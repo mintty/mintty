@@ -1,0 +1,3 @@
+-include std.h
+-std=gnu99 -Wall -Wextra -Werror
+-march=i586 -mtune=pentium-m -fomit-frame-pointer -Os
