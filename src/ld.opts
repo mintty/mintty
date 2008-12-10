@@ -1,1 +1,0 @@
--s -mwindows -lcomctl32 -lcomdlg32 -limm32 -lwinspool --gc-sections
