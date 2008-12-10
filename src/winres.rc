@@ -3,7 +3,7 @@
 
 #include <winresrc.h>
 
-IDI_MAINICON ICON "icon/terminal.ico"
+IDI_MAINICON ICON "../icon/terminal.ico"
 
 IDD_MAINBOX DIALOG DISCARDABLE 100, 40, 300, 252
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
