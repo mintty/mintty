@@ -9,7 +9,7 @@ rc_srcs := $(wildcard *.rc)
 objs := $(c_srcs:.c=.o) $(rc_srcs:.rc=.o)
 deps := $(objs:.o=.d)
 
-c_opts := -include std.h -std=gnu99 -Wall -Wextra -Werror
+c_opts := -include std.h -std=gnu99 -Wall -Wextra -Werror -DNDEBUG
 code_opts := -march=i586 -mtune=pentium-m -fomit-frame-pointer -Os
 ld_opts := -mwindows -lcomctl32 -lcomdlg32 -limm32 -lwinspool --gc-sections -s
 
