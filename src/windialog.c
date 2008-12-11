@@ -391,7 +391,7 @@ win_about(void)
     .dwStyle = MB_USERICON | MB_OKCANCEL | MB_DEFBUTTON2,
     .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
     .lpszText = 
-      "MinTTY " VERSION "\n" COPYRIGHT "\n"
+      APPNAME " " VERSION "\n" COPYRIGHT "\n"
       "This software is released under the terms of the\n"
       "GNU General Public License v3 or later.\n"
       "\n"
