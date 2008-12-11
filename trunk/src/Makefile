@@ -13,10 +13,12 @@ c_opts := -include std.h -std=gnu99 -Wall -Wextra -Werror -DNDEBUG
 code_opts := -march=i586 -mtune=pentium-m -fomit-frame-pointer -Os
 ld_opts := -mwindows -lcomctl32 -lcomdlg32 -limm32 -lwinspool --gc-sections -s
 
-rc_cpp := gcc -E -MMD -xc-header -DRC_INVOKED -DREVISION=$(rev)
+cc := gcc
+rc_cpp := $(cc) -E -MMD -xc-header -DRC_INVOKED -DREVISION=$(rev)
+rc := windres --preprocessor "$(rc_cpp)"
 
 $(exe): $(objs)
-	gcc -o $@ $^ $(ld_opts)
+	$(cc) -o $@ $^ $(ld_opts)
 	du -b $@
 
 $(zip): $(exe) $(stuff)
@@ -25,10 +27,10 @@ $(zip): $(exe) $(stuff)
 	du -b $@
 
 %.o %.d: %.c
-	gcc $< -c -MMD -MP $(c_opts) $(code_opts) -DREVISION=$(rev)
+	$(cc) $< -c -MMD -MP $(c_opts) $(code_opts) -DREVISION=$(rev)
 
 %.o %.d: %.rc
-	windres --preprocessor "$(rc_cpp)" $< $(<:.rc=.o)
+	$(rc) $< $(<:.rc=.o)
 
 zip: $(zip)
 

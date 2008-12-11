@@ -53,6 +53,7 @@ child_read_thread(LPVOID unused(param))
   logout(ut.ut_line);
   SetEvent(child_event);
   for (;;) wait(0);
+  return 0;
 }
 
 static void
