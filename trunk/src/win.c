@@ -681,7 +681,7 @@ confirm_close(void)
     MessageBox(
       hwnd,
       "Processes are running in session.\n"
-      "Kill processes and close anyway?",
+      "Exit anyway?",
       APPNAME " Exit Confirmation", 
       MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON2
     ) == IDOK;

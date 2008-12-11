@@ -275,6 +275,11 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Output", "Output");
 
+  s = ctrl_getset(b, "Output", "printer", "Printer");
+  ctrl_combobox(
+    s, null, '\0', 100, P(0), printerbox_handler, P(null), P(null)
+  );
+
   s = ctrl_getset(b, "Output", "bell", "Bell");
   ctrl_columns(s, 2, 50, 50);
   ctrl_radiobuttons(
@@ -293,11 +298,6 @@ setup_config_box(controlbox * b)
     "Steady", '\0', I(B_IND_STEADY),
     null
   )->column = 1;
-                   
-  s = ctrl_getset(b, "Output", "printer", "Printer");
-  ctrl_combobox(
-    s, null, '\0', 100, P(0), printerbox_handler, P(null), P(null)
-  );
 }
 
 char *
