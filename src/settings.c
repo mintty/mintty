@@ -13,15 +13,12 @@
 static FILE *file;
 
 char *
-open_settings_w(void)
+open_settings_w(char *filename)
 {
-  char *filename;
-  asprintf(&filename, "%s/" FILENAME, getenv("HOME"));
   file = fopen(filename, "w");
   char *errmsg = NULL;
   if (!file)
     asprintf(&errmsg, "Unable to create %s: %s", filename, strerror(errno));
-  free(filename);
   return errmsg;
 }
 
@@ -76,12 +73,9 @@ keyvalcmp(void *a, void *b)
 static tree234 *tree;
 
 void
-open_settings_r(void)
+open_settings_r(char *filename)
 {
-  char *filename;
-  asprintf(&filename, "%s/" FILENAME, getenv("HOME"));
   FILE *file = fopen(filename, "r");
-  free(filename);
   if (!file) {
     tree = 0;
     return;
