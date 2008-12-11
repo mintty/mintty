@@ -45,7 +45,7 @@ void freeline(termline *);
 void resizeline(termline *, int);
 
 int sblines(void);
-termline *lineptr(int y, int screen);
+termline *lineptr(int y);
 void unlineptr(termline *);
 
 int termchars_equal(termchar *a, termchar *b);
@@ -62,8 +62,7 @@ termline *decompressline(ubyte *, int *bytes_used);
 
 termchar *term_bidi_line(termline *, int scr_y);
 
-#define lineptr(x) (lineptr)(x,false)
-#define scrlineptr(x) (lineptr)(x,true)
+#define scrlineptr(x) (lineptr)(x)
 
 /*
  * Fetch the character at a particular position in a line array,

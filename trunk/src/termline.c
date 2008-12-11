@@ -825,7 +825,7 @@ sblines(void)
  * (respectively).
  */
 termline *
-(lineptr)(int y, int screen)
+(lineptr)(int y)
 {
   termline *line;
   tree234 *whichtree;
@@ -836,7 +836,6 @@ termline *
     treeindex = y;
   }
   else {
-    assert(!screen);
     whichtree = term.scrollback;
     treeindex = y + count234(term.scrollback);
   }
