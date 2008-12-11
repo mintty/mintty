@@ -14,6 +14,8 @@
  * config.c - the configuration box.
  */
 
+char *config_filename;
+
 config cfg;     /* exported to windlg.c */
 
 static void
@@ -303,7 +305,7 @@ setup_config_box(controlbox * b)
 char *
 save_config(void)
 {
-  char *errmsg = open_settings_w();
+  char *errmsg = open_settings_w(config_filename);
   if (errmsg)
     return errmsg;
   write_int_setting("CopyOnSelect", cfg.copy_on_select);
@@ -335,7 +337,7 @@ save_config(void)
 void
 load_config(void)
 {
-  open_settings_r();
+  open_settings_r(config_filename);
   read_int_setting("CopyOnSelect", false, &cfg.copy_on_select);
   read_int_setting("EscapeSendsFS", false, &cfg.escape_sends_fs);
   read_int_setting("BackspaceSendsDEL", false, &cfg.backspace_sends_del);
@@ -364,7 +366,7 @@ load_config(void)
   read_string_setting("LineCodePage", "", cfg.line_codepage,
                                           sizeof cfg.line_codepage);
   read_string_setting("Printer", "", cfg.printer, sizeof cfg.printer);
-  read_int_setting("Scrollbar", true, &cfg.scrollbar);
+  read_int_setting("Scrollbar", false, &cfg.scrollbar);
   read_int_setting("ScrollMod", SHIFT, &cfg.scroll_mod);
   read_int_setting("BlinkText", true, &cfg.blinktext);
   close_settings_r();

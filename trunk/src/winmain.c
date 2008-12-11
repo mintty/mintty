@@ -903,12 +903,18 @@ main(int argc, char *argv[])
       return 0;
     }
     if (strcmp(argv[1], "--help") == 0) {
-      printf("Usage: %s [COMMAND ARGS...]\n", *argv);
+      printf("Usage: %s [--config FILENAME][COMMAND ARGS...]\n", *argv);
       return 0;
     }
   }
 
+  if (argc >= 3 && strcmp(argv[1],"--config") == 0)
+    config_filename = argv[2];
+  else
+    asprintf(&config_filename, "%s/.minttyrc", getenv("HOME"));
+
   load_config();
+
   hinst = GetModuleHandle(NULL);
 
  /* Create window class. */

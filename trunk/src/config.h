@@ -3,6 +3,8 @@
 
 #include "settings.h"
 
+char *config_filename;
+
 static const char ANSWERBACK[] = "xterm";
 enum { SAVELINES = 65536 };
 
