@@ -182,13 +182,12 @@ create_controls(HWND hwnd, char *path)
  * dialog processing should be performed, and 1 if it should not.)
  */
 static int CALLBACK
-GenericMainDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+config_dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   switch (msg) {
     when WM_INITDIALOG: {
       RECT r;
       GetWindowRect(GetParent(hwnd), &r);
-      SetWindowPos(hwnd, null, r.left + 60, r.top + 40, 448, 276, 0);
       dp.hwnd = hwnd;
       create_controls(hwnd, "");        /* Open and Cancel buttons etc */
       SetWindowText(hwnd, dp.wintitle);
@@ -367,7 +366,7 @@ win_config(void)
 
   int ret = 
     SaneDialogBox(hinst, MAKEINTRESOURCE(IDD_MAINBOX), 
-                  hwnd, GenericMainDlgProc);
+                  hwnd, config_dialog_proc);
 
   ctrl_free_box(ctrlbox);
   winctrl_cleanup(&ctrls_base);
