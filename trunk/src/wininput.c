@@ -117,7 +117,7 @@ win_mouse_wheel(WPARAM wp, LPARAM lp)
     term_mouse_wheel(lines, get_mouse_mods(wp), get_pos(lp, 0));
 }
 
-static bool
+inline static bool
 is_key_down(ubyte vk)
 {
   return GetKeyState(vk) & 0x80;
@@ -136,7 +136,7 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
   bool ctrl = is_key_down(VK_RCONTROL) ||
               (is_key_down(VK_LCONTROL) && !is_key_down(VK_RMENU)); // not AltGr
   int mods = shift * SHIFT | alt * ALT | ctrl * CTRL;
-  
+
   // Exit
   if (key == VK_F4 && alt && !ctrl) {
     SendMessage(hwnd, WM_CLOSE, 0, 0);
@@ -279,7 +279,7 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
     goto send;
   }
   
-  // Special treatment for the space key.
+  // Special treatment for the space bar.
   if (key == VK_SPACE) {
     if (mods == CTRL) {
       // For some reason most keyboard layouts map Ctrl-Space to 0x20. 
@@ -295,19 +295,20 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
   // Try keyboard layout.
   // ToUnicode produces up to four UTF-16 code units per keypress according
   // to an experiment with Keyboard Layout Creator 1.4. (MSDN doesn't say.)
-  ubyte keyboard_state[256];  
-  GetKeyboardState(keyboard_state);
+  ubyte keyboard[256];  
+  GetKeyboardState(keyboard);
     
   wchar wchars[4];
-  int wchars_n = ToUnicode(key, scancode, keyboard_state, wchars, 4, 0);
+  int wchars_n = ToUnicode(key, scancode, keyboard, wchars, 4, 0);
   
   if (wchars_n != 0) {
     // Got normal key or dead key.
     term_cancel_paste();
     term_seen_key_event();
     if (wchars_n > 0) {
+      bool meta = alt && !is_key_down(VK_CONTROL);
       do {
-        if (alt && !ctrl) ldisc_send("\e", 1, 1);
+        if (meta) ldisc_send("\e", 1, 1);
         luni_send(wchars, wchars_n, 1);
       } while (--count);
     }
