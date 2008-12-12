@@ -47,12 +47,12 @@ child_read_thread(LPVOID unused(param))
     WaitForSingleObject(proc_event, INFINITE);
   };
   int status;
-  while (wait(&status) != pid);
+  waitpid(pid, &status, 0);
   child_exitcode = WEXITSTATUS(status);
   pid = 0;
   logout(ut.ut_line);
   SetEvent(child_event);
-  for (;;) wait(0);
+  while (wait(0) > 0);
   return 0;
 }
 
