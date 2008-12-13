@@ -7,7 +7,6 @@
 
 #include "linedisc.h"
 #include "settings.h"
-#include "timing.h"
 #include "config.h"
 #include "minibidi.h"
 #include "unicode.h"

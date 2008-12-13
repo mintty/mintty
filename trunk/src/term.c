@@ -7,7 +7,6 @@
 
 #include "linedisc.h"
 #include "win.h"
-#include "timing.h"
 
 struct term term;
 
@@ -16,32 +15,33 @@ struct term term;
 #define CBLINK_DELAY (cursor_blink_ticks())     // ticks between cursor blinks
 #define VBELL_DELAY (ticks_per_sec/10)        // visual bell timeout in ticks
 
-void
-term_timer(int now)
+static void
+tblink_cb(void)
 {
-  int update = false;
-
-  if (term.tblink_pending && now - term.next_tblink >= 0) {
+  if (term.tblink_pending) {
     term.tblinker = !term.tblinker;
     term.tblink_pending = false;
     term_schedule_tblink();
-    update = true;
+    term_update();
   }
+}
 
-  if (term.cblink_pending && now - term.next_cblink >= 0) {
+static void
+cblink_cb(void)
+{
+  if (term.cblink_pending) {
     term.cblinker = !term.cblinker;
     term.cblink_pending = false;
     term_schedule_cblink();
-    update = true;
-  }
-
-  if (term.in_vbell && now - term.vbell_end >= 0) {
-    term.in_vbell = false;
-    update = true;
-  }
-
-  if (update || (term.update_pending && now - term.next_update >= 0))
     term_update();
+  }
+}
+
+static void
+vbell_cb(void)
+{
+  term.in_vbell = false;
+  term_update();
 }
 
 void
@@ -49,10 +49,9 @@ term_schedule_update(void)
 {
   if (!term.update_pending) {
     term.update_pending = true;
-    term.next_update = schedule_timer(UPDATE_DELAY, term_timer);
+    win_schedule_timer(UPDATE_DELAY, term_update);
   }
 }
-
 
 /*
  * Call when the terminal's blinking-text settings change, or when
@@ -63,7 +62,7 @@ term_schedule_tblink(void)
 {
   if (term.blink_is_real) {
     if (!term.tblink_pending)
-      term.next_tblink = schedule_timer(TBLINK_DELAY, term_timer);
+      win_schedule_timer(TBLINK_DELAY, tblink_cb);
     term.tblink_pending = true;
   }
   else {
@@ -80,7 +79,7 @@ term_schedule_cblink(void)
 {
   if (term.cfg.blink_cur && term.has_focus) {
     if (!term.cblink_pending)
-      term.next_cblink = schedule_timer(CBLINK_DELAY, term_timer);
+      win_schedule_timer(CBLINK_DELAY, cblink_cb);
     term.cblink_pending = true;
   }
   else {
@@ -104,8 +103,7 @@ term_schedule_vbell(int already_started, int startpoint)
 
   if (ticks_already_gone - VBELL_DELAY < 0) {
     term.in_vbell = true;
-    term.vbell_end =
-      schedule_timer(VBELL_DELAY - ticks_already_gone, term_timer);
+    win_schedule_timer(VBELL_DELAY - ticks_already_gone, vbell_cb);
   }
   else {
     term.in_vbell = false;

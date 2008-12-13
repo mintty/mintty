@@ -37,7 +37,6 @@ void term_schedule_tblink(void);
 void term_schedule_cblink(void);
 void term_schedule_update(void);
 void term_schedule_vbell(int already_started, int startpoint);
-void term_timer(int now);
 
 void term_swap_screen(int which, int reset, int keep_cur_pos);
 void term_check_selection(pos from, pos to);
@@ -118,13 +117,12 @@ struct term {
   int alt_save_sco_acs;
 
   int rows, cols;
-  int has_focus;
-  int in_vbell;
-  int vbell_end;
-  int app_cursor_keys;
-  int cr_lf_return;
-  int seen_disp_event;
-  int big_cursor;
+  bool has_focus;
+  bool in_vbell;
+  bool app_cursor_keys;
+  bool cr_lf_return;
+  bool seen_disp_event;
+  bool big_cursor;
 
   int cset_attr[2];
 
@@ -200,14 +198,12 @@ struct term {
   * We schedule a window update shortly after receiving terminal
   * data. This tracks whether one is currently pending.
   */
-  int update_pending;
-  int next_update;
+  bool update_pending;
 
  /*
   * Track pending blinks and tblinks.
   */
-  int tblink_pending, cblink_pending;
-  int next_tblink, next_cblink;
+  bool tblink_pending, cblink_pending;
 
  /*
   * These are buffers used by the bidi and Arabic shaping code.
