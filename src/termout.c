@@ -5,7 +5,6 @@
 
 #include "termpriv.h"
 
-#include "timing.h"
 #include "linedisc.h"
 #include "win.h"
 

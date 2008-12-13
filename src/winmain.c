@@ -6,7 +6,6 @@
 #include "winpriv.h"
 
 #include "term.h"
-#include "timing.h"
 #include "config.h"
 #include "appinfo.h"
 #include "linedisc.h"
@@ -33,8 +32,11 @@ static int prev_rows, prev_cols;
 
 static bool flashing;
 
-enum { TIMER_ID = 1234 };
-static int next_time;
+void
+win_schedule_timer(uint ticks, void (*cb)(void))
+{
+  SetTimer(hwnd, (UINT_PTR)cb, ticks, null);
+}
 
 void
 win_set_title(char *title)
@@ -695,14 +697,12 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
   static int fullscr_on_max = false;
 
   switch (message) {
-    when WM_TIMER:
-      if ((UINT_PTR) wp == TIMER_ID) {
-        KillTimer(hwnd, TIMER_ID);
-        int next;
-        if (run_timers(next_time, &next))
-          timer_change_cb(next);
-      }
+    when WM_TIMER: {
+      KillTimer(hwnd, wp);
+      void_fn cb = (void_fn)wp;
+      cb();
       return 0;
+    }
     when WM_CLOSE:
       win_show_mouse();
       if (child_exitcode)
@@ -1070,15 +1070,4 @@ main(int argc, char *argv[])
     // Set focus, just in case a message got lost.
     term_set_focus(GetForegroundWindow() == hwnd);
   }
-}
-
-void
-timer_change_cb(int next)
-{
-  int ticks = next - get_tick_count();
-  if (ticks <= 0)
-    ticks = 1;  /* just in case */
-  KillTimer(hwnd, TIMER_ID);
-  SetTimer(hwnd, TIMER_ID, ticks, null);
-  next_time = next;
 }
