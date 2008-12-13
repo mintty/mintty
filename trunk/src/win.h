@@ -26,6 +26,7 @@ void win_get_pixels(int *x, int *y);
 void win_write_clip(wchar *, int *, int);
 void win_read_clip(wchar **, int *);
 
-void win_schedule_timer(uint ticks, void_fn cb);
+void win_set_timer(void_fn cb, uint ticks);
+void win_kill_timer(void_fn cb);
 
 #endif

@@ -33,9 +33,15 @@ static int prev_rows, prev_cols;
 static bool flashing;
 
 void
-win_schedule_timer(uint ticks, void (*cb)(void))
+win_set_timer(void (*cb)(void), uint ticks)
 {
   SetTimer(hwnd, (UINT_PTR)cb, ticks, null);
+}
+
+void
+win_kill_timer(void (*cb)(void))
+{
+  KillTimer(hwnd, (UINT_PTR)cb);
 }
 
 void
@@ -569,8 +575,7 @@ paint(void)
   term_paint((p.rcPaint.left - offset_width) / font_width,
              (p.rcPaint.top - offset_height) / font_height,
              (p.rcPaint.right - offset_width - 1) / font_width,
-             (p.rcPaint.bottom - offset_height - 1) / font_height,
-             !term_update_pending());
+             (p.rcPaint.bottom - offset_height - 1) / font_height);
 
   if (p.fErase || p.rcPaint.left < offset_width ||
       p.rcPaint.top < offset_height ||
@@ -1067,7 +1072,5 @@ main(int argc, char *argv[])
       DispatchMessage(&msg);
       term_send_paste();
     }
-    // Set focus, just in case a message got lost.
-    term_set_focus(GetForegroundWindow() == hwnd);
   }
 }

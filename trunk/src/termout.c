@@ -578,7 +578,6 @@ term_write(const char *data, int len)
   // Reset cursor blinking.
   seen_disp_event();
   term.cblinker = 1;
-  term.cblink_pending = false;
   term_schedule_cblink();
 
  /*
