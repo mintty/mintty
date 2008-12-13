@@ -15,41 +15,12 @@ struct term term;
 #define CBLINK_DELAY (cursor_blink_ticks())     // ticks between cursor blinks
 #define VBELL_DELAY (ticks_per_sec/10)        // visual bell timeout in ticks
 
-static void
-tblink_cb(void)
-{
-  if (term.tblink_pending) {
-    term.tblinker = !term.tblinker;
-    term.tblink_pending = false;
-    term_schedule_tblink();
-    term_update();
-  }
-}
-
-static void
-cblink_cb(void)
-{
-  if (term.cblink_pending) {
-    term.cblinker = !term.cblinker;
-    term.cblink_pending = false;
-    term_schedule_cblink();
-    term_update();
-  }
-}
-
-static void
-vbell_cb(void)
-{
-  term.in_vbell = false;
-  term_update();
-}
-
 void
 term_schedule_update(void)
 {
   if (!term.update_pending) {
+    win_set_timer(term_update, UPDATE_DELAY);
     term.update_pending = true;
-    win_schedule_timer(UPDATE_DELAY, term_update);
   }
 }
 
@@ -57,40 +28,53 @@ term_schedule_update(void)
  * Call when the terminal's blinking-text settings change, or when
  * a text blink has just occurred.
  */
+static void
+tblink_cb(void)
+{
+  term.tblinker = !term.tblinker;
+  term_schedule_tblink();
+  term_update();
+}
+
 void
 term_schedule_tblink(void)
 {
-  if (term.blink_is_real) {
-    if (!term.tblink_pending)
-      win_schedule_timer(TBLINK_DELAY, tblink_cb);
-    term.tblink_pending = true;
-  }
-  else {
+  if (term.blink_is_real)
+    win_set_timer(tblink_cb, TBLINK_DELAY);
+  else
     term.tblinker = 1;  /* reset when not in use */
-    term.tblink_pending = false;
-  }
 }
 
 /*
  * Likewise with cursor blinks.
  */
+static void
+cblink_cb(void)
+{
+    term.cblinker = !term.cblinker;
+    term_schedule_cblink();
+    term_update();
+}
+
 void
 term_schedule_cblink(void)
 {
-  if (term.cfg.blink_cur && term.has_focus) {
-    if (!term.cblink_pending)
-      win_schedule_timer(CBLINK_DELAY, cblink_cb);
-    term.cblink_pending = true;
-  }
-  else {
+  if (term.cfg.blink_cur && term.has_focus)
+    win_set_timer(cblink_cb, CBLINK_DELAY);
+  else
     term.cblinker = 1;  /* reset when not in use */
-    term.cblink_pending = false;
-  }
 }
 
 /*
  * Call to begin a visual bell.
  */
+static void
+vbell_cb(void)
+{
+  term.in_vbell = false;
+  term_update();
+}
+
 void
 term_schedule_vbell(int already_started, int startpoint)
 {
@@ -103,7 +87,7 @@ term_schedule_vbell(int already_started, int startpoint)
 
   if (ticks_already_gone - VBELL_DELAY < 0) {
     term.in_vbell = true;
-    win_schedule_timer(VBELL_DELAY - ticks_already_gone, vbell_cb);
+    win_set_timer(vbell_cb, VBELL_DELAY - ticks_already_gone);
   }
   else {
     term.in_vbell = false;
@@ -892,26 +876,21 @@ term_print_finish(void)
   term.printing = term.only_printing = false;
 }
 
-/*
- * Given a context, update the window. Out of paranoia, we don't
- * allow WM_PAINT responses to do scrolling optimisations.
- */
-static void
-do_paint(void)
+void
+term_update(void)
 {
-  int i, j, our_curs_y, our_curs_x;
-  int rv, cursor;
-  pos scrpos;
-  wchar *ch;
-  int chlen;
-  termchar *newline;
+  if (term.update_pending) {
+    win_kill_timer(term_update);
+    term.update_pending = false;
+  }
 
-  chlen = 1024;
-  ch = newn(wchar, chlen);
-
-  newline = newn(termchar, term.cols);
-
-  rv = (!term.rvideo ^ !term.in_vbell ? ATTR_REVERSE : 0);
+  if (term.seen_disp_event)
+    update_sbar();
+    
+  int chlen = 1024;
+  wchar *ch = newn(wchar, chlen);
+  termchar *newline = newn(termchar, term.cols);
+  int rv = !term.rvideo ^ !term.in_vbell ? ATTR_REVERSE : 0;
 
  /* Depends on:
   * screen array, disptop, scrtop,
@@ -921,6 +900,7 @@ do_paint(void)
   */
 
  /* Has the cursor position or type changed ? */
+  int cursor;
   if (term.cursor_on) {
     if (term.has_focus) {
       if (term.cblinker || !term.cfg.blink_cur)
@@ -935,7 +915,8 @@ do_paint(void)
   }
   else
     cursor = 0;
-  our_curs_y = term.curs.y - term.disptop;
+ 
+  int our_curs_y = term.curs.y - term.disptop, our_curs_x = term.curs.x;
   {
    /*
     * Adjust the cursor position:
@@ -947,13 +928,10 @@ do_paint(void)
     *    one space to the left.
     */
     termline *ldata = lineptr(term.curs.y);
-    termchar *lchars;
+    termchar *lchars = term_bidi_line(ldata, our_curs_y);
 
-    our_curs_x = term.curs.x;
-
-    if ((lchars = term_bidi_line(ldata, our_curs_y)) != null) {
+    if (lchars)
       our_curs_x = term.post_bidi_cache[our_curs_y].forward[our_curs_x];
-    }
     else
       lchars = ldata->chars;
 
@@ -984,7 +962,7 @@ do_paint(void)
   term.dispcursx = term.dispcursy = -1;
 
  /* The normal screen data */
-  for (i = 0; i < term.rows; i++) {
+  for (int i = 0; i < term.rows; i++) {
     termline *ldata;
     termchar *lchars;
     int dirty_line, dirty_run, selected;
@@ -996,6 +974,7 @@ do_paint(void)
     int laststart, dirtyrect;
     int *backward;
 
+    pos scrpos;
     scrpos.y = i + term.disptop;
     ldata = lineptr(scrpos.y);
 
@@ -1013,7 +992,7 @@ do_paint(void)
     * First loop: work along the line deciding what we want
     * each character cell to look like.
     */
-    for (j = 0; j < term.cols; j++) {
+    for (int j = 0; j < term.cols; j++) {
       uint tattr, tchar;
       termchar *d = lchars + j;
       scrpos.x = backward ? backward[j] : j;
@@ -1093,7 +1072,7 @@ do_paint(void)
     */
     laststart = 0;
     dirtyrect = false;
-    for (j = 0; j < term.cols; j++) {
+    for (int j = 0; j < term.cols; j++) {
       if (term.disptext[i]->chars[j].attr & DATTR_STARTRUN) {
         laststart = j;
         dirtyrect = false;
@@ -1122,7 +1101,7 @@ do_paint(void)
     dirty_run = dirty_line = (ldata->lattr != term.disptext[i]->lattr);
     term.disptext[i]->lattr = ldata->lattr;
 
-    for (j = 0; j < term.cols; j++) {
+    for (int j = 0; j < term.cols; j++) {
       uint tattr, tchar;
       int break_run, do_copy;
       termchar *d = lchars + j;
@@ -1248,23 +1227,8 @@ do_paint(void)
     }
     unlineptr(ldata);
   }
-
   free(newline);
   free(ch);
-}
-
-
-/*
- * Force a screen update.
- */
-void
-term_update(void)
-{
-  term.update_pending = false;
-  int need_sbar_update = term.seen_disp_event;
-  if (need_sbar_update)
-    update_sbar();
-  do_paint();
   win_sys_cursor(term.curs.x, term.curs.y - term.disptop);
 }
 
@@ -1287,7 +1251,7 @@ term_invalidate(void)
  * Paint the window in response to a WM_PAINT message.
  */
 void
-term_paint(int left, int top, int right, int bottom, int immediately)
+term_paint(int left, int top, int right, int bottom)
 {
   int i, j;
   if (left < 0)
@@ -1308,10 +1272,7 @@ term_paint(int left, int top, int right, int bottom, int immediately)
         term.disptext[i]->chars[j].attr |= ATTR_INVALID;
   }
 
-  if (immediately)
-    do_paint();
-  else
-    term_schedule_update();
+  term_update();
 }
 
 /*
@@ -1623,8 +1584,10 @@ term_deselect(void)
 void
 term_set_focus(int has_focus)
 {
-  term.has_focus = has_focus;
-  term_schedule_cblink();
+  if (has_focus != term.has_focus) {
+    term.has_focus = has_focus;
+    term_schedule_cblink();
+  }
 }
 
 bool
@@ -1639,7 +1602,6 @@ int term_rows(void) { return term.rows; }
 int term_cols(void) { return term.cols; }
 int term_which_screen(void) { return term.which_screen; }
 bool term_app_cursor_keys(void) { return term.app_cursor_keys; }
-bool term_update_pending(void) { return term.update_pending; }
 bool term_has_focus(void) { return term.has_focus; }
 bool term_big_cursor(void) { return term.big_cursor; }
 

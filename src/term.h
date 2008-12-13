@@ -92,7 +92,7 @@ typedef enum {
 
 void term_init(void);
 void term_resize(int, int);
-void term_paint(int, int, int, int, int);
+void term_paint(int left, int top, int right, int bottom);
 void term_scroll(int, int);
 void term_reset(void);
 void term_clear_scrollback(void);
@@ -119,7 +119,6 @@ int  term_rows(void);
 int  term_cols(void);
 int  term_which_screen(void);
 bool term_app_cursor_keys(void);
-bool term_update_pending(void);
 bool term_has_focus(void);
 bool term_big_cursor(void);
 

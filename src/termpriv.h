@@ -201,11 +201,6 @@ struct term {
   bool update_pending;
 
  /*
-  * Track pending blinks and tblinks.
-  */
-  bool tblink_pending, cblink_pending;
-
- /*
   * These are buffers used by the bidi and Arabic shaping code.
   */
   termchar *ltemp;
