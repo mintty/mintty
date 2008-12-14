@@ -5,6 +5,7 @@
 
 #include "termpriv.h"
 #include "linedisc.h"
+#include "win.h"
 
 static pos
 sel_spread_word(pos p, int dir)
@@ -217,14 +218,8 @@ send_mouse_event(char code, mod_keys mods, pos p)
 static pos
 box_pos(pos p)
 {
-  if (p.y < 0)
-    p.y = 0;
-  else if (p.y >= term.rows)
-    p.y = term.rows - 1;
-  if (p.x < 0)
-    p.x = 0;
-  else if (p.x >= term.cols)
-    p.x = term.cols - 1;
+  p.y = box(0, p.y, term.rows - 1);
+  p.x = box(0, p.x, term.cols - 1);
   return p;
 }
 
@@ -248,10 +243,6 @@ get_selpoint(pos p)
   unlineptr(ldata);
   return selpoint;
 }
-
-bool
-term_selecting(void)
-{ return term.mouse_state >= MS_SEL_CHAR; }
 
 void
 term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
@@ -316,21 +307,41 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
   term.mouse_state = MS_IDLE;
 }
 
+static void
+sel_scroll_cb(void)
+{
+  if (term_selecting() && term.sel_scroll != 0) {
+    term_scroll(0, term.sel_scroll);
+    sel_drag(get_selpoint(term.sel_pos));
+    win_set_timer(sel_scroll_cb, 200);
+  }
+}
+
 void
 term_mouse_move(mouse_button b, mod_keys mods, pos p)
 {
-  p = box_pos(p);
+  pos bp = box_pos(p);
   if (term_selecting()) {
-    sel_drag(get_selpoint(p));
+    if (bp.y == p.y)
+      term.sel_scroll = 0;
+    else {
+      if (term.sel_scroll == 0) 
+        win_set_timer(sel_scroll_cb, 200);
+      term.sel_scroll = p.y < 0 ? p.y : p.y - term.rows + 1;
+      term.sel_pos = bp;
+    }
+    sel_drag(get_selpoint(bp));
     term_update();
   }
-  else if (term.mouse_state == MS_CLICKED) {
-    if (term.mouse_tracking >= MT_BTN_EVENT)
-      send_mouse_event(0x3F + b, mods, p);
-  }
   else {
-    if (term.mouse_tracking == MT_ANY_EVENT)
-      send_mouse_event(0x43, mods, p);
+    if (term.mouse_state == MS_CLICKED) {
+      if (term.mouse_tracking >= MT_BTN_EVENT)
+        send_mouse_event(0x3F + b, mods, bp);
+    }
+    else {
+      if (term.mouse_tracking == MT_ANY_EVENT)
+        send_mouse_event(0x43, mods, bp);
+    }
   }
 }
 

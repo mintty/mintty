@@ -52,12 +52,13 @@ typedef void (*void_fn)(void);
 #define newn(type, n) ((type *) calloc(n, sizeof(type)))
 #define renewn(p, n) ((typeof(p)) realloc(p, sizeof(*p) * n))
 
-#ifndef min
-#define min(a, b) ((a) <= (b) ? (a) : (b))
-#endif
-#ifndef max
-#define max(a, b) ((a) >= (b) ? (a) : (b))
-#endif
+static inline int
+box(int l, int x, int h)
+{
+  return
+    x < l ? l :
+    x > h ? h : x;
+}
 
 #define when break; case
 #define or : case
