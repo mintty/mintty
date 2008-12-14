@@ -10,16 +10,11 @@
 
 struct term term;
 
-#define UPDATE_DELAY ((ticks_per_sec+49)/50)    // ticks to defer window update
-#define TBLINK_DELAY ((ticks_per_sec*9+19)/20)  // ticks between text blinks
-#define CBLINK_DELAY (cursor_blink_ticks())     // ticks between cursor blinks
-#define VBELL_DELAY (ticks_per_sec/10)        // visual bell timeout in ticks
-
 void
 term_schedule_update(void)
 {
   if (!term.update_pending) {
-    win_set_timer(term_update, UPDATE_DELAY);
+    win_set_timer(term_update, 20);
     term.update_pending = true;
   }
 }
@@ -40,7 +35,7 @@ void
 term_schedule_tblink(void)
 {
   if (term.blink_is_real)
-    win_set_timer(tblink_cb, TBLINK_DELAY);
+    win_set_timer(tblink_cb, 500);
   else
     term.tblinker = 1;  /* reset when not in use */
 }
@@ -60,7 +55,7 @@ void
 term_schedule_cblink(void)
 {
   if (term.cfg.blink_cur && term.has_focus)
-    win_set_timer(cblink_cb, CBLINK_DELAY);
+    win_set_timer(cblink_cb, cursor_blink_ticks());
   else
     term.cblinker = 1;  /* reset when not in use */
 }
@@ -78,20 +73,10 @@ vbell_cb(void)
 void
 term_schedule_vbell(int already_started, int startpoint)
 {
-  int ticks_already_gone;
-
-  if (already_started)
-    ticks_already_gone = get_tick_count() - startpoint;
-  else
-    ticks_already_gone = 0;
-
-  if (ticks_already_gone - VBELL_DELAY < 0) {
-    term.in_vbell = true;
-    win_set_timer(vbell_cb, VBELL_DELAY - ticks_already_gone);
-  }
-  else {
-    term.in_vbell = false;
-  }
+  int ticks_gone = already_started ? get_tick_count() - startpoint : 0;
+  int ticks = 100 - ticks_gone;
+  if ((term.in_vbell = ticks > 0))
+    win_set_timer(vbell_cb, ticks);
 }
 
 /* Find the bottom line on the screen that has any content.
@@ -1479,7 +1464,7 @@ term_paste(void)
 
     if (term.paste_buffer)
       free(term.paste_buffer);
-    term.paste_pos = term.paste_hold = term.paste_len = 0;
+    term.paste_pos = term.paste_len = term.paste_hold = 0;
     term.paste_buffer = newn(wchar, len);
 
     p = q = data;
@@ -1489,12 +1474,8 @@ term_paste(void)
                !memcmp(p, sel_nl, sizeof (sel_nl))))
         p++;
 
-      {
-        int i;
-        for (i = 0; i < p - q; i++) {
-          term.paste_buffer[term.paste_len++] = q[i];
-        }
-      }
+      for (int i = 0; i < p - q; i++)
+        term.paste_buffer[term.paste_len++] = q[i];
 
       if (p <= data + len - lenof(sel_nl) &&
           !memcmp(p, sel_nl, sizeof sel_nl)) {
@@ -1510,7 +1491,7 @@ term_paste(void)
       if (term.paste_buffer)
         free(term.paste_buffer);
       term.paste_buffer = 0;
-      term.paste_pos = term.paste_hold = term.paste_len = 0;
+      term.paste_pos = term.paste_len = term.paste_hold = 0;
     }
   }
   win_read_clip(null, null);
@@ -1529,18 +1510,9 @@ term_cancel_paste(void)
 void
 term_send_paste(void)
 {
-  int now, paste_diff;
-
-  if (term.paste_len == 0)
+  if (term.paste_hold || term.paste_len == 0)
     return;
 
- /* Don't wait forever to paste */
-  if (term.paste_hold) {
-    now = get_tick_count();
-    paste_diff = now - term.last_paste;
-    if (paste_diff >= 0 && paste_diff < 450)
-      return;
-  }
   term.paste_hold = 0;
 
   while (term.paste_pos < term.paste_len) {
@@ -1579,7 +1551,6 @@ term_deselect(void)
   term.selected = false;
   term.sel_start.x = term.sel_start.y = term.sel_end.x = term.sel_end.y = 0;
 }
-
 
 void
 term_set_focus(int has_focus)

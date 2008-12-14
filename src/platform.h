@@ -16,7 +16,6 @@ static const bool sel_nul_terminated = true;
 static const wchar sel_nl[] = { '\r', '\n' };
 
 // Clock ticks.
-static const int ticks_per_sec = 1000;
 int get_tick_count(void);
 int cursor_blink_ticks(void);
 

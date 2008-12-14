@@ -357,10 +357,8 @@ out_bell(void)
   */
   if (!term.bell_overloaded) {
     win_bell(term.cfg.bell);
-
-    if (term.cfg.bell == BELL_VISUAL) {
+    if (term.cfg.bell == BELL_VISUAL)
       term_schedule_vbell(false, 0);
-    }
   }
   seen_disp_event();
 }
@@ -1000,16 +998,18 @@ term_write(const char *data, int len)
             term.state = SEEN_CSI;
           }
           else {
+            int arg0 = term.esc_args[0], arg1 = term.esc_args[1];
+            int def_arg0 = arg0 ?: 1;  // first arg with default
             switch (ANSI(c, term.esc_query)) {
               when 'A':        /* CUU: move up N lines */
-                move(term.curs.x, term.curs.y - def(term.esc_args[0], 1), 1);
+                move(term.curs.x, term.curs.y - def_arg0, 1);
                 seen_disp_event();
               when 'e':        /* VPR: move down N lines */
                 compatibility(ANSI);
-                move(term.curs.x, term.curs.y + def(term.esc_args[0], 1), 1);
+                move(term.curs.x, term.curs.y + def_arg0, 1);
                 seen_disp_event();
               when 'B':        /* CUD: Cursor down */
-                move(term.curs.x, term.curs.y + def(term.esc_args[0], 1), 1);
+                move(term.curs.x, term.curs.y + def_arg0, 1);
                 seen_disp_event();
               when ANSI('c', '>'):     /* DA: report xterm version */
                 compatibility(OTHER);
@@ -1018,41 +1018,41 @@ term_write(const char *data, int len)
                 ldisc_send("\033[>0;136;0c", 11, 0);
               when 'a':        /* HPR: move right N cols */
                 compatibility(ANSI);
-                move(term.curs.x + def(term.esc_args[0], 1), term.curs.y, 1);
+                move(term.curs.x + def_arg0, term.curs.y, 1);
                 seen_disp_event();
               when 'C':        /* CUF: Cursor right */
-                move(term.curs.x + def(term.esc_args[0], 1), term.curs.y, 1);
+                move(term.curs.x + def_arg0, term.curs.y, 1);
                 seen_disp_event();
               when 'D':        /* CUB: move left N cols */
-                move(term.curs.x - def(term.esc_args[0], 1), term.curs.y, 1);
+                move(term.curs.x - def_arg0, term.curs.y, 1);
                 seen_disp_event();
               when 'E':        /* CNL: move down N lines and CR */
                 compatibility(ANSI);
-                move(0, term.curs.y + def(term.esc_args[0], 1), 1);
+                move(0, term.curs.y + def_arg0, 1);
                 seen_disp_event();
               when 'F':        /* CPL: move up N lines and CR */
                 compatibility(ANSI);
-                move(0, term.curs.y - def(term.esc_args[0], 1), 1);
+                move(0, term.curs.y - def_arg0, 1);
                 seen_disp_event();
               when 'G' or '`':  /* CHA or HPA: set horizontal posn */
                 compatibility(ANSI);
-                move(def(term.esc_args[0], 1) - 1, term.curs.y, 0);
+                move(def_arg0 - 1, term.curs.y, 0);
                 seen_disp_event();
               when 'd':        /* VPA: set vertical posn */
                 compatibility(ANSI);
                 move(term.curs.x,
                      ((term.dec_om ? term.marg_t : 0) +
-                      def(term.esc_args[0], 1) - 1), (term.dec_om ? 2 : 0));
+                      def_arg0 - 1), (term.dec_om ? 2 : 0));
                 seen_disp_event();
               when 'H' or 'f':  /* CUP or HVP: set horz and vert posns at once */
                 if (term.esc_nargs < 2)
-                  term.esc_args[1] = ARG_DEFAULT;
-                move(def(term.esc_args[1], 1) - 1,
+                  arg1 = ARG_DEFAULT;
+                move((arg1 ?: 1) - 1,
                      ((term.dec_om ? term.marg_t : 0) +
-                      def(term.esc_args[0], 1) - 1), (term.dec_om ? 2 : 0));
+                      def_arg0 - 1), (term.dec_om ? 2 : 0));
                 seen_disp_event();
               when 'J': {      /* ED: erase screen or parts of it */
-                uint i = def(term.esc_args[0], 0);
+                uint i = arg0;
                 if (i == 3) {
                  /* Erase Saved Lines (xterm) */
                   term_clear_scrollback();
@@ -1066,7 +1066,7 @@ term_write(const char *data, int len)
                 seen_disp_event();
               }
               when 'K': {      /* EL: erase line or parts of it */
-                uint i = def(term.esc_args[0], 0) + 1;
+                uint i = arg0 + 1;
                 if (i > 3)
                   i = 0;
                 term_erase_lots(true, !!(i & 2), !!(i & 1));
@@ -1076,36 +1076,36 @@ term_write(const char *data, int len)
                 compatibility(VT102);
                 if (term.curs.y <= term.marg_b) {
                   term_do_scroll(term.curs.y, term.marg_b,
-                                 -def(term.esc_args[0], 1), false);
+                                 -def_arg0, false);
                 }
                 seen_disp_event();
               when 'M':        /* DL: delete lines */
                 compatibility(VT102);
                 if (term.curs.y <= term.marg_b) {
                   term_do_scroll(term.curs.y, term.marg_b,
-                                 def(term.esc_args[0], 1), true);
+                                 def_arg0, true);
                 }
                 seen_disp_event();
               when '@':        /* ICH: insert chars */
                /* XXX VTTEST says this is vt220, vt510 manual says vt102 */
                 compatibility(VT102);
-                insch(def(term.esc_args[0], 1));
+                insch(def_arg0);
                 seen_disp_event();
               when 'P':        /* DCH: delete chars */
                 compatibility(VT102);
-                insch(-def(term.esc_args[0], 1));
+                insch(-def_arg0);
                 seen_disp_event();
               when 'c':        /* DA: terminal type query */
                 compatibility(VT100);
                /* This is the response for a VT102 */
                 ldisc_send(term.id_string, strlen(term.id_string), 0);
               when 'n':        /* DSR: cursor position query */
-                if (term.esc_args[0] == 6) {
+                if (arg0 == 6) {
                   char buf[32];
                   sprintf(buf, "\033[%d;%dR", term.curs.y + 1, term.curs.x + 1);
                   ldisc_send(buf, strlen(buf), 0);
                 }
-                else if (term.esc_args[0] == 5) {
+                else if (arg0 == 5) {
                   ldisc_send("\033[0n", 4, 0);
                 }
               when 'h' or ANSI_QUE('h'):  /* SM: toggle modes to high */
@@ -1115,13 +1115,13 @@ term_write(const char *data, int len)
               when 'i' or ANSI_QUE('i'):  /* MC: Media copy */
                 compatibility(VT100);
                 if (term.esc_nargs == 1) {
-                  if (term.esc_args[0] == 5 && *term.cfg.printer) {
+                  if (arg0 == 5 && *term.cfg.printer) {
                     term.printing = true;
                     term.only_printing = !term.esc_query;
                     term.print_state = 0;
                     term_print_setup();
                   }
-                  else if (term.esc_args[0] == 4 && term.printing)
+                  else if (arg0 == 4 && term.printing)
                     term_print_finish();
                 }
               when 'l' or ANSI_QUE('l'):  /* RM: toggle modes to low */
@@ -1131,10 +1131,10 @@ term_write(const char *data, int len)
               when 'g':        /* TBC: clear tabs */
                 compatibility(VT100);
                 if (term.esc_nargs == 1) {
-                  if (term.esc_args[0] == 0) {
+                  if (arg0 == 0) {
                     term.tabs[term.curs.x] = false;
                   }
-                  else if (term.esc_args[0] == 3) {
+                  else if (arg0 == 3) {
                     int i;
                     for (i = 0; i < term.cols; i++)
                       term.tabs[i] = false;
@@ -1143,10 +1143,12 @@ term_write(const char *data, int len)
               when 'r':        /* DECSTBM: set scroll margins */
                 compatibility(VT100);
                 if (term.esc_nargs <= 2) {
-                  int top = def(term.esc_args[0], 1) - 1;
-                  int bot = (term.esc_nargs <= 1 ||
-                         term.esc_args[1] ==
-                         0 ? term.rows : def(term.esc_args[1], term.rows)) - 1;
+                  int top = def_arg0 - 1;
+                  int bot = (
+                    term.esc_nargs <= 1 || arg1 == 0
+                    ? term.rows 
+                    : (arg1 ?: term.rows)
+                  ) - 1;
                   if (bot >= term.rows)
                     bot = term.rows - 1;
                  /* VTTEST Bug 9 - if region is less than 2 lines
@@ -1199,7 +1201,7 @@ term_write(const char *data, int len)
                 * to be unimplemented.
                 */
                 for (int i = 0; i < term.esc_nargs; i++) {
-                  switch (def(term.esc_args[i], 0)) {
+                  switch (term.esc_args[i]) {
                     when 0:  /* restore defaults */
                       term.curr_attr = term.default_attr;
                     when 1:  /* enable bold */
@@ -1296,24 +1298,22 @@ term_write(const char *data, int len)
                 * and reports.
                 */
                 if (term.esc_nargs <= 1 &&
-                    (term.esc_args[0] < 1 || term.esc_args[0] >= 24)) {
+                    (arg0 < 1 || arg0 >= 24)) {
                   compatibility(VT340TEXT);
-                  win_resize(def(term.esc_args[0], 24), term.cols);
+                  win_resize((arg0 ?: 24), term.cols);
                   term_deselect();
                 }
-                else if (term.esc_nargs >= 1 && term.esc_args[0] >= 1 &&
-                         term.esc_args[0] < 24) {
+                else if (term.esc_nargs >= 1 && arg0 >= 1 &&
+                         arg0 < 24) {
                   compatibility(OTHER);
                   int x, y, len;
                   char buf[80];
-                  switch (term.esc_args[0]) {
+                  switch (arg0) {
                     when 1: win_set_iconic(false);
                     when 2: win_set_iconic(true);
                     when 3:
-                      if (term.esc_nargs >= 3) {
-                        win_move(def(term.esc_args[1], 0),
-                                    def(term.esc_args[2], 0));
-                      }
+                      if (term.esc_nargs >= 3)
+                        win_move(arg1, term.esc_args[2]);
                     when 4:
                      /* We should resize the window to a given
                       * size in pixels here, but currently our
@@ -1329,12 +1329,12 @@ term_write(const char *data, int len)
                       win_refresh();
                     when 8:
                       if (term.esc_nargs >= 3) {
-                        win_resize(def(term.esc_args[1], term.cfg.rows),
-                                       def(term.esc_args[2], term.cfg.cols));
+                        win_resize(arg1 ?: term.cfg.rows,
+                                   term.esc_args[2] ?: term.cfg.cols);
                       }
                     when 9:
                       if (term.esc_nargs >= 2)
-                        win_set_zoom(term.esc_args[1] ? true : false);
+                        win_set_zoom(arg1 ? true : false);
                     when 11:
                       ldisc_send(win_is_iconic()
                                  ? "\033[1t" : "\033[2t", 4, 0);
@@ -1373,13 +1373,13 @@ term_write(const char *data, int len)
               when 'S':        /* SU: Scroll up */
                 compatibility(SCOANSI);
                 term_do_scroll(term.marg_t, term.marg_b,
-                               def(term.esc_args[0], 1), true);
+                               def_arg0, true);
                 term.wrapnext = false;
                 seen_disp_event();
               when 'T':        /* SD: Scroll down */
                 compatibility(SCOANSI);
                 term_do_scroll(term.marg_t, term.marg_b,
-                               -def(term.esc_args[0], 1), true);
+                               -def_arg0, true);
                 term.wrapnext = false;
                 seen_disp_event();
               when ANSI('|', '*'):     /* DECSNLS */
@@ -1390,9 +1390,8 @@ term_write(const char *data, int len)
                 * (24..49 AIUI) with no default specified.
                 */
                 compatibility(VT420);
-                if (term.esc_nargs == 1 && term.esc_args[0] > 0) {
-                  win_resize(def(term.esc_args[0], term.cfg.rows),
-                                 term.cols);
+                if (term.esc_nargs == 1 && arg0 > 0) {
+                  win_resize(arg0 ?: term.cfg.rows, term.cols);
                   term_deselect();
                 }
               when ANSI('|', '$'):     /* DECSCPP */
@@ -1403,15 +1402,14 @@ term_write(const char *data, int len)
                 */
                 compatibility(VT340TEXT);
                 if (term.esc_nargs <= 1) {
-                  win_resize(term.rows,
-                                 def(term.esc_args[0], term.cfg.cols));
+                  win_resize(term.rows, arg0 ?: term.cfg.cols);
                   term_deselect();
                 }
               when 'X': {      /* ECH: write N spaces w/o moving cursor */
                /* XXX VTTEST says this is vt220, vt510 manual
                 * says vt100 */
                 compatibility(ANSIMIN);
-                int n = def(term.esc_args[0], 1);
+                int n = def_arg0;
                 pos cursplus;
                 int p = term.curs.x;
                 termline *cline = scrlineptr(term.curs.y);
@@ -1429,7 +1427,7 @@ term_write(const char *data, int len)
               }
               when 'x': {      /* DECREQTPARM: report terminal characteristics */
                 compatibility(VT100);
-                int i = def(term.esc_args[0], 0);
+                int i = arg0;
                 if (i == 0 || i == 1) {
                   char buf[20] = "\033[2;1;1;112;112;1;0x";
                   buf[2] += i;
@@ -1439,7 +1437,7 @@ term_write(const char *data, int len)
               when 'Z': {       /* CBT */
                 compatibility(OTHER);
                 pos old_curs = term.curs;
-                int i = def(term.esc_args[0], 1); 
+                int i = def_arg0; 
                 while (--i >= 0 && term.curs.x > 0) {
                   do {
                     term.curs.x--;
@@ -1449,7 +1447,7 @@ term_write(const char *data, int len)
               }
               when ANSI('c', '='):     /* Hide or Show Cursor */
                 compatibility(SCOANSI);
-                switch (term.esc_args[0]) {
+                switch (arg0) {
                   when 0:      /* hide cursor */
                     term.cursor_on = false;
                   when 1:      /* restore cursor */
@@ -1468,7 +1466,7 @@ term_write(const char *data, int len)
                 */
                 compatibility(SCOANSI);
                 if (term.esc_nargs >= 2) {
-                  if (term.esc_args[0] > term.esc_args[1])
+                  if (arg0 > arg1)
                     term.cursor_on = false;
                   else
                     term.cursor_on = true;
@@ -1477,20 +1475,20 @@ term_write(const char *data, int len)
                 compatibility(SCOANSI);
                 term.blink_is_real = false;
                 term_schedule_tblink();
-                if (term.esc_args[0] >= 1)
+                if (arg0 >= 1)
                   term.curr_attr |= ATTR_BLINK;
                 else
                   term.curr_attr &= ~ATTR_BLINK;
               when ANSI('E', '='):
                 compatibility(SCOANSI);
-                term.blink_is_real = (term.esc_args[0] >= 1);
+                term.blink_is_real = (arg0 >= 1);
                 term_schedule_tblink();
               when ANSI('F', '='):     /* set normal foreground */
                 compatibility(SCOANSI);
-                if (term.esc_args[0] >= 0 && term.esc_args[0] < 16) {
+                if (arg0 >= 0 && arg0 < 16) {
                   int colour =
-                    (sco2ansicolour[term.esc_args[0] & 0x7] |
-                     (term.esc_args[0] & 0x8)) << ATTR_FGSHIFT;
+                    (sco2ansicolour[arg0 & 0x7] |
+                     (arg0 & 0x8)) << ATTR_FGSHIFT;
                   term.curr_attr &= ~ATTR_FGMASK;
                   term.curr_attr |= colour;
                   term.default_attr &= ~ATTR_FGMASK;
@@ -1499,10 +1497,10 @@ term_write(const char *data, int len)
                 }
               when ANSI('G', '='):     /* set normal background */
                 compatibility(SCOANSI);
-                if (term.esc_args[0] >= 0 && term.esc_args[0] < 16) {
+                if (arg0 >= 0 && arg0 < 16) {
                   int colour =
-                    (sco2ansicolour[term.esc_args[0] & 0x7] |
-                     (term.esc_args[0] & 0x8)) << ATTR_BGSHIFT;
+                    (sco2ansicolour[arg0 & 0x7] |
+                     (arg0 & 0x8)) << ATTR_BGSHIFT;
                   term.curr_attr &= ~ATTR_BGMASK;
                   term.curr_attr |= colour;
                   term.default_attr &= ~ATTR_BGMASK;
@@ -1511,7 +1509,7 @@ term_write(const char *data, int len)
                 }
               when ANSI('L', '='):
                 compatibility(SCOANSI);
-                term.use_bce = (term.esc_args[0] <= 0);
+                term.use_bce = (arg0 <= 0);
                 set_erase_char();
               when ANSI('p', '"'): {   /* DECSCL: set compat level */
                /*
@@ -1531,7 +1529,7 @@ term_write(const char *data, int len)
                 *
                 * Note ESC c will NOT change this!
                 */
-                switch (term.esc_args[0]) {
+                switch (arg0) {
                   when 61:
                     term.compatibility_level &= ~TM_VTXXX;
                     term.compatibility_level |= TM_VT102;
@@ -1548,11 +1546,11 @@ term_write(const char *data, int len)
                     term.compatibility_level = TM_PUTTY;
                   when 50: // ignore
                   otherwise:
-                    if (term.esc_args[0] > 60 && term.esc_args[0] < 70)
+                    if (arg0 > 60 && arg0 < 70)
                       term.compatibility_level |= TM_VTXXX;
                 }
                /* Change the response to CSI c */
-                if (term.esc_args[0] == 50) {
+                if (arg0 == 50) {
                   char lbuf[64];
                   strcpy(term.id_string, "\033[?");
                   for (int i = 1; i < term.esc_nargs; i++) {

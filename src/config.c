@@ -150,7 +150,7 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Window", "other", null);
   ctrl_checkbox(
-    s, "Show scrollbar", '\0', P(0),
+    s, "Enable scrollbar", '\0', P(0),
     dlg_stdcheckbox_handler, I(offsetof(config, scrollbar))
   );
 

@@ -6,17 +6,16 @@
 
 #include "linedisc.h"
 #include "config.h"
+#include "math.h"
 
 static pos
 get_pos(LPARAM lp, bool *has_moved_p)
 {
-  short x = LOWORD(lp);
-  short y = HIWORD(lp);
-  if (x < 0) x -= font_width - 1;
-  if (y < 0) y -= font_height - 1;
-  pos p;
-  p.x = (x - offset_width) / font_width;
-  p.y = (y - offset_height) / font_height;  
+  int16 y = HIWORD(lp), x = LOWORD(lp);  
+  pos p = {
+    .y = floorf((y - offset_height) / (float)font_height), 
+    .x = floorf((x - offset_width ) / (float)font_width ),
+  };
   static pos last_p;
   if (has_moved_p)
     *has_moved_p = p.x != last_p.x || p.y != last_p.y;
