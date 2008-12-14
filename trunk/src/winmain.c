@@ -16,7 +16,7 @@
 
 HWND hwnd;
 HINSTANCE hinst;
-HDC hdc;
+HDC hdc, wnd_hdc;
 HMENU hmenu;
 static HBITMAP caretbm;
 
@@ -276,6 +276,7 @@ static void
 notify_resize(int rows, int cols)
 {
   term_resize(rows, cols);
+  term_update();
   struct winsize ws = {rows, cols, cols * font_width, rows * font_height};
   child_resize(&ws);
 }
@@ -534,10 +535,9 @@ alpha()
 static void
 paint(void)
 {
-  PAINTSTRUCT p;
-
   HideCaret(hwnd);
-  HDC hdc0 = hdc; // save device context
+
+  PAINTSTRUCT p;
   hdc = BeginPaint(hwnd, &p);
 
  /*
@@ -615,7 +615,6 @@ paint(void)
   SelectObject(hdc, GetStockObject(SYSTEM_FONT));
   SelectObject(hdc, GetStockObject(WHITE_PEN));
   EndPaint(hwnd, &p);
-  hdc = hdc0;     // restore original device context
   ShowCaret(hwnd);
 }
 
@@ -786,7 +785,7 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
       paint();
       return 0;
     when WM_SETFOCUS:
-      term_set_focus(true);
+	  term_set_focus(true);
       CreateCaret(hwnd, caretbm, font_width, font_height);
       ShowCaret(hwnd);
       flash_window(0);  /* stop */
@@ -961,7 +960,6 @@ main(int argc, char *argv[])
                          CW_USEDEFAULT, guess_width, guess_height, null, null,
                          hinst, null);
     SetLayeredWindowAttributes(hwnd, 0, alpha(), LWA_ALPHA);
-    hdc = GetDC(hwnd);
   }
 
  /*
@@ -995,6 +993,7 @@ main(int argc, char *argv[])
   * Initialise the fonts, simultaneously correcting the guesses
   * for font_{width,height}.
   */
+  hdc = GetDC(hwnd);
   win_init_fonts();
   win_init_palette();
 
@@ -1042,22 +1041,20 @@ main(int argc, char *argv[])
   */
   int term_width = font_width * term_cols();
   int term_height = extra_height + font_height * term_rows();
+
+  // Finally show the window!
   SetWindowPos(hwnd, null, 0, 0,
                term_width + extra_width, term_height + extra_height,
-               SWP_NOMOVE | SWP_NOREDRAW | SWP_NOZORDER);
+               SWP_NOMOVE | SWP_NOZORDER | SWP_SHOWWINDOW);
+  ReleaseDC(hwnd, hdc);
 
   // Create child process and set window title to the executed command.
   struct winsize ws = {term_rows(), term_cols(), term_width, term_height};
   char *cmd = child_create(argv + 1, &ws);
   win_set_title(cmd);
   free(cmd);
-
-  // Finally show the window!
-  ShowWindow(hwnd, SW_SHOWDEFAULT);
-  SetForegroundWindow(hwnd);
-  term_set_focus(GetForegroundWindow() == hwnd);
-  UpdateWindow(hwnd);
-
+  
+  
   // Message loop.
   // Also monitoring child events.
   for (;;) {

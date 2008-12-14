@@ -6,7 +6,7 @@
 #include "termpriv.h"
 
 #include "linedisc.h"
-#include "win.h"
+#include "winpriv.h"
 
 struct term term;
 
@@ -14,7 +14,7 @@ void
 term_schedule_update(void)
 {
   if (!term.update_pending) {
-    win_set_timer(term_update, 20);
+    win_set_timer(term_update, 10);
     term.update_pending = true;
   }
 }
@@ -46,9 +46,9 @@ term_schedule_tblink(void)
 static void
 cblink_cb(void)
 {
-    term.cblinker = !term.cblinker;
-    term_schedule_cblink();
-    term_update();
+  term.cblinker = !term.cblinker;
+  term_schedule_cblink();
+  term_update();
 }
 
 void
@@ -431,7 +431,6 @@ term_resize(int newrows, int newcols)
   term_swap_screen(save_which_screen, false, false);
 
   update_sbar();
-  term_update();
 }
 
 /*
@@ -861,17 +860,9 @@ term_print_finish(void)
   term.printing = term.only_printing = false;
 }
 
-void
-term_update(void)
+static void
+draw(void)
 {
-  if (term.update_pending) {
-    win_kill_timer(term_update);
-    term.update_pending = false;
-  }
-
-  if (term.seen_disp_event)
-    update_sbar();
-    
   int chlen = 1024;
   wchar *ch = newn(wchar, chlen);
   termchar *newline = newn(termchar, term.cols);
@@ -1214,7 +1205,52 @@ term_update(void)
   }
   free(newline);
   free(ch);
+}
+
+void
+term_update(void)
+{
+  if (term.update_pending) {
+    win_kill_timer(term_update);
+    term.update_pending = false;
+  }
+
+  if (term.seen_disp_event)
+    update_sbar();
+
+  hdc = GetDC(hwnd);
+  draw();
+  ReleaseDC(hwnd, hdc);
+  
   win_sys_cursor(term.curs.x, term.curs.y - term.disptop);
+}
+
+/*
+ * Paint the window in response to a WM_PAINT message.
+ */
+void
+term_paint(int left, int top, int right, int bottom)
+{
+  if (left < 0)
+    left = 0;
+  if (top < 0)
+    top = 0;
+  if (right >= term.cols)
+    right = term.cols - 1;
+  if (bottom >= term.rows)
+    bottom = term.rows - 1;
+
+  for (int i = top; i <= bottom && i < term.rows; i++) {
+    if ((term.disptext[i]->lattr & LATTR_MODE) == LATTR_NORM)
+      for (int j = left; j <= right && j < term.cols; j++)
+        term.disptext[i]->chars[j].attr |= ATTR_INVALID;
+    else
+      for (int j = left / 2; j <= right / 2 + 1 && j < term.cols; j++)
+        term.disptext[i]->chars[j].attr |= ATTR_INVALID;
+  }
+
+  if (!term.update_pending)
+	draw();
 }
 
 /*
@@ -1230,34 +1266,6 @@ term_invalidate(void)
       term.disptext[i]->chars[j].attr |= ATTR_INVALID;
 
   term_schedule_update();
-}
-
-/*
- * Paint the window in response to a WM_PAINT message.
- */
-void
-term_paint(int left, int top, int right, int bottom)
-{
-  int i, j;
-  if (left < 0)
-    left = 0;
-  if (top < 0)
-    top = 0;
-  if (right >= term.cols)
-    right = term.cols - 1;
-  if (bottom >= term.rows)
-    bottom = term.rows - 1;
-
-  for (i = top; i <= bottom && i < term.rows; i++) {
-    if ((term.disptext[i]->lattr & LATTR_MODE) == LATTR_NORM)
-      for (j = left; j <= right && j < term.cols; j++)
-        term.disptext[i]->chars[j].attr |= ATTR_INVALID;
-    else
-      for (j = left / 2; j <= right / 2 + 1 && j < term.cols; j++)
-        term.disptext[i]->chars[j].attr |= ATTR_INVALID;
-  }
-
-  term_update();
 }
 
 /*
