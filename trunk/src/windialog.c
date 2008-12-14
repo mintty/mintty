@@ -389,18 +389,7 @@ win_about(void)
     .lpszCaption = "About " APPNAME,
     .dwStyle = MB_USERICON | MB_OKCANCEL | MB_DEFBUTTON2,
     .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
-    .lpszText = 
-      APPNAME " " VERSION "\n"
-      COPYRIGHT "\n"
-      "This software is released under the terms of the\n"
-      "GNU General Public License v3 or later.\n"
-      "\n"
-      "Thanks to Simon Tatham and the other contributors for\n"
-      "their great work on PuTTY, which MinTTY is largely based on.\n"
-      "Thanks also to KDE's Oxygen team for the program icon.\n"
-      "\n"
-      "Updates and sources are available from the project page.\n"
-      "Do you want go to " WEBSITE " now?",
+    .lpszText = APPNAME " " VERSION "\n" COPYRIGHT "\n" APPINFO
   };
   if (MessageBoxIndirect(&params) == IDOK)
     ShellExecute(hwnd, "open", WEBSITE, 0, 0, SW_SHOWDEFAULT);
