@@ -1218,9 +1218,11 @@ term_update(void)
   if (term.seen_disp_event)
     update_sbar();
 
+  HDC hdc0 = hdc;
   hdc = GetDC(hwnd);
   draw();
   ReleaseDC(hwnd, hdc);
+  hdc = hdc0;
   
   win_sys_cursor(term.curs.x, term.curs.y - term.disptop);
 }
@@ -1545,7 +1547,6 @@ term_send_paste(void)
 void
 term_select_all(void)
 {
-  printf("%i", sblines());
   term.sel_start = (pos){-sblines(), 0};
   term.sel_end = (pos){find_last_nonempty_line(), term.cols};
   term.selected = true;

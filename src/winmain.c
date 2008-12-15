@@ -16,7 +16,7 @@
 
 HWND hwnd;
 HINSTANCE hinst;
-HDC hdc, wnd_hdc;
+HDC hdc;
 HMENU hmenu;
 static HBITMAP caretbm;
 
@@ -538,6 +538,7 @@ paint(void)
   HideCaret(hwnd);
 
   PAINTSTRUCT p;
+  HDC hdc0 = hdc;
   hdc = BeginPaint(hwnd, &p);
 
  /*
@@ -614,7 +615,10 @@ paint(void)
   }
   SelectObject(hdc, GetStockObject(SYSTEM_FONT));
   SelectObject(hdc, GetStockObject(WHITE_PEN));
+  
   EndPaint(hwnd, &p);
+  hdc = hdc0;
+  
   ShowCaret(hwnd);
 }
 
@@ -1045,8 +1049,8 @@ main(int argc, char *argv[])
   // Finally show the window!
   SetWindowPos(hwnd, null, 0, 0,
                term_width + extra_width, term_height + extra_height,
-               SWP_NOMOVE | SWP_NOZORDER | SWP_SHOWWINDOW);
-  ReleaseDC(hwnd, hdc);
+               SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+  ShowWindow(hwnd, SW_SHOWDEFAULT);
 
   // Create child process and set window title to the executed command.
   struct winsize ws = {term_rows(), term_cols(), term_width, term_height};
