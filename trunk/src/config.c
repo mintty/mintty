@@ -188,8 +188,8 @@ setup_config_box(controlbox * b)
     s, null, '\0', 3, P(0), dlg_stdradiobutton_handler,
     I(offsetof(config, cursor_type)),
     "Block", '\0', I(CUR_BLOCK),
-    "Underline", '\0', I(CUR_UNDERLINE),
     "Line", '\0', I(CUR_LINE), 
+    "Underline", '\0', I(CUR_UNDERLINE),
     null
   );
   s = ctrl_getset(b, "Screen", "blinking", "Blinking");
