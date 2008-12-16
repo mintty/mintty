@@ -789,6 +789,16 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
       sys_cursor_update();
       return 0;
     }
+    when WM_INITMENU:
+      EnableMenuItem(hmenu, IDM_COPY, term_selected() ? MF_ENABLED : MF_GRAYED);
+      EnableMenuItem(
+        hmenu, IDM_PASTE,
+        IsClipboardFormatAvailable(CF_TEXT) || 
+        IsClipboardFormatAvailable(CF_UNICODETEXT) 
+        ? MF_ENABLED : MF_GRAYED
+      );
+      return 0;
+      
   }
  /*
   * Any messages we don't process completely above are passed through to

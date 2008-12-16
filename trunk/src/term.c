@@ -1561,4 +1561,5 @@ int term_which_screen(void) { return term.which_screen; }
 bool term_app_cursor_keys(void) { return term.app_cursor_keys; }
 bool term_has_focus(void) { return term.has_focus; }
 bool term_big_cursor(void) { return term.big_cursor; }
+bool term_selected(void) { return term.selected; }
 
