@@ -12,7 +12,6 @@
 extern HWND hwnd;       // the main terminal window
 extern HINSTANCE hinst; // The all-important instance handle
 extern HMENU hmenu;
-extern HDC hdc;
 
 enum {
   WM_IGNORE_CLIP = WM_APP + 2,
@@ -32,6 +31,8 @@ extern enum bold_mode { BOLD_COLOURS, BOLD_SHADOW, BOLD_FONT } bold_mode;
 
 extern int font_width, font_height;
 extern int offset_width, offset_height;
+
+void win_paint(void);
 
 void win_init_fonts(void);
 void win_deinit_fonts(void);

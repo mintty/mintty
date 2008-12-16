@@ -139,7 +139,7 @@ static void
 seen_disp_event(void)
 {
   term.seen_disp_event = true;  /* for scrollback-reset-on-activity */
-  term_schedule_update();
+  win_schedule_update();
 }
 
 /*
@@ -1325,8 +1325,6 @@ term_write(const char *data, int len)
                     when 6:
                      /* move to bottom */
                       win_set_zorder(false);
-                    when 7:
-                      win_refresh();
                     when 8:
                       if (term.esc_nargs >= 3) {
                         win_resize(arg1 ?: term.cfg.rows,
@@ -1573,7 +1571,7 @@ term_write(const char *data, int len)
               term.osc_strlen = 0;
             when 'R':  /* Linux palette reset */
               win_reset_palette();
-              term_invalidate();
+              term_invalidate_all();
               term.state = TOPLEVEL;
             when 'W':  /* word-set */
               term.state = SEEN_OSC_W;
@@ -1643,7 +1641,7 @@ term_write(const char *data, int len)
                         term.osc_string[1] * 16 + term.osc_string[2],
                         term.osc_string[3] * 16 + term.osc_string[4],
                         term.osc_string[5] * 16 + term.osc_string[6]);
-            term_invalidate();
+            term_invalidate_all();
             term.state = TOPLEVEL;
           }
         }

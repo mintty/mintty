@@ -291,7 +291,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
   }
   else if (b == MB_RIGHT)
     term_paste();
-  term_update();
+  win_update();
 }
 
 void
@@ -331,7 +331,7 @@ term_mouse_move(mouse_button b, mod_keys mods, pos p)
       term.sel_pos = bp;
     }
     sel_drag(get_selpoint(bp));
-    term_update();
+    win_update();
   }
   else {
     if (term.mouse_state == MS_CLICKED) {
