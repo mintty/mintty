@@ -616,9 +616,10 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_COMMAND or WM_SYSCOMMAND:
       switch (wp & ~0xF) {  /* low 4 bits reserved to Windows */
         when SC_KEYMENU:
-          if (lp == 0)
+          if (lp == 0) {  // Sent by Alt on its own
             ldisc_send((char[]){'\e'}, 1, 1);
-          return 0;
+            return 0;
+          }
         when IDM_COPY: term_copy();
         when IDM_PASTE: term_paste();
         when IDM_SELALL:
