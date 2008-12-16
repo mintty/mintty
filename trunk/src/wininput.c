@@ -145,7 +145,8 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
   // Context menu
   if (key == VK_APPS) {
     POINT p;
-    GetCursorPos(&p);
+    GetCaretPos(&p);
+    ClientToScreen(hwnd, &p);
     TrackPopupMenu(
       hmenu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
       p.x, p.y, 0, hwnd, null
