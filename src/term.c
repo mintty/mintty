@@ -6,18 +6,9 @@
 #include "termpriv.h"
 
 #include "linedisc.h"
-#include "winpriv.h"
+#include "win.h"
 
 struct term term;
-
-void
-term_schedule_update(void)
-{
-  if (!term.update_pending) {
-    win_set_timer(term_update, 10);
-    term.update_pending = true;
-  }
-}
 
 /*
  * Call when the terminal's blinking-text settings change, or when
@@ -28,7 +19,7 @@ tblink_cb(void)
 {
   term.tblinker = !term.tblinker;
   term_schedule_tblink();
-  term_update();
+  win_update();
 }
 
 void
@@ -48,7 +39,7 @@ cblink_cb(void)
 {
   term.cblinker = !term.cblinker;
   term_schedule_cblink();
-  term_update();
+  win_update();
 }
 
 void
@@ -67,7 +58,7 @@ static void
 vbell_cb(void)
 {
   term.in_vbell = false;
-  term_update();
+  win_update();
 }
 
 void
@@ -188,7 +179,7 @@ term_seen_key_event(void)
   */
   term.disptop = 0;   /* return to main screen */
   term.seen_disp_event = true;  /* for scrollback-reset-on-activity */
-  term_schedule_update();
+  win_schedule_update();
 }
 
 /*
@@ -763,7 +754,7 @@ term_erase_lots(int line_only, int from_begin, int to_end)
 
  /* Clear screen also forces a full window redraw, just in case. */
   if (start.y == 0 && start.x == 0 && end.y == term.rows)
-    term_invalidate();
+    term_invalidate_all();
 
  /* Lines scrolled away shouldn't be brought back on if the terminal
   * resizes. */
@@ -860,8 +851,8 @@ term_print_finish(void)
   term.printing = term.only_printing = false;
 }
 
-static void
-draw(void)
+void
+term_paint(void)
 {
   int chlen = 1024;
   wchar *ch = newn(wchar, chlen);
@@ -1210,20 +1201,9 @@ draw(void)
 void
 term_update(void)
 {
-  if (term.update_pending) {
-    win_kill_timer(term_update);
-    term.update_pending = false;
-  }
-
   if (term.seen_disp_event)
     update_sbar();
-
-  HDC hdc0 = hdc;
-  hdc = GetDC(hwnd);
-  draw();
-  ReleaseDC(hwnd, hdc);
-  hdc = hdc0;
-  
+  term_paint();
   win_sys_cursor(term.curs.x, term.curs.y - term.disptop);
 }
 
@@ -1231,7 +1211,7 @@ term_update(void)
  * Paint the window in response to a WM_PAINT message.
  */
 void
-term_paint(int left, int top, int right, int bottom)
+term_invalidate(int left, int top, int right, int bottom)
 {
   if (left < 0)
     left = 0;
@@ -1250,16 +1230,13 @@ term_paint(int left, int top, int right, int bottom)
       for (int j = left / 2; j <= right / 2 + 1 && j < term.cols; j++)
         term.disptext[i]->chars[j].attr |= ATTR_INVALID;
   }
-
-  if (!term.update_pending)
-	draw();
 }
 
 /*
  * Invalidate the whole screen so it will be repainted in full.
  */
 void
-term_invalidate(void)
+term_invalidate_all(void)
 {
   int i, j;
 
@@ -1267,7 +1244,7 @@ term_invalidate(void)
     for (j = 0; j < term.cols; j++)
       term.disptext[i]->chars[j].attr |= ATTR_INVALID;
 
-  term_schedule_update();
+  win_schedule_update();
 }
 
 /*
@@ -1287,7 +1264,7 @@ term_scroll(int rel, int where)
   if (term.disptop > 0)
     term.disptop = 0;
   update_sbar();
-  term_update();
+  win_update();
 }
 
 /*

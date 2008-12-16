@@ -39,12 +39,6 @@ win_set_timer(void (*cb)(void), uint ticks)
 }
 
 void
-win_kill_timer(void (*cb)(void))
-{
-  KillTimer(hwnd, (UINT_PTR)cb);
-}
-
-void
 win_set_title(char *title)
 {
   free(window_name);
@@ -95,13 +89,6 @@ win_set_zorder(bool top)
   SetWindowPos(hwnd, top ? HWND_TOP : HWND_BOTTOM, 0, 0, 0, 0,
                SWP_NOMOVE | SWP_NOSIZE);
 }
-
-/*
- * Refresh the window in response to a server-side request.
- */
-void
-win_refresh(void)
-{ InvalidateRect(hwnd, null, true); }
 
 /*
  * Report whether the window is iconic, for terminal reports.
@@ -276,7 +263,7 @@ static void
 notify_resize(int rows, int cols)
 {
   term_resize(rows, cols);
-  term_update();
+  win_update();
   struct winsize ws = {rows, cols, cols * font_width, rows * font_height};
   child_resize(&ws);
 }
@@ -531,96 +518,6 @@ set_transparency()
 }
 
 static void
-paint(void)
-{
-  HideCaret(hwnd);
-
-  PAINTSTRUCT p;
-  HDC hdc0 = hdc;
-  hdc = BeginPaint(hwnd, &p);
-
- /*
-  * We have to be careful about term_paint(). It will
-  * set a bunch of character cells to INVALID and then
-  * call do_paint(), which will redraw those cells and
-  * _then mark them as done_. This may not be accurate:
-  * when painting in WM_PAINT context we are restricted
-  * to the rectangle which has just been exposed - so if
-  * that only covers _part_ of a character cell and the
-  * rest of it was already visible, that remainder will
-  * not be redrawn at all. Accordingly, we must not
-  * paint any character cell in a WM_PAINT context which
-  * already has a pending update due to terminal output.
-  * The simplest solution to this - and many, many
-  * thanks to Hung-Te Lin for working all this out - is
-  * not to do any actual painting at _all_ if there's a
-  * pending terminal update: just mark the relevant
-  * character cells as INVALID and wait for the
-  * scheduled full update to sort it out.
-  * 
-  * I have a suspicion this isn't the _right_ solution.
-  * An alternative approach would be to have terminal.c
-  * separately track what _should_ be on the terminal
-  * screen and what _is_ on the terminal screen, and
-  * have two completely different types of redraw (one
-  * for full updates, which syncs the former with the
-  * terminal itself, and one for WM_PAINT which syncs
-  * the latter with the former); yet another possibility
-  * would be to have the Windows front end do what the
-  * GTK one already does, and maintain a bitmap of the
-  * current terminal appearance so that WM_PAINT becomes
-  * completely trivial. However, this should do for now.
-  */
-  term_paint((p.rcPaint.left - offset_width) / font_width,
-             (p.rcPaint.top - offset_height) / font_height,
-             (p.rcPaint.right - offset_width - 1) / font_width,
-             (p.rcPaint.bottom - offset_height - 1) / font_height);
-
-  if (p.fErase || p.rcPaint.left < offset_width ||
-      p.rcPaint.top < offset_height ||
-      p.rcPaint.right >= offset_width + font_width * term_cols() ||
-      p.rcPaint.bottom >= offset_height + font_height * term_rows()) {
-    HBRUSH fillcolour, oldbrush;
-    HPEN edge, oldpen;
-    fillcolour = CreateSolidBrush(colours[ATTR_DEFBG >> ATTR_BGSHIFT]);
-    oldbrush = SelectObject(hdc, fillcolour);
-    edge = CreatePen(PS_SOLID, 0, colours[ATTR_DEFBG >> ATTR_BGSHIFT]);
-    oldpen = SelectObject(hdc, edge);
-
-   /*
-    * Jordan Russell reports that this apparently
-    * ineffectual IntersectClipRect() call masks a
-    * Windows NT/2K bug causing strange display
-    * problems when the PuTTY window is taller than
-    * the primary monitor. It seems harmless enough...
-    */
-    IntersectClipRect(hdc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
-                      p.rcPaint.bottom);
-
-    ExcludeClipRect(hdc, offset_width, offset_height,
-                    offset_width + font_width * term_cols(),
-                    offset_height + font_height * term_rows());
-
-    Rectangle(hdc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
-              p.rcPaint.bottom);
-
-   /* SelectClipRgn(hdc, null); */
-
-    SelectObject(hdc, oldbrush);
-    DeleteObject(fillcolour);
-    SelectObject(hdc, oldpen);
-    DeleteObject(edge);
-  }
-  SelectObject(hdc, GetStockObject(SYSTEM_FONT));
-  SelectObject(hdc, GetStockObject(WHITE_PEN));
-  
-  EndPaint(hwnd, &p);
-  hdc = hdc0;
-  
-  ShowCaret(hwnd);
-}
-
-static void
 reconfig(void)
 {
   static bool reconfiguring = false;
@@ -726,11 +623,11 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_PASTE: term_paste();
         when IDM_SELALL:
           term_select_all();
-          term_update();
+          win_update();
         when IDM_RESET:
           term_reset();
           term_deselect();
-          term_update();
+          win_update();
           ldisc_send(null, 0, 0);
         when IDM_ABOUT: win_about();
         when IDM_FULLSCREEN: flip_full_screen();
@@ -779,25 +676,25 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_DESTROYCLIPBOARD:
       if (!ignore_clip) {
         term_deselect();
-        term_update();
+        win_update();
       }
       ignore_clip = false;
       return 0;
     when WM_PAINT:
-      paint();
+      win_paint();
       return 0;
     when WM_SETFOCUS:
 	  term_set_focus(true);
       CreateCaret(hwnd, caretbm, font_width, font_height);
       ShowCaret(hwnd);
       flash_window(0);  /* stop */
-      term_update();
+      win_update();
     when WM_KILLFOCUS:
       win_show_mouse();
       term_set_focus(false);
       DestroyCaret();
       caret_x = caret_y = -1;   /* ensure caret is replaced next time */
-      term_update();
+      win_update();
     when WM_FULLSCR_ON_MAX: fullscr_on_max = true;
     when WM_MOVE: sys_cursor_update();
     when WM_ENTERSIZEMOVE:
@@ -992,7 +889,6 @@ main(int argc, char *argv[])
   * Initialise the fonts, simultaneously correcting the guesses
   * for font_{width,height}.
   */
-  hdc = GetDC(hwnd);
   win_init_fonts();
   win_init_palette();
 

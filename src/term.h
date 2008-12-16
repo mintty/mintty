@@ -92,7 +92,6 @@ typedef enum {
 
 void term_init(void);
 void term_resize(int, int);
-void term_paint(int left, int top, int right, int bottom);
 void term_scroll(int, int);
 void term_reset(void);
 void term_clear_scrollback(void);
@@ -102,8 +101,10 @@ void term_mouse_move(mouse_button, mod_keys, pos);
 void term_mouse_wheel(int lines, mod_keys, pos);
 void term_deselect(void);
 void term_select_all(void);
+void term_paint(void);
 void term_update(void);
-void term_invalidate(void);
+void term_invalidate(int left, int top, int right, int bottom);
+void term_invalidate_all(void);
 void term_blink(int set_cursor);
 void term_paste(void);
 void term_send_paste(void);

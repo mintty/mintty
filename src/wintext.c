@@ -108,6 +108,7 @@ win_init_fonts(void)
     fw_bold = FW_BOLD;
   }
 
+  HDC hdc = GetDC(hwnd);
   font_height = cfg.font.height;
   if (font_height > 0) {
     font_height = -MulDiv(font_height, GetDeviceCaps(hdc, LOGPIXELSY), 72);
@@ -191,7 +192,7 @@ win_init_fonts(void)
       fonts[FONT_UNDERLINE] = 0;
     }
   }
-
+  
   if (bold_mode == BOLD_FONT)
     fonts[FONT_BOLD] = create_font(fw_bold, false);
 
@@ -209,6 +210,8 @@ win_init_fonts(void)
     else
       fontsize[i] = -i;
   }
+
+  ReleaseDC(hwnd, hdc);
 
   if (fontsize[FONT_UNDERLINE] != fontsize[FONT_NORMAL]) {
     und_mode = UND_LINE;
@@ -235,6 +238,83 @@ win_deinit_fonts(void)
       DeleteObject(fonts[i]);
     fonts[i] = 0;
     fontflag[i] = 0;
+  }
+}
+
+static HDC hdc;
+
+static bool update_pending;
+
+void
+win_paint(void)
+{
+  HideCaret(hwnd);
+
+  PAINTSTRUCT p;
+  hdc = BeginPaint(hwnd, &p);
+
+  term_invalidate(
+    (p.rcPaint.left - offset_width) / font_width,
+    (p.rcPaint.top - offset_height) / font_height,
+    (p.rcPaint.right - offset_width - 1) / font_width,
+    (p.rcPaint.bottom - offset_height - 1) / font_height
+  );
+
+  if (!update_pending)
+    term_paint();
+
+  if (p.fErase || p.rcPaint.left < offset_width ||
+      p.rcPaint.top < offset_height ||
+      p.rcPaint.right >= offset_width + font_width * term_cols() ||
+      p.rcPaint.bottom >= offset_height + font_height * term_rows()) {
+    HBRUSH fillcolour, oldbrush;
+    HPEN edge, oldpen;
+    fillcolour = CreateSolidBrush(colours[ATTR_DEFBG >> ATTR_BGSHIFT]);
+    oldbrush = SelectObject(hdc, fillcolour);
+    edge = CreatePen(PS_SOLID, 0, colours[ATTR_DEFBG >> ATTR_BGSHIFT]);
+    oldpen = SelectObject(hdc, edge);
+
+    IntersectClipRect(hdc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
+                      p.rcPaint.bottom);
+
+    ExcludeClipRect(hdc, offset_width, offset_height,
+                    offset_width + font_width * term_cols(),
+                    offset_height + font_height * term_rows());
+
+    Rectangle(hdc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
+              p.rcPaint.bottom);
+
+    SelectObject(hdc, oldbrush);
+    DeleteObject(fillcolour);
+    SelectObject(hdc, oldpen);
+    DeleteObject(edge);
+  }
+  SelectObject(hdc, GetStockObject(SYSTEM_FONT));
+  SelectObject(hdc, GetStockObject(WHITE_PEN));
+  
+  EndPaint(hwnd, &p);
+  
+  ShowCaret(hwnd);
+}
+
+void
+win_update(void)
+{
+  if (update_pending) {
+    KillTimer(hwnd, (UINT_PTR)win_update);
+    update_pending = false;
+  }
+  hdc = GetDC(hwnd);
+  term_update();
+  ReleaseDC(hwnd, hdc);
+}
+
+void
+win_schedule_update(void)
+{
+  if (!update_pending) {
+    SetTimer(hwnd, (UINT_PTR)win_update, 10, null);
+    update_pending = true;
   }
 }
 

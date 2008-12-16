@@ -1,7 +1,8 @@
 #ifndef WIN_H
 #define WIN_H
 
-void win_refresh(void);
+void win_update(void);
+void win_schedule_update(void);
 
 int  win_char_width(int uc);
 void win_text(int, int, wchar *, int, uint, int);
@@ -27,6 +28,5 @@ void win_write_clip(wchar *, int *, int);
 void win_read_clip(wchar **, int *);
 
 void win_set_timer(void_fn cb, uint ticks);
-void win_kill_timer(void_fn cb);
 
 #endif

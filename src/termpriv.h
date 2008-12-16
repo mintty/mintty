@@ -170,12 +170,6 @@ struct term {
   bool in_term_write;
 
  /*
-  * We schedule a window update shortly after receiving terminal
-  * data. This tracks whether one is currently pending.
-  */
-  bool update_pending;
-
- /*
   * These are buffers used by the bidi and Arabic shaping code.
   */
   termchar *ltemp;
@@ -206,7 +200,6 @@ void term_print_flush(void);
 
 void term_schedule_tblink(void);
 void term_schedule_cblink(void);
-void term_schedule_update(void);
 void term_schedule_vbell(int already_started, int startpoint);
 
 void term_swap_screen(int which, int reset, int keep_cur_pos);
