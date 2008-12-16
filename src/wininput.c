@@ -136,10 +136,16 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
               (is_key_down(VK_LCONTROL) && !is_key_down(VK_RMENU)); // not AltGr
   int mods = shift * SHIFT | alt * ALT | ctrl * CTRL;
 
-  // Exit
-  if (key == VK_F4 && alt && !ctrl) {
-    SendMessage(hwnd, WM_CLOSE, 0, 0);
-    return 1;
+  // Specials
+  if (alt && !ctrl) {
+    if (key == VK_F4) {
+      SendMessage(hwnd, WM_CLOSE, 0, 0);
+      return 1;
+    }
+    if (key == VK_SPACE) {
+      SendMessage(hwnd, WM_SYSCOMMAND, SC_KEYMENU, ' ');
+      return 1;
+    }
   }
   
   // Context menu
@@ -279,17 +285,12 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
     goto send;
   }
   
-  // Special treatment for the space bar.
-  if (key == VK_SPACE) {
-    if (mods == CTRL) {
-      // For some reason most keyboard layouts map Ctrl-Space to 0x20. 
-      esc(shift); ch(0); goto send; 
-    }
-    if (alt && !ctrl) {
-      // Bring up window menu.
-      SendMessage(hwnd, WM_SYSCOMMAND, SC_KEYMENU, ' ');
-      return 1;
-    }
+  // Special treatment for space.
+  if (key == VK_SPACE && mods == CTRL) {
+    // For some reason most keyboard layouts map Ctrl-Space to 0x20,
+    // whereas we want 0.
+    esc(shift); ch(0);
+    goto send; 
   }
   
   // Try keyboard layout.
