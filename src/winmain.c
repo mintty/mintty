@@ -965,13 +965,14 @@ main(int argc, char *argv[])
   */
   {
     HMENU m = hmenu = CreatePopupMenu();
-    AppendMenu(m, MF_ENABLED, IDM_COPY, "&Copy");
-    AppendMenu(m, MF_ENABLED, IDM_PASTE, "&Paste");
+    AppendMenu(m, MF_ENABLED, IDM_COPY, "&Copy\tCtrl+Ins");
+    AppendMenu(m, MF_ENABLED, IDM_PASTE, "&Paste\tShift+Ins");
     AppendMenu(m, MF_SEPARATOR, 0, 0);
     AppendMenu(m, MF_ENABLED, IDM_SELALL, "&Select All");
     AppendMenu(m, MF_SEPARATOR, 0, 0);
     AppendMenu(m, MF_ENABLED, IDM_RESET, "&Reset Terminal");
-    AppendMenu(m, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN, "&Full Screen");
+    AppendMenu(m, MF_ENABLED | MF_UNCHECKED,
+               IDM_FULLSCREEN, "&Full Screen\tAlt+Enter");
     AppendMenu(m, MF_SEPARATOR, 0, 0);
     AppendMenu(m, MF_ENABLED, IDM_OPTIONS, "&Options...");
     AppendMenu(m, MF_ENABLED, IDM_ABOUT, "&About ...");
