@@ -521,15 +521,13 @@ flip_full_screen()
   }
 }
 
-static ubyte
-alpha()
+static void
+set_transparency()
 {
-  switch (cfg.transparency) {
-    when 1: return 239;
-    when 2: return 223;
-    when 3: return 207;
-    otherwise: return 255;
-  }
+  int trans = cfg.transparency;
+  SetWindowLong(hwnd, GWL_EXSTYLE, trans ? WS_EX_LAYERED : 0);
+  if (trans)
+    SetLayeredWindowAttributes(hwnd, 0, 255 - 16 * trans, LWA_ALPHA);
 }
 
 static void
@@ -678,7 +676,7 @@ reconfig(void)
       cfg.bold_as_bright != prev_cfg.bold_as_bright)
     init_lvl = 2;
   
-  SetLayeredWindowAttributes(hwnd, 0, alpha(), LWA_ALPHA);
+  set_transparency();
   InvalidateRect(hwnd, null, true);
   reset_window(init_lvl);
 }
@@ -956,14 +954,10 @@ main(int argc, char *argv[])
       guess_width = r.right - r.left;
     if (guess_height > r.bottom - r.top)
       guess_height = r.bottom - r.top;
-    int winmode = WS_OVERLAPPEDWINDOW;
-    if (cfg.scrollbar)
-      winmode |= WS_VSCROLL;
-    int exwinmode = WS_EX_LAYERED;
-    hwnd = CreateWindowEx(exwinmode, APPNAME, APPNAME, winmode, CW_USEDEFAULT,
-                         CW_USEDEFAULT, guess_width, guess_height, null, null,
-                         hinst, null);
-    SetLayeredWindowAttributes(hwnd, 0, alpha(), LWA_ALPHA);
+    uint style = WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0);
+    hwnd = CreateWindow(APPNAME, APPNAME, style, CW_USEDEFAULT, CW_USEDEFAULT,
+                        guess_width, guess_height, null, null, hinst, null);
+    set_transparency();
   }
 
  /*
