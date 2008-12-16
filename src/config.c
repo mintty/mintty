@@ -285,7 +285,7 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Output", "bell", "Bell");
   ctrl_columns(s, 2, 50, 50);
   ctrl_radiobuttons(
-    s, "Action:", '\0', 1, P(0), dlg_stdradiobutton_handler, 
+    s, "Action", '\0', 1, P(0), dlg_stdradiobutton_handler, 
     I(offsetof(config, bell)),
     "None", '\0', I(BELL_DISABLED),
     "System sound", '\0', I(BELL_SOUND),
@@ -293,7 +293,7 @@ setup_config_box(controlbox * b)
     null
   )->column = 0;
   ctrl_radiobuttons(
-    s, "Taskbar indication:", '\0', 1, P(0), dlg_stdradiobutton_handler,
+    s, "Taskbar indication", '\0', 1, P(0), dlg_stdradiobutton_handler,
     I(offsetof(config, bell_ind)),
     "Disabled", '\0', I(B_IND_DISABLED),
     "Flashing", '\0', I(B_IND_FLASH),
