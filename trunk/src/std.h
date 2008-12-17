@@ -50,7 +50,7 @@ typedef void (*void_fn)(void);
 
 #define new(type) ((type *) malloc(sizeof(type)))
 #define newn(type, n) ((type *) calloc(n, sizeof(type)))
-#define renewn(p, n) ((typeof(p)) realloc(p, sizeof(*p) * n))
+#define renewn(p, n) ((typeof(p)) realloc(p, sizeof(*p) * (n)))
 
 static inline int
 box(int l, int x, int h)

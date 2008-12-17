@@ -1444,44 +1444,47 @@ term_paste(void)
   int len;
 
   win_read_clip(&data, &len);
-  if (data && len > 0) {
-    wchar *p, *q;
+  
+  if (!data)
+    return;
 
-    term_seen_key_event();      /* pasted data counts */
+  wchar *p, *q;
 
+  term_seen_key_event();      /* pasted data counts */
+
+  if (term.paste_buffer)
+    free(term.paste_buffer);
+  term.paste_pos = term.paste_len = term.paste_hold = 0;
+  term.paste_buffer = newn(wchar, len);
+
+  p = q = data;
+  while (p < data + len) {
+    while (p < data + len &&
+           !(p <= data + len - lenof(sel_nl) &&
+             !memcmp(p, sel_nl, sizeof (sel_nl))))
+      p++;
+
+    for (int i = 0; i < p - q; i++)
+      term.paste_buffer[term.paste_len++] = q[i];
+
+    if (p <= data + len - lenof(sel_nl) &&
+        !memcmp(p, sel_nl, sizeof sel_nl)) {
+      term.paste_buffer[term.paste_len++] = '\015';
+      p += lenof(sel_nl);
+    }
+    q = p;
+  }
+  
+  free(data);
+
+ /* Assume a small paste will be OK in one go. */
+  if (term.paste_len < 256) {
+    luni_send(term.paste_buffer, term.paste_len, 0);
     if (term.paste_buffer)
       free(term.paste_buffer);
+    term.paste_buffer = 0;
     term.paste_pos = term.paste_len = term.paste_hold = 0;
-    term.paste_buffer = newn(wchar, len);
-
-    p = q = data;
-    while (p < data + len) {
-      while (p < data + len &&
-             !(p <= data + len - lenof(sel_nl) &&
-               !memcmp(p, sel_nl, sizeof (sel_nl))))
-        p++;
-
-      for (int i = 0; i < p - q; i++)
-        term.paste_buffer[term.paste_len++] = q[i];
-
-      if (p <= data + len - lenof(sel_nl) &&
-          !memcmp(p, sel_nl, sizeof sel_nl)) {
-        term.paste_buffer[term.paste_len++] = '\015';
-        p += lenof(sel_nl);
-      }
-      q = p;
-    }
-
-   /* Assume a small paste will be OK in one go. */
-    if (term.paste_len < 256) {
-      luni_send(term.paste_buffer, term.paste_len, 0);
-      if (term.paste_buffer)
-        free(term.paste_buffer);
-      term.paste_buffer = 0;
-      term.paste_pos = term.paste_len = term.paste_hold = 0;
-    }
   }
-  win_read_clip(null, null);
 }
 
 void
