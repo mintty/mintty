@@ -1,5 +1,5 @@
 name := mintty
-rev := $(shell printf "r%03u" `svn info | grep Revision | sed "s/Revision: //"`)
+rev := $(shell printf "rev%u" `svn info | grep Revision | sed "s/Revision: //"`)
 exe := $(name).exe
 zip := $(name)-$(rev).zip
 stuff := readme.html create_shortcut.js
