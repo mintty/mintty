@@ -795,7 +795,8 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
       EnableMenuItem(
         hmenu, IDM_PASTE,
         IsClipboardFormatAvailable(CF_TEXT) || 
-        IsClipboardFormatAvailable(CF_UNICODETEXT) 
+        IsClipboardFormatAvailable(CF_UNICODETEXT) ||
+        IsClipboardFormatAvailable(CF_HDROP)
         ? MF_ENABLED : MF_GRAYED
       );
       return 0;

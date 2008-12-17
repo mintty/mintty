@@ -10,9 +10,11 @@
 
 #include <winnls.h>
 #include <richedit.h>
+#include <shellapi.h>
+#include <wchar.h>
 
 void
-win_write_clip(wchar * data, int *attr, int len)
+win_write_clip(wchar *data, int *attr, int len)
 {
   HGLOBAL clipdata, clipdata2, clipdata3;
   int len2;
@@ -345,47 +347,44 @@ win_write_clip(wchar * data, int *attr, int len)
 }
 
 void
-win_read_clip(wchar ** p, int *len)
+win_read_clip(wchar **sp, int *lp)
 {
-  static HGLOBAL clipdata = null;
-  static wchar *converted = 0;
-  wchar *p2;
-
-  if (converted) {
-    free(converted);
-    converted = 0;
-  }
-  if (!p) {
-    if (clipdata)
-      GlobalUnlock(clipdata);
-    clipdata = null;
+  *sp = null;
+  if (!OpenClipboard(null))
     return;
-  }
-  else if (OpenClipboard(null)) {
-    if ((clipdata = GetClipboardData(CF_UNICODETEXT))) {
-      CloseClipboard();
-      *p = GlobalLock(clipdata);
-      if (*p) {
-        for (p2 = *p; *p2; p2++);
-        *len = p2 - *p;
-        return;
-      }
-    }
-    else if ((clipdata = GetClipboardData(CF_TEXT))) {
-      char *s;
-      int i;
-      CloseClipboard();
-      s = GlobalLock(clipdata);
-      i = MultiByteToWideChar(CP_ACP, 0, s, strlen(s) + 1, 0, 0);
-      *p = converted = newn(wchar, i);
-      MultiByteToWideChar(CP_ACP, 0, s, strlen(s) + 1, converted, i);
-      *len = i - 1;
-      return;
-    }
-    else
-      CloseClipboard();
-  }
 
-  *p = null;
-  *len = 0;
+  HANDLE data;
+  HDROP drop;
+  
+  if ((data = GetClipboardData(CF_UNICODETEXT))) {
+    wchar *s = GlobalLock(data);
+    *lp = wcslen(s);
+    *sp = newn(wchar, *lp);
+    wmemcpy(*sp, s, *lp);
+    GlobalUnlock(data);
+  }
+  else if ((data = GetClipboardData(CF_TEXT))) {
+    char *s = GlobalLock(data);
+    *lp = MultiByteToWideChar(CP_ACP, 0, s, -1, 0, 0) - 1;
+    *sp = newn(wchar, *lp);
+    MultiByteToWideChar(CP_ACP, 0, s, -1, *sp, *lp);
+    GlobalUnlock(data);
+  }
+  else if ((drop = GetClipboardData(CF_HDROP))) {
+    uint len = 0;
+    wchar *s = 0;
+    uint n = DragQueryFileW(drop, -1, 0, 0);
+    for (uint i = 0; i < n; i++) {
+      uint l = DragQueryFileW(drop, i, 0, 0);
+      s = renewn(s, len + l + 3); // 3 extra for quotes and space
+      wchar *name = s + len;
+      DragQueryFileW(drop, i, name + 1, l + 1);
+      name[0] = name[l + 1] = '"';
+      name[l + 2] = ' ';
+      len += l + 3;
+    }
+    *lp = len - 1; // forget trailing space
+    *sp = s;
+  }
+  CloseClipboard();
 }
