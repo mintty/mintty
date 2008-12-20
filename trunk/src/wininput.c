@@ -117,7 +117,7 @@ win_mouse_wheel(WPARAM wp, LPARAM lp)
 }
 
 inline static bool
-is_key_down(ubyte vk)
+is_key_down(uchar vk)
 {
   return GetKeyState(vk) & 0x80;
 }
@@ -167,7 +167,7 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
       return 1;
     }
     else if (mods == SHIFT) {
-      term_paste();
+      win_paste();
       return 1;
     }
   }
@@ -274,8 +274,8 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
   // Function keys.
   if (VK_F1 <= key && key <= VK_F24) {
     str("\e[");
-    byte code = 
-      (byte[]){
+    uchar code = 
+      (uchar[]){
         11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 23, 24,
         25, 26, 28, 29, 31, 32, 33, 34, 36, 37, 38, 39
       }[key - VK_F1];
@@ -296,7 +296,7 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
   // Try keyboard layout.
   // ToUnicode produces up to four UTF-16 code units per keypress according
   // to an experiment with Keyboard Layout Creator 1.4. (MSDN doesn't say.)
-  ubyte keyboard[256];  
+  uchar keyboard[256];  
   GetKeyboardState(keyboard);
     
   wchar wchars[4];

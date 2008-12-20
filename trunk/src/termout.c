@@ -636,7 +636,7 @@ term_write(const char *data, int len)
       if (term.only_printing) {
         if (c == '\033')
           term.print_state = 1;
-        else if (c == (ubyte) '\233')
+        else if (c == (uchar) '\233')
           term.print_state = 2;
         else if (c == '[' && term.print_state == 1)
           term.print_state = 2;
@@ -663,7 +663,7 @@ term_write(const char *data, int len)
               if (ucsdata.unitab_ctrl[c] != 0xFF)
                 c = ucsdata.unitab_ctrl[c];
               else
-                c = ((ubyte) c) | CSET_ASCII;
+                c = ((uchar) c) | CSET_ASCII;
               break;
             }
             else if ((c & 0xe0) == 0xc0) {
@@ -763,7 +763,7 @@ term_write(const char *data, int len)
             if (ucsdata.unitab_ctrl[c] != 0xFF)
               c = ucsdata.unitab_ctrl[c];
             else
-              c = ((ubyte) c) | CSET_LINEDRW;
+              c = ((uchar) c) | CSET_LINEDRW;
           when  CSET_ASCII or CSET_GBCHR:
             /* If UK-ASCII, make the '#' a LineDraw Pound */
             if (c == '#' && cset_attr == CSET_GBCHR)
@@ -771,10 +771,10 @@ term_write(const char *data, int len)
             else if (ucsdata.unitab_ctrl[c] != 0xFF)
               c = ucsdata.unitab_ctrl[c];
             else
-              c = ((ubyte) c) | CSET_ASCII;
+              c = ((uchar) c) | CSET_ASCII;
           when CSET_SCOACS:
             if (c >= ' ')
-              c = ((ubyte) c) | CSET_SCOACS;
+              c = ((uchar) c) | CSET_SCOACS;
         }
       }
     }

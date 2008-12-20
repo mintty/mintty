@@ -23,8 +23,8 @@
 
 typedef wchar_t wchar;
 
-typedef signed char byte;
-typedef unsigned char ubyte;
+typedef signed char schar;
+typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
 

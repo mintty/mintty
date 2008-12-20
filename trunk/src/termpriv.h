@@ -116,7 +116,7 @@ struct term {
 
   char id_string[1024];
 
-  ubyte *tabs;
+  uchar *tabs;
 
  /*
   * DO_CTRLS here isn't an actual state, but acts as a marker that

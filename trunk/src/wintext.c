@@ -518,7 +518,7 @@ win_text_internal(int x, int y, wchar * text, int len, uint attr, int lattr)
 
  /* Special hack for the VT100 linedraw glyphs. */
   if (text[0] >= 0x23BA && text[0] <= 0x23BD) {
-    switch ((ubyte) (text[0])) {
+    switch ((uchar) (text[0])) {
       when 0xBA: text_adjust = -2 * font_height / 5;
       when 0xBB: text_adjust = -1 * font_height / 5;
       when 0xBC: text_adjust = font_height / 5;

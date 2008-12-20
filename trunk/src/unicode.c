@@ -808,7 +808,7 @@ wordtype(int uc)
 {
   struct ucsword {
     wchar start, end; 
-    ubyte ctype;
+    uchar ctype;
   };
   static const struct ucsword ucs_words[] = {
     {128, 160, 0},

@@ -55,4 +55,6 @@ void win_mouse_wheel(WPARAM, LPARAM);
 void win_mouse_move(bool nc, WPARAM, LPARAM);
 bool win_key_press(WPARAM, LPARAM);
 
+void win_init_drop_target(void);
+
 #endif

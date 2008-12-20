@@ -36,7 +36,7 @@ typedef struct {
   wchar unitab_font[256];
   wchar unitab_xterm[256];
   wchar unitab_oemcp[256];
-  ubyte unitab_ctrl[256];
+  uchar unitab_ctrl[256];
 } unicode_data;
 
 extern unicode_data ucsdata;

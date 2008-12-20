@@ -10,7 +10,7 @@ typedef struct {
   int charset;
 } font_spec;
 
-typedef struct { ubyte red, green, blue; } colour;
+typedef struct { uchar red, green, blue; } colour;
 
 char *open_settings_w(char *filename);
 void write_string_setting(const char *key, const char *value);

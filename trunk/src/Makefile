@@ -11,14 +11,15 @@ deps := $(objs:.o=.d)
 
 c_opts := -include std.h -std=gnu99 -Wall -Wextra -Werror -DNDEBUG
 code_opts := -march=i586 -mtune=pentium-m -fomit-frame-pointer -Os
-ld_opts := -mwindows -lcomctl32 -lcomdlg32 -limm32 -lwinspool --gc-sections -s
+ld_opts := --gc-sections -s
+libs := -mwindows -lcomctl32 -lcomdlg32 -limm32 -lwinspool -lole32 -luuid
 
 cc := gcc
 rc_cpp := $(cc) -E -MMD -xc-header -DRC_INVOKED -DREVISION=$(rev)
 rc := windres --preprocessor "$(rc_cpp)"
 
 $(exe): $(objs)
-	$(cc) -o $@ $^ $(ld_opts)
+	$(cc) -o $@ $^ $(ld_opts) $(libs)
 	du -b $@
 
 $(zip): $(exe) $(stuff)

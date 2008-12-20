@@ -621,7 +621,7 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
             return 0;
           }
         when IDM_COPY: term_copy();
-        when IDM_PASTE: term_paste();
+        when IDM_PASTE: win_paste();
         when IDM_SELALL:
           term_select_all();
           win_update();
@@ -660,7 +660,7 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
       if (win_key_press(wp, lp))
         return 0;
     when WM_CHAR or WM_SYSCHAR: { // TODO: handle wchar and WM_UNICHAR
-      char c = (ubyte) wp;
+      char c = (uchar) wp;
       term_seen_key_event();
       lpage_send(CP_ACP, &c, 1, 1);
       return 0;
@@ -866,7 +866,6 @@ main(int argc, char *argv[])
     uint style = WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0);
     hwnd = CreateWindow(APPNAME, APPNAME, style, CW_USEDEFAULT, CW_USEDEFAULT,
                         guess_width, guess_height, null, null, hinst, null);
-    set_transparency();
   }
 
  /*
@@ -948,11 +947,19 @@ main(int argc, char *argv[])
   */
   int term_width = font_width * term_cols();
   int term_height = extra_height + font_height * term_rows();
-
-  // Finally show the window!
   SetWindowPos(hwnd, null, 0, 0,
                term_width + extra_width, term_height + extra_height,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+
+    SetWindowPos(hwnd, null, 0, 0,
+               term_width + extra_width, term_height + extra_height,
+               SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+
+  // Enable drag & drop.
+  win_init_drop_target();
+
+  // Finally show the window!
+  set_transparency();
   ShowWindow(hwnd, SW_SHOWDEFAULT);
 
   // Create child process and set window title to the executed command.
