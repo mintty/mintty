@@ -23,6 +23,7 @@ void win_set_iconic(bool);
 bool win_is_iconic(void);
 void win_get_pos(int *x, int *y);
 void win_get_pixels(int *x, int *y);
+void win_popup_menu(void);
 
 void win_copy(wchar *, int *attrs, int len);
 void win_paste(void);

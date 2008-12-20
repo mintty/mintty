@@ -128,8 +128,8 @@ struct term {
   } state;
 
   enum {
-    MT_NONE, MT_X10, MT_VT200, MT_BTN_EVENT, MT_ANY_EVENT
-  } mouse_tracking;
+    MM_NONE, MM_X10, MM_VT200, MM_BTN_EVENT, MM_ANY_EVENT
+  } mouse_mode;
 
   enum {
     MS_CLICKED = -1, MS_IDLE = 0,

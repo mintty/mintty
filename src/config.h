@@ -26,12 +26,15 @@ typedef struct {
   int backspace_sends_del;
   int alt_sends_esc;
   int cursor_type;
-  int blink_cur;
+  int cursor_blinks;
   int bell;
   int bell_ind;
   int scrollbar;
   int scroll_mod;
-  int blinktext;
+  int click_targets_app;
+  int click_target_mod;
+  int rmb_pastes;
+  int text_blink;
   int rows, cols;
   char printer[128];
  /* Colour options */

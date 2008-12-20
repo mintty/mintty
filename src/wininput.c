@@ -8,6 +8,55 @@
 #include "config.h"
 #include "math.h"
 
+static HMENU menu;
+
+void
+win_init_menu(void)
+{
+  menu = CreatePopupMenu();
+  AppendMenu(menu, MF_ENABLED, IDM_COPY, "&Copy\tCtrl+Ins");
+  AppendMenu(menu, MF_ENABLED, IDM_PASTE, "&Paste\tShift+Ins");
+  AppendMenu(menu, MF_SEPARATOR, 0, 0);
+  AppendMenu(menu, MF_ENABLED, IDM_SELALL, "&Select All");
+  AppendMenu(menu, MF_SEPARATOR, 0, 0);
+  AppendMenu(menu, MF_ENABLED, IDM_RESET, "&Reset");
+  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED,
+             IDM_FULLSCREEN, "&Full Screen\tAlt+Enter");
+  AppendMenu(menu, MF_SEPARATOR, 0, 0);
+  AppendMenu(menu, MF_ENABLED, IDM_OPTIONS, "&Options...");
+  AppendMenu(menu, MF_ENABLED, IDM_ABOUT, "&About ...");
+
+  HMENU sysmenu = GetSystemMenu(hwnd, false);
+  InsertMenu(sysmenu, 0, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
+  InsertMenu(sysmenu, 0, MF_BYPOSITION|MF_ENABLED, IDM_OPTIONS, "&Options...");
+}
+
+void
+win_popup_menu(void)
+{
+  POINT p;
+  GetCursorPos(&p);
+  TrackPopupMenu(
+    menu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
+    p.x, p.y, 0, hwnd, null
+  );
+}
+
+void
+win_update_menu(void)
+{
+  EnableMenuItem(menu, IDM_COPY, term_selected() ? MF_ENABLED : MF_GRAYED);
+  EnableMenuItem(
+    menu, IDM_PASTE,
+    IsClipboardFormatAvailable(CF_TEXT) || 
+    IsClipboardFormatAvailable(CF_UNICODETEXT) ||
+    IsClipboardFormatAvailable(CF_HDROP)
+    ? MF_ENABLED : MF_GRAYED
+  );
+  bool fullscreen = !(GetWindowLongPtr(hwnd, GWL_STYLE) & WS_CAPTION);
+  CheckMenuItem(menu, IDM_FULLSCREEN, fullscreen ? MF_CHECKED : MF_UNCHECKED);
+}
+
 static pos
 get_pos(LPARAM lp, bool *has_moved_p)
 {
@@ -38,36 +87,20 @@ void
 win_mouse_click(mouse_button b, WPARAM wp, LPARAM lp)
 {
   win_show_mouse();
-  
   mod_keys mods = get_mouse_mods(wp);
-
   if (clicked_button) {
     term_mouse_release(b, mods, get_pos(lp, 0));
     clicked_button = 0;
   }
-
-  // Show context menu on right mouse button click.
-  if (b == MB_RIGHT && !(mods & CTRL)) {
-    if (!(mods & ALT)) {
-      POINT p;
-      GetCursorPos(&p);
-      TrackPopupMenu(
-        hmenu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
-        p.x, p.y, 0, hwnd, null
-      );
-    }
-  }
-  else {
-    static mouse_button last_button;
-    static uint last_time, count;
-    uint t = GetMessageTime();
-    if (b != last_button || t - last_time > GetDoubleClickTime() || ++count > 3)
-      count = 1;
-    term_mouse_click(b, mods, get_pos(lp, 0), count);
-    last_time = t;
-    clicked_button = last_button = b;
-    SetCapture(hwnd);
-  }
+  static mouse_button last_button;
+  static uint last_time, count;
+  uint t = GetMessageTime();
+  if (b != last_button || t - last_time > GetDoubleClickTime() || ++count > 3)
+    count = 1;
+  term_mouse_click(b, mods, get_pos(lp, 0), count);
+  last_time = t;
+  clicked_button = last_button = b;
+  SetCapture(hwnd);
 }
 
 void
@@ -150,11 +183,12 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
   
   // Context menu
   if (key == VK_APPS) {
+    win_show_mouse();
     POINT p;
     GetCaretPos(&p);
     ClientToScreen(hwnd, &p);
     TrackPopupMenu(
-      hmenu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
+      menu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
       p.x, p.y, 0, hwnd, null
     );
     return 1;
@@ -203,12 +237,14 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
       when VK_ESCAPE or VK_PAUSE or VK_CANCEL or VK_TAB:
         return 0;
       when VK_RETURN:
-        if (ctrl) return 0;
+        if (ctrl)
+          return 0;
         // Alt-Enter: toggle fullscreen
         SendMessage(hwnd, WM_SYSCOMMAND, IDM_FULLSCREEN, 0);
         return 1;
       when VK_BACK:
-        if (ctrl) return 0;
+        if (ctrl)
+          return 0;
         ch('\e'); ch(shift ? ' ' : 0x7F);
         goto send;
     }

@@ -17,7 +17,6 @@
 HWND hwnd;
 HINSTANCE hinst;
 HDC hdc;
-HMENU hmenu;
 static HBITMAP caretbm;
 
 static char *window_name;
@@ -425,48 +424,25 @@ reset_window(int reinit)
 }
 
 /*
- * See if we're in full-screen mode.
- */
-static bool
-is_full_screen()
-{
-  if (!IsZoomed(hwnd))
-    return false;
-  if (GetWindowLongPtr(hwnd, GWL_STYLE) & WS_CAPTION)
-    return false;
-  return true;
-}
-
-/*
  * Go full-screen. This should only be called when we are already
  * maximised.
  */
 static void
 make_full_screen()
 {
-  DWORD style;
-  RECT ss;
-
-  assert(IsZoomed(hwnd));
-
-  if (is_full_screen())
-    return;
-
  /* Remove the window furniture. */
-  style = GetWindowLongPtr(hwnd, GWL_STYLE);
+  DWORD style = GetWindowLongPtr(hwnd, GWL_STYLE);
   style &= ~(WS_CAPTION | WS_BORDER | WS_THICKFRAME);
   SetWindowLongPtr(hwnd, GWL_STYLE, style);
 
  /* Resize ourselves to exactly cover the nearest monitor. */
+  RECT ss;
   get_fullscreen_rect(&ss);
   SetWindowPos(hwnd, HWND_TOP, ss.left, ss.top, ss.right - ss.left,
                ss.bottom - ss.top, SWP_FRAMECHANGED);
 
  /* We may have changed size as a result */
   reset_window(0);
-
- /* Tick the menu item in the System menu. */
-  CheckMenuItem(hmenu, IDM_FULLSCREEN, MF_CHECKED);
 }
 
 /*
@@ -485,9 +461,6 @@ clear_full_screen()
     SetWindowPos(hwnd, null, 0, 0, 0, 0,
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
   }
-
- /* Untick the menu item in the System menu. */
-  CheckMenuItem(hmenu, IDM_FULLSCREEN, MF_UNCHECKED);
 }
 
 /*
@@ -496,11 +469,11 @@ clear_full_screen()
 static void
 flip_full_screen()
 {
-  if (is_full_screen()) {
-    ShowWindow(hwnd, SW_RESTORE);
-  }
-  else if (IsZoomed(hwnd)) {
-    make_full_screen();
+  if (IsZoomed(hwnd)) {
+    if (GetWindowLongPtr(hwnd, GWL_STYLE) & WS_CAPTION)
+      make_full_screen();
+    else
+      ShowWindow(hwnd, SW_RESTORE);
   }
   else {
     SendMessage(hwnd, WM_FULLSCR_ON_MAX, 0, 0);
@@ -643,16 +616,15 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
           when SB_LINEUP:   term_scroll(0, -1);
           when SB_PAGEDOWN: term_scroll(0, +term_rows());
           when SB_PAGEUP:   term_scroll(0, -term_rows());
-          when SB_THUMBPOSITION or SB_THUMBTRACK:
-            term_scroll(1, HIWORD(wp));
+          when SB_THUMBPOSITION or SB_THUMBTRACK: term_scroll(1, HIWORD(wp));
         }
       }
-    when WM_LBUTTONDOWN: win_mouse_click(MB_LEFT, wp, lp);
-    when WM_RBUTTONDOWN: win_mouse_click(MB_RIGHT, wp, lp);
-    when WM_MBUTTONDOWN: win_mouse_click(MB_MIDDLE, wp, lp);
-    when WM_LBUTTONUP: win_mouse_release(MB_LEFT, wp, lp);
-    when WM_RBUTTONUP: win_mouse_release(MB_RIGHT, wp, lp);
-    when WM_MBUTTONUP: win_mouse_release(MB_MIDDLE, wp, lp);
+    when WM_LBUTTONDOWN: win_mouse_click(MBT_LEFT, wp, lp);
+    when WM_RBUTTONDOWN: win_mouse_click(MBT_RIGHT, wp, lp);
+    when WM_MBUTTONDOWN: win_mouse_click(MBT_MIDDLE, wp, lp);
+    when WM_LBUTTONUP: win_mouse_release(MBT_LEFT, wp, lp);
+    when WM_RBUTTONUP: win_mouse_release(MBT_RIGHT, wp, lp);
+    when WM_MBUTTONUP: win_mouse_release(MBT_MIDDLE, wp, lp);
     when WM_MOUSEWHEEL: win_mouse_wheel(wp, lp);
     when WM_MOUSEMOVE: win_mouse_move(false, wp, lp);
     when WM_NCMOUSEMOVE: win_mouse_move(true, wp, lp);
@@ -791,16 +763,8 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
       return 0;
     }
     when WM_INITMENU:
-      EnableMenuItem(hmenu, IDM_COPY, term_selected() ? MF_ENABLED : MF_GRAYED);
-      EnableMenuItem(
-        hmenu, IDM_PASTE,
-        IsClipboardFormatAvailable(CF_TEXT) || 
-        IsClipboardFormatAvailable(CF_UNICODETEXT) ||
-        IsClipboardFormatAvailable(CF_HDROP)
-        ? MF_ENABLED : MF_GRAYED
-      );
+      win_update_menu();
       return 0;
-      
   }
  /*
   * Any messages we don't process completely above are passed through to
@@ -868,23 +832,7 @@ main(int argc, char *argv[])
                         guess_width, guess_height, null, null, hinst, null);
   }
 
- /*
-  * Set up the context menu.
-  */
-  {
-    HMENU m = hmenu = CreatePopupMenu();
-    AppendMenu(m, MF_ENABLED, IDM_COPY, "&Copy\tCtrl+Ins");
-    AppendMenu(m, MF_ENABLED, IDM_PASTE, "&Paste\tShift+Ins");
-    AppendMenu(m, MF_SEPARATOR, 0, 0);
-    AppendMenu(m, MF_ENABLED, IDM_SELALL, "&Select All");
-    AppendMenu(m, MF_SEPARATOR, 0, 0);
-    AppendMenu(m, MF_ENABLED, IDM_RESET, "&Reset Terminal");
-    AppendMenu(m, MF_ENABLED | MF_UNCHECKED,
-               IDM_FULLSCREEN, "&Full Screen\tAlt+Enter");
-    AppendMenu(m, MF_SEPARATOR, 0, 0);
-    AppendMenu(m, MF_ENABLED, IDM_OPTIONS, "&Options...");
-    AppendMenu(m, MF_ENABLED, IDM_ABOUT, "&About ...");
-  }
+  win_init_menu();
   
  /*
   * Initialise the terminal. (We have to do this _after_
@@ -951,10 +899,6 @@ main(int argc, char *argv[])
                term_width + extra_width, term_height + extra_height,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 
-    SetWindowPos(hwnd, null, 0, 0,
-               term_width + extra_width, term_height + extra_height,
-               SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
-
   // Enable drag & drop.
   win_init_drop_target();
 
@@ -967,7 +911,6 @@ main(int argc, char *argv[])
   char *cmd = child_create(argv + 1, &ws);
   win_set_title(cmd);
   free(cmd);
-  
   
   // Message loop.
   // Also monitoring child events.
