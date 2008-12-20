@@ -49,12 +49,12 @@ unlineptr(termline * line)
  * features are in constant use.)
  */
 struct buf {
-  ubyte *data;
+  uchar *data;
   int len, size;
 };
 
 static void
-add(struct buf *b, ubyte c)
+add(struct buf *b, uchar c)
 {
   if (b->len >= b->size) {
     b->size = (b->len * 3 / 2) + 512;
@@ -246,29 +246,29 @@ makeliteral_chr(struct buf *b, termchar * c, uint * state)
   * instead.
   */
   if ((c->chr & ~0x7F) == *state) {
-    add(b, (ubyte) (c->chr & 0x7F));
+    add(b, (uchar) (c->chr & 0x7F));
   }
   else if (c->chr < 0x4000) {
-    add(b, (ubyte) (((c->chr >> 8) & 0x3F) | 0x80));
-    add(b, (ubyte) (c->chr & 0xFF));
+    add(b, (uchar) (((c->chr >> 8) & 0x3F) | 0x80));
+    add(b, (uchar) (c->chr & 0xFF));
   }
   else if (c->chr < 0x200000) {
-    add(b, (ubyte) (((c->chr >> 16) & 0x1F) | 0xC0));
-    add(b, (ubyte) ((c->chr >> 8) & 0xFF));
-    add(b, (ubyte) (c->chr & 0xFF));
+    add(b, (uchar) (((c->chr >> 16) & 0x1F) | 0xC0));
+    add(b, (uchar) ((c->chr >> 8) & 0xFF));
+    add(b, (uchar) (c->chr & 0xFF));
   }
   else if (c->chr < 0x10000000) {
-    add(b, (ubyte) (((c->chr >> 24) & 0x0F) | 0xE0));
-    add(b, (ubyte) ((c->chr >> 16) & 0xFF));
-    add(b, (ubyte) ((c->chr >> 8) & 0xFF));
-    add(b, (ubyte) (c->chr & 0xFF));
+    add(b, (uchar) (((c->chr >> 24) & 0x0F) | 0xE0));
+    add(b, (uchar) ((c->chr >> 16) & 0xFF));
+    add(b, (uchar) ((c->chr >> 8) & 0xFF));
+    add(b, (uchar) (c->chr & 0xFF));
   }
   else {
     add(b, 0xF0);
-    add(b, (ubyte) ((c->chr >> 24) & 0xFF));
-    add(b, (ubyte) ((c->chr >> 16) & 0xFF));
-    add(b, (ubyte) ((c->chr >> 8) & 0xFF));
-    add(b, (ubyte) (c->chr & 0xFF));
+    add(b, (uchar) ((c->chr >> 24) & 0xFF));
+    add(b, (uchar) ((c->chr >> 16) & 0xFF));
+    add(b, (uchar) ((c->chr >> 8) & 0xFF));
+    add(b, (uchar) (c->chr & 0xFF));
   }
   *state = c->chr & ~0xFF;
 }
@@ -310,14 +310,14 @@ makeliteral_attr(struct buf *b, termchar * c, uint *unused(state))
   attr |= (colourbits << (32 - 9));
 
   if (attr < 0x8000) {
-    add(b, (ubyte) ((attr >> 8) & 0xFF));
-    add(b, (ubyte) (attr & 0xFF));
+    add(b, (uchar) ((attr >> 8) & 0xFF));
+    add(b, (uchar) (attr & 0xFF));
   }
   else {
-    add(b, (ubyte) (((attr >> 24) & 0x7F) | 0x80));
-    add(b, (ubyte) ((attr >> 16) & 0xFF));
-    add(b, (ubyte) ((attr >> 8) & 0xFF));
-    add(b, (ubyte) (attr & 0xFF));
+    add(b, (uchar) (((attr >> 24) & 0x7F) | 0x80));
+    add(b, (uchar) ((attr >> 16) & 0xFF));
+    add(b, (uchar) ((attr >> 8) & 0xFF));
+    add(b, (uchar) (attr & 0xFF));
   }
 }
 static void
@@ -580,7 +580,7 @@ makerle(struct buf *b, termline * ldata,
 }
 
 
-ubyte *
+uchar *
 compressline(termline * ldata)
 {
   struct buf buffer = { null, 0, 0 }, *b = &buffer;
@@ -593,10 +593,10 @@ compressline(termline * ldata)
   {
     int n = ldata->cols;
     while (n >= 128) {
-      add(b, (ubyte) ((n & 0x7F) | 0x80));
+      add(b, (uchar) ((n & 0x7F) | 0x80));
       n >>= 7;
     }
-    add(b, (ubyte) (n));
+    add(b, (uchar) (n));
   }
 
  /*
@@ -605,10 +605,10 @@ compressline(termline * ldata)
   {
     int n = ldata->lattr;
     while (n >= 128) {
-      add(b, (ubyte) ((n & 0x7F) | 0x80));
+      add(b, (uchar) ((n & 0x7F) | 0x80));
       n >>= 7;
     }
-    add(b, (ubyte) (n));
+    add(b, (uchar) (n));
   }
 
  /*
@@ -672,7 +672,7 @@ readrle(struct buf *b, termline * ldata,
 }
 
 termline *
-decompressline(ubyte * data, int *bytes_used)
+decompressline(uchar * data, int *bytes_used)
 {
   int ncols, byte, shift;
   struct buf buffer, *b = &buffer;
@@ -840,7 +840,7 @@ termline *
     treeindex = y + count234(term.scrollback);
   }
   if (whichtree == term.scrollback) {
-    ubyte *cline = index234(whichtree, treeindex);
+    uchar *cline = index234(whichtree, treeindex);
     line = decompressline(cline, null);
   }
   else {

@@ -57,8 +57,8 @@ void move_termchar(termline *line, termchar *dest, termchar *src);
 void add_cc(termline *, int col, uint chr);
 void clear_cc(termline *, int col);
 
-ubyte *compressline(termline *);
-termline *decompressline(ubyte *, int *bytes_used);
+uchar *compressline(termline *);
+termline *decompressline(uchar *, int *bytes_used);
 
 termchar *term_bidi_line(termline *, int scr_y);
 

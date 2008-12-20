@@ -106,13 +106,13 @@ void term_update(void);
 void term_invalidate(int left, int top, int right, int bottom);
 void term_invalidate_all(void);
 void term_blink(int set_cursor);
-void term_paste(void);
+void term_copy(void);
+void term_paste(wchar *, uint len);
 void term_send_paste(void);
 void term_cancel_paste(void);
-void term_copy(void);
 void term_reconfig(void);
 void term_seen_key_event(void);
-void term_write(const char *data, int len);
+void term_write(const char *, int len);
 void term_set_focus(int has_focus);
 
 int  term_rows(void);

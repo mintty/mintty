@@ -287,10 +287,8 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     if (mods & SHIFT)
       term_copy();
     else
-      term_paste();
+      win_paste();
   }
-  else if (b == MB_RIGHT)
-    term_paste();
   win_update();
 }
 

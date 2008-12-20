@@ -8,13 +8,18 @@
 #include "config.h"
 #include "unicode.h"
 
+#include <wchar.h>
+
 #include <winnls.h>
 #include <richedit.h>
 #include <shellapi.h>
-#include <wchar.h>
+
+#include <wtypes.h>
+#include <objidl.h>
+#include <oleidl.h>
 
 void
-win_write_clip(wchar *data, int *attr, int len)
+win_copy(wchar *data, int *attr, int len)
 {
   HGLOBAL clipdata, clipdata2, clipdata3;
   int len2;
@@ -42,7 +47,7 @@ win_write_clip(wchar *data, int *attr, int len)
 
   wchar unitab[256];
   char *rtf = null;
-  ubyte *tdata = (ubyte *) lock2;
+  uchar *tdata = (uchar *) lock2;
   wchar *udata = (wchar_t *) lock;
   int rtflen = 0, uindex = 0, tindex = 0;
   int rtfsize = 0;
@@ -342,49 +347,162 @@ win_write_clip(wchar *data, int *attr, int len)
     GlobalFree(clipdata);
     GlobalFree(clipdata2);
   }
-
   SendMessage(hwnd, WM_IGNORE_CLIP, false, 0);
 }
 
-void
-win_read_clip(wchar **sp, int *lp)
+static void
+paste_hdrop(HDROP drop)
 {
-  *sp = null;
-  if (!OpenClipboard(null))
-    return;
+  uint len = 0;
+  wchar *s = 0;
+  uint n = DragQueryFileW(drop, -1, 0, 0);
+  for (uint i = 0; i < n; i++) {
+    uint l = DragQueryFileW(drop, i, 0, 0);
+    s = renewn(s, len + l + 3); // 3 extra for quotes and space
+    wchar *name = s + len;
+    DragQueryFileW(drop, i, name + 1, l + 1);
+    name[0] = name[l + 1] = '"';
+    name[l + 2] = ' ';
+    len += l + 3;
+  }
+  len -= 1; // forget trailing space
+  term_paste(s, len);
+  free(s);
+}
 
-  HANDLE data;
-  HDROP drop;
-  
-  if ((data = GetClipboardData(CF_UNICODETEXT))) {
-    wchar *s = GlobalLock(data);
-    *lp = wcslen(s);
-    *sp = newn(wchar, *lp);
-    wmemcpy(*sp, s, *lp);
-    GlobalUnlock(data);
-  }
-  else if ((data = GetClipboardData(CF_TEXT))) {
-    char *s = GlobalLock(data);
-    *lp = MultiByteToWideChar(CP_ACP, 0, s, -1, 0, 0) - 1;
-    *sp = newn(wchar, *lp);
-    MultiByteToWideChar(CP_ACP, 0, s, -1, *sp, *lp);
-    GlobalUnlock(data);
-  }
-  else if ((drop = GetClipboardData(CF_HDROP))) {
-    uint len = 0;
-    wchar *s = 0;
-    uint n = DragQueryFileW(drop, -1, 0, 0);
-    for (uint i = 0; i < n; i++) {
-      uint l = DragQueryFileW(drop, i, 0, 0);
-      s = renewn(s, len + l + 3); // 3 extra for quotes and space
-      wchar *name = s + len;
-      DragQueryFileW(drop, i, name + 1, l + 1);
-      name[0] = name[l + 1] = '"';
-      name[l + 2] = ' ';
-      len += l + 3;
-    }
-    *lp = len - 1; // forget trailing space
-    *sp = s;
-  }
+static void
+paste_unicode_text(HANDLE data)
+{
+  wchar *s = GlobalLock(data);
+  uint l = wcslen(s);
+  term_paste(s, l);
+  GlobalUnlock(data);
+}
+
+static void
+paste_text(HANDLE data)
+{
+  char *cs = GlobalLock(data);
+  uint l = MultiByteToWideChar(CP_ACP, 0, cs, -1, 0, 0) - 1;
+  wchar *s = newn(wchar, l);
+  MultiByteToWideChar(CP_ACP, 0, cs, -1, s, l);
+  GlobalUnlock(data);
+  term_paste(s, l);
+  free(s);
+}
+
+void
+win_paste(void)
+{
+  if (!OpenClipboard(null))
+    return;  
+  HGLOBAL data;
+  if ((data = GetClipboardData(CF_HDROP)))
+    paste_hdrop(data);
+  else if ((data = GetClipboardData(CF_UNICODETEXT)))
+    paste_unicode_text(data);
+  else if ((data = GetClipboardData(CF_TEXT)))
+    paste_text(data);
   CloseClipboard();
+}
+
+static volatile long dt_ref_count;
+
+static FORMATETC dt_format = { 0, null, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+
+static __stdcall HRESULT
+dt_query_interface(IDropTarget *this, REFIID iid, void **p)
+{
+  if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_IDropTarget)) {
+    InterlockedIncrement(&dt_ref_count);
+    *p = this;
+    return S_OK;
+  }  
+  else {
+    *p = null;
+    return E_NOINTERFACE;
+  }
+}
+
+static __stdcall ULONG
+dt_add_ref(IDropTarget *unused(this))
+{ return InterlockedIncrement(&dt_ref_count); }
+
+static __stdcall ULONG
+dt_release(IDropTarget *unused(this))
+{ return InterlockedDecrement(&dt_ref_count); }
+
+static __stdcall HRESULT
+dt_drag_over(IDropTarget *unused(this),
+             DWORD keys, POINTL unused(pos), DWORD *effect_p)
+{
+  switch (dt_format.cfFormat) {
+    when CF_TEXT or CF_UNICODETEXT:
+      *effect_p =
+        *effect_p & (keys & MK_CONTROL ? DROPEFFECT_COPY : DROPEFFECT_MOVE)
+        ?: *effect_p & (DROPEFFECT_COPY | DROPEFFECT_MOVE);
+    when CF_HDROP:
+      *effect_p &= DROPEFFECT_LINK;
+    otherwise:
+      *effect_p = DROPEFFECT_NONE;
+  }
+  return S_OK;
+}
+  
+static bool
+try_format(IDataObject *obj, CLIPFORMAT format)
+{
+  dt_format.cfFormat = format; 
+  return obj->lpVtbl->QueryGetData(obj, &dt_format) == S_OK;
+}
+
+static __stdcall HRESULT
+dt_drag_enter(IDropTarget *this, IDataObject *obj,
+             DWORD keys, POINTL pos, DWORD *effect_p)
+{
+  try_format(obj, CF_HDROP) ||
+  try_format(obj, CF_UNICODETEXT) ||
+  try_format(obj, CF_TEXT) ||
+  (dt_format.cfFormat = 0);
+  return dt_drag_over(this, keys, pos, effect_p);
+}  
+  
+static __stdcall HRESULT
+dt_drag_leave(IDropTarget *unused(this))
+{ return S_OK; }
+
+static __stdcall HRESULT
+dt_drop(IDropTarget *this, IDataObject *obj,
+        DWORD keys, POINTL pos, DWORD *effect_p)
+{ 
+  dt_drag_enter(this, obj, keys, pos, effect_p);
+  if (!effect_p)
+    return 0;
+  STGMEDIUM stgmed;
+  if (obj->lpVtbl->GetData(obj, &dt_format, &stgmed) != S_OK)
+    return 0;
+  HGLOBAL data = stgmed.hGlobal;
+  if (!data)
+    return 0;
+  switch (dt_format.cfFormat) {
+    when CF_TEXT: paste_text(stgmed.hGlobal);
+    when CF_UNICODETEXT: paste_unicode_text(data);
+    when CF_HDROP: paste_hdrop(data);
+  }
+  return 0;
+}
+
+static IDropTargetVtbl
+dt_vtbl = {
+  dt_query_interface, dt_add_ref, dt_release,
+  dt_drag_enter, dt_drag_over, dt_drag_leave, dt_drop
+};
+
+static IDropTarget dt = { &dt_vtbl };
+
+void
+win_init_drop_target(void)
+{
+  OleInitialize(null);
+  RegisterDragDrop(hwnd, &dt);
 }

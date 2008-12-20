@@ -22,7 +22,7 @@ struct {
 } ldisc;
 
 static int
-plen(ubyte c)
+plen(uchar c)
 {
   if ((c >= 32 && c <= 126) || (c >= 160 && !term_in_utf()))
     return 1;
@@ -38,7 +38,7 @@ plen(ubyte c)
 }
 
 static void
-pwrite(ubyte c)
+pwrite(uchar c)
 {
   if ((c >= 32 && c <= 126) || (!term_in_utf() && c >= 0xA0) ||
       (term_in_utf() && c >= 0x80)) {
@@ -58,7 +58,7 @@ pwrite(ubyte c)
 }
 
 static int
-char_start(ubyte c)
+char_start(uchar c)
 {
   if (term_in_utf())
     return (c < 0x80 || c >= 0xC0);
@@ -135,8 +135,8 @@ ldisc_send(const char *buf, int len, int interactive)
             if (term_echoing())
               bsb(plen(ldisc.buf[ldisc.buflen - 1]));
             ldisc.buflen--;
-            if (ldisc.buflen > 0 && isspace((ubyte) ldisc.buf[ldisc.buflen - 1])
-                && !isspace((ubyte) ldisc.buf[ldisc.buflen]))
+            if (ldisc.buflen > 0 && isspace((uchar) ldisc.buf[ldisc.buflen - 1])
+                && !isspace((uchar) ldisc.buf[ldisc.buflen]))
               break;
           }
         when CTRL('R'):        /* redraw line */
@@ -176,7 +176,7 @@ ldisc_send(const char *buf, int len, int interactive)
           }
           ldisc.buf[ldisc.buflen++] = c;
           if (term_echoing())
-            pwrite((ubyte) c);
+            pwrite((uchar) c);
           ldisc.quotenext = false;
       }
     }

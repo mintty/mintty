@@ -228,7 +228,7 @@ update_sbar(void)
 void
 term_clear_scrollback(void)
 {
-  ubyte *line;
+  uchar *line;
   term.disptop = 0;
   while ((line = delpos234(term.scrollback, 0)))
     free(line); /* this is compressed data, not a termline */
@@ -324,7 +324,7 @@ term_resize(int newrows, int newcols)
   assert(term.rows == count234(term.screen));
   while (term.rows < newrows) {
     if (term.tempsblines > 0) {
-      ubyte *cline;
+      uchar *cline;
      /* Insert a line from the scrollback at the top of the screen. */
       assert(sblen >= term.tempsblines);
       cline = delpos234(term.scrollback, --sblen);
@@ -637,7 +637,7 @@ term_do_scroll(int topline, int botline, int lines, int sb)
         * the scrollback is full.
         */
         if (sblen == SAVELINES) {
-          ubyte *cline;
+          uchar *cline;
 
           sblen--;
           cline = delpos234(term.scrollback, 0);
@@ -991,7 +991,7 @@ term_paint(void)
      /* 'Real' blinking ? */
       if (term.blink_is_real && (tattr & ATTR_BLINK)) {
         if (term.has_focus && term.tblinker) {
-          tchar = ucsdata.unitab_line[(ubyte) ' '];
+          tchar = ucsdata.unitab_line[(uchar) ' '];
         }
         tattr &= ~ATTR_BLINK;
       }
@@ -1391,7 +1391,7 @@ term_copy(void)
             char buf[4];
             wchar wbuf[4];
             int rv;
-            if (is_dbcs_leadbyte(ucsdata.font_codepage, (ubyte) c)) {
+            if (is_dbcs_leadbyte(ucsdata.font_codepage, (uchar) c)) {
               buf[0] = c;
               buf[1] = (char) (0xFF & ldata->chars[start.x + 1].chr);
               rv = mb_to_wc(ucsdata.font_codepage, 0, buf, 2, wbuf, 4);
@@ -1432,22 +1432,14 @@ term_copy(void)
     clip_addchar(&buf, 0, 0);
 
  /* Finally, transfer all that to the clipboard. */
-  win_write_clip(buf.textbuf, buf.attrbuf, buf.bufpos);
+  win_copy(buf.textbuf, buf.attrbuf, buf.bufpos);
   free(buf.textbuf);
   free(buf.attrbuf);
 }
 
 void
-term_paste(void)
+term_paste(wchar *data, uint len)
 {
-  wchar *data;
-  int len;
-
-  win_read_clip(&data, &len);
-  
-  if (!data)
-    return;
-
   wchar *p, *q;
 
   term_seen_key_event();      /* pasted data counts */
@@ -1475,8 +1467,6 @@ term_paste(void)
     q = p;
   }
   
-  free(data);
-
  /* Assume a small paste will be OK in one go. */
   if (term.paste_len < 256) {
     luni_send(term.paste_buffer, term.paste_len, 0);

@@ -64,8 +64,8 @@ enum {
 };
 
 typedef struct {
-  ubyte type;
-  ubyte form_b;
+  uchar type;
+  uchar form_b;
 } shape_node;
 
 /* Kept near the actual table, for verification. */
@@ -122,7 +122,7 @@ static const shape_node shapetypes[] = {
  * Finds the index of a run with level equals tlevel
  */
 static int
-findIndexOfRun(ubyte * level, int start, int count, int tlevel)
+findIndexOfRun(uchar * level, int start, int count, int tlevel)
 {
   int i;
   for (i = start; i < count; i++) {
@@ -140,11 +140,11 @@ findIndexOfRun(ubyte * level, int start, int count, int tlevel)
  * Input:
  * from: text buffer, on which to apply flipping
  * level: resolved levels buffer
- * max: the maximum level found in this line (should be ubyte)
+ * max: the maximum level found in this line (should be uchar)
  * count: line size in bidi_char
  */
 static void
-flipThisRun(bidi_char * from, ubyte * level, int max, int count)
+flipThisRun(bidi_char * from, uchar * level, int max, int count)
 {
   int i, j, k, tlevel;
   bidi_char temp;
@@ -188,12 +188,12 @@ flipThisRun(bidi_char * from, ubyte * level, int max, int count)
  UnicodeData.txt
  
  */
-static ubyte
+static uchar
 getType(wchar ch)
 {
   static const struct {
     wchar first, last;
-    ubyte type;
+    uchar type;
   } lookup[] = {
     {0x0000, 0x0008, BN},  {0x0009, 0x0009, S},
     {0x000a, 0x000a, B},   {0x000b, 0x000b, S},
@@ -575,8 +575,8 @@ is_rtl(wchar c)
  * This function sets the override bits of level according
  * to the value in override, and reurns the new byte.
  */
-static ubyte
-setOverrideBits(ubyte level, ubyte override)
+static uchar
+setOverrideBits(uchar level, uchar override)
 {
   if (override == ON)
     return level;
@@ -593,10 +593,10 @@ setOverrideBits(ubyte level, ubyte override)
  * DIRECTIONAL FORMATTING.
  */
 static int
-getPreviousLevel(ubyte * level, int from)
+getPreviousLevel(uchar * level, int from)
 {
   if (from > 0) {
-    ubyte current = level[--from];
+    uchar current = level[--from];
 
     while (from >= 0 && level[from] == current)
       from--;
@@ -800,12 +800,12 @@ mirror(wchar c)
 int
 do_bidi(bidi_char * line, int count)
 {
-  ubyte *types;
-  ubyte *levels;
-  ubyte paragraphLevel;
-  ubyte currentEmbedding;
-  ubyte currentOverride;
-  ubyte tempType;
+  uchar *types;
+  uchar *levels;
+  uchar paragraphLevel;
+  uchar currentEmbedding;
+  uchar currentOverride;
+  uchar tempType;
   int i, j, imax, yes, bover;
 
  /* Check the presence of R or AL types as optimization */
@@ -821,8 +821,8 @@ do_bidi(bidi_char * line, int count)
     return L;
 
  /* Initialize types, levels */
-  types = newn(ubyte, count);
-  levels = newn(ubyte, count);
+  types = newn(uchar, count);
+  levels = newn(uchar, count);
 
  /* Rule (P1)  NOT IMPLEMENTED
   * P1. Split the text into separate paragraphs. A paragraph separator is

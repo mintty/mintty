@@ -320,7 +320,7 @@ staticwrap(ctrlpos * cp, HWND hwnd, char *text, int *lines)
     * the line at `nfit'.
     */
     for (j = nfit; j > 0; j--) {
-      if (isspace((ubyte) p[j])) {
+      if (isspace((uchar) p[j])) {
         nfit = j;
         break;
       }
@@ -331,7 +331,7 @@ staticwrap(ctrlpos * cp, HWND hwnd, char *text, int *lines)
     q += nfit + 1;
 
     p += nfit;
-    while (*p && isspace((ubyte) * p))
+    while (*p && isspace((uchar) * p))
       p++;
 
     nlines++;
@@ -622,12 +622,12 @@ shortcut_escape(const char *text, char shortcut)
     return null;        /* free won't choke on this */
 
   ret = newn(char, 2 * strlen(text) + 1);       /* size potentially doubles! */
-  shortcut = tolower((ubyte) shortcut);
+  shortcut = tolower((uchar) shortcut);
 
   p = text;
   q = ret;
   while (*p) {
-    if (shortcut != NO_SHORTCUT && tolower((ubyte) * p) == shortcut) {
+    if (shortcut != NO_SHORTCUT && tolower((uchar) * p) == shortcut) {
       *q++ = '&';
       shortcut = NO_SHORTCUT;   /* stop it happening twice */
     }
@@ -645,7 +645,7 @@ winctrl_add_shortcuts(dlgparam * dp, winctrl * c)
 {
   for (size_t i = 0; i < lenof(c->shortcuts); i++)
     if (c->shortcuts[i] != NO_SHORTCUT) {
-      ubyte s = tolower((ubyte) c->shortcuts[i]);
+      uchar s = tolower((uchar) c->shortcuts[i]);
       assert(!dp->shortcuts[s]);
       dp->shortcuts[s] = true;
     }
@@ -656,7 +656,7 @@ winctrl_rem_shortcuts(dlgparam * dp, winctrl * c)
 {
   for (size_t i = 0; i < lenof(c->shortcuts); i++)
     if (c->shortcuts[i] != NO_SHORTCUT) {
-      ubyte s = tolower((ubyte) c->shortcuts[i]);
+      uchar s = tolower((uchar) c->shortcuts[i]);
       assert(dp->shortcuts[s]);
       dp->shortcuts[s] = false;
     }
