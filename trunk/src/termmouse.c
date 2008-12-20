@@ -247,49 +247,45 @@ get_selpoint(pos p)
 void
 term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
 {
-  p = box_pos(p);
-  if (mods & CTRL) {
-    if (term.mouse_tracking) {
-      if (term.mouse_tracking == MT_X10)
-        mods = 0;
-      send_mouse_event(0x1F + b, mods, p);
-    }
+  bool target_override = mods & cfg.click_target_mod;
+  mods &= ~cfg.click_target_mod;
+  if (term.mouse_mode && cfg.click_targets_app ^ target_override) {
+    if (term.mouse_mode == MM_X10)
+      mods = 0;
+    send_mouse_event(0x1F + b, mods, box_pos(p));
     term.mouse_state = MS_CLICKED;
-    return;
   }
-  pos selpoint = get_selpoint(p);
-  if (b == MB_LEFT) {
+  else if (b == MBT_LEFT) {
     term.mouse_state = count;
+    p = get_selpoint(box_pos(p));
     if (count == 1) {
       term.sel_rect = mods & ALT;
       if (mods & SHIFT) {
         // Shift click: extend selection
         term.mouse_state = MS_SEL_CHAR;
-        sel_extend(selpoint);
+        sel_extend(p);
       }
       else {
         // Plain click: clear/start selection
         term.selected = false;
         term.sel_start = term.sel_end = (pos){0, 0};
-        term.sel_anchor = selpoint;
+        term.sel_anchor = p;
       }
     }
     else {
       // Double or triple-click: select whole word or line
       term.selected = true;
       term.sel_rect = false;
-      term.sel_start = term.sel_end = term.sel_anchor = selpoint;
+      term.sel_start = term.sel_end = term.sel_anchor = p;
       incpos(term.sel_end);
       sel_spread();
+      win_update();
     }
   }
-  else if (b == MB_MIDDLE) {
-    if (mods & SHIFT)
-      term_copy();
-    else
-      win_paste();
-  }
-  win_update();
+  else if (b == MBT_MIDDLE || (b == MBT_RIGHT && cfg.rmb_pastes && !mods))
+    win_paste();
+  else if (!(mods & ALT))
+    win_popup_menu();
 }
 
 void
@@ -297,7 +293,7 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
 {
   p = box_pos(p);
   if (term.mouse_state == MS_CLICKED) {
-    if (term.mouse_tracking >= MT_VT200)
+    if (term.mouse_mode >= MM_VT200)
       send_mouse_event(0x23, mods, p);
   }
   else if (term_selecting() && cfg.copy_on_select)
@@ -333,11 +329,11 @@ term_mouse_move(mouse_button b, mod_keys mods, pos p)
   }
   else {
     if (term.mouse_state == MS_CLICKED) {
-      if (term.mouse_tracking >= MT_BTN_EVENT)
+      if (term.mouse_mode >= MM_BTN_EVENT)
         send_mouse_event(0x3F + b, mods, bp);
     }
     else {
-      if (term.mouse_tracking == MT_ANY_EVENT)
+      if (term.mouse_mode == MM_ANY_EVENT)
         send_mouse_event(0x43, mods, bp);
     }
   }
@@ -350,7 +346,7 @@ term_mouse_wheel(int lines, mod_keys mods, pos p)
     return; // reserved for future use
   if (term.which_screen == 0)
     term_scroll(0, lines * (mods & SHIFT ? term.rows : 1));
-  else if (term.mouse_tracking) {
+  else if (term.mouse_mode) {
     // Send as mouse codes.
     char code = 0x60 | (lines > 0);
     for (int i = 0; i < abs(lines); i++)

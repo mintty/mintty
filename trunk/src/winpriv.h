@@ -11,7 +11,6 @@
 
 extern HWND hwnd;       // the main terminal window
 extern HINSTANCE hinst; // The all-important instance handle
-extern HMENU hmenu;
 
 enum {
   WM_IGNORE_CLIP = WM_APP + 2,
@@ -47,12 +46,16 @@ void win_enable_tip(void);
 void win_disable_tip(void);
 void win_update_tip(HWND src, int cx, int cy);
 
+void win_init_menu(void);
+void win_update_menu(void);
+
 void win_show_mouse(void);
 void win_hide_mouse(void);
 void win_mouse_click(mouse_button, WPARAM, LPARAM);
 void win_mouse_release(mouse_button, WPARAM, LPARAM);
 void win_mouse_wheel(WPARAM, LPARAM);
 void win_mouse_move(bool nc, WPARAM, LPARAM);
+
 bool win_key_press(WPARAM, LPARAM);
 
 void win_init_drop_target(void);

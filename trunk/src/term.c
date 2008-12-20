@@ -45,7 +45,7 @@ cblink_cb(void)
 void
 term_schedule_cblink(void)
 {
-  if (term.cfg.blink_cur && term.has_focus)
+  if (term.cfg.cursor_blinks && term.has_focus)
     win_set_timer(cblink_cb, cursor_blink_ticks());
   else
     term.cblinker = 1;  /* reset when not in use */
@@ -127,7 +127,7 @@ term_reset(void)
   term.editing = term.echoing = false;
   term.app_cursor_keys = false;
   term.use_bce = true;
-  term.blink_is_real = term.cfg.blinktext;
+  term.blink_is_real = term.cfg.text_blink;
   term.erase_char = term.basic_erase_char;
   term.which_screen = 0;
   term_print_finish();
@@ -198,12 +198,12 @@ term_reconfig(void)
   * default one. The full list is: Auto wrap mode, DEC Origin
   * Mode, BCE, blinking text, character classes.
   */
-  int reset_tblink = (term.cfg.blinktext != cfg.blinktext);
+  int reset_tblink = (term.cfg.text_blink != cfg.text_blink);
   
   term.cfg = cfg;       /* STRUCTURE COPY */
 
   if (reset_tblink) {
-    term.blink_is_real = term.cfg.blinktext;
+    term.blink_is_real = term.cfg.text_blink;
   }  
   if (!*term.cfg.printer) {
     term_print_finish();
@@ -863,14 +863,14 @@ term_paint(void)
   * screen array, disptop, scrtop,
   * selection, rv, 
   * cfg.blinkpc, blink_is_real, tblinker, 
-  * curs.y, curs.x, cblinker, cfg.blink_cur, cursor_on, has_focus, wrapnext
+  * curs.y, curs.x, cblinker, cfg.cursor_blinks, cursor_on, has_focus, wrapnext
   */
 
  /* Has the cursor position or type changed ? */
   int cursor;
   if (term.cursor_on) {
     if (term.has_focus) {
-      if (term.cblinker || !term.cfg.blink_cur)
+      if (term.cblinker || !term.cfg.cursor_blinks)
         cursor = TATTR_ACTCURS;
       else
         cursor = 0;

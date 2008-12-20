@@ -203,7 +203,7 @@ config_dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       r.left = 3;
       r.right = r.left + 64;
       r.top = 3;
-      r.bottom = r.top + 126;
+      r.bottom = r.top + 124;
       MapDialogRect(hwnd, &r);
       HWND treeview =
         CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, "",
