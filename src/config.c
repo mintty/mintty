@@ -1,6 +1,6 @@
 // config.c (part of MinTTY)
 // Copyright 2008 Andy Koppe
-// Based on code from PuTTY-0.60 by Simon Tatham.
+// Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "config.h"
@@ -192,7 +192,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offsetof(config, text_blink))
   );
 
-  s = ctrl_getset(b, "Looks", "curtype", "Cursor type");
+  s = ctrl_getset(b, "Looks", "curtype", "Cursor");
   ctrl_radiobuttons(
     s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
     I(offsetof(config, cursor_type)),
