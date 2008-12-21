@@ -24,7 +24,7 @@ win_init_menu(void)
              IDM_FULLSCREEN, "&Full Screen\tAlt+Enter");
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_OPTIONS, "&Options...");
-  AppendMenu(menu, MF_ENABLED, IDM_ABOUT, "&About ...");
+  AppendMenu(menu, MF_ENABLED, IDM_ABOUT, "&About...");
 
   HMENU sysmenu = GetSystemMenu(hwnd, false);
   InsertMenu(sysmenu, 0, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
