@@ -1,6 +1,6 @@
 // termmouse.c (part of MinTTY)
 // Copyright 2008 Andy Koppe
-// Based on code from PuTTY-0.60 by Simon Tatham.
+// Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "termpriv.h"
