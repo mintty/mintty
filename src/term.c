@@ -251,10 +251,8 @@ term_init(void)
   strcpy(term.id_string, "\033[?6c");
   term.inbuf = new_bufchain();
   term.printer_buf = new_bufchain();
-  term.has_focus = 1;
   term.state = TOPLEVEL;
   term.dispcursx = term.dispcursy = -1;
-  term_deselect();
   term.rows = term.cols = -1;
   term_reset();
   term.attr_mask = 0xffffffff;
@@ -1528,7 +1526,6 @@ void
 term_deselect(void)
 {
   term.selected = false;
-  term.sel_start.x = term.sel_start.y = term.sel_end.x = term.sel_end.y = 0;
 }
 
 void

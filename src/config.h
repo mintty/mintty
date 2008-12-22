@@ -20,6 +20,8 @@ enum { CUR_BLOCK, CUR_UNDERLINE, CUR_LINE };
 
 enum { FQ_DEFAULT, FQ_ANTIALIASED, FQ_NONANTIALIASED, FQ_CLEARTYPE };
 
+enum { RC_SHOWMENU, RC_PASTE, RC_EXTEND };
+
 typedef struct {
   int copy_on_select;
   int escape_sends_fs;
@@ -33,7 +35,7 @@ typedef struct {
   int scroll_mod;
   int click_targets_app;
   int click_target_mod;
-  int rmb_pastes;
+  int right_click_action;
   int text_blink;
   int rows, cols;
   char printer[128];
