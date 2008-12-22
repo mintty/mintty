@@ -274,16 +274,22 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Mouse", "Mouse");
 
-  s = ctrl_getset(b, "Mouse", "copypaste", "Copy && paste");
+  s = ctrl_getset(b, "Mouse", "rightclick", "Right click action");
+  ctrl_radiobuttons(
+    s, null, '\0', 3, P(0), dlg_stdradiobutton_handler,
+    I(offsetof(config, right_click_action)),
+    "Paste", '\0', I(RC_PASTE),
+    "Extend", '\0', I(RC_EXTEND),
+    "Show menu", '\0', I(RC_SHOWMENU),
+    null
+  );
+  
+  s = ctrl_getset(b, "Mouse", "selectcopy", null);
   ctrl_checkbox(
     s, "Copy on select", '\0', P(0),
     dlg_stdcheckbox_handler, I(offsetof(config, copy_on_select))
   );
-  ctrl_checkbox(
-    s, "Right click pastes", '\0', P(0),
-    dlg_stdcheckbox_handler, I(offsetof(config, rmb_pastes))
-  );
-  
+
   s = ctrl_getset(b, "Mouse", "mousemode", "Application mouse mode");
   ctrl_radiobuttons(
     s, "Default click target", '\0', 3, P(0), dlg_stdradiobutton_handler,
@@ -360,7 +366,7 @@ save_config(void)
   write_string_setting("Printer", cfg.printer);
   write_int_setting("Scrollbar", cfg.scrollbar);
   write_int_setting("ScrollMod", cfg.scroll_mod);
-  write_int_setting("RightClickPastes", cfg.rmb_pastes);
+  write_int_setting("RightClickAction", cfg.right_click_action);
   write_int_setting("ClickTargetsApp", cfg.click_targets_app);
   write_int_setting("ClickTargetMod", cfg.click_target_mod);
   close_settings_w();
@@ -401,7 +407,7 @@ load_config(void)
   read_string_setting("Printer", "", cfg.printer, sizeof cfg.printer);
   read_int_setting("Scrollbar", false, &cfg.scrollbar);
   read_int_setting("ScrollMod", SHIFT, &cfg.scroll_mod);
-  read_int_setting("RightClickPastes", false, &cfg.rmb_pastes);
+  read_int_setting("RightClickAction", RC_SHOWMENU, &cfg.right_click_action);
   read_int_setting("ClickTargetsApp", false, &cfg.click_targets_app);
   read_int_setting("ClickTargetMod", CTRL, &cfg.click_target_mod);
 

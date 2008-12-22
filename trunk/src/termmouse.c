@@ -209,7 +209,7 @@ static void
 send_mouse_event(char code, mod_keys mods, pos p)
 {
   char buf[6] = "\e[M";
-  buf[3] = code | (mods & ~CTRL);  // ctrl is ignored
+  buf[3] = code | mods;
   buf[4] = p.x + 33;
   buf[5] = p.y + 33;
   ldisc_send(buf, 6, 0);
@@ -249,28 +249,31 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
 {
   bool target_override = mods & cfg.click_target_mod;
   mods &= ~cfg.click_target_mod;
+  int rca = cfg.right_click_action;
   if (term.mouse_mode && cfg.click_targets_app ^ target_override) {
     if (term.mouse_mode == MM_X10)
       mods = 0;
     send_mouse_event(0x1F + b, mods, box_pos(p));
     term.mouse_state = MS_CLICKED;
+  }  
+  else if (b == MBT_RIGHT && (rca == RC_SHOWMENU || mods & (SHIFT | CTRL))) {
+    if (!(mods & ALT)) 
+      win_popup_menu();
   }
-  else if (b == MBT_LEFT) {
-    term.mouse_state = count;
+  else if (b == MBT_MIDDLE || (b == MBT_RIGHT && rca == RC_PASTE)) {
+    if (!(mods & ALT)) 
+      win_paste();
+  }
+  else {
+    // Only left clicks and extending right clicks should get here.
     p = get_selpoint(box_pos(p));
-    if (count == 1) {
-      term.sel_rect = mods & ALT;
-      if (mods & SHIFT) {
-        // Shift click: extend selection
-        term.mouse_state = MS_SEL_CHAR;
-        sel_extend(p);
-      }
-      else {
-        // Plain click: clear/start selection
-        term.selected = false;
-        term.sel_start = term.sel_end = (pos){0, 0};
-        term.sel_anchor = p;
-      }
+    term.mouse_state = count;
+    term.sel_rect = mods & ALT;
+    if (b == MBT_RIGHT || mods & (SHIFT | CTRL))
+      sel_extend(p);
+    else if (count == 1) {
+      term.selected = false;
+      term.sel_anchor = p;
     }
     else {
       // Double or triple-click: select whole word or line
@@ -279,13 +282,9 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
       term.sel_start = term.sel_end = term.sel_anchor = p;
       incpos(term.sel_end);
       sel_spread();
-      win_update();
     }
+    win_update();
   }
-  else if (b == MBT_MIDDLE || (b == MBT_RIGHT && cfg.rmb_pastes && !mods))
-    win_paste();
-  else if (!(mods & ALT))
-    win_popup_menu();
 }
 
 void
@@ -307,7 +306,8 @@ sel_scroll_cb(void)
   if (term_selecting() && term.sel_scroll != 0) {
     term_scroll(0, term.sel_scroll);
     sel_drag(get_selpoint(term.sel_pos));
-    win_set_timer(sel_scroll_cb, 200);
+    win_update();
+    win_set_timer(sel_scroll_cb, 150);
   }
 }
 
