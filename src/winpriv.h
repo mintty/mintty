@@ -9,8 +9,8 @@
 #include <wingdi.h>
 #include <winuser.h>
 
-extern HWND hwnd;       // the main terminal window
-extern HINSTANCE hinst; // The all-important instance handle
+extern HWND wnd;       // the main terminal window
+extern HINSTANCE inst; // The all-important instance handle
 
 enum {
   WM_IGNORE_CLIP = WM_APP + 2,

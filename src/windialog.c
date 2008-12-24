@@ -43,7 +43,7 @@ static dlgparam dp;
 #define PRINTER_DISABLED_STRING "None (printing disabled)"
 
 static void
-force_normal(HWND hwnd)
+force_normal(HWND wnd)
 {
   static int recurse = 0;
 
@@ -54,15 +54,15 @@ force_normal(HWND hwnd)
   recurse = 1;
 
   wp.length = sizeof (wp);
-  if (GetWindowPlacement(hwnd, &wp) && wp.showCmd == SW_SHOWMAXIMIZED) {
+  if (GetWindowPlacement(wnd, &wp) && wp.showCmd == SW_SHOWMAXIMIZED) {
     wp.showCmd = SW_SHOWNORMAL;
-    SetWindowPlacement(hwnd, &wp);
+    SetWindowPlacement(wnd, &wp);
   }
   recurse = 0;
 }
 
 static int
-SaneDialogBox(HINSTANCE hinst, LPCTSTR tmpl, HWND hwndparent,
+SaneDialogBox(HINSTANCE inst, LPCTSTR tmpl, HWND wndparent,
               DLGPROC lpDialogFunc)
 {
   WNDCLASS wc;
@@ -70,23 +70,23 @@ SaneDialogBox(HINSTANCE hinst, LPCTSTR tmpl, HWND hwndparent,
   wc.lpfnWndProc = DefDlgProc;
   wc.cbClsExtra = 0;
   wc.cbWndExtra = DLGWINDOWEXTRA + 2 * sizeof (LONG_PTR);
-  wc.hInstance = hinst;
+  wc.hInstance = inst;
   wc.hIcon = null;
   wc.hCursor = LoadCursor(null, IDC_ARROW);
   wc.hbrBackground = (HBRUSH) (COLOR_BACKGROUND + 1);
   wc.lpszMenuName = null;
   wc.lpszClassName = "ConfigBox";
   RegisterClass(&wc);
-  HWND hwnd = CreateDialog(hinst, tmpl, hwndparent, lpDialogFunc);
+  HWND wnd = CreateDialog(inst, tmpl, wndparent, lpDialogFunc);
 
-  SetWindowLongPtr(hwnd, BOXFLAGS, 0);  /* flags */
-  SetWindowLongPtr(hwnd, BOXRESULT, 0); /* result from SaneEndDialog */
+  SetWindowLongPtr(wnd, BOXFLAGS, 0);  /* flags */
+  SetWindowLongPtr(wnd, BOXRESULT, 0); /* result from SaneEndDialog */
 
   MSG msg;
   int gm;
   while ((gm = GetMessage(&msg, null, 0, 0)) > 0) {
-    uint flags = GetWindowLongPtr(hwnd, BOXFLAGS);
-    if (!(flags & DF_END) && !IsDialogMessage(hwnd, &msg))
+    uint flags = GetWindowLongPtr(wnd, BOXFLAGS);
+    if (!(flags & DF_END) && !IsDialogMessage(wnd, &msg))
       DispatchMessage(&msg);
     if (flags & DF_END)
       break;
@@ -95,16 +95,16 @@ SaneDialogBox(HINSTANCE hinst, LPCTSTR tmpl, HWND hwndparent,
   if (gm == 0)
     PostQuitMessage(msg.wParam);        /* We got a WM_QUIT, pass it on */
 
-  int ret = GetWindowLongPtr(hwnd, BOXRESULT);
-  DestroyWindow(hwnd);
+  int ret = GetWindowLongPtr(wnd, BOXRESULT);
+  DestroyWindow(wnd);
   return ret;
 }
 
 static void
-SaneEndDialog(HWND hwnd, int ret)
+SaneEndDialog(HWND wnd, int ret)
 {
-  SetWindowLongPtr(hwnd, BOXRESULT, ret);
-  SetWindowLongPtr(hwnd, BOXFLAGS, DF_END);
+  SetWindowLongPtr(wnd, BOXRESULT, ret);
+  SetWindowLongPtr(wnd, BOXFLAGS, DF_END);
 }
 
 enum {
@@ -145,7 +145,7 @@ treeview_insert(treeview_faff * faff, int level, char *text, char *path)
  * Create the panelfuls of controls in the configuration box.
  */
 static void
-create_controls(HWND hwnd, char *path)
+create_controls(HWND wnd, char *path)
 {
   ctrlpos cp;
   int index;
@@ -156,7 +156,7 @@ create_controls(HWND hwnd, char *path)
    /*
     * Here we must create the basic standard controls.
     */
-    ctrlposinit(&cp, hwnd, 3, 3, 135);
+    ctrlposinit(&cp, wnd, 3, 3, 135);
     wc = &ctrls_base;
     base_id = IDCX_STDBASE;
   }
@@ -165,7 +165,7 @@ create_controls(HWND hwnd, char *path)
     * Otherwise, we're creating the controls for a particular
     * panel.
     */
-    ctrlposinit(&cp, hwnd, 69, 3, 3);
+    ctrlposinit(&cp, wnd, 69, 3, 3);
     wc = &ctrls_panel;
     base_id = IDCX_PANELBASE;
   }
@@ -182,37 +182,37 @@ create_controls(HWND hwnd, char *path)
  * dialog processing should be performed, and 1 if it should not.)
  */
 static int CALLBACK
-config_dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   switch (msg) {
     when WM_INITDIALOG: {
       RECT r;
-      GetWindowRect(GetParent(hwnd), &r);
-      dp.hwnd = hwnd;
-      create_controls(hwnd, "");        /* Open and Cancel buttons etc */
-      SetWindowText(hwnd, dp.wintitle);
-      SetWindowLongPtr(hwnd, GWLP_USERDATA, 0);
-      SendMessage(hwnd, WM_SETICON, (WPARAM) ICON_BIG,
-                  (LPARAM) LoadIcon(hinst, MAKEINTRESOURCE(IDI_MAINICON)));
+      GetWindowRect(GetParent(wnd), &r);
+      dp.wnd = wnd;
+      create_controls(wnd, "");        /* Open and Cancel buttons etc */
+      SetWindowText(wnd, dp.wintitle);
+      SetWindowLongPtr(wnd, GWLP_USERDATA, 0);
+      SendMessage(wnd, WM_SETICON, (WPARAM) ICON_BIG,
+                  (LPARAM) LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON)));
 
      /*
       * Create the tree view.
       */
-      WPARAM font = SendMessage(hwnd, WM_GETFONT, 0, 0);
+      WPARAM font = SendMessage(wnd, WM_GETFONT, 0, 0);
 
       r.left = 3;
       r.right = r.left + 64;
       r.top = 3;
       r.bottom = r.top + 124;
-      MapDialogRect(hwnd, &r);
+      MapDialogRect(wnd, &r);
       HWND treeview =
         CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, "",
                        WS_CHILD | WS_VISIBLE | WS_TABSTOP | TVS_HASLINES |
                        TVS_DISABLEDRAGDROP | TVS_HASBUTTONS | TVS_LINESATROOT
                        | TVS_SHOWSELALWAYS, r.left, r.top, r.right - r.left,
-                       r.bottom - r.top, hwnd, (HMENU) IDCX_TREEVIEW, hinst,
+                       r.bottom - r.top, wnd, (HMENU) IDCX_TREEVIEW, inst,
                        null);
-      font = SendMessage(hwnd, WM_GETFONT, 0, 0);
+      font = SendMessage(wnd, WM_GETFONT, 0, 0);
       SendMessage(treeview, WM_SETFONT, font, MAKELPARAM(true, 0));
       treeview_faff tvfaff;
       tvfaff.treeview = treeview;
@@ -277,7 +277,7 @@ config_dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
           break;
         }
       }
-      SetWindowLongPtr(hwnd, GWLP_USERDATA, 1);
+      SetWindowLongPtr(wnd, GWLP_USERDATA, 1);
     }
     when WM_LBUTTONUP:
      /*
@@ -286,7 +286,7 @@ config_dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       */
       ReleaseCapture();
       if (dp.ended)
-        SaneEndDialog(hwnd, dp.endresult ? 1 : 0);
+        SaneEndDialog(wnd, dp.endresult ? 1 : 0);
     when WM_NOTIFY: {
       if (LOWORD(wParam) == IDCX_TREEVIEW &&
           ((LPNMHDR) lParam)->code == TVN_SELCHANGED) {
@@ -294,7 +294,7 @@ config_dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         TVITEM item;
         char buffer[64];
 
-        SendMessage(hwnd, WM_SETREDRAW, false, 0);
+        SendMessage(wnd, WM_SETREDRAW, false, 0);
 
         item.hItem = i;
         item.pszText = buffer;
@@ -309,7 +309,7 @@ config_dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
           while ((c = winctrl_findbyindex(&ctrls_panel, 0)) != null) {
             for (k = 0; k < c->num_ids; k++) {
-              item = GetDlgItem(hwnd, c->base_id + k);
+              item = GetDlgItem(wnd, c->base_id + k);
               if (item)
                 DestroyWindow(item);
             }
@@ -319,30 +319,30 @@ config_dialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             free(c);
           }
         }
-        create_controls(hwnd, (char *) item.lParam);
+        create_controls(wnd, (char *) item.lParam);
         dlg_refresh(null, &dp); /* set up control values */
-        SendMessage(hwnd, WM_SETREDRAW, true, 0);
-        InvalidateRect(hwnd, null, true);
+        SendMessage(wnd, WM_SETREDRAW, true, 0);
+        InvalidateRect(wnd, null, true);
         SetFocus(((LPNMHDR) lParam)->hwndFrom); /* ensure focus stays */
       }
     }
     
     when WM_CLOSE:
-      SaneEndDialog(hwnd, 0);
+      SaneEndDialog(wnd, 0);
 
      /* Grrr Explorer will maximize Dialogs! */
     when WM_SIZE:
       if (wParam == SIZE_MAXIMIZED)
-        force_normal(hwnd);
+        force_normal(wnd);
 
     otherwise:
      /*
       * Only process WM_COMMAND once the dialog is fully formed.
       */
-      if (GetWindowLongPtr(hwnd, GWLP_USERDATA) == 1) {
+      if (GetWindowLongPtr(wnd, GWLP_USERDATA) == 1) {
         int ret = winctrl_handle_command(&dp, msg, wParam, lParam);
-        if (dp.ended && GetCapture() != hwnd)
-          SaneEndDialog(hwnd, dp.endresult ? 1 : 0);
+        if (dp.ended && GetCapture() != wnd)
+          SaneEndDialog(wnd, dp.endresult ? 1 : 0);
         return ret;
       }    
   }
@@ -365,8 +365,8 @@ win_config(void)
   dp.data = &cfg;
 
   int ret = 
-    SaneDialogBox(hinst, MAKEINTRESOURCE(IDD_MAINBOX), 
-                  hwnd, config_dialog_proc);
+    SaneDialogBox(inst, MAKEINTRESOURCE(IDD_MAINBOX), 
+                  wnd, config_dialog_proc);
 
   ctrl_free_box(ctrlbox);
   winctrl_cleanup(&ctrls_base);
@@ -384,13 +384,13 @@ win_about(void)
 {
   MSGBOXPARAMS params = {
     .cbSize = sizeof(MSGBOXPARAMS),
-    .hwndOwner = hwnd,
-    .hInstance = hinst,
+    .hwndOwner = wnd,
+    .hInstance = inst,
     .lpszCaption = "About " APPNAME,
     .dwStyle = MB_USERICON | MB_OKCANCEL | MB_DEFBUTTON2,
     .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
     .lpszText = APPNAME " " VERSION "\n" COPYRIGHT "\n" APPINFO
   };
   if (MessageBoxIndirect(&params) == IDOK)
-    ShellExecute(hwnd, "open", WEBSITE, 0, 0, SW_SHOWDEFAULT);
+    ShellExecute(wnd, "open", WEBSITE, 0, 0, SW_SHOWDEFAULT);
 }

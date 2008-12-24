@@ -44,18 +44,18 @@
 #define PROGBARHEIGHT 14
 
 void
-ctrlposinit(ctrlpos * cp, HWND hwnd, int leftborder, int rightborder,
+ctrlposinit(ctrlpos * cp, HWND wnd, int leftborder, int rightborder,
            int topborder)
 {
   RECT r, r2;
-  cp->hwnd = hwnd;
-  cp->font = SendMessage(hwnd, WM_GETFONT, 0, 0);
+  cp->wnd = wnd;
+  cp->font = SendMessage(wnd, WM_GETFONT, 0, 0);
   cp->ypos = topborder;
-  GetClientRect(hwnd, &r);
+  GetClientRect(wnd, &r);
   r2.left = r2.top = 0;
   r2.right = 4;
   r2.bottom = 8;
-  MapDialogRect(hwnd, &r2);
+  MapDialogRect(wnd, &r2);
   cp->dlu4inpix = r2.right;
   cp->width = (r.right * 4) / (r2.right) - 2 * GAPBETWEEN;
   cp->xoff = leftborder;
@@ -74,16 +74,16 @@ doctl(ctrlpos * cp, RECT r, char *wclass, int wstyle, int exstyle,
   */
 
   r.left += cp->xoff;
-  MapDialogRect(cp->hwnd, &r);
+  MapDialogRect(cp->wnd, &r);
 
  /*
-  * We can pass in cp->hwnd == null, to indicate a dry run
+  * We can pass in cp->wnd == null, to indicate a dry run
   * without creating any actual controls.
   */
-  if (cp->hwnd) {
+  if (cp->wnd) {
     ctl =
       CreateWindowEx(exstyle, wclass, wtext, wstyle, r.left, r.top, r.right,
-                     r.bottom, cp->hwnd, (HMENU) wid, hinst, null);
+                     r.bottom, cp->wnd, (HMENU) wid, inst, null);
     SendMessage(ctl, WM_SETFONT, cp->font, MAKELPARAM(true, 0));
 
     if (!strcmp(wclass, "LISTBOX")) {
@@ -265,9 +265,9 @@ checkbox(ctrlpos * cp, char *text, int id)
  * returns the number of lines required.
  */
 static char *
-staticwrap(ctrlpos * cp, HWND hwnd, char *text, int *lines)
+staticwrap(ctrlpos * cp, HWND wnd, char *text, int *lines)
 {
-  HDC hdc = GetDC(hwnd);
+  HDC dc = GetDC(wnd);
   int width, nlines, j;
   INT *pwidths, nfit;
   SIZE size;
@@ -285,10 +285,10 @@ staticwrap(ctrlpos * cp, HWND hwnd, char *text, int *lines)
   * the same adjustment that the `statictext' function itself
   * will perform.
   */
-  SetMapMode(hdc, MM_TEXT);     /* ensure logical units == pixels */
+  SetMapMode(dc, MM_TEXT);     /* ensure logical units == pixels */
   r.left = r.top = r.bottom = 0;
   r.right = cp->width;
-  MapDialogRect(hwnd, &r);
+  MapDialogRect(wnd, &r);
   width = r.right;
 
   nlines = 1;
@@ -297,11 +297,11 @@ staticwrap(ctrlpos * cp, HWND hwnd, char *text, int *lines)
   * We must select the correct font into the HDC before calling
   * GetTextExtent*, or silly things will happen.
   */
-  newfont = (HFONT) SendMessage(hwnd, WM_GETFONT, 0, 0);
-  oldfont = SelectObject(hdc, newfont);
+  newfont = (HFONT) SendMessage(wnd, WM_GETFONT, 0, 0);
+  oldfont = SelectObject(dc, newfont);
 
   while (*p) {
-    if (!GetTextExtentExPoint(hdc, p, strlen(p), width, &nfit, pwidths, &size)
+    if (!GetTextExtentExPoint(dc, p, strlen(p), width, &nfit, pwidths, &size)
         || (size_t) nfit >= strlen(p)) {
      /*
       * Either GetTextExtentExPoint returned failure, or the
@@ -337,8 +337,8 @@ staticwrap(ctrlpos * cp, HWND hwnd, char *text, int *lines)
     nlines++;
   }
 
-  SelectObject(hdc, oldfont);
-  ReleaseDC(cp->hwnd, hdc);
+  SelectObject(dc, oldfont);
+  ReleaseDC(cp->wnd, dc);
 
   if (lines)
     *lines = nlines;
@@ -426,8 +426,8 @@ button(ctrlpos * cp, char *btext, int bid, int defbtn)
 
  /* Q67655: the _dialog box_ must know which button is default
   * as well as the button itself knowing */
-  if (defbtn && cp->hwnd)
-    SendMessage(cp->hwnd, DM_SETDEFID, bid, 0);
+  if (defbtn && cp->wnd)
+    SendMessage(cp->wnd, DM_SETDEFID, bid, 0);
 
   doctl(cp, r, "BUTTON",
         BS_NOTIFY | WS_CHILD | WS_VISIBLE | WS_TABSTOP | (defbtn ?
@@ -921,7 +921,7 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
 
      /*
       * If this control is to be tabdelayed, add it to the
-      * tabdelay list, and unset pos.hwnd to inhibit actual
+      * tabdelay list, and unset pos.wnd to inhibit actual
       * control creation.
       */
       if (ctrl->tabdelayed) {
@@ -929,7 +929,7 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
         tabdelays[ntabdelays] = pos;    /* structure copy */
         tabdelayed[ntabdelays] = ctrl;
         ntabdelays++;
-        pos.hwnd = null;
+        pos.wnd = null;
       }
     }
 
@@ -951,7 +951,7 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
       when CTRL_TEXT: {
         num_ids = 1;
         int lines;
-        char *wrapped = staticwrap(&pos, cp->hwnd, ctrl->label, &lines);
+        char *wrapped = staticwrap(&pos, cp->wnd, ctrl->label, &lines);
         char *escaped = shortcut_escape(wrapped, NO_SHORTCUT);
         statictext(&pos, escaped, lines, base_id);
         free(escaped);
@@ -1055,7 +1055,7 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
             percent += ctrl->listbox.percentages[i];
             tabarray[i] = width * percent / 10000;
           }
-          SendDlgItemMessage(cp->hwnd, base_id + 1, LB_SETTABSTOPS,
+          SendDlgItemMessage(cp->wnd, base_id + 1, LB_SETTABSTOPS,
                              ctrl->listbox.ncols - 1, (LPARAM) tabarray);
           free(tabarray);
         }
@@ -1081,7 +1081,7 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
     * the dialog ID counter, if it's actually been created
     * (and isn't tabdelayed).
     */
-    if (pos.hwnd) {
+    if (pos.wnd) {
       winctrl *c = new(winctrl);
 
       c->ctrl = ctrl;
@@ -1165,15 +1165,15 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
     * Owner-draw request for a panel title.
     */
     LPDRAWITEMSTRUCT di = (LPDRAWITEMSTRUCT) lParam;
-    HDC hdc = di->hDC;
+    HDC dc = di->hDC;
     RECT r = di->rcItem;
     SIZE s;
 
-    SetMapMode(hdc, MM_TEXT);   /* ensure logical units == pixels */
+    SetMapMode(dc, MM_TEXT);   /* ensure logical units == pixels */
 
-    GetTextExtentPoint32(hdc, (char *) c->data, strlen((char *) c->data), &s);
-    DrawEdge(hdc, &r, EDGE_ETCHED, BF_ADJUST | BF_RECT);
-    TextOut(hdc, r.left + (r.right - r.left - s.cx) / 2,
+    GetTextExtentPoint32(dc, (char *) c->data, strlen((char *) c->data), &s);
+    DrawEdge(dc, &r, EDGE_ETCHED, BF_ADJUST | BF_RECT);
+    TextOut(dc, r.left + (r.right - r.left - s.cx) / 2,
             r.top + (r.bottom - r.top - s.cy) / 2, (char *) c->data,
             strlen((char *) c->data));
 
@@ -1217,14 +1217,14 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
           char *text;
 
           index =
-            SendDlgItemMessage(dp->hwnd, c->base_id + 1, CB_GETCURSEL, 0, 0);
+            SendDlgItemMessage(dp->wnd, c->base_id + 1, CB_GETCURSEL, 0, 0);
           len =
-            SendDlgItemMessage(dp->hwnd, c->base_id + 1, CB_GETLBTEXTLEN, index,
+            SendDlgItemMessage(dp->wnd, c->base_id + 1, CB_GETLBTEXTLEN, index,
                                0);
           text = newn(char, len + 1);
-          SendDlgItemMessage(dp->hwnd, c->base_id + 1, CB_GETLBTEXT, index,
+          SendDlgItemMessage(dp->wnd, c->base_id + 1, CB_GETLBTEXT, index,
                              (LPARAM) text);
-          SetDlgItemText(dp->hwnd, c->base_id + 1, text);
+          SetDlgItemText(dp->wnd, c->base_id + 1, text);
           free(text);
           ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
         }
@@ -1250,7 +1250,7 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
       */
       if (msg == WM_COMMAND &&
           (HIWORD(wParam) == BN_CLICKED || HIWORD(wParam) == BN_DOUBLECLICKED)
-          && IsDlgButtonChecked(dp->hwnd, LOWORD(wParam))) {
+          && IsDlgButtonChecked(dp->wnd, LOWORD(wParam))) {
         ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
       }
     when CTRL_CHECKBOX:
@@ -1282,7 +1282,7 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
           (HIWORD(wParam) == BN_SETFOCUS || HIWORD(wParam) == BN_KILLFOCUS))
         winctrl_set_focus(ctrl, dp, HIWORD(wParam) == BN_SETFOCUS);
       if (msg == WM_COMMAND && HIWORD(wParam) == LBN_DBLCLK) {
-        SetCapture(dp->hwnd);
+        SetCapture(dp->wnd);
         ctrl->handler(ctrl, dp, dp->data, EVENT_ACTION);
       }
       else if (msg == WM_COMMAND && HIWORD(wParam) == LBN_SELCHANGE) {
@@ -1297,10 +1297,10 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
            (HIWORD(wParam) == BN_CLICKED ||
             HIWORD(wParam) == BN_DOUBLECLICKED))) {
         font_spec fs = *(font_spec *) c->data;
-        HDC hdc = GetDC(0);
+        HDC dc = GetDC(0);
         LOGFONT lf;
-        lf.lfHeight = -MulDiv(fs.height, GetDeviceCaps(hdc, LOGPIXELSY), 72);
-        ReleaseDC(0, hdc);
+        lf.lfHeight = -MulDiv(fs.height, GetDeviceCaps(dc, LOGPIXELSY), 72);
+        ReleaseDC(0, dc);
         lf.lfWidth = lf.lfEscapement = lf.lfOrientation = 0;
         lf.lfItalic = lf.lfUnderline = lf.lfStrikeOut = 0;
         lf.lfWeight = (fs.isbold ? FW_BOLD : 0);
@@ -1314,7 +1314,7 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
 
         CHOOSEFONT cf;
         cf.lStructSize = sizeof (cf);
-        cf.hwndOwner = dp->hwnd;
+        cf.hwndOwner = dp->wnd;
         cf.lpLogFont = &lf;
         cf.Flags =
           CF_FIXEDPITCHONLY | CF_FORCEFONTEXIST | CF_INITTOLOGFONTSTRUCT |
@@ -1341,8 +1341,8 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
     static CHOOSECOLOR cc;
     static DWORD custom[16] = { 0 };    /* zero initialisers */
     cc.lStructSize = sizeof (cc);
-    cc.hwndOwner = dp->hwnd;
-    cc.hInstance = (HWND) hinst;
+    cc.hwndOwner = dp->wnd;
+    cc.hInstance = (HWND) inst;
     cc.lpCustColors = custom;
     cc.rgbResult =
       RGB(dp->coloursel_result.red, dp->coloursel_result.green,
@@ -1386,7 +1386,7 @@ dlg_radiobutton_set(control *ctrl, void *dlg, int whichbutton)
   dlgparam *dp = (dlgparam *) dlg;
   winctrl *c = dlg_findbyctrl(dp, ctrl);
   assert(c && c->ctrl->type == CTRL_RADIO);
-  CheckRadioButton(dp->hwnd, c->base_id + 1,
+  CheckRadioButton(dp->wnd, c->base_id + 1,
                    c->base_id + c->ctrl->radio.nbuttons,
                    c->base_id + 1 + whichbutton);
 }
@@ -1399,7 +1399,7 @@ dlg_radiobutton_get(control *ctrl, void *dlg)
   int i;
   assert(c && c->ctrl->type == CTRL_RADIO);
   for (i = 0; i < c->ctrl->radio.nbuttons; i++)
-    if (IsDlgButtonChecked(dp->hwnd, c->base_id + 1 + i))
+    if (IsDlgButtonChecked(dp->wnd, c->base_id + 1 + i))
       return i;
   assert(!"No radio button was checked?!");
   return 0;
@@ -1411,7 +1411,7 @@ dlg_checkbox_set(control *ctrl, void *dlg, int checked)
   dlgparam *dp = (dlgparam *) dlg;
   winctrl *c = dlg_findbyctrl(dp, ctrl);
   assert(c && c->ctrl->type == CTRL_CHECKBOX);
-  CheckDlgButton(dp->hwnd, c->base_id, (checked != 0));
+  CheckDlgButton(dp->wnd, c->base_id, (checked != 0));
 }
 
 int
@@ -1420,7 +1420,7 @@ dlg_checkbox_get(control *ctrl, void *dlg)
   dlgparam *dp = (dlgparam *) dlg;
   winctrl *c = dlg_findbyctrl(dp, ctrl);
   assert(c && c->ctrl->type == CTRL_CHECKBOX);
-  return 0 != IsDlgButtonChecked(dp->hwnd, c->base_id);
+  return 0 != IsDlgButtonChecked(dp->wnd, c->base_id);
 }
 
 void
@@ -1429,7 +1429,7 @@ dlg_editbox_set(control *ctrl, void *dlg, char const *text)
   dlgparam *dp = (dlgparam *) dlg;
   winctrl *c = dlg_findbyctrl(dp, ctrl);
   assert(c && c->ctrl->type == CTRL_EDITBOX);
-  SetDlgItemText(dp->hwnd, c->base_id + 1, text);
+  SetDlgItemText(dp->wnd, c->base_id + 1, text);
 }
 
 void
@@ -1438,7 +1438,7 @@ dlg_editbox_get(control *ctrl, void *dlg, char *buffer, int length)
   dlgparam *dp = (dlgparam *) dlg;
   winctrl *c = dlg_findbyctrl(dp, ctrl);
   assert(c && c->ctrl->type == CTRL_EDITBOX);
-  GetDlgItemText(dp->hwnd, c->base_id + 1, buffer, length);
+  GetDlgItemText(dp->wnd, c->base_id + 1, buffer, length);
   buffer[length - 1] = '\0';
 }
 
@@ -1455,7 +1455,7 @@ dlg_listbox_clear(control *ctrl, void *dlg)
            c->ctrl->editbox.has_list)));
   msg = (c->ctrl->type == CTRL_LISTBOX &&
          c->ctrl->listbox.height != 0 ? LB_RESETCONTENT : CB_RESETCONTENT);
-  SendDlgItemMessage(dp->hwnd, c->base_id + 1, msg, 0, 0);
+  SendDlgItemMessage(dp->wnd, c->base_id + 1, msg, 0, 0);
 }
 
 void
@@ -1470,7 +1470,7 @@ dlg_listbox_add(control *ctrl, void *dlg, char const *text)
            c->ctrl->editbox.has_list)));
   msg = (c->ctrl->type == CTRL_LISTBOX &&
          c->ctrl->listbox.height != 0 ? LB_ADDSTRING : CB_ADDSTRING);
-  SendDlgItemMessage(dp->hwnd, c->base_id + 1, msg, 0, (LPARAM) text);
+  SendDlgItemMessage(dp->wnd, c->base_id + 1, msg, 0, (LPARAM) text);
 }
 
 void
@@ -1479,7 +1479,7 @@ dlg_text_set(control *ctrl, void *dlg, char const *text)
   dlgparam *dp = (dlgparam *) dlg;
   winctrl *c = dlg_findbyctrl(dp, ctrl);
   assert(c && c->ctrl->type == CTRL_TEXT);
-  SetDlgItemText(dp->hwnd, c->base_id, text);
+  SetDlgItemText(dp->wnd, c->base_id, text);
 }
 
 void
@@ -1514,7 +1514,7 @@ dlg_label_change(control *ctrl, void *dlg, char const *text)
       assert(!"Can't happen");
   }
   if (escaped) {
-    SetDlgItemText(dp->hwnd, id, escaped);
+    SetDlgItemText(dp->wnd, id, escaped);
     free(escaped);
   }
 }
@@ -1536,7 +1536,7 @@ dlg_fontsel_set(control *ctrl, void *dlg, font_spec fs)
     asprintf(&buf, "%s, %s%d-%s", fs.name, boldstr,
              (fs.height < 0 ? -fs.height : fs.height),
              (fs.height < 0 ? "pixel" : "point"));
-  SetDlgItemText(dp->hwnd, c->base_id + 1, buf);
+  SetDlgItemText(dp->wnd, c->base_id + 1, buf);
   free(buf);
 }
 
@@ -1560,7 +1560,7 @@ dlg_update_start(control *ctrl, void *dlg)
   dlgparam *dp = (dlgparam *) dlg;
   winctrl *c = dlg_findbyctrl(dp, ctrl);
   if (c && c->ctrl->type == CTRL_LISTBOX) {
-    SendDlgItemMessage(dp->hwnd, c->base_id + 1, WM_SETREDRAW, false, 0);
+    SendDlgItemMessage(dp->wnd, c->base_id + 1, WM_SETREDRAW, false, 0);
   }
 }
 
@@ -1570,7 +1570,7 @@ dlg_update_done(control *ctrl, void *dlg)
   dlgparam *dp = (dlgparam *) dlg;
   winctrl *c = dlg_findbyctrl(dp, ctrl);
   if (c && c->ctrl->type == CTRL_LISTBOX) {
-    HWND hw = GetDlgItem(dp->hwnd, c->base_id + 1);
+    HWND hw = GetDlgItem(dp->wnd, c->base_id + 1);
     SendMessage(hw, WM_SETREDRAW, true, 0);
     InvalidateRect(hw, null, true);
   }
@@ -1587,7 +1587,7 @@ dlg_set_focus(control *ctrl, void *dlg)
     when CTRL_FONTSELECT: id = c->base_id + 2;
     when CTRL_RADIO:
       id = c->base_id + ctrl->radio.nbuttons;
-      while (id > 1 && IsDlgButtonChecked(dp->hwnd, id))
+      while (id > 1 && IsDlgButtonChecked(dp->wnd, id))
         --id;
      /*
       * In the theoretically-unlikely case that no button was
@@ -1596,7 +1596,7 @@ dlg_set_focus(control *ctrl, void *dlg)
       */
     otherwise: id = c->base_id;
   }
-  SetFocus(GetDlgItem(dp->hwnd, id));
+  SetFocus(GetDlgItem(dp->wnd, id));
 }
 
 /*
@@ -1684,7 +1684,7 @@ dp_init(dlgparam * dp)
   dp->ended = false;
   dp->focused = dp->lastfocused = null;
   memset(dp->shortcuts, 0, sizeof (dp->shortcuts));
-  dp->hwnd = null;
+  dp->wnd = null;
   dp->wintitle = null;
   dp->privdata = newtree234(perctrl_privdata_cmp);
 }

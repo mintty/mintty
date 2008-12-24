@@ -333,9 +333,9 @@ win_copy(wchar *data, int *attr, int len)
   GlobalUnlock(clipdata);
   GlobalUnlock(clipdata2);
 
-  SendMessage(hwnd, WM_IGNORE_CLIP, true, 0);
+  SendMessage(wnd, WM_IGNORE_CLIP, true, 0);
 
-  if (OpenClipboard(hwnd)) {
+  if (OpenClipboard(wnd)) {
     EmptyClipboard();
     SetClipboardData(CF_UNICODETEXT, clipdata);
     SetClipboardData(CF_TEXT, clipdata2);
@@ -347,7 +347,7 @@ win_copy(wchar *data, int *attr, int len)
     GlobalFree(clipdata);
     GlobalFree(clipdata2);
   }
-  SendMessage(hwnd, WM_IGNORE_CLIP, false, 0);
+  SendMessage(wnd, WM_IGNORE_CLIP, false, 0);
 }
 
 static void
@@ -504,5 +504,5 @@ void
 win_init_drop_target(void)
 {
   OleInitialize(null);
-  RegisterDragDrop(hwnd, &dt);
+  RegisterDragDrop(wnd, &dt);
 }

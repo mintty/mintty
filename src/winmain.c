@@ -14,9 +14,9 @@
 #include <imm.h>
 #include <winnls.h>
 
-HWND hwnd;
-HINSTANCE hinst;
-HDC hdc;
+HWND wnd;
+HINSTANCE inst;
+HDC dc;
 static HBITMAP caretbm;
 
 static char *window_name;
@@ -34,7 +34,7 @@ static bool flashing;
 void
 win_set_timer(void (*cb)(void), uint ticks)
 {
-  SetTimer(hwnd, (UINT_PTR)cb, ticks, null);
+  SetTimer(wnd, (UINT_PTR)cb, ticks, null);
 }
 
 void
@@ -43,7 +43,7 @@ win_set_title(char *title)
   free(window_name);
   window_name = newn(char, 1 + strlen(title));
   strcpy(window_name, title);
-  SetWindowText(hwnd, title);
+  SetWindowText(wnd, title);
 }
 
 /*
@@ -53,8 +53,8 @@ win_set_title(char *title)
 void
 win_set_iconic(bool iconic)
 {
-  if (iconic ^ IsIconic(hwnd))
-    ShowWindow(hwnd, iconic ? SW_MINIMIZE : SW_RESTORE);
+  if (iconic ^ IsIconic(wnd))
+    ShowWindow(wnd, iconic ? SW_MINIMIZE : SW_RESTORE);
 }
 
 /*
@@ -64,8 +64,8 @@ win_set_iconic(bool iconic)
 void
 win_set_zoom(bool zoom)
 {
-  if (zoom ^ IsZoomed(hwnd))
-    ShowWindow(hwnd, zoom ? SW_MAXIMIZE : SW_RESTORE);
+  if (zoom ^ IsZoomed(wnd))
+    ShowWindow(wnd, zoom ? SW_MAXIMIZE : SW_RESTORE);
 }
 
 /*
@@ -74,8 +74,8 @@ win_set_zoom(bool zoom)
 void
 win_move(int x, int y)
 {
-  if (!IsZoomed(hwnd))
-    SetWindowPos(hwnd, null, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+  if (!IsZoomed(wnd))
+    SetWindowPos(wnd, null, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
 /*
@@ -85,7 +85,7 @@ win_move(int x, int y)
 void
 win_set_zorder(bool top)
 {
-  SetWindowPos(hwnd, top ? HWND_TOP : HWND_BOTTOM, 0, 0, 0, 0,
+  SetWindowPos(wnd, top ? HWND_TOP : HWND_BOTTOM, 0, 0, 0, 0,
                SWP_NOMOVE | SWP_NOSIZE);
 }
 
@@ -94,7 +94,7 @@ win_set_zorder(bool top)
  */
 bool
 win_is_iconic(void)
-{ return IsIconic(hwnd); }
+{ return IsIconic(wnd); }
 
 /*
  * Report the window's position, for terminal reports.
@@ -103,7 +103,7 @@ void
 win_get_pos(int *x, int *y)
 {
   RECT r;
-  GetWindowRect(hwnd, &r);
+  GetWindowRect(wnd, &r);
   *x = r.left;
   *y = r.top;
 }
@@ -115,7 +115,7 @@ void
 win_get_pixels(int *x, int *y)
 {
   RECT r;
-  GetWindowRect(hwnd, &r);
+  GetWindowRect(wnd, &r);
   *x = r.right - r.left;
   *y = r.bottom - r.top;
 }
@@ -129,7 +129,7 @@ flash_window_ex(DWORD dwFlags, UINT uCount, DWORD dwTimeout)
 {
   FLASHWINFO fi;
   fi.cbSize = sizeof (fi);
-  fi.hwnd = hwnd;
+  fi.hwnd = wnd;
   fi.dwFlags = dwFlags;
   fi.uCount = uCount;
   fi.dwTimeout = dwTimeout;
@@ -212,13 +212,13 @@ sys_cursor_update(void)
 
   SetCaretPos(caret_x, caret_y);
 
-  hIMC = ImmGetContext(hwnd);
+  hIMC = ImmGetContext(wnd);
   cf.dwStyle = CFS_POINT;
   cf.ptCurrentPos.x = caret_x;
   cf.ptCurrentPos.y = caret_y;
   ImmSetCompositionWindow(hIMC, &cf);
 
-  ImmReleaseContext(hwnd, hIMC);
+  ImmReleaseContext(wnd, hIMC);
 }
 
 void
@@ -249,7 +249,7 @@ get_fullscreen_rect(RECT * ss)
 {
   HMONITOR mon;
   MONITORINFO mi;
-  mon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+  mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
   mi.cbSize = sizeof (mi);
   GetMonitorInfo(mon, &mi);
 
@@ -271,7 +271,7 @@ void
 win_resize(int rows, int cols)
 {
  /* If the window is maximized supress resizing attempts */
-  if (IsZoomed(hwnd) || (rows == term_rows() && cols == term_cols())) 
+  if (IsZoomed(wnd) || (rows == term_rows() && cols == term_cols())) 
     return;
     
  /* Sanity checks ... */
@@ -298,9 +298,9 @@ win_resize(int rows, int cols)
   notify_resize(rows, cols);
   int width = extra_width + font_width * cols;
   int height = extra_height + font_height * rows;
-  SetWindowPos(hwnd, null, 0, 0, width, height,
+  SetWindowPos(wnd, null, 0, 0, width, height,
                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
-  InvalidateRect(hwnd, null, true);
+  InvalidateRect(wnd, null, true);
 }
 
 static void
@@ -316,8 +316,8 @@ reset_window(int reinit)
 
  /* Current window sizes ... */
   RECT cr, wr;
-  GetWindowRect(hwnd, &wr);
-  GetClientRect(hwnd, &cr);
+  GetWindowRect(wnd, &wr);
+  GetClientRect(wnd, &cr);
 
   int win_width = cr.right - cr.left;
   int win_height = cr.bottom - cr.top;
@@ -340,10 +340,10 @@ reset_window(int reinit)
        offset_height != (win_height - font_height * rows) / 2)) {
     offset_width = (win_width - font_width * cols) / 2;
     offset_height = (win_height - font_height * rows) / 2;
-    InvalidateRect(hwnd, null, true);
+    InvalidateRect(wnd, null, true);
   }
 
-  if (IsZoomed(hwnd)) {
+  if (IsZoomed(wnd)) {
    /* We're fullscreen, this means we must not change the size of
     * the window so it's the font size or the terminal itself.
     */
@@ -361,7 +361,7 @@ reset_window(int reinit)
       offset_height = (win_height % font_height) / 2;
       offset_width = (win_width % font_width) / 2;
       notify_resize(rows, cols);
-      InvalidateRect(hwnd, null, true);
+      InvalidateRect(wnd, null, true);
     }
     return;
   }
@@ -381,12 +381,12 @@ reset_window(int reinit)
       * allowed window size, we will then be back in here and resize
       * the font or terminal to fit.
       */
-      SetWindowPos(hwnd, null, 0, 0, font_width * cols + extra_width,
+      SetWindowPos(wnd, null, 0, 0, font_width * cols + extra_width,
                    font_height * rows + extra_height,
                    SWP_NOMOVE | SWP_NOZORDER);
     }
 
-    InvalidateRect(hwnd, null, true);
+    InvalidateRect(wnd, null, true);
     return;
   }
 
@@ -414,12 +414,12 @@ reset_window(int reinit)
       notify_resize(rows, cols);
     }
 
-    SetWindowPos(hwnd, null, 0, 0,
+    SetWindowPos(wnd, null, 0, 0,
                  font_width * cols + extra_width,
                  font_height * rows + extra_height,
                  SWP_NOMOVE | SWP_NOZORDER);
 
-    InvalidateRect(hwnd, null, true);
+    InvalidateRect(wnd, null, true);
   }
 }
 
@@ -431,14 +431,14 @@ static void
 make_full_screen()
 {
  /* Remove the window furniture. */
-  DWORD style = GetWindowLongPtr(hwnd, GWL_STYLE);
+  DWORD style = GetWindowLongPtr(wnd, GWL_STYLE);
   style &= ~(WS_CAPTION | WS_BORDER | WS_THICKFRAME);
-  SetWindowLongPtr(hwnd, GWL_STYLE, style);
+  SetWindowLongPtr(wnd, GWL_STYLE, style);
 
  /* Resize ourselves to exactly cover the nearest monitor. */
   RECT ss;
   get_fullscreen_rect(&ss);
-  SetWindowPos(hwnd, HWND_TOP, ss.left, ss.top, ss.right - ss.left,
+  SetWindowPos(wnd, HWND_TOP, ss.left, ss.top, ss.right - ss.left,
                ss.bottom - ss.top, SWP_FRAMECHANGED);
 
  /* We may have changed size as a result */
@@ -454,11 +454,11 @@ clear_full_screen()
   DWORD oldstyle, style;
 
  /* Reinstate the window furniture. */
-  style = oldstyle = GetWindowLongPtr(hwnd, GWL_STYLE);
+  style = oldstyle = GetWindowLongPtr(wnd, GWL_STYLE);
   style |= WS_CAPTION | WS_BORDER | WS_THICKFRAME;
   if (style != oldstyle) {
-    SetWindowLongPtr(hwnd, GWL_STYLE, style);
-    SetWindowPos(hwnd, null, 0, 0, 0, 0,
+    SetWindowLongPtr(wnd, GWL_STYLE, style);
+    SetWindowPos(wnd, null, 0, 0, 0, 0,
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
   }
 }
@@ -469,15 +469,15 @@ clear_full_screen()
 static void
 flip_full_screen()
 {
-  if (IsZoomed(hwnd)) {
-    if (GetWindowLongPtr(hwnd, GWL_STYLE) & WS_CAPTION)
+  if (IsZoomed(wnd)) {
+    if (GetWindowLongPtr(wnd, GWL_STYLE) & WS_CAPTION)
       make_full_screen();
     else
-      ShowWindow(hwnd, SW_RESTORE);
+      ShowWindow(wnd, SW_RESTORE);
   }
   else {
-    SendMessage(hwnd, WM_FULLSCR_ON_MAX, 0, 0);
-    ShowWindow(hwnd, SW_MAXIMIZE);
+    SendMessage(wnd, WM_FULLSCR_ON_MAX, 0, 0);
+    ShowWindow(wnd, SW_MAXIMIZE);
   }
 }
 
@@ -485,9 +485,9 @@ static void
 set_transparency()
 {
   int trans = cfg.transparency;
-  SetWindowLong(hwnd, GWL_EXSTYLE, trans ? WS_EX_LAYERED : 0);
+  SetWindowLong(wnd, GWL_EXSTYLE, trans ? WS_EX_LAYERED : 0);
   if (trans)
-    SetLayeredWindowAttributes(hwnd, 0, 255 - 16 * trans, LWA_ALPHA);
+    SetLayeredWindowAttributes(wnd, 0, 255 - 16 * trans, LWA_ALPHA);
 }
 
 static void
@@ -522,20 +522,20 @@ reconfig(void)
  /* Enable or disable the scroll bar, etc */
   int init_lvl = 1;
   if (cfg.scrollbar != prev_cfg.scrollbar) {
-    LONG flag = GetWindowLongPtr(hwnd, GWL_STYLE);
+    LONG flag = GetWindowLongPtr(wnd, GWL_STYLE);
     if (cfg.scrollbar)
       flag |= WS_VSCROLL;
     else
       flag &= ~WS_VSCROLL;
-    SetWindowLongPtr(hwnd, GWL_STYLE, flag);
-    SetWindowPos(hwnd, null, 0, 0, 0, 0,
+    SetWindowLongPtr(wnd, GWL_STYLE, flag);
+    SetWindowPos(wnd, null, 0, 0, 0, 0,
                 SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE |
                  SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
     init_lvl = 2;
   }
 
-  if (IsIconic(hwnd))
-    SetWindowText(hwnd, window_name);
+  if (IsIconic(wnd))
+    SetWindowText(wnd, window_name);
 
   if (strcmp(cfg.font.name, prev_cfg.font.name) != 0 ||
       strcmp(cfg.line_codepage, prev_cfg.line_codepage) != 0 ||
@@ -547,7 +547,7 @@ reconfig(void)
     init_lvl = 2;
   
   set_transparency();
-  InvalidateRect(hwnd, null, true);
+  InvalidateRect(wnd, null, true);
   reset_window(init_lvl);
   win_update_pointer();
 }
@@ -558,7 +558,7 @@ confirm_close(void)
   return
     !child_is_parent() ||
     MessageBox(
-      hwnd,
+      wnd,
       "Processes are running in session.\n"
       "Exit anyway?",
       APPNAME " Exit Confirmation", 
@@ -581,13 +581,13 @@ win_update_pointer(void)
     : ibeam_cursor;
   if (new_cursor != cursor) {
     cursor = new_cursor;
-    SetClassLongPtr(hwnd, GCLP_HCURSOR, (LONG_PTR)new_cursor);
+    SetClassLongPtr(wnd, GCLP_HCURSOR, (LONG_PTR)new_cursor);
     SetCursor(new_cursor);
   }
 }
 
 static LRESULT CALLBACK
-win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
 {
   static int ignore_clip = false;
   static int need_backend_resize = false;
@@ -595,7 +595,7 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 
   switch (message) {
     when WM_TIMER: {
-      KillTimer(hwnd, wp);
+      KillTimer(wnd, wp);
       void_fn cb = (void_fn)wp;
       cb();
       return 0;
@@ -664,9 +664,9 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_INPUTLANGCHANGE:
       sys_cursor_update();
     when WM_IME_STARTCOMPOSITION: {
-      HIMC hImc = ImmGetContext(hwnd);
+      HIMC hImc = ImmGetContext(wnd);
       ImmSetCompositionFont(hImc, &lfont);
-      ImmReleaseContext(hwnd, hImc);
+      ImmReleaseContext(wnd, hImc);
     }
     when WM_IGNORE_CLIP:
       ignore_clip = wp;     /* don't panic on DESTROYCLIPBOARD */
@@ -682,8 +682,8 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
       return 0;
     when WM_SETFOCUS:
 	  term_set_focus(true);
-      CreateCaret(hwnd, caretbm, font_width, font_height);
-      ShowCaret(hwnd);
+      CreateCaret(wnd, caretbm, font_width, font_height);
+      ShowCaret(wnd);
       flash_window(0);  /* stop */
       win_update();
     when WM_KILLFOCUS:
@@ -703,7 +703,7 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
       resizing = false;
       if (need_backend_resize) {
         notify_resize(cfg.rows, cfg.cols);
-        InvalidateRect(hwnd, null, true);
+        InvalidateRect(wnd, null, true);
       }
     when WM_SIZING: {
      /*
@@ -720,7 +720,7 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
       int h = (height + font_height / 2) / font_height;
       if (h < 1)
         h = 1;
-      win_update_tip(hwnd, w, h);
+      win_update_tip(wnd, w, h);
       int ew = width - w * font_width;
       int eh = height - h * font_height;
       if (ew != 0) {
@@ -741,7 +741,7 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
     }
     when WM_SIZE: {
       if (wp == SIZE_MINIMIZED || wp == SIZE_RESTORED || wp == SIZE_MAXIMIZED)
-        SetWindowText(hwnd, window_name);
+        SetWindowText(wnd, window_name);
       if (wp == SIZE_RESTORED)
         clear_full_screen();
       if (wp == SIZE_MAXIMIZED && fullscr_on_max) {
@@ -794,7 +794,7 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
   * Any messages we don't process completely above are passed through to
   * DefWindowProc() for default processing.
   */
-  return DefWindowProc(hwnd, message, wp, lp);
+  return DefWindowProc(wnd, message, wp, lp);
 }
 
 int
@@ -818,7 +818,7 @@ main(int argc, char *argv[])
 
   load_config();
 
-  hinst = GetModuleHandle(NULL);
+  inst = GetModuleHandle(NULL);
 
   ibeam_cursor = LoadCursor(null, IDC_IBEAM);
   arrow_cursor = LoadCursor(null, IDC_ARROW);
@@ -831,8 +831,8 @@ main(int argc, char *argv[])
     wndclass.lpfnWndProc = win_proc;
     wndclass.cbClsExtra = 0;
     wndclass.cbWndExtra = 0;
-    wndclass.hInstance = hinst;
-    wndclass.hIcon = LoadIcon(hinst, MAKEINTRESOURCE(IDI_MAINICON));
+    wndclass.hInstance = inst;
+    wndclass.hIcon = LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON));
     wndclass.hCursor = ibeam_cursor;
     wndclass.hbrBackground = null;
     wndclass.lpszMenuName = null;
@@ -856,8 +856,8 @@ main(int argc, char *argv[])
     if (guess_height > r.bottom - r.top)
       guess_height = r.bottom - r.top;
     uint style = WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0);
-    hwnd = CreateWindow(APPNAME, APPNAME, style, CW_USEDEFAULT, CW_USEDEFAULT,
-                        guess_width, guess_height, null, null, hinst, null);
+    wnd = CreateWindow(APPNAME, APPNAME, style, CW_USEDEFAULT, CW_USEDEFAULT,
+                        guess_width, guess_height, null, null, inst, null);
   }
 
   win_init_menu();
@@ -866,7 +866,7 @@ main(int argc, char *argv[])
   * Initialise the terminal. (We have to do this _after_
   * creating the window, since the terminal is the first thing
   * which will call schedule_timer(), which will in turn call
-  * timer_change_cb() which will expect hwnd to exist.)
+  * timer_change_cb() which will expect wnd to exist.)
   */
   term_init();
   term_resize(cfg.rows, cfg.cols);
@@ -884,8 +884,8 @@ main(int argc, char *argv[])
   */
   {
     RECT cr, wr;
-    GetWindowRect(hwnd, &wr);
-    GetClientRect(hwnd, &cr);
+    GetWindowRect(wnd, &wr);
+    GetClientRect(wnd, &cr);
     offset_width = offset_height = 0;
     extra_width = wr.right - wr.left - cr.right + cr.left;
     extra_height = wr.bottom - wr.top - cr.bottom + cr.top;
@@ -900,7 +900,7 @@ main(int argc, char *argv[])
     memset(bits, 0, size);
     caretbm = CreateBitmap(font_width, font_height, 1, 1, bits);
     free(bits);
-    CreateCaret(hwnd, caretbm, font_width, font_height);
+    CreateCaret(wnd, caretbm, font_width, font_height);
   }
 
  /*
@@ -914,7 +914,7 @@ main(int argc, char *argv[])
     si.nMax = term_rows() - 1;
     si.nPage = term_rows();
     si.nPos = 0;
-    SetScrollInfo(hwnd, SB_VERT, &si, false);
+    SetScrollInfo(wnd, SB_VERT, &si, false);
   }
 
  /*
@@ -922,7 +922,7 @@ main(int argc, char *argv[])
   */
   int term_width = font_width * term_cols();
   int term_height = extra_height + font_height * term_rows();
-  SetWindowPos(hwnd, null, 0, 0,
+  SetWindowPos(wnd, null, 0, 0,
                term_width + extra_width, term_height + extra_height,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 
@@ -931,7 +931,7 @@ main(int argc, char *argv[])
 
   // Finally show the window!
   set_transparency();
-  ShowWindow(hwnd, SW_SHOWDEFAULT);
+  ShowWindow(wnd, SW_SHOWDEFAULT);
 
   // Create child process and set window title to the executed command.
   struct winsize ws = {term_rows(), term_cols(), term_width, term_height};

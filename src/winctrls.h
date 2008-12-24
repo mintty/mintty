@@ -4,13 +4,13 @@
 #include "ctrls.h"
 #include "tree234.h"
 
-extern HINSTANCE hinst;
+extern HINSTANCE inst;
 
 /*
  * Exports from winctrls.c.
  */
 typedef struct {
-  HWND hwnd;
+  HWND wnd;
   WPARAM font;
   int dlu4inpix;
   int ypos, width;
@@ -27,7 +27,7 @@ typedef struct {
  * Private structure for prefslist state. Only in the header file
  * so that we can delegate allocation to callers.
  */
-void ctrlposinit(ctrlpos * cp, HWND hwnd, int leftborder, int rightborder,
+void ctrlposinit(ctrlpos * cp, HWND wnd, int leftborder, int rightborder,
                 int topborder);
 
 #define MAX_SHORTCUTS_PER_CTRL 16
@@ -75,7 +75,7 @@ typedef struct {
  * parameter, and hence is passed back to winctrls access functions.
  */
 typedef struct {
-  HWND hwnd;    /* the hwnd of the dialog box */
+  HWND wnd;    /* the wnd of the dialog box */
   winctrls *controltrees[8];    /* can have several of these */
   int nctrltrees;
   char *wintitle;       /* title of actual window */
