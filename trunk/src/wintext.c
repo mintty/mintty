@@ -108,10 +108,10 @@ win_init_fonts(void)
     fw_bold = FW_BOLD;
   }
 
-  HDC hdc = GetDC(hwnd);
+  HDC dc = GetDC(wnd);
   font_height = cfg.font.height;
   if (font_height > 0) {
-    font_height = -MulDiv(font_height, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+    font_height = -MulDiv(font_height, GetDeviceCaps(dc, LOGPIXELSY), 72);
   }
   font_width = 0;
 
@@ -119,8 +119,8 @@ win_init_fonts(void)
 
   GetObject(fonts[FONT_NORMAL], sizeof (LOGFONT), &lfont);
 
-  SelectObject(hdc, fonts[FONT_NORMAL]);
-  GetTextMetrics(hdc, &tm);
+  SelectObject(dc, fonts[FONT_NORMAL]);
+  GetTextMetrics(dc, &tm);
 
   font_height = tm.tmHeight;
   font_width = tm.tmAveCharWidth;
@@ -168,8 +168,8 @@ win_init_fonts(void)
     int i, gotit;
     COLORREF c;
 
-    und_dc = CreateCompatibleDC(hdc);
-    und_bm = CreateCompatibleBitmap(hdc, font_width, font_height);
+    und_dc = CreateCompatibleDC(dc);
+    und_bm = CreateCompatibleBitmap(dc, font_width, font_height);
     und_oldbm = SelectObject(und_dc, und_bm);
     SelectObject(und_dc, fonts[FONT_UNDERLINE]);
     SetTextAlign(und_dc, TA_TOP | TA_LEFT | TA_NOUPDATECP);
@@ -202,7 +202,7 @@ win_init_fonts(void)
 
   for (i = 0; i < 3; i++) {
     if (fonts[i]) {
-      if (SelectObject(hdc, fonts[i]) && GetTextMetrics(hdc, &tm))
+      if (SelectObject(dc, fonts[i]) && GetTextMetrics(dc, &tm))
         fontsize[i] = tm.tmAveCharWidth + 256 * tm.tmHeight;
       else
         fontsize[i] = -i;
@@ -211,7 +211,7 @@ win_init_fonts(void)
       fontsize[i] = -i;
   }
 
-  ReleaseDC(hwnd, hdc);
+  ReleaseDC(wnd, dc);
 
   if (fontsize[FONT_UNDERLINE] != fontsize[FONT_NORMAL]) {
     und_mode = UND_LINE;
@@ -241,17 +241,17 @@ win_deinit_fonts(void)
   }
 }
 
-static HDC hdc;
+static HDC dc;
 
 static bool update_pending;
 
 void
 win_paint(void)
 {
-  HideCaret(hwnd);
+  HideCaret(wnd);
 
   PAINTSTRUCT p;
-  hdc = BeginPaint(hwnd, &p);
+  dc = BeginPaint(wnd, &p);
 
   term_invalidate(
     (p.rcPaint.left - offset_width) / font_width,
@@ -270,50 +270,50 @@ win_paint(void)
     HBRUSH fillcolour, oldbrush;
     HPEN edge, oldpen;
     fillcolour = CreateSolidBrush(colours[ATTR_DEFBG >> ATTR_BGSHIFT]);
-    oldbrush = SelectObject(hdc, fillcolour);
+    oldbrush = SelectObject(dc, fillcolour);
     edge = CreatePen(PS_SOLID, 0, colours[ATTR_DEFBG >> ATTR_BGSHIFT]);
-    oldpen = SelectObject(hdc, edge);
+    oldpen = SelectObject(dc, edge);
 
-    IntersectClipRect(hdc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
+    IntersectClipRect(dc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
                       p.rcPaint.bottom);
 
-    ExcludeClipRect(hdc, offset_width, offset_height,
+    ExcludeClipRect(dc, offset_width, offset_height,
                     offset_width + font_width * term_cols(),
                     offset_height + font_height * term_rows());
 
-    Rectangle(hdc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
+    Rectangle(dc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
               p.rcPaint.bottom);
 
-    SelectObject(hdc, oldbrush);
+    SelectObject(dc, oldbrush);
     DeleteObject(fillcolour);
-    SelectObject(hdc, oldpen);
+    SelectObject(dc, oldpen);
     DeleteObject(edge);
   }
-  SelectObject(hdc, GetStockObject(SYSTEM_FONT));
-  SelectObject(hdc, GetStockObject(WHITE_PEN));
+  SelectObject(dc, GetStockObject(SYSTEM_FONT));
+  SelectObject(dc, GetStockObject(WHITE_PEN));
   
-  EndPaint(hwnd, &p);
+  EndPaint(wnd, &p);
   
-  ShowCaret(hwnd);
+  ShowCaret(wnd);
 }
 
 void
 win_update(void)
 {
   if (update_pending) {
-    KillTimer(hwnd, (UINT_PTR)win_update);
+    KillTimer(wnd, (UINT_PTR)win_update);
     update_pending = false;
   }
-  hdc = GetDC(hwnd);
+  dc = GetDC(wnd);
   term_update();
-  ReleaseDC(hwnd, hdc);
+  ReleaseDC(wnd, dc);
 }
 
 void
 win_schedule_update(void)
 {
   if (!update_pending) {
-    SetTimer(hwnd, (UINT_PTR)win_update, 10, null);
+    SetTimer(wnd, (UINT_PTR)win_update, 10, null);
     update_pending = true;
   }
 }
@@ -340,10 +340,10 @@ exact_textout(int x, int y, CONST RECT * lprc, ushort * lpString,
   gcpr.lpClass = (void *) classbuffer;
   gcpr.nGlyphs = cbCount;
 
-  GetCharacterPlacementW(hdc, lpString, cbCount, 0, &gcpr,
+  GetCharacterPlacementW(dc, lpString, cbCount, 0, &gcpr,
                          FLI_MASK | GCP_CLASSIN | GCP_DIACRITIC);
 
-  ExtTextOut(hdc, x, y,
+  ExtTextOut(dc, x, y,
              ETO_GLYPH_INDEX | ETO_CLIPPED | (opaque ? ETO_OPAQUE : 0), lprc,
              buffer, cbCount, lpDx);
 }
@@ -394,7 +394,7 @@ general_textout(int x, int y, CONST RECT * lprc, ushort * lpString,
       newrc.right = lprc->left + xn - x;
       newrc.top = lprc->top;
       newrc.bottom = lprc->bottom;
-      ExtTextOutW(hdc, xp, y, ETO_CLIPPED | (opaque ? ETO_OPAQUE : 0), &newrc,
+      ExtTextOutW(dc, xp, y, ETO_CLIPPED | (opaque ? ETO_OPAQUE : 0), &newrc,
                   lpString + i, j - i, lpDx + i);
     }
 
@@ -582,13 +582,13 @@ win_text_internal(int x, int y, wchar * text, int len, uint attr, int lattr)
   }
   fg = colours[nfg];
   bg = colours[nbg];
-  SelectObject(hdc, fonts[nfont]);
-  SetTextColor(hdc, fg);
-  SetBkColor(hdc, bg);
+  SelectObject(dc, fonts[nfont]);
+  SetTextColor(dc, fg);
+  SetBkColor(dc, bg);
   if (attr & TATTR_COMBINING)
-    SetBkMode(hdc, TRANSPARENT);
+    SetBkMode(dc, TRANSPARENT);
   else
-    SetBkMode(hdc, OPAQUE);
+    SetBkMode(dc, OPAQUE);
   line_box.left = x;
   line_box.top = y;
   line_box.right = x + char_width * len;
@@ -633,11 +633,11 @@ win_text_internal(int x, int y, wchar * text, int len, uint attr, int lattr)
     if (nlen <= 0)
       return;   /* Eeek! */
 
-    ExtTextOutW(hdc, x, y - font_height * (lattr == LATTR_BOT) + text_adjust,
+    ExtTextOutW(dc, x, y - font_height * (lattr == LATTR_BOT) + text_adjust,
                 ETO_CLIPPED | ETO_OPAQUE, &line_box, uni_buf, nlen, IpDx);
     if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD)) {
-      SetBkMode(hdc, TRANSPARENT);
-      ExtTextOutW(hdc, x - 1,
+      SetBkMode(dc, TRANSPARENT);
+      ExtTextOutW(dc, x - 1,
                   y - font_height * (lattr == LATTR_BOT) + text_adjust,
                   ETO_CLIPPED, &line_box, uni_buf, nlen, IpDx);
     }
@@ -656,10 +656,10 @@ win_text_internal(int x, int y, wchar * text, int len, uint attr, int lattr)
     for (i = 0; i < len; i++)
       directbuf[i] = text[i] & 0xFF;
 
-    ExtTextOut(hdc, x, y - font_height * (lattr == LATTR_BOT) + text_adjust,
+    ExtTextOut(dc, x, y - font_height * (lattr == LATTR_BOT) + text_adjust,
                ETO_CLIPPED | ETO_OPAQUE, &line_box, directbuf, len, IpDx);
     if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD)) {
-      SetBkMode(hdc, TRANSPARENT);
+      SetBkMode(dc, TRANSPARENT);
 
      /* GRR: This draws the character outside it's box and can leave
       * 'droppings' even with the clip box! I suppose I could loop it
@@ -668,7 +668,7 @@ win_text_internal(int x, int y, wchar * text, int len, uint attr, int lattr)
       * Or ... I could do a test print with "W", and use +1 or -1 for this
       * shift depending on if the leftmost column is blank...
       */
-      ExtTextOut(hdc, x - 1,
+      ExtTextOut(dc, x - 1,
                  y - font_height * (lattr == LATTR_BOT) + text_adjust,
                  ETO_CLIPPED, &line_box, directbuf, len, IpDx);
     }
@@ -695,8 +695,8 @@ win_text_internal(int x, int y, wchar * text, int len, uint attr, int lattr)
 
    /* And the shadow bold hack. */
     if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD)) {
-      SetBkMode(hdc, TRANSPARENT);
-      ExtTextOutW(hdc, x - 1,
+      SetBkMode(dc, TRANSPARENT);
+      ExtTextOutW(dc, x - 1,
                   y - font_height * (lattr == LATTR_BOT) + text_adjust,
                   ETO_CLIPPED, &line_box, wbuf, len, IpDx);
     }
@@ -709,10 +709,10 @@ win_text_internal(int x, int y, wchar * text, int len, uint attr, int lattr)
     if (lattr == LATTR_BOT)
       dec = dec * 2 - font_height;
 
-    oldpen = SelectObject(hdc, CreatePen(PS_SOLID, 0, fg));
-    MoveToEx(hdc, x, y + dec, null);
-    LineTo(hdc, x + len * char_width, y + dec);
-    oldpen = SelectObject(hdc, oldpen);
+    oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
+    MoveToEx(dc, x, y + dec, null);
+    LineTo(dc, x + len * char_width, y + dec);
+    oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
   }
 }
@@ -769,9 +769,9 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
     pts[2].x = pts[3].x = x + char_width - 1;
     pts[0].y = pts[3].y = pts[4].y = y;
     pts[1].y = pts[2].y = y + font_height - 1;
-    oldpen = SelectObject(hdc, CreatePen(PS_SOLID, 0, colours[261]));
-    Polyline(hdc, pts, 5);
-    oldpen = SelectObject(hdc, oldpen);
+    oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, colours[261]));
+    Polyline(dc, pts, 5);
+    oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
   }
   else if ((attr & (TATTR_ACTCURS | TATTR_PASCURS)) && ctype != 0) {
@@ -795,16 +795,16 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
     }
     if (attr & TATTR_ACTCURS) {
       HPEN oldpen;
-      oldpen = SelectObject(hdc, CreatePen(PS_SOLID, 0, colours[261]));
-      MoveToEx(hdc, startx, starty, null);
-      LineTo(hdc, startx + dx * length, starty + dy * length);
-      oldpen = SelectObject(hdc, oldpen);
+      oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, colours[261]));
+      MoveToEx(dc, startx, starty, null);
+      LineTo(dc, startx + dx * length, starty + dy * length);
+      oldpen = SelectObject(dc, oldpen);
       DeleteObject(oldpen);
     }
     else {
       for (i = 0; i < length; i++) {
         if (i % 2 == 0) {
-          SetPixel(hdc, startx, starty, colours[261]);
+          SetPixel(dc, startx, starty, colours[261]);
         }
         startx += dx;
         starty += dy;
@@ -840,20 +840,20 @@ win_char_width(int uc)
       return 1;
 
     if ((uc & CSET_MASK) == CSET_ACP) {
-      SelectObject(hdc, fonts[FONT_NORMAL]);
+      SelectObject(dc, fonts[FONT_NORMAL]);
     }
     else if ((uc & CSET_MASK) == CSET_OEMCP) {
       another_font(FONT_OEM);
       if (!fonts[FONT_OEM])
         return 0;
 
-      SelectObject(hdc, fonts[FONT_OEM]);
+      SelectObject(dc, fonts[FONT_OEM]);
     }
     else
       return 0;
 
-    if (GetCharWidth32(hdc, uc & ~CSET_MASK, uc & ~CSET_MASK, &ibuf) != 1 &&
-        GetCharWidth(hdc, uc & ~CSET_MASK, uc & ~CSET_MASK, &ibuf) != 1)
+    if (GetCharWidth32(dc, uc & ~CSET_MASK, uc & ~CSET_MASK, &ibuf) != 1 &&
+        GetCharWidth(dc, uc & ~CSET_MASK, uc & ~CSET_MASK, &ibuf) != 1)
       return 0;
   }
   else {
@@ -861,10 +861,10 @@ win_char_width(int uc)
     if (uc >= ' ' && uc <= '~')
       return 1;
 
-    SelectObject(hdc, fonts[FONT_NORMAL]);
-    if (GetCharWidth32W(hdc, uc, uc, &ibuf) == 1)
+    SelectObject(dc, fonts[FONT_NORMAL]);
+    if (GetCharWidth32W(dc, uc, uc, &ibuf) == 1)
      /* Okay that one worked */ ;
-    else if (GetCharWidthW(hdc, uc, uc, &ibuf) == 1)
+    else if (GetCharWidthW(dc, uc, uc, &ibuf) == 1)
      /* This should work on 9x too, but it's "less accurate" */ ;
     else
       return 0;
@@ -887,8 +887,8 @@ win_set_sbar(int total, int start, int page)
     si.nMax = total - 1;
     si.nPage = page;
     si.nPos = start;
-    if (hwnd)
-      SetScrollInfo(hwnd, SB_VERT, &si, true);
+    if (wnd)
+      SetScrollInfo(wnd, SB_VERT, &si, true);
   }
 }
 
@@ -944,7 +944,7 @@ win_reset_palette(void)
   win_reconfig_palette();
  /* Default Background may have changed. Ensure any space between
   * text area and window border is redrawn. */
-  InvalidateRect(hwnd, null, true);
+  InvalidateRect(wnd, null, true);
 }
 
 void
@@ -959,7 +959,7 @@ win_set_palette(int n, int r, int g, int b)
    /* If Default Background changes, we need to ensure any
     * space between the text area and the window border is
     * redrawn. */
-    InvalidateRect(hwnd, null, true);
+    InvalidateRect(wnd, null, true);
   }
 }
 

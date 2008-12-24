@@ -26,7 +26,7 @@ win_init_menu(void)
   AppendMenu(menu, MF_ENABLED, IDM_OPTIONS, "&Options...");
   AppendMenu(menu, MF_ENABLED, IDM_ABOUT, "&About...");
 
-  HMENU sysmenu = GetSystemMenu(hwnd, false);
+  HMENU sysmenu = GetSystemMenu(wnd, false);
   InsertMenu(sysmenu, 0, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
   InsertMenu(sysmenu, 0, MF_BYPOSITION|MF_ENABLED, IDM_OPTIONS, "&Options...");
 }
@@ -38,7 +38,7 @@ win_popup_menu(void)
   GetCursorPos(&p);
   TrackPopupMenu(
     menu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
-    p.x, p.y, 0, hwnd, null
+    p.x, p.y, 0, wnd, null
   );
 }
 
@@ -53,7 +53,7 @@ win_update_menu(void)
     IsClipboardFormatAvailable(CF_HDROP)
     ? MF_ENABLED : MF_GRAYED
   );
-  bool fullscreen = !(GetWindowLongPtr(hwnd, GWL_STYLE) & WS_CAPTION);
+  bool fullscreen = !(GetWindowLongPtr(wnd, GWL_STYLE) & WS_CAPTION);
   CheckMenuItem(menu, IDM_FULLSCREEN, fullscreen ? MF_CHECKED : MF_UNCHECKED);
 }
 
@@ -122,7 +122,7 @@ win_mouse_click(mouse_button b, WPARAM wp, LPARAM lp)
   term_mouse_click(b, mods, get_pos(lp, 0), count);
   last_time = t;
   clicked_button = last_button = b;
-  SetCapture(hwnd);
+  SetCapture(wnd);
 }
 
 void
@@ -194,11 +194,11 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
   // Specials
   if (alt && !ctrl) {
     if (key == VK_F4) {
-      SendMessage(hwnd, WM_CLOSE, 0, 0);
+      SendMessage(wnd, WM_CLOSE, 0, 0);
       return 1;
     }
     if (key == VK_SPACE) {
-      SendMessage(hwnd, WM_SYSCOMMAND, SC_KEYMENU, ' ');
+      SendMessage(wnd, WM_SYSCOMMAND, SC_KEYMENU, ' ');
       return 1;
     }
   }
@@ -208,10 +208,10 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
     win_show_mouse();
     POINT p;
     GetCaretPos(&p);
-    ClientToScreen(hwnd, &p);
+    ClientToScreen(wnd, &p);
     TrackPopupMenu(
       menu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
-      p.x, p.y, 0, hwnd, null
+      p.x, p.y, 0, wnd, null
     );
     return 1;
   }
@@ -240,7 +240,7 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
       when VK_DOWN:  scroll = SB_LINEDOWN;
       otherwise: goto not_scroll;
     }
-    SendMessage(hwnd, WM_VSCROLL, scroll, 0);
+    SendMessage(wnd, WM_VSCROLL, scroll, 0);
     return 1;
   }
   not_scroll: ;
@@ -262,7 +262,7 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
         if (ctrl)
           return 0;
         // Alt-Enter: toggle fullscreen
-        SendMessage(hwnd, WM_SYSCOMMAND, IDM_FULLSCREEN, 0);
+        SendMessage(wnd, WM_SYSCOMMAND, IDM_FULLSCREEN, 0);
         return 1;
       when VK_BACK:
         if (ctrl)

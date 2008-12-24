@@ -23,41 +23,41 @@ tip_proc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
     when WM_NCHITTEST:  return HTTRANSPARENT;
     when WM_SETTEXT: {
       LPCTSTR str = (LPCTSTR) lParam;
-      HDC hdc = CreateCompatibleDC(null);
-      SelectObject(hdc, tip_font);
+      HDC dc = CreateCompatibleDC(null);
+      SelectObject(dc, tip_font);
       SIZE sz;
-      GetTextExtentPoint32(hdc, str, strlen(str), &sz);
+      GetTextExtentPoint32(dc, str, strlen(str), &sz);
       SetWindowPos(hWnd, null, 0, 0, sz.cx + 6, sz.cy + 6,
                    SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
       InvalidateRect(hWnd, null, false);
-      DeleteDC(hdc);
+      DeleteDC(dc);
     }
     when WM_PAINT: {
       PAINTSTRUCT ps;
-      HDC hdc = BeginPaint(hWnd, &ps);
+      HDC dc = BeginPaint(hWnd, &ps);
 
-      SelectObject(hdc, tip_font);
-      SelectObject(hdc, GetStockObject(BLACK_PEN));
+      SelectObject(dc, tip_font);
+      SelectObject(dc, GetStockObject(BLACK_PEN));
 
       HBRUSH hbr = CreateSolidBrush(tip_bg);
-      HGDIOBJ holdbr = SelectObject(hdc, hbr);
+      HGDIOBJ holdbr = SelectObject(dc, hbr);
 
       RECT cr;
       GetClientRect(hWnd, &cr);
-      Rectangle(hdc, cr.left, cr.top, cr.right, cr.bottom);
+      Rectangle(dc, cr.left, cr.top, cr.right, cr.bottom);
 
       int wtlen = GetWindowTextLength(hWnd);
       LPTSTR wt = (LPTSTR) newn(TCHAR, wtlen + 1);
       GetWindowText(hWnd, wt, wtlen + 1);
 
-      SetTextColor(hdc, tip_text);
-      SetBkColor(hdc, tip_bg);
+      SetTextColor(dc, tip_text);
+      SetBkColor(dc, tip_bg);
 
-      TextOut(hdc, cr.left + 3, cr.top + 3, wt, wtlen);
+      TextOut(dc, cr.left + 3, cr.top + 3, wt, wtlen);
 
       free(wt);
 
-      SelectObject(hdc, holdbr);
+      SelectObject(dc, holdbr);
       DeleteObject(hbr);
 
       EndPaint(hWnd, &ps);
@@ -84,7 +84,7 @@ win_update_tip(HWND src, int cx, int cy)
       wc.lpfnWndProc = tip_proc;
       wc.cbClsExtra = 0;
       wc.cbWndExtra = 0;
-      wc.hInstance = hinst;
+      wc.hInstance = inst;
       wc.hIcon = null;
       wc.hCursor = null;
       wc.hbrBackground = null;
@@ -112,10 +112,10 @@ win_update_tip(HWND src, int cx, int cy)
   if (!tip_wnd) {
    /* calculate the tip's size */
 
-    HDC hdc = CreateCompatibleDC(null);
+    HDC dc = CreateCompatibleDC(null);
     SIZE sz;    
-    GetTextExtentPoint32(hdc, str, strlen(str), &sz);
-    DeleteDC(hdc);
+    GetTextExtentPoint32(dc, str, strlen(str), &sz);
+    DeleteDC(dc);
 
     RECT wr;
     GetWindowRect(src, &wr);
@@ -127,7 +127,7 @@ win_update_tip(HWND src, int cx, int cy)
     tip_wnd =
       CreateWindowEx(WS_EX_TOOLWINDOW | WS_EX_TOPMOST,
                      MAKEINTRESOURCE(tip_class), str, WS_POPUP, ix, iy, sz.cx,
-                     sz.cy, null, null, hinst, null);
+                     sz.cy, null, null, inst, null);
     ShowWindow(tip_wnd, SW_SHOWNOACTIVATE);
   }
   else {
