@@ -57,6 +57,28 @@ win_update_menu(void)
   CheckMenuItem(menu, IDM_FULLSCREEN, fullscreen ? MF_CHECKED : MF_UNCHECKED);
 }
 
+
+static bool mouse_showing = true;
+
+void
+win_show_mouse()
+{
+  if (!mouse_showing) {
+    ShowCursor(true);
+    mouse_showing = true;
+  }
+}
+
+void
+win_hide_mouse()
+{
+  if (mouse_showing) {
+    ShowCursor(false);
+    mouse_showing = false;
+  }
+}
+
+
 static pos
 get_pos(LPARAM lp, bool *has_moved_p)
 {
@@ -405,25 +427,3 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
     return 1;
   }
 }
-
-
-static bool mouse_showing = true;
-
-void
-win_show_mouse()
-{
-  if (!mouse_showing) {
-    ShowCursor(true);
-    mouse_showing = true;
-  }
-}
-
-void
-win_hide_mouse()
-{
-  if (mouse_showing) {
-    ShowCursor(false);
-    mouse_showing = false;
-  }
-}
-
