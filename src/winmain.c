@@ -549,6 +549,7 @@ reconfig(void)
   set_transparency();
   InvalidateRect(hwnd, null, true);
   reset_window(init_lvl);
+  win_update_pointer();
 }
 
 static bool
@@ -563,6 +564,26 @@ confirm_close(void)
       APPNAME " Exit Confirmation", 
       MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON2
     ) == IDOK;
+}
+
+static HCURSOR cursor, ibeam_cursor, arrow_cursor, no_cursor;
+
+void
+win_update_pointer(void)
+{
+  mod_keys mod = cfg.click_target_mod;
+  uchar key = mod == SHIFT ? VK_SHIFT : mod == ALT ? VK_MENU : VK_CONTROL;
+  bool override = GetKeyState(key) & 0x80;
+  bool mouse_mode = term_in_mouse_mode();
+  HCURSOR new_cursor = 
+    (cfg.click_targets_app && mouse_mode) ^ override
+    ? (mouse_mode ? arrow_cursor : no_cursor)
+    : ibeam_cursor;
+  if (new_cursor != cursor) {
+    cursor = new_cursor;
+    SetClassLongPtr(hwnd, GCLP_HCURSOR, (LONG_PTR)new_cursor);
+    SetCursor(new_cursor);
+  }
 }
 
 static LRESULT CALLBACK
@@ -629,8 +650,11 @@ win_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_MOUSEMOVE: win_mouse_move(false, wp, lp);
     when WM_NCMOUSEMOVE: win_mouse_move(true, wp, lp);
     when WM_KEYDOWN or WM_SYSKEYDOWN:
+      win_update_pointer();
       if (win_key_press(wp, lp))
         return 0;
+    when WM_KEYUP or WM_SYSKEYUP:
+      win_update_pointer();
     when WM_CHAR or WM_SYSCHAR: { // TODO: handle wchar and WM_UNICHAR
       char c = (uchar) wp;
       term_seen_key_event();
@@ -796,6 +820,10 @@ main(int argc, char *argv[])
 
   hinst = GetModuleHandle(NULL);
 
+  ibeam_cursor = LoadCursor(null, IDC_IBEAM);
+  arrow_cursor = LoadCursor(null, IDC_ARROW);
+  no_cursor = LoadCursor(null, IDC_NO);
+
  /* Create window class. */
   {
     WNDCLASS wndclass;
@@ -805,7 +833,7 @@ main(int argc, char *argv[])
     wndclass.cbWndExtra = 0;
     wndclass.hInstance = hinst;
     wndclass.hIcon = LoadIcon(hinst, MAKEINTRESOURCE(IDI_MAINICON));
-    wndclass.hCursor = LoadCursor(null, IDC_IBEAM);
+    wndclass.hCursor = ibeam_cursor;
     wndclass.hbrBackground = null;
     wndclass.lpszMenuName = null;
     wndclass.lpszClassName = APPNAME;
@@ -867,9 +895,8 @@ main(int argc, char *argv[])
   * Set up a caret bitmap, with no content.
   */
   {
-    char *bits;
     int size = (font_width + 15) / 16 * 2 * font_height;
-    bits = newn(char, size);
+    char *bits = newn(char, size);
     memset(bits, 0, size);
     caretbm = CreateBitmap(font_width, font_height, 1, 1, bits);
     free(bits);

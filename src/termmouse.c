@@ -249,27 +249,38 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
 {
   bool target_override = mods & cfg.click_target_mod;
   mods &= ~cfg.click_target_mod;
-  int rca = cfg.right_click_action;
-  if (term.mouse_mode && cfg.click_targets_app ^ target_override) {
-    if (term.mouse_mode == MM_X10)
-      mods = 0;
-    send_mouse_event(0x1F + b, mods, box_pos(p));
+  
+  if ((term.mouse_mode && cfg.click_targets_app) ^ target_override) {
+    if (term.mouse_mode) {
+      if (term.mouse_mode == MM_X10)
+        mods = 0;
+      send_mouse_event(0x1F + b, mods, box_pos(p));
+    }
     term.mouse_state = MS_CLICKED;
+    return;
   }  
-  else if (b == MBT_RIGHT && (rca == RC_SHOWMENU || mods & (SHIFT | CTRL))) {
-    if (!(mods & ALT)) 
+  
+  bool alt = mods & ALT;
+  bool shift_ctrl = mods & (SHIFT | CTRL);
+  int rca = cfg.right_click_action;
+  if (b == MBT_RIGHT && (rca == RC_SHOWMENU || shift_ctrl)) {
+    if (!alt) 
       win_popup_menu();
   }
   else if (b == MBT_MIDDLE || (b == MBT_RIGHT && rca == RC_PASTE)) {
-    if (!(mods & ALT)) 
-      win_paste();
+    if (!alt) {
+      if (shift_ctrl)
+        term_copy();
+      else
+        win_paste();
+    }
   }
   else {
     // Only left clicks and extending right clicks should get here.
     p = get_selpoint(box_pos(p));
     term.mouse_state = count;
-    term.sel_rect = mods & ALT;
-    if (b == MBT_RIGHT || mods & (SHIFT | CTRL))
+    term.sel_rect = alt;
+    if (b == MBT_RIGHT || shift_ctrl)
       sel_extend(p);
     else if (count == 1) {
       term.selected = false;

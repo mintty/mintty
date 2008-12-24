@@ -228,6 +228,7 @@ toggle_mode(int mode, int query, int state)
         //term.repeat_off = !state;
       when 9:  /* X10_MOUSE */
         term.mouse_mode = state ? MM_X10 : 0;
+        win_update_pointer();
       when 10: /* DECEDM: set local edit mode */
         term.editing = state;
         ldisc_send(null, 0, 0);
@@ -242,10 +243,13 @@ toggle_mode(int mode, int query, int state)
         term.disptop = 0;
       when 1000: /* VT200_MOUSE */
         term.mouse_mode = state ? MM_VT200 : 0;
+        win_update_pointer();
       when 1002: /* BTN_EVENT_MOUSE */
         term.mouse_mode = state ? MM_BTN_EVENT : 0;
+        win_update_pointer();
       when 1003: /* ANY_EVENT_MOUSE */
         term.mouse_mode = state ? MM_ANY_EVENT : 0;
+        win_update_pointer();
       when 1047:       /* alternate screen */
         compatibility(OTHER);
         term_deselect();
