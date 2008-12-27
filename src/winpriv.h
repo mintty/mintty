@@ -50,12 +50,12 @@ void win_init_menu(void);
 void win_update_menu(void);
 
 void win_show_mouse(void);
-void win_mouse_click(mouse_button, WPARAM, LPARAM);
-void win_mouse_release(mouse_button, WPARAM, LPARAM);
+void win_mouse_click(mouse_button, LPARAM);
+void win_mouse_release(mouse_button, LPARAM);
 void win_mouse_wheel(WPARAM, LPARAM);
-void win_mouse_move(bool nc, WPARAM, LPARAM);
+void win_mouse_move(bool nc, LPARAM);
 
-bool win_key_press(WPARAM, LPARAM);
+bool win_key_down(WPARAM, LPARAM);
 
 void win_init_drop_target(void);
 
