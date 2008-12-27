@@ -31,8 +31,6 @@ static int prev_rows, prev_cols;
 
 static bool flashing;
 
-static HCURSOR ibeam_cursor, arrow_cursor;
-
 void
 win_set_timer(void (*cb)(void), uint ticks)
 {
@@ -551,7 +549,7 @@ reconfig(void)
   set_transparency();
   InvalidateRect(wnd, null, true);
   reset_window(init_lvl);
-  win_update_pointer();
+  win_update_mouse();
 }
 
 static bool
@@ -565,25 +563,6 @@ confirm_close(void)
       "Shall they be killed?",
       APPNAME, MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON2
     ) == IDOK;
-}
-
-void
-win_update_pointer(void)
-{
-  static bool app_pointer;
-  bool new_app_pointer = false;
-  if (term_in_mouse_mode()) {
-    mod_keys mod = cfg.click_target_mod;
-    uchar key = mod == SHIFT ? VK_SHIFT : mod == ALT ? VK_MENU : VK_CONTROL;
-    bool override = GetKeyState(key) & 0x80;
-    new_app_pointer = cfg.click_targets_app ^ override;
-  }
-  if (new_app_pointer != app_pointer) {
-    HCURSOR cursor = app_pointer ? arrow_cursor : ibeam_cursor;
-    SetClassLongPtr(wnd, GCLP_HCURSOR, (LONG_PTR)cursor);
-    SetCursor(cursor);
-    app_pointer = new_app_pointer;
-  }
 }
 
 static LRESULT CALLBACK
@@ -650,11 +629,11 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_MOUSEMOVE: win_mouse_move(false, wp, lp);
     when WM_NCMOUSEMOVE: win_mouse_move(true, wp, lp);
     when WM_KEYDOWN or WM_SYSKEYDOWN:
-      win_update_pointer();
+      win_update_mouse();
       if (win_key_press(wp, lp))
         return 0;
     when WM_KEYUP or WM_SYSKEYUP:
-      win_update_pointer();
+      win_update_mouse();
     when WM_CHAR or WM_SYSCHAR: { // TODO: handle wchar and WM_UNICHAR
       char c = (uchar) wp;
       term_seen_key_event();
@@ -820,9 +799,6 @@ main(int argc, char *argv[])
 
   inst = GetModuleHandle(NULL);
 
-  ibeam_cursor = LoadCursor(null, IDC_IBEAM);
-  arrow_cursor = LoadCursor(null, IDC_ARROW);
-
  /* Create window class. */
   {
     WNDCLASS wndclass;
@@ -832,7 +808,7 @@ main(int argc, char *argv[])
     wndclass.cbWndExtra = 0;
     wndclass.hInstance = inst;
     wndclass.hIcon = LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON));
-    wndclass.hCursor = ibeam_cursor;
+    wndclass.hCursor = LoadCursor(null, IDC_IBEAM);
     wndclass.hbrBackground = null;
     wndclass.lpszMenuName = null;
     wndclass.lpszClassName = APPNAME;
