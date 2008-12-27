@@ -61,6 +61,25 @@ win_update_menu(void)
 static bool mouse_showing = true;
 
 void
+win_update_mouse(void)
+{
+  static bool app_mouse;
+  bool new_app_mouse = false;
+  if (term_in_mouse_mode()) {
+    mod_keys mod = cfg.click_target_mod;
+    uchar key = mod == SHIFT ? VK_SHIFT : mod == ALT ? VK_MENU : VK_CONTROL;
+    bool override = GetKeyState(key) & 0x80;
+    new_app_mouse = cfg.click_targets_app ^ override;
+  }
+  if (new_app_mouse != app_mouse) {
+    HCURSOR cursor = LoadCursor(null, new_app_mouse ? IDC_ARROW : IDC_IBEAM);
+    SetClassLongPtr(wnd, GCLP_HCURSOR, (LONG_PTR)cursor);
+    SetCursor(cursor);
+    app_mouse = new_app_mouse;
+  }
+}
+
+void
 win_show_mouse()
 {
   if (!mouse_showing) {
@@ -70,7 +89,7 @@ win_show_mouse()
 }
 
 void
-win_hide_mouse()
+hide_mouse()
 {
   if (mouse_showing) {
     ShowCursor(false);
@@ -371,7 +390,7 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
         luni_send(wchars, wchars_n, 1);
       } while (--count);
     }
-    win_hide_mouse();
+    hide_mouse();
     return 1;
   }
   
@@ -423,7 +442,7 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
     do
       ldisc_send(chars, chars_n, 1);
     while (--count);
-    win_hide_mouse();
+    hide_mouse();
     return 1;
   }
 }

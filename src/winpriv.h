@@ -50,7 +50,6 @@ void win_init_menu(void);
 void win_update_menu(void);
 
 void win_show_mouse(void);
-void win_hide_mouse(void);
 void win_mouse_click(mouse_button, WPARAM, LPARAM);
 void win_mouse_release(mouse_button, WPARAM, LPARAM);
 void win_mouse_wheel(WPARAM, LPARAM);
