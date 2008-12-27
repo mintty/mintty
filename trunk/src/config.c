@@ -264,8 +264,8 @@ setup_config_box(controlbox * b)
     s, null, '\0', 3, P(0), dlg_stdradiobutton_handler,
     I(offsetof(config, scroll_mod)),
     "Shift", '\0', I(SHIFT),
-    "Alt", '\0', I(ALT),
     "Ctrl", '\0', I(CTRL),
+    "Alt", '\0', I(ALT),
     null
   );
 
@@ -303,8 +303,8 @@ setup_config_box(controlbox * b)
     '\0', 3, P(0), dlg_stdradiobutton_handler,
     I(offsetof(config, click_target_mod)),
     "Shift", '\0', I(SHIFT),
-    "Alt", '\0', I(ALT),
     "Ctrl", '\0', I(CTRL),
+    "Alt", '\0', I(ALT),
     null
   );
   

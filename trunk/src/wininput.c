@@ -58,19 +58,27 @@ win_update_menu(void)
 }
 
 
-static bool mouse_showing = true;
+inline static bool
+is_key_down(uchar vk)
+{ return GetKeyState(vk) & 0x80; }
 
-void
-win_update_mouse(void)
+static mod_keys
+get_mods(void)
+{
+  bool shift = is_key_down(VK_SHIFT);
+  bool alt = is_key_down(VK_MENU);
+  bool ctrl = is_key_down(VK_RCONTROL) ||
+              (is_key_down(VK_LCONTROL) && !is_key_down(VK_RMENU)); // not AltGr
+  return shift * SHIFT | alt * ALT | ctrl * CTRL;
+}
+
+static void
+update_mouse(mod_keys mods)
 {
   static bool app_mouse;
-  bool new_app_mouse = false;
-  if (term_in_mouse_mode()) {
-    mod_keys mod = cfg.click_target_mod;
-    uchar key = mod == SHIFT ? VK_SHIFT : mod == ALT ? VK_MENU : VK_CONTROL;
-    bool override = GetKeyState(key) & 0x80;
-    new_app_mouse = cfg.click_targets_app ^ override;
-  }
+  bool new_app_mouse = 
+    term_in_mouse_mode() &&
+    cfg.click_targets_app ^ ((mods & cfg.click_target_mod) != 0);
   if (new_app_mouse != app_mouse) {
     HCURSOR cursor = LoadCursor(null, new_app_mouse ? IDC_ARROW : IDC_IBEAM);
     SetClassLongPtr(wnd, GCLP_HCURSOR, (LONG_PTR)cursor);
@@ -78,6 +86,13 @@ win_update_mouse(void)
     app_mouse = new_app_mouse;
   }
 }
+
+void
+win_update_mouse(void)
+{ update_mouse(get_mods()); }
+
+
+static bool mouse_showing = true;
 
 void
 win_show_mouse()
@@ -99,7 +114,7 @@ hide_mouse()
 
 
 static pos
-get_pos(LPARAM lp, bool *has_moved_p)
+get_mouse_pos(LPARAM lp, bool *has_moved_p)
 {
   int16 y = HIWORD(lp), x = LOWORD(lp);  
   pos p = {
@@ -113,24 +128,15 @@ get_pos(LPARAM lp, bool *has_moved_p)
   return p;
 }
 
-static mod_keys
-get_mouse_mods(WPARAM wp)
-{
-  return
-    (wp & MK_SHIFT ? SHIFT : 0) |
-    (GetKeyState(VK_MENU) & 0x80 ? ALT : 0) |
-    (wp & MK_CONTROL ? CTRL : 0);
-}
-
 static mouse_button clicked_button;
 
 void
-win_mouse_click(mouse_button b, WPARAM wp, LPARAM lp)
+win_mouse_click(mouse_button b, LPARAM lp)
 {
   win_show_mouse();
-  mod_keys mods = get_mouse_mods(wp);
+  mod_keys mods = get_mods();
   if (clicked_button) {
-    term_mouse_release(b, mods, get_pos(lp, 0));
+    term_mouse_release(b, mods, get_mouse_pos(lp, 0));
     clicked_button = 0;
   }
   static mouse_button last_button;
@@ -138,18 +144,18 @@ win_mouse_click(mouse_button b, WPARAM wp, LPARAM lp)
   uint t = GetMessageTime();
   if (b != last_button || t - last_time > GetDoubleClickTime() || ++count > 3)
     count = 1;
-  term_mouse_click(b, mods, get_pos(lp, 0), count);
+  term_mouse_click(b, mods, get_mouse_pos(lp, 0), count);
   last_time = t;
   clicked_button = last_button = b;
   SetCapture(wnd);
 }
 
 void
-win_mouse_release(mouse_button b, WPARAM wp, LPARAM lp)
+win_mouse_release(mouse_button b, LPARAM lp)
 {
   win_show_mouse();
   if (b == clicked_button) {
-    term_mouse_release(b, get_mouse_mods(wp), get_pos(lp, 0));
+    term_mouse_release(b, get_mods(), get_mouse_pos(lp, 0));
     clicked_button = 0;
     ReleaseCapture();
   }
@@ -160,7 +166,7 @@ win_mouse_release(mouse_button b, WPARAM wp, LPARAM lp)
  * mouse hasn't moved. Don't do anything in this case.
  */
 void
-win_mouse_move(bool nc, WPARAM wp, LPARAM lp)
+win_mouse_move(bool nc, LPARAM lp)
 {
   static bool last_nc;
   static LPARAM last_lp;
@@ -171,9 +177,9 @@ win_mouse_move(bool nc, WPARAM wp, LPARAM lp)
   win_show_mouse();
   if (!nc) {
     bool has_moved;
-    pos p = get_pos(lp, &has_moved);
+    pos p = get_mouse_pos(lp, &has_moved);
     if (has_moved)  
-      term_mouse_move(clicked_button, get_mouse_mods(wp), p);
+      term_mouse_move(clicked_button, get_mods(), p);
   }
 }
 
@@ -187,28 +193,18 @@ win_mouse_wheel(WPARAM wp, LPARAM lp)
   int lines = delta / WHEEL_DELTA;
   delta -= lines * WHEEL_DELTA;
   if (lines)
-    term_mouse_wheel(lines, get_mouse_mods(wp), get_pos(lp, 0));
-}
-
-inline static bool
-is_key_down(uchar vk)
-{
-  return GetKeyState(vk) & 0x80;
+    term_mouse_wheel(lines, get_mods(), get_mouse_pos(lp, 0));
 }
 
 bool 
-win_key_press(WPARAM wParam, LPARAM lParam) {
+win_key_down(WPARAM wParam, LPARAM lParam)
+{
+  mod_keys mods = get_mods();
+  bool shift = mods & SHIFT, alt = mods & ALT, ctrl = mods & CTRL;
   uint key = wParam;
-  uint flags = HIWORD(lParam);
   uint count = LOWORD(lParam);
-  uint scancode = flags & (KF_UP | KF_EXTENDED | 0xFF);
 
-  // Check modifiers.
-  bool shift = is_key_down(VK_SHIFT);
-  bool alt = flags & KF_ALTDOWN;
-  bool ctrl = is_key_down(VK_RCONTROL) ||
-              (is_key_down(VK_LCONTROL) && !is_key_down(VK_RMENU)); // not AltGr
-  int mods = shift * SHIFT | alt * ALT | ctrl * CTRL;
+  update_mouse(mods);
 
   // Specials
   if (alt && !ctrl) {
@@ -248,7 +244,7 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
   }
 
   // Scrollback
-  if (term_which_screen() == 0 && mods == cfg.scroll_mod) { 
+  if (term_which_screen() == 0 && mods == (mod_keys)cfg.scroll_mod) { 
     int scroll;
     switch (key) {
       when VK_HOME:  scroll = SB_TOP;
@@ -375,7 +371,7 @@ win_key_press(WPARAM wParam, LPARAM lParam) {
   // to an experiment with Keyboard Layout Creator 1.4. (MSDN doesn't say.)
   uchar keyboard[256];  
   GetKeyboardState(keyboard);
-    
+  uint scancode = HIWORD(lParam) & (KF_EXTENDED | 0xFF);
   wchar wchars[4];
   int wchars_n = ToUnicode(key, scancode, keyboard, wchars, 4, 0);
   

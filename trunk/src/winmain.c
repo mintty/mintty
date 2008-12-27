@@ -619,18 +619,17 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
           when SB_THUMBPOSITION or SB_THUMBTRACK: term_scroll(1, HIWORD(wp));
         }
       }
-    when WM_LBUTTONDOWN: win_mouse_click(MBT_LEFT, wp, lp);
-    when WM_RBUTTONDOWN: win_mouse_click(MBT_RIGHT, wp, lp);
-    when WM_MBUTTONDOWN: win_mouse_click(MBT_MIDDLE, wp, lp);
-    when WM_LBUTTONUP: win_mouse_release(MBT_LEFT, wp, lp);
-    when WM_RBUTTONUP: win_mouse_release(MBT_RIGHT, wp, lp);
-    when WM_MBUTTONUP: win_mouse_release(MBT_MIDDLE, wp, lp);
+    when WM_LBUTTONDOWN: win_mouse_click(MBT_LEFT, lp);
+    when WM_RBUTTONDOWN: win_mouse_click(MBT_RIGHT, lp);
+    when WM_MBUTTONDOWN: win_mouse_click(MBT_MIDDLE, lp);
+    when WM_LBUTTONUP: win_mouse_release(MBT_LEFT, lp);
+    when WM_RBUTTONUP: win_mouse_release(MBT_RIGHT, lp);
+    when WM_MBUTTONUP: win_mouse_release(MBT_MIDDLE, lp);
+    when WM_MOUSEMOVE: win_mouse_move(false, lp);
+    when WM_NCMOUSEMOVE: win_mouse_move(true, lp);
     when WM_MOUSEWHEEL: win_mouse_wheel(wp, lp);
-    when WM_MOUSEMOVE: win_mouse_move(false, wp, lp);
-    when WM_NCMOUSEMOVE: win_mouse_move(true, wp, lp);
     when WM_KEYDOWN or WM_SYSKEYDOWN:
-      win_update_mouse();
-      if (win_key_press(wp, lp))
+      if (win_key_down(wp, lp))
         return 0;
     when WM_KEYUP or WM_SYSKEYUP:
       win_update_mouse();
