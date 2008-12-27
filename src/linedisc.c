@@ -22,7 +22,7 @@ struct {
 } ldisc;
 
 static int
-plen(uchar c)
+uclen(uchar c)
 {
   if ((c >= 32 && c <= 126) || (c >= 160 && !term_in_utf()))
     return 1;
@@ -38,7 +38,7 @@ plen(uchar c)
 }
 
 static void
-pwrite(uchar c)
+ucwrite(uchar c)
 {
   if ((c >= 32 && c <= 126) || (!term_in_utf() && c >= 0xA0) ||
       (term_in_utf() && c >= 0x80)) {
@@ -126,14 +126,14 @@ ldisc_send(const char *buf, int len, int interactive)
           if (ldisc.buflen > 0) {
             do {
               if (term_echoing())
-                bsb(plen(ldisc.buf[ldisc.buflen - 1]));
+                bsb(uclen(ldisc.buf[ldisc.buflen - 1]));
               ldisc.buflen--;
             } while (!char_start(ldisc.buf[ldisc.buflen]));
           }
         when CTRL('W'):        /* delete word */
           while (ldisc.buflen > 0) {
             if (term_echoing())
-              bsb(plen(ldisc.buf[ldisc.buflen - 1]));
+              bsb(uclen(ldisc.buf[ldisc.buflen - 1]));
             ldisc.buflen--;
             if (ldisc.buflen > 0 && isspace((uchar) ldisc.buf[ldisc.buflen - 1])
                 && !isspace((uchar) ldisc.buf[ldisc.buflen]))
@@ -143,7 +143,7 @@ ldisc_send(const char *buf, int len, int interactive)
           if (term_echoing()) {
             term_write("^R\r\n", 4);
             for (int i = 0; i < ldisc.buflen; i++)
-              pwrite(ldisc.buf[i]);
+              ucwrite(ldisc.buf[i]);
           }
         when CTRL('V'):        /* quote next char */
           ldisc.quotenext = true;
@@ -166,7 +166,7 @@ ldisc_send(const char *buf, int len, int interactive)
           or CTRL('Z'):       /* Suspend */
           while (ldisc.buflen > 0) {
             if (term_echoing())
-              bsb(plen(ldisc.buf[ldisc.buflen - 1]));
+              bsb(uclen(ldisc.buf[ldisc.buflen - 1]));
             ldisc.buflen--;
           }
         default:
@@ -176,7 +176,7 @@ ldisc_send(const char *buf, int len, int interactive)
           }
           ldisc.buf[ldisc.buflen++] = c;
           if (term_echoing())
-            pwrite((uchar) c);
+            ucwrite((uchar) c);
           ldisc.quotenext = false;
       }
     }
@@ -185,7 +185,7 @@ ldisc_send(const char *buf, int len, int interactive)
     if (ldisc.buflen != 0) {
       child_write(ldisc.buf, ldisc.buflen);
       while (ldisc.buflen > 0) {
-        bsb(plen(ldisc.buf[ldisc.buflen - 1]));
+        bsb(uclen(ldisc.buf[ldisc.buflen - 1]));
         ldisc.buflen--;
       }
     }
