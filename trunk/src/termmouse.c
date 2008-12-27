@@ -250,12 +250,10 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
   bool target_override = mods & cfg.click_target_mod;
   mods &= ~cfg.click_target_mod;
   
-  if ((term.mouse_mode && cfg.click_targets_app) ^ target_override) {
-    if (term.mouse_mode) {
-      if (term.mouse_mode == MM_X10)
-        mods = 0;
-      send_mouse_event(0x1F + b, mods, box_pos(p));
-    }
+  if (term.mouse_mode && (cfg.click_targets_app ^ target_override)) {
+    if (term.mouse_mode == MM_X10)
+      mods = 0;
+    send_mouse_event(0x1F + b, mods, box_pos(p));
     term.mouse_state = MS_CLICKED;
     return;
   }  
