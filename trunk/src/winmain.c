@@ -31,6 +31,8 @@ static int prev_rows, prev_cols;
 
 static bool flashing;
 
+static HCURSOR ibeam_cursor, arrow_cursor;
+
 void
 win_set_timer(void (*cb)(void), uint ticks)
 {
@@ -560,29 +562,27 @@ confirm_close(void)
     MessageBox(
       wnd,
       "Processes are running in session.\n"
-      "Exit anyway?",
-      APPNAME " Exit Confirmation", 
-      MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON2
+      "Shall they be killed?",
+      APPNAME, MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON2
     ) == IDOK;
 }
-
-static HCURSOR cursor, ibeam_cursor, arrow_cursor, no_cursor;
 
 void
 win_update_pointer(void)
 {
-  mod_keys mod = cfg.click_target_mod;
-  uchar key = mod == SHIFT ? VK_SHIFT : mod == ALT ? VK_MENU : VK_CONTROL;
-  bool override = GetKeyState(key) & 0x80;
-  bool mouse_mode = term_in_mouse_mode();
-  HCURSOR new_cursor = 
-    (cfg.click_targets_app && mouse_mode) ^ override
-    ? (mouse_mode ? arrow_cursor : no_cursor)
-    : ibeam_cursor;
-  if (new_cursor != cursor) {
-    cursor = new_cursor;
-    SetClassLongPtr(wnd, GCLP_HCURSOR, (LONG_PTR)new_cursor);
-    SetCursor(new_cursor);
+  static bool app_pointer;
+  bool new_app_pointer = false;
+  if (term_in_mouse_mode()) {
+    mod_keys mod = cfg.click_target_mod;
+    uchar key = mod == SHIFT ? VK_SHIFT : mod == ALT ? VK_MENU : VK_CONTROL;
+    bool override = GetKeyState(key) & 0x80;
+    new_app_pointer = cfg.click_targets_app ^ override;
+  }
+  if (new_app_pointer != app_pointer) {
+    HCURSOR cursor = app_pointer ? arrow_cursor : ibeam_cursor;
+    SetClassLongPtr(wnd, GCLP_HCURSOR, (LONG_PTR)cursor);
+    SetCursor(cursor);
+    app_pointer = new_app_pointer;
   }
 }
 
@@ -822,7 +822,6 @@ main(int argc, char *argv[])
 
   ibeam_cursor = LoadCursor(null, IDC_IBEAM);
   arrow_cursor = LoadCursor(null, IDC_ARROW);
-  no_cursor = LoadCursor(null, IDC_NO);
 
  /* Create window class. */
   {
