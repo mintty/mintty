@@ -555,14 +555,17 @@ reconfig(void)
 static bool
 confirm_close(void)
 {
-  return
+  // Only ask once.
+  static bool confirmed = false;
+  confirmed |=
     !child_is_parent() ||
     MessageBox(
       wnd,
       "Processes are running in session.\n"
-      "Shall they be killed?",
+      "Exit anyway?",
       APPNAME, MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON2
     ) == IDOK;
+  return confirmed;
 }
 
 static LRESULT CALLBACK
