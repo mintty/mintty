@@ -33,7 +33,8 @@ $(dir)-cygwin.zip: $(exe) $(stuff)
 	du -b $@
 
 $(dir).tgz: $(srcs)
-	mkdir -p $(dir)
+	rm -rf $(dir)
+	mkdir $(dir)
 	cp -ax --parents $^ $(dir)
 	rm -f $@
 	tar czf $@ $(dir)
