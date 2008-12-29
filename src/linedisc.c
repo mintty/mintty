@@ -254,7 +254,7 @@ luni_send(const wchar * buf, int len, int interactive)
   }
   else {
     int rv;
-    rv = wc_to_mb(ucsdata.line_codepage, 0, buf, len, linebuffer, linesize);
+    rv = wc_to_mb(ucsdata.codepage, 0, buf, len, linebuffer, linesize);
     if (rv >= 0)
       p = linebuffer + rv;
     else

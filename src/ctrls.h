@@ -1,13 +1,7 @@
 #ifndef CTRLS_H
 #define CTRLS_H
 
-#include "settings.h"
-
-/*
- * This will come in handy for generic control handlers. Anyone
- * knows how to make this more portable, let me know :-)
- */
-#define ATOFFSET(data, offset) ( (void *) ( (char *)(data) + (offset) ) )
+#include "config.h"
 
 /*
  * This is the big union which defines a single control, of any
@@ -475,8 +469,8 @@ void dlg_editbox_get(control *, void *dlg, char *buffer, int length);
 void dlg_listbox_clear(control *, void *dlg);
 void dlg_listbox_add(control *, void *dlg, char const *text);
 void dlg_text_set(control *, void *dlg, char const *text);
-void dlg_fontsel_set(control *, void *dlg, font_spec fn);
-void dlg_fontsel_get(control *, void *dlg, font_spec * fn);
+void dlg_fontsel_set(control *, void *dlg, font_spec *);
+void dlg_fontsel_get(control *, void *dlg, font_spec *);
 /*
  * Bracketing a large set of updates in these two functions will
  * cause the front end (if possible) to delay updating the screen

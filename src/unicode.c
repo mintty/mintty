@@ -451,15 +451,15 @@ init_ucs(void)
     tbuf[i] = i;
 
  /* Decide on the Line and Font codepages */
-  ucsdata.line_codepage = decode_codepage(cfg.line_codepage);
+  ucsdata.codepage = decode_codepage(cfg.codepage);
 
   if (ucsdata.font_codepage <= 0) {
     ucsdata.font_codepage = 0;
     ucsdata.dbcs_screenfont = 0;
   }
 
-  if (ucsdata.line_codepage <= 0)
-    ucsdata.line_codepage = ucsdata.font_codepage;
+  if (ucsdata.codepage <= 0)
+    ucsdata.codepage = ucsdata.font_codepage;
 
  /* Collect screen font ucs table */
   if (ucsdata.dbcs_screenfont || ucsdata.font_codepage == 0) {
@@ -481,7 +481,7 @@ init_ucs(void)
   get_unitab(437, ucsdata.unitab_scoacs, 1);
 
  /* Collect line set ucs table */
-  if (ucsdata.line_codepage == ucsdata.font_codepage &&
+  if (ucsdata.codepage == ucsdata.font_codepage &&
       (ucsdata.dbcs_screenfont || ucsdata.font_codepage == 0)) {
 
    /* For DBCS and POOR fonts force direct to font */
@@ -493,7 +493,7 @@ init_ucs(void)
     ucsdata.unitab_line[127] = (wchar) 127;
   }
   else
-    get_unitab(ucsdata.line_codepage, ucsdata.unitab_line, 0);
+    get_unitab(ucsdata.codepage, ucsdata.unitab_line, 0);
 
  /* VT100 graphics - NB: Broken for non-ascii CP's */
   memcpy(ucsdata.unitab_xterm, ucsdata.unitab_line,
@@ -541,7 +541,7 @@ init_ucs(void)
   link_font(ucsdata.unitab_scoacs, ucsdata.unitab_font, CSET_ACP);
   link_font(ucsdata.unitab_xterm, ucsdata.unitab_font, CSET_ACP);
 
-  if (ucsdata.dbcs_screenfont && ucsdata.font_codepage != ucsdata.line_codepage) {
+  if (ucsdata.dbcs_screenfont && ucsdata.font_codepage != ucsdata.codepage) {
    /* F***ing Microsoft fonts, Japanese and Korean codepage fonts
     * have a currency symbol at 0x5C but their unicode value is 
     * still given as U+005C not the correct U+00A5. */
@@ -714,7 +714,7 @@ cp_name(int codepage)
 const char *
 cp_enumerate(int index)
 {
-  if (index < 0 || index >= (int) lenof(cp_list))
+  if (index < 0 || index >= (int) lengthof(cp_list))
     return null;
   return cp_list[index].name;
 }
@@ -765,7 +765,7 @@ wc_to_mb(int codepage, int flags, const wchar * wcstr, int wclen,
 {
   char *p;
   int i;
-  if (codepage == ucsdata.line_codepage && ucsdata.uni_tbl) {
+  if (codepage == ucsdata.codepage && ucsdata.uni_tbl) {
    /* Do this by array lookup if we can. */
     if (wclen < 0) {
       for (wclen = 0; wcstr[wclen++];); /* will include the NUL */
@@ -858,7 +858,7 @@ wordtype(int uc)
  /* For DBCS fonts I can't do anything useful. Even this will sometimes
   * fail as there's such a thing as a double width space. :-(
   */
-  if (ucsdata.dbcs_screenfont && ucsdata.font_codepage == ucsdata.line_codepage)
+  if (ucsdata.dbcs_screenfont && ucsdata.font_codepage == ucsdata.codepage)
     return (uc != ' ');
   if (uc < 0x80) {
     if (isalpha(uc) || (uc >= '-' && uc <= '9') || uc == '_')

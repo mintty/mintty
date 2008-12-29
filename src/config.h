@@ -5,6 +5,13 @@
 
 char *config_filename;
 
+typedef struct {
+  char name[64];
+  int isbold;
+  int height;
+  int charset;
+} font_spec;
+
 static const char ANSWERBACK[] = "xterm";
 enum { SAVELINES = 65536 };
 
@@ -29,14 +36,14 @@ typedef struct {
   int alt_sends_esc;
   int cursor_type;
   int cursor_blinks;
-  int bell;
+  int bell_type;
   int bell_ind;
   int scrollbar;
   int scroll_mod;
   int click_targets_app;
   int click_target_mod;
   int right_click_action;
-  int text_blink;
+  int allow_blinking;
   int rows, cols;
   char printer[128];
  /* Colour options */
@@ -44,7 +51,7 @@ typedef struct {
   colour fg_colour, bg_colour, cursor_colour;
   int transparency;
  /* translations */
-  char line_codepage[128];
+  char codepage[128];
  /* fonts */
   font_spec font;
   int font_quality;

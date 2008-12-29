@@ -35,19 +35,6 @@ write_int_setting(const char *key, int value)
 }
 
 void
-write_font_setting(const char *key, font_spec font)
-{
-  write_string_setting(key, font.name);
-  char key2[16];
-  snprintf(key2, sizeof key2, "%sIsBold", key);
-  write_int_setting(key2, font.isbold);
-  snprintf(key2, sizeof key2, "%sHeight", key);
-  write_int_setting(key2, font.height);
-  snprintf(key2, sizeof key2, "%sCharset", key);
-  write_int_setting(key2, font.charset);
-}
-
-void
 write_colour_setting(const char *key, colour value)
 {
   fprintf(file, "%s=%u,%u,%u\n", key, value.red, value.green, value.blue);
@@ -111,7 +98,7 @@ lookup_val(const char *key)
 }
   
 void
-read_string_setting(const char *key, const char *def, char *res, int len)
+read_string_setting(const char *key, char *res, int len, const char *def)
 {
   const char *val = lookup_val(key) ?: def;
   strncpy(res, val, len);
@@ -119,27 +106,14 @@ read_string_setting(const char *key, const char *def, char *res, int len)
 }
 
 void
-read_int_setting(const char *key, int def, int *res_p)
+read_int_setting(const char *key, int *res_p, int def)
 {
   const char *val = lookup_val(key);
   *res_p = val ? atoi(val) : def;
 }
 
 void
-read_font_setting(const char *key, font_spec def, font_spec *res_p)
-{
-  read_string_setting(key, def.name, res_p->name, sizeof res_p->name);
-  char key2[16];
-  snprintf(key2, sizeof key2, "%sIsBold", key);
-  read_int_setting(key2, def.isbold, &res_p->isbold);
-  snprintf(key2, sizeof key2, "%sHeight", key);
-  read_int_setting(key2, def.height, &res_p->height);
-  snprintf(key2, sizeof key2, "%sCharset", key);
-  read_int_setting(key2, def.charset, &res_p->charset);
-}
-
-void
-read_colour_setting(const char *key, colour def, colour *res)
+read_colour_setting(const char *key, colour *res, colour def)
 {
   const char *val = lookup_val(key); 
   if (val) {

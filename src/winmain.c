@@ -538,7 +538,7 @@ reconfig(void)
     SetWindowText(wnd, window_name);
 
   if (strcmp(cfg.font.name, prev_cfg.font.name) != 0 ||
-      strcmp(cfg.line_codepage, prev_cfg.line_codepage) != 0 ||
+      strcmp(cfg.codepage, prev_cfg.codepage) != 0 ||
       cfg.font.isbold != prev_cfg.font.isbold ||
       cfg.font.height != prev_cfg.font.height ||
       cfg.font.charset != prev_cfg.font.charset ||

@@ -511,7 +511,7 @@ getType(wchar ch)
   int i, j, k;
 
   i = -1;
-  j = lenof(lookup);
+  j = lengthof(lookup);
 
   while (j - i > 1) {
     k = (i + j) / 2;
@@ -776,7 +776,7 @@ mirror(wchar c)
     {0xFF62, 0xFF63}, {0xFF63, 0xFF62}
   };
   int i = 0;
-  int j = lenof(pairs);
+  int j = lengthof(pairs);
   while (j - i > 1) {
     int k = (i + j) / 2;
     if (c == pairs[k].from)

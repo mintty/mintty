@@ -360,8 +360,8 @@ out_bell(void)
   * Perform an actual bell if we're not overloaded.
   */
   if (!term.bell_overloaded) {
-    win_bell(term.cfg.bell);
-    if (term.cfg.bell == BELL_VISUAL)
+    win_bell(term.cfg.bell_type);
+    if (term.cfg.bell_type == BELL_VISUAL)
       term_schedule_vbell(false, 0);
   }
   seen_disp_event();
@@ -818,7 +818,7 @@ term_write(const char *data, int len)
           * upset some weird software.
           */
           compatibility(ANSIMIN);
-          lpage_send(ansi_codepage, ANSWERBACK, lenof(ANSWERBACK), 0);
+          lpage_send(ansi_codepage, ANSWERBACK, lengthof(ANSWERBACK), 0);
 
         when '\a':   /* BEL: Bell */
           out_bell();

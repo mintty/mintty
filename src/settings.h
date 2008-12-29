@@ -3,27 +3,18 @@
 
 #include "platform.h"
 
-typedef struct {
-  char name[64];
-  int isbold;
-  int height;
-  int charset;
-} font_spec;
-
 typedef struct { uchar red, green, blue; } colour;
 
 char *open_settings_w(char *filename);
 void write_string_setting(const char *key, const char *value);
 void write_int_setting(const char *key, int value);
-void write_font_setting(const char *key, font_spec);
 void write_colour_setting(const char *key, colour);
 void close_settings_w(void);
 
 void open_settings_r(char *filename);
-void read_string_setting(const char *key, const char *def, char *, int len);
-void read_int_setting(const char *key, int def, int *);
-void read_font_setting(const char *key, font_spec def, font_spec *);
-void read_colour_setting(const char *key, colour def, colour *);
+void read_string_setting(const char *key, char *, int len, const char *def);
+void read_int_setting(const char *key, int *, int def);
+void read_colour_setting(const char *key, colour *, colour def);
 void close_settings_r(void);
 
 #endif

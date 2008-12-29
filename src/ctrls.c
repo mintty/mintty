@@ -407,7 +407,7 @@ dlg_stdradiobutton_handler(control *ctrl, void *dlg, void *data, int event)
   */
   if (event == EVENT_REFRESH) {
     for (button = 0; button < ctrl->radio.nbuttons; button++)
-      if (*(int *) ATOFFSET(data, ctrl->context.i) ==
+      if (atoffset(int, data, ctrl->context.i) ==
           ctrl->radio.buttondata[button].i)
         break;
    /* We expected that `break' to happen, in all circumstances. */
@@ -417,7 +417,7 @@ dlg_stdradiobutton_handler(control *ctrl, void *dlg, void *data, int event)
   else if (event == EVENT_VALCHANGE) {
     button = dlg_radiobutton_get(ctrl, dlg);
     assert(button >= 0 && button < ctrl->radio.nbuttons);
-    *(int *) ATOFFSET(data, ctrl->context.i) =
+    atoffset(int, data, ctrl->context.i) =
       ctrl->radio.buttondata[button].i;
   }
 }
@@ -447,10 +447,10 @@ dlg_stdcheckbox_handler(control *ctrl, void *dlg, void *data, int event)
   */
 
   if (event == EVENT_REFRESH) {
-    dlg_checkbox_set(ctrl, dlg, (!*(int *) ATOFFSET(data, offset) ^ !invert));
+    dlg_checkbox_set(ctrl, dlg, (!atoffset(int, data, offset) ^ !invert));
   }
   else if (event == EVENT_VALCHANGE) {
-    *(int *) ATOFFSET(data, offset) = !dlg_checkbox_get(ctrl, dlg) ^ !invert;
+    atoffset(int, data, offset) = !dlg_checkbox_get(ctrl, dlg) ^ !invert;
   }
 }
 
@@ -476,7 +476,7 @@ dlg_stdeditbox_handler(control *ctrl, void *dlg, void *data, int event)
   int length = ctrl->editbox.context2.i;
 
   if (length > 0) {
-    char *field = (char *) ATOFFSET(data, offset);
+    char *field = &atoffset(char, data, offset);
     if (event == EVENT_REFRESH) {
       dlg_editbox_set(ctrl, dlg, field);
     }
@@ -485,7 +485,7 @@ dlg_stdeditbox_handler(control *ctrl, void *dlg, void *data, int event)
     }
   }
   else if (length < 0) {
-    int *field = (int *) ATOFFSET(data, offset);
+    int *field = &atoffset(int, data, offset);
     char data[80];
     if (event == EVENT_REFRESH) {
       if (length == -1)
@@ -495,7 +495,7 @@ dlg_stdeditbox_handler(control *ctrl, void *dlg, void *data, int event)
       dlg_editbox_set(ctrl, dlg, data);
     }
     else if (event == EVENT_VALCHANGE) {
-      dlg_editbox_get(ctrl, dlg, data, lenof(data));
+      dlg_editbox_get(ctrl, dlg, data, lengthof(data));
       if (length == -1)
         *field = atoi(data);
       else
@@ -515,9 +515,9 @@ dlg_stdfontsel_handler(control *ctrl, void *dlg, void *data, int event)
   int offset = ctrl->context.i;
 
   if (event == EVENT_REFRESH) {
-    dlg_fontsel_set(ctrl, dlg, *(font_spec *) ATOFFSET(data, offset));
+    dlg_fontsel_set(ctrl, dlg, &atoffset(font_spec, data, offset));
   }
   else if (event == EVENT_VALCHANGE) {
-    dlg_fontsel_get(ctrl, dlg, (font_spec *) ATOFFSET(data, offset));
+    dlg_fontsel_get(ctrl, dlg, &atoffset(font_spec, data, offset));
   }
 }

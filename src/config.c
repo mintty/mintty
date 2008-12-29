@@ -76,16 +76,16 @@ codepage_handler(control *ctrl, void *dlg, void *unused(data), int event)
     int i;
     const char *cp;
     dlg_update_start(ctrl, dlg);
-    strcpy(cfg.line_codepage, cp_name(decode_codepage(cfg.line_codepage)));
+    strcpy(cfg.codepage, cp_name(decode_codepage(cfg.codepage)));
     dlg_listbox_clear(ctrl, dlg);
     for (i = 0; (cp = cp_enumerate(i)) != null; i++)
       dlg_listbox_add(ctrl, dlg, cp);
-    dlg_editbox_set(ctrl, dlg, cfg.line_codepage);
+    dlg_editbox_set(ctrl, dlg, cfg.codepage);
     dlg_update_done(ctrl, dlg);
   }
   else if (event == EVENT_VALCHANGE) {
-    dlg_editbox_get(ctrl, dlg, cfg.line_codepage, sizeof (cfg.line_codepage));
-    strcpy(cfg.line_codepage, cp_name(decode_codepage(cfg.line_codepage)));
+    dlg_editbox_get(ctrl, dlg, cfg.codepage, sizeof (cfg.codepage));
+    strcpy(cfg.codepage, cp_name(decode_codepage(cfg.codepage)));
   }
 }
 
@@ -112,6 +112,9 @@ colour_handler(control *ctrl, void *dlg, void *unused(data), int event)
       *colour_p = result;
   }
 }
+
+
+#define offcfg(setting) offsetof(config, setting)
 
 void
 setup_config_box(controlbox * b)
@@ -141,23 +144,23 @@ setup_config_box(controlbox * b)
   ctrl_columns(s, 2, 50, 50);
   ctrl_editbox(
     s, "Columns", '\0', 100, P(0),
-    dlg_stdeditbox_handler, I(offsetof(config, cols)), I(-1)
+    dlg_stdeditbox_handler, I(offcfg(cols)), I(-1)
   )->column = 0;
   ctrl_editbox(
     s, "Rows", '\0', 100, P(0),
-    dlg_stdeditbox_handler, I(offsetof(config, rows)), I(-1)
+    dlg_stdeditbox_handler, I(offcfg(rows)), I(-1)
   )->column = 1;
 
   s = ctrl_getset(b, "Window", "other", null);
   ctrl_checkbox(
     s, "Show scrollbar", '\0', P(0),
-    dlg_stdcheckbox_handler, I(offsetof(config, scrollbar))
+    dlg_stdcheckbox_handler, I(offcfg(scrollbar))
   );
 
   s = ctrl_getset(b, "Window", "trans", "Transparency");
   ctrl_radiobuttons(
     s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
-    I(offsetof(config, transparency)),
+    I(offcfg(transparency)),
     "Off", '\0', I(0),
     "Low", '\0', I(1),
     "Medium", '\0', I(2), 
@@ -185,17 +188,17 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Looks", "text", null);
   ctrl_checkbox(
     s, "Show bold text as bright", '\0', P(0), dlg_stdcheckbox_handler,
-    I(offsetof(config, bold_as_bright))
+    I(offcfg(bold_as_bright))
   );
   ctrl_checkbox(
     s, "Allow text blinking", '\0', P(0),
-    dlg_stdcheckbox_handler, I(offsetof(config, text_blink))
+    dlg_stdcheckbox_handler, I(offcfg(allow_blinking))
   );
 
   s = ctrl_getset(b, "Looks", "curtype", "Cursor");
   ctrl_radiobuttons(
     s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
-    I(offsetof(config, cursor_type)),
+    I(offcfg(cursor_type)),
     "Block", '\0', I(CUR_BLOCK),
     "Line", '\0', I(CUR_LINE), 
     "Underline", '\0', I(CUR_UNDERLINE),
@@ -204,7 +207,7 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Looks", "curblink", null);
   ctrl_checkbox(
      s, "Enable cursor blinking", '\0', P(0),
-     dlg_stdcheckbox_handler, I(offsetof(config, cursor_blinks))
+     dlg_stdcheckbox_handler, I(offcfg(cursor_blinks))
   );
 
  /*
@@ -214,13 +217,13 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Text", "font", "Font");
   ctrl_fontsel(
-    s, null, '\0', P(0), dlg_stdfontsel_handler, I(offsetof(config, font))
+    s, null, '\0', P(0), dlg_stdfontsel_handler, I(offcfg(font))
   );
 
   s = ctrl_getset(b, "Text", "smooth", "Smoothing");
   ctrl_radiobuttons(
     s, null, 's', 2, P(0), dlg_stdradiobutton_handler, 
-    I(offsetof(config, font_quality)),
+    I(offcfg(font_quality)),
     "System Default", I(FQ_DEFAULT),
     "Antialiased", I(FQ_ANTIALIASED),
     "Non-Antialiased", I(FQ_NONANTIALIASED),
@@ -239,30 +242,30 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Keys", "keycodes", "Key codes");
   ctrl_columns(s, 2, 50, 50);
   ctrl_radiobuttons(
-    s, "Escape", '\0', 1, P(0), dlg_stdradiobutton_handler,
-    I(offsetof(config, escape_sends_fs)),
-    "^[", '\0', I(0),
-    "^\\", '\0', I(1),
+    s, "Backspace", '\0', 1, P(0), dlg_stdradiobutton_handler,
+    I(offcfg(backspace_sends_del)),
+    "^H", '\0', I(0),
+    "^?", '\0', I(1),
     null
   )->column = 0;
   ctrl_radiobuttons(
-    s, "Backspace", '\0', 1, P(0), dlg_stdradiobutton_handler,
-    I(offsetof(config, backspace_sends_del)),
-    "^H", '\0', I(0),
-    "^?", '\0', I(1),
+    s, "Escape", '\0', 1, P(0), dlg_stdradiobutton_handler,
+    I(offcfg(escape_sends_fs)),
+    "^[", '\0', I(0),
+    "^\\", '\0', I(1),
     null
   )->column = 1;
 
   s = ctrl_getset(b, "Keys", "alt", null);
   ctrl_checkbox(
     s, "Alt key on its own sends ^[", '\0', P(0),
-    dlg_stdcheckbox_handler, I(offsetof(config, alt_sends_esc))
+    dlg_stdcheckbox_handler, I(offcfg(alt_sends_esc))
   );
 
   s = ctrl_getset(b, "Keys", "scrollmod", "Modifier key for scrolling");
   ctrl_radiobuttons(
     s, null, '\0', 3, P(0), dlg_stdradiobutton_handler,
-    I(offsetof(config, scroll_mod)),
+    I(offcfg(scroll_mod)),
     "Shift", '\0', I(SHIFT),
     "Ctrl", '\0', I(CTRL),
     "Alt", '\0', I(ALT),
@@ -277,31 +280,31 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Mouse", "rightclick", "Right click action");
   ctrl_radiobuttons(
     s, null, '\0', 3, P(0), dlg_stdradiobutton_handler,
-    I(offsetof(config, right_click_action)),
-    "Paste", '\0', I(RC_PASTE),
-    "Extend", '\0', I(RC_EXTEND),
+    I(offcfg(right_click_action)),
     "Show menu", '\0', I(RC_SHOWMENU),
+    "Extend", '\0', I(RC_EXTEND),
+    "Paste", '\0', I(RC_PASTE),
     null
   );
   
   s = ctrl_getset(b, "Mouse", "selectcopy", null);
   ctrl_checkbox(
     s, "Copy on select", '\0', P(0),
-    dlg_stdcheckbox_handler, I(offsetof(config, copy_on_select))
+    dlg_stdcheckbox_handler, I(offcfg(copy_on_select))
   );
 
   s = ctrl_getset(b, "Mouse", "mousemode", "Application mouse mode");
   ctrl_radiobuttons(
     s, "Default click target", '\0', 3, P(0), dlg_stdradiobutton_handler,
-    I(offsetof(config, click_targets_app)),
-    "Window", '\0', I(0),
+    I(offcfg(click_targets_app)),
     "Application", '\0', I(1),
+    "Window", '\0', I(0),
     null
   );
   ctrl_radiobuttons(
     s, "Modifier key for overriding default",
     '\0', 3, P(0), dlg_stdradiobutton_handler,
-    I(offsetof(config, click_target_mod)),
+    I(offcfg(click_target_mod)),
     "Shift", '\0', I(SHIFT),
     "Ctrl", '\0', I(CTRL),
     "Alt", '\0', I(ALT),
@@ -322,7 +325,7 @@ setup_config_box(controlbox * b)
   ctrl_columns(s, 2, 50, 50);
   ctrl_radiobuttons(
     s, "Action", '\0', 1, P(0), dlg_stdradiobutton_handler, 
-    I(offsetof(config, bell)),
+    I(offcfg(bell_type)),
     "None", '\0', I(BELL_DISABLED),
     "System sound", '\0', I(BELL_SOUND),
     "Flash window", '\0', I(BELL_VISUAL),
@@ -330,12 +333,85 @@ setup_config_box(controlbox * b)
   )->column = 0;
   ctrl_radiobuttons(
     s, "Taskbar indication", '\0', 1, P(0), dlg_stdradiobutton_handler,
-    I(offsetof(config, bell_ind)),
+    I(offcfg(bell_ind)),
     "Disabled", '\0', I(B_IND_DISABLED),
     "Flashing", '\0', I(B_IND_FLASH),
     "Steady", '\0', I(B_IND_STEADY),
     null
   )->column = 1;
+}
+
+
+typedef const struct {
+  const char *key;
+  ushort offset;
+  ushort def;
+} int_setting;
+
+static int_setting
+int_settings[] = {
+  {"Columns", offcfg(cols), 80},
+  {"Rows", offcfg(rows), 24},
+  {"Scrollbar", offcfg(scrollbar), false},
+  {"Transparency", offcfg(transparency), 0},
+  {"BoldAsBright", offcfg(bold_as_bright), true},
+  {"AllowBlinking", offcfg(allow_blinking), true},
+  {"CursorType", offcfg(cursor_type), 2},
+  {"CursorBlinks", offcfg(cursor_blinks), true},
+  {"FontIsBold", offcfg(font.isbold), 0},
+  {"FontHeight", offcfg(font.height), 9},
+  {"FontCharset", offcfg(font.charset), 0},
+  {"FontQuality", offcfg(font_quality), FQ_DEFAULT},
+  {"BackspaceSendsDEL", offcfg(backspace_sends_del), false},
+  {"EscapeSendsFS", offcfg(escape_sends_fs), false},
+  {"AltSendsESC", offcfg(alt_sends_esc), false},
+  {"ScrollMod", offcfg(scroll_mod), SHIFT},
+  {"RightClickAction", offcfg(right_click_action), RC_SHOWMENU},
+  {"CopyOnSelect", offcfg(copy_on_select), false},
+  {"ClickTargetsApp", offcfg(click_targets_app), true},
+  {"ClickTargetMod", offcfg(click_target_mod), SHIFT},
+  {"BellType", offcfg(bell_type), BELL_SOUND},
+  {"BellIndication", offcfg(bell_ind), B_IND_STEADY},
+};
+
+typedef const struct {
+  const char *key;
+  ushort offset;
+  ushort len;
+  const char *def;
+} string_setting;
+
+static string_setting
+string_settings[] = {
+  {"Font", offcfg(font.name), sizeof cfg.font.name, "Lucida Console"},
+  {"Codepage", offcfg(codepage), sizeof cfg.codepage, ""},
+  {"Printer", offcfg(printer), sizeof cfg.printer, ""},
+};
+
+typedef const struct {
+  const char *key;
+  ushort offset;
+  colour def;
+} colour_setting;
+
+static colour_setting
+colour_settings[] = {
+  {"ForegroundColour", offcfg(fg_colour), {191, 191, 191}},
+  {"BackgroundColour", offcfg(bg_colour), {0, 0, 0}},
+  {"CursorColour", offcfg(cursor_colour), {191, 191, 191}},
+};
+
+void
+load_config(void)
+{
+  open_settings_r(config_filename);
+  for (int_setting *s = int_settings; s < endof(int_settings); s++)
+    read_int_setting(s->key, &atoffset(int, &cfg, s->offset), s->def);
+  for (string_setting *s = string_settings; s < endof(string_settings); s++)
+    read_string_setting(s->key, &atoffset(char, &cfg, s->offset), s->len, s->def);
+  for (colour_setting *s = colour_settings; s < endof(colour_settings); s++)
+    read_colour_setting(s->key, &atoffset(colour, &cfg, s->offset), s->def);
+  close_settings_r();
 }
 
 char *
@@ -344,72 +420,13 @@ save_config(void)
   char *errmsg = open_settings_w(config_filename);
   if (errmsg)
     return errmsg;
-  write_int_setting("CopyOnSelect", cfg.copy_on_select);
-  write_int_setting("EscapeSendsFS", cfg.escape_sends_fs);
-  write_int_setting("BackspaceSendsDEL", cfg.backspace_sends_del);
-  write_int_setting("AltSendsESC", cfg.alt_sends_esc);
-  write_int_setting("CurType", cfg.cursor_type);
-  write_int_setting("BlinkCur", cfg.cursor_blinks);
-  write_int_setting("BlinkText", cfg.text_blink);
-  write_int_setting("Bell", cfg.bell);
-  write_int_setting("BellInd", cfg.bell_ind);
-  write_int_setting("Columns", cfg.cols);
-  write_int_setting("Rows", cfg.rows);
-  write_font_setting("Font", cfg.font);
-  write_int_setting("FontQuality", cfg.font_quality);
-  write_int_setting("BoldAsBright", cfg.bold_as_bright);
-  write_colour_setting("ForegroundColour", cfg.fg_colour);
-  write_colour_setting("BackgroundColour", cfg.bg_colour);
-  write_colour_setting("CursorColour", cfg.cursor_colour);
-  write_int_setting("Transparency", cfg.transparency);
-  write_string_setting("LineCodePage", cfg.line_codepage);
-  write_string_setting("Printer", cfg.printer);
-  write_int_setting("Scrollbar", cfg.scrollbar);
-  write_int_setting("ScrollMod", cfg.scroll_mod);
-  write_int_setting("RightClickAction", cfg.right_click_action);
-  write_int_setting("ClickTargetsApp", cfg.click_targets_app);
-  write_int_setting("ClickTargetMod", cfg.click_target_mod);
+  for (int_setting *s = int_settings; s < endof(int_settings); s++)
+    write_int_setting(s->key, atoffset(int, &cfg, s->offset));
+  for (string_setting *s = string_settings; s < endof(string_settings); s++)
+    write_string_setting(s->key, &atoffset(char, &cfg, s->offset));
+  for (colour_setting *s = colour_settings; s < endof(colour_settings); s++)
+    write_colour_setting(s->key, atoffset(colour, &cfg, s->offset));
   close_settings_w();
   return 0;
 }
 
-void
-load_config(void)
-{
-  open_settings_r(config_filename);
-  read_int_setting("CopyOnSelect", false, &cfg.copy_on_select);
-  read_int_setting("EscapeSendsFS", false, &cfg.escape_sends_fs);
-  read_int_setting("BackspaceSendsDEL", false, &cfg.backspace_sends_del);
-  read_int_setting("AltSendsESC", false, &cfg.alt_sends_esc);
-  read_int_setting("CurType", 2, &cfg.cursor_type);
-  read_int_setting("BlinkCur", true, &cfg.cursor_blinks);
-  read_int_setting("BlinkText", true, &cfg.text_blink);
-  read_int_setting("Bell", BELL_SOUND, &cfg.bell);
-  read_int_setting("BellInd", B_IND_STEADY, &cfg.bell_ind);
-  read_int_setting("Columns", 80, &cfg.cols);
-  read_int_setting("Rows", 24, &cfg.rows);
-  read_font_setting("Font", (font_spec){"Lucida Console", 0, 9, 0}, &cfg.font);
-  read_int_setting("FontQuality", FQ_DEFAULT, &cfg.font_quality);
-  read_int_setting("BoldAsBright", true, &cfg.bold_as_bright);
-  read_colour_setting("ForegroundColour", (colour){191, 191, 191},
-                      &cfg.fg_colour);
-  read_colour_setting("BackgroundColour", (colour){0, 0, 0},
-                      &cfg.bg_colour);
-  read_colour_setting("CursorColour", (colour){191, 191, 191},
-                      &cfg.cursor_colour);
-  read_int_setting("Transparency", 0, &cfg.transparency);
- /*
-  * The empty default for LineCodePage will be converted later
-  * into a plausible default for the locale.
-  */
-  read_string_setting("LineCodePage", "", cfg.line_codepage,
-                                          sizeof cfg.line_codepage);
-  read_string_setting("Printer", "", cfg.printer, sizeof cfg.printer);
-  read_int_setting("Scrollbar", false, &cfg.scrollbar);
-  read_int_setting("ScrollMod", SHIFT, &cfg.scroll_mod);
-  read_int_setting("RightClickAction", RC_SHOWMENU, &cfg.right_click_action);
-  read_int_setting("ClickTargetsApp", false, &cfg.click_targets_app);
-  read_int_setting("ClickTargetMod", CTRL, &cfg.click_target_mod);
-
-  close_settings_r();
-}
