@@ -9,6 +9,7 @@ void child_write(const char *, int len);
 void child_resize(struct winsize *winp);
 void child_proc(void);
 bool child_is_parent(void);
+bool child_is_alive(void);
 extern HANDLE child_event;
 extern int child_exitcode;
 
