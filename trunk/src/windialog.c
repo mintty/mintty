@@ -389,7 +389,7 @@ win_about(void)
     .lpszCaption = "About " APPNAME,
     .dwStyle = MB_USERICON | MB_OKCANCEL | MB_DEFBUTTON2,
     .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
-    .lpszText = APPNAME " " VERSION "\n" COPYRIGHT "\n" APPINFO
+    .lpszText = APPNAME " " APPVER "\n" COPYRIGHT "\n" APPINFO
   };
   if (MessageBoxIndirect(&params) == IDOK)
     ShellExecute(wnd, "open", WEBSITE, 0, 0, SW_SHOWDEFAULT);

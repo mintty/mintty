@@ -783,7 +783,7 @@ main(int argc, char *argv[])
 {
   if (argc == 2) {
     if (strcmp(argv[1], "--version") == 0) {
-      puts(APPNAME " " VERSION "\n" COPYRIGHT);
+      puts(APPNAME " " APPVER "\n" COPYRIGHT);
       return 0;
     }
     if (strcmp(argv[1], "--help") == 0) {
