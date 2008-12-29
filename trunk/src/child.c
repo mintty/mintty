@@ -8,7 +8,6 @@
 #include "config.h"
 
 #include <pwd.h>
-#include <unistd.h>
 #include <pty.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -28,43 +27,35 @@ static int read_len;
 static char read_buf[4096];
 static struct utmp ut;
 
-void
-child_proc(void)
-{
-  if (read_len > 0) {
-    term_write(read_buf, read_len);
-    SetEvent(proc_event);
-  }
-  else if (child_exitcode == 0)
-    exit(0);
-}
-
 static DWORD WINAPI
-child_read_thread(LPVOID unused(param))
+read_thread(LPVOID unused(param))
 {
   while ((read_len = read(fd, read_buf, sizeof read_buf)) > 0) {
     SetEvent(child_event);
     WaitForSingleObject(proc_event, INFINITE);
   };
+  return 0;
+}
+
+static DWORD WINAPI
+wait_thread(LPVOID unused(param))
+{
   int status;
-  waitpid(pid, &status, 0);
-  child_exitcode = WEXITSTATUS(status);
-  pid = 0;
-  logout(ut.ut_line);
-  SetEvent(child_event);
-  while (wait(0) > 0);
+  if (waitpid(pid, &status, 0) == pid) {
+    pid = 0;
+    child_exitcode = WEXITSTATUS(status);
+    logout(ut.ut_line);
+    SetEvent(child_event);
+  }
   return 0;
 }
 
 static void
 signal_handler(int unused(sig))
-{
-  if (pid)
-    kill(pid, SIGHUP);
-  else
-    exit(child_exitcode);
+{ 
+  child_kill();
 }
-  
+
 char *
 child_create(char *argv[], struct winsize *winp)
 {
@@ -78,7 +69,7 @@ child_create(char *argv[], struct winsize *winp)
   pid = forkpty(&fd, 0, 0, winp);
   if (pid == -1) { // Fork failed.
     char *msg = strdup(strerror(errno));
-    term_write("forkpty: ", 16);
+    term_write("forkpty: ", 8);
     term_write(msg, strlen(msg));
     free(msg);
     pid = 0;
@@ -124,7 +115,8 @@ child_create(char *argv[], struct winsize *winp)
     
     child_event = CreateEvent(null, false, false, null);
     proc_event = CreateEvent(null, false, false, null);
-    CreateThread(null, 0, child_read_thread, 0, 0, 0);
+    CreateThread(null, 0, read_thread, 0, 0, 0);
+    CreateThread(null, 0, wait_thread, 0, 0, 0);
   }
   
   // Return child command line for window title.
@@ -144,24 +136,15 @@ child_kill(void)
     huped = true;
   }
   else {
-    // Tell any children and use brute force.
-    kill(-pid, SIGHUP);
+    // Use brute force and exit.
     kill(pid, SIGKILL);
+    exit(0);
   }
 }
 
-void
-child_write(const char *buf, int len)
-{ 
-  if (pid)
-    write(fd, buf, len); 
-  else
-    exit(child_exitcode);
-}
-
-void
-child_resize(struct winsize *winp)
-{ ioctl(fd, TIOCSWINSZ, winp); }
+bool
+child_is_alive(void)
+{ return pid; }
 
 bool
 child_is_parent(void)
@@ -191,3 +174,29 @@ child_is_parent(void)
   closedir(d);
   return res;
 }
+
+void
+child_proc(void)
+{
+  if (read_len > 0) {
+    term_write(read_buf, read_len);
+    read_len = 0;
+    SetEvent(proc_event);
+  }
+  if (!pid && !child_exitcode)
+    exit(0);
+}
+
+void
+child_write(const char *buf, int len)
+{ 
+  if (pid)
+    write(fd, buf, len); 
+  else
+    exit(child_exitcode);
+}
+
+void
+child_resize(struct winsize *winp)
+{ ioctl(fd, TIOCSWINSZ, winp); }
+

@@ -584,7 +584,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     }
     when WM_CLOSE:
       win_show_mouse();
-      if (child_exitcode)
+      if (!child_is_alive())
         exit(child_exitcode);
       if (confirm_close())
         child_kill();
@@ -791,7 +791,7 @@ main(int argc, char *argv[])
       return 0;
     }
   }
-
+  
   if (argc >= 3 && strcmp(argv[1],"--config") == 0)
     config_filename = argv[2];
   else
