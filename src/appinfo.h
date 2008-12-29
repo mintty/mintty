@@ -5,9 +5,9 @@
 #define stringify(s) xstringify(s)
 
 #define APPNAME "MinTTY"
+#define APPVER stringify(VERSION)
 #define APPDESC "Cygwin command line window"
 #define COPYRIGHT "Copyright (C) 2008 Andy Koppe"
-#define VERSION stringify(REVISION)
 #define WEBSITE "http://code.google.com/p/mintty"
 
 #define APPINFO \

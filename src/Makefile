@@ -1,8 +1,10 @@
 name := mintty
-rev := $(shell printf "rev%u" `svn info | grep Revision | sed "s/Revision: //"`)
+version := $(shell printf "svn-r%u" `svn info | grep Revision | sed "s/Revision: //"`)
+
 exe := $(name).exe
-zip := $(name)-$(rev).zip
-stuff := readme.html create_shortcut.js
+dir := $(name)-$(version)
+stuff := docs/readme.html scripts/create_shortcut.js
+srcs := Makefile $(wildcard *.c *.h *.rc *.mft icon/*.ico COPYING LICENSE*) $(stuff)
 
 c_srcs := $(wildcard *.c)
 rc_srcs := $(wildcard *.rc)
@@ -15,28 +17,36 @@ ld_opts := --gc-sections -s
 libs := -mwindows -lcomctl32 -lcomdlg32 -limm32 -lwinspool -lole32 -luuid
 
 cc := gcc
-rc_cpp := $(cc) -E -MMD -xc-header -DRC_INVOKED -DREVISION=$(rev)
+rc_cpp := $(cc) -E -MMD -xc-header -DRC_INVOKED -DVERSION=$(version)
 rc := windres --preprocessor "$(rc_cpp)"
 
 $(exe): $(objs)
 	$(cc) -o $@ $^ $(ld_opts) $(libs)
 	du -b $@
 
-$(zip): $(exe) $(stuff)
+bin: $(dir)-cygwin.zip
+src: $(dir).tgz
+
+$(dir)-cygwin.zip: $(exe) $(stuff)
 	rm -f $@
-	zip -9 $@ $^
+	zip -9 -j $@ $^
 	du -b $@
 
+$(dir).tgz: $(srcs)
+	mkdir -p $(dir)
+	cp -ax --parents $^ $(dir)
+	rm -f $@
+	tar czf $@ $(dir)
+	rm -rf $(dir)
+
 %.o %.d: %.c
-	$(cc) $< -c -MMD -MP $(c_opts) $(code_opts) -DREVISION=$(rev)
+	$(cc) $< -c -MMD -MP $(c_opts) $(code_opts) -DVERSION=$(version)
 
 %.o %.d: %.rc
 	$(rc) $< $(<:.rc=.o)
 
-zip: $(zip)
-
 clean:
-	rm -f *.d *.o *.exe *.zip *.stackdump
+	rm -f *.d *.o *.exe *.zip *.tgz *.stackdump
 
 .PHONY: zip clean
 

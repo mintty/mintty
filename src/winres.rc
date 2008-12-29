@@ -3,7 +3,7 @@
 
 #include <winresrc.h>
 
-IDI_MAINICON ICON "../icon/terminal.ico"
+IDI_MAINICON ICON "icon/terminal.ico"
 
 IDD_MAINBOX DIALOG DISCARDABLE 48, 32, 256, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
@@ -43,12 +43,12 @@ BEGIN
       VALUE "FileDescription", APPDESC
       VALUE "InternalName", APPNAME
       VALUE "OriginalFilename", APPNAME
-      VALUE "FileVersion", VERSION
-      VALUE "ProductVersion", VERSION
+      VALUE "FileVersion", APPVER
+      VALUE "ProductVersion", APPVER
       VALUE "LegalCopyright", COPYRIGHT
 #if (!defined SNAPSHOT) && (!defined RELEASE)
         /* Only if VS_FF_PRIVATEBUILD. */
-      VALUE "PrivateBuild", VERSION /* NBI */
+      VALUE "PrivateBuild", APPVER /* NBI */
 #endif
     END
   END
