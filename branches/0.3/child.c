@@ -53,7 +53,9 @@ wait_thread(LPVOID unused(param))
 static void
 signal_handler(int unused(sig))
 { 
-  child_kill();
+  if (pid)
+    kill(pid, SIGHUP);
+  exit(0);
 }
 
 char *
