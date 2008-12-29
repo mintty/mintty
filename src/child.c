@@ -137,7 +137,18 @@ child_create(char *argv[], struct winsize *winp)
 
 void
 child_kill(void)
-{ kill(pid, SIGHUP); }
+{ 
+  static bool huped = false;
+  if (!huped) {
+    kill(pid, SIGHUP);
+    huped = true;
+  }
+  else {
+    // Tell any children and use brute force.
+    kill(-pid, SIGHUP);
+    kill(pid, SIGKILL);
+  }
+}
 
 void
 child_write(const char *buf, int len)
