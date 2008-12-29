@@ -1,5 +1,5 @@
 name := mintty
-version := $(shell printf "svn-r%u" `svn info | grep Revision | sed "s/Revision: //"`)
+version := 0.3.0
 
 exe := $(name).exe
 dir := $(name)-$(version)
@@ -33,7 +33,8 @@ $(dir)-cygwin.zip: $(exe) $(stuff)
 	du -b $@
 
 $(dir).tgz: $(srcs)
-	mkdir -p $(dir)
+	rm -rf $(dir)
+	mkdir $(dir)
 	cp -ax --parents $^ $(dir)
 	rm -f $@
 	tar czf $@ $(dir)
