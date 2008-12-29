@@ -30,7 +30,7 @@ typedef struct {
   char **uni_tbl;
   int dbcs_screenfont;
   int font_codepage;
-  int line_codepage;
+  int codepage;
   wchar unitab_scoacs[256];
   wchar unitab_line[256];
   wchar unitab_font[256];

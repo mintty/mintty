@@ -643,7 +643,7 @@ shortcut_escape(const char *text, char shortcut)
 void
 winctrl_add_shortcuts(dlgparam * dp, winctrl * c)
 {
-  for (size_t i = 0; i < lenof(c->shortcuts); i++)
+  for (size_t i = 0; i < lengthof(c->shortcuts); i++)
     if (c->shortcuts[i] != NO_SHORTCUT) {
       uchar s = tolower((uchar) c->shortcuts[i]);
       assert(!dp->shortcuts[s]);
@@ -654,7 +654,7 @@ winctrl_add_shortcuts(dlgparam * dp, winctrl * c)
 void
 winctrl_rem_shortcuts(dlgparam * dp, winctrl * c)
 {
-  for (size_t i = 0; i < lenof(c->shortcuts); i++)
+  for (size_t i = 0; i < lengthof(c->shortcuts); i++)
     if (c->shortcuts[i] != NO_SHORTCUT) {
       uchar s = tolower((uchar) c->shortcuts[i]);
       assert(dp->shortcuts[s]);
@@ -800,7 +800,7 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
     c->base_id = base_id;
     c->num_ids = 1;
     c->data = null;
-    memset(c->shortcuts, NO_SHORTCUT, lenof(c->shortcuts));
+    memset(c->shortcuts, NO_SHORTCUT, lengthof(c->shortcuts));
     winctrl_add(wc, c);
     beginbox(cp, s->boxtitle, base_id);
     base_id++;
@@ -813,7 +813,7 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
     c->base_id = base_id;
     c->num_ids = 1;
     c->data = strdup(s->boxtitle);
-    memset(c->shortcuts, NO_SHORTCUT, lenof(c->shortcuts));
+    memset(c->shortcuts, NO_SHORTCUT, lengthof(c->shortcuts));
     winctrl_add(wc, c);
     paneltitle(cp, base_id);
     base_id++;
@@ -851,7 +851,7 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
         int lpercent, rpercent, lx, rx, i;
 
         ncols = ctrl->columns.ncols;
-        assert(ncols <= (int) lenof(columns));
+        assert(ncols <= (int) lengthof(columns));
         for (i = 1; i < ncols; i++)
           columns[i] = columns[0];      /* structure copy */
 
@@ -925,7 +925,7 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
       * control creation.
       */
       if (ctrl->tabdelayed) {
-        assert(ntabdelays < (int) lenof(tabdelays));
+        assert(ntabdelays < (int) lengthof(tabdelays));
         tabdelays[ntabdelays] = pos;    /* structure copy */
         tabdelayed[ntabdelays] = ctrl;
         ntabdelays++;
@@ -937,7 +937,7 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
     data = null;
 
    /* And they all start off with no shortcuts registered. */
-    memset(shortcuts, NO_SHORTCUT, lenof(shortcuts));
+    memset(shortcuts, NO_SHORTCUT, lengthof(shortcuts));
     nshortcuts = 0;
 
    /* Almost all controls start at base_id. */
@@ -1326,7 +1326,7 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
           fs.isbold = (lf.lfWeight == FW_BOLD);
           fs.charset = lf.lfCharSet;
           fs.height = cf.iPointSize / 10;
-          dlg_fontsel_set(ctrl, dp, fs);
+          dlg_fontsel_set(ctrl, dp, &fs);
           ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
         }
       }
@@ -1520,28 +1520,27 @@ dlg_label_change(control *ctrl, void *dlg, char const *text)
 }
 
 void
-dlg_fontsel_set(control *ctrl, void *dlg, font_spec fs)
+dlg_fontsel_set(control *ctrl, void *dlg, font_spec *fs)
 {
   char *buf, *boldstr;
   dlgparam *dp = (dlgparam *) dlg;
   winctrl *c = dlg_findbyctrl(dp, ctrl);
   assert(c && c->ctrl->type == CTRL_FONTSELECT);
 
-  *(font_spec *) c->data = fs;   /* structure copy */
+  *(font_spec *) c->data = *fs;   /* structure copy */
 
-  boldstr = (fs.isbold ? "bold, " : "");
-  if (fs.height == 0)
-    asprintf(&buf, "%s, %sdefault height", fs.name, boldstr);
+  boldstr = fs->isbold ? "bold, " : "";
+  if (!fs->height)
+    asprintf(&buf, "%s, %sdefault height", fs->name, boldstr);
   else
-    asprintf(&buf, "%s, %s%d-%s", fs.name, boldstr,
-             (fs.height < 0 ? -fs.height : fs.height),
-             (fs.height < 0 ? "pixel" : "point"));
+    asprintf(&buf, "%s, %s%d-%s", fs->name, boldstr, abs(fs->height),
+             fs->height < 0 ? "pixel" : "point");
   SetDlgItemText(dp->wnd, c->base_id + 1, buf);
   free(buf);
 }
 
 void
-dlg_fontsel_get(control *ctrl, void *dlg, font_spec * fs)
+dlg_fontsel_get(control *ctrl, void *dlg, font_spec *fs)
 {
   dlgparam *dp = (dlgparam *) dlg;
   winctrl *c = dlg_findbyctrl(dp, ctrl);
@@ -1692,7 +1691,7 @@ dp_init(dlgparam * dp)
 void
 dp_add_tree(dlgparam * dp, winctrls * wc)
 {
-  assert(dp->nctrltrees < (int) lenof(dp->controltrees));
+  assert(dp->nctrltrees < (int) lengthof(dp->controltrees));
   dp->controltrees[dp->nctrltrees++] = wc;
 }
 

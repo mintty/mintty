@@ -42,14 +42,14 @@ typedef uintptr_t uintptr;
 
 typedef void (*void_fn)(void);
 
-#define C(c) ((c) & 0x1f)
-
 #define null ((void *) 0)
 
-#define lenof(x) (sizeof(x) / sizeof(*(x)))
+#define lengthof(array) (sizeof(array) / sizeof(*(array)))
+#define endof(array) (&array[lengthof(array)])
+#define atoffset(type, data, offset) (*((type *)((char *)(data) + (offset))))
 
-#define new(type) ((type *) malloc(sizeof(type)))
-#define newn(type, n) ((type *) calloc(n, sizeof(type)))
+#define new(type) ((type *)malloc(sizeof(type)))
+#define newn(type, n) ((type *)calloc(n, sizeof(type)))
 #define renewn(p, n) ((typeof(p)) realloc(p, sizeof(*p) * (n)))
 
 static inline int

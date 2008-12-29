@@ -127,7 +127,7 @@ term_reset(void)
   term.editing = term.echoing = false;
   term.app_cursor_keys = false;
   term.use_bce = true;
-  term.blink_is_real = term.cfg.text_blink;
+  term.blink_is_real = term.cfg.allow_blinking;
   term.erase_char = term.basic_erase_char;
   term.which_screen = 0;
   term_print_finish();
@@ -198,12 +198,12 @@ term_reconfig(void)
   * default one. The full list is: Auto wrap mode, DEC Origin
   * Mode, BCE, blinking text, character classes.
   */
-  int reset_tblink = (term.cfg.text_blink != cfg.text_blink);
+  int reset_tblink = (term.cfg.allow_blinking != cfg.allow_blinking);
   
   term.cfg = cfg;       /* STRUCTURE COPY */
 
   if (reset_tblink) {
-    term.blink_is_real = term.cfg.text_blink;
+    term.blink_is_real = term.cfg.allow_blinking;
   }  
   if (!*term.cfg.printer) {
     term_print_finish();
@@ -1418,7 +1418,7 @@ term_copy(void)
       start.x++;
     }
     if (nl) {
-      for (size_t i = 0; i < lenof(sel_nl); i++)
+      for (size_t i = 0; i < lengthof(sel_nl); i++)
         clip_addchar(&buf, sel_nl[i], 0);
     }
     start.y++;
@@ -1450,17 +1450,17 @@ term_paste(wchar *data, uint len)
   p = q = data;
   while (p < data + len) {
     while (p < data + len &&
-           !(p <= data + len - lenof(sel_nl) &&
+           !(p <= data + len - lengthof(sel_nl) &&
              !memcmp(p, sel_nl, sizeof (sel_nl))))
       p++;
 
     for (int i = 0; i < p - q; i++)
       term.paste_buffer[term.paste_len++] = q[i];
 
-    if (p <= data + len - lenof(sel_nl) &&
+    if (p <= data + len - lengthof(sel_nl) &&
         !memcmp(p, sel_nl, sizeof sel_nl)) {
       term.paste_buffer[term.paste_len++] = '\015';
-      p += lenof(sel_nl);
+      p += lengthof(sel_nl);
     }
     q = p;
   }
@@ -1540,7 +1540,7 @@ term_set_focus(int has_focus)
 bool
 term_in_utf(void)
 {
-  return term.utf || ucsdata.line_codepage == unicode_codepage;
+  return term.utf || ucsdata.codepage == unicode_codepage;
 }
 
 bool term_echoing(void) { return term.echoing; }
