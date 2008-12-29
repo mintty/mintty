@@ -4,7 +4,7 @@ version := $(shell printf "svn-r%u" `svn info | grep Revision | sed "s/Revision:
 exe := $(name).exe
 dir := $(name)-$(version)
 stuff := docs/readme.html scripts/create_shortcut.js
-srcs := Makefile $(wildcard *.c *.h *.rc *.mft icon/*.ico COPYING LICENSE*) $(stuff)
+srcs := Makefile $(wildcard *.c *.h *.rc *.mft icon/*.ico COPYING LICENSE* INSTALL) $(stuff)
 
 c_srcs := $(wildcard *.c)
 rc_srcs := $(wildcard *.rc)
@@ -48,6 +48,6 @@ $(dir).tgz: $(srcs)
 clean:
 	rm -f *.d *.o *.exe *.zip *.tgz *.stackdump
 
-.PHONY: zip clean
+.PHONY: bin src clean
 
 include $(deps)
