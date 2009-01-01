@@ -1,5 +1,5 @@
 // termout.c (part of MinTTY)
-// Copyright 2008 Andy Koppe
+// Copyright 2008-09 Andy Koppe
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -597,7 +597,7 @@ term_write(const char *data, int len)
   */
   term.in_term_write = true;
   int unget = -1;
-  char *chars = null; /* placate compiler warnings */
+  uchar *chars = null; /* placate compiler warnings */
   int nchars = 0;
   while (nchars > 0 || unget != -1 || bufchain_size(term.inbuf) > 0) {
     uint c;
@@ -605,7 +605,7 @@ term_write(const char *data, int len)
       if (nchars == 0) {
         void *ret;
         bufchain_prefix(term.inbuf, &ret, &nchars);
-        char localbuf[256];
+        uchar localbuf[256];
         nchars = min(nchars, (int) sizeof localbuf);
         memcpy(localbuf, ret, nchars);
         bufchain_consume(term.inbuf, nchars);
