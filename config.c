@@ -1,5 +1,5 @@
 // config.c (part of MinTTY)
-// Copyright 2008 Andy Koppe
+// Copyright 2008-09 Andy Koppe
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -128,10 +128,10 @@ setup_config_box(controlbox * b)
   */
   s = ctrl_getset(b, "", "", "");
   ctrl_columns(s, 5, 20, 20, 20, 20, 20);
-  c = ctrl_pushbutton(s, "OK", 'o', P(0), ok_handler, P(0));
+  c = ctrl_pushbutton(s, "OK", '\0', P(0), ok_handler, P(0));
   c->button.isdefault = true;
   c->column = 3;
-  c = ctrl_pushbutton(s, "Cancel", 'c', P(0), cancel_handler, P(0));
+  c = ctrl_pushbutton(s, "Cancel", '\0', P(0), cancel_handler, P(0));
   c->button.iscancel = true;
   c->column = 4;
 
@@ -143,17 +143,17 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Window", "size", "Size");
   ctrl_columns(s, 2, 50, 50);
   ctrl_editbox(
-    s, "Columns", '\0', 100, P(0),
+    s, "Columns", 'c', 100, P(0),
     dlg_stdeditbox_handler, I(offcfg(cols)), I(-1)
   )->column = 0;
   ctrl_editbox(
-    s, "Rows", '\0', 100, P(0),
+    s, "Rows", 'r', 100, P(0),
     dlg_stdeditbox_handler, I(offcfg(rows)), I(-1)
   )->column = 1;
 
-  s = ctrl_getset(b, "Window", "other", null);
+  s = ctrl_getset(b, "Window", "scrollbar", null);
   ctrl_checkbox(
-    s, "Show scrollbar", '\0', P(0),
+    s, "Show scrollbar", 's', P(0),
     dlg_stdcheckbox_handler, I(offcfg(scrollbar))
   );
 
@@ -161,11 +161,17 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
     I(offcfg(transparency)),
-    "Off", '\0', I(0),
-    "Low", '\0', I(1),
-    "Medium", '\0', I(2), 
-    "High", '\0', I(3), 
+    "Off", 'o', I(0),
+    "Low", 'l', I(1),
+    "Medium", 'm', I(2), 
+    "High", 'h', I(3), 
     null
+  );
+
+  s = ctrl_getset(b, "Window", "transfocus", null);
+  ctrl_checkbox(
+    s, "Disable transparency when focused", 'd', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(opaque_when_focused))
   );
 
  /*
@@ -176,22 +182,22 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Looks", "colours", "Colours");
   ctrl_columns(s, 3, 33, 33, 33);
   ctrl_pushbutton(
-    s, "Foreground", '\0', P(0), colour_handler, P(&cfg.fg_colour)
+    s, "Foreground", 'f', P(0), colour_handler, P(&cfg.fg_colour)
   )->column = 0;
   ctrl_pushbutton(
-    s, "Background", '\0', P(0), colour_handler, P(&cfg.bg_colour)
+    s, "Background", 'b', P(0), colour_handler, P(&cfg.bg_colour)
   )->column = 1;
   ctrl_pushbutton(
-    s, "Cursor", '\0', P(0), colour_handler, P(&cfg.cursor_colour)
+    s, "Cursor", 'c', P(0), colour_handler, P(&cfg.cursor_colour)
   )->column = 2;
 
   s = ctrl_getset(b, "Looks", "text", null);
   ctrl_checkbox(
-    s, "Show bold text as bright", '\0', P(0), dlg_stdcheckbox_handler,
+    s, "Show bold text as bright", 's', P(0), dlg_stdcheckbox_handler,
     I(offcfg(bold_as_bright))
   );
   ctrl_checkbox(
-    s, "Allow text blinking", '\0', P(0),
+    s, "Allow text blinking", 'a', P(0),
     dlg_stdcheckbox_handler, I(offcfg(allow_blinking))
   );
 
@@ -199,14 +205,14 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
     I(offcfg(cursor_type)),
-    "Block", '\0', I(CUR_BLOCK),
-    "Line", '\0', I(CUR_LINE), 
-    "Underline", '\0', I(CUR_UNDERLINE),
+    "Block", 'k', I(CUR_BLOCK),
+    "Line", 'l', I(CUR_LINE), 
+    "Underline", 'u', I(CUR_UNDERLINE),
     null
   );
   s = ctrl_getset(b, "Looks", "curblink", null);
   ctrl_checkbox(
-     s, "Enable cursor blinking", '\0', P(0),
+     s, "Enable cursor blinking", 'e', P(0),
      dlg_stdcheckbox_handler, I(offcfg(cursor_blinks))
   );
 
@@ -222,12 +228,12 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Text", "smooth", "Smoothing");
   ctrl_radiobuttons(
-    s, null, 's', 2, P(0), dlg_stdradiobutton_handler, 
+    s, null, '\0', 2, P(0), dlg_stdradiobutton_handler, 
     I(offcfg(font_quality)),
-    "System Default", I(FQ_DEFAULT),
-    "Antialiased", I(FQ_ANTIALIASED),
-    "Non-Antialiased", I(FQ_NONANTIALIASED),
-    "ClearType", I(FQ_CLEARTYPE),
+    "System Default", 's', I(FQ_DEFAULT),
+    "Antialiased", 'a', I(FQ_ANTIALIASED),
+    "Non-Antialiased", 'n', I(FQ_NONANTIALIASED),
+    "ClearType", 'c', I(FQ_CLEARTYPE),
     null
   );
 
@@ -244,21 +250,21 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, "Backspace", '\0', 1, P(0), dlg_stdradiobutton_handler,
     I(offcfg(backspace_sends_del)),
-    "^H", '\0', I(0),
-    "^?", '\0', I(1),
+    "^H", 'h', I(0),
+    "^?", '?', I(1),
     null
   )->column = 0;
   ctrl_radiobuttons(
     s, "Escape", '\0', 1, P(0), dlg_stdradiobutton_handler,
     I(offcfg(escape_sends_fs)),
-    "^[", '\0', I(0),
-    "^\\", '\0', I(1),
+    "^[", '[', I(0),
+    "^\\", '\\', I(1),
     null
   )->column = 1;
 
   s = ctrl_getset(b, "Keys", "alt", null);
   ctrl_checkbox(
-    s, "Alt key on its own sends ^[", '\0', P(0),
+    s, "Alt key on its own sends ^[", 'k', P(0),
     dlg_stdcheckbox_handler, I(offcfg(alt_sends_esc))
   );
 
@@ -266,9 +272,9 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, null, '\0', 3, P(0), dlg_stdradiobutton_handler,
     I(offcfg(scroll_mod)),
-    "Shift", '\0', I(SHIFT),
-    "Ctrl", '\0', I(CTRL),
-    "Alt", '\0', I(ALT),
+    "Shift", 's', I(SHIFT),
+    "Ctrl", 'c', I(CTRL),
+    "Alt", 'a', I(ALT),
     null
   );
 
@@ -281,15 +287,15 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, null, '\0', 3, P(0), dlg_stdradiobutton_handler,
     I(offcfg(right_click_action)),
-    "Show menu", '\0', I(RC_SHOWMENU),
-    "Extend", '\0', I(RC_EXTEND),
-    "Paste", '\0', I(RC_PASTE),
+    "Show menu", 'm', I(RC_SHOWMENU),
+    "Extend", 'x', I(RC_EXTEND),
+    "Paste", 'p', I(RC_PASTE),
     null
   );
   
   s = ctrl_getset(b, "Mouse", "selectcopy", null);
   ctrl_checkbox(
-    s, "Copy on select", '\0', P(0),
+    s, "Copy on select", 's', P(0),
     dlg_stdcheckbox_handler, I(offcfg(copy_on_select))
   );
 
@@ -297,17 +303,16 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, "Default click target", '\0', 3, P(0), dlg_stdradiobutton_handler,
     I(offcfg(click_targets_app)),
-    "Application", '\0', I(1),
-    "Window", '\0', I(0),
+    "Application", 'n', I(1),
+    "Window", 'w', I(0),
     null
   );
   ctrl_radiobuttons(
-    s, "Modifier key for overriding default",
-    '\0', 3, P(0), dlg_stdradiobutton_handler,
-    I(offcfg(click_target_mod)),
-    "Shift", '\0', I(SHIFT),
-    "Ctrl", '\0', I(CTRL),
-    "Alt", '\0', I(ALT),
+    s, "Modifier key for overriding default", '\0', 3, P(0),
+    dlg_stdradiobutton_handler, I(offcfg(click_target_mod)),
+    "Shift", 's', I(SHIFT),
+    "Ctrl", 'c', I(CTRL),
+    "Alt", 'a', I(ALT),
     null
   );
   
@@ -326,17 +331,17 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, "Action", '\0', 1, P(0), dlg_stdradiobutton_handler, 
     I(offcfg(bell_type)),
-    "None", '\0', I(BELL_DISABLED),
-    "System sound", '\0', I(BELL_SOUND),
-    "Flash window", '\0', I(BELL_VISUAL),
+    "None", 'n', I(BELL_DISABLED),
+    "System sound", 's', I(BELL_SOUND),
+    "Flash window", 'f', I(BELL_VISUAL),
     null
   )->column = 0;
   ctrl_radiobuttons(
     s, "Taskbar indication", '\0', 1, P(0), dlg_stdradiobutton_handler,
     I(offcfg(bell_ind)),
-    "Disabled", '\0', I(B_IND_DISABLED),
-    "Flashing", '\0', I(B_IND_FLASH),
-    "Steady", '\0', I(B_IND_STEADY),
+    "Disabled", 'd', I(B_IND_DISABLED),
+    "Steady", 'y', I(B_IND_STEADY),
+    "Blinking", 'b', I(B_IND_FLASH),
     null
   )->column = 1;
 }
@@ -354,12 +359,13 @@ int_settings[] = {
   {"Rows", offcfg(rows), 24},
   {"Scrollbar", offcfg(scrollbar), false},
   {"Transparency", offcfg(transparency), 0},
+  {"OpaqueWhenFocused", offcfg(opaque_when_focused), 0},
   {"BoldAsBright", offcfg(bold_as_bright), true},
   {"AllowBlinking", offcfg(allow_blinking), true},
   {"CursorType", offcfg(cursor_type), 2},
   {"CursorBlinks", offcfg(cursor_blinks), true},
   {"FontIsBold", offcfg(font.isbold), 0},
-  {"FontHeight", offcfg(font.height), 9},
+  {"FontHeight", offcfg(font.height), 10},
   {"FontCharset", offcfg(font.charset), 0},
   {"FontQuality", offcfg(font_quality), FQ_DEFAULT},
   {"BackspaceSendsDEL", offcfg(backspace_sends_del), false},
