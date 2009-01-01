@@ -25,14 +25,14 @@ $(exe): $(objs)
 	du -b $@
 
 bin: $(dir)-cygwin.zip
-src: $(dir).tgz
+src: $(dir)-src.tgz
 
 $(dir)-cygwin.zip: $(exe) $(stuff)
 	rm -f $@
 	zip -9 -j $@ $^
 	du -b $@
 
-$(dir).tgz: $(srcs)
+$(dir)-src.tgz: $(srcs)
 	rm -rf $(dir)
 	mkdir $(dir)
 	cp -ax --parents $^ $(dir)
