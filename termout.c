@@ -597,7 +597,7 @@ term_write(const char *data, int len)
   */
   term.in_term_write = true;
   int unget = -1;
-  char *chars = null; /* placate compiler warnings */
+  uchar *chars = null; /* placate compiler warnings */
   int nchars = 0;
   while (nchars > 0 || unget != -1 || bufchain_size(term.inbuf) > 0) {
     uint c;
@@ -605,7 +605,7 @@ term_write(const char *data, int len)
       if (nchars == 0) {
         void *ret;
         bufchain_prefix(term.inbuf, &ret, &nchars);
-        char localbuf[256];
+        uchar localbuf[256];
         nchars = min(nchars, (int) sizeof localbuf);
         memcpy(localbuf, ret, nchars);
         bufchain_consume(term.inbuf, nchars);
