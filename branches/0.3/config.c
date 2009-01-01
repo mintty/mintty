@@ -1,5 +1,5 @@
 // config.c (part of MinTTY)
-// Copyright 2008 Andy Koppe
+// Copyright 2008-09 Andy Koppe
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -359,7 +359,7 @@ int_settings[] = {
   {"CursorType", offcfg(cursor_type), 2},
   {"CursorBlinks", offcfg(cursor_blinks), true},
   {"FontIsBold", offcfg(font.isbold), 0},
-  {"FontHeight", offcfg(font.height), 9},
+  {"FontHeight", offcfg(font.height), 10},
   {"FontCharset", offcfg(font.charset), 0},
   {"FontQuality", offcfg(font_quality), FQ_DEFAULT},
   {"BackspaceSendsDEL", offcfg(backspace_sends_del), false},
