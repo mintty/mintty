@@ -151,7 +151,7 @@ setup_config_box(controlbox * b)
     dlg_stdeditbox_handler, I(offcfg(rows)), I(-1)
   )->column = 1;
 
-  s = ctrl_getset(b, "Window", "other", null);
+  s = ctrl_getset(b, "Window", "scrollbar", null);
   ctrl_checkbox(
     s, "Show scrollbar", 's', P(0),
     dlg_stdcheckbox_handler, I(offcfg(scrollbar))
@@ -166,6 +166,12 @@ setup_config_box(controlbox * b)
     "Medium", 'm', I(2), 
     "High", 'h', I(3), 
     null
+  );
+
+  s = ctrl_getset(b, "Window", "transfocus", null);
+  ctrl_checkbox(
+    s, "Disable transparency when focused", 'd', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(opaque_when_focused))
   );
 
  /*
@@ -353,6 +359,7 @@ int_settings[] = {
   {"Rows", offcfg(rows), 24},
   {"Scrollbar", offcfg(scrollbar), false},
   {"Transparency", offcfg(transparency), 0},
+  {"OpaqueWhenFocused", offcfg(opaque_when_focused), 0},
   {"BoldAsBright", offcfg(bold_as_bright), true},
   {"AllowBlinking", offcfg(allow_blinking), true},
   {"CursorType", offcfg(cursor_type), 2},

@@ -484,7 +484,8 @@ flip_full_screen()
 static void
 set_transparency()
 {
-  int trans = cfg.transparency;
+  int trans =
+    cfg.opaque_when_focused && term_has_focus() ? 0 : cfg.transparency;
   SetWindowLong(wnd, GWL_EXSTYLE, trans ? WS_EX_LAYERED : 0);
   if (trans)
     SetLayeredWindowAttributes(wnd, 0, 255 - 16 * trans, LWA_ALPHA);
@@ -662,17 +663,19 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       win_paint();
       return 0;
     when WM_SETFOCUS:
-	  term_set_focus(true);
+      term_set_focus(true);
       CreateCaret(wnd, caretbm, font_width, font_height);
       ShowCaret(wnd);
       flash_window(0);  /* stop */
       win_update();
+      set_transparency();
     when WM_KILLFOCUS:
       win_show_mouse();
       term_set_focus(false);
       DestroyCaret();
       caret_x = caret_y = -1;   /* ensure caret is replaced next time */
       win_update();
+      set_transparency();
     when WM_FULLSCR_ON_MAX: fullscr_on_max = true;
     when WM_MOVE: sys_cursor_update();
     when WM_ENTERSIZEMOVE:
