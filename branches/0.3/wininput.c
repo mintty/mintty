@@ -345,14 +345,27 @@ win_key_down(WPARAM wParam, LPARAM lParam)
   }
   not_six:
   
-  // Function keys.
-  if (VK_F1 <= key && key <= VK_F24) {
+  // PF keys.
+  if (VK_F1 <= key && key <= VK_F4) {
+    if (!mods)
+      str("\eO");
+    else {
+      str("\e[1;");
+      ch('1' + mods);
+    }
+    ch(key - VK_F1 + 'P');
+    goto send;
+  }
+  
+  // F keys.
+  if (VK_F5 <= key && key <= VK_F24) {
     str("\e[");
     uchar code = 
       (uchar[]){
-        11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 23, 24,
-        25, 26, 28, 29, 31, 32, 33, 34, 36, 37, 38, 39
-      }[key - VK_F1];
+        15, 17, 18, 19, 20, 21, 23, 24,
+        25, 26, 28, 29, 31, 32, 33, 34,
+        36, 37, 38, 39
+      }[key - VK_F5];
     ch('0' + code / 10); ch('0' + code % 10);
     if (mods) { ch(';'); ch('1' + mods); }
     ch('~');
