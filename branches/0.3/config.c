@@ -357,7 +357,7 @@ static int_setting
 int_settings[] = {
   {"Columns", offcfg(cols), 80},
   {"Rows", offcfg(rows), 24},
-  {"Scrollbar", offcfg(scrollbar), false},
+  {"Scrollbar", offcfg(scrollbar), true},
   {"Transparency", offcfg(transparency), 0},
   {"OpaqueWhenFocused", offcfg(opaque_when_focused), 0},
   {"BoldAsBright", offcfg(bold_as_bright), true},
