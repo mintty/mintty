@@ -409,7 +409,6 @@ out_return(void)
   term.curs.x = 0;
   term.wrapnext = false;
   seen_disp_event();
-  term.paste_hold = 0;
 }
 
 static void
@@ -421,7 +420,6 @@ out_linefeed(void)
     term.curs.y++;
   term.wrapnext = false;
   seen_disp_event();
-  term.paste_hold = 0;
 }
 
 static void
