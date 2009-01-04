@@ -92,6 +92,9 @@ void
 win_update_mouse(void)
 { update_mouse(get_mods()); }
 
+void
+win_capture_mouse(void)
+{ SetCapture(wnd); }
 
 static bool mouse_showing = true;
 
@@ -148,7 +151,6 @@ win_mouse_click(mouse_button b, LPARAM lp)
   term_mouse_click(b, mods, get_mouse_pos(lp, 0), count);
   last_time = t;
   clicked_button = last_button = b;
-  SetCapture(wnd);
 }
 
 void
