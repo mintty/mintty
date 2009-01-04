@@ -197,15 +197,21 @@ win_mouse_wheel(WPARAM wp, LPARAM lp)
     term_mouse_wheel(lines, get_mods(), get_mouse_pos(lp, 0));
 }
 
+static bool alt_alone;
+
 bool 
 win_key_down(WPARAM wParam, LPARAM lParam)
 {
-  mod_keys mods = get_mods();
-  bool shift = mods & SHIFT, alt = mods & ALT, ctrl = mods & CTRL;
   uint key = wParam;
   uint count = LOWORD(lParam);
-
+  mod_keys mods = get_mods();
+  bool shift = mods & SHIFT, alt = mods & ALT, ctrl = mods & CTRL;
+ 
   update_mouse(mods);
+
+  alt_alone = key == VK_MENU;
+  if (alt_alone)
+    return 1;
 
   // Specials
   if (alt && !ctrl) {
@@ -455,4 +461,16 @@ win_key_down(WPARAM wParam, LPARAM lParam)
     hide_mouse();
     return 1;
   }
+}
+
+bool 
+win_key_up(WPARAM wParam, LPARAM unused(lParam))
+{
+  win_update_mouse();
+  uint key = wParam;
+  bool alt = key == VK_MENU;
+  if (alt && alt_alone && cfg.alt_sends_esc)   
+    ldisc_send((char[]){'\e'}, 1, 1);
+  alt_alone = false;
+  return alt;
 }

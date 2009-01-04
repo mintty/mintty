@@ -592,11 +592,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       return 0;
     when WM_COMMAND or WM_SYSCOMMAND:
       switch (wp & ~0xF) {  /* low 4 bits reserved to Windows */
-        when SC_KEYMENU:
-          if (lp == 0) {  // Sent by Alt on its own
-            ldisc_send((char[]){'\e'}, 1, 1);
-            return 0;
-          }
         when IDM_COPY: term_copy();
         when IDM_PASTE: win_paste();
         when IDM_SELALL:
@@ -632,11 +627,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_MOUSEMOVE: win_mouse_move(false, lp);
     when WM_NCMOUSEMOVE: win_mouse_move(true, lp);
     when WM_MOUSEWHEEL: win_mouse_wheel(wp, lp);
-    when WM_KEYDOWN or WM_SYSKEYDOWN:
-      if (win_key_down(wp, lp))
-        return 0;
-    when WM_KEYUP or WM_SYSKEYUP:
-      win_update_mouse();
+    when WM_KEYDOWN or WM_SYSKEYDOWN: if (win_key_down(wp, lp)) return 0;
+    when WM_KEYUP or WM_SYSKEYUP: if (win_key_up(wp, lp)) return 0;
     when WM_CHAR or WM_SYSCHAR: { // TODO: handle wchar and WM_UNICHAR
       char c = (uchar) wp;
       term_seen_key_event();
