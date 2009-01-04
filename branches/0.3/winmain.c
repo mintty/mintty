@@ -482,13 +482,27 @@ flip_full_screen()
 }
 
 static void
-set_transparency()
+update_transparency()
 {
   int trans =
     cfg.opaque_when_focused && term_has_focus() ? 0 : cfg.transparency;
   SetWindowLong(wnd, GWL_EXSTYLE, trans ? WS_EX_LAYERED : 0);
   if (trans)
     SetLayeredWindowAttributes(wnd, 0, 255 - 16 * trans, LWA_ALPHA);
+}
+
+static void
+update_alt_f4(void)
+{
+  char *text = cfg.close_on_alt_f4 ? "Close\tAlt+F4" : "Close";
+  HMENU sysmenu = GetSystemMenu(wnd, false);
+  MENUITEMINFO mii = {
+    .cbSize = sizeof(MENUITEMINFO),
+    .fMask = MIIM_STRING,
+    .dwTypeData = text,
+    .cch = strlen(text)
+  };
+  SetMenuItemInfo(sysmenu, SC_CLOSE, false, &mii);
 }
 
 static void
@@ -534,10 +548,7 @@ reconfig(void)
                  SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
     init_lvl = 2;
   }
-
-  if (IsIconic(wnd))
-    SetWindowText(wnd, window_name);
-
+  
   if (strcmp(cfg.font.name, prev_cfg.font.name) != 0 ||
       strcmp(cfg.codepage, prev_cfg.codepage) != 0 ||
       cfg.font.isbold != prev_cfg.font.isbold ||
@@ -547,7 +558,8 @@ reconfig(void)
       cfg.bold_as_bright != prev_cfg.bold_as_bright)
     init_lvl = 2;
   
-  set_transparency();
+  update_alt_f4();
+  update_transparency();
   InvalidateRect(wnd, null, true);
   reset_window(init_lvl);
   win_update_mouse();
@@ -660,14 +672,14 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       ShowCaret(wnd);
       flash_window(0);  /* stop */
       win_update();
-      set_transparency();
+      update_transparency();
     when WM_KILLFOCUS:
       win_show_mouse();
       term_set_focus(false);
       DestroyCaret();
       caret_x = caret_y = -1;   /* ensure caret is replaced next time */
       win_update();
-      set_transparency();
+      update_transparency();
     when WM_FULLSCR_ON_MAX: fullscr_on_max = true;
     when WM_MOVE: sys_cursor_update();
     when WM_ENTERSIZEMOVE:
@@ -833,6 +845,7 @@ main(int argc, char *argv[])
   }
 
   win_init_menu();
+  update_alt_f4();
   
  /*
   * Initialise the terminal. (We have to do this _after_
@@ -902,7 +915,7 @@ main(int argc, char *argv[])
   win_init_drop_target();
 
   // Finally show the window!
-  set_transparency();
+  update_transparency();
   ShowWindow(wnd, SW_SHOWDEFAULT);
 
   // Create child process and set window title to the executed command.

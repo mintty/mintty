@@ -215,7 +215,7 @@ win_key_down(WPARAM wParam, LPARAM lParam)
 
   // Specials
   if (alt && !ctrl) {
-    if (key == VK_F4) {
+    if (key == VK_F4 && cfg.close_on_alt_f4) {
       SendMessage(wnd, WM_CLOSE, 0, 0);
       return 1;
     }
