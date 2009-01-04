@@ -1,5 +1,5 @@
 // winctrls.c (part of MinTTY)
-// Copyright 2008 Andy Koppe
+// Copyright 2008-09 Andy Koppe
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -1066,7 +1066,7 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
         char *escaped = shortcut_escape(ctrl->label, ctrl->fontselect.shortcut);
         shortcuts[nshortcuts++] = ctrl->fontselect.shortcut;
         //statictext(&pos, escaped, 1, base_id);
-        staticbtn(&pos, "", base_id + 1, "Change...", base_id + 2);
+        staticbtn(&pos, "", base_id + 1, "&Select...", base_id + 2);
         free(escaped);
         data = new(font_spec);
       }

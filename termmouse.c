@@ -293,6 +293,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
       incpos(term.sel_end);
       sel_spread();
     }
+    win_capture_mouse();
     win_update();
   }
 }
