@@ -4,7 +4,7 @@ version := 0.3.1
 exe := $(name).exe
 dir := $(name)-$(version)
 stuff := docs/readme.html scripts/create_shortcut.js
-srcs := Makefile $(wildcard *.c *.h *.rc *.mft icon/*.ico COPYING LICENSE* INSTALL) $(stuff)
+srcs := $(wildcard Makefile *.c *.h *.rc *.mft icon/*.ico icon/*.png COPYING LICENSE* INSTALL) $(stuff)
 
 c_srcs := $(wildcard *.c)
 rc_srcs := $(wildcard *.rc)
