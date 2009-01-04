@@ -1,5 +1,5 @@
 // wininput.c (part of MinTTY)
-// Copyright 2008 Andy Koppe
+// Copyright 2008-09 Andy Koppe
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "winpriv.h"
@@ -197,7 +197,11 @@ win_mouse_wheel(WPARAM wp, LPARAM lp)
     term_mouse_wheel(lines, get_mods(), get_mouse_pos(lp, 0));
 }
 
-static bool alt_alone;
+
+/* Keyboard handling */
+
+enum { ALT_NONE = 0, ALT_ALONE = 1, ALT_OCT = 8, ALT_DEC = 10} alt_state;
+wchar alt_char;
 
 bool 
 win_key_down(WPARAM wParam, LPARAM lParam)
@@ -209,10 +213,25 @@ win_key_down(WPARAM wParam, LPARAM lParam)
  
   update_mouse(mods);
 
-  alt_alone = key == VK_MENU;
-  if (alt_alone)
+  if (alt_state != ALT_NONE) {
+    uint digit = key - VK_NUMPAD0;
+    if (alt_state == ALT_ALONE) {
+      if (digit < 10) {
+        alt_char = digit;
+        alt_state = digit ? ALT_DEC : ALT_OCT;
+        return 1;
+      }
+    }
+    else if (digit < alt_state) {
+      alt_char = alt_char * alt_state + digit;
+      return 1;
+    }
+  }
+  
+  alt_state = key == VK_MENU;
+  if (alt_state)
     return 1;
-
+  
   // Specials
   if (alt && !ctrl) {
     if (key == VK_F4 && cfg.close_on_alt_f4) {
@@ -468,9 +487,15 @@ win_key_up(WPARAM wParam, LPARAM unused(lParam))
 {
   win_update_mouse();
   uint key = wParam;
+
   bool alt = key == VK_MENU;
-  if (alt && alt_alone && cfg.alt_sends_esc)   
-    ldisc_send((char[]){'\e'}, 1, 1);
-  alt_alone = false;
+  if (alt && alt_state != ALT_NONE) {
+    if (alt_state == ALT_ALONE)
+      ldisc_send((char[]){'\e'}, 1, 1);
+    else
+      luni_send(&alt_char, 1, 1);
+    alt_state = ALT_NONE;
+  }
+  
   return alt;
 }
