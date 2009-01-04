@@ -140,7 +140,7 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Window", "Window");
 
-  s = ctrl_getset(b, "Window", "size", "Size");
+  s = ctrl_getset(b, "Window", "size", null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_editbox(
     s, "Columns", 'c', 100, P(0),
@@ -220,16 +220,16 @@ setup_config_box(controlbox * b)
   );
 
  /*
-  * The Text panel.
+  * The Font panel.
   */
-  ctrl_settitle(b, "Text", "Text");
+  ctrl_settitle(b, "Font", "Font");
 
-  s = ctrl_getset(b, "Text", "font", "Font");
+  s = ctrl_getset(b, "Font", "font", null);
   ctrl_fontsel(
     s, null, '\0', P(0), dlg_stdfontsel_handler, I(offcfg(font))
   );
 
-  s = ctrl_getset(b, "Text", "smooth", "Smoothing");
+  s = ctrl_getset(b, "Font", "smooth", "Smoothing");
   ctrl_radiobuttons(
     s, null, '\0', 2, P(0), dlg_stdradiobutton_handler, 
     I(offcfg(font_quality)),
@@ -240,7 +240,7 @@ setup_config_box(controlbox * b)
     null
   );
 
-  s = ctrl_getset(b, "Text", "codepage", "Codepage");
+  s = ctrl_getset(b, "Font", "codepage", "Codepage");
   ctrl_combobox(s, null, '\0', 100, P(0), codepage_handler, P(null), P(null));
 
  /*
