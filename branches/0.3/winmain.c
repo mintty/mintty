@@ -484,11 +484,13 @@ flip_full_screen()
 static void
 update_transparency()
 {
-  int trans =
-    cfg.opaque_when_focused && term_has_focus() ? 0 : cfg.transparency;
+  uchar trans = cfg.transparency;
   SetWindowLong(wnd, GWL_EXSTYLE, trans ? WS_EX_LAYERED : 0);
-  if (trans)
-    SetLayeredWindowAttributes(wnd, 0, 255 - 16 * trans, LWA_ALPHA);
+  if (trans) {
+    bool opaque = cfg.opaque_when_focused && term_has_focus();
+    uchar alpha = opaque ? 255 : 255 - 16 * trans;
+    SetLayeredWindowAttributes(wnd, 0, alpha, LWA_ALPHA);
+  }
 }
 
 static void
