@@ -492,8 +492,10 @@ win_key_up(WPARAM wParam, LPARAM unused(lParam))
 
   bool alt = key == VK_MENU;
   if (alt && alt_state != ALT_NONE) {
-    if (alt_state == ALT_ALONE)
-      ldisc_send((char[]){'\e'}, 1, 1);
+    if (alt_state == ALT_ALONE) {
+      if (cfg.alt_sends_esc)
+        ldisc_send((char[]){'\e'}, 1, 1);
+    }
     else
       luni_send(&alt_char, 1, 1);
     alt_state = ALT_NONE;
