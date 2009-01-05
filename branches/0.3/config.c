@@ -233,7 +233,7 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, null, '\0', 2, P(0), dlg_stdradiobutton_handler, 
     I(offcfg(font_quality)),
-    "System Default", 's', I(FQ_DEFAULT),
+    "System Default", 'd', I(FQ_DEFAULT),
     "Antialiased", 'a', I(FQ_ANTIALIASED),
     "Non-Antialiased", 'n', I(FQ_NONANTIALIASED),
     "ClearType", 'c', I(FQ_CLEARTYPE),
