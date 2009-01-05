@@ -496,13 +496,7 @@ update_alt_f4(void)
 {
   char *text = cfg.close_on_alt_f4 ? "Close\tAlt+F4" : "Close";
   HMENU sysmenu = GetSystemMenu(wnd, false);
-  MENUITEMINFO mii = {
-    .cbSize = sizeof(MENUITEMINFO),
-    .fMask = MIIM_STRING,
-    .dwTypeData = text,
-    .cch = strlen(text)
-  };
-  SetMenuItemInfo(sysmenu, SC_CLOSE, false, &mii);
+  ModifyMenu(sysmenu, SC_CLOSE, MF_BYCOMMAND | MF_STRING, 0, text); 
 }
 
 static void
