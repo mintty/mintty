@@ -215,7 +215,6 @@ ctrl_new(controlset *s, int type, intorptr helpctx, handler_fn handler,
   * Fill in the standard fields.
   */
   c->type = type;
-  c->tabdelayed = 0;
   c->column = COLUMN_FIELD(0, s->ncolumns);
   c->helpctx = helpctx;
   c->handler = handler;
@@ -349,22 +348,6 @@ ctrl_fontsel(controlset *s, char *label, char shortcut, intorptr helpctx,
   control *c = ctrl_new(s, CTRL_FONTSELECT, helpctx, handler, context);
   c->label = label ? strdup(label) : null;
   c->fontselect.shortcut = shortcut;
-  return c;
-}
-
-control *
-ctrl_tabdelay(controlset *s, control *ctrl)
-{
-  control *c = ctrl_new(s, CTRL_TABDELAY, P(null), null, P(null));
-  c->tabdelay.ctrl = ctrl;
-  return c;
-}
-
-control *
-ctrl_text(controlset *s, char *text, intorptr helpctx)
-{
-  control *c = ctrl_new(s, CTRL_TEXT, helpctx, null, P(null));
-  c->label = strdup(text);
   return c;
 }
 

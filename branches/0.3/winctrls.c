@@ -260,110 +260,6 @@ checkbox(ctrlpos * cp, char *text, int id)
 }
 
 /*
- * Wrap a piece of text for a static text control. Returns the
- * wrapped text (a malloc'ed string containing \ns), and also
- * returns the number of lines required.
- */
-static char *
-staticwrap(ctrlpos * cp, HWND wnd, char *text, int *lines)
-{
-  HDC dc = GetDC(wnd);
-  int width, nlines, j;
-  INT *pwidths, nfit;
-  SIZE size;
-  char *ret, *p, *q;
-  RECT r;
-  HFONT oldfont, newfont;
-
-  ret = newn(char, 1 + strlen(text));
-  p = text;
-  q = ret;
-  pwidths = newn(INT, 1 + strlen(text));
-
- /*
-  * Work out the width the text will need to fit in, by doing
-  * the same adjustment that the `statictext' function itself
-  * will perform.
-  */
-  SetMapMode(dc, MM_TEXT);     /* ensure logical units == pixels */
-  r.left = r.top = r.bottom = 0;
-  r.right = cp->width;
-  MapDialogRect(wnd, &r);
-  width = r.right;
-
-  nlines = 1;
-
- /*
-  * We must select the correct font into the HDC before calling
-  * GetTextExtent*, or silly things will happen.
-  */
-  newfont = (HFONT) SendMessage(wnd, WM_GETFONT, 0, 0);
-  oldfont = SelectObject(dc, newfont);
-
-  while (*p) {
-    if (!GetTextExtentExPoint(dc, p, strlen(p), width, &nfit, pwidths, &size)
-        || (size_t) nfit >= strlen(p)) {
-     /*
-      * Either GetTextExtentExPoint returned failure, or the
-      * whole of the rest of the text fits on this line.
-      * Either way, we stop wrapping, copy the remainder of
-      * the input string unchanged to the output, and leave.
-      */
-      strcpy(q, p);
-      break;
-    }
-
-   /*
-    * Now we search backwards along the string from `nfit',
-    * looking for a space at which to break the line. If we
-    * don't find one at all, that's fine - we'll just break
-    * the line at `nfit'.
-    */
-    for (j = nfit; j > 0; j--) {
-      if (isspace((uchar) p[j])) {
-        nfit = j;
-        break;
-      }
-    }
-
-    strncpy(q, p, nfit);
-    q[nfit] = '\n';
-    q += nfit + 1;
-
-    p += nfit;
-    while (*p && isspace((uchar) * p))
-      p++;
-
-    nlines++;
-  }
-
-  SelectObject(dc, oldfont);
-  ReleaseDC(cp->wnd, dc);
-
-  if (lines)
-    *lines = nlines;
-
-  return ret;
-}
-
-/*
- * A single standalone static text control.
- */
-static void
-statictext(ctrlpos * cp, char *text, int lines, int id)
-{
-  RECT r;
-
-  r.left = GAPBETWEEN;
-  r.top = cp->ypos;
-  r.right = cp->width;
-  r.bottom = STATICHEIGHT * lines;
-  cp->ypos += r.bottom + GAPBETWEEN;
-  doctl(cp, r, "STATIC", WS_CHILD | WS_VISIBLE | SS_LEFTNOWORDWRAP, 0, text,
-        id);
-}
-
-/*
  * An owner-drawn static text control for a panel title.
  */
 static void
@@ -780,10 +676,6 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
   ctrlpos columns[16];
   int ncols, colstart, colspan;
 
-  ctrlpos tabdelays[16];
-  control *tabdelayed[16];
-  int ntabdelays;
-
   ctrlpos pos;
 
   char shortcuts[MAX_SHORTCUTS_PER_CTRL];
@@ -822,9 +714,6 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
  /* Initially we have just one column. */
   ncols = 1;
   columns[0] = *cp;     /* structure copy */
-
- /* And initially, there are no pending tab-delayed controls. */
-  ntabdelays = 0;
 
  /* Loop over each control in the controlset. */
   for (int i = 0; i < s->ncontrols; i++) {
@@ -883,22 +772,6 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
 
       continue;
     }
-    else if (ctrl->type == CTRL_TABDELAY) {
-      int i;
-
-      assert(!ctrl->tabdelayed);
-      ctrl = ctrl->tabdelay.ctrl;
-
-      for (i = 0; i < ntabdelays; i++)
-        if (tabdelayed[i] == ctrl)
-          break;
-      assert(i < ntabdelays);   /* we have to have found it */
-
-      pos = tabdelays[i];       /* structure copy */
-
-      colstart = colspan = -1;  /* indicate this was tab-delayed */
-
-    }
     else {
      /*
       * If it wasn't one of those, it's a genuine control;
@@ -918,19 +791,6 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
       for (col = colstart; col < colstart + colspan; col++)
         if (pos.ypos < columns[col].ypos)
           pos.ypos = columns[col].ypos;
-
-     /*
-      * If this control is to be tabdelayed, add it to the
-      * tabdelay list, and unset pos.wnd to inhibit actual
-      * control creation.
-      */
-      if (ctrl->tabdelayed) {
-        assert(ntabdelays < (int) lengthof(tabdelays));
-        tabdelays[ntabdelays] = pos;    /* structure copy */
-        tabdelayed[ntabdelays] = ctrl;
-        ntabdelays++;
-        pos.wnd = null;
-      }
     }
 
    /* Most controls don't need anything in c->data. */
@@ -948,15 +808,6 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
     * switching on its type.
     */
     switch (ctrl->type) {
-      when CTRL_TEXT: {
-        num_ids = 1;
-        int lines;
-        char *wrapped = staticwrap(&pos, cp->wnd, ctrl->label, &lines);
-        char *escaped = shortcut_escape(wrapped, NO_SHORTCUT);
-        statictext(&pos, escaped, lines, base_id);
-        free(escaped);
-        free(wrapped);
-      }
       when CTRL_EDITBOX: {
         num_ids = 2;    /* static, edit */
         char *escaped = shortcut_escape(ctrl->label, ctrl->editbox.shortcut);
@@ -1079,7 +930,6 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
    /*
     * Create a `winctrl' for this control, and advance
     * the dialog ID counter, if it's actually been created
-    * (and isn't tabdelayed).
     */
     if (pos.wnd) {
       winctrl *c = new(winctrl);
@@ -1471,15 +1321,6 @@ dlg_listbox_add(control *ctrl, void *dlg, char const *text)
   msg = (c->ctrl->type == CTRL_LISTBOX &&
          c->ctrl->listbox.height != 0 ? LB_ADDSTRING : CB_ADDSTRING);
   SendDlgItemMessage(dp->wnd, c->base_id + 1, msg, 0, (LPARAM) text);
-}
-
-void
-dlg_text_set(control *ctrl, void *dlg, char const *text)
-{
-  dlgparam *dp = (dlgparam *) dlg;
-  winctrl *c = dlg_findbyctrl(dp, ctrl);
-  assert(c && c->ctrl->type == CTRL_TEXT);
-  SetDlgItemText(dp->wnd, c->base_id, text);
 }
 
 void
