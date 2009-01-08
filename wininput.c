@@ -1,5 +1,5 @@
 // wininput.c (part of MinTTY)
-// Copyright 2008 Andy Koppe
+// Copyright 2008-09 Andy Koppe
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "winpriv.h"
@@ -24,6 +24,7 @@ win_init_menu(void)
   AppendMenu(menu, MF_ENABLED | MF_UNCHECKED,
              IDM_FULLSCREEN, "&Full Screen\tAlt+Enter");
   AppendMenu(menu, MF_ENABLED, IDM_OPTIONS, "&Options...");
+  AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_ABOUT, "&About...");
 
   HMENU sysmenu = GetSystemMenu(wnd, false);
@@ -91,6 +92,9 @@ void
 win_update_mouse(void)
 { update_mouse(get_mods()); }
 
+void
+win_capture_mouse(void)
+{ SetCapture(wnd); }
 
 static bool mouse_showing = true;
 
@@ -147,7 +151,6 @@ win_mouse_click(mouse_button b, LPARAM lp)
   term_mouse_click(b, mods, get_mouse_pos(lp, 0), count);
   last_time = t;
   clicked_button = last_button = b;
-  SetCapture(wnd);
 }
 
 void
@@ -196,19 +199,44 @@ win_mouse_wheel(WPARAM wp, LPARAM lp)
     term_mouse_wheel(lines, get_mods(), get_mouse_pos(lp, 0));
 }
 
+
+/* Keyboard handling */
+
+enum { ALT_NONE = 0, ALT_ALONE = 1, ALT_OCT = 8, ALT_DEC = 10} alt_state;
+wchar alt_char;
+
 bool 
 win_key_down(WPARAM wParam, LPARAM lParam)
 {
-  mod_keys mods = get_mods();
-  bool shift = mods & SHIFT, alt = mods & ALT, ctrl = mods & CTRL;
   uint key = wParam;
   uint count = LOWORD(lParam);
-
+  mod_keys mods = get_mods();
+  bool shift = mods & SHIFT, alt = mods & ALT, ctrl = mods & CTRL;
+ 
   update_mouse(mods);
 
+  if (alt_state != ALT_NONE) {
+    uint digit = key - VK_NUMPAD0;
+    if (alt_state == ALT_ALONE) {
+      if (digit < 10) {
+        alt_char = digit;
+        alt_state = digit ? ALT_DEC : ALT_OCT;
+        return 1;
+      }
+    }
+    else if (digit < alt_state) {
+      alt_char = alt_char * alt_state + digit;
+      return 1;
+    }
+  }
+  
+  alt_state = key == VK_MENU;
+  if (alt_state)
+    return 1;
+  
   // Specials
   if (alt && !ctrl) {
-    if (key == VK_F4) {
+    if (key == VK_F4 && cfg.close_on_alt_f4) {
       SendMessage(wnd, WM_CLOSE, 0, 0);
       return 1;
     }
@@ -344,14 +372,27 @@ win_key_down(WPARAM wParam, LPARAM lParam)
   }
   not_six:
   
-  // Function keys.
-  if (VK_F1 <= key && key <= VK_F24) {
+  // PF keys.
+  if (VK_F1 <= key && key <= VK_F4) {
+    if (!mods)
+      str("\eO");
+    else {
+      str("\e[1;");
+      ch('1' + mods);
+    }
+    ch(key - VK_F1 + 'P');
+    goto send;
+  }
+  
+  // F keys.
+  if (VK_F5 <= key && key <= VK_F24) {
     str("\e[");
     uchar code = 
       (uchar[]){
-        11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 23, 24,
-        25, 26, 28, 29, 31, 32, 33, 34, 36, 37, 38, 39
-      }[key - VK_F1];
+        15, 17, 18, 19, 20, 21, 23, 24,
+        25, 26, 28, 29, 31, 32, 33, 34,
+        36, 37, 38, 39
+      }[key - VK_F5];
     ch('0' + code / 10); ch('0' + code % 10);
     if (mods) { ch(';'); ch('1' + mods); }
     ch('~');
@@ -441,4 +482,24 @@ win_key_down(WPARAM wParam, LPARAM lParam)
     hide_mouse();
     return 1;
   }
+}
+
+bool 
+win_key_up(WPARAM wParam, LPARAM unused(lParam))
+{
+  win_update_mouse();
+  uint key = wParam;
+
+  bool alt = key == VK_MENU;
+  if (alt && alt_state != ALT_NONE) {
+    if (alt_state == ALT_ALONE) {
+      if (cfg.alt_sends_esc)
+        ldisc_send((char[]){'\e'}, 1, 1);
+    }
+    else
+      luni_send(&alt_char, 1, 1);
+    alt_state = ALT_NONE;
+  }
+  
+  return alt;
 }

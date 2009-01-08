@@ -1,5 +1,5 @@
 // termout.c (part of MinTTY)
-// Copyright 2008 Andy Koppe
+// Copyright 2008-09 Andy Koppe
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -409,7 +409,6 @@ out_return(void)
   term.curs.x = 0;
   term.wrapnext = false;
   seen_disp_event();
-  term.paste_hold = 0;
 }
 
 static void
@@ -421,7 +420,6 @@ out_linefeed(void)
     term.curs.y++;
   term.wrapnext = false;
   seen_disp_event();
-  term.paste_hold = 0;
 }
 
 static void

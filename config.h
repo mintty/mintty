@@ -39,6 +39,7 @@ typedef struct {
   int bell_type;
   int bell_ind;
   int scrollbar;
+  int close_on_alt_f4;
   int scroll_mod;
   int click_targets_app;
   int click_target_mod;
@@ -50,6 +51,7 @@ typedef struct {
   int bold_as_bright;
   colour fg_colour, bg_colour, cursor_colour;
   int transparency;
+  int opaque_when_focused;
  /* translations */
   char codepage[128];
  /* fonts */
