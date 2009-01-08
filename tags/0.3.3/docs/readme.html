@@ -1,0 +1,57 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html><head>
+<meta content="text/html; charset=ISO-8859-1" http-equiv="content-type"><title>MinTTY</title>
+
+</head><body>
+<p>MinTTY is copyright 2008-09 Andy Koppe.</p>
+<p>This program is distributed in the hope that it will be
+useful, but without any warranty; without even the implied warranty
+merchantability or fitness for a particular purpose. It is licensed
+under the terms of the <a href="http://mintty.googlecode.com/svn/trunk/src/LICENSE">GNU
+General Public License version 3</a> or later.&nbsp;<a href="http://code.google.com/p/mintty/downloads/list">Updates</a>
+and <a href="http://code.google.com/p/mintty/source/checkout">source
+code</a> are available from the MinTTY project page at <a href="http://code.google.com/p/mintty">http://code.google.com/p/mintty</a>.</p>
+<p>MinTTY is based on <a href="http://www.chiark.greenend.org.uk/%7Esgtatham/putty/">PuTTY</a>
+version 0.60 by Simon Tatham and contributors, available from <a href="ftp://ftp.chiark.greenend.org.uk/users/sgtatham/putty-0.60">ftp://ftp.chiark.greenend.org.uk/users/sgtatham/putty-0.60</a>.
+Big thanks to everyone involved. Thanks also to KDE's Oxygen team for
+the program icon.</p>
+<h4>Running MinTTY</h4>
+<p>MinTTY requires Cygwin, so Windows needs to be able to find
+the Cygwin DLL (<span style="font-style: italic;">cygwin1.dll</span>)
+when starting <span style="font-style: italic;">mintty.exe</span>.
+There are several ways to ensure this:</p>
+<ul>
+<li>Start<span style="font-style: italic;"> </span>it<span style="font-style: italic;"> </span>from within an
+existing Cygwin session.</li>
+<li>Place <span style="font-style: italic;">mintty.exe</span>
+alongside <span style="font-style: italic;">cygwin1.dll</span>
+in the Cygwin <span style="font-style: italic;">/bin</span>
+directory and start it from there.</li>
+<li>Add the Cygwin&nbsp;<span style="font-style: italic;">bin</span>
+directory (normally <span style="font-style: italic;">C:\cygwin\bin</span>)
+to the Windows <span style="font-style: italic;">PATH</span>
+variable, which can be found under 'Environment Variables' on the
+'Advanced' tab of the System Properties. This is&nbsp;a good idea
+anyway, as it makes&nbsp;all the Cygwin commands available from the
+Windows 'Command Prompt' and 'Run...' dialog.</li>
+<li>Create a shortcut to <span style="font-style: italic;">mintty.exe</span>
+with the working directory set to the Cygwin <span style="font-style: italic;">bin</span> directory. The <a href="create_shortcut.js"><span style="font-style: italic;">create_shortcut.js</span></a>
+script will do this for you.</li>
+</ul>
+<p>Invoking MinTTY with <span style="font-style: italic;">--version</span>
+or <span style="font-style: italic;">--help</span>
+will print version or usage information. By default, MinTTY will store
+its configuration into a file called <span style="font-style: italic;">.minttyrc</span> in your
+Cygwin home directory. This can be overridden with the <span style="font-style: italic;">--config</span> command
+line option.</p>
+<p>Any other command line arguments are interpreted as the
+command to execute in the terminal session. If no command is given,
+MinTTY will look up the current users default shell in <span style="font-style: italic;">/etc/passwd</span>. If
+that is not set, it will run <span style="font-style: italic;">/bin/sh</span>.</p>
+<p>Windows shortcuts can have arguments too, which have to be
+listed after the program location in the 'Target:' box of their
+properties. This can be very useful with MinTTY,&nbsp;for instance
+for creating icons for ssh sessions or your favourite editor.</p>
+Enjoy!<br>
+Andy
+</body></html>
