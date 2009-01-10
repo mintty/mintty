@@ -92,7 +92,7 @@ struct term {
   bool has_focus;
   bool in_vbell;
   bool app_cursor_keys;
-  bool cr_lf_return;
+  bool newline_mode;
   bool seen_disp_event;
   bool big_cursor;
 

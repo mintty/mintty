@@ -1549,3 +1549,5 @@ bool term_has_focus(void) { return term.has_focus; }
 bool term_big_cursor(void) { return term.big_cursor; }
 bool term_selected(void) { return term.selected; }
 bool term_in_mouse_mode(void) { return term.mouse_mode; }
+bool term_newline_mode(void) { return term.newline_mode; }
+

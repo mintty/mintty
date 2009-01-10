@@ -127,5 +127,6 @@ bool term_in_mouse_mode(void);
 bool term_in_utf(void);
 bool term_editing(void);
 bool term_echoing(void);
+bool term_newline_mode(void);
 
 #endif

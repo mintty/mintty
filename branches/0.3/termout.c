@@ -281,7 +281,7 @@ toggle_mode(int mode, int query, int state)
         term.echoing = !state;
         ldisc_send(null, 0, 0);
       when 20: /* LNM: Return sends ... */
-        term.cr_lf_return = state;
+        term.newline_mode = state;
       when 34: /* WYULCURM: Make cursor BIG */
         compatibility2(OTHER, VT220);
         term.big_cursor = !state;
@@ -844,6 +844,8 @@ term_write(const char *data, int len)
           out_linefeed();
         when '\n':   /* LF: Line feed */
           out_linefeed();
+          if (term.newline_mode)
+            out_return();
         when '\t':     /* HT: Character tabulation */
           out_tab();
       }

@@ -325,7 +325,9 @@ win_key_down(WPARAM wParam, LPARAM lParam)
       when VK_TAB:
         str(ctrl ? (shift ? "\eOZ" : "\eOz") : (shift ? "\e[Z" : "\t"));
       when VK_RETURN:
-        ctrl ? (esc(shift), ctrl_ch('^')) : ch(shift ? '\n' : '\r');
+        ctrl 
+        ? (esc(shift), ctrl_ch('^'))
+        : shift ? ch('\n') : term_newline_mode() ? str("\r\n") : ch('r');
       when VK_BACK:
         ctrl 
         ? (esc(shift), ctrl_ch('_')) 
