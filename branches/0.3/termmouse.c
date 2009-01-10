@@ -218,30 +218,31 @@ send_mouse_event(char code, mod_keys mods, pos p)
 static pos
 box_pos(pos p)
 {
-  p.y = box(0, p.y, term.rows - 1);
-  p.x = box(0, p.x, term.cols - 1);
+  p.y = min(max(0, p.y), term.rows - 1);
+  p.x =
+    p.x < 0
+    ? (p.y > 0 ? (--p.y, term.cols - 1) : 0)
+    : min(p.x, term.cols - 1);
   return p;
 }
 
 static pos
-get_selpoint(pos p)
+get_selpoint(const pos p)
 {
-  pos selpoint;
-  selpoint.y = p.y + term.disptop;
-  termline *ldata = lineptr(selpoint.y);
-
+  pos sp = { .y = p.y + term.disptop, .x = p.x };
+  termline *ldata = lineptr(sp.y);
   if ((ldata->lattr & LATTR_MODE) != LATTR_NORM)
-    p.x /= 2;
+    sp.x /= 2;
 
  /*
   * Transform x through the bidi algorithm to find the _logical_
   * click point from the physical one.
   */
   if (term_bidi_line(ldata, p.y) != null)
-    p.x = term.post_bidi_cache[p.y].backward[p.x];
-  selpoint.x = p.x;
+    sp.x = term.post_bidi_cache[p.y].backward[sp.x];
+  
   unlineptr(ldata);
-  return selpoint;
+  return sp;
 }
 
 void
@@ -325,6 +326,11 @@ sel_scroll_cb(void)
 void
 term_mouse_move(mouse_button b, mod_keys mods, pos p)
 {
+  static pos last_p;
+  if (poseq(p, last_p))
+    return;
+  last_p = p;
+  
   pos bp = box_pos(p);
   if (term_selecting()) {
     if (bp.y == p.y)

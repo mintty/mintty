@@ -118,18 +118,13 @@ hide_mouse()
 
 
 static pos
-get_mouse_pos(LPARAM lp, bool *has_moved_p)
+get_mouse_pos(LPARAM lp)
 {
   int16 y = HIWORD(lp), x = LOWORD(lp);  
-  pos p = {
+  return (pos){
     .y = floorf((y - offset_height) / (float)font_height), 
     .x = floorf((x - offset_width ) / (float)font_width ),
   };
-  static pos last_p;
-  if (has_moved_p)
-    *has_moved_p = p.x != last_p.x || p.y != last_p.y;
-  last_p = p;
-  return p;
 }
 
 static mouse_button clicked_button;
@@ -140,7 +135,7 @@ win_mouse_click(mouse_button b, LPARAM lp)
   win_show_mouse();
   mod_keys mods = get_mods();
   if (clicked_button) {
-    term_mouse_release(b, mods, get_mouse_pos(lp, 0));
+    term_mouse_release(b, mods, get_mouse_pos(lp));
     clicked_button = 0;
   }
   static mouse_button last_button;
@@ -148,7 +143,7 @@ win_mouse_click(mouse_button b, LPARAM lp)
   uint t = GetMessageTime();
   if (b != last_button || t - last_time > GetDoubleClickTime() || ++count > 3)
     count = 1;
-  term_mouse_click(b, mods, get_mouse_pos(lp, 0), count);
+  term_mouse_click(b, mods, get_mouse_pos(lp), count);
   last_time = t;
   clicked_button = last_button = b;
 }
@@ -158,7 +153,7 @@ win_mouse_release(mouse_button b, LPARAM lp)
 {
   win_show_mouse();
   if (b == clicked_button) {
-    term_mouse_release(b, get_mods(), get_mouse_pos(lp, 0));
+    term_mouse_release(b, get_mods(), get_mouse_pos(lp));
     clicked_button = 0;
     ReleaseCapture();
   }
@@ -178,12 +173,8 @@ win_mouse_move(bool nc, LPARAM lp)
   last_nc = nc;
   last_lp = lp;
   win_show_mouse();
-  if (!nc) {
-    bool has_moved;
-    pos p = get_mouse_pos(lp, &has_moved);
-    if (has_moved)  
-      term_mouse_move(clicked_button, get_mods(), p);
-  }
+  if (!nc)
+    term_mouse_move(clicked_button, get_mods(), get_mouse_pos(lp));
 }
 
 void
@@ -196,7 +187,7 @@ win_mouse_wheel(WPARAM wp, LPARAM lp)
   int lines = delta / WHEEL_DELTA;
   delta -= lines * WHEEL_DELTA;
   if (lines)
-    term_mouse_wheel(lines, get_mods(), get_mouse_pos(lp, 0));
+    term_mouse_wheel(lines, get_mods(), get_mouse_pos(lp));
 }
 
 
