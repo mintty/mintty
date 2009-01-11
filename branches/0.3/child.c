@@ -18,14 +18,19 @@
 
 #include <winbase.h>
 
-int child_exitcode;
 HANDLE child_event;
 static HANDLE proc_event;
 static pid_t pid;
+static int status;
 static int fd;
 static int read_len;
 static char read_buf[4096];
 static struct utmp ut;
+static char *name;
+
+static const int ERROR_SIGS =
+  1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
+  1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS; 
 
 static DWORD WINAPI
 read_thread(LPVOID unused(param))
@@ -40,14 +45,46 @@ read_thread(LPVOID unused(param))
 static DWORD WINAPI
 wait_thread(LPVOID unused(param))
 {
-  int status;
-  if (waitpid(pid, &status, 0) == pid) {
-    pid = 0;
-    child_exitcode = WEXITSTATUS(status);
-    logout(ut.ut_line);
-    SetEvent(child_event);
-  }
+  while (waitpid(pid, &status, 0) == -1 && errno == EINTR)
+    ;
+  pid = 0;
+  SetEvent(child_event);
   return 0;
+}
+
+bool
+child_proc(void)
+{
+  if (read_len > 0) {
+    term_write(read_buf, read_len);
+    read_len = 0;
+    SetEvent(proc_event);
+  }
+  if (pid == 0) {
+    logout(ut.ut_line);
+    int l = -1;
+    char *s; 
+    if (WIFEXITED(status)) {
+      status = WEXITSTATUS(status);
+      if (status == 0)
+        exit(0);
+      else
+        l = asprintf(&s, "\r\n%s exited with status %i\r\n", name, status); 
+    }
+    else if (WIFSIGNALED(status)) {
+      int sig = WTERMSIG(status);
+      if ((ERROR_SIGS & 1<<sig) == 0)
+        exit(0);
+      else
+        l = asprintf(&s, "\r\n%s terminated: %s\r\n", name, strsignal(sig));
+    }
+    if (l != -1) {
+      term_write(s, l);
+      free(s);
+    }
+    return true;
+  }
+  return false;
 }
 
 static void
@@ -66,6 +103,9 @@ child_create(char *argv[], struct winsize *winp)
     char *shell = (pw ? pw->pw_shell : 0) ?: "/bin/sh"; 
     argv = (char *[]){shell, 0};
   }
+  
+  // Remember the child's name.
+  name = *argv;
   
   // Create the child process and pseudo terminal.
   pid = forkpty(&fd, 0, 0, winp);
@@ -145,10 +185,6 @@ child_kill(void)
 }
 
 bool
-child_is_alive(void)
-{ return pid; }
-
-bool
 child_is_parent(void)
 {
   DIR *d = opendir("/proc");
@@ -178,24 +214,12 @@ child_is_parent(void)
 }
 
 void
-child_proc(void)
-{
-  if (read_len > 0) {
-    term_write(read_buf, read_len);
-    read_len = 0;
-    SetEvent(proc_event);
-  }
-  if (!pid && !child_exitcode)
-    exit(0);
-}
-
-void
 child_write(const char *buf, int len)
 { 
   if (pid)
     write(fd, buf, len); 
   else
-    exit(child_exitcode);
+    exit(0);
 }
 
 void

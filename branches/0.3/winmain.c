@@ -31,6 +31,8 @@ static int prev_rows, prev_cols;
 
 static bool flashing;
 
+static bool child_dead;
+
 void
 win_set_timer(void (*cb)(void), uint ticks)
 {
@@ -593,8 +595,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     }
     when WM_CLOSE:
       win_show_mouse();
-      if (!child_is_alive())
-        exit(child_exitcode);
+      if (child_dead)
+        exit(0);
       if (confirm_close())
         child_kill();
       return 0;
@@ -663,9 +665,11 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       win_paint();
       return 0;
     when WM_SETFOCUS:
-      term_set_focus(true);
-      CreateCaret(wnd, caretbm, font_width, font_height);
-      ShowCaret(wnd);
+      if (!child_dead) {
+        term_set_focus(true);
+        CreateCaret(wnd, caretbm, font_width, font_height);
+        ShowCaret(wnd);
+      }
       flash_window(0);  /* stop */
       win_update();
       update_transparency();
@@ -925,8 +929,12 @@ main(int argc, char *argv[])
   for (;;) {
     DWORD wakeup =
       MsgWaitForMultipleObjects(1, &child_event, false, INFINITE, QS_ALLINPUT);
-    if (wakeup == WAIT_OBJECT_0)
-      child_proc();
+    if (wakeup == WAIT_OBJECT_0) {
+      if (child_proc()) {
+        child_dead = true;
+        term_set_focus(false);
+      }
+    }
     MSG msg;
     while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
       if (msg.message == WM_QUIT)
