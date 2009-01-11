@@ -1,5 +1,5 @@
 // child.c (part of MinTTY)
-// Copyright 2008 Andy Koppe
+// Copyright 2008-09 Andy Koppe
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "child.h"
