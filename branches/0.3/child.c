@@ -47,6 +47,7 @@ wait_thread(LPVOID unused(param))
 {
   while (waitpid(pid, &status, 0) == -1 && errno == EINTR)
     ;
+  Sleep(100); // Give any ongoing output some time to finish.
   pid = 0;
   SetEvent(child_event);
   return 0;
