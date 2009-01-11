@@ -28,9 +28,22 @@ static char read_buf[4096];
 static struct utmp ut;
 static char *name;
 
-static const int ERROR_SIGS =
-  1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
-  1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS; 
+static const sigset_t
+  error_sigs =
+    1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
+    1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS,
+  term_sigs =
+    1<<SIGHUP | 1<<SIGKILL | 1<<SIGTERM | 1<<SIGINT;
+
+static DWORD WINAPI
+signal_thread(LPVOID unused(param))
+{
+  int sig;
+  sigwait(&term_sigs, &sig);
+  if (pid)
+    kill(pid, SIGHUP);
+  exit(0);
+}
 
 static DWORD WINAPI
 read_thread(LPVOID unused(param))
@@ -74,7 +87,7 @@ child_proc(void)
     }
     else if (WIFSIGNALED(status)) {
       int sig = WTERMSIG(status);
-      if ((ERROR_SIGS & 1<<sig) == 0)
+      if ((error_sigs & 1<<sig) == 0)
         exit(0);
       else
         l = asprintf(&s, "\r\n%s terminated: %s\r\n", name, strsignal(sig));
@@ -86,14 +99,6 @@ child_proc(void)
     return true;
   }
   return false;
-}
-
-static void
-signal_handler(int unused(sig))
-{ 
-  if (pid)
-    kill(pid, SIGHUP);
-  exit(0);
 }
 
 char *
@@ -136,11 +141,6 @@ child_create(char *argv[], struct winsize *winp)
     exit(1);
   }
   else { // Parent process.
-    signal(SIGHUP, signal_handler);
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
-    signal(SIGQUIT, signal_handler);
-    
     ut.ut_type = USER_PROCESS;
     ut.ut_pid = pid;
     ut.ut_time = time(0);
@@ -158,6 +158,7 @@ child_create(char *argv[], struct winsize *winp)
     
     child_event = CreateEvent(null, false, false, null);
     proc_event = CreateEvent(null, false, false, null);
+    CreateThread(null, 0, signal_thread, 0, 0, 0);
     CreateThread(null, 0, read_thread, 0, 0, 0);
     CreateThread(null, 0, wait_thread, 0, 0, 0);
   }
