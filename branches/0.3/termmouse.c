@@ -370,10 +370,8 @@ term_mouse_wheel(int lines, mod_keys mods, pos p)
       send_mouse_event(code, mods, p);
   }
   else {
-    // Send as cursor keys with ctrl modifier.
+    // Send as cursor keys with scroll modifier.
     char code[6] = "\e[1;1~";
-    if (term.app_cursor_keys)
-      code[1] = 'O';
     code[4] = '1' + cfg.scroll_mod;
     if (mods & SHIFT)
       code[2] = lines < 0 ? '5' : '6';  // PgUp/PgDown
