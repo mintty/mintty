@@ -340,8 +340,11 @@ win_key_down(WPARAM wParam, LPARAM lParam)
       otherwise: goto not_arrow;
     }
     ch('\e');
-    ch(term_app_cursor_keys() ? 'O' : '[');
-    if (mods) { str("1;"); ch('1' + mods); }
+    if (!mods) 
+      ch(term_app_cursor_keys() ? 'O' : '[');
+    else { 
+      str("[1;"); ch('1' + mods);
+    }
     ch(code);
     goto send;
   }
