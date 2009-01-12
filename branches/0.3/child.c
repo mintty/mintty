@@ -15,6 +15,7 @@
 #include <argz.h>
 #include <utmp.h>
 #include <dirent.h>
+#include <pthread.h>
 
 #include <winbase.h>
 
@@ -27,6 +28,7 @@ static int read_len;
 static char read_buf[4096];
 static struct utmp ut;
 static char *name;
+static bool killed;
 
 static const sigset_t
   error_sigs =
@@ -35,8 +37,8 @@ static const sigset_t
   term_sigs =
     1<<SIGHUP | 1<<SIGKILL | 1<<SIGTERM | 1<<SIGINT;
 
-static DWORD WINAPI
-signal_thread(LPVOID unused(param))
+static void *
+signal_thread(void *unused(arg))
 {
   int sig;
   sigwait(&term_sigs, &sig);
@@ -45,8 +47,8 @@ signal_thread(LPVOID unused(param))
   exit(0);
 }
 
-static DWORD WINAPI
-read_thread(LPVOID unused(param))
+static void *
+read_thread(void *unused(arg))
 {
   while ((read_len = read(fd, read_buf, sizeof read_buf)) > 0) {
     SetEvent(child_event);
@@ -55,8 +57,8 @@ read_thread(LPVOID unused(param))
   return 0;
 }
 
-static DWORD WINAPI
-wait_thread(LPVOID unused(param))
+static void *
+wait_thread(void *unused(arg))
 {
   while (waitpid(pid, &status, 0) == -1 && errno == EINTR)
     ;
@@ -76,6 +78,12 @@ child_proc(void)
   }
   if (pid == 0) {
     logout(ut.ut_line);
+    
+    // No point hanging around if the user wants the terminal shut.
+    if (killed)
+      exit(0);
+    
+    // Otherwise, display a message if the child process died with an error. 
     int l = -1;
     char *s; 
     if (WIFEXITED(status)) {
@@ -158,9 +166,11 @@ child_create(char *argv[], struct winsize *winp)
     
     child_event = CreateEvent(null, false, false, null);
     proc_event = CreateEvent(null, false, false, null);
-    CreateThread(null, 0, signal_thread, 0, 0, 0);
-    CreateThread(null, 0, read_thread, 0, 0, 0);
-    CreateThread(null, 0, wait_thread, 0, 0, 0);
+    
+    pthread_t thread;
+    pthread_create(&thread, 0, signal_thread, 0);
+    pthread_create(&thread, 0, wait_thread, 0);
+    pthread_create(&thread, 0, read_thread, 0);
   }
   
   // Return child command line for window title.
@@ -174,13 +184,13 @@ child_create(char *argv[], struct winsize *winp)
 void
 child_kill(void)
 { 
-  static bool huped = false;
-  if (!huped) {
+  if (!killed) {
+    // Tell the child nicely.
     kill(pid, SIGHUP);
-    huped = true;
+    killed = true;
   }
   else {
-    // Use brute force and exit.
+    // Use brute force and head for the exit.
     kill(pid, SIGKILL);
     exit(0);
   }
