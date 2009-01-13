@@ -30,12 +30,7 @@ static struct utmp ut;
 static char *name;
 static bool killed;
 
-static const sigset_t
-  error_sigs =
-    1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
-    1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS,
-  term_sigs =
-    1<<SIGHUP | 1<<SIGKILL | 1<<SIGTERM | 1<<SIGINT;
+static sigset_t term_sigs;
 
 static void *
 signal_thread(void *unused(arg))
@@ -94,11 +89,13 @@ child_proc(void)
         l = asprintf(&s, "\r\n%s exited with status %i\r\n", name, status); 
     }
     else if (WIFSIGNALED(status)) {
+      int error_sigs =
+        1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
+        1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
       int sig = WTERMSIG(status);
       if ((error_sigs & 1<<sig) == 0)
         exit(0);
-      else
-        l = asprintf(&s, "\r\n%s terminated: %s\r\n", name, strsignal(sig));
+      l = asprintf(&s, "\r\n%s terminated: %s\r\n", name, strsignal(sig));
     }
     if (l != -1) {
       term_write(s, l);
@@ -149,6 +146,21 @@ child_create(char *argv[], struct winsize *winp)
     exit(1);
   }
   else { // Parent process.
+    
+    child_event = CreateEvent(null, false, false, null);
+    proc_event = CreateEvent(null, false, false, null);
+    
+    sigemptyset(&term_sigs);
+    sigaddset(&term_sigs, SIGHUP);
+    sigaddset(&term_sigs, SIGINT);
+    sigaddset(&term_sigs, SIGTERM);
+    pthread_sigmask(SIG_BLOCK, &term_sigs, null);
+    
+    pthread_t thread;
+    pthread_create(&thread, 0, signal_thread, 0);
+    pthread_create(&thread, 0, wait_thread, 0);
+    pthread_create(&thread, 0, read_thread, 0);
+
     ut.ut_type = USER_PROCESS;
     ut.ut_pid = pid;
     ut.ut_time = time(0);
@@ -163,14 +175,6 @@ child_create(char *argv[], struct winsize *winp)
     }
     strncpy(ut.ut_user, (pw ? pw->pw_name : 0) ?: "?", sizeof ut.ut_user);
     login(&ut);
-    
-    child_event = CreateEvent(null, false, false, null);
-    proc_event = CreateEvent(null, false, false, null);
-    
-    pthread_t thread;
-    pthread_create(&thread, 0, signal_thread, 0);
-    pthread_create(&thread, 0, wait_thread, 0);
-    pthread_create(&thread, 0, read_thread, 0);
   }
   
   // Return child command line for window title.
