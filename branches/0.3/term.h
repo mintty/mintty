@@ -79,7 +79,7 @@
 #define TSIZE (sizeof(TTYPE))
 
 typedef struct {
-  short y, x;
+  int y, x;
 } pos;
 
 typedef enum {

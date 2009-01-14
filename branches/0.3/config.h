@@ -13,7 +13,7 @@ typedef struct {
 } font_spec;
 
 static const char ANSWERBACK[] = "xterm";
-enum { SAVELINES = 32767 };
+enum { SAVELINES = 65535 };
 
 /* Bell type */
 enum { BELL_DISABLED, BELL_SOUND, BELL_VISUAL };
