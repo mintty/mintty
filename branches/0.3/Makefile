@@ -40,10 +40,10 @@ $(dir)-src.tgz: $(srcs)
 	tar czf $@ $(dir)
 	rm -rf $(dir)
 
-%.o %.d: %.c
+%.o %.d: %.c Makefile
 	$(cc) $< -c -MMD -MP $(c_opts) $(code_opts) -DVERSION=$(version)
 
-%.o %.d: %.rc
+%.o %.d: %.rc Makefile
 	$(rc) $< $(<:.rc=.o)
 
 clean:
