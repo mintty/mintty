@@ -333,14 +333,14 @@ term_mouse_move(mouse_button b, mod_keys mods, pos p)
   
   pos bp = box_pos(p);
   if (term_selecting()) {
-    if (bp.y == p.y)
-      term.sel_scroll = 0;
-    else {
+    if (p.y < 0 || p.y >= term.rows) {
       if (term.sel_scroll == 0) 
         win_set_timer(sel_scroll_cb, 200);
       term.sel_scroll = p.y < 0 ? p.y : p.y - term.rows + 1;
       term.sel_pos = bp;
     }
+    else    
+      term.sel_scroll = 0;
     sel_drag(get_selpoint(bp));
     win_update();
   }
