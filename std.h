@@ -53,14 +53,6 @@ typedef void (*void_fn)(void);
 #define newn(type, n) ((type *)calloc(n, sizeof(type)))
 #define renewn(p, n) ((typeof(p)) realloc(p, sizeof(*p) * (n)))
 
-static inline int
-box(int l, int x, int h)
-{
-  return
-    x < l ? l :
-    x > h ? h : x;
-}
-
 #define when break; case
 #define or : case
 #define otherwise break; default

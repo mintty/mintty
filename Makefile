@@ -1,10 +1,10 @@
 name := mintty
-version := $(shell printf "svn-r%u" `svn info | grep Revision | sed "s/Revision: //"`)
+version := 0.3.4
 
 exe := $(name).exe
 dir := $(name)-$(version)
 stuff := docs/readme.html scripts/create_shortcut.js
-srcs := Makefile $(wildcard *.c *.h *.rc *.mft icon/*.ico COPYING LICENSE* INSTALL) $(stuff)
+srcs := $(wildcard Makefile *.c *.h *.rc *.mft icon/*.ico icon/*.png COPYING LICENSE* INSTALL) $(stuff)
 
 c_srcs := $(wildcard *.c)
 rc_srcs := $(wildcard *.rc)
@@ -25,24 +25,25 @@ $(exe): $(objs)
 	du -b $@
 
 bin: $(dir)-cygwin.zip
-src: $(dir).tgz
+src: $(dir)-src.tgz
 
 $(dir)-cygwin.zip: $(exe) $(stuff)
 	rm -f $@
 	zip -9 -j $@ $^
 	du -b $@
 
-$(dir).tgz: $(srcs)
-	mkdir -p $(dir)
+$(dir)-src.tgz: $(srcs)
+	rm -rf $(dir)
+	mkdir $(dir)
 	cp -ax --parents $^ $(dir)
 	rm -f $@
 	tar czf $@ $(dir)
 	rm -rf $(dir)
 
-%.o %.d: %.c
+%.o %.d: %.c Makefile
 	$(cc) $< -c -MMD -MP $(c_opts) $(code_opts) -DVERSION=$(version)
 
-%.o %.d: %.rc
+%.o %.d: %.rc Makefile
 	$(rc) $< $(<:.rc=.o)
 
 clean:
