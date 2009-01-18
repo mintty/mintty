@@ -27,7 +27,7 @@ static int fd;
 static int read_len;
 static char read_buf[4096];
 static struct utmp ut;
-static char *name;
+static char *cmd;
 static bool killed;
 
 static sigset_t term_sigs;
@@ -86,7 +86,7 @@ child_proc(void)
       if (status == 0)
         exit(0);
       else
-        l = asprintf(&s, "\r\n%s exited with status %i\r\n", name, status); 
+        l = asprintf(&s, "\r\n%s exited with status %i\r\n", cmd, status); 
     }
     else if (WIFSIGNALED(status)) {
       int error_sigs =
@@ -95,7 +95,7 @@ child_proc(void)
       int sig = WTERMSIG(status);
       if ((error_sigs & 1<<sig) == 0)
         exit(0);
-      l = asprintf(&s, "\r\n%s terminated: %s\r\n", name, strsignal(sig));
+      l = asprintf(&s, "\r\n%s terminated: %s\r\n", cmd, strsignal(sig));
     }
     if (l != -1) {
       term_write(s, l);
@@ -110,13 +110,12 @@ char *
 child_create(char *argv[], struct winsize *winp)
 {
   struct passwd *pw = getpwuid(getuid());
-  if (!*argv) {
-    char *shell = (pw ? pw->pw_shell : 0) ?: "/bin/sh"; 
-    argv = (char *[]){shell, 0};
-  }
   
-  // Remember the child's name.
-  name = *argv;
+  cmd = (pw ? pw->pw_shell : 0) ?: "/bin/sh";  
+  if (!*argv)
+    argv = (char *[]){cmd, 0};
+  else if (argv[1] || strcmp(*argv, "-") != 0)
+    cmd = *argv;
   
   // Create the child process and pseudo terminal.
   pid = forkpty(&fd, 0, 0, winp);
@@ -134,7 +133,7 @@ child_create(char *argv[], struct winsize *winp)
     attr.c_cc[VDISCARD] = 0;
     tcsetattr(0, TCSANOW, &attr);
     setenv("TERM", "xterm", 1);
-    execvp(*argv, argv);
+    execvp(cmd, argv);
 
     // If we get here, exec failed.
     char *msg = strdup(strerror(errno));
@@ -178,6 +177,7 @@ child_create(char *argv[], struct winsize *winp)
   }
   
   // Return child command line for window title.
+  *argv = cmd;
   char *argz;
   size_t argz_len;
   argz_create(argv, &argz, &argz_len);
