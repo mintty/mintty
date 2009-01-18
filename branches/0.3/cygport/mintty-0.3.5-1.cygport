@@ -1,4 +1,4 @@
-SRC_URI="http://mintty.googlecode.com/files/mintty-0.3.4-src.tgz"
+SRC_URI="http://mintty.googlecode.com/files/mintty-0.3.5-src.tgz"
 PKG_HINTS=setup
 
 src_compile() {
