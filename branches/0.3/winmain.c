@@ -785,6 +785,21 @@ opts[] = {
   {"title", required_argument, 0, 't'},
 };
 
+static const char *
+help =
+  "Usage: %s [OPTION]... [COMMAND [ARGS]...]\n"
+  "\n"
+  "If no command is given, the user's default shell is invoked as a non-login\n"
+  "shell. If the command is a single minus sign, the default shell is invoked\n"
+  "as a login shell. Otherwise the command is invoked with the given arguments.\n"
+  "\n"
+  "Options:\n"
+  "  -c, --config=FILE   Use specified config file (default: ~/.minttyrc)\n"
+  "  -t, --title=TITLE   Set window title (default: the invoked command)\n"
+  "  -h, --help          Display this help and exit\n"
+  "  -v, --version       Print version information and exit\n"
+;
+
 int
 main(int argc, char *argv[])
 {
@@ -794,7 +809,7 @@ main(int argc, char *argv[])
   while ((opt = getopt_long(argc, argv, short_opts, opts, 0)) != -1) {
     switch (opt) {
       when 'h':
-        printf("Usage: %s [--config FILENAME][COMMAND ARGS...]\n", *argv);
+        printf(help, *argv);
         return 0;
       when 'v':
         puts(APPNAME " " APPVER "\n" COPYRIGHT);
