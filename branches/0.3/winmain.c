@@ -775,7 +775,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
   return DefWindowProc(wnd, message, wp, lp);
 }
 
-static const char short_opts[] = "hvc:t:";
+static const char short_opts[] = "+hvc:t:";
 
 static const struct option
 opts[] = { 
