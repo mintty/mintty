@@ -11,6 +11,7 @@
 #include "linedisc.h"
 #include "child.h"
 
+#include <getopt.h>
 #include <imm.h>
 #include <winnls.h>
 
@@ -18,8 +19,6 @@ HWND wnd;
 HINSTANCE inst;
 HDC dc;
 static HBITMAP caretbm;
-
-static char *window_name;
 
 int offset_width, offset_height;
 static int extra_width, extra_height;
@@ -35,18 +34,11 @@ static bool child_dead;
 
 void
 win_set_timer(void (*cb)(void), uint ticks)
-{
-  SetTimer(wnd, (UINT_PTR)cb, ticks, null);
-}
+{ SetTimer(wnd, (UINT_PTR)cb, ticks, null); }
 
 void
 win_set_title(char *title)
-{
-  free(window_name);
-  window_name = newn(char, 1 + strlen(title));
-  strcpy(window_name, title);
-  SetWindowText(wnd, title);
-}
+{ SetWindowText(wnd, title); }
 
 /*
  * Minimise or restore the window in response to a server-side
@@ -728,8 +720,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       return ew || eh;
     }
     when WM_SIZE: {
-      if (wp == SIZE_MINIMIZED || wp == SIZE_RESTORED || wp == SIZE_MAXIMIZED)
-        SetWindowText(wnd, window_name);
       if (wp == SIZE_RESTORED)
         clear_full_screen();
       if (wp == SIZE_MAXIMIZED && fullscr_on_max) {
@@ -785,23 +775,36 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
   return DefWindowProc(wnd, message, wp, lp);
 }
 
+static const char short_opts[] = "hvc:t:";
+
+static const struct option
+opts[] = { 
+  {"help", no_argument, 0, 'h'},
+  {"version", no_argument, 0, 'v'},
+  {"config", required_argument, 0, 'c'},
+  {"title", required_argument, 0, 't'},
+};
+
 int
 main(int argc, char *argv[])
 {
-  if (argc == 2) {
-    if (strcmp(argv[1], "--version") == 0) {
-      puts(APPNAME " " APPVER "\n" COPYRIGHT);
-      return 0;
-    }
-    if (strcmp(argv[1], "--help") == 0) {
-      printf("Usage: %s [--config FILENAME][COMMAND ARGS...]\n", *argv);
-      return 0;
+  char *title = 0;
+
+  int opt;
+  while ((opt = getopt_long(argc, argv, short_opts, opts, 0)) != -1) {
+    switch (opt) {
+      when 'h':
+        printf("Usage: %s [--config FILENAME][COMMAND ARGS...]\n", *argv);
+        return 0;
+      when 'v':
+        puts(APPNAME " " APPVER "\n" COPYRIGHT);
+        return 0;
+      when 'c': config_filename = optarg;
+      when 't': title = optarg;
     }
   }
   
-  if (argc >= 3 && strcmp(argv[1],"--config") == 0)
-    config_filename = argv[2];
-  else
+  if (!config_filename)
     asprintf(&config_filename, "%s/.minttyrc", getenv("HOME"));
 
   load_config();
@@ -918,10 +921,12 @@ main(int argc, char *argv[])
   update_transparency();
   ShowWindow(wnd, SW_SHOWDEFAULT);
 
-  // Create child process and set window title to the executed command.
+  // Create child process.
   struct winsize ws = {term_rows(), term_cols(), term_width, term_height};
-  char *cmd = child_create(argv + 1, &ws);
-  win_set_title(cmd);
+  char *cmd = child_create(argv + optind, &ws);
+  
+  // Set window title.
+  SetWindowText(wnd, title ?: cmd);
   free(cmd);
   
   // Message loop.
