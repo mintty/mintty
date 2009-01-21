@@ -92,7 +92,7 @@ struct term {
   bool has_focus;
   bool in_vbell;
   bool app_cursor_keys;
-  bool cr_lf_return;
+  bool newline_mode;
   bool seen_disp_event;
   bool big_cursor;
 
@@ -148,7 +148,6 @@ struct term {
 
   wchar *paste_buffer;
   int paste_len, paste_pos;
-  bool paste_hold;
 
  /*
   * We maintain a full _copy_ of a Config structure here, not

@@ -1,5 +1,5 @@
 // term.c (part of MinTTY)
-// Copyright 2008 Andy Koppe
+// Copyright 2008-09 Andy Koppe
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -1444,7 +1444,7 @@ term_paste(wchar *data, uint len)
 
   if (term.paste_buffer)
     free(term.paste_buffer);
-  term.paste_pos = term.paste_len = term.paste_hold = 0;
+  term.paste_pos = term.paste_len = 0;
   term.paste_buffer = newn(wchar, len);
 
   p = q = data;
@@ -1471,7 +1471,7 @@ term_paste(wchar *data, uint len)
     if (term.paste_buffer)
       free(term.paste_buffer);
     term.paste_buffer = 0;
-    term.paste_pos = term.paste_len = term.paste_hold = 0;
+    term.paste_pos = term.paste_len = 0;
   }
 }
 
@@ -1488,10 +1488,8 @@ term_cancel_paste(void)
 void
 term_send_paste(void)
 {
-  if (term.paste_hold || term.paste_len == 0)
+  if (term.paste_len == 0)
     return;
-
-  term.paste_hold = 0;
 
   while (term.paste_pos < term.paste_len) {
     int n = 0;
@@ -1502,10 +1500,8 @@ term_send_paste(void)
     luni_send(term.paste_buffer + term.paste_pos, n, 0);
     term.paste_pos += n;
 
-    if (term.paste_pos < term.paste_len) {
-      term.paste_hold = 1;
+    if (term.paste_pos < term.paste_len)
       return;
-    }
   }
   free(term.paste_buffer);
   term.paste_buffer = null;
@@ -1553,3 +1549,5 @@ bool term_has_focus(void) { return term.has_focus; }
 bool term_big_cursor(void) { return term.big_cursor; }
 bool term_selected(void) { return term.selected; }
 bool term_in_mouse_mode(void) { return term.mouse_mode; }
+bool term_newline_mode(void) { return term.newline_mode; }
+

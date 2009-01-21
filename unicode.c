@@ -861,7 +861,7 @@ wordtype(int uc)
   if (ucsdata.dbcs_screenfont && ucsdata.font_codepage == ucsdata.codepage)
     return (uc != ' ');
   if (uc < 0x80) {
-    if (isalpha(uc) || (uc >= '-' && uc <= '9') || uc == '_')
+    if (isalpha(uc) || (uc >= '-' && uc <= '9') || uc == '_' || uc == '~')
       return 2;
     else if (uc > ' ' && uc < 0x7f)
       return 1;

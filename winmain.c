@@ -1,5 +1,5 @@
 // win.c (part of MinTTY)
-// Copyright 2008 Andy Koppe
+// Copyright 2008-09 Andy Koppe
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -11,6 +11,7 @@
 #include "linedisc.h"
 #include "child.h"
 
+#include <getopt.h>
 #include <imm.h>
 #include <winnls.h>
 
@@ -18,8 +19,6 @@ HWND wnd;
 HINSTANCE inst;
 HDC dc;
 static HBITMAP caretbm;
-
-static char *window_name;
 
 int offset_width, offset_height;
 static int extra_width, extra_height;
@@ -31,20 +30,15 @@ static int prev_rows, prev_cols;
 
 static bool flashing;
 
+static bool child_dead;
+
 void
 win_set_timer(void (*cb)(void), uint ticks)
-{
-  SetTimer(wnd, (UINT_PTR)cb, ticks, null);
-}
+{ SetTimer(wnd, (UINT_PTR)cb, ticks, null); }
 
 void
 win_set_title(char *title)
-{
-  free(window_name);
-  window_name = newn(char, 1 + strlen(title));
-  strcpy(window_name, title);
-  SetWindowText(wnd, title);
-}
+{ SetWindowText(wnd, title); }
 
 /*
  * Minimise or restore the window in response to a server-side
@@ -482,12 +476,23 @@ flip_full_screen()
 }
 
 static void
-set_transparency()
+update_transparency()
 {
-  int trans = cfg.transparency;
+  uchar trans = cfg.transparency;
   SetWindowLong(wnd, GWL_EXSTYLE, trans ? WS_EX_LAYERED : 0);
-  if (trans)
-    SetLayeredWindowAttributes(wnd, 0, 255 - 16 * trans, LWA_ALPHA);
+  if (trans) {
+    bool opaque = cfg.opaque_when_focused && term_has_focus();
+    uchar alpha = opaque ? 255 : 255 - 16 * trans;
+    SetLayeredWindowAttributes(wnd, 0, alpha, LWA_ALPHA);
+  }
+}
+
+static void
+update_alt_f4(void)
+{
+  char *text = cfg.close_on_alt_f4 ? "Close\tAlt+F4" : "Close";
+  HMENU sysmenu = GetSystemMenu(wnd, false);
+  ModifyMenu(sysmenu, SC_CLOSE, MF_BYCOMMAND | MF_STRING, SC_CLOSE, text); 
 }
 
 static void
@@ -533,10 +538,7 @@ reconfig(void)
                  SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
     init_lvl = 2;
   }
-
-  if (IsIconic(wnd))
-    SetWindowText(wnd, window_name);
-
+  
   if (strcmp(cfg.font.name, prev_cfg.font.name) != 0 ||
       strcmp(cfg.codepage, prev_cfg.codepage) != 0 ||
       cfg.font.isbold != prev_cfg.font.isbold ||
@@ -546,7 +548,8 @@ reconfig(void)
       cfg.bold_as_bright != prev_cfg.bold_as_bright)
     init_lvl = 2;
   
-  set_transparency();
+  update_alt_f4();
+  update_transparency();
   InvalidateRect(wnd, null, true);
   reset_window(init_lvl);
   win_update_mouse();
@@ -584,18 +587,13 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     }
     when WM_CLOSE:
       win_show_mouse();
-      if (!child_is_alive())
-        exit(child_exitcode);
+      if (child_dead)
+        exit(0);
       if (confirm_close())
         child_kill();
       return 0;
     when WM_COMMAND or WM_SYSCOMMAND:
       switch (wp & ~0xF) {  /* low 4 bits reserved to Windows */
-        when SC_KEYMENU:
-          if (lp == 0) {  // Sent by Alt on its own
-            ldisc_send((char[]){'\e'}, 1, 1);
-            return 0;
-          }
         when IDM_COPY: term_copy();
         when IDM_PASTE: win_paste();
         when IDM_SELALL:
@@ -631,11 +629,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_MOUSEMOVE: win_mouse_move(false, lp);
     when WM_NCMOUSEMOVE: win_mouse_move(true, lp);
     when WM_MOUSEWHEEL: win_mouse_wheel(wp, lp);
-    when WM_KEYDOWN or WM_SYSKEYDOWN:
-      if (win_key_down(wp, lp))
-        return 0;
-    when WM_KEYUP or WM_SYSKEYUP:
-      win_update_mouse();
+    when WM_KEYDOWN or WM_SYSKEYDOWN: if (win_key_down(wp, lp)) return 0;
+    when WM_KEYUP or WM_SYSKEYUP: if (win_key_up(wp, lp)) return 0;
     when WM_CHAR or WM_SYSCHAR: { // TODO: handle wchar and WM_UNICHAR
       char c = (uchar) wp;
       term_seen_key_event();
@@ -662,17 +657,21 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       win_paint();
       return 0;
     when WM_SETFOCUS:
-	  term_set_focus(true);
-      CreateCaret(wnd, caretbm, font_width, font_height);
-      ShowCaret(wnd);
+      if (!child_dead) {
+        term_set_focus(true);
+        CreateCaret(wnd, caretbm, font_width, font_height);
+        ShowCaret(wnd);
+      }
       flash_window(0);  /* stop */
       win_update();
+      update_transparency();
     when WM_KILLFOCUS:
       win_show_mouse();
       term_set_focus(false);
       DestroyCaret();
       caret_x = caret_y = -1;   /* ensure caret is replaced next time */
       win_update();
+      update_transparency();
     when WM_FULLSCR_ON_MAX: fullscr_on_max = true;
     when WM_MOVE: sys_cursor_update();
     when WM_ENTERSIZEMOVE:
@@ -721,8 +720,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       return ew || eh;
     }
     when WM_SIZE: {
-      if (wp == SIZE_MINIMIZED || wp == SIZE_RESTORED || wp == SIZE_MAXIMIZED)
-        SetWindowText(wnd, window_name);
       if (wp == SIZE_RESTORED)
         clear_full_screen();
       if (wp == SIZE_MAXIMIZED && fullscr_on_max) {
@@ -778,23 +775,51 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
   return DefWindowProc(wnd, message, wp, lp);
 }
 
+static const char short_opts[] = "+hvc:t:";
+
+static const struct option
+opts[] = { 
+  {"help", no_argument, 0, 'h'},
+  {"version", no_argument, 0, 'v'},
+  {"config", required_argument, 0, 'c'},
+  {"title", required_argument, 0, 't'},
+};
+
+static const char *
+help =
+  "Usage: %s [OPTION]... [COMMAND [ARGS]...]\n"
+  "\n"
+  "If no command is given, the user's default shell is invoked as a non-login\n"
+  "shell. If the command is a single minus sign, the default shell is invoked\n"
+  "as a login shell. Otherwise the command is invoked with the given arguments.\n"
+  "\n"
+  "Options:\n"
+  "  -c, --config=FILE   Use specified config file (default: ~/.minttyrc)\n"
+  "  -t, --title=TITLE   Set window title (default: the invoked command)\n"
+  "  -h, --help          Display this help and exit\n"
+  "  -v, --version       Print version information and exit\n"
+;
+
 int
 main(int argc, char *argv[])
 {
-  if (argc == 2) {
-    if (strcmp(argv[1], "--version") == 0) {
-      puts(APPNAME " " APPVER "\n" COPYRIGHT);
-      return 0;
-    }
-    if (strcmp(argv[1], "--help") == 0) {
-      printf("Usage: %s [--config FILENAME][COMMAND ARGS...]\n", *argv);
-      return 0;
+  char *title = 0;
+
+  int opt;
+  while ((opt = getopt_long(argc, argv, short_opts, opts, 0)) != -1) {
+    switch (opt) {
+      when 'h':
+        printf(help, *argv);
+        return 0;
+      when 'v':
+        puts(APPNAME " " APPVER "\n" COPYRIGHT);
+        return 0;
+      when 'c': config_filename = optarg;
+      when 't': title = optarg;
     }
   }
   
-  if (argc >= 3 && strcmp(argv[1],"--config") == 0)
-    config_filename = argv[2];
-  else
+  if (!config_filename)
     asprintf(&config_filename, "%s/.minttyrc", getenv("HOME"));
 
   load_config();
@@ -838,6 +863,7 @@ main(int argc, char *argv[])
   }
 
   win_init_menu();
+  update_alt_f4();
   
  /*
   * Initialise the terminal. (We have to do this _after_
@@ -907,13 +933,15 @@ main(int argc, char *argv[])
   win_init_drop_target();
 
   // Finally show the window!
-  set_transparency();
+  update_transparency();
   ShowWindow(wnd, SW_SHOWDEFAULT);
 
-  // Create child process and set window title to the executed command.
+  // Create child process.
   struct winsize ws = {term_rows(), term_cols(), term_width, term_height};
-  char *cmd = child_create(argv + 1, &ws);
-  win_set_title(cmd);
+  char *cmd = child_create(argv + optind, &ws);
+  
+  // Set window title.
+  SetWindowText(wnd, title ?: cmd);
   free(cmd);
   
   // Message loop.
@@ -921,8 +949,12 @@ main(int argc, char *argv[])
   for (;;) {
     DWORD wakeup =
       MsgWaitForMultipleObjects(1, &child_event, false, INFINITE, QS_ALLINPUT);
-    if (wakeup == WAIT_OBJECT_0)
-      child_proc();
+    if (wakeup == WAIT_OBJECT_0) {
+      if (child_proc()) {
+        child_dead = true;
+        term_set_focus(false);
+      }
+    }
     MSG msg;
     while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
       if (msg.message == WM_QUIT)

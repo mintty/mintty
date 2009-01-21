@@ -21,7 +21,6 @@
 #define NO_SHORTCUT '\0'
 
 enum {
-  CTRL_TEXT,    /* just a static line of text */
   CTRL_EDITBOX, /* label plus edit box */
   CTRL_RADIO,   /* label plus radio buttons */
   CTRL_CHECKBOX,        /* checkbox (contains own label) */
@@ -29,7 +28,6 @@ enum {
   CTRL_LISTBOX, /* label plus list box */
   CTRL_COLUMNS, /* divide window into columns */
   CTRL_FONTSELECT,      /* label plus font selector */
-  CTRL_TABDELAY /* see `tabdelayed' below */
 };
 
 /*
@@ -127,12 +125,6 @@ struct control {
   */
   char *label;
  /*
-  * If `tabdelayed' is non-zero, it indicates that this
-  * particular control should not yet appear in the tab
-  * order. A subsequent CTRL_TABDELAY entry will place it.
-  */
-  int tabdelayed;
- /*
   * Indicate which column(s) this control occupies. This can
   * be unpacked into starting column and column span by the
   * COLUMN macros above.
@@ -169,9 +161,6 @@ struct control {
   */
   intorptr helpctx;
   union {
-    struct {
-      control *ctrl;
-    } tabdelay;
     struct {
       char shortcut;      /* keyboard shortcut */
      /*
@@ -406,10 +395,8 @@ control *ctrl_droplist(controlset *, char *label, char shortcut,
                        handler_fn handler, intorptr context);
 control *ctrl_fontsel(controlset *, char *label, char shortcut,
                       intorptr helpctx, handler_fn handler, intorptr context);
-control *ctrl_text(controlset *, char *text, intorptr helpctx);
 control *ctrl_checkbox(controlset *, char *label, char shortcut,
                        intorptr helpctx, handler_fn handler, intorptr context);
-control *ctrl_tabdelay(controlset *, control *);
 
 /*
  * Standard handler routines to cover most of the common cases in
@@ -468,7 +455,6 @@ void dlg_editbox_get(control *, void *dlg, char *buffer, int length);
 /* The `listbox' functions also apply to combo boxes. */
 void dlg_listbox_clear(control *, void *dlg);
 void dlg_listbox_add(control *, void *dlg, char const *text);
-void dlg_text_set(control *, void *dlg, char const *text);
 void dlg_fontsel_set(control *, void *dlg, font_spec *);
 void dlg_fontsel_get(control *, void *dlg, font_spec *);
 /*
