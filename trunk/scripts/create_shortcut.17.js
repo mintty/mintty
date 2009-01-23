@@ -2,7 +2,7 @@ ws = WScript;
 sh = ws.CreateObject("WScript.Shell");
 try {
   cygbase = sh.RegRead(
-    "HKLM\\Software\\Cygnus Solutions\\Cygwin\\mounts v2\\/\\native"
+    "HKLM\\Software\\Cygwin\\setup\\rootdir"
   );
 } catch (e) {
   ws.Echo("Error: Could not read Cygwin registry key.");

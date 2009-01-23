@@ -1,0 +1,16 @@
+SRC_URI="http://mintty.googlecode.com/files/mintty-0.3.5-src.tgz"
+PKG_HINTS=setup
+
+src_compile() {
+  lndirs
+  cd ${B}
+  cygmake -j4
+}
+
+src_install() {
+  cd ${B}
+  dobin mintty.exe
+}
+
+DOCS="LICENSE.Oxygen LICENSE.PuTTY"
+HTMLDOCS="docs/readme.html"
