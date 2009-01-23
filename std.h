@@ -46,20 +46,12 @@ typedef void (*void_fn)(void);
 #define null ((void *) 0)
 
 #define lengthof(array) (sizeof(array) / sizeof(*(array)))
-#define endof(array) (&array[lengthof(array)])
+#define endof(array) (&(array)[lengthof(array)])
 #define atoffset(type, data, offset) (*((type *)((char *)(data) + (offset))))
 
 #define new(type) ((type *)malloc(sizeof(type)))
-#define newn(type, n) ((type *)calloc(n, sizeof(type)))
-#define renewn(p, n) ((typeof(p)) realloc(p, sizeof(*p) * (n)))
-
-static inline int
-box(int l, int x, int h)
-{
-  return
-    x < l ? l :
-    x > h ? h : x;
-}
+#define newn(type, n) ((type *)calloc((n), sizeof(type)))
+#define renewn(p, n) ((typeof(p)) realloc((p), sizeof(*p) * (n)))
 
 #define when break; case
 #define or : case

@@ -1,5 +1,5 @@
 // child.c (part of MinTTY)
-// Copyright 2008 Andy Koppe
+// Copyright 2008-09 Andy Koppe
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "child.h"
@@ -15,20 +15,35 @@
 #include <argz.h>
 #include <utmp.h>
 #include <dirent.h>
+#include <pthread.h>
 
 #include <winbase.h>
 
-int child_exitcode;
 HANDLE child_event;
 static HANDLE proc_event;
 static pid_t pid;
+static int status;
 static int fd;
 static int read_len;
 static char read_buf[4096];
 static struct utmp ut;
+static char *name;
+static bool killed;
 
-static DWORD WINAPI
-read_thread(LPVOID unused(param))
+static sigset_t term_sigs;
+
+static void *
+signal_thread(void *unused(arg))
+{
+  int sig;
+  sigwait(&term_sigs, &sig);
+  if (pid)
+    kill(pid, SIGHUP);
+  exit(0);
+}
+
+static void *
+read_thread(void *unused(arg))
 {
   while ((read_len = read(fd, read_buf, sizeof read_buf)) > 0) {
     SetEvent(child_event);
@@ -37,32 +52,73 @@ read_thread(LPVOID unused(param))
   return 0;
 }
 
-static DWORD WINAPI
-wait_thread(LPVOID unused(param))
+static void *
+wait_thread(void *unused(arg))
 {
-  int status;
-  if (waitpid(pid, &status, 0) == pid) {
-    pid = 0;
-    child_exitcode = WEXITSTATUS(status);
-    logout(ut.ut_line);
-    SetEvent(child_event);
-  }
+  while (waitpid(pid, &status, 0) == -1 && errno == EINTR)
+    ;
+  Sleep(100); // Give any ongoing output some time to finish.
+  pid = 0;
+  SetEvent(child_event);
   return 0;
 }
 
-static void
-signal_handler(int unused(sig))
-{ 
-  child_kill();
+bool
+child_proc(void)
+{
+  if (read_len > 0) {
+    term_write(read_buf, read_len);
+    read_len = 0;
+    SetEvent(proc_event);
+  }
+  if (pid == 0) {
+    logout(ut.ut_line);
+    
+    // No point hanging around if the user wants the terminal shut.
+    if (killed)
+      exit(0);
+    
+    // Otherwise, display a message if the child process died with an error. 
+    int l = -1;
+    char *s; 
+    if (WIFEXITED(status)) {
+      status = WEXITSTATUS(status);
+      if (status == 0)
+        exit(0);
+      else
+        l = asprintf(&s, "\r\n%s exited with status %i\r\n", name, status); 
+    }
+    else if (WIFSIGNALED(status)) {
+      int error_sigs =
+        1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
+        1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
+      int sig = WTERMSIG(status);
+      if ((error_sigs & 1<<sig) == 0)
+        exit(0);
+      l = asprintf(&s, "\r\n%s terminated: %s\r\n", name, strsignal(sig));
+    }
+    if (l != -1) {
+      term_write(s, l);
+      free(s);
+    }
+    return true;
+  }
+  return false;
 }
 
 char *
 child_create(char *argv[], struct winsize *winp)
 {
   struct passwd *pw = getpwuid(getuid());
-  if (!*argv) {
-    char *shell = (pw ? pw->pw_shell : 0) ?: "/bin/sh"; 
-    argv = (char *[]){shell, 0};
+  
+  char *cmd = (pw ? pw->pw_shell : 0) ?: "/bin/bash";  
+  if (!*argv)
+    argv = (char *[]){cmd, 0};
+  else if (argv[1] || strcmp(*argv, "-"))
+    cmd = *argv;
+  else {  
+    char *slash_p = strrchr(cmd, '/');
+    asprintf(argv, "-%s", slash_p ? slash_p + 1 : cmd);
   }
   
   // Create the child process and pseudo terminal.
@@ -81,7 +137,7 @@ child_create(char *argv[], struct winsize *winp)
     attr.c_cc[VDISCARD] = 0;
     tcsetattr(0, TCSANOW, &attr);
     setenv("TERM", "xterm", 1);
-    execvp(*argv, argv);
+    execvp(cmd, argv);
 
     // If we get here, exec failed.
     char *msg = strdup(strerror(errno));
@@ -93,11 +149,22 @@ child_create(char *argv[], struct winsize *winp)
     exit(1);
   }
   else { // Parent process.
-    signal(SIGHUP, signal_handler);
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
-    signal(SIGQUIT, signal_handler);
+    name = *argv;
     
+    child_event = CreateEvent(null, false, false, null);
+    proc_event = CreateEvent(null, false, false, null);
+    
+    sigemptyset(&term_sigs);
+    sigaddset(&term_sigs, SIGHUP);
+    sigaddset(&term_sigs, SIGINT);
+    sigaddset(&term_sigs, SIGTERM);
+    pthread_sigmask(SIG_BLOCK, &term_sigs, null);
+    
+    pthread_t thread;
+    pthread_create(&thread, 0, signal_thread, 0);
+    pthread_create(&thread, 0, wait_thread, 0);
+    pthread_create(&thread, 0, read_thread, 0);
+
     ut.ut_type = USER_PROCESS;
     ut.ut_pid = pid;
     ut.ut_time = time(0);
@@ -112,11 +179,6 @@ child_create(char *argv[], struct winsize *winp)
     }
     strncpy(ut.ut_user, (pw ? pw->pw_name : 0) ?: "?", sizeof ut.ut_user);
     login(&ut);
-    
-    child_event = CreateEvent(null, false, false, null);
-    proc_event = CreateEvent(null, false, false, null);
-    CreateThread(null, 0, read_thread, 0, 0, 0);
-    CreateThread(null, 0, wait_thread, 0, 0, 0);
   }
   
   // Return child command line for window title.
@@ -130,21 +192,17 @@ child_create(char *argv[], struct winsize *winp)
 void
 child_kill(void)
 { 
-  static bool huped = false;
-  if (!huped) {
+  if (!killed) {
+    // Tell the child nicely.
     kill(pid, SIGHUP);
-    huped = true;
+    killed = true;
   }
   else {
-    // Use brute force and exit.
+    // Use brute force and head for the exit.
     kill(pid, SIGKILL);
     exit(0);
   }
 }
-
-bool
-child_is_alive(void)
-{ return pid; }
 
 bool
 child_is_parent(void)
@@ -176,24 +234,12 @@ child_is_parent(void)
 }
 
 void
-child_proc(void)
-{
-  if (read_len > 0) {
-    term_write(read_buf, read_len);
-    read_len = 0;
-    SetEvent(proc_event);
-  }
-  if (!pid && !child_exitcode)
-    exit(0);
-}
-
-void
 child_write(const char *buf, int len)
 { 
   if (pid)
     write(fd, buf, len); 
   else
-    exit(child_exitcode);
+    exit(0);
 }
 
 void

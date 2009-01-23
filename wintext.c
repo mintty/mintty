@@ -892,13 +892,13 @@ win_set_sbar(int total, int start, int page)
   }
 }
 
-static const COLORREF ansi_colours[16] = {
+static const COLORREF
+ansi_colours[16] = {
   0x000000, 0x0000BF, 0x00BF00, 0x00BFBF,
   0xBF0000, 0xBF00BF, 0xBFBF00, 0xBFBFBF,
-  0x303040, 0x3030FF, 0x30FF30, 0x30FFFF,
-  0xFF3030, 0xFF30FF, 0xFFFF30, 0xFFFFFF,
+  0x404040, 0x4040FF, 0x40FF40, 0x40FFFF,
+  0xFF4040, 0xFF40FF, 0xFFFF40, 0xFFFFFF
 };
-
 
 void
 win_reconfig_palette(void)
@@ -914,6 +914,16 @@ win_reconfig_palette(void)
   colours[259] = rgb(brighter(cfg.bg_colour));
   colours[260] = rgb(cfg.bg_colour);
   colours[261] = rgb(cfg.cursor_colour);
+}
+
+void
+win_reset_palette(void)
+{
+  memcpy(colours, ansi_colours, sizeof ansi_colours);
+  win_reconfig_palette();
+ /* Default Background may have changed. Ensure any space between
+  * text area and window border is redrawn. */
+  InvalidateRect(wnd, null, true);
 }
 
 void
@@ -933,18 +943,6 @@ win_init_palette(void)
     colours[i++] = RGB(c,c,c);
   }
   win_reset_palette();
-  memcpy(colours, ansi_colours, sizeof ansi_colours);
-  win_reconfig_palette();  
-}
-
-void
-win_reset_palette(void)
-{
-  memcpy(colours, ansi_colours, sizeof ansi_colours);
-  win_reconfig_palette();
- /* Default Background may have changed. Ensure any space between
-  * text area and window border is redrawn. */
-  InvalidateRect(wnd, null, true);
 }
 
 void

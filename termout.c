@@ -1,5 +1,5 @@
 // termout.c (part of MinTTY)
-// Copyright 2008 Andy Koppe
+// Copyright 2008-09 Andy Koppe
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -281,7 +281,7 @@ toggle_mode(int mode, int query, int state)
         term.echoing = !state;
         ldisc_send(null, 0, 0);
       when 20: /* LNM: Return sends ... */
-        term.cr_lf_return = state;
+        term.newline_mode = state;
       when 34: /* WYULCURM: Make cursor BIG */
         compatibility2(OTHER, VT220);
         term.big_cursor = !state;
@@ -409,7 +409,6 @@ out_return(void)
   term.curs.x = 0;
   term.wrapnext = false;
   seen_disp_event();
-  term.paste_hold = 0;
 }
 
 static void
@@ -421,7 +420,6 @@ out_linefeed(void)
     term.curs.y++;
   term.wrapnext = false;
   seen_disp_event();
-  term.paste_hold = 0;
 }
 
 static void
@@ -846,6 +844,8 @@ term_write(const char *data, int len)
           out_linefeed();
         when '\n':   /* LF: Line feed */
           out_linefeed();
+          if (term.newline_mode)
+            out_return();
         when '\t':     /* HT: Character tabulation */
           out_tab();
       }
