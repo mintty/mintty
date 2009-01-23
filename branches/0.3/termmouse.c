@@ -258,7 +258,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
       term.mouse_state = MS_CLICKED;
       return;
     }
-  }  
+  }
   
   bool alt = mods & ALT;
   bool shift_ctrl = mods & (SHIFT | CTRL);
@@ -300,15 +300,24 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
 }
 
 void
-term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
+term_mouse_release(mouse_button b, mod_keys mods, pos p)
 {
   p = box_pos(p);
   if (term.mouse_state == MS_CLICKED) {
     if (term.mouse_mode >= MM_VT200)
       send_mouse_event(0x23, mods, p);
   }
-  else if (term_selecting() && cfg.copy_on_select)
-    term_copy();
+  else if (term_selecting() && term.selected) {
+    if (cfg.copy_on_select)
+      term_copy();
+  }
+  else if (b == MBT_LEFT && term.which_screen == 0) {
+    int diff = (p.y - term.curs.y) * term.cols + (p.x - term.curs.x) + 1;
+    char *code = diff >= 0 ? "\e[C" : "\e[D";
+    for (uint i = abs(diff); i; --i)
+      ldisc_send(code, 3, 1);  
+  }
+
   term.mouse_state = MS_IDLE;
 }
 
@@ -377,7 +386,7 @@ term_mouse_wheel(int lines, mod_keys mods, pos p)
       code[2] = lines < 0 ? '5' : '6';  // PgUp/PgDown
     else
       code[5] = lines < 0 ? 'A' : 'B';  // Arrow up/down
-    for (int i = 0; i < abs(lines); i++)
+    for (uint i = abs(lines); i; --i)
       ldisc_send(code, 6, 1);  
   }
 }
