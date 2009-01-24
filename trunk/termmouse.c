@@ -296,8 +296,6 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     }
     win_capture_mouse();
     win_update();
-    //termline *l = lineptr(p.y);
-    //printf("%i %i %i %i\n", term.disptop, p.y, l->cols, !!(l->lattr & LATTR_WRAPPED));
   }
 }
 
@@ -315,7 +313,8 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
   else if (state != MS_IDLE) {
     if (term.selected && cfg.copy_on_select)
       term_copy();
-    if (term.which_screen != 0 || term.app_cursor_keys || term.editing)
+    if (!cfg.click_moves_cmd_cursor || term.which_screen != 0 ||
+        term.app_cursor_keys || term.editing)
       return;
     if (term.selected)
       p = term.sel_end;
