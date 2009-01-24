@@ -529,17 +529,6 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
 }
 
 /*
- * Check whether the region bounded by the two pointers intersects
- * the scroll region, and de-select the on-screen selection if so.
- */
-void
-term_check_selection(pos from, pos to)
-{
-  if (poslt(from, term.sel_end) && poslt(term.sel_start, to))
-    term_deselect();
-}
-
-/*
  * This function is called before doing _anything_ which affects
  * only part of a line of text. It is used to mark the boundary
  * between two character positions, and it indicates that some sort
@@ -748,7 +737,6 @@ term_erase_lots(int line_only, int from_begin, int to_end)
   }
   if (!from_begin || !to_end)
     term_check_boundary(term.curs.x, term.curs.y);
-  term_check_selection(start, end);
 
  /* Clear screen also forces a full window redraw, just in case. */
   if (start.y == 0 && start.x == 0 && end.y == term.rows)

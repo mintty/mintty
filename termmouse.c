@@ -296,20 +296,55 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     }
     win_capture_mouse();
     win_update();
+    //termline *l = lineptr(p.y);
+    //printf("%i %i %i %i\n", term.disptop, p.y, l->cols, !!(l->lattr & LATTR_WRAPPED));
   }
 }
+
 
 void
 term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
 {
   p = box_pos(p);
-  if (term.mouse_state == MS_CLICKED) {
+  int state = term.mouse_state;
+  term.mouse_state = MS_IDLE;
+  if (state == MS_CLICKED) {
     if (term.mouse_mode >= MM_VT200)
       send_mouse_event(0x23, mods, p);
   }
-  else if (term_selecting() && cfg.copy_on_select)
-    term_copy();
-  term.mouse_state = MS_IDLE;
+  else if (state != MS_IDLE) {
+    if (term.selected && cfg.copy_on_select)
+      term_copy();
+    if (term.which_screen != 0 || term.app_cursor_keys || term.editing)
+      return;
+    if (term.selected)
+      p = term.sel_end;
+    int y = p.y += term.disptop;
+    if (y < 0)
+      return;
+    pos p0 = term.curs;
+    int y0 = p0.y, dy = y - y0;
+    if (dy < 0) {
+      do {
+        if (!(lineptr(y)->lattr & LATTR_WRAPPED))
+          return;
+      } while (++y < y0);
+    }
+    else {
+      while (y-- > y0) {
+        if (!(lineptr(y)->lattr & LATTR_WRAPPED))
+          return;
+      }
+    }
+    static pos last_p;
+    if (state != MS_SEL_CHAR)
+      p0 = last_p;
+    last_p = p;
+    int diff = (p.y - p0.y) * term.cols + (p.x - p0.x);
+    char *code = diff < 0 ? "\e[D" : "\e[C";
+    for (uint i = abs(diff); i; --i)
+      ldisc_send(code, 3, 0);
+  }
 }
 
 static void
@@ -377,7 +412,7 @@ term_mouse_wheel(int lines, mod_keys mods, pos p)
       code[2] = lines < 0 ? '5' : '6';  // PgUp/PgDown
     else
       code[5] = lines < 0 ? 'A' : 'B';  // Arrow up/down
-    for (int i = 0; i < abs(lines); i++)
-      ldisc_send(code, 6, 1);  
+    for (int i = abs(lines); i; i--)
+      ldisc_send(code, 6, 0);  
   }
 }

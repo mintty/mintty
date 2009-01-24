@@ -1,5 +1,5 @@
 name := mintty
-version := 0.3.5
+version := svn
 
 exe := $(name).exe
 dir := $(name)-$(version)
