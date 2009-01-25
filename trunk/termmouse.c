@@ -245,6 +245,16 @@ get_selpoint(const pos p)
   return sp;
 }
 
+static void
+send_key(char *code, uint len, uint count, bool interactive)
+{
+  uint size = len * count;
+  char *buf = malloc(size), *p = buf;
+  do { memcpy(p, code, len); p += len; } while (--count);
+  ldisc_send(buf, size, interactive);
+  free(buf);
+}
+
 void
 term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
 {
@@ -340,9 +350,7 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
       p0 = last_p;
     last_p = p;
     int diff = (p.y - p0.y) * term.cols + (p.x - p0.x);
-    char *code = diff < 0 ? "\e[D" : "\e[C";
-    for (uint i = abs(diff); i; --i)
-      ldisc_send(code, 3, 0);
+    send_key(diff < 0 ? "\e[D" : "\e[C", 3, abs(diff), false);
   }
 }
 
@@ -403,7 +411,7 @@ term_mouse_wheel(int lines, mod_keys mods, pos p)
     for (int i = 0; i < abs(lines); i++)
       send_mouse_event(code, mods, p);
   }
-  else {
+  else if (!term.editing) {
     // Send as cursor keys with scroll modifier.
     char code[6] = "\e[1;1~";
     code[4] = '1' + cfg.scroll_mod;
@@ -411,7 +419,6 @@ term_mouse_wheel(int lines, mod_keys mods, pos p)
       code[2] = lines < 0 ? '5' : '6';  // PgUp/PgDown
     else
       code[5] = lines < 0 ? 'A' : 'B';  // Arrow up/down
-    for (int i = abs(lines); i; i--)
-      ldisc_send(code, 6, 0);  
+    send_key(code, 6, abs(lines), true);
   }
 }
