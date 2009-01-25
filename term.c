@@ -285,7 +285,7 @@ term_resize(int newrows, int newcols)
   if (newcols < 1)
     newcols = 1;
 
-  term_deselect();
+  term.selected = false;
   term_swap_screen(0, false, false);
 
   term.alt_t = term.marg_t = 0;
@@ -1509,7 +1509,10 @@ term_select_all(void)
 void
 term_deselect(void)
 {
-  term.selected = false;
+  if (term.selected) {
+    term.selected = false;
+    win_update();
+  }
 }
 
 void

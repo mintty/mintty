@@ -194,7 +194,7 @@ toggle_mode(int mode, int query, int state)
       when 2:  /* DECANM: VT52 mode */
         // IGNORE
       when 3:  /* DECCOLM: 80/132 columns */
-        term_deselect();
+        term.selected = false;
         win_resize(term.rows, state ? 132 : 80);
         term.reset_132 = state;
         term.alt_t = term.marg_t = 0;
@@ -237,7 +237,7 @@ toggle_mode(int mode, int query, int state)
         seen_disp_event();
       when 47: /* alternate screen */
         compatibility(OTHER);
-        term_deselect();
+        term.selected = false;
         term_swap_screen(state, false, false);
         term.disptop = 0;
       when 1000: /* VT200_MOUSE */
@@ -251,7 +251,7 @@ toggle_mode(int mode, int query, int state)
         win_update_mouse();
       when 1047:       /* alternate screen */
         compatibility(OTHER);
-        term_deselect();
+        term.selected = false;
         term_swap_screen(state, true, true);
         term.disptop = 0;
       when 1048:       /* save/restore cursor */
@@ -264,7 +264,7 @@ toggle_mode(int mode, int query, int state)
         if (!state)
           seen_disp_event();
         compatibility(OTHER);
-        term_deselect();
+        term.selected = false;
         term_swap_screen(state, true, false);
         if (!state)
           save_cursor(state);
@@ -1296,7 +1296,7 @@ term_write(const char *data, int len)
                     (arg0 < 1 || arg0 >= 24)) {
                   compatibility(VT340TEXT);
                   win_resize((arg0 ?: 24), term.cols);
-                  term_deselect();
+                  term.selected = false;
                 }
                 else if (term.esc_nargs >= 1 && arg0 >= 1 &&
                          arg0 < 24) {
@@ -1385,7 +1385,7 @@ term_write(const char *data, int len)
                 compatibility(VT420);
                 if (term.esc_nargs == 1 && arg0 > 0) {
                   win_resize(arg0 ?: term.cfg.rows, term.cols);
-                  term_deselect();
+                  term.selected = false;
                 }
               when ANSI('|', '$'):     /* DECSCPP */
                /*
@@ -1396,7 +1396,7 @@ term_write(const char *data, int len)
                 compatibility(VT340TEXT);
                 if (term.esc_nargs <= 1) {
                   win_resize(term.rows, arg0 ?: term.cfg.cols);
-                  term_deselect();
+                  term.selected = false;
                 }
               when 'X': {      /* ECH: write N spaces w/o moving cursor */
                /* XXX VTTEST says this is vt220, vt510 manual
