@@ -350,7 +350,8 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
       p0 = last_p;
     last_p = p;
     int diff = (p.y - p0.y) * term.cols + (p.x - p0.x);
-    send_key(diff < 0 ? "\e[D" : "\e[C", 3, abs(diff), false);
+    if (diff)
+      send_key(diff < 0 ? "\e[D" : "\e[C", 3, abs(diff), false);
   }
 }
 
