@@ -209,7 +209,7 @@ static void
 send_mouse_event(char code, mod_keys mods, pos p)
 {
   char buf[6] = "\e[M";
-  buf[3] = code | mods;
+  buf[3] = code | mods << 2;
   buf[4] = p.x + 33;
   buf[5] = p.y + 33;
   ldisc_send(buf, 6, 0);
