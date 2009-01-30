@@ -180,14 +180,10 @@ win_mouse_move(bool nc, LPARAM lp)
 void
 win_mouse_wheel(WPARAM wp, LPARAM lp)      
 {
-  uint lines_per_notch;
+  int delta = -GET_WHEEL_DELTA_WPARAM(wp);
+  int lines_per_notch;
   SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &lines_per_notch, 0);
-  static int delta = 0;
-  delta -= GET_WHEEL_DELTA_WPARAM(wp) * lines_per_notch;
-  int lines = delta / WHEEL_DELTA;
-  delta -= lines * WHEEL_DELTA;
-  if (lines)
-    term_mouse_wheel(lines, get_mods(), get_mouse_pos(lp));
+  term_mouse_wheel(delta, lines_per_notch, get_mods(), get_mouse_pos(lp));
 }
 
 
