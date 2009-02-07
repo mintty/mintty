@@ -786,9 +786,8 @@ opts[] = {
   {"pos", required_argument, 0, 'p'},
 };
 
-static const char *
-help =
-  "Usage: %s [OPTION]... [COMMAND [ARGS]...]\n"
+static const char *help =
+  "Usage: %s [OPTION]... [- | COMMAND [ARGS]...]\n"
   "\n"
   "If no command is given, the user's default shell is invoked as a non-login\n"
   "shell. If the command is a single minus sign, the default shell is invoked\n"
