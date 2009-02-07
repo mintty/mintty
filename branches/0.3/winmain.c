@@ -775,7 +775,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
   return DefWindowProc(wnd, message, wp, lp);
 }
 
-static const char short_opts[] = "+hvc:t:";
+static const char short_opts[] = "+hvc:t:p:";
 
 static const struct option
 opts[] = { 
@@ -783,6 +783,7 @@ opts[] = {
   {"version", no_argument, 0, 'v'},
   {"config", required_argument, 0, 'c'},
   {"title", required_argument, 0, 't'},
+  {"pos", required_argument, 0, 'p'},
 };
 
 static const char *
@@ -796,6 +797,7 @@ help =
   "Options:\n"
   "  -c, --config=FILE   Use specified config file (default: ~/.minttyrc)\n"
   "  -t, --title=TITLE   Set window title (default: the invoked command)\n"
+  "  -p, --pos=X,Y       Open window at specified position\n"
   "  -h, --help          Display this help and exit\n"
   "  -v, --version       Print version information and exit\n"
 ;
@@ -804,6 +806,7 @@ int
 main(int argc, char *argv[])
 {
   char *title = 0;
+  int x = CW_USEDEFAULT, y = CW_USEDEFAULT;
 
   int opt;
   while ((opt = getopt_long(argc, argv, short_opts, opts, 0)) != -1) {
@@ -816,6 +819,13 @@ main(int argc, char *argv[])
         return 0;
       when 'c': config_filename = optarg;
       when 't': title = optarg;
+	  when 'p': {
+		int i;
+		if (sscanf(optarg, "%u,%u%n", &x, &y, &i) != 2 || optarg[i]) {
+		  fputs("Syntax error in position argument\n", stderr);
+		  exit(1);
+		}
+	  }
     }
   }
   
@@ -858,7 +868,7 @@ main(int argc, char *argv[])
     if (guess_height > r.bottom - r.top)
       guess_height = r.bottom - r.top;
     uint style = WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0);
-    wnd = CreateWindow(APPNAME, APPNAME, style, CW_USEDEFAULT, CW_USEDEFAULT,
+    wnd = CreateWindow(APPNAME, APPNAME, style, x, y,
                         guess_width, guess_height, null, null, inst, null);
   }
 
