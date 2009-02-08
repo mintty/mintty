@@ -819,8 +819,8 @@ main(int argc, char *argv[])
       when 'c': config_filename = optarg;
       when 't': title = optarg;
 	  when 'p': {
-		int i;
-		if (sscanf(optarg, "%u,%u%n", &x, &y, &i) != 2 || optarg[i]) {
+		char s[2];
+		if (sscanf(optarg, "%i,%i%1s", &x, &y, s) != 2) {
 		  fputs("Syntax error in position argument\n", stderr);
 		  exit(1);
 		}
