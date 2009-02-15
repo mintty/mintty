@@ -1348,13 +1348,13 @@ term_write(const char *data, int len)
                 }
               }
               when 'S':        /* SU: Scroll up */
-                compatibility(SCOANSI);
+                compatibility2(VT340TEXT,SCOANSI);
                 term_do_scroll(term.marg_t, term.marg_b,
                                def_arg0, true);
                 term.wrapnext = false;
                 seen_disp_event();
               when 'T':        /* SD: Scroll down */
-                compatibility(SCOANSI);
+                compatibility2(VT340TEXT,SCOANSI);
                 term_do_scroll(term.marg_t, term.marg_b,
                                -def_arg0, true);
                 term.wrapnext = false;
