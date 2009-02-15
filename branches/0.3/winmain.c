@@ -785,6 +785,7 @@ opts[] = {
   {"pos", required_argument, 0, 'p'},
   {"size", required_argument, 0, 's'},
   {"title", required_argument, 0, 't'},
+  {0, 0, 0, 0}
 };
 
 static const char *help =
@@ -837,6 +838,7 @@ main(int argc, char *argv[])
         size_override = true;
       }
       when 't': title = optarg;
+      default: exit(1);
     }
   }
   
