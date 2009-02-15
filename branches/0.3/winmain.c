@@ -775,15 +775,16 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
   return DefWindowProc(wnd, message, wp, lp);
 }
 
-static const char short_opts[] = "+hvc:t:p:";
+static const char short_opts[] = "+hvc:p:s:t:";
 
 static const struct option
 opts[] = { 
   {"help", no_argument, 0, 'h'},
   {"version", no_argument, 0, 'v'},
   {"config", required_argument, 0, 'c'},
-  {"title", required_argument, 0, 't'},
   {"pos", required_argument, 0, 'p'},
+  {"size", required_argument, 0, 's'},
+  {"title", required_argument, 0, 't'},
 };
 
 static const char *help =
@@ -794,11 +795,12 @@ static const char *help =
   "as a login shell. Otherwise the command is invoked with the given arguments.\n"
   "\n"
   "Options:\n"
-  "  -c, --config=FILE   Use specified config file (default: ~/.minttyrc)\n"
-  "  -t, --title=TITLE   Set window title (default: the invoked command)\n"
-  "  -p, --pos=X,Y       Open window at specified position\n"
-  "  -h, --help          Display this help and exit\n"
-  "  -v, --version       Print version information and exit\n"
+  "  -c, --config=FILE     Use specified config file (default: ~/.minttyrc)\n"
+  "  -p, --pos=X,Y         Open window at specified position\n"
+  "  -s, --size=COLS,ROWS  Set screen size in characters\n"
+  "  -t, --title=TITLE     Set window title (default: the invoked command)\n"
+  "  -h, --help            Display this help and exit\n"
+  "  -v, --version         Print version information and exit\n"
 ;
 
 int
@@ -806,6 +808,8 @@ main(int argc, char *argv[])
 {
   char *title = 0;
   int x = CW_USEDEFAULT, y = CW_USEDEFAULT;
+  bool size_override = false;
+  uint rows = 0, cols = 0;
 
   int opt;
   while ((opt = getopt_long(argc, argv, short_opts, opts, 0)) != -1) {
@@ -817,14 +821,22 @@ main(int argc, char *argv[])
         puts(APPNAME " " APPVER "\n" COPYRIGHT);
         return 0;
       when 'c': config_filename = optarg;
+      when 'p': {
+        char s[2];
+        if (sscanf(optarg, "%i,%i%1s", &x, &y, s) != 2) {
+          fputs("Syntax error in position argument\n", stderr);
+          exit(1);
+        }
+      }
+      when 's': {
+        char s[2];
+        if (sscanf(optarg, "%u,%u%1s", &cols, &rows, s) != 2) {
+          fputs("Syntax error in size argument\n", stderr);
+          exit(1);
+        }
+        size_override = true;
+      }
       when 't': title = optarg;
-	  when 'p': {
-		char s[2];
-		if (sscanf(optarg, "%i,%i%1s", &x, &y, s) != 2) {
-		  fputs("Syntax error in position argument\n", stderr);
-		  exit(1);
-		}
-	  }
     }
   }
   
@@ -832,6 +844,11 @@ main(int argc, char *argv[])
     asprintf(&config_filename, "%s/.minttyrc", getenv("HOME"));
 
   load_config();
+  
+  if (!size_override) {
+    rows = cfg.rows;
+    cols = cfg.cols;
+  }
 
   inst = GetModuleHandle(NULL);
 
@@ -858,8 +875,8 @@ main(int argc, char *argv[])
   * large font rather than a small one...
   */
   {
-    int guess_width = 25 + 20 * cfg.cols;
-    int guess_height = 28 + 20 * cfg.rows;
+    int guess_width = 25 + 20 * cols;
+    int guess_height = 28 + 20 * rows;
     RECT r;
     get_fullscreen_rect(&r);
     if (guess_width > r.right - r.left)
@@ -881,7 +898,7 @@ main(int argc, char *argv[])
   * timer_change_cb() which will expect wnd to exist.)
   */
   term_init();
-  term_resize(cfg.rows, cfg.cols);
+  term_resize(rows, cols);
   ldisc_init();
   
  /*
