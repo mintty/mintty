@@ -838,7 +838,7 @@ main(int argc, char *argv[])
         size_override = true;
       }
       when 't': title = optarg;
-      default: exit(1);
+      otherwise: exit(1);
     }
   }
   
