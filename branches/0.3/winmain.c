@@ -789,7 +789,7 @@ opts[] = {
 };
 
 static const char *help =
-  "Usage: %s [OPTION]... [- | COMMAND [ARGS]...]\n"
+  "Usage: %s [OPTION]... [ - | COMMAND [ARG]... ]\n"
   "\n"
   "If no command is given, the user's default shell is invoked as a non-login\n"
   "shell. If the command is a single minus sign, the default shell is invoked\n"
@@ -800,8 +800,8 @@ static const char *help =
   "  -p, --pos=X,Y         Open window at specified position\n"
   "  -s, --size=COLS,ROWS  Set screen size in characters\n"
   "  -t, --title=TITLE     Set window title (default: the invoked command)\n"
-  "  -h, --help            Display this help and exit\n"
   "  -v, --version         Print version information and exit\n"
+  "  -h, --help            Display this help message and exit\n"
 ;
 
 int
