@@ -318,7 +318,7 @@ win_key_down(WPARAM wParam, LPARAM lParam)
       when VK_BACK:
         ctrl 
         ? (esc(shift), ctrl_ch('_')) 
-        : ch(cfg.backspace_sends_del ? 0x7F : '\b');
+        : ch(cfg.backspace_sends_del ^ shift ? 0x7F : '\b');
       otherwise: goto not_grey;
     }
     goto send;
