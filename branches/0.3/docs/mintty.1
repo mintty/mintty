@@ -669,26 +669,127 @@ a time.
 
 .SH TIPS
 
-Here are a few tips on how to use MinTTY features with other programs.
+A few tips on MinTTY use.
+
+
+.SS Shortcuts
+
+The mintty Cygwin package installs a shortcut in the Windows start menu
+under \fIAll Programs/Cygwin\fR.
+It starts mintty with a '-' as its only argument, which tells it to invoke
+the user's default shell as a login shell.
+
+Shortcuts are also a convenient way to start MinTTY with additional options
+and different commands.
+For example, shortcuts for access to remote machines can be created by
+invoking \fIssh\fR. 
+The command simply needs to be appended to the target field of the shortcut:
+
+.RS
+Target:  C:\\Cygwin\\bin\\mintty.exe ssh server
+.RE
+
+The working directory for the session can be set in the "Start In:" field.
+(But note that the bash login profile cd's to the user's home directory.)
+
+Another convenient feature of shortcuts is the ability to assign a global
+shortcut keys, which allow MinTTY to be invoked easily without using
+to the mouse.
+
+
+.SS Global variables
+
+The standard Cygwin console that is based on the Windows Command Prompt
+is invoked from the script \fICygwin.bat\fR, which may include settings
+of environment variables, in particular \fIPATH\fR and \fICYGWIN\fR. 
+(See http://www.cygwin.com/cygwin-ug-net/using-cygwinenv.html on how to
+configure Cygwin using the \fICYGWIN\fR variable.)
+
+Unfortunately Windows shortcuts do not allow the setting of environment
+variables, but variables can be set globally in Windows via a button on the
+\fBAdvanced\fR tab of the \fBSystem Properties\fR.
+Alternatively, global variables can be set using the \fIsetx\fR command
+line utility, which comes pre-installed with some versions of Windows
+but is also available as part of the free (as in beer) Windows 2003
+Resource Kit Tools.
+
 
 .SS Starting mintty from a batch file
 
-.SS Global CYGWIN variable
+Of course MinTTY can also be started from a batch file.
+It needs to be invoked through the \fIstart\fR command though, so as to 
+avoid the batch file's console window staying open while MinTTY is running.
+For example:
 
-.SS Windows shortcuts
-
-parameters
-
-start in directory
-
-keyboard shortcut
-
-mention use for remote access with ssh
+.RS
+start mintty -
+.RE
 
 
-.SS Bash and readline
+.SS Terminal line settings
 
-TODO: .inputrc
+
+.SS Readline configuration
+
+Keyboard input for the \fBbash\fR shell and other program that use the
+\fBreadline\fR library can be be configured through the so-called
+\fIinputrc\fR file. Unless overridden by setting the \fIINPUTRC\fR variable,
+this is located at \fI~/.inputrc\fR.
+
+It consists of bindings of keycodes to readline commands.
+Comments start with a hash character.
+The file format is explained fully in the bash manual.
+
+The default inputrc configuration does not support the \fBHome\fR and
+\fBEnd\fR keys.
+These two lines fix this:
+
+.RS
+.nf
+\fC
+"\e[1~": beginning-of-line
+"\e[4~": end-of-line
+\fR
+.fi
+.RE
+
+Anyone used to Windows key combinations for editing text might find the
+following bindings useful:
+
+.RS
+.nf
+\fC
+# Ctrl+Left/Right to move by whole words
+"\\e[1;5D": backward-word
+"\\e[1;5C": forward-word
+
+# Ctrl+Backspace/Delete to delete whole words
+"\\d": backward-kill-word
+"\\e[3;5~": kill-word
+
+# Ctrl+Shift+Backspace/Delete to delete to start/end of the line
+"\\e\\d": backward-kill-line
+"\\e[3;6~": kill-line
+
+# Alt-Backspace for undo
+"\\e\\b": undo
+\fR
+.fi
+.RE
+
+Finally, a couple of bindings for convenient searching of the command history.
+Just enter the first few characters of a previous command and press
+\fBCtrl-Up\fR to look it up.
+
+.RS
+.nf
+\fC
+# Ctrl-Up/Down for searching command history
+"\\e[1;5A": history-search-backward
+"\\e[1;5B": history-search-forward
+\fR
+.fi
+.RE
 
 
 .SS Less
@@ -697,7 +798,6 @@ TODO: .lesskey
 
 
 .SH LIMITATIONS
-
 .SS Console Issue
 
 MinTTY is not a full replacement for the \fBCygwin\fR console
