@@ -620,8 +620,8 @@ the VT220 terminal.
 .RS
 .TS
 tab(#) nospaces;
-LI  s     LB
-LB  L     L.
+LI  s      LB
+LB  L      L.
 Key       #modified
 F1 #^[OP  #^[[1;\fIm\fRP
 F2 #^[OQ  #^[[1;\fIm\fRQ
@@ -683,10 +683,11 @@ Shortcuts are also a convenient way to start MinTTY with additional options
 and different commands.
 For example, shortcuts for access to remote machines can be created by
 invoking \fIssh\fR. 
-The command simply needs to be appended to the target field of the shortcut:
+The command simply needs to be appended to the target field of the shortcut
+(in the shortcut's properties):
 
 .RS
-Target:  C:\\Cygwin\\bin\\mintty.exe ssh server
+Target:  C:\\Cygwin\\bin\\mintty.exe \fBssh server\fR
 .RE
 
 The working directory for the session can be set in the "Start In:" field.
@@ -727,6 +728,52 @@ start mintty -
 
 
 .SS Terminal line settings
+
+Terminal line settings can be viewed or changed with the \fBstty\fR utility,
+which is installed as part of Cygwin's core utilities package.
+Among other things, it can set the control characters used for generating
+signals or editing an input line.
+
+See the \fBstty\fR man page for all the details, but here are a few examples.
+The commands can be included in shell startup files to make them permanent.
+
+To change the key for deleting a whole word from \fBCtrl+W\fR to
+\fBCtrl+Backspace\fR (assuming the \fBBackspace\fR keycode is set to \fB^H\fR):
+
+.RS
+.nf
+\fC
+stty werase '^?'
+\fR
+.fi
+.RE
+
+To use \fBCtrl+Enter\fR instead of \fBCtrl+D\fR for end of file:
+
+.RS
+.nf
+\fC
+stty eof '^^'
+\fR
+.fi
+.RE
+
+To use \fBPause\fR and \fBBreak\fR instead of \fBCtrl+Z\fR and \fBCtrl+C\fR for
+suspending or interrupting a process, and to also disable the
+stackdump-producing SIGQUIT:
+
+.RS
+.nf
+\fC
+stty susp '^]' swtch '^]' intr '^\' quit '^-'
+\fR
+.fi
+.RE
+
+With these settings, the \fBEsc\fR key can also be used to interrupt
+processes by setting the \fBEsc\fR keycode to \fB^\\\fR.
+The standard escape character \fB^[\fR cannot be used for that purpose
+because it appears as the first character in many other keycodes.
 
 
 .SS Readline configuration
@@ -798,6 +845,7 @@ TODO: .lesskey
 
 
 .SH LIMITATIONS
+
 .SS Console Issue
 
 MinTTY is not a full replacement for the \fBCygwin\fR console
