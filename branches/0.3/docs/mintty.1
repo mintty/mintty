@@ -5,15 +5,12 @@
 .\" You may distribute, use, and modify this man page under the terms
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
-
 .\" Turn off Right Justification
 .na
 .ad l
 .\" Turn off Hyphenation
 .nh
-
-.TH mintty 1 2009-03-01 0.3.6 Cygwin
-
+.TH mintty 1 2009-03-10 0.3.6 Cygwin
 
 .SH NAME
 
@@ -27,8 +24,8 @@ mintty - Cygwin terminal emulator
 
 .SH DESCRIPTION
 
-\fBMinTTY\fR is a terminal emulator (aka command line window) for Cygwin with
-a native Windows user interface and minimalist design.
+\fBMinTTY\fR is a command line window for Cygwin with a native Windows user
+interface and minimalist design.
 Its terminal emulation is largely compatible with \fBxterm\fR, but it does not
 require an X server to be running.
 
@@ -42,7 +39,7 @@ Otherwise, it is invoked as a non-login shell.
 
 .SH OPTIONS
 
-MinTTY understands the standard GNU option formats, with single dashes
+MinTTY accepts the standard GNU option formats, with single dashes
 introducing short options and double dashes introducing long options,
 e.g. \fB-o arg\fR, \fB--option arg\fR, and \fB--option=arg\fR.
 
@@ -112,13 +109,13 @@ that support it, e.g. word processors.
 
 The clipboard contents can be pasted using either the \fBPaste\fR menu command,
 the \fBCtrl+Insert\fR keyboard shortcut, or the middle mouse button.
-Not only text but also files and directories can be pasted into MinTTY,
+Not only text but also files and directories can be pasted,
 whereby the latter are inserted as quoted filenames.
 
 
 .SS Drag & drop
 
-Text, files and directories can be also be dragged and dropped into the
+Text, files and directories can also be dragged and dropped into the
 MinTTY window.
 
 
@@ -165,26 +162,34 @@ xterm-compatible control sequences.
 Most MinTTY settings are chosen not through command line arguments but in its
 graphical \fIOptions\fR dialog, which can be reached via the context menu or
 the window menu.
-Settings are stored as in a configuration file, which by
-default is located at \fI~/.minttyrc\fR.
-It can be overridden with the \fB--config\fR command line option.
+Settings are stored in a configuration file that by default is located
+at \fI~/.minttyrc\fR.
+The file's location can be overridden with the \fB--config\fR command line
+option.
 Settings are written to the file whenever the \fBOK\fR button is pressed in
 the options dialog.
+
+The following sections explain the settings on each pane of the options
+dialog.
+For each setting, its name in the config file is shown with its default
+value, e.g. Columns=80. For multiple-choice settings, the value 
+representing each choice in the config file is shown.
+
 
 .SS Window
 Window properties.
 
 .TP
 \fBColumns\fR (Columns=80)
-Width of the window in character columns.
+Width of the window in character cells.
 
 .TP
 \fBRows\fR (Rows=24)
-Height of the window in character rows.
+Height of the window in character cells.
 
 .TP
 \fBTransparency\fR (Transparency=0)
-Set window transparency level to one of the following choices:
+Window transparency level, with the following choices:
 
 .RS
 .PD 0
@@ -206,17 +211,17 @@ window.
 
 .TP
 \fBClose on Alt-F4\fR (CloseOnAltF4=1)
-Close the window when Alt-F4 is pressed, otherwise send the corresponding
-keycode to the terminal application.
+If enabled, close the window when \fBAlt-F4\fR is pressed, otherwise send the
+appropriate keycode to the terminal application.
 
 
 .SS Looks
 Settings for changing MinTTY's appearance.
 
 .TP
-\fBColours
+\fBColours\fR
 Clicking on one of the buttons here opens the colour selection dialog.
-In the config file colours are represented as comma-separated RGB triples
+In the config file, colours are represented as comma-separated RGB triples
 with decimal 8-bit values (i.e. ranging from 0 to 255).
 
 .RS
@@ -257,7 +262,7 @@ panel.
 Settings controlling text display.
 
 .TP
-\fBSelect...
+\fBSelect...\fR
 Clicking on this button opens the font dialog, where the font and its
 properties can be chosen.
 In the config file, this corresponds to the following entries:
@@ -266,7 +271,7 @@ In the config file, this corresponds to the following entries:
 .PD 0
 .IP "\- \fBFont\fR (Font=Lucida Console)"
 .IP "\- \fBSize\fR (FontHeight=10)"
-.IP "\- \fBStyle\fR (FontIsBold=Lucida Console)"
+.IP "\- \fBStyle\fR (FontIsBold=0)"
 .IP "\- \fBScript\fR (FontCharset=0)"
 .RE
 
@@ -294,8 +299,8 @@ Settings controlling keyboard behaviour.
 \fBBackspace keycode\fR (BackspaceSendsDEL=0)
 The character to be sent by the backspace key.
 The default is \fB^H\fR, because that is the default across Cygwin,
-but ^? (DEL) can be used instead to free up Ctrl-H for other purposes,
-e.g. as the help key in Emacs.
+but \fB^?\fR (DEL) can be used instead to free up Ctrl+H for other
+purposes, e.g. as the help key in Emacs.
 
 .RS
 .PD 0
@@ -309,7 +314,7 @@ The character to be sent by the escape key.
 The default is the standard escape character \fB^[\fR, but the character
 \fB^\(rs\fR can be used instead, thereby allowing the escape key to be used as
 one of the special keys in the terminal line settings (see stty(1)).
-For example, the escape key can be used instead of Ctrl-C for interrupting
+For example, the escape key can be used instead of Ctrl+C for interrupting
 processes, which is impractical with \fB^[\fR, as that is used as the first
 character in many multi-character keycodes.
 
@@ -334,8 +339,8 @@ or page up/down keys to scroll the scrollback buffer.
 .RS
 .PD 0
 .IP "\- \fBShift\fR (1)"
-.IP "\- \fBCtrl\fR (4)"
 .IP "\- \fBAlt\fR (2)"
+.IP "\- \fBCtrl\fR (4)"
 .RE
 
 .SS Mouse
@@ -347,9 +352,9 @@ Action to take when clicking the right mouse button.
 
 .RS
 .PD 0
-.IP "\- \fBShow menu\fR (0): Display the context menu
-.IP "\- \fBExtend\fR (1): Extend selected region
-.IP "\- \fBPaste\fR (2): Paste clipboard contents
+.IP "\- \fBShow menu\fR (0): Display the context menu.
+.IP "\- \fBExtend\fR (1): Extend the selected region.
+.IP "\- \fBPaste\fR (2): Paste the clipboard contents.
 .RE
 
 .TP
@@ -357,7 +362,7 @@ Action to take when clicking the right mouse button.
 If enabled, the region selected with the mouse is copied to the clipboard as
 soon as the mouse button is released, thus emulating X Window behaviour.
 Otherwise, the selected region has to be copied explicitly using the context
-menu or the Ctrl-Insert key combination.
+menu or the Ctrl+Insert key combination.
 
 .TP
 \fBDefault click target\fR (ClickTargetsApp=1)
@@ -368,8 +373,8 @@ or to the window for the usual actions: select, extend, paste, show menu.
 
 .RS
 .PD 0
-.IP "\- \fBApplication\fR (1)
 .IP "\- \fBWindow\fR (0)
+.IP "\- \fBApplication\fR (1)
 .RE
 
 .TP
@@ -383,21 +388,23 @@ instead.
 .RS
 .PD 0
 .IP "\- \fBShift\fR (1)"
-.IP "\- \fBCtrl\fR (4)"
 .IP "\- \fBAlt\fR (2)"
+.IP "\- \fBCtrl\fR (4)"
+
 .RE
 
 .SS Output
-Setting for output devices other than the terminal screen.
+Settings for output devices other than the terminal screen.
 
 .TP
 \fBPrinter\fR (Printer=)
 The ANSI standard defines control sequences for sending text to a printer,
 which are used by some terminal applications such as the mail reader pine.
 The Windows printer to send such text to can be selected here.
+By default, printing is disabled.
 
 .TP
-\fBBell action (BellType=1)
+\fBBell action\fR (BellType=1)
 The action to take when the application sends the bell character \fB^G\fR.
 
 .RS
@@ -426,7 +433,7 @@ Microsoft's \fBKeyboard Layout Creator\fR (MSKLC), available from
 \fIhttp://www.microsoft.com/Globaldev/tools/msklc.mspx\fR,
 can be used to create custom keyboard layouts.
 
-For the other keys, MinTTY sends xterm keycodes as described at
+For other keys, MinTTY sends xterm keycodes as described at
 \fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.html\fR, with a few
 minor changes and additions.
 
@@ -436,19 +443,18 @@ See \fIhttp://en.wikipedia.org/wiki/Caret_notation\fR for an explanation.
 
 .SS Letter keys
 
-If the Windows keyboard layout does not produce for a letter key press and the
-\fBCtrl\fR key is down, MinTTY sends a control character.
-This corresponds to the key's "virtual keycode", i.e. \fBVK_A\fR
-sends \fB^A\fR, \fBVK_B\fR sends \fB^B\fR, and so on.
-For keyboards with Latin scripts the virtual keycodes correspond directly
-to the keys' labels, whereas for others, the virtual keys are usually laid
-out the same as on the US keyboard.
+If the Windows keyboard layout does not have a keycode for a letter key press
+and the \fBCtrl\fR key is down, MinTTY sends a control character.
+The character sent corresponds to the key's "virtual keycode".
+For keyboards with Latin scripts the virtual keycodes reflect the keys' labels,
+whereas for others, the virtual keys are usually laid out the same as on the US
+keyboard.
 
 .RS
 .TS
 tab(#) nospaces;
 LI    LB    LB
-LB    L     L.
+LB    LfC   LfC.
 Key  #Ctrl #Ctrl+Shift/Alt
 A    #^A   #^[^A
 B    #^B   #^[^B
@@ -469,12 +475,12 @@ pad keys.
 As usual on Windows, when \fBNumLock\fR is off, the number pad keys are treated
 as arrow and editing keys, and when it is on, they are treated as number and
 symbol keys.
-Application keypad codes can still be sent though, by holding down \fBCtrl\fI 
+Application keypad codes can still be sent though, by holding down \fBCtrl\fR 
 while \fBNumLock\fR is on.
 
 Furthermore, the number keys as well as the comma,
 period, plus and minus keys on the main part of the keyboard also send
-application keypad codes when pressed simultaneously with\fBCtrl\fR.
+application keypad codes when pressed simultaneously with \fBCtrl\fR.
 This makes those keycodes more accessible to laptop users and more useful
 as application shortcuts.
 
@@ -485,7 +491,7 @@ well as \fBCtrl\fR.
 .TS
 tab(#) nospaces;
 LI  LB   LB
-LB  L    L.
+LB  LfC  LfC.
 Key#Ctrl#Ctrl+Shift/Alt
 *  #^[Oj#^[[j
 +  #^[Ok#^[[k
@@ -500,10 +506,10 @@ Key#Ctrl#Ctrl+Shift/Alt
 .TE
 .RE
 
-Some of the symbol keys send control characters
-when pressed together with \fBCtrl\fR. These are the characters between
-\fB^Z\fR (ASCII 26) and space (32). Their positions on the keyboard
-hard-coded based on the US keyboard layout.
+Some of the symbol keys send control characters when pressed together with
+\fBCtrl\fR.
+These are the characters between \fB^Z\fR (ASCII 26) and space (32).
+Their positions on the keyboard are hard-coded based on the US keyboard layout.
 
 .RS
 .TS
@@ -839,10 +845,32 @@ Just enter the first few characters of a previous command and press
 .RE
 
 
-.SS Less
+.SS Mousewheel scrolling for less
 
-TODO: .lesskey
+No, this is not some sort of special offer, but a guide on how to enable
+mousewheel scrolling in the pager program \fBless\fR.
+Key bindings for \fBless\fR can be specified in the text file \fI~/.lesskey\fR.
 
+Beware though, before such bindings can be used, they have be translated into,
+the binary file \fI~/.less\fR using the \fBlesskey\fR tool.
+(That probably saves about 0.0042 seconds when starting \fBless\fR).
+See \fBlesskey\fR(1) for details.
+
+Here are the lesskey lines needed for mousewheel support, assuming the
+default \fIShift\fR is the scroll modifier key.
+For \fBAlt\fR or \fBCtrl\fR, replace the \fB2\fRs in the keycodes with
+\fB3\fRs or \fB5\fRs, respectively.
+
+.RS
+.nf
+\fC
+\\e[1;2A back-line
+\\e[1;2B forw-line
+\\e[5;2B back-screen
+\\e[6;2B forw-screen
+\fR
+.fi
+.RE
 
 .SH LIMITATIONS
 
@@ -873,6 +901,14 @@ with a number of MinTTY-specific extensions).
 Neither Tektronix 4014 emulation nor mouse highlighting mode are supported.
 
 
+.SH SEE ALSO
+
+bash
+stty
+lesskey
+
+
+
 .SH ACKNOWLEDGEMENTS
 
 MinTTY is based on PuTTY version 0.60 by Simon Tatham and contributors,
@@ -880,9 +916,14 @@ so big thanks to everyone involved.
 Thanks also to KDE's Oxygen team for the program icon.
 
 
-.SH LICENSE
+.SH COPYRIGHT
 
-TODO
+Copyright (C) 2008-09 Andy Koppe.
+
+MinTTY is released under the terms of the the \fIGNU General Public License\fR
+version 3 or later.
+See \fIhttp://gnu.org/licenses/gpl/html\fR for the license text. 
+There is NO WARRANTY, to the extent permitted by law.
 
 
 .SH CONTACT
