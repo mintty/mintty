@@ -15,31 +15,6 @@
 #define ANSI(x,y)	((x)+((y)<<8))
 #define ANSI_QUE(x)	ANSI(x,true)
 
-enum {
-  CL_ANSIMIN   = 0x0001, /* Codes in all ANSI like terminals. */
-  CL_VT100     = 0x0002, /* VT100 */
-  CL_VT100AVO  = 0x0004, /* VT100 +AVO; 132x24 (not 132x14) & attrs */
-  CL_VT102     = 0x0008, /* VT102 */
-  CL_VT220     = 0x0010, /* VT220 */
-  CL_VT320     = 0x0020, /* VT320 */
-  CL_VT420     = 0x0040, /* VT420 */
-  CL_VT510     = 0x0080, /* VT510, NB VT510 includes ANSI */
-  CL_VT340TEXT = 0x0100, /* VT340 extensions that appear in the VT420 */
-  CL_SCOANSI   = 0x1000, /* SCOANSI not in ANSIMIN. */
-  CL_ANSI      = 0x2000, /* ANSI ECMA-48 not in the VT100..VT420 */
-  CL_OTHER     = 0x4000, /* Others, Xterm, linux, putty, dunno, etc */
-};
-
-enum {
-  TM_VT100    = CL_ANSIMIN | CL_VT100,
-  TM_VT100AVO = TM_VT100 | CL_VT100AVO,
-  TM_VT102    = TM_VT100AVO | CL_VT102,
-  TM_VT220    = TM_VT102 | CL_VT220,
-  TM_VTXXX    = TM_VT220 | CL_VT340TEXT | CL_VT510 | CL_VT420 | CL_VT320,
-  TM_SCOANSI  = CL_ANSIMIN | CL_SCOANSI,
-  TM_PUTTY    = 0xFFFF,
-};
-
 #define compatibility(x) \
     if ( ((CL_##x)&term.compatibility_level) == 0 ) { \
        term.state=TOPLEVEL; \
@@ -160,6 +135,7 @@ insch(int n)
   m = term.cols - term.curs.x - n;
   cursplus.y = term.curs.y;
   cursplus.x = term.curs.x + n;
+  term_check_selection(term.curs, cursplus);
   term_check_boundary(term.curs.x, term.curs.y);
   if (dir < 0)
     term_check_boundary(term.curs.x + n, term.curs.y);
@@ -194,7 +170,7 @@ toggle_mode(int mode, int query, int state)
       when 2:  /* DECANM: VT52 mode */
         // IGNORE
       when 3:  /* DECCOLM: 80/132 columns */
-        term.selected = false;
+        term_deselect();
         win_resize(term.rows, state ? 132 : 80);
         term.reset_132 = state;
         term.alt_t = term.marg_t = 0;
@@ -237,7 +213,7 @@ toggle_mode(int mode, int query, int state)
         seen_disp_event();
       when 47: /* alternate screen */
         compatibility(OTHER);
-        term.selected = false;
+        term_deselect();
         term_swap_screen(state, false, false);
         term.disptop = 0;
       when 1000: /* VT200_MOUSE */
@@ -251,7 +227,7 @@ toggle_mode(int mode, int query, int state)
         win_update_mouse();
       when 1047:       /* alternate screen */
         compatibility(OTHER);
-        term.selected = false;
+        term_deselect();
         term_swap_screen(state, true, true);
         term.disptop = 0;
       when 1048:       /* save/restore cursor */
@@ -264,7 +240,7 @@ toggle_mode(int mode, int query, int state)
         if (!state)
           seen_disp_event();
         compatibility(OTHER);
-        term.selected = false;
+        term_deselect();
         term_swap_screen(state, true, false);
         if (!state)
           save_cursor(state);
@@ -383,6 +359,7 @@ out_backspace(void)
 static void
 out_tab(void)
 {
+  pos old_curs = term.curs;
   termline *ldata = scrlineptr(term.curs.y);
   do {
     term.curs.x++;
@@ -397,6 +374,7 @@ out_tab(void)
       term.curs.x = term.cols - 1;
   }
   
+  term_check_selection(old_curs, term.curs);
   seen_disp_event();
 }
 
@@ -462,6 +440,11 @@ out_char(wchar c)
   }
   if (term.insert && width > 0)
     insch(width);
+  if (term.selected) {
+    pos cursplus = term.curs;
+    incpos(cursplus);
+    term_check_selection(term.curs, cursplus);
+  }
   switch (width) {
     when 1:  // Normal character.
       term_check_boundary(term.curs.x, term.curs.y);
@@ -556,6 +539,7 @@ out_align_pattern(void)
   scrtop.x = scrtop.y = 0;
   scrbot.x = 0;
   scrbot.y = term.rows;
+  term_check_selection(scrtop, scrbot);
 }
 
 void
@@ -1296,7 +1280,7 @@ term_write(const char *data, int len)
                     (arg0 < 1 || arg0 >= 24)) {
                   compatibility(VT340TEXT);
                   win_resize((arg0 ?: 24), term.cols);
-                  term.selected = false;
+                  term_deselect();
                 }
                 else if (term.esc_nargs >= 1 && arg0 >= 1 &&
                          arg0 < 24) {
@@ -1364,13 +1348,13 @@ term_write(const char *data, int len)
                 }
               }
               when 'S':        /* SU: Scroll up */
-                compatibility(SCOANSI);
+                compatibility2(VT340TEXT,SCOANSI);
                 term_do_scroll(term.marg_t, term.marg_b,
                                def_arg0, true);
                 term.wrapnext = false;
                 seen_disp_event();
               when 'T':        /* SD: Scroll down */
-                compatibility(SCOANSI);
+                compatibility2(VT340TEXT,SCOANSI);
                 term_do_scroll(term.marg_t, term.marg_b,
                                -def_arg0, true);
                 term.wrapnext = false;
@@ -1385,7 +1369,7 @@ term_write(const char *data, int len)
                 compatibility(VT420);
                 if (term.esc_nargs == 1 && arg0 > 0) {
                   win_resize(arg0 ?: term.cfg.rows, term.cols);
-                  term.selected = false;
+                  term_deselect();
                 }
               when ANSI('|', '$'):     /* DECSCPP */
                /*
@@ -1396,7 +1380,7 @@ term_write(const char *data, int len)
                 compatibility(VT340TEXT);
                 if (term.esc_nargs <= 1) {
                   win_resize(term.rows, arg0 ?: term.cfg.cols);
-                  term.selected = false;
+                  term_deselect();
                 }
               when 'X': {      /* ECH: write N spaces w/o moving cursor */
                /* XXX VTTEST says this is vt220, vt510 manual
@@ -1413,6 +1397,7 @@ term_write(const char *data, int len)
                 cursplus.x += n;
                 term_check_boundary(term.curs.x, term.curs.y);
                 term_check_boundary(term.curs.x + n, term.curs.y);
+                term_check_selection(term.curs, cursplus);
                 while (n--)
                   copy_termchar(cline, p++, &term.erase_char);
                 seen_disp_event();
@@ -1428,12 +1413,14 @@ term_write(const char *data, int len)
               }
               when 'Z': {       /* CBT */
                 compatibility(OTHER);
+                pos old_curs = term.curs;
                 int i = def_arg0; 
                 while (--i >= 0 && term.curs.x > 0) {
                   do {
                     term.curs.x--;
                   } while (term.curs.x > 0 && !term.tabs[term.curs.x]);
                 }
+                term_check_selection(old_curs, term.curs);
               }
               when ANSI('c', '='):     /* Hide or Show Cursor */
                 compatibility(SCOANSI);
@@ -1648,13 +1635,11 @@ term_write(const char *data, int len)
           break;
       }
     }
-    /*
     if (term.selected) {
       pos cursplus = term.curs;
       incpos(cursplus);
       term_check_selection(term.curs, cursplus);
     }
-    */
   }
   term.in_term_write = false;
   term_print_flush();

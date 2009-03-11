@@ -235,7 +235,7 @@ setup_config_box(controlbox * b)
     I(offcfg(font_quality)),
     "System Default", 'd', I(FQ_DEFAULT),
     "Antialiased", 'a', I(FQ_ANTIALIASED),
-    "Non-Antialiased", 'n', I(FQ_NONANTIALIASED),
+    "None", 'n', I(FQ_NONANTIALIASED),
     "ClearType", 'c', I(FQ_CLEARTYPE),
     null
   );
@@ -296,14 +296,10 @@ setup_config_box(controlbox * b)
     null
   );
   
-  s = ctrl_getset(b, "Mouse", "mouseopts", null);
+  s = ctrl_getset(b, "Mouse", "selectcopy", null);
   ctrl_checkbox(
-    s, "Copy on select", 'y', P(0),
+    s, "Copy on select", 's', P(0),
     dlg_stdcheckbox_handler, I(offcfg(copy_on_select))
-  );
-  ctrl_checkbox(
-    s, "Clicks move command line cursor", 'l', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(click_moves_cmd_cursor))
   );
 
   s = ctrl_getset(b, "Mouse", "mousemode", "Application mouse mode");
@@ -382,7 +378,6 @@ int_settings[] = {
   {"ScrollMod", offcfg(scroll_mod), SHIFT},
   {"RightClickAction", offcfg(right_click_action), RC_SHOWMENU},
   {"CopyOnSelect", offcfg(copy_on_select), false},
-  {"ClickMovesCmdCursor", offcfg(click_moves_cmd_cursor), true},
   {"ClickTargetsApp", offcfg(click_targets_app), true},
   {"ClickTargetMod", offcfg(click_target_mod), SHIFT},
   {"BellType", offcfg(bell_type), BELL_SOUND},

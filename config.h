@@ -44,7 +44,6 @@ typedef struct {
   int click_targets_app;
   int click_target_mod;
   int right_click_action;
-  int click_moves_cmd_cursor;
   int allow_blinking;
   int rows, cols;
   char printer[128];
