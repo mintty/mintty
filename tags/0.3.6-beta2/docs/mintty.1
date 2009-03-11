@@ -1,0 +1,937 @@
+.\" MinTTY man page
+.\"
+.\" This 'man' page is Copyright 2009 (c) Andy Koppe and Lee D. Rothstein
+.\"
+.\" You may distribute, use, and modify this man page under the terms
+.\" of the GNU Free Documentation License (GFDL), Version 1.3,
+.\" 3 November 2008 (or later) as specified.
+.\" Turn off Right Justification
+.ad l
+.TH mintty 1 2009-03-11 0.3.6 Cygwin
+
+.SH NAME
+
+mintty - Cygwin terminal emulator
+
+
+.SH SYNOPSIS
+
+\fBmintty\fP [\fIOPTION\fP]... [ \fB-\fP | \fICOMMAND\fP [\fIARG\fP]... ]
+
+
+.SH DESCRIPTION
+
+\fBMinTTY\fP is a terminal emulator for Cygwin with a native Windows user
+interface and minimalist design.
+Its terminal emulation is largely compatible with \fBxterm\fP, but it does not
+require an X server to be running.
+
+If a command is supplied on the command line, MinTTY executes that with
+any arguments given.
+If a single dash is supplied instead of a command,
+the current user's default shell (as defined in \fI/etc/passwd\fP) is invoked
+as a login shell.
+Otherwise, it is invoked as a non-login shell.
+
+
+.SH OPTIONS
+
+MinTTY accepts the standard GNU option formats, with single dashes
+introducing short options and double dashes introducing long options,
+e.g. \fB-o arg\fP, \fB--option arg\fP, and \fB--option=arg\fP.
+
+.TP
+\fB-c\fP, \fB--config\fP=\fIFILENAME\fP
+Use the specified configuration file instead of the default \fI~/.minttyrc\fP.
+
+.TP
+\fB-p\fP, \fB--pos\fP=\fIX\fB,\fIY\fR
+Open the window with its top left corner at the specified coordinates.
+
+.TP
+\fB-s\fP, \fB--size\fP=\fICOLS\fB,\fIROWS\fR
+Set the number of screen columns and rows, overriding any config file settings.
+
+.TP
+\fB-t\fP, \fB--title\fP=\fITITLE\fP
+Use \fITITLE\fP as the initial window title.
+By default, the title is set to the executed command.
+
+.TP
+\fB-v\fP, \fB--version\fP
+Print version information and exit.
+
+.TP
+\fB-h\fP, \fB--help\fP
+Display a brief help message and exit.
+
+
+.SH USAGE
+
+MinTTY aims to adhere to both Windows and Unix conventions, but where they
+conflict the Windows conventions take precedence, at least in the default
+configuration.
+
+
+.SS Menu
+
+MinTTY's context menu can be opened by right-clicking the mouse or by pressing
+the \fBMenu\fP key that is normally located next to the right Ctrl key.
+
+
+.SS Options dialog
+
+The configuration can be changed in a graphical dialog, which can be opened by
+selecting \fBOptions...\fP in MinTTY's context menu or window menu.
+(The window menu can be opened by clicking on the program icon or
+pressing Alt+Space.)
+
+See the \fBCONFIGURATION\fP section for details.
+
+
+.SS Copy & paste
+
+As usual in Windows, screen contents can be selected by holding
+down the left mouse button and dragging the mouse and he current selection can
+be extended by holding down \fBShift\fP or \fBCtrl\fP while left-clicking.
+Double-clicking or triple-clicking selects a whole word or line.
+
+In the default configuration, selected text has to be explicitly copied
+to the clipboard using either the \fBCopy\fP menu command, the
+\fBCtrl+Insert\fP keyboard shortcut, or the middle mouse button combined
+with \fBShift\fP. (See the \fBCopy on select\fP setting for X-like
+copy behaviour.)
+
+The selected region is copied as "rich text" as well as normal text,
+which means it can be pasted with colours and formatting into applications
+that support it, e.g. word processors.
+
+The clipboard contents can be pasted using either the \fBPaste\fP menu command,
+the \fBCtrl+Insert\fP keyboard shortcut, or the middle mouse button.
+Not only text but also files and directories can be pasted,
+whereby the latter are inserted as quoted filenames.
+
+
+.SS Drag & drop
+
+Text, files and directories can also be dropped into the MinTTY window.
+
+
+.SS Fullscreen
+
+Fullscreen mode can be toggled using either the \fBFullscreen\fP command in
+the menu or the \fBAlt+Enter\fP keyboard shortcut.
+
+
+.SS Scrolling
+
+MinTTY has a scrollback buffer that can hold up to 65535 lines.
+This can be accessed using the scrollbar, the mouse wheel, or the keyboard.
+Hold the \fBShift\fP key while pressing the \fBUp\fP and \fBDown\fP arrow keys
+to scroll line-by-line or the \fBPageUp\fP and \fBPageDown\fP keys to scroll
+page-by-page.
+The modifier key for scrolling can be changed in the options dialog.
+
+Scrolling into the scrollback buffer is not available with programs such
+as pagers or editors that use the the terminal's "alternate screen".
+
+
+.SS Mouse tracking
+
+When an application activates mouse tracking, mouse events are sent to the
+application rather than processed by MinTTY.
+This is indicated by the mouse pointer changing from an I shape to an arrow.
+Holding down \fBShift\fP overrides mouse tracking mode and sends mouse
+events to MinTTY instead, so that e.g. text can be selected and the menu
+can be accessed.
+(The modifier key for overriding mouse tracking can be changed in the
+options dialog.)
+
+
+.SS TERM variable
+
+The \fITERM\fP variable for the child process is set to "xterm", so that
+programs that pay attention to it expect xterm keycodes and output
+xterm-compatible control sequences.
+
+
+.SH CONFIGURATION
+
+Most MinTTY settings are chosen not through command line arguments but in its
+graphical options dialog, which can be reached via the context menu or
+the window menu.
+Settings are stored in a configuration file that by default is located
+at \fI~/.minttyrc\fP.
+This can be overridden with the \fB--config\fP command line option.
+Settings are written to the file whenever the \fBOK\fP button is pressed in
+the options dialog.
+
+The following sections explain the settings on each pane of the options
+dialog.
+For each setting, its name in the config file is shown in parentheses,
+along with its default value, e.g. Columns=80.
+For multiple-choice settings, the value representing each choice in the config
+file is shown.
+
+
+.SS Window
+Window properties.
+
+.TP
+\fBColumns\fP (Columns=80)
+Width of the window in character cells.
+
+.TP
+\fBRows\fP (Rows=24)
+Height of the window in character cells.
+
+.TP
+\fBTransparency\fP (Transparency=0)
+Window transparency level, with the following choices:
+
+.RS
+.PD 0
+.IP "\- \fBOff\fP (0)"
+.IP "\- \fBLow\fP (1)"
+.IP "\- \fBMedium\fP (2)"
+.IP "\- \fBHigh\fP (3)"
+.RE
+
+.TP
+\fBDisable transparency when active\fP (OpaqueWhenFocused=0)
+Make the window opaque when it is active (to avoid background distractions
+when working in it).
+
+.TP
+\fBDisplay scrollbar\fP (Scrollbar=1)
+Show the scrollbar for accessing the scrollback buffer on the right of the
+window.
+
+.TP
+\fBClose on Alt-F4\fP (CloseOnAltF4=1)
+If enabled, close the window when \fBAlt-F4\fP is pressed, otherwise send the
+appropriate keycode to the terminal application.
+
+
+.SS Looks
+Settings for changing MinTTY's appearance.
+
+.TP
+\fBColours\fP
+Clicking on one of the buttons here opens the colour selection dialog.
+In the config file, colours are represented as comma-separated RGB triples
+with decimal 8-bit values (i.e. ranging from 0 to 255).
+
+.RS
+.PD 0
+.IP "\- \fBForeground\fP (ForegroundColour=191,191,191)
+.IP "\- \fBBackground\fP (BackgroundColour=0,0,0)
+.IP "\- \fBCursor\fP (CursorColour=191,191,191)
+.RE
+
+.TP
+\fBShow bold text as bright\fP (BoldAsBright=1)
+If selected, text with the ANSI bold attribute set is displayed with
+increased brightness.
+Otherwise, it is shown with a bold font, which tends to look better with
+black-on-white text.
+
+.TP
+\fBAllow text blinking\fP (AllowBlinking=1)
+ANSI text blinking can be disabled here, as it can be rather annoying.
+
+.TP
+\fBCursor\fP (CursorType=2)
+The following cursor types are available:
+
+.RS
+.PD 0
+.IP "\- \fBBlock\fP (0)"
+.IP "\- \fBLine\fP (2)"
+.IP "\- \fBUnderline\fP (1)"
+.RE
+
+.TP
+\fBEnable cursor blinking\fP (CursorBlinks=1)
+If enabled, the cursor blinks at the rate set in Windows' keyboard control
+panel.
+
+.SS Font
+Settings controlling text display.
+
+.TP
+\fBSelect...\fP
+Clicking on this button opens the font dialog, where the font and its
+properties can be chosen.
+In the config file, this corresponds to the following entries:
+
+.RS
+.PD 0
+.IP "\- \fBFont\fP (Font=Lucida Console)"
+.IP "\- \fBSize\fP (FontHeight=10)"
+.IP "\- \fBStyle\fP (FontIsBold=0)"
+.IP "\- \fBScript\fP (FontCharset=0)"
+.RE
+
+.TP
+\fBSmoothing\fP (FontQuality=0)
+Select the type of font smoothing, if any, from the following choices:
+
+.RS
+.PD 0
+.IP "\- \fBSystem Default\fP (0)"
+.IP "\- \fBNone\fP (2)"
+.IP "\- \fBAntialiased\fP (1)"
+.IP "\- \fBClearType\fP (3)"
+.RE
+
+.TP
+\fBCodepage\fP (Codepage=ISO-8859-1:1998 (Latin-1, West Europe))
+The codepage used for encoding input and decoding output.
+Select \fBUTF-8\fP for 8-bit Unicode.
+
+.SS Keys
+Settings controlling keyboard behaviour.
+
+.TP
+\fBBackspace keycode\fP (BackspaceSendsDEL=0)
+The character to be sent by the backspace key.
+The default is \fB^H\fP, because that is the default across Cygwin,
+but \fB^?\fP (DEL) can be used instead to free up Ctrl+H for other
+purposes, e.g. as the help key in Emacs.
+
+.RS
+.PD 0
+.IP "\- \fB^H\fP (0)"
+.IP "\- \fB^?\fP (1)"
+.RE
+
+.TP
+\fBEscape keycode\fP (EscapeSendsFS=0)
+The character to be sent by the escape key.
+The default is the standard escape character \fB^[\fP, but the character
+\fB^\\\fP can be used instead, thereby allowing the escape key to be used as
+one of the special keys in the terminal line settings (see stty(1)).
+This is impractical with \fB^[\fP, as that appears as the first character in
+multi-character keycodes.
+
+.RS
+.PD 0
+.IP "\- \fB^[\fP (0)"
+.IP "\- \fB^\\\fP (1)"
+.RE
+
+.TP
+\fBAlt key on its own sends ^[\fP (AltSendsESC=0)
+The Alt key pressed on its own can be set to send the escape character
+\fB^[\fP.
+This can be particularly useful when the escape key is set to send
+\fB^\\\fP instead.
+
+.TP
+\fBModifier key for scrolling\fP (ScrollMod=1)
+The modifier key that needs to be pressed together with the arrow up/down
+or page up/down keys to access the scrollback buffer.
+
+.RS
+.PD 0
+.IP "\- \fBShift\fP (1)"
+.IP "\- \fBAlt\fP (2)"
+.IP "\- \fBCtrl\fP (4)"
+.RE
+
+.SS Mouse
+Settings controlling mouse support.
+
+.TP
+\fBRight click action\fP (RightClickAction=0)
+Action to take when clicking the right mouse button.
+
+.RS
+.PD 0
+.IP "\- \fBShow menu\fP (0): Display the context menu.
+.IP "\- \fBExtend\fP (1): Extend the selected region.
+.IP "\- \fBPaste\fP (2): Paste the clipboard contents.
+.RE
+
+.TP
+\fBCopy on select\fP (CopyOnSelect=0)
+If enabled, the region selected with the mouse is copied to the clipboard as
+soon as the mouse button is released, thus emulating X Window behaviour.
+
+.TP
+\fBDefault click target\fP (ClickTargetsApp=1)
+This applies to application mouse mode, i.e. when the application activates
+xterm-style mouse reporting.
+In that mode, mouse clicks can be sent either to the application to process,
+or to the window for the usual actions: select, extend, paste, show menu.
+
+.RS
+.PD 0
+.IP "\- \fBWindow\fP (0)
+.IP "\- \fBApplication\fP (1)
+.RE
+
+.TP
+\fBModifier key overriding default\fP (ClickTargetMod=1)
+The modifier key selected here can be used to override the default click
+target in application mouse mode.
+With the default settings, clicks are sent to the application,
+and Shift has to be pressed while clicking in order to trigger window actions
+instead.
+
+.RS
+.PD 0
+.IP "\- \fBShift\fP (1)"
+.IP "\- \fBAlt\fP (2)"
+.IP "\- \fBCtrl\fP (4)"
+
+.RE
+
+.SS Output
+Settings for output devices other than the terminal screen.
+
+.TP
+\fBPrinter\fP (Printer=)
+The ANSI standard defines control sequences for sending text to a printer,
+which are used by some terminal applications such as the mail reader
+\fBpine\fP.
+The Windows printer to send such text to can be selected here.
+By default, printing is disabled.
+
+.TP
+\fBBell action\fP (BellType=1)
+The action to take when the application sends the bell character \fB^G\fP.
+
+.RS
+.PD 0
+.IP "\- \fBNone\fP (0)"
+.IP "\- \fBSystem sound\fP (1)"
+.IP "\- \fBFlash window\fP (2)"
+.RE
+
+
+.SH KEYCODES
+
+For alphanumeric and symbol keys MinTTY uses the Windows keyboard layout 
+to translate key presses into characters, which means that the keyboard layout
+can be switched using the standard Windows mechanisms for that purpose.
+\fBAltGr\fP combinations, dead keys, and input method editors (IMEs) are all
+supported.
+
+The Windows keyboard layout yields Unicode codepoints, which are encoded
+using the \fBCodepage\fP selected in MinTTY's configuration before sending them
+to the application.
+(The UTF-8 codepage can be selected for full Unicode input support.)
+
+Should the available keyboard layouts lack required features,
+Microsoft's \fBKeyboard Layout Creator\fP (MSKLC), available from
+\fIhttp://www.microsoft.com/Globaldev/tools/msklc.mspx\fP,
+can be used to create custom keyboard layouts.
+
+For other keys, MinTTY sends xterm keycodes as described at
+\fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.html\fP, with a few
+minor changes and additions.
+
+Caret notation is used to show control characters.
+See \fIhttp://en.wikipedia.org/wiki/Caret_notation\fP for an explanation.
+
+
+.SS Letter keys
+
+If the Windows keyboard layout does not have a keycode for a letter key press
+and the \fBCtrl\fP key is down, MinTTY sends a control character.
+The character sent corresponds to the key's "virtual keycode".
+For keyboards with Latin scripts the virtual keycodes reflect the keys' labels,
+whereas for others, the virtual keys are usually laid out the same as on the US
+keyboard.
+
+.RS
+.TS
+tab(#) nospaces;
+LI    LB    LB
+LB    LfC   LfC.
+Key  #Ctrl #Ctrl+Shift/Alt
+A    #^A   #^[^A
+B    #^B   #^[^B
+\fP...
+Z    #^Z   #^[^Z
+.TE
+.RE
+
+.SS Number and symbol keys
+
+In the same way as for letter keys, the Windows keyboard layout is consulted
+first for number and symbol keys. If that comes back empty, and \fBCtrl\fP is
+down, the keycodes below are sent.
+
+Unlike xterm, MinTTY ignores VT100 "application keypad mode".
+Instead, it relies on the state of \fBNumLock\fP to decide how to handle number
+pad keys.
+As usual on Windows, when \fBNumLock\fP is off, the number pad keys are treated
+as arrow and editing keys, and when it is on, they are treated as number and
+symbol keys.
+Application keypad codes can still be sent though, by holding down \fBCtrl\fP 
+while \fBNumLock\fP is on.
+
+Furthermore, the number keys as well as the comma,
+period, plus and minus keys on the main part of the keyboard also send
+application keypad codes when pressed simultaneously with \fBCtrl\fP.
+This makes those keycodes more accessible to laptop users and more useful
+as application shortcuts.
+
+Finally, the keycodes can be modified by holding \fBShift\fP or \fBAlt\fP as
+well as \fBCtrl\fP.
+
+.RS
+.TS
+tab(#) nospaces;
+LI  LB   LB
+LB  LfC  LfC.
+Key#Ctrl#Ctrl+Shift/Alt
+*  #^[Oj#^[[j
++  #^[Ok#^[[k
+,  #^[Ol#^[[l
+-  #^[Om#^[[m
+\. #^[On#^[[n
+/  #^[Oo#^[[o
+0  #^[Op#^[[p
+1  #^[Oq#^[[q
+\fP...
+9  #^[Oy#^[[y
+.TE
+.RE
+
+Some of the symbol keys send control characters when pressed together with
+\fBCtrl\fP.
+These are the characters between \fB^Z\fP (ASCII 26) and space (32).
+Their positions on the keyboard are hard-coded based on the US keyboard layout.
+
+.RS
+.TS
+tab(#) nospaces;
+LI    LB    LB
+LB    LfC   LfC.
+Key  #Ctrl #Ctrl+Shift/Alt
+[{   #^[   #^[^[
+]}   #^]   #^[^]
+\(rs|#^\(rs#^[^\(rs
+'"   #^^   #^[^^
+/?   #^_   #^[^_
+.TE
+.RE
+
+
+.SS Control keys
+
+The keys here send the usual control characters, but there are a few
+MinTTY-specific additions that make combinations with modifier keys
+available as separate keycodes.
+
+.RS
+.TS
+tab(#) nospaces;
+LI        s     LB    LB    LB    LB    LB
+LB        LfC   LfC   LfC   LfC   LfC   LfC.
+Key            #Shift#Crtl #C+S   #Alt  #A+S
+Space    #\fIsp#\fIsp#^@   #^[^@
+Enter    #^M   #J    #^^   #^[^^
+Tab      #^I   #^[[Z #^[Oz #^[OZ
+Back (^H)#^H   #^H   #^?   #^[^?  #^[^H #^[\fIsp
+Back (^?)#^?   #^?   #^_   #^[^_  #^[^? #^[\fIsp
+Esc (^[) #^[   #^]
+Esc (^\(rs)#^\(rs#^]
+Pause    #^]   #^[^]
+Break    #^\(rs#^[^\(rs
+.TE
+.RE
+
+The \fBBack\fP and \fBEsc\fP keycodes can be configured in the options dialog,
+which is why different keycodes depending on those settings are shown.
+On most keyboards \fBPause\fP and \fBBreak\fP share a key, whereby \fBCtrl\fP
+has to be pressed to get the \fBBreak\fP function.
+
+
+.SS Modifier Keys
+
+The remaining keys all use a common encoding for modifier keys.
+When one or more of the following modifier keys are pressed,
+they are encoded by adding the associated value to 1.
+
+.RS
+.PD 0
+.IP "\- \fBShift\fP: 1
+.IP "\- \fBAlt  \fP: 2
+.IP "\- \fBCtrl \fP: 4
+.RE
+
+For example, \fBShift+Ctrl\fP would be encoded as the character \fB6\fP
+(i.e. 1+1+4).
+The modifier code is shown as \fIm\fP in the following sections.
+
+
+.SS Cursor keys
+
+Cursor keycodes without modifier keys depend on the terminal's 
+"application cursor mode", which is used by fullscreen applications such as
+editors and pagers.
+When one or more modifier keys are pressed, the application cursor mode is
+ignored, but the modifier code is inserted into the keycode as shown.
+
+.RS
+.TS
+tab(#) nospaces;
+LI    s     LB    LB
+LB    LfC   LfC   LfC.
+Key        #app  #modified
+Up   #^[[A #^[OA #^[[1;\fIm\fPA
+Down #^[[B #^[OB #^[[1;\fIm\fPB
+Right#^[[C #^[OC #^[[1;\fIm\fPC
+Left #^[[D #^[OD #^[[1;\fIm\fPD
+.TE
+.RE
+
+
+.SS Editing keys
+
+There is no special application mode for the editing keys in the block of six
+that is usually situated above the cursor keys, but modifiers can be applied.
+
+.RS
+.TS
+tab(#) nospaces;
+LI     s     LB
+LB     LfC   LfC.
+Key         #modified
+Insert#^[[2~#^[[2;\fIm\fP~
+Delete#^[[3~#^[[3;\fIm\fP~
+Home  #^[[1~#^[[1;\fIm\fP~
+End   #^[[4~#^[[4;\fIm\fP~
+PgUp  #^[[5~#^[[5;\fIm\fP~
+PgDn  #^[[6~#^[[6;\fIm\fP~
+.TE
+.RE
+
+
+.SS Function keys
+
+\fBF1\fP through \fBF4\fP send numpad-style keycodes, because they
+emulate the four PF keys above the number pad on the VT100 terminal.
+The remaining function keys send codes that were introduced with
+the VT220 terminal.
+
+.RS
+.TS
+tab(#) nospaces;
+LI  s      LB
+LB  LfC    LfC.
+Key       #modified
+F1 #^[OP  #^[[1;\fIm\fPP
+F2 #^[OQ  #^[[1;\fIm\fPQ
+F3 #^[OR  #^[[1;\fIm\fPR
+F4 #^[OS  #^[[1;\fIm\fPS
+F5 #^[[15~#^[[15;\fIm\fP~
+F6 #^[[17~#^[[17;\fIm\fP~
+F7 #^[[18~#^[[18;\fIm\fP~
+F8 #^[[19~#^[[19;\fIm\fP~
+F9 #^[[20~#^[[20;\fIm\fP~
+F10#^[[21~#^[[21;\fIm\fP~
+F11#^[[23~#^[[23;\fIm\fP~
+F12#^[[24~#^[[24;\fIm\fP~
+.TE
+.RE
+
+
+.SS Mousewheel
+
+In xterm mouse reporting modes, the mousewheel is treated is a pair of mouse
+buttons.
+However, the mousewheel can also be used for scrolling in applications such as
+\fIless\fP that do not support xterm mouse reporting but that do use the
+alternatescreen.
+Under those circumstances, mousewheel events are
+encoded as arrow up/down or page/up down keys, combined with the
+\fBModifier key for scrolling\fP as selected on the \fBKeys\fP page of
+the options dialog.
+
+.RS
+.TS
+tab(#);
+LB LfC.
+line up#^[[1;\fIm\fPA
+line down#^[[1;\fIm\fPB
+page up#^[[5;\fIm\fP~
+page down#^[[6;\fIm\fP~
+.TE
+.RE
+
+The number of line up/down events sent per mousewheel notch depends on
+the relevant Windows setting on the \fBWheel\fP tab of the \fBMouse\fP
+control panel.
+Page up/down codes can be sent by holding down \fBShift\fP while scrolling.
+The Windows wheel setting can also be set to always scroll by a whole screen
+at a time.
+
+
+.SH TIPS
+
+A few tips on MinTTY use.
+
+
+.SS Shortcuts
+
+The mintty Cygwin package installs a shortcut in the Windows start menu
+under \fIAll Programs/Cygwin\fP.
+It starts mintty with a '-' as its only argument, which tells it to invoke
+the user's default shell as a login shell.
+
+Shortcuts are also a convenient way to start MinTTY with additional options
+and different commands.
+For example, shortcuts for access to remote machines can be created by
+invoking \fIssh\fP. 
+The command simply needs to be appended to the target field of the shortcut
+(in the shortcut's properties):
+
+.RS
+Target:  \fCC:\\Cygwin\\bin\\mintty.exe \f(CBssh server\fR
+.RE
+
+The working directory for the session can be set in the "Start In:" field.
+(But note that the bash login profile cd's to the user's home directory.)
+
+Another convenient feature of shortcuts is the ability to assign global
+shortcut keys.
+
+
+.SS Global variables
+
+The standard Cygwin console that is based on the Windows Command Prompt
+is invoked from the script \fICygwin.bat\fP, which may include settings
+of environment variables, in particular \fIPATH\fP and \fICYGWIN\fP. 
+(See \fIhttp://www.cygwin.com/cygwin-ug-net/using-cygwinenv.html\fP on how to
+configure Cygwin using the \fICYGWIN\fP variable.)
+
+Unfortunately Windows shortcuts do not allow the setting of environment
+variables, but variables can be set globally in Windows via a button on the
+\fBAdvanced\fP tab of the \fBSystem Properties\fP.
+Alternatively, global variables can be set using the \fIsetx\fP command
+line utility, which comes pre-installed with some versions of Windows
+but is also available as part of the free (as in beer) \fBWindows 2003
+Resource Kit Tools\fP.
+
+
+.SS Starting mintty from a batch file
+
+When starting MinTTY from a batch file, it needs to be invoked through the
+\fIstart\fP command, so as to avoid the batch file's console window staying
+open while MinTTY is running.
+For example:
+
+.RS
+\fCstart mintty -\fP
+.RE
+
+
+.SS Terminal line settings
+
+Terminal line settings can be viewed or changed with the \fBstty\fP utility,
+which is installed as part of Cygwin's core utilities package.
+Among other things, it can set the control characters used for generating
+signals or editing an input line.
+
+See the \fBstty\fP man page for all the details, but here are a few examples.
+The commands can be included in shell startup files to make them permanent.
+
+To change the key for deleting a whole word from \fBCtrl+W\fP to
+\fBCtrl+Backspace\fP (assuming the \fBBackspace\fP keycode is set to \fB^H\fP):
+
+.RS
+.nf
+\fCstty werase '^?'\fP
+.fi
+.RE
+
+To use \fBCtrl+Enter\fP instead of \fBCtrl+D\fP for end of file:
+
+.RS
+.nf
+\fCstty eof '^^'\fP
+.fi
+.RE
+
+To use \fBPause\fP and \fBBreak\fP instead of \fBCtrl+Z\fP and \fBCtrl+C\fP for
+suspending or interrupting a process, and to also disable the
+stackdump-producing SIGQUIT:
+
+.RS
+.nf
+\fCstty susp '^]' swtch '^]' intr '^\' quit '^-'\fP
+.fi
+.RE
+
+With these settings, the \fBEsc\fP key can also be used to interrupt
+processes by setting its keycode to \fB^\\\fP.
+The standard escape character \fB^[\fP cannot be used for that purpose
+because it appears as the first character in many other keycodes.
+
+
+.SS Readline configuration
+
+Keyboard input for the \fBbash\fP shell and other program that use the
+\fBreadline\fP library can be configured with the so-called
+\fIinputrc\fP file.
+Unless overridden by setting the \fIINPUTRC\fP variable, this is located
+at \fI~/.inputrc\fP.
+
+It consists of bindings of keycodes to readline commands, whereby
+comments start with a hash character.
+The file format is explained fully in the bash manual.
+
+The default readline configuration does not support the \fBHome\fP and
+\fBEnd\fP keys.
+These two lines fix this:
+
+.RS
+.nf
+\fC
+"\e[1~": beginning-of-line
+"\e[4~": end-of-line
+\fP
+.fi
+.RE
+
+Anyone used to Windows key combinations for editing text might find the
+following bindings useful:
+
+.RS
+.nf
+\fC
+# Ctrl+Left/Right to move by whole words
+"\\e[1;5D": backward-word
+"\\e[1;5C": forward-word
+
+# Ctrl+Backspace/Delete to delete whole words
+"\\d": backward-kill-word
+"\\e[3;5~": kill-word
+
+# Ctrl+Shift+Backspace/Delete to delete to start/end of the line
+"\\e\\d": backward-kill-line
+"\\e[3;6~": kill-line
+
+# Alt-Backspace for undo
+"\\e\\b": undo
+\fP
+.fi
+.RE
+
+Finally, a couple of bindings for convenient searching of the command history.
+Just enter the first few characters of a previous command and press
+\fBCtrl-Up\fP to look it up.
+
+.RS
+.nf
+\fC
+# Ctrl-Up/Down for searching command history
+"\\e[1;5A": history-search-backward
+"\\e[1;5B": history-search-forward
+\fP
+.fi
+.RE
+
+
+.SS Mousewheel scrolling for less
+
+No, this is not some sort of special offer, but a guide on how to enable
+mousewheel scrolling in the pager program \fBless\fP.
+Key bindings for \fBless\fP can be specified in the text file \fI~/.lesskey\fP.
+
+Before the bindings can be used, they have be translated into
+the binary file \fI~/.less\fP using the \fBlesskey\fP tool (which probably
+saves about 0.0042 seconds when starting \fBless\fP).
+See \fBlesskey\fP(1) for details.
+
+Here are the lesskey lines needed for mousewheel support, assuming the
+the scroll modifier key is set to the default \fIShift\fP. 
+For \fBAlt\fP or \fBCtrl\fP, replace the \fB2\fPs in the keycodes with
+\fB3\fPs or \fB5\fPs.
+
+.RS
+.nf
+\fC
+\\e[1;2A back-line
+\\e[1;2B forw-line
+\\e[5;2B back-screen
+\\e[6;2B forw-screen
+\fP
+.fi
+.RE
+
+.SH LIMITATIONS
+
+.SS Console Issue
+
+MinTTY is not a complete replacement for the \fBCygwin\fP console,
+which is based on the Windows command prompt (\fIcmd.exe\fP).
+Like xterm and rxvt, MinTTY communicates with the child process through a
+pseudo terminal device, which Cygwin emulates using Windows pipes.
+This means that native Windows command line programs started in MinTTY see
+a pipe rather than a console device.
+As a consequence, interactive input often does not work correctly, and
+direct calls to Win32 console functions will fail.
+Programs that only output text are usually fine though.
+
+
+.SS Termcap/terminfo
+
+MinTTY does not have its own \fItermcap\fP or \fIterminfo\fP entry;
+instead, it simply pretends to be an xterm.
+
+
+.SS Missing xterm features
+
+MinTTY is nowhere near as configurable as xterm, and its keycodes
+are fixed according to xterm's VT220-style keyboard behaviour (albeit
+with a number of MinTTY-specific extensions).
+Neither Tektronix 4014 emulation nor mouse highlighting mode are supported.
+
+
+.SH SEE ALSO
+
+\fIstty(1)\fP, \fIterminfo\fP(5), \fIbash\fP(1), \fIssh\fP(1),
+\fIlesskey\fP(1), \fImkshortcut\fP(1)
+
+\fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.html\fP
+
+\fIhttp://vt100.net/\fP
+
+
+.SH ACKNOWLEDGEMENTS
+
+MinTTY is based on PuTTY version 0.60 by Simon Tatham and contributors,
+so big thanks to everyone involved.
+Thanks also to KDE's Oxygen team for the program icon.
+
+
+.SH COPYRIGHT
+
+Copyright (C) 2008-09 Andy Koppe.
+
+MinTTY is released under the terms of the the \fIGNU General Public License\fP
+version 3 or later.
+See \fIhttp://gnu.org/licenses/gpl/html\fP for the license text. 
+There is NO WARRANTY, to the extent permitted by law.
+
+
+.SH CONTACT
+
+Please report bugs or suggest enhancements via the MinTTY issue tracker at
+\fIhttp://mintty.googlecode.com/issues\fP. 
+Questions can be directed to the MinTTY discussion group at
+\fIhttp://groups.google.com/group/mintty-discuss\fP or
+the Cygwin mailing list at \fIcygwin@cygwin.com\fP.
+
+
+.SH AUTHOR
+
+This manual page was written by Andy Koppe with much appreciated help
+from Lee D. Rothstein.
