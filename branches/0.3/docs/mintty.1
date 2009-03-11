@@ -6,10 +6,7 @@
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
 .\" Turn off Right Justification
-.na
 .ad l
-.\" Turn off Hyphenation
-.nh
 .TH mintty 1 2009-03-10 0.3.6 Cygwin
 
 .SH NAME
@@ -24,7 +21,7 @@ mintty - Cygwin terminal emulator
 
 .SH DESCRIPTION
 
-\fBMinTTY\fR is a command line window for Cygwin with a native Windows user
+\fBMinTTY\fR is a terminal emulator for Cygwin with a native Windows user
 interface and minimalist design.
 Its terminal emulation is largely compatible with \fBxterm\fR, but it does not
 require an X server to be running.
@@ -79,7 +76,7 @@ configuration.
 .SS Menu
 
 MinTTY's context menu can be opened by right-clicking the mouse or by pressing
-the \fBMenu\fR key that is normally located next to the right \fBCtrl\fR key.
+the \fBMenu\fR key that is normally located next to the right Ctrl key.
 
 
 .SS Options dialog
@@ -87,25 +84,27 @@ the \fBMenu\fR key that is normally located next to the right \fBCtrl\fR key.
 The configuration can be changed in a graphical dialog, which can be opened by
 selecting \fBOptions...\fR in MinTTY's context menu or window menu.
 (The window menu can be opened by clicking on the program icon or
-pressing Alt-Space.)
+pressing Alt+Space.)
+
+See the \fBCONFIGURATION\fR section for details.
 
 
 .SS Copy & paste
 
 As usual in Windows, screen contents can be selected by holding
-down the left mouse button and dragging the mouse.
-The current selection can be extended by holding down \fBShift\fR or
-\fBCtrl\fR while left-clicking.
+down the left mouse button and dragging the mouse and he current selection can
+be extended by holding down \fBShift\fR or \fBCtrl\fR while left-clicking.
 Double-clicking or triple-clicking selects a whole word or line.
 
 In the default configuration, selected text has to be explicitly copied
 to the clipboard using either the \fBCopy\fR menu command, the
 \fBCtrl+Insert\fR keyboard shortcut, or the middle mouse button combined
-with \fBShift\fR.
+with \fBShift\fR. (See the \fBCopy on select\fR setting for X-like
+copy behaviour.)
+
 The selected region is copied as "rich text" as well as normal text,
 which means it can be pasted with colours and formatting into applications
 that support it, e.g. word processors.
-(See also the \fBCopy on select\fR setting below.)
 
 The clipboard contents can be pasted using either the \fBPaste\fR menu command,
 the \fBCtrl+Insert\fR keyboard shortcut, or the middle mouse button.
@@ -115,8 +114,7 @@ whereby the latter are inserted as quoted filenames.
 
 .SS Drag & drop
 
-Text, files and directories can also be dragged and dropped into the
-MinTTY window.
+Text, files and directories can also be dropped into the MinTTY window.
 
 
 .SS Fullscreen
@@ -134,8 +132,8 @@ to scroll line-by-line or the \fBPageUp\fR and \fBPageDown\fR keys to scroll
 page-by-page.
 The modifier key for scrolling can be changed in the options dialog.
 
-Scrolling into the scrollback buffer is not available while the terminal's
-"alternate screen" is active.
+Scrolling into the scrollback buffer is not available with programs such
+as pagers or editors that use the the terminal's "alternate screen".
 
 
 .SS Mouse tracking
@@ -171,9 +169,10 @@ the options dialog.
 
 The following sections explain the settings on each pane of the options
 dialog.
-For each setting, its name in the config file is shown with its default
-value, e.g. Columns=80. For multiple-choice settings, the value 
-representing each choice in the config file is shown.
+For each setting, its name in the config file is shown in parentheses,
+along with its default value, e.g. Columns=80.
+For multiple-choice settings, the value representing each choice in the config
+file is shown.
 
 
 .SS Window
@@ -314,9 +313,8 @@ The character to be sent by the escape key.
 The default is the standard escape character \fB^[\fR, but the character
 \fB^\(rs\fR can be used instead, thereby allowing the escape key to be used as
 one of the special keys in the terminal line settings (see stty(1)).
-For example, the escape key can be used instead of Ctrl+C for interrupting
-processes, which is impractical with \fB^[\fR, as that is used as the first
-character in many multi-character keycodes.
+This is impractical with \fB^[\fR, as that appears as the first character in
+multi-character keycodes.
 
 .RS
 .PD 0
@@ -329,12 +327,12 @@ character in many multi-character keycodes.
 The Alt key pressed on its own can be set to send the escape character
 \fB^[\fR.
 This can be particularly useful when the escape key is set to send
-\fB^\(rs\fR instead.
+\fB^\\\fR instead.
 
 .TP
 \fBModifier key for scrolling\fR (ScrollMod=1)
 The modifier key that needs to be pressed together with the arrow up/down
-or page up/down keys to scroll the scrollback buffer.
+or page up/down keys to access the scrollback buffer.
 
 .RS
 .PD 0
@@ -361,8 +359,6 @@ Action to take when clicking the right mouse button.
 \fBCopy on select\fR (CopyOnSelect=0)
 If enabled, the region selected with the mouse is copied to the clipboard as
 soon as the mouse button is released, thus emulating X Window behaviour.
-Otherwise, the selected region has to be copied explicitly using the context
-menu or the Ctrl+Insert key combination.
 
 .TP
 \fBDefault click target\fR (ClickTargetsApp=1)
@@ -399,7 +395,8 @@ Settings for output devices other than the terminal screen.
 .TP
 \fBPrinter\fR (Printer=)
 The ANSI standard defines control sequences for sending text to a printer,
-which are used by some terminal applications such as the mail reader pine.
+which are used by some terminal applications such as the mail reader
+\fBpine\fR.
 The Windows printer to send such text to can be selected here.
 By default, printing is disabled.
 
@@ -420,7 +417,7 @@ The action to take when the application sends the bell character \fB^G\fR.
 For alphanumeric and symbol keys MinTTY uses the Windows keyboard layout 
 to translate key presses into characters, which means that the keyboard layout
 can be switched using the standard Windows mechanisms for that purpose.
-AltGr combinations, "dead keys" and input method editors (IMEs) are all
+\fBAltGr\fR combinations, dead keys, and input method editors (IMEs) are all
 supported.
 
 The Windows keyboard layout yields Unicode codepoints, which are encoded
@@ -458,7 +455,7 @@ LB    LfC   LfC.
 Key  #Ctrl #Ctrl+Shift/Alt
 A    #^A   #^[^A
 B    #^B   #^[^B
-...
+\fR...
 Z    #^Z   #^[^Z
 .TE
 .RE
@@ -467,9 +464,9 @@ Z    #^Z   #^[^Z
 
 In the same way as for letter keys, the Windows keyboard layout is consulted
 first for number and symbol keys. If that comes back empty, and \fBCtrl\fR is
-down, the following keycodes are sent.
+down, the keycodes below are sent.
 
-Unlike xterm, MinTTY ignores VT100 "application keypad mode" for the numpad.
+Unlike xterm, MinTTY ignores VT100 "application keypad mode".
 Instead, it relies on the state of \fBNumLock\fR to decide how to handle number
 pad keys.
 As usual on Windows, when \fBNumLock\fR is off, the number pad keys are treated
@@ -501,7 +498,7 @@ Key#Ctrl#Ctrl+Shift/Alt
 /  #^[Oo#^[[o
 0  #^[Op#^[[p
 1  #^[Oq#^[[q
-\fR...#
+\fR...
 9  #^[Oy#^[[y
 .TE
 .RE
@@ -515,7 +512,7 @@ Their positions on the keyboard are hard-coded based on the US keyboard layout.
 .TS
 tab(#) nospaces;
 LI    LB    LB
-LB    L     L.
+LB    LfC   LfC.
 Key  #Ctrl #Ctrl+Shift/Alt
 [{   #^[   #^[^[
 ]}   #^]   #^[^]
@@ -529,14 +526,14 @@ Key  #Ctrl #Ctrl+Shift/Alt
 .SS Control keys
 
 The keys here send the usual control characters, but there are a few
-MinTTY-specific additions here that make combinations involving those
-characters available as separate keycode.
+MinTTY-specific additions that make combinations with modifier keys
+available as separate keycodes.
 
 .RS
 .TS
 tab(#) nospaces;
 LI        s     LB    LB    LB    LB    LB
-LB        L     L     L     L     L     L.
+LB        LfC   LfC   LfC   LfC   LfC   LfC.
 Key            #Shift#Crtl #C+S   #Alt  #A+S
 Space    #\fIsp\fR#\fIsp\fR#^@   #^[^@
 Enter    #^M   #J    #^^   #^[^^
@@ -550,8 +547,8 @@ Break    #^\(rs#^[^\(rs
 .TE
 .RE
 
-The \fBBack\fR and \fBEsc\fR can be configured in the options dialog, so
-different keycodes depending on those settings are shown here.
+The \fBBack\fR and \fBEsc\fR keycodes can be configured in the options dialog,
+so different keycodes depending on those settings are shown here.
 
 On most keyboards \fBPause\fR and \fBBreak\fR share a key, whereby \fBCtrl\fR
 has to be pressed to get the \fBBreak\fR function.
@@ -560,8 +557,9 @@ has to be pressed to get the \fBBreak\fR function.
 .SS Modifier Keys
 
 The remaining keys all use a common encoding for modifier keys that was
-introduced by xterm. When one or more of the following modifier keys are
-pressed, they is encoded by adding the associated value to 1.
+introduced by xterm.
+When one or more of the following modifier keys are pressed,
+they are encoded by adding the associated value to 1.
 
 .RS
 .PD 0
@@ -570,22 +568,23 @@ pressed, they is encoded by adding the associated value to 1.
 .IP "\- \fBCtrl \fR: 4
 .RE
 
-For example, Shift+Alt would be encoded as \fB4\fR (i.e. 1+1+2). The modifier
-encoding is shown as \fIm\fR in the following sections.
+For example, Shift+Ctrl would be encoded as \fB6\fR (i.e. 1+1+4).
+The modifier encoding is shown as \fIm\fR in the following sections.
 
 
 .SS Cursor keys
 
-Cursor keycodes without modifier keys depend on the "application cursor mode",
-which is used by fullscreen applications such as editors and pagers. When
-one or more modifier keys are pressed, the modifier encoding is added to the
-keycodes as shown.
+Cursor keycodes without modifier keys depend on the terminal's 
+"application cursor mode", which is used by fullscreen applications such as
+editors and pagers.
+When one or more modifier keys are pressed, the application cursor mode is
+ignored, but the modifier encoding is added to the keycodes as shown.
 
 .RS
 .TS
 tab(#) nospaces;
 LI    s     LB    LB
-LB    L     L     L.
+LB    LfC   LfC   LfC.
 Key        #app  #modified
 Up   #^[[A #^[OA #^[[1;\fIm\fRA
 Down #^[[B #^[OB #^[[1;\fIm\fRB
@@ -597,14 +596,14 @@ Left #^[[D #^[OD #^[[1;\fIm\fRD
 
 .SS Editing keys
 
-There is no special application mode for the editing keys in the block of six,
-but modifier keys can be applied.
+There is no special application mode for the editing keys in the block of six
+that is usually situated above the cursor keys, but modifiers can be applied.
 
 .RS
 .TS
 tab(#) nospaces;
 LI     s     LB
-LB     L     L.
+LB     LfC   LfC.
 Key         #modified
 Insert#^[[2~#^[[2;\fIm\fR~
 Delete#^[[3~#^[[3;\fIm\fR~
@@ -627,7 +626,7 @@ the VT220 terminal.
 .TS
 tab(#) nospaces;
 LI  s      LB
-LB  L      L.
+LB  LfC    LfC.
 Key       #modified
 F1 #^[OP  #^[[1;\fIm\fRP
 F2 #^[OQ  #^[[1;\fIm\fRQ
@@ -658,19 +657,22 @@ encoded as arrow up/down or page/up down keys, combined with the
 the options dialog:
 
 .RS
-.PD 0
-.IP "\- \fBline up\fR:   ^[[1;\fIm\fRA
-.IP "\- \fBline down\fR: ^[[1;\fIm\fRB
-.IP "\- \fBpage up\fR:   ^[[5;\fIm\fR~
-.IP "\- \fBpage down\fR: ^[[6;\fIm\fR~
+.TS
+tab(#) nospaces;
+LB  LfC.
+line up  #^[[1;\fIm\fRA
+line down#^[[1;\fIm\fRB
+page up  #^[[5;\fIm\fR~
+page down#^[[6;\fIm\fR~
+.TE
 .RE
 
 The number of line up/down events sent per mousewheel notch depends on
 the relevant Windows setting on the \fBWheel\fR tab of the \fBMouse\fR
 control panel.
 Page up/down codes can be sent by holding down Shift while scrolling.
-The Windows wheel setting can also be set to always scroll a whole screen at
-a time.
+The Windows wheel setting can also be set to always scroll by a whole screen
+at a time.
 
 
 .SH TIPS
@@ -700,8 +702,8 @@ The working directory for the session can be set in the "Start In:" field.
 (But note that the bash login profile cd's to the user's home directory.)
 
 Another convenient feature of shortcuts is the ability to assign a global
-shortcut keys, which allow MinTTY to be invoked easily without using
-to the mouse.
+shortcut keys, which allows MinTTY to be invoked easily without using
+the mouse.
 
 
 .SS Global variables
@@ -709,7 +711,7 @@ to the mouse.
 The standard Cygwin console that is based on the Windows Command Prompt
 is invoked from the script \fICygwin.bat\fR, which may include settings
 of environment variables, in particular \fIPATH\fR and \fICYGWIN\fR. 
-(See http://www.cygwin.com/cygwin-ug-net/using-cygwinenv.html on how to
+(See \fIhttp://www.cygwin.com/cygwin-ug-net/using-cygwinenv.html\fR on how to
 configure Cygwin using the \fICYGWIN\fR variable.)
 
 Unfortunately Windows shortcuts do not allow the setting of environment
@@ -717,15 +719,15 @@ variables, but variables can be set globally in Windows via a button on the
 \fBAdvanced\fR tab of the \fBSystem Properties\fR.
 Alternatively, global variables can be set using the \fIsetx\fR command
 line utility, which comes pre-installed with some versions of Windows
-but is also available as part of the free (as in beer) Windows 2003
-Resource Kit Tools.
+but is also available as part of the free (as in beer) \fBWindows 2003
+Resource Kit Tools\fR.
 
 
 .SS Starting mintty from a batch file
 
-Of course MinTTY can also be started from a batch file.
-It needs to be invoked through the \fIstart\fR command though, so as to 
-avoid the batch file's console window staying open while MinTTY is running.
+When starting MinTTY from a batch file, it needs to be invoked through the
+\fIstart\fR command, so as to avoid the batch file's console window staying
+open while MinTTY is running.
 For example:
 
 .RS
