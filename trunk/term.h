@@ -98,7 +98,7 @@ void term_clear_scrollback(void);
 void term_mouse_click(mouse_button, mod_keys, pos, int count);
 void term_mouse_release(mouse_button, mod_keys, pos);
 void term_mouse_move(mouse_button, mod_keys, pos);
-void term_mouse_wheel(int lines, mod_keys, pos);
+void term_mouse_wheel(int delta, int lines_per_notch, mod_keys, pos);
 void term_deselect(void);
 void term_select_all(void);
 void term_paint(void);

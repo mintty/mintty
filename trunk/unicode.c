@@ -827,8 +827,6 @@ wordtype(int uc)
     {0x17d4, 0x17dc, 1},        /* Khmer punctuation */
     {0x1800, 0x180a, 1},        /* Mongolian punctuation */
     {0x2000, 0x200a, 0},        /* Various spaces */
-    {0x2070, 0x207f, 2},        /* superscript */
-    {0x2080, 0x208f, 2},        /* subscript */
     {0x200b, 0x27ff, 1},        /* punctuation and symbols */
     {0x3000, 0x3000, 0},        /* ideographic space */
     {0x3001, 0x3020, 1},        /* ideographic punctuation */
@@ -861,12 +859,12 @@ wordtype(int uc)
   if (ucsdata.dbcs_screenfont && ucsdata.font_codepage == ucsdata.codepage)
     return (uc != ' ');
   if (uc < 0x80) {
-    if (isalpha(uc) || (uc >= '-' && uc <= '9') || uc == '_' || uc == '~')
-      return 2;
-    else if (uc > ' ' && uc < 0x7f)
+    if (uc <= ' ' || uc == 0x7f)
+      return 0;
+    else if (strchr("""'`,;:&|!?<=>()[]{}", uc))
       return 1;
     else
-      return 0;
+      return 2;
   }
   for (const struct ucsword *wptr = ucs_words; wptr->start; wptr++) {
     if (uc >= wptr->start && uc <= wptr->end)

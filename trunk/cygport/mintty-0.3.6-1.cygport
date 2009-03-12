@@ -1,4 +1,4 @@
-SRC_URI="http://mintty.googlecode.com/files/mintty-0.3.5-src.tgz"
+SRC_URI="http://mintty.googlecode.com/files/mintty-0.3.6-src.tgz"
 PKG_HINTS=setup
 
 src_compile() {
@@ -10,7 +10,8 @@ src_compile() {
 src_install() {
   cd ${B}
   dobin mintty.exe
+  insinto /usr/share/man/man1
+  doins docs/mintty.1
 }
 
 DOCS="LICENSE.Oxygen LICENSE.PuTTY"
-HTMLDOCS="docs/readme.html"

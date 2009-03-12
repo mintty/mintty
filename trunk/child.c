@@ -23,7 +23,7 @@ HANDLE child_event;
 static HANDLE proc_event;
 static pid_t pid;
 static int status;
-static int fd;
+static int fd = -1;
 static int read_len;
 static char read_buf[4096];
 static struct utmp ut;
@@ -49,6 +49,8 @@ read_thread(void *unused(arg))
     SetEvent(child_event);
     WaitForSingleObject(proc_event, INFINITE);
   };
+  close(fd);
+  fd = -1;
   return 0;
 }
 
@@ -236,13 +238,16 @@ child_is_parent(void)
 void
 child_write(const char *buf, int len)
 { 
-  if (pid)
+  if (fd >= 0)
     write(fd, buf, len); 
-  else
+  else if (!pid)
     exit(0);
 }
 
 void
 child_resize(struct winsize *winp)
-{ ioctl(fd, TIOCSWINSZ, winp); }
+{ 
+  if (fd >= 0)
+    ioctl(fd, TIOCSWINSZ, winp);
+}
 

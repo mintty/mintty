@@ -209,7 +209,7 @@ static void
 send_mouse_event(char code, mod_keys mods, pos p)
 {
   char buf[6] = "\e[M";
-  buf[3] = code | mods;
+  buf[3] = code | (mods & ~cfg.click_target_mod) << 2;
   buf[4] = p.x + 33;
   buf[5] = p.y + 33;
   ldisc_send(buf, 6, 0);
@@ -246,7 +246,7 @@ get_selpoint(const pos p)
 }
 
 static void
-send_key(char *code, uint len, uint count, bool interactive)
+send_keys(char *code, uint len, uint count, bool interactive)
 {
   uint size = len * count;
   char *buf = malloc(size), *p = buf;
@@ -255,57 +255,63 @@ send_key(char *code, uint len, uint count, bool interactive)
   free(buf);
 }
 
+static bool
+is_app_mouse(mod_keys *mods_p)
+{
+  if (!term.mouse_mode)
+    return false;
+  bool override = *mods_p & cfg.click_target_mod;
+  *mods_p &= ~cfg.click_target_mod;
+  return cfg.click_targets_app ^ override;
+}
+
 void
 term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
 {
-  if (term.mouse_mode) {
-    bool target_override = mods & cfg.click_target_mod;
-    mods &= ~cfg.click_target_mod;
-    if (cfg.click_targets_app ^ target_override) {
-      if (term.mouse_mode == MM_X10)
-        mods = 0;
-      send_mouse_event(0x1F + b, mods, box_pos(p));
-      term.mouse_state = MS_CLICKED;
-      return;
-    }
-  }  
-  
-  bool alt = mods & ALT;
-  bool shift_ctrl = mods & (SHIFT | CTRL);
-  int rca = cfg.right_click_action;
-  if (b == MBT_RIGHT && (rca == RC_SHOWMENU || shift_ctrl)) {
-    if (!alt) 
-      win_popup_menu();
+  if (is_app_mouse(&mods)) {
+    if (term.mouse_mode == MM_X10)
+      mods = 0;
+    send_mouse_event(0x1F + b, mods, box_pos(p));
+    term.mouse_state = MS_CLICKED;
   }
-  else if (b == MBT_MIDDLE || (b == MBT_RIGHT && rca == RC_PASTE)) {
-    if (!alt) {
-      if (shift_ctrl)
-        term_copy();
-      else
-        win_paste();
+  else {  
+    bool alt = mods & ALT;
+    bool shift_ctrl = mods & (SHIFT | CTRL);
+    int rca = cfg.right_click_action;
+    if (b == MBT_RIGHT && (rca == RC_SHOWMENU || shift_ctrl)) {
+      if (!alt) 
+        win_popup_menu();
     }
-  }
-  else {
-    // Only left clicks and extending right clicks should get here.
-    p = get_selpoint(box_pos(p));
-    term.mouse_state = count;
-    term.sel_rect = alt;
-    if (b == MBT_RIGHT || shift_ctrl)
-      sel_extend(p);
-    else if (count == 1) {
-      term.selected = false;
-      term.sel_anchor = p;
+    else if (b == MBT_MIDDLE || (b == MBT_RIGHT && rca == RC_PASTE)) {
+      if (!alt) {
+        if (shift_ctrl)
+          term_copy();
+        else
+          win_paste();
+      }
     }
     else {
-      // Double or triple-click: select whole word or line
-      term.selected = true;
-      term.sel_rect = false;
-      term.sel_start = term.sel_end = term.sel_anchor = p;
-      incpos(term.sel_end);
-      sel_spread();
+      // Only left clicks and extending right clicks should get here.
+      p = get_selpoint(box_pos(p));
+      term.mouse_state = count;
+      term.sel_rect = alt;
+      if (b == MBT_RIGHT || shift_ctrl)
+        sel_extend(p);
+      else if (count == 1) {
+        term.selected = false;
+        term.sel_anchor = p;
+      }
+      else {
+        // Double or triple-click: select whole word or line
+        term.selected = true;
+        term.sel_rect = false;
+        term.sel_start = term.sel_end = term.sel_anchor = p;
+        incpos(term.sel_end);
+        sel_spread();
+      }
+      win_capture_mouse();
+      win_update();
     }
-    win_capture_mouse();
-    win_update();
   }
 }
 
@@ -351,7 +357,7 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
     last_p = p;
     int diff = (p.y - p0.y) * term.cols + (p.x - p0.x);
     if (diff)
-      send_key(diff < 0 ? "\e[D" : "\e[C", 3, abs(diff), false);
+      send_keys(diff < 0 ? "\e[D" : "\e[C", 3, abs(diff), false);
   }
 }
 
@@ -400,26 +406,48 @@ term_mouse_move(mouse_button b, mod_keys mods, pos p)
 }
 
 void
-term_mouse_wheel(int lines, mod_keys mods, pos p)
+term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
 {
-  if (mods & (ALT | CTRL))
-    return; // reserved for future use
-  if (term.which_screen == 0)
-    term_scroll(0, lines * (mods & SHIFT ? term.rows : 1));
-  else if (term.mouse_mode) {
-    // Send as mouse codes.
-    char code = 0x60 | (lines > 0);
-    for (int i = 0; i < abs(lines); i++)
+  enum { DELTA_NOTCH = 120 };
+  if (is_app_mouse(&mods)) {
+    // Send as mouse events, with one event per notch.
+    static int accu;
+    accu += delta;
+    int notches = accu / DELTA_NOTCH;
+    accu -= notches * DELTA_NOTCH;
+    char code = 0x60 | (notches > 0);
+    notches = abs(notches);
+    while (notches--)
       send_mouse_event(code, mods, p);
   }
-  else if (!term.editing) {
-    // Send as cursor keys with scroll modifier.
-    char code[6] = "\e[1;1~";
-    code[4] = '1' + cfg.scroll_mod;
-    if (mods & SHIFT)
-      code[2] = lines < 0 ? '5' : '6';  // PgUp/PgDown
-    else
-      code[5] = lines < 0 ? 'A' : 'B';  // Arrow up/down
-    send_key(code, 6, abs(lines), true);
+  else if (!(mods & (ALT | CTRL))) {
+    // Scroll, taking the lines_per_notch setting into account.
+    // Scroll by a page per notch if setting is -1 or Shift is pressed.
+    if (lines_per_notch == -1 || mods & SHIFT)
+      lines_per_notch = term.rows;
+    static int accu;
+    accu += delta * lines_per_notch;
+    int lines = accu / DELTA_NOTCH;
+    accu -= lines * DELTA_NOTCH;
+    if (term.which_screen == 0)
+      term_scroll(0, lines);
+    else {
+      // Send scroll distance as PageUp/Down and Arrow Up/Down
+      char code[6] = "\e[ ; ~";
+      bool back = lines < 0;
+      lines = abs(lines);
+      int pages = lines / term.rows;
+      lines -= pages * term.rows;
+      
+      // First send full pages.
+      code[2] = back ? '5' : '6';
+      code[4] = '1' + cfg.scroll_mod;
+      send_keys(code, 6, pages, true);
+      
+      // Then send remaining lines.
+      code[2] = '1';
+      code[5] = back ? 'A' : 'B';
+      send_keys(code, 6, lines, true);
+    }
   }
 }
