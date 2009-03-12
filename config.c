@@ -235,7 +235,7 @@ setup_config_box(controlbox * b)
     I(offcfg(font_quality)),
     "System Default", 'd', I(FQ_DEFAULT),
     "Antialiased", 'a', I(FQ_ANTIALIASED),
-    "Non-Antialiased", 'n', I(FQ_NONANTIALIASED),
+    "None", 'n', I(FQ_NONANTIALIASED),
     "ClearType", 'c', I(FQ_CLEARTYPE),
     null
   );
