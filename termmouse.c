@@ -248,6 +248,7 @@ get_selpoint(const pos p)
 static void
 send_keys(char *code, uint len, uint count, bool interactive)
 {
+  assert(len);
   uint size = len * count;
   char *buf = malloc(size), *p = buf;
   do { memcpy(p, code, len); p += len; } while (--count);
@@ -442,12 +443,14 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
       // First send full pages.
       code[2] = back ? '5' : '6';
       code[4] = '1' + cfg.scroll_mod;
-      send_keys(code, 6, pages, true);
+      if (pages)
+        send_keys(code, 6, pages, true);
       
       // Then send remaining lines.
       code[2] = '1';
       code[5] = back ? 'A' : 'B';
-      send_keys(code, 6, lines, true);
+      if (lines)
+        send_keys(code, 6, lines, true);
     }
   }
 }
