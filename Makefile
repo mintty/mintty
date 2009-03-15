@@ -1,10 +1,12 @@
 name := mintty
-version := svn-trunk
+version := 0.3.6
 
 exe := $(name).exe
 dir := $(name)-$(version)
+srcs := $(wildcard Makefile *.c *.h *.rc *.mft icon/*.ico icon/*.png)
+srcs += $(wildcard COPYING LICENSE* INSTALL)
+srcs += docs/readme.html docs/mintty.1 scripts/create_shortcut.js
 stuff := docs/readme.html docs/mintty.1.pdf scripts/create_shortcut.js
-srcs := $(wildcard Makefile *.c *.h *.rc *.mft icon/*.ico icon/*.png COPYING LICENSE* INSTALL docs/mintty.1) $(stuff)
 
 c_srcs := $(wildcard *.c)
 rc_srcs := $(wildcard *.rc)
@@ -45,6 +47,9 @@ $(dir)-src.tgz: $(srcs)
 
 %.o %.d: %.rc Makefile
 	$(rc) $< $(<:.rc=.o)
+
+%.1.pdf: %.1
+	groff -t -man -Tps $< | ps2pdf - $@
 
 clean:
 	rm -f *.d *.o *.exe *.zip *.tgz *.stackdump

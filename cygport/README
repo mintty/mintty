@@ -61,10 +61,13 @@ Files included in the binary package:
 Port Notes:
 
 ----- mintty-0.3.6-1 -----
-* Update.
+* Update to version 0.3.6. 
+* Replaced readme.html with manual page. Thanks to Lee D. Rothstein for 
+helping with that.
 
 ----- mintty-0.3.5-1 -----
-* First attempt at Cygwin setup package.
+* First attempt at Cygwin setup package. Thanks to Yaakov Selkovitz for 
+getting this off the ground by adding MinTTY to Cygports.
 
 Cygwin port maintained by:  Andy Koppe  cygwin@cygwin.com
 Please address questions to the Cygwin mailing list at 

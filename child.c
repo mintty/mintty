@@ -113,7 +113,7 @@ child_create(char *argv[], struct winsize *winp)
 {
   struct passwd *pw = getpwuid(getuid());
   
-  char *cmd = (pw ? pw->pw_shell : 0) ?: "/bin/bash";  
+  char *cmd = (pw ? pw->pw_shell : 0) ?: "/bin/sh";  
   if (!*argv)
     argv = (char *[]){cmd, 0};
   else if (argv[1] || strcmp(*argv, "-"))
