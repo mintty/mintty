@@ -397,7 +397,6 @@ win_paste(void)
   if (!OpenClipboard(null))
     return;  
   HGLOBAL data;
-  term_deselect();
   if ((data = GetClipboardData(CF_HDROP)))
     paste_hdrop(data);
   else if ((data = GetClipboardData(CF_UNICODETEXT)))

@@ -227,6 +227,7 @@ void term_schedule_cblink(void);
 void term_schedule_vbell(int already_started, int startpoint);
 
 void term_swap_screen(int which, int reset, int keep_cur_pos);
+void term_check_selection(pos from, pos to);
 void term_check_boundary(int x, int y);
 void term_do_scroll(int topline, int botline, int lines, int sb);
 void term_erase_lots(int line_only, int from_begin, int to_end);
