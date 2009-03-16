@@ -602,6 +602,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_RESET:
           term_reset();
           term_deselect();
+          win_update();
           ldisc_send(null, 0, 0);
         when IDM_ABOUT: win_about();
         when IDM_FULLSCREEN: flip_full_screen();
@@ -646,8 +647,10 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_IGNORE_CLIP:
       ignore_clip = wp;     /* don't panic on DESTROYCLIPBOARD */
     when WM_DESTROYCLIPBOARD:
-      if (!ignore_clip)
+      if (!ignore_clip) {
         term_deselect();
+        win_update();
+      }
       ignore_clip = false;
       return 0;
     when WM_PAINT:
@@ -782,11 +785,10 @@ opts[] = {
   {"pos", required_argument, 0, 'p'},
   {"size", required_argument, 0, 's'},
   {"title", required_argument, 0, 't'},
-  {0, 0, 0, 0}
 };
 
 static const char *help =
-  "Usage: %s [OPTION]... [ - | COMMAND [ARG]... ]\n"
+  "Usage: %s [OPTION]... [- | COMMAND [ARGS]...]\n"
   "\n"
   "If no command is given, the user's default shell is invoked as a non-login\n"
   "shell. If the command is a single minus sign, the default shell is invoked\n"
@@ -797,8 +799,8 @@ static const char *help =
   "  -p, --pos=X,Y         Open window at specified position\n"
   "  -s, --size=COLS,ROWS  Set screen size in characters\n"
   "  -t, --title=TITLE     Set window title (default: the invoked command)\n"
+  "  -h, --help            Display this help and exit\n"
   "  -v, --version         Print version information and exit\n"
-  "  -h, --help            Display this help message and exit\n"
 ;
 
 int
@@ -835,7 +837,6 @@ main(int argc, char *argv[])
         size_override = true;
       }
       when 't': title = optarg;
-      otherwise: exit(1);
     }
   }
   

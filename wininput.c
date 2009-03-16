@@ -202,7 +202,6 @@ win_key_down(WPARAM wParam, LPARAM lParam)
  
   update_mouse(mods);
 
-  // Alt+keycode
   if (alt_state != ALT_NONE) {
     uint digit = key - VK_NUMPAD0;
     if (alt_state == ALT_ALONE) {
@@ -218,7 +217,7 @@ win_key_down(WPARAM wParam, LPARAM lParam)
     }
   }
   
-  alt_state = key == VK_MENU && !shift && !ctrl;
+  alt_state = key == VK_MENU;
   if (alt_state)
     return 1;
   
@@ -269,8 +268,7 @@ win_key_down(WPARAM wParam, LPARAM lParam)
       when VK_NEXT:  scroll = SB_PAGEDOWN;
       when VK_UP:    scroll = SB_LINEUP;
       when VK_DOWN:  scroll = SB_LINEDOWN;
-      otherwise:
-        goto not_scroll;
+      otherwise: goto not_scroll;
     }
     SendMessage(wnd, WM_VSCROLL, scroll, 0);
     return 1;
@@ -299,31 +297,29 @@ win_key_down(WPARAM wParam, LPARAM lParam)
       when VK_BACK:
         if (ctrl)
           return 0;
-        ch('\e');
-        ch(shift ? ' ' : cfg.backspace_sends_del ? 0x7F : '\b');
+        ch('\e'); ch(shift ? ' ' : 0x7F);
         goto send;
     }
   }
   else { // !alt
     switch (key) {
       when VK_ESCAPE:
-        ctrl_ch(shift ? ']' : cfg.escape_sends_fs ? '\\' : '[');
+        ctrl_ch(cfg.escape_sends_fs ? (shift ? ']' : '\\') : '[');
       when VK_PAUSE:
         esc(shift); ctrl_ch(']');
       when VK_CANCEL:
         esc(shift); ctrl_ch('\\');
       when VK_TAB:
-        str(ctrl ? (shift ? "\e[z" : "\eOz") : (shift ? "\e[Z" : "\t"));
+        str(ctrl ? (shift ? "\eOZ" : "\eOz") : (shift ? "\e[Z" : "\t"));
       when VK_RETURN:
         ctrl 
         ? (esc(shift), ctrl_ch('^'))
         : shift ? ch('\n') : term_newline_mode() ? str("\r\n") : ch('\r');
       when VK_BACK:
         ctrl 
-        ? (esc(shift), cfg.backspace_sends_del ? ctrl_ch('_') : ch(0x7F)) 
+        ? (esc(shift), ctrl_ch('_')) 
         : ch(cfg.backspace_sends_del ? 0x7F : '\b');
-      otherwise:
-        goto not_grey;
+      otherwise: goto not_grey;
     }
     goto send;
   }
@@ -334,15 +330,10 @@ win_key_down(WPARAM wParam, LPARAM lParam)
     switch (key) {
       when VK_UP:    code = 'A';
       when VK_DOWN:  code = 'B';
-      when VK_RIGHT: code = 'C';
       when VK_LEFT:  code = 'D';
+      when VK_RIGHT: code = 'C';
       when VK_CLEAR: code = 'E';
-      when VK_BROWSER_FORWARD:
-        code = 'F';
-      when VK_BROWSER_BACK:
-        code = 'G';
-      otherwise:
-        goto not_arrow;
+      otherwise: goto not_arrow;
     }
     ch('\e');
     if (!mods) 
@@ -364,8 +355,7 @@ win_key_down(WPARAM wParam, LPARAM lParam)
       when VK_END:    code = '4';
       when VK_INSERT: code = '2';
       when VK_DELETE: code = '3';
-      otherwise:
-        goto not_six;
+      otherwise: goto not_six;
     }
     str("\e["); ch(code);
     if (mods) { ch(';'); ch('1' + mods); }
@@ -433,51 +423,44 @@ win_key_down(WPARAM wParam, LPARAM lParam)
     return 1;
   }
   
-  // Try to handle Ctrl combinations if keyboard layout didn't.
-  if (!ctrl)
-    return 0;
-  
-  { 
-    // Keys yielding app-pad sequences.
-    // Helpfully, they're in the same order in VK, ASCII, and VT codes.
+  // Handle Ctrl combinations if keyboard layout didn't.
+
+  // First, keys yielding control characters.
+  if (ctrl) {
+    { char c;
+      switch (key) {
+        when VK_SPACE or 'A' ... 'Z': c = key;
+        when VK_OEM_1 or VK_OEM_4:    c = '[';
+        when VK_OEM_5 or VK_OEM_102:  c = '\\';
+        when VK_OEM_6:                c = ']';
+        when VK_OEM_2 or VK_OEM_7:    c = '_';
+        when VK_OEM_3 or VK_OEM_8:    c = '^';
+        otherwise: goto not_ctrl_ch;
+      }
+      esc(alt || shift);
+      ctrl_ch(c);
+      goto send;
+    }
+  }
+  not_ctrl_ch:
+    
+  // Finally, keys yielding app-pad sequences.
+  // Helpfully, they're lined up in the same order in VK, ASCII, and VT codes.
+  if (ctrl) {
     char c;
     switch (key) {
       when '0' ... '9':                   c = key;
       when VK_NUMPAD0  ... VK_NUMPAD9:    c = key - VK_NUMPAD0  + '0';
       when VK_MULTIPLY ... VK_DIVIDE:     c = key - VK_MULTIPLY + '*';
       when VK_OEM_PLUS ... VK_OEM_PERIOD: c = key - VK_OEM_PLUS + '+';
-      otherwise:
-        goto not_app_pad;
+      otherwise: goto not_app_pad;
     }
-    ch('\e');
-    ch(alt || shift ? '[' : 'O');
-    ch(c + 0x40);
+    str("\eO");
+    ch(c - '0' + (alt || shift ? 'P' : 'p'));
     goto send;
   }
   not_app_pad:
   
-  {
-    char c;
-    if (key == ' ' || ('A' <= key && key <= 'Z'))
-      c = key;
-    else {
-      switch (scancode) {
-        when 0x2B
-          or 0x56: c = '\\';
-        when 0x1A: c = '[';
-        when 0x1B: c = ']';
-        when 0x28: c = '^';
-        when 0x35: c = '_';
-        otherwise: 
-          goto not_ctrl_ch;
-      }
-    }
-    esc(alt || shift);
-    ctrl_ch(c);
-    goto send;
-  }
-  not_ctrl_ch:
-
   // Key was not handled.
   return 0;
 

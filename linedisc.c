@@ -8,7 +8,6 @@
 #include "child.h"
 #include "term.h"
 #include "unicode.h"
-#include "win.h"
 
 /*
  * ldisc.c: PuTTY line discipline. Sits between the input coming
@@ -88,9 +87,6 @@ ldisc_init(void)
 void
 ldisc_send(const char *buf, int len, int interactive)
 {
-  if (interactive)
-    term_deselect();
-  
   int keyflag = 0;
 
  /*
