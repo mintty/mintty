@@ -886,11 +886,12 @@ term_write(const char *data, int len)
             when 'c':  /* RIS: restore power-on settings */
               compatibility(VT100);
               term_reset();
-              ldisc_send(null, 0, 0);
+              term_clear_scrollback();
               if (term.reset_132) {
                 win_resize(term.rows, 80);
                 term.reset_132 = 0;
               }
+              ldisc_send(null, 0, 0);
               seen_disp_event();
             when 'H':  /* HTS: set a tab */
               compatibility(VT100);
@@ -1022,24 +1023,20 @@ term_write(const char *data, int len)
                       def_arg0 - 1), (term.dec_om ? 2 : 0));
                 seen_disp_event();
               when 'J': {      /* ED: erase screen or parts of it */
-                uint i = arg0;
-                if (i == 3) {
-                 /* Erase Saved Lines (xterm) */
+                if (arg0 == 3) /* Erase Saved Lines (xterm) */
                   term_clear_scrollback();
-                }
                 else {
-                  if (++i > 3)
-                    i = 0;
-                  term_erase_lots(false, !!(i & 2), !!(i & 1));
+                  bool below = arg0 == 0 || arg0 == 2;
+                  bool above = arg0 == 1 || arg0 == 2;
+                  term_erase_lots(false, above, below);
                 }
                 term.disptop = 0;
                 seen_disp_event();
               }
               when 'K': {      /* EL: erase line or parts of it */
-                uint i = arg0 + 1;
-                if (i > 3)
-                  i = 0;
-                term_erase_lots(true, !!(i & 2), !!(i & 1));
+                bool right = arg0 == 0 || arg0 == 2;
+                bool left  = arg0 == 1 || arg0 == 2;
+                term_erase_lots(true, left, right);
                 seen_disp_event();
               }
               when 'L':        /* IL: insert lines */
