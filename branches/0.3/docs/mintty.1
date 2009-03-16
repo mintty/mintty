@@ -700,38 +700,56 @@ Target:  \fCC:\\Cygwin\\bin\\mintty.exe \f(CBssh server\fR
 
 The working directory for the session can be set in the "Start In:" field.
 (But note that the bash login profile cd's to the user's home directory.)
-
 Another convenient feature of shortcuts is the ability to assign global
 shortcut keys.
 
-
-.SS Global variables
-
-The standard Cygwin console that is based on the Windows Command Prompt
-is invoked from the script \fICygwin.bat\fP, which may include settings
-of environment variables, in particular \fIPATH\fP and \fICYGWIN\fP. 
-(See \fIhttp://www.cygwin.com/cygwin-ug-net/using-cygwinenv.html\fP on how to
-configure Cygwin using the \fICYGWIN\fP variable.)
-
-Unfortunately Windows shortcuts do not allow the setting of environment
-variables, but variables can be set globally in Windows via a button on the
-\fBAdvanced\fP tab of the \fBSystem Properties\fP.
-Alternatively, global variables can be set using the \fIsetx\fP command
-line utility, which comes pre-installed with some versions of Windows
-but is also available as part of the free (as in beer) \fBWindows 2003
-Resource Kit Tools\fP.
+Cygwin provides the \fBmkshortcut\fP utility for creating shortcuts from the
+command line.
+See its manual page for details.
 
 
 .SS Starting mintty from a batch file
 
-When starting MinTTY from a batch file, it needs to be invoked through the
-\fIstart\fP command, so as to avoid the batch file's console window staying
-open while MinTTY is running.
+In order to start MinTTY from a batch file it needs to be invoked through the
+\fIstart\fP command.
+This avoids the batch file's console window staying open while MinTTY is
+running.
 For example:
 
 .RS
 \fCstart mintty -\fP
 .RE
+
+
+.SS Environment variables
+
+Unfortunately Windows shortcuts do not allow the setting of environment
+variables. Variables can be set globally though via a button on the
+\fBAdvanced\fP tab of the \fBSystem Properties\fP.
+Those can be reached by right-clicking on \fBComputer\fP, selecting
+\fBProperties\fP, then \fBAdvanced System Settings\fP.
+
+Alternatively, global variables can be set using the \fIsetx\fP command
+line utility.
+This comes pre-installed with some versions of Windows but is also available 
+as part of the freely downloadable \fBWindows 2003 Resource Kit Tools\fP.
+
+Another way to set variables for the program to be run in \fBMinTTY\fP is by
+invoking it using the shell's \fB-c\fP option, which allows a shell command 
+to be passed as a string argument, e.g.:
+
+.RS
+\fCmintty sh -c "DISPLAY=:0 ssh -X server"\fP
+.RE
+
+
+.SS The CYGWIN variable
+
+The \fBCYGWIN\fP environment variable is used to control a number of settings
+for the Cygwin runtime system.
+Many of them apply to the Cygwin console only, but others can be useful
+with any Cygwin process.
+See \fIhttp://www.cygwin.com/cygwin-ug-net/using-cygwinenv.html\fP for details.
 
 
 .SS Terminal line settings
