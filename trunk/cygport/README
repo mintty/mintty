@@ -31,15 +31,15 @@ Canonical download:
 -------------------------------------------
 
 Build instructions:
-  unpack mintty-0.3.6-X-src.tar.bz2
+  unpack mintty-0.3.7-X-src.tar.bz2
     if you use setup to install this src package, it will be
     unpacked under /usr/src automatically
   cd /usr/src
-  cygport ./mintty-0.3.6-X.cygport all
+  cygport ./mintty-0.3.7-X.cygport all
 
 This will create:
-  /usr/src/mintty-0.3.6-X-src.tar.bz2
-  /usr/src/mintty-0.3.6-X.tar.bz2
+  /usr/src/mintty-0.3.7-X-src.tar.bz2
+  /usr/src/mintty-0.3.7-X.tar.bz2
 
 -------------------------------------------
 
@@ -48,23 +48,29 @@ Files included in the binary package:
   /etc/postinstall/mintty.sh
   /etc/preremove/mintty.sh
   /usr/bin/mintty.exe
-  /usr/share/doc/Cygwin/mintty-0.3.6.README
-  /usr/share/doc/mintty-0.3.6/COPYING
-  /usr/share/doc/mintty-0.3.6/INSTALL
-  /usr/share/doc/mintty-0.3.6/LICENSE
-  /usr/share/doc/mintty-0.3.6/LICENSE.Oxygen
-  /usr/share/doc/mintty-0.3.6/LICENSE.PuTTY
+  /usr/share/doc/Cygwin/mintty-0.3.7.README
+  /usr/share/doc/mintty-0.3.7/COPYING
+  /usr/share/doc/mintty-0.3.7/INSTALL
+  /usr/share/doc/mintty-0.3.7/LICENSE
+  /usr/share/doc/mintty-0.3.7/LICENSE.Oxygen
+  /usr/share/doc/mintty-0.3.7/LICENSE.PuTTY
   /usr/share/man/man1/mintty.1.gz
 
 ------------------
 
 Port Notes:
 
+----- mintty-0.3.7-1 -----
+* Quick respin to address a couple of xterm incompatibilities.
+
 ----- mintty-0.3.6-1 -----
-* Update.
+* Update to version 0.3.6. 
+* Replaced readme.html with manual page. Thanks to Lee D. Rothstein for 
+helping with that.
 
 ----- mintty-0.3.5-1 -----
-* First attempt at Cygwin setup package.
+* First attempt at Cygwin setup package. Thanks to Yaakov Selkovitz for 
+getting this off the ground by adding MinTTY to Cygports.
 
 Cygwin port maintained by:  Andy Koppe  cygwin@cygwin.com
 Please address questions to the Cygwin mailing list at 

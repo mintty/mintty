@@ -7,7 +7,7 @@
 .\" 3 November 2008 (or later) as specified.
 .\" Turn off Right Justification
 .ad l
-.TH mintty 1 2009-03-11 0.3.6 Cygwin
+.TH mintty 1 2009-03-16 0.3.7 Cygwin
 
 .SH NAME
 
@@ -578,6 +578,7 @@ Cursor keycodes without modifier keys depend on the terminal's
 editors and pagers.
 When one or more modifier keys are pressed, the application cursor mode is
 ignored, but the modifier code is inserted into the keycode as shown.
+The \fBHome\fP and \fBEnd\fP keys are considered cursor keys.
 
 .RS
 .TS
@@ -587,8 +588,10 @@ LB    LfC   LfC   LfC.
 Key        #app  #modified
 Up   #^[[A #^[OA #^[[1;\fIm\fPA
 Down #^[[B #^[OB #^[[1;\fIm\fPB
-Right#^[[C #^[OC #^[[1;\fIm\fPC
 Left #^[[D #^[OD #^[[1;\fIm\fPD
+Right#^[[C #^[OC #^[[1;\fIm\fPC
+Home #^[[H #^[OH #^[[1;\fIm\fPH
+End  #^[[F #^[OF #^[[1;\fIm\fPF
 .TE
 .RE
 
@@ -606,8 +609,6 @@ LB     LfC   LfC.
 Key         #modified
 Insert#^[[2~#^[[2;\fIm\fP~
 Delete#^[[3~#^[[3;\fIm\fP~
-Home  #^[[1~#^[[1;\fIm\fP~
-End   #^[[4~#^[[4;\fIm\fP~
 PgUp  #^[[5~#^[[5;\fIm\fP~
 PgDn  #^[[6~#^[[6;\fIm\fP~
 .TE
@@ -699,38 +700,56 @@ Target:  \fCC:\\Cygwin\\bin\\mintty.exe \f(CBssh server\fR
 
 The working directory for the session can be set in the "Start In:" field.
 (But note that the bash login profile cd's to the user's home directory.)
-
 Another convenient feature of shortcuts is the ability to assign global
 shortcut keys.
 
-
-.SS Global variables
-
-The standard Cygwin console that is based on the Windows Command Prompt
-is invoked from the script \fICygwin.bat\fP, which may include settings
-of environment variables, in particular \fIPATH\fP and \fICYGWIN\fP. 
-(See \fIhttp://www.cygwin.com/cygwin-ug-net/using-cygwinenv.html\fP on how to
-configure Cygwin using the \fICYGWIN\fP variable.)
-
-Unfortunately Windows shortcuts do not allow the setting of environment
-variables, but variables can be set globally in Windows via a button on the
-\fBAdvanced\fP tab of the \fBSystem Properties\fP.
-Alternatively, global variables can be set using the \fIsetx\fP command
-line utility, which comes pre-installed with some versions of Windows
-but is also available as part of the free (as in beer) \fBWindows 2003
-Resource Kit Tools\fP.
+Cygwin provides the \fBmkshortcut\fP utility for creating shortcuts from the
+command line.
+See its manual page for details.
 
 
 .SS Starting mintty from a batch file
 
-When starting MinTTY from a batch file, it needs to be invoked through the
-\fIstart\fP command, so as to avoid the batch file's console window staying
-open while MinTTY is running.
+In order to start MinTTY from a batch file it needs to be invoked through the
+\fIstart\fP command.
+This avoids the batch file's console window staying open while MinTTY is
+running.
 For example:
 
 .RS
 \fCstart mintty -\fP
 .RE
+
+
+.SS Environment variables
+
+Unfortunately Windows shortcuts do not allow the setting of environment
+variables. Variables can be set globally though via a button on the
+\fBAdvanced\fP tab of the \fBSystem Properties\fP.
+Those can be reached by right-clicking on \fBComputer\fP, selecting
+\fBProperties\fP, then \fBAdvanced System Settings\fP.
+
+Alternatively, global variables can be set using the \fIsetx\fP command
+line utility.
+This comes pre-installed with some versions of Windows but is also available 
+as part of the freely downloadable \fBWindows 2003 Resource Kit Tools\fP.
+
+Another way to set variables for the program to be run in \fBMinTTY\fP is by
+invoking it using the shell's \fB-c\fP option, which allows a shell command 
+to be passed as a string argument, e.g.:
+
+.RS
+\fCmintty sh -c "DISPLAY=:0 ssh -X server"\fP
+.RE
+
+
+.SS The CYGWIN variable
+
+The \fBCYGWIN\fP environment variable is used to control a number of settings
+for the Cygwin runtime system.
+Many of them apply to the Cygwin console only, but others can be useful
+with any Cygwin process.
+See \fIhttp://www.cygwin.com/cygwin-ug-net/using-cygwinenv.html\fP for details.
 
 
 .SS Terminal line settings
@@ -787,19 +806,6 @@ at \fI~/.inputrc\fP.
 It consists of bindings of keycodes to readline commands, whereby
 comments start with a hash character.
 The file format is explained fully in the bash manual.
-
-The default readline configuration does not support the \fBHome\fP and
-\fBEnd\fP keys.
-These two lines fix this:
-
-.RS
-.nf
-\fC
-"\e[1~": beginning-of-line
-"\e[4~": end-of-line
-\fP
-.fi
-.RE
 
 Anyone used to Windows key combinations for editing text might find the
 following bindings useful:
@@ -891,7 +897,7 @@ instead, it simply pretends to be an xterm.
 .SS Missing xterm features
 
 MinTTY is nowhere near as configurable as xterm, and its keycodes
-are fixed according to xterm's VT220-style keyboard behaviour (albeit
+are fixed according to xterm's PC-style keyboard behaviour (albeit
 with a number of MinTTY-specific extensions).
 Neither Tektronix 4014 emulation nor mouse highlighting mode are supported.
 

@@ -336,11 +336,11 @@ win_key_down(WPARAM wParam, LPARAM lParam)
       when VK_DOWN:  code = 'B';
       when VK_RIGHT: code = 'C';
       when VK_LEFT:  code = 'D';
-      when VK_CLEAR: code = 'E';
-      when VK_BROWSER_FORWARD:
-        code = 'F';
-      when VK_BROWSER_BACK:
-        code = 'G';
+      when VK_CLEAR: code = 'G';
+      when VK_HOME:  code = 'H';
+      when VK_END:   code = 'F';
+      when VK_BROWSER_BACK: code = 'J';
+      when VK_BROWSER_FORWARD: code = 'K';
       otherwise:
         goto not_arrow;
     }
@@ -360,8 +360,6 @@ win_key_down(WPARAM wParam, LPARAM lParam)
     switch (key) {
       when VK_PRIOR:  code = '5';
       when VK_NEXT:   code = '6';
-      when VK_HOME:   code = '1';
-      when VK_END:    code = '4';
       when VK_INSERT: code = '2';
       when VK_DELETE: code = '3';
       otherwise:

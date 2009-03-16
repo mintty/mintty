@@ -602,6 +602,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_RESET:
           term_reset();
           term_deselect();
+          term_clear_scrollback();
+          win_update();
           ldisc_send(null, 0, 0);
         when IDM_ABOUT: win_about();
         when IDM_FULLSCREEN: flip_full_screen();
