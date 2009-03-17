@@ -515,7 +515,7 @@ reconfig(void)
   * case where local editing has just been disabled.
   */
   ldisc_send(null, 0, 0);
-  win_reconfig_palette();
+  win_reset_palette();
 
  /* Pass new config data to the terminal */
   term_reconfig();
