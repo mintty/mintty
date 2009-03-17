@@ -37,7 +37,6 @@ void win_init_fonts(void);
 void win_deinit_fonts(void);
 
 void win_init_palette(void);
-void win_reconfig_palette(void);
 
 void win_about(void);
 bool win_config(void);

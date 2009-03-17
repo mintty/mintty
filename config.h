@@ -51,6 +51,7 @@ typedef struct {
  /* Colour options */
   int bold_as_bright;
   colour fg_colour, bg_colour, cursor_colour;
+  colour ansi_colours[16];
   int transparency;
   int opaque_when_focused;
  /* translations */

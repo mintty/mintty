@@ -411,9 +411,25 @@ typedef const struct {
 
 static colour_setting
 colour_settings[] = {
-  {"ForegroundColour", offcfg(fg_colour), {191, 191, 191}},
-  {"BackgroundColour", offcfg(bg_colour), {0, 0, 0}},
-  {"CursorColour", offcfg(cursor_colour), {191, 191, 191}},
+  {"ForegroundColour",       offcfg(fg_colour), {191, 191, 191}},
+  {"BackgroundColour",       offcfg(bg_colour), {  0,   0,   0}},
+  {"CursorColour",       offcfg(cursor_colour), {191, 191, 191}},
+  {"AnsiBlack",       offcfg(ansi_colours[ 0]), {  0,   0,   0}},
+  {"AnsiRed",         offcfg(ansi_colours[ 1]), {191,   0,   0}},
+  {"AnsiGreen",       offcfg(ansi_colours[ 2]), {  0, 191,   0}},
+  {"AnsiYellow",      offcfg(ansi_colours[ 3]), {191, 191,   0}},
+  {"AnsiBlue",        offcfg(ansi_colours[ 4]), {  0,   0, 191}},
+  {"AnsiMagenta",     offcfg(ansi_colours[ 5]), {191,   0, 191}},
+  {"AnsiCyan",        offcfg(ansi_colours[ 6]), {  0, 191, 191}},
+  {"AnsiWhite",       offcfg(ansi_colours[ 7]), {191, 191, 191}},
+  {"AnsiBoldBlack",   offcfg(ansi_colours[ 8]), { 64,  64,  64}},
+  {"AnsiBoldRed",     offcfg(ansi_colours[ 9]), {255,  64,  64}},
+  {"AnsiBoldGreen",   offcfg(ansi_colours[10]), { 64, 255,  64}},
+  {"AnsiBoldYellow",  offcfg(ansi_colours[11]), {255, 255,  64}},
+  {"AnsiBoldBlue",    offcfg(ansi_colours[12]), { 64,  64, 255}},
+  {"AnsiBoldMagenta", offcfg(ansi_colours[13]), {255,  64, 255}},
+  {"AnsiBoldCyan",    offcfg(ansi_colours[14]), { 64, 255, 255}},
+  {"AnsiBoldWhite",   offcfg(ansi_colours[15]), {255, 255, 255}},
 };
 
 void
