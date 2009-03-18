@@ -618,8 +618,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_FULLSCREEN: flip_full_screen();
         when IDM_OPTIONS: reconfig();
         when IDM_DUPLICATE:
-          spawnv(_P_DETACH, *main_argv, (const char *const *) main_argv);
-          
+          spawnv(_P_DETACH, "/proc/self/exe", (void *)main_argv);
       }
     when WM_VSCROLL:
       if (term_which_screen() == 0) {
