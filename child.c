@@ -112,15 +112,16 @@ char *
 child_create(char *argv[], struct winsize *winp)
 {
   struct passwd *pw = getpwuid(getuid());
-  
-  char *cmd = (pw ? pw->pw_shell : 0) ?: "/bin/sh";  
-  if (!*argv)
-    argv = (char *[]){cmd, 0};
-  else if (argv[1] || strcmp(*argv, "-"))
+  char *cmd; 
+  if (*argv && (argv[1] || strcmp(*argv, "-") != 0))
     cmd = *argv;
-  else {  
-    char *slash_p = strrchr(cmd, '/');
-    asprintf(argv, "-%s", slash_p ? slash_p + 1 : cmd);
+  else {
+    cmd = (pw ? pw->pw_shell : 0) ?: "/bin/sh";
+    char *last_slash = strrchr(cmd, '/');
+    char *name = last_slash ? last_slash + 1 : cmd;
+    if (*argv)
+      asprintf(&name, "-%s", name);
+    argv = (char *[]){name, 0};
   }
   
   // Create the child process and pseudo terminal.

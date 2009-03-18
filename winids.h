@@ -16,6 +16,6 @@
 #define IDM_FULLSCREEN 0x0050
 #define IDM_ABOUT      0x0060
 #define IDM_OPTIONS    0x0070
-#define IDM_EXIT       0x0080
+#define IDM_DUPLICATE  0x0080
 
 #endif

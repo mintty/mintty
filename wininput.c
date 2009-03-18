@@ -28,8 +28,11 @@ win_init_menu(void)
   AppendMenu(menu, MF_ENABLED, IDM_ABOUT, "&About...");
 
   HMENU sysmenu = GetSystemMenu(wnd, false);
-  InsertMenu(sysmenu, 0, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
-  InsertMenu(sysmenu, 0, MF_BYPOSITION|MF_ENABLED, IDM_OPTIONS, "&Options...");
+  InsertMenu(sysmenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
+  InsertMenu(sysmenu, 0, MF_BYPOSITION | MF_ENABLED,
+             IDM_OPTIONS, "&Options...");
+  InsertMenu(sysmenu, SC_CLOSE, MF_BYCOMMAND | MF_ENABLED,
+             IDM_DUPLICATE, "&Duplicate");
 }
 
 void
@@ -226,6 +229,10 @@ win_key_down(WPARAM wParam, LPARAM lParam)
   if (alt && !ctrl) {
     if (key == VK_F4 && cfg.close_on_alt_f4) {
       SendMessage(wnd, WM_CLOSE, 0, 0);
+      return 1;
+    }
+    if (key == VK_F2 && cfg.duplicate_on_alt_f2) {
+      SendMessage(wnd, WM_SYSCOMMAND, IDM_DUPLICATE, 0);
       return 1;
     }
     if (key == VK_SPACE) {

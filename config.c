@@ -172,7 +172,11 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(scrollbar))
   );
   ctrl_checkbox(
-    s, "Close on Alt+F4", 'a', P(0),
+    s, "Duplicate on Alt+F2", '2', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(duplicate_on_alt_f2))
+  );
+  ctrl_checkbox(
+    s, "Close on Alt+F4", '4', P(0),
     dlg_stdcheckbox_handler, I(offcfg(close_on_alt_f4))
   );
   
@@ -367,6 +371,7 @@ int_settings[] = {
   {"Transparency", offcfg(transparency), 0},
   {"OpaqueWhenFocused", offcfg(opaque_when_focused), 0},
   {"Scrollbar", offcfg(scrollbar), true},
+  {"DuplicateOnAltF2", offcfg(duplicate_on_alt_f2), true},
   {"CloseOnAltF4", offcfg(close_on_alt_f4), true},
   {"BoldAsBright", offcfg(bold_as_bright), true},
   {"AllowBlinking", offcfg(allow_blinking), true},
