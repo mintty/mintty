@@ -776,25 +776,13 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
   return DefWindowProc(wnd, message, wp, lp);
 }
 
-static const char short_opts[] = "+hvc:p:s:t:";
-
-static const struct option
-opts[] = { 
-  {"help", no_argument, 0, 'h'},
-  {"version", no_argument, 0, 'v'},
-  {"config", required_argument, 0, 'c'},
-  {"pos", required_argument, 0, 'p'},
-  {"size", required_argument, 0, 's'},
-  {"title", required_argument, 0, 't'},
-  {0, 0, 0, 0}
-};
-
 static const char *help =
-  "Usage: %s [OPTION]... [ - | COMMAND [ARG]... ]\n"
+  "Usage: %s [OPTION]... [-e] [ - | COMMAND [ARG]... ]\n"
   "\n"
   "If no command is given, the user's default shell is invoked as a non-login\n"
-  "shell. If the command is a single minus sign, the default shell is invoked\n"
-  "as a login shell. Otherwise the command is invoked with the given arguments.\n"
+  "shell. If the command is a single dash, the default shell is invoked as a\n"
+  "login shell. Otherwise, the command is invoked with the given arguments.\n"
+  "The command can be preceded by -e (for execute), but that is not required.\n"
   "\n"
   "Options:\n"
   "  -c, --config=FILE     Use specified config file (default: ~/.minttyrc)\n"
@@ -805,6 +793,19 @@ static const char *help =
   "  -h, --help            Display this help message and exit\n"
 ;
 
+static const char short_opts[] = "+hvec:p:s:t:";
+
+static const struct option
+opts[] = { 
+  {"help",    no_argument,       0, 'h'},
+  {"version", no_argument,       0, 'v'},
+  {"config",  required_argument, 0, 'c'},
+  {"pos",     required_argument, 0, 'p'},
+  {"size",    required_argument, 0, 's'},
+  {"title",   required_argument, 0, 't'},
+  {0, 0, 0, 0}
+};
+
 int
 main(int argc, char *argv[])
 {
@@ -813,33 +814,36 @@ main(int argc, char *argv[])
   bool size_override = false;
   uint rows = 0, cols = 0;
 
-  int opt;
-  while ((opt = getopt_long(argc, argv, short_opts, opts, 0)) != -1) {
+  for (;;) {
+    int opt = getopt_long(argc, argv, short_opts, opts, 0);
+    if (opt == -1 || opt == 'e')
+      break;
     switch (opt) {
+      when 'c':
+        config_filename = optarg;
+      when 'p':
+        if (sscanf(optarg, "%i,%i%1s", &x, &y, (char[2]){}) != 2) {
+          fprintf(stderr, "%s: syntax error in position argument -- %s\n",
+                          *argv, optarg);
+          exit(1);
+        }
+      when 's':
+        if (sscanf(optarg, "%u,%u%1s", &cols, &rows, (char[2]){}) != 2) {
+          fprintf(stderr, "%s: syntax error in size argument -- %s\n",
+                          *argv, optarg);
+          exit(1);
+        }
+        size_override = true;
+      when 't':
+        title = optarg;
       when 'h':
         printf(help, *argv);
         return 0;
       when 'v':
         puts(APPNAME " " APPVER "\n" COPYRIGHT);
         return 0;
-      when 'c': config_filename = optarg;
-      when 'p': {
-        char s[2];
-        if (sscanf(optarg, "%i,%i%1s", &x, &y, s) != 2) {
-          fputs("Syntax error in position argument\n", stderr);
-          exit(1);
-        }
-      }
-      when 's': {
-        char s[2];
-        if (sscanf(optarg, "%u,%u%1s", &cols, &rows, s) != 2) {
-          fputs("Syntax error in size argument\n", stderr);
-          exit(1);
-        }
-        size_override = true;
-      }
-      when 't': title = optarg;
-      otherwise: exit(1);
+      otherwise:
+        exit(1);
     }
   }
   
