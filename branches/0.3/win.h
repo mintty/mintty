@@ -14,7 +14,7 @@ void win_bell(int);
 
 void win_set_title(char *);
 void win_set_sbar(int, int, int);
-void win_set_palette(int, int, int, int);
+void win_set_palette(uint n, uint8 r, uint8 g, uint8 b);
 void win_reset_palette(void);
 
 void win_move(int x, int y);
