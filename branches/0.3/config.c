@@ -172,11 +172,10 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(scrollbar))
   );
   ctrl_checkbox(
-    s, "Close on Alt+F4", 'a', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(close_on_alt_f4))
+    s, "Enable Alt+key shortcuts", 'a', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
   );
   
-
  /*
   * The Looks panel.
   */
@@ -363,7 +362,7 @@ int_settings[] = {
   {"Transparency", offcfg(transparency), 0},
   {"OpaqueWhenFocused", offcfg(opaque_when_focused), 0},
   {"Scrollbar", offcfg(scrollbar), true},
-  {"CloseOnAltF4", offcfg(close_on_alt_f4), true},
+  {"WindowShortcuts", offcfg(window_shortcuts), true},
   {"BoldAsBright", offcfg(bold_as_bright), true},
   {"AllowBlinking", offcfg(allow_blinking), true},
   {"CursorType", offcfg(cursor_type), 2},

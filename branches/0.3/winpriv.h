@@ -46,8 +46,8 @@ void win_enable_tip(void);
 void win_disable_tip(void);
 void win_update_tip(HWND src, int cx, int cy);
 
-void win_init_menu(void);
-void win_update_menu(void);
+void win_init_menus(void);
+void win_update_menus(void);
 
 void win_show_mouse(void);
 void win_mouse_click(mouse_button, LPARAM);

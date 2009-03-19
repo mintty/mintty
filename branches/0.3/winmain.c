@@ -11,6 +11,7 @@
 #include "linedisc.h"
 #include "child.h"
 
+#include <process.h>
 #include <getopt.h>
 #include <imm.h>
 #include <winnls.h>
@@ -31,6 +32,8 @@ static int prev_rows, prev_cols;
 static bool flashing;
 
 static bool child_dead;
+
+static char **main_argv;
 
 void
 win_set_timer(void (*cb)(void), uint ticks)
@@ -488,14 +491,6 @@ update_transparency()
 }
 
 static void
-update_alt_f4(void)
-{
-  char *text = cfg.close_on_alt_f4 ? "Close\tAlt+F4" : "Close";
-  HMENU sysmenu = GetSystemMenu(wnd, false);
-  ModifyMenu(sysmenu, SC_CLOSE, MF_BYCOMMAND | MF_STRING, SC_CLOSE, text); 
-}
-
-static void
 reconfig(void)
 {
   static bool reconfiguring = false;
@@ -548,7 +543,6 @@ reconfig(void)
       cfg.bold_as_bright != prev_cfg.bold_as_bright)
     init_lvl = 2;
   
-  update_alt_f4();
   update_transparency();
   InvalidateRect(wnd, null, true);
   reset_window(init_lvl);
@@ -608,6 +602,9 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_ABOUT: win_about();
         when IDM_FULLSCREEN: flip_full_screen();
         when IDM_OPTIONS: reconfig();
+        when IDM_DUPLICATE:
+          spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv);
+          
       }
     when WM_VSCROLL:
       if (term_which_screen() == 0) {
@@ -766,7 +763,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       return 0;
     }
     when WM_INITMENU:
-      win_update_menu();
+      win_update_menus();
       return 0;
   }
  /*
@@ -847,6 +844,8 @@ main(int argc, char *argv[])
     }
   }
   
+  main_argv = argv;
+  
   if (!config_filename)
     asprintf(&config_filename, "%s/.minttyrc", getenv("HOME"));
 
@@ -895,8 +894,7 @@ main(int argc, char *argv[])
                         guess_width, guess_height, null, null, inst, null);
   }
 
-  win_init_menu();
-  update_alt_f4();
+  win_init_menus();
   
  /*
   * Initialise the terminal. (We have to do this _after_
