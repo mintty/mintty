@@ -16,7 +16,8 @@ mintty - Cygwin terminal emulator
 
 .SH SYNOPSIS
 
-\fBmintty\fP [\fIOPTION\fP]... [\fB-e\fP] [ \fB-\fP | \fICOMMAND\fP [\fIARG\fP]... ]
+\fBmintty\fP [\fIOPTION\fP]... [\fB-e\fP] [ \fB-\fP | \fICOMMAND\fP
+[\fIARG\fP]... ]
 
 
 .SH DESCRIPTION
@@ -210,9 +211,17 @@ Show the scrollbar for accessing the scrollback buffer on the right of the
 window.
 
 .TP
-\fBClose on Alt-F4\fP (CloseOnAltF4=1)
-If enabled, close the window when \fBAlt-F4\fP is pressed, otherwise send the
-appropriate keycode to the terminal application.
+\fBEnable Alt+key shortcuts\fP (WindowShortcuts=1)
+Controls shortcuts for window commands. When disabled, these combinations
+send their regular keycodes to the application.
+
+.RS
+.PD 0
+.IP "\- \fBAlt+Space\fP: Menu"
+.IP "\- \fBAlt+Enter\fP: Fullscreen"
+.IP "\- \fBAlt+F2\fP: Duplicate"
+.IP "\- \fBAlt+F4\fP: Close"
+.RE
 
 
 .SS Looks
@@ -536,11 +545,11 @@ tab(#) nospaces;
 LI        s     LB    LB    LB    LB    LB
 LB        LfC   LfC   LfC   LfC   LfC   LfC.
 Key            #Shift#Crtl #C+S   #Alt  #A+S
-Space    #\fIsp#\fIsp#^@   #^[^@
-Enter    #^M   #J    #^^   #^[^^
-Tab      #^I   #^[[Z #^[Oz #^[OZ
+Space    #\fIsp#\fIsp#^@   #^[^@  #^[\fIsp#^[\fIsp
+Enter    #^M   #^J   #^^   #^[^^  #^[^M #^[J
 Back (^H)#^H   #^H   #^?   #^[^?  #^[^H #^[\fIsp
 Back (^?)#^?   #^?   #^_   #^[^_  #^[^? #^[\fIsp
+Tab      #^I   #^[[Z #^[Oz #^[OZ
 Esc (^[) #^[   #^]
 Esc (^\(rs)#^\(rs#^]
 Pause    #^]   #^[^]
