@@ -762,6 +762,29 @@ with any Cygwin process.
 See \fIhttp://www.cygwin.com/cygwin-ug-net/using-cygwinenv.html\fP for details.
 
 
+.SS Changing the ANSI colours
+
+A number of settings can be controlled through terminal control sequences,
+including the colour values for the 16 ANSI colours.
+Here is the xterm sequence for this, whereby \fInum\fP stands for the ANSI
+number and \fIrrggbb\fP stands for a hexadecimal RGB colour value.
+
+.RS
+\fC^[]4;\fInum\fP;#\fIrrggbb\fP^G\fR
+.RE
+
+The \fB-e\fP option to the \fBecho\fP command is useful for emitting
+control sequences.
+For example, to turn yellow (colour 3) up to its full brightness:
+
+.RS
+\fCecho -e "\\e]4;3;#FFFF00\a"\fP
+.RE
+
+Sequences such as this can be included in scripts or on the \fBmintty\fP
+command line with the help of \fBsh -c\fP.
+
+
 .SS Terminal line settings
 
 Terminal line settings can be viewed or changed with the \fBstty\fP utility,
@@ -915,7 +938,7 @@ Neither Tektronix 4014 emulation nor mouse highlighting mode are supported.
 .SH SEE ALSO
 
 \fIstty(1)\fP, \fIterminfo\fP(5), \fIbash\fP(1), \fIssh\fP(1),
-\fIlesskey\fP(1), \fImkshortcut\fP(1)
+\fIecho\fP(1), \fIlesskey\fP(1), \fImkshortcut\fP(1)
 
 \fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.html\fP
 
