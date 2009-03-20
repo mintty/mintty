@@ -1,5 +1,5 @@
 name := mintty
-version := 0.3.7
+version := 0.3.8
 
 exe := $(name).exe
 dir := $(name)-$(version)
