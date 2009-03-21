@@ -39,13 +39,11 @@ typedef struct {
   int bell_type;
   int bell_ind;
   int scrollbar;
-  int duplicate_on_alt_f2;
-  int close_on_alt_f4;
+  int window_shortcuts;
   int scroll_mod;
   int click_targets_app;
   int click_target_mod;
   int right_click_action;
-  int click_moves_cmd_cursor;
   int allow_blinking;
   int rows, cols;
   char printer[128];

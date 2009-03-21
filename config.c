@@ -172,15 +172,10 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(scrollbar))
   );
   ctrl_checkbox(
-    s, "Duplicate on Alt+F2", '2', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(duplicate_on_alt_f2))
-  );
-  ctrl_checkbox(
-    s, "Close on Alt+F4", '4', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(close_on_alt_f4))
+    s, "Enable Alt+key shortcuts", 'a', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
   );
   
-
  /*
   * The Looks panel.
   */
@@ -300,14 +295,10 @@ setup_config_box(controlbox * b)
     null
   );
   
-  s = ctrl_getset(b, "Mouse", "mouseopts", null);
+  s = ctrl_getset(b, "Mouse", "selectcopy", null);
   ctrl_checkbox(
-    s, "Copy on select", 'y', P(0),
+    s, "Copy on select", 's', P(0),
     dlg_stdcheckbox_handler, I(offcfg(copy_on_select))
-  );
-  ctrl_checkbox(
-    s, "Clicks move command line cursor", 'l', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(click_moves_cmd_cursor))
   );
 
   s = ctrl_getset(b, "Mouse", "mousemode", "Application mouse mode");
@@ -371,8 +362,7 @@ int_settings[] = {
   {"Transparency", offcfg(transparency), 0},
   {"OpaqueWhenFocused", offcfg(opaque_when_focused), 0},
   {"Scrollbar", offcfg(scrollbar), true},
-  {"DuplicateOnAltF2", offcfg(duplicate_on_alt_f2), true},
-  {"CloseOnAltF4", offcfg(close_on_alt_f4), true},
+  {"WindowShortcuts", offcfg(window_shortcuts), true},
   {"BoldAsBright", offcfg(bold_as_bright), true},
   {"AllowBlinking", offcfg(allow_blinking), true},
   {"CursorType", offcfg(cursor_type), 2},
@@ -387,7 +377,6 @@ int_settings[] = {
   {"ScrollMod", offcfg(scroll_mod), SHIFT},
   {"RightClickAction", offcfg(right_click_action), RC_SHOWMENU},
   {"CopyOnSelect", offcfg(copy_on_select), false},
-  {"ClickMovesCmdCursor", offcfg(click_moves_cmd_cursor), true},
   {"ClickTargetsApp", offcfg(click_targets_app), true},
   {"ClickTargetMod", offcfg(click_target_mod), SHIFT},
   {"BellType", offcfg(bell_type), BELL_SOUND},

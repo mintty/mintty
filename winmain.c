@@ -491,20 +491,6 @@ update_transparency()
 }
 
 static void
-update_shortcuts(void)
-{
-  HMENU sysmenu = GetSystemMenu(wnd, false);
-  ModifyMenu(
-    sysmenu, SC_CLOSE, MF_BYCOMMAND | MF_STRING, SC_CLOSE,
-    cfg.close_on_alt_f4 ? "&Close\tAlt+F4" : "&Close"
-  ); 
-  ModifyMenu(
-    sysmenu, IDM_DUPLICATE, MF_BYCOMMAND | MF_STRING, IDM_DUPLICATE,
-    cfg.duplicate_on_alt_f2 ? "&Duplicate\tAlt+F2" : "&Duplicate"
-  );
-}
-
-static void
 reconfig(void)
 {
   static bool reconfiguring = false;
@@ -557,7 +543,6 @@ reconfig(void)
       cfg.bold_as_bright != prev_cfg.bold_as_bright)
     init_lvl = 2;
   
-  update_shortcuts();
   update_transparency();
   InvalidateRect(wnd, null, true);
   reset_window(init_lvl);
@@ -618,7 +603,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_FULLSCREEN: flip_full_screen();
         when IDM_OPTIONS: reconfig();
         when IDM_DUPLICATE:
-          spawnv(_P_DETACH, "/proc/self/exe", (void *)main_argv);
+          spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv);
+          
       }
     when WM_VSCROLL:
       if (term_which_screen() == 0) {
@@ -659,8 +645,10 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_IGNORE_CLIP:
       ignore_clip = wp;     /* don't panic on DESTROYCLIPBOARD */
     when WM_DESTROYCLIPBOARD:
-      if (!ignore_clip)
+      if (!ignore_clip) {
         term_deselect();
+        win_update();
+      }
       ignore_clip = false;
       return 0;
     when WM_PAINT:
@@ -775,7 +763,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       return 0;
     }
     when WM_INITMENU:
-      win_update_menu();
+      win_update_menus();
       return 0;
   }
  /*
@@ -785,25 +773,13 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
   return DefWindowProc(wnd, message, wp, lp);
 }
 
-static const char short_opts[] = "+hvc:p:s:t:";
-
-static const struct option
-opts[] = { 
-  {"help", no_argument, 0, 'h'},
-  {"version", no_argument, 0, 'v'},
-  {"config", required_argument, 0, 'c'},
-  {"pos", required_argument, 0, 'p'},
-  {"size", required_argument, 0, 's'},
-  {"title", required_argument, 0, 't'},
-  {0, 0, 0, 0}
-};
-
 static const char *help =
-  "Usage: %s [OPTION]... [ - | COMMAND [ARG]... ]\n"
+  "Usage: %s [OPTION]... [-e] [ - | COMMAND [ARG]... ]\n"
   "\n"
   "If no command is given, the user's default shell is invoked as a non-login\n"
-  "shell. If the command is a single minus sign, the default shell is invoked\n"
-  "as a login shell. Otherwise the command is invoked with the given arguments.\n"
+  "shell. If the command is a single dash, the default shell is invoked as a\n"
+  "login shell. Otherwise, the command is invoked with the given arguments.\n"
+  "The command can be preceded by -e (for execute), but that is not required.\n"
   "\n"
   "Options:\n"
   "  -c, --config=FILE     Use specified config file (default: ~/.minttyrc)\n"
@@ -814,6 +790,19 @@ static const char *help =
   "  -h, --help            Display this help message and exit\n"
 ;
 
+static const char short_opts[] = "+hvec:p:s:t:";
+
+static const struct option
+opts[] = { 
+  {"help",    no_argument,       0, 'h'},
+  {"version", no_argument,       0, 'v'},
+  {"config",  required_argument, 0, 'c'},
+  {"pos",     required_argument, 0, 'p'},
+  {"size",    required_argument, 0, 's'},
+  {"title",   required_argument, 0, 't'},
+  {0, 0, 0, 0}
+};
+
 int
 main(int argc, char *argv[])
 {
@@ -822,33 +811,36 @@ main(int argc, char *argv[])
   bool size_override = false;
   uint rows = 0, cols = 0;
 
-  int opt;
-  while ((opt = getopt_long(argc, argv, short_opts, opts, 0)) != -1) {
+  for (;;) {
+    int opt = getopt_long(argc, argv, short_opts, opts, 0);
+    if (opt == -1 || opt == 'e')
+      break;
     switch (opt) {
+      when 'c':
+        config_filename = optarg;
+      when 'p':
+        if (sscanf(optarg, "%i,%i%1s", &x, &y, (char[2]){}) != 2) {
+          fprintf(stderr, "%s: syntax error in position argument -- %s\n",
+                          *argv, optarg);
+          exit(1);
+        }
+      when 's':
+        if (sscanf(optarg, "%u,%u%1s", &cols, &rows, (char[2]){}) != 2) {
+          fprintf(stderr, "%s: syntax error in size argument -- %s\n",
+                          *argv, optarg);
+          exit(1);
+        }
+        size_override = true;
+      when 't':
+        title = optarg;
       when 'h':
         printf(help, *argv);
         return 0;
       when 'v':
         puts(APPNAME " " APPVER "\n" COPYRIGHT);
         return 0;
-      when 'c': config_filename = optarg;
-      when 'p': {
-        char s[2];
-        if (sscanf(optarg, "%i,%i%1s", &x, &y, s) != 2) {
-          fputs("Syntax error in position argument\n", stderr);
-          exit(1);
-        }
-      }
-      when 's': {
-        char s[2];
-        if (sscanf(optarg, "%u,%u%1s", &cols, &rows, s) != 2) {
-          fputs("Syntax error in size argument\n", stderr);
-          exit(1);
-        }
-        size_override = true;
-      }
-      when 't': title = optarg;
-      otherwise: exit(1);
+      otherwise:
+        exit(1);
     }
   }
   
@@ -902,8 +894,7 @@ main(int argc, char *argv[])
                         guess_width, guess_height, null, null, inst, null);
   }
 
-  win_init_menu();
-  update_shortcuts();
+  win_init_menus();
   
  /*
   * Initialise the terminal. (We have to do this _after_

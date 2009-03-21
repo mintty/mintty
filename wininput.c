@@ -8,47 +8,23 @@
 #include "config.h"
 #include "math.h"
 
-static HMENU menu;
+static HMENU menu, sysmenu;
 
 void
-win_init_menu(void)
+win_update_menus(void)
 {
-  menu = CreatePopupMenu();
-  AppendMenu(menu, MF_ENABLED, IDM_COPY, "&Copy\tCtrl+Ins");
-  AppendMenu(menu, MF_ENABLED, IDM_PASTE, "&Paste\tShift+Ins");
-  AppendMenu(menu, MF_SEPARATOR, 0, 0);
-  AppendMenu(menu, MF_ENABLED, IDM_SELALL, "&Select All");
-  AppendMenu(menu, MF_SEPARATOR, 0, 0);
-  AppendMenu(menu, MF_ENABLED, IDM_RESET, "&Reset");
-  AppendMenu(menu, MF_SEPARATOR, 0, 0);
-  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED,
-             IDM_FULLSCREEN, "&Full Screen\tAlt+Enter");
-  AppendMenu(menu, MF_ENABLED, IDM_OPTIONS, "&Options...");
-  AppendMenu(menu, MF_SEPARATOR, 0, 0);
-  AppendMenu(menu, MF_ENABLED, IDM_ABOUT, "&About...");
-
-  HMENU sysmenu = GetSystemMenu(wnd, false);
-  InsertMenu(sysmenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
-  InsertMenu(sysmenu, 0, MF_BYPOSITION | MF_ENABLED,
-             IDM_OPTIONS, "&Options...");
-  InsertMenu(sysmenu, SC_CLOSE, MF_BYCOMMAND | MF_ENABLED,
-             IDM_DUPLICATE, "&Duplicate");
-}
-
-void
-win_popup_menu(void)
-{
-  POINT p;
-  GetCursorPos(&p);
-  TrackPopupMenu(
-    menu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
-    p.x, p.y, 0, wnd, null
+  ModifyMenu(
+    menu, IDM_FULLSCREEN, MF_BYCOMMAND | MF_STRING, IDM_FULLSCREEN,
+    cfg.window_shortcuts ? "&Fullscreen\tAlt+Enter" : "&Fullscreen"
   );
-}
-
-void
-win_update_menu(void)
-{
+  ModifyMenu(
+    sysmenu, SC_CLOSE, MF_BYCOMMAND | MF_STRING, SC_CLOSE,
+    cfg.window_shortcuts ? "&Close\tAlt+F4" : "&Close"
+  ); 
+  ModifyMenu(
+    sysmenu, IDM_DUPLICATE, MF_BYCOMMAND | MF_STRING, IDM_DUPLICATE,
+    cfg.window_shortcuts ? "&Duplicate\tAlt+F2" : "&Duplicate"
+  );
   EnableMenuItem(menu, IDM_COPY, term_selected() ? MF_ENABLED : MF_GRAYED);
   EnableMenuItem(
     menu, IDM_PASTE,
@@ -61,6 +37,42 @@ win_update_menu(void)
   CheckMenuItem(menu, IDM_FULLSCREEN, fullscreen ? MF_CHECKED : MF_UNCHECKED);
 }
 
+void
+win_init_menus(void)
+{
+  menu = CreatePopupMenu();
+  AppendMenu(menu, MF_ENABLED, IDM_COPY, "&Copy\tCtrl+Ins");
+  AppendMenu(menu, MF_ENABLED, IDM_PASTE, "&Paste\tShift+Ins");
+  AppendMenu(menu, MF_SEPARATOR, 0, 0);
+  AppendMenu(menu, MF_ENABLED, IDM_SELALL, "&Select All");
+  AppendMenu(menu, MF_SEPARATOR, 0, 0);
+  AppendMenu(menu, MF_ENABLED, IDM_RESET, "&Reset");
+  AppendMenu(menu, MF_SEPARATOR, 0, 0);
+  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED,
+             IDM_FULLSCREEN, "&Fullscreen\tAlt+Enter");
+  AppendMenu(menu, MF_ENABLED, IDM_OPTIONS, "&Options...");
+  AppendMenu(menu, MF_SEPARATOR, 0, 0);
+  AppendMenu(menu, MF_ENABLED, IDM_ABOUT, "&About...");
+
+  sysmenu = GetSystemMenu(wnd, false);
+  InsertMenu(sysmenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
+  InsertMenu(sysmenu, 0, MF_BYPOSITION | MF_ENABLED,
+                         IDM_OPTIONS, "&Options...");
+  InsertMenu(sysmenu, SC_CLOSE, MF_BYCOMMAND | MF_ENABLED, IDM_DUPLICATE, 0);
+ 
+  win_update_menus();
+}
+
+void
+win_popup_menu(void)
+{
+  POINT p;
+  GetCursorPos(&p);
+  TrackPopupMenu(
+    menu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
+    p.x, p.y, 0, wnd, null
+  );
+}
 
 inline static bool
 is_key_down(uchar vk)
@@ -225,21 +237,20 @@ win_key_down(WPARAM wParam, LPARAM lParam)
   if (alt_state)
     return 1;
   
-  // Specials
-  if (alt && !ctrl) {
-    if (key == VK_F4 && cfg.close_on_alt_f4) {
-      SendMessage(wnd, WM_CLOSE, 0, 0);
-      return 1;
+  // Window command
+  if (alt && !ctrl && cfg.window_shortcuts) {
+    WPARAM cmd;
+    switch (key) {
+      when VK_RETURN: cmd = IDM_FULLSCREEN;
+      when VK_SPACE:  cmd = SC_KEYMENU; 
+      when VK_F2:     cmd = IDM_DUPLICATE;
+      when VK_F4:     cmd = SC_CLOSE;
+      otherwise: goto not_window_command;
     }
-    if (key == VK_F2 && cfg.duplicate_on_alt_f2) {
-      SendMessage(wnd, WM_SYSCOMMAND, IDM_DUPLICATE, 0);
-      return 1;
-    }
-    if (key == VK_SPACE) {
-      SendMessage(wnd, WM_SYSCOMMAND, SC_KEYMENU, ' ');
-      return 1;
-    }
+    SendMessage(wnd, WM_SYSCOMMAND, cmd, ' ');
+    return 1;
   }
+  not_window_command:
   
   // Context menu
   if (key == VK_APPS) {
@@ -297,43 +308,34 @@ win_key_down(WPARAM wParam, LPARAM lParam)
     switch (key) {
       when VK_ESCAPE or VK_PAUSE or VK_CANCEL or VK_TAB:
         return 0;
-      when VK_RETURN:
+      when VK_RETURN or VK_SPACE:
         if (ctrl)
           return 0;
-        // Alt-Enter: toggle fullscreen
-        SendMessage(wnd, WM_SYSCOMMAND, IDM_FULLSCREEN, 0);
-        return 1;
-      when VK_BACK:
-        if (ctrl)
-          return 0;
-        ch('\e');
-        ch(shift ? ' ' : cfg.backspace_sends_del ? 0x7F : '\b');
-        goto send;
     }
+  }      
+  switch (key) {
+    when VK_ESCAPE:
+      ctrl_ch(shift ? ']' : cfg.escape_sends_fs ? '\\' : '[');
+    when VK_PAUSE:
+      esc(shift); ctrl_ch(']');
+    when VK_CANCEL:
+      esc(shift); ctrl_ch('\\');
+    when VK_TAB:
+      str(ctrl ? (shift ? "\e[z" : "\eOz") : (shift ? "\e[Z" : "\t"));
+    when VK_RETURN:
+      ctrl 
+      ? (esc(shift), ctrl_ch('^'))
+      : (esc(alt), 
+         shift ? ch('\n') : term_newline_mode() ? str("\r\n") : ch('\r'));
+    when VK_BACK:
+      ctrl 
+      ? (esc(shift), ch(cfg.backspace_sends_del ? 0x1F : 0x7F)) 
+      : (esc(alt), 
+         ch(shift && alt ? ' ' : cfg.backspace_sends_del ? 0x7F : '\b'));
+    otherwise:
+      goto not_grey;
   }
-  else { // !alt
-    switch (key) {
-      when VK_ESCAPE:
-        ctrl_ch(shift ? ']' : cfg.escape_sends_fs ? '\\' : '[');
-      when VK_PAUSE:
-        esc(shift); ctrl_ch(']');
-      when VK_CANCEL:
-        esc(shift); ctrl_ch('\\');
-      when VK_TAB:
-        str(ctrl ? (shift ? "\e[z" : "\eOz") : (shift ? "\e[Z" : "\t"));
-      when VK_RETURN:
-        ctrl 
-        ? (esc(shift), ctrl_ch('^'))
-        : shift ? ch('\n') : term_newline_mode() ? str("\r\n") : ch('\r');
-      when VK_BACK:
-        ctrl 
-        ? (esc(shift), cfg.backspace_sends_del ? ctrl_ch('_') : ch(0x7F)) 
-        : ch(cfg.backspace_sends_del ? 0x7F : '\b');
-      otherwise:
-        goto not_grey;
-    }
-    goto send;
-  }
+  goto send;
   not_grey:
   
   // Arrow keys and clear key.

@@ -7,7 +7,7 @@
 .\" 3 November 2008 (or later) as specified.
 .\" Turn off Right Justification
 .ad l
-.TH mintty 1 2009-03-16 0.3.7 Cygwin
+.TH mintty 1 2009-03-20 0.3.8 Cygwin
 
 .SH NAME
 
@@ -16,7 +16,8 @@ mintty - Cygwin terminal emulator
 
 .SH SYNOPSIS
 
-\fBmintty\fP [\fIOPTION\fP]... [ \fB-\fP | \fICOMMAND\fP [\fIARG\fP]... ]
+\fBmintty\fP [\fIOPTION\fP]... [\fB-e\fP] [ \fB-\fP | \fICOMMAND\fP
+[\fIARG\fP]... ]
 
 
 .SH DESCRIPTION
@@ -32,6 +33,7 @@ If a single dash is supplied instead of a command,
 the current user's default shell (as defined in \fI/etc/passwd\fP) is invoked
 as a login shell.
 Otherwise, it is invoked as a non-login shell.
+The command can be preceded by \fB-e\fP (for execute), but that is not required.
 
 
 .SH OPTIONS
@@ -209,9 +211,17 @@ Show the scrollbar for accessing the scrollback buffer on the right of the
 window.
 
 .TP
-\fBClose on Alt-F4\fP (CloseOnAltF4=1)
-If enabled, close the window when \fBAlt-F4\fP is pressed, otherwise send the
-appropriate keycode to the terminal application.
+\fBEnable Alt+key shortcuts\fP (WindowShortcuts=1)
+Controls shortcuts for window commands. When disabled, these combinations
+send their regular keycodes to the application.
+
+.RS
+.PD 0
+.IP "\- \fBAlt+Space\fP: Menu"
+.IP "\- \fBAlt+Enter\fP: Fullscreen"
+.IP "\- \fBAlt+F2\fP: Duplicate"
+.IP "\- \fBAlt+F4\fP: Close"
+.RE
 
 
 .SS Looks
@@ -535,11 +545,11 @@ tab(#) nospaces;
 LI        s     LB    LB    LB    LB    LB
 LB        LfC   LfC   LfC   LfC   LfC   LfC.
 Key            #Shift#Crtl #C+S   #Alt  #A+S
-Space    #\fIsp#\fIsp#^@   #^[^@
-Enter    #^M   #J    #^^   #^[^^
-Tab      #^I   #^[[Z #^[Oz #^[OZ
+Space    #\fIsp#\fIsp#^@   #^[^@  #^[\fIsp#^[\fIsp
+Enter    #^M   #^J   #^^   #^[^^  #^[^M #^[J
 Back (^H)#^H   #^H   #^?   #^[^?  #^[^H #^[\fIsp
 Back (^?)#^?   #^?   #^_   #^[^_  #^[^? #^[\fIsp
+Tab      #^I   #^[[Z #^[Oz #^[OZ
 Esc (^[) #^[   #^]
 Esc (^\(rs)#^\(rs#^]
 Pause    #^]   #^[^]
@@ -752,6 +762,29 @@ with any Cygwin process.
 See \fIhttp://www.cygwin.com/cygwin-ug-net/using-cygwinenv.html\fP for details.
 
 
+.SS Changing the ANSI colours
+
+A number of settings can be controlled through terminal control sequences,
+including the colour values for the 16 ANSI colours.
+Here is the xterm sequence for this, whereby \fInum\fP stands for the ANSI
+number and \fIrrggbb\fP stands for a hexadecimal RGB colour value.
+
+.RS
+\fC^[]4;\fInum\fP;#\fIrrggbb\fP^G\fR
+.RE
+
+The \fB-e\fP option to the \fBecho\fP command is useful for emitting
+control sequences.
+For example, to turn yellow (colour 3) up to its full brightness:
+
+.RS
+\fCecho -e "\\e]4;3;#FFFF00\\a"\fP
+.RE
+
+Sequences such as this can be included in scripts or on the \fBmintty\fP
+command line with the help of \fBsh -c\fP.
+
+
 .SS Terminal line settings
 
 Terminal line settings can be viewed or changed with the \fBstty\fP utility,
@@ -905,7 +938,7 @@ Neither Tektronix 4014 emulation nor mouse highlighting mode are supported.
 .SH SEE ALSO
 
 \fIstty(1)\fP, \fIterminfo\fP(5), \fIbash\fP(1), \fIssh\fP(1),
-\fIlesskey\fP(1), \fImkshortcut\fP(1)
+\fIecho\fP(1), \fIlesskey\fP(1), \fImkshortcut\fP(1)
 
 \fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.html\fP
 
