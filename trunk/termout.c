@@ -274,7 +274,12 @@ do_osc(void)
     switch (term.esc_args[0]) {
       when 0 or 2 or 21:
         win_set_title(term.osc_string);
-       // icon title is ignored
+        // icon title is ignored
+      when 4: {
+        uint n, rgb;
+        if (sscanf(term.osc_string, "%u;#%x%c", &n, &rgb, &(char){0}) == 2)
+          win_set_palette(n, rgb >> 16, rgb >> 8, rgb);
+      }
     }
   }
 }

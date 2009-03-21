@@ -1,5 +1,5 @@
 name := mintty
-version := svn-trunk
+version := $(shell printf "svn-r%u" `svn info | grep Revision | sed "s/Revision: //"`)
 
 exe := $(name).exe
 dir := $(name)-$(version)
