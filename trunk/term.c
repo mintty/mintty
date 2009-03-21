@@ -45,7 +45,7 @@ cblink_cb(void)
 void
 term_schedule_cblink(void)
 {
-  if (term.cfg.cursor_blinks && term.has_focus)
+  if (cfg.cursor_blinks && term.has_focus)
     win_set_timer(cblink_cb, cursor_blink_ticks());
   else
     term.cblinker = 1;  /* reset when not in use */
@@ -127,7 +127,7 @@ term_reset(void)
   term.editing = term.echoing = false;
   term.app_cursor_keys = false;
   term.use_bce = true;
-  term.blink_is_real = term.cfg.allow_blinking;
+  term.blink_is_real = cfg.allow_blinking;
   term.erase_char = term.basic_erase_char;
   term.which_screen = 0;
   term_print_finish();
@@ -191,21 +191,8 @@ term_seen_key_event(void)
 void
 term_reconfig(void)
 {
- /*
-  * Before adopting the new config, check all those terminal
-  * settings which control power-on defaults; and if they've
-  * changed, we will modify the current state as well as the
-  * default one. The full list is: Auto wrap mode, DEC Origin
-  * Mode, BCE, blinking text, character classes.
-  */
-  int reset_tblink = (term.cfg.allow_blinking != cfg.allow_blinking);
-  
-  term.cfg = cfg;       /* STRUCTURE COPY */
-
-  if (reset_tblink) {
-    term.blink_is_real = term.cfg.allow_blinking;
-  }  
-  if (!*term.cfg.printer) {
+  term.blink_is_real = cfg.allow_blinking;
+  if (!*cfg.printer) {
     term_print_finish();
   }
   term_schedule_tblink();
@@ -246,7 +233,6 @@ term_init(void)
   * Allocate a new Terminal structure and initialise the fields
   * that need it.
   */
-  term.cfg = cfg;       /* STRUCTURE COPY */
   term.compatibility_level = TM_PUTTY & ~CL_SCOANSI;
   strcpy(term.id_string, "\033[?6c");
   term.inbuf = new_bufchain();
@@ -792,7 +778,7 @@ void
 term_print_setup(void)
 {
   bufchain_clear(term.printer_buf);
-  term.print_job = printer_start_job(term.cfg.printer);
+  term.print_job = printer_start_job(cfg.printer);
 }
 
 void
@@ -856,7 +842,7 @@ term_paint(void)
   int cursor;
   if (term.cursor_on) {
     if (term.has_focus) {
-      if (term.cblinker || !term.cfg.cursor_blinks)
+      if (term.cblinker || !cfg.cursor_blinks)
         cursor = TATTR_ACTCURS;
       else
         cursor = 0;

@@ -339,8 +339,8 @@ out_bell(void)
   * Perform an actual bell if we're not overloaded.
   */
   if (!term.bell_overloaded) {
-    win_bell(term.cfg.bell_type);
-    if (term.cfg.bell_type == BELL_VISUAL)
+    win_bell(cfg.bell_type);
+    if (cfg.bell_type == BELL_VISUAL)
       term_schedule_vbell(false, 0);
   }
   seen_disp_event();
@@ -1087,7 +1087,7 @@ term_write(const char *data, int len)
               when 'i' or ANSI_QUE('i'):  /* MC: Media copy */
                 compatibility(VT100);
                 if (term.esc_nargs == 1) {
-                  if (arg0 == 5 && *term.cfg.printer) {
+                  if (arg0 == 5 && *cfg.printer) {
                     term.printing = true;
                     term.only_printing = !term.esc_query;
                     term.print_state = 0;
@@ -1299,8 +1299,8 @@ term_write(const char *data, int len)
                       win_set_zorder(false);
                     when 8:
                       if (term.esc_nargs >= 3) {
-                        win_resize(arg1 ?: term.cfg.rows,
-                                   term.esc_args[2] ?: term.cfg.cols);
+                        win_resize(arg1 ?: cfg.rows,
+                                   term.esc_args[2] ?: cfg.cols);
                       }
                     when 9:
                       if (term.esc_nargs >= 2)
@@ -1361,7 +1361,7 @@ term_write(const char *data, int len)
                 */
                 compatibility(VT420);
                 if (term.esc_nargs == 1 && arg0 > 0) {
-                  win_resize(arg0 ?: term.cfg.rows, term.cols);
+                  win_resize(arg0 ?: cfg.rows, term.cols);
                   term.selected = false;
                 }
               when ANSI('|', '$'):     /* DECSCPP */
@@ -1372,7 +1372,7 @@ term_write(const char *data, int len)
                 */
                 compatibility(VT340TEXT);
                 if (term.esc_nargs <= 1) {
-                  win_resize(term.rows, arg0 ?: term.cfg.cols);
+                  win_resize(term.rows, arg0 ?: cfg.cols);
                   term.selected = false;
                 }
               when 'X': {      /* ECH: write N spaces w/o moving cursor */
