@@ -946,7 +946,7 @@ win_init_palette(void)
 }
 
 void
-win_set_palette(int n, int r, int g, int b)
+win_set_palette(uint n, uint8 r, uint8 g, uint8 b)
 {
   if (n >= 16)
     n += 256 - 16;
