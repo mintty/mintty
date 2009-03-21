@@ -175,15 +175,6 @@ struct term {
   int paste_len, paste_pos;
 
  /*
-  * We maintain a full _copy_ of a Config structure here, not
-  * merely a pointer to it. That way, when we're passed a new
-  * one for reconfiguration, we can check the differences and
-  * adjust the _current_ setting of (e.g.) auto wrap mode rather
-  * than only the default.
-  */
-  config cfg;
-
- /*
   * child_read calls term_write, but it can also be called from
   * the ldisc if the ldisc is called _within_ term_out. So we
   * have to guard against re-entrancy - if from_backend is
