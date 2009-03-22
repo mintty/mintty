@@ -9,6 +9,7 @@
 #include "print.h"
 #include "unicode.h"
 #include "term.h"
+#include "win.h"
 
 /*
  * config.c - the configuration box.
@@ -24,7 +25,8 @@ ok_handler(control *unused(ctrl), void *dlg,
 {
   if (event == EVENT_ACTION) {
     save_config();
-    dlg_end(dlg, 1);
+    win_reconfig();
+    dlg_end(dlg);
   }
 }
 
@@ -33,7 +35,7 @@ cancel_handler(control *unused(ctrl), void *dlg,
                void *unused(data), int event)
 {
   if (event == EVENT_ACTION)
-    dlg_end(dlg, 0);
+    dlg_end(dlg);
 }
 
 const char PRINTER_DISABLED_STRING[] = "None (printing disabled)";

@@ -474,10 +474,9 @@ void dlg_set_focus(control *, void *dlg);
 void dlg_label_change(control *, void *dlg, char const *text);
 /*
  * This function signals to the front end that the dialog's
- * processing is completed, and passes an integer value (typically
- * a success status).
+ * processing is completed.
  */
-void dlg_end(void *dlg, int value);
+void dlg_end(void *dlg);
 
 /*
  * Routines to manage a (per-platform) colour selector.
