@@ -498,12 +498,9 @@ win_reconfig(void)
   * case where local editing has just been disabled.
   */
   ldisc_send(null, 0, 0);
-  win_reconfig_palette();
 
  /* Pass new config data to the terminal */
   term_reconfig();
-
-  config prev_cfg = cfg;
 
  /* Screen size changed ? */
   if (cfg.rows != prev_cfg.rows || cfg.cols != prev_cfg.cols)
@@ -532,6 +529,8 @@ win_reconfig(void)
       cfg.font_quality != prev_cfg.font_quality ||
       cfg.bold_as_bright != prev_cfg.bold_as_bright)
     init_lvl = 2;
+
+  win_reconfig_palette();
   
   update_transparency();
   InvalidateRect(wnd, null, true);

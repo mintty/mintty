@@ -60,7 +60,7 @@ typedef struct {
   int font_quality;
 } config;
 
-extern config cfg;
+extern config cfg, new_cfg, prev_cfg;
 
 void load_config(void);
 char *save_config(void);
