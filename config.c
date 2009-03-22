@@ -38,6 +38,16 @@ cancel_handler(control *unused(ctrl), void *dlg,
     dlg_end(dlg);
 }
 
+static void
+apply_handler(control *unused(ctrl), void *unused(dlg),
+           void *unused(data), int event)
+{
+  if (event == EVENT_ACTION) {
+    save_config();
+    win_reconfig();
+  }
+}
+
 const char PRINTER_DISABLED_STRING[] = "None (printing disabled)";
 
 static void
@@ -132,9 +142,11 @@ setup_config_box(controlbox * b)
   ctrl_columns(s, 5, 20, 20, 20, 20, 20);
   c = ctrl_pushbutton(s, "OK", '\0', P(0), ok_handler, P(0));
   c->button.isdefault = true;
-  c->column = 3;
+  c->column = 2;
   c = ctrl_pushbutton(s, "Cancel", '\0', P(0), cancel_handler, P(0));
   c->button.iscancel = true;
+  c->column = 3;
+  c = ctrl_pushbutton(s, "Apply", '\0', P(0), apply_handler, P(0));
   c->column = 4;
 
  /*
