@@ -502,15 +502,11 @@ win_reconfig(void)
  /* Pass new config data to the terminal */
   term_reconfig();
 
- /* Screen size changed ? */
-  if (cfg.rows != prev_cfg.rows || cfg.cols != prev_cfg.cols)
-    notify_resize(cfg.rows, cfg.cols);
-
  /* Enable or disable the scroll bar, etc */
   int init_lvl = 1;
-  if (cfg.scrollbar != prev_cfg.scrollbar) {
+  if (new_cfg.scrollbar != cfg.scrollbar) {
     LONG flag = GetWindowLongPtr(wnd, GWL_STYLE);
-    if (cfg.scrollbar)
+    if (new_cfg.scrollbar)
       flag |= WS_VSCROLL;
     else
       flag &= ~WS_VSCROLL;
@@ -521,17 +517,13 @@ win_reconfig(void)
     init_lvl = 2;
   }
   
-  if (strcmp(cfg.font.name, prev_cfg.font.name) != 0 ||
-      strcmp(cfg.codepage, prev_cfg.codepage) != 0 ||
-      cfg.font.isbold != prev_cfg.font.isbold ||
-      cfg.font.height != prev_cfg.font.height ||
-      cfg.font.charset != prev_cfg.font.charset ||
-      cfg.font_quality != prev_cfg.font_quality ||
-      cfg.bold_as_bright != prev_cfg.bold_as_bright)
+  if (memcmp(&new_cfg.font, &cfg.font, sizeof cfg.font) != 0 ||
+      strcmp(new_cfg.codepage, cfg.codepage) != 0)
     init_lvl = 2;
 
+  /* Copy the new config and refresh everything */
+  cfg = new_cfg;
   win_reconfig_palette();
-  
   update_transparency();
   InvalidateRect(wnd, null, true);
   reset_window(init_lvl);
@@ -720,8 +712,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         * down the connection during an NT opaque drag.)
         */
         need_backend_resize = true;
-        cfg.rows = max(1, height / font_height);
-        cfg.cols = max(1, width / font_width);
       }
       else if (wp == SIZE_MAXIMIZED && !was_zoomed) {
         was_zoomed = 1;
