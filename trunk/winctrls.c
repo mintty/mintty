@@ -316,7 +316,7 @@ button(ctrlpos * cp, char *btext, int bid, int defbtn)
   RECT r;
 
   r.left = GAPBETWEEN;
-  r.top = cp->ypos;
+  r.top = cp->ypos - 1;
   r.right = cp->width;
   r.bottom = PUSHBTNHEIGHT;
 
@@ -326,9 +326,8 @@ button(ctrlpos * cp, char *btext, int bid, int defbtn)
     SendMessage(cp->wnd, DM_SETDEFID, bid, 0);
 
   doctl(cp, r, "BUTTON",
-        BS_NOTIFY | WS_CHILD | WS_VISIBLE | WS_TABSTOP | (defbtn ?
-                                                          BS_DEFPUSHBUTTON : 0)
-        | BS_PUSHBUTTON, 0, btext, bid);
+        BS_NOTIFY | WS_CHILD | WS_VISIBLE | WS_TABSTOP |
+        (defbtn ? BS_DEFPUSHBUTTON : 0) | BS_PUSHBUTTON, 0, btext, bid);
 
   cp->ypos += PUSHBTNHEIGHT + GAPBETWEEN;
 }

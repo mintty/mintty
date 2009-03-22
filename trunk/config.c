@@ -16,8 +16,9 @@
  */
 
 char *config_filename;
-
 config cfg, new_cfg;
+
+static control *cols_box, *rows_box;
 
 static void
 apply_config(void)
@@ -50,6 +51,18 @@ apply_handler(control *unused(ctrl), void *unused(dlg),
 {
   if (event == EVENT_ACTION)
     apply_config();
+}
+
+static void
+current_size_handler(control *unused(ctrl), void *dlg,
+           void *unused(data), int event)
+{
+  if (event == EVENT_ACTION) {
+    new_cfg.cols = term_cols();
+    new_cfg.rows = term_rows();
+    dlg_refresh(cols_box, dlg);
+    dlg_refresh(rows_box, dlg);
+  }
 }
 
 const char PRINTER_DISABLED_STRING[] = "None (printing disabled)";
@@ -146,13 +159,13 @@ setup_config_box(controlbox * b)
   */
   s = ctrl_getset(b, "", "", "");
   ctrl_columns(s, 5, 20, 20, 20, 20, 20);
-  c = ctrl_pushbutton(s, "OK", '\0', P(0), ok_handler, P(0));
+  c = ctrl_pushbutton(s, "OK", 0, P(0), ok_handler, P(0));
   c->button.isdefault = true;
   c->column = 2;
-  c = ctrl_pushbutton(s, "Cancel", '\0', P(0), cancel_handler, P(0));
+  c = ctrl_pushbutton(s, "Cancel", 0, P(0), cancel_handler, P(0));
   c->button.iscancel = true;
   c->column = 3;
-  c = ctrl_pushbutton(s, "Apply", '\0', P(0), apply_handler, P(0));
+  c = ctrl_pushbutton(s, "Apply", 0, P(0), apply_handler, P(0));
   c->column = 4;
 
  /*
@@ -160,16 +173,19 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Window", "Window");
 
-  s = ctrl_getset(b, "Window", "size", null);
-  ctrl_columns(s, 2, 50, 50);
-  ctrl_editbox(
-    s, "Columns", 'c', 100, P(0),
+  s = ctrl_getset(b, "Window", "size", "Initial size");
+  ctrl_columns(s, 5, 35, 3, 28, 4, 30);
+  (cols_box = ctrl_editbox(
+    s, "Columns", 'c', 44, P(0),
     dlg_stdeditbox_handler, I(offcfg(cols)), I(-1)
-  )->column = 0;
-  ctrl_editbox(
-    s, "Rows", 'r', 100, P(0),
+  ))->column = 0;
+  (rows_box = ctrl_editbox(
+    s, "Rows", 'r', 55, P(0),
     dlg_stdeditbox_handler, I(offcfg(rows)), I(-1)
-  )->column = 1;
+  ))->column = 2;
+  ctrl_pushbutton(
+    s, "Current size", 'u', P(0), current_size_handler, P(0)
+  )->column = 4;
 
   s = ctrl_getset(b, "Window", "trans", "Transparency");
   ctrl_radiobuttons(

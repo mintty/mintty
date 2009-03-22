@@ -19,17 +19,12 @@
 HWND wnd;
 HINSTANCE inst;
 HDC dc;
-static HBITMAP caretbm;
 
 int offset_width, offset_height;
 static int extra_width, extra_height;
+
+static HBITMAP caretbm;
 static int caret_x = -1, caret_y = -1;
-
-static bool resizing;
-static bool was_zoomed;
-static int prev_rows, prev_cols;
-
-static bool flashing;
 
 static bool child_dead;
 
@@ -140,6 +135,8 @@ flash_window_ex(DWORD dwFlags, UINT uCount, DWORD dwTimeout)
 static void
 flash_window(int mode)
 {
+  static bool flashing;
+
   if ((mode == 0) || (cfg.bell_ind == B_IND_DISABLED)) {
    /* stop */
     if (flashing) {
@@ -549,9 +546,12 @@ confirm_close(void)
 static LRESULT CALLBACK
 win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
 {
-  static int ignore_clip = false;
-  static int need_backend_resize = false;
-  static int fullscr_on_max = false;
+  static bool ignore_clip, need_backend_resize, fullscr_on_max;
+  static int new_cols, new_rows;
+static bool resizing;
+static bool was_zoomed;
+static int prev_rows, prev_cols;
+
 
   switch (message) {
     when WM_TIMER: {
@@ -654,12 +654,12 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_ENTERSIZEMOVE:
       win_enable_tip();
       resizing = true;
-      need_backend_resize = false;
     when WM_EXITSIZEMOVE:
       win_disable_tip();
       resizing = false;
       if (need_backend_resize) {
-        notify_resize(cfg.rows, cfg.cols);
+        need_backend_resize = false;
+        notify_resize(new_rows, new_cols);
         InvalidateRect(wnd, null, true);
       }
     when WM_SIZING: {
@@ -703,8 +703,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         fullscr_on_max = false;
         make_full_screen();
       }
-      int width = LOWORD(lp);
-      int height = HIWORD(lp);
+      new_cols = max(1, LOWORD(lp) / font_width);
+      new_rows = max(1, HIWORD(lp) / font_height);
       if (resizing) {
        /*
         * Don't call child_size in mid-resize. (To prevent
@@ -717,9 +717,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         was_zoomed = 1;
         prev_rows = term_rows();
         prev_cols = term_cols();
-        int rows = max(1, height / font_height);
-        int cols = max(1, width / font_width);
-        notify_resize(rows, cols);
+        notify_resize(new_rows, new_cols);
         reset_window(0);
       }
       else if (wp == SIZE_RESTORED && was_zoomed) {
@@ -973,17 +971,3 @@ main(int argc, char *argv[])
     }
   }
 }
-
-
-/*
-  MSG msg;
-  int gm;
-  while ((gm = GetMessage(&msg, null, 0, 0)) > 0) {
-    uint flags = GetWindowLongPtr(wnd, BOXFLAGS);
-    if (!(flags & DF_END) && !IsDialogMessage(wnd, &msg))
-      DispatchMessage(&msg);
-    if (flags & DF_END)
-      break;
-  }
-*/
-
