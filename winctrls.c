@@ -995,9 +995,6 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
   control *ctrl;
   int i, id, ret;
 
-  if (msg != WM_COMMAND && msg != WM_DRAWITEM)
-    return 0;
-
  /*
   * Look up the control ID in our data.
   */
@@ -1445,11 +1442,9 @@ dlg_set_focus(control *ctrl, void *dlg)
  * a success status).
  */
 void
-dlg_end(void *dlg, int value)
+dlg_end(void *dlg)
 {
-  dlgparam *dp = (dlgparam *) dlg;
-  dp->ended = true;
-  dp->endresult = value;
+  ((dlgparam *) dlg)->ended = true;
 }
 
 void

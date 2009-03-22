@@ -490,21 +490,9 @@ update_transparency()
   }
 }
 
-static void
-reconfig(void)
+void
+win_reconfig(void)
 {
-  static bool reconfiguring = false;
-  
-  if (reconfiguring)
-    return;
-  
-  reconfiguring = true;
-  config prev_cfg = cfg;
-  bool reconfig_result = win_config();
-  reconfiguring = false;
-  if (!reconfig_result)
-    return;
-
  /*
   * Flush the line discipline's edit buffer in the
   * case where local editing has just been disabled.
@@ -514,6 +502,8 @@ reconfig(void)
 
  /* Pass new config data to the terminal */
   term_reconfig();
+
+  config prev_cfg = cfg;
 
  /* Screen size changed ? */
   if (cfg.rows != prev_cfg.rows || cfg.cols != prev_cfg.cols)
@@ -599,9 +589,9 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
           term_clear_scrollback();
           win_update();
           ldisc_send(null, 0, 0);
-        when IDM_ABOUT: win_about();
+        when IDM_ABOUT: win_show_about();
         when IDM_FULLSCREEN: flip_full_screen();
-        when IDM_OPTIONS: reconfig();
+        when IDM_OPTIONS: win_open_config();
         when IDM_DUPLICATE:
           spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv);
           
@@ -988,8 +978,23 @@ main(int argc, char *argv[])
     while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
       if (msg.message == WM_QUIT)
         return msg.wParam;      
-      DispatchMessage(&msg);
+      if (!IsDialogMessage(config_wnd, &msg))
+        DispatchMessage(&msg);
       term_send_paste();
     }
   }
 }
+
+
+/*
+  MSG msg;
+  int gm;
+  while ((gm = GetMessage(&msg, null, 0, 0)) > 0) {
+    uint flags = GetWindowLongPtr(wnd, BOXFLAGS);
+    if (!(flags & DF_END) && !IsDialogMessage(wnd, &msg))
+      DispatchMessage(&msg);
+    if (flags & DF_END)
+      break;
+  }
+*/
+

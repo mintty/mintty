@@ -1,6 +1,8 @@
 #ifndef WIN_H
 #define WIN_H
 
+void win_reconfig();
+
 void win_update(void);
 void win_schedule_update(void);
 
