@@ -17,15 +17,23 @@
 
 char *config_filename;
 
-config cfg;     /* exported to windlg.c */
+config cfg, new_cfg, prev_cfg;     /* exported to windlg.c */
+
+static void
+apply_config(void)
+{
+  prev_cfg = cfg;
+  cfg = new_cfg;
+  win_reconfig();
+  save_config();
+}
 
 static void
 ok_handler(control *unused(ctrl), void *dlg,
            void *unused(data), int event)
 {
   if (event == EVENT_ACTION) {
-    save_config();
-    win_reconfig();
+    apply_config();
     dlg_end(dlg);
   }
 }
@@ -42,10 +50,8 @@ static void
 apply_handler(control *unused(ctrl), void *unused(dlg),
            void *unused(data), int event)
 {
-  if (event == EVENT_ACTION) {
-    save_config();
-    win_reconfig();
-  }
+  if (event == EVENT_ACTION)
+    apply_config();
 }
 
 const char PRINTER_DISABLED_STRING[] = "None (printing disabled)";
@@ -70,34 +76,36 @@ printerbox_handler(control *ctrl, void *dlg, void *unused(data), int event)
         dlg_listbox_add(ctrl, dlg, printer_get_name(pe, i));
       printer_finish_enum(pe);
     }
-    dlg_editbox_set(ctrl, dlg,
-                    (*cfg.printer ? cfg.printer : PRINTER_DISABLED_STRING));
+    dlg_editbox_set(
+      ctrl, dlg, 
+      *new_cfg.printer ? new_cfg.printer : PRINTER_DISABLED_STRING
+    );
     dlg_update_done(ctrl, dlg);
   }
   else if (event == EVENT_VALCHANGE) {
-    dlg_editbox_get(ctrl, dlg, cfg.printer, sizeof (cfg.printer));
-    if (!strcmp(cfg.printer, PRINTER_DISABLED_STRING))
-      *cfg.printer = '\0';
+    dlg_editbox_get(ctrl, dlg, new_cfg.printer, sizeof (cfg.printer));
+    if (strcmp(new_cfg.printer, PRINTER_DISABLED_STRING) == 0)
+      *new_cfg.printer = '\0';
   }
 }
 
 static void
 codepage_handler(control *ctrl, void *dlg, void *unused(data), int event)
 {
+  char *cp = new_cfg.codepage;
   if (event == EVENT_REFRESH) {
-    int i;
-    const char *cp;
     dlg_update_start(ctrl, dlg);
-    strcpy(cfg.codepage, cp_name(decode_codepage(cfg.codepage)));
+    strcpy(cp, cp_name(decode_codepage(cp)));
     dlg_listbox_clear(ctrl, dlg);
-    for (i = 0; (cp = cp_enumerate(i)) != null; i++)
-      dlg_listbox_add(ctrl, dlg, cp);
-    dlg_editbox_set(ctrl, dlg, cfg.codepage);
+    const char *icp;
+    for (int i = 0; (icp = cp_enumerate(i)); i++)
+      dlg_listbox_add(ctrl, dlg, icp);
+    dlg_editbox_set(ctrl, dlg, cp);
     dlg_update_done(ctrl, dlg);
   }
   else if (event == EVENT_VALCHANGE) {
-    dlg_editbox_get(ctrl, dlg, cfg.codepage, sizeof (cfg.codepage));
-    strcpy(cfg.codepage, cp_name(decode_codepage(cfg.codepage)));
+    dlg_editbox_get(ctrl, dlg, cp, sizeof (cfg.codepage));
+    strcpy(cp, cp_name(decode_codepage(cp)));
   }
 }
 
@@ -198,13 +206,13 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Looks", "colours", "Colours");
   ctrl_columns(s, 3, 33, 33, 33);
   ctrl_pushbutton(
-    s, "Foreground", 'f', P(0), colour_handler, P(&cfg.fg_colour)
+    s, "Foreground", 'f', P(0), colour_handler, P(&new_cfg.fg_colour)
   )->column = 0;
   ctrl_pushbutton(
-    s, "Background", 'b', P(0), colour_handler, P(&cfg.bg_colour)
+    s, "Background", 'b', P(0), colour_handler, P(&new_cfg.bg_colour)
   )->column = 1;
   ctrl_pushbutton(
-    s, "Cursor", 'c', P(0), colour_handler, P(&cfg.cursor_colour)
+    s, "Cursor", 'c', P(0), colour_handler, P(&new_cfg.cursor_colour)
   )->column = 2;
 
   s = ctrl_getset(b, "Looks", "text", null);

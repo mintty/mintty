@@ -183,18 +183,16 @@ term_seen_key_event(void)
 }
 
 /*
- * When the user reconfigures us, we need to check the forbidden-
- * alternate-screen config option, disable raw mouse mode if the
- * user has disabled mouse reporting, and abandon a print job if
+ * When the user reconfigures us, we need to abandon a print job if
  * the user has disabled printing.
  */
 void
 term_reconfig(void)
 {
-  term.blink_is_real = cfg.allow_blinking;
-  if (!*cfg.printer) {
+  if (!*cfg.printer)
     term_print_finish();
-  }
+  if (cfg.allow_blinking != prev_cfg.allow_blinking)
+    term.blink_is_real = cfg.allow_blinking;
   term_schedule_tblink();
   term_schedule_cblink();
 }

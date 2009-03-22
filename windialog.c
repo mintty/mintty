@@ -143,7 +143,8 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
       dp_add_tree(&dp, &ctrls_base);
       dp_add_tree(&dp, &ctrls_panel);
       asprintf(&dp.wintitle, APPNAME " Options");
-      dp.data = &cfg;
+      new_cfg = cfg;
+      dp.data = &new_cfg;
 
       RECT r;
       GetWindowRect(GetParent(wnd), &r);
