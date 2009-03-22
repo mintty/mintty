@@ -17,13 +17,11 @@
 
 char *config_filename;
 
-config cfg, new_cfg, prev_cfg;     /* exported to windlg.c */
+config cfg, new_cfg;
 
 static void
 apply_config(void)
 {
-  prev_cfg = cfg;
-  cfg = new_cfg;
   win_reconfig();
   save_config();
 }

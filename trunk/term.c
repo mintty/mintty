@@ -189,10 +189,11 @@ term_seen_key_event(void)
 void
 term_reconfig(void)
 {
-  if (!*cfg.printer)
+  if (!*new_cfg.printer)
     term_print_finish();
-  if (cfg.allow_blinking != prev_cfg.allow_blinking)
-    term.blink_is_real = cfg.allow_blinking;
+  if (new_cfg.allow_blinking != cfg.allow_blinking)
+    term.blink_is_real = new_cfg.allow_blinking;
+  cfg.cursor_blinks = new_cfg.cursor_blinks;
   term_schedule_tblink();
   term_schedule_cblink();
 }
