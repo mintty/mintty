@@ -39,6 +39,7 @@ typedef struct {
   int bell_type;
   int bell_ind;
   int scrollbar;
+  int scrollback_lines;
   int window_shortcuts;
   int scroll_mod;
   int click_targets_app;

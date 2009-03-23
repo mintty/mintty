@@ -196,6 +196,10 @@ term_reconfig(void)
   cfg.cursor_blinks = new_cfg.cursor_blinks;
   term_schedule_tblink();
   term_schedule_cblink();
+  if (new_cfg.scrollback_lines != cfg.scrollback_lines) {
+    cfg.scrollback_lines = new_cfg.scrollback_lines;
+    term_resize(term.rows, term.cols);
+  }
 }
 
 /*
@@ -256,12 +260,8 @@ term_resize(int newrows, int newcols)
 {
   tree234 *newalt;
   termline **newdisp, *line;
-  int i, j, oldrows = term.rows;
-  int sblen;
+  int oldrows = term.rows;
   int save_which_screen = term.which_screen;
-
-  if (newrows == term.rows && newcols == term.cols)
-    return;     /* nothing to do */
 
  /* Behave sensibly if we're given zero (or negative) rows/cols */
 
@@ -302,7 +302,7 @@ term_resize(int newrows, int newcols)
   *    amount of scrollback we actually have, we must throw some
   *    away.
   */
-  sblen = count234(term.scrollback);
+  int sblen = count234(term.scrollback);
  /* Do this loop to expand the screen if newrows > rows */
   assert(term.rows == count234(term.screen));
   while (term.rows < newrows) {
@@ -346,20 +346,27 @@ term_resize(int newrows, int newcols)
   assert(term.rows == newrows);
   assert(count234(term.screen) == newrows);
 
+ /* Delete any excess lines from the scrollback. */
+  while (sblen > cfg.scrollback_lines) {
+    line = delpos234(term.scrollback, 0);
+    free(line);
+    sblen--;
+  }
   if (sblen < term.tempsblines)
     term.tempsblines = sblen;
+  assert(count234(term.scrollback) <= cfg.scrollback_lines);
   assert(count234(term.scrollback) >= term.tempsblines);
   term.disptop = 0;
 
  /* Make a new displayed text buffer. */
   newdisp = newn(termline *, newrows);
-  for (i = 0; i < newrows; i++) {
+  for (int i = 0; i < newrows; i++) {
     newdisp[i] = newline(newcols, false);
-    for (j = 0; j < newcols; j++)
+    for (int j = 0; j < newcols; j++)
       newdisp[i]->chars[j].attr = ATTR_INVALID;
   }
   if (term.disptext) {
-    for (i = 0; i < oldrows; i++)
+    for (int i = 0; i < oldrows; i++)
       freeline(term.disptext[i]);
   }
   free(term.disptext);
@@ -368,7 +375,7 @@ term_resize(int newrows, int newcols)
 
  /* Make a new alternate screen. */
   newalt = newtree234(null);
-  for (i = 0; i < newrows; i++) {
+  for (int i = 0; i < newrows; i++) {
     line = newline(newcols, true);
     addpos234(newalt, line, i);
   }
@@ -601,18 +608,16 @@ term_do_scroll(int topline, int botline, int lines, int sb)
   else {
     while (lines > 0) {
       line = delpos234(term.screen, topline);
-      if (sb) {
+      if (sb && cfg.scrollback_lines > 0) {
         int sblen = count234(term.scrollback);
        /*
         * We must add this line to the scrollback. We'll
         * remove a line from the top of the scrollback if
         * the scrollback is full.
         */
-        if (sblen == SAVELINES) {
-          uchar *cline;
-
+        if (sblen == cfg.scrollback_lines) {
           sblen--;
-          cline = delpos234(term.scrollback, 0);
+          uchar *cline = delpos234(term.scrollback, 0);
           free(cline);
         }
         else
@@ -636,7 +641,7 @@ term_do_scroll(int topline, int botline, int lines, int sb)
         * Thanks to Jan Holmen Holsten for the idea and
         * initial implementation.
         */
-        if (term.disptop > -SAVELINES && term.disptop < 0)
+        if (term.disptop > -cfg.scrollback_lines && term.disptop < 0)
           term.disptop--;
       }
       resizeline(line, term.cols);
@@ -656,7 +661,7 @@ term_do_scroll(int topline, int botline, int lines, int sb)
       * selection), and also sel_anchor (for one being
       * selected as we speak).
       */
-      seltop = sb ? -SAVELINES : topline;
+      seltop = sb ? -cfg.scrollback_lines : topline;
 
       if (term.selected) {
         if (term.sel_start.y >= seltop && term.sel_start.y <= botline) {

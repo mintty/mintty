@@ -169,25 +169,23 @@ setup_config_box(controlbox * b)
   c->column = 4;
 
  /*
-  * The Window panel.
+  * The Looks panel.
   */
-  ctrl_settitle(b, "Window", "Window");
+  ctrl_settitle(b, "Looks", "Looks");
 
-  s = ctrl_getset(b, "Window", "size", "Initial size");
-  ctrl_columns(s, 5, 35, 3, 28, 4, 30);
-  (cols_box = ctrl_editbox(
-    s, "Columns", 'c', 44, P(0),
-    dlg_stdeditbox_handler, I(offcfg(cols)), I(-1)
-  ))->column = 0;
-  (rows_box = ctrl_editbox(
-    s, "Rows", 'r', 55, P(0),
-    dlg_stdeditbox_handler, I(offcfg(rows)), I(-1)
-  ))->column = 2;
+  s = ctrl_getset(b, "Looks", "colours", "Colours");
+  ctrl_columns(s, 3, 33, 33, 33);
   ctrl_pushbutton(
-    s, "Current size", 'u', P(0), current_size_handler, P(0)
-  )->column = 4;
+    s, "Foreground...", 'f', P(0), colour_handler, P(&new_cfg.fg_colour)
+  )->column = 0;
+  ctrl_pushbutton(
+    s, "Background...", 'b', P(0), colour_handler, P(&new_cfg.bg_colour)
+  )->column = 1;
+  ctrl_pushbutton(
+    s, "Cursor...", 'c', P(0), colour_handler, P(&new_cfg.cursor_colour)
+  )->column = 2;
 
-  s = ctrl_getset(b, "Window", "trans", "Transparency");
+  s = ctrl_getset(b, "Looks", "trans", "Transparency");
   ctrl_radiobuttons(
     s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
     I(offcfg(transparency)),
@@ -197,76 +195,36 @@ setup_config_box(controlbox * b)
     "High", 'h', I(3), 
     null
   );
-
-  s = ctrl_getset(b, "Window", "misc", null);
   ctrl_checkbox(
-    s, "Disable transparency when active", 'd', P(0),
+    s, "Opaque when focused", 'd', P(0),
     dlg_stdcheckbox_handler, I(offcfg(opaque_when_focused))
-  );
-  ctrl_checkbox(
-    s, "Show scrollbar", 's', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(scrollbar))
-  );
-  ctrl_checkbox(
-    s, "Enable Alt+key shortcuts", 'a', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
-  );
-  
- /*
-  * The Looks panel.
-  */
-  ctrl_settitle(b, "Looks", "Looks");
-
-  s = ctrl_getset(b, "Looks", "colours", "Colours");
-  ctrl_columns(s, 3, 33, 33, 33);
-  ctrl_pushbutton(
-    s, "Foreground", 'f', P(0), colour_handler, P(&new_cfg.fg_colour)
-  )->column = 0;
-  ctrl_pushbutton(
-    s, "Background", 'b', P(0), colour_handler, P(&new_cfg.bg_colour)
-  )->column = 1;
-  ctrl_pushbutton(
-    s, "Cursor", 'c', P(0), colour_handler, P(&new_cfg.cursor_colour)
-  )->column = 2;
-
-  s = ctrl_getset(b, "Looks", "text", null);
-  ctrl_checkbox(
-    s, "Show bold text as bright", 's', P(0), dlg_stdcheckbox_handler,
-    I(offcfg(bold_as_bright))
-  );
-  ctrl_checkbox(
-    s, "Allow text blinking", 'a', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(allow_blinking))
   );
 
   s = ctrl_getset(b, "Looks", "curtype", "Cursor");
   ctrl_radiobuttons(
-    s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
+    s, null, '\0', 3, P(0), dlg_stdradiobutton_handler,
     I(offcfg(cursor_type)),
-    "Block", 'k', I(CUR_BLOCK),
     "Line", 'l', I(CUR_LINE), 
     "Underline", 'u', I(CUR_UNDERLINE),
+    "Block", 'k', I(CUR_BLOCK),
     null
   );
-  s = ctrl_getset(b, "Looks", "curblink", null);
   ctrl_checkbox(
-     s, "Enable cursor blinking", 'e', P(0),
+     s, "Enable blinking", 'e', P(0),
      dlg_stdcheckbox_handler, I(offcfg(cursor_blinks))
   );
 
  /*
-  * The Font panel.
+  * The Text panel.
   */
-  ctrl_settitle(b, "Font", "Font");
+  ctrl_settitle(b, "Text", "Text");
 
-  s = ctrl_getset(b, "Font", "font", null);
+  s = ctrl_getset(b, "Text", "font", null);
   ctrl_fontsel(
     s, null, '\0', P(0), dlg_stdfontsel_handler, I(offcfg(font))
   );
-
-  s = ctrl_getset(b, "Font", "smooth", "Smoothing");
   ctrl_radiobuttons(
-    s, null, '\0', 2, P(0), dlg_stdradiobutton_handler, 
+    s, "Smoothing", '\0', 2, P(0), dlg_stdradiobutton_handler, 
     I(offcfg(font_quality)),
     "System Default", 'd', I(FQ_DEFAULT),
     "Antialiased", 'a', I(FQ_ANTIALIASED),
@@ -275,7 +233,18 @@ setup_config_box(controlbox * b)
     null
   );
 
-  s = ctrl_getset(b, "Font", "codepage", "Codepage");
+  s = ctrl_getset(b, "Text", "effects", null);
+  ctrl_columns(s, 2, 50, 50);
+  ctrl_checkbox(
+    s, "Show bold as bright", 's', P(0), dlg_stdcheckbox_handler,
+    I(offcfg(bold_as_bright))
+  )->column = 0;
+  ctrl_checkbox(
+    s, "Allow blinking", 'a', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(allow_blinking))
+  )->column = 1;
+
+  s = ctrl_getset(b, "Text", "codepage", "Codepage");
   ctrl_combobox(s, null, '\0', 100, P(0), codepage_handler, P(null), P(null));
 
  /*
@@ -283,7 +252,7 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Keys", "Keys");
 
-  s = ctrl_getset(b, "Keys", "keycodes", "Key codes");
+  s = ctrl_getset(b, "Keys", "keycodes", "Keycodes");
   ctrl_columns(s, 2, 50, 50);
   ctrl_radiobuttons(
     s, "Backspace", '\0', 1, P(0), dlg_stdradiobutton_handler,
@@ -305,17 +274,11 @@ setup_config_box(controlbox * b)
     s, "Alt key on its own sends ^[", 'k', P(0),
     dlg_stdcheckbox_handler, I(offcfg(alt_sends_esc))
   );
-
-  s = ctrl_getset(b, "Keys", "scrollmod", "Modifier key for scrolling");
-  ctrl_radiobuttons(
-    s, null, '\0', 3, P(0), dlg_stdradiobutton_handler,
-    I(offcfg(scroll_mod)),
-    "Shift", 's', I(SHIFT),
-    "Ctrl", 'c', I(CTRL),
-    "Alt", 'a', I(ALT),
-    null
+  ctrl_checkbox(
+    s, "Enable Alt+key shortcuts", 'e', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
   );
-
+  
  /*
   * The Mouse panel.
   */
@@ -332,14 +295,15 @@ setup_config_box(controlbox * b)
   );
   
   s = ctrl_getset(b, "Mouse", "mouseopts", null);
+  ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
     s, "Copy on select", 'y', P(0),
     dlg_stdcheckbox_handler, I(offcfg(copy_on_select))
-  );
+  )->column = 0;
   ctrl_checkbox(
-    s, "Clicks move command line cursor", 'l', P(0),
+    s, "Clicks move cursor", 'l', P(0),
     dlg_stdcheckbox_handler, I(offcfg(click_moves_cmd_cursor))
-  );
+  )->column = 1;
 
   s = ctrl_getset(b, "Mouse", "mousemode", "Application mouse mode");
   ctrl_radiobuttons(
@@ -350,7 +314,7 @@ setup_config_box(controlbox * b)
     null
   );
   ctrl_radiobuttons(
-    s, "Modifier key for overriding default", '\0', 3, P(0),
+    s, "Modifier for overriding default", '\0', 4, P(0),
     dlg_stdradiobutton_handler, I(offcfg(click_target_mod)),
     "Shift", 's', I(SHIFT),
     "Ctrl", 'c', I(CTRL),
@@ -358,6 +322,47 @@ setup_config_box(controlbox * b)
     null
   );
   
+ /*
+  * The Screen panel.
+  */
+  ctrl_settitle(b, "Screen", "Screen");
+
+  s = ctrl_getset(b, "Screen", "size", "Initial size");
+  ctrl_columns(s, 5, 35, 3, 28, 4, 30);
+  (cols_box = ctrl_editbox(
+    s, "Columns", 'c', 44, P(0),
+    dlg_stdeditbox_handler, I(offcfg(cols)), I(-1)
+  ))->column = 0;
+  (rows_box = ctrl_editbox(
+    s, "Rows", 'r', 55, P(0),
+    dlg_stdeditbox_handler, I(offcfg(rows)), I(-1)
+  ))->column = 2;
+  ctrl_pushbutton(
+    s, "Current size", 'u', P(0), current_size_handler, P(0)
+  )->column = 4;
+
+  s = ctrl_getset(b, "Screen", "scrollback", "Scrollback");
+  ctrl_columns(s, 2, 66, 34);
+  ctrl_editbox(
+    s, "Lines to keep", 'b', 50, P(0),
+    dlg_stdeditbox_handler, I(offsetof(config, scrollback_lines)), I(-1)
+  )->column = 0;
+  ctrl_columns(s, 1, 100);
+  ctrl_radiobuttons(
+    s, "Modifier for scrolling with cursor keys", '\0', 4, P(0),      
+    dlg_stdradiobutton_handler, I(offcfg(scroll_mod)),
+    "Shift", 's', I(SHIFT),
+    "Ctrl", 'c', I(CTRL),
+    "Alt", 'a', I(ALT),
+    null
+  )->column = 0;
+
+  s = ctrl_getset(b, "Screen", "scrollbar", null);
+  ctrl_checkbox(
+    s, "Show scrollbar", 's', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(scrollbar))
+  )->column = 0;
+
  /*
   * The Output panel.
   */
@@ -402,6 +407,7 @@ int_settings[] = {
   {"Transparency", offcfg(transparency), 0},
   {"OpaqueWhenFocused", offcfg(opaque_when_focused), 0},
   {"Scrollbar", offcfg(scrollbar), true},
+  {"ScrollbackLines", offcfg(scrollback_lines), 10000},
   {"WindowShortcuts", offcfg(window_shortcuts), true},
   {"BoldAsBright", offcfg(bold_as_bright), true},
   {"AllowBlinking", offcfg(allow_blinking), true},
