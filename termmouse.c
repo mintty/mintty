@@ -369,7 +369,7 @@ sel_scroll_cb(void)
     term_scroll(0, term.sel_scroll);
     sel_drag(get_selpoint(term.sel_pos));
     win_update();
-    win_set_timer(sel_scroll_cb, 150);
+    win_set_timer(sel_scroll_cb, 125);
   }
 }
 
