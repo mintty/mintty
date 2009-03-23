@@ -5,8 +5,9 @@ exe := $(name).exe
 dir := $(name)-$(version)
 srcs := $(wildcard Makefile *.c *.h *.rc *.mft icon/*.ico icon/*.png)
 srcs += $(wildcard COPYING LICENSE* INSTALL)
-srcs += docs/readme.html docs/mintty.1 scripts/create_shortcut.js
+srcs += docs/readme.html docs/mintty.1
 stuff := docs/readme.html docs/mintty.1.pdf scripts/create_shortcut.js
+stuff += scripts/create_shortcut.js scripts/create_shortcut.17.js
 
 c_srcs := $(wildcard *.c)
 rc_srcs := $(wildcard *.rc)
