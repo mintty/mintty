@@ -548,10 +548,9 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
 {
   static bool ignore_clip, need_backend_resize, fullscr_on_max;
   static int new_cols, new_rows;
-static bool resizing;
-static bool was_zoomed;
-static int prev_rows, prev_cols;
-
+  static bool resizing;
+  static bool was_zoomed;
+  static int prev_rows, prev_cols;
 
   switch (message) {
     when WM_TIMER: {
