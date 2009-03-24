@@ -29,6 +29,7 @@ extern LOGFONT lfont;
 
 extern enum bold_mode { BOLD_COLOURS, BOLD_SHADOW, BOLD_FONT } bold_mode;
 
+extern int font_size;
 extern int font_width, font_height;
 extern int offset_width, offset_height;
 

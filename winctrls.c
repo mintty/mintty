@@ -1145,7 +1145,7 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
         font_spec fs = *(font_spec *) c->data;
         HDC dc = GetDC(0);
         LOGFONT lf;
-        lf.lfHeight = -MulDiv(fs.height, GetDeviceCaps(dc, LOGPIXELSY), 72);
+        lf.lfHeight = -MulDiv(fs.size, GetDeviceCaps(dc, LOGPIXELSY), 72);
         ReleaseDC(0, dc);
         lf.lfWidth = lf.lfEscapement = lf.lfOrientation = 0;
         lf.lfItalic = lf.lfUnderline = lf.lfStrikeOut = 0;
@@ -1171,7 +1171,7 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
           fs.name[sizeof (fs.name) - 1] = '\0';
           fs.isbold = (lf.lfWeight == FW_BOLD);
           fs.charset = lf.lfCharSet;
-          fs.height = cf.iPointSize / 10;
+          fs.size = cf.iPointSize / 10;
           dlg_fontsel_set(ctrl, dp, &fs);
           ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
         }
@@ -1367,11 +1367,11 @@ dlg_fontsel_set(control *ctrl, void *dlg, font_spec *fs)
   *(font_spec *) c->data = *fs;   /* structure copy */
 
   boldstr = fs->isbold ? "bold, " : "";
-  if (!fs->height)
+  if (!fs->size)
     asprintf(&buf, "%s, %sdefault height", fs->name, boldstr);
   else
-    asprintf(&buf, "%s, %s%d-%s", fs->name, boldstr, abs(fs->height),
-             fs->height < 0 ? "pixel" : "point");
+    asprintf(&buf, "%s, %s%d-%s", fs->name, boldstr, abs(fs->size),
+             fs->size < 0 ? "pixel" : "point");
   SetDlgItemText(dp->wnd, c->base_id + 1, buf);
   free(buf);
 }

@@ -66,7 +66,7 @@ win_copy(wchar *data, int *attr, int len)
   rtf = newn(char, rtfsize);
   rtflen =
     sprintf(rtf, "{\\rtf1\\ansi\\deff0{\\fonttbl\\f0\\fmodern %s;}\\f0\\fs%d",
-            cfg.font.name, cfg.font.height * 2);
+            cfg.font.name, cfg.font.size * 2);
 
  /*
   * Add colour palette

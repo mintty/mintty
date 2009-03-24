@@ -38,6 +38,10 @@ static enum {
 } und_mode;
 static int descent;
 
+// Current font size (with any zooming)
+int font_size; 
+
+// Font screen dimensions
 int font_width, font_height;
 static int font_dualwidth;
 
@@ -109,10 +113,10 @@ win_init_fonts(void)
   }
 
   HDC dc = GetDC(wnd);
-  font_height = cfg.font.height;
-  if (font_height > 0) {
-    font_height = -MulDiv(font_height, GetDeviceCaps(dc, LOGPIXELSY), 72);
-  }
+  font_height =
+    font_size > 0
+    ? -MulDiv(font_size, GetDeviceCaps(dc, LOGPIXELSY), 72)
+    : font_size;
   font_width = 0;
 
   fonts[FONT_NORMAL] = create_font(fw_dontcare, false);
