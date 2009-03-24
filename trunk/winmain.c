@@ -515,9 +515,11 @@ win_reconfig(void)
   }
   
   if (memcmp(&new_cfg.font, &cfg.font, sizeof cfg.font) != 0 ||
-      strcmp(new_cfg.codepage, cfg.codepage) != 0)
+      strcmp(new_cfg.codepage, cfg.codepage) != 0) {
+    font_size = new_cfg.font.size;
     init_lvl = 2;
-
+  }
+  
   /* Copy the new config and refresh everything */
   cfg = new_cfg;
   win_reconfig_palette();
@@ -582,9 +584,18 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_ABOUT: win_show_about();
         when IDM_FULLSCREEN: flip_full_screen();
         when IDM_OPTIONS: win_open_config();
+        when IDM_ZOOM: {
+          int zoom = lp;
+          switch (zoom) {
+            when 0: font_size = cfg.font.size;
+            when 1 or -1: font_size += font_size > 0 ? zoom : -zoom;
+            when 2: font_size *= 2;
+            when -2: font_size = (font_size + 1) / 2;
+          }
+          reset_window(2);
+        }
         when IDM_DUPLICATE:
-          spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv);
-          
+          spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv); 
       }
     when WM_VSCROLL:
       if (term_which_screen() == 0) {
@@ -829,6 +840,7 @@ main(int argc, char *argv[])
     rows = cfg.rows;
     cols = cfg.cols;
   }
+  font_size = cfg.font.size;
 
   inst = GetModuleHandle(NULL);
 

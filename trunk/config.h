@@ -8,7 +8,7 @@ char *config_filename;
 typedef struct {
   char name[64];
   int isbold;
-  int height;
+  int size;
   int charset;
 } font_spec;
 
@@ -40,6 +40,8 @@ typedef struct {
   int scrollbar;
   int scrollback_lines;
   int window_shortcuts;
+  int edit_shortcuts;
+  int zoom_shortcuts;
   int scroll_mod;
   int click_targets_app;
   int click_target_mod;

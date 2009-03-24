@@ -255,14 +255,14 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Keys", "keycodes", "Keycodes");
   ctrl_columns(s, 2, 50, 50);
   ctrl_radiobuttons(
-    s, "Backspace", '\0', 1, P(0), dlg_stdradiobutton_handler,
+    s, "Backspace", '\0', 3, P(0), dlg_stdradiobutton_handler,
     I(offcfg(backspace_sends_del)),
     "^H", 'h', I(0),
     "^?", '?', I(1),
     null
   )->column = 0;
   ctrl_radiobuttons(
-    s, "Escape", '\0', 1, P(0), dlg_stdradiobutton_handler,
+    s, "Escape", '\0', 3, P(0), dlg_stdradiobutton_handler,
     I(offcfg(escape_sends_fs)),
     "^[", '[', I(0),
     "^\\", '\\', I(1),
@@ -274,10 +274,21 @@ setup_config_box(controlbox * b)
     s, "Alt key on its own sends ^[", 'k', P(0),
     dlg_stdcheckbox_handler, I(offcfg(alt_sends_esc))
   );
+
+  s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
   ctrl_checkbox(
-    s, "Enable Alt+key shortcuts", 'e', P(0),
+    s, "Duplicate and close", 'e', P(0),
     dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
   );
+  ctrl_checkbox(
+    s, "Copy and paste", 0, P(0),
+    dlg_stdcheckbox_handler, I(offcfg(edit_shortcuts))
+  );
+  ctrl_checkbox(
+    s, "Fullscreen and zoom", 0, P(0),
+    dlg_stdcheckbox_handler, I(offcfg(zoom_shortcuts))
+  );
+  
   
  /*
   * The Mouse panel.
@@ -409,12 +420,14 @@ int_settings[] = {
   {"Scrollbar", offcfg(scrollbar), true},
   {"ScrollbackLines", offcfg(scrollback_lines), 10000},
   {"WindowShortcuts", offcfg(window_shortcuts), true},
+  {"EditShortcuts", offcfg(edit_shortcuts), true},
+  {"ZoomShortcuts", offcfg(zoom_shortcuts), true},
   {"BoldAsBright", offcfg(bold_as_bright), true},
   {"AllowBlinking", offcfg(allow_blinking), true},
   {"CursorType", offcfg(cursor_type), 2},
   {"CursorBlinks", offcfg(cursor_blinks), true},
   {"FontIsBold", offcfg(font.isbold), 0},
-  {"FontHeight", offcfg(font.height), 10},
+  {"FontHeight", offcfg(font.size), 10},
   {"FontCharset", offcfg(font.charset), 0},
   {"FontQuality", offcfg(font_quality), FQ_DEFAULT},
   {"BackspaceSendsDEL", offcfg(backspace_sends_del), false},
