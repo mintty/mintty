@@ -66,4 +66,6 @@ typedef void (*void_fn)(void);
 #define trace(f, xs...) {}
 #endif
 
+#define sgn(x) ({ typeof(x) x_ = (x); (x_ > 0) - (x_ < 0); })
+
 #endif
