@@ -58,8 +58,6 @@ win_init_menus(void)
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN, 0);
   AppendMenu(menu, MF_ENABLED, IDM_OPTIONS, "&Options...");
-  AppendMenu(menu, MF_SEPARATOR, 0, 0);
-  AppendMenu(menu, MF_ENABLED, IDM_ABOUT, "&About...");
 
   sysmenu = GetSystemMenu(wnd, false);
   InsertMenu(sysmenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, 0);

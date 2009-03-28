@@ -330,15 +330,13 @@ win_open_config(void)
 void
 win_show_about(void)
 {
-  MSGBOXPARAMS params = {
+  MessageBoxIndirect(&(MSGBOXPARAMS){
     .cbSize = sizeof(MSGBOXPARAMS),
-    .hwndOwner = wnd,
+    .hwndOwner = config_wnd,
     .hInstance = inst,
     .lpszCaption = "About " APPNAME,
-    .dwStyle = MB_USERICON | MB_OKCANCEL | MB_DEFBUTTON2,
+    .dwStyle = MB_USERICON | MB_OK,
     .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
     .lpszText = APPNAME " " APPVER "\n" COPYRIGHT "\n" APPINFO
-  };
-  if (MessageBoxIndirect(&params) == IDOK)
-    ShellExecute(wnd, "open", WEBSITE, 0, 0, SW_SHOWDEFAULT);
+  });
 }
