@@ -20,10 +20,11 @@
 #include <winbase.h>
 
 HANDLE child_event;
+
 static HANDLE proc_event;
 static pid_t pid;
 static int status;
-static int fd = -1;
+static int fd = -1, log_fd = -1;
 static int read_len;
 static char read_buf[4096];
 static struct utmp ut;
@@ -70,6 +71,7 @@ child_proc(void)
 {
   if (read_len > 0) {
     term_write(read_buf, read_len);
+    write(log_fd, read_buf, read_len);
     read_len = 0;
     SetEvent(proc_event);
   }
@@ -109,7 +111,7 @@ child_proc(void)
 }
 
 char *
-child_create(char *argv[], struct winsize *winp)
+child_create(char *argv[], struct winsize *winp, const char *log_file)
 {
   struct passwd *pw = getpwuid(getuid());
   char *cmd; 
@@ -124,11 +126,29 @@ child_create(char *argv[], struct winsize *winp)
     argv = (char *[]){name, 0};
   }
   
+  // Command line for window title.
+  char *argz;
+  size_t argz_len;
+  argz_create(argv, &argz, &argz_len);
+  argz_stringify(argz, argz_len, ' ');
+  
+  // Open log file if any
+  if (log_file) {
+    log_fd = open(log_file, O_WRONLY | O_CREAT);
+    if (log_fd == -1) {
+      char *msg = strdup(strerror(errno));
+      term_write("Failed to open log file: ", 25);
+      term_write(msg, strlen(msg));
+      free(msg);
+      return argz;
+    }
+  }
+
   // Create the child process and pseudo terminal.
   pid = forkpty(&fd, 0, 0, winp);
   if (pid == -1) { // Fork failed.
     char *msg = strdup(strerror(errno));
-    term_write("forkpty: ", 8);
+    term_write("Failed to create child process: ", 32);
     term_write(msg, strlen(msg));
     free(msg);
     pid = 0;
@@ -184,11 +204,6 @@ child_create(char *argv[], struct winsize *winp)
     login(&ut);
   }
   
-  // Return child command line for window title.
-  char *argz;
-  size_t argz_len;
-  argz_create(argv, &argz, &argz_len);
-  argz_stringify(argz, argz_len, ' ');
   return argz;
 }
 
