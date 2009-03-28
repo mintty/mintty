@@ -54,6 +54,14 @@ apply_handler(control *unused(ctrl), void *unused(dlg),
 }
 
 static void
+about_handler(control *unused(ctrl), void *unused(dlg),
+           void *unused(data), int event)
+{
+  if (event == EVENT_ACTION)
+    win_show_about();
+}
+
+static void
 current_size_handler(control *unused(ctrl), void *dlg,
            void *unused(data), int event)
 {
@@ -159,6 +167,8 @@ setup_config_box(controlbox * b)
   */
   s = ctrl_getset(b, "", "", "");
   ctrl_columns(s, 5, 20, 20, 20, 20, 20);
+  c = ctrl_pushbutton(s, "About...", 0, P(0), about_handler, P(0));
+  c->column = 0;
   c = ctrl_pushbutton(s, "OK", 0, P(0), ok_handler, P(0));
   c->button.isdefault = true;
   c->column = 2;

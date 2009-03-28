@@ -581,7 +581,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
           term_clear_scrollback();
           win_update();
           ldisc_send(null, 0, 0);
-        when IDM_ABOUT: win_show_about();
         when IDM_FULLSCREEN: flip_full_screen();
         when IDM_OPTIONS: win_open_config();
         when IDM_ZOOM: {
