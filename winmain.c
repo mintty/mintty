@@ -772,6 +772,7 @@ static const char *help =
   "  -p, --pos=X,Y         Open window at specified position\n"
   "  -s, --size=COLS,ROWS  Set screen size in characters\n"
   "  -t, --title=TITLE     Set window title (default: the invoked command)\n"
+  "  -l, --log=FILE        Log output to file\n"
   "  -v, --version         Print version information and exit\n"
   "  -h, --help            Display this help message and exit\n"
 ;
@@ -786,17 +787,20 @@ opts[] = {
   {"pos",     required_argument, 0, 'p'},
   {"size",    required_argument, 0, 's'},
   {"title",   required_argument, 0, 't'},
+  {"log",     required_argument, 0, 'l'},
   {0, 0, 0, 0}
 };
 
 int
 main(int argc, char *argv[])
 {
-  char *title = 0;
+  const char *title = 0, *log_file = 0;
   int x = CW_USEDEFAULT, y = CW_USEDEFAULT;
   bool size_override = false;
   uint rows = 0, cols = 0;
 
+  main_argv = argv;
+  
   for (;;) {
     int opt = getopt_long(argc, argv, short_opts, opts, 0);
     if (opt == -1 || opt == 'e')
@@ -819,6 +823,8 @@ main(int argc, char *argv[])
         size_override = true;
       when 't':
         title = optarg;
+      when 'l':
+        log_file = optarg;
       when 'h':
         printf(help, *argv);
         return 0;
@@ -829,9 +835,7 @@ main(int argc, char *argv[])
         exit(1);
     }
   }
-  
-  main_argv = argv;
-  
+
   if (!config_filename)
     asprintf(&config_filename, "%s/.minttyrc", getenv("HOME"));
 
@@ -956,7 +960,7 @@ main(int argc, char *argv[])
 
   // Create child process.
   struct winsize ws = {term_rows(), term_cols(), term_width, term_height};
-  char *cmd = child_create(argv + optind, &ws);
+  char *cmd = child_create(argv + optind, &ws, log_file);
   
   // Set window title.
   SetWindowText(wnd, title ?: cmd);
