@@ -769,25 +769,25 @@ static const char *help =
   "\n"
   "Options:\n"
   "  -c, --config=FILE     Use specified config file (default: ~/.minttyrc)\n"
-  "  -p, --pos=X,Y         Open window at specified position\n"
+  "  -p, --position=X,Y    Open window at specified coordinates\n"
   "  -s, --size=COLS,ROWS  Set screen size in characters\n"
   "  -t, --title=TITLE     Set window title (default: the invoked command)\n"
   "  -l, --log=FILE        Log output to file\n"
-  "  -v, --version         Print version information and exit\n"
-  "  -h, --help            Display this help message and exit\n"
+  "  -H, --help            Display this help message and exit\n"
+  "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = "+hvec:p:s:t:";
+static const char short_opts[] = "+HVec:p:s:t:";
 
 static const struct option
 opts[] = { 
-  {"help",    no_argument,       0, 'h'},
-  {"version", no_argument,       0, 'v'},
-  {"config",  required_argument, 0, 'c'},
-  {"pos",     required_argument, 0, 'p'},
-  {"size",    required_argument, 0, 's'},
-  {"title",   required_argument, 0, 't'},
-  {"log",     required_argument, 0, 'l'},
+  {"config",   required_argument, 0, 'c'},
+  {"position", required_argument, 0, 'p'},
+  {"size",     required_argument, 0, 's'},
+  {"title",    required_argument, 0, 't'},
+  {"log",      required_argument, 0, 'l'},
+  {"help",     no_argument,       0, 'H'},
+  {"version",  no_argument,       0, 'V'},
   {0, 0, 0, 0}
 };
 
@@ -825,10 +825,10 @@ main(int argc, char *argv[])
         title = optarg;
       when 'l':
         log_file = optarg;
-      when 'h':
+      when 'H':
         printf(help, *argv);
         return 0;
-      when 'v':
+      when 'V':
         puts(APPNAME " " APPVER "\n" COPYRIGHT);
         return 0;
       otherwise:
