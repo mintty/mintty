@@ -645,11 +645,9 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       win_paint();
       return 0;
     when WM_SETFOCUS:
-      if (!child_dead) {
-        term_set_focus(true);
-        CreateCaret(wnd, caretbm, font_width, font_height);
-        ShowCaret(wnd);
-      }
+      term_set_focus(true);
+      CreateCaret(wnd, caretbm, font_width, font_height);
+      ShowCaret(wnd);
       flash_window(0);  /* stop */
       win_update();
       update_transparency();
@@ -773,11 +771,13 @@ static const char *help =
   "  -s, --size=COLS,ROWS  Set screen size in characters\n"
   "  -t, --title=TITLE     Set window title (default: the invoked command)\n"
   "  -l, --log=FILE        Log output to file\n"
-  "  -H, --help            Display this help message and exit\n"
+  "  -h, --hold=always|never|error\n"
+  "                        Keep window open after command terminates?\n"
+  "  -H, --help            Display help and exit\n"
   "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = "+HVec:p:s:t:";
+static const char short_opts[] = "+HVec:p:s:t:h:";
 
 static const struct option
 opts[] = { 
@@ -786,6 +786,7 @@ opts[] = {
   {"size",     required_argument, 0, 's'},
   {"title",    required_argument, 0, 't'},
   {"log",      required_argument, 0, 'l'},
+  {"hold",     required_argument, 0, 'h'},
   {"help",     no_argument,       0, 'H'},
   {"version",  no_argument,       0, 'V'},
   {0, 0, 0, 0}
@@ -795,6 +796,7 @@ int
 main(int argc, char *argv[])
 {
   const char *title = 0, *log_file = 0;
+  hold_t hold = HOLD_NEVER;
   int x = CW_USEDEFAULT, y = CW_USEDEFAULT;
   bool size_override = false;
   uint rows = 0, cols = 0;
@@ -825,6 +827,20 @@ main(int argc, char *argv[])
         title = optarg;
       when 'l':
         log_file = optarg;
+      when 'h': {
+        int len = strlen(optarg);
+        if (memcmp(optarg, "always", len) == 0)
+          hold = HOLD_ALWAYS;
+        else if (memcmp(optarg, "never", len) == 0)
+          hold = HOLD_NEVER;
+        else if (memcmp(optarg, "error", len) == 0)
+          hold = HOLD_ERROR;
+        else {
+          fprintf(stderr, "%s: invalid argument to hold option -- %s\n",
+                          *argv, optarg);
+          exit(1);
+        }
+      }
       when 'H':
         printf(help, *argv);
         return 0;
@@ -971,12 +987,8 @@ main(int argc, char *argv[])
   for (;;) {
     DWORD wakeup =
       MsgWaitForMultipleObjects(1, &child_event, false, INFINITE, QS_ALLINPUT);
-    if (wakeup == WAIT_OBJECT_0) {
-      if (child_proc()) {
-        child_dead = true;
-        term_set_focus(false);
-      }
-    }
+    if (wakeup == WAIT_OBJECT_0)
+      child_dead |= child_proc(hold);
     MSG msg;
     while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
       if (msg.message == WM_QUIT)

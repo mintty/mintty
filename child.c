@@ -67,7 +67,7 @@ wait_thread(void *unused(arg))
 }
 
 bool
-child_proc(void)
+child_proc(hold_t hold)
 {
   if (read_len > 0) {
     term_write(read_buf, read_len);
@@ -75,39 +75,44 @@ child_proc(void)
     read_len = 0;
     SetEvent(proc_event);
   }
-  if (pid == 0) {
-    logout(ut.ut_line);
-    
-    // No point hanging around if the user wants the terminal shut.
-    if (killed)
+
+  if (pid)
+    return false;
+
+  logout(ut.ut_line);
+
+  // No point hanging around if the user wants us dead.
+  if (killed || hold == HOLD_NEVER)
+    exit(0);
+  
+  if (hold == HOLD_ALWAYS)
+    return false;
+
+  // Display a message if the child process died with an error. 
+  int l = -1;
+  char *s; 
+  if (WIFEXITED(status)) {
+    status = WEXITSTATUS(status);
+    if (status == 0)
       exit(0);
-    
-    // Otherwise, display a message if the child process died with an error. 
-    int l = -1;
-    char *s; 
-    if (WIFEXITED(status)) {
-      status = WEXITSTATUS(status);
-      if (status == 0)
-        exit(0);
-      else
-        l = asprintf(&s, "\r\n%s exited with status %i\r\n", name, status); 
-    }
-    else if (WIFSIGNALED(status)) {
-      int error_sigs =
-        1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
-        1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
-      int sig = WTERMSIG(status);
-      if ((error_sigs & 1<<sig) == 0)
-        exit(0);
-      l = asprintf(&s, "\r\n%s terminated: %s\r\n", name, strsignal(sig));
-    }
-    if (l != -1) {
-      term_write(s, l);
-      free(s);
-    }
-    return true;
+    else
+      l = asprintf(&s, "\r\n%s exited with status %i\r\n", name, status); 
   }
-  return false;
+  else if (WIFSIGNALED(status)) {
+    int error_sigs =
+      1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
+      1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
+    int sig = WTERMSIG(status);
+    if ((error_sigs & 1<<sig) == 0)
+      exit(0);
+    l = asprintf(&s, "\r\n%s terminated: %s\r\n", name, strsignal(sig));
+  }
+  if (l != -1) {
+    term_write(s, l);
+    term_write("Press any key to close\r\n", 24);
+    free(s);
+  }
+  return true;
 }
 
 char *
