@@ -364,8 +364,9 @@ reset_window(int reinit)
  /* Hmm, a force re-init means we should ignore the current window
   * so we resize to the default font size.
   */
+  offset_width = offset_height = 0;
+
   if (reinit > 0) {
-    offset_width = offset_height = 0;
     extra_width = wr.right - wr.left - cr.right + cr.left;
     extra_height = wr.bottom - wr.top - cr.bottom + cr.top;
 
@@ -389,7 +390,6 @@ reset_window(int reinit)
   * window. But that may be too big for the screen which forces us
   * to change the terminal.
   */
-  offset_width = offset_height = 0;
   extra_width = wr.right - wr.left - cr.right + cr.left;
   extra_height = wr.bottom - wr.top - cr.bottom + cr.top;
 
@@ -962,7 +962,7 @@ main(int argc, char *argv[])
   * Resize the window, now we know what size we _really_ want it to be.
   */
   int term_width = font_width * term_cols();
-  int term_height = extra_height + font_height * term_rows();
+  int term_height = font_height * term_rows();
   SetWindowPos(wnd, null, 0, 0,
                term_width + extra_width, term_height + extra_height,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
