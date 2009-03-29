@@ -328,16 +328,15 @@ reset_window(int reinit)
 
   int cols = term_cols(), rows = term_rows();
 
- /* Is the window out of position ? */
-  if (!reinit &&
-      (offset_width != (win_width - font_width * cols) / 2 ||
-       offset_height != (win_height - font_height * rows) / 2)) {
-    offset_width = (win_width - font_width * cols) / 2;
-    offset_height = (win_height - font_height * rows) / 2;
-    InvalidateRect(wnd, null, true);
+  bool zoomed = IsZoomed(wnd);
+  if (zoomed) {
+    offset_height = (win_height % font_height) / 2;
+    offset_width = (win_width % font_width) / 2;
   }
+  else
+    offset_width = offset_height = 0;
 
-  if (IsZoomed(wnd) || reinit == -1) {
+  if (zoomed || reinit == -1) {
    /* We're fullscreen, or we were told to resize, 
     * this means we must not change the size of
     * the window so the terminal has to change.
@@ -353,8 +352,6 @@ reset_window(int reinit)
       */
       rows = win_height / font_height;
       cols = win_width / font_width;
-      offset_height = (win_height % font_height) / 2;
-      offset_width = (win_width % font_width) / 2;
       notify_resize(rows, cols);
       InvalidateRect(wnd, null, true);
     }
@@ -364,8 +361,6 @@ reset_window(int reinit)
  /* Hmm, a force re-init means we should ignore the current window
   * so we resize to the default font size.
   */
-  offset_width = offset_height = 0;
-
   if (reinit > 0) {
     extra_width = wr.right - wr.left - cr.right + cr.left;
     extra_height = wr.bottom - wr.top - cr.bottom + cr.top;
