@@ -337,9 +337,10 @@ reset_window(int reinit)
     InvalidateRect(wnd, null, true);
   }
 
-  if (IsZoomed(wnd)) {
-   /* We're fullscreen, this means we must not change the size of
-    * the window so it's the font size or the terminal itself.
+  if (IsZoomed(wnd) || reinit == -1) {
+   /* We're fullscreen, or we were told to resize, 
+    * this means we must not change the size of
+    * the window so the terminal has to change.
     */
 
     extra_width = wr.right - wr.left - cr.right + cr.left;
