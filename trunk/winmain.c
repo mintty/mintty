@@ -15,6 +15,7 @@
 #include <getopt.h>
 #include <imm.h>
 #include <winnls.h>
+#include <wincon.h>
 
 HWND wnd;
 HINSTANCE inst;
@@ -29,6 +30,8 @@ static int caret_x = -1, caret_y = -1;
 static bool child_dead;
 
 static char **main_argv;
+
+static HWND con_wnd;
 
 void
 win_set_timer(void (*cb)(void), uint ticks)
@@ -592,6 +595,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         }
         when IDM_DUPLICATE:
           spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv); 
+          if (con_wnd)
+            ShowWindowAsync(con_wnd, SW_HIDE);
       }
     when WM_VSCROLL:
       if (term_which_screen() == 0) {
@@ -796,8 +801,6 @@ main(int argc, char *argv[])
   bool size_override = false;
   uint rows = 0, cols = 0;
 
-  main_argv = argv;
-  
   for (;;) {
     int opt = getopt_long(argc, argv, short_opts, opts, 0);
     if (opt == -1 || opt == 'e')
@@ -856,9 +859,10 @@ main(int argc, char *argv[])
     rows = cfg.rows;
     cols = cfg.cols;
   }
-  font_size = cfg.font.size;
-
+    
+  main_argv = argv;  
   inst = GetModuleHandle(NULL);
+  con_wnd = GetConsoleWindow();
 
  /* Create window class. */
   {
@@ -912,6 +916,7 @@ main(int argc, char *argv[])
   * Initialise the fonts, simultaneously correcting the guesses
   * for font_{width,height}.
   */
+  font_size = cfg.font.size;
   win_init_fonts();
   win_init_palette();
 
@@ -968,7 +973,7 @@ main(int argc, char *argv[])
   // Finally show the window!
   update_transparency();
   ShowWindow(wnd, SW_SHOWDEFAULT);
-
+  
   // Create child process.
   struct winsize ws = {term_rows(), term_cols(), term_width, term_height};
   char *cmd = child_create(argv + optind, &ws, log_file);
