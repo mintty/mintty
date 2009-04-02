@@ -15,7 +15,6 @@
 #include <getopt.h>
 #include <imm.h>
 #include <winnls.h>
-#include <wincon.h>
 
 HWND wnd;
 HINSTANCE inst;
@@ -30,8 +29,6 @@ static int caret_x = -1, caret_y = -1;
 static bool child_dead;
 
 static char **main_argv;
-
-static HWND con_wnd;
 
 void
 win_set_timer(void (*cb)(void), uint ticks)
@@ -595,8 +592,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         }
         when IDM_DUPLICATE:
           spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv); 
-          if (con_wnd)
-            ShowWindowAsync(con_wnd, SW_HIDE);
       }
     when WM_VSCROLL:
       if (term_which_screen() == 0) {
@@ -862,7 +857,6 @@ main(int argc, char *argv[])
     
   main_argv = argv;  
   inst = GetModuleHandle(NULL);
-  con_wnd = GetConsoleWindow();
 
  /* Create window class. */
   {
