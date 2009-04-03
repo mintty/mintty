@@ -206,7 +206,7 @@ setup_config_box(controlbox * b)
     null
   );
   ctrl_checkbox(
-    s, "Opaque when focused", 'd', P(0),
+    s, "Opaque when focused", 'p', P(0),
     dlg_stdcheckbox_handler, I(offcfg(opaque_when_focused))
   );
 
@@ -214,7 +214,7 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, null, '\0', 3, P(0), dlg_stdradiobutton_handler,
     I(offcfg(cursor_type)),
-    "Line", 'l', I(CUR_LINE), 
+    "Line", 'n', I(CUR_LINE), 
     "Underline", 'u', I(CUR_UNDERLINE),
     "Block", 'k', I(CUR_BLOCK),
     null
@@ -231,7 +231,7 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Text", "font", null);
   ctrl_fontsel(
-    s, null, '\0', P(0), dlg_stdfontsel_handler, I(offcfg(font))
+    s, null, 'f', P(0), dlg_stdfontsel_handler, I(offcfg(font))
   );
   ctrl_radiobuttons(
     s, "Smoothing", '\0', 2, P(0), dlg_stdradiobutton_handler, 
@@ -250,7 +250,7 @@ setup_config_box(controlbox * b)
     I(offcfg(bold_as_bright))
   )->column = 0;
   ctrl_checkbox(
-    s, "Allow blinking", 'a', P(0),
+    s, "Allow blinking", 'b', P(0),
     dlg_stdcheckbox_handler, I(offcfg(allow_blinking))
   )->column = 1;
 
@@ -281,21 +281,21 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Keys", "alt", null);
   ctrl_checkbox(
-    s, "Alt key on its own sends ^[", 'k', P(0),
+    s, "Alt key on its own sends ^[", 'a', P(0),
     dlg_stdcheckbox_handler, I(offcfg(alt_sends_esc))
   );
 
   s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
   ctrl_checkbox(
-    s, "Duplicate and close", 'e', P(0),
+    s, "Duplicate and close", 'd', P(0),
     dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
   );
   ctrl_checkbox(
-    s, "Copy and paste", 0, P(0),
+    s, "Copy and paste", 'c', P(0),
     dlg_stdcheckbox_handler, I(offcfg(edit_shortcuts))
   );
   ctrl_checkbox(
-    s, "Fullscreen and zoom", 0, P(0),
+    s, "Fullscreen and zoom", 'f', P(0),
     dlg_stdcheckbox_handler, I(offcfg(zoom_shortcuts))
   );
   
@@ -322,7 +322,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(copy_on_select))
   )->column = 0;
   ctrl_checkbox(
-    s, "Clicks move cursor", 'l', P(0),
+    s, "Clicks move cursor", 'v', P(0),
     dlg_stdcheckbox_handler, I(offcfg(click_moves_cmd_cursor))
   )->column = 1;
 
@@ -351,7 +351,7 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Screen", "size", "Initial size");
   ctrl_columns(s, 5, 35, 3, 28, 4, 30);
   (cols_box = ctrl_editbox(
-    s, "Columns", 'c', 44, P(0),
+    s, "Columns", 'o', 44, P(0),
     dlg_stdeditbox_handler, I(offcfg(cols)), I(-1)
   ))->column = 0;
   (rows_box = ctrl_editbox(
@@ -365,7 +365,7 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Screen", "scrollback", "Scrollback");
   ctrl_columns(s, 2, 66, 34);
   ctrl_editbox(
-    s, "Lines to keep", 'b', 50, P(0),
+    s, "Lines to keep", 'l', 50, P(0),
     dlg_stdeditbox_handler, I(offsetof(config, scrollback_lines)), I(-1)
   )->column = 0;
   ctrl_columns(s, 1, 100);
@@ -380,7 +380,7 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Screen", "scrollbar", null);
   ctrl_checkbox(
-    s, "Show scrollbar", 's', P(0),
+    s, "Show scrollbar", 'b', P(0),
     dlg_stdcheckbox_handler, I(offcfg(scrollbar))
   )->column = 0;
 
