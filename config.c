@@ -475,9 +475,9 @@ typedef const struct {
 
 static colour_setting
 colour_settings[] = {
-  {"ForegroundColour", offcfg(fg_colour), {191, 191, 191}},
-  {"BackgroundColour", offcfg(bg_colour), {0, 0, 0}},
-  {"CursorColour", offcfg(cursor_colour), {191, 191, 191}},
+  {"ForegroundColour", offcfg(fg_colour), 0xBFBFBF},
+  {"BackgroundColour", offcfg(bg_colour), 0x000000},
+  {"CursorColour", offcfg(cursor_colour), 0xBFBFBF},
 };
 
 void

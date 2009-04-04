@@ -896,45 +896,63 @@ win_set_sbar(int total, int start, int page)
   }
 }
 
-static const COLORREF
-ansi_colours[16] = {
-  0x000000, 0x0000BF, 0x00BF00, 0x00BFBF,
-  0xBF0000, 0xBF00BF, 0xBFBF00, 0xBFBFBF,
-  0x404040, 0x4040FF, 0x40FF40, 0x40FFFF,
-  0xFF4040, 0xFF40FF, 0xFFFF40, 0xFFFFFF
-};
-
-void
-win_reconfig_palette(void)
-{
-  COLORREF rgb(colour c) { return RGB(c.red, c.green, c.blue); }
-  colour brighter(colour c) {
-    uint s = min(85, 255 - max(max(c.red, c.green), c.blue));
-    return (colour){c.red + s, c.green + s, c.blue + s};
-  }
-  colours[256] = rgb(cfg.fg_colour);
-  colours[257] = rgb(brighter(cfg.fg_colour));
-  colours[258] = rgb(cfg.bg_colour);
-  colours[259] = rgb(brighter(cfg.bg_colour));
-  colours[260] = rgb(cfg.bg_colour);
-  colours[261] = rgb(cfg.cursor_colour);
+static colour brighter(colour c) {
+  uint r = red(c), g = green(c), b = blue(c);   
+  uint s = min(85, 255 - max(max(r, g), b));
+  return make_colour(r + s, g + s, b + s);
 }
 
 void
-win_reset_palette(void)
+win_set_colour(uint n, colour c)
 {
-  memcpy(colours, ansi_colours, sizeof ansi_colours);
-  win_reconfig_palette();
- /* Default Background may have changed. Ensure any space between
-  * text area and window border is redrawn. */
+  if (n <= 261)
+    colours[n] = c;
+}
+
+void
+win_set_foreground_colour(colour c)
+{
+  colours[256] = c;
+  colours[257] = brighter(c);
+}
+
+void
+win_set_background_colour(colour c)
+{
+  colours[258] = colours[260] = c;
+  colours[259] = brighter(c);
+  
+  // Make sure the background around the edge of the screen is repainted.
   InvalidateRect(wnd, null, true);
 }
 
 void
-win_init_palette(void)
+win_set_cursor_colour(colour c)
 {
-  // Initialise the colour cube and grayscale parts of the palette.
-  // These aren't gonna change.
+  colours[261] = c;
+}
+
+void
+win_reconfig_palette(void)
+{
+  win_set_foreground_colour(cfg.fg_colour);
+  win_set_background_colour(cfg.bg_colour);
+  win_set_cursor_colour(cfg.cursor_colour);
+}
+
+void
+win_reset_colours(void)
+{
+  static const COLORREF
+  ansi_colours[16] = {
+    0x000000, 0x0000BF, 0x00BF00, 0x00BFBF,
+    0xBF0000, 0xBF00BF, 0xBFBF00, 0xBFBFBF,
+    0x404040, 0x4040FF, 0x40FF40, 0x40FFFF,
+    0xFF4040, 0xFF40FF, 0xFFFF40, 0xFFFFFF
+  };
+  memcpy(colours, ansi_colours, sizeof ansi_colours);
+
+  // Colour cube
   int i = 16;
   for (uint r = 0; r < 6; r++)
     for (uint g = 0; g < 6; g++)
@@ -942,26 +960,13 @@ win_init_palette(void)
         colours[i++] = RGB (r ? r * 40 + 55 : 0,
                             g ? g * 40 + 55 : 0,
                             b ? b * 40 + 55 : 0);
+  
+  // Grayscale
   for (uint s = 0; s < 24; s++) {
     uint c = s * 10 + 8;
     colours[i++] = RGB(c,c,c);
   }
-  win_reset_palette();
-}
 
-void
-win_set_palette(uint n, uint8 r, uint8 g, uint8 b)
-{
-  if (n >= 16)
-    n += 256 - 16;
-  if (n > NALLCOLOURS)
-    return;
-  colours[n] = RGB(r, g, b);
-  if (n == (ATTR_DEFBG >> ATTR_BGSHIFT)) {
-   /* If Default Background changes, we need to ensure any
-    * space between the text area and the window border is
-    * redrawn. */
-    InvalidateRect(wnd, null, true);
-  }
+  // Foreground, background, cursor
+  win_reconfig_palette();
 }
-

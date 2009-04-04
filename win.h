@@ -1,6 +1,8 @@
 #ifndef WIN_H
 #define WIN_H
 
+#include "platform.h"
+
 void win_reconfig();
 
 void win_update(void);
@@ -16,8 +18,12 @@ void win_bell(int);
 
 void win_set_title(char *);
 void win_set_sbar(int, int, int);
-void win_set_palette(uint n, uint8 r, uint8 g, uint8 b);
-void win_reset_palette(void);
+
+void win_set_colour(uint n, colour);
+void win_set_foreground_colour(colour);
+void win_set_background_colour(colour);
+void win_set_cursor_colour(colour);
+void win_reset_colours(void);
 
 void win_move(int x, int y);
 void win_resize(int rows, int cols);
