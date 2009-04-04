@@ -912,7 +912,7 @@ main(int argc, char *argv[])
   */
   font_size = cfg.font.size;
   win_init_fonts();
-  win_init_palette();
+  win_reset_colours();
 
  /*
   * Correct the guesses for extra_{width,height}.

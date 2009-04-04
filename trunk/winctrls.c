@@ -1190,18 +1190,10 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
     cc.hwndOwner = dp->wnd;
     cc.hInstance = (HWND) inst;
     cc.lpCustColors = custom;
-    cc.rgbResult =
-      RGB(dp->coloursel_result.red, dp->coloursel_result.green,
-          dp->coloursel_result.blue);
+    cc.rgbResult = dp->coloursel_result;
     cc.Flags = CC_FULLOPEN | CC_RGBINIT;
-    if (ChooseColor(&cc)) {
-      dp->coloursel_result.red = GetRValue(cc.rgbResult);
-      dp->coloursel_result.green = GetGValue(cc.rgbResult);
-      dp->coloursel_result.blue = GetBValue(cc.rgbResult);
-      dp->coloursel_ok = true;
-    }
-    else
-      dp->coloursel_ok = false;
+    dp->coloursel_ok = ChooseColor(&cc);
+    dp->coloursel_result = cc.rgbResult;
     ctrl->handler(ctrl, dp, dp->data, EVENT_CALLBACK);
   }
 

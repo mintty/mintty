@@ -5,6 +5,18 @@
  * Random platform-specific functions and constants for Windows.
  */
 
+// Colours
+
+typedef uint32 colour;
+
+static inline colour
+make_colour(uint8 r, uint8 g, uint8 b) { return r | g << 8 | b << 16; }
+
+static inline uint8 red(colour c) { return c & 0xff; }
+static inline uint8 green(colour c) { return c >> 8 & 0xff; }
+static inline uint8 blue(colour c) { return c >> 16 & 0xff; }
+
+
 // Codepages.
 static const int unicode_codepage = 65001; //CP_UTF8;
 static const int ansi_codepage = 0; //CP_ACP;
