@@ -614,21 +614,40 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_MOUSEMOVE: win_mouse_move(false, lp);
     when WM_NCMOUSEMOVE: win_mouse_move(true, lp);
     when WM_MOUSEWHEEL: win_mouse_wheel(wp, lp);
-    when WM_KEYDOWN or WM_SYSKEYDOWN: if (win_key_down(wp, lp)) return 0;
-    when WM_KEYUP or WM_SYSKEYUP: if (win_key_up(wp, lp)) return 0;
-    when WM_CHAR or WM_SYSCHAR: { // TODO: handle wchar and WM_UNICHAR
-      char c = (uchar) wp;
-      term_seen_key_event();
-      lpage_send(CP_ACP, &c, 1, 1);
-      return 0;
-    }
+    when WM_KEYDOWN or WM_SYSKEYDOWN:
+      if (win_key_down(wp, lp))
+        return 0;
+    when WM_KEYUP or WM_SYSKEYUP:
+      if (win_key_up(wp, lp))
+        return 0;
+    when WM_CHAR or WM_SYSCHAR:
+      { // TODO: handle wchar and WM_UNICHAR
+        char c = (uchar) wp;
+        term_seen_key_event();
+        lpage_send(CP_ACP, &c, 1, 1);
+        return 0;
+      }
     when WM_INPUTLANGCHANGE:
       sys_cursor_update();
-    when WM_IME_STARTCOMPOSITION: {
-      HIMC hImc = ImmGetContext(wnd);
-      ImmSetCompositionFont(hImc, &lfont);
-      ImmReleaseContext(wnd, hImc);
-    }
+    when WM_IME_STARTCOMPOSITION:
+      {
+        HIMC imc = ImmGetContext(wnd);
+        ImmSetCompositionFont(imc, &lfont);
+        ImmReleaseContext(wnd, imc);
+      }
+    when WM_IME_COMPOSITION:
+      if (lp & GCS_RESULTSTR) {
+        HIMC imc = ImmGetContext(wnd);
+        LONG len = ImmGetCompositionStringW(imc, GCS_RESULTSTR, null, 0);
+        if (len > 0) {
+          char buf[len];
+          ImmGetCompositionStringW(imc, GCS_RESULTSTR, buf, len);
+          term_seen_key_event();
+          luni_send((wchar *)buf, len / 2, 1);
+        }
+        ImmReleaseContext(wnd, imc);
+      }
+      return 1;
     when WM_IGNORE_CLIP:
       ignore_clip = wp;     /* don't panic on DESTROYCLIPBOARD */
     when WM_DESTROYCLIPBOARD:
