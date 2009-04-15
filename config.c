@@ -344,11 +344,11 @@ setup_config_box(controlbox * b)
   );
   
  /*
-  * The Screen panel.
+  * The Window panel.
   */
-  ctrl_settitle(b, "Screen", "Screen");
+  ctrl_settitle(b, "Window", "Window");
 
-  s = ctrl_getset(b, "Screen", "size", "Initial size");
+  s = ctrl_getset(b, "Window", "size", "Initial size");
   ctrl_columns(s, 5, 35, 3, 28, 4, 30);
   (cols_box = ctrl_editbox(
     s, "Columns", 'o', 44, P(0),
@@ -362,7 +362,7 @@ setup_config_box(controlbox * b)
     s, "Current size", 'u', P(0), current_size_handler, P(0)
   )->column = 4;
 
-  s = ctrl_getset(b, "Screen", "scrollback", "Scrollback");
+  s = ctrl_getset(b, "Window", "scrollback", "Scrollback");
   ctrl_columns(s, 2, 66, 34);
   ctrl_editbox(
     s, "Lines to keep", 'l', 50, P(0),
@@ -378,7 +378,7 @@ setup_config_box(controlbox * b)
     null
   )->column = 0;
 
-  s = ctrl_getset(b, "Screen", "scrollbar", null);
+  s = ctrl_getset(b, "Window", "scrollbar", null);
   ctrl_checkbox(
     s, "Show scrollbar", 'b', P(0),
     dlg_stdcheckbox_handler, I(offcfg(scrollbar))
