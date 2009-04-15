@@ -185,54 +185,38 @@ win_bell(int mode)
     flash_window(2);
 }
 
+static void
+update_sys_cursor(void)
+{
+  if (term_has_focus() && caret_x >= 0 && caret_y >= 0) {
+    SetCaretPos(caret_x, caret_y);
+
+    HIMC imc = ImmGetContext(wnd);
+    COMPOSITIONFORM cf = {
+      .dwStyle = CFS_POINT,
+      .ptCurrentPos = {caret_x, caret_y}
+    };
+    ImmSetCompositionWindow(imc, &cf);
+    ImmReleaseContext(wnd, imc);
+  }
+}
+
 /*
  * Move the system caret. (We maintain one, even though it's
  * invisible, for the benefit of blind people: apparently some
  * helper software tracks the system caret, so we should arrange to
  * have one.)
  */
-
-static void
-sys_cursor_update(void)
-{
-  COMPOSITIONFORM cf;
-  HIMC hIMC;
-
-  if (!term_has_focus())
-    return;
-
-  if (caret_x < 0 || caret_y < 0)
-    return;
-
-  SetCaretPos(caret_x, caret_y);
-
-  hIMC = ImmGetContext(wnd);
-  cf.dwStyle = CFS_POINT;
-  cf.ptCurrentPos.x = caret_x;
-  cf.ptCurrentPos.y = caret_y;
-  ImmSetCompositionWindow(hIMC, &cf);
-
-  ImmReleaseContext(wnd, hIMC);
-}
-
 void
-win_sys_cursor(int x, int y)
+win_set_sys_cursor(int x, int y)
 {
-  if (!term_has_focus())
-    return;
-
- /*
-  * Avoid gratuitously re-updating the cursor position and IMM
-  * window if there's no actual change required.
-  */
   int cx = x * font_width + offset_width;
   int cy = y * font_height + offset_height;
-  if (cx == caret_x && cy == caret_y)
-    return;
-  caret_x = cx;
-  caret_y = cy;
-
-  sys_cursor_update();
+  if (cx != caret_x || cy != caret_y) {
+    caret_x = cx;
+    caret_y = cy;
+    update_sys_cursor();
+  }
 }
 
 /* Get the rect/size of a full screen window using the nearest available
@@ -628,7 +612,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         return 0;
       }
     when WM_INPUTLANGCHANGE:
-      sys_cursor_update();
+      update_sys_cursor();
     when WM_IME_STARTCOMPOSITION:
       {
         HIMC imc = ImmGetContext(wnd);
@@ -673,7 +657,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       win_update();
       update_transparency();
     when WM_FULLSCR_ON_MAX: fullscr_on_max = true;
-    when WM_MOVE: sys_cursor_update();
+    when WM_MOVE: update_sys_cursor();
     when WM_ENTERSIZEMOVE:
       win_enable_tip();
       resizing = true;
@@ -757,7 +741,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         */
         reset_window(-1);
       }
-      sys_cursor_update();
+      update_sys_cursor();
       return 0;
     }
     when WM_INITMENU:

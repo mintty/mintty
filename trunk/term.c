@@ -1180,7 +1180,7 @@ term_update(void)
   if (term.seen_disp_event)
     update_sbar();
   term_paint();
-  win_sys_cursor(term.curs.x, term.curs.y - term.disptop);
+  win_set_sys_cursor(term.curs.x, term.curs.y - term.disptop);
 }
 
 /*
