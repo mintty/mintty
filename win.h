@@ -11,7 +11,7 @@ void win_schedule_update(void);
 int  win_char_width(int uc);
 void win_text(int, int, wchar *, int, uint, int);
 void win_cursor(int, int, wchar *, int, uint, int);
-void win_sys_cursor(int x, int y);
+void win_set_sys_cursor(int x, int y);
 void win_update_mouse(void);
 void win_capture_mouse(void);
 void win_bell(int);
