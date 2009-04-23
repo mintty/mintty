@@ -43,7 +43,7 @@ int font_size;
 
 // Font screen dimensions
 int font_width, font_height;
-static int font_dualwidth;
+static bool font_dualwidth;
 
 COLORREF colours[NALLCOLOURS];
 
@@ -816,6 +816,13 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
     }
   }
 }
+
+int
+win_ambig_cjk_width(void)
+{
+  return 1 + font_dualwidth;
+}
+
 
 /* This function gets the actual width of a character in the normal font.
  */
