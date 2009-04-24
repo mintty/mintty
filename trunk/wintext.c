@@ -128,7 +128,7 @@ win_init_fonts(void)
 
   font_height = tm.tmHeight;
   font_width = tm.tmAveCharWidth;
-  font_dualwidth = (tm.tmAveCharWidth != tm.tmMaxCharWidth);
+  font_dualwidth = (tm.tmMaxCharWidth > tm.tmAveCharWidth * 3 / 2);
 
   {
     CHARSETINFO info;
