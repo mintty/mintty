@@ -659,8 +659,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
           luni_send((wchar *)buf, len / 2, 1);
         }
         ImmReleaseContext(wnd, imc);
+        return 1;
       }
-      return 1;
     when WM_IGNORE_CLIP:
       ignore_clip = wp;     /* don't panic on DESTROYCLIPBOARD */
     when WM_DESTROYCLIPBOARD:
