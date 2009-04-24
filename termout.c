@@ -445,11 +445,8 @@ out_char(wchar c)
   int width = 0;
   if (DIRECT_CHAR(c))
     width = 1;
-  if (!width) {
-    width = wcwidth(c);
-    if (width == -2)
-      width = win_ambig_cjk_width();
-  } 
+  if (!width)
+    width = wcwidth((wchar) c);
   if (term.wrapnext && term.wrap && width > 0) {
     cline->lattr |= LATTR_WRAPPED;
     if (term.curs.y == term.marg_b)

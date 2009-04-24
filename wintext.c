@@ -43,7 +43,7 @@ int font_size;
 
 // Font screen dimensions
 int font_width, font_height;
-static bool font_dualwidth;
+static int font_dualwidth;
 
 COLORREF colours[NALLCOLOURS];
 
@@ -128,7 +128,7 @@ win_init_fonts(void)
 
   font_height = tm.tmHeight;
   font_width = tm.tmAveCharWidth;
-  font_dualwidth = (tm.tmMaxCharWidth > tm.tmAveCharWidth * 3 / 2);
+  font_dualwidth = (tm.tmAveCharWidth != tm.tmMaxCharWidth);
 
   {
     CHARSETINFO info;
@@ -816,13 +816,6 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
     }
   }
 }
-
-int
-win_ambig_cjk_width(void)
-{
-  return 1 + font_dualwidth;
-}
-
 
 /* This function gets the actual width of a character in the normal font.
  */

@@ -877,24 +877,24 @@ main(int argc, char *argv[])
     RegisterClass(&wndclass);
   }
 
- /* Create initial window.
-  * Its real size has to be set after loading the fonts and determining their
-  * size, but the window has to exist to do that.
-  */
-  wnd = CreateWindow(APPNAME, APPNAME,
-                     WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
-                     x, y, 300, 200, null, null, inst, null);
-
  /*
-  * Determine extra_{width,height}.
+  * Guess some defaults for the window size. This all gets
+  * updated later, so we don't really care too much. However, we
+  * do want the font width/height guesses to correspond to a
+  * large font rather than a small one...
   */
   {
-    RECT cr, wr;
-    GetWindowRect(wnd, &wr);
-    GetClientRect(wnd, &cr);
-    offset_width = offset_height = 0;
-    extra_width = wr.right - wr.left - cr.right + cr.left;
-    extra_height = wr.bottom - wr.top - cr.bottom + cr.top;
+    int guess_width = 25 + 20 * cols;
+    int guess_height = 28 + 20 * rows;
+    RECT r;
+    get_fullscreen_rect(&r);
+    if (guess_width > r.right - r.left)
+      guess_width = r.right - r.left;
+    if (guess_height > r.bottom - r.top)
+      guess_height = r.bottom - r.top;
+    uint style = WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0);
+    wnd = CreateWindow(APPNAME, APPNAME, style, x, y,
+                        guess_width, guess_height, null, null, inst, null);
   }
 
   win_init_menus();
@@ -916,6 +916,18 @@ main(int argc, char *argv[])
   font_size = cfg.font.size;
   win_init_fonts();
   win_reset_colours();
+
+ /*
+  * Correct the guesses for extra_{width,height}.
+  */
+  {
+    RECT cr, wr;
+    GetWindowRect(wnd, &wr);
+    GetClientRect(wnd, &cr);
+    offset_width = offset_height = 0;
+    extra_width = wr.right - wr.left - cr.right + cr.left;
+    extra_height = wr.bottom - wr.top - cr.bottom + cr.top;
+  }
   
  /*
   * Set up a caret bitmap, with no content.
