@@ -4,6 +4,7 @@
 void win_update(void);
 void win_schedule_update(void);
 
+int  win_ambig_cjk_width(void);
 int  win_char_width(int uc);
 void win_text(int, int, wchar *, int, uint, int);
 void win_cursor(int, int, wchar *, int, uint, int);

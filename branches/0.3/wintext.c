@@ -39,7 +39,7 @@ static enum {
 static int descent;
 
 int font_width, font_height;
-static int font_dualwidth;
+static bool font_dualwidth;
 
 COLORREF colours[NALLCOLOURS];
 
@@ -124,7 +124,7 @@ win_init_fonts(void)
 
   font_height = tm.tmHeight;
   font_width = tm.tmAveCharWidth;
-  font_dualwidth = (tm.tmAveCharWidth != tm.tmMaxCharWidth);
+  font_dualwidth = (tm.tmMaxCharWidth > tm.tmAveCharWidth * 3 / 2);
 
   {
     CHARSETINFO info;
@@ -812,6 +812,13 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
     }
   }
 }
+
+int
+win_ambig_cjk_width(void)
+{
+  return 1 + font_dualwidth;
+}
+
 
 /* This function gets the actual width of a character in the normal font.
  */
