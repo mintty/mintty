@@ -331,18 +331,18 @@ reset_window(int reinit)
 
   int cols = term_cols(), rows = term_rows();
 
- /* Is the window out of position ? */
-  if (!reinit &&
-      (offset_width != (win_width - font_width * cols) / 2 ||
-       offset_height != (win_height - font_height * rows) / 2)) {
-    offset_width = (win_width - font_width * cols) / 2;
-    offset_height = (win_height - font_height * rows) / 2;
-    InvalidateRect(wnd, null, true);
+  bool zoomed = IsZoomed(wnd);
+  if (zoomed) {
+    offset_height = (win_height % font_height) / 2;
+    offset_width = (win_width % font_width) / 2;
   }
+  else
+    offset_width = offset_height = 0;
 
-  if (IsZoomed(wnd)) {
-   /* We're fullscreen, this means we must not change the size of
-    * the window so it's the font size or the terminal itself.
+  if (zoomed || reinit == -1) {
+   /* We're fullscreen, or we were told to resize, 
+    * this means we must not change the size of
+    * the window so the terminal has to change.
     */
 
     extra_width = wr.right - wr.left - cr.right + cr.left;
@@ -355,8 +355,6 @@ reset_window(int reinit)
       */
       rows = win_height / font_height;
       cols = win_width / font_width;
-      offset_height = (win_height % font_height) / 2;
-      offset_width = (win_width % font_width) / 2;
       notify_resize(rows, cols);
       InvalidateRect(wnd, null, true);
     }
@@ -367,7 +365,6 @@ reset_window(int reinit)
   * so we resize to the default font size.
   */
   if (reinit > 0) {
-    offset_width = offset_height = 0;
     extra_width = wr.right - wr.left - cr.right + cr.left;
     extra_height = wr.bottom - wr.top - cr.bottom + cr.top;
 
@@ -391,7 +388,6 @@ reset_window(int reinit)
   * window. But that may be too big for the screen which forces us
   * to change the terminal.
   */
-  offset_width = offset_height = 0;
   extra_width = wr.right - wr.left - cr.right + cr.left;
   extra_height = wr.bottom - wr.top - cr.bottom + cr.top;
 
@@ -974,7 +970,7 @@ main(int argc, char *argv[])
   * Resize the window, now we know what size we _really_ want it to be.
   */
   int term_width = font_width * term_cols();
-  int term_height = extra_height + font_height * term_rows();
+  int term_height = font_height * term_rows();
   SetWindowPos(wnd, null, 0, 0,
                term_width + extra_width, term_height + extra_height,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
