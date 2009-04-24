@@ -128,15 +128,6 @@ child_create(char *argv[], struct winsize *winp)
     argv = (char *[]){name, 0};
   }
   
-  // AttachConsole is only available from XP, so need to load it dynamically
-  BOOL WINAPI (*AttachConsole)(DWORD dwProcessId) =
-    GetProcAddress(GetModuleHandle("kernel32.dll"), "AttachConsole");
-
-  // Attach mintty process to parent's console, if any,
-  // so it can be passed down to the child process.
-  if (AttachConsole)
-    (*AttachConsole)(-1);
-
   // Create the child process and pseudo terminal.
   pid = forkpty(&fd, 0, 0, winp);
   if (pid == -1) { // Fork failed.
@@ -148,14 +139,12 @@ child_create(char *argv[], struct winsize *winp)
   }
   else if (pid == 0) { // Child process.
 
-    // Latch on to parent console, if any.
-    if (AttachConsole)
-      (*AttachConsole)(-1);
-
     // Windows se7en actually is Windows 6.1 (aka Vista Second Edition).
-    // Unlike before, console programs now always seem to want a console,
-    // not just if they actually need it. So here's a disgusting hack
-    // to give them a console with a hidden window.
+    // The Cygwin DLL's trick of allocating a console on an invisible
+    // "window station" no longer works here due to a change of behaviour
+    // (or a bug?) in Windows.
+    // Hence, here's a hack that allocates a console for the child command
+    // and hides it. Annoyingly the console window still flashes up briefly.
     DWORD version = GetVersion();
     version = ((version & 0xff) << 8) | ((version >> 8) & 0xff);
     if (version >= 0x0601 && AllocConsole())
