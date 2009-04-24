@@ -58,6 +58,8 @@ win_init_menus(void)
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN, 0);
   AppendMenu(menu, MF_ENABLED, IDM_OPTIONS, "&Options...");
+  AppendMenu(menu, MF_SEPARATOR, 0, 0);
+  AppendMenu(menu, MF_ENABLED, IDM_ABOUT, "&About...");
 
   sysmenu = GetSystemMenu(wnd, false);
   InsertMenu(sysmenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
@@ -76,12 +78,6 @@ win_popup_menu(void)
     p.x, p.y, 0, wnd, null
   );
 }
-
-static enum {
-  ALT_CANCELLED = -1, ALT_NONE = 0, ALT_ALONE = 1,
-  ALT_OCT = 8, ALT_DEC = 10
-} alt_state;
-static wchar alt_char;
 
 inline static bool
 is_key_down(uchar vk)
@@ -170,8 +166,6 @@ win_mouse_click(mouse_button b, LPARAM lp)
   term_mouse_click(b, mods, get_mouse_pos(lp), count);
   last_time = t;
   clicked_button = last_button = b;
-  if (alt_state > ALT_NONE)
-    alt_state = ALT_CANCELLED;
 }
 
 void
@@ -215,45 +209,38 @@ win_mouse_wheel(WPARAM wp, LPARAM lp)
 
 /* Keyboard handling */
 
+enum { ALT_NONE = 0, ALT_ALONE = 1, ALT_OCT = 8, ALT_DEC = 10} alt_state;
+wchar alt_char;
+
 bool 
-win_key_down(WPARAM wp, LPARAM lp)
+win_key_down(WPARAM wParam, LPARAM lParam)
 {
-  uint key = wp;
-
-  if (key == VK_PROCESSKEY) {
-    TranslateMessage(
-      &(MSG){.hwnd = wnd, .message = WM_KEYDOWN, .wParam = wp, .lParam = lp}
-    );
-    return 1;
-  }
-
-  uint count = LOWORD(lp);
+  uint key = wParam;
+  uint count = LOWORD(lParam);
   mod_keys mods = get_mods();
   bool shift = mods & SHIFT, alt = mods & ALT, ctrl = mods & CTRL;
  
   update_mouse(mods);
 
   // Alt+keycode
-  if (alt_state > ALT_NONE && VK_NUMPAD0 <= key && key <= VK_NUMPAD9) {
-    int digit = key - VK_NUMPAD0;
+  if (alt_state != ALT_NONE) {
+    uint digit = key - VK_NUMPAD0;
     if (alt_state == ALT_ALONE) {
-      alt_char = digit;
-      alt_state = digit ? ALT_DEC : ALT_OCT;
-      return 1;
+      if (digit < 10) {
+        alt_char = digit;
+        alt_state = digit ? ALT_DEC : ALT_OCT;
+        return 1;
+      }
     }
     else if (digit < alt_state) {
-      alt_char *= alt_state;
-      alt_char += digit;
+      alt_char = alt_char * alt_state + digit;
       return 1;
     }
   }
-  if (key == VK_MENU && !shift && !ctrl) {
-    if (alt_state == ALT_NONE)
-      alt_state = ALT_ALONE;
+  
+  alt_state = key == VK_MENU && !shift && !ctrl;
+  if (alt_state)
     return 1;
-  }
-  else if (alt_state != ALT_NONE)
-    alt_state = ALT_CANCELLED;
   
   // Window commands
   if (alt && !ctrl) {
@@ -454,7 +441,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   // to an experiment with Keyboard Layout Creator 1.4. (MSDN doesn't say.)
   uchar keyboard[256];  
   GetKeyboardState(keyboard);
-  uint scancode = HIWORD(lp) & (KF_EXTENDED | 0xFF);
+  uint scancode = HIWORD(lParam) & (KF_EXTENDED | 0xFF);
   wchar wchars[4];
   int wchars_n = ToUnicode(key, scancode, keyboard, wchars, 4, 0);
   
@@ -540,12 +527,12 @@ win_key_up(WPARAM wParam, LPARAM unused(lParam))
   uint key = wParam;
 
   bool alt = key == VK_MENU;
-  if (alt) {
+  if (alt && alt_state != ALT_NONE) {
     if (alt_state == ALT_ALONE) {
       if (cfg.alt_sends_esc)
         ldisc_send((char[]){'\e'}, 1, 1);
     }
-    else if (alt_state > ALT_ALONE)
+    else
       luni_send(&alt_char, 1, 1);
     alt_state = ALT_NONE;
   }

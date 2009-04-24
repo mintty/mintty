@@ -3,7 +3,7 @@
 
 #include "settings.h"
 
-extern char *config_filename;
+char *config_filename;
 
 typedef struct {
   char name[64];

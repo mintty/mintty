@@ -263,20 +263,6 @@ toggle_mode(int mode, int query, int state)
   }
 }
 
-static colour
-rgb_to_colour(uint32 rgb)
-{
-  return make_colour(rgb >> 16, rgb >> 8, rgb);
-}
-
-static void
-do_colour_osc(void (*set_colour_f)(uint32))
-{
-  uint rgb;
-  if (sscanf(term.osc_string, "#%x%c", &rgb, &(char){0}) == 1)
-    (*set_colour_f)(rgb_to_colour(rgb));
-}
-
 /*
  * Process an OSC sequence: set window title or icon name.
  */
@@ -292,11 +278,8 @@ do_osc(void)
       when 4: {
         uint n, rgb;
         if (sscanf(term.osc_string, "%u;#%x%c", &n, &rgb, &(char){0}) == 2)
-          win_set_colour(n, rgb_to_colour(rgb));
+          win_set_palette(n, rgb >> 16, rgb >> 8, rgb);
       }
-      when 10: do_colour_osc(win_set_foreground_colour);
-      when 11: do_colour_osc(win_set_background_colour);
-      when 12: do_colour_osc(win_set_cursor_colour);
     }
   }
 }
@@ -445,11 +428,8 @@ out_char(wchar c)
   int width = 0;
   if (DIRECT_CHAR(c))
     width = 1;
-  if (!width) {
-    width = wcwidth(c);
-    if (width == -2)
-      width = win_ambig_cjk_width();
-  } 
+  if (!width)
+    width = wcwidth((wchar) c);
   if (term.wrapnext && term.wrap && width > 0) {
     cline->lattr |= LATTR_WRAPPED;
     if (term.curs.y == term.marg_b)
@@ -1559,7 +1539,7 @@ term_write(const char *data, int len)
               term.state = SEEN_OSC_P;
               term.osc_strlen = 0;
             when 'R':  /* Linux palette reset */
-              win_reset_colours();
+              win_reset_palette();
               term_invalidate_all();
               term.state = TOPLEVEL;
             when 'W':  /* word-set */
@@ -1612,15 +1592,24 @@ term_write(const char *data, int len)
           }
         }
         when SEEN_OSC_P: {
-          if (!isxdigit(c)) {
+          uint max = (term.osc_strlen == 0 ? 21 : 15);
+          uint val;
+          if (c >= '0' && c <= '9')
+            val = c - '0';
+          else if (c >= 'A' && c <= 'A' + max - 10)
+            val = c - 'A' + 10;
+          else if (c >= 'a' && c <= 'a' + max - 10)
+            val = c - 'a' + 10;
+          else {
             term.state = TOPLEVEL;
             break;
           }
-          term.osc_string[term.osc_strlen++] = c;
-          if (term.osc_strlen == 7) {
-            uint n, rgb;
-            sscanf(term.osc_string, "%1x%6x", &n, &rgb);
-            win_set_colour(n, rgb_to_colour(rgb));
+          term.osc_string[term.osc_strlen++] = val;
+          if (term.osc_strlen >= 7) {
+            win_set_palette(term.osc_string[0],
+                        term.osc_string[1] * 16 + term.osc_string[2],
+                        term.osc_string[3] * 16 + term.osc_string[4],
+                        term.osc_string[5] * 16 + term.osc_string[6]);
             term_invalidate_all();
             term.state = TOPLEVEL;
           }

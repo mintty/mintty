@@ -18,17 +18,12 @@
 #include <pthread.h>
 
 #include <winbase.h>
-#include <wincon.h>
-#include <wingdi.h>
-#include <winuser.h>
-#include <sys/cygwin.h>
 
 HANDLE child_event;
-
 static HANDLE proc_event;
 static pid_t pid;
 static int status;
-static int fd = -1, log_fd = -1;
+static int fd = -1;
 static int read_len;
 static char read_buf[4096];
 static struct utmp ut;
@@ -71,56 +66,50 @@ wait_thread(void *unused(arg))
 }
 
 bool
-child_proc(hold_t hold)
+child_proc(void)
 {
   if (read_len > 0) {
     term_write(read_buf, read_len);
-    write(log_fd, read_buf, read_len);
     read_len = 0;
     SetEvent(proc_event);
   }
-
-  if (pid)
-    return false;
-
-  logout(ut.ut_line);
-
-  // No point hanging around if the user wants us dead.
-  if (killed || hold == HOLD_NEVER)
-    exit(0);
-  
-  if (hold == HOLD_ALWAYS)
-    return false;
-
-  // Display a message if the child process died with an error. 
-  int l = -1;
-  char *s; 
-  if (WIFEXITED(status)) {
-    status = WEXITSTATUS(status);
-    if (status == 0)
+  if (pid == 0) {
+    logout(ut.ut_line);
+    
+    // No point hanging around if the user wants the terminal shut.
+    if (killed)
       exit(0);
-    else
-      l = asprintf(&s, "\r\n%s exited with status %i\r\n", name, status); 
+    
+    // Otherwise, display a message if the child process died with an error. 
+    int l = -1;
+    char *s; 
+    if (WIFEXITED(status)) {
+      status = WEXITSTATUS(status);
+      if (status == 0)
+        exit(0);
+      else
+        l = asprintf(&s, "\r\n%s exited with status %i\r\n", name, status); 
+    }
+    else if (WIFSIGNALED(status)) {
+      int error_sigs =
+        1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
+        1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
+      int sig = WTERMSIG(status);
+      if ((error_sigs & 1<<sig) == 0)
+        exit(0);
+      l = asprintf(&s, "\r\n%s terminated: %s\r\n", name, strsignal(sig));
+    }
+    if (l != -1) {
+      term_write(s, l);
+      free(s);
+    }
+    return true;
   }
-  else if (WIFSIGNALED(status)) {
-    int error_sigs =
-      1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
-      1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
-    int sig = WTERMSIG(status);
-    if ((error_sigs & 1<<sig) == 0)
-      exit(0);
-    l = asprintf(&s, "\r\n%s terminated: %s\r\n", name, strsignal(sig));
-  }
-  if (l != -1) {
-    term_write(s, l);
-    term_write("Press any key to close\r\n", 24);
-    free(s);
-  }
-  return true;
+  return false;
 }
 
 char *
-child_create(char *argv[], struct winsize *winp, const char *log_file)
+child_create(char *argv[], struct winsize *winp)
 {
   struct passwd *pw = getpwuid(getuid());
   char *cmd; 
@@ -135,46 +124,16 @@ child_create(char *argv[], struct winsize *winp, const char *log_file)
     argv = (char *[]){name, 0};
   }
   
-  // Command line for window title.
-  char *argz;
-  size_t argz_len;
-  argz_create(argv, &argz, &argz_len);
-  argz_stringify(argz, argz_len, ' ');
-  
-  // Open log file if any
-  if (log_file) {
-    log_fd = open(log_file, O_WRONLY | O_CREAT);
-    if (log_fd == -1) {
-      char *msg = strdup(strerror(errno));
-      term_write("Failed to open log file: ", 25);
-      term_write(msg, strlen(msg));
-      free(msg);
-      return argz;
-    }
-  }
-
   // Create the child process and pseudo terminal.
   pid = forkpty(&fd, 0, 0, winp);
   if (pid == -1) { // Fork failed.
     char *msg = strdup(strerror(errno));
-    term_write("Failed to create child process: ", 32);
+    term_write("forkpty: ", 8);
     term_write(msg, strlen(msg));
     free(msg);
     pid = 0;
   }
   else if (pid == 0) { // Child process.
-
-    // Windows se7en actually is Windows 6.1 (aka Vista Second Edition).
-    // The Cygwin DLL's trick of allocating a console on an invisible
-    // "window station" no longer works here due to a change of behaviour
-    // (or a bug?) in Windows.
-    // Hence, here's a hack that allocates a console for the child command
-    // and hides it. Annoyingly the console window still flashes up briefly.
-    DWORD version = GetVersion();
-    version = ((version & 0xff) << 8) | ((version >> 8) & 0xff);
-    if (version >= 0x0601 && AllocConsole())
-      ShowWindowAsync(GetConsoleWindow(), SW_HIDE);
-
     struct termios attr;
     tcgetattr(0, &attr);
     attr.c_cc[VERASE] = cfg.backspace_sends_del ? 0x7F : '\b';
@@ -193,7 +152,6 @@ child_create(char *argv[], struct winsize *winp, const char *log_file)
     exit(1);
   }
   else { // Parent process.
-  
     name = *argv;
     
     child_event = CreateEvent(null, false, false, null);
@@ -226,6 +184,11 @@ child_create(char *argv[], struct winsize *winp, const char *log_file)
     login(&ut);
   }
   
+  // Return child command line for window title.
+  char *argz;
+  size_t argz_len;
+  argz_create(argv, &argz, &argz_len);
+  argz_stringify(argz, argz_len, ' ');
   return argz;
 }
 

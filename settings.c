@@ -35,9 +35,9 @@ write_int_setting(const char *key, int value)
 }
 
 void
-write_colour_setting(const char *key, colour c)
+write_colour_setting(const char *key, colour value)
 {
-  fprintf(file, "%s=%u,%u,%u\n", key, red(c), green(c), blue(c));
+  fprintf(file, "%s=%u,%u,%u\n", key, value.red, value.green, value.blue);
 }
 
 void 
@@ -113,17 +113,17 @@ read_int_setting(const char *key, int *res_p, int def)
 }
 
 void
-read_colour_setting(const char *key, colour *res_p, colour def)
+read_colour_setting(const char *key, colour *res, colour def)
 {
   const char *val = lookup_val(key); 
   if (val) {
-    uint r, g, b;
-    if (sscanf(val, "%u,%u,%u", &r, &g, &b) == 3) {
-      *res_p = make_colour(r, g, b);
+    int r, g, b;
+    if (sscanf(val, "%d,%d,%d", &r, &g, &b) == 3) {
+      *res = (colour){r, g, b};
       return;
     }
   }
-  *res_p = def;
+  *res = def;
 }
 
 
