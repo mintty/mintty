@@ -18,6 +18,10 @@
 #include <pthread.h>
 
 #include <winbase.h>
+#include <wincon.h>
+#include <wingdi.h>
+#include <winuser.h>
+#include <sys/cygwin.h>
 
 HANDLE child_event;
 static HANDLE proc_event;
@@ -124,6 +128,15 @@ child_create(char *argv[], struct winsize *winp)
     argv = (char *[]){name, 0};
   }
   
+  // AttachConsole is only available from XP, so need to load it dynamically
+  BOOL WINAPI (*AttachConsole)(DWORD dwProcessId) =
+    GetProcAddress(GetModuleHandle("kernel32.dll"), "AttachConsole");
+
+  // Attach mintty process to parent's console, if any,
+  // so it can be passed down to the child process.
+  if (AttachConsole)
+    (*AttachConsole)(-1);
+
   // Create the child process and pseudo terminal.
   pid = forkpty(&fd, 0, 0, winp);
   if (pid == -1) { // Fork failed.
@@ -134,6 +147,20 @@ child_create(char *argv[], struct winsize *winp)
     pid = 0;
   }
   else if (pid == 0) { // Child process.
+
+    // Latch on to parent console, if any.
+    if (AttachConsole)
+      (*AttachConsole)(-1);
+
+    // Windows se7en actually is Windows 6.1 (aka Vista Second Edition).
+    // Unlike before, console programs now always seem to want a console,
+    // not just if they actually need it. So here's a disgusting hack
+    // to give them a console with a hidden window.
+    DWORD version = GetVersion();
+    version = ((version & 0xff) << 8) | ((version >> 8) & 0xff);
+    if (version >= 0x0601 && AllocConsole())
+      ShowWindowAsync(GetConsoleWindow(), SW_HIDE);
+
     struct termios attr;
     tcgetattr(0, &attr);
     attr.c_cc[VERASE] = cfg.backspace_sends_del ? 0x7F : '\b';
@@ -152,6 +179,7 @@ child_create(char *argv[], struct winsize *winp)
     exit(1);
   }
   else { // Parent process.
+  
     name = *argv;
     
     child_event = CreateEvent(null, false, false, null);
