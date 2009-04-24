@@ -185,38 +185,54 @@ win_bell(int mode)
     flash_window(2);
 }
 
-static void
-update_sys_cursor(void)
-{
-  if (term_has_focus() && caret_x >= 0 && caret_y >= 0) {
-    SetCaretPos(caret_x, caret_y);
-
-    HIMC imc = ImmGetContext(wnd);
-    COMPOSITIONFORM cf = {
-      .dwStyle = CFS_POINT,
-      .ptCurrentPos = {caret_x, caret_y}
-    };
-    ImmSetCompositionWindow(imc, &cf);
-    ImmReleaseContext(wnd, imc);
-  }
-}
-
 /*
  * Move the system caret. (We maintain one, even though it's
  * invisible, for the benefit of blind people: apparently some
  * helper software tracks the system caret, so we should arrange to
  * have one.)
  */
-void
-win_set_sys_cursor(int x, int y)
+
+static void
+sys_cursor_update(void)
 {
+  COMPOSITIONFORM cf;
+  HIMC hIMC;
+
+  if (!term_has_focus())
+    return;
+
+  if (caret_x < 0 || caret_y < 0)
+    return;
+
+  SetCaretPos(caret_x, caret_y);
+
+  hIMC = ImmGetContext(wnd);
+  cf.dwStyle = CFS_POINT;
+  cf.ptCurrentPos.x = caret_x;
+  cf.ptCurrentPos.y = caret_y;
+  ImmSetCompositionWindow(hIMC, &cf);
+
+  ImmReleaseContext(wnd, hIMC);
+}
+
+void
+win_sys_cursor(int x, int y)
+{
+  if (!term_has_focus())
+    return;
+
+ /*
+  * Avoid gratuitously re-updating the cursor position and IMM
+  * window if there's no actual change required.
+  */
   int cx = x * font_width + offset_width;
   int cy = y * font_height + offset_height;
-  if (cx != caret_x || cy != caret_y) {
-    caret_x = cx;
-    caret_y = cy;
-    update_sys_cursor();
-  }
+  if (cx == caret_x && cy == caret_y)
+    return;
+  caret_x = cx;
+  caret_y = cy;
+
+  sys_cursor_update();
 }
 
 /* Get the rect/size of a full screen window using the nearest available
@@ -598,40 +614,21 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_MOUSEMOVE: win_mouse_move(false, lp);
     when WM_NCMOUSEMOVE: win_mouse_move(true, lp);
     when WM_MOUSEWHEEL: win_mouse_wheel(wp, lp);
-    when WM_KEYDOWN or WM_SYSKEYDOWN:
-      if (win_key_down(wp, lp))
-        return 0;
-    when WM_KEYUP or WM_SYSKEYUP:
-      if (win_key_up(wp, lp))
-        return 0;
-    when WM_CHAR or WM_SYSCHAR:
-      { // TODO: handle wchar and WM_UNICHAR
-        char c = (uchar) wp;
-        term_seen_key_event();
-        lpage_send(CP_ACP, &c, 1, 1);
-        return 0;
-      }
+    when WM_KEYDOWN or WM_SYSKEYDOWN: if (win_key_down(wp, lp)) return 0;
+    when WM_KEYUP or WM_SYSKEYUP: if (win_key_up(wp, lp)) return 0;
+    when WM_CHAR or WM_SYSCHAR: { // TODO: handle wchar and WM_UNICHAR
+      char c = (uchar) wp;
+      term_seen_key_event();
+      lpage_send(CP_ACP, &c, 1, 1);
+      return 0;
+    }
     when WM_INPUTLANGCHANGE:
-      update_sys_cursor();
-    when WM_IME_STARTCOMPOSITION:
-      {
-        HIMC imc = ImmGetContext(wnd);
-        ImmSetCompositionFont(imc, &lfont);
-        ImmReleaseContext(wnd, imc);
-      }
-    when WM_IME_COMPOSITION:
-      if (lp & GCS_RESULTSTR) {
-        HIMC imc = ImmGetContext(wnd);
-        LONG len = ImmGetCompositionStringW(imc, GCS_RESULTSTR, null, 0);
-        if (len > 0) {
-          char buf[len];
-          ImmGetCompositionStringW(imc, GCS_RESULTSTR, buf, len);
-          term_seen_key_event();
-          luni_send((wchar *)buf, len / 2, 1);
-        }
-        ImmReleaseContext(wnd, imc);
-        return 1;
-      }
+      sys_cursor_update();
+    when WM_IME_STARTCOMPOSITION: {
+      HIMC hImc = ImmGetContext(wnd);
+      ImmSetCompositionFont(hImc, &lfont);
+      ImmReleaseContext(wnd, hImc);
+    }
     when WM_IGNORE_CLIP:
       ignore_clip = wp;     /* don't panic on DESTROYCLIPBOARD */
     when WM_DESTROYCLIPBOARD:
@@ -657,7 +654,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       win_update();
       update_transparency();
     when WM_FULLSCR_ON_MAX: fullscr_on_max = true;
-    when WM_MOVE: update_sys_cursor();
+    when WM_MOVE: sys_cursor_update();
     when WM_ENTERSIZEMOVE:
       win_enable_tip();
       resizing = true;
@@ -741,7 +738,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         */
         reset_window(-1);
       }
-      update_sys_cursor();
+      sys_cursor_update();
       return 0;
     }
     when WM_INITMENU:
@@ -877,24 +874,24 @@ main(int argc, char *argv[])
     RegisterClass(&wndclass);
   }
 
- /* Create initial window.
-  * Its real size has to be set after loading the fonts and determining their
-  * size, but the window has to exist to do that.
-  */
-  wnd = CreateWindow(APPNAME, APPNAME,
-                     WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
-                     x, y, 300, 200, null, null, inst, null);
-
  /*
-  * Determine extra_{width,height}.
+  * Guess some defaults for the window size. This all gets
+  * updated later, so we don't really care too much. However, we
+  * do want the font width/height guesses to correspond to a
+  * large font rather than a small one...
   */
   {
-    RECT cr, wr;
-    GetWindowRect(wnd, &wr);
-    GetClientRect(wnd, &cr);
-    offset_width = offset_height = 0;
-    extra_width = wr.right - wr.left - cr.right + cr.left;
-    extra_height = wr.bottom - wr.top - cr.bottom + cr.top;
+    int guess_width = 25 + 20 * cols;
+    int guess_height = 28 + 20 * rows;
+    RECT r;
+    get_fullscreen_rect(&r);
+    if (guess_width > r.right - r.left)
+      guess_width = r.right - r.left;
+    if (guess_height > r.bottom - r.top)
+      guess_height = r.bottom - r.top;
+    uint style = WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0);
+    wnd = CreateWindow(APPNAME, APPNAME, style, x, y,
+                        guess_width, guess_height, null, null, inst, null);
   }
 
   win_init_menus();
@@ -915,7 +912,19 @@ main(int argc, char *argv[])
   */
   font_size = cfg.font.size;
   win_init_fonts();
-  win_reset_colours();
+  win_init_palette();
+
+ /*
+  * Correct the guesses for extra_{width,height}.
+  */
+  {
+    RECT cr, wr;
+    GetWindowRect(wnd, &wr);
+    GetClientRect(wnd, &cr);
+    offset_width = offset_height = 0;
+    extra_width = wr.right - wr.left - cr.right + cr.left;
+    extra_height = wr.bottom - wr.top - cr.bottom + cr.top;
+  }
   
  /*
   * Set up a caret bitmap, with no content.

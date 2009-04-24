@@ -216,18 +216,10 @@ win_mouse_wheel(WPARAM wp, LPARAM lp)
 /* Keyboard handling */
 
 bool 
-win_key_down(WPARAM wp, LPARAM lp)
+win_key_down(WPARAM wParam, LPARAM lParam)
 {
-  uint key = wp;
-
-  if (key == VK_PROCESSKEY) {
-    TranslateMessage(
-      &(MSG){.hwnd = wnd, .message = WM_KEYDOWN, .wParam = wp, .lParam = lp}
-    );
-    return 1;
-  }
-
-  uint count = LOWORD(lp);
+  uint key = wParam;
+  uint count = LOWORD(lParam);
   mod_keys mods = get_mods();
   bool shift = mods & SHIFT, alt = mods & ALT, ctrl = mods & CTRL;
  
@@ -454,7 +446,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   // to an experiment with Keyboard Layout Creator 1.4. (MSDN doesn't say.)
   uchar keyboard[256];  
   GetKeyboardState(keyboard);
-  uint scancode = HIWORD(lp) & (KF_EXTENDED | 0xFF);
+  uint scancode = HIWORD(lParam) & (KF_EXTENDED | 0xFF);
   wchar wchars[4];
   int wchars_n = ToUnicode(key, scancode, keyboard, wchars, 4, 0);
   

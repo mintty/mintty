@@ -137,7 +137,7 @@ struct term {
 
   int osc_strlen;
   char osc_string[OSC_STR_MAX + 1];
-  bool osc_w;
+  int osc_w;
 
   char id_string[1024];
 
