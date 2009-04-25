@@ -45,7 +45,7 @@ cblink_cb(void)
 void
 term_schedule_cblink(void)
 {
-  if (cfg.cursor_blinks && term.has_focus)
+  if (term.cfg.cursor_blinks && term.has_focus)
     win_set_timer(cblink_cb, cursor_blink_ticks());
   else
     term.cblinker = 1;  /* reset when not in use */
@@ -127,7 +127,7 @@ term_reset(void)
   term.editing = term.echoing = false;
   term.app_cursor_keys = false;
   term.use_bce = true;
-  term.blink_is_real = cfg.allow_blinking;
+  term.blink_is_real = term.cfg.allow_blinking;
   term.erase_char = term.basic_erase_char;
   term.which_screen = 0;
   term_print_finish();
@@ -183,23 +183,33 @@ term_seen_key_event(void)
 }
 
 /*
- * When the user reconfigures us, we need to abandon a print job if
+ * When the user reconfigures us, we need to check the forbidden-
+ * alternate-screen config option, disable raw mouse mode if the
+ * user has disabled mouse reporting, and abandon a print job if
  * the user has disabled printing.
  */
 void
 term_reconfig(void)
 {
-  if (!*new_cfg.printer)
+ /*
+  * Before adopting the new config, check all those terminal
+  * settings which control power-on defaults; and if they've
+  * changed, we will modify the current state as well as the
+  * default one. The full list is: Auto wrap mode, DEC Origin
+  * Mode, BCE, blinking text, character classes.
+  */
+  int reset_tblink = (term.cfg.allow_blinking != cfg.allow_blinking);
+  
+  term.cfg = cfg;       /* STRUCTURE COPY */
+
+  if (reset_tblink) {
+    term.blink_is_real = term.cfg.allow_blinking;
+  }  
+  if (!*term.cfg.printer) {
     term_print_finish();
-  if (new_cfg.allow_blinking != cfg.allow_blinking)
-    term.blink_is_real = new_cfg.allow_blinking;
-  cfg.cursor_blinks = new_cfg.cursor_blinks;
+  }
   term_schedule_tblink();
   term_schedule_cblink();
-  if (new_cfg.scrollback_lines != cfg.scrollback_lines) {
-    cfg.scrollback_lines = new_cfg.scrollback_lines;
-    term_resize(term.rows, term.cols);
-  }
 }
 
 /*
@@ -236,6 +246,7 @@ term_init(void)
   * Allocate a new Terminal structure and initialise the fields
   * that need it.
   */
+  term.cfg = cfg;       /* STRUCTURE COPY */
   term.compatibility_level = TM_PUTTY & ~CL_SCOANSI;
   strcpy(term.id_string, "\033[?6c");
   term.inbuf = new_bufchain();
@@ -260,8 +271,12 @@ term_resize(int newrows, int newcols)
 {
   tree234 *newalt;
   termline **newdisp, *line;
-  int oldrows = term.rows;
+  int i, j, oldrows = term.rows;
+  int sblen;
   int save_which_screen = term.which_screen;
+
+  if (newrows == term.rows && newcols == term.cols)
+    return;     /* nothing to do */
 
  /* Behave sensibly if we're given zero (or negative) rows/cols */
 
@@ -270,7 +285,7 @@ term_resize(int newrows, int newcols)
   if (newcols < 1)
     newcols = 1;
 
-  term.selected = false;
+  term_deselect();
   term_swap_screen(0, false, false);
 
   term.alt_t = term.marg_t = 0;
@@ -302,7 +317,7 @@ term_resize(int newrows, int newcols)
   *    amount of scrollback we actually have, we must throw some
   *    away.
   */
-  int sblen = count234(term.scrollback);
+  sblen = count234(term.scrollback);
  /* Do this loop to expand the screen if newrows > rows */
   assert(term.rows == count234(term.screen));
   while (term.rows < newrows) {
@@ -346,27 +361,20 @@ term_resize(int newrows, int newcols)
   assert(term.rows == newrows);
   assert(count234(term.screen) == newrows);
 
- /* Delete any excess lines from the scrollback. */
-  while (sblen > cfg.scrollback_lines) {
-    line = delpos234(term.scrollback, 0);
-    free(line);
-    sblen--;
-  }
   if (sblen < term.tempsblines)
     term.tempsblines = sblen;
-  assert(count234(term.scrollback) <= cfg.scrollback_lines);
   assert(count234(term.scrollback) >= term.tempsblines);
   term.disptop = 0;
 
  /* Make a new displayed text buffer. */
   newdisp = newn(termline *, newrows);
-  for (int i = 0; i < newrows; i++) {
+  for (i = 0; i < newrows; i++) {
     newdisp[i] = newline(newcols, false);
-    for (int j = 0; j < newcols; j++)
+    for (j = 0; j < newcols; j++)
       newdisp[i]->chars[j].attr = ATTR_INVALID;
   }
   if (term.disptext) {
-    for (int i = 0; i < oldrows; i++)
+    for (i = 0; i < oldrows; i++)
       freeline(term.disptext[i]);
   }
   free(term.disptext);
@@ -375,7 +383,7 @@ term_resize(int newrows, int newcols)
 
  /* Make a new alternate screen. */
   newalt = newtree234(null);
-  for (int i = 0; i < newrows; i++) {
+  for (i = 0; i < newrows; i++) {
     line = newline(newcols, true);
     addpos234(newalt, line, i);
   }
@@ -521,6 +529,17 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
 }
 
 /*
+ * Check whether the region bounded by the two pointers intersects
+ * the scroll region, and de-select the on-screen selection if so.
+ */
+void
+term_check_selection(pos from, pos to)
+{
+  if (poslt(from, term.sel_end) && poslt(term.sel_start, to))
+    term_deselect();
+}
+
+/*
  * This function is called before doing _anything_ which affects
  * only part of a line of text. It is used to mark the boundary
  * between two character positions, and it indicates that some sort
@@ -608,16 +627,18 @@ term_do_scroll(int topline, int botline, int lines, int sb)
   else {
     while (lines > 0) {
       line = delpos234(term.screen, topline);
-      if (sb && cfg.scrollback_lines > 0) {
+      if (sb) {
         int sblen = count234(term.scrollback);
        /*
         * We must add this line to the scrollback. We'll
         * remove a line from the top of the scrollback if
         * the scrollback is full.
         */
-        if (sblen == cfg.scrollback_lines) {
+        if (sblen == SAVELINES) {
+          uchar *cline;
+
           sblen--;
-          uchar *cline = delpos234(term.scrollback, 0);
+          cline = delpos234(term.scrollback, 0);
           free(cline);
         }
         else
@@ -641,7 +662,7 @@ term_do_scroll(int topline, int botline, int lines, int sb)
         * Thanks to Jan Holmen Holsten for the idea and
         * initial implementation.
         */
-        if (term.disptop > -cfg.scrollback_lines && term.disptop < 0)
+        if (term.disptop > -SAVELINES && term.disptop < 0)
           term.disptop--;
       }
       resizeline(line, term.cols);
@@ -661,7 +682,7 @@ term_do_scroll(int topline, int botline, int lines, int sb)
       * selection), and also sel_anchor (for one being
       * selected as we speak).
       */
-      seltop = sb ? -cfg.scrollback_lines : topline;
+      seltop = sb ? -SAVELINES : topline;
 
       if (term.selected) {
         if (term.sel_start.y >= seltop && term.sel_start.y <= botline) {
@@ -727,6 +748,7 @@ term_erase_lots(int line_only, int from_begin, int to_end)
   }
   if (!from_begin || !to_end)
     term_check_boundary(term.curs.x, term.curs.y);
+  term_check_selection(start, end);
 
  /* Clear screen also forces a full window redraw, just in case. */
   if (start.y == 0 && start.x == 0 && end.y == term.rows)
@@ -782,7 +804,7 @@ void
 term_print_setup(void)
 {
   bufchain_clear(term.printer_buf);
-  term.print_job = printer_start_job(cfg.printer);
+  term.print_job = printer_start_job(term.cfg.printer);
 }
 
 void
@@ -846,7 +868,7 @@ term_paint(void)
   int cursor;
   if (term.cursor_on) {
     if (term.has_focus) {
-      if (term.cblinker || !cfg.cursor_blinks)
+      if (term.cblinker || !term.cfg.cursor_blinks)
         cursor = TATTR_ACTCURS;
       else
         cursor = 0;
@@ -1180,7 +1202,7 @@ term_update(void)
   if (term.seen_disp_event)
     update_sbar();
   term_paint();
-  win_set_sys_cursor(term.curs.x, term.curs.y - term.disptop);
+  win_sys_cursor(term.curs.x, term.curs.y - term.disptop);
 }
 
 /*
@@ -1499,10 +1521,7 @@ term_select_all(void)
 void
 term_deselect(void)
 {
-  if (term.selected) {
-    term.selected = false;
-    win_update();
-  }
+  term.selected = false;
 }
 
 void

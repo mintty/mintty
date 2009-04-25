@@ -316,7 +316,7 @@ button(ctrlpos * cp, char *btext, int bid, int defbtn)
   RECT r;
 
   r.left = GAPBETWEEN;
-  r.top = cp->ypos - 1;
+  r.top = cp->ypos;
   r.right = cp->width;
   r.bottom = PUSHBTNHEIGHT;
 
@@ -326,8 +326,9 @@ button(ctrlpos * cp, char *btext, int bid, int defbtn)
     SendMessage(cp->wnd, DM_SETDEFID, bid, 0);
 
   doctl(cp, r, "BUTTON",
-        BS_NOTIFY | WS_CHILD | WS_VISIBLE | WS_TABSTOP |
-        (defbtn ? BS_DEFPUSHBUTTON : 0) | BS_PUSHBUTTON, 0, btext, bid);
+        BS_NOTIFY | WS_CHILD | WS_VISIBLE | WS_TABSTOP | (defbtn ?
+                                                          BS_DEFPUSHBUTTON : 0)
+        | BS_PUSHBUTTON, 0, btext, bid);
 
   cp->ypos += PUSHBTNHEIGHT + GAPBETWEEN;
 }
@@ -916,7 +917,7 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
         char *escaped = shortcut_escape(ctrl->label, ctrl->fontselect.shortcut);
         shortcuts[nshortcuts++] = ctrl->fontselect.shortcut;
         //statictext(&pos, escaped, 1, base_id);
-        staticbtn(&pos, "", base_id + 1, "&Font...", base_id + 2);
+        staticbtn(&pos, "", base_id + 1, "&Select...", base_id + 2);
         free(escaped);
         data = new(font_spec);
       }
@@ -993,6 +994,9 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
   winctrl *c;
   control *ctrl;
   int i, id, ret;
+
+  if (msg != WM_COMMAND && msg != WM_DRAWITEM)
+    return 0;
 
  /*
   * Look up the control ID in our data.
@@ -1145,7 +1149,7 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
         font_spec fs = *(font_spec *) c->data;
         HDC dc = GetDC(0);
         LOGFONT lf;
-        lf.lfHeight = -MulDiv(fs.size, GetDeviceCaps(dc, LOGPIXELSY), 72);
+        lf.lfHeight = -MulDiv(fs.height, GetDeviceCaps(dc, LOGPIXELSY), 72);
         ReleaseDC(0, dc);
         lf.lfWidth = lf.lfEscapement = lf.lfOrientation = 0;
         lf.lfItalic = lf.lfUnderline = lf.lfStrikeOut = 0;
@@ -1171,7 +1175,7 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
           fs.name[sizeof (fs.name) - 1] = '\0';
           fs.isbold = (lf.lfWeight == FW_BOLD);
           fs.charset = lf.lfCharSet;
-          fs.size = cf.iPointSize / 10;
+          fs.height = cf.iPointSize / 10;
           dlg_fontsel_set(ctrl, dp, &fs);
           ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
         }
@@ -1190,10 +1194,18 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
     cc.hwndOwner = dp->wnd;
     cc.hInstance = (HWND) inst;
     cc.lpCustColors = custom;
-    cc.rgbResult = dp->coloursel_result;
+    cc.rgbResult =
+      RGB(dp->coloursel_result.red, dp->coloursel_result.green,
+          dp->coloursel_result.blue);
     cc.Flags = CC_FULLOPEN | CC_RGBINIT;
-    dp->coloursel_ok = ChooseColor(&cc);
-    dp->coloursel_result = cc.rgbResult;
+    if (ChooseColor(&cc)) {
+      dp->coloursel_result.red = GetRValue(cc.rgbResult);
+      dp->coloursel_result.green = GetGValue(cc.rgbResult);
+      dp->coloursel_result.blue = GetBValue(cc.rgbResult);
+      dp->coloursel_ok = true;
+    }
+    else
+      dp->coloursel_ok = false;
     ctrl->handler(ctrl, dp, dp->data, EVENT_CALLBACK);
   }
 
@@ -1359,11 +1371,11 @@ dlg_fontsel_set(control *ctrl, void *dlg, font_spec *fs)
   *(font_spec *) c->data = *fs;   /* structure copy */
 
   boldstr = fs->isbold ? "bold, " : "";
-  if (!fs->size)
+  if (!fs->height)
     asprintf(&buf, "%s, %sdefault height", fs->name, boldstr);
   else
-    asprintf(&buf, "%s, %s%d-%s", fs->name, boldstr, abs(fs->size),
-             fs->size < 0 ? "pixel" : "point");
+    asprintf(&buf, "%s, %s%d-%s", fs->name, boldstr, abs(fs->height),
+             fs->height < 0 ? "pixel" : "point");
   SetDlgItemText(dp->wnd, c->base_id + 1, buf);
   free(buf);
 }
@@ -1433,9 +1445,11 @@ dlg_set_focus(control *ctrl, void *dlg)
  * a success status).
  */
 void
-dlg_end(void *dlg)
+dlg_end(void *dlg, int value)
 {
-  ((dlgparam *) dlg)->ended = true;
+  dlgparam *dp = (dlgparam *) dlg;
+  dp->ended = true;
+  dp->endresult = value;
 }
 
 void

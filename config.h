@@ -3,16 +3,17 @@
 
 #include "settings.h"
 
-extern char *config_filename;
+char *config_filename;
 
 typedef struct {
   char name[64];
   int isbold;
-  int size;
+  int height;
   int charset;
 } font_spec;
 
 static const char ANSWERBACK[] = "xterm";
+enum { SAVELINES = 65535 };
 
 /* Bell type */
 enum { BELL_DISABLED, BELL_SOUND, BELL_VISUAL };
@@ -38,15 +39,11 @@ typedef struct {
   int bell_type;
   int bell_ind;
   int scrollbar;
-  int scrollback_lines;
   int window_shortcuts;
-  int edit_shortcuts;
-  int zoom_shortcuts;
   int scroll_mod;
   int click_targets_app;
   int click_target_mod;
   int right_click_action;
-  int click_moves_cmd_cursor;
   int allow_blinking;
   int rows, cols;
   char printer[128];
@@ -62,7 +59,7 @@ typedef struct {
   int font_quality;
 } config;
 
-extern config cfg, new_cfg, prev_cfg;
+extern config cfg;
 
 void load_config(void);
 char *save_config(void);

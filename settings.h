@@ -3,6 +3,8 @@
 
 #include "platform.h"
 
+typedef struct { uchar red, green, blue; } colour;
+
 char *open_settings_w(char *filename);
 void write_string_setting(const char *key, const char *value);
 void write_int_setting(const char *key, int value);

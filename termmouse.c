@@ -245,17 +245,6 @@ get_selpoint(const pos p)
   return sp;
 }
 
-static void
-send_keys(char *code, uint len, uint count, bool interactive)
-{
-  assert(len);
-  uint size = len * count;
-  char *buf = malloc(size), *p = buf;
-  do { memcpy(p, code, len); p += len; } while (--count);
-  ldisc_send(buf, size, interactive);
-  free(buf);
-}
-
 static bool
 is_app_mouse(mod_keys *mods_p)
 {
@@ -316,50 +305,17 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
   }
 }
 
-
 void
 term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
 {
   p = box_pos(p);
-  int state = term.mouse_state;
-  term.mouse_state = MS_IDLE;
-  if (state == MS_CLICKED) {
+  if (term.mouse_state == MS_CLICKED) {
     if (term.mouse_mode >= MM_VT200)
       send_mouse_event(0x23, mods, p);
   }
-  else if (state != MS_IDLE) {
-    if (term.selected && cfg.copy_on_select)
-      term_copy();
-    if (!cfg.click_moves_cmd_cursor || term.which_screen != 0 ||
-        term.app_cursor_keys || term.editing)
-      return;
-    if (term.selected)
-      p = term.sel_end;
-    int y = p.y += term.disptop;
-    if (y < 0)
-      return;
-    pos p0 = term.curs;
-    int y0 = p0.y, dy = y - y0;
-    if (dy < 0) {
-      do {
-        if (!(lineptr(y)->lattr & LATTR_WRAPPED))
-          return;
-      } while (++y < y0);
-    }
-    else {
-      while (y-- > y0) {
-        if (!(lineptr(y)->lattr & LATTR_WRAPPED))
-          return;
-      }
-    }
-    static pos last_p;
-    if (state != MS_SEL_CHAR)
-      p0 = last_p;
-    last_p = p;
-    int diff = (p.y - p0.y) * term.cols + (p.x - p0.x);
-    if (diff)
-      send_keys(diff < 0 ? "\e[D" : "\e[C", 3, abs(diff), false);
-  }
+  else if (term_selecting() && cfg.copy_on_select)
+    term_copy();
+  term.mouse_state = MS_IDLE;
 }
 
 static void
@@ -369,7 +325,7 @@ sel_scroll_cb(void)
     term_scroll(0, term.sel_scroll);
     sel_drag(get_selpoint(term.sel_pos));
     win_update();
-    win_set_timer(sel_scroll_cb, 125);
+    win_set_timer(sel_scroll_cb, 150);
   }
 }
 
@@ -443,14 +399,14 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
       // First send full pages.
       code[2] = back ? '5' : '6';
       code[4] = '1' + cfg.scroll_mod;
-      if (pages)
-        send_keys(code, 6, pages, true);
+      while (pages--)
+        ldisc_send(code, 6, 1);  
       
       // Then send remaining lines.
       code[2] = '1';
       code[5] = back ? 'A' : 'B';
-      if (lines)
-        send_keys(code, 6, lines, true);
+      while (lines--)
+        ldisc_send(code, 6, 1);  
     }
   }
 }

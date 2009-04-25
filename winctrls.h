@@ -87,7 +87,7 @@ typedef struct {
   colour coloursel_result;  /* 0-255 */
   bool coloursel_ok;
   tree234 *privdata;    /* stores per-control private data */
-  int ended;            /* has the dialog been ended? */
+  int ended, endresult; /* has the dialog been ended? */
 } dlgparam;
 
 void dp_init(dlgparam * dp);

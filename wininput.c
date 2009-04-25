@@ -14,16 +14,8 @@ void
 win_update_menus(void)
 {
   ModifyMenu(
-    menu, IDM_COPY, MF_BYCOMMAND | MF_STRING, IDM_COPY,
-    cfg.edit_shortcuts ? "&Copy\tCtrl+Insert" : "&Copy"
-  );
-  ModifyMenu(
-    menu, IDM_PASTE, MF_BYCOMMAND | MF_STRING, IDM_PASTE,
-    cfg.edit_shortcuts ? "&Paste\tShift+Insert" : "&Paste"
-  );
-  ModifyMenu(
     menu, IDM_FULLSCREEN, MF_BYCOMMAND | MF_STRING, IDM_FULLSCREEN,
-    cfg.zoom_shortcuts ? "&Fullscreen\tAlt+Enter" : "&Fullscreen"
+    cfg.window_shortcuts ? "&Fullscreen\tAlt+Enter" : "&Fullscreen"
   );
   ModifyMenu(
     sysmenu, SC_CLOSE, MF_BYCOMMAND | MF_STRING, SC_CLOSE,
@@ -49,21 +41,26 @@ void
 win_init_menus(void)
 {
   menu = CreatePopupMenu();
-  AppendMenu(menu, MF_ENABLED, IDM_COPY, 0);
-  AppendMenu(menu, MF_ENABLED, IDM_PASTE, 0);
+  AppendMenu(menu, MF_ENABLED, IDM_COPY, "&Copy\tCtrl+Ins");
+  AppendMenu(menu, MF_ENABLED, IDM_PASTE, "&Paste\tShift+Ins");
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_SELALL, "&Select All");
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_RESET, "&Reset");
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
-  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN, 0);
+  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED,
+             IDM_FULLSCREEN, "&Fullscreen\tAlt+Enter");
   AppendMenu(menu, MF_ENABLED, IDM_OPTIONS, "&Options...");
+  AppendMenu(menu, MF_SEPARATOR, 0, 0);
+  AppendMenu(menu, MF_ENABLED, IDM_ABOUT, "&About...");
 
   sysmenu = GetSystemMenu(wnd, false);
   InsertMenu(sysmenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
   InsertMenu(sysmenu, 0, MF_BYPOSITION | MF_ENABLED,
                          IDM_OPTIONS, "&Options...");
   InsertMenu(sysmenu, SC_CLOSE, MF_BYCOMMAND | MF_ENABLED, IDM_DUPLICATE, 0);
+ 
+  win_update_menus();
 }
 
 void
@@ -255,22 +252,20 @@ win_key_down(WPARAM wp, LPARAM lp)
   else if (alt_state != ALT_NONE)
     alt_state = ALT_CANCELLED;
   
-  // Window commands
-  if (alt && !ctrl) {
+  // Window command
+  if (alt && !ctrl && cfg.window_shortcuts) {
     WPARAM cmd;
-    if (key == VK_SPACE)
-      cmd = SC_KEYMENU;
-    else if (key == VK_RETURN && cfg.zoom_shortcuts)
-      cmd = IDM_FULLSCREEN;
-    else if (key == VK_F2 && cfg.window_shortcuts)
-      cmd = IDM_DUPLICATE;
-    else if (key == VK_F4 && cfg.window_shortcuts)
-      cmd = SC_CLOSE;
-    else goto not_command;
+    switch (key) {
+      when VK_RETURN: cmd = IDM_FULLSCREEN;
+      when VK_SPACE:  cmd = SC_KEYMENU; 
+      when VK_F2:     cmd = IDM_DUPLICATE;
+      when VK_F4:     cmd = SC_CLOSE;
+      otherwise: goto not_window_command;
+    }
     SendMessage(wnd, WM_SYSCOMMAND, cmd, ' ');
     return 1;
   }
-  not_command:
+  not_window_command:
   
   // Context menu
   if (key == VK_APPS) {
@@ -286,7 +281,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
   
   // Clipboard
-  if (key == VK_INSERT && cfg.edit_shortcuts) {
+  if (key == VK_INSERT) {
     if (mods == CTRL) {
       term_copy();
       return 1;
@@ -307,26 +302,13 @@ win_key_down(WPARAM wp, LPARAM lp)
       when VK_NEXT:  scroll = SB_PAGEDOWN;
       when VK_UP:    scroll = SB_LINEUP;
       when VK_DOWN:  scroll = SB_LINEDOWN;
-      otherwise: goto not_scroll;
+      otherwise:
+        goto not_scroll;
     }
     SendMessage(wnd, WM_VSCROLL, scroll, 0);
     return 1;
   }
-  not_scroll:
-  
-  // Font zooming
-  if (ctrl && !alt && cfg.zoom_shortcuts) {
-    int zoom;
-    switch (key) {
-      when VK_OEM_PLUS or VK_ADD: zoom = 1 + shift;
-      when VK_OEM_MINUS or VK_SUBTRACT: zoom = -1 - shift;
-      when '0' or VK_NUMPAD0: zoom = 0;
-      otherwise: goto not_zoom;
-    }
-    SendMessage(wnd, WM_SYSCOMMAND, IDM_ZOOM, zoom);
-    return 1;
-  }
-  not_zoom: ;
+  not_scroll: ;
   
   // Keycode buffer.
   char chars[8];

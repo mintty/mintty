@@ -10,6 +10,7 @@
 #include "appinfo.h"
 #include "linedisc.h"
 #include "child.h"
+#include "unicode.h"
 
 #include <process.h>
 #include <getopt.h>
@@ -19,12 +20,17 @@
 HWND wnd;
 HINSTANCE inst;
 HDC dc;
+static HBITMAP caretbm;
 
 int offset_width, offset_height;
 static int extra_width, extra_height;
-
-static HBITMAP caretbm;
 static int caret_x = -1, caret_y = -1;
+
+static bool resizing;
+static bool was_zoomed;
+static int prev_rows, prev_cols;
+
+static bool flashing;
 
 static bool child_dead;
 
@@ -36,7 +42,14 @@ win_set_timer(void (*cb)(void), uint ticks)
 
 void
 win_set_title(char *title)
-{ SetWindowText(wnd, title); }
+{
+  size_t len = strlen(title);
+  wchar wtitle[len + 1];
+  size_t wlen =
+    MultiByteToWideChar(ucsdata.codepage, 0, title, len, wtitle, len);
+  wtitle[wlen] = 0;
+  SetWindowTextW(wnd, wtitle);
+}
 
 /*
  * Minimise or restore the window in response to a server-side
@@ -135,8 +148,6 @@ flash_window_ex(DWORD dwFlags, UINT uCount, DWORD dwTimeout)
 static void
 flash_window(int mode)
 {
-  static bool flashing;
-
   if ((mode == 0) || (cfg.bell_ind == B_IND_DISABLED)) {
    /* stop */
     if (flashing) {
@@ -185,38 +196,54 @@ win_bell(int mode)
     flash_window(2);
 }
 
-static void
-update_sys_cursor(void)
-{
-  if (term_has_focus() && caret_x >= 0 && caret_y >= 0) {
-    SetCaretPos(caret_x, caret_y);
-
-    HIMC imc = ImmGetContext(wnd);
-    COMPOSITIONFORM cf = {
-      .dwStyle = CFS_POINT,
-      .ptCurrentPos = {caret_x, caret_y}
-    };
-    ImmSetCompositionWindow(imc, &cf);
-    ImmReleaseContext(wnd, imc);
-  }
-}
-
 /*
  * Move the system caret. (We maintain one, even though it's
  * invisible, for the benefit of blind people: apparently some
  * helper software tracks the system caret, so we should arrange to
  * have one.)
  */
-void
-win_set_sys_cursor(int x, int y)
+
+static void
+sys_cursor_update(void)
 {
+  COMPOSITIONFORM cf;
+  HIMC hIMC;
+
+  if (!term_has_focus())
+    return;
+
+  if (caret_x < 0 || caret_y < 0)
+    return;
+
+  SetCaretPos(caret_x, caret_y);
+
+  hIMC = ImmGetContext(wnd);
+  cf.dwStyle = CFS_POINT;
+  cf.ptCurrentPos.x = caret_x;
+  cf.ptCurrentPos.y = caret_y;
+  ImmSetCompositionWindow(hIMC, &cf);
+
+  ImmReleaseContext(wnd, hIMC);
+}
+
+void
+win_sys_cursor(int x, int y)
+{
+  if (!term_has_focus())
+    return;
+
+ /*
+  * Avoid gratuitously re-updating the cursor position and IMM
+  * window if there's no actual change required.
+  */
   int cx = x * font_width + offset_width;
   int cy = y * font_height + offset_height;
-  if (cx != caret_x || cy != caret_y) {
-    caret_x = cx;
-    caret_y = cy;
-    update_sys_cursor();
-  }
+  if (cx == caret_x && cy == caret_y)
+    return;
+  caret_x = cx;
+  caret_y = cy;
+
+  sys_cursor_update();
 }
 
 /* Get the rect/size of a full screen window using the nearest available
@@ -467,23 +494,40 @@ update_transparency()
   }
 }
 
-void
-win_reconfig(void)
+static void
+reconfig(void)
 {
+  static bool reconfiguring = false;
+  
+  if (reconfiguring)
+    return;
+  
+  reconfiguring = true;
+  config prev_cfg = cfg;
+  bool reconfig_result = win_config();
+  reconfiguring = false;
+  if (!reconfig_result)
+    return;
+
  /*
   * Flush the line discipline's edit buffer in the
   * case where local editing has just been disabled.
   */
   ldisc_send(null, 0, 0);
+  win_reconfig_palette();
 
  /* Pass new config data to the terminal */
   term_reconfig();
 
+ /* Screen size changed ? */
+  if (cfg.rows != prev_cfg.rows || cfg.cols != prev_cfg.cols)
+    notify_resize(cfg.rows, cfg.cols);
+
  /* Enable or disable the scroll bar, etc */
   int init_lvl = 1;
-  if (new_cfg.scrollbar != cfg.scrollbar) {
+  if (cfg.scrollbar != prev_cfg.scrollbar) {
     LONG flag = GetWindowLongPtr(wnd, GWL_STYLE);
-    if (new_cfg.scrollbar)
+    if (cfg.scrollbar)
       flag |= WS_VSCROLL;
     else
       flag &= ~WS_VSCROLL;
@@ -494,15 +538,15 @@ win_reconfig(void)
     init_lvl = 2;
   }
   
-  if (memcmp(&new_cfg.font, &cfg.font, sizeof cfg.font) != 0 ||
-      strcmp(new_cfg.codepage, cfg.codepage) != 0) {
-    font_size = new_cfg.font.size;
+  if (strcmp(cfg.font.name, prev_cfg.font.name) != 0 ||
+      strcmp(cfg.codepage, prev_cfg.codepage) != 0 ||
+      cfg.font.isbold != prev_cfg.font.isbold ||
+      cfg.font.height != prev_cfg.font.height ||
+      cfg.font.charset != prev_cfg.font.charset ||
+      cfg.font_quality != prev_cfg.font_quality ||
+      cfg.bold_as_bright != prev_cfg.bold_as_bright)
     init_lvl = 2;
-  }
   
-  /* Copy the new config and refresh everything */
-  cfg = new_cfg;
-  win_reconfig_palette();
   update_transparency();
   InvalidateRect(wnd, null, true);
   reset_window(init_lvl);
@@ -528,11 +572,9 @@ confirm_close(void)
 static LRESULT CALLBACK
 win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
 {
-  static bool ignore_clip, need_backend_resize, fullscr_on_max;
-  static int new_cols, new_rows;
-  static bool resizing;
-  static bool was_zoomed;
-  static int prev_rows, prev_cols;
+  static int ignore_clip = false;
+  static int need_backend_resize = false;
+  static int fullscr_on_max = false;
 
   switch (message) {
     when WM_TIMER: {
@@ -561,21 +603,12 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
           term_clear_scrollback();
           win_update();
           ldisc_send(null, 0, 0);
+        when IDM_ABOUT: win_about();
         when IDM_FULLSCREEN: flip_full_screen();
-        when IDM_OPTIONS: win_open_config();
-        when IDM_ZOOM: {
-          int zoom = lp;
-          switch (zoom) {
-            when -2: font_size = (font_size + 1) / 2;
-            when -1: if (abs(font_size) > 1) font_size -= sgn(font_size);
-            when 0: font_size = cfg.font.size;
-            when 1: font_size += sgn(font_size);
-            when 2: font_size *= 2;
-          }
-          reset_window(2);
-        }
+        when IDM_OPTIONS: reconfig();
         when IDM_DUPLICATE:
-          spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv); 
+          spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv);
+          
       }
     when WM_VSCROLL:
       if (term_which_screen() == 0) {
@@ -612,7 +645,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         return 0;
       }
     when WM_INPUTLANGCHANGE:
-      update_sys_cursor();
+      sys_cursor_update();
     when WM_IME_STARTCOMPOSITION:
       {
         HIMC imc = ImmGetContext(wnd);
@@ -635,17 +668,21 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_IGNORE_CLIP:
       ignore_clip = wp;     /* don't panic on DESTROYCLIPBOARD */
     when WM_DESTROYCLIPBOARD:
-      if (!ignore_clip)
+      if (!ignore_clip) {
         term_deselect();
+        win_update();
+      }
       ignore_clip = false;
       return 0;
     when WM_PAINT:
       win_paint();
       return 0;
     when WM_SETFOCUS:
-      term_set_focus(true);
-      CreateCaret(wnd, caretbm, font_width, font_height);
-      ShowCaret(wnd);
+      if (!child_dead) {
+        term_set_focus(true);
+        CreateCaret(wnd, caretbm, font_width, font_height);
+        ShowCaret(wnd);
+      }
       flash_window(0);  /* stop */
       win_update();
       update_transparency();
@@ -657,16 +694,16 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       win_update();
       update_transparency();
     when WM_FULLSCR_ON_MAX: fullscr_on_max = true;
-    when WM_MOVE: update_sys_cursor();
+    when WM_MOVE: sys_cursor_update();
     when WM_ENTERSIZEMOVE:
       win_enable_tip();
       resizing = true;
+      need_backend_resize = false;
     when WM_EXITSIZEMOVE:
       win_disable_tip();
       resizing = false;
       if (need_backend_resize) {
-        need_backend_resize = false;
-        notify_resize(new_rows, new_cols);
+        notify_resize(cfg.rows, cfg.cols);
         InvalidateRect(wnd, null, true);
       }
     when WM_SIZING: {
@@ -710,8 +747,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         fullscr_on_max = false;
         make_full_screen();
       }
-      new_cols = max(1, LOWORD(lp) / font_width);
-      new_rows = max(1, HIWORD(lp) / font_height);
+      int width = LOWORD(lp);
+      int height = HIWORD(lp);
       if (resizing) {
        /*
         * Don't call child_size in mid-resize. (To prevent
@@ -719,12 +756,16 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         * down the connection during an NT opaque drag.)
         */
         need_backend_resize = true;
+        cfg.rows = max(1, height / font_height);
+        cfg.cols = max(1, width / font_width);
       }
       else if (wp == SIZE_MAXIMIZED && !was_zoomed) {
         was_zoomed = 1;
         prev_rows = term_rows();
         prev_cols = term_cols();
-        notify_resize(new_rows, new_cols);
+        int rows = max(1, height / font_height);
+        int cols = max(1, width / font_width);
+        notify_resize(rows, cols);
         reset_window(0);
       }
       else if (wp == SIZE_RESTORED && was_zoomed) {
@@ -741,7 +782,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         */
         reset_window(-1);
       }
-      update_sys_cursor();
+      sys_cursor_update();
       return 0;
     }
     when WM_INITMENU:
@@ -765,36 +806,30 @@ static const char *help =
   "\n"
   "Options:\n"
   "  -c, --config=FILE     Use specified config file (default: ~/.minttyrc)\n"
-  "  -p, --position=X,Y    Open window at specified coordinates\n"
+  "  -p, --pos=X,Y         Open window at specified position\n"
   "  -s, --size=COLS,ROWS  Set screen size in characters\n"
   "  -t, --title=TITLE     Set window title (default: the invoked command)\n"
-  "  -l, --log=FILE        Log output to file\n"
-  "  -h, --hold=always|never|error\n"
-  "                        Keep window open after command terminates?\n"
-  "  -H, --help            Display help and exit\n"
-  "  -V, --version         Print version information and exit\n"
+  "  -v, --version         Print version information and exit\n"
+  "  -h, --help            Display this help message and exit\n"
 ;
 
-static const char short_opts[] = "+HVec:p:s:t:h:";
+static const char short_opts[] = "+hvec:p:s:t:";
 
 static const struct option
 opts[] = { 
-  {"config",   required_argument, 0, 'c'},
-  {"position", required_argument, 0, 'p'},
-  {"size",     required_argument, 0, 's'},
-  {"title",    required_argument, 0, 't'},
-  {"log",      required_argument, 0, 'l'},
-  {"hold",     required_argument, 0, 'h'},
-  {"help",     no_argument,       0, 'H'},
-  {"version",  no_argument,       0, 'V'},
+  {"help",    no_argument,       0, 'h'},
+  {"version", no_argument,       0, 'v'},
+  {"config",  required_argument, 0, 'c'},
+  {"pos",     required_argument, 0, 'p'},
+  {"size",    required_argument, 0, 's'},
+  {"title",   required_argument, 0, 't'},
   {0, 0, 0, 0}
 };
 
 int
 main(int argc, char *argv[])
 {
-  const char *title = 0, *log_file = 0;
-  hold_t hold = HOLD_NEVER;
+  char *title = 0;
   int x = CW_USEDEFAULT, y = CW_USEDEFAULT;
   bool size_override = false;
   uint rows = 0, cols = 0;
@@ -821,33 +856,19 @@ main(int argc, char *argv[])
         size_override = true;
       when 't':
         title = optarg;
-      when 'l':
-        log_file = optarg;
-      when 'h': {
-        int len = strlen(optarg);
-        if (memcmp(optarg, "always", len) == 0)
-          hold = HOLD_ALWAYS;
-        else if (memcmp(optarg, "never", len) == 0)
-          hold = HOLD_NEVER;
-        else if (memcmp(optarg, "error", len) == 0)
-          hold = HOLD_ERROR;
-        else {
-          fprintf(stderr, "%s: invalid argument to hold option -- %s\n",
-                          *argv, optarg);
-          exit(1);
-        }
-      }
-      when 'H':
+      when 'h':
         printf(help, *argv);
         return 0;
-      when 'V':
+      when 'v':
         puts(APPNAME " " APPVER "\n" COPYRIGHT);
         return 0;
       otherwise:
         exit(1);
     }
   }
-
+  
+  main_argv = argv;
+  
   if (!config_filename)
     asprintf(&config_filename, "%s/.minttyrc", getenv("HOME"));
 
@@ -857,8 +878,7 @@ main(int argc, char *argv[])
     rows = cfg.rows;
     cols = cfg.cols;
   }
-    
-  main_argv = argv;  
+
   inst = GetModuleHandle(NULL);
 
  /* Create window class. */
@@ -913,9 +933,8 @@ main(int argc, char *argv[])
   * Initialise the fonts, simultaneously correcting the guesses
   * for font_{width,height}.
   */
-  font_size = cfg.font.size;
   win_init_fonts();
-  win_reset_colours();
+  win_init_palette();
   
  /*
   * Set up a caret bitmap, with no content.
@@ -958,13 +977,13 @@ main(int argc, char *argv[])
   // Finally show the window!
   update_transparency();
   ShowWindow(wnd, SW_SHOWDEFAULT);
-  
+
   // Create child process.
   struct winsize ws = {term_rows(), term_cols(), term_width, term_height};
-  char *cmd = child_create(argv + optind, &ws, log_file);
+  char *cmd = child_create(argv + optind, &ws);
   
   // Set window title.
-  SetWindowText(wnd, title ?: cmd);
+  win_set_title(title ?: cmd);
   free(cmd);
   
   // Message loop.
@@ -972,14 +991,17 @@ main(int argc, char *argv[])
   for (;;) {
     DWORD wakeup =
       MsgWaitForMultipleObjects(1, &child_event, false, INFINITE, QS_ALLINPUT);
-    if (wakeup == WAIT_OBJECT_0)
-      child_dead |= child_proc(hold);
+    if (wakeup == WAIT_OBJECT_0) {
+      if (child_proc()) {
+        child_dead = true;
+        term_set_focus(false);
+      }
+    }
     MSG msg;
     while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
       if (msg.message == WM_QUIT)
         return msg.wParam;      
-      if (!IsDialogMessage(config_wnd, &msg))
-        DispatchMessage(&msg);
+      DispatchMessage(&msg);
       term_send_paste();
     }
   }
