@@ -3,11 +3,10 @@ version := $(shell printf "svn-r%u" `svn info | grep Revision | sed "s/Revision:
 
 exe := $(name).exe
 dir := $(name)-$(version)
+stuff := docs/readme.html scripts/create_shortcut.js
 srcs := $(wildcard Makefile *.c *.h *.rc *.mft icon/*.ico icon/*.png)
 srcs += $(wildcard COPYING LICENSE* INSTALL)
-srcs += docs/readme.html docs/mintty.1
-stuff := docs/readme.html docs/mintty.1.pdf scripts/create_shortcut.js
-stuff += scripts/create_shortcut.js scripts/create_shortcut.17.js
+srcs += docs/mintty.1 $(stuff)
 
 c_srcs := $(wildcard *.c)
 rc_srcs := $(wildcard *.rc)
@@ -27,8 +26,11 @@ $(exe): $(objs)
 	$(cc) -o $@ $^ $(ld_opts) $(libs)
 	du -b $@
 
+all: bin src doc
+
 bin: $(dir)-cygwin.zip
 src: $(dir)-src.tgz
+doc: $(dir).pdf
 
 $(dir)-cygwin.zip: $(exe) $(stuff)
 	rm -f $@
@@ -43,18 +45,21 @@ $(dir)-src.tgz: $(srcs)
 	tar czf $@ $(dir)
 	rm -rf $(dir)
 
-%.o %.d: %.c Makefile
+$(dir).pdf: docs/$(name).1.pdf
+	cp $< $@
+
+%.o %.d: %.c
 	$(cc) $< -c -MMD -MP $(c_opts) $(code_opts) -DVERSION=$(version)
 
-%.o %.d: %.rc Makefile
+%.o %.d: %.rc
 	$(rc) $< $(<:.rc=.o)
 
 %.1.pdf: %.1
 	groff -t -man -Tps $< | ps2pdf - $@
 
 clean:
-	rm -f *.d *.o *.exe *.zip *.tgz *.stackdump
+	rm -f *.d *.o *.exe *.zip *.tgz *.stackdump *.pdf docs/*.pdf
 
-.PHONY: bin src clean
+.PHONY: all src bin src clean
 
 include $(deps)
