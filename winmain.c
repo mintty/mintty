@@ -10,6 +10,7 @@
 #include "appinfo.h"
 #include "linedisc.h"
 #include "child.h"
+#include "unicode.h"
 
 #include <process.h>
 #include <getopt.h>
@@ -36,7 +37,14 @@ win_set_timer(void (*cb)(void), uint ticks)
 
 void
 win_set_title(char *title)
-{ SetWindowText(wnd, title); }
+{
+  size_t len = strlen(title);
+  wchar wtitle[len + 1];
+  size_t wlen =
+    MultiByteToWideChar(ucsdata.codepage, 0, title, len, wtitle, len);
+  wtitle[wlen] = 0;
+  SetWindowTextW(wnd, wtitle);
+}
 
 /*
  * Minimise or restore the window in response to a server-side
@@ -793,7 +801,7 @@ opts[] = {
 int
 main(int argc, char *argv[])
 {
-  const char *title = 0, *log_file = 0;
+  char *title = 0, *log_file = 0;
   hold_t hold = HOLD_NEVER;
   int x = CW_USEDEFAULT, y = CW_USEDEFAULT;
   bool size_override = false;
@@ -964,7 +972,7 @@ main(int argc, char *argv[])
   char *cmd = child_create(argv + optind, &ws, log_file);
   
   // Set window title.
-  SetWindowText(wnd, title ?: cmd);
+  win_set_title(title ?: cmd);
   free(cmd);
   
   // Message loop.
