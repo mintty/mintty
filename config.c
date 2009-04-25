@@ -433,7 +433,7 @@ int_settings[] = {
   {"EditShortcuts", offcfg(edit_shortcuts), true},
   {"ZoomShortcuts", offcfg(zoom_shortcuts), true},
   {"BoldAsBright", offcfg(bold_as_bright), true},
-  {"AllowBlinking", offcfg(allow_blinking), true},
+  {"AllowBlinking", offcfg(allow_blinking), false},
   {"CursorType", offcfg(cursor_type), 2},
   {"CursorBlinks", offcfg(cursor_blinks), true},
   {"FontIsBold", offcfg(font.isbold), 0},
