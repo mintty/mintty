@@ -1,5 +1,5 @@
 name := mintty
-version := 0.3.8
+version := 0.3.9
 
 exe := $(name).exe
 dir := $(name)-$(version)
@@ -15,8 +15,8 @@ deps := $(objs:.o=.d)
 
 c_opts := -include std.h -std=gnu99 -Wall -Wextra -Werror -DNDEBUG
 code_opts := -march=i586 -mtune=pentium-m -fomit-frame-pointer -Os
-ld_opts := --gc-sections -s
-libs := -mwindows -lcomctl32 -lcomdlg32 -limm32 -lwinspool -lole32 -luuid
+ld_opts := -s
+libs := -mwindows -lcomctl32 -limm32 -lwinspool -lole32 -luuid
 
 cc := gcc
 rc_cpp := $(cc) -E -MMD -xc-header -DRC_INVOKED -DVERSION=$(version)
