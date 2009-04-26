@@ -518,7 +518,7 @@ win_reconfig(void)
 }
 
 static bool
-confirm_close(void)
+confirm_exit(void)
 {
   // Only ask once.
   static bool confirmed = false;
@@ -553,7 +553,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       win_show_mouse();
       if (child_dead)
         exit(0);
-      if (confirm_close())
+      if (!cfg.confirm_exit || confirm_exit())
         child_kill();
       return 0;
     when WM_COMMAND or WM_SYSCOMMAND:

@@ -37,6 +37,7 @@ typedef struct {
   int cursor_blinks;
   int bell_type;
   int bell_ind;
+  int confirm_exit;
   int scrollbar;
   int scrollback_lines;
   int window_shortcuts;
