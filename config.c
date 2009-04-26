@@ -362,10 +362,21 @@ setup_config_box(controlbox * b)
     s, "Current size", 'u', P(0), current_size_handler, P(0)
   )->column = 4;
 
+  s = ctrl_getset(b, "Window", "options", null);
+  ctrl_columns(s, 2, 50, 50);
+  ctrl_checkbox(
+    s, "Show scrollbar", 'b', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(scrollbar))
+  )->column = 0;
+  ctrl_checkbox(
+    s, "Confirm exit", 'b', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
+  )->column = 1;
+
   s = ctrl_getset(b, "Window", "scrollback", "Scrollback");
-  ctrl_columns(s, 2, 66, 34);
+  ctrl_columns(s, 2, 35, 65);
   ctrl_editbox(
-    s, "Lines to keep", 'l', 50, P(0),
+    s, "Lines", 'l', 65, P(0),
     dlg_stdeditbox_handler, I(offsetof(config, scrollback_lines)), I(-1)
   )->column = 0;
   ctrl_columns(s, 1, 100);
@@ -376,13 +387,7 @@ setup_config_box(controlbox * b)
     "Ctrl", 'c', I(CTRL),
     "Alt", 'a', I(ALT),
     null
-  )->column = 0;
-
-  s = ctrl_getset(b, "Window", "scrollbar", null);
-  ctrl_checkbox(
-    s, "Show scrollbar", 'b', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(scrollbar))
-  )->column = 0;
+  );
 
  /*
   * The Output panel.
@@ -429,6 +434,7 @@ int_settings[] = {
   {"OpaqueWhenFocused", offcfg(opaque_when_focused), 0},
   {"Scrollbar", offcfg(scrollbar), true},
   {"ScrollbackLines", offcfg(scrollback_lines), 10000},
+  {"ConfirmExit", offcfg(confirm_exit), true},
   {"WindowShortcuts", offcfg(window_shortcuts), true},
   {"EditShortcuts", offcfg(edit_shortcuts), true},
   {"ZoomShortcuts", offcfg(zoom_shortcuts), true},
