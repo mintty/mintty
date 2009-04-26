@@ -179,6 +179,52 @@ setup_config_box(controlbox * b)
   c->column = 4;
 
  /*
+  * The Window panel.
+  */
+  ctrl_settitle(b, "Window", "Window");
+
+  s = ctrl_getset(b, "Window", "size", "Initial size");
+  ctrl_columns(s, 5, 35, 3, 28, 4, 30);
+  (cols_box = ctrl_editbox(
+    s, "Columns", 'o', 44, P(0),
+    dlg_stdeditbox_handler, I(offcfg(cols)), I(-1)
+  ))->column = 0;
+  (rows_box = ctrl_editbox(
+    s, "Rows", 'r', 55, P(0),
+    dlg_stdeditbox_handler, I(offcfg(rows)), I(-1)
+  ))->column = 2;
+  ctrl_pushbutton(
+    s, "Current size", 'u', P(0), current_size_handler, P(0)
+  )->column = 4;
+
+  s = ctrl_getset(b, "Window", "options", null);
+  ctrl_columns(s, 2, 50, 50);
+  ctrl_checkbox(
+    s, "Show scrollbar", 'b', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(scrollbar))
+  )->column = 0;
+  ctrl_checkbox(
+    s, "Confirm exit", 'b', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
+  )->column = 1;
+
+  s = ctrl_getset(b, "Window", "scrollback", "Scrollback");
+  ctrl_columns(s, 2, 35, 65);
+  ctrl_editbox(
+    s, "Lines", 'l', 65, P(0),
+    dlg_stdeditbox_handler, I(offsetof(config, scrollback_lines)), I(-1)
+  )->column = 0;
+  ctrl_columns(s, 1, 100);
+  ctrl_radiobuttons(
+    s, "Modifier for scrolling with cursor keys", '\0', 4, P(0),      
+    dlg_stdradiobutton_handler, I(offcfg(scroll_mod)),
+    "Shift", 's', I(SHIFT),
+    "Ctrl", 'c', I(CTRL),
+    "Alt", 'a', I(ALT),
+    null
+  );
+
+ /*
   * The Looks panel.
   */
   ctrl_settitle(b, "Looks", "Looks");
@@ -343,52 +389,6 @@ setup_config_box(controlbox * b)
     null
   );
   
- /*
-  * The Window panel.
-  */
-  ctrl_settitle(b, "Window", "Window");
-
-  s = ctrl_getset(b, "Window", "size", "Initial size");
-  ctrl_columns(s, 5, 35, 3, 28, 4, 30);
-  (cols_box = ctrl_editbox(
-    s, "Columns", 'o', 44, P(0),
-    dlg_stdeditbox_handler, I(offcfg(cols)), I(-1)
-  ))->column = 0;
-  (rows_box = ctrl_editbox(
-    s, "Rows", 'r', 55, P(0),
-    dlg_stdeditbox_handler, I(offcfg(rows)), I(-1)
-  ))->column = 2;
-  ctrl_pushbutton(
-    s, "Current size", 'u', P(0), current_size_handler, P(0)
-  )->column = 4;
-
-  s = ctrl_getset(b, "Window", "options", null);
-  ctrl_columns(s, 2, 50, 50);
-  ctrl_checkbox(
-    s, "Show scrollbar", 'b', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(scrollbar))
-  )->column = 0;
-  ctrl_checkbox(
-    s, "Confirm exit", 'b', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
-  )->column = 1;
-
-  s = ctrl_getset(b, "Window", "scrollback", "Scrollback");
-  ctrl_columns(s, 2, 35, 65);
-  ctrl_editbox(
-    s, "Lines", 'l', 65, P(0),
-    dlg_stdeditbox_handler, I(offsetof(config, scrollback_lines)), I(-1)
-  )->column = 0;
-  ctrl_columns(s, 1, 100);
-  ctrl_radiobuttons(
-    s, "Modifier for scrolling with cursor keys", '\0', 4, P(0),      
-    dlg_stdradiobutton_handler, I(offcfg(scroll_mod)),
-    "Shift", 's', I(SHIFT),
-    "Ctrl", 'c', I(CTRL),
-    "Alt", 'a', I(ALT),
-    null
-  );
-
  /*
   * The Output panel.
   */
