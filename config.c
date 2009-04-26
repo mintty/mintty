@@ -311,17 +311,17 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Keys", "keycodes", "Keycodes");
   ctrl_columns(s, 2, 50, 50);
   ctrl_radiobuttons(
-    s, "Backspace", '\0', 3, P(0), dlg_stdradiobutton_handler,
-    I(offcfg(backspace_sends_del)),
-    "^H", 'h', I(0),
-    "^?", '?', I(1),
-    null
-  )->column = 0;
-  ctrl_radiobuttons(
     s, "Escape", '\0', 3, P(0), dlg_stdradiobutton_handler,
     I(offcfg(escape_sends_fs)),
     "^[", '[', I(0),
     "^\\", '\\', I(1),
+    null
+  )->column = 0;
+  ctrl_radiobuttons(
+    s, "Backspace", '\0', 3, P(0), dlg_stdradiobutton_handler,
+    I(offcfg(backspace_sends_del)),
+    "^H", 'h', I(0),
+    "^?", '?', I(1),
     null
   )->column = 1;
 
@@ -333,18 +333,17 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
   ctrl_checkbox(
-    s, "Duplicate and close", 'd', P(0),
+    s, "Window commands (Alt+Space/Enter/F2/F4)", 'd', P(0),
     dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
   );
   ctrl_checkbox(
-    s, "Copy and paste", 'c', P(0),
+    s, "Copy and paste (Ctrl/Shift+Ins)", 'c', P(0),
     dlg_stdcheckbox_handler, I(offcfg(edit_shortcuts))
   );
   ctrl_checkbox(
-    s, "Fullscreen and zoom", 'f', P(0),
+    s, "Zoom (Ctrl+plus/minus/0)", 'f', P(0),
     dlg_stdcheckbox_handler, I(offcfg(zoom_shortcuts))
   );
-  
   
  /*
   * The Mouse panel.

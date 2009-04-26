@@ -23,7 +23,7 @@ win_update_menus(void)
   );
   ModifyMenu(
     menu, IDM_FULLSCREEN, MF_BYCOMMAND | MF_STRING, IDM_FULLSCREEN,
-    cfg.zoom_shortcuts ? "&Fullscreen\tAlt+Enter" : "&Fullscreen"
+    cfg.window_shortcuts ? "&Fullscreen\tAlt+Enter" : "&Fullscreen"
   );
   ModifyMenu(
     sysmenu, SC_CLOSE, MF_BYCOMMAND | MF_STRING, SC_CLOSE,
@@ -256,17 +256,15 @@ win_key_down(WPARAM wp, LPARAM lp)
     alt_state = ALT_CANCELLED;
   
   // Window commands
-  if (alt && !ctrl) {
+  if (alt && !ctrl && cfg.window_shortcuts) {
     WPARAM cmd;
-    if (key == VK_SPACE)
-      cmd = SC_KEYMENU;
-    else if (key == VK_RETURN && cfg.zoom_shortcuts)
-      cmd = IDM_FULLSCREEN;
-    else if (key == VK_F2 && cfg.window_shortcuts)
-      cmd = IDM_DUPLICATE;
-    else if (key == VK_F4 && cfg.window_shortcuts)
-      cmd = SC_CLOSE;
-    else goto not_command;
+    switch (key) {
+      when VK_SPACE:  cmd = SC_KEYMENU;
+      when VK_RETURN: cmd = IDM_FULLSCREEN;
+      when VK_F2:     cmd = IDM_DUPLICATE;
+      when VK_F4:     cmd = SC_CLOSE;
+      otherwise: goto not_command;
+    }
     SendMessage(wnd, WM_SYSCOMMAND, cmd, ' ');
     return 1;
   }
