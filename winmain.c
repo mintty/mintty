@@ -41,7 +41,7 @@ win_set_title(char *title)
   size_t len = strlen(title);
   wchar wtitle[len + 1];
   size_t wlen =
-    MultiByteToWideChar(ucsdata.codepage, 0, title, len, wtitle, len);
+    mb_to_wc(ucsdata.codepage, 0, title, len, wtitle, len);
   wtitle[wlen] = 0;
   SetWindowTextW(wnd, wtitle);
 }
