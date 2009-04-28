@@ -394,8 +394,6 @@ struct cp_list_item {
 };
 
 static const struct cp_list_item cp_list[] = {
-  {"UTF-8", CP_UTF8, 0, 0},
-
   {"ISO-8859-1:1998 (Latin-1, West Europe)", 0, 96, iso_8859_1},
   {"ISO-8859-2:1999 (Latin-2, East Europe)", 0, 96, iso_8859_2},
   {"ISO-8859-3:1999 (Latin-3, South Europe)", 0, 96, iso_8859_3},
@@ -417,6 +415,8 @@ static const struct cp_list_item cp_list[] = {
   {"HP-ROMAN8", 0, 96, roman8},
   {"VSCII", 0, 256, vscii},
   {"DEC-MCS", 0, 96, dec_mcs},
+
+  {"UTF-8", CP_UTF8, 0, 0},
 
   {"Win1250 (Central European)", 1250, 0, 0},
   {"Win1251 (Cyrillic)", 1251, 0, 0},
@@ -794,6 +794,26 @@ int
 mb_to_wc(int codepage, int flags, const char *mbstr, int mblen,
                                   wchar * wcstr, int wclen)
 {
+  if (codepage > 0xffff) {
+    // Custom codepage.
+    if (codepage == ucsdata.codepage) {
+      // It should be the configured codepage really.
+      if (mblen < 0)
+        mblen = strlen(mbstr);
+      if (wclen <= 0)
+        return mblen;
+      if (wclen < mblen)
+        mblen = wclen;
+      for (int i = 0; i < mblen; i++)
+        wcstr[i] = ucsdata.unitab_font[mbstr[i] & 0xff];
+      return mblen;
+    }
+    else {
+      // We shouldn't get here, but if we do anyway,
+      // fall back to the ANSI codepage.
+      codepage = GetACP();
+    }
+  }
   return MultiByteToWideChar(codepage, flags, mbstr, mblen, wcstr, wclen);
 }
 
