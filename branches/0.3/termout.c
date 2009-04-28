@@ -434,7 +434,7 @@ out_char(wchar c)
   if (!width) {
     width = wcwidth(c);
     if (width == -2)
-      width = win_ambig_cjk_width();
+      width = 1 + win_ambig_cjk_wide();
   } 
   if (term.wrapnext && term.wrap && width > 0) {
     cline->lattr |= LATTR_WRAPPED;
