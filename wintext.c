@@ -45,6 +45,8 @@ int font_size;
 int font_width, font_height;
 static bool font_dualwidth;
 
+static bool ambig_cjk_wide;
+
 COLORREF colours[NALLCOLOURS];
 
 #define CLEARTYPE_QUALITY 5
@@ -129,6 +131,15 @@ win_init_fonts(void)
   font_height = tm.tmHeight;
   font_width = tm.tmAveCharWidth;
   font_dualwidth = (tm.tmMaxCharWidth > tm.tmAveCharWidth * 3 / 2);
+  
+  float latin_char_width, greek_char_width, line_char_width;
+  GetCharWidthFloatW(dc, 0x0041, 0x0041, &latin_char_width);
+  GetCharWidthFloatW(dc, 0x03B1, 0x03B1, &greek_char_width);
+  GetCharWidthFloatW(dc, 0x2500, 0x2500, &line_char_width);
+  
+  ambig_cjk_wide =
+    greek_char_width > latin_char_width ||
+    line_char_width > latin_char_width;
 
   {
     CHARSETINFO info;
@@ -817,10 +828,10 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
   }
 }
 
-int
-win_ambig_cjk_width(void)
+bool
+win_ambig_cjk_wide(void)
 {
-  return 1 + font_dualwidth;
+  return ambig_cjk_wide;
 }
 
 
