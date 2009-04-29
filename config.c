@@ -9,31 +9,22 @@
 #include "print.h"
 #include "unicode.h"
 #include "term.h"
-#include "win.h"
 
 /*
  * config.c - the configuration box.
  */
 
 char *config_filename;
-config cfg, new_cfg;
 
-static control *cols_box, *rows_box;
-
-static void
-apply_config(void)
-{
-  win_reconfig();
-  save_config();
-}
+config cfg;     /* exported to windlg.c */
 
 static void
 ok_handler(control *unused(ctrl), void *dlg,
            void *unused(data), int event)
 {
   if (event == EVENT_ACTION) {
-    apply_config();
-    dlg_end(dlg);
+    save_config();
+    dlg_end(dlg, 1);
   }
 }
 
@@ -42,35 +33,7 @@ cancel_handler(control *unused(ctrl), void *dlg,
                void *unused(data), int event)
 {
   if (event == EVENT_ACTION)
-    dlg_end(dlg);
-}
-
-static void
-apply_handler(control *unused(ctrl), void *unused(dlg),
-           void *unused(data), int event)
-{
-  if (event == EVENT_ACTION)
-    apply_config();
-}
-
-static void
-about_handler(control *unused(ctrl), void *unused(dlg),
-           void *unused(data), int event)
-{
-  if (event == EVENT_ACTION)
-    win_show_about();
-}
-
-static void
-current_size_handler(control *unused(ctrl), void *dlg,
-           void *unused(data), int event)
-{
-  if (event == EVENT_ACTION) {
-    new_cfg.cols = term_cols();
-    new_cfg.rows = term_rows();
-    dlg_refresh(cols_box, dlg);
-    dlg_refresh(rows_box, dlg);
-  }
+    dlg_end(dlg, 0);
 }
 
 const char PRINTER_DISABLED_STRING[] = "None (printing disabled)";
@@ -95,36 +58,34 @@ printerbox_handler(control *ctrl, void *dlg, void *unused(data), int event)
         dlg_listbox_add(ctrl, dlg, printer_get_name(pe, i));
       printer_finish_enum(pe);
     }
-    dlg_editbox_set(
-      ctrl, dlg, 
-      *new_cfg.printer ? new_cfg.printer : PRINTER_DISABLED_STRING
-    );
+    dlg_editbox_set(ctrl, dlg,
+                    (*cfg.printer ? cfg.printer : PRINTER_DISABLED_STRING));
     dlg_update_done(ctrl, dlg);
   }
   else if (event == EVENT_VALCHANGE) {
-    dlg_editbox_get(ctrl, dlg, new_cfg.printer, sizeof (cfg.printer));
-    if (strcmp(new_cfg.printer, PRINTER_DISABLED_STRING) == 0)
-      *new_cfg.printer = '\0';
+    dlg_editbox_get(ctrl, dlg, cfg.printer, sizeof (cfg.printer));
+    if (!strcmp(cfg.printer, PRINTER_DISABLED_STRING))
+      *cfg.printer = '\0';
   }
 }
 
 static void
 codepage_handler(control *ctrl, void *dlg, void *unused(data), int event)
 {
-  char *cp = new_cfg.codepage;
   if (event == EVENT_REFRESH) {
+    int i;
+    const char *cp;
     dlg_update_start(ctrl, dlg);
-    strcpy(cp, cp_name(decode_codepage(cp)));
+    strcpy(cfg.codepage, cp_name(decode_codepage(cfg.codepage)));
     dlg_listbox_clear(ctrl, dlg);
-    const char *icp;
-    for (int i = 0; (icp = cp_enumerate(i)); i++)
-      dlg_listbox_add(ctrl, dlg, icp);
-    dlg_editbox_set(ctrl, dlg, cp);
+    for (i = 0; (cp = cp_enumerate(i)) != null; i++)
+      dlg_listbox_add(ctrl, dlg, cp);
+    dlg_editbox_set(ctrl, dlg, cfg.codepage);
     dlg_update_done(ctrl, dlg);
   }
   else if (event == EVENT_VALCHANGE) {
-    dlg_editbox_get(ctrl, dlg, cp, sizeof (cfg.codepage));
-    strcpy(cp, cp_name(decode_codepage(cp)));
+    dlg_editbox_get(ctrl, dlg, cfg.codepage, sizeof (cfg.codepage));
+    strcpy(cfg.codepage, cp_name(decode_codepage(cfg.codepage)));
   }
 }
 
@@ -167,15 +128,11 @@ setup_config_box(controlbox * b)
   */
   s = ctrl_getset(b, "", "", "");
   ctrl_columns(s, 5, 20, 20, 20, 20, 20);
-  c = ctrl_pushbutton(s, "About...", 0, P(0), about_handler, P(0));
-  c->column = 0;
-  c = ctrl_pushbutton(s, "OK", 0, P(0), ok_handler, P(0));
+  c = ctrl_pushbutton(s, "OK", '\0', P(0), ok_handler, P(0));
   c->button.isdefault = true;
-  c->column = 2;
-  c = ctrl_pushbutton(s, "Cancel", 0, P(0), cancel_handler, P(0));
-  c->button.iscancel = true;
   c->column = 3;
-  c = ctrl_pushbutton(s, "Apply", 0, P(0), apply_handler, P(0));
+  c = ctrl_pushbutton(s, "Cancel", '\0', P(0), cancel_handler, P(0));
+  c->button.iscancel = true;
   c->column = 4;
 
  /*
@@ -183,65 +140,18 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Window", "Window");
 
-  s = ctrl_getset(b, "Window", "size", "Initial size");
-  ctrl_columns(s, 5, 35, 3, 28, 4, 30);
-  (cols_box = ctrl_editbox(
-    s, "Columns", 'o', 44, P(0),
-    dlg_stdeditbox_handler, I(offcfg(cols)), I(-1)
-  ))->column = 0;
-  (rows_box = ctrl_editbox(
-    s, "Rows", 'r', 55, P(0),
-    dlg_stdeditbox_handler, I(offcfg(rows)), I(-1)
-  ))->column = 2;
-  ctrl_pushbutton(
-    s, "Current size", 'u', P(0), current_size_handler, P(0)
-  )->column = 4;
-
-  s = ctrl_getset(b, "Window", "options", null);
+  s = ctrl_getset(b, "Window", "size", null);
   ctrl_columns(s, 2, 50, 50);
-  ctrl_checkbox(
-    s, "Show scrollbar", 'b', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(scrollbar))
-  )->column = 0;
-  ctrl_checkbox(
-    s, "Confirm exit", 'b', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
-  )->column = 1;
-
-  s = ctrl_getset(b, "Window", "scrollback", "Scrollback");
-  ctrl_columns(s, 2, 35, 65);
   ctrl_editbox(
-    s, "Lines", 'l', 65, P(0),
-    dlg_stdeditbox_handler, I(offsetof(config, scrollback_lines)), I(-1)
+    s, "Columns", 'c', 100, P(0),
+    dlg_stdeditbox_handler, I(offcfg(cols)), I(-1)
   )->column = 0;
-  ctrl_columns(s, 1, 100);
-  ctrl_radiobuttons(
-    s, "Modifier for scrolling with cursor keys", '\0', 4, P(0),      
-    dlg_stdradiobutton_handler, I(offcfg(scroll_mod)),
-    "Shift", 's', I(SHIFT),
-    "Ctrl", 'c', I(CTRL),
-    "Alt", 'a', I(ALT),
-    null
-  );
-
- /*
-  * The Looks panel.
-  */
-  ctrl_settitle(b, "Looks", "Looks");
-
-  s = ctrl_getset(b, "Looks", "colours", "Colours");
-  ctrl_columns(s, 3, 33, 33, 33);
-  ctrl_pushbutton(
-    s, "Foreground...", 'f', P(0), colour_handler, P(&new_cfg.fg_colour)
-  )->column = 0;
-  ctrl_pushbutton(
-    s, "Background...", 'b', P(0), colour_handler, P(&new_cfg.bg_colour)
+  ctrl_editbox(
+    s, "Rows", 'r', 100, P(0),
+    dlg_stdeditbox_handler, I(offcfg(rows)), I(-1)
   )->column = 1;
-  ctrl_pushbutton(
-    s, "Cursor...", 'c', P(0), colour_handler, P(&new_cfg.cursor_colour)
-  )->column = 2;
 
-  s = ctrl_getset(b, "Looks", "trans", "Transparency");
+  s = ctrl_getset(b, "Window", "trans", "Transparency");
   ctrl_radiobuttons(
     s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
     I(offcfg(transparency)),
@@ -251,36 +161,76 @@ setup_config_box(controlbox * b)
     "High", 'h', I(3), 
     null
   );
+
+  s = ctrl_getset(b, "Window", "misc", null);
   ctrl_checkbox(
-    s, "Opaque when focused", 'p', P(0),
+    s, "Disable transparency when active", 'd', P(0),
     dlg_stdcheckbox_handler, I(offcfg(opaque_when_focused))
+  );
+  ctrl_checkbox(
+    s, "Show scrollbar", 's', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(scrollbar))
+  );
+  ctrl_checkbox(
+    s, "Enable Alt+key shortcuts", 'a', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
+  );
+  
+ /*
+  * The Looks panel.
+  */
+  ctrl_settitle(b, "Looks", "Looks");
+
+  s = ctrl_getset(b, "Looks", "colours", "Colours");
+  ctrl_columns(s, 3, 33, 33, 33);
+  ctrl_pushbutton(
+    s, "Foreground", 'f', P(0), colour_handler, P(&cfg.fg_colour)
+  )->column = 0;
+  ctrl_pushbutton(
+    s, "Background", 'b', P(0), colour_handler, P(&cfg.bg_colour)
+  )->column = 1;
+  ctrl_pushbutton(
+    s, "Cursor", 'c', P(0), colour_handler, P(&cfg.cursor_colour)
+  )->column = 2;
+
+  s = ctrl_getset(b, "Looks", "text", null);
+  ctrl_checkbox(
+    s, "Show bold text as bright", 's', P(0), dlg_stdcheckbox_handler,
+    I(offcfg(bold_as_bright))
+  );
+  ctrl_checkbox(
+    s, "Allow text blinking", 'a', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(allow_blinking))
   );
 
   s = ctrl_getset(b, "Looks", "curtype", "Cursor");
   ctrl_radiobuttons(
-    s, null, '\0', 3, P(0), dlg_stdradiobutton_handler,
+    s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
     I(offcfg(cursor_type)),
-    "Line", 'n', I(CUR_LINE), 
-    "Underline", 'u', I(CUR_UNDERLINE),
     "Block", 'k', I(CUR_BLOCK),
+    "Line", 'l', I(CUR_LINE), 
+    "Underline", 'u', I(CUR_UNDERLINE),
     null
   );
+  s = ctrl_getset(b, "Looks", "curblink", null);
   ctrl_checkbox(
-     s, "Enable blinking", 'e', P(0),
+     s, "Enable cursor blinking", 'e', P(0),
      dlg_stdcheckbox_handler, I(offcfg(cursor_blinks))
   );
 
  /*
-  * The Text panel.
+  * The Font panel.
   */
-  ctrl_settitle(b, "Text", "Text");
+  ctrl_settitle(b, "Font", "Font");
 
-  s = ctrl_getset(b, "Text", "font", null);
+  s = ctrl_getset(b, "Font", "font", null);
   ctrl_fontsel(
-    s, null, 'f', P(0), dlg_stdfontsel_handler, I(offcfg(font))
+    s, null, '\0', P(0), dlg_stdfontsel_handler, I(offcfg(font))
   );
+
+  s = ctrl_getset(b, "Font", "smooth", "Smoothing");
   ctrl_radiobuttons(
-    s, "Smoothing", '\0', 2, P(0), dlg_stdradiobutton_handler, 
+    s, null, '\0', 2, P(0), dlg_stdradiobutton_handler, 
     I(offcfg(font_quality)),
     "System Default", 'd', I(FQ_DEFAULT),
     "Antialiased", 'a', I(FQ_ANTIALIASED),
@@ -289,18 +239,7 @@ setup_config_box(controlbox * b)
     null
   );
 
-  s = ctrl_getset(b, "Text", "effects", null);
-  ctrl_columns(s, 2, 50, 50);
-  ctrl_checkbox(
-    s, "Show bold as bright", 's', P(0), dlg_stdcheckbox_handler,
-    I(offcfg(bold_as_bright))
-  )->column = 0;
-  ctrl_checkbox(
-    s, "Allow blinking", 'b', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(allow_blinking))
-  )->column = 1;
-
-  s = ctrl_getset(b, "Text", "codepage", "Codepage");
+  s = ctrl_getset(b, "Font", "codepage", "Codepage");
   ctrl_combobox(s, null, '\0', 100, P(0), codepage_handler, P(null), P(null));
 
  /*
@@ -308,43 +247,39 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Keys", "Keys");
 
-  s = ctrl_getset(b, "Keys", "keycodes", "Keycodes");
+  s = ctrl_getset(b, "Keys", "keycodes", "Key codes");
   ctrl_columns(s, 2, 50, 50);
   ctrl_radiobuttons(
-    s, "Escape", '\0', 3, P(0), dlg_stdradiobutton_handler,
-    I(offcfg(escape_sends_fs)),
-    "^[", '[', I(0),
-    "^\\", '\\', I(1),
-    null
-  )->column = 0;
-  ctrl_radiobuttons(
-    s, "Backspace", '\0', 3, P(0), dlg_stdradiobutton_handler,
+    s, "Backspace", '\0', 1, P(0), dlg_stdradiobutton_handler,
     I(offcfg(backspace_sends_del)),
     "^H", 'h', I(0),
     "^?", '?', I(1),
+    null
+  )->column = 0;
+  ctrl_radiobuttons(
+    s, "Escape", '\0', 1, P(0), dlg_stdradiobutton_handler,
+    I(offcfg(escape_sends_fs)),
+    "^[", '[', I(0),
+    "^\\", '\\', I(1),
     null
   )->column = 1;
 
   s = ctrl_getset(b, "Keys", "alt", null);
   ctrl_checkbox(
-    s, "Alt key on its own sends ^[", 'a', P(0),
+    s, "Alt key on its own sends ^[", 'k', P(0),
     dlg_stdcheckbox_handler, I(offcfg(alt_sends_esc))
   );
 
-  s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
-  ctrl_checkbox(
-    s, "Window commands (Alt+Space/Enter/F2/F4)", 'd', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
+  s = ctrl_getset(b, "Keys", "scrollmod", "Modifier key for scrolling");
+  ctrl_radiobuttons(
+    s, null, '\0', 3, P(0), dlg_stdradiobutton_handler,
+    I(offcfg(scroll_mod)),
+    "Shift", 's', I(SHIFT),
+    "Ctrl", 'c', I(CTRL),
+    "Alt", 'a', I(ALT),
+    null
   );
-  ctrl_checkbox(
-    s, "Copy and paste (Ctrl/Shift+Ins)", 'c', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(edit_shortcuts))
-  );
-  ctrl_checkbox(
-    s, "Zoom (Ctrl+plus/minus/0)", 'f', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(zoom_shortcuts))
-  );
-  
+
  /*
   * The Mouse panel.
   */
@@ -360,16 +295,11 @@ setup_config_box(controlbox * b)
     null
   );
   
-  s = ctrl_getset(b, "Mouse", "mouseopts", null);
-  ctrl_columns(s, 2, 50, 50);
+  s = ctrl_getset(b, "Mouse", "selectcopy", null);
   ctrl_checkbox(
-    s, "Copy on select", 'y', P(0),
+    s, "Copy on select", 's', P(0),
     dlg_stdcheckbox_handler, I(offcfg(copy_on_select))
-  )->column = 0;
-  ctrl_checkbox(
-    s, "Clicks move cursor", 'v', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(click_moves_cmd_cursor))
-  )->column = 1;
+  );
 
   s = ctrl_getset(b, "Mouse", "mousemode", "Application mouse mode");
   ctrl_radiobuttons(
@@ -380,7 +310,7 @@ setup_config_box(controlbox * b)
     null
   );
   ctrl_radiobuttons(
-    s, "Modifier for overriding default", '\0', 4, P(0),
+    s, "Modifier key for overriding default", '\0', 3, P(0),
     dlg_stdradiobutton_handler, I(offcfg(click_target_mod)),
     "Shift", 's', I(SHIFT),
     "Ctrl", 'c', I(CTRL),
@@ -432,17 +362,13 @@ int_settings[] = {
   {"Transparency", offcfg(transparency), 0},
   {"OpaqueWhenFocused", offcfg(opaque_when_focused), 0},
   {"Scrollbar", offcfg(scrollbar), true},
-  {"ScrollbackLines", offcfg(scrollback_lines), 10000},
-  {"ConfirmExit", offcfg(confirm_exit), true},
   {"WindowShortcuts", offcfg(window_shortcuts), true},
-  {"EditShortcuts", offcfg(edit_shortcuts), true},
-  {"ZoomShortcuts", offcfg(zoom_shortcuts), true},
   {"BoldAsBright", offcfg(bold_as_bright), true},
-  {"AllowBlinking", offcfg(allow_blinking), false},
+  {"AllowBlinking", offcfg(allow_blinking), true},
   {"CursorType", offcfg(cursor_type), 2},
   {"CursorBlinks", offcfg(cursor_blinks), true},
   {"FontIsBold", offcfg(font.isbold), 0},
-  {"FontHeight", offcfg(font.size), 10},
+  {"FontHeight", offcfg(font.height), 10},
   {"FontCharset", offcfg(font.charset), 0},
   {"FontQuality", offcfg(font_quality), FQ_DEFAULT},
   {"BackspaceSendsDEL", offcfg(backspace_sends_del), false},
@@ -451,7 +377,6 @@ int_settings[] = {
   {"ScrollMod", offcfg(scroll_mod), SHIFT},
   {"RightClickAction", offcfg(right_click_action), RC_SHOWMENU},
   {"CopyOnSelect", offcfg(copy_on_select), false},
-  {"ClickMovesCmdCursor", offcfg(click_moves_cmd_cursor), true},
   {"ClickTargetsApp", offcfg(click_targets_app), true},
   {"ClickTargetMod", offcfg(click_target_mod), SHIFT},
   {"BellType", offcfg(bell_type), BELL_SOUND},
@@ -480,9 +405,9 @@ typedef const struct {
 
 static colour_setting
 colour_settings[] = {
-  {"ForegroundColour", offcfg(fg_colour), 0xBFBFBF},
-  {"BackgroundColour", offcfg(bg_colour), 0x000000},
-  {"CursorColour", offcfg(cursor_colour), 0xBFBFBF},
+  {"ForegroundColour", offcfg(fg_colour), {191, 191, 191}},
+  {"BackgroundColour", offcfg(bg_colour), {0, 0, 0}},
+  {"CursorColour", offcfg(cursor_colour), {191, 191, 191}},
 };
 
 void

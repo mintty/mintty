@@ -20,6 +20,10 @@ void setup_config_box(controlbox *);
  * windlg.c - Dialogs, including the configuration dialog.
  */
 
+#define BOXFLAGS DLGWINDOWEXTRA
+#define BOXRESULT (DLGWINDOWEXTRA + sizeof(LONG_PTR))
+#define DF_END 0x0001
+
 /*
  * These are the various bits of data required to handle the
  * portable-dialog stuff in the config box. Having them at file
@@ -56,6 +60,53 @@ force_normal(HWND wnd)
   }
   recurse = 0;
 }
+
+static int
+SaneDialogBox(HINSTANCE inst, LPCTSTR tmpl, HWND wndparent,
+              DLGPROC lpDialogFunc)
+{
+  WNDCLASS wc;
+  wc.style = CS_DBLCLKS | CS_SAVEBITS;
+  wc.lpfnWndProc = DefDlgProc;
+  wc.cbClsExtra = 0;
+  wc.cbWndExtra = DLGWINDOWEXTRA + 2 * sizeof (LONG_PTR);
+  wc.hInstance = inst;
+  wc.hIcon = null;
+  wc.hCursor = LoadCursor(null, IDC_ARROW);
+  wc.hbrBackground = (HBRUSH) (COLOR_BACKGROUND + 1);
+  wc.lpszMenuName = null;
+  wc.lpszClassName = "ConfigBox";
+  RegisterClass(&wc);
+  HWND wnd = CreateDialog(inst, tmpl, wndparent, lpDialogFunc);
+
+  SetWindowLongPtr(wnd, BOXFLAGS, 0);  /* flags */
+  SetWindowLongPtr(wnd, BOXRESULT, 0); /* result from SaneEndDialog */
+
+  MSG msg;
+  int gm;
+  while ((gm = GetMessage(&msg, null, 0, 0)) > 0) {
+    uint flags = GetWindowLongPtr(wnd, BOXFLAGS);
+    if (!(flags & DF_END) && !IsDialogMessage(wnd, &msg))
+      DispatchMessage(&msg);
+    if (flags & DF_END)
+      break;
+  }
+
+  if (gm == 0)
+    PostQuitMessage(msg.wParam);        /* We got a WM_QUIT, pass it on */
+
+  int ret = GetWindowLongPtr(wnd, BOXRESULT);
+  DestroyWindow(wnd);
+  return ret;
+}
+
+static void
+SaneEndDialog(HWND wnd, int ret)
+{
+  SetWindowLongPtr(wnd, BOXRESULT, ret);
+  SetWindowLongPtr(wnd, BOXFLAGS, DF_END);
+}
+
 enum {
   IDCX_TVSTATIC = 1001,
   IDCX_TREEVIEW,
@@ -135,17 +186,6 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   switch (msg) {
     when WM_INITDIALOG: {
-      ctrlbox = ctrl_new_box();
-      setup_config_box(ctrlbox);
-      dp_init(&dp);
-      winctrl_init(&ctrls_base);
-      winctrl_init(&ctrls_panel);
-      dp_add_tree(&dp, &ctrls_base);
-      dp_add_tree(&dp, &ctrls_panel);
-      asprintf(&dp.wintitle, APPNAME " Options");
-      new_cfg = cfg;
-      dp.data = &new_cfg;
-
       RECT r;
       GetWindowRect(GetParent(wnd), &r);
       dp.wnd = wnd;
@@ -237,15 +277,16 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
           break;
         }
       }
+      SetWindowLongPtr(wnd, GWLP_USERDATA, 1);
     }
-
-    when WM_DESTROY:
-      ctrl_free_box(ctrlbox);
-      winctrl_cleanup(&ctrls_base);
-      winctrl_cleanup(&ctrls_panel);
-      dp_cleanup(&dp);
-      config_wnd = 0;
-
+    when WM_LBUTTONUP:
+     /*
+      * Button release should trigger WM_OK if there was a
+      * previous double click on the session list.
+      */
+      ReleaseCapture();
+      if (dp.ended)
+        SaneEndDialog(wnd, dp.endresult ? 1 : 0);
     when WM_NOTIFY: {
       if (LOWORD(wParam) == IDCX_TREEVIEW &&
           ((LPNMHDR) lParam)->code == TVN_SELCHANGED) {
@@ -287,56 +328,69 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     
     when WM_CLOSE:
-      DestroyWindow(wnd);
+      SaneEndDialog(wnd, 0);
 
      /* Grrr Explorer will maximize Dialogs! */
     when WM_SIZE:
       if (wParam == SIZE_MAXIMIZED)
         force_normal(wnd);
 
-    when WM_COMMAND or WM_DRAWITEM: { 
-      int ret = winctrl_handle_command(&dp, msg, wParam, lParam);
-      if (dp.ended)
-        DestroyWindow(wnd);
-      return ret;
-    }
+    otherwise:
+     /*
+      * Only process WM_COMMAND once the dialog is fully formed.
+      */
+      if (GetWindowLongPtr(wnd, GWLP_USERDATA) == 1) {
+        int ret = winctrl_handle_command(&dp, msg, wParam, lParam);
+        if (dp.ended && GetCapture() != wnd)
+          SaneEndDialog(wnd, dp.endresult ? 1 : 0);
+        return ret;
+      }    
   }
   return 0;
 }
 
-HWND config_wnd;
-
-void
-win_open_config(void)
+bool
+win_config(void)
 {
   InitCommonControls();
+  config backup_cfg = cfg;
+  ctrlbox = ctrl_new_box();
+  setup_config_box(ctrlbox);
+  dp_init(&dp);
+  winctrl_init(&ctrls_base);
+  winctrl_init(&ctrls_panel);
+  dp_add_tree(&dp, &ctrls_base);
+  dp_add_tree(&dp, &ctrls_panel);
+  asprintf(&dp.wintitle, APPNAME " Options");
+  dp.data = &cfg;
 
-  RegisterClass(&(WNDCLASS){
-    .style = CS_DBLCLKS | CS_SAVEBITS,
-    .lpfnWndProc = DefDlgProc,
-    .cbClsExtra = 0,
-    .cbWndExtra = DLGWINDOWEXTRA + 2 * sizeof (LONG_PTR),
-    .hInstance = inst,
-    .hIcon = null,
-    .hCursor = LoadCursor(null, IDC_ARROW),
-    .hbrBackground = (HBRUSH) (COLOR_BACKGROUND + 1),
-    .lpszMenuName = null,
-    .lpszClassName = "ConfigBox"
-  });
-  config_wnd = CreateDialog(inst, MAKEINTRESOURCE(IDD_MAINBOX),
-                            wnd, config_dialog_proc);
-}  
+  int ret = 
+    SaneDialogBox(inst, MAKEINTRESOURCE(IDD_MAINBOX), 
+                  wnd, config_dialog_proc);
+
+  ctrl_free_box(ctrlbox);
+  winctrl_cleanup(&ctrls_base);
+  winctrl_cleanup(&ctrls_panel);
+  dp_cleanup(&dp);
+
+  if (!ret)
+    cfg = backup_cfg;   /* structure copy */
+
+  return ret;
+}
 
 void
-win_show_about(void)
+win_about(void)
 {
-  MessageBoxIndirect(&(MSGBOXPARAMS){
+  MSGBOXPARAMS params = {
     .cbSize = sizeof(MSGBOXPARAMS),
-    .hwndOwner = config_wnd,
+    .hwndOwner = wnd,
     .hInstance = inst,
     .lpszCaption = "About " APPNAME,
-    .dwStyle = MB_USERICON | MB_OK,
+    .dwStyle = MB_USERICON | MB_OKCANCEL | MB_DEFBUTTON2,
     .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
     .lpszText = APPNAME " " APPVER "\n" COPYRIGHT "\n" APPINFO
-  });
+  };
+  if (MessageBoxIndirect(&params) == IDOK)
+    ShellExecute(wnd, "open", WEBSITE, 0, 0, SW_SHOWDEFAULT);
 }

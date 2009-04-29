@@ -7,7 +7,7 @@
 .\" 3 November 2008 (or later) as specified.
 .\" Turn off Right Justification
 .ad l
-.TH mintty 1 2009-04-25 0.3.9 Cygwin
+.TH mintty 1 2009-04-29 0.3.10 Cygwin
 
 .SH NAME
 
@@ -60,11 +60,11 @@ Use \fITITLE\fP as the initial window title.
 By default, the title is set to the executed command.
 
 .TP
-\fB-V\fP, \fB--version\fP
+\fB-v\fP, \fB--version\fP
 Print version information and exit.
 
 .TP
-\fB-H\fP, \fB--help\fP
+\fB-h\fP, \fB--help\fP
 Display a brief help message and exit.
 
 
@@ -217,6 +217,7 @@ send their regular keycodes to the application.
 
 .RS
 .PD 0
+.IP "\- \fBAlt+Space\fP: Menu"
 .IP "\- \fBAlt+Enter\fP: Fullscreen"
 .IP "\- \fBAlt+F2\fP: Duplicate"
 .IP "\- \fBAlt+F4\fP: Close"
@@ -247,9 +248,8 @@ Otherwise, it is shown with a bold font, which tends to look better with
 black-on-white text.
 
 .TP
-\fBAllow text blinking\fP (AllowBlinking=0)
-ANSI text blinking is diabled by default, because it is a crime against
-aesthetic decency.
+\fBAllow text blinking\fP (AllowBlinking=1)
+ANSI text blinking can be disabled here, as it can be rather annoying.
 
 .TP
 \fBCursor\fP (CursorType=2)
@@ -545,7 +545,7 @@ tab(#) nospaces;
 LI        s     LB    LB    LB    LB    LB
 LB        LfC   LfC   LfC   LfC   LfC   LfC.
 Key            #Shift#Crtl #C+S   #Alt  #A+S
-Space    #\fIsp#\fIsp#^@   #^[^@
+Space    #\fIsp#\fIsp#^@   #^[^@  #^[\fIsp#^[\fIsp
 Enter    #^M   #^J   #^^   #^[^^  #^[^M #^[J
 Back (^H)#^H   #^H   #^?   #^[^?  #^[^H #^[\fIsp
 Back (^?)#^?   #^?   #^_   #^[^_  #^[^? #^[\fIsp

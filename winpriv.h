@@ -9,9 +9,8 @@
 #include <wingdi.h>
 #include <winuser.h>
 
-extern HWND wnd;        // the main terminal window
-extern HWND config_wnd; // the options window
-extern HINSTANCE inst;  // The all-important instance handle
+extern HWND wnd;       // the main terminal window
+extern HINSTANCE inst; // The all-important instance handle
 
 enum {
   WM_IGNORE_CLIP = WM_APP + 2,
@@ -29,7 +28,6 @@ extern LOGFONT lfont;
 
 extern enum bold_mode { BOLD_COLOURS, BOLD_SHADOW, BOLD_FONT } bold_mode;
 
-extern int font_size;
 extern int font_width, font_height;
 extern int offset_width, offset_height;
 
@@ -38,9 +36,11 @@ void win_paint(void);
 void win_init_fonts(void);
 void win_deinit_fonts(void);
 
+void win_init_palette(void);
 void win_reconfig_palette(void);
 
-void win_open_config(void);
+void win_about(void);
+bool win_config(void);
 
 void win_enable_tip(void);
 void win_disable_tip(void);

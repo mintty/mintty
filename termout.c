@@ -135,6 +135,7 @@ insch(int n)
   m = term.cols - term.curs.x - n;
   cursplus.y = term.curs.y;
   cursplus.x = term.curs.x + n;
+  term_check_selection(term.curs, cursplus);
   term_check_boundary(term.curs.x, term.curs.y);
   if (dir < 0)
     term_check_boundary(term.curs.x + n, term.curs.y);
@@ -169,7 +170,7 @@ toggle_mode(int mode, int query, int state)
       when 2:  /* DECANM: VT52 mode */
         // IGNORE
       when 3:  /* DECCOLM: 80/132 columns */
-        term.selected = false;
+        term_deselect();
         win_resize(term.rows, state ? 132 : 80);
         term.reset_132 = state;
         term.alt_t = term.marg_t = 0;
@@ -212,7 +213,7 @@ toggle_mode(int mode, int query, int state)
         seen_disp_event();
       when 47: /* alternate screen */
         compatibility(OTHER);
-        term.selected = false;
+        term_deselect();
         term_swap_screen(state, false, false);
         term.disptop = 0;
       when 1000: /* VT200_MOUSE */
@@ -226,7 +227,7 @@ toggle_mode(int mode, int query, int state)
         win_update_mouse();
       when 1047:       /* alternate screen */
         compatibility(OTHER);
-        term.selected = false;
+        term_deselect();
         term_swap_screen(state, true, true);
         term.disptop = 0;
       when 1048:       /* save/restore cursor */
@@ -239,7 +240,7 @@ toggle_mode(int mode, int query, int state)
         if (!state)
           seen_disp_event();
         compatibility(OTHER);
-        term.selected = false;
+        term_deselect();
         term_swap_screen(state, true, false);
         if (!state)
           save_cursor(state);
@@ -263,20 +264,6 @@ toggle_mode(int mode, int query, int state)
   }
 }
 
-static colour
-rgb_to_colour(uint32 rgb)
-{
-  return make_colour(rgb >> 16, rgb >> 8, rgb);
-}
-
-static void
-do_colour_osc(void (*set_colour_f)(uint32))
-{
-  uint rgb;
-  if (sscanf(term.osc_string, "#%x%c", &rgb, &(char){0}) == 1)
-    (*set_colour_f)(rgb_to_colour(rgb));
-}
-
 /*
  * Process an OSC sequence: set window title or icon name.
  */
@@ -292,11 +279,8 @@ do_osc(void)
       when 4: {
         uint n, rgb;
         if (sscanf(term.osc_string, "%u;#%x%c", &n, &rgb, &(char){0}) == 2)
-          win_set_colour(n, rgb_to_colour(rgb));
+          win_set_palette(n, rgb >> 16, rgb >> 8, rgb);
       }
-      when 10: do_colour_osc(win_set_foreground_colour);
-      when 11: do_colour_osc(win_set_background_colour);
-      when 12: do_colour_osc(win_set_cursor_colour);
     }
   }
 }
@@ -356,8 +340,8 @@ out_bell(void)
   * Perform an actual bell if we're not overloaded.
   */
   if (!term.bell_overloaded) {
-    win_bell(cfg.bell_type);
-    if (cfg.bell_type == BELL_VISUAL)
+    win_bell(term.cfg.bell_type);
+    if (term.cfg.bell_type == BELL_VISUAL)
       term_schedule_vbell(false, 0);
   }
   seen_disp_event();
@@ -380,6 +364,7 @@ out_backspace(void)
 static void
 out_tab(void)
 {
+  pos old_curs = term.curs;
   termline *ldata = scrlineptr(term.curs.y);
   do {
     term.curs.x++;
@@ -394,6 +379,7 @@ out_tab(void)
       term.curs.x = term.cols - 1;
   }
   
+  term_check_selection(old_curs, term.curs);
   seen_disp_event();
 }
 
@@ -462,6 +448,11 @@ out_char(wchar c)
   }
   if (term.insert && width > 0)
     insch(width);
+  if (term.selected) {
+    pos cursplus = term.curs;
+    incpos(cursplus);
+    term_check_selection(term.curs, cursplus);
+  }
   switch (width) {
     when 1:  // Normal character.
       term_check_boundary(term.curs.x, term.curs.y);
@@ -556,6 +547,7 @@ out_align_pattern(void)
   scrtop.x = scrtop.y = 0;
   scrbot.x = 0;
   scrbot.y = term.rows;
+  term_check_selection(scrtop, scrbot);
 }
 
 void
@@ -1107,7 +1099,7 @@ term_write(const char *data, int len)
               when 'i' or ANSI_QUE('i'):  /* MC: Media copy */
                 compatibility(VT100);
                 if (term.esc_nargs == 1) {
-                  if (arg0 == 5 && *cfg.printer) {
+                  if (arg0 == 5 && *term.cfg.printer) {
                     term.printing = true;
                     term.only_printing = !term.esc_query;
                     term.print_state = 0;
@@ -1293,7 +1285,7 @@ term_write(const char *data, int len)
                     (arg0 < 1 || arg0 >= 24)) {
                   compatibility(VT340TEXT);
                   win_resize((arg0 ?: 24), term.cols);
-                  term.selected = false;
+                  term_deselect();
                 }
                 else if (term.esc_nargs >= 1 && arg0 >= 1 &&
                          arg0 < 24) {
@@ -1319,8 +1311,8 @@ term_write(const char *data, int len)
                       win_set_zorder(false);
                     when 8:
                       if (term.esc_nargs >= 3) {
-                        win_resize(arg1 ?: cfg.rows,
-                                   term.esc_args[2] ?: cfg.cols);
+                        win_resize(arg1 ?: term.cfg.rows,
+                                   term.esc_args[2] ?: term.cfg.cols);
                       }
                     when 9:
                       if (term.esc_nargs >= 2)
@@ -1381,8 +1373,8 @@ term_write(const char *data, int len)
                 */
                 compatibility(VT420);
                 if (term.esc_nargs == 1 && arg0 > 0) {
-                  win_resize(arg0 ?: cfg.rows, term.cols);
-                  term.selected = false;
+                  win_resize(arg0 ?: term.cfg.rows, term.cols);
+                  term_deselect();
                 }
               when ANSI('|', '$'):     /* DECSCPP */
                /*
@@ -1392,8 +1384,8 @@ term_write(const char *data, int len)
                 */
                 compatibility(VT340TEXT);
                 if (term.esc_nargs <= 1) {
-                  win_resize(term.rows, arg0 ?: cfg.cols);
-                  term.selected = false;
+                  win_resize(term.rows, arg0 ?: term.cfg.cols);
+                  term_deselect();
                 }
               when 'X': {      /* ECH: write N spaces w/o moving cursor */
                /* XXX VTTEST says this is vt220, vt510 manual
@@ -1410,6 +1402,7 @@ term_write(const char *data, int len)
                 cursplus.x += n;
                 term_check_boundary(term.curs.x, term.curs.y);
                 term_check_boundary(term.curs.x + n, term.curs.y);
+                term_check_selection(term.curs, cursplus);
                 while (n--)
                   copy_termchar(cline, p++, &term.erase_char);
                 seen_disp_event();
@@ -1425,12 +1418,14 @@ term_write(const char *data, int len)
               }
               when 'Z': {       /* CBT */
                 compatibility(OTHER);
+                pos old_curs = term.curs;
                 int i = def_arg0; 
                 while (--i >= 0 && term.curs.x > 0) {
                   do {
                     term.curs.x--;
                   } while (term.curs.x > 0 && !term.tabs[term.curs.x]);
                 }
+                term_check_selection(old_curs, term.curs);
               }
               when ANSI('c', '='):     /* Hide or Show Cursor */
                 compatibility(SCOANSI);
@@ -1559,7 +1554,7 @@ term_write(const char *data, int len)
               term.state = SEEN_OSC_P;
               term.osc_strlen = 0;
             when 'R':  /* Linux palette reset */
-              win_reset_colours();
+              win_reset_palette();
               term_invalidate_all();
               term.state = TOPLEVEL;
             when 'W':  /* word-set */
@@ -1612,15 +1607,24 @@ term_write(const char *data, int len)
           }
         }
         when SEEN_OSC_P: {
-          if (!isxdigit(c)) {
+          uint max = (term.osc_strlen == 0 ? 21 : 15);
+          uint val;
+          if (c >= '0' && c <= '9')
+            val = c - '0';
+          else if (c >= 'A' && c <= 'A' + max - 10)
+            val = c - 'A' + 10;
+          else if (c >= 'a' && c <= 'a' + max - 10)
+            val = c - 'a' + 10;
+          else {
             term.state = TOPLEVEL;
             break;
           }
-          term.osc_string[term.osc_strlen++] = c;
-          if (term.osc_strlen == 7) {
-            uint n, rgb;
-            sscanf(term.osc_string, "%1x%6x", &n, &rgb);
-            win_set_colour(n, rgb_to_colour(rgb));
+          term.osc_string[term.osc_strlen++] = val;
+          if (term.osc_strlen >= 7) {
+            win_set_palette(term.osc_string[0],
+                        term.osc_string[1] * 16 + term.osc_string[2],
+                        term.osc_string[3] * 16 + term.osc_string[4],
+                        term.osc_string[5] * 16 + term.osc_string[6]);
             term_invalidate_all();
             term.state = TOPLEVEL;
           }
@@ -1636,13 +1640,11 @@ term_write(const char *data, int len)
           break;
       }
     }
-    /*
     if (term.selected) {
       pos cursplus = term.curs;
       incpos(cursplus);
       term_check_selection(term.curs, cursplus);
     }
-    */
   }
   term.in_term_write = false;
   term_print_flush();

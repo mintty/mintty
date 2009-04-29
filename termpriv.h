@@ -137,7 +137,7 @@ struct term {
 
   int osc_strlen;
   char osc_string[OSC_STR_MAX + 1];
-  bool osc_w;
+  int osc_w;
 
   char id_string[1024];
 
@@ -173,6 +173,15 @@ struct term {
 
   wchar *paste_buffer;
   int paste_len, paste_pos;
+
+ /*
+  * We maintain a full _copy_ of a Config structure here, not
+  * merely a pointer to it. That way, when we're passed a new
+  * one for reconfiguration, we can check the differences and
+  * adjust the _current_ setting of (e.g.) auto wrap mode rather
+  * than only the default.
+  */
+  config cfg;
 
  /*
   * child_read calls term_write, but it can also be called from
@@ -218,6 +227,7 @@ void term_schedule_cblink(void);
 void term_schedule_vbell(int already_started, int startpoint);
 
 void term_swap_screen(int which, int reset, int keep_cur_pos);
+void term_check_selection(pos from, pos to);
 void term_check_boundary(int x, int y);
 void term_do_scroll(int topline, int botline, int lines, int sb);
 void term_erase_lots(int line_only, int from_begin, int to_end);

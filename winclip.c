@@ -66,7 +66,7 @@ win_copy(wchar *data, int *attr, int len)
   rtf = newn(char, rtfsize);
   rtflen =
     sprintf(rtf, "{\\rtf1\\ansi\\deff0{\\fonttbl\\f0\\fmodern %s;}\\f0\\fs%d",
-            cfg.font.name, cfg.font.size * 2);
+            cfg.font.name, cfg.font.height * 2);
 
  /*
   * Add colour palette
@@ -397,7 +397,6 @@ win_paste(void)
   if (!OpenClipboard(null))
     return;  
   HGLOBAL data;
-  term_deselect();
   if ((data = GetClipboardData(CF_HDROP)))
     paste_hdrop(data);
   else if ((data = GetClipboardData(CF_UNICODETEXT)))
