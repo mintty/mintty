@@ -54,7 +54,7 @@ win_init_menus(void)
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_SELALL, "&Select All");
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
-  AppendMenu(menu, MF_ENABLED, IDM_RESET, "&Reset");
+  AppendMenu(menu, MF_ENABLED, IDM_RESETTERM, "&Reset");
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN, 0);
   AppendMenu(menu, MF_ENABLED, IDM_OPTIONS, "&Options...");
@@ -263,6 +263,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       when VK_RETURN: cmd = IDM_FULLSCREEN;
       when VK_F2:     cmd = IDM_DUPLICATE;
       when VK_F4:     cmd = SC_CLOSE;
+      when VK_F10:    cmd = IDM_RESETSIZE;
       otherwise: goto not_command;
     }
     SendMessage(wnd, WM_SYSCOMMAND, cmd, ' ');

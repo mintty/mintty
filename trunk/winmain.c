@@ -410,7 +410,7 @@ reset_window(int reinit)
  * maximised.
  */
 static void
-make_full_screen()
+make_full_screen(void)
 {
  /* Remove the window furniture. */
   DWORD style = GetWindowLongPtr(wnd, GWL_STYLE);
@@ -431,7 +431,7 @@ make_full_screen()
  * Clear the full-screen attributes.
  */
 static void
-clear_full_screen()
+clear_full_screen(void)
 {
   DWORD oldstyle, style;
 
@@ -449,7 +449,7 @@ clear_full_screen()
  * Toggle full-screen mode.
  */
 static void
-flip_full_screen()
+flip_full_screen(void)
 {
   if (IsZoomed(wnd)) {
     if (GetWindowLongPtr(wnd, GWL_STYLE) & WS_CAPTION)
@@ -463,8 +463,31 @@ flip_full_screen()
   }
 }
 
+/*
+ * Go back to configured window size.
+ */
 static void
-update_transparency()
+reset_size(void)
+{
+  if (IsZoomed(wnd))
+    ShowWindow(wnd, SW_RESTORE);
+  win_resize(cfg.rows, cfg.cols);
+}
+
+
+
+static void
+reset_term(void)
+{
+  term_reset();
+  term_deselect();
+  term_clear_scrollback();
+  win_update();
+  ldisc_send(null, 0, 0);
+}
+
+static void
+update_transparency(void)
 {
   uchar trans = cfg.transparency;
   SetWindowLong(wnd, GWL_EXSTYLE, trans ? WS_EX_LAYERED : 0);
@@ -563,12 +586,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_SELALL:
           term_select_all();
           win_update();
-        when IDM_RESET:
-          term_reset();
-          term_deselect();
-          term_clear_scrollback();
-          win_update();
-          ldisc_send(null, 0, 0);
+        when IDM_RESETTERM: reset_term();
+        when IDM_RESETSIZE: reset_size();
         when IDM_FULLSCREEN: flip_full_screen();
         when IDM_OPTIONS: win_open_config();
         when IDM_ZOOM: {
