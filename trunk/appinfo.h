@@ -6,7 +6,7 @@
 
 #define APPNAME "MinTTY"
 #define APPVER stringify(VERSION)
-#define APPDESC "Cygwin command line window"
+#define APPDESC "Cygwin terminal"
 #define COPYRIGHT "Copyright (C) 2008-09 Andy Koppe"
 #define WEBSITE "http://mintty.googlecode.com"
 
