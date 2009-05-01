@@ -182,28 +182,16 @@ Window properties.
 
 .TP
 \fBColumns\fP (Columns=80)
-Width of the window in character cells.
+Width of the window at startup, in character cells.
 
 .TP
 \fBRows\fP (Rows=24)
-Height of the window in character cells.
+Height of the window at startup, in character cells.
 
 .TP
-\fBTransparency\fP (Transparency=0)
-Window transparency level, with the following choices:
-
-.RS
-.PD 0
-.IP "\- \fBOff\fP (0)"
-.IP "\- \fBLow\fP (1)"
-.IP "\- \fBMedium\fP (2)"
-.IP "\- \fBHigh\fP (3)"
-.RE
-
-.TP
-\fBDisable transparency when active\fP (OpaqueWhenFocused=0)
-Make the window opaque when it is active (to avoid background distractions
-when working in it).
+\fBCurrent size\fP
+Pressing this button sets the \fBColumns\fP and \fBRows\fP fields to the
+current size of the window.
 
 .TP
 \fBDisplay scrollbar\fP (Scrollbar=1)
@@ -211,20 +199,29 @@ Show the scrollbar for accessing the scrollback buffer on the right of the
 window.
 
 .TP
-\fBEnable Alt+key shortcuts\fP (WindowShortcuts=1)
-Controls shortcuts for window commands. When disabled, these combinations
-send their regular keycodes to the application.
+\fBConfirm exit\fP (ConfirmExit=1)
+If enabled, ask for confirmation when the close button or \fIAlt+F4\fP is 
+pressed and the command running in MinTTY has any child processes.
+
+.TP
+\fBScrollback lines\fP (ScrollbackLines=10000)
+The maximum number of lines to keep in the scrollback buffer.
+
+.TP
+\fBModifier for scrolling with cursor keys\fP (ScrollMod=1)
+The modifier key that needs to be pressed together with the arrow up/down
+or page up/down keys to access the scrollback buffer.
 
 .RS
 .PD 0
-.IP "\- \fBAlt+Enter\fP: Fullscreen"
-.IP "\- \fBAlt+F2\fP: Duplicate"
-.IP "\- \fBAlt+F4\fP: Close"
+.IP "\- \fBShift\fP (1)"
+.IP "\- \fBCtrl\fP (4)"
+.IP "\- \fBAlt\fP (2)"
 .RE
 
 
 .SS Looks
-Settings for changing MinTTY's appearance.
+Settings affecting MinTTY's appearance.
 
 .TP
 \fBColours\fP
@@ -240,16 +237,21 @@ with decimal 8-bit values (i.e. ranging from 0 to 255).
 .RE
 
 .TP
-\fBShow bold text as bright\fP (BoldAsBright=1)
-If selected, text with the ANSI bold attribute set is displayed with
-increased brightness.
-Otherwise, it is shown with a bold font, which tends to look better with
-black-on-white text.
+\fBTransparency\fP (Transparency=0)
+Window transparency level, with the following choices:
+
+.RS
+.PD 0
+.IP "\- \fBOff\fP (0)"
+.IP "\- \fBLow\fP (1)"
+.IP "\- \fBMedium\fP (2)"
+.IP "\- \fBHigh\fP (3)"
+.RE
 
 .TP
-\fBAllow text blinking\fP (AllowBlinking=0)
-ANSI text blinking is diabled by default, because it is a crime against
-aesthetic decency.
+\fBOpaque when focused\fP (OpaqueWhenFocused=0)
+Enable to make the window opaque when it is active (to avoid background
+distractions when working in it).
 
 .TP
 \fBCursor\fP (CursorType=2)
@@ -267,11 +269,12 @@ The following cursor types are available:
 If enabled, the cursor blinks at the rate set in Windows' keyboard control
 panel.
 
-.SS Font
+
+.SS Text
 Settings controlling text display.
 
 .TP
-\fBSelect...\fP
+\fBFont...\fP
 Clicking on this button opens the font dialog, where the font and its
 properties can be chosen.
 In the config file, this corresponds to the following entries:
@@ -297,25 +300,25 @@ Select the type of font smoothing, if any, from the following choices:
 .RE
 
 .TP
+\fBShow bold as bright\fP (BoldAsBright=1)
+If selected, text with the ANSI bold attribute set is displayed with
+increased brightness.
+Otherwise, it is shown with a bold font, which tends to look better with
+black-on-white text.
+
+.TP
+\fBAllow blinking\fP (AllowBlinking=0)
+ANSI text blinking is diabled by default, on the grounds that blinking
+text is a crime against aesthetic decency.
+
+.TP
 \fBCodepage\fP (Codepage=ISO-8859-1:1998 (Latin-1, West Europe))
 The codepage used for encoding input and decoding output.
 Select \fBUTF-8\fP for 8-bit Unicode.
 
+
 .SS Keys
 Settings controlling keyboard behaviour.
-
-.TP
-\fBBackspace keycode\fP (BackspaceSendsDEL=0)
-The character to be sent by the backspace key.
-The default is \fB^H\fP, because that is the default across Cygwin,
-but \fB^?\fP (DEL) can be used instead to free up Ctrl+H for other
-purposes, e.g. as the help key in Emacs.
-
-.RS
-.PD 0
-.IP "\- \fB^H\fP (0)"
-.IP "\- \fB^?\fP (1)"
-.RE
 
 .TP
 \fBEscape keycode\fP (EscapeSendsFS=0)
@@ -333,23 +336,61 @@ multi-character keycodes.
 .RE
 
 .TP
-\fBAlt key on its own sends ^[\fP (AltSendsESC=0)
-The Alt key pressed on its own can be set to send the escape character
-\fB^[\fP.
-This can be particularly useful when the escape key is set to send
-\fB^\\\fP instead.
-
-.TP
-\fBModifier key for scrolling\fP (ScrollMod=1)
-The modifier key that needs to be pressed together with the arrow up/down
-or page up/down keys to access the scrollback buffer.
+\fBBackspace keycode\fP (BackspaceSendsDEL=0)
+The character to be sent by the backspace key.
+The default is \fB^H\fP, because that is the default across Cygwin,
+but \fB^?\fP (DEL) can be used instead to free up Ctrl+H for other
+purposes, e.g. as the help key in Emacs.
 
 .RS
 .PD 0
-.IP "\- \fBShift\fP (1)"
-.IP "\- \fBAlt\fP (2)"
-.IP "\- \fBCtrl\fP (4)"
+.IP "\- \fB^H\fP (0)"
+.IP "\- \fB^?\fP (1)"
 .RE
+
+.TP
+\fBAlt key on its own sends ^[\fP (AltSendsESC=0)
+The Alt key pressed on its own can be set to send the escape character
+\fB^[\fP.
+This can save the regular trip to the upper left corner of the keyboard
+for \fIvi\fP users, and can also be useful when the escape key is set to send
+\fB^\\\fP instead.
+
+.TP
+\fBWindow command shortcuts\fP (WindowShortcuts=1)
+Checkbox for enabling window command shortcuts.
+When disabled, these combinations send their regular keycodes to the
+application.
+
+.RS
+.PD 0
+.IP "\- \fBAlt+Space\fP: Menu"
+.IP "\- \fBAlt+Enter\fP: Fullscreen"
+.IP "\- \fBAlt+F2\fP: Duplicate"
+.IP "\- \fBAlt+F4\fP: Close"
+.RE
+
+.TP
+\fBCopy and paste shortcuts\fP (EditShortcuts=1)
+Checkbox for enabling the copy and paste shortcuts.
+
+.RS
+.PD 0
+.IP "\- \fBCtrl+Insert\fP: Copy"
+.IP "\- \fBShift+Insert\fP: Paste"
+.RE
+
+.TP
+\fBZoom shortcuts\fP (ZoomShortcuts=1)
+Checkbox for enabling font zoom shortcuts.
+
+.RS
+.PD 0
+.IP "\- \fBCtrl+plus\fP: Zoom in"
+.IP "\- \fBCtrl+minus\fP: Zoom out"
+.IP "\- \fBCtrl+zero\fP: Reset zoom to configured font size"
+.RE
+
 
 .SS Mouse
 Settings controlling mouse support.
@@ -371,7 +412,14 @@ If enabled, the region selected with the mouse is copied to the clipboard as
 soon as the mouse button is released, thus emulating X Window behaviour.
 
 .TP
-\fBDefault click target\fP (ClickTargetsApp=1)
+\fBClicks move cursor\fP (ClicksMoveCursor=1)
+If enabled, the command line cursor can be placed by pressing the left
+mouse button.
+This works by sending the number of cursor keycodes needed to get to the
+destination.
+
+.TP
+\fBDefault click target\fP (ClicksTargetApp=1)
 This applies to application mouse mode, i.e. when the application activates
 xterm-style mouse reporting.
 In that mode, mouse clicks can be sent either to the application to process,
@@ -384,7 +432,7 @@ or to the window for the usual actions: select, extend, paste, show menu.
 .RE
 
 .TP
-\fBModifier key overriding default\fP (ClickTargetMod=1)
+\fBModifier key for overriding default\fP (ClickTargetMod=1)
 The modifier key selected here can be used to override the default click
 target in application mouse mode.
 With the default settings, clicks are sent to the application,
@@ -398,6 +446,7 @@ instead.
 .IP "\- \fBCtrl\fP (4)"
 
 .RE
+
 
 .SS Output
 Settings for output devices other than the terminal screen.

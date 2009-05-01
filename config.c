@@ -337,11 +337,11 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
   );
   ctrl_checkbox(
-    s, "Copy and paste (Ctrl/Shift+Ins)", 'c', P(0),
+    s, "Copy and paste (Ctrl/Shift+Insert)", 'c', P(0),
     dlg_stdcheckbox_handler, I(offcfg(edit_shortcuts))
   );
   ctrl_checkbox(
-    s, "Zoom (Ctrl+plus/minus/0)", 'f', P(0),
+    s, "Zoom (Ctrl+plus/minus/zero)", 'f', P(0),
     dlg_stdcheckbox_handler, I(offcfg(zoom_shortcuts))
   );
   
@@ -451,8 +451,8 @@ int_settings[] = {
   {"ScrollMod", offcfg(scroll_mod), SHIFT},
   {"RightClickAction", offcfg(right_click_action), RC_SHOWMENU},
   {"CopyOnSelect", offcfg(copy_on_select), false},
-  {"ClickMovesCmdCursor", offcfg(click_moves_cmd_cursor), true},
-  {"ClickTargetsApp", offcfg(click_targets_app), true},
+  {"ClicksMoveCursor", offcfg(click_moves_cmd_cursor), true},
+  {"ClicksTargetApp", offcfg(click_targets_app), true},
   {"ClickTargetMod", offcfg(click_target_mod), SHIFT},
   {"BellType", offcfg(bell_type), BELL_SOUND},
   {"BellIndication", offcfg(bell_ind), B_IND_STEADY},
