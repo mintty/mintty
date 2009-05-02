@@ -110,7 +110,7 @@ which means it can be pasted with colours and formatting into applications
 that support it, e.g. word processors.
 
 The clipboard contents can be pasted using either the \fBPaste\fP menu command,
-the \fBCtrl+Insert\fP keyboard shortcut, or the middle mouse button.
+the \fBShift+Insert\fP keyboard shortcut, or the middle mouse button.
 Not only text but also files and directories can be pasted,
 whereby the latter are inserted as quoted filenames.
 
@@ -137,6 +137,14 @@ The modifier key for scrolling can be changed in the options dialog.
 
 Scrolling into the scrollback buffer is not available with programs such
 as pagers or editors that use the the terminal's "alternate screen".
+
+
+.SS AltGr
+
+The AltGr key on non-US keyboards acts as a second Alt key unless the keyboard
+layout being used assigns a character to a particular key combination.
+This means that it can be used in shortcuts such as \fBAlt+Enter\fP
+or as the \fBMeta\fP modifier for terminal keys.
 
 
 .SS Mouse tracking
@@ -497,6 +505,22 @@ Caret notation is used to show control characters.
 See \fIhttp://en.wikipedia.org/wiki/Caret_notation\fP for an explanation.
 
 
+.SS Alt and Meta
+
+As is customary with PC keyboards, the \fBAlt\fP key acts as the so-called
+\fBMeta\fP modifier.
+When it is held down while pressing a key or key combination, the keycode is
+prepended with the escape character \fB^[\fP, unless noted otherwise in
+the keycode tables in the following sections.
+
+If present, the \fBAltGr\fP key also acts as a Meta modifier for any key
+combinations for which the Windows keyboard layout does not have a keycode.
+
+Encoding the meta modifier by setting the top bit of a character instead
+of prefixing it with the escape character is not supported, because that
+does not work for characters beyond 7-bit ASCII.
+
+
 .SS Letter keys
 
 If the Windows keyboard layout does not have a keycode for a letter key press
@@ -594,7 +618,7 @@ tab(#) nospaces;
 LI        s     LB    LB    LB    LB    LB
 LB        LfC   LfC   LfC   LfC   LfC   LfC.
 Key            #Shift#Crtl #C+S   #Alt  #A+S
-Space    #\fIsp#\fIsp#^@   #^[^@
+Space    #\fIsp#\fIsp#^@   #^[^@  #^[\fIsp #^[\fIsp
 Enter    #^M   #^J   #^^   #^[^^  #^[^M #^[J
 Back (^H)#^H   #^H   #^?   #^[^?  #^[^H #^[\fIsp
 Back (^?)#^?   #^?   #^_   #^[^_  #^[^? #^[\fIsp
@@ -701,6 +725,16 @@ F11#^[[23~#^[[23;\fIm\fP~
 F12#^[[24~#^[[24;\fIm\fP~
 .TE
 .RE
+
+
+.SS Alt+Numpad
+
+MinTTY supports the Alt+Numpad method for entering character codes, whereby
+the \fBAlt\fP key has to be held while entering the character's Unicode
+codepoint.
+If the first digit entered is a zero, the codepoint is interpreted as octal,
+otherwise as decimal.
+The codepoint is encoded using the selected codepage before it is sent.
 
 
 .SS Mousewheel
