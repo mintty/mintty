@@ -101,7 +101,7 @@ Double-clicking or triple-clicking selects a whole word or line.
 
 In the default configuration, selected text has to be explicitly copied
 to the clipboard using either the \fBCopy\fP menu command, the
-\fBCtrl+Insert\fP keyboard shortcut, or the middle mouse button combined
+\fBCtrl+Ins\fP keyboard shortcut, or the middle mouse button combined
 with \fBShift\fP. (See the \fBCopy on select\fP setting for X-like
 copy behaviour.)
 
@@ -110,7 +110,7 @@ which means it can be pasted with colours and formatting into applications
 that support it, e.g. word processors.
 
 The clipboard contents can be pasted using either the \fBPaste\fP menu command,
-the \fBShift+Insert\fP keyboard shortcut, or the middle mouse button.
+the \fBShift+Ins\fP keyboard shortcut, or the middle mouse button.
 Not only text but also files and directories can be pasted,
 whereby the latter are inserted as quoted filenames.
 
@@ -190,16 +190,16 @@ Window properties.
 
 .TP
 \fBColumns\fP (Columns=80)
-Width of the window at startup, in character cells.
+Default width of the window, in character cells.
 
 .TP
 \fBRows\fP (Rows=24)
-Height of the window at startup, in character cells.
+Default height of the window, in character cells.
 
 .TP
 \fBCurrent size\fP
-Pressing this button sets the \fBColumns\fP and \fBRows\fP fields to the
-current size of the window.
+Pressing this button sets the default width and height of the window to
+its current size.
 
 .TP
 \fBDisplay scrollbar\fP (Scrollbar=1)
@@ -384,8 +384,8 @@ Checkbox for enabling the copy and paste shortcuts.
 
 .RS
 .PD 0
-.IP "\- \fBCtrl+Insert\fP: Copy"
-.IP "\- \fBShift+Insert\fP: Paste"
+.IP "\- \fBCtrl+Ins\fP: Copy"
+.IP "\- \fBShift+Ins\fP: Paste"
 .RE
 
 .TP
@@ -690,8 +690,8 @@ tab(#) nospaces;
 LI     s     LB
 LB     LfC   LfC.
 Key         #modified
-Insert#^[[2~#^[[2;\fIm\fP~
-Delete#^[[3~#^[[3;\fIm\fP~
+Ins   #^[[2~#^[[2;\fIm\fP~
+Del   #^[[3~#^[[3;\fIm\fP~
 PgUp  #^[[5~#^[[5;\fIm\fP~
 PgDn  #^[[6~#^[[6;\fIm\fP~
 .TE
