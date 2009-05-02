@@ -183,7 +183,7 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Window", "Window");
 
-  s = ctrl_getset(b, "Window", "size", "Initial size");
+  s = ctrl_getset(b, "Window", "size", "Default size");
   ctrl_columns(s, 5, 35, 3, 28, 4, 30);
   (cols_box = ctrl_editbox(
     s, "Columns", 'o', 44, P(0),
@@ -337,7 +337,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
   );
   ctrl_checkbox(
-    s, "Copy and paste (Ctrl/Shift+Insert)", 'c', P(0),
+    s, "Copy and paste (Ctrl/Shift+Ins)", 'c', P(0),
     dlg_stdcheckbox_handler, I(offcfg(edit_shortcuts))
   );
   ctrl_checkbox(

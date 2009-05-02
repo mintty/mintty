@@ -17,6 +17,6 @@
 #define IDM_OPTIONS    0x0060
 #define IDM_DUPLICATE  0x0070
 #define IDM_ZOOM       0x0080
-#define IDM_INITSIZE   0x0090
+#define IDM_DEFSIZE    0x0090
 
 #endif

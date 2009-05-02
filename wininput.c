@@ -14,28 +14,28 @@ void
 win_update_menus(void)
 {
   ModifyMenu(
-    menu, IDM_COPY, MF_BYCOMMAND | MF_STRING, IDM_COPY,
-    cfg.edit_shortcuts ? "&Copy\tCtrl+Insert" : "&Copy"
-  );
-  ModifyMenu(
-    menu, IDM_PASTE, MF_BYCOMMAND | MF_STRING, IDM_PASTE,
-    cfg.edit_shortcuts ? "&Paste\tShift+Insert" : "&Paste"
-  );
-  ModifyMenu(
-    menu, IDM_INITSIZE, MF_BYCOMMAND | MF_STRING, IDM_INITSIZE,
-    cfg.window_shortcuts ? "&Initial size\tAlt+F10" : "&Initial size"
-  );
-  ModifyMenu(
-    menu, IDM_FULLSCREEN, MF_BYCOMMAND | MF_STRING, IDM_FULLSCREEN,
-    cfg.window_shortcuts ? "&Fullscreen\tAlt+F11" : "&Fullscreen"
+    sysmenu, IDM_DUPLICATE, MF_BYCOMMAND | MF_STRING, IDM_DUPLICATE,
+    cfg.window_shortcuts ? "&Duplicate\tAlt+F2" : "&Duplicate"
   );
   ModifyMenu(
     sysmenu, SC_CLOSE, MF_BYCOMMAND | MF_STRING, SC_CLOSE,
     cfg.window_shortcuts ? "&Close\tAlt+F4" : "&Close"
   ); 
   ModifyMenu(
-    sysmenu, IDM_DUPLICATE, MF_BYCOMMAND | MF_STRING, IDM_DUPLICATE,
-    cfg.window_shortcuts ? "&Duplicate\tAlt+F2" : "&Duplicate"
+    menu, IDM_COPY, MF_BYCOMMAND | MF_STRING, IDM_COPY,
+    cfg.edit_shortcuts ? "&Copy\tCtrl+Ins" : "&Copy"
+  );
+  ModifyMenu(
+    menu, IDM_PASTE, MF_BYCOMMAND | MF_STRING, IDM_PASTE,
+    cfg.edit_shortcuts ? "&Paste\tShift+Ins" : "&Paste"
+  );
+  ModifyMenu(
+    menu, IDM_DEFSIZE, MF_BYCOMMAND | MF_STRING, IDM_DEFSIZE,
+    cfg.window_shortcuts ? "&Default size\tAlt+F10" : "&Default size"
+  );
+  ModifyMenu(
+    menu, IDM_FULLSCREEN, MF_BYCOMMAND | MF_STRING, IDM_FULLSCREEN,
+    cfg.window_shortcuts ? "&Fullscreen\tAlt+F11" : "&Fullscreen"
   );
   EnableMenuItem(menu, IDM_COPY, term_selected() ? MF_ENABLED : MF_GRAYED);
   EnableMenuItem(
@@ -60,7 +60,7 @@ win_init_menus(void)
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_RESET, "&Reset");
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
-  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_INITSIZE, 0);
+  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_DEFSIZE, 0);
   AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN, 0);
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_OPTIONS, "&Options...");
@@ -269,7 +269,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       when VK_RETURN or VK_F11: cmd = IDM_FULLSCREEN;
       when VK_F2:     cmd = IDM_DUPLICATE;
       when VK_F4:     cmd = SC_CLOSE;
-      when VK_F10:    cmd = IDM_INITSIZE;
+      when VK_F10:    cmd = IDM_DEFSIZE;
       otherwise: goto not_command;
     }
     SendMessage(wnd, WM_SYSCOMMAND, cmd, ' ');
