@@ -467,7 +467,7 @@ flip_full_screen(void)
  * Go back to configured window size.
  */
 static void
-reset_size(void)
+init_size(void)
 {
   if (IsZoomed(wnd))
     ShowWindow(wnd, SW_RESTORE);
@@ -586,8 +586,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_SELALL:
           term_select_all();
           win_update();
-        when IDM_RESETTERM: reset_term();
-        when IDM_RESETSIZE: reset_size();
+        when IDM_RESET: reset_term();
+        when IDM_INITSIZE: init_size();
         when IDM_FULLSCREEN: flip_full_screen();
         when IDM_OPTIONS: win_open_config();
         when IDM_ZOOM: {
