@@ -333,7 +333,7 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
   ctrl_checkbox(
-    s, "Window commands (Alt+Space/Enter/F2/F4)", 'd', P(0),
+    s, "Window commands (Alt+Space/Enter/Fn)", 'd', P(0),
     dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
   );
   ctrl_checkbox(

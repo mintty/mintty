@@ -260,7 +260,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     WPARAM cmd;
     switch (key) {
       when VK_SPACE:  cmd = SC_KEYMENU;
-      when VK_RETURN: cmd = IDM_FULLSCREEN;
+      when VK_RETURN or VK_F11: cmd = IDM_FULLSCREEN;
       when VK_F2:     cmd = IDM_DUPLICATE;
       when VK_F4:     cmd = SC_CLOSE;
       when VK_F10:    cmd = IDM_RESETSIZE;
