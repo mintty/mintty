@@ -767,6 +767,21 @@ command line.
 See its manual page for details.
 
 
+.SS Starting mintty from folder context menus
+
+Cygwin's \fBchere\fP package can be used to create a folder context menu
+item for mintty in Windows Explorer.
+This allows one to right click on a
+folder and open a shell in that folder.
+
+The following command will create a "Bash Prompt Here" for the current user.
+See \fIchere\fP(1) for all the options.
+
+.RS
+\fCchere -i -c -t mintty\fP
+.RE
+
+
 .SS Starting mintty from a batch file
 
 In order to start MinTTY from a batch file it needs to be invoked through the
@@ -987,7 +1002,7 @@ Neither Tektronix 4014 emulation nor mouse highlighting mode are supported.
 .SH SEE ALSO
 
 \fIstty(1)\fP, \fIterminfo\fP(5), \fIbash\fP(1), \fIssh\fP(1),
-\fIecho\fP(1), \fIlesskey\fP(1), \fImkshortcut\fP(1)
+\fIecho\fP(1), \fIlesskey\fP(1), \fImkshortcut\fP(1), \fIchere\fP(1)
 
 \fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.html\fP
 
