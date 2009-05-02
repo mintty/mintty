@@ -23,7 +23,7 @@ win_update_menus(void)
   );
   ModifyMenu(
     menu, IDM_FULLSCREEN, MF_BYCOMMAND | MF_STRING, IDM_FULLSCREEN,
-    cfg.window_shortcuts ? "&Fullscreen\tAlt+Enter" : "&Fullscreen"
+    cfg.window_shortcuts ? "&Fullscreen\tAlt+F11" : "&Fullscreen"
   );
   ModifyMenu(
     sysmenu, SC_CLOSE, MF_BYCOMMAND | MF_STRING, SC_CLOSE,
