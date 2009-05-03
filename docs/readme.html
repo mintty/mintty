@@ -10,7 +10,7 @@ merchantability or fitness for a particular purpose. It is licensed
 under the terms of the <a href="http://mintty.googlecode.com/svn/trunk/src/LICENSE">GNU
 General Public License version 3</a> or later.&nbsp;<a href="http://code.google.com/p/mintty/downloads/list">Updates</a>
 and <a href="http://code.google.com/p/mintty/source/checkout">source
-code</a> are available from the MinTTY project page at <a href="http://code.google.com/p/mintty">http://code.google.com/p/mintty</a>.</p>
+code</a> are available from the MinTTY project page at <a href="http://mintty.googlecode.com">http://mintty.googlecode.com</a>.</p>
 <p>MinTTY is based on <a href="http://www.chiark.greenend.org.uk/%7Esgtatham/putty/">PuTTY</a>
 version 0.60 by Simon Tatham and contributors, available from <a href="ftp://ftp.chiark.greenend.org.uk/users/sgtatham/putty-0.60">ftp://ftp.chiark.greenend.org.uk/users/sgtatham/putty-0.60</a>.
 Big thanks to everyone involved. Thanks also to KDE's Oxygen team for
@@ -37,23 +37,13 @@ variable, which can be found under 'Environment Variables' on the
 anyway, as it makes&nbsp;all the Cygwin commands available from the
 Windows 'Command Prompt' and 'Run...' dialog.</li>
 <li>Create a shortcut to <span style="font-style: italic;">mintty.exe</span>
-with the working directory set to the Cygwin <span style="font-style: italic;">bin</span> directory. The <a href="create_shortcut.js"><span style="font-style: italic;">create_shortcut.js</span></a>
-script will do this for you.</li>
+with the working directory set to the Cygwin <span style="font-style: italic;">bin</span> directory. This can be done with the <a href="create_shortcut.js"><span style="font-style: italic;">create_shortcut.js</span></a> script. (<a href="create_shortcut.js"><span style="font-style: italic;">create_shortcut_17.js</span></a> needs to used on Cygwin 1.7.) </li>
 </ul>
 <p>Invoking MinTTY with <span style="font-style: italic;">--version</span>
 or <span style="font-style: italic;">--help</span>
-will print version or usage information. By default, MinTTY will store
-its configuration into a file called <span style="font-style: italic;">.minttyrc</span> in your
-Cygwin home directory. This can be overridden with the <span style="font-style: italic;">--config</span> command
-line option.</p>
-<p>Any other command line arguments are interpreted as the
-command to execute in the terminal session. If no command is given,
-MinTTY will look up the current users default shell in <span style="font-style: italic;">/etc/passwd</span>. If
-that is not set, it will run <span style="font-style: italic;">/bin/sh</span>.</p>
-<p>Windows shortcuts can have arguments too, which have to be
-listed after the program location in the 'Target:' box of their
-properties. This can be very useful with MinTTY,&nbsp;for instance
-for creating icons for ssh sessions or your favourite editor.</p>
+will print version or usage information. The MinTTY manual in PDF format can be found on the project page at <a href="http://mintty.googlecode.com">http://mintty.googlecode.com</a>.</p> 
+<p>Please report bugs or suggest enhancements via the <a href="http://mintty.googlecode.com/issues">issue tracker</a>. Vote for any issues you'd particularly like to see addressed by starring them. The discussion group for all things MinTTY is <a href="http://groups.google.com/group/mintty-discuss">mintty-discuss</a>. Questions can also be sent to the <a href="mailto:cygwin@cygwin.org">Cygwin mailing list</a>.</p>
+
 Enjoy!<br>
 Andy
 </body></html>
