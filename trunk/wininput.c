@@ -117,7 +117,7 @@ update_mouse(mod_keys mods)
   static bool app_mouse;
   bool new_app_mouse = 
     term_in_mouse_mode() &&
-    cfg.click_targets_app ^ ((mods & cfg.click_target_mod) != 0);
+    cfg.clicks_target_app ^ ((mods & cfg.click_target_mod) != 0);
   if (new_app_mouse != app_mouse) {
     HCURSOR cursor = LoadCursor(null, new_app_mouse ? IDC_ARROW : IDC_IBEAM);
     SetClassLongPtr(wnd, GCLP_HCURSOR, (LONG_PTR)cursor);
