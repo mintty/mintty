@@ -5,9 +5,7 @@
 .\" You may distribute, use, and modify this man page under the terms
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
-
 .ad l
-
 .TH mintty 1 2009-04-25 svn Cygwin
 
 .SH NAME
@@ -28,14 +26,11 @@ interface and minimalist design.
 Its terminal emulation is largely compatible with \fBxterm\fP, but it does not
 require an X server to be running.
 
-MinTTY aims to adhere to both Windows and Unix conventions, but where they
-conflict the Windows conventions take precedence, at least in the default
-configuration.
-
 
 .SH INVOCATION
 
-If a command is supplied on the command line, it is executed with its arguments.
+If a command is supplied on the command line, this is executed with any
+additional arguments passed to it.
 Otherwise, MinTTY looks for a shell to execute in the \fISHELL\fP environment
 variable.
 If that is not set, it tries to read the user's default shell setting from
@@ -60,7 +55,7 @@ Open the window with its top left corner at the specified coordinates.
 
 .TP
 \fB-s\fP, \fB--size\fP=\fICOLS\fB,\fIROWS\fR
-Set the default numbers of screen columns and rows.
+Set the default numbers of terminal columns and rows.
 
 .TP
 \fB-t\fP, \fB--title\fP=\fITITLE\fP
@@ -90,6 +85,10 @@ Print version information and exit.
 
 .SH USAGE
 
+MinTTY aims to adhere to both Windows and Unix conventions usage.
+Where they conflict, the Windows conventions take precedence,
+at least in the default configuration.
+
 .SS Menu
 
 MinTTY's context menu can be opened by right-clicking the mouse or by pressing
@@ -100,25 +99,24 @@ the \fBMenu\fP key that is normally located next to the right Ctrl key.
 
 The configuration can be changed in a graphical dialog, which can be opened by
 selecting \fBOptions...\fP in MinTTY's context menu or window menu.
-(The window menu can be opened by clicking on the program icon or
-pressing Alt+Space.)
-
+(The window menu can be opened by clicking on the program icon in the title or
+by pressing \fBAlt+Space\fP.)
 See the \fBCONFIGURATION\fP section for details.
 
 
 .SS Copy & paste
 
 As usual in Windows, screen contents can be selected by holding
-down the left mouse button and dragging the mouse and the current 
-selection can be extended by holding down \fBShift\fP or \fBCtrl\fP 
-while left-clicking.
+down the left mouse button and dragging the mouse.
+The selection can be extended by holding down \fBShift\fP or \fBCtrl\fP while
+left-clicking.
 Double-clicking or triple-clicking selects a whole word or line.
 
 In the default configuration, selected text has to be explicitly copied
 to the clipboard using either the \fBCopy\fP menu command, the
 \fBCtrl+Ins\fP keyboard shortcut, or the middle mouse button combined
-with \fBShift\fP. (See the \fBCopy on select\fP setting for X-like
-copy behaviour.)
+with \fBShift\fP.
+(See the \fBCopy on select\fP setting for X-like copy behaviour.)
 
 The selected region is copied as "rich text" as well as normal text,
 which means it can be pasted with colours and formatting into applications
@@ -139,7 +137,7 @@ Text, files and directories can also be dropped into the MinTTY window.
 
 The font size can be increased or decreased using the keyboard shortcuts
 \fBCtrl+plus\fP and \fBCtrl+minus\fP.
-\fBCtrl+zero\fP returns it to the default configured in the options dialog.
+\fBCtrl+zero\fP returns it to the size configured in the options dialog.
 
 
 .SS Fullscreen
@@ -157,8 +155,8 @@ or the \fBAlt+F10\fP shortcut.
 
 .SS Scrolling
 
-MinTTY has a scrollback buffer with a configurable maximum number of lines.
-By default, it can hold up to 10000 lines.
+MinTTY has a scrollback buffer that can hold up to 10000 lines in the default
+configuration.
 It can be accessed using the scrollbar, the mouse wheel, or the keyboard.
 Hold the \fBShift\fP key while pressing the \fBUp\fP and \fBDown\fP arrow keys
 to scroll line-by-line or the \fBPageUp\fP and \fBPageDown\fP keys to scroll
@@ -171,10 +169,10 @@ as pagers or editors that use the the terminal's "alternate screen".
 
 .SS AltGr
 
-The AltGr key on non-US keyboards acts as a second Alt key unless the keyboard
-layout being used assigns a character to a particular key combination.
-This means that it can be used in shortcuts such as \fBAlt+F2\fP
-or as the \fBMeta\fP modifier for terminal keys.
+The AltGr key on non-US keyboards acts as a second Alt key, except for key
+combinations that the Windows keyboard layout already assigns a character to.
+This means that it can be used in window command shortcuts such as \fBAlt+F11\fP
+or as the \fBMeta\fP modifier for keypresses that are sent to the application.
 
 
 .SS Mouse tracking
@@ -297,9 +295,9 @@ The following cursor types are available:
 
 .RS
 .PD 0
-.IP "\- \fBBlock\fP (0)"
 .IP "\- \fBLine\fP (2)"
 .IP "\- \fBUnderline\fP (1)"
+.IP "\- \fBBlock\fP (0)"
 .RE
 
 .TP
@@ -332,8 +330,8 @@ Select the type of font smoothing, if any, from the following choices:
 .RS
 .PD 0
 .IP "\- \fBSystem Default\fP (0)"
-.IP "\- \fBNone\fP (2)"
 .IP "\- \fBAntialiased\fP (1)"
+.IP "\- \fBNone\fP (2)"
 .IP "\- \fBClearType\fP (3)"
 .RE
 
@@ -370,7 +368,7 @@ multi-character keycodes.
 .RS
 .PD 0
 .IP "\- \fB^[\fP (0)"
-.IP "\- \fB^\\\fP (1)"
+.IP "\- \fB^\(rs\fP (1)"
 .RE
 
 .TP
@@ -481,9 +479,8 @@ instead.
 .RS
 .PD 0
 .IP "\- \fBShift\fP (1)"
-.IP "\- \fBAlt\fP (2)"
 .IP "\- \fBCtrl\fP (4)"
-
+.IP "\- \fBAlt\fP (2)"
 .RE
 
 
@@ -577,8 +574,8 @@ Z    #^Z   #^[^Z
 .SS Number and symbol keys
 
 In the same way as for letter keys, the Windows keyboard layout is consulted
-first for number and symbol keys. If that comes back empty, and \fBCtrl\fP is
-down, the keycodes below are sent.
+first for number and symbol keys.
+If that comes back empty, and \fBCtrl\fP is down, the keycodes below are sent.
 
 Unlike xterm, MinTTY ignores VT100 "application keypad mode".
 Instead, it relies on the state of \fBNumLock\fP to decide how to handle number
@@ -680,8 +677,7 @@ they are encoded by adding the associated value to 1.
 .IP "\- \fBCtrl \fP: 4
 .RE
 
-For example, \fBShift+Ctrl\fP would be encoded as the character \fB6\fP
-(i.e. 1+1+4).
+For example, \fBShift+Ctrl\fP would be encoded as the character \fB6\fP (i.e. 1+1+4).
 The modifier code is shown as \fIm\fP in the following sections.
 
 
@@ -814,7 +810,7 @@ the user's default shell as a login shell.
 Shortcuts are also a convenient way to start MinTTY with additional options
 and different commands.
 For example, shortcuts for access to remote machines can be created by
-invoking \fIssh\fP. 
+invoking \fIssh\fP.
 The command simply needs to be appended to the target field of the shortcut
 (in the shortcut's properties):
 
@@ -863,7 +859,8 @@ For example:
 .SS Environment variables
 
 Unfortunately Windows shortcuts do not allow the setting of environment
-variables. Variables can be set globally though via a button on the
+variables.
+Variables can be set globally though via a button on the
 \fBAdvanced\fP tab of the \fBSystem Properties\fP.
 Those can be reached by right-clicking on \fBComputer\fP, selecting
 \fBProperties\fP, then \fBAdvanced System Settings\fP.
@@ -1020,7 +1017,7 @@ saves about 0.0042 seconds when starting \fBless\fP).
 See \fBlesskey\fP(1) for details.
 
 Here are the lesskey lines needed for mousewheel support, assuming the
-scroll modifier key is set to the default \fIShift\fP. 
+scroll modifier key is set to the default \fIShift\fP.
 For \fBAlt\fP or \fBCtrl\fP, replace the \fB2\fPs in the keycodes with
 \fB3\fPs or \fB5\fPs.
 
@@ -1087,14 +1084,15 @@ Copyright (C) 2008-09 Andy Koppe.
 
 MinTTY is released under the terms of the the \fIGNU General Public License\fP
 version 3 or later.
-See \fIhttp://gnu.org/licenses/gpl/html\fP for the license text. 
+See \fIhttp://gnu.org/licenses/gpl/html\fP for the license text.
+
 There is NO WARRANTY, to the extent permitted by law.
 
 
 .SH CONTACT
 
 Please report bugs or suggest enhancements via the MinTTY issue tracker at
-\fIhttp://mintty.googlecode.com/issues\fP. 
+\fIhttp://mintty.googlecode.com/issues\fP.
 Questions can be directed to the MinTTY discussion group at
 \fIhttp://groups.google.com/group/mintty-discuss\fP or
 the Cygwin mailing list at \fIcygwin@cygwin.com\fP.
