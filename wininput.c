@@ -45,8 +45,16 @@ win_update_menus(void)
     IsClipboardFormatAvailable(CF_HDROP)
     ? MF_ENABLED : MF_GRAYED
   );
-  bool fullscreen = !(GetWindowLongPtr(wnd, GWL_STYLE) & WS_CAPTION);
-  CheckMenuItem(menu, IDM_FULLSCREEN, fullscreen ? MF_CHECKED : MF_UNCHECKED);
+  CheckMenuItem(
+    menu, IDM_FULLSCREEN,
+    GetWindowLongPtr(wnd, GWL_STYLE) & WS_CAPTION
+    ? MF_UNCHECKED : MF_CHECKED
+  );
+  EnableMenuItem(
+    menu, IDM_DEFSIZE, 
+    IsZoomed(wnd) || term_cols() != cfg.cols || term_rows() != cfg.rows
+    ? MF_ENABLED : MF_GRAYED
+  );
 }
 
 void
