@@ -1636,13 +1636,6 @@ term_write(const char *data, int len)
           break;
       }
     }
-    /*
-    if (term.selected) {
-      pos cursplus = term.curs;
-      incpos(cursplus);
-      term_check_selection(term.curs, cursplus);
-    }
-    */
   }
   term.in_term_write = false;
   term_print_flush();
