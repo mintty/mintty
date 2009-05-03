@@ -367,14 +367,14 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(copy_on_select))
   )->column = 0;
   ctrl_checkbox(
-    s, "Clicks move cursor", 'v', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(click_moves_cmd_cursor))
+    s, "Clicks place cursor", 'v', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(clicks_place_cursor))
   )->column = 1;
 
   s = ctrl_getset(b, "Mouse", "mousemode", "Application mouse mode");
   ctrl_radiobuttons(
     s, "Default click target", '\0', 3, P(0), dlg_stdradiobutton_handler,
-    I(offcfg(click_targets_app)),
+    I(offcfg(clicks_target_app)),
     "Application", 'n', I(1),
     "Window", 'w', I(0),
     null
@@ -451,8 +451,8 @@ int_settings[] = {
   {"ScrollMod", offcfg(scroll_mod), SHIFT},
   {"RightClickAction", offcfg(right_click_action), RC_SHOWMENU},
   {"CopyOnSelect", offcfg(copy_on_select), false},
-  {"ClicksMoveCursor", offcfg(click_moves_cmd_cursor), true},
-  {"ClicksTargetApp", offcfg(click_targets_app), true},
+  {"ClicksPlaceCursor", offcfg(clicks_place_cursor), true},
+  {"ClicksTargetApp", offcfg(clicks_target_app), true},
   {"ClickTargetMod", offcfg(click_target_mod), SHIFT},
   {"BellType", offcfg(bell_type), BELL_SOUND},
   {"BellIndication", offcfg(bell_ind), B_IND_STEADY},

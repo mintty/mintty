@@ -44,10 +44,10 @@ typedef struct {
   int edit_shortcuts;
   int zoom_shortcuts;
   int scroll_mod;
-  int click_targets_app;
+  int clicks_place_cursor;
+  int clicks_target_app;
   int click_target_mod;
   int right_click_action;
-  int click_moves_cmd_cursor;
   int allow_blinking;
   int rows, cols;
   char printer[128];

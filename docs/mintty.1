@@ -5,9 +5,10 @@
 .\" You may distribute, use, and modify this man page under the terms
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
-.\" Turn off Right Justification
+
 .ad l
-.TH mintty 1 2009-04-25 0.3.9 Cygwin
+
+.TH mintty 1 2009-04-25 svn Cygwin
 
 .SH NAME
 
@@ -27,13 +28,20 @@ interface and minimalist design.
 Its terminal emulation is largely compatible with \fBxterm\fP, but it does not
 require an X server to be running.
 
-If a command is supplied on the command line, MinTTY executes that with
-any arguments given.
-If a single dash is supplied instead of a command,
-the current user's default shell (as defined in \fI/etc/passwd\fP) is invoked
-as a login shell.
-Otherwise, it is invoked as a non-login shell.
-The command can be preceded by \fB-e\fP (for execute), but that is not required.
+MinTTY aims to adhere to both Windows and Unix conventions, but where they
+conflict the Windows conventions take precedence, at least in the default
+configuration.
+
+
+.SH INVOCATION
+
+If a command is supplied on the command line, it is executed with its arguments.
+Otherwise, MinTTY looks for a shell to execute in the \fISHELL\fP environment
+variable.
+If that is not set, it tries to read the user's default shell setting from
+\fI/etc/passwd\fP.
+Failing that, it falls back to \fI/bin/sh\fP.
+If the last argument is a single dash, the shell is invoked as a login shell.
 
 
 .SH OPTIONS
@@ -47,12 +55,12 @@ e.g. \fB-o arg\fP, \fB--option arg\fP, and \fB--option=arg\fP.
 Use the specified configuration file instead of the default \fI~/.minttyrc\fP.
 
 .TP
-\fB-p\fP, \fB--pos\fP=\fIX\fB,\fIY\fR
+\fB-p\fP, \fB--position\fP=\fIX\fB,\fIY\fR
 Open the window with its top left corner at the specified coordinates.
 
 .TP
 \fB-s\fP, \fB--size\fP=\fICOLS\fB,\fIROWS\fR
-Set the number of screen columns and rows, overriding any config file settings.
+Set the default numbers of screen columns and rows.
 
 .TP
 \fB-t\fP, \fB--title\fP=\fITITLE\fP
@@ -60,20 +68,27 @@ Use \fITITLE\fP as the initial window title.
 By default, the title is set to the executed command.
 
 .TP
-\fB-V\fP, \fB--version\fP
-Print version information and exit.
+\fB-l\fP, \fB--log\fP=\fIFILE\fP
+Copy all output into the specified log file.
+
+.TP
+\fB-h\fP, \fB--hold\fP=\fBnever\fP|\fBalways\fP|\fBerror\fP
+Determine whether to keep the terminal window open when the command exits.
+The argument can be abbreviated to a single letter.
+By default, the window is closed immediately.
+Alternatively, it can be set to always stay open, or to stay open only if
+the command finished with a non-zero exit code or due to a runtime error signal.
 
 .TP
 \fB-H\fP, \fB--help\fP
 Display a brief help message and exit.
 
+.TP
+\fB-V\fP, \fB--version\fP
+Print version information and exit.
+
 
 .SH USAGE
-
-MinTTY aims to adhere to both Windows and Unix conventions, but where they
-conflict the Windows conventions take precedence, at least in the default
-configuration.
-
 
 .SS Menu
 
@@ -120,16 +135,31 @@ whereby the latter are inserted as quoted filenames.
 Text, files and directories can also be dropped into the MinTTY window.
 
 
+.SS Font zoom
+
+The font size can be increased or decreased using the keyboard shortcuts
+\fBCtrl+plus\fP and \fBCtrl+minus\fP.
+\fBCtrl+zero\fP returns it to the default configured in the options dialog.
+
+
 .SS Fullscreen
 
 Fullscreen mode can be toggled using either the \fBFullscreen\fP command in
 the menu or the \fBAlt+F11\fP keyboard shortcut.
 
 
+.SS Default size
+
+If the window has been resized, it can be returned to the default size set in
+the Window panel of the options using the \fBDefault size\fP command in the menu
+or the \fBAlt+F10\fP shortcut.
+
+
 .SS Scrolling
 
-MinTTY has a scrollback buffer that can hold up to 65535 lines.
-This can be accessed using the scrollbar, the mouse wheel, or the keyboard.
+MinTTY has a scrollback buffer with a configurable maximum number of lines.
+By default, it can hold up to 10000 lines.
+It can be accessed using the scrollbar, the mouse wheel, or the keyboard.
 Hold the \fBShift\fP key while pressing the \fBUp\fP and \fBDown\fP arrow keys
 to scroll line-by-line or the \fBPageUp\fP and \fBPageDown\fP keys to scroll
 page-by-page.
@@ -375,7 +405,8 @@ application.
 .IP "\- \fBAlt+Space\fP: Menu"
 .IP "\- \fBAlt+F2\fP: Duplicate"
 .IP "\- \fBAlt+F4\fP: Close"
-.IP "\- \fBAlt+F11\fP: Fullscreen"
+.IP "\- \fBAlt+F10\fP: Default size"
+.IP "\- \fBAlt+F11\fP or \fBAlt+Enter\fP: Fullscreen"
 .RE
 
 .TP
@@ -420,7 +451,7 @@ If enabled, the region selected with the mouse is copied to the clipboard as
 soon as the mouse button is released, thus emulating X Window behaviour.
 
 .TP
-\fBClicks move cursor\fP (ClicksMoveCursor=1)
+\fBClicks place cursor\fP (ClicksPlaceCursor=1)
 If enabled, the command line cursor can be placed by pressing the left
 mouse button.
 This works by sending the number of cursor keycodes needed to get to the

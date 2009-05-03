@@ -263,7 +263,7 @@ is_app_mouse(mod_keys *mods_p)
     return false;
   bool override = *mods_p & cfg.click_target_mod;
   *mods_p &= ~cfg.click_target_mod;
-  return cfg.click_targets_app ^ override;
+  return cfg.clicks_target_app ^ override;
 }
 
 void
@@ -330,7 +330,7 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
   else if (state != MS_IDLE) {
     if (term.selected && cfg.copy_on_select)
       term_copy();
-    if (!cfg.click_moves_cmd_cursor || term.which_screen != 0 ||
+    if (!cfg.clicks_place_cursor || term.which_screen != 0 ||
         term.app_cursor_keys || term.editing)
       return;
     if (term.selected)
