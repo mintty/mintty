@@ -737,14 +737,14 @@ decompressline(uchar * data, int *bytes_used)
 }
 
 /*
- * Resize a line to make it at least `cols' columns wide.
+ * Resize a line to make it `cols' columns wide.
  */
 void
 resizeline(termline * line, int cols)
 {
   int i, oldcols;
 
-  if (line->cols < cols) {
+  if (line->cols != cols) {
 
     oldcols = line->cols;
 
