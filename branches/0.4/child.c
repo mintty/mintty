@@ -178,7 +178,6 @@ child_create(char *argv[], struct winsize *winp, const char *log_file)
     struct termios attr;
     tcgetattr(0, &attr);
     attr.c_cc[VERASE] = cfg.backspace_sends_del ? 0x7F : '\b';
-    attr.c_cc[VDISCARD] = 0;
     tcsetattr(0, TCSANOW, &attr);
     setenv("TERM", "xterm", 1);
     execvp(cmd, argv);
