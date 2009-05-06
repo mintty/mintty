@@ -454,12 +454,11 @@ win_key_down(WPARAM wp, LPARAM lp)
     goto send;
   }
   
-  // Special treatment for space.
-  if (key == VK_SPACE && mods == CTRL) {
-    // For some reason most keyboard layouts map Ctrl-Space to 0x20,
-    // whereas we want 0.
-    esc(shift); ch(0);
-    goto send; 
+  // Control characters.
+  if (ctrl && !alt && (key == ' ' || ('A' <= key && key <= 'Z'))) {
+    esc(shift);
+    ctrl_ch(key);
+    goto send;
   }
   
   // Try keyboard layout.
@@ -486,11 +485,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     return 1;
   }
   
-  // Try to handle Ctrl combinations if keyboard layout didn't.
-  if (!ctrl)
-    return 0;
-  
-  { 
+  if (ctrl) { 
     // Keys yielding app-pad sequences.
     // Helpfully, they're in the same order in VK, ASCII, and VT codes.
     char c;
@@ -509,28 +504,6 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
   not_app_pad:
   
-  {
-    char c;
-    if (key == ' ' || ('A' <= key && key <= 'Z'))
-      c = key;
-    else {
-      switch (scancode) {
-        when 0x2B
-          or 0x56: c = '\\';
-        when 0x1A: c = '[';
-        when 0x1B: c = ']';
-        when 0x28: c = '^';
-        when 0x35: c = '_';
-        otherwise: 
-          goto not_ctrl_ch;
-      }
-    }
-    esc(alt || shift);
-    ctrl_ch(c);
-    goto send;
-  }
-  not_ctrl_ch:
-
   // Key was not handled.
   return 0;
 
