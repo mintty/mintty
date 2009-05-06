@@ -593,11 +593,9 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_ZOOM: {
           int zoom = lp;
           switch (zoom) {
-            when -2: font_size = (font_size + 1) / 2;
             when -1: if (abs(font_size) > 1) font_size -= sgn(font_size);
             when 0: font_size = cfg.font.size;
             when 1: font_size += sgn(font_size);
-            when 2: font_size *= 2;
           }
           reset_window(2);
         }

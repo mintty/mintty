@@ -328,12 +328,12 @@ win_key_down(WPARAM wp, LPARAM lp)
   not_scroll:
   
   // Font zooming
-  if (ctrl && !alt && cfg.zoom_shortcuts) {
+  if (mods == CTRL && cfg.zoom_shortcuts) {
     int zoom;
     switch (key) {
-      when VK_OEM_PLUS or VK_ADD: zoom = 1 + shift;
-      when VK_OEM_MINUS or VK_SUBTRACT: zoom = -1 - shift;
-      when '0' or VK_NUMPAD0: zoom = 0;
+      when VK_OEM_PLUS or VK_ADD:       zoom = 1;
+      when VK_OEM_MINUS or VK_SUBTRACT: zoom = -1;
+      when '0' or VK_NUMPAD0:           zoom = 0;
       otherwise: goto not_zoom;
     }
     SendMessage(wnd, WM_SYSCOMMAND, IDM_ZOOM, zoom);
