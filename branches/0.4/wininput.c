@@ -354,7 +354,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     switch (key) {
       when VK_ESCAPE or VK_PAUSE or VK_CANCEL or VK_TAB:
         return 0;
-      when VK_RETURN or VK_SPACE:
+      when VK_RETURN or VK_SPACE or VK_BACK:
         if (ctrl)
           return 0;
     }
@@ -376,8 +376,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     when VK_BACK:
       ctrl 
       ? (esc(shift), ch(cfg.backspace_sends_del ? 0x1F : 0x7F)) 
-      : (esc(alt), 
-         ch(shift && alt ? ' ' : cfg.backspace_sends_del ? 0x7F : '\b'));
+      : (esc(alt), ch(cfg.backspace_sends_del ? 0x7F : '\b'));
     otherwise:
       goto not_grey;
   }
@@ -454,12 +453,10 @@ win_key_down(WPARAM wp, LPARAM lp)
     goto send;
   }
   
-  // Control characters.
-  if (ctrl && !alt && (key == ' ' || ('A' <= key && key <= 'Z'))) {
-    esc(shift);
-    ctrl_ch(key);
-    goto send;
-  }
+  // Don't consult the keyboard layout for Ctrl combinations
+  // involving space, letters, and digits on the main keypad
+  if (ctrl && !alt && (key == ' ' || isupper(key) || isdigit(key)))
+    goto skip_layout;
   
   // Try keyboard layout.
   // ToUnicode produces up to four UTF-16 code units per keypress according
@@ -469,7 +466,6 @@ win_key_down(WPARAM wp, LPARAM lp)
   uint scancode = HIWORD(lp) & (KF_EXTENDED | 0xFF);
   wchar wchars[4];
   int wchars_n = ToUnicode(key, scancode, keyboard, wchars, 4, 0);
-  
   if (wchars_n != 0) {
     // Got normal key or dead key.
     term_cancel_paste();
@@ -484,8 +480,16 @@ win_key_down(WPARAM wp, LPARAM lp)
     hide_mouse();
     return 1;
   }
+  skip_layout:
   
-  if (ctrl) { 
+  if (ctrl) {
+    // Control characters.
+    if (key == ' ' || isupper(key)) {
+      esc(alt || shift);
+      ctrl_ch(key);
+      goto send;
+    }
+    
     // Keys yielding app-pad sequences.
     // Helpfully, they're in the same order in VK, ASCII, and VT codes.
     char c;
@@ -495,17 +499,12 @@ win_key_down(WPARAM wp, LPARAM lp)
       when VK_MULTIPLY ... VK_DIVIDE:     c = key - VK_MULTIPLY + '*';
       when VK_OEM_PLUS ... VK_OEM_PERIOD: c = key - VK_OEM_PLUS + '+';
       otherwise:
-        goto not_app_pad;
+        return 0;
     }
     ch('\e');
     ch(alt || shift ? '[' : 'O');
     ch(c + 0x40);
-    goto send;
   }
-  not_app_pad:
-  
-  // Key was not handled.
-  return 0;
 
   // Send char buffer.
   send: {

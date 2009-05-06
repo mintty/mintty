@@ -577,12 +577,11 @@ In the same way as for letter keys, the Windows keyboard layout is consulted
 first for number and symbol keys.
 If that comes back empty, and \fBCtrl\fP is down, the keycodes below are sent.
 
-Unlike xterm, MinTTY ignores VT100 "application keypad mode".
+MinTTY ignores VT100 "application keypad mode".
 Instead, it relies on the state of \fBNumLock\fP to decide how to handle number
 pad keys.
 As usual on Windows, when \fBNumLock\fP is off, the number pad keys are treated
-as arrow and editing keys, and when it is on, they are treated as number and
-symbol keys.
+as arrow and editing keys, and when it is on, they are treated as number keys.
 Application keypad codes can still be sent though, by holding down \fBCtrl\fP 
 while \fBNumLock\fP is on.
 
@@ -629,8 +628,8 @@ LB        LfC   LfC   LfC   LfC   LfC   LfC.
 Key            #Shift#Crtl #C+S   #Alt  #A+S
 Space    #\fIsp#\fIsp#^@   #^[^@  #^[\fIsp #^[\fIsp
 Enter    #^M   #^J   #^^   #^[^^  #^[^M #^[J
-Back (^H)#^H   #^H   #^?   #^[^?  #^[^H #^[\fIsp
-Back (^?)#^?   #^?   #^_   #^[^_  #^[^? #^[\fIsp
+Back (^H)#^H   #^H   #^?   #^[^?  #^[^H #^[^H
+Back (^?)#^?   #^?   #^_   #^[^_  #^[^? #^[^?
 Tab      #^I   #^[[Z #^[Oz #^[OZ
 Esc (^[) #^[   #^]
 Esc (^\(rs)#^\(rs#^]
