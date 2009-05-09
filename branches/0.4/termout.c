@@ -1368,10 +1368,12 @@ term_write(const char *data, int len)
                 seen_disp_event();
               when 'T':        /* SD: Scroll down */
                 compatibility2(VT340TEXT,SCOANSI);
-                term_do_scroll(term.marg_t, term.marg_b,
-                               -def_arg0, true);
-                term.wrapnext = false;
-                seen_disp_event();
+                /* Avoid clash with hilight mouse tracking mode sequence */
+                if (term.esc_nargs <= 1) {
+                  term_do_scroll(term.marg_t, term.marg_b, -def_arg0, true);
+                  term.wrapnext = false;
+                  seen_disp_event();
+                }
               when ANSI('|', '*'):     /* DECSNLS */
                /* 
                 * Set number of lines on screen
