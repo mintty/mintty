@@ -505,6 +505,8 @@ win_key_down(WPARAM wp, LPARAM lp)
     ch(alt || shift ? '[' : 'O');
     ch(c + 0x40);
   }
+  else
+    return 0;
 
   // Send char buffer.
   send: {
