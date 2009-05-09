@@ -795,13 +795,14 @@ static const char *help =
   "  -s, --size=COLS,ROWS  Set screen size in characters\n"
   "  -t, --title=TITLE     Set window title (default: the invoked command)\n"
   "  -l, --log=FILE        Log output to file\n"
+  "  -u, --no-utmp         Do not create a utmp entry\n"
   "  -h, --hold=never|always|error\n"
   "                        Keep window open after command terminates?\n"
   "  -H, --help            Display help and exit\n"
   "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = "+HVec:p:s:t:h:";
+static const char short_opts[] = "+HVuec:p:s:t:h::";
 
 static const struct option
 opts[] = { 
@@ -810,7 +811,8 @@ opts[] = {
   {"size",     required_argument, 0, 's'},
   {"title",    required_argument, 0, 't'},
   {"log",      required_argument, 0, 'l'},
-  {"hold",     required_argument, 0, 'h'},
+  {"no-utmp",  no_argument,       0, 'u'},
+  {"hold",     optional_argument, 0, 'h'},
   {"help",     no_argument,       0, 'H'},
   {"version",  no_argument,       0, 'V'},
   {0, 0, 0, 0}
@@ -822,7 +824,7 @@ main(int argc, char *argv[])
   char *title = 0, *log_file = 0;
   hold_t hold = HOLD_NEVER;
   int x = CW_USEDEFAULT, y = CW_USEDEFAULT;
-  bool size_override = false;
+  bool size_override = false, log_utmp = true;
   uint rows = 0, cols = 0;
 
   for (;;) {
@@ -849,18 +851,24 @@ main(int argc, char *argv[])
         title = optarg;
       when 'l':
         log_file = optarg;
+      when 'u':
+        log_utmp = false;
       when 'h': {
-        int len = strlen(optarg);
-        if (memcmp(optarg, "always", len) == 0)
+        if (!optarg)
           hold = HOLD_ALWAYS;
-        else if (memcmp(optarg, "never", len) == 0)
-          hold = HOLD_NEVER;
-        else if (memcmp(optarg, "error", len) == 0)
-          hold = HOLD_ERROR;
         else {
-          fprintf(stderr, "%s: invalid argument to hold option -- %s\n",
-                          *argv, optarg);
-          exit(1);
+          int len = strlen(optarg);
+          if (memcmp(optarg, "always", len) == 0)
+            hold = HOLD_ALWAYS;
+          else if (memcmp(optarg, "never", len) == 0)
+            hold = HOLD_NEVER;
+          else if (memcmp(optarg, "error", len) == 0)
+            hold = HOLD_ERROR;
+          else {
+            fprintf(stderr, "%s: invalid argument to hold option -- %s\n",
+                            *argv, optarg);
+            exit(1);
+          }
         }
       }
       when 'H':
@@ -987,7 +995,7 @@ main(int argc, char *argv[])
   
   // Create child process.
   struct winsize ws = {term_rows(), term_cols(), term_width, term_height};
-  char *cmd = child_create(argv + optind, &ws, log_file);
+  char *cmd = child_create(argv + optind, &ws, log_file, log_utmp);
   
   // Set window title.
   win_set_title(title ?: cmd);

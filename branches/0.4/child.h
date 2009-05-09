@@ -5,7 +5,8 @@
 
 typedef enum { HOLD_NEVER, HOLD_ALWAYS, HOLD_ERROR } hold_t;
 
-char *child_create(char *argv[], struct winsize *winp, const char *log_file);
+char *child_create(char *argv[], struct winsize *winp,
+                   const char *log_file, bool log_utmp);
 void child_kill(void);
 void child_write(const char *, int len);
 void child_resize(struct winsize *winp);

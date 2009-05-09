@@ -120,7 +120,10 @@ child_proc(hold_t hold)
 }
 
 char *
-child_create(char *argv[], struct winsize *winp, const char *log_file)
+child_create(char *argv[],
+             struct winsize *winp,
+             const char *log_file,
+             bool log_utmp)
 {
   struct passwd *pw = getpwuid(getuid());
   char *cmd; 
@@ -209,20 +212,22 @@ child_create(char *argv[], struct winsize *winp, const char *log_file)
     pthread_create(&thread, 0, wait_thread, 0);
     pthread_create(&thread, 0, read_thread, 0);
 
-    ut.ut_type = USER_PROCESS;
-    ut.ut_pid = pid;
-    ut.ut_time = time(0);
-    char *dev = ptsname(fd);
-    if (dev) {
-      if (strncmp(dev, "/dev/", 5) == 0)
-        dev += 5;
-      strncpy(ut.ut_line, dev ?: "?", sizeof ut.ut_line);
-      if (strncmp(dev, "pty", 3) == 0 || strncmp(dev, "tty", 3) == 0)
-        dev += 3;
-      strncpy(ut.ut_id, dev ?: "?", sizeof ut.ut_id);      
+    if (log_utmp) {
+      ut.ut_type = USER_PROCESS;
+      ut.ut_pid = pid;
+      ut.ut_time = time(0);
+      char *dev = ptsname(fd);
+      if (dev) {
+        if (strncmp(dev, "/dev/", 5) == 0)
+          dev += 5;
+        strncpy(ut.ut_line, dev ?: "?", sizeof ut.ut_line);
+        if (strncmp(dev, "pty", 3) == 0 || strncmp(dev, "tty", 3) == 0)
+          dev += 3;
+        strncpy(ut.ut_id, dev ?: "?", sizeof ut.ut_id);      
+      }
+      strncpy(ut.ut_user, (pw ? pw->pw_name : 0) ?: "?", sizeof ut.ut_user);
+      login(&ut);
     }
-    strncpy(ut.ut_user, (pw ? pw->pw_name : 0) ?: "?", sizeof ut.ut_user);
-    login(&ut);
   }
   
   return argz;
