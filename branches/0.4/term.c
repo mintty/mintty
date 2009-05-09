@@ -237,7 +237,6 @@ term_init(void)
   * that need it.
   */
   term.compatibility_level = TM_PUTTY & ~CL_SCOANSI;
-  strcpy(term.id_string, "\033[?6c");
   term.inbuf = new_bufchain();
   term.printer_buf = new_bufchain();
   term.state = TOPLEVEL;

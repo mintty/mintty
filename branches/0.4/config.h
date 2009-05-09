@@ -12,8 +12,6 @@ typedef struct {
   int charset;
 } font_spec;
 
-static const char ANSWERBACK[] = "xterm";
-
 /* Bell type */
 enum { BELL_DISABLED, BELL_SOUND, BELL_VISUAL };
 

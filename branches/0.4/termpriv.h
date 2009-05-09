@@ -139,8 +139,6 @@ struct term {
   char osc_string[OSC_STR_MAX + 1];
   bool osc_w;
 
-  char id_string[1024];
-
   uchar *tabs;
 
  /*

@@ -1,5 +1,6 @@
 name := mintty
 version := $(shell printf "svn-0.4-r%u" `svn info | grep Revision | sed "s/Revision: //"`)
+da_version := 400
 
 exe := $(name).exe
 dir := $(name)-$(version)
@@ -13,14 +14,17 @@ rc_srcs := $(wildcard *.rc)
 objs := $(c_srcs:.c=.o) $(rc_srcs:.rc=.o)
 deps := $(objs:.o=.d)
 
-c_opts := -include std.h -std=gnu99 -Wall -Wextra -Werror -DNDEBUG
-code_opts := -march=i586 -mtune=pentium-m -fomit-frame-pointer -Os
+cc_opts =  \
+  -include std.h -DNDEBUG \
+  -DVERSION=\"$(version)\" -DDA_VERSION=\"$(da_version)\" \
+  -std=gnu99 -Wall -Wextra -Werror \
+  -march=i586 -mtune=pentium-m -fomit-frame-pointer -Os
 ld_opts := -s
 libs := -mwindows -lcomctl32 -limm32 -lwinspool -lole32 -luuid
 
 cc := gcc
-rc_cpp := $(cc) -E -MMD -xc-header -DRC_INVOKED -DVERSION=$(version)
-rc := windres --preprocessor "$(rc_cpp)"
+rc_cpp := $(cc) -E -MMD -xc-header -DRC_INVOKED -DVERSION=\"$(version)\"
+rc := windres --preprocessor '$(rc_cpp)'
 
 $(exe): $(objs)
 	$(cc) -o $@ $^ $(ld_opts) $(libs)
@@ -49,7 +53,7 @@ $(dir).pdf: docs/$(name).1.pdf
 	cp $< $@
 
 %.o %.d: %.c
-	$(cc) $< -c -MMD -MP $(c_opts) $(code_opts) -DVERSION=$(version)
+	$(cc) $< -c -MMD -MP $(cc_opts)
 
 %.o %.d: %.rc
 	$(rc) $< $(<:.rc=.o)

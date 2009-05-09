@@ -867,7 +867,7 @@ main(int argc, char *argv[])
         printf(help, *argv);
         return 0;
       when 'V':
-        puts(APPNAME " " APPVER "\n" COPYRIGHT "\n" LICENSE);
+        puts(APPNAME " " VERSION "\n" COPYRIGHT "\n" LICENSE);
         return 0;
       otherwise:
         exit(1);
