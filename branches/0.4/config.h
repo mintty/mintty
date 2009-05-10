@@ -3,7 +3,13 @@
 
 #include "settings.h"
 
-extern char *config_filename;
+typedef enum { HOLD_NEVER, HOLD_ALWAYS, HOLD_ERROR } hold_t;
+extern hold_t hold;
+
+extern const char *log_file;
+extern bool utmp_enabled;
+
+extern const char *config_file;
 
 typedef struct {
   char name[64];

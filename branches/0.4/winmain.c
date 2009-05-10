@@ -795,7 +795,7 @@ static const char *help =
   "  -s, --size=COLS,ROWS  Set screen size in characters\n"
   "  -t, --title=TITLE     Set window title (default: the invoked command)\n"
   "  -l, --log=FILE        Log output to file\n"
-  "  -u, --no-utmp         Do not create a utmp entry\n"
+  "  -u, --utmp            Create a utmp entry\n"
   "  -h, --hold=never|always|error\n"
   "                        Keep window open after command terminates?\n"
   "  -H, --help            Display help and exit\n"
@@ -811,7 +811,7 @@ opts[] = {
   {"size",     required_argument, 0, 's'},
   {"title",    required_argument, 0, 't'},
   {"log",      required_argument, 0, 'l'},
-  {"no-utmp",  no_argument,       0, 'u'},
+  {"utmp",     no_argument,       0, 'u'},
   {"hold",     optional_argument, 0, 'h'},
   {"help",     no_argument,       0, 'H'},
   {"version",  no_argument,       0, 'V'},
@@ -821,10 +821,9 @@ opts[] = {
 int
 main(int argc, char *argv[])
 {
-  char *title = 0, *log_file = 0;
-  hold_t hold = HOLD_NEVER;
+  char *title = 0;
   int x = CW_USEDEFAULT, y = CW_USEDEFAULT;
-  bool size_override = false, log_utmp = true;
+  bool size_override = false;
   uint rows = 0, cols = 0;
 
   for (;;) {
@@ -833,7 +832,7 @@ main(int argc, char *argv[])
       break;
     switch (opt) {
       when 'c':
-        config_filename = optarg;
+        config_file = optarg;
       when 'p':
         if (sscanf(optarg, "%i,%i%1s", &x, &y, (char[2]){}) != 2) {
           fprintf(stderr, "%s: syntax error in position argument -- %s\n",
@@ -852,7 +851,7 @@ main(int argc, char *argv[])
       when 'l':
         log_file = optarg;
       when 'u':
-        log_utmp = false;
+        utmp_enabled = true;
       when 'h': {
         if (!optarg)
           hold = HOLD_ALWAYS;
@@ -882,8 +881,8 @@ main(int argc, char *argv[])
     }
   }
 
-  if (!config_filename)
-    asprintf(&config_filename, "%s/.minttyrc", getenv("HOME"));
+  if (!config_file)
+    asprintf((char **)&config_file, "%s/.minttyrc", getenv("HOME"));
 
   load_config();
   
@@ -995,7 +994,7 @@ main(int argc, char *argv[])
   
   // Create child process.
   struct winsize ws = {term_rows(), term_cols(), term_width, term_height};
-  char *cmd = child_create(argv + optind, &ws, log_file, log_utmp);
+  char *cmd = child_create(argv + optind, &ws);
   
   // Set window title.
   win_set_title(title ?: cmd);
@@ -1007,7 +1006,7 @@ main(int argc, char *argv[])
     DWORD wakeup =
       MsgWaitForMultipleObjects(1, &child_event, false, INFINITE, QS_ALLINPUT);
     if (wakeup == WAIT_OBJECT_0)
-      child_dead |= child_proc(hold);
+      child_dead |= child_proc();
     MSG msg;
     while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
       if (msg.message == WM_QUIT)

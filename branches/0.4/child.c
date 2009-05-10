@@ -71,7 +71,7 @@ wait_thread(void *unused(arg))
 }
 
 bool
-child_proc(hold_t hold)
+child_proc(void)
 {
   if (read_len > 0) {
     term_write(read_buf, read_len);
@@ -120,10 +120,7 @@ child_proc(hold_t hold)
 }
 
 char *
-child_create(char *argv[],
-             struct winsize *winp,
-             const char *log_file,
-             bool log_utmp)
+child_create(char *argv[], struct winsize *winp)
 {
   struct passwd *pw = getpwuid(getuid());
   char *cmd; 
@@ -212,7 +209,7 @@ child_create(char *argv[],
     pthread_create(&thread, 0, wait_thread, 0);
     pthread_create(&thread, 0, read_thread, 0);
 
-    if (log_utmp) {
+    if (utmp_enabled) {
       ut.ut_type = USER_PROCESS;
       ut.ut_pid = pid;
       ut.ut_time = time(0);

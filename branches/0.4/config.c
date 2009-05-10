@@ -11,11 +11,11 @@
 #include "term.h"
 #include "win.h"
 
-/*
- * config.c - the configuration box.
- */
+const char *log_file = 0;
+bool utmp_enabled = false;
+hold_t hold = HOLD_NEVER;
 
-char *config_filename;
+const char *config_file = 0;
 config cfg, new_cfg;
 
 static control *cols_box, *rows_box;
@@ -488,7 +488,7 @@ colour_settings[] = {
 void
 load_config(void)
 {
-  open_settings_r(config_filename);
+  open_settings_r(config_file);
   for (int_setting *s = int_settings; s < endof(int_settings); s++)
     read_int_setting(s->key, &atoffset(int, &cfg, s->offset), s->def);
   for (string_setting *s = string_settings; s < endof(string_settings); s++)
@@ -501,7 +501,7 @@ load_config(void)
 char *
 save_config(void)
 {
-  char *errmsg = open_settings_w(config_filename);
+  char *errmsg = open_settings_w(config_file);
   if (errmsg)
     return errmsg;
   for (int_setting *s = int_settings; s < endof(int_settings); s++)
