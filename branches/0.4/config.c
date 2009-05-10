@@ -152,6 +152,23 @@ colour_handler(control *ctrl, void *dlg, void *unused(data), int event)
   }
 }
 
+static void
+int_handler(control *ctrl, void *dlg, void *data, int event)
+{
+  int offset = ctrl->context.i;
+  int limit = ctrl->editbox.context2.i;
+
+  int *field = &atoffset(int, data, offset);
+  char buf[16];
+  switch (event) {
+    when EVENT_VALCHANGE:
+      dlg_editbox_get(ctrl, dlg, buf, lengthof(buf));
+      *field = max(0, min(atoi(buf), limit));
+    when EVENT_REFRESH:
+      sprintf(buf, "%i", *field);
+      dlg_editbox_set(ctrl, dlg, buf);
+  }
+}
 
 #define offcfg(setting) offsetof(config, setting)
 
@@ -186,12 +203,10 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Window", "size", "Default size");
   ctrl_columns(s, 5, 35, 3, 28, 4, 30);
   (cols_box = ctrl_editbox(
-    s, "Columns", 'o', 44, P(0),
-    dlg_stdeditbox_handler, I(offcfg(cols)), I(-1)
+    s, "Columns", 'o', 44, P(0), int_handler, I(offcfg(cols)), I(256)
   ))->column = 0;
   (rows_box = ctrl_editbox(
-    s, "Rows", 'r', 55, P(0),
-    dlg_stdeditbox_handler, I(offcfg(rows)), I(-1)
+    s, "Rows", 'r', 55, P(0), int_handler, I(offcfg(rows)), I(256)
   ))->column = 2;
   ctrl_pushbutton(
     s, "Current size", 'u', P(0), current_size_handler, P(0)
@@ -212,7 +227,7 @@ setup_config_box(controlbox * b)
   ctrl_columns(s, 2, 35, 65);
   ctrl_editbox(
     s, "Lines", 'l', 65, P(0),
-    dlg_stdeditbox_handler, I(offsetof(config, scrollback_lines)), I(-1)
+    int_handler, I(offsetof(config, scrollback_lines)), I(1000000)
   )->column = 0;
   ctrl_columns(s, 1, 100);
   ctrl_radiobuttons(
