@@ -241,6 +241,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     return 1;
   }
 
+  bool extended = HIWORD(lp) & KF_EXTENDED;
   uint count = LOWORD(lp);
   mod_keys mods = get_mods();
   bool shift = mods & SHIFT, alt = mods & ALT, ctrl = mods & CTRL;
@@ -342,12 +343,13 @@ win_key_down(WPARAM wp, LPARAM lp)
   not_zoom: ;
   
   // Keycode buffer.
-  char chars[8];
+  char chars[12];
   int  chars_n = 0;
   void ch(char c) { chars[chars_n++] = c; }
   void esc(bool b) { if (b) ch('\e'); }  
   void ctrl_ch(char c) { ch(c & 0x1F); }
   void str(char *s) { while (*s) ch(*s++); }
+  uchar code;
 
   // Grey keys.
   if (alt) {
@@ -383,9 +385,34 @@ win_key_down(WPARAM wp, LPARAM lp)
   goto send;
   not_grey:
   
-  // Arrow keys and clear key.
-  { char code;
+  // Application keypad
+  if (!extended && term_app_keypad()) {
     switch (key) {
+      when VK_DELETE: code = 'n';
+      when VK_INSERT: code = 'p';
+      when VK_END:    code = 'q';
+      when VK_DOWN:   code = 'r';
+      when VK_NEXT:   code = 's';
+      when VK_LEFT:   code = 't';
+      when VK_CLEAR:  code = 'u';
+      when VK_RIGHT:  code = 'v';
+      when VK_HOME:   code = 'w';
+      when VK_UP:     code = 'x';
+      when VK_PRIOR:  code = 'y';
+      otherwise:
+        goto not_apppad;
+    }
+    if (!mods) {
+      str("\eO"); ch(code);
+      goto send;
+    }
+    else
+      goto fallback;
+  }
+  not_apppad:
+  
+  // Arrow keys and clear key.
+  { switch (key) {
       when VK_UP:    code = 'A';
       when VK_DOWN:  code = 'B';
       when VK_RIGHT: code = 'C';
@@ -410,8 +437,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   not_arrow:
   
   // Block of six.
-  { char code;
-    switch (key) {
+  { switch (key) {
       when VK_PRIOR:  code = '5';
       when VK_NEXT:   code = '6';
       when VK_INSERT: code = '2';
@@ -441,7 +467,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   // F keys.
   if (VK_F5 <= key && key <= VK_F24) {
     str("\e[");
-    uchar code = 
+    code = 
       (uchar[]){
         15, 17, 18, 19, 20, 21, 23, 24,
         25, 26, 28, 29, 31, 32, 33, 34,
@@ -482,31 +508,35 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
   skip_layout:
   
-  if (ctrl) {
+  if (ctrl && !shift &&  (key == ' ' || isupper(key))) {
     // Control characters.
-    if (key == ' ' || isupper(key)) {
-      esc(alt || shift);
-      ctrl_ch(key);
-      goto send;
-    }
-    
-    // Keys yielding app-pad sequences.
-    // Helpfully, they're in the same order in VK, ASCII, and VT codes.
-    char c;
-    switch (key) {
-      when '0' ... '9':                   c = key;
-      when VK_NUMPAD0  ... VK_NUMPAD9:    c = key - VK_NUMPAD0  + '0';
-      when VK_MULTIPLY ... VK_DIVIDE:     c = key - VK_MULTIPLY + '*';
-      when VK_OEM_PLUS ... VK_OEM_PERIOD: c = key - VK_OEM_PLUS + '+';
-      otherwise:
-        return 0;
-    }
-    ch('\e');
-    ch(alt || shift ? '[' : 'O');
-    ch(c + 0x40);
+    esc(alt);
+    ctrl_ch(key);
+    goto send;
   }
-  else
-    return 0;
+    
+  // For anything else we know: send an xterm formatOtherKeys:1 code
+  switch (key) {
+    when '0' ... '9' or 'A' ... 'Z':      code = key;
+    when VK_NUMPAD0  ... VK_NUMPAD9:    code = key - VK_NUMPAD0 + 'p';
+    when VK_MULTIPLY ... VK_DIVIDE:     code = key - VK_MULTIPLY + 'j';
+    when VK_OEM_PLUS ... VK_OEM_PERIOD: code = key - VK_OEM_PLUS + '+';
+    when VK_OEM_1: code = ';';
+    when VK_OEM_2: code = '/';
+    when VK_OEM_3: code = '`';
+    when VK_OEM_4: code = '[';
+    when VK_OEM_5: code = '\\';
+    when VK_OEM_6: code = ']';
+    when VK_OEM_7: code = '\'';
+    when VK_OEM_8: code = '~';
+    when VK_OEM_102: code = '<';
+    otherwise:
+      return 0;
+  }
+  
+  fallback:
+
+  chars_n = snprintf(chars, sizeof(chars), "\e[%u;%cu", code, mods + '1');
 
   // Send char buffer.
   send: {

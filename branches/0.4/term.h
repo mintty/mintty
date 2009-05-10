@@ -119,6 +119,7 @@ int  term_rows(void);
 int  term_cols(void);
 int  term_which_screen(void);
 bool term_app_cursor_keys(void);
+bool term_app_keypad(void);
 bool term_has_focus(void);
 bool term_big_cursor(void);
 bool term_selected(void);

@@ -567,7 +567,7 @@ keyboard.
 tab(#) nospaces;
 LI    LB    LB
 LB    LfC   LfC.
-Key  #Ctrl #Ctrl+Shift/Alt
+Key  #Ctrl #Ctrl+Alt
 A    #^A   #^[^A
 B    #^B   #^[^B
 \fP...
@@ -579,43 +579,6 @@ Z    #^Z   #^[^Z
 
 In the same way as for letter keys, the Windows keyboard layout is consulted
 first for number and symbol keys.
-If that comes back empty, and \fBCtrl\fP is down, the keycodes below are sent.
-
-MinTTY ignores VT100 "application keypad mode".
-Instead, it relies on the state of \fBNumLock\fP to decide how to handle number
-pad keys.
-As usual on Windows, when \fBNumLock\fP is off, the number pad keys are treated
-as arrow and editing keys, and when it is on, they are treated as number keys.
-Application keypad codes can still be sent though, by holding down \fBCtrl\fP 
-while \fBNumLock\fP is on.
-
-Furthermore, the number keys as well as the comma,
-period, plus and minus keys on the main part of the keyboard also send
-application keypad codes when pressed simultaneously with \fBCtrl\fP.
-This makes those keycodes more accessible to laptop users and more useful
-as application shortcuts.
-
-Finally, the keycodes can be modified by holding \fBShift\fP or \fBAlt\fP as
-well as \fBCtrl\fP.
-
-.RS
-.TS
-tab(#) nospaces;
-LI  LB   LB
-LB  LfC  LfC.
-Key#Ctrl#Ctrl+Shift/Alt
-*  #^[Oj#^[[j
-+  #^[Ok#^[[k
-,  #^[Ol#^[[l
--  #^[Om#^[[m
-\. #^[On#^[[n
-/  #^[Oo#^[[o
-0  #^[Op#^[[p
-1  #^[Oq#^[[q
-\fP...
-9  #^[Oy#^[[y
-.TE
-.RE
 
 
 .SS Control keys

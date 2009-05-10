@@ -888,10 +888,11 @@ term_write(const char *data, int len)
               save_cursor(false);
               seen_disp_event();
             when '=':  /* DECKPAM: Keypad application mode */
-              // compatibility(VT100);
-              // AK: Ignore keypad application mode 
+              compatibility(VT100);
+              term.app_keypad = true;
             when '>':  /* DECKPNM: Keypad numeric mode */
-              // compatibility(VT100);
+              compatibility(VT100);
+              term.app_keypad = false;
             when 'D':  /* IND: exactly equivalent to LF */
               compatibility(VT100);
               out_linefeed();

@@ -117,6 +117,7 @@ struct term {
   bool has_focus;
   bool in_vbell;
   bool app_cursor_keys;
+  bool app_keypad;
   bool newline_mode;
   bool seen_disp_event;
   bool big_cursor;
