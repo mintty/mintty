@@ -37,7 +37,7 @@ win_update_menus(void)
     menu, IDM_FULLSCREEN, MF_BYCOMMAND | MF_STRING, IDM_FULLSCREEN,
     cfg.window_shortcuts ? "&Fullscreen\tAlt+F11" : "&Fullscreen"
   );
-  EnableMenuItem(menu, IDM_COPY, term_selected() ? MF_ENABLED : MF_GRAYED);
+  EnableMenuItem(menu, IDM_COPY, term.selected ? MF_ENABLED : MF_GRAYED);
   EnableMenuItem(
     menu, IDM_PASTE,
     IsClipboardFormatAvailable(CF_TEXT) || 
@@ -52,7 +52,7 @@ win_update_menus(void)
   );
   EnableMenuItem(
     menu, IDM_DEFSIZE, 
-    IsZoomed(wnd) || term_cols() != cfg.cols || term_rows() != cfg.rows
+    IsZoomed(wnd) || term.cols != cfg.cols || term.rows != cfg.rows
     ? MF_ENABLED : MF_GRAYED
   );
 }
@@ -116,7 +116,7 @@ update_mouse(mod_keys mods)
 {
   static bool app_mouse;
   bool new_app_mouse = 
-    term_in_mouse_mode() &&
+    term.mouse_mode &&
     cfg.clicks_target_app ^ ((mods & cfg.click_target_mod) != 0);
   if (new_app_mouse != app_mouse) {
     HCURSOR cursor = LoadCursor(null, new_app_mouse ? IDC_ARROW : IDC_IBEAM);
@@ -312,7 +312,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
 
   // Scrollback
-  if (term_which_screen() == 0 && mods == (mod_keys)cfg.scroll_mod) { 
+  if (term.which_screen == 0 && mods == (mod_keys)cfg.scroll_mod) { 
     int scroll;
     switch (key) {
       when VK_HOME:  scroll = SB_TOP;
@@ -374,7 +374,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       ctrl 
       ? (esc(shift), ctrl_ch('^'))
       : (esc(alt), 
-         shift ? ch('\n') : term_newline_mode() ? str("\r\n") : ch('\r'));
+         shift ? ch('\n') : term.newline_mode ? str("\r\n") : ch('\r'));
     when VK_BACK:
       ctrl 
       ? (esc(shift), ch(cfg.backspace_sends_del ? 0x1F : 0x7F)) 
@@ -386,7 +386,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   not_grey:
   
   // Application keypad
-  if (!extended && term_app_keypad()) {
+  if (!extended && term.app_keypad) {
     switch (key) {
       when VK_DELETE: code = 'n';
       when VK_INSERT: code = 'p';
@@ -427,7 +427,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     ch('\e');
     if (!mods) 
-      ch(term_app_cursor_keys() ? 'O' : '[');
+      ch(term.app_cursor_keys ? 'O' : '[');
     else { 
       str("[1;"); ch('1' + mods);
     }

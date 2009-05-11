@@ -189,14 +189,14 @@ win_bell(int mode)
     lastbell = GetTickCount();
   }
 
-  if (!term_has_focus())
+  if (!term.has_focus)
     flash_window(2);
 }
 
 static void
 update_sys_cursor(void)
 {
-  if (term_has_focus() && caret_x >= 0 && caret_y >= 0) {
+  if (term.has_focus && caret_x >= 0 && caret_y >= 0) {
     SetCaretPos(caret_x, caret_y);
 
     HIMC imc = ImmGetContext(wnd);
@@ -257,7 +257,7 @@ void
 win_resize(int rows, int cols)
 {
  /* If the window is maximized supress resizing attempts */
-  if (IsZoomed(wnd) || (rows == term_rows() && cols == term_cols())) 
+  if (IsZoomed(wnd) || (rows == term.rows && cols == term.cols)) 
     return;
     
  /* Sanity checks ... */
@@ -318,7 +318,7 @@ reset_window(int reinit)
   if (win_width == 0 || win_height == 0)
     return;
 
-  int cols = term_cols(), rows = term_rows();
+  int cols = term.cols, rows = term.rows;
 
   bool zoomed = IsZoomed(wnd);
   if (zoomed) {
@@ -492,7 +492,7 @@ update_transparency(void)
   uchar trans = cfg.transparency;
   SetWindowLong(wnd, GWL_EXSTYLE, trans ? WS_EX_LAYERED : 0);
   if (trans) {
-    bool opaque = cfg.opaque_when_focused && term_has_focus();
+    bool opaque = cfg.opaque_when_focused && term.has_focus;
     uchar alpha = opaque ? 255 : 255 - 16 * trans;
     SetLayeredWindowAttributes(wnd, 0, alpha, LWA_ALPHA);
   }
@@ -603,14 +603,14 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
           spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv); 
       }
     when WM_VSCROLL:
-      if (term_which_screen() == 0) {
+      if (term.which_screen == 0) {
         switch (LOWORD(wp)) {
           when SB_BOTTOM:   term_scroll(-1, 0);
           when SB_TOP:      term_scroll(+1, 0);
           when SB_LINEDOWN: term_scroll(0, +1);
           when SB_LINEUP:   term_scroll(0, -1);
-          when SB_PAGEDOWN: term_scroll(0, +term_rows());
-          when SB_PAGEUP:   term_scroll(0, -term_rows());
+          when SB_PAGEDOWN: term_scroll(0, +term.rows);
+          when SB_PAGEUP:   term_scroll(0, -term.rows);
           when SB_THUMBPOSITION or SB_THUMBTRACK: term_scroll(1, HIWORD(wp));
         }
       }
@@ -747,8 +747,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       }
       else if (wp == SIZE_MAXIMIZED && !was_zoomed) {
         was_zoomed = 1;
-        prev_rows = term_rows();
-        prev_cols = term_cols();
+        prev_rows = term.rows;
+        prev_cols = term.cols;
         notify_resize(new_rows, new_cols);
         reset_window(0);
       }
@@ -970,8 +970,8 @@ main(int argc, char *argv[])
     si.cbSize = sizeof (si);
     si.fMask = SIF_ALL | SIF_DISABLENOSCROLL;
     si.nMin = 0;
-    si.nMax = term_rows() - 1;
-    si.nPage = term_rows();
+    si.nMax = term.rows - 1;
+    si.nPage = term.rows;
     si.nPos = 0;
     SetScrollInfo(wnd, SB_VERT, &si, false);
   }
@@ -979,8 +979,8 @@ main(int argc, char *argv[])
  /*
   * Resize the window, now we know what size we _really_ want it to be.
   */
-  int term_width = font_width * term_cols();
-  int term_height = font_height * term_rows();
+  int term_width = font_width * term.cols;
+  int term_height = font_height * term.rows;
   SetWindowPos(wnd, null, 0, 0,
                term_width + extra_width, term_height + extra_height,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
@@ -993,7 +993,7 @@ main(int argc, char *argv[])
   ShowWindow(wnd, SW_SHOWDEFAULT);
   
   // Create child process.
-  struct winsize ws = {term_rows(), term_cols(), term_width, term_height};
+  struct winsize ws = {term.rows, term.cols, term_width, term_height};
   char *cmd = child_create(argv + optind, &ws);
   
   // Set window title.

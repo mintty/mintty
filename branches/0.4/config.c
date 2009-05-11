@@ -66,8 +66,8 @@ current_size_handler(control *unused(ctrl), void *dlg,
            void *unused(data), int event)
 {
   if (event == EVENT_ACTION) {
-    new_cfg.cols = term_cols();
-    new_cfg.rows = term_rows();
+    new_cfg.cols = term.cols;
+    new_cfg.rows = term.rows;
     dlg_refresh(cols_box, dlg);
     dlg_refresh(rows_box, dlg);
   }
