@@ -37,7 +37,7 @@ win_update_menus(void)
     menu, IDM_FULLSCREEN, MF_BYCOMMAND | MF_STRING, IDM_FULLSCREEN,
     cfg.window_shortcuts ? "&Fullscreen\tAlt+F11" : "&Fullscreen"
   );
-  EnableMenuItem(menu, IDM_COPY, term_selected() ? MF_ENABLED : MF_GRAYED);
+  EnableMenuItem(menu, IDM_COPY, term.selected ? MF_ENABLED : MF_GRAYED);
   EnableMenuItem(
     menu, IDM_PASTE,
     IsClipboardFormatAvailable(CF_TEXT) || 
@@ -52,7 +52,7 @@ win_update_menus(void)
   );
   EnableMenuItem(
     menu, IDM_DEFSIZE, 
-    IsZoomed(wnd) || term_cols() != cfg.cols || term_rows() != cfg.rows
+    IsZoomed(wnd) || term.cols != cfg.cols || term.rows != cfg.rows
     ? MF_ENABLED : MF_GRAYED
   );
 }
@@ -116,7 +116,7 @@ update_mouse(mod_keys mods)
 {
   static bool app_mouse;
   bool new_app_mouse = 
-    term_in_mouse_mode() &&
+    term.mouse_mode &&
     cfg.clicks_target_app ^ ((mods & cfg.click_target_mod) != 0);
   if (new_app_mouse != app_mouse) {
     HCURSOR cursor = LoadCursor(null, new_app_mouse ? IDC_ARROW : IDC_IBEAM);
@@ -241,6 +241,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     return 1;
   }
 
+  bool extended = HIWORD(lp) & KF_EXTENDED;
   uint count = LOWORD(lp);
   mod_keys mods = get_mods();
   bool shift = mods & SHIFT, alt = mods & ALT, ctrl = mods & CTRL;
@@ -311,7 +312,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
 
   // Scrollback
-  if (term_which_screen() == 0 && mods == (mod_keys)cfg.scroll_mod) { 
+  if (term.which_screen == 0 && mods == (mod_keys)cfg.scroll_mod) { 
     int scroll;
     switch (key) {
       when VK_HOME:  scroll = SB_TOP;
@@ -328,12 +329,12 @@ win_key_down(WPARAM wp, LPARAM lp)
   not_scroll:
   
   // Font zooming
-  if (ctrl && !alt && cfg.zoom_shortcuts) {
+  if (mods == CTRL && cfg.zoom_shortcuts) {
     int zoom;
     switch (key) {
-      when VK_OEM_PLUS or VK_ADD: zoom = 1 + shift;
-      when VK_OEM_MINUS or VK_SUBTRACT: zoom = -1 - shift;
-      when '0' or VK_NUMPAD0: zoom = 0;
+      when VK_OEM_PLUS or VK_ADD:       zoom = 1;
+      when VK_OEM_MINUS or VK_SUBTRACT: zoom = -1;
+      when '0' or VK_NUMPAD0:           zoom = 0;
       otherwise: goto not_zoom;
     }
     SendMessage(wnd, WM_SYSCOMMAND, IDM_ZOOM, zoom);
@@ -342,19 +343,20 @@ win_key_down(WPARAM wp, LPARAM lp)
   not_zoom: ;
   
   // Keycode buffer.
-  char chars[8];
+  char chars[12];
   int  chars_n = 0;
   void ch(char c) { chars[chars_n++] = c; }
   void esc(bool b) { if (b) ch('\e'); }  
   void ctrl_ch(char c) { ch(c & 0x1F); }
   void str(char *s) { while (*s) ch(*s++); }
+  uchar code;
 
   // Grey keys.
   if (alt) {
     switch (key) {
       when VK_ESCAPE or VK_PAUSE or VK_CANCEL or VK_TAB:
         return 0;
-      when VK_RETURN or VK_SPACE:
+      when VK_RETURN or VK_SPACE or VK_BACK:
         if (ctrl)
           return 0;
     }
@@ -372,26 +374,50 @@ win_key_down(WPARAM wp, LPARAM lp)
       ctrl 
       ? (esc(shift), ctrl_ch('^'))
       : (esc(alt), 
-         shift ? ch('\n') : term_newline_mode() ? str("\r\n") : ch('\r'));
+         shift ? ch('\n') : term.newline_mode ? str("\r\n") : ch('\r'));
     when VK_BACK:
       ctrl 
       ? (esc(shift), ch(cfg.backspace_sends_del ? 0x1F : 0x7F)) 
-      : (esc(alt), 
-         ch(shift && alt ? ' ' : cfg.backspace_sends_del ? 0x7F : '\b'));
+      : (esc(alt), ch(cfg.backspace_sends_del ? 0x7F : '\b'));
     otherwise:
       goto not_grey;
   }
   goto send;
   not_grey:
   
-  // Arrow keys and clear key.
-  { char code;
+  // Application keypad
+  if (!extended && term.app_keypad) {
     switch (key) {
+      when VK_DELETE: code = 'n';
+      when VK_INSERT: code = 'p';
+      when VK_END:    code = 'q';
+      when VK_DOWN:   code = 'r';
+      when VK_NEXT:   code = 's';
+      when VK_LEFT:   code = 't';
+      when VK_CLEAR:  code = 'u';
+      when VK_RIGHT:  code = 'v';
+      when VK_HOME:   code = 'w';
+      when VK_UP:     code = 'x';
+      when VK_PRIOR:  code = 'y';
+      otherwise:
+        goto not_apppad;
+    }
+    if (!mods) {
+      str("\eO"); ch(code);
+      goto send;
+    }
+    else
+      goto fallback;
+  }
+  not_apppad:
+  
+  // Arrow keys and clear key.
+  { switch (key) {
       when VK_UP:    code = 'A';
       when VK_DOWN:  code = 'B';
       when VK_RIGHT: code = 'C';
       when VK_LEFT:  code = 'D';
-      when VK_CLEAR: code = 'G';
+      when VK_CLEAR: code = 'E';
       when VK_HOME:  code = 'H';
       when VK_END:   code = 'F';
       when VK_BROWSER_BACK: code = 'J';
@@ -401,7 +427,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     ch('\e');
     if (!mods) 
-      ch(term_app_cursor_keys() ? 'O' : '[');
+      ch(term.app_cursor_keys ? 'O' : '[');
     else { 
       str("[1;"); ch('1' + mods);
     }
@@ -411,8 +437,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   not_arrow:
   
   // Block of six.
-  { char code;
-    switch (key) {
+  { switch (key) {
       when VK_PRIOR:  code = '5';
       when VK_NEXT:   code = '6';
       when VK_INSERT: code = '2';
@@ -442,7 +467,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   // F keys.
   if (VK_F5 <= key && key <= VK_F24) {
     str("\e[");
-    uchar code = 
+    code = 
       (uchar[]){
         15, 17, 18, 19, 20, 21, 23, 24,
         25, 26, 28, 29, 31, 32, 33, 34,
@@ -454,13 +479,10 @@ win_key_down(WPARAM wp, LPARAM lp)
     goto send;
   }
   
-  // Special treatment for space.
-  if (key == VK_SPACE && mods == CTRL) {
-    // For some reason most keyboard layouts map Ctrl-Space to 0x20,
-    // whereas we want 0.
-    esc(shift); ch(0);
-    goto send; 
-  }
+  // Don't consult the keyboard layout for Ctrl combinations
+  // involving space, letters, and digits on the main keypad
+  if (ctrl && !alt && (key == ' ' || isupper(key) || isdigit(key)))
+    goto skip_layout;
   
   // Try keyboard layout.
   // ToUnicode produces up to four UTF-16 code units per keypress according
@@ -470,7 +492,6 @@ win_key_down(WPARAM wp, LPARAM lp)
   uint scancode = HIWORD(lp) & (KF_EXTENDED | 0xFF);
   wchar wchars[4];
   int wchars_n = ToUnicode(key, scancode, keyboard, wchars, 4, 0);
-  
   if (wchars_n != 0) {
     // Got normal key or dead key.
     term_cancel_paste();
@@ -485,54 +506,42 @@ win_key_down(WPARAM wp, LPARAM lp)
     hide_mouse();
     return 1;
   }
+  skip_layout:
   
-  // Try to handle Ctrl combinations if keyboard layout didn't.
-  if (!ctrl)
-    return 0;
-  
-  { 
-    // Keys yielding app-pad sequences.
-    // Helpfully, they're in the same order in VK, ASCII, and VT codes.
-    char c;
-    switch (key) {
-      when '0' ... '9':                   c = key;
-      when VK_NUMPAD0  ... VK_NUMPAD9:    c = key - VK_NUMPAD0  + '0';
-      when VK_MULTIPLY ... VK_DIVIDE:     c = key - VK_MULTIPLY + '*';
-      when VK_OEM_PLUS ... VK_OEM_PERIOD: c = key - VK_OEM_PLUS + '+';
-      otherwise:
-        goto not_app_pad;
-    }
-    ch('\e');
-    ch(alt || shift ? '[' : 'O');
-    ch(c + 0x40);
+  if (ctrl && !shift &&  (key == ' ' || isupper(key))) {
+    // Control characters.
+    esc(alt);
+    ctrl_ch(key);
     goto send;
   }
-  not_app_pad:
-  
-  {
-    char c;
-    if (key == ' ' || ('A' <= key && key <= 'Z'))
-      c = key;
-    else {
-      switch (scancode) {
-        when 0x2B
-          or 0x56: c = '\\';
-        when 0x1A: c = '[';
-        when 0x1B: c = ']';
-        when 0x28: c = '^';
-        when 0x35: c = '_';
-        otherwise: 
-          goto not_ctrl_ch;
+    
+  // For anything else we know: send an xterm formatOtherKeys:1 code
+  switch (key) {
+    when '0' ... '9' or 'A' ... 'Z':      code = key;
+    when VK_NUMPAD0  ... VK_NUMPAD9:    code = key - VK_NUMPAD0 + 'p';
+    when VK_MULTIPLY ... VK_DIVIDE:     code = key - VK_MULTIPLY + 'j';
+    otherwise:
+      switch(scancode) {
+        when 0x29: code = '`';
+        when 0x0c: code = '-';
+        when 0x0d: code = '+';
+        when 0x1a: code = '[';
+        when 0x1b: code = ']';
+        when 0x27: code = ';';
+        when 0x28: code = '\'';
+        when 0x2b: code = '\\';
+        when 0x56: code = '<';
+        when 0x33: code = ',';
+        when 0x34: code = '.';
+        when 0x35: code = '/';
+        otherwise:
+          return 0;
       }
-    }
-    esc(alt || shift);
-    ctrl_ch(c);
-    goto send;
   }
-  not_ctrl_ch:
+  
+  fallback:
 
-  // Key was not handled.
-  return 0;
+  chars_n = snprintf(chars, sizeof(chars), "\e[%u;%cu", code, mods + '1');
 
   // Send char buffer.
   send: {

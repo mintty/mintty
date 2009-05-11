@@ -237,7 +237,6 @@ term_init(void)
   * that need it.
   */
   term.compatibility_level = TM_PUTTY & ~CL_SCOANSI;
-  strcpy(term.id_string, "\033[?6c");
   term.inbuf = new_bufchain();
   term.printer_buf = new_bufchain();
   term.state = TOPLEVEL;
@@ -1519,16 +1518,3 @@ term_in_utf(void)
 {
   return term.utf || ucsdata.codepage == unicode_codepage;
 }
-
-bool term_echoing(void) { return term.echoing; }
-bool term_editing(void) { return term.editing; }
-int term_rows(void) { return term.rows; }
-int term_cols(void) { return term.cols; }
-int term_which_screen(void) { return term.which_screen; }
-bool term_app_cursor_keys(void) { return term.app_cursor_keys; }
-bool term_has_focus(void) { return term.has_focus; }
-bool term_big_cursor(void) { return term.big_cursor; }
-bool term_selected(void) { return term.selected; }
-bool term_in_mouse_mode(void) { return term.mouse_mode; }
-bool term_newline_mode(void) { return term.newline_mode; }
-

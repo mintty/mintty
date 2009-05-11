@@ -3,7 +3,13 @@
 
 #include "settings.h"
 
-extern char *config_filename;
+typedef enum { HOLD_NEVER, HOLD_ALWAYS, HOLD_ERROR } hold_t;
+extern hold_t hold;
+
+extern const char *log_file;
+extern bool utmp_enabled;
+
+extern const char *config_file;
 
 typedef struct {
   char name[64];
@@ -11,8 +17,6 @@ typedef struct {
   int size;
   int charset;
 } font_spec;
-
-static const char ANSWERBACK[] = "xterm";
 
 /* Bell type */
 enum { BELL_DISABLED, BELL_SOUND, BELL_VISUAL };

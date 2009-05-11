@@ -28,8 +28,11 @@
 
 #define has_compat(x) ( ((CL_##x)&term.compatibility_level) != 0 )
 
+static const char answerback[] = "mintty";
+static const char primary_da[] = "\e[?1;2c";
+static const char secondary_da[] = "\e[>77;" DA_VERSION ";0c";
 
-const char sco2ansicolour[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
+static const char sco2ansicolour[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
 
 /*
  * Move the cursor to a given position, clipping at boundaries. We
@@ -807,8 +810,7 @@ term_write(const char *data, int len)
           * upset some weird software.
           */
           compatibility(ANSIMIN);
-          lpage_send(ansi_codepage, ANSWERBACK, lengthof(ANSWERBACK), 0);
-
+          lpage_send(ansi_codepage, answerback, sizeof(answerback), 0);
         when '\a':   /* BEL: Bell */
           out_bell();
         when '\b':     /* BS: Back space */
@@ -886,10 +888,11 @@ term_write(const char *data, int len)
               save_cursor(false);
               seen_disp_event();
             when '=':  /* DECKPAM: Keypad application mode */
-              // compatibility(VT100);
-              // AK: Ignore keypad application mode 
+              compatibility(VT100);
+              term.app_keypad = true;
             when '>':  /* DECKPNM: Keypad numeric mode */
-              // compatibility(VT100);
+              compatibility(VT100);
+              term.app_keypad = false;
             when 'D':  /* IND: exactly equivalent to LF */
               compatibility(VT100);
               out_linefeed();
@@ -907,7 +910,7 @@ term_write(const char *data, int len)
               seen_disp_event();
             when 'Z':  /* DECID: terminal type query */
               compatibility(VT100);
-              ldisc_send(term.id_string, strlen(term.id_string), 0);
+              ldisc_send(primary_da, lengthof(primary_da), 0);
             when 'c':  /* RIS: restore power-on settings */
               compatibility(VT100);
               term_reset();
@@ -1007,11 +1010,10 @@ term_write(const char *data, int len)
               when 'B':        /* CUD: Cursor down */
                 move(term.curs.x, term.curs.y + def_arg0, 1);
                 seen_disp_event();
-              when ANSI('c', '>'):     /* DA: report xterm version */
+              when ANSI('c', '>'):     /* DA: report version */
                 compatibility(OTHER);
-               /* this reports xterm version 136 so that VIM can
-                * use the drag messages from the mouse reporting */
-                ldisc_send("\033[>0;136;0c", 11, 0);
+                /* Terminal type 77 (ASCII 'M' for MinTTY) */
+                ldisc_send(secondary_da, lengthof(secondary_da), 0);
               when 'a':        /* HPR: move right N cols */
                 compatibility(ANSI);
                 move(term.curs.x + def_arg0, term.curs.y, 1);
@@ -1089,8 +1091,7 @@ term_write(const char *data, int len)
                 seen_disp_event();
               when 'c':        /* DA: terminal type query */
                 compatibility(VT100);
-               /* This is the response for a VT102 */
-                ldisc_send(term.id_string, strlen(term.id_string), 0);
+                ldisc_send(primary_da, lengthof(primary_da), 0);
               when 'n':        /* DSR: cursor position query */
                 if (arg0 == 6) {
                   char buf[32];
@@ -1368,10 +1369,12 @@ term_write(const char *data, int len)
                 seen_disp_event();
               when 'T':        /* SD: Scroll down */
                 compatibility2(VT340TEXT,SCOANSI);
-                term_do_scroll(term.marg_t, term.marg_b,
-                               -def_arg0, true);
-                term.wrapnext = false;
-                seen_disp_event();
+                /* Avoid clash with hilight mouse tracking mode sequence */
+                if (term.esc_nargs <= 1) {
+                  term_do_scroll(term.marg_t, term.marg_b, -def_arg0, true);
+                  term.wrapnext = false;
+                  seen_disp_event();
+                }
               when ANSI('|', '*'):     /* DECSNLS */
                /* 
                 * Set number of lines on screen
@@ -1418,9 +1421,9 @@ term_write(const char *data, int len)
                 compatibility(VT100);
                 int i = arg0;
                 if (i == 0 || i == 1) {
-                  char buf[20] = "\033[2;1;1;112;112;1;0x";
+                  char buf[] = "\e[2;1;1;112;112;1;0x";
                   buf[2] += i;
-                  ldisc_send(buf, 20, 0);
+                  ldisc_send(buf, lengthof(buf), 0);
                 }
               }
               when 'Z': {       /* CBT */
@@ -1535,18 +1538,6 @@ term_write(const char *data, int len)
                   otherwise:
                     if (arg0 > 60 && arg0 < 70)
                       term.compatibility_level |= TM_VTXXX;
-                }
-               /* Change the response to CSI c */
-                if (arg0 == 50) {
-                  char lbuf[64];
-                  strcpy(term.id_string, "\033[?");
-                  for (int i = 1; i < term.esc_nargs; i++) {
-                    if (i != 1)
-                      strcat(term.id_string, ";");
-                    sprintf(lbuf, "%d", term.esc_args[i]);
-                    strcat(term.id_string, lbuf);
-                  }
-                  strcat(term.id_string, "c");
                 }
               }
             }
