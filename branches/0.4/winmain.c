@@ -592,11 +592,12 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_OPTIONS: win_open_config();
         when IDM_ZOOM: {
           int zoom = lp;
-          switch (zoom) {
-            when -1: if (abs(font_size) > 1) font_size -= sgn(font_size);
-            when 0: font_size = cfg.font.size;
-            when 1: font_size += sgn(font_size);
-          }
+          if (!zoom)
+            font_size = cfg.font.size;
+          else if (abs(font_size) + zoom <= 1)
+            font_size = sgn(font_size);
+          else 
+            font_size += sgn(font_size) * zoom;
           reset_window(2);
         }
         when IDM_DUPLICATE:

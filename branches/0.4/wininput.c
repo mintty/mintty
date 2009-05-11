@@ -220,10 +220,22 @@ win_mouse_move(bool nc, LPARAM lp)
 void
 win_mouse_wheel(WPARAM wp, LPARAM lp)      
 {
-  int delta = -GET_WHEEL_DELTA_WPARAM(wp);
-  int lines_per_notch;
-  SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &lines_per_notch, 0);
-  term_mouse_wheel(delta, lines_per_notch, get_mods(), get_mouse_pos(lp));
+  int delta = GET_WHEEL_DELTA_WPARAM(wp);
+  mod_keys mods = get_mods();
+  if (mods == CTRL && cfg.zoom_shortcuts) {
+    static int accu = 0;
+    accu += delta;
+    int zoom = accu / 120;
+    if (zoom) {
+      accu -= zoom * 120;
+      SendMessage(wnd, WM_SYSCOMMAND, IDM_ZOOM, zoom);
+    }
+  }
+  else {
+    int lines_per_notch;
+    SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &lines_per_notch, 0);
+    term_mouse_wheel(delta, lines_per_notch, mods, get_mouse_pos(lp));
+  }
 }
 
 
