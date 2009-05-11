@@ -520,18 +520,23 @@ win_key_down(WPARAM wp, LPARAM lp)
     when '0' ... '9' or 'A' ... 'Z':      code = key;
     when VK_NUMPAD0  ... VK_NUMPAD9:    code = key - VK_NUMPAD0 + 'p';
     when VK_MULTIPLY ... VK_DIVIDE:     code = key - VK_MULTIPLY + 'j';
-    when VK_OEM_PLUS ... VK_OEM_PERIOD: code = key - VK_OEM_PLUS + '+';
-    when VK_OEM_1: code = ';';
-    when VK_OEM_2: code = '/';
-    when VK_OEM_3: code = '`';
-    when VK_OEM_4: code = '[';
-    when VK_OEM_5: code = '\\';
-    when VK_OEM_6: code = ']';
-    when VK_OEM_7: code = '\'';
-    when VK_OEM_8: code = '~';
-    when VK_OEM_102: code = '<';
     otherwise:
-      return 0;
+      switch(scancode) {
+        when 0x29: code = '`';
+        when 0x0c: code = '-';
+        when 0x0d: code = '+';
+        when 0x1a: code = '[';
+        when 0x1b: code = ']';
+        when 0x27: code = ';';
+        when 0x28: code = '\'';
+        when 0x2b: code = '\\';
+        when 0x56: code = '<';
+        when 0x33: code = ',';
+        when 0x34: code = '.';
+        when 0x35: code = '/';
+        otherwise:
+          return 0;
+      }
   }
   
   fallback:
