@@ -204,7 +204,8 @@ struct term {
   */
   enum {
     TOPLEVEL, SEEN_ESC, SEEN_CSI, SEEN_OSC, SEEN_OSC_W,
-    DO_CTRLS, SEEN_OSC_P, OSC_STRING, OSC_MAYBE_ST
+    DO_CTRLS, SEEN_OSC_P, OSC_STRING, OSC_MAYBE_ST,
+    SEEN_DCS, DCS_MAYBE_ST
   } state;
 
   enum {

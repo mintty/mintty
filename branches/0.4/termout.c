@@ -850,14 +850,15 @@ term_write(const char *data, int len)
           * ctrls are stripped above */
           if (!out_char(c))
             continue;
-        when SEEN_ESC or OSC_MAYBE_ST: {
+        when SEEN_ESC or OSC_MAYBE_ST or DCS_MAYBE_ST: {
          /*
           * OSC_MAYBE_ST is virtually identical to SEEN_ESC, with the
           * exception that we have an OSC sequence in the pipeline,
           * and _if_ we see a backslash, we process it.
           */
-          if (c == '\\' && term.state == OSC_MAYBE_ST) {
-            do_osc();
+          if (c == '\\' && term.state != SEEN_ESC) {
+            if (term.state == OSC_MAYBE_ST)
+              do_osc();
             term.state = TOPLEVEL;
             break;
           }
@@ -880,6 +881,9 @@ term_write(const char *data, int len)
               compatibility(OTHER);
               term.state = SEEN_OSC;
               term.esc_args[0] = 0;
+            when 'P':  /* DCS: Device Control String sequences */
+              compatibility(VT100);
+              term.state = SEEN_DCS;
             when '7':  /* DECSC: save cursor */
               compatibility(VT100);
               save_cursor(true);
@@ -1628,6 +1632,18 @@ term_write(const char *data, int len)
             term.state = OSC_STRING;
             term.osc_strlen = 0;
           }
+        when SEEN_DCS: {
+         /* Parse and ignore Device Control String (DCS) sequences */
+          switch (c) {
+            when '\n' or '\r' or '\a':
+              term.state = TOPLEVEL;
+            when 0234:
+              if (!term_in_utf())
+                term.state = TOPLEVEL;
+            when '\e':
+              term.state = DCS_MAYBE_ST;
+          }
+        }
         when DO_CTRLS:
           break;
       }
