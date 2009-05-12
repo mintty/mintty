@@ -803,7 +803,7 @@ static const char *help =
   "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = "+HVuec:p:s:t:h::";
+static const char short_opts[] = "+HVuec:p:s:t:l:h::";
 
 static const struct option
 opts[] = { 
