@@ -253,6 +253,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     return 1;
   }
 
+  uint scancode = HIWORD(lp) & (KF_EXTENDED | 0xFF);
   bool extended = HIWORD(lp) & KF_EXTENDED;
   uint count = LOWORD(lp);
   mod_keys mods = get_mods();
@@ -501,7 +502,6 @@ win_key_down(WPARAM wp, LPARAM lp)
   // to an experiment with Keyboard Layout Creator 1.4. (MSDN doesn't say.)
   uchar keyboard[256];  
   GetKeyboardState(keyboard);
-  uint scancode = HIWORD(lp) & (KF_EXTENDED | 0xFF);
   wchar wchars[4];
   int wchars_n = ToUnicode(key, scancode, keyboard, wchars, 4, 0);
   if (wchars_n != 0) {
@@ -529,9 +529,9 @@ win_key_down(WPARAM wp, LPARAM lp)
     
   // For anything else we know: send an xterm formatOtherKeys:1 code
   switch (key) {
-    when '0' ... '9' or 'A' ... 'Z':      code = key;
-    when VK_NUMPAD0  ... VK_NUMPAD9:    code = key - VK_NUMPAD0 + 'p';
-    when VK_MULTIPLY ... VK_DIVIDE:     code = key - VK_MULTIPLY + 'j';
+    when '0' ... '9' or 'A' ... 'Z': code = key;
+    when VK_NUMPAD0  ... VK_NUMPAD9: code = key - VK_NUMPAD0 + 'p';
+    when VK_MULTIPLY ... VK_DIVIDE:  code = key - VK_MULTIPLY + 'j';
     otherwise:
       switch(scancode) {
         when 0x29: code = '`';
