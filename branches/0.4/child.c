@@ -256,7 +256,7 @@ child_is_parent(void)
   char fn[18] = "/proc/";
   while ((e = readdir(d))) {
     char *pn = e->d_name;
-    if (isdigit(*pn) && strlen(pn) <= 6) {
+    if (isdigit((uchar)*pn) && strlen(pn) <= 6) {
       snprintf(fn + 6, 12, "%s/ppid", pn);
       FILE *f = fopen(fn, "r");
       if (!f)
