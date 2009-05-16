@@ -174,6 +174,7 @@ struct term {
   bool in_vbell;
   bool app_cursor_keys;
   bool app_keypad;
+  bool modify_other_keys;
   bool newline_mode;
   bool seen_disp_event;
   bool big_cursor;

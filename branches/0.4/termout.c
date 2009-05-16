@@ -1003,6 +1003,7 @@ term_write(const char *data, int len)
           else {
             int arg0 = term.esc_args[0], arg1 = term.esc_args[1];
             int def_arg0 = arg0 ?: 1;  // first arg with default
+            int nargs = term.esc_nargs;
             switch (ANSI(c, term.esc_query)) {
               when 'A':        /* CUU: move up N lines */
                 move(term.curs.x, term.curs.y - def_arg0, 1);
@@ -1047,7 +1048,7 @@ term_write(const char *data, int len)
                       def_arg0 - 1), (term.dec_om ? 2 : 0));
                 seen_disp_event();
               when 'H' or 'f':  /* CUP or HVP: set horz and vert posns at once */
-                if (term.esc_nargs < 2)
+                if (nargs < 2)
                   arg1 = ARG_DEFAULT;
                 move((arg1 ?: 1) - 1,
                      ((term.dec_om ? term.marg_t : 0) +
@@ -1107,11 +1108,11 @@ term_write(const char *data, int len)
                 }
               when 'h' or ANSI_QUE('h'):  /* SM: toggle modes to high */
                 compatibility(VT100);
-                for (int i = 0; i < term.esc_nargs; i++)
+                for (int i = 0; i < nargs; i++)
                   toggle_mode(term.esc_args[i], term.esc_query, true);
               when 'i' or ANSI_QUE('i'):  /* MC: Media copy */
                 compatibility(VT100);
-                if (term.esc_nargs == 1) {
+                if (nargs == 1) {
                   if (arg0 == 5 && *cfg.printer) {
                     term.printing = true;
                     term.only_printing = !term.esc_query;
@@ -1123,11 +1124,11 @@ term_write(const char *data, int len)
                 }
               when 'l' or ANSI_QUE('l'):  /* RM: toggle modes to low */
                 compatibility(VT100);
-                for (int i = 0; i < term.esc_nargs; i++)
+                for (int i = 0; i < nargs; i++)
                   toggle_mode(term.esc_args[i], term.esc_query, false);
               when 'g':        /* TBC: clear tabs */
                 compatibility(VT100);
-                if (term.esc_nargs == 1) {
+                if (nargs == 1) {
                   if (arg0 == 0) {
                     term.tabs[term.curs.x] = false;
                   }
@@ -1139,10 +1140,10 @@ term_write(const char *data, int len)
                 }
               when 'r':        /* DECSTBM: set scroll margins */
                 compatibility(VT100);
-                if (term.esc_nargs <= 2) {
+                if (nargs <= 2) {
                   int top = def_arg0 - 1;
                   int bot = (
-                    term.esc_nargs <= 1 || arg1 == 0
+                    nargs <= 1 || arg1 == 0
                     ? term.rows 
                     : (arg1 ?: term.rows)
                   ) - 1;
@@ -1197,7 +1198,7 @@ term_write(const char *data, int len)
                 * The 39 and 49 attributes are likely
                 * to be unimplemented.
                 */
-                for (int i = 0; i < term.esc_nargs; i++) {
+                for (int i = 0; i < nargs; i++) {
                   switch (term.esc_args[i]) {
                     when 0:  /* restore defaults */
                       term.curr_attr = term.default_attr;
@@ -1265,14 +1266,14 @@ term_write(const char *data, int len)
                       term.curr_attr &= ~ATTR_BGMASK;
                       term.curr_attr |= ATTR_DEFBG;
                     when 38: /* xterm 256-colour mode */
-                      if (i + 2 < term.esc_nargs && term.esc_args[i + 1] == 5) {
+                      if (i + 2 < nargs && term.esc_args[i + 1] == 5) {
                         term.curr_attr &= ~ATTR_FGMASK;
                         term.curr_attr |= ((term.esc_args[i + 2] & 0xFF)
                                            << ATTR_FGSHIFT);
                         i += 2;
                       }
                     when 48: /* xterm 256-colour mode */
-                      if (i + 2 < term.esc_nargs && term.esc_args[i + 1] == 5) {
+                      if (i + 2 < nargs && term.esc_args[i + 1] == 5) {
                         term.curr_attr &= ~ATTR_BGMASK;
                         term.curr_attr |= ((term.esc_args[i + 2] & 0xFF)
                                            << ATTR_BGSHIFT);
@@ -1294,14 +1295,12 @@ term_write(const char *data, int len)
                 * illegal values (eg first arg 1..9) for window changing 
                 * and reports.
                 */
-                if (term.esc_nargs <= 1 &&
-                    (arg0 < 1 || arg0 >= 24)) {
+                if (nargs <= 1 && (arg0 < 1 || arg0 >= 24)) {
                   compatibility(VT340TEXT);
                   win_resize((arg0 ?: 24), term.cols);
                   term.selected = false;
                 }
-                else if (term.esc_nargs >= 1 && arg0 >= 1 &&
-                         arg0 < 24) {
+                else if (nargs >= 1 && arg0 >= 1 && arg0 < 24) {
                   compatibility(OTHER);
                   int x, y, len;
                   char buf[80];
@@ -1309,7 +1308,7 @@ term_write(const char *data, int len)
                     when 1: win_set_iconic(false);
                     when 2: win_set_iconic(true);
                     when 3:
-                      if (term.esc_nargs >= 3)
+                      if (nargs >= 3)
                         win_move(arg1, term.esc_args[2]);
                     when 4:
                      /* We should resize the window to a given
@@ -1323,12 +1322,12 @@ term_write(const char *data, int len)
                      /* move to bottom */
                       win_set_zorder(false);
                     when 8:
-                      if (term.esc_nargs >= 3) {
+                      if (nargs >= 3) {
                         win_resize(arg1 ?: cfg.rows,
                                    term.esc_args[2] ?: cfg.cols);
                       }
                     when 9:
-                      if (term.esc_nargs >= 2)
+                      if (nargs >= 2)
                         win_set_zoom(arg1 ? true : false);
                     when 11:
                       ldisc_send(win_is_iconic()
@@ -1374,7 +1373,7 @@ term_write(const char *data, int len)
               when 'T':        /* SD: Scroll down */
                 compatibility2(VT340TEXT,SCOANSI);
                 /* Avoid clash with hilight mouse tracking mode sequence */
-                if (term.esc_nargs <= 1) {
+                if (nargs <= 1) {
                   term_do_scroll(term.marg_t, term.marg_b, -def_arg0, true);
                   term.wrapnext = false;
                   seen_disp_event();
@@ -1387,7 +1386,7 @@ term_write(const char *data, int len)
                 * (24..49 AIUI) with no default specified.
                 */
                 compatibility(VT420);
-                if (term.esc_nargs == 1 && arg0 > 0) {
+                if (nargs == 1 && arg0 > 0) {
                   win_resize(arg0 ?: cfg.rows, term.cols);
                   term.selected = false;
                 }
@@ -1398,7 +1397,7 @@ term_write(const char *data, int len)
                 * I'll allow any.
                 */
                 compatibility(VT340TEXT);
-                if (term.esc_nargs <= 1) {
+                if (nargs <= 1) {
                   win_resize(term.rows, arg0 ?: cfg.cols);
                   term.selected = false;
                 }
@@ -1459,7 +1458,7 @@ term_write(const char *data, int len)
                 * the top scan line, the cursor will disappear.
                 */
                 compatibility(SCOANSI);
-                if (term.esc_nargs >= 2) {
+                if (nargs >= 2) {
                   if (arg0 > arg1)
                     term.cursor_on = false;
                   else
@@ -1544,6 +1543,18 @@ term_write(const char *data, int len)
                       term.compatibility_level |= TM_VTXXX;
                 }
               }
+              when ANSI('m', '>'):     /* xterm: modifier key setting */
+                /* only the modifyOtherKeys setting is implemented */
+                compatibility(OTHER);
+                if (!nargs)
+                  term.modify_other_keys = false;
+                else if (arg0 == 4)
+                  term.modify_other_keys = arg1;
+              when ANSI('n', '>'):     /* xterm: modifier key setting */
+                /* only the modifyOtherKeys setting is implemented */
+                compatibility(OTHER);
+                if (nargs == 1 && arg0 == 4)
+                  term.modify_other_keys = false;
             }
           }
         }
