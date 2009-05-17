@@ -6,7 +6,9 @@
 
 #include "linedisc.h"
 #include "config.h"
-#include "math.h"
+
+#include <math.h>
+#include <windowsx.h>
 
 static HMENU menu, sysmenu;
 
@@ -153,15 +155,19 @@ hide_mouse()
   }
 }
 
+static pos
+translate_pos(int x, int y)
+{
+  return (pos){
+    .x = floorf((x - offset_width ) / (float)font_width ),
+    .y = floorf((y - offset_height) / (float)font_height), 
+  };
+}
 
 static pos
 get_mouse_pos(LPARAM lp)
 {
-  int16 y = HIWORD(lp), x = LOWORD(lp);  
-  return (pos){
-    .y = floorf((y - offset_height) / (float)font_height), 
-    .x = floorf((x - offset_width ) / (float)font_width ),
-  };
+  return translate_pos(GET_X_LPARAM(lp), GET_Y_LPARAM(lp));  
 }
 
 static mouse_button clicked_button;
@@ -231,9 +237,12 @@ win_mouse_wheel(WPARAM wp, LPARAM lp)
     }
   }
   else {
+    // WM_MOUSEWHEEL reports screen coordinates rather than client coordinates
+    POINT p = {.x = GET_X_LPARAM(lp), .y = GET_Y_LPARAM(lp)};
+    ScreenToClient(wnd, &p);
     int lines_per_notch;
     SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &lines_per_notch, 0);
-    term_mouse_wheel(delta, lines_per_notch, mods, get_mouse_pos(lp));
+    term_mouse_wheel(delta, lines_per_notch, mods, translate_pos(p.x, p.y));
   }
 }
 
