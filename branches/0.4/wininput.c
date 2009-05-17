@@ -366,35 +366,32 @@ win_key_down(WPARAM wp, LPARAM lp)
   void csi(char c) { esc(); ch('['); ch(c); }
   void mod_csi(char c) { str("\e[1;"); ch(mods + '1'); ch(c); }
 
-  char code;
-
   // Special keys.
-  if (!ctrl) {
-    switch(key) {
+  {
+    switch (key) {
       when VK_RETURN:
-        esc_if(alt);
-        term.newline_mode ? str("\r\n") : ch(shift ? '\n' : '\r');
+        if (!ctrl)
+          esc_if(alt), term.newline_mode ? str("\r\n") : ch(shift ? '\n' : '\r');
+        else if (!alt)
+          esc_if(shift), ch(C('^'));
       when VK_BACK:
-        esc_if(alt);
-        ch(cfg.backspace_sends_del ? 0x7f : '\b');
-      when VK_TAB: shift ? csi('Z') : ch('\t');
+        if (!ctrl)
+          esc_if(alt), ch(cfg.backspace_sends_del ? 0x7f : '\b');
+        else if (!alt)
+          esc_if(shift), ch(cfg.backspace_sends_del ? C('_') : 0x7f);
+      when VK_TAB:
+        if (!ctrl)
+          shift ? csi('Z') : ch('\t');
+        else
+          ss3(shift ? 'Z' : 'z');
       when VK_ESCAPE:
         ch(shift ? C(']') : cfg.escape_sends_fs ? C('\\') : C('['));
-      when VK_PAUSE: esc_if(shift); ch(C(']'));
-      when VK_CANCEL: esc_if(shift); ch(C('\\'));
+      when VK_PAUSE or VK_CANCEL:
+        if (!ctrl && !alt)
+          esc_if(shift), ch(key == VK_PAUSE ? C(']') : C('\\'));
       otherwise: goto not_special;
     }
-    goto send;
-  }
-  else {
-    switch(key) {
-      when VK_RETURN: esc_if(shift); ch(C('^'));
-      when VK_BACK: esc_if(shift); ch(cfg.backspace_sends_del ? C('_') : 0x7f);
-      when VK_TAB: ss3(shift ? 'Z' : 'z');
-      when VK_ESCAPE or VK_PAUSE or VK_CANCEL: return 0;
-      otherwise: goto not_special;
-    }
-    if (alt)
+    if (!buf_len)
       return 0;
     goto send;
   }
@@ -456,6 +453,8 @@ win_key_down(WPARAM wp, LPARAM lp)
     goto send;
   }
   
+  char code;
+
   if (extended || !term.app_keypad) {
     // Cursor keys.
     switch (key) {
