@@ -722,13 +722,17 @@ term_write(const char *data, int len)
             if (c >= 0xD800 && c < 0xE000)
               c = UCSERR;
 
+           /* Ignore language tags */
+            if (c >= 0xE0000 && c <= 0xE007F)
+              continue;
+
            /* ISO 10646 characters now limited to UTF-16 range. */
             if (c > 0x10FFFF)
               c = UCSERR;
-
-           /* This is currently a TagPhobic application.. */
-            if (c >= 0xE0000 && c <= 0xE007F)
-              continue;
+           
+           /* Only the BMP is supported at the moment. */
+            else if (c >= 0x10000)
+              c = 0xFFFD;
 
            /* U+FEFF is best seen as a null. */
             if (c == 0xFEFF)
