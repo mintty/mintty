@@ -1,11 +1,7 @@
 #ifndef APPINFO_H
 #define APPINFO_H
 
-#define xstringify(s) #s
-#define stringify(s) xstringify(s)
-
 #define APPNAME "MinTTY"
-#define APPVER stringify(VERSION)
 #define APPDESC "Cygwin terminal"
 #define WEBSITE "http://mintty.googlecode.com"
 #define COPYRIGHT "Copyright (C) 2008-09 Andy Koppe"

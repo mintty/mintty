@@ -427,30 +427,32 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
     if (lines_per_notch == -1 || mods & SHIFT)
       lines_per_notch = term.rows;
     static int accu;
-    accu += delta * lines_per_notch;
+    accu -= delta * lines_per_notch;
     int lines = accu / DELTA_NOTCH;
-    accu -= lines * DELTA_NOTCH;
-    if (term.which_screen == 0)
-      term_scroll(0, lines);
-    else {
-      // Send scroll distance as PageUp/Down and Arrow Up/Down
-      char code[6] = "\e[ ; ~";
-      bool back = lines < 0;
-      lines = abs(lines);
-      int pages = lines / term.rows;
-      lines -= pages * term.rows;
-      
-      // First send full pages.
-      code[2] = back ? '5' : '6';
-      code[4] = '1' + cfg.scroll_mod;
-      if (pages)
-        send_keys(code, 6, pages, true);
-      
-      // Then send remaining lines.
-      code[2] = '1';
-      code[5] = back ? 'A' : 'B';
-      if (lines)
-        send_keys(code, 6, lines, true);
+    if (lines) {
+      accu -= lines * DELTA_NOTCH;
+      if (term.which_screen == 0)
+        term_scroll(0, lines);
+      else {
+        // Send scroll distance as PageUp/Down and Arrow Up/Down
+        char code[6] = "\e[ ; ~";
+        bool back = lines < 0;
+        lines = abs(lines);
+        int pages = lines / term.rows;
+        lines -= pages * term.rows;
+        
+        // First send full pages.
+        code[2] = back ? '5' : '6';
+        code[4] = '1' + cfg.scroll_mod;
+        if (pages)
+          send_keys(code, 6, pages, true);
+        
+        // Then send remaining lines.
+        code[2] = '1';
+        code[5] = back ? 'A' : 'B';
+        if (lines)
+          send_keys(code, 6, lines, true);
+      }
     }
   }
 }

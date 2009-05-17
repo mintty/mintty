@@ -189,14 +189,14 @@ win_bell(int mode)
     lastbell = GetTickCount();
   }
 
-  if (!term_has_focus())
+  if (!term.has_focus)
     flash_window(2);
 }
 
 static void
 update_sys_cursor(void)
 {
-  if (term_has_focus() && caret_x >= 0 && caret_y >= 0) {
+  if (term.has_focus && caret_x >= 0 && caret_y >= 0) {
     SetCaretPos(caret_x, caret_y);
 
     HIMC imc = ImmGetContext(wnd);
@@ -257,7 +257,7 @@ void
 win_resize(int rows, int cols)
 {
  /* If the window is maximized supress resizing attempts */
-  if (IsZoomed(wnd) || (rows == term_rows() && cols == term_cols())) 
+  if (IsZoomed(wnd) || (rows == term.rows && cols == term.cols)) 
     return;
     
  /* Sanity checks ... */
@@ -318,7 +318,7 @@ reset_window(int reinit)
   if (win_width == 0 || win_height == 0)
     return;
 
-  int cols = term_cols(), rows = term_rows();
+  int cols = term.cols, rows = term.rows;
 
   bool zoomed = IsZoomed(wnd);
   if (zoomed) {
@@ -492,7 +492,7 @@ update_transparency(void)
   uchar trans = cfg.transparency;
   SetWindowLong(wnd, GWL_EXSTYLE, trans ? WS_EX_LAYERED : 0);
   if (trans) {
-    bool opaque = cfg.opaque_when_focused && term_has_focus();
+    bool opaque = cfg.opaque_when_focused && term.has_focus;
     uchar alpha = opaque ? 255 : 255 - 16 * trans;
     SetLayeredWindowAttributes(wnd, 0, alpha, LWA_ALPHA);
   }
@@ -592,27 +592,26 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_OPTIONS: win_open_config();
         when IDM_ZOOM: {
           int zoom = lp;
-          switch (zoom) {
-            when -2: font_size = (font_size + 1) / 2;
-            when -1: if (abs(font_size) > 1) font_size -= sgn(font_size);
-            when 0: font_size = cfg.font.size;
-            when 1: font_size += sgn(font_size);
-            when 2: font_size *= 2;
-          }
+          if (!zoom)
+            font_size = cfg.font.size;
+          else if (abs(font_size) + zoom <= 1)
+            font_size = sgn(font_size);
+          else 
+            font_size += sgn(font_size) * zoom;
           reset_window(2);
         }
         when IDM_DUPLICATE:
           spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv); 
       }
     when WM_VSCROLL:
-      if (term_which_screen() == 0) {
+      if (term.which_screen == 0) {
         switch (LOWORD(wp)) {
           when SB_BOTTOM:   term_scroll(-1, 0);
           when SB_TOP:      term_scroll(+1, 0);
           when SB_LINEDOWN: term_scroll(0, +1);
           when SB_LINEUP:   term_scroll(0, -1);
-          when SB_PAGEDOWN: term_scroll(0, +term_rows());
-          when SB_PAGEUP:   term_scroll(0, -term_rows());
+          when SB_PAGEDOWN: term_scroll(0, +term.rows);
+          when SB_PAGEUP:   term_scroll(0, -term.rows);
           when SB_THUMBPOSITION or SB_THUMBTRACK: term_scroll(1, HIWORD(wp));
         }
       }
@@ -749,8 +748,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       }
       else if (wp == SIZE_MAXIMIZED && !was_zoomed) {
         was_zoomed = 1;
-        prev_rows = term_rows();
-        prev_cols = term_cols();
+        prev_rows = term.rows;
+        prev_cols = term.cols;
         notify_resize(new_rows, new_cols);
         reset_window(0);
       }
@@ -797,13 +796,14 @@ static const char *help =
   "  -s, --size=COLS,ROWS  Set screen size in characters\n"
   "  -t, --title=TITLE     Set window title (default: the invoked command)\n"
   "  -l, --log=FILE        Log output to file\n"
+  "  -u, --utmp            Create a utmp entry\n"
   "  -h, --hold=never|always|error\n"
   "                        Keep window open after command terminates?\n"
   "  -H, --help            Display help and exit\n"
   "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = "+HVec:p:s:t:h:";
+static const char short_opts[] = "+HVuec:p:s:t:l:h::";
 
 static const struct option
 opts[] = { 
@@ -812,7 +812,8 @@ opts[] = {
   {"size",     required_argument, 0, 's'},
   {"title",    required_argument, 0, 't'},
   {"log",      required_argument, 0, 'l'},
-  {"hold",     required_argument, 0, 'h'},
+  {"utmp",     no_argument,       0, 'u'},
+  {"hold",     optional_argument, 0, 'h'},
   {"help",     no_argument,       0, 'H'},
   {"version",  no_argument,       0, 'V'},
   {0, 0, 0, 0}
@@ -821,8 +822,7 @@ opts[] = {
 int
 main(int argc, char *argv[])
 {
-  char *title = 0, *log_file = 0;
-  hold_t hold = HOLD_NEVER;
+  char *title = 0;
   int x = CW_USEDEFAULT, y = CW_USEDEFAULT;
   bool size_override = false;
   uint rows = 0, cols = 0;
@@ -833,7 +833,7 @@ main(int argc, char *argv[])
       break;
     switch (opt) {
       when 'c':
-        config_filename = optarg;
+        config_file = optarg;
       when 'p':
         if (sscanf(optarg, "%i,%i%1s", &x, &y, (char[2]){}) != 2) {
           fprintf(stderr, "%s: syntax error in position argument -- %s\n",
@@ -851,33 +851,39 @@ main(int argc, char *argv[])
         title = optarg;
       when 'l':
         log_file = optarg;
+      when 'u':
+        utmp_enabled = true;
       when 'h': {
-        int len = strlen(optarg);
-        if (memcmp(optarg, "always", len) == 0)
+        if (!optarg)
           hold = HOLD_ALWAYS;
-        else if (memcmp(optarg, "never", len) == 0)
-          hold = HOLD_NEVER;
-        else if (memcmp(optarg, "error", len) == 0)
-          hold = HOLD_ERROR;
         else {
-          fprintf(stderr, "%s: invalid argument to hold option -- %s\n",
-                          *argv, optarg);
-          exit(1);
+          int len = strlen(optarg);
+          if (memcmp(optarg, "always", len) == 0)
+            hold = HOLD_ALWAYS;
+          else if (memcmp(optarg, "never", len) == 0)
+            hold = HOLD_NEVER;
+          else if (memcmp(optarg, "error", len) == 0)
+            hold = HOLD_ERROR;
+          else {
+            fprintf(stderr, "%s: invalid argument to hold option -- %s\n",
+                            *argv, optarg);
+            exit(1);
+          }
         }
       }
       when 'H':
         printf(help, *argv);
         return 0;
       when 'V':
-        puts(APPNAME " " APPVER "\n" COPYRIGHT "\n" LICENSE);
+        puts(APPNAME " " VERSION "\n" COPYRIGHT "\n" LICENSE);
         return 0;
       otherwise:
         exit(1);
     }
   }
 
-  if (!config_filename)
-    asprintf(&config_filename, "%s/.minttyrc", getenv("HOME"));
+  if (!config_file)
+    asprintf((char **)&config_file, "%s/.minttyrc", getenv("HOME"));
 
   load_config();
   
@@ -965,8 +971,8 @@ main(int argc, char *argv[])
     si.cbSize = sizeof (si);
     si.fMask = SIF_ALL | SIF_DISABLENOSCROLL;
     si.nMin = 0;
-    si.nMax = term_rows() - 1;
-    si.nPage = term_rows();
+    si.nMax = term.rows - 1;
+    si.nPage = term.rows;
     si.nPos = 0;
     SetScrollInfo(wnd, SB_VERT, &si, false);
   }
@@ -974,8 +980,8 @@ main(int argc, char *argv[])
  /*
   * Resize the window, now we know what size we _really_ want it to be.
   */
-  int term_width = font_width * term_cols();
-  int term_height = font_height * term_rows();
+  int term_width = font_width * term.cols;
+  int term_height = font_height * term.rows;
   SetWindowPos(wnd, null, 0, 0,
                term_width + extra_width, term_height + extra_height,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
@@ -988,8 +994,8 @@ main(int argc, char *argv[])
   ShowWindow(wnd, SW_SHOWDEFAULT);
   
   // Create child process.
-  struct winsize ws = {term_rows(), term_cols(), term_width, term_height};
-  char *cmd = child_create(argv + optind, &ws, log_file);
+  struct winsize ws = {term.rows, term.cols, term_width, term_height};
+  char *cmd = child_create(argv + optind, &ws);
   
   // Set window title.
   win_set_title(title ?: cmd);
@@ -1001,7 +1007,7 @@ main(int argc, char *argv[])
     DWORD wakeup =
       MsgWaitForMultipleObjects(1, &child_event, false, INFINITE, QS_ALLINPUT);
     if (wakeup == WAIT_OBJECT_0)
-      child_dead |= child_proc(hold);
+      child_dead |= child_proc();
     MSG msg;
     while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
       if (msg.message == WM_QUIT)

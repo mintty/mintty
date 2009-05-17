@@ -103,7 +103,7 @@ ldisc_send(const char *buf, int len, int interactive)
  /*
   * Either perform local editing, or just send characters.
   */
-  if (term_editing()) {
+  if (term.editing) {
     while (len--) {
       int c;
       c = *buf++ + keyflag;
@@ -129,14 +129,14 @@ ldisc_send(const char *buf, int len, int interactive)
         when KCTRL('H') or KCTRL('?'):       /* backspace/delete */
           if (ldisc.buflen > 0) {
             do {
-              if (term_echoing())
+              if (term.echoing)
                 bsb(uclen(ldisc.buf[ldisc.buflen - 1]));
               ldisc.buflen--;
             } while (!char_start(ldisc.buf[ldisc.buflen]));
           }
         when CTRL('W'):        /* delete word */
           while (ldisc.buflen > 0) {
-            if (term_echoing())
+            if (term.echoing)
               bsb(uclen(ldisc.buf[ldisc.buflen - 1]));
             ldisc.buflen--;
             if (ldisc.buflen > 0 && isspace((uchar) ldisc.buf[ldisc.buflen - 1])
@@ -144,7 +144,7 @@ ldisc_send(const char *buf, int len, int interactive)
               break;
           }
         when CTRL('R'):        /* redraw line */
-          if (term_echoing()) {
+          if (term.echoing) {
             term_write("^R\r\n", 4);
             for (int i = 0; i < ldisc.buflen; i++)
               ucwrite(ldisc.buf[i]);
@@ -161,7 +161,7 @@ ldisc_send(const char *buf, int len, int interactive)
             child_write(ldisc.buf, ldisc.buflen);
           else
             child_write("\r", 1);
-          if (term_echoing())
+          if (term.echoing)
             term_write("\r\n", 2);
           ldisc.buflen = 0;
         when CTRL('U')        /* delete line */
@@ -169,7 +169,7 @@ ldisc_send(const char *buf, int len, int interactive)
           or CTRL('\\')       /* Quit */
           or CTRL('Z'):       /* Suspend */
           while (ldisc.buflen > 0) {
-            if (term_echoing())
+            if (term.echoing)
               bsb(uclen(ldisc.buf[ldisc.buflen - 1]));
             ldisc.buflen--;
           }
@@ -179,7 +179,7 @@ ldisc_send(const char *buf, int len, int interactive)
             ldisc.buf = renewn(ldisc.buf, ldisc.bufsiz);
           }
           ldisc.buf[ldisc.buflen++] = c;
-          if (term_echoing())
+          if (term.echoing)
             ucwrite((uchar) c);
           ldisc.quotenext = false;
       }
@@ -194,7 +194,7 @@ ldisc_send(const char *buf, int len, int interactive)
       }
     }
     if (len > 0) {
-      if (term_echoing())
+      if (term.echoing)
         term_write(buf, len);
       child_write(buf, len);
     }

@@ -13,7 +13,7 @@
 static FILE *file;
 
 char *
-open_settings_w(char *filename)
+open_settings_w(const char *filename)
 {
   file = fopen(filename, "w");
   char *errmsg = NULL;
@@ -60,7 +60,7 @@ keyvalcmp(void *a, void *b)
 static tree234 *tree;
 
 void
-open_settings_r(char *filename)
+open_settings_r(const char *filename)
 {
   FILE *file = fopen(filename, "r");
   if (!file) {

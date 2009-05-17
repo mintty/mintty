@@ -337,6 +337,6 @@ win_show_about(void)
     .lpszCaption = "About " APPNAME,
     .dwStyle = MB_USERICON | MB_OK,
     .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
-    .lpszText = APPNAME " " APPVER "\n" COPYRIGHT "\n" APPINFO
+    .lpszText = APPNAME " " VERSION "\n" COPYRIGHT "\n" APPINFO
   });
 }
