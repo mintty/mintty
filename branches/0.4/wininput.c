@@ -106,8 +106,7 @@ get_mods(void)
 {
   bool shift = is_key_down(VK_SHIFT);
   bool alt = is_key_down(VK_MENU);
-  bool ctrl = is_key_down(VK_RCONTROL) ||
-              (is_key_down(VK_LCONTROL) && !is_key_down(VK_RMENU)); // not AltGr
+  bool ctrl = is_key_down(VK_CONTROL);
   return shift * SHIFT | alt * ALT | ctrl * CTRL;
 }
 
@@ -222,7 +221,7 @@ win_mouse_wheel(WPARAM wp, LPARAM lp)
 {
   int delta = GET_WHEEL_DELTA_WPARAM(wp);
   mod_keys mods = get_mods();
-  if (mods == CTRL && cfg.zoom_shortcuts) {
+  if (mods == CTRL) {
     static int accu = 0;
     accu += delta;
     int zoom = accu / 120;
@@ -319,7 +318,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   not_scroll:
   
   // Font zooming
-  if (mods == CTRL && cfg.zoom_shortcuts) {
+  if (mods == CTRL && cfg.zoom_shortcuts && !term.modify_other_keys) {
     int zoom;
     switch (key) {
       when VK_OEM_PLUS or VK_ADD:       zoom = 1;
@@ -385,10 +384,10 @@ win_key_down(WPARAM wp, LPARAM lp)
       when VK_CANCEL: esc_if(shift); ch(C('\\'));
       otherwise: goto not_special;
     }
+    goto send;
   }
   else {
     switch(key) {
-      when VK_SPACE: esc_if(shift); ch(0);
       when VK_RETURN: esc_if(shift); ch(C('^'));
       when VK_BACK: esc_if(shift); ch(cfg.backspace_sends_del ? C('_') : 0x7f);
       when VK_TAB: ss3(shift ? 'Z' : 'z');
@@ -397,100 +396,69 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     if (alt)
       return 0;
-  }
-  goto send;
-  not_special:
-  
-  // Ctrl-modified number and symbol keys in modifyOtherKeys mode
-  if (ctrl && !alt && term.modify_other_keys) {
-    switch (key) {
-      when '0' ... '9': code = key;
-      when VK_NUMPAD0  ... VK_NUMPAD9: code = key - VK_NUMPAD0 + 'p';
-      when VK_MULTIPLY ... VK_DIVIDE:  code = key - VK_MULTIPLY + 'j';
-      when VK_OEM_PLUS ... VK_OEM_PERIOD: code = key - VK_OEM_PLUS + '+';
-      when VK_OEM_1: code = ';';     // These are based on the US layout.
-      when VK_OEM_2: code = '/';
-      when VK_OEM_3: code = '`';
-      when VK_OEM_4: code = '[';
-      when VK_OEM_5: code = '\\';
-      when VK_OEM_6: code = ']';
-      when VK_OEM_7: code = '\'';
-      when VK_OEM_8: code = '!';     // This is French.
-      when VK_OEM_102: code = '<';   // This appears on many non-US layouts.
-      otherwise: goto not_symbol;
-    }
-    buf_len = snprintf(buf, sizeof(buf), "\e[%u;%cu", code, mods + '1');
     goto send;
   }
-  not_symbol:;
+  not_special:;
+  
+  bool letter = key == ' ' || ('A' <= key && key <= 'Z');
+  bool modify_other =
+    term.modify_other_keys &&
+    (('0' <= key && key <= '9') || 
+     (VK_OEM_1 <= key && key <= VK_OEM_102));
+  bool skip_layout = ctrl && !alt && (letter || modify_other);
+  
+  uchar keyboard[256];  
+  GetKeyboardState(keyboard);
   
   // Try keyboard layout.
   // ToUnicode produces up to four UTF-16 code units per keypress according
   // to an experiment with Keyboard Layout Creator 1.4. (MSDN doesn't say.)
-  uchar keyboard[256];  
-  GetKeyboardState(keyboard);
-  wchar wbuf[4];
-  int wbuf_len = ToUnicode(key, scancode, keyboard, wbuf, 4, 0);
-  if (wbuf_len != 0) {
-    // Got normal key or dead key.
-    term_cancel_paste();
-    term_seen_key_event();
-    if (wbuf_len > 0) {
-      bool meta =
-        (alt && !is_key_down(VK_CONTROL)) ||
-        (mods == (CTRL | SHIFT) &&  'A' <= key && key <= 'Z' && 
-         wbuf_len == 1 && wbuf[0] == C(key));
-      do {
-        if (meta) ldisc_send("\e", 1, 1);
-        luni_send(wbuf, wbuf_len, 1);
-      } while (--count);
+  if (!skip_layout) { 
+    wchar wbuf[4];
+    int wbuf_len = ToUnicode(key, scancode, keyboard, wbuf, 4, 0);
+    if (wbuf_len != 0) {
+      // Got normal key or dead key.
+      term_cancel_paste();
+      term_seen_key_event();
+      if (wbuf_len > 0) {
+        bool meta = alt && !ctrl;
+        do {
+          if (meta) ldisc_send("\e", 1, 1);
+          luni_send(wbuf, wbuf_len, 1);
+        } while (--count);
+      }
+      hide_mouse();
+      return 1;
     }
-    hide_mouse();
-    return 1;
   }
   
-  // Ignore Alt+Ctrl combinations:
-  // they're reserved for AltGr and system-wide shortcuts
-  if (alt && ctrl)
-    return 0;
-
-  // Leftover Ctrl-modified number and symbol keys
-  if (ctrl) {
-    switch (key) {
-      when '0' ... '9': code = key;
-      when VK_NUMPAD0  ... VK_NUMPAD9: code = key - VK_NUMPAD0 + '0';
-      when VK_MULTIPLY ... VK_DIVIDE:  code = key - VK_MULTIPLY + '*';
-      when VK_OEM_PLUS ... VK_OEM_PERIOD: code = key - VK_OEM_PLUS + '+';
-      otherwise: goto not_symbol2;
+  // xterm modifyOtherKeys mode (sends CSI u codes)
+  if (modify_other) {
+    keyboard[VK_CONTROL] = keyboard[VK_LCONTROL] = keyboard[VK_RCONTROL] = 0;
+    wchar wc;
+    int len = ToUnicode(key, scancode, keyboard, &wc, 1, 0);
+    if (!len)
+      return 0;
+    buf_len = snprintf(buf, sizeof(buf), "\e[%u;%cu", wc, mods + '1');
+    if (len < 0) {
+      // Nasty hack to clear dead key state, a la Michael Kaplan.
+      memset(keyboard, 0, sizeof keyboard);
+      scancode = MapVirtualKey(VK_DECIMAL, 0);
+      while (ToUnicode(VK_DECIMAL, scancode, keyboard, &wc, 1, 0) < 0);
     }
-    csi(code - '0' + (shift ? 'P' : 'p'));
     goto send;
   }
-  not_symbol2:
-
-  // VT100-style application keypad
-  if (!extended && term.app_keypad) {
-    switch (key) {
-      when VK_DELETE: code = 'n';
-      when VK_INSERT: code = 'p';
-      when VK_END:    code = 'q';
-      when VK_DOWN:   code = 'r';
-      when VK_NEXT:   code = 's';
-      when VK_LEFT:   code = 't';
-      when VK_CLEAR:  code = 'u';
-      when VK_RIGHT:  code = 'v';
-      when VK_HOME:   code = 'w';
-      when VK_UP:     code = 'x';
-      when VK_PRIOR:  code = 'y';
-      otherwise: goto not_app_keypad;
-    }
-    mods ? mod_csi(code) : ss3(code);
-    goto send;
-  }
-  not_app_keypad:
   
-  // Cursor keys.
-  { switch (key) {
+  // Ctrl+letter combinations
+  if (ctrl && letter) {
+    esc_if(alt || shift);
+    ch(C(key));
+    goto send;
+  }
+  
+  if (extended || !term.app_keypad) {
+    // Cursor keys.
+    switch (key) {
       when VK_UP:    code = 'A';
       when VK_DOWN:  code = 'B';
       when VK_RIGHT: code = 'C';
@@ -504,11 +472,10 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     mods ? mod_csi(code) : term.app_cursor_keys ? ss3(code) : csi(code);
     goto send;
-  }
-  not_cursor:
-  
-  // Editing keys.
-  { switch (key) {
+    not_cursor:
+    
+    // Editing keys.
+    switch (key) {
       when VK_PRIOR:  code = '5';
       when VK_NEXT:   code = '6';
       when VK_INSERT: code = '2';
@@ -519,8 +486,34 @@ win_key_down(WPARAM wp, LPARAM lp)
     if (mods) { ch(';'); ch('1' + mods); }
     ch('~');
     goto send;
+    not_edit:;
   }
-  not_edit:
+  
+  // VT100-style application keypad
+  {
+    switch (key) {
+      when VK_DELETE: code = '.';
+      when VK_INSERT: code = '0';
+      when VK_END:    code = '1';
+      when VK_DOWN:   code = '2';
+      when VK_NEXT:   code = '3';
+      when VK_LEFT:   code = '4';
+      when VK_CLEAR:  code = '5';
+      when VK_RIGHT:  code = '6';
+      when VK_HOME:   code = '7';
+      when VK_UP:     code = '8';
+      when VK_PRIOR:  code = '9';
+      when '0' ... '9': code = key;
+      when VK_NUMPAD0  ... VK_NUMPAD9: code = key - VK_NUMPAD0 + '0';
+      when VK_MULTIPLY ... VK_DIVIDE:  code = key - VK_MULTIPLY + '*';
+      when VK_OEM_PLUS ... VK_OEM_2: code = key - VK_OEM_PLUS + '+';
+      otherwise: goto not_app_keypad;
+    }
+    code += 'p' - '0';
+    mods ? mod_csi(code) : ss3(code);
+    goto send;
+  }
+  not_app_keypad:
   
   // PF keys.
   if (VK_F1 <= key && key <= VK_F4) {
