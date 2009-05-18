@@ -1553,7 +1553,7 @@ term_write(const char *data, int len)
                 if (!nargs)
                   term.modify_other_keys = false;
                 else if (arg0 == 4)
-                  term.modify_other_keys = arg1;
+                  term.modify_other_keys = nargs > 1 && arg1;
               when ANSI('n', '>'):     /* xterm: modifier key setting */
                 /* only the modifyOtherKeys setting is implemented */
                 compatibility(OTHER);
