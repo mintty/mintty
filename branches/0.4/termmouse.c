@@ -415,11 +415,21 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
     static int accu;
     accu += delta;
     int notches = accu / DELTA_NOTCH;
-    accu -= notches * DELTA_NOTCH;
-    char code = 0x60 | (notches > 0);
-    notches = abs(notches);
-    while (notches--)
-      send_mouse_event(code, mods, p);
+    if (notches) {
+      accu -= notches * DELTA_NOTCH;
+      char code = 0x60 | (notches > 0);
+      notches = abs(notches);
+      do send_mouse_event(code, mods, p); while (--notches);
+    }
+  }
+  else if (mods == CTRL) {
+    static int accu;
+    accu += delta;
+    int zoom = accu / DELTA_NOTCH;
+    if (zoom) {
+      accu -= zoom * DELTA_NOTCH;
+      win_zoom_font(zoom);
+    }
   }
   else if (!(mods & (ALT | CTRL))) {
     // Scroll, taking the lines_per_notch setting into account.

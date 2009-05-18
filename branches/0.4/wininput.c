@@ -225,25 +225,16 @@ win_mouse_move(bool nc, LPARAM lp)
 void
 win_mouse_wheel(WPARAM wp, LPARAM lp)      
 {
+  // WM_MOUSEWHEEL reports screen coordinates rather than client coordinates
+  POINT wpos = {.x = GET_X_LPARAM(lp), .y = GET_Y_LPARAM(lp)};
+  ScreenToClient(wnd, &wpos);
+  pos tpos = translate_pos(wpos.x, wpos.y);
+
   int delta = GET_WHEEL_DELTA_WPARAM(wp);
-  mod_keys mods = get_mods();
-  if (mods == CTRL) {
-    static int accu = 0;
-    accu += delta;
-    int zoom = accu / 120;
-    if (zoom) {
-      accu -= zoom * 120;
-      SendMessage(wnd, WM_SYSCOMMAND, IDM_ZOOM, zoom);
-    }
-  }
-  else {
-    // WM_MOUSEWHEEL reports screen coordinates rather than client coordinates
-    POINT p = {.x = GET_X_LPARAM(lp), .y = GET_Y_LPARAM(lp)};
-    ScreenToClient(wnd, &p);
-    int lines_per_notch;
-    SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &lines_per_notch, 0);
-    term_mouse_wheel(delta, lines_per_notch, mods, translate_pos(p.x, p.y));
-  }
+  int lines_per_notch;
+  SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &lines_per_notch, 0);
+
+  term_mouse_wheel(delta, lines_per_notch, get_mods(), tpos);
 }
 
 
@@ -357,7 +348,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       when '0' or VK_NUMPAD0:           zoom = 0;
       otherwise: goto not_zoom;
     }
-    SendMessage(wnd, WM_SYSCOMMAND, IDM_ZOOM, zoom);
+    win_zoom_font(zoom);
     return 1;
   }
   not_zoom: ;

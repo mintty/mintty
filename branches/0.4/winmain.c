@@ -474,8 +474,6 @@ default_size(void)
   win_resize(cfg.rows, cfg.cols);
 }
 
-
-
 static void
 reset_term(void)
 {
@@ -540,6 +538,18 @@ win_reconfig(void)
   win_update_mouse();
 }
 
+void
+win_zoom_font(int zoom)
+{
+  if (!zoom)
+    font_size = cfg.font.size;
+  else if (abs(font_size) + zoom <= 1)
+    font_size = sgn(font_size);
+  else 
+    font_size += sgn(font_size) * zoom;
+  reset_window(2);
+}
+
 static bool
 confirm_exit(void)
 {
@@ -590,16 +600,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_DEFSIZE: default_size();
         when IDM_FULLSCREEN: flip_full_screen();
         when IDM_OPTIONS: win_open_config();
-        when IDM_ZOOM: {
-          int zoom = lp;
-          if (!zoom)
-            font_size = cfg.font.size;
-          else if (abs(font_size) + zoom <= 1)
-            font_size = sgn(font_size);
-          else 
-            font_size += sgn(font_size) * zoom;
-          reset_window(2);
-        }
         when IDM_DUPLICATE:
           spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv); 
       }
