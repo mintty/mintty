@@ -268,6 +268,28 @@ win_key_down(WPARAM wp, LPARAM lp)
  
   update_mouse(mods);
 
+  // Alt+keycode
+  if (alt_state > ALT_NONE && VK_NUMPAD0 <= key && key <= VK_NUMPAD9) {
+    int digit = key - VK_NUMPAD0;
+    if (alt_state == ALT_ALONE) {
+      alt_char = digit;
+      alt_state = digit ? ALT_DEC : ALT_OCT;
+      return 1;
+    }
+    else if (digit < alt_state) {
+      alt_char *= alt_state;
+      alt_char += digit;
+      return 1;
+    }
+  }
+  if (key == VK_MENU && !shift && !ctrl) {
+    if (alt_state == ALT_NONE)
+      alt_state = ALT_ALONE;
+    return 1;
+  }
+  else if (alt_state != ALT_NONE)
+    alt_state = ALT_CANCELLED;
+  
   // Window commands
   if (alt && !ctrl && cfg.window_shortcuts) {
     WPARAM cmd;
@@ -339,28 +361,6 @@ win_key_down(WPARAM wp, LPARAM lp)
     return 1;
   }
   not_zoom: ;
-  
-  // Alt+keycode
-  if (alt_state > ALT_NONE && VK_NUMPAD0 <= key && key <= VK_NUMPAD9) {
-    int digit = key - VK_NUMPAD0;
-    if (alt_state == ALT_ALONE) {
-      alt_char = digit;
-      alt_state = digit ? ALT_DEC : ALT_OCT;
-      return 1;
-    }
-    else if (digit < alt_state) {
-      alt_char *= alt_state;
-      alt_char += digit;
-      return 1;
-    }
-  }
-  if (key == VK_MENU && !shift && !ctrl) {
-    if (alt_state == ALT_NONE)
-      alt_state = ALT_ALONE;
-    return 1;
-  }
-  else if (alt_state != ALT_NONE)
-    alt_state = ALT_CANCELLED;
   
   // Keycode buffer.
   char buf[12];
