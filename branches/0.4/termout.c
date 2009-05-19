@@ -651,15 +651,14 @@ term_write(const char *data, int len)
 
    /* First see about all those translations. */
     if (term.state == TOPLEVEL) {
-      if (term_in_utf()) {
+      bool in_utf = term_in_utf();
+      if (in_utf) {
         switch (term.utf_state) {
           when 0: {
             if (c < 0x80) {
              /* UTF-8 must be stateless so we ignore iso2022. */
               if (ucsdata.unitab_ctrl[c] != 0xFF)
                 c = ucsdata.unitab_ctrl[c];
-              else
-                c = ((uchar) c) | CSET_ASCII;
               break;
             }
             else if ((c & 0xe0) == 0xc0) {
@@ -743,38 +742,40 @@ term_write(const char *data, int len)
           }
         }
       }
-     /* Are we in the nasty ACS mode? Note: no sco in utf mode. */
-      else if (term.sco_acs &&
-               (c != '\033' && c != '\012' && c != '\015' && c != '\b')) {
-        if (term.sco_acs == 2)
-          c |= 0x80;
-        c |= CSET_SCOACS;
-      }
-      else {
-        int cset_attr = term.cset_attr[term.cset]; 
-        switch (cset_attr) {
+      if (!in_utf || c < 0x100) {
+        if (term.sco_acs) {
+         /* SCO ACS (aka VGA graphics) */
+          if (c != '\e' && c != '\n' && c != '\r' && c != '\b') {
+            if (term.sco_acs == 2)
+              c |= 0x80;
+            c |= CSET_SCOACS;
+        }
+        else {
+          int cset_attr = term.cset_attr[term.cset]; 
+          switch (cset_attr) {
            /* 
             * Linedraw characters are different from 'ESC ( B'
             * only for a small range. For ones outside that
             * range, make sure we use the same font as well as
             * the same encoding.
             */
-          when CSET_LINEDRW:
-            if (ucsdata.unitab_ctrl[c] != 0xFF)
-              c = ucsdata.unitab_ctrl[c];
-            else
-              c = ((uchar) c) | CSET_LINEDRW;
-          when  CSET_ASCII or CSET_GBCHR:
-            /* If UK-ASCII, make the '#' a LineDraw Pound */
-            if (c == '#' && cset_attr == CSET_GBCHR)
-              c = '}' | CSET_LINEDRW;
-            else if (ucsdata.unitab_ctrl[c] != 0xFF)
-              c = ucsdata.unitab_ctrl[c];
-            else
-              c = ((uchar) c) | CSET_ASCII;
-          when CSET_SCOACS:
-            if (c >= ' ')
-              c = ((uchar) c) | CSET_SCOACS;
+            when CSET_LINEDRW:
+              if (ucsdata.unitab_ctrl[c] != 0xFF)
+                c = ucsdata.unitab_ctrl[c];
+              else
+                c = ((uchar) c) | CSET_LINEDRW;
+            when CSET_ASCII or CSET_GBCHR:
+              /* If UK-ASCII, make the '#' a LineDraw Pound */
+              if (c == '#' && cset_attr == CSET_GBCHR)
+                c = '}' | CSET_LINEDRW;
+              else if (ucsdata.unitab_ctrl[c] != 0xFF)
+                c = ucsdata.unitab_ctrl[c];
+              else
+                c = ((uchar) c) | CSET_ASCII;
+            when CSET_SCOACS:
+              if (c >= ' ')
+                c = ((uchar) c) | CSET_SCOACS;
+          }
         }
       }
     }
