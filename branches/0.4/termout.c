@@ -742,13 +742,12 @@ term_write(const char *data, int len)
           }
         }
       }
-      if (!in_utf || c < 0x100) {
+      if (c >= ' ' && (!in_utf || c <= 0xFF)) {
         if (term.sco_acs) {
          /* SCO ACS (aka VGA graphics) */
-          if (c != '\e' && c != '\n' && c != '\r' && c != '\b') {
-            if (term.sco_acs == 2)
-              c |= 0x80;
-            c |= CSET_SCOACS;
+          if (term.sco_acs == 2)
+            c |= 0x80;
+          c |= CSET_SCOACS;
         }
         else {
           int cset_attr = term.cset_attr[term.cset]; 
@@ -763,7 +762,7 @@ term_write(const char *data, int len)
               if (ucsdata.unitab_ctrl[c] != 0xFF)
                 c = ucsdata.unitab_ctrl[c];
               else
-                c = ((uchar) c) | CSET_LINEDRW;
+                c |= CSET_LINEDRW;
             when CSET_ASCII or CSET_GBCHR:
               /* If UK-ASCII, make the '#' a LineDraw Pound */
               if (c == '#' && cset_attr == CSET_GBCHR)
@@ -771,10 +770,9 @@ term_write(const char *data, int len)
               else if (ucsdata.unitab_ctrl[c] != 0xFF)
                 c = ucsdata.unitab_ctrl[c];
               else
-                c = ((uchar) c) | CSET_ASCII;
+                c |= CSET_ASCII;
             when CSET_SCOACS:
-              if (c >= ' ')
-                c = ((uchar) c) | CSET_SCOACS;
+              c |= CSET_SCOACS;
           }
         }
       }
