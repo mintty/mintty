@@ -32,7 +32,8 @@ enum {
   TM_VT220    = TM_VT102 | CL_VT220,
   TM_VTXXX    = TM_VT220 | CL_VT340TEXT | CL_VT510 | CL_VT420 | CL_VT320,
   TM_SCOANSI  = CL_ANSIMIN | CL_SCOANSI,
-  TM_PUTTY    = 0xFFFF,
+  TM_MINTTY   = TM_VTXXX | CL_OTHER,
+  TM_PUTTY    = 0xFFFF
 };
 
 #define incpos(p) ((p).x == term.cols ? ((p).x = 0, (p).y++, 1) : ((p).x++, 0))

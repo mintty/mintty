@@ -1223,13 +1223,13 @@ term_write(const char *data, int len)
                     when 7:  /* enable reverse video */
                       term.curr_attr |= ATTR_REVERSE;
                     when 10: /* SCO acs off */
-                      compatibility(SCOANSI);
+                      compatibility2(SCOANSI, OTHER);
                       term.sco_acs = 0;
                     when 11: /* SCO acs on */
-                      compatibility(SCOANSI);
+                      compatibility2(SCOANSI, OTHER);
                       term.sco_acs = 1;
                     when 12: /* SCO acs on, |0x80 */
-                      compatibility(SCOANSI);
+                      compatibility2(SCOANSI, OTHER);
                       term.sco_acs = 2;
                     when 22: /* disable bold */
                       compatibility2(OTHER, VT220);
@@ -1540,7 +1540,7 @@ term_write(const char *data, int len)
                   when 42:
                     term.compatibility_level = TM_SCOANSI;
                   when ARG_DEFAULT:
-                    term.compatibility_level = TM_PUTTY;
+                    term.compatibility_level = TM_MINTTY;
                   when 50: // ignore
                   otherwise:
                     if (arg0 > 60 && arg0 < 70)

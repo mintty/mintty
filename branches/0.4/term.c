@@ -236,7 +236,7 @@ term_init(void)
   * Allocate a new Terminal structure and initialise the fields
   * that need it.
   */
-  term.compatibility_level = TM_PUTTY & ~CL_SCOANSI;
+  term.compatibility_level = TM_MINTTY;
   term.inbuf = new_bufchain();
   term.printer_buf = new_bufchain();
   term.state = TOPLEVEL;
