@@ -203,7 +203,7 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Window", "size", "Default size");
   ctrl_columns(s, 5, 35, 3, 28, 4, 30);
   (cols_box = ctrl_editbox(
-    s, "Columns", 'o', 44, P(0), int_handler, I(offcfg(cols)), I(256)
+    s, "Columns", 'm', 44, P(0), int_handler, I(offcfg(cols)), I(256)
   ))->column = 0;
   (rows_box = ctrl_editbox(
     s, "Rows", 'r', 55, P(0), int_handler, I(offcfg(rows)), I(256)
@@ -219,7 +219,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(scrollbar))
   )->column = 0;
   ctrl_checkbox(
-    s, "Confirm exit", 'b', P(0),
+    s, "Confirm exit", 'x', P(0),
     dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
   )->column = 1;
 
@@ -236,6 +236,7 @@ setup_config_box(controlbox * b)
     "Shift", 's', I(SHIFT),
     "Ctrl", 'c', I(CTRL),
     "Alt", 'a', I(ALT),
+    "Off", 'o', I(0),
     null
   );
 
@@ -400,6 +401,7 @@ setup_config_box(controlbox * b)
     "Shift", 's', I(SHIFT),
     "Ctrl", 'c', I(CTRL),
     "Alt", 'a', I(ALT),
+    "Off", 'o', I(0),
     null
   );
   
