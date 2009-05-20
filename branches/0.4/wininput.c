@@ -503,9 +503,9 @@ win_key_down(WPARAM wp, LPARAM lp)
       when VK_UP:     code = '8';
       when VK_PRIOR:  code = '9';
       when '0' ... '9': code = key;
-      when VK_NUMPAD0  ... VK_NUMPAD9: code = key - VK_NUMPAD0 + '0';
-      when VK_MULTIPLY ... VK_DIVIDE:  code = key - VK_MULTIPLY + '*';
-      when VK_OEM_PLUS ... VK_OEM_2: code = key - VK_OEM_PLUS + '+';
+      when VK_NUMPAD0  ... VK_NUMPAD9:    code = key - VK_NUMPAD0  + '0';
+      when VK_MULTIPLY ... VK_DIVIDE:     code = key - VK_MULTIPLY + '*';
+      when VK_OEM_PLUS ... VK_OEM_PERIOD: code = key - VK_OEM_PLUS + '+';
       otherwise: goto not_app_keypad;
     }
     code += 'p' - '0';
