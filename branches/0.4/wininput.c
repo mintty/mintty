@@ -230,7 +230,7 @@ win_mouse_wheel(WPARAM wp, LPARAM lp)
   ScreenToClient(wnd, &wpos);
   pos tpos = translate_pos(wpos.x, wpos.y);
 
-  int delta = GET_WHEEL_DELTA_WPARAM(wp);
+  int delta = GET_WHEEL_DELTA_WPARAM(wp);  // positive means up
   int lines_per_notch;
   SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &lines_per_notch, 0);
 
