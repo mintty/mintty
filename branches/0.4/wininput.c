@@ -323,7 +323,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
 
   // Scrollback
-  if (term.which_screen == 0 && mods == (mod_keys)cfg.scroll_mod) { 
+  if (term.which_screen == 0 && mods && mods == (mod_keys)cfg.scroll_mod) { 
     int scroll;
     switch (key) {
       when VK_HOME:  scroll = SB_TOP;
@@ -420,7 +420,8 @@ win_key_down(WPARAM wp, LPARAM lp)
       if (wbuf_len > 0) {
         bool meta = alt && !ctrl;
         do {
-          if (meta) ldisc_send("\e", 1, 1);
+          if (meta)
+            ldisc_send("\e", 1, 1);
           luni_send(wbuf, wbuf_len, 1);
         } while (--count);
       }
@@ -560,7 +561,7 @@ win_key_up(WPARAM wParam, LPARAM unused(lParam))
   if (alt) {
     if (alt_state == ALT_ALONE) {
       if (cfg.alt_sends_esc)
-        ldisc_send((char[]){'\e'}, 1, 1);
+        ldisc_send("\e", 1, 1);
     }
     else if (alt_state > ALT_ALONE)
       luni_send(&alt_char, 1, 1);
