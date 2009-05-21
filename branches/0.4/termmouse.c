@@ -248,12 +248,10 @@ get_selpoint(const pos p)
 static void
 send_keys(char *code, uint len, uint count, bool interactive)
 {
-  assert(len);
   uint size = len * count;
-  char *buf = malloc(size), *p = buf;
-  do { memcpy(p, code, len); p += len; } while (--count);
+  char buf[size], *p = buf;
+  while (count--) { memcpy(p, code, len); p += len; }
   ldisc_send(buf, size, interactive);
-  free(buf);
 }
 
 static bool
@@ -431,7 +429,7 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
       win_zoom_font(zoom);
     }
   }
-  else if (!(mods & (ALT | CTRL))) {
+  else if (!(mods & ~SHIFT)) {
     // Scroll, taking the lines_per_notch setting into account.
     // Scroll by a page per notch if setting is -1 or Shift is pressed.
     if (lines_per_notch == -1 || mods & SHIFT)
@@ -444,24 +442,20 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
       if (term.which_screen == 0)
         term_scroll(0, -lines);
       else {
-        // Send scroll distance as PageUp/Down and Arrow Up/Down
-        char code[6] = "\e[ ; ~";
-        bool up = lines > 0;
+        // Send scroll distance as CSI a/b events
+        char buf[6] = "\e[1;2 ";
+        char code = lines > 0 ? 'a' : 'b';
         lines = abs(lines);
         int pages = lines / term.rows;
-        lines -= pages * term.rows;
-        
-        // First send full pages.
-        code[2] = up ? '5' : '6';
-        code[4] = '1' + cfg.scroll_mod;
-        if (pages)
-          send_keys(code, 6, pages, true);
-        
-        // Then send remaining lines.
-        code[2] = '1';
-        code[5] = up ? 'A' : 'B';
-        if (lines)
-          send_keys(code, 6, lines, true);
+        if (pages) {
+          buf[5] = code;
+          send_keys(buf, 6, pages, true);
+          lines -= pages * term.rows;
+        }
+        if (lines) {
+          buf[2] = code;
+          send_keys(buf, 3, lines, true);
+        }
       }
     }
   }
