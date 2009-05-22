@@ -365,34 +365,44 @@ win_key_down(WPARAM wp, LPARAM lp)
   void ss3(char c) { esc(); ch('O'); ch(c); }
   void csi(char c) { esc(); ch('['); ch(c); }
   void mod_csi(char c) { str("\e[1;"); ch(mods + '1'); ch(c); }
+  void mod_other(wchar c) {
+    buf_len = snprintf(buf, sizeof(buf), "\e[%u;%cu", c, mods + '1');
+  }
 
   // Special keys.
   {
     switch (key) {
       when VK_RETURN:
-        if (!ctrl)
-          esc_if(alt), term.newline_mode ? str("\r\n") : ch(shift ? '\n' : '\r');
-        else if (!alt)
-          esc_if(shift), ch(C('^'));
+        if (term.modify_other_keys && (shift || ctrl))
+          mod_other('\r');
+        else if (!ctrl)
+          esc_if(alt),
+          term.newline_mode ? str("\r\n") : ch(shift ? '\n' : '\r');
+        else
+          esc_if(shift || alt), ch(C('^'));
       when VK_BACK:
         if (!ctrl)
           esc_if(alt), ch(cfg.backspace_sends_del ? 0x7f : '\b');
-        else if (!alt)
-          esc_if(shift), ch(cfg.backspace_sends_del ? C('_') : 0x7f);
+        else if (!term.modify_other_keys)
+          esc_if(shift || alt), ch(cfg.backspace_sends_del ? C('_') : 0x7f);
+        else
+          mod_other(cfg.backspace_sends_del ? 0x7f : '\b');
       when VK_TAB:
         if (!ctrl)
           shift ? csi('Z') : ch('\t');
+        else if (!term.modify_other_keys)
+          mod_csi('Z');
         else
-          ss3(shift ? 'Z' : 'z');
+          mod_other('\t');
       when VK_ESCAPE:
         ch(shift ? C(']') : cfg.escape_sends_fs ? C('\\') : C('['));
       when VK_PAUSE or VK_CANCEL:
         if (!ctrl && !alt)
           esc_if(shift), ch(key == VK_PAUSE ? C(']') : C('\\'));
+        else
+          return 0;
       otherwise: goto not_special;
     }
-    if (!buf_len)
-      return 0;
     goto send;
   }
   not_special:;
@@ -437,7 +447,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     int len = ToUnicode(key, scancode, keyboard, &wc, 1, 0);
     if (!len)
       return 0;
-    buf_len = snprintf(buf, sizeof(buf), "\e[%u;%cu", wc, mods + '1');
+    mod_other(wc);
     if (len < 0) {
       // Nasty hack to clear dead key state, a la Michael Kaplan.
       memset(keyboard, 0, sizeof keyboard);
