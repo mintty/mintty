@@ -365,6 +365,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   void ss3(char c) { esc(); ch('O'); ch(c); }
   void csi(char c) { esc(); ch('['); ch(c); }
   void mod_csi(char c) { str("\e[1;"); ch(mods + '1'); ch(c); }
+  void mod_ss3(char c) { mods ? mod_csi(c) : ss3(c); }
   void mod_other(wchar c) {
     buf_len = snprintf(buf, sizeof(buf), "\e[%u;%cu", c, mods + '1');
   }
@@ -373,7 +374,9 @@ win_key_down(WPARAM wp, LPARAM lp)
   {
     switch (key) {
       when VK_RETURN:
-        if (term.modify_other_keys && (shift || ctrl))
+        if (extended && term.app_keypad)
+          mod_ss3('M');
+        else if (term.modify_other_keys && (shift || ctrl))
           mod_other('\r');
         else if (!ctrl)
           esc_if(alt),
@@ -407,67 +410,37 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
   not_special:;
   
-  bool letter = key == ' ' || ('A' <= key && key <= 'Z');
-  bool modify_other =
-    term.modify_other_keys &&
-    (('0' <= key && key <= '9') || 
-     (VK_OEM_1 <= key && key <= VK_OEM_102));
-  bool skip_layout = ctrl && !alt && (letter || modify_other);
-  
-  uchar keyboard[256];  
-  GetKeyboardState(keyboard);
-  
-  // Try keyboard layout.
-  // ToUnicode produces up to four UTF-16 code units per keypress according
-  // to an experiment with Keyboard Layout Creator 1.4. (MSDN doesn't say.)
-  if (!skip_layout) { 
-    wchar wbuf[4];
-    int wbuf_len = ToUnicode(key, scancode, keyboard, wbuf, 4, 0);
-    if (wbuf_len != 0) {
-      // Got normal key or dead key.
-      term_cancel_paste();
-      term_seen_key_event();
-      if (wbuf_len > 0) {
-        bool meta = alt && !ctrl;
-        do {
-          if (meta)
-            ldisc_send("\e", 1, 1);
-          luni_send(wbuf, wbuf_len, 1);
-        } while (--count);
-      }
-      hide_mouse();
-      return 1;
-    }
-  }
-  
-  // xterm modifyOtherKeys mode (sends CSI u codes)
-  if (modify_other) {
-    keyboard[VK_CONTROL] = keyboard[VK_LCONTROL] = keyboard[VK_RCONTROL] = 0;
-    wchar wc;
-    int len = ToUnicode(key, scancode, keyboard, &wc, 1, 0);
-    if (!len)
-      return 0;
-    mod_other(wc);
-    if (len < 0) {
-      // Nasty hack to clear dead key state, a la Michael Kaplan.
-      memset(keyboard, 0, sizeof keyboard);
-      scancode = MapVirtualKey(VK_DECIMAL, 0);
-      while (ToUnicode(VK_DECIMAL, scancode, keyboard, &wc, 1, 0) < 0);
-    }
-    goto send;
-  }
-  
-  // Ctrl+letter combinations
-  if (ctrl && letter) {
+  // Ctrl+space/letter combinations
+  if (ctrl && !alt && (key == ' ' || ('A' <= key && key <= 'Z'))) {
     esc_if(alt || shift);
     ch(C(key));
     goto send;
   }
   
-  char code;
-
-  if (extended || !term.app_keypad) {
+  // PF keys.
+  if (VK_F1 <= key && key <= VK_F4) {
+    mod_ss3(key - VK_F1 + 'P');
+    goto send;
+  }
+  
+  // F keys.
+  if (VK_F5 <= key && key <= VK_F24) {
+    str("\e[");
+    char code = 
+      (uchar[]){
+        15, 17, 18, 19, 20, 21, 23, 24,
+        25, 26, 28, 29, 31, 32, 33, 34,
+        36, 37, 38, 39
+      }[key - VK_F5];
+    ch('0' + code / 10); ch('0' + code % 10);
+    if (mods) { ch(';'); ch('1' + mods); }
+    ch('~');
+    goto send;
+  }
+  
+  if (extended || !term.app_keypad || term.app_cursor_keys) {
     // Cursor keys.
+    char code;
     switch (key) {
       when VK_UP:    code = 'A';
       when VK_DOWN:  code = 'B';
@@ -476,8 +449,8 @@ win_key_down(WPARAM wp, LPARAM lp)
       when VK_CLEAR: code = 'E';
       when VK_HOME:  code = 'H';
       when VK_END:   code = 'F';
-      when VK_BROWSER_BACK: code = 'G';
-      when VK_BROWSER_FORWARD: code = 'I';
+      when VK_BROWSER_BACK: code = 'J';
+      when VK_BROWSER_FORWARD: code = 'K';
       otherwise: goto not_cursor;
     }
     mods ? mod_csi(code) : term.app_cursor_keys ? ss3(code) : csi(code);
@@ -498,9 +471,10 @@ win_key_down(WPARAM wp, LPARAM lp)
     goto send;
     not_edit:;
   }
-  
-  // VT100-style application keypad
+    
+  // Application keypad codes
   {
+    char code;
     switch (key) {
       when VK_DELETE: code = '.';
       when VK_INSERT: code = '0';
@@ -513,52 +487,88 @@ win_key_down(WPARAM wp, LPARAM lp)
       when VK_HOME:   code = '7';
       when VK_UP:     code = '8';
       when VK_PRIOR:  code = '9';
-      when '0' ... '9': code = key;
-      when VK_NUMPAD0  ... VK_NUMPAD9:    code = key - VK_NUMPAD0  + '0';
-      when VK_MULTIPLY ... VK_DIVIDE:     code = key - VK_MULTIPLY + '*';
-      when VK_OEM_PLUS ... VK_OEM_PERIOD: code = key - VK_OEM_PLUS + '+';
+      when VK_NUMPAD0  ... VK_NUMPAD9: 
+        if (!mods)
+          goto not_app_keypad;
+        code = key - VK_NUMPAD0  + '0';
+      when VK_MULTIPLY ... VK_DIVIDE:
+        if (!mods && !term.app_keypad)
+          goto not_app_keypad;
+        code = key - VK_MULTIPLY + '*';
       otherwise: goto not_app_keypad;
     }
-    code += 'p' - '0';
-    mods ? mod_csi(code) : ss3(code);
+    mod_ss3(code - '0' + 'p');
     goto send;
   }
-  not_app_keypad:
+  not_app_keypad:;
+
+  uchar keyboard[256];  
+  GetKeyboardState(keyboard);
   
-  // PF keys.
-  if (VK_F1 <= key && key <= VK_F4) {
-    code = key - VK_F1 + 'P';
-    mods ? mod_csi(code) : ss3(code);
-    goto send;
+  bool other =
+    ('0' <= key && key <= '9') || (VK_OEM_1 <= key && key <= VK_OEM_102);
+
+  if (!(term.modify_other_keys && other && ctrl && !alt)) {
+    // Try keyboard layout.
+    // ToUnicode produces up to four UTF-16 code units per keypress according
+    // to an experiment with Keyboard Layout Creator 1.4. (MSDN doesn't say.)
+    wchar wbuf[4];
+    int wbuf_len = ToUnicode(key, scancode, keyboard, wbuf, 4, 0);
+    if (wbuf_len != 0) {
+      // Got normal key or dead key.
+      term_cancel_paste();
+      term_seen_key_event();
+      if (wbuf_len > 0) {
+        bool meta = alt && !ctrl;
+        do {
+          if (meta)
+            ldisc_send("\e", 1, 1);
+          luni_send(wbuf, wbuf_len, 1);
+        } while (--count);
+      }
+      hide_mouse();
+      return 1;
+    }
+    else if (!other)
+      return 0;
+  }
+
+  if (term.modify_other_keys) {
+    // xterm modifyOtherKeys mode (sends CSI u codes)
+    keyboard[VK_CONTROL] = keyboard[VK_LCONTROL] = keyboard[VK_RCONTROL] = 0;
+    wchar wc;
+    int len = ToUnicode(key, scancode, keyboard, &wc, 1, 0);
+    if (!len)
+      return 0;
+    mod_other(wc);
+    if (len < 0) {
+      // Nasty hack to clear dead key state, a la Michael Kaplan.
+      memset(keyboard, 0, sizeof keyboard);
+      scancode = MapVirtualKey(VK_DECIMAL, 0);
+      while (ToUnicode(VK_DECIMAL, scancode, keyboard, &wc, 1, 0) < 0);
+    }
+  }
+  else {
+    // Treat remaining digits and symbols as apppad combinations
+    char code;
+    switch (key) {
+      when '0' ... '9': code = key;
+      when VK_OEM_PLUS ... VK_OEM_PERIOD: code = key - VK_OEM_PLUS + '+';
+      otherwise: return 0;
+    }
+    mod_ss3(code - '0' + 'p');
   }
   
-  // F keys.
-  if (VK_F5 <= key && key <= VK_F24) {
-    str("\e[");
-    code = 
-      (uchar[]){
-        15, 17, 18, 19, 20, 21, 23, 24,
-        25, 26, 28, 29, 31, 32, 33, 34,
-        36, 37, 38, 39
-      }[key - VK_F5];
-    ch('0' + code / 10); ch('0' + code % 10);
-    if (mods) { ch(';'); ch('1' + mods); }
-    ch('~');
-    goto send;
-  }
-  
-  return 0;
-    
   // Send char buffer.
-  send: {
-    term_cancel_paste();
-    term_seen_key_event();
-    do
-      ldisc_send(buf, buf_len, 1);
-    while (--count);
-    hide_mouse();
-    return 1;
-  }
+  send:
+
+  term_cancel_paste();
+  term_seen_key_event();
+  do
+    ldisc_send(buf, buf_len, 1);
+  while (--count);
+  hide_mouse();
+  return 1;
 }
 
 bool 
