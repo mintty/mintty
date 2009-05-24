@@ -243,6 +243,10 @@ win_mouse_wheel(WPARAM wp, LPARAM lp)
 bool 
 win_key_down(WPARAM wp, LPARAM lp)
 {
+  hide_mouse();
+  term_cancel_paste();
+  term_seen_key_event();
+
   uint key = wp;
   uint scancode = HIWORD(lp) & (KF_EXTENDED | 0xFF);
   bool extended = HIWORD(lp) & KF_EXTENDED;
@@ -281,50 +285,56 @@ win_key_down(WPARAM wp, LPARAM lp)
   else if (alt_state != ALT_NONE)
     alt_state = ALT_CANCELLED;
   
+  // Context and window menus
+  if (key == VK_APPS) {
+    if (shift)
+      SendMessage(wnd, WM_SYSCOMMAND, SC_KEYMENU, ' ');
+    else {
+      win_show_mouse();
+      POINT p;
+      GetCaretPos(&p);
+      ClientToScreen(wnd, &p);
+      TrackPopupMenu(
+        menu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
+        p.x, p.y, 0, wnd, null
+      );
+    }
+    return 1;
+  }
+
   // Window commands
-  if (alt && !ctrl && cfg.window_shortcuts) {
+  if (cfg.window_shortcuts && alt && !ctrl) {
     WPARAM cmd;
     switch (key) {
-      when VK_SPACE:  cmd = SC_KEYMENU;
+      when VK_SPACE: cmd = SC_KEYMENU;
       when VK_RETURN or VK_F11: cmd = IDM_FULLSCREEN;
-      when VK_F2:     cmd = IDM_DUPLICATE;
-      when VK_F4:     cmd = SC_CLOSE;
-      when VK_F10:    cmd = IDM_DEFSIZE;
+      when VK_F2: cmd = IDM_DUPLICATE;
+      when VK_F4: cmd = SC_CLOSE;
+      when VK_F10: cmd = IDM_DEFSIZE;
       otherwise: goto not_command;
     }
     SendMessage(wnd, WM_SYSCOMMAND, cmd, ' ');
     return 1;
+    not_command:;
   }
-  not_command:
   
-  // Context menu
-  if (key == VK_APPS) {
-    win_show_mouse();
-    POINT p;
-    GetCaretPos(&p);
-    ClientToScreen(wnd, &p);
-    TrackPopupMenu(
-      menu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
-      p.x, p.y, 0, wnd, null
-    );
+  // Font zooming
+  if (cfg.zoom_shortcuts && mods == CTRL && !term.modify_other_keys) {
+    int zoom;
+    switch (key) {
+      when VK_OEM_PLUS or VK_ADD:       zoom = 1;
+      when VK_OEM_MINUS or VK_SUBTRACT: zoom = -1;
+      when '0' or VK_NUMPAD0:           zoom = 0;
+      otherwise: goto not_zoom;
+    }
+    win_zoom_font(zoom);
     return 1;
+    not_zoom:;
   }
   
-  // Clipboard
-  if (key == VK_INSERT && cfg.edit_shortcuts) {
-    if (mods == CTRL) {
-      term_copy();
-      return 1;
-    }
-    else if (mods == SHIFT) {
-      win_paste();
-      return 1;
-    }
-  }
-
   // Scrollback
-  if (term.which_screen == 0 && mods && mods == (mod_keys)cfg.scroll_mod) { 
-    int scroll;
+  if (mods && mods == (mod_keys)cfg.scroll_mod && !term.which_screen) {
+    WPARAM scroll;
     switch (key) {
       when VK_HOME:  scroll = SB_TOP;
       when VK_END:   scroll = SB_BOTTOM;
@@ -336,238 +346,167 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     SendMessage(wnd, WM_VSCROLL, scroll, 0);
     return 1;
-  }
-  not_scroll:
-  
-  // Font zooming
-  if (mods == CTRL && cfg.zoom_shortcuts && !term.modify_other_keys) {
-    int zoom;
-    switch (key) {
-      when VK_OEM_PLUS or VK_ADD:       zoom = 1;
-      when VK_OEM_MINUS or VK_SUBTRACT: zoom = -1;
-      when '0' or VK_NUMPAD0:           zoom = 0;
-      otherwise: goto not_zoom;
-    }
-    win_zoom_font(zoom);
-    return 1;
-  }
-  not_zoom: ;
-  
-  // Keycode buffer.
-  char buf[12];
-  int  buf_len = 0;
-  
-  inline void ch(char c) { buf[buf_len++] = c; }
-  void str(char *s) { while (*s) ch(*s++); }
-  inline void esc(void) { ch('\e'); }
-  inline void esc_if(bool b) { if (b) esc(); }  
-  inline char C(char c) { return c & 0x1F; }
-  void ss3(char c) { esc(); ch('O'); ch(c); }
-  void csi(char c) { esc(); ch('['); ch(c); }
-  void mod_csi(char c) { str("\e[1;"); ch(mods + '1'); ch(c); }
-  void mod_ss3(char c) { mods ? mod_csi(c) : ss3(c); }
-  void mod_other(wchar c) {
-    buf_len = snprintf(buf, sizeof(buf), "\e[%u;%cu", c, mods + '1');
+    not_scroll:;
   }
 
-  // Special keys.
-  {
-    switch (key) {
-      when VK_RETURN:
-        if (extended && term.app_keypad)
-          mod_ss3('M');
-        else if (term.modify_other_keys && (shift || ctrl))
-          mod_other('\r');
-        else if (!ctrl)
-          esc_if(alt),
-          term.newline_mode ? str("\r\n") : ch(shift ? '\n' : '\r');
-        else
-          esc_if(shift || alt), ch(C('^'));
-      when VK_BACK:
-        if (!ctrl)
-          esc_if(alt), ch(cfg.backspace_sends_del ? 0x7f : '\b');
-        else if (!term.modify_other_keys)
-          esc_if(shift || alt), ch(cfg.backspace_sends_del ? C('_') : 0x7f);
-        else
-          mod_other(cfg.backspace_sends_del ? 0x7f : '\b');
-      when VK_TAB:
-        if (!ctrl)
-          shift ? csi('Z') : ch('\t');
-        else if (!term.modify_other_keys)
-          mod_csi('Z');
-        else
-          mod_other('\t');
-      when VK_ESCAPE:
-        ch(shift ? C(']') : cfg.escape_sends_fs ? C('\\') : C('['));
-      when VK_PAUSE or VK_CANCEL:
-        if (!ctrl && !alt)
-          esc_if(shift), ch(key == VK_PAUSE ? C(']') : C('\\'));
-        else
-          return 0;
-      otherwise: goto not_special;
-    }
-    goto send;
+  // Copy&paste
+  if (cfg.edit_shortcuts && key == VK_INSERT) {
+    if (mods == CTRL) { term_copy(); return 1; }
+    if (mods == SHIFT) { win_paste(); return 1; }
   }
-  not_special:;
-  
-  // Ctrl+space/letter combinations
-  if (ctrl && !alt && (key == ' ' || ('A' <= key && key <= 'Z'))) {
-    esc_if(alt || shift);
-    ch(C(key));
-    goto send;
-  }
-  
-  // PF keys.
-  if (VK_F1 <= key && key <= VK_F4) {
-    mod_ss3(key - VK_F1 + 'P');
-    goto send;
-  }
-  
-  // F keys.
-  if (VK_F5 <= key && key <= VK_F24) {
-    str("\e[");
-    char code = 
-      (uchar[]){
-        15, 17, 18, 19, 20, 21, 23, 24,
-        25, 26, 28, 29, 31, 32, 33, 34,
-        36, 37, 38, 39
-      }[key - VK_F5];
-    ch('0' + code / 10); ch('0' + code % 10);
-    if (mods) { ch(';'); ch('1' + mods); }
-    ch('~');
-    goto send;
-  }
-  
-  if (extended || !term.app_keypad || term.app_cursor_keys) {
-    // Cursor keys.
-    char code;
-    switch (key) {
-      when VK_UP:    code = 'A';
-      when VK_DOWN:  code = 'B';
-      when VK_RIGHT: code = 'C';
-      when VK_LEFT:  code = 'D';
-      when VK_CLEAR: code = 'E';
-      when VK_HOME:  code = 'H';
-      when VK_END:   code = 'F';
-      when VK_BROWSER_BACK: code = 'J';
-      when VK_BROWSER_FORWARD: code = 'K';
-      otherwise: goto not_cursor;
-    }
-    mods ? mod_csi(code) : term.app_cursor_keys ? ss3(code) : csi(code);
-    goto send;
-    not_cursor:
-    
-    // Editing keys.
-    switch (key) {
-      when VK_PRIOR:  code = '5';
-      when VK_NEXT:   code = '6';
-      when VK_INSERT: code = '2';
-      when VK_DELETE: code = '3';
-      otherwise: goto not_edit;
-    }
-    esc(); ch('['); ch(code);
-    if (mods) { ch(';'); ch('1' + mods); }
-    ch('~');
-    goto send;
-    not_edit:;
-  }
-    
-  // Application keypad codes
-  {
-    char code;
-    switch (key) {
-      when VK_DELETE: code = '.';
-      when VK_INSERT: code = '0';
-      when VK_END:    code = '1';
-      when VK_DOWN:   code = '2';
-      when VK_NEXT:   code = '3';
-      when VK_LEFT:   code = '4';
-      when VK_CLEAR:  code = '5';
-      when VK_RIGHT:  code = '6';
-      when VK_HOME:   code = '7';
-      when VK_UP:     code = '8';
-      when VK_PRIOR:  code = '9';
-      when VK_NUMPAD0  ... VK_NUMPAD9: 
-        if (!mods)
-          goto not_app_keypad;
-        code = key - VK_NUMPAD0  + '0';
-      when VK_MULTIPLY ... VK_DIVIDE:
-        if (!mods && !term.app_keypad)
-          goto not_app_keypad;
-        code = key - VK_MULTIPLY + '*';
-      otherwise: goto not_app_keypad;
-    }
-    mod_ss3(code - '0' + 'p');
-    goto send;
-  }
-  not_app_keypad:;
 
-  uchar keyboard[256];  
-  GetKeyboardState(keyboard);
-  
-  bool other =
-    ('0' <= key && key <= '9') || (VK_OEM_1 <= key && key <= VK_OEM_102);
-
-  if (!(term.modify_other_keys && other && ctrl && !alt)) {
-    // Try keyboard layout.
+  // Keyboard layout
+  uchar kbd[256];  
+  bool layout(void) {
     // ToUnicode produces up to four UTF-16 code units per keypress according
     // to an experiment with Keyboard Layout Creator 1.4. (MSDN doesn't say.)
-    wchar wbuf[4];
-    int wbuf_len = ToUnicode(key, scancode, keyboard, wbuf, 4, 0);
-    if (wbuf_len != 0) {
+    GetKeyboardState(kbd);
+    wchar buf[4];
+    int len = ToUnicode(key, scancode, kbd, buf, 4, 0);
+    if (len) {
       // Got normal key or dead key.
       term_cancel_paste();
       term_seen_key_event();
-      if (wbuf_len > 0) {
+      if (len > 0) {
         bool meta = alt && !ctrl;
         do {
           if (meta)
             ldisc_send("\e", 1, 1);
-          luni_send(wbuf, wbuf_len, 1);
+          luni_send(buf, len, 1);
         } while (--count);
       }
       hide_mouse();
-      return 1;
     }
-    else if (!other)
-      return 0;
+    return len;
   }
 
-  if (term.modify_other_keys) {
-    // xterm modifyOtherKeys mode (sends CSI u codes)
-    keyboard[VK_CONTROL] = keyboard[VK_LCONTROL] = keyboard[VK_RCONTROL] = 0;
-    wchar wc;
-    int len = ToUnicode(key, scancode, keyboard, &wc, 1, 0);
-    if (!len)
-      return 0;
-    mod_other(wc);
-    if (len < 0) {
-      // Nasty hack to clear dead key state, a la Michael Kaplan.
-      memset(keyboard, 0, sizeof keyboard);
-      scancode = MapVirtualKey(VK_DECIMAL, 0);
-      while (ToUnicode(VK_DECIMAL, scancode, keyboard, &wc, 1, 0) < 0);
-    }
+  // Keycode buffer.
+  char buf[12];
+  int  len = 0;
+  
+  inline void ch(char c) { buf[len++] = c; }
+  inline void esc_if(bool b) { if (b) ch('\e'); }  
+  inline char C(char c) { return c & 0x1F; }
+  void ss3(char c) { ch('\e'); ch('O'); ch(c); }
+  void csi(char c) { ch('\e'); ch('['); ch(c); }
+  void mod_csi(char c) { len = sprintf(buf, "\e[1;%c%c", mods + '1', c); }
+  void mod_ss3(char c) { mods ? mod_csi(c) : ss3(c); }
+  void tilde_code(uchar code) {
+    len = sprintf(buf, mods ? "\e[%i;%c~" : "\e[%i~", code, mods + '1');
   }
-  else {
-    // Treat remaining digits and symbols as apppad combinations
-    char code;
-    switch (key) {
-      when '0' ... '9': code = key;
-      when VK_OEM_PLUS ... VK_OEM_PERIOD: code = key - VK_OEM_PLUS + '+';
-      otherwise: return 0;
-    }
-    mod_ss3(code - '0' + 'p');
+  void other_code(wchar c) {
+    len = sprintf(buf, "\e[%u;%cu", c, mods + '1');
+  }
+  void app_pad_key(char c) { mod_ss3(c - '0' + 'p'); }
+  bool app_pad_active(void) {
+    return !extended && term.app_keypad && !term.app_cursor_keys;
+  }
+  void edit_key(uchar code, char app_pad_code) {
+    if (app_pad_active())
+      app_pad_key(app_pad_code);
+    else
+      tilde_code(code);
+  }
+  void cursor_key(char code, char app_pad_code) {
+    if (app_pad_active())
+      app_pad_key(app_pad_code);
+    else
+      mods ? mod_csi(code) : term.app_cursor_keys ? ss3(code) : csi(code);
   }
   
-  // Send char buffer.
-  send:
-
-  term_cancel_paste();
-  term_seen_key_event();
-  do
-    ldisc_send(buf, buf_len, 1);
-  while (--count);
-  hide_mouse();
+  switch(key) {
+    when VK_RETURN:
+      if (extended && term.app_keypad)
+        mod_ss3('M');
+      else if (term.modify_other_keys && (shift || ctrl))
+        other_code('\r');
+      else if (!ctrl)
+        esc_if(alt),
+        term.newline_mode ? ch('\r'), ch('\n') : ch(shift ? '\n' : '\r');
+      else
+        esc_if(shift || alt), ch(C('^'));
+    when VK_BACK:
+      if (!ctrl)
+        esc_if(alt), ch(cfg.backspace_sends_del ? 0x7f : '\b');
+      else if (!term.modify_other_keys)
+        esc_if(shift || alt), ch(cfg.backspace_sends_del ? C('_') : 0x7f);
+      else
+        other_code(cfg.backspace_sends_del ? 0x7f : '\b');
+    when VK_TAB:
+      if (!ctrl)
+        shift ? csi('Z') : ch('\t');
+      else if (!term.modify_other_keys)
+        mod_csi('Z');
+      else
+        other_code('\t');
+    when VK_ESCAPE:
+      if (ctrl || alt)
+        return 0;
+      ch(shift ? C(']') : cfg.escape_sends_fs ? C('\\') : C('['));
+    when VK_PAUSE or VK_CANCEL:
+      if (ctrl || alt)
+        return 0;
+      esc_if(shift), ch(key == VK_PAUSE ? C(']') : C('\\'));
+    when VK_F1 ... VK_F4:
+      mod_ss3(key - VK_F1 + 'P');
+    when VK_F5 ... VK_F24:
+      tilde_code(
+        (uchar[]){
+          15, 17, 18, 19, 20, 21, 23, 24, 25, 26,
+          28, 29, 31, 32, 33, 34, 36, 37, 38, 39
+        }[key - VK_F5]
+      );
+    when VK_INSERT: edit_key(2, '0');
+    when VK_DELETE: edit_key(3, '.');
+    when VK_PRIOR:  edit_key(5, '9');
+    when VK_NEXT:   edit_key(6, '3');
+    when VK_HOME:   cursor_key('H', '7');
+    when VK_END:    cursor_key('F', '1');
+    when VK_UP:     cursor_key('A', '8');
+    when VK_DOWN:   cursor_key('B', '2');
+    when VK_LEFT:   cursor_key('D', '4');
+    when VK_RIGHT:  cursor_key('C', '6');
+    when VK_CLEAR:  cursor_key('E', '5');
+    when VK_MULTIPLY ... VK_DIVIDE:
+      if (mods || term.app_keypad || !layout())
+        app_pad_key(key - VK_MULTIPLY + '*');
+    when VK_NUMPAD0 ... VK_NUMPAD9:
+      if (mods || !layout())
+        app_pad_key(key - VK_NUMPAD0  + '0');
+    when 'A' ... 'Z' or ' ':
+      if ((ctrl && !alt) || !layout())
+        esc_if(shift || alt), ch(C(key));
+    otherwise:
+      if (!(ctrl && !alt && term.modify_other_keys) && layout());
+      else if (term.modify_other_keys) {
+        // xterm modifyOtherKeys mode (sends CSI u codes)
+        kbd[VK_CONTROL] = kbd[VK_LCONTROL] = kbd[VK_RCONTROL] = 0;
+        wchar wc;
+        int len = ToUnicode(key, scancode, kbd, &wc, 1, 0);
+        if (!len)
+          return 0;
+        other_code(wc);
+        if (len < 0) {
+          // Ugly hack to clear dead key state, a la Michael Kaplan.
+          memset(kbd, 0, sizeof kbd);
+          scancode = MapVirtualKey(VK_DECIMAL, 0);
+          while (ToUnicode(VK_DECIMAL, scancode, kbd, &wc, 1, 0) < 0);
+        }
+      }
+      else {
+        // Treat remaining digits and symbols as apppad combinations
+        switch (key) {
+          when '0' ... '9': app_pad_key(key);
+          when VK_OEM_PLUS ... VK_OEM_PERIOD:
+            app_pad_key(key - VK_OEM_PLUS + '+');
+          otherwise: return 0;
+        }
+      }
+  }
+  
+  if (len)
+    do ldisc_send(buf, len, 1); while (--count);
+  
   return 1;
 }
 
