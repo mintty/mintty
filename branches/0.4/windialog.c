@@ -309,6 +309,9 @@ HWND config_wnd;
 void
 win_open_config(void)
 {
+  if (config_wnd)
+    return;
+  
   InitCommonControls();
 
   RegisterClass(&(WNDCLASS){

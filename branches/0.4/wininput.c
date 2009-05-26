@@ -23,40 +23,38 @@ win_update_menus(void)
     sysmenu, SC_CLOSE, MF_BYCOMMAND | MF_STRING, SC_CLOSE,
     cfg.window_shortcuts ? "&Close\tAlt+F4" : "&Close"
   ); 
+  uint copy_enabled = term.selected ? MF_ENABLED : MF_GRAYED;
   ModifyMenu(
-    menu, IDM_COPY, MF_BYCOMMAND | MF_STRING, IDM_COPY,
+    menu, IDM_COPY, MF_BYCOMMAND | MF_STRING | copy_enabled, IDM_COPY,
     cfg.edit_shortcuts ? "&Copy\tCtrl+Ins" : "&Copy"
   );
+  uint paste_enabled =
+    IsClipboardFormatAvailable(CF_TEXT) || 
+      IsClipboardFormatAvailable(CF_UNICODETEXT) ||
+      IsClipboardFormatAvailable(CF_HDROP)
+      ? MF_ENABLED : MF_GRAYED;
   ModifyMenu(
-    menu, IDM_PASTE, MF_BYCOMMAND | MF_STRING, IDM_PASTE,
+    menu, IDM_PASTE, MF_BYCOMMAND | MF_STRING | paste_enabled, IDM_PASTE,
     cfg.edit_shortcuts ? "&Paste\tShift+Ins" : "&Paste"
   );
+  uint defsize_enabled =
+    IsZoomed(wnd) || term.cols != cfg.cols || term.rows != cfg.rows
+    ? MF_ENABLED : MF_GRAYED;
   ModifyMenu(
-    menu, IDM_DEFSIZE, MF_BYCOMMAND | MF_STRING, IDM_DEFSIZE,
+    menu, IDM_DEFSIZE, MF_BYCOMMAND | MF_STRING | defsize_enabled, IDM_DEFSIZE,
     cfg.window_shortcuts ? "&Default size\tAlt+F10" : "&Default size"
   );
+  uint fullscreen_checked =  
+    GetWindowLongPtr(wnd, GWL_STYLE) & WS_CAPTION
+    ? MF_UNCHECKED : MF_CHECKED;
   ModifyMenu(
-    menu, IDM_FULLSCREEN, MF_BYCOMMAND | MF_STRING, IDM_FULLSCREEN,
+    menu, IDM_FULLSCREEN,
+    MF_BYCOMMAND | MF_STRING | fullscreen_checked, IDM_FULLSCREEN,
     cfg.window_shortcuts ? "&Fullscreen\tAlt+F11" : "&Fullscreen"
   );
-  EnableMenuItem(menu, IDM_COPY, term.selected ? MF_ENABLED : MF_GRAYED);
-  EnableMenuItem(
-    menu, IDM_PASTE,
-    IsClipboardFormatAvailable(CF_TEXT) || 
-    IsClipboardFormatAvailable(CF_UNICODETEXT) ||
-    IsClipboardFormatAvailable(CF_HDROP)
-    ? MF_ENABLED : MF_GRAYED
-  );
-  CheckMenuItem(
-    menu, IDM_FULLSCREEN,
-    GetWindowLongPtr(wnd, GWL_STYLE) & WS_CAPTION
-    ? MF_UNCHECKED : MF_CHECKED
-  );
-  EnableMenuItem(
-    menu, IDM_DEFSIZE, 
-    IsZoomed(wnd) || term.cols != cfg.cols || term.rows != cfg.rows
-    ? MF_ENABLED : MF_GRAYED
-  );
+  uint options_enabled = config_wnd ? MF_GRAYED : MF_ENABLED;
+  EnableMenuItem(menu, IDM_OPTIONS, options_enabled);
+  EnableMenuItem(sysmenu, IDM_OPTIONS, options_enabled);
 }
 
 void
