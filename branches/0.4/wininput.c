@@ -385,12 +385,13 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
 
   // Keyboard layout
-  uchar kbd[256];  
+  uchar kbd[256];
+  int translate_kbd(void) { 
+    return ToUnicode(key, scancode, kbd, wbuf, sizeof wbuf, 0);
+  }
   bool layout(void) {
-    // ToUnicode produces up to four UTF-16 code units per keypress according
-    // to an experiment with Keyboard Layout Creator 1.4. (MSDN doesn't say.)
     GetKeyboardState(kbd);
-    wlen = ToUnicode(key, scancode, kbd, wbuf, sizeof wbuf, 0);
+    wlen = translate_kbd();
     if (!wlen)
       return 0;
     if (wlen > 0)
@@ -399,7 +400,6 @@ win_key_down(WPARAM wp, LPARAM lp)
       wlen = 0;
     return 1;
   }
-  
   void clear_dead_key(void) {
     // Ugly hack to clear dead key state, a la Michael Kaplan.
     memset(kbd, 0, sizeof kbd);
@@ -469,38 +469,40 @@ win_key_down(WPARAM wp, LPARAM lp)
       if ((ctrl && !alt) || !layout())
         esc_if(shift || alt), ch(C(key));
     otherwise:
-      if (!(ctrl && !alt && term.modify_other_keys) && layout());
-      else if (term.modify_other_keys) {
+      if (!(ctrl && !alt && term.modify_other_keys) && layout())
+        break;
+      if (term.modify_other_keys) {
         // xterm modifyOtherKeys mode (sends CSI u codes)
         kbd[VK_CONTROL] = kbd[VK_MENU] = 0;
-        wlen = ToUnicode(key, scancode, kbd, wbuf, sizeof wbuf, 0);
+        wlen = translate_kbd();
         if (!wlen)
           return 0;
         other_code(*wbuf);
         if (wlen < 0)
           clear_dead_key();
         wlen = 0;
+        break;
       }
-      else {
+      if (alt && ctrl) {
+        // Try the layout without Alt.
         kbd[VK_MENU] = 0;
-        wlen = ToUnicode(key, scancode, kbd, wbuf, sizeof wbuf, 0);
+        wlen = translate_kbd();
         if (wlen) {
           if (wlen < 0) {
             wlen = 1;
             clear_dead_key();
           }
           ch('\e');
+          break;
         }
-        else {
-          // Treat remaining digits and symbols as apppad combinations
-          switch (key) {
-            when '0' ... '9': app_pad_key(key);
-            when VK_OEM_PLUS ... VK_OEM_PERIOD:
-              app_pad_key(key - VK_OEM_PLUS + '+');
-            when VK_OEM_1 or VK_OEM_2 ... VK_OEM_102: return 1; 
-            otherwise: return 0;
-          }
-        }
+      }
+      // Treat remaining digits and symbols as apppad combinations
+      switch (key) {
+        when '0' ... '9': app_pad_key(key);
+        when VK_OEM_PLUS ... VK_OEM_PERIOD:
+          app_pad_key(key - VK_OEM_PLUS + '+');
+        when VK_OEM_1 or VK_OEM_2 ... VK_OEM_102: return 1; 
+        otherwise: return 0;
       }
   }
   
