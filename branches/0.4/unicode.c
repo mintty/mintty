@@ -768,7 +768,8 @@ wc_to_mb(int codepage, int flags, const wchar * wcstr, int wclen,
 {
   char *p;
   int i;
-  if (codepage == ucsdata.codepage && ucsdata.uni_tbl) {
+  if (codepage != unicode_codepage &&
+      codepage == ucsdata.codepage && ucsdata.uni_tbl) {
    /* Do this by array lookup if we can. */
     if (wclen < 0) {
       for (wclen = 0; wcstr[wclen++];); /* will include the NUL */

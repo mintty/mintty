@@ -204,36 +204,10 @@ ldisc_send(const char *buf, int len, int interactive)
 void
 luni_send(const wchar *wbuf, int wlen, int interactive)
 {
-  char buf[wlen * 6], *p = buf;
-
-  if (term_in_utf()) {
-   /* UTF is a simple algorithm */
-    for (int i = 0; i < wlen; i++) {
-      wchar wc = wbuf[i];
-     /* We only deal with 16-bit wide chars */
-      if ((wc & 0xF800) == 0xD800)
-        wc = '.';
-
-      if (wc < 0x80) {
-        *p++ = wc;
-      }
-      else if (wc < 0x800) {
-        *p++ = 0xC0 | (wc >> 6);
-        *p++ = 0x80 | (wc & 0x3F);
-      }
-      else {
-        *p++ = 0xE0 | (wc >> 12);
-        *p++ = 0x80 | ((wc >> 6) & 0x3F);
-        *p++ = 0x80 | (wc & 0x3F);
-      }
-    }
-  }
-  else {
-    int rv = wc_to_mb(ucsdata.codepage, 0, wbuf, wlen, buf, sizeof buf);
-    if (rv >= 0)
-      p += rv;
-  }
-
-  if (p > buf)
-    ldisc_send(buf, p - buf, interactive);
+  char buf[wlen * 6];
+  int cp = term.utf ? unicode_codepage : ucsdata.codepage;
+  int len = wc_to_mb(cp, 0, wbuf, wlen, buf, sizeof buf);
+  printf("cp=%i wlen=%i, len=%i, *buf=%i, *buf=%i\n", cp, wlen, len, *wbuf, *buf);
+  if (len > 0)
+    ldisc_send(buf, len, interactive);
 }
