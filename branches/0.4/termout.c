@@ -813,7 +813,7 @@ term_write(const char *data, int len)
           * upset some weird software.
           */
           compatibility(ANSIMIN);
-          lpage_send(ansi_codepage, answerback, sizeof(answerback), 0);
+          ldisc_send(answerback, sizeof(answerback), 0);
         when '\a':   /* BEL: Bell */
           out_bell();
         when '\b':     /* BS: Back space */

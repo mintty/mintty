@@ -631,10 +631,10 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       if (win_key_up(wp, lp))
         return 0;
     when WM_CHAR or WM_SYSCHAR:
-      { // TODO: handle wchar and WM_UNICHAR
-        char c = (uchar) wp;
+      {
+        wchar wc = wp;
         term_seen_key_event();
-        lpage_send(CP_ACP, &c, 1, 1);
+        luni_send(&wc, 1, 1);
         return 0;
       }
     when WM_INPUTLANGCHANGE:

@@ -202,70 +202,38 @@ ldisc_send(const char *buf, int len, int interactive)
 }
 
 void
-lpage_send(int codepage, const char *buf, int len, int interactive)
+luni_send(const wchar *wbuf, int wlen, int interactive)
 {
-  wchar *widebuffer = 0;
-  int widesize = 0;
-  int wclen;
-
-  if (codepage < 0) {
-    ldisc_send(buf, len, interactive);
-    return;
-  }
-
-  widesize = len * 2;
-  widebuffer = newn(wchar, widesize);
-
-  wclen = mb_to_wc(codepage, 0, buf, len, widebuffer, widesize);
-  luni_send(widebuffer, wclen, interactive);
-
-  free(widebuffer);
-}
-
-void
-luni_send(const wchar * buf, int len, int interactive)
-{
-  int ratio = (term_in_utf())? 3 : 1;
-  char *linebuffer;
-  int linesize;
-  int i;
-  char *p;
-
-  linesize = len * ratio * 2;
-  linebuffer = newn(char, linesize);
+  char buf[wlen * 6], *p = buf;
 
   if (term_in_utf()) {
    /* UTF is a simple algorithm */
-    for (p = linebuffer, i = 0; i < len; i++) {
-      wchar ch = buf[i];
+    for (int i = 0; i < wlen; i++) {
+      wchar wc = wbuf[i];
      /* We only deal with 16-bit wide chars */
-      if ((ch & 0xF800) == 0xD800)
-        ch = '.';
+      if ((wc & 0xF800) == 0xD800)
+        wc = '.';
 
-      if (ch < 0x80) {
-        *p++ = (char) (ch);
+      if (wc < 0x80) {
+        *p++ = wc;
       }
-      else if (ch < 0x800) {
-        *p++ = (0xC0 | (ch >> 6));
-        *p++ = (0x80 | (ch & 0x3F));
+      else if (wc < 0x800) {
+        *p++ = 0xC0 | (wc >> 6);
+        *p++ = 0x80 | (wc & 0x3F);
       }
       else {
-        *p++ = (0xE0 | (ch >> 12));
-        *p++ = (0x80 | ((ch >> 6) & 0x3F));
-        *p++ = (0x80 | (ch & 0x3F));
+        *p++ = 0xE0 | (wc >> 12);
+        *p++ = 0x80 | ((wc >> 6) & 0x3F);
+        *p++ = 0x80 | (wc & 0x3F);
       }
     }
   }
   else {
-    int rv;
-    rv = wc_to_mb(ucsdata.codepage, 0, buf, len, linebuffer, linesize);
+    int rv = wc_to_mb(ucsdata.codepage, 0, wbuf, wlen, buf, sizeof buf);
     if (rv >= 0)
-      p = linebuffer + rv;
-    else
-      p = linebuffer;
+      p += rv;
   }
-  if (p > linebuffer)
-    ldisc_send(linebuffer, p - linebuffer, interactive);
 
-  free(linebuffer);
+  if (p > buf)
+    ldisc_send(buf, p - buf, interactive);
 }
