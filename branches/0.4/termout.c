@@ -813,7 +813,7 @@ term_write(const char *data, int len)
           * upset some weird software.
           */
           compatibility(ANSIMIN);
-          ldisc_send(answerback, sizeof(answerback), 0);
+          ldisc_send(answerback, sizeof(answerback) - 1, 0);
         when '\a':   /* BEL: Bell */
           out_bell();
         when '\b':     /* BS: Back space */
@@ -917,7 +917,7 @@ term_write(const char *data, int len)
               seen_disp_event();
             when 'Z':  /* DECID: terminal type query */
               compatibility(VT100);
-              ldisc_send(primary_da, lengthof(primary_da), 0);
+              ldisc_send(primary_da, sizeof primary_da - 1, 0);
             when 'c':  /* RIS: restore power-on settings */
               compatibility(VT100);
               term_reset();
@@ -1021,7 +1021,7 @@ term_write(const char *data, int len)
               when ANSI('c', '>'):     /* DA: report version */
                 compatibility(OTHER);
                 /* Terminal type 77 (ASCII 'M' for MinTTY) */
-                ldisc_send(secondary_da, lengthof(secondary_da), 0);
+                ldisc_send(secondary_da, sizeof secondary_da - 1, 0);
               when 'a':        /* HPR: move right N cols */
                 compatibility(ANSI);
                 move(term.curs.x + def_arg0, term.curs.y, 1);
@@ -1099,7 +1099,7 @@ term_write(const char *data, int len)
                 seen_disp_event();
               when 'c':        /* DA: terminal type query */
                 compatibility(VT100);
-                ldisc_send(primary_da, lengthof(primary_da), 0);
+                ldisc_send(primary_da, sizeof primary_da - 1, 0);
               when 'n':        /* DSR: cursor position query */
                 if (arg0 == 6) {
                   char buf[32];
@@ -1429,7 +1429,7 @@ term_write(const char *data, int len)
                 if (i == 0 || i == 1) {
                   char buf[] = "\e[2;1;1;112;112;1;0x";
                   buf[2] += i;
-                  ldisc_send(buf, lengthof(buf), 0);
+                  ldisc_send(buf, sizeof buf - 1, 0);
                 }
               }
               when 'Z': {       /* CBT */
