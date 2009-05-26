@@ -243,10 +243,6 @@ win_mouse_wheel(WPARAM wp, LPARAM lp)
 bool 
 win_key_down(WPARAM wp, LPARAM lp)
 {
-  hide_mouse();
-  term_cancel_paste();
-  term_seen_key_event();
-
   uint key = wp;
   uint scancode = HIWORD(lp) & (KF_EXTENDED | 0xFF);
   bool extended = HIWORD(lp) & KF_EXTENDED;
@@ -355,38 +351,14 @@ win_key_down(WPARAM wp, LPARAM lp)
     if (mods == SHIFT) { win_paste(); return 1; }
   }
 
-  // Keyboard layout
-  uchar kbd[256];  
-  bool layout(void) {
-    // ToUnicode produces up to four UTF-16 code units per keypress according
-    // to an experiment with Keyboard Layout Creator 1.4. (MSDN doesn't say.)
-    GetKeyboardState(kbd);
-    wchar buf[4];
-    int len = ToUnicode(key, scancode, kbd, buf, 4, 0);
-    if (len) {
-      // Got normal key or dead key.
-      term_cancel_paste();
-      term_seen_key_event();
-      if (len > 0) {
-        bool meta = alt && !ctrl;
-        do {
-          if (meta)
-            ldisc_send("\e", 1, 1);
-          luni_send(buf, len, 1);
-        } while (--count);
-      }
-      hide_mouse();
-    }
-    return len;
-  }
-
-  // Keycode buffer.
+  // Keycode buffers
   char buf[12];
-  int  len = 0;
-  
-  inline void ch(char c) { buf[len++] = c; }
-  inline void esc_if(bool b) { if (b) ch('\e'); }  
+  wchar wbuf[8];
+  int len = 0, wlen = 0;
+
   inline char C(char c) { return c & 0x1F; }
+  inline void ch(char c) { buf[len++] = c; }
+  inline void esc_if(bool b) { if (b) ch('\e'); }
   void ss3(char c) { ch('\e'); ch('O'); ch(c); }
   void csi(char c) { ch('\e'); ch('['); ch(c); }
   void mod_csi(char c) { len = sprintf(buf, "\e[1;%c%c", mods + '1', c); }
@@ -413,7 +385,23 @@ win_key_down(WPARAM wp, LPARAM lp)
     else
       mods ? mod_csi(code) : term.app_cursor_keys ? ss3(code) : csi(code);
   }
-  
+
+  // Keyboard layout
+  uchar kbd[256];  
+  bool layout(void) {
+    // ToUnicode produces up to four UTF-16 code units per keypress according
+    // to an experiment with Keyboard Layout Creator 1.4. (MSDN doesn't say.)
+    GetKeyboardState(kbd);
+    wlen = ToUnicode(key, scancode, kbd, wbuf, sizeof wbuf, 0);
+    if (!wlen)
+      return 0;
+    if (wlen > 0)
+      esc_if(alt && !ctrl);
+    else
+      wlen = 0;
+    return 1;
+  }
+
   switch(key) {
     when VK_RETURN:
       if (extended && term.app_keypad)
@@ -480,18 +468,18 @@ win_key_down(WPARAM wp, LPARAM lp)
       if (!(ctrl && !alt && term.modify_other_keys) && layout());
       else if (term.modify_other_keys) {
         // xterm modifyOtherKeys mode (sends CSI u codes)
-        kbd[VK_CONTROL] = kbd[VK_LCONTROL] = kbd[VK_RCONTROL] = 0;
-        wchar wc;
-        int len = ToUnicode(key, scancode, kbd, &wc, 1, 0);
-        if (!len)
+        kbd[VK_CONTROL] = 0;
+        wlen = ToUnicode(key, scancode, kbd, wbuf, sizeof wbuf, 0);
+        if (!wlen)
           return 0;
-        other_code(wc);
-        if (len < 0) {
+        other_code(*wbuf);
+        if (wlen < 0) {
           // Ugly hack to clear dead key state, a la Michael Kaplan.
           memset(kbd, 0, sizeof kbd);
           scancode = MapVirtualKey(VK_DECIMAL, 0);
-          while (ToUnicode(VK_DECIMAL, scancode, kbd, &wc, 1, 0) < 0);
+          while (ToUnicode(VK_DECIMAL, scancode, kbd, wbuf, 1, 0) < 0);
         }
+        wlen = 0;
       }
       else {
         // Treat remaining digits and symbols as apppad combinations
@@ -504,8 +492,14 @@ win_key_down(WPARAM wp, LPARAM lp)
       }
   }
   
-  if (len)
-    do ldisc_send(buf, len, 1); while (--count);
+  hide_mouse();
+  term_cancel_paste();
+  term_seen_key_event();
+  
+  do {
+    if (len) ldisc_send(buf, len, 1);
+    if (wlen) luni_send(wbuf, wlen, 1);
+  } while (--count);
   
   return 1;
 }
