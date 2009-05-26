@@ -207,7 +207,6 @@ luni_send(const wchar *wbuf, int wlen, int interactive)
   char buf[wlen * 6];
   int cp = term.utf ? unicode_codepage : ucsdata.codepage;
   int len = wc_to_mb(cp, 0, wbuf, wlen, buf, sizeof buf);
-  printf("cp=%i wlen=%i, len=%i, *buf=%i, *buf=%i\n", cp, wlen, len, *wbuf, *buf);
   if (len > 0)
     ldisc_send(buf, len, interactive);
 }
