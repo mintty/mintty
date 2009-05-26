@@ -370,17 +370,17 @@ win_key_down(WPARAM wp, LPARAM lp)
     len = sprintf(buf, "\e[%u;%cu", c, mods + '1');
   }
   void app_pad_key(char c) { mod_ss3(c - '0' + 'p'); }
-  bool app_pad_active(void) {
-    return !extended && term.app_keypad && !term.app_cursor_keys;
+  bool is_app_pad_key(void) {
+    return !extended && term.app_keypad != term.app_cursor_keys;
   }
   void edit_key(uchar code, char app_pad_code) {
-    if (app_pad_active())
+    if (is_app_pad_key())
       app_pad_key(app_pad_code);
     else
       tilde_code(code);
   }
   void cursor_key(char code, char app_pad_code) {
-    if (app_pad_active())
+    if (is_app_pad_key())
       app_pad_key(app_pad_code);
     else
       mods ? mod_csi(code) : term.app_cursor_keys ? ss3(code) : csi(code);
@@ -423,10 +423,8 @@ win_key_down(WPARAM wp, LPARAM lp)
     when VK_TAB:
       if (!ctrl)
         shift ? csi('Z') : ch('\t');
-      else if (!term.modify_other_keys)
-        mod_csi('Z');
       else
-        other_code('\t');
+        term.modify_other_keys ? other_code('\t') : mod_csi('Z');
     when VK_ESCAPE:
       if (ctrl || alt)
         return 0;
