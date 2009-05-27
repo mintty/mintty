@@ -64,6 +64,10 @@ $(dir).pdf: docs/$(name).1.pdf
 clean:
 	rm -f *.d *.o *.exe *.zip *.tgz *.stackdump *.pdf docs/*.pdf
 
-.PHONY: all src bin src clean
+.PHONY: all src bin src doc clean
 
+ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(MAKECMDGOALS),doc)
 include $(deps)
+endif
+endif
