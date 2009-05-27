@@ -386,12 +386,9 @@ win_key_down(WPARAM wp, LPARAM lp)
 
   // Keyboard layout
   uchar kbd[256];
-  int translate_kbd(void) { 
-    return ToUnicode(key, scancode, kbd, wbuf, sizeof wbuf, 0);
-  }
+  GetKeyboardState(kbd);
   bool layout(void) {
-    GetKeyboardState(kbd);
-    wlen = translate_kbd();
+    wlen = ToUnicode(key, scancode, kbd, wbuf, lengthof(wbuf), 0);
     if (!wlen)
       return 0;
     if (wlen > 0)
@@ -400,12 +397,31 @@ win_key_down(WPARAM wp, LPARAM lp)
       wlen = 0;
     return 1;
   }
-  void clear_dead_key(void) {
-    // Ugly hack to clear dead key state, a la Michael Kaplan.
-    memset(kbd, 0, sizeof kbd);
-    uint scancode = MapVirtualKey(VK_DECIMAL, 0);
+  wchar undead_keycode(void) {
     wchar wc;
-    while (ToUnicode(VK_DECIMAL, scancode, kbd, &wc, 1, 0) < 0);
+    int len = ToUnicode(key, scancode, kbd, &wc, 1, 0);
+    if (len < 0) {
+      // Ugly hack to clear dead key state, a la Michael Kaplan.
+      uchar empty_kbd[256];
+      memset(empty_kbd, 0, sizeof empty_kbd);
+      uint scancode = MapVirtualKey(VK_DECIMAL, 0);
+      wchar dummy;
+      while (ToUnicode(VK_DECIMAL, scancode, empty_kbd, &dummy, 1, 0) < 0);
+      return wc;
+    }
+    return len == 1 ? wc : 0;
+  }
+  bool ctrl_key(void) {
+    wchar wc = undead_keycode();
+    char c;
+    switch (wc) {
+      when '@' or '[' ... '_': c = C(wc);
+      when '?': c = 0x7F;
+      otherwise: return 0;
+    }
+    esc_if(alt);
+    ch(c);
+    return 1;
   }
   
   switch(key) {
@@ -468,53 +484,40 @@ win_key_down(WPARAM wp, LPARAM lp)
     when 'A' ... 'Z' or ' ':
       if ((ctrl && !alt) || !layout())
         esc_if(shift || alt), ch(C(key));
-    otherwise:
-      if (!(ctrl && !alt && term.modify_other_keys) && layout())
+    when '0' ... '9' or VK_OEM_1 ... VK_OEM_102:
+      if (!(ctrl && !alt) && layout())
         break;
+      if (!ctrl)
+        return 0;
+      kbd[VK_CONTROL] = kbd[VK_MENU] = 0;
       if (term.modify_other_keys) {
         // xterm modifyOtherKeys mode (sends CSI u codes)
-        kbd[VK_CONTROL] = kbd[VK_MENU] = 0;
-        wlen = translate_kbd();
-        if (!wlen)
-          return 0;
-        other_code(*wbuf);
-        if (wlen < 0)
-          clear_dead_key();
-        wlen = 0;
+        wchar wc = undead_keycode();
+        if (wc)
+          other_code(wc);
         break;
       }
-      if (alt && ctrl) {
-        // Try the layout without Alt.
-        kbd[VK_MENU] = 0;
-        wlen = translate_kbd();
-        if (wlen) {
-          if (wlen < 0) {
-            wlen = 1;
-            clear_dead_key();
-          }
-          ch('\e');
-          break;
-        }
-      }
+      if (ctrl_key())
+        break;
+      kbd[VK_CONTROL] = kbd[VK_MENU] = 0x80;
+      if (ctrl_key())
+        break;
       // Treat remaining digits and symbols as apppad combinations
       switch (key) {
         when '0' ... '9': app_pad_key(key);
         when VK_OEM_PLUS ... VK_OEM_PERIOD:
           app_pad_key(key - VK_OEM_PLUS + '+');
-        when VK_OEM_1 or VK_OEM_2 ... VK_OEM_102: return 1; 
-        otherwise: return 0;
+        otherwise: return 1; 
       }
+    otherwise: return 0;
   }
-  
   hide_mouse();
   term_cancel_paste();
   term_seen_key_event();
-  
   do {
     if (len) ldisc_send(buf, len, 1);
     if (wlen) luni_send(wbuf, wlen, 1);
   } while (--count);
-  
   return 1;
 }
 
