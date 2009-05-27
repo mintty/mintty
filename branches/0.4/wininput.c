@@ -369,7 +369,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
   void app_pad_key(char c) { mod_ss3(c - '0' + 'p'); }
   bool is_app_pad_key(void) {
-    return !extended && term.app_keypad != term.app_cursor_keys;
+    return !extended && term.app_keypad && !term.app_cursor_keys;
   }
   void edit_key(uchar code, char app_pad_code) {
     if (is_app_pad_key())
