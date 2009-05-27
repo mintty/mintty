@@ -651,8 +651,13 @@ term_write(const char *data, int len)
 
    /* First see about all those translations. */
     if (term.state == TOPLEVEL) {
-      bool in_utf = term_in_utf();
-      if (in_utf) {
+      if (term.sco_acs && c >= ' ') {
+       /* SCO ACS (aka VGA graphics) */
+        if (term.sco_acs == 2)
+          c |= 0x80;
+        c |= CSET_SCOACS;
+      }
+      else if (term_in_utf()) {
         switch (term.utf_state) {
           when 0: {
             if (c < 0x80) {
@@ -742,38 +747,30 @@ term_write(const char *data, int len)
           }
         }
       }
-      if (c >= ' ' && (!in_utf || c <= 0xFF)) {
-        if (term.sco_acs) {
-         /* SCO ACS (aka VGA graphics) */
-          if (term.sco_acs == 2)
-            c |= 0x80;
-          c |= CSET_SCOACS;
-        }
-        else {
-          int cset_attr = term.cset_attr[term.cset]; 
-          switch (cset_attr) {
-           /* 
-            * Linedraw characters are different from 'ESC ( B'
-            * only for a small range. For ones outside that
-            * range, make sure we use the same font as well as
-            * the same encoding.
-            */
-            when CSET_LINEDRW:
-              if (ucsdata.unitab_ctrl[c] != 0xFF)
-                c = ucsdata.unitab_ctrl[c];
-              else
-                c |= CSET_LINEDRW;
-            when CSET_ASCII or CSET_GBCHR:
-              /* If UK-ASCII, make the '#' a LineDraw Pound */
-              if (c == '#' && cset_attr == CSET_GBCHR)
-                c = '}' | CSET_LINEDRW;
-              else if (ucsdata.unitab_ctrl[c] != 0xFF)
-                c = ucsdata.unitab_ctrl[c];
-              else
-                c |= CSET_ASCII;
-            when CSET_SCOACS:
-              c |= CSET_SCOACS;
-          }
+      if (' ' <= c && c <= 0x7F) {
+        int cset_attr = term.cset_attr[term.cset]; 
+        switch (cset_attr) {
+         /* 
+          * Linedraw characters are different from 'ESC ( B'
+          * only for a small range. For ones outside that
+          * range, make sure we use the same font as well as
+          * the same encoding.
+          */
+          when CSET_LINEDRW:
+            if (ucsdata.unitab_ctrl[c] != 0xFF)
+              c = ucsdata.unitab_ctrl[c];
+            else
+              c |= CSET_LINEDRW;
+          when CSET_ASCII or CSET_GBCHR:
+            /* If UK-ASCII, make the '#' a LineDraw Pound */
+            if (c == '#' && cset_attr == CSET_GBCHR)
+              c = '}' | CSET_LINEDRW;
+            else if (ucsdata.unitab_ctrl[c] != 0xFF)
+              c = ucsdata.unitab_ctrl[c];
+            else
+              c |= CSET_ASCII;
+          when CSET_SCOACS:
+            c |= CSET_SCOACS;
         }
       }
     }
