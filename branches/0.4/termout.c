@@ -1547,14 +1547,14 @@ term_write(const char *data, int len)
                 /* only the modifyOtherKeys setting is implemented */
                 compatibility(OTHER);
                 if (!nargs)
-                  term.modify_other_keys = false;
+                  term.modify_other_keys = 0;
                 else if (arg0 == 4)
-                  term.modify_other_keys = nargs > 1 && arg1;
+                  term.modify_other_keys = nargs > 1 ? arg1 : 0;
               when ANSI('n', '>'):     /* xterm: modifier key setting */
                 /* only the modifyOtherKeys setting is implemented */
                 compatibility(OTHER);
                 if (nargs == 1 && arg0 == 4)
-                  term.modify_other_keys = false;
+                  term.modify_other_keys = 0;
             }
           }
         }

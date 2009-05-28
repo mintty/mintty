@@ -397,6 +397,13 @@ win_key_down(WPARAM wp, LPARAM lp)
       wlen = 0;
     return 1;
   }
+  bool char_key(void) {
+    if (ctrl & !alt)
+      return false;
+    if (layout())
+      return true;
+    return !ctrl;
+  }
   wchar undead_keycode(void) {
     wchar wc;
     int len = ToUnicode(key, scancode, kbd, &wc, 1, 0);
@@ -410,6 +417,11 @@ win_key_down(WPARAM wp, LPARAM lp)
       return wc;
     }
     return len == 1 ? wc : 0;
+  }
+  void modify_other_key(void) {  
+    wchar wc = undead_keycode();
+    if (wc)
+      other_code(wc);
   }
   bool ctrl_key(void) {
     wchar wc = undead_keycode();
@@ -476,25 +488,26 @@ win_key_down(WPARAM wp, LPARAM lp)
     when VK_RIGHT:  cursor_key('C', '6');
     when VK_CLEAR:  cursor_key('E', '5');
     when VK_MULTIPLY ... VK_DIVIDE:
-      if (mods || term.app_keypad || !layout())
+      if (term.app_keypad || !layout())
         app_pad_key(key - VK_MULTIPLY + '*');
     when VK_NUMPAD0 ... VK_NUMPAD9:
-      if (mods || !layout())
+      if (!layout())
         app_pad_key(key - VK_NUMPAD0  + '0');
     when 'A' ... 'Z' or ' ':
-      if ((ctrl && !alt) || !layout())
+      if (char_key())
+        break;
+      if (term.modify_other_keys > 1) {
+        kbd[VK_CONTROL] = kbd[VK_MENU] = 0;
+        modify_other_key();
+      }
+      else
         esc_if(shift || alt), ch(C(key));
     when '0' ... '9' or VK_OEM_1 ... VK_OEM_102:
-      if (!(ctrl && !alt) && layout())
+      if (char_key())
         break;
-      if (!ctrl)
-        return 0;
       kbd[VK_CONTROL] = kbd[VK_MENU] = 0;
       if (term.modify_other_keys) {
-        // xterm modifyOtherKeys mode (sends CSI u codes)
-        wchar wc = undead_keycode();
-        if (wc)
-          other_code(wc);
+        modify_other_key();
         break;
       }
       if (ctrl_key())
