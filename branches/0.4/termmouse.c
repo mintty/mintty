@@ -443,19 +443,14 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
         term_scroll(0, -lines);
       else {
         // Send scroll distance as CSI a/b events
-        char buf[6] = "\e[1;2 ";
-        char code = lines > 0 ? 'a' : 'b';
+        bool up = lines > 0;
         lines = abs(lines);
         int pages = lines / term.rows;
-        if (pages) {
-          buf[5] = code;
-          send_keys(buf, 6, pages, true);
-          lines -= pages * term.rows;
-        }
-        if (lines) {
-          buf[2] = code;
-          send_keys(buf, 3, lines, true);
-        }
+        lines -= pages * term.rows;
+        if (pages)
+          send_keys(up ? "\e[1;2a" : "\e[1;2b", 6, pages, true);
+        if (lines)
+          send_keys(up ? "\eOa" : "\eOb", 3, lines, true);
       }
     }
   }
