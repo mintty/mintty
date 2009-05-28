@@ -507,7 +507,6 @@ win_key_down(WPARAM wp, LPARAM lp)
         when '0' ... '9': app_pad_key(key);
         when VK_OEM_PLUS ... VK_OEM_PERIOD:
           app_pad_key(key - VK_OEM_PLUS + '+');
-        otherwise: return 1; 
       }
     otherwise: return 0;
   }
