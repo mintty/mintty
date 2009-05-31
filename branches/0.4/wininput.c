@@ -247,6 +247,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   uint count = LOWORD(lp);
   mod_keys mods = get_mods();
   bool shift = mods & SHIFT, alt = mods & ALT, ctrl = mods & CTRL;
+  bool numlock = GetKeyState(VK_NUMLOCK);
 
   if (key == VK_PROCESSKEY) {
     TranslateMessage(
@@ -367,20 +368,22 @@ win_key_down(WPARAM wp, LPARAM lp)
   void other_code(wchar c) {
     len = sprintf(buf, "\e[%u;%cu", c, mods + '1');
   }
-  void app_pad_key(char c) { mod_ss3(c - '0' + 'p'); }
-  bool is_app_pad_key(void) {
-    return !extended && term.app_keypad && !term.app_cursor_keys;
+  void app_pad_code(char c) { mod_ss3(c - '0' + 'p'); }
+  bool app_pad_key(char symbol) {
+    if (extended || !term.app_keypad || term.app_cursor_keys)
+      return false;
+    // If NumLock is on, Shift must have been pressed to override it and
+    // get a VK code for an editing or cursor key code.
+    mods |= numlock;
+    app_pad_code(symbol);
+    return true;
   }
-  void edit_key(uchar code, char app_pad_code) {
-    if (is_app_pad_key())
-      app_pad_key(app_pad_code);
-    else
+  void edit_key(uchar code, char symbol) {
+    if (!app_pad_key(symbol))
       tilde_code(code);
   }
-  void cursor_key(char code, char app_pad_code) {
-    if (is_app_pad_key())
-      app_pad_key(app_pad_code);
-    else
+  void cursor_key(char code, char symbol) {
+    if (!app_pad_key(symbol))
       mods ? mod_csi(code) : term.app_cursor_keys ? ss3(code) : csi(code);
   }
 
@@ -438,9 +441,9 @@ win_key_down(WPARAM wp, LPARAM lp)
   
   switch(key) {
     when VK_RETURN:
-      if (extended && term.app_keypad)
+      if (extended && !numlock && term.app_keypad)
         mod_ss3('M');
-      else if (term.modify_other_keys && (shift || ctrl))
+      else if (!extended && term.modify_other_keys && (shift || ctrl))
         other_code('\r');
       else if (!ctrl)
         esc_if(alt),
@@ -488,11 +491,11 @@ win_key_down(WPARAM wp, LPARAM lp)
     when VK_RIGHT:  cursor_key('C', '6');
     when VK_CLEAR:  cursor_key('E', '5');
     when VK_MULTIPLY ... VK_DIVIDE:
-      if (term.app_keypad || !layout())
-        app_pad_key(key - VK_MULTIPLY + '*');
+      if (mods || (term.app_keypad && !numlock) || !layout())
+        app_pad_code(key - VK_MULTIPLY + '*');
     when VK_NUMPAD0 ... VK_NUMPAD9:
       if (!layout())
-        app_pad_key(key - VK_NUMPAD0  + '0');
+        app_pad_code(key - VK_NUMPAD0  + '0');
     when 'A' ... 'Z' or ' ':
       if (char_key())
         break;
@@ -517,9 +520,9 @@ win_key_down(WPARAM wp, LPARAM lp)
         break;
       // Treat remaining digits and symbols as apppad combinations
       switch (key) {
-        when '0' ... '9': app_pad_key(key);
+        when '0' ... '9': app_pad_code(key);
         when VK_OEM_PLUS ... VK_OEM_PERIOD:
-          app_pad_key(key - VK_OEM_PLUS + '+');
+          app_pad_code(key - VK_OEM_PLUS + '+');
       }
     otherwise: return 0;
   }
