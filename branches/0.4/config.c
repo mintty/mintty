@@ -468,7 +468,7 @@ int_settings[] = {
   {"ScrollMod", offcfg(scroll_mod), SHIFT},
   {"RightClickAction", offcfg(right_click_action), RC_SHOWMENU},
   {"CopyOnSelect", offcfg(copy_on_select), false},
-  {"ClicksPlaceCursor", offcfg(clicks_place_cursor), true},
+  {"ClicksPlaceCursor", offcfg(clicks_place_cursor), false},
   {"ClicksTargetApp", offcfg(clicks_target_app), true},
   {"ClickTargetMod", offcfg(click_target_mod), SHIFT},
   {"BellType", offcfg(bell_type), BELL_SOUND},
