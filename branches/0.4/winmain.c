@@ -803,7 +803,7 @@ static const char *help =
   "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = "+HVuec:p:s:t:l:h::";
+static const char short_opts[] = "+HVuec:p:s:t:l:h:";
 
 static const struct option
 opts[] = { 
@@ -812,8 +812,8 @@ opts[] = {
   {"size",     required_argument, 0, 's'},
   {"title",    required_argument, 0, 't'},
   {"log",      required_argument, 0, 'l'},
+  {"hold",     required_argument, 0, 'h'},
   {"utmp",     no_argument,       0, 'u'},
-  {"hold",     optional_argument, 0, 'h'},
   {"help",     no_argument,       0, 'H'},
   {"version",  no_argument,       0, 'V'},
   {0, 0, 0, 0}
@@ -854,21 +854,17 @@ main(int argc, char *argv[])
       when 'u':
         utmp_enabled = true;
       when 'h': {
-        if (!optarg)
+        int len = strlen(optarg);
+        if (memcmp(optarg, "always", len) == 0)
           hold = HOLD_ALWAYS;
+        else if (memcmp(optarg, "never", len) == 0)
+          hold = HOLD_NEVER;
+        else if (memcmp(optarg, "error", len) == 0)
+          hold = HOLD_ERROR;
         else {
-          int len = strlen(optarg);
-          if (memcmp(optarg, "always", len) == 0)
-            hold = HOLD_ALWAYS;
-          else if (memcmp(optarg, "never", len) == 0)
-            hold = HOLD_NEVER;
-          else if (memcmp(optarg, "error", len) == 0)
-            hold = HOLD_ERROR;
-          else {
-            fprintf(stderr, "%s: invalid argument to hold option -- %s\n",
-                            *argv, optarg);
-            exit(1);
-          }
+          fprintf(stderr, "%s: invalid argument to hold option -- %s\n",
+                          *argv, optarg);
+          exit(1);
         }
       }
       when 'H':
