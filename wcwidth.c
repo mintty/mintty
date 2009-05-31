@@ -266,27 +266,27 @@ wcwidth(wchar wc)
   /* null character */
   if (wc == 0)
     return 0;
-    
+  
   /* printable ASCII characters */
   if (wc >= 0x20 && wc < 0x7f)
     return 1;
-
+  
   /* control characters */
   if (wc < 0xa0)
     return -1;
+  
+  /* non-spacing characters */
+  if (bisearch(wc, combining, lengthof(combining)))
+    return 0;
+  
+  /* CJK ambiguous characters */
+  if (bisearch(wc, ambiguous, lengthof(ambiguous)))
+    return -2;
   
   /* wide characters */
   if (bisearch(wc, wide, lengthof(wide)))
     return 2;
   
-  /* ambiguous characters */
-  if (bisearch(wc, ambiguous, lengthof(ambiguous)))
-    return -2;
-
-  /* non-spacing characters */
-  if (bisearch(wc, combining, lengthof(combining)))
-    return 0;
-
   /* anything else */
   return 1;
 }

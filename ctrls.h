@@ -410,6 +410,7 @@ control *ctrl_checkbox(controlset *, char *label, char shortcut,
  */
 void dlg_stdradiobutton_handler(control *, void *dlg, void *data,
                                 int event);
+
 /*
  * The standard checkbox handler expects the main `context' field
  * to contain the `offsetof' an int field in the structure pointed
@@ -419,22 +420,7 @@ void dlg_stdradiobutton_handler(control *, void *dlg, void *data,
  */
 #define CHECKBOX_INVERT (1<<30)
 void dlg_stdcheckbox_handler(control *, void *dlg, void *data, int event);
-/*
- * The standard edit-box handler expects the main `context' field
- * to contain the `offsetof' a field in the structure pointed to by
- * `data'. The secondary `context2' field indicates the type of
- * this field:
- * 
- *  - if context2 > 0, the field is a char array and context2 gives
- *    its size.
- *  - if context2 == -1, the field is an int and the edit box is
- *    numeric.
- *  - if context2 < -1, the field is an int and the edit box is
- *    _floating_, and (-context2) gives the scale. (E.g. if
- *    context2 == -1000, then typing 1.2 into the box will set the
- *    field to 1200.)
- */
-void dlg_stdeditbox_handler(control *, void *dlg, void *data, int event);
+
 /*
  * The standard font-selector handler expects the main `context'
  * field to contain the `offsetof' a Font field in the structure

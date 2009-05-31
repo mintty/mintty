@@ -248,12 +248,10 @@ get_selpoint(const pos p)
 static void
 send_keys(char *code, uint len, uint count, bool interactive)
 {
-  assert(len);
   uint size = len * count;
-  char *buf = malloc(size), *p = buf;
-  do { memcpy(p, code, len); p += len; } while (--count);
+  char buf[size], *p = buf;
+  while (count--) { memcpy(p, code, len); p += len; }
   ldisc_send(buf, size, interactive);
-  free(buf);
 }
 
 static bool
@@ -415,13 +413,23 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
     static int accu;
     accu += delta;
     int notches = accu / DELTA_NOTCH;
-    accu -= notches * DELTA_NOTCH;
-    char code = 0x60 | (notches > 0);
-    notches = abs(notches);
-    while (notches--)
-      send_mouse_event(code, mods, p);
+    if (notches) {
+      accu -= notches * DELTA_NOTCH;
+      char code = 0x60 | (notches < 0);
+      notches = abs(notches);
+      do send_mouse_event(code, mods, p); while (--notches);
+    }
   }
-  else if (!(mods & (ALT | CTRL))) {
+  else if (mods == CTRL) {
+    static int accu;
+    accu += delta;
+    int zoom = accu / DELTA_NOTCH;
+    if (zoom) {
+      accu -= zoom * DELTA_NOTCH;
+      win_zoom_font(zoom);
+    }
+  }
+  else if (!(mods & ~SHIFT)) {
     // Scroll, taking the lines_per_notch setting into account.
     // Scroll by a page per notch if setting is -1 or Shift is pressed.
     if (lines_per_notch == -1 || mods & SHIFT)
@@ -429,28 +437,21 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
     static int accu;
     accu += delta * lines_per_notch;
     int lines = accu / DELTA_NOTCH;
-    accu -= lines * DELTA_NOTCH;
-    if (term.which_screen == 0)
-      term_scroll(0, lines);
-    else {
-      // Send scroll distance as PageUp/Down and Arrow Up/Down
-      char code[6] = "\e[ ; ~";
-      bool back = lines < 0;
-      lines = abs(lines);
-      int pages = lines / term.rows;
-      lines -= pages * term.rows;
-      
-      // First send full pages.
-      code[2] = back ? '5' : '6';
-      code[4] = '1' + cfg.scroll_mod;
-      if (pages)
-        send_keys(code, 6, pages, true);
-      
-      // Then send remaining lines.
-      code[2] = '1';
-      code[5] = back ? 'A' : 'B';
-      if (lines)
-        send_keys(code, 6, lines, true);
+    if (lines) {
+      accu -= lines * DELTA_NOTCH;
+      if (term.which_screen == 0)
+        term_scroll(0, -lines);
+      else {
+        // Send scroll distance as CSI a/b events
+        bool up = lines > 0;
+        lines = abs(lines);
+        int pages = lines / term.rows;
+        lines -= pages * term.rows;
+        if (pages)
+          send_keys(up ? "\e[1;2a" : "\e[1;2b", 6, pages, true);
+        if (lines)
+          send_keys(up ? "\eOa" : "\eOb", 3, lines, true);
+      }
     }
   }
 }

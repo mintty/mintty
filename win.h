@@ -28,6 +28,7 @@ void win_reset_colours(void);
 
 void win_move(int x, int y);
 void win_resize(int rows, int cols);
+void win_zoom_font(int zoom);
 void win_set_zoom(bool);
 void win_set_zorder(bool top);
 void win_set_iconic(bool);
