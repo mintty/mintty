@@ -515,9 +515,12 @@ win_key_down(WPARAM wp, LPARAM lp)
       }
       if (ctrl_key())
         break;
-      kbd[VK_CONTROL] = kbd[VK_MENU] = 0x80;
-      if (ctrl_key())
-        break;
+      if (shift) {
+        kbd[VK_CONTROL] = kbd[VK_MENU] = 0x80;
+        kbd[VK_SHIFT] = 0;
+        if (ctrl_key())
+          break;
+      }
       // Treat remaining digits and symbols as apppad combinations
       switch (key) {
         when '0' ... '9': app_pad_code(key);
