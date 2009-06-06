@@ -463,11 +463,15 @@ win_key_down(WPARAM wp, LPARAM lp)
       else
         term.modify_other_keys ? other_code('\t') : mod_csi('Z');
     when VK_ESCAPE:
-      ch(shift ? C(']') : cfg.escape_sends_fs ? C('\\') : C('['));
-    when VK_PAUSE or VK_CANCEL:
+      ch(cfg.escape_sends_fs ? C('\\') : C('['));
+    when VK_PAUSE:
       if (shift || alt)
         return 0;
-      ch(key == VK_PAUSE ? C(']') : C('\\'));
+      ch(C(']'));
+    when VK_CANCEL:
+      if (shift || alt)
+        return 0;
+      ch(C('\\'));
     when VK_F1 ... VK_F4:
       mod_ss3(key - VK_F1 + 'P');
     when VK_F5 ... VK_F24:
