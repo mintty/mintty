@@ -45,7 +45,7 @@ int font_size;
 int font_width, font_height;
 static bool font_dualwidth;
 
-static bool ambig_cjk_wide;
+bool font_ambig_wide;
 
 COLORREF colours[NALLCOLOURS];
 
@@ -137,7 +137,7 @@ win_init_fonts(void)
   GetCharWidthFloatW(dc, 0x03B1, 0x03B1, &greek_char_width);
   GetCharWidthFloatW(dc, 0x2500, 0x2500, &line_char_width);
   
-  ambig_cjk_wide =
+  font_ambig_wide =
     greek_char_width > latin_char_width ||
     line_char_width > latin_char_width;
 
@@ -831,7 +831,7 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
 bool
 win_ambig_cjk_wide(void)
 {
-  return ambig_cjk_wide;
+  return font_ambig_wide;
 }
 
 

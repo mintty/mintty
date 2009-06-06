@@ -300,66 +300,43 @@ reset_window(int reinit)
   * font size is locked that may be it's only soluion.
   */
 
- /* Current window sizes ... */
-  RECT cr, wr;
-  GetWindowRect(wnd, &wr);
-  GetClientRect(wnd, &cr);
-
-  int win_width = cr.right - cr.left;
-  int win_height = cr.bottom - cr.top;
-
  /* Are we being forced to reload the fonts ? */
+  bool old_ambig_wide = font_ambig_wide;
   if (reinit > 1) {
     win_deinit_fonts();
     win_init_fonts();
   }
 
- /* Oh, looks like we're minimised */
-  if (win_width == 0 || win_height == 0)
-    return;
+ /* Current window sizes ... */
+  RECT cr, wr;
+  GetClientRect(wnd, &cr);
+  GetWindowRect(wnd, &wr);
+  int win_width = cr.right - cr.left;
+  int win_height = cr.bottom - cr.top;
+  offset_height = (win_height % font_height) / 2;
+  offset_width = (win_width % font_width) / 2;
+  extra_width = wr.right - wr.left - win_width;
+  extra_height = wr.bottom - wr.top - win_height;
 
   int cols = term.cols, rows = term.rows;
 
-  bool zoomed = IsZoomed(wnd);
-  if (zoomed) {
-    offset_height = (win_height % font_height) / 2;
-    offset_width = (win_width % font_width) / 2;
+  if (win_width == 0 || win_height == 0) {
+    /* Oh, looks like we're minimised: do nothing */
   }
-  else
-    offset_width = offset_height = 0;
-
-  if (zoomed || reinit == -1) {
+  else if (IsZoomed(wnd) || reinit == -1) {
    /* We're fullscreen, or we were told to resize, 
     * this means we must not change the size of
     * the window so the terminal has to change.
     */
-
-    extra_width = wr.right - wr.left - cr.right + cr.left;
-    extra_height = wr.bottom - wr.top - cr.bottom + cr.top;
-
-    if (font_width * cols != win_width ||
-        font_height * rows != win_height) {
-     /* Our only choice at this point is to change the 
-      * size of the terminal; Oh well.
-      */
-      rows = win_height / font_height;
-      cols = win_width / font_width;
-      notify_resize(rows, cols);
-      InvalidateRect(wnd, null, true);
-    }
-    return;
+    rows = win_height / font_height;
+    cols = win_width / font_width;
   }
-
- /* Hmm, a force re-init means we should ignore the current window
-  * so we resize to the default font size.
-  */
-  if (reinit > 0) {
-    extra_width = wr.right - wr.left - cr.right + cr.left;
-    extra_height = wr.bottom - wr.top - cr.bottom + cr.top;
-
+  else if (reinit > 0) {
+   /* Hmm, a force re-init means we should ignore the current window
+    * so we resize to the default font size.
+    */
     if (win_width != font_width * cols ||
         win_height != font_height * rows) {
-
      /* If this is too large windows will resize it to the maximum
       * allowed window size, we will then be back in here and resize
       * the font or terminal to fit.
@@ -368,41 +345,30 @@ reset_window(int reinit)
                    font_height * rows + extra_height,
                    SWP_NOMOVE | SWP_NOZORDER);
     }
-
-    InvalidateRect(wnd, null, true);
-    return;
   }
-
- /* Okay the user doesn't want us to change the font so we try the 
-  * window. But that may be too big for the screen which forces us
-  * to change the terminal.
-  */
-  extra_width = wr.right - wr.left - cr.right + cr.left;
-  extra_height = wr.bottom - wr.top - cr.bottom + cr.top;
-
-  if (win_width != font_width * cols ||
-      win_height != font_height * rows) {
-
+  else if (win_width != font_width * term.cols ||
+           win_height != font_height * term.rows) {
+   /* Okay the user doesn't want us to change the font so we try the 
+    * window. But that may be too big for the screen which forces us
+    * to change the terminal.
+    */
     static RECT ss;
     get_fullscreen_rect(&ss);
-
     int win_rows = (ss.bottom - ss.top - extra_height) / font_height;
     int win_cols = (ss.right - ss.left - extra_width) / font_width;
-
-   /* Grrr too big */
-    if (rows > win_rows || cols > win_cols) {
-      rows = min(rows, win_rows);
-      cols = min(cols, win_cols);
-      notify_resize(rows, cols);
-    }
-
+    rows = min(rows, win_rows);
+    cols = min(cols, win_cols);
     SetWindowPos(wnd, null, 0, 0,
                  font_width * cols + extra_width,
                  font_height * rows + extra_height,
                  SWP_NOMOVE | SWP_NOZORDER);
-
-    InvalidateRect(wnd, null, true);
   }
+  
+  if (rows != term.rows || cols != term.cols ||
+      old_ambig_wide != font_ambig_wide)
+    notify_resize(rows, cols);
+
+  InvalidateRect(wnd, null, true);
 }
 
 /*

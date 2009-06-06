@@ -32,6 +32,7 @@ extern enum bold_mode { BOLD_COLOURS, BOLD_SHADOW, BOLD_FONT } bold_mode;
 extern int font_size;
 extern int font_width, font_height;
 extern int offset_width, offset_height;
+extern bool font_ambig_wide;
 
 void win_paint(void);
 
