@@ -524,7 +524,8 @@ win_reconfig(void)
   }
   
   if (memcmp(&new_cfg.font, &cfg.font, sizeof cfg.font) != 0 ||
-      strcmp(new_cfg.codepage, cfg.codepage) != 0) {
+      strcmp(new_cfg.codepage, cfg.codepage) != 0 ||
+      new_cfg.bold_as_bright != cfg.bold_as_bright) {
     font_size = new_cfg.font.size;
     init_lvl = 2;
   }
