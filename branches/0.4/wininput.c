@@ -461,7 +461,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       if (!ctrl)
         shift ? csi('Z') : ch('\t');
       else
-        term.modify_other_keys ? other_code('\t') : mod_csi('Z');
+        term.modify_other_keys ? other_code('\t') : mod_csi('I');
     when VK_ESCAPE:
       ch(cfg.escape_sends_fs ? C('\\') : C('['));
     when VK_PAUSE:
