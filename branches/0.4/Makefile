@@ -33,7 +33,7 @@ $(exe): $(objs)
 all: bin src doc
 
 bin: $(dir)-cygwin.zip
-src: $(dir)-src.tgz
+src: $(dir)-src.tar.bz2
 doc: $(dir).pdf
 
 $(dir)-cygwin.zip: $(exe) $(stuff)
@@ -41,12 +41,12 @@ $(dir)-cygwin.zip: $(exe) $(stuff)
 	zip -9 -j $@ $^
 	du -b $@
 
-$(dir)-src.tgz: $(srcs)
+$(dir)-src.tar.bz2: $(srcs)
 	rm -rf $(dir)
 	mkdir $(dir)
 	cp -ax --parents $^ $(dir)
 	rm -f $@
-	tar czf $@ $(dir)
+	tar cjf $@ $(dir)
 	rm -rf $(dir)
 
 $(dir).pdf: docs/$(name).1.pdf
@@ -62,7 +62,7 @@ $(dir).pdf: docs/$(name).1.pdf
 	groff -t -man -Tps $< | ps2pdf - $@
 
 clean:
-	rm -f *.d *.o *.exe *.zip *.tgz *.stackdump *.pdf docs/*.pdf
+	rm -f *.d *.o *.exe *.zip *.bz2 *.stackdump *.pdf docs/*.pdf
 
 .PHONY: all src bin src doc clean
 

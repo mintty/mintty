@@ -7,8 +7,8 @@
 #define COPYRIGHT "Copyright (C) 2008-09 Andy Koppe"
 
 #define LICENSE \
-"Licensed under GPL version 3 or later.\n" \
-"There is no warranty, to the extent permitted by law." \
+"License: GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n" \
+"There is no warranty, to the extent permitted by law."
 
 #define APPINFO \
   LICENSE "\n" \
