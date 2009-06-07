@@ -189,14 +189,14 @@ win_bell(int mode)
     lastbell = GetTickCount();
   }
 
-  if (!term_has_focus())
+  if (!term.has_focus)
     flash_window(2);
 }
 
 static void
 update_sys_cursor(void)
 {
-  if (term_has_focus() && caret_x >= 0 && caret_y >= 0) {
+  if (term.has_focus && caret_x >= 0 && caret_y >= 0) {
     SetCaretPos(caret_x, caret_y);
 
     HIMC imc = ImmGetContext(wnd);
@@ -257,7 +257,7 @@ void
 win_resize(int rows, int cols)
 {
  /* If the window is maximized supress resizing attempts */
-  if (IsZoomed(wnd) || (rows == term_rows() && cols == term_cols())) 
+  if (IsZoomed(wnd) || (rows == term.rows && cols == term.cols)) 
     return;
     
  /* Sanity checks ... */
@@ -300,66 +300,43 @@ reset_window(int reinit)
   * font size is locked that may be it's only soluion.
   */
 
- /* Current window sizes ... */
-  RECT cr, wr;
-  GetWindowRect(wnd, &wr);
-  GetClientRect(wnd, &cr);
-
-  int win_width = cr.right - cr.left;
-  int win_height = cr.bottom - cr.top;
-
  /* Are we being forced to reload the fonts ? */
+  bool old_ambig_wide = font_ambig_wide;
   if (reinit > 1) {
     win_deinit_fonts();
     win_init_fonts();
   }
 
- /* Oh, looks like we're minimised */
-  if (win_width == 0 || win_height == 0)
-    return;
+ /* Current window sizes ... */
+  RECT cr, wr;
+  GetClientRect(wnd, &cr);
+  GetWindowRect(wnd, &wr);
+  int win_width = cr.right - cr.left;
+  int win_height = cr.bottom - cr.top;
+  offset_height = (win_height % font_height) / 2;
+  offset_width = (win_width % font_width) / 2;
+  extra_width = wr.right - wr.left - win_width;
+  extra_height = wr.bottom - wr.top - win_height;
 
-  int cols = term_cols(), rows = term_rows();
+  int cols = term.cols, rows = term.rows;
 
-  bool zoomed = IsZoomed(wnd);
-  if (zoomed) {
-    offset_height = (win_height % font_height) / 2;
-    offset_width = (win_width % font_width) / 2;
+  if (win_width == 0 || win_height == 0) {
+    /* Oh, looks like we're minimised: do nothing */
   }
-  else
-    offset_width = offset_height = 0;
-
-  if (zoomed || reinit == -1) {
+  else if (IsZoomed(wnd) || reinit == -1) {
    /* We're fullscreen, or we were told to resize, 
     * this means we must not change the size of
     * the window so the terminal has to change.
     */
-
-    extra_width = wr.right - wr.left - cr.right + cr.left;
-    extra_height = wr.bottom - wr.top - cr.bottom + cr.top;
-
-    if (font_width * cols != win_width ||
-        font_height * rows != win_height) {
-     /* Our only choice at this point is to change the 
-      * size of the terminal; Oh well.
-      */
-      rows = win_height / font_height;
-      cols = win_width / font_width;
-      notify_resize(rows, cols);
-      InvalidateRect(wnd, null, true);
-    }
-    return;
+    rows = win_height / font_height;
+    cols = win_width / font_width;
   }
-
- /* Hmm, a force re-init means we should ignore the current window
-  * so we resize to the default font size.
-  */
-  if (reinit > 0) {
-    extra_width = wr.right - wr.left - cr.right + cr.left;
-    extra_height = wr.bottom - wr.top - cr.bottom + cr.top;
-
+  else if (reinit > 0) {
+   /* Hmm, a force re-init means we should ignore the current window
+    * so we resize to the default font size.
+    */
     if (win_width != font_width * cols ||
         win_height != font_height * rows) {
-
      /* If this is too large windows will resize it to the maximum
       * allowed window size, we will then be back in here and resize
       * the font or terminal to fit.
@@ -368,41 +345,30 @@ reset_window(int reinit)
                    font_height * rows + extra_height,
                    SWP_NOMOVE | SWP_NOZORDER);
     }
-
-    InvalidateRect(wnd, null, true);
-    return;
   }
-
- /* Okay the user doesn't want us to change the font so we try the 
-  * window. But that may be too big for the screen which forces us
-  * to change the terminal.
-  */
-  extra_width = wr.right - wr.left - cr.right + cr.left;
-  extra_height = wr.bottom - wr.top - cr.bottom + cr.top;
-
-  if (win_width != font_width * cols ||
-      win_height != font_height * rows) {
-
+  else if (win_width != font_width * term.cols ||
+           win_height != font_height * term.rows) {
+   /* Okay the user doesn't want us to change the font so we try the 
+    * window. But that may be too big for the screen which forces us
+    * to change the terminal.
+    */
     static RECT ss;
     get_fullscreen_rect(&ss);
-
     int win_rows = (ss.bottom - ss.top - extra_height) / font_height;
     int win_cols = (ss.right - ss.left - extra_width) / font_width;
-
-   /* Grrr too big */
-    if (rows > win_rows || cols > win_cols) {
-      rows = min(rows, win_rows);
-      cols = min(cols, win_cols);
-      notify_resize(rows, cols);
-    }
-
+    rows = min(rows, win_rows);
+    cols = min(cols, win_cols);
     SetWindowPos(wnd, null, 0, 0,
                  font_width * cols + extra_width,
                  font_height * rows + extra_height,
                  SWP_NOMOVE | SWP_NOZORDER);
-
-    InvalidateRect(wnd, null, true);
   }
+  
+  if (rows != term.rows || cols != term.cols ||
+      old_ambig_wide != font_ambig_wide)
+    notify_resize(rows, cols);
+
+  InvalidateRect(wnd, null, true);
 }
 
 /*
@@ -474,8 +440,6 @@ default_size(void)
   win_resize(cfg.rows, cfg.cols);
 }
 
-
-
 static void
 reset_term(void)
 {
@@ -492,7 +456,7 @@ update_transparency(void)
   uchar trans = cfg.transparency;
   SetWindowLong(wnd, GWL_EXSTYLE, trans ? WS_EX_LAYERED : 0);
   if (trans) {
-    bool opaque = cfg.opaque_when_focused && term_has_focus();
+    bool opaque = cfg.opaque_when_focused && term.has_focus;
     uchar alpha = opaque ? 255 : 255 - 16 * trans;
     SetLayeredWindowAttributes(wnd, 0, alpha, LWA_ALPHA);
   }
@@ -526,7 +490,8 @@ win_reconfig(void)
   }
   
   if (memcmp(&new_cfg.font, &cfg.font, sizeof cfg.font) != 0 ||
-      strcmp(new_cfg.codepage, cfg.codepage) != 0) {
+      strcmp(new_cfg.codepage, cfg.codepage) != 0 ||
+      new_cfg.bold_as_bright != cfg.bold_as_bright) {
     font_size = new_cfg.font.size;
     init_lvl = 2;
   }
@@ -538,6 +503,18 @@ win_reconfig(void)
   InvalidateRect(wnd, null, true);
   reset_window(init_lvl);
   win_update_mouse();
+}
+
+void
+win_zoom_font(int zoom)
+{
+  if (!zoom)
+    font_size = cfg.font.size;
+  else if (abs(font_size) + zoom <= 1)
+    font_size = sgn(font_size);
+  else 
+    font_size += sgn(font_size) * zoom;
+  reset_window(2);
 }
 
 static bool
@@ -590,29 +567,18 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_DEFSIZE: default_size();
         when IDM_FULLSCREEN: flip_full_screen();
         when IDM_OPTIONS: win_open_config();
-        when IDM_ZOOM: {
-          int zoom = lp;
-          switch (zoom) {
-            when -2: font_size = (font_size + 1) / 2;
-            when -1: if (abs(font_size) > 1) font_size -= sgn(font_size);
-            when 0: font_size = cfg.font.size;
-            when 1: font_size += sgn(font_size);
-            when 2: font_size *= 2;
-          }
-          reset_window(2);
-        }
         when IDM_DUPLICATE:
           spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv); 
       }
     when WM_VSCROLL:
-      if (term_which_screen() == 0) {
+      if (term.which_screen == 0) {
         switch (LOWORD(wp)) {
           when SB_BOTTOM:   term_scroll(-1, 0);
           when SB_TOP:      term_scroll(+1, 0);
           when SB_LINEDOWN: term_scroll(0, +1);
           when SB_LINEUP:   term_scroll(0, -1);
-          when SB_PAGEDOWN: term_scroll(0, +term_rows());
-          when SB_PAGEUP:   term_scroll(0, -term_rows());
+          when SB_PAGEDOWN: term_scroll(0, +term.rows);
+          when SB_PAGEUP:   term_scroll(0, -term.rows);
           when SB_THUMBPOSITION or SB_THUMBTRACK: term_scroll(1, HIWORD(wp));
         }
       }
@@ -632,10 +598,10 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       if (win_key_up(wp, lp))
         return 0;
     when WM_CHAR or WM_SYSCHAR:
-      { // TODO: handle wchar and WM_UNICHAR
-        char c = (uchar) wp;
+      {
+        wchar wc = wp;
         term_seen_key_event();
-        lpage_send(CP_ACP, &c, 1, 1);
+        luni_send(&wc, 1, 1);
         return 0;
       }
     when WM_INPUTLANGCHANGE:
@@ -749,8 +715,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       }
       else if (wp == SIZE_MAXIMIZED && !was_zoomed) {
         was_zoomed = 1;
-        prev_rows = term_rows();
-        prev_cols = term_cols();
+        prev_rows = term.rows;
+        prev_cols = term.cols;
         notify_resize(new_rows, new_cols);
         reset_window(0);
       }
@@ -797,13 +763,14 @@ static const char *help =
   "  -s, --size=COLS,ROWS  Set screen size in characters\n"
   "  -t, --title=TITLE     Set window title (default: the invoked command)\n"
   "  -l, --log=FILE        Log output to file\n"
+  "  -u, --utmp            Create a utmp entry\n"
   "  -h, --hold=never|always|error\n"
   "                        Keep window open after command terminates?\n"
   "  -H, --help            Display help and exit\n"
   "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = "+HVec:p:s:t:h:";
+static const char short_opts[] = "+HVuec:p:s:t:l:h:";
 
 static const struct option
 opts[] = { 
@@ -813,6 +780,7 @@ opts[] = {
   {"title",    required_argument, 0, 't'},
   {"log",      required_argument, 0, 'l'},
   {"hold",     required_argument, 0, 'h'},
+  {"utmp",     no_argument,       0, 'u'},
   {"help",     no_argument,       0, 'H'},
   {"version",  no_argument,       0, 'V'},
   {0, 0, 0, 0}
@@ -821,8 +789,7 @@ opts[] = {
 int
 main(int argc, char *argv[])
 {
-  char *title = 0, *log_file = 0;
-  hold_t hold = HOLD_NEVER;
+  char *title = 0;
   int x = CW_USEDEFAULT, y = CW_USEDEFAULT;
   bool size_override = false;
   uint rows = 0, cols = 0;
@@ -833,7 +800,7 @@ main(int argc, char *argv[])
       break;
     switch (opt) {
       when 'c':
-        config_filename = optarg;
+        config_file = optarg;
       when 'p':
         if (sscanf(optarg, "%i,%i%1s", &x, &y, (char[2]){}) != 2) {
           fprintf(stderr, "%s: syntax error in position argument -- %s\n",
@@ -851,6 +818,8 @@ main(int argc, char *argv[])
         title = optarg;
       when 'l':
         log_file = optarg;
+      when 'u':
+        utmp_enabled = true;
       when 'h': {
         int len = strlen(optarg);
         if (memcmp(optarg, "always", len) == 0)
@@ -869,15 +838,15 @@ main(int argc, char *argv[])
         printf(help, *argv);
         return 0;
       when 'V':
-        puts(APPNAME " " APPVER "\n" COPYRIGHT "\n" LICENSE);
+        puts(APPNAME " " VERSION "\n" COPYRIGHT "\n" LICENSE);
         return 0;
       otherwise:
         exit(1);
     }
   }
 
-  if (!config_filename)
-    asprintf(&config_filename, "%s/.minttyrc", getenv("HOME"));
+  if (!config_file)
+    asprintf((char **)&config_file, "%s/.minttyrc", getenv("HOME"));
 
   load_config();
   
@@ -965,8 +934,8 @@ main(int argc, char *argv[])
     si.cbSize = sizeof (si);
     si.fMask = SIF_ALL | SIF_DISABLENOSCROLL;
     si.nMin = 0;
-    si.nMax = term_rows() - 1;
-    si.nPage = term_rows();
+    si.nMax = term.rows - 1;
+    si.nPage = term.rows;
     si.nPos = 0;
     SetScrollInfo(wnd, SB_VERT, &si, false);
   }
@@ -974,8 +943,8 @@ main(int argc, char *argv[])
  /*
   * Resize the window, now we know what size we _really_ want it to be.
   */
-  int term_width = font_width * term_cols();
-  int term_height = font_height * term_rows();
+  int term_width = font_width * term.cols;
+  int term_height = font_height * term.rows;
   SetWindowPos(wnd, null, 0, 0,
                term_width + extra_width, term_height + extra_height,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
@@ -988,8 +957,8 @@ main(int argc, char *argv[])
   ShowWindow(wnd, SW_SHOWDEFAULT);
   
   // Create child process.
-  struct winsize ws = {term_rows(), term_cols(), term_width, term_height};
-  char *cmd = child_create(argv + optind, &ws, log_file);
+  struct winsize ws = {term.rows, term.cols, term_width, term_height};
+  char *cmd = child_create(argv + optind, &ws);
   
   // Set window title.
   win_set_title(title ?: cmd);
@@ -1001,7 +970,7 @@ main(int argc, char *argv[])
     DWORD wakeup =
       MsgWaitForMultipleObjects(1, &child_event, false, INFINITE, QS_ALLINPUT);
     if (wakeup == WAIT_OBJECT_0)
-      child_dead |= child_proc(hold);
+      child_dead |= child_proc();
     MSG msg;
     while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
       if (msg.message == WM_QUIT)

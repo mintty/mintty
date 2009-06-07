@@ -1,5 +1,5 @@
 // termline.c (part of MinTTY)
-// Copyright 2008 Andy Koppe
+// Copyright 2008-09  Andy Koppe
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -737,14 +737,14 @@ decompressline(uchar * data, int *bytes_used)
 }
 
 /*
- * Resize a line to make it at least `cols' columns wide.
+ * Resize a line to make it `cols' columns wide.
  */
 void
 resizeline(termline * line, int cols)
 {
   int i, oldcols;
 
-  if (line->cols < cols) {
+  if (line->cols != cols) {
 
     oldcols = line->cols;
 
