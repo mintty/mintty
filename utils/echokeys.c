@@ -15,6 +15,7 @@ restore_tattr (void)
 int 
 main (void) 
 {
+  unsigned char c;
   if (isatty (STDIN_FILENO)) {
     tcgetattr (STDIN_FILENO, &saved_tattr);    
     struct termios tattr = saved_tattr;
@@ -28,15 +29,13 @@ main (void)
     atexit (restore_tattr);
   }
   setbuf(stdout, 0);
-  int c;
-  while ((c = getchar()) && c != -1) {
+  while ((c = getchar()) != 4) {
     switch (c) {
       case 0x00 ... 0x1f:  putchar('^'); putchar(c + 0x40); break;
       case '^': case '\\': putchar('\\'); putchar(c); break;
       case 0x7f: putchar('^'); putchar('?'); break;
-      default: 
-        if (c < 0x80) putchar(c); else printf("\0x%X",c);
-        break;
+      case 0x80 ... 0xFF: printf("\\x%2X", c); break;
+      default: putchar(c);
     }
   }
   putchar ('\n');
