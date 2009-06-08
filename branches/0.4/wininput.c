@@ -97,17 +97,14 @@ static enum {
 } alt_state;
 static wchar alt_char;
 
-inline static bool
-is_key_down(uchar vk)
-{ return GetKeyState(vk) & 0x80; }
-
 static mod_keys
 get_mods(void)
 {
-  bool shift = is_key_down(VK_SHIFT);
-  bool alt = is_key_down(VK_MENU);
-  bool ctrl = is_key_down(VK_CONTROL);
-  return shift * SHIFT | alt * ALT | ctrl * CTRL;
+  inline static bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
+  return
+    is_key_down(VK_SHIFT) * SHIFT |
+    is_key_down(VK_MENU) * ALT |
+    is_key_down(VK_CONTROL) * CTRL;
 }
 
 static void
@@ -242,12 +239,6 @@ bool
 win_key_down(WPARAM wp, LPARAM lp)
 {
   uint key = wp;
-  uint scancode = HIWORD(lp) & (KF_EXTENDED | 0xFF);
-  bool extended = HIWORD(lp) & KF_EXTENDED;
-  uint count = LOWORD(lp);
-  mod_keys mods = get_mods();
-  bool shift = mods & SHIFT, alt = mods & ALT, ctrl = mods & CTRL;
-  bool numlock = GetKeyState(VK_NUMLOCK);
 
   if (key == VK_PROCESSKEY) {
     TranslateMessage(
@@ -256,6 +247,21 @@ win_key_down(WPARAM wp, LPARAM lp)
     return 1;
   }
  
+  uint scancode = HIWORD(lp) & (KF_EXTENDED | 0xFF);
+  bool extended = HIWORD(lp) & KF_EXTENDED;
+  uint count = LOWORD(lp);
+
+  uchar kbd[256];
+  GetKeyboardState(kbd);
+  inline static bool is_key_down(uchar vk) { return kbd[vk] & 0x80; }
+  
+  bool shift = is_key_down(VK_SHIFT);
+  bool alt = is_key_down(VK_MENU);
+  bool ctrl = is_key_down(VK_CONTROL);
+  mod_keys mods = shift * SHIFT | alt * ALT | ctrl * CTRL;
+  bool meta = (alt & !ctrl) | (is_key_down(VK_LMENU) & is_key_down(VK_RMENU));
+  bool numlock = is_key_down(VK_NUMLOCK);
+
   update_mouse(mods);
 
   // Alt+keycode
@@ -388,14 +394,12 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
 
   // Keyboard layout
-  uchar kbd[256];
-  GetKeyboardState(kbd);
   bool layout(void) {
     wlen = ToUnicode(key, scancode, kbd, wbuf, lengthof(wbuf), 0);
     if (!wlen)
       return 0;
     if (wlen > 0)
-      esc_if(alt && !ctrl);
+      esc_if(meta);
     else
       wlen = 0;
     return 1;
