@@ -2,7 +2,7 @@
 #define APPINFO_H
 
 #define APPNAME "MinTTY"
-#define APPDESC "Cygwin terminal"
+#define APPDESC "Cygwin Terminal"
 #define WEBSITE "http://mintty.googlecode.com"
 #define COPYRIGHT "Copyright (C) 2008-09 Andy Koppe"
 
