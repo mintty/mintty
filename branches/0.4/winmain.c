@@ -638,7 +638,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       int height = r->bottom - r->top - extra_height - 2;
       int cols = max(1, (width + font_width / 2) / font_width);
       int rows = max(1, (height + font_height / 2) / font_height);
-      win_update_tip(wnd, cols, rows);
+
       int ew = width - cols * font_width;
       int eh = height - rows * font_height;
       if (ew != 0) {
@@ -655,6 +655,9 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         else
           r->bottom -= eh;
       }
+
+      win_update_tip(r->left + extra_width, r->top + extra_height, cols, rows);
+
       return ew || eh;
     }
     when WM_SIZE: {

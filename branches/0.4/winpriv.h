@@ -45,7 +45,7 @@ void win_open_config(void);
 
 void win_enable_tip(void);
 void win_disable_tip(void);
-void win_update_tip(HWND src, int cx, int cy);
+void win_update_tip(int x, int y, int cols, int rows);
 
 void win_init_menus(void);
 void win_update_menus(void);
