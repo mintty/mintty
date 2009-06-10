@@ -227,6 +227,8 @@ toggle_mode(int mode, int query, int state)
       when 1003: /* ANY_EVENT_MOUSE */
         term.mouse_mode = state ? MM_ANY_EVENT : 0;
         win_update_mouse();
+      when 1004: /* FOCUS_EVENT_MOUSE */
+        term.send_focus = state;      
       when 1047:       /* alternate screen */
         compatibility(OTHER);
         term.selected = false;

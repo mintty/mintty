@@ -168,26 +168,24 @@ struct term {
   int alt_save_cset, alt_save_csattr;
   int alt_save_utf, alt_save_wnext;
   int alt_save_sco_acs;
-
-  int rows, cols;
-  bool has_focus;
-  bool in_vbell;
-  bool app_cursor_keys;
-  bool app_keypad;
-  int modify_other_keys;
-  bool newline_mode;
-  bool seen_disp_event;
-  bool big_cursor;
-
-  int cset_attr[2];
-
- /*
-  * Saved settings on the alternate screen.
-  */
   int alt_x, alt_y, alt_om, alt_wrap, alt_wnext, alt_ins;
   int alt_cset, alt_sco_acs, alt_utf;
   int alt_t, alt_b;
   int which_screen;
+
+  int rows, cols;
+  bool has_focus;
+  bool in_vbell;
+  bool seen_disp_event;
+
+  bool app_cursor_keys;
+  bool app_keypad;
+  int modify_other_keys;
+  bool newline_mode;
+  bool big_cursor;
+  bool send_focus;
+
+  int cset_attr[2];
 
   int esc_args[ARGS_MAX];
   int esc_nargs;
