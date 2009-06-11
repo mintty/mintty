@@ -290,3 +290,12 @@ child_resize(struct winsize *winp)
     ioctl(fd, TIOCSWINSZ, winp);
 }
 
+void
+child_tickle(void)
+{
+  if (fd >= 0) {
+    pid_t pgrp = tcgetpgrp(fd);
+    if (pgrp >= 0)
+      kill(-pgrp, SIGWINCH);
+  }
+}

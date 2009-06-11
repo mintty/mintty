@@ -274,16 +274,15 @@ reset_window(int reinit)
  /*
   * This function decides how to resize or redraw when the 
   * user changes something. 
-  *
-  * This function doesn't like to change the terminal size but if the
-  * font size is locked that may be it's only soluion.
   */
 
  /* Are we being forced to reload the fonts ? */
-  bool old_ambig_wide = font_ambig_wide;
   if (reinit > 1) {
+  bool old_ambig_wide = font_ambig_wide;
     win_deinit_fonts();
     win_init_fonts();
+    if (old_ambig_wide != font_ambig_wide)
+      child_tickle();
   }
 
   int cols = term.cols, rows = term.rows;
@@ -300,7 +299,7 @@ reset_window(int reinit)
   int text_height = client_height - 2;
   
   if (!client_width || !client_height) {
-    /* Oh, looks like we're minimised: do nothing */
+   /* Oh, looks like we're minimised: do nothing */
   }
   else if (IsZoomed(wnd) || reinit == -1) {
    /* We're fullscreen, or we were told to resize,
@@ -328,8 +327,7 @@ reset_window(int reinit)
                  SWP_NOMOVE | SWP_NOZORDER);
   }
   
-  if (rows != term.rows || cols != term.cols ||
-      old_ambig_wide != font_ambig_wide)
+  if (rows != term.rows || cols != term.cols)
     notify_resize(rows, cols);
 
   InvalidateRect(wnd, null, true);

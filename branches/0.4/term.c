@@ -262,6 +262,9 @@ term_resize(int newrows, int newcols)
   int oldrows = term.rows;
   int save_which_screen = term.which_screen;
 
+  if (newrows == term.rows && newcols == term.cols)
+    return;     /* nothing to do */
+
  /* Behave sensibly if we're given zero (or negative) rows/cols */
 
   if (newrows < 1)
