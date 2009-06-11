@@ -471,7 +471,7 @@ int_settings[] = {
   {"ClicksPlaceCursor", offcfg(clicks_place_cursor), false},
   {"ClicksTargetApp", offcfg(clicks_target_app), true},
   {"ClickTargetMod", offcfg(click_target_mod), SHIFT},
-  {"BellType", offcfg(bell_type), BELL_SOUND},
+  {"BellType", offcfg(bell_type), BELL_DISABLED},
   {"BellIndication", offcfg(bell_ind), B_IND_STEADY},
 };
 

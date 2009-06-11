@@ -123,11 +123,6 @@ struct term {
   int dispcursx, dispcursy;     /* location of cursor on real screen */
   int curstype; /* type of cursor on real screen */
 
-  belltime *bellhead, *belltail;
-  int nbells;
-  int bell_overloaded;
-  int lastbell;
-
   int default_attr, curr_attr, save_attr;
   termchar basic_erase_char, erase_char;
 

@@ -159,22 +159,6 @@ void
 term_seen_key_event(void)
 {
  /*
-  * On any keypress, clear the bell overload mechanism
-  * completely, on the grounds that large numbers of
-  * bells coming from deliberate key action are likely
-  * to be intended (e.g. bells from filename completion
-  * blocking repeatedly).
-  */
-  term.bell_overloaded = false;
-  while (term.bellhead) {
-    belltime *tmp = term.bellhead;
-    term.bellhead = tmp->next;
-    free(tmp);
-  }
-  term.belltail = null;
-  term.nbells = 0;
-
- /*
   * Reset the scrollback.
   */
   term.disptop = 0;   /* return to main screen */

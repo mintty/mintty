@@ -309,63 +309,9 @@ do_osc(void)
 static void
 out_bell(void)
 {
-  belltime *newbell;
-  uint ticks = get_tick_count();
-
-  if (!term.bell_overloaded) {
-    newbell = new(belltime);
-    newbell->ticks = ticks;
-    newbell->next = null;
-    if (!term.bellhead)
-      term.bellhead = newbell;
-    else
-      term.belltail->next = newbell;
-    term.belltail = newbell;
-    term.nbells++;
-  }
-
- /*
-  * Throw out any bells that happened more than t seconds ago.
-  */
-  while (term.bellhead &&
-         term.bellhead->ticks < ticks - BELLOVL_T) {
-    belltime *tmp = term.bellhead;
-    term.bellhead = tmp->next;
-    free(tmp);
-    if (!term.bellhead)
-      term.belltail = null;
-    term.nbells--;
-  }
-
-  if (term.bell_overloaded &&
-      ticks - term.lastbell >= (uint) BELLOVL_S) {
-   /*
-    * If we're currently overloaded and the
-    * last bell was more than s seconds ago,
-    * leave overload mode.
-    */
-    term.bell_overloaded = false;
-  }
-  else if (!term.bell_overloaded &&
-           term.nbells >= BELLOVL_N) {
-   /*
-    * Now, if we have n or more bells
-    * remaining in the queue, go into overload
-    * mode.
-    */
-    term.bell_overloaded = true;
-  }
-  term.lastbell = ticks;
-
- /*
-  * Perform an actual bell if we're not overloaded.
-  */
-  if (!term.bell_overloaded) {
-    win_bell(cfg.bell_type);
-    if (cfg.bell_type == BELL_VISUAL)
-      term_schedule_vbell(false, 0);
-  }
-  seen_disp_event();
+  win_bell(cfg.bell_type);
+  if (cfg.bell_type == BELL_VISUAL)
+    term_schedule_vbell(false, 0);
 }
 
 static void
