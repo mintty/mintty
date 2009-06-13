@@ -377,15 +377,14 @@ win_key_down(WPARAM wp, LPARAM lp)
   bool app_pad_key(char symbol) {
     if (extended)
       return false;
-    if (symbol != '.' && alt_code_key(symbol - '0'))
+    if (term.app_keypad && !term.app_cursor_keys) {
+      // If NumLock is on, Shift must have been pressed to override it and
+      // get a VK code for an editing or cursor key code.
+      mods |= numlock;
+      app_pad_code(symbol);
       return true;
-    if (!term.app_keypad || term.app_cursor_keys)
-      return false;
-    // If NumLock is on, Shift must have been pressed to override it and
-    // get a VK code for an editing or cursor key code.
-    mods |= numlock;
-    app_pad_code(symbol);
-    return true;
+    }
+    return symbol != '.' && alt_code_key(symbol - '0');
   }
   void edit_key(uchar code, char symbol) {
     if (!app_pad_key(symbol))
@@ -507,9 +506,10 @@ win_key_down(WPARAM wp, LPARAM lp)
       if (mods || (term.app_keypad && !numlock) || !layout())
         app_pad_code(key - VK_MULTIPLY + '*');
     when VK_NUMPAD0 ... VK_NUMPAD9:
-        alt_code_key(key - VK_NUMPAD0) ?:
-        layout() ?:
-        app_pad_code(key - VK_NUMPAD0 + '0');
+        !(term.app_keypad && !term.app_cursor_keys) 
+        && alt_code_key(key - VK_NUMPAD0)
+        ?: layout()
+        ?: app_pad_code(key - VK_NUMPAD0 + '0');
     when 'A' ... 'Z' or ' ':
       if (char_key())
         break;
