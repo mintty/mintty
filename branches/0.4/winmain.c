@@ -278,11 +278,11 @@ reset_window(int reinit)
 
  /* Are we being forced to reload the fonts ? */
   if (reinit > 1) {
-  bool old_ambig_wide = font_ambig_wide;
+    bool old_ambig_wide = font_ambig_wide;
     win_deinit_fonts();
     win_init_fonts();
-    if (old_ambig_wide != font_ambig_wide)
-      child_tickle();
+    if (term.report_ambig_width && old_ambig_wide != font_ambig_wide)
+      ldisc_send(font_ambig_wide ? "\e[2W" : "\e[1W", 4, 0);
   }
 
   int cols = term.cols, rows = term.rows;

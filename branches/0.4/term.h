@@ -178,7 +178,8 @@ struct term {
   int modify_other_keys;
   bool newline_mode;
   bool big_cursor;
-  bool send_focus;
+  bool report_focus;
+  bool report_ambig_width;
 
   int cset_attr[2];
 

@@ -228,7 +228,7 @@ toggle_mode(int mode, int query, int state)
         term.mouse_mode = state ? MM_ANY_EVENT : 0;
         win_update_mouse();
       when 1004: /* FOCUS_EVENT_MOUSE */
-        term.send_focus = state;      
+        term.report_focus = state;      
       when 1047:       /* alternate screen */
         compatibility(OTHER);
         term.selected = false;
@@ -249,6 +249,8 @@ toggle_mode(int mode, int query, int state)
         if (!state)
           save_cursor(state);
         term.disptop = 0;
+      when 7700:       /* MinTTY only: CJK ambigous width reporting */
+        term.report_ambig_width = state;
     }
   }
   else {
