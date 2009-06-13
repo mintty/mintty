@@ -91,10 +91,11 @@ win_popup_menu(void)
   );
 }
 
-static enum {
+typedef enum {
   ALT_CANCELLED = -1, ALT_NONE = 0, ALT_ALONE = 1,
   ALT_OCT = 8, ALT_DEC = 10
-} alt_state;
+} alt_state_t;
+static alt_state_t alt_state;
 static wchar alt_char;
 
 static mod_keys
@@ -264,26 +265,8 @@ win_key_down(WPARAM wp, LPARAM lp)
 
   update_mouse(mods);
 
-  // Alt+keycode
-  if (alt_state > ALT_NONE && VK_NUMPAD0 <= key && key <= VK_NUMPAD9) {
-    int digit = key - VK_NUMPAD0;
-    if (alt_state == ALT_ALONE) {
-      alt_char = digit;
-      alt_state = digit ? ALT_DEC : ALT_OCT;
-      return 1;
-    }
-    else if (digit < alt_state) {
-      alt_char *= alt_state;
-      alt_char += digit;
-      return 1;
-    }
-  }
-  if (key == VK_MENU && !shift && !ctrl) {
-    if (alt_state == ALT_NONE)
-      alt_state = ALT_ALONE;
-    return 1;
-  }
-  else if (alt_state != ALT_NONE)
+  alt_state_t old_alt_state = alt_state;
+  if (alt_state > ALT_NONE)
     alt_state = ALT_CANCELLED;
   
   // Context and window menus
@@ -375,8 +358,28 @@ win_key_down(WPARAM wp, LPARAM lp)
     len = sprintf(buf, "\e[%u;%cu", c, mods + '1');
   }
   void app_pad_code(char c) { mod_ss3(c - '0' + 'p'); }
+
+  bool alt_code_key(char digit) {
+    if (old_alt_state == ALT_ALONE) {
+      alt_char = digit;
+      alt_state = digit ? ALT_DEC : ALT_OCT;
+      return true;
+    }
+    if (old_alt_state > ALT_ALONE && digit < old_alt_state) {
+      alt_state = old_alt_state;
+      alt_char *= alt_state;
+      alt_char += digit;
+      return true;
+    }
+    return false;
+  }
+
   bool app_pad_key(char symbol) {
-    if (extended || !term.app_keypad || term.app_cursor_keys)
+    if (extended)
+      return false;
+    if (symbol != '.' && alt_code_key(symbol - '0'))
+      return true;
+    if (!term.app_keypad || term.app_cursor_keys)
       return false;
     // If NumLock is on, Shift must have been pressed to override it and
     // get a VK code for an editing or cursor key code.
@@ -444,6 +447,10 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
   
   switch(key) {
+    when VK_MENU:
+      if (!shift && !ctrl)
+        alt_state = old_alt_state == ALT_NONE ? ALT_ALONE : old_alt_state;
+      return 1;
     when VK_RETURN:
       if (extended && !numlock && term.app_keypad)
         mod_ss3('M');
@@ -500,8 +507,9 @@ win_key_down(WPARAM wp, LPARAM lp)
       if (mods || (term.app_keypad && !numlock) || !layout())
         app_pad_code(key - VK_MULTIPLY + '*');
     when VK_NUMPAD0 ... VK_NUMPAD9:
-      if (!layout())
-        app_pad_code(key - VK_NUMPAD0  + '0');
+        alt_code_key(key - VK_NUMPAD0) ?:
+        layout() ?:
+        app_pad_code(key - VK_NUMPAD0 + '0');
     when 'A' ... 'Z' or ' ':
       if (char_key())
         break;
@@ -532,13 +540,16 @@ win_key_down(WPARAM wp, LPARAM lp)
       }
     otherwise: return 0;
   }
+  
   hide_mouse();
   term_cancel_paste();
   term_seen_key_event();
+
   do {
     if (len) ldisc_send(buf, len, 1);
     if (wlen) luni_send(wbuf, wlen, 1);
   } while (--count);
+
   return 1;
 }
 
@@ -546,18 +557,21 @@ bool
 win_key_up(WPARAM wParam, LPARAM unused(lParam))
 {
   win_update_mouse();
-  uint key = wParam;
 
-  bool alt = key == VK_MENU;
-  if (alt) {
-    if (alt_state == ALT_ALONE) {
-      if (cfg.alt_sends_esc)
-        ldisc_send("\e", 1, 1);
-    }
-    else if (alt_state > ALT_ALONE)
+  if (wParam != VK_MENU)
+    return false;
+
+  if (alt_state == ALT_ALONE) {
+    if (cfg.alt_sends_esc)
+      ldisc_send("\e", 1, 1);
+  }
+  else if (alt_state > ALT_ALONE) {
+    if (term_in_utf())
       luni_send(&alt_char, 1, 1);
-    alt_state = ALT_NONE;
+    else if (alt_char < 0x100)
+      ldisc_send((char[]){alt_char}, 1, 1);
   }
   
-  return alt;
+  alt_state = ALT_NONE;
+  return true;
 }
