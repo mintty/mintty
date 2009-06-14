@@ -1,5 +1,5 @@
 // linedisc.c (part of MinTTY)
-// Copyright 2008 Andy Koppe
+// Copyright 2008-09  Andy Koppe
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -103,7 +103,7 @@ ldisc_send(const char *buf, int len, int interactive)
  /*
   * Either perform local editing, or just send characters.
   */
-  if (term_editing()) {
+  if (term.editing) {
     while (len--) {
       int c;
       c = *buf++ + keyflag;
@@ -129,14 +129,14 @@ ldisc_send(const char *buf, int len, int interactive)
         when KCTRL('H') or KCTRL('?'):       /* backspace/delete */
           if (ldisc.buflen > 0) {
             do {
-              if (term_echoing())
+              if (term.echoing)
                 bsb(uclen(ldisc.buf[ldisc.buflen - 1]));
               ldisc.buflen--;
             } while (!char_start(ldisc.buf[ldisc.buflen]));
           }
         when CTRL('W'):        /* delete word */
           while (ldisc.buflen > 0) {
-            if (term_echoing())
+            if (term.echoing)
               bsb(uclen(ldisc.buf[ldisc.buflen - 1]));
             ldisc.buflen--;
             if (ldisc.buflen > 0 && isspace((uchar) ldisc.buf[ldisc.buflen - 1])
@@ -144,7 +144,7 @@ ldisc_send(const char *buf, int len, int interactive)
               break;
           }
         when CTRL('R'):        /* redraw line */
-          if (term_echoing()) {
+          if (term.echoing) {
             term_write("^R\r\n", 4);
             for (int i = 0; i < ldisc.buflen; i++)
               ucwrite(ldisc.buf[i]);
@@ -161,7 +161,7 @@ ldisc_send(const char *buf, int len, int interactive)
             child_write(ldisc.buf, ldisc.buflen);
           else
             child_write("\r", 1);
-          if (term_echoing())
+          if (term.echoing)
             term_write("\r\n", 2);
           ldisc.buflen = 0;
         when CTRL('U')        /* delete line */
@@ -169,7 +169,7 @@ ldisc_send(const char *buf, int len, int interactive)
           or CTRL('\\')       /* Quit */
           or CTRL('Z'):       /* Suspend */
           while (ldisc.buflen > 0) {
-            if (term_echoing())
+            if (term.echoing)
               bsb(uclen(ldisc.buf[ldisc.buflen - 1]));
             ldisc.buflen--;
           }
@@ -179,7 +179,7 @@ ldisc_send(const char *buf, int len, int interactive)
             ldisc.buf = renewn(ldisc.buf, ldisc.bufsiz);
           }
           ldisc.buf[ldisc.buflen++] = c;
-          if (term_echoing())
+          if (term.echoing)
             ucwrite((uchar) c);
           ldisc.quotenext = false;
       }
@@ -194,7 +194,7 @@ ldisc_send(const char *buf, int len, int interactive)
       }
     }
     if (len > 0) {
-      if (term_echoing())
+      if (term.echoing)
         term_write(buf, len);
       child_write(buf, len);
     }
@@ -202,70 +202,11 @@ ldisc_send(const char *buf, int len, int interactive)
 }
 
 void
-lpage_send(int codepage, const char *buf, int len, int interactive)
+luni_send(const wchar *wbuf, int wlen, int interactive)
 {
-  wchar *widebuffer = 0;
-  int widesize = 0;
-  int wclen;
-
-  if (codepage < 0) {
+  char buf[wlen * 6];
+  int cp = term.utf ? unicode_codepage : ucsdata.codepage;
+  int len = wc_to_mb(cp, 0, wbuf, wlen, buf, sizeof buf);
+  if (len > 0)
     ldisc_send(buf, len, interactive);
-    return;
-  }
-
-  widesize = len * 2;
-  widebuffer = newn(wchar, widesize);
-
-  wclen = mb_to_wc(codepage, 0, buf, len, widebuffer, widesize);
-  luni_send(widebuffer, wclen, interactive);
-
-  free(widebuffer);
-}
-
-void
-luni_send(const wchar * buf, int len, int interactive)
-{
-  int ratio = (term_in_utf())? 3 : 1;
-  char *linebuffer;
-  int linesize;
-  int i;
-  char *p;
-
-  linesize = len * ratio * 2;
-  linebuffer = newn(char, linesize);
-
-  if (term_in_utf()) {
-   /* UTF is a simple algorithm */
-    for (p = linebuffer, i = 0; i < len; i++) {
-      wchar ch = buf[i];
-     /* We only deal with 16-bit wide chars */
-      if ((ch & 0xF800) == 0xD800)
-        ch = '.';
-
-      if (ch < 0x80) {
-        *p++ = (char) (ch);
-      }
-      else if (ch < 0x800) {
-        *p++ = (0xC0 | (ch >> 6));
-        *p++ = (0x80 | (ch & 0x3F));
-      }
-      else {
-        *p++ = (0xE0 | (ch >> 12));
-        *p++ = (0x80 | ((ch >> 6) & 0x3F));
-        *p++ = (0x80 | (ch & 0x3F));
-      }
-    }
-  }
-  else {
-    int rv;
-    rv = wc_to_mb(ucsdata.codepage, 0, buf, len, linebuffer, linesize);
-    if (rv >= 0)
-      p = linebuffer + rv;
-    else
-      p = linebuffer;
-  }
-  if (p > linebuffer)
-    ldisc_send(linebuffer, p - linebuffer, interactive);
-
-  free(linebuffer);
 }

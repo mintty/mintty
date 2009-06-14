@@ -1,5 +1,5 @@
 // wintip.c (part of MinTTY)
-// Copyright 2008 Andy Koppe
+// Copyright 2008-09  Andy Koppe
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -68,7 +68,7 @@ tip_proc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 }
 
 void
-win_update_tip(HWND src, int cx, int cy)
+win_update_tip(int x, int y, int cols, int rows)
 {
   if (!tip_enabled)
     return;
@@ -77,7 +77,6 @@ win_update_tip(HWND src, int cx, int cy)
     NONCLIENTMETRICS nci;
 
    /* First make sure the window class is registered */
-
     if (!tip_class) {
       WNDCLASS wc;
       wc.style = CS_HREDRAW | CS_VREDRAW;
@@ -94,7 +93,6 @@ win_update_tip(HWND src, int cx, int cy)
     }
 
    /* Prepare other GDI objects and drawing info */
-
     tip_bg = GetSysColor(COLOR_INFOBK);
     tip_text = GetSysColor(COLOR_INFOTEXT);
     memset(&nci, 0, sizeof (NONCLIENTMETRICS));
@@ -102,38 +100,20 @@ win_update_tip(HWND src, int cx, int cy)
     SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof (NONCLIENTMETRICS),
                          &nci, 0);
     tip_font = CreateFontIndirect(&nci.lfStatusFont);
-  }
-
- /* Generate the tip text */
-
-  char str[32];
-  sprintf(str, "%dx%d", cx, cy);
-
-  if (!tip_wnd) {
-   /* calculate the tip's size */
-
-    HDC dc = CreateCompatibleDC(null);
-    SIZE sz;    
-    GetTextExtentPoint32(dc, str, strlen(str), &sz);
-    DeleteDC(dc);
-
-    RECT wr;
-    GetWindowRect(src, &wr);
-
-    int ix = max(wr.left, 16);
-    int iy = max(wr.top - sz.cy, 16);
-
-   /* Create the tip window */
     tip_wnd =
       CreateWindowEx(WS_EX_TOOLWINDOW | WS_EX_TOPMOST,
-                     MAKEINTRESOURCE(tip_class), str, WS_POPUP, ix, iy, sz.cx,
-                     sz.cy, null, null, inst, null);
+                     MAKEINTRESOURCE(tip_class), null, WS_POPUP, x, y, 1, 1,
+                     null, null, inst, null);
     ShowWindow(tip_wnd, SW_SHOWNOACTIVATE);
   }
   else {
-   /* Tip already exists, just set the text */
-    SetWindowText(tip_wnd, str);
+      SetWindowPos(tip_wnd, null, x, y, 0, 0,
+                   SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
   }
+
+  char str[32];
+  sprintf(str, "%dx%d", cols, rows);
+  SetWindowText(tip_wnd, str);
 }
 
 void

@@ -1,5 +1,6 @@
-SRC_URI="http://mintty.googlecode.com/files/mintty-0.3.9-src.tgz"
+SRC_URI="http://mintty.googlecode.com/files/mintty-0.4.0-src.tar.bz2"
 PKG_HINTS=setup
+_CYGPORT_RESTRICT_postinst_doc_=1
 
 src_compile() {
   lndirs
@@ -12,6 +13,7 @@ src_install() {
   dobin mintty.exe
   insinto /usr/share/man/man1
   doins docs/mintty.1
+  dodoc COPYING
+  dodoc LICENSE.Oxygen
+  dodoc LICENSE.PuTTY
 }
-
-DOCS="LICENSE.Oxygen LICENSE.PuTTY"

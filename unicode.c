@@ -1,5 +1,5 @@
 // unicode.c (part of MinTTY)
-// Copyright 2008 Andy Koppe
+// Copyright 2008-09  Andy Koppe
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -232,9 +232,9 @@ decode_codepage(char *cp_name)
       s = cp_name;
       d = cpi->name;
       for (;;) {
-        while (*s && !isalnum(*s) && *s != ':')
+        while (*s && !isalnum((uchar)*s) && *s != ':')
           s++;
-        while (*d && !isalnum(*d) && *d != ':')
+        while (*d && !isalnum((uchar)*d) && *d != ':')
           d++;
         if (*s == 0) {
           codepage = cpi->codepage;
@@ -245,16 +245,19 @@ decode_codepage(char *cp_name)
           if (GetCPInfo(codepage, &cpinfo) != 0)
             goto break_break;
         }
-        if (tolower(*s++) != tolower(*d++))
+        if (tolower((uchar)*s++) != tolower((uchar)*d++))
           break;
       }
     }
 
   if (cp_name && *cp_name) {
     d = cp_name;
-    if (tolower(d[0]) == 'c' && tolower(d[1]) == 'p')
+    if (tolower((uchar)d[0]) == 'c' && 
+	    tolower((uchar)d[1]) == 'p')
       d += 2;
-    if (tolower(d[0]) == 'i' && tolower(d[1]) == 'b' && tolower(d[1]) == 'm')
+    if (tolower((uchar)d[0]) == 'i' && 
+	    tolower((uchar)d[1]) == 'b' && 
+	    tolower((uchar)d[2]) == 'm')
       d += 3;
     for (s = d; *s >= '0' && *s <= '9'; s++);
     if (*s == 0 && s != d)

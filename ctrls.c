@@ -438,56 +438,6 @@ dlg_stdcheckbox_handler(control *ctrl, void *dlg, void *data, int event)
 }
 
 void
-dlg_stdeditbox_handler(control *ctrl, void *dlg, void *data, int event)
-{
- /*
-  * The standard edit-box handler expects the main `context'
-  * field to contain the `offsetof' a field in the structure
-  * pointed to by `data'. The secondary `context2' field
-  * indicates the type of this field:
-  *
-  *  - if context2 > 0, the field is a char array and context2
-  *    gives its size.
-  *  - if context2 == -1, the field is an int and the edit box
-  *    is numeric.
-  *  - if context2 < -1, the field is an int and the edit box is
-  *    _floating_, and (-context2) gives the scale. (E.g. if
-  *    context2 == -1000, then typing 1.2 into the box will set
-  *    the field to 1200.)
-  */
-  int offset = ctrl->context.i;
-  int length = ctrl->editbox.context2.i;
-
-  if (length > 0) {
-    char *field = &atoffset(char, data, offset);
-    if (event == EVENT_REFRESH) {
-      dlg_editbox_set(ctrl, dlg, field);
-    }
-    else if (event == EVENT_VALCHANGE) {
-      dlg_editbox_get(ctrl, dlg, field, length);
-    }
-  }
-  else if (length < 0) {
-    int *field = &atoffset(int, data, offset);
-    char data[80];
-    if (event == EVENT_REFRESH) {
-      if (length == -1)
-        sprintf(data, "%d", *field);
-      else
-        sprintf(data, "%g", (double) *field / (double) (-length));
-      dlg_editbox_set(ctrl, dlg, data);
-    }
-    else if (event == EVENT_VALCHANGE) {
-      dlg_editbox_get(ctrl, dlg, data, lengthof(data));
-      if (length == -1)
-        *field = atoi(data);
-      else
-        *field = (int) ((-length) * atof(data));
-    }
-  }
-}
-
-void
 dlg_stdfontsel_handler(control *ctrl, void *dlg, void *data, int event)
 {
  /*

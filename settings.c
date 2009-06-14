@@ -1,5 +1,5 @@
 // settings.c (part of MinTTY)
-// Copyright 2008 Andy Koppe
+// Copyright 2008-09  Andy Koppe
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -13,7 +13,7 @@
 static FILE *file;
 
 char *
-open_settings_w(char *filename)
+open_settings_w(const char *filename)
 {
   file = fopen(filename, "w");
   char *errmsg = NULL;
@@ -60,7 +60,7 @@ keyvalcmp(void *a, void *b)
 static tree234 *tree;
 
 void
-open_settings_r(char *filename)
+open_settings_r(const char *filename)
 {
   FILE *file = fopen(filename, "r");
   if (!file) {
