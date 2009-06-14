@@ -29,6 +29,7 @@ struct cp_list_item {
 };
 
 static const struct cp_list_item cp_list[] = {
+  {-1, "Use font encoding"},
   {CP_UTF8, "UTF-8"},
   {28591, "ISO-8859-1:1998 (Latin-1, West Europe)"},
   {28592, "ISO-8859-2:1999 (Latin-2, East Europe)"},
@@ -41,8 +42,6 @@ static const struct cp_list_item cp_list[] = {
   {28599, "ISO-8859-9:1999 (Latin-5, Turkish)"},
   {28603, "ISO-8859-13:1998 (Latin-7, Baltic)"},
   {28605, "ISO-8859-15:1999 (Latin-9, \"euro\")"},
-  {20866, "Russian (KOI8-R)"},
-  {21866, "Ukrainian (KOI8-U)"},
   {1250, "Win1250 (Central European)"},
   {1251, "Win1251 (Cyrillic)"},
   {1252, "Win1252 (Western)"},
@@ -52,8 +51,8 @@ static const struct cp_list_item cp_list[] = {
   {1256, "Win1256 (Arabic)"},
   {1257, "Win1257 (Baltic)"},
   {1258, "Win1258 (Vietnamese)"},
-  {437, "OEM United States"},
-  {-1, "Use font encoding"},
+  {20866, "Russian (KOI8-R)"},
+  {21866, "Ukrainian (KOI8-U)"},
   {0, 0}
 };
 
@@ -193,39 +192,8 @@ decode_codepage(char *cp_name)
   int codepage = -1;
   CPINFO cpinfo;
 
-  if (!*cp_name) {
-   /*
-    * Here we select a plausible default code page based on
-    * the locale the user is in. We wish to select an ISO code
-    * page or appropriate local default _rather_ than go with
-    * the Win125* series, because it's more important to have
-    * CSI and friends enabled by default than the ghastly
-    * Windows extra quote characters, and because it's more
-    * likely the user is connecting to a remote server that
-    * does something Unixy or VMSy and hence standards-
-    * compliant than that they're connecting back to a Windows
-    * box using horrible nonstandard charsets.
-    * 
-    * Accordingly, Robert de Bath suggests a method for
-    * picking a default character set that runs as follows:
-    * first call GetACP to get the system's ANSI code page
-    * identifier, and translate as follows.
-    * 
-    * For anything else, choose direct-to-font.
-    */
-    int cp = GetACP();
-    switch (cp) {
-      when 1250: cp_name = "ISO-8859-2";
-      when 1251: cp_name = "KOI8-U";
-      when 1252: cp_name = "ISO-8859-1";
-      when 1253: cp_name = "ISO-8859-7";
-      when 1254: cp_name = "ISO-8859-9";
-      when 1255: cp_name = "ISO-8859-8";
-      when 1256: cp_name = "ISO-8859-6";
-      when 1257: cp_name = "ISO-8859-13";
-       /* default: leave it blank, which will select -1, direct->font */
-    }
-  }
+  if (!*cp_name)
+    return unicode_codepage;
 
   if (cp_name && *cp_name)
     for (cpi = cp_list; cpi->name; cpi++) {
