@@ -31,15 +31,15 @@ Canonical download:
 -------------------------------------------
 
 Build instructions:
-  unpack mintty-0.3.9-X-src.tar.bz2
+  unpack mintty-0.4.0-X-src.tar.bz2
     if you use setup to install this src package, it will be
     unpacked under /usr/src automatically
   cd /usr/src
-  cygport ./mintty-0.3.9-X.cygport all
+  cygport ./mintty-0.4.0-X.cygport all
 
 This will create:
-  /usr/src/mintty-0.3.9-X-src.tar.bz2
-  /usr/src/mintty-0.3.9-X.tar.bz2
+  /usr/src/mintty-0.4.0-X-src.tar.bz2
+  /usr/src/mintty-0.4.0-X.tar.bz2
 
 -------------------------------------------
 
@@ -48,17 +48,24 @@ Files included in the binary package:
   /etc/postinstall/mintty.sh
   /etc/preremove/mintty.sh
   /usr/bin/mintty.exe
-  /usr/share/doc/Cygwin/mintty-0.3.9.README
-  /usr/share/doc/mintty-0.3.9/COPYING
-  /usr/share/doc/mintty-0.3.9/INSTALL
-  /usr/share/doc/mintty-0.3.9/LICENSE
-  /usr/share/doc/mintty-0.3.9/LICENSE.Oxygen
-  /usr/share/doc/mintty-0.3.9/LICENSE.PuTTY
+  /usr/share/doc/Cygwin/mintty-0.4.0.README
+  /usr/share/doc/mintty-0.4.0/COPYING
+  /usr/share/doc/mintty-0.4.0/LICENSE.Oxygen
+  /usr/share/doc/mintty-0.4.0/LICENSE.PuTTY
   /usr/share/man/man1/mintty.1.gz
 
 ------------------
 
 Port Notes:
+
+----- mintty-0.4.0-1 -----
+* Revamped options dialog with added Apply button.
+* Better keyboard handling, including xterm modifyOtherKeys mode.
+* Added --log and --hold options.
+* Lots of little fixes.
+
+----- mintty-0.3.10-1 -----
+* Fixed a couple of codepage and font handling bugs introduced in 0.3.10.
 
 ----- mintty-0.3.9-1 -----
 * Improved support for East Asian languages.

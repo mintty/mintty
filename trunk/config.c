@@ -11,11 +11,11 @@
 #include "term.h"
 #include "win.h"
 
-/*
- * config.c - the configuration box.
- */
+const char *log_file = 0;
+bool utmp_enabled = false;
+hold_t hold = HOLD_NEVER;
 
-char *config_filename;
+const char *config_file = 0;
 config cfg, new_cfg;
 
 static control *cols_box, *rows_box;
@@ -66,8 +66,8 @@ current_size_handler(control *unused(ctrl), void *dlg,
            void *unused(data), int event)
 {
   if (event == EVENT_ACTION) {
-    new_cfg.cols = term_cols();
-    new_cfg.rows = term_rows();
+    new_cfg.cols = term.cols;
+    new_cfg.rows = term.rows;
     dlg_refresh(cols_box, dlg);
     dlg_refresh(rows_box, dlg);
   }
@@ -152,6 +152,23 @@ colour_handler(control *ctrl, void *dlg, void *unused(data), int event)
   }
 }
 
+static void
+int_handler(control *ctrl, void *dlg, void *data, int event)
+{
+  int offset = ctrl->context.i;
+  int limit = ctrl->editbox.context2.i;
+
+  int *field = &atoffset(int, data, offset);
+  char buf[16];
+  switch (event) {
+    when EVENT_VALCHANGE:
+      dlg_editbox_get(ctrl, dlg, buf, lengthof(buf));
+      *field = max(0, min(atoi(buf), limit));
+    when EVENT_REFRESH:
+      sprintf(buf, "%i", *field);
+      dlg_editbox_set(ctrl, dlg, buf);
+  }
+}
 
 #define offcfg(setting) offsetof(config, setting)
 
@@ -186,12 +203,10 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Window", "size", "Default size");
   ctrl_columns(s, 5, 35, 3, 28, 4, 30);
   (cols_box = ctrl_editbox(
-    s, "Columns", 'o', 44, P(0),
-    dlg_stdeditbox_handler, I(offcfg(cols)), I(-1)
+    s, "Columns", 'm', 44, P(0), int_handler, I(offcfg(cols)), I(256)
   ))->column = 0;
   (rows_box = ctrl_editbox(
-    s, "Rows", 'r', 55, P(0),
-    dlg_stdeditbox_handler, I(offcfg(rows)), I(-1)
+    s, "Rows", 'r', 55, P(0), int_handler, I(offcfg(rows)), I(256)
   ))->column = 2;
   ctrl_pushbutton(
     s, "Current size", 'u', P(0), current_size_handler, P(0)
@@ -204,7 +219,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(scrollbar))
   )->column = 0;
   ctrl_checkbox(
-    s, "Confirm exit", 'b', P(0),
+    s, "Confirm exit", 'x', P(0),
     dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
   )->column = 1;
 
@@ -212,7 +227,7 @@ setup_config_box(controlbox * b)
   ctrl_columns(s, 2, 35, 65);
   ctrl_editbox(
     s, "Lines", 'l', 65, P(0),
-    dlg_stdeditbox_handler, I(offsetof(config, scrollback_lines)), I(-1)
+    int_handler, I(offsetof(config, scrollback_lines)), I(1000000)
   )->column = 0;
   ctrl_columns(s, 1, 100);
   ctrl_radiobuttons(
@@ -221,6 +236,7 @@ setup_config_box(controlbox * b)
     "Shift", 's', I(SHIFT),
     "Ctrl", 'c', I(CTRL),
     "Alt", 'a', I(ALT),
+    "Off", 'o', I(0),
     null
   );
 
@@ -385,6 +401,7 @@ setup_config_box(controlbox * b)
     "Shift", 's', I(SHIFT),
     "Ctrl", 'c', I(CTRL),
     "Alt", 'a', I(ALT),
+    "Off", 'o', I(0),
     null
   );
   
@@ -451,10 +468,10 @@ int_settings[] = {
   {"ScrollMod", offcfg(scroll_mod), SHIFT},
   {"RightClickAction", offcfg(right_click_action), RC_SHOWMENU},
   {"CopyOnSelect", offcfg(copy_on_select), false},
-  {"ClicksPlaceCursor", offcfg(clicks_place_cursor), true},
+  {"ClicksPlaceCursor", offcfg(clicks_place_cursor), false},
   {"ClicksTargetApp", offcfg(clicks_target_app), true},
   {"ClickTargetMod", offcfg(click_target_mod), SHIFT},
-  {"BellType", offcfg(bell_type), BELL_SOUND},
+  {"BellType", offcfg(bell_type), BELL_DISABLED},
   {"BellIndication", offcfg(bell_ind), B_IND_STEADY},
 };
 
@@ -488,7 +505,7 @@ colour_settings[] = {
 void
 load_config(void)
 {
-  open_settings_r(config_filename);
+  open_settings_r(config_file);
   for (int_setting *s = int_settings; s < endof(int_settings); s++)
     read_int_setting(s->key, &atoffset(int, &cfg, s->offset), s->def);
   for (string_setting *s = string_settings; s < endof(string_settings); s++)
@@ -501,7 +518,7 @@ load_config(void)
 char *
 save_config(void)
 {
-  char *errmsg = open_settings_w(config_filename);
+  char *errmsg = open_settings_w(config_file);
   if (errmsg)
     return errmsg;
   for (int_setting *s = int_settings; s < endof(int_settings); s++)

@@ -159,22 +159,6 @@ void
 term_seen_key_event(void)
 {
  /*
-  * On any keypress, clear the bell overload mechanism
-  * completely, on the grounds that large numbers of
-  * bells coming from deliberate key action are likely
-  * to be intended (e.g. bells from filename completion
-  * blocking repeatedly).
-  */
-  term.bell_overloaded = false;
-  while (term.bellhead) {
-    belltime *tmp = term.bellhead;
-    term.bellhead = tmp->next;
-    free(tmp);
-  }
-  term.belltail = null;
-  term.nbells = 0;
-
- /*
   * Reset the scrollback.
   */
   term.disptop = 0;   /* return to main screen */
@@ -236,8 +220,7 @@ term_init(void)
   * Allocate a new Terminal structure and initialise the fields
   * that need it.
   */
-  term.compatibility_level = TM_PUTTY & ~CL_SCOANSI;
-  strcpy(term.id_string, "\033[?6c");
+  term.compatibility_level = TM_MINTTY;
   term.inbuf = new_bufchain();
   term.printer_buf = new_bufchain();
   term.state = TOPLEVEL;
@@ -262,6 +245,9 @@ term_resize(int newrows, int newcols)
   termline **newdisp, *line;
   int oldrows = term.rows;
   int save_which_screen = term.which_screen;
+
+  if (newrows == term.rows && newcols == term.cols)
+    return;     /* nothing to do */
 
  /* Behave sensibly if we're given zero (or negative) rows/cols */
 
@@ -1511,6 +1497,8 @@ term_set_focus(int has_focus)
   if (has_focus != term.has_focus) {
     term.has_focus = has_focus;
     term_schedule_cblink();
+    if (term.report_focus)
+      ldisc_send(has_focus ? "\e[I" : "\e[O", 3, 0);
   }
 }
 
@@ -1519,16 +1507,3 @@ term_in_utf(void)
 {
   return term.utf || ucsdata.codepage == unicode_codepage;
 }
-
-bool term_echoing(void) { return term.echoing; }
-bool term_editing(void) { return term.editing; }
-int term_rows(void) { return term.rows; }
-int term_cols(void) { return term.cols; }
-int term_which_screen(void) { return term.which_screen; }
-bool term_app_cursor_keys(void) { return term.app_cursor_keys; }
-bool term_has_focus(void) { return term.has_focus; }
-bool term_big_cursor(void) { return term.big_cursor; }
-bool term_selected(void) { return term.selected; }
-bool term_in_mouse_mode(void) { return term.mouse_mode; }
-bool term_newline_mode(void) { return term.newline_mode; }
-

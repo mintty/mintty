@@ -32,6 +32,7 @@ extern enum bold_mode { BOLD_COLOURS, BOLD_SHADOW, BOLD_FONT } bold_mode;
 extern int font_size;
 extern int font_width, font_height;
 extern int offset_width, offset_height;
+extern bool font_ambig_wide;
 
 void win_paint(void);
 
@@ -44,7 +45,7 @@ void win_open_config(void);
 
 void win_enable_tip(void);
 void win_disable_tip(void);
-void win_update_tip(HWND src, int cx, int cy);
+void win_update_tip(int x, int y, int cols, int rows);
 
 void win_init_menus(void);
 void win_update_menus(void);

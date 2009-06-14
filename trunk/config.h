@@ -3,7 +3,13 @@
 
 #include "settings.h"
 
-extern char *config_filename;
+typedef enum { HOLD_NEVER, HOLD_ALWAYS, HOLD_ERROR } hold_t;
+extern hold_t hold;
+
+extern const char *log_file;
+extern bool utmp_enabled;
+
+extern const char *config_file;
 
 typedef struct {
   char name[64];
@@ -12,15 +18,11 @@ typedef struct {
   int charset;
 } font_spec;
 
-static const char ANSWERBACK[] = "xterm";
-
 /* Bell type */
 enum { BELL_DISABLED, BELL_SOUND, BELL_VISUAL };
 
 /* Taskbar flashing indication on bell (cfg.bell_ind) */
 enum { B_IND_DISABLED, B_IND_FLASH, B_IND_STEADY };
-
-enum { BELLOVL_T = 5, BELLOVL_S = 2, BELLOVL_N = 5 };
 
 enum { CUR_BLOCK, CUR_UNDERLINE, CUR_LINE };
 

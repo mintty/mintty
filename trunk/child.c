@@ -71,7 +71,7 @@ wait_thread(void *unused(arg))
 }
 
 bool
-child_proc(hold_t hold)
+child_proc(void)
 {
   if (read_len > 0) {
     term_write(read_buf, read_len);
@@ -120,7 +120,7 @@ child_proc(hold_t hold)
 }
 
 char *
-child_create(char *argv[], struct winsize *winp, const char *log_file)
+child_create(char *argv[], struct winsize *winp)
 {
   struct passwd *pw = getpwuid(getuid());
   char *cmd; 
@@ -178,7 +178,6 @@ child_create(char *argv[], struct winsize *winp, const char *log_file)
     struct termios attr;
     tcgetattr(0, &attr);
     attr.c_cc[VERASE] = cfg.backspace_sends_del ? 0x7F : '\b';
-    attr.c_cc[VDISCARD] = 0;
     tcsetattr(0, TCSANOW, &attr);
     setenv("TERM", "xterm", 1);
     execvp(cmd, argv);
@@ -210,20 +209,22 @@ child_create(char *argv[], struct winsize *winp, const char *log_file)
     pthread_create(&thread, 0, wait_thread, 0);
     pthread_create(&thread, 0, read_thread, 0);
 
-    ut.ut_type = USER_PROCESS;
-    ut.ut_pid = pid;
-    ut.ut_time = time(0);
-    char *dev = ptsname(fd);
-    if (dev) {
-      if (strncmp(dev, "/dev/", 5) == 0)
-        dev += 5;
-      strncpy(ut.ut_line, dev ?: "?", sizeof ut.ut_line);
-      if (strncmp(dev, "pty", 3) == 0 || strncmp(dev, "tty", 3) == 0)
-        dev += 3;
-      strncpy(ut.ut_id, dev ?: "?", sizeof ut.ut_id);      
+    if (utmp_enabled) {
+      ut.ut_type = USER_PROCESS;
+      ut.ut_pid = pid;
+      ut.ut_time = time(0);
+      char *dev = ptsname(fd);
+      if (dev) {
+        if (strncmp(dev, "/dev/", 5) == 0)
+          dev += 5;
+        strncpy(ut.ut_line, dev ?: "?", sizeof ut.ut_line);
+        if (strncmp(dev, "pty", 3) == 0 || strncmp(dev, "tty", 3) == 0)
+          dev += 3;
+        strncpy(ut.ut_id, dev ?: "?", sizeof ut.ut_id);      
+      }
+      strncpy(ut.ut_user, (pw ? pw->pw_name : 0) ?: "?", sizeof ut.ut_user);
+      login(&ut);
     }
-    strncpy(ut.ut_user, (pw ? pw->pw_name : 0) ?: "?", sizeof ut.ut_user);
-    login(&ut);
   }
   
   return argz;
@@ -255,7 +256,7 @@ child_is_parent(void)
   char fn[18] = "/proc/";
   while ((e = readdir(d))) {
     char *pn = e->d_name;
-    if (isdigit(*pn) && strlen(pn) <= 6) {
+    if (isdigit((uchar)*pn) && strlen(pn) <= 6) {
       snprintf(fn + 6, 12, "%s/ppid", pn);
       FILE *f = fopen(fn, "r");
       if (!f)
@@ -288,4 +289,3 @@ child_resize(struct winsize *winp)
   if (fd >= 0)
     ioctl(fd, TIOCSWINSZ, winp);
 }
-

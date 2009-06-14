@@ -1,5 +1,5 @@
 // windialog.c (part of MinTTY)
-// Copyright 2008 Andy Koppe
+// Copyright 2008-09  Andy Koppe
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -309,6 +309,9 @@ HWND config_wnd;
 void
 win_open_config(void)
 {
+  if (config_wnd)
+    return;
+  
   InitCommonControls();
 
   RegisterClass(&(WNDCLASS){
@@ -337,6 +340,6 @@ win_show_about(void)
     .lpszCaption = "About " APPNAME,
     .dwStyle = MB_USERICON | MB_OK,
     .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
-    .lpszText = APPNAME " " APPVER "\n" COPYRIGHT "\n" APPINFO
+    .lpszText = APPNAME " " VERSION "\n" COPYRIGHT "\n" APPINFO
   });
 }
