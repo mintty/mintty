@@ -61,11 +61,10 @@ static void link_font(wchar * line_tbl, wchar * font_tbl, wchar attr);
 void
 init_ucs(void)
 {
-  int i, j;
   int used_dtf = 0;
   char tbuf[256];
-
-  for (i = 0; i < 256; i++)
+  
+  for (int i = 0; i < 256; i++)
     tbuf[i] = i;
 
  /* Decide on the Line and Font codepages */
@@ -82,7 +81,7 @@ init_ucs(void)
  /* Collect screen font ucs table */
   if (ucsdata.dbcs_screenfont || ucsdata.font_codepage == 0) {
     get_unitab(ucsdata.font_codepage, ucsdata.unitab_font, 2);
-    for (i = 128; i < 256; i++)
+    for (int i = 128; i < 256; i++)
       ucsdata.unitab_font[i] = (wchar) (CSET_ACP + i);
   }
   else {
@@ -104,9 +103,9 @@ init_ucs(void)
 
    /* For DBCS and POOR fonts force direct to font */
     used_dtf = 1;
-    for (i = 0; i < 32; i++)
+    for (int i = 0; i < 32; i++)
       ucsdata.unitab_line[i] = (wchar) i;
-    for (i = 32; i < 256; i++)
+    for (int i = 32; i < 256; i++)
       ucsdata.unitab_line[i] = (wchar) (CSET_ACP + i);
     ucsdata.unitab_line[127] = (wchar) 127;
   }
@@ -120,35 +119,17 @@ init_ucs(void)
          sizeof (unitab_xterm_std));
   ucsdata.unitab_xterm['_'] = ' ';
 
- /* Generate UCS ->line page table. */
-  if (ucsdata.uni_tbl) {
-    for (i = 0; i < 256; i++)
-      if (ucsdata.uni_tbl[i])
-        free(ucsdata.uni_tbl[i]);
-    free(ucsdata.uni_tbl);
-    ucsdata.uni_tbl = 0;
-  }
   if (!used_dtf) {
-    for (i = 0; i < 256; i++) {
+    for (int i = 0; i < 256; i++) {
       if (DIRECT_CHAR(ucsdata.unitab_line[i]))
         continue;
       if (DIRECT_FONT(ucsdata.unitab_line[i]))
         continue;
-      if (!ucsdata.uni_tbl) {
-        ucsdata.uni_tbl = newn(char *, 256);
-        memset(ucsdata.uni_tbl, 0, 256 * sizeof (char *));
-      }
-      j = ((ucsdata.unitab_line[i] >> 8) & 0xFF);
-      if (!ucsdata.uni_tbl[j]) {
-        ucsdata.uni_tbl[j] = newn(char, 256);
-        memset(ucsdata.uni_tbl[j], 0, 256 * sizeof (char));
-      }
-      ucsdata.uni_tbl[j][ucsdata.unitab_line[i] & 0xFF] = i;
     }
   }
 
  /* Find the line control characters. */
-  for (i = 0; i < 256; i++)
+  for (int i = 0; i < 256; i++)
     if (ucsdata.unitab_line[i] < ' ' ||
         (ucsdata.unitab_line[i] >= 0x7F && ucsdata.unitab_line[i] < 0xA0))
       ucsdata.unitab_ctrl[i] = i;
