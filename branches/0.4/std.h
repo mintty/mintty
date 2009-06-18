@@ -45,6 +45,9 @@ typedef void (*void_fn)(void);
 
 #define null ((void *) 0)
 
+#define __W(s) L##s
+#define _W(s) __W(s)
+
 #define lengthof(array) (sizeof(array) / sizeof(*(array)))
 #define endof(array) (&(array)[lengthof(array)])
 #define atoffset(type, data, offset) (*((type *)((char *)(data) + (offset))))
