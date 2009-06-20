@@ -837,9 +837,9 @@ main(int argc, char *argv[])
   * Its real size has to be set after loading the fonts and determining their
   * size, but the window has to exist to do that.
   */
-  wnd = CreateWindow(APPNAME, APPNAME,
-                     WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
-                     x, y, 300, 200, null, null, inst, null);
+  wnd = CreateWindowW(_W(APPNAME), _W(APPNAME),
+                      WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
+                      x, y, 300, 200, null, null, inst, null);
 
  /*
   * Determine extra_{width,height}.
