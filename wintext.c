@@ -130,7 +130,7 @@ win_init_fonts(void)
 
   font_height = tm.tmHeight;
   font_width = tm.tmAveCharWidth;
-  font_dualwidth = (tm.tmMaxCharWidth > tm.tmAveCharWidth * 3 / 2);
+  font_dualwidth = (tm.tmMaxCharWidth >= tm.tmAveCharWidth * 3 / 2);
   
   float latin_char_width, greek_char_width, line_char_width;
   GetCharWidthFloatW(dc, 0x0041, 0x0041, &latin_char_width);
@@ -138,8 +138,8 @@ win_init_fonts(void)
   GetCharWidthFloatW(dc, 0x2500, 0x2500, &line_char_width);
   
   font_ambig_wide =
-    greek_char_width > latin_char_width ||
-    line_char_width > latin_char_width;
+    greek_char_width >= latin_char_width * 1.5 ||
+    line_char_width  >= latin_char_width * 1.5;
 
   {
     CHARSETINFO info;

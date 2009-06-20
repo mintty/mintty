@@ -9,6 +9,7 @@
 
 #include <math.h>
 #include <windowsx.h>
+#include <winnls.h>
 
 static HMENU menu, sysmenu;
 
@@ -553,7 +554,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   return 1;
 }
 
-bool 
+bool
 win_key_up(WPARAM wParam, LPARAM unused(lParam))
 {
   win_update_mouse();
@@ -566,8 +567,11 @@ win_key_up(WPARAM wParam, LPARAM unused(lParam))
       ldisc_send("\e", 1, 1);
   }
   else if (alt_state > ALT_ALONE) {
-    if (term_in_utf())
+    if (term_in_utf()) {
+      if (alt_char < 0x20)
+        MultiByteToWideChar(CP_OEMCP, MB_USEGLYPHCHARS, (char[]){alt_char}, 1, &alt_char, 1); 
       luni_send(&alt_char, 1, 1);
+    }
     else if (alt_char < 0x100)
       ldisc_send((char[]){alt_char}, 1, 1);
   }

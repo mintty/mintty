@@ -40,8 +40,7 @@ win_set_title(char *title)
 {
   size_t len = strlen(title);
   wchar wtitle[len + 1];
-  size_t wlen =
-    mb_to_wc(ucsdata.codepage, 0, title, len, wtitle, len);
+  size_t wlen = mb_to_wc(ucsdata.codepage, 0, title, len, wtitle, len);
   wtitle[wlen] = 0;
   SetWindowTextW(wnd, wtitle);
 }
@@ -708,7 +707,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
   * Any messages we don't process completely above are passed through to
   * DefWindowProc() for default processing.
   */
-  return DefWindowProc(wnd, message, wp, lp);
+  return DefWindowProcW(wnd, message, wp, lp);
 }
 
 static const char *help =
@@ -821,29 +820,26 @@ main(int argc, char *argv[])
   main_argv = argv;  
   inst = GetModuleHandle(NULL);
 
- /* Create window class. */
-  {
-    WNDCLASS wndclass;
-    wndclass.style = 0;
-    wndclass.lpfnWndProc = win_proc;
-    wndclass.cbClsExtra = 0;
-    wndclass.cbWndExtra = 0;
-    wndclass.hInstance = inst;
-    wndclass.hIcon = LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON));
-    wndclass.hCursor = LoadCursor(null, IDC_IBEAM);
-    wndclass.hbrBackground = null;
-    wndclass.lpszMenuName = null;
-    wndclass.lpszClassName = APPNAME;
-    RegisterClass(&wndclass);
-  }
+  RegisterClassW(&(WNDCLASSW){
+    .style = 0,
+    .lpfnWndProc = win_proc,
+    .cbClsExtra = 0,
+    .cbWndExtra = 0,
+    .hInstance = inst,
+    .hIcon = LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON)),
+    .hCursor = LoadCursor(null, IDC_IBEAM),
+    .hbrBackground = null,
+    .lpszMenuName = null,
+    .lpszClassName = _W(APPNAME),
+  });
 
  /* Create initial window.
   * Its real size has to be set after loading the fonts and determining their
   * size, but the window has to exist to do that.
   */
-  wnd = CreateWindow(APPNAME, APPNAME,
-                     WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
-                     x, y, 300, 200, null, null, inst, null);
+  wnd = CreateWindowW(_W(APPNAME), _W(APPNAME),
+                      WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
+                      x, y, 300, 200, null, null, inst, null);
 
  /*
   * Determine extra_{width,height}.
