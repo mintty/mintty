@@ -885,7 +885,7 @@ wordtype(int uc)
   if (uc < 0x80) {
     if (uc <= ' ' || uc == 0x7f)
       return 0;
-    else if (strchr("""'`,;:&|!?<=>()[]{}", uc))
+    else if (strchr("\"'`,;:&|!?<=>()[]{}", uc))
       return 1;
     else
       return 2;
