@@ -697,7 +697,7 @@ term_write(const char *data, int len)
           }
         }
       }
-      if (' ' <= c && c <= 0x7F) {
+      if (' ' <= c && c <= 0xFF) {
         int cset_attr = term.cset_attr[term.cset]; 
         switch (cset_attr) {
          /* 
