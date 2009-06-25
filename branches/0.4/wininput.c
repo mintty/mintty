@@ -102,7 +102,7 @@ static wchar alt_char;
 static mod_keys
 get_mods(void)
 {
-  inline static bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
+  inline bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
   return
     is_key_down(VK_SHIFT) * SHIFT |
     is_key_down(VK_MENU) * ALT |
@@ -255,14 +255,14 @@ win_key_down(WPARAM wp, LPARAM lp)
 
   uchar kbd[256];
   GetKeyboardState(kbd);
-  inline static bool is_key_down(uchar vk) { return kbd[vk] & 0x80; }
+  inline bool is_key_down(uchar vk) { return kbd[vk] & 0x80; }
   
   bool shift = is_key_down(VK_SHIFT);
   bool alt = is_key_down(VK_MENU);
   bool ctrl = is_key_down(VK_CONTROL);
   mod_keys mods = shift * SHIFT | alt * ALT | ctrl * CTRL;
   bool meta = (alt & !ctrl) | (is_key_down(VK_LMENU) & is_key_down(VK_RMENU));
-  bool numlock = is_key_down(VK_NUMLOCK);
+  bool numlock = kbd[VK_NUMLOCK] & 1;
 
   update_mouse(mods);
 
