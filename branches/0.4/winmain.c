@@ -255,7 +255,7 @@ notify_resize(int rows, int cols)
 void
 win_resize(int rows, int cols)
 {
- /* If the window is maximized supress resizing attempts */
+ /* If the window is maximized suppress resizing attempts */
   if (IsZoomed(wnd) || (rows == term.rows && cols == term.cols)) 
     return;
   
@@ -307,13 +307,10 @@ reset_window(int reinit)
     */
     cols = text_width / font_width;
     rows = text_height / font_height;
-    offset_width = (text_width % font_width) / 2 + 1;
-    offset_height = (text_height % font_height) / 2 + 1;
   }
   else if (text_width != cols * font_width ||
            text_height != rows * font_height) {
    /* Window size isn't what's needed. Let's change it then. */
-    offset_width = offset_height = 1;
     static RECT ss;
     get_fullscreen_rect(&ss);
     int max_cols = (ss.right - ss.left - extra_width - 2) / font_width;
@@ -325,6 +322,9 @@ reset_window(int reinit)
                  font_height * rows + 2 + extra_height,
                  SWP_NOMOVE | SWP_NOZORDER);
   }
+  
+  offset_width = (text_width % font_width) / 2 + 1;
+  offset_height = (text_height % font_height) / 2 + 1;
   
   if (rows != term.rows || cols != term.cols)
     notify_resize(rows, cols);
