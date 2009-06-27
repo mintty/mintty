@@ -914,10 +914,21 @@ win_set_sbar(int total, int start, int page)
   }
 }
 
-static colour brighter(colour c) {
+static colour 
+brighter(colour c)
+{
   uint r = red(c), g = green(c), b = blue(c);   
   uint s = min(85, 255 - max(max(r, g), b));
   return make_colour(r + s, g + s, b + s);
+}
+
+static uint
+colour_dist(colour a, colour b)
+{
+  return
+    2 * sqr(red(a) - red(b)) +
+    4 * sqr(green(a) - green(b)) +
+    1 * sqr(blue(a) - blue(b));
 }
 
 void
@@ -937,7 +948,7 @@ win_set_foreground_colour(colour c)
 void
 win_set_background_colour(colour c)
 {
-  colours[258] = colours[260] = c;
+  colours[258] = c;
   colours[259] = brighter(c);
   
   // Make sure the background around the edge of the screen is repainted.
@@ -947,6 +958,10 @@ win_set_background_colour(colour c)
 void
 win_set_cursor_colour(colour c)
 {
+  // Set the colour of text under the cursor to whichever of foreground
+  // and background colour is further away.
+  colour fg = colours[256], bg = colours[258];
+  colours[260] = colour_dist(c, fg) > colour_dist(c, bg) ? fg : bg;
   colours[261] = c;
 }
 
@@ -961,7 +976,7 @@ win_reconfig_palette(void)
 void
 win_reset_colours(void)
 {
-  static const COLORREF
+  static const colour
   ansi_colours[16] = {
     0x000000, 0x0000BF, 0x00BF00, 0x00BFBF,
     0xBF0000, 0xBF00BF, 0xBFBF00, 0xBFBFBF,

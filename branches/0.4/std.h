@@ -70,5 +70,6 @@ typedef void (*void_fn)(void);
 #endif
 
 #define sgn(x) ({ typeof(x) x_ = (x); (x_ > 0) - (x_ < 0); })
+#define sqr(x) ({ typeof(x) x_ = (x); x_ * x_; })
 
 #endif
