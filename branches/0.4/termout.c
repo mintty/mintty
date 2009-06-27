@@ -715,20 +715,6 @@ term_write(const char *data, int len)
       }
     }
 
-   /*
-    * How about C1 controls? 
-    * Explicitly ignore SCI (0x9a), which we don't translate to DECID.
-    */
-    if ((c & -32) == 0x80 && term.state < DO_CTRLS && has_compat(VT220)) {
-      if (c == 0x9a)
-        c = 0;
-      else {
-        term.state = SEEN_ESC;
-        term.esc_query = false;
-        c = '@' + (c & 0x1F);
-      }
-    }
-
    /* Or the GL control. */
     if (c == '\177' && term.state < DO_CTRLS && has_compat(OTHER)) {
       if (term.curs.x && !term.wrapnext)
