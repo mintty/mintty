@@ -711,15 +711,16 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
 }
 
 static const char *help =
-  "Usage: %s [OPTION]... [-e] [ - | COMMAND [ARG]... ]\n"
+  "Usage: %s [OPTION]... [ - | PROGRAM [ARG]... ]\n"
   "\n"
-  "If a command is supplied, it is executed with its arguments. Otherwise,\n"
+  "If a program is supplied, it is executed with its arguments. Otherwise,\n"
   "MinTTY looks for a shell to execute in the SHELL environment variable.\n"
   "If that is not set, it tries to read the user's default shell setting\n"
   "from /etc/passwd. Failing that, it falls back to /bin/sh. If the last\n"
   "argument is a single dash, the shell is invoked as a login shell.\n"
   "\n"
   "Options:\n"
+  "  -e, --exec            Treat remaining arguments as the command to execute\n"
   "  -c, --config=FILE     Use specified config file (default: ~/.minttyrc)\n"
   "  -p, --position=X,Y    Open window at specified coordinates\n"
   "  -s, --size=COLS,ROWS  Set screen size in characters\n"
@@ -736,15 +737,16 @@ static const char short_opts[] = "+HVuec:p:s:t:l:h:";
 
 static const struct option
 opts[] = { 
+  {"help",     no_argument,       0, 'H'},
+  {"version",  no_argument,       0, 'V'},
+  {"exec",     no_argument,       0, 'e'},
+  {"utmp",     no_argument,       0, 'u'},
   {"config",   required_argument, 0, 'c'},
   {"position", required_argument, 0, 'p'},
   {"size",     required_argument, 0, 's'},
   {"title",    required_argument, 0, 't'},
   {"log",      required_argument, 0, 'l'},
   {"hold",     required_argument, 0, 'h'},
-  {"utmp",     no_argument,       0, 'u'},
-  {"help",     no_argument,       0, 'H'},
-  {"version",  no_argument,       0, 'V'},
   {0, 0, 0, 0}
 };
 
