@@ -601,126 +601,116 @@ term_write(const char *data, int len)
 
    /* First see about all those translations. */
     if (term.state == TOPLEVEL) {
-      if (term.sco_acs && c >= ' ') {
+      int cset_attr = term.cset_attr[term.cset]; 
+      if (term.sco_acs || cset_attr == CSET_SCOACS) {
        /* SCO ACS (aka VGA graphics) */
-        if (term.sco_acs == 2)
-          c |= 0x80;
-        c |= CSET_SCOACS;
-      }
-      else if (term_in_utf()) {
-        switch (term.utf_state) {
-          when 0: {
-            if (c < 0x80) {
-             /* UTF-8 must be stateless so we ignore iso2022. */
-              if (ucsdata.unitab_ctrl[c] != 0xFF)
-                c = ucsdata.unitab_ctrl[c];
-              break;
-            }
-            else if ((c & 0xe0) == 0xc0) {
-              term.utf_size = term.utf_state = 1;
-              term.utf_char = (c & 0x1f);
-            }
-            else if ((c & 0xf0) == 0xe0) {
-              term.utf_size = term.utf_state = 2;
-              term.utf_char = (c & 0x0f);
-            }
-            else if ((c & 0xf8) == 0xf0) {
-              term.utf_size = term.utf_state = 3;
-              term.utf_char = (c & 0x07);
-            }
-            else if ((c & 0xfc) == 0xf8) {
-              term.utf_size = term.utf_state = 4;
-              term.utf_char = (c & 0x03);
-            }
-            else if ((c & 0xfe) == 0xfc) {
-              term.utf_size = term.utf_state = 5;
-              term.utf_char = (c & 0x01);
-            }
-            else {
-              c = UCSERR;
-              break;
-            }
-            continue;
-          }
-          when 1 or 2 or 3 or 4 or 5: {
-            if ((c & 0xC0) != 0x80) {
-              unget = c;
-              c = UCSERR;
-              term.utf_state = 0;
-              break;
-            }
-            term.utf_char = (term.utf_char << 6) | (c & 0x3f);
-            if (--term.utf_state)
-              continue;
-
-            c = term.utf_char;
-
-           /* Is somebody trying to be evil! */
-            if (c < 0x80 || (c < 0x800 && term.utf_size >= 2) ||
-                (c < 0x10000 && term.utf_size >= 3) || (c < 0x200000 &&
-                                                        term.utf_size >= 4) ||
-                (c < 0x4000000 && term.utf_size >= 5))
-              c = UCSERR;
-
-           /* Unicode line separator and paragraph separator are CR-LF */
-            if (c == 0x2028 || c == 0x2029)
-              c = 0x85;
-
-           /* High controls are probably a Baaad idea too. */
-            if (c < 0xA0)
-              c = 0xFFFD;
-
-           /* The UTF-16 surrogates are not nice either. */
-           /*       The standard give the option of decoding these: 
-            *       I don't want to! */
-            if (c >= 0xD800 && c < 0xE000)
-              c = UCSERR;
-
-           /* Ignore language tags */
-            if (c >= 0xE0000 && c <= 0xE007F)
-              continue;
-
-           /* ISO 10646 characters now limited to UTF-16 range. */
-            if (c > 0x10FFFF)
-              c = UCSERR;
-           
-           /* Only the BMP is supported at the moment. */
-            else if (c >= 0x10000)
-              c = 0xFFFD;
-
-           /* U+FEFF is best seen as a null. */
-            if (c == 0xFEFF)
-              continue;
-           /* But U+FFFE is an error. */
-            if (c == 0xFFFE || c == 0xFFFF)
-              c = UCSERR;
-          }
+        if (!strchr("\e\n\r\b", c)) {
+          if (term.sco_acs == 2)
+            c |= 0x80;
+          c |= CSET_SCOACS;
         }
       }
-      if (' ' <= c && c <= 0xFF) {
-        int cset_attr = term.cset_attr[term.cset]; 
-        switch (cset_attr) {
-         /* 
-          * Linedraw characters are different from 'ESC ( B'
-          * only for a small range. For ones outside that
-          * range, make sure we use the same font as well as
-          * the same encoding.
-          */
-          when CSET_LINEDRW:
-            if (ucsdata.unitab_ctrl[c] != 0xFF)
-              c = ucsdata.unitab_ctrl[c];
-            else
-              c |= CSET_LINEDRW;
-          when CSET_ASCII or CSET_GBCHR:
-            /* If UK-ASCII, make the '#' a LineDraw Pound */
-            if (c == '#' && cset_attr == CSET_GBCHR)
-              c = '}' | CSET_LINEDRW;
-            else if (ucsdata.unitab_ctrl[c] != 0xFF)
-              c = ucsdata.unitab_ctrl[c];
-            else
-              c |= CSET_ASCII;
-          when CSET_SCOACS:
-            c |= CSET_SCOACS;
+      else {
+        bool in_utf = term_in_utf();
+        if (in_utf) {
+          switch (term.utf_state) {
+            when 0: {
+              if (c < 0x80) {
+               /* UTF-8 must be stateless so we ignore iso2022. */
+                if (ucsdata.unitab_ctrl[c] != 0xFF)
+                  c = ucsdata.unitab_ctrl[c];
+                break;
+              }
+              else if ((c & 0xe0) == 0xc0) {
+                term.utf_size = term.utf_state = 1;
+                term.utf_char = (c & 0x1f);
+              }
+              else if ((c & 0xf0) == 0xe0) {
+                term.utf_size = term.utf_state = 2;
+                term.utf_char = (c & 0x0f);
+              }
+              else if ((c & 0xf8) == 0xf0) {
+                term.utf_size = term.utf_state = 3;
+                term.utf_char = (c & 0x07);
+              }
+              else if ((c & 0xfc) == 0xf8) {
+                term.utf_size = term.utf_state = 4;
+                term.utf_char = (c & 0x03);
+              }
+              else if ((c & 0xfe) == 0xfc) {
+                term.utf_size = term.utf_state = 5;
+                term.utf_char = (c & 0x01);
+              }
+              else {
+                c = UCSERR;
+                break;
+              }
+              continue;
+            }
+            when 1 or 2 or 3 or 4 or 5: {
+              if ((c & 0xC0) != 0x80) {
+                unget = c;
+                c = UCSERR;
+                term.utf_state = 0;
+                break;
+              }
+              term.utf_char = (term.utf_char << 6) | (c & 0x3f);
+              if (--term.utf_state)
+                continue;
+
+              c = term.utf_char;
+
+             /* Is somebody trying to be evil! */
+              if (c < 0x80 || (c < 0x800 && term.utf_size >= 2) ||
+                  (c < 0x10000 && term.utf_size >= 3) || (c < 0x200000 &&
+                                                          term.utf_size >= 4) ||
+                  (c < 0x4000000 && term.utf_size >= 5))
+                c = UCSERR;
+
+             /* Unicode line separator and paragraph separator are CR-LF */
+              if (c == 0x2028 || c == 0x2029)
+                c = 0x85;
+
+             /* High controls are probably a Baaad idea too. */
+              if (c < 0xA0)
+                c = 0xFFFD;
+
+             /* The UTF-16 surrogates are not nice either. */
+             /*       The standard give the option of decoding these: 
+              *       I don't want to! */
+              if (c >= 0xD800 && c < 0xE000)
+                c = UCSERR;
+
+             /* Ignore language tags */
+              if (c >= 0xE0000 && c <= 0xE007F)
+                continue;
+
+             /* ISO 10646 characters now limited to UTF-16 range. */
+              if (c > 0x10FFFF)
+                c = UCSERR;
+             
+             /* Only the BMP is supported at the moment. */
+              else if (c >= 0x10000)
+                c = 0xFFFD;
+
+             /* U+FEFF is best seen as a null. */
+              if (c == 0xFEFF)
+                continue;
+             /* But U+FFFE is an error. */
+              if (c == 0xFFFE || c == 0xFFFF)
+                c = UCSERR;
+            }
+          }
+        }
+        if (cset_attr == CSET_LINEDRW && 0x60 <= c && c < 0x80) 
+          c |= CSET_LINEDRW;
+        else if (cset_attr == CSET_GBCHR && c == '#')
+          c = '}' | CSET_LINEDRW;
+        else if (!in_utf) {
+          if (ucsdata.unitab_ctrl[c] != 0xFF)
+            c = ucsdata.unitab_ctrl[c];
+          else
+            c |= CSET_ASCII;
         }
       }
     }
