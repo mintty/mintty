@@ -269,19 +269,19 @@ win_paint(void)
   dc = BeginPaint(wnd, &p);
 
   term_invalidate(
-    (p.rcPaint.left - offset_width) / font_width,
-    (p.rcPaint.top - offset_height) / font_height,
-    (p.rcPaint.right - offset_width - 1) / font_width,
-    (p.rcPaint.bottom - offset_height - 1) / font_height
+    (p.rcPaint.left - PADDING) / font_width,
+    (p.rcPaint.top - PADDING) / font_height,
+    (p.rcPaint.right - PADDING - 1) / font_width,
+    (p.rcPaint.bottom - PADDING - 1) / font_height
   );
 
   if (!update_pending)
     term_paint();
 
-  if (p.fErase || p.rcPaint.left < offset_width ||
-      p.rcPaint.top < offset_height ||
-      p.rcPaint.right >= offset_width + font_width * term.cols ||
-      p.rcPaint.bottom >= offset_height + font_height * term.rows) {
+  if (p.fErase || p.rcPaint.left < PADDING ||
+      p.rcPaint.top < PADDING ||
+      p.rcPaint.right >= PADDING + font_width * term.cols ||
+      p.rcPaint.bottom >= PADDING + font_height * term.rows) {
     HBRUSH fillcolour, oldbrush;
     HPEN edge, oldpen;
     fillcolour = CreateSolidBrush(colours[ATTR_DEFBG >> ATTR_BGSHIFT]);
@@ -292,9 +292,9 @@ win_paint(void)
     IntersectClipRect(dc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
                       p.rcPaint.bottom);
 
-    ExcludeClipRect(dc, offset_width, offset_height,
-                    offset_width + font_width * term.cols,
-                    offset_height + font_height * term.rows);
+    ExcludeClipRect(dc, PADDING, PADDING,
+                    PADDING + font_width * term.cols,
+                    PADDING + font_height * term.rows);
 
     Rectangle(dc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
               p.rcPaint.bottom);
@@ -510,8 +510,8 @@ win_text_internal(int x, int y, wchar * text, int len, uint attr, int lattr)
 
   x *= fnt_width;
   y *= font_height;
-  x += offset_width;
-  y += offset_height;
+  x += PADDING;
+  y += PADDING;
 
   if ((attr & TATTR_ACTCURS) && (cfg.cursor_type == 0 || term.big_cursor)) {
     attr &= ~(ATTR_REVERSE | ATTR_BLINK | ATTR_COLOURS);
@@ -610,8 +610,8 @@ win_text_internal(int x, int y, wchar * text, int len, uint attr, int lattr)
   line_box.bottom = y + font_height;
 
  /* Only want the left half of double width lines */
-  if (line_box.right > font_width * term.cols + offset_width)
-    line_box.right = font_width * term.cols + offset_width;
+  if (line_box.right > font_width * term.cols + PADDING)
+    line_box.right = font_width * term.cols + PADDING;
 
  /* We're using a private area for direct to font. (512 chars.) */
   if (ucsdata.dbcs_screenfont && (text[0] & CSET_MASK) == CSET_ACP) {
@@ -774,8 +774,8 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
     char_width *= 2;
   x *= fnt_width;
   y *= font_height;
-  x += offset_width;
-  y += offset_height;
+  x += PADDING;
+  y += PADDING;
 
   if ((attr & TATTR_PASCURS) && (ctype == 0 || term.big_cursor)) {
     POINT pts[5];

@@ -885,7 +885,7 @@ wordtype(int c)
   if (c < 0x80) {
     if (c <= ' ' || c == 0x7f)
       return 0;
-    else if (isalnum(c) || strchr("#+-./\\_~", c))
+    else if (isalnum(c) || strchr("#-./\\_~", c))
       return 2;
     else
       return 1;

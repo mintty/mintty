@@ -21,7 +21,6 @@ HWND wnd;
 HINSTANCE inst;
 HDC dc;
 
-int offset_width, offset_height;
 static int extra_width, extra_height;
 
 static HBITMAP caretbm;
@@ -217,8 +216,8 @@ update_sys_cursor(void)
 void
 win_set_sys_cursor(int x, int y)
 {
-  int cx = x * font_width + offset_width;
-  int cy = y * font_height + offset_height;
+  int cx = x * font_width + PADDING;
+  int cy = y * font_height + PADDING;
   if (cx != caret_x || cy != caret_y) {
     caret_x = cx;
     caret_y = cy;
@@ -260,8 +259,8 @@ win_resize(int rows, int cols)
     return;
   
   notify_resize(rows, cols);
-  int width = extra_width + font_width * cols + 2;
-  int height = extra_height + font_height * rows + 2;
+  int width = extra_width + font_width * cols + 2 * PADDING;
+  int height = extra_height + font_height * rows + 2 * PADDING;
   SetWindowPos(wnd, null, 0, 0, width, height,
                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
   InvalidateRect(wnd, null, true);
@@ -294,8 +293,8 @@ reset_window(int reinit)
   int client_height = cr.bottom - cr.top;
   extra_width = wr.right - wr.left - client_width;
   extra_height = wr.bottom - wr.top - client_height;
-  int text_width = client_width - 2;
-  int text_height = client_height - 2;
+  int term_width = client_width - 2 * PADDING;
+  int term_height = client_height - 2 * PADDING;
   
   if (!client_width || !client_height) {
    /* Oh, looks like we're minimised: do nothing */
@@ -305,26 +304,24 @@ reset_window(int reinit)
     * this means we must not change the size of
     * the window so the terminal has to change.
     */
-    cols = text_width / font_width;
-    rows = text_height / font_height;
+    cols = term_width / font_width;
+    rows = term_height / font_height;
   }
-  else if (text_width != cols * font_width ||
-           text_height != rows * font_height) {
+  else if (term_width != cols * font_width ||
+           term_height != rows * font_height) {
    /* Window size isn't what's needed. Let's change it then. */
+   /* Make sure the window isn't bigger than the screen. */
     static RECT ss;
     get_fullscreen_rect(&ss);
-    int max_cols = (ss.right - ss.left - extra_width - 2) / font_width;
-    int max_rows = (ss.bottom - ss.top - extra_height - 2) / font_height;
-    cols = min(cols, max_cols);
-    rows = min(rows, max_rows);
+    int max_client_width = ss.right - ss.left - extra_width;
+    int max_client_height = ss.bottom - ss.top - extra_height;
+    cols = min(cols, (max_client_width - 2 * PADDING) / font_width);
+    rows = min(rows, (max_client_height - 2 * PADDING) / font_height);
     SetWindowPos(wnd, null, 0, 0,
-                 font_width * cols + 2 + extra_width,
-                 font_height * rows + 2 + extra_height,
+                 font_width * cols + 2 * PADDING + extra_width, 
+                 font_height * rows + 2 * PADDING + extra_height,
                  SWP_NOMOVE | SWP_NOZORDER);
   }
-  
-  offset_width = (text_width % font_width) / 2 + 1;
-  offset_height = (text_height % font_height) / 2 + 1;
   
   if (rows != term.rows || cols != term.cols)
     notify_resize(rows, cols);
@@ -620,7 +617,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       resizing = false;
       if (need_backend_resize) {
         need_backend_resize = false;
-        offset_width = offset_height = 1;
         notify_resize(new_rows, new_cols);
         InvalidateRect(wnd, null, true);
       }
@@ -631,10 +627,10 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       * 2) Make sure the window size is _stepped_ in units of the font size.
       */
       LPRECT r = (LPRECT) lp;
-      int width = r->right - r->left - extra_width - 2;
-      int height = r->bottom - r->top - extra_height - 2;
-      int cols = max(1, (width + font_width / 2) / font_width);
-      int rows = max(1, (height + font_height / 2) / font_height);
+      int width = r->right - r->left - extra_width - 2 * PADDING;
+      int height = r->bottom - r->top - extra_height - 2 * PADDING;
+      int cols = max(1, width / font_width);
+      int rows = max(1, height / font_height);
 
       int ew = width - cols * font_width;
       int eh = height - rows * font_height;
@@ -664,8 +660,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         fullscr_on_max = false;
         make_full_screen();
       }
-      int new_width = LOWORD(lp) - 2;
-      int new_height = HIWORD(lp) - 2;
+      int new_width = LOWORD(lp) - 2 * PADDING;
+      int new_height = HIWORD(lp) - 2 * PADDING;
       new_cols = max(1, new_width / font_width);
       new_rows = max(1, new_height / font_height);
       if (resizing) {
@@ -905,9 +901,9 @@ main(int argc, char *argv[])
   */
   int term_width = font_width * term.cols;
   int term_height = font_height * term.rows;
-  offset_width = offset_height = 1;
   SetWindowPos(wnd, null, 0, 0,
-               term_width + extra_width + 2, term_height + extra_height + 2,
+               term_width + extra_width + 2 * PADDING,
+               term_height + extra_height + 2 * PADDING,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 
   // Enable drag & drop.
