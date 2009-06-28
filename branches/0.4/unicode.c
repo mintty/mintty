@@ -828,7 +828,7 @@ is_dbcs_leadbyte(int codepage, char byte)
 }
 
 int
-wordtype(int uc)
+wordtype(int c)
 {
   struct ucsword {
     wchar start, end; 
@@ -867,31 +867,31 @@ wordtype(int uc)
     {0xfff0, 0xffff, 0},        /* half/fullwidth ASCII */
     {0, 0, 0}
   };
-  switch (uc & CSET_MASK) {
-    when CSET_LINEDRW: uc = ucsdata.unitab_xterm[uc & 0xFF];
-    when CSET_ASCII:   uc = ucsdata.unitab_line[uc & 0xFF];
-    when CSET_SCOACS:  uc = ucsdata.unitab_scoacs[uc & 0xFF];
+  switch (c & CSET_MASK) {
+    when CSET_LINEDRW: c = ucsdata.unitab_xterm[c & 0xFF];
+    when CSET_ASCII:   c = ucsdata.unitab_line[c & 0xFF];
+    when CSET_SCOACS:  c = ucsdata.unitab_scoacs[c & 0xFF];
   }
-  switch (uc & CSET_MASK) {
-    when CSET_ACP:   uc = ucsdata.unitab_font[uc & 0xFF];
-    when CSET_OEMCP: uc = ucsdata.unitab_oemcp[uc & 0xFF];
+  switch (c & CSET_MASK) {
+    when CSET_ACP:   c = ucsdata.unitab_font[c & 0xFF];
+    when CSET_OEMCP: c = ucsdata.unitab_oemcp[c & 0xFF];
   }
 
  /* For DBCS fonts I can't do anything useful. Even this will sometimes
   * fail as there's such a thing as a double width space. :-(
   */
   if (ucsdata.dbcs_screenfont && ucsdata.font_codepage == ucsdata.codepage)
-    return (uc != ' ');
-  if (uc < 0x80) {
-    if (uc <= ' ' || uc == 0x7f)
+    return (c != ' ');
+  if (c < 0x80) {
+    if (c <= ' ' || c == 0x7f)
       return 0;
-    else if (strchr("\"'`,;:&|!?<=>()[]{}", uc))
-      return 1;
-    else
+    else if (isalnum(c) || strchr("#+-./\\_~", c))
       return 2;
+    else
+      return 1;
   }
   for (const struct ucsword *wptr = ucs_words; wptr->start; wptr++) {
-    if (uc >= wptr->start && uc <= wptr->end)
+    if (c >= wptr->start && c <= wptr->end)
       return wptr->ctype;
   }
   return 2;
