@@ -9,6 +9,7 @@
 
 #include <math.h>
 #include <windowsx.h>
+#include <winnls.h>
 
 static HMENU menu, sysmenu;
 
@@ -101,7 +102,7 @@ static wchar alt_char;
 static mod_keys
 get_mods(void)
 {
-  inline static bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
+  inline bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
   return
     is_key_down(VK_SHIFT) * SHIFT |
     is_key_down(VK_MENU) * ALT |
@@ -155,8 +156,8 @@ static pos
 translate_pos(int x, int y)
 {
   return (pos){
-    .x = floorf((x - offset_width ) / (float)font_width ),
-    .y = floorf((y - offset_height) / (float)font_height), 
+    .x = floorf((x - PADDING) / (float)font_width ),
+    .y = floorf((y - PADDING) / (float)font_height), 
   };
 }
 
@@ -254,14 +255,14 @@ win_key_down(WPARAM wp, LPARAM lp)
 
   uchar kbd[256];
   GetKeyboardState(kbd);
-  inline static bool is_key_down(uchar vk) { return kbd[vk] & 0x80; }
+  inline bool is_key_down(uchar vk) { return kbd[vk] & 0x80; }
   
   bool shift = is_key_down(VK_SHIFT);
   bool alt = is_key_down(VK_MENU);
   bool ctrl = is_key_down(VK_CONTROL);
   mod_keys mods = shift * SHIFT | alt * ALT | ctrl * CTRL;
   bool meta = (alt & !ctrl) | (is_key_down(VK_LMENU) & is_key_down(VK_RMENU));
-  bool numlock = is_key_down(VK_NUMLOCK);
+  bool numlock = kbd[VK_NUMLOCK] & 1;
 
   update_mouse(mods);
 
@@ -553,7 +554,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   return 1;
 }
 
-bool 
+bool
 win_key_up(WPARAM wParam, LPARAM unused(lParam))
 {
   win_update_mouse();
@@ -566,8 +567,11 @@ win_key_up(WPARAM wParam, LPARAM unused(lParam))
       ldisc_send("\e", 1, 1);
   }
   else if (alt_state > ALT_ALONE) {
-    if (term_in_utf())
+    if (term_in_utf()) {
+      if (alt_char < 0x20)
+        MultiByteToWideChar(CP_OEMCP, MB_USEGLYPHCHARS, (char[]){alt_char}, 1, &alt_char, 1); 
       luni_send(&alt_char, 1, 1);
+    }
     else if (alt_char < 0x100)
       ldisc_send((char[]){alt_char}, 1, 1);
   }
