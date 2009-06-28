@@ -971,6 +971,24 @@ Just enter the first few characters of a previous command and press
 .RE
 
 
+.SS Enabling non-ASCII input in bash and readline
+
+By default, \fBreadline\fP treats the uppermost bit of input and output 
+characters as the "meta" flag.
+The following settings in \fI~/.inputrc\fP will disable that and thereby 
+allow the use of characters outside the 7-bit ASCII character set:
+
+.RS
+.nf
+\fC
+set input-meta on
+set convert-meta off
+set output-meta on
+\fP
+.fi
+.RE
+
+
 .SS Mousewheel scrolling for less
 
 No, this is not some sort of special offer, but a tip on how to enable
