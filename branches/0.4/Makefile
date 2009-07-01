@@ -1,6 +1,6 @@
 name := mintty
 version := $(shell printf "svn-0.4-r%u" `svn info | grep Revision | sed "s/Revision: //"`)
-da_version := 401
+da_version := 403
 
 exe := $(name).exe
 dir := $(name)-$(version)

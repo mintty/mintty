@@ -1536,11 +1536,6 @@ term_write(const char *data, int len)
             when '\a':
               do_osc();
               term.state = TOPLEVEL;
-            when 0234:
-              if (!term_in_utf()) {
-                do_osc();
-                term.state = TOPLEVEL;
-              }
             when '\e':
               term.state = OSC_MAYBE_ST;
             otherwise:
@@ -1574,9 +1569,6 @@ term_write(const char *data, int len)
           switch (c) {
             when '\n' or '\r' or '\a':
               term.state = TOPLEVEL;
-            when 0234:
-              if (!term_in_utf())
-                term.state = TOPLEVEL;
             when '\e':
               term.state = DCS_MAYBE_ST;
           }
