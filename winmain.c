@@ -21,7 +21,6 @@ HWND wnd;
 HINSTANCE inst;
 HDC dc;
 
-int offset_width, offset_height;
 static int extra_width, extra_height;
 
 static HBITMAP caretbm;
@@ -40,8 +39,7 @@ win_set_title(char *title)
 {
   size_t len = strlen(title);
   wchar wtitle[len + 1];
-  size_t wlen =
-    mb_to_wc(ucsdata.codepage, 0, title, len, wtitle, len);
+  size_t wlen = mb_to_wc(ucsdata.codepage, 0, title, len, wtitle, len);
   wtitle[wlen] = 0;
   SetWindowTextW(wnd, wtitle);
 }
@@ -218,8 +216,8 @@ update_sys_cursor(void)
 void
 win_set_sys_cursor(int x, int y)
 {
-  int cx = x * font_width + offset_width;
-  int cy = y * font_height + offset_height;
+  int cx = x * font_width + PADDING;
+  int cy = y * font_height + PADDING;
   if (cx != caret_x || cy != caret_y) {
     caret_x = cx;
     caret_y = cy;
@@ -256,13 +254,13 @@ notify_resize(int rows, int cols)
 void
 win_resize(int rows, int cols)
 {
- /* If the window is maximized supress resizing attempts */
+ /* If the window is maximized suppress resizing attempts */
   if (IsZoomed(wnd) || (rows == term.rows && cols == term.cols)) 
     return;
   
   notify_resize(rows, cols);
-  int width = extra_width + font_width * cols + 2;
-  int height = extra_height + font_height * rows + 2;
+  int width = extra_width + font_width * cols + 2 * PADDING;
+  int height = extra_height + font_height * rows + 2 * PADDING;
   SetWindowPos(wnd, null, 0, 0, width, height,
                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
   InvalidateRect(wnd, null, true);
@@ -295,8 +293,8 @@ reset_window(int reinit)
   int client_height = cr.bottom - cr.top;
   extra_width = wr.right - wr.left - client_width;
   extra_height = wr.bottom - wr.top - client_height;
-  int text_width = client_width - 2;
-  int text_height = client_height - 2;
+  int term_width = client_width - 2 * PADDING;
+  int term_height = client_height - 2 * PADDING;
   
   if (!client_width || !client_height) {
    /* Oh, looks like we're minimised: do nothing */
@@ -306,24 +304,22 @@ reset_window(int reinit)
     * this means we must not change the size of
     * the window so the terminal has to change.
     */
-    cols = text_width / font_width;
-    rows = text_height / font_height;
-    offset_width = (text_width % font_width) / 2 + 1;
-    offset_height = (text_height % font_height) / 2 + 1;
+    cols = term_width / font_width;
+    rows = term_height / font_height;
   }
-  else if (text_width != cols * font_width ||
-           text_height != rows * font_height) {
+  else if (term_width != cols * font_width ||
+           term_height != rows * font_height) {
    /* Window size isn't what's needed. Let's change it then. */
-    offset_width = offset_height = 1;
+   /* Make sure the window isn't bigger than the screen. */
     static RECT ss;
     get_fullscreen_rect(&ss);
-    int max_cols = (ss.right - ss.left - extra_width - 2) / font_width;
-    int max_rows = (ss.bottom - ss.top - extra_height - 2) / font_height;
-    cols = min(cols, max_cols);
-    rows = min(rows, max_rows);
+    int max_client_width = ss.right - ss.left - extra_width;
+    int max_client_height = ss.bottom - ss.top - extra_height;
+    cols = min(cols, (max_client_width - 2 * PADDING) / font_width);
+    rows = min(rows, (max_client_height - 2 * PADDING) / font_height);
     SetWindowPos(wnd, null, 0, 0,
-                 font_width * cols + 2 + extra_width,
-                 font_height * rows + 2 + extra_height,
+                 font_width * cols + 2 * PADDING + extra_width, 
+                 font_height * rows + 2 * PADDING + extra_height,
                  SWP_NOMOVE | SWP_NOZORDER);
   }
   
@@ -621,7 +617,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       resizing = false;
       if (need_backend_resize) {
         need_backend_resize = false;
-        offset_width = offset_height = 1;
         notify_resize(new_rows, new_cols);
         InvalidateRect(wnd, null, true);
       }
@@ -632,10 +627,10 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       * 2) Make sure the window size is _stepped_ in units of the font size.
       */
       LPRECT r = (LPRECT) lp;
-      int width = r->right - r->left - extra_width - 2;
-      int height = r->bottom - r->top - extra_height - 2;
-      int cols = max(1, (width + font_width / 2) / font_width);
-      int rows = max(1, (height + font_height / 2) / font_height);
+      int width = r->right - r->left - extra_width - 2 * PADDING;
+      int height = r->bottom - r->top - extra_height - 2 * PADDING;
+      int cols = max(1, width / font_width);
+      int rows = max(1, height / font_height);
 
       int ew = width - cols * font_width;
       int eh = height - rows * font_height;
@@ -665,8 +660,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         fullscr_on_max = false;
         make_full_screen();
       }
-      int new_width = LOWORD(lp) - 2;
-      int new_height = HIWORD(lp) - 2;
+      int new_width = LOWORD(lp) - 2 * PADDING;
+      int new_height = HIWORD(lp) - 2 * PADDING;
       new_cols = max(1, new_width / font_width);
       new_rows = max(1, new_height / font_height);
       if (resizing) {
@@ -708,19 +703,20 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
   * Any messages we don't process completely above are passed through to
   * DefWindowProc() for default processing.
   */
-  return DefWindowProc(wnd, message, wp, lp);
+  return DefWindowProcW(wnd, message, wp, lp);
 }
 
 static const char *help =
-  "Usage: %s [OPTION]... [-e] [ - | COMMAND [ARG]... ]\n"
+  "Usage: %s [OPTION]... [ - | PROGRAM [ARG]... ]\n"
   "\n"
-  "If a command is supplied, it is executed with its arguments. Otherwise,\n"
+  "If a program is supplied, it is executed with its arguments. Otherwise,\n"
   "MinTTY looks for a shell to execute in the SHELL environment variable.\n"
   "If that is not set, it tries to read the user's default shell setting\n"
   "from /etc/passwd. Failing that, it falls back to /bin/sh. If the last\n"
   "argument is a single dash, the shell is invoked as a login shell.\n"
   "\n"
   "Options:\n"
+  "  -e, --exec            Treat remaining arguments as the command to execute\n"
   "  -c, --config=FILE     Use specified config file (default: ~/.minttyrc)\n"
   "  -p, --position=X,Y    Open window at specified coordinates\n"
   "  -s, --size=COLS,ROWS  Set screen size in characters\n"
@@ -737,15 +733,16 @@ static const char short_opts[] = "+HVuec:p:s:t:l:h:";
 
 static const struct option
 opts[] = { 
+  {"help",     no_argument,       0, 'H'},
+  {"version",  no_argument,       0, 'V'},
+  {"exec",     no_argument,       0, 'e'},
+  {"utmp",     no_argument,       0, 'u'},
   {"config",   required_argument, 0, 'c'},
   {"position", required_argument, 0, 'p'},
   {"size",     required_argument, 0, 's'},
   {"title",    required_argument, 0, 't'},
   {"log",      required_argument, 0, 'l'},
   {"hold",     required_argument, 0, 'h'},
-  {"utmp",     no_argument,       0, 'u'},
-  {"help",     no_argument,       0, 'H'},
-  {"version",  no_argument,       0, 'V'},
   {0, 0, 0, 0}
 };
 
@@ -821,29 +818,26 @@ main(int argc, char *argv[])
   main_argv = argv;  
   inst = GetModuleHandle(NULL);
 
- /* Create window class. */
-  {
-    WNDCLASS wndclass;
-    wndclass.style = 0;
-    wndclass.lpfnWndProc = win_proc;
-    wndclass.cbClsExtra = 0;
-    wndclass.cbWndExtra = 0;
-    wndclass.hInstance = inst;
-    wndclass.hIcon = LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON));
-    wndclass.hCursor = LoadCursor(null, IDC_IBEAM);
-    wndclass.hbrBackground = null;
-    wndclass.lpszMenuName = null;
-    wndclass.lpszClassName = APPNAME;
-    RegisterClass(&wndclass);
-  }
+  RegisterClassW(&(WNDCLASSW){
+    .style = 0,
+    .lpfnWndProc = win_proc,
+    .cbClsExtra = 0,
+    .cbWndExtra = 0,
+    .hInstance = inst,
+    .hIcon = LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON)),
+    .hCursor = LoadCursor(null, IDC_IBEAM),
+    .hbrBackground = null,
+    .lpszMenuName = null,
+    .lpszClassName = _W(APPNAME),
+  });
 
  /* Create initial window.
   * Its real size has to be set after loading the fonts and determining their
   * size, but the window has to exist to do that.
   */
-  wnd = CreateWindow(APPNAME, APPNAME,
-                     WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
-                     x, y, 300, 200, null, null, inst, null);
+  wnd = CreateWindowW(_W(APPNAME), _W(APPNAME),
+                      WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
+                      x, y, 300, 200, null, null, inst, null);
 
  /*
   * Determine extra_{width,height}.
@@ -907,9 +901,9 @@ main(int argc, char *argv[])
   */
   int term_width = font_width * term.cols;
   int term_height = font_height * term.rows;
-  offset_width = offset_height = 1;
   SetWindowPos(wnd, null, 0, 0,
-               term_width + extra_width + 2, term_height + extra_height + 2,
+               term_width + extra_width + 2 * PADDING,
+               term_height + extra_height + 2 * PADDING,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 
   // Enable drag & drop.

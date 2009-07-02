@@ -177,9 +177,11 @@ struct term {
   bool app_keypad;
   int modify_other_keys;
   bool newline_mode;
-  bool big_cursor;
   bool report_focus;
   bool report_ambig_width;
+
+  int cursor_type;
+  int cursor_blinks;
 
   int cset_attr[2];
 
@@ -273,5 +275,7 @@ void term_seen_key_event(void);
 void term_write(const char *, int len);
 void term_set_focus(int has_focus);
 bool term_in_utf(void);
+int  term_cursor_type(void);
+bool term_cursor_blinks(void);
 
 #endif
