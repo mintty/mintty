@@ -130,7 +130,7 @@ win_init_fonts(void)
 
   font_height = tm.tmHeight;
   font_width = tm.tmAveCharWidth;
-  font_dualwidth = (tm.tmMaxCharWidth > tm.tmAveCharWidth * 3 / 2);
+  font_dualwidth = (tm.tmMaxCharWidth >= tm.tmAveCharWidth * 3 / 2);
   
   float latin_char_width, greek_char_width, line_char_width;
   GetCharWidthFloatW(dc, 0x0041, 0x0041, &latin_char_width);
@@ -138,8 +138,8 @@ win_init_fonts(void)
   GetCharWidthFloatW(dc, 0x2500, 0x2500, &line_char_width);
   
   font_ambig_wide =
-    greek_char_width > latin_char_width ||
-    line_char_width > latin_char_width;
+    greek_char_width >= latin_char_width * 1.5 ||
+    line_char_width  >= latin_char_width * 1.5;
 
   {
     CHARSETINFO info;
@@ -269,19 +269,19 @@ win_paint(void)
   dc = BeginPaint(wnd, &p);
 
   term_invalidate(
-    (p.rcPaint.left - offset_width) / font_width,
-    (p.rcPaint.top - offset_height) / font_height,
-    (p.rcPaint.right - offset_width - 1) / font_width,
-    (p.rcPaint.bottom - offset_height - 1) / font_height
+    (p.rcPaint.left - PADDING) / font_width,
+    (p.rcPaint.top - PADDING) / font_height,
+    (p.rcPaint.right - PADDING - 1) / font_width,
+    (p.rcPaint.bottom - PADDING - 1) / font_height
   );
 
   if (!update_pending)
     term_paint();
 
-  if (p.fErase || p.rcPaint.left < offset_width ||
-      p.rcPaint.top < offset_height ||
-      p.rcPaint.right >= offset_width + font_width * term.cols ||
-      p.rcPaint.bottom >= offset_height + font_height * term.rows) {
+  if (p.fErase || p.rcPaint.left < PADDING ||
+      p.rcPaint.top < PADDING ||
+      p.rcPaint.right >= PADDING + font_width * term.cols ||
+      p.rcPaint.bottom >= PADDING + font_height * term.rows) {
     HBRUSH fillcolour, oldbrush;
     HPEN edge, oldpen;
     fillcolour = CreateSolidBrush(colours[ATTR_DEFBG >> ATTR_BGSHIFT]);
@@ -292,9 +292,9 @@ win_paint(void)
     IntersectClipRect(dc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
                       p.rcPaint.bottom);
 
-    ExcludeClipRect(dc, offset_width, offset_height,
-                    offset_width + font_width * term.cols,
-                    offset_height + font_height * term.rows);
+    ExcludeClipRect(dc, PADDING, PADDING,
+                    PADDING + font_width * term.cols,
+                    PADDING + font_height * term.rows);
 
     Rectangle(dc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
               p.rcPaint.bottom);
@@ -510,10 +510,10 @@ win_text_internal(int x, int y, wchar * text, int len, uint attr, int lattr)
 
   x *= fnt_width;
   y *= font_height;
-  x += offset_width;
-  y += offset_height;
+  x += PADDING;
+  y += PADDING;
 
-  if ((attr & TATTR_ACTCURS) && (cfg.cursor_type == 0 || term.big_cursor)) {
+  if ((attr & TATTR_ACTCURS) && term_cursor_type() == CUR_BLOCK) {
     attr &= ~(ATTR_REVERSE | ATTR_BLINK | ATTR_COLOURS);
     if (bold_mode == BOLD_COLOURS)
       attr &= ~ATTR_BOLD;
@@ -610,8 +610,8 @@ win_text_internal(int x, int y, wchar * text, int len, uint attr, int lattr)
   line_box.bottom = y + font_height;
 
  /* Only want the left half of double width lines */
-  if (line_box.right > font_width * term.cols + offset_width)
-    line_box.right = font_width * term.cols + offset_width;
+  if (line_box.right > font_width * term.cols + PADDING)
+    line_box.right = font_width * term.cols + PADDING;
 
  /* We're using a private area for direct to font. (512 chars.) */
   if (ucsdata.dbcs_screenfont && (text[0] & CSET_MASK) == CSET_ACP) {
@@ -756,16 +756,16 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
 {
   int fnt_width;
   int char_width;
-  int ctype = cfg.cursor_type;
+  int cursor_type = term_cursor_type();
 
   lattr &= LATTR_MODE;
 
-  if ((attr & TATTR_ACTCURS) && (ctype == 0 || term.big_cursor)) {
+  if ((attr & TATTR_ACTCURS) && cursor_type == CUR_BLOCK) {
     if (*text != UCSWIDE) {
       win_text(x, y, text, len, attr, lattr);
       return;
     }
-    ctype = 2;
+    cursor_type = CUR_LINE;
     attr |= TATTR_RIGHTCURS;
   }
 
@@ -774,10 +774,10 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
     char_width *= 2;
   x *= fnt_width;
   y *= font_height;
-  x += offset_width;
-  y += offset_height;
+  x += PADDING;
+  y += PADDING;
 
-  if ((attr & TATTR_PASCURS) && (ctype == 0 || term.big_cursor)) {
+  if ((attr & TATTR_PASCURS) && cursor_type == CUR_BLOCK) {
     POINT pts[5];
     HPEN oldpen;
     pts[0].x = pts[1].x = pts[4].x = x;
@@ -789,9 +789,9 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
   }
-  else if ((attr & (TATTR_ACTCURS | TATTR_PASCURS)) && ctype != 0) {
+  else if ((attr & (TATTR_ACTCURS | TATTR_PASCURS)) && cursor_type != CUR_BLOCK) {
     int startx, starty, dx, dy, length, i;
-    if (ctype == 1) {
+    if (cursor_type == CUR_UNDERLINE) {
       startx = x;
       starty = y + descent;
       dx = 1;
@@ -914,10 +914,21 @@ win_set_sbar(int total, int start, int page)
   }
 }
 
-static colour brighter(colour c) {
+static colour 
+brighter(colour c)
+{
   uint r = red(c), g = green(c), b = blue(c);   
   uint s = min(85, 255 - max(max(r, g), b));
   return make_colour(r + s, g + s, b + s);
+}
+
+static uint
+colour_dist(colour a, colour b)
+{
+  return
+    2 * sqr(red(a) - red(b)) +
+    4 * sqr(green(a) - green(b)) +
+    1 * sqr(blue(a) - blue(b));
 }
 
 void
@@ -937,7 +948,7 @@ win_set_foreground_colour(colour c)
 void
 win_set_background_colour(colour c)
 {
-  colours[258] = colours[260] = c;
+  colours[258] = c;
   colours[259] = brighter(c);
   
   // Make sure the background around the edge of the screen is repainted.
@@ -947,6 +958,10 @@ win_set_background_colour(colour c)
 void
 win_set_cursor_colour(colour c)
 {
+  // Set the colour of text under the cursor to whichever of foreground
+  // and background colour is further away.
+  colour fg = colours[256], bg = colours[258];
+  colours[260] = colour_dist(c, fg) > colour_dist(c, bg) ? fg : bg;
   colours[261] = c;
 }
 
@@ -961,7 +976,7 @@ win_reconfig_palette(void)
 void
 win_reset_colours(void)
 {
-  static const COLORREF
+  static const colour
   ansi_colours[16] = {
     0x000000, 0x0000BF, 0x00BF00, 0x00BFBF,
     0xBF0000, 0xBF00BF, 0xBFBF00, 0xBFBFBF,

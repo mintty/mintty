@@ -6,7 +6,7 @@
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
 .ad l
-.TH mintty 1 2009-06-07 0.4-svn Cygwin
+.TH mintty 1 2009-06-27 0.4-svn Cygwin
 
 .SH NAME
 
@@ -15,8 +15,7 @@ mintty - Cygwin terminal emulator
 
 .SH SYNOPSIS
 
-\fBmintty\fP [\fIOPTION\fP]... [\fB-e\fP] [ \fB-\fP | \fICOMMAND\fP
-[\fIARG\fP]... ]
+\fBmintty\fP [\fIOPTION\fP]... [ \fB-\fP | \fIPROGRAM\fP [\fIARG\fP]... ]
 
 
 .SH DESCRIPTION
@@ -29,14 +28,15 @@ require an X server to be running.
 
 .SH INVOCATION
 
-If a command is supplied on the command line, this is executed with any
+If a program name is supplied on the command line, this is executed with any
 additional arguments passed to it.
 Otherwise, MinTTY looks for a shell to execute in the \fISHELL\fP environment
 variable.
 If that is not set, it tries to read the user's default shell setting from
 \fI/etc/passwd\fP.
-Failing that, it falls back to \fI/bin/sh\fP.
-If the last argument is a single dash, the shell is invoked as a login shell.
+Finally, it falls back to \fI/bin/sh\fP.
+If a single dash is specified instead of a program name, the shell is invoked
+as a login shell.
 
 
 .SH OPTIONS
@@ -44,6 +44,13 @@ If the last argument is a single dash, the shell is invoked as a login shell.
 MinTTY accepts the standard GNU option formats, with single dashes
 introducing short options and double dashes introducing long options,
 e.g. \fB-o arg\fP, \fB--option arg\fP, and \fB--option=arg\fP.
+
+.TP
+\fB-e\fP, \fB--exec\fP \fIPROGRAM\fP [\fIARG\fP ...]
+Execute the specified program in the terminal session and pass on any additional
+arguments.
+This option can be omitted, in which case the first non-option argument, if any,
+is taken as the name of the program to execute.
 
 .TP
 \fB-c\fP, \fB--config\fP=\fIFILENAME\fP
@@ -814,11 +821,10 @@ This comes pre-installed with some versions of Windows but is also available
 as part of the freely downloadable \fBWindows 2003 Resource Kit Tools\fP.
 
 Another way to set variables for the program to be run in \fBMinTTY\fP is by
-invoking it using the shell's \fB-c\fP option, which allows a shell command 
-to be passed as a string argument, e.g.:
+invoking it through the \fBenv\fP command, e.g.:
 
 .RS
-\fCmintty sh -c "DISPLAY=:0 ssh -X server"\fP
+\fCmintty env DISPLAY=:0 ssh -X server\fP
 .RE
 
 
@@ -829,6 +835,23 @@ for the Cygwin runtime system.
 Many of them apply to the Cygwin console only, but others can be useful
 with any Cygwin process.
 See \fIhttp://www.cygwin.com/cygwin-ug-net/using-cygwinenv.html\fP for details.
+
+
+.SS Detecting MinTTY
+
+MinTTY sets the \fITERM\fP variable to \fBxterm\fP for compatibility reasons,
+but that of course makes it difficult to tell MinTTY apart from \fBxterm\fP when
+required for example in shell startup scripts.
+
+One way around that is to invoke the shell through the \fBenv\fP command to set
+the \fITERM\fP variable differently:
+
+.RS
+\fCmintty env TERM=mintty bash -l\fP
+.RE
+
+This can then be tested for in a startup script to trigger MinTTY-specific
+actions, followed by setting \fITERM\fP back to \fBxterm\fP.
 
 
 .SS Changing the ANSI colours
@@ -948,6 +971,24 @@ Just enter the first few characters of a previous command and press
 .RE
 
 
+.SS Enabling non-ASCII input in bash and readline
+
+By default, \fBreadline\fP treats the uppermost bit of input and output 
+characters as the "meta" flag.
+The following settings in \fI~/.inputrc\fP will disable that and thereby 
+allow the use of characters outside the 7-bit ASCII character set:
+
+.RS
+.nf
+\fC
+set input-meta on
+set convert-meta off
+set output-meta on
+\fP
+.fi
+.RE
+
+
 .SS Mousewheel scrolling for less
 
 No, this is not some sort of special offer, but a tip on how to enable
@@ -1006,8 +1047,8 @@ Neither Tektronix 4014 emulation nor mouse highlighting mode are supported.
 
 .SH SEE ALSO
 
-\fIstty(1)\fP, \fIterminfo\fP(5), \fIbash\fP(1), \fIssh\fP(1),
-\fIecho\fP(1), \fIlesskey\fP(1), \fImkshortcut\fP(1), \fIchere\fP(1)
+\fIbash\fP(1), \fIenv\fP(1), \fIecho\fP(1), \fIstty(1)\fP,
+\fIlesskey\fP(1), \fImkshortcut\fP(1), \fIchere\fP(1)
 
 \fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.html\fP
 
