@@ -263,9 +263,6 @@ toggle_mode(int mode, int query, int state)
         ldisc_send(null, 0, 0);
       when 20: /* LNM: Return sends ... */
         term.newline_mode = state;
-      when 34: /* WYULCURM: Make cursor BIG */
-        compatibility2(OTHER, VT220);
-        term.big_cursor = !state;
     }
   }
 }
@@ -1370,11 +1367,11 @@ term_write(const char *data, int len)
                   when 0:      /* hide cursor */
                     term.cursor_on = false;
                   when 1:      /* restore cursor */
-                    term.big_cursor = false;
                     term.cursor_on = true;
-                  when 2:      /* block cursor */
-                    term.big_cursor = true;
+                    term.cursor_type = -1;
+                  when 2:
                     term.cursor_on = true;
+                    term.cursor_type = CUR_BLOCK;
                 }
               when ANSI('C', '='):
                /*
@@ -1481,7 +1478,14 @@ term_write(const char *data, int len)
                 compatibility(OTHER);
                 if (nargs == 1 && arg0 == 4)
                   term.modify_other_keys = 0;
-            }
+              when ANSI('q', ' '):     /* DECSCUSR: set cursor style */
+                compatibility(VT510);
+                if (nargs == 1) {
+                  term.cursor_type = arg0 ? (arg0 - 1) / 2 : -1;
+                  term.cursor_blinks = arg0 ? arg0 % 2 : -1;
+                  term_schedule_cblink();
+                }
+             }
           }
         }
         when SEEN_OSC: {

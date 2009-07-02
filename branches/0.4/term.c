@@ -45,7 +45,7 @@ cblink_cb(void)
 void
 term_schedule_cblink(void)
 {
-  if (cfg.cursor_blinks && term.has_focus)
+  if (term_cursor_blinks() && term.has_focus)
     win_set_timer(cblink_cb, cursor_blink_ticks());
   else
     term.cblinker = 1;  /* reset when not in use */
@@ -120,13 +120,14 @@ term_reset(void)
     term.alt_save_csattr = CSET_ASCII;
   term.rvideo = 0;
   term.in_vbell = false;
-  term.cursor_on = 1;
-  term.big_cursor = 0;
+  term.cursor_on = true;
   term.default_attr = term.save_attr = term.alt_save_attr = term.curr_attr =
     ATTR_DEFAULT;
   term.editing = term.echoing = false;
   term.app_cursor_keys = false;
   term.use_bce = true;
+  term.cursor_type = -1;
+  term.cursor_blinks = -1;
   term.blink_is_real = cfg.allow_blinking;
   term.erase_char = term.basic_erase_char;
   term.which_screen = 0;
@@ -832,7 +833,7 @@ term_paint(void)
   int cursor;
   if (term.cursor_on) {
     if (term.has_focus) {
-      if (term.cblinker || !cfg.cursor_blinks)
+      if (term.cblinker || !term_cursor_blinks())
         cursor = TATTR_ACTCURS;
       else
         cursor = 0;
@@ -1506,4 +1507,16 @@ bool
 term_in_utf(void)
 {
   return term.utf || ucsdata.codepage == unicode_codepage;
+}
+
+int
+term_cursor_type(void)
+{
+  return term.cursor_type == -1 ? cfg.cursor_type : term.cursor_type;
+}
+
+bool
+term_cursor_blinks(void)
+{
+  return term.cursor_blinks == -1 ? cfg.cursor_blinks : term.cursor_blinks;
 }

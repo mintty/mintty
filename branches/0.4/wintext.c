@@ -513,7 +513,7 @@ win_text_internal(int x, int y, wchar * text, int len, uint attr, int lattr)
   x += PADDING;
   y += PADDING;
 
-  if ((attr & TATTR_ACTCURS) && (cfg.cursor_type == 0 || term.big_cursor)) {
+  if ((attr & TATTR_ACTCURS) && term_cursor_type() == CUR_BLOCK) {
     attr &= ~(ATTR_REVERSE | ATTR_BLINK | ATTR_COLOURS);
     if (bold_mode == BOLD_COLOURS)
       attr &= ~ATTR_BOLD;
@@ -756,16 +756,16 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
 {
   int fnt_width;
   int char_width;
-  int ctype = cfg.cursor_type;
+  int cursor_type = term_cursor_type();
 
   lattr &= LATTR_MODE;
 
-  if ((attr & TATTR_ACTCURS) && (ctype == 0 || term.big_cursor)) {
+  if ((attr & TATTR_ACTCURS) && cursor_type == CUR_BLOCK) {
     if (*text != UCSWIDE) {
       win_text(x, y, text, len, attr, lattr);
       return;
     }
-    ctype = 2;
+    cursor_type = CUR_LINE;
     attr |= TATTR_RIGHTCURS;
   }
 
@@ -777,7 +777,7 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
   x += PADDING;
   y += PADDING;
 
-  if ((attr & TATTR_PASCURS) && (ctype == 0 || term.big_cursor)) {
+  if ((attr & TATTR_PASCURS) && cursor_type == CUR_BLOCK) {
     POINT pts[5];
     HPEN oldpen;
     pts[0].x = pts[1].x = pts[4].x = x;
@@ -789,9 +789,9 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
   }
-  else if ((attr & (TATTR_ACTCURS | TATTR_PASCURS)) && ctype != 0) {
+  else if ((attr & (TATTR_ACTCURS | TATTR_PASCURS)) && cursor_type != CUR_BLOCK) {
     int startx, starty, dx, dy, length, i;
-    if (ctype == 1) {
+    if (cursor_type == CUR_UNDERLINE) {
       startx = x;
       starty = y + descent;
       dx = 1;
