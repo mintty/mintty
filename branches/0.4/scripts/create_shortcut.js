@@ -1,12 +1,15 @@
 ws = WScript;
 sh = ws.CreateObject("WScript.Shell");
+cygkey = "Cygnus Solutions\\Cygwin\\mounts v2\\/\\native"
 try {
-  cygbase = sh.RegRead(
-    "HKLM\\Software\\Cygnus Solutions\\Cygwin\\mounts v2\\/\\native"
-  );
+  cygbase = sh.RegRead("HKLM\\Software\\" + cygkey);
 } catch (e) {
-  ws.Echo("Error: Could not read Cygwin registry key.");
-  ws.Quit(1);
+  try {
+    cygbase = sh.RegRead("HKLM\\Software\\WoW6432Node\\" + cygkey);
+  } catch (e) {
+    ws.Echo("Error: Could not read Cygwin registry key.");
+    ws.Quit(1);
+  }
 }
 cwd = sh.CurrentDirectory;
 link = sh.CreateShortcut("MinTTY.lnk");
