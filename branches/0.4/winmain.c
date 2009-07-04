@@ -16,6 +16,7 @@
 #include <getopt.h>
 #include <imm.h>
 #include <winnls.h>
+#include <sys/cygwin.h>
 
 HWND wnd;
 HINSTANCE inst;
@@ -721,6 +722,7 @@ static const char *help =
   "  -p, --position=X,Y    Open window at specified coordinates\n"
   "  -s, --size=COLS,ROWS  Set screen size in characters\n"
   "  -t, --title=TITLE     Set window title (default: the invoked command)\n"
+  "  -i, --icon=FILE       Load window icon from .ICO file\n"
   "  -l, --log=FILE        Log output to file\n"
   "  -u, --utmp            Create a utmp entry\n"
   "  -h, --hold=never|always|error\n"
@@ -729,7 +731,7 @@ static const char *help =
   "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = "+HVuec:p:s:t:l:h:";
+static const char short_opts[] = "+HVuec:p:s:t:i:l:h:";
 
 static const struct option
 opts[] = { 
@@ -741,45 +743,51 @@ opts[] = {
   {"position", required_argument, 0, 'p'},
   {"size",     required_argument, 0, 's'},
   {"title",    required_argument, 0, 't'},
+  {"icon",     required_argument, 0, 'i'},
   {"log",      required_argument, 0, 'l'},
   {"hold",     required_argument, 0, 'h'},
   {0, 0, 0, 0}
 };
 
+static no_return __attribute__((format(printf, 1, 2)))
+error(char *f, ...) 
+{
+  fprintf(stderr, "%s: ", main_argv[0]);
+  va_list va;
+  va_start(va, f);
+  vfprintf(stderr, f, va);
+  va_end(va);
+  fputc('\n', stderr);
+  exit(1);
+}
+
 int
 main(int argc, char *argv[])
 {
-  char *title = 0;
+  char *title = 0, *icon_file = 0;
   int x = CW_USEDEFAULT, y = CW_USEDEFAULT;
   bool size_override = false;
   uint rows = 0, cols = 0;
+
+  main_argv = argv;  
 
   for (;;) {
     int opt = getopt_long(argc, argv, short_opts, opts, 0);
     if (opt == -1 || opt == 'e')
       break;
     switch (opt) {
-      when 'c':
-        config_file = optarg;
+      when 'c': config_file = optarg;
+      when 't': title = optarg;
+      when 'i': icon_file = optarg;
+      when 'l': log_file = optarg;
+      when 'u': utmp_enabled = true;
       when 'p':
-        if (sscanf(optarg, "%i,%i%1s", &x, &y, (char[2]){}) != 2) {
-          fprintf(stderr, "%s: syntax error in position argument -- %s\n",
-                          *argv, optarg);
-          exit(1);
-        }
+        if (sscanf(optarg, "%i,%i%1s", &x, &y, (char[2]){}) != 2)
+          error("syntax error in position argument -- %s", optarg);
       when 's':
-        if (sscanf(optarg, "%u,%u%1s", &cols, &rows, (char[2]){}) != 2) {
-          fprintf(stderr, "%s: syntax error in size argument -- %s\n",
-                          *argv, optarg);
-          exit(1);
-        }
+        if (sscanf(optarg, "%u,%u%1s", &cols, &rows, (char[2]){}) != 2)
+          error("syntax error in size argument -- %s", optarg);
         size_override = true;
-      when 't':
-        title = optarg;
-      when 'l':
-        log_file = optarg;
-      when 'u':
-        utmp_enabled = true;
       when 'h': {
         int len = strlen(optarg);
         if (memcmp(optarg, "always", len) == 0)
@@ -788,11 +796,8 @@ main(int argc, char *argv[])
           hold = HOLD_NEVER;
         else if (memcmp(optarg, "error", len) == 0)
           hold = HOLD_ERROR;
-        else {
-          fprintf(stderr, "%s: invalid argument to hold option -- %s\n",
-                          *argv, optarg);
-          exit(1);
-        }
+        else
+          error("invalid argument to hold option -- %s", optarg);
       }
       when 'H':
         printf(help, *argv);
@@ -805,6 +810,21 @@ main(int argc, char *argv[])
     }
   }
 
+  HICON small_icon = 0, large_icon = 0;
+  if (icon_file) {
+    ssize_t len = cygwin_conv_path(CCP_POSIX_TO_WIN_W, icon_file, NULL, 0);
+    if (len <= 0)
+      error("invalid icon file path -- %s", icon_file);
+    wchar win_file[len];
+    cygwin_conv_path(CCP_POSIX_TO_WIN_W, icon_file, win_file, sizeof win_file);
+    small_icon =
+      LoadImageW(NULL, win_file, IMAGE_ICON, 16, 16, LR_LOADFROMFILE);
+    large_icon =
+      LoadImageW(NULL, win_file, IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
+    if (!small_icon && !large_icon)
+      error("could not load icon file -- %s", icon_file);
+  }
+
   if (!config_file)
     asprintf((char **)&config_file, "%s/.minttyrc", getenv("HOME"));
 
@@ -814,8 +834,7 @@ main(int argc, char *argv[])
     rows = cfg.rows;
     cols = cfg.cols;
   }
-    
-  main_argv = argv;  
+
   inst = GetModuleHandle(NULL);
 
   RegisterClassW(&(WNDCLASSW){
@@ -824,7 +843,7 @@ main(int argc, char *argv[])
     .cbClsExtra = 0,
     .cbWndExtra = 0,
     .hInstance = inst,
-    .hIcon = LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON)),
+    .hIcon = icon_file ? 0 : LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON)),
     .hCursor = LoadCursor(null, IDC_IBEAM),
     .hbrBackground = null,
     .lpszMenuName = null,
@@ -838,6 +857,13 @@ main(int argc, char *argv[])
   wnd = CreateWindowW(_W(APPNAME), _W(APPNAME),
                       WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
                       x, y, 300, 200, null, null, inst, null);
+
+  if (icon_file) {
+    if (small_icon)
+      SendMessage(wnd, WM_SETICON, ICON_SMALL, (LPARAM)small_icon);
+    if (large_icon)
+      SendMessage(wnd, WM_SETICON, ICON_BIG, (LPARAM)large_icon);
+  }
 
  /*
   * Determine extra_{width,height}.
