@@ -865,9 +865,11 @@ main(int argc, char *argv[])
   * Its real size has to be set after loading the fonts and determining their
   * size, but the window has to exist to do that.
   */
-  wnd = CreateWindowW(_W(APPNAME), _W(APPNAME),
+  wnd = CreateWindowW(_W(APPNAME), 0,
                       WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
                       x, y, 300, 200, null, null, inst, null);
+
+  update_transparency();
 
   if (icon_file) {
     if (small_icon)
@@ -946,10 +948,6 @@ main(int argc, char *argv[])
   // Enable drag & drop.
   win_init_drop_target();
 
-  // Finally show the window!
-  update_transparency();
-  ShowWindow(wnd, SW_SHOWDEFAULT);
-  
   // Create child process.
   struct winsize ws = {term.rows, term.cols, term_width, term_height};
   char *cmd = child_create(argv + optind, &ws);
@@ -957,6 +955,9 @@ main(int argc, char *argv[])
   // Set window title.
   win_set_title(title ?: cmd);
   free(cmd);
+  
+  // Finally show the window!
+  ShowWindow(wnd, SW_SHOWDEFAULT);
   
   // Message loop.
   // Also monitoring child events.
