@@ -177,11 +177,12 @@ child_create(char *argv[], struct winsize *winp)
     DWORD win_version = GetVersion();
     win_version = ((win_version & 0xff) << 8) | ((win_version >> 8) & 0xff);
     if (win_version >= 0x0601) {
-      // Cygwin 1.7 from minor API version 211 already has a fix for this.
+      // Cygwin 1.7 from minor API version 211 has its own better workaround.
       struct utsname un;
       uname(&un);
+      char *api_version = strchr(un.release, '(') + 1;
       uint minor_api_version;
-      if (sscanf(un.release, "%*u.%*u.%*u(0.%u", &minor_api_version) != 1 ||
+      if (!api_version || !sscanf(api_version, "0.%u", &minor_api_version) ||
           minor_api_version < 211)
         if (AllocConsole())
           ShowWindowAsync(GetConsoleWindow(), SW_HIDE);
