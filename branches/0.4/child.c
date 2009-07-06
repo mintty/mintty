@@ -10,18 +10,21 @@
 #include <pwd.h>
 #include <pty.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
-#include <sys/wait.h>
 #include <argz.h>
 #include <utmp.h>
 #include <dirent.h>
 #include <pthread.h>
+#include <sys/ioctl.h>
+#include <sys/wait.h>
+#include <sys/utsname.h>
 
 #include <winbase.h>
 #include <wincon.h>
 #include <wingdi.h>
 #include <winuser.h>
+
 #include <sys/cygwin.h>
+#include <cygwin/version.h>
 
 HANDLE child_event;
 
@@ -164,16 +167,26 @@ child_create(char *argv[], struct winsize *winp)
   }
   else if (pid == 0) { // Child process.
 
+#if CYGWIN_VERSION_API_MINOR < 211
     // Windows se7en actually is Windows 6.1 (aka Vista Second Edition).
     // The Cygwin DLL's trick of allocating a console on an invisible
-    // "window station" no longer works here due to a change of behaviour
-    // (or a bug?) in Windows.
+    // "window station" no longer works here due to a bug in Windows
+    // that Microsoft don't intend to fix for 7 final.
     // Hence, here's a hack that allocates a console for the child command
     // and hides it. Annoyingly the console window still flashes up briefly.
-    DWORD version = GetVersion();
-    version = ((version & 0xff) << 8) | ((version >> 8) & 0xff);
-    if (version >= 0x0601 && AllocConsole())
-      ShowWindowAsync(GetConsoleWindow(), SW_HIDE);
+    DWORD win_version = GetVersion();
+    win_version = ((win_version & 0xff) << 8) | ((win_version >> 8) & 0xff);
+    if (win_version >= 0x0601) {
+      // Cygwin 1.7 from minor API version 211 already has a fix for this.
+      struct utsname un;
+      uname(&un);
+      uint minor_api_version;
+      if (sscanf(un.release, "%*u.%*u.%*u(0.%u", &minor_api_version) != 1 ||
+          minor_api_version < 211)
+        if (AllocConsole())
+          ShowWindowAsync(GetConsoleWindow(), SW_HIDE);
+    }
+#endif
 
     struct termios attr;
     tcgetattr(0, &attr);
