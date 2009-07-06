@@ -16,7 +16,9 @@
 #include <getopt.h>
 #include <imm.h>
 #include <winnls.h>
+
 #include <sys/cygwin.h>
+#include <cygwin/version.h>
 
 HWND wnd;
 HINSTANCE inst;
@@ -806,21 +808,30 @@ main(int argc, char *argv[])
         puts(APPNAME " " VERSION "\n" COPYRIGHT "\n" LICENSE);
         return 0;
       otherwise:
+        fputs("Try --help for more information.\n", stderr);
         exit(1);
     }
   }
 
   HICON small_icon = 0, large_icon = 0;
   if (icon_file) {
-    ssize_t len = cygwin_conv_path(CCP_POSIX_TO_WIN_W, icon_file, NULL, 0);
-    if (len <= 0)
+#if CYGWIN_VERSION_API_MINOR >= 181
+    wchar *win_icon_file = cygwin_create_path(CCP_POSIX_TO_WIN_W, icon_file);
+    if (!win_icon_file)
       error("invalid icon file path -- %s", icon_file);
-    wchar win_file[len];
-    cygwin_conv_path(CCP_POSIX_TO_WIN_W, icon_file, win_file, sizeof win_file);
     small_icon =
-      LoadImageW(NULL, win_file, IMAGE_ICON, 16, 16, LR_LOADFROMFILE);
+      LoadImageW(NULL, win_icon_file, IMAGE_ICON, 16, 16, LR_LOADFROMFILE);
     large_icon =
-      LoadImageW(NULL, win_file, IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
+      LoadImageW(NULL, win_icon_file, IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
+    free(win_icon_file);
+#else
+    char win_icon_file[MAX_PATH];
+    cygwin_conv_to_win32_path(icon_file, win_icon_file);
+    small_icon =
+      LoadImage(NULL, win_icon_file, IMAGE_ICON, 16, 16, LR_LOADFROMFILE);
+    large_icon =
+      LoadImage(NULL, win_icon_file, IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
+#endif
     if (!small_icon && !large_icon)
       error("could not load icon file -- %s", icon_file);
   }
