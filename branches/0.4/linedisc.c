@@ -86,7 +86,20 @@ ldisc_init(void)
 }
 
 void
-ldisc_send(const char *buf, int len, int interactive)
+ldisc_printf(bool interactive, const char *fmt, ...)
+{
+  va_list va;
+  va_start(va, fmt);
+  char *s;
+  int len = vasprintf(&s, fmt, va);
+  va_end(va);
+  if (len >= 0)
+    ldisc_send(s, len, interactive);
+  free(s);
+}
+
+void
+ldisc_send(const char *buf, int len, bool interactive)
 {
   if (interactive)
     term_deselect();
@@ -201,8 +214,10 @@ ldisc_send(const char *buf, int len, int interactive)
   }
 }
 
+
+
 void
-luni_send(const wchar *wbuf, int wlen, int interactive)
+luni_send(const wchar *wbuf, int wlen, bool interactive)
 {
   char buf[wlen * 6];
   int cp = term.utf ? unicode_codepage : ucsdata.codepage;

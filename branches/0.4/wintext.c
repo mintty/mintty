@@ -934,43 +934,33 @@ colour_dist(colour a, colour b)
 void
 win_set_colour(uint n, colour c)
 {
-  if (n <= 261)
-    colours[n] = c;
+  if (n >= 262)
+    return;
+  colours[n] = c;
+  switch (n) {
+    when 256:
+      colours[257] = brighter(c);
+    when 258:
+      colours[259] = brighter(c);
+      // Make sure the background around the edge of the screen is repainted.
+      InvalidateRect(wnd, null, true);
+    when 261: {
+      // Set the colour of text under the cursor to whichever of foreground
+      // and background colour is further away.
+      colour fg = colours[256], bg = colours[258];
+      colours[260] = colour_dist(c, fg) > colour_dist(c, bg) ? fg : bg;
+    }
+  }
 }
 
-void
-win_set_foreground_colour(colour c)
-{
-  colours[256] = c;
-  colours[257] = brighter(c);
-}
-
-void
-win_set_background_colour(colour c)
-{
-  colours[258] = c;
-  colours[259] = brighter(c);
-  
-  // Make sure the background around the edge of the screen is repainted.
-  InvalidateRect(wnd, null, true);
-}
-
-void
-win_set_cursor_colour(colour c)
-{
-  // Set the colour of text under the cursor to whichever of foreground
-  // and background colour is further away.
-  colour fg = colours[256], bg = colours[258];
-  colours[260] = colour_dist(c, fg) > colour_dist(c, bg) ? fg : bg;
-  colours[261] = c;
-}
+colour win_get_colour(uint n) { return n < 262 ? colours[n] : 0; }
 
 void
 win_reconfig_palette(void)
 {
-  win_set_foreground_colour(cfg.fg_colour);
-  win_set_background_colour(cfg.bg_colour);
-  win_set_cursor_colour(cfg.cursor_colour);
+  win_set_colour(FG_COLOUR_I, cfg.fg_colour);
+  win_set_colour(BG_COLOUR_I, cfg.bg_colour);
+  win_set_colour(CURSOR_COLOUR_I, cfg.cursor_colour);
 }
 
 void
