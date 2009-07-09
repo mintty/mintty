@@ -276,9 +276,28 @@ rgb_to_colour(uint32 rgb)
 static void
 do_colour_osc(uint i)
 {
-  uint rgb;
-  if (sscanf(term.osc_string, "#%x%c", &rgb, &(char){0}) == 1)
+  char *s = term.osc_string;
+  bool has_index_arg = !i;
+  if (has_index_arg) {
+    int len = 0;
+    sscanf(s, "%u;%n", &i, &len);
+    if (!len || i >= 262)
+      return;
+    s += len;
+  }
+  uint rgb, r, g, b;
+  if (strcmp(s, "?") == 0) {
+    ldisc_printf(0, "\e]%u;", term.esc_args[0]);
+    if (has_index_arg)
+      ldisc_printf(0, "%u;", i);
+    uint c = win_get_colour(i);
+    r = red(c), g = green(c), b = blue(c);
+    ldisc_printf(0, "rgb:%04x/%04x/%04x", r | r << 8, g | g << 8, b | b << 8);
+  }
+  else if (sscanf(s, "#%x%c", &rgb, &(char){0}) == 1)
     win_set_colour(i, rgb_to_colour(rgb));
+  else if (sscanf(s, "rgb:%x/%x/%x%c", &r, &g, &b, &(char){0}) == 3)
+    win_set_colour(i, make_colour(r >> 8, g >> 8, b >> 8));
 }
 
 /*
@@ -290,14 +309,8 @@ do_osc(void)
   if (!term.osc_w) { // "wordness" is ignored
     term.osc_string[term.osc_strlen] = 0;
     switch (term.esc_args[0]) {
-      when 0 or 2 or 21:
-        win_set_title(term.osc_string);
-        // icon title is ignored
-      when 4: {
-        uint n, rgb;
-        if (sscanf(term.osc_string, "%u;#%x%c", &n, &rgb, &(char){0}) == 2)
-          win_set_colour(n, rgb_to_colour(rgb));
-      }
+      when 0 or 2 or 21: win_set_title(term.osc_string);  // ignore icon title
+      when 4:  do_colour_osc(0);
       when 10: do_colour_osc(FG_COLOUR_I);
       when 11: do_colour_osc(BG_COLOUR_I);
       when 12: do_colour_osc(CURSOR_COLOUR_I);
