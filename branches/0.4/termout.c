@@ -251,6 +251,8 @@ toggle_mode(int mode, int query, int state)
         term.disptop = 0;
       when 7700:       /* MinTTY only: CJK ambigous width reporting */
         term.report_ambig_width = state;
+      when 7727:       /* MinTTY only: Application escape key mode */
+        term.app_escape_key = state;
     }
   }
   else {
