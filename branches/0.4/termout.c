@@ -7,6 +7,7 @@
 
 #include "linedisc.h"
 #include "win.h"
+#include "appinfo.h"
 
 /*
  * Terminal emulator.
@@ -30,7 +31,6 @@
 
 static const char answerback[] = "mintty";
 static const char primary_da[] = "\e[?1;2c";
-static const char secondary_da[] = "\e[>77;" DA_VERSION ";0c";
 
 static const char sco2ansicolour[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
 
@@ -956,7 +956,7 @@ term_write(const char *data, int len)
               when ANSI('c', '>'):     /* DA: report version */
                 compatibility(OTHER);
                 /* Terminal type 77 (ASCII 'M' for MinTTY) */
-                ldisc_send(secondary_da, sizeof secondary_da - 1, 0);
+                ldisc_printf(0, "\e[>77;%u;0c", DECIMAL_VERSION);
               when 'a':        /* HPR: move right N cols */
                 compatibility(ANSI);
                 move(term.curs.x + def_arg0, term.curs.y, 1);

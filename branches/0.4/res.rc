@@ -1,0 +1,46 @@
+#include "appinfo.h"
+#include "winids.h"
+
+#include <winresrc.h>
+
+IDI_MAINICON ICON "icon/terminal.ico"
+
+IDD_MAINBOX DIALOG DISCARDABLE 48, 32, 256, 152
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Configuration"
+FONT 8, "MS Shell Dlg"
+CLASS "ConfigBox"
+BEGIN
+END
+
+/*
+ * The actual VERSIONINFO resource.
+ */
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION COMMA_VERSION
+FILEFLAGSMASK 0
+FILEFLAGS 0
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_APP
+FILESUBTYPE 0 /* n/a for VFT_APP */
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    /* "lang-charset" LLLLCCCC = (UK English, Unicode) */
+    BLOCK "080904B0"
+    BEGIN
+      VALUE "CompanyName", AUTHOR
+      VALUE "FileDescription", APPDESC
+      VALUE "ProductName", APPNAME
+      VALUE "ProductVersion", POINT_VERSION
+      VALUE "LegalCopyright", COPYRIGHT
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    /* Once again -- same meanings -- apparently necessary */
+    VALUE "Translation", 0x809, 1200
+  END
+END
+
+1 RT_MANIFEST "res.mft"

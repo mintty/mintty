@@ -3,14 +3,13 @@
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
+#include "winpriv.h"
+
 #include "ctrls.h"
 #include "config.h"
 #include "winctrls.h"
 #include "winids.h"
 #include "appinfo.h"
-#include "shellapi.h"
-
-#include "winpriv.h"
 
 #include <commctrl.h>
 
@@ -329,17 +328,3 @@ win_open_config(void)
   config_wnd = CreateDialog(inst, MAKEINTRESOURCE(IDD_MAINBOX),
                             wnd, config_dialog_proc);
 }  
-
-void
-win_show_about(void)
-{
-  MessageBoxIndirect(&(MSGBOXPARAMS){
-    .cbSize = sizeof(MSGBOXPARAMS),
-    .hwndOwner = config_wnd,
-    .hInstance = inst,
-    .lpszCaption = "About " APPNAME,
-    .dwStyle = MB_USERICON | MB_OK,
-    .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
-    .lpszText = APPNAME " " VERSION "\n" COPYRIGHT "\n" APPINFO
-  });
-}

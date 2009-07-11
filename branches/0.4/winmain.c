@@ -805,7 +805,7 @@ main(int argc, char *argv[])
         printf(help, *argv);
         return 0;
       when 'V':
-        puts(APPNAME " " VERSION "\n" COPYRIGHT "\n" LICENSE);
+        puts(VERSION_TEXT);
         return 0;
       otherwise:
         fputs("Try --help for more information.\n", stderr);
@@ -975,4 +975,21 @@ main(int argc, char *argv[])
       term_send_paste();
     }
   }
+}
+
+void
+win_show_about(void)
+{
+  char *text;
+  asprintf(&text, "%s\n\n" ABOUT_TEXT, VERSION_TEXT);
+  MessageBoxIndirect(&(MSGBOXPARAMS){
+    .cbSize = sizeof(MSGBOXPARAMS),
+    .hwndOwner = config_wnd,
+    .hInstance = inst,
+    .lpszCaption = "About " APPNAME,
+    .dwStyle = MB_USERICON | MB_OK,
+    .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
+    .lpszText = text
+  });
+  free(text);
 }
