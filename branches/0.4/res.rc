@@ -29,10 +29,11 @@ BEGIN
     /* "lang-charset" LLLLCCCC = (UK English, Unicode) */
     BLOCK "080904B0"
     BEGIN
-      VALUE "CompanyName", AUTHOR
+      VALUE "FileVersion", POINT_VERSION
       VALUE "FileDescription", APPDESC
       VALUE "ProductName", APPNAME
-      VALUE "ProductVersion", POINT_VERSION
+      VALUE "ProductVersion", VERSION
+      VALUE "CompanyName", AUTHOR
       VALUE "LegalCopyright", COPYRIGHT
     END
   END
