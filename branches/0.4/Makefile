@@ -10,11 +10,11 @@ version := $(shell echo $(shell echo VERSION | cpp -P $(defines) --include appin
 exe := $(name).exe
 dir := $(name)-$(version)
 
+stuff := docs/readme.html scripts/create_shortcut.js
+
 srcs := $(wildcard Makefile *.c *.h *.rc *.mft icon/*.ico icon/*.png)
 srcs += $(wildcard COPYING LICENSE* INSTALL)
 srcs += docs/mintty.1 $(stuff)
-
-stuff := $(wildcard docs/readme.html scripts/*.js)
 
 c_srcs := $(wildcard *.c)
 rc_srcs := $(wildcard *.rc)
