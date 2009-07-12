@@ -474,7 +474,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       else
         term.modify_other_keys ? other_code('\t') : mod_csi('I');
     when VK_ESCAPE:
-      ch(cfg.escape_sends_fs ? C('\\') : C('['));
+      term.app_escape_key ? ss3('[') : ch(cfg.escape_sends_fs ? C('\\') : C('['));
     when VK_PAUSE:
       if (shift || alt)
         return 0;
@@ -564,7 +564,7 @@ win_key_up(WPARAM wParam, LPARAM unused(lParam))
 
   if (alt_state == ALT_ALONE) {
     if (cfg.alt_sends_esc)
-      ldisc_send("\e", 1, 1);
+      term.app_escape_key ? ldisc_send("\eO[", 3, 1) : ldisc_send("\e", 1, 1);
   }
   else if (alt_state > ALT_ALONE) {
     if (term_in_utf()) {

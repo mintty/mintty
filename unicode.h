@@ -27,6 +27,7 @@
 #define UCSWIDE	     0xDFFF
 
 typedef struct {
+  char **uni_tbl;
   int dbcs_screenfont;
   int font_codepage;
   int codepage;

@@ -21,6 +21,7 @@
 
 #define always_inline __attribute__((always_inline)) inline
 #define unused(arg) unused_##arg __attribute__((unused))
+#define no_return __attribute__((noreturn)) void
 
 typedef wchar_t wchar;
 

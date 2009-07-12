@@ -1,10 +1,17 @@
 name := mintty
-version := $(shell printf "svn-r%u" `svn info | grep Revision | sed "s/Revision: //"`)
-da_version := 500
+
+rev := $(shell svn info 2>/dev/null | grep Revision | sed "s/Revision: //" || echo 0)
+ifneq ($(rev),)
+defines := -DREVISION=$(rev) -DDIRECTORY=$(shell basename `pwd`)
+endif
+
+version := $(shell echo $(shell echo VERSION | cpp -P $(defines) --include appinfo.h))
 
 exe := $(name).exe
 dir := $(name)-$(version)
-stuff := $(wildcard docs/readme.html scripts/*.js)
+
+stuff := docs/readme.html scripts/create_shortcut.js
+
 srcs := $(wildcard Makefile *.c *.h *.rc *.mft icon/*.ico icon/*.png)
 srcs += $(wildcard COPYING LICENSE* INSTALL)
 srcs += docs/mintty.1 $(stuff)
@@ -14,16 +21,17 @@ rc_srcs := $(wildcard *.rc)
 objs := $(c_srcs:.c=.o) $(rc_srcs:.rc=.o)
 deps := $(objs:.o=.d)
 
+cpp_opts = -MMD -MP $(defines)
+
 cc_opts =  \
-  -include std.h -DNDEBUG \
-  -DVERSION=\"$(version)\" -DDA_VERSION=\"$(da_version)\" \
+  $(cpp_opts) -DNDEBUG -include std.h \
   -std=gnu99 -Wall -Wextra -Werror \
   -march=i586 -mtune=pentium-m -fomit-frame-pointer -Os
 ld_opts := -s
 libs := -mwindows -lcomctl32 -limm32 -lwinspool -lole32 -luuid
 
 cc := gcc
-rc_cpp := $(cc) -E -MMD -xc-header -DRC_INVOKED -DVERSION=\"$(version)\"
+rc_cpp := $(cc) -E -xc-header -DRC_INVOKED $(cpp_opts)
 rc := windres --preprocessor '$(rc_cpp)'
 
 $(exe): $(objs)
@@ -53,7 +61,7 @@ $(dir).pdf: docs/$(name).1.pdf
 	cp $< $@
 
 %.o %.d: %.c
-	$(cc) $< -c -MMD -MP $(cc_opts)
+	$(cc) $< -c $(cc_opts)
 
 %.o %.d: %.rc
 	$(rc) $< $(<:.rc=.o)
