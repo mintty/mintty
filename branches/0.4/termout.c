@@ -294,11 +294,13 @@ do_colour_osc(uint i)
       ldisc_printf(0, "%u;", i);
     uint c = win_get_colour(i);
     r = red(c), g = green(c), b = blue(c);
-    ldisc_printf(0, "rgb:%04x/%04x/%04x", r | r << 8, g | g << 8, b | b << 8);
+    ldisc_printf(0, "rgb:%04x/%04x/%04x", r * 0x101, g * 0x101, b * 0x101);
   }
-  else if (sscanf(s, "#%x%c", &rgb, &(char){0}) == 1)
+  else if (sscanf(s, "#%6x%c", &rgb, &(char){0}) == 1)
     win_set_colour(i, rgb_to_colour(rgb));
-  else if (sscanf(s, "rgb:%x/%x/%x%c", &r, &g, &b, &(char){0}) == 3)
+  else if (sscanf(s, "rgb:%2x/%2x/%2x%c", &r, &g, &b, &(char){0}) == 3)
+    win_set_colour(i, make_colour(r, g, b));
+  else if (sscanf(s, "rgb:%4x/%4x/%4x%c", &r, &g, &b, &(char){0}) == 3)
     win_set_colour(i, make_colour(r >> 8, g >> 8, b >> 8));
 }
 
