@@ -189,11 +189,24 @@ child_create(char *argv[], struct winsize *winp)
     }
 #endif
 
+    // Reset signals
+    signal(SIGINT, SIG_DFL);
+    signal(SIGQUIT, SIG_DFL);
+    signal(SIGCHLD, SIG_DFL);
+
+    // Mimick login's behavior by disabling the job control signals
+    signal(SIGTSTP, SIG_IGN);
+    signal(SIGTTIN, SIG_IGN);
+    signal(SIGTTOU, SIG_IGN);
+
+    // Set backspace keycode and TERM variable
     struct termios attr;
     tcgetattr(0, &attr);
     attr.c_cc[VERASE] = cfg.backspace_sends_del ? 0x7F : '\b';
     tcsetattr(0, TCSANOW, &attr);
     setenv("TERM", "xterm", 1);
+    
+    // Invoke command
     execvp(cmd, argv);
 
     // If we get here, exec failed.
