@@ -294,7 +294,7 @@ do_colour_osc(uint i)
       ldisc_printf(0, "%u;", i);
     uint c = win_get_colour(i);
     r = red(c), g = green(c), b = blue(c);
-    ldisc_printf(0, "rgb:%04x/%04x/%04x", r * 0x101, g * 0x101, b * 0x101);
+    ldisc_printf(0, "rgb:%04x/%04x/%04x\e\\", r * 0x101, g * 0x101, b * 0x101);
   }
   else if (sscanf(s, "#%6x%c", &rgb, &(char){0}) == 1)
     win_set_colour(i, rgb_to_colour(rgb));
