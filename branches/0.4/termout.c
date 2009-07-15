@@ -180,22 +180,10 @@ toggle_mode(int mode, int query, int state)
         move(0, 0, 0);
         term_erase_lots(false, true, true);
       when 5:  /* DECSCNM: reverse video */
-       /*
-        * Toggle reverse video. If we receive an OFF within the
-        * visual bell timeout period after an ON, we trigger an
-        * effective visual bell, so that ESC[?5hESC[?5l will
-        * always be an actually _visible_ visual bell.
-        */
-        if (term.rvideo && !state) {
-         /* This is an OFF, so set up a vbell */
-          term_schedule_vbell(true, term.rvbell_startpoint);
+        if (state != term.rvideo) {
+          term.rvideo = state;
+          win_invalidate_all();
         }
-        else if (!term.rvideo && state) {
-         /* This is an ON, so we notice the time and save it. */
-          term.rvbell_startpoint = get_tick_count();
-        }
-        term.rvideo = state;
-        seen_disp_event();
       when 6:  /* DECOM: DEC origin mode */
         term.dec_om = state;
       when 7:  /* DECAWM: auto wrap */
@@ -1501,7 +1489,6 @@ term_write(const char *data, int len)
               term.osc_strlen = 0;
             when 'R':  /* Linux palette reset */
               win_reset_colours();
-              term_invalidate_all();
               term.state = TOPLEVEL;
             when 'W':  /* word-set */
               term.state = SEEN_OSC_W;
@@ -1562,7 +1549,6 @@ term_write(const char *data, int len)
             uint n, rgb;
             sscanf(term.osc_string, "%1x%6x", &n, &rgb);
             win_set_colour(n, rgb_to_colour(rgb));
-            term_invalidate_all();
             term.state = TOPLEVEL;
           }
         }

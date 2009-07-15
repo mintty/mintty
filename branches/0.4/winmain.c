@@ -266,7 +266,7 @@ win_resize(int rows, int cols)
   int height = extra_height + font_height * rows + 2 * PADDING;
   SetWindowPos(wnd, null, 0, 0, width, height,
                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
-  InvalidateRect(wnd, null, true);
+  win_invalidate_all();
 }
 
 static void
@@ -329,7 +329,7 @@ reset_window(int reinit)
   if (rows != term.rows || cols != term.cols)
     notify_resize(rows, cols);
 
-  InvalidateRect(wnd, null, true);
+  win_invalidate_all();
 }
 
 /*
@@ -461,7 +461,7 @@ win_reconfig(void)
   cfg = new_cfg;
   win_reconfig_palette();
   update_transparency();
-  InvalidateRect(wnd, null, true);
+  win_invalidate_all();
   reset_window(init_lvl);
   win_update_mouse();
 }
@@ -621,7 +621,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       if (need_backend_resize) {
         need_backend_resize = false;
         notify_resize(new_rows, new_cols);
-        InvalidateRect(wnd, null, true);
+        win_invalidate_all();
       }
     when WM_SIZING: {
      /*

@@ -284,9 +284,10 @@ win_paint(void)
       p.rcPaint.bottom >= PADDING + font_height * term.rows) {
     HBRUSH fillcolour, oldbrush;
     HPEN edge, oldpen;
-    fillcolour = CreateSolidBrush(colours[ATTR_DEFBG >> ATTR_BGSHIFT]);
+    colour bg_colour = colours[term.rvideo ? 256 : 258];
+    fillcolour = CreateSolidBrush(bg_colour);
     oldbrush = SelectObject(dc, fillcolour);
-    edge = CreatePen(PS_SOLID, 0, colours[ATTR_DEFBG >> ATTR_BGSHIFT]);
+    edge = CreatePen(PS_SOLID, 0, bg_colour);
     oldpen = SelectObject(dc, edge);
 
     IntersectClipRect(dc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
@@ -559,8 +560,6 @@ win_text_internal(int x, int y, wchar * text, int len, uint attr, int lattr)
   if ((text[0] & CSET_MASK) == CSET_OEMCP)
     nfont |= FONT_OEM;
 
-  nfg = ((attr & ATTR_FGMASK) >> ATTR_FGSHIFT);
-  nbg = ((attr & ATTR_BGMASK) >> ATTR_BGSHIFT);
   if (bold_mode == BOLD_FONT && (attr & ATTR_BOLD))
     nfont |= FONT_BOLD;
   if (und_mode == UND_FONT && (attr & ATTR_UNDER))
@@ -576,6 +575,19 @@ win_text_internal(int x, int y, wchar * text, int len, uint attr, int lattr)
   another_font(nfont);
   if (!fonts[nfont])
     nfont = FONT_NORMAL;
+
+  nfg = ((attr & ATTR_FGMASK) >> ATTR_FGSHIFT);
+  nbg = ((attr & ATTR_BGMASK) >> ATTR_BGSHIFT);
+  if (term.rvideo) {
+    if (nfg >= 260)
+      nfg ^= 1;
+    else if (nfg >= 256)
+      nfg ^= 2;
+    if (nbg >= 260)
+      nbg ^= 1;
+    else if (nbg >= 256)
+      nbg ^= 2;
+  }
   if (attr & ATTR_REVERSE) {
     t = nfg;
     nfg = nbg;
@@ -757,6 +769,7 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
   int fnt_width;
   int char_width;
   int cursor_type = term_cursor_type();
+  colour cursor_colour = colours[261 - term.rvideo];
 
   lattr &= LATTR_MODE;
 
@@ -784,7 +797,7 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
     pts[2].x = pts[3].x = x + char_width - 1;
     pts[0].y = pts[3].y = pts[4].y = y;
     pts[1].y = pts[2].y = y + font_height - 1;
-    oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, colours[261]));
+    oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, cursor_colour));
     Polyline(dc, pts, 5);
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
@@ -810,7 +823,7 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
     }
     if (attr & TATTR_ACTCURS) {
       HPEN oldpen;
-      oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, colours[261]));
+      oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, cursor_colour));
       MoveToEx(dc, startx, starty, null);
       LineTo(dc, startx + dx * length, starty + dy * length);
       oldpen = SelectObject(dc, oldpen);
@@ -818,9 +831,8 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
     }
     else {
       for (i = 0; i < length; i++) {
-        if (i % 2 == 0) {
-          SetPixel(dc, startx, starty, colours[261]);
-        }
+        if (i % 2 == 0)
+          SetPixel(dc, startx, starty, cursor_colour);
         startx += dx;
         starty += dy;
       }
@@ -942,8 +954,6 @@ win_set_colour(uint n, colour c)
       colours[257] = brighter(c);
     when 258:
       colours[259] = brighter(c);
-      // Make sure the background around the edge of the screen is repainted.
-      InvalidateRect(wnd, null, true);
     when 261: {
       // Set the colour of text under the cursor to whichever of foreground
       // and background colour is further away.
@@ -951,6 +961,8 @@ win_set_colour(uint n, colour c)
       colours[260] = colour_dist(c, fg) > colour_dist(c, bg) ? fg : bg;
     }
   }
+  // Redraw everything.
+  win_invalidate_all();
 }
 
 colour win_get_colour(uint n) { return n < 262 ? colours[n] : 0; }
@@ -992,4 +1004,10 @@ win_reset_colours(void)
 
   // Foreground, background, cursor
   win_reconfig_palette();
+}
+
+void
+win_invalidate_all(void)
+{
+  InvalidateRect(wnd, null, true);
 }
