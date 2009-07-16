@@ -588,11 +588,6 @@ win_text_internal(int x, int y, wchar * text, int len, uint attr, int lattr)
     else if (nbg >= 256)
       nbg ^= 2;
   }
-  if (attr & ATTR_REVERSE) {
-    t = nfg;
-    nfg = nbg;
-    nbg = t;
-  }
   if (bold_mode == BOLD_COLOURS) {
     if (attr & ATTR_BOLD) {
       if (nfg < 16)
@@ -606,6 +601,11 @@ win_text_internal(int x, int y, wchar * text, int len, uint attr, int lattr)
       else if (nbg >= 256)
         nbg |= 1;
     }
+  }
+  if (attr & ATTR_REVERSE) {
+    t = nfg;
+    nfg = nbg;
+    nbg = t;
   }
   fg = colours[nfg];
   bg = colours[nbg];
