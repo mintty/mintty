@@ -13,7 +13,7 @@ restore_tattr (void)
 }
 
 int 
-main (void) 
+main(int argc, char *argv[]) 
 {
   unsigned char c;
   if (isatty (STDIN_FILENO)) {
@@ -29,6 +29,8 @@ main (void)
     atexit (restore_tattr);
   }
   setbuf(stdout, 0);
+  while (*++argv)
+    fputs(*argv, stdout);
   while ((c = getchar()) != 4) {
     switch (c) {
       case 0x00 ... 0x1f:  putchar('^'); putchar(c + 0x40); break;
