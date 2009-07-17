@@ -804,7 +804,7 @@ win_cursor(int x, int y, wchar *text, int len, uint attr, int lattr)
           SetPixel(dc, x, y + dy, cursor_colour);
       } 
     when CUR_UNDERSCORE:
-      y += descent;
+      y += min(descent, font_height - 2);
       if (attr & TATTR_ACTCURS)
         Rectangle(dc, x, y, x + char_width, y + 2);
       else if (attr & TATTR_PASCURS) {
