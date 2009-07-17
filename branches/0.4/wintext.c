@@ -477,7 +477,7 @@ another_font(int fontno)
  * We are allowed to fiddle with the contents of `text'.
  */
 static void
-win_text_internal(int x, int y, wchar * text, int len, uint attr, int lattr)
+win_text_internal(int x, int y, wchar *text, int len, uint attr, int lattr)
 {
   COLORREF fg, bg, t;
   int nfg, nbg, nfont;
@@ -748,7 +748,7 @@ win_text_internal(int x, int y, wchar * text, int len, uint attr, int lattr)
  * Wrapper that handles combining characters.
  */
 void
-win_text(int x, int y, wchar * text, int len, uint attr, int lattr)
+win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
 {
   if (attr & TATTR_COMBINING) {
     uint a = 0;
@@ -764,7 +764,7 @@ win_text(int x, int y, wchar * text, int len, uint attr, int lattr)
 }
 
 void
-win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
+win_cursor(int x, int y, wchar *text, int len, uint attr, int lattr)
 {
   int fnt_width;
   int char_width;
@@ -785,59 +785,37 @@ win_cursor(int x, int y, wchar * text, int len, uint attr, int lattr)
   fnt_width = char_width = font_width * (1 + (lattr != LATTR_NORM));
   if (attr & ATTR_WIDE)
     char_width *= 2;
-  x *= fnt_width;
-  y *= font_height;
-  x += PADDING;
-  y += PADDING;
+  x = x * fnt_width + PADDING;
+  y = y * font_height + PADDING;
 
-  if ((attr & TATTR_PASCURS) && cursor_type == CUR_BLOCK) {
-    POINT pts[5];
-    HPEN oldpen;
-    pts[0].x = pts[1].x = pts[4].x = x;
-    pts[2].x = pts[3].x = x + char_width - 1;
-    pts[0].y = pts[3].y = pts[4].y = y;
-    pts[1].y = pts[2].y = y + font_height - 1;
-    oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, cursor_colour));
-    Polyline(dc, pts, 5);
-    oldpen = SelectObject(dc, oldpen);
-    DeleteObject(oldpen);
-  }
-  else if ((attr & (TATTR_ACTCURS | TATTR_PASCURS)) && cursor_type != CUR_BLOCK) {
-    int startx, starty, dx, dy, length, i;
-    if (cursor_type == CUR_UNDERLINE) {
-      startx = x;
-      starty = y + descent;
-      dx = 1;
-      dy = 0;
-      length = char_width;
-    }
-    else {
-      int xadjust = 0;
+  HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, cursor_colour));
+  HBRUSH oldbrush = SelectObject(dc, GetStockObject(NULL_BRUSH));
+  switch(cursor_type) {
+    when CUR_BLOCK:
+      if (attr & TATTR_PASCURS)
+        Rectangle(dc, x, y, x + char_width, y + font_height);
+    when CUR_LINE:
       if (attr & TATTR_RIGHTCURS)
-        xadjust = char_width - 1;
-      startx = x + xadjust;
-      starty = y;
-      dx = 0;
-      dy = 1;
-      length = font_height;
-    }
-    if (attr & TATTR_ACTCURS) {
-      HPEN oldpen;
-      oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, cursor_colour));
-      MoveToEx(dc, startx, starty, null);
-      LineTo(dc, startx + dx * length, starty + dy * length);
-      oldpen = SelectObject(dc, oldpen);
-      DeleteObject(oldpen);
-    }
-    else {
-      for (i = 0; i < length; i++) {
-        if (i % 2 == 0)
-          SetPixel(dc, startx, starty, cursor_colour);
-        startx += dx;
-        starty += dy;
-      }
-    }
+        x += char_width - 1;
+      if (attr & TATTR_ACTCURS)
+        Rectangle(dc, x, y, x + 1, y + font_height);
+      else if (attr & TATTR_PASCURS) {
+        for (int dy = 0; dy < font_height; dy += 2)
+          SetPixel(dc, x, y + dy, cursor_colour);
+      } 
+    when CUR_UNDERSCORE:
+      y += descent;
+      if (attr & TATTR_ACTCURS)
+        Rectangle(dc, x, y, x + char_width, y + 2);
+      else if (attr & TATTR_PASCURS) {
+        for (int dx = 0; dx < char_width; dx += 2) {
+          SetPixel(dc, x + dx, y, cursor_colour);
+          SetPixel(dc, x + dx, y + 1, cursor_colour);
+        }
+      } 
   }
+  SelectObject(dc, oldbrush);
+  DeleteObject(SelectObject(dc, oldpen));
 }
 
 bool
