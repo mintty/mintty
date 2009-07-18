@@ -6,7 +6,7 @@
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
 .ad l
-.TH mintty 1 2009-07-12 0.4.3 Cygwin
+.TH mintty 1 2009-07-18 0.4.4 Cygwin
 
 .SH NAME
 
@@ -766,16 +766,16 @@ The VT510 DECCSUSR sequence can be used to control cursor shape and blinking.
 
 .TS
 tab(#) nospaces;
-LI  LB        LB
-LfC L         L.
-arg#shape    #blinking
-0  #default  #default
-1  #block    #yes
-2  #block    #no
-3  #underline#yes
-4  #underline#no
-5  #line     #yes
-6  #line     #no
+LI  LB         LB
+LfC L          L.
+arg#shape     #blinking
+0  #default   #default
+1  #block     #yes
+2  #block     #no
+3  #underscore#yes
+4  #underscore#no
+5  #line      #yes
+6  #line      #no
 .TE
 .RE
 
@@ -1100,10 +1100,10 @@ cursor in normal mode and a line cursor in insert mode:
 .RS
 .nf
 \fC
-let &t_ti.="\e[1 q\e[?7727h"
-let &t_SI.="\e[5 q"
-let &t_EI.="\e[1 q"
-let &t_te.="\e[0 q\e[?7727l"
+let &t_ti.="\\e[1 q\\e[?7727h"
+let &t_SI.="\\e[5 q"
+let &t_EI.="\\e[1 q"
+let &t_te.="\\e[0 q\\e[?7727l"
 noremap <Esc>O[ <Esc>
 noremap! <Esc>O[ <Esc>
 \fP
