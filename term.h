@@ -136,7 +136,7 @@ struct term {
   int cset;     /* 0 or 1: which char set */
   int save_cset, save_csattr;   /* saved with cursor position */
   int save_utf, save_wnext;     /* saved with cursor position */
-  int rvideo;   /* global reverse video flag */
+  bool rvideo;   /* global reverse video flag */
   uint rvbell_startpoint;       /* for ESC[?5hESC[?5l vbell */
   int cursor_on;        /* cursor enabled flag */
   int reset_132;        /* Flag ESC c resets to 80 cols */
@@ -173,6 +173,7 @@ struct term {
   bool in_vbell;
   bool seen_disp_event;
 
+  bool app_escape_key;
   bool app_cursor_keys;
   bool app_keypad;
   int modify_other_keys;
@@ -264,7 +265,6 @@ void term_select_all(void);
 void term_paint(void);
 void term_update(void);
 void term_invalidate(int left, int top, int right, int bottom);
-void term_invalidate_all(void);
 void term_blink(int set_cursor);
 void term_copy(void);
 void term_paste(wchar *, uint len);

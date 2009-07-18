@@ -328,6 +328,11 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
   else if (state != MS_IDLE) {
     if (term.selected && cfg.copy_on_select)
       term_copy();
+    
+    // Flush any output held back during selection.
+    term_write(0, 0);
+    
+    // "Clicks place cursor" implementation.
     if (!cfg.clicks_place_cursor || term.which_screen != 0 ||
         term.app_cursor_keys || term.editing)
       return;
