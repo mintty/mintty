@@ -20,11 +20,11 @@ void win_bell(int);
 void win_set_title(char *);
 void win_set_sbar(int, int, int);
 
-void win_set_colour(uint n, colour);
-void win_set_foreground_colour(colour);
-void win_set_background_colour(colour);
-void win_set_cursor_colour(colour);
+enum { FG_COLOUR_I = 256, BG_COLOUR_I = 258, CURSOR_COLOUR_I = 261 };
+colour win_get_colour(uint i);
+void win_set_colour(uint i, colour);
 void win_reset_colours(void);
+void win_invalidate_all(void);
 
 void win_move(int x, int y);
 void win_resize(int rows, int cols);

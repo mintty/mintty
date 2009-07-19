@@ -717,7 +717,7 @@ term_erase_lots(int line_only, int from_begin, int to_end)
 
  /* Clear screen also forces a full window redraw, just in case. */
   if (start.y == 0 && start.x == 0 && end.y == term.rows)
-    term_invalidate_all();
+    win_invalidate_all();
 
  /* Lines scrolled away shouldn't be brought back on if the terminal
   * resizes. */
@@ -820,12 +820,10 @@ term_paint(void)
   int chlen = 1024;
   wchar *ch = newn(wchar, chlen);
   termchar *newline = newn(termchar, term.cols);
-  int rv = !term.rvideo ^ !term.in_vbell ? ATTR_REVERSE : 0;
 
  /* Depends on:
   * screen array, disptop, scrtop,
-  * selection, rv, 
-  * cfg.blinkpc, blink_is_real, tblinker, 
+  * selection, cfg.blinkpc, blink_is_real, tblinker, 
   * curs.y, curs.x, cblinker, cfg.cursor_blinks, cursor_on, has_focus, wrapnext
   */
 
@@ -895,7 +893,7 @@ term_paint(void)
   for (int i = 0; i < term.rows; i++) {
     termline *ldata;
     termchar *lchars;
-    int dirty_line, dirty_run, selected;
+    int dirty_line, dirty_run;
     uint attr = 0, cset = 0;
     int updated_line = 0;
     int start = 0;
@@ -939,17 +937,14 @@ term_paint(void)
         tattr |= ATTR_WIDE;
 
      /* Video reversing things */
-      if (term.selected) {
-        if (term.sel_rect)
-          selected = (posPle(term.sel_start, scrpos) &&
-                      posPlt(scrpos, term.sel_end));
-        else
-          selected = (posle(term.sel_start, scrpos) &&
-                      poslt(scrpos, term.sel_end));
-      }
-      else
-        selected = false;
-      tattr = (tattr ^ rv ^ (selected ? ATTR_REVERSE : 0));
+      bool selected = 
+        term.selected &&
+        ( term.sel_rect
+          ? posPle(term.sel_start, scrpos) && posPlt(scrpos, term.sel_end)
+          : posle(term.sel_start, scrpos) && poslt(scrpos, term.sel_end)
+        );
+      if (term.in_vbell || selected)
+        tattr ^= ATTR_REVERSE;
 
      /* 'Real' blinking ? */
       if (term.blink_is_real && (tattr & ATTR_BLINK)) {
@@ -1193,21 +1188,6 @@ term_invalidate(int left, int top, int right, int bottom)
       for (int j = left / 2; j <= right / 2 + 1 && j < term.cols; j++)
         term.disptext[i]->chars[j].attr |= ATTR_INVALID;
   }
-}
-
-/*
- * Invalidate the whole screen so it will be repainted in full.
- */
-void
-term_invalidate_all(void)
-{
-  int i, j;
-
-  for (i = 0; i < term.rows; i++)
-    for (j = 0; j < term.cols; j++)
-      term.disptext[i]->chars[j].attr |= ATTR_INVALID;
-
-  win_schedule_update();
 }
 
 /*

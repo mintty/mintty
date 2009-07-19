@@ -274,11 +274,11 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Looks", "curtype", "Cursor");
   ctrl_radiobuttons(
-    s, null, '\0', 3, P(0), dlg_stdradiobutton_handler,
+    s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
     I(offcfg(cursor_type)),
     "Line", 'n', I(CUR_LINE), 
-    "Underline", 'u', I(CUR_UNDERLINE),
     "Block", 'k', I(CUR_BLOCK),
+    "Underscore", 'u', I(CUR_UNDERSCORE),
     null
   );
   ctrl_checkbox(

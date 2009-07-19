@@ -6,7 +6,7 @@
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
 .ad l
-.TH mintty 1 2009-06-27 0.4-svn Cygwin
+.TH mintty 1 2009-07-18 0.4.4 Cygwin
 
 .SH NAME
 
@@ -68,6 +68,10 @@ Set the default numbers of terminal columns and rows.
 \fB-t\fP, \fB--title\fP=\fITITLE\fP
 Use \fITITLE\fP as the initial window title.
 By default, the title is set to the executed command.
+
+.TP
+\fB-i\fP, \fB--icon\fP=\fIFILE\fP
+Load the window icon from a Windows \fI.ICO\fP file.
 
 .TP
 \fB-l\fP, \fB--log\fP=\fIFILE\fP
@@ -307,9 +311,9 @@ The following cursor types are available:
 
 .RS
 .PD 0
-.IP "\- \fBLine\fP (2)"
-.IP "\- \fBUnderline\fP (1)"
 .IP "\- \fBBlock\fP (0)"
+.IP "\- \fBUnderscore\fP (1)"
+.IP "\- \fBLine\fP (2)"
 .RE
 
 .TP
@@ -600,7 +604,7 @@ tab(#) nospaces;
 LI        s     LB    LB    LB    LB    LB
 LB        LfC   LfC   LfC   LfC   LfC   LfC.
 Key            #Shift#Crtl #C+S   #Alt  #A+S
-Space    #\fIsp#\fIsp#^@   #^[^@  #^[\fIsp #^[\fIsp
+Space    #\fISP#\fISP#^@   #^[^@  #^[\fISP#^[\fISP
 Enter    #^M   #^J   #^^   #^[^^  #^[^M #^[J
 Back (^H)#^H   #^H   #^?   #^[^?  #^[^H #^[^H
 Back (^?)#^?   #^?   #^_   #^[^_  #^[^? #^[^?
@@ -745,9 +749,78 @@ The Windows wheel setting can also be set to always scroll by a whole screen
 at a time.
 
 
+.SH CONTROL SEQUENCES
+
+MinTTY supports most of the xterm control sequences documented at \fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.html\fP.
+Please report incompatibilities or unimplemented sequences as bugs.
+
+Below are MinTTY control sequences not currently supported in xterm.
+
+
+.SS Cursor style
+
+The VT510 DECCSUSR sequence can be used to control cursor shape and blinking.
+
+.RS
+\fC^[[ \fIarg\fC \fISP\fC q\fR
+
+.TS
+tab(#) nospaces;
+LI  LB         LB
+LfC L          L.
+arg#shape     #blinking
+0  #default   #default
+1  #block     #yes
+2  #block     #no
+3  #underscore#yes
+4  #underscore#no
+5  #line      #yes
+6  #line      #no
+.TE
+.RE
+
+
+.SS Escape key mode
+
+In application escape key mode, the escape key sends a keycode that allows
+applications to tell it apart from the escape character appearing at the start
+of many other keycodes, without resorting to a timeout mechanism.
+
+.RS
+.TS
+tab(#) nospaces;
+LB        LB          LB
+LfC       L           LfC.
+sequence #mode       #keycode
+^[[?7727l#normal     #^[
+^[[?7727h#application#^[O[
+.TE
+.RE
+
+
+.SS Ambiguous width reporting
+
+Applications can ask to be notified when the width of the so-called
+"ambiguous width" character category changes due to the user changing font.
+
+.RS
+.TS
+tab(#) nospaces;
+LB        LB
+LfC       L.
+sequence #reporting
+^[[?7700l#disabled
+^[[?7700h#enabled
+.TE
+.RE
+
+When enabled, '\fC^[[1W\fP' is sent when changing to an "ambiguous narrow"
+font and '\fC^[[2W\fP' is sent when changing to an "ambiguous wide" font.
+
+
 .SH TIPS
 
-A few tips on MinTTY use.
+A few tips on setting up MinTTY and other programs.
 
 
 .SS Shortcuts
@@ -1016,6 +1089,33 @@ For \fBAlt\fP or \fBCtrl\fP, replace the \fB2\fPs in the keycodes with
 .fi
 .RE
 
+
+.SS Mode-dependent cursor in vim
+
+Using the control sequences for cursor style and application escape key mode,
+the \fBvim\fP editor can be configured to change cursor depending on mode.
+For example, with the following lines in \fI.vimrc\fP, vim will show a block
+cursor in normal mode and a line cursor in insert mode:
+
+.RS
+.nf
+\fC
+let &t_ti.="\\e[1 q\\e[?7727h"
+let &t_SI.="\\e[5 q"
+let &t_EI.="\\e[1 q"
+let &t_te.="\\e[0 q\\e[?7727l"
+noremap <Esc>O[ <Esc>
+noremap! <Esc>O[ <Esc>
+\fP
+.fi
+.RE
+
+Without application escape key mode, it would take a second for the cursor to
+change after pressing Esc to leave insert mode.
+(That time can otherwise be reduced using vim's \fIttimeoutlen\fP setting,
+at the risk of keycodes not being recognised in some circumstances.)
+
+
 .SH LIMITATIONS
 
 .SS Console Issue
@@ -1048,7 +1148,7 @@ Neither Tektronix 4014 emulation nor mouse highlighting mode are supported.
 .SH SEE ALSO
 
 \fIbash\fP(1), \fIenv\fP(1), \fIecho\fP(1), \fIstty(1)\fP,
-\fIlesskey\fP(1), \fImkshortcut\fP(1), \fIchere\fP(1)
+\fImkshortcut\fP(1), \fIchere\fP(1), \fIlesskey\fP(1), vim(1)
 
 \fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.html\fP
 

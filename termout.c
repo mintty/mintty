@@ -7,6 +7,7 @@
 
 #include "linedisc.h"
 #include "win.h"
+#include "appinfo.h"
 
 /*
  * Terminal emulator.
@@ -30,7 +31,6 @@
 
 static const char answerback[] = "mintty";
 static const char primary_da[] = "\e[?1;2c";
-static const char secondary_da[] = "\e[>77;" DA_VERSION ";0c";
 
 static const char sco2ansicolour[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
 
@@ -180,22 +180,10 @@ toggle_mode(int mode, int query, int state)
         move(0, 0, 0);
         term_erase_lots(false, true, true);
       when 5:  /* DECSCNM: reverse video */
-       /*
-        * Toggle reverse video. If we receive an OFF within the
-        * visual bell timeout period after an ON, we trigger an
-        * effective visual bell, so that ESC[?5hESC[?5l will
-        * always be an actually _visible_ visual bell.
-        */
-        if (term.rvideo && !state) {
-         /* This is an OFF, so set up a vbell */
-          term_schedule_vbell(true, term.rvbell_startpoint);
+        if (state != term.rvideo) {
+          term.rvideo = state;
+          win_invalidate_all();
         }
-        else if (!term.rvideo && state) {
-         /* This is an ON, so we notice the time and save it. */
-          term.rvbell_startpoint = get_tick_count();
-        }
-        term.rvideo = state;
-        seen_disp_event();
       when 6:  /* DECOM: DEC origin mode */
         term.dec_om = state;
       when 7:  /* DECAWM: auto wrap */
@@ -251,6 +239,8 @@ toggle_mode(int mode, int query, int state)
         term.disptop = 0;
       when 7700:       /* MinTTY only: CJK ambigous width reporting */
         term.report_ambig_width = state;
+      when 7727:       /* MinTTY only: Application escape key mode */
+        term.app_escape_key = state;
     }
   }
   else {
@@ -274,11 +264,32 @@ rgb_to_colour(uint32 rgb)
 }
 
 static void
-do_colour_osc(void (*set_colour_f)(uint32))
+do_colour_osc(uint i)
 {
-  uint rgb;
-  if (sscanf(term.osc_string, "#%x%c", &rgb, &(char){0}) == 1)
-    (*set_colour_f)(rgb_to_colour(rgb));
+  char *s = term.osc_string;
+  bool has_index_arg = !i;
+  if (has_index_arg) {
+    int len = 0;
+    sscanf(s, "%u;%n", &i, &len);
+    if (!len || i >= 262)
+      return;
+    s += len;
+  }
+  uint rgb, r, g, b;
+  if (strcmp(s, "?") == 0) {
+    ldisc_printf(0, "\e]%u;", term.esc_args[0]);
+    if (has_index_arg)
+      ldisc_printf(0, "%u;", i);
+    uint c = win_get_colour(i);
+    r = red(c), g = green(c), b = blue(c);
+    ldisc_printf(0, "rgb:%04x/%04x/%04x\e\\", r * 0x101, g * 0x101, b * 0x101);
+  }
+  else if (sscanf(s, "#%6x%c", &rgb, &(char){0}) == 1)
+    win_set_colour(i, rgb_to_colour(rgb));
+  else if (sscanf(s, "rgb:%2x/%2x/%2x%c", &r, &g, &b, &(char){0}) == 3)
+    win_set_colour(i, make_colour(r, g, b));
+  else if (sscanf(s, "rgb:%4x/%4x/%4x%c", &r, &g, &b, &(char){0}) == 3)
+    win_set_colour(i, make_colour(r >> 8, g >> 8, b >> 8));
 }
 
 /*
@@ -288,19 +299,13 @@ static void
 do_osc(void)
 {
   if (!term.osc_w) { // "wordness" is ignored
-    term.osc_string[term.osc_strlen] = '\0';
+    term.osc_string[term.osc_strlen] = 0;
     switch (term.esc_args[0]) {
-      when 0 or 2 or 21:
-        win_set_title(term.osc_string);
-        // icon title is ignored
-      when 4: {
-        uint n, rgb;
-        if (sscanf(term.osc_string, "%u;#%x%c", &n, &rgb, &(char){0}) == 2)
-          win_set_colour(n, rgb_to_colour(rgb));
-      }
-      when 10: do_colour_osc(win_set_foreground_colour);
-      when 11: do_colour_osc(win_set_background_colour);
-      when 12: do_colour_osc(win_set_cursor_colour);
+      when 0 or 2 or 21: win_set_title(term.osc_string);  // ignore icon title
+      when 4:  do_colour_osc(0);
+      when 10: do_colour_osc(FG_COLOUR_I);
+      when 11: do_colour_osc(BG_COLOUR_I);
+      when 12: do_colour_osc(CURSOR_COLOUR_I);
     }
   }
 }
@@ -577,7 +582,7 @@ term_write(const char *data, int len)
       * termination sequence.
       */
       if (term.only_printing) {
-        if (c == '\033')
+        if (c == '\e')
           term.print_state = 1;
         else if (c == (uchar) '\233')
           term.print_state = 2;
@@ -724,7 +729,7 @@ term_write(const char *data, int len)
     else if ((c & ~0x1F) == 0 && term.state < DO_CTRLS) {
      /* Or normal C0 controls. */
       switch (c) {
-        when '\005':   /* ENQ: terminal type query */
+        when 5:   /* ENQ: terminal type query */
          /* 
           * Strictly speaking this is VT100 but a VT100 defaults to
           * no response. Other terminals respond at their option.
@@ -738,10 +743,10 @@ term_write(const char *data, int len)
           out_bell();
         when '\b':     /* BS: Back space */
           out_backspace();
-        when '\016':   /* LS1: Locking-shift one */
+        when 14:   /* LS1: Locking-shift one */
           compatibility(VT100);
           term.cset = 1;
-        when '\017':   /* LS0: Locking-shift zero */
+        when 15:   /* LS0: Locking-shift zero */
           compatibility(VT100);
           term.cset = 0;
         when '\e':   /* ESC: Escape */
@@ -941,7 +946,7 @@ term_write(const char *data, int len)
               when ANSI('c', '>'):     /* DA: report version */
                 compatibility(OTHER);
                 /* Terminal type 77 (ASCII 'M' for MinTTY) */
-                ldisc_send(secondary_da, sizeof secondary_da - 1, 0);
+                ldisc_printf(0, "\e[>77;%u;0c", DECIMAL_VERSION);
               when 'a':        /* HPR: move right N cols */
                 compatibility(ANSI);
                 move(term.curs.x + def_arg0, term.curs.y, 1);
@@ -1021,13 +1026,10 @@ term_write(const char *data, int len)
                 compatibility(VT100);
                 ldisc_send(primary_da, sizeof primary_da - 1, 0);
               when 'n':        /* DSR: cursor position query */
-                if (arg0 == 6) {
-                  char buf[32];
-                  sprintf(buf, "\033[%d;%dR", term.curs.y + 1, term.curs.x + 1);
-                  ldisc_send(buf, strlen(buf), 0);
-                }
+                if (arg0 == 6)
+                  ldisc_printf(0, "\e[%d;%dR", term.curs.y + 1, term.curs.x + 1);
                 else if (arg0 == 5) {
-                  ldisc_send("\033[0n", 4, 0);
+                  ldisc_send("\e[0n", 4, 0);
                 }
               when 'h' or ANSI_QUE('h'):  /* SM: toggle modes to high */
                 compatibility(VT100);
@@ -1225,8 +1227,7 @@ term_write(const char *data, int len)
                 }
                 else if (nargs >= 1 && arg0 >= 1 && arg0 < 24) {
                   compatibility(OTHER);
-                  int x, y, len;
-                  char buf[80];
+                  int x, y;
                   switch (arg0) {
                     when 1: win_set_iconic(false);
                     when 2: win_set_iconic(true);
@@ -1251,21 +1252,17 @@ term_write(const char *data, int len)
                       }
                     when 9:
                       if (nargs >= 2)
-                        win_set_zoom(arg1 ? true : false);
+                        win_set_zoom(arg1 != 0);
                     when 11:
-                      ldisc_send(win_is_iconic()
-                                 ? "\033[1t" : "\033[2t", 4, 0);
+                      ldisc_send(win_is_iconic() ? "\e[1t" : "\e[2t", 4, 0);
                     when 13:
                       win_get_pos(&x, &y);
-                      len = sprintf(buf, "\033[3;%d;%dt", x, y);
-                      ldisc_send(buf, len, 0);
+                      ldisc_printf(0, "\e[3;%d;%dt", x, y);
                     when 14:
                       win_get_pixels(&x, &y);
-                      len = sprintf(buf, "\033[4;%d;%dt", x, y);
-                      ldisc_send(buf, len, 0);
+                      ldisc_printf(0, "\e[4;%d;%dt", x, y);
                     when 18:
-                      len = sprintf(buf, "\033[8;%d;%dt", term.rows, term.cols);
-                      ldisc_send(buf, len, 0);
+                      ldisc_printf(0, "\e[8;%d;%dt", term.rows, term.cols);
                     when 19:
                      /*
                       * Hmmm. Strictly speaking we
@@ -1283,7 +1280,7 @@ term_write(const char *data, int len)
                       * what they would like it to do.
                       */
                     when 20 or 21:
-                      ldisc_send("\033]l\033\\", 5, 0);
+                      ldisc_send("\e]l\e\\", 5, 0);
                   }
                 }
               }
@@ -1345,12 +1342,8 @@ term_write(const char *data, int len)
               }
               when 'x': {      /* DECREQTPARM: report terminal characteristics */
                 compatibility(VT100);
-                int i = arg0;
-                if (i == 0 || i == 1) {
-                  char buf[] = "\e[2;1;1;112;112;1;0x";
-                  buf[2] += i;
-                  ldisc_send(buf, sizeof buf - 1, 0);
-                }
+                if (arg0 <= 1)
+                  ldisc_printf(0, "\e[%c;1;1;112;112;1;0x", '2' + arg0);
               }
               when 'Z': {       /* CBT */
                 compatibility(OTHER);
@@ -1496,7 +1489,6 @@ term_write(const char *data, int len)
               term.osc_strlen = 0;
             when 'R':  /* Linux palette reset */
               win_reset_colours();
-              term_invalidate_all();
               term.state = TOPLEVEL;
             when 'W':  /* word-set */
               term.state = SEEN_OSC_W;
@@ -1557,7 +1549,6 @@ term_write(const char *data, int len)
             uint n, rgb;
             sscanf(term.osc_string, "%1x%6x", &n, &rgb);
             win_set_colour(n, rgb_to_colour(rgb));
-            term_invalidate_all();
             term.state = TOPLEVEL;
           }
         }
