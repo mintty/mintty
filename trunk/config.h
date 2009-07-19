@@ -24,7 +24,7 @@ enum { BELL_DISABLED, BELL_SOUND, BELL_VISUAL };
 /* Taskbar flashing indication on bell (cfg.bell_ind) */
 enum { B_IND_DISABLED, B_IND_FLASH, B_IND_STEADY };
 
-enum { CUR_BLOCK, CUR_UNDERLINE, CUR_LINE };
+enum { CUR_BLOCK, CUR_UNDERSCORE, CUR_LINE };
 
 enum { FQ_DEFAULT, FQ_ANTIALIASED, FQ_NONANTIALIASED, FQ_CLEARTYPE };
 

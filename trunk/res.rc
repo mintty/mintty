@@ -17,18 +17,9 @@ END
  * The actual VERSIONINFO resource.
  */
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION 0,0,0,0
-PRODUCTVERSION 0,0,0,0 /* version of whole suite */
-FILEFLAGSMASK VS_FF_DEBUG | VS_FF_PRERELEASE | VS_FF_PRIVATEBUILD
+FILEVERSION COMMA_VERSION
+FILEFLAGSMASK 0
 FILEFLAGS 0
-#if defined DEBUG
-  | VS_FF_DEBUG
-#endif
-#if defined SNAPSHOT
-  | VS_FF_PRERELEASE
-#elif !defined RELEASE
-  | VS_FF_PRIVATEBUILD
-#endif
 FILEOS VOS_NT_WINDOWS32
 FILETYPE VFT_APP
 FILESUBTYPE 0 /* n/a for VFT_APP */
@@ -38,27 +29,19 @@ BEGIN
     /* "lang-charset" LLLLCCCC = (UK English, Unicode) */
     BLOCK "080904B0"
     BEGIN
-      VALUE "CompanyName", "Andy Koppe"
-      VALUE "ProductName", APPNAME
+      VALUE "FileVersion", POINT_VERSION
       VALUE "FileDescription", APPDESC
-      VALUE "InternalName", APPNAME
-      VALUE "OriginalFilename", APPNAME
-      VALUE "FileVersion", VERSION
+      VALUE "ProductName", APPNAME
       VALUE "ProductVersion", VERSION
+      VALUE "CompanyName", AUTHOR
       VALUE "LegalCopyright", COPYRIGHT
-#if (!defined SNAPSHOT) && (!defined RELEASE)
-        /* Only if VS_FF_PRIVATEBUILD. */
-      VALUE "PrivateBuild", VERSION /* NBI */
-#endif
     END
   END
   BLOCK "VarFileInfo"
   BEGIN
-  /* Once again -- same meanings -- apparently necessary */
+    /* Once again -- same meanings -- apparently necessary */
     VALUE "Translation", 0x809, 1200
   END
 END
 
-#ifndef NO_MANIFESTS
-1 RT_MANIFEST "app.mft"
-#endif /* NO_MANIFESTS */
+1 RT_MANIFEST "res.mft"

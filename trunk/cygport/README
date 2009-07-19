@@ -17,7 +17,7 @@ Runtime requirements:
 
 Build requirements:
   binutils-20080624-2
-  cygport-0.4.3-1
+  cygport-0.4.4-1
   gcc-core-3.4.4-3
   make-3.81-1
   w32api-3.12-1
@@ -31,15 +31,15 @@ Canonical download:
 -------------------------------------------
 
 Build instructions:
-  unpack mintty-0.4.2-X-src.tar.bz2
+  unpack mintty-0.4.4-X-src.tar.bz2
     if you use setup to install this src package, it will be
     unpacked under /usr/src automatically
   cd /usr/src
-  cygport ./mintty-0.4.2-X.cygport all
+  cygport ./mintty-0.4.4-X.cygport all
 
 This will create:
-  /usr/src/mintty-0.4.2-X-src.tar.bz2
-  /usr/src/mintty-0.4.2-X.tar.bz2
+  /usr/src/mintty-0.4.4-X-src.tar.bz2
+  /usr/src/mintty-0.4.4-X.tar.bz2
 
 -------------------------------------------
 
@@ -48,15 +48,23 @@ Files included in the binary package:
   /etc/postinstall/mintty.sh
   /etc/preremove/mintty.sh
   /usr/bin/mintty.exe
-  /usr/share/doc/Cygwin/mintty-0.4.2.README
-  /usr/share/doc/mintty-0.4.2/COPYING
-  /usr/share/doc/mintty-0.4.2/LICENSE.Oxygen
-  /usr/share/doc/mintty-0.4.2/LICENSE.PuTTY
+  /usr/share/doc/Cygwin/mintty-0.4.4.README
+  /usr/share/doc/mintty-0.4.4/COPYING
+  /usr/share/doc/mintty-0.4.4/LICENSE.Oxygen
+  /usr/share/doc/mintty-0.4.4/LICENSE.PuTTY
   /usr/share/man/man1/mintty.1.gz
 
 ------------------
 
 Port Notes:
+
+----- mintty-0.4.4-1 -----
+* Tweaks and compatibility fixes.
+
+----- mintty-0.4.3-1 -----
+* Skipping Windows 7 popup console workaround on Cygwin API >= 0.211.
+* Improved versioning.
+* Enhancements: custom icon, aplication escape key mode, DECSCUSR.
 
 ----- mintty-0.4.2-1 -----
 * Fixed bug that meant that codepage setting was ignored on output.
