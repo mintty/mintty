@@ -21,13 +21,6 @@
        term.state=TOPLEVEL; \
        break; \
     }
-#define compatibility2(x,y) \
-    if ( ((CL_##x|CL_##y)&term.compatibility_level) == 0 ) { \
-       term.state=TOPLEVEL; \
-       break; \
-    }
-
-#define has_compat(x) ( ((CL_##x)&term.compatibility_level) != 0 )
 
 static const char answerback[] = "mintty";
 static const char primary_da[] = "\e[?1;2c";
@@ -198,7 +191,7 @@ toggle_mode(int mode, int query, int state)
         term.editing = state;
         ldisc_send(null, 0, 0);
       when 25: /* DECTCEM: enable/disable cursor */
-        compatibility2(OTHER, VT220);
+        compatibility(VT220);
         term.cursor_on = state;
         seen_disp_event();
       when 47: /* alternate screen */
@@ -367,16 +360,6 @@ out_linefeed(void)
     term_do_scroll(term.marg_t, term.marg_b, 1, true);
   else if (term.curs.y < term.rows - 1)
     term.curs.y++;
-  term.wrapnext = false;
-  seen_disp_event();
-}
-
-static void
-out_formfeed(void)
-{
-  move(0, 0, 0);
-  term_erase_lots(false, false, true);
-  term.disptop = 0;
   term.wrapnext = false;
   seen_disp_event();
 }
@@ -718,7 +701,8 @@ term_write(const char *data, int len)
     }
 
    /* Or the GL control. */
-    if (c == '\177' && term.state < DO_CTRLS && has_compat(OTHER)) {
+    if (c == '\177' && term.state < DO_CTRLS &&
+        term.compatibility_level & CL_OTHER) {
       if (term.curs.x && !term.wrapnext)
         term.curs.x--;
       term.wrapnext = false;
@@ -756,10 +740,7 @@ term_write(const char *data, int len)
         when '\r':   /* CR: Carriage return */
           out_return();
         when '\f':   /* FF: Form feed */
-          if (has_compat(SCOANSI))
-            out_formfeed();
-          else
-            out_linefeed();
+          out_linefeed();
         when '\v':   /* VT: Line tabulation */
           compatibility(VT100);
           out_linefeed();
@@ -1136,33 +1117,28 @@ term_write(const char *data, int len)
                     when 5:  /* enable blink */
                       compatibility(VT100AVO);
                       term.curr_attr |= ATTR_BLINK;
-                    when 6:  /* SCO light bkgrd */
-                      compatibility(SCOANSI);
-                      term.blink_is_real = false;
-                      term.curr_attr |= ATTR_BLINK;
-                      term_schedule_tblink();
                     when 7:  /* enable reverse video */
                       term.curr_attr |= ATTR_REVERSE;
                     when 10: /* SCO acs off */
-                      compatibility2(SCOANSI, OTHER);
+                      compatibility(OTHER);
                       term.sco_acs = 0;
                     when 11: /* SCO acs on */
-                      compatibility2(SCOANSI, OTHER);
+                      compatibility(OTHER);
                       term.sco_acs = 1;
                     when 12: /* SCO acs on, |0x80 */
-                      compatibility2(SCOANSI, OTHER);
+                      compatibility(OTHER);
                       term.sco_acs = 2;
                     when 22: /* disable bold */
-                      compatibility2(OTHER, VT220);
+                      compatibility(VT220);
                       term.curr_attr &= ~ATTR_BOLD;
                     when 24: /* disable underline */
-                      compatibility2(OTHER, VT220);
+                      compatibility(VT220);
                       term.curr_attr &= ~ATTR_UNDER;
                     when 25: /* disable blink */
-                      compatibility2(OTHER, VT220);
+                      compatibility(VT220);
                       term.curr_attr &= ~ATTR_BLINK;
                     when 27: /* disable reverse video */
-                      compatibility2(OTHER, VT220);
+                      compatibility(VT220);
                       term.curr_attr &= ~ATTR_REVERSE;
                     when 30 ... 37:
                      /* foreground */
@@ -1285,13 +1261,13 @@ term_write(const char *data, int len)
                 }
               }
               when 'S':        /* SU: Scroll up */
-                compatibility2(VT340TEXT,SCOANSI);
+                compatibility(VT340TEXT);
                 term_do_scroll(term.marg_t, term.marg_b,
                                def_arg0, true);
                 term.wrapnext = false;
                 seen_disp_event();
               when 'T':        /* SD: Scroll down */
-                compatibility2(VT340TEXT,SCOANSI);
+                compatibility(VT340TEXT);
                 /* Avoid clash with hilight mouse tracking mode sequence */
                 if (nargs <= 1) {
                   term_do_scroll(term.marg_t, term.marg_b, -def_arg0, true);
@@ -1354,72 +1330,6 @@ term_write(const char *data, int len)
                   } while (term.curs.x > 0 && !term.tabs[term.curs.x]);
                 }
               }
-              when ANSI('c', '='):     /* Hide or Show Cursor */
-                compatibility(SCOANSI);
-                switch (arg0) {
-                  when 0:      /* hide cursor */
-                    term.cursor_on = false;
-                  when 1:      /* restore cursor */
-                    term.cursor_on = true;
-                    term.cursor_type = -1;
-                  when 2:
-                    term.cursor_on = true;
-                    term.cursor_type = CUR_BLOCK;
-                }
-              when ANSI('C', '='):
-               /*
-                * set cursor start on scanline esc_args[0] and
-                * end on scanline esc_args[1].If you set
-                * the bottom scan line to a value less than
-                * the top scan line, the cursor will disappear.
-                */
-                compatibility(SCOANSI);
-                if (nargs >= 2) {
-                  if (arg0 > arg1)
-                    term.cursor_on = false;
-                  else
-                    term.cursor_on = true;
-                }
-              when ANSI('D', '='):
-                compatibility(SCOANSI);
-                term.blink_is_real = false;
-                term_schedule_tblink();
-                if (arg0 >= 1)
-                  term.curr_attr |= ATTR_BLINK;
-                else
-                  term.curr_attr &= ~ATTR_BLINK;
-              when ANSI('E', '='):
-                compatibility(SCOANSI);
-                term.blink_is_real = (arg0 >= 1);
-                term_schedule_tblink();
-              when ANSI('F', '='):     /* set normal foreground */
-                compatibility(SCOANSI);
-                if (arg0 >= 0 && arg0 < 16) {
-                  int colour =
-                    (sco2ansicolour[arg0 & 0x7] |
-                     (arg0 & 0x8)) << ATTR_FGSHIFT;
-                  term.curr_attr &= ~ATTR_FGMASK;
-                  term.curr_attr |= colour;
-                  term.default_attr &= ~ATTR_FGMASK;
-                  term.default_attr |= colour;
-                  set_erase_char();
-                }
-              when ANSI('G', '='):     /* set normal background */
-                compatibility(SCOANSI);
-                if (arg0 >= 0 && arg0 < 16) {
-                  int colour =
-                    (sco2ansicolour[arg0 & 0x7] |
-                     (arg0 & 0x8)) << ATTR_BGSHIFT;
-                  term.curr_attr &= ~ATTR_BGMASK;
-                  term.curr_attr |= colour;
-                  term.default_attr &= ~ATTR_BGMASK;
-                  term.default_attr |= colour;
-                  set_erase_char();
-                }
-              when ANSI('L', '='):
-                compatibility(SCOANSI);
-                term.use_bce = (arg0 <= 0);
-                set_erase_char();
               when ANSI('p', '"'): {   /* DECSCL: set compat level */
                /*
                 * Allow the host to make this emulator a
@@ -1448,9 +1358,7 @@ term_write(const char *data, int len)
                   when 40:
                     term.compatibility_level &= TM_VTXXX;
                   when 41:
-                    term.compatibility_level = TM_PUTTY;
-                  when 42:
-                    term.compatibility_level = TM_SCOANSI;
+                    term.compatibility_level = TM_MINTTY;
                   when ARG_DEFAULT:
                     term.compatibility_level = TM_MINTTY;
                   when 50: // ignore

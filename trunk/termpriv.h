@@ -20,7 +20,6 @@ enum {
   CL_VT420     = 0x0040, /* VT420 */
   CL_VT510     = 0x0080, /* VT510, NB VT510 includes ANSI */
   CL_VT340TEXT = 0x0100, /* VT340 extensions that appear in the VT420 */
-  CL_SCOANSI   = 0x1000, /* SCOANSI not in ANSIMIN. */
   CL_ANSI      = 0x2000, /* ANSI ECMA-48 not in the VT100..VT420 */
   CL_OTHER     = 0x4000, /* Others, Xterm, linux, putty, dunno, etc */
 };
@@ -31,9 +30,7 @@ enum {
   TM_VT102    = TM_VT100AVO | CL_VT102,
   TM_VT220    = TM_VT102 | CL_VT220,
   TM_VTXXX    = TM_VT220 | CL_VT340TEXT | CL_VT510 | CL_VT420 | CL_VT320,
-  TM_SCOANSI  = CL_ANSIMIN | CL_SCOANSI,
-  TM_MINTTY   = TM_VTXXX | CL_ANSI | CL_OTHER,
-  TM_PUTTY    = 0xFFFF
+  TM_MINTTY   = 0xFFFF
 };
 
 #define incpos(p) ((p).x == term.cols ? ((p).x = 0, (p).y++, 1) : ((p).x++, 0))
