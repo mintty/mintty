@@ -127,48 +127,48 @@ struct term {
   termchar basic_erase_char, erase_char;
 
   bufchain *inbuf;      /* terminal input buffer */
-  pos curs;     /* cursor */
-  pos savecurs; /* saved cursor position */
-  int marg_t, marg_b;   /* scroll margins */
-  int dec_om;   /* DEC origin mode flag */
-  int wrap, wrapnext;   /* wrap flags */
-  int insert;   /* insert-mode flag */
-  int cset;     /* 0 or 1: which char set */
-  int save_cset, save_csattr;   /* saved with cursor position */
-  int save_utf, save_wnext;     /* saved with cursor position */
+  pos  curs;     /* cursor */
+  pos  savecurs; /* saved cursor position */
+  int  marg_t, marg_b;   /* scroll margins */
+  bool dec_om;   /* DEC origin mode flag */
+  bool wrap, wrapnext;   /* wrap flags */
+  bool insert;   /* insert-mode flag */
+  int  cset;     /* 0 or 1: which char set */
+  int  save_cset, save_csattr;   /* saved with cursor position */
+  bool save_utf, save_wnext;     /* saved with cursor position */
   bool rvideo;   /* global reverse video flag */
-  uint rvbell_startpoint;       /* for ESC[?5hESC[?5l vbell */
-  int cursor_on;        /* cursor enabled flag */
-  int reset_132;        /* Flag ESC c resets to 80 cols */
-  int use_bce;  /* Use Background coloured erase */
-  int cblinker; /* When blinking is the cursor on ? */
-  int tblinker; /* When the blinking text is on */
-  int blink_is_real;    /* Actually blink blinking text */
-  int echoing;  /* Does terminal want local echo? */
-  int editing;  /* Does terminal want local edit? */
-  int sco_acs, save_sco_acs;    /* CSI 10,11,12m -> OEM charset */
-  int vt52_bold;        /* Force bold on non-bold colours */
-  int utf;      /* Are we in toggleable UTF-8 mode? */
-  int utf_state;        /* Is there a pending UTF-8 character */
-  int utf_char; /* and what is it so far. */
-  int utf_size; /* The size of the UTF character. */
-  int printing, only_printing;  /* Are we doing ANSI printing? */
-  int print_state;      /* state of print-end-sequence scan */
+  bool cursor_on;        /* cursor enabled flag */
+  bool reset_132;        /* Flag ESC c resets to 80 cols */
+  bool use_bce;  /* Use Background coloured erase */
+  bool cblinker; /* When blinking is the cursor on ? */
+  bool tblinker; /* When the blinking text is on */
+  bool blink_is_real;    /* Actually blink blinking text */
+  bool echoing;  /* Does terminal want local echo? */
+  bool editing;  /* Does terminal want local edit? */
+  int  sco_acs, save_sco_acs;    /* CSI 10,11,12m -> OEM charset */
+  bool utf;      /* Are we in toggleable UTF-8 mode? */
+  int  utf_state;        /* Is there a pending UTF-8 character */
+  int  utf_char; /* and what is it so far. */
+  int  utf_size; /* The size of the UTF character. */
+  bool printing, only_printing;  /* Are we doing ANSI printing? */
+  int  print_state;      /* state of print-end-sequence scan */
   bufchain *printer_buf;        /* buffered data for printer */
   printer_job *print_job;
 
  /* ESC 7 saved state for the alternate screen */
-  pos alt_savecurs;
-  int alt_save_attr;
-  int alt_save_cset, alt_save_csattr;
-  int alt_save_utf, alt_save_wnext;
-  int alt_save_sco_acs;
-  int alt_x, alt_y, alt_om, alt_wrap, alt_wnext, alt_ins;
-  int alt_cset, alt_sco_acs, alt_utf;
-  int alt_t, alt_b;
-  int which_screen;
+  pos  alt_savecurs;
+  int  alt_save_attr;
+  int  alt_save_cset, alt_save_csattr;
+  bool alt_save_utf, alt_save_wnext;
+  int  alt_save_sco_acs;
+  int  alt_x, alt_y;
+  bool alt_om, alt_wrap, alt_wnext, alt_ins;
+  int  alt_cset, alt_sco_acs;
+  bool alt_utf;
+  int  alt_t, alt_b;
+  bool which_screen;
 
-  int rows, cols;
+  int  rows, cols;
   bool has_focus;
   bool in_vbell;
   bool seen_disp_event;
@@ -176,21 +176,21 @@ struct term {
   bool app_escape_key;
   bool app_cursor_keys;
   bool app_keypad;
-  int modify_other_keys;
+  int  modify_other_keys;
   bool newline_mode;
   bool report_focus;
   bool report_ambig_width;
 
-  int cursor_type;
-  int cursor_blinks;
+  int  cursor_type;
+  int  cursor_blinks;
 
-  int cset_attr[2];
+  int  cset_attr[2];
 
-  int esc_args[ARGS_MAX];
-  int esc_nargs;
-  int esc_query;
+  int  esc_args[ARGS_MAX];
+  int  esc_nargs;
+  int  esc_query;
 
-  int osc_strlen;
+  int  osc_strlen;
   char osc_string[OSC_STR_MAX + 1];
   bool osc_w;
 
