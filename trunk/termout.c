@@ -25,8 +25,6 @@
 static const char answerback[] = "mintty";
 static const char primary_da[] = "\e[?1;2c";
 
-static const char sco2ansicolour[] = { 0, 4, 2, 6, 1, 5, 3, 7 };
-
 /*
  * Move the cursor to a given position, clipping at boundaries. We
  * may or may not want to clip at the scroll margin: marg_clip is 0
@@ -76,7 +74,7 @@ save_cursor(int save)
     term.save_utf = term.utf;
     term.save_wnext = term.wrapnext;
     term.save_csattr = term.cset_attr[term.cset];
-    term.save_sco_acs = term.sco_acs;
+    term.save_oem_acs = term.oem_acs;
   }
   else {
     term.curs = term.savecurs;
@@ -97,7 +95,7 @@ save_cursor(int save)
     if (term.wrapnext && term.curs.x < term.cols - 1)
       term.wrapnext = false;
     term.cset_attr[term.cset] = term.save_csattr;
-    term.sco_acs = term.save_sco_acs;
+    term.oem_acs = term.save_oem_acs;
     set_erase_char();
   }
 }
@@ -587,12 +585,11 @@ term_write(const char *data, int len)
    /* First see about all those translations. */
     if (term.state == TOPLEVEL) {
       int cset_attr = term.cset_attr[term.cset]; 
-      if (term.sco_acs || cset_attr == CSET_SCOACS) {
-       /* SCO ACS (aka VGA graphics) */
+      if (term.oem_acs || cset_attr == CSET_OEMCP) {
         if (!strchr("\e\n\r\b", c)) {
-          if (term.sco_acs == 2)
+          if (term.oem_acs == 2)
             c |= 0x80;
-          c |= CSET_SCOACS;
+          c |= CSET_OEMCP;
         }
       }
       else {
@@ -863,7 +860,7 @@ term_write(const char *data, int len)
               term.cset_attr[0] = CSET_LINEDRW;
             when ANSI('U', '('):
               compatibility(OTHER);
-              term.cset_attr[0] = CSET_SCOACS;
+              term.cset_attr[0] = CSET_OEMCP;
             when ANSI('A', ')'):  /* G1D4: G1-designate 94-set */
               compatibility(VT100);
               term.cset_attr[1] = CSET_GBCHR;
@@ -875,7 +872,7 @@ term_write(const char *data, int len)
               term.cset_attr[1] = CSET_LINEDRW;
             when ANSI('U', ')'):
               compatibility(OTHER);
-              term.cset_attr[1] = CSET_SCOACS;
+              term.cset_attr[1] = CSET_OEMCP;
             when ANSI('8', '%') or ANSI('G', '%'):
               compatibility(OTHER);
               term.utf = 1;
@@ -1119,15 +1116,15 @@ term_write(const char *data, int len)
                       term.curr_attr |= ATTR_BLINK;
                     when 7:  /* enable reverse video */
                       term.curr_attr |= ATTR_REVERSE;
-                    when 10: /* SCO acs off */
+                    when 10: /* OEM acs off */
                       compatibility(OTHER);
-                      term.sco_acs = 0;
-                    when 11: /* SCO acs on */
+                      term.oem_acs = 0;
+                    when 11: /* OEM acs on */
                       compatibility(OTHER);
-                      term.sco_acs = 1;
-                    when 12: /* SCO acs on, |0x80 */
+                      term.oem_acs = 1;
+                    when 12: /* OEM acs on, |0x80 */
                       compatibility(OTHER);
-                      term.sco_acs = 2;
+                      term.oem_acs = 2;
                     when 22: /* disable bold */
                       compatibility(VT220);
                       term.curr_attr &= ~ATTR_BOLD;

@@ -8,7 +8,6 @@
 /* These are internal use overlapping with the UTF-16 surrogates */
 #define CSET_ASCII   0x0000D800UL       /* normal ASCII charset ESC ( B */
 #define CSET_LINEDRW 0x0000D900UL       /* line drawing charset ESC ( 0 */
-#define CSET_SCOACS  0x0000DA00UL       /* SCO Alternate charset */
 #define CSET_GBCHR   0x0000DB00UL       /* UK variant   charset ESC ( A */
 #define CSET_MASK    0xFFFFFF00UL       /* Character set mask */
 
@@ -30,7 +29,6 @@ typedef struct {
   int dbcs_screenfont;
   int font_codepage;
   int codepage;
-  wchar unitab_scoacs[256];
   wchar unitab_line[256];
   wchar unitab_font[256];
   wchar unitab_xterm[256];

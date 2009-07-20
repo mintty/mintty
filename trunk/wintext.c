@@ -841,7 +841,7 @@ win_char_width(int uc)
   switch (uc & CSET_MASK) {
     when CSET_ASCII:   uc = ucsdata.unitab_line[uc & 0xFF];
     when CSET_LINEDRW: uc = ucsdata.unitab_xterm[uc & 0xFF];
-    when CSET_SCOACS:  uc = ucsdata.unitab_scoacs[uc & 0xFF];
+    when CSET_OEMCP:   uc = ucsdata.unitab_oemcp[uc & 0xFF];
   }
   if (DIRECT_FONT(uc)) {
     if (ucsdata.dbcs_screenfont)

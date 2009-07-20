@@ -114,7 +114,7 @@ term_reset(void)
   term.alt_cset = term.cset = term.save_cset = term.alt_save_cset = 0;
   term.alt_utf = term.utf = term.save_utf = term.alt_save_utf = 0;
   term.utf_state = 0;
-  term.alt_sco_acs = term.sco_acs = term.save_sco_acs = term.alt_save_sco_acs =
+  term.alt_oem_acs = term.oem_acs = term.save_oem_acs = term.alt_save_oem_acs =
     0;
   term.cset_attr[0] = term.cset_attr[1] = term.save_csattr =
     term.alt_save_csattr = CSET_ASCII;
@@ -464,10 +464,10 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
     if (!reset)
       term.utf = term.alt_utf;
     term.alt_utf = t;
-    t = term.sco_acs;
+    t = term.oem_acs;
     if (!reset)
-      term.sco_acs = term.alt_sco_acs;
-    term.alt_sco_acs = t;
+      term.oem_acs = term.alt_oem_acs;
+    term.alt_oem_acs = t;
 
     tp = term.savecurs;
     if (!reset && !keep_cur_pos)
@@ -493,10 +493,10 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
     if (!reset && !keep_cur_pos)
       term.save_wnext = term.alt_save_wnext;
     term.alt_save_wnext = t;
-    t = term.save_sco_acs;
+    t = term.save_oem_acs;
     if (!reset && !keep_cur_pos)
-      term.save_sco_acs = term.alt_save_sco_acs;
-    term.alt_save_sco_acs = t;
+      term.save_oem_acs = term.alt_save_oem_acs;
+    term.alt_save_oem_acs = t;
   }
 
   if (reset && term.screen) {
@@ -931,7 +931,7 @@ term_paint(void)
       switch (tchar & CSET_MASK) {
         when CSET_ASCII:   tchar = ucsdata.unitab_line[tchar & 0xFF];
         when CSET_LINEDRW: tchar = ucsdata.unitab_xterm[tchar & 0xFF];
-        when CSET_SCOACS:  tchar = ucsdata.unitab_scoacs[tchar & 0xFF];
+        when CSET_OEMCP:   tchar = ucsdata.unitab_oemcp[tchar & 0xFF];
       }
       if (j < term.cols - 1 && d[1].chr == UCSWIDE)
         tattr |= ATTR_WIDE;
@@ -1106,7 +1106,7 @@ term_paint(void)
           switch (schar & CSET_MASK) {
             when CSET_ASCII:   schar = ucsdata.unitab_line[schar & 0xFF];
             when CSET_LINEDRW: schar = ucsdata.unitab_xterm[schar & 0xFF];
-            when CSET_SCOACS:  schar = ucsdata.unitab_scoacs[schar & 0xFF];
+            when CSET_OEMCP:   schar = ucsdata.unitab_oemcp[schar & 0xFF];
           }
 
           if (ccount >= chlen) {
@@ -1317,9 +1317,6 @@ term_copy(void)
         switch (uc & CSET_MASK) {
           when CSET_LINEDRW: uc = ucsdata.unitab_xterm[uc & 0xFF];
           when CSET_ASCII:   uc = ucsdata.unitab_line[uc & 0xFF];
-          when CSET_SCOACS:  uc = ucsdata.unitab_scoacs[uc & 0xFF];
-        }
-        switch (uc & CSET_MASK) {
           when CSET_ACP:   uc = ucsdata.unitab_font[uc & 0xFF];
           when CSET_OEMCP: uc = ucsdata.unitab_oemcp[uc & 0xFF];
         }
