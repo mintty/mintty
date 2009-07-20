@@ -145,7 +145,7 @@ struct term {
   bool blink_is_real;    /* Actually blink blinking text */
   bool echoing;  /* Does terminal want local echo? */
   bool editing;  /* Does terminal want local edit? */
-  int  sco_acs, save_sco_acs;    /* CSI 10,11,12m -> OEM charset */
+  int  oem_acs, save_oem_acs;    /* CSI 10,11,12m -> OEM charset */
   bool utf;      /* Are we in toggleable UTF-8 mode? */
   int  utf_state;        /* Is there a pending UTF-8 character */
   int  utf_char; /* and what is it so far. */
@@ -160,10 +160,10 @@ struct term {
   int  alt_save_attr;
   int  alt_save_cset, alt_save_csattr;
   bool alt_save_utf, alt_save_wnext;
-  int  alt_save_sco_acs;
+  int  alt_save_oem_acs;
   int  alt_x, alt_y;
   bool alt_om, alt_wrap, alt_wnext, alt_ins;
-  int  alt_cset, alt_sco_acs;
+  int  alt_cset, alt_oem_acs;
   bool alt_utf;
   int  alt_t, alt_b;
   bool which_screen;

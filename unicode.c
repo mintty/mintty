@@ -95,8 +95,6 @@ init_ucs(void)
  /* Collect OEMCP ucs table */
   get_unitab(CP_OEMCP, ucsdata.unitab_oemcp, 1);
 
-  get_unitab(437, ucsdata.unitab_scoacs, 1);
-
  /* Collect line set ucs table */
   if (ucsdata.codepage == ucsdata.font_codepage &&
       (ucsdata.dbcs_screenfont || ucsdata.font_codepage == 0)) {
@@ -137,7 +135,7 @@ init_ucs(void)
       ucsdata.unitab_ctrl[i] = 0xFF;
 
   link_font(ucsdata.unitab_line, ucsdata.unitab_font, CSET_ACP);
-  link_font(ucsdata.unitab_scoacs, ucsdata.unitab_font, CSET_ACP);
+  link_font(ucsdata.unitab_oemcp, ucsdata.unitab_font, CSET_ACP);
   link_font(ucsdata.unitab_xterm, ucsdata.unitab_font, CSET_ACP);
 
   if (ucsdata.dbcs_screenfont && ucsdata.font_codepage != ucsdata.codepage) {
@@ -363,9 +361,6 @@ wordtype(int c)
   switch (c & CSET_MASK) {
     when CSET_LINEDRW: c = ucsdata.unitab_xterm[c & 0xFF];
     when CSET_ASCII:   c = ucsdata.unitab_line[c & 0xFF];
-    when CSET_SCOACS:  c = ucsdata.unitab_scoacs[c & 0xFF];
-  }
-  switch (c & CSET_MASK) {
     when CSET_ACP:   c = ucsdata.unitab_font[c & 0xFF];
     when CSET_OEMCP: c = ucsdata.unitab_oemcp[c & 0xFF];
   }

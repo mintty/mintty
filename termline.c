@@ -962,11 +962,8 @@ term_bidi_line(termline * ldata, int scr_y)
       switch (uc & CSET_MASK) {
         when CSET_LINEDRW: uc = ucsdata.unitab_xterm[uc & 0xFF];
         when CSET_ASCII:   uc = ucsdata.unitab_line[uc & 0xFF];
-        when CSET_SCOACS:  uc = ucsdata.unitab_scoacs[uc & 0xFF];
-      }
-      switch (uc & CSET_MASK) {
-        when CSET_ACP:   uc = ucsdata.unitab_font[uc & 0xFF];
-        when CSET_OEMCP: uc = ucsdata.unitab_oemcp[uc & 0xFF];
+        when CSET_ACP:     uc = ucsdata.unitab_font[uc & 0xFF];
+        when CSET_OEMCP:   uc = ucsdata.unitab_oemcp[uc & 0xFF];
       }
 
       term.wcFrom[it].origwc = term.wcFrom[it].wc = (wchar) uc;
