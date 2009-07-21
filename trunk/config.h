@@ -32,7 +32,6 @@ enum { RC_SHOWMENU, RC_PASTE, RC_EXTEND };
 
 typedef struct {
   int copy_on_select;
-  int escape_sends_fs;
   int backspace_sends_del;
   int alt_sends_esc;
   int cursor_type;
