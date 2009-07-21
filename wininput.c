@@ -474,7 +474,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       else
         term.modify_other_keys ? other_code('\t') : mod_csi('I');
     when VK_ESCAPE:
-      term.app_escape_key ? ss3('[') : ch(cfg.escape_sends_fs ? C('\\') : C('['));
+      term.app_escape_key ? ss3('[') : ch(term.escape_sends_fs ? C('\\') : C('['));
     when VK_PAUSE:
       if (shift || alt)
         return 0;

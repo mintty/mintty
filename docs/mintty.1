@@ -373,21 +373,6 @@ Select \fBUTF-8\fP for 8-bit Unicode.
 Settings controlling keyboard behaviour.
 
 .TP
-\fBEscape keycode\fP (EscapeSendsFS=0)
-The character to be sent by the escape key.
-The default is the standard escape character \fB^[\fP, but the character
-\fB^\\\fP can be used instead, thereby allowing the escape key to be used as
-one of the special keys in the terminal line settings (see stty(1)).
-This is impractical with \fB^[\fP, as that appears as the first character in
-multi-character keycodes.
-
-.RS
-.PD 0
-.IP "\- \fB^[\fP (0)"
-.IP "\- \fB^\(rs\fP (1)"
-.RE
-
-.TP
 \fBBackspace keycode\fP (BackspaceSendsDEL=0)
 The character to be sent by the backspace key.
 The default is \fB^H\fP, because that is the default across Cygwin,
@@ -780,11 +765,15 @@ arg#shape     #blinking
 .RE
 
 
-.SS Escape key mode
+.SS Escape keycode
 
-In application escape key mode, the escape key sends a keycode that allows
-applications to tell it apart from the escape character appearing at the start
-of many other keycodes, without resorting to a timeout mechanism.
+There are two settings controlling the keycode sent by the escape key.
+
+The first control application escape key mode, where the escape key sends a 
+keycode that allows applications such as vim to tell it apart from the escape
+character appearing at the start of many other keycodes, without resorting to
+a timeout mechanism. This setting also applies to the Alt key when that is
+pressed on its own.
 
 .RS
 .TS
@@ -792,8 +781,25 @@ tab(#) nospaces;
 LB        LB          LB
 LfC       L           LfC.
 sequence #mode       #keycode
-^[[?7727l#normal     #^[
+^[[?7727l#normal     #^[ or ^\(rs
 ^[[?7727h#application#^[O[
+.TE
+.RE
+
+When application escape key mode is off, the escape key can be be configured
+to send \fB^\\\fP instead of the standard and default \fB^[\fP.
+This allows the escape key to be used as one of the special keys in the
+terminal line settings (see stty(1)), which is impractical with \fB^[\fP,
+as that appears as the first character in many keycodes.
+
+.RS
+.TS
+tab(#) nospaces;
+LB        LB
+LfC       LfC.
+sequence #keycode
+^[[?7728l#^[
+^[[?7728h#^\(rs
 .TE
 .RE
 
@@ -988,9 +994,16 @@ stackdump-producing SIGQUIT:
 .RE
 
 With these settings, the \fBEsc\fP key can also be used to interrupt
-processes by setting its keycode to \fB^\\\fP.
+processes by setting its keycode to \fB^\\\fP:
+
+.RS
+.nf
+\fCecho -e "\e[?7728h"\fP
+.fi
+.RE
+
 The standard escape character \fB^[\fP cannot be used for that purpose
-because it appears as the first character in many other keycodes.
+because it appears as the first character in many keycodes.
 
 
 .SS Readline configuration

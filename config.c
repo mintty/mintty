@@ -327,19 +327,12 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Keys", "keycodes", "Keycodes");
   ctrl_columns(s, 2, 50, 50);
   ctrl_radiobuttons(
-    s, "Escape", '\0', 3, P(0), dlg_stdradiobutton_handler,
-    I(offcfg(escape_sends_fs)),
-    "^[", '[', I(0),
-    "^\\", '\\', I(1),
-    null
-  )->column = 0;
-  ctrl_radiobuttons(
     s, "Backspace", '\0', 3, P(0), dlg_stdradiobutton_handler,
     I(offcfg(backspace_sends_del)),
     "^H", 'h', I(0),
     "^?", '?', I(1),
     null
-  )->column = 1;
+  )->column = 0;
 
   s = ctrl_getset(b, "Keys", "alt", null);
   ctrl_checkbox(
@@ -463,7 +456,6 @@ int_settings[] = {
   {"FontCharset", offcfg(font.charset), 0},
   {"FontQuality", offcfg(font_quality), FQ_DEFAULT},
   {"BackspaceSendsDEL", offcfg(backspace_sends_del), false},
-  {"EscapeSendsFS", offcfg(escape_sends_fs), false},
   {"AltSendsESC", offcfg(alt_sends_esc), false},
   {"ScrollMod", offcfg(scroll_mod), SHIFT},
   {"RightClickAction", offcfg(right_click_action), RC_SHOWMENU},

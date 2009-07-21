@@ -173,6 +173,7 @@ struct term {
   bool in_vbell;
   bool seen_disp_event;
 
+  bool escape_sends_fs;
   bool app_escape_key;
   bool app_cursor_keys;
   bool app_keypad;

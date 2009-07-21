@@ -154,7 +154,7 @@ insch(int n)
  * whether the mode is a DEC private one or a normal one.)
  */
 static void
-toggle_mode(int mode, int query, int state)
+toggle_mode(int mode, bool query, bool state)
 {
   if (query) {
     switch (mode) {
@@ -232,6 +232,8 @@ toggle_mode(int mode, int query, int state)
         term.report_ambig_width = state;
       when 7727:       /* MinTTY only: Application escape key mode */
         term.app_escape_key = state;
+      when 7728:       /* MinTTY only: Escape sends FS (instead of ESC) */
+        term.escape_sends_fs = state;
     }
   }
   else {
