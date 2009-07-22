@@ -324,12 +324,6 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Keys", "Keys");
 
-  s = ctrl_getset(b, "Keys", "alt", null);
-  ctrl_checkbox(
-    s, "Alt key on its own sends ^[", 'a', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(alt_sends_esc))
-  );
-
   s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
   ctrl_checkbox(
     s, "Window commands (Alt+Space/Enter/Fn)", 'd', P(0),
@@ -445,7 +439,6 @@ int_settings[] = {
   {"FontHeight", offcfg(font.size), 10},
   {"FontCharset", offcfg(font.charset), 0},
   {"FontQuality", offcfg(font_quality), FQ_DEFAULT},
-  {"AltSendsESC", offcfg(alt_sends_esc), false},
   {"ScrollMod", offcfg(scroll_mod), SHIFT},
   {"RightClickAction", offcfg(right_click_action), RC_SHOWMENU},
   {"CopyOnSelect", offcfg(copy_on_select), false},
