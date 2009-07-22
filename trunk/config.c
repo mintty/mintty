@@ -196,51 +196,6 @@ setup_config_box(controlbox * b)
   c->column = 4;
 
  /*
-  * The Window panel.
-  */
-  ctrl_settitle(b, "Window", "Window");
-
-  s = ctrl_getset(b, "Window", "size", "Default size");
-  ctrl_columns(s, 5, 35, 3, 28, 4, 30);
-  (cols_box = ctrl_editbox(
-    s, "Columns", 'm', 44, P(0), int_handler, I(offcfg(cols)), I(256)
-  ))->column = 0;
-  (rows_box = ctrl_editbox(
-    s, "Rows", 'r', 55, P(0), int_handler, I(offcfg(rows)), I(256)
-  ))->column = 2;
-  ctrl_pushbutton(
-    s, "Current size", 'u', P(0), current_size_handler, P(0)
-  )->column = 4;
-
-  s = ctrl_getset(b, "Window", "options", null);
-  ctrl_columns(s, 2, 50, 50);
-  ctrl_checkbox(
-    s, "Show scrollbar", 'b', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(scrollbar))
-  )->column = 0;
-  ctrl_checkbox(
-    s, "Confirm exit", 'x', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
-  )->column = 1;
-
-  s = ctrl_getset(b, "Window", "scrollback", "Scrollback");
-  ctrl_columns(s, 2, 35, 65);
-  ctrl_editbox(
-    s, "Lines", 'l', 65, P(0),
-    int_handler, I(offsetof(config, scrollback_lines)), I(1000000)
-  )->column = 0;
-  ctrl_columns(s, 1, 100);
-  ctrl_radiobuttons(
-    s, "Modifier for scrolling with cursor keys", '\0', 4, P(0),      
-    dlg_stdradiobutton_handler, I(offcfg(scroll_mod)),
-    "Shift", 's', I(SHIFT),
-    "Ctrl", 'c', I(CTRL),
-    "Alt", 'a', I(ALT),
-    "Off", 'o', I(0),
-    null
-  );
-
- /*
   * The Looks panel.
   */
   ctrl_settitle(b, "Looks", "Looks");
@@ -326,18 +281,29 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
   ctrl_checkbox(
-    s, "Window commands (Alt+Space/Enter/Fn)", 'd', P(0),
+    s, "Window commands (Alt+Space/Enter/Fn)", 'w', P(0),
     dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
   );
   ctrl_checkbox(
-    s, "Copy and paste (Ctrl/Shift+Ins)", 'c', P(0),
+    s, "Copy and paste (Ctrl/Shift+Ins)", 'p', P(0),
     dlg_stdcheckbox_handler, I(offcfg(edit_shortcuts))
   );
   ctrl_checkbox(
-    s, "Zoom (Ctrl+plus/minus/zero)", 'f', P(0),
+    s, "Zoom (Ctrl+plus/minus/zero)", 'z', P(0),
     dlg_stdcheckbox_handler, I(offcfg(zoom_shortcuts))
   );
   
+  s = ctrl_getset(b, "Keys", "scroll", "Modifier for scrolling");
+  ctrl_radiobuttons(
+    s, null, '\0', 4, P(0),      
+    dlg_stdradiobutton_handler, I(offcfg(scroll_mod)),
+    "Shift", 's', I(SHIFT),
+    "Ctrl", 'c', I(CTRL),
+    "Alt", 'a', I(ALT),
+    "Off", 'o', I(0),
+    null
+  );
+
  /*
   * The Mouse panel.
   */
@@ -387,11 +353,6 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Output", "Output");
 
-  s = ctrl_getset(b, "Output", "printer", "Printer");
-  ctrl_combobox(
-    s, null, '\0', 100, P(0), printerbox_handler, P(null), P(null)
-  );
-
   s = ctrl_getset(b, "Output", "bell", "Bell");
   ctrl_columns(s, 2, 50, 50);
   ctrl_radiobuttons(
@@ -410,6 +371,47 @@ setup_config_box(controlbox * b)
     "Blinking", 'b', I(B_IND_FLASH),
     null
   )->column = 1;
+
+  s = ctrl_getset(b, "Output", "printer", "Printer");
+  ctrl_combobox(
+    s, null, '\0', 100, P(0), printerbox_handler, P(null), P(null)
+  );
+
+ /*
+  * The Window panel.
+  */
+  ctrl_settitle(b, "Window", "Window");
+
+  s = ctrl_getset(b, "Window", "size", "Default size");
+  ctrl_columns(s, 5, 35, 3, 28, 4, 30);
+  (cols_box = ctrl_editbox(
+    s, "Columns", 'c', 44, P(0), int_handler, I(offcfg(cols)), I(256)
+  ))->column = 0;
+  (rows_box = ctrl_editbox(
+    s, "Rows", 'r', 55, P(0), int_handler, I(offcfg(rows)), I(256)
+  ))->column = 2;
+  ctrl_pushbutton(
+    s, "Current size", 'u', P(0), current_size_handler, P(0)
+  )->column = 4;
+
+  s = ctrl_getset(b, "Window", "options", null);
+  ctrl_columns(s, 2, 50, 50);
+  ctrl_checkbox(
+    s, "Show scrollbar", 's', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(scrollbar))
+  )->column = 0;
+  ctrl_checkbox(
+    s, "Confirm exit", 'x', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
+  )->column = 1;
+
+  s = ctrl_getset(b, "Window", "scroll", null);
+  ctrl_columns(s, 2, 60, 40);
+  ctrl_editbox(
+    s, "Scrollback lines", 'b', 40, P(0),
+    int_handler, I(offsetof(config, scrollback_lines)), I(1000000)
+  )->column = 0;
+
 }
 
 
