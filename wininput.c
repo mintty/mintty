@@ -463,11 +463,11 @@ win_key_down(WPARAM wp, LPARAM lp)
         esc_if(shift || alt), ch(C('^'));
     when VK_BACK:
       if (!ctrl)
-        esc_if(alt), ch(cfg.backspace_sends_del ? 0x7f : '\b');
+        esc_if(alt), ch(term.backspace_sends_bs ? '\b' : 0x7F);
       else if (!term.modify_other_keys)
-        esc_if(shift || alt), ch(cfg.backspace_sends_del ? C('_') : 0x7f);
+        esc_if(shift || alt), ch(term.backspace_sends_bs ? 0x7F : C('_'));
       else
-        other_code(cfg.backspace_sends_del ? 0x7f : '\b');
+        other_code(term.backspace_sends_bs ? '\b' : 0x7F);
     when VK_TAB:
       if (!ctrl)
         shift ? csi('Z') : ch('\t');
