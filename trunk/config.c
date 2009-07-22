@@ -324,16 +324,6 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Keys", "Keys");
 
-  s = ctrl_getset(b, "Keys", "keycodes", "Keycodes");
-  ctrl_columns(s, 2, 50, 50);
-  ctrl_radiobuttons(
-    s, "Backspace", '\0', 3, P(0), dlg_stdradiobutton_handler,
-    I(offcfg(backspace_sends_del)),
-    "^H", 'h', I(0),
-    "^?", '?', I(1),
-    null
-  )->column = 0;
-
   s = ctrl_getset(b, "Keys", "alt", null);
   ctrl_checkbox(
     s, "Alt key on its own sends ^[", 'a', P(0),
@@ -455,7 +445,6 @@ int_settings[] = {
   {"FontHeight", offcfg(font.size), 10},
   {"FontCharset", offcfg(font.charset), 0},
   {"FontQuality", offcfg(font_quality), FQ_DEFAULT},
-  {"BackspaceSendsDEL", offcfg(backspace_sends_del), false},
   {"AltSendsESC", offcfg(alt_sends_esc), false},
   {"ScrollMod", offcfg(scroll_mod), SHIFT},
   {"RightClickAction", offcfg(right_click_action), RC_SHOWMENU},

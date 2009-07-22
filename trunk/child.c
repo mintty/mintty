@@ -199,12 +199,15 @@ child_create(char *argv[], struct winsize *winp)
     signal(SIGTTIN, SIG_IGN);
     signal(SIGTTOU, SIG_IGN);
 
-    // Set backspace keycode and TERM variable
+    setenv("TERM", "xterm", 1);
+
+#if CYGWIN_VERSION_DLL_MAJOR < 1007
+    // Set backspace keycode
     struct termios attr;
     tcgetattr(0, &attr);
-    attr.c_cc[VERASE] = cfg.backspace_sends_del ? 0x7F : '\b';
+    attr.c_cc[VERASE] = 0x7F;
     tcsetattr(0, TCSANOW, &attr);
-    setenv("TERM", "xterm", 1);
+#endif
     
     // Invoke command
     execvp(cmd, argv);

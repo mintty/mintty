@@ -197,6 +197,9 @@ toggle_mode(int mode, bool query, bool state)
         term.selected = false;
         term_swap_screen(state, false, false);
         term.disptop = 0;
+      when 67: /* DECBKM: backarrow key mode */
+        compatibility(VT420);
+        term.backspace_sends_bs = state;
       when 1000: /* VT200_MOUSE */
         term.mouse_mode = state ? MM_VT200 : 0;
         win_update_mouse();
