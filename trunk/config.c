@@ -281,8 +281,8 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Keys", "altgr", null);
   ctrl_checkbox(
-    s, "Window commands (Alt+Space/Enter/Fn)", 'w', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
+    s, "Distinguish AltGr from Ctrl+Alt", 'd', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(distinguish_altgr))
   );
 
   s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
