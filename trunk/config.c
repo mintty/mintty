@@ -281,8 +281,8 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Keys", "altgr", null);
   ctrl_checkbox(
-    s, "Distinguish AltGr from Ctrl+Alt", 'w', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(distinguish_altgr))
+    s, "Window commands (Alt+Space/Enter/Fn)", 'w', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
   );
 
   s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
@@ -359,18 +359,6 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Output", "Output");
 
-  s = ctrl_getset(b, "Output", "size", "Default size");
-  ctrl_columns(s, 5, 35, 3, 28, 4, 30);
-  (cols_box = ctrl_editbox(
-    s, "Columns", 'c', 44, P(0), int_handler, I(offcfg(cols)), I(256)
-  ))->column = 0;
-  (rows_box = ctrl_editbox(
-    s, "Rows", 'r', 55, P(0), int_handler, I(offcfg(rows)), I(256)
-  ))->column = 2;
-  ctrl_pushbutton(
-    s, "Current size", 'u', P(0), current_size_handler, P(0)
-  )->column = 4;
-
   s = ctrl_getset(b, "Output", "bell", "Bell");
   ctrl_columns(s, 2, 50, 50);
   ctrl_radiobuttons(
@@ -400,9 +388,24 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Window", "Window");
 
+  s = ctrl_getset(b, "Window", "size", "Default size");
+  ctrl_columns(s, 5, 35, 3, 28, 4, 30);
+  (cols_box = ctrl_editbox(
+    s, "Columns", 'c', 44, P(0), int_handler, I(offcfg(cols)), I(256)
+  ))->column = 0;
+  (rows_box = ctrl_editbox(
+    s, "Rows", 'r', 55, P(0), int_handler, I(offcfg(rows)), I(256)
+  ))->column = 2;
+  ctrl_pushbutton(
+    s, "Current size", 'u', P(0), current_size_handler, P(0)
+  )->column = 4;
 
   s = ctrl_getset(b, "Window", "options", null);
   ctrl_columns(s, 2, 50, 50);
+  ctrl_checkbox(
+    s, "Show scrollbar", 's', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(scrollbar))
+  )->column = 0;
   ctrl_checkbox(
     s, "Confirm exit", 'x', P(0),
     dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
@@ -414,10 +417,6 @@ setup_config_box(controlbox * b)
     s, "Scrollback lines", 'b', 40, P(0),
     int_handler, I(offsetof(config, scrollback_lines)), I(1000000)
   )->column = 0;
-  ctrl_checkbox(
-    s, "Show scrollbar", 's', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(scrollbar))
-  )->column = 1;
 
 }
 
