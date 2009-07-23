@@ -42,6 +42,7 @@ typedef struct {
   int window_shortcuts;
   int edit_shortcuts;
   int zoom_shortcuts;
+  int distinguish_altgr;
   int scroll_mod;
   int clicks_place_cursor;
   int clicks_target_app;
