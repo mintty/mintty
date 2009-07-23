@@ -257,12 +257,23 @@ win_key_down(WPARAM wp, LPARAM lp)
   GetKeyboardState(kbd);
   inline bool is_key_down(uchar vk) { return kbd[vk] & 0x80; }
   
-  bool shift = is_key_down(VK_SHIFT);
-  bool alt = is_key_down(VK_MENU);
-  bool ctrl = is_key_down(VK_CONTROL);
-  mod_keys mods = shift * SHIFT | alt * ALT | ctrl * CTRL;
-  bool meta = (alt & !ctrl) | (is_key_down(VK_LMENU) & is_key_down(VK_RMENU));
   bool numlock = kbd[VK_NUMLOCK] & 1;
+  
+  bool shift = is_key_down(VK_SHIFT);
+  bool alt, ctrl, altgr, meta;
+  if (cfg.distinguish_altgr) {
+    alt = meta = is_key_down(VK_LMENU);
+    altgr = is_key_down(VK_RMENU);
+    ctrl = is_key_down(VK_CONTROL) & !altgr;
+    kbd[VK_MENU] = kbd[VK_RMENU];
+  }
+  else {
+    alt = is_key_down(VK_MENU);
+    ctrl = is_key_down(VK_CONTROL);
+    altgr = alt & ctrl;
+    meta = (alt & !ctrl) | (is_key_down(VK_LMENU) & is_key_down(VK_RMENU));
+  }
+  mod_keys mods = shift * SHIFT | alt * ALT | ctrl * CTRL;
 
   update_mouse(mods);
 
