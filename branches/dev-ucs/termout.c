@@ -314,7 +314,7 @@ do_osc(void)
 }
 
 static void
-out_bell(void)
+write_bell(void)
 {
   win_bell(cfg.bell_type);
   if (cfg.bell_type == BELL_VISUAL)
@@ -322,7 +322,7 @@ out_bell(void)
 }
 
 static void
-out_backspace(void)
+write_backspace(void)
 {
   if (term.curs.x == 0 && (term.curs.y == 0 || term.wrap == 0))
    /* do nothing */ ;
@@ -336,7 +336,7 @@ out_backspace(void)
 }
 
 static void
-out_tab(void)
+write_tab(void)
 {
   termline *ldata = scrlineptr(term.curs.y);
   do {
@@ -356,7 +356,7 @@ out_tab(void)
 }
 
 static void
-out_return(void)
+write_return(void)
 {
   term.curs.x = 0;
   term.wrapnext = false;
@@ -364,7 +364,7 @@ out_return(void)
 }
 
 static void
-out_linefeed(void)
+write_linefeed(void)
 {
   if (term.curs.y == term.marg_b)
     term_do_scroll(term.marg_t, term.marg_b, 1, true);
@@ -375,7 +375,7 @@ out_linefeed(void)
 }
 
 static void
-write_char(termline *cline, wchar c)
+put_char(termline *cline, wchar c)
 {
   clear_cc(cline, term.curs.x);
   cline->chars[term.curs.x].chr = c;
@@ -384,10 +384,9 @@ write_char(termline *cline, wchar c)
 
 /*
  * Output a character.
- * Return true if anything is actually written to the screen.
  */
-static bool
-out_char(wchar c)
+static void
+write_char(wchar c)
 {
   termline *cline = scrlineptr(term.curs.y);
   int width = 0;
@@ -412,7 +411,7 @@ out_char(wchar c)
     when 1:  // Normal character.
       term_check_boundary(term.curs.x, term.curs.y);
       term_check_boundary(term.curs.x + 1, term.curs.y);
-      write_char(cline, c);
+      put_char(cline, c);
     when 2:  // Double-width character.
      /*
       * If we're about to display a double-width
@@ -448,9 +447,9 @@ out_char(wchar c)
         term_check_boundary(term.curs.x, term.curs.y);
         term_check_boundary(term.curs.x + 2, term.curs.y);
       }
-      write_char(cline, c);
+      put_char(cline, c);
       term.curs.x++;
-      write_char(cline, UCSWIDE);
+      put_char(cline, UCSWIDE);
     when 0:  // Combining character.
       if (term.curs.x > 0) {
         int x = term.curs.x - 1;
@@ -469,9 +468,9 @@ out_char(wchar c)
         add_cc(cline, x, c);
         seen_disp_event();
       }
-      return false;
+      return;
     otherwise:  // Anything else. Probably shouldn't get here.
-      return false;
+      return;
   }
   term.curs.x++;
   if (term.curs.x == term.cols) {
@@ -479,11 +478,10 @@ out_char(wchar c)
     term.wrapnext = true;
   }
   seen_disp_event();
-  return true;
 }
 
 static void
-out_align_pattern(void)
+write_align_pattern(void)
 {
   termline *ldata;
   int i, j;
@@ -721,9 +719,9 @@ term_write(const char *data, int len)
           compatibility(ANSIMIN);
           ldisc_send(answerback, sizeof(answerback) - 1, 0);
         when '\a':   /* BEL: Bell */
-          out_bell();
+          write_bell();
         when '\b':     /* BS: Back space */
-          out_backspace();
+          write_backspace();
         when 14:   /* LS1: Locking-shift one */
           compatibility(VT100);
           term.cset = 1;
@@ -735,18 +733,18 @@ term_write(const char *data, int len)
           term.state = SEEN_ESC;
           term.esc_query = false;
         when '\r':   /* CR: Carriage return */
-          out_return();
+          write_return();
         when '\f':   /* FF: Form feed */
-          out_linefeed();
+          write_linefeed();
         when '\v':   /* VT: Line tabulation */
           compatibility(VT100);
-          out_linefeed();
+          write_linefeed();
         when '\n':   /* LF: Line feed */
-          out_linefeed();
+          write_linefeed();
           if (term.newline_mode)
-            out_return();
+            write_return();
         when '\t':     /* HT: Character tabulation */
-          out_tab();
+          write_tab();
       }
     }
     else {
@@ -754,8 +752,7 @@ term_write(const char *data, int len)
         when TOPLEVEL:
          /* Only graphic characters get this far;
           * ctrls are stripped above */
-          if (!out_char(c))
-            continue;
+          write_char(c);
         when SEEN_ESC or OSC_MAYBE_ST or DCS_MAYBE_ST: {
          /*
           * OSC_MAYBE_ST is virtually identical to SEEN_ESC, with the
@@ -805,11 +802,11 @@ term_write(const char *data, int len)
               term.app_keypad = false;
             when 'D':  /* IND: exactly equivalent to LF */
               compatibility(VT100);
-              out_linefeed();
+              write_linefeed();
             when 'E':  /* NEL: exactly equivalent to CR-LF */
               compatibility(VT100);
-              out_return();
-              out_linefeed();
+              write_return();
+              write_linefeed();
             when 'M':  /* RI: reverse index - backwards LF */
               compatibility(VT100);
               if (term.curs.y == term.marg_t)
@@ -836,7 +833,7 @@ term_write(const char *data, int len)
               term.tabs[term.curs.x] = true;
             when ANSI('8', '#'):    /* DECALN: fills screen with Es :-) */
               compatibility(VT100);
-              out_align_pattern();
+              write_align_pattern();
             when ANSI('3', '#'):  /* DECDHL: 2*height, top */
               compatibility(VT100);
               scrlineptr(term.curs.y)->lattr = LATTR_TOP;
