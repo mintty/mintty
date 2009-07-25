@@ -25,6 +25,13 @@
 static const char answerback[] = "mintty";
 static const char primary_da[] = "\e[?1;2c";
 
+static const wchar linedraw_chars[32] = {
+  0x2666, 0x2592, 0x2409, 0x240c, 0x240d, 0x240a, 0x00b0, 0x00b1,
+  0x2424, 0x240b, 0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0x23ba,
+  0x23bb, 0x2500, 0x23bc, 0x23bd, 0x251c, 0x2524, 0x2534, 0x252c,
+  0x2502, 0x2264, 0x2265, 0x03c0, 0x2260, 0x00a3, 0x00b7, 0x0020
+};
+
 /*
  * Move the cursor to a given position, clipping at boundaries. We
  * may or may not want to clip at the scroll margin: marg_clip is 0
@@ -684,7 +691,7 @@ term_write(const char *data, int len)
           }
         }
         if (cset_attr == CS_LINEDRW && 0x60 <= c && c < 0x80)
-          ; // TODO: translate to linedraw character
+          c = linedraw_chars[c - 0x60];
         else if (cset_attr == CS_GBCHR && c == '#')
           c = 0xA3; // pound sign
       }
