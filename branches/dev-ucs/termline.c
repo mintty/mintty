@@ -73,10 +73,8 @@ get(struct buf *b)
  * Add a combining character to a character cell.
  */
 void
-add_cc(termline * line, int col, uint chr)
+add_cc(termline *line, int col, wchar chr)
 {
-  int newcc;
-
   assert(col >= 0 && col < line->cols);
 
  /*
@@ -106,7 +104,7 @@ add_cc(termline * line, int col, uint chr)
   * `col' now points at the last cc currently in this cell; so
   * we simply add another one.
   */
-  newcc = line->cc_free;
+  int newcc = line->cc_free;
   if (line->chars[newcc].cc_next)
     line->cc_free = newcc + line->chars[newcc].cc_next;
   else
@@ -217,23 +215,10 @@ makeliteral_chr(struct buf *b, termchar * c, uint * state)
   * unlike UTF-8 in that it doesn't need to be able to
   * resynchronise, and therefore I don't want to waste two bits
   * per byte on having recognisable continuation characters.
-  * Also I don't want to rule out the possibility that I may one
-  * day use values 0x80000000-0xFFFFFFFF for interesting
-  * purposes, so unlike UTF-8 I need a full 32-bit range.
-  * Accordingly, here is my encoding:
   * 
-  * 00000000-0000007F: 0xxxxxxx (but see below)
-  * 00000080-00003FFF: 10xxxxxx xxxxxxxx
-  * 00004000-001FFFFF: 110xxxxx xxxxxxxx xxxxxxxx
-  * 00200000-0FFFFFFF: 1110xxxx xxxxxxxx xxxxxxxx xxxxxxxx
-  * 10000000-FFFFFFFF: 11110ZZZ xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx
-  * 
-  * (`Z' is like `x' but is always going to be zero since the
-  * values I'm encoding don't go above 2^32. In principle the
-  * five-byte form of the encoding could extend to 2^35, and
-  * there could be six-, seven-, eight- and nine-byte forms as
-  * well to allow up to 64-bit values to be encoded. But that's
-  * completely unnecessary for these purposes!)
+  * 0000-007F: 0xxxxxxx (but see below)
+  * 0080-7FFF: 1xxxxxxx xxxxxxxx
+  * 4000-FFFF: 11111111 1xxxxxxx xxxxxxxx
   * 
   * The encoding as written above would be very simple, except
   * that 7-bit ASCII can occur in several different ways in the
@@ -245,32 +230,19 @@ makeliteral_chr(struct buf *b, termchar * c, uint * state)
   * absolute value of 00-7F you need to use the two-byte form
   * instead.
   */
-  if ((c->chr & ~0x7F) == *state) {
-    add(b, (uchar) (c->chr & 0x7F));
-  }
-  else if (c->chr < 0x4000) {
-    add(b, (uchar) (((c->chr >> 8) & 0x3F) | 0x80));
-    add(b, (uchar) (c->chr & 0xFF));
-  }
-  else if (c->chr < 0x200000) {
-    add(b, (uchar) (((c->chr >> 16) & 0x1F) | 0xC0));
-    add(b, (uchar) ((c->chr >> 8) & 0xFF));
-    add(b, (uchar) (c->chr & 0xFF));
-  }
-  else if (c->chr < 0x10000000) {
-    add(b, (uchar) (((c->chr >> 24) & 0x0F) | 0xE0));
-    add(b, (uchar) ((c->chr >> 16) & 0xFF));
-    add(b, (uchar) ((c->chr >> 8) & 0xFF));
-    add(b, (uchar) (c->chr & 0xFF));
+  wchar wc = c->chr;
+  if ((wc & ~0x7Fu) == *state)
+    add(b, wc & 0x7F);
+  else if (c->chr < 0x8000) {
+    add(b, (wc >> 8) | 0x80);
+    add(b, wc);
   }
   else {
-    add(b, 0xF0);
-    add(b, (uchar) ((c->chr >> 24) & 0xFF));
-    add(b, (uchar) ((c->chr >> 16) & 0xFF));
-    add(b, (uchar) ((c->chr >> 8) & 0xFF));
-    add(b, (uchar) (c->chr & 0xFF));
+    add(b, 0xFF);
+    add(b, wc >> 8);
+    add(b, wc);
   }
-  *state = c->chr & ~0xFF;
+  *state = wc & ~0x7F;
 }
 
 static void
@@ -349,46 +321,29 @@ makeliteral_cc(struct buf *b, termchar * c, uint * unused(state))
 }
 
 static void
-readliteral_chr(struct buf *b, termchar * c, termline * unused(ldata),
+readliteral_chr(struct buf *buf, termchar * c, termline * unused(ldata),
                 uint * state)
 {
-  int byte;
-
  /*
-  * 00000000-0000007F: 0xxxxxxx
-  * 00000080-00003FFF: 10xxxxxx xxxxxxxx
-  * 00004000-001FFFFF: 110xxxxx xxxxxxxx xxxxxxxx
-  * 00200000-0FFFFFFF: 1110xxxx xxxxxxxx xxxxxxxx xxxxxxxx
-  * 10000000-FFFFFFFF: 11110ZZZ xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx
+  * 0000-007F: 0xxxxxxx
+  * 0080-7FFF: 1xxxxxxx xxxxxxxx
+  * 4000-FFFF: 11111111 1xxxxxxx xxxxxxxx
   */
 
-  byte = get(b);
-  if (byte < 0x80) {
-    c->chr = byte | *state;
-  }
-  else if (byte < 0xC0) {
-    c->chr = (byte & ~0xC0) << 8;
-    c->chr |= get(b);
-  }
-  else if (byte < 0xE0) {
-    c->chr = (byte & ~0xE0) << 16;
-    c->chr |= get(b) << 8;
-    c->chr |= get(b);
-  }
-  else if (byte < 0xF0) {
-    c->chr = (byte & ~0xF0) << 24;
-    c->chr |= get(b) << 16;
-    c->chr |= get(b) << 8;
-    c->chr |= get(b);
+  wchar wc;
+  uint b = get(buf);
+  if (b < 0x80)
+    wc = b | *state;
+  else if (b != 0xFF) {
+    wc = (b & ~0x80) << 8;
+    wc |= get(buf); 
   }
   else {
-    assert(byte == 0xF0);
-    c->chr = get(b) << 24;
-    c->chr |= get(b) << 16;
-    c->chr |= get(b) << 8;
-    c->chr |= get(b);
+    wc = get(buf) << 8;
+    wc |= get(buf);
   }
-  *state = c->chr & ~0xFF;
+  *state = wc & ~0x7F;
+  c->chr = wc;
 }
 
 static void
@@ -424,8 +379,8 @@ readliteral_attr(struct buf *b, termchar * c, termline * unused(ldata),
 }
 
 static void
-readliteral_cc(struct buf *b, termchar * c, termline * ldata,
-               uint * unused(state))
+readliteral_cc(struct buf *b, termchar *c, termline *ldata,
+               uint *unused(state))
 {
   termchar n;
   uint zstate;
