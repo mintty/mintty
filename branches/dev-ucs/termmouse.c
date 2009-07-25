@@ -101,7 +101,7 @@ sel_spread_half(pos p, int dir)
       termline *ldata = lineptr(p.y);
       if (!(ldata->lattr & LATTR_WRAPPED)) {
         termchar *q = ldata->chars + term.cols;
-        while (q > ldata->chars && IS_SPACE_CHR(q[-1].chr) && !q[-1].cc_next)
+        while (q > ldata->chars && q[-1].chr == ' ' && !q[-1].cc_next)
           q--;
         if (q == ldata->chars + term.cols)
           q--;

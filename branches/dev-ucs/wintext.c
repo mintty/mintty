@@ -19,11 +19,7 @@ enum {
   FONT_WIDE       = 0x04,
   FONT_HIGH       = 0x08,
   FONT_NARROW     = 0x10,
-  FONT_OEM        = 0x20,
-  FONT_OEMBOLD    = 0x21,
-  FONT_OEMUND     = 0x22,
-  FONT_OEMBOLDUND = 0x23,
-  FONT_MAXNO      = 0x2F,
+  FONT_MAXNO      = 0x1F,
   FONT_SHIFT      = 5
 };
 
@@ -94,7 +90,6 @@ void
 win_init_fonts(void)
 {
   TEXTMETRIC tm;
-  CPINFO cpinfo;
   int fontsize[3];
   int i;
   int fw_dontcare, fw_bold;
@@ -140,22 +135,6 @@ win_init_fonts(void)
   font_ambig_wide =
     greek_char_width >= latin_char_width * 1.5 ||
     line_char_width  >= latin_char_width * 1.5;
-
-  {
-    CHARSETINFO info;
-    DWORD cset = tm.tmCharSet;
-    memset(&info, 0xFF, sizeof (info));
-
-   /* !!! Yes the next line is right */
-    if (cset == OEM_CHARSET)
-      ucsdata.font_codepage = GetOEMCP();
-    else if (TranslateCharsetInfo((DWORD *) cset, &info, TCI_SRCCHARSET))
-      ucsdata.font_codepage = info.ciACP;
-    else
-      ucsdata.font_codepage = -1;
-
-    GetCPInfo(ucsdata.font_codepage, &cpinfo);
-  }
 
   fonts[FONT_UNDERLINE] = create_font(fw_dontcare, true);
 
@@ -454,8 +433,6 @@ another_font(int fontno)
     x *= 2;
   if (fontno & FONT_NARROW)
     x = (x + 1) / 2;
-  if (fontno & FONT_OEM)
-    c = OEM_CHARSET;
   if (fontno & FONT_BOLD)
     w = fw_bold;
   if (fontno & FONT_UNDERLINE)
@@ -541,23 +518,12 @@ win_text_internal(int x, int y, wchar *text, int len, uint attr, int lattr)
     }
     if (lattr == LATTR_TOP || lattr == LATTR_BOT)
       text_adjust *= 2;
-    text[0] = ucsdata.unitab_xterm['q'];
+    text[0] = 0x2500;
     if (attr & ATTR_UNDER) {
       attr &= ~ATTR_UNDER;
       force_manual_underline = 1;
     }
   }
-
- /* Anything left as an original character set is unprintable. */
-  if (DIRECT_CHAR(text[0])) {
-    int i;
-    for (i = 0; i < len; i++)
-      text[i] = 0xFFFD;
-  }
-
- /* OEM CP */
-  if ((text[0] & CSET_MASK) == CSET_OEMCP)
-    nfont |= FONT_OEM;
 
   if (bold_mode == BOLD_FONT && (attr & ATTR_BOLD))
     nfont |= FONT_BOLD;
@@ -624,62 +590,31 @@ win_text_internal(int x, int y, wchar *text, int len, uint attr, int lattr)
   if (line_box.right > font_width * term.cols + PADDING)
     line_box.right = font_width * term.cols + PADDING;
 
-  if (DIRECT_FONT(text[0])) {
-    static char *directbuf = null;
-    static int directlen = 0;
-    int i;
-    if (len > directlen) {
-      directlen = len;
-      directbuf = renewn(directbuf, directlen);
-    }
+ /* And 'normal' unicode characters */
+  static WCHAR *wbuf = null;
+  static int wlen = 0;
+  int i;
 
-    for (i = 0; i < len; i++)
-      directbuf[i] = text[i] & 0xFF;
-
-    ExtTextOut(dc, x, y - font_height * (lattr == LATTR_BOT) + text_adjust,
-               ETO_CLIPPED | ETO_OPAQUE, &line_box, directbuf, len, IpDx);
-    if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD)) {
-      SetBkMode(dc, TRANSPARENT);
-
-     /* GRR: This draws the character outside it's box and can leave
-      * 'droppings' even with the clip box! I suppose I could loop it
-      * one character at a time ... yuk. 
-      * 
-      * Or ... I could do a test print with "W", and use +1 or -1 for this
-      * shift depending on if the leftmost column is blank...
-      */
-      ExtTextOut(dc, x - 1,
-                 y - font_height * (lattr == LATTR_BOT) + text_adjust,
-                 ETO_CLIPPED, &line_box, directbuf, len, IpDx);
-    }
+  if (wlen < len) {
+    free(wbuf);
+    wlen = len;
+    wbuf = newn(wchar, wlen);
   }
-  else {
-   /* And 'normal' unicode characters */
-    static WCHAR *wbuf = null;
-    static int wlen = 0;
-    int i;
 
-    if (wlen < len) {
-      free(wbuf);
-      wlen = len;
-      wbuf = newn(wchar, wlen);
-    }
+  for (i = 0; i < len; i++)
+    wbuf[i] = text[i];
 
-    for (i = 0; i < len; i++)
-      wbuf[i] = text[i];
-
-   /* print Glyphs as they are, without Windows' Shaping */
-    general_textout(x,
-                    y - font_height * (lattr == LATTR_BOT) + text_adjust,
-                    &line_box, wbuf, len, IpDx, !(attr & TATTR_COMBINING));
-
-   /* And the shadow bold hack. */
-    if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD)) {
-      SetBkMode(dc, TRANSPARENT);
-      ExtTextOutW(dc, x - 1,
+ /* print Glyphs as they are, without Windows' Shaping */
+  general_textout(x,
                   y - font_height * (lattr == LATTR_BOT) + text_adjust,
-                  ETO_CLIPPED, &line_box, wbuf, len, IpDx);
-    }
+                  &line_box, wbuf, len, IpDx, !(attr & TATTR_COMBINING));
+
+ /* And the shadow bold hack. */
+  if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD)) {
+    SetBkMode(dc, TRANSPARENT);
+    ExtTextOutW(dc, x - 1,
+                y - font_height * (lattr == LATTR_BOT) + text_adjust,
+                ETO_CLIPPED, &line_box, wbuf, len, IpDx);
   }
   if (lattr != LATTR_TOP &&
       (force_manual_underline ||
@@ -791,46 +726,17 @@ win_char_width(int uc)
   if (!font_dualwidth)
     return 1;
 
-  switch (uc & CSET_MASK) {
-    when CSET_ASCII:   uc = ucsdata.unitab_line[uc & 0xFF];
-    when CSET_LINEDRW: uc = ucsdata.unitab_xterm[uc & 0xFF];
-    when CSET_OEMCP:   uc = ucsdata.unitab_oemcp[uc & 0xFF];
-  }
-  if (DIRECT_FONT(uc)) {
-   /* Speedup, I know of no font where ascii is the wrong width */
-    if ((uc & ~CSET_MASK) >= ' ' && (uc & ~CSET_MASK) <= '~')
-      return 1;
+ /* Speedup, I know of no font where ascii is the wrong width */
+  if (uc >= ' ' && uc <= '~')
+    return 1;
 
-    if ((uc & CSET_MASK) == CSET_ACP) {
-      SelectObject(dc, fonts[FONT_NORMAL]);
-    }
-    else if ((uc & CSET_MASK) == CSET_OEMCP) {
-      another_font(FONT_OEM);
-      if (!fonts[FONT_OEM])
-        return 0;
-
-      SelectObject(dc, fonts[FONT_OEM]);
-    }
-    else
-      return 0;
-
-    if (GetCharWidth32(dc, uc & ~CSET_MASK, uc & ~CSET_MASK, &ibuf) != 1 &&
-        GetCharWidth(dc, uc & ~CSET_MASK, uc & ~CSET_MASK, &ibuf) != 1)
-      return 0;
-  }
-  else {
-   /* Speedup, I know of no font where ascii is the wrong width */
-    if (uc >= ' ' && uc <= '~')
-      return 1;
-
-    SelectObject(dc, fonts[FONT_NORMAL]);
-    if (GetCharWidth32W(dc, uc, uc, &ibuf) == 1)
-     /* Okay that one worked */ ;
-    else if (GetCharWidthW(dc, uc, uc, &ibuf) == 1)
-     /* This should work on 9x too, but it's "less accurate" */ ;
-    else
-      return 0;
-  }
+  SelectObject(dc, fonts[FONT_NORMAL]);
+  if (GetCharWidth32W(dc, uc, uc, &ibuf) == 1)
+   /* Okay that one worked */ ;
+  else if (GetCharWidthW(dc, uc, uc, &ibuf) == 1)
+   /* This should work on 9x too, but it's "less accurate" */ ;
+  else
+    return 0;
 
   ibuf += font_width / 2 - 1;
   ibuf /= font_width;

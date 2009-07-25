@@ -29,7 +29,6 @@ struct cp_list_item {
 };
 
 static const struct cp_list_item cp_list[] = {
-  {-1, "Use font encoding"},
   {CP_UTF8, "UTF-8"},
   {28591, "ISO-8859-1:1998 (Latin-1, West Europe)"},
   {28592, "ISO-8859-2:1999 (Latin-2, East Europe)"},
@@ -56,12 +55,9 @@ static const struct cp_list_item cp_list[] = {
   {0, 0}
 };
 
-static void link_font(wchar * line_tbl, wchar * font_tbl, wchar attr);
-
 void
 init_ucs(void)
 {
-  int used_dtf = 0;
   char tbuf[256];
   
   for (int i = 0; i < 256; i++)
@@ -69,89 +65,6 @@ init_ucs(void)
 
  /* Decide on the Line and Font codepages */
   ucsdata.codepage = decode_codepage(cfg.codepage);
-
-  if (ucsdata.font_codepage <= 0)
-    ucsdata.font_codepage = 0;
-
-  if (ucsdata.codepage <= 0)
-    ucsdata.codepage = ucsdata.font_codepage;
-
- /* Collect screen font ucs table */
-  if (ucsdata.font_codepage == 0) {
-    get_unitab(ucsdata.font_codepage, ucsdata.unitab_font, 2);
-    for (int i = 128; i < 256; i++)
-      ucsdata.unitab_font[i] = (wchar) (CSET_ACP + i);
-  }
-  else {
-    get_unitab(ucsdata.font_codepage, ucsdata.unitab_font, 1);
-
-   /* CP437 fonts are often broken ... */
-    if (ucsdata.font_codepage == 437)
-      ucsdata.unitab_font[0] = ucsdata.unitab_font[255] = 0xFFFF;
-  }
-
- /* Collect OEMCP ucs table */
-  get_unitab(CP_OEMCP, ucsdata.unitab_oemcp, 1);
-
- /* Collect line set ucs table */
-  if (ucsdata.codepage == ucsdata.font_codepage &&
-      ucsdata.font_codepage == 0) {
-
-   /* For POOR fonts force direct to font */
-    used_dtf = 1;
-    for (int i = 0; i < 32; i++)
-      ucsdata.unitab_line[i] = (wchar) i;
-    for (int i = 32; i < 256; i++)
-      ucsdata.unitab_line[i] = (wchar) (CSET_ACP + i);
-    ucsdata.unitab_line[127] = (wchar) 127;
-  }
-  else
-    get_unitab(ucsdata.codepage, ucsdata.unitab_line, 0);
-
- /* VT100 graphics - NB: Broken for non-ascii CP's */
-  memcpy(ucsdata.unitab_xterm, ucsdata.unitab_line,
-         sizeof (ucsdata.unitab_xterm));
-  memcpy(ucsdata.unitab_xterm + '`', unitab_xterm_std,
-         sizeof (unitab_xterm_std));
-  ucsdata.unitab_xterm['_'] = ' ';
-
-  if (!used_dtf) {
-    for (int i = 0; i < 256; i++) {
-      if (DIRECT_CHAR(ucsdata.unitab_line[i]))
-        continue;
-      if (DIRECT_FONT(ucsdata.unitab_line[i]))
-        continue;
-    }
-  }
-
- /* Find the line control characters. */
-  for (int i = 0; i < 256; i++)
-    if (ucsdata.unitab_line[i] < ' ' ||
-        (ucsdata.unitab_line[i] >= 0x7F && ucsdata.unitab_line[i] < 0xA0))
-      ucsdata.unitab_ctrl[i] = i;
-    else
-      ucsdata.unitab_ctrl[i] = 0xFF;
-
-  link_font(ucsdata.unitab_line, ucsdata.unitab_font, CSET_ACP);
-  link_font(ucsdata.unitab_oemcp, ucsdata.unitab_font, CSET_ACP);
-  link_font(ucsdata.unitab_xterm, ucsdata.unitab_font, CSET_ACP);
-}
-
-static void
-link_font(wchar * line_tbl, wchar * font_tbl, wchar attr)
-{
-  int font_index, line_index, i;
-  for (line_index = 0; line_index < 256; line_index++) {
-    if (DIRECT_FONT(line_tbl[line_index]))
-      continue;
-    for (i = 0; i < 256; i++) {
-      font_index = ((32 + i) & 0xFF);
-      if (line_tbl[line_index] == font_tbl[font_index]) {
-        line_tbl[line_index] = (wchar) (attr + font_index);
-        break;
-      }
-    }
-  }
 }
 
 int
@@ -349,13 +262,6 @@ wordtype(int c)
     {0xfff0, 0xffff, 0},        /* half/fullwidth ASCII */
     {0, 0, 0}
   };
-  switch (c & CSET_MASK) {
-    when CSET_LINEDRW: c = ucsdata.unitab_xterm[c & 0xFF];
-    when CSET_ASCII:   c = ucsdata.unitab_line[c & 0xFF];
-    when CSET_ACP:   c = ucsdata.unitab_font[c & 0xFF];
-    when CSET_OEMCP: c = ucsdata.unitab_oemcp[c & 0xFF];
-  }
-
   if (c < 0x80) {
     if (c <= ' ' || c == 0x7f)
       return 0;

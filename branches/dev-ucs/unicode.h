@@ -2,37 +2,26 @@
 #define UNICODE_H
 
 /* Like Linux use the F000 page for direct to font. */
-#define CSET_OEMCP   0x0000F000UL       /* OEM Codepage DTF */
-#define CSET_ACP     0x0000F100UL       /* Ansi Codepage DTF */
+#define CS_OEMCP   0x0000F000UL       /* OEM Codepage DTF */
+#define CS_ACP     0x0000F100UL       /* Ansi Codepage DTF */
 
 /* These are internal use overlapping with the UTF-16 surrogates */
-#define CSET_ASCII   0x0000D800UL       /* normal ASCII charset ESC ( B */
-#define CSET_LINEDRW 0x0000D900UL       /* line drawing charset ESC ( 0 */
-#define CSET_GBCHR   0x0000DB00UL       /* UK variant   charset ESC ( A */
-#define CSET_MASK    0xFFFFFF00UL       /* Character set mask */
+#define CS_ASCII   0x0000D800UL       /* normal ASCII charset ESC ( B */
+#define CS_LINEDRW 0x0000D900UL       /* line drawing charset ESC ( 0 */
+#define CS_GBCHR   0x0000DB00UL       /* UK variant   charset ESC ( A */
+#define CS_MASK    0xFFFFFF00UL       /* Character set mask */
 
-#define DIRECT_CHAR(c) ((c&0xFFFFFC00)==0xD800)
-#define DIRECT_FONT(c) ((c&0xFFFFFE00)==0xF000)
+#define UCSERR 0x2592 /* UCS Format error character. */
 
-#define UCSERR	     (CSET_LINEDRW|'a') /* UCS Format error character. */
 /*
  * UCSWIDE is a special value used in the terminal data to signify
  * the character cell containing the right-hand half of a CJK wide
- * character. We use 0xDFFF because it's part of the surrogate
- * range and hence won't be used for anything else (it's impossible
- * to input it via UTF-8 because our UTF-8 decoder correctly
- * rejects surrogates).
+ * character.
  */
-#define UCSWIDE	     0xDFFF
+#define UCSWIDE 0xF000
 
 typedef struct {
-  int font_codepage;
-  int codepage;
-  wchar unitab_line[256];
-  wchar unitab_font[256];
-  wchar unitab_xterm[256];
-  wchar unitab_oemcp[256];
-  uchar unitab_ctrl[256];
+  uint codepage;
 } unicode_data;
 
 extern unicode_data ucsdata;

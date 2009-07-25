@@ -384,8 +384,6 @@ out_char(wchar c)
 {
   termline *cline = scrlineptr(term.curs.y);
   int width = 0;
-  if (DIRECT_CHAR(c))
-    width = 1;
   if (!width) {
     width = wcwidth(c);
     if (width == -2)
@@ -590,11 +588,11 @@ term_write(const char *data, int len)
    /* First see about all those translations. */
     if (term.state == TOPLEVEL) {
       int cset_attr = term.cset_attr[term.cset]; 
-      if (term.oem_acs || cset_attr == CSET_OEMCP) {
+      if (term.oem_acs || cset_attr == CS_OEMCP) {
         if (!strchr("\e\n\r\b", c)) {
           if (term.oem_acs == 2)
             c |= 0x80;
-          c |= CSET_OEMCP;
+          // TODO: translate to codepage 437
         }
       }
       else {
@@ -602,12 +600,8 @@ term_write(const char *data, int len)
         if (in_utf) {
           switch (term.utf_state) {
             when 0: {
-              if (c < 0x80) {
-               /* UTF-8 must be stateless so we ignore iso2022. */
-                if (ucsdata.unitab_ctrl[c] != 0xFF)
-                  c = ucsdata.unitab_ctrl[c];
+              if (c < 0x80)
                 break;
-              }
               else if ((c & 0xe0) == 0xc0) {
                 term.utf_size = term.utf_state = 1;
                 term.utf_char = (c & 0x1f);
@@ -689,21 +683,15 @@ term_write(const char *data, int len)
             }
           }
         }
-        if (cset_attr == CSET_LINEDRW && 0x60 <= c && c < 0x80) 
-          c |= CSET_LINEDRW;
-        else if (cset_attr == CSET_GBCHR && c == '#')
-          c = '}' | CSET_LINEDRW;
-        else if (!in_utf) {
-          if (ucsdata.unitab_ctrl[c] != 0xFF)
-            c = ucsdata.unitab_ctrl[c];
-          else
-            c |= CSET_ASCII;
-        }
+        if (cset_attr == CS_LINEDRW && 0x60 <= c && c < 0x80)
+          ; // TODO: translate to linedraw character
+        else if (cset_attr == CS_GBCHR && c == '#')
+          c = 0xA3; // pound sign
       }
     }
 
-   /* Or the GL control. */
-    if (c == '\177' && term.state < DO_CTRLS &&
+   /* Or DEL. */
+    if (c == 0x7F && term.state < DO_CTRLS &&
         term.compatibility_level & CL_OTHER) {
       if (term.curs.x && !term.wrapnext)
         term.curs.x--;
@@ -856,28 +844,28 @@ term_write(const char *data, int len)
               scrlineptr(term.curs.y)->lattr = LATTR_WIDE;
             when ANSI('A', '('):  /* GZD4: G0 designate 94-set */
               compatibility(VT100);
-              term.cset_attr[0] = CSET_GBCHR;
+              term.cset_attr[0] = CS_GBCHR;
             when ANSI('B', '('):
               compatibility(VT100);
-              term.cset_attr[0] = CSET_ASCII;
+              term.cset_attr[0] = CS_ASCII;
             when ANSI('0', '('):
               compatibility(VT100);
-              term.cset_attr[0] = CSET_LINEDRW;
+              term.cset_attr[0] = CS_LINEDRW;
             when ANSI('U', '('):
               compatibility(OTHER);
-              term.cset_attr[0] = CSET_OEMCP;
+              term.cset_attr[0] = CS_OEMCP;
             when ANSI('A', ')'):  /* G1D4: G1-designate 94-set */
               compatibility(VT100);
-              term.cset_attr[1] = CSET_GBCHR;
+              term.cset_attr[1] = CS_GBCHR;
             when ANSI('B', ')'):
               compatibility(VT100);
-              term.cset_attr[1] = CSET_ASCII;
+              term.cset_attr[1] = CS_ASCII;
             when ANSI('0', ')'):
               compatibility(VT100);
-              term.cset_attr[1] = CSET_LINEDRW;
+              term.cset_attr[1] = CS_LINEDRW;
             when ANSI('U', ')'):
               compatibility(OTHER);
-              term.cset_attr[1] = CSET_OEMCP;
+              term.cset_attr[1] = CS_OEMCP;
             when ANSI('8', '%') or ANSI('G', '%'):
               compatibility(OTHER);
               term.utf = 1;

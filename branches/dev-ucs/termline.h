@@ -74,15 +74,4 @@ termchar *term_bidi_line(termline *, int scr_y);
 #define UCSGET(a, x) \
     ( (x)>0 && (a)[(x)].chr == UCSWIDE ? (a)[(x)-1].chr : (a)[(x)].chr )
 
-/*
- * Detect the various aliases of U+0020 SPACE.
- */
-#define IS_SPACE_CHR(chr) \
-	((chr) == 0x20 || (DIRECT_CHAR(chr) && ((chr) & 0xFF) == 0x20))
-
-/*
- * Spot magic CSETs.
- */
-#define CSET_OF(chr) (DIRECT_CHAR(chr)||DIRECT_FONT(chr) ? (chr)&CSET_MASK : 0)
-
 #endif
