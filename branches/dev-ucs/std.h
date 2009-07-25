@@ -24,6 +24,7 @@
 #define no_return __attribute__((noreturn)) void
 
 typedef wchar_t wchar;
+typedef uint32_t xchar;
 
 typedef signed char schar;
 typedef unsigned char uchar;

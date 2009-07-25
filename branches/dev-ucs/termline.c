@@ -957,16 +957,16 @@ term_bidi_line(termline * ldata, int scr_y)
     }
 
     for (it = 0; it < term.cols; it++) {
-      uint uc = (ldata->chars[it].chr);
+      wchar c = ldata->chars[it].chr;
 
-      switch (uc & CSET_MASK) {
-        when CSET_LINEDRW: uc = ucsdata.unitab_xterm[uc & 0xFF];
-        when CSET_ASCII:   uc = ucsdata.unitab_line[uc & 0xFF];
-        when CSET_ACP:     uc = ucsdata.unitab_font[uc & 0xFF];
-        when CSET_OEMCP:   uc = ucsdata.unitab_oemcp[uc & 0xFF];
+      switch (c & CSET_MASK) {
+        when CSET_LINEDRW: c = ucsdata.unitab_xterm[c & 0xFF];
+        when CSET_ASCII:   c = ucsdata.unitab_line[c & 0xFF];
+        when CSET_ACP:     c = ucsdata.unitab_font[c & 0xFF];
+        when CSET_OEMCP:   c = ucsdata.unitab_oemcp[c & 0xFF];
       }
 
-      term.wcFrom[it].origwc = term.wcFrom[it].wc = (wchar) uc;
+      term.wcFrom[it].origwc = term.wcFrom[it].wc = c;
       term.wcFrom[it].index = it;
     }
 

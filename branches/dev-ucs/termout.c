@@ -530,7 +530,7 @@ term_write(const char *data, int len)
   uchar *chars = null; /* placate compiler warnings */
   int nchars = 0;
   while (nchars > 0 || unget != -1 || bufchain_size(term.inbuf) > 0) {
-    uint c;
+    xchar c;
     if (unget == -1) {
       if (nchars == 0) {
         void *ret;
