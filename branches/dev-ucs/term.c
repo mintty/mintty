@@ -1056,7 +1056,7 @@ term_paint(void)
       if (d->cc_next != 0 || (j > 0 && d[-1].cc_next != 0))
         break_run = true;
 
-      if (!ucsdata.dbcs_screenfont && !dirty_line) {
+      if (!dirty_line) {
         if (term.disptext[i]->chars[j].chr == tchar &&
             (term.disptext[i]->chars[j].attr & ~DATTR_MASK) == tattr)
           break_run = true;
@@ -1076,8 +1076,6 @@ term_paint(void)
         ccount = 0;
         attr = tattr;
         cset = CSET_OF(tchar);
-        if (ucsdata.dbcs_screenfont)
-          last_run_dirty = dirty_run;
         dirty_run = dirty_line;
       }
 
@@ -1330,18 +1328,8 @@ term_copy(void)
           if (c >= ' ' && c != 0x7F) {
             char buf[4];
             wchar wbuf[4];
-            int rv;
-            if (is_dbcs_leadbyte(ucsdata.font_codepage, (uchar) c)) {
-              buf[0] = c;
-              buf[1] = (char) (0xFF & ldata->chars[start.x + 1].chr);
-              rv = mb_to_wc(ucsdata.font_codepage, 0, buf, 2, wbuf, 4);
-              start.x++;
-            }
-            else {
-              buf[0] = c;
-              rv = mb_to_wc(ucsdata.font_codepage, 0, buf, 1, wbuf, 4);
-            }
-
+            int rv = mb_to_wc(ucsdata.font_codepage, 0, buf, 1, wbuf, 4);
+            buf[0] = c;
             if (rv > 0) {
               memcpy(cbuf, wbuf, rv * sizeof (wchar));
               cbuf[rv] = 0;

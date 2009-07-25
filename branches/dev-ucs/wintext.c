@@ -155,7 +155,6 @@ win_init_fonts(void)
       ucsdata.font_codepage = -1;
 
     GetCPInfo(ucsdata.font_codepage, &cpinfo);
-    ucsdata.dbcs_screenfont = (cpinfo.MaxCharSize > 1);
   }
 
   fonts[FONT_UNDERLINE] = create_font(fw_dontcare, true);
@@ -625,53 +624,7 @@ win_text_internal(int x, int y, wchar *text, int len, uint attr, int lattr)
   if (line_box.right > font_width * term.cols + PADDING)
     line_box.right = font_width * term.cols + PADDING;
 
- /* We're using a private area for direct to font. (512 chars.) */
-  if (ucsdata.dbcs_screenfont && (text[0] & CSET_MASK) == CSET_ACP) {
-   /* Ho Hum, dbcs fonts are a PITA! */
-   /* To display on W9x I have to convert to UCS */
-    static wchar *uni_buf = 0;
-    static int uni_len = 0;
-    int nlen, mptr;
-    if (len > uni_len) {
-      free(uni_buf);
-      uni_len = len;
-      uni_buf = newn(wchar, uni_len);
-    }
-
-    for (nlen = mptr = 0; mptr < len; mptr++) {
-      uni_buf[nlen] = 0xFFFD;
-      if (IsDBCSLeadByteEx(ucsdata.font_codepage, (BYTE) text[mptr])) {
-        char dbcstext[2];
-        dbcstext[0] = text[mptr] & 0xFF;
-        dbcstext[1] = text[mptr + 1] & 0xFF;
-        IpDx[nlen] += char_width;
-        MultiByteToWideChar(ucsdata.font_codepage, MB_USEGLYPHCHARS, dbcstext,
-                            2, uni_buf + nlen, 1);
-        mptr++;
-      }
-      else {
-        char dbcstext[1];
-        dbcstext[0] = text[mptr] & 0xFF;
-        MultiByteToWideChar(ucsdata.font_codepage, MB_USEGLYPHCHARS, dbcstext,
-                            1, uni_buf + nlen, 1);
-      }
-      nlen++;
-    }
-    if (nlen <= 0)
-      return;   /* Eeek! */
-
-    ExtTextOutW(dc, x, y - font_height * (lattr == LATTR_BOT) + text_adjust,
-                ETO_CLIPPED | ETO_OPAQUE, &line_box, uni_buf, nlen, IpDx);
-    if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD)) {
-      SetBkMode(dc, TRANSPARENT);
-      ExtTextOutW(dc, x - 1,
-                  y - font_height * (lattr == LATTR_BOT) + text_adjust,
-                  ETO_CLIPPED, &line_box, uni_buf, nlen, IpDx);
-    }
-
-    IpDx[0] = -1;
-  }
-  else if (DIRECT_FONT(text[0])) {
+  if (DIRECT_FONT(text[0])) {
     static char *directbuf = null;
     static int directlen = 0;
     int i;
@@ -844,9 +797,6 @@ win_char_width(int uc)
     when CSET_OEMCP:   uc = ucsdata.unitab_oemcp[uc & 0xFF];
   }
   if (DIRECT_FONT(uc)) {
-    if (ucsdata.dbcs_screenfont)
-      return 1;
-
    /* Speedup, I know of no font where ascii is the wrong width */
     if ((uc & ~CSET_MASK) >= ' ' && (uc & ~CSET_MASK) <= '~')
       return 1;

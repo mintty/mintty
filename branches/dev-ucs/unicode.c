@@ -70,16 +70,14 @@ init_ucs(void)
  /* Decide on the Line and Font codepages */
   ucsdata.codepage = decode_codepage(cfg.codepage);
 
-  if (ucsdata.font_codepage <= 0) {
+  if (ucsdata.font_codepage <= 0)
     ucsdata.font_codepage = 0;
-    ucsdata.dbcs_screenfont = 0;
-  }
 
   if (ucsdata.codepage <= 0)
     ucsdata.codepage = ucsdata.font_codepage;
 
  /* Collect screen font ucs table */
-  if (ucsdata.dbcs_screenfont || ucsdata.font_codepage == 0) {
+  if (ucsdata.font_codepage == 0) {
     get_unitab(ucsdata.font_codepage, ucsdata.unitab_font, 2);
     for (int i = 128; i < 256; i++)
       ucsdata.unitab_font[i] = (wchar) (CSET_ACP + i);
@@ -97,9 +95,9 @@ init_ucs(void)
 
  /* Collect line set ucs table */
   if (ucsdata.codepage == ucsdata.font_codepage &&
-      (ucsdata.dbcs_screenfont || ucsdata.font_codepage == 0)) {
+      ucsdata.font_codepage == 0) {
 
-   /* For DBCS and POOR fonts force direct to font */
+   /* For POOR fonts force direct to font */
     used_dtf = 1;
     for (int i = 0; i < 32; i++)
       ucsdata.unitab_line[i] = (wchar) i;
@@ -137,13 +135,6 @@ init_ucs(void)
   link_font(ucsdata.unitab_line, ucsdata.unitab_font, CSET_ACP);
   link_font(ucsdata.unitab_oemcp, ucsdata.unitab_font, CSET_ACP);
   link_font(ucsdata.unitab_xterm, ucsdata.unitab_font, CSET_ACP);
-
-  if (ucsdata.dbcs_screenfont && ucsdata.font_codepage != ucsdata.codepage) {
-   /* F***ing Microsoft fonts, Japanese and Korean codepage fonts
-    * have a currency symbol at 0x5C but their unicode value is 
-    * still given as U+005C not the correct U+00A5. */
-    ucsdata.unitab_line['\\'] = CSET_OEMCP + '\\';
-  }
 }
 
 static void
@@ -365,11 +356,6 @@ wordtype(int c)
     when CSET_OEMCP: c = ucsdata.unitab_oemcp[c & 0xFF];
   }
 
- /* For DBCS fonts I can't do anything useful. Even this will sometimes
-  * fail as there's such a thing as a double width space. :-(
-  */
-  if (ucsdata.dbcs_screenfont && ucsdata.font_codepage == ucsdata.codepage)
-    return (c != ' ');
   if (c < 0x80) {
     if (c <= ' ' || c == 0x7f)
       return 0;
