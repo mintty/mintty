@@ -601,93 +601,6 @@ term_write(const char *data, int len)
         }
       }
       else {
-        bool in_utf = term_in_utf();
-        if (in_utf) {
-          switch (term.utf_state) {
-            when 0: {
-              if (c < 0x80)
-                break;
-              else if ((c & 0xe0) == 0xc0) {
-                term.utf_size = term.utf_state = 1;
-                term.utf_char = (c & 0x1f);
-              }
-              else if ((c & 0xf0) == 0xe0) {
-                term.utf_size = term.utf_state = 2;
-                term.utf_char = (c & 0x0f);
-              }
-              else if ((c & 0xf8) == 0xf0) {
-                term.utf_size = term.utf_state = 3;
-                term.utf_char = (c & 0x07);
-              }
-              else if ((c & 0xfc) == 0xf8) {
-                term.utf_size = term.utf_state = 4;
-                term.utf_char = (c & 0x03);
-              }
-              else if ((c & 0xfe) == 0xfc) {
-                term.utf_size = term.utf_state = 5;
-                term.utf_char = (c & 0x01);
-              }
-              else {
-                c = UCSERR;
-                break;
-              }
-              continue;
-            }
-            when 1 or 2 or 3 or 4 or 5: {
-              if ((c & 0xC0) != 0x80) {
-                unget = c;
-                c = UCSERR;
-                term.utf_state = 0;
-                break;
-              }
-              term.utf_char = (term.utf_char << 6) | (c & 0x3f);
-              if (--term.utf_state)
-                continue;
-
-              c = term.utf_char;
-
-             /* Is somebody trying to be evil! */
-              if (c < 0x80 || (c < 0x800 && term.utf_size >= 2) ||
-                  (c < 0x10000 && term.utf_size >= 3) || (c < 0x200000 &&
-                                                          term.utf_size >= 4) ||
-                  (c < 0x4000000 && term.utf_size >= 5))
-                c = UCSERR;
-
-             /* Unicode line separator and paragraph separator are CR-LF */
-              if (c == 0x2028 || c == 0x2029)
-                c = 0x85;
-
-             /* High controls are probably a Baaad idea too. */
-              if (c < 0xA0)
-                c = 0xFFFD;
-
-             /* The UTF-16 surrogates are not nice either. */
-             /*       The standard give the option of decoding these: 
-              *       I don't want to! */
-              if (c >= 0xD800 && c < 0xE000)
-                c = UCSERR;
-
-             /* Ignore language tags */
-              if (c >= 0xE0000 && c <= 0xE007F)
-                continue;
-
-             /* ISO 10646 characters now limited to UTF-16 range. */
-              if (c > 0x10FFFF)
-                c = UCSERR;
-             
-             /* Only the BMP is supported at the moment. */
-              else if (c >= 0x10000)
-                c = 0xFFFD;
-
-             /* U+FEFF is best seen as a null. */
-              if (c == 0xFEFF)
-                continue;
-             /* But U+FFFE is an error. */
-              if (c == 0xFFFE || c == 0xFFFF)
-                c = UCSERR;
-            }
-          }
-        }
         if (cset_attr == CS_LINEDRW && 0x60 <= c && c < 0x80)
           c = linedraw_chars[c - 0x60];
         else if (cset_attr == CS_GBCHR && c == '#')
@@ -695,18 +608,8 @@ term_write(const char *data, int len)
       }
     }
 
-   /* Or DEL. */
-    if (c == 0x7F && term.state < DO_CTRLS &&
-        term.compatibility_level & CL_OTHER) {
-      if (term.curs.x && !term.wrapnext)
-        term.curs.x--;
-      term.wrapnext = false;
-      term_check_boundary(term.curs.x, term.curs.y);
-      term_check_boundary(term.curs.x + 1, term.curs.y);
-      copy_termchar(scrlineptr(term.curs.y), term.curs.x, &term.erase_char);
-    }
-    else if ((c & ~0x1F) == 0 && term.state < DO_CTRLS) {
-     /* Or normal C0 controls. */
+    if (c < 0x20 && term.state < DO_CTRLS) {
+     /* C0 controls. */
       switch (c) {
         when 5:   /* ENQ: terminal type query */
          /* 
@@ -746,6 +649,16 @@ term_write(const char *data, int len)
         when '\t':     /* HT: Character tabulation */
           write_tab();
       }
+    }
+    else if (c == 0x7F && term.state < DO_CTRLS &&
+             term.compatibility_level & CL_OTHER) {
+      /* DEL */
+      if (term.curs.x && !term.wrapnext)
+        term.curs.x--;
+      term.wrapnext = false;
+      term_check_boundary(term.curs.x, term.curs.y);
+      term_check_boundary(term.curs.x + 1, term.curs.y);
+      copy_termchar(scrlineptr(term.curs.y), term.curs.x, &term.erase_char);
     }
     else {
       switch (term.state) {

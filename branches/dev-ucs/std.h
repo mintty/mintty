@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <wctype.h>
 #include <errno.h>
 
 #define WINVER 0x500
