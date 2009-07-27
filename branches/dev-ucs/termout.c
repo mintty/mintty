@@ -25,13 +25,6 @@
 static const char answerback[] = "mintty";
 static const char primary_da[] = "\e[?1;2c";
 
-static const wchar linedraw_chars[32] = {
-  0x2666, 0x2592, 0x2409, 0x240c, 0x240d, 0x240a, 0x00b0, 0x00b1,
-  0x2424, 0x240b, 0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0x23ba,
-  0x23bb, 0x2500, 0x23bc, 0x23bd, 0x251c, 0x2524, 0x2534, 0x252c,
-  0x2502, 0x2264, 0x2265, 0x03c0, 0x2260, 0x00a3, 0x00b7, 0x0020
-};
-
 /*
  * Move the cursor to a given position, clipping at boundaries. We
  * may or may not want to clip at the scroll margin: marg_clip is 0
@@ -123,7 +116,7 @@ seen_disp_event(void)
  * insertion is desired, and -ve for deletion.
  */
 static void
-insch(int n)
+insert_char(int n)
 {
   int dir = (n < 0 ? -1 : +1);
   int m, j;
@@ -153,163 +146,6 @@ insch(int n)
                     ldata->chars + term.curs.x + j);
     while (n--)
       copy_termchar(ldata, term.curs.x + n, &term.erase_char);
-  }
-}
-
-/*
- * Toggle terminal mode `mode' to state `state'. (`query' indicates
- * whether the mode is a DEC private one or a normal one.)
- */
-static void
-toggle_mode(int mode, bool query, bool state)
-{
-  if (query) {
-    switch (mode) {
-      when 1:  /* DECCKM: application cursor keys */
-        term.app_cursor_keys = state;
-      when 2:  /* DECANM: VT52 mode */
-        // IGNORE
-      when 3:  /* DECCOLM: 80/132 columns */
-        term.selected = false;
-        win_resize(term.rows, state ? 132 : 80);
-        term.reset_132 = state;
-        term.alt_t = term.marg_t = 0;
-        term.alt_b = term.marg_b = term.rows - 1;
-        move(0, 0, 0);
-        term_erase_lots(false, true, true);
-      when 5:  /* DECSCNM: reverse video */
-        if (state != term.rvideo) {
-          term.rvideo = state;
-          win_invalidate_all();
-        }
-      when 6:  /* DECOM: DEC origin mode */
-        term.dec_om = state;
-      when 7:  /* DECAWM: auto wrap */
-        term.wrap = state;
-      when 8:  /* DECARM: auto key repeat */
-        // ignore
-        //term.repeat_off = !state;
-      when 9:  /* X10_MOUSE */
-        term.mouse_mode = state ? MM_X10 : 0;
-        win_update_mouse();
-      when 10: /* DECEDM: set local edit mode */
-        term.editing = state;
-        ldisc_send(null, 0, 0);
-      when 25: /* DECTCEM: enable/disable cursor */
-        compatibility(VT220);
-        term.cursor_on = state;
-        seen_disp_event();
-      when 47: /* alternate screen */
-        compatibility(OTHER);
-        term.selected = false;
-        term_swap_screen(state, false, false);
-        term.disptop = 0;
-      when 67: /* DECBKM: backarrow key mode */
-        compatibility(VT420);
-        term.backspace_sends_bs = state;
-      when 1000: /* VT200_MOUSE */
-        term.mouse_mode = state ? MM_VT200 : 0;
-        win_update_mouse();
-      when 1002: /* BTN_EVENT_MOUSE */
-        term.mouse_mode = state ? MM_BTN_EVENT : 0;
-        win_update_mouse();
-      when 1003: /* ANY_EVENT_MOUSE */
-        term.mouse_mode = state ? MM_ANY_EVENT : 0;
-        win_update_mouse();
-      when 1004: /* FOCUS_EVENT_MOUSE */
-        term.report_focus = state;      
-      when 1047:       /* alternate screen */
-        compatibility(OTHER);
-        term.selected = false;
-        term_swap_screen(state, true, true);
-        term.disptop = 0;
-      when 1048:       /* save/restore cursor */
-        save_cursor(state);
-        if (!state)
-          seen_disp_event();
-      when 1049:       /* cursor & alternate screen */
-        if (state)
-          save_cursor(state);
-        if (!state)
-          seen_disp_event();
-        compatibility(OTHER);
-        term.selected = false;
-        term_swap_screen(state, true, false);
-        if (!state)
-          save_cursor(state);
-        term.disptop = 0;
-      when 7700:       /* MinTTY only: CJK ambigous width reporting */
-        term.report_ambig_width = state;
-      when 7727:       /* MinTTY only: Application escape key mode */
-        term.app_escape_key = state;
-      when 7728:       /* MinTTY only: Escape sends FS (instead of ESC) */
-        term.escape_sends_fs = state;
-    }
-  }
-  else {
-    switch (mode) {
-      when 4:  /* IRM: set insert mode */
-        compatibility(VT102);
-        term.insert = state;
-      when 12: /* SRM: set echo mode */
-        term.echoing = !state;
-        ldisc_send(null, 0, 0);
-      when 20: /* LNM: Return sends ... */
-        term.newline_mode = state;
-    }
-  }
-}
-
-static colour
-rgb_to_colour(uint32 rgb)
-{
-  return make_colour(rgb >> 16, rgb >> 8, rgb);
-}
-
-static void
-do_colour_osc(uint i)
-{
-  char *s = term.osc_string;
-  bool has_index_arg = !i;
-  if (has_index_arg) {
-    int len = 0;
-    sscanf(s, "%u;%n", &i, &len);
-    if (!len || i >= 262)
-      return;
-    s += len;
-  }
-  uint rgb, r, g, b;
-  if (strcmp(s, "?") == 0) {
-    ldisc_printf(0, "\e]%u;", term.esc_args[0]);
-    if (has_index_arg)
-      ldisc_printf(0, "%u;", i);
-    uint c = win_get_colour(i);
-    r = red(c), g = green(c), b = blue(c);
-    ldisc_printf(0, "rgb:%04x/%04x/%04x\e\\", r * 0x101, g * 0x101, b * 0x101);
-  }
-  else if (sscanf(s, "#%6x%c", &rgb, &(char){0}) == 1)
-    win_set_colour(i, rgb_to_colour(rgb));
-  else if (sscanf(s, "rgb:%2x/%2x/%2x%c", &r, &g, &b, &(char){0}) == 3)
-    win_set_colour(i, make_colour(r, g, b));
-  else if (sscanf(s, "rgb:%4x/%4x/%4x%c", &r, &g, &b, &(char){0}) == 3)
-    win_set_colour(i, make_colour(r >> 8, g >> 8, b >> 8));
-}
-
-/*
- * Process an OSC sequence: set window title or icon name.
- */
-static void
-do_osc(void)
-{
-  if (!term.osc_w) { // "wordness" is ignored
-    term.osc_string[term.osc_strlen] = 0;
-    switch (term.esc_args[0]) {
-      when 0 or 2 or 21: win_set_title(term.osc_string);  // ignore icon title
-      when 4:  do_colour_osc(0);
-      when 10: do_colour_osc(FG_COLOUR_I);
-      when 11: do_colour_osc(BG_COLOUR_I);
-      when 12: do_colour_osc(CURSOR_COLOUR_I);
-    }
   }
 }
 
@@ -375,20 +211,16 @@ write_linefeed(void)
 }
 
 static void
-put_char(termline *cline, wchar c)
-{
-  clear_cc(cline, term.curs.x);
-  cline->chars[term.curs.x].chr = c;
-  cline->chars[term.curs.x].attr = term.curr_attr;
-}  
-
-/*
- * Output a character.
- */
-static void
 write_char(wchar c)
 {
   termline *cline = scrlineptr(term.curs.y);
+  static void put_char(wchar c)
+  {
+    clear_cc(cline, term.curs.x);
+    cline->chars[term.curs.x].chr = c;
+    cline->chars[term.curs.x].attr = term.curr_attr;
+  }  
+
   int width = wcwidth(c);
   if (term.wrapnext && term.wrap && width > 0) {
     cline->lattr |= LATTR_WRAPPED;
@@ -401,12 +233,12 @@ write_char(wchar c)
     cline = scrlineptr(term.curs.y);
   }
   if (term.insert && width > 0)
-    insch(width);
+    insert_char(width);
   switch (width) {
     when 1:  // Normal character.
       term_check_boundary(term.curs.x, term.curs.y);
       term_check_boundary(term.curs.x + 1, term.curs.y);
-      put_char(cline, c);
+      put_char(c);
     when 2:  // Double-width character.
      /*
       * If we're about to display a double-width
@@ -442,9 +274,9 @@ write_char(wchar c)
         term_check_boundary(term.curs.x, term.curs.y);
         term_check_boundary(term.curs.x + 2, term.curs.y);
       }
-      put_char(cline, c);
+      put_char(c);
       term.curs.x++;
-      put_char(cline, UCSWIDE);
+      put_char(UCSWIDE);
     when 0:  // Combining character.
       if (term.curs.x > 0) {
         int x = term.curs.x - 1;
@@ -596,6 +428,226 @@ do_esc(uchar c)
 }
 
 static void
+do_sgr(void)
+{
+ /* Set Graphics Rendition.
+  *
+  * A VT100 without the AVO only had one
+  * attribute, either underline or
+  * reverse video depending on the
+  * cursor type, this was selected by
+  * CSI 7m.
+  *
+  * when 2:
+  *  This is sometimes DIM, eg on the
+  *  GIGI and Linux
+  * when 8:
+  *  This is sometimes INVIS various ANSI.
+  * when 21:
+  *  This like 22 disables BOLD, DIM and INVIS
+  *
+  * The ANSI colours appear on any
+  * terminal that has colour (obviously)
+  * but the interaction between sgr0 and
+  * the colours varies but is usually
+  * related to the background colour
+  * erase item. The interaction between
+  * colour attributes and the mono ones
+  * is also very implementation
+  * dependent.
+  *
+  * The 39 and 49 attributes are likely
+  * to be unimplemented.
+  */
+  int nargs = term.esc_nargs;
+  for (int i = 0; i < nargs; i++) {
+    switch (term.esc_args[i]) {
+      when 0:  /* restore defaults */
+        term.curr_attr = term.default_attr;
+      when 1:  /* enable bold */
+        compatibility(VT100AVO);
+        term.curr_attr |= ATTR_BOLD;
+      when 4 or 21:  /* enable underline */
+        compatibility(VT100AVO);
+        term.curr_attr |= ATTR_UNDER;
+      when 5:  /* enable blink */
+        compatibility(VT100AVO);
+        term.curr_attr |= ATTR_BLINK;
+      when 7:  /* enable reverse video */
+        term.curr_attr |= ATTR_REVERSE;
+      when 10: /* OEM acs off */
+        compatibility(OTHER);
+        term.oem_acs = 0;
+      when 11: /* OEM acs on */
+        compatibility(OTHER);
+        term.oem_acs = 1;
+      when 12: /* OEM acs on, |0x80 */
+        compatibility(OTHER);
+        term.oem_acs = 2;
+      when 22: /* disable bold */
+        compatibility(VT220);
+        term.curr_attr &= ~ATTR_BOLD;
+      when 24: /* disable underline */
+        compatibility(VT220);
+        term.curr_attr &= ~ATTR_UNDER;
+      when 25: /* disable blink */
+        compatibility(VT220);
+        term.curr_attr &= ~ATTR_BLINK;
+      when 27: /* disable reverse video */
+        compatibility(VT220);
+        term.curr_attr &= ~ATTR_REVERSE;
+      when 30 ... 37:
+       /* foreground */
+        term.curr_attr &= ~ATTR_FGMASK;
+        term.curr_attr |=
+          (term.esc_args[i] - 30) << ATTR_FGSHIFT;
+      when 90 ... 97:
+       /* aixterm-style bright foreground */
+        term.curr_attr &= ~ATTR_FGMASK;
+        term.curr_attr |= ((term.esc_args[i] - 90 + 8)
+                           << ATTR_FGSHIFT);
+      when 39: /* default-foreground */
+        term.curr_attr &= ~ATTR_FGMASK;
+        term.curr_attr |= ATTR_DEFFG;
+      when 40 ... 47:
+       /* background */
+        term.curr_attr &= ~ATTR_BGMASK;
+        term.curr_attr |=
+          (term.esc_args[i] - 40) << ATTR_BGSHIFT;
+      when 100 ... 107:
+       /* aixterm-style bright background */
+        term.curr_attr &= ~ATTR_BGMASK;
+        term.curr_attr |= ((term.esc_args[i] - 100 + 8)
+                           << ATTR_BGSHIFT);
+      when 49: /* default-background */
+        term.curr_attr &= ~ATTR_BGMASK;
+        term.curr_attr |= ATTR_DEFBG;
+      when 38: /* xterm 256-colour mode */
+        if (i + 2 < nargs && term.esc_args[i + 1] == 5) {
+          term.curr_attr &= ~ATTR_FGMASK;
+          term.curr_attr |= ((term.esc_args[i + 2] & 0xFF)
+                             << ATTR_FGSHIFT);
+          i += 2;
+        }
+      when 48: /* xterm 256-colour mode */
+        if (i + 2 < nargs && term.esc_args[i + 1] == 5) {
+          term.curr_attr &= ~ATTR_BGMASK;
+          term.curr_attr |= ((term.esc_args[i + 2] & 0xFF)
+                             << ATTR_BGSHIFT);
+          i += 2;
+        }
+    }
+  }
+  set_erase_char();
+}
+
+/*
+ * Set terminal modes in escape arguments to state.
+ */
+static void
+set_modes(bool state)
+{
+  for (int i = 0; i < term.esc_nargs; i++) {
+    int mode = term.esc_args[i];
+    if (term.esc_query) {
+      switch (mode) {
+        when 1:  /* DECCKM: application cursor keys */
+          term.app_cursor_keys = state;
+        when 2:  /* DECANM: VT52 mode */
+          // IGNORE
+        when 3:  /* DECCOLM: 80/132 columns */
+          term.selected = false;
+          win_resize(term.rows, state ? 132 : 80);
+          term.reset_132 = state;
+          term.alt_t = term.marg_t = 0;
+          term.alt_b = term.marg_b = term.rows - 1;
+          move(0, 0, 0);
+          term_erase_lots(false, true, true);
+        when 5:  /* DECSCNM: reverse video */
+          if (state != term.rvideo) {
+            term.rvideo = state;
+            win_invalidate_all();
+          }
+        when 6:  /* DECOM: DEC origin mode */
+          term.dec_om = state;
+        when 7:  /* DECAWM: auto wrap */
+          term.wrap = state;
+        when 8:  /* DECARM: auto key repeat */
+          // ignore
+          //term.repeat_off = !state;
+        when 9:  /* X10_MOUSE */
+          term.mouse_mode = state ? MM_X10 : 0;
+          win_update_mouse();
+        when 10: /* DECEDM: set local edit mode */
+          term.editing = state;
+          ldisc_send(null, 0, 0);
+        when 25: /* DECTCEM: enable/disable cursor */
+          compatibility(VT220);
+          term.cursor_on = state;
+          seen_disp_event();
+        when 47: /* alternate screen */
+          compatibility(OTHER);
+          term.selected = false;
+          term_swap_screen(state, false, false);
+          term.disptop = 0;
+        when 67: /* DECBKM: backarrow key mode */
+          compatibility(VT420);
+          term.backspace_sends_bs = state;
+        when 1000: /* VT200_MOUSE */
+          term.mouse_mode = state ? MM_VT200 : 0;
+          win_update_mouse();
+        when 1002: /* BTN_EVENT_MOUSE */
+          term.mouse_mode = state ? MM_BTN_EVENT : 0;
+          win_update_mouse();
+        when 1003: /* ANY_EVENT_MOUSE */
+          term.mouse_mode = state ? MM_ANY_EVENT : 0;
+          win_update_mouse();
+        when 1004: /* FOCUS_EVENT_MOUSE */
+          term.report_focus = state;      
+        when 1047:       /* alternate screen */
+          compatibility(OTHER);
+          term.selected = false;
+          term_swap_screen(state, true, true);
+          term.disptop = 0;
+        when 1048:       /* save/restore cursor */
+          save_cursor(state);
+          if (!state)
+            seen_disp_event();
+        when 1049:       /* cursor & alternate screen */
+          if (state)
+            save_cursor(state);
+          else
+            seen_disp_event();
+          compatibility(OTHER);
+          term.selected = false;
+          term_swap_screen(state, true, false);
+          if (!state)
+            save_cursor(state);
+          term.disptop = 0;
+        when 7700:       /* MinTTY only: CJK ambigous width reporting */
+          term.report_ambig_width = state;
+        when 7727:       /* MinTTY only: Application escape key mode */
+          term.app_escape_key = state;
+        when 7728:       /* MinTTY only: Escape sends FS (instead of ESC) */
+          term.escape_sends_fs = state;
+      }
+    }
+    else {
+      switch (mode) {
+        when 4:  /* IRM: set insert mode */
+          compatibility(VT102);
+          term.insert = state;
+        when 12: /* SRM: set echo mode */
+          term.echoing = !state;
+          ldisc_send(null, 0, 0);
+        when 20: /* LNM: Return sends ... */
+          term.newline_mode = state;
+      }
+    }
+  }
+}
+
+static void
 do_csi(uchar c)
 {
   int arg0 = term.esc_args[0], arg1 = term.esc_args[1];
@@ -685,11 +737,11 @@ do_csi(uchar c)
     when '@':        /* ICH: insert chars */
      /* XXX VTTEST says this is vt220, vt510 manual says vt102 */
       compatibility(VT102);
-      insch(def_arg0);
+      insert_char(def_arg0);
       seen_disp_event();
     when 'P':        /* DCH: delete chars */
       compatibility(VT102);
-      insch(-def_arg0);
+      insert_char(-def_arg0);
       seen_disp_event();
     when 'c':        /* DA: terminal type query */
       compatibility(VT100);
@@ -702,8 +754,10 @@ do_csi(uchar c)
       }
     when 'h' or ANSI_QUE('h'):  /* SM: toggle modes to high */
       compatibility(VT100);
-      for (int i = 0; i < nargs; i++)
-        toggle_mode(term.esc_args[i], term.esc_query, true);
+      set_modes(true);
+    when 'l' or ANSI_QUE('l'):  /* RM: toggle modes to low */
+      compatibility(VT100);
+      set_modes(false);
     when 'i' or ANSI_QUE('i'):  /* MC: Media copy */
       compatibility(VT100);
       if (nargs == 1) {
@@ -716,10 +770,6 @@ do_csi(uchar c)
         else if (arg0 == 4 && term.printing)
           term_print_finish();
       }
-    when 'l' or ANSI_QUE('l'):  /* RM: toggle modes to low */
-      compatibility(VT100);
-      for (int i = 0; i < nargs; i++)
-        toggle_mode(term.esc_args[i], term.esc_query, false);
     when 'g':        /* TBC: clear tabs */
       compatibility(VT100);
       if (nargs == 1) {
@@ -763,115 +813,8 @@ do_csi(uchar c)
           seen_disp_event();
         }
       }
-    when 'm': {      /* SGR: set graphics rendition */
-     /* 
-      * A VT100 without the AVO only had one
-      * attribute, either underline or
-      * reverse video depending on the
-      * cursor type, this was selected by
-      * CSI 7m.
-      *
-      * when 2:
-      *  This is sometimes DIM, eg on the
-      *  GIGI and Linux
-      * when 8:
-      *  This is sometimes INVIS various ANSI.
-      * when 21:
-      *  This like 22 disables BOLD, DIM and INVIS
-      *
-      * The ANSI colours appear on any
-      * terminal that has colour (obviously)
-      * but the interaction between sgr0 and
-      * the colours varies but is usually
-      * related to the background colour
-      * erase item. The interaction between
-      * colour attributes and the mono ones
-      * is also very implementation
-      * dependent.
-      *
-      * The 39 and 49 attributes are likely
-      * to be unimplemented.
-      */
-      for (int i = 0; i < nargs; i++) {
-        switch (term.esc_args[i]) {
-          when 0:  /* restore defaults */
-            term.curr_attr = term.default_attr;
-          when 1:  /* enable bold */
-            compatibility(VT100AVO);
-            term.curr_attr |= ATTR_BOLD;
-          when 4 or 21:  /* enable underline */
-            compatibility(VT100AVO);
-            term.curr_attr |= ATTR_UNDER;
-          when 5:  /* enable blink */
-            compatibility(VT100AVO);
-            term.curr_attr |= ATTR_BLINK;
-          when 7:  /* enable reverse video */
-            term.curr_attr |= ATTR_REVERSE;
-          when 10: /* OEM acs off */
-            compatibility(OTHER);
-            term.oem_acs = 0;
-          when 11: /* OEM acs on */
-            compatibility(OTHER);
-            term.oem_acs = 1;
-          when 12: /* OEM acs on, |0x80 */
-            compatibility(OTHER);
-            term.oem_acs = 2;
-          when 22: /* disable bold */
-            compatibility(VT220);
-            term.curr_attr &= ~ATTR_BOLD;
-          when 24: /* disable underline */
-            compatibility(VT220);
-            term.curr_attr &= ~ATTR_UNDER;
-          when 25: /* disable blink */
-            compatibility(VT220);
-            term.curr_attr &= ~ATTR_BLINK;
-          when 27: /* disable reverse video */
-            compatibility(VT220);
-            term.curr_attr &= ~ATTR_REVERSE;
-          when 30 ... 37:
-           /* foreground */
-            term.curr_attr &= ~ATTR_FGMASK;
-            term.curr_attr |=
-              (term.esc_args[i] - 30) << ATTR_FGSHIFT;
-          when 90 ... 97:
-           /* aixterm-style bright foreground */
-            term.curr_attr &= ~ATTR_FGMASK;
-            term.curr_attr |= ((term.esc_args[i] - 90 + 8)
-                               << ATTR_FGSHIFT);
-          when 39: /* default-foreground */
-            term.curr_attr &= ~ATTR_FGMASK;
-            term.curr_attr |= ATTR_DEFFG;
-          when 40 ... 47:
-           /* background */
-            term.curr_attr &= ~ATTR_BGMASK;
-            term.curr_attr |=
-              (term.esc_args[i] - 40) << ATTR_BGSHIFT;
-          when 100 ... 107:
-           /* aixterm-style bright background */
-            term.curr_attr &= ~ATTR_BGMASK;
-            term.curr_attr |= ((term.esc_args[i] - 100 + 8)
-                               << ATTR_BGSHIFT);
-          when 49: /* default-background */
-            term.curr_attr &= ~ATTR_BGMASK;
-            term.curr_attr |= ATTR_DEFBG;
-          when 38: /* xterm 256-colour mode */
-            if (i + 2 < nargs && term.esc_args[i + 1] == 5) {
-              term.curr_attr &= ~ATTR_FGMASK;
-              term.curr_attr |= ((term.esc_args[i + 2] & 0xFF)
-                                 << ATTR_FGSHIFT);
-              i += 2;
-            }
-          when 48: /* xterm 256-colour mode */
-            if (i + 2 < nargs && term.esc_args[i + 1] == 5) {
-              term.curr_attr &= ~ATTR_BGMASK;
-              term.curr_attr |= ((term.esc_args[i + 2] & 0xFF)
-                                 << ATTR_BGSHIFT);
-              i += 2;
-            }
-        }
-      }
-      set_erase_char();
-    }
+    when 'm':      /* SGR: set graphics rendition */
+      do_sgr();
     when 's':        /* save cursor */
       save_cursor(true);
     when 'u':        /* restore cursor */
@@ -1077,6 +1020,59 @@ do_csi(uchar c)
    }
 }
 
+static colour
+rgb_to_colour(uint32 rgb)
+{
+  return make_colour(rgb >> 16, rgb >> 8, rgb);
+}
+
+static void
+do_colour_osc(uint i)
+{
+  char *s = term.osc_string;
+  bool has_index_arg = !i;
+  if (has_index_arg) {
+    int len = 0;
+    sscanf(s, "%u;%n", &i, &len);
+    if (!len || i >= 262)
+      return;
+    s += len;
+  }
+  uint rgb, r, g, b;
+  if (strcmp(s, "?") == 0) {
+    ldisc_printf(0, "\e]%u;", term.esc_args[0]);
+    if (has_index_arg)
+      ldisc_printf(0, "%u;", i);
+    uint c = win_get_colour(i);
+    r = red(c), g = green(c), b = blue(c);
+    ldisc_printf(0, "rgb:%04x/%04x/%04x\e\\", r * 0x101, g * 0x101, b * 0x101);
+  }
+  else if (sscanf(s, "#%6x%c", &rgb, &(char){0}) == 1)
+    win_set_colour(i, rgb_to_colour(rgb));
+  else if (sscanf(s, "rgb:%2x/%2x/%2x%c", &r, &g, &b, &(char){0}) == 3)
+    win_set_colour(i, make_colour(r, g, b));
+  else if (sscanf(s, "rgb:%4x/%4x/%4x%c", &r, &g, &b, &(char){0}) == 3)
+    win_set_colour(i, make_colour(r >> 8, g >> 8, b >> 8));
+}
+
+/*
+ * Process an OSC sequence: set window title or icon name.
+ */
+static void
+do_osc(void)
+{
+  if (!term.osc_w) { // "wordness" is ignored
+    term.osc_string[term.osc_strlen] = 0;
+    switch (term.esc_args[0]) {
+      when 0 or 2 or 21: win_set_title(term.osc_string);  // ignore icon title
+      when 4:  do_colour_osc(0);
+      when 10: do_colour_osc(FG_COLOUR_I);
+      when 11: do_colour_osc(BG_COLOUR_I);
+      when 12: do_colour_osc(CURSOR_COLOUR_I);
+    }
+  }
+}
+
 void
 term_write(const char *data, int len)
 {
@@ -1179,8 +1175,15 @@ term_write(const char *data, int len)
         }
         else {
           // TODO: translate from current codepage
-          if (cset_attr == CS_LINEDRW && 0x60 <= wc && wc < 0x80)
+          if (cset_attr == CS_LINEDRW && 0x60 <= wc && wc < 0x80) {
+            static const wchar linedraw_chars[32] = {
+              0x2666, 0x2592, 0x2409, 0x240c, 0x240d, 0x240a, 0x00b0, 0x00b1,
+              0x2424, 0x240b, 0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0x23ba,
+              0x23bb, 0x2500, 0x23bc, 0x23bd, 0x251c, 0x2524, 0x2534, 0x252c,
+              0x2502, 0x2264, 0x2265, 0x03c0, 0x2260, 0x00a3, 0x00b7, 0x0020
+            };
             wc = linedraw_chars[wc - 0x60];
+          }
           else if (cset_attr == CS_GBCHR && c == '#')
             wc = 0xA3; // pound sign
         }
@@ -1222,15 +1225,6 @@ term_write(const char *data, int len)
               write_return();
           when '\t':     /* HT: Character tabulation */
             write_tab();
-          when 0x7F:     /* DEL */
-            compatibility(OTHER)
-            if (term.curs.x && !term.wrapnext)
-              term.curs.x--;
-            term.wrapnext = false;
-            term_check_boundary(term.curs.x, term.curs.y);
-            term_check_boundary(term.curs.x + 1, term.curs.y);
-            copy_termchar(scrlineptr(term.curs.y),
-                          term.curs.x, &term.erase_char);
           otherwise:
             write_char(wc); 
         }
