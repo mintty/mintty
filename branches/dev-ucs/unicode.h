@@ -1,15 +1,12 @@
 #ifndef UNICODE_H
 #define UNICODE_H
 
-/* Like Linux use the F000 page for direct to font. */
-#define CS_OEMCP   0x0000F000UL       /* OEM Codepage DTF */
-#define CS_ACP     0x0000F100UL       /* Ansi Codepage DTF */
-
-/* These are internal use overlapping with the UTF-16 surrogates */
-#define CS_ASCII   0x0000D800UL       /* normal ASCII charset ESC ( B */
-#define CS_LINEDRW 0x0000D900UL       /* line drawing charset ESC ( 0 */
-#define CS_GBCHR   0x0000DB00UL       /* UK variant   charset ESC ( A */
-#define CS_MASK    0xFFFFFF00UL       /* Character set mask */
+enum {
+  CS_ASCII = 'B',   /* normal ASCII charset */
+  CS_GBCHR = 'A',   /* UK variant */
+  CS_LINEDRW = '0', /* line drawing charset */
+  CS_OEM = 'U'      /* OEM Codepage 437 */
+};
 
 #define UCSERR 0x2592 /* UCS Format error character. */
 
