@@ -113,7 +113,6 @@ term_reset(void)
   term.alt_wrap = term.wrap = true;
   term.alt_cset = term.cset = term.save_cset = term.alt_save_cset = 0;
   term.alt_utf = term.utf = term.save_utf = term.alt_save_utf = 0;
-  term.utf_state = 0;
   term.alt_oem_acs = term.oem_acs = term.save_oem_acs = term.alt_save_oem_acs =
     0;
   term.cset_attr[0] = term.cset_attr[1] = term.save_csattr =

@@ -18,7 +18,7 @@
  * the character cell containing the right-hand half of a CJK wide
  * character.
  */
-#define UCSWIDE 0xF000
+#define UCSWIDE 0
 
 typedef struct {
   uint codepage;

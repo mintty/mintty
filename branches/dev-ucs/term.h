@@ -147,9 +147,7 @@ struct term {
   bool editing;  /* Does terminal want local edit? */
   int  oem_acs, save_oem_acs;    /* CSI 10,11,12m -> OEM charset */
   bool utf;      /* Are we in toggleable UTF-8 mode? */
-  int  utf_state;        /* Is there a pending UTF-8 character */
-  xchar utf_char; /* and what is it so far. */
-  int  utf_size; /* The size of the UTF character. */
+  mbstate_t mbstate; /* Multibyte conversion state */
   bool printing, only_printing;  /* Are we doing ANSI printing? */
   int  print_state;      /* state of print-end-sequence scan */
   bufchain *printer_buf;        /* buffered data for printer */
@@ -198,13 +196,9 @@ struct term {
 
   uchar *tabs;
 
- /*
-  * DO_CTRLS here isn't an actual state, but acts as a marker that
-  * divides the states in two classes.
-  */
   enum {
-    TOPLEVEL, SEEN_ESC, SEEN_CSI, SEEN_OSC, SEEN_OSC_W,
-    DO_CTRLS, SEEN_OSC_P, OSC_STRING, OSC_MAYBE_ST,
+    TOPLEVEL, SEEN_ESC, SEEN_CSI,
+    SEEN_OSC, SEEN_OSC_W, SEEN_OSC_P, OSC_STRING, OSC_MAYBE_ST,
     SEEN_DCS, DCS_MAYBE_ST
   } state;
 
