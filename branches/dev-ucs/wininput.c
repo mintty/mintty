@@ -104,9 +104,9 @@ get_mods(void)
 {
   inline bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
   return
-    is_key_down(VK_SHIFT) * SHIFT |
-    is_key_down(VK_MENU) * ALT |
-    is_key_down(VK_CONTROL) * CTRL;
+    is_key_down(VK_SHIFT) * MOD_SHIFT |
+    is_key_down(VK_MENU) * MOD_ALT |
+    is_key_down(VK_CONTROL) * MOD_CTRL;
 }
 
 static void
@@ -273,7 +273,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     altgr = alt & ctrl;
     meta = (alt & !ctrl) | (is_key_down(VK_LMENU) & is_key_down(VK_RMENU));
   }
-  mod_keys mods = shift * SHIFT | alt * ALT | ctrl * CTRL;
+  mod_keys mods = shift * MOD_SHIFT | alt * MOD_ALT | ctrl * MOD_CTRL;
 
   update_mouse(mods);
 
@@ -315,7 +315,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
   
   // Font zooming
-  if (cfg.zoom_shortcuts && mods == CTRL && !term.modify_other_keys) {
+  if (cfg.zoom_shortcuts && mods == MOD_CTRL && !term.modify_other_keys) {
     int zoom;
     switch (key) {
       when VK_OEM_PLUS or VK_ADD:       zoom = 1;
@@ -347,8 +347,8 @@ win_key_down(WPARAM wp, LPARAM lp)
 
   // Copy&paste
   if (cfg.edit_shortcuts && key == VK_INSERT) {
-    if (mods == CTRL) { term_copy(); return 1; }
-    if (mods == SHIFT) { win_paste(); return 1; }
+    if (mods == MOD_CTRL) { term_copy(); return 1; }
+    if (mods == MOD_SHIFT) { win_paste(); return 1; }
   }
 
   // Keycode buffers

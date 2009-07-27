@@ -9,6 +9,8 @@
 #include "win.h"
 #include "appinfo.h"
 
+#include <sys/termios.h>
+
 /*
  * Terminal emulator.
  */
@@ -24,6 +26,13 @@
 
 static const char answerback[] = "mintty";
 static const char primary_da[] = "\e[?1;2c";
+
+static const wchar linedraw_chars[32] = {
+  0x2666, 0x2592, 0x2409, 0x240c, 0x240d, 0x240a, 0x00b0, 0x00b1,
+  0x2424, 0x240b, 0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0x23ba,
+  0x23bb, 0x2500, 0x23bc, 0x23bd, 0x251c, 0x2524, 0x2534, 0x252c,
+  0x2502, 0x2264, 0x2265, 0x03c0, 0x2260, 0x00a3, 0x00b7, 0x0020
+};
 
 /*
  * Move the cursor to a given position, clipping at boundaries. We
@@ -1176,19 +1185,34 @@ term_write(const char *data, int len)
         else {
           // TODO: translate from current codepage
           if (cset_attr == CS_LINEDRW && 0x60 <= wc && wc < 0x80) {
-            static const wchar linedraw_chars[32] = {
-              0x2666, 0x2592, 0x2409, 0x240c, 0x240d, 0x240a, 0x00b0, 0x00b1,
-              0x2424, 0x240b, 0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0x23ba,
-              0x23bb, 0x2500, 0x23bc, 0x23bd, 0x251c, 0x2524, 0x2534, 0x252c,
-              0x2502, 0x2264, 0x2265, 0x03c0, 0x2260, 0x00a3, 0x00b7, 0x0020
-            };
             wc = linedraw_chars[wc - 0x60];
           }
           else if (cset_attr == CS_GBCHR && c == '#')
             wc = 0xA3; // pound sign
         }
         switch (wc) {
-          when 5:   /* ENQ: terminal type query */
+          when '\e':   /* ESC: Escape */
+            compatibility(ANSIMIN);
+            term.state = SEEN_ESC;
+            term.esc_query = false;
+          when '\a':   /* BEL: Bell */
+            write_bell();
+          when '\b':     /* BS: Back space */
+            write_backspace();
+          when '\t':     /* HT: Character tabulation */
+            write_tab();
+          when '\v':   /* VT: Line tabulation */
+            compatibility(VT100);
+            write_linefeed();
+          when '\f':   /* FF: Form feed */
+            write_linefeed();
+          when '\r':   /* CR: Carriage return */
+            write_return();
+          when '\n':   /* LF: Line feed */
+            write_linefeed();
+            if (term.newline_mode)
+              write_return();
+          when CTRL('E'):   /* ENQ: terminal type query */
            /* 
             * Strictly speaking this is VT100 but a VT100 defaults to
             * no response. Other terminals respond at their option.
@@ -1198,33 +1222,12 @@ term_write(const char *data, int len)
             */
             compatibility(ANSIMIN);
             ldisc_send(answerback, sizeof(answerback) - 1, 0);
-          when '\a':   /* BEL: Bell */
-            write_bell();
-          when '\b':     /* BS: Back space */
-            write_backspace();
-          when 14:   /* LS1: Locking-shift one */
+          when CTRL('N'):   /* LS1: Locking-shift one */
             compatibility(VT100);
             term.cset = 1;
-          when 15:   /* LS0: Locking-shift zero */
+          when CTRL('O'):   /* LS0: Locking-shift zero */
             compatibility(VT100);
             term.cset = 0;
-          when '\e':   /* ESC: Escape */
-            compatibility(ANSIMIN);
-            term.state = SEEN_ESC;
-            term.esc_query = false;
-          when '\r':   /* CR: Carriage return */
-            write_return();
-          when '\f':   /* FF: Form feed */
-            write_linefeed();
-          when '\v':   /* VT: Line tabulation */
-            compatibility(VT100);
-            write_linefeed();
-          when '\n':   /* LF: Line feed */
-            write_linefeed();
-            if (term.newline_mode)
-              write_return();
-          when '\t':     /* HT: Character tabulation */
-            write_tab();
           otherwise:
             write_char(wc); 
         }

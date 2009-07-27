@@ -89,11 +89,11 @@ typedef struct {
 } pos;
 
 typedef enum {
-  MB_NONE = 0, MBT_LEFT = 1, MBT_MIDDLE = 2, MBT_RIGHT = 3
+  MBT_NONE = 0, MBT_LEFT = 1, MBT_MIDDLE = 2, MBT_RIGHT = 3
 } mouse_button;
 
 typedef enum {
-  SHIFT = 1, ALT = 2, CTRL = 4
+  MOD_SHIFT = 1, MOD_ALT = 2, MOD_CTRL = 4
 } mod_keys;
 
 enum {
