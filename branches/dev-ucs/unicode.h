@@ -1,13 +1,6 @@
 #ifndef UNICODE_H
 #define UNICODE_H
 
-enum {
-  CS_ASCII = 'B',   /* normal ASCII charset */
-  CS_GBCHR = 'A',   /* UK variant */
-  CS_LINEDRW = '0', /* line drawing charset */
-  CS_OEM = 'U'      /* OEM Codepage 437 */
-};
-
 #define UCSERR 0x2592 /* UCS Format error character. */
 
 /*

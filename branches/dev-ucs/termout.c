@@ -79,10 +79,10 @@ save_cursor(int save)
   if (save) {
     term.savecurs = term.curs;
     term.save_attr = term.curr_attr;
-    term.save_cset = term.cset;
+    term.save_cset_i = term.cset_i;
     term.save_utf = term.utf;
     term.save_wnext = term.wrapnext;
-    term.save_csattr = term.cset_attr[term.cset];
+    term.save_cset = term.csets[term.cset_i];
     term.save_oem_acs = term.oem_acs;
   }
   else {
@@ -94,7 +94,7 @@ save_cursor(int save)
       term.curs.y = term.rows - 1;
 
     term.curr_attr = term.save_attr;
-    term.cset = term.save_cset;
+    term.cset_i = term.save_cset_i;
     term.utf = term.save_utf;
     term.wrapnext = term.save_wnext;
    /*
@@ -103,7 +103,7 @@ save_cursor(int save)
     */
     if (term.wrapnext && term.curs.x < term.cols - 1)
       term.wrapnext = false;
-    term.cset_attr[term.cset] = term.save_csattr;
+    term.csets[term.cset_i] = term.save_cset;
     term.oem_acs = term.save_oem_acs;
     set_erase_char();
   }
@@ -403,30 +403,20 @@ do_esc(uchar c)
     when ANSI('6', '#'):  /* DECDWL: 2*width */
       compatibility(VT100);
       scrlineptr(term.curs.y)->lattr = LATTR_WIDE;
-    when ANSI('A', '('):  /* GZD4: G0 designate 94-set */
+    when ANSI('A', '(') or ANSI('B', '(') or ANSI('0', '('):
+     /* GZD4: G0 designate 94-set */
       compatibility(VT100);
-      term.cset_attr[0] = CS_GBCHR;
-    when ANSI('B', '('):
-      compatibility(VT100);
-      term.cset_attr[0] = CS_ASCII;
-    when ANSI('0', '('):
-      compatibility(VT100);
-      term.cset_attr[0] = CS_LINEDRW;
-    when ANSI('U', '('):
+      term.csets[0] = c;
+    when ANSI('U', '('):  /* G0: OEM character set */
       compatibility(OTHER);
-      term.cset_attr[0] = CS_OEM;
-    when ANSI('A', ')'):  /* G1D4: G1-designate 94-set */
+      term.csets[0] = CSET_OEM;
+    when ANSI('A', ')') or ANSI('B', ')') or ANSI('0', ')'):
+     /* G1D4: G1-designate 94-set */
       compatibility(VT100);
-      term.cset_attr[1] = CS_GBCHR;
-    when ANSI('B', ')'):
-      compatibility(VT100);
-      term.cset_attr[1] = CS_ASCII;
-    when ANSI('0', ')'):
-      compatibility(VT100);
-      term.cset_attr[1] = CS_LINEDRW;
-    when ANSI('U', ')'):
+      term.csets[1] = c;
+    when ANSI('U', ')'): /* G1: OEM character set */
       compatibility(OTHER);
-      term.cset_attr[1] = CS_OEM;
+      term.csets[1] = CSET_OEM;
     when ANSI('8', '%') or ANSI('G', '%'):
       compatibility(OTHER);
       term.utf = 1;
@@ -1153,8 +1143,6 @@ term_write(const char *data, int len)
       if (term.only_printing) {
         if (c == '\e')
           term.print_state = 1;
-        else if (c == (uchar) '\233')
-          term.print_state = 2;
         else if (c == '[' && term.print_state == 1)
           term.print_state = 2;
         else if (c == '4' && term.print_state == 2)
@@ -1173,9 +1161,9 @@ term_write(const char *data, int len)
     switch (term.state) {
       when TOPLEVEL: {
         // First see about all those translations. */
-        int cset_attr = term.cset_attr[term.cset];
+        int cset = term.csets[term.cset_i];
         wchar wc = c;
-        if (term.oem_acs || cset_attr == CS_OEM) {
+        if (term.oem_acs || cset == CSET_OEM) {
           if (!strchr("\e\n\r\b", c)) {
             if (term.oem_acs == 2)
               wc |= 0x80;
@@ -1184,10 +1172,10 @@ term_write(const char *data, int len)
         }
         else {
           // TODO: translate from current codepage
-          if (cset_attr == CS_LINEDRW && 0x60 <= wc && wc < 0x80) {
+          if (cset == CSET_LINEDRW && 0x60 <= wc && wc < 0x80) {
             wc = linedraw_chars[wc - 0x60];
           }
-          else if (cset_attr == CS_GBCHR && c == '#')
+          else if (cset == CSET_GBCHR && c == '#')
             wc = 0xA3; // pound sign
         }
         switch (wc) {
@@ -1224,10 +1212,10 @@ term_write(const char *data, int len)
             ldisc_send(answerback, sizeof(answerback) - 1, 0);
           when CTRL('N'):   /* LS1: Locking-shift one */
             compatibility(VT100);
-            term.cset = 1;
+            term.cset_i = 1;
           when CTRL('O'):   /* LS0: Locking-shift zero */
             compatibility(VT100);
-            term.cset = 0;
+            term.cset_i = 0;
           otherwise:
             write_char(wc); 
         }

@@ -111,12 +111,12 @@ term_reset(void)
   term.alt_wnext = term.wrapnext = term.save_wnext = term.alt_save_wnext =
     false;
   term.alt_wrap = term.wrap = true;
-  term.alt_cset = term.cset = term.save_cset = term.alt_save_cset = 0;
+  term.alt_cset_i = term.cset_i = term.save_cset_i = term.alt_save_cset_i = 0;
   term.alt_utf = term.utf = term.save_utf = term.alt_save_utf = 0;
   term.alt_oem_acs = term.oem_acs = term.save_oem_acs = term.alt_save_oem_acs =
     0;
-  term.cset_attr[0] = term.cset_attr[1] = term.save_csattr =
-    term.alt_save_csattr = CS_ASCII;
+  term.csets[0] = term.csets[1] = term.save_cset =
+    term.alt_save_cset = CSET_ASCII;
   term.rvideo = 0;
   term.in_vbell = false;
   term.cursor_on = true;
@@ -455,10 +455,10 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
     if (!reset)
       term.insert = term.alt_ins;
     term.alt_ins = t;
-    t = term.cset;
+    t = term.cset_i;
     if (!reset)
-      term.cset = term.alt_cset;
-    term.alt_cset = t;
+      term.cset_i = term.alt_cset_i;
+    term.alt_cset_i = t;
     t = term.utf;
     if (!reset)
       term.utf = term.alt_utf;
@@ -472,14 +472,14 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
     if (!reset && !keep_cur_pos)
       term.savecurs = term.alt_savecurs;
     term.alt_savecurs = tp;
+    t = term.save_cset_i;
+    if (!reset && !keep_cur_pos)
+      term.save_cset_i = term.alt_save_cset_i;
+    term.alt_save_cset_i = t;
     t = term.save_cset;
     if (!reset && !keep_cur_pos)
       term.save_cset = term.alt_save_cset;
     term.alt_save_cset = t;
-    t = term.save_csattr;
-    if (!reset && !keep_cur_pos)
-      term.save_csattr = term.alt_save_csattr;
-    term.alt_save_csattr = t;
     t = term.save_attr;
     if (!reset && !keep_cur_pos)
       term.save_attr = term.alt_save_attr;

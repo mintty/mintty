@@ -84,6 +84,13 @@
 #define TTYPE termchar
 #define TSIZE (sizeof(TTYPE))
 
+typedef enum {
+  CSET_ASCII = 'B',   /* Normal ASCII charset */
+  CSET_GBCHR = 'A',   /* UK variant */
+  CSET_LINEDRW = '0', /* Line drawing charset */
+  CSET_OEM = 'U'      /* OEM Codepage 437 */
+} cset;
+
 typedef struct {
   int y, x;
 } pos;
@@ -133,8 +140,9 @@ struct term {
   bool dec_om;   /* DEC origin mode flag */
   bool wrap, wrapnext;   /* wrap flags */
   bool insert;   /* insert-mode flag */
-  int  cset;     /* 0 or 1: which char set */
-  int  save_cset, save_csattr;   /* saved with cursor position */
+  bool cset_i;   /* 0 or 1: which char set */
+  bool save_cset_i;
+  cset save_cset;   /* saved with cursor position */
   bool save_utf, save_wnext;     /* saved with cursor position */
   bool rvideo;   /* global reverse video flag */
   bool cursor_on;        /* cursor enabled flag */
@@ -156,12 +164,14 @@ struct term {
  /* ESC 7 saved state for the alternate screen */
   pos  alt_savecurs;
   int  alt_save_attr;
-  int  alt_save_cset, alt_save_csattr;
+  bool alt_save_cset_i;
+  cset alt_save_cset;
   bool alt_save_utf, alt_save_wnext;
   int  alt_save_oem_acs;
   int  alt_x, alt_y;
   bool alt_om, alt_wrap, alt_wnext, alt_ins;
-  int  alt_cset, alt_oem_acs;
+  bool alt_cset_i;
+  int  alt_oem_acs;
   bool alt_utf;
   int  alt_t, alt_b;
   bool which_screen;
@@ -184,7 +194,7 @@ struct term {
   int  cursor_type;
   int  cursor_blinks;
 
-  int  cset_attr[2];
+  int  csets[2];
 
   int  esc_args[ARGS_MAX];
   int  esc_nargs;
