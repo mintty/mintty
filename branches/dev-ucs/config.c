@@ -303,9 +303,9 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, null, '\0', 4, P(0),      
     dlg_stdradiobutton_handler, I(offcfg(scroll_mod)),
-    "Shift", 's', I(MOD_SHIFT),
-    "Ctrl", 'c', I(MOD_CTRL),
-    "Alt", 'a', I(MOD_ALT),
+    "Shift", 's', I(MDK_SHIFT),
+    "Ctrl", 'c', I(MDK_CTRL),
+    "Alt", 'a', I(MDK_ALT),
     "Off", 'o', I(0),
     null
   );
@@ -347,9 +347,9 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, "Modifier for overriding default", '\0', 4, P(0),
     dlg_stdradiobutton_handler, I(offcfg(click_target_mod)),
-    "Shift", 's', I(MOD_SHIFT),
-    "Ctrl", 'c', I(MOD_CTRL),
-    "Alt", 'a', I(MOD_ALT),
+    "Shift", 's', I(MDK_SHIFT),
+    "Ctrl", 'c', I(MDK_CTRL),
+    "Alt", 'a', I(MDK_ALT),
     "Off", 'o', I(0),
     null
   );
@@ -448,12 +448,12 @@ int_settings[] = {
   {"FontHeight", offcfg(font.size), 10},
   {"FontCharset", offcfg(font.charset), 0},
   {"FontQuality", offcfg(font_quality), FQ_DEFAULT},
-  {"ScrollMod", offcfg(scroll_mod), MOD_SHIFT},
+  {"ScrollMod", offcfg(scroll_mod), MDK_SHIFT},
   {"RightClickAction", offcfg(right_click_action), RC_SHOWMENU},
   {"CopyOnSelect", offcfg(copy_on_select), false},
   {"ClicksPlaceCursor", offcfg(clicks_place_cursor), false},
   {"ClicksTargetApp", offcfg(clicks_target_app), true},
-  {"ClickTargetMod", offcfg(click_target_mod), MOD_SHIFT},
+  {"ClickTargetMod", offcfg(click_target_mod), MDK_SHIFT},
   {"BellType", offcfg(bell_type), BELL_DISABLED},
   {"BellIndication", offcfg(bell_ind), B_IND_STEADY},
 };

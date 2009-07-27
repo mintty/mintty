@@ -100,7 +100,7 @@ typedef enum {
 } mouse_button;
 
 typedef enum {
-  MOD_SHIFT = 1, MOD_ALT = 2, MOD_CTRL = 4
+  MDK_SHIFT = 1, MDK_ALT = 2, MDK_CTRL = 4
 } mod_keys;
 
 enum {

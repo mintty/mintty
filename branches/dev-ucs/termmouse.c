@@ -274,8 +274,8 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     term.mouse_state = MS_CLICKED;
   }
   else {  
-    bool alt = mods & MOD_ALT;
-    bool shift_ctrl = mods & (MOD_SHIFT | MOD_CTRL);
+    bool alt = mods & MDK_ALT;
+    bool shift_ctrl = mods & (MDK_SHIFT | MDK_CTRL);
     int rca = cfg.right_click_action;
     if (b == MBT_RIGHT && (rca == RC_SHOWMENU || shift_ctrl)) {
       if (!alt) 
@@ -425,7 +425,7 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
       do send_mouse_event(code, mods, p); while (--notches);
     }
   }
-  else if (mods == MOD_CTRL) {
+  else if (mods == MDK_CTRL) {
     static int accu;
     accu += delta;
     int zoom = accu / DELTA_NOTCH;
@@ -434,10 +434,10 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
       win_zoom_font(zoom);
     }
   }
-  else if (!(mods & ~MOD_SHIFT)) {
+  else if (!(mods & ~MDK_SHIFT)) {
     // Scroll, taking the lines_per_notch setting into account.
     // Scroll by a page per notch if setting is -1 or Shift is pressed.
-    if (lines_per_notch == -1 || mods & MOD_SHIFT)
+    if (lines_per_notch == -1 || mods & MDK_SHIFT)
       lines_per_notch = term.rows;
     static int accu;
     accu += delta * lines_per_notch;
