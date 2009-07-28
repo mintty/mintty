@@ -480,6 +480,8 @@ win_key_down(WPARAM wp, LPARAM lp)
       else
         other_code(term.backspace_sends_bs ? '\b' : 0x7F);
     when VK_TAB:
+      if (alt)
+        return 0;
       if (!ctrl)
         shift ? csi('Z') : ch('\t');
       else
