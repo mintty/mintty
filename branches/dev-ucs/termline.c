@@ -206,33 +206,34 @@ move_termchar(termline * line, termchar * dest, termchar * src)
 }
 
 static void
-makeliteral_chr(struct buf *b, termchar *c)
+makeliteral_chr(struct buf *buf, termchar *c)
 {
  /*
-  * My encoding for characters is UTF-8-like, in that it stores
-  * 7-bit ASCII in one byte and uses high-bit-set bytes as
-  * introducers to indicate a longer sequence. However, it's
-  * unlike UTF-8 in that it doesn't need to be able to
-  * resynchronise, and therefore I don't want to waste two bits
-  * per byte on having recognisable continuation characters.
-  * 
-  * 0000-007F: 0xxxxxxx
-  * 0080-7FFF: 1xxxxxxx xxxxxxxx
-  * 4000-FFFF: 11111111 1xxxxxxx xxxxxxxx
+  * The encoding for characters assigns one-byte codes to printable
+  * ISO-8859-1 characters and NUL, and two-byte codes to anything else up
+  * to 0x37FF. UTF-16 surrogates also get two-byte codes, to avoid non-BMP
+  * characters exploding to six bytes. Anything else is three bytes long.
   */
-
-  wchar wc = c->chr;
-  if (wc < 0x80)
-    add(b, wc);
-  else if (c->chr < 0x8000) {
-    add(b, (wc >> 8) | 0x80);
-    add(b, wc);
+  uchar h = c->chr >> 8, l = c->chr;
+  if (h == 0) {
+    /* Map control chars except NUL to three byte-codes.
+     * DEL acts as prefix for three-byte codes, while the other control chars
+     * introduce two-byte codes.
+     */
+    if ((l != 0 && (l & 0xC0) == 0) || l == 0x7F)
+      add(buf, 0x7F),
+      add(buf, 0);
   }
-  else {
-    add(b, 0xFF);
-    add(b, wc >> 8);
-    add(b, wc);
-  }
+  else if (h < 0x20)
+    add(buf, h);
+  else if (h < 0x38)
+    add(buf, h + 0x60);
+  else if (h >= 0xD8 && h < 0xE0)
+    add(buf, h - 0x40);
+  else
+    add(buf, 0x7F),
+    add(buf, h);
+  add(buf, l);
 }
 
 static void
@@ -308,16 +309,18 @@ static void
 readliteral_chr(struct buf *buf, termchar *c, termline *unused(ldata))
 {
   wchar wc;
-  uint b = get(buf);
-  if (b < 0x80)
-    wc = b;
-  else if (b != 0xFF) {
-    wc = (b & ~0x80) << 8;
-    wc |= get(buf); 
-  }
-  else {
-    wc = get(buf) << 8;
-    wc |= get(buf);
+  uchar b = get(buf);
+  switch (b) {
+    when 0x01 ... 0x1F:
+      wc = b << 8 | get(buf);
+    when 0x80 ... 0x97:
+      wc = (b - 0x60) << 8 | get(buf);
+    when 0x98 ... 0x9F:
+      wc = (b + 0x0) << 8 | get(buf);
+    when 0x7F:
+      wc = get(buf) << 8 | get(buf);
+    otherwise:
+      wc = b;
   }
   c->chr = wc;
 }
@@ -747,7 +750,7 @@ sblines(void)
  * (respectively).
  */
 termline *
-(lineptr)(int y)
+lineptr(int y)
 {
   termline *line;
   tree234 *whichtree;
