@@ -206,7 +206,7 @@ move_termchar(termline * line, termchar * dest, termchar * src)
 }
 
 static void
-makeliteral_chr(struct buf *b, termchar * c, uint * state)
+makeliteral_chr(struct buf *b, termchar *c)
 {
  /*
   * My encoding for characters is UTF-8-like, in that it stores
@@ -216,23 +216,14 @@ makeliteral_chr(struct buf *b, termchar * c, uint * state)
   * resynchronise, and therefore I don't want to waste two bits
   * per byte on having recognisable continuation characters.
   * 
-  * 0000-007F: 0xxxxxxx (but see below)
+  * 0000-007F: 0xxxxxxx
   * 0080-7FFF: 1xxxxxxx xxxxxxxx
   * 4000-FFFF: 11111111 1xxxxxxx xxxxxxxx
-  * 
-  * The encoding as written above would be very simple, except
-  * that 7-bit ASCII can occur in several different ways in the
-  * terminal data; sometimes it crops up in the D800 page
-  * (CSET_ASCII) but at other times it's in the 0000 page (real
-  * Unicode). Therefore, this encoding is actually _stateful_:
-  * the one-byte encoding of 00-7F actually indicates `reuse the
-  * upper three bytes of the last character', and to encode an
-  * absolute value of 00-7F you need to use the two-byte form
-  * instead.
   */
+
   wchar wc = c->chr;
-  if ((wc & ~0x7Fu) == *state)
-    add(b, wc & 0x7F);
+  if (wc < 0x80)
+    add(b, wc);
   else if (c->chr < 0x8000) {
     add(b, (wc >> 8) | 0x80);
     add(b, wc);
@@ -242,11 +233,10 @@ makeliteral_chr(struct buf *b, termchar * c, uint * state)
     add(b, wc >> 8);
     add(b, wc);
   }
-  *state = wc & ~0x7F;
 }
 
 static void
-makeliteral_attr(struct buf *b, termchar * c, uint *unused(state))
+makeliteral_attr(struct buf *b, termchar *c)
 {
  /*
   * My encoding for attributes is 16-bit-granular and assumes
@@ -292,48 +282,35 @@ makeliteral_attr(struct buf *b, termchar * c, uint *unused(state))
     add(b, (uchar) (attr & 0xFF));
   }
 }
+
 static void
-makeliteral_cc(struct buf *b, termchar * c, uint * unused(state))
+makeliteral_cc(struct buf *b, termchar *c)
 {
  /*
   * For combining characters, I just encode a bunch of ordinary
   * chars using makeliteral_chr, and terminate with a \0
   * character (which I know won't come up as a combining char
   * itself).
-  * 
-  * I don't use the stateful encoding in makeliteral_chr.
   */
-  uint zstate;
   termchar z;
 
   while (c->cc_next) {
     c += c->cc_next;
-
     assert(c->chr != 0);
-
-    zstate = 0;
-    makeliteral_chr(b, c, &zstate);
+    makeliteral_chr(b, c);
   }
 
   z.chr = 0;
-  zstate = 0;
-  makeliteral_chr(b, &z, &zstate);
+  makeliteral_chr(b, &z);
 }
 
 static void
-readliteral_chr(struct buf *buf, termchar * c, termline * unused(ldata),
-                uint * state)
+readliteral_chr(struct buf *buf, termchar *c, termline *unused(ldata))
 {
- /*
-  * 0000-007F: 0xxxxxxx
-  * 0080-7FFF: 1xxxxxxx xxxxxxxx
-  * 4000-FFFF: 11111111 1xxxxxxx xxxxxxxx
-  */
-
   wchar wc;
   uint b = get(buf);
   if (b < 0x80)
-    wc = b | *state;
+    wc = b;
   else if (b != 0xFF) {
     wc = (b & ~0x80) << 8;
     wc |= get(buf); 
@@ -342,13 +319,11 @@ readliteral_chr(struct buf *buf, termchar * c, termline * unused(ldata),
     wc = get(buf) << 8;
     wc |= get(buf);
   }
-  *state = wc & ~0x7F;
   c->chr = wc;
 }
 
 static void
-readliteral_attr(struct buf *b, termchar * c, termline * unused(ldata),
-                 uint * unused(state))
+readliteral_attr(struct buf *b, termchar *c, termline *unused(ldata))
 {
   uint val, attr, colourbits;
 
@@ -379,18 +354,15 @@ readliteral_attr(struct buf *b, termchar * c, termline * unused(ldata),
 }
 
 static void
-readliteral_cc(struct buf *b, termchar *c, termline *ldata,
-               uint *unused(state))
+readliteral_cc(struct buf *b, termchar *c, termline *ldata)
 {
   termchar n;
-  uint zstate;
   int x = c - ldata->chars;
 
   c->cc_next = 0;
 
   while (1) {
-    zstate = 0;
-    readliteral_chr(b, &n, ldata, &zstate);
+    readliteral_chr(b, &n, ldata);
     if (!n.chr)
       break;
     add_cc(ldata, x, n.chr);
@@ -398,12 +370,11 @@ readliteral_cc(struct buf *b, termchar *c, termline *ldata,
 }
 
 static void
-makerle(struct buf *b, termline * ldata,
-        void (*makeliteral) (struct buf * b, termchar * c, uint * state))
+makerle(struct buf *b, termline *ldata,
+        void (*makeliteral) (struct buf *b, termchar *c))
 {
   int hdrpos, hdrsize, n, prevlen, prevpos, thislen, thispos, prev2;
   termchar *c = ldata->chars;
-  uint state = 0, oldstate;
 
   n = ldata->cols;
 
@@ -415,7 +386,7 @@ makerle(struct buf *b, termline * ldata,
 
   while (n-- > 0) {
     thispos = b->len;
-    makeliteral(b, c++, &state);
+    makeliteral(b, c++);
     thislen = b->len - thispos;
     if (thislen == prevlen &&
         !memcmp(b->data + prevpos, b->data + thispos, thislen)) {
@@ -468,13 +439,11 @@ makerle(struct buf *b, termline * ldata,
         while (n > 0 && runlen < 129) {
           int tmppos, tmplen;
           tmppos = b->len;
-          oldstate = state;
-          makeliteral(b, c, &state);
+          makeliteral(b, c);
           tmplen = b->len - tmppos;
           b->len = tmppos;
           if (tmplen != thislen ||
               memcmp(b->data + runpos + 1, b->data + tmppos, tmplen)) {
-            state = oldstate;
             break;      /* run over */
           }
           n--, c++, runlen++;
@@ -590,12 +559,10 @@ compressline(termline * ldata)
 }
 
 static void
-readrle(struct buf *b, termline * ldata,
-        void (*readliteral) (struct buf * b, termchar * c, termline * ldata,
-                             uint * state))
+readrle(struct buf *b, termline *ldata,
+        void (*readliteral) (struct buf *b, termchar *c, termline *ldata))
 {
   int n = 0;
-  uint state = 0;
 
   while (n < ldata->cols) {
     int hdr = get(b);
@@ -607,7 +574,7 @@ readrle(struct buf *b, termline * ldata,
       while (count--) {
         assert(n < ldata->cols);
         b->len = pos;
-        readliteral(b, ldata->chars + n, ldata, &state);
+        readliteral(b, ldata->chars + n, ldata);
         n++;
       }
     }
@@ -617,7 +584,7 @@ readrle(struct buf *b, termline * ldata,
       int count = hdr + 1;
       while (count--) {
         assert(n < ldata->cols);
-        readliteral(b, ldata->chars + n, ldata, &state);
+        readliteral(b, ldata->chars + n, ldata);
         n++;
       }
     }
