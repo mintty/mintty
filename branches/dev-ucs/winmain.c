@@ -16,6 +16,7 @@
 #include <getopt.h>
 #include <imm.h>
 #include <winnls.h>
+#include <locale.h>
 
 #include <sys/cygwin.h>
 #include <cygwin/version.h>
@@ -840,6 +841,8 @@ main(int argc, char *argv[])
     asprintf((char **)&config_file, "%s/.minttyrc", getenv("HOME"));
 
   load_config();
+  
+  setlocale(LC_CTYPE, "");
   
   if (!size_override) {
     rows = cfg.rows;

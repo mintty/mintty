@@ -1171,7 +1171,14 @@ term_write(const char *data, int len)
           }
         }
         else {
-          // TODO: translate from current codepage
+          size_t ret = mbrtowc(&wc, (const char []){c}, 1, &term.mbstate);
+          switch (ret) {
+            when (size_t)-2:
+              continue;
+            when (size_t)-1:
+              wc = UCSERR;
+              mbrtowc(0, 0, 0, &term.mbstate);
+          }
           if (cset == CSET_LINEDRW && 0x60 <= wc && wc < 0x80) {
             wc = linedraw_chars[wc - 0x60];
           }
@@ -1216,6 +1223,8 @@ term_write(const char *data, int len)
           when CTRL('O'):   /* LS0: Locking-shift zero */
             compatibility(VT100);
             term.cset_i = 0;
+          when 0x7F:  /* DEL */
+            // ignore
           otherwise:
             write_char(wc); 
         }
