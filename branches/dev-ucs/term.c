@@ -920,12 +920,10 @@ term_paint(void)
     * each character cell to look like.
     */
     for (int j = 0; j < term.cols; j++) {
-      uint tattr, tchar;
       termchar *d = lchars + j;
       scrpos.x = backward ? backward[j] : j;
-
-      tchar = d->chr;
-      tattr = d->attr;
+      wchar tchar = d->chr;
+      uint tattr = d->attr;
       
       if (j < term.cols - 1 && d[1].chr == UCSWIDE)
         tattr |= ATTR_WIDE;
@@ -1021,12 +1019,10 @@ term_paint(void)
     term.disptext[i]->lattr = ldata->lattr;
 
     for (int j = 0; j < term.cols; j++) {
-      uint tattr, tchar;
-      int break_run, do_copy;
+      bool break_run, do_copy;
       termchar *d = lchars + j;
-
-      tattr = newline[j].attr;
-      tchar = newline[j].chr;
+      uint tattr = newline[j].attr;
+      wchar tchar = newline[j].chr;
 
       if ((term.disptext[i]->chars[j].attr ^ tattr) & ATTR_WIDE)
         dirty_line = true;
@@ -1076,22 +1072,18 @@ term_paint(void)
         chlen = ccount + 256;
         ch = renewn(ch, chlen);
       }
-      ch[ccount++] = (wchar) tchar;
+      ch[ccount++] = tchar;
 
       if (d->cc_next) {
         termchar *dd = d;
 
         while (dd->cc_next) {
-          uint schar;
-
-          dd += dd->cc_next;
-
-          schar = dd->chr;
           if (ccount >= chlen) {
             chlen = ccount + 256;
             ch = renewn(ch, chlen);
           }
-          ch[ccount++] = (wchar) schar;
+          dd += dd->cc_next;
+          ch[ccount++] = dd->chr;
         }
 
         attr |= TATTR_COMBINING;
