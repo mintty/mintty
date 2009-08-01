@@ -279,12 +279,6 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Keys", "Keys");
 
-  s = ctrl_getset(b, "Keys", "altgr", null);
-  ctrl_checkbox(
-    s, "Distinguish AltGr from Ctrl+Alt", 'd', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(distinguish_altgr))
-  );
-
   s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
   ctrl_checkbox(
     s, "Window commands (Alt+Space/Enter/Fn)", 'w', P(0),
@@ -299,6 +293,17 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(zoom_shortcuts))
   );
   
+  s = ctrl_getset(b, "Keys", "alt", null);
+  ctrl_columns(s, 2, 50, 50);
+  ctrl_checkbox(
+    s, "Ctrl+Alt is AltGr", 'g', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(altctrl_is_altgr))
+  )->column = 0;
+  ctrl_checkbox(
+    s, "Lone Alt sends ESC", 'e', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(alt_sends_esc))
+  )->column = 1;
+
   s = ctrl_getset(b, "Keys", "scroll", "Modifier for scrolling");
   ctrl_radiobuttons(
     s, null, '\0', 4, P(0),      
@@ -436,7 +441,8 @@ int_settings[] = {
   {"Scrollbar", offcfg(scrollbar), true},
   {"ScrollbackLines", offcfg(scrollback_lines), 10000},
   {"ConfirmExit", offcfg(confirm_exit), true},
-  {"DistinguishAltGr", offcfg(distinguish_altgr), false},
+  {"DistinguishAltGr", offcfg(altctrl_is_altgr), true},
+  {"AltSendsESC", offcfg(alt_sends_esc), false},
   {"WindowShortcuts", offcfg(window_shortcuts), true},
   {"EditShortcuts", offcfg(edit_shortcuts), true},
   {"ZoomShortcuts", offcfg(zoom_shortcuts), true},

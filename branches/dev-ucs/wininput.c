@@ -575,8 +575,10 @@ win_key_up(WPARAM wParam, LPARAM unused(lParam))
   if (wParam != VK_MENU)
     return false;
 
-  if (alt_state == ALT_ALONE)
-    term.app_escape_key ? ldisc_send("\eO[", 3, 1) : ldisc_send("\e", 1, 1);
+  if (alt_state == ALT_ALONE) {
+    if (cfg.alt_sends_esc)
+      term.app_escape_key ? ldisc_send("\eO[", 3, 1) : ldisc_send("\e", 1, 1);
+  }
   else if (alt_state > ALT_ALONE) {
     if (term_in_utf()) {
       if (alt_char < 0x20)

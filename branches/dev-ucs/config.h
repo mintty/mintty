@@ -32,6 +32,7 @@ enum { RC_SHOWMENU, RC_PASTE, RC_EXTEND };
 
 typedef struct {
   int copy_on_select;
+  int alt_sends_esc;
   int cursor_type;
   int cursor_blinks;
   int bell_type;
@@ -42,7 +43,7 @@ typedef struct {
   int window_shortcuts;
   int edit_shortcuts;
   int zoom_shortcuts;
-  int distinguish_altgr;
+  int altctrl_is_altgr;
   int scroll_mod;
   int clicks_place_cursor;
   int clicks_target_app;
