@@ -7,6 +7,12 @@
 #include "linedisc.h"
 #include "win.h"
 
+static bool
+wordtype(int c)
+{
+  return iswalnum(c) || strchr("#-./\\_~", c);
+}
+
 static pos
 sel_spread_word(pos p, int dir)
 {

@@ -7,7 +7,6 @@
 
 #include "config.h"
 #include "minibidi.h"
-#include "unicode.h"
 
 #include <winnls.h>
 
@@ -218,8 +217,6 @@ win_init_fonts(void)
     fonts[FONT_BOLD] = 0;
   }
   fontflag[0] = fontflag[1] = fontflag[2] = 1;
-
-  init_ucs();
 }
 
 void

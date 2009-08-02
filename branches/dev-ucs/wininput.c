@@ -580,13 +580,13 @@ win_key_up(WPARAM wParam, LPARAM unused(lParam))
       term.app_escape_key ? ldisc_send("\eO[", 3, 1) : ldisc_send("\e", 1, 1);
   }
   else if (alt_state > ALT_ALONE) {
-    if (term_in_utf()) {
+    if (MB_CUR_MAX == 1)
+      ldisc_send((char[]){alt_char}, 1, 1);
+    else {
       if (alt_char < 0x20)
         MultiByteToWideChar(CP_OEMCP, MB_USEGLYPHCHARS, (char[]){alt_char}, 1, &alt_char, 1); 
       luni_send(&alt_char, 1, 1);
     }
-    else if (alt_char < 0x100)
-      ldisc_send((char[]){alt_char}, 1, 1);
   }
   
   alt_state = ALT_NONE;

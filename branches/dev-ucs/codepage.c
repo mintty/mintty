@@ -3,14 +3,12 @@
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
-#include "unicode.h"
+#include "codepage.h"
 
-#include "config.h"
+#include "platform.h"
 
 #include <winbase.h>
 #include <winnls.h>
-
-unicode_data ucsdata;
 
 struct cp_list_item {
   int codepage;
@@ -43,13 +41,6 @@ static const struct cp_list_item cp_list[] = {
   {21866, "Ukrainian (KOI8-U)"},
   {0, 0}
 };
-
-void
-init_ucs(void)
-{
- /* Decide on the Line and Font codepages */
-  ucsdata.codepage = decode_codepage(cfg.codepage);
-}
 
 int
 decode_codepage(char *cp_name)
@@ -153,61 +144,4 @@ cp_enumerate(int index)
   if (index < 0 || index >= (int) lengthof(cp_list))
     return null;
   return cp_list[index].name;
-}
-
-void
-get_unitab(int codepage, wchar * unitab, int ftype)
-{
-  char tbuf[4];
-  int i, max = 256, flg = MB_ERR_INVALID_CHARS;
-
-  if (ftype)
-    flg |= MB_USEGLYPHCHARS;
-  if (ftype == 2)
-    max = 128;
-
-  if (codepage == CP_UTF8) {
-    for (i = 0; i < max; i++)
-      unitab[i] = i;
-    return;
-  }
-
-  if (codepage == CP_ACP)
-    codepage = GetACP();
-  else if (codepage == CP_OEMCP)
-    codepage = GetOEMCP();
-
-  if (codepage > 0) {
-    for (i = 0; i < max; i++) {
-      tbuf[0] = i;
-      if (mb_to_wc(codepage, flg, tbuf, 1, unitab + i, 1) != 1)
-        unitab[i] = 0xFFFD;
-    }
-  }
-}
-
-int
-wc_to_mb(int codepage, int flags, const wchar * wcstr, int wclen,
-                                  char *mbstr, int mblen)
-{
-  return WideCharToMultiByte(codepage, flags, wcstr, wclen, mbstr, mblen, 0, 0);
-}
-
-int
-mb_to_wc(int codepage, int flags, const char *mbstr, int mblen,
-                                  wchar * wcstr, int wclen)
-{
-  return MultiByteToWideChar(codepage, flags, mbstr, mblen, wcstr, wclen);
-}
-
-int
-is_dbcs_leadbyte(int codepage, char byte)
-{
-  return IsDBCSLeadByteEx(codepage, byte);
-}
-
-int
-wordtype(int c)
-{
-  return iswalnum(c) || strchr("#-./\\_~", c);
 }

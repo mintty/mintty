@@ -1416,12 +1416,6 @@ term_set_focus(int has_focus)
   }
 }
 
-bool
-term_in_utf(void)
-{
-  return term.utf || ucsdata.codepage == unicode_codepage;
-}
-
 int
 term_cursor_type(void)
 {

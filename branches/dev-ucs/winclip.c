@@ -6,7 +6,6 @@
 #include "winpriv.h"
 
 #include "config.h"
-#include "unicode.h"
 
 #include <wchar.h>
 
@@ -60,7 +59,9 @@ win_copy(wchar *data, int *attr, int len)
   int palette[NALLCOLOURS];
   int numcolours;
 
-  get_unitab(CP_ACP, unitab, 0);
+  for (int i = 0; i < 256; i++)
+    MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS,
+                        (char[]){i}, 1, unitab + i, 1);
 
   rtfsize = 100 + strlen(cfg.font.name);
   rtf = newn(char, rtfsize);

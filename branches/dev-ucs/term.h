@@ -7,6 +7,15 @@
 #include "print.h"
 #include "minibidi.h"
 
+#define UCSERR 0x2592 /* UCS Format error character. */
+
+/*
+ * UCSWIDE is a special value used in the terminal data to signify
+ * the character cell containing the right-hand half of a CJK wide
+ * character.
+ */
+#define UCSWIDE 0
+
 /* Three attribute types: 
  * The ATTRs (normal attributes) are stored with the characters in
  * the main display arrays
@@ -280,7 +289,6 @@ void term_reconfig(void);
 void term_seen_key_event(void);
 void term_write(const char *, int len);
 void term_set_focus(int has_focus);
-bool term_in_utf(void);
 int  term_cursor_type(void);
 bool term_cursor_blinks(void);
 

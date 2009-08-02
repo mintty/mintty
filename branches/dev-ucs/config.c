@@ -7,7 +7,7 @@
 
 #include "ctrls.h"
 #include "print.h"
-#include "unicode.h"
+#include "codepage.h"
 #include "term.h"
 #include "win.h"
 

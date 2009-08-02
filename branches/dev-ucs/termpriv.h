@@ -7,7 +7,6 @@
 
 #include "term.h"
 
-#include "unicode.h"
 #include "config.h"
 
 enum {

@@ -10,7 +10,6 @@
 #include "appinfo.h"
 #include "linedisc.h"
 #include "child.h"
-#include "unicode.h"
 
 #include <process.h>
 #include <getopt.h>
@@ -41,10 +40,8 @@ win_set_timer(void (*cb)(void), uint ticks)
 void
 win_set_title(char *title)
 {
-  size_t len = strlen(title);
-  wchar wtitle[len + 1];
-  size_t wlen = mb_to_wc(ucsdata.codepage, 0, title, len, wtitle, len);
-  wtitle[wlen] = 0;
+  wchar wtitle[strlen(title) + 1];
+  mbstowcs(wtitle, title, sizeof wtitle);
   SetWindowTextW(wnd, wtitle);
 }
 
