@@ -5,8 +5,6 @@
 
 #include "codepage.h"
 
-#include "platform.h"
-
 #include <winbase.h>
 #include <winnls.h>
 
@@ -128,5 +126,14 @@ cp_enumerate(uint i)
     return 0;
   static char buf[64];
   sprintf(buf, "%s (%s)", cp_name(cp_menu[i].id), cp_menu[i].comment);
+  return buf;
+}
+
+char *
+default_locale(void)
+{
+  static char buf[6] = "xx_XX";
+  GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME, buf, 2);
+  GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, buf + 3, 2);
   return buf;
 }

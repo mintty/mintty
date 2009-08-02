@@ -123,9 +123,22 @@ codepage_handler(control *ctrl, void *dlg, void *unused(data), int event)
     dlg_update_done(ctrl, dlg);
   }
   else if (event == EVENT_VALCHANGE) {
-    dlg_editbox_get(ctrl, dlg, cp, sizeof (cfg.codepage));
+    dlg_editbox_get(ctrl, dlg, cp, sizeof cfg.codepage);
     strcpy(cp, cp_name(cp_lookup(cp)));
   }
+}
+
+static void
+locale_handler(control *ctrl, void *dlg, void *unused(data), int event)
+{
+  char *loc = new_cfg.locale;
+  if (event == EVENT_REFRESH) {
+    if (!*loc)
+      strcpy(loc, default_locale());
+    dlg_editbox_set(ctrl, dlg, loc);
+  }
+  else if (event == EVENT_VALCHANGE)
+    dlg_editbox_get(ctrl, dlg, loc, sizeof cfg.locale);
 }
 
 static void
@@ -271,8 +284,14 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(allow_blinking))
   )->column = 1;
 
-  s = ctrl_getset(b, "Text", "codepage", "Codepage");
-  ctrl_combobox(s, null, '\0', 100, P(0), codepage_handler, P(null), P(null));
+  s = ctrl_getset(b, "Text", "locale", null);
+  ctrl_columns(s, 2, 25, 75);
+  ctrl_editbox(
+    s, "Locale", '\0', 100, P(0), locale_handler, P(0), P(0)
+  )->column = 0;
+  ctrl_combobox(
+    s, "Character set", '\0', 100, P(0), codepage_handler, P(0), P(0)
+  )->column = 1;
 
  /*
   * The Keys panel.
@@ -385,7 +404,7 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Output", "printer", "Printer");
   ctrl_combobox(
-    s, null, '\0', 100, P(0), printerbox_handler, P(null), P(null)
+    s, null, '\0', 100, P(0), printerbox_handler, P(0), P(0)
   );
 
  /*
@@ -432,7 +451,7 @@ typedef const struct {
   ushort def;
 } int_setting;
 
-static int_setting
+static const int_setting
 int_settings[] = {
   {"Columns", offcfg(cols), 80},
   {"Rows", offcfg(rows), 24},
@@ -471,9 +490,10 @@ typedef const struct {
   const char *def;
 } string_setting;
 
-static string_setting
+static const string_setting
 string_settings[] = {
   {"Font", offcfg(font.name), sizeof cfg.font.name, "Lucida Console"},
+  {"Locale", offcfg(locale), sizeof cfg.locale, ""},
   {"Codepage", offcfg(codepage), sizeof cfg.codepage, ""},
   {"Printer", offcfg(printer), sizeof cfg.printer, ""},
 };
@@ -484,7 +504,7 @@ typedef const struct {
   colour def;
 } colour_setting;
 
-static colour_setting
+static const colour_setting
 colour_settings[] = {
   {"ForegroundColour", offcfg(fg_colour), 0xBFBFBF},
   {"BackgroundColour", offcfg(bg_colour), 0x000000},

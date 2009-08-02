@@ -58,6 +58,7 @@ typedef struct {
   int transparency;
   int opaque_when_focused;
  /* translations */
+  char locale[16];
   char codepage[16];
  /* fonts */
   font_spec font;
