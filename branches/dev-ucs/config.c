@@ -114,7 +114,7 @@ codepage_handler(control *ctrl, void *dlg, void *unused(data), int event)
   char *cp = new_cfg.codepage;
   if (event == EVENT_REFRESH) {
     dlg_update_start(ctrl, dlg);
-    strcpy(cp, cp_name(decode_codepage(cp)));
+    strcpy(cp, cp_name(cp_lookup(cp)));
     dlg_listbox_clear(ctrl, dlg);
     const char *icp;
     for (int i = 0; (icp = cp_enumerate(i)); i++)
@@ -124,7 +124,7 @@ codepage_handler(control *ctrl, void *dlg, void *unused(data), int event)
   }
   else if (event == EVENT_VALCHANGE) {
     dlg_editbox_get(ctrl, dlg, cp, sizeof (cfg.codepage));
-    strcpy(cp, cp_name(decode_codepage(cp)));
+    strcpy(cp, cp_name(cp_lookup(cp)));
   }
 }
 

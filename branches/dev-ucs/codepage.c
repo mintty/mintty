@@ -10,127 +10,73 @@
 #include <winbase.h>
 #include <winnls.h>
 
-struct cp_list_item {
-  int codepage;
-  char *name;
+static const struct {
+  ushort id;
+  const char *name;
+}
+cp_names[] = {
+  {65001, "UTF-8"},
+  {  936, "GBK"},
+  {  950, "Big5"},
+  {  932, "SJIS"},
+  {20933, "eucJP"},
+  {  949, "eucKR"},
+  {20866, "KOI8-R"},
+  {21866, "KOI8-U"}
 };
 
-static const struct cp_list_item cp_list[] = {
-  {CP_UTF8, "UTF-8"},
-  {28591, "ISO-8859-1:1998 (Latin-1, West Europe)"},
-  {28592, "ISO-8859-2:1999 (Latin-2, East Europe)"},
-  {28593, "ISO-8859-3:1999 (Latin-3, South Europe)"},
-  {28594, "ISO-8859-4:1998 (Latin-4, North Europe)"},
-  {28595, "ISO-8859-5:1999 (Latin/Cyrillic)"},
-  {28596, "ISO-8859-6:1999 (Latin/Arabic)"},
-  {28597, "ISO-8859-7:1987 (Latin/Greek)"},
-  {28598, "ISO-8859-8:1999 (Latin/Hebrew}"},
-  {28599, "ISO-8859-9:1999 (Latin-5, Turkish)"},
-  {28603, "ISO-8859-13:1998 (Latin-7, Baltic)"},
-  {28605, "ISO-8859-15:1999 (Latin-9, \"euro\")"},
-  {1250, "Win1250 (Central European)"},
-  {1251, "Win1251 (Cyrillic)"},
-  {1252, "Win1252 (Western)"},
-  {1253, "Win1253 (Greek)"},
-  {1254, "Win1254 (Turkish)"},
-  {1255, "Win1255 (Hebrew)"},
-  {1256, "Win1256 (Arabic)"},
-  {1257, "Win1257 (Baltic)"},
-  {1258, "Win1258 (Vietnamese)"},
-  {20866, "Russian (KOI8-R)"},
-  {21866, "Ukrainian (KOI8-U)"},
-  {0, 0}
-};
-
-int
-decode_codepage(char *cp_name)
+uint
+cp_lookup(const char *name)
 {
-  char *s, *d;
-  const struct cp_list_item *cpi;
-  int codepage = -1;
-  CPINFO cpinfo;
+  char buf[strlen(name)];
+  uint len;
+  for (len = 0; name[len] && name [len] > ' '; len++)
+    buf[len] = tolower((uchar)name[len]);
+  buf[len] = 0;
 
-  if (!*cp_name)
-    return unicode_codepage;
-
-  if (cp_name && *cp_name)
-    for (cpi = cp_list; cpi->name; cpi++) {
-      s = cp_name;
-      d = cpi->name;
-      for (;;) {
-        while (*s && !isalnum((uchar)*s) && *s != ':')
-          s++;
-        while (*d && !isalnum((uchar)*d) && *d != ':')
-          d++;
-        if (*s == 0) {
-          codepage = cpi->codepage;
-          if (codepage == CP_UTF8)
-            goto break_break;
-          if (codepage == -1)
-            return -1;
-          if (GetCPInfo(codepage, &cpinfo) != 0)
-            goto break_break;
-        }
-        if (tolower((uchar)*s++) != tolower((uchar)*d++))
-          break;
+  for (uint i = 0; i < lengthof(cp_names); i++) {
+    bool found(const char *name) {
+      for (uint j = 0; j < len; j++) {
+        if (buf[j] != tolower((uchar)name[j]))
+          return false;
       }
+      return true;
     }
-
-  if (cp_name && *cp_name) {
-    d = cp_name;
-    if (tolower((uchar)d[0]) == 'c' && 
-	    tolower((uchar)d[1]) == 'p')
-      d += 2;
-    if (tolower((uchar)d[0]) == 'i' && 
-	    tolower((uchar)d[1]) == 'b' && 
-	    tolower((uchar)d[2]) == 'm')
-      d += 3;
-    for (s = d; *s >= '0' && *s <= '9'; s++);
-    if (*s == 0 && s != d)
-      codepage = atoi(d);       /* CP999 or IBM999 */
-
-    if (codepage == CP_ACP)
-      codepage = GetACP();
-    if (codepage == CP_OEMCP)
-      codepage = GetOEMCP();
+    if (found(cp_names[i].name))
+      return cp_names[i].id;
   }
-
-break_break:;
-  if (codepage != -1) {
-    if (codepage != CP_UTF8) {
-      if (GetCPInfo(codepage, &cpinfo) == 0) {
-        codepage = -2;
-      }
-      else if (cpinfo.MaxCharSize > 1)
-        codepage = -3;
-    }
+  
+  uint id;
+  if (sscanf(buf, "iso-8859-%u", &id) == 1 ||
+      sscanf(buf, "iso8859-%u", &id) == 1) {
+    if (id != 0 && id != 12 && id <= 16)
+      return id + 28590;
   }
-  if (codepage == -1 && *cp_name)
-    codepage = -2;
-  return codepage;
+  else if (sscanf(buf, "cp%u", &id) == 1 ||
+           sscanf(buf, "win%u", &id) == 1 ||
+           sscanf(buf, "windows-%u", &id) == 1 ||
+           sscanf(buf, "%u", &id) == 1) {
+    CPINFO cpi;
+    if (GetCPInfo(id, &cpi))
+      return id;
+  }
+  return 0;
 }
 
 const char *
-cp_name(int codepage)
+cp_name(uint id)
 {
-  const struct cp_list_item *cpi;
-  static char buf[32];
-
-  if (codepage == -1) {
-    sprintf(buf, "Use font encoding");
-    return buf;
+  for (uint i = 0; i < lengthof(cp_names); i++) {
+    if (id == cp_names[i].id)
+      return cp_names[i].name;
   }
-
-  if (codepage > 0)
-    sprintf(buf, "CP%03d", codepage);
+  static char buf[16];
+  if (id >= 28591 && id <= 28606)
+    sprintf(buf, "ISO-8859-%u", id - 28590);
+  else if (id != 0)
+    sprintf(buf, "CP%u", id);
   else
     *buf = 0;
-
-  for (cpi = cp_list; cpi->name; cpi++) {
-    if (codepage == cpi->codepage)
-      return cpi->name;
-  }
-
   return buf;
 }
 
@@ -138,10 +84,49 @@ cp_name(int codepage)
  * Return the nth code page in the list, for use in the GUI
  * configurer.
  */
+static const struct {
+  ushort id;
+  const char *comment;
+}
+cp_menu[] = {
+  {65001, "Unicode"},
+  {28591, "Western European"},
+  {28592, "Central European"},
+  {28593, "South European"},
+  {28594, "North European"},
+  {28595, "Cyrillic"},
+  {28596, "Arabic"},
+  {28597, "Greek"},
+  {28598, "Hebrew"},
+  {28599, "Turkish"},
+  {28600, "Nordic"},
+  {28601, "Thai"},
+  {28603, "Baltic"},
+  {28604, "Celtic"},
+  {28605, "\"euro\""},
+  { 1250, "Central European"},
+  { 1251, "Cyrillic"},
+  { 1252, "Western European"},
+  { 1253, "Greek"},
+  { 1254, "Turkish"},
+  { 1255, "Hebrew"},
+  { 1256, "Arabic"},
+  { 1257, "Baltic"},
+  { 1258, "Vietnamese"},
+  {  874, "Thai"},
+  {  936, "Simplified Chinese"},
+  {  950, "Traditional Chinese"},
+  {  932, "Japanese"},
+  {20933, "Japanese"},
+  {  949, "Korean"}
+};
+
 const char *
-cp_enumerate(int index)
+cp_enumerate(uint i)
 {
-  if (index < 0 || index >= (int) lengthof(cp_list))
-    return null;
-  return cp_list[index].name;
+  if (i >= lengthof(cp_menu))
+    return 0;
+  static char buf[64];
+  sprintf(buf, "%s (%s)", cp_name(cp_menu[i].id), cp_menu[i].comment);
+  return buf;
 }
