@@ -109,12 +109,17 @@ printerbox_handler(control *ctrl, void *dlg, void *unused(data), int event)
 }
 
 static void
+correct_codepage(char *cp)
+{
+  strcpy(cp, cp_name(cp_lookup(cp)));
+}
+
+static void
 codepage_handler(control *ctrl, void *dlg, void *unused(data), int event)
 {
   char *cp = new_cfg.codepage;
   if (event == EVENT_REFRESH) {
     dlg_update_start(ctrl, dlg);
-    strcpy(cp, cp_name(cp_lookup(cp)));
     dlg_listbox_clear(ctrl, dlg);
     const char *icp;
     for (int i = 0; (icp = cp_enumerate(i)); i++)
@@ -124,8 +129,31 @@ codepage_handler(control *ctrl, void *dlg, void *unused(data), int event)
   }
   else if (event == EVENT_VALCHANGE) {
     dlg_editbox_get(ctrl, dlg, cp, sizeof cfg.codepage);
-    strcpy(cp, cp_name(cp_lookup(cp)));
+    correct_codepage(cp);
   }
+}
+
+static void
+correct_locale(char *loc)
+{
+  uchar *la = (uchar *)loc;
+  if (isalpha(la[0]) && isalpha(la[1])) {
+    // Treat two letters at the start as the language.
+    loc[0] = tolower(la[0]);
+    loc[1] = tolower(la[1]);
+    uchar *tr = (uchar *)strchr(loc + 2, '_');
+    if (tr && isalpha(tr[1]) && isalpha(tr[2])) {
+      // Treat two letters after an underscore as the territory.
+      loc[2] = '_';
+      loc[3] = toupper(tr[1]);
+      loc[4] = toupper(tr[2]);
+      loc[5] = 0;
+    }
+    else
+      loc[2] = 0;
+  }
+  else
+    strcpy(loc, default_locale());
 }
 
 static void
@@ -133,12 +161,14 @@ locale_handler(control *ctrl, void *dlg, void *unused(data), int event)
 {
   char *loc = new_cfg.locale;
   if (event == EVENT_REFRESH) {
-    if (!*loc)
-      strcpy(loc, default_locale());
+    dlg_update_start(ctrl, dlg);
     dlg_editbox_set(ctrl, dlg, loc);
+    dlg_update_done(ctrl, dlg);
   }
-  else if (event == EVENT_VALCHANGE)
+  else if (event == EVENT_VALCHANGE) {
     dlg_editbox_get(ctrl, dlg, loc, sizeof cfg.locale);
+    correct_locale(loc);
+  }
 }
 
 static void
@@ -522,6 +552,8 @@ load_config(void)
   for (colour_setting *s = colour_settings; s < endof(colour_settings); s++)
     read_colour_setting(s->key, &atoffset(colour, &cfg, s->offset), s->def);
   close_settings_r();
+  correct_locale(cfg.locale);
+  correct_codepage(cfg.codepage);
 }
 
 char *
