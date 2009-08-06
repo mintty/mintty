@@ -25,6 +25,6 @@ static const wchar sel_nl[] = { '\r', '\n' };
 // Clock ticks.
 int get_tick_count(void);
 int cursor_blink_ticks(void);
-char *default_locale(void);
+void get_default_locale(char *);
 
 #endif

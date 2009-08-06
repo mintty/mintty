@@ -156,7 +156,11 @@ correct_locale(char *loc)
       loc[2] = 0;
     return true;
   }
-  return false;
+  else {
+    bool empty = *loc;
+    get_default_locale(loc);
+    return !empty;
+  }
 }
 
 static void
@@ -556,10 +560,8 @@ load_config(void)
   for (colour_setting *s = colour_settings; s < endof(colour_settings); s++)
     read_colour_setting(s->key, &atoffset(colour, &cfg, s->offset), s->def);
   close_settings_r();
-  if (!correct_locale(cfg.locale))
-    strcpy(cfg.locale, default_locale());
-  if (!correct_codepage(cfg.codepage))
-    strcpy(cfg.codepage, cp_name(cp_default()));
+  correct_locale(cfg.locale);
+  correct_codepage(cfg.codepage);
 }
 
 char *

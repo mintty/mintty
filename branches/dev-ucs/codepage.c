@@ -37,16 +37,12 @@ strtoupper(char *dst, const char *src)
 uint
 cp_lookup(const char *name)
 {
+  if (!*name)
+    return GetACP();
+
   char upname[strlen(name) + 1];
   strtoupper(upname, name);
-  
-  for (uint i = 0; i < lengthof(cp_names); i++) {
-    char cp_upname[8];
-    strtoupper(cp_upname, cp_names[i].name);
-    if (memcmp(upname, cp_upname, strlen(cp_upname)) == 0)
-      return cp_names[i].id;
-  }
-  
+
   uint id;
   if (sscanf(upname, "ISO-8859-%u", &id) == 1) {
     if (id != 0 && id != 12 && id <= 16)
@@ -57,6 +53,14 @@ cp_lookup(const char *name)
     CPINFO cpi;
     if (GetCPInfo(id, &cpi))
       return id;
+  }
+  else {
+    for (uint i = 0; i < lengthof(cp_names); i++) {
+      char cp_upname[8];
+      strtoupper(cp_upname, cp_names[i].name);
+      if (memcmp(upname, cp_upname, strlen(cp_upname)) == 0)
+        return cp_names[i].id;
+    }
   }
   return 0;
 }
@@ -71,10 +75,8 @@ cp_name(uint id)
   static char buf[16];
   if (id >= 28591 && id <= 28606)
     sprintf(buf, "ISO-8859-%u", id - 28590);
-  else if (id != 0)
-    sprintf(buf, "CP%u", id);
   else
-    *buf = 0;
+    sprintf(buf, "CP%u", id ?: GetACP());
   return buf;
 }
 
@@ -129,17 +131,10 @@ cp_enumerate(uint i)
   return buf;
 }
 
-char *
-default_locale(void)
+void
+get_default_locale(char *buf)
 {
-  static char buf[6] = "xx_XX";
+  strcpy(buf, "xx_XX");
   GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME, buf, 2);
   GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, buf + 3, 2);
-  return buf;
-}
-
-uint
-cp_default(void)
-{
-  return GetACP();
 }
