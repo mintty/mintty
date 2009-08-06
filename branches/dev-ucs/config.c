@@ -108,10 +108,12 @@ printerbox_handler(control *ctrl, void *dlg, void *unused(data), int event)
   }
 }
 
-static void
+static bool
 correct_codepage(char *cp)
 {
-  strcpy(cp, cp_name(cp_lookup(cp)));
+  uint id = cp_lookup(cp);
+  strcpy(cp, cp_name(id));
+  return id;
 }
 
 static void
@@ -129,11 +131,12 @@ codepage_handler(control *ctrl, void *dlg, void *unused(data), int event)
   }
   else if (event == EVENT_VALCHANGE) {
     dlg_editbox_get(ctrl, dlg, cp, sizeof cfg.codepage);
-    correct_codepage(cp);
+    if (!correct_codepage(cp))
+      strcpy(cp, cfg.codepage);
   }
 }
 
-static void
+static bool
 correct_locale(char *loc)
 {
   uchar *la = (uchar *)loc;
@@ -151,9 +154,9 @@ correct_locale(char *loc)
     }
     else
       loc[2] = 0;
+    return true;
   }
-  else
-    strcpy(loc, default_locale());
+  return false;
 }
 
 static void
@@ -167,7 +170,8 @@ locale_handler(control *ctrl, void *dlg, void *unused(data), int event)
   }
   else if (event == EVENT_VALCHANGE) {
     dlg_editbox_get(ctrl, dlg, loc, sizeof cfg.locale);
-    correct_locale(loc);
+    if (!correct_locale(loc))
+      strcpy(loc, cfg.locale);
   }
 }
 
@@ -552,8 +556,10 @@ load_config(void)
   for (colour_setting *s = colour_settings; s < endof(colour_settings); s++)
     read_colour_setting(s->key, &atoffset(colour, &cfg, s->offset), s->def);
   close_settings_r();
-  correct_locale(cfg.locale);
-  correct_codepage(cfg.codepage);
+  if (!correct_locale(cfg.locale))
+    strcpy(cfg.locale, default_locale());
+  if (!correct_codepage(cfg.codepage))
+    strcpy(cfg.codepage, cp_name(cp_default()));
 }
 
 char *

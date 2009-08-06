@@ -19,41 +19,41 @@ cp_names[] = {
   {  932, "SJIS"},
   {20933, "eucJP"},
   {  949, "eucKR"},
+  // Not supported by Cygwin
   {20866, "KOI8-R"},
-  {21866, "KOI8-U"}
+  {21866, "KOI8-U"},
+  {54396, "GB18030"},
+  // Aliases
+  {65001, "UTF8"},
+  {20866, "KOI8"}
 };
+
+static void
+strtoupper(char *dst, const char *src)
+{
+  while ((*dst++ = toupper((uchar)*src++)));
+}
 
 uint
 cp_lookup(const char *name)
 {
-  char buf[strlen(name)];
-  uint len;
-  for (len = 0; name[len] && name [len] > ' '; len++)
-    buf[len] = tolower((uchar)name[len]);
-  buf[len] = 0;
-
+  char upname[strlen(name) + 1];
+  strtoupper(upname, name);
+  
   for (uint i = 0; i < lengthof(cp_names); i++) {
-    bool found(const char *name) {
-      for (uint j = 0; j < len; j++) {
-        if (buf[j] != tolower((uchar)name[j]))
-          return false;
-      }
-      return true;
-    }
-    if (found(cp_names[i].name))
+    char cp_upname[8];
+    strtoupper(cp_upname, cp_names[i].name);
+    if (memcmp(upname, cp_upname, strlen(cp_upname)) == 0)
       return cp_names[i].id;
   }
   
   uint id;
-  if (sscanf(buf, "iso-8859-%u", &id) == 1 ||
-      sscanf(buf, "iso8859-%u", &id) == 1) {
+  if (sscanf(upname, "ISO-8859-%u", &id) == 1) {
     if (id != 0 && id != 12 && id <= 16)
       return id + 28590;
   }
-  else if (sscanf(buf, "cp%u", &id) == 1 ||
-           sscanf(buf, "win%u", &id) == 1 ||
-           sscanf(buf, "windows-%u", &id) == 1 ||
-           sscanf(buf, "%u", &id) == 1) {
+  else if (sscanf(upname, "CP%u", &id) == 1 ||
+           sscanf(upname, "WIN%u", &id)) {
     CPINFO cpi;
     if (GetCPInfo(id, &cpi))
       return id;
@@ -136,4 +136,10 @@ default_locale(void)
   GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME, buf, 2);
   GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, buf + 3, 2);
   return buf;
+}
+
+uint
+cp_default(void)
+{
+  return GetACP();
 }
