@@ -61,4 +61,6 @@ static inline bool
 term_selecting(void)
 { return term.mouse_state >= MS_SEL_CHAR; }
 
+void term_set_utf(bool utf);
+
 #endif

@@ -288,7 +288,7 @@ void term_cancel_paste(void);
 void term_reconfig(void);
 void term_seen_key_event(void);
 void term_write(const char *, int len);
-void term_set_focus(int has_focus);
+void term_set_focus(bool has_focus);
 int  term_cursor_type(void);
 bool term_cursor_blinks(void);
 

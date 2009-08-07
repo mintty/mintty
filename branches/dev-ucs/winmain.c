@@ -10,12 +10,12 @@
 #include "appinfo.h"
 #include "linedisc.h"
 #include "child.h"
+#include "codepage.h"
 
 #include <process.h>
 #include <getopt.h>
 #include <imm.h>
 #include <winnls.h>
-#include <locale.h>
 
 #include <sys/cygwin.h>
 #include <cygwin/version.h>
@@ -425,14 +425,14 @@ void
 win_reconfig(void)
 {
  /*
-  * Flush the line discipline's edit buffer in the
-  * case where local editing has just been disabled.
+  * Flush the line discipline's edit buffer in
+  * case local editing has just been disabled.
   */
   ldisc_send(null, 0, 0);
-
+  
  /* Pass new config data to the terminal */
   term_reconfig();
-
+  
  /* Enable or disable the scroll bar, etc */
   int init_lvl = 1;
   if (new_cfg.scrollbar != cfg.scrollbar) {
@@ -449,7 +449,6 @@ win_reconfig(void)
   }
   
   if (memcmp(&new_cfg.font, &cfg.font, sizeof cfg.font) != 0 ||
-      strcmp(new_cfg.codepage, cfg.codepage) != 0 ||
       new_cfg.bold_as_bright != cfg.bold_as_bright) {
     font_size = new_cfg.font.size;
     init_lvl = 2;
@@ -462,6 +461,7 @@ win_reconfig(void)
   win_invalidate_all();
   reset_window(init_lvl);
   win_update_mouse();
+  cp_update();
 }
 
 void
@@ -839,8 +839,6 @@ main(int argc, char *argv[])
 
   load_config();
   
-  setlocale(LC_CTYPE, "");
-  
   if (!size_override) {
     rows = cfg.rows;
     cols = cfg.cols;
@@ -899,6 +897,7 @@ main(int argc, char *argv[])
   */
   term_init();
   term_resize(rows, cols);
+  cp_update();
   ldisc_init();
   
  /*

@@ -95,7 +95,7 @@ save_cursor(int save)
 
     term.curr_attr = term.save_attr;
     term.cset_i = term.save_cset_i;
-    term.utf = term.save_utf;
+    term_set_utf(term.save_utf);
     term.wrapnext = term.save_wnext;
    /*
     * wrapnext might reset to False if the x position is no
@@ -419,10 +419,10 @@ do_esc(uchar c)
       term.csets[1] = CSET_OEM;
     when ANSI('8', '%') or ANSI('G', '%'):
       compatibility(OTHER);
-      term.utf = 1;
+      term_set_utf(true);
     when ANSI('@', '%'):
       compatibility(OTHER);
-      term.utf = 0;
+      term_set_utf(false);
   }
 }
 
@@ -1171,19 +1171,17 @@ term_write(const char *data, int len)
           }
         }
         else {
-          size_t ret = mbrtowc(&wc, (const char []){c}, 1, &term.mbstate);
-          switch (ret) {
+          bool is_mb = !mbsinit(&term.mbstate);
+          switch (mbrtowc(&wc, (const char []){c}, 1, &term.mbstate)) {
             when (size_t)-2:
               continue;
             when (size_t)-1:
               wc = UCSERR;
               mbrtowc(0, 0, 0, &term.mbstate);
+              // Salvage currect char if we had an invalid mb sequence
+              if (is_mb)
+                unget = c;
           }
-          if (cset == CSET_LINEDRW && 0x60 <= wc && wc < 0x80) {
-            wc = linedraw_chars[wc - 0x60];
-          }
-          else if (cset == CSET_GBCHR && c == '#')
-            wc = 0xA3; // pound sign
         }
         switch (wc) {
           when '\e':   /* ESC: Escape */
@@ -1226,6 +1224,18 @@ term_write(const char *data, int len)
           when 0x7F:  /* DEL */
             // ignore
           otherwise:
+            if (wc == 0x2010) {
+             /* Many Windows fonts don't have the Unicode hyphen, but groff
+              * uses it for man pages, so replace it with the ASCII version.
+              */
+              wc = '-';
+            }
+            else if (cset == CSET_LINEDRW && 0x60 <= wc && wc < 0x80) {
+              wc = linedraw_chars[wc - 0x60];
+            }
+            else if (cset == CSET_GBCHR && c == '#')
+              wc = 0xA3; // pound sign
+            
             write_char(wc); 
         }
       }

@@ -5,6 +5,10 @@
 
 #include "codepage.h"
 
+#include "config.h"
+#include "term.h"
+
+#include <locale.h>
 #include <winbase.h>
 #include <winnls.h>
 
@@ -137,4 +141,19 @@ get_default_locale(char *buf)
   strcpy(buf, "xx_XX");
   GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME, buf, 2);
   GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, buf + 3, 2);
+}
+
+void
+cp_update(void)
+{
+  char lc_ctype[32];
+  if (term.utf) {
+    snprintf(lc_ctype, 32, "%s.UTF-8", cfg.locale);
+    setlocale(LC_CTYPE, lc_ctype);
+  }
+  else {
+    snprintf(lc_ctype, 32, "%s.%s", cfg.locale, cfg.codepage);
+    setenv("LC_CTYPE", lc_ctype, true);
+    setlocale(LC_CTYPE, "");
+  }
 }

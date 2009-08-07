@@ -7,6 +7,7 @@
 
 #include "linedisc.h"
 #include "win.h"
+#include "codepage.h"
 
 struct term term;
 
@@ -404,8 +405,7 @@ term_resize(int newrows, int newcols)
  * Swap screens. If `reset' is true and we have been asked to
  * switch to the alternate screen, we must bring most of its
  * configuration from the main screen and erase the contents of the
- * alternate screen completely. (This is even true if we're already
- * on it! Blame xterm.)
+ * alternate screen completely.
  */
 void
 term_swap_screen(int which, int reset, int keep_cur_pos)
@@ -414,8 +414,7 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
   pos tp;
   tree234 *ttr;
 
-  if (!which)
-    reset = false;      /* do no weird resetting if which==0 */
+  reset &= which;      /* do no resetting if which==0 */
 
   if (which != term.which_screen) {
     term.which_screen = which;
@@ -459,10 +458,12 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
     if (!reset)
       term.cset_i = term.alt_cset_i;
     term.alt_cset_i = t;
+    
     t = term.utf;
     if (!reset)
-      term.utf = term.alt_utf;
+      term_set_utf(term.alt_utf);
     term.alt_utf = t;
+    
     t = term.oem_acs;
     if (!reset)
       term.oem_acs = term.alt_oem_acs;
@@ -1406,13 +1407,23 @@ term_deselect(void)
 }
 
 void
-term_set_focus(int has_focus)
+term_set_focus(bool has_focus)
 {
   if (has_focus != term.has_focus) {
     term.has_focus = has_focus;
     term_schedule_cblink();
     if (term.report_focus)
       ldisc_send(has_focus ? "\e[I" : "\e[O", 3, 0);
+  }
+}
+
+void
+term_set_utf(bool utf)
+{
+  if (utf != term.utf) {
+    term.utf = utf;
+    cp_update();
+    mbrtowc(0, 0, 0, &term.mbstate);
   }
 }
 
