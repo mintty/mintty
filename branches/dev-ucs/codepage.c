@@ -6,7 +6,6 @@
 #include "codepage.h"
 
 #include "config.h"
-#include "term.h"
 
 #include <locale.h>
 #include <winbase.h>
@@ -143,17 +142,38 @@ get_default_locale(char *buf)
   GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, buf + 3, 2);
 }
 
+static char utf8_locale[32];
+static bool utf8_mode = false;
+
 void
-cp_update(void)
+cp_set_utf8_mode(bool mode)
 {
-  char lc_ctype[32];
-  if (term.utf) {
-    snprintf(lc_ctype, 32, "%s.UTF-8", cfg.locale);
-    setlocale(LC_CTYPE, lc_ctype);
+  utf8_mode = mode;
+  setlocale(LC_CTYPE, mode ? utf8_locale : "");
+  mbrtowc(0, 0, 0, 0);
+}
+
+
+void
+cp_update_locale(bool ambig_wide)
+{
+  void
+  narrow_locale(char *locale)
+  {
+    // Add @cjknarrow to locale if we're using an ambig_narrow font with an 
+    // ambig_wide locale. (Test on Greek alpha.)
+    setlocale(LC_CTYPE, locale);
+    if (!ambig_wide && wcwidth(0x3B1) == 2)
+      strcat(locale, "@cjknarrow");
   }
-  else {
-    snprintf(lc_ctype, 32, "%s.%s", cfg.locale, cfg.codepage);
-    setenv("LC_CTYPE", lc_ctype, true);
-    setlocale(LC_CTYPE, "");
-  }
+
+  char locale[32];
+  sprintf(locale, "%s.%s", cfg.locale, cfg.codepage);
+  narrow_locale(locale);
+  setenv("LC_CTYPE", locale, true);
+  
+  sprintf(utf8_locale, "%s.UTF-8", cfg.locale);
+  narrow_locale(utf8_locale);
+  
+  cp_set_utf8_mode(utf8_mode);
 }

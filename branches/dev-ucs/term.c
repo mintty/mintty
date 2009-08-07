@@ -1422,8 +1422,7 @@ term_set_utf(bool utf)
 {
   if (utf != term.utf) {
     term.utf = utf;
-    cp_update();
-    mbrtowc(0, 0, 0, &term.mbstate);
+    cp_set_utf8_mode(utf);
   }
 }
 

@@ -1171,13 +1171,13 @@ term_write(const char *data, int len)
           }
         }
         else {
-          bool is_mb = !mbsinit(&term.mbstate);
-          switch (mbrtowc(&wc, (const char []){c}, 1, &term.mbstate)) {
+          bool is_mb = !mbsinit(0);
+          switch (mbrtowc(&wc, (const char []){c}, 1, 0)) {
             when (size_t)-2:
               continue;
             when (size_t)-1:
               wc = UCSERR;
-              mbrtowc(0, 0, 0, &term.mbstate);
+              mbrtowc(0, 0, 0, 0);
               // Salvage currect char if we had an invalid mb sequence
               if (is_mb)
                 unget = c;

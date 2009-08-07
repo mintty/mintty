@@ -461,7 +461,7 @@ win_reconfig(void)
   win_invalidate_all();
   reset_window(init_lvl);
   win_update_mouse();
-  cp_update();
+  cp_update_locale(font_ambig_wide);
 }
 
 void
@@ -897,7 +897,6 @@ main(int argc, char *argv[])
   */
   term_init();
   term_resize(rows, cols);
-  cp_update();
   ldisc_init();
   
  /*
@@ -948,6 +947,7 @@ main(int argc, char *argv[])
   win_init_drop_target();
 
   // Create child process.
+  cp_update_locale(font_ambig_wide);
   struct winsize ws = {term.rows, term.cols, term_width, term_height};
   char *cmd = child_create(argv + optind, &ws);
   

@@ -164,7 +164,6 @@ struct term {
   bool editing;  /* Does terminal want local edit? */
   int  oem_acs, save_oem_acs;    /* CSI 10,11,12m -> OEM charset */
   bool utf;      /* Are we in toggleable UTF-8 mode? */
-  mbstate_t mbstate; /* Multibyte conversion state */
   bool printing, only_printing;  /* Are we doing ANSI printing? */
   int  print_state;      /* state of print-end-sequence scan */
   bufchain *printer_buf;        /* buffered data for printer */
