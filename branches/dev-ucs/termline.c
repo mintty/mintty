@@ -210,30 +210,26 @@ makeliteral_chr(struct buf *buf, termchar *c)
 {
  /*
   * The encoding for characters assigns one-byte codes to printable
-  * ISO-8859-1 characters and NUL, and two-byte codes to anything else up
-  * to 0x37FF. UTF-16 surrogates also get two-byte codes, to avoid non-BMP
+  * ASCII characters and NUL, and two-byte codes to anything else up
+  * to 0x96FF. UTF-16 surrogates also get two-byte codes, to avoid non-BMP
   * characters exploding to six bytes. Anything else is three bytes long.
   */
-  uchar h = c->chr >> 8, l = c->chr;
-  if (h == 0) {
-    /* Map control chars except NUL to three byte-codes.
-     * DEL acts as prefix for three-byte codes, while the other control chars
-     * introduce two-byte codes.
-     */
-    if ((l != 0 && (l & 0xC0) == 0) || l == 0x7F)
-      add(buf, 0x7F),
-      add(buf, 0);
+  wchar wc = c->chr;
+  if (wc == 0 || (wc >= 0x20 && wc < 0x7F))
+    ;
+  else {
+    uchar b = wc >> 8;
+    if (b < 0x80)
+      b += 0x80;
+    else if (b < 0x97)
+      b -= 0x7F;
+    else if (b >= 0xD8 && b < 0xE0)
+      b -= 0xC0;
+    else
+      add (buf, 0x7F);
+    add(buf, b);
   }
-  else if (h < 0x20)
-    add(buf, h);
-  else if (h < 0x38)
-    add(buf, h + 0x60);
-  else if (h >= 0xD8 && h < 0xE0)
-    add(buf, h - 0x40);
-  else
-    add(buf, 0x7F),
-    add(buf, h);
-  add(buf, l);
+  add(buf, wc);
 }
 
 static void
@@ -308,21 +304,20 @@ makeliteral_cc(struct buf *b, termchar *c)
 static void
 readliteral_chr(struct buf *buf, termchar *c, termline *unused(ldata))
 {
-  wchar wc;
   uchar b = get(buf);
-  switch (b) {
-    when 0x01 ... 0x1F:
-      wc = b << 8 | get(buf);
-    when 0x80 ... 0x97:
-      wc = (b - 0x60) << 8 | get(buf);
-    when 0x98 ... 0x9F:
-      wc = (b + 0x0) << 8 | get(buf);
-    when 0x7F:
-      wc = get(buf) << 8 | get(buf);
-    otherwise:
-      wc = b;
+  if (b == 0 || (b >= 0x20 && b < 0x7F))
+    c->chr = b;
+  else {
+    if (b >= 0x80)
+      b -= 0x80;
+    else if (b < 0x18)
+      b += 0x7F;
+    else if (b < 0x20)
+      b += 0xC0;
+    else
+      b = get(buf);
+    c->chr = b << 8 | get(buf);
   }
-  c->chr = wc;
 }
 
 static void

@@ -154,8 +154,6 @@ cp_set_utf8_mode(bool mode)
   utf8_mode = mode;
   char *locale = setlocale(LC_CTYPE, mode ? utf8_locale : "");
   codepage = locale ? 0 : cp_lookup(cfg.codepage);
-  setlocale(LC_CTYPE, mode ? utf8_locale : "");
-  codepage = cp_lookup(cfg.codepage);
   cp_btowc(0, 0);
 }
 
