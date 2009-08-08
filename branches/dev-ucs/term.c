@@ -1373,7 +1373,7 @@ term_send_paste(void)
   while (term.paste_pos < term.paste_len) {
     int n = 0;
     while (n + term.paste_pos < term.paste_len) {
-      if (term.paste_buffer[term.paste_pos + n++] == '\015')
+      if (term.paste_buffer[term.paste_pos + n++] == '\r')
         break;
     }
     luni_send(term.paste_buffer + term.paste_pos, n, 0);

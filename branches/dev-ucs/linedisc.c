@@ -9,6 +9,8 @@
 #include "term.h"
 #include "win.h"
 
+#include "codepage.h"
+
 /*
  * ldisc.c: PuTTY line discipline. Sits between the input coming
  * from keypresses in the window, and the output channel leading to
@@ -195,11 +197,10 @@ ldisc_send(const char *buf, int len, bool interactive)
 }
 
 void
-luni_send(const wchar *wbuf, int wlen, bool interactive)
+luni_send(const wchar *ws, int wlen, bool interactive)
 {
-  char buf[wlen * 4];
-  int len = 0;
-  for (int i = 0; i < wlen; i++)
-    len += wctomb(buf + len, wbuf[i]);
-  ldisc_send(buf, len, interactive);
+  char s[wlen * MB_LEN_MAX];
+  int len = cp_wcntombn(s, ws, sizeof s, wlen);
+  if (len > 0)
+    ldisc_send(s, len, interactive);
 }

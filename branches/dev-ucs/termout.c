@@ -8,6 +8,7 @@
 #include "linedisc.h"
 #include "win.h"
 #include "appinfo.h"
+#include "codepage.h"
 
 #include <sys/termios.h>
 
@@ -1160,29 +1161,30 @@ term_write(const char *data, int len)
 
     switch (term.state) {
       when TOPLEVEL: {
-        // First see about all those translations. */
-        int cset = term.csets[term.cset_i];
         wchar wc = c;
+        int cset = term.csets[term.cset_i];
         if (term.oem_acs || cset == CSET_OEM) {
           if (!strchr("\e\n\r\b", c)) {
             if (term.oem_acs == 2)
-              wc |= 0x80;
-            // TODO: translate from codepage 437
+              c |= 0x80;
+            wc = cp_oemtowc(c);
           }
         }
         else {
-          bool is_mb = !mbsinit(0);
-          switch (mbrtowc(&wc, (const char []){c}, 1, 0)) {
-            when (size_t)-2:
+          switch (cp_btowc(&wc, &c)) {
+            when -2: // Incomplete character
+              term.incomplete_char = true;
               continue;
-            when (size_t)-1:
-              wc = UCSERR;
-              mbrtowc(0, 0, 0, 0);
-              // Salvage currect char if we had an invalid mb sequence
-              if (is_mb)
+            when -1: // Encoding error
+              cp_btowc(0, 0); // Clear decoder state
+              wc = 0xFFFD; // The Unicode "Replacement Character"
+              if (term.incomplete_char)
                 unget = c;
+            when 0: // Character wasn't consumed (due to surrogate pair)
+              unget = c; // Feed it back in
           }
         }
+        term.incomplete_char = false;
         switch (wc) {
           when '\e':   /* ESC: Escape */
             compatibility(ANSIMIN);

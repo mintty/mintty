@@ -54,7 +54,7 @@ cp_lookup(const char *name)
   else if (sscanf(upname, "CP%u", &id) == 1 ||
            sscanf(upname, "WIN%u", &id)) {
     CPINFO cpi;
-    if (GetCPInfo(id, &cpi))
+    if (id > 3 && GetCPInfo(id, &cpi))
       return id;
   }
   else {
@@ -116,6 +116,8 @@ cp_menu[] = {
   { 1256, "Arabic"},
   { 1257, "Baltic"},
   { 1258, "Vietnamese"},
+  {20866, "Russian"},
+  {21866, "Ukrainian"},
   {  874, "Thai"},
   {  936, "Simplified Chinese"},
   {  950, "Traditional Chinese"},
@@ -142,6 +144,7 @@ get_default_locale(char *buf)
   GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, buf + 3, 2);
 }
 
+static int codepage;
 static char utf8_locale[32];
 static bool utf8_mode = false;
 
@@ -149,10 +152,12 @@ void
 cp_set_utf8_mode(bool mode)
 {
   utf8_mode = mode;
+  char *locale = setlocale(LC_CTYPE, mode ? utf8_locale : "");
+  codepage = locale ? 0 : cp_lookup(cfg.codepage);
   setlocale(LC_CTYPE, mode ? utf8_locale : "");
-  mbrtowc(0, 0, 0, 0);
+  codepage = cp_lookup(cfg.codepage);
+  cp_btowc(0, 0);
 }
-
 
 void
 cp_update_locale(bool ambig_wide)
@@ -176,4 +181,81 @@ cp_update_locale(bool ambig_wide)
   narrow_locale(utf8_locale);
   
   cp_set_utf8_mode(utf8_mode);
+}
+
+int
+cp_wcntombn(char *s, const wchar *ws, size_t len, size_t wlen)
+{
+  if (codepage)
+    return WideCharToMultiByte(codepage, 0, ws, wlen, s, len, 0, 0);
+
+  // The POSIX way
+  size_t i = 0, wi = 0;
+  while (wi < wlen && i + MB_CUR_MAX < len) {
+    int n = wctomb(&s[i], ws[wi++]);
+    // Drop characters than can't be translated to codepage.
+    if (n >= 0)
+      i += n;
+  }
+  return i;
+}
+
+int
+cp_btowc(wchar *pwc, const char *pc)
+{
+  if (!codepage)
+    return mbrtowc(pwc, pc, 1, 0);
+
+  // The Windows way
+  static int sn;
+  static char s[MB_LEN_MAX];
+  static wchar ws[2];
+
+  if (!pc) {
+    // Reset state
+    sn = 0;
+    return 0;
+  }
+  if (sn < 0) {
+    // Leftover surrogate
+    *pwc = ws[1];
+    sn = 0;
+    return 0;
+  }
+  if (sn == sizeof s)
+    return -1; // Overlong sequence
+  s[sn++] = *pc;
+  switch (MultiByteToWideChar(codepage, 0, s, sn, ws, 2)) {
+    when 1:
+      if (*ws == 0xFFFD)
+        return -2; // Incomplete character
+      else
+        sn = 0; // Valid character
+    when 2:
+      if (*ws == 0xFFFD)
+        return -1; // Encoding error
+      else
+        sn = -1; // Surrogate pair
+    otherwise:
+      return -1; // Shouldn't happen
+  }
+  *pwc = *ws;
+  return 1;
+}
+
+int
+cp_mbstowcs(wchar *ws, const char *s, size_t wlen)
+{
+  if (!codepage)
+    return mbstowcs(ws, s, wlen);
+  else
+    return MultiByteToWideChar(codepage, 0, s, -1, ws, wlen) - 1;
+}
+
+wchar
+cp_oemtowc(char c)
+{
+  wchar wc;
+  MultiByteToWideChar(437, 0, &c, 1, &wc, 1);
+  return wc;
 }

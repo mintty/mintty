@@ -7,8 +7,6 @@
 #include "print.h"
 #include "minibidi.h"
 
-#define UCSERR 0x2592 /* UCS Format error character. */
-
 /*
  * UCSWIDE is a special value used in the terminal data to signify
  * the character cell containing the right-hand half of a CJK wide
@@ -251,6 +249,9 @@ struct term {
   * through.
   */
   bool in_term_write;
+  
+ /* True when we've seen part of a multibyte input char */
+  bool incomplete_char;
 
  /*
   * These are buffers used by the bidi and Arabic shaping code.

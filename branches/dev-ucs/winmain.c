@@ -40,9 +40,12 @@ win_set_timer(void (*cb)(void), uint ticks)
 void
 win_set_title(char *title)
 {
-  wchar wtitle[strlen(title) + 1];
-  mbstowcs(wtitle, title, sizeof wtitle);
-  SetWindowTextW(wnd, wtitle);
+  int wlen = cp_mbstowcs(0, title, 0);
+  if (wlen >= 0) {
+    wchar wtitle[wlen + 1];
+    cp_mbstowcs(wtitle, title, wlen + 1);
+    SetWindowTextW(wnd, wtitle);
+  }
 }
 
 /*
