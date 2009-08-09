@@ -116,8 +116,6 @@ cp_menu[] = {
   { 1256, "Arabic"},
   { 1257, "Baltic"},
   { 1258, "Vietnamese"},
-  {20866, "Russian"},
-  {21866, "Ukrainian"},
   {  874, "Thai"},
   {  936, "Simplified Chinese"},
   {  950, "Traditional Chinese"},
