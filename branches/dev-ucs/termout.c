@@ -221,7 +221,7 @@ write_linefeed(void)
 }
 
 static void
-write_char(wchar c)
+write_char(wchar c, int width)
 {
   termline *cline = scrlineptr(term.curs.y);
   static void put_char(wchar c)
@@ -231,7 +231,6 @@ write_char(wchar c)
     cline->chars[term.curs.x].attr = term.curr_attr;
   }  
 
-  int width = wcwidth(c);
   if (term.wrapnext && term.wrap && width > 0) {
     cline->lattr |= LATTR_WRAPPED;
     if (term.curs.y == term.marg_b)
@@ -315,6 +314,14 @@ write_char(wchar c)
     term.wrapnext = true;
   }
   seen_disp_event();
+}
+
+static void
+write_error(void)
+{
+  // Write the Unicode "replacement character", which usually shows as an
+  // empty box or some sort of question mark.
+  write_char(0xFFFD, 1);
 }
 
 static void
@@ -1172,19 +1179,47 @@ term_write(const char *data, int len)
         }
         else {
           switch (cp_btowc(&wc, &c)) {
-            when -2: // Incomplete character
-              term.incomplete_char = true;
-              continue;
+            when 0: // NUL or low surrogate
+              if (wc)
+                unget = c;
             when -1: // Encoding error
               cp_btowc(0, 0); // Clear decoder state
-              wc = 0xFFFD; // The Unicode "Replacement Character"
-              if (term.incomplete_char)
+              write_error();
+              if (term.in_mb_char)
                 unget = c;
-            when 0: // Character wasn't consumed (due to surrogate pair)
-              unget = c; // Feed it back in
+              continue;
+            when -2: // Incomplete character
+              term.in_mb_char = true;
+              continue;
           }
         }
-        term.incomplete_char = false;
+        
+        term.in_mb_char = false;
+        
+        // Fetch previous high surrogate 
+        wchar hwc = term.high_surrogate;
+        term.high_surrogate = 0;
+        
+        // Low surrogate
+        if ((wc & 0xFC00) == 0xDC00) {
+          if (hwc) {
+            write_char(hwc, wcswidth((wchar[]){hwc, wc}, 2));
+            write_char(wc, 0);
+          }
+          else
+            write_error();
+          continue;
+        }
+        
+        if (hwc) // Previous high surrogate not followed by low one
+          write_error();
+        
+        // High surrogate
+        if ((wc & 0xFC00) == 0xD800) {
+          term.high_surrogate = wc;
+          continue;
+        }
+        
         switch (wc) {
           when '\e':   /* ESC: Escape */
             compatibility(ANSIMIN);
@@ -1208,13 +1243,6 @@ term_write(const char *data, int len)
             if (term.newline_mode)
               write_return();
           when CTRL('E'):   /* ENQ: terminal type query */
-           /* 
-            * Strictly speaking this is VT100 but a VT100 defaults to
-            * no response. Other terminals respond at their option.
-            *
-            * Don't put a CR in the default string as this tends to
-            * upset some weird software.
-            */
             compatibility(ANSIMIN);
             ldisc_send(answerback, sizeof(answerback) - 1, 0);
           when CTRL('N'):   /* LS1: Locking-shift one */
@@ -1238,7 +1266,7 @@ term_write(const char *data, int len)
             else if (cset == CSET_GBCHR && c == '#')
               wc = 0xA3; // pound sign
             
-            write_char(wc); 
+            write_char(wc, wcwidth(wc)); 
         }
       }
       when SEEN_ESC or OSC_MAYBE_ST or DCS_MAYBE_ST:

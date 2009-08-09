@@ -251,7 +251,10 @@ struct term {
   bool in_term_write;
   
  /* True when we've seen part of a multibyte input char */
-  bool incomplete_char;
+  bool in_mb_char;
+  
+ /* Non-zero when we've seen the first half of a surrogate pair */
+  wchar high_surrogate;
 
  /*
   * These are buffers used by the bidi and Arabic shaping code.
