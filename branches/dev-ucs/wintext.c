@@ -689,13 +689,6 @@ win_cursor(int x, int y, wchar *text, int len, uint attr, int lattr)
   DeleteObject(SelectObject(dc, oldpen));
 }
 
-bool
-win_ambig_cjk_wide(void)
-{
-  return font_ambig_wide;
-}
-
-
 /* This function gets the actual width of a character in the normal font.
  */
 int
