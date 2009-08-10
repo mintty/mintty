@@ -1187,6 +1187,7 @@ term_write(const char *data, int len)
               write_error();
               if (term.in_mb_char)
                 unget = c;
+              term.in_mb_char = false;
               continue;
             when -2: // Incomplete character
               term.in_mb_char = true;
