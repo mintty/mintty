@@ -457,7 +457,6 @@ win_text_internal(int x, int y, wchar *text, int len, uint attr, int lattr)
   RECT line_box;
   int force_manual_underline = 0;
   int fnt_width, char_width;
-  int text_adjust = 0;
   static int *IpDx = 0, IpDxLEN = 0;
 
   lattr &= LATTR_MODE;
@@ -505,22 +504,11 @@ win_text_internal(int x, int y, wchar *text, int len, uint attr, int lattr)
   if (attr & ATTR_NARROW)
     nfont |= FONT_NARROW;
 
- /* Special hack for the VT100 linedraw glyphs. */
-  if (text[0] >= 0x23BA && text[0] <= 0x23BD) {
-    switch ((uchar) (text[0])) {
-      when 0xBA: text_adjust = -2 * font_height / 5;
-      when 0xBB: text_adjust = -1 * font_height / 5;
-      when 0xBC: text_adjust = font_height / 5;
-      when 0xBD: text_adjust = 2 * font_height / 5;
-    }
-    if (lattr == LATTR_TOP || lattr == LATTR_BOT)
-      text_adjust *= 2;
+ /* Windows font's dont tend to have the vertical line characters on different
+  * levels, so replace them with a mid-level line
+  */
+  if (text[0] >= 0x23BA && text[0] <= 0x23BD)
     text[0] = 0x2500;
-    if (attr & ATTR_UNDER) {
-      attr &= ~ATTR_UNDER;
-      force_manual_underline = 1;
-    }
-  }
 
   if (bold_mode == BOLD_FONT && (attr & ATTR_BOLD))
     nfont |= FONT_BOLD;
@@ -588,15 +576,14 @@ win_text_internal(int x, int y, wchar *text, int len, uint attr, int lattr)
     line_box.right = font_width * term.cols + PADDING;
 
  /* print Glyphs as they are, without Windows' Shaping */
-  general_textout(x,
-                  y - font_height * (lattr == LATTR_BOT) + text_adjust,
+  general_textout(x, y - font_height * (lattr == LATTR_BOT),
                   &line_box, text, len, IpDx, !(attr & TATTR_COMBINING));
 
  /* And the shadow bold hack. */
   if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD)) {
     SetBkMode(dc, TRANSPARENT);
     ExtTextOutW(dc, x - 1,
-                y - font_height * (lattr == LATTR_BOT) + text_adjust,
+                y - font_height * (lattr == LATTR_BOT),
                 ETO_CLIPPED, &line_box, text, len, IpDx);
   }
   if (lattr != LATTR_TOP &&
@@ -707,11 +694,7 @@ win_char_width(int uc)
     return 1;
 
   SelectObject(dc, fonts[FONT_NORMAL]);
-  if (GetCharWidth32W(dc, uc, uc, &ibuf) == 1)
-   /* Okay that one worked */ ;
-  else if (GetCharWidthW(dc, uc, uc, &ibuf) == 1)
-   /* This should work on 9x too, but it's "less accurate" */ ;
-  else
+  if (!GetCharWidth32W(dc, uc, uc, &ibuf))
     return 0;
 
   ibuf += font_width / 2 - 1;
