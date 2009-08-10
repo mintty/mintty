@@ -587,31 +587,17 @@ win_text_internal(int x, int y, wchar *text, int len, uint attr, int lattr)
   if (line_box.right > font_width * term.cols + PADDING)
     line_box.right = font_width * term.cols + PADDING;
 
- /* And 'normal' unicode characters */
-  static WCHAR *wbuf = null;
-  static int wlen = 0;
-  int i;
-
-  if (wlen < len) {
-    free(wbuf);
-    wlen = len;
-    wbuf = newn(wchar, wlen);
-  }
-
-  for (i = 0; i < len; i++)
-    wbuf[i] = text[i];
-
  /* print Glyphs as they are, without Windows' Shaping */
   general_textout(x,
                   y - font_height * (lattr == LATTR_BOT) + text_adjust,
-                  &line_box, wbuf, len, IpDx, !(attr & TATTR_COMBINING));
+                  &line_box, text, len, IpDx, !(attr & TATTR_COMBINING));
 
  /* And the shadow bold hack. */
   if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD)) {
     SetBkMode(dc, TRANSPARENT);
     ExtTextOutW(dc, x - 1,
                 y - font_height * (lattr == LATTR_BOT) + text_adjust,
-                ETO_CLIPPED, &line_box, wbuf, len, IpDx);
+                ETO_CLIPPED, &line_box, text, len, IpDx);
   }
   if (lattr != LATTR_TOP &&
       (force_manual_underline ||
