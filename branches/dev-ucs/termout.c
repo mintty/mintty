@@ -224,7 +224,7 @@ static void
 write_char(wchar c, int width)
 {
   termline *cline = scrlineptr(term.curs.y);
-  static void put_char(wchar c)
+  void put_char(wchar c)
   {
     clear_cc(cline, term.curs.x);
     cline->chars[term.curs.x].chr = c;
@@ -1178,7 +1178,7 @@ term_write(const char *data, int len)
           }
         }
         else {
-          switch (cp_btowc(&wc, &c)) {
+          switch (cp_btowc(&wc, (char *)&c)) {
             when 0: // NUL or low surrogate
               if (wc)
                 unget = c;
