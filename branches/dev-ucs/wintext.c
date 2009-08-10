@@ -622,13 +622,13 @@ void
 win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
 {
   if (attr & TATTR_COMBINING) {
-    uint a = 0;
     attr &= ~TATTR_COMBINING;
-    while (len--) {
-      win_text_internal(x, y, text, 1, attr | a, lattr);
-      text++;
-      a = TATTR_COMBINING;
-    }
+    do {
+      uint n = 1 + ((*text & 0xFC00) == 0xD800);
+      win_text_internal(x, y, text, n, attr, lattr);
+      len -= n, text += n;
+      attr |= TATTR_COMBINING;
+    } while (len > 0);
   }
   else
     win_text_internal(x, y, text, len, attr, lattr);
