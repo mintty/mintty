@@ -28,10 +28,15 @@
 static const char answerback[] = "mintty";
 static const char primary_da[] = "\e[?1;2c";
 
+ /* The vt100 linedraw characters.
+  * Windows fonts don't tend to have the horizontal line characters at
+  * different levels (0x23BA..0x23BD), hence they've been replaced
+  * with approximations here (0x00af, 0x2500, 0x005f).
+  */
 static const wchar linedraw_chars[32] = {
   0x2666, 0x2592, 0x2409, 0x240c, 0x240d, 0x240a, 0x00b0, 0x00b1,
-  0x2424, 0x240b, 0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0x23ba,
-  0x23bb, 0x2500, 0x23bc, 0x23bd, 0x251c, 0x2524, 0x2534, 0x252c,
+  0x2424, 0x240b, 0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0x00af,
+  0x2500, 0x2500, 0x2500, 0x005f, 0x251c, 0x2524, 0x2534, 0x252c,
   0x2502, 0x2264, 0x2265, 0x03c0, 0x2260, 0x00a3, 0x00b7, 0x0020
 };
 
@@ -1254,20 +1259,22 @@ term_write(const char *data, int len)
             term.cset_i = 0;
           when 0x7F:  /* DEL */
             // ignore
-          otherwise:
+          otherwise: {
+            // Determine character width before any replacements.
+            int width = wcwidth(wc);
             if (wc == 0x2010) {
              /* Many Windows fonts don't have the Unicode hyphen, but groff
               * uses it for man pages, so replace it with the ASCII version.
               */
               wc = '-';
             }
-            else if (cset == CSET_LINEDRW && 0x60 <= wc && wc < 0x80) {
+            else if (cset == CSET_LINEDRW && 0x60 <= wc && wc < 0x80)
               wc = linedraw_chars[wc - 0x60];
-            }
             else if (cset == CSET_GBCHR && c == '#')
               wc = 0xA3; // pound sign
             
-            write_char(wc, wcwidth(wc)); 
+            write_char(wc, width);
+          }
         }
       }
       when SEEN_ESC or OSC_MAYBE_ST or DCS_MAYBE_ST:

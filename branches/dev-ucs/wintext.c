@@ -504,12 +504,6 @@ win_text_internal(int x, int y, wchar *text, int len, uint attr, int lattr)
   if (attr & ATTR_NARROW)
     nfont |= FONT_NARROW;
 
- /* Windows font's dont tend to have the vertical line characters on different
-  * levels, so replace them with a mid-level line
-  */
-  if (text[0] >= 0x23BA && text[0] <= 0x23BD)
-    text[0] = 0x2500;
-
   if (bold_mode == BOLD_FONT && (attr & ATTR_BOLD))
     nfont |= FONT_BOLD;
   if (und_mode == UND_FONT && (attr & ATTR_UNDER))
