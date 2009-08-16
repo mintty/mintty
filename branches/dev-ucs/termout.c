@@ -232,7 +232,7 @@ write_linefeed(void)
   seen_disp_event();
 }
 
-static void
+static bool
 write_ctrl(char c)
 {
   switch (c) {
@@ -268,7 +268,10 @@ write_ctrl(char c)
       compatibility(VT100);
       term.cset_i = 0;
       term_update_cs();
+    otherwise:
+      return false;
   }
+  return true;
 }
 
 static void
@@ -1226,16 +1229,21 @@ term_write(const char *data, int len)
     switch (term.state) {
       when TOPLEVEL: {
         
-        if (term.oem_acs == 2 && !(c && strchr("\e\n\r\b", c)))
-          c |= 0x80;
-        
         wchar wc;
-        switch (cs_btowc(&wc, (char *)&c)) {
+
+        if (term.oem_acs && !memchr("\e\n\r\b", c, 4)) {
+          if (term.oem_acs == 2)
+            c |= 0x80;
+          write_char(cs_btowc_glyph(c), 1);
+          continue;
+        }
+        
+        switch (cs_mb1towc(&wc, (char *)&c)) {
           when 0: // NUL or low surrogate
             if (wc)
               unget = c;
           when -1: // Encoding error
-            cs_btowc(0, 0); // Clear decoder state
+            cs_mb1towc(0, 0); // Clear decoder state
             write_error();
             if (term.in_mb_char)
               unget = c;
@@ -1272,27 +1280,33 @@ term_write(const char *data, int len)
           continue;
         }
         
-        if (wc < 0x20 || wc == 0x7F)
-          write_ctrl(wc);
-        else {
-          // Determine character width before any replacements.
-          int width = wcwidth(wc);
-          switch(term.csets[term.cset_i]) {
-            when CSET_LINEDRW:
-              if (0x60 <= wc && wc < 0x80)
-                wc = linedraw_chars[wc - 0x60];
-            when CSET_GBCHR:
-              if (c == '#')
-                wc = 0xA3; // pound sign
+        // Control characters
+        if (wc < 0x20 || wc == 0x7F) {
+          if (!write_ctrl(wc) && c == wc) {
+            wc = cs_btowc_glyph(c);
+            if (wc != c)
+              write_char(wc, 1);
           }
-          if (wc == 0x2010) {
-           /* Many Windows fonts don't have the Unicode hyphen, but groff
-            * uses it for man pages, so replace it with the ASCII version.
-            */
-            wc = '-';
-          }
-          write_char(wc, width);
+          continue;
         }
+
+        // Everything else
+        int width = wcwidth(wc);
+        switch(term.csets[term.cset_i]) {
+          when CSET_LINEDRW:
+            if (0x60 <= wc && wc < 0x80)
+              wc = linedraw_chars[wc - 0x60];
+          when CSET_GBCHR:
+            if (c == '#')
+              wc = 0xA3; // pound sign
+        }
+        if (wc == 0x2010) {
+         /* Many Windows fonts don't have the Unicode hyphen, but groff
+          * uses it for man pages, so replace it with the ASCII version.
+          */
+          wc = '-';
+        }
+        write_char(wc, width);
       }
       when SEEN_ESC or OSC_MAYBE_ST or DCS_MAYBE_ST:
        /*

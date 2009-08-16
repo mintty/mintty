@@ -180,17 +180,20 @@ enumerate_locales(uint i)
 
 static cs_mode mode = CSM_DEFAULT;
 static char default_locale[32], utf8_locale[32];
-static uint codepage;
+bool valid_locale;
+static uint default_codepage, codepage;
 
 static void
 update_locale(void)
 {
-  char *locale =
-    setlocale(LC_CTYPE, mode == CSM_OEM  ? "C-CP437" :
-                        mode == CSM_UTF8 ? utf8_locale :
-                                           default_locale);
-  codepage = locale ? 0 : cs_lookup(cfg.charset);
-  cs_btowc(0, 0);
+  char *locale;
+  switch (mode) {
+    when CSM_OEM:  locale = "C-CP437";      codepage = 437;
+    when CSM_UTF8: locale = utf8_locale;    codepage = CP_UTF8;
+    otherwise:     locale = default_locale; codepage = default_codepage;
+  }
+  valid_locale = setlocale(LC_CTYPE, locale);
+  cs_mb1towc(0, 0);
 }
 
 const char *
@@ -216,10 +219,11 @@ cs_config_locale(bool font_ambig_wide)
     else {
       snprintf(default_locale, 32, setlocale(LC_CTYPE, "") ?: "C");
       bool ambig_wide = font_ambig_wide && wcwidth(0x3B1) == 2;
-      snprintf(utf8_locale, 32, "%sUTF-8", ambig_wide ? "ja-" : "C-");
+      snprintf(utf8_locale, 32, "%sUTF-8", ambig_wide ? "ja." : "C-");
       ret = 0;
     }
   }
+  default_codepage = cset ? cs_lookup(cset) : 0;
   update_locale();
   return ret;  
 }
@@ -236,7 +240,7 @@ cs_set_mode(cs_mode new_mode)
 int
 cs_wcntombn(char *s, const wchar *ws, size_t len, size_t wlen)
 {
-  if (codepage)
+  if (!valid_locale)
     return WideCharToMultiByte(codepage, 0, ws, wlen, s, len, 0, 0);
 
   // The POSIX way
@@ -251,9 +255,18 @@ cs_wcntombn(char *s, const wchar *ws, size_t len, size_t wlen)
 }
 
 int
-cs_btowc(wchar *pwc, const char *pc)
+cs_mbstowcs(wchar *ws, const char *s, size_t wlen)
 {
-  if (!codepage)
+  if (valid_locale)
+    return mbstowcs(ws, s, wlen);
+  else
+    return MultiByteToWideChar(codepage, 0, s, -1, ws, wlen) - 1;
+}
+
+int
+cs_mb1towc(wchar *pwc, const char *pc)
+{
+  if (valid_locale)
     return mbrtowc(pwc, pc, 1, 0);
 
   // The Windows way
@@ -293,19 +306,10 @@ cs_btowc(wchar *pwc, const char *pc)
   return 1;
 }
 
-int
-cs_mbstowcs(wchar *ws, const char *s, size_t wlen)
-{
-  if (!codepage)
-    return mbstowcs(ws, s, wlen);
-  else
-    return MultiByteToWideChar(codepage, 0, s, -1, ws, wlen) - 1;
-}
-
 wchar
-cs_oemtowc(char c)
+cs_btowc_glyph(char c)
 {
-  wchar wc;
-  MultiByteToWideChar(437, 0, &c, 1, &wc, 1);
+  wchar wc = 0;
+  MultiByteToWideChar(codepage, MB_USEGLYPHCHARS, &c, 1, &wc, 1);
   return wc;
 }
