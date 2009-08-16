@@ -90,7 +90,6 @@ locale_menu[] = {
   "ur", // Urdu
   "vi", // Vietnamese
   "zh", // Chinese
-  ""
 };
 
 static void
