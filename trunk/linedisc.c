@@ -7,8 +7,9 @@
 
 #include "child.h"
 #include "term.h"
-#include "unicode.h"
 #include "win.h"
+
+#include "charset.h"
 
 /*
  * ldisc.c: PuTTY line discipline. Sits between the input coming
@@ -25,15 +26,10 @@ struct {
 static int
 uclen(uchar c)
 {
-  if ((c >= 32 && c <= 126) || (c >= 160 && !term_in_utf()))
+  if ((c >= 32 && c <= 126) || (c >= 160))
     return 1;
   else if (c < 128)
     return 2;   /* ^x for some x */
-  else if (term_in_utf() && c >= 0xC0)
-    return 1;   /* UTF-8 introducer character
-                 * (FIXME: combining / wide chars) */
-  else if (term_in_utf() && c >= 0x80 && c < 0xC0)
-    return 0;   /* UTF-8 followup character */
   else
     return 4;   /* <XY> hex representation */
 }
@@ -41,10 +37,8 @@ uclen(uchar c)
 static void
 ucwrite(uchar c)
 {
-  if ((c >= 32 && c <= 126) || (!term_in_utf() && c >= 0xA0) ||
-      (term_in_utf() && c >= 0x80)) {
+  if ((c >= 32 && c <= 126) || c >= 160)
     term_write((char *) &c, 1);
-  }
   else if (c < 128) {
     char cc[2];
     cc[1] = (c == 127 ? '?' : c + 0x40);
@@ -56,15 +50,6 @@ ucwrite(uchar c)
     sprintf(cc, "<%02X>", c);
     term_write(cc, 4);
   }
-}
-
-static int
-char_start(uchar c)
-{
-  if (term_in_utf())
-    return (c < 0x80 || c >= 0xC0);
-  else
-    return 1;
 }
 
 static void
@@ -125,8 +110,7 @@ ldisc_send(const char *buf, int len, bool interactive)
       switch (ldisc.quotenext ? ' ' : c) {
          /*
           * ^h/^?: delete, and output BSBs, to return to
-          * last character boundary (in UTF-8 mode this may
-          * be more than one byte)
+          * last character boundary
           * ^w: delete, and output BSBs, to return to last
           * space/nonspace boundary
           * ^u: delete, and output BSBs, to return to BOL
@@ -141,11 +125,9 @@ ldisc_send(const char *buf, int len, bool interactive)
           */
         when KCTRL('H') or KCTRL('?'):       /* backspace/delete */
           if (ldisc.buflen > 0) {
-            do {
-              if (term.echoing)
-                bsb(uclen(ldisc.buf[ldisc.buflen - 1]));
-              ldisc.buflen--;
-            } while (!char_start(ldisc.buf[ldisc.buflen]));
+            if (term.echoing)
+              bsb(uclen(ldisc.buf[ldisc.buflen - 1]));
+            ldisc.buflen--;
           }
         when CTRL('W'):        /* delete word */
           while (ldisc.buflen > 0) {
@@ -214,14 +196,11 @@ ldisc_send(const char *buf, int len, bool interactive)
   }
 }
 
-
-
 void
-luni_send(const wchar *wbuf, int wlen, bool interactive)
+luni_send(const wchar *ws, int wlen, bool interactive)
 {
-  char buf[wlen * 6];
-  int cp = term.utf ? unicode_codepage : ucsdata.codepage;
-  int len = wc_to_mb(cp, 0, wbuf, wlen, buf, sizeof buf);
+  char s[wlen * MB_LEN_MAX];
+  int len = cs_wcntombn(s, ws, sizeof s, wlen);
   if (len > 0)
-    ldisc_send(buf, len, interactive);
+    ldisc_send(s, len, interactive);
 }

@@ -104,9 +104,9 @@ get_mods(void)
 {
   inline bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
   return
-    is_key_down(VK_SHIFT) * SHIFT |
-    is_key_down(VK_MENU) * ALT |
-    is_key_down(VK_CONTROL) * CTRL;
+    is_key_down(VK_SHIFT) * MDK_SHIFT |
+    is_key_down(VK_MENU) * MDK_ALT |
+    is_key_down(VK_CONTROL) * MDK_CTRL;
 }
 
 static void
@@ -261,7 +261,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   
   bool shift = is_key_down(VK_SHIFT);
   bool alt, ctrl, altgr, meta;
-  if (cfg.distinguish_altgr) {
+  if (cfg.altctrl_is_altgr) {
     alt = meta = is_key_down(VK_LMENU);
     altgr = is_key_down(VK_RMENU);
     ctrl = is_key_down(VK_CONTROL) & !altgr;
@@ -273,7 +273,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     altgr = alt & ctrl;
     meta = (alt & !ctrl) | (is_key_down(VK_LMENU) & is_key_down(VK_RMENU));
   }
-  mod_keys mods = shift * SHIFT | alt * ALT | ctrl * CTRL;
+  mod_keys mods = shift * MDK_SHIFT | alt * MDK_ALT | ctrl * MDK_CTRL;
 
   update_mouse(mods);
 
@@ -315,7 +315,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
   
   // Font zooming
-  if (cfg.zoom_shortcuts && mods == CTRL && !term.modify_other_keys) {
+  if (cfg.zoom_shortcuts && mods == MDK_CTRL && !term.modify_other_keys) {
     int zoom;
     switch (key) {
       when VK_OEM_PLUS or VK_ADD:       zoom = 1;
@@ -347,8 +347,8 @@ win_key_down(WPARAM wp, LPARAM lp)
 
   // Copy&paste
   if (cfg.edit_shortcuts && key == VK_INSERT) {
-    if (mods == CTRL) { term_copy(); return 1; }
-    if (mods == SHIFT) { win_paste(); return 1; }
+    if (mods == MDK_CTRL) { term_copy(); return 1; }
+    if (mods == MDK_SHIFT) { win_paste(); return 1; }
   }
 
   // Keycode buffers
@@ -480,6 +480,8 @@ win_key_down(WPARAM wp, LPARAM lp)
       else
         other_code(term.backspace_sends_bs ? '\b' : 0x7F);
     when VK_TAB:
+      if (alt)
+        return 0;
       if (!ctrl)
         shift ? csi('Z') : ch('\t');
       else
@@ -573,16 +575,18 @@ win_key_up(WPARAM wParam, LPARAM unused(lParam))
   if (wParam != VK_MENU)
     return false;
 
-  if (alt_state == ALT_ALONE)
-    term.app_escape_key ? ldisc_send("\eO[", 3, 1) : ldisc_send("\e", 1, 1);
+  if (alt_state == ALT_ALONE) {
+    if (cfg.alt_sends_esc)
+      term.app_escape_key ? ldisc_send("\eO[", 3, 1) : ldisc_send("\e", 1, 1);
+  }
   else if (alt_state > ALT_ALONE) {
-    if (term_in_utf()) {
+    if (MB_CUR_MAX == 1)
+      ldisc_send((char[]){alt_char}, 1, 1);
+    else {
       if (alt_char < 0x20)
         MultiByteToWideChar(CP_OEMCP, MB_USEGLYPHCHARS, (char[]){alt_char}, 1, &alt_char, 1); 
       luni_send(&alt_char, 1, 1);
     }
-    else if (alt_char < 0x100)
-      ldisc_send((char[]){alt_char}, 1, 1);
   }
   
   alt_state = ALT_NONE;

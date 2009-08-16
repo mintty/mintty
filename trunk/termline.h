@@ -3,14 +3,6 @@
 
 typedef struct {
  /*
-  * Any code in terminal.c which definitely needs to be changed
-  * when extra fields are added here is labelled with a comment
-  * saying FULL-TERMCHAR.
-  */
-  uint chr;
-  uint attr;
-
- /*
   * The cc_next field is used to link multiple termchars
   * together into a list, so as to fit more than one character
   * into a character cell (Unicode combining characters).
@@ -21,16 +13,25 @@ typedef struct {
   * 
   * Zero means end of list.
   */
-  int cc_next;
+  short cc_next;
+
+ /*
+  * Any code in terminal.c which definitely needs to be changed
+  * when extra fields are added here is labelled with a comment
+  * saying FULL-TERMCHAR.
+  */
+  wchar chr;
+  uint attr;
+
 } termchar;
 
 typedef struct {
   ushort lattr;
-  int cols;     /* number of real columns on the line */
-  int size;     /* number of allocated termchars
-                 * (cc-lists may make this > cols) */
-  int temporary;        /* true if decompressed from scrollback */
-  int cc_free;  /* offset to first cc in free list */
+  ushort cols;    /* number of real columns on the line */
+  ushort size;    /* number of allocated termchars
+                     (cc-lists may make this > cols) */
+  bool temporary; /* true if decompressed from scrollback */
+  short cc_free;  /* offset to first cc in free list */
   termchar *chars;
 } termline;
 
@@ -54,7 +55,7 @@ int termchars_equal_override(termchar *a, termchar *b, uint bchr, uint battr);
 void copy_termchar(termline *destline, int x, termchar *src);
 void move_termchar(termline *line, termchar *dest, termchar *src);
 
-void add_cc(termline *, int col, uint chr);
+void add_cc(termline *, int col, wchar chr);
 void clear_cc(termline *, int col);
 
 uchar *compressline(termline *);
@@ -72,16 +73,5 @@ termchar *term_bidi_line(termline *, int scr_y);
  */
 #define UCSGET(a, x) \
     ( (x)>0 && (a)[(x)].chr == UCSWIDE ? (a)[(x)-1].chr : (a)[(x)].chr )
-
-/*
- * Detect the various aliases of U+0020 SPACE.
- */
-#define IS_SPACE_CHR(chr) \
-	((chr) == 0x20 || (DIRECT_CHAR(chr) && ((chr) & 0xFF) == 0x20))
-
-/*
- * Spot magic CSETs.
- */
-#define CSET_OF(chr) (DIRECT_CHAR(chr)||DIRECT_FONT(chr) ? (chr)&CSET_MASK : 0)
 
 #endif

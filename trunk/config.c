@@ -7,7 +7,7 @@
 
 #include "ctrls.h"
 #include "print.h"
-#include "unicode.h"
+#include "charset.h"
 #include "term.h"
 #include "win.h"
 
@@ -109,22 +109,69 @@ printerbox_handler(control *ctrl, void *dlg, void *unused(data), int event)
 }
 
 static void
-codepage_handler(control *ctrl, void *dlg, void *unused(data), int event)
+correct_charset(char *cs)
 {
-  char *cp = new_cfg.codepage;
+  strcpy(cs, cs_name(cs_lookup(cs)));
+}
+
+static void
+charset_handler(control *ctrl, void *dlg, void *unused(data), int event)
+{
+  char *cs = new_cfg.charset;
   if (event == EVENT_REFRESH) {
     dlg_update_start(ctrl, dlg);
-    strcpy(cp, cp_name(decode_codepage(cp)));
     dlg_listbox_clear(ctrl, dlg);
-    const char *icp;
-    for (int i = 0; (icp = cp_enumerate(i)); i++)
-      dlg_listbox_add(ctrl, dlg, icp);
-    dlg_editbox_set(ctrl, dlg, cp);
+    const char *ics;
+    for (int i = 0; (ics = enumerate_charsets(i)); i++)
+      dlg_listbox_add(ctrl, dlg, ics);
+    dlg_editbox_set(ctrl, dlg, cs);
     dlg_update_done(ctrl, dlg);
   }
   else if (event == EVENT_VALCHANGE) {
-    dlg_editbox_get(ctrl, dlg, cp, sizeof (cfg.codepage));
-    strcpy(cp, cp_name(decode_codepage(cp)));
+    dlg_editbox_get(ctrl, dlg, cs, sizeof cfg.charset);
+    correct_charset(cs);
+  }
+}
+
+static void
+correct_locale(char *locale)
+{
+  uchar *lang = (uchar *)locale;
+  if (isalpha(lang[0]) && isalpha(lang[1])) {
+    // Treat two letters at the start as the language.
+    locale[0] = tolower(lang[0]);
+    locale[1] = tolower(lang[1]);
+    uchar *terr = (uchar *)strchr(locale + 2, '_');
+    if (terr && isalpha(terr[1]) && isalpha(terr[2])) {
+      // Treat two letters after an underscore as the territory.
+      locale[2] = '_';
+      locale[3] = toupper(terr[1]);
+      locale[4] = toupper(terr[2]);
+      locale[5] = 0;
+    }
+    else
+      locale[2] = 0;
+  }
+  else 
+    locale[0] = 0;
+}
+
+static void
+locale_handler(control *ctrl, void *dlg, void *unused(data), int event)
+{
+  char *locale = new_cfg.locale;
+  if (event == EVENT_REFRESH) {
+    dlg_update_start(ctrl, dlg);
+    dlg_listbox_clear(ctrl, dlg);
+    const char *l;
+    for (int i = 0; (l = enumerate_locales(i)); i++)
+      dlg_listbox_add(ctrl, dlg, l);
+    dlg_editbox_set(ctrl, dlg, locale);
+    dlg_update_done(ctrl, dlg);
+  }
+  else if (event == EVENT_VALCHANGE) {
+    dlg_editbox_get(ctrl, dlg, locale, sizeof cfg.locale);
+    correct_locale(locale);
   }
 }
 
@@ -271,19 +318,19 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(allow_blinking))
   )->column = 1;
 
-  s = ctrl_getset(b, "Text", "codepage", "Codepage");
-  ctrl_combobox(s, null, '\0', 100, P(0), codepage_handler, P(null), P(null));
+  s = ctrl_getset(b, "Text", "locale", null);
+  ctrl_columns(s, 2, 25, 75);
+  ctrl_combobox(
+    s, "Locale", '\0', 100, P(0), locale_handler, P(0), P(0)
+  )->column = 0;
+  ctrl_combobox(
+    s, "Character set", '\0', 100, P(0), charset_handler, P(0), P(0)
+  )->column = 1;
 
  /*
   * The Keys panel.
   */
   ctrl_settitle(b, "Keys", "Keys");
-
-  s = ctrl_getset(b, "Keys", "altgr", null);
-  ctrl_checkbox(
-    s, "Distinguish AltGr from Ctrl+Alt", 'd', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(distinguish_altgr))
-  );
 
   s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
   ctrl_checkbox(
@@ -299,13 +346,24 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(zoom_shortcuts))
   );
   
+  s = ctrl_getset(b, "Keys", "alt", null);
+  ctrl_columns(s, 2, 50, 50);
+  ctrl_checkbox(
+    s, "Ctrl+Alt is AltGr", 'g', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(altctrl_is_altgr))
+  )->column = 0;
+  ctrl_checkbox(
+    s, "Lone Alt sends ESC", 'e', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(alt_sends_esc))
+  )->column = 1;
+
   s = ctrl_getset(b, "Keys", "scroll", "Modifier for scrolling");
   ctrl_radiobuttons(
     s, null, '\0', 4, P(0),      
     dlg_stdradiobutton_handler, I(offcfg(scroll_mod)),
-    "Shift", 's', I(SHIFT),
-    "Ctrl", 'c', I(CTRL),
-    "Alt", 'a', I(ALT),
+    "Shift", 's', I(MDK_SHIFT),
+    "Ctrl", 'c', I(MDK_CTRL),
+    "Alt", 'a', I(MDK_ALT),
     "Off", 'o', I(0),
     null
   );
@@ -347,9 +405,9 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, "Modifier for overriding default", '\0', 4, P(0),
     dlg_stdradiobutton_handler, I(offcfg(click_target_mod)),
-    "Shift", 's', I(SHIFT),
-    "Ctrl", 'c', I(CTRL),
-    "Alt", 'a', I(ALT),
+    "Shift", 's', I(MDK_SHIFT),
+    "Ctrl", 'c', I(MDK_CTRL),
+    "Alt", 'a', I(MDK_ALT),
     "Off", 'o', I(0),
     null
   );
@@ -380,7 +438,7 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Output", "printer", "Printer");
   ctrl_combobox(
-    s, null, '\0', 100, P(0), printerbox_handler, P(null), P(null)
+    s, null, '\0', 100, P(0), printerbox_handler, P(0), P(0)
   );
 
  /*
@@ -427,7 +485,7 @@ typedef const struct {
   ushort def;
 } int_setting;
 
-static int_setting
+static const int_setting
 int_settings[] = {
   {"Columns", offcfg(cols), 80},
   {"Rows", offcfg(rows), 24},
@@ -436,7 +494,8 @@ int_settings[] = {
   {"Scrollbar", offcfg(scrollbar), true},
   {"ScrollbackLines", offcfg(scrollback_lines), 10000},
   {"ConfirmExit", offcfg(confirm_exit), true},
-  {"DistinguishAltGr", offcfg(distinguish_altgr), false},
+  {"DistinguishAltGr", offcfg(altctrl_is_altgr), true},
+  {"AltSendsESC", offcfg(alt_sends_esc), false},
   {"WindowShortcuts", offcfg(window_shortcuts), true},
   {"EditShortcuts", offcfg(edit_shortcuts), true},
   {"ZoomShortcuts", offcfg(zoom_shortcuts), true},
@@ -448,12 +507,12 @@ int_settings[] = {
   {"FontHeight", offcfg(font.size), 10},
   {"FontCharset", offcfg(font.charset), 0},
   {"FontQuality", offcfg(font_quality), FQ_DEFAULT},
-  {"ScrollMod", offcfg(scroll_mod), SHIFT},
+  {"ScrollMod", offcfg(scroll_mod), MDK_SHIFT},
   {"RightClickAction", offcfg(right_click_action), RC_SHOWMENU},
   {"CopyOnSelect", offcfg(copy_on_select), false},
   {"ClicksPlaceCursor", offcfg(clicks_place_cursor), false},
   {"ClicksTargetApp", offcfg(clicks_target_app), true},
-  {"ClickTargetMod", offcfg(click_target_mod), SHIFT},
+  {"ClickTargetMod", offcfg(click_target_mod), MDK_SHIFT},
   {"BellType", offcfg(bell_type), BELL_DISABLED},
   {"BellIndication", offcfg(bell_ind), B_IND_STEADY},
 };
@@ -465,10 +524,11 @@ typedef const struct {
   const char *def;
 } string_setting;
 
-static string_setting
+static const string_setting
 string_settings[] = {
   {"Font", offcfg(font.name), sizeof cfg.font.name, "Lucida Console"},
-  {"Codepage", offcfg(codepage), sizeof cfg.codepage, ""},
+  {"Locale", offcfg(locale), sizeof cfg.locale, ""},
+  {"Charset", offcfg(charset), sizeof cfg.charset, ""},
   {"Printer", offcfg(printer), sizeof cfg.printer, ""},
 };
 
@@ -478,7 +538,7 @@ typedef const struct {
   colour def;
 } colour_setting;
 
-static colour_setting
+static const colour_setting
 colour_settings[] = {
   {"ForegroundColour", offcfg(fg_colour), 0xBFBFBF},
   {"BackgroundColour", offcfg(bg_colour), 0x000000},
@@ -496,6 +556,14 @@ load_config(void)
   for (colour_setting *s = colour_settings; s < endof(colour_settings); s++)
     read_colour_setting(s->key, &atoffset(colour, &cfg, s->offset), s->def);
   close_settings_r();
+  
+  correct_locale(cfg.locale);
+  
+  if (!*cfg.charset) {
+    // For compatibility with pre 0.5
+    read_string_setting("Codepage", cfg.charset, sizeof cfg.charset, "");
+  }
+  correct_charset(cfg.charset);
 }
 
 char *

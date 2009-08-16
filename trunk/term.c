@@ -7,6 +7,7 @@
 
 #include "linedisc.h"
 #include "win.h"
+#include "charset.h"
 
 struct term term;
 
@@ -111,13 +112,12 @@ term_reset(void)
   term.alt_wnext = term.wrapnext = term.save_wnext = term.alt_save_wnext =
     false;
   term.alt_wrap = term.wrap = true;
-  term.alt_cset = term.cset = term.save_cset = term.alt_save_cset = 0;
+  term.alt_cset_i = term.cset_i = term.save_cset_i = term.alt_save_cset_i = 0;
   term.alt_utf = term.utf = term.save_utf = term.alt_save_utf = 0;
-  term.utf_state = 0;
   term.alt_oem_acs = term.oem_acs = term.save_oem_acs = term.alt_save_oem_acs =
     0;
-  term.cset_attr[0] = term.cset_attr[1] = term.save_csattr =
-    term.alt_save_csattr = CSET_ASCII;
+  term.csets[0] = term.csets[1] = term.save_cset =
+    term.alt_save_cset = CSET_ASCII;
   term.rvideo = 0;
   term.in_vbell = false;
   term.cursor_on = true;
@@ -231,7 +231,7 @@ term_init(void)
   term.attr_mask = 0xffffffff;
 
  /* FULL-TERMCHAR */
-  term.basic_erase_char.chr = CSET_ASCII | ' ';
+  term.basic_erase_char.chr = ' ';
   term.basic_erase_char.attr = ATTR_DEFAULT;
   term.erase_char = term.basic_erase_char;
 }
@@ -405,8 +405,7 @@ term_resize(int newrows, int newcols)
  * Swap screens. If `reset' is true and we have been asked to
  * switch to the alternate screen, we must bring most of its
  * configuration from the main screen and erase the contents of the
- * alternate screen completely. (This is even true if we're already
- * on it! Blame xterm.)
+ * alternate screen completely.
  */
 void
 term_swap_screen(int which, int reset, int keep_cur_pos)
@@ -415,8 +414,7 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
   pos tp;
   tree234 *ttr;
 
-  if (!which)
-    reset = false;      /* do no weird resetting if which==0 */
+  reset &= which;      /* do no resetting if which==0 */
 
   if (which != term.which_screen) {
     term.which_screen = which;
@@ -456,14 +454,16 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
     if (!reset)
       term.insert = term.alt_ins;
     term.alt_ins = t;
-    t = term.cset;
+    t = term.cset_i;
     if (!reset)
-      term.cset = term.alt_cset;
-    term.alt_cset = t;
+      term.cset_i = term.alt_cset_i;
+    term.alt_cset_i = t;
+    
     t = term.utf;
     if (!reset)
       term.utf = term.alt_utf;
     term.alt_utf = t;
+    
     t = term.oem_acs;
     if (!reset)
       term.oem_acs = term.alt_oem_acs;
@@ -473,14 +473,14 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
     if (!reset && !keep_cur_pos)
       term.savecurs = term.alt_savecurs;
     term.alt_savecurs = tp;
+    t = term.save_cset_i;
+    if (!reset && !keep_cur_pos)
+      term.save_cset_i = term.alt_save_cset_i;
+    term.alt_save_cset_i = t;
     t = term.save_cset;
     if (!reset && !keep_cur_pos)
       term.save_cset = term.alt_save_cset;
     term.alt_save_cset = t;
-    t = term.save_csattr;
-    if (!reset && !keep_cur_pos)
-      term.save_csattr = term.alt_save_csattr;
-    term.alt_save_csattr = t;
     t = term.save_attr;
     if (!reset && !keep_cur_pos)
       term.save_attr = term.alt_save_attr;
@@ -497,6 +497,8 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
     if (!reset && !keep_cur_pos)
       term.save_oem_acs = term.alt_save_oem_acs;
     term.alt_save_oem_acs = t;
+    
+    term_update_cs();
   }
 
   if (reset && term.screen) {
@@ -543,7 +545,7 @@ term_check_boundary(int x, int y)
     if (ldata->chars[x].chr == UCSWIDE) {
       clear_cc(ldata, x - 1);
       clear_cc(ldata, x);
-      ldata->chars[x - 1].chr = ' ' | CSET_ASCII;
+      ldata->chars[x - 1].chr = ' ';
       ldata->chars[x] = ldata->chars[x - 1];
     }
   }
@@ -894,7 +896,7 @@ term_paint(void)
     termline *ldata;
     termchar *lchars;
     int dirty_line, dirty_run;
-    uint attr = 0, cset = 0;
+    uint attr = 0;
     int updated_line = 0;
     int start = 0;
     int ccount = 0;
@@ -921,18 +923,11 @@ term_paint(void)
     * each character cell to look like.
     */
     for (int j = 0; j < term.cols; j++) {
-      uint tattr, tchar;
       termchar *d = lchars + j;
       scrpos.x = backward ? backward[j] : j;
-
-      tchar = d->chr;
-      tattr = d->attr;
+      wchar tchar = d->chr;
+      uint tattr = d->attr;
       
-      switch (tchar & CSET_MASK) {
-        when CSET_ASCII:   tchar = ucsdata.unitab_line[tchar & 0xFF];
-        when CSET_LINEDRW: tchar = ucsdata.unitab_xterm[tchar & 0xFF];
-        when CSET_OEMCP:   tchar = ucsdata.unitab_oemcp[tchar & 0xFF];
-      }
       if (j < term.cols - 1 && d[1].chr == UCSWIDE)
         tattr |= ATTR_WIDE;
 
@@ -949,7 +944,7 @@ term_paint(void)
      /* 'Real' blinking ? */
       if (term.blink_is_real && (tattr & ATTR_BLINK)) {
         if (term.has_focus && term.tblinker) {
-          tchar = ucsdata.unitab_line[(uchar) ' '];
+          tchar = ' ';
         }
         tattr &= ~ATTR_BLINK;
       }
@@ -1027,12 +1022,10 @@ term_paint(void)
     term.disptext[i]->lattr = ldata->lattr;
 
     for (int j = 0; j < term.cols; j++) {
-      uint tattr, tchar;
-      int break_run, do_copy;
+      bool break_run, do_copy;
       termchar *d = lchars + j;
-
-      tattr = newline[j].attr;
-      tchar = newline[j].chr;
+      uint tattr = newline[j].attr;
+      wchar tchar = newline[j].chr;
 
       if ((term.disptext[i]->chars[j].attr ^ tattr) & ATTR_WIDE)
         dirty_line = true;
@@ -1044,19 +1037,12 @@ term_paint(void)
         break_run = true;
 
      /*
-      * Separate out sequences of characters that have the
-      * same CSET, if that CSET is a magic one.
-      */
-      if (CSET_OF(tchar) != cset)
-        break_run = true;
-
-     /*
       * Break on both sides of any combined-character cell.
       */
       if (d->cc_next != 0 || (j > 0 && d[-1].cc_next != 0))
         break_run = true;
 
-      if (!ucsdata.dbcs_screenfont && !dirty_line) {
+      if (!dirty_line) {
         if (term.disptext[i]->chars[j].chr == tchar &&
             (term.disptext[i]->chars[j].attr & ~DATTR_MASK) == tattr)
           break_run = true;
@@ -1075,9 +1061,6 @@ term_paint(void)
         start = j;
         ccount = 0;
         attr = tattr;
-        cset = CSET_OF(tchar);
-        if (ucsdata.dbcs_screenfont)
-          last_run_dirty = dirty_run;
         dirty_run = dirty_line;
       }
 
@@ -1092,28 +1075,18 @@ term_paint(void)
         chlen = ccount + 256;
         ch = renewn(ch, chlen);
       }
-      ch[ccount++] = (wchar) tchar;
+      ch[ccount++] = tchar;
 
       if (d->cc_next) {
         termchar *dd = d;
 
         while (dd->cc_next) {
-          uint schar;
-
-          dd += dd->cc_next;
-
-          schar = dd->chr;
-          switch (schar & CSET_MASK) {
-            when CSET_ASCII:   schar = ucsdata.unitab_line[schar & 0xFF];
-            when CSET_LINEDRW: schar = ucsdata.unitab_xterm[schar & 0xFF];
-            when CSET_OEMCP:   schar = ucsdata.unitab_oemcp[schar & 0xFF];
-          }
-
           if (ccount >= chlen) {
             chlen = ccount + 256;
             ch = renewn(ch, chlen);
           }
-          ch[ccount++] = (wchar) schar;
+          dd += dd->cc_next;
+          ch[ccount++] = dd->chr;
         }
 
         attr |= TATTR_COMBINING;
@@ -1276,7 +1249,7 @@ term_copy(void)
     * newline at the end)...
     */
     if (!(ldata->lattr & LATTR_WRAPPED)) {
-      while (nlpos.x && IS_SPACE_CHR(ldata->chars[nlpos.x - 1].chr) &&
+      while (nlpos.x && ldata->chars[nlpos.x - 1].chr == ' ' &&
              !ldata->chars[nlpos.x - 1].cc_next && poslt(start, nlpos))
         decpos(nlpos);
       if (poslt(nlpos, end))
@@ -1302,7 +1275,6 @@ term_copy(void)
 
     while (poslt(start, end) && poslt(start, nlpos)) {
       wchar cbuf[16], *p;
-      int set, c;
       int x = start.x;
 
       if (ldata->chars[x].chr == UCSWIDE) {
@@ -1311,43 +1283,10 @@ term_copy(void)
       }
 
       while (1) {
-        int uc = ldata->chars[x].chr;
+        wchar c = ldata->chars[x].chr;
         attr = ldata->chars[x].attr;
-
-        switch (uc & CSET_MASK) {
-          when CSET_LINEDRW: uc = ucsdata.unitab_xterm[uc & 0xFF];
-          when CSET_ASCII:   uc = ucsdata.unitab_line[uc & 0xFF];
-          when CSET_ACP:   uc = ucsdata.unitab_font[uc & 0xFF];
-          when CSET_OEMCP: uc = ucsdata.unitab_oemcp[uc & 0xFF];
-        }
-
-        set = (uc & CSET_MASK);
-        c = (uc & ~CSET_MASK);
-        cbuf[0] = uc;
+        cbuf[0] = c;
         cbuf[1] = 0;
-
-        if (DIRECT_FONT(uc)) {
-          if (c >= ' ' && c != 0x7F) {
-            char buf[4];
-            wchar wbuf[4];
-            int rv;
-            if (is_dbcs_leadbyte(ucsdata.font_codepage, (uchar) c)) {
-              buf[0] = c;
-              buf[1] = (char) (0xFF & ldata->chars[start.x + 1].chr);
-              rv = mb_to_wc(ucsdata.font_codepage, 0, buf, 2, wbuf, 4);
-              start.x++;
-            }
-            else {
-              buf[0] = c;
-              rv = mb_to_wc(ucsdata.font_codepage, 0, buf, 1, wbuf, 4);
-            }
-
-            if (rv > 0) {
-              memcpy(cbuf, wbuf, rv * sizeof (wchar));
-              cbuf[rv] = 0;
-            }
-          }
-        }
 
         for (p = cbuf; *p; p++)
           clip_addchar(&buf, *p, attr);
@@ -1436,7 +1375,7 @@ term_send_paste(void)
   while (term.paste_pos < term.paste_len) {
     int n = 0;
     while (n + term.paste_pos < term.paste_len) {
-      if (term.paste_buffer[term.paste_pos + n++] == '\015')
+      if (term.paste_buffer[term.paste_pos + n++] == '\r')
         break;
     }
     luni_send(term.paste_buffer + term.paste_pos, n, 0);
@@ -1470,7 +1409,7 @@ term_deselect(void)
 }
 
 void
-term_set_focus(int has_focus)
+term_set_focus(bool has_focus)
 {
   if (has_focus != term.has_focus) {
     term.has_focus = has_focus;
@@ -1480,10 +1419,14 @@ term_set_focus(int has_focus)
   }
 }
 
-bool
-term_in_utf(void)
+void
+term_update_cs()
 {
-  return term.utf || ucsdata.codepage == unicode_codepage;
+  cs_set_mode(
+    term.oem_acs ? CSM_OEM :
+    term.utf ? CSM_UTF8 :
+    term.csets[term.cset_i] == CSET_OEM ? CSM_OEM : CSM_DEFAULT
+  );
 }
 
 int

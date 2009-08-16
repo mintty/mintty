@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <wctype.h>
+#include <wchar.h>
 #include <errno.h>
 
 #define WINVER 0x500
@@ -24,6 +26,7 @@
 #define no_return __attribute__((noreturn)) void
 
 typedef wchar_t wchar;
+typedef wint_t wint;
 
 typedef signed char schar;
 typedef unsigned char uchar;

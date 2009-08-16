@@ -983,6 +983,44 @@ winctrl_set_focus(control *ctrl, dlgparam * dp, int has_focus)
   }
 }
 
+static void
+select_font(winctrl *c, dlgparam *dp)
+{
+  font_spec fs = *(font_spec *) c->data;
+  HDC dc = GetDC(0);
+  LOGFONT lf;
+  lf.lfHeight = -MulDiv(fs.size, GetDeviceCaps(dc, LOGPIXELSY), 72);
+  ReleaseDC(0, dc);
+  lf.lfWidth = lf.lfEscapement = lf.lfOrientation = 0;
+  lf.lfItalic = lf.lfUnderline = lf.lfStrikeOut = 0;
+  lf.lfWeight = (fs.isbold ? FW_BOLD : 0);
+  lf.lfCharSet = fs.charset;
+  lf.lfOutPrecision = OUT_DEFAULT_PRECIS;
+  lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+  lf.lfQuality = DEFAULT_QUALITY;
+  lf.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
+  strncpy(lf.lfFaceName, fs.name, sizeof (lf.lfFaceName) - 1);
+  lf.lfFaceName[sizeof (lf.lfFaceName) - 1] = '\0';
+
+  CHOOSEFONT cf;
+  cf.lStructSize = sizeof (cf);
+  cf.hwndOwner = dp->wnd;
+  cf.lpLogFont = &lf;
+  cf.Flags =
+    CF_FIXEDPITCHONLY | CF_FORCEFONTEXIST | CF_INITTOLOGFONTSTRUCT |
+    CF_SCREENFONTS;
+
+  if (ChooseFont(&cf)) {
+    strncpy(fs.name, lf.lfFaceName, sizeof (fs.name) - 1);
+    fs.name[sizeof (fs.name) - 1] = '\0';
+    fs.isbold = (lf.lfWeight == FW_BOLD);
+    fs.charset = lf.lfCharSet;
+    fs.size = cf.iPointSize / 10;
+    dlg_fontsel_set(c->ctrl, dp, &fs);
+    c->ctrl->handler(c->ctrl, dp, dp->data, EVENT_VALCHANGE);
+  }
+}
+
 /*
  * The dialog-box procedure calls this function to handle Windows
  * messages on a control we manage.
@@ -1045,137 +1083,96 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
  /*
   * Now switch on the control type and the message.
   */
-  switch (ctrl->type) {
-    when CTRL_EDITBOX: {
-      if (msg == WM_COMMAND && !ctrl->editbox.has_list &&
-          (HIWORD(wParam) == EN_SETFOCUS || HIWORD(wParam) == EN_KILLFOCUS))
-        winctrl_set_focus(ctrl, dp, HIWORD(wParam) == EN_SETFOCUS);
-      if (msg == WM_COMMAND && ctrl->editbox.has_list &&
-          (HIWORD(wParam) == CBN_SETFOCUS || HIWORD(wParam) == CBN_KILLFOCUS))
-        winctrl_set_focus(ctrl, dp, HIWORD(wParam) == CBN_SETFOCUS);
-
-      if (msg == WM_COMMAND && !ctrl->editbox.has_list &&
-          HIWORD(wParam) == EN_CHANGE)
-        ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
-      if (msg == WM_COMMAND && ctrl->editbox.has_list) {
-        if (HIWORD(wParam) == CBN_SELCHANGE) {
-          int index, len;
-          char *text;
-
-          index =
-            SendDlgItemMessage(dp->wnd, c->base_id + 1, CB_GETCURSEL, 0, 0);
-          len =
-            SendDlgItemMessage(dp->wnd, c->base_id + 1, CB_GETLBTEXTLEN, index,
-                               0);
-          text = newn(char, len + 1);
-          SendDlgItemMessage(dp->wnd, c->base_id + 1, CB_GETLBTEXT, index,
-                             (LPARAM) text);
-          SetDlgItemText(dp->wnd, c->base_id + 1, text);
-          free(text);
-          ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
+  if (msg == WM_COMMAND) {
+    WORD note = HIWORD(wParam);
+    switch (ctrl->type) {
+      when CTRL_EDITBOX:
+        if (ctrl->editbox.has_list) {
+          switch (note) {
+            when CBN_SETFOCUS:
+              winctrl_set_focus(ctrl, dp, true);
+            when CBN_KILLFOCUS:
+              winctrl_set_focus(ctrl, dp, false);
+              ctrl->handler(ctrl, dp, dp->data, EVENT_REFRESH);
+            when CBN_SELCHANGE: {
+              int index = SendDlgItemMessage(
+                            dp->wnd, c->base_id + 1, CB_GETCURSEL, 0, 0);
+              int len = SendDlgItemMessage(
+                          dp->wnd, c->base_id + 1, CB_GETLBTEXTLEN, index, 0);
+              char text[len + 1];
+              SendDlgItemMessage(
+                dp->wnd, c->base_id + 1, CB_GETLBTEXT, index, (LPARAM) text);
+              SetDlgItemText(dp->wnd, c->base_id + 1, text);
+              ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
+            }
+            when CBN_EDITCHANGE:
+              ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
+          }
         }
-        else if (HIWORD(wParam) == CBN_EDITCHANGE) {
-          ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
+        else {
+          switch (note) {
+            when EN_SETFOCUS:
+              winctrl_set_focus(ctrl, dp, true);
+            when EN_KILLFOCUS:
+              winctrl_set_focus(ctrl, dp, false);
+              ctrl->handler(ctrl, dp, dp->data, EVENT_REFRESH);
+            when EN_CHANGE:
+              ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
+          }
         }
-        else if (HIWORD(wParam) == CBN_KILLFOCUS) {
-          ctrl->handler(ctrl, dp, dp->data, EVENT_REFRESH);
+      when CTRL_RADIO:
+        switch (note) {
+          when BN_SETFOCUS or BN_KILLFOCUS:
+            winctrl_set_focus(ctrl, dp, note == BN_SETFOCUS);
+          when BN_CLICKED or BN_DOUBLECLICKED:
+           /*
+            * We sometimes get spurious BN_CLICKED messages for the
+            * radio button that is just about to _lose_ selection, if
+            * we're switching using the arrow keys. Therefore we
+            * double-check that the button in wParam is actually
+            * checked before generating an event.
+            */
+            if (IsDlgButtonChecked(dp->wnd, LOWORD(wParam)))
+              ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
         }
-
-      }
-    }
-    when CTRL_RADIO:
-      if (msg == WM_COMMAND &&
-          (HIWORD(wParam) == BN_SETFOCUS || HIWORD(wParam) == BN_KILLFOCUS))
-        winctrl_set_focus(ctrl, dp, HIWORD(wParam) == BN_SETFOCUS);
-     /*
-      * We sometimes get spurious BN_CLICKED messages for the
-      * radio button that is just about to _lose_ selection, if
-      * we're switching using the arrow keys. Therefore we
-      * double-check that the button in wParam is actually
-      * checked before generating an event.
-      */
-      if (msg == WM_COMMAND &&
-          (HIWORD(wParam) == BN_CLICKED || HIWORD(wParam) == BN_DOUBLECLICKED)
-          && IsDlgButtonChecked(dp->wnd, LOWORD(wParam))) {
-        ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
-      }
-    when CTRL_CHECKBOX:
-      if (msg == WM_COMMAND &&
-          (HIWORD(wParam) == BN_SETFOCUS || HIWORD(wParam) == BN_KILLFOCUS))
-        winctrl_set_focus(ctrl, dp, HIWORD(wParam) == BN_SETFOCUS);
-      if (msg == WM_COMMAND &&
-          (HIWORD(wParam) == BN_CLICKED ||
-           HIWORD(wParam) == BN_DOUBLECLICKED)) {
-        ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
-      }
-    when CTRL_BUTTON:
-      if (msg == WM_COMMAND &&
-          (HIWORD(wParam) == BN_SETFOCUS || HIWORD(wParam) == BN_KILLFOCUS))
-        winctrl_set_focus(ctrl, dp, HIWORD(wParam) == BN_SETFOCUS);
-      if (msg == WM_COMMAND &&
-          (HIWORD(wParam) == BN_CLICKED ||
-           HIWORD(wParam) == BN_DOUBLECLICKED)) {
-        ctrl->handler(ctrl, dp, dp->data, EVENT_ACTION);
-      }
-    when CTRL_LISTBOX:
-      if (msg == WM_COMMAND && ctrl->listbox.height != 0 &&
-          (HIWORD(wParam) == LBN_SETFOCUS || HIWORD(wParam) == LBN_KILLFOCUS))
-        winctrl_set_focus(ctrl, dp, HIWORD(wParam) == LBN_SETFOCUS);
-      if (msg == WM_COMMAND && ctrl->listbox.height == 0 &&
-          (HIWORD(wParam) == CBN_SETFOCUS || HIWORD(wParam) == CBN_KILLFOCUS))
-        winctrl_set_focus(ctrl, dp, HIWORD(wParam) == CBN_SETFOCUS);
-      if (msg == WM_COMMAND && id >= 2 &&
-          (HIWORD(wParam) == BN_SETFOCUS || HIWORD(wParam) == BN_KILLFOCUS))
-        winctrl_set_focus(ctrl, dp, HIWORD(wParam) == BN_SETFOCUS);
-      if (msg == WM_COMMAND && HIWORD(wParam) == LBN_DBLCLK) {
-        SetCapture(dp->wnd);
-        ctrl->handler(ctrl, dp, dp->data, EVENT_ACTION);
-      }
-      else if (msg == WM_COMMAND && HIWORD(wParam) == LBN_SELCHANGE) {
-        ctrl->handler(ctrl, dp, dp->data, EVENT_SELCHANGE);
-      }
-    when CTRL_FONTSELECT: {
-      if (msg == WM_COMMAND && id == 2 &&
-          (HIWORD(wParam) == BN_SETFOCUS || HIWORD(wParam) == BN_KILLFOCUS))
-        winctrl_set_focus(ctrl, dp, HIWORD(wParam) == BN_SETFOCUS);
-      if (id == 2 &&
-          (msg == WM_COMMAND &&
-           (HIWORD(wParam) == BN_CLICKED ||
-            HIWORD(wParam) == BN_DOUBLECLICKED))) {
-        font_spec fs = *(font_spec *) c->data;
-        HDC dc = GetDC(0);
-        LOGFONT lf;
-        lf.lfHeight = -MulDiv(fs.size, GetDeviceCaps(dc, LOGPIXELSY), 72);
-        ReleaseDC(0, dc);
-        lf.lfWidth = lf.lfEscapement = lf.lfOrientation = 0;
-        lf.lfItalic = lf.lfUnderline = lf.lfStrikeOut = 0;
-        lf.lfWeight = (fs.isbold ? FW_BOLD : 0);
-        lf.lfCharSet = fs.charset;
-        lf.lfOutPrecision = OUT_DEFAULT_PRECIS;
-        lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-        lf.lfQuality = DEFAULT_QUALITY;
-        lf.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
-        strncpy(lf.lfFaceName, fs.name, sizeof (lf.lfFaceName) - 1);
-        lf.lfFaceName[sizeof (lf.lfFaceName) - 1] = '\0';
-
-        CHOOSEFONT cf;
-        cf.lStructSize = sizeof (cf);
-        cf.hwndOwner = dp->wnd;
-        cf.lpLogFont = &lf;
-        cf.Flags =
-          CF_FIXEDPITCHONLY | CF_FORCEFONTEXIST | CF_INITTOLOGFONTSTRUCT |
-          CF_SCREENFONTS;
-
-        if (ChooseFont(&cf)) {
-          strncpy(fs.name, lf.lfFaceName, sizeof (fs.name) - 1);
-          fs.name[sizeof (fs.name) - 1] = '\0';
-          fs.isbold = (lf.lfWeight == FW_BOLD);
-          fs.charset = lf.lfCharSet;
-          fs.size = cf.iPointSize / 10;
-          dlg_fontsel_set(ctrl, dp, &fs);
-          ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
+      when CTRL_CHECKBOX:
+        switch (note) {
+          when BN_SETFOCUS or BN_KILLFOCUS:
+            winctrl_set_focus(ctrl, dp, note == BN_SETFOCUS);
+          when BN_CLICKED or BN_DOUBLECLICKED:
+            ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
         }
-      }
+      when CTRL_BUTTON:
+        switch (note) {
+          when BN_SETFOCUS or BN_KILLFOCUS:
+            winctrl_set_focus(ctrl, dp, note == BN_SETFOCUS);
+          when BN_CLICKED or BN_DOUBLECLICKED:
+            ctrl->handler(ctrl, dp, dp->data, EVENT_ACTION);
+        }
+      when CTRL_LISTBOX:
+        if (ctrl->listbox.height != 0 &&
+            (note == LBN_SETFOCUS || note == LBN_KILLFOCUS))
+          winctrl_set_focus(ctrl, dp, note == LBN_SETFOCUS);
+        else if (ctrl->listbox.height == 0 &&
+            (note == CBN_SETFOCUS || note == CBN_KILLFOCUS))
+          winctrl_set_focus(ctrl, dp, note == CBN_SETFOCUS);
+        else if (id >= 2 && (note == BN_SETFOCUS || note == BN_KILLFOCUS))
+          winctrl_set_focus(ctrl, dp, note == BN_SETFOCUS);
+        else if (note == LBN_DBLCLK) {
+          SetCapture(dp->wnd);
+          ctrl->handler(ctrl, dp, dp->data, EVENT_ACTION);
+        }
+        else if (note == LBN_SELCHANGE)
+          ctrl->handler(ctrl, dp, dp->data, EVENT_SELCHANGE);
+      when CTRL_FONTSELECT:
+        if (id == 2) {
+          switch (note) {
+            when BN_SETFOCUS or BN_KILLFOCUS:
+              winctrl_set_focus(ctrl, dp, note == BN_SETFOCUS);
+            when BN_CLICKED or BN_DOUBLECLICKED:
+              select_font(c, dp);
+          }
+        }
     }
   }
 

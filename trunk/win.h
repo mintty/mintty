@@ -8,7 +8,6 @@ void win_reconfig();
 void win_update(void);
 void win_schedule_update(void);
 
-bool win_ambig_cjk_wide(void);
 int  win_char_width(int uc);
 void win_text(int, int, wchar *, int, uint, int);
 void win_cursor(int, int, wchar *, int, uint, int);
