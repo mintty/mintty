@@ -338,7 +338,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
   );
   ctrl_checkbox(
-    s, "Copy and paste (Ctrl/Shift+Ins)", 'p', P(0),
+    s, "Copy and paste (Ctrl/Shift+Ins)", 'y', P(0),
     dlg_stdcheckbox_handler, I(offcfg(edit_shortcuts))
   );
   ctrl_checkbox(
@@ -353,7 +353,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(altctrl_is_altgr))
   )->column = 0;
   ctrl_checkbox(
-    s, "Lone Alt sends ESC", 'e', P(0),
+    s, "Lone Alt sends ESC", 'l', P(0),
     dlg_stdcheckbox_handler, I(offcfg(alt_sends_esc))
   )->column = 1;
 
@@ -390,7 +390,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(copy_on_select))
   )->column = 0;
   ctrl_checkbox(
-    s, "Clicks place cursor", 'v', P(0),
+    s, "Clicks place cursor", 'k', P(0),
     dlg_stdcheckbox_handler, I(offcfg(clicks_place_cursor))
   )->column = 1;
 
@@ -459,20 +459,19 @@ setup_config_box(controlbox * b)
   )->column = 4;
 
   s = ctrl_getset(b, "Window", "options", null);
-  ctrl_columns(s, 2, 50, 50);
+  ctrl_checkbox(
+    s, "Ask for exit confirmation", 'a', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
+  )->column;
   ctrl_checkbox(
     s, "Show scrollbar", 's', P(0),
     dlg_stdcheckbox_handler, I(offcfg(scrollbar))
-  )->column = 0;
-  ctrl_checkbox(
-    s, "Confirm exit", 'x', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
-  )->column = 1;
+  )->column;
 
   s = ctrl_getset(b, "Window", "scroll", null);
-  ctrl_columns(s, 2, 60, 40);
+  ctrl_columns(s, 2, 53, 47);
   ctrl_editbox(
-    s, "Scrollback lines", 'b', 40, P(0),
+    s, "Scrollback lines", 'b', 38, P(0),
     int_handler, I(offsetof(config, scrollback_lines)), I(1000000)
   )->column = 0;
 
