@@ -73,10 +73,8 @@ get(struct buf *b)
  * Add a combining character to a character cell.
  */
 void
-add_cc(termline * line, int col, uint chr)
+add_cc(termline *line, int col, wchar chr)
 {
-  int newcc;
-
   assert(col >= 0 && col < line->cols);
 
  /*
@@ -106,7 +104,7 @@ add_cc(termline * line, int col, uint chr)
   * `col' now points at the last cc currently in this cell; so
   * we simply add another one.
   */
-  newcc = line->cc_free;
+  int newcc = line->cc_free;
   if (line->chars[newcc].cc_next)
     line->cc_free = newcc + line->chars[newcc].cc_next;
   else
@@ -208,73 +206,34 @@ move_termchar(termline * line, termchar * dest, termchar * src)
 }
 
 static void
-makeliteral_chr(struct buf *b, termchar * c, uint * state)
+makeliteral_chr(struct buf *buf, termchar *c)
 {
  /*
-  * My encoding for characters is UTF-8-like, in that it stores
-  * 7-bit ASCII in one byte and uses high-bit-set bytes as
-  * introducers to indicate a longer sequence. However, it's
-  * unlike UTF-8 in that it doesn't need to be able to
-  * resynchronise, and therefore I don't want to waste two bits
-  * per byte on having recognisable continuation characters.
-  * Also I don't want to rule out the possibility that I may one
-  * day use values 0x80000000-0xFFFFFFFF for interesting
-  * purposes, so unlike UTF-8 I need a full 32-bit range.
-  * Accordingly, here is my encoding:
-  * 
-  * 00000000-0000007F: 0xxxxxxx (but see below)
-  * 00000080-00003FFF: 10xxxxxx xxxxxxxx
-  * 00004000-001FFFFF: 110xxxxx xxxxxxxx xxxxxxxx
-  * 00200000-0FFFFFFF: 1110xxxx xxxxxxxx xxxxxxxx xxxxxxxx
-  * 10000000-FFFFFFFF: 11110ZZZ xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx
-  * 
-  * (`Z' is like `x' but is always going to be zero since the
-  * values I'm encoding don't go above 2^32. In principle the
-  * five-byte form of the encoding could extend to 2^35, and
-  * there could be six-, seven-, eight- and nine-byte forms as
-  * well to allow up to 64-bit values to be encoded. But that's
-  * completely unnecessary for these purposes!)
-  * 
-  * The encoding as written above would be very simple, except
-  * that 7-bit ASCII can occur in several different ways in the
-  * terminal data; sometimes it crops up in the D800 page
-  * (CSET_ASCII) but at other times it's in the 0000 page (real
-  * Unicode). Therefore, this encoding is actually _stateful_:
-  * the one-byte encoding of 00-7F actually indicates `reuse the
-  * upper three bytes of the last character', and to encode an
-  * absolute value of 00-7F you need to use the two-byte form
-  * instead.
+  * The encoding for characters assigns one-byte codes to printable
+  * ASCII characters and NUL, and two-byte codes to anything else up
+  * to 0x96FF. UTF-16 surrogates also get two-byte codes, to avoid non-BMP
+  * characters exploding to six bytes. Anything else is three bytes long.
   */
-  if ((c->chr & ~0x7F) == *state) {
-    add(b, (uchar) (c->chr & 0x7F));
-  }
-  else if (c->chr < 0x4000) {
-    add(b, (uchar) (((c->chr >> 8) & 0x3F) | 0x80));
-    add(b, (uchar) (c->chr & 0xFF));
-  }
-  else if (c->chr < 0x200000) {
-    add(b, (uchar) (((c->chr >> 16) & 0x1F) | 0xC0));
-    add(b, (uchar) ((c->chr >> 8) & 0xFF));
-    add(b, (uchar) (c->chr & 0xFF));
-  }
-  else if (c->chr < 0x10000000) {
-    add(b, (uchar) (((c->chr >> 24) & 0x0F) | 0xE0));
-    add(b, (uchar) ((c->chr >> 16) & 0xFF));
-    add(b, (uchar) ((c->chr >> 8) & 0xFF));
-    add(b, (uchar) (c->chr & 0xFF));
-  }
+  wchar wc = c->chr;
+  if (wc == 0 || (wc >= 0x20 && wc < 0x7F))
+    ;
   else {
-    add(b, 0xF0);
-    add(b, (uchar) ((c->chr >> 24) & 0xFF));
-    add(b, (uchar) ((c->chr >> 16) & 0xFF));
-    add(b, (uchar) ((c->chr >> 8) & 0xFF));
-    add(b, (uchar) (c->chr & 0xFF));
+    uchar b = wc >> 8;
+    if (b < 0x80)
+      b += 0x80;
+    else if (b < 0x97)
+      b -= 0x7F;
+    else if (b >= 0xD8 && b < 0xE0)
+      b -= 0xC0;
+    else
+      add (buf, 0x7F);
+    add(buf, b);
   }
-  *state = c->chr & ~0xFF;
+  add(buf, wc);
 }
 
 static void
-makeliteral_attr(struct buf *b, termchar * c, uint *unused(state))
+makeliteral_attr(struct buf *b, termchar *c)
 {
  /*
   * My encoding for attributes is 16-bit-granular and assumes
@@ -320,80 +279,49 @@ makeliteral_attr(struct buf *b, termchar * c, uint *unused(state))
     add(b, (uchar) (attr & 0xFF));
   }
 }
+
 static void
-makeliteral_cc(struct buf *b, termchar * c, uint * unused(state))
+makeliteral_cc(struct buf *b, termchar *c)
 {
  /*
   * For combining characters, I just encode a bunch of ordinary
   * chars using makeliteral_chr, and terminate with a \0
   * character (which I know won't come up as a combining char
   * itself).
-  * 
-  * I don't use the stateful encoding in makeliteral_chr.
   */
-  uint zstate;
   termchar z;
 
   while (c->cc_next) {
     c += c->cc_next;
-
     assert(c->chr != 0);
-
-    zstate = 0;
-    makeliteral_chr(b, c, &zstate);
+    makeliteral_chr(b, c);
   }
 
   z.chr = 0;
-  zstate = 0;
-  makeliteral_chr(b, &z, &zstate);
+  makeliteral_chr(b, &z);
 }
 
 static void
-readliteral_chr(struct buf *b, termchar * c, termline * unused(ldata),
-                uint * state)
+readliteral_chr(struct buf *buf, termchar *c, termline *unused(ldata))
 {
-  int byte;
-
- /*
-  * 00000000-0000007F: 0xxxxxxx
-  * 00000080-00003FFF: 10xxxxxx xxxxxxxx
-  * 00004000-001FFFFF: 110xxxxx xxxxxxxx xxxxxxxx
-  * 00200000-0FFFFFFF: 1110xxxx xxxxxxxx xxxxxxxx xxxxxxxx
-  * 10000000-FFFFFFFF: 11110ZZZ xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx
-  */
-
-  byte = get(b);
-  if (byte < 0x80) {
-    c->chr = byte | *state;
-  }
-  else if (byte < 0xC0) {
-    c->chr = (byte & ~0xC0) << 8;
-    c->chr |= get(b);
-  }
-  else if (byte < 0xE0) {
-    c->chr = (byte & ~0xE0) << 16;
-    c->chr |= get(b) << 8;
-    c->chr |= get(b);
-  }
-  else if (byte < 0xF0) {
-    c->chr = (byte & ~0xF0) << 24;
-    c->chr |= get(b) << 16;
-    c->chr |= get(b) << 8;
-    c->chr |= get(b);
-  }
+  uchar b = get(buf);
+  if (b == 0 || (b >= 0x20 && b < 0x7F))
+    c->chr = b;
   else {
-    assert(byte == 0xF0);
-    c->chr = get(b) << 24;
-    c->chr |= get(b) << 16;
-    c->chr |= get(b) << 8;
-    c->chr |= get(b);
+    if (b >= 0x80)
+      b -= 0x80;
+    else if (b < 0x18)
+      b += 0x7F;
+    else if (b < 0x20)
+      b += 0xC0;
+    else
+      b = get(buf);
+    c->chr = b << 8 | get(buf);
   }
-  *state = c->chr & ~0xFF;
 }
 
 static void
-readliteral_attr(struct buf *b, termchar * c, termline * unused(ldata),
-                 uint * unused(state))
+readliteral_attr(struct buf *b, termchar *c, termline *unused(ldata))
 {
   uint val, attr, colourbits;
 
@@ -424,18 +352,15 @@ readliteral_attr(struct buf *b, termchar * c, termline * unused(ldata),
 }
 
 static void
-readliteral_cc(struct buf *b, termchar * c, termline * ldata,
-               uint * unused(state))
+readliteral_cc(struct buf *b, termchar *c, termline *ldata)
 {
   termchar n;
-  uint zstate;
   int x = c - ldata->chars;
 
   c->cc_next = 0;
 
   while (1) {
-    zstate = 0;
-    readliteral_chr(b, &n, ldata, &zstate);
+    readliteral_chr(b, &n, ldata);
     if (!n.chr)
       break;
     add_cc(ldata, x, n.chr);
@@ -443,12 +368,11 @@ readliteral_cc(struct buf *b, termchar * c, termline * ldata,
 }
 
 static void
-makerle(struct buf *b, termline * ldata,
-        void (*makeliteral) (struct buf * b, termchar * c, uint * state))
+makerle(struct buf *b, termline *ldata,
+        void (*makeliteral) (struct buf *b, termchar *c))
 {
   int hdrpos, hdrsize, n, prevlen, prevpos, thislen, thispos, prev2;
   termchar *c = ldata->chars;
-  uint state = 0, oldstate;
 
   n = ldata->cols;
 
@@ -460,7 +384,7 @@ makerle(struct buf *b, termline * ldata,
 
   while (n-- > 0) {
     thispos = b->len;
-    makeliteral(b, c++, &state);
+    makeliteral(b, c++);
     thislen = b->len - thispos;
     if (thislen == prevlen &&
         !memcmp(b->data + prevpos, b->data + thispos, thislen)) {
@@ -513,13 +437,11 @@ makerle(struct buf *b, termline * ldata,
         while (n > 0 && runlen < 129) {
           int tmppos, tmplen;
           tmppos = b->len;
-          oldstate = state;
-          makeliteral(b, c, &state);
+          makeliteral(b, c);
           tmplen = b->len - tmppos;
           b->len = tmppos;
           if (tmplen != thislen ||
               memcmp(b->data + runpos + 1, b->data + tmppos, tmplen)) {
-            state = oldstate;
             break;      /* run over */
           }
           n--, c++, runlen++;
@@ -635,12 +557,10 @@ compressline(termline * ldata)
 }
 
 static void
-readrle(struct buf *b, termline * ldata,
-        void (*readliteral) (struct buf * b, termchar * c, termline * ldata,
-                             uint * state))
+readrle(struct buf *b, termline *ldata,
+        void (*readliteral) (struct buf *b, termchar *c, termline *ldata))
 {
   int n = 0;
-  uint state = 0;
 
   while (n < ldata->cols) {
     int hdr = get(b);
@@ -652,7 +572,7 @@ readrle(struct buf *b, termline * ldata,
       while (count--) {
         assert(n < ldata->cols);
         b->len = pos;
-        readliteral(b, ldata->chars + n, ldata, &state);
+        readliteral(b, ldata->chars + n, ldata);
         n++;
       }
     }
@@ -662,7 +582,7 @@ readrle(struct buf *b, termline * ldata,
       int count = hdr + 1;
       while (count--) {
         assert(n < ldata->cols);
-        readliteral(b, ldata->chars + n, ldata, &state);
+        readliteral(b, ldata->chars + n, ldata);
         n++;
       }
     }
@@ -825,7 +745,7 @@ sblines(void)
  * (respectively).
  */
 termline *
-(lineptr)(int y)
+lineptr(int y)
 {
   termline *line;
   tree234 *whichtree;
@@ -957,16 +877,8 @@ term_bidi_line(termline * ldata, int scr_y)
     }
 
     for (it = 0; it < term.cols; it++) {
-      uint uc = (ldata->chars[it].chr);
-
-      switch (uc & CSET_MASK) {
-        when CSET_LINEDRW: uc = ucsdata.unitab_xterm[uc & 0xFF];
-        when CSET_ASCII:   uc = ucsdata.unitab_line[uc & 0xFF];
-        when CSET_ACP:     uc = ucsdata.unitab_font[uc & 0xFF];
-        when CSET_OEMCP:   uc = ucsdata.unitab_oemcp[uc & 0xFF];
-      }
-
-      term.wcFrom[it].origwc = term.wcFrom[it].wc = (wchar) uc;
+      wchar c = ldata->chars[it].chr;
+      term.wcFrom[it].origwc = term.wcFrom[it].wc = c;
       term.wcFrom[it].index = it;
     }
 

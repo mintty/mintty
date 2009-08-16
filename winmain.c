@@ -10,7 +10,7 @@
 #include "appinfo.h"
 #include "linedisc.h"
 #include "child.h"
-#include "unicode.h"
+#include "charset.h"
 
 #include <process.h>
 #include <getopt.h>
@@ -40,11 +40,12 @@ win_set_timer(void (*cb)(void), uint ticks)
 void
 win_set_title(char *title)
 {
-  size_t len = strlen(title);
-  wchar wtitle[len + 1];
-  size_t wlen = mb_to_wc(ucsdata.codepage, 0, title, len, wtitle, len);
-  wtitle[wlen] = 0;
-  SetWindowTextW(wnd, wtitle);
+  int wlen = cs_mbstowcs(0, title, 0);
+  if (wlen >= 0) {
+    wchar wtitle[wlen + 1];
+    cs_mbstowcs(wtitle, title, wlen + 1);
+    SetWindowTextW(wnd, wtitle);
+  }
 }
 
 /*
@@ -427,14 +428,14 @@ void
 win_reconfig(void)
 {
  /*
-  * Flush the line discipline's edit buffer in the
-  * case where local editing has just been disabled.
+  * Flush the line discipline's edit buffer in
+  * case local editing has just been disabled.
   */
   ldisc_send(null, 0, 0);
-
+  
  /* Pass new config data to the terminal */
   term_reconfig();
-
+  
  /* Enable or disable the scroll bar, etc */
   int init_lvl = 1;
   if (new_cfg.scrollbar != cfg.scrollbar) {
@@ -451,7 +452,6 @@ win_reconfig(void)
   }
   
   if (memcmp(&new_cfg.font, &cfg.font, sizeof cfg.font) != 0 ||
-      strcmp(new_cfg.codepage, cfg.codepage) != 0 ||
       new_cfg.bold_as_bright != cfg.bold_as_bright) {
     font_size = new_cfg.font.size;
     init_lvl = 2;
@@ -464,6 +464,7 @@ win_reconfig(void)
   win_invalidate_all();
   reset_window(init_lvl);
   win_update_mouse();
+  cs_config_locale(font_ambig_wide);
 }
 
 void
@@ -949,8 +950,9 @@ main(int argc, char *argv[])
   win_init_drop_target();
 
   // Create child process.
+  const char *locale = cs_config_locale(font_ambig_wide);
   struct winsize ws = {term.rows, term.cols, term_width, term_height};
-  char *cmd = child_create(argv + optind, &ws);
+  char *cmd = child_create(argv + optind, locale, &ws);
   
   // Set window title.
   win_set_title(title ?: cmd);

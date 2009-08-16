@@ -7,6 +7,13 @@
 #include "print.h"
 #include "minibidi.h"
 
+/*
+ * UCSWIDE is a special value used in the terminal data to signify
+ * the character cell containing the right-hand half of a CJK wide
+ * character.
+ */
+#define UCSWIDE 0
+
 /* Three attribute types: 
  * The ATTRs (normal attributes) are stored with the characters in
  * the main display arrays
@@ -84,16 +91,23 @@
 #define TTYPE termchar
 #define TSIZE (sizeof(TTYPE))
 
+typedef enum {
+  CSET_ASCII = 'B',   /* Normal ASCII charset */
+  CSET_GBCHR = 'A',   /* UK variant */
+  CSET_LINEDRW = '0', /* Line drawing charset */
+  CSET_OEM = 'U'      /* OEM Codepage 437 */
+} cset;
+
 typedef struct {
   int y, x;
 } pos;
 
 typedef enum {
-  MB_NONE = 0, MBT_LEFT = 1, MBT_MIDDLE = 2, MBT_RIGHT = 3
+  MBT_NONE = 0, MBT_LEFT = 1, MBT_MIDDLE = 2, MBT_RIGHT = 3
 } mouse_button;
 
 typedef enum {
-  SHIFT = 1, ALT = 2, CTRL = 4
+  MDK_SHIFT = 1, MDK_ALT = 2, MDK_CTRL = 4
 } mod_keys;
 
 enum {
@@ -133,8 +147,9 @@ struct term {
   bool dec_om;   /* DEC origin mode flag */
   bool wrap, wrapnext;   /* wrap flags */
   bool insert;   /* insert-mode flag */
-  int  cset;     /* 0 or 1: which char set */
-  int  save_cset, save_csattr;   /* saved with cursor position */
+  bool cset_i;   /* 0 or 1: which char set */
+  bool save_cset_i;
+  cset save_cset;   /* saved with cursor position */
   bool save_utf, save_wnext;     /* saved with cursor position */
   bool rvideo;   /* global reverse video flag */
   bool cursor_on;        /* cursor enabled flag */
@@ -147,9 +162,6 @@ struct term {
   bool editing;  /* Does terminal want local edit? */
   int  oem_acs, save_oem_acs;    /* CSI 10,11,12m -> OEM charset */
   bool utf;      /* Are we in toggleable UTF-8 mode? */
-  int  utf_state;        /* Is there a pending UTF-8 character */
-  int  utf_char; /* and what is it so far. */
-  int  utf_size; /* The size of the UTF character. */
   bool printing, only_printing;  /* Are we doing ANSI printing? */
   int  print_state;      /* state of print-end-sequence scan */
   bufchain *printer_buf;        /* buffered data for printer */
@@ -158,12 +170,14 @@ struct term {
  /* ESC 7 saved state for the alternate screen */
   pos  alt_savecurs;
   int  alt_save_attr;
-  int  alt_save_cset, alt_save_csattr;
+  bool alt_save_cset_i;
+  cset alt_save_cset;
   bool alt_save_utf, alt_save_wnext;
   int  alt_save_oem_acs;
   int  alt_x, alt_y;
   bool alt_om, alt_wrap, alt_wnext, alt_ins;
-  int  alt_cset, alt_oem_acs;
+  bool alt_cset_i;
+  int  alt_oem_acs;
   bool alt_utf;
   int  alt_t, alt_b;
   bool which_screen;
@@ -186,7 +200,7 @@ struct term {
   int  cursor_type;
   int  cursor_blinks;
 
-  int  cset_attr[2];
+  int  csets[2];
 
   int  esc_args[ARGS_MAX];
   int  esc_nargs;
@@ -198,13 +212,9 @@ struct term {
 
   uchar *tabs;
 
- /*
-  * DO_CTRLS here isn't an actual state, but acts as a marker that
-  * divides the states in two classes.
-  */
   enum {
-    TOPLEVEL, SEEN_ESC, SEEN_CSI, SEEN_OSC, SEEN_OSC_W,
-    DO_CTRLS, SEEN_OSC_P, OSC_STRING, OSC_MAYBE_ST,
+    TOPLEVEL, SEEN_ESC, SEEN_CSI,
+    SEEN_OSC, SEEN_OSC_W, SEEN_OSC_P, OSC_STRING, OSC_MAYBE_ST,
     SEEN_DCS, DCS_MAYBE_ST
   } state;
 
@@ -239,6 +249,12 @@ struct term {
   * through.
   */
   bool in_term_write;
+  
+ /* True when we've seen part of a multibyte input char */
+  bool in_mb_char;
+  
+ /* Non-zero when we've seen the first half of a surrogate pair */
+  wchar high_surrogate;
 
  /*
   * These are buffers used by the bidi and Arabic shaping code.
@@ -275,8 +291,7 @@ void term_cancel_paste(void);
 void term_reconfig(void);
 void term_seen_key_event(void);
 void term_write(const char *, int len);
-void term_set_focus(int has_focus);
-bool term_in_utf(void);
+void term_set_focus(bool has_focus);
 int  term_cursor_type(void);
 bool term_cursor_blinks(void);
 

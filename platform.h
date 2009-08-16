@@ -16,11 +16,6 @@ static inline uint8 red(colour c) { return c & 0xff; }
 static inline uint8 green(colour c) { return c >> 8 & 0xff; }
 static inline uint8 blue(colour c) { return c >> 16 & 0xff; }
 
-
-// Codepages.
-static const int unicode_codepage = 65001; //CP_UTF8;
-static const int ansi_codepage = 0; //CP_ACP;
-
 // Clipboard data has to be NUL-terminated.
 static const bool sel_nul_terminated = true;
 

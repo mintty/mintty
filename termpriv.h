@@ -7,7 +7,6 @@
 
 #include "term.h"
 
-#include "unicode.h"
 #include "config.h"
 
 enum {
@@ -61,5 +60,7 @@ void term_erase_lots(int line_only, int from_begin, int to_end);
 static inline bool
 term_selecting(void)
 { return term.mouse_state >= MS_SEL_CHAR; }
+
+void term_update_cs(void);
 
 #endif

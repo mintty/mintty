@@ -123,7 +123,7 @@ child_proc(void)
 }
 
 char *
-child_create(char *argv[], struct winsize *winp)
+child_create(char *argv[], const char *locale, struct winsize *winp)
 {
   struct passwd *pw = getpwuid(getuid());
   char *cmd; 
@@ -200,6 +200,12 @@ child_create(char *argv[], struct winsize *winp)
     signal(SIGTTOU, SIG_IGN);
 
     setenv("TERM", "xterm", 1);
+    
+    if (locale) {
+      unsetenv("LC_ALL");
+      unsetenv("LC_CTYPE");
+      setenv("LANG", locale, true);
+    }
 
 #if CYGWIN_VERSION_DLL_MAJOR < 1007
     // Set backspace keycode
