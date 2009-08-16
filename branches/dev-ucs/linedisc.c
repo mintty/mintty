@@ -9,7 +9,7 @@
 #include "term.h"
 #include "win.h"
 
-#include "codepage.h"
+#include "charset.h"
 
 /*
  * ldisc.c: PuTTY line discipline. Sits between the input coming
@@ -200,7 +200,7 @@ void
 luni_send(const wchar *ws, int wlen, bool interactive)
 {
   char s[wlen * MB_LEN_MAX];
-  int len = cp_wcntombn(s, ws, sizeof s, wlen);
+  int len = cs_wcntombn(s, ws, sizeof s, wlen);
   if (len > 0)
     ldisc_send(s, len, interactive);
 }

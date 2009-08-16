@@ -59,7 +59,7 @@ typedef struct {
   int opaque_when_focused;
  /* translations */
   char locale[16];
-  char codepage[16];
+  char charset[16];
  /* fonts */
   font_spec font;
   int font_quality;

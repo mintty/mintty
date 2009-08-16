@@ -7,7 +7,7 @@
 
 #include "linedisc.h"
 #include "win.h"
-#include "codepage.h"
+#include "charset.h"
 
 struct term term;
 
@@ -461,7 +461,7 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
     
     t = term.utf;
     if (!reset)
-      term_set_utf(term.alt_utf);
+      term.utf = term.alt_utf;
     term.alt_utf = t;
     
     t = term.oem_acs;
@@ -497,6 +497,8 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
     if (!reset && !keep_cur_pos)
       term.save_oem_acs = term.alt_save_oem_acs;
     term.alt_save_oem_acs = t;
+    
+    term_update_cs();
   }
 
   if (reset && term.screen) {
@@ -1418,12 +1420,13 @@ term_set_focus(bool has_focus)
 }
 
 void
-term_set_utf(bool utf)
+term_update_cs()
 {
-  if (utf != term.utf) {
-    term.utf = utf;
-    cp_set_utf8_mode(utf);
-  }
+  cs_set_mode(
+    term.oem_acs ? CSM_OEM :
+    term.utf ? CSM_UTF8 :
+    term.csets[term.cset_i] == CSET_OEM ? CSM_OEM : CSM_DEFAULT
+  );
 }
 
 int

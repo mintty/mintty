@@ -7,7 +7,7 @@
 
 #include "ctrls.h"
 #include "print.h"
-#include "codepage.h"
+#include "charset.h"
 #include "term.h"
 #include "win.h"
 
@@ -108,74 +108,70 @@ printerbox_handler(control *ctrl, void *dlg, void *unused(data), int event)
   }
 }
 
-static bool
-correct_codepage(char *cp)
+static void
+correct_charset(char *cs)
 {
-  uint id = cp_lookup(cp);
-  strcpy(cp, cp_name(id));
-  return id;
+  strcpy(cs, cs_name(cs_lookup(cs)));
 }
 
 static void
-codepage_handler(control *ctrl, void *dlg, void *unused(data), int event)
+charset_handler(control *ctrl, void *dlg, void *unused(data), int event)
 {
-  char *cp = new_cfg.codepage;
+  char *cs = new_cfg.charset;
   if (event == EVENT_REFRESH) {
     dlg_update_start(ctrl, dlg);
     dlg_listbox_clear(ctrl, dlg);
-    const char *icp;
-    for (int i = 0; (icp = cp_enumerate(i)); i++)
-      dlg_listbox_add(ctrl, dlg, icp);
-    dlg_editbox_set(ctrl, dlg, cp);
+    const char *ics;
+    for (int i = 0; (ics = enumerate_charsets(i)); i++)
+      dlg_listbox_add(ctrl, dlg, ics);
+    dlg_editbox_set(ctrl, dlg, cs);
     dlg_update_done(ctrl, dlg);
   }
   else if (event == EVENT_VALCHANGE) {
-    dlg_editbox_get(ctrl, dlg, cp, sizeof cfg.codepage);
-    if (!correct_codepage(cp))
-      strcpy(cp, cfg.codepage);
+    dlg_editbox_get(ctrl, dlg, cs, sizeof cfg.charset);
+    correct_charset(cs);
   }
 }
 
-static bool
-correct_locale(char *loc)
+static void
+correct_locale(char *locale)
 {
-  uchar *la = (uchar *)loc;
-  if (isalpha(la[0]) && isalpha(la[1])) {
+  uchar *lang = (uchar *)locale;
+  if (isalpha(lang[0]) && isalpha(lang[1])) {
     // Treat two letters at the start as the language.
-    loc[0] = tolower(la[0]);
-    loc[1] = tolower(la[1]);
-    uchar *tr = (uchar *)strchr(loc + 2, '_');
-    if (tr && isalpha(tr[1]) && isalpha(tr[2])) {
+    locale[0] = tolower(lang[0]);
+    locale[1] = tolower(lang[1]);
+    uchar *terr = (uchar *)strchr(locale + 2, '_');
+    if (terr && isalpha(terr[1]) && isalpha(terr[2])) {
       // Treat two letters after an underscore as the territory.
-      loc[2] = '_';
-      loc[3] = toupper(tr[1]);
-      loc[4] = toupper(tr[2]);
-      loc[5] = 0;
+      locale[2] = '_';
+      locale[3] = toupper(terr[1]);
+      locale[4] = toupper(terr[2]);
+      locale[5] = 0;
     }
     else
-      loc[2] = 0;
-    return true;
+      locale[2] = 0;
   }
-  else {
-    bool empty = *loc;
-    get_default_locale(loc);
-    return !empty;
-  }
+  else 
+    locale[0] = 0;
 }
 
 static void
 locale_handler(control *ctrl, void *dlg, void *unused(data), int event)
 {
-  char *loc = new_cfg.locale;
+  char *locale = new_cfg.locale;
   if (event == EVENT_REFRESH) {
     dlg_update_start(ctrl, dlg);
-    dlg_editbox_set(ctrl, dlg, loc);
+    dlg_listbox_clear(ctrl, dlg);
+    const char *l;
+    for (int i = 0; (l = enumerate_locales(i)); i++)
+      dlg_listbox_add(ctrl, dlg, l);
+    dlg_editbox_set(ctrl, dlg, locale);
     dlg_update_done(ctrl, dlg);
   }
   else if (event == EVENT_VALCHANGE) {
-    dlg_editbox_get(ctrl, dlg, loc, sizeof cfg.locale);
-    if (!correct_locale(loc))
-      strcpy(loc, cfg.locale);
+    dlg_editbox_get(ctrl, dlg, locale, sizeof cfg.locale);
+    correct_locale(locale);
   }
 }
 
@@ -324,11 +320,11 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Text", "locale", null);
   ctrl_columns(s, 2, 25, 75);
-  ctrl_editbox(
+  ctrl_combobox(
     s, "Locale", '\0', 100, P(0), locale_handler, P(0), P(0)
   )->column = 0;
   ctrl_combobox(
-    s, "Character set", '\0', 100, P(0), codepage_handler, P(0), P(0)
+    s, "Character set", '\0', 100, P(0), charset_handler, P(0), P(0)
   )->column = 1;
 
  /*
@@ -532,7 +528,7 @@ static const string_setting
 string_settings[] = {
   {"Font", offcfg(font.name), sizeof cfg.font.name, "Lucida Console"},
   {"Locale", offcfg(locale), sizeof cfg.locale, ""},
-  {"Codepage", offcfg(codepage), sizeof cfg.codepage, ""},
+  {"Charset", offcfg(charset), sizeof cfg.charset, ""},
   {"Printer", offcfg(printer), sizeof cfg.printer, ""},
 };
 
@@ -560,8 +556,14 @@ load_config(void)
   for (colour_setting *s = colour_settings; s < endof(colour_settings); s++)
     read_colour_setting(s->key, &atoffset(colour, &cfg, s->offset), s->def);
   close_settings_r();
+  
   correct_locale(cfg.locale);
-  correct_codepage(cfg.codepage);
+  
+  if (!*cfg.charset) {
+    // For compatibility with pre 0.5
+    read_string_setting("Codepage", cfg.charset, sizeof cfg.charset, "");
+  }
+  correct_charset(cfg.charset);
 }
 
 char *

@@ -8,7 +8,7 @@
 #include "linedisc.h"
 #include "win.h"
 #include "appinfo.h"
-#include "codepage.h"
+#include "charset.h"
 
 #include <sys/termios.h>
 
@@ -77,45 +77,6 @@ set_erase_char(void)
 }
 
 /*
- * Save or restore the cursor and SGR mode.
- */
-static void
-save_cursor(int save)
-{
-  if (save) {
-    term.savecurs = term.curs;
-    term.save_attr = term.curr_attr;
-    term.save_cset_i = term.cset_i;
-    term.save_utf = term.utf;
-    term.save_wnext = term.wrapnext;
-    term.save_cset = term.csets[term.cset_i];
-    term.save_oem_acs = term.oem_acs;
-  }
-  else {
-    term.curs = term.savecurs;
-   /* Make sure the window hasn't shrunk since the save */
-    if (term.curs.x >= term.cols)
-      term.curs.x = term.cols - 1;
-    if (term.curs.y >= term.rows)
-      term.curs.y = term.rows - 1;
-
-    term.curr_attr = term.save_attr;
-    term.cset_i = term.save_cset_i;
-    term_set_utf(term.save_utf);
-    term.wrapnext = term.save_wnext;
-   /*
-    * wrapnext might reset to False if the x position is no
-    * longer at the rightmost edge.
-    */
-    if (term.wrapnext && term.curs.x < term.cols - 1)
-      term.wrapnext = false;
-    term.csets[term.cset_i] = term.save_cset;
-    term.oem_acs = term.save_oem_acs;
-    set_erase_char();
-  }
-}
-
-/*
  * Call this whenever the terminal window state changes, to queue
  * an update.
  */
@@ -124,6 +85,52 @@ seen_disp_event(void)
 {
   term.seen_disp_event = true;  /* for scrollback-reset-on-activity */
   win_schedule_update();
+}
+
+/*
+ * Save the cursor and SGR mode.
+ */
+static void
+save_cursor(void)
+{
+  term.savecurs = term.curs;
+  term.save_attr = term.curr_attr;
+  term.save_cset_i = term.cset_i;
+  term.save_utf = term.utf;
+  term.save_wnext = term.wrapnext;
+  term.save_cset = term.csets[term.cset_i];
+  term.save_oem_acs = term.oem_acs;
+}
+
+/*
+ * Restore the cursor and SGR mode.
+ */
+static void
+restore_cursor(void)
+{
+  term.curs = term.savecurs;
+ /* Make sure the window hasn't shrunk since the save */
+  if (term.curs.x >= term.cols)
+    term.curs.x = term.cols - 1;
+  if (term.curs.y >= term.rows)
+    term.curs.y = term.rows - 1;
+
+  term.curr_attr = term.save_attr;
+  term.cset_i = term.save_cset_i;
+  term.utf = term.save_utf;
+  term.wrapnext = term.save_wnext;
+ /*
+  * wrapnext might reset to False if the x position is no
+  * longer at the rightmost edge.
+  */
+  if (term.wrapnext && term.curs.x < term.cols - 1)
+    term.wrapnext = false;
+  term.csets[term.cset_i] = term.save_cset;
+  term.oem_acs = term.save_oem_acs; 
+
+  set_erase_char();
+  term_update_cs();
+  seen_disp_event();
 }
 
 /*
@@ -223,6 +230,45 @@ write_linefeed(void)
     term.curs.y++;
   term.wrapnext = false;
   seen_disp_event();
+}
+
+static void
+write_ctrl(char c)
+{
+  switch (c) {
+    when '\e':   /* ESC: Escape */
+      compatibility(ANSIMIN);
+      term.state = SEEN_ESC;
+      term.esc_query = false;
+    when '\a':   /* BEL: Bell */
+      write_bell();
+    when '\b':     /* BS: Back space */
+      write_backspace();
+    when '\t':     /* HT: Character tabulation */
+      write_tab();
+    when '\v':   /* VT: Line tabulation */
+      compatibility(VT100);
+      write_linefeed();
+    when '\f':   /* FF: Form feed */
+      write_linefeed();
+    when '\r':   /* CR: Carriage return */
+      write_return();
+    when '\n':   /* LF: Line feed */
+      write_linefeed();
+      if (term.newline_mode)
+        write_return();
+    when CTRL('E'):   /* ENQ: terminal type query */
+      compatibility(ANSIMIN);
+      ldisc_send(answerback, sizeof(answerback) - 1, 0);
+    when CTRL('N'):   /* LS1: Locking-shift one */
+      compatibility(VT100);
+      term.cset_i = 1;
+      term_update_cs();
+    when CTRL('O'):   /* LS0: Locking-shift zero */
+      compatibility(VT100);
+      term.cset_i = 0;
+      term_update_cs();
+  }
 }
 
 static void
@@ -349,11 +395,10 @@ do_esc(uchar c)
       term.state = SEEN_DCS;
     when '7':  /* DECSC: save cursor */
       compatibility(VT100);
-      save_cursor(true);
+      save_cursor();
     when '8':  /* DECRC: restore cursor */
       compatibility(VT100);
-      save_cursor(false);
-      seen_disp_event();
+      restore_cursor();
     when '=':  /* DECKPAM: Keypad application mode */
       compatibility(VT100);
       term.app_keypad = true;
@@ -420,22 +465,28 @@ do_esc(uchar c)
      /* GZD4: G0 designate 94-set */
       compatibility(VT100);
       term.csets[0] = c;
+      term_update_cs();
     when ANSI('U', '('):  /* G0: OEM character set */
       compatibility(OTHER);
       term.csets[0] = CSET_OEM;
+      term_update_cs();
     when ANSI('A', ')') or ANSI('B', ')') or ANSI('0', ')'):
      /* G1D4: G1-designate 94-set */
       compatibility(VT100);
       term.csets[1] = c;
+      term_update_cs();
     when ANSI('U', ')'): /* G1: OEM character set */
       compatibility(OTHER);
       term.csets[1] = CSET_OEM;
+      term_update_cs();
     when ANSI('8', '%') or ANSI('G', '%'):
       compatibility(OTHER);
-      term_set_utf(true);
+      term.utf = true;
+      term_update_cs();
     when ANSI('@', '%'):
       compatibility(OTHER);
-      term_set_utf(false);
+      term.utf = false;
+      term_update_cs();
   }
 }
 
@@ -490,12 +541,15 @@ do_sgr(void)
       when 10: /* OEM acs off */
         compatibility(OTHER);
         term.oem_acs = 0;
+        term_update_cs();
       when 11: /* OEM acs on */
         compatibility(OTHER);
         term.oem_acs = 1;
+        term_update_cs();
       when 12: /* OEM acs on, |0x80 */
         compatibility(OTHER);
         term.oem_acs = 2;
+        term_update_cs();
       when 22: /* disable bold */
         compatibility(VT220);
         term.curr_attr &= ~ATTR_BOLD;
@@ -622,19 +676,18 @@ set_modes(bool state)
           term_swap_screen(state, true, true);
           term.disptop = 0;
         when 1048:       /* save/restore cursor */
-          save_cursor(state);
-          if (!state)
-            seen_disp_event();
+          if (state)
+            save_cursor();
+          else
+            restore_cursor();
         when 1049:       /* cursor & alternate screen */
           if (state)
-            save_cursor(state);
-          else
-            seen_disp_event();
+            save_cursor();
           compatibility(OTHER);
           term.selected = false;
           term_swap_screen(state, true, false);
           if (!state)
-            save_cursor(state);
+            restore_cursor();
           term.disptop = 0;
         when 7700:       /* MinTTY only: CJK ambigous width reporting */
           term.report_ambig_width = state;
@@ -828,10 +881,9 @@ do_csi(uchar c)
     when 'm':      /* SGR: set graphics rendition */
       do_sgr();
     when 's':        /* save cursor */
-      save_cursor(true);
+      save_cursor();
     when 'u':        /* restore cursor */
-      save_cursor(false);
-      seen_disp_event();
+      restore_cursor();
     when 't': {      /* DECSLPP: set page size - ie window height */
      /*
       * VT340/VT420 sequence DECSLPP, DEC only allows values
@@ -1173,31 +1225,25 @@ term_write(const char *data, int len)
 
     switch (term.state) {
       when TOPLEVEL: {
-        wchar wc = c;
-        int cset = term.csets[term.cset_i];
-        if (term.oem_acs || cset == CSET_OEM) {
-          if (!strchr("\e\n\r\b", c)) {
-            if (term.oem_acs == 2)
-              c |= 0x80;
-            wc = cp_oemtowc(c);
-          }
-        }
-        else {
-          switch (cp_btowc(&wc, (char *)&c)) {
-            when 0: // NUL or low surrogate
-              if (wc)
-                unget = c;
-            when -1: // Encoding error
-              cp_btowc(0, 0); // Clear decoder state
-              write_error();
-              if (term.in_mb_char)
-                unget = c;
-              term.in_mb_char = false;
-              continue;
-            when -2: // Incomplete character
-              term.in_mb_char = true;
-              continue;
-          }
+        
+        if (term.oem_acs == 2 && !(c && strchr("\e\n\r\b", c)))
+          c |= 0x80;
+        
+        wchar wc;
+        switch (cs_btowc(&wc, (char *)&c)) {
+          when 0: // NUL or low surrogate
+            if (wc)
+              unget = c;
+          when -1: // Encoding error
+            cs_btowc(0, 0); // Clear decoder state
+            write_error();
+            if (term.in_mb_char)
+              unget = c;
+            term.in_mb_char = false;
+            continue;
+          when -2: // Incomplete character
+            term.in_mb_char = true;
+            continue;
         }
         
         term.in_mb_char = false;
@@ -1226,55 +1272,26 @@ term_write(const char *data, int len)
           continue;
         }
         
-        switch (wc) {
-          when '\e':   /* ESC: Escape */
-            compatibility(ANSIMIN);
-            term.state = SEEN_ESC;
-            term.esc_query = false;
-          when '\a':   /* BEL: Bell */
-            write_bell();
-          when '\b':     /* BS: Back space */
-            write_backspace();
-          when '\t':     /* HT: Character tabulation */
-            write_tab();
-          when '\v':   /* VT: Line tabulation */
-            compatibility(VT100);
-            write_linefeed();
-          when '\f':   /* FF: Form feed */
-            write_linefeed();
-          when '\r':   /* CR: Carriage return */
-            write_return();
-          when '\n':   /* LF: Line feed */
-            write_linefeed();
-            if (term.newline_mode)
-              write_return();
-          when CTRL('E'):   /* ENQ: terminal type query */
-            compatibility(ANSIMIN);
-            ldisc_send(answerback, sizeof(answerback) - 1, 0);
-          when CTRL('N'):   /* LS1: Locking-shift one */
-            compatibility(VT100);
-            term.cset_i = 1;
-          when CTRL('O'):   /* LS0: Locking-shift zero */
-            compatibility(VT100);
-            term.cset_i = 0;
-          when 0x7F:  /* DEL */
-            // ignore
-          otherwise: {
-            // Determine character width before any replacements.
-            int width = wcwidth(wc);
-            if (wc == 0x2010) {
-             /* Many Windows fonts don't have the Unicode hyphen, but groff
-              * uses it for man pages, so replace it with the ASCII version.
-              */
-              wc = '-';
-            }
-            else if (cset == CSET_LINEDRW && 0x60 <= wc && wc < 0x80)
-              wc = linedraw_chars[wc - 0x60];
-            else if (cset == CSET_GBCHR && c == '#')
-              wc = 0xA3; // pound sign
-            
-            write_char(wc, width);
+        if (wc < 0x20 || wc == 0x7F)
+          write_ctrl(wc);
+        else {
+          // Determine character width before any replacements.
+          int width = wcwidth(wc);
+          switch(term.csets[term.cset_i]) {
+            when CSET_LINEDRW:
+              if (0x60 <= wc && wc < 0x80)
+                wc = linedraw_chars[wc - 0x60];
+            when CSET_GBCHR:
+              if (c == '#')
+                wc = 0xA3; // pound sign
           }
+          if (wc == 0x2010) {
+           /* Many Windows fonts don't have the Unicode hyphen, but groff
+            * uses it for man pages, so replace it with the ASCII version.
+            */
+            wc = '-';
+          }
+          write_char(wc, width);
         }
       }
       when SEEN_ESC or OSC_MAYBE_ST or DCS_MAYBE_ST:

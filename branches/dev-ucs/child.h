@@ -3,7 +3,7 @@
 
 #include <sys/termios.h>
 
-char *child_create(char *argv[], struct winsize *winp);
+char *child_create(char *argv[], const char *locale, struct winsize *winp);
 void child_kill(void);
 void child_write(const char *, int len);
 void child_resize(struct winsize *winp);

@@ -10,7 +10,7 @@
 #include "appinfo.h"
 #include "linedisc.h"
 #include "child.h"
-#include "codepage.h"
+#include "charset.h"
 
 #include <process.h>
 #include <getopt.h>
@@ -40,10 +40,10 @@ win_set_timer(void (*cb)(void), uint ticks)
 void
 win_set_title(char *title)
 {
-  int wlen = cp_mbstowcs(0, title, 0);
+  int wlen = cs_mbstowcs(0, title, 0);
   if (wlen >= 0) {
     wchar wtitle[wlen + 1];
-    cp_mbstowcs(wtitle, title, wlen + 1);
+    cs_mbstowcs(wtitle, title, wlen + 1);
     SetWindowTextW(wnd, wtitle);
   }
 }
@@ -464,7 +464,7 @@ win_reconfig(void)
   win_invalidate_all();
   reset_window(init_lvl);
   win_update_mouse();
-  cp_update_locale(font_ambig_wide);
+  cs_config_locale(font_ambig_wide);
 }
 
 void
@@ -950,9 +950,9 @@ main(int argc, char *argv[])
   win_init_drop_target();
 
   // Create child process.
-  cp_update_locale(font_ambig_wide);
+  const char *locale = cs_config_locale(font_ambig_wide);
   struct winsize ws = {term.rows, term.cols, term_width, term_height};
-  char *cmd = child_create(argv + optind, &ws);
+  char *cmd = child_create(argv + optind, locale, &ws);
   
   // Set window title.
   win_set_title(title ?: cmd);
