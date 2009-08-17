@@ -11,8 +11,8 @@ int cs_mbstowcs(wchar *ws, const char *s, size_t wlen);
 int cs_mb1towc(wchar *pwc, const char *pc);
 wchar cs_btowc_glyph(char);
 
-uint cs_lookup(const char *);
-const char *cs_name(uint id);
+void correct_charset(char *);
+void correct_locale(char *);
 
 const char *enumerate_locales(uint);
 const char *enumerate_charsets(uint);

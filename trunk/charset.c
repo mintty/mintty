@@ -11,24 +11,26 @@
 #include <winbase.h>
 #include <winnls.h>
 
+enum { CP_DEFAULT = 65535 };
+
 static const struct {
   ushort id;
   const char *name;
 }
 cs_names[] = {
-  {65001, "UTF-8"},
-  {  936, "GBK"},
-  {  950, "Big5"},
-  {  932, "SJIS"},
-  {20933, "eucJP"},
-  {  949, "eucKR"},
+  {CP_UTF8, "UTF-8"},
+  {    936, "GBK"},
+  {    950, "Big5"},
+  {    932, "SJIS"},
+  {  20933, "eucJP"},
+  {    949, "eucKR"},
   // Not supported by Cygwin
-  {20866, "KOI8-R"},
-  {21866, "KOI8-U"},
-  {54396, "GB18030"},
+  {  20866, "KOI8-R"},
+  {  21866, "KOI8-U"},
+  {  54396, "GB18030"},
   // Aliases
-  {65001, "UTF8"},
-  {20866, "KOI8"}
+  {CP_UTF8, "UTF8"},
+  {  20866, "KOI8"}
 };
 
 static const struct {
@@ -36,36 +38,28 @@ static const struct {
   const char *comment;
 }
 cs_menu[] = {
-  {65001, "Unicode"},
-  {28591, "Western European"},
-  {28592, "Central European"},
-  {28593, "South European"},
-  {28594, "North European"},
-  {28595, "Cyrillic"},
-  {28596, "Arabic"},
-  {28597, "Greek"},
-  {28598, "Hebrew"},
-  {28599, "Turkish"},
-  {28600, "Nordic"},
-  {28601, "Thai"},
-  {28603, "Baltic"},
-  {28604, "Celtic"},
-  {28605, "\"euro\""},
-  { 1250, "Central European"},
-  { 1251, "Cyrillic"},
-  { 1252, "Western European"},
-  { 1253, "Greek"},
-  { 1254, "Turkish"},
-  { 1255, "Hebrew"},
-  { 1256, "Arabic"},
-  { 1257, "Baltic"},
-  { 1258, "Vietnamese"},
-  {  874, "Thai"},
-  {  936, "Simplified Chinese"},
-  {  950, "Traditional Chinese"},
-  {  932, "Japanese"},
-  {20933, "Japanese"},
-  {  949, "Korean"}
+  { CP_UTF8, "Unicode"},
+  {   28591, "Western European"},
+  {   28592, "Central European"},
+  {   28593, "South European"},
+  {   28594, "North European"},
+  {   28595, "Cyrillic"},
+  {   28596, "Arabic"},
+  {   28597, "Greek"},
+  {   28598, "Hebrew"},
+  {   28599, "Turkish"},
+  {   28600, "Nordic"},
+  {   28601, "Thai"},
+  {   28603, "Baltic"},
+  {   28604, "Celtic"},
+  {   28605, "\"euro\""},
+  {     936, "Simplified Chinese"},
+  {     950, "Traditional Chinese"},
+  {     932, "Japanese"},
+  {   20933, "Japanese"},
+  {     949, "Korean"},
+  {CP_OEMCP, "OEM codepage"},
+  {  CP_ACP, "Windows codepage"}
 };
 
 static const char *const
@@ -98,7 +92,7 @@ strtoupper(char *dst, const char *src)
   while ((*dst++ = toupper((uchar)*src++)));
 }
 
-uint
+static uint
 cs_lookup(const char *name)
 {
   if (!*name)
@@ -126,14 +120,20 @@ cs_lookup(const char *name)
         return cs_names[i].id;
     }
   }
-  return 0;
+  return CP_DEFAULT;
 }
 
-const char *
+static const char *
 cs_name(uint id)
 {
-  if (!id)
+  if (id == CP_DEFAULT)
     return "";
+
+  if (id == CP_ACP)
+    id = GetACP();
+  else if (id == CP_OEMCP)
+    id = GetOEMCP();
+  
   for (uint i = 0; i < lengthof(cs_names); i++) {
     if (id == cs_names[i].id)
       return cs_names[i].name;
@@ -146,6 +146,36 @@ cs_name(uint id)
     sprintf(buf, "CP%u", id);
   return buf;
 }
+
+void
+correct_charset(char *cs)
+{
+  strcpy(cs, cs_name(cs_lookup(cs)));
+}
+
+void
+correct_locale(char *locale)
+{
+  uchar *lang = (uchar *)locale;
+  if (isalpha(lang[0]) && isalpha(lang[1])) {
+    // Treat two letters at the start as the language.
+    locale[0] = tolower(lang[0]);
+    locale[1] = tolower(lang[1]);
+    uchar *terr = (uchar *)strchr(locale + 2, '_');
+    if (terr && isalpha(terr[1]) && isalpha(terr[2])) {
+      // Treat two letters after an underscore as the territory.
+      locale[2] = '_';
+      locale[3] = toupper(terr[1]);
+      locale[4] = toupper(terr[2]);
+      locale[5] = 0;
+    }
+    else
+      locale[2] = 0;
+  }
+  else 
+    locale[0] = 0;
+}
+
 
 /*
  * Return the nth code page in the list, for use in the GUI

@@ -109,12 +109,6 @@ printerbox_handler(control *ctrl, void *dlg, void *unused(data), int event)
 }
 
 static void
-correct_charset(char *cs)
-{
-  strcpy(cs, cs_name(cs_lookup(cs)));
-}
-
-static void
 charset_handler(control *ctrl, void *dlg, void *unused(data), int event)
 {
   char *cs = new_cfg.charset;
@@ -131,29 +125,6 @@ charset_handler(control *ctrl, void *dlg, void *unused(data), int event)
     dlg_editbox_get(ctrl, dlg, cs, sizeof cfg.charset);
     correct_charset(cs);
   }
-}
-
-static void
-correct_locale(char *locale)
-{
-  uchar *lang = (uchar *)locale;
-  if (isalpha(lang[0]) && isalpha(lang[1])) {
-    // Treat two letters at the start as the language.
-    locale[0] = tolower(lang[0]);
-    locale[1] = tolower(lang[1]);
-    uchar *terr = (uchar *)strchr(locale + 2, '_');
-    if (terr && isalpha(terr[1]) && isalpha(terr[2])) {
-      // Treat two letters after an underscore as the territory.
-      locale[2] = '_';
-      locale[3] = toupper(terr[1]);
-      locale[4] = toupper(terr[2]);
-      locale[5] = 0;
-    }
-    else
-      locale[2] = 0;
-  }
-  else 
-    locale[0] = 0;
 }
 
 static void
