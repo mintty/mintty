@@ -433,11 +433,11 @@ setup_config_box(controlbox * b)
   ctrl_checkbox(
     s, "Ask for exit confirmation", 'a', P(0),
     dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
-  )->column;
+  );
   ctrl_checkbox(
     s, "Show scrollbar", 's', P(0),
     dlg_stdcheckbox_handler, I(offcfg(scrollbar))
-  )->column;
+  );
 
   s = ctrl_getset(b, "Window", "scroll", null);
   ctrl_columns(s, 2, 53, 47);
