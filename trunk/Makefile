@@ -2,7 +2,7 @@ name := mintty
 
 rev := $(shell svn info 2>/dev/null | grep Revision | sed "s/Revision: //" || echo 0)
 ifneq ($(rev),)
-defines := -DREVISION=$(rev) -DDIRECTORY=$(shell basename `pwd`)
+defines := -DREVISION=$(rev) -DBRANCH=$(shell basename `pwd`)
 endif
 
 version := $(shell echo $(shell echo VERSION | cpp -P $(defines) --include appinfo.h))
@@ -38,18 +38,23 @@ $(exe): $(objs)
 	$(cc) -o $@ $^ $(ld_opts) $(libs)
 	du -b $@
 
+
+bin = $(dir)-cygwin17.zip
+src = $(dir)-src.tar.bz2
+doc = $(dir).pdf
+
 all: bin src doc
 
-bin: $(dir)-cygwin.zip
-src: $(dir)-src.tar.bz2
-doc: $(dir).pdf
+bin: $(bin)
+src: $(src)
+doc: $(docs)
 
-$(dir)-cygwin.zip: $(exe) $(stuff)
+$(bin): $(exe) $(stuff)
 	rm -f $@
 	zip -9 -j $@ $^
 	du -b $@
 
-$(dir)-src.tar.bz2: $(srcs)
+$(src): $(srcs)
 	rm -rf $(dir)
 	mkdir $(dir)
 	cp -ax --parents $^ $(dir)
@@ -57,7 +62,7 @@ $(dir)-src.tar.bz2: $(srcs)
 	tar cjf $@ $(dir)
 	rm -rf $(dir)
 
-$(dir).pdf: docs/$(name).1.pdf
+$(doc): docs/$(name).1.pdf
 	cp $< $@
 
 %.o %.d: %.c
