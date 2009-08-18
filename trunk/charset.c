@@ -96,7 +96,7 @@ static uint
 cs_lookup(const char *name)
 {
   if (!*name)
-    return 0;
+    return CP_DEFAULT;
 
   char upname[strlen(name) + 1];
   strtoupper(upname, name);
