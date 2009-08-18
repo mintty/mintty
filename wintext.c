@@ -450,14 +450,14 @@ another_font(int fontno)
  * We are allowed to fiddle with the contents of `text'.
  */
 static void
-win_text_internal(int x, int y, wchar *text, int len, uint attr, int lattr)
+win_text_internal(int x, int y, wchar *text, int len,
+                  int chars, uint attr, int lattr)
 {
   COLORREF fg, bg, t;
   int nfg, nbg, nfont;
   RECT line_box;
   int force_manual_underline = 0;
   int fnt_width, char_width;
-  static int *IpDx = 0, IpDxLEN = 0;
 
   lattr &= LATTR_MODE;
 
@@ -466,16 +466,11 @@ win_text_internal(int x, int y, wchar *text, int len, uint attr, int lattr)
   if (attr & ATTR_WIDE)
     char_width *= 2;
 
-  if (len > IpDxLEN || IpDx[0] != char_width) {
-    int i;
-    if (len > IpDxLEN) {
-      free(IpDx);
-      IpDx = newn(int, len + 16);
-      IpDxLEN = (len + 16);
-    }
-    for (i = 0; i < IpDxLEN; i++)
-      IpDx[i] = char_width;
-  }
+  int dxs[len];
+  for (int i = 0; i < len; i++)
+    dxs[i] = char_width;
+  if (chars < len)
+    dxs[chars] = 0;
 
  /* Only want the left half of double width lines */
   if (lattr != LATTR_NORM && x * 2 >= term.cols)
@@ -562,7 +557,7 @@ win_text_internal(int x, int y, wchar *text, int len, uint attr, int lattr)
     SetBkMode(dc, OPAQUE);
   line_box.left = x;
   line_box.top = y;
-  line_box.right = x + char_width * len;
+  line_box.right = x + char_width * chars;
   line_box.bottom = y + font_height;
 
  /* Only want the left half of double width lines */
@@ -571,14 +566,14 @@ win_text_internal(int x, int y, wchar *text, int len, uint attr, int lattr)
 
  /* print Glyphs as they are, without Windows' Shaping */
   general_textout(x, y - font_height * (lattr == LATTR_BOT),
-                  &line_box, text, len, IpDx, !(attr & TATTR_COMBINING));
+                  &line_box, text, len, dxs, !(attr & TATTR_COMBINING));
 
  /* And the shadow bold hack. */
   if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD)) {
     SetBkMode(dc, TRANSPARENT);
     ExtTextOutW(dc, x - 1,
                 y - font_height * (lattr == LATTR_BOT),
-                ETO_CLIPPED, &line_box, text, len, IpDx);
+                ETO_CLIPPED, &line_box, text, len, dxs);
   }
   if (lattr != LATTR_TOP &&
       (force_manual_underline ||
@@ -590,7 +585,7 @@ win_text_internal(int x, int y, wchar *text, int len, uint attr, int lattr)
 
     oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
     MoveToEx(dc, x, y + dec, null);
-    LineTo(dc, x + len * char_width, y + dec);
+    LineTo(dc, x + chars * char_width, y + dec);
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
   }
@@ -606,13 +601,13 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
     attr &= ~TATTR_COMBINING;
     do {
       uint n = 1 + ((*text & 0xFC00) == 0xD800);
-      win_text_internal(x, y, text, n, attr, lattr);
+      win_text_internal(x, y, text, n, 1, attr, lattr);
       len -= n, text += n;
       attr |= TATTR_COMBINING;
     } while (len > 0);
   }
   else
-    win_text_internal(x, y, text, len, attr, lattr);
+    win_text_internal(x, y, text, len, len, attr, lattr);
 }
 
 void
