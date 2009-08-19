@@ -736,7 +736,10 @@ resizeline(termline * line, int cols)
 int
 sblines(void)
 {
-  return term.which_screen == 0 ? count234(term.scrollback) : 0;
+  if (term.which_screen == 0 || cfg.alt_screen_scroll)
+    return count234(term.scrollback) + term.alt_sblines;
+  else
+    return 0;
 }
 
 /*
@@ -748,29 +751,23 @@ termline *
 lineptr(int y)
 {
   termline *line;
-  tree234 *whichtree;
-  int treeindex;
 
-  if (y >= 0) {
-    whichtree = term.screen;
-    treeindex = y;
-  }
+  if (y >= 0)
+    line = index234(term.screen, y);
   else {
-    whichtree = term.scrollback;
-    treeindex = y + count234(term.scrollback);
-  }
-  if (whichtree == term.scrollback) {
-    uchar *cline = index234(whichtree, treeindex);
-    line = decompressline(cline, null);
-  }
-  else {
-    line = index234(whichtree, treeindex);
+    y += term.alt_sblines;
+    if (y >= 0)
+      line = index234(term.alt_screen, y);
+    else {
+      y += count234(term.scrollback);
+      uchar *cline = index234(term.scrollback, y);
+      line = decompressline(cline, null);
+    }
   }
 
   assert(line != null);
 
   resizeline(line, term.cols);
- /* FIXME: should we sort the compressed scrollback out here? */
 
   return line;
 }

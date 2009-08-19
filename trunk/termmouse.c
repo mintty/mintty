@@ -450,7 +450,7 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
     int lines = accu / DELTA_NOTCH;
     if (lines) {
       accu -= lines * DELTA_NOTCH;
-      if (term.which_screen == 0)
+      if (term.which_screen == 0 || cfg.alt_screen_scroll)
         term_scroll(0, -lines);
       else {
         // Send scroll distance as CSI a/b events

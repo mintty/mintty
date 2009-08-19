@@ -180,6 +180,7 @@ struct term {
   int  alt_oem_acs;
   bool alt_utf;
   int  alt_t, alt_b;
+  int  alt_sblines;
   bool which_screen;
 
   int  rows, cols;

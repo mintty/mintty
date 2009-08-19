@@ -429,22 +429,26 @@ setup_config_box(controlbox * b)
     s, "Current size", 'u', P(0), current_size_handler, P(0)
   )->column = 4;
 
-  s = ctrl_getset(b, "Window", "options", null);
-  ctrl_checkbox(
-    s, "Ask for exit confirmation", 'a', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
-  );
+  s = ctrl_getset(b, "Window", "scroll", "Scrolling");
   ctrl_checkbox(
     s, "Show scrollbar", 's', P(0),
     dlg_stdcheckbox_handler, I(offcfg(scrollbar))
   );
-
-  s = ctrl_getset(b, "Window", "scroll", null);
+  ctrl_checkbox(
+    s, "Enable scrollback on alternate screen", 'e', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(alt_screen_scroll))
+  );
   ctrl_columns(s, 2, 53, 47);
   ctrl_editbox(
     s, "Scrollback lines", 'b', 38, P(0),
     int_handler, I(offsetof(config, scrollback_lines)), I(1000000)
   )->column = 0;
+
+  s = ctrl_getset(b, "Window", "options", null);
+  ctrl_checkbox(
+    s, "Ask for exit confirmation", 'a', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
+  );
 
 }
 
@@ -463,6 +467,7 @@ int_settings[] = {
   {"OpaqueWhenFocused", offcfg(opaque_when_focused), 0},
   {"Scrollbar", offcfg(scrollbar), true},
   {"ScrollbackLines", offcfg(scrollback_lines), 10000},
+  {"AltScreenScroll", offcfg(alt_screen_scroll), false},
   {"ConfirmExit", offcfg(confirm_exit), true},
   {"DistinguishAltGr", offcfg(altctrl_is_altgr), true},
   {"AltSendsESC", offcfg(alt_sends_esc), false},
