@@ -208,6 +208,7 @@ term_clear_scrollback(void)
   while ((line = delpos234(term.scrollback, 0)))
     free(line); /* this is compressed data, not a termline */
   term.tempsblines = 0;
+  term.alt_sblines = 0;
   update_sbar();
 }
 
@@ -372,6 +373,7 @@ term_resize(int newrows, int newcols)
     freetree234(term.alt_screen);
   }
   term.alt_screen = newalt;
+  term.alt_sblines = 0;
   term.tabs = renewn(term.tabs, newcols);
   {
     int i;
@@ -419,6 +421,8 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
   if (which != term.which_screen) {
     term.which_screen = which;
 
+    term.alt_sblines =
+      cfg.alt_screen_scroll && which ? find_last_nonempty_line() + 1 : 0;
     ttr = term.alt_screen;
     term.alt_screen = term.screen;
     term.screen = ttr;

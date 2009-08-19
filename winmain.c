@@ -533,16 +533,14 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
           spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv); 
       }
     when WM_VSCROLL:
-      if (term.which_screen == 0) {
-        switch (LOWORD(wp)) {
-          when SB_BOTTOM:   term_scroll(-1, 0);
-          when SB_TOP:      term_scroll(+1, 0);
-          when SB_LINEDOWN: term_scroll(0, +1);
-          when SB_LINEUP:   term_scroll(0, -1);
-          when SB_PAGEDOWN: term_scroll(0, +term.rows);
-          when SB_PAGEUP:   term_scroll(0, -term.rows);
-          when SB_THUMBPOSITION or SB_THUMBTRACK: term_scroll(1, HIWORD(wp));
-        }
+      switch (LOWORD(wp)) {
+        when SB_BOTTOM:   term_scroll(-1, 0);
+        when SB_TOP:      term_scroll(+1, 0);
+        when SB_LINEDOWN: term_scroll(0, +1);
+        when SB_LINEUP:   term_scroll(0, -1);
+        when SB_PAGEDOWN: term_scroll(0, +term.rows);
+        when SB_PAGEUP:   term_scroll(0, -term.rows);
+        when SB_THUMBPOSITION or SB_THUMBTRACK: term_scroll(1, HIWORD(wp));
       }
     when WM_LBUTTONDOWN: win_mouse_click(MBT_LEFT, lp);
     when WM_RBUTTONDOWN: win_mouse_click(MBT_RIGHT, lp);

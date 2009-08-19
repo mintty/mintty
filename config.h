@@ -40,6 +40,7 @@ typedef struct {
   int confirm_exit;
   int scrollbar;
   int scrollback_lines;
+  int alt_screen_scroll;
   int window_shortcuts;
   int edit_shortcuts;
   int zoom_shortcuts;
