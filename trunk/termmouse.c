@@ -459,9 +459,15 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
         int pages = lines / term.rows;
         lines -= pages * term.rows;
         if (pages)
-          send_keys(up ? "\e[1;2a" : "\e[1;2b", 6, pages, true);
-        if (lines)
-          send_keys(up ? "\eOa" : "\eOb", 3, lines, true);
+          send_keys(up ? "\e[5~" : "\e[6~", 4, pages, true);
+        if (lines) {
+          char code[3] = {
+            '\e', 
+            term.app_cursor_keys ? 'O' : '[',
+            up ? 'A' : 'B'
+          };
+          send_keys(code, 3, lines, true);
+        }
       }
     }
   }
