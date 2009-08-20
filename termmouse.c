@@ -418,25 +418,25 @@ term_mouse_move(mouse_button b, mod_keys mods, pos p)
 void
 term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
 {
-  enum { DELTA_NOTCH = 120 };
-  if (is_app_mouse(&mods)) {
+  enum { NOTCH_DELTA = 120 };
+  
+  static int accu;
+  accu += delta;
+  
+  if (!term.app_wheel && is_app_mouse(&mods)) {
     // Send as mouse events, with one event per notch.
-    static int accu;
-    accu += delta;
-    int notches = accu / DELTA_NOTCH;
+    int notches = accu / NOTCH_DELTA;
     if (notches) {
-      accu -= notches * DELTA_NOTCH;
+      accu -= NOTCH_DELTA * notches;
       char code = 0x60 | (notches < 0);
       notches = abs(notches);
       do send_mouse_event(code, mods, p); while (--notches);
     }
   }
   else if (mods == MDK_CTRL) {
-    static int accu;
-    accu += delta;
-    int zoom = accu / DELTA_NOTCH;
+    int zoom = accu / NOTCH_DELTA;
     if (zoom) {
-      accu -= zoom * DELTA_NOTCH;
+      accu -= NOTCH_DELTA * zoom;
       win_zoom_font(zoom);
     }
   }
@@ -445,12 +445,10 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
     // Scroll by a page per notch if setting is -1 or Shift is pressed.
     if (lines_per_notch == -1 || mods & MDK_SHIFT)
       lines_per_notch = term.rows;
-    static int accu;
-    accu += delta * lines_per_notch;
-    int lines = accu / DELTA_NOTCH;
+    int lines = lines_per_notch * accu / NOTCH_DELTA;
     if (lines) {
-      accu -= lines * DELTA_NOTCH;
-      if (term.which_screen == 0 || cfg.alt_screen_scroll)
+      accu -= lines * NOTCH_DELTA / lines_per_notch;
+      if (!term.app_wheel && (!term.which_screen || cfg.alt_screen_scroll))
         term_scroll(0, -lines);
       else {
         // Send scroll distance as CSI a/b events
@@ -458,15 +456,20 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
         lines = abs(lines);
         int pages = lines / term.rows;
         lines -= pages * term.rows;
-        if (pages)
-          send_keys(up ? "\e[5~" : "\e[6~", 4, pages, true);
-        if (lines) {
-          char code[3] = {
-            '\e', 
-            term.app_cursor_keys ? 'O' : '[',
-            up ? 'A' : 'B'
-          };
-          send_keys(code, 3, lines, true);
+        if (term.app_wheel) {
+          if (pages)
+            send_keys(up ? "\e[1;2a" : "\e[1;2b", 6, pages, true);
+          if (lines)
+            send_keys(up ? "\eOa" : "\eOb", 3, lines, true);
+        }
+        else {
+          if (pages)
+            send_keys(up ? "\e[5~" : "\e[6~", 4, pages, true);
+          if (lines) {
+            char code[3] =
+              {'\e',  term.app_cursor_keys ? 'O' : '[', up ? 'A' : 'B'};
+            send_keys(code, 3, lines, true);
+          }
         }
       }
     }

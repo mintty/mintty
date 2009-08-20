@@ -693,11 +693,17 @@ set_modes(bool state)
             restore_cursor();
           term.disptop = 0;
         when 7700:       /* MinTTY only: CJK ambigous width reporting */
+          compatibility(OTHER);
           term.report_ambig_width = state;
         when 7727:       /* MinTTY only: Application escape key mode */
+          compatibility(OTHER);
           term.app_escape_key = state;
         when 7728:       /* MinTTY only: Escape sends FS (instead of ESC) */
+          compatibility(OTHER);
           term.escape_sends_fs = state;
+        when 7787:       /* MinTTY only: Application mousewheel mode */
+          compatibility(OTHER);
+          term.app_wheel = state;
       }
     }
     else {
