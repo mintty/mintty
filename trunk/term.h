@@ -193,6 +193,7 @@ struct term {
   bool app_escape_key;
   bool app_cursor_keys;
   bool app_keypad;
+  bool app_wheel;
   int  modify_other_keys;
   bool newline_mode;
   bool report_focus;
