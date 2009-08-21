@@ -63,15 +63,4 @@ termline *decompressline(uchar *, int *bytes_used);
 
 termchar *term_bidi_line(termline *, int scr_y);
 
-#define scrlineptr(x) (lineptr)(x)
-
-/*
- * Fetch the character at a particular position in a line array,
- * for purposes of `wordtype'. The reason this isn't just a simple
- * array reference is that if the character we find is UCSWIDE,
- * then we must look one space further to the left.
- */
-#define UCSGET(a, x) \
-    ( (x)>0 && (a)[(x)].chr == UCSWIDE ? (a)[(x)-1].chr : (a)[(x)].chr )
-
 #endif

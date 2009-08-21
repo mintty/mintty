@@ -541,7 +541,7 @@ term_check_boundary(int x, int y)
   if (x == 0 || x > term.cols)
     return;
 
-  ldata = scrlineptr(y);
+  ldata = lineptr(y);
   if (x == term.cols) {
     ldata->lattr &= ~LATTR_WRAPPED2;
   }
@@ -743,7 +743,7 @@ term_erase_lots(int line_only, int from_begin, int to_end)
       term_do_scroll(0, scrolllines - 1, scrolllines, true);
   }
   else {
-    termline *ldata = scrlineptr(start.y);
+    termline *ldata = lineptr(start.y);
     while (poslt(start, end)) {
       if (start.x == term.cols) {
         if (!erase_lattr)
@@ -755,7 +755,7 @@ term_erase_lots(int line_only, int from_begin, int to_end)
         copy_termchar(ldata, start.x, &term.erase_char);
       }
       if (incpos(start) && start.y < term.rows) {
-        ldata = scrlineptr(start.y);
+        ldata = lineptr(start.y);
       }
     }
   }

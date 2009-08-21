@@ -154,7 +154,7 @@ insert_char(int n)
   term_check_boundary(term.curs.x, term.curs.y);
   if (dir < 0)
     term_check_boundary(term.curs.x + n, term.curs.y);
-  ldata = scrlineptr(term.curs.y);
+  ldata = lineptr(term.curs.y);
   if (dir < 0) {
     for (j = 0; j < m; j++)
       move_termchar(ldata, ldata->chars + term.curs.x + j,
@@ -196,7 +196,7 @@ write_backspace(void)
 static void
 write_tab(void)
 {
-  termline *ldata = scrlineptr(term.curs.y);
+  termline *ldata = lineptr(term.curs.y);
   do {
     term.curs.x++;
   } while (term.curs.x < term.cols - 1 && !term.tabs[term.curs.x]);
@@ -277,7 +277,7 @@ write_ctrl(char c)
 static void
 write_char(wchar c, int width)
 {
-  termline *cline = scrlineptr(term.curs.y);
+  termline *cline = lineptr(term.curs.y);
   void put_char(wchar c)
   {
     clear_cc(cline, term.curs.x);
@@ -293,7 +293,7 @@ write_char(wchar c, int width)
       term.curs.y++;
     term.curs.x = 0;
     term.wrapnext = false;
-    cline = scrlineptr(term.curs.y);
+    cline = lineptr(term.curs.y);
   }
   if (term.insert && width > 0)
     insert_char(width);
@@ -332,7 +332,7 @@ write_char(wchar c, int width)
         else if (term.curs.y < term.rows - 1)
           term.curs.y++;
         term.curs.x = 0;
-        cline = scrlineptr(term.curs.y);
+        cline = lineptr(term.curs.y);
        /* Now we must term_check_boundary again, of course. */
         term_check_boundary(term.curs.x, term.curs.y);
         term_check_boundary(term.curs.x + 2, term.curs.y);
@@ -443,7 +443,7 @@ do_esc(uchar c)
       compatibility(VT100);
       termline *ldata;
       for (int i = 0; i < term.rows; i++) {
-        ldata = scrlineptr(i);
+        ldata = lineptr(i);
         for (int j = 0; j < term.cols; j++) {
           copy_termchar(ldata, j, &term.basic_erase_char);
           ldata->chars[j].chr = 'E';
@@ -454,16 +454,16 @@ do_esc(uchar c)
       seen_disp_event();
     when ANSI('3', '#'):  /* DECDHL: 2*height, top */
       compatibility(VT100);
-      scrlineptr(term.curs.y)->lattr = LATTR_TOP;
+      lineptr(term.curs.y)->lattr = LATTR_TOP;
     when ANSI('4', '#'):  /* DECDHL: 2*height, bottom */
       compatibility(VT100);
-      scrlineptr(term.curs.y)->lattr = LATTR_BOT;
+      lineptr(term.curs.y)->lattr = LATTR_BOT;
     when ANSI('5', '#'):  /* DECSWL: normal */
       compatibility(VT100);
-      scrlineptr(term.curs.y)->lattr = LATTR_NORM;
+      lineptr(term.curs.y)->lattr = LATTR_NORM;
     when ANSI('6', '#'):  /* DECDWL: 2*width */
       compatibility(VT100);
-      scrlineptr(term.curs.y)->lattr = LATTR_WIDE;
+      lineptr(term.curs.y)->lattr = LATTR_WIDE;
     when ANSI('A', '(') or ANSI('B', '(') or ANSI('0', '('):
      /* GZD4: G0 designate 94-set */
       compatibility(VT100);
@@ -1008,7 +1008,7 @@ do_csi(uchar c)
       int n = def_arg0;
       pos cursplus;
       int p = term.curs.x;
-      termline *cline = scrlineptr(term.curs.y);
+      termline *cline = lineptr(term.curs.y);
 
       if (n > term.cols - term.curs.x)
         n = term.cols - term.curs.x;
