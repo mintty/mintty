@@ -7,9 +7,16 @@
 #include "linedisc.h"
 #include "win.h"
 
+/*
+ * Fetch the character at a particular position in a line array,
+ * for purposes of `wordtype'. The reason this isn't just a simple
+ * array reference is that if the character we find is UCSWIDE,
+ * then we must look one space further to the left.
+ */
 static bool
-wordtype(int c)
+wordtype(termchar a[], int x)
 {
+  wchar c = x > 0 && a[x].chr == UCSWIDE ? a[x - 1].chr : a[x].chr;
   return iswalnum(c) || strchr("#-./\\_~", c);
 }
 
@@ -21,58 +28,50 @@ sel_spread_word(pos p, int dir)
   * whose `wordness' has the same value.
   */
   termline *ldata = lineptr(p.y);
-  short wvalue = wordtype(UCSGET(ldata->chars, p.x));
+  short wvalue = wordtype(ldata->chars, p.x);
   if (dir == 1) {
     for (;;) {
-      int maxcols =
-        (ldata->lattr & LATTR_WRAPPED2 ? term.cols - 1 : term.cols);
+      int maxcols = term.cols - ((ldata->lattr & LATTR_WRAPPED2) != 0);
       if (p.x < maxcols - 1) {
-        if (wordtype(UCSGET(ldata->chars, p.x + 1)) == wvalue)
+        if (wordtype(ldata->chars, p.x + 1) == wvalue)
           p.x++;
         else
           break;
       }
-      else {
-        if (ldata->lattr & LATTR_WRAPPED) {
-          termline *ldata2;
-          ldata2 = lineptr(p.y + 1);
-          if (wordtype(UCSGET(ldata2->chars, 0))
-              == wvalue) {
-            p.x = 0;
-            p.y++;
-            unlineptr(ldata);
-            ldata = ldata2;
-          }
-          else {
-            unlineptr(ldata2);
-            break;
-          }
+      else if (ldata->lattr & LATTR_WRAPPED) {
+        termline *ldata2;
+        ldata2 = lineptr(p.y + 1);
+        if (wordtype(ldata2->chars, 0) == wvalue) {
+          p.x = 0;
+          p.y++;
+          unlineptr(ldata);
+          ldata = ldata2;
         }
-        else
+        else {
+          unlineptr(ldata2);
           break;
+        }
       }
+      else
+        break;
     }
   }
   else {
     int topy = -sblines();
     for (;;) {
       if (p.x > 0) {
-        if (wordtype(UCSGET(ldata->chars, p.x - 1)) == wvalue)
+        if (wordtype(ldata->chars, p.x - 1) == wvalue)
           p.x--;
         else
           break;
       }
       else {
-        termline *ldata2;
-        int maxcols;
         if (p.y <= topy)
           break;
-        ldata2 = lineptr(p.y - 1);
-        maxcols =
-          (ldata2->lattr & LATTR_WRAPPED2 ? term.cols - 1 : term.cols);
+        termline *ldata2 = lineptr(p.y - 1);
+        int maxcols = term.cols - ((ldata2->lattr & LATTR_WRAPPED2) != 0);
         if (ldata2->lattr & LATTR_WRAPPED) {
-          if (wordtype(UCSGET(ldata2->chars, maxcols - 1))
-              == wvalue) {
+          if (wordtype(ldata2->chars, maxcols - 1) == wvalue) {
             p.x = maxcols - 1;
             p.y--;
             unlineptr(ldata);
