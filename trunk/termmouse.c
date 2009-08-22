@@ -9,93 +9,58 @@
 
 /*
  * Fetch the character at a particular position in a line array,
- * for purposes of `wordtype'. The reason this isn't just a simple
- * array reference is that if the character we find is UCSWIDE,
- * then we must look one space further to the left.
+ * and determine whether we're in a 'word'. The reason this isn't
+ * just a simple array reference is that if the character we find
+ * is UCSWIDE, then we must look one space further to the left.
  */
 static bool
-wordtype(termchar a[], int x)
+in_word(termchar a[], int x)
 {
-  wchar c = x > 0 && a[x].chr == UCSWIDE ? a[x - 1].chr : a[x].chr;
+  wchar c = a[x].chr;
+  if (c == UCSWIDE && x > 0)
+    c = a[x - 1].chr;
   return iswalnum(c) || strchr("#-./\\_~", c);
 }
 
 static pos
-sel_spread_word(pos p, int dir)
+sel_spread_word(pos p, bool forward)
 {
- /*
-  * In this mode, the units are maximal runs of characters
-  * whose `wordness' has the same value.
-  */
-  termline *ldata = lineptr(p.y);
-  short wvalue = wordtype(ldata->chars, p.x);
-  if (dir == 1) {
-    for (;;) {
-      int maxcols = term.cols - ((ldata->lattr & LATTR_WRAPPED2) != 0);
-      if (p.x < maxcols - 1) {
-        if (wordtype(ldata->chars, p.x + 1) == wvalue)
-          p.x++;
-        else
+  termline *line = lineptr(p.y);
+  bool word = in_word(line->chars, p.x);
+  pos ret_p;
+  do {
+    ret_p = p;
+    if (forward) {
+      if (++p.x >= term.cols - ((line->lattr & LATTR_WRAPPED2) != 0)) {
+        if (!(line->lattr & LATTR_WRAPPED))
           break;
-      }
-      else if (ldata->lattr & LATTR_WRAPPED) {
-        termline *ldata2;
-        ldata2 = lineptr(p.y + 1);
-        if (wordtype(ldata2->chars, 0) == wvalue) {
-          p.x = 0;
-          p.y++;
-          unlineptr(ldata);
-          ldata = ldata2;
-        }
-        else {
-          unlineptr(ldata2);
-          break;
-        }
-      }
-      else
-        break;
-    }
-  }
-  else {
-    int topy = -sblines();
-    for (;;) {
-      if (p.x > 0) {
-        if (wordtype(ldata->chars, p.x - 1) == wvalue)
-          p.x--;
-        else
-          break;
-      }
-      else {
-        if (p.y <= topy)
-          break;
-        termline *ldata2 = lineptr(p.y - 1);
-        int maxcols = term.cols - ((ldata2->lattr & LATTR_WRAPPED2) != 0);
-        if (ldata2->lattr & LATTR_WRAPPED) {
-          if (wordtype(ldata2->chars, maxcols - 1) == wvalue) {
-            p.x = maxcols - 1;
-            p.y--;
-            unlineptr(ldata);
-            ldata = ldata2;
-          }
-          else {
-            unlineptr(ldata2);
-            break;
-          }
-        }
-        else
-          break;
+        p.x = 0;
+        unlineptr(line);
+        line = lineptr(++p.y);
       }
     }
-  }
-  unlineptr(ldata);
-  return p;
+    else {
+      if (p.x <= 0) {
+        if (p.y <= -sblines())
+          break;
+        unlineptr(line);
+        line = lineptr(--p.y);
+        if (!(line->lattr & LATTR_WRAPPED))
+          break;
+        p.x = term.cols - ((line->lattr & LATTR_WRAPPED2) != 0);
+      }
+      p.x--;
+    }
+  } while (word == in_word(line->chars, p.x));
+  unlineptr(line);
+  return ret_p;
 }
 
 /*
  * Spread the selection outwards according to the selection mode.
  */
 static pos
-sel_spread_half(pos p, int dir)
+sel_spread_half(pos p, bool forward)
 {
   switch (term.mouse_state) {
     when MS_SEL_CHAR: {
@@ -111,17 +76,17 @@ sel_spread_half(pos p, int dir)
         if (q == ldata->chars + term.cols)
           q--;
         if (p.x >= q - ldata->chars)
-          p.x = (dir == -1 ? q - ldata->chars : term.cols - 1);
+          p.x = forward ? term.cols - 1 : q - ldata->chars;
       }
       unlineptr(ldata);
     }
     when MS_SEL_WORD:
-      p = sel_spread_word(p, dir); 
+      p = sel_spread_word(p, forward); 
     when MS_SEL_LINE:
      /*
       * In this mode, every line is a unit.
       */
-      p.x = (dir == -1 ? 0 : term.cols - 1);
+      p.x = forward ? term.cols - 1 : 0;
     default:
      /* Shouldn't happen. */
       break;
@@ -132,9 +97,9 @@ sel_spread_half(pos p, int dir)
 static void
 sel_spread(void)
 {
-  term.sel_start = sel_spread_half(term.sel_start, -1);
+  term.sel_start = sel_spread_half(term.sel_start, false);
   decpos(term.sel_end);
-  term.sel_end = sel_spread_half(term.sel_end, +1);
+  term.sel_end = sel_spread_half(term.sel_end, true);
   incpos(term.sel_end);
 }
 
