@@ -25,7 +25,7 @@ cpp_opts = -MMD -MP $(defines)
 
 cc_opts =  \
   $(cpp_opts) -DNDEBUG -include std.h \
-  -std=gnu99 -Wall -Wextra -Werror \
+  -std=gnu99 -Wall -Wextra -Werror -Wundef \
   -march=i586 -mtune=pentium-m -fomit-frame-pointer -Os
 ld_opts := -s
 libs := -mwindows -lcomctl32 -limm32 -lwinspool -lole32 -luuid
