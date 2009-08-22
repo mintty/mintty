@@ -8,27 +8,35 @@
 #include "win.h"
 
 /*
- * Fetch the character at a particular position in a line array,
- * and determine whether we're in a 'word'. The reason this isn't
- * just a simple array reference is that if the character we find
- * is UCSWIDE, then we must look one space further to the left.
+ * Fetch the character at a particular position in a line array.
+ * The reason this isn't just a simple array reference is that if the
+ * character we find is UCSWIDE, then we must look one space further
+ * to the left.
  */
-static bool
-in_word(termchar a[], int x)
+static wchar
+get_char(termline *line, int x)
 {
-  wchar c = a[x].chr;
+  wchar c = line->chars[x].chr;
   if (c == UCSWIDE && x > 0)
-    c = a[x - 1].chr;
-  return iswalnum(c) || strchr("#-./\\_~", c);
+    c = line->chars[x - 1].chr;
+  return c;
+}
+
+static bool
+in_word(termline *line, int x)
+{
+  wchar c = get_char(line, x);
+  return iswalnum(c) || strchr("#$%+-./:@\\_~", c);
 }
 
 static pos
 sel_spread_word(pos p, bool forward)
 {
   termline *line = lineptr(p.y);
-  bool word = in_word(line->chars, p.x);
-  pos ret_p;
+  bool word = in_word(line, p.x);
+  pos ret_p = p, prev_p;
   do {
+    prev_p = ret_p;
     ret_p = p;
     if (forward) {
       if (++p.x >= term.cols - ((line->lattr & LATTR_WRAPPED2) != 0)) {
@@ -51,7 +59,12 @@ sel_spread_word(pos p, bool forward)
       }
       p.x--;
     }
-  } while (word == in_word(line->chars, p.x));
+  } while (word == in_word(line, p.x));
+    
+  /* Go back by one depending on last character. */
+  if (forward && strchr(".:/@", get_char(line, ret_p.x)))
+    ret_p = prev_p;
+
   unlineptr(line);
   return ret_p;
 }
