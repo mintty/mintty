@@ -23,23 +23,28 @@ get_char(termline *line, int x)
 }
 
 static bool
-in_word(termline *line, int x)
+is_word_char(wchar c)
 {
-  wchar c = get_char(line, x);
   return iswalnum(c) || strchr("#$%+-./:@\\_~", c);
 }
 
 static pos
 sel_spread_word(pos p, bool forward)
 {
+  pos ret_p = p;
+  
   termline *line = lineptr(p.y);
-  bool word = in_word(line, p.x);
-  pos ret_p = p, prev_p;
-  do {
-    prev_p = ret_p;
-    ret_p = p;
+  bool in_word = is_word_char(get_char(line, p.x));
+  
+  bool in_linenum = false;
+  pos prev_colon_p;
+  
+  for (;;) {
+    pos prev_p = p;
+
     if (forward) {
-      if (++p.x >= term.cols - ((line->lattr & LATTR_WRAPPED2) != 0)) {
+      p.x++;
+      if (p.x >= term.cols - ((line->lattr & LATTR_WRAPPED2) != 0)) {
         if (!(line->lattr & LATTR_WRAPPED))
           break;
         p.x = 0;
@@ -59,12 +64,28 @@ sel_spread_word(pos p, bool forward)
       }
       p.x--;
     }
-  } while (word == in_word(line, p.x));
     
-  /* Go back by one depending on last character. */
-  if (forward && strchr(".:/@", get_char(line, ret_p.x)))
-    ret_p = prev_p;
-
+    wchar c = get_char(line, p.x);
+    if (is_word_char(c) != in_word)
+      break;
+    
+    if (forward) {
+      if (c == ':') {
+       /* Exclude line numbers in file:123: format */
+        ret_p = in_linenum ? prev_colon_p : prev_p;
+        in_linenum = true;
+        prev_colon_p = prev_p;
+      }
+      else {
+       /* Exclude periods and ls filetype indicators at end of word */
+        ret_p = strchr("./@", c) ? prev_p : p;
+        in_linenum = in_linenum && iswdigit(c);
+      }
+    }
+    else
+      ret_p = p;
+  }
+    
   unlineptr(line);
   return ret_p;
 }
