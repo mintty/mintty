@@ -321,7 +321,7 @@ setup_config_box(controlbox * b)
   ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
     s, "Ctrl+Alt is AltGr", 'g', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(altctrl_is_altgr))
+    dlg_stdcheckbox_handler, I(offcfg(ctrl_alt_is_altgr))
   )->column = 0;
   ctrl_checkbox(
     s, "Lone Alt sends ESC", 'l', P(0),
@@ -469,7 +469,7 @@ int_settings[] = {
   {"ScrollbackLines", offcfg(scrollback_lines), 10000},
   {"AltScreenScroll", offcfg(alt_screen_scroll), false},
   {"ConfirmExit", offcfg(confirm_exit), true},
-  {"DistinguishAltGr", offcfg(altctrl_is_altgr), true},
+  {"CtrlAltIsAltGr", offcfg(ctrl_alt_is_altgr), true},
   {"AltSendsESC", offcfg(alt_sends_esc), false},
   {"WindowShortcuts", offcfg(window_shortcuts), true},
   {"EditShortcuts", offcfg(edit_shortcuts), true},
