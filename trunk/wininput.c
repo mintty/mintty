@@ -261,7 +261,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   
   bool shift = is_key_down(VK_SHIFT);
   bool alt, ctrl, altgr, meta;
-  if (cfg.altctrl_is_altgr) {
+  if (cfg.ctrl_alt_is_altgr) {
     alt = meta = is_key_down(VK_LMENU);
     altgr = is_key_down(VK_RMENU);
     ctrl = is_key_down(VK_CONTROL) & !altgr;
