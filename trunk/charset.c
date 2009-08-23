@@ -226,8 +226,10 @@ update_locale(void)
   cs_mb1towc(0, 0);
 }
 
+extern bool font_ambig_wide;
+
 const char *
-cs_config_locale(bool font_ambig_wide)
+cs_config_locale(void)
 {
   const char *loc = cfg.locale, *cset = cfg.charset;
   const char *ret = default_locale;

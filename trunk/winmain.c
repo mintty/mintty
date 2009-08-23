@@ -464,7 +464,7 @@ win_reconfig(void)
   win_invalidate_all();
   reset_window(init_lvl);
   win_update_mouse();
-  cs_config_locale(font_ambig_wide);
+  cs_config_locale();
 }
 
 void
@@ -948,7 +948,7 @@ main(int argc, char *argv[])
   win_init_drop_target();
 
   // Create child process.
-  const char *locale = cs_config_locale(font_ambig_wide);
+  const char *locale = cs_config_locale();
   struct winsize ws = {term.rows, term.cols, term_width, term_height};
   char *cmd = child_create(argv + optind, locale, &ws);
   
