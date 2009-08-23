@@ -1,7 +1,7 @@
 #ifndef CODEPAGE_H
 #define CODEPAGE_H
 
-const char *cs_config_locale(bool ambig_wide);
+const char *cs_config_locale(void);
 
 typedef enum { CSM_DEFAULT, CSM_OEM, CSM_UTF8 } cs_mode;
 void cs_set_mode(cs_mode);
