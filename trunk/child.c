@@ -207,13 +207,11 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
       setenv("LANG", locale, true);
     }
 
-#if CYGWIN_VERSION_DLL_MAJOR < 1007
     // Set backspace keycode
     struct termios attr;
     tcgetattr(0, &attr);
     attr.c_cc[VERASE] = 0x7F;
     tcsetattr(0, TCSANOW, &attr);
-#endif
     
     // Invoke command
     execvp(cmd, argv);
