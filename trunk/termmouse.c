@@ -36,9 +36,6 @@ sel_spread_word(pos p, bool forward)
   termline *line = lineptr(p.y);
   bool in_word = is_word_char(get_char(line, p.x));
   
-  bool in_linenum = false;
-  pos prev_colon_p;
-  
   for (;;) {
     pos prev_p = p;
 
@@ -71,15 +68,13 @@ sel_spread_word(pos p, bool forward)
     
     if (forward) {
       if (c == ':') {
-       /* Exclude line numbers in file:123: format */
-        ret_p = in_linenum ? prev_colon_p : prev_p;
-        in_linenum = true;
-        prev_colon_p = prev_p;
+       /* Don't include colons when spreading forwards */
+        ret_p = prev_p;
+        break;
       }
       else {
        /* Exclude periods and ls filetype indicators at end of word */
         ret_p = strchr("./@", c) ? prev_p : p;
-        in_linenum = in_linenum && iswdigit(c);
       }
     }
     else
