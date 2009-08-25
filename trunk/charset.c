@@ -54,6 +54,8 @@ cs_menu[] = {
   {   28604, "Celtic"},
   {   28605, "\"euro\""},
   {   28606, "Balkans"},
+  {   20866, "Russian"},
+  {   21866, "Ukrainian"},
   {     936, "Chinese"},
   {     950, "Chinese"},
   {     932, "Japanese"},
