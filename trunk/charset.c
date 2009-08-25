@@ -62,7 +62,8 @@ cs_menu[] = {
   {   20933, "Japanese"},
   {     949, "Korean"},
   {CP_OEMCP, "OEM codepage"},
-  {  CP_ACP, "Windows codepage"}
+  {  CP_ACP, "Windows codepage"},
+  { CP_DEFAULT, "default"}
 };
 
 static const char *const
@@ -87,6 +88,7 @@ locale_menu[] = {
   "ur", // Urdu
   "vi", // Vietnamese
   "zh", // Chinese
+  "(none)"
 };
 
 static void
