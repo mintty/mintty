@@ -741,7 +741,8 @@ do_csi(uchar c)
     when ANSI('c', '>'):     /* DA: report version */
       compatibility(OTHER);
       /* Terminal type 77 (ASCII 'M' for MinTTY) */
-      ldisc_printf(0, "\e[>77;%u;0c", DECIMAL_VERSION);
+      if (!nargs || (nargs == 1 && arg0 == 0))
+        ldisc_printf(0, "\e[>77;%u;0c", DECIMAL_VERSION);
     when 'a':        /* HPR: move right N cols */
       compatibility(ANSI);
       move(term.curs.x + def_arg0, term.curs.y, 1);
@@ -1333,8 +1334,7 @@ term_write(const char *data, int len)
         }
         else
           do_esc(c);
-      when SEEN_CSI: 
-        term.state = TOPLEVEL;    /* default */
+      when SEEN_CSI:
         if (isdigit(c)) {
           if (term.esc_nargs <= ARGS_MAX) {
             if (term.esc_args[term.esc_nargs - 1] == ARG_DEFAULT)
@@ -1342,12 +1342,10 @@ term_write(const char *data, int len)
             term.esc_args[term.esc_nargs - 1] =
               10 * term.esc_args[term.esc_nargs - 1] + c - '0';
           }
-          term.state = SEEN_CSI;
         }
         else if (c == ';') {
           if (++term.esc_nargs <= ARGS_MAX)
             term.esc_args[term.esc_nargs - 1] = ARG_DEFAULT;
-          term.state = SEEN_CSI;
         }
         else if (c < '@') {
           if (term.esc_query)
@@ -1356,10 +1354,11 @@ term_write(const char *data, int len)
             term.esc_query = true;
           else
             term.esc_query = c;
-          term.state = SEEN_CSI;
         }
-        else
+        else {
           do_csi(c);
+          term.state = TOPLEVEL;
+        }
       when SEEN_OSC: {
         term.osc_w = false;
         switch (c) {
