@@ -88,9 +88,6 @@ P(void *p)
  *    the underlying data (toggling a checkbox or radio button,
  *    moving the items around in a drag-list, editing an edit
  *    control)
- *  - the SELCHANGE event, called when the user alters the setting
- *    of the control in a more minor way (changing the selected
- *    item in a list box).
  *  - the CALLBACK event, which happens after the handler routine
  *    has requested a subdialog (file selector, font selector,
  *    colour selector) and it has come back with information.
@@ -99,7 +96,7 @@ enum {
   EVENT_REFRESH,
   EVENT_ACTION,
   EVENT_VALCHANGE,
-  EVENT_SELCHANGE,
+  EVENT_UNFOCUS,
   EVENT_CALLBACK
 };
 

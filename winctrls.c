@@ -1093,7 +1093,7 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
               winctrl_set_focus(ctrl, dp, true);
             when CBN_KILLFOCUS:
               winctrl_set_focus(ctrl, dp, false);
-              ctrl->handler(ctrl, dp, dp->data, EVENT_REFRESH);
+              ctrl->handler(ctrl, dp, dp->data, EVENT_UNFOCUS);
             when CBN_SELCHANGE: {
               int index = SendDlgItemMessage(
                             dp->wnd, c->base_id + 1, CB_GETCURSEL, 0, 0);
@@ -1115,7 +1115,7 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
               winctrl_set_focus(ctrl, dp, true);
             when EN_KILLFOCUS:
               winctrl_set_focus(ctrl, dp, false);
-              ctrl->handler(ctrl, dp, dp->data, EVENT_REFRESH);
+              ctrl->handler(ctrl, dp, dp->data, EVENT_UNFOCUS);
             when EN_CHANGE:
               ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
           }
@@ -1163,7 +1163,7 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
           ctrl->handler(ctrl, dp, dp->data, EVENT_ACTION);
         }
         else if (note == LBN_SELCHANGE)
-          ctrl->handler(ctrl, dp, dp->data, EVENT_SELCHANGE);
+          ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
       when CTRL_FONTSELECT:
         if (id == 2) {
           switch (note) {
