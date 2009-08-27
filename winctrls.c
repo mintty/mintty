@@ -1086,40 +1086,6 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
   if (msg == WM_COMMAND) {
     WORD note = HIWORD(wParam);
     switch (ctrl->type) {
-      when CTRL_EDITBOX:
-        if (ctrl->editbox.has_list) {
-          switch (note) {
-            when CBN_SETFOCUS:
-              winctrl_set_focus(ctrl, dp, true);
-            when CBN_KILLFOCUS:
-              winctrl_set_focus(ctrl, dp, false);
-              ctrl->handler(ctrl, dp, dp->data, EVENT_UNFOCUS);
-            when CBN_SELCHANGE: {
-              int index = SendDlgItemMessage(
-                            dp->wnd, c->base_id + 1, CB_GETCURSEL, 0, 0);
-              int len = SendDlgItemMessage(
-                          dp->wnd, c->base_id + 1, CB_GETLBTEXTLEN, index, 0);
-              char text[len + 1];
-              SendDlgItemMessage(
-                dp->wnd, c->base_id + 1, CB_GETLBTEXT, index, (LPARAM) text);
-              SetDlgItemText(dp->wnd, c->base_id + 1, text);
-              ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
-            }
-            when CBN_EDITCHANGE:
-              ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
-          }
-        }
-        else {
-          switch (note) {
-            when EN_SETFOCUS:
-              winctrl_set_focus(ctrl, dp, true);
-            when EN_KILLFOCUS:
-              winctrl_set_focus(ctrl, dp, false);
-              ctrl->handler(ctrl, dp, dp->data, EVENT_UNFOCUS);
-            when EN_CHANGE:
-              ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
-          }
-        }
       when CTRL_RADIO:
         switch (note) {
           when BN_SETFOCUS or BN_KILLFOCUS:
@@ -1149,6 +1115,15 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
           when BN_CLICKED or BN_DOUBLECLICKED:
             ctrl->handler(ctrl, dp, dp->data, EVENT_ACTION);
         }
+      when CTRL_FONTSELECT:
+        if (id == 2) {
+          switch (note) {
+            when BN_SETFOCUS or BN_KILLFOCUS:
+              winctrl_set_focus(ctrl, dp, note == BN_SETFOCUS);
+            when BN_CLICKED or BN_DOUBLECLICKED:
+              select_font(c, dp);
+          }
+        }
       when CTRL_LISTBOX:
         if (ctrl->listbox.height != 0 &&
             (note == LBN_SETFOCUS || note == LBN_KILLFOCUS))
@@ -1163,14 +1138,39 @@ winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
           ctrl->handler(ctrl, dp, dp->data, EVENT_ACTION);
         }
         else if (note == LBN_SELCHANGE)
-          ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
-      when CTRL_FONTSELECT:
-        if (id == 2) {
+          ctrl->handler(ctrl, dp, dp->data, EVENT_SELCHANGE);
+      when CTRL_EDITBOX:
+        if (ctrl->editbox.has_list) {
           switch (note) {
-            when BN_SETFOCUS or BN_KILLFOCUS:
-              winctrl_set_focus(ctrl, dp, note == BN_SETFOCUS);
-            when BN_CLICKED or BN_DOUBLECLICKED:
-              select_font(c, dp);
+            when CBN_SETFOCUS:
+              winctrl_set_focus(ctrl, dp, true);
+            when CBN_KILLFOCUS:
+              winctrl_set_focus(ctrl, dp, false);
+              ctrl->handler(ctrl, dp, dp->data, EVENT_UNFOCUS);
+            when CBN_SELCHANGE: {
+              int index = SendDlgItemMessage(
+                            dp->wnd, c->base_id + 1, CB_GETCURSEL, 0, 0);
+              int len = SendDlgItemMessage(
+                          dp->wnd, c->base_id + 1, CB_GETLBTEXTLEN, index, 0);
+              char text[len + 1];
+              SendDlgItemMessage(
+                dp->wnd, c->base_id + 1, CB_GETLBTEXT, index, (LPARAM) text);
+              SetDlgItemText(dp->wnd, c->base_id + 1, text);
+              ctrl->handler(ctrl, dp, dp->data, EVENT_SELCHANGE);
+            }
+            when CBN_EDITCHANGE:
+              ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
+          }
+        }
+        else {
+          switch (note) {
+            when EN_SETFOCUS:
+              winctrl_set_focus(ctrl, dp, true);
+            when EN_KILLFOCUS:
+              winctrl_set_focus(ctrl, dp, false);
+              ctrl->handler(ctrl, dp, dp->data, EVENT_UNFOCUS);
+            when EN_CHANGE:
+              ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
           }
         }
     }
@@ -1399,6 +1399,14 @@ dlg_update_done(control *ctrl, void *dlg)
     SendMessage(hw, WM_SETREDRAW, true, 0);
     InvalidateRect(hw, null, true);
   }
+}
+
+void
+dlg_enable(control *ctrl, void *dlg, bool enable)
+{
+  dlgparam *dp = (dlgparam *) dlg;
+  winctrl *c = dlg_findbyctrl(dp, ctrl);
+  EnableWindow(GetDlgItem(dp->wnd, c->base_id + 1), enable);
 }
 
 void

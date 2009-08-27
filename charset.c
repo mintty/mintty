@@ -110,7 +110,7 @@ cs_lookup(const char *name)
            sscanf(upname, "WIN%u", &id) == 1 ||
            sscanf(upname, "%u", &id) == 1) {
     CPINFO cpi;
-    if (id >= 100 && GetCPInfo(id, &cpi))
+    if (GetCPInfo(id, &cpi))
       return id;
   }
   else {
@@ -232,32 +232,29 @@ const char *
 cs_config_locale(void)
 {
   const char *loc = cfg.locale, *cset = cfg.charset;
-  const char *ret = default_locale;
   if (*loc) {
     const char *narrow =
       !font_ambig_wide && setlocale(LC_CTYPE, loc) && wcwidth(0x3B1) == 2
       ? "@cjknarrow" : "";
-    if (*cset)
-      snprintf(default_locale, 32, "%s.%s%s", loc, cset, narrow);
-    else
-      snprintf(default_locale, 32, "%s%s", loc, narrow);
-    snprintf(utf8_locale, 32, "%s.UTF-8%s", loc, narrow);
-  }
-  else {
     if (*cset) {
-      snprintf(default_locale, 32, "C-%s", cset);
-      strcpy(utf8_locale, "C-UTF-8");
+      snprintf(default_locale, 32, "%s.%s%s", loc, cset, narrow);
+      default_codepage = cs_lookup(cset);
     }
     else {
-      snprintf(default_locale, 32, setlocale(LC_CTYPE, "") ?: "C");
-      bool ambig_wide = font_ambig_wide && wcwidth(0x3B1) == 2;
-      snprintf(utf8_locale, 32, "%sUTF-8", ambig_wide ? "ja." : "C-");
-      ret = 0;
+      snprintf(default_locale, 32, "%s%s", loc, narrow);
+      default_codepage = 0;
     }
+    snprintf(utf8_locale, 32, "%s.UTF-8%s", loc, narrow);
+    update_locale();
+    return default_locale;
   }
-  default_codepage = cset ? cs_lookup(cset) : 0;
-  update_locale();
-  return ret;  
+  else {
+    snprintf(default_locale, 32, setlocale(LC_CTYPE, "") ?: "C");
+    bool ambig_wide = font_ambig_wide && wcwidth(0x3B1) == 2;
+    snprintf(utf8_locale, 32, "%sUTF-8", ambig_wide ? "ja." : "C-");
+    update_locale();
+    return 0;
+  }
 }
 
 void
