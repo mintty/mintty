@@ -111,19 +111,21 @@ printerbox_handler(control *ctrl, void *dlg, void *unused(data), int event)
 static void
 charset_handler(control *ctrl, void *dlg, void *unused(data), int event)
 {
-  char *cs = new_cfg.charset;
-  if (event == EVENT_REFRESH) {
-    dlg_update_start(ctrl, dlg);
-    dlg_listbox_clear(ctrl, dlg);
-    const char *ics;
-    for (int i = 0; (ics = enumerate_charsets(i)); i++)
-      dlg_listbox_add(ctrl, dlg, ics);
-    dlg_editbox_set(ctrl, dlg, cs);
-    dlg_update_done(ctrl, dlg);
-  }
-  else if (event == EVENT_VALCHANGE) {
-    dlg_editbox_get(ctrl, dlg, cs, sizeof cfg.charset);
-    correct_charset(cs);
+  char *charset = new_cfg.charset;
+  switch (event) {
+    when EVENT_REFRESH:
+      dlg_update_start(ctrl, dlg);
+      dlg_listbox_clear(ctrl, dlg);
+      const char *cs;
+      for (int i = 0; (cs = enumerate_charsets(i)); i++)
+        dlg_listbox_add(ctrl, dlg, cs);
+      dlg_update_done(ctrl, dlg);
+      dlg_editbox_set(ctrl, dlg, charset);
+    when EVENT_UNFOCUS:
+      dlg_editbox_set(ctrl, dlg, charset);
+    when EVENT_VALCHANGE:
+      dlg_editbox_get(ctrl, dlg, charset, sizeof cfg.charset);
+      correct_charset(charset);
   }
 }
 
@@ -131,18 +133,20 @@ static void
 locale_handler(control *ctrl, void *dlg, void *unused(data), int event)
 {
   char *locale = new_cfg.locale;
-  if (event == EVENT_REFRESH) {
-    dlg_update_start(ctrl, dlg);
-    dlg_listbox_clear(ctrl, dlg);
-    const char *l;
-    for (int i = 0; (l = enumerate_locales(i)); i++)
-      dlg_listbox_add(ctrl, dlg, l);
-    dlg_editbox_set(ctrl, dlg, locale);
-    dlg_update_done(ctrl, dlg);
-  }
-  else if (event == EVENT_VALCHANGE) {
-    dlg_editbox_get(ctrl, dlg, locale, sizeof cfg.locale);
-    correct_locale(locale);
+  switch (event) {
+    when EVENT_REFRESH:
+      dlg_update_start(ctrl, dlg);
+      dlg_listbox_clear(ctrl, dlg);
+      const char *l;
+      for (int i = 0; (l = enumerate_locales(i)); i++)
+        dlg_listbox_add(ctrl, dlg, l);
+      dlg_update_done(ctrl, dlg);
+      dlg_editbox_set(ctrl, dlg, locale);
+    when EVENT_UNFOCUS:
+      dlg_editbox_set(ctrl, dlg, locale);
+    when EVENT_VALCHANGE:
+      dlg_editbox_get(ctrl, dlg, locale, sizeof cfg.locale);
+      correct_locale(locale);
   }
 }
 

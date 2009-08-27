@@ -61,14 +61,10 @@ cs_menu[] = {
   {     932, "Japanese"},
   {   20933, "Japanese"},
   {     949, "Korean"},
-  {CP_OEMCP, "OEM codepage"},
-  {  CP_ACP, "Windows codepage"},
-  { CP_DEFAULT, "default"}
 };
 
 static const char *const
 locale_menu[] = {
-  0,
   "ar", // Arabic
   "bn", // Bengali
   "de", // German
@@ -88,7 +84,6 @@ locale_menu[] = {
   "ur", // Urdu
   "vi", // Vietnamese
   "zh", // Chinese
-  "(none)"
 };
 
 static void
@@ -112,7 +107,8 @@ cs_lookup(const char *name)
       return id + 28590;
   }
   else if (sscanf(upname, "CP%u", &id) == 1 ||
-           sscanf(upname, "WIN%u", &id) == 1) {
+           sscanf(upname, "WIN%u", &id) == 1 ||
+           sscanf(upname, "%u", &id) == 1) {
     CPINFO cpi;
     if (id >= 100 && GetCPInfo(id, &cpi))
       return id;
@@ -134,11 +130,6 @@ cs_name(uint id)
   if (id == CP_DEFAULT)
     return "";
 
-  if (id == CP_ACP)
-    id = GetACP();
-  else if (id == CP_OEMCP)
-    id = GetOEMCP();
-  
   for (uint i = 0; i < lengthof(cs_names); i++) {
     if (id == cs_names[i].id)
       return cs_names[i].name;
@@ -190,26 +181,31 @@ correct_locale(char *locale)
 const char *
 enumerate_charsets(uint i)
 {
-  if (i >= lengthof(cs_menu))
-    return 0;
-  static char buf[64];
-  sprintf(buf, "%s (%s)", cs_name(cs_menu[i].id), cs_menu[i].comment);
-  return buf;
+  if (i == 0)
+    return "(Default)";
+  if (--i < lengthof(cs_menu)) {
+    static char buf[64];
+    sprintf(buf, "%s (%s)", cs_name(cs_menu[i].id), cs_menu[i].comment);
+    return buf;
+  }
+  return 0;
 }
 
 const char *
 enumerate_locales(uint i)
 {
-  if (i == 0) {
+  if (i == 0)
+    return "(None)";
+  if (i == 1) {
     static char buf[] = "xx_XX";
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME, buf, 2);
     GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, buf + 3, 2);
     return buf;
   }
-  else if (i < lengthof(locale_menu))
+  i -= 2;
+  if (i < lengthof(locale_menu))
     return locale_menu[i];
-  else
-    return 0;
+  return 0;
 }
 
 static cs_mode mode = CSM_DEFAULT;
