@@ -18,7 +18,7 @@ hold_t hold = HOLD_NEVER;
 const char *config_file = 0;
 config cfg, new_cfg;
 
-static control *cols_box, *rows_box;
+static control *cols_box, *rows_box, *charset_box;
 
 static void
 apply_config(void)
@@ -108,6 +108,14 @@ printerbox_handler(control *ctrl, void *dlg, void *unused(data), int event)
   }
 }
 
+void
+charset_enable(void *dlg)
+{
+  bool enable = *new_cfg.locale != 0;
+  dlg_enable(charset_box, dlg, enable);
+  dlg_editbox_set(charset_box, dlg, enable ? new_cfg.charset : "");
+}
+
 static void
 charset_handler(control *ctrl, void *dlg, void *unused(data), int event)
 {
@@ -120,10 +128,10 @@ charset_handler(control *ctrl, void *dlg, void *unused(data), int event)
       for (int i = 0; (cs = enumerate_charsets(i)); i++)
         dlg_listbox_add(ctrl, dlg, cs);
       dlg_update_done(ctrl, dlg);
-      dlg_editbox_set(ctrl, dlg, charset);
+      charset_enable(dlg);
     when EVENT_UNFOCUS:
       dlg_editbox_set(ctrl, dlg, charset);
-    when EVENT_VALCHANGE:
+    when EVENT_VALCHANGE or EVENT_SELCHANGE:
       dlg_editbox_get(ctrl, dlg, charset, sizeof cfg.charset);
       correct_charset(charset);
   }
@@ -144,9 +152,14 @@ locale_handler(control *ctrl, void *dlg, void *unused(data), int event)
       dlg_editbox_set(ctrl, dlg, locale);
     when EVENT_UNFOCUS:
       dlg_editbox_set(ctrl, dlg, locale);
+      charset_enable(dlg);
     when EVENT_VALCHANGE:
       dlg_editbox_get(ctrl, dlg, locale, sizeof cfg.locale);
       correct_locale(locale);
+    when EVENT_SELCHANGE:
+      dlg_editbox_get(ctrl, dlg, locale, sizeof cfg.locale);
+      correct_locale(locale);
+      charset_enable(dlg);
   }
 }
 
@@ -298,9 +311,9 @@ setup_config_box(controlbox * b)
   ctrl_combobox(
     s, "Locale", '\0', 100, P(0), locale_handler, P(0), P(0)
   )->column = 0;
-  ctrl_combobox(
+  (charset_box = ctrl_combobox(
     s, "Character set", '\0', 100, P(0), charset_handler, P(0), P(0)
-  )->column = 1;
+  ))->column = 1;
 
  /*
   * The Keys panel.
@@ -537,11 +550,6 @@ load_config(void)
   close_settings_r();
   
   correct_locale(cfg.locale);
-  
-  if (!*cfg.charset) {
-    // For compatibility with pre 0.5
-    read_string_setting("Codepage", cfg.charset, sizeof cfg.charset, "");
-  }
   correct_charset(cfg.charset);
 }
 

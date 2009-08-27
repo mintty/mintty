@@ -21,13 +21,13 @@
 #define NO_SHORTCUT '\0'
 
 enum {
-  CTRL_EDITBOX, /* label plus edit box */
-  CTRL_RADIO,   /* label plus radio buttons */
-  CTRL_CHECKBOX,        /* checkbox (contains own label) */
-  CTRL_BUTTON,  /* simple push button (no label) */
-  CTRL_LISTBOX, /* label plus list box */
-  CTRL_COLUMNS, /* divide window into columns */
-  CTRL_FONTSELECT,      /* label plus font selector */
+  CTRL_EDITBOX,    /* label plus edit box */
+  CTRL_RADIO,      /* label plus radio buttons */
+  CTRL_CHECKBOX,   /* checkbox (contains own label) */
+  CTRL_BUTTON,     /* simple push button (no label) */
+  CTRL_LISTBOX,    /* label plus list box */
+  CTRL_COLUMNS,    /* divide window into columns */
+  CTRL_FONTSELECT, /* label plus font selector */
 };
 
 /*
@@ -88,6 +88,9 @@ P(void *p)
  *    the underlying data (toggling a checkbox or radio button,
  *    moving the items around in a drag-list, editing an edit
  *    control)
+ *  - the SELCHANGE event, called when the user alters the setting
+ *    of the control in a more minor way (changing the selected
+ *    item in a list box).
  *  - the CALLBACK event, which happens after the handler routine
  *    has requested a subdialog (file selector, font selector,
  *    colour selector) and it has come back with information.
@@ -96,6 +99,7 @@ enum {
   EVENT_REFRESH,
   EVENT_ACTION,
   EVENT_VALCHANGE,
+  EVENT_SELCHANGE,
   EVENT_UNFOCUS,
   EVENT_CALLBACK
 };
@@ -447,6 +451,10 @@ void dlg_fontsel_get(control *, void *dlg, font_spec *);
  */
 void dlg_update_start(control *, void *dlg);
 void dlg_update_done(control *, void *dlg);
+/*
+ * Enable or disable a control.
+ */
+void dlg_enable(control *, void *dlg, bool);
 /*
  * Set input focus into a particular control.
  */
