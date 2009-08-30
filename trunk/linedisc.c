@@ -199,7 +199,7 @@ ldisc_send(const char *buf, int len, bool interactive)
 void
 luni_send(const wchar *ws, int wlen, bool interactive)
 {
-  char s[wlen * MB_LEN_MAX];
+  char s[wlen * cs_cur_max];
   int len = cs_wcntombn(s, ws, sizeof s, wlen);
   if (len > 0)
     ldisc_send(s, len, interactive);

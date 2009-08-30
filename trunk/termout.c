@@ -9,6 +9,7 @@
 #include "win.h"
 #include "appinfo.h"
 #include "charset.h"
+#include "platform.h"
 
 #include <sys/termios.h>
 
@@ -1270,7 +1271,13 @@ term_write(const char *data, int len)
         // Low surrogate
         if ((wc & 0xFC00) == 0xDC00) {
           if (hwc) {
-            write_char(hwc, wcswidth((wchar[]){hwc, wc}, 2));
+            #if HAS_WCWIDTH
+            int width = wcswidth((wchar[]){hwc, wc}, 2);
+            #else
+            xchar xc = 0x10000 + ((hwc & 0x3FF) << 10 | (wc & 0x3FF));
+            int width = xcwidth(xc);
+            #endif
+            write_char(hwc, width);
             write_char(wc, 0);
           }
           else
@@ -1298,7 +1305,12 @@ term_write(const char *data, int len)
         }
 
         // Everything else
+        #if HAS_WCWIDTH
         int width = wcwidth(wc);
+        #else
+        int width = xcwidth(wc);
+        #endif
+        
         switch(term.csets[term.cset_i]) {
           when CSET_LINEDRW:
             if (0x60 <= wc && wc < 0x80)

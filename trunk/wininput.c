@@ -6,6 +6,7 @@
 
 #include "linedisc.h"
 #include "config.h"
+#include "charset.h"
 
 #include <math.h>
 #include <windowsx.h>
@@ -581,7 +582,7 @@ win_key_up(WPARAM wParam, LPARAM unused(lParam))
       term.app_escape_key ? ldisc_send("\eO[", 3, 1) : ldisc_send("\e", 1, 1);
   }
   else if (alt_state > ALT_ALONE) {
-    if (MB_CUR_MAX == 1)
+    if (cs_cur_max == 1)
       ldisc_send((char[]){alt_char}, 1, 1);
     else {
       if (alt_char < 0x20)

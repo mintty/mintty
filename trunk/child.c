@@ -6,6 +6,7 @@
 
 #include "term.h"
 #include "config.h"
+#include "platform.h"
 
 #include <pwd.h>
 #include <pty.h>
@@ -22,9 +23,6 @@
 #include <wincon.h>
 #include <wingdi.h>
 #include <winuser.h>
-
-#include <sys/cygwin.h>
-#include <cygwin/version.h>
 
 HANDLE child_event;
 
@@ -167,7 +165,7 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
   }
   else if (pid == 0) { // Child process.
 
-#if CYGWIN_VERSION_API_MINOR < 211
+#if NEEDS_WIN7_CONSOLE_WORKAROUND
     // Windows se7en actually is Windows 6.1 (aka Vista Second Edition).
     // The Cygwin DLL's trick of allocating a console on an invisible
     // "window station" no longer works here due to a bug in Windows

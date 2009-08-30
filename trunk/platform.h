@@ -1,9 +1,22 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-/*
- * Random platform-specific functions and constants for Windows.
- */
+#ifdef __CYGWIN__
+ #include <cygwin/version.h>
+ #if CYGWIN_VERSION_DLL_MAJOR >= 1007
+  #define NEEDS_WIN7_CONSOLE_WORKAROUND 0
+  #define HAS_LOCALES 1
+  #define HAS_WCWIDTH 1
+ #else
+  #define NEEDS_WIN7_CONSOLE_WORKAROUND 1
+  #define HAS_LOCALES 0
+  #define HAS_WCWIDTH 0
+  typedef uint32_t xchar;
+  int xcwidth(xchar c);
+ #endif
+#else
+ #error Platform not configured.
+#endif
 
 // Colours
 
@@ -22,7 +35,6 @@ static const bool sel_nul_terminated = true;
 // Copying to the clipboard terminates lines with CRLF.
 static const wchar sel_nl[] = { '\r', '\n' };
 
-// Clock ticks.
 int get_tick_count(void);
 int cursor_blink_ticks(void);
 

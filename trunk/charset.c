@@ -6,6 +6,7 @@
 #include "charset.h"
 
 #include "config.h"
+#include "platform.h"
 
 #include <locale.h>
 #include <winbase.h>
@@ -22,11 +23,13 @@ cs_names[] = {
   {    936, "GBK"},
   {    950, "Big5"},
   {    932, "SJIS"},
-  {  20933, "eucJP"},
+#if HAS_LOCALES
+  {  20933, "eucJP"},  // MS only has a simplified version of this in CP20932
+#endif
   {    949, "eucKR"},
-  // Not supported by Cygwin
   {  20866, "KOI8-R"},
   {  21866, "KOI8-U"},
+  // Not supported by Cygwin
   {  54396, "GB18030"},
   // Aliases
   {CP_UTF8, "UTF8"},
@@ -59,7 +62,9 @@ cs_menu[] = {
   {     936, "Chinese"},
   {     950, "Chinese"},
   {     932, "Japanese"},
+#if HAS_LOCALES
   {   20933, "Japanese"},
+#endif
   {     949, "Korean"},
 };
 
@@ -209,50 +214,85 @@ enumerate_locales(uint i)
 }
 
 static cs_mode mode = CSM_DEFAULT;
-static char default_locale[32], utf8_locale[32];
-bool valid_locale;
 static uint default_codepage, codepage;
 
-static void
-update_locale(void)
+static char default_locale[32];
+
+#if HAS_LOCALES
+static char utf8_locale[32];
+static bool valid_locale;
+#endif
+
+int cs_cur_max;
+
+static int
+cp_cur_max(void)
 {
-  char *locale;
-  switch (mode) {
-    when CSM_OEM:  locale = "C-CP437";      codepage = 437;
-    when CSM_UTF8: locale = utf8_locale;    codepage = CP_UTF8;
-    otherwise:     locale = default_locale; codepage = default_codepage;
-  }
+  CPINFO cpinfo;
+  GetCPInfo(codepage, &cpinfo);
+  return cpinfo.MaxCharSize;
+}
+
+static void
+cs_update(void)
+{
+  codepage = 
+    mode == CSM_UTF8 ? CP_UTF8 :
+    mode == CSM_OEM  ? 437 : 
+                       default_codepage;
+#if HAS_LOCALES
+  char *locale = 
+    mode == CSM_UTF8 ? utf8_locale :
+    mode == CSM_OEM  ? "CP-CP437" : 
+                       default_locale;
   valid_locale = setlocale(LC_CTYPE, locale);
+  cs_cur_max = valid_locale ? MB_CUR_MAX : cp_cur_max();
+#else
+  cs_cur_max = cp_cur_max();
+#endif
   cs_mb1towc(0, 0);
 }
 
 extern bool font_ambig_wide;
 
 const char *
-cs_config_locale(void)
+cs_config(void)
 {
   const char *loc = cfg.locale, *cset = cfg.charset;
   if (*loc) {
-    const char *narrow =
-      !font_ambig_wide && setlocale(LC_CTYPE, loc) && wcwidth(0x3B1) == 2
-      ? "@cjknarrow" : "";
     if (*cset) {
-      snprintf(default_locale, 32, "%s.%s%s", loc, cset, narrow);
       default_codepage = cs_lookup(cset);
+      snprintf(default_locale, 32, "%s.%s", loc, cset);
     }
     else {
-      snprintf(default_locale, 32, "%s%s", loc, narrow);
       default_codepage = 0;
+      snprintf(default_locale, 32, "%s", loc);
     }
-    snprintf(utf8_locale, 32, "%s.UTF-8%s", loc, narrow);
-    update_locale();
+
+    #if HAS_LOCALES
+    snprintf(utf8_locale, 32, "%s.UTF-8", loc);
+
+    // Attach "@cjknarrow" to locales if using an ambig-narrow font
+    // with an ambig-wide font
+    if (!font_ambig_wide && setlocale(LC_CTYPE, loc) && wcwidth(0x3B1) == 2) {
+      strcat(default_locale, "@cjknarrow");
+      strcat(utf8_locale, "@cjknarrow");
+    }
+    #endif
+    
+    cs_update();
     return default_locale;
   }
   else {
+    default_codepage = 0;
+
+    #if HAS_LOCALES
     snprintf(default_locale, 32, setlocale(LC_CTYPE, "") ?: "C");
     bool ambig_wide = font_ambig_wide && wcwidth(0x3B1) == 2;
     snprintf(utf8_locale, 32, "%sUTF-8", ambig_wide ? "ja." : "C-");
-    update_locale();
+    #endif
+    
+    cs_update();
     return 0;
   }
 }
@@ -262,45 +302,51 @@ cs_set_mode(cs_mode new_mode)
 {
   if (new_mode != mode) {
     mode = new_mode;
-    update_locale();
+    cs_update();
   }
 }
 
 int
 cs_wcntombn(char *s, const wchar *ws, size_t len, size_t wlen)
 {
-  if (!valid_locale)
-    return WideCharToMultiByte(codepage, 0, ws, wlen, s, len, 0, 0);
-
-  // The POSIX way
-  size_t i = 0, wi = 0;
-  while (wi < wlen && i + MB_CUR_MAX < len) {
-    int n = wctomb(&s[i], ws[wi++]);
-    // Drop characters than can't be translated to charset.
-    if (n >= 0)
-      i += n;
+#if HAS_LOCALES
+  if (valid_locale) {
+    // The POSIX way
+    size_t i = 0, wi = 0;
+    len -= MB_CUR_MAX;
+    while (wi < wlen && i <= len) {
+      int n = wctomb(&s[i], ws[wi++]);
+      // Drop characters than can't be translated to charset.
+      if (n >= 0)
+        i += n;
+    }
+    return i;
   }
-  return i;
+#endif
+  return WideCharToMultiByte(codepage, 0, ws, wlen, s, len, 0, 0);
 }
 
 int
 cs_mbstowcs(wchar *ws, const char *s, size_t wlen)
 {
+#if HAS_LOCALES
   if (valid_locale)
     return mbstowcs(ws, s, wlen);
-  else
-    return MultiByteToWideChar(codepage, 0, s, -1, ws, wlen) - 1;
+#endif
+  return MultiByteToWideChar(codepage, 0, s, -1, ws, wlen) - 1;
 }
 
 int
 cs_mb1towc(wchar *pwc, const char *pc)
 {
+#if HAS_LOCALES
   if (valid_locale)
     return mbrtowc(pwc, pc, 1, 0);
+#endif
 
   // The Windows way
   static int sn;
-  static char s[MB_LEN_MAX];
+  static char s[8];
   static wchar ws[2];
 
   if (!pc) {

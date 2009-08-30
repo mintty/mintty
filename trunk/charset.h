@@ -1,10 +1,12 @@
-#ifndef CODEPAGE_H
-#define CODEPAGE_H
+#ifndef CHARSET_H
+#define CHARSET_H
 
-const char *cs_config_locale(void);
+const char *cs_config(void);
 
 typedef enum { CSM_DEFAULT, CSM_OEM, CSM_UTF8 } cs_mode;
 void cs_set_mode(cs_mode);
+
+int cs_cur_max;
 
 int cs_wcntombn(char *s, const wchar *ws, size_t len, size_t wlen);
 int cs_mbstowcs(wchar *ws, const char *s, size_t wlen);
