@@ -12,6 +12,14 @@
 #include <windowsx.h>
 #include <winnls.h>
 
+#if (WINVER < 0x0500)
+#define VK_OEM_PLUS 0xBB
+#define VK_OEM_COMMA 0xBC
+#define VK_OEM_MINUS 0xBD
+#define VK_OEM_PERIOD 0xBE
+#define VK_OEM_102 0xE2
+#endif
+
 static HMENU menu, sysmenu;
 
 void

@@ -24,6 +24,46 @@ HWND wnd;
 HINSTANCE inst;
 HDC dc;
 
+#if WINVER < 0x500
+
+#define MONITOR_DEFAULTTONEAREST 2 
+
+#define FLASHW_STOP 0
+#define FLASHW_CAPTION 1
+#define FLASHW_TRAY 2
+#define FLASHW_ALL (FLASHW_CAPTION|FLASHW_TRAY)
+#define FLASHW_TIMER 4
+#define FLASHW_TIMERNOFG 12
+
+typedef struct {
+  UINT  cbSize;
+  HWND  hwnd;
+  DWORD dwFlags;
+  UINT  uCount;
+  DWORD dwTimeout;
+} FLASHWINFO,*PFLASHWINFO;
+
+#define LWA_ALPHA	0x02
+
+#endif
+
+static HMONITOR (WINAPI *pMonitorFromWindow)(HWND,DWORD);
+static BOOL (WINAPI *pGetMonitorInfo)(HMONITOR,LPMONITORINFO);
+static BOOL (WINAPI *pFlashWindowEx)(PFLASHWINFO);
+static BOOL (WINAPI *pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD);
+
+static void
+load_funcs(void)
+{
+  HMODULE user = LoadLibrary("user32");
+  pMonitorFromWindow = (void *)GetProcAddress(user, "MonitorFromWindow");
+  pGetMonitorInfo = (void *)GetProcAddress(user, "GetMonitorInfoA");
+  pFlashWindowEx = (void *)GetProcAddress(user, "FlashWindowEx");
+  pSetLayeredWindowAttributes =
+    (void *)GetProcAddress(user, "SetLayeredWindowAttributes");
+}
+
+
 static int extra_width, extra_height;
 
 static HBITMAP caretbm;
@@ -126,51 +166,6 @@ win_get_pixels(int *x, int *y)
 int get_tick_count(void) { return GetTickCount(); }
 int cursor_blink_ticks(void) { return GetCaretBlinkTime(); }
 
-static BOOL
-flash_window_ex(DWORD dwFlags, UINT uCount, DWORD dwTimeout)
-{
-  FLASHWINFO fi;
-  fi.cbSize = sizeof (fi);
-  fi.hwnd = wnd;
-  fi.dwFlags = dwFlags;
-  fi.uCount = uCount;
-  fi.dwTimeout = dwTimeout;
-  return FlashWindowEx(&fi);
-}
-
-/*
- * Manage window caption / taskbar flashing, if enabled.
- * 0 = stop, 1 = maintain, 2 = start
- */
-static void
-flash_window(int mode)
-{
-  static bool flashing;
-
-  if ((mode == 0) || (cfg.bell_ind == B_IND_DISABLED)) {
-   /* stop */
-    if (flashing) {
-      flashing = 0;
-      flash_window_ex(FLASHW_STOP, 0, 0);
-    }
-  }
-  else if (mode == 2) {
-   /* start */
-    if (!flashing) {
-      flashing = 1;
-     /* For so-called "steady" mode, we use uCount=2, which
-      * seems to be the traditional number of flashes used
-      * by user notifications (e.g., by Explorer).
-      * uCount=0 appears to enable continuous flashing, per
-      * "flashing" mode, although I haven't seen this
-      * documented. */
-      flash_window_ex(FLASHW_ALL | FLASHW_TIMER,
-                      (cfg.bell_ind == B_IND_FLASH ? 0 : 2),
-                      0 /* system cursor blink rate */ );
-    }
-  }
-}
-
 /*
  * Bell.
  */
@@ -191,8 +186,15 @@ win_bell(int mode)
     lastbell = GetTickCount();
   }
 
-  if (!term.has_focus)
-    flash_window(2);
+  if (!term.has_focus && pFlashWindowEx) {
+    pFlashWindowEx(&(FLASHWINFO){
+      .cbSize = sizeof(FLASHWINFO),
+      .hwnd = wnd,
+      .dwFlags = FLASHW_ALL | FLASHW_TIMER,
+      .uCount = cfg.bell_ind == B_IND_FLASH ? 0 : 2,
+      .dwTimeout = 0
+    });
+  }
 }
 
 static void
@@ -232,18 +234,19 @@ win_set_sys_cursor(int x, int y)
 /* Get the rect/size of a full screen window using the nearest available
  * monitor in multimon systems; default to something sensible if only
  * one monitor is present. */
-static int
-get_fullscreen_rect(RECT * ss)
+static void
+get_fullscreen_rect(RECT *rect)
 {
-  HMONITOR mon;
-  MONITORINFO mi;
-  mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
-  mi.cbSize = sizeof (mi);
-  GetMonitorInfo(mon, &mi);
-
- /* structure copy */
-  *ss = mi.rcMonitor;
-  return true;
+  if (pMonitorFromWindow) {
+    HMONITOR mon;
+    MONITORINFO mi;
+    mon = pMonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+    mi.cbSize = sizeof (mi);
+    pGetMonitorInfo(mon, &mi);
+    *rect = mi.rcMonitor;
+  }
+  else
+    GetClientRect(GetDesktopWindow(), rect);
 }
 
 static void
@@ -412,12 +415,14 @@ reset_term(void)
 static void
 update_transparency(void)
 {
-  uchar trans = cfg.transparency;
-  SetWindowLong(wnd, GWL_EXSTYLE, trans ? WS_EX_LAYERED : 0);
-  if (trans) {
-    bool opaque = cfg.opaque_when_focused && term.has_focus;
-    uchar alpha = opaque ? 255 : 255 - 16 * trans;
-    SetLayeredWindowAttributes(wnd, 0, alpha, LWA_ALPHA);
+  if (pSetLayeredWindowAttributes) {
+    uchar trans = cfg.transparency;
+    SetWindowLong(wnd, GWL_EXSTYLE, trans ? WS_EX_LAYERED : 0);
+    if (trans) {
+      bool opaque = cfg.opaque_when_focused && term.has_focus;
+      uchar alpha = opaque ? 255 : 255 - 16 * trans;
+      pSetLayeredWindowAttributes(wnd, 0, alpha, LWA_ALPHA);
+    }
   }
 }
 
@@ -605,7 +610,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       term_set_focus(true);
       CreateCaret(wnd, caretbm, font_width, font_height);
       ShowCaret(wnd);
-      flash_window(0);  /* stop */
+      FlashWindow(wnd, 0);  /* stop */
       win_update();
       update_transparency();
     when WM_KILLFOCUS:
@@ -817,6 +822,8 @@ main(int argc, char *argv[])
         exit(1);
     }
   }
+  
+  load_funcs();
 
   HICON small_icon = 0, large_icon = 0;
   if (icon_file) {
