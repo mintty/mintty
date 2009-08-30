@@ -56,6 +56,7 @@ void term_swap_screen(int which, int reset, int keep_cur_pos);
 void term_check_boundary(int x, int y);
 void term_do_scroll(int topline, int botline, int lines, int sb);
 void term_erase_lots(int line_only, int from_begin, int to_end);
+int  term_last_nonempty_line(void);
 
 static inline bool
 term_selecting(void)
