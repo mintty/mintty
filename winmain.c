@@ -280,11 +280,8 @@ reset_window(int reinit)
 
  /* Are we being forced to reload the fonts ? */
   if (reinit > 1) {
-    bool old_ambig_wide = font_ambig_wide;
     win_deinit_fonts();
     win_init_fonts();
-    if (term.report_ambig_width && old_ambig_wide != font_ambig_wide)
-      ldisc_send(font_ambig_wide ? "\e[2W" : "\e[1W", 4, 0);
   }
 
   int cols = term.cols, rows = term.rows;
@@ -448,7 +445,6 @@ win_reconfig(void)
     SetWindowPos(wnd, null, 0, 0, 0, 0,
                 SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE |
                  SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-    init_lvl = 2;
   }
   
   if (memcmp(&new_cfg.font, &cfg.font, sizeof cfg.font) != 0 ||
@@ -464,7 +460,11 @@ win_reconfig(void)
   win_invalidate_all();
   reset_window(init_lvl);
   win_update_mouse();
+
+  bool old_ambig_wide = cs_ambig_wide;
   cs_config();
+  if (term.report_ambig_width && old_ambig_wide != cs_ambig_wide)
+    ldisc_send(cs_ambig_wide ? "\e[2W" : "\e[1W", 4, 0);
 }
 
 void

@@ -254,6 +254,7 @@ cs_update(void)
 }
 
 extern bool font_ambig_wide;
+bool cs_ambig_wide;
 
 const char *
 cs_config(void)
@@ -271,30 +272,35 @@ cs_config(void)
 
     #if HAS_LOCALES
     snprintf(utf8_locale, 32, "%s.UTF-8", loc);
+    setlocale(LC_CTYPE, default_locale);
+    cs_ambig_wide = wcwidth(0x3B1) == 2;
 
     // Attach "@cjknarrow" to locales if using an ambig-narrow font
     // with an ambig-wide font
-    if (!font_ambig_wide && setlocale(LC_CTYPE, loc) && wcwidth(0x3B1) == 2) {
+    if (cs_ambig_wide && !font_ambig_wide) {
       strcat(default_locale, "@cjknarrow");
       strcat(utf8_locale, "@cjknarrow");
+      cs_ambig_wide = false;
     }
     #endif
-    
-    cs_update();
-    return default_locale;
   }
   else {
     default_codepage = 0;
-
+    
     #if HAS_LOCALES
     snprintf(default_locale, 32, setlocale(LC_CTYPE, "") ?: "C");
-    bool ambig_wide = font_ambig_wide && wcwidth(0x3B1) == 2;
-    snprintf(utf8_locale, 32, "%sUTF-8", ambig_wide ? "ja." : "C-");
+    cs_ambig_wide = wcwidth(0x3B1) == 2;
+    snprintf(utf8_locale, 32, "%s.UTF-8", cs_ambig_wide ? "en" : "ja");
     #endif
-    
-    cs_update();
-    return 0;
   }
+  
+  cs_update();
+
+  #if !HAS_LOCALES
+  cs_ambig_wide = font_ambig_wide;
+  #endif
+  
+  return *loc ? default_locale : 0;
 }
 
 void
