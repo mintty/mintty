@@ -15,7 +15,7 @@
 #include <wchar.h>
 #include <errno.h>
 
-#define WINVER 0x500
+#define WINVER 0x400
 #define _WIN32_WINNT WINVER
 #define _WIN32_IE WINVER
 

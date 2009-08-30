@@ -172,18 +172,18 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
     // that Microsoft don't intend to fix for 7 final.
     // Hence, here's a hack that allocates a console for the child command
     // and hides it. Annoyingly the console window still flashes up briefly.
+    // Cygwin 1.7 has its own better workaround.
     DWORD win_version = GetVersion();
     win_version = ((win_version & 0xff) << 8) | ((win_version >> 8) & 0xff);
-    if (win_version >= 0x0601) {
-      // Cygwin 1.7 from minor API version 211 has its own better workaround.
-      struct utsname un;
-      uname(&un);
-      char *api_version = strchr(un.release, '(') + 1;
-      uint minor_api_version;
-      if (!api_version || !sscanf(api_version, "0.%u", &minor_api_version) ||
-          minor_api_version < 211)
-        if (AllocConsole())
-          ShowWindowAsync(GetConsoleWindow(), SW_HIDE);
+    struct utsname un;
+    uname(&un);
+    if (win_version >= 0x0601 && un.release[2] == '5') {
+      if (AllocConsole()) {
+        HMODULE kernel = LoadLibrary("kernel32");
+        HWND (WINAPI *pGetConsoleWindow)(void) =
+          (void *)GetProcAddress(kernel, "GetConsoleWindow");
+        ShowWindowAsync(pGetConsoleWindow(), SW_HIDE);
+      }
     }
 #endif
 
