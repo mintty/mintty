@@ -1,5 +1,5 @@
-#ifndef STORAGE_H
-#define STORAGE_H
+#ifndef SETTINGS_H
+#define SETTINGS_H
 
 #include "platform.h"
 
