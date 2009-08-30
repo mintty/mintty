@@ -253,7 +253,7 @@ static const interval wide[] = {
   { 0x30000, 0x3fffd }
 };
 
-extern bool font_ambig_wide;
+extern bool cs_ambig_wide;
 
 int
 xcwidth(xchar c)
@@ -276,7 +276,7 @@ xcwidth(xchar c)
   
   /* CJK ambiguous characters */
   if (bisearch(c, ambiguous, lengthof(ambiguous)))
-    return font_ambig_wide + 1;
+    return cs_ambig_wide + 1;
   
   /* wide characters */
   if (bisearch(c, wide, lengthof(wide)))
