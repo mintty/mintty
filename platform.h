@@ -29,12 +29,6 @@ static inline uint8 red(colour c) { return c & 0xff; }
 static inline uint8 green(colour c) { return c >> 8 & 0xff; }
 static inline uint8 blue(colour c) { return c >> 16 & 0xff; }
 
-// Clipboard data has to be NUL-terminated.
-static const bool sel_nul_terminated = true;
-
-// Copying to the clipboard terminates lines with CRLF.
-static const wchar sel_nl[] = { '\r', '\n' };
-
 int get_tick_count(void);
 int cursor_blink_ticks(void);
 
