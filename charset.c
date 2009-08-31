@@ -366,7 +366,7 @@ cs_mb1towc(wchar *pwc, const char *pc)
     sn = 0;
     return 0;
   }
-  if (sn == sizeof s)
+  if (sn == cs_cur_max)
     return -1; // Overlong sequence
   s[sn++] = *pc;
   switch (MultiByteToWideChar(codepage, 0, s, sn, ws, 2)) {
@@ -380,8 +380,8 @@ cs_mb1towc(wchar *pwc, const char *pc)
         return -1; // Encoding error
       else
         sn = -1; // Surrogate pair
-    otherwise:
-      return -1; // Shouldn't happen
+    when 0:
+      return -2; // <Vista: can't tell errors from incomplete chars :(
   }
   *pwc = *ws;
   return 1;
