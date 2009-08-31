@@ -374,9 +374,9 @@ write_char(wchar c, int width)
 static void
 write_error(void)
 {
-  // Write the Unicode "replacement character", which usually shows as an
-  // empty box or some sort of question mark.
-  write_char(0xFFFD, 1);
+  // Write 'Medium Shade' character from vt100 linedraw set,
+  // which looks appropriately erroneous.
+  write_char(0x2592, 1);
 }
 
 static void
