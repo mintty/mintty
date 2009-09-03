@@ -18,12 +18,6 @@ typedef struct {
   int charset;
 } font_spec;
 
-/* Bell type */
-enum { BELL_DISABLED, BELL_SOUND, BELL_VISUAL };
-
-/* Taskbar flashing indication on bell (cfg.bell_ind) */
-enum { B_IND_DISABLED, B_IND_FLASH, B_IND_STEADY };
-
 enum { CUR_BLOCK, CUR_UNDERSCORE, CUR_LINE };
 
 enum { FQ_DEFAULT, FQ_ANTIALIASED, FQ_NONANTIALIASED, FQ_CLEARTYPE };
@@ -35,8 +29,9 @@ typedef struct {
   int alt_sends_esc;
   int cursor_type;
   int cursor_blinks;
-  int bell_type;
-  int bell_ind;
+  int bell_sound;
+  int bell_flash;
+  int bell_taskbar;
   int confirm_exit;
   int scrollbar;
   int scrollback_lines;

@@ -14,7 +14,7 @@ void win_cursor(int, int, wchar *, int, uint, int);
 void win_set_sys_cursor(int x, int y);
 void win_update_mouse(void);
 void win_capture_mouse(void);
-void win_bell(int);
+void win_bell(void);
 
 void win_set_title(char *);
 void win_set_sbar(int, int, int);
