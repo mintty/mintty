@@ -31,9 +31,7 @@ HDC dc;
 #define FLASHW_STOP 0
 #define FLASHW_CAPTION 1
 #define FLASHW_TRAY 2
-#define FLASHW_ALL (FLASHW_CAPTION|FLASHW_TRAY)
 #define FLASHW_TIMER 4
-#define FLASHW_TIMERNOFG 12
 
 typedef struct {
   UINT  cbSize;
@@ -166,6 +164,23 @@ win_get_pixels(int *x, int *y)
 int get_tick_count(void) { return GetTickCount(); }
 int cursor_blink_ticks(void) { return GetCaretBlinkTime(); }
 
+static void
+flash_taskbar(bool enable)
+{
+  static bool enabled;
+  if (enable != enabled && pFlashWindowEx) {
+    
+    pFlashWindowEx(&(FLASHWINFO){
+      .cbSize = sizeof(FLASHWINFO),
+      .hwnd = wnd,
+      .dwFlags = enable ? FLASHW_TRAY | FLASHW_TIMER : FLASHW_STOP,
+      .uCount = cfg.bell_ind != B_IND_FLASH,
+      .dwTimeout = 0
+    });
+    enabled = enable;
+  }
+}
+
 /*
  * Bell.
  */
@@ -185,16 +200,9 @@ win_bell(int mode)
     MessageBeep(MB_OK);
     lastbell = GetTickCount();
   }
-
-  if (!term.has_focus && pFlashWindowEx) {
-    pFlashWindowEx(&(FLASHWINFO){
-      .cbSize = sizeof(FLASHWINFO),
-      .hwnd = wnd,
-      .dwFlags = FLASHW_ALL | FLASHW_TIMER,
-      .uCount = cfg.bell_ind == B_IND_FLASH ? 0 : 2,
-      .dwTimeout = 0
-    });
-  }
+  
+  if (cfg.bell_ind && !term.has_focus)
+    flash_taskbar(true);
 }
 
 static void
@@ -610,7 +618,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       term_set_focus(true);
       CreateCaret(wnd, caretbm, font_width, font_height);
       ShowCaret(wnd);
-      FlashWindow(wnd, 0);  /* stop */
+      flash_taskbar(false);  /* stop */
       win_update();
       update_transparency();
     when WM_KILLFOCUS:
