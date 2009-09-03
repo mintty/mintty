@@ -405,24 +405,19 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Output", "Output");
 
-  s = ctrl_getset(b, "Output", "bell", "Bell");
-  ctrl_columns(s, 2, 50, 50);
-  ctrl_radiobuttons(
-    s, "Action", '\0', 1, P(0), dlg_stdradiobutton_handler, 
-    I(offcfg(bell_type)),
-    "None", 'n', I(BELL_DISABLED),
-    "System sound", 's', I(BELL_SOUND),
-    "Flash window", 'f', I(BELL_VISUAL),
-    null
-  )->column = 0;
-  ctrl_radiobuttons(
-    s, "Taskbar indication", '\0', 1, P(0), dlg_stdradiobutton_handler,
-    I(offcfg(bell_ind)),
-    "Disabled", 'd', I(B_IND_DISABLED),
-    "Steady", 'y', I(B_IND_STEADY),
-    "Blinking", 'b', I(B_IND_FLASH),
-    null
-  )->column = 1;
+  s = ctrl_getset(b, "Output", "bell", "Bell action");
+  ctrl_checkbox(
+    s, "Play system sound", 'p', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(bell_sound))
+  );
+  ctrl_checkbox(
+    s, "Flash screen", 'f', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(bell_flash))
+  );
+  ctrl_checkbox(
+    s, "Highlight taskbar", 'h', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(bell_taskbar))
+  );
 
   s = ctrl_getset(b, "Output", "printer", "Printer");
   ctrl_combobox(
@@ -505,8 +500,9 @@ int_settings[] = {
   {"ClicksPlaceCursor", offcfg(clicks_place_cursor), false},
   {"ClicksTargetApp", offcfg(clicks_target_app), true},
   {"ClickTargetMod", offcfg(click_target_mod), MDK_SHIFT},
-  {"BellType", offcfg(bell_type), BELL_DISABLED},
-  {"BellIndication", offcfg(bell_ind), B_IND_STEADY},
+  {"BellSound", offcfg(bell_sound), false},
+  {"BellFlash", offcfg(bell_flash), false},
+  {"BellTaskbar", offcfg(bell_taskbar), true},
 };
 
 typedef const struct {

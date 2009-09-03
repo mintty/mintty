@@ -175,9 +175,9 @@ insert_char(int n)
 static void
 write_bell(void)
 {
-  win_bell(cfg.bell_type);
-  if (cfg.bell_type == BELL_VISUAL)
+  if (cfg.bell_flash)
     term_schedule_vbell(false, 0);
+  win_bell();
 }
 
 static void

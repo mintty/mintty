@@ -174,7 +174,7 @@ flash_taskbar(bool enable)
       .cbSize = sizeof(FLASHWINFO),
       .hwnd = wnd,
       .dwFlags = enable ? FLASHW_TRAY | FLASHW_TIMER : FLASHW_STOP,
-      .uCount = cfg.bell_ind != B_IND_FLASH,
+      .uCount = 1,
       .dwTimeout = 0
     });
     enabled = enable;
@@ -185,23 +185,11 @@ flash_taskbar(bool enable)
  * Bell.
  */
 void
-win_bell(int mode)
+win_bell(void)
 {
-  if (mode == BELL_SOUND) {
-   /*
-    * For MessageBeep style bells, we want to be careful of timing,
-    * because they don't have the nice property that each one cancels out 
-    * the previous active one. So we limit the rate to one per 50ms or so.
-    */
-    static int lastbell = 0;
-    int belldiff = GetTickCount() - lastbell;
-    if (belldiff >= 0 && belldiff < 50)
-      return;
+  if (cfg.bell_sound)
     MessageBeep(MB_OK);
-    lastbell = GetTickCount();
-  }
-  
-  if (cfg.bell_ind && !term.has_focus)
+  if (cfg.bell_taskbar && !term.has_focus)
     flash_taskbar(true);
 }
 
