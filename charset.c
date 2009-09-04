@@ -12,14 +12,14 @@
 #include <winbase.h>
 #include <winnls.h>
 
-enum { CP_DEFAULT = 65535 };
-
 static const struct {
   ushort id;
   const char *name;
 }
 cs_names[] = {
   {CP_UTF8, "UTF-8"},
+  {  20866, "KOI8-R"},
+  {  21866, "KOI8-U"},
   {    936, "GBK"},
   {    950, "Big5"},
   {    932, "SJIS"},
@@ -27,8 +27,6 @@ cs_names[] = {
   {  20933, "eucJP"},  // MS only has a simplified version of this in CP20932
 #endif
   {    949, "eucKR"},
-  {  20866, "KOI8-R"},
-  {  21866, "KOI8-U"},
   // Not supported by Cygwin
   {  54396, "GB18030"},
   // Aliases
@@ -101,7 +99,7 @@ static uint
 cs_lookup(const char *name)
 {
   if (!*name)
-    return CP_DEFAULT;
+    return CP_ACP;
 
   char upname[strlen(name) + 1];
   strtoupper(upname, name);
@@ -126,13 +124,13 @@ cs_lookup(const char *name)
         return cs_names[i].id;
     }
   }
-  return CP_DEFAULT;
+  return CP_ACP;
 }
 
 static const char *
 cs_name(uint id)
 {
-  if (id == CP_DEFAULT)
+  if (id == CP_ACP)
     return "";
 
   for (uint i = 0; i < lengthof(cs_names); i++) {
@@ -381,7 +379,7 @@ cs_mb1towc(wchar *pwc, const char *pc)
       else
         sn = -1; // Surrogate pair
     when 0:
-      return -2; // <Vista: can't tell errors from incomplete chars :(
+      return -2; // pre-Vista: can't tell errors from incomplete chars :(
   }
   *pwc = *ws;
   return 1;
