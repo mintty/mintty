@@ -1401,6 +1401,7 @@ dlg_update_done(control *ctrl, void *dlg)
   }
 }
 
+#if 0 // Unused
 void
 dlg_enable(control *ctrl, void *dlg, bool enable)
 {
@@ -1408,6 +1409,7 @@ dlg_enable(control *ctrl, void *dlg, bool enable)
   winctrl *c = dlg_findbyctrl(dp, ctrl);
   EnableWindow(GetDlgItem(dp->wnd, c->base_id + 1), enable);
 }
+#endif
 
 void
 dlg_set_focus(control *ctrl, void *dlg)

@@ -18,7 +18,7 @@ hold_t hold = HOLD_NEVER;
 const char *config_file = 0;
 config cfg, new_cfg;
 
-static control *cols_box, *rows_box, *charset_box;
+static control *cols_box, *rows_box, *locale_box, *charset_box;
 
 static void
 apply_config(void)
@@ -108,32 +108,18 @@ printerbox_handler(control *ctrl, void *dlg, void *unused(data), int event)
   }
 }
 
-void
-charset_enable(void *dlg)
+static void
+update_charset(void *dlg)
 {
-  bool enable = *new_cfg.locale != 0;
-  dlg_enable(charset_box, dlg, enable);
-  dlg_editbox_set(charset_box, dlg, enable ? new_cfg.charset : "");
+  dlg_editbox_set(charset_box, dlg, *new_cfg.locale ? new_cfg.charset : "");
 }
 
 static void
-charset_handler(control *ctrl, void *dlg, void *unused(data), int event)
+update_locale(void *dlg)
 {
-  char *charset = new_cfg.charset;
-  switch (event) {
-    when EVENT_REFRESH:
-      dlg_update_start(ctrl, dlg);
-      dlg_listbox_clear(ctrl, dlg);
-      const char *cs;
-      for (int i = 0; (cs = enumerate_charsets(i)); i++)
-        dlg_listbox_add(ctrl, dlg, cs);
-      dlg_update_done(ctrl, dlg);
-      charset_enable(dlg);
-    when EVENT_UNFOCUS:
-      dlg_editbox_set(ctrl, dlg, charset);
-    when EVENT_VALCHANGE or EVENT_SELCHANGE:
-      dlg_editbox_get(ctrl, dlg, charset, sizeof cfg.charset);
-      correct_charset(charset);
+  if (*new_cfg.charset && !*new_cfg.locale) {
+    strcpy(new_cfg.locale, enumerate_locales(1));
+    dlg_editbox_set(locale_box, dlg, new_cfg.locale);
   }
 }
 
@@ -152,14 +138,36 @@ locale_handler(control *ctrl, void *dlg, void *unused(data), int event)
       dlg_editbox_set(ctrl, dlg, locale);
     when EVENT_UNFOCUS:
       dlg_editbox_set(ctrl, dlg, locale);
-      charset_enable(dlg);
-    when EVENT_VALCHANGE:
+      update_charset(dlg);
+    when EVENT_VALCHANGE or EVENT_SELCHANGE:
       dlg_editbox_get(ctrl, dlg, locale, sizeof cfg.locale);
       correct_locale(locale);
-    when EVENT_SELCHANGE:
-      dlg_editbox_get(ctrl, dlg, locale, sizeof cfg.locale);
-      correct_locale(locale);
-      charset_enable(dlg);
+      if (event == EVENT_SELCHANGE)
+        update_charset(dlg);
+  }
+}
+
+static void
+charset_handler(control *ctrl, void *dlg, void *unused(data), int event)
+{
+  char *charset = new_cfg.charset;
+  switch (event) {
+    when EVENT_REFRESH:
+      dlg_update_start(ctrl, dlg);
+      dlg_listbox_clear(ctrl, dlg);
+      const char *cs;
+      for (int i = 0; (cs = enumerate_charsets(i)); i++)
+        dlg_listbox_add(ctrl, dlg, cs);
+      dlg_update_done(ctrl, dlg);
+      update_charset(dlg);
+    when EVENT_UNFOCUS:
+      dlg_editbox_set(ctrl, dlg, charset);
+      update_locale(dlg);
+    when EVENT_VALCHANGE or EVENT_SELCHANGE:
+      dlg_editbox_get(ctrl, dlg, charset, sizeof cfg.charset);
+      correct_charset(charset);
+      if (event == EVENT_SELCHANGE)
+        update_locale(dlg);
   }
 }
 
@@ -308,9 +316,9 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Text", "locale", null);
   ctrl_columns(s, 2, 25, 75);
-  ctrl_combobox(
+  (locale_box = ctrl_combobox(
     s, "Locale", '\0', 100, P(0), locale_handler, P(0), P(0)
-  )->column = 0;
+  ))->column = 0;
   (charset_box = ctrl_combobox(
     s, "Character set", '\0', 100, P(0), charset_handler, P(0), P(0)
   ))->column = 1;
