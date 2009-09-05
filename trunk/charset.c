@@ -214,13 +214,13 @@ enumerate_locales(uint i)
 static cs_mode mode = CSM_DEFAULT;
 static uint default_codepage, codepage;
 
-static char default_locale[32];
-
 #if HAS_LOCALES
-static char utf8_locale[32];
-static bool valid_locale;
+static const char *default_locale;
+static bool use_locale;
 #endif
 
+extern bool font_ambig_wide;
+bool cs_ambig_wide;
 int cs_cur_max;
 
 static int
@@ -235,70 +235,62 @@ static void
 cs_update(void)
 {
   codepage = 
-    mode == CSM_UTF8 ? CP_UTF8 :
-    mode == CSM_OEM  ? 437 : 
-                       default_codepage;
+    mode == CSM_UTF8 ? CP_UTF8 : mode == CSM_OEM  ? 437 : default_codepage;
+
 #if HAS_LOCALES
-  char *locale = 
-    mode == CSM_UTF8 ? utf8_locale :
-    mode == CSM_OEM  ? "CP-CP437" : 
-                       default_locale;
-  valid_locale = setlocale(LC_CTYPE, locale);
-  cs_cur_max = valid_locale ? MB_CUR_MAX : cp_cur_max();
+  bool use_default_locale = mode == CSM_DEFAULT && default_locale;
+  setlocale(
+    LC_CTYPE,
+    use_default_locale ? default_locale : cs_ambig_wide ? "ja.UTF-8" : "en.UTF-8"
+  );
+  use_locale = use_default_locale || mode == CSM_UTF8;  // Not for CSM_OEM
+  cs_cur_max = use_locale ? MB_CUR_MAX : cp_cur_max();
 #else
   cs_cur_max = cp_cur_max();
 #endif
+
+  // Clear output conversion state.
   cs_mb1towc(0, 0);
 }
-
-extern bool font_ambig_wide;
-bool cs_ambig_wide;
 
 const char *
 cs_config(void)
 {
-  const char *loc = cfg.locale, *cset = cfg.charset;
-  if (*loc) {
-    if (*cset) {
-      default_codepage = cs_lookup(cset);
-      snprintf(default_locale, 32, "%s.%s", loc, cset);
-    }
-    else {
-      default_codepage = 0;
-      snprintf(default_locale, 32, "%s", loc);
-    }
-
-    #if HAS_LOCALES
-    snprintf(utf8_locale, 32, "%s.UTF-8", loc);
-    setlocale(LC_CTYPE, default_locale);
-    cs_ambig_wide = wcwidth(0x3B1) == 2;
-
-    // Attach "@cjknarrow" to locales if using an ambig-narrow font
-    // with an ambig-wide font
-    if (cs_ambig_wide && !font_ambig_wide) {
-      strcat(default_locale, "@cjknarrow");
-      strcat(utf8_locale, "@cjknarrow");
-      cs_ambig_wide = false;
-    }
-    #endif
+  static char locale[32];
+  char *lang = *cfg.locale ? locale : 0;  // Resulting LANG seetting
+  if (lang) {
+    snprintf(
+      locale, sizeof locale,
+      "%s%s%s", cfg.locale, *cfg.charset ? "." : "", cfg.charset
+    );
+    default_codepage = cs_lookup(cfg.charset);
   }
   else {
-    default_codepage = 0;
-    
-    #if HAS_LOCALES
-    snprintf(default_locale, 32, setlocale(LC_CTYPE, "") ?: "C");
-    cs_ambig_wide = wcwidth(0x3B1) == 2;
-    snprintf(utf8_locale, 32, "%s.UTF-8", cs_ambig_wide ? "en" : "ja");
-    #endif
+    snprintf(
+      locale, sizeof locale,
+      getenv("LC_ALL") ?: getenv("LC_CTYPE") ?: getenv("LANG") ?: "C"
+    );
+    char *dot = strchr(locale, '.');
+    default_codepage = dot ? cs_lookup(dot + 1) : CP_ACP;
   }
   
-  cs_update();
-
-  #if !HAS_LOCALES
+  #if HAS_LOCALES
+  default_locale = setlocale(LC_CTYPE, locale) ? locale : 0;
+  cs_ambig_wide = default_locale && wcwidth(0x3B1) == 2;
+  
+  if (lang && cs_ambig_wide && !font_ambig_wide) {
+    // Attach "@cjknarrow" to locale if using an ambig-narrow font
+    // with an ambig-wide locale setting
+    strcat(locale, "@cjknarrow");
+    cs_ambig_wide = false;
+  }
+  #else
   cs_ambig_wide = font_ambig_wide;
   #endif
   
-  return *loc ? default_locale : 0;
+  cs_update();
+  
+  return lang;
 }
 
 void
@@ -314,7 +306,7 @@ int
 cs_wcntombn(char *s, const wchar *ws, size_t len, size_t wlen)
 {
 #if HAS_LOCALES
-  if (valid_locale) {
+  if (use_locale) {
     // The POSIX way
     size_t i = 0, wi = 0;
     len -= MB_CUR_MAX;
@@ -334,7 +326,7 @@ int
 cs_mbstowcs(wchar *ws, const char *s, size_t wlen)
 {
 #if HAS_LOCALES
-  if (valid_locale)
+  if (use_locale)
     return mbstowcs(ws, s, wlen);
 #endif
   return MultiByteToWideChar(codepage, 0, s, -1, ws, wlen) - 1;
@@ -344,7 +336,7 @@ int
 cs_mb1towc(wchar *pwc, const char *pc)
 {
 #if HAS_LOCALES
-  if (valid_locale)
+  if (use_locale)
     return mbrtowc(pwc, pc, 1, 0);
 #endif
 
