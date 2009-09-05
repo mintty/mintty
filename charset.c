@@ -62,7 +62,7 @@ cs_menu[] = {
   {     950, "Chinese"},
   {     932, "Japanese"},
 #if HAS_LOCALES
-  {   20933, "Japanese"},
+  {   51932, "Japanese"},
 #endif
   {     949, "Korean"},
 };
