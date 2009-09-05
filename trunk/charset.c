@@ -18,13 +18,14 @@ static const struct {
 }
 cs_names[] = {
   {CP_UTF8, "UTF-8"},
+  {  20127, "ASCII"},
   {  20866, "KOI8-R"},
   {  21866, "KOI8-U"},
   {    936, "GBK"},
   {    950, "Big5"},
   {    932, "SJIS"},
 #if HAS_LOCALES
-  {  20933, "eucJP"},  // MS only has a simplified version of this in CP20932
+  {  51932, "eucJP"},  // CP20932 is a simplified DBCS version of the proper one
 #endif
   {    949, "eucKR"},
   // Not supported by Cygwin
