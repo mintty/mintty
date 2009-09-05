@@ -42,12 +42,18 @@ $(exe): $(objs)
 bin = $(dir)-cygwin17.zip
 src = $(dir)-src.tar.bz2
 doc = $(dir).pdf
+bz2 = $(dir).exe.bz2
 
 all: bin src doc
 
 bin: $(bin)
 src: $(src)
-doc: $(docs)
+doc: $(doc)
+bz2: $(bz2)
+
+$(bz2): $(exe)
+	bzip2 -k $<
+	mv $<.bz2 $@
 
 $(bin): $(exe) $(stuff)
 	rm -f $@
