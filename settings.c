@@ -1,4 +1,4 @@
-// settings.c (part of MinTTY)
+// settings.c (part of mintty)
 // Copyright 2008-09  Andy Koppe
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.

@@ -1,4 +1,4 @@
-To compile MinTTY, just run 'make'. (Add a -j option as desired.)
+To compile mintty, just run 'make'. (Add a -j option as desired.)
 To install, copy mintty.exe to an appropriate place.
 'make src' creates a source tarball.
 'make bin' creates a zip for binary release.

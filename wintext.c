@@ -1,4 +1,4 @@
-// wintext.c (part of MinTTY)
+// wintext.c (part of mintty)
 // Copyright 2008-09  Andy Koppe
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.

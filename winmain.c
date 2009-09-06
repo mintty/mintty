@@ -1,4 +1,4 @@
-// win.c (part of MinTTY)
+// win.c (part of mintty)
 // Copyright 2008-09 Andy Koppe
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
@@ -719,7 +719,7 @@ static const char *help =
   "Usage: %s [OPTION]... [ - | PROGRAM [ARG]... ]\n"
   "\n"
   "If a program is supplied, it is executed with its arguments. Otherwise,\n"
-  "MinTTY looks for a shell to execute in the SHELL environment variable.\n"
+  "mintty looks for a shell to execute in the SHELL environment variable.\n"
   "If that is not set, it tries to read the user's default shell setting\n"
   "from /etc/passwd. Failing that, it falls back to /bin/sh. If the last\n"
   "argument is a single dash, the shell is invoked as a login shell.\n"
@@ -995,7 +995,7 @@ win_show_about(void)
     .cbSize = sizeof(MSGBOXPARAMS),
     .hwndOwner = config_wnd,
     .hInstance = inst,
-    .lpszCaption = "About " APPNAME,
+    .lpszCaption = APPNAME,
     .dwStyle = MB_USERICON | MB_OK,
     .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
     .lpszText = text
