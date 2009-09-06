@@ -551,6 +551,17 @@ load_config(void)
     read_string_setting(s->key, &atoffset(char, &cfg, s->offset), s->len, s->def);
   for (colour_setting *s = colour_settings; s < endof(colour_settings); s++)
     read_colour_setting(s->key, &atoffset(colour, &cfg, s->offset), s->def);
+  
+  if (!*cfg.locale && !*cfg.charset) {
+    read_string_setting("Codepage", cfg.charset, sizeof cfg.charset, "");
+    if (*cfg.charset) {
+      if (strncmp(cfg.charset, "ISO-8859-1", 10))
+        strcpy(cfg.locale, "C");
+      else
+        *cfg.charset = 0;
+    }
+  }
+  
   close_settings_r();
   
   correct_locale(cfg.locale);
