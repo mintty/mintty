@@ -10,11 +10,10 @@ version := $(shell echo $(shell echo VERSION | cpp -P $(defines) --include appin
 exe := $(name).exe
 dir := $(name)-$(version)
 
-stuff := docs/readme.html scripts/create_shortcut.js
+stuff := docs/readme.html scripts/create_shortcut.js scripts
 
 srcs := $(wildcard Makefile *.c *.h *.rc *.mft icon/*.ico icon/*.png)
-srcs += $(wildcard COPYING LICENSE* INSTALL)
-srcs += docs/mintty.1 $(stuff)
+srcs += $(wildcard COPYING LICENSE* INSTALL docs/* scripts/*)
 
 c_srcs := $(wildcard *.c)
 rc_srcs := $(wildcard *.rc)
@@ -38,15 +37,16 @@ $(exe): $(objs)
 	$(cc) -o $@ $^ $(ld_opts) $(libs)
 	du -b $@
 
-
-bin = $(dir)-cygwin17.zip
+cygwin17 = $(dir)-cygwin17.zip
+cygwin15 = $(dir)-cygwin15.zip
 src = $(dir)-src.tar.bz2
 doc = $(dir).pdf
 bz2 = $(dir).exe.bz2
 
 all: bin src doc
 
-bin: $(bin)
+cygwin17: $(cygwin17)
+cygwin15: $(cygwin15)
 src: $(src)
 doc: $(doc)
 bz2: $(bz2)
@@ -55,9 +55,18 @@ $(bz2): $(exe)
 	bzip2 -k $<
 	mv $<.bz2 $@
 
-$(bin): $(exe) $(stuff)
+$(cygwin17): $(exe) docs/readme.html scripts/create_shortcut-cygwin17.js
+	cp scripts/create_shortcut-cygwin17.js scripts/create_shortcut.js
 	rm -f $@
-	zip -9 -j $@ $^
+	zip -9 -j $@ $< docs/readme.html scripts/create_shortcut.js
+	rm scripts/create_shortcut.js
+	du -b $@
+
+$(cygwin15): $(exe) docs/readme.html scripts/create_shortcut-cygwin15.js
+	cp scripts/create_shortcut-cygwin15.js scripts/create_shortcut.js
+	rm -f $@
+	zip -9 -j $@ $< docs/readme.html scripts/create_shortcut.js
+	rm scripts/create_shortcut.js
 	du -b $@
 
 $(src): $(srcs)
