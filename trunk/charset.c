@@ -162,6 +162,8 @@ correct_charset(char *cs)
 void
 correct_locale(char *locale)
 {
+  if (strcmp(locale, "C") == 0)
+    return;
   uchar *lang = (uchar *)locale;
   if (isalpha(lang[0]) && isalpha(lang[1])) {
     // Treat two letters at the start as the language.
@@ -267,8 +269,10 @@ cs_config(void)
   char *lang = *cfg.locale ? locale : 0;  // Resulting LANG seetting
   if (lang) {
     snprintf(
-      locale, sizeof locale,
-      "%s%s%s", cfg.locale, *cfg.charset ? "." : "", cfg.charset
+      locale, sizeof locale, "%s%s%s",
+      cfg.locale,
+      *cfg.charset ? (strcmp(cfg.locale, "C") ? "." : "-") : "",
+      cfg.charset
     );
     default_codepage = cs_lookup(cfg.charset);
   }
