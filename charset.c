@@ -162,8 +162,6 @@ correct_charset(char *cs)
 void
 correct_locale(char *locale)
 {
-  if (strcmp(locale, "C") == 0)
-    return;
   uchar *lang = (uchar *)locale;
   if (isalpha(lang[0]) && isalpha(lang[1])) {
     // Treat two letters at the start as the language.
@@ -184,12 +182,28 @@ correct_locale(char *locale)
     locale[0] = 0;
 }
 
+const char *
+get_system_locale(void)
+{
+  static char buf[] = "xx_XX";
+  GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME, buf, 2);
+  GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, buf + 3, 2);
+  return buf;
+}
 
-/*
- * Return the nth code page in the list, for use in the GUI
- * configurer.
- */
- 
+const char *
+enumerate_locales(uint i)
+{
+  if (i == 0)
+    return "(None)";
+  if (i == 1)
+    return get_system_locale();
+  i -= 2;
+  if (i < lengthof(locale_menu))
+    return locale_menu[i];
+  return 0;
+}
+
 const char *
 enumerate_charsets(uint i)
 {
@@ -200,23 +214,6 @@ enumerate_charsets(uint i)
     sprintf(buf, "%s (%s)", cs_name(cs_menu[i].id), cs_menu[i].comment);
     return buf;
   }
-  return 0;
-}
-
-const char *
-enumerate_locales(uint i)
-{
-  if (i == 0)
-    return "(None)";
-  if (i == 1) {
-    static char buf[] = "xx_XX";
-    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME, buf, 2);
-    GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, buf + 3, 2);
-    return buf;
-  }
-  i -= 2;
-  if (i < lengthof(locale_menu))
-    return locale_menu[i];
   return 0;
 }
 
@@ -269,10 +266,8 @@ cs_config(void)
   char *lang = *cfg.locale ? locale : 0;  // Resulting LANG seetting
   if (lang) {
     snprintf(
-      locale, sizeof locale, "%s%s%s",
-      cfg.locale,
-      *cfg.charset ? (strcmp(cfg.locale, "C") ? "." : "-") : "",
-      cfg.charset
+      locale, sizeof locale,
+      "%s%s%s", cfg.locale, *cfg.charset ? "." : "", cfg.charset
     );
     default_codepage = cs_lookup(cfg.charset);
   }

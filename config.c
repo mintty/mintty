@@ -118,7 +118,7 @@ static void
 update_locale(void *dlg)
 {
   if (*new_cfg.charset && !*new_cfg.locale) {
-    strcpy(new_cfg.locale, enumerate_locales(1));
+    strcpy(new_cfg.locale, get_system_locale());
     dlg_editbox_set(locale_box, dlg, new_cfg.locale);
   }
 }
@@ -545,6 +545,7 @@ void
 load_config(void)
 {
   open_settings_r(config_file);
+
   for (int_setting *s = int_settings; s < endof(int_settings); s++)
     read_int_setting(s->key, &atoffset(int, &cfg, s->offset), s->def);
   for (string_setting *s = string_settings; s < endof(string_settings); s++)
@@ -552,14 +553,10 @@ load_config(void)
   for (colour_setting *s = colour_settings; s < endof(colour_settings); s++)
     read_colour_setting(s->key, &atoffset(colour, &cfg, s->offset), s->def);
   
-  if (!*cfg.locale && !*cfg.charset) {
+  if (!*cfg.charset) {
     read_string_setting("Codepage", cfg.charset, sizeof cfg.charset, "");
-    if (*cfg.charset) {
-      if (strncmp(cfg.charset, "ISO-8859-1", 10))
-        strcpy(cfg.locale, "C");
-      else
-        *cfg.charset = 0;
-    }
+    if (*cfg.charset && !*cfg.locale)
+      strcpy(cfg.locale, get_system_locale());
   }
   
   close_settings_r();
