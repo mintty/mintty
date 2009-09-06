@@ -1,4 +1,4 @@
-// wininput.c (part of MinTTY)
+// wininput.c (part of mintty)
 // Copyright 2008-09 Andy Koppe
 // Licensed under the terms of the GNU General Public License v3 or later.
 

@@ -1,4 +1,4 @@
-// termout.c (part of MinTTY)
+// termout.c (part of mintty)
 // Copyright 2008-09 Andy Koppe
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
@@ -693,16 +693,16 @@ set_modes(bool state)
           if (!state)
             restore_cursor();
           term.disptop = 0;
-        when 7700:       /* MinTTY only: CJK ambigous width reporting */
+        when 7700:       /* mintty only: CJK ambigous width reporting */
           compatibility(OTHER);
           term.report_ambig_width = state;
-        when 7727:       /* MinTTY only: Application escape key mode */
+        when 7727:       /* mintty only: Application escape key mode */
           compatibility(OTHER);
           term.app_escape_key = state;
-        when 7728:       /* MinTTY only: Escape sends FS (instead of ESC) */
+        when 7728:       /* mintty only: Escape sends FS (instead of ESC) */
           compatibility(OTHER);
           term.escape_sends_fs = state;
-        when 7787:       /* MinTTY only: Application mousewheel mode */
+        when 7787:       /* mintty only: Application mousewheel mode */
           compatibility(OTHER);
           term.app_wheel = state;
       }
@@ -741,7 +741,7 @@ do_csi(uchar c)
       seen_disp_event();
     when ANSI('c', '>'):     /* DA: report version */
       compatibility(OTHER);
-      /* Terminal type 77 (ASCII 'M' for MinTTY) */
+      /* Terminal type 77 (ASCII 'M' for mintty) */
       if (!nargs || (nargs == 1 && arg0 == 0))
         ldisc_printf(0, "\e[>77;%u;0c", DECIMAL_VERSION);
     when 'a':        /* HPR: move right N cols */
