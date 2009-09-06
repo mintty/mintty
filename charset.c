@@ -50,12 +50,18 @@ cs_menu[] = {
   {   28597, "Greek"},
   {   28598, "Hebrew"},
   {   28599, "Turkish"},
+#if HAS_LOCALES
   {   28600, "Nordic"},
   {   28601, "Thai"},
+#endif
   {   28603, "Baltic"},
+#if HAS_LOCALES
   {   28604, "Celtic"},
+#endif
   {   28605, "\"euro\""},
+#if HAS_LOCALES
   {   28606, "Balkans"},
+#endif
   {   20866, "Russian"},
   {   21866, "Ukrainian"},
   {     936, "Chinese"},
