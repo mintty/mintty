@@ -1,4 +1,4 @@
-.\" MinTTY man page
+.\" mintty man page
 .\"
 .\" This 'man' page is Copyright 2009 (c) Andy Koppe and Lee D. Rothstein
 .\"
@@ -6,7 +6,7 @@
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
 .ad l
-.TH mintty 1 2009-07-18 0.4.4 Cygwin
+.TH mintty 1 2009-09-09 0.5.0 Cygwin
 
 .SH NAME
 
@@ -20,7 +20,7 @@ mintty - Cygwin terminal emulator
 
 .SH DESCRIPTION
 
-\fBMinTTY\fP is a terminal emulator for Cygwin with a native Windows user
+\fBMintty\fP is a terminal emulator for Cygwin with a native Windows user
 interface and minimalist design.
 Its terminal emulation is largely compatible with \fBxterm\fP, but it does not
 require an X server to be running.
@@ -30,7 +30,7 @@ require an X server to be running.
 
 If a program name is supplied on the command line, this is executed with any
 additional arguments passed to it.
-Otherwise, MinTTY looks for a shell to execute in the \fISHELL\fP environment
+Otherwise, mintty looks for a shell to execute in the \fISHELL\fP environment
 variable.
 If that is not set, it tries to read the user's default shell setting from
 \fI/etc/passwd\fP.
@@ -41,7 +41,7 @@ as a login shell.
 
 .SH OPTIONS
 
-MinTTY accepts the standard GNU option formats, with single dashes
+The standard GNU option formats are accepted, with single dashes
 introducing short options and double dashes introducing long options,
 e.g. \fB-o arg\fP, \fB--option arg\fP, and \fB--option=arg\fP.
 
@@ -100,20 +100,20 @@ Print version information and exit.
 
 .SH USAGE
 
-MinTTY aims to adhere to both Windows and Unix conventions usage.
+Mintty aims to adhere to both Windows and Unix conventions usage.
 Where they conflict, the Windows conventions take precedence,
 at least in the default configuration.
 
 .SS Menu
 
-MinTTY's context menu can be opened by right-clicking the mouse or by pressing
+The context menu can be opened by right-clicking the mouse or by pressing
 the \fBMenu\fP key that is normally located next to the right Ctrl key.
 
 
 .SS Options dialog
 
 The configuration can be changed in a graphical dialog, which can be opened by
-selecting \fBOptions...\fP in MinTTY's context menu or window menu.
+selecting \fBOptions...\fP in the context menu or window menu.
 (The window menu can be opened by clicking on the program icon in the title or
 by pressing \fBAlt+Space\fP.)
 See the \fBCONFIGURATION\fP section for details.
@@ -145,7 +145,7 @@ whereby the latter are inserted as quoted filenames.
 
 .SS Drag & drop
 
-Text, files and directories can also be dropped into the MinTTY window.
+Text, files and directories can also be dropped into the mintty window.
 
 
 .SS Font zoom
@@ -170,7 +170,7 @@ or the \fBAlt+F10\fP shortcut.
 
 .SS Scrolling
 
-MinTTY has a scrollback buffer that can hold up to 10000 lines in the default
+Mintty has a scrollback buffer that can hold up to 10000 lines in the default
 configuration.
 It can be accessed using the scrollbar, the mouse wheel, or the keyboard.
 Hold the \fBShift\fP key while pressing the \fBUp\fP and \fBDown\fP arrow keys
@@ -191,10 +191,10 @@ The \fBAltGr\fP key on non-US keyboards has the same effect as if both
 .SS Mouse tracking
 
 When an application activates mouse tracking, mouse events are sent to the
-application rather than processed by MinTTY.
+application rather than being treated as window events.
 This is indicated by the mouse pointer changing from an I shape to an arrow.
 Holding down \fBShift\fP overrides mouse tracking mode and sends mouse
-events to MinTTY instead, so that e.g. text can be selected and the menu
+events to the window instead, so that e.g. text can be selected and the menu
 can be accessed.
 (The modifier key for overriding mouse tracking can be changed in the
 options dialog.)
@@ -209,7 +209,7 @@ xterm-compatible control sequences.
 
 .SH CONFIGURATION
 
-Most MinTTY settings are chosen not through command line arguments but in its
+Most settings are chosen not through command line arguments but in the
 graphical options dialog, which can be reached via the context menu or
 the window menu.
 Settings are stored in a configuration file that by default is located
@@ -250,7 +250,7 @@ window.
 .TP
 \fBConfirm exit\fP (ConfirmExit=1)
 If enabled, ask for confirmation when the close button or \fIAlt+F4\fP is 
-pressed and the command running in MinTTY has any child processes.
+pressed and the command invoked by mintty has any child processes.
 
 .TP
 \fBScrollback lines\fP (ScrollbackLines=10000)
@@ -273,7 +273,7 @@ Scrolling with cursor keys can also be disabled here.
 
 
 .SS Looks
-Settings affecting MinTTY's appearance.
+Settings affecting mintty's appearance.
 
 .TP
 \fBColours\fP
@@ -512,23 +512,18 @@ The action to take when the application sends the bell character \fB^G\fP.
 
 .SH KEYCODES
 
-For alphanumeric and symbol keys MinTTY uses the Windows keyboard layout 
-to translate key presses into characters, which means that the keyboard layout
-can be switched using the standard Windows mechanisms for that purpose.
-\fBAltGr\fP combinations, dead keys, and input method editors (IMEs) are all
-supported.
-
-The Windows keyboard layout yields Unicode codepoints, which are encoded
-using the \fBCodepage\fP selected in MinTTY's configuration before sending them
-to the application.
-(The UTF-8 codepage can be selected for full Unicode input support.)
+The Windows keyboard layout is used to translate alphanumeric and symbol key
+presses into characters, which means that the keyboard layout can be switched
+using the standard Windows mechanisms for that purpose.
+Also, \fBAltGr\fP combinations, dead keys, and input method editors (IMEs) are
+all supported.
 
 Should the available keyboard layouts lack required features,
 Microsoft's \fBKeyboard Layout Creator\fP (MSKLC), available from
 \fIhttp://www.microsoft.com/Globaldev/tools/msklc.mspx\fP,
 can be used to create custom keyboard layouts.
 
-For other keys, MinTTY sends xterm keycodes as described at
+For other keys, mintty sends xterm keycodes as described at
 \fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.html\fP, with a few
 minor changes and additions.
 
@@ -552,11 +547,11 @@ does not work for characters beyond 7-bit ASCII.
 .SS Letter keys
 
 If the Windows keyboard layout does not have a keycode for a letter key press
-and the \fBCtrl\fP key is down, MinTTY sends a control character.
-The character sent corresponds to the key's "virtual keycode".
+and the \fBCtrl\fP key is down, a control character is sent corresponding to the
+key's "virtual keycode" is sent.
 For keyboards with Latin scripts the virtual keycodes reflect the keys' labels,
-whereas for others, the virtual keys are usually laid out the same as on the US
-keyboard.
+whereas for others, the virtual keys are usually arranged in the same way as on a
+QWERTY keyboard.
 
 .RS
 .TS
@@ -580,7 +575,7 @@ first for number and symbol keys.
 .SS Control keys
 
 The keys here send the usual control characters, but there are a few
-MinTTY-specific additions that make combinations with modifier keys
+mintty-specific additions that make combinations with modifier keys
 available as separate keycodes.
 
 .RS
@@ -697,9 +692,9 @@ F12#^[[24~#^[[24;\fIm\fP~
 
 .SS Alt+Numpad
 
-MinTTY supports the Alt+Numpad method for entering character codes, whereby
-the \fBAlt\fP key has to be held while entering the character's Unicode
-codepoint.
+The Windows Alt+Numpad method for entering character codes is supported,
+whereby the \fBAlt\fP key has to be held while entering the character's
+Unicode codepoint.
 If the first digit entered is a zero, the codepoint is interpreted as octal,
 otherwise as decimal.
 The codepoint is encoded using the selected codepage before it is sent.
@@ -736,10 +731,10 @@ at a time.
 
 .SH CONTROL SEQUENCES
 
-MinTTY supports most of the xterm control sequences documented at \fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.html\fP.
+Most of the xterm control sequences documented at \fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.html\fP are supported.
 Please report incompatibilities or unimplemented sequences as bugs.
 
-Below are MinTTY control sequences not currently supported in xterm.
+Below are mintty control sequences not currently supported in xterm.
 
 
 .SS Cursor style
@@ -826,17 +821,17 @@ font and '\fC^[[2W\fP' is sent when changing to an "ambiguous wide" font.
 
 .SH TIPS
 
-A few tips on setting up MinTTY and other programs.
+A few tips on setting up mintty and other programs.
 
 
 .SS Shortcuts
 
-The mintty Cygwin package installs a shortcut in the Windows start menu
+The Cygwin package for mintty installs a shortcut in the Windows start menu
 under \fIAll Programs/Cygwin\fP.
 It starts mintty with a '-' as its only argument, which tells it to invoke
 the user's default shell as a login shell.
 
-Shortcuts are also a convenient way to start MinTTY with additional options
+Shortcuts are also a convenient way to start mintty with additional options
 and different commands.
 For example, shortcuts for access to remote machines can be created by
 invoking \fIssh\fP.
@@ -861,8 +856,7 @@ See its manual page for details.
 
 Cygwin's \fBchere\fP package can be used to create a folder context menu
 item for mintty in Windows Explorer.
-This allows one to right click on a
-folder and open a shell in that folder.
+This allows one to right click on a folder and open a shell in that folder.
 
 The following command will create a "Bash Prompt Here" for the current user.
 See \fIchere\fP(1) for all the options.
@@ -874,9 +868,9 @@ See \fIchere\fP(1) for all the options.
 
 .SS Starting mintty from a batch file
 
-In order to start MinTTY from a batch file it needs to be invoked through the
+In order to start mintty from a batch file it needs to be invoked through the
 \fIstart\fP command.
-This avoids the batch file's console window staying open while MinTTY is
+This avoids the batch file's console window staying open while mintty is
 running.
 For example:
 
@@ -899,7 +893,7 @@ line utility.
 This comes pre-installed with some versions of Windows but is also available 
 as part of the freely downloadable \fBWindows 2003 Resource Kit Tools\fP.
 
-Another way to set variables for the program to be run in \fBMinTTY\fP is by
+Another way to set variables for the program to be run in \fBmintty\fP is by
 invoking it through the \fBenv\fP command, e.g.:
 
 .RS
@@ -916,11 +910,12 @@ with any Cygwin process.
 See \fIhttp://www.cygwin.com/cygwin-ug-net/using-cygwinenv.html\fP for details.
 
 
-.SS Detecting MinTTY
+.SS Detecting mintty
 
-MinTTY sets the \fITERM\fP variable to \fBxterm\fP for compatibility reasons,
-but that of course makes it difficult to tell MinTTY apart from \fBxterm\fP when
-required for example in shell startup scripts.
+Due to reasons of compatibility, mintty sets the \fITERM\fP variable to
+\fBxterm\fP.
+This, however, makes it difficult to tell mintty apart from real \fBxterm\fP
+when required for example in shell startup scripts.
 
 One way around that is to invoke the shell through the \fBenv\fP command to set
 the \fITERM\fP variable differently:
@@ -929,7 +924,7 @@ the \fITERM\fP variable differently:
 \fCmintty env TERM=mintty bash -l\fP
 .RE
 
-This can then be tested for in a startup script to trigger MinTTY-specific
+This can then be tested for in a startup script to trigger mintty-specific
 actions, followed by setting \fITERM\fP back to \fBxterm\fP.
 
 
@@ -1133,11 +1128,11 @@ at the risk of keycodes not being recognised in some circumstances.)
 
 .SS Console Issue
 
-MinTTY is not a complete replacement for the \fBCygwin\fP console,
+Mintty is not a complete replacement for the \fBCygwin\fP console,
 which is based on the Windows command prompt (\fIcmd.exe\fP).
-Like xterm and rxvt, MinTTY communicates with the child process through a
+Like xterm and rxvt, mintty communicates with the child process through a
 pseudo terminal device, which Cygwin emulates using Windows pipes.
-This means that native Windows command line programs started in MinTTY see
+This means that native Windows command line programs started in mintty see
 a pipe rather than a console device.
 As a consequence, interactive input often does not work correctly, and
 direct calls to Win32 console functions will fail.
@@ -1146,16 +1141,16 @@ Programs that only output text are usually fine though.
 
 .SS Termcap/terminfo
 
-MinTTY does not have its own \fItermcap\fP or \fIterminfo\fP entries;
+Mintty does not have its own \fItermcap\fP or \fIterminfo\fP entries;
 instead, it simply pretends to be an xterm.
 
 
 .SS Missing xterm features
 
-MinTTY is nowhere near as configurable as xterm, and its keycodes
+Mintty is nowhere near as configurable as xterm, and its keycodes
 are fixed according to xterm's PC-style keyboard behaviour (albeit
-with a number of MinTTY-specific extensions).
-Neither Tektronix 4014 emulation nor mouse highlighting mode are supported.
+with a number of mintty-specific extensions).
+Also, there is no Tektronix 4014 emulation or mouse highlighting mode.
 
 
 .SH SEE ALSO
@@ -1165,12 +1160,12 @@ Neither Tektronix 4014 emulation nor mouse highlighting mode are supported.
 
 \fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.html\fP
 
-\fIhttp://vt100.net/\fP
+\fIhttp://vt100.net\fP
 
 
 .SH ACKNOWLEDGEMENTS
 
-MinTTY is based on PuTTY version 0.60 by Simon Tatham and contributors,
+Mintty is based on PuTTY version 0.60 by Simon Tatham and contributors,
 so big thanks to everyone involved.
 Thanks also to KDE's Oxygen team for the program icon.
 
@@ -1179,7 +1174,7 @@ Thanks also to KDE's Oxygen team for the program icon.
 
 Copyright (C) 2008-09 Andy Koppe.
 
-MinTTY is released under the terms of the the \fIGNU General Public License\fP
+Mintty is released under the terms of the the \fIGNU General Public License\fP
 version 3 or later.
 See \fIhttp://gnu.org/licenses/gpl/html\fP for the license text.
 
@@ -1188,9 +1183,9 @@ There is NO WARRANTY, to the extent permitted by law.
 
 .SH CONTACT
 
-Please report bugs or suggest enhancements via the MinTTY issue tracker at
+Please report bugs or suggest enhancements via the issue tracker at
 \fIhttp://mintty.googlecode.com/issues\fP.
-Questions can be directed to the MinTTY discussion group at
+Questions can be directed sent to the discussion group at
 \fIhttp://groups.google.com/group/mintty-discuss\fP or
 the Cygwin mailing list at \fIcygwin@cygwin.com\fP.
 
