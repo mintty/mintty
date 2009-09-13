@@ -994,7 +994,7 @@ select_font(winctrl *c, dlgparam *dp)
   lf.lfWidth = lf.lfEscapement = lf.lfOrientation = 0;
   lf.lfItalic = lf.lfUnderline = lf.lfStrikeOut = 0;
   lf.lfWeight = (fs.isbold ? FW_BOLD : 0);
-  lf.lfCharSet = fs.charset;
+  lf.lfCharSet = DEFAULT_CHARSET;
   lf.lfOutPrecision = OUT_DEFAULT_PRECIS;
   lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
   lf.lfQuality = DEFAULT_QUALITY;
@@ -1008,13 +1008,12 @@ select_font(winctrl *c, dlgparam *dp)
   cf.lpLogFont = &lf;
   cf.Flags =
     CF_FIXEDPITCHONLY | CF_FORCEFONTEXIST | CF_INITTOLOGFONTSTRUCT |
-    CF_SCREENFONTS;
+    CF_SCREENFONTS | CF_NOSCRIPTSEL;
 
   if (ChooseFont(&cf)) {
     strncpy(fs.name, lf.lfFaceName, sizeof (fs.name) - 1);
     fs.name[sizeof (fs.name) - 1] = '\0';
     fs.isbold = (lf.lfWeight == FW_BOLD);
-    fs.charset = lf.lfCharSet;
     fs.size = cf.iPointSize / 10;
     dlg_fontsel_set(c->ctrl, dp, &fs);
     c->ctrl->handler(c->ctrl, dp, dp->data, EVENT_VALCHANGE);
