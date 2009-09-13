@@ -289,44 +289,55 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Text", "Text");
 
-  s = ctrl_getset(b, "Text", "font", null);
+  s = ctrl_getset(b, "Text", "locale", null);
+  ctrl_columns(s, 2, 29, 71);
+  (locale_box = ctrl_combobox(
+    s, "Locale", 'l', 100, P(0), locale_handler, P(0), P(0)
+  ))->column = 0;
+  (charset_box = ctrl_combobox(
+    s, "Character set", 'c', 100, P(0), charset_handler, P(0), P(0)
+  ))->column = 1;
+
+  s = ctrl_getset(b, "Text", "font", "Font");
   ctrl_fontsel(
-    s, null, 'f', P(0), dlg_stdfontsel_handler, I(offcfg(font))
+    s, null, '\0', P(0), dlg_stdfontsel_handler, I(offcfg(font))
   );
   ctrl_radiobuttons(
-    s, "Smoothing", '\0', 2, P(0), dlg_stdradiobutton_handler, 
+    s, "Smoothing", '\0', 4, P(0), dlg_stdradiobutton_handler, 
     I(offcfg(font_quality)),
-    "System Default", 'd', I(FQ_DEFAULT),
-    "Antialiased", 'a', I(FQ_ANTIALIASED),
+    "Default", 'd', I(FQ_DEFAULT),
     "None", 'n', I(FQ_NONANTIALIASED),
-    "ClearType", 'c', I(FQ_CLEARTYPE),
+    "Partial", 'p', I(FQ_ANTIALIASED),
+    "Full", 'f', I(FQ_CLEARTYPE),
     null
   );
 
   s = ctrl_getset(b, "Text", "effects", null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
-    s, "Show bold as bright", 's', P(0), dlg_stdcheckbox_handler,
+    s, "Show bold as bright", 'b', P(0), dlg_stdcheckbox_handler,
     I(offcfg(bold_as_bright))
   )->column = 0;
   ctrl_checkbox(
-    s, "Allow blinking", 'b', P(0),
+    s, "Allow blinking", 'a', P(0),
     dlg_stdcheckbox_handler, I(offcfg(allow_blinking))
   )->column = 1;
-
-  s = ctrl_getset(b, "Text", "locale", null);
-  ctrl_columns(s, 2, 25, 75);
-  (locale_box = ctrl_combobox(
-    s, "Locale", '\0', 100, P(0), locale_handler, P(0), P(0)
-  ))->column = 0;
-  (charset_box = ctrl_combobox(
-    s, "Character set", '\0', 100, P(0), charset_handler, P(0), P(0)
-  ))->column = 1;
 
  /*
   * The Keys panel.
   */
   ctrl_settitle(b, "Keys", "Keys");
+
+  s = ctrl_getset(b, "Keys", "alt", null);
+  ctrl_columns(s, 2, 50, 50);
+  ctrl_checkbox(
+    s, "Lone Alt sends ESC", 'l', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(alt_sends_esc))
+  )->column = 0;
+  ctrl_checkbox(
+    s, "Ctrl+LeftAlt is AltGr", 'g', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(ctrl_alt_is_altgr))
+  )->column = 1;
 
   s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
   ctrl_checkbox(
@@ -342,17 +353,6 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(zoom_shortcuts))
   );
   
-  s = ctrl_getset(b, "Keys", "alt", null);
-  ctrl_columns(s, 2, 50, 50);
-  ctrl_checkbox(
-    s, "Ctrl+Alt is AltGr", 'g', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(ctrl_alt_is_altgr))
-  )->column = 0;
-  ctrl_checkbox(
-    s, "Lone Alt sends ESC", 'l', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(alt_sends_esc))
-  )->column = 1;
-
   s = ctrl_getset(b, "Keys", "scroll", "Modifier for scrolling");
   ctrl_radiobuttons(
     s, null, '\0', 4, P(0),      
@@ -369,16 +369,6 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Mouse", "Mouse");
 
-  s = ctrl_getset(b, "Mouse", "rightclick", "Right click action");
-  ctrl_radiobuttons(
-    s, null, '\0', 3, P(0), dlg_stdradiobutton_handler,
-    I(offcfg(right_click_action)),
-    "Show menu", 'm', I(RC_SHOWMENU),
-    "Extend", 'x', I(RC_EXTEND),
-    "Paste", 'p', I(RC_PASTE),
-    null
-  );
-  
   s = ctrl_getset(b, "Mouse", "mouseopts", null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
@@ -390,12 +380,22 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(clicks_place_cursor))
   )->column = 1;
 
+  s = ctrl_getset(b, "Mouse", "rightclick", "Right click action");
+  ctrl_radiobuttons(
+    s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
+    I(offcfg(right_click_action)),
+    "Paste", 'p', I(RC_PASTE),
+    "Extend", 'x', I(RC_EXTEND),
+    "Show menu", 'm', I(RC_SHOWMENU),
+    null
+  );
+  
   s = ctrl_getset(b, "Mouse", "mousemode", "Application mouse mode");
   ctrl_radiobuttons(
-    s, "Default click target", '\0', 3, P(0), dlg_stdradiobutton_handler,
+    s, "Default click target", '\0', 4, P(0), dlg_stdradiobutton_handler,
     I(offcfg(clicks_target_app)),
-    "Application", 'n', I(1),
     "Window", 'w', I(0),
+    "Application", 'n', I(1),
     null
   );
   ctrl_radiobuttons(
@@ -413,9 +413,14 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Output", "Output");
 
-  s = ctrl_getset(b, "Output", "bell", "Bell action");
+  s = ctrl_getset(b, "Output", "printer", "Printer");
+  ctrl_combobox(
+    s, null, '\0', 100, P(0), printerbox_handler, P(0), P(0)
+  );
+
+  s = ctrl_getset(b, "Output", "bell", "Bell");
   ctrl_checkbox(
-    s, "Play system sound", 'p', P(0),
+    s, "Play sound", 'p', P(0),
     dlg_stdcheckbox_handler, I(offcfg(bell_sound))
   );
   ctrl_checkbox(
@@ -423,13 +428,8 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(bell_flash))
   );
   ctrl_checkbox(
-    s, "Highlight taskbar", 'h', P(0),
+    s, "Highlight in taskbar", 'h', P(0),
     dlg_stdcheckbox_handler, I(offcfg(bell_taskbar))
-  );
-
-  s = ctrl_getset(b, "Output", "printer", "Printer");
-  ctrl_combobox(
-    s, null, '\0', 100, P(0), printerbox_handler, P(0), P(0)
   );
 
  /*
@@ -489,7 +489,7 @@ int_settings[] = {
   {"ScrollbackLines", offcfg(scrollback_lines), 10000},
   {"AltScreenScroll", offcfg(alt_screen_scroll), false},
   {"ConfirmExit", offcfg(confirm_exit), true},
-  {"CtrlAltIsAltGr", offcfg(ctrl_alt_is_altgr), true},
+  {"CtrlAltIsAltGr", offcfg(ctrl_alt_is_altgr), false},
   {"AltSendsESC", offcfg(alt_sends_esc), false},
   {"WindowShortcuts", offcfg(window_shortcuts), true},
   {"EditShortcuts", offcfg(edit_shortcuts), true},

@@ -916,7 +916,7 @@ winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
         char *escaped = shortcut_escape(ctrl->label, ctrl->fontselect.shortcut);
         shortcuts[nshortcuts++] = ctrl->fontselect.shortcut;
         //statictext(&pos, escaped, 1, base_id);
-        staticbtn(&pos, "", base_id + 1, "&Font...", base_id + 2);
+        staticbtn(&pos, "", base_id + 1, "&Select...", base_id + 2);
         free(escaped);
         data = new(font_spec);
       }
