@@ -6,7 +6,7 @@
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
 .ad l
-.TH mintty 1 2009-09-09 0.5.0 Cygwin
+.TH mintty 1 2009-09-13 0.5.0 Cygwin
 
 .SH NAME
 
@@ -76,6 +76,7 @@ Load the window icon from a Windows \fI.ICO\fP file.
 .TP
 \fB-l\fP, \fB--log\fP=\fIFILE\fP
 Copy all output into the specified log file.
+(See \fIscript\fP(1) for a more flexible logging tool.)
 
 .TP
 \fB-u\fP, \fB--utmp\fP
@@ -226,52 +227,6 @@ For multiple-choice settings, the value representing each choice in the config
 file is shown.
 
 
-.SS Window
-Window properties.
-
-.TP
-\fBColumns\fP (Columns=80)
-Default width of the window, in character cells.
-
-.TP
-\fBRows\fP (Rows=24)
-Default height of the window, in character cells.
-
-.TP
-\fBCurrent size\fP
-Pressing this button sets the default width and height of the window to
-its current size.
-
-.TP
-\fBDisplay scrollbar\fP (Scrollbar=1)
-Show the scrollbar for accessing the scrollback buffer on the right of the
-window.
-
-.TP
-\fBConfirm exit\fP (ConfirmExit=1)
-If enabled, ask for confirmation when the close button or \fIAlt+F4\fP is 
-pressed and the command invoked by mintty has any child processes.
-
-.TP
-\fBScrollback lines\fP (ScrollbackLines=10000)
-The maximum number of lines to keep in the scrollback buffer.
-
-.TP
-\fBModifier for scrolling with cursor keys\fP (ScrollMod=1)
-The modifier key that needs to be pressed together with the arrow up/down
-or page up/down keys to access the scrollback buffer.
-The default is \fBShift\fP.
-Scrolling with cursor keys can also be disabled here.
-
-.RS
-.PD 0
-.IP "\- \fBShift\fP (1)"
-.IP "\- \fBCtrl\fP (4)"
-.IP "\- \fBAlt\fP (2)"
-.IP "\- \fBOff\fP (0)"
-.RE
-
-
 .SS Looks
 Settings affecting mintty's appearance.
 
@@ -318,16 +273,43 @@ The following cursor types are available:
 
 .TP
 \fBEnable cursor blinking\fP (CursorBlinks=1)
-If enabled, the cursor blinks at the rate set in Windows' keyboard control
+If enabled, the cursor blinks at the rate set in the Windows Keyboard control
 panel.
 
 
 .SS Text
 Settings controlling text display.
 
+
 .TP
-\fBFont...\fP
-Clicking on this button opens the font dialog, where the font and its
+\fBLocale\fP (Locale=)
+The locale setting consists of a lowercase two-letter language code such as
+\fBen\fP or \fBzh\fP, followed by an optional uppercase two-letter country
+code such as \fBUS\fP or \fBCN\fP.
+If the country code is present, the two parts have to be separated by an
+underscore, for instance \fBen_US\fP or \fBzh_CN\fP.
+
+If no locale is set here, which is the default, the locale and character set
+specified via the environment variables \fILC_ALL\fP, \fILC_CTYPE\fP or
+\fILANG\fP are used instead.
+
+If a locale is set, however, it will override any environment variable setting:
+\fILC_ALL\fP and \fILC_CTYPE\fP are cleared, while \fILANG\fP is set according
+to the chosen locale and character set.
+
+.TP
+\fBCharacter set\fP (Charset=)
+The character set to be used for encoding input and decoding output.
+If no locale is set, this setting is ignored.
+
+While changing the character set immediately takes effect for text input and
+ouput, it does not affect the command running inside it until it is restarted.
+This is because the environment variables of a running process cannot be
+changed from outside that process.
+
+.TP
+\fBFont\fP
+Clicking on the \fBSelect\fP button opens a dialog where the font and its
 properties can be chosen.
 In the config file, this corresponds to the following entries:
 
@@ -336,68 +318,65 @@ In the config file, this corresponds to the following entries:
 .IP "\- \fBFont\fP (Font=Lucida Console)"
 .IP "\- \fBSize\fP (FontHeight=10)"
 .IP "\- \fBStyle\fP (FontIsBold=0)"
-.IP "\- \fBScript\fP (FontCharset=0)"
 .RE
 
 .TP
 \fBSmoothing\fP (FontQuality=0)
-Select the type of font smoothing, if any, from the following choices:
+Select the amount of font smoothing from the following choices:
 
 .RS
 .PD 0
-.IP "\- \fBSystem Default\fP (0)"
-.IP "\- \fBAntialiased\fP (1)"
-.IP "\- \fBNone\fP (2)"
-.IP "\- \fBClearType\fP (3)"
+.IP "\- \fBDefault\fP (0): Use Windows setting"
+.IP "\- \fBNone\fP (1): With all the jaggies"
+.IP "\- \fBPartial\fP (2): Greyscale anti-aliasing"
+.IP "\- \fBFull\fP (3): Subpixel anti-aliasing (ClearType)"
 .RE
 
 .TP
 \fBShow bold as bright\fP (BoldAsBright=1)
-If selected, text with the ANSI bold attribute set is displayed with
+By default, text with the ANSI bold attribute set is displayed with
 increased brightness.
-Otherwise, it is shown with a bold font, which tends to look better with
-black-on-white text.
+Alternatively, it can be shown using a bold font, which tends to look better
+with black-on-white text.
 
 .TP
 \fBAllow blinking\fP (AllowBlinking=0)
 ANSI text blinking is diabled by default, on the grounds that blinking
 text is a crime against aesthetic decency.
 
-.TP
-\fBCodepage\fP (Codepage=ISO-8859-1:1998 (Latin-1, West Europe))
-The codepage used for encoding input and decoding output.
-Select \fBUTF-8\fP for 8-bit Unicode.
-
 
 .SS Keys
 Settings controlling keyboard behaviour.
 
 .TP
-\fBBackspace keycode\fP (BackspaceSendsDEL=0)
-The character to be sent by the backspace key.
-The default is \fB^H\fP, because that is the default across Cygwin,
-but \fB^?\fP (DEL) can be used instead to free up Ctrl+H for other
-purposes, e.g. as the help key in Emacs.
-
-.RS
-.PD 0
-.IP "\- \fB^H\fP (0)"
-.IP "\- \fB^?\fP (1)"
-.RE
-
-.TP
-\fBAlt key on its own sends ^[\fP (AltSendsESC=0)
+\fBLone Alt sends ESC\fP (AltSendsESC=0)
 The Alt key pressed on its own can be set to send the escape character
 \fB^[\fP.
 This can save the regular trip to the upper left corner of the keyboard
-for \fIvi\fP users, and can also be useful when the escape key is set to send
-\fB^\\\fP instead.
+for \fIvi\fP users.
+
+.TP
+\fBCtrl+LeftAlt is AltGr\fP (CtrlAltIsAltGr=0)
+The AltGr key on non-US Windows systems is a strange beast: pressing it is
+synonymous with pressing the left Ctrl key and the right Alt key at the
+same time, and Windows programs usually treat any Ctrl+Alt combination as
+AltGr.
+
+Some programs, however, chief among them Microsoft's very own Office, do not
+treat Ctrl+LeftAlt as AltGr, so that Ctrl+LeftAlt combinations can be used in
+command shortcuts even when a key has an AltGr character binding.
+
+By default, mintty follows Office's approach, because a number of terminal
+programs make use of Ctrl+Alt shortcuts.
+The "standard" Windows behaviour can be restored by ticking the checkbox here.
+
+The setting makes no difference for keys without an AltGr key binding
+(e.g. any key on a US keyboard).
+
 
 .TP
 \fBWindow command shortcuts\fP (WindowShortcuts=1)
-Checkbox for enabling window command shortcuts.
-When disabled, these combinations send their regular keycodes to the
-application.
+Checkbox for enabling the following shortcuts:
 
 .RS
 .PD 0
@@ -420,7 +399,7 @@ Checkbox for enabling the copy and paste shortcuts.
 
 .TP
 \fBZoom shortcuts\fP (ZoomShortcuts=1)
-Checkbox for enabling font zoom shortcuts.
+Checkbox for enabling the font zooming shortcuts.
 
 .RS
 .PD 0
@@ -429,20 +408,24 @@ Checkbox for enabling font zoom shortcuts.
 .IP "\- \fBCtrl+zero\fP: Reset zoom to configured font size"
 .RE
 
-
-.SS Mouse
-Settings controlling mouse support.
-
 .TP
-\fBRight click action\fP (RightClickAction=0)
-Action to take when clicking the right mouse button.
+\fBModifier for scrolling\fP (ScrollMod=1)
+The modifier key that needs to be pressed together with the arrow up/down
+or page up/down keys to access the scrollback buffer.
+The default is \fBShift\fP.
+The \fBOff\fP setting disables scrolling with the cursor keys.
 
 .RS
 .PD 0
-.IP "\- \fBShow menu\fP (0): Display the context menu.
-.IP "\- \fBExtend\fP (1): Extend the selected region.
-.IP "\- \fBPaste\fP (2): Paste the clipboard contents.
+.IP "\- \fBShift\fP (1)"
+.IP "\- \fBCtrl\fP (4)"
+.IP "\- \fBAlt\fP (2)"
+.IP "\- \fBOff\fP (0)"
 .RE
+
+
+.SS Mouse
+Settings controlling mouse support.
 
 .TP
 \fBCopy on select\fP (CopyOnSelect=0)
@@ -457,11 +440,22 @@ This works by sending the number of cursor keycodes needed to get to the
 destination.
 
 .TP
+\fBRight click action\fP (RightClickAction=0)
+Action to take when the right mouse button is pressed.
+
+.RS
+.PD 0
+.IP "\- \fBPaste\fP (1): Paste the clipboard contents.
+.IP "\- \fBExtend\fP (2): Extend the selected region.
+.IP "\- \fBShow menu\fP (0): Show the context menu.
+.RE
+
+.TP
 \fBDefault click target\fP (ClicksTargetApp=1)
 This applies to application mouse mode, i.e. when the application activates
 xterm-style mouse reporting.
 In that mode, mouse clicks can be sent either to the application to process,
-or to the window for the usual actions: select, extend, paste, show menu.
+or to the window for the usual actions such as select and paste.
 
 .RS
 .PD 0
@@ -473,7 +467,6 @@ or to the window for the usual actions: select, extend, paste, show menu.
 \fBModifier key for overriding default\fP (ClickTargetMod=1)
 The modifier key selected here can be used to override the default click
 target in application mouse mode.
-Overriding can also be disabled.
 With the default settings, clicks are sent to the application,
 and Shift has to be pressed while clicking in order to trigger window actions
 instead.
@@ -486,9 +479,13 @@ instead.
 .IP "\- \fBOff\fP (0)"
 .RE
 
+The \fBOff\fP setting disables overriding.
+If the default target is set to \fBWindow\fP, this effectively disables
+application mouse mode.
+
 
 .SS Output
-Settings for output devices other than the terminal screen.
+Settings for output devices other than the screen.
 
 .TP
 \fBPrinter\fP (Printer=)
@@ -499,15 +496,70 @@ The Windows printer to send such text to can be selected here.
 By default, printing is disabled.
 
 .TP
-\fBBell action\fP (BellType=1)
-The action to take when the application sends the bell character \fB^G\fP.
+\fBBell\fP (Bell)
+The three checkboxes here determine what effects the bell character \fB^G\fP
+has.
 
 .RS
 .PD 0
-.IP "\- \fBNone\fP (0)"
-.IP "\- \fBSystem sound\fP (1)"
-.IP "\- \fBFlash window\fP (2)"
+.IP "\- \fBPlay Sound\fP (BellSound=0)"
+.IP "\- \fBFlash Screen\fP (BellFlash=0)"
+.IP "\- \fBHighlight in taskbar\fP (BellTaskbar=1)"
 .RE
+
+Taskbar highlighting, which is enabled by default, changes the colour of the
+mintty's taskbar entry in case its window is not active already.
+
+.RS
+.PD 0
+.IP "\- \fBFont\fP (Font=Lucida Console)"
+.IP "\- \fBSize\fP (FontHeight=10)"
+.IP "\- \fBStyle\fP (FontIsBold=0)"
+.RE
+
+
+.SS Window
+Window properties.
+
+.TP
+\fBColumns\fP (Columns=80)
+Default width of the window, in character cells.
+
+.TP
+\fBRows\fP (Rows=24)
+Default height of the window, in character cells.
+
+.TP
+\fBCurrent size\fP
+Pressing this button sets the default width and height of the window to
+its current size.
+
+.TP
+\fBShow scrollbar\fP (Scrollbar=1)
+Show the scrollbar for accessing the scrollback buffer.
+
+.TP
+\fBEnable scrollback on alternate screen\fP (AltScreenScroll=0)
+Fullscreen applications such as editors and viewers usually switch to a second
+screen buffer called the \fIalternate screen\fP.
+This allows the screen to be restored to its original content after the
+application finishes.
+
+By default, mousewheel events and the key combinations for scrolling the
+screen are sent to the application to enable scrolling within that application.
+If the option here is enabled, however, the command line history on the
+primary screen can be accessed instead.
+
+.TP
+\fBScrollback lines\fP (ScrollbackLines=10000)
+The maximum number of lines to keep in the scrollback buffer.
+
+.TP
+\fBAsk for exit confirmation\fP (ConfirmExit=1)
+If enabled, ask for confirmation when the close button or \fIAlt+F4\fP is 
+pressed and the command invoked by mintty still has child processes.
+This is enabled by default is intended to help avoid closing programs
+accidentally.
 
 
 .SH KEYCODES
@@ -1155,8 +1207,8 @@ Also, there is no Tektronix 4014 emulation or mouse highlighting mode.
 
 .SH SEE ALSO
 
-\fIbash\fP(1), \fIenv\fP(1), \fIecho\fP(1), \fIstty(1)\fP,
-\fImkshortcut\fP(1), \fIchere\fP(1), \fIlesskey\fP(1), vim(1)
+\fIbash\fP(1), \fIenv\fP(1), \fIecho\fP(1), \fIstty\fP(1), \fIscript\fP(1),
+\fImkshortcut\fP(1), \fIchere\fP(1), \fIlesskey\fP(1), \fIvim\fP(1)
 
 \fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.html\fP
 
