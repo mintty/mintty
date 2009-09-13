@@ -29,7 +29,7 @@ require an X server to be running.
 .SH INVOCATION
 
 If a program name is supplied on the command line, this is executed with any
-additional arguments passed to it.
+additional arguments given.
 Otherwise, mintty looks for a shell to execute in the \fISHELL\fP environment
 variable.
 If that is not set, it tries to read the user's default shell setting from
@@ -62,7 +62,7 @@ Open the window with its top left corner at the specified coordinates.
 
 .TP
 \fB-s\fP, \fB--size\fP=\fICOLS\fB,\fIROWS\fR
-Set the default numbers of terminal columns and rows.
+Set the initial numbers of character columns and rows.
 
 .TP
 \fB-t\fP, \fB--title\fP=\fITITLE\fP
@@ -84,7 +84,7 @@ Create a utmp entry.
 
 .TP
 \fB-h\fP, \fB--hold\fP=\fBnever\fP|\fBalways\fP|\fBerror\fP
-Determine whether to keep the terminal window open when the command exits.
+Determine whether to keep the terminal window open after the command exits.
 The argument can be abbreviated to a single letter.
 By default, the window is closed immediately.
 Alternatively, it can be set to always stay open, or to stay open only if
@@ -102,8 +102,11 @@ Print version information and exit.
 .SH USAGE
 
 Mintty aims to adhere to both Windows and Unix conventions usage.
-Where they conflict, the Windows conventions take precedence,
-at least in the default configuration.
+Where they conflict, the Windows conventions usually take precedence.
+
+This section primarily describes the default configuration.
+See the \fBCONFIGURATION\fP on how it can be customised.
+
 
 .SS Menu
 
@@ -132,7 +135,8 @@ In the default configuration, selected text has to be explicitly copied
 to the clipboard using either the \fBCopy\fP menu command, the
 \fBCtrl+Ins\fP keyboard shortcut, or the middle mouse button combined
 with \fBShift\fP.
-(See the \fBCopy on select\fP setting for X-like copy behaviour.)
+X-like copy-on-select behaviour can be enabled on the \fBMouse\P page of the
+options dialog.
 
 The selected region is copied as "rich text" as well as normal text,
 which means it can be pasted with colours and formatting into applications
@@ -146,7 +150,8 @@ whereby the latter are inserted as quoted filenames.
 
 .SS Drag & drop
 
-Text, files and directories can also be dropped into the mintty window.
+Text, files and directories can be dropped into the mintty window.
+They are inserted in the same way as if they were pasted from the clipboard.
 
 
 .SS Font zoom
@@ -159,14 +164,14 @@ The font size can be increased or decreased using the keyboard shortcuts
 .SS Fullscreen
 
 Fullscreen mode can be toggled using either the \fBFullscreen\fP command in
-the menu or the \fBAlt+F11\fP keyboard shortcut.
+the menu or the \fBAlt+Enter\fP and \fBAlt+F11\fP keyboard shortcuts.
 
 
 .SS Default size
 
 If the window has been resized, it can be returned to the default size set in
-the Window panel of the options using the \fBDefault size\fP command in the menu
-or the \fBAlt+F10\fP shortcut.
+the Window panel of the options using the \fBDefault size\fP command in the
+menu or the \fBAlt+F10\fP shortcut.
 
 
 .SS Scrolling
@@ -177,16 +182,6 @@ It can be accessed using the scrollbar, the mouse wheel, or the keyboard.
 Hold the \fBShift\fP key while pressing the \fBUp\fP and \fBDown\fP arrow keys
 to scroll line-by-line or the \fBPageUp\fP and \fBPageDown\fP keys to scroll
 page-by-page.
-The modifier key for scrolling can be changed in the options dialog.
-
-Scrolling into the scrollback buffer is not available with programs such
-as pagers or editors that use the the terminal's "alternate screen".
-
-
-.SS AltGr
-
-The \fBAltGr\fP key on non-US keyboards has the same effect as if both
-\fBCtrl\fP and \fBAlt\fP are held.
 
 
 .SS Mouse tracking
@@ -197,8 +192,6 @@ This is indicated by the mouse pointer changing from an I shape to an arrow.
 Holding down \fBShift\fP overrides mouse tracking mode and sends mouse
 events to the window instead, so that e.g. text can be selected and the menu
 can be accessed.
-(The modifier key for overriding mouse tracking can be changed in the
-options dialog.)
 
 
 .SS TERM variable
@@ -216,8 +209,8 @@ the window menu.
 Settings are stored in a configuration file that by default is located
 at \fI~/.minttyrc\fP.
 This can be overridden with the \fB--config\fP command line option.
-Settings are written to the file whenever the \fBOK\fP button is pressed in
-the options dialog.
+Settings are written to the file whenever the \fBOK\fP or \fBApply\fP
+buttons are pressed in the options dialog.
 
 The following sections explain the settings on each pane of the options
 dialog.
@@ -593,17 +586,17 @@ the keycode tables in the following sections.
 
 Encoding the meta modifier by setting the top bit of a character instead
 of prefixing it with the escape character is not supported, because that
-does not work for characters beyond 7-bit ASCII.
+does not work for character codes beyond 7-bit ASCII.
 
 
 .SS Letter keys
 
 If the Windows keyboard layout does not have a keycode for a letter key press
-and the \fBCtrl\fP key is down, a control character is sent corresponding to the
+and the \fBCtrl\fP key is down, a control character corresponding to the
 key's "virtual keycode" is sent.
 For keyboards with Latin scripts the virtual keycodes reflect the keys' labels,
-whereas for others, the virtual keys are usually arranged in the same way as on a
-QWERTY keyboard.
+whereas for others, the virtual keys are usually arranged in the same way as
+on a QWERTY keyboard.
 
 .RS
 .TS
@@ -618,13 +611,8 @@ Z    #^Z   #^[^Z
 .TE
 .RE
 
-.SS Number and symbol keys
 
-In the same way as for letter keys, the Windows keyboard layout is consulted
-first for number and symbol keys.
-
-
-.SS Control keys
+.SS Special keys
 
 The keys here send the usual control characters, but there are a few
 mintty-specific additions that make combinations with modifier keys
@@ -638,16 +626,13 @@ LB        LfC   LfC   LfC   LfC   LfC   LfC.
 Key            #Shift#Crtl #C+S   #Alt  #A+S
 Space    #\fISP#\fISP#^@   #^[^@  #^[\fISP#^[\fISP
 Enter    #^M   #^J   #^^   #^[^^  #^[^M #^[J
-Back (^H)#^H   #^H   #^?   #^[^?  #^[^H #^[^H
-Back (^?)#^?   #^?   #^_   #^[^_  #^[^? #^[^?
+Back     #^?   #^?   #^_   #^[^_  #^[^? #^[^?
 Tab      #^I   #^[[Z #^[[1;5I#^[[1;6I
 Pause    #^]
 Break    #^\(rs
 .TE
 .RE
 
-The \fBBack\fP and \fBEsc\fP keycodes can be configured in the options dialog,
-which is why different keycodes depending on those settings are shown.
 On most keyboards \fBPause\fP and \fBBreak\fP share a key, whereby \fBCtrl\fP
 has to be pressed to get the \fBBreak\fP function.
 
@@ -669,11 +654,37 @@ For example, \fBShift+Ctrl\fP would be encoded as the character \fB6\fP (i.e. 1+
 The modifier code is shown as \fIm\fP in the following sections.
 
 
+.SS Number and symbol keys
+
+In the same way as for letter keys, the Windows keyboard layout is consulted
+first for the number and symbol keys.
+Key combinations involving \fBCtrl\fP send the following keycodes:
+
+.RS
+.TS
+tab(#) nospaces;
+LI   LB
+LB   LfC.
+Key #modified
+*   #^[[1;\fIm\fPj
++   #^[[1;\fIm\fPk
+,   #^[[1;\fIm\fPl
+-   #^[[1;\fIm\fPm
+.   #^[[1;\fIm\fPn
+/   #^[[1;\fIm\fPo
+0   #^[[1;\fIm\fPp
+1   #^[[1;\fIm\fPq
+2   #^[[1;\fIm\fPr
+\fP...
+9   #^[[1;\fIm\fPy
+.TE
+.RE
+
+
 .SS Cursor keys
 
 Cursor keycodes without modifier keys depend on the terminal's 
-"application cursor mode", which is used by fullscreen applications such as
-editors and pagers.
+"application cursor key mode", which is often used by fullscreen applications.
 When one or more modifier keys are pressed, the application cursor mode is
 ignored, but the modifier code is inserted into the keycode as shown.
 The \fBHome\fP and \fBEnd\fP keys are considered cursor keys.
@@ -696,8 +707,8 @@ End  #^[[F #^[OF #^[[1;\fIm\fPF
 
 .SS Editing keys
 
-There is no special application mode for the editing keys in the block of six
-that is usually situated above the cursor keys, but modifiers can be applied.
+There is no special application mode for the remaining four keys in the block
+of six that is usually situated above the cursor keys.
 
 .RS
 .TS
@@ -759,19 +770,9 @@ buttons.
 However, the mousewheel can also be used for scrolling in applications such as
 \fIless\fP that do not support xterm mouse reporting but that do use the
 alternate screen.
-Under those circumstances, mousewheel events are
-encoded as follows:
-
-.RS
-.TS
-tab(#);
-LB LfC.
-line up#^[Oa
-line down#^[Ob
-page up#^[[1;2a
-page down#^[[1;2b
-.TE
-.RE
+Under those circumstances, mousewheel events are encoded as cursor up/down
+or page up/down keys.
+See the sections above about cursor key and editing key codes for details.
 
 The number of line up/down events sent per mousewheel notch depends on
 the relevant Windows setting on the \fBWheel\fP tab of the \fBMouse\fP
@@ -786,28 +787,36 @@ at a time.
 Most of the xterm control sequences documented at \fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.html\fP are supported.
 Please report incompatibilities or unimplemented sequences as bugs.
 
-Below are mintty control sequences not currently supported in xterm.
+This section lists mintty-specific control sequences.
 
 
-.SS Cursor style
+.SS Application mousewheel mode
 
-The VT510 DECCSUSR sequence can be used to control cursor shape and blinking.
+Application mousewheel mode allows the mousewheel to be distinguished from
+the cursor keys without enabling full xterm mouse tracking. The two sequences enable and disable it:
 
 .RS
-\fC^[[ \fIarg\fC \fISP\fC q\fR
-
 .TS
 tab(#) nospaces;
-LI  LB         LB
-LfC L          L.
-arg#shape     #blinking
-0  #default   #default
-1  #block     #yes
-2  #block     #no
-3  #underscore#yes
-4  #underscore#no
-5  #line      #yes
-6  #line      #no
+LB        LB
+LfC       L.
+sequence #mode
+^[[?7787l#normal
+^[[?7787h#application
+.TE
+.RE
+
+When application mousewheel mode is on, mousewheel events are encoded as
+follows:
+
+.RS
+.TS
+tab(#);
+LB        LfC.
+line up  #^[Oa
+line down#^[Oa
+page up  #^[[1;2a
+page down#^[[1;2b
 .TE
 .RE
 
@@ -816,7 +825,7 @@ arg#shape     #blinking
 
 There are two settings controlling the keycode sent by the escape key.
 
-The first control application escape key mode, where the escape key sends a 
+The first controls application escape key mode, where the escape key sends a 
 keycode that allows applications such as vim to tell it apart from the escape
 character appearing at the start of many other keycodes, without resorting to
 a timeout mechanism. This setting also applies to the Alt key when that is
@@ -836,8 +845,8 @@ sequence #mode       #keycode
 When application escape key mode is off, the escape key can be be configured
 to send \fB^\\\fP instead of the standard and default \fB^[\fP.
 This allows the escape key to be used as one of the special keys in the
-terminal line settings (see stty(1)), which is impractical with \fB^[\fP,
-as that appears as the first character in many keycodes.
+terminal line settings (see stty(1)), which is not possible with \fB^[\fP,
+as that appears as the first character in many other keycodes.
 
 .RS
 .TS
@@ -869,6 +878,29 @@ sequence #reporting
 
 When enabled, '\fC^[[1W\fP' is sent when changing to an "ambiguous narrow"
 font and '\fC^[[2W\fP' is sent when changing to an "ambiguous wide" font.
+
+
+.SS Cursor style
+
+The VT510 DECCSUSR sequence can be used to control cursor shape and blinking.
+
+.RS
+\fC^[[ \fIarg\fC \fISP\fC q\fR
+
+.TS
+tab(#) nospaces;
+LI  LB         LB
+LfC L          L.
+arg#shape     #blinking
+0  #default   #default
+1  #block     #yes
+2  #block     #no
+3  #underscore#yes
+4  #underscore#no
+5  #line      #yes
+6  #line      #no
+.TE
+.RE
 
 
 .SH TIPS
