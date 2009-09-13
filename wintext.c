@@ -62,7 +62,7 @@ create_font(int weight, bool underline)
   return 
     CreateFont(
       font_height, font_width, 0, 0, weight, false, underline, false,
-      cfg.font.charset, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+      DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
       get_font_quality(), FIXED_PITCH | FF_DONTCARE,
       cfg.font.name
     );
@@ -401,7 +401,7 @@ another_font(int fontno)
 {
   int basefont;
   int fw_dontcare, fw_bold;
-  int c, u, w, x;
+  int u, w, x;
   char *s;
 
   if (fontno < 0 || fontno >= FONT_MAXNO || fontflag[fontno])
@@ -420,7 +420,6 @@ another_font(int fontno)
     fw_bold = FW_BOLD;
   }
 
-  c = cfg.font.charset;
   w = fw_dontcare;
   u = false;
   s = cfg.font.name;
@@ -437,7 +436,7 @@ another_font(int fontno)
 
   fonts[fontno] =
     CreateFont(font_height * (1 + !!(fontno & FONT_HIGH)), x, 0, 0, w, false, u,
-               false, c, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+               false, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                get_font_quality(), FIXED_PITCH | FF_DONTCARE, s);
 
   fontflag[fontno] = 1;

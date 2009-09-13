@@ -13,9 +13,8 @@ extern const char *config_file;
 
 typedef struct {
   char name[64];
-  int isbold;
+  bool isbold;
   int size;
-  int charset;
 } font_spec;
 
 enum { CUR_BLOCK, CUR_UNDERSCORE, CUR_LINE };

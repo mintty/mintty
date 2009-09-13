@@ -500,7 +500,6 @@ int_settings[] = {
   {"CursorBlinks", offcfg(cursor_blinks), true},
   {"FontIsBold", offcfg(font.isbold), 0},
   {"FontHeight", offcfg(font.size), 10},
-  {"FontCharset", offcfg(font.charset), 0},
   {"FontQuality", offcfg(font_quality), FQ_DEFAULT},
   {"ScrollMod", offcfg(scroll_mod), MDK_SHIFT},
   {"RightClickAction", offcfg(right_click_action), RC_SHOWMENU},
