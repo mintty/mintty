@@ -96,6 +96,8 @@ clean:
 
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(MAKECMDGOALS),doc)
+ifneq ($(MAKECMDGOALS),src)
 include $(deps)
+endif
 endif
 endif
