@@ -957,7 +957,7 @@ main(int argc, char *argv[])
   win_init_drop_target();
 
   // Create child process.
-  const char *locale = cs_config();
+  const char *locale = cs_init();
   struct winsize ws = {term.rows, term.cols, term_width, term_height};
   char *cmd = child_create(argv + optind, locale, &ws);
   

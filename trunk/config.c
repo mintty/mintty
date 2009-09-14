@@ -118,7 +118,7 @@ static void
 update_locale(void *dlg)
 {
   if (*new_cfg.charset && !*new_cfg.locale) {
-    strcpy(new_cfg.locale, get_system_locale());
+    strcpy(new_cfg.locale, system_locale);
     dlg_editbox_set(locale_box, dlg, new_cfg.locale);
   }
 }
@@ -555,7 +555,7 @@ load_config(void)
   if (!*cfg.charset) {
     read_string_setting("Codepage", cfg.charset, sizeof cfg.charset, "");
     if (*cfg.charset && !*cfg.locale)
-      strcpy(cfg.locale, get_system_locale());
+      strcpy(cfg.locale, system_locale);
   }
   
   close_settings_r();

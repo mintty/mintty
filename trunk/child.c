@@ -197,7 +197,7 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
     signal(SIGTTIN, SIG_IGN);
     signal(SIGTTOU, SIG_IGN);
 
-    setenv("TERM", "xterm", 1);
+    setenv("TERM", "xterm", true);
     
     if (locale) {
       unsetenv("LC_ALL");

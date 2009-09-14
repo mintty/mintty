@@ -183,21 +183,12 @@ correct_locale(char *locale)
 }
 
 const char *
-get_system_locale(void)
-{
-  static char buf[] = "xx_XX";
-  GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME, buf, 2);
-  GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, buf + 3, 2);
-  return buf;
-}
-
-const char *
 enumerate_locales(uint i)
 {
   if (i == 0)
     return "(None)";
   if (i == 1)
-    return get_system_locale();
+    return system_locale;
   i -= 2;
   if (i < lengthof(locale_menu))
     return locale_menu[i];
@@ -218,16 +209,50 @@ enumerate_charsets(uint i)
 }
 
 static cs_mode mode = CSM_DEFAULT;
-static uint default_codepage, codepage;
+static uint env_codepage, default_codepage, codepage;
 
 #if HAS_LOCALES
-static const char *default_locale;
+static const char *env_locale, *default_locale;
 static bool use_locale;
 #endif
 
-extern bool font_ambig_wide;
+char system_locale[] = "xx_XX";
+
 bool cs_ambig_wide;
 int cs_cur_max;
+
+extern bool font_ambig_wide;
+
+
+const char *
+cs_init(void)
+{
+  GetLocaleInfo(
+    LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME, system_locale, 2
+  );
+  GetLocaleInfo(
+    LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, system_locale + 3, 2
+  );
+
+  char *locale = getenv("LC_ALL") ?: getenv("LC_CTYPE") ?: getenv("LANG");
+  if (locale) {
+#if HAS_LOCALES
+    env_locale = strdup(locale);
+#endif
+    char *dot = strchr(locale, '.');
+    env_codepage = dot ? cs_lookup(dot + 1) : CP_ACP;
+  }
+  else {
+#if HAS_LOCALES
+    env_locale = system_locale;
+    setenv("LC_CTYPE", system_locale, true);
+#endif
+    env_codepage = CP_ACP;
+  }
+
+  cs_config();
+  return *cfg.locale ? default_locale : 0;
+}
 
 static int
 cp_cur_max(void)
@@ -244,13 +269,17 @@ cs_update(void)
     mode == CSM_UTF8 ? CP_UTF8 : mode == CSM_OEM  ? 437 : default_codepage;
 
 #if HAS_LOCALES
-  bool use_default_locale = mode == CSM_DEFAULT && default_locale;
-  setlocale(
-    LC_CTYPE,
-    use_default_locale ? default_locale : cs_ambig_wide ? "ja.UTF-8" : "en.UTF-8"
-  );
-  use_locale = use_default_locale || mode == CSM_UTF8;  // Not for CSM_OEM
-  cs_cur_max = use_locale ? MB_CUR_MAX : cp_cur_max();
+  use_locale = (mode == CSM_DEFAULT && default_locale) || mode == CSM_UTF8;
+  if (use_locale) {
+    setlocale(LC_CTYPE,
+      mode == CSM_DEFAULT
+      ? default_locale
+      : cs_ambig_wide ? "ja.UTF-8" : "en.UTF-8"
+    );
+    cs_cur_max = MB_CUR_MAX;
+  }
+  else
+    cs_cur_max = cp_cur_max();
 #else
   cs_cur_max = cp_cur_max();
 #endif
@@ -259,44 +288,39 @@ cs_update(void)
   cs_mb1towc(0, 0);
 }
 
-const char *
+void
 cs_config(void)
 {
-  static char locale[32];
-  char *lang = *cfg.locale ? locale : 0;  // Resulting LANG seetting
-  if (lang) {
+  default_codepage = *cfg.locale ? cs_lookup(cfg.charset) : env_codepage;
+
+#if HAS_LOCALES
+  static char cfg_locale[32];
+  if (*cfg.locale) {
     snprintf(
-      locale, sizeof locale,
+      cfg_locale, sizeof cfg_locale,
       "%s%s%s", cfg.locale, *cfg.charset ? "." : "", cfg.charset
     );
-    default_codepage = cs_lookup(cfg.charset);
+    default_locale = cfg_locale;
   }
-  else {
-    snprintf(
-      locale, sizeof locale,
-      getenv("LC_ALL") ?: getenv("LC_CTYPE") ?: getenv("LANG") ?: "C"
-    );
-    char *dot = strchr(locale, '.');
-    default_codepage = dot ? cs_lookup(dot + 1) : CP_ACP;
-  }
+  else
+    default_locale = env_locale;
   
-  #if HAS_LOCALES
-  default_locale = setlocale(LC_CTYPE, locale) ? locale : 0;
+  if (!setlocale(LC_CTYPE, default_locale))
+    default_locale = 0;
+  
   cs_ambig_wide = default_locale && wcwidth(0x3B1) == 2;
   
-  if (lang && cs_ambig_wide && !font_ambig_wide) {
+  if (*cfg.locale && cs_ambig_wide && !font_ambig_wide) {
     // Attach "@cjknarrow" to locale if using an ambig-narrow font
     // with an ambig-wide locale setting
-    strcat(locale, "@cjknarrow");
+    strcat(cfg_locale, "@cjknarrow");
     cs_ambig_wide = false;
   }
-  #else
+#else
   cs_ambig_wide = font_ambig_wide;
-  #endif
+#endif
   
   cs_update();
-  
-  return lang;
 }
 
 void
