@@ -217,6 +217,7 @@ static bool use_locale;
 #endif
 
 char system_locale[] = "xx_XX";
+static char cfg_locale[32];
 
 bool cs_ambig_wide;
 int cs_cur_max;
@@ -251,7 +252,7 @@ cs_init(void)
   }
 
   cs_config();
-  return *cfg.locale ? default_locale : 0;
+  return *cfg.locale ? cfg_locale : 0;
 }
 
 static int
@@ -294,7 +295,6 @@ cs_config(void)
   default_codepage = *cfg.locale ? cs_lookup(cfg.charset) : env_codepage;
 
 #if HAS_LOCALES
-  static char cfg_locale[32];
   if (*cfg.locale) {
     snprintf(
       cfg_locale, sizeof cfg_locale,
