@@ -6,7 +6,7 @@
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
 .ad l
-.TH mintty 1 2009-09-13 0.5.0 Cygwin
+.TH mintty 1 2009-09-15 0.5-beta3 Cygwin
 
 .SH NAME
 
@@ -23,7 +23,7 @@ mintty - Cygwin terminal emulator
 \fBMintty\fP is a terminal emulator for Cygwin with a native Windows user
 interface and minimalist design.
 Its terminal emulation is largely compatible with \fBxterm\fP, but it does not
-require an X server to be running.
+require an X server.
 
 
 .SH INVOCATION
@@ -32,9 +32,9 @@ If a program name is supplied on the command line, this is executed with any
 additional arguments given.
 Otherwise, mintty looks for a shell to execute in the \fISHELL\fP environment
 variable.
-If that is not set, it tries to read the user's default shell setting from
+If that is not set, it reads the user's default shell setting from
 \fI/etc/passwd\fP.
-Finally, it falls back to \fI/bin/sh\fP.
+As a last resort, it falls back to \fI/bin/sh\fP.
 If a single dash is specified instead of a program name, the shell is invoked
 as a login shell.
 
@@ -101,41 +101,40 @@ Print version information and exit.
 
 .SH USAGE
 
-Mintty aims to adhere to both Windows and Unix conventions usage.
-Where they conflict, the Windows conventions usually take precedence.
-
-This section primarily describes the default configuration.
-See the \fBCONFIGURATION\fP on how it can be customised.
-
-
-.SS Menu
-
-The context menu can be opened by right-clicking the mouse or by pressing
-the \fBMenu\fP key that is normally located next to the right Ctrl key.
+Mintty aims to adhere to both Windows and Unix usage conventions.
+Where they conflict, the Windows conventions generally take precedence,
+at least in the default configuration.
+This is what this what this section primarily describes;
+see the \fBCONFIGURATION\fP section on how it can be customised.
 
 
-.SS Options dialog
+.SS Menus
 
-The configuration can be changed in a graphical dialog, which can be opened by
-selecting \fBOptions...\fP in the context menu or window menu.
-(The window menu can be opened by clicking on the program icon in the title or
-by pressing \fBAlt+Space\fP.)
-See the \fBCONFIGURATION\fP section for details.
+As usual, the context menu can be opened by right-clicking the mouse or by
+pressing the \fBMenu\fP key that is normally located next to the right Ctrl key.
+
+Mintty also adds a couple of items to the window menu, which can be accessed 
+by clicking on the program icon or pressing \fBAlt+Space\fP.
+
+Both menus have an entry that leads to the options dialog for changing mintty's
+configuration.
 
 
 .SS Copy & paste
 
-As usual in Windows, screen contents can be selected by holding
-down the left mouse button and dragging the mouse.
+Screen contents can be selected by holding down the left mouse button and
+dragging the mouse.
 The selection can be extended by holding down \fBShift\fP or \fBCtrl\fP while
 left-clicking.
-Double-clicking or triple-clicking selects a whole word or line.
+Double-clicking or triple-clicking selects a whole word or line, whereby word
+selection includes special characters that commonly appear in file names and
+URLs.
 
 In the default configuration, selected text has to be explicitly copied
 to the clipboard using either the \fBCopy\fP menu command, the
 \fBCtrl+Ins\fP keyboard shortcut, or the middle mouse button combined
 with \fBShift\fP.
-X-like copy-on-select behaviour can be enabled on the \fBMouse\P page of the
+X-like copy-on-select behaviour can be enabled on the \fBMouse\fP page of the
 options dialog.
 
 The selected region is copied as "rich text" as well as normal text,
@@ -170,7 +169,7 @@ the menu or the \fBAlt+Enter\fP and \fBAlt+F11\fP keyboard shortcuts.
 .SS Default size
 
 If the window has been resized, it can be returned to the default size set in
-the Window panel of the options using the \fBDefault size\fP command in the
+the Window pane of the options using the \fBDefault size\fP command in the
 menu or the \fBAlt+F10\fP shortcut.
 
 
@@ -188,7 +187,8 @@ page-by-page.
 
 When an application activates mouse tracking, mouse events are sent to the
 application rather than being treated as window events.
-This is indicated by the mouse pointer changing from an I shape to an arrow.
+This is indicated by the mouse pointer changing from an \fBI\fP shape to an
+arrow.
 Holding down \fBShift\fP overrides mouse tracking mode and sends mouse
 events to the window instead, so that e.g. text can be selected and the menu
 can be accessed.
@@ -206,8 +206,8 @@ xterm-compatible control sequences.
 Most settings are chosen not through command line arguments but in the
 graphical options dialog, which can be reached via the context menu or
 the window menu.
-Settings are stored in a configuration file that by default is located
-at \fI~/.minttyrc\fP.
+Settings are stored in an INI-style configuration file that by default
+is located at \fI~/.minttyrc\fP.
 This can be overridden with the \fB--config\fP command line option.
 Settings are written to the file whenever the \fBOK\fP or \fBApply\fP
 buttons are pressed in the options dialog.
@@ -296,12 +296,12 @@ The character set to be used for encoding input and decoding output.
 If no locale is set, this setting is ignored.
 
 While changing the character set immediately takes effect for text input and
-ouput, it does not affect the command running inside it until it is restarted.
+ouput, it does not affect the command running in mintty until it is restarted.
 This is because the environment variables of a running process cannot be
 changed from outside that process.
 
 .TP
-\fBFont\fP
+\fBFont selection\fP
 Clicking on the \fBSelect\fP button opens a dialog where the font and its
 properties can be chosen.
 In the config file, this corresponds to the following entries:
@@ -309,8 +309,8 @@ In the config file, this corresponds to the following entries:
 .RS
 .PD 0
 .IP "\- \fBFont\fP (Font=Lucida Console)"
-.IP "\- \fBSize\fP (FontHeight=10)"
 .IP "\- \fBStyle\fP (FontIsBold=0)"
+.IP "\- \fBSize\fP (FontHeight=10)"
 .RE
 
 .TP
@@ -363,8 +363,8 @@ By default, mintty follows Office's approach, because a number of terminal
 programs make use of Ctrl+Alt shortcuts.
 The "standard" Windows behaviour can be restored by ticking the checkbox here.
 
-The setting makes no difference for keys without an AltGr key binding
-(e.g. any key on a US keyboard).
+The setting makes no difference for keys without AltGr key bindings
+(e.g. any key in the standard US layout).
 
 
 .TP
@@ -464,6 +464,10 @@ With the default settings, clicks are sent to the application,
 and Shift has to be pressed while clicking in order to trigger window actions
 instead.
 
+The \fBOff\fP setting disables overriding.
+If the default target is set to \fBWindow\fP, this effectively disables
+application mouse mode.
+
 .RS
 .PD 0
 .IP "\- \fBShift\fP (1)"
@@ -471,10 +475,6 @@ instead.
 .IP "\- \fBAlt\fP (2)"
 .IP "\- \fBOff\fP (0)"
 .RE
-
-The \fBOff\fP setting disables overriding.
-If the default target is set to \fBWindow\fP, this effectively disables
-application mouse mode.
 
 
 .SS Output
@@ -492,22 +492,14 @@ By default, printing is disabled.
 \fBBell\fP (Bell)
 The three checkboxes here determine what effects the bell character \fB^G\fP
 has.
+Taskbar highlighting, which is enabled by default, changes the colour of
+mintty's taskbar entry in case its window is not active already.
 
 .RS
 .PD 0
 .IP "\- \fBPlay Sound\fP (BellSound=0)"
 .IP "\- \fBFlash Screen\fP (BellFlash=0)"
 .IP "\- \fBHighlight in taskbar\fP (BellTaskbar=1)"
-.RE
-
-Taskbar highlighting, which is enabled by default, changes the colour of the
-mintty's taskbar entry in case its window is not active already.
-
-.RS
-.PD 0
-.IP "\- \fBFont\fP (Font=Lucida Console)"
-.IP "\- \fBSize\fP (FontHeight=10)"
-.IP "\- \fBStyle\fP (FontIsBold=0)"
 .RE
 
 
@@ -772,7 +764,7 @@ However, the mousewheel can also be used for scrolling in applications such as
 alternate screen.
 Under those circumstances, mousewheel events are encoded as cursor up/down
 or page up/down keys.
-See the sections above about cursor key and editing key codes for details.
+See the cursor keycode and editing keycodes above for details.
 
 The number of line up/down events sent per mousewheel notch depends on
 the relevant Windows setting on the \fBWheel\fP tab of the \fBMouse\fP
