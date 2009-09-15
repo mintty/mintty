@@ -814,7 +814,7 @@ follows:
 tab(#);
 LB        LfC.
 line up  #^[Oa
-line down#^[Oa
+line down#^[Ob
 page up  #^[[1;2a
 page down#^[[1;2b
 .TE
@@ -1046,11 +1046,11 @@ See the \fBstty\fP man page for all the details, but here are a few examples.
 The commands can be included in shell startup files to make them permanent.
 
 To change the key for deleting a whole word from \fBCtrl+W\fP to
-\fBCtrl+Backspace\fP (assuming the \fBBackspace\fP keycode is set to \fB^H\fP):
+\fBCtrl+Backspace\fP:
 
 .RS
 .nf
-\fCstty werase '^?'\fP
+\fCstty werase '^_'\fP
 .fi
 .RE
 
@@ -1108,15 +1108,15 @@ following bindings useful:
 "\\e[1;5C": forward-word
 
 # Ctrl+Backspace/Delete to delete whole words
-"\\d": backward-kill-word
+"\\C-_": backward-kill-word
 "\\e[3;5~": kill-word
 
 # Ctrl+Shift+Backspace/Delete to delete to start/end of the line
-"\\e\\d": backward-kill-line
+"\\e\\C-_": backward-kill-line
 "\\e[3;6~": kill-line
 
 # Alt-Backspace for undo
-"\\e\\b": undo
+"\\e\\d": undo
 \fP
 .fi
 .RE
@@ -1154,34 +1154,6 @@ set output-meta on
 .RE
 
 
-.SS Mousewheel scrolling for less
-
-No, this is not some sort of special offer, but a tip on how to enable
-mousewheel scrolling in the pager program \fBless\fP.
-
-Key bindings for \fBless\fP can be specified in the text file \fI~/.lesskey\fP.
-Before the bindings can be used, they have be translated into
-the binary file \fI~/.less\fP using the \fBlesskey\fP tool (which probably
-saves about 0.0042 seconds when starting \fBless\fP).
-See \fBlesskey\fP(1) for details.
-
-Here are the lesskey lines needed for mousewheel support, assuming the
-scroll modifier key is set to the default \fIShift\fP.
-For \fBAlt\fP or \fBCtrl\fP, replace the \fB2\fPs in the keycodes with
-\fB3\fPs or \fB5\fPs.
-
-.RS
-.nf
-\fC
-\\eOa back-line
-\\eOb forw-line
-\\e[1;2a back-screen
-\\e[1;2b forw-screen
-\fP
-.fi
-.RE
-
-
 .SS Mode-dependent cursor in vim
 
 Using the control sequences for cursor style and application escape key mode,
@@ -1212,15 +1184,15 @@ at the risk of keycodes not being recognised in some circumstances.)
 
 .SS Console Issue
 
-Mintty is not a complete replacement for the \fBCygwin\fP console,
-which is based on the Windows command prompt (\fIcmd.exe\fP).
+Mintty is not a full replacement for the Windows console window that Cygwin
+uses by default.
 Like xterm and rxvt, mintty communicates with the child process through a
 pseudo terminal device, which Cygwin emulates using Windows pipes.
 This means that native Windows command line programs started in mintty see
 a pipe rather than a console device.
-As a consequence, interactive input often does not work correctly, and
-direct calls to Win32 console functions will fail.
-Programs that only output text are usually fine though.
+As a consequence, such programs often disable interactive input. Also,
+direct calls to low-level Win32 console functions will fail.
+Programs that access the console as a file should be fine though.
 
 
 .SS Termcap/terminfo
