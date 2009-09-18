@@ -305,7 +305,7 @@ cs_config(void)
   else
     default_locale = env_locale;
   
-  if (!setlocale(LC_CTYPE, default_locale))
+  if (!setlocale(LC_CTYPE, default_locale) || MB_CUR_MAX == 1)
     default_locale = 0;
   
   cs_ambig_wide = default_locale && wcwidth(0x3B1) == 2;
