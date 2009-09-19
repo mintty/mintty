@@ -305,7 +305,7 @@ cs_config(void)
   else
     default_locale = env_locale;
   
-  if (!setlocale(LC_CTYPE, default_locale) || MB_CUR_MAX == 1)
+  if (!setlocale(LC_CTYPE, default_locale))
     default_locale = 0;
   
   cs_ambig_wide = default_locale && wcwidth(0x3B1) == 2;
@@ -342,9 +342,11 @@ cs_wcntombn(char *s, const wchar *ws, size_t len, size_t wlen)
     len -= MB_CUR_MAX;
     while (wi < wlen && i <= len) {
       int n = wctomb(&s[i], ws[wi++]);
-      // Drop characters than can't be translated to charset.
+      // Replace untranslatable characters with question mark.
       if (n >= 0)
         i += n;
+      else
+        s[i++] = '?';
     }
     return i;
   }
