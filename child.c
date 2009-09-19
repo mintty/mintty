@@ -25,6 +25,7 @@
 #include <winuser.h>
 
 HANDLE child_event;
+int child_fd;
 
 static HANDLE proc_event;
 static pid_t pid;
@@ -120,6 +121,18 @@ child_proc(void)
   return true;
 }
 
+static void
+error(char *action)
+{
+  char *msg;
+  int len = asprintf(&msg, "Failed to %s: %s", action, strerror(errno));
+  if (len > 0) {
+    term_write(msg, len);
+    free(msg);
+  }
+  pid = 0;
+}
+
 char *
 child_create(char *argv[], const char *locale, struct winsize *winp)
 {
@@ -146,25 +159,20 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
   if (log_file) {
     log_fd = open(log_file, O_WRONLY | O_CREAT);
     if (log_fd == -1) {
-      char *msg = strdup(strerror(errno));
-      term_write("Failed to open log file: ", 25);
-      term_write(msg, strlen(msg));
-      free(msg);
+      error("open log file");
       return argz;
     }
   }
 
   // Create the child process and pseudo terminal.
-  pid = forkpty(&fd, 0, 0, winp);
-  if (pid == -1) { // Fork failed.
-    char *msg = strdup(strerror(errno));
-    term_write("Failed to create child process: ", 32);
-    term_write(msg, strlen(msg));
-    free(msg);
-    pid = 0;
-  }
+  if (openpty (&fd, &child_fd, 0, 0, winp) == -1)
+    error("allocate pseudo terminal device");
+  else if ((pid = fork()) == -1) // Fork failed.
+    error("create child process");
   else if (pid == 0) { // Child process.
-
+    close(fd);
+    login_tty(child_fd);
+    
 #if NEEDS_WIN7_CONSOLE_WORKAROUND
     // Windows se7en actually is Windows 6.1 (aka Vista Second Edition).
     // The Cygwin DLL's trick of allocating a console on an invisible
@@ -224,7 +232,6 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
     exit(1);
   }
   else { // Parent process.
-  
     name = *argv;
     
     child_event = CreateEvent(null, false, false, null);

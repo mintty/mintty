@@ -225,7 +225,7 @@ struct term {
   } mouse_mode;
 
   enum {
-    MS_CLICKED = -1, MS_IDLE = 0,
+    MS_OPENING = -2, MS_CLICKED = -1, MS_IDLE = 0,
     MS_SEL_CHAR = 1, MS_SEL_WORD = 2, MS_SEL_LINE = 3
   } mouse_state;
   
