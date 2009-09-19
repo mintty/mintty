@@ -288,8 +288,20 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
           win_paste();
       }
     }
+    else if (b == MBT_LEFT && mods == MDK_CTRL) {
+      // Open word under cursor
+      p = get_selpoint(box_pos(p));
+      term.mouse_state = MS_SEL_WORD;
+      term.selected = true;
+      term.sel_rect = false;
+      term.sel_start = term.sel_end = term.sel_anchor = p;
+      incpos(term.sel_end);
+      sel_spread();
+      term.mouse_state = MS_OPENING;
+      win_update();
+    }
     else {
-      // Only left clicks and extending right clicks should get here.
+      // Only selecting left clicks and extending right clicks should get here.
       p = get_selpoint(box_pos(p));
       term.mouse_state = count;
       term.sel_rect = alt;
@@ -313,7 +325,6 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
   }
 }
 
-
 void
 term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
 {
@@ -323,6 +334,11 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
   if (state == MS_CLICKED) {
     if (term.mouse_mode >= MM_VT200)
       send_mouse_event(0x23, mods, p);
+  }
+  else if (state == MS_OPENING) {
+    term_open();
+    term.selected = false;
+    win_update();
   }
   else if (state != MS_IDLE) {
     if (term.selected && cfg.copy_on_select)
@@ -394,6 +410,11 @@ term_mouse_move(mouse_button b, mod_keys mods, pos p)
     else    
       term.sel_scroll = 0;
     sel_drag(get_selpoint(bp));
+    win_update();
+  }
+  else if (term.mouse_state == MS_OPENING) {
+    term.mouse_state = MS_IDLE;
+    term.selected = false;
     win_update();
   }
   else {

@@ -58,6 +58,8 @@ void term_do_scroll(int topline, int botline, int lines, int sb);
 void term_erase_lots(int line_only, int from_begin, int to_end);
 int  term_last_nonempty_line(void);
 
+void term_open(void);
+
 static inline bool
 term_selecting(void)
 { return term.mouse_state >= MS_SEL_CHAR; }

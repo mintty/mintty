@@ -7,6 +7,7 @@
 
 #include "win.h"
 #include "linedisc.h"
+#include "charset.h"
 
 // Clipboard data has to be NUL-terminated.
 static const bool sel_nul_terminated = true;
@@ -41,22 +42,18 @@ clip_addchar(clip_workbuf * b, wchar chr, int attr)
   b->bufpos++;
 }
 
-void
-term_copy(void)
+static void
+get_selection(clip_workbuf *buf)
 {
-  if (!term.selected)
-    return;
-  
   pos start = term.sel_start, end = term.sel_end;
   
-  clip_workbuf buf;
   int old_top_x;
   int attr;
 
-  buf.buflen = 5120;
-  buf.bufpos = 0;
-  buf.textptr = buf.textbuf = newn(wchar, buf.buflen);
-  buf.attrptr = buf.attrbuf = newn(int, buf.buflen);
+  buf->buflen = 5120;
+  buf->bufpos = 0;
+  buf->textptr = buf->textbuf = newn(wchar, buf->buflen);
+  buf->attrptr = buf->attrbuf = newn(int, buf->buflen);
 
   old_top_x = start.x;    /* needed for rect==1 */
 
@@ -120,7 +117,7 @@ term_copy(void)
         cbuf[1] = 0;
 
         for (p = cbuf; *p; p++)
-          clip_addchar(&buf, *p, attr);
+          clip_addchar(buf, *p, attr);
 
         if (ldata->chars[x].cc_next)
           x += ldata->chars[x].cc_next;
@@ -131,7 +128,7 @@ term_copy(void)
     }
     if (nl) {
       for (size_t i = 0; i < lengthof(sel_nl); i++)
-        clip_addchar(&buf, sel_nl[i], 0);
+        clip_addchar(buf, sel_nl[i], 0);
     }
     start.y++;
     start.x = term.sel_rect ? old_top_x : 0;
@@ -139,12 +136,49 @@ term_copy(void)
     unlineptr(ldata);
   }
   if (sel_nul_terminated)
-    clip_addchar(&buf, 0, 0);
+    clip_addchar(buf, 0, 0);
+}
 
+void
+term_copy(void)
+{
+  if (!term.selected)
+    return;
+  
+  clip_workbuf buf;
+  get_selection(&buf);
+  
  /* Finally, transfer all that to the clipboard. */
   win_copy(buf.textbuf, buf.attrbuf, buf.bufpos);
   free(buf.textbuf);
   free(buf.attrbuf);
+}
+
+void
+term_open(void)
+{
+  clip_workbuf buf;
+  get_selection(&buf);
+  
+  wchar *wfile = buf.textbuf;
+  size_t wlen = buf.bufpos;
+  int len = wlen * cs_cur_max;
+  char file[len];
+  len = cs_wcntombn(file, wfile, len, wlen);
+  if (len <= 0)
+    return;
+  file[len] = 0;
+
+  extern int child_fd;
+  char *cmd;
+  asprintf(&cmd, "cd /proc/%i/cwd; /bin/cygstart %s >/dev/null 2>&1",
+                 tcgetpgrp(child_fd), file);
+  system(cmd);
+  
+  free(cmd);
+  free(buf.textbuf);
+  free(buf.attrbuf);
+  
 }
 
 void
