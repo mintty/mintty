@@ -9,6 +9,9 @@
 #include "linedisc.h"
 #include "charset.h"
 
+#include <wordexp.h>
+#include <process.h>
+
 // Clipboard data has to be NUL-terminated.
 static const bool sel_nul_terminated = true;
 
@@ -160,25 +163,30 @@ term_open(void)
   clip_workbuf buf;
   get_selection(&buf);
   
-  wchar *wfile = buf.textbuf;
+  // Translate selection to current charset.
+  wchar *wtext = buf.textbuf;
   size_t wlen = buf.bufpos;
   int len = wlen * cs_cur_max;
-  char file[len];
-  len = cs_wcntombn(file, wfile, len, wlen);
-  if (len <= 0)
-    return;
-  file[len] = 0;
-
-  extern int child_fd;
-  char *cmd;
-  asprintf(&cmd, "cd /proc/%i/cwd; /bin/cygstart %s >/dev/null 2>&1",
-                 tcgetpgrp(child_fd), file);
-  system(cmd);
-  
-  free(cmd);
+  char text[len];
+  len = cs_wcntombn(text, wtext, len, wlen);
   free(buf.textbuf);
   free(buf.attrbuf);
+  if (len <= 0)
+    return;
+  text[len] = 0;
   
+  // Do shell substitutions on selected text.
+  wordexp_t exp;
+  exp.we_offs = 1;
+  if (wordexp(text, &exp, WRDE_DOOFFS | WRDE_NOCMD | WRDE_UNDEF))
+    return;
+  
+  // Invoke cygstart on it.
+  char **argv = exp.we_wordv;
+  *argv = "/bin/cygstart";
+  spawnv(_P_WAIT | _P_DETACH, *argv, (const char **)argv);
+  *argv = 0;
+  wordfree(&exp);
 }
 
 void
