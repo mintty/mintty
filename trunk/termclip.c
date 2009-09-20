@@ -181,7 +181,14 @@ term_open(void)
   if (wordexp(text, &exp, WRDE_DOOFFS | WRDE_NOCMD | WRDE_UNDEF))
     return;
   
-  // Invoke cygstart on it.
+  // Change to working directory of foreground process.
+  extern int child_fd;
+  char *dir = 0;
+  asprintf(&dir, "/proc/%i/cwd", tcgetpgrp(child_fd));
+  chdir(dir);
+  free(dir);
+  
+  // Invoke cygstart.
   char **argv = exp.we_wordv;
   *argv = "/bin/cygstart";
   spawnv(_P_WAIT | _P_DETACH, *argv, (const char **)argv);
