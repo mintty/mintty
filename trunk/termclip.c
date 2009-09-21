@@ -9,7 +9,6 @@
 #include "linedisc.h"
 #include "charset.h"
 
-#include <wordexp.h>
 #include <process.h>
 #include <pwd.h>
 
@@ -199,7 +198,7 @@ term_open(void)
   free(dir);
   
   // Invoke cygstart.
-  spawnl(_P_WAIT, "/bin/cygstart", "/bin/cygstart", arg, 0);
+  spawnl(_P_DETACH, "/bin/cygstart", "/bin/cygstart", arg, 0);
 }
 
 void
