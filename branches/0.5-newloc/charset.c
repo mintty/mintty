@@ -239,21 +239,13 @@ cs_init(void)
     LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, system_locale + 3, 2
   );
 
-  char *locale = getenv("LC_ALL") ?: getenv("LC_CTYPE") ?: getenv("LANG");
-  if (locale) {
+  char *locale =
+    getenv("LC_ALL") ?: getenv("LC_CTYPE") ?: getenv("LANG") ?: "C";
 #if HAS_LOCALES
-    env_locale = strdup(locale);
+  env_locale = strdup(locale);
 #endif
-    char *dot = strchr(locale, '.');
-    env_codepage = dot ? cs_lookup(dot + 1) : CP_ACP;
-  }
-  else {
-#if HAS_LOCALES
-    env_locale = system_locale;
-    setenv("LC_CTYPE", system_locale, true);
-#endif
-    env_codepage = CP_ACP;
-  }
+  char *dot = strchr(locale, '.');
+  env_codepage = dot ? cs_lookup(dot + 1) : CP_ACP;
 
   cs_config();
   return *cfg.locale ? cfg_locale : 0;
