@@ -12,6 +12,8 @@
 #include <winbase.h>
 #include <winnls.h>
 
+// Constant for representing an unspecified charset.
+#define CS_DEFAULT -1
 
 static cs_mode mode = CSM_DEFAULT;
 static uint env_codepage, default_codepage, codepage;
@@ -46,11 +48,13 @@ cs_names[] = {
   {  51932, "eucJP"},  // CP20932 is a simplified DBCS version of the proper one
 #endif
   {    949, "eucKR"},
-  // Not supported by Cygwin
-  {  54396, "GB18030"},
   // Aliases
   {CP_UTF8, "UTF8"},
-  {  20866, "KOI8"}
+  {  20866, "KOI8"},
+  // Not supported by Cygwin
+  {  54396, "GB18030"},
+  { CP_ACP, "ANSI"},
+  { CP_OEMCP, "OEM"},
 };
 
 static const struct {
@@ -121,42 +125,10 @@ strtoupper(char *dst, const char *src)
   while ((*dst++ = toupper((uchar)*src++)));
 }
 
-static uint
-cs_lookup(const char *name)
-{
-  if (!*name)
-    return CP_ACP;
-
-  char upname[strlen(name) + 1];
-  strtoupper(upname, name);
-
-  uint id;
-  if (sscanf(upname, "ISO-8859-%u", &id) == 1) {
-    if (id != 0 && id != 12 && id <= 16)
-      return id + 28590;
-  }
-  else if (sscanf(upname, "CP%u", &id) == 1 ||
-           sscanf(upname, "WIN%u", &id) == 1 ||
-           sscanf(upname, "%u", &id) == 1) {
-    CPINFO cpi;
-    if (GetCPInfo(id, &cpi))
-      return id;
-  }
-  else {
-    for (uint i = 0; i < lengthof(cs_names); i++) {
-      char cs_upname[8];
-      strtoupper(cs_upname, cs_names[i].name);
-      if (memcmp(upname, cs_upname, strlen(cs_upname)) == 0)
-        return cs_names[i].id;
-    }
-  }
-  return CP_ACP;
-}
-
 static const char *
-cs_name(uint id)
+cs_name(int id)
 {
-  if (id == CP_ACP)
+  if (id == CS_DEFAULT)
     return "";
 
   for (uint i = 0; i < lengthof(cs_names); i++) {
@@ -172,10 +144,52 @@ cs_name(uint id)
   return buf;
 }
 
+static int
+cs_id(const char *name)
+{
+  if (*name) {
+    uint id;
+    char upname[strlen(name) + 1];
+    strtoupper(upname, name);
+
+    if (sscanf(upname, "ISO-8859-%u", &id) == 1) {
+      if (id != 0 && id != 12 && id <= 16)
+        return id + 28590;
+    }
+    else if (sscanf(upname, "CP%u", &id) == 1 ||
+             sscanf(upname, "WIN%u", &id) == 1 ||
+             sscanf(upname, "%u", &id) == 1) {
+      CPINFO cpi;
+      if (GetCPInfo(id, &cpi))
+        return id;
+    }
+    else {
+      for (uint i = 0; i < lengthof(cs_names); i++) {
+        char cs_upname[8];
+        strtoupper(cs_upname, cs_names[i].name);
+        if (memcmp(upname, cs_upname, strlen(cs_upname)) == 0)
+          return cs_names[i].id;
+      }
+    }
+  }
+  return CS_DEFAULT;
+}
+
+static uint
+cs_codepage(const char *loc, int id)
+{
+  if (id != CS_DEFAULT)
+    return id;
+  else if (HAS_UTF8_C_LOCALE && loc[0] == 'C' && (!loc[1] || loc[1] == '.'))
+    return CP_UTF8;
+  else 
+    return CP_ACP;  
+}  
+
 void
 correct_charset(char *cs)
 {
-  strcpy(cs, cs_name(cs_lookup(cs)));
+  strcpy(cs, cs_name(cs_id(cs)));
 }
 
 void
@@ -245,7 +259,7 @@ cs_init(void)
   env_locale = strdup(locale);
 #endif
   char *dot = strchr(locale, '.');
-  env_codepage = dot ? cs_lookup(dot + 1) : CP_ACP;
+  env_codepage = cs_codepage(locale, dot ? cs_id(dot + 1) : CS_DEFAULT);
 
   cs_config();
   return *cfg.locale ? cfg_locale : 0;
@@ -288,7 +302,10 @@ cs_update(void)
 void
 cs_config(void)
 {
-  default_codepage = *cfg.locale ? cs_lookup(cfg.charset) : env_codepage;
+  default_codepage =
+    *cfg.locale
+    ? cs_codepage(cfg.locale, cs_id(cfg.charset))
+    : env_codepage;
 
 #if HAS_LOCALES
   if (*cfg.locale) {
