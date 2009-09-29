@@ -18,8 +18,6 @@ wchar cs_btowc_glyph(char);
 void correct_charset(char *);
 void correct_locale(char *);
 
-extern char system_locale[];
-
 const char *enumerate_locales(uint);
 const char *enumerate_charsets(uint);
 

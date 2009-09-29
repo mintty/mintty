@@ -12,6 +12,24 @@
 #include <winbase.h>
 #include <winnls.h>
 
+
+static cs_mode mode = CSM_DEFAULT;
+static uint env_codepage, default_codepage, codepage;
+
+#if HAS_LOCALES
+static const char *env_locale, *default_locale;
+static bool use_locale;
+#endif
+
+static char system_locale[] = "xx_XX";
+static char cfg_locale[32];
+
+bool cs_ambig_wide;
+int cs_cur_max;
+
+extern bool font_ambig_wide;
+
+
 static const struct {
   ushort id;
   const char *name;
@@ -94,6 +112,7 @@ locale_menu[] = {
   "ur", // Urdu
   "vi", // Vietnamese
   "zh", // Chinese
+  "C",  // language-neutral
 };
 
 static void
@@ -162,6 +181,8 @@ correct_charset(char *cs)
 void
 correct_locale(char *locale)
 {
+  if (!strcmp(locale, "C"))
+    return;
   uchar *lang = (uchar *)locale;
   if (isalpha(lang[0]) && isalpha(lang[1])) {
     // Treat two letters at the start as the language.
@@ -207,23 +228,6 @@ enumerate_charsets(uint i)
   }
   return 0;
 }
-
-static cs_mode mode = CSM_DEFAULT;
-static uint env_codepage, default_codepage, codepage;
-
-#if HAS_LOCALES
-static const char *env_locale, *default_locale;
-static bool use_locale;
-#endif
-
-char system_locale[] = "xx_XX";
-static char cfg_locale[32];
-
-bool cs_ambig_wide;
-int cs_cur_max;
-
-extern bool font_ambig_wide;
-
 
 const char *
 cs_init(void)
