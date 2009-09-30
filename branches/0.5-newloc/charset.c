@@ -234,10 +234,17 @@ enumerate_charsets(uint i)
 {
   if (i == 0)
     return "(Default)";
+  static char buf[64];
   if (--i < lengthof(cs_menu)) {
-    static char buf[64];
     sprintf(buf, "%s (%s)", cs_name(cs_menu[i].id), cs_menu[i].comment);
     return buf;
+  }
+  if ((i -= lengthof(cs_menu)) < 2) {
+    const char *cs = cs_name(i ? GetACP() : GetOEMCP());
+    if (*cs == 'C') {
+      sprintf(buf, "%s (%s codepage)", cs, i ? "ANSI" : "OEM");
+      return buf;
+    }
   }
   return 0;
 }
