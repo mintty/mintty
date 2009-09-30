@@ -30,11 +30,11 @@ int child_fd;
 static HANDLE proc_event;
 static pid_t pid;
 static int status;
-static int fd = -1, log_fd = -1;
+static int parent_fd = -1, log_fd = -1;
 static int read_len;
 static char read_buf[4096];
 static struct utmp ut;
-static char *name;
+static char *child_name;
 static bool killed;
 
 static sigset_t term_sigs;
@@ -52,12 +52,12 @@ signal_thread(void *unused(arg))
 static void *
 read_thread(void *unused(arg))
 {
-  while ((read_len = read(fd, read_buf, sizeof read_buf)) > 0) {
+  while ((read_len = read(parent_fd, read_buf, sizeof read_buf)) > 0) {
     SetEvent(child_event);
     WaitForSingleObject(proc_event, INFINITE);
   };
-  close(fd);
-  fd = -1;
+  close(parent_fd);
+  parent_fd = -1;
   return 0;
 }
 
@@ -102,7 +102,7 @@ child_proc(void)
     if (status == 0)
       exit(0);
     else
-      l = asprintf(&s, "\r\n%s exited with status %i\r\n", name, status); 
+      l = asprintf(&s, "\r\n%s exited with status %i\r\n", child_name, status); 
   }
   else if (WIFSIGNALED(status)) {
     int error_sigs =
@@ -111,7 +111,7 @@ child_proc(void)
     int sig = WTERMSIG(status);
     if ((error_sigs & 1<<sig) == 0)
       exit(0);
-    l = asprintf(&s, "\r\n%s terminated: %s\r\n", name, strsignal(sig));
+    l = asprintf(&s, "\r\n%s terminated: %s\r\n", child_name, strsignal(sig));
   }
   if (l != -1) {
     term_write(s, l);
@@ -133,6 +133,18 @@ error(char *action)
   pid = 0;
 }
 
+static int
+nonstdfd(int fd)
+{
+  // Move file descriptor out of standard range if necessary.
+  if (fd < 3) {
+    int old_fd = fd;
+    fd = fcntl(fd, F_DUPFD, 3);
+    close(old_fd);
+  }
+  return fd;
+}
+
 char *
 child_create(char *argv[], const char *locale, struct winsize *winp)
 {
@@ -148,6 +160,7 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
       asprintf(&name, "-%s", name);
     argv = (char *[]){name, 0};
   }
+  child_name = *argv;
   
   // Command line for window title.
   char *argz;
@@ -157,20 +170,21 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
   
   // Open log file if any
   if (log_file) {
-    log_fd = open(log_file, O_WRONLY | O_CREAT);
-    if (log_fd == -1) {
+    int fd = open(log_file, O_WRONLY | O_CREAT);
+    if (fd == -1) {
       error("open log file");
       return argz;
     }
+    log_fd = nonstdfd(fd);
   }
 
   // Create the child process and pseudo terminal.
-  if (openpty (&fd, &child_fd, 0, 0, winp) == -1)
+  if (openpty (&parent_fd, &child_fd, 0, 0, winp) == -1)
     error("allocate pseudo terminal device");
   else if ((pid = fork()) == -1) // Fork failed.
     error("create child process");
   else if (pid == 0) { // Child process.
-    close(fd);
+    close(parent_fd);
     login_tty(child_fd);
     
 #if NEEDS_WIN7_CONSOLE_WORKAROUND
@@ -232,7 +246,10 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
     exit(1);
   }
   else { // Parent process.
-    name = *argv;
+    
+    // Move file descriptors out of harm's way.
+    parent_fd = nonstdfd(parent_fd);
+    child_fd = nonstdfd(child_fd);
     
     child_event = CreateEvent(null, false, false, null);
     proc_event = CreateEvent(null, false, false, null);
@@ -252,7 +269,7 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
       ut.ut_type = USER_PROCESS;
       ut.ut_pid = pid;
       ut.ut_time = time(0);
-      char *dev = ptsname(fd);
+      char *dev = ptsname(parent_fd);
       if (dev) {
         if (strncmp(dev, "/dev/", 5) == 0)
           dev += 5;
@@ -316,8 +333,8 @@ child_is_parent(void)
 void
 child_write(const char *buf, int len)
 { 
-  if (fd >= 0)
-    write(fd, buf, len); 
+  if (parent_fd >= 0)
+    write(parent_fd, buf, len); 
   else if (!pid)
     exit(0);
 }
@@ -325,6 +342,6 @@ child_write(const char *buf, int len)
 void
 child_resize(struct winsize *winp)
 { 
-  if (fd >= 0)
-    ioctl(fd, TIOCSWINSZ, winp);
+  if (parent_fd >= 0)
+    ioctl(parent_fd, TIOCSWINSZ, winp);
 }
