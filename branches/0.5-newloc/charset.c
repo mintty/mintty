@@ -358,11 +358,9 @@ cs_wcntombn(char *s, const wchar *ws, size_t len, size_t wlen)
     len -= MB_CUR_MAX;
     while (wi < wlen && i <= len) {
       int n = wctomb(&s[i], ws[wi++]);
-      // Replace untranslatable characters with question mark.
+      // Drop untranslatable characters.
       if (n >= 0)
         i += n;
-      else
-        s[i++] = '?';
     }
     return i;
   }
