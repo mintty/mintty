@@ -25,14 +25,6 @@ static HMENU menu, sysmenu;
 void
 win_update_menus(void)
 {
-  ModifyMenu(
-    sysmenu, IDM_DUPLICATE, MF_BYCOMMAND | MF_STRING, IDM_DUPLICATE,
-    cfg.window_shortcuts ? "&Duplicate\tAlt+F2" : "&Duplicate"
-  );
-  ModifyMenu(
-    sysmenu, SC_CLOSE, MF_BYCOMMAND | MF_STRING, SC_CLOSE,
-    cfg.window_shortcuts ? "&Close\tAlt+F4" : "&Close"
-  ); 
   uint copy_enabled = term.selected ? MF_ENABLED : MF_GRAYED;
   ModifyMenu(
     menu, IDM_COPY, MF_BYCOMMAND | MF_STRING | copy_enabled, IDM_COPY,
@@ -47,20 +39,13 @@ win_update_menus(void)
     menu, IDM_PASTE, MF_BYCOMMAND | MF_STRING | paste_enabled, IDM_PASTE,
     cfg.edit_shortcuts ? "&Paste\tShift+Ins" : "&Paste"
   );
-  uint defsize_enabled =
+  EnableMenuItem(
+    menu, IDM_DEFSIZE,
     IsZoomed(wnd) || term.cols != cfg.cols || term.rows != cfg.rows
-    ? MF_ENABLED : MF_GRAYED;
-  ModifyMenu(
-    menu, IDM_DEFSIZE, MF_BYCOMMAND | MF_STRING | defsize_enabled, IDM_DEFSIZE,
-    cfg.window_shortcuts ? "&Default size\tAlt+F10" : "&Default size"
   );
-  uint fullscreen_checked =  
-    GetWindowLongPtr(wnd, GWL_STYLE) & WS_CAPTION
-    ? MF_UNCHECKED : MF_CHECKED;
-  ModifyMenu(
+  EnableMenuItem(
     menu, IDM_FULLSCREEN,
-    MF_BYCOMMAND | MF_STRING | fullscreen_checked, IDM_FULLSCREEN,
-    cfg.window_shortcuts ? "&Fullscreen\tAlt+F11" : "&Fullscreen"
+    GetWindowLongPtr(wnd, GWL_STYLE) & WS_CAPTION
   );
   uint options_enabled = config_wnd ? MF_GRAYED : MF_ENABLED;
   EnableMenuItem(menu, IDM_OPTIONS, options_enabled);
@@ -76,10 +61,12 @@ win_init_menus(void)
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_SELALL, "&Select All");
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
-  AppendMenu(menu, MF_ENABLED, IDM_RESET, "&Reset");
+  AppendMenu(menu, MF_ENABLED, IDM_RESET, "&Reset\tAlt+F8");
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
-  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_DEFSIZE, 0);
-  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN, 0);
+  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED,
+                   IDM_DEFSIZE, "&Default size\tAlt+F10");
+  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED,
+                   IDM_FULLSCREEN, "&Fullscreen\tAlt+F11");
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_OPTIONS, "&Options...");
 
@@ -87,7 +74,8 @@ win_init_menus(void)
   InsertMenu(sysmenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
   InsertMenu(sysmenu, 0, MF_BYPOSITION | MF_ENABLED,
                          IDM_OPTIONS, "&Options...");
-  InsertMenu(sysmenu, SC_CLOSE, MF_BYCOMMAND | MF_ENABLED, IDM_DUPLICATE, 0);
+  InsertMenu(sysmenu, SC_CLOSE, MF_BYCOMMAND | MF_ENABLED,
+                                IDM_DUPLICATE, "&Duplicate\tAlt+F2");
 }
 
 void
@@ -246,6 +234,12 @@ win_mouse_wheel(WPARAM wp, LPARAM lp)
 
 /* Keyboard handling */
 
+static void
+send_syscommand(WPARAM cmd)
+{
+  SendMessage(wnd, WM_SYSCOMMAND, cmd, ' ');
+}
+
 bool 
 win_key_down(WPARAM wp, LPARAM lp)
 {
@@ -293,7 +287,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   // Context and window menus
   if (key == VK_APPS) {
     if (shift)
-      SendMessage(wnd, WM_SYSCOMMAND, SC_KEYMENU, ' ');
+      send_syscommand(SC_KEYMENU);
     else {
       win_show_mouse();
       POINT p;
@@ -306,21 +300,28 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     return 1;
   }
+  
+  // Window shortcuts
+  if (cfg.window_shortcuts) {
+    if (key == VK_RETURN)
+      send_syscommand(IDM_FULLSCREEN);
+    else if (key == VK_SPACE)
+      send_syscommand(SC_KEYMENU);
+  }
 
-  // Window commands
-  if (cfg.window_shortcuts && alt && !ctrl) {
+  // Alt+Fkey
+  if (alt && !ctrl) {
     WPARAM cmd;
     switch (key) {
-      when VK_SPACE: cmd = SC_KEYMENU;
-      when VK_RETURN or VK_F11: cmd = IDM_FULLSCREEN;
-      when VK_F2: cmd = IDM_DUPLICATE;
-      when VK_F4: cmd = SC_CLOSE;
+      when VK_F2:  cmd = IDM_DUPLICATE;
+      when VK_F4:  cmd = SC_CLOSE;
+      when VK_F8:  cmd = IDM_RESET;
       when VK_F10: cmd = IDM_DEFSIZE;
-      otherwise: goto not_command;
+      when VK_F11: cmd = IDM_FULLSCREEN;
+      otherwise: return 1;
     }
-    SendMessage(wnd, WM_SYSCOMMAND, cmd, ' ');
+    send_syscommand(cmd);
     return 1;
-    not_command:;
   }
   
   // Font zooming
