@@ -24,13 +24,11 @@ static bool use_locale;
 #endif
 
 static char system_locale[] = "xx_XX";
-static char cfg_locale[32];
 
 bool cs_ambig_wide;
 int cs_cur_max;
 
 extern bool font_ambig_wide;
-
 
 static const struct {
   ushort id;
@@ -176,8 +174,9 @@ cs_id(const char *name)
 }
 
 static uint
-cs_codepage(const char *loc, int id)
+cs_codepage(const char *loc, char *cs)
 {
+  int id = cs_id(cs);
   if (id != CS_DEFAULT)
     return id;
   else if (HAS_UTF8_C_LOCALE && loc[0] == 'C' && (!loc[1] || loc[1] == '.'))
@@ -259,10 +258,10 @@ cs_init(void)
   env_locale = strdup(locale);
 #endif
   char *dot = strchr(locale, '.');
-  env_codepage = cs_codepage(locale, dot ? cs_id(dot + 1) : CS_DEFAULT);
+  char *charset = dot ? dot + 1 : "";
+  env_codepage = cs_codepage(locale, charset);
 
-  cs_config();
-  return *cfg.locale ? cfg_locale : 0;
+  return cs_config();
 }
 
 static int
@@ -299,41 +298,45 @@ cs_update(void)
   cs_mb1towc(0, 0);
 }
 
-void
+const char *
 cs_config(void)
 {
-  default_codepage =
-    *cfg.locale
-    ? cs_codepage(cfg.locale, cs_id(cfg.charset))
-    : env_codepage;
+  static char locale[32];
+  bool override_env = *cfg.locale;
 
-#if HAS_LOCALES
-  if (*cfg.locale) {
-    snprintf(
-      cfg_locale, sizeof cfg_locale,
-      "%s%s%s", cfg.locale, *cfg.charset ? "." : "", cfg.charset
-    );
-    default_locale = cfg_locale;
+  if (override_env) {
+    default_codepage = cs_codepage(cfg.locale, cfg.charset);
+    if (*cfg.charset)
+      sprintf(locale, "%s.%s", cfg.locale, cfg.charset);
+    else
+      strcpy(locale, cfg.locale);
   }
   else
-    default_locale = env_locale;
+    default_codepage = env_codepage;
+
+#if HAS_LOCALES
+  default_locale = override_env ? locale : env_locale;
   
-  if (!setlocale(LC_CTYPE, default_locale))
+  if (!setlocale(LC_CTYPE, default_locale)) {
+    // Not a valid Cygwin locale: fall back to Windows functions.
     default_locale = 0;
-  
-  cs_ambig_wide = default_locale && wcwidth(0x3B1) == 2;
-  
-  if (*cfg.locale && cs_ambig_wide && !font_ambig_wide) {
-    // Attach "@cjknarrow" to locale if using an ambig-narrow font
-    // with an ambig-wide locale setting
-    strcat(cfg_locale, "@cjknarrow");
-    cs_ambig_wide = false;
+    cs_ambig_wide = font_ambig_wide;
+  }
+  else {
+    cs_ambig_wide = wcwidth(0x3B1) == 2;
+    if (override_env && cs_ambig_wide && !font_ambig_wide) {
+      // Attach "@cjknarrow" to locale if using an ambig-narrow font
+      // with an ambig-wide locale setting
+      strcat(locale, "@cjknarrow");
+      cs_ambig_wide = false;
+    }
   }
 #else
   cs_ambig_wide = font_ambig_wide;
 #endif
-  
+
   cs_update();
+  return override_env ? locale : 0;
 }
 
 void
