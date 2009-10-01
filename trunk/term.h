@@ -286,6 +286,7 @@ void term_paint(void);
 void term_update(void);
 void term_invalidate(int left, int top, int right, int bottom);
 void term_blink(int set_cursor);
+void term_open(void);
 void term_copy(void);
 void term_paste(wchar *, uint len);
 void term_send_paste(void);
