@@ -289,15 +289,6 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Text", "Text");
 
-  s = ctrl_getset(b, "Text", "locale", null);
-  ctrl_columns(s, 2, 29, 71);
-  (locale_box = ctrl_combobox(
-    s, "Locale", 'l', 100, P(0), locale_handler, P(0), P(0)
-  ))->column = 0;
-  (charset_box = ctrl_combobox(
-    s, "Character set", 'c', 100, P(0), charset_handler, P(0), P(0)
-  ))->column = 1;
-
   s = ctrl_getset(b, "Text", "font", "Font");
   ctrl_fontsel(
     s, null, '\0', P(0), dlg_stdfontsel_handler, I(offcfg(font))
@@ -322,6 +313,15 @@ setup_config_box(controlbox * b)
     s, "Allow blinking", 'a', P(0),
     dlg_stdcheckbox_handler, I(offcfg(allow_blinking))
   )->column = 1;
+
+  s = ctrl_getset(b, "Text", "locale", null);
+  ctrl_columns(s, 2, 29, 71);
+  (locale_box = ctrl_combobox(
+    s, "Locale", 'l', 100, P(0), locale_handler, P(0), P(0)
+  ))->column = 0;
+  (charset_box = ctrl_combobox(
+    s, "Character set", 'c', 100, P(0), charset_handler, P(0), P(0)
+  ))->column = 1;
 
  /*
   * The Keys panel.
