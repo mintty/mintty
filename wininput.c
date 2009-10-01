@@ -25,9 +25,10 @@ static HMENU menu, sysmenu;
 void
 win_update_menus(void)
 {
-  uint copy_enabled = term.selected ? MF_ENABLED : MF_GRAYED;
+  uint sel_enabled = term.selected ? MF_ENABLED : MF_GRAYED;
+  EnableMenuItem(menu, IDM_OPEN, sel_enabled);
   ModifyMenu(
-    menu, IDM_COPY, MF_BYCOMMAND | MF_STRING | copy_enabled, IDM_COPY,
+    menu, IDM_COPY, MF_BYCOMMAND | MF_STRING | sel_enabled, IDM_COPY,
     cfg.edit_shortcuts ? "&Copy\tCtrl+Ins" : "&Copy"
   );
   uint paste_enabled =
@@ -56,13 +57,14 @@ void
 win_init_menus(void)
 {
   menu = CreatePopupMenu();
+  AppendMenu(menu, MF_ENABLED, IDM_OPEN, "&Open");
+  AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_COPY, 0);
   AppendMenu(menu, MF_ENABLED, IDM_PASTE, 0);
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_SELALL, "&Select All");
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_RESET, "&Reset\tAlt+F8");
-  AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED | MF_UNCHECKED,
                    IDM_DEFSIZE, "&Default size\tAlt+F10");
   AppendMenu(menu, MF_ENABLED | MF_UNCHECKED,
