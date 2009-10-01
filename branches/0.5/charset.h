@@ -2,7 +2,7 @@
 #define CHARSET_H
 
 const char *cs_init(void);
-void cs_config(void);
+const char *cs_config(void);
 
 typedef enum { CSM_DEFAULT, CSM_OEM, CSM_UTF8 } cs_mode;
 void cs_set_mode(cs_mode);
@@ -17,8 +17,6 @@ wchar cs_btowc_glyph(char);
 
 void correct_charset(char *);
 void correct_locale(char *);
-
-extern char system_locale[];
 
 const char *enumerate_locales(uint);
 const char *enumerate_charsets(uint);
