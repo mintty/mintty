@@ -521,6 +521,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       return 0;
     when WM_COMMAND or WM_SYSCOMMAND:
       switch (wp & ~0xF) {  /* low 4 bits reserved to Windows */
+        when IDM_OPEN: term_open();
         when IDM_COPY: term_copy();
         when IDM_PASTE: win_paste();
         when IDM_SELALL:

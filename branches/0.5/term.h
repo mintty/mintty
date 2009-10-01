@@ -225,7 +225,7 @@ struct term {
   } mouse_mode;
 
   enum {
-    MS_CLICKED = -1, MS_IDLE = 0,
+    MS_OPENING = -2, MS_CLICKED = -1, MS_IDLE = 0,
     MS_SEL_CHAR = 1, MS_SEL_WORD = 2, MS_SEL_LINE = 3
   } mouse_state;
   
@@ -286,6 +286,7 @@ void term_paint(void);
 void term_update(void);
 void term_invalidate(int left, int top, int right, int bottom);
 void term_blink(int set_cursor);
+void term_open(void);
 void term_copy(void);
 void term_paste(wchar *, uint len);
 void term_send_paste(void);
