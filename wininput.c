@@ -304,15 +304,15 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
   
   // Window shortcuts
-  if (cfg.window_shortcuts) {
+  if (alt && !ctrl && cfg.window_shortcuts) {
     if (key == VK_RETURN)
       send_syscommand(IDM_FULLSCREEN);
     else if (key == VK_SPACE)
       send_syscommand(SC_KEYMENU);
   }
 
-  // Alt+Fkey
-  if (alt && !ctrl) {
+  // Window commands
+  if (alt && !ctrl && VK_F1 <= key && key <= VK_F24) {
     WPARAM cmd;
     switch (key) {
       when VK_F2:  cmd = IDM_DUPLICATE;
