@@ -132,7 +132,7 @@ locale_handler(control *ctrl, void *dlg, void *unused(data), int event)
       dlg_update_start(ctrl, dlg);
       dlg_listbox_clear(ctrl, dlg);
       const char *l;
-      for (int i = 0; (l = enumerate_locales(i)); i++)
+      for (int i = 0; (l = locale_menu[i]); i++)
         dlg_listbox_add(ctrl, dlg, l);
       dlg_update_done(ctrl, dlg);
       dlg_editbox_set(ctrl, dlg, locale);
@@ -156,7 +156,7 @@ charset_handler(control *ctrl, void *dlg, void *unused(data), int event)
       dlg_update_start(ctrl, dlg);
       dlg_listbox_clear(ctrl, dlg);
       const char *cs;
-      for (int i = 0; (cs = enumerate_charsets(i)); i++)
+      for (int i = 0; (cs = charset_menu[i]); i++)
         dlg_listbox_add(ctrl, dlg, cs);
       dlg_update_done(ctrl, dlg);
       update_charset(dlg);

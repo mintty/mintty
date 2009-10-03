@@ -43,7 +43,7 @@ cs_names[] = {
   {    950, "Big5"},
   {    932, "SJIS"},
 #if HAS_LOCALES
-  {  51932, "eucJP"},  // CP20932 is a simplified DBCS version of the proper one
+  {  20932, "eucJP"},
 #endif
   {    949, "eucKR"},
   // Aliases
@@ -57,9 +57,9 @@ cs_names[] = {
 
 static const struct {
   ushort id;
-  const char *comment;
+  const char *desc;
 }
-cs_menu[] = {
+cs_descs[] = {
   { CP_UTF8, "Unicode"},
   {   28591, "Western European"},
   {   28592, "Central European"},
@@ -88,33 +88,22 @@ cs_menu[] = {
   {     950, "Chinese"},
   {     932, "Japanese"},
 #if HAS_LOCALES
-  {   51932, "Japanese"},
+  {   20932, "Japanese"},
 #endif
   {     949, "Korean"},
 };
 
-static const char *const
+const char *
+charset_menu[lengthof(cs_descs) + 4] = {
+  "(Default)"
+};
+
+const char *
 locale_menu[] = {
-  "ar", // Arabic
-  "bn", // Bengali
-  "de", // German
-  "en", // English
-  "es", // Spanish
-  "fa", // Persian
-  "fr", // French
-  "hi", // Hindi
-  "id", // Indonesian
-  "it", // Italian
-  "ja", // Japanese
-  "ko", // Korean
-  "pt", // Portuguese
-  "ru", // Russian
-  "th", // Thai
-  "tr", // Turkish
-  "ur", // Urdu
-  "vi", // Vietnamese
-  "zh", // Chinese
-  "C",  // language-neutral
+  "(None)",
+  system_locale,
+  "C",
+  0
 };
 
 static void
@@ -142,35 +131,54 @@ cs_name(int id)
   return buf;
 }
 
+static bool
+valid_cp(uint cp)
+{
+  // Check whether Windows knows a codepage.
+  CPINFO cpi;
+  return GetCPInfo(cp, &cpi);
+}
+
+static bool
+valid_cs(int id)
+{
+  #if HAS_LOCALES
+  // Cygwin 1.7 always supports all the ISO charsets.
+  if (id >= 28591 && id <= 28606)
+    return true;
+  #endif
+  return valid_cp(id);
+}
+
 static int
 cs_id(const char *name)
 {
-  if (*name) {
-    uint id;
-    char upname[strlen(name) + 1];
-    strtoupper(upname, name);
-
-    if (sscanf(upname, "ISO-8859-%u", &id) == 1) {
-      if (id != 0 && id != 12 && id <= 16)
-        return id + 28590;
-    }
-    else if (sscanf(upname, "CP%u", &id) == 1 ||
-             sscanf(upname, "WIN%u", &id) == 1 ||
-             sscanf(upname, "%u", &id) == 1) {
-      CPINFO cpi;
-      if (GetCPInfo(id, &cpi))
-        return id;
-    }
-    else {
-      for (uint i = 0; i < lengthof(cs_names); i++) {
-        char cs_upname[8];
-        strtoupper(cs_upname, cs_names[i].name);
-        if (memcmp(upname, cs_upname, strlen(cs_upname)) == 0)
-          return cs_names[i].id;
+  if (!*name)
+    return CS_DEFAULT;
+  
+  int id = CS_DEFAULT;
+  
+  char upname[strlen(name) + 1];
+  strtoupper(upname, name);
+  uint iso;
+  if (sscanf(upname, "ISO-8859-%u", &iso) == 1) {
+    if (iso && iso <= 16 && iso != 12)
+      id = 28590 + iso;
+  }
+  else if (sscanf(upname, "CP%u", &id) != 1 &&
+           sscanf(upname, "WIN%u", &id) != 1 &&
+           sscanf(upname, "%u", &id) != 1) {
+    for (uint i = 0; i < lengthof(cs_names); i++) {
+      char cs_upname[8];
+      strtoupper(cs_upname, cs_names[i].name);
+      if (memcmp(upname, cs_upname, strlen(cs_upname)) == 0) {
+        id = cs_names[i].id;
+        break;
       }
     }
   }
-  return CS_DEFAULT;
+  
+  return valid_cs(id) ? id : CS_DEFAULT;
 }
 
 static uint
@@ -178,7 +186,7 @@ cs_codepage(const char *loc, char *cs)
 {
   int id = cs_id(cs);
   if (id != CS_DEFAULT)
-    return id;
+    return valid_cp(id) ? id : CP_ACP;
   else if (HAS_UTF8_C_LOCALE && loc[0] == 'C' && (!loc[1] || loc[1] == '.'))
     return CP_UTF8;
   else 
@@ -217,48 +225,32 @@ correct_locale(char *locale)
 }
 
 const char *
-enumerate_locales(uint i)
-{
-  if (i == 0)
-    return "(None)";
-  if (i == 1)
-    return system_locale;
-  i -= 2;
-  if (i < lengthof(locale_menu))
-    return locale_menu[i];
-  return 0;
-}
-
-const char *
-enumerate_charsets(uint i)
-{
-  if (i == 0)
-    return "(Default)";
-  static char buf[64];
-  if (--i < lengthof(cs_menu)) {
-    sprintf(buf, "%s (%s)", cs_name(cs_menu[i].id), cs_menu[i].comment);
-    return buf;
-  }
-  if ((i -= lengthof(cs_menu)) < 2) {
-    const char *cs = cs_name(i ? GetACP() : GetOEMCP());
-    if (*cs == 'C') {
-      sprintf(buf, "%s (%s codepage)", cs, i ? "ANSI" : "OEM");
-      return buf;
-    }
-  }
-  return 0;
-}
-
-const char *
 cs_init(void)
 {
+  // Fetch POSIX name of Windows locale.
   GetLocaleInfo(
     LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME, system_locale, 2
   );
   GetLocaleInfo(
     LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, system_locale + 3, 2
   );
+  
+  // Fill in the charset menu.
+  const char **p = charset_menu + 1;
+  for (uint i = 0; i < lengthof(cs_descs); i++) {
+    uint id = cs_descs[i].id;
+    if (valid_cs(id))
+      asprintf((char **)p++, "%s (%s)", cs_name(id), cs_descs[i].desc);
+  }
+  
+  const char *oem_cs = cs_name(GetOEMCP());
+  if (*oem_cs == 'C')
+    asprintf((char **)p++, "%s (OEM codepage)", oem_cs);
 
+  const char *ansi_cs = cs_name(GetACP());
+  if (*ansi_cs == 'C')
+    asprintf((char **)p++, "%s (ANSI codepage)", ansi_cs);
+  
   char *locale =
     getenv("LC_ALL") ?: getenv("LC_CTYPE") ?: getenv("LANG") ?: "C";
 #if HAS_LOCALES
