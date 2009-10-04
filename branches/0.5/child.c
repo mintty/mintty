@@ -15,6 +15,7 @@
 #include <utmp.h>
 #include <dirent.h>
 #include <pthread.h>
+#include <process.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/utsname.h>
@@ -25,7 +26,7 @@
 #include <winuser.h>
 
 HANDLE child_event;
-int child_fd;
+static char child_ptyname[TTY_NAME_MAX];
 
 static HANDLE proc_event;
 static pid_t pid;
@@ -179,14 +180,9 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
   }
 
   // Create the child process and pseudo terminal.
-  if (openpty (&parent_fd, &child_fd, 0, 0, winp) == -1)
-    error("allocate pseudo terminal device");
-  else if ((pid = fork()) == -1) // Fork failed.
+  if ((pid = forkpty(&parent_fd, child_ptyname, 0, winp)) == -1)
     error("create child process");
   else if (pid == 0) { // Child process.
-    close(parent_fd);
-    login_tty(child_fd);
-    
 #if NEEDS_WIN7_CONSOLE_WORKAROUND
     // Windows se7en actually is Windows 6.1 (aka Vista Second Edition).
     // The Cygwin DLL's trick of allocating a console on an invisible
@@ -246,10 +242,7 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
     exit(1);
   }
   else { // Parent process.
-    
-    // Move file descriptors out of harm's way.
     parent_fd = nonstdfd(parent_fd);
-    child_fd = nonstdfd(child_fd);
     
     child_event = CreateEvent(null, false, false, null);
     proc_event = CreateEvent(null, false, false, null);
@@ -344,4 +337,35 @@ child_resize(struct winsize *winp)
 { 
   if (parent_fd >= 0)
     ioctl(parent_fd, TIOCSWINSZ, winp);
+}
+
+void
+child_open(char *arg, int len)
+{
+  arg[len] = 0;
+  if (*arg == '~') {
+    // Tilde expansion
+    char *name = arg + 1, *rest = strchr(arg, '/');
+    if (rest) *rest = 0;
+    struct passwd *pw = *name ? getpwnam(name) : getpwuid(getuid());
+    if (!pw) return;
+    char *home = pw->pw_dir ?: "";
+    if (rest) {
+      arg = alloca(strlen(home) + len);
+      sprintf(arg, "%s/%s", home, rest + 1);
+    }
+    else
+      arg = home;
+  }  
+  
+  // Change to working directory of foreground process.
+  char *dir = 0;
+  int child_pty = open(child_ptyname, O_RDONLY);
+  asprintf(&dir, "/proc/%i/cwd", tcgetpgrp(child_pty));
+  close(child_pty);
+  chdir(dir);
+  free(dir);
+  
+  // Invoke cygstart.
+  spawnl(_P_DETACH, "/bin/cygstart", "/bin/cygstart", arg, 0);
 }
