@@ -8,9 +8,7 @@
 #include "win.h"
 #include "linedisc.h"
 #include "charset.h"
-
-#include <process.h>
-#include <pwd.h>
+#include "child.h"
 
 // Clipboard data has to be NUL-terminated.
 static const bool sel_nul_terminated = true;
@@ -167,38 +165,12 @@ term_open(void)
   wchar *warg = buf.textbuf;
   size_t wlen = buf.bufpos;
   int len = wlen * cs_cur_max;
-  char *arg = alloca(len);
+  char arg[len];
   len = cs_wcntombn(arg, warg, len, wlen);
   free(buf.textbuf);
   free(buf.attrbuf);
-  if (len <= 0)
-    return;
-  arg[len] = 0;
-  
-  if (*arg == '~') {
-    // Tilde expansion
-    char *name = arg + 1, *rest = strchr(arg, '/');
-    if (rest) *rest = 0;
-    struct passwd *pw = *name ? getpwnam(name) : getpwuid(getuid());
-    if (!pw) return;
-    char *home = pw->pw_dir ?: "";
-    if (rest) {
-      arg = alloca(len + strlen(home));
-      sprintf(arg, "%s/%s", home, rest + 1);
-    }
-    else
-      arg = home;
-  }  
-  
-  // Change to working directory of foreground process.
-  extern int child_fd;
-  char *dir = 0;
-  asprintf(&dir, "/proc/%i/cwd", tcgetpgrp(child_fd));
-  chdir(dir);
-  free(dir);
-  
-  // Invoke cygstart.
-  spawnl(_P_DETACH, "/bin/cygstart", "/bin/cygstart", arg, 0);
+  if (len > 0)
+    child_open(arg, len);
 }
 
 void

@@ -5,7 +5,7 @@
 
 #include "platform.h"
 
-#if !HAS_WCWIDTH
+#if !HAS_LOCALES
 
 /*
  * This is an implementation of wcwidth() (defined in IEEE Std 1002.1-2001)

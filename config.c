@@ -118,7 +118,7 @@ static void
 update_locale(void *dlg)
 {
   if (*new_cfg.charset && !*new_cfg.locale) {
-    strcpy(new_cfg.locale, system_locale);
+    strcpy(new_cfg.locale, "C");
     dlg_editbox_set(locale_box, dlg, new_cfg.locale);
   }
 }
@@ -132,7 +132,7 @@ locale_handler(control *ctrl, void *dlg, void *unused(data), int event)
       dlg_update_start(ctrl, dlg);
       dlg_listbox_clear(ctrl, dlg);
       const char *l;
-      for (int i = 0; (l = enumerate_locales(i)); i++)
+      for (int i = 0; (l = locale_menu[i]); i++)
         dlg_listbox_add(ctrl, dlg, l);
       dlg_update_done(ctrl, dlg);
       dlg_editbox_set(ctrl, dlg, locale);
@@ -156,7 +156,7 @@ charset_handler(control *ctrl, void *dlg, void *unused(data), int event)
       dlg_update_start(ctrl, dlg);
       dlg_listbox_clear(ctrl, dlg);
       const char *cs;
-      for (int i = 0; (cs = enumerate_charsets(i)); i++)
+      for (int i = 0; (cs = charset_menu[i]); i++)
         dlg_listbox_add(ctrl, dlg, cs);
       dlg_update_done(ctrl, dlg);
       update_charset(dlg);
@@ -289,15 +289,6 @@ setup_config_box(controlbox * b)
   */
   ctrl_settitle(b, "Text", "Text");
 
-  s = ctrl_getset(b, "Text", "locale", null);
-  ctrl_columns(s, 2, 29, 71);
-  (locale_box = ctrl_combobox(
-    s, "Locale", 'l', 100, P(0), locale_handler, P(0), P(0)
-  ))->column = 0;
-  (charset_box = ctrl_combobox(
-    s, "Character set", 'c', 100, P(0), charset_handler, P(0), P(0)
-  ))->column = 1;
-
   s = ctrl_getset(b, "Text", "font", "Font");
   ctrl_fontsel(
     s, null, '\0', P(0), dlg_stdfontsel_handler, I(offcfg(font))
@@ -322,6 +313,15 @@ setup_config_box(controlbox * b)
     s, "Allow blinking", 'a', P(0),
     dlg_stdcheckbox_handler, I(offcfg(allow_blinking))
   )->column = 1;
+
+  s = ctrl_getset(b, "Text", "locale", null);
+  ctrl_columns(s, 2, 29, 71);
+  (locale_box = ctrl_combobox(
+    s, "Locale", 'l', 100, P(0), locale_handler, P(0), P(0)
+  ))->column = 0;
+  (charset_box = ctrl_combobox(
+    s, "Character set", 'c', 100, P(0), charset_handler, P(0), P(0)
+  ))->column = 1;
 
  /*
   * The Keys panel.
@@ -555,7 +555,7 @@ load_config(void)
   if (!*cfg.charset) {
     read_string_setting("Codepage", cfg.charset, sizeof cfg.charset, "");
     if (*cfg.charset && !*cfg.locale)
-      strcpy(cfg.locale, system_locale);
+      strcpy(cfg.locale, "C");
   }
   
   close_settings_r();

@@ -6,7 +6,6 @@
 
 #include "term.h"
 #include "config.h"
-#include "platform.h"
 
 #include <pwd.h>
 #include <pty.h>
@@ -15,22 +14,19 @@
 #include <utmp.h>
 #include <dirent.h>
 #include <pthread.h>
+#include <process.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/utsname.h>
 
 #include <winbase.h>
-#include <wincon.h>
-#include <wingdi.h>
-#include <winuser.h>
 
 HANDLE child_event;
-int child_fd;
 
 static HANDLE proc_event;
 static pid_t pid;
 static int status;
-static int parent_fd = -1, log_fd = -1;
+static int parent_fd = -1, child_fd = -1, log_fd = -1;
 static int read_len;
 static char read_buf[4096];
 static struct utmp ut;
@@ -186,28 +182,6 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
   else if (pid == 0) { // Child process.
     close(parent_fd);
     login_tty(child_fd);
-    
-#if NEEDS_WIN7_CONSOLE_WORKAROUND
-    // Windows se7en actually is Windows 6.1 (aka Vista Second Edition).
-    // The Cygwin DLL's trick of allocating a console on an invisible
-    // "window station" no longer works here due to a bug in Windows
-    // that Microsoft don't intend to fix for 7 final.
-    // Hence, here's a hack that allocates a console for the child command
-    // and hides it. Annoyingly the console window still flashes up briefly.
-    // Cygwin 1.7 has its own better workaround.
-    DWORD win_version = GetVersion();
-    win_version = ((win_version & 0xff) << 8) | ((win_version >> 8) & 0xff);
-    struct utsname un;
-    uname(&un);
-    if (win_version >= 0x0601 && un.release[2] == '5') {
-      if (AllocConsole()) {
-        HMODULE kernel = LoadLibrary("kernel32");
-        HWND (WINAPI *pGetConsoleWindow)(void) =
-          (void *)GetProcAddress(kernel, "GetConsoleWindow");
-        ShowWindowAsync(pGetConsoleWindow(), SW_HIDE);
-      }
-    }
-#endif
 
     // Reset signals
     signal(SIGINT, SIG_DFL);
@@ -246,8 +220,6 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
     exit(1);
   }
   else { // Parent process.
-    
-    // Move file descriptors out of harm's way.
     parent_fd = nonstdfd(parent_fd);
     child_fd = nonstdfd(child_fd);
     
@@ -344,4 +316,35 @@ child_resize(struct winsize *winp)
 { 
   if (parent_fd >= 0)
     ioctl(parent_fd, TIOCSWINSZ, winp);
+}
+
+void
+child_open(char *arg, int len)
+{
+  arg[len] = 0;
+  if (*arg == '~') {
+    // Tilde expansion
+    char *name = arg + 1, *rest = strchr(arg, '/');
+    if (rest) *rest = 0;
+    struct passwd *pw = *name ? getpwnam(name) : getpwuid(getuid());
+    if (!pw) return;
+    char *home = pw->pw_dir ?: "";
+    if (rest) {
+      arg = alloca(strlen(home) + len);
+      sprintf(arg, "%s/%s", home, rest + 1);
+    }
+    else
+      arg = home;
+  }  
+  
+  // Change to working directory of currrent foreground process.
+  char dir[24], old_dir[PATH_MAX + 1];
+  getcwd(old_dir, sizeof old_dir);
+  snprintf(dir, sizeof dir, "/proc/%u/cwd", tcgetpgrp(child_fd));
+  chdir(dir);
+  
+  // Invoke cygstart.
+  spawnl(_P_DETACH, "/bin/cygstart", "/bin/cygstart", arg, 0);
+  
+  chdir(old_dir);
 }
