@@ -6,7 +6,6 @@
 
 #include "term.h"
 #include "config.h"
-#include "platform.h"
 
 #include <pwd.h>
 #include <pty.h>
@@ -21,17 +20,13 @@
 #include <sys/utsname.h>
 
 #include <winbase.h>
-#include <wincon.h>
-#include <wingdi.h>
-#include <winuser.h>
 
 HANDLE child_event;
-static char child_ptyname[TTY_NAME_MAX];
 
 static HANDLE proc_event;
 static pid_t pid;
 static int status;
-static int parent_fd = -1, log_fd = -1;
+static int parent_fd = -1, child_fd = -1, log_fd = -1;
 static int read_len;
 static char read_buf[4096];
 static struct utmp ut;
@@ -180,30 +175,13 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
   }
 
   // Create the child process and pseudo terminal.
-  if ((pid = forkpty(&parent_fd, child_ptyname, 0, winp)) == -1)
+  if (openpty (&parent_fd, &child_fd, 0, 0, winp) == -1)
+    error("allocate pseudo terminal device");
+  else if ((pid = fork()) == -1) // Fork failed.
     error("create child process");
   else if (pid == 0) { // Child process.
-#if NEEDS_WIN7_CONSOLE_WORKAROUND
-    // Windows se7en actually is Windows 6.1 (aka Vista Second Edition).
-    // The Cygwin DLL's trick of allocating a console on an invisible
-    // "window station" no longer works here due to a bug in Windows
-    // that Microsoft don't intend to fix for 7 final.
-    // Hence, here's a hack that allocates a console for the child command
-    // and hides it. Annoyingly the console window still flashes up briefly.
-    // Cygwin 1.7 has its own better workaround.
-    DWORD win_version = GetVersion();
-    win_version = ((win_version & 0xff) << 8) | ((win_version >> 8) & 0xff);
-    struct utsname un;
-    uname(&un);
-    if (win_version >= 0x0601 && un.release[2] == '5') {
-      if (AllocConsole()) {
-        HMODULE kernel = LoadLibrary("kernel32");
-        HWND (WINAPI *pGetConsoleWindow)(void) =
-          (void *)GetProcAddress(kernel, "GetConsoleWindow");
-        ShowWindowAsync(pGetConsoleWindow(), SW_HIDE);
-      }
-    }
-#endif
+    close(parent_fd);
+    login_tty(child_fd);
 
     // Reset signals
     signal(SIGINT, SIG_DFL);
@@ -243,6 +221,7 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
   }
   else { // Parent process.
     parent_fd = nonstdfd(parent_fd);
+    child_fd = nonstdfd(child_fd);
     
     child_event = CreateEvent(null, false, false, null);
     proc_event = CreateEvent(null, false, false, null);
@@ -358,11 +337,9 @@ child_open(char *arg, int len)
       arg = home;
   }  
   
-  // Change to working directory of foreground process.
+  // Change to working directory of currrent foreground process.
   char *dir = 0;
-  int child_pty = open(child_ptyname, O_RDONLY);
-  asprintf(&dir, "/proc/%i/cwd", tcgetpgrp(child_pty));
-  close(child_pty);
+  asprintf(&dir, "/proc/%i/cwd", tcgetpgrp(child_fd));
   chdir(dir);
   free(dir);
   
