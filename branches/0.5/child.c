@@ -338,11 +338,13 @@ child_open(char *arg, int len)
   }  
   
   // Change to working directory of currrent foreground process.
-  char *dir = 0;
-  asprintf(&dir, "/proc/%i/cwd", tcgetpgrp(child_fd));
+  char dir[24], old_dir[PATH_MAX + 1];
+  getcwd(old_dir, sizeof old_dir);
+  snprintf(dir, sizeof dir, "/proc/%u/cwd", tcgetpgrp(child_fd));
   chdir(dir);
-  free(dir);
   
   // Invoke cygstart.
   spawnl(_P_DETACH, "/bin/cygstart", "/bin/cygstart", arg, 0);
+  
+  chdir(old_dir);
 }
