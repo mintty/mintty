@@ -143,8 +143,8 @@ static bool
 valid_cs(int id)
 {
   #if HAS_LOCALES
-  // Cygwin 1.7 always supports all the ISO charsets.
-  if (id >= 28591 && id <= 28606 || id == 20866 || id == 21866)
+  // Cygwin 1.7 always supports all the ISO and KOI8 charsets.
+  if ((id >= 28591 && id <= 28606) || id == 20866 || id == 21866)
     return true;
   #endif
   return valid_cp(id);
