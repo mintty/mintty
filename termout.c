@@ -1271,7 +1271,7 @@ term_write(const char *data, int len)
         // Low surrogate
         if ((wc & 0xFC00) == 0xDC00) {
           if (hwc) {
-            #if HAS_WCWIDTH
+            #if HAS_LOCALES
             int width = wcswidth((wchar[]){hwc, wc}, 2);
             #else
             xchar xc = 0x10000 + ((hwc & 0x3FF) << 10 | (wc & 0x3FF));
@@ -1305,7 +1305,7 @@ term_write(const char *data, int len)
         }
 
         // Everything else
-        #if HAS_WCWIDTH
+        #if HAS_LOCALES
         int width = wcwidth(wc);
         #else
         int width = xcwidth(wc);
