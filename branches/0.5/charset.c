@@ -187,10 +187,8 @@ cs_codepage(const char *loc, char *cs)
   int id = cs_id(cs);
   if (id != CS_DEFAULT)
     return valid_cp(id) ? id : CP_ACP;
-#if HAS_LOCALES
-  else if (loc[0] == 'C' && (!loc[1] || loc[1] == '.'))
+  else if (HAS_LOCALES && loc[0] == 'C' && (!loc[1] || loc[1] == '.'))
     return CP_UTF8;
-#endif
   else 
     return CP_ACP;  
 }  
