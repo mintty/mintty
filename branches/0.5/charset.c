@@ -251,10 +251,12 @@ cs_init(void)
   if (*ansi_cs == 'C')
     asprintf((char **)p++, "%s (ANSI codepage)", ansi_cs);
   
+#if HAS_LOCALES
+  char *locale = setlocale(LC_CTYPE, 0);  
+  env_locale = strdup(locale);
+#else
   char *locale =
     getenv("LC_ALL") ?: getenv("LC_CTYPE") ?: getenv("LANG") ?: "C";
-#if HAS_LOCALES
-  env_locale = strdup(locale);
 #endif
   char *dot = strchr(locale, '.');
   char *charset = dot ? dot + 1 : "";
