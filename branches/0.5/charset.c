@@ -187,8 +187,10 @@ cs_codepage(const char *loc, char *cs)
   int id = cs_id(cs);
   if (id != CS_DEFAULT)
     return valid_cp(id) ? id : CP_ACP;
-  else if (HAS_UTF8_C_LOCALE && loc[0] == 'C' && (!loc[1] || loc[1] == '.'))
+#if HAS_LOCALES
+  else if (loc[0] == 'C' && (!loc[1] || loc[1] == '.'))
     return CP_UTF8;
+#endif
   else 
     return CP_ACP;  
 }  
@@ -225,8 +227,34 @@ correct_locale(char *locale)
 }
 
 const char *
+getlocenv(const char *name)
+{
+  const char *val = getenv(name);
+  return val && *val ? val : 0;
+}
+
+const char *
 cs_init(void)
 {
+  // Get locale set in environment or Cygwin default
+  const char *locale =
+    getlocenv("LC_ALL") ?: getlocenv("LC_CTYPE") ?: getlocenv("LANG");
+#if HAS_LOCALES
+  if (!locale) {
+    locale = setlocale(LC_CTYPE, "");
+    if (!locale || !strcmp(locale, "C"))
+      locale = "C.UTF-8";
+    setenv("LANG", locale, false);
+  }
+  env_locale = strdup(locale);
+#else
+  if (!locale)
+    locale = "C";
+#endif
+  char *dot = strchr(locale, '.');
+  char *charset = dot ? dot + 1 : "";
+  env_codepage = cs_codepage(locale, charset);
+
   // Fetch POSIX name of Windows locale.
   GetLocaleInfo(
     LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME, system_locale, 2
@@ -251,17 +279,6 @@ cs_init(void)
   if (*ansi_cs == 'C')
     asprintf((char **)p++, "%s (ANSI codepage)", ansi_cs);
   
-#if HAS_LOCALES
-  char *locale = setlocale(LC_CTYPE, 0);  
-  env_locale = strdup(locale);
-#else
-  char *locale =
-    getenv("LC_ALL") ?: getenv("LC_CTYPE") ?: getenv("LANG") ?: "C";
-#endif
-  char *dot = strchr(locale, '.');
-  char *charset = dot ? dot + 1 : "";
-  env_codepage = cs_codepage(locale, charset);
-
   return cs_config();
 }
 
