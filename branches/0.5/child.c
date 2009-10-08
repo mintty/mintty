@@ -142,7 +142,7 @@ nonstdfd(int fd)
 }
 
 char *
-child_create(char *argv[], const char *locale, struct winsize *winp)
+child_create(char *argv[], const char *lang, struct winsize *winp)
 {
   struct passwd *pw = getpwuid(getuid());
   char *cmd; 
@@ -191,10 +191,10 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
 
     setenv("TERM", "xterm", true);
     
-    if (locale) {
+    if (lang) {
       unsetenv("LC_ALL");
       unsetenv("LC_CTYPE");
-      setenv("LANG", locale, true);
+      setenv("LANG", lang, true);
     }
 
     // Set backspace keycode
