@@ -26,7 +26,7 @@ HANDLE child_event;
 static HANDLE proc_event;
 static pid_t pid;
 static int status;
-static int parent_fd = -1, child_fd = -1, log_fd = -1;
+static int pty_fd = -1, log_fd = -1;
 static int read_len;
 static char read_buf[4096];
 static struct utmp ut;
@@ -48,12 +48,12 @@ signal_thread(void *unused(arg))
 static void *
 read_thread(void *unused(arg))
 {
-  while ((read_len = read(parent_fd, read_buf, sizeof read_buf)) > 0) {
+  while ((read_len = read(pty_fd, read_buf, sizeof read_buf)) > 0) {
     SetEvent(child_event);
     WaitForSingleObject(proc_event, INFINITE);
   };
-  close(parent_fd);
-  parent_fd = -1;
+  close(pty_fd);
+  pty_fd = -1;
   return 0;
 }
 
@@ -175,13 +175,9 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
   }
 
   // Create the child process and pseudo terminal.
-  if (openpty (&parent_fd, &child_fd, 0, 0, winp) == -1)
-    error("allocate pseudo terminal device");
-  else if ((pid = fork()) == -1) // Fork failed.
+  if ((pid = forkpty(&pty_fd, 0, 0, winp)) == -1)
     error("create child process");
   else if (pid == 0) { // Child process.
-    close(parent_fd);
-    login_tty(child_fd);
 
     // Reset signals
     signal(SIGINT, SIG_DFL);
@@ -220,8 +216,7 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
     exit(1);
   }
   else { // Parent process.
-    parent_fd = nonstdfd(parent_fd);
-    child_fd = nonstdfd(child_fd);
+    pty_fd = nonstdfd(pty_fd);
     
     child_event = CreateEvent(null, false, false, null);
     proc_event = CreateEvent(null, false, false, null);
@@ -241,7 +236,7 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
       ut.ut_type = USER_PROCESS;
       ut.ut_pid = pid;
       ut.ut_time = time(0);
-      char *dev = ptsname(parent_fd);
+      char *dev = ptsname(pty_fd);
       if (dev) {
         if (strncmp(dev, "/dev/", 5) == 0)
           dev += 5;
@@ -305,8 +300,8 @@ child_is_parent(void)
 void
 child_write(const char *buf, int len)
 { 
-  if (parent_fd >= 0)
-    write(parent_fd, buf, len); 
+  if (pty_fd >= 0)
+    write(pty_fd, buf, len); 
   else if (!pid)
     exit(0);
 }
@@ -314,8 +309,8 @@ child_write(const char *buf, int len)
 void
 child_resize(struct winsize *winp)
 { 
-  if (parent_fd >= 0)
-    ioctl(parent_fd, TIOCSWINSZ, winp);
+  if (pty_fd >= 0)
+    ioctl(pty_fd, TIOCSWINSZ, winp);
 }
 
 void
@@ -340,7 +335,7 @@ child_open(char *arg, int len)
   // Change to working directory of currrent foreground process.
   char dir[24], old_dir[PATH_MAX + 1];
   getcwd(old_dir, sizeof old_dir);
-  snprintf(dir, sizeof dir, "/proc/%u/cwd", tcgetpgrp(child_fd));
+  snprintf(dir, sizeof dir, "/proc/%u/cwd", pid);
   chdir(dir);
   
   // Invoke cygstart.
