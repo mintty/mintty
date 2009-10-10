@@ -6,6 +6,7 @@
 
 #include "term.h"
 #include "config.h"
+#include "charset.h"
 
 #include <pwd.h>
 #include <pty.h>
@@ -18,8 +19,11 @@
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/utsname.h>
-
+#include <sys/cygwin.h>
 #include <winbase.h>
+#include <winnls.h>
+
+extern HWND wnd;
 
 HANDLE child_event;
 
@@ -313,33 +317,54 @@ child_resize(struct winsize *winp)
     ioctl(pty_fd, TIOCSWINSZ, winp);
 }
 
-void
-child_open(char *arg, int len)
+const wchar *
+child_conv_path(const wchar *wpath)
 {
-  arg[len] = 0;
-  if (*arg == '~') {
+  int wlen = wcslen(wpath);
+  int len = wlen * cs_cur_max;
+  char path[len];
+  len = cs_wcntombn(path, wpath, len, wlen);
+  path[len] = 0;
+  
+  char *abs_path;
+  if (*path == '~') {
     // Tilde expansion
-    char *name = arg + 1, *rest = strchr(arg, '/');
-    if (rest) *rest = 0;
-    struct passwd *pw = *name ? getpwnam(name) : getpwuid(getuid());
-    if (!pw) return;
-    char *home = pw->pw_dir ?: "";
-    if (rest) {
-      arg = alloca(strlen(home) + len);
-      sprintf(arg, "%s/%s", home, rest + 1);
-    }
+    char *name = path + 1;
+    char *rest = strchr(path, '/');
+    if (rest)
+      *rest++ = 0;
     else
-      arg = home;
-  }  
+      rest = "";
+    struct passwd *pw = *name ? getpwnam(name) : getpwuid(getuid());
+    char *home = pw ? pw->pw_dir : 0;
+    if (home)
+      asprintf(&abs_path, "%s/%s", home, rest);
+    else
+      abs_path = path;
+  }
+  else if (*path != '/') {
+    // Relative path: prepend child process' working directory
+    char proc_cwd[32];
+    sprintf(proc_cwd, "/proc/%u/cwd", pid);
+    //char *cwd = canonicalize_file_name(proc_cwd);
+    char *cwd = realpath(proc_cwd, 0);
+    asprintf(&abs_path, "%s/%s", cwd, path);
+    free(cwd);
+  }
+  else
+    abs_path = path;
   
-  // Change to working directory of currrent foreground process.
-  char dir[24], old_dir[PATH_MAX + 1];
-  getcwd(old_dir, sizeof old_dir);
-  snprintf(dir, sizeof dir, "/proc/%u/cwd", pid);
-  chdir(dir);
+#if CYGWIN_VERSION_DLL_MAJOR >= 1007
+  wchar *win_wpath = cygwin_create_path(CCP_POSIX_TO_WIN_W, abs_path);
+#else
+  char win_path[MAX_PATH];
+  cygwin_conv_to_win32_path(abs_path, win_path);
+  wchar *win_wpath = newn(wchar, MAX_PATH);
+  MultiByteToWideChar(0, 0, win_path, -1, win_wpath, MAX_PATH);
+#endif
   
-  // Invoke cygstart.
-  spawnl(_P_DETACH, "/bin/cygstart", "/bin/cygstart", arg, 0);
+  if (abs_path != path)
+    free(abs_path);
   
-  chdir(old_dir);
+  return win_wpath;
 }

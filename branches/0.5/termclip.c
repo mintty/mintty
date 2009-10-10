@@ -8,10 +8,6 @@
 #include "win.h"
 #include "linedisc.h"
 #include "charset.h"
-#include "child.h"
-
-// Clipboard data has to be NUL-terminated.
-static const bool sel_nul_terminated = true;
 
 // Copying to the clipboard terminates lines with CRLF.
 static const wchar sel_nl[] = { '\r', '\n' };
@@ -136,8 +132,7 @@ get_selection(clip_workbuf *buf)
 
     unlineptr(ldata);
   }
-  if (sel_nul_terminated)
-    clip_addchar(buf, 0, 0);
+  clip_addchar(buf, 0, 0);
 }
 
 void
@@ -158,19 +153,12 @@ term_copy(void)
 void
 term_open(void)
 {
+  if (!term.selected)
+    return;
   clip_workbuf buf;
   get_selection(&buf);
-  
-  // Translate selection to current charset.
-  wchar *warg = buf.textbuf;
-  size_t wlen = buf.bufpos;
-  int len = wlen * cs_cur_max;
-  char arg[len];
-  len = cs_wcntombn(arg, warg, len, wlen);
-  free(buf.textbuf);
+  win_open(buf.textbuf); // textbuf is freed by win_open
   free(buf.attrbuf);
-  if (len > 0)
-    child_open(arg, len);
 }
 
 void
