@@ -19,8 +19,15 @@
 #include <sys/wait.h>
 #include <sys/utsname.h>
 #include <sys/cygwin.h>
+
 #include <winbase.h>
+
+#if CYGWIN_VERSION_DLL_MAJOR < 1007
 #include <winnls.h>
+#include <wincon.h>
+#include <wingdi.h>
+#include <winuser.h>
+#endif
 
 extern HWND wnd;
 
@@ -181,6 +188,26 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
   if ((pid = forkpty(&pty_fd, 0, 0, winp)) == -1)
     error("create child process");
   else if (pid == 0) { // Child process.
+#if CYGWIN_VERSION_DLL_MAJOR < 1007
+    // The Cygwin 1.5 DLL's trick of allocating a console on an invisible
+    // "window station" no longer works on Windows 7 due to a bug that
+    // Microsoft don't intend to fix anytime soon.
+    // Hence, here's a hack that allocates a console for the child command
+    // and hides it. Annoyingly the console window still flashes up briefly.
+    // Cygwin 1.7 has a better workaround.
+    DWORD win_version = GetVersion();
+    win_version = ((win_version & 0xff) << 8) | ((win_version >> 8) & 0xff);
+    struct utsname un;
+    uname(&un);
+    if (win_version >= 0x0601 && un.release[2] == '5') {
+      if (AllocConsole()) {
+        HMODULE kernel = LoadLibrary("kernel32");
+        HWND (WINAPI *pGetConsoleWindow)(void) =
+          (void *)GetProcAddress(kernel, "GetConsoleWindow");
+        ShowWindowAsync(pGetConsoleWindow(), SW_HIDE);
+      }
+    }
+#endif
 
     // Reset signals
     signal(SIGINT, SIG_DFL);
