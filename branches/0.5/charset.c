@@ -235,6 +235,7 @@ const char *
 cs_init(void)
 {
   // Get locale set in environment or Cygwin default
+  const char *lang = 0;
   const char *locale =
     getlocenv("LC_ALL") ?: getlocenv("LC_CTYPE") ?: getlocenv("LANG");
 #if HAS_LOCALES
@@ -242,7 +243,7 @@ cs_init(void)
     locale = setlocale(LC_CTYPE, "");
     if (!locale || !strcmp(locale, "C"))
       locale = "C.UTF-8";
-    setenv("LANG", locale, false);
+    lang = locale;
   }
   env_locale = strdup(locale);
 #else
@@ -277,7 +278,7 @@ cs_init(void)
   if (*ansi_cs == 'C')
     asprintf((char **)p++, "%s (ANSI codepage)", ansi_cs);
   
-  return cs_config();
+  return cs_config() ?: lang;
 }
 
 static int
