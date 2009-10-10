@@ -15,7 +15,6 @@
 #include <utmp.h>
 #include <dirent.h>
 #include <pthread.h>
-#include <process.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/utsname.h>
@@ -326,7 +325,7 @@ child_conv_path(const wchar *wpath)
   len = cs_wcntombn(path, wpath, len, wlen);
   path[len] = 0;
   
-  char *abs_path;
+  char *exp_path;  // expanded path
   if (*path == '~') {
     // Tilde expansion
     char *name = path + 1;
@@ -338,33 +337,32 @@ child_conv_path(const wchar *wpath)
     struct passwd *pw = *name ? getpwnam(name) : getpwuid(getuid());
     char *home = pw ? pw->pw_dir : 0;
     if (home)
-      asprintf(&abs_path, "%s/%s", home, rest);
+      asprintf(&exp_path, "%s/%s", home, rest);
     else
-      abs_path = path;
+      exp_path = path;
   }
-  else if (*path != '/') {
+  else if (*path != '/' && pid) {
     // Relative path: prepend child process' working directory
     char proc_cwd[32];
     sprintf(proc_cwd, "/proc/%u/cwd", pid);
-    //char *cwd = canonicalize_file_name(proc_cwd);
     char *cwd = realpath(proc_cwd, 0);
-    asprintf(&abs_path, "%s/%s", cwd, path);
+    asprintf(&exp_path, "%s/%s", cwd, path);
     free(cwd);
   }
   else
-    abs_path = path;
+    exp_path = path;
   
 #if CYGWIN_VERSION_DLL_MAJOR >= 1007
-  wchar *win_wpath = cygwin_create_path(CCP_POSIX_TO_WIN_W, abs_path);
+  wchar *win_wpath = cygwin_create_path(CCP_POSIX_TO_WIN_W, exp_path);
 #else
   char win_path[MAX_PATH];
-  cygwin_conv_to_win32_path(abs_path, win_path);
+  cygwin_conv_to_win32_path(exp_path, win_path);
   wchar *win_wpath = newn(wchar, MAX_PATH);
   MultiByteToWideChar(0, 0, win_path, -1, win_wpath, MAX_PATH);
 #endif
   
-  if (abs_path != path)
-    free(abs_path);
+  if (exp_path != path)
+    free(exp_path);
   
   return win_wpath;
 }
