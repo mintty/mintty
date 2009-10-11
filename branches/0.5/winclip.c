@@ -20,12 +20,15 @@ shell_exec_thread(void *data)
 {
   wchar *wpath = data;
   if ((int)ShellExecuteW(wnd, 0, wpath, 0, 0, SW_SHOWNORMAL) <= 32) {
-    char msg[1024];
-    FormatMessage(
-      FORMAT_MESSAGE_FROM_SYSTEM | 64,
-      0, GetLastError(), 0, msg, sizeof msg, 0
-    );
-    MessageBox(0, msg, 0, 0);
+    uint error = GetLastError();
+    if (error != ERROR_CANCELLED) {
+      char msg[1024];
+      FormatMessage(
+        FORMAT_MESSAGE_FROM_SYSTEM | 64,
+        0, error, 0, msg, sizeof msg, 0
+      );
+      MessageBox(0, msg, 0, 0);
+    }
   }
   free(data);
   return 0;
