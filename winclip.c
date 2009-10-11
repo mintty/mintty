@@ -4,21 +4,64 @@
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "winpriv.h"
-
+#include "charset.h"
+#include "child.h"
 #include "config.h"
-
-#include <wchar.h>
 
 #include <winnls.h>
 #include <richedit.h>
 #include <shellapi.h>
-
 #include <wtypes.h>
 #include <objidl.h>
 #include <oleidl.h>
 
+static DWORD WINAPI
+shell_exec_thread(void *data)
+{
+  wchar *wpath = data;
+  if ((int)ShellExecuteW(wnd, 0, wpath, 0, 0, SW_SHOWNORMAL) <= 32) {
+    uint error = GetLastError();
+    if (error != ERROR_CANCELLED) {
+      char msg[1024];
+      FormatMessage(
+        FORMAT_MESSAGE_FROM_SYSTEM | 64,
+        0, error, 0, msg, sizeof msg, 0
+      );
+      MessageBox(0, msg, 0, 0);
+    }
+  }
+  free(data);
+  return 0;
+}
+
+static void
+shell_exec(const wchar *wpath)
+{
+  CreateThread(0, 0, shell_exec_thread, (void *)wpath, 0, 0);
+}
+
 void
-win_copy(wchar *data, int *attr, int len)
+win_open(const wchar *wpath)
+{
+  const wchar *p = wpath;
+  while (iswalpha(*p)) p++;
+  
+  if (*wpath == '\\' || *p == ':') {
+    // Looks like it's a Windows path or URI
+    shell_exec(wpath);
+  }
+  else {
+    // Need to convert POSIX path to Windows first
+    const wchar *conv_wpath = child_conv_path(wpath);
+    free((void *)wpath);
+    if (conv_wpath)
+      shell_exec(conv_wpath);
+  }
+}
+
+
+void
+win_copy(const wchar *data, int *attr, int len)
 {
   HGLOBAL clipdata, clipdata2, clipdata3;
   int len2;

@@ -5,10 +5,8 @@
  #include <cygwin/version.h>
  #if CYGWIN_VERSION_DLL_MAJOR >= 1007
   #define HAS_LOCALES 1
-  #define HAS_UTF8_C_LOCALE 1
  #else
   #define HAS_LOCALES 0
-  #define HAS_UTF8_C_LOCALE 0
   typedef uint32_t xchar;
   int xcwidth(xchar c);
  #endif
