@@ -61,7 +61,7 @@ void
 win_init_menus(void)
 {
   menu = CreatePopupMenu();
-  AppendMenu(menu, MF_ENABLED, IDM_OPEN, "&Open");
+  AppendMenu(menu, MF_ENABLED, IDM_OPEN, "Ope&n");
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_COPY, 0);
   AppendMenu(menu, MF_ENABLED, IDM_PASTE, 0);
