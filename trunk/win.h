@@ -36,7 +36,8 @@ void win_get_pos(int *x, int *y);
 void win_get_pixels(int *x, int *y);
 void win_popup_menu(void);
 
-void win_copy(wchar *, int *attrs, int len);
+void win_open(const wchar *);
+void win_copy(const wchar *, int *attrs, int len);
 void win_paste(void);
 
 void win_set_timer(void_fn cb, uint ticks);

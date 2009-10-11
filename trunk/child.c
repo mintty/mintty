@@ -6,6 +6,7 @@
 
 #include "term.h"
 #include "config.h"
+#include "charset.h"
 
 #include <pwd.h>
 #include <pty.h>
@@ -14,19 +15,28 @@
 #include <utmp.h>
 #include <dirent.h>
 #include <pthread.h>
-#include <process.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/utsname.h>
+#include <sys/cygwin.h>
 
 #include <winbase.h>
+
+#if CYGWIN_VERSION_DLL_MAJOR < 1007
+#include <winnls.h>
+#include <wincon.h>
+#include <wingdi.h>
+#include <winuser.h>
+#endif
+
+extern HWND wnd;
 
 HANDLE child_event;
 
 static HANDLE proc_event;
 static pid_t pid;
 static int status;
-static int parent_fd = -1, child_fd = -1, log_fd = -1;
+static int pty_fd = -1, log_fd = -1;
 static int read_len;
 static char read_buf[4096];
 static struct utmp ut;
@@ -48,12 +58,12 @@ signal_thread(void *unused(arg))
 static void *
 read_thread(void *unused(arg))
 {
-  while ((read_len = read(parent_fd, read_buf, sizeof read_buf)) > 0) {
+  while ((read_len = read(pty_fd, read_buf, sizeof read_buf)) > 0) {
     SetEvent(child_event);
     WaitForSingleObject(proc_event, INFINITE);
   };
-  close(parent_fd);
-  parent_fd = -1;
+  close(pty_fd);
+  pty_fd = -1;
   return 0;
 }
 
@@ -142,7 +152,7 @@ nonstdfd(int fd)
 }
 
 char *
-child_create(char *argv[], const char *locale, struct winsize *winp)
+child_create(char *argv[], const char *lang, struct winsize *winp)
 {
   struct passwd *pw = getpwuid(getuid());
   char *cmd; 
@@ -175,13 +185,29 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
   }
 
   // Create the child process and pseudo terminal.
-  if (openpty (&parent_fd, &child_fd, 0, 0, winp) == -1)
-    error("allocate pseudo terminal device");
-  else if ((pid = fork()) == -1) // Fork failed.
+  if ((pid = forkpty(&pty_fd, 0, 0, winp)) == -1)
     error("create child process");
   else if (pid == 0) { // Child process.
-    close(parent_fd);
-    login_tty(child_fd);
+#if CYGWIN_VERSION_DLL_MAJOR < 1007
+    // The Cygwin 1.5 DLL's trick of allocating a console on an invisible
+    // "window station" no longer works on Windows 7 due to a bug that
+    // Microsoft don't intend to fix anytime soon.
+    // Hence, here's a hack that allocates a console for the child command
+    // and hides it. Annoyingly the console window still flashes up briefly.
+    // Cygwin 1.7 has a better workaround.
+    DWORD win_version = GetVersion();
+    win_version = ((win_version & 0xff) << 8) | ((win_version >> 8) & 0xff);
+    struct utsname un;
+    uname(&un);
+    if (win_version >= 0x0601 && un.release[2] == '5') {
+      if (AllocConsole()) {
+        HMODULE kernel = LoadLibrary("kernel32");
+        HWND (WINAPI *pGetConsoleWindow)(void) =
+          (void *)GetProcAddress(kernel, "GetConsoleWindow");
+        ShowWindowAsync(pGetConsoleWindow(), SW_HIDE);
+      }
+    }
+#endif
 
     // Reset signals
     signal(SIGINT, SIG_DFL);
@@ -195,10 +221,10 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
 
     setenv("TERM", "xterm", true);
     
-    if (locale) {
+    if (lang) {
       unsetenv("LC_ALL");
       unsetenv("LC_CTYPE");
-      setenv("LANG", locale, true);
+      setenv("LANG", lang, true);
     }
 
     // Set backspace keycode
@@ -220,8 +246,7 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
     exit(1);
   }
   else { // Parent process.
-    parent_fd = nonstdfd(parent_fd);
-    child_fd = nonstdfd(child_fd);
+    pty_fd = nonstdfd(pty_fd);
     
     child_event = CreateEvent(null, false, false, null);
     proc_event = CreateEvent(null, false, false, null);
@@ -241,7 +266,7 @@ child_create(char *argv[], const char *locale, struct winsize *winp)
       ut.ut_type = USER_PROCESS;
       ut.ut_pid = pid;
       ut.ut_time = time(0);
-      char *dev = ptsname(parent_fd);
+      char *dev = ptsname(pty_fd);
       if (dev) {
         if (strncmp(dev, "/dev/", 5) == 0)
           dev += 5;
@@ -305,8 +330,8 @@ child_is_parent(void)
 void
 child_write(const char *buf, int len)
 { 
-  if (parent_fd >= 0)
-    write(parent_fd, buf, len); 
+  if (pty_fd >= 0)
+    write(pty_fd, buf, len); 
   else if (!pid)
     exit(0);
 }
@@ -314,37 +339,57 @@ child_write(const char *buf, int len)
 void
 child_resize(struct winsize *winp)
 { 
-  if (parent_fd >= 0)
-    ioctl(parent_fd, TIOCSWINSZ, winp);
+  if (pty_fd >= 0)
+    ioctl(pty_fd, TIOCSWINSZ, winp);
 }
 
-void
-child_open(char *arg, int len)
+const wchar *
+child_conv_path(const wchar *wpath)
 {
-  arg[len] = 0;
-  if (*arg == '~') {
+  int wlen = wcslen(wpath);
+  int len = wlen * cs_cur_max;
+  char path[len];
+  len = cs_wcntombn(path, wpath, len, wlen);
+  path[len] = 0;
+  
+  char *exp_path;  // expanded path
+  if (*path == '~') {
     // Tilde expansion
-    char *name = arg + 1, *rest = strchr(arg, '/');
-    if (rest) *rest = 0;
-    struct passwd *pw = *name ? getpwnam(name) : getpwuid(getuid());
-    if (!pw) return;
-    char *home = pw->pw_dir ?: "";
-    if (rest) {
-      arg = alloca(strlen(home) + len);
-      sprintf(arg, "%s/%s", home, rest + 1);
-    }
+    char *name = path + 1;
+    char *rest = strchr(path, '/');
+    if (rest)
+      *rest++ = 0;
     else
-      arg = home;
-  }  
+      rest = "";
+    struct passwd *pw = *name ? getpwnam(name) : getpwuid(getuid());
+    char *home = pw ? pw->pw_dir : 0;
+    if (home)
+      asprintf(&exp_path, "%s/%s", home, rest);
+    else
+      exp_path = path;
+  }
+  else if (*path != '/' && pid) {
+    // Relative path: prepend child process' working directory
+    char proc_cwd[32];
+    sprintf(proc_cwd, "/proc/%u/cwd", pid);
+    char *cwd = realpath(proc_cwd, 0);
+    asprintf(&exp_path, "%s/%s", cwd, path);
+    free(cwd);
+  }
+  else
+    exp_path = path;
   
-  // Change to working directory of currrent foreground process.
-  char dir[24], old_dir[PATH_MAX + 1];
-  getcwd(old_dir, sizeof old_dir);
-  snprintf(dir, sizeof dir, "/proc/%u/cwd", tcgetpgrp(child_fd));
-  chdir(dir);
+#if CYGWIN_VERSION_DLL_MAJOR >= 1007
+  wchar *win_wpath = cygwin_create_path(CCP_POSIX_TO_WIN_W, exp_path);
+#else
+  char win_path[MAX_PATH];
+  cygwin_conv_to_win32_path(exp_path, win_path);
+  wchar *win_wpath = newn(wchar, MAX_PATH);
+  MultiByteToWideChar(0, 0, win_path, -1, win_wpath, MAX_PATH);
+#endif
   
-  // Invoke cygstart.
-  spawnl(_P_DETACH, "/bin/cygstart", "/bin/cygstart", arg, 0);
+  if (exp_path != path)
+    free(exp_path);
   
-  chdir(old_dir);
+  return win_wpath;
 }
