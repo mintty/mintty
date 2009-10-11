@@ -1,19 +1,19 @@
 mintty
 ------------------------------------------
-MinTTY is a terminal emulator for Cygwin. It is based on code from 
+mintty is a terminal emulator for Cygwin. It is based on code from 
 PuTTY 0.60 by Simon Tatham and team.
 
 Features include:
 * Xterm-compatible terminal emulation.
 * Native Windows user interface that tries to keep things simple.
+* Unicode support, not limited to the Basic Multilingual Plane
 * Drag & drop and copy & paste of text, files and folders. 
-* Mousewheel events can be sent as arrow keys.
 * Options are stored in a text file. No registry entries.
 * Window transparency.
 * Small executable size (currently <120K). 
 
 Runtime requirements:
-  cygwin-1.5.25-15
+  cygwin-1.7.0-62
 
 Build requirements:
   binutils-20080624-2
@@ -31,15 +31,15 @@ Canonical download:
 -------------------------------------------
 
 Build instructions:
-  unpack mintty-0.4.4-X-src.tar.bz2
+  unpack mintty-0.5.1-X-src.tar.bz2
     if you use setup to install this src package, it will be
     unpacked under /usr/src automatically
   cd /usr/src
-  cygport ./mintty-0.4.4-X.cygport all
+  cygport ./mintty-0.5.1-X.cygport all
 
 This will create:
-  /usr/src/mintty-0.4.4-X-src.tar.bz2
-  /usr/src/mintty-0.4.4-X.tar.bz2
+  /usr/src/mintty-0.5.1-X-src.tar.bz2
+  /usr/src/mintty-0.5.1-X.tar.bz2
 
 -------------------------------------------
 
@@ -48,15 +48,21 @@ Files included in the binary package:
   /etc/postinstall/mintty.sh
   /etc/preremove/mintty.sh
   /usr/bin/mintty.exe
-  /usr/share/doc/Cygwin/mintty-0.4.4.README
-  /usr/share/doc/mintty-0.4.4/COPYING
-  /usr/share/doc/mintty-0.4.4/LICENSE.Oxygen
-  /usr/share/doc/mintty-0.4.4/LICENSE.PuTTY
+  /usr/share/doc/Cygwin/mintty-0.5.1.README
+  /usr/share/doc/mintty-0.5.1/COPYING
+  /usr/share/doc/mintty-0.5.1/LICENSE.Oxygen
+  /usr/share/doc/mintty-0.5.1/LICENSE.PuTTY
   /usr/share/man/man1/mintty.1.gz
 
 ------------------
 
 Port Notes:
+
+----- mintty-0.5.1-1 -----
+* Added options for configuring Cygwin 1.7's locales.
+* Unicode support beyond the Basic Multilingual Plane.
+* Ctrl+click opening of files, folders, links.
+* Changed backspace key default to ^?.
 
 ----- mintty-0.4.4-1 -----
 * Tweaks and compatibility fixes.
@@ -107,5 +113,5 @@ getting this off the ground by adding MinTTY to Cygports.
 
 Cygwin port maintained by:  Andy Koppe  cygwin@cygwin.com
 Please address questions to the Cygwin mailing list at 
-<cygwin@cygwin.com> or to the MinTTY discussion group at
+<cygwin@cygwin.com> or to the mintty discussion group at
 http://groups.google.com/group/mintty-discuss.

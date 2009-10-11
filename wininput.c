@@ -28,26 +28,30 @@ win_update_menus(void)
   uint sel_enabled = term.selected ? MF_ENABLED : MF_GRAYED;
   EnableMenuItem(menu, IDM_OPEN, sel_enabled);
   ModifyMenu(
-    menu, IDM_COPY, MF_BYCOMMAND | MF_STRING | sel_enabled, IDM_COPY,
+    menu, IDM_COPY, MF_STRING | sel_enabled, IDM_COPY,
     cfg.edit_shortcuts ? "&Copy\tCtrl+Ins" : "&Copy"
   );
+
   uint paste_enabled =
     IsClipboardFormatAvailable(CF_TEXT) || 
-      IsClipboardFormatAvailable(CF_UNICODETEXT) ||
-      IsClipboardFormatAvailable(CF_HDROP)
-      ? MF_ENABLED : MF_GRAYED;
+    IsClipboardFormatAvailable(CF_UNICODETEXT) ||
+    IsClipboardFormatAvailable(CF_HDROP)
+    ? MF_ENABLED : MF_GRAYED;
   ModifyMenu(
-    menu, IDM_PASTE, MF_BYCOMMAND | MF_STRING | paste_enabled, IDM_PASTE,
+    menu, IDM_PASTE, MF_STRING | paste_enabled, IDM_PASTE,
     cfg.edit_shortcuts ? "&Paste\tShift+Ins" : "&Paste"
   );
-  EnableMenuItem(
-    menu, IDM_DEFSIZE,
+
+  uint defsize_enabled = 
     IsZoomed(wnd) || term.cols != cfg.cols || term.rows != cfg.rows
-  );
-  EnableMenuItem(
-    menu, IDM_FULLSCREEN,
+    ? MF_ENABLED : MF_GRAYED;
+  EnableMenuItem(menu, IDM_DEFSIZE, defsize_enabled);
+
+  uint fullscreen_checked =
     GetWindowLongPtr(wnd, GWL_STYLE) & WS_CAPTION
-  );
+    ? MF_UNCHECKED : MF_CHECKED;
+  CheckMenuItem(menu, IDM_FULLSCREEN, fullscreen_checked);
+
   uint options_enabled = config_wnd ? MF_GRAYED : MF_ENABLED;
   EnableMenuItem(menu, IDM_OPTIONS, options_enabled);
   EnableMenuItem(sysmenu, IDM_OPTIONS, options_enabled);
@@ -76,8 +80,8 @@ win_init_menus(void)
   InsertMenu(sysmenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
   InsertMenu(sysmenu, 0, MF_BYPOSITION | MF_ENABLED,
                          IDM_OPTIONS, "&Options...");
-  InsertMenu(sysmenu, SC_CLOSE, MF_BYCOMMAND | MF_ENABLED,
-                                IDM_DUPLICATE, "&Duplicate\tAlt+F2");
+  InsertMenu(sysmenu, SC_CLOSE, MF_ENABLED,
+                      IDM_DUPLICATE, "&Duplicate\tAlt+F2");
 }
 
 void

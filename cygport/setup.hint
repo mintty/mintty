@@ -1,11 +1,12 @@
 category: Shells
 requires: cygwin bash cygutils
 sdesc: "Terminal emulator with native Windows look and feel"
-ldesc: "MinTTY is a terminal emulator for Cygwin. It is based on code 
+ldesc: "Mintty is a terminal emulator for Cygwin. It is based on code 
 from PuTTY 0.60 by Simon Tatham and team.
 
 Features include:
 * Xterm-compatible terminal emulation.
+* Full Unicode support.
 * Native Windows user interface that tries to keep things simple.
 * Graphical options dialog. Options stored in a text file.
 * Drag & drop and copy & paste of text, files and folders.
