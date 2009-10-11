@@ -1,6 +1,6 @@
 mintty
 ------------------------------------------
-MinTTY is a terminal emulator for Cygwin. It is based on code from 
+mintty is a terminal emulator for Cygwin. It is based on code from 
 PuTTY 0.60 by Simon Tatham and team.
 
 Features include:
@@ -113,5 +113,5 @@ getting this off the ground by adding MinTTY to Cygports.
 
 Cygwin port maintained by:  Andy Koppe  cygwin@cygwin.com
 Please address questions to the Cygwin mailing list at 
-<cygwin@cygwin.com> or to the MinTTY discussion group at
+<cygwin@cygwin.com> or to the mintty discussion group at
 http://groups.google.com/group/mintty-discuss.
