@@ -341,6 +341,10 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
   ctrl_checkbox(
+    s, "Window commands (Alt+Fn keys)", 'w', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(alt_fn_shortcuts))
+  );
+  ctrl_checkbox(
     s, "Menu and fullscreen (Alt+Space/Enter)", 'm', P(0),
     dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
   );
@@ -492,6 +496,7 @@ int_settings[] = {
   {"CtrlAltIsAltGr", offcfg(ctrl_alt_is_altgr), false},
   {"AltSendsESC", offcfg(alt_sends_esc), false},
   {"WindowShortcuts", offcfg(window_shortcuts), true},
+  {"AltFnShortcuts", offcfg(alt_fn_shortcuts), true},
   {"EditShortcuts", offcfg(edit_shortcuts), true},
   {"ZoomShortcuts", offcfg(zoom_shortcuts), true},
   {"BoldAsBright", offcfg(bold_as_bright), true},

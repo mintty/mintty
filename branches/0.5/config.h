@@ -36,6 +36,7 @@ typedef struct {
   int scrollback_lines;
   int alt_screen_scroll;
   int window_shortcuts;
+  int alt_fn_shortcuts;
   int edit_shortcuts;
   int zoom_shortcuts;
   int ctrl_alt_is_altgr;

@@ -25,10 +25,19 @@ static HMENU menu, sysmenu;
 void
 win_update_menus(void)
 {
+  ModifyMenu(
+    sysmenu, IDM_DUPLICATE, 0, IDM_DUPLICATE,
+    cfg.alt_fn_shortcuts ? "&Duplicate\tAlt+F2" : "&Duplicate"
+  );
+  ModifyMenu(
+    sysmenu, SC_CLOSE, 0, SC_CLOSE,
+    cfg.alt_fn_shortcuts ? "&Close\tAlt+F4" : "&Close"
+  ); 
+
   uint sel_enabled = term.selected ? MF_ENABLED : MF_GRAYED;
   EnableMenuItem(menu, IDM_OPEN, sel_enabled);
   ModifyMenu(
-    menu, IDM_COPY, MF_STRING | sel_enabled, IDM_COPY,
+    menu, IDM_COPY, sel_enabled, IDM_COPY,
     cfg.edit_shortcuts ? "&Copy\tCtrl+Ins" : "&Copy"
   );
 
@@ -38,19 +47,30 @@ win_update_menus(void)
     IsClipboardFormatAvailable(CF_HDROP)
     ? MF_ENABLED : MF_GRAYED;
   ModifyMenu(
-    menu, IDM_PASTE, MF_STRING | paste_enabled, IDM_PASTE,
+    menu, IDM_PASTE, paste_enabled, IDM_PASTE,
     cfg.edit_shortcuts ? "&Paste\tShift+Ins" : "&Paste"
+  );
+
+  ModifyMenu(
+    menu, IDM_RESET, 0, IDM_RESET,
+    cfg.alt_fn_shortcuts ? "&Reset\tAlt+F8" : "&Reset"
   );
 
   uint defsize_enabled = 
     IsZoomed(wnd) || term.cols != cfg.cols || term.rows != cfg.rows
     ? MF_ENABLED : MF_GRAYED;
-  EnableMenuItem(menu, IDM_DEFSIZE, defsize_enabled);
+  ModifyMenu(
+    menu, IDM_DEFSIZE, defsize_enabled, IDM_DEFSIZE,
+    cfg.alt_fn_shortcuts ? "&Default size\tAlt+F10" : "&Default size"
+  );
 
   uint fullscreen_checked =
     GetWindowLongPtr(wnd, GWL_STYLE) & WS_CAPTION
     ? MF_UNCHECKED : MF_CHECKED;
-  CheckMenuItem(menu, IDM_FULLSCREEN, fullscreen_checked);
+  ModifyMenu(
+    menu, IDM_FULLSCREEN, fullscreen_checked, IDM_FULLSCREEN,
+    cfg.alt_fn_shortcuts ? "&Fullscreen\tAlt+F11" : "&Fullscreen"
+  );
 
   uint options_enabled = config_wnd ? MF_GRAYED : MF_ENABLED;
   EnableMenuItem(menu, IDM_OPTIONS, options_enabled);
@@ -68,11 +88,9 @@ win_init_menus(void)
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_SELALL, "&Select All");
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
-  AppendMenu(menu, MF_ENABLED, IDM_RESET, "&Reset\tAlt+F8");
-  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED,
-                   IDM_DEFSIZE, "&Default size\tAlt+F10");
-  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED,
-                   IDM_FULLSCREEN, "&Fullscreen\tAlt+F11");
+  AppendMenu(menu, MF_ENABLED, IDM_RESET, 0);
+  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_DEFSIZE, 0);
+  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN, 0);
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_OPTIONS, "&Options...");
 
@@ -80,8 +98,7 @@ win_init_menus(void)
   InsertMenu(sysmenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
   InsertMenu(sysmenu, 0, MF_BYPOSITION | MF_ENABLED,
                          IDM_OPTIONS, "&Options...");
-  InsertMenu(sysmenu, SC_CLOSE, MF_ENABLED,
-                      IDM_DUPLICATE, "&Duplicate\tAlt+F2");
+  InsertMenu(sysmenu, SC_CLOSE, MF_ENABLED, IDM_DUPLICATE, 0);
 }
 
 void
@@ -308,26 +325,27 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
   
   // Window shortcuts
-  if (alt && !ctrl && cfg.window_shortcuts) {
-    if (key == VK_RETURN)
-      send_syscommand(IDM_FULLSCREEN);
-    else if (key == VK_SPACE)
-      send_syscommand(SC_KEYMENU);
-  }
-
-  // Window commands
-  if (alt && !ctrl && VK_F1 <= key && key <= VK_F24) {
-    WPARAM cmd;
-    switch (key) {
-      when VK_F2:  cmd = IDM_DUPLICATE;
-      when VK_F4:  cmd = SC_CLOSE;
-      when VK_F8:  cmd = IDM_RESET;
-      when VK_F10: cmd = IDM_DEFSIZE;
-      when VK_F11: cmd = IDM_FULLSCREEN;
-      otherwise: return 1;
+  if (alt && !ctrl) {
+    if (cfg.window_shortcuts) {
+      if (key == VK_RETURN)
+        send_syscommand(IDM_FULLSCREEN);
+      else if (key == VK_SPACE)
+        send_syscommand(SC_KEYMENU);
     }
-    send_syscommand(cmd);
-    return 1;
+    if (cfg.alt_fn_shortcuts &&
+        VK_F1 <= key && key <= VK_F24) {
+      WPARAM cmd;
+      switch (key) {
+        when VK_F2:  cmd = IDM_DUPLICATE;
+        when VK_F4:  cmd = SC_CLOSE;
+        when VK_F8:  cmd = IDM_RESET;
+        when VK_F10: cmd = IDM_DEFSIZE;
+        when VK_F11: cmd = IDM_FULLSCREEN;
+        otherwise: return 1;
+      }
+      send_syscommand(cmd);
+      return 1;
+    }
   }
   
   // Font zooming
