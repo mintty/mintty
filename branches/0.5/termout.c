@@ -780,14 +780,15 @@ do_csi(uchar c)
             def_arg0 - 1), (term.dec_om ? 2 : 0));
       seen_disp_event();
     when 'J': {      /* ED: erase screen or parts of it */
-      if (arg0 == 3) /* Erase Saved Lines (xterm) */
+      if (arg0 == 3) { /* Erase Saved Lines (xterm) */
         term_clear_scrollback();
+        term.disptop = 0;
+      }
       else {
         bool below = arg0 == 0 || arg0 == 2;
         bool above = arg0 == 1 || arg0 == 2;
         term_erase_lots(false, above, below);
       }
-      term.disptop = 0;
       seen_disp_event();
     }
     when 'K': {      /* EL: erase line or parts of it */
