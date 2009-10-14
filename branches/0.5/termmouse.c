@@ -114,6 +114,11 @@ sel_spread_half(pos p, bool forward)
     when MS_SEL_LINE:
       if (forward) {
         termline *line = lineptr(p.y);
+        while (line->lattr & LATTR_WRAPPED) {
+          unlineptr(line);
+          line = lineptr(++p.y);
+          p.x = 0;
+        }
         int x = p.x;
         p.x = term.cols - 1;
         do {
@@ -122,8 +127,17 @@ sel_spread_half(pos p, bool forward)
         } while (++x < line->cols);
         unlineptr(line);
       }
-      else
+      else {
         p.x = 0;
+        while (p.y > -sblines()) {
+          termline *line = lineptr(p.y - 1);
+          bool wrapped = line->lattr & LATTR_WRAPPED;
+          unlineptr(line);
+          if (!wrapped)
+            break;
+          p.y--;
+        }
+      }
     default:
      /* Shouldn't happen. */
       break;
