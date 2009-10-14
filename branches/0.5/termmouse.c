@@ -97,25 +97,33 @@ sel_spread_half(pos p, bool forward)
       * In this mode, every character is a separate unit, except
       * for runs of spaces at the end of a non-wrapping line.
       */
-      termline *ldata = lineptr(p.y);
-      if (!(ldata->lattr & LATTR_WRAPPED)) {
-        termchar *q = ldata->chars + term.cols;
-        while (q > ldata->chars && q[-1].chr == ' ' && !q[-1].cc_next)
+      termline *line = lineptr(p.y);
+      if (!(line->lattr & LATTR_WRAPPED)) {
+        termchar *q = line->chars + term.cols;
+        while (q > line->chars && q[-1].chr == ' ' && !q[-1].cc_next)
           q--;
-        if (q == ldata->chars + term.cols)
+        if (q == line->chars + term.cols)
           q--;
-        if (p.x >= q - ldata->chars)
-          p.x = forward ? term.cols - 1 : q - ldata->chars;
+        if (p.x >= q - line->chars)
+          p.x = forward ? term.cols - 1 : q - line->chars;
       }
-      unlineptr(ldata);
+      unlineptr(line);
     }
     when MS_SEL_WORD:
       p = sel_spread_word(p, forward); 
     when MS_SEL_LINE:
-     /*
-      * In this mode, every line is a unit.
-      */
-      p.x = forward ? term.cols - 1 : 0;
+      if (forward) {
+        termline *line = lineptr(p.y);
+        int x = p.x;
+        p.x = term.cols - 1;
+        do {
+          if (get_char(line, x) != ' ')
+            p.x = x;
+        } while (++x < line->cols);
+        unlineptr(line);
+      }
+      else
+        p.x = 0;
     default:
      /* Shouldn't happen. */
       break;
@@ -229,18 +237,18 @@ static pos
 get_selpoint(const pos p)
 {
   pos sp = { .y = p.y + term.disptop, .x = p.x };
-  termline *ldata = lineptr(sp.y);
-  if ((ldata->lattr & LATTR_MODE) != LATTR_NORM)
+  termline *line = lineptr(sp.y);
+  if ((line->lattr & LATTR_MODE) != LATTR_NORM)
     sp.x /= 2;
 
  /*
   * Transform x through the bidi algorithm to find the _logical_
   * click point from the physical one.
   */
-  if (term_bidi_line(ldata, p.y) != null)
+  if (term_bidi_line(line, p.y) != null)
     sp.x = term.post_bidi_cache[p.y].backward[sp.x];
   
-  unlineptr(ldata);
+  unlineptr(line);
   return sp;
 }
 
