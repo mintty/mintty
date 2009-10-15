@@ -639,8 +639,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       LPRECT r = (LPRECT) lp;
       int width = r->right - r->left - extra_width - 2 * PADDING;
       int height = r->bottom - r->top - extra_height - 2 * PADDING;
-      int cols = max(1, width / font_width);
-      int rows = max(1, height / font_height);
+      int cols = max(1, (float)width / font_width + 0.5);
+      int rows = max(1, (float)height / font_height + 0.5);
       
       int ew = width - cols * font_width;
       int eh = height - rows * font_height;
