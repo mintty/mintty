@@ -641,26 +641,26 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       int height = r->bottom - r->top - extra_height - 2 * PADDING;
       int cols = max(1, width / font_width);
       int rows = max(1, height / font_height);
-
+      
       int ew = width - cols * font_width;
       int eh = height - rows * font_height;
-      if (ew != 0) {
-        if (wp == WMSZ_LEFT || wp == WMSZ_BOTTOMLEFT ||
-            wp == WMSZ_TOPLEFT)
-          r->left += ew;
-        else
-          r->right -= ew;
+      
+      if (wp >= WMSZ_BOTTOM) {
+        wp -= WMSZ_BOTTOM;
+        r->bottom -= eh;
       }
-      if (eh != 0) {
-        if (wp == WMSZ_TOP || wp == WMSZ_TOPRIGHT ||
-            wp == WMSZ_TOPLEFT)
-          r->top += eh;
-        else
-          r->bottom -= eh;
+      else if (wp >= WMSZ_TOP) {
+        wp -= WMSZ_TOP;
+        r->top += eh;
       }
-
+      
+      if (wp == WMSZ_RIGHT)
+        r->right -= ew;
+      else if (wp == WMSZ_LEFT)
+        r->left += ew;
+      
       win_update_tip(r->left + extra_width, r->top + extra_height, cols, rows);
-
+      
       return ew || eh;
     }
     when WM_SIZE: {
