@@ -702,6 +702,9 @@ set_modes(bool state)
         when 7728:       /* mintty only: Escape sends FS (instead of ESC) */
           compatibility(OTHER);
           term.escape_sends_fs = state;
+        when 7783:       /* mintty only: Shortcut override */
+          compatibility(OTHER);
+          term.shortcut_override = state;
         when 7787:       /* mintty only: Application mousewheel mode */
           compatibility(OTHER);
           term.app_wheel = state;

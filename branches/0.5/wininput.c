@@ -324,68 +324,76 @@ win_key_down(WPARAM wp, LPARAM lp)
     return 1;
   }
   
-  // Window shortcuts
-  if (alt && !ctrl) {
-    if (cfg.window_shortcuts) {
-      if (key == VK_RETURN)
+  if (!term.shortcut_override) {
+
+    // Window menu and fullscreen
+    if (cfg.window_shortcuts && alt && !ctrl) {
+      if (key == VK_RETURN) {
         send_syscommand(IDM_FULLSCREEN);
-      else if (key == VK_SPACE)
-        send_syscommand(SC_KEYMENU);
-    }
-    if (cfg.alt_fn_shortcuts &&
-        VK_F1 <= key && key <= VK_F24) {
-      WPARAM cmd;
-      switch (key) {
-        when VK_F2:  cmd = IDM_DUPLICATE;
-        when VK_F4:  cmd = SC_CLOSE;
-        when VK_F8:  cmd = IDM_RESET;
-        when VK_F10: cmd = IDM_DEFSIZE;
-        when VK_F11: cmd = IDM_FULLSCREEN;
-        otherwise: return 1;
+        return 1;
       }
-      send_syscommand(cmd);
+      else if (key == VK_SPACE) {
+        send_syscommand(SC_KEYMENU);
+        return 1;
+      }
+    }
+
+    // Alt+Fn shortcuts
+    if (cfg.alt_fn_shortcuts && alt && VK_F1 <= key && key <= VK_F24) {
+      if (mods == MDK_ALT) {
+        WPARAM cmd;
+        switch (key) {
+          when VK_F2:  cmd = IDM_DUPLICATE;
+          when VK_F4:  cmd = SC_CLOSE;
+          when VK_F8:  cmd = IDM_RESET;
+          when VK_F10: cmd = IDM_DEFSIZE;
+          when VK_F11: cmd = IDM_FULLSCREEN;
+          otherwise: return 1;
+        }
+        send_syscommand(cmd);
+      }
       return 1;
     }
+    
+    // Font zooming
+    if (cfg.zoom_shortcuts && mods == MDK_CTRL) {
+      int zoom;
+      switch (key) {
+        when VK_OEM_PLUS or VK_ADD:       zoom = 1;
+        when VK_OEM_MINUS or VK_SUBTRACT: zoom = -1;
+        when '0' or VK_NUMPAD0:           zoom = 0;
+        otherwise: goto not_zoom;
+      }
+      win_zoom_font(zoom);
+      return 1;
+      not_zoom:;
+    }
+    
+    // Scrollback
+    if (mods && mods == (mod_keys)cfg.scroll_mod &&
+        (term.which_screen == 0 || cfg.alt_screen_scroll)) {
+      WPARAM scroll;
+      switch (key) {
+        when VK_HOME:  scroll = SB_TOP;
+        when VK_END:   scroll = SB_BOTTOM;
+        when VK_PRIOR: scroll = SB_PAGEUP;
+        when VK_NEXT:  scroll = SB_PAGEDOWN;
+        when VK_UP:    scroll = SB_LINEUP;
+        when VK_DOWN:  scroll = SB_LINEDOWN;
+        otherwise: goto not_scroll;
+      }
+      SendMessage(wnd, WM_VSCROLL, scroll, 0);
+      return 1;
+      not_scroll:;
+    }
+    
+    // Copy&paste
+    if (cfg.edit_shortcuts && key == VK_INSERT) {
+      if (mods == MDK_CTRL) { term_copy(); return 1; }
+      if (mods == MDK_SHIFT) { win_paste(); return 1; }
+    }
   }
   
-  // Font zooming
-  if (cfg.zoom_shortcuts && mods == MDK_CTRL && !term.modify_other_keys) {
-    int zoom;
-    switch (key) {
-      when VK_OEM_PLUS or VK_ADD:       zoom = 1;
-      when VK_OEM_MINUS or VK_SUBTRACT: zoom = -1;
-      when '0' or VK_NUMPAD0:           zoom = 0;
-      otherwise: goto not_zoom;
-    }
-    win_zoom_font(zoom);
-    return 1;
-    not_zoom:;
-  }
-  
-  // Scrollback
-  if (mods && mods == (mod_keys)cfg.scroll_mod &&
-      (term.which_screen == 0 || cfg.alt_screen_scroll)) {
-    WPARAM scroll;
-    switch (key) {
-      when VK_HOME:  scroll = SB_TOP;
-      when VK_END:   scroll = SB_BOTTOM;
-      when VK_PRIOR: scroll = SB_PAGEUP;
-      when VK_NEXT:  scroll = SB_PAGEDOWN;
-      when VK_UP:    scroll = SB_LINEUP;
-      when VK_DOWN:  scroll = SB_LINEDOWN;
-      otherwise: goto not_scroll;
-    }
-    SendMessage(wnd, WM_VSCROLL, scroll, 0);
-    return 1;
-    not_scroll:;
-  }
-
-  // Copy&paste
-  if (cfg.edit_shortcuts && key == VK_INSERT) {
-    if (mods == MDK_CTRL) { term_copy(); return 1; }
-    if (mods == MDK_SHIFT) { win_paste(); return 1; }
-  }
-
   // Keycode buffers
   char buf[12];
   wchar wbuf[8];

@@ -124,9 +124,8 @@ term_reset(void)
   term.default_attr = term.save_attr = term.alt_save_attr = term.curr_attr =
     ATTR_DEFAULT;
   term.editing = term.echoing = false;
-  term.escape_sends_fs = term.app_escape_key = false;
-  term.app_keypad = term.app_cursor_keys = false;
-  term.app_wheel = false;
+  term.shortcut_override = term.escape_sends_fs = term.app_escape_key = false;
+  term.app_keypad = term.app_cursor_keys = term.app_wheel = false;
   term.modify_other_keys = 0;
   term.report_focus = term.report_ambig_width = 0;
 
