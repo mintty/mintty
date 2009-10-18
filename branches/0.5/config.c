@@ -327,30 +327,25 @@ setup_config_box(controlbox * b)
   * The Keys panel.
   */
   ctrl_settitle(b, "Keys", "Keys");
-
-  s = ctrl_getset(b, "Keys", "alt", null);
-  ctrl_columns(s, 2, 50, 50);
+  
+  s = ctrl_getset(b, "Keys", "keys", null);
+  ctrl_checkbox(
+    s, "Backspace sends ^H", 'b', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(backspace_sends_bs))
+  );
   ctrl_checkbox(
     s, "Lone Alt sends ESC", 'l', P(0),
     dlg_stdcheckbox_handler, I(offcfg(alt_sends_esc))
-  )->column = 0;
+  );
   ctrl_checkbox(
     s, "Ctrl+LeftAlt is AltGr", 'g', P(0),
     dlg_stdcheckbox_handler, I(offcfg(ctrl_alt_is_altgr))
-  )->column = 1;
+  );
 
   s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
   ctrl_checkbox(
-    s, "Window commands (Alt+Fn keys)", 'w', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(alt_fn_shortcuts))
-  );
-  ctrl_checkbox(
     s, "Menu and fullscreen (Alt+Space/Enter)", 'm', P(0),
     dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
-  );
-  ctrl_checkbox(
-    s, "Copy and paste (Ctrl/Shift+Ins)", 'y', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(edit_shortcuts))
   );
   ctrl_checkbox(
     s, "Zoom (Ctrl+plus/minus/zero)", 'z', P(0),
@@ -495,9 +490,8 @@ int_settings[] = {
   {"ConfirmExit", offcfg(confirm_exit), true},
   {"CtrlAltIsAltGr", offcfg(ctrl_alt_is_altgr), false},
   {"AltSendsESC", offcfg(alt_sends_esc), false},
+  {"BackspaceSendsBS", offcfg(backspace_sends_bs), false},
   {"WindowShortcuts", offcfg(window_shortcuts), true},
-  {"AltFnShortcuts", offcfg(alt_fn_shortcuts), true},
-  {"EditShortcuts", offcfg(edit_shortcuts), true},
   {"ZoomShortcuts", offcfg(zoom_shortcuts), true},
   {"BoldAsBright", offcfg(bold_as_bright), true},
   {"AllowBlinking", offcfg(allow_blinking), false},

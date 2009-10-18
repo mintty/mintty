@@ -94,6 +94,7 @@ term_last_nonempty_line(void)
 void
 term_reset(void)
 {
+  term.backspace_sends_bs = cfg.backspace_sends_bs;
   term.alt_x = term.alt_y = 0;
   term.savecurs.x = term.savecurs.y = 0;
   term.alt_savecurs.x = term.alt_savecurs.y = 0;
@@ -189,6 +190,8 @@ term_reconfig(void)
     cfg.scrollback_lines = new_cfg.scrollback_lines;
     term_resize(term.rows, term.cols);
   }
+  if (new_cfg.backspace_sends_bs != cfg.backspace_sends_bs)
+    term.backspace_sends_bs = new_cfg.backspace_sends_bs;
 }
 
 /*

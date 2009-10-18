@@ -27,18 +27,18 @@ win_update_menus(void)
 {
   ModifyMenu(
     sysmenu, IDM_DUPLICATE, 0, IDM_DUPLICATE,
-    cfg.alt_fn_shortcuts ? "&Duplicate\tAlt+F2" : "&Duplicate"
+    term.shortcut_override ? "&Duplicate" : "&Duplicate\tAlt+F2" 
   );
   ModifyMenu(
     sysmenu, SC_CLOSE, 0, SC_CLOSE,
-    cfg.alt_fn_shortcuts ? "&Close\tAlt+F4" : "&Close"
+    term.shortcut_override ? "&Close" : "&Close\tAlt+F4" 
   ); 
 
   uint sel_enabled = term.selected ? MF_ENABLED : MF_GRAYED;
   EnableMenuItem(menu, IDM_OPEN, sel_enabled);
   ModifyMenu(
     menu, IDM_COPY, sel_enabled, IDM_COPY,
-    cfg.edit_shortcuts ? "&Copy\tCtrl+Ins" : "&Copy"
+    term.shortcut_override ? "&Copy" : "&Copy\tCtrl+Ins"
   );
 
   uint paste_enabled =
@@ -48,12 +48,12 @@ win_update_menus(void)
     ? MF_ENABLED : MF_GRAYED;
   ModifyMenu(
     menu, IDM_PASTE, paste_enabled, IDM_PASTE,
-    cfg.edit_shortcuts ? "&Paste\tShift+Ins" : "&Paste"
+    term.shortcut_override ? "&Paste" : "&Paste\tShift+Ins"
   );
 
   ModifyMenu(
     menu, IDM_RESET, 0, IDM_RESET,
-    cfg.alt_fn_shortcuts ? "&Reset\tAlt+F8" : "&Reset"
+    term.shortcut_override ?  "&Reset" : "&Reset\tAlt+F8"
   );
 
   uint defsize_enabled = 
@@ -61,7 +61,7 @@ win_update_menus(void)
     ? MF_ENABLED : MF_GRAYED;
   ModifyMenu(
     menu, IDM_DEFSIZE, defsize_enabled, IDM_DEFSIZE,
-    cfg.alt_fn_shortcuts ? "&Default size\tAlt+F10" : "&Default size"
+    term.shortcut_override ? "&Default size" : "&Default size\tAlt+F10"
   );
 
   uint fullscreen_checked =
@@ -69,7 +69,7 @@ win_update_menus(void)
     ? MF_UNCHECKED : MF_CHECKED;
   ModifyMenu(
     menu, IDM_FULLSCREEN, fullscreen_checked, IDM_FULLSCREEN,
-    cfg.alt_fn_shortcuts ? "&Fullscreen\tAlt+F11" : "&Fullscreen"
+    term.shortcut_override ? "&Fullscreen" : "&Fullscreen\tAlt+F11"
   );
 
   uint options_enabled = config_wnd ? MF_GRAYED : MF_ENABLED;
@@ -339,7 +339,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
 
     // Alt+Fn shortcuts
-    if (cfg.alt_fn_shortcuts && alt && VK_F1 <= key && key <= VK_F24) {
+    if (alt && VK_F1 <= key && key <= VK_F24) {
       if (mods == MDK_ALT) {
         WPARAM cmd;
         switch (key) {
@@ -388,7 +388,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     
     // Copy&paste
-    if (cfg.edit_shortcuts && key == VK_INSERT) {
+    if (key == VK_INSERT) {
       if (mods == MDK_CTRL) { term_copy(); return 1; }
       if (mods == MDK_SHIFT) { win_paste(); return 1; }
     }
@@ -530,7 +530,9 @@ win_key_down(WPARAM wp, LPARAM lp)
       else
         term.modify_other_keys ? other_code('\t') : mod_csi('I');
     when VK_ESCAPE:
-      term.app_escape_key ? ss3('[') : ch(term.escape_sends_fs ? C('\\') : C('['));
+      term.app_escape_key
+      ? ss3('[')
+      : ch(term.escape_sends_fs ? C('\\') : C('['));
     when VK_PAUSE:
       if (shift || alt)
         return 0;
