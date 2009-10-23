@@ -31,15 +31,15 @@ Canonical download:
 -------------------------------------------
 
 Build instructions:
-  unpack mintty-0.5.1-X-src.tar.bz2
+  unpack mintty-0.5.2-X-src.tar.bz2
     if you use setup to install this src package, it will be
     unpacked under /usr/src automatically
   cd /usr/src
-  cygport ./mintty-0.5.1-X.cygport all
+  cygport ./mintty-0.5.2-X.cygport all
 
 This will create:
-  /usr/src/mintty-0.5.1-X-src.tar.bz2
-  /usr/src/mintty-0.5.1-X.tar.bz2
+  /usr/src/mintty-0.5.2-X-src.tar.bz2
+  /usr/src/mintty-0.5.2-X.tar.bz2
 
 -------------------------------------------
 
@@ -48,15 +48,19 @@ Files included in the binary package:
   /etc/postinstall/mintty.sh
   /etc/preremove/mintty.sh
   /usr/bin/mintty.exe
-  /usr/share/doc/Cygwin/mintty-0.5.1.README
-  /usr/share/doc/mintty-0.5.1/COPYING
-  /usr/share/doc/mintty-0.5.1/LICENSE.Oxygen
-  /usr/share/doc/mintty-0.5.1/LICENSE.PuTTY
+  /usr/share/doc/Cygwin/mintty-0.5.2.README
+  /usr/share/doc/mintty-0.5.2/COPYING
+  /usr/share/doc/mintty-0.5.2/LICENSE.Oxygen
+  /usr/share/doc/mintty-0.5.2/LICENSE.PuTTY
   /usr/share/man/man1/mintty.1.gz
 
 ------------------
 
 Port Notes:
+
+----- mintty-0.5.2-1 -----
+* Re-added option for ^H backspace.
+* Added control sequence for overriding all shortcuts.
 
 ----- mintty-0.5.1-1 -----
 * Added options for configuring Cygwin 1.7's locales.
