@@ -702,6 +702,9 @@ set_modes(bool state)
         when 7728:       /* mintty only: Escape sends FS (instead of ESC) */
           compatibility(OTHER);
           term.escape_sends_fs = state;
+        when 7783:       /* mintty only: Shortcut override */
+          compatibility(OTHER);
+          term.shortcut_override = state;
         when 7787:       /* mintty only: Application mousewheel mode */
           compatibility(OTHER);
           term.app_wheel = state;
@@ -780,14 +783,15 @@ do_csi(uchar c)
             def_arg0 - 1), (term.dec_om ? 2 : 0));
       seen_disp_event();
     when 'J': {      /* ED: erase screen or parts of it */
-      if (arg0 == 3) /* Erase Saved Lines (xterm) */
+      if (arg0 == 3) { /* Erase Saved Lines (xterm) */
         term_clear_scrollback();
+        term.disptop = 0;
+      }
       else {
         bool below = arg0 == 0 || arg0 == 2;
         bool above = arg0 == 1 || arg0 == 2;
         term_erase_lots(false, above, below);
       }
-      term.disptop = 0;
       seen_disp_event();
     }
     when 'K': {      /* EL: erase line or parts of it */

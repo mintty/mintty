@@ -188,6 +188,7 @@ struct term {
   bool in_vbell;
   bool seen_disp_event;
 
+  bool shortcut_override;
   bool backspace_sends_bs;
   bool escape_sends_fs;
   bool app_escape_key;

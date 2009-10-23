@@ -93,10 +93,7 @@ cs_descs[] = {
   {     949, "Korean"},
 };
 
-const char *
-charset_menu[lengthof(cs_descs) + 4] = {
-  "(Default)"
-};
+const char *charset_menu[lengthof(cs_descs) + 4];
 
 const char *
 locale_menu[] = {
@@ -261,6 +258,8 @@ cs_init(void)
   GetLocaleInfo(
     LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, system_locale + 3, 2
   );
+  
+  charset_menu[0] = "(Default)";
   
   // Fill in the charset menu.
   const char **p = charset_menu + 1;
