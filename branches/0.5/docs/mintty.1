@@ -6,7 +6,7 @@
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
 .ad l
-.TH mintty 1 2009-10-10 0.5.1 Cygwin
+.TH mintty 1 2009-10-23 0.5.2 Cygwin
 
 .SH NAME
 
@@ -153,6 +153,16 @@ Text, files and directories can be dropped into the mintty window.
 They are inserted in the same way as if they were pasted from the clipboard.
 
 
+.SS Opening files, directories and URLs
+
+Files, directories and URLs can be opened either by holding \fBCtrl\fP while
+left-clicking on them, or by selecting them and choosing the \fBOpen\fP
+command from the context menu.
+Please note that opening a file or directory with a relative paths only works
+correctly if the path refers to the current working directory of the process
+invoked by mintty.
+
+
 .SS Font zoom
 
 The font size can be increased or decreased using the keyboard shortcuts
@@ -207,6 +217,56 @@ can be accessed.
 The \fITERM\fP variable for the child process is set to "xterm", so that
 programs that pay attention to it expect xterm keycodes and output
 xterm-compatible control sequences.
+
+
+.SS Shortcuts
+
+An overview of all the keyboard shortcuts.
+
+.TP
+\fBWindow commands\fP
+
+.RS
+.PD 0
+.IP "\- \fBAlt+F2\fP: Duplicate"
+.IP "\- \fBAlt+F4\fP: Close"
+.IP "\- \fBAlt+F8\fP: Reset"
+.IP "\- \fBAlt+F10\fP: Default size"
+.IP "\- \fBAlt+F11\fP or \fBAlt+Enter\fP: Fullscreen"
+.IP "\- \fBAlt+Space\fP: Window menu"
+.RE
+
+.TP
+\fBScrollback\fP
+
+.RS
+.PD 0
+.IP "\- \fBShift+Up\fP: Line up"
+.IP "\- \fBShift+Down\fP: Line down"
+.IP "\- \fBShift+PgUp\fP: Page up"
+.IP "\- \fBShift+PgDown\fP: Page down"
+.IP "\- \fBShift+Home\fP: Top"
+.IP "\- \fBShift+End\fP: Bottom"
+.RE
+
+.TP
+\fBCopy and paste\fP
+
+.RS
+.PD 0
+.IP "\- \fBCtrl+Ins\fP: Copy"
+.IP "\- \fBShift+Ins\fP: Paste"
+.RE
+
+.TP
+\fBFont zoom\fP
+
+.RS
+.PD 0
+.IP "\- \fBCtrl+plus\fP: Zoom in"
+.IP "\- \fBCtrl+minus\fP: Zoom out"
+.IP "\- \fBCtrl+zero\fP: Back to configured font size"
+.RE
 
 
 .SH CONFIGURATION
@@ -352,6 +412,12 @@ effect.
 Settings controlling keyboard behaviour.
 
 .TP
+\fBBackspace sends ^H\fP (BackspaceSendsBS=0)
+By default, mintty sends \fB^?\fP as the keycode for the backspace key.
+If this option is enabled, \fB^H\fP is sent instead.
+This also changes the Ctrl+Backspace code from \fB^_\fP to \fB^?\fP.
+
+.TP
 \fBLone Alt sends ESC\fP (AltSendsESC=0)
 The Alt key pressed on its own can be set to send the escape character
 \fB^[\fP.
@@ -376,52 +442,13 @@ The "standard" Windows behaviour can be restored by ticking the checkbox here.
 The setting makes no difference for keys without AltGr key bindings
 (e.g. any key in the standard US layout).
 
-
-.TP
-\fBWindow command shortcuts\fP (AltFnShortcuts=1)
-Checkbox for enabling the following shortcuts:
-
-.RS
-.PD 0
-.IP "\- \fBAlt+F2\fP: Duplicate"
-.IP "\- \fBAlt+F4\fP: Close"
-.IP "\- \fBAlt+F8\fP: Reset"
-.IP "\- \fBAlt+F10\fP: Default size"
-.IP "\- \fBAlt+F11\fP: Fullscreen"
-.RE
-
-
 .TP
 \fBMenu and fullscreen shortcuts\fP (WindowShortcuts=1)
-Checkbox for enabling a couple more window shortcuts:
-
-.RS
-.PD 0
-.IP "\- \fBAlt+Space\fP: Window menu"
-.IP "\- \fBAlt+Enter\fP: Fullscreen"
-.RE
-
-
-.TP
-\fBCopy and paste shortcuts\fP (EditShortcuts=1)
-Checkbox for enabling the copy and paste shortcuts.
-
-.RS
-.PD 0
-.IP "\- \fBCtrl+Ins\fP: Copy"
-.IP "\- \fBShift+Ins\fP: Paste"
-.RE
+Checkbox for enabling the \fBAlt+Space\fP and \fBAlt+Enter\fP shortcuts.
 
 .TP
 \fBZoom shortcuts\fP (ZoomShortcuts=1)
-Checkbox for enabling the font zooming shortcuts.
-
-.RS
-.PD 0
-.IP "\- \fBCtrl+plus\fP: Zoom in"
-.IP "\- \fBCtrl+minus\fP: Zoom out"
-.IP "\- \fBCtrl+zero\fP: Reset zoom to configured font size"
-.RE
+Checkbox for enabling the font zooming shortcuts \fBCtrl+plus/minus/zero\fP.
 
 .TP
 \fBModifier for scrolling\fP (ScrollMod=1)
