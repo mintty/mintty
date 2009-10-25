@@ -375,30 +375,44 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
       return;
     if (term.selected)
       p = term.sel_end;
-    int y = p.y += term.disptop;
-    if (y < 0)
+    
+    p.y += term.disptop;
+    if (p.y < 0)
       return;
-    pos p0 = term.curs;
-    int y0 = p0.y, dy = y - y0;
-    if (dy < 0) {
-      do {
-        if (!(lineptr(y)->lattr & LATTR_WRAPPED))
-          return;
-      } while (++y < y0);
-    }
-    else {
-      while (y-- > y0) {
-        if (!(lineptr(y)->lattr & LATTR_WRAPPED))
-          return;
-      }
-    }
+    
     static pos last_p;
-    if (state != MS_SEL_CHAR)
-      p0 = last_p;
+    pos p0 = state == MS_SEL_CHAR ? term.curs : last_p;
     last_p = p;
-    int diff = (p.y - p0.y) * term.cols + (p.x - p0.x);
-    if (diff)
-      send_keys(diff < 0 ? "\e[D" : "\e[C", 3, abs(diff), false);
+    
+    bool forward = posle(p0, p);
+    pos end = forward ? p : p0;
+    p = forward ? p0 : p;
+    
+    uint count = 0;
+    while (p.y != end.y) {
+      termline *line = lineptr(p.y);
+      if (!(line->lattr & LATTR_WRAPPED)) {
+        unlineptr(line);
+        return;
+      }
+      int cols = term.cols - ((line->lattr & LATTR_WRAPPED2) != 0);
+      for (int x = p.x; x < cols; x++) {
+        if (line->chars[x].chr != UCSWIDE)
+          count++;
+      }
+      p.y++;
+      p.x = 0;
+      unlineptr(line);
+    }
+    termline *line = lineptr(p.y);
+    for (int x = p.x; x < end.x; x++) {
+      if (line->chars[x].chr != UCSWIDE)
+        count++;
+    }
+    unlineptr(line);
+    
+    if (count)
+      send_keys(forward ? "\e[C" : "\e[D", 3, count, false);
   }
 }
 
