@@ -262,6 +262,10 @@ get_selpoint(const pos p)
   if (term_bidi_line(line, p.y) != null)
     sp.x = term.post_bidi_cache[p.y].backward[sp.x];
   
+  // Back to previous cell if current one is second half of a wide char
+  if (line->chars[sp.x].chr == UCSWIDE)
+    sp.x--;
+  
   unlineptr(line);
   return sp;
 }
@@ -373,12 +377,8 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
     if (!cfg.clicks_place_cursor || term.which_screen != 0 ||
         term.app_cursor_keys || term.editing)
       return;
-    if (term.selected)
-      p = term.sel_end;
     
-    p.y += term.disptop;
-    if (p.y < 0)
-      return;
+    p = term.selected ? term.sel_end : get_selpoint(p);
     
     static pos last_p;
     pos p0 = state == MS_SEL_CHAR ? term.curs : last_p;
