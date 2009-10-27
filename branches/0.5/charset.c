@@ -50,7 +50,7 @@ cs_names[] = {
   {CP_UTF8, "UTF8"},
   {  20866, "KOI8"},
   // Not supported by Cygwin
-  {  54396, "GB18030"},
+  {  54936, "GB18030"},
   { CP_ACP, "ANSI"},
   { CP_OEMCP, "OEM"},
 };
