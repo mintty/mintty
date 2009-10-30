@@ -257,12 +257,13 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Looks", "trans", "Transparency");
   ctrl_radiobuttons(
-    s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
+    s, null, '\0', 5, P(0), dlg_stdradiobutton_handler,
     I(offcfg(transparency)),
     "Off", 'o', I(0),
     "Low", 'l', I(1),
-    "Medium", 'm', I(2), 
+    "Med", 'm', I(2), 
     "High", 'h', I(3), 
+    win_is_glass_available() ? "Glass" : null, 'g', I(-1), 
     null
   );
   ctrl_checkbox(
@@ -272,7 +273,7 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Looks", "curtype", "Cursor");
   ctrl_radiobuttons(
-    s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
+    s, null, '\0', 5, P(0), dlg_stdradiobutton_handler,
     I(offcfg(cursor_type)),
     "Line", 'n', I(CUR_LINE), 
     "Block", 'k', I(CUR_BLOCK),

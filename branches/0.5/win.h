@@ -44,4 +44,6 @@ void win_set_timer(void_fn cb, uint ticks);
 
 void win_show_about(void);
 
+bool win_is_glass_available(void);
+
 #endif

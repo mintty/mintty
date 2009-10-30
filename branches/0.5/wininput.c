@@ -64,9 +64,7 @@ win_update_menus(void)
     term.shortcut_override ? "&Default size" : "&Default size\tAlt+F10"
   );
 
-  uint fullscreen_checked =
-    GetWindowLongPtr(wnd, GWL_STYLE) & WS_CAPTION
-    ? MF_UNCHECKED : MF_CHECKED;
+  uint fullscreen_checked = win_is_fullscreen() ? MF_CHECKED : MF_UNCHECKED;
   ModifyMenu(
     menu, IDM_FULLSCREEN, fullscreen_checked, IDM_FULLSCREEN,
     term.shortcut_override ? "&Fullscreen" : "&Fullscreen\tAlt+F11"
