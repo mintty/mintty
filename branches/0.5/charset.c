@@ -23,8 +23,6 @@ static const char *env_locale, *default_locale;
 static bool use_locale;
 #endif
 
-static char system_locale[] = "xx_XX";
-
 bool cs_ambig_wide;
 int cs_cur_max;
 
@@ -93,15 +91,8 @@ cs_descs[] = {
   {     949, "Korean"},
 };
 
+const char *locale_menu[8];
 const char *charset_menu[lengthof(cs_descs) + 4];
-
-const char *
-locale_menu[] = {
-  "(None)",
-  system_locale,
-  "C",
-  0
-};
 
 static void
 strtoupper(char *dst, const char *src)
@@ -221,7 +212,61 @@ correct_locale(char *locale)
     locale[0] = 0;
 }
 
-const char *
+static void
+init_locale_menu(void)
+{
+  uint count = 0;
+  
+  void add_lcid(LCID lcid) {
+    char locale[6];
+    if (!GetLocaleInfo(lcid, LOCALE_SISO639LANGNAME, locale, 3) ||
+        !GetLocaleInfo(lcid, LOCALE_SISO3166CTRYNAME, locale + 3, 3))
+      return;
+    locale[2] = '_';
+    for (uint i = 1; i < count; i++)
+      if (!strcmp(locale, locale_menu[i]))
+        return;
+    locale_menu[count++] = strdup(locale);
+  }
+  
+  HMODULE kernel = LoadLibrary("kernel32");
+  LANGID WINAPI (*pGetUserDefaultUILanguage)(void) = 
+    (void *)GetProcAddress(kernel, "GetUserDefaultUILanguage");
+  LANGID WINAPI (*pGetSystemDefaultUILanguage)(void) = 
+    (void *)GetProcAddress(kernel, "GetSystemDefaultUILanguage");
+  
+  locale_menu[count++] = "(None)";
+  if (pGetUserDefaultUILanguage)
+    add_lcid(pGetUserDefaultUILanguage());
+  add_lcid(LOCALE_USER_DEFAULT);
+  add_lcid(LOCALE_SYSTEM_DEFAULT);
+  if (pGetSystemDefaultUILanguage)
+    add_lcid(pGetSystemDefaultUILanguage());
+  locale_menu[count++] = "C";
+}
+
+static void
+init_charset_menu(void)
+{
+  charset_menu[0] = "(Default)";
+  
+  const char **p = charset_menu + 1;
+  for (uint i = 0; i < lengthof(cs_descs); i++) {
+    uint id = cs_descs[i].id;
+    if (valid_cs(id))
+      asprintf((char **)p++, "%s (%s)", cs_name(id), cs_descs[i].desc);
+  }
+  
+  const char *oem_cs = cs_name(GetOEMCP());
+  if (*oem_cs == 'C')
+    asprintf((char **)p++, "%s (OEM codepage)", oem_cs);
+
+  const char *ansi_cs = cs_name(GetACP());
+  if (*ansi_cs == 'C')
+    asprintf((char **)p++, "%s (ANSI codepage)", ansi_cs);
+}
+
+static const char *
 getlocenv(const char *name)
 {
   const char *val = getenv(name);
@@ -250,33 +295,10 @@ cs_init(void)
   char *dot = strchr(locale, '.');
   char *charset = dot ? dot + 1 : "";
   env_codepage = cs_codepage(locale, charset);
-
-  // Fetch POSIX name of Windows locale.
-  GetLocaleInfo(
-    LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME, system_locale, 2
-  );
-  GetLocaleInfo(
-    LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, system_locale + 3, 2
-  );
   
-  charset_menu[0] = "(Default)";
-  
-  // Fill in the charset menu.
-  const char **p = charset_menu + 1;
-  for (uint i = 0; i < lengthof(cs_descs); i++) {
-    uint id = cs_descs[i].id;
-    if (valid_cs(id))
-      asprintf((char **)p++, "%s (%s)", cs_name(id), cs_descs[i].desc);
-  }
-  
-  const char *oem_cs = cs_name(GetOEMCP());
-  if (*oem_cs == 'C')
-    asprintf((char **)p++, "%s (OEM codepage)", oem_cs);
-
-  const char *ansi_cs = cs_name(GetACP());
-  if (*ansi_cs == 'C')
-    asprintf((char **)p++, "%s (ANSI codepage)", ansi_cs);
-  
+  init_locale_menu();
+  init_charset_menu();
+    
   return cs_config() ?: lang;
 }
 
