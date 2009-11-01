@@ -1118,7 +1118,7 @@ do_colour_osc(uint i)
     s += len;
   }
   uint rgb, r, g, b;
-  if (strcmp(s, "?") == 0) {
+  if (!strcmp(s, "?")) {
     ldisc_printf(0, "\e]%u;", term.esc_args[0]);
     if (has_index_arg)
       ldisc_printf(0, "%u;", i);
@@ -1141,13 +1141,19 @@ static void
 do_osc(void)
 {
   if (!term.osc_w) { // "wordness" is ignored
-    term.osc_string[term.osc_strlen] = 0;
+    char *s = term.osc_string;
+    s[term.osc_strlen] = 0;
     switch (term.esc_args[0]) {
-      when 0 or 2 or 21: win_set_title(term.osc_string);  // ignore icon title
+      when 0 or 2 or 21: win_set_title(s);  // ignore icon title
       when 4:  do_colour_osc(0);
       when 10: do_colour_osc(FG_COLOUR_I);
       when 11: do_colour_osc(BG_COLOUR_I);
       when 12: do_colour_osc(CURSOR_COLOUR_I);
+      when 7776:
+        if (strcmp(s, "?"))
+          cs_set_locale(s);
+        else
+          ldisc_printf(0, "\e]7776;%s\e\\", cs_set_locale(0));
     }
   }
 }
