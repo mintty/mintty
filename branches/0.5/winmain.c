@@ -505,16 +505,23 @@ win_reconfig(void)
     ldisc_send(cs_ambig_wide ? "\e[2W" : "\e[1W", 4, 0);
 }
 
+uint
+win_get_font_size(void)
+{
+  return abs(font_size);
+}
+
+void
+win_set_font_size(int size)
+{
+  font_size = size ? sgn(font_size) * min(size, 72) : cfg.font.size;
+  reset_window(2);
+}
+
 void
 win_zoom_font(int zoom)
 {
-  if (!zoom)
-    font_size = cfg.font.size;
-  else if (abs(font_size) + zoom <= 1)
-    font_size = sgn(font_size);
-  else 
-    font_size += sgn(font_size) * zoom;
-  reset_window(2);
+  win_set_font_size(zoom ? max(1, abs(font_size) + zoom) : 0);
 }
 
 static bool

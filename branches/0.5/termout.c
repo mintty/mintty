@@ -1149,11 +1149,24 @@ do_osc(void)
       when 10: do_colour_osc(FG_COLOUR_I);
       when 11: do_colour_osc(BG_COLOUR_I);
       when 12: do_colour_osc(CURSOR_COLOUR_I);
+      when 7770:
+        if (!strcmp(s, "?"))
+          ldisc_printf(0, "\e]7770;%u\e\\", win_get_font_size());
+        else {
+          char *end;
+          int i = strtol(s, &end, 10);
+          if (*end)
+            ; // Ignore if parameter contains unexpected characters
+          else if (*s == '+' || *s == '-')
+            win_zoom_font(i);
+          else
+            win_set_font_size(i);
+        }
       when 7776:
-        if (strcmp(s, "?"))
-          cs_set_locale(s);
-        else
+        if (!strcmp(s, "?"))
           ldisc_printf(0, "\e]7776;%s\e\\", cs_set_locale(0));
+        else
+          cs_set_locale(s);
     }
   }
 }
