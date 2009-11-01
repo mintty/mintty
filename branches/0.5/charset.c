@@ -55,7 +55,9 @@ cs_names[] = {
   // Not supported by Cygwin
   {  54936, "GB18030"},
   { CP_ACP, "ANSI"},
+  { CP_ACP, "ACP"},
   { CP_OEMCP, "OEM"},
+  { CP_OEMCP, "OCP"},
 };
 
 static const struct {
