@@ -28,7 +28,7 @@ void win_invalidate_all(void);
 void win_move(int x, int y);
 void win_resize(int rows, int cols);
 void win_zoom_font(int zoom);
-void win_set_zoom(bool);
+void win_maximise(int);
 void win_set_zorder(bool top);
 void win_set_iconic(bool);
 bool win_is_iconic(void);

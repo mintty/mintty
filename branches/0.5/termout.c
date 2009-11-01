@@ -938,7 +938,7 @@ do_csi(uchar c)
             }
           when 9:
             if (nargs >= 2)
-              win_set_zoom(arg1 != 0);
+              win_maximise(arg1);
           when 11:
             ldisc_send(win_is_iconic() ? "\e[1t" : "\e[2t", 4, 0);
           when 13:

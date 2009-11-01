@@ -113,17 +113,6 @@ win_set_iconic(bool iconic)
 }
 
 /*
- * Maximise or restore the window in response to a server-side
- * request.
- */
-void
-win_set_zoom(bool zoom)
-{
-  if (zoom ^ IsZoomed(wnd))
-    ShowWindow(wnd, zoom ? SW_MAXIMIZE : SW_RESTORE);
-}
-
-/*
  * Move the window in response to a server-side request.
  */
 void
@@ -361,11 +350,20 @@ enable_glass(bool enabled)
 }
 
 /*
+ * When the window is fullscreen, there's no caption.
+ */
+bool
+win_is_fullscreen(void)
+{
+  return !(GetWindowLongPtr(wnd, GWL_STYLE) & WS_CAPTION);
+}
+
+/*
  * Go full-screen. This should only be called when we are already
  * maximised.
  */
 static void
-make_fullsceen(void)
+make_fullscreen(void)
 {
  /* Remove the window furniture. */
   DWORD style = GetWindowLongPtr(wnd, GWL_STYLE);
@@ -406,27 +404,23 @@ clear_fullsceen(void)
 }
 
 /*
- * Toggle full-screen mode.
+ * Maximise or restore the window in response to a server-side.
+ * Argument value of 2 means go fullscreen.
  */
-static void
-flip_fullsceen(void)
+void
+win_maximise(int max)
 {
   if (IsZoomed(wnd)) {
-    if (GetWindowLongPtr(wnd, GWL_STYLE) & WS_CAPTION)
-      make_fullsceen();
-    else
+    if (!max)
       ShowWindow(wnd, SW_RESTORE);
+    else if (max == 2 && !win_is_fullscreen())
+      make_fullscreen();
   }
-  else {
-    SendMessage(wnd, WM_FULLSCR_ON_MAX, 0, 0);
+  else if (max) {
+    if (max == 2)
+      SendMessage(wnd, WM_FULLSCR_ON_MAX, 0, 0);
     ShowWindow(wnd, SW_MAXIMIZE);
   }
-}
-
-bool
-win_is_fullscreen(void)
-{
-  return !(GetWindowLongPtr(wnd, GWL_STYLE) & WS_CAPTION);
 }
 
 /*
@@ -572,7 +566,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
           win_update();
         when IDM_RESET: reset_term();
         when IDM_DEFSIZE: default_size();
-        when IDM_FULLSCREEN: flip_fullsceen();
+        when IDM_FULLSCREEN: win_maximise(win_is_fullscreen() ? 0 : 2);
         when IDM_OPTIONS: win_open_config();
         when IDM_DUPLICATE:
           spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv); 
@@ -711,7 +705,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         clear_fullsceen();
       if (wp == SIZE_MAXIMIZED && fullscr_on_max) {
         fullscr_on_max = false;
-        make_fullsceen();
+        make_fullscreen();
       }
       int new_width = LOWORD(lp) - 2 * PADDING;
       int new_height = HIWORD(lp) - 2 * PADDING;
