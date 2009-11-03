@@ -240,10 +240,7 @@ static pos
 box_pos(pos p)
 {
   p.y = min(max(0, p.y), term.rows - 1);
-  p.x =
-    p.x < 0
-    ? (p.y > 0 ? (--p.y, term.cols - 1) : 0)
-    : min(p.x, term.cols - 1);
+  p.x = min(max(0, p.x), term.cols - 1);
   return p;
 }
 
