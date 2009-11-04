@@ -440,8 +440,11 @@ term_mouse_move(mouse_button b, mod_keys mods, pos p)
       term.sel_scroll = p.y < 0 ? p.y : p.y - term.rows + 1;
       term.sel_pos = bp;
     }
-    else    
+    else   { 
       term.sel_scroll = 0;
+      if (p.x < 0 && p.y + term.disptop > term.sel_anchor.y)
+        bp = (pos){.y = p.y - 1, .x = term.cols - 1};
+    }
     sel_drag(get_selpoint(bp));
     win_update();
   }
