@@ -6,7 +6,7 @@
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
 .ad l
-.TH mintty 1 2009-10-23 0.5.2 Cygwin
+.TH mintty 1 2009-11-06 0.5.3 Cygwin
 
 .SH NAME
 
@@ -314,7 +314,11 @@ Window transparency level, with the following choices:
 .IP "\- \fBLow\fP (1)"
 .IP "\- \fBMedium\fP (2)"
 .IP "\- \fBHigh\fP (3)"
+.IP "\- \fBGlass\fP (-1)"
 .RE
+
+The \fBGlass\P option is only available on Vista and above with desktop
+compositing enabled.
 
 .TP
 \fBOpaque when focused\fP (OpaqueWhenFocused=0)
@@ -901,6 +905,23 @@ sequence #keycode
 .RE
 
 
+.SS Shortcut override mode
+
+When shortcut override mode is on, all shortcut key combinations are sent to
+the application instead of triggering window commands.
+
+.RS
+.TS
+tab(#) nospaces;
+LB        LB
+LfC       LfC.
+sequence #override
+^[[?7783l#off
+^[[?7783h#on
+.TE
+.RE
+
+
 .SS Ambiguous width reporting
 
 Applications can ask to be notified when the width of the so-called
@@ -917,8 +938,57 @@ sequence #reporting
 .TE
 .RE
 
-When enabled, '\fC^[[1W\fP' is sent when changing to an "ambiguous narrow"
-font and '\fC^[[2W\fP' is sent when changing to an "ambiguous wide" font.
+When enabled, \fC^[[1W\fP is sent when changing to an "ambiguous narrow"
+font and \fC^[[2W\fP is sent when changing to an "ambiguous wide" font.
+
+
+.SS Font size 
+
+These OSC sequences can be used to set and query font size:
+
+.RS
+.TS
+tab(#) nospaces;
+LB                  LB
+LfC                 L.
+sequence            #font size
+^[]7770;?^G         #query
+^[]7770;\fInum\fP^G #set to \fInum\fP
+^[]7770;+\fInum\fP^G#increase by \fInum\fP
+^[]7770;-\fInum\fP^G#decrease by \fInum\fP
+^[]7770;^G          #default
+.TE
+.RE
+
+As usual, OSC sequences can also be terminated with \fC^[\\\fP (ST) instead
+of \fC^G\fP.
+When the font size is queried, a sequence that would restore the current size
+is sent, terminated with ST: \fC^[]7700;\fInum\fP^[\\\fR.
+
+
+.SS Locale
+
+The locale and charset used by the terminal can be queried or changed using
+these sequences:
+
+.RS
+.TS
+tab(#) nospaces;
+LB                  LB
+LfC                 L.
+sequence           #locale
+^[]7776;?^G        #query
+^[]7776;\fIloc\fP^G#set to \fIloc\fP
+^[]7776;^G         #default
+.TE
+.RE
+
+The locale string used here should take the same format as in the locale
+environment variables such as \fILANG\fP.
+When the locale is queried, a sequence that would set the current locale 
+is sent, e.g. \fC^[]7776;C.UTF-8^[\\\fP.
+An empty \fIloc\fP string selects the locale configured in the options or the
+environment.
 
 
 .SS Cursor style
