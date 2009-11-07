@@ -448,7 +448,7 @@ static void
 update_transparency(void)
 {
   if (pSetLayeredWindowAttributes) {
-    uchar trans = cfg.transparency > 0;
+    int trans = max(cfg.transparency, 0);
     SetWindowLong(wnd, GWL_EXSTYLE, trans ? WS_EX_LAYERED : 0);
     if (trans) {
       bool opaque = (cfg.opaque_when_focused && term.has_focus);
