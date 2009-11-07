@@ -702,6 +702,9 @@ set_modes(bool state)
         when 7728:       /* mintty only: Escape sends FS (instead of ESC) */
           compatibility(OTHER);
           term.escape_sends_fs = state;
+        when 7783:       /* mintty only: Shortcut override */
+          compatibility(OTHER);
+          term.shortcut_override = state;
         when 7787:       /* mintty only: Application mousewheel mode */
           compatibility(OTHER);
           term.app_wheel = state;
@@ -780,14 +783,15 @@ do_csi(uchar c)
             def_arg0 - 1), (term.dec_om ? 2 : 0));
       seen_disp_event();
     when 'J': {      /* ED: erase screen or parts of it */
-      if (arg0 == 3) /* Erase Saved Lines (xterm) */
+      if (arg0 == 3) { /* Erase Saved Lines (xterm) */
         term_clear_scrollback();
+        term.disptop = 0;
+      }
       else {
         bool below = arg0 == 0 || arg0 == 2;
         bool above = arg0 == 1 || arg0 == 2;
         term_erase_lots(false, above, below);
       }
-      term.disptop = 0;
       seen_disp_event();
     }
     when 'K': {      /* EL: erase line or parts of it */
@@ -934,7 +938,7 @@ do_csi(uchar c)
             }
           when 9:
             if (nargs >= 2)
-              win_set_zoom(arg1 != 0);
+              win_maximise(arg1);
           when 11:
             ldisc_send(win_is_iconic() ? "\e[1t" : "\e[2t", 4, 0);
           when 13:
@@ -1114,7 +1118,7 @@ do_colour_osc(uint i)
     s += len;
   }
   uint rgb, r, g, b;
-  if (strcmp(s, "?") == 0) {
+  if (!strcmp(s, "?")) {
     ldisc_printf(0, "\e]%u;", term.esc_args[0]);
     if (has_index_arg)
       ldisc_printf(0, "%u;", i);
@@ -1137,13 +1141,32 @@ static void
 do_osc(void)
 {
   if (!term.osc_w) { // "wordness" is ignored
-    term.osc_string[term.osc_strlen] = 0;
+    char *s = term.osc_string;
+    s[term.osc_strlen] = 0;
     switch (term.esc_args[0]) {
-      when 0 or 2 or 21: win_set_title(term.osc_string);  // ignore icon title
+      when 0 or 2 or 21: win_set_title(s);  // ignore icon title
       when 4:  do_colour_osc(0);
       when 10: do_colour_osc(FG_COLOUR_I);
       when 11: do_colour_osc(BG_COLOUR_I);
       when 12: do_colour_osc(CURSOR_COLOUR_I);
+      when 7770:
+        if (!strcmp(s, "?"))
+          ldisc_printf(0, "\e]7770;%u\e\\", win_get_font_size());
+        else {
+          char *end;
+          int i = strtol(s, &end, 10);
+          if (*end)
+            ; // Ignore if parameter contains unexpected characters
+          else if (*s == '+' || *s == '-')
+            win_zoom_font(i);
+          else
+            win_set_font_size(i);
+        }
+      when 7776:
+        if (!strcmp(s, "?"))
+          ldisc_printf(0, "\e]7776;%s\e\\", cs_set_locale(0));
+        else
+          cs_set_locale(s);
     }
   }
 }
