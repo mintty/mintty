@@ -39,9 +39,16 @@ typedef struct {
   DWORD dwFlags;
   UINT  uCount;
   DWORD dwTimeout;
-} FLASHWINFO,*PFLASHWINFO;
+} FLASHWINFO, *PFLASHWINFO;
 
 #define LWA_ALPHA	0x02
+
+typedef struct {
+  int cxLeftWidth;
+  int cxRightWidth;
+  int cyTopHeight;
+  int cyBottomHeight;
+} MARGINS;
 
 #endif
 
@@ -49,6 +56,8 @@ static HMONITOR (WINAPI *pMonitorFromWindow)(HWND,DWORD);
 static BOOL (WINAPI *pGetMonitorInfo)(HMONITOR,LPMONITORINFO);
 static BOOL (WINAPI *pFlashWindowEx)(PFLASHWINFO);
 static BOOL (WINAPI *pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD);
+static HRESULT (WINAPI *pDwmIsCompositionEnabled)(BOOL *);
+static HRESULT (WINAPI *pDwmExtendFrameIntoClientArea)(HWND, const MARGINS *);
 
 static void
 load_funcs(void)
@@ -59,6 +68,12 @@ load_funcs(void)
   pFlashWindowEx = (void *)GetProcAddress(user, "FlashWindowEx");
   pSetLayeredWindowAttributes =
     (void *)GetProcAddress(user, "SetLayeredWindowAttributes");
+  
+  HMODULE dwm = LoadLibrary("dwmapi");
+  pDwmIsCompositionEnabled =
+    (void *)GetProcAddress(dwm, "DwmIsCompositionEnabled");
+  pDwmExtendFrameIntoClientArea =
+    (void *)GetProcAddress(dwm, "DwmExtendFrameIntoClientArea");
 }
 
 
@@ -95,17 +110,6 @@ win_set_iconic(bool iconic)
 {
   if (iconic ^ IsIconic(wnd))
     ShowWindow(wnd, iconic ? SW_MINIMIZE : SW_RESTORE);
-}
-
-/*
- * Maximise or restore the window in response to a server-side
- * request.
- */
-void
-win_set_zoom(bool zoom)
-{
-  if (zoom ^ IsZoomed(wnd))
-    ShowWindow(wnd, zoom ? SW_MAXIMIZE : SW_RESTORE);
 }
 
 /*
@@ -329,12 +333,37 @@ reset_window(int reinit)
   win_invalidate_all();
 }
 
+bool
+win_is_glass_available(void)
+{
+  BOOL result = false;
+  if (pDwmIsCompositionEnabled)
+    pDwmIsCompositionEnabled(&result);
+  return result;
+}
+
+static void
+enable_glass(bool enabled)
+{
+  if (pDwmExtendFrameIntoClientArea)
+    pDwmExtendFrameIntoClientArea(wnd, &(MARGINS){enabled ? -1 : 0, 0, 0, 0});
+}
+
+/*
+ * When the window is fullscreen, there's no caption.
+ */
+bool
+win_is_fullscreen(void)
+{
+  return !(GetWindowLongPtr(wnd, GWL_STYLE) & WS_CAPTION);
+}
+
 /*
  * Go full-screen. This should only be called when we are already
  * maximised.
  */
 static void
-make_full_screen(void)
+make_fullscreen(void)
 {
  /* Remove the window furniture. */
   DWORD style = GetWindowLongPtr(wnd, GWL_STYLE);
@@ -346,7 +375,10 @@ make_full_screen(void)
   get_fullscreen_rect(&ss);
   SetWindowPos(wnd, HWND_TOP, ss.left, ss.top, ss.right - ss.left,
                ss.bottom - ss.top, SWP_FRAMECHANGED);
-
+  
+ /* The glass effect doesn't work for fullscreen windows */
+  enable_glass(false);
+  
  /* We may have changed size as a result */
   reset_window(0);
 }
@@ -355,7 +387,7 @@ make_full_screen(void)
  * Clear the full-screen attributes.
  */
 static void
-clear_full_screen(void)
+clear_fullsceen(void)
 {
   DWORD oldstyle, style;
 
@@ -367,22 +399,26 @@ clear_full_screen(void)
     SetWindowPos(wnd, null, 0, 0, 0, 0,
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
   }
+  
+  enable_glass(cfg.transparency < 0);
 }
 
 /*
- * Toggle full-screen mode.
+ * Maximise or restore the window in response to a server-side.
+ * Argument value of 2 means go fullscreen.
  */
-static void
-flip_full_screen(void)
+void
+win_maximise(int max)
 {
   if (IsZoomed(wnd)) {
-    if (GetWindowLongPtr(wnd, GWL_STYLE) & WS_CAPTION)
-      make_full_screen();
-    else
+    if (!max)
       ShowWindow(wnd, SW_RESTORE);
+    else if (max == 2 && !win_is_fullscreen())
+      make_fullscreen();
   }
-  else {
-    SendMessage(wnd, WM_FULLSCR_ON_MAX, 0, 0);
+  else if (max) {
+    if (max == 2)
+      SendMessage(wnd, WM_FULLSCR_ON_MAX, 0, 0);
     ShowWindow(wnd, SW_MAXIMIZE);
   }
 }
@@ -412,14 +448,15 @@ static void
 update_transparency(void)
 {
   if (pSetLayeredWindowAttributes) {
-    uchar trans = cfg.transparency;
+    uchar trans = cfg.transparency > 0;
     SetWindowLong(wnd, GWL_EXSTYLE, trans ? WS_EX_LAYERED : 0);
     if (trans) {
-      bool opaque = cfg.opaque_when_focused && term.has_focus;
+      bool opaque = (cfg.opaque_when_focused && term.has_focus);
       uchar alpha = opaque ? 255 : 255 - 16 * trans;
       pSetLayeredWindowAttributes(wnd, 0, alpha, LWA_ALPHA);
     }
   }
+  enable_glass(cfg.transparency < 0 && !win_is_fullscreen());
 }
 
 void
@@ -463,21 +500,28 @@ win_reconfig(void)
   win_update_mouse();
 
   bool old_ambig_wide = cs_ambig_wide;
-  cs_config();
+  cs_config_locale();
   if (term.report_ambig_width && old_ambig_wide != cs_ambig_wide)
     ldisc_send(cs_ambig_wide ? "\e[2W" : "\e[1W", 4, 0);
+}
+
+uint
+win_get_font_size(void)
+{
+  return abs(font_size);
+}
+
+void
+win_set_font_size(int size)
+{
+  font_size = size ? sgn(font_size) * min(size, 72) : cfg.font.size;
+  reset_window(2);
 }
 
 void
 win_zoom_font(int zoom)
 {
-  if (!zoom)
-    font_size = cfg.font.size;
-  else if (abs(font_size) + zoom <= 1)
-    font_size = sgn(font_size);
-  else 
-    font_size += sgn(font_size) * zoom;
-  reset_window(2);
+  win_set_font_size(zoom ? max(1, abs(font_size) + zoom) : 0);
 }
 
 static bool
@@ -529,7 +573,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
           win_update();
         when IDM_RESET: reset_term();
         when IDM_DEFSIZE: default_size();
-        when IDM_FULLSCREEN: flip_full_screen();
+        when IDM_FULLSCREEN: win_maximise(win_is_fullscreen() ? 0 : 2);
         when IDM_OPTIONS: win_open_config();
         when IDM_DUPLICATE:
           spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv); 
@@ -639,36 +683,36 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       LPRECT r = (LPRECT) lp;
       int width = r->right - r->left - extra_width - 2 * PADDING;
       int height = r->bottom - r->top - extra_height - 2 * PADDING;
-      int cols = max(1, width / font_width);
-      int rows = max(1, height / font_height);
-
+      int cols = max(1, (float)width / font_width + 0.5);
+      int rows = max(1, (float)height / font_height + 0.5);
+      
       int ew = width - cols * font_width;
       int eh = height - rows * font_height;
-      if (ew != 0) {
-        if (wp == WMSZ_LEFT || wp == WMSZ_BOTTOMLEFT ||
-            wp == WMSZ_TOPLEFT)
-          r->left += ew;
-        else
-          r->right -= ew;
+      
+      if (wp >= WMSZ_BOTTOM) {
+        wp -= WMSZ_BOTTOM;
+        r->bottom -= eh;
       }
-      if (eh != 0) {
-        if (wp == WMSZ_TOP || wp == WMSZ_TOPRIGHT ||
-            wp == WMSZ_TOPLEFT)
-          r->top += eh;
-        else
-          r->bottom -= eh;
+      else if (wp >= WMSZ_TOP) {
+        wp -= WMSZ_TOP;
+        r->top += eh;
       }
-
+      
+      if (wp == WMSZ_RIGHT)
+        r->right -= ew;
+      else if (wp == WMSZ_LEFT)
+        r->left += ew;
+      
       win_update_tip(r->left + extra_width, r->top + extra_height, cols, rows);
-
+      
       return ew || eh;
     }
     when WM_SIZE: {
       if (wp == SIZE_RESTORED)
-        clear_full_screen();
+        clear_fullsceen();
       if (wp == SIZE_MAXIMIZED && fullscr_on_max) {
         fullscr_on_max = false;
-        make_full_screen();
+        make_fullscreen();
       }
       int new_width = LOWORD(lp) - 2 * PADDING;
       int new_height = HIWORD(lp) - 2 * PADDING;
@@ -879,7 +923,7 @@ main(int argc, char *argv[])
                       x, y, 300, 200, null, null, inst, null);
 
   update_transparency();
-
+  
   if (icon_file) {
     if (small_icon)
       SendMessage(wnd, WM_SETICON, ICON_SMALL, (LPARAM)small_icon);

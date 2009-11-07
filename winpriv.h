@@ -62,4 +62,6 @@ bool win_key_up(WPARAM, LPARAM);
 
 void win_init_drop_target(void);
 
+bool win_is_fullscreen(void);
+
 #endif
