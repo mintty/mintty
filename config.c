@@ -256,13 +256,15 @@ setup_config_box(controlbox * b)
   )->column = 2;
 
   s = ctrl_getset(b, "Looks", "trans", "Transparency");
+  bool with_glass = win_is_glass_available();
   ctrl_radiobuttons(
-    s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
+    s, null, '\0', 4 + with_glass, P(0), dlg_stdradiobutton_handler,
     I(offcfg(transparency)),
     "Off", 'o', I(0),
     "Low", 'l', I(1),
-    "Medium", 'm', I(2), 
+    with_glass ? "Med." : "Medium", 'm', I(2), 
     "High", 'h', I(3), 
+    with_glass ? "Glass" : null, 'g', I(-1), 
     null
   );
   ctrl_checkbox(
@@ -272,7 +274,7 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Looks", "curtype", "Cursor");
   ctrl_radiobuttons(
-    s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
+    s, null, '\0', 4 + with_glass, P(0), dlg_stdradiobutton_handler,
     I(offcfg(cursor_type)),
     "Line", 'n', I(CUR_LINE), 
     "Block", 'k', I(CUR_BLOCK),
@@ -327,26 +329,25 @@ setup_config_box(controlbox * b)
   * The Keys panel.
   */
   ctrl_settitle(b, "Keys", "Keys");
-
-  s = ctrl_getset(b, "Keys", "alt", null);
-  ctrl_columns(s, 2, 50, 50);
+  
+  s = ctrl_getset(b, "Keys", "keys", null);
+  ctrl_checkbox(
+    s, "Backspace sends ^H", 'b', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(backspace_sends_bs))
+  );
   ctrl_checkbox(
     s, "Lone Alt sends ESC", 'l', P(0),
     dlg_stdcheckbox_handler, I(offcfg(alt_sends_esc))
-  )->column = 0;
+  );
   ctrl_checkbox(
     s, "Ctrl+LeftAlt is AltGr", 'g', P(0),
     dlg_stdcheckbox_handler, I(offcfg(ctrl_alt_is_altgr))
-  )->column = 1;
+  );
 
   s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
   ctrl_checkbox(
     s, "Menu and fullscreen (Alt+Space/Enter)", 'm', P(0),
     dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
-  );
-  ctrl_checkbox(
-    s, "Copy and paste (Ctrl/Shift+Ins)", 'y', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(edit_shortcuts))
   );
   ctrl_checkbox(
     s, "Zoom (Ctrl+plus/minus/zero)", 'z', P(0),
@@ -491,8 +492,8 @@ int_settings[] = {
   {"ConfirmExit", offcfg(confirm_exit), true},
   {"CtrlAltIsAltGr", offcfg(ctrl_alt_is_altgr), false},
   {"AltSendsESC", offcfg(alt_sends_esc), false},
+  {"BackspaceSendsBS", offcfg(backspace_sends_bs), false},
   {"WindowShortcuts", offcfg(window_shortcuts), true},
-  {"EditShortcuts", offcfg(edit_shortcuts), true},
   {"ZoomShortcuts", offcfg(zoom_shortcuts), true},
   {"BoldAsBright", offcfg(bold_as_bright), true},
   {"AllowBlinking", offcfg(allow_blinking), false},

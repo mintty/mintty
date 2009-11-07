@@ -16,14 +16,17 @@
 #define CS_DEFAULT -1
 
 static cs_mode mode = CSM_DEFAULT;
-static uint env_codepage, default_codepage, codepage;
+
+static const char *env_locale, *config_locale, *set_locale;
+
+static const char *default_locale;
+static uint default_codepage;
+
+static uint codepage;
 
 #if HAS_LOCALES
-static const char *env_locale, *default_locale;
-static bool use_locale;
+static bool valid_default_locale, use_locale;
 #endif
-
-static char system_locale[] = "xx_XX";
 
 bool cs_ambig_wide;
 int cs_cur_max;
@@ -50,9 +53,11 @@ cs_names[] = {
   {CP_UTF8, "UTF8"},
   {  20866, "KOI8"},
   // Not supported by Cygwin
-  {  54396, "GB18030"},
+  {  54936, "GB18030"},
   { CP_ACP, "ANSI"},
+  { CP_ACP, "ACP"},
   { CP_OEMCP, "OEM"},
+  { CP_OEMCP, "OCP"},
 };
 
 static const struct {
@@ -93,18 +98,8 @@ cs_descs[] = {
   {     949, "Korean"},
 };
 
-const char *
-charset_menu[lengthof(cs_descs) + 4] = {
-  "(Default)"
-};
-
-const char *
-locale_menu[] = {
-  "(None)",
-  system_locale,
-  "C",
-  0
-};
+const char *locale_menu[8];
+const char *charset_menu[lengthof(cs_descs) + 4];
 
 static void
 strtoupper(char *dst, const char *src)
@@ -143,8 +138,8 @@ static bool
 valid_cs(int id)
 {
   #if HAS_LOCALES
-  // Cygwin 1.7 always supports all the ISO and KOI8 charsets.
-  if ((id >= 28591 && id <= 28606) || id == 20866 || id == 21866)
+  // Cygwin 1.7 always supports all the ISO charsets.
+  if (id >= 28591 && id <= 28606 && id != 28602)
     return true;
   #endif
   return valid_cp(id);
@@ -181,18 +176,6 @@ cs_id(const char *name)
   return valid_cs(id) ? id : CS_DEFAULT;
 }
 
-static uint
-cs_codepage(const char *loc, char *cs)
-{
-  int id = cs_id(cs);
-  if (id != CS_DEFAULT)
-    return valid_cp(id) ? id : CP_ACP;
-  else if (HAS_LOCALES && loc[0] == 'C' && (!loc[1] || loc[1] == '.'))
-    return CP_UTF8;
-  else 
-    return CP_ACP;  
-}  
-
 void
 correct_charset(char *cs)
 {
@@ -224,45 +207,44 @@ correct_locale(char *locale)
     locale[0] = 0;
 }
 
-const char *
-getlocenv(const char *name)
+static void
+init_locale_menu(void)
 {
-  const char *val = getenv(name);
-  return val && *val ? val : 0;
+  uint count = 0;
+  
+  void add_lcid(LCID lcid) {
+    char locale[6];
+    if (!GetLocaleInfo(lcid, LOCALE_SISO639LANGNAME, locale, 3) ||
+        !GetLocaleInfo(lcid, LOCALE_SISO3166CTRYNAME, locale + 3, 3))
+      return;
+    locale[2] = '_';
+    for (uint i = 1; i < count; i++)
+      if (!strcmp(locale, locale_menu[i]))
+        return;
+    locale_menu[count++] = strdup(locale);
+  }
+  
+  HMODULE kernel = LoadLibrary("kernel32");
+  LANGID WINAPI (*pGetUserDefaultUILanguage)(void) = 
+    (void *)GetProcAddress(kernel, "GetUserDefaultUILanguage");
+  LANGID WINAPI (*pGetSystemDefaultUILanguage)(void) = 
+    (void *)GetProcAddress(kernel, "GetSystemDefaultUILanguage");
+  
+  locale_menu[count++] = "(None)";
+  if (pGetUserDefaultUILanguage)
+    add_lcid(pGetUserDefaultUILanguage());
+  add_lcid(LOCALE_USER_DEFAULT);
+  add_lcid(LOCALE_SYSTEM_DEFAULT);
+  if (pGetSystemDefaultUILanguage)
+    add_lcid(pGetSystemDefaultUILanguage());
+  locale_menu[count++] = "C";
 }
 
-const char *
-cs_init(void)
+static void
+init_charset_menu(void)
 {
-  // Get locale set in environment or Cygwin default
-  const char *lang = 0;
-  const char *locale =
-    getlocenv("LC_ALL") ?: getlocenv("LC_CTYPE") ?: getlocenv("LANG");
-#if HAS_LOCALES
-  if (!locale) {
-    locale = setlocale(LC_CTYPE, "");
-    if (!locale || !strcmp(locale, "C"))
-      locale = "C.UTF-8";
-    lang = locale;
-  }
-  env_locale = strdup(locale);
-#else
-  if (!locale)
-    locale = "C";
-#endif
-  char *dot = strchr(locale, '.');
-  char *charset = dot ? dot + 1 : "";
-  env_codepage = cs_codepage(locale, charset);
-
-  // Fetch POSIX name of Windows locale.
-  GetLocaleInfo(
-    LOCALE_USER_DEFAULT, LOCALE_SISO639LANGNAME, system_locale, 2
-  );
-  GetLocaleInfo(
-    LOCALE_USER_DEFAULT, LOCALE_SISO3166CTRYNAME, system_locale + 3, 2
-  );
+  charset_menu[0] = "(Default)";
   
-  // Fill in the charset menu.
   const char **p = charset_menu + 1;
   for (uint i = 0; i < lengthof(cs_descs); i++) {
     uint id = cs_descs[i].id;
@@ -277,8 +259,6 @@ cs_init(void)
   const char *ansi_cs = cs_name(GetACP());
   if (*ansi_cs == 'C')
     asprintf((char **)p++, "%s (ANSI codepage)", ansi_cs);
-  
-  return cs_config() ?: lang;
 }
 
 static int
@@ -290,23 +270,20 @@ cp_cur_max(void)
 }
 
 static void
-cs_update(void)
+update_mode(void)
 {
   codepage = 
     mode == CSM_UTF8 ? CP_UTF8 : mode == CSM_OEM  ? 437 : default_codepage;
 
 #if HAS_LOCALES
-  use_locale = (mode == CSM_DEFAULT && default_locale) || mode == CSM_UTF8;
-  if (use_locale) {
-    setlocale(LC_CTYPE,
-      mode == CSM_DEFAULT
-      ? default_locale
-      : cs_ambig_wide ? "ja.UTF-8" : "en.UTF-8"
-    );
-    cs_cur_max = MB_CUR_MAX;
-  }
-  else
-    cs_cur_max = cp_cur_max();
+  bool use_default_locale = mode == CSM_DEFAULT && valid_default_locale;
+  setlocale(LC_CTYPE,
+    use_default_locale
+    ? default_locale
+    : cs_ambig_wide ? "ja.UTF-8" : "en.UTF-8"
+  );
+  use_locale = use_default_locale || mode == CSM_UTF8;
+  cs_cur_max = use_locale ? MB_CUR_MAX : cp_cur_max();
 #else
   cs_cur_max = cp_cur_max();
 #endif
@@ -315,54 +292,101 @@ cs_update(void)
   cs_mb1towc(0, 0);
 }
 
-const char *
-cs_config(void)
-{
-  static char locale[32];
-  bool override_env = *cfg.locale;
-
-  if (override_env) {
-    default_codepage = cs_codepage(cfg.locale, cfg.charset);
-    if (*cfg.charset)
-      sprintf(locale, "%s.%s", cfg.locale, cfg.charset);
-    else
-      strcpy(locale, cfg.locale);
-  }
-  else
-    default_codepage = env_codepage;
-
-#if HAS_LOCALES
-  default_locale = override_env ? locale : env_locale;
-  
-  if (!setlocale(LC_CTYPE, default_locale)) {
-    // Not a valid Cygwin locale: fall back to Windows functions.
-    default_locale = 0;
-    cs_ambig_wide = font_ambig_wide;
-  }
-  else {
-    cs_ambig_wide = wcwidth(0x3B1) == 2;
-    if (override_env && cs_ambig_wide && !font_ambig_wide) {
-      // Attach "@cjknarrow" to locale if using an ambig-narrow font
-      // with an ambig-wide locale setting
-      strcat(locale, "@cjknarrow");
-      cs_ambig_wide = false;
-    }
-  }
-#else
-  cs_ambig_wide = font_ambig_wide;
-#endif
-
-  cs_update();
-  return override_env ? locale : 0;
-}
-
 void
 cs_set_mode(cs_mode new_mode)
 {
-  if (new_mode != mode) {
-    mode = new_mode;
-    cs_update();
+  if (new_mode == mode)
+    return;
+  mode = new_mode;
+  update_mode();
+}
+
+static void
+update_locale(void)
+{
+  default_locale = set_locale ?: config_locale ?: env_locale;
+
+  const char *dot = strchr(default_locale, '.');
+  const char *charset = dot ? dot + 1 : "";
+  int id = cs_id(charset);
+  if (id != CS_DEFAULT && valid_cp(id))
+    default_codepage = id;
+#if HAS_LOCALES
+  else if (*default_locale == 'C')
+    default_codepage = CP_UTF8;
+#endif
+  else 
+    default_codepage = CP_ACP;  
+  
+#if HAS_LOCALES
+  valid_default_locale = setlocale(LC_CTYPE, default_locale);
+  if (valid_default_locale)
+    cs_ambig_wide = wcwidth(0x3B1) == 2;
+  else
+    cs_ambig_wide = font_ambig_wide;
+#else
+  cs_ambig_wide = font_ambig_wide;
+#endif
+  
+  update_mode();
+}
+
+const char *
+cs_set_locale(const char *locale)
+{
+  if (locale) {
+    free((void *)set_locale);
+    set_locale = *locale ? strdup(locale) : 0;
+    update_locale();
   }
+  return default_locale;
+}
+
+void
+cs_config_locale(void)
+{
+  if (*cfg.locale) {
+    static char buf[32];
+    sprintf(buf, "%s%s%s", cfg.locale, *cfg.charset ? "." : "", cfg.charset);
+    config_locale = buf;
+#if HAS_LOCALES
+    if (setlocale(LC_CTYPE, buf) &&
+        wcwidth(0x3B1) == 2 && !font_ambig_wide) {
+      // Attach "@cjknarrow" to locale if using an ambig-narrow font
+      // with an ambig-wide locale setting
+      strcat(buf, "@cjknarrow");
+    }
+#endif
+  }
+  else
+    config_locale = 0;
+  
+  update_locale();
+}
+
+const char *
+cs_init(void)
+{
+  init_locale_menu();
+  init_charset_menu();
+  
+  // Get locale set in environment or Cygwin default
+  const char *
+  getlocenv(const char *name)
+  {
+    const char *val = getenv(name);
+    return val && *val ? val : 0;
+  }
+  const char *locenv =
+    getlocenv("LC_ALL") ?: getlocenv("LC_CTYPE") ?: getlocenv("LANG");
+  env_locale = strdup(locenv ?: setlocale(LC_CTYPE, ""));
+  cs_config_locale();
+  const char *lang = config_locale;
+#if HAS_LOCALES
+  if (!lang && !locenv)
+    lang = strcmp(env_locale, "C") ? env_locale : "C.UTF-8";
+#endif  
+  return lang;
 }
 
 int

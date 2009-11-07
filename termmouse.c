@@ -97,25 +97,47 @@ sel_spread_half(pos p, bool forward)
       * In this mode, every character is a separate unit, except
       * for runs of spaces at the end of a non-wrapping line.
       */
-      termline *ldata = lineptr(p.y);
-      if (!(ldata->lattr & LATTR_WRAPPED)) {
-        termchar *q = ldata->chars + term.cols;
-        while (q > ldata->chars && q[-1].chr == ' ' && !q[-1].cc_next)
+      termline *line = lineptr(p.y);
+      if (!(line->lattr & LATTR_WRAPPED)) {
+        termchar *q = line->chars + term.cols;
+        while (q > line->chars && q[-1].chr == ' ' && !q[-1].cc_next)
           q--;
-        if (q == ldata->chars + term.cols)
+        if (q == line->chars + term.cols)
           q--;
-        if (p.x >= q - ldata->chars)
-          p.x = forward ? term.cols - 1 : q - ldata->chars;
+        if (p.x >= q - line->chars)
+          p.x = forward ? term.cols - 1 : q - line->chars;
       }
-      unlineptr(ldata);
+      unlineptr(line);
     }
     when MS_SEL_WORD:
       p = sel_spread_word(p, forward); 
     when MS_SEL_LINE:
-     /*
-      * In this mode, every line is a unit.
-      */
-      p.x = forward ? term.cols - 1 : 0;
+      if (forward) {
+        termline *line = lineptr(p.y);
+        while (line->lattr & LATTR_WRAPPED) {
+          unlineptr(line);
+          line = lineptr(++p.y);
+          p.x = 0;
+        }
+        int x = p.x;
+        p.x = term.cols - 1;
+        do {
+          if (get_char(line, x) != ' ')
+            p.x = x;
+        } while (++x < line->cols);
+        unlineptr(line);
+      }
+      else {
+        p.x = 0;
+        while (p.y > -sblines()) {
+          termline *line = lineptr(p.y - 1);
+          bool wrapped = line->lattr & LATTR_WRAPPED;
+          unlineptr(line);
+          if (!wrapped)
+            break;
+          p.y--;
+        }
+      }
     default:
      /* Shouldn't happen. */
       break;
@@ -218,10 +240,7 @@ static pos
 box_pos(pos p)
 {
   p.y = min(max(0, p.y), term.rows - 1);
-  p.x =
-    p.x < 0
-    ? (p.y > 0 ? (--p.y, term.cols - 1) : 0)
-    : min(p.x, term.cols - 1);
+  p.x = min(max(0, p.x), term.cols - 1);
   return p;
 }
 
@@ -229,18 +248,22 @@ static pos
 get_selpoint(const pos p)
 {
   pos sp = { .y = p.y + term.disptop, .x = p.x };
-  termline *ldata = lineptr(sp.y);
-  if ((ldata->lattr & LATTR_MODE) != LATTR_NORM)
+  termline *line = lineptr(sp.y);
+  if ((line->lattr & LATTR_MODE) != LATTR_NORM)
     sp.x /= 2;
 
  /*
   * Transform x through the bidi algorithm to find the _logical_
   * click point from the physical one.
   */
-  if (term_bidi_line(ldata, p.y) != null)
+  if (term_bidi_line(line, p.y) != null)
     sp.x = term.post_bidi_cache[p.y].backward[sp.x];
   
-  unlineptr(ldata);
+  // Back to previous cell if current one is second half of a wide char
+  if (line->chars[sp.x].chr == UCSWIDE)
+    sp.x--;
+  
+  unlineptr(line);
   return sp;
 }
 
@@ -351,32 +374,42 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
     if (!cfg.clicks_place_cursor || term.which_screen != 0 ||
         term.app_cursor_keys || term.editing)
       return;
-    if (term.selected)
-      p = term.sel_end;
-    int y = p.y += term.disptop;
-    if (y < 0)
-      return;
-    pos p0 = term.curs;
-    int y0 = p0.y, dy = y - y0;
-    if (dy < 0) {
-      do {
-        if (!(lineptr(y)->lattr & LATTR_WRAPPED))
-          return;
-      } while (++y < y0);
-    }
-    else {
-      while (y-- > y0) {
-        if (!(lineptr(y)->lattr & LATTR_WRAPPED))
-          return;
-      }
-    }
+    
+    p = term.selected ? term.sel_end : get_selpoint(p);
+    
     static pos last_p;
-    if (state != MS_SEL_CHAR)
-      p0 = last_p;
+    pos p0 = state == MS_SEL_CHAR ? term.curs : last_p;
     last_p = p;
-    int diff = (p.y - p0.y) * term.cols + (p.x - p0.x);
-    if (diff)
-      send_keys(diff < 0 ? "\e[D" : "\e[C", 3, abs(diff), false);
+    
+    bool forward = posle(p0, p);
+    pos end = forward ? p : p0;
+    p = forward ? p0 : p;
+    
+    uint count = 0;
+    while (p.y != end.y) {
+      termline *line = lineptr(p.y);
+      if (!(line->lattr & LATTR_WRAPPED)) {
+        unlineptr(line);
+        return;
+      }
+      int cols = term.cols - ((line->lattr & LATTR_WRAPPED2) != 0);
+      for (int x = p.x; x < cols; x++) {
+        if (line->chars[x].chr != UCSWIDE)
+          count++;
+      }
+      p.y++;
+      p.x = 0;
+      unlineptr(line);
+    }
+    termline *line = lineptr(p.y);
+    for (int x = p.x; x < end.x; x++) {
+      if (line->chars[x].chr != UCSWIDE)
+        count++;
+    }
+    unlineptr(line);
+    
+    if (count)
+      send_keys(forward ? "\e[C" : "\e[D", 3, count, false);
   }
 }
 
@@ -407,8 +440,11 @@ term_mouse_move(mouse_button b, mod_keys mods, pos p)
       term.sel_scroll = p.y < 0 ? p.y : p.y - term.rows + 1;
       term.sel_pos = bp;
     }
-    else    
+    else   { 
       term.sel_scroll = 0;
+      if (p.x < 0 && p.y + term.disptop > term.sel_anchor.y)
+        bp = (pos){.y = p.y - 1, .x = term.cols - 1};
+    }
     sel_drag(get_selpoint(bp));
     win_update();
   }
