@@ -301,6 +301,9 @@ struct control {
       char shortcut;
     } fontselect;
   };
+  
+  /* Space for storing platform-specific control data */
+  void *plat_ctrl;
 };
 
 #undef STANDARD_PREFIX

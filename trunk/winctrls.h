@@ -6,9 +6,6 @@
 
 extern HINSTANCE inst;
 
-/*
- * Exports from winctrls.c.
- */
 typedef struct {
   HWND wnd;
   WPARAM font;
@@ -18,10 +15,6 @@ typedef struct {
   int boxystart, boxid;
   char *boxtext;
 } ctrlpos;
-
-/*
- * Exports from winctrls.c.
- */
 
 /*
  * Private structure for prefslist state. Only in the header file
@@ -67,7 +60,7 @@ typedef struct {
  * dialog ID.
  */
 typedef struct {
-  tree234 *byctrl, *byid;
+  tree234 *byid;
 } winctrls;
 
 /*

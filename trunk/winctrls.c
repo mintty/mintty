@@ -558,18 +558,6 @@ winctrl_rem_shortcuts(winctrl * c)
 }
 
 static int
-winctrl_cmp_byctrl(void *av, void *bv)
-{
-  winctrl *a = (winctrl *) av;
-  winctrl *b = (winctrl *) bv;
-  if (a->ctrl < b->ctrl)
-    return -1;
-  else if (a->ctrl > b->ctrl)
-    return +1;
-  else
-    return 0;
-}
-static int
 winctrl_cmp_byid(void *av, void *bv)
 {
   winctrl *a = (winctrl *) av;
@@ -581,18 +569,7 @@ winctrl_cmp_byid(void *av, void *bv)
   else
     return 0;
 }
-static int
-winctrl_cmp_byctrl_find(void *av, void *bv)
-{
-  control *a = (control *) av;
-  winctrl *b = (winctrl *) bv;
-  if (a < b->ctrl)
-    return -1;
-  else if (a > b->ctrl)
-    return +1;
-  else
-    return 0;
-}
+
 static int
 winctrl_cmp_byid_find(void *av, void *bv)
 {
@@ -609,7 +586,6 @@ winctrl_cmp_byid_find(void *av, void *bv)
 void
 winctrl_init(winctrls * wc)
 {
-  wc->byctrl = newtree234(winctrl_cmp_byctrl);
   wc->byid = newtree234(winctrl_cmp_byid);
 }
 
@@ -624,36 +600,24 @@ winctrl_cleanup(winctrls * wc)
     free(c);
   }
 
-  freetree234(wc->byctrl);
   freetree234(wc->byid);
-  wc->byctrl = wc->byid = null;
+  wc->byid = null;
 }
 
 void
 winctrl_add(winctrls *wc, winctrl *c)
 {
-  winctrl *ret;
-  if (c->ctrl) {
-    ret = add234(wc->byctrl, c);
-    assert(ret == c);
-  }
-  ret = add234(wc->byid, c);
-  assert(ret == c);
+  add234(wc->byid, c);
+  if (c->ctrl)
+    c->ctrl->plat_ctrl = c;
 }
 
 void
 winctrl_remove(winctrls *wc, winctrl *c)
 {
-  winctrl *ret;
-  ret = del234(wc->byctrl, c);
-  ret = del234(wc->byid, c);
-  assert(ret == c);
-}
-
-winctrl *
-winctrl_findbyctrl(winctrls *wc, control *ctrl)
-{
-  return find234(wc->byctrl, ctrl, winctrl_cmp_byctrl_find);
+  del234(wc->byid, c);
+  if (c->ctrl)
+    c->ctrl->plat_ctrl = null;
 }
 
 winctrl *
@@ -1200,23 +1164,10 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
  * mechanism can call to access the dialog box entries.
  */
 
-static winctrl *
-dlg_findbyctrl(control *ctrl)
-{
-  int i;
-
-  for (i = 0; i < dlg.nctrltrees; i++) {
-    winctrl *c = winctrl_findbyctrl(dlg.controltrees[i], ctrl);
-    if (c)
-      return c;
-  }
-  return null;
-}
-
 void
 dlg_radiobutton_set(control *ctrl, int whichbutton)
 {
-  winctrl *c = dlg_findbyctrl(ctrl);
+  winctrl *c = ctrl->plat_ctrl;
   assert(c && c->ctrl->type == CTRL_RADIO);
   CheckRadioButton(dlg.wnd, c->base_id + 1,
                    c->base_id + c->ctrl->radio.nbuttons,
@@ -1226,7 +1177,7 @@ dlg_radiobutton_set(control *ctrl, int whichbutton)
 int
 dlg_radiobutton_get(control *ctrl)
 {
-  winctrl *c = dlg_findbyctrl(ctrl);
+  winctrl *c = ctrl->plat_ctrl;
   int i;
   assert(c && c->ctrl->type == CTRL_RADIO);
   for (i = 0; i < c->ctrl->radio.nbuttons; i++)
@@ -1239,7 +1190,7 @@ dlg_radiobutton_get(control *ctrl)
 void
 dlg_checkbox_set(control *ctrl, int checked)
 {
-  winctrl *c = dlg_findbyctrl(ctrl);
+  winctrl *c = ctrl->plat_ctrl;
   assert(c && c->ctrl->type == CTRL_CHECKBOX);
   CheckDlgButton(dlg.wnd, c->base_id, (checked != 0));
 }
@@ -1247,7 +1198,7 @@ dlg_checkbox_set(control *ctrl, int checked)
 int
 dlg_checkbox_get(control *ctrl)
 {
-  winctrl *c = dlg_findbyctrl(ctrl);
+  winctrl *c = ctrl->plat_ctrl;
   assert(c && c->ctrl->type == CTRL_CHECKBOX);
   return 0 != IsDlgButtonChecked(dlg.wnd, c->base_id);
 }
@@ -1255,7 +1206,7 @@ dlg_checkbox_get(control *ctrl)
 void
 dlg_editbox_set(control *ctrl, char const *text)
 {
-  winctrl *c = dlg_findbyctrl(ctrl);
+  winctrl *c = ctrl->plat_ctrl;
   assert(c && c->ctrl->type == CTRL_EDITBOX);
   SetDlgItemText(dlg.wnd, c->base_id + 1, text);
 }
@@ -1263,7 +1214,7 @@ dlg_editbox_set(control *ctrl, char const *text)
 void
 dlg_editbox_get(control *ctrl, char *buffer, int length)
 {
-  winctrl *c = dlg_findbyctrl(ctrl);
+  winctrl *c = ctrl->plat_ctrl;
   assert(c && c->ctrl->type == CTRL_EDITBOX);
   GetDlgItemText(dlg.wnd, c->base_id + 1, buffer, length);
   buffer[length - 1] = '\0';
@@ -1273,7 +1224,7 @@ dlg_editbox_get(control *ctrl, char *buffer, int length)
 void
 dlg_listbox_clear(control *ctrl)
 {
-  winctrl *c = dlg_findbyctrl(ctrl);
+  winctrl *c = ctrl->plat_ctrl;
   int msg;
   assert(c &&
          (c->ctrl->type == CTRL_LISTBOX ||
@@ -1287,7 +1238,7 @@ dlg_listbox_clear(control *ctrl)
 void
 dlg_listbox_add(control *ctrl, char const *text)
 {
-  winctrl *c = dlg_findbyctrl(ctrl);
+  winctrl *c = ctrl->plat_ctrl;
   int msg;
   assert(c &&
          (c->ctrl->type == CTRL_LISTBOX ||
@@ -1301,7 +1252,7 @@ dlg_listbox_add(control *ctrl, char const *text)
 void
 dlg_label_change(control *ctrl, char const *text)
 {
-  winctrl *c = dlg_findbyctrl(ctrl);
+  winctrl *c = ctrl->plat_ctrl;
   char *escaped = null;
   int id = -1;
 
@@ -1338,7 +1289,7 @@ void
 dlg_fontsel_set(control *ctrl, font_spec *fs)
 {
   char *buf, *boldstr;
-  winctrl *c = dlg_findbyctrl(ctrl);
+  winctrl *c = ctrl->plat_ctrl;
   assert(c && c->ctrl->type == CTRL_FONTSELECT);
 
   *(font_spec *) c->data = *fs;   /* structure copy */
@@ -1356,7 +1307,7 @@ dlg_fontsel_set(control *ctrl, font_spec *fs)
 void
 dlg_fontsel_get(control *ctrl, font_spec *fs)
 {
-  winctrl *c = dlg_findbyctrl(ctrl);
+  winctrl *c = ctrl->plat_ctrl;
   assert(c && c->ctrl->type == CTRL_FONTSELECT);
   *fs = *(font_spec *) c->data;  /* structure copy */
 }
@@ -1369,7 +1320,7 @@ dlg_fontsel_get(control *ctrl, font_spec *fs)
 void
 dlg_update_start(control *ctrl)
 {
-  winctrl *c = dlg_findbyctrl(ctrl);
+  winctrl *c = ctrl->plat_ctrl;
   if (c && c->ctrl->type == CTRL_LISTBOX) {
     SendDlgItemMessage(dlg.wnd, c->base_id + 1, WM_SETREDRAW, false, 0);
   }
@@ -1378,7 +1329,7 @@ dlg_update_start(control *ctrl)
 void
 dlg_update_done(control *ctrl)
 {
-  winctrl *c = dlg_findbyctrl(ctrl);
+  winctrl *c = ctrl->plat_ctrl;
   if (c && c->ctrl->type == CTRL_LISTBOX) {
     HWND hw = GetDlgItem(dlg.wnd, c->base_id + 1);
     SendMessage(hw, WM_SETREDRAW, true, 0);
@@ -1390,7 +1341,7 @@ dlg_update_done(control *ctrl)
 void
 dlg_enable(control *ctrl, bool enable)
 {
-  winctrl *c = dlg_findbyctrl(ctrl);
+  winctrl *c = ctrl->plat_ctrl;
   EnableWindow(GetDlgItem(dlg.wnd, c->base_id + 1), enable);
 }
 #endif
@@ -1398,7 +1349,7 @@ dlg_enable(control *ctrl, bool enable)
 void
 dlg_set_focus(control *ctrl)
 {
-  winctrl *c = dlg_findbyctrl(ctrl);
+  winctrl *c = ctrl->plat_ctrl;
   int id;
   switch (ctrl->type) {
     when CTRL_EDITBOX or CTRL_LISTBOX: id = c->base_id + 1;
