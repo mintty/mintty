@@ -78,7 +78,6 @@ typedef struct {
                          * a colour selector? */
   colour coloursel_result;  /* 0-255 */
   bool coloursel_ok;
-  tree234 *privdata;    /* stores per-control private data */
   int ended;            /* has the dialog been ended? */
 } windlg;
 
@@ -92,7 +91,6 @@ void winctrl_init(winctrls *);
 void winctrl_cleanup(winctrls *);
 void winctrl_add(winctrls *, winctrl *);
 void winctrl_remove(winctrls *, winctrl *);
-winctrl *winctrl_findbyctrl(winctrls *, control *);
 winctrl *winctrl_findbyid(winctrls *, int);
 winctrl *winctrl_findbyindex(winctrls *, int);
 void winctrl_layout(winctrls *, ctrlpos *, controlset *, int *id);
