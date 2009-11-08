@@ -33,7 +33,8 @@ static controlbox *ctrlbox;
  * which change from panel to panel.
  */
 static winctrls ctrls_base, ctrls_panel;
-static dlgparam dp;
+
+windlg dlg;
 
 #define PRINTER_DISABLED_STRING "None (printing disabled)"
 
@@ -120,7 +121,7 @@ create_controls(HWND wnd, char *path)
 
   for (index = -1; (index = ctrl_find_path(ctrlbox, path, index)) >= 0;) {
     controlset *s = ctrlbox->ctrlsets[index];
-    winctrl_layout(&dp, wc, &cp, s, &base_id);
+    winctrl_layout(wc, &cp, s, &base_id);
   }
 }
 
@@ -136,20 +137,20 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
     when WM_INITDIALOG: {
       ctrlbox = ctrl_new_box();
       setup_config_box(ctrlbox);
-      dp_init(&dp);
+      windlg_init();
       winctrl_init(&ctrls_base);
       winctrl_init(&ctrls_panel);
-      dp_add_tree(&dp, &ctrls_base);
-      dp_add_tree(&dp, &ctrls_panel);
-      asprintf(&dp.wintitle, "Options");
+      windlg_add_tree(&ctrls_base);
+      windlg_add_tree(&ctrls_panel);
+      asprintf(&dlg.wintitle, "Options");
       new_cfg = cfg;
-      dp.data = &new_cfg;
+      dlg.data = &new_cfg;
 
       RECT r;
       GetWindowRect(GetParent(wnd), &r);
-      dp.wnd = wnd;
+      dlg.wnd = wnd;
       create_controls(wnd, "");        /* Open and Cancel buttons etc */
-      SetWindowText(wnd, dp.wintitle);
+      SetWindowText(wnd, dlg.wintitle);
       SetWindowLongPtr(wnd, GWLP_USERDATA, 0);
       SendMessage(wnd, WM_SETICON, (WPARAM) ICON_BIG,
                   (LPARAM) LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON)));
@@ -232,7 +233,7 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
       winctrl *c;
       for (int i = 0; (c = winctrl_findbyindex(&ctrls_panel, i)) != null; i++) {
         if (c->ctrl) {
-          dlg_set_focus(c->ctrl, &dp);
+          dlg_set_focus(c->ctrl);
           break;
         }
       }
@@ -242,7 +243,7 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
       ctrl_free_box(ctrlbox);
       winctrl_cleanup(&ctrls_base);
       winctrl_cleanup(&ctrls_panel);
-      dp_cleanup(&dp);
+      windlg_cleanup();
       config_wnd = 0;
 
     when WM_NOTIFY: {
@@ -271,14 +272,14 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
               if (item)
                 DestroyWindow(item);
             }
-            winctrl_rem_shortcuts(&dp, c);
+            winctrl_rem_shortcuts(c);
             winctrl_remove(&ctrls_panel, c);
             free(c->data);
             free(c);
           }
         }
         create_controls(wnd, (char *) item.lParam);
-        dlg_refresh(null, &dp); /* set up control values */
+        dlg_refresh(null); /* set up control values */
         SendMessage(wnd, WM_SETREDRAW, true, 0);
         InvalidateRect(wnd, null, true);
         SetFocus(((LPNMHDR) lParam)->hwndFrom); /* ensure focus stays */
@@ -294,8 +295,8 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
         force_normal(wnd);
 
     when WM_COMMAND or WM_DRAWITEM: { 
-      int ret = winctrl_handle_command(&dp, msg, wParam, lParam);
-      if (dp.ended)
+      int ret = winctrl_handle_command(msg, wParam, lParam);
+      if (dlg.ended)
         DestroyWindow(wnd);
       return ret;
     }

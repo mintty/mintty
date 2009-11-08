@@ -71,8 +71,7 @@ typedef struct {
 } winctrls;
 
 /*
- * This structure is passed to event handler functions as the `dlg'
- * parameter, and hence is passed back to winctrls access functions.
+ * This describes a dialog box.
  */
 typedef struct {
   HWND wnd;    /* the wnd of the dialog box */
@@ -88,11 +87,13 @@ typedef struct {
   bool coloursel_ok;
   tree234 *privdata;    /* stores per-control private data */
   int ended;            /* has the dialog been ended? */
-} dlgparam;
+} windlg;
 
-void dp_init(dlgparam * dp);
-void dp_add_tree(dlgparam * dp, winctrls * tree);
-void dp_cleanup(dlgparam * dp);
+extern windlg dlg;
+
+void windlg_init(void);
+void windlg_add_tree(winctrls *);
+void windlg_cleanup(void);
 
 void winctrl_init(winctrls *);
 void winctrl_cleanup(winctrls *);
@@ -101,10 +102,8 @@ void winctrl_remove(winctrls *, winctrl *);
 winctrl *winctrl_findbyctrl(winctrls *, control *);
 winctrl *winctrl_findbyid(winctrls *, int);
 winctrl *winctrl_findbyindex(winctrls *, int);
-void winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
-                    controlset * s, int *id);
-int winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam,
-                           LPARAM lParam);
-void winctrl_rem_shortcuts(dlgparam * dp, winctrl * c);
+void winctrl_layout(winctrls *, ctrlpos *, controlset *, int *id);
+int winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam);
+void winctrl_rem_shortcuts(winctrl *);
 
 #endif
