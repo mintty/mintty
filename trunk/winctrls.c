@@ -1422,24 +1422,6 @@ dlg_coloursel_results(colour *res_p)
   return ok;
 }
 
-typedef struct {
-  control *ctrl;
-  void *data;
-  int needs_free;
-} perctrl_privdata;
-
-static int
-perctrl_privdata_cmp(void *av, void *bv)
-{
-  perctrl_privdata *a = (perctrl_privdata *) av;
-  perctrl_privdata *b = (perctrl_privdata *) bv;
-  if (a->ctrl < b->ctrl)
-    return -1;
-  else if (a->ctrl > b->ctrl)
-    return +1;
-  return 0;
-}
-
 void
 windlg_init(void)
 {
@@ -1450,7 +1432,6 @@ windlg_init(void)
   memset(dlg.shortcuts, 0, sizeof (dlg.shortcuts));
   dlg.wnd = null;
   dlg.wintitle = null;
-  dlg.privdata = newtree234(perctrl_privdata_cmp);
 }
 
 void
@@ -1463,17 +1444,5 @@ windlg_add_tree(winctrls * wc)
 void
 windlg_cleanup(void)
 {
-  perctrl_privdata *p;
-
-  if (dlg.privdata) {
-    while ((p = index234(dlg.privdata, 0)) != null) {
-      del234(dlg.privdata, p);
-      if (p->needs_free)
-        free(p->data);
-      free(p);
-    }
-    freetree234(dlg.privdata);
-    dlg.privdata = null;
-  }
   free(dlg.wintitle);
 }
