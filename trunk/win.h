@@ -3,7 +3,7 @@
 
 #include "platform.h"
 
-void win_reconfig();
+void win_reconfig(void);
 
 void win_update(void);
 void win_schedule_update(void);
