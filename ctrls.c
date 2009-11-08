@@ -220,6 +220,7 @@ ctrl_new(controlset *s, int type, intorptr helpctx, handler_fn handler,
   c->handler = handler;
   c->context = context;
   c->label = null;
+  c->plat_ctrl = null;
   return c;
 }
 
