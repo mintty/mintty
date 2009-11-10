@@ -2,7 +2,6 @@
 #define WINCTRLS_H
 
 #include "ctrls.h"
-#include "tree234.h"
 
 extern HINSTANCE inst;
 
@@ -29,7 +28,7 @@ void ctrlposinit(ctrlpos * cp, HWND wnd, int leftborder, int rightborder,
  * This structure is what's stored for each `union control' in the
  * portable-dialog interface.
  */
-typedef struct {
+typedef struct winctrl {
   control *ctrl;
  /*
   * The control may have several components at the Windows
@@ -52,15 +51,14 @@ typedef struct {
   * store temporary data about the control.
   */
   void *data;
+  struct winctrl *next;
 } winctrl;
 
 /*
- * And this structure holds a set of the above, in two separate
- * tree234s so that it can find an item by `union control' or by
- * dialog ID.
+ * And this structure holds a set of the above
  */
 typedef struct {
-  tree234 *byid;
+  winctrl *first, *last;
 } winctrls;
 
 /*
@@ -89,10 +87,6 @@ void windlg_cleanup(void);
 
 void winctrl_init(winctrls *);
 void winctrl_cleanup(winctrls *);
-void winctrl_add(winctrls *, winctrl *);
-void winctrl_remove(winctrls *, winctrl *);
-winctrl *winctrl_findbyid(winctrls *, int);
-winctrl *winctrl_findbyindex(winctrls *, int);
 void winctrl_layout(winctrls *, ctrlpos *, controlset *, int *id);
 int winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam);
 void winctrl_rem_shortcuts(winctrl *);
