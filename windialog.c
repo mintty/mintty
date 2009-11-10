@@ -230,8 +230,7 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
      /*
       * Set focus into the first available control.
       */
-      winctrl *c;
-      for (int i = 0; (c = winctrl_findbyindex(&ctrls_panel, i)) != null; i++) {
+      for (winctrl *c = ctrls_panel.first; c; c = c->next) {
         if (c->ctrl) {
           dlg_set_focus(c->ctrl);
           break;
@@ -260,24 +259,18 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
         item.cchTextMax = sizeof (buffer);
         item.mask = TVIF_TEXT | TVIF_PARAM;
         TreeView_GetItem(((LPNMHDR) lParam)->hwndFrom, &item);
-        {
-         /* Destroy all controls in the currently visible panel. */
-          int k;
-          HWND item;
-          winctrl *c;
 
-          while ((c = winctrl_findbyindex(&ctrls_panel, 0)) != null) {
-            for (k = 0; k < c->num_ids; k++) {
-              item = GetDlgItem(wnd, c->base_id + k);
-              if (item)
-                DestroyWindow(item);
-            }
-            winctrl_rem_shortcuts(c);
-            winctrl_remove(&ctrls_panel, c);
-            free(c->data);
-            free(c);
+       /* Destroy all controls in the currently visible panel. */
+        for (winctrl *c = ctrls_panel.first; c; c = c->next) {
+          for (int k = 0; k < c->num_ids; k++) {
+            HWND item = GetDlgItem(wnd, c->base_id + k);
+            if (item)
+              DestroyWindow(item);
           }
+          winctrl_rem_shortcuts(c);
         }
+        winctrl_cleanup(&ctrls_panel);
+        
         create_controls(wnd, (char *) item.lParam);
         dlg_refresh(null); /* set up control values */
         SendMessage(wnd, WM_SETREDRAW, true, 0);

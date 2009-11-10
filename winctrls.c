@@ -557,79 +557,60 @@ winctrl_rem_shortcuts(winctrl * c)
     }
 }
 
-static int
-winctrl_cmp_byid(void *av, void *bv)
+void
+winctrl_init(winctrls *wc)
 {
-  winctrl *a = (winctrl *) av;
-  winctrl *b = (winctrl *) bv;
-  if (a->base_id < b->base_id)
-    return -1;
-  else if (a->base_id > b->base_id)
-    return +1;
-  else
-    return 0;
-}
-
-static int
-winctrl_cmp_byid_find(void *av, void *bv)
-{
-  int *a = (int *) av;
-  winctrl *b = (winctrl *) bv;
-  if (*a < b->base_id)
-    return -1;
-  else if (*a >= b->base_id + b->num_ids)
-    return +1;
-  else
-    return 0;
+  wc->first = wc->last = null;
 }
 
 void
-winctrl_init(winctrls * wc)
+winctrl_cleanup(winctrls *wc)
 {
-  wc->byid = newtree234(winctrl_cmp_byid);
-}
-
-void
-winctrl_cleanup(winctrls * wc)
-{
-  winctrl *c;
-
-  while ((c = index234(wc->byid, 0)) != null) {
-    winctrl_remove(wc, c);
+  winctrl *c = wc->first;
+  while (c) {
+    winctrl *next = c->next;
+    if (c->ctrl)
+      c->ctrl->plat_ctrl = null;
     free(c->data);
     free(c);
+    c = next;
   }
-
-  freetree234(wc->byid);
-  wc->byid = null;
+  wc->first = wc->last = null;
 }
 
-void
+static void
 winctrl_add(winctrls *wc, winctrl *c)
 {
-  add234(wc->byid, c);
+  if (wc->last)
+    wc->last->next = c;
+  else
+    wc->first = c;
+  wc->last = c;
   if (c->ctrl)
     c->ctrl->plat_ctrl = c;
 }
 
-void
-winctrl_remove(winctrls *wc, winctrl *c)
-{
-  del234(wc->byid, c);
-  if (c->ctrl)
-    c->ctrl->plat_ctrl = null;
-}
-
-winctrl *
+static winctrl *
 winctrl_findbyid(winctrls *wc, int id)
 {
-  return find234(wc->byid, &id, winctrl_cmp_byid_find);
+  for (winctrl *c = wc->first; c; c = c->next) {
+    if (id >= c->base_id && id < c->base_id + c->num_ids)
+      return c;
+  }
+  return 0;
 }
 
-winctrl *
-winctrl_findbyindex(winctrls *wc, int index)
+static winctrl *
+new_winctrl(int base_id, void *data)
 {
-  return index234(wc->byid, index);
+  winctrl *c = new(winctrl);
+  c->next = null;
+  c->ctrl = null;
+  c->base_id = base_id;
+  c->num_ids = 1;
+  c->data = data;
+  memset(c->shortcuts, NO_SHORTCUT, lengthof(c->shortcuts));
+  return c;
 }
 
 void
@@ -649,12 +630,7 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
 
  /* Start a containing box, if we have a boxname. */
   if (s->boxname && *s->boxname) {
-    winctrl *c = new(winctrl);
-    c->ctrl = null;
-    c->base_id = base_id;
-    c->num_ids = 1;
-    c->data = null;
-    memset(c->shortcuts, NO_SHORTCUT, lengthof(c->shortcuts));
+    winctrl *c = new_winctrl(base_id, null);
     winctrl_add(wc, c);
     beginbox(cp, s->boxtitle, base_id);
     base_id++;
@@ -662,12 +638,7 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
 
  /* Draw a title, if we have one. */
   if (!s->boxname && s->boxtitle) {
-    winctrl *c = new(winctrl);
-    c->ctrl = null;
-    c->base_id = base_id;
-    c->num_ids = 1;
-    c->data = strdup(s->boxtitle);
-    memset(c->shortcuts, NO_SHORTCUT, lengthof(c->shortcuts));
+    winctrl *c = new_winctrl(base_id, strdup(s->boxtitle));
     winctrl_add(wc, c);
     paneltitle(cp, base_id);
     base_id++;
@@ -895,7 +866,7 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
     */
     if (pos.wnd) {
       winctrl *c = new(winctrl);
-
+      c->next = null;
       c->ctrl = ctrl;
       c->base_id = actual_base_id;
       c->num_ids = num_ids;
@@ -1382,18 +1353,15 @@ dlg_end(void)
 void
 dlg_refresh(control *ctrl)
 {
-  int i, j;
-  winctrl *c;
-
   if (!ctrl) {
    /*
     * Send EVENT_REFRESH to absolutely everything.
     */
-    for (j = 0; j < dlg.nctrltrees; j++) {
-      for (i = 0; (c = winctrl_findbyindex(dlg.controltrees[j], i)) != null;
-           i++) {
-        if (c->ctrl && c->ctrl->handler != null)
+    for (int i = 0; i < dlg.nctrltrees; i++) {
+      for (winctrl *c = dlg.controltrees[i]->first; c; c = c->next) {
+        if (c->ctrl && c->ctrl->handler) {
           c->ctrl->handler(c->ctrl, dlg.data, EVENT_REFRESH);
+        }
       }
     }
   }
