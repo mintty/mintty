@@ -272,8 +272,8 @@ term_resize(int newrows, int newcols)
   term.alt_b = term.marg_b = newrows - 1;
 
   if (term.rows == -1) {
-    term.scrollback = newtree234(null);
-    term.screen = newtree234(null);
+    term.scrollback = newtree234();
+    term.screen = newtree234();
     term.tempsblines = 0;
     term.rows = 0;
   }
@@ -369,7 +369,7 @@ term_resize(int newrows, int newcols)
   term.dispcursx = term.dispcursy = -1;
 
  /* Make a new alternate screen. */
-  newalt = newtree234(null);
+  newalt = newtree234();
   for (int i = 0; i < newrows; i++) {
     line = newline(newcols, true);
     addpos234(newalt, line, i);
