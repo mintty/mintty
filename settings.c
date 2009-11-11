@@ -5,11 +5,6 @@
 
 #include "settings.h"
 
-#include "tree234.h"
-#include <sys/stat.h>
-
-#define FILENAME ".mintty"
-
 static FILE *file;
 
 char *
@@ -46,33 +41,24 @@ close_settings_w(void)
   fclose(file);
 }
 
-typedef struct {
+typedef struct keyval {
+  struct keyval *prev;
   const char *key;
   const char *value;
 } keyval;
 
-static int
-keyvalcmp(void *a, void *b)
-{
-  return strcmp(((keyval *)a)->key, ((keyval *)b)->key);
-}
-
-static tree234 *tree;
+static keyval *last_keyval;
 
 void
 open_settings_r(const char *filename)
 {
   FILE *file = fopen(filename, "r");
-  if (!file) {
-    tree = 0;
+  if (!file)
     return;
-  }
-
-  tree = newtree234(keyvalcmp);
 
   char *line;
   size_t len;
-  while (line = 0, len = 0, __getline(&line, &len, file) != -1) {
+  while (line = 0, __getline(&line, &len, file) != -1) {
     char *value = strchr(line, '=');
     if (!value)
       continue;
@@ -81,7 +67,8 @@ open_settings_r(const char *filename)
     keyval *kv = new(keyval);
     kv->key = strdup(line);
     kv->value = strdup(value);
-    add234(tree, kv);
+    kv->prev = last_keyval;
+    last_keyval = kv;
     free(line);
   }
   fclose(file);
@@ -90,11 +77,11 @@ open_settings_r(const char *filename)
 static const char *
 lookup_val(const char *key)
 {
-  keyval *kv;
-  if (tree && (kv = find234(tree, &(keyval){key, 0}, 0)))
-    return kv->value;
-  else
-    return 0;
+  for (keyval *kv = last_keyval; kv; kv = kv->prev) {
+    if (!strcmp(key, kv->key))
+      return kv->value;
+  }
+  return 0;
 }
   
 void
@@ -128,15 +115,13 @@ read_colour_setting(const char *key, colour *res_p, colour def)
 void
 close_settings_r(void)
 {
-  if (tree) {
-    keyval *kv;
-    while ((kv = index234(tree, 0))) {
-      del234(tree, kv);
-      free((char *) kv->key);
-      free((char *) kv->value);
-      free(kv);
-    }
-    freetree234(tree);
-    tree = 0;
+  keyval *kv = last_keyval;
+  while (kv) {
+    keyval *prev = kv->prev;
+    free((char *) kv->key);
+    free((char *) kv->value);
+    free(kv);
+    kv = prev;
   }
+  last_keyval = 0;
 }
