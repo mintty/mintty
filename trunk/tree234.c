@@ -31,7 +31,6 @@ typedef struct node234_Tag node234;
 
 struct tree234 {
   node234 *root;
-  cmpfn234 cmp;
 };
 
 struct node234_Tag {
@@ -45,11 +44,10 @@ struct node234_Tag {
  * Create a 2-3-4 tree.
  */
 tree234 *
-newtree234(cmpfn234 cmp)
+newtree234(void)
 {
   tree234 *ret = new(tree234);
   ret->root = null;
-  ret->cmp = cmp;
   return ret;
 }
 
@@ -109,12 +107,15 @@ count234(tree234 * t)
  * Add an element e to a 2-3-4 tree t. Returns e on success, or if
  * an existing element compares equal, returns that.
  */
-static void *
-add234_internal(tree234 * t, void *e, int index)
+void *
+addpos234(tree234 * t, void *e, int index)
 {
+  if (index < 0)        /* index out of range */
+    return null;        /* return failure */
+
   node234 *n, **np, *left, *right;
   void *orig_e = e;
-  int c, lcount, rcount;
+  int lcount, rcount;
 
   if (t->root == null) {
     t->root = new(node234);
@@ -131,7 +132,7 @@ add234_internal(tree234 * t, void *e, int index)
   n = null;     /* placate gcc; will always be set below since t->root != null */
   np = &t->root;
   while (*np) {
-    int childnum;
+    int childnum = 0;
     n = *np;
     if (index >= 0) {
       if (!n->kids[0]) {
@@ -172,22 +173,6 @@ add234_internal(tree234 * t, void *e, int index)
           return null;  /* error: index out of range */
         } while (0);
       }
-    }
-    else {
-      if ((c = t->cmp(e, n->elems[0])) < 0)
-        childnum = 0;
-      else if (c == 0)
-        return n->elems[0];     /* already exists */
-      else if (n->elems[1] == null || (c = t->cmp(e, n->elems[1])) < 0)
-        childnum = 1;
-      else if (c == 0)
-        return n->elems[1];     /* already exists */
-      else if (n->elems[2] == null || (c = t->cmp(e, n->elems[2])) < 0)
-        childnum = 2;
-      else if (c == 0)
-        return n->elems[2];     /* already exists */
-      else
-        childnum = 3;
     }
     np = &n->kids[childnum];
   }
@@ -414,25 +399,6 @@ add234_internal(tree234 * t, void *e, int index)
   return orig_e;
 }
 
-void *
-add234(tree234 * t, void *e)
-{
-  if (!t->cmp)  /* tree is unsorted */
-    return null;
-
-  return add234_internal(t, e, -1);
-}
-
-void *
-addpos234(tree234 * t, void *e, int index)
-{
-  if (index < 0 ||      /* index out of range */
-      t->cmp)   /* tree is sorted */
-    return null;        /* return failure */
-
-  return add234_internal(t, e, index);  /* this checks the upper bound */
-}
-
 /*
  * Look up the element at a given numeric index in a 2-3-4 tree.
  * Returns null if the index is out of range.
@@ -472,147 +438,15 @@ index234(tree234 * t, int index)
 }
 
 /*
- * Find an element e in a sorted 2-3-4 tree t. Returns null if not
- * found. e is always passed as the first argument to cmp, so cmp
- * can be an asymmetric function if desired. cmp can also be passed
- * as null, in which case the compare function from the tree proper
- * will be used.
- */
-void *
-findrelpos234(tree234 * t, void *e, cmpfn234 cmp, int relation, int *index)
-{
-  node234 *n;
-  void *ret;
-  int c;
-  int idx, ecount, kcount, cmpret;
-
-  if (t->root == null)
-    return null;
-
-  if (cmp == null)
-    cmp = t->cmp;
-
-  n = t->root;
- /*
-  * Attempt to find the element itself.
-  */
-  idx = 0;
-  ecount = -1;
- /*
-  * Prepare a fake `cmp' result if e is null.
-  */
-  cmpret = 0;
-  if (e == null) {
-    assert(relation == REL234_LT || relation == REL234_GT);
-    if (relation == REL234_LT)
-      cmpret = +1;      /* e is a max: always greater */
-    else if (relation == REL234_GT)
-      cmpret = -1;      /* e is a min: always smaller */
-  }
-  while (1) {
-    for (kcount = 0; kcount < 4; kcount++) {
-      if (kcount >= 3 || n->elems[kcount] == null ||
-          (c = cmpret ? cmpret : cmp(e, n->elems[kcount])) < 0) {
-        break;
-      }
-      if (n->kids[kcount])
-        idx += n->counts[kcount];
-      if (c == 0) {
-        ecount = kcount;
-        break;
-      }
-      idx++;
-    }
-    if (ecount >= 0)
-      break;
-    if (n->kids[kcount])
-      n = n->kids[kcount];
-    else
-      break;
-  }
-
-  if (ecount >= 0) {
-   /*
-    * We have found the element we're looking for. It's
-    * n->elems[ecount], at tree index idx. If our search
-    * relation is EQ, LE or GE we can now go home.
-    */
-    if (relation != REL234_LT && relation != REL234_GT) {
-      if (index)
-        *index = idx;
-      return n->elems[ecount];
-    }
-
-   /*
-    * Otherwise, we'll do an indexed lookup for the previous
-    * or next element. (It would be perfectly possible to
-    * implement these search types in a non-counted tree by
-    * going back up from where we are, but far more fiddly.)
-    */
-    if (relation == REL234_LT)
-      idx--;
-    else
-      idx++;
-  }
-  else {
-   /*
-    * We've found our way to the bottom of the tree and we
-    * know where we would insert this node if we wanted to:
-    * we'd put it in in place of the (empty) subtree
-    * n->kids[kcount], and it would have index idx
-    * 
-    * But the actual element isn't there. So if our search
-    * relation is EQ, we're doomed.
-    */
-    if (relation == REL234_EQ)
-      return null;
-
-   /*
-    * Otherwise, we must do an index lookup for index idx-1
-    * (if we're going left - LE or LT) or index idx (if we're
-    * going right - GE or GT).
-    */
-    if (relation == REL234_LT || relation == REL234_LE) {
-      idx--;
-    }
-  }
-
- /*
-  * We know the index of the element we want; just call index234
-  * to do the rest. This will return null if the index is out of
-  * bounds, which is exactly what we want.
-  */
-  ret = index234(t, idx);
-  if (ret && index)
-    *index = idx;
-  return ret;
-}
-
-void *
-find234(tree234 * t, void *e, cmpfn234 cmp)
-{
-  return findrelpos234(t, e, cmp, REL234_EQ, null);
-}
-
-void *
-findrel234(tree234 * t, void *e, cmpfn234 cmp, int relation)
-{
-  return findrelpos234(t, e, cmp, relation, null);
-}
-
-void *
-findpos234(tree234 * t, void *e, cmpfn234 cmp, int *index)
-{
-  return findrelpos234(t, e, cmp, REL234_EQ, index);
-}
-
-/*
  * Delete an element e in a 2-3-4 tree. Does not free the element,
  * merely removes all links to it from the tree nodes.
  */
-static void *
-delpos234_internal(tree234 * t, int index)
+void *
+delpos234(tree234 * t, int index)
 {
+  if (index < 0 || index >= countnode234(t->root))
+    return null;
+
   node234 *n;
   void *retval;
   int ei = -1;
@@ -934,20 +768,4 @@ delpos234_internal(tree234 * t, int index)
       index = a->counts[0] + a->counts[1] + 1;
     }
   }
-}
-void *
-delpos234(tree234 * t, int index)
-{
-  if (index < 0 || index >= countnode234(t->root))
-    return null;
-  return delpos234_internal(t, index);
-}
-
-void *
-del234(tree234 * t, void *e)
-{
-  int index;
-  if (!findrelpos234(t, e, null, REL234_EQ, &index))
-    return null;        /* it wasn't in there anyway */
-  return delpos234_internal(t, index);  /* it's there; delete it. */
 }

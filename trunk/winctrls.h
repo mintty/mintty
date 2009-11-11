@@ -32,11 +32,8 @@ typedef struct winctrl {
   control *ctrl;
  /*
   * The control may have several components at the Windows
-  * level, with different dialog IDs. To avoid needing N
-  * separate platformsidectrl structures (which could be stored
-  * separately in a tree234 so that lookup by ID worked), we
-  * impose the constraint that those IDs must be in a contiguous
-  * block.
+  * level, with different dialog IDs. We impose the constraint that
+  * those IDs must be in a contiguous block.
   */
   int base_id;
   int num_ids;
