@@ -123,8 +123,6 @@ typedef struct belltime {
 } belltime;
 
 struct term {
-  int compatibility_level;
-
   tree234 *scrollback;  /* lines scrolled off top of screen */
   tree234 *screen;      /* lines on primary screen */
   tree234 *alt_screen;  /* lines on alternate screen */
