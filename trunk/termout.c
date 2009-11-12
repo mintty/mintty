@@ -20,12 +20,6 @@
 #define ANSI(x,y)	((x)+((y)<<8))
 #define ANSI_QUE(x)	ANSI(x,true)
 
-#define compatibility(x) \
-    if ( ((CL_##x)&term.compatibility_level) == 0 ) { \
-       term.state=TOPLEVEL; \
-       break; \
-    }
-
 static const char answerback[] = "mintty";
 static const char primary_da[] = "\e[?1;2c";
 
@@ -238,7 +232,6 @@ write_ctrl(char c)
 {
   switch (c) {
     when '\e':   /* ESC: Escape */
-      compatibility(ANSIMIN);
       term.state = SEEN_ESC;
       term.esc_query = false;
     when '\a':   /* BEL: Bell */
@@ -248,7 +241,6 @@ write_ctrl(char c)
     when '\t':     /* HT: Character tabulation */
       write_tab();
     when '\v':   /* VT: Line tabulation */
-      compatibility(VT100);
       write_linefeed();
     when '\f':   /* FF: Form feed */
       write_linefeed();
@@ -259,14 +251,11 @@ write_ctrl(char c)
       if (term.newline_mode)
         write_return();
     when CTRL('E'):   /* ENQ: terminal type query */
-      compatibility(ANSIMIN);
       ldisc_send(answerback, sizeof(answerback) - 1, 0);
     when CTRL('N'):   /* LS1: Locking-shift one */
-      compatibility(VT100);
       term.cset_i = 1;
       term_update_cs();
     when CTRL('O'):   /* LS0: Locking-shift zero */
-      compatibility(VT100);
       term.cset_i = 0;
       term_update_cs();
     otherwise:
@@ -390,34 +379,24 @@ do_esc(uchar c)
       term.esc_args[0] = ARG_DEFAULT;
       term.esc_query = false;
     when ']':  /* OSC: xterm escape sequences */
-     /* Compatibility is nasty here, xterm, linux, decterm yuk! */
-      compatibility(OTHER);
       term.state = SEEN_OSC;
       term.esc_args[0] = 0;
     when 'P':  /* DCS: Device Control String sequences */
-      compatibility(VT100);
       term.state = SEEN_DCS;
     when '7':  /* DECSC: save cursor */
-      compatibility(VT100);
       save_cursor();
     when '8':  /* DECRC: restore cursor */
-      compatibility(VT100);
       restore_cursor();
     when '=':  /* DECKPAM: Keypad application mode */
-      compatibility(VT100);
       term.app_keypad = true;
     when '>':  /* DECKPNM: Keypad numeric mode */
-      compatibility(VT100);
       term.app_keypad = false;
     when 'D':  /* IND: exactly equivalent to LF */
-      compatibility(VT100);
       write_linefeed();
     when 'E':  /* NEL: exactly equivalent to CR-LF */
-      compatibility(VT100);
       write_return();
       write_linefeed();
     when 'M':  /* RI: reverse index - backwards LF */
-      compatibility(VT100);
       if (term.curs.y == term.marg_t)
         term_do_scroll(term.marg_t, term.marg_b, -1, true);
       else if (term.curs.y > 0)
@@ -425,10 +404,8 @@ do_esc(uchar c)
       term.wrapnext = false;
       seen_disp_event();
     when 'Z':  /* DECID: terminal type query */
-      compatibility(VT100);
       ldisc_send(primary_da, sizeof primary_da - 1, 0);
     when 'c':  /* RIS: restore power-on settings */
-      compatibility(VT100);
       term_reset();
       term_clear_scrollback();
       if (term.reset_132) {
@@ -438,13 +415,10 @@ do_esc(uchar c)
       ldisc_send(null, 0, 0);
       seen_disp_event();
     when 'H':  /* HTS: set a tab */
-      compatibility(VT100);
       term.tabs[term.curs.x] = true;
     when ANSI('8', '#'):    /* DECALN: fills screen with Es :-) */
-      compatibility(VT100);
-      termline *ldata;
       for (int i = 0; i < term.rows; i++) {
-        ldata = lineptr(i);
+        termline *ldata = lineptr(i);
         for (int j = 0; j < term.cols; j++) {
           copy_termchar(ldata, j, &term.basic_erase_char);
           ldata->chars[j].chr = 'E';
@@ -454,41 +428,31 @@ do_esc(uchar c)
       term.disptop = 0;
       seen_disp_event();
     when ANSI('3', '#'):  /* DECDHL: 2*height, top */
-      compatibility(VT100);
       lineptr(term.curs.y)->lattr = LATTR_TOP;
     when ANSI('4', '#'):  /* DECDHL: 2*height, bottom */
-      compatibility(VT100);
       lineptr(term.curs.y)->lattr = LATTR_BOT;
     when ANSI('5', '#'):  /* DECSWL: normal */
-      compatibility(VT100);
       lineptr(term.curs.y)->lattr = LATTR_NORM;
     when ANSI('6', '#'):  /* DECDWL: 2*width */
-      compatibility(VT100);
       lineptr(term.curs.y)->lattr = LATTR_WIDE;
     when ANSI('A', '(') or ANSI('B', '(') or ANSI('0', '('):
      /* GZD4: G0 designate 94-set */
-      compatibility(VT100);
       term.csets[0] = c;
       term_update_cs();
     when ANSI('U', '('):  /* G0: OEM character set */
-      compatibility(OTHER);
       term.csets[0] = CSET_OEM;
       term_update_cs();
     when ANSI('A', ')') or ANSI('B', ')') or ANSI('0', ')'):
      /* G1D4: G1-designate 94-set */
-      compatibility(VT100);
       term.csets[1] = c;
       term_update_cs();
     when ANSI('U', ')'): /* G1: OEM character set */
-      compatibility(OTHER);
       term.csets[1] = CSET_OEM;
       term_update_cs();
     when ANSI('8', '%') or ANSI('G', '%'):
-      compatibility(OTHER);
       term.utf = true;
       term_update_cs();
     when ANSI('@', '%'):
-      compatibility(OTHER);
       term.utf = false;
       term_update_cs();
   }
@@ -532,39 +496,29 @@ do_sgr(void)
       when 0:  /* restore defaults */
         term.curr_attr = term.default_attr;
       when 1:  /* enable bold */
-        compatibility(VT100AVO);
         term.curr_attr |= ATTR_BOLD;
       when 4 or 21:  /* enable underline */
-        compatibility(VT100AVO);
         term.curr_attr |= ATTR_UNDER;
       when 5:  /* enable blink */
-        compatibility(VT100AVO);
         term.curr_attr |= ATTR_BLINK;
       when 7:  /* enable reverse video */
         term.curr_attr |= ATTR_REVERSE;
       when 10: /* OEM acs off */
-        compatibility(OTHER);
         term.oem_acs = 0;
         term_update_cs();
       when 11: /* OEM acs on */
-        compatibility(OTHER);
         term.oem_acs = 1;
         term_update_cs();
       when 12: /* OEM acs on, |0x80 */
-        compatibility(OTHER);
         term.oem_acs = 2;
         term_update_cs();
       when 22: /* disable bold */
-        compatibility(VT220);
         term.curr_attr &= ~ATTR_BOLD;
       when 24: /* disable underline */
-        compatibility(VT220);
         term.curr_attr &= ~ATTR_UNDER;
       when 25: /* disable blink */
-        compatibility(VT220);
         term.curr_attr &= ~ATTR_BLINK;
       when 27: /* disable reverse video */
-        compatibility(VT220);
         term.curr_attr &= ~ATTR_REVERSE;
       when 30 ... 37:
        /* foreground */
@@ -652,16 +606,13 @@ set_modes(bool state)
           term.editing = state;
           ldisc_send(null, 0, 0);
         when 25: /* DECTCEM: enable/disable cursor */
-          compatibility(VT220);
           term.cursor_on = state;
           seen_disp_event();
         when 47: /* alternate screen */
-          compatibility(OTHER);
           term.selected = false;
           term_swap_screen(state, false, false);
           term.disptop = 0;
         when 67: /* DECBKM: backarrow key mode */
-          compatibility(VT420);
           term.backspace_sends_bs = state;
         when 1000: /* VT200_MOUSE */
           term.mouse_mode = state ? MM_VT200 : 0;
@@ -675,7 +626,6 @@ set_modes(bool state)
         when 1004: /* FOCUS_EVENT_MOUSE */
           term.report_focus = state;      
         when 1047:       /* alternate screen */
-          compatibility(OTHER);
           term.selected = false;
           term_swap_screen(state, true, true);
           term.disptop = 0;
@@ -687,33 +637,26 @@ set_modes(bool state)
         when 1049:       /* cursor & alternate screen */
           if (state)
             save_cursor();
-          compatibility(OTHER);
           term.selected = false;
           term_swap_screen(state, true, false);
           if (!state)
             restore_cursor();
           term.disptop = 0;
         when 7700:       /* mintty only: CJK ambigous width reporting */
-          compatibility(OTHER);
           term.report_ambig_width = state;
         when 7727:       /* mintty only: Application escape key mode */
-          compatibility(OTHER);
           term.app_escape_key = state;
         when 7728:       /* mintty only: Escape sends FS (instead of ESC) */
-          compatibility(OTHER);
           term.escape_sends_fs = state;
         when 7783:       /* mintty only: Shortcut override */
-          compatibility(OTHER);
           term.shortcut_override = state;
         when 7787:       /* mintty only: Application mousewheel mode */
-          compatibility(OTHER);
           term.app_wheel = state;
       }
     }
     else {
       switch (mode) {
         when 4:  /* IRM: set insert mode */
-          compatibility(VT102);
           term.insert = state;
         when 12: /* SRM: set echo mode */
           term.echoing = !state;
@@ -736,19 +679,16 @@ do_csi(uchar c)
       move(term.curs.x, term.curs.y - def_arg0, 1);
       seen_disp_event();
     when 'e':        /* VPR: move down N lines */
-      compatibility(ANSI);
       move(term.curs.x, term.curs.y + def_arg0, 1);
       seen_disp_event();
     when 'B':        /* CUD: Cursor down */
       move(term.curs.x, term.curs.y + def_arg0, 1);
       seen_disp_event();
     when ANSI('c', '>'):     /* DA: report version */
-      compatibility(OTHER);
       /* Terminal type 77 (ASCII 'M' for mintty) */
       if (!nargs || (nargs == 1 && arg0 == 0))
         ldisc_printf(0, "\e[>77;%u;0c", DECIMAL_VERSION);
     when 'a':        /* HPR: move right N cols */
-      compatibility(ANSI);
       move(term.curs.x + def_arg0, term.curs.y, 1);
       seen_disp_event();
     when 'C':        /* CUF: Cursor right */
@@ -758,19 +698,15 @@ do_csi(uchar c)
       move(term.curs.x - def_arg0, term.curs.y, 1);
       seen_disp_event();
     when 'E':        /* CNL: move down N lines and CR */
-      compatibility(ANSI);
       move(0, term.curs.y + def_arg0, 1);
       seen_disp_event();
     when 'F':        /* CPL: move up N lines and CR */
-      compatibility(ANSI);
       move(0, term.curs.y - def_arg0, 1);
       seen_disp_event();
     when 'G' or '`':  /* CHA or HPA: set horizontal posn */
-      compatibility(ANSI);
       move(def_arg0 - 1, term.curs.y, 0);
       seen_disp_event();
     when 'd':        /* VPA: set vertical posn */
-      compatibility(ANSI);
       move(term.curs.x,
            ((term.dec_om ? term.marg_t : 0) +
             def_arg0 - 1), (term.dec_om ? 2 : 0));
@@ -801,30 +737,24 @@ do_csi(uchar c)
       seen_disp_event();
     }
     when 'L':        /* IL: insert lines */
-      compatibility(VT102);
       if (term.curs.y <= term.marg_b) {
         term_do_scroll(term.curs.y, term.marg_b,
                        -def_arg0, false);
       }
       seen_disp_event();
     when 'M':        /* DL: delete lines */
-      compatibility(VT102);
       if (term.curs.y <= term.marg_b) {
         term_do_scroll(term.curs.y, term.marg_b,
                        def_arg0, true);
       }
       seen_disp_event();
     when '@':        /* ICH: insert chars */
-     /* XXX VTTEST says this is vt220, vt510 manual says vt102 */
-      compatibility(VT102);
       insert_char(def_arg0);
       seen_disp_event();
     when 'P':        /* DCH: delete chars */
-      compatibility(VT102);
       insert_char(-def_arg0);
       seen_disp_event();
     when 'c':        /* DA: terminal type query */
-      compatibility(VT100);
       ldisc_send(primary_da, sizeof primary_da - 1, 0);
     when 'n':        /* DSR: cursor position query */
       if (arg0 == 6)
@@ -833,13 +763,10 @@ do_csi(uchar c)
         ldisc_send("\e[0n", 4, 0);
       }
     when 'h' or ANSI_QUE('h'):  /* SM: toggle modes to high */
-      compatibility(VT100);
       set_modes(true);
     when 'l' or ANSI_QUE('l'):  /* RM: toggle modes to low */
-      compatibility(VT100);
       set_modes(false);
     when 'i' or ANSI_QUE('i'):  /* MC: Media copy */
-      compatibility(VT100);
       if (nargs == 1) {
         if (arg0 == 5 && *cfg.printer) {
           term.printing = true;
@@ -851,7 +778,6 @@ do_csi(uchar c)
           term_print_finish();
       }
     when 'g':        /* TBC: clear tabs */
-      compatibility(VT100);
       if (nargs == 1) {
         if (arg0 == 0) {
           term.tabs[term.curs.x] = false;
@@ -863,7 +789,6 @@ do_csi(uchar c)
         }
       }
     when 'r':        /* DECSTBM: set scroll margins */
-      compatibility(VT100);
       if (nargs <= 2) {
         int top = def_arg0 - 1;
         int bot = (
@@ -907,12 +832,10 @@ do_csi(uchar c)
       * and reports.
       */
       if (nargs <= 1 && (arg0 < 1 || arg0 >= 24)) {
-        compatibility(VT340TEXT);
         win_resize((arg0 ?: 24), term.cols);
         term.selected = false;
       }
       else if (nargs >= 1 && arg0 >= 1 && arg0 < 24) {
-        compatibility(OTHER);
         int x, y;
         switch (arg0) {
           when 1: win_set_iconic(false);
@@ -971,13 +894,11 @@ do_csi(uchar c)
       }
     }
     when 'S':        /* SU: Scroll up */
-      compatibility(VT340TEXT);
       term_do_scroll(term.marg_t, term.marg_b,
                      def_arg0, true);
       term.wrapnext = false;
       seen_disp_event();
     when 'T':        /* SD: Scroll down */
-      compatibility(VT340TEXT);
       /* Avoid clash with hilight mouse tracking mode sequence */
       if (nargs <= 1) {
         term_do_scroll(term.marg_t, term.marg_b, -def_arg0, true);
@@ -991,7 +912,6 @@ do_csi(uchar c)
       * support any size in reasonable range
       * (24..49 AIUI) with no default specified.
       */
-      compatibility(VT420);
       if (nargs == 1 && arg0 > 0) {
         win_resize(arg0 ?: cfg.rows, term.cols);
         term.selected = false;
@@ -1002,15 +922,11 @@ do_csi(uchar c)
       * Docs imply range is only 80 or 132, but
       * I'll allow any.
       */
-      compatibility(VT340TEXT);
       if (nargs <= 1) {
         win_resize(term.rows, arg0 ?: cfg.cols);
         term.selected = false;
       }
     when 'X': {      /* ECH: write N spaces w/o moving cursor */
-     /* XXX VTTEST says this is vt220, vt510 manual
-      * says vt100 */
-      compatibility(ANSIMIN);
       int n = def_arg0;
       pos cursplus;
       int p = term.curs.x;
@@ -1027,12 +943,10 @@ do_csi(uchar c)
       seen_disp_event();
     }
     when 'x': {      /* DECREQTPARM: report terminal characteristics */
-      compatibility(VT100);
       if (arg0 <= 1)
         ldisc_printf(0, "\e[%c;1;1;112;112;1;0x", '2' + arg0);
     }
     when 'Z': {       /* CBT */
-      compatibility(OTHER);
       int i = def_arg0; 
       while (--i >= 0 && term.curs.x > 0) {
         do {
@@ -1040,57 +954,17 @@ do_csi(uchar c)
         } while (term.curs.x > 0 && !term.tabs[term.curs.x]);
       }
     }
-    when ANSI('p', '"'): {   /* DECSCL: set compat level */
-     /*
-      * Allow the host to make this emulator a
-      * 'perfect' VT102. This first appeared in
-      * the VT220, but we do need to get back to
-      * PuTTY mode so I won't check it.
-      *
-      * The arg in 40..42,50 are a PuTTY extension.
-      * The 2nd arg, 8bit vs 7bit is not checked.
-      *
-      * Setting VT102 mode should also change
-      * the Fkeys to generate PF* codes as a
-      * real VT102 has no Fkeys. The VT220 does
-      * this, F11..F13 become ESC,BS,LF other
-      * Fkeys send nothing.
-      *
-      * Note ESC c will NOT change this!
-      */
-      switch (arg0) {
-        when 61:
-          term.compatibility_level &= ~TM_VTXXX;
-          term.compatibility_level |= TM_VT102;
-        when 62:
-          term.compatibility_level &= ~TM_VTXXX;
-          term.compatibility_level |= TM_VT220;
-        when 40:
-          term.compatibility_level &= TM_VTXXX;
-        when 41:
-          term.compatibility_level = TM_MINTTY;
-        when ARG_DEFAULT:
-          term.compatibility_level = TM_MINTTY;
-        when 50: // ignore
-        otherwise:
-          if (arg0 > 60 && arg0 < 70)
-            term.compatibility_level |= TM_VTXXX;
-      }
-    }
     when ANSI('m', '>'):     /* xterm: modifier key setting */
       /* only the modifyOtherKeys setting is implemented */
-      compatibility(OTHER);
       if (!nargs)
         term.modify_other_keys = 0;
       else if (arg0 == 4)
         term.modify_other_keys = nargs > 1 ? arg1 : 0;
     when ANSI('n', '>'):     /* xterm: modifier key setting */
       /* only the modifyOtherKeys setting is implemented */
-      compatibility(OTHER);
       if (nargs == 1 && arg0 == 4)
         term.modify_other_keys = 0;
     when ANSI('q', ' '):     /* DECSCUSR: set cursor style */
-      compatibility(VT510);
       if (nargs == 1) {
         term.cursor_type = arg0 ? (arg0 - 1) / 2 : -1;
         term.cursor_blinks = arg0 ? arg0 % 2 : -1;
