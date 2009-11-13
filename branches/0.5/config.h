@@ -47,6 +47,8 @@ typedef struct {
   int allow_blinking;
   int rows, cols;
   char printer[128];
+  char term[32];
+  char answerback[80];
  /* Colour options */
   int bold_as_bright;
   colour fg_colour, bg_colour, cursor_colour;

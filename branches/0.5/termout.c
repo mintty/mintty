@@ -26,7 +26,6 @@
        break; \
     }
 
-static const char answerback[] = "mintty";
 static const char primary_da[] = "\e[?1;2c";
 
  /* The vt100 linedraw characters.
@@ -260,7 +259,7 @@ write_ctrl(char c)
         write_return();
     when CTRL('E'):   /* ENQ: terminal type query */
       compatibility(ANSIMIN);
-      ldisc_send(answerback, sizeof(answerback) - 1, 0);
+      ldisc_send(cfg.answerback, strlen(cfg.answerback), false);
     when CTRL('N'):   /* LS1: Locking-shift one */
       compatibility(VT100);
       term.cset_i = 1;
