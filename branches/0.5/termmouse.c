@@ -408,8 +408,6 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
     }
     unlineptr(line);
     
-    printf("%i\n", count);
-    
     if (count)
       send_keys(forward ? "\e[C" : "\e[D", 3, count, false);
     
