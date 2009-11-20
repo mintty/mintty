@@ -466,13 +466,12 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Output", "ids", null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_combobox(
-    s, "TERM", '\0', 100, P(0), term_handler, P(0), P(0)
+    s, "TERM (at startup)", 't', 100, P(0), term_handler, P(0), P(0)
   )->column = 0;
   ctrl_editbox(
-    s, "Answerback", '\0', 100, P(0),
+    s, "Answerback", 'a', 100, P(0),
     string_handler, I(offcfg(answerback)), I(sizeof cfg.answerback)
   )->column = 1;
-
 
  /*
   * The Window panel.
@@ -511,7 +510,6 @@ setup_config_box(controlbox * b)
     s, "Ask for exit confirmation", 'a', P(0),
     dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
   );
-
 }
 
 

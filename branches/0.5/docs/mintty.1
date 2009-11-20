@@ -6,7 +6,7 @@
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
 .ad l
-.TH mintty 1 2009-11-06 0.5.3 Cygwin
+.TH mintty 1 2009-11-20 0.5.4 Cygwin
 
 .SH NAME
 
@@ -214,8 +214,8 @@ can be accessed.
 
 .SS TERM variable
 
-The \fITERM\fP variable for the child process is set to "xterm", so that
-programs that pay attention to it expect xterm keycodes and output
+By default, the \fITERM\fP variable for the child process is set to "xterm",
+so that programs that pay attention to it expect xterm keycodes and output
 xterm-compatible control sequences.
 
 
@@ -546,7 +546,7 @@ The Windows printer to send such text to can be selected here.
 By default, printing is disabled.
 
 .TP
-\fBBell\fP (Bell)
+\fBBell\fP
 The three checkboxes here determine what effects the bell character \fB^G\fP
 has.
 Taskbar highlighting, which is enabled by default, changes the colour of
@@ -558,6 +558,23 @@ mintty's taskbar entry in case its window is not active already.
 .IP "\- \fBFlash Screen\fP (BellFlash=0)"
 .IP "\- \fBHighlight in taskbar\fP (BellTaskbar=1)"
 .RE
+
+.TP
+\FBTERM\fP (Term=xterm)
+The TERM variable setting at mintty startup.
+Choices available from the dropdown list are \fBxterm\fP, \fBxterm-256color\fP,
+and \fBvt100\fP.
+This setting has no effect on mintty's terminal emulation, but it tells
+applications what features to expect.
+The \fBxterm-256color\fP setting enables 256-color mode in some applications,
+but may not be recognised at all by others, which is why plain \fBxterm\fP
+is the default.
+
+.TP
+\FBAnswerback\fP (Answerback=)
+
+The answerback string is sent in response to the \fB^E\fP (ENQ) character.
+By default, this is empty.
 
 
 .SS Window
@@ -1107,24 +1124,6 @@ for the Cygwin runtime system.
 Many of them apply to the Cygwin console only, but others can be useful
 with any Cygwin process.
 See \fIhttp://www.cygwin.com/cygwin-ug-net/using-cygwinenv.html\fP for details.
-
-
-.SS Detecting mintty
-
-Due to reasons of compatibility, mintty sets the \fITERM\fP variable to
-\fBxterm\fP.
-This, however, makes it difficult to tell mintty apart from real \fBxterm\fP
-when required for example in shell startup scripts.
-
-One way around that is to invoke the shell through the \fBenv\fP command to set
-the \fITERM\fP variable differently:
-
-.RS
-\fCmintty env TERM=mintty bash -l\fP
-.RE
-
-This can then be tested for in a startup script to trigger mintty-specific
-actions, followed by setting \fITERM\fP back to \fBxterm\fP.
 
 
 .SS Changing the ANSI colours
