@@ -20,7 +20,6 @@
 #define ANSI(x,y)	((x)+((y)<<8))
 #define ANSI_QUE(x)	ANSI(x,true)
 
-static const char answerback[] = "mintty";
 static const char primary_da[] = "\e[?1;2c";
 
  /* The vt100 linedraw characters.
@@ -251,7 +250,7 @@ write_ctrl(char c)
       if (term.newline_mode)
         write_return();
     when CTRL('E'):   /* ENQ: terminal type query */
-      ldisc_send(answerback, sizeof(answerback) - 1, 0);
+      ldisc_send(cfg.answerback, strlen(cfg.answerback), false);
     when CTRL('N'):   /* LS1: Locking-shift one */
       term.cset_i = 1;
       term_update_cs();
