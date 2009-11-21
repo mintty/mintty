@@ -106,7 +106,7 @@ enum {
 
 typedef struct control control;
 
-typedef void (*handler_fn) (control *, void *data, int event);
+typedef void (*handler_fn) (control *, void *dlg, void *data, int event);
 
 
 struct control {
@@ -301,9 +301,6 @@ struct control {
       char shortcut;
     } fontselect;
   };
-  
-  /* Space for storing platform-specific control data */
-  void *plat_ctrl;
 };
 
 #undef STANDARD_PREFIX
@@ -412,7 +409,8 @@ control *ctrl_checkbox(controlset *, char *label, char shortcut,
  * pointed to by `data', and expects each of the individual button
  * data to give a value for that int field.
  */
-void dlg_stdradiobutton_handler(control *, void *data, int event);
+void dlg_stdradiobutton_handler(control *, void *dlg, void *data,
+                                int event);
 
 /*
  * The standard checkbox handler expects the main `context' field
@@ -422,54 +420,54 @@ void dlg_stdradiobutton_handler(control *, void *data, int event);
  * checkbox.
  */
 #define CHECKBOX_INVERT (1<<30)
-void dlg_stdcheckbox_handler(control *, void *data, int event);
+void dlg_stdcheckbox_handler(control *, void *dlg, void *data, int event);
 
 /*
  * The standard font-selector handler expects the main `context'
  * field to contain the `offsetof' a Font field in the structure
  * pointed to by `data'.
  */
-void dlg_stdfontsel_handler(control *, void *data, int event);
+void dlg_stdfontsel_handler(control *, void *dlg, void *data, int event);
 
 /*
  * Routines the platform-independent dialog code can call to read
  * and write the values of controls.
  */
-void dlg_radiobutton_set(control *, int whichbutton);
-int dlg_radiobutton_get(control *);
-void dlg_checkbox_set(control *, int checked);
-int dlg_checkbox_get(control *);
-void dlg_editbox_set(control *, char const *text);
-void dlg_editbox_get(control *, char *buffer, int length);
+void dlg_radiobutton_set(control *, void *dlg, int whichbutton);
+int dlg_radiobutton_get(control *, void *dlg);
+void dlg_checkbox_set(control *, void *dlg, int checked);
+int dlg_checkbox_get(control *, void *dlg);
+void dlg_editbox_set(control *, void *dlg, char const *text);
+void dlg_editbox_get(control *, void *dlg, char *buffer, int length);
 /* The `listbox' functions also apply to combo boxes. */
-void dlg_listbox_clear(control *);
-void dlg_listbox_add(control *, char const *text);
-void dlg_fontsel_set(control *, font_spec *);
-void dlg_fontsel_get(control *, font_spec *);
+void dlg_listbox_clear(control *, void *dlg);
+void dlg_listbox_add(control *, void *dlg, char const *text);
+void dlg_fontsel_set(control *, void *dlg, font_spec *);
+void dlg_fontsel_get(control *, void *dlg, font_spec *);
 /*
  * Bracketing a large set of updates in these two functions will
  * cause the front end (if possible) to delay updating the screen
  * until it's all complete, thus avoiding flicker.
  */
-void dlg_update_start(control *);
-void dlg_update_done(control *);
+void dlg_update_start(control *, void *dlg);
+void dlg_update_done(control *, void *dlg);
 /*
  * Enable or disable a control.
  */
-void dlg_enable(control *, bool);
+void dlg_enable(control *, void *dlg, bool);
 /*
  * Set input focus into a particular control.
  */
-void dlg_set_focus(control *);
+void dlg_set_focus(control *, void *dlg);
 /*
  * Change the label text on a control.
  */
-void dlg_label_change(control *, char const *text);
+void dlg_label_change(control *, void *dlg, char const *text);
 /*
  * This function signals to the front end that the dialog's
  * processing is completed.
  */
-void dlg_end(void);
+void dlg_end(void *dlg);
 
 /*
  * Routines to manage a (per-platform) colour selector.
@@ -484,8 +482,8 @@ void dlg_end(void);
  * dlg_coloursel_start() accepts an RGB triple which is used to
  * initialise the colour selector to its starting value.
  */
-void dlg_coloursel_start(colour);
-int dlg_coloursel_results(colour *);
+void dlg_coloursel_start(void *dlg, colour);
+int dlg_coloursel_results(void *dlg, colour *);
 
 /*
  * This routine is used by the platform-independent code to
@@ -496,7 +494,7 @@ int dlg_coloursel_results(colour *);
  * If `ctrl' is null, _all_ controls in the dialog get refreshed
  * (for loading or saving entire sets of settings).
  */
-void dlg_refresh(control *);
+void dlg_refresh(control *, void *dlg);
 
 /*
  * Standard helper functions for reading a controlbox structure.
