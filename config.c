@@ -190,11 +190,27 @@ colour_handler(control *ctrl, void *unused(data), int event)
 }
 
 static void
+term_handler(control *ctrl, void *unused(data), int event)
+{
+  switch (event) {
+    when EVENT_REFRESH:
+      dlg_update_start(ctrl);
+      dlg_listbox_clear(ctrl);
+      dlg_listbox_add(ctrl, "xterm");
+      dlg_listbox_add(ctrl, "xterm-256color");
+      dlg_listbox_add(ctrl, "vt100");
+      dlg_update_done(ctrl);
+      dlg_editbox_set(ctrl, new_cfg.term);
+    when EVENT_VALCHANGE or EVENT_SELCHANGE:
+      dlg_editbox_get(ctrl, new_cfg.term, sizeof cfg.term);
+  }
+}
+
+static void
 int_handler(control *ctrl, void *data, int event)
 {
   int offset = ctrl->context.i;
   int limit = ctrl->editbox.context2.i;
-
   int *field = &atoffset(int, data, offset);
   char buf[16];
   switch (event) {
@@ -203,6 +219,20 @@ int_handler(control *ctrl, void *data, int event)
       *field = max(0, min(atoi(buf), limit));
     when EVENT_REFRESH:
       sprintf(buf, "%i", *field);
+      dlg_editbox_set(ctrl, buf);
+  }
+}
+
+static void
+string_handler(control *ctrl, void *data, int event)
+{
+  int offset = ctrl->context.i;
+  int size = ctrl->editbox.context2.i;
+  char *buf = &atoffset(char, data, offset);
+  switch (event) {
+    when EVENT_VALCHANGE:
+      dlg_editbox_get(ctrl, buf, size);
+    when EVENT_REFRESH:
       dlg_editbox_set(ctrl, buf);
   }
 }
@@ -427,6 +457,16 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(bell_taskbar))
   );
 
+  s = ctrl_getset(b, "Output", "ids", null);
+  ctrl_columns(s, 2, 50, 50);
+  ctrl_combobox(
+    s, "TERM (at startup)", 't', 100, P(0), term_handler, P(0), P(0)
+  )->column = 0;
+  ctrl_editbox(
+    s, "Answerback", 'a', 100, P(0),
+    string_handler, I(offcfg(answerback)), I(sizeof cfg.answerback)
+  )->column = 1;
+
  /*
   * The Window panel.
   */
@@ -464,7 +504,6 @@ setup_config_box(controlbox * b)
     s, "Ask for exit confirmation", 'a', P(0),
     dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
   );
-
 }
 
 
@@ -520,6 +559,8 @@ string_settings[] = {
   {"Locale", offcfg(locale), sizeof cfg.locale, ""},
   {"Charset", offcfg(charset), sizeof cfg.charset, ""},
   {"Printer", offcfg(printer), sizeof cfg.printer, ""},
+  {"Term", offcfg(term), sizeof cfg.term, "xterm"},
+  {"Answerback", offcfg(answerback), sizeof cfg.answerback, ""},
 };
 
 typedef const struct {

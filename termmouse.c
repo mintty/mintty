@@ -377,13 +377,13 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
     
     p = term.selected ? term.sel_end : get_selpoint(p);
     
-    static pos last_p;
-    pos p0 = state == MS_SEL_CHAR ? term.curs : last_p;
-    last_p = p;
+    static pos last_dest;
+    pos orig = state == MS_SEL_CHAR ? term.curs : last_dest;
+    pos dest = p;
     
-    bool forward = posle(p0, p);
-    pos end = forward ? p : p0;
-    p = forward ? p0 : p;
+    bool forward = posle(orig, dest);
+    pos end = forward ? dest : orig;
+    p = forward ? orig : dest;
     
     uint count = 0;
     while (p.y != end.y) {
@@ -410,6 +410,8 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
     
     if (count)
       send_keys(forward ? "\e[C" : "\e[D", 3, count, false);
+    
+    last_dest = dest;
   }
 }
 
