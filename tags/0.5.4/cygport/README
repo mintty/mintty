@@ -1,0 +1,128 @@
+mintty
+------------------------------------------
+mintty is a terminal emulator for Cygwin. It is based on code from 
+PuTTY 0.60 by Simon Tatham and team.
+
+Features include:
+* Xterm-compatible terminal emulation.
+* Native Windows user interface that tries to keep things simple.
+* Unicode support, not limited to the Basic Multilingual Plane
+* Drag & drop and copy & paste of text, files and folders. 
+* Options are stored in a text file. No registry entries.
+* Window transparency.
+* Small executable size (currently <120K). 
+
+Runtime requirements:
+  cygwin-1.7.0-62
+
+Build requirements:
+  binutils-20080624-2
+  cygport-0.4.4-1
+  gcc-core-3.4.4-3
+  make-3.81-1
+  w32api-3.12-1
+
+Canonical website:
+  http://mintty.googlecode.com
+
+Canonical download:
+  http://code.google.com/p/mintty/downloads/list
+
+-------------------------------------------
+
+Build instructions:
+  unpack mintty-0.5.4-X-src.tar.bz2
+    if you use setup to install this src package, it will be
+    unpacked under /usr/src automatically
+  cd /usr/src
+  cygport ./mintty-0.5.4-X.cygport all
+
+This will create:
+  /usr/src/mintty-0.5.4-X-src.tar.bz2
+  /usr/src/mintty-0.5.4-X.tar.bz2
+
+-------------------------------------------
+
+Files included in the binary package:
+
+  /etc/postinstall/mintty.sh
+  /etc/preremove/mintty.sh
+  /usr/bin/mintty.exe
+  /usr/share/doc/Cygwin/mintty-0.5.4.README
+  /usr/share/doc/mintty-0.5.4/COPYING
+  /usr/share/doc/mintty-0.5.4/LICENSE.Oxygen
+  /usr/share/doc/mintty-0.5.4/LICENSE.PuTTY
+  /usr/share/man/man1/mintty.1.gz
+
+------------------
+
+Port Notes:
+
+----- mintty-0.5.4-1 -----
+* Added TERM and Answerback options
+
+----- mintty-0.5.3-1 -----
+* Fixed "clicks place cursor" for wide char
+* Added glass transparency setting
+
+----- mintty-0.5.2-1 -----
+* Re-added option for ^H backspace.
+* Added control sequence for overriding all shortcuts.
+
+----- mintty-0.5.1-1 -----
+* Added options for configuring Cygwin 1.7's locales.
+* Unicode support beyond the Basic Multilingual Plane.
+* Ctrl+click opening of files, folders, links.
+* Changed backspace key default to ^?.
+
+----- mintty-0.4.4-1 -----
+* Tweaks and compatibility fixes.
+
+----- mintty-0.4.3-1 -----
+* Skipping Windows 7 popup console workaround on Cygwin API >= 0.211.
+* Improved versioning.
+* Enhancements: custom icon, aplication escape key mode, DECSCUSR.
+
+----- mintty-0.4.2-1 -----
+* Fixed bug that meant that codepage setting was ignored on output.
+* Removed C1 control character processing.
+* Various smaller fixes and improvements to the man page.
+
+----- mintty-0.4.1-1 -----
+* Spit'n'polish
+
+----- mintty-0.4.0-2 -----
+* Postinstall and preremove scripts were missing.
+
+----- mintty-0.4.0-1 -----
+* Revamped options dialog with added Apply button.
+* Better keyboard handling, including xterm modifyOtherKeys mode.
+* Added --log and --hold options.
+* Lots of little fixes.
+
+----- mintty-0.3.10-1 -----
+* Fixed a couple of codepage and font handling bugs introduced in 0.3.10.
+
+----- mintty-0.3.9-1 -----
+* Improved support for East Asian languages.
+* Workaround for Windows 7 console popups.
+
+----- mintty-0.3.8-1 -----
+* Added -e option and duplicate command.
+
+----- mintty-0.3.7-1 -----
+* Quick respin to address a couple of xterm incompatibilities.
+
+----- mintty-0.3.6-1 -----
+* Update to version 0.3.6. 
+* Replaced readme.html with manual page. Thanks to Lee D. Rothstein for 
+helping with that.
+
+----- mintty-0.3.5-1 -----
+* First attempt at Cygwin setup package. Thanks to Yaakov Selkovitz for 
+getting this off the ground by adding MinTTY to Cygports.
+
+Cygwin port maintained by:  Andy Koppe  cygwin@cygwin.com
+Please address questions to the Cygwin mailing list at 
+<cygwin@cygwin.com> or to the mintty discussion group at
+http://groups.google.com/group/mintty-discuss.
