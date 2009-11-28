@@ -1,3 +1,7 @@
+// conin.c
+// Copyright 2009 Andy Koppe
+// Licensed under the terms of the GNU General Public License v3 or later.
+
 #define WINVER 0x500
 #define _WIN32_WINNT WINVER
 #define _WIN32_IE WINVER
@@ -19,10 +23,12 @@
 static int pid;
 static HANDLE conin;
 
-struct termios saved_tattr;
+struct termios orig_tattr, raw_tattr;
 
 static char prompt[256];
 static int prompt_len;
+
+static bool in_readline_mode = false;
 
 static void
 sigchld(int sig)
@@ -30,7 +36,7 @@ sigchld(int sig)
   int status;
   if (wait(&status) != pid)
     return;
-  tcsetattr (0, TCSANOW, &saved_tattr);
+  tcsetattr (0, TCSANOW, &orig_tattr);
   if (WIFEXITED(status))
     exit(WEXITSTATUS(status));
   else if (WIFSIGNALED(status)) {
@@ -77,27 +83,36 @@ forward_output(int src_fd, int dest_fd)
   write(dest_fd, buf, buf_len);
 
   // Look for a line feed
-  for (int i = buf_len; i; i--) {
-    if (buf[i-1] == '\n') {
-      prompt_len = buf_len - i;
-      memcpy(prompt, buf + i, prompt_len);
-      return;
+  int p;
+  for (p = buf_len; p; p--) {
+    if (buf[p-1] == '\n') {
+      prompt_len = buf_len - p;
+      memcpy(prompt, buf + p, prompt_len);
+      break;
     }
   }
-  
-  int old_prompt_len = prompt_len;
-  prompt_len += buf_len;
-  if (prompt_len < sizeof buf) {
-    memcpy(prompt + old_prompt_len, buf, buf_len);
-    prompt[prompt_len] = 0;
+
+  if (!p) {
+    int old_prompt_len = prompt_len;
+    prompt_len += buf_len;
+    if (prompt_len < sizeof prompt)
+      memcpy(prompt + old_prompt_len, buf, buf_len);
   }
+  
+  prompt[prompt_len < sizeof prompt ? prompt_len : 0] = 0;
 }
 
 static void
 rl_callback(char *line)
 {
+  rl_callback_handler_remove();
+  in_readline_mode = false;
+
   if (!line)
     exit(1);
+
+  tcsetattr (0, TCSANOW, &raw_tattr);
+
   if (*line)
     add_history(line);
   size_t len = strlen(line) + 1;
@@ -128,7 +143,6 @@ rl_callback(char *line)
   }
   DWORD written;
   WriteConsoleInput(conin, inrecs, len * 2, &written);
-  rl_set_prompt(prompt);
 }
 
 int
@@ -189,10 +203,10 @@ main(int argc, char *argv[])
   close(cmderr_pipe[1]);
   int cmdout_fd = cmdout_pipe[0], cmderr_fd = cmderr_pipe[0];
   
-  tcgetattr (0, &saved_tattr);
-  
-  rl_already_prompted = true;
-  rl_callback_handler_install(0, rl_callback);
+  tcgetattr (0, &orig_tattr);
+  raw_tattr = orig_tattr;
+  raw_tattr.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
+  tcsetattr (0, TCSANOW, &raw_tattr);
   
   enum {START, SEEN_ESC, SEEN_CSI} state = START;
 
@@ -213,14 +227,21 @@ main(int argc, char *argv[])
       forward_output(cmderr_fd, 2);
 
     if (FD_ISSET(0, &fdset)) {
-      DWORD mode;
-      GetConsoleMode(conin, &mode);
-      if ((mode & 7) == 7) { // PROCESSED_INPUT, LINE_INPUT, ECHO_INPUT
-        // readline mode
-        rl_callback_read_char();
+      
+      if (!in_readline_mode) {
+        DWORD mode;
+        GetConsoleMode(conin, &mode);
+        if ((mode & 7) == 7) { // PROCESSED_INPUT, LINE_INPUT, ECHO_INPUT
+          tcsetattr (0, TCSANOW, &orig_tattr);
+          rl_already_prompted = true;
+          rl_callback_handler_install(prompt, rl_callback);
+          in_readline_mode = true;
+        }
       }
+      if (in_readline_mode)
+        rl_callback_read_char();
       else {
-        // direct mode
+        // raw mode
         char c = getchar();
         UCHAR vk;
         bool shift = 0, ctrl = 0, alt = 0;
