@@ -23,7 +23,7 @@
 static int pid;
 static HANDLE conin;
 
-struct termios orig_tattr, raw_tattr;
+struct termios orig_tattr, raw_tattr, readline_tattr;
 
 static char prompt[256];
 static int prompt_len;
@@ -103,46 +103,53 @@ forward_output(int src_fd, int dest_fd)
 }
 
 static void
+trans_char(INPUT_RECORD *inrecs, char c)
+{
+  SHORT vkks = VkKeyScan(c);
+  UCHAR vk = vkks;
+  bool shift = vkks & 0x100, ctrl = vkks & 0x200, alt = vkks & 0x400;
+  WORD vsc = MapVirtualKey(vk, 0 /* MAPVK_VK_TO_VSC */);
+  inrecs[0] = inrecs[1] = (INPUT_RECORD){
+    .EventType = KEY_EVENT,
+    .Event = {
+      .KeyEvent = {
+        .bKeyDown = false,
+        .wRepeatCount = 1,
+        .wVirtualKeyCode = vk,
+        .wVirtualScanCode = vsc,
+        .uChar = { .AsciiChar = c },
+        .dwControlKeyState =
+          shift * SHIFT_PRESSED |
+          ctrl  * LEFT_CTRL_PRESSED |
+          alt   * RIGHT_ALT_PRESSED
+      }
+    }
+  };
+  inrecs[0].Event.KeyEvent.bKeyDown = true;
+}
+
+static void
 rl_callback(char *line)
 {
   rl_callback_handler_remove();
   in_readline_mode = false;
-
-  if (!line)
-    exit(1);
-
   tcsetattr (0, TCSANOW, &raw_tattr);
 
-  if (*line)
-    add_history(line);
-  size_t len = strlen(line) + 1;
-  line[len - 1] = '\r';
-  INPUT_RECORD inrecs[len * 2];
-  for (int i = 0; i < len; i++) {
-    SHORT vkks = VkKeyScan(line[i]);
-    UCHAR vk = vkks;
-    bool shift = vkks & 0x100, ctrl = vkks & 0x200, alt = vkks & 0x400;
-    WORD vsc = MapVirtualKey(vk, 0 /* MAPVK_VK_TO_VSC */);
-    inrecs[2*i] = inrecs[2*i+1] = (INPUT_RECORD){
-      .EventType = KEY_EVENT,
-      .Event = {
-        .KeyEvent = {
-          .bKeyDown = false,
-          .wRepeatCount = 1,
-          .wVirtualKeyCode = vk,
-          .wVirtualScanCode = vsc,
-          .uChar = { .AsciiChar = line[i] },
-          .dwControlKeyState =
-            shift * SHIFT_PRESSED |
-            ctrl  * LEFT_CTRL_PRESSED |
-            alt   * RIGHT_ALT_PRESSED
-        }
-      }
-    };
-    inrecs[2*i].Event.KeyEvent.bKeyDown = true;
+  if (!line) {
+    INPUT_RECORD inrecs[2];
+    trans_char(inrecs, 26); // ^Z
+    WriteConsoleInput(conin, inrecs, 2, &(DWORD){0});
   }
-  DWORD written;
-  WriteConsoleInput(conin, inrecs, len * 2, &written);
+  else {
+    if (*line)
+      add_history(line);
+    size_t len = strlen(line) + 1;
+    line[len - 1] = '\r';
+    INPUT_RECORD inrecs[len * 2];
+    for (int i = 0; i < len; i++)
+      trans_char(inrecs + i*2, line[i]);
+    WriteConsoleInput(conin, inrecs, len * 2, &(DWORD){0});
+  }
 }
 
 int
@@ -204,9 +211,13 @@ main(int argc, char *argv[])
   int cmdout_fd = cmdout_pipe[0], cmderr_fd = cmderr_pipe[0];
   
   tcgetattr (0, &orig_tattr);
+
   raw_tattr = orig_tattr;
-  raw_tattr.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
+  raw_tattr.c_lflag &= ~(ECHO|ICANON|IEXTEN);
   tcsetattr (0, TCSANOW, &raw_tattr);
+  
+  readline_tattr = orig_tattr;
+  readline_tattr.c_lflag &= ~ISIG;
   
   enum {START, SEEN_ESC, SEEN_CSI} state = START;
 
@@ -218,7 +229,7 @@ main(int argc, char *argv[])
     FD_SET(cmderr_fd, &fdset);
 
     if (select(cmderr_fd + 1, &fdset, 0, 0, 0) < 0)
-      error("select() failed");
+      break;
     
     if (FD_ISSET(cmdout_fd, &fdset))
       forward_output(cmdout_fd, 1);
@@ -232,7 +243,7 @@ main(int argc, char *argv[])
         DWORD mode;
         GetConsoleMode(conin, &mode);
         if ((mode & 7) == 7) { // PROCESSED_INPUT, LINE_INPUT, ECHO_INPUT
-          tcsetattr (0, TCSANOW, &orig_tattr);
+          tcsetattr (0, TCSANOW, &readline_tattr);
           rl_already_prompted = true;
           rl_callback_handler_install(prompt, rl_callback);
           in_readline_mode = true;
@@ -305,4 +316,9 @@ main(int argc, char *argv[])
       }
     }
   }
+  
+  int status;
+  while (wait(&status) != pid);
+
+  return 0;
 }
