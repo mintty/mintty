@@ -401,7 +401,8 @@ clear_fullsceen(void)
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
   }
   
-  enable_glass(cfg.transparency < 0);
+  enable_glass(cfg.transparency < 0 &&
+               !(cfg.opaque_when_focused && term.has_focus));
 }
 
 /*
@@ -448,16 +449,16 @@ reset_term(void)
 static void
 update_transparency(void)
 {
+  bool opaque = cfg.opaque_when_focused && term.has_focus;
   if (pSetLayeredWindowAttributes) {
     int trans = max(cfg.transparency, 0);
     SetWindowLong(wnd, GWL_EXSTYLE, trans ? WS_EX_LAYERED : 0);
     if (trans) {
-      bool opaque = (cfg.opaque_when_focused && term.has_focus);
       uchar alpha = opaque ? 255 : 255 - 16 * trans;
       pSetLayeredWindowAttributes(wnd, 0, alpha, LWA_ALPHA);
     }
   }
-  enable_glass(cfg.transparency < 0 && !win_is_fullscreen());
+  enable_glass(cfg.transparency < 0 && !win_is_fullscreen() && !opaque);
 }
 
 void
