@@ -70,8 +70,10 @@ Use \fITITLE\fP as the initial window title.
 By default, the title is set to the executed command.
 
 .TP
-\fB-i\fP, \fB--icon\fP=\fIFILE\fP
-Load the window icon from a Windows \fI.ICO\fP file.
+\fB-i\fP, \fB--icon\fP=\fIFILE\fP[\fB,\fIINDEX\fR]
+Load the window icon from an executable, DLL, or icon file.
+A comma-separated index can be used to select an icon in a file with multiple
+icons.
 
 .TP
 \fB-l\fP, \fB--log\fP=\fIFILE\fP
