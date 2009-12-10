@@ -886,16 +886,15 @@ main(int argc, char *argv[])
     if (!win_icon_file)
       error("invalid icon file path -- %s", icon_file);
     free(win_icon_file);
-    if (ExtractIconExW(win_icon_file, icon_index,
-                       &large_icon, &small_icon, 1) != 2)
-      error("could not load icon -- %s", icon_file);
+    ExtractIconExW(win_icon_file, icon_index, &large_icon, &small_icon, 1);
+
 #else
     char win_icon_file[MAX_PATH];
     cygwin_conv_to_win32_path(icon_file, win_icon_file);
-    if (ExtractIconExA(win_icon_file, icon_index,
-                       &large_icon, &small_icon, 1) != 2)
-      error("could not load icon -- %s", icon_file);
+    ExtractIconExA(win_icon_file, icon_index, &large_icon, &small_icon, 1);
 #endif
+    if (!small_icon || !large_icon)
+      error("could not load icon -- %s", icon_file);
   }
 
   if (!config_file)
