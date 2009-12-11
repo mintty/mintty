@@ -885,9 +885,8 @@ main(int argc, char *argv[])
     wchar *win_icon_file = cygwin_create_path(CCP_POSIX_TO_WIN_W, icon_file);
     if (!win_icon_file)
       error("invalid icon file path -- %s", icon_file);
-    free(win_icon_file);
     ExtractIconExW(win_icon_file, icon_index, &large_icon, &small_icon, 1);
-
+    free(win_icon_file);
 #else
     char win_icon_file[MAX_PATH];
     cygwin_conv_to_win32_path(icon_file, win_icon_file);
