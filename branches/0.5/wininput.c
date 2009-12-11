@@ -286,16 +286,18 @@ win_key_down(WPARAM wp, LPARAM lp)
   bool shift = is_key_down(VK_SHIFT);
   bool alt, ctrl, altgr, meta;
   if (cfg.ctrl_alt_is_altgr) {
-    alt = meta = is_key_down(VK_LMENU);
-    altgr = is_key_down(VK_RMENU);
-    ctrl = is_key_down(VK_CONTROL) & !altgr;
-    kbd[VK_MENU] = kbd[VK_RMENU];
-  }
-  else {
+    // Treat any Ctrl+Alt as AltGr
     alt = is_key_down(VK_MENU);
     ctrl = is_key_down(VK_CONTROL);
     altgr = alt & ctrl;
     meta = (alt & !ctrl) | (is_key_down(VK_LMENU) & is_key_down(VK_RMENU));
+  }
+  else {
+    // Only treat Ctrl+RightAlt (or an actual AltGr key if present) as AltGr
+    alt = meta = is_key_down(VK_LMENU);
+    altgr = is_key_down(VK_RMENU);
+    ctrl = is_key_down(VK_CONTROL) & !altgr;
+    kbd[VK_MENU] = kbd[VK_RMENU];
   }
   mod_keys mods = shift * MDK_SHIFT | alt * MDK_ALT | ctrl * MDK_CTRL;
 
