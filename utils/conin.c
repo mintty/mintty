@@ -23,7 +23,7 @@
 static int pid;
 static HANDLE conin;
 
-struct termios orig_tattr, raw_tattr, readline_tattr;
+struct termios orig_tattr, raw_tattr;
 
 static char prompt[256];
 static int prompt_len;
@@ -36,7 +36,7 @@ sigchld(int sig)
   int status;
   if (wait(&status) != pid)
     return;
-  tcsetattr (0, TCSANOW, &orig_tattr);
+  tcsetattr(0, TCSANOW, &orig_tattr);
   if (WIFEXITED(status))
     exit(WEXITSTATUS(status));
   else if (WIFSIGNALED(status)) {
@@ -197,9 +197,8 @@ forward_raw_char(void)
 static void
 rl_callback(char *line)
 {
-  rl_callback_handler_remove();
   in_readline_mode = false;
-  tcsetattr (0, TCSANOW, &raw_tattr);
+  rl_callback_handler_remove();
 
   if (!line) {
     INPUT_RECORD inrecs[2];
@@ -225,14 +224,17 @@ forward_input(void)
     DWORD mode;
     GetConsoleMode(conin, &mode);
     if ((mode & 7) == 7) { // PROCESSED_INPUT, LINE_INPUT, ECHO_INPUT
-      tcsetattr (0, TCSANOW, &readline_tattr);
+      in_readline_mode = true;
+      tcsetattr(0, TCSANOW, &orig_tattr);
       rl_already_prompted = true;
       rl_callback_handler_install(prompt, rl_callback);
-      in_readline_mode = true;
     }
   }
-  if (in_readline_mode)
+  if (in_readline_mode) {
     rl_callback_read_char();
+    if (!in_readline_mode)
+      tcsetattr(0, TCSANOW, &raw_tattr);
+  }
   else
     forward_raw_char();
 }
@@ -301,13 +303,9 @@ main(int argc, char *argv[])
   int cmdout_fd = cmdout_pipe[0], cmderr_fd = cmderr_pipe[0];
   
   tcgetattr (0, &orig_tattr);
-
-  readline_tattr = orig_tattr;
-  readline_tattr.c_lflag &= ~ISIG;
-  
   raw_tattr = orig_tattr;
-  raw_tattr.c_lflag &= ~(ECHO|ICANON|IEXTEN|ISIG);
-  tcsetattr (0, TCSANOW, &raw_tattr);
+  raw_tattr.c_lflag &= ~(ECHO|ICANON|IEXTEN);
+  tcsetattr(0, TCSANOW, &raw_tattr);
   
   for (;;) {
     fd_set fdset;
@@ -315,22 +313,14 @@ main(int argc, char *argv[])
     FD_SET(0, &fdset);
     FD_SET(cmdout_fd, &fdset);
     FD_SET(cmderr_fd, &fdset);
-
-    if (select(cmderr_fd + 1, &fdset, 0, 0, 0) < 0)
-      break;
     
-    if (FD_ISSET(cmderr_fd, &fdset))
-      forward_output(cmderr_fd, 2);
-
-    if (FD_ISSET(cmdout_fd, &fdset))
-      forward_output(cmdout_fd, 1);
-
-    if (FD_ISSET(0, &fdset))
-      forward_input();
+    if (select(cmderr_fd + 1, &fdset, 0, 0, 0) > 0) {
+      if (FD_ISSET(cmdout_fd, &fdset))
+        forward_output(cmdout_fd, 1);
+      if (FD_ISSET(cmderr_fd, &fdset))
+        forward_output(cmderr_fd, 2);
+      if (FD_ISSET(0, &fdset))
+        forward_input();
+    }
   }
-  
-  int status;
-  while (wait(&status) != pid);
-
-  return 0;
 }
