@@ -213,6 +213,10 @@ rl_callback(char *line)
       trans_char(inrecs + i*2, line[i]);
     WriteConsoleInput(conin, inrecs, len * 2, &(DWORD){0});
   }
+
+  // Fresh prompt.
+  prompt_len = 0;
+  *prompt = 0;
 }
 
 static void
