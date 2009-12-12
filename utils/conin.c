@@ -2,7 +2,7 @@
 // Copyright 2009 Andy Koppe
 // Licensed under the terms of the GNU General Public License v3 or later.
 
-#define WINVER 0x500
+#define WINVER 0x501
 #define _WIN32_WINNT WINVER
 #define _WIN32_IE WINVER
 
@@ -129,6 +129,72 @@ trans_char(INPUT_RECORD *inrecs, char c)
 }
 
 static void
+forward_raw_char(void)
+{
+  static enum {START, SEEN_ESC, SEEN_CSI} state = START;
+
+  char c = getchar();
+  UCHAR vk;
+  bool shift = 0, ctrl = 0, alt = 0;
+  switch (state) {
+    case START:
+      if (c == '\e') {
+        state = SEEN_ESC;
+        return;
+      }
+      if (c == '\n')
+        c = '\r';
+      else if (c == 0x7F)
+        c = '\b';
+      
+      
+      SHORT vkks = VkKeyScan(c);
+      vk = vkks;
+      shift = vkks & 0x100, ctrl = vkks & 0x200, alt = vkks & 0x400;
+      break;
+    case SEEN_ESC:
+      state = c == '[' ? SEEN_CSI : START;
+      return;
+    case SEEN_CSI:
+      state = START;
+      switch (c) {
+        case 'A': vk = VK_UP; break;
+        case 'B': vk = VK_DOWN; break;
+        case 'C': vk = VK_RIGHT; break;
+        case 'D': vk = VK_LEFT; break;
+        case 'F': vk = VK_END; break;
+        case 'H': vk = VK_HOME; break;
+        default: return;
+      }
+      c = 0;
+      break;
+  }
+  
+  WORD vsc = MapVirtualKey(vk, 0 /* MAPVK_VK_TO_VSC */);
+  INPUT_RECORD inrec = {
+    .EventType = KEY_EVENT,
+    .Event = {
+      .KeyEvent = {
+        .bKeyDown = true,
+        .wRepeatCount = 1,
+        .wVirtualKeyCode = vk,
+        .wVirtualScanCode = vsc,
+        .uChar = { .AsciiChar = c },
+        .dwControlKeyState =
+          shift * SHIFT_PRESSED |
+          ctrl  * LEFT_CTRL_PRESSED |
+          alt   * RIGHT_ALT_PRESSED
+      }
+    }
+  };
+  
+  DWORD written;
+  WriteConsoleInput(conin, &inrec, 1, &written);
+  inrec.Event.KeyEvent.bKeyDown = false;
+  WriteConsoleInput(conin, &inrec, 1, &written);
+}
+
+static void
 rl_callback(char *line)
 {
   rl_callback_handler_remove();
@@ -152,6 +218,25 @@ rl_callback(char *line)
   }
 }
 
+static void
+forward_input(void)
+{  
+  if (!in_readline_mode) {
+    DWORD mode;
+    GetConsoleMode(conin, &mode);
+    if ((mode & 7) == 7) { // PROCESSED_INPUT, LINE_INPUT, ECHO_INPUT
+      tcsetattr (0, TCSANOW, &readline_tattr);
+      rl_already_prompted = true;
+      rl_callback_handler_install(prompt, rl_callback);
+      in_readline_mode = true;
+    }
+  }
+  if (in_readline_mode)
+    rl_callback_read_char();
+  else
+    forward_raw_char();
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -162,10 +247,15 @@ main(int argc, char *argv[])
   if (pipe(cmdout_pipe) != 0 || pipe(cmderr_pipe) != 0)
     error("Could not create pipes");
   
+  spawnl(_P_WAIT, "/bin/test", "/bin/test", 0);
+  
   pid = fork();
   if (pid < 0)
     error("Could not create child process");
   else if (pid == 0) {
+    setsid();
+    AttachConsole(-1);
+    
     // Child process
     close(0);
     if (open("/dev/conin", O_RDONLY) != 0)
@@ -212,15 +302,13 @@ main(int argc, char *argv[])
   
   tcgetattr (0, &orig_tattr);
 
-  raw_tattr = orig_tattr;
-  raw_tattr.c_lflag &= ~(ECHO|ICANON|IEXTEN);
-  tcsetattr (0, TCSANOW, &raw_tattr);
-  
   readline_tattr = orig_tattr;
   readline_tattr.c_lflag &= ~ISIG;
   
-  enum {START, SEEN_ESC, SEEN_CSI} state = START;
-
+  raw_tattr = orig_tattr;
+  raw_tattr.c_lflag &= ~(ECHO|ICANON|IEXTEN|ISIG);
+  tcsetattr (0, TCSANOW, &raw_tattr);
+  
   for (;;) {
     fd_set fdset;
     FD_ZERO(&fdset);
@@ -231,90 +319,14 @@ main(int argc, char *argv[])
     if (select(cmderr_fd + 1, &fdset, 0, 0, 0) < 0)
       break;
     
-    if (FD_ISSET(cmdout_fd, &fdset))
-      forward_output(cmdout_fd, 1);
-
     if (FD_ISSET(cmderr_fd, &fdset))
       forward_output(cmderr_fd, 2);
 
-    if (FD_ISSET(0, &fdset)) {
-      
-      if (!in_readline_mode) {
-        DWORD mode;
-        GetConsoleMode(conin, &mode);
-        if ((mode & 7) == 7) { // PROCESSED_INPUT, LINE_INPUT, ECHO_INPUT
-          tcsetattr (0, TCSANOW, &readline_tattr);
-          rl_already_prompted = true;
-          rl_callback_handler_install(prompt, rl_callback);
-          in_readline_mode = true;
-        }
-      }
-      if (in_readline_mode)
-        rl_callback_read_char();
-      else {
-        // raw mode
-        char c = getchar();
-        UCHAR vk;
-        bool shift = 0, ctrl = 0, alt = 0;
-        switch (state) {
-          case START:
-            if (c == '\e') {
-              state = SEEN_ESC;
-              continue;
-            }
-            if (c == '\n')
-              c = '\r';
-            else if (c == 0x7F)
-              c = '\b';
-            SHORT vkks = VkKeyScan(c);
-            vk = vkks;
-            shift = vkks & 0x100, ctrl = vkks & 0x200, alt = vkks & 0x400;
-            break;
-          case SEEN_ESC:
-            if (c == '[') {
-              state = SEEN_CSI;
-              continue;
-            }
-            state = START;
-            continue;
-          case SEEN_CSI:
-            state = START;
-            switch (c) {
-              case 'A': vk = VK_UP; break;
-              case 'B': vk = VK_DOWN; break;
-              case 'C': vk = VK_RIGHT; break;
-              case 'D': vk = VK_LEFT; break;
-              case 'F': vk = VK_END; break;
-              case 'H': vk = VK_HOME; break;
-              default: continue;
-            }
-            c = 0;
-            break;
-        }
-        
-        WORD vsc = MapVirtualKey(vk, 0 /* MAPVK_VK_TO_VSC */);
-        INPUT_RECORD inrec = {
-          .EventType = KEY_EVENT,
-          .Event = {
-            .KeyEvent = {
-              .bKeyDown = true,
-              .wRepeatCount = 1,
-              .wVirtualKeyCode = vk,
-              .wVirtualScanCode = vsc,
-              .uChar = { .AsciiChar = c },
-              .dwControlKeyState =
-                shift * SHIFT_PRESSED |
-                ctrl  * LEFT_CTRL_PRESSED |
-                alt   * RIGHT_ALT_PRESSED
-            }
-          }
-        };
-        DWORD written;
-        WriteConsoleInput(conin, &inrec, 1, &written);
-        inrec.Event.KeyEvent.bKeyDown = false;
-        WriteConsoleInput(conin, &inrec, 1, &written);
-      }
-    }
+    if (FD_ISSET(cmdout_fd, &fdset))
+      forward_output(cmdout_fd, 1);
+
+    if (FD_ISSET(0, &fdset))
+      forward_input();
   }
   
   int status;
