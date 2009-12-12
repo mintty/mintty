@@ -307,6 +307,9 @@ main(int argc, char *argv[])
   raw_tattr.c_lflag &= ~(ECHO|ICANON|IEXTEN);
   tcsetattr(0, TCSANOW, &raw_tattr);
   
+  rl_catch_signals = false;
+  rl_bind_key ('\t', rl_insert);
+  
   for (;;) {
     fd_set fdset;
     FD_ZERO(&fdset);
