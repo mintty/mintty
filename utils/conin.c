@@ -146,8 +146,6 @@ forward_raw_char(void)
         c = '\r';
       else if (c == 0x7F)
         c = '\b';
-      
-      
       SHORT vkks = VkKeyScan(c);
       vk = vkks;
       shift = vkks & 0x100, ctrl = vkks & 0x200, alt = vkks & 0x400;
@@ -245,9 +243,9 @@ main(int argc, char *argv[])
   if (argc < 2)
     return 2;
   
-  int cmdout_pipe[2], cmderr_pipe[2];
-  if (pipe(cmdout_pipe) != 0 || pipe(cmderr_pipe) != 0)
-    error("Could not create pipes");
+  int pipe_fds[2];
+  if (pipe(pipe_fds) != 0)
+    error("Could not create output pipe");
   
   spawnl(_P_WAIT, "/bin/test", "/bin/test", 0);
   
@@ -258,15 +256,16 @@ main(int argc, char *argv[])
     setsid();
     AttachConsole(-1);
     
-    // Child process
     close(0);
     if (open("/dev/conin", O_RDONLY) != 0)
       error("Could not open /dev/conin");
     
-    dup2(cmdout_pipe[1], 1);
-    dup2(cmderr_pipe[1], 2);
-    close(cmdout_pipe[0]);
-    close(cmderr_pipe[0]);
+    close(pipe_fds[0]);
+    int pipe_fd = pipe_fds[1];
+    dup2(pipe_fd, 1);
+    dup2(pipe_fd, 2);
+    if (pipe_fd > 2)
+      close(pipe_fd);
     
     execvp(argv[1], argv + 1);
     
@@ -298,9 +297,8 @@ main(int argc, char *argv[])
   if (conin == INVALID_HANDLE_VALUE)
     error("Could not open console input buffer");
 
-  close(cmdout_pipe[1]);
-  close(cmderr_pipe[1]);
-  int cmdout_fd = cmdout_pipe[0], cmderr_fd = cmderr_pipe[0];
+  close(pipe_fds[1]);
+  int pipe_fd = pipe_fds[0];
   
   tcgetattr (0, &orig_tattr);
   raw_tattr = orig_tattr;
@@ -314,14 +312,11 @@ main(int argc, char *argv[])
     fd_set fdset;
     FD_ZERO(&fdset);
     FD_SET(0, &fdset);
-    FD_SET(cmdout_fd, &fdset);
-    FD_SET(cmderr_fd, &fdset);
+    FD_SET(pipe_fd, &fdset);
     
-    if (select(cmderr_fd + 1, &fdset, 0, 0, 0) > 0) {
-      if (FD_ISSET(cmdout_fd, &fdset))
-        forward_output(cmdout_fd, 1);
-      if (FD_ISSET(cmderr_fd, &fdset))
-        forward_output(cmderr_fd, 2);
+    if (select(pipe_fd + 1, &fdset, 0, 0, 0) > 0) {
+      if (FD_ISSET(pipe_fd, &fdset))
+        forward_output(pipe_fd, 1);
       if (FD_ISSET(0, &fdset))
         forward_input();
     }
