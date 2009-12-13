@@ -284,7 +284,12 @@ setup_config_box(controlbox * b)
   ctrl_pushbutton(
     s, "Cursor...", 'c', P(0), colour_handler, P(&new_cfg.cursor_colour)
   )->column = 2;
-
+  //ctrl_columns(s, 1, 100);
+  ctrl_checkbox(
+    s, "Use system colours instead", 's', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(use_system_colours))
+  );
+  
   s = ctrl_getset(b, "Looks", "trans", "Transparency");
   bool with_glass = win_is_glass_available();
   ctrl_radiobuttons(
@@ -303,18 +308,18 @@ setup_config_box(controlbox * b)
   );
 
   s = ctrl_getset(b, "Looks", "curtype", "Cursor");
+  ctrl_columns(s, 2, 80, 20);
   ctrl_radiobuttons(
-    s, null, '\0', 4 + with_glass, P(0), dlg_stdradiobutton_handler,
+    s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
     I(offcfg(cursor_type)),
     "Line", 'n', I(CUR_LINE), 
     "Block", 'k', I(CUR_BLOCK),
     "Underscore", 'u', I(CUR_UNDERSCORE),
     null
-  );
+  )->column = 0;
   ctrl_checkbox(
-     s, "Enable blinking", 'e', P(0),
-     dlg_stdcheckbox_handler, I(offcfg(cursor_blinks))
-  );
+    s, "Blink", 'e', P(0), dlg_stdcheckbox_handler, I(offcfg(cursor_blinks))
+  )->column = 1;
 
  /*
   * The Text panel.
@@ -534,6 +539,7 @@ int_settings[] = {
   {"BackspaceSendsBS", offcfg(backspace_sends_bs), false},
   {"WindowShortcuts", offcfg(window_shortcuts), true},
   {"ZoomShortcuts", offcfg(zoom_shortcuts), true},
+  {"UseSystemColours", offcfg(use_system_colours), true},
   {"BoldAsBright", offcfg(bold_as_bright), true},
   {"AllowBlinking", offcfg(allow_blinking), false},
   {"CursorType", offcfg(cursor_type), 2},

@@ -751,9 +751,12 @@ colour win_get_colour(uint n) { return n < 262 ? colours[n] : 0; }
 void
 win_reconfig_palette(void)
 {
-  win_set_colour(FG_COLOUR_I, cfg.fg_colour);
-  win_set_colour(BG_COLOUR_I, cfg.bg_colour);
-  win_set_colour(CURSOR_COLOUR_I, cfg.cursor_colour);
+  bool sys = cfg.use_system_colours;
+  colour sys_fg = GetSysColor(COLOR_WINDOWTEXT);
+  colour sys_bg = GetSysColor(COLOR_WINDOW);
+  win_set_colour(FG_COLOUR_I, sys ? sys_fg : cfg.fg_colour);
+  win_set_colour(BG_COLOUR_I, sys ? sys_bg : cfg.bg_colour);
+  win_set_colour(CURSOR_COLOUR_I, sys ? sys_fg : cfg.cursor_colour);
 }
 
 void

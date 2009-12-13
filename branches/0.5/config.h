@@ -50,6 +50,7 @@ typedef struct {
   char term[32];
   char answerback[80];
  /* Colour options */
+  int use_system_colours;
   int bold_as_bright;
   colour fg_colour, bg_colour, cursor_colour;
   int transparency;
