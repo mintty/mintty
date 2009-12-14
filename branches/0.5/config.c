@@ -539,7 +539,7 @@ int_settings[] = {
   {"BackspaceSendsBS", offcfg(backspace_sends_bs), false},
   {"WindowShortcuts", offcfg(window_shortcuts), true},
   {"ZoomShortcuts", offcfg(zoom_shortcuts), true},
-  {"UseSystemColours", offcfg(use_system_colours), true},
+  {"UseSystemColours", offcfg(use_system_colours), false},
   {"BoldAsBright", offcfg(bold_as_bright), true},
   {"AllowBlinking", offcfg(allow_blinking), false},
   {"CursorType", offcfg(cursor_type), 2},
