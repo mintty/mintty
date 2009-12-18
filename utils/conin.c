@@ -9,16 +9,18 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <wchar.h>
 #include <process.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <wait.h>
 #include <termios.h>
-#include <windows.h>
-#include <sys/cygwin.h>
+#include <locale.h>
+#include <langinfo.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <windows.h>
 
 static int pid;
 static HANDLE conin;
@@ -29,6 +31,38 @@ static char prompt[256];
 static int prompt_len;
 
 static bool in_readline_mode = false;
+
+static const struct {
+  ushort cp;
+  const char *name;
+}
+cs_names[] = {
+  {CP_UTF8, "UTF-8"},
+  {  20127, "ASCII"},
+  {  20866, "KOI8-R"},
+  {  21866, "KOI8-U"},
+  {    936, "GBK"},
+  {    950, "BIG5"},
+  {    932, "SJIS"},
+  {  20932, "EUCJP"},
+  {    949, "EUCKR"},
+};
+
+static int
+cs_cp(const char *name)
+{
+  uint iso;
+  if (sscanf(name, "ISO-8859-%u", &iso) == 1)
+    return 28590 + iso;
+  uint cp;
+  if (sscanf(name, "CP%u", &cp) == 1)
+    return cp;
+  for (uint i = 0; i < sizeof(cs_names) / sizeof(*cs_names); i++) {
+    if (strcmp(name, cs_names[i].name) == 0)
+      return cs_names[i].cp;
+  }
+  return 0;
+}
 
 static void
 sigchld(int sig)
@@ -103,13 +137,21 @@ forward_output(int src_fd, int dest_fd)
 }
 
 static void
-trans_char(INPUT_RECORD *inrecs, char c)
+trans_char(INPUT_RECORD **ppinrec, char c)
 {
+  wchar_t wc;
+  switch (mbrtowc(&wc, &c, 1, 0)) {
+    case -2: return;
+    case -1:
+      mbrtowc(0, 0, 0, 0);
+      return;
+  }
+  
   SHORT vkks = VkKeyScan(c);
   UCHAR vk = vkks;
   bool shift = vkks & 0x100, ctrl = vkks & 0x200, alt = vkks & 0x400;
   WORD vsc = MapVirtualKey(vk, 0 /* MAPVK_VK_TO_VSC */);
-  inrecs[0] = inrecs[1] = (INPUT_RECORD){
+  (*ppinrec)[0] = (*ppinrec)[1] = (INPUT_RECORD){
     .EventType = KEY_EVENT,
     .Event = {
       .KeyEvent = {
@@ -117,7 +159,7 @@ trans_char(INPUT_RECORD *inrecs, char c)
         .wRepeatCount = 1,
         .wVirtualKeyCode = vk,
         .wVirtualScanCode = vsc,
-        .uChar = { .AsciiChar = c },
+        .uChar = { .UnicodeChar = wc },
         .dwControlKeyState =
           shift * SHIFT_PRESSED |
           ctrl  * LEFT_CTRL_PRESSED |
@@ -125,7 +167,35 @@ trans_char(INPUT_RECORD *inrecs, char c)
       }
     }
   };
-  inrecs[0].Event.KeyEvent.bKeyDown = true;
+  (*ppinrec)[0].Event.KeyEvent.bKeyDown = true;
+  *ppinrec += 2;
+}
+
+static void
+rl_callback(char *line)
+{
+  in_readline_mode = false;
+  rl_callback_handler_remove();
+
+  if (!line) {
+    INPUT_RECORD inrecs[2], *pinrec = inrecs;
+    trans_char(&pinrec, 26); // ^Z
+    WriteConsoleInputW(conin, inrecs, pinrec - inrecs, &(DWORD){0});
+  }
+  else {
+    if (*line)
+      add_history(line);
+    size_t len = strlen(line) + 1;
+    line[len - 1] = '\r';
+    INPUT_RECORD inrecs[len * 2], *pinrec = inrecs;
+    for (int i = 0; i < len; i++)
+      trans_char(&pinrec, line[i]);
+    WriteConsoleInputW(conin, inrecs, pinrec - inrecs, &(DWORD){0});
+  }
+
+  // Fresh prompt.
+  prompt_len = 0;
+  *prompt = 0;
 }
 
 static void
@@ -193,33 +263,6 @@ forward_raw_char(void)
 }
 
 static void
-rl_callback(char *line)
-{
-  in_readline_mode = false;
-  rl_callback_handler_remove();
-
-  if (!line) {
-    INPUT_RECORD inrecs[2];
-    trans_char(inrecs, 26); // ^Z
-    WriteConsoleInput(conin, inrecs, 2, &(DWORD){0});
-  }
-  else {
-    if (*line)
-      add_history(line);
-    size_t len = strlen(line) + 1;
-    line[len - 1] = '\r';
-    INPUT_RECORD inrecs[len * 2];
-    for (int i = 0; i < len; i++)
-      trans_char(inrecs + i*2, line[i]);
-    WriteConsoleInput(conin, inrecs, len * 2, &(DWORD){0});
-  }
-
-  // Fresh prompt.
-  prompt_len = 0;
-  *prompt = 0;
-}
-
-static void
 forward_input(void)
 {  
   if (!in_readline_mode) {
@@ -251,8 +294,26 @@ main(int argc, char *argv[])
   if (pipe(pipe_fds) != 0)
     error("Could not create output pipe");
   
+  // This hack prompts Cygwin to allocate an invisible console for us.
   spawnl(_P_WAIT, "/bin/test", "/bin/test", 0);
   
+  // Get hold of the console input buffer
+  conin =
+    CreateFile(
+      "CONIN$",
+      GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+      0, OPEN_EXISTING, 0, 0
+    );
+  if (conin == INVALID_HANDLE_VALUE)
+    error("Could not open console input buffer");
+
+  // Configure charsets
+  setlocale(LC_CTYPE, "");
+  int cp = cs_cp(nl_langinfo(CODESET));
+  SetConsoleCP(cp);
+  SetConsoleOutputCP(cp);
+  printf("%u %u\n", GetConsoleCP(), GetConsoleOutputCP());
+
   pid = fork();
   if (pid < 0)
     error("Could not create child process");
@@ -285,22 +346,7 @@ main(int argc, char *argv[])
   signal(SIGUSR1, sigfwd);
   signal(SIGUSR2, sigfwd);
   signal(SIGWINCH,sigfwd);
-
-  // Get hold of the console input buffer
-  conin =
-    CreateFile(
-      "CONIN$",
-      GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
-      &(SECURITY_ATTRIBUTES){
-        .nLength = sizeof(SECURITY_ATTRIBUTES),
-        .lpSecurityDescriptor = 0,
-        .bInheritHandle = true
-      },
-      OPEN_EXISTING, 0, 0
-    );
-  if (conin == INVALID_HANDLE_VALUE)
-    error("Could not open console input buffer");
-
+  
   close(pipe_fds[1]);
   int pipe_fd = pipe_fds[0];
   
