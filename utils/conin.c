@@ -202,10 +202,8 @@ static void
 forward_raw_char(void)
 {
   static enum {START, SEEN_ESC, SEEN_CSI} state = START;
-
   char c = getchar();
-  UCHAR vk;
-  bool shift = 0, ctrl = 0, alt = 0;
+  INPUT_RECORD inrecs[2];
   switch (state) {
     case START:
       if (c == '\e') {
@@ -216,15 +214,16 @@ forward_raw_char(void)
         c = '\r';
       else if (c == 0x7F)
         c = '\b';
-      SHORT vkks = VkKeyScan(c);
-      vk = vkks;
-      shift = vkks & 0x100, ctrl = vkks & 0x200, alt = vkks & 0x400;
-      break;
+      INPUT_RECORD *pinrec = inrecs;
+      trans_char(&pinrec, c);
+      WriteConsoleInputW(conin, inrecs, pinrec - inrecs, &(DWORD){0});
+      return;
     case SEEN_ESC:
       state = c == '[' ? SEEN_CSI : START;
       return;
     case SEEN_CSI:
       state = START;
+      UCHAR vk;
       switch (c) {
         case 'A': vk = VK_UP; break;
         case 'B': vk = VK_DOWN; break;
@@ -234,32 +233,24 @@ forward_raw_char(void)
         case 'H': vk = VK_HOME; break;
         default: return;
       }
-      c = 0;
+      WORD vsc = MapVirtualKey(vk, 0 /* MAPVK_VK_TO_VSC */);
+      inrecs[0] = inrecs[1] = (INPUT_RECORD){
+        .EventType = KEY_EVENT,
+        .Event = {
+          .KeyEvent = {
+            .bKeyDown = false,
+            .wRepeatCount = 1,
+            .wVirtualKeyCode = vk,
+            .wVirtualScanCode = vsc,
+            .uChar = { .UnicodeChar = 0 },
+            .dwControlKeyState = 0
+          }
+        }
+      };
+      inrecs[0].Event.KeyEvent.bKeyDown = true;
+      WriteConsoleInputW(conin, inrecs, 2, &(DWORD){0});
       break;
   }
-  
-  WORD vsc = MapVirtualKey(vk, 0 /* MAPVK_VK_TO_VSC */);
-  INPUT_RECORD inrec = {
-    .EventType = KEY_EVENT,
-    .Event = {
-      .KeyEvent = {
-        .bKeyDown = true,
-        .wRepeatCount = 1,
-        .wVirtualKeyCode = vk,
-        .wVirtualScanCode = vsc,
-        .uChar = { .AsciiChar = c },
-        .dwControlKeyState =
-          shift * SHIFT_PRESSED |
-          ctrl  * LEFT_CTRL_PRESSED |
-          alt   * RIGHT_ALT_PRESSED
-      }
-    }
-  };
-  
-  DWORD written;
-  WriteConsoleInput(conin, &inrec, 1, &written);
-  inrec.Event.KeyEvent.bKeyDown = false;
-  WriteConsoleInput(conin, &inrec, 1, &written);
 }
 
 static void
@@ -312,7 +303,6 @@ main(int argc, char *argv[])
   int cp = cs_cp(nl_langinfo(CODESET));
   SetConsoleCP(cp);
   SetConsoleOutputCP(cp);
-  printf("%u %u\n", GetConsoleCP(), GetConsoleOutputCP());
 
   pid = fork();
   if (pid < 0)
