@@ -540,13 +540,15 @@ win_text_internal(int x, int y, wchar *text, int len,
         nbg |= 1;
     }
   }
-  if (attr & ATTR_REVERSE) {
-    t = nfg;
-    nfg = nbg;
-    nbg = t;
-  }
   fg = colours[nfg];
   bg = colours[nbg];
+  if (attr & ATTR_DIM)
+    fg = (fg & 0xFEFEFEFE) >> 1;
+  if (attr & ATTR_REVERSE) {
+    t = fg;
+    fg = bg;
+    bg = t;
+  }
   SelectObject(dc, fonts[nfont]);
   SetTextColor(dc, fg);
   SetBkColor(dc, bg);

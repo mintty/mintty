@@ -533,6 +533,9 @@ do_sgr(void)
       when 1:  /* enable bold */
         compatibility(VT100AVO);
         term.curr_attr |= ATTR_BOLD;
+      when 2:  /* enable dim */
+        compatibility(OTHER);
+        term.curr_attr |= ATTR_DIM;
       when 4 or 21:  /* enable underline */
         compatibility(VT100AVO);
         term.curr_attr |= ATTR_UNDER;
@@ -555,7 +558,7 @@ do_sgr(void)
         term_update_cs();
       when 22: /* disable bold */
         compatibility(VT220);
-        term.curr_attr &= ~ATTR_BOLD;
+        term.curr_attr &= ~(ATTR_BOLD | ATTR_DIM);
       when 24: /* disable underline */
         compatibility(VT220);
         term.curr_attr &= ~ATTR_UNDER;
