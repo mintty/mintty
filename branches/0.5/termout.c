@@ -544,6 +544,8 @@ do_sgr(void)
         term.curr_attr |= ATTR_BLINK;
       when 7:  /* enable reverse video */
         term.curr_attr |= ATTR_REVERSE;
+      when 8:  /* enable invisible text */
+        term.curr_attr |= ATTR_INVISIBLE;
       when 10: /* OEM acs off */
         compatibility(OTHER);
         term.oem_acs = 0;
@@ -568,6 +570,8 @@ do_sgr(void)
       when 27: /* disable reverse video */
         compatibility(VT220);
         term.curr_attr &= ~ATTR_REVERSE;
+      when 28: /* disable invisible text */
+        term.curr_attr &= ~ATTR_INVISIBLE;
       when 30 ... 37:
        /* foreground */
         term.curr_attr &= ~ATTR_FGMASK;

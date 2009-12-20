@@ -147,6 +147,9 @@ win_copy(const wchar *data, int *attr, int len)
           bgcolour++;
       }
 
+      if (attr[i] & ATTR_INVISIBLE)
+        fgcolour = bgcolour;
+
       palette[fgcolour]++;
       palette[bgcolour]++;
     }
@@ -268,6 +271,9 @@ win_copy(const wchar *data, int *attr, int len)
           fgcolour = -1;      /* No coloring */
         }
       }
+
+      if (attr[i] & ATTR_INVISIBLE)
+        fgcolour = bgcolour;
 
      /*
       * Write RTF text attributes

@@ -549,6 +549,8 @@ win_text_internal(int x, int y, wchar *text, int len,
     fg = bg;
     bg = t;
   }
+  if (attr & ATTR_INVISIBLE)
+    fg = bg;
   SelectObject(dc, fonts[nfont]);
   SetTextColor(dc, fg);
   SetBkColor(dc, bg);
