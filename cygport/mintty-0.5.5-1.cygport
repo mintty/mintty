@@ -1,4 +1,4 @@
-SRC_URI="http://mintty.googlecode.com/files/mintty-0.5.4-src.tar.bz2"
+SRC_URI="http://mintty.googlecode.com/files/mintty-0.5.5-src.tar.bz2"
 PKG_HINTS=setup
 _CYGPORT_RESTRICT_postinst_doc_=1
 CC=gcc-3

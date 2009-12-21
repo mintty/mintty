@@ -93,7 +93,7 @@ win_copy(const wchar *data, int *attr, int len)
   wchar *udata = (wchar_t *) lock;
   int rtflen = 0, uindex = 0, tindex = 0;
   int rtfsize = 0;
-  int multilen, blen, alen, totallen, i;
+  int multilen, blen, alen, totallen;
   char before[16], after[4];
   int fgcolour, lastfgcolour = 0;
   int bgcolour, lastbgcolour = 0;
@@ -123,7 +123,7 @@ win_copy(const wchar *data, int *attr, int len)
   */
   if (attr) {
     memset(palette, 0, sizeof (palette));
-    for (i = 0; i < (len - 1); i++) {
+    for (int i = 0; i < (len - 1); i++) {
       fgcolour = ((attr[i] & ATTR_FGMASK) >> ATTR_FGSHIFT);
       bgcolour = ((attr[i] & ATTR_BGMASK) >> ATTR_BGSHIFT);
 
@@ -147,6 +147,9 @@ win_copy(const wchar *data, int *attr, int len)
           bgcolour++;
       }
 
+      if (attr[i] & ATTR_INVISIBLE)
+        fgcolour = bgcolour;
+
       palette[fgcolour]++;
       palette[bgcolour]++;
     }
@@ -155,7 +158,7 @@ win_copy(const wchar *data, int *attr, int len)
     * Next - Create a reduced palette
     */
     numcolours = 0;
-    for (i = 0; i < NALLCOLOURS; i++) {
+    for (int i = 0; i < NALLCOLOURS; i++) {
       if (palette[i] != 0)
         palette[i] = ++numcolours;
     }
@@ -167,7 +170,7 @@ win_copy(const wchar *data, int *attr, int len)
     strcat(rtf, "{\\colortbl ;");
     rtflen = strlen(rtf);
 
-    for (i = 0; i < NALLCOLOURS; i++) {
+    for (int i = 0; i < NALLCOLOURS; i++) {
       if (palette[i] != 0) {
         rtflen +=
           sprintf(&rtf[rtflen], "\\red%d\\green%d\\blue%d;",
@@ -269,6 +272,9 @@ win_copy(const wchar *data, int *attr, int len)
         }
       }
 
+      if (attr[tindex] & ATTR_INVISIBLE)
+        fgcolour = bgcolour;
+
      /*
       * Write RTF text attributes
       */
@@ -321,7 +327,7 @@ win_copy(const wchar *data, int *attr, int len)
     }
     assert(tindex + multilen <= len2);
     totallen = blen + alen;
-    for (i = 0; i < multilen; i++) {
+    for (int i = 0; i < multilen; i++) {
       if (tdata[tindex + i] == '\\' || tdata[tindex + i] == '{' ||
           tdata[tindex + i] == '}')
         totallen += 2;
@@ -340,7 +346,7 @@ win_copy(const wchar *data, int *attr, int len)
 
     strcpy(rtf + rtflen, before);
     rtflen += blen;
-    for (i = 0; i < multilen; i++) {
+    for (int i = 0; i < multilen; i++) {
       if (tdata[tindex + i] == '\\' || tdata[tindex + i] == '{' ||
           tdata[tindex + i] == '}') {
         rtf[rtflen++] = '\\';
