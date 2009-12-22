@@ -496,12 +496,16 @@ do_sgr(void)
         term.curr_attr = term.default_attr;
       when 1:  /* enable bold */
         term.curr_attr |= ATTR_BOLD;
+      when 2:  /* enable dim */
+        term.curr_attr |= ATTR_DIM;
       when 4 or 21:  /* enable underline */
         term.curr_attr |= ATTR_UNDER;
       when 5:  /* enable blink */
         term.curr_attr |= ATTR_BLINK;
       when 7:  /* enable reverse video */
         term.curr_attr |= ATTR_REVERSE;
+      when 8:  /* enable invisible text */
+        term.curr_attr |= ATTR_INVISIBLE;
       when 10: /* OEM acs off */
         term.oem_acs = 0;
         term_update_cs();
@@ -512,13 +516,15 @@ do_sgr(void)
         term.oem_acs = 2;
         term_update_cs();
       when 22: /* disable bold */
-        term.curr_attr &= ~ATTR_BOLD;
+        term.curr_attr &= ~(ATTR_BOLD | ATTR_DIM);
       when 24: /* disable underline */
         term.curr_attr &= ~ATTR_UNDER;
       when 25: /* disable blink */
         term.curr_attr &= ~ATTR_BLINK;
       when 27: /* disable reverse video */
         term.curr_attr &= ~ATTR_REVERSE;
+      when 28: /* disable invisible text */
+        term.curr_attr &= ~ATTR_INVISIBLE;
       when 30 ... 37:
        /* foreground */
         term.curr_attr &= ~ATTR_FGMASK;

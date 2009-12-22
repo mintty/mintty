@@ -12,10 +12,10 @@
 #define AUTHOR  "Andy Koppe"
 #define YEARS   "2008-09"
 
-#define VERSION "0.5.4"
+#define VERSION "0.5.5"
 #define MAJOR_VERSION  0
 #define MINOR_VERSION  5
-#define PATCH_NUMBER   4
+#define PATCH_NUMBER   5
 #define BUILD_NUMBER   1
 
 #if defined BRANCH && defined REVISION
@@ -42,8 +42,9 @@
 
 #define ABOUT_TEXT \
   "Thanks to Simon Tatham and the other contributors for their\n"\
-  "great work on PuTTY, which mintty is largely based on.\n" \
-  "Thanks also to KDE's Oxygen team for the program icon.\n" \
+  "great work on PuTTY, which mintty is largely based on. Thanks\n" \
+  "also to Thomas Wolff and Chris Sutcliffe for lots of testing and\n" \
+  "advice, and to KDE's Oxygen team for the program icon.\n" \
   "\n" \
   "Please report bugs or request enhancements through the\n" \
   "issue tracker on the mintty project page located at\n" \

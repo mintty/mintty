@@ -540,13 +540,17 @@ win_text_internal(int x, int y, wchar *text, int len,
         nbg |= 1;
     }
   }
-  if (attr & ATTR_REVERSE) {
-    t = nfg;
-    nfg = nbg;
-    nbg = t;
-  }
   fg = colours[nfg];
   bg = colours[nbg];
+  if (attr & ATTR_DIM)
+    fg = (fg & 0xFEFEFEFE) >> 1;
+  if (attr & ATTR_REVERSE) {
+    t = fg;
+    fg = bg;
+    bg = t;
+  }
+  if (attr & ATTR_INVISIBLE)
+    fg = bg;
   SelectObject(dc, fonts[nfont]);
   SetTextColor(dc, fg);
   SetBkColor(dc, bg);
@@ -751,9 +755,12 @@ colour win_get_colour(uint n) { return n < 262 ? colours[n] : 0; }
 void
 win_reconfig_palette(void)
 {
-  win_set_colour(FG_COLOUR_I, cfg.fg_colour);
-  win_set_colour(BG_COLOUR_I, cfg.bg_colour);
-  win_set_colour(CURSOR_COLOUR_I, cfg.cursor_colour);
+  bool sys = cfg.use_system_colours;
+  colour sys_fg = GetSysColor(COLOR_WINDOWTEXT);
+  colour sys_bg = GetSysColor(COLOR_WINDOW);
+  win_set_colour(FG_COLOUR_I, sys ? sys_fg : cfg.fg_colour);
+  win_set_colour(BG_COLOUR_I, sys ? sys_bg : cfg.bg_colour);
+  win_set_colour(CURSOR_COLOUR_I, sys ? sys_fg : cfg.cursor_colour);
 }
 
 void
