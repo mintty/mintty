@@ -16,6 +16,7 @@
 #include <getopt.h>
 #include <imm.h>
 #include <winnls.h>
+#include <shellapi.h>
 
 #include <sys/cygwin.h>
 #include <cygwin/version.h>
@@ -400,7 +401,8 @@ clear_fullsceen(void)
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
   }
   
-  enable_glass(cfg.transparency < 0);
+  enable_glass(cfg.transparency < 0 &&
+               !(cfg.opaque_when_focused && term.has_focus));
 }
 
 /*
@@ -447,16 +449,16 @@ reset_term(void)
 static void
 update_transparency(void)
 {
+  bool opaque = cfg.opaque_when_focused && term.has_focus;
   if (pSetLayeredWindowAttributes) {
     int trans = max(cfg.transparency, 0);
     SetWindowLong(wnd, GWL_EXSTYLE, trans ? WS_EX_LAYERED : 0);
     if (trans) {
-      bool opaque = (cfg.opaque_when_focused && term.has_focus);
       uchar alpha = opaque ? 255 : 255 - 16 * trans;
       pSetLayeredWindowAttributes(wnd, 0, alpha, LWA_ALPHA);
     }
   }
-  enable_glass(cfg.transparency < 0 && !win_is_fullscreen());
+  enable_glass(cfg.transparency < 0 && !win_is_fullscreen() && !opaque);
 }
 
 void
@@ -775,7 +777,8 @@ static const char *help =
   "  -p, --position=X,Y    Open window at specified coordinates\n"
   "  -s, --size=COLS,ROWS  Set screen size in characters\n"
   "  -t, --title=TITLE     Set window title (default: the invoked command)\n"
-  "  -i, --icon=FILE       Load window icon from .ICO file\n"
+  "  -i, --icon=FILE[,INDEX]\n"
+  "                        Load window icon from file, optionally with index\n"
   "  -l, --log=FILE        Log output to file\n"
   "  -u, --utmp            Create a utmp entry\n"
   "  -h, --hold=never|always|error\n"
@@ -868,25 +871,29 @@ main(int argc, char *argv[])
 
   HICON small_icon = 0, large_icon = 0;
   if (icon_file) {
+    uint icon_index = 0;
+    char *comma = strrchr(icon_file, ',');
+    if (comma) {
+      char *start = comma + 1, *end;
+      icon_index = strtoul(start, &end, 0);
+      if (start != end && !*end)
+        *comma = 0;
+      else
+        icon_index = 0;
+    }
 #if CYGWIN_VERSION_API_MINOR >= 181
     wchar *win_icon_file = cygwin_create_path(CCP_POSIX_TO_WIN_W, icon_file);
     if (!win_icon_file)
       error("invalid icon file path -- %s", icon_file);
-    small_icon =
-      LoadImageW(NULL, win_icon_file, IMAGE_ICON, 16, 16, LR_LOADFROMFILE);
-    large_icon =
-      LoadImageW(NULL, win_icon_file, IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
+    ExtractIconExW(win_icon_file, icon_index, &large_icon, &small_icon, 1);
     free(win_icon_file);
 #else
     char win_icon_file[MAX_PATH];
     cygwin_conv_to_win32_path(icon_file, win_icon_file);
-    small_icon =
-      LoadImage(NULL, win_icon_file, IMAGE_ICON, 16, 16, LR_LOADFROMFILE);
-    large_icon =
-      LoadImage(NULL, win_icon_file, IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
+    ExtractIconExA(win_icon_file, icon_index, &large_icon, &small_icon, 1);
 #endif
-    if (!small_icon && !large_icon)
-      error("could not load icon file -- %s", icon_file);
+    if (!small_icon || !large_icon)
+      error("could not load icon -- %s", icon_file);
   }
 
   if (!config_file)

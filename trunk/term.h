@@ -52,18 +52,20 @@
 #define LATTR_WRAPPED2 0x00000020UL     /* with WRAPPED: CJK wide character
                                          * wrapped to next line, so last
                                          * single-width cell is empty */
-#define ATTR_INVALID 0x03FFFFU
-#define ATTR_NARROW  0x800000U
-#define ATTR_WIDE    0x400000U
-#define ATTR_BOLD    0x040000U
-#define ATTR_UNDER   0x080000U
-#define ATTR_REVERSE 0x100000U
-#define ATTR_BLINK   0x200000U
-#define ATTR_FGMASK  0x0001FFU
-#define ATTR_BGMASK  0x03FE00U
-#define ATTR_COLOURS 0x03FFFFU
-#define ATTR_FGSHIFT 0
-#define ATTR_BGSHIFT 9
+#define ATTR_FGSHIFT   0
+#define ATTR_BGSHIFT   9
+#define ATTR_FGMASK    0x00001FFU
+#define ATTR_BGMASK    0x003FE00U
+#define ATTR_COLOURS   0x003FFFFU
+#define ATTR_INVALID   0x003FFFFU
+#define ATTR_BOLD      0x0040000U
+#define ATTR_DIM       0x0080000U
+#define ATTR_INVISIBLE 0x0100000U
+#define ATTR_UNDER     0x0200000U
+#define ATTR_REVERSE   0x0400000U
+#define ATTR_BLINK     0x0800000U
+#define ATTR_WIDE      0x1000000U
+#define ATTR_NARROW    0x2000000U
 
 /*
  * The definitive list of colour numbers stored in terminal
