@@ -584,9 +584,16 @@ win_key_down(WPARAM wp, LPARAM lp)
       }
       if (ctrl_key())
         break;
+      // Try with added AltGr.
       kbd[VK_CONTROL] = kbd[VK_MENU] = 0x80;
       if (ctrl_key())
         break;
+      // Try with added Shift (if it isn't pressed already)
+      if (!is_key_down(VK_SHIFT)) {
+        kbd[VK_CONTROL] = kbd[VK_MENU] = 0, kbd[VK_SHIFT] = 0x80;
+        if (ctrl_key())
+          break;
+      }
       // Treat remaining digits and symbols as apppad combinations
       switch (key) {
         when '0' ... '9': app_pad_code(key);
