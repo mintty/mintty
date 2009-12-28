@@ -13,7 +13,7 @@ Features include:
 * Small executable size (currently <120K). 
 
 Runtime requirements:
-  cygwin-1.7.0-62
+  cygwin-1.7.1-1
 
 Build requirements:
   binutils-20080624-2
@@ -31,15 +31,15 @@ Canonical download:
 -------------------------------------------
 
 Build instructions:
-  unpack mintty-0.5.5-X-src.tar.bz2
+  unpack mintty-0.5.6-X-src.tar.bz2
     if you use setup to install this src package, it will be
     unpacked under /usr/src automatically
   cd /usr/src
-  cygport ./mintty-0.5.5-X.cygport all
+  cygport ./mintty-0.5.6-X.cygport all
 
 This will create:
-  /usr/src/mintty-0.5.5-X-src.tar.bz2
-  /usr/src/mintty-0.5.5-X.tar.bz2
+  /usr/src/mintty-0.5.6-X-src.tar.bz2
+  /usr/src/mintty-0.5.6-X.tar.bz2
 
 -------------------------------------------
 
@@ -48,15 +48,19 @@ Files included in the binary package:
   /etc/postinstall/mintty.sh
   /etc/preremove/mintty.sh
   /usr/bin/mintty.exe
-  /usr/share/doc/Cygwin/mintty-0.5.5.README
-  /usr/share/doc/mintty-0.5.5/COPYING
-  /usr/share/doc/mintty-0.5.5/LICENSE.Oxygen
-  /usr/share/doc/mintty-0.5.5/LICENSE.PuTTY
+  /usr/share/doc/Cygwin/mintty-0.5.6.README
+  /usr/share/doc/mintty-0.5.6/COPYING
+  /usr/share/doc/mintty-0.5.6/LICENSE.Oxygen
+  /usr/share/doc/mintty-0.5.6/LICENSE.PuTTY
   /usr/share/man/man1/mintty.1.gz
 
 ------------------
 
 Port Notes:
+
+----- mintty-0.5.6-1 -----
+* Fixed RightAlt snafu on US keyboard
+* Tweaked implementation of dim attribute
 
 ----- mintty-0.5.5-1 -----
 * Added dim and invisible text attributes, UseSystemColours option

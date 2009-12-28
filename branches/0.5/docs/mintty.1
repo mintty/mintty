@@ -6,7 +6,7 @@
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
 .ad l
-.TH mintty 1 2009-12-21 0.5.5 Cygwin
+.TH mintty 1 2009-12-28 0.5.6 Cygwin
 
 .SH NAME
 
@@ -388,6 +388,10 @@ By default, text with the ANSI bold attribute set is displayed with
 increased brightness.
 Alternatively, it can be shown using a bold font, which tends to look better
 with black-on-white text.
+Additionally, this option controls how the 'half-bright' (or 'dim') text 
+attribute is displayed: if it is on, half-bright text is literally 
+shown with halved foreground colour brightness, otherwise, it is shown 
+by blending the foreground into the background colours.
 
 .TP
 \fBAllow blinking\fP (AllowBlinking=0)
@@ -1139,18 +1143,16 @@ See \fIhttp://www.cygwin.com/cygwin-ug-net/using-cygwinenv.html\fP for details.
 A number of settings can be controlled through terminal control sequences,
 including the colour values for the 16 ANSI colours.
 Here is the xterm sequence for this, whereby \fInum\fP stands for the ANSI
-number and \fIrrggbb\fP stands for a hexadecimal RGB colour value.
+number:
 
 .RS
-\fC^[]4;\fInum\fP;#\fIrrggbb\fP^G\fR
+\fC^[]4;\fInum\fP;\fIred\fP,\fIgreen\fP,\fIblue\fP^G\fR
 .RE
 
-The \fB-e\fP option to the \fBecho\fP command is useful for emitting
-control sequences.
 For example, to turn yellow (colour 3) up to its full brightness:
 
 .RS
-\fCecho -e "\\e]4;3;#FFFF00\\a"\fP
+\fCecho $'\\e]4;3;255,255,0\\a'\fP
 .RE
 
 Sequences such as this can be included in scripts or on the \fBmintty\fP
@@ -1199,7 +1201,7 @@ processes by setting its keycode to \fB^\\\fP:
 
 .RS
 .nf
-\fCecho -e "\e[?7728h"\fP
+\fCecho $'\e[?7728h'\fP
 .fi
 .RE
 
