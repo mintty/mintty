@@ -1011,6 +1011,8 @@ do_colour_osc(uint i)
     win_set_colour(i, make_colour(r, g, b));
   else if (sscanf(s, "rgb:%4x/%4x/%4x%c", &r, &g, &b, &(char){0}) == 3)
     win_set_colour(i, make_colour(r >> 8, g >> 8, b >> 8));
+  else if (sscanf(s, "%i,%i,%i%c", &r, &g, &b, &(char){0}) == 3)
+    win_set_colour(i, make_colour(r, g, b));
 }
 
 /*
