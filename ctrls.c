@@ -220,7 +220,6 @@ ctrl_new(controlset *s, int type, intorptr helpctx, handler_fn handler,
   c->handler = handler;
   c->context = context;
   c->label = null;
-  c->plat_ctrl = null;
   return c;
 }
 
@@ -380,7 +379,7 @@ ctrl_free(control *ctrl)
 }
 
 void
-dlg_stdradiobutton_handler(control *ctrl, void *data, int event)
+dlg_stdradiobutton_handler(control *ctrl, void *dlg, void *data, int event)
 {
   int button;
  /*
@@ -396,10 +395,10 @@ dlg_stdradiobutton_handler(control *ctrl, void *data, int event)
         break;
    /* We expected that `break' to happen, in all circumstances. */
     assert(button < ctrl->radio.nbuttons);
-    dlg_radiobutton_set(ctrl, button);
+    dlg_radiobutton_set(ctrl, dlg, button);
   }
   else if (event == EVENT_VALCHANGE) {
-    button = dlg_radiobutton_get(ctrl);
+    button = dlg_radiobutton_get(ctrl, dlg);
     assert(button >= 0 && button < ctrl->radio.nbuttons);
     atoffset(int, data, ctrl->context.i) =
       ctrl->radio.buttondata[button].i;
@@ -407,7 +406,7 @@ dlg_stdradiobutton_handler(control *ctrl, void *data, int event)
 }
 
 void
-dlg_stdcheckbox_handler(control *ctrl, void *data, int event)
+dlg_stdcheckbox_handler(control *ctrl, void *dlg, void *data, int event)
 {
   int offset, invert;
 
@@ -431,15 +430,15 @@ dlg_stdcheckbox_handler(control *ctrl, void *data, int event)
   */
 
   if (event == EVENT_REFRESH) {
-    dlg_checkbox_set(ctrl, !atoffset(int, data, offset) ^ !invert);
+    dlg_checkbox_set(ctrl, dlg, (!atoffset(int, data, offset) ^ !invert));
   }
   else if (event == EVENT_VALCHANGE) {
-    atoffset(int, data, offset) = !dlg_checkbox_get(ctrl) ^ !invert;
+    atoffset(int, data, offset) = !dlg_checkbox_get(ctrl, dlg) ^ !invert;
   }
 }
 
 void
-dlg_stdfontsel_handler(control *ctrl, void *data, int event)
+dlg_stdfontsel_handler(control *ctrl, void *dlg, void *data, int event)
 {
  /*
   * The standard font selector handler expects the `context'
@@ -449,9 +448,9 @@ dlg_stdfontsel_handler(control *ctrl, void *data, int event)
   int offset = ctrl->context.i;
 
   if (event == EVENT_REFRESH) {
-    dlg_fontsel_set(ctrl, &atoffset(font_spec, data, offset));
+    dlg_fontsel_set(ctrl, dlg, &atoffset(font_spec, data, offset));
   }
   else if (event == EVENT_VALCHANGE) {
-    dlg_fontsel_get(ctrl, &atoffset(font_spec, data, offset));
+    dlg_fontsel_get(ctrl, dlg, &atoffset(font_spec, data, offset));
   }
 }

@@ -536,85 +536,141 @@ shortcut_escape(const char *text, char shortcut)
 }
 
 void
-winctrl_add_shortcuts(winctrl * c)
+winctrl_add_shortcuts(dlgparam * dp, winctrl * c)
 {
   for (size_t i = 0; i < lengthof(c->shortcuts); i++)
     if (c->shortcuts[i] != NO_SHORTCUT) {
       uchar s = tolower((uchar) c->shortcuts[i]);
-      assert(!dlg.shortcuts[s]);
-      dlg.shortcuts[s] = true;
+      assert(!dp->shortcuts[s]);
+      dp->shortcuts[s] = true;
     }
 }
 
 void
-winctrl_rem_shortcuts(winctrl * c)
+winctrl_rem_shortcuts(dlgparam * dp, winctrl * c)
 {
   for (size_t i = 0; i < lengthof(c->shortcuts); i++)
     if (c->shortcuts[i] != NO_SHORTCUT) {
       uchar s = tolower((uchar) c->shortcuts[i]);
-      assert(dlg.shortcuts[s]);
-      dlg.shortcuts[s] = false;
+      assert(dp->shortcuts[s]);
+      dp->shortcuts[s] = false;
     }
 }
 
-void
-winctrl_init(winctrls *wc)
+static int
+winctrl_cmp_byctrl(void *av, void *bv)
 {
-  wc->first = wc->last = null;
+  winctrl *a = (winctrl *) av;
+  winctrl *b = (winctrl *) bv;
+  if (a->ctrl < b->ctrl)
+    return -1;
+  else if (a->ctrl > b->ctrl)
+    return +1;
+  else
+    return 0;
+}
+static int
+winctrl_cmp_byid(void *av, void *bv)
+{
+  winctrl *a = (winctrl *) av;
+  winctrl *b = (winctrl *) bv;
+  if (a->base_id < b->base_id)
+    return -1;
+  else if (a->base_id > b->base_id)
+    return +1;
+  else
+    return 0;
+}
+static int
+winctrl_cmp_byctrl_find(void *av, void *bv)
+{
+  control *a = (control *) av;
+  winctrl *b = (winctrl *) bv;
+  if (a < b->ctrl)
+    return -1;
+  else if (a > b->ctrl)
+    return +1;
+  else
+    return 0;
+}
+static int
+winctrl_cmp_byid_find(void *av, void *bv)
+{
+  int *a = (int *) av;
+  winctrl *b = (winctrl *) bv;
+  if (*a < b->base_id)
+    return -1;
+  else if (*a >= b->base_id + b->num_ids)
+    return +1;
+  else
+    return 0;
 }
 
 void
-winctrl_cleanup(winctrls *wc)
+winctrl_init(winctrls * wc)
 {
-  winctrl *c = wc->first;
-  while (c) {
-    winctrl *next = c->next;
-    if (c->ctrl)
-      c->ctrl->plat_ctrl = null;
+  wc->byctrl = newtree234(winctrl_cmp_byctrl);
+  wc->byid = newtree234(winctrl_cmp_byid);
+}
+
+void
+winctrl_cleanup(winctrls * wc)
+{
+  winctrl *c;
+
+  while ((c = index234(wc->byid, 0)) != null) {
+    winctrl_remove(wc, c);
     free(c->data);
     free(c);
-    c = next;
   }
-  wc->first = wc->last = null;
-}
 
-static void
-winctrl_add(winctrls *wc, winctrl *c)
-{
-  if (wc->last)
-    wc->last->next = c;
-  else
-    wc->first = c;
-  wc->last = c;
-  if (c->ctrl)
-    c->ctrl->plat_ctrl = c;
-}
-
-static winctrl *
-winctrl_findbyid(winctrls *wc, int id)
-{
-  for (winctrl *c = wc->first; c; c = c->next) {
-    if (id >= c->base_id && id < c->base_id + c->num_ids)
-      return c;
-  }
-  return 0;
-}
-
-static winctrl *
-new_winctrl(int base_id, void *data)
-{
-  winctrl *c = new(winctrl);
-  c->next = null;
-  c->ctrl = null;
-  c->base_id = base_id;
-  c->num_ids = 1;
-  c->data = data;
-  memset(c->shortcuts, NO_SHORTCUT, lengthof(c->shortcuts));
-  return c;
+  freetree234(wc->byctrl);
+  freetree234(wc->byid);
+  wc->byctrl = wc->byid = null;
 }
 
 void
-winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
+winctrl_add(winctrls * wc, winctrl * c)
+{
+  winctrl *ret;
+  if (c->ctrl) {
+    ret = add234(wc->byctrl, c);
+    assert(ret == c);
+  }
+  ret = add234(wc->byid, c);
+  assert(ret == c);
+}
+
+void
+winctrl_remove(winctrls * wc, winctrl * c)
+{
+  winctrl *ret;
+  ret = del234(wc->byctrl, c);
+  ret = del234(wc->byid, c);
+  assert(ret == c);
+}
+
+winctrl *
+winctrl_findbyctrl(winctrls * wc, control *ctrl)
+{
+  return find234(wc->byctrl, ctrl, winctrl_cmp_byctrl_find);
+}
+
+winctrl *
+winctrl_findbyid(winctrls * wc, int id)
+{
+  return find234(wc->byid, &id, winctrl_cmp_byid_find);
+}
+
+winctrl *
+winctrl_findbyindex(winctrls * wc, int index)
+{
+  return index234(wc->byid, index);
+}
+
+void
+winctrl_layout(dlgparam * dp, winctrls * wc, ctrlpos * cp,
+               controlset * s, int *id)
 {
   ctrlpos columns[16];
   int ncols, colstart, colspan;
@@ -630,7 +686,12 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
 
  /* Start a containing box, if we have a boxname. */
   if (s->boxname && *s->boxname) {
-    winctrl *c = new_winctrl(base_id, null);
+    winctrl *c = new(winctrl);
+    c->ctrl = null;
+    c->base_id = base_id;
+    c->num_ids = 1;
+    c->data = null;
+    memset(c->shortcuts, NO_SHORTCUT, lengthof(c->shortcuts));
     winctrl_add(wc, c);
     beginbox(cp, s->boxtitle, base_id);
     base_id++;
@@ -638,7 +699,12 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
 
  /* Draw a title, if we have one. */
   if (!s->boxname && s->boxtitle) {
-    winctrl *c = new_winctrl(base_id, strdup(s->boxtitle));
+    winctrl *c = new(winctrl);
+    c->ctrl = null;
+    c->base_id = base_id;
+    c->num_ids = 1;
+    c->data = strdup(s->boxtitle);
+    memset(c->shortcuts, NO_SHORTCUT, lengthof(c->shortcuts));
     winctrl_add(wc, c);
     paneltitle(cp, base_id);
     base_id++;
@@ -866,14 +932,14 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
     */
     if (pos.wnd) {
       winctrl *c = new(winctrl);
-      c->next = null;
+
       c->ctrl = ctrl;
       c->base_id = actual_base_id;
       c->num_ids = num_ids;
       c->data = data;
       memcpy(c->shortcuts, shortcuts, sizeof (shortcuts));
       winctrl_add(wc, c);
-      winctrl_add_shortcuts(c);
+      winctrl_add_shortcuts(dp, c);
       if (actual_base_id == base_id)
         base_id += num_ids;
     }
@@ -904,21 +970,21 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
 }
 
 static void
-winctrl_set_focus(control *ctrl, int has_focus)
+winctrl_set_focus(control *ctrl, dlgparam * dp, int has_focus)
 {
   if (has_focus) {
-    if (dlg.focused)
-      dlg.lastfocused = dlg.focused;
-    dlg.focused = ctrl;
+    if (dp->focused)
+      dp->lastfocused = dp->focused;
+    dp->focused = ctrl;
   }
-  else if (!has_focus && dlg.focused == ctrl) {
-    dlg.lastfocused = dlg.focused;
-    dlg.focused = null;
+  else if (!has_focus && dp->focused == ctrl) {
+    dp->lastfocused = dp->focused;
+    dp->focused = null;
   }
 }
 
 static void
-select_font(winctrl *c)
+select_font(winctrl *c, dlgparam *dp)
 {
   font_spec fs = *(font_spec *) c->data;
   HDC dc = GetDC(0);
@@ -938,7 +1004,7 @@ select_font(winctrl *c)
 
   CHOOSEFONT cf;
   cf.lStructSize = sizeof (cf);
-  cf.hwndOwner = dlg.wnd;
+  cf.hwndOwner = dp->wnd;
   cf.lpLogFont = &lf;
   cf.Flags =
     CF_FIXEDPITCHONLY | CF_FORCEFONTEXIST | CF_INITTOLOGFONTSTRUCT |
@@ -949,8 +1015,8 @@ select_font(winctrl *c)
     fs.name[sizeof (fs.name) - 1] = '\0';
     fs.isbold = (lf.lfWeight == FW_BOLD);
     fs.size = cf.iPointSize / 10;
-    dlg_fontsel_set(c->ctrl, &fs);
-    c->ctrl->handler(c->ctrl, dlg.data, EVENT_VALCHANGE);
+    dlg_fontsel_set(c->ctrl, dp, &fs);
+    c->ctrl->handler(c->ctrl, dp, dp->data, EVENT_VALCHANGE);
   }
 }
 
@@ -959,7 +1025,7 @@ select_font(winctrl *c)
  * messages on a control we manage.
  */
 int
-winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
+winctrl_handle_command(dlgparam * dp, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   winctrl *c;
   control *ctrl;
@@ -969,8 +1035,8 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
   * Look up the control ID in our data.
   */
   c = null;
-  for (i = 0; i < dlg.nctrltrees; i++) {
-    c = winctrl_findbyid(dlg.controltrees[i], LOWORD(wParam));
+  for (i = 0; i < dp->nctrltrees; i++) {
+    c = winctrl_findbyid(dp->controltrees[i], LOWORD(wParam));
     if (c)
       break;
   }
@@ -1008,10 +1074,10 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
   * very end of the dialog box: any event handler is entitled to
   * ask for a colour selector, so we _must_ always allow control
   * to reach the end of this switch statement so that the
-  * subsequent code can test dlg.coloursel_wanted().
+  * subsequent code can test dp->coloursel_wanted().
   */
   ret = 0;
-  dlg.coloursel_wanted = false;
+  dp->coloursel_wanted = false;
 
  /*
   * Now switch on the control type and the message.
@@ -1022,7 +1088,7 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
       when CTRL_RADIO:
         switch (note) {
           when BN_SETFOCUS or BN_KILLFOCUS:
-            winctrl_set_focus(ctrl, note == BN_SETFOCUS);
+            winctrl_set_focus(ctrl, dp, note == BN_SETFOCUS);
           when BN_CLICKED or BN_DOUBLECLICKED:
            /*
             * We sometimes get spurious BN_CLICKED messages for the
@@ -1031,79 +1097,79 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
             * double-check that the button in wParam is actually
             * checked before generating an event.
             */
-            if (IsDlgButtonChecked(dlg.wnd, LOWORD(wParam)))
-              ctrl->handler(ctrl, dlg.data, EVENT_VALCHANGE);
+            if (IsDlgButtonChecked(dp->wnd, LOWORD(wParam)))
+              ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
         }
       when CTRL_CHECKBOX:
         switch (note) {
           when BN_SETFOCUS or BN_KILLFOCUS:
-            winctrl_set_focus(ctrl, note == BN_SETFOCUS);
+            winctrl_set_focus(ctrl, dp, note == BN_SETFOCUS);
           when BN_CLICKED or BN_DOUBLECLICKED:
-            ctrl->handler(ctrl, dlg.data, EVENT_VALCHANGE);
+            ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
         }
       when CTRL_BUTTON:
         switch (note) {
           when BN_SETFOCUS or BN_KILLFOCUS:
-            winctrl_set_focus(ctrl, note == BN_SETFOCUS);
+            winctrl_set_focus(ctrl, dp, note == BN_SETFOCUS);
           when BN_CLICKED or BN_DOUBLECLICKED:
-            ctrl->handler(ctrl, dlg.data, EVENT_ACTION);
+            ctrl->handler(ctrl, dp, dp->data, EVENT_ACTION);
         }
       when CTRL_FONTSELECT:
         if (id == 2) {
           switch (note) {
             when BN_SETFOCUS or BN_KILLFOCUS:
-              winctrl_set_focus(ctrl, note == BN_SETFOCUS);
+              winctrl_set_focus(ctrl, dp, note == BN_SETFOCUS);
             when BN_CLICKED or BN_DOUBLECLICKED:
-              select_font(c);
+              select_font(c, dp);
           }
         }
       when CTRL_LISTBOX:
         if (ctrl->listbox.height != 0 &&
             (note == LBN_SETFOCUS || note == LBN_KILLFOCUS))
-          winctrl_set_focus(ctrl, note == LBN_SETFOCUS);
+          winctrl_set_focus(ctrl, dp, note == LBN_SETFOCUS);
         else if (ctrl->listbox.height == 0 &&
             (note == CBN_SETFOCUS || note == CBN_KILLFOCUS))
-          winctrl_set_focus(ctrl, note == CBN_SETFOCUS);
+          winctrl_set_focus(ctrl, dp, note == CBN_SETFOCUS);
         else if (id >= 2 && (note == BN_SETFOCUS || note == BN_KILLFOCUS))
-          winctrl_set_focus(ctrl, note == BN_SETFOCUS);
+          winctrl_set_focus(ctrl, dp, note == BN_SETFOCUS);
         else if (note == LBN_DBLCLK) {
-          SetCapture(dlg.wnd);
-          ctrl->handler(ctrl, dlg.data, EVENT_ACTION);
+          SetCapture(dp->wnd);
+          ctrl->handler(ctrl, dp, dp->data, EVENT_ACTION);
         }
         else if (note == LBN_SELCHANGE)
-          ctrl->handler(ctrl, dlg.data, EVENT_SELCHANGE);
+          ctrl->handler(ctrl, dp, dp->data, EVENT_SELCHANGE);
       when CTRL_EDITBOX:
         if (ctrl->editbox.has_list) {
           switch (note) {
             when CBN_SETFOCUS:
-              winctrl_set_focus(ctrl, true);
+              winctrl_set_focus(ctrl, dp, true);
             when CBN_KILLFOCUS:
-              winctrl_set_focus(ctrl, false);
-              ctrl->handler(ctrl, dlg.data, EVENT_UNFOCUS);
+              winctrl_set_focus(ctrl, dp, false);
+              ctrl->handler(ctrl, dp, dp->data, EVENT_UNFOCUS);
             when CBN_SELCHANGE: {
               int index = SendDlgItemMessage(
-                            dlg.wnd, c->base_id + 1, CB_GETCURSEL, 0, 0);
+                            dp->wnd, c->base_id + 1, CB_GETCURSEL, 0, 0);
               int len = SendDlgItemMessage(
-                          dlg.wnd, c->base_id + 1, CB_GETLBTEXTLEN, index, 0);
+                          dp->wnd, c->base_id + 1, CB_GETLBTEXTLEN, index, 0);
               char text[len + 1];
               SendDlgItemMessage(
-                dlg.wnd, c->base_id + 1, CB_GETLBTEXT, index, (LPARAM) text);
-              SetDlgItemText(dlg.wnd, c->base_id + 1, text);
-              ctrl->handler(ctrl, dlg.data, EVENT_SELCHANGE);
+                dp->wnd, c->base_id + 1, CB_GETLBTEXT, index, (LPARAM) text);
+              SetDlgItemText(dp->wnd, c->base_id + 1, text);
+              ctrl->handler(ctrl, dp, dp->data, EVENT_SELCHANGE);
             }
             when CBN_EDITCHANGE:
-              ctrl->handler(ctrl, dlg.data, EVENT_VALCHANGE);
+              ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
           }
         }
         else {
           switch (note) {
             when EN_SETFOCUS:
-              winctrl_set_focus(ctrl, true);
+              winctrl_set_focus(ctrl, dp, true);
             when EN_KILLFOCUS:
-              winctrl_set_focus(ctrl, false);
-              ctrl->handler(ctrl, dlg.data, EVENT_UNFOCUS);
+              winctrl_set_focus(ctrl, dp, false);
+              ctrl->handler(ctrl, dp, dp->data, EVENT_UNFOCUS);
             when EN_CHANGE:
-              ctrl->handler(ctrl, dlg.data, EVENT_VALCHANGE);
+              ctrl->handler(ctrl, dp, dp->data, EVENT_VALCHANGE);
           }
         }
     }
@@ -1113,18 +1179,18 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
   * If the above event handler has asked for a colour selector,
   * now is the time to generate one.
   */
-  if (dlg.coloursel_wanted) {
+  if (dp->coloursel_wanted) {
     static CHOOSECOLOR cc;
     static DWORD custom[16] = { 0 };    /* zero initialisers */
     cc.lStructSize = sizeof (cc);
-    cc.hwndOwner = dlg.wnd;
+    cc.hwndOwner = dp->wnd;
     cc.hInstance = (HWND) inst;
     cc.lpCustColors = custom;
-    cc.rgbResult = dlg.coloursel_result;
+    cc.rgbResult = dp->coloursel_result;
     cc.Flags = CC_FULLOPEN | CC_RGBINIT;
-    dlg.coloursel_ok = ChooseColor(&cc);
-    dlg.coloursel_result = cc.rgbResult;
-    ctrl->handler(ctrl, dlg.data, EVENT_CALLBACK);
+    dp->coloursel_ok = ChooseColor(&cc);
+    dp->coloursel_result = cc.rgbResult;
+    ctrl->handler(ctrl, dp, dp->data, EVENT_CALLBACK);
   }
 
   return ret;
@@ -1135,67 +1201,87 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
  * mechanism can call to access the dialog box entries.
  */
 
-void
-dlg_radiobutton_set(control *ctrl, int whichbutton)
+static winctrl *
+dlg_findbyctrl(dlgparam * dp, control *ctrl)
 {
-  winctrl *c = ctrl->plat_ctrl;
+  int i;
+
+  for (i = 0; i < dp->nctrltrees; i++) {
+    winctrl *c = winctrl_findbyctrl(dp->controltrees[i], ctrl);
+    if (c)
+      return c;
+  }
+  return null;
+}
+
+void
+dlg_radiobutton_set(control *ctrl, void *dlg, int whichbutton)
+{
+  dlgparam *dp = (dlgparam *) dlg;
+  winctrl *c = dlg_findbyctrl(dp, ctrl);
   assert(c && c->ctrl->type == CTRL_RADIO);
-  CheckRadioButton(dlg.wnd, c->base_id + 1,
+  CheckRadioButton(dp->wnd, c->base_id + 1,
                    c->base_id + c->ctrl->radio.nbuttons,
                    c->base_id + 1 + whichbutton);
 }
 
 int
-dlg_radiobutton_get(control *ctrl)
+dlg_radiobutton_get(control *ctrl, void *dlg)
 {
-  winctrl *c = ctrl->plat_ctrl;
+  dlgparam *dp = (dlgparam *) dlg;
+  winctrl *c = dlg_findbyctrl(dp, ctrl);
   int i;
   assert(c && c->ctrl->type == CTRL_RADIO);
   for (i = 0; i < c->ctrl->radio.nbuttons; i++)
-    if (IsDlgButtonChecked(dlg.wnd, c->base_id + 1 + i))
+    if (IsDlgButtonChecked(dp->wnd, c->base_id + 1 + i))
       return i;
   assert(!"No radio button was checked?!");
   return 0;
 }
 
 void
-dlg_checkbox_set(control *ctrl, int checked)
+dlg_checkbox_set(control *ctrl, void *dlg, int checked)
 {
-  winctrl *c = ctrl->plat_ctrl;
+  dlgparam *dp = (dlgparam *) dlg;
+  winctrl *c = dlg_findbyctrl(dp, ctrl);
   assert(c && c->ctrl->type == CTRL_CHECKBOX);
-  CheckDlgButton(dlg.wnd, c->base_id, (checked != 0));
+  CheckDlgButton(dp->wnd, c->base_id, (checked != 0));
 }
 
 int
-dlg_checkbox_get(control *ctrl)
+dlg_checkbox_get(control *ctrl, void *dlg)
 {
-  winctrl *c = ctrl->plat_ctrl;
+  dlgparam *dp = (dlgparam *) dlg;
+  winctrl *c = dlg_findbyctrl(dp, ctrl);
   assert(c && c->ctrl->type == CTRL_CHECKBOX);
-  return 0 != IsDlgButtonChecked(dlg.wnd, c->base_id);
+  return 0 != IsDlgButtonChecked(dp->wnd, c->base_id);
 }
 
 void
-dlg_editbox_set(control *ctrl, char const *text)
+dlg_editbox_set(control *ctrl, void *dlg, char const *text)
 {
-  winctrl *c = ctrl->plat_ctrl;
+  dlgparam *dp = (dlgparam *) dlg;
+  winctrl *c = dlg_findbyctrl(dp, ctrl);
   assert(c && c->ctrl->type == CTRL_EDITBOX);
-  SetDlgItemText(dlg.wnd, c->base_id + 1, text);
+  SetDlgItemText(dp->wnd, c->base_id + 1, text);
 }
 
 void
-dlg_editbox_get(control *ctrl, char *buffer, int length)
+dlg_editbox_get(control *ctrl, void *dlg, char *buffer, int length)
 {
-  winctrl *c = ctrl->plat_ctrl;
+  dlgparam *dp = (dlgparam *) dlg;
+  winctrl *c = dlg_findbyctrl(dp, ctrl);
   assert(c && c->ctrl->type == CTRL_EDITBOX);
-  GetDlgItemText(dlg.wnd, c->base_id + 1, buffer, length);
+  GetDlgItemText(dp->wnd, c->base_id + 1, buffer, length);
   buffer[length - 1] = '\0';
 }
 
 /* The `listbox' functions also apply to combo boxes. */
 void
-dlg_listbox_clear(control *ctrl)
+dlg_listbox_clear(control *ctrl, void *dlg)
 {
-  winctrl *c = ctrl->plat_ctrl;
+  dlgparam *dp = (dlgparam *) dlg;
+  winctrl *c = dlg_findbyctrl(dp, ctrl);
   int msg;
   assert(c &&
          (c->ctrl->type == CTRL_LISTBOX ||
@@ -1203,13 +1289,14 @@ dlg_listbox_clear(control *ctrl)
            c->ctrl->editbox.has_list)));
   msg = (c->ctrl->type == CTRL_LISTBOX &&
          c->ctrl->listbox.height != 0 ? LB_RESETCONTENT : CB_RESETCONTENT);
-  SendDlgItemMessage(dlg.wnd, c->base_id + 1, msg, 0, 0);
+  SendDlgItemMessage(dp->wnd, c->base_id + 1, msg, 0, 0);
 }
 
 void
-dlg_listbox_add(control *ctrl, char const *text)
+dlg_listbox_add(control *ctrl, void *dlg, char const *text)
 {
-  winctrl *c = ctrl->plat_ctrl;
+  dlgparam *dp = (dlgparam *) dlg;
+  winctrl *c = dlg_findbyctrl(dp, ctrl);
   int msg;
   assert(c &&
          (c->ctrl->type == CTRL_LISTBOX ||
@@ -1217,13 +1304,14 @@ dlg_listbox_add(control *ctrl, char const *text)
            c->ctrl->editbox.has_list)));
   msg = (c->ctrl->type == CTRL_LISTBOX &&
          c->ctrl->listbox.height != 0 ? LB_ADDSTRING : CB_ADDSTRING);
-  SendDlgItemMessage(dlg.wnd, c->base_id + 1, msg, 0, (LPARAM) text);
+  SendDlgItemMessage(dp->wnd, c->base_id + 1, msg, 0, (LPARAM) text);
 }
 
 void
-dlg_label_change(control *ctrl, char const *text)
+dlg_label_change(control *ctrl, void *dlg, char const *text)
 {
-  winctrl *c = ctrl->plat_ctrl;
+  dlgparam *dp = (dlgparam *) dlg;
+  winctrl *c = dlg_findbyctrl(dp, ctrl);
   char *escaped = null;
   int id = -1;
 
@@ -1251,16 +1339,17 @@ dlg_label_change(control *ctrl, char const *text)
       assert(!"Can't happen");
   }
   if (escaped) {
-    SetDlgItemText(dlg.wnd, id, escaped);
+    SetDlgItemText(dp->wnd, id, escaped);
     free(escaped);
   }
 }
 
 void
-dlg_fontsel_set(control *ctrl, font_spec *fs)
+dlg_fontsel_set(control *ctrl, void *dlg, font_spec *fs)
 {
   char *buf, *boldstr;
-  winctrl *c = ctrl->plat_ctrl;
+  dlgparam *dp = (dlgparam *) dlg;
+  winctrl *c = dlg_findbyctrl(dp, ctrl);
   assert(c && c->ctrl->type == CTRL_FONTSELECT);
 
   *(font_spec *) c->data = *fs;   /* structure copy */
@@ -1271,14 +1360,15 @@ dlg_fontsel_set(control *ctrl, font_spec *fs)
   else
     asprintf(&buf, "%s, %s%d-%s", fs->name, boldstr, abs(fs->size),
              fs->size < 0 ? "pixel" : "point");
-  SetDlgItemText(dlg.wnd, c->base_id + 1, buf);
+  SetDlgItemText(dp->wnd, c->base_id + 1, buf);
   free(buf);
 }
 
 void
-dlg_fontsel_get(control *ctrl, font_spec *fs)
+dlg_fontsel_get(control *ctrl, void *dlg, font_spec *fs)
 {
-  winctrl *c = ctrl->plat_ctrl;
+  dlgparam *dp = (dlgparam *) dlg;
+  winctrl *c = dlg_findbyctrl(dp, ctrl);
   assert(c && c->ctrl->type == CTRL_FONTSELECT);
   *fs = *(font_spec *) c->data;  /* structure copy */
 }
@@ -1289,20 +1379,22 @@ dlg_fontsel_get(control *ctrl, font_spec *fs)
  * until it's all complete, thus avoiding flicker.
  */
 void
-dlg_update_start(control *ctrl)
+dlg_update_start(control *ctrl, void *dlg)
 {
-  winctrl *c = ctrl->plat_ctrl;
+  dlgparam *dp = (dlgparam *) dlg;
+  winctrl *c = dlg_findbyctrl(dp, ctrl);
   if (c && c->ctrl->type == CTRL_LISTBOX) {
-    SendDlgItemMessage(dlg.wnd, c->base_id + 1, WM_SETREDRAW, false, 0);
+    SendDlgItemMessage(dp->wnd, c->base_id + 1, WM_SETREDRAW, false, 0);
   }
 }
 
 void
-dlg_update_done(control *ctrl)
+dlg_update_done(control *ctrl, void *dlg)
 {
-  winctrl *c = ctrl->plat_ctrl;
+  dlgparam *dp = (dlgparam *) dlg;
+  winctrl *c = dlg_findbyctrl(dp, ctrl);
   if (c && c->ctrl->type == CTRL_LISTBOX) {
-    HWND hw = GetDlgItem(dlg.wnd, c->base_id + 1);
+    HWND hw = GetDlgItem(dp->wnd, c->base_id + 1);
     SendMessage(hw, WM_SETREDRAW, true, 0);
     InvalidateRect(hw, null, true);
   }
@@ -1310,24 +1402,26 @@ dlg_update_done(control *ctrl)
 
 #if 0 // Unused
 void
-dlg_enable(control *ctrl, bool enable)
+dlg_enable(control *ctrl, void *dlg, bool enable)
 {
-  winctrl *c = ctrl->plat_ctrl;
-  EnableWindow(GetDlgItem(dlg.wnd, c->base_id + 1), enable);
+  dlgparam *dp = (dlgparam *) dlg;
+  winctrl *c = dlg_findbyctrl(dp, ctrl);
+  EnableWindow(GetDlgItem(dp->wnd, c->base_id + 1), enable);
 }
 #endif
 
 void
-dlg_set_focus(control *ctrl)
+dlg_set_focus(control *ctrl, void *dlg)
 {
-  winctrl *c = ctrl->plat_ctrl;
+  dlgparam *dp = dlg;
+  winctrl *c = dlg_findbyctrl(dp, ctrl);
   int id;
   switch (ctrl->type) {
     when CTRL_EDITBOX or CTRL_LISTBOX: id = c->base_id + 1;
     when CTRL_FONTSELECT: id = c->base_id + 2;
     when CTRL_RADIO:
       id = c->base_id + ctrl->radio.nbuttons;
-      while (id > 1 && IsDlgButtonChecked(dlg.wnd, id))
+      while (id > 1 && IsDlgButtonChecked(dp->wnd, id))
         --id;
      /*
       * In the theoretically-unlikely case that no button was
@@ -1336,7 +1430,7 @@ dlg_set_focus(control *ctrl)
       */
     otherwise: id = c->base_id;
   }
-  SetFocus(GetDlgItem(dlg.wnd, id));
+  SetFocus(GetDlgItem(dp->wnd, id));
 }
 
 /*
@@ -1345,23 +1439,27 @@ dlg_set_focus(control *ctrl)
  * a success status).
  */
 void
-dlg_end(void)
+dlg_end(void *dlg)
 {
-  dlg.ended = true;
+  ((dlgparam *) dlg)->ended = true;
 }
 
 void
-dlg_refresh(control *ctrl)
+dlg_refresh(control *ctrl, void *dlg)
 {
+  dlgparam *dp = (dlgparam *) dlg;
+  int i, j;
+  winctrl *c;
+
   if (!ctrl) {
    /*
     * Send EVENT_REFRESH to absolutely everything.
     */
-    for (int i = 0; i < dlg.nctrltrees; i++) {
-      for (winctrl *c = dlg.controltrees[i]->first; c; c = c->next) {
-        if (c->ctrl && c->ctrl->handler) {
-          c->ctrl->handler(c->ctrl, dlg.data, EVENT_REFRESH);
-        }
+    for (j = 0; j < dp->nctrltrees; j++) {
+      for (i = 0; (c = winctrl_findbyindex(dp->controltrees[j], i)) != null;
+           i++) {
+        if (c->ctrl && c->ctrl->handler != null)
+          c->ctrl->handler(c->ctrl, dp, dp->data, EVENT_REFRESH);
       }
     }
   }
@@ -1370,47 +1468,80 @@ dlg_refresh(control *ctrl)
     * Send EVENT_REFRESH to a specific control.
     */
     if (ctrl->handler != null)
-      ctrl->handler(ctrl, dlg.data, EVENT_REFRESH);
+      ctrl->handler(ctrl, dp, dp->data, EVENT_REFRESH);
   }
 }
 
 void
-dlg_coloursel_start(colour c)
+dlg_coloursel_start(void *dlg, colour c)
 {
-  dlg.coloursel_wanted = true;
-  dlg.coloursel_result = c;
+  dlgparam *dp = (dlgparam *) dlg;
+  dp->coloursel_wanted = true;
+  dp->coloursel_result = c;
 }
 
 int
-dlg_coloursel_results(colour *res_p)
+dlg_coloursel_results(void *dlg, colour *res_p)
 {
-  bool ok = dlg.coloursel_ok ;
+  dlgparam *dp = (dlgparam *) dlg;
+  bool ok = dp->coloursel_ok ;
   if (ok)
-    *res_p = dlg.coloursel_result;
+    *res_p = dp->coloursel_result;
   return ok;
 }
 
-void
-windlg_init(void)
+typedef struct {
+  control *ctrl;
+  void *data;
+  int needs_free;
+} perctrl_privdata;
+
+static int
+perctrl_privdata_cmp(void *av, void *bv)
 {
-  dlg.nctrltrees = 0;
-  dlg.data = null;
-  dlg.ended = false;
-  dlg.focused = dlg.lastfocused = null;
-  memset(dlg.shortcuts, 0, sizeof (dlg.shortcuts));
-  dlg.wnd = null;
-  dlg.wintitle = null;
+  perctrl_privdata *a = (perctrl_privdata *) av;
+  perctrl_privdata *b = (perctrl_privdata *) bv;
+  if (a->ctrl < b->ctrl)
+    return -1;
+  else if (a->ctrl > b->ctrl)
+    return +1;
+  return 0;
 }
 
 void
-windlg_add_tree(winctrls * wc)
+dp_init(dlgparam * dp)
 {
-  assert(dlg.nctrltrees < (int) lengthof(dlg.controltrees));
-  dlg.controltrees[dlg.nctrltrees++] = wc;
+  dp->nctrltrees = 0;
+  dp->data = null;
+  dp->ended = false;
+  dp->focused = dp->lastfocused = null;
+  memset(dp->shortcuts, 0, sizeof (dp->shortcuts));
+  dp->wnd = null;
+  dp->wintitle = null;
+  dp->privdata = newtree234(perctrl_privdata_cmp);
 }
 
 void
-windlg_cleanup(void)
+dp_add_tree(dlgparam * dp, winctrls * wc)
 {
-  free(dlg.wintitle);
+  assert(dp->nctrltrees < (int) lengthof(dp->controltrees));
+  dp->controltrees[dp->nctrltrees++] = wc;
+}
+
+void
+dp_cleanup(dlgparam * dp)
+{
+  perctrl_privdata *p;
+
+  if (dp->privdata) {
+    while ((p = index234(dp->privdata, 0)) != null) {
+      del234(dp->privdata, p);
+      if (p->needs_free)
+        free(p->data);
+      free(p);
+    }
+    freetree234(dp->privdata);
+    dp->privdata = null;
+  }
+  free(dp->wintitle);
 }
