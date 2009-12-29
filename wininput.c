@@ -281,24 +281,20 @@ win_key_down(WPARAM wp, LPARAM lp)
   GetKeyboardState(kbd);
   inline bool is_key_down(uchar vk) { return kbd[vk] & 0x80; }
   
-  bool numlock = kbd[VK_NUMLOCK] & 1;
-  
-  bool shift = is_key_down(VK_SHIFT);
-  bool alt, ctrl, altgr, meta;
-  if (cfg.ctrl_alt_is_altgr) {
-    // Treat any Ctrl+Alt as AltGr
-    alt = is_key_down(VK_MENU);
+  bool
+    numlock = kbd[VK_NUMLOCK] & 1,
+    shift = is_key_down(VK_SHIFT),
+    alt = is_key_down(VK_MENU),
     ctrl = is_key_down(VK_CONTROL);
-    altgr = alt & ctrl;
-    meta = (alt & !ctrl) | (is_key_down(VK_LMENU) & is_key_down(VK_RMENU));
-  }
-  else {
-    // Only treat Ctrl+RightAlt (or an actual AltGr key if present) as AltGr
-    alt = meta = is_key_down(VK_LMENU);
-    altgr = is_key_down(VK_RMENU);
-    ctrl = is_key_down(VK_CONTROL) & !altgr;
+  
+  // Don't treat Ctrl+LeftAlt as AltGr unless requested.
+  if (!cfg.ctrl_alt_is_altgr)
     kbd[VK_MENU] = kbd[VK_RMENU];
-  }
+  
+  bool
+    altgr = ctrl & is_key_down(VK_MENU),
+    meta = (alt & !altgr) | (is_key_down(VK_LMENU) & is_key_down(VK_RMENU));
+  
   mod_keys mods = shift * MDK_SHIFT | alt * MDK_ALT | ctrl * MDK_CTRL;
 
   update_mouse(mods);
@@ -588,9 +584,16 @@ win_key_down(WPARAM wp, LPARAM lp)
       }
       if (ctrl_key())
         break;
+      // Try with added AltGr.
       kbd[VK_CONTROL] = kbd[VK_MENU] = 0x80;
       if (ctrl_key())
         break;
+      // Try with added Shift (if it isn't pressed already)
+      if (!is_key_down(VK_SHIFT)) {
+        kbd[VK_CONTROL] = kbd[VK_MENU] = 0, kbd[VK_SHIFT] = 0x80;
+        if (ctrl_key())
+          break;
+      }
       // Treat remaining digits and symbols as apppad combinations
       switch (key) {
         when '0' ... '9': app_pad_code(key);

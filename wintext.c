@@ -481,7 +481,8 @@ win_text_internal(int x, int y, wchar *text, int len,
   y += PADDING;
 
   if ((attr & TATTR_ACTCURS) && term_cursor_type() == CUR_BLOCK) {
-    attr &= ~(ATTR_REVERSE | ATTR_BLINK | ATTR_COLOURS);
+    attr &= ~(ATTR_REVERSE | ATTR_BLINK | ATTR_COLOURS |
+              ATTR_DIM | ATTR_INVISIBLE);
     if (bold_mode == BOLD_COLOURS)
       attr &= ~ATTR_BOLD;
 
@@ -528,13 +529,13 @@ win_text_internal(int x, int y, wchar *text, int len,
   }
   if (bold_mode == BOLD_COLOURS) {
     if (attr & ATTR_BOLD) {
-      if (nfg < 16)
+      if (nfg < 8)
         nfg |= 8;
       else if (nfg >= 256)
         nfg |= 1;
     }
     if (attr & ATTR_BLINK) {
-      if (nbg < 16)
+      if (nbg < 8)
         nbg |= 8;
       else if (nbg >= 256)
         nbg |= 1;
@@ -542,8 +543,11 @@ win_text_internal(int x, int y, wchar *text, int len,
   }
   fg = colours[nfg];
   bg = colours[nbg];
-  if (attr & ATTR_DIM)
+  if (attr & ATTR_DIM && (nfg < 16 || nfg >= 256)) {
     fg = (fg & 0xFEFEFEFE) >> 1;
+    if (!cfg.bold_as_bright)
+      fg += (bg & 0xFEFEFEFE) >> 1;
+  }
   if (attr & ATTR_REVERSE) {
     t = fg;
     fg = bg;
