@@ -483,7 +483,11 @@ win_key_down(WPARAM wp, LPARAM lp)
     if (wc)
       other_code(wc);
   }
-  bool ctrl_key(void) {
+  void ctrl_key(char c) {
+    esc_if(alt);
+    ch(c | shift << 7);
+  }
+  bool ctrl_symbol_key(void) {
     wchar wc = undead_keycode();
     char c;
     switch (wc) {
@@ -510,14 +514,14 @@ win_key_down(WPARAM wp, LPARAM lp)
         esc_if(alt),
         term.newline_mode ? ch('\r'), ch('\n') : ch(shift ? '\n' : '\r');
       else
-        esc_if(shift || alt), ch(C('^'));
+        ctrl_key(C('^'));
     when VK_BACK:
       if (!ctrl)
         esc_if(alt), ch(term.backspace_sends_bs ? '\b' : 0x7F);
-      else if (!term.modify_other_keys)
-        esc_if(shift || alt), ch(term.backspace_sends_bs ? 0x7F : C('_'));
-      else
+      else if (term.modify_other_keys)
         other_code(term.backspace_sends_bs ? '\b' : 0x7F);
+      else
+        ctrl_key(term.backspace_sends_bs ? 0x7F : C('_'));
     when VK_TAB:
       if (alt)
         return 0;
@@ -528,15 +532,11 @@ win_key_down(WPARAM wp, LPARAM lp)
     when VK_ESCAPE:
       term.app_escape_key
       ? ss3('[')
-      : ch(term.escape_sends_fs ? C('\\') : C('['));
+      : ctrl_key(term.escape_sends_fs ? C('\\') : C('['));
     when VK_PAUSE:
-      if (shift || alt)
-        return 0;
-      ch(C(']'));
+      ctrl_key(C(']'));
     when VK_CANCEL:
-      if (shift || alt)
-        return 0;
-      ch(C('\\'));
+      ctrl_key(C('\\'));
     when VK_F1 ... VK_F4:
       mod_ss3(key - VK_F1 + 'P');
     when VK_F5 ... VK_F24:
@@ -573,7 +573,7 @@ win_key_down(WPARAM wp, LPARAM lp)
         modify_other_key();
       }
       else
-        esc_if(shift || alt), ch(C(key));
+        ctrl_key(C(key));
     when '0' ... '9' or VK_OEM_1 ... VK_OEM_102:
       if (char_key())
         break;
@@ -582,16 +582,16 @@ win_key_down(WPARAM wp, LPARAM lp)
         modify_other_key();
         break;
       }
-      if (ctrl_key())
+      if (ctrl_symbol_key())
         break;
       // Try with added AltGr.
       kbd[VK_CONTROL] = kbd[VK_MENU] = 0x80;
-      if (ctrl_key())
+      if (ctrl_symbol_key())
         break;
       // Try with added Shift (if it isn't pressed already)
       if (!is_key_down(VK_SHIFT)) {
         kbd[VK_CONTROL] = kbd[VK_MENU] = 0, kbd[VK_SHIFT] = 0x80;
-        if (ctrl_key())
+        if (ctrl_symbol_key())
           break;
       }
       // Treat remaining digits and symbols as apppad combinations
