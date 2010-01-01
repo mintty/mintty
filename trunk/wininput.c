@@ -491,6 +491,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     wchar wc = undead_keycode();
     switch (wc) {
       when '@' or '[' ... '_': wc = C(wc);
+      when '/': wc = C('_');
       when '?': wc = 0x7F;
       otherwise: return 0;
     }
