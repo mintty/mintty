@@ -483,20 +483,19 @@ win_key_down(WPARAM wp, LPARAM lp)
     if (wc)
       other_code(wc);
   }
-  void ctrl_key(char c) {
+  void ctrl_key(uchar c) {
     esc_if(alt);
-    ch(c | shift << 7);
+    wbuf[wlen++] = c | shift << 7;
   }
   bool ctrl_symbol_key(void) {
     wchar wc = undead_keycode();
-    char c;
     switch (wc) {
-      when '@' or '[' ... '_': c = C(wc);
-      when '?': c = 0x7F;
+      when '@' or '[' ... '_': wc = C(wc);
+      when '?': wc = 0x7F;
       otherwise: return 0;
     }
     esc_if(alt);
-    ch(c);
+    wbuf[wlen++] = wc;
     return 1;
   }
   
