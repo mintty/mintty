@@ -381,6 +381,21 @@ child_conv_path(const wchar *wpath)
   
 #if CYGWIN_VERSION_DLL_MAJOR >= 1007
   wchar *win_wpath = cygwin_create_path(CCP_POSIX_TO_WIN_W, exp_path);
+  
+  // Drop long path prefix if possible,
+  // because some programs have trouble with them.
+  if (wcslen(win_wpath) < MAX_PATH) {
+    wchar *old_win_wpath = win_wpath;
+    if (wcsncmp(win_wpath, L"\\\\?\\UNC\\", 8) == 0) {
+      win_wpath = wcsdup(win_wpath + 6);
+      win_wpath[0] = '\\';  // Replace "\\?\UNC\" prefix with "\\"
+      free(old_win_wpath);
+    }
+    else if (wcsncmp(win_wpath, L"\\\\?\\", 4) == 0) {
+      win_wpath = wcsdup(win_wpath + 4);  // Drop "\\?\" prefix
+      free(old_win_wpath);
+    }
+  }
 #else
   char win_path[MAX_PATH];
   cygwin_conv_to_win32_path(exp_path, win_path);
