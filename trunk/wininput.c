@@ -537,7 +537,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   
   switch(key) {
     when VK_MENU:
-      if (!shift && !ctrl)
+      if (!shift && !is_key_down(VK_CONTROL))
         alt_state = old_alt_state == ALT_NONE ? ALT_ALONE : old_alt_state;
       return 1;
     when VK_RETURN:
