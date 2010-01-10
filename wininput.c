@@ -303,7 +303,9 @@ win_key_down(WPARAM wp, LPARAM lp)
     ralt = is_key_down(VK_RMENU),
     alt = lalt | ralt,
     rctrl = is_key_down(VK_RCONTROL),
-    ctrl = lctrl | rctrl;
+    ctrl = lctrl | rctrl,
+    ctrl_lalt_altgr = cfg.ctrl_alt_is_altgr & ctrl & lalt & !ralt,
+    meta = lalt & !ctrl_lalt_altgr;
 
   mod_keys mods = shift * MDK_SHIFT | alt * MDK_ALT | ctrl * MDK_CTRL;
 
@@ -407,7 +409,7 @@ win_key_down(WPARAM wp, LPARAM lp)
 
   inline char C(char c) { return c & 0x1F; }
   inline void ch(char c) { buf[len++] = c; }
-  inline void meta(void) { if (alt) ch('\e'); }
+  inline void esc_if(bool b) { if (b) ch('\e'); }
   void ss3(char c) { ch('\e'); ch('O'); ch(c); }
   void csi(char c) { ch('\e'); ch('['); ch(c); }
   void mod_csi(char c) { len = sprintf(buf, "\e[1;%c%c", mods + '1', c); }
@@ -464,7 +466,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     if (!wlen)
       return 0;
     if (wlen > 0)
-      meta();
+      esc_if(meta);
     else
       wlen = 0;
     return 1;
@@ -493,14 +495,8 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
   
   bool char_key(void) {
-    // Do we have a Ctrl+LeftAlt==AltGr case?
-    bool ctrl_lalt_altgr = cfg.ctrl_alt_is_altgr & ctrl & lalt & !ralt;
-
     // Sync keyboard layout with our idea of AltGr.
     kbd[VK_CONTROL] = ralt | ctrl_lalt_altgr ? 0x80 : 0;
-
-    // Do we have an Alt that isn't part of AltGr?
-    alt = lalt & !ctrl_lalt_altgr;
 
     // Don't handle Ctrl combinations here.
     // Need to check there's a Ctrl that isn't part of Ctrl+LeftAlt==AltGr.
@@ -512,9 +508,9 @@ win_key_down(WPARAM wp, LPARAM lp)
       return true;
     
     if (ralt) {
-      // Try with RightAlt/AltGr key treated as Alt.
+      // Try with RightAlt/AltGr key treated as Meta.
       kbd[VK_CONTROL] = 0;
-      alt = true;
+      meta = true;
       layout();
       return true;
     }
@@ -529,13 +525,13 @@ win_key_down(WPARAM wp, LPARAM lp)
       when '?': wc = 0x7F;
       otherwise: return false;
     }
-    meta();
+    esc_if(meta);
     wbuf[wlen++] = wc;
     return true;
   }
   
   void ctrl_key(uchar c) {
-    meta();
+    esc_if(alt);
     wbuf[wlen++] = c | shift << 7;
   }
   
@@ -550,13 +546,13 @@ win_key_down(WPARAM wp, LPARAM lp)
       else if (!extended && term.modify_other_keys && (shift || ctrl))
         other_code('\r');
       else if (!ctrl)
-        meta(),
+        esc_if(alt),
         term.newline_mode ? ch('\r'), ch('\n') : ch(shift ? '\n' : '\r');
       else
         ctrl_key(C('^'));
     when VK_BACK:
       if (!ctrl)
-        meta(), ch(term.backspace_sends_bs ? '\b' : 0x7F);
+        esc_if(alt), ch(term.backspace_sends_bs ? '\b' : 0x7F);
       else if (term.modify_other_keys)
         other_code(term.backspace_sends_bs ? '\b' : 0x7F);
       else
@@ -621,9 +617,9 @@ win_key_down(WPARAM wp, LPARAM lp)
       if (ctrl_symbol_key())
         break;
       if (ralt) {
-        // Try with RightAlt/AltGr key treated as Alt.
+        // Try with RightAlt/AltGr key treated as Meta.
         kbd[VK_CONTROL] = 0;
-        alt = true;
+        meta = true;
         if (ctrl_symbol_key())
           break;
       }
