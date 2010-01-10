@@ -293,8 +293,8 @@ win_key_down(WPARAM wp, LPARAM lp)
     lctrl = !(key == VK_MENU && extended && lctrl_time == GetMessageTime());
     lctrl_time = 0;
   }
-  else
-    lctrl &= is_key_down(VK_LCONTROL);
+  
+  lctrl &= is_key_down(VK_LCONTROL);
 
   bool
     numlock = kbd[VK_NUMLOCK] & 1,
