@@ -117,14 +117,18 @@ typedef enum {
 static alt_state_t alt_state;
 static wchar alt_char;
 
+static bool lctrl;  // Is left Ctrl pressed?
+static long lctrl_time;
+
 static mod_keys
 get_mods(void)
 {
   inline bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
+  lctrl &= is_key_down(VK_LCONTROL);
   return
     is_key_down(VK_SHIFT) * MDK_SHIFT |
     is_key_down(VK_MENU) * MDK_ALT |
-    is_key_down(VK_CONTROL) * MDK_CTRL;
+    (lctrl | is_key_down(VK_RCONTROL)) * MDK_CTRL;
 }
 
 static void
@@ -280,9 +284,6 @@ win_key_down(WPARAM wp, LPARAM lp)
   uchar kbd[256];
   GetKeyboardState(kbd);
   inline bool is_key_down(uchar vk) { return kbd[vk] & 0x80; }
-  
-  static bool lctrl;  // Is left Ctrl pressed?
-  static long lctrl_time;
   
   // Distinguish real LeftCtrl from keypresses from messages sent for AltGr.
   if (key == VK_CONTROL && !extended) {
