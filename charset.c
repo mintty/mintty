@@ -194,22 +194,20 @@ correct_locale(char *locale)
     return;
   uchar *lang = (uchar *)locale;
   if (isalpha(lang[0]) && isalpha(lang[1])) {
-    // Treat two letters at the start as the language.
-    locale[0] = tolower(lang[0]);
-    locale[1] = tolower(lang[1]);
-    uchar *terr = (uchar *)strchr(locale + 2, '_');
+    // Treat two or three letters at the start as the language.
+    *locale++ = tolower(*lang++);
+    *locale++ = tolower(*lang++);
+    if (isalpha(*lang))
+      *locale++ = tolower(*lang++);
+    uchar *terr = (uchar *)strchr(locale, '_');
     if (terr && isalpha(terr[1]) && isalpha(terr[2])) {
       // Treat two letters after an underscore as the territory.
-      locale[2] = '_';
-      locale[3] = toupper(terr[1]);
-      locale[4] = toupper(terr[2]);
-      locale[5] = 0;
+      *locale++ = '_';
+      *locale++ = toupper(*++terr);
+      *locale++ = toupper(*++terr);
     }
-    else
-      locale[2] = 0;
   }
-  else 
-    locale[0] = 0;
+  *locale = 0;
 }
 
 static void
