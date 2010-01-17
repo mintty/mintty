@@ -15,6 +15,9 @@
 // Constant for representing an unspecified charset.
 #define CS_DEFAULT -1
 
+// ASCII codepage number
+#define CP_ASCII 20127
+
 static cs_mode mode = CSM_DEFAULT;
 
 static const char *env_locale, *config_locale, *set_locale;
@@ -39,7 +42,7 @@ static const struct {
 }
 cs_names[] = {
   {CP_UTF8, "UTF-8"},
-  {  20127, "ASCII"},
+  {CP_ASCII, "ASCII"},
   {  20866, "KOI8-R"},
   {  21866, "KOI8-U"},
   {    936, "GBK"},
@@ -313,7 +316,7 @@ update_locale(void)
     default_codepage = id;
 #if HAS_LOCALES
   else if (*default_locale == 'C')
-    default_codepage = CP_UTF8;
+    default_codepage = CP_ASCII;
 #endif
   else 
     default_codepage = CP_ACP;  
@@ -384,7 +387,7 @@ cs_init(void)
   const char *lang = config_locale;
 #if HAS_LOCALES
   if (!lang && !locenv)
-    lang = strcmp(env_locale, "C") ? env_locale : "C.UTF-8";
+    lang = env_locale;
 #endif  
   return lang;
 }
