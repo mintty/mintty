@@ -9,6 +9,8 @@
 #include "platform.h"
 
 #include <locale.h>
+#include <langinfo.h>
+
 #include <winbase.h>
 #include <winnls.h>
 
@@ -309,27 +311,24 @@ update_locale(void)
 {
   default_locale = set_locale ?: config_locale ?: env_locale;
 
-  const char *dot = strchr(default_locale, '.');
-  const char *charset = dot ? dot + 1 : "";
-  int id = cs_id(charset);
-  if (id != CS_DEFAULT && valid_cp(id))
-    default_codepage = id;
-#if HAS_LOCALES
-  else if (*default_locale == 'C')
-    default_codepage = CP_ASCII;
-#endif
-  else 
-    default_codepage = CP_ACP;  
-  
+  const char *charset;
 #if HAS_LOCALES
   valid_default_locale = setlocale(LC_CTYPE, default_locale);
-  if (valid_default_locale)
+  if (valid_default_locale) {
+    charset = nl_langinfo(CODESET);
     cs_ambig_wide = wcwidth(0x3B1) == 2;
-  else
-    cs_ambig_wide = font_ambig_wide;
-#else
-  cs_ambig_wide = font_ambig_wide;
+  }
+  else {
 #endif
+    const char *dot = strchr(default_locale, '.');
+    charset = dot ? dot + 1 : "";
+    cs_ambig_wide = font_ambig_wide;
+#if HAS_LOCALES
+  }
+#endif
+
+  int id = cs_id(charset);
+  default_codepage = id != CS_DEFAULT && valid_cp(id) ? id : CP_ACP;
   
   update_mode();
 }
