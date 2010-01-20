@@ -124,6 +124,10 @@ static mod_keys
 get_mods(void)
 {
   inline bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
+  if (lctrl_time) {
+    lctrl = true;
+    lctrl_time = 0;
+  }
   lctrl &= is_key_down(VK_LCONTROL);
   return
     is_key_down(VK_SHIFT) * MDK_SHIFT |
@@ -290,11 +294,10 @@ win_key_down(WPARAM wp, LPARAM lp)
     lctrl_time = GetMessageTime();
     return 0;
   }
-  else if (lctrl_time) {
+  if (lctrl_time) {
     lctrl = !(key == VK_MENU && extended && lctrl_time == GetMessageTime());
     lctrl_time = 0;
   }
-  
   lctrl &= is_key_down(VK_LCONTROL);
 
   bool
