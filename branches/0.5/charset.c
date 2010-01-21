@@ -9,11 +9,16 @@
 #include "platform.h"
 
 #include <locale.h>
+#include <langinfo.h>
+
 #include <winbase.h>
 #include <winnls.h>
 
 // Constant for representing an unspecified charset.
 #define CS_DEFAULT -1
+
+// ASCII codepage number
+#define CP_ASCII 20127
 
 static cs_mode mode = CSM_DEFAULT;
 
@@ -39,7 +44,7 @@ static const struct {
 }
 cs_names[] = {
   {CP_UTF8, "UTF-8"},
-  {  20127, "ASCII"},
+  {CP_ASCII, "ASCII"},
   {  20866, "KOI8-R"},
   {  21866, "KOI8-U"},
   {    936, "GBK"},
@@ -189,22 +194,20 @@ correct_locale(char *locale)
     return;
   uchar *lang = (uchar *)locale;
   if (isalpha(lang[0]) && isalpha(lang[1])) {
-    // Treat two letters at the start as the language.
-    locale[0] = tolower(lang[0]);
-    locale[1] = tolower(lang[1]);
-    uchar *terr = (uchar *)strchr(locale + 2, '_');
+    // Treat two or three letters at the start as the language.
+    *locale++ = tolower(*lang++);
+    *locale++ = tolower(*lang++);
+    if (isalpha(*lang))
+      *locale++ = tolower(*lang++);
+    uchar *terr = (uchar *)strchr(locale, '_');
     if (terr && isalpha(terr[1]) && isalpha(terr[2])) {
       // Treat two letters after an underscore as the territory.
-      locale[2] = '_';
-      locale[3] = toupper(terr[1]);
-      locale[4] = toupper(terr[2]);
-      locale[5] = 0;
+      *locale++ = '_';
+      *locale++ = toupper(*++terr);
+      *locale++ = toupper(*++terr);
     }
-    else
-      locale[2] = 0;
   }
-  else 
-    locale[0] = 0;
+  *locale = 0;
 }
 
 static void
@@ -306,27 +309,24 @@ update_locale(void)
 {
   default_locale = set_locale ?: config_locale ?: env_locale;
 
-  const char *dot = strchr(default_locale, '.');
-  const char *charset = dot ? dot + 1 : "";
-  int id = cs_id(charset);
-  if (id != CS_DEFAULT && valid_cp(id))
-    default_codepage = id;
-#if HAS_LOCALES
-  else if (*default_locale == 'C')
-    default_codepage = CP_UTF8;
-#endif
-  else 
-    default_codepage = CP_ACP;  
-  
+  const char *charset;
 #if HAS_LOCALES
   valid_default_locale = setlocale(LC_CTYPE, default_locale);
-  if (valid_default_locale)
+  if (valid_default_locale) {
+    charset = nl_langinfo(CODESET);
     cs_ambig_wide = wcwidth(0x3B1) == 2;
-  else
-    cs_ambig_wide = font_ambig_wide;
-#else
-  cs_ambig_wide = font_ambig_wide;
+  }
+  else {
 #endif
+    const char *dot = strchr(default_locale, '.');
+    charset = dot ? dot + 1 : "";
+    cs_ambig_wide = font_ambig_wide;
+#if HAS_LOCALES
+  }
+#endif
+
+  int id = cs_id(charset);
+  default_codepage = id != CS_DEFAULT && valid_cp(id) ? id : CP_ACP;
   
   update_mode();
 }
@@ -384,7 +384,7 @@ cs_init(void)
   const char *lang = config_locale;
 #if HAS_LOCALES
   if (!lang && !locenv)
-    lang = strcmp(env_locale, "C") ? env_locale : "C.UTF-8";
+    lang = env_locale;
 #endif  
   return lang;
 }

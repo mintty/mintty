@@ -543,7 +543,7 @@ win_text_internal(int x, int y, wchar *text, int len,
   }
   fg = colours[nfg];
   bg = colours[nbg];
-  if (attr & ATTR_DIM && (nfg < 16 || nfg >= 256)) {
+  if (attr & ATTR_DIM) {
     fg = (fg & 0xFEFEFEFE) >> 1;
     if (!cfg.bold_as_bright)
       fg += (bg & 0xFEFEFEFE) >> 1;

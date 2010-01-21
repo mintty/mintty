@@ -488,6 +488,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     char c;
     switch (wc) {
       when '@' or '[' ... '_': c = C(wc);
+      when '/': c = C('_');
       when '?': c = 0x7F;
       otherwise: return 0;
     }

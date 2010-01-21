@@ -12,6 +12,7 @@
 #include "child.h"
 #include "charset.h"
 
+#include <locale.h>
 #include <process.h>
 #include <getopt.h>
 #include <imm.h>
@@ -777,8 +778,8 @@ static const char *help =
   "  -p, --position=X,Y    Open window at specified coordinates\n"
   "  -s, --size=COLS,ROWS  Set screen size in characters\n"
   "  -t, --title=TITLE     Set window title (default: the invoked command)\n"
-  "  -i, --icon=FILE[,INDEX]\n"
-  "                        Load window icon from file, optionally with index\n"
+  "      --class=CLASS     Set window class name (default: " APPNAME ")\n"
+  "  -i, --icon=FILE[,IX]  Load window icon from file, optionally with index\n"
   "  -l, --log=FILE        Log output to file\n"
   "  -u, --utmp            Create a utmp entry\n"
   "  -h, --hold=never|always|error\n"
@@ -799,6 +800,7 @@ opts[] = {
   {"position", required_argument, 0, 'p'},
   {"size",     required_argument, 0, 's'},
   {"title",    required_argument, 0, 't'},
+  {"class",    required_argument, 0, 'C'},
   {"icon",     required_argument, 0, 'i'},
   {"log",      required_argument, 0, 'l'},
   {"hold",     required_argument, 0, 'h'},
@@ -824,7 +826,9 @@ main(int argc, char *argv[])
   int x = CW_USEDEFAULT, y = CW_USEDEFAULT;
   bool size_override = false;
   uint rows = 0, cols = 0;
+  wchar *class_name = _W(APPNAME);
 
+  setlocale(LC_CTYPE, "");
   main_argv = argv;  
 
   for (;;) {
@@ -854,6 +858,13 @@ main(int argc, char *argv[])
           hold = HOLD_ERROR;
         else
           error("invalid argument to hold option -- %s", optarg);
+      }
+      when 'C': {
+        int len = mbstowcs(0, optarg, 0);
+        if (len < 0)
+          error("invalid character in class name -- %s", optarg);
+        class_name = newn(wchar, len + 1);
+        mbstowcs(class_name, optarg, len + 1);
       }
       when 'H':
         printf(help, *argv);
@@ -918,14 +929,14 @@ main(int argc, char *argv[])
     .hCursor = LoadCursor(null, IDC_IBEAM),
     .hbrBackground = null,
     .lpszMenuName = null,
-    .lpszClassName = _W(APPNAME),
+    .lpszClassName = class_name,
   });
 
  /* Create initial window.
   * Its real size has to be set after loading the fonts and determining their
   * size, but the window has to exist to do that.
   */
-  wnd = CreateWindowW(_W(APPNAME), 0,
+  wnd = CreateWindowW(class_name, 0,
                       WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
                       x, y, 300, 200, null, null, inst, null);
 
