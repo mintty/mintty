@@ -1,3 +1,7 @@
-/usr/bin/mkdir -p "$(/usr/bin/cygpath -AP)/Cygwin"
-/usr/bin/mkshortcut -AP -n Cygwin/mintty -a - -d Terminal /usr/bin/mintty.exe
-/usr/bin/chmod go+r "$(/usr/bin/cygpath -AP)/Cygwin/mintty.lnk"
+PROGS=$(/bin/cygpath -AP)
+if [ ! -w "$PROGS" ]; then
+  PROGS=$(/bin/cygpath -P)
+fi
+/bin/mkdir -p "$PROGS/Cygwin"
+/bin/mkshortcut -n "$PROGS/Cygwin/mintty" -a - -d Terminal /bin/mintty.exe
+/bin/chmod go+r "$PROGS/Cygwin/mintty.lnk"
