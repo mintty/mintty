@@ -216,11 +216,14 @@ init_locale_menu(void)
   uint count = 0;
   
   void add_lcid(LCID lcid) {
-    char locale[6];
-    if (!GetLocaleInfo(lcid, LOCALE_SISO639LANGNAME, locale, 3) ||
-        !GetLocaleInfo(lcid, LOCALE_SISO3166CTRYNAME, locale + 3, 3))
+    char locale[8];
+    int lang_len = GetLocaleInfo(lcid, LOCALE_SISO639LANGNAME,
+                                 locale, sizeof locale);
+    if (!lang_len)
       return;
-    locale[2] = '_';
+    if (GetLocaleInfo(lcid, LOCALE_SISO3166CTRYNAME,
+                      locale + lang_len, sizeof locale - lang_len))
+      locale[lang_len - 1] = '_';
     for (uint i = 1; i < count; i++)
       if (!strcmp(locale, locale_menu[i]))
         return;
