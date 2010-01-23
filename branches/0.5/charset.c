@@ -43,26 +43,31 @@ static const struct {
   const char *name;
 }
 cs_names[] = {
-  {CP_UTF8, "UTF-8"},
+  { CP_UTF8, "UTF-8"},
+  { CP_UTF8, "UTF8"},
   {CP_ASCII, "ASCII"},
-  {  20866, "KOI8-R"},
-  {  21866, "KOI8-U"},
-  {    936, "GBK"},
-  {    950, "Big5"},
-  {    932, "SJIS"},
+  {CP_ASCII, "US-ASCII"},
+  {CP_ASCII, "ANSI_X3.4-1968"},
+  {   20866, "KOI8-R"},
+  {   20866, "KOI8"},
+  {   21866, "KOI8-U"},
+  {     936, "GBK"},
+  {     950, "Big5"},
 #if HAS_LOCALES
-  {  20932, "eucJP"},
+  {     933, "SJIS"},  // SJIS isn't quite the same as CP932.
+  {   20933, "eucJP"}, // eucJP isn't quite the same as CP20932.
+  {   20933, "EUC-JP"},
 #endif
-  {    949, "eucKR"},
-  // Aliases
-  {CP_UTF8, "UTF8"},
-  {  20866, "KOI8"},
+  {     949, "eucKR"},
+  {     949, "EUC-KR"},
+  {     874, "TIS620"},
+  {     874, "TIS-620"},
   // Not supported by Cygwin
-  {  54936, "GB18030"},
-  { CP_ACP, "ANSI"},
-  { CP_ACP, "ACP"},
-  { CP_OEMCP, "OEM"},
-  { CP_OEMCP, "OCP"},
+  {   54936, "GB18030"},
+  {  CP_ACP, "ANSI"},
+  {  CP_ACP, "ACP"},
+  {CP_OEMCP, "OEM"},
+  {CP_OEMCP, "OCP"},
 };
 
 static const struct {
@@ -96,9 +101,8 @@ cs_descs[] = {
   {   21866, "Ukrainian"},
   {     936, "Chinese"},
   {     950, "Chinese"},
-  {     932, "Japanese"},
 #if HAS_LOCALES
-  {   20932, "Japanese"},
+  {   20933, "Japanese"},
 #endif
   {     949, "Korean"},
 };
@@ -139,6 +143,18 @@ valid_cp(uint cp)
   return GetCPInfo(cp, &cpi);
 }
 
+static int
+cs_cp(uint id)
+{
+  // Return codepage number for a charset id.
+  switch (id) {
+    when CS_DEFAULT: return CP_ACP;
+    when 933: return 932;
+    when 20933: return 20932;
+    otherwise: return id;
+  }
+}
+
 static bool
 valid_cs(int id)
 {
@@ -147,7 +163,7 @@ valid_cs(int id)
   if (id >= 28591 && id <= 28606 && id != 28602)
     return true;
   #endif
-  return valid_cp(id);
+  return valid_cp(cs_cp(id));
 }
 
 static int
@@ -328,8 +344,8 @@ update_locale(void)
   }
 #endif
 
-  int id = cs_id(charset);
-  default_codepage = id != CS_DEFAULT && valid_cp(id) ? id : CP_ACP;
+  int cp = cs_cp(cs_id(charset));
+  default_codepage = valid_cp(cp) ? cp : CP_ASCII;
   
   update_mode();
 }
