@@ -53,8 +53,8 @@ cs_names[] = {
   {   21866, "KOI8-U"},
   {     936, "GBK"},
   {     950, "Big5"},
+  {     932, "SJIS"},
 #if HAS_LOCALES
-  {     933, "SJIS"},  // SJIS isn't quite the same as CP932.
   {   20933, "eucJP"}, // eucJP isn't quite the same as CP20932.
   {   20933, "EUC-JP"},
 #endif
@@ -101,6 +101,7 @@ cs_descs[] = {
   {   21866, "Ukrainian"},
   {     936, "Chinese"},
   {     950, "Chinese"},
+  {     932, "Japanese"},
 #if HAS_LOCALES
   {   20933, "Japanese"},
 #endif
@@ -149,7 +150,6 @@ cs_cp(uint id)
   // Return codepage number for a charset id.
   switch (id) {
     when CS_DEFAULT: return CP_ACP;
-    when 933: return 932;
     when 20933: return 20932;
     otherwise: return id;
   }
