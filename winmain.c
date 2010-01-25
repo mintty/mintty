@@ -276,15 +276,21 @@ win_resize(int rows, int cols)
 }
 
 static void
-reinit_fonts(void)
+reset_window(int reinit)
 {
-  win_deinit_fonts();
-  win_init_fonts();
-}
+ /*
+  * This function decides how to resize or redraw when the 
+  * user changes something. 
+  */
 
-static void
-resize_window(bool forced)
-{
+ /* Are we being forced to reload the fonts ? */
+  if (reinit > 1) {
+    win_deinit_fonts();
+    win_init_fonts();
+  }
+
+  int cols = term.cols, rows = term.rows;
+
  /* Current window sizes ... */
   RECT cr, wr;
   GetClientRect(wnd, &cr);
@@ -296,11 +302,10 @@ resize_window(bool forced)
   int term_width = client_width - 2 * PADDING;
   int term_height = client_height - 2 * PADDING;
   
-  int cols = term.cols, rows = term.rows;
   if (!client_width || !client_height) {
    /* Oh, looks like we're minimised: do nothing */
   }
-  else if (IsZoomed(wnd) || forced) {
+  else if (IsZoomed(wnd) || reinit == -1) {
    /* We're fullscreen, or we were told to resize,
     * this means we must not change the size of
     * the window so the terminal has to change.
@@ -377,7 +382,7 @@ make_fullscreen(void)
   enable_glass(false);
   
  /* We may have changed size as a result */
-  resize_window(false);
+  reset_window(0);
 }
 
 /*
@@ -470,6 +475,7 @@ win_reconfig(void)
   term_reconfig();
   
  /* Enable or disable the scroll bar, etc */
+  int init_lvl = 1;
   if (new_cfg.scrollbar != cfg.scrollbar) {
     LONG flag = GetWindowLongPtr(wnd, GWL_STYLE);
     if (new_cfg.scrollbar)
@@ -485,7 +491,7 @@ win_reconfig(void)
   if (memcmp(&new_cfg.font, &cfg.font, sizeof cfg.font) != 0 ||
       new_cfg.bold_as_bright != cfg.bold_as_bright) {
     font_size = new_cfg.font.size;
-    reinit_fonts();
+    init_lvl = 2;
   }
   
   /* Copy the new config and refresh everything */
@@ -493,7 +499,7 @@ win_reconfig(void)
   win_reconfig_palette();
   update_transparency();
   win_invalidate_all();
-  resize_window(false);
+  reset_window(init_lvl);
   win_update_mouse();
 
   bool old_ambig_wide = cs_ambig_wide;
@@ -512,8 +518,7 @@ void
 win_set_font_size(int size)
 {
   font_size = size ? sgn(font_size) * min(size, 72) : cfg.font.size;
-  reinit_fonts();
-  resize_window(false);
+  reset_window(2);
 }
 
 void
@@ -728,12 +733,12 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         prev_rows = term.rows;
         prev_cols = term.cols;
         notify_resize(new_rows, new_cols);
-        resize_window(false);
+        reset_window(0);
       }
       else if (wp == SIZE_RESTORED && was_zoomed) {
         was_zoomed = 0;
         notify_resize(prev_rows, prev_cols);
-        resize_window(false);
+        reset_window(0);
       }
       else {
        /* This is an unexpected resize, these will normally happen
@@ -742,7 +747,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         *
         * This is also called with minimize.
         */
-        resize_window(true);
+        reset_window(-1);
       }
       update_sys_cursor();
       return 0;

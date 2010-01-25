@@ -229,6 +229,7 @@ term_init(void)
   * Allocate a new Terminal structure and initialise the fields
   * that need it.
   */
+  term.compatibility_level = TM_MINTTY;
   term.inbuf = new_bufchain();
   term.printer_buf = new_bufchain();
   term.state = TOPLEVEL;
@@ -271,8 +272,8 @@ term_resize(int newrows, int newcols)
   term.alt_b = term.marg_b = newrows - 1;
 
   if (term.rows == -1) {
-    term.scrollback = newtree234();
-    term.screen = newtree234();
+    term.scrollback = newtree234(null);
+    term.screen = newtree234(null);
     term.tempsblines = 0;
     term.rows = 0;
   }
@@ -368,7 +369,7 @@ term_resize(int newrows, int newcols)
   term.dispcursx = term.dispcursy = -1;
 
  /* Make a new alternate screen. */
-  newalt = newtree234();
+  newalt = newtree234(null);
   for (int i = 0; i < newrows; i++) {
     line = newline(newcols, true);
     addpos234(newalt, line, i);

@@ -117,22 +117,14 @@ typedef enum {
 static alt_state_t alt_state;
 static wchar alt_char;
 
-static bool lctrl;  // Is left Ctrl pressed?
-static long lctrl_time;
-
 static mod_keys
 get_mods(void)
 {
   inline bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
-  if (lctrl_time) {
-    lctrl = true;
-    lctrl_time = 0;
-  }
-  lctrl &= is_key_down(VK_LCONTROL);
   return
     is_key_down(VK_SHIFT) * MDK_SHIFT |
     is_key_down(VK_MENU) * MDK_ALT |
-    (lctrl | is_key_down(VK_RCONTROL)) * MDK_CTRL;
+    is_key_down(VK_CONTROL) * MDK_CTRL;
 }
 
 static void
@@ -289,28 +281,20 @@ win_key_down(WPARAM wp, LPARAM lp)
   GetKeyboardState(kbd);
   inline bool is_key_down(uchar vk) { return kbd[vk] & 0x80; }
   
-  // Distinguish real LeftCtrl from keypresses from messages sent for AltGr.
-  if (key == VK_CONTROL && !extended) {
-    lctrl_time = GetMessageTime();
-    return 0;
-  }
-  if (lctrl_time) {
-    lctrl = !(key == VK_MENU && extended && lctrl_time == GetMessageTime());
-    lctrl_time = 0;
-  }
-  lctrl &= is_key_down(VK_LCONTROL);
-
   bool
     numlock = kbd[VK_NUMLOCK] & 1,
     shift = is_key_down(VK_SHIFT),
-    lalt = is_key_down(VK_LMENU),
-    ralt = is_key_down(VK_RMENU),
-    alt = lalt | ralt,
-    rctrl = is_key_down(VK_RCONTROL),
-    ctrl = lctrl | rctrl,
-    ctrl_lalt_altgr = cfg.ctrl_alt_is_altgr & ctrl & lalt & !ralt,
-    meta = lalt & !ctrl_lalt_altgr;
-
+    alt = is_key_down(VK_MENU),
+    ctrl = is_key_down(VK_CONTROL);
+  
+  // Don't treat Ctrl+LeftAlt as AltGr unless requested.
+  if (!cfg.ctrl_alt_is_altgr)
+    kbd[VK_MENU] = kbd[VK_RMENU];
+  
+  bool
+    altgr = ctrl & is_key_down(VK_MENU),
+    meta = (alt & !altgr) | (is_key_down(VK_LMENU) & is_key_down(VK_RMENU));
+  
   mod_keys mods = shift * MDK_SHIFT | alt * MDK_ALT | ctrl * MDK_CTRL;
 
   update_mouse(mods);
@@ -453,12 +437,10 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     return symbol != '.' && alt_code_key(symbol - '0');
   }
-  
   void edit_key(uchar code, char symbol) {
     if (!app_pad_key(symbol))
       tilde_code(code);
   }
-  
   void cursor_key(char code, char symbol) {
     if (!app_pad_key(symbol))
       mods ? mod_csi(code) : term.app_cursor_keys ? ss3(code) : csi(code);
@@ -475,7 +457,13 @@ win_key_down(WPARAM wp, LPARAM lp)
       wlen = 0;
     return 1;
   }
-  
+  bool char_key(void) {
+    if (ctrl & !alt)
+      return false;
+    if (layout())
+      return true;
+    return !ctrl;
+  }
   wchar undead_keycode(void) {
     wchar wc;
     int len = ToUnicode(key, scancode, kbd, &wc, 1, 0);
@@ -490,58 +478,28 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     return len == 1 ? wc : 0;
   }
-  
   void modify_other_key(void) {  
-    kbd[VK_CONTROL] = 0;
     wchar wc = undead_keycode();
     if (wc)
       other_code(wc);
   }
-  
-  bool char_key(void) {
-    // Sync keyboard layout with our idea of AltGr.
-    kbd[VK_CONTROL] = ralt | ctrl_lalt_altgr ? 0x80 : 0;
-
-    // Don't handle Ctrl combinations here.
-    // Need to check there's a Ctrl that isn't part of Ctrl+LeftAlt==AltGr.
-    if ((ctrl & !ctrl_lalt_altgr) | (lctrl & rctrl))
-      return false;
-    
-    // Try the layout.
-    if (layout())
-      return true;
-    
-    if (ralt) {
-      // Try with RightAlt/AltGr key treated as Meta.
-      kbd[VK_CONTROL] = 0;
-      meta = true;
-      layout();
-      return true;
-    }
-    return !ctrl;
-  }
-  
-  bool ctrl_symbol_key(void) {
+  bool ctrl_key(void) {
     wchar wc = undead_keycode();
+    char c;
     switch (wc) {
-      when '@' or '[' ... '_': wc = C(wc);
-      when '/': wc = C('_');
-      when '?': wc = 0x7F;
-      otherwise: return false;
+      when '@' or '[' ... '_': c = C(wc);
+      when '/': c = C('_');
+      when '?': c = 0x7F;
+      otherwise: return 0;
     }
-    esc_if(meta);
-    wbuf[wlen++] = wc;
-    return true;
-  }
-  
-  void ctrl_key(uchar c) {
     esc_if(alt);
-    wbuf[wlen++] = c | shift << 7;
+    ch(c);
+    return 1;
   }
   
   switch(key) {
     when VK_MENU:
-      if (!shift && !is_key_down(VK_CONTROL))
+      if (!shift && !ctrl)
         alt_state = old_alt_state == ALT_NONE ? ALT_ALONE : old_alt_state;
       return 1;
     when VK_RETURN:
@@ -553,14 +511,14 @@ win_key_down(WPARAM wp, LPARAM lp)
         esc_if(alt),
         term.newline_mode ? ch('\r'), ch('\n') : ch(shift ? '\n' : '\r');
       else
-        ctrl_key(C('^'));
+        esc_if(shift || alt), ch(C('^'));
     when VK_BACK:
       if (!ctrl)
         esc_if(alt), ch(term.backspace_sends_bs ? '\b' : 0x7F);
-      else if (term.modify_other_keys)
-        other_code(term.backspace_sends_bs ? '\b' : 0x7F);
+      else if (!term.modify_other_keys)
+        esc_if(shift || alt), ch(term.backspace_sends_bs ? 0x7F : C('_'));
       else
-        ctrl_key(term.backspace_sends_bs ? 0x7F : C('_'));
+        other_code(term.backspace_sends_bs ? '\b' : 0x7F);
     when VK_TAB:
       if (alt)
         return 0;
@@ -571,11 +529,15 @@ win_key_down(WPARAM wp, LPARAM lp)
     when VK_ESCAPE:
       term.app_escape_key
       ? ss3('[')
-      : ctrl_key(term.escape_sends_fs ? C('\\') : C('['));
+      : ch(term.escape_sends_fs ? C('\\') : C('['));
     when VK_PAUSE:
-      ctrl_key(C(']'));
+      if (shift || alt)
+        return 0;
+      ch(C(']'));
     when VK_CANCEL:
-      ctrl_key(C('\\'));
+      if (shift || alt)
+        return 0;
+      ch(C('\\'));
     when VK_F1 ... VK_F4:
       mod_ss3(key - VK_F1 + 'P');
     when VK_F5 ... VK_F24:
@@ -607,30 +569,30 @@ win_key_down(WPARAM wp, LPARAM lp)
     when 'A' ... 'Z' or ' ':
       if (char_key())
         break;
-      if (term.modify_other_keys > 1)
+      if (term.modify_other_keys > 1) {
+        kbd[VK_CONTROL] = kbd[VK_MENU] = 0;
         modify_other_key();
-      else if (!ctrl_symbol_key())
-        ctrl_key(C(key));
+      }
+      else
+        esc_if(shift || alt), ch(C(key));
     when '0' ... '9' or VK_OEM_1 ... VK_OEM_102:
       if (char_key())
         break;
+      kbd[VK_CONTROL] = kbd[VK_MENU] = 0;
       if (term.modify_other_keys) {
         modify_other_key();
         break;
       }
-      if (ctrl_symbol_key())
+      if (ctrl_key())
         break;
-      if (ralt) {
-        // Try with RightAlt/AltGr key treated as Meta.
-        kbd[VK_CONTROL] = 0;
-        meta = true;
-        if (ctrl_symbol_key())
-          break;
-      }
-      // Try with added Shift (if not pressed already).
-      if (!shift) {
-        kbd[VK_SHIFT] = 0x80;
-        if (ctrl_symbol_key())
+      // Try with added AltGr.
+      kbd[VK_CONTROL] = kbd[VK_MENU] = 0x80;
+      if (ctrl_key())
+        break;
+      // Try with added Shift (if it isn't pressed already)
+      if (!is_key_down(VK_SHIFT)) {
+        kbd[VK_CONTROL] = kbd[VK_MENU] = 0, kbd[VK_SHIFT] = 0x80;
+        if (ctrl_key())
           break;
       }
       // Treat remaining digits and symbols as apppad combinations
@@ -655,11 +617,11 @@ win_key_down(WPARAM wp, LPARAM lp)
 }
 
 bool
-win_key_up(WPARAM wp, LPARAM unused(lp))
+win_key_up(WPARAM wParam, LPARAM unused(lParam))
 {
   win_update_mouse();
 
-  if (wp != VK_MENU)
+  if (wParam != VK_MENU)
     return false;
 
   if (alt_state == ALT_ALONE) {

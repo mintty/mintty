@@ -28,145 +28,151 @@ apply_config(void)
 }
 
 static void
-ok_handler(control *unused(ctrl), void *unused(data), int event)
+ok_handler(control *unused(ctrl), void *dlg,
+           void *unused(data), int event)
 {
   if (event == EVENT_ACTION) {
     apply_config();
-    dlg_end();
+    dlg_end(dlg);
   }
 }
 
 static void
-cancel_handler(control *unused(ctrl), void *unused(data), int event)
+cancel_handler(control *unused(ctrl), void *dlg,
+               void *unused(data), int event)
 {
   if (event == EVENT_ACTION)
-    dlg_end();
+    dlg_end(dlg);
 }
 
 static void
-apply_handler(control *unused(ctrl), void *unused(data), int event)
+apply_handler(control *unused(ctrl), void *unused(dlg),
+           void *unused(data), int event)
 {
   if (event == EVENT_ACTION)
     apply_config();
 }
 
 static void
-about_handler(control *unused(ctrl), void *unused(data), int event)
+about_handler(control *unused(ctrl), void *unused(dlg),
+           void *unused(data), int event)
 {
   if (event == EVENT_ACTION)
     win_show_about();
 }
 
 static void
-current_size_handler(control *unused(ctrl), void *unused(data), int event)
+current_size_handler(control *unused(ctrl), void *dlg,
+           void *unused(data), int event)
 {
   if (event == EVENT_ACTION) {
     new_cfg.cols = term.cols;
     new_cfg.rows = term.rows;
-    dlg_refresh(cols_box);
-    dlg_refresh(rows_box);
+    dlg_refresh(cols_box, dlg);
+    dlg_refresh(rows_box, dlg);
   }
 }
 
 const char PRINTER_DISABLED_STRING[] = "None (printing disabled)";
 
 static void
-printerbox_handler(control *ctrl, void *unused(data), int event)
+printerbox_handler(control *ctrl, void *dlg, void *unused(data), int event)
 {
   if (event == EVENT_REFRESH) {
     int nprinters, i;
     printer_enum *pe;
 
-    dlg_update_start(ctrl);
+    dlg_update_start(ctrl, dlg);
    /*
     * Some backends may wish to disable the drop-down list on
     * this edit box. Be prepared for this.
     */
     if (ctrl->editbox.has_list) {
-      dlg_listbox_clear(ctrl);
-      dlg_listbox_add(ctrl, PRINTER_DISABLED_STRING);
+      dlg_listbox_clear(ctrl, dlg);
+      dlg_listbox_add(ctrl, dlg, PRINTER_DISABLED_STRING);
       pe = printer_start_enum(&nprinters);
       for (i = 0; i < nprinters; i++)
-        dlg_listbox_add(ctrl, printer_get_name(pe, i));
+        dlg_listbox_add(ctrl, dlg, printer_get_name(pe, i));
       printer_finish_enum(pe);
     }
     dlg_editbox_set(
-      ctrl, *new_cfg.printer ? new_cfg.printer : PRINTER_DISABLED_STRING
+      ctrl, dlg, 
+      *new_cfg.printer ? new_cfg.printer : PRINTER_DISABLED_STRING
     );
-    dlg_update_done(ctrl);
+    dlg_update_done(ctrl, dlg);
   }
   else if (event == EVENT_VALCHANGE) {
-    dlg_editbox_get(ctrl, new_cfg.printer, sizeof (cfg.printer));
+    dlg_editbox_get(ctrl, dlg, new_cfg.printer, sizeof (cfg.printer));
     if (strcmp(new_cfg.printer, PRINTER_DISABLED_STRING) == 0)
       *new_cfg.printer = '\0';
   }
 }
 
 static void
-update_charset(void)
+update_charset(void *dlg)
 {
-  dlg_editbox_set(charset_box, *new_cfg.locale ? new_cfg.charset : "");
+  dlg_editbox_set(charset_box, dlg, *new_cfg.locale ? new_cfg.charset : "");
 }
 
 static void
-update_locale(void)
+update_locale(void *dlg)
 {
   if (*new_cfg.charset && !*new_cfg.locale) {
     strcpy(new_cfg.locale, "C");
-    dlg_editbox_set(locale_box, new_cfg.locale);
+    dlg_editbox_set(locale_box, dlg, new_cfg.locale);
   }
 }
 
 static void
-locale_handler(control *ctrl, void *unused(data), int event)
+locale_handler(control *ctrl, void *dlg, void *unused(data), int event)
 {
   char *locale = new_cfg.locale;
   switch (event) {
     when EVENT_REFRESH:
-      dlg_update_start(ctrl);
-      dlg_listbox_clear(ctrl);
+      dlg_update_start(ctrl, dlg);
+      dlg_listbox_clear(ctrl, dlg);
       const char *l;
       for (int i = 0; (l = locale_menu[i]); i++)
-        dlg_listbox_add(ctrl, l);
-      dlg_update_done(ctrl);
-      dlg_editbox_set(ctrl, locale);
+        dlg_listbox_add(ctrl, dlg, l);
+      dlg_update_done(ctrl, dlg);
+      dlg_editbox_set(ctrl, dlg, locale);
     when EVENT_UNFOCUS:
-      dlg_editbox_set(ctrl, locale);
-      update_charset();
+      dlg_editbox_set(ctrl, dlg, locale);
+      update_charset(dlg);
     when EVENT_VALCHANGE or EVENT_SELCHANGE:
-      dlg_editbox_get(ctrl, locale, sizeof cfg.locale);
+      dlg_editbox_get(ctrl, dlg, locale, sizeof cfg.locale);
       correct_locale(locale);
       if (event == EVENT_SELCHANGE)
-        update_charset();
+        update_charset(dlg);
   }
 }
 
 static void
-charset_handler(control *ctrl, void *unused(data), int event)
+charset_handler(control *ctrl, void *dlg, void *unused(data), int event)
 {
   char *charset = new_cfg.charset;
   switch (event) {
     when EVENT_REFRESH:
-      dlg_update_start(ctrl);
-      dlg_listbox_clear(ctrl);
+      dlg_update_start(ctrl, dlg);
+      dlg_listbox_clear(ctrl, dlg);
       const char *cs;
       for (int i = 0; (cs = charset_menu[i]); i++)
-        dlg_listbox_add(ctrl, cs);
-      dlg_update_done(ctrl);
-      update_charset();
+        dlg_listbox_add(ctrl, dlg, cs);
+      dlg_update_done(ctrl, dlg);
+      update_charset(dlg);
     when EVENT_UNFOCUS:
-      dlg_editbox_set(ctrl, charset);
-      update_locale();
+      dlg_editbox_set(ctrl, dlg, charset);
+      update_locale(dlg);
     when EVENT_VALCHANGE or EVENT_SELCHANGE:
-      dlg_editbox_get(ctrl, charset, sizeof cfg.charset);
+      dlg_editbox_get(ctrl, dlg, charset, sizeof cfg.charset);
       correct_charset(charset);
       if (event == EVENT_SELCHANGE)
-        update_locale();
+        update_locale(dlg);
   }
 }
 
 static void
-colour_handler(control *ctrl, void *unused(data), int event)
+colour_handler(control *ctrl, void *dlg, void *unused(data), int event)
 {
   colour *colour_p = ctrl->context.p;
   if (event == EVENT_ACTION) {
@@ -175,7 +181,7 @@ colour_handler(control *ctrl, void *unused(data), int event)
     * EVENT_CALLBACK when it's finished and allow us to
     * pick up the results.
     */
-    dlg_coloursel_start(*colour_p);
+    dlg_coloursel_start(dlg, *colour_p);
   }
   else if (event == EVENT_CALLBACK) {
    /*
@@ -184,30 +190,30 @@ colour_handler(control *ctrl, void *unused(data), int event)
     * selector did nothing (user hit Cancel, for example).
     */
     colour result;
-    if (dlg_coloursel_results(&result))
+    if (dlg_coloursel_results(dlg, &result))
       *colour_p = result;
   }
 }
 
 static void
-term_handler(control *ctrl, void *unused(data), int event)
+term_handler(control *ctrl, void *dlg, void *unused(data), int event)
 {
   switch (event) {
     when EVENT_REFRESH:
-      dlg_update_start(ctrl);
-      dlg_listbox_clear(ctrl);
-      dlg_listbox_add(ctrl, "xterm");
-      dlg_listbox_add(ctrl, "xterm-256color");
-      dlg_listbox_add(ctrl, "vt100");
-      dlg_update_done(ctrl);
-      dlg_editbox_set(ctrl, new_cfg.term);
+      dlg_update_start(ctrl, dlg);
+      dlg_listbox_clear(ctrl, dlg);
+      dlg_listbox_add(ctrl, dlg, "xterm");
+      dlg_listbox_add(ctrl, dlg, "xterm-256color");
+      dlg_listbox_add(ctrl, dlg, "vt100");
+      dlg_update_done(ctrl, dlg);
+      dlg_editbox_set(ctrl, dlg, new_cfg.term);
     when EVENT_VALCHANGE or EVENT_SELCHANGE:
-      dlg_editbox_get(ctrl, new_cfg.term, sizeof cfg.term);
+      dlg_editbox_get(ctrl, dlg, new_cfg.term, sizeof cfg.term);
   }
 }
 
 static void
-int_handler(control *ctrl, void *data, int event)
+int_handler(control *ctrl, void *dlg, void *data, int event)
 {
   int offset = ctrl->context.i;
   int limit = ctrl->editbox.context2.i;
@@ -215,25 +221,25 @@ int_handler(control *ctrl, void *data, int event)
   char buf[16];
   switch (event) {
     when EVENT_VALCHANGE:
-      dlg_editbox_get(ctrl, buf, lengthof(buf));
+      dlg_editbox_get(ctrl, dlg, buf, lengthof(buf));
       *field = max(0, min(atoi(buf), limit));
     when EVENT_REFRESH:
       sprintf(buf, "%i", *field);
-      dlg_editbox_set(ctrl, buf);
+      dlg_editbox_set(ctrl, dlg, buf);
   }
 }
 
 static void
-string_handler(control *ctrl, void *data, int event)
+string_handler(control *ctrl, void *dlg, void *data, int event)
 {
   int offset = ctrl->context.i;
   int size = ctrl->editbox.context2.i;
   char *buf = &atoffset(char, data, offset);
   switch (event) {
     when EVENT_VALCHANGE:
-      dlg_editbox_get(ctrl, buf, size);
+      dlg_editbox_get(ctrl, dlg, buf, size);
     when EVENT_REFRESH:
-      dlg_editbox_set(ctrl, buf);
+      dlg_editbox_set(ctrl, dlg, buf);
   }
 }
 
