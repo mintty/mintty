@@ -1,12 +1,12 @@
 .\" mintty man page
 .\"
-.\" This 'man' page is Copyright 2009 (c) Andy Koppe and Lee D. Rothstein
+.\" This 'man' page is Copyright 2009-10 (c) Andy Koppe and Lee D. Rothstein
 .\"
 .\" You may distribute, use, and modify this man page under the terms
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
 .ad l
-.TH mintty 1 2009-12-28 0.5.6 Cygwin
+.TH mintty 1 2010-01-21 0.5.7 Cygwin
 
 .SH NAME
 
@@ -68,6 +68,12 @@ Set the initial numbers of character columns and rows.
 \fB-t\fP, \fB--title\fP=\fITITLE\fP
 Use \fITITLE\fP as the initial window title.
 By default, the title is set to the executed command.
+
+.TP
+\fB--class\fP=\fICLASS\fP
+Use \fICLASS\fP as the window class name of the main window.
+This allows scripting tools to distinguish different mintty instances.
+The default is "mintty".
 
 .TP
 \fB-i\fP, \fB--icon\fP=\fIFILE\fP[\fB,\fIINDEX\fR]
@@ -400,9 +406,9 @@ text is a crime against aesthetic decency.
 
 .TP
 \fBLocale\fP (Locale=)
-The locale setting consists of a lowercase two-letter language code such as
-\fBen\fP or \fBzh\fP, followed by an optional uppercase two-letter country
-code such as \fBUS\fP or \fBCN\fP.
+The locale setting consists of a lowercase two-letter or three-letter language
+code such as \fBen\fP or \fBzh\fP, followed by an optional uppercase two-letter
+country code such as \fBUS\fP or \fBCN\fP.
 If the country code is present, the two parts have to be separated by an
 underscore, for instance \fBen_US\fP or \fBzh_CN\fP.
 Alternatively, the language-neutral "C" locale can be selected.
