@@ -60,8 +60,8 @@ cs_names[] = {
 #endif
   {     949, "eucKR"},
   {     949, "EUC-KR"},
-  {     874, "TIS620"},
-  {     874, "TIS-620"},
+  {     620, "TIS620"},
+  {     620, "TIS-620"},
   // Not supported by Cygwin
   {   54936, "GB18030"},
   {  CP_ACP, "ANSI"},
@@ -150,6 +150,7 @@ cs_cp(uint id)
   // Return codepage number for a charset id.
   switch (id) {
     when CS_DEFAULT: return CP_ACP;
+    when 620: return 874;
     when 20933: return 20932;
     otherwise: return id;
   }
