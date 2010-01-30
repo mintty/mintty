@@ -431,10 +431,10 @@ dlg_stdcheckbox_handler(control *ctrl, void *data, int event)
   */
 
   if (event == EVENT_REFRESH) {
-    dlg_checkbox_set(ctrl, !atoffset(int, data, offset) ^ !invert);
+    dlg_checkbox_set(ctrl, !atoffset(bool, data, offset) ^ !invert);
   }
   else if (event == EVENT_VALCHANGE) {
-    atoffset(int, data, offset) = !dlg_checkbox_get(ctrl) ^ !invert;
+    atoffset(bool, data, offset) = !dlg_checkbox_get(ctrl) ^ !invert;
   }
 }
 

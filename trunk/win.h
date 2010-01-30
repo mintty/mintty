@@ -1,7 +1,7 @@
 #ifndef WIN_H
 #define WIN_H
 
-#include "platform.h"
+#include "config.h"
 
 void win_reconfig(void);
 
@@ -48,5 +48,8 @@ void win_set_timer(void_fn cb, uint ticks);
 void win_show_about(void);
 
 bool win_is_glass_available(void);
+
+int get_tick_count(void);
+int cursor_blink_ticks(void);
 
 #endif

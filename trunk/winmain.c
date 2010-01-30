@@ -759,31 +759,30 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
 }
 
 static const char *help =
-  "Usage: %s [OPTION]... [ - | PROGRAM [ARG]... ]\n"
+  "Usage: %s [OPTION]... [ PROGRAM [ARG]... | - ]\n"
   "\n"
-  "If a program is supplied, it is executed with its arguments. Otherwise,\n"
-  "mintty looks for a shell to execute in the SHELL environment variable.\n"
-  "If that is not set, it tries to read the user's default shell setting\n"
-  "from /etc/passwd. Failing that, it falls back to /bin/sh. If the last\n"
-  "argument is a single dash, the shell is invoked as a login shell.\n"
+  "If a program is supplied, it is executed with its arguments. Otherwise, the\n"
+  "shell to execute is looked up in the SHELL environment variable followed by\n"
+  "the user's shell setting in /etc/passwd. Failing that, /bin/sh is used. If\n"
+  "the last argument is a single dash, the shell is invoked as a login shell.\n"
   "\n"
   "Options:\n"
   "  -e, --exec            Treat remaining arguments as the command to execute\n"
-  "  -c, --config=FILE     Use specified config file (default: ~/.minttyrc)\n"
-  "  -p, --position=X,Y    Open window at specified coordinates\n"
-  "  -s, --size=COLS,ROWS  Set screen size in characters\n"
-  "  -t, --title=TITLE     Set window title (default: the invoked command)\n"
-  "      --class=CLASS     Set window class name (default: " APPNAME ")\n"
-  "  -i, --icon=FILE[,IX]  Load window icon from file, optionally with index\n"
-  "  -l, --log=FILE        Log output to file\n"
+  "  -p, --position X,Y    Open window at specified coordinates\n"
+  "  -s, --size COLS,ROWS  Set screen size in characters\n"
+  "  -t, --title TITLE     Set window title (default: the invoked command)\n"
+  "      --class CLASS     Set window class name (default: " APPNAME ")\n"
+  "  -i, --icon FILE[,IX]  Load window icon from file, optionally with index\n"
+  "  -l, --log FILE        Log output to file\n"
   "  -u, --utmp            Create a utmp entry\n"
-  "  -h, --hold=never|always|error\n"
-  "                        Keep window open after command terminates?\n"
+  "  -h, --hold never|always|error  Keep window open after command terminates?\n"
+  "  -c, --config FILE     Load specified config file\n"
+  "  -o, --option OPT=VAL  Override config option with given value\n"
   "  -H, --help            Display help and exit\n"
   "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = "+HVuec:p:s:t:i:l:h:";
+static const char short_opts[] = "+HVuec:o:p:s:t:i:l:h:";
 
 static const struct option
 opts[] = { 
@@ -792,6 +791,7 @@ opts[] = {
   {"exec",     no_argument,       0, 'e'},
   {"utmp",     no_argument,       0, 'u'},
   {"config",   required_argument, 0, 'c'},
+  {"option",   required_argument, 0, 'o'},
   {"position", required_argument, 0, 'p'},
   {"size",     required_argument, 0, 's'},
   {"title",    required_argument, 0, 't'},
@@ -824,14 +824,22 @@ main(int argc, char *argv[])
   wchar *class_name = _W(APPNAME);
 
   setlocale(LC_CTYPE, "");
-  main_argv = argv;  
+  main_argv = argv;
+  
+  load_config("/etc/minttyrc");
+  
+  char *rc_file;
+  asprintf(&rc_file, "%s/.minttyrc", getenv("HOME") ?: "/tmp");
+  load_config(rc_file);
+  free(rc_file);
 
   for (;;) {
     int opt = getopt_long(argc, argv, short_opts, opts, 0);
     if (opt == -1 || opt == 'e')
       break;
     switch (opt) {
-      when 'c': config_file = optarg;
+      when 'c': load_config(optarg);
+      when 'o': parse_option(optarg);
       when 't': title = optarg;
       when 'i': icon_file = optarg;
       when 'l': log_file = optarg;
@@ -902,11 +910,6 @@ main(int argc, char *argv[])
       error("could not load icon -- %s", icon_file);
   }
 
-  if (!config_file)
-    asprintf((char **)&config_file, "%s/.minttyrc", getenv("HOME"));
-
-  load_config();
-  
   if (!size_override) {
     rows = cfg.rows;
     cols = cfg.cols;

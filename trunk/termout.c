@@ -9,7 +9,6 @@
 #include "win.h"
 #include "appinfo.h"
 #include "charset.h"
-#include "platform.h"
 
 #include <sys/termios.h>
 
