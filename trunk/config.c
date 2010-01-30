@@ -4,7 +4,6 @@
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "config.h"
-
 #include "ctrls.h"
 #include "print.h"
 #include "charset.h"
@@ -15,7 +14,7 @@ const char *log_file = 0;
 bool utmp_enabled = false;
 hold_t hold = HOLD_NEVER;
 
-static const char *config_filename = 0;
+static char *config_filename = 0;
 
 config new_cfg;
 config cfg = {
@@ -169,7 +168,8 @@ void
 load_config(char *filename)
 {
   option_order_len = 0;
-  config_filename = filename;
+  free(config_filename);
+  config_filename = strdup(filename);
   FILE *file = fopen(filename, "r");
   if (file) {
     char *line;
