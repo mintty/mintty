@@ -3,7 +3,7 @@
 // Adapted from code by Markus Kuhn.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
-#include "platform.h"
+#include "charset.h"
 
 #if !HAS_LOCALES
 

@@ -6,7 +6,6 @@
 #include "charset.h"
 
 #include "config.h"
-#include "platform.h"
 
 #include <locale.h>
 #include <langinfo.h>

@@ -1,6 +1,19 @@
 #ifndef CHARSET_H
 #define CHARSET_H
 
+#ifdef __CYGWIN__
+ #include <cygwin/version.h>
+ #if CYGWIN_VERSION_DLL_MAJOR >= 1007
+  #define HAS_LOCALES 1
+ #else
+  #define HAS_LOCALES 0
+  typedef uint32_t xchar;
+  int xcwidth(xchar c);
+ #endif
+#else
+ #error Platform not configured.
+#endif
+
 const char *cs_init(void);
 
 void cs_config_locale(void);

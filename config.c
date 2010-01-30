@@ -15,14 +15,219 @@ const char *log_file = 0;
 bool utmp_enabled = false;
 hold_t hold = HOLD_NEVER;
 
-const char *config_file = 0;
-config cfg, new_cfg;
+static const char *config_filename = 0;
+
+config new_cfg;
+config cfg = {
+  // Looks
+  .fg_colour = 0xBFBFBF,
+  .bg_colour = 0x000000,
+  .cursor_colour = 0xBFBFBF,
+  .use_system_colours = false,
+  .transparency = 0,
+  .opaque_when_focused = false,
+  .cursor_type = CUR_LINE,
+  .cursor_blinks = true,
+  // Text
+  .font = {.name = "Lucida Console", .isbold = false, .size = 10},
+  .font_quality = FQ_DEFAULT,
+  .bold_as_bright = true,
+  .allow_blinking = false,
+  .locale = "",
+  .charset = "",
+  // Keys
+  .backspace_sends_bs = false,
+  .alt_sends_esc = false,
+  .ctrl_alt_is_altgr = false,
+  .window_shortcuts = true,
+  .zoom_shortcuts = true,
+  .scroll_mod = MDK_SHIFT,
+  // Mouse
+  .copy_on_select = false,
+  .clicks_place_cursor = false,
+  .right_click_action = RC_SHOWMENU,
+  .clicks_target_app = true,
+  .click_target_mod = MDK_SHIFT,
+  // Output
+  .printer = "",
+  .bell_sound = false,
+  .bell_flash = false,
+  .bell_taskbar = true,
+  .term = "xterm",
+  .answerback = "",
+  // Window
+  .cols = 80,
+  .rows = 24,
+  .scrollbar = true,
+  .alt_screen_scroll = false,
+  .scrollback_lines = 10000,
+  .confirm_exit = true
+};
+
+#define offcfg(option) offsetof(config, option)
+#define cfg_field(option) sizeof(cfg.option), offcfg(option)
+
+typedef enum { OPT_BOOL, OPT_INT, OPT_STRING, OPT_COLOUR } opt_type;
+
+struct {
+  const char *name;
+  opt_type type;
+  uchar size;
+  ushort offset;
+}
+options[] = {
+  // Looks
+  {"ForegroundColour", OPT_COLOUR, cfg_field(fg_colour)},
+  {"BackgroundColour", OPT_COLOUR, cfg_field(bg_colour)},
+  {"CursorColour", OPT_COLOUR, cfg_field(cursor_colour)},
+  {"UseSystemColours", OPT_BOOL, cfg_field(use_system_colours)},
+  {"Transparency", OPT_INT, cfg_field(transparency)},
+  {"OpaqueWhenFocused", OPT_BOOL, cfg_field(opaque_when_focused)},
+  {"CursorType", OPT_INT, cfg_field(cursor_type)},
+  {"CursorBlinks", OPT_BOOL, cfg_field(cursor_blinks)},
+  // Text
+  {"Font", OPT_STRING, cfg_field(font.name)},
+  {"FontIsBold", OPT_BOOL, cfg_field(font.isbold)},
+  {"FontHeight", OPT_INT, cfg_field(font.size)},
+  {"FontQuality", OPT_INT, cfg_field(font_quality)},
+  {"BoldAsBright", OPT_BOOL, cfg_field(bold_as_bright)},
+  {"AllowBlinking", OPT_BOOL, cfg_field(allow_blinking)},
+  {"Locale", OPT_STRING, cfg_field(locale)},
+  {"Charset", OPT_STRING, cfg_field(charset)},
+  // Keys
+  {"BackspaceSendsBS", OPT_BOOL, cfg_field(backspace_sends_bs)},
+  {"AltSendsESC", OPT_BOOL, cfg_field(alt_sends_esc)},
+  {"CtrlAltIsAltGr", OPT_BOOL, cfg_field(ctrl_alt_is_altgr)},
+  {"WindowShortcuts", OPT_BOOL, cfg_field(window_shortcuts)},
+  {"ZoomShortcuts", OPT_BOOL, cfg_field(zoom_shortcuts)},
+  {"ScrollMod", OPT_INT, cfg_field(scroll_mod)},
+  // Mouse
+  {"CopyOnSelect", OPT_BOOL, cfg_field(copy_on_select)},
+  {"ClicksPlaceCursor", OPT_BOOL, cfg_field(clicks_place_cursor)},
+  {"RightClickAction", OPT_INT, cfg_field(right_click_action)},
+  {"ClicksTargetApp", OPT_BOOL, cfg_field(clicks_target_app)},
+  {"ClickTargetMod", OPT_INT, cfg_field(click_target_mod)},
+  // Output
+  {"Printer", OPT_STRING, cfg_field(printer)},
+  {"BellSound", OPT_BOOL, cfg_field(bell_sound)},
+  {"BellFlash", OPT_BOOL, cfg_field(bell_flash)},
+  {"BellTaskbar", OPT_BOOL, cfg_field(bell_taskbar)},
+  {"Term", OPT_STRING, cfg_field(term)},
+  {"Answerback", OPT_STRING, cfg_field(answerback)},
+  // Window
+  {"Columns", OPT_INT, cfg_field(cols)},
+  {"Rows", OPT_INT, cfg_field(rows)},
+  {"Scrollbar", OPT_BOOL, cfg_field(scrollbar)},
+  {"AltScreenScroll", OPT_BOOL, cfg_field(alt_screen_scroll)},
+  {"ScrollbackLines", OPT_INT, cfg_field(scrollback_lines)},
+  {"ConfirmExit", OPT_BOOL, cfg_field(confirm_exit)},
+};
+
+static uchar option_order[lengthof(options)];
+static uint option_order_len;
+
+static int
+find_option(char *name)
+{
+  for (uint i = 0; i < lengthof(options); i++) {
+    if (!strcasecmp(name, options[i].name))
+      return i;
+  }
+  return -1;
+}
+
+int
+parse_option(char *option)
+{
+  char *val = strchr(option, '=');
+  if (!val)
+    return -1;
+  *val++ = 0;
+  
+  int i = find_option(option);
+  if (i < 0)
+    return i;
+  
+  uint offset = options[i].offset;
+  switch (options[i].type) {
+    when OPT_BOOL:
+      atoffset(bool, &cfg, offset) = atoi(val);
+    when OPT_INT:
+      atoffset(int, &cfg, offset) = atoi(val);
+    when OPT_STRING:
+      strncpy(&atoffset(char, &cfg, offset), val, options[i].size);
+    when OPT_COLOUR: {
+      uint r, g, b;
+      if (sscanf(val, "%u,%u,%u", &r, &g, &b) == 3)
+        atoffset(colour, &cfg, offset) = make_colour(r, g, b);
+    }
+  }
+  return i;
+}
+
+void
+load_config(char *filename)
+{
+  option_order_len = 0;
+  config_filename = filename;
+  FILE *file = fopen(filename, "r");
+  if (file) {
+    char *line;
+    size_t len;
+    while (line = 0, __getline(&line, &len, file) != -1) {
+      line[strcspn(line, "\r\n")] = 0;  /* trim newline */
+      int i = parse_option(line);
+      if (i >= 0 && !memchr(option_order, i, option_order_len))
+        option_order[option_order_len++] = i;
+      free(line);
+    }
+    fclose(file);
+  }
+}
+
+static char *
+save_config(void)
+{
+  FILE *file = fopen(config_filename, "w");
+  if (!file)
+    return 0;
+
+  for (uint j = 0; j < option_order_len; j++) {
+    uint i = option_order[j];
+    fprintf(file, "%s=", options[i].name);
+    uint offset = options[i].offset;
+    switch (options[i].type) {
+      when OPT_BOOL:
+        fprintf(file, "%i\n", atoffset(bool, &cfg, offset));
+      when OPT_INT:
+        fprintf(file, "%i\n", atoffset(int, &cfg, offset));
+      when OPT_STRING:
+        fprintf(file, "%s\n", &atoffset(char, &cfg, offset));
+      when OPT_COLOUR: {
+        colour c = atoffset(colour, &cfg, offset);
+        fprintf(file, "%u,%u,%u\n", red(c), green(c), blue(c));
+      }
+    }
+  }
+  
+  fclose(file);
+  return 0;
+}
+
 
 static control *cols_box, *rows_box, *locale_box, *charset_box;
 
 static void
 apply_config(void)
 {
+  // Record what's changed
+  for (uint i = 0; i < lengthof(options); i++) {
+    uint offset = options[i].offset, size = options[i].size;
+    if (memcmp((char *)&cfg + offset, (char *)&new_cfg + offset, size) &&
+        !memchr(option_order, i, option_order_len))
+      option_order[option_order_len++] = i;
+  }
+  
   win_reconfig();
   save_config();
 }
@@ -236,8 +441,6 @@ string_handler(control *ctrl, void *data, int event)
       dlg_editbox_set(ctrl, buf);
   }
 }
-
-#define offcfg(setting) offsetof(config, setting)
 
 void
 setup_config_box(controlbox * b)
@@ -501,7 +704,7 @@ setup_config_box(controlbox * b)
   ctrl_columns(s, 2, 53, 47);
   ctrl_editbox(
     s, "Scrollback lines", 'b', 38, P(0),
-    int_handler, I(offsetof(config, scrollback_lines)), I(1000000)
+    int_handler, I(offcfg(scrollback_lines)), I(1000000)
   )->column = 0;
 
   s = ctrl_getset(b, "Window", "options", null);
@@ -510,115 +713,3 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
   );
 }
-
-
-typedef const struct {
-  const char *key;
-  ushort offset;
-  ushort def;
-} int_setting;
-
-static const int_setting
-int_settings[] = {
-  {"Columns", offcfg(cols), 80},
-  {"Rows", offcfg(rows), 24},
-  {"Transparency", offcfg(transparency), 0},
-  {"OpaqueWhenFocused", offcfg(opaque_when_focused), 0},
-  {"Scrollbar", offcfg(scrollbar), true},
-  {"ScrollbackLines", offcfg(scrollback_lines), 10000},
-  {"AltScreenScroll", offcfg(alt_screen_scroll), false},
-  {"ConfirmExit", offcfg(confirm_exit), true},
-  {"CtrlAltIsAltGr", offcfg(ctrl_alt_is_altgr), false},
-  {"AltSendsESC", offcfg(alt_sends_esc), false},
-  {"BackspaceSendsBS", offcfg(backspace_sends_bs), false},
-  {"WindowShortcuts", offcfg(window_shortcuts), true},
-  {"ZoomShortcuts", offcfg(zoom_shortcuts), true},
-  {"UseSystemColours", offcfg(use_system_colours), false},
-  {"BoldAsBright", offcfg(bold_as_bright), true},
-  {"AllowBlinking", offcfg(allow_blinking), false},
-  {"CursorType", offcfg(cursor_type), 2},
-  {"CursorBlinks", offcfg(cursor_blinks), true},
-  {"FontIsBold", offcfg(font.isbold), 0},
-  {"FontHeight", offcfg(font.size), 10},
-  {"FontQuality", offcfg(font_quality), FQ_DEFAULT},
-  {"ScrollMod", offcfg(scroll_mod), MDK_SHIFT},
-  {"RightClickAction", offcfg(right_click_action), RC_SHOWMENU},
-  {"CopyOnSelect", offcfg(copy_on_select), false},
-  {"ClicksPlaceCursor", offcfg(clicks_place_cursor), false},
-  {"ClicksTargetApp", offcfg(clicks_target_app), true},
-  {"ClickTargetMod", offcfg(click_target_mod), MDK_SHIFT},
-  {"BellSound", offcfg(bell_sound), false},
-  {"BellFlash", offcfg(bell_flash), false},
-  {"BellTaskbar", offcfg(bell_taskbar), true},
-};
-
-typedef const struct {
-  const char *key;
-  ushort offset;
-  ushort len;
-  const char *def;
-} string_setting;
-
-static const string_setting
-string_settings[] = {
-  {"Font", offcfg(font.name), sizeof cfg.font.name, "Lucida Console"},
-  {"Locale", offcfg(locale), sizeof cfg.locale, ""},
-  {"Charset", offcfg(charset), sizeof cfg.charset, ""},
-  {"Printer", offcfg(printer), sizeof cfg.printer, ""},
-  {"Term", offcfg(term), sizeof cfg.term, "xterm"},
-  {"Answerback", offcfg(answerback), sizeof cfg.answerback, ""},
-};
-
-typedef const struct {
-  const char *key;
-  ushort offset;
-  colour def;
-} colour_setting;
-
-static const colour_setting
-colour_settings[] = {
-  {"ForegroundColour", offcfg(fg_colour), 0xBFBFBF},
-  {"BackgroundColour", offcfg(bg_colour), 0x000000},
-  {"CursorColour", offcfg(cursor_colour), 0xBFBFBF},
-};
-
-void
-load_config(void)
-{
-  open_settings_r(config_file);
-
-  for (int_setting *s = int_settings; s < endof(int_settings); s++)
-    read_int_setting(s->key, &atoffset(int, &cfg, s->offset), s->def);
-  for (string_setting *s = string_settings; s < endof(string_settings); s++)
-    read_string_setting(s->key, &atoffset(char, &cfg, s->offset), s->len, s->def);
-  for (colour_setting *s = colour_settings; s < endof(colour_settings); s++)
-    read_colour_setting(s->key, &atoffset(colour, &cfg, s->offset), s->def);
-  
-  if (!*cfg.charset) {
-    read_string_setting("Codepage", cfg.charset, sizeof cfg.charset, "");
-    if (*cfg.charset && !*cfg.locale)
-      strcpy(cfg.locale, "C");
-  }
-  
-  close_settings_r();
-  
-  correct_locale(cfg.locale);
-  correct_charset(cfg.charset);
-}
-
-char *
-save_config(void)
-{
-  char *errmsg = open_settings_w(config_file);
-  if (errmsg)
-    return errmsg;
-  for (int_setting *s = int_settings; s < endof(int_settings); s++)
-    write_int_setting(s->key, atoffset(int, &cfg, s->offset));
-  for (string_setting *s = string_settings; s < endof(string_settings); s++)
-    write_string_setting(s->key, &atoffset(char, &cfg, s->offset));
-  for (colour_setting *s = colour_settings; s < endof(colour_settings); s++)
-    write_colour_setting(s->key, atoffset(colour, &cfg, s->offset));
-  close_settings_w();
-  return 0;
-}
-
