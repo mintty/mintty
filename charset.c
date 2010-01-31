@@ -385,6 +385,9 @@ cs_config_locale(void)
 const char *
 cs_init(void)
 {
+  if (*cfg.charset && !*cfg.locale)
+    *cfg.locale = 'C';
+
   init_locale_menu();
   init_charset_menu();
   
