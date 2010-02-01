@@ -252,7 +252,7 @@ init_locale_menu(void)
   LANGID WINAPI (*pGetSystemDefaultUILanguage)(void) = 
     (void *)GetProcAddress(kernel, "GetSystemDefaultUILanguage");
   
-  locale_menu[count++] = "(None)";
+  locale_menu[count++] = "(Env)";
   if (pGetUserDefaultUILanguage)
     add_lcid(pGetUserDefaultUILanguage());
   add_lcid(LOCALE_USER_DEFAULT);
