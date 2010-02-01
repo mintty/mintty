@@ -11,6 +11,7 @@
 #include <math.h>
 #include <windowsx.h>
 #include <winnls.h>
+#include <termios.h>
 
 #if (WINVER < 0x0500)
 #define VK_OEM_PLUS 0xBB
@@ -411,7 +412,6 @@ win_key_down(WPARAM wp, LPARAM lp)
   wchar wbuf[8];
   int len = 0, wlen = 0;
 
-  inline char C(char c) { return c & 0x1F; }
   inline void ch(char c) { buf[len++] = c; }
   inline void esc_if(bool b) { if (b) ch('\e'); }
   void ss3(char c) { ch('\e'); ch('O'); ch(c); }
@@ -524,9 +524,9 @@ win_key_down(WPARAM wp, LPARAM lp)
   bool ctrl_symbol_key(void) {
     wchar wc = undead_keycode();
     switch (wc) {
-      when '@' or '[' ... '_': wc = C(wc);
-      when '/': wc = C('_');
-      when '?': wc = 0x7F;
+      when '@' or '[' ... '_': wc = CTRL(wc);
+      when '/': wc = CTRL('_');
+      when '?': wc = CDEL;
       otherwise: return false;
     }
     esc_if(meta);
@@ -553,14 +553,14 @@ win_key_down(WPARAM wp, LPARAM lp)
         esc_if(alt),
         term.newline_mode ? ch('\r'), ch('\n') : ch(shift ? '\n' : '\r');
       else
-        ctrl_key(C('^'));
+        ctrl_key(CTRL('^'));
     when VK_BACK:
       if (!ctrl)
-        esc_if(alt), ch(term.backspace_sends_bs ? '\b' : 0x7F);
+        esc_if(alt), ch(term.backspace_sends_bs ? '\b' : CDEL);
       else if (term.modify_other_keys)
-        other_code(term.backspace_sends_bs ? '\b' : 0x7F);
+        other_code(term.backspace_sends_bs ? '\b' : CDEL);
       else
-        ctrl_key(term.backspace_sends_bs ? 0x7F : C('_'));
+        ctrl_key(term.backspace_sends_bs ? CDEL : CTRL('_'));
     when VK_TAB:
       if (alt)
         return 0;
@@ -571,11 +571,11 @@ win_key_down(WPARAM wp, LPARAM lp)
     when VK_ESCAPE:
       term.app_escape_key
       ? ss3('[')
-      : ctrl_key(term.escape_sends_fs ? C('\\') : C('['));
+      : ctrl_key(CTRL(term.escape_sends_fs ? '\\' : '['));
     when VK_PAUSE:
-      ctrl_key(C(']'));
+      ctrl_key(CTRL(']'));
     when VK_CANCEL:
-      ctrl_key(C('\\'));
+      ctrl_key(CTRL('\\'));
     when VK_F1 ... VK_F4:
       mod_ss3(key - VK_F1 + 'P');
     when VK_F5 ... VK_F24:
@@ -610,7 +610,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       if (term.modify_other_keys > 1)
         modify_other_key();
       else if (!ctrl_symbol_key())
-        ctrl_key(C(key));
+        ctrl_key(CTRL(key));
     when '0' ... '9' or VK_OEM_1 ... VK_OEM_102:
       if (char_key())
         break;

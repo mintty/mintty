@@ -230,7 +230,7 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
     // Set backspace keycode
     struct termios attr;
     tcgetattr(0, &attr);
-    attr.c_cc[VERASE] = cfg.backspace_sends_bs ? '\b' : 0x7F;
+    attr.c_cc[VERASE] = cfg.backspace_sends_bs ? CTRL('H') : CDEL;
     tcsetattr(0, TCSANOW, &attr);
     
     // Invoke command
