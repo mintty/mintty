@@ -68,9 +68,9 @@ config cfg = {
 
 typedef enum { OPT_BOOL, OPT_INT, OPT_STRING, OPT_COLOUR } opt_type;
 
-struct {
+static const struct {
   const char *name;
-  opt_type type;
+  uchar type;
   uchar size;
   ushort offset;
 }
