@@ -1021,9 +1021,10 @@ static void
 do_osc(void)
 {
   if (!term.osc_w) { // "wordness" is ignored
+    uint arg = term.esc_args[0];
     char *s = term.osc_string;
     s[term.osc_strlen] = 0;
-    switch (term.esc_args[0]) {
+    switch (arg) {
       when 0 or 2 or 21: win_set_title(s);  // ignore icon title
       when 4:  do_colour_osc(0);
       when 10: do_colour_osc(FG_COLOUR_I);
@@ -1042,9 +1043,9 @@ do_osc(void)
           else
             win_set_font_size(i);
         }
-      when 7776:
+      when 701 or 7776:  // Set/get locale. 701 is from urxvt.
         if (!strcmp(s, "?"))
-          ldisc_printf(0, "\e]7776;%s\e\\", cs_set_locale(0));
+          ldisc_printf(0, "\e]%u;%s\e\\", arg, cs_get_locale());
         else
           cs_set_locale(s);
     }
