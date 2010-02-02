@@ -350,14 +350,17 @@ update_locale(void)
 }
 
 const char *
+cs_get_locale(void)
+{
+  return default_locale;
+}
+
+void
 cs_set_locale(const char *locale)
 {
-  if (locale) {
-    free((void *)set_locale);
-    set_locale = *locale ? strdup(locale) : 0;
-    update_locale();
-  }
-  return default_locale;
+  free((void *)set_locale);
+  set_locale = *locale ? strdup(locale) : 0;
+  update_locale();
 }
 
 void

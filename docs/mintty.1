@@ -871,7 +871,8 @@ at a time.
 Most of the xterm control sequences documented at \fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.html\fP are supported.
 Please report incompatibilities or unimplemented sequences as bugs.
 
-This section lists mintty-specific control sequences.
+This section lists control sequences implemented in mintty that are not
+supported by xterm.
 
 
 .SS Application mousewheel mode
@@ -1008,7 +1009,7 @@ is sent, terminated with ST: \fC^[]7700;\fInum\fP^[\\\fR.
 .SS Locale
 
 The locale and charset used by the terminal can be queried or changed using
-these sequences:
+these sequences introduced by urxvt:
 
 .RS
 .TS
@@ -1016,16 +1017,16 @@ tab(#) nospaces;
 LB                  LB
 LfC                 L.
 sequence           #locale
-^[]7776;?^G        #query
-^[]7776;\fIloc\fP^G#set to \fIloc\fP
-^[]7776;^G         #default
+^[]701;?^G        #query
+^[]701;\fIloc\fP^G#set to \fIloc\fP
+^[]701;^G         #default
 .TE
 .RE
 
 The locale string used here should take the same format as in the locale
 environment variables such as \fILANG\fP.
 When the locale is queried, a sequence that would set the current locale 
-is sent, e.g. \fC^[]7776;C.UTF-8^[\\\fP.
+is sent, e.g. \fC^[]701;C.UTF-8^[\\\fP.
 An empty \fIloc\fP string selects the locale configured in the options or the
 environment.
 
