@@ -170,10 +170,11 @@ win_show_mouse()
   }
 }
 
-void
+static void
 hide_mouse()
 {
-  if (mouse_showing) {
+  POINT p;
+  if (mouse_showing && GetCursorPos(&p) && WindowFromPoint(p) == wnd) {
     ShowCursor(false);
     mouse_showing = false;
   }
@@ -228,13 +229,11 @@ win_mouse_release(mouse_button b, LPARAM lp)
   }
 }  
 
-/*
- * Windows seems to like to occasionally send MOUSEMOVE events even if the 
- * mouse hasn't moved. Don't do anything in this case.
- */
 void
 win_mouse_move(bool nc, LPARAM lp)
 {
+  // Windows seems to like to occasionally send MOUSEMOVE events even if the
+  // mouse hasn't moved. Don't do anything in this case.
   static bool last_nc;
   static LPARAM last_lp;
   if (nc == last_nc && lp == last_lp)
