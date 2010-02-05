@@ -60,7 +60,9 @@ config cfg = {
   .scrollbar = true,
   .alt_screen_scroll = false,
   .scrollback_lines = 10000,
-  .confirm_exit = true
+  .confirm_exit = true,
+  // Hidden
+  .line_spacing = 0
 };
 
 #define offcfg(option) offsetof(config, option)
@@ -120,6 +122,8 @@ options[] = {
   {"AltScreenScroll", OPT_BOOL, cfg_field(alt_screen_scroll)},
   {"ScrollbackLines", OPT_INT, cfg_field(scrollback_lines)},
   {"ConfirmExit", OPT_BOOL, cfg_field(confirm_exit)},
+  // Hidden
+  {"LineSpacing", OPT_INT, cfg_field(line_spacing)},
 };
 
 static uchar option_order[lengthof(options)];
