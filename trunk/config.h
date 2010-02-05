@@ -69,6 +69,8 @@ typedef struct {
   bool alt_screen_scroll;
   int scrollback_lines;
   bool confirm_exit;
+  // Hidden
+  int line_spacing;
 } config;
 
 extern config cfg, new_cfg;
