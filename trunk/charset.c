@@ -48,8 +48,10 @@ cs_names[] = {
   {CP_ASCII, "US-ASCII"},
   {CP_ASCII, "ANSI_X3.4-1968"},
   {   20866, "KOI8-R"},
+  {   20866, "KOI8R"},
   {   20866, "KOI8"},
   {   21866, "KOI8-U"},
+  {   21866, "KOI8U"},
   {     936, "GBK"},
   {     950, "Big5"},
   {     932, "SJIS"},
@@ -177,7 +179,9 @@ cs_id(const char *name)
   char upname[strlen(name) + 1];
   strtoupper(upname, name);
   uint iso;
-  if (sscanf(upname, "ISO-8859-%u", &iso) == 1) {
+  if (sscanf(upname, "ISO-8859-%u", &iso) == 1 ||
+      sscanf(upname, "ISO8859-%u", &iso) == 1 ||
+      sscanf(upname, "ISO8859%u", &iso) == 1) {
     if (iso && iso <= 16 && iso != 12)
       id = 28590 + iso;
   }
@@ -302,7 +306,7 @@ update_mode(void)
   setlocale(LC_CTYPE,
     use_default_locale
     ? default_locale
-    : cs_ambig_wide ? "ja.UTF-8" : "en.UTF-8"
+    : cs_ambig_wide ? "ja_JP.UTF-8" : "C.UTF-8"
   );
   use_locale = use_default_locale || mode == CSM_UTF8;
   cs_cur_max = use_locale ? MB_CUR_MAX : cp_cur_max();
