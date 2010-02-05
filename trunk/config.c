@@ -142,15 +142,20 @@ find_option(char *name)
 int
 parse_option(char *option)
 {
-  char *val = strchr(option, '=');
-  if (!val)
+  char *eq= strchr(option, '=');
+  if (!eq)
     return -1;
-  *val++ = 0;
   
-  int i = find_option(option);
+  uint name_len = eq - option;
+  char name[name_len + 1];
+  memcpy(name, option, name_len);
+  name[name_len] = 0;
+  
+  int i = find_option(name);
   if (i < 0)
     return i;
   
+  char *val = eq + 1;
   uint offset = options[i].offset;
   switch (options[i].type) {
     when OPT_BOOL:
