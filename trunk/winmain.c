@@ -482,14 +482,14 @@ win_reconfig(void)
                  SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
   }
   
-  if (memcmp(&new_cfg.font, &cfg.font, sizeof cfg.font) != 0 ||
-      new_cfg.bold_as_bright != cfg.bold_as_bright) {
-    font_size = new_cfg.font.size;
-    reinit_fonts();
-  }
+  bool font_changed =
+    memcmp(&new_cfg.font, &cfg.font, sizeof cfg.font) ||
+    new_cfg.bold_as_bright != cfg.bold_as_bright;
   
   /* Copy the new config and refresh everything */
   cfg = new_cfg;
+  if (font_changed)
+    reinit_fonts();
   win_reconfig_palette();
   update_transparency();
   win_invalidate_all();
