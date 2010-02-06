@@ -27,6 +27,8 @@ static const char *default_locale;
 static uint default_codepage;
 
 static uint codepage;
+static wchar cp_default_wchar;
+static char cp_default_char[4];
 
 #if HAS_LOCALES
 static bool valid_default_locale, use_locale;
@@ -287,12 +289,17 @@ init_charset_menu(void)
     asprintf((char **)p++, "%s (ANSI codepage)", ansi_cs);
 }
 
-static int
-cp_cur_max(void)
+static void
+get_cp_info(void)
 {
-  CPINFO cpinfo;
-  GetCPInfo(codepage, &cpinfo);
-  return cpinfo.MaxCharSize;
+  CPINFOEX cpinfo;
+  GetCPInfoEx(codepage, 0, &cpinfo);
+  cs_cur_max = cpinfo.MaxCharSize;
+
+  cp_default_wchar = cpinfo.UnicodeDefaultChar;
+  int len = WideCharToMultiByte(codepage, 0, &cp_default_wchar, 1,
+                                cp_default_char, sizeof cp_default_char - 1, 0, 0);
+  cp_default_char[len] = 0;
 }
 
 static void
@@ -309,9 +316,12 @@ update_mode(void)
     : cs_ambig_wide ? "ja_JP.UTF-8" : "C.UTF-8"
   );
   use_locale = use_default_locale || mode == CSM_UTF8;
-  cs_cur_max = use_locale ? MB_CUR_MAX : cp_cur_max();
+  if (use_locale)
+    cs_cur_max = MB_CUR_MAX;
+  else
+    get_cp_info();
 #else
-  cs_cur_max = cp_cur_max();
+  get_cp_info();
 #endif
 
   // Clear output conversion state.
@@ -471,17 +481,21 @@ cs_mb1towc(wchar *pwc, const char *pc)
   if (sn == cs_cur_max)
     return -1; // Overlong sequence
   s[sn++] = *pc;
-  switch (MultiByteToWideChar(codepage, 0, s, sn, ws, 2)) {
-    when 1:
-      if (*ws == 0xFFFD)
+  int ret = MultiByteToWideChar(codepage, 0, s, sn, ws, 2);
+  switch (ret) {
+    when 1: {
+      // Incomplete sequences yield the codepage's default character, but so
+      // does the default character's very own (valid) sequence.
+      if (*ws == cp_default_wchar && memcmp(s, cp_default_char, sn))
         return -2; // Incomplete character
       else
         sn = 0; // Valid character
+    }
     when 2:
-      if (*ws == 0xFFFD)
-        return -1; // Encoding error
-      else
+      if (IS_HIGH_SURROGATE(*ws))
         sn = -1; // Surrogate pair
+      else
+        return -1; // Encoding error
     when 0:
       return -2; // pre-Vista: can't tell errors from incomplete chars :(
   }
