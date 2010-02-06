@@ -14,10 +14,10 @@
 #include <winnls.h>
 
 // Constant for representing an unspecified charset.
-#define CS_DEFAULT -1
+enum { CS_DEFAULT = -1 };
 
 // ASCII codepage number
-#define CP_ASCII 20127
+enum { CP_ASCII = 20127 }; 
 
 static cs_mode mode = CSM_DEFAULT;
 
@@ -481,28 +481,27 @@ cs_mb1towc(wchar *pwc, const char *pc)
   s[sn++] = *pc;
   s[sn] = 0;
   switch (MultiByteToWideChar(codepage, 0, s, sn, ws, 2)) {
-    when 1: {
+    when 1:
       // Incomplete sequences yield the codepage's default character, but so
       // does the default character's very own (valid) sequence.
-      if (*ws == cp_default_wchar && strcmp(s, cp_default_char))
-        return sn < cs_cur_max ? -2 : -1;
-      else
-        sn = 0; // Valid character
-    }
+      if (!(*ws == cp_default_wchar && strcmp(s, cp_default_char))) {
+        *pwc = *ws;
+        sn = 0;
+        return 1;
+      }
     when 2:
       if (IS_HIGH_SURROGATE(*ws)) {
         *pwc = *ws;
         sn = -1; // Surrogate pair
         return 0;
       }
-      else
-        return -1; // Encoding error
-    when 0:
-      // pre-Vista: can't tell errors from incomplete chars :(
-      return sn < cs_cur_max ? -2 : -1;
+      // Special handling for GB18030. Windows considers the first two bytes
+      // of a four-byte sequence as an encoding error followed by a digit.
+      if (codepage == 54936 && sn == 2 && ws[1] >= '0' && ws[1] <= '9')
+        return -2;
+      return -1; // Encoding error
   }
-  *pwc = *ws;
-  return 1;
+  return sn < cs_cur_max ? -2 : -1;
 }
 
 wchar
