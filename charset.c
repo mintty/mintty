@@ -476,28 +476,30 @@ cs_mb1towc(wchar *pwc, const char *pc)
     // Leftover surrogate
     *pwc = ws[1];
     sn = 0;
-    return 0;
+    return 1;
   }
-  if (sn == cs_cur_max)
-    return -1; // Overlong sequence
   s[sn++] = *pc;
-  int ret = MultiByteToWideChar(codepage, 0, s, sn, ws, 2);
-  switch (ret) {
+  s[sn] = 0;
+  switch (MultiByteToWideChar(codepage, 0, s, sn, ws, 2)) {
     when 1: {
       // Incomplete sequences yield the codepage's default character, but so
       // does the default character's very own (valid) sequence.
-      if (*ws == cp_default_wchar && memcmp(s, cp_default_char, sn))
-        return -2; // Incomplete character
+      if (*ws == cp_default_wchar && strcmp(s, cp_default_char))
+        return sn < cs_cur_max ? -2 : -1;
       else
         sn = 0; // Valid character
     }
     when 2:
-      if (IS_HIGH_SURROGATE(*ws))
+      if (IS_HIGH_SURROGATE(*ws)) {
+        *pwc = *ws;
         sn = -1; // Surrogate pair
+        return 0;
+      }
       else
         return -1; // Encoding error
     when 0:
-      return -2; // pre-Vista: can't tell errors from incomplete chars :(
+      // pre-Vista: can't tell errors from incomplete chars :(
+      return sn < cs_cur_max ? -2 : -1;
   }
   *pwc = *ws;
   return 1;
