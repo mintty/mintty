@@ -349,9 +349,11 @@ locale_handler(control *ctrl, void *unused(data), int event)
       update_charset();
     when EVENT_VALCHANGE or EVENT_SELCHANGE:
       dlg_editbox_get(ctrl, locale, sizeof cfg.locale);
-      correct_locale(locale);
-      if (event == EVENT_SELCHANGE)
+      if (event == EVENT_SELCHANGE) {
+        if (*locale == '(')
+          *locale = 0;
         update_charset();
+      }
   }
 }
 
@@ -373,9 +375,13 @@ charset_handler(control *ctrl, void *unused(data), int event)
       update_locale();
     when EVENT_VALCHANGE or EVENT_SELCHANGE:
       dlg_editbox_get(ctrl, charset, sizeof cfg.charset);
-      correct_charset(charset);
-      if (event == EVENT_SELCHANGE)
+      if (event == EVENT_SELCHANGE) {
+        if (*charset == '(')
+          *charset = 0;
+        else 
+          *strchr(charset, ' ') = 0;
         update_locale();
+      }
   }
 }
 
