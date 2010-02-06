@@ -203,35 +203,6 @@ cs_id(const char *name)
   return valid_cs(id) ? id : CS_DEFAULT;
 }
 
-void
-correct_charset(char *cs)
-{
-  strcpy(cs, cs_name(cs_id(cs)));
-}
-
-void
-correct_locale(char *locale)
-{
-  if (!strcmp(locale, "C"))
-    return;
-  uchar *lang = (uchar *)locale;
-  if (isalpha(lang[0]) && isalpha(lang[1])) {
-    // Treat two or three letters at the start as the language.
-    *locale++ = tolower(*lang++);
-    *locale++ = tolower(*lang++);
-    if (isalpha(*lang))
-      *locale++ = tolower(*lang++);
-    uchar *terr = (uchar *)strchr(locale, '_');
-    if (terr && isalpha(terr[1]) && isalpha(terr[2])) {
-      // Treat two letters after an underscore as the territory.
-      *locale++ = '_';
-      *locale++ = toupper(*++terr);
-      *locale++ = toupper(*++terr);
-    }
-  }
-  *locale = 0;
-}
-
 static void
 init_locale_menu(void)
 {

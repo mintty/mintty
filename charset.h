@@ -32,9 +32,6 @@ int cs_mbstowcs(wchar *ws, const char *s, size_t wlen);
 int cs_mb1towc(wchar *pwc, const char *pc);
 wchar cs_btowc_glyph(char);
 
-void correct_charset(char *);
-void correct_locale(char *);
-
 extern const char *locale_menu[];
 extern const char *charset_menu[];
 
