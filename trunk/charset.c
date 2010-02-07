@@ -63,15 +63,15 @@ cs_names[] = {
   {     932, "SJIS"},
   {     932, "shift_jis"},
   {     936, "GBK"},
+  {     936, "GB2312"},
+  {     936, "eucCN"},
+  {     936, "EUC-CN"},
   {     949, "eucKR"},
   {     949, "EUC-KR"},
   {     950, "Big5"},
   // Not (yet) supported by Cygwin
   {    1361, "JOHAB"},       // Korean
   {    1361, "KSC5601"},
-  {   51950, "eucTW"},
-  {   51950, "EUC-TW"},
-  {   52936, "GB2312"},
   {   54936, "GB18030"},
   {  CP_ACP, "ANSI"},
   {  CP_ACP, "ACP"},
