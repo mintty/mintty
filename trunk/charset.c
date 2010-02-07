@@ -54,18 +54,24 @@ cs_names[] = {
   {   20866, "KOI8"},
   {   21866, "KOI8-U"},
   {   21866, "KOI8U"},
-  {     936, "GBK"},
-  {     950, "Big5"},
-  {     932, "SJIS"},
 #if HAS_LOCALES
   {   20933, "eucJP"}, // eucJP isn't quite the same as CP20932.
   {   20933, "EUC-JP"},
 #endif
-  {     949, "eucKR"},
-  {     949, "EUC-KR"},
   {     620, "TIS620"},
   {     620, "TIS-620"},
-  // Not supported by Cygwin
+  {     932, "SJIS"},
+  {     932, "shift_jis"},
+  {     936, "GBK"},
+  {     949, "eucKR"},
+  {     949, "EUC-KR"},
+  {     950, "Big5"},
+  // Not (yet) supported by Cygwin
+  {    1361, "JOHAB"},       // Korean
+  {    1361, "KSC5601"},
+  {   51950, "eucTW"},
+  {   51950, "EUC-TW"},
+  {   52936, "GB2312"},
   {   54936, "GB18030"},
   {  CP_ACP, "ANSI"},
   {  CP_ACP, "ACP"},
