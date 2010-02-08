@@ -70,7 +70,7 @@ typedef struct {
   int scrollback_lines;
   bool confirm_exit;
   // Hidden
-  int line_spacing;
+  int col_spacing, row_spacing;
 } config;
 
 extern config cfg, new_cfg;

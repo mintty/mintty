@@ -62,7 +62,8 @@ config cfg = {
   .scrollback_lines = 10000,
   .confirm_exit = true,
   // Hidden
-  .line_spacing = 0
+  .col_spacing = 0,
+  .row_spacing = 0
 };
 
 #define offcfg(option) offsetof(config, option)
@@ -123,7 +124,8 @@ options[] = {
   {"ScrollbackLines", OPT_INT, cfg_field(scrollback_lines)},
   {"ConfirmExit", OPT_BOOL, cfg_field(confirm_exit)},
   // Hidden
-  {"LineSpacing", OPT_INT, cfg_field(line_spacing)},
+  {"ColSpacing", OPT_INT, cfg_field(col_spacing)},
+  {"RowSpacing", OPT_INT, cfg_field(row_spacing)},
 };
 
 static uchar option_order[lengthof(options)];
