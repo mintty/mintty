@@ -488,8 +488,10 @@ win_reconfig(void)
   
   /* Copy the new config and refresh everything */
   cfg = new_cfg;
-  if (font_changed)
+  if (font_changed) {
+    font_size = cfg.font.size;
     reinit_fonts();
+  }
   win_reconfig_palette();
   update_transparency();
   win_invalidate_all();
