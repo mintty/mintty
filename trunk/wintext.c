@@ -579,7 +579,7 @@ win_text_internal(int x, int y, wchar *text, int len,
  /* And the shadow bold hack. */
   if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD)) {
     SetBkMode(dc, TRANSPARENT);
-    ExtTextOutW(dc, x - 1,
+    ExtTextOutW(dc, x + 1,
                 y - font_height * (lattr == LATTR_BOT) + cfg.row_spacing,
                 ETO_CLIPPED, &line_box, text, len, dxs);
   }
