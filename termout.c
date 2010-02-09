@@ -1150,7 +1150,7 @@ term_write(const char *data, int len)
           continue;
         }
         
-        switch (cs_mb1towc(&wc, (char *)&c)) {
+        switch (cs_mb1towc(&wc, c)) {
           when 0: // NUL or low surrogate
             if (wc)
               unget = c;
