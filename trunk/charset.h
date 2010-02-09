@@ -29,7 +29,7 @@ bool cs_ambig_wide;
 
 int cs_wcntombn(char *s, const wchar *ws, size_t len, size_t wlen);
 int cs_mbstowcs(wchar *ws, const char *s, size_t wlen);
-int cs_mb1towc(wchar *pwc, const char *pc);
+int cs_mb1towc(wchar *pwc, char c);
 wchar cs_btowc_glyph(char);
 
 extern const char *locale_menu[];

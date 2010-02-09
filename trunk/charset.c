@@ -432,11 +432,11 @@ cs_mbstowcs(wchar *ws, const char *s, size_t wlen)
 }
 
 int
-cs_mb1towc(wchar *pwc, const char *pc)
+cs_mb1towc(wchar *pwc, char c)
 {
 #if HAS_LOCALES
   if (use_locale)
-    return mbrtowc(pwc, pc, 1, 0);
+    return mbrtowc(pwc, &c, 1, 0);
 #endif
 
   // The Windows way
@@ -444,7 +444,7 @@ cs_mb1towc(wchar *pwc, const char *pc)
   static char s[8];
   static wchar ws[2];
 
-  if (!pc) {
+  if (!pwc) {
     // Reset state
     sn = 0;
     return 0;
@@ -455,17 +455,23 @@ cs_mb1towc(wchar *pwc, const char *pc)
     sn = 0;
     return 1;
   }
-  s[sn++] = *pc;
+  s[sn++] = c;
   s[sn] = 0;
   switch (MultiByteToWideChar(codepage, 0, s, sn, ws, 2)) {
-    when 1:
+    when 1: {
       // Incomplete sequences yield the codepage's default character, but so
       // does the default character's very own (valid) sequence.
-      if (!(*ws == cp_default_wchar && strcmp(s, cp_default_char))) {
+      // Pre-Vista, DBCS codepages return a null character rather
+      // than the default character for incomplete sequences.
+      bool incomplete =
+        (*ws == cp_default_wchar && strcmp(s, cp_default_char)) ||
+        (!*ws && *s);
+      if (!incomplete) {
         *pwc = *ws;
         sn = 0;
         return 1;
       }
+    }
     when 2:
       if (IS_HIGH_SURROGATE(*ws)) {
         *pwc = *ws;
