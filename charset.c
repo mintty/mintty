@@ -13,12 +13,6 @@
 #include <winbase.h>
 #include <winnls.h>
 
-// Constant for representing an unspecified charset.
-enum { CS_DEFAULT = -1 };
-
-// ASCII codepage number
-enum { CP_ASCII = 20127 }; 
-
 static cs_mode mode = CSM_DEFAULT;
 
 static const char *env_locale, *config_locale, *set_locale;
@@ -40,24 +34,22 @@ int cs_cur_max;
 extern bool font_ambig_wide;
 
 static const struct {
-  ushort id;
+  ushort cp;
   const char *name;
 }
 cs_names[] = {
   { CP_UTF8, "UTF-8"},
   { CP_UTF8, "UTF8"},
-  {CP_ASCII, "ASCII"},
-  {CP_ASCII, "US-ASCII"},
-  {CP_ASCII, "ANSI_X3.4-1968"},
+  {   20127, "ASCII"},
+  {   20127, "US-ASCII"},
+  {   20127, "ANSI_X3.4-1968"},
   {   20866, "KOI8-R"},
   {   20866, "KOI8R"},
   {   20866, "KOI8"},
   {   21866, "KOI8-U"},
   {   21866, "KOI8U"},
-#if HAS_LOCALES
-  {   20933, "eucJP"}, // eucJP isn't quite the same as CP20932.
-  {   20933, "EUC-JP"},
-#endif
+  {   20932, "eucJP"},
+  {   20932, "EUC-JP"},
   {     620, "TIS620"},
   {     620, "TIS-620"},
   {     932, "SJIS"},
@@ -80,7 +72,7 @@ cs_names[] = {
 };
 
 static const struct {
-  ushort id;
+  ushort cp;
   const char *desc;
 }
 cs_descs[] = {
@@ -112,7 +104,7 @@ cs_descs[] = {
   {     950, "Chinese"},
   {     932, "Japanese"},
 #if HAS_LOCALES
-  {   20933, "Japanese"},
+  {   20932, "Japanese"},
 #endif
   {     949, "Korean"},
 };
@@ -126,64 +118,39 @@ strtoupper(char *dst, const char *src)
   while ((*dst++ = toupper((uchar)*src++)));
 }
 
+// Return the charset name for a codepage number.
 static const char *
-cs_name(int id)
+cs_name(uint cp)
 {
-  if (id == CS_DEFAULT)
-    return "";
-
   for (uint i = 0; i < lengthof(cs_names); i++) {
-    if (id == cs_names[i].id)
+    if (cp == cs_names[i].cp)
       return cs_names[i].name;
   }
   
   static char buf[16];
-  if (id >= 28591 && id <= 28606)
-    sprintf(buf, "ISO-8859-%u", id - 28590);
+  if (cp >= 28591 && cp <= 28606)
+    sprintf(buf, "ISO-8859-%u", cp - 28590);
   else
-    sprintf(buf, "CP%u", id);
+    sprintf(buf, "CP%u", cp);
   return buf;
 }
 
+// Check whether a codepage is installed.
 static bool
-valid_cp(uint cp)
+valid_codepage(uint cp)
 {
-  // Check whether Windows knows a codepage.
   CPINFO cpi;
   return GetCPInfo(cp, &cpi);
 }
 
-static int
-cs_cp(uint id)
-{
-  // Return codepage number for a charset id.
-  switch (id) {
-    when CS_DEFAULT: return CP_ACP;
-    when 620: return 874;
-    when 20933: return 20932;
-    otherwise: return id;
-  }
-}
-
-static bool
-valid_cs(int id)
-{
-  #if HAS_LOCALES
-  // Cygwin 1.7 always supports all the ISO charsets.
-  if (id >= 28591 && id <= 28606 && id != 28602)
-    return true;
-  #endif
-  return valid_cp(cs_cp(id));
-}
-
-static int
-cs_id(const char *name)
+// Find the codepage number for a charset name.
+static uint
+cs_codepage(const char *name)
 {
   if (!*name)
-    return CS_DEFAULT;
+    return CP_ACP;
   
-  int id = CS_DEFAULT;
-  
+  uint cp = CP_ACP;
   char upname[strlen(name) + 1];
   strtoupper(upname, name);
   uint iso;
@@ -191,22 +158,22 @@ cs_id(const char *name)
       sscanf(upname, "ISO8859-%u", &iso) == 1 ||
       sscanf(upname, "ISO8859%u", &iso) == 1) {
     if (iso && iso <= 16 && iso != 12)
-      id = 28590 + iso;
+      cp = 28590 + iso;
   }
-  else if (sscanf(upname, "CP%u", &id) != 1 &&
-           sscanf(upname, "WIN%u", &id) != 1 &&
-           sscanf(upname, "%u", &id) != 1) {
+  else if (sscanf(upname, "CP%u", &cp) != 1 &&
+           sscanf(upname, "WIN%u", &cp) != 1 &&
+           sscanf(upname, "%u", &cp) != 1) {
     for (uint i = 0; i < lengthof(cs_names); i++) {
       char cs_upname[8];
       strtoupper(cs_upname, cs_names[i].name);
-      if (memcmp(upname, cs_upname, strlen(cs_upname)) == 0) {
-        id = cs_names[i].id;
+      if (!memcmp(upname, cs_upname, strlen(cs_upname))) {
+        cp = cs_names[i].cp;
         break;
       }
     }
   }
   
-  return valid_cs(id) ? id : CS_DEFAULT;
+  return valid_codepage(cp) ? cp : CP_ACP;
 }
 
 static void
@@ -252,9 +219,9 @@ init_charset_menu(void)
   
   const char **p = charset_menu + 1;
   for (uint i = 0; i < lengthof(cs_descs); i++) {
-    uint id = cs_descs[i].id;
-    if (valid_cs(id))
-      asprintf((char **)p++, "%s (%s)", cs_name(id), cs_descs[i].desc);
+    uint cp = cs_descs[i].cp;
+    if (valid_codepage(cp) || (28591 <= cp && cp <= 28606))
+      asprintf((char **)p++, "%s (%s)", cs_name(cp), cs_descs[i].desc);
   }
   
   const char *oem_cs = cs_name(GetOEMCP());
@@ -334,8 +301,7 @@ update_locale(void)
 #if HAS_LOCALES
   }
 #endif
-  int cp = cs_cp(cs_id(charset));
-  default_codepage = valid_cp(cp) ? cp : CP_ASCII;
+  default_codepage = cs_codepage(charset);
   
   update_mode();
 }
