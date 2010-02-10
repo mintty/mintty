@@ -380,6 +380,10 @@ child_conv_path(const wchar *wpath)
     exp_path = path;
   
 #if CYGWIN_VERSION_DLL_MAJOR >= 1007
+#if CYGWIN_VERSION_API_MINOR >= 222
+  // CW_INT_SETLOCALE was introduced in API 0.222
+  cygwin_internal(CW_INT_SETLOCALE);
+#endif
   wchar *win_wpath = cygwin_create_path(CCP_POSIX_TO_WIN_W, exp_path);
   
   // Drop long path prefix if possible,
