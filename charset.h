@@ -15,8 +15,7 @@
 #endif
 
 const char *cs_init(void);
-
-void cs_config_locale(void);
+void cs_reconfig(void);
 
 const char *cs_get_locale(void);
 void cs_set_locale(const char *);

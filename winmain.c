@@ -499,7 +499,7 @@ win_reconfig(void)
   win_update_mouse();
 
   bool old_ambig_wide = cs_ambig_wide;
-  cs_config_locale();
+  cs_reconfig();
   if (term.report_ambig_width && old_ambig_wide != cs_ambig_wide)
     ldisc_send(cs_ambig_wide ? "\e[2W" : "\e[1W", 4, 0);
 }

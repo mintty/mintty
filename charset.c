@@ -15,7 +15,7 @@
 
 static cs_mode mode = CSM_DEFAULT;
 
-static const char *env_locale, *config_locale, *set_locale;
+static const char *env_locale, *config_locale, *term_locale;
 
 static const char *default_locale;
 static uint default_codepage;
@@ -25,7 +25,7 @@ static wchar cp_default_wchar;
 static char cp_default_char[4];
 
 #if HAS_LOCALES
-static bool valid_default_locale, use_locale;
+static bool valid_default_locale, use_locale, changed_locale;
 #endif
 
 bool cs_ambig_wide;
@@ -256,11 +256,12 @@ update_mode(void)
 #if HAS_LOCALES
   bool use_default_locale = mode == CSM_DEFAULT && valid_default_locale;
   setlocale(LC_CTYPE,
-    use_default_locale
-    ? default_locale
-    : cs_ambig_wide ? "ja_JP.UTF-8" : "C.UTF-8"
+    mode == CSM_OEM ? "C.CP437" :
+    use_default_locale ? default_locale :
+    cs_ambig_wide ? "ja_JP.UTF-8" : "C.UTF-8"
   );
   use_locale = use_default_locale || mode == CSM_UTF8;
+  changed_locale = true;
   if (use_locale)
     cs_cur_max = MB_CUR_MAX;
   else
@@ -285,7 +286,7 @@ cs_set_mode(cs_mode new_mode)
 static void
 update_locale(void)
 {
-  default_locale = set_locale ?: config_locale ?: env_locale;
+  default_locale = term_locale ?: config_locale ?: env_locale;
 
   const char *charset;
 #if HAS_LOCALES
@@ -316,17 +317,18 @@ cs_get_locale(void)
 void
 cs_set_locale(const char *locale)
 {
-  free((void *)set_locale);
-  set_locale = *locale ? strdup(locale) : 0;
+  free((void *)term_locale);
+  term_locale = *locale ? strdup(locale) : 0;
   update_locale();
 }
 
 void
-cs_config_locale(void)
+cs_reconfig(void)
 {
   if (*cfg.locale) {
     static char buf[32];
-    sprintf(buf, "%s%s%s", cfg.locale, *cfg.charset ? "." : "", cfg.charset);
+    snprintf(buf, sizeof buf, "%s%s%s",
+             cfg.locale, *cfg.charset ? "." : "", cfg.charset);
     config_locale = buf;
 #if HAS_LOCALES
     if (setlocale(LC_CTYPE, buf) &&
@@ -343,29 +345,33 @@ cs_config_locale(void)
   update_locale();
 }
 
+static const char *
+getlocenv(const char *name)
+{
+  const char *val = getenv(name);
+  return val && *val ? val : 0;
+}
+  
 const char *
 cs_init(void)
 {
   init_locale_menu();
   init_charset_menu();
   
-  // Get locale set in environment or Cygwin default
-  const char *
-  getlocenv(const char *name)
-  {
-    const char *val = getenv(name);
-    return val && *val ? val : 0;
-  }
-  const char *locenv =
+  const char *lang = 0;
+  env_locale =
     getlocenv("LC_ALL") ?: getlocenv("LC_CTYPE") ?: getlocenv("LANG");
-  env_locale = strdup(locenv ?: setlocale(LC_CTYPE, ""));
-  cs_config_locale();
-  const char *lang = config_locale;
+  if (!env_locale) {
 #if HAS_LOCALES
-  if (!lang && !locenv)
-    lang = env_locale;
-#endif  
-  return lang;
+    env_locale = lang = setlocale(LC_CTYPE, 0);
+#else
+    env_locale = "C";
+#endif
+  }
+  env_locale = strdup(env_locale);
+  
+  cs_reconfig();
+  return config_locale ?: lang;
 }
 
 int
