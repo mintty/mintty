@@ -164,8 +164,12 @@ parse_option(char *option)
       atoffset(bool, &cfg, offset) = atoi(val);
     when OPT_INT:
       atoffset(int, &cfg, offset) = atoi(val);
-    when OPT_STRING:
-      strncpy(&atoffset(char, &cfg, offset), val, options[i].size);
+    when OPT_STRING: {
+      char *str = &atoffset(char, &cfg, offset);
+      uint size = options[i].size;
+      strncpy(str, val, size - 1);
+      str[size - 1] = 0;
+    }
     when OPT_COLOUR: {
       uint r, g, b;
       if (sscanf(val, "%u,%u,%u", &r, &g, &b) == 3)
