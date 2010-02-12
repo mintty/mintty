@@ -125,10 +125,7 @@ static mod_keys
 get_mods(void)
 {
   inline bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
-  if (lctrl_time) {
-    lctrl = true;
-    lctrl_time = 0;
-  }
+  lctrl_time = 0;
   lctrl &= is_key_down(VK_LCONTROL);
   return
     is_key_down(VK_SHIFT) * MDK_SHIFT |
@@ -291,14 +288,15 @@ win_key_down(WPARAM wp, LPARAM lp)
   
   // Distinguish real LeftCtrl from keypresses from messages sent for AltGr.
   if (key == VK_CONTROL && !extended) {
+    lctrl = true;
     lctrl_time = GetMessageTime();
-    return 0;
   }
-  if (lctrl_time) {
+  else if (lctrl_time) {
     lctrl = !(key == VK_MENU && extended && lctrl_time == GetMessageTime());
     lctrl_time = 0;
   }
-  lctrl &= is_key_down(VK_LCONTROL);
+  else
+    lctrl &= is_key_down(VK_LCONTROL);
 
   bool
     numlock = kbd[VK_NUMLOCK] & 1,
@@ -670,7 +668,8 @@ win_key_up(WPARAM wp, LPARAM unused(lp))
       ldisc_send((char[]){alt_char}, 1, 1);
     else {
       if (alt_char < 0x20)
-        MultiByteToWideChar(CP_OEMCP, MB_USEGLYPHCHARS, (char[]){alt_char}, 1, &alt_char, 1); 
+        MultiByteToWideChar(CP_OEMCP, MB_USEGLYPHCHARS,
+                            (char[]){alt_char}, 1, &alt_char, 1);
       luni_send(&alt_char, 1, 1);
     }
   }
