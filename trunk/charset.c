@@ -326,7 +326,7 @@ void
 cs_reconfig(void)
 {
   if (*cfg.locale) {
-    static char buf[32];
+    static char buf[sizeof cfg.locale + sizeof cfg.charset];
     snprintf(buf, sizeof buf, "%s%s%s",
              cfg.locale, *cfg.charset ? "." : "", cfg.charset);
     config_locale = buf;

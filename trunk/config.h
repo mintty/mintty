@@ -41,8 +41,8 @@ typedef struct {
   int font_quality;
   bool bold_as_bright;
   bool allow_blinking;
-  char locale[16];
-  char charset[16];
+  char locale[32];
+  char charset[32];
   // Keys
   bool backspace_sends_bs;
   bool alt_sends_esc;
