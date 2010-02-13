@@ -520,20 +520,32 @@ win_key_down(WPARAM wp, LPARAM lp)
   
   bool ctrl_symbol_key(void) {
     wchar wc = undead_keycode();
+    char c;
     switch (wc) {
-      when '@' or '[' ... '_': wc = CTRL(wc);
-      when '/': wc = CTRL('_');
-      when '?': wc = CDEL;
+      when '@' or '[' ... '_': c = CTRL(wc);
+      when '/': c = CTRL('_');
+      when '?': c = CDEL;
       otherwise: return false;
     }
     esc_if(meta);
-    wbuf[wlen++] = wc;
+    ch(c);
     return true;
   }
   
   void ctrl_key(uchar c) {
     esc_if(alt);
-    wbuf[wlen++] = c | shift << 7;
+    if (!shift)
+      ch(c);
+    else {
+      // Send C1 control char if the charset supports it.
+      // Otherwise prefix the C0 char with ESC.
+      wchar wc = c | 0x80;
+      int l = cs_wcntombn(buf + len, &wc, cs_cur_max, 1);
+      if (l > 0 && buf[len] != '?')
+        len += l;
+      else
+        buf[0] = '\e', buf[1] = c, len = 2;
+    }
   }
   
   switch(key) {
