@@ -23,9 +23,16 @@ deps := $(objs:.o=.d)
 cpp_opts = -MMD -MP $(defines)
 
 cc_opts =  \
-  $(cpp_opts) -DNDEBUG -include std.h \
+  $(cpp_opts) -include std.h \
   -std=gnu99 -Wall -Wextra -Werror -Wundef \
   -march=i586 -mtune=pentium-m -fomit-frame-pointer -Os
+
+ifdef debug
+cc_opts += -g
+else
+cc_opts += -DNDEBUG 
+endif
+
 ld_opts := -s
 libs := -mwindows -lcomctl32 -limm32 -lwinspool -lole32 -luuid
 
