@@ -25,23 +25,24 @@ cpp_opts = -MMD -MP $(defines)
 cc_opts =  \
   $(cpp_opts) -include std.h \
   -std=gnu99 -Wall -Wextra -Werror -Wundef \
-  -march=i586 -mtune=pentium-m -fomit-frame-pointer -Os
+  -march=i586 -mtune=pentium-m
+
+ld_opts := -mwindows -lcomctl32 -limm32 -lwinspool -lole32 -luuid 
 
 ifdef debug
-cc_opts += -g
+cc_opts += -DDMALLOC -g
+ld_opts += -ldmallocth
 else
-cc_opts += -DNDEBUG 
+cc_opts += -DNDEBUG -fomit-frame-pointer -Os
+ld_opts += -s
 endif
-
-ld_opts := -s
-libs := -mwindows -lcomctl32 -limm32 -lwinspool -lole32 -luuid
 
 cc := gcc
 rc_cpp := $(cc) -E -xc-header -DRC_INVOKED $(cpp_opts)
 rc := windres --preprocessor '$(rc_cpp)'
 
 $(exe): $(objs)
-	$(cc) -o $@ $^ $(ld_opts) $(libs)
+	$(cc) -o $@ $^ $(ld_opts)
 	du -b $@
 
 cygwin17 = $(dir)-cygwin17.zip
