@@ -29,7 +29,6 @@ freeline(termline *line)
   if (line) {
     free(line->chars);
     free(line);
-    free(line);
   }
 }
 
