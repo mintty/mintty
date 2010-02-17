@@ -54,7 +54,7 @@ typedef struct {
   bool copy_on_select;
   bool clicks_place_cursor;
   int right_click_action;
-  bool clicks_target_app;
+  int clicks_target_app;
   int click_target_mod;
   // Output
   char printer[64];

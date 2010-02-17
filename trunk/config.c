@@ -107,7 +107,7 @@ options[] = {
   {"CopyOnSelect", OPT_BOOL, cfg_field(copy_on_select)},
   {"ClicksPlaceCursor", OPT_BOOL, cfg_field(clicks_place_cursor)},
   {"RightClickAction", OPT_INT, cfg_field(right_click_action)},
-  {"ClicksTargetApp", OPT_BOOL, cfg_field(clicks_target_app)},
+  {"ClicksTargetApp", OPT_INT, cfg_field(clicks_target_app)},
   {"ClickTargetMod", OPT_INT, cfg_field(click_target_mod)},
   // Output
   {"Printer", OPT_STRING, cfg_field(printer)},
