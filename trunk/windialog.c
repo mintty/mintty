@@ -239,9 +239,9 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
 
     when WM_DESTROY:
-      ctrl_free_box(ctrlbox);
       winctrl_cleanup(&ctrls_base);
       winctrl_cleanup(&ctrls_panel);
+      ctrl_free_box(ctrlbox);
       windlg_cleanup();
       config_wnd = 0;
 
