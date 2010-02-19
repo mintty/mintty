@@ -580,9 +580,9 @@ win_key_down(WPARAM wp, LPARAM lp)
     when VK_ESCAPE:
       term.app_escape_key
       ? ss3('[')
-      : ctrl_key(CTRL(term.escape_sends_fs ? '\\' : '['));
+      : ctrl_key(term.escape_sends_fs ? CTRL('\\') : CTRL('['));
     when VK_PAUSE:
-      ctrl_key(CTRL(']'));
+      ctrl_key(ctrl & !extended ? CTRL('\\') : CTRL(']'));
     when VK_CANCEL:
       ctrl_key(CTRL('\\'));
     when VK_F1 ... VK_F4:
