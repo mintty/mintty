@@ -575,8 +575,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_DEFSIZE: default_size();
         when IDM_FULLSCREEN: win_maximise(win_is_fullscreen() ? 0 : 2);
         when IDM_OPTIONS: win_open_config();
-        when IDM_DUPLICATE:
-          spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv); 
+        when IDM_NEW:
+          spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv);
       }
     when WM_VSCROLL:
       switch (LOWORD(wp)) {

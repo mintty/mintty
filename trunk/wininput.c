@@ -27,8 +27,8 @@ void
 win_update_menus(void)
 {
   ModifyMenu(
-    sysmenu, IDM_DUPLICATE, 0, IDM_DUPLICATE,
-    term.shortcut_override ? "&Duplicate" : "&Duplicate\tAlt+F2" 
+    sysmenu, IDM_NEW, 0, IDM_NEW,
+    term.shortcut_override ? "Ne&w" : "Ne&w\tAlt+F2" 
   );
   ModifyMenu(
     sysmenu, SC_CLOSE, 0, SC_CLOSE,
@@ -97,7 +97,7 @@ win_init_menus(void)
   InsertMenu(sysmenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
   InsertMenu(sysmenu, 0, MF_BYPOSITION | MF_ENABLED,
                          IDM_OPTIONS, "&Options...");
-  InsertMenu(sysmenu, SC_CLOSE, MF_ENABLED, IDM_DUPLICATE, 0);
+  InsertMenu(sysmenu, SC_CLOSE, MF_ENABLED, IDM_NEW, 0);
 }
 
 void
@@ -353,7 +353,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       if (mods == MDK_ALT) {
         WPARAM cmd;
         switch (key) {
-          when VK_F2:  cmd = IDM_DUPLICATE;
+          when VK_F2:  cmd = IDM_NEW;
           when VK_F4:  cmd = SC_CLOSE;
           when VK_F8:  cmd = IDM_RESET;
           when VK_F10: cmd = IDM_DEFSIZE;
