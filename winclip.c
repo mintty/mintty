@@ -433,41 +433,37 @@ paste_hdrop(HDROP drop)
     cygwin_conv_to_full_posix_path(wfn, fn);
 #endif
 
-    bool has_cntrl = false;
-    for (char *p = fn; *p && !has_cntrl; p++)
-      has_cntrl = iscntrl((uchar)*p);
-    
-    if (has_cntrl) { // Use C-style quoting (enclosed in $'')
-      buf_add('$');
-      buf_add('\'');
-      for (char *p = fn; *p; p++) {
-        uchar c = *p;
-        if (iscntrl(c)) {
-          buf_add('\\');
-          buf_add('0' + (c >> 6));
-          buf_add('0' + (c >> 3 & 7));
-          buf_add('0' + (c & 7));
-        }
-        else {
-          if (c == '\\' || c == '\'')
-            buf_add('\\');
-          buf_add(c);
-        }
-      }
-      buf_add('\'');
+    bool has_tick = false, needs_quotes = false, needs_dollar = false;
+    for (char *p = fn; *p && !needs_dollar; p++) {
+      uchar c = *p;
+      has_tick |= c == '\'';
+      needs_quotes |= isascii(c) && !isalnum(c) && !strchr("+,-./@_~'", c);
+      needs_dollar = iscntrl(c) || (needs_quotes && has_tick);
     }
-    else { // Use backslash quoting on anything special
-      // The tilde is only special at the start.
-      if (*fn == '~')
+    needs_quotes |= needs_dollar;
+    
+    if (needs_dollar)
+      buf_add('$');
+    if (needs_quotes)
+      buf_add('\'');
+    else if (*fn == '~')
+      buf_add('\\');
+    for (char *p = fn; *p; p++) {
+      uchar c = *p;
+      if (iscntrl(c)) {
         buf_add('\\');
-      for (char *p = fn; *p; p++) {
-        uchar c = *p;
-        if (isascii(c) && !isalnum(c) && !strchr("+,-./@_~", c))
+        buf_add('0' + (c >> 6));
+        buf_add('0' + (c >> 3 & 7));
+        buf_add('0' + (c & 7));
+      }
+      else {
+        if (c == '\'')
           buf_add('\\');
         buf_add(c);
       }
     }
-
+    if (needs_quotes)
+      buf_add('\'');
     buf_add(' ');  // Filename separator
     free(fn);
   }
