@@ -26,6 +26,9 @@ static char cp_default_char[4];
 
 #if HAS_LOCALES
 static bool valid_default_locale, use_locale, changed_locale;
+enum { CP_DEFAULT = CP_UTF8 };
+#else
+enum { CP_DEFAULT = CP_ACP };
 #endif
 
 bool cs_ambig_wide;
@@ -149,9 +152,9 @@ static uint
 cs_codepage(const char *name)
 {
   if (!*name)
-    return CP_ACP;
+    return CP_DEFAULT;
   
-  uint cp = CP_ACP;
+  uint cp = CP_DEFAULT;
   char upname[strlen(name) + 1];
   strtoupper(upname, name);
   uint iso;
@@ -174,7 +177,7 @@ cs_codepage(const char *name)
     }
   }
   
-  return valid_codepage(cp) ? cp : CP_ACP;
+  return valid_codepage(cp) ? cp : CP_DEFAULT;
 }
 
 static void
