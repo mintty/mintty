@@ -38,7 +38,7 @@
   APPNAME " " VERSION "\n" \
   COPYRIGHT "\n" \
   "License GPLv3+: GNU GPL version 3 or later\n" \
-  "There is no warranty, to the extent permitted by law."
+  "There is no warranty, to the extent permitted by law.\n"
 
 #define ABOUT_TEXT \
   "Thanks to Simon Tatham and the other contributors for their\n"\
@@ -48,6 +48,6 @@
   "\n" \
   "Please report bugs or request enhancements through the\n" \
   "issue tracker on the mintty project page located at\n" \
-  WEBSITE "."
+  WEBSITE ".\n"
 
 #endif
