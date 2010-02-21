@@ -540,6 +540,23 @@ confirm_exit(void)
   return confirmed;
 }
 
+void
+win_show_about(void)
+{
+  char *text;
+  asprintf(&text, "%s\n" ABOUT_TEXT, VERSION_TEXT);
+  MessageBoxIndirect(&(MSGBOXPARAMS){
+    .cbSize = sizeof(MSGBOXPARAMS),
+    .hwndOwner = config_wnd,
+    .hInstance = inst,
+    .lpszCaption = APPNAME,
+    .dwStyle = MB_USERICON | MB_OK,
+    .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
+    .lpszText = text
+  });
+  free(text);
+}
+
 static LRESULT CALLBACK
 win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
 {
@@ -760,8 +777,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
   return DefWindowProcW(wnd, message, wp, lp);
 }
 
-static const char *help =
-  "Usage: %s [OPTION]... [ PROGRAM [ARG]... | - ]\n"
+static const char help[] =
+  "Usage: " APPNAME " [OPTION]... [ PROGRAM [ARG]... | - ]\n"
   "\n"
   "If a program is supplied, it is executed with its arguments. Otherwise, the\n"
   "shell to execute is looked up in the SHELL environment variable followed by\n"
@@ -779,12 +796,12 @@ static const char *help =
   "  -u, --utmp            Create a utmp entry\n"
   "  -h, --hold never|always|error  Keep window open after command terminates?\n"
   "  -c, --config FILE     Load specified config file\n"
-  "  -o, --option OPT=VAL  Override config option with given value\n"
+  "  -o, --option OPT=VAL  Override config file option with given value\n"
   "  -H, --help            Display help and exit\n"
   "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = "+HVuec:o:p:s:t:i:l:h:";
+static const char short_opts[] = ":+HVuec:o:p:s:t:i:l:h:";
 
 static const struct option
 opts[] = { 
@@ -804,15 +821,24 @@ opts[] = {
   {0, 0, 0, 0}
 };
 
-static no_return __attribute__((format(printf, 1, 2)))
-error(char *f, ...) 
+static void
+show_msg(FILE *stream, const char *msg)
 {
-  fprintf(stderr, "%s: ", main_argv[0]);
+  if (fputs(msg, stream) < 0 || fflush(stream) < 0)
+    MessageBox(0, msg, APPNAME, MB_OK);
+}
+
+static no_return __attribute__((format(printf, 2, 3)))
+error(bool syntax, char *format, ...) 
+{
+  char *msg;
   va_list va;
-  va_start(va, f);
-  vfprintf(stderr, f, va);
+  va_start(va, format);
+  vasprintf(&msg, format, va);
   va_end(va);
-  fputc('\n', stderr);
+  asprintf(&msg, "%s: %s\n%s", main_argv[0], msg,
+            syntax ? "Try '--help' for more information.\n" : "");
+  show_msg(stderr, msg);
   exit(1);
 }
 
@@ -839,6 +865,7 @@ main(int argc, char *argv[])
     int opt = getopt_long(argc, argv, short_opts, opts, 0);
     if (opt == -1 || opt == 'e')
       break;
+    char *longopt = argv[optind - 1], *shortopt = (char[]){'-', optopt, 0};
     switch (opt) {
       when 'c': load_config(optarg);
       when 'o': parse_option(optarg);
@@ -848,10 +875,10 @@ main(int argc, char *argv[])
       when 'u': utmp_enabled = true;
       when 'p':
         if (sscanf(optarg, "%i,%i%1s", &x, &y, (char[2]){}) != 2)
-          error("syntax error in position argument -- %s", optarg);
+          error(true, "syntax error in position argument '%s'", optarg);
       when 's':
         if (sscanf(optarg, "%u,%u%1s", &cols, &rows, (char[2]){}) != 2)
-          error("syntax error in size argument -- %s", optarg);
+          error(true, "syntax error in size argument '%s'", optarg);
         size_override = true;
       when 'h': {
         int len = strlen(optarg);
@@ -862,24 +889,26 @@ main(int argc, char *argv[])
         else if (memcmp(optarg, "error", len) == 0)
           hold = HOLD_ERROR;
         else
-          error("invalid argument to hold option -- %s", optarg);
+          error(true, "invalid hold argument '%s'", optarg);
       }
       when 'C': {
         int len = mbstowcs(0, optarg, 0);
         if (len < 0)
-          error("invalid character in class name -- %s", optarg);
+          error(false, "invalid character in class name '%s'", optarg);
         class_name = newn(wchar, len + 1);
         mbstowcs(class_name, optarg, len + 1);
       }
       when 'H':
-        printf(help, *argv);
+        show_msg(stdout, help);
         return 0;
       when 'V':
-        puts(VERSION_TEXT);
+        show_msg(stdout, VERSION_TEXT);
         return 0;
-      otherwise:
-        fputs("Try --help for more information.\n", stderr);
-        exit(1);
+      when '?':
+        error(true, "unknown option '%s'", optopt ? shortopt : longopt);
+      when ':':
+        error(true, "option '%s' requires an argument",
+              longopt[1] == '-' ? longopt : shortopt);
     }
   }
   
@@ -900,7 +929,7 @@ main(int argc, char *argv[])
 #if CYGWIN_VERSION_API_MINOR >= 181
     wchar *win_icon_file = cygwin_create_path(CCP_POSIX_TO_WIN_W, icon_file);
     if (!win_icon_file)
-      error("invalid icon file path -- %s", icon_file);
+      error(false, "invalid icon file path '%s'", icon_file);
     ExtractIconExW(win_icon_file, icon_index, &large_icon, &small_icon, 1);
     free(win_icon_file);
 #else
@@ -909,7 +938,7 @@ main(int argc, char *argv[])
     ExtractIconExA(win_icon_file, icon_index, &large_icon, &small_icon, 1);
 #endif
     if (!small_icon || !large_icon)
-      error("could not load icon -- %s", icon_file);
+      error(false, "could not load icon from '%s'", icon_file);
   }
 
   if (!size_override) {
@@ -1047,21 +1076,4 @@ main(int argc, char *argv[])
       term_send_paste();
     }
   }
-}
-
-void
-win_show_about(void)
-{
-  char *text;
-  asprintf(&text, "%s\n\n" ABOUT_TEXT, VERSION_TEXT);
-  MessageBoxIndirect(&(MSGBOXPARAMS){
-    .cbSize = sizeof(MSGBOXPARAMS),
-    .hwndOwner = config_wnd,
-    .hInstance = inst,
-    .lpszCaption = APPNAME,
-    .dwStyle = MB_USERICON | MB_OK,
-    .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
-    .lpszText = text
-  });
-  free(text);
 }
