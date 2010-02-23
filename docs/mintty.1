@@ -1287,28 +1287,49 @@ set output-meta on
 
 .SS Mode-dependent cursor in vim
 
-Using the control sequences for cursor style and application escape key mode,
-the \fBvim\fP editor can be configured to change cursor depending on mode.
+Using the control sequences for cursor style, the \fBvim\fP editor can be
+configured to change cursor depending on mode.
 For example, with the following lines in \fI.vimrc\fP, vim will show a block
 cursor in normal mode and a line cursor in insert mode:
 
 .RS
 .nf
 \fC
-let &t_ti.="\\e[1 q\\e[?7727h"
+let &t_ti.="\\e[1 q"
 let &t_SI.="\\e[5 q"
 let &t_EI.="\\e[1 q"
-let &t_te.="\\e[0 q\\e[?7727l"
+let &t_te.="\\e[0 q"
+\fP
+.fi
+.RE
+
+
+.SS Avoiding escape timeout issues in vim
+
+A historical flaw of Unix terminals is that the keycode of the escape key,
+i.e. the escape character, also appears at the start of many other keycodes.
+This means that on seeing an escape character, an application cannot be sure
+whether to treat it as an escape key press or whether to expect more characters
+to complete a longer keycode.
+
+Therefore they tend to employ a timeout to decide.  The delay on the escape
+key can be annoying though, particularly with the mode-dependent cursor
+above enabled.  The timeout approach can also fail on slow connections or a
+heavily loaded machine.
+
+Mintty's "application escape key mode" can be used to avoid this by switching
+the escape key to an unambiguous keycode.  This will activate it in vim:
+
+.RS
+.nf
+\fC
+let &t_ti.="\\e[?7727h"
+let &t_te.="\\e[?7727l"
 noremap <Esc>O[ <Esc>
 noremap! <Esc>O[ <Esc>
 \fP
 .fi
 .RE
-
-Without application escape key mode, it would take a second for the cursor to
-change after pressing Esc to leave insert mode.
-(That time can otherwise be reduced using vim's \fIttimeoutlen\fP setting,
-at the risk of keycodes not being recognised in some circumstances.)
 
 
 .SH LIMITATIONS
