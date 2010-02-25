@@ -801,7 +801,7 @@ static const char help[] =
   "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = ":+HVuec:o:p:s:t:i:l:h:";
+static const char short_opts[] = "+:HVuec:o:p:s:t:i:l:h:";
 
 static const struct option
 opts[] = { 
