@@ -100,7 +100,8 @@ lookup_val(const char *key)
 void
 read_string_setting(const char *key, char *res, int len, const char *def)
 {
-  snprintf(res, len, lookup_val(key) ?: def);
+  strncpy(res, lookup_val(key) ?: def, len);
+  res[len - 1] = 0;
 }
 
 void
