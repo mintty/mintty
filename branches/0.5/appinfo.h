@@ -12,10 +12,10 @@
 #define AUTHOR  "Andy Koppe"
 #define YEARS   "2008-10"
 
-#define VERSION "0.5.7"
+#define VERSION "0.5.8"
 #define MAJOR_VERSION  0
 #define MINOR_VERSION  5
-#define PATCH_NUMBER   7
+#define PATCH_NUMBER   8
 #define BUILD_NUMBER   1
 
 #if defined BRANCH && defined REVISION
