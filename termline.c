@@ -24,7 +24,7 @@ newline(int cols, int bce)
 }
 
 void
-freeline(termline *line)
+freeline(termline * line)
 {
   if (line) {
     free(line->chars);
@@ -33,9 +33,8 @@ freeline(termline *line)
 }
 
 void
-unlineptr(termline *line)
+unlineptr(termline * line)
 {
-  assert(line);
   if (line->temporary)
     freeline(line);
 }
@@ -57,7 +56,6 @@ struct buf {
 static void
 add(struct buf *b, uchar c)
 {
-  assert(b);
   if (b->len >= b->size) {
     b->size = (b->len * 3 / 2) + 512;
     b->data = renewn(b->data, b->size);
@@ -120,7 +118,7 @@ add_cc(termline *line, int col, wchar chr)
  * Clear the combining character list in a character cell.
  */
 void
-clear_cc(termline *line, int col)
+clear_cc(termline * line, int col)
 {
   int oldfree, origcol = col;
 
@@ -147,7 +145,7 @@ clear_cc(termline *line, int col)
  * fields to be.
  */
 int
-termchars_equal_override(termchar *a, termchar *b, uint bchr, uint battr)
+termchars_equal_override(termchar * a, termchar * b, uint bchr, uint battr)
 {
  /* FULL-TERMCHAR */
   if (a->chr != bchr)
@@ -166,7 +164,7 @@ termchars_equal_override(termchar *a, termchar *b, uint bchr, uint battr)
 }
 
 int
-termchars_equal(termchar *a, termchar *b)
+termchars_equal(termchar * a, termchar * b)
 {
   return termchars_equal_override(a, b, b->chr, b->attr);
 }
@@ -176,7 +174,7 @@ termchars_equal(termchar *a, termchar *b)
  * termline, so as to access its free list.)
  */
 void
-copy_termchar(termline *destline, int x, termchar *src)
+copy_termchar(termline * destline, int x, termchar * src)
 {
   clear_cc(destline, x);
 
@@ -193,7 +191,7 @@ copy_termchar(termline *destline, int x, termchar *src)
  * Move a character cell within its termline.
  */
 void
-move_termchar(termline * line, termchar *dest, termchar *src)
+move_termchar(termline * line, termchar * dest, termchar * src)
 {
  /* First clear the cc list from the original char, just in case. */
   clear_cc(line, dest - line->chars);
@@ -228,7 +226,7 @@ makeliteral_chr(struct buf *buf, termchar *c)
     else if (b >= 0xD8 && b < 0xE0)
       b -= 0xC0;
     else
-      add(buf, 0x7F);
+      add (buf, 0x7F);
     add(buf, b);
   }
   add(buf, wc);
@@ -505,7 +503,7 @@ makerle(struct buf *b, termline *ldata,
 
 
 uchar *
-compressline(termline *ldata)
+compressline(termline * ldata)
 {
   struct buf buffer = { null, 0, 0 }, *b = &buffer;
 
@@ -594,7 +592,7 @@ readrle(struct buf *b, termline *ldata,
 }
 
 termline *
-decompressline(uchar *data, int *bytes_used)
+decompressline(uchar * data, int *bytes_used)
 {
   int ncols, byte, shift;
   struct buf buffer, *b = &buffer;
@@ -662,7 +660,7 @@ decompressline(uchar *data, int *bytes_used)
  * Resize a line to make it `cols' columns wide.
  */
 void
-resizeline(termline *line, int cols)
+resizeline(termline * line, int cols)
 {
   int i, oldcols;
 
@@ -763,13 +761,14 @@ lineptr(int y)
     else {
       y += count234(term.scrollback);
       uchar *cline = index234(term.scrollback, y);
-      assert(cline);
       line = decompressline(cline, null);
     }
   }
 
-  assert(line);
+  assert(line != null);
+
   resizeline(line, term.cols);
+
   return line;
 }
 
@@ -780,7 +779,7 @@ lineptr(int y)
  * fed to the algorithm on each line of the display.
  */
 static int
-term_bidi_cache_hit(int line, termchar *lbefore, int width)
+term_bidi_cache_hit(int line, termchar * lbefore, int width)
 {
   int i;
 
@@ -804,8 +803,8 @@ term_bidi_cache_hit(int line, termchar *lbefore, int width)
 }
 
 static void
-term_bidi_cache_store(int line, termchar *lbefore, termchar *lafter,
-                      bidi_char *wcTo, int width, int size)
+term_bidi_cache_store(int line, termchar * lbefore, termchar * lafter,
+                      bidi_char * wcTo, int width, int size)
 {
   int i;
 
@@ -859,7 +858,7 @@ term_bidi_cache_store(int line, termchar *lbefore, termchar *lafter,
  * term.post_bidi_cache[scr_y].*.
  */
 termchar *
-term_bidi_line(termline *ldata, int scr_y)
+term_bidi_line(termline * ldata, int scr_y)
 {
   termchar *lchars;
   int it;

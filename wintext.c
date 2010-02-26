@@ -1,5 +1,5 @@
 // wintext.c (part of mintty)
-// Copyright 2008-10  Andy Koppe
+// Copyright 2008-09  Andy Koppe
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -122,8 +122,8 @@ win_init_fonts(void)
   SelectObject(dc, fonts[FONT_NORMAL]);
   GetTextMetrics(dc, &tm);
 
-  font_height = tm.tmHeight + cfg.row_spacing;
-  font_width = tm.tmAveCharWidth + cfg.col_spacing;
+  font_height = tm.tmHeight;
+  font_width = tm.tmAveCharWidth;
   font_dualwidth = (tm.tmMaxCharWidth >= tm.tmAveCharWidth * 3 / 2);
   
   float latin_char_width, greek_char_width, line_char_width;
@@ -334,7 +334,7 @@ exact_textout(int x, int y, CONST RECT * lprc, ushort * lpString,
   GetCharacterPlacementW(dc, lpString, cbCount, 0, &gcpr,
                          FLI_MASK | GCP_CLASSIN | GCP_DIACRITIC);
 
-  ExtTextOut(dc, x, y + cfg.row_spacing,
+  ExtTextOut(dc, x, y,
              ETO_GLYPH_INDEX | ETO_CLIPPED | (opaque ? ETO_OPAQUE : 0), lprc,
              buffer, cbCount, lpDx);
 }
@@ -385,8 +385,7 @@ general_textout(int x, int y, CONST RECT * lprc, ushort * lpString,
       newrc.right = lprc->left + xn - x;
       newrc.top = lprc->top;
       newrc.bottom = lprc->bottom;
-      ExtTextOutW(dc, xp, y + cfg.row_spacing, 
-                  ETO_CLIPPED | (opaque ? ETO_OPAQUE : 0), &newrc,
+      ExtTextOutW(dc, xp, y, ETO_CLIPPED | (opaque ? ETO_OPAQUE : 0), &newrc,
                   lpString + i, j - i, lpDx + i);
     }
 
@@ -579,8 +578,8 @@ win_text_internal(int x, int y, wchar *text, int len,
  /* And the shadow bold hack. */
   if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD)) {
     SetBkMode(dc, TRANSPARENT);
-    ExtTextOutW(dc, x + 1,
-                y - font_height * (lattr == LATTR_BOT) + cfg.row_spacing,
+    ExtTextOutW(dc, x - 1,
+                y - font_height * (lattr == LATTR_BOT),
                 ETO_CLIPPED, &line_box, text, len, dxs);
   }
   if (lattr != LATTR_TOP &&

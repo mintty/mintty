@@ -12,11 +12,11 @@
 #define AUTHOR  "Andy Koppe"
 #define YEARS   "2008-10"
 
-#define VERSION "0.6-beta2"
+#define VERSION "0.5.8"
 #define MAJOR_VERSION  0
-#define MINOR_VERSION  6
-#define PATCH_NUMBER   0
-#define BUILD_NUMBER   2
+#define MINOR_VERSION  5
+#define PATCH_NUMBER   8
+#define BUILD_NUMBER   1
 
 #if defined BRANCH && defined REVISION
 #undef VERSION
@@ -38,7 +38,7 @@
   APPNAME " " VERSION "\n" \
   COPYRIGHT "\n" \
   "License GPLv3+: GNU GPL version 3 or later\n" \
-  "There is no warranty, to the extent permitted by law.\n"
+  "There is no warranty, to the extent permitted by law."
 
 #define ABOUT_TEXT \
   "Thanks to Simon Tatham and the other contributors for their\n"\
@@ -48,6 +48,6 @@
   "\n" \
   "Please report bugs or request enhancements through the\n" \
   "issue tracker on the mintty project page located at\n" \
-  WEBSITE ".\n"
+  WEBSITE "."
 
 #endif

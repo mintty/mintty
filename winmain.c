@@ -1,5 +1,5 @@
 // win.c (part of mintty)
-// Copyright 2008-10 Andy Koppe
+// Copyright 2008-09 Andy Koppe
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -276,15 +276,21 @@ win_resize(int rows, int cols)
 }
 
 static void
-reinit_fonts(void)
+reset_window(int reinit)
 {
-  win_deinit_fonts();
-  win_init_fonts();
-}
+ /*
+  * This function decides how to resize or redraw when the 
+  * user changes something. 
+  */
 
-static void
-resize_window(bool forced)
-{
+ /* Are we being forced to reload the fonts ? */
+  if (reinit > 1) {
+    win_deinit_fonts();
+    win_init_fonts();
+  }
+
+  int cols = term.cols, rows = term.rows;
+
  /* Current window sizes ... */
   RECT cr, wr;
   GetClientRect(wnd, &cr);
@@ -296,11 +302,10 @@ resize_window(bool forced)
   int term_width = client_width - 2 * PADDING;
   int term_height = client_height - 2 * PADDING;
   
-  int cols = term.cols, rows = term.rows;
   if (!client_width || !client_height) {
    /* Oh, looks like we're minimised: do nothing */
   }
-  else if (IsZoomed(wnd) || forced) {
+  else if (IsZoomed(wnd) || reinit == -1) {
    /* We're fullscreen, or we were told to resize,
     * this means we must not change the size of
     * the window so the terminal has to change.
@@ -377,7 +382,7 @@ make_fullscreen(void)
   enable_glass(false);
   
  /* We may have changed size as a result */
-  resize_window(false);
+  reset_window(0);
 }
 
 /*
@@ -470,6 +475,7 @@ win_reconfig(void)
   term_reconfig();
   
  /* Enable or disable the scroll bar, etc */
+  int init_lvl = 1;
   if (new_cfg.scrollbar != cfg.scrollbar) {
     LONG flag = GetWindowLongPtr(wnd, GWL_STYLE);
     if (new_cfg.scrollbar)
@@ -482,24 +488,22 @@ win_reconfig(void)
                  SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
   }
   
-  bool font_changed =
-    memcmp(&new_cfg.font, &cfg.font, sizeof cfg.font) ||
-    new_cfg.bold_as_bright != cfg.bold_as_bright;
+  if (memcmp(&new_cfg.font, &cfg.font, sizeof cfg.font) != 0 ||
+      new_cfg.bold_as_bright != cfg.bold_as_bright) {
+    font_size = new_cfg.font.size;
+    init_lvl = 2;
+  }
   
   /* Copy the new config and refresh everything */
   cfg = new_cfg;
-  if (font_changed) {
-    font_size = cfg.font.size;
-    reinit_fonts();
-  }
   win_reconfig_palette();
   update_transparency();
   win_invalidate_all();
-  resize_window(false);
+  reset_window(init_lvl);
   win_update_mouse();
 
   bool old_ambig_wide = cs_ambig_wide;
-  cs_reconfig();
+  cs_config_locale();
   if (term.report_ambig_width && old_ambig_wide != cs_ambig_wide)
     ldisc_send(cs_ambig_wide ? "\e[2W" : "\e[1W", 4, 0);
 }
@@ -514,8 +518,7 @@ void
 win_set_font_size(int size)
 {
   font_size = size ? sgn(font_size) * min(size, 72) : cfg.font.size;
-  reinit_fonts();
-  resize_window(false);
+  reset_window(2);
 }
 
 void
@@ -538,23 +541,6 @@ confirm_exit(void)
       APPNAME, MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON2
     ) == IDOK;
   return confirmed;
-}
-
-void
-win_show_about(void)
-{
-  char *text;
-  asprintf(&text, "%s\n" ABOUT_TEXT, VERSION_TEXT);
-  MessageBoxIndirect(&(MSGBOXPARAMS){
-    .cbSize = sizeof(MSGBOXPARAMS),
-    .hwndOwner = config_wnd,
-    .hInstance = inst,
-    .lpszCaption = APPNAME,
-    .dwStyle = MB_USERICON | MB_OK,
-    .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
-    .lpszText = text
-  });
-  free(text);
 }
 
 static LRESULT CALLBACK
@@ -592,8 +578,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_DEFSIZE: default_size();
         when IDM_FULLSCREEN: win_maximise(win_is_fullscreen() ? 0 : 2);
         when IDM_OPTIONS: win_open_config();
-        when IDM_NEW:
-          spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv);
+        when IDM_DUPLICATE:
+          spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv); 
       }
     when WM_VSCROLL:
       switch (LOWORD(wp)) {
@@ -747,12 +733,12 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         prev_rows = term.rows;
         prev_cols = term.cols;
         notify_resize(new_rows, new_cols);
-        resize_window(false);
+        reset_window(0);
       }
       else if (wp == SIZE_RESTORED && was_zoomed) {
         was_zoomed = 0;
         notify_resize(prev_rows, prev_cols);
-        resize_window(false);
+        reset_window(0);
       }
       else {
        /* This is an unexpected resize, these will normally happen
@@ -761,7 +747,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         *
         * This is also called with minimize.
         */
-        resize_window(true);
+        reset_window(-1);
       }
       update_sys_cursor();
       return 0;
@@ -777,31 +763,32 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
   return DefWindowProcW(wnd, message, wp, lp);
 }
 
-static const char help[] =
-  "Usage: " APPNAME " [OPTION]... [ PROGRAM [ARG]... | - ]\n"
+static const char *help =
+  "Usage: %s [OPTION]... [ - | PROGRAM [ARG]... ]\n"
   "\n"
-  "If a program is supplied, it is executed with its arguments. Otherwise, the\n"
-  "shell to execute is looked up in the SHELL environment variable followed by\n"
-  "the user's shell setting in /etc/passwd. Failing that, /bin/sh is used. If\n"
-  "the last argument is a single dash, the shell is invoked as a login shell.\n"
+  "If a program is supplied, it is executed with its arguments. Otherwise,\n"
+  "mintty looks for a shell to execute in the SHELL environment variable.\n"
+  "If that is not set, it tries to read the user's default shell setting\n"
+  "from /etc/passwd. Failing that, it falls back to /bin/sh. If the last\n"
+  "argument is a single dash, the shell is invoked as a login shell.\n"
   "\n"
   "Options:\n"
   "  -e, --exec            Treat remaining arguments as the command to execute\n"
-  "  -p, --position X,Y    Open window at specified coordinates\n"
-  "  -s, --size COLS,ROWS  Set screen size in characters\n"
-  "  -t, --title TITLE     Set window title (default: the invoked command)\n"
-  "      --class CLASS     Set window class name (default: " APPNAME ")\n"
-  "  -i, --icon FILE[,IX]  Load window icon from file, optionally with index\n"
-  "  -l, --log FILE        Log output to file\n"
+  "  -c, --config=FILE     Use specified config file (default: ~/.minttyrc)\n"
+  "  -p, --position=X,Y    Open window at specified coordinates\n"
+  "  -s, --size=COLS,ROWS  Set screen size in characters\n"
+  "  -t, --title=TITLE     Set window title (default: the invoked command)\n"
+  "      --class=CLASS     Set window class name (default: " APPNAME ")\n"
+  "  -i, --icon=FILE[,IX]  Load window icon from file, optionally with index\n"
+  "  -l, --log=FILE        Log output to file\n"
   "  -u, --utmp            Create a utmp entry\n"
-  "  -h, --hold never|always|error  Keep window open after command terminates?\n"
-  "  -c, --config FILE     Load specified config file\n"
-  "  -o, --option OPT=VAL  Override config file option with given value\n"
+  "  -h, --hold=never|always|error\n"
+  "                        Keep window open after command terminates?\n"
   "  -H, --help            Display help and exit\n"
   "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = "+:HVuec:o:p:s:t:i:l:h:";
+static const char short_opts[] = "+HVuec:p:s:t:i:l:h:";
 
 static const struct option
 opts[] = { 
@@ -810,7 +797,6 @@ opts[] = {
   {"exec",     no_argument,       0, 'e'},
   {"utmp",     no_argument,       0, 'u'},
   {"config",   required_argument, 0, 'c'},
-  {"option",   required_argument, 0, 'o'},
   {"position", required_argument, 0, 'p'},
   {"size",     required_argument, 0, 's'},
   {"title",    required_argument, 0, 't'},
@@ -821,24 +807,15 @@ opts[] = {
   {0, 0, 0, 0}
 };
 
-static void
-show_msg(FILE *stream, const char *msg)
+static no_return __attribute__((format(printf, 1, 2)))
+error(char *f, ...) 
 {
-  if (fputs(msg, stream) < 0 || fflush(stream) < 0)
-    MessageBox(0, msg, APPNAME, MB_OK);
-}
-
-static no_return __attribute__((format(printf, 2, 3)))
-error(bool syntax, char *format, ...) 
-{
-  char *msg;
+  fprintf(stderr, "%s: ", main_argv[0]);
   va_list va;
-  va_start(va, format);
-  vasprintf(&msg, format, va);
+  va_start(va, f);
+  vfprintf(stderr, f, va);
   va_end(va);
-  asprintf(&msg, "%s: %s\n%s", main_argv[0], msg,
-            syntax ? "Try '--help' for more information.\n" : "");
-  show_msg(stderr, msg);
+  fputc('\n', stderr);
   exit(1);
 }
 
@@ -852,33 +829,24 @@ main(int argc, char *argv[])
   wchar *class_name = _W(APPNAME);
 
   setlocale(LC_CTYPE, "");
-  main_argv = argv;
-  
-  load_config("/etc/minttyrc");
-  
-  char *rc_file;
-  asprintf(&rc_file, "%s/.minttyrc", getenv("HOME") ?: "/tmp");
-  load_config(rc_file);
-  free(rc_file);
+  main_argv = argv;  
 
   for (;;) {
     int opt = getopt_long(argc, argv, short_opts, opts, 0);
     if (opt == -1 || opt == 'e')
       break;
-    char *longopt = argv[optind - 1], *shortopt = (char[]){'-', optopt, 0};
     switch (opt) {
-      when 'c': load_config(optarg);
-      when 'o': parse_option(optarg);
+      when 'c': config_file = optarg;
       when 't': title = optarg;
       when 'i': icon_file = optarg;
       when 'l': log_file = optarg;
       when 'u': utmp_enabled = true;
       when 'p':
         if (sscanf(optarg, "%i,%i%1s", &x, &y, (char[2]){}) != 2)
-          error(true, "syntax error in position argument '%s'", optarg);
+          error("syntax error in position argument -- %s", optarg);
       when 's':
         if (sscanf(optarg, "%u,%u%1s", &cols, &rows, (char[2]){}) != 2)
-          error(true, "syntax error in size argument '%s'", optarg);
+          error("syntax error in size argument -- %s", optarg);
         size_override = true;
       when 'h': {
         int len = strlen(optarg);
@@ -889,26 +857,24 @@ main(int argc, char *argv[])
         else if (memcmp(optarg, "error", len) == 0)
           hold = HOLD_ERROR;
         else
-          error(true, "invalid hold argument '%s'", optarg);
+          error("invalid argument to hold option -- %s", optarg);
       }
       when 'C': {
         int len = mbstowcs(0, optarg, 0);
         if (len < 0)
-          error(false, "invalid character in class name '%s'", optarg);
+          error("invalid character in class name -- %s", optarg);
         class_name = newn(wchar, len + 1);
         mbstowcs(class_name, optarg, len + 1);
       }
       when 'H':
-        show_msg(stdout, help);
+        printf(help, *argv);
         return 0;
       when 'V':
-        show_msg(stdout, VERSION_TEXT);
+        puts(VERSION_TEXT);
         return 0;
-      when '?':
-        error(true, "unknown option '%s'", optopt ? shortopt : longopt);
-      when ':':
-        error(true, "option '%s' requires an argument",
-              longopt[1] == '-' ? longopt : shortopt);
+      otherwise:
+        fputs("Try --help for more information.\n", stderr);
+        exit(1);
     }
   }
   
@@ -929,7 +895,7 @@ main(int argc, char *argv[])
 #if CYGWIN_VERSION_API_MINOR >= 181
     wchar *win_icon_file = cygwin_create_path(CCP_POSIX_TO_WIN_W, icon_file);
     if (!win_icon_file)
-      error(false, "invalid icon file path '%s'", icon_file);
+      error("invalid icon file path -- %s", icon_file);
     ExtractIconExW(win_icon_file, icon_index, &large_icon, &small_icon, 1);
     free(win_icon_file);
 #else
@@ -938,9 +904,14 @@ main(int argc, char *argv[])
     ExtractIconExA(win_icon_file, icon_index, &large_icon, &small_icon, 1);
 #endif
     if (!small_icon || !large_icon)
-      error(false, "could not load icon from '%s'", icon_file);
+      error("could not load icon -- %s", icon_file);
   }
 
+  if (!config_file)
+    asprintf((char **)&config_file, "%s/.minttyrc", getenv("HOME"));
+
+  load_config();
+  
   if (!size_override) {
     rows = cfg.rows;
     cols = cfg.cols;
@@ -1076,4 +1047,21 @@ main(int argc, char *argv[])
       term_send_paste();
     }
   }
+}
+
+void
+win_show_about(void)
+{
+  char *text;
+  asprintf(&text, "%s\n\n" ABOUT_TEXT, VERSION_TEXT);
+  MessageBoxIndirect(&(MSGBOXPARAMS){
+    .cbSize = sizeof(MSGBOXPARAMS),
+    .hwndOwner = config_wnd,
+    .hInstance = inst,
+    .lpszCaption = APPNAME,
+    .dwStyle = MB_USERICON | MB_OK,
+    .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
+    .lpszText = text
+  });
+  free(text);
 }

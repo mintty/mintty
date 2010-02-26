@@ -1,5 +1,5 @@
 // winclip.c (part of mintty)
-// Copyright 2008-10  Andy Koppe
+// Copyright 2008-09  Andy Koppe
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -7,7 +7,6 @@
 #include "charset.h"
 #include "child.h"
 #include "config.h"
-#include "linedisc.h"
 
 #include <winnls.h>
 #include <richedit.h>
@@ -15,7 +14,6 @@
 #include <wtypes.h>
 #include <objidl.h>
 #include <oleidl.h>
-#include <sys/cygwin.h>
 
 static DWORD WINAPI
 shell_exec_thread(void *data)
@@ -405,71 +403,21 @@ win_copy(const wchar *data, int *attr, int len)
 static void
 paste_hdrop(HDROP drop)
 {
-  uint buf_len = 32, buf_pos = 0;
-  char *buf = newn(char, buf_len);
-  void buf_add(char c) {
-    if (buf_pos >= buf_len)
-      buf = renewn(buf, buf_len *= 2);
-    buf[buf_pos++] = c;
-  }
-
-#if CYGWIN_VERSION_API_MINOR >= 222
-  // Update Cygwin locale to terminal locale.
-  cygwin_internal(CW_INT_SETLOCALE);
-#endif
+  uint len = 0;
+  wchar *s = 0;
   uint n = DragQueryFileW(drop, -1, 0, 0);
   for (uint i = 0; i < n; i++) {
-    
-#if CYGWIN_VERSION_DLL_MAJOR >= 1007
-    uint wfn_len = DragQueryFileW(drop, i, 0, 0);
-    wchar wfn[wfn_len + 1];
-    DragQueryFileW(drop, i, wfn, wfn_len + 1);
-    char *fn = cygwin_create_path(CCP_WIN_W_TO_POSIX, wfn);
-#else
-    uint wfn_len = DragQueryFileA(drop, i, 0, 0);
-    char wfn[wfn_len + 1];
-    DragQueryFileA(drop, i, wfn, wfn_len + 1);
-    char *fn = newn(char, MAX_PATH);
-    cygwin_conv_to_full_posix_path(wfn, fn);
-#endif
-
-    bool has_tick = false, needs_quotes = false, needs_dollar = false;
-    for (char *p = fn; *p && !needs_dollar; p++) {
-      uchar c = *p;
-      has_tick |= c == '\'';
-      needs_quotes |= isascii(c) && !isalnum(c) && !strchr("+,-./@_~'", c);
-      needs_dollar = iscntrl(c) || (needs_quotes && has_tick);
-    }
-    needs_quotes |= needs_dollar;
-    
-    if (needs_dollar)
-      buf_add('$');
-    if (needs_quotes)
-      buf_add('\'');
-    else if (*fn == '~')
-      buf_add('\\');
-    for (char *p = fn; *p; p++) {
-      uchar c = *p;
-      if (iscntrl(c)) {
-        buf_add('\\');
-        buf_add('0' + (c >> 6));
-        buf_add('0' + (c >> 3 & 7));
-        buf_add('0' + (c & 7));
-      }
-      else {
-        if (c == '\'')
-          buf_add('\\');
-        buf_add(c);
-      }
-    }
-    if (needs_quotes)
-      buf_add('\'');
-    buf_add(' ');  // Filename separator
-    free(fn);
+    uint l = DragQueryFileW(drop, i, 0, 0);
+    s = renewn(s, len + l + 3); // 3 extra for quotes and space
+    wchar *name = s + len;
+    DragQueryFileW(drop, i, name + 1, l + 1);
+    name[0] = name[l + 1] = '"';
+    name[l + 2] = ' ';
+    len += l + 3;
   }
-  buf_pos--;  // Drop trailing space
-  ldisc_send(buf, buf_pos, false);
-  free(buf);
+  len -= 1; // forget trailing space
+  term_paste(s, len);
+  free(s);
 }
 
 static void

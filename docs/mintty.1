@@ -6,7 +6,7 @@
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
 .ad l
-.TH mintty 1 2010-01-21 0.5.7 Cygwin
+.TH mintty 1 2010-02-26 0.5.8 Cygwin
 
 .SH NAME
 
@@ -871,8 +871,7 @@ at a time.
 Most of the xterm control sequences documented at \fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.html\fP are supported.
 Please report incompatibilities or unimplemented sequences as bugs.
 
-This section lists control sequences implemented in mintty that are not
-supported by xterm.
+This section lists mintty-specific control sequences.
 
 
 .SS Application mousewheel mode
@@ -1009,7 +1008,7 @@ is sent, terminated with ST: \fC^[]7700;\fInum\fP^[\\\fR.
 .SS Locale
 
 The locale and charset used by the terminal can be queried or changed using
-these sequences introduced by urxvt:
+these sequences:
 
 .RS
 .TS
@@ -1017,16 +1016,16 @@ tab(#) nospaces;
 LB                  LB
 LfC                 L.
 sequence           #locale
-^[]701;?^G        #query
-^[]701;\fIloc\fP^G#set to \fIloc\fP
-^[]701;^G         #default
+^[]7776;?^G        #query
+^[]7776;\fIloc\fP^G#set to \fIloc\fP
+^[]7776;^G         #default
 .TE
 .RE
 
 The locale string used here should take the same format as in the locale
 environment variables such as \fILANG\fP.
 When the locale is queried, a sequence that would set the current locale 
-is sent, e.g. \fC^[]701;C.UTF-8^[\\\fP.
+is sent, e.g. \fC^[]7776;C.UTF-8^[\\\fP.
 An empty \fIloc\fP string selects the locale configured in the options or the
 environment.
 
@@ -1199,7 +1198,7 @@ stackdump-producing SIGQUIT:
 
 .RS
 .nf
-\fCstty susp '^]' swtch '^]' intr '^\\' quit '^-'\fP
+\fCstty susp '^]' swtch '^]' intr '^\' quit '^-'\fP
 .fi
 .RE
 
@@ -1287,49 +1286,28 @@ set output-meta on
 
 .SS Mode-dependent cursor in vim
 
-Using the control sequences for cursor style, the \fBvim\fP editor can be
-configured to change cursor depending on mode.
+Using the control sequences for cursor style and application escape key mode,
+the \fBvim\fP editor can be configured to change cursor depending on mode.
 For example, with the following lines in \fI.vimrc\fP, vim will show a block
 cursor in normal mode and a line cursor in insert mode:
 
 .RS
 .nf
 \fC
-let &t_ti.="\\e[1 q"
+let &t_ti.="\\e[1 q\\e[?7727h"
 let &t_SI.="\\e[5 q"
 let &t_EI.="\\e[1 q"
-let &t_te.="\\e[0 q"
-\fP
-.fi
-.RE
-
-
-.SS Avoiding escape timeout issues in vim
-
-A historical flaw of Unix terminals is that the keycode of the escape key,
-i.e. the escape character, also appears at the start of many other keycodes.
-This means that on seeing an escape character, an application cannot be sure
-whether to treat it as an escape key press or whether to expect more characters
-to complete a longer keycode.
-
-Therefore they tend to employ a timeout to decide.  The delay on the escape
-key can be annoying though, particularly with the mode-dependent cursor
-above enabled.  The timeout approach can also fail on slow connections or a
-heavily loaded machine.
-
-Mintty's "application escape key mode" can be used to avoid this by switching
-the escape key to an unambiguous keycode.  This will activate it in vim:
-
-.RS
-.nf
-\fC
-let &t_ti.="\\e[?7727h"
-let &t_te.="\\e[?7727l"
+let &t_te.="\\e[0 q\\e[?7727l"
 noremap <Esc>O[ <Esc>
 noremap! <Esc>O[ <Esc>
 \fP
 .fi
 .RE
+
+Without application escape key mode, it would take a second for the cursor to
+change after pressing Esc to leave insert mode.
+(That time can otherwise be reduced using vim's \fIttimeoutlen\fP setting,
+at the risk of keycodes not being recognised in some circumstances.)
 
 
 .SH LIMITATIONS

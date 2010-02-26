@@ -1,5 +1,5 @@
 // child.c (part of mintty)
-// Copyright 2008-10 Andy Koppe
+// Copyright 2008-09 Andy Koppe
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "child.h"
@@ -230,7 +230,7 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
     // Set backspace keycode
     struct termios attr;
     tcgetattr(0, &attr);
-    attr.c_cc[VERASE] = cfg.backspace_sends_bs ? CTRL('H') : CDEL;
+    attr.c_cc[VERASE] = cfg.backspace_sends_bs ? '\b' : 0x7F;
     tcsetattr(0, TCSANOW, &attr);
     
     // Invoke command
@@ -380,10 +380,6 @@ child_conv_path(const wchar *wpath)
     exp_path = path;
   
 #if CYGWIN_VERSION_DLL_MAJOR >= 1007
-#if CYGWIN_VERSION_API_MINOR >= 222
-  // CW_INT_SETLOCALE was introduced in API 0.222
-  cygwin_internal(CW_INT_SETLOCALE);
-#endif
   wchar *win_wpath = cygwin_create_path(CCP_POSIX_TO_WIN_W, exp_path);
   
   // Drop long path prefix if possible,
