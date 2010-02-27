@@ -10,11 +10,13 @@
 #include "term.h"
 #include "win.h"
 
+#include <sys/cygwin.h>
+
 const char *log_file = 0;
 bool utmp_enabled = false;
 hold_t hold = HOLD_NEVER;
 
-static char *config_filename = 0;
+static wchar *wfilename = 0;
 
 config new_cfg;
 config cfg = {
@@ -183,8 +185,8 @@ void
 load_config(char *filename)
 {
   option_order_len = 0;
-  free(config_filename);
-  config_filename = strdup(filename);
+  free(wfilename);
+  wfilename = cygwin_create_path(CCP_POSIX_TO_WIN_W, filename);
   FILE *file = fopen(filename, "r");
   if (file) {
     char *line;
@@ -203,7 +205,9 @@ load_config(char *filename)
 static char *
 save_config(void)
 {
-  FILE *file = fopen(config_filename, "w");
+  char *filename = cygwin_create_path(CCP_WIN_W_TO_POSIX, wfilename);
+  FILE *file = fopen(filename, "w");
+  free(filename);
   if (!file)
     return 0;
 
