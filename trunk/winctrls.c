@@ -609,7 +609,7 @@ new_winctrl(int base_id, void *data)
   c->base_id = base_id;
   c->num_ids = 1;
   c->data = data;
-  memset(c->shortcuts, NO_SHORTCUT, lengthof(c->shortcuts));
+  memset(c->shortcuts, NO_SHORTCUT, sizeof(c->shortcuts));
   return c;
 }
 
@@ -730,7 +730,7 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
     data = null;
 
    /* And they all start off with no shortcuts registered. */
-    memset(shortcuts, NO_SHORTCUT, lengthof(shortcuts));
+    memset(shortcuts, NO_SHORTCUT, sizeof(shortcuts));
     nshortcuts = 0;
 
    /* Almost all controls start at base_id. */
