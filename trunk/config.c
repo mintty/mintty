@@ -16,7 +16,11 @@ const char *log_file = 0;
 bool utmp_enabled = false;
 hold_t hold = HOLD_NEVER;
 
-static wchar *wfilename = 0;
+#if CYGWIN_VERSION_API_MINOR >= 222
+static wchar *rc_filename = 0;
+#else
+static char *rc_filename = 0;
+#endif
 
 config new_cfg;
 config cfg = {
@@ -185,8 +189,14 @@ void
 load_config(char *filename)
 {
   option_order_len = 0;
-  free(wfilename);
-  wfilename = cygwin_create_path(CCP_POSIX_TO_WIN_W, filename);
+
+  free(rc_filename);
+#if CYGWIN_VERSION_API_MINOR >= 222
+  rc_filename = cygwin_create_path(CCP_POSIX_TO_WIN_W, filename);
+#else
+  rc_filename = strdup(filename);
+#endif
+
   FILE *file = fopen(filename, "r");
   if (file) {
     char *line;
@@ -202,14 +212,19 @@ load_config(char *filename)
   }
 }
 
-static char *
+static void
 save_config(void)
 {
-  char *filename = cygwin_create_path(CCP_WIN_W_TO_POSIX, wfilename);
+#if CYGWIN_VERSION_API_MINOR >= 222
+  char *filename = cygwin_create_path(CCP_WIN_W_TO_POSIX, rc_filename);
   FILE *file = fopen(filename, "w");
   free(filename);
+#else
+  FILE *file = fopen(rc_filename, "w");
+#endif
+
   if (!file)
-    return 0;
+    return;
 
   for (uint j = 0; j < option_order_len; j++) {
     uint i = option_order[j];
@@ -230,7 +245,7 @@ save_config(void)
   }
   
   fclose(file);
-  return 0;
+  return;
 }
 
 
