@@ -313,9 +313,6 @@ static void
 printerbox_handler(control *ctrl, void *unused(data), int event)
 {
   if (event == EVENT_REFRESH) {
-    int nprinters, i;
-    printer_enum *pe;
-
     dlg_update_start(ctrl);
    /*
     * Some backends may wish to disable the drop-down list on
@@ -324,10 +321,10 @@ printerbox_handler(control *ctrl, void *unused(data), int event)
     if (ctrl->editbox.has_list) {
       dlg_listbox_clear(ctrl);
       dlg_listbox_add(ctrl, PRINTER_DISABLED_STRING);
-      pe = printer_start_enum(&nprinters);
-      for (i = 0; i < nprinters; i++)
-        dlg_listbox_add(ctrl, printer_get_name(pe, i));
-      printer_finish_enum(pe);
+      uint num = printer_start_enum();
+      for (uint i = 0; i < num; i++)
+        dlg_listbox_add(ctrl, printer_get_name(i));
+      printer_finish_enum();
     }
     dlg_editbox_set(
       ctrl, *new_cfg.printer ? new_cfg.printer : PRINTER_DISABLED_STRING

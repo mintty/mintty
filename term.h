@@ -4,7 +4,6 @@
 #include "termline.h"
 #include "tree234.h"
 #include "bufchain.h"
-#include "print.h"
 #include "minibidi.h"
 
 /*
@@ -165,7 +164,6 @@ struct term {
   bool printing, only_printing;  /* Are we doing ANSI printing? */
   int  print_state;      /* state of print-end-sequence scan */
   bufchain *printer_buf;        /* buffered data for printer */
-  printer_job *print_job;
 
  /* ESC 7 saved state for the alternate screen */
   pos  alt_savecurs;
