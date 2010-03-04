@@ -314,24 +314,18 @@ printerbox_handler(control *ctrl, void *unused(data), int event)
 {
   if (event == EVENT_REFRESH) {
     dlg_update_start(ctrl);
-   /*
-    * Some backends may wish to disable the drop-down list on
-    * this edit box. Be prepared for this.
-    */
-    if (ctrl->editbox.has_list) {
-      dlg_listbox_clear(ctrl);
-      dlg_listbox_add(ctrl, PRINTER_DISABLED_STRING);
-      uint num = printer_start_enum();
-      for (uint i = 0; i < num; i++)
-        dlg_listbox_add(ctrl, printer_get_name(i));
-      printer_finish_enum();
-    }
+    dlg_listbox_clear(ctrl);
+    dlg_listbox_add(ctrl, PRINTER_DISABLED_STRING);
+    uint num = printer_start_enum();
+    for (uint i = 0; i < num; i++)
+      dlg_listbox_add(ctrl, printer_get_name(i));
+    printer_finish_enum();
     dlg_editbox_set(
       ctrl, *new_cfg.printer ? new_cfg.printer : PRINTER_DISABLED_STRING
     );
     dlg_update_done(ctrl);
   }
-  else if (event == EVENT_VALCHANGE) {
+  else if (event == EVENT_VALCHANGE || event == EVENT_SELCHANGE) {
     dlg_editbox_get(ctrl, new_cfg.printer, sizeof (cfg.printer));
     if (strcmp(new_cfg.printer, PRINTER_DISABLED_STRING) == 0)
       *new_cfg.printer = '\0';
