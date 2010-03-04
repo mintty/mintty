@@ -4,147 +4,76 @@
 #include <wingdi.h>
 #include <winspool.h>
 
-struct printer_enum_tag {
-  int nprinters;
-  LPPRINTER_INFO_4 info;
-};
 
-struct printer_job_tag {
-  HANDLE hprinter;
-};
+static PRINTER_INFO_4 *printer_info;
 
-static BYTE *
-printer_add_enum(int param, DWORD level, BYTE * buffer, int offset,
-                 int *nprinters_ptr)
+uint
+printer_start_enum(void)
 {
-  DWORD needed, nprinters;
-
-  buffer = renewn(buffer, offset + 512);
-
- /*
-  * Exploratory call to EnumPrinters to determine how much space
-  * we'll need for the output. Discard the return value since it
-  * will almost certainly be a failure due to lack of space.
-  */
-  EnumPrinters(param, null, level, buffer + offset, 512, &needed, &nprinters);
-
-  if (needed < 512)
-    needed = 512;
-
-  buffer = renewn(buffer, offset + needed);
-
-  if (EnumPrinters
-      (param, null, level, buffer + offset, needed, &needed, &nprinters) == 0)
-    return null;
-
-  *nprinters_ptr += nprinters;
-
-  return buffer;
-}
-
-printer_enum *
-printer_start_enum(int *nprinters_ptr)
-{
-  printer_enum *ret = new(printer_enum);
-  BYTE *buffer = null, *retval;
-
-  *nprinters_ptr = 0;   /* default return value */
-  buffer = newn(BYTE, 512);
-
-  retval =
-    printer_add_enum(PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS,
-                     4, buffer, 0, nprinters_ptr);
-  if (!retval)
-    goto error;
-  else
-    buffer = retval;
-
-  ret->info = (LPPRINTER_INFO_4) buffer;
-  ret->nprinters = *nprinters_ptr;
-
-  return ret;
-
- error:
-  free(buffer);
-  free(ret);
-  *nprinters_ptr = 0;
-  return null;
+  DWORD size = 0, num = 0;
+  while (
+    !EnumPrinters(PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS,
+                  0, 4, (LPBYTE)printer_info, size, &size, &num) &&
+    GetLastError() == ERROR_INSUFFICIENT_BUFFER
+  ) {
+    printer_info = realloc(printer_info, size);
+  }
+  
+  return num;
 }
 
 char *
-printer_get_name(printer_enum * pe, int i)
+printer_get_name(uint i)
 {
-  if (!pe)
-    return null;
-  if (i < 0 || i >= pe->nprinters)
-    return null;
-  return pe->info[i].pPrinterName;
+  return printer_info[i].pPrinterName;
 }
 
 void
-printer_finish_enum(printer_enum * pe)
+printer_finish_enum(void)
 {
-  if (!pe)
-    return;
-  free(pe->info);
-  free(pe);
+  free(printer_info);
+  printer_info = 0;
 }
 
-printer_job *
-printer_start_job(char *printer)
+
+static HANDLE printer;
+
+static const DOC_INFO_1 doc_info = {
+  .pDocName = "Remote printer output",
+  .pOutputFile = null,
+  .pDatatype = "RAW"
+};
+
+void
+printer_start_job(char *printer_name)
 {
-  printer_job *ret = new(printer_job);
-  DOC_INFO_1 docinfo;
-  int jobstarted = 0, pagestarted = 0;
-
-  ret->hprinter = null;
-  if (!OpenPrinter(printer, &ret->hprinter, null))
-    goto error;
-
-  docinfo.pDocName = "PuTTY remote printer output";
-  docinfo.pOutputFile = null;
-  docinfo.pDatatype = "RAW";
-
-  if (!StartDocPrinter(ret->hprinter, 1, (LPBYTE) & docinfo))
-    goto error;
-  jobstarted = 1;
-
-  if (!StartPagePrinter(ret->hprinter))
-    goto error;
-  pagestarted = 1;
-
-  return ret;
-
- error:
-  if (pagestarted)
-    EndPagePrinter(ret->hprinter);
-  if (jobstarted)
-    EndDocPrinter(ret->hprinter);
-  if (ret->hprinter)
-    ClosePrinter(ret->hprinter);
-  free(ret);
-  return null;
+  if (OpenPrinter(printer_name, &printer, 0)) {
+    if (StartDocPrinter(printer, 1, (LPBYTE)&doc_info)) {
+      if (StartPagePrinter(printer))
+        return;
+      EndDocPrinter(printer);
+    }
+    ClosePrinter(printer);
+    printer = 0;
+  }
 }
 
 void
-printer_job_data(printer_job * pj, void *data, int len)
+printer_write(void *data, uint len)
 {
-  DWORD written;
-
-  if (!pj)
-    return;
-
-  WritePrinter(pj->hprinter, data, len, &written);
+  if (printer) {
+    DWORD written;
+    WritePrinter(printer, data, len, &written);
+  }
 }
 
 void
-printer_finish_job(printer_job * pj)
+printer_finish_job(void)
 {
-  if (!pj)
-    return;
-
-  EndPagePrinter(pj->hprinter);
-  EndDocPrinter(pj->hprinter);
-  ClosePrinter(pj->hprinter);
-  free(pj);
+  if (printer) {
+    EndPagePrinter(printer);
+    EndDocPrinter(printer);
+    ClosePrinter(printer);
+    printer = 0;
+  }
 }

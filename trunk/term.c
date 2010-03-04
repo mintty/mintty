@@ -8,6 +8,7 @@
 #include "linedisc.h"
 #include "win.h"
 #include "charset.h"
+#include "print.h"
 
 struct term term;
 
@@ -781,7 +782,7 @@ void
 term_print_setup(void)
 {
   bufchain_clear(term.printer_buf);
-  term.print_job = printer_start_job(cfg.printer);
+  printer_start_job(cfg.printer);
 }
 
 void
@@ -794,10 +795,11 @@ term_print_flush(void)
     bufchain_prefix(term.printer_buf, &data, &len);
     if (len > size - 5)
       len = size - 5;
-    printer_job_data(term.print_job, data, len);
+    printer_write(data, len);
     bufchain_consume(term.printer_buf, len);
   }
 }
+
 void
 term_print_finish(void)
 {
@@ -817,12 +819,11 @@ term_print_finish(void)
       break;
     }
     else {
-      printer_job_data(term.print_job, &c, 1);
+      printer_write(&c, 1);
       bufchain_consume(term.printer_buf, 1);
     }
   }
-  printer_finish_job(term.print_job);
-  term.print_job = null;
+  printer_finish_job();
   term.printing = term.only_printing = false;
 }
 
