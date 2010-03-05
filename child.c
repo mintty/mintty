@@ -50,8 +50,8 @@ signal_thread(void *unused(arg))
 {
   int sig;
   sigwait(&term_sigs, &sig);
-  if (pid)
-    kill(pid, SIGHUP);
+  if (pty_fd >= 0)
+    close(pty_fd);
   exit(0);
 }
 
@@ -251,8 +251,13 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
     child_event = CreateEvent(null, false, false, null);
     proc_event = CreateEvent(null, false, false, null);
     
+    // xterm and urxvt ignore SIGHUP, so let's do the same.
+    signal(SIGHUP, SIG_IGN);
+    
+    // SIGINT and SIGTERM are handled by signal_thread(). This is because the
+    // main thread spends most of its time in MsgWaitForMultipleObjects,
+    // during which Cygwin signals aren't handled.
     sigemptyset(&term_sigs);
-    sigaddset(&term_sigs, SIGHUP);
     sigaddset(&term_sigs, SIGINT);
     sigaddset(&term_sigs, SIGTERM);
     pthread_sigmask(SIG_BLOCK, &term_sigs, null);
