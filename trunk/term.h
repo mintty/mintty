@@ -152,6 +152,7 @@ struct term {
   bool save_utf, save_wnext;     /* saved with cursor position */
   bool rvideo;   /* global reverse video flag */
   bool cursor_on;        /* cursor enabled flag */
+  bool deccolm_allowed;  /* DECCOLM sequence for 80/132 cols allowed? */
   bool reset_132;        /* Flag ESC c resets to 80 cols */
   bool use_bce;  /* Use Background coloured erase */
   bool cblinker; /* When blinking is the cursor on ? */

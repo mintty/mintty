@@ -584,13 +584,15 @@ set_modes(bool state)
         when 2:  /* DECANM: VT52 mode */
           // IGNORE
         when 3:  /* DECCOLM: 80/132 columns */
-          term.selected = false;
-          win_resize(term.rows, state ? 132 : 80);
-          term.reset_132 = state;
-          term.alt_t = term.marg_t = 0;
-          term.alt_b = term.marg_b = term.rows - 1;
-          move(0, 0, 0);
-          term_erase_lots(false, true, true);
+          if (term.deccolm_allowed) {
+            term.selected = false;
+            win_resize(term.rows, state ? 132 : 80);
+            term.reset_132 = state;
+            term.alt_t = term.marg_t = 0;
+            term.alt_b = term.marg_b = term.rows - 1;
+            move(0, 0, 0);
+            term_erase_lots(false, true, true);
+          }
         when 5:  /* DECSCNM: reverse video */
           if (state != term.rvideo) {
             term.rvideo = state;
@@ -612,6 +614,8 @@ set_modes(bool state)
         when 25: /* DECTCEM: enable/disable cursor */
           term.cursor_on = state;
           seen_disp_event();
+        when 40: /* Allow/disallow DECCOLM (xterm c132 resource) */
+          term.deccolm_allowed = state;
         when 47: /* alternate screen */
           term.selected = false;
           term_swap_screen(state, false, false);
