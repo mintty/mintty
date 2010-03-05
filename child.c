@@ -50,8 +50,8 @@ signal_thread(void *unused(arg))
 {
   int sig;
   sigwait(&term_sigs, &sig);
-  if (pty_fd >= 0)
-    close(pty_fd);
+  if (pid)
+    kill(-pid, SIGHUP);
   exit(0);
 }
 
@@ -292,13 +292,13 @@ void
 child_kill(void)
 { 
   if (!killed) {
-    // Tell the child nicely.
-    kill(pid, SIGHUP);
+    // First tell the child nicely.
+    kill(-pid, SIGHUP);
     killed = true;
   }
   else {
-    // Use brute force and head for the exit.
-    kill(pid, SIGKILL);
+    // We've tried being nice: be more forceful and exit.
+    kill(-pid, SIGTERM);
     exit(0);
   }
 }
