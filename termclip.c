@@ -9,9 +9,6 @@
 #include "linedisc.h"
 #include "charset.h"
 
-// Copying to the clipboard terminates lines with CRLF.
-static const wchar sel_nl[] = { '\r', '\n' };
-
 /*
  * Helper routine for term_copy(): growing buffer.
  */
@@ -55,7 +52,7 @@ get_selection(clip_workbuf *buf)
   old_top_x = start.x;    /* needed for rect==1 */
 
   while (poslt(start, end)) {
-    int nl = false;
+    bool nl = false;
     termline *ldata = lineptr(start.y);
     pos nlpos;
 
@@ -124,8 +121,8 @@ get_selection(clip_workbuf *buf)
       start.x++;
     }
     if (nl) {
-      for (size_t i = 0; i < lengthof(sel_nl); i++)
-        clip_addchar(buf, sel_nl[i], 0);
+      clip_addchar(buf, '\r', 0);
+      clip_addchar(buf, '\n', 0);
     }
     start.y++;
     start.x = term.sel_rect ? old_top_x : 0;
@@ -164,8 +161,6 @@ term_open(void)
 void
 term_paste(wchar *data, uint len)
 {
-  wchar *p, *q;
-
   term_seen_key_event();      /* pasted data counts */
 
   if (term.paste_buffer)
@@ -173,22 +168,14 @@ term_paste(wchar *data, uint len)
   term.paste_pos = term.paste_len = 0;
   term.paste_buffer = newn(wchar, len);
 
-  p = q = data;
-  while (p < data + len) {
-    while (p < data + len &&
-           !(p <= data + len - lengthof(sel_nl) &&
-             !memcmp(p, sel_nl, sizeof (sel_nl))))
-      p++;
-
-    for (int i = 0; i < p - q; i++)
-      term.paste_buffer[term.paste_len++] = q[i];
-
-    if (p <= data + len - lengthof(sel_nl) &&
-        !memcmp(p, sel_nl, sizeof sel_nl)) {
-      term.paste_buffer[term.paste_len++] = '\015';
-      p += lengthof(sel_nl);
-    }
-    q = p;
+  // Copy data to the paste buffer, converting both Windows-style \r\n and
+  // Unix-style \n line endings to \r, because that's what the Enter key sends.
+  for (uint i = 0; i < len; i++) {
+    wchar wc = data[i];
+    if (wc != '\n')
+      term.paste_buffer[term.paste_len++] = wc;
+    else if (i == 0 || data[i - 1] != '\r')
+      term.paste_buffer[term.paste_len++] = '\r';
   }
   
  /* Assume a small paste will be OK in one go. */
