@@ -84,8 +84,6 @@ static int extra_width, extra_height;
 static HBITMAP caretbm;
 static int caret_x = -1, caret_y = -1;
 
-static bool child_dead;
-
 static char **main_argv;
 
 void
@@ -527,9 +525,7 @@ win_zoom_font(int zoom)
 static bool
 confirm_exit(void)
 {
-  // Only ask once.
-  static bool confirmed = false;
-  confirmed |=
+  return
     !child_is_parent() ||
     MessageBox(
       wnd,
@@ -537,7 +533,6 @@ confirm_exit(void)
       "Exit anyway?",
       APPNAME, MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON2
     ) == IDOK;
-  return confirmed;
 }
 
 void
@@ -575,8 +570,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     }
     when WM_CLOSE:
       win_show_mouse();
-      if (child_dead)
-        exit(0);
       if (!cfg.confirm_exit || confirm_exit())
         child_kill();
       return 0;
@@ -1066,7 +1059,7 @@ main(int argc, char *argv[])
     DWORD wakeup =
       MsgWaitForMultipleObjects(1, &child_event, false, INFINITE, QS_ALLINPUT);
     if (wakeup == WAIT_OBJECT_0)
-      child_dead |= child_proc();
+      child_proc();
     MSG msg;
     while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
       if (msg.message == WM_QUIT)
