@@ -41,7 +41,6 @@ static int read_len;
 static char read_buf[4096];
 static struct utmp ut;
 static char *child_name;
-static bool killed;
 
 static sigset_t term_sigs;
 
@@ -78,7 +77,7 @@ wait_thread(void *unused(arg))
   return 0;
 }
 
-bool
+void
 child_proc(void)
 {
   if (read_len > 0) {
@@ -89,42 +88,37 @@ child_proc(void)
   }
 
   if (pid)
-    return false;
+    return;
 
   logout(ut.ut_line);
 
   // No point hanging around if the user wants us dead.
-  if (killed || hold == HOLD_NEVER)
+  if (hold == HOLD_NEVER)
     exit(0);
-  
-  if (hold == HOLD_ALWAYS)
-    return false;
-
+    
   // Display a message if the child process died with an error. 
   int l = -1;
   char *s; 
   if (WIFEXITED(status)) {
-    status = WEXITSTATUS(status);
-    if (status == 0)
+    int code = WEXITSTATUS(status);
+    if (hold == HOLD_ERROR && code == 0)
       exit(0);
-    else
-      l = asprintf(&s, "\r\n%s exited with status %i\r\n", child_name, status); 
+    l = asprintf(&s, "\r\n%s: Exit %i", child_name, code); 
   }
   else if (WIFSIGNALED(status)) {
+    int sig = WTERMSIG(status);
     int error_sigs =
       1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
       1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
-    int sig = WTERMSIG(status);
-    if ((error_sigs & 1<<sig) == 0)
+    if (hold == HOLD_ERROR && (error_sigs & 1<<sig) == 0)
       exit(0);
-    l = asprintf(&s, "\r\n%s terminated: %s\r\n", child_name, strsignal(sig));
+    l = asprintf(&s, "\r\n%s: %s", child_name, strsignal(sig));
   }
   if (l != -1) {
     term_write(s, l);
-    term_write("Press any key to close\r\n", 24);
     free(s);
   }
-  return true;
+  return;
 }
 
 static void
@@ -291,21 +285,17 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
 void
 child_kill(void)
 { 
-  if (!killed) {
-    // First tell the child nicely.
+  if (pid)
     kill(-pid, SIGHUP);
-    killed = true;
-  }
-  else {
-    // We've tried being nice: be more forceful and exit.
-    kill(-pid, SIGTERM);
+  else
     exit(0);
-  }
 }
 
 bool
 child_is_parent(void)
 {
+  if (!pid)
+    return false;
   DIR *d = opendir("/proc");
   if (!d)
     return false;
