@@ -71,8 +71,8 @@ wait_thread(void *unused(arg))
 {
   while (waitpid(pid, &status, 0) == -1 && errno == EINTR)
     ;
-  Sleep(100); // Give any ongoing output some time to finish.
   pid = 0;
+  Sleep(100); // Give any ongoing output some time to finish.
   SetEvent(child_event);
   return 0;
 }
