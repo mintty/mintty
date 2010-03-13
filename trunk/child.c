@@ -204,8 +204,10 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
 #endif
 
     // Reset signals
+    signal(SIGHUP, SIG_DFL);
     signal(SIGINT, SIG_DFL);
     signal(SIGQUIT, SIG_DFL);
+    signal(SIGTERM, SIG_DFL);
     signal(SIGCHLD, SIG_DFL);
 
     // Mimick login's behavior by disabling the job control signals
