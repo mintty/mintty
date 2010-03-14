@@ -550,14 +550,14 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     
     bool try_shifts(void) {
-      shift = false;
+      shift = is_key_down(VK_LSHIFT) & is_key_down(VK_RSHIFT);
       if (try_key())
         return true;
       shift = is_key_down(VK_SHIFT);
-      kbd[VK_SHIFT] ^= 0x80;
+      kbd[VK_SHIFT] ^= 0x80;  // Toggle Shift state
       if (try_key())
         return true;
-      kbd[VK_SHIFT] ^= 0x80;
+      kbd[VK_SHIFT] ^= 0x80;  // Restore Shift state
       return false;
     }
     
