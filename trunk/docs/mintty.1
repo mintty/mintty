@@ -5,8 +5,9 @@
 .\" You may distribute, use, and modify this man page under the terms
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
-.ad l
 .TH mintty 1 2010-03-07 0.6-beta3 Cygwin
+
+.ad l
 
 .SH NAME
 
@@ -95,7 +96,7 @@ Alternatively, it can be set to always stay open, or to stay open only if
 the command finished with a non-zero exit code or due to a runtime error signal.
 
 .TP
-\fB-c\fP, \fB--config\P \fIFILENAME\fP
+\fB-c\fP, \fB--config\fP \fIFILENAME\fP
 Read settings from the specified configuration file, in addition to
 \fI/etc/minttyrc\fP and \fI~/.minttyrc\fP.
 
@@ -639,7 +640,7 @@ This is intended to help avoid closing programs accidentally.
 The Windows keyboard layout is used to translate alphanumeric and symbol key
 presses into characters, which means that the keyboard layout can be switched
 using the standard Windows mechanisms for that purpose.
-Also, \fBAltGr\fP combinations, dead keys, and input method editors (IMEs) are
+\fBAltGr\fP combinations, dead keys, and input method editors (IMEs) are
 all supported.
 
 Should the available keyboard layouts lack required features,
@@ -660,33 +661,72 @@ See \fIhttp://en.wikipedia.org/wiki/Caret_notation\fP for an explanation.
 As is customary with PC keyboards, the \fBAlt\fP key acts as the so-called
 \fBMeta\fP modifier.
 When it is held down while pressing a key or key combination, the keycode is
-prepended with the escape character \fB^[\fP, unless noted otherwise in
-the keycode tables in the following sections.
+prefixed with an escape character, unless noted otherwise in the keycode tables
+in the following sections.
 
 Encoding the meta modifier by setting the top bit of a character instead
 of prefixing it with the escape character is not supported, because that
 does not work for character codes beyond 7-bit ASCII.
 
 
-.SS Letter keys
+.SS AltGr
 
-If the Windows keyboard layout does not have a keycode for a letter key press
-and the \fBCtrl\fP key is down, a control character corresponding to the
-key's "virtual keycode" is sent.
-For keyboards with Latin scripts the virtual keycodes reflect the keys' labels,
-whereas for others, the virtual keys are usually arranged in the same way as
-on a QWERTY keyboard.
+The right \fBAlt\fP key, which is labelled \fBAltGr\fP on most non-US
+keyboards, allows to type additional characters on many keyboard layouts.
+When the keyboard layout does not have a keycode for an AltGr combination,
+the AltGr key is instead treated as Alt instead.
+
+The 'Ctrl+LeftAlt is AltGr' setting allows Ctrl+LeftAlt combinations to
+also be treated as AltGr.
+
+
+.SS Ctrl
+
+For key combinations involving \fBCtrl\fP, the key combination's character code
+without the \fBCtrl\fP is looked up in the Windows keyboard layout (whereby
+AltGr or Shift may be involved).  If that character corresponds to a control
+character, the control character will be sent to the application.
+For example, \fBCtrl+]\fP sends \fC^]\fP.
+
+If the keyboard layout does not yield a character from the table below, the
+key's "virtual keycode" is tried instead, which usually corresponds to the US
+keyboard layout.  This allows control characters to be entered when using a
+non-Latin keyboard layout.
+
+If Shift is held in addition to a control character combination, the
+corresponding character from the so-called C1 control character set is sent.
+The C1 control characters are shown as Unicode codepoints in the table below.  
+
+How exactly C1 control characters are sent depends on the selected character
+set.
+In ISO-8859 character sets, they are encoded as single bytes, e.g. \\x81 for
+U+0081.
+With UTF-8, they are encoded as two-byte sequences, which effectively means
+that the character code is prefixed with a \\xC2 byte, so for example U+0081
+becomes \\xC2\\x81.
+C1 codepoints that are not supported by the character set are sent by prefixing
+the corresponding ASCII control character with an ESC character, e.g.
+\fC^[^A\fP.
 
 .RS
 .TS
 tab(#) nospaces;
 LI    LB    LB
-LB    LfC   LfC.
-Key  #Ctrl #Ctrl+Alt
-A    #^A   #^[^A
-B    #^B   #^[^B
-\fP...
-Z    #^Z   #^[^Z
+LB    LfC   L.
+Key  #Ctrl #Ctrl+Shift
+@    #^@   #U+0080
+A    #^A   #U+0081
+B    #^B   #U+0082
+\fR...
+Y    #^Y   #U+0099
+Z    #^Z   #U+009A
+[    #^[   #U+009B
+\\   #^\\  #U+009C
+]    #^]   #U+009D
+^    #^^   #U+009E
+\(ul #^_   #U+009F
+/    #^_   #U+009F
+?    #^?   #U+00FF
 .TE
 .RE
 
@@ -700,27 +740,29 @@ available as separate keycodes.
 .RS
 .TS
 tab(#) nospaces;
-LI        s     LB    LB    LB    LB    LB
-LB        LfC   LfC   LfC   LfC   LfC   LfC.
-Key            #Shift#Crtl #C+S   #Alt  #A+S
-Space    #\fISP#\fISP#^@   #^[^@  #^[\fISP#^[\fISP
-Enter    #^M   #^J   #^^   #^[^^  #^[^M #^[J
-Back     #^?   #^?   #^_   #^[^_  #^[^? #^[^?
-Tab      #^I   #^[[Z #^[[1;5I#^[[1;6I
-Pause    #^]
-Break    #^\(rs
+LI        LB    LB    LB    LB
+LB        LfC   LfC   LfC   L.
+Key      #plain#Shift#Crtl #Ctrl+Shift
+Tab      #^I   #^[[Z #^[[1;5I#\fC^[[1;6I
+Space    #\fRSP#\fRSP#^@   #U+0080
+Escape   #^[   #\fRU+009B
+Pause    #^]   #\fRU+009C
+Break    #^\(rs#\fRU+009D
+Enter    #^M   #^J   #^^   #U+009E
+Back     #^?   #^?   #^_   #U+009F
 .TE
 .RE
 
-On most keyboards \fBPause\fP and \fBBreak\fP share a key, whereby \fBCtrl\fP
-has to be pressed to get the \fBBreak\fP function.
+\fBPause\fP and \fBBreak\fP usually share a key, whereby \fBCtrl\fP has to be
+pressed to get the \fBBreak\fP function.
 
 
-.SS Modifier Keys
+.SS Modifier key encodings
 
-The remaining keys all use a common encoding for modifier keys.
-When one or more of the following modifier keys are pressed,
-they are encoded by adding the associated value to 1.
+Where the modifier keys \fBShift\fP, \fBAlt\fP and \fBCtrl\fP are not handled
+as described in the sections above, they are encoded as a one-digit number that
+becomes part of the keycode.
+To obtain that number, add the numbers for each pressed modifier to 1:
 
 .RS
 .PD 0
@@ -729,15 +771,17 @@ they are encoded by adding the associated value to 1.
 .IP "\- \fBCtrl \fP: 4
 .RE
 
-For example, \fBShift+Ctrl\fP would be encoded as the character \fB6\fP (i.e. 1+1+4).
+For example, \fBShift+Ctrl\fP would be encoded as the number \fB6\fP (1+1+4).
+Modifiers are not double-counted if, for example, both Shift keys are pressed.
+
 The modifier code is shown as \fIm\fP in the following sections.
 
 
 .SS Number and symbol keys
 
-In the same way as for letter keys, the Windows keyboard layout is consulted
-first for the number and symbol keys.
-Key combinations involving \fBCtrl\fP send the following keycodes:
+Number and symbol key combinations that are not handled either by the Windows
+keyboard layout or by the Ctrl key processing described above, are assigned the
+keycodes shown here.
 
 .RS
 .TS
@@ -749,31 +793,33 @@ Key #modified
 +   #^[[1;\fIm\fPk
 ,   #^[[1;\fIm\fPl
 -   #^[[1;\fIm\fPm
-.   #^[[1;\fIm\fPn
+\.  #^[[1;\fIm\fPn
 /   #^[[1;\fIm\fPo
 0   #^[[1;\fIm\fPp
 1   #^[[1;\fIm\fPq
-2   #^[[1;\fIm\fPr
-\fP...
+\fR...
+8   #^[[1;\fIm\fPx
 9   #^[[1;\fIm\fPy
 .TE
 .RE
 
+(These are VT220 application keypad codes with added modifier.)
+
 
 .SS Cursor keys
 
-Cursor keycodes without modifier keys depend on the terminal's 
-"application cursor key mode", which is often used by fullscreen applications.
-When one or more modifier keys are pressed, the application cursor mode is
-ignored, but the modifier code is inserted into the keycode as shown.
+Cursor keycodes without modifier keys depend on whether "application cursor key
+mode" (controlled by the DECCKM sequence) is enabled.
+Application cursor mode is ignored if any modifier keys are down, and the
+modifier code is inserted into the keycode as shown.
 The \fBHome\fP and \fBEnd\fP keys are considered cursor keys.
 
 .RS
 .TS
 tab(#) nospaces;
-LI    s     LB    LB
+LI    LB    LB    LB
 LB    LfC   LfC   LfC.
-Key        #app  #modified
+Key  #plain#app  #modified
 Up   #^[[A #^[OA #^[[1;\fIm\fPA
 Down #^[[B #^[OB #^[[1;\fIm\fPB
 Left #^[[D #^[OD #^[[1;\fIm\fPD
@@ -792,9 +838,9 @@ of six that is usually situated above the cursor keys.
 .RS
 .TS
 tab(#) nospaces;
-LI     s     LB
+LI     LB    LB
 LB     LfC   LfC.
-Key         #modified
+Key   #plain#modified
 Ins   #^[[2~#^[[2;\fIm\fP~
 Del   #^[[3~#^[[3;\fIm\fP~
 PgUp  #^[[5~#^[[5;\fIm\fP~
@@ -813,9 +859,9 @@ the VT220 terminal.
 .RS
 .TS
 tab(#) nospaces;
-LI  s      LB
+LI  LB     LB
 LB  LfC    LfC.
-Key       #modified
+Key#plain #modified
 F1 #^[OP  #^[[1;\fIm\fPP
 F2 #^[OQ  #^[[1;\fIm\fPQ
 F3 #^[OR  #^[[1;\fIm\fPR
@@ -1175,17 +1221,13 @@ To change the key for deleting a whole word from \fBCtrl+W\fP to
 \fBCtrl+Backspace\fP:
 
 .RS
-.nf
 \fCstty werase '^_'\fP
-.fi
 .RE
 
 To use \fBCtrl+Enter\fP instead of \fBCtrl+D\fP for end of file:
 
 .RS
-.nf
 \fCstty eof '^^'\fP
-.fi
 .RE
 
 To use \fBPause\fP and \fBBreak\fP instead of \fBCtrl+Z\fP and \fBCtrl+C\fP for
@@ -1193,18 +1235,14 @@ suspending or interrupting a process, and to also disable the
 stackdump-producing SIGQUIT:
 
 .RS
-.nf
 \fCstty susp '^]' swtch '^]' intr '^\\' quit '^-'\fP
-.fi
 .RE
 
 With these settings, the \fBEsc\fP key can also be used to interrupt
 processes by setting its keycode to \fB^\\\fP:
 
 .RS
-.nf
 \fCecho $'\e[?7728h'\fP
-.fi
 .RE
 
 The standard escape character \fB^[\fP cannot be used for that purpose
