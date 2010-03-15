@@ -153,7 +153,7 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
   if (*argv && (argv[1] || strcmp(*argv, "-") != 0))
     cmd = *argv;
   else {
-    cmd = getenv("SHELL") ?: (pw ? pw->pw_shell : 0) ?: "/bin/sh";
+    cmd = getenv("SHELL") ?: (pw ? pw->pw_shell : 0) ?: "/bin/bash";
     char *last_slash = strrchr(cmd, '/');
     char *name = last_slash ? last_slash + 1 : cmd;
     if (*argv)
