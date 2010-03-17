@@ -691,7 +691,7 @@ resizeline(termline *line, int cols)
     */
     if (cols < oldcols)
       memmove(line->chars + cols, line->chars + oldcols,
-              (line->size - line->cols) * TSIZE);
+              (line->size - line->cols) * sizeof(termchar));
 
    /*
     * Now do the actual resize, leaving the _same_ amount of
@@ -707,7 +707,7 @@ resizeline(termline *line, int cols)
     */
     if (cols > oldcols)
       memmove(line->chars + cols, line->chars + oldcols,
-              (line->size - line->cols) * TSIZE);
+              (line->size - line->cols) * sizeof(termchar));
 
    /*
     * Go through what's left of the original line, and adjust
@@ -835,8 +835,8 @@ term_bidi_cache_store(int line, termchar *lbefore, termchar *lafter,
   term.post_bidi_cache[line].forward = newn(int, width);
   term.post_bidi_cache[line].backward = newn(int, width);
 
-  memcpy(term.pre_bidi_cache[line].chars, lbefore, size * TSIZE);
-  memcpy(term.post_bidi_cache[line].chars, lafter, size * TSIZE);
+  memcpy(term.pre_bidi_cache[line].chars, lbefore, size * sizeof(termchar));
+  memcpy(term.post_bidi_cache[line].chars, lafter, size * sizeof(termchar));
   memset(term.post_bidi_cache[line].forward, 0, width * sizeof (int));
   memset(term.post_bidi_cache[line].backward, 0, width * sizeof (int));
 
@@ -888,7 +888,7 @@ term_bidi_line(termline *ldata, int scr_y)
       term.ltemp = renewn(term.ltemp, term.ltemp_size);
     }
 
-    memcpy(term.ltemp, ldata->chars, ldata->size * TSIZE);
+    memcpy(term.ltemp, ldata->chars, ldata->size * sizeof(termchar));
 
     for (it = 0; it < term.cols; it++) {
       term.ltemp[it] = ldata->chars[term.wcTo[it].index];
