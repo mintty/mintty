@@ -1268,22 +1268,27 @@ following bindings useful:
 .nf
 \fC
 # Ctrl+Left/Right to move by whole words
-"\\e[1;5D": backward-word
 "\\e[1;5C": forward-word
+"\\e[1;5D": backward-word
 
 # Ctrl+Backspace/Delete to delete whole words
-"\\C-_": backward-kill-word
 "\\e[3;5~": kill-word
+"\\C-_": backward-kill-word
 
 # Ctrl+Shift+Backspace/Delete to delete to start/end of the line
-"\\e\\C-_": backward-kill-line
 "\\e[3;6~": kill-line
+"\\xC2\\x9F": backward-kill-line # for UTF-8
+#"\\x9F": backward-kill-line    # for ISO-8859-x
+#"\\e\\C-_": backward-kill-line  # for any other charset
 
 # Alt-Backspace for undo
 "\\e\\d": undo
 \fP
 .fi
 .RE
+
+(The Ctrl+Shift+Backspace keycode depends on the selected character set, so
+the appropriate binding needs to be chosen.)
 
 Finally, a couple of bindings for convenient searching of the command history.
 Just enter the first few characters of a previous command and press
@@ -1295,24 +1300,6 @@ Just enter the first few characters of a previous command and press
 # Ctrl-Up/Down for searching command history
 "\\e[1;5A": history-search-backward
 "\\e[1;5B": history-search-forward
-\fP
-.fi
-.RE
-
-
-.SS Enabling non-ASCII input in bash and readline
-
-By default, \fBreadline\fP treats the uppermost bit of input and output 
-characters as the "meta" flag.
-The following settings in \fI~/.inputrc\fP will disable that and thereby 
-allow the use of characters outside the 7-bit ASCII character set:
-
-.RS
-.nf
-\fC
-set input-meta on
-set convert-meta off
-set output-meta on
 \fP
 .fi
 .RE
