@@ -521,18 +521,20 @@ win_key_down(WPARAM wp, LPARAM lp)
   
   void ctrl_ch(uchar c) {
     esc_if(alt);
-    if (!shift)
-      ch(c);
-    else {
+    if (shift) {
       // Send C1 control char if the charset supports it.
       // Otherwise prefix the C0 char with ESC.
-      wchar wc = c | 0x80;
-      int l = cs_wcntombn(buf + len, &wc, cs_cur_max, 1);
-      if (l > 0 && buf[len] != '?')
-        len += l;
-      else
-        buf[0] = '\e', buf[1] = c, len = 2;
+      if (c < 0x20) {
+        wchar wc = c | 0x80;
+        int l = cs_wcntombn(buf + len, &wc, cs_cur_max, 1);
+        if (l > 0 && buf[len] != '?') {
+          len += l;
+          return;
+        }
+      };
+      esc_if(!alt);
     }
+    ch(c);
   }
   
   bool ctrl_key(void) {
