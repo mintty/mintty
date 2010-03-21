@@ -123,6 +123,8 @@ typedef struct {
   termchar *chars;
 } termline;
 
+typedef termline *termlines;
+
 typedef struct {
   int width;
   termchar *chars;
@@ -185,14 +187,14 @@ typedef struct belltime {
 
 struct term {
   tree234 *scrollback;  /* lines scrolled off top of screen */
-  tree234 *screen;      /* lines on primary screen */
-  tree234 *alt_screen;  /* lines on alternate screen */
+  termlines *screen;      /* lines on primary screen */
+  termlines *alt_screen;  /* lines on alternate screen */
   int disptop;  /* distance scrolled back (0 or -ve) */
   int tempsblines;      /* number of lines of .scrollback that
                          * can be retrieved onto the terminal
                          * ("temporary scrollback") */
 
-  termline **disptext;  /* buffer of text on real screen */
+  termlines *disptext;  /* buffer of text on real screen */
   int dispcursx, dispcursy;     /* location of cursor on real screen */
   int curstype; /* type of cursor on real screen */
 

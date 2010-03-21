@@ -755,11 +755,11 @@ lineptr(int y)
   termline *line;
 
   if (y >= 0)
-    line = index234(term.screen, y);
+    line = term.screen[y];
   else {
     y += term.alt_sblines;
     if (y >= 0)
-      line = index234(term.alt_screen, y);
+      line = term.alt_screen[y];
     else {
       y += count234(term.scrollback);
       uchar *cline = index234(term.scrollback, y);
