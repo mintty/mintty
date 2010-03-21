@@ -739,7 +739,7 @@ int
 sblines(void)
 {
   if (term.which_screen == 0 || cfg.alt_screen_scroll)
-    return count234(term.scrollback) + term.alt_sblines;
+    return term.sblines + term.alt_sblines;
   else
     return 0;
 }
@@ -753,19 +753,21 @@ termline *
 lineptr(int y)
 {
   termline *line;
-
-  if (y >= 0)
+  if (y >= 0) {
+    assert(y < term.rows);
     line = term.screen[y];
+  }
+  else if ((y += term.alt_sblines) >= 0) {
+    assert(y < term.rows);
+    line = term.alt_screen[y];
+  }
   else {
-    y += term.alt_sblines;
-    if (y >= 0)
-      line = term.alt_screen[y];
-    else {
-      y += count234(term.scrollback);
-      uchar *cline = index234(term.scrollback, y);
-      assert(cline);
-      line = decompressline(cline, null);
-    }
+    assert(y < term.sblines);
+    y += term.sbpos;
+    if (y < 0)
+      y += term.sblen; // Scrollback has wrapped round
+    uchar *cline = term.scrollback[y];
+    line = decompressline(cline, null);
   }
 
   assert(line);
