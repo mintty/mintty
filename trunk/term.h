@@ -1,7 +1,6 @@
 #ifndef TERM_H
 #define TERM_H
 
-#include "tree234.h"
 #include "bufchain.h"
 #include "minibidi.h"
 
@@ -186,13 +185,16 @@ typedef struct belltime {
 } belltime;
 
 struct term {
-  tree234 *scrollback;  /* lines scrolled off top of screen */
   termlines *screen;      /* lines on primary screen */
   termlines *alt_screen;  /* lines on alternate screen */
-  int disptop;  /* distance scrolled back (0 or -ve) */
-  int tempsblines;      /* number of lines of .scrollback that
-                         * can be retrieved onto the terminal
-                         * ("temporary scrollback") */
+  uchar **scrollback;     /* lines scrolled off top of screen */
+  int disptop;            /* distance scrolled back (0 or -ve) */
+  int sblen;              /* length of scrollback buffer */
+  int sblines;            /* number of lines of scrollback */
+  int sbpos;              /* index of next scrollback position to be filled */
+  int tempsblines;        /* number of lines of .scrollback that
+                           * can be retrieved onto the terminal
+                           * ("temporary scrollback") */
 
   termlines *disptext;  /* buffer of text on real screen */
   int dispcursx, dispcursy;     /* location of cursor on real screen */

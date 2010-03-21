@@ -202,18 +202,62 @@ update_sbar(void)
   win_set_sbar(nscroll + term.rows, nscroll + term.disptop, term.rows);
 }
 
+static void
+scrollback_push(uchar *line)
+{
+  if (term.sblines == term.sblen) {
+    // Need to make space for the new line.
+    if (term.sblen < cfg.scrollback_lines) {
+      // Expand buffer
+      assert(term.sbpos == 0);
+      int new_sblen = min(cfg.scrollback_lines, term.sblen * 10 + 1000);
+      term.scrollback = renewn(term.scrollback, new_sblen);
+      term.sbpos = term.sblen;
+      term.sblen = new_sblen;
+    }
+    else {
+      // Throw away the oldest line
+      free(term.scrollback[term.sbpos]);
+      term.sblines--;
+    }
+  }
+  assert(term.sblines < term.sblen);
+  assert(term.sbpos < term.sblen);
+  term.scrollback[term.sbpos++] = line;
+  if (term.sbpos == term.sblen)
+    term.sbpos = 0;
+  term.sblines++;
+  if (term.tempsblines < term.sblines)
+    term.tempsblines++;
+}
+
+static uchar *
+scrollback_pop(void)
+{
+  assert(term.sblines > 0);
+  assert(term.sbpos < term.sblen);
+  term.sblines--;
+  if (term.tempsblines)
+    term.tempsblines--;
+  if (term.sbpos == 0)
+    term.sbpos = term.sblen;
+  return term.scrollback[--term.sbpos];
+}
+
 /*
  * Clear the scrollback.
  */
 void
 term_clear_scrollback(void)
 {
-  uchar *line;
-  term.disptop = 0;
-  while ((line = delpos234(term.scrollback, 0)))
-    free(line); /* this is compressed data, not a termline */
+  while (term.sblines)
+    free(scrollback_pop());
+  free(term.scrollback);
+  term.scrollback = 0;
+  term.sblen = term.sblines = term.sbpos = 0;
   term.tempsblines = 0;
   term.alt_sblines = 0;
+  term.disptop = 0;
   update_sbar();
 }
 
@@ -238,8 +282,6 @@ term_init(void)
   term.basic_erase_char.chr = ' ';
   term.basic_erase_char.attr = ATTR_DEFAULT;
   term.erase_char = term.basic_erase_char;
-  
-  term.scrollback = newtree234();
 }
 
 /*
@@ -283,7 +325,6 @@ term_resize(int newrows, int newcols)
   *    amount of scrollback we actually have, we must throw some
   *    away.
   */
-  int sblen = count234(term.scrollback);
 
   // Shrink the screen if newrows < rows
   if (newrows < term.rows) {
@@ -294,19 +335,10 @@ term_resize(int newrows, int newcols)
     // Push removed lines into scrollback
     for (int i = 0; i < store; i++) {
       termline *line = term.screen[i];
-      addpos234(term.scrollback, compressline(line), sblen++);
+      scrollback_push(compressline(line));
       freeline(line);
     }
-    term.tempsblines += store;
 
-    // Delete any excess lines from the scrollback.
-    while (sblen > cfg.scrollback_lines) {
-      free(delpos234(term.scrollback, 0));
-      sblen--;
-    }
-    if (sblen < term.tempsblines)
-      term.tempsblines = sblen;
-    
     // Move up remaining lines
     memmove(term.screen, term.screen + store, newrows * sizeof(termline *));
     
@@ -336,22 +368,18 @@ term_resize(int newrows, int newcols)
     
     // Restore lines from scrollback
     for (int i = restore; i--;) {
-      uchar *cline = delpos234(term.scrollback, --sblen);
+      uchar *cline = scrollback_pop();
       termline *line = decompressline(cline, null);
       free(cline);
       line->temporary = false;  /* reconstituted line is now real */
       term.screen[i] = line;
     }
-    term.tempsblines -= restore;
     
     // Adjust cursor position
     term.curs.y += restore;
     term.savecurs.y += restore;
   }
   
-  assert(count234(term.scrollback) <= cfg.scrollback_lines);
-  assert(count234(term.scrollback) >= term.tempsblines);
-
   // Make a new displayed text buffer.
   if (term.disptext) {
     for (int i = 0; i < term.rows; i++)
@@ -599,23 +627,14 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
     // Only push lines into the scrollback when scrolling off the top of the
     // normal screen and scrollback is actually enabled.
     if (sb && topline == 0 && term.which_screen == 0 && cfg.scrollback_lines) {
-      int sblen = count234(term.scrollback);
       for (int i = 0; i < lines; i++)
-        addpos234(term.scrollback, compressline(term.screen[i]), sblen++);
-      term.tempsblines += lines;
+        scrollback_push(compressline(term.screen[i]));
  
-      // Destroy excess scrollback lines.
-      while (sblen > cfg.scrollback_lines) {
-        free(delpos234(term.scrollback, 0));
-        sblen--;
-        term.tempsblines--;
-      }
-
       // Shift viewpoint accordingly if user is looking at scrollback
       if (term.disptop < 0)
-        term.disptop = max(term.disptop - lines, -cfg.scrollback_lines);
+        term.disptop = max(term.disptop - lines, -term.sblines);
 
-      seltop = -cfg.scrollback_lines;
+      seltop = -term.sblines;
     }
     
     // Move up remaining lines and push in the recycled lines
