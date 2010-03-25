@@ -33,7 +33,7 @@ extern int font_size;
 extern int font_width, font_height;
 extern bool font_ambig_wide;
 
-enum { PADDING = 1 };
+#define PADDING 1
 
 void win_paint(void);
 

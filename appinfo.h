@@ -10,13 +10,13 @@
 #define APPDESC "Terminal"
 #define WEBSITE "http://mintty.googlecode.com"
 #define AUTHOR  "Andy Koppe"
-#define YEARS   "2008-10"
+#define YEAR    "2010"
 
-#define VERSION "0.7-alpha"
+#define VERSION "0.6.1"
 #define MAJOR_VERSION  0
-#define MINOR_VERSION  7
-#define PATCH_NUMBER   0
-#define BUILD_NUMBER   0
+#define MINOR_VERSION  6
+#define PATCH_NUMBER   1
+#define BUILD_NUMBER   1
 
 #if defined BRANCH && defined REVISION
 #undef VERSION
@@ -32,7 +32,7 @@
 #define DECIMAL_VERSION \
   (MAJOR_VERSION * 10000 + MINOR_VERSION * 100 + PATCH_NUMBER)
 
-#define COPYRIGHT "(C) " YEARS " " AUTHOR
+#define COPYRIGHT "(C) " YEAR " " AUTHOR
 
 #define VERSION_TEXT \
   APPNAME " " VERSION "\n" \

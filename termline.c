@@ -691,7 +691,7 @@ resizeline(termline *line, int cols)
     */
     if (cols < oldcols)
       memmove(line->chars + cols, line->chars + oldcols,
-              (line->size - line->cols) * sizeof(termchar));
+              (line->size - line->cols) * TSIZE);
 
    /*
     * Now do the actual resize, leaving the _same_ amount of
@@ -707,7 +707,7 @@ resizeline(termline *line, int cols)
     */
     if (cols > oldcols)
       memmove(line->chars + cols, line->chars + oldcols,
-              (line->size - line->cols) * sizeof(termchar));
+              (line->size - line->cols) * TSIZE);
 
    /*
     * Go through what's left of the original line, and adjust
@@ -739,7 +739,7 @@ int
 sblines(void)
 {
   if (term.which_screen == 0 || cfg.alt_screen_scroll)
-    return term.sblines + term.alt_sblines;
+    return count234(term.scrollback) + term.alt_sblines;
   else
     return 0;
 }
@@ -753,21 +753,19 @@ termline *
 lineptr(int y)
 {
   termline *line;
-  if (y >= 0) {
-    assert(y < term.rows);
-    line = term.screen[y];
-  }
-  else if ((y += term.alt_sblines) >= 0) {
-    assert(y < term.rows);
-    line = term.alt_screen[y];
-  }
+
+  if (y >= 0)
+    line = index234(term.screen, y);
   else {
-    assert(y < term.sblines);
-    y += term.sbpos;
-    if (y < 0)
-      y += term.sblen; // Scrollback has wrapped round
-    uchar *cline = term.scrollback[y];
-    line = decompressline(cline, null);
+    y += term.alt_sblines;
+    if (y >= 0)
+      line = index234(term.alt_screen, y);
+    else {
+      y += count234(term.scrollback);
+      uchar *cline = index234(term.scrollback, y);
+      assert(cline);
+      line = decompressline(cline, null);
+    }
   }
 
   assert(line);
@@ -837,8 +835,8 @@ term_bidi_cache_store(int line, termchar *lbefore, termchar *lafter,
   term.post_bidi_cache[line].forward = newn(int, width);
   term.post_bidi_cache[line].backward = newn(int, width);
 
-  memcpy(term.pre_bidi_cache[line].chars, lbefore, size * sizeof(termchar));
-  memcpy(term.post_bidi_cache[line].chars, lafter, size * sizeof(termchar));
+  memcpy(term.pre_bidi_cache[line].chars, lbefore, size * TSIZE);
+  memcpy(term.post_bidi_cache[line].chars, lafter, size * TSIZE);
   memset(term.post_bidi_cache[line].forward, 0, width * sizeof (int));
   memset(term.post_bidi_cache[line].backward, 0, width * sizeof (int));
 
@@ -890,7 +888,7 @@ term_bidi_line(termline *ldata, int scr_y)
       term.ltemp = renewn(term.ltemp, term.ltemp_size);
     }
 
-    memcpy(term.ltemp, ldata->chars, ldata->size * sizeof(termchar));
+    memcpy(term.ltemp, ldata->chars, ldata->size * TSIZE);
 
     for (it = 0; it < term.cols; it++) {
       term.ltemp[it] = ldata->chars[term.wcTo[it].index];

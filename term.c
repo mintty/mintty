@@ -79,15 +79,17 @@ term_schedule_vbell(int already_started, int startpoint)
 int
 term_last_nonempty_line(void)
 {
-  for (int i = term.rows - 1; i >= 0; i--) {
-    termline *line = term.screen[i];
-    if (line) {
-      for (int j = 0; j < line->cols; j++)
-        if (!termchars_equal(&line->chars[j], &term.erase_char))
-          return i;
-    }
+  int i;
+  for (i = count234(term.screen) - 1; i >= 0; i--) {
+    termline *line = index234(term.screen, i);
+    int j;
+    for (j = 0; j < line->cols; j++)
+      if (!termchars_equal(&line->chars[j], &term.erase_char))
+        break;
+    if (j != line->cols)
+      break;
   }
-  return -1;
+  return i;
 }
 
 void
@@ -102,9 +104,10 @@ term_reset(void)
     term.alt_b = term.marg_b = term.rows - 1;
   else
     term.alt_b = term.marg_b = 0;
-  if (term.tabs) {
-    for (int i = 0; i < term.cols; i++)
-      term.tabs[i] = (i % 8 == 0);
+  if (term.cols != -1) {
+    int i;
+    for (i = 0; i < term.cols; i++)
+      term.tabs[i] = (i % 8 == 0 ? true : false);
   }
   term.alt_om = term.dec_om = false;
   term.alt_ins = term.insert = false;
@@ -202,62 +205,18 @@ update_sbar(void)
   win_set_sbar(nscroll + term.rows, nscroll + term.disptop, term.rows);
 }
 
-static void
-scrollback_push(uchar *line)
-{
-  if (term.sblines == term.sblen) {
-    // Need to make space for the new line.
-    if (term.sblen < cfg.scrollback_lines) {
-      // Expand buffer
-      assert(term.sbpos == 0);
-      int new_sblen = min(cfg.scrollback_lines, term.sblen * 10 + 1000);
-      term.scrollback = renewn(term.scrollback, new_sblen);
-      term.sbpos = term.sblen;
-      term.sblen = new_sblen;
-    }
-    else {
-      // Throw away the oldest line
-      free(term.scrollback[term.sbpos]);
-      term.sblines--;
-    }
-  }
-  assert(term.sblines < term.sblen);
-  assert(term.sbpos < term.sblen);
-  term.scrollback[term.sbpos++] = line;
-  if (term.sbpos == term.sblen)
-    term.sbpos = 0;
-  term.sblines++;
-  if (term.tempsblines < term.sblines)
-    term.tempsblines++;
-}
-
-static uchar *
-scrollback_pop(void)
-{
-  assert(term.sblines > 0);
-  assert(term.sbpos < term.sblen);
-  term.sblines--;
-  if (term.tempsblines)
-    term.tempsblines--;
-  if (term.sbpos == 0)
-    term.sbpos = term.sblen;
-  return term.scrollback[--term.sbpos];
-}
-
 /*
  * Clear the scrollback.
  */
 void
 term_clear_scrollback(void)
 {
-  while (term.sblines)
-    free(scrollback_pop());
-  free(term.scrollback);
-  term.scrollback = 0;
-  term.sblen = term.sblines = term.sbpos = 0;
+  uchar *line;
+  term.disptop = 0;
+  while ((line = delpos234(term.scrollback, 0)))
+    free(line); /* this is compressed data, not a termline */
   term.tempsblines = 0;
   term.alt_sblines = 0;
-  term.disptop = 0;
   update_sbar();
 }
 
@@ -275,6 +234,7 @@ term_init(void)
   term.printer_buf = new_bufchain();
   term.state = TOPLEVEL;
   term.dispcursx = term.dispcursy = -1;
+  term.rows = term.cols = -1;
   term_reset();
   term.attr_mask = 0xffffffff;
 
@@ -290,21 +250,33 @@ term_init(void)
 void
 term_resize(int newrows, int newcols)
 {
+  tree234 *newalt;
+  termline **newdisp, *line;
+  int oldrows = term.rows;
+  int save_which_screen = term.which_screen;
+
   if (newrows == term.rows && newcols == term.cols)
     return;     /* nothing to do */
 
  /* Behave sensibly if we're given zero (or negative) rows/cols */
 
-  newrows = max(1, newrows);
-  newcols = max(1, newcols);
-
-  int save_which_screen = term.which_screen;
-  term_swap_screen(0, false, false);
+  if (newrows < 1)
+    newrows = 1;
+  if (newcols < 1)
+    newcols = 1;
 
   term.selected = false;
+  term_swap_screen(0, false, false);
 
   term.alt_t = term.marg_t = 0;
   term.alt_b = term.marg_b = newrows - 1;
+
+  if (term.rows == -1) {
+    term.scrollback = newtree234();
+    term.screen = newtree234();
+    term.tempsblines = 0;
+    term.rows = 0;
+  }
 
  /*
   * Resize the screen and scrollback. We only need to shift
@@ -325,99 +297,110 @@ term_resize(int newrows, int newcols)
   *    amount of scrollback we actually have, we must throw some
   *    away.
   */
-
-  // Shrink the screen if newrows < rows
-  if (newrows < term.rows) {
-    int removed = term.rows - newrows;
-    int destroy = min(removed, term.rows - (term.curs.y + 1));
-    int store = removed - destroy;
-    
-    // Push removed lines into scrollback
-    for (int i = 0; i < store; i++) {
-      termline *line = term.screen[i];
-      scrollback_push(compressline(line));
-      freeline(line);
-    }
-
-    // Move up remaining lines
-    memmove(term.screen, term.screen + store, newrows * sizeof(termline *));
-    
-    // Destroy removed lines below the cursor
-    for (int i = term.rows - destroy; i < term.rows; i++)
-      freeline(term.screen[i]);
-    
-    // Adjust cursor position
-    term.curs.y = max(0, term.curs.y - store);
-    term.savecurs.y = max(0, term.savecurs.y - store);
-  }
-
-  term.screen = renewn(term.screen, newrows);
-  
-  // Expand the screen if newrows > rows
-  if (newrows > term.rows) {
-    int added = newrows - term.rows;
-    int restore = min(added, term.tempsblines);
-    int create = added - restore;
-    
-    // Fill bottom of screen with blank lines
-    for (int i = newrows - create; i < newrows; i++)
-      term.screen[i] = newline(newcols, false);
-    
-    // Move existing lines down
-    memmove(term.screen + restore, term.screen, term.rows * sizeof(termline *));
-    
-    // Restore lines from scrollback
-    for (int i = restore; i--;) {
-      uchar *cline = scrollback_pop();
-      termline *line = decompressline(cline, null);
+  int sblen = count234(term.scrollback);
+ /* Do this loop to expand the screen if newrows > rows */
+  assert(term.rows == count234(term.screen));
+  while (term.rows < newrows) {
+    if (term.tempsblines > 0) {
+      uchar *cline;
+     /* Insert a line from the scrollback at the top of the screen. */
+      assert(sblen >= term.tempsblines);
+      cline = delpos234(term.scrollback, --sblen);
+      line = decompressline(cline, null);
       free(cline);
       line->temporary = false;  /* reconstituted line is now real */
-      term.screen[i] = line;
+      term.tempsblines -= 1;
+      addpos234(term.screen, line, 0);
+      term.curs.y += 1;
+      term.savecurs.y += 1;
     }
-    
-    // Adjust cursor position
-    term.curs.y += restore;
-    term.savecurs.y += restore;
+    else {
+     /* Add a new blank line at the bottom of the screen. */
+      line = newline(newcols, false);
+      addpos234(term.screen, line, count234(term.screen));
+    }
+    term.rows += 1;
   }
-  
-  // Make a new displayed text buffer.
+ /* Do this loop to shrink the screen if newrows < rows */
+  while (term.rows > newrows) {
+    if (term.curs.y < term.rows - 1) {
+     /* delete bottom row, unless it contains the cursor */
+      free(delpos234(term.screen, term.rows - 1));
+    }
+    else {
+     /* push top row to scrollback */
+      line = delpos234(term.screen, 0);
+      addpos234(term.scrollback, compressline(line), sblen++);
+      freeline(line);
+      term.tempsblines += 1;
+      term.curs.y -= 1;
+      term.savecurs.y -= 1;
+    }
+    term.rows -= 1;
+  }
+  assert(term.rows == newrows);
+  assert(count234(term.screen) == newrows);
+
+ /* Delete any excess lines from the scrollback. */
+  while (sblen > cfg.scrollback_lines) {
+    line = delpos234(term.scrollback, 0);
+    free(line);
+    sblen--;
+  }
+  if (sblen < term.tempsblines)
+    term.tempsblines = sblen;
+  assert(count234(term.scrollback) <= cfg.scrollback_lines);
+  assert(count234(term.scrollback) >= term.tempsblines);
+  term.disptop = 0;
+
+ /* Make a new displayed text buffer. */
+  newdisp = newn(termline *, newrows);
+  for (int i = 0; i < newrows; i++) {
+    newdisp[i] = newline(newcols, false);
+    for (int j = 0; j < newcols; j++)
+      newdisp[i]->chars[j].attr = ATTR_INVALID;
+  }
   if (term.disptext) {
-    for (int i = 0; i < term.rows; i++)
+    for (int i = 0; i < oldrows; i++)
       freeline(term.disptext[i]);
   }
-  term.disptext = renewn(term.disptext, newrows);
-  for (int i = 0; i < newrows; i++) {
-    termline *line = newline(newcols, false);
-    term.disptext[i] = line;
-    for (int j = 0; j < newcols; j++)
-      line->chars[j].attr = ATTR_INVALID;
-  }
+  free(term.disptext);
+  term.disptext = newdisp;
   term.dispcursx = term.dispcursy = -1;
 
-  // Make a new alternate screen.
-  if (term.alt_screen) {
-    for (int i = 0; i < term.rows; i++)
-      freeline(term.alt_screen[i]);
+ /* Make a new alternate screen. */
+  newalt = newtree234();
+  for (int i = 0; i < newrows; i++) {
+    line = newline(newcols, true);
+    addpos234(newalt, line, i);
   }
-  term.alt_screen = renewn(term.alt_screen, newrows);
-  for (int i = 0; i < newrows; i++)
-    term.alt_screen[i] = newline(newcols, true);
+  if (term.alt_screen) {
+    while (null != (line = delpos234(term.alt_screen, 0)))
+      freeline(line);
+    freetree234(term.alt_screen);
+  }
+  term.alt_screen = newalt;
   term.alt_sblines = 0;
-
-  // Reset tab stops
   term.tabs = renewn(term.tabs, newcols);
-  for (int i = (term.cols > 0 ? term.cols : 0); i < newcols; i++)
-    term.tabs[i] = (i % 8 == 0);
+  {
+    int i;
+    for (i = (term.cols > 0 ? term.cols : 0); i < newcols; i++)
+      term.tabs[i] = (i % 8 == 0 ? true : false);
+  }
 
-  // Check that the cursor positions are still valid.
-  assert(0 <= term.curs.y && term.curs.y < newrows);
-  assert(0 <= term.savecurs.y && term.savecurs.y < newrows);
-  term.curs.x = min(term.curs.x, newcols - 1);
-
+ /* Check that the cursor positions are still valid. */
+  if (term.savecurs.y < 0)
+    term.savecurs.y = 0;
+  if (term.savecurs.y >= newrows)
+    term.savecurs.y = newrows - 1;
+  if (term.curs.y < 0)
+    term.curs.y = 0;
+  if (term.curs.y >= newrows)
+    term.curs.y = newrows - 1;
+  if (term.curs.x >= newcols)
+    term.curs.x = newcols - 1;
   term.alt_x = term.alt_y = 0;
   term.wrapnext = term.alt_wnext = false;
-
-  term.disptop = 0;
 
   term.rows = newrows;
   term.cols = newcols;
@@ -436,6 +419,10 @@ term_resize(int newrows, int newcols)
 void
 term_swap_screen(int which, int reset, int keep_cur_pos)
 {
+  int t;
+  pos tp;
+  tree234 *ttr;
+
   reset &= which;      /* do no resetting if which==0 */
 
   if (which != term.which_screen) {
@@ -443,10 +430,10 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
 
     term.alt_sblines =
       cfg.alt_screen_scroll && which ? term_last_nonempty_line() + 1 : 0;
-    termlines *ttr = term.alt_screen;
+    ttr = term.alt_screen;
     term.alt_screen = term.screen;
     term.screen = ttr;
-    int t = term.curs.x;
+    t = term.curs.x;
     if (!reset && !keep_cur_pos)
       term.curs.x = term.alt_x;
     term.alt_x = t;
@@ -493,7 +480,7 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
       term.oem_acs = term.alt_oem_acs;
     term.alt_oem_acs = t;
 
-    pos tp = term.savecurs;
+    tp = term.savecurs;
     if (!reset && !keep_cur_pos)
       term.savecurs = term.alt_savecurs;
     term.alt_savecurs = tp;
@@ -581,77 +568,127 @@ term_check_boundary(int x, int y)
  * affect the scrollback buffer.
  */
 void
-term_do_scroll(int topline, int botline, int lines, bool sb)
+term_do_scroll(int topline, int botline, int lines, int sb)
 {
-  bool down = lines < 0;
-  lines = abs(lines);
-  
-  botline++; // One below the scroll region: easier to calculate with
-  int moved_lines = botline - topline - lines;
-  
-  termline **top = term.screen + topline, **bot = term.screen + botline;
-  
-  // Reuse lines that are being scrolled out of the scroll region
-  termline *recycled[abs(lines)];
-  void recycle(termline **src) {
-    memcpy(recycled, src, sizeof recycled);
-    for (int i = 0; i < lines; i++) {
-      termline *line = recycled[i];
+  termline *line;
+  int i, seltop, olddisptop, shift;
+
+  if (topline != 0 || term.which_screen != 0)
+    sb = false;
+
+  olddisptop = term.disptop;
+  shift = lines;
+  if (lines < 0) {
+    while (lines < 0) {
+      line = delpos234(term.screen, botline);
       resizeline(line, term.cols);
-      for (int j = 0; j < term.cols; j++)
-        copy_termchar(line, j, &term.erase_char);
+      for (i = 0; i < term.cols; i++)
+        copy_termchar(line, i, &term.erase_char);
       line->lattr = LATTR_NORM;
+      addpos234(term.screen, line, topline);
+
+      if (term.sel_start.y >= topline && term.sel_start.y <= botline) {
+        term.sel_start.y++;
+        if (term.sel_start.y > botline) {
+          term.sel_start.y = botline + 1;
+          term.sel_start.x = 0;
+        }
+      }
+      if (term.sel_end.y >= topline && term.sel_end.y <= botline) {
+        term.sel_end.y++;
+        if (term.sel_end.y > botline) {
+          term.sel_end.y = botline + 1;
+          term.sel_end.x = 0;
+        }
+      }
+
+      lines++;
     }
   }
+  else {
+    while (lines > 0) {
+      line = delpos234(term.screen, topline);
+      if (sb && cfg.scrollback_lines > 0) {
+        int sblen = count234(term.scrollback);
+       /*
+        * We must add this line to the scrollback. We'll
+        * remove a line from the top of the scrollback if
+        * the scrollback is full.
+        */
+        if (sblen == cfg.scrollback_lines) {
+          sblen--;
+          uchar *cline = delpos234(term.scrollback, 0);
+          free(cline);
+        }
+        else
+          term.tempsblines += 1;
 
-  if (down) {
-    // Move down remaining lines and push in the recycled lines
-    recycle(bot - lines);
-    memmove(top + lines, top, moved_lines * sizeof(termline *));
-    memcpy(top, recycled, sizeof recycled);
+        addpos234(term.scrollback, compressline(line), sblen);
 
-    // Move selection markers if they're within the scroll region
-    void scroll_pos(pos *p) {
-      if (p->y >= topline && p->y < botline) {
-        if ((p->y += lines) >= botline)
-          *p = (pos){.y = botline, .x = 0};
+       /* now `line' itself can be reused as the bottom line */
+
+       /*
+        * If the user is currently looking at part of the
+        * scrollback, and they haven't enabled any options
+        * that are going to reset the scrollback as a
+        * result of this movement, then the chances are
+        * they'd like to keep looking at the same line. So
+        * we move their viewpoint at the same rate as the
+        * scroll, at least until their viewpoint hits the
+        * top end of the scrollback buffer, at which point
+        * we don't have the choice any more.
+        * 
+        * Thanks to Jan Holmen Holsten for the idea and
+        * initial implementation.
+        */
+        if (term.disptop > -cfg.scrollback_lines && term.disptop < 0)
+          term.disptop--;
       }
-    }
-    scroll_pos(&term.sel_start);
-    scroll_pos(&term.sel_anchor);
-    scroll_pos(&term.sel_end);
-  }
-  else if (lines > 0) {
-    int seltop = topline;
+      resizeline(line, term.cols);
+      for (i = 0; i < term.cols; i++)
+        copy_termchar(line, i, &term.erase_char);
+      line->lattr = LATTR_NORM;
+      addpos234(term.screen, line, botline);
 
-    // Only push lines into the scrollback when scrolling off the top of the
-    // normal screen and scrollback is actually enabled.
-    if (sb && topline == 0 && term.which_screen == 0 && cfg.scrollback_lines) {
-      for (int i = 0; i < lines; i++)
-        scrollback_push(compressline(term.screen[i]));
- 
-      // Shift viewpoint accordingly if user is looking at scrollback
-      if (term.disptop < 0)
-        term.disptop = max(term.disptop - lines, -term.sblines);
+     /*
+      * If the selection endpoints move into the scrollback,
+      * we keep them moving until they hit the top. However,
+      * of course, if the line _hasn't_ moved into the
+      * scrollback then we don't do this, and cut them off
+      * at the top of the scroll region.
+      * 
+      * This applies to sel_start and sel_end (for an existing
+      * selection), and also sel_anchor (for one being
+      * selected as we speak).
+      */
+      seltop = sb ? -cfg.scrollback_lines : topline;
 
-      seltop = -term.sblines;
-    }
-    
-    // Move up remaining lines and push in the recycled lines
-    recycle(top);
-    memmove(top, top + lines, moved_lines * sizeof(termline *));
-    memcpy(bot - lines, recycled, sizeof recycled);
-
-    // Move selection markers if they're within the scroll region
-    void scroll_pos(pos *p) {
-      if (p->y >= seltop && p->y < botline) {
-        if ((p->y -= lines) < seltop)
-          *p = (pos){.y = seltop, .x = 0};
+      if (term.selected) {
+        if (term.sel_start.y >= seltop && term.sel_start.y <= botline) {
+          term.sel_start.y--;
+          if (term.sel_start.y < seltop) {
+            term.sel_start.y = seltop;
+            term.sel_start.x = 0;
+          }
+        }
+        if (term.sel_end.y >= seltop && term.sel_end.y <= botline) {
+          term.sel_end.y--;
+          if (term.sel_end.y < seltop) {
+            term.sel_end.y = seltop;
+            term.sel_end.x = 0;
+          }
+        }
+        if (term.sel_anchor.y >= seltop && term.sel_anchor.y <= botline) {
+          term.sel_anchor.y--;
+          if (term.sel_anchor.y < seltop) {
+            term.sel_anchor.y = seltop;
+            term.sel_anchor.x = 0;
+          }
+        }
       }
+
+      lines--;
     }
-    scroll_pos(&term.sel_start);
-    scroll_pos(&term.sel_anchor);
-    scroll_pos(&term.sel_end);
   }
 }
 

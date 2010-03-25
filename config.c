@@ -729,7 +729,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(scrollbar))
   );
   ctrl_checkbox(
-    s, "Enable scrollback on alternate screen", 'e', P(0),
+    s, "Access scrollback from alternate screen", 'a', P(0),
     dlg_stdcheckbox_handler, I(offcfg(alt_screen_scroll))
   );
   ctrl_columns(s, 2, 53, 47);
@@ -740,7 +740,7 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Window", "options", null);
   ctrl_checkbox(
-    s, "Ask for exit confirmation", 'a', P(0),
+    s, "Ask for exit confirmation", 'x', P(0),
     dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
   );
 }
