@@ -5,7 +5,7 @@
 .\" You may distribute, use, and modify this man page under the terms
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
-.TH mintty 1 2010-03-24 0.6.1 Cygwin
+.TH mintty 1 2010-03-25 0.6.1 Cygwin
 
 .ad l
 
@@ -1115,7 +1115,7 @@ The command simply needs to be appended to the target field of the shortcut
 (in the shortcut's properties):
 
 .RS
-Target:  \fCC:\\Cygwin\\bin\\mintty.exe \f(CBssh server\fR
+Target:  \fCC:\\Cygwin\\bin\\mintty.exe \f(CB/bin/ssh server\fR
 .RE
 
 The working directory for the session can be set in the "Start In:" field.
@@ -1173,7 +1173,7 @@ Another way to set variables for the program to be run in \fBmintty\fP is by
 invoking it through the \fBenv\fP command, e.g.:
 
 .RS
-\fCmintty env DISPLAY=:0 ssh -X server\fP
+\fCmintty /bin/env DISPLAY=:0 /bin/ssh -X server\fP
 .RE
 
 
