@@ -35,7 +35,7 @@ Otherwise, mintty looks for a shell to execute in the \fISHELL\fP environment
 variable.
 If that is not set, it reads the user's default shell setting from
 \fI/etc/passwd\fP.
-As a last resort, it falls back to \fI/bin/bash\fP.
+As a last resort, it falls back to \fI/bin/sh\fP.
 If a single dash is specified instead of a program name, the shell is invoked
 as a login shell.
 
@@ -762,7 +762,7 @@ pressed to get the \fBBreak\fP function.
 Where the modifier keys \fBShift\fP, \fBAlt\fP and \fBCtrl\fP are not handled
 as described in the sections above, they are encoded as a one-digit number that
 becomes part of the keycode.
-To obtain that number, add the values for each pressed modifier to 1:
+To obtain that number, add the numbers for each pressed modifier to 1:
 
 .RS
 .PD 0
