@@ -4,7 +4,7 @@
 #include <sys/termios.h>
 
 char *child_create(char *argv[], const char *lang, struct winsize *winp);
-void child_kill(void);
+void child_kill(bool point_blank);
 void child_write(const char *, int len);
 void child_resize(struct winsize *winp);
 void child_proc(void);

@@ -226,6 +226,18 @@ events to the window instead, so that e.g. text can be selected and the context
 menu can be accessed.
 
 
+.SS Closing a session
+
+Clicking the window's close button, pressing \fBAlt+F4\fP, or choosing
+\fBClose\fP from the window menu sends a \fISIGHUP\fP signal to the process
+running in mintty, which normally causes it to exit.
+
+That signal can be ignored, though, in which case the program might have to be
+forced to terminate by sending a \fISIGKILL\fP signal instead.
+This can be done by holding down \fBShift\fP when using the close button,
+shortcut or menu item.
+
+
 .SS Shortcuts
 
 An overview of all the keyboard shortcuts.

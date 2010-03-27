@@ -285,10 +285,10 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
 }
 
 void
-child_kill(void)
+child_kill(bool point_blank)
 { 
   if (pid)
-    kill(-pid, SIGHUP);
+    kill(-pid, point_blank ? SIGKILL : SIGHUP);
   else
     exit(0);
 }
