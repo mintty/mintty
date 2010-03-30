@@ -1007,10 +1007,9 @@ main(int argc, char *argv[])
   */
   {
     int size = (font_width + 15) / 16 * 2 * font_height;
-    char *bits = newn(char, size);
+    char bits[size];
     memset(bits, 0, size);
     caretbm = CreateBitmap(font_width, font_height, 1, 1, bits);
-    free(bits);
     CreateCaret(wnd, caretbm, font_width, font_height);
   }
 

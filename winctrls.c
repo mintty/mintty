@@ -740,10 +740,11 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
     * Now we're ready to actually create the control, by
     * switching on its type.
     */
+    char *escaped = 0;
     switch (ctrl->type) {
       when CTRL_EDITBOX: {
         num_ids = 2;    /* static, edit */
-        char *escaped = shortcut_escape(ctrl->label, ctrl->editbox.shortcut);
+        escaped = shortcut_escape(ctrl->label, ctrl->editbox.shortcut);
         shortcuts[nshortcuts++] = ctrl->editbox.shortcut;
         if (ctrl->editbox.percentwidth == 100) {
           if (ctrl->editbox.has_list)
@@ -762,15 +763,14 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
               (&pos, escaped, base_id, base_id + 1, ctrl->editbox.percentwidth);
           }
         }
-        free(escaped);
       }
       when CTRL_RADIO: {
         num_ids = ctrl->radio.nbuttons + 1;     /* label as well */
         
-        char *escaped = shortcut_escape(ctrl->label, ctrl->radio.shortcut);
+        escaped = shortcut_escape(ctrl->label, ctrl->radio.shortcut);
         shortcuts[nshortcuts++] = ctrl->radio.shortcut;
 
-        radio *buttons = newn(radio, ctrl->radio.nbuttons);
+        radio buttons[ctrl->radio.nbuttons];
 
         for (int i = 0; i < ctrl->radio.nbuttons; i++) {
           buttons[i].text =
@@ -789,28 +789,24 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
 
         for (int i = 0; i < ctrl->radio.nbuttons; i++)
           free(buttons[i].text);
-        free(buttons);
-        free(escaped);
       }
       when CTRL_CHECKBOX: {
         num_ids = 1;
-        char *escaped = shortcut_escape(ctrl->label, ctrl->checkbox.shortcut);
+        escaped = shortcut_escape(ctrl->label, ctrl->checkbox.shortcut);
         shortcuts[nshortcuts++] = ctrl->checkbox.shortcut;
         checkbox(&pos, escaped, base_id);
-        free(escaped);
       }
       when CTRL_BUTTON: {
-        char *escaped = shortcut_escape(ctrl->label, ctrl->button.shortcut);
+        escaped = shortcut_escape(ctrl->label, ctrl->button.shortcut);
         shortcuts[nshortcuts++] = ctrl->button.shortcut;
         if (ctrl->button.iscancel)
           actual_base_id = IDCANCEL;
         num_ids = 1;
         button(&pos, escaped, actual_base_id, ctrl->button.isdefault);
-        free(escaped);
       }
       when CTRL_LISTBOX: {
         num_ids = 2;
-        char *escaped = shortcut_escape(ctrl->label, ctrl->listbox.shortcut);
+        escaped = shortcut_escape(ctrl->label, ctrl->listbox.shortcut);
         shortcuts[nshortcuts++] = ctrl->listbox.shortcut;
         if (ctrl->listbox.height == 0) {
          /* Drop-down list. */
@@ -833,7 +829,7 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
           * fun, and this should be good enough accuracy.
           */
           int width = cp->width * ctrl->listbox.percentwidth;
-          int *tabarray = newn(int, ctrl->listbox.ncols - 1);
+          int tabarray[ctrl->listbox.ncols - 1];
           int percent = 0;
           for (int i = 0; i < ctrl->listbox.ncols - 1; i++) {
             percent += ctrl->listbox.percentages[i];
@@ -841,24 +837,20 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
           }
           SendDlgItemMessage(cp->wnd, base_id + 1, LB_SETTABSTOPS,
                              ctrl->listbox.ncols - 1, (LPARAM) tabarray);
-          free(tabarray);
         }
-        free(escaped);
       }
       when CTRL_FONTSELECT: {
         num_ids = 3;
-        char *escaped = shortcut_escape(ctrl->label, ctrl->fontselect.shortcut);
         shortcuts[nshortcuts++] = ctrl->fontselect.shortcut;
         //statictext(&pos, escaped, 1, base_id);
         staticbtn(&pos, "", base_id + 1, "&Select...", base_id + 2);
-        free(escaped);
         data = new(font_spec);
       }
       otherwise:
         assert(!"Can't happen");
         num_ids = 0;    /* placate gcc */
-        break;
     }
+    free(escaped);
 
    /*
     * Create a `winctrl' for this control, and advance
@@ -1224,7 +1216,7 @@ void
 dlg_label_change(control *ctrl, char const *text)
 {
   winctrl *c = ctrl->plat_ctrl;
-  char *escaped = null;
+  char *escaped = 0;
   int id = -1;
 
   assert(c);

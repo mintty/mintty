@@ -32,7 +32,7 @@ shell_exec_thread(void *data)
       MessageBox(0, msg, 0, 0);
     }
   }
-  free(data);
+  free(wpath);
   return 0;
 }
 
@@ -486,11 +486,10 @@ paste_text(HANDLE data)
 {
   char *cs = GlobalLock(data);
   uint l = MultiByteToWideChar(CP_ACP, 0, cs, -1, 0, 0) - 1;
-  wchar *s = newn(wchar, l);
+  wchar s[l];
   MultiByteToWideChar(CP_ACP, 0, cs, -1, s, l);
   GlobalUnlock(data);
   term_paste(s, l);
-  free(s);
 }
 
 void
