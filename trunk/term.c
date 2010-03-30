@@ -795,7 +795,7 @@ term_paint(void)
 {
   int chlen = 1024;
   wchar *ch = newn(wchar, chlen);
-  termchar *newline = newn(termchar, term.cols);
+  termchar newline[term.cols];
 
  /* Depends on:
   * screen array, disptop, scrtop,
@@ -1099,7 +1099,6 @@ term_paint(void)
     }
     unlineptr(ldata);
   }
-  free(newline);
   free(ch);
 }
 

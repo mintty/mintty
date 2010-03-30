@@ -800,8 +800,6 @@ mirror(wchar c)
 int
 do_bidi(bidi_char * line, int count)
 {
-  uchar *types;
-  uchar *levels;
   uchar paragraphLevel;
   uchar currentEmbedding;
   uchar currentOverride;
@@ -821,8 +819,8 @@ do_bidi(bidi_char * line, int count)
     return L;
 
  /* Initialize types, levels */
-  types = newn(uchar, count);
-  levels = newn(uchar, count);
+  uchar types[count];
+  uchar levels[count];
 
  /* Rule (P1)  NOT IMPLEMENTED
   * P1. Split the text into separate paragraphs. A paragraph separator is
@@ -1219,7 +1217,5 @@ do_bidi(bidi_char * line, int count)
   * process, then the ordering of the marks and the base character must
   * be reversed.
   */
-  free(types);
-  free(levels);
   return R;
 }

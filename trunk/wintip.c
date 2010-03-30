@@ -47,15 +47,13 @@ tip_proc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
       Rectangle(dc, cr.left, cr.top, cr.right, cr.bottom);
 
       int wtlen = GetWindowTextLength(hWnd);
-      LPTSTR wt = (LPTSTR) newn(TCHAR, wtlen + 1);
+      TCHAR wt[wtlen + 1];
       GetWindowText(hWnd, wt, wtlen + 1);
 
       SetTextColor(dc, tip_text);
       SetBkColor(dc, tip_bg);
 
       TextOut(dc, cr.left + 3, cr.top + 3, wt, wtlen);
-
-      free(wt);
 
       SelectObject(dc, holdbr);
       DeleteObject(hbr);
