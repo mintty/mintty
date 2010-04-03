@@ -14,7 +14,7 @@
 
 const char *log_file = 0;
 bool utmp_enabled = false;
-hold_t hold = HOLD_NEVER;
+hold_t hold = HOLD_ERROR;
 
 #if CYGWIN_VERSION_API_MINOR >= 222
 static wchar *rc_filename = 0;
