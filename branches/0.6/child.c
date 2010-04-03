@@ -49,7 +49,7 @@ signal_thread(void *unused(arg))
 {
   int sig;
   sigwait(&term_sigs, &sig);
-  if (pid)
+  if (pid > 0)
     kill(-pid, SIGHUP);
   exit(0);
 }
@@ -73,6 +73,7 @@ wait_thread(void *unused(arg))
     ;
   pid = 0;
   Sleep(100); // Give any ongoing output some time to finish.
+  pid = -1;
   SetEvent(child_event);
   return 0;
 }
@@ -87,9 +88,9 @@ child_proc(void)
     SetEvent(proc_event);
   }
 
-  if (pid)
+  if (pid >= 0)
     return;
-
+  
   logout(ut.ut_line);
 
   // No point hanging around if the user wants us dead.
@@ -101,9 +102,10 @@ child_proc(void)
   char *s; 
   if (WIFEXITED(status)) {
     int code = WEXITSTATUS(status);
-    if (hold == HOLD_ERROR && code == 0)
+    if (code)
+      l = asprintf(&s, "%s: Exit %i", child_name, code); 
+    else if (hold == HOLD_ERROR)
       exit(0);
-    l = asprintf(&s, "\r\n%s: Exit %i", child_name, code); 
   }
   else if (WIFSIGNALED(status)) {
     int sig = WTERMSIG(status);
@@ -112,9 +114,9 @@ child_proc(void)
       1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
     if (hold == HOLD_ERROR && (error_sigs & 1<<sig) == 0)
       exit(0);
-    l = asprintf(&s, "\r\n%s: %s", child_name, strsignal(sig));
+    l = asprintf(&s, "%s: %s", child_name, strsignal(sig));
   }
-  if (l != -1) {
+  if (l > 0) {
     term_write(s, l);
     free(s);
   }
@@ -130,7 +132,6 @@ error(char *action)
     term_write(msg, len);
     free(msg);
   }
-  pid = 0;
 }
 
 static int
@@ -233,13 +234,8 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
     execvp(cmd, argv);
 
     // If we get here, exec failed.
-    char *msg = strdup(strerror(errno));
-    write(STDERR_FILENO, "exec: ", 6);
-    write(STDERR_FILENO, *argv, strlen(*argv));
-    write(STDERR_FILENO, ": ", 2);
-    write(STDERR_FILENO, msg, strlen(msg));
-    free(msg);
-    exit(1);
+    fprintf(stderr, "%s: %s\r\n", *argv, strerror(errno));
+    exit(errno == ENOENT || errno == ENOTDIR ? 127 : 126);
   }
   else { // Parent process.
     pty_fd = nonstdfd(pty_fd);
@@ -287,7 +283,7 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
 void
 child_kill(bool point_blank)
 { 
-  if (pid)
+  if (pid > 0)
     kill(-pid, point_blank ? SIGKILL : SIGHUP);
   else
     exit(0);
@@ -296,7 +292,7 @@ child_kill(bool point_blank)
 bool
 child_is_parent(void)
 {
-  if (!pid)
+  if (pid <= 0)
     return false;
   DIR *d = opendir("/proc");
   if (!d)
@@ -329,7 +325,7 @@ child_write(const char *buf, int len)
 { 
   if (pty_fd >= 0)
     write(pty_fd, buf, len); 
-  else if (!pid)
+  else if (pid < 0)
     exit(0);
 }
 
@@ -365,7 +361,7 @@ child_conv_path(const wchar *wpath)
     else
       exp_path = path;
   }
-  else if (*path != '/' && pid) {
+  else if (*path != '/' && pid > 0) {
     // Relative path: prepend child process' working directory
     char proc_cwd[32];
     sprintf(proc_cwd, "/proc/%u/cwd", pid);
