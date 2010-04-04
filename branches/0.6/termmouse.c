@@ -22,22 +22,22 @@ get_char(termline *line, int x)
   return c;
 }
 
-static bool
-is_word_char(wchar c)
-{
-  return iswalnum(c) || strchr("!#$%&*+,-./:=?@\\^_|~", c);
-}
-
 static pos
 sel_spread_word(pos p, bool forward)
 {
   pos ret_p = p;
-  
   termline *line = lineptr(p.y);
-  bool in_word = is_word_char(get_char(line, p.x));
   
   for (;;) {
-    pos prev_p = p;
+    wchar c = get_char(line, p.x);
+    if (iswalnum(c) || strchr("_#$%~", c))
+      ret_p = p;
+    else if (strchr(".@/\\", c)) {
+      if (!forward)
+        ret_p = p;
+    }
+    else if (!(strchr("&+-,.?", c) || c == (forward ? '=' : ':')))
+      break;
 
     if (forward) {
       p.x++;
@@ -60,20 +60,6 @@ sel_spread_word(pos p, bool forward)
         p.x = term.cols - ((line->lattr & LATTR_WRAPPED2) != 0);
       }
       p.x--;
-    }
-    
-    wchar c = get_char(line, p.x);
-    if (is_word_char(c) != in_word)
-      break;
-    
-    if (forward ? c == ':' : c == '=') {
-      /* Don't include colons going forward or equal signs going backward */
-      ret_p = prev_p;
-      break;
-    }
-    else {
-      /* Exclude the following characters at the end of a word */
-      ret_p = forward && strchr("!&*,./:=?@\\|", c) ? prev_p : p;
     }
   }
     
