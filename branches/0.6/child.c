@@ -35,6 +35,7 @@ HANDLE child_event;
 
 static HANDLE proc_event;
 static pid_t pid;
+static bool killed;
 static int status;
 static int pty_fd = -1, log_fd = -1;
 static int read_len;
@@ -94,7 +95,7 @@ child_proc(void)
   logout(ut.ut_line);
 
   // No point hanging around if the user wants us dead.
-  if (hold == HOLD_NEVER)
+  if (killed || hold == HOLD_NEVER)
     exit(0);
     
   // Display a message if the child process died with an error. 
@@ -112,7 +113,7 @@ child_proc(void)
     int error_sigs =
       1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
       1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
-    if (hold == HOLD_ERROR && (error_sigs & 1<<sig) == 0)
+    if (hold == HOLD_ERROR && !(error_sigs & 1<<sig))
       exit(0);
     l = asprintf(&s, "%s: %s", child_name, strsignal(sig));
   }
@@ -283,10 +284,10 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
 void
 child_kill(bool point_blank)
 { 
-  if (pid > 0)
-    kill(-pid, point_blank ? SIGKILL : SIGHUP);
-  else
+  if (pid <= 0)
     exit(0);
+  kill(-pid, point_blank ? SIGKILL : SIGHUP);
+  killed = true;
 }
 
 bool
