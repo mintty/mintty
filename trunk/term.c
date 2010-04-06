@@ -12,6 +12,9 @@
 
 struct term term;
 
+const termchar
+basic_erase_char = { .cc_next = 0, .chr = ' ', .attr = ATTR_DEFAULT };
+
 /*
  * Call when the terminal's blinking-text settings change, or when
  * a text blink has just occurred.
@@ -120,8 +123,7 @@ term_reset(void)
   term.rvideo = 0;
   term.in_vbell = false;
   term.cursor_on = true;
-  term.default_attr = term.save_attr = term.alt_save_attr = term.curr_attr =
-    ATTR_DEFAULT;
+  term.save_attr = term.alt_save_attr = term.curr_attr = ATTR_DEFAULT;
   term.editing = term.echoing = false;
   term.shortcut_override = term.escape_sends_fs = term.app_escape_key = false;
   term.app_keypad = term.app_cursor_keys = term.app_wheel = false;
@@ -132,7 +134,7 @@ term_reset(void)
   term.cursor_type = -1;
   term.cursor_blinks = -1;
   term.blink_is_real = cfg.allow_blinking;
-  term.erase_char = term.basic_erase_char;
+  term.erase_char = basic_erase_char;
   term.which_screen = 0;
   term_print_finish();
   if (term.screen) {
@@ -267,21 +269,11 @@ term_clear_scrollback(void)
 void
 term_init(void)
 {
- /*
-  * Allocate a new Terminal structure and initialise the fields
-  * that need it.
-  */
   term.inbuf = new_bufchain();
   term.printer_buf = new_bufchain();
   term.state = TOPLEVEL;
   term.dispcursx = term.dispcursy = -1;
   term_reset();
-  term.attr_mask = 0xffffffff;
-
- /* FULL-TERMCHAR */
-  term.basic_erase_char.chr = ' ';
-  term.basic_erase_char.attr = ATTR_DEFAULT;
-  term.erase_char = term.basic_erase_char;
 }
 
 /*
@@ -599,7 +591,7 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
       termline *line = recycled[i];
       resizeline(line, term.cols);
       for (int j = 0; j < term.cols; j++)
-        copy_termchar(line, j, &term.erase_char);
+        line->chars[j] = term.erase_char;
       line->lattr = LATTR_NORM;
     }
   }
@@ -721,9 +713,8 @@ term_erase_lots(int line_only, int from_begin, int to_end)
         else
           ldata->lattr = LATTR_NORM;
       }
-      else {
-        copy_termchar(ldata, start.x, &term.erase_char);
-      }
+      else
+        ldata->chars[start.x] = term.erase_char;
       if (incpos(start) && start.y < term.rows) {
         ldata = lineptr(start.y);
       }
@@ -1004,7 +995,7 @@ term_paint(void)
       if ((term.disptext[i]->chars[j].attr ^ tattr) & ATTR_WIDE)
         dirty_line = true;
 
-      break_run = ((tattr ^ attr) & term.attr_mask) != 0;
+      break_run = (tattr ^ attr) != 0;
 
      /* Special hack for VT100 Linedraw glyphs */
       if (tchar >= 0x23BA && tchar <= 0x23BD)

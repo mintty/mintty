@@ -14,7 +14,7 @@ newline(int cols, int bce)
   line = new(termline);
   line->chars = newn(termchar, cols);
   for (j = 0; j < cols; j++)
-    line->chars[j] = (bce ? term.erase_char : term.basic_erase_char);
+    line->chars[j] = (bce ? term.erase_char : basic_erase_char);
   line->cols = line->size = cols;
   line->lattr = LATTR_NORM;
   line->temporary = false;
@@ -728,7 +728,7 @@ resizeline(termline *line, int cols)
     * _know_ the erase char doesn't have one.)
     */
     for (i = oldcols; i < cols; i++)
-      line->chars[i] = term.basic_erase_char;
+      line->chars[i] = basic_erase_char;
   }
 }
 

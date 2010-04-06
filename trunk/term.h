@@ -112,6 +112,8 @@ typedef struct {
 
 } termchar;
 
+const termchar basic_erase_char;
+
 typedef struct {
   ushort lattr;
   ushort cols;    /* number of real columns on the line */
@@ -200,8 +202,8 @@ struct term {
   int dispcursx, dispcursy;     /* location of cursor on real screen */
   int curstype; /* type of cursor on real screen */
 
-  int default_attr, curr_attr, save_attr;
-  termchar basic_erase_char, erase_char;
+  int curr_attr, save_attr;
+  termchar erase_char;
 
   bufchain *inbuf;      /* terminal input buffer */
   pos  curs;     /* cursor */
@@ -299,9 +301,6 @@ struct term {
  /* Scroll steps during selection when cursor out of window. */
   int sel_scroll;
   pos sel_pos;
-
- /* Mask of attributes to pay attention to when painting. */
-  int attr_mask;
 
   wchar *paste_buffer;
   int paste_len, paste_pos;
