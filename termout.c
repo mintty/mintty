@@ -64,9 +64,9 @@ move(int x, int y, int marg_clip)
 static void
 set_erase_char(void)
 {
-  term.erase_char = term.basic_erase_char;
+  term.erase_char = basic_erase_char;
   if (term.use_bce)
-    term.erase_char.attr = (term.curr_attr & (ATTR_FGMASK | ATTR_BGMASK));
+    term.erase_char.attr = term.curr_attr & (ATTR_FGMASK | ATTR_BGMASK);
 }
 
 /*
@@ -153,14 +153,14 @@ insert_char(int n)
       move_termchar(ldata, ldata->chars + term.curs.x + j,
                     ldata->chars + term.curs.x + j + n);
     while (n--)
-      copy_termchar(ldata, term.curs.x + m++, &term.erase_char);
+      ldata->chars[term.curs.x + m++] = term.erase_char;
   }
   else {
     for (j = m; j--;)
       move_termchar(ldata, ldata->chars + term.curs.x + j + n,
                     ldata->chars + term.curs.x + j);
     while (n--)
-      copy_termchar(ldata, term.curs.x + n, &term.erase_char);
+      ldata->chars[term.curs.x + n] = term.erase_char;
   }
 }
 
@@ -313,7 +313,7 @@ write_char(wchar c, int width)
       term_check_boundary(term.curs.x, term.curs.y);
       term_check_boundary(term.curs.x + 2, term.curs.y);
       if (term.curs.x == term.cols - 1) {
-        copy_termchar(cline, term.curs.x, &term.erase_char);
+        cline->chars[term.curs.x] = term.erase_char;
         cline->lattr |= LATTR_WRAPPED | LATTR_WRAPPED2;
         if (term.curs.y == term.marg_b)
           term_do_scroll(term.marg_t, term.marg_b, 1, true);
@@ -418,8 +418,8 @@ do_esc(uchar c)
       for (int i = 0; i < term.rows; i++) {
         termline *ldata = lineptr(i);
         for (int j = 0; j < term.cols; j++) {
-          copy_termchar(ldata, j, &term.basic_erase_char);
-          ldata->chars[j].chr = 'E';
+          ldata->chars[j] =
+            (termchar){.cc_next = 0, .chr = 'E', .attr = ATTR_DEFAULT};
         }
         ldata->lattr = LATTR_NORM;
       }
@@ -492,7 +492,7 @@ do_sgr(void)
   for (int i = 0; i < nargs; i++) {
     switch (term.esc_args[i]) {
       when 0:  /* restore defaults */
-        term.curr_attr = term.default_attr;
+        term.curr_attr = ATTR_DEFAULT;
       when 1:  /* enable bold */
         term.curr_attr |= ATTR_BOLD;
       when 2:  /* enable dim */
@@ -947,7 +947,7 @@ do_csi(uchar c)
       term_check_boundary(term.curs.x, term.curs.y);
       term_check_boundary(term.curs.x + n, term.curs.y);
       while (n--)
-        copy_termchar(cline, p++, &term.erase_char);
+        cline->chars[p++] = term.erase_char;
       seen_disp_event();
     }
     when 'x': {      /* DECREQTPARM: report terminal characteristics */
