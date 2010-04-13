@@ -42,23 +42,25 @@ static const wchar linedraw_chars[32] = {
 static void
 move(int x, int y, int marg_clip)
 {
+  term_screen *screen = &term.screen;
+  term_cursor *curs = &screen->curs;
   if (x < 0)
     x = 0;
   if (x >= term.cols)
     x = term.cols - 1;
   if (marg_clip) {
-    if ((term.curs.y >= term.marg_t || marg_clip == 2) && y < term.marg_t)
-      y = term.marg_t;
-    if ((term.curs.y <= term.marg_b || marg_clip == 2) && y > term.marg_b)
-      y = term.marg_b;
+    if ((curs->y >= screen->marg_t || marg_clip == 2) && y < screen->marg_t)
+      y = screen->marg_t;
+    if ((curs->y <= screen->marg_b || marg_clip == 2) && y > screen->marg_b)
+      y = screen->marg_b;
   }
   if (y < 0)
     y = 0;
   if (y >= term.rows)
     y = term.rows - 1;
-  term.curs.x = x;
-  term.curs.y = y;
-  term.wrapnext = false;
+  curs->x = x;
+  curs->y = y;
+  curs->wrapnext = false;
 }
 
 static void
@@ -66,7 +68,7 @@ set_erase_char(void)
 {
   term.erase_char = basic_erase_char;
   if (term.use_bce)
-    term.erase_char.attr = term.curr_attr & (ATTR_FGMASK | ATTR_BGMASK);
+    term.erase_char.attr = term.screen.curs.attr & (ATTR_FGMASK | ATTR_BGMASK);
 }
 
 /*
@@ -86,13 +88,7 @@ seen_disp_event(void)
 static void
 save_cursor(void)
 {
-  term.savecurs = term.curs;
-  term.save_attr = term.curr_attr;
-  term.save_utf = term.utf;
-  term.save_wnext = term.wrapnext;
-  term.save_oem_acs = term.oem_acs;
-  term.save_cset_i = term.cset_i;
-  memcpy(term.save_csets, term.csets, sizeof term.csets);
+  term.screen.saved_curs = term.screen.curs;
 }
 
 /*
@@ -101,25 +97,21 @@ save_cursor(void)
 static void
 restore_cursor(void)
 {
-  term.curs = term.savecurs;
+  term_cursor *curs = &term.screen.curs;
+  *curs = term.screen.saved_curs;
+  
  /* Make sure the window hasn't shrunk since the save */
-  if (term.curs.x >= term.cols)
-    term.curs.x = term.cols - 1;
-  if (term.curs.y >= term.rows)
-    term.curs.y = term.rows - 1;
+  if (curs->x >= term.cols)
+    curs->x = term.cols - 1;
+  if (curs->y >= term.rows)
+    curs->y = term.rows - 1;
 
-  term.curr_attr = term.save_attr;
-  term.utf = term.save_utf;
-  term.wrapnext = term.save_wnext;
  /*
   * wrapnext might reset to False if the x position is no
   * longer at the rightmost edge.
   */
-  if (term.wrapnext && term.curs.x < term.cols - 1)
-    term.wrapnext = false;
-  term.oem_acs = term.save_oem_acs; 
-  term.cset_i = term.save_cset_i;
-  memcpy(term.csets, term.save_csets, sizeof term.csets);
+  if (curs->wrapnext && curs->x < term.cols - 1)
+    curs->wrapnext = false;
 
   term_update_cs();
   seen_disp_event();
@@ -133,33 +125,31 @@ static void
 insert_char(int n)
 {
   int dir = (n < 0 ? -1 : +1);
-  int m, j;
-  pos cursplus;
+  int m;
   termline *ldata;
+  term_cursor *curs = &term.screen.curs;
 
   n = (n < 0 ? -n : n);
-  if (n > term.cols - term.curs.x)
-    n = term.cols - term.curs.x;
-  m = term.cols - term.curs.x - n;
-  cursplus.y = term.curs.y;
-  cursplus.x = term.curs.x + n;
-  term_check_boundary(term.curs.x, term.curs.y);
+  if (n > term.cols - curs->x)
+    n = term.cols - curs->x;
+  m = term.cols - curs->x - n;
+  term_check_boundary(curs->x, curs->y);
   if (dir < 0)
-    term_check_boundary(term.curs.x + n, term.curs.y);
-  ldata = lineptr(term.curs.y);
+    term_check_boundary(curs->x + n, curs->y);
+  ldata = lineptr(curs->y);
   if (dir < 0) {
-    for (j = 0; j < m; j++)
-      move_termchar(ldata, ldata->chars + term.curs.x + j,
-                    ldata->chars + term.curs.x + j + n);
+    for (int j = 0; j < m; j++)
+      move_termchar(ldata, ldata->chars + curs->x + j,
+                    ldata->chars + curs->x + j + n);
     while (n--)
-      ldata->chars[term.curs.x + m++] = term.erase_char;
+      ldata->chars[curs->x + m++] = term.erase_char;
   }
   else {
-    for (j = m; j--;)
-      move_termchar(ldata, ldata->chars + term.curs.x + j + n,
-                    ldata->chars + term.curs.x + j);
+    for (int j = m; j--;)
+      move_termchar(ldata, ldata->chars + curs->x + j + n,
+                    ldata->chars + curs->x + j);
     while (n--)
-      ldata->chars[term.curs.x + n] = term.erase_char;
+      ldata->chars[curs->x + n] = term.erase_char;
   }
 }
 
@@ -174,32 +164,34 @@ write_bell(void)
 static void
 write_backspace(void)
 {
-  if (term.curs.x == 0 && (term.curs.y == 0 || term.wrap == 0))
+  term_cursor *curs = &term.screen.curs;
+  if (curs->x == 0 && (curs->y == 0 || !term.screen.autowrap))
    /* do nothing */ ;
-  else if (term.curs.x == 0 && term.curs.y > 0)
-    term.curs.x = term.cols - 1, term.curs.y--;
-  else if (term.wrapnext)
-    term.wrapnext = false;
+  else if (curs->x == 0 && curs->y > 0)
+    curs->x = term.cols - 1, curs->y--;
+  else if (curs->wrapnext)
+    curs->wrapnext = false;
   else
-    term.curs.x--;
+    curs->x--;
   seen_disp_event();
 }
 
 static void
 write_tab(void)
 {
-  termline *ldata = lineptr(term.curs.y);
-  do {
-    term.curs.x++;
-  } while (term.curs.x < term.cols - 1 && !term.tabs[term.curs.x]);
+  term_cursor *curs = &term.screen.curs;
+  termline *ldata = lineptr(curs->y);
+  do
+    curs->x++;
+  while (curs->x < term.cols - 1 && !term.tabs[curs->x]);
   
   if ((ldata->lattr & LATTR_MODE) != LATTR_NORM) {
-    if (term.curs.x >= term.cols / 2)
-      term.curs.x = term.cols / 2 - 1;
+    if (curs->x >= term.cols / 2)
+      curs->x = term.cols / 2 - 1;
   }
   else {
-    if (term.curs.x >= term.cols)
-      term.curs.x = term.cols - 1;
+    if (curs->x >= term.cols)
+      curs->x = term.cols - 1;
   }
   
   seen_disp_event();
@@ -208,19 +200,20 @@ write_tab(void)
 static void
 write_return(void)
 {
-  term.curs.x = 0;
-  term.wrapnext = false;
+  term.screen.curs.x = 0;
+  term.screen.curs.wrapnext = false;
   seen_disp_event();
 }
 
 static void
 write_linefeed(void)
 {
-  if (term.curs.y == term.marg_b)
-    term_do_scroll(term.marg_t, term.marg_b, 1, true);
-  else if (term.curs.y < term.rows - 1)
-    term.curs.y++;
-  term.wrapnext = false;
+  term_cursor *curs = &term.screen.curs;
+  if (curs->y == term.screen.marg_b)
+    term_do_scroll(term.screen.marg_t, term.screen.marg_b, 1, true);
+  else if (curs->y < term.rows - 1)
+    curs->y++;
+  curs->wrapnext = false;
   seen_disp_event();
 }
 
@@ -250,10 +243,10 @@ write_ctrl(char c)
     when CTRL('E'):   /* ENQ: terminal type query */
       ldisc_send(cfg.answerback, strlen(cfg.answerback), false);
     when CTRL('N'):   /* LS1: Locking-shift one */
-      term.cset_i = 1;
+      term.screen.curs.g1 = true;
       term_update_cs();
     when CTRL('O'):   /* LS0: Locking-shift zero */
-      term.cset_i = 0;
+      term.screen.curs.g1 = false;
       term_update_cs();
     otherwise:
       return false;
@@ -264,30 +257,32 @@ write_ctrl(char c)
 static void
 write_char(wchar c, int width)
 {
-  termline *cline = lineptr(term.curs.y);
+  term_screen *screen = &term.screen;
+  term_cursor *curs = &screen->curs;
+  termline *cline = lineptr(curs->y);
   void put_char(wchar c)
   {
-    clear_cc(cline, term.curs.x);
-    cline->chars[term.curs.x].chr = c;
-    cline->chars[term.curs.x].attr = term.curr_attr;
+    clear_cc(cline, curs->x);
+    cline->chars[curs->x].chr = c;
+    cline->chars[curs->x].attr = curs->attr;
   }  
 
-  if (term.wrapnext && term.wrap && width > 0) {
+  if (curs->wrapnext && screen->autowrap && width > 0) {
     cline->lattr |= LATTR_WRAPPED;
-    if (term.curs.y == term.marg_b)
-      term_do_scroll(term.marg_t, term.marg_b, 1, true);
-    else if (term.curs.y < term.rows - 1)
-      term.curs.y++;
-    term.curs.x = 0;
-    term.wrapnext = false;
-    cline = lineptr(term.curs.y);
+    if (curs->y == screen->marg_b)
+      term_do_scroll(screen->marg_t, screen->marg_b, 1, true);
+    else if (curs->y < term.rows - 1)
+      curs->y++;
+    curs->x = 0;
+    curs->wrapnext = false;
+    cline = lineptr(curs->y);
   }
-  if (term.insert && width > 0)
+  if (screen->insert && width > 0)
     insert_char(width);
   switch (width) {
     when 1:  // Normal character.
-      term_check_boundary(term.curs.x, term.curs.y);
-      term_check_boundary(term.curs.x + 1, term.curs.y);
+      term_check_boundary(curs->x, curs->y);
+      term_check_boundary(curs->x + 1, curs->y);
       put_char(c);
     when 2:  // Double-width character.
      /*
@@ -309,30 +304,30 @@ write_char(wchar c, int width)
       * misfortune to start in the wrong parity
       * column. xterm concurs.)
       */
-      term_check_boundary(term.curs.x, term.curs.y);
-      term_check_boundary(term.curs.x + 2, term.curs.y);
-      if (term.curs.x == term.cols - 1) {
-        cline->chars[term.curs.x] = term.erase_char;
+      term_check_boundary(curs->x, curs->y);
+      term_check_boundary(curs->x + 2, curs->y);
+      if (curs->x == term.cols - 1) {
+        cline->chars[curs->x] = term.erase_char;
         cline->lattr |= LATTR_WRAPPED | LATTR_WRAPPED2;
-        if (term.curs.y == term.marg_b)
-          term_do_scroll(term.marg_t, term.marg_b, 1, true);
-        else if (term.curs.y < term.rows - 1)
-          term.curs.y++;
-        term.curs.x = 0;
-        cline = lineptr(term.curs.y);
+        if (curs->y == screen->marg_b)
+          term_do_scroll(screen->marg_t, screen->marg_b, 1, true);
+        else if (curs->y < term.rows - 1)
+          curs->y++;
+        curs->x = 0;
+        cline = lineptr(curs->y);
        /* Now we must term_check_boundary again, of course. */
-        term_check_boundary(term.curs.x, term.curs.y);
-        term_check_boundary(term.curs.x + 2, term.curs.y);
+        term_check_boundary(curs->x, curs->y);
+        term_check_boundary(curs->x + 2, curs->y);
       }
       put_char(c);
-      term.curs.x++;
+      curs->x++;
       put_char(UCSWIDE);
     when 0:  // Combining character.
-      if (term.curs.x > 0) {
-        int x = term.curs.x - 1;
+      if (curs->x > 0) {
+        int x = curs->x - 1;
        /* If we're in wrapnext state, the character
         * to combine with is _here_, not to our left. */
-        if (term.wrapnext)
+        if (curs->wrapnext)
           x++;
        /*
         * If the previous character is
@@ -349,10 +344,10 @@ write_char(wchar c, int width)
     otherwise:  // Anything else. Probably shouldn't get here.
       return;
   }
-  term.curs.x++;
-  if (term.curs.x == term.cols) {
-    term.curs.x--;
-    term.wrapnext = true;
+  curs->x++;
+  if (curs->x == term.cols) {
+    curs->x--;
+    curs->wrapnext = true;
   }
   seen_disp_event();
 }
@@ -368,6 +363,8 @@ write_error(void)
 static void
 do_esc(uchar c)
 {
+  term_screen *screen = &term.screen;
+  term_cursor *curs = &screen->curs;
   term.state = TOPLEVEL;
   switch (ANSI(c, term.esc_query)) {
     when '[':  /* enter CSI mode */
@@ -394,11 +391,11 @@ do_esc(uchar c)
       write_return();
       write_linefeed();
     when 'M':  /* RI: reverse index - backwards LF */
-      if (term.curs.y == term.marg_t)
-        term_do_scroll(term.marg_t, term.marg_b, -1, true);
-      else if (term.curs.y > 0)
-        term.curs.y--;
-      term.wrapnext = false;
+      if (curs->y == screen->marg_t)
+        term_do_scroll(screen->marg_t, screen->marg_b, -1, true);
+      else if (curs->y > 0)
+        curs->y--;
+      curs->wrapnext = false;
       seen_disp_event();
     when 'Z':  /* DECID: terminal type query */
       ldisc_send(primary_da, sizeof primary_da - 1, 0);
@@ -412,7 +409,7 @@ do_esc(uchar c)
       ldisc_send(null, 0, 0);
       seen_disp_event();
     when 'H':  /* HTS: set a tab */
-      term.tabs[term.curs.x] = true;
+      term.tabs[curs->x] = true;
     when ANSI('8', '#'):    /* DECALN: fills screen with Es :-) */
       for (int i = 0; i < term.rows; i++) {
         termline *ldata = lineptr(i);
@@ -425,32 +422,32 @@ do_esc(uchar c)
       term.disptop = 0;
       seen_disp_event();
     when ANSI('3', '#'):  /* DECDHL: 2*height, top */
-      lineptr(term.curs.y)->lattr = LATTR_TOP;
+      lineptr(curs->y)->lattr = LATTR_TOP;
     when ANSI('4', '#'):  /* DECDHL: 2*height, bottom */
-      lineptr(term.curs.y)->lattr = LATTR_BOT;
+      lineptr(curs->y)->lattr = LATTR_BOT;
     when ANSI('5', '#'):  /* DECSWL: normal */
-      lineptr(term.curs.y)->lattr = LATTR_NORM;
+      lineptr(curs->y)->lattr = LATTR_NORM;
     when ANSI('6', '#'):  /* DECDWL: 2*width */
-      lineptr(term.curs.y)->lattr = LATTR_WIDE;
+      lineptr(curs->y)->lattr = LATTR_WIDE;
     when ANSI('A', '(') or ANSI('B', '(') or ANSI('0', '('):
      /* GZD4: G0 designate 94-set */
-      term.csets[0] = c;
+      curs->csets[0] = c;
       term_update_cs();
     when ANSI('U', '('):  /* G0: OEM character set */
-      term.csets[0] = CSET_OEM;
+      curs->csets[0] = CSET_OEM;
       term_update_cs();
     when ANSI('A', ')') or ANSI('B', ')') or ANSI('0', ')'):
      /* G1D4: G1-designate 94-set */
-      term.csets[1] = c;
+      curs->csets[1] = c;
       term_update_cs();
     when ANSI('U', ')'): /* G1: OEM character set */
-      term.csets[1] = CSET_OEM;
+      curs->csets[1] = CSET_OEM;
       term_update_cs();
     when ANSI('8', '%') or ANSI('G', '%'):
-      term.utf = true;
+      curs->utf = true;
       term_update_cs();
     when ANSI('@', '%'):
-      term.utf = false;
+      curs->utf = false;
       term_update_cs();
   }
 }
@@ -489,77 +486,72 @@ do_sgr(void)
   */
   int nargs = term.esc_nargs;
   for (int i = 0; i < nargs; i++) {
+    term_cursor *curs = &term.screen.curs;
     switch (term.esc_args[i]) {
       when 0:  /* restore defaults */
-        term.curr_attr = ATTR_DEFAULT;
+        curs->attr = ATTR_DEFAULT;
       when 1:  /* enable bold */
-        term.curr_attr |= ATTR_BOLD;
+        curs->attr |= ATTR_BOLD;
       when 2:  /* enable dim */
-        term.curr_attr |= ATTR_DIM;
+        curs->attr |= ATTR_DIM;
       when 4 or 21:  /* enable underline */
-        term.curr_attr |= ATTR_UNDER;
+        curs->attr |= ATTR_UNDER;
       when 5:  /* enable blink */
-        term.curr_attr |= ATTR_BLINK;
+        curs->attr |= ATTR_BLINK;
       when 7:  /* enable reverse video */
-        term.curr_attr |= ATTR_REVERSE;
+        curs->attr |= ATTR_REVERSE;
       when 8:  /* enable invisible text */
-        term.curr_attr |= ATTR_INVISIBLE;
-      when 10: /* OEM acs off */
-        term.oem_acs = 0;
-        term_update_cs();
-      when 11: /* OEM acs on */
-        term.oem_acs = 1;
-        term_update_cs();
-      when 12: /* OEM acs on, |0x80 */
-        term.oem_acs = 2;
+        curs->attr |= ATTR_INVISIBLE;
+      when 10 ... 12: /* OEM acs off */
+        curs->oem_acs = term.esc_args[i] - 10;
         term_update_cs();
       when 22: /* disable bold */
-        term.curr_attr &= ~(ATTR_BOLD | ATTR_DIM);
+        curs->attr &= ~(ATTR_BOLD | ATTR_DIM);
       when 24: /* disable underline */
-        term.curr_attr &= ~ATTR_UNDER;
+        curs->attr &= ~ATTR_UNDER;
       when 25: /* disable blink */
-        term.curr_attr &= ~ATTR_BLINK;
+        curs->attr &= ~ATTR_BLINK;
       when 27: /* disable reverse video */
-        term.curr_attr &= ~ATTR_REVERSE;
+        curs->attr &= ~ATTR_REVERSE;
       when 28: /* disable invisible text */
-        term.curr_attr &= ~ATTR_INVISIBLE;
+        curs->attr &= ~ATTR_INVISIBLE;
       when 30 ... 37:
        /* foreground */
-        term.curr_attr &= ~ATTR_FGMASK;
-        term.curr_attr |=
+        curs->attr &= ~ATTR_FGMASK;
+        curs->attr |=
           (term.esc_args[i] - 30) << ATTR_FGSHIFT;
       when 90 ... 97:
        /* aixterm-style bright foreground */
-        term.curr_attr &= ~ATTR_FGMASK;
-        term.curr_attr |= ((term.esc_args[i] - 90 + 8)
+        curs->attr &= ~ATTR_FGMASK;
+        curs->attr |= ((term.esc_args[i] - 90 + 8)
                            << ATTR_FGSHIFT);
       when 39: /* default-foreground */
-        term.curr_attr &= ~ATTR_FGMASK;
-        term.curr_attr |= ATTR_DEFFG;
+        curs->attr &= ~ATTR_FGMASK;
+        curs->attr |= ATTR_DEFFG;
       when 40 ... 47:
        /* background */
-        term.curr_attr &= ~ATTR_BGMASK;
-        term.curr_attr |=
+        curs->attr &= ~ATTR_BGMASK;
+        curs->attr |=
           (term.esc_args[i] - 40) << ATTR_BGSHIFT;
       when 100 ... 107:
        /* aixterm-style bright background */
-        term.curr_attr &= ~ATTR_BGMASK;
-        term.curr_attr |= ((term.esc_args[i] - 100 + 8)
+        curs->attr &= ~ATTR_BGMASK;
+        curs->attr |= ((term.esc_args[i] - 100 + 8)
                            << ATTR_BGSHIFT);
       when 49: /* default-background */
-        term.curr_attr &= ~ATTR_BGMASK;
-        term.curr_attr |= ATTR_DEFBG;
+        curs->attr &= ~ATTR_BGMASK;
+        curs->attr |= ATTR_DEFBG;
       when 38: /* xterm 256-colour mode */
         if (i + 2 < nargs && term.esc_args[i + 1] == 5) {
-          term.curr_attr &= ~ATTR_FGMASK;
-          term.curr_attr |= ((term.esc_args[i + 2] & 0xFF)
+          curs->attr &= ~ATTR_FGMASK;
+          curs->attr |= ((term.esc_args[i + 2] & 0xFF)
                              << ATTR_FGSHIFT);
           i += 2;
         }
       when 48: /* xterm 256-colour mode */
         if (i + 2 < nargs && term.esc_args[i + 1] == 5) {
-          term.curr_attr &= ~ATTR_BGMASK;
-          term.curr_attr |= ((term.esc_args[i + 2] & 0xFF)
+          curs->attr &= ~ATTR_BGMASK;
+          curs->attr |= ((term.esc_args[i + 2] & 0xFF)
                              << ATTR_BGSHIFT);
           i += 2;
         }
@@ -587,8 +579,8 @@ set_modes(bool state)
             term.selected = false;
             win_resize(term.rows, state ? 132 : 80);
             term.reset_132 = state;
-            term.alt_t = term.marg_t = 0;
-            term.alt_b = term.marg_b = term.rows - 1;
+            term.other_screen.marg_t = term.screen.marg_t = 0;
+            term.other_screen.marg_b = term.screen.marg_b = term.rows - 1;
             move(0, 0, 0);
             term_erase_lots(false, true, true);
           }
@@ -598,12 +590,11 @@ set_modes(bool state)
             win_invalidate_all();
           }
         when 6:  /* DECOM: DEC origin mode */
-          term.dec_om = state;
+          term.screen.dec_om = state;
         when 7:  /* DECAWM: auto wrap */
-          term.wrap = state;
+          term.screen.autowrap = state;
         when 8:  /* DECARM: auto key repeat */
           // ignore
-          //term.repeat_off = !state;
         when 9:  /* X10_MOUSE */
           term.mouse_mode = state ? MM_X10 : 0;
           win_update_mouse();
@@ -664,7 +655,7 @@ set_modes(bool state)
     else {
       switch (mode) {
         when 4:  /* IRM: set insert mode */
-          term.insert = state;
+          term.screen.insert = state;
         when 12: /* SRM: set echo mode */
           term.echoing = !state;
           ldisc_send(null, 0, 0);
@@ -678,52 +669,54 @@ set_modes(bool state)
 static void
 do_csi(uchar c)
 {
+  term_screen *screen = &term.screen;
+  term_cursor *curs = &screen->curs;
   int arg0 = term.esc_args[0], arg1 = term.esc_args[1];
   int def_arg0 = arg0 ?: 1;  // first arg with default
   int nargs = term.esc_nargs;
   switch (ANSI(c, term.esc_query)) {
     when 'A':        /* CUU: move up N lines */
-      move(term.curs.x, term.curs.y - def_arg0, 1);
+      move(curs->x, curs->y - def_arg0, 1);
       seen_disp_event();
     when 'e':        /* VPR: move down N lines */
-      move(term.curs.x, term.curs.y + def_arg0, 1);
+      move(curs->x, curs->y + def_arg0, 1);
       seen_disp_event();
     when 'B':        /* CUD: Cursor down */
-      move(term.curs.x, term.curs.y + def_arg0, 1);
+      move(curs->x, curs->y + def_arg0, 1);
       seen_disp_event();
     when ANSI('c', '>'):     /* DA: report version */
       /* Terminal type 77 (ASCII 'M' for mintty) */
       if (!nargs || (nargs == 1 && arg0 == 0))
         ldisc_printf(0, "\e[>77;%u;0c", DECIMAL_VERSION);
     when 'a':        /* HPR: move right N cols */
-      move(term.curs.x + def_arg0, term.curs.y, 1);
+      move(curs->x + def_arg0, curs->y, 1);
       seen_disp_event();
     when 'C':        /* CUF: Cursor right */
-      move(term.curs.x + def_arg0, term.curs.y, 1);
+      move(curs->x + def_arg0, curs->y, 1);
       seen_disp_event();
     when 'D':        /* CUB: move left N cols */
-      move(term.curs.x - def_arg0, term.curs.y, 1);
+      move(curs->x - def_arg0, curs->y, 1);
       seen_disp_event();
     when 'E':        /* CNL: move down N lines and CR */
-      move(0, term.curs.y + def_arg0, 1);
+      move(0, curs->y + def_arg0, 1);
       seen_disp_event();
     when 'F':        /* CPL: move up N lines and CR */
-      move(0, term.curs.y - def_arg0, 1);
+      move(0, curs->y - def_arg0, 1);
       seen_disp_event();
     when 'G' or '`':  /* CHA or HPA: set horizontal posn */
-      move(def_arg0 - 1, term.curs.y, 0);
+      move(def_arg0 - 1, curs->y, 0);
       seen_disp_event();
     when 'd':        /* VPA: set vertical posn */
-      move(term.curs.x,
-           ((term.dec_om ? term.marg_t : 0) +
-            def_arg0 - 1), (term.dec_om ? 2 : 0));
+      move(curs->x,
+           ((screen->dec_om ? screen->marg_t : 0) +
+            def_arg0 - 1), (screen->dec_om ? 2 : 0));
       seen_disp_event();
     when 'H' or 'f':  /* CUP or HVP: set horz and vert posns at once */
       if (nargs < 2)
         arg1 = ARG_DEFAULT;
       move((arg1 ?: 1) - 1,
-           ((term.dec_om ? term.marg_t : 0) +
-            def_arg0 - 1), (term.dec_om ? 2 : 0));
+           ((screen->dec_om ? screen->marg_t : 0) +
+            def_arg0 - 1), (screen->dec_om ? 2 : 0));
       seen_disp_event();
     when 'J': {      /* ED: erase screen or parts of it */
       if (arg0 == 3) { /* Erase Saved Lines (xterm) */
@@ -744,14 +737,14 @@ do_csi(uchar c)
       seen_disp_event();
     }
     when 'L':        /* IL: insert lines */
-      if (term.curs.y <= term.marg_b) {
-        term_do_scroll(term.curs.y, term.marg_b,
+      if (curs->y <= screen->marg_b) {
+        term_do_scroll(curs->y, screen->marg_b,
                        -def_arg0, false);
       }
       seen_disp_event();
     when 'M':        /* DL: delete lines */
-      if (term.curs.y <= term.marg_b) {
-        term_do_scroll(term.curs.y, term.marg_b,
+      if (curs->y <= screen->marg_b) {
+        term_do_scroll(curs->y, screen->marg_b,
                        def_arg0, true);
       }
       seen_disp_event();
@@ -765,7 +758,7 @@ do_csi(uchar c)
       ldisc_send(primary_da, sizeof primary_da - 1, 0);
     when 'n':        /* DSR: cursor position query */
       if (arg0 == 6)
-        ldisc_printf(0, "\e[%d;%dR", term.curs.y + 1, term.curs.x + 1);
+        ldisc_printf(0, "\e[%d;%dR", curs->y + 1, curs->x + 1);
       else if (arg0 == 5) {
         ldisc_send("\e[0n", 4, 0);
       }
@@ -787,7 +780,7 @@ do_csi(uchar c)
     when 'g':        /* TBC: clear tabs */
       if (nargs == 1) {
         if (arg0 == 0) {
-          term.tabs[term.curs.x] = false;
+          term.tabs[curs->x] = false;
         }
         else if (arg0 == 3) {
           int i;
@@ -809,9 +802,9 @@ do_csi(uchar c)
         * don't change region.
         */
         if (bot - top > 0) {
-          term.marg_t = top;
-          term.marg_b = bot;
-          term.curs.x = 0;
+          screen->marg_t = top;
+          screen->marg_b = bot;
+          curs->x = 0;
          /*
           * I used to think the cursor should be
           * placed at the top of the newly marginned
@@ -821,7 +814,7 @@ do_csi(uchar c)
           * Well actually it should for
           * Origin mode - RDB
           */
-          term.curs.y = (term.dec_om ? term.marg_t : 0);
+          curs->y = (screen->dec_om ? screen->marg_t : 0);
           seen_disp_event();
         }
       }
@@ -901,15 +894,15 @@ do_csi(uchar c)
       }
     }
     when 'S':        /* SU: Scroll up */
-      term_do_scroll(term.marg_t, term.marg_b,
+      term_do_scroll(screen->marg_t, screen->marg_b,
                      def_arg0, true);
-      term.wrapnext = false;
+      curs->wrapnext = false;
       seen_disp_event();
     when 'T':        /* SD: Scroll down */
       /* Avoid clash with hilight mouse tracking mode sequence */
       if (nargs <= 1) {
-        term_do_scroll(term.marg_t, term.marg_b, -def_arg0, true);
-        term.wrapnext = false;
+        term_do_scroll(screen->marg_t, screen->marg_b, -def_arg0, true);
+        curs->wrapnext = false;
         seen_disp_event();
       }
     when ANSI('|', '*'):     /* DECSNLS */
@@ -935,16 +928,13 @@ do_csi(uchar c)
       }
     when 'X': {      /* ECH: write N spaces w/o moving cursor */
       int n = def_arg0;
-      pos cursplus;
-      int p = term.curs.x;
-      termline *cline = lineptr(term.curs.y);
+      int p = curs->x;
+      termline *cline = lineptr(curs->y);
 
-      if (n > term.cols - term.curs.x)
-        n = term.cols - term.curs.x;
-      cursplus = term.curs;
-      cursplus.x += n;
-      term_check_boundary(term.curs.x, term.curs.y);
-      term_check_boundary(term.curs.x + n, term.curs.y);
+      if (n > term.cols - curs->x)
+        n = term.cols - curs->x;
+      term_check_boundary(curs->x, curs->y);
+      term_check_boundary(curs->x + n, curs->y);
       while (n--)
         cline->chars[p++] = term.erase_char;
       seen_disp_event();
@@ -955,10 +945,10 @@ do_csi(uchar c)
     }
     when 'Z': {       /* CBT */
       int i = def_arg0; 
-      while (--i >= 0 && term.curs.x > 0) {
+      while (--i >= 0 && curs->x > 0) {
         do {
-          term.curs.x--;
-        } while (term.curs.x > 0 && !term.tabs[term.curs.x]);
+          curs->x--;
+        } while (curs->x > 0 && !term.tabs[curs->x]);
       }
     }
     when ANSI('m', '>'):     /* xterm: modifier key setting */
@@ -1146,8 +1136,8 @@ term_write(const char *data, int len)
         
         wchar wc;
 
-        if (term.oem_acs && !memchr("\e\n\r\b", c, 4)) {
-          if (term.oem_acs == 2)
+        if (term.screen.curs.oem_acs && !memchr("\e\n\r\b", c, 4)) {
+          if (term.screen.curs.oem_acs == 2)
             c |= 0x80;
           write_char(cs_btowc_glyph(c), 1);
           continue;
@@ -1218,7 +1208,7 @@ term_write(const char *data, int len)
         int width = xcwidth(wc);
         #endif
         
-        switch(term.csets[term.cset_i]) {
+        switch(term.screen.curs.csets[term.screen.curs.g1]) {
           when CSET_LINEDRW:
             if (0x60 <= wc && wc < 0x80)
               wc = linedraw_chars[wc - 0x60];

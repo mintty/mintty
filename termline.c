@@ -739,7 +739,7 @@ int
 sblines(void)
 {
   if (term.which_screen == 0 || cfg.alt_screen_scroll)
-    return term.sblines + term.alt_sblines;
+    return term.sblines + term.extra_sblines;
   else
     return 0;
 }
@@ -755,11 +755,11 @@ lineptr(int y)
   termline *line;
   if (y >= 0) {
     assert(y < term.rows);
-    line = term.screen[y];
+    line = term.screen.lines[y];
   }
-  else if ((y += term.alt_sblines) >= 0) {
+  else if ((y += term.extra_sblines) >= 0) {
     assert(y < term.rows);
-    line = term.alt_screen[y];
+    line = term.other_screen.lines[y];
   }
   else {
     assert(y < term.sblines);
