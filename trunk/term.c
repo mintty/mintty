@@ -83,7 +83,7 @@ int
 term_last_nonempty_line(void)
 {
   for (int i = term.rows - 1; i >= 0; i--) {
-    termline *line = term.screen[i];
+    termline *line = term.screen.lines[i];
     if (line) {
       for (int j = 0; j < line->cols; j++)
         if (!termchars_equal(&line->chars[j], &term.erase_char))
@@ -93,40 +93,40 @@ term_last_nonempty_line(void)
   return -1;
 }
 
+static void
+term_cursor_reset(term_cursor *curs)
+{
+  curs->attr = ATTR_DEFAULT;
+  curs->csets[0] = curs->csets[1] = CSET_ASCII;
+}
+
+static void
+term_screen_reset(term_screen *screen)
+{
+  termlines *lines = screen->lines;
+  memset(screen, 0, sizeof(term_screen));
+  screen->lines = lines;
+  screen->autowrap = true;
+  if (term.rows != -1) 
+    screen->marg_b = term.rows - 1;
+  term_cursor_reset(&screen->curs);
+  term_cursor_reset(&screen->saved_curs);
+}
+
 void
 term_reset(void)
 {
+  term_screen_reset(&term.screen);
+  term_screen_reset(&term.other_screen);
+  
   term.backspace_sends_bs = cfg.backspace_sends_bs;
-  term.alt_x = term.alt_y = 0;
-  term.savecurs.x = term.savecurs.y = 0;
-  term.alt_savecurs.x = term.alt_savecurs.y = 0;
-  term.alt_t = term.marg_t = 0;
-  if (term.rows != -1)
-    term.alt_b = term.marg_b = term.rows - 1;
-  else
-    term.alt_b = term.marg_b = 0;
   if (term.tabs) {
     for (int i = 0; i < term.cols; i++)
       term.tabs[i] = (i % 8 == 0);
   }
-  term.alt_om = term.dec_om = false;
-  term.alt_ins = term.insert = false;
-  term.alt_wnext = term.wrapnext = term.save_wnext = term.alt_save_wnext =
-    false;
-  term.alt_wrap = term.wrap = true;
-  term.alt_cset_i = term.cset_i = term.save_cset_i = term.alt_save_cset_i = 0;
-  term.alt_utf = term.utf = term.save_utf = term.alt_save_utf = 0;
-  term.alt_oem_acs = term.oem_acs = term.save_oem_acs = term.alt_save_oem_acs =
-    0;
-  term.csets[0] = term.save_csets[0] =
-  term.csets[1] = term.save_csets[1] =
-  term.alt_csets[0] = term.alt_save_csets[0] =
-  term.alt_csets[1] = term.alt_save_csets[1] =
-    CSET_ASCII;
   term.rvideo = 0;
   term.in_vbell = false;
   term.cursor_on = true;
-  term.save_attr = term.alt_save_attr = term.curr_attr = ATTR_DEFAULT;
   term.editing = term.echoing = false;
   term.shortcut_override = term.escape_sends_fs = term.app_escape_key = false;
   term.app_keypad = term.app_cursor_keys = term.app_wheel = false;
@@ -138,23 +138,19 @@ term_reset(void)
   term.cursor_blinks = -1;
   term.blink_is_real = cfg.allow_blinking;
   term.erase_char = basic_erase_char;
-  term.which_screen = 0;
+  term.which_screen = false;
   term_print_finish();
-  if (term.screen) {
+  if (term.screen.lines) {
     term_swap_screen(1, false, false);
     term_erase_lots(false, true, true);
     term_swap_screen(0, false, false);
     term_erase_lots(false, true, true);
-    term.curs.y = term_last_nonempty_line() + 1;
-    if (term.curs.y == term.rows) {
-      term.curs.y--;
+    term.screen.curs.y = term_last_nonempty_line() + 1;
+    if (term.screen.curs.y == term.rows) {
+      term.screen.curs.y--;
       term_do_scroll(0, term.rows - 1, 1, true);
     }
   }
-  else {
-    term.curs.y = 0;
-  }
-  term.curs.x = 0;
   term_schedule_tblink();
   term_schedule_cblink();
   term.disptop = 0;
@@ -261,7 +257,7 @@ term_clear_scrollback(void)
   term.scrollback = 0;
   term.sblen = term.sblines = term.sbpos = 0;
   term.tempsblines = 0;
-  term.alt_sblines = 0;
+  term.extra_sblines = 0;
   term.disptop = 0;
   update_sbar();
 }
@@ -275,7 +271,7 @@ term_init(void)
   term.inbuf = new_bufchain();
   term.printer_buf = new_bufchain();
   term.state = TOPLEVEL;
-  term.dispcursx = term.dispcursy = -1;
+  term.dispcurs = (pos){-1, -1};
   term_reset();
 }
 
@@ -298,8 +294,8 @@ term_resize(int newrows, int newcols)
 
   term.selected = false;
 
-  term.alt_t = term.marg_t = 0;
-  term.alt_b = term.marg_b = newrows - 1;
+  term.screen.marg_t = term.other_screen.marg_t = 0;
+  term.screen.marg_b = term.other_screen.marg_b = newrows - 1;
 
  /*
   * Resize the screen and scrollback. We only need to shift
@@ -321,32 +317,36 @@ term_resize(int newrows, int newcols)
   *    away.
   */
 
+  termlines *lines = term.screen.lines;
+  term_cursor *curs = &term.screen.curs;
+  term_cursor *saved_curs = &term.screen.saved_curs;
+
   // Shrink the screen if newrows < rows
   if (newrows < term.rows) {
     int removed = term.rows - newrows;
-    int destroy = min(removed, term.rows - (term.curs.y + 1));
+    int destroy = min(removed, term.rows - (curs->y + 1));
     int store = removed - destroy;
     
     // Push removed lines into scrollback
     for (int i = 0; i < store; i++) {
-      termline *line = term.screen[i];
+      termline *line = lines[i];
       scrollback_push(compressline(line));
       freeline(line);
     }
 
     // Move up remaining lines
-    memmove(term.screen, term.screen + store, newrows * sizeof(termline *));
+    memmove(lines, lines + store, newrows * sizeof(termline *));
     
     // Destroy removed lines below the cursor
     for (int i = term.rows - destroy; i < term.rows; i++)
-      freeline(term.screen[i]);
+      freeline(lines[i]);
     
     // Adjust cursor position
-    term.curs.y = max(0, term.curs.y - store);
-    term.savecurs.y = max(0, term.savecurs.y - store);
+    curs->y = max(0, curs->y - store);
+    saved_curs->y = max(0, saved_curs->y - store);
   }
 
-  term.screen = renewn(term.screen, newrows);
+  term.screen.lines = lines = renewn(lines, newrows);
   
   // Expand the screen if newrows > rows
   if (newrows > term.rows) {
@@ -356,10 +356,10 @@ term_resize(int newrows, int newcols)
     
     // Fill bottom of screen with blank lines
     for (int i = newrows - create; i < newrows; i++)
-      term.screen[i] = newline(newcols, false);
+      lines[i] = newline(newcols, false);
     
     // Move existing lines down
-    memmove(term.screen + restore, term.screen, term.rows * sizeof(termline *));
+    memmove(lines + restore, lines, term.rows * sizeof(termline *));
     
     // Restore lines from scrollback
     for (int i = restore; i--;) {
@@ -367,12 +367,12 @@ term_resize(int newrows, int newcols)
       termline *line = decompressline(cline, null);
       free(cline);
       line->temporary = false;  /* reconstituted line is now real */
-      term.screen[i] = line;
+      lines[i] = line;
     }
     
     // Adjust cursor position
-    term.curs.y += restore;
-    term.savecurs.y += restore;
+    curs->y += restore;
+    saved_curs->y += restore;
   }
   
   // Make a new displayed text buffer.
@@ -387,17 +387,18 @@ term_resize(int newrows, int newcols)
     for (int j = 0; j < newcols; j++)
       line->chars[j].attr = ATTR_INVALID;
   }
-  term.dispcursx = term.dispcursy = -1;
+  term.dispcurs = (pos){-1, -1};
 
   // Make a new alternate screen.
-  if (term.alt_screen) {
+  lines = term.other_screen.lines;
+  if (lines) {
     for (int i = 0; i < term.rows; i++)
-      freeline(term.alt_screen[i]);
+      freeline(lines[i]);
   }
-  term.alt_screen = renewn(term.alt_screen, newrows);
+  term.other_screen.lines = lines = renewn(lines, newrows);
   for (int i = 0; i < newrows; i++)
-    term.alt_screen[i] = newline(newcols, true);
-  term.alt_sblines = 0;
+    lines[i] = newline(newcols, true);
+  term.extra_sblines = 0;
 
   // Reset tab stops
   term.tabs = renewn(term.tabs, newcols);
@@ -405,12 +406,12 @@ term_resize(int newrows, int newcols)
     term.tabs[i] = (i % 8 == 0);
 
   // Check that the cursor positions are still valid.
-  assert(0 <= term.curs.y && term.curs.y < newrows);
-  assert(0 <= term.savecurs.y && term.savecurs.y < newrows);
-  term.curs.x = min(term.curs.x, newcols - 1);
+  assert(0 <= curs->y && curs->y < newrows);
+  assert(0 <= saved_curs->y && saved_curs->y < newrows);
+  curs->x = min(curs->x, newcols - 1);
 
-  term.alt_x = term.alt_y = 0;
-  term.wrapnext = term.alt_wnext = false;
+  term.other_screen.curs.x = term.other_screen.curs.y = 0;
+  curs->wrapnext = term.other_screen.curs.wrapnext = false;
 
   term.disptop = 0;
 
@@ -429,99 +430,32 @@ term_resize(int newrows, int newcols)
  * alternate screen completely.
  */
 void
-term_swap_screen(int which, int reset, int keep_cur_pos)
+term_swap_screen(bool which, bool reset, bool keep_curs)
 {
   reset &= which;      /* do no resetting if which==0 */
 
   if (which != term.which_screen) {
     term.which_screen = which;
 
-    term.alt_sblines =
+    term.extra_sblines =
       cfg.alt_screen_scroll && which ? term_last_nonempty_line() + 1 : 0;
-    termlines *ttr = term.alt_screen;
-    term.alt_screen = term.screen;
-    term.screen = ttr;
-    int t = term.curs.x;
-    if (!reset && !keep_cur_pos)
-      term.curs.x = term.alt_x;
-    term.alt_x = t;
-    t = term.curs.y;
-    if (!reset && !keep_cur_pos)
-      term.curs.y = term.alt_y;
-    term.alt_y = t;
-    t = term.marg_t;
-    if (!reset)
-      term.marg_t = term.alt_t;
-    term.alt_t = t;
-    t = term.marg_b;
-    if (!reset)
-      term.marg_b = term.alt_b;
-    term.alt_b = t;
-    t = term.dec_om;
-    if (!reset)
-      term.dec_om = term.alt_om;
-    term.alt_om = t;
-    t = term.wrap;
-    if (!reset)
-      term.wrap = term.alt_wrap;
-    term.alt_wrap = t;
-    t = term.wrapnext;
-    if (!reset)
-      term.wrapnext = term.alt_wnext;
-    term.alt_wnext = t;
-    t = term.insert;
-    if (!reset)
-      term.insert = term.alt_ins;
-    term.alt_ins = t;
-    t = term.cset_i;
-    if (!reset)
-      term.cset_i = term.alt_cset_i;
-    term.alt_cset_i = t;
     
-    t = term.utf;
-    if (!reset)
-      term.utf = term.alt_utf;
-    term.alt_utf = t;
-    
-    t = term.oem_acs;
-    if (!reset)
-      term.oem_acs = term.alt_oem_acs;
-    term.alt_oem_acs = t;
-
-    pos tp = term.savecurs;
-    if (!reset && !keep_cur_pos)
-      term.savecurs = term.alt_savecurs;
-    term.alt_savecurs = tp;
-    t = term.save_attr;
-    if (!reset && !keep_cur_pos)
-      term.save_attr = term.alt_save_attr;
-    term.alt_save_attr = t;
-    t = term.save_utf;
-    if (!reset && !keep_cur_pos)
-      term.save_utf = term.alt_save_utf;
-    term.alt_save_utf = t;
-    t = term.save_wnext;
-    if (!reset && !keep_cur_pos)
-      term.save_wnext = term.alt_save_wnext;
-    term.alt_save_wnext = t;
-    t = term.save_oem_acs;
-    if (!reset && !keep_cur_pos)
-      term.save_oem_acs = term.alt_save_oem_acs;
-    term.alt_save_oem_acs = t;
-    t = term.save_cset_i;
-    if (!reset && !keep_cur_pos)
-      term.save_cset_i = term.alt_save_cset_i;
-    term.alt_save_cset_i = t;
-    term_cset tcs[2];
-    memcpy(tcs, term.save_csets, sizeof tcs);
-    if (!reset && !keep_cur_pos)
-      memcpy(term.save_csets, term.alt_save_csets, sizeof tcs);
-    memcpy(term.alt_save_csets, tcs, sizeof tcs);
+    term_screen new_screen = term.other_screen;
+    term.other_screen = term.screen;
+    if (!reset) {
+      if (keep_curs) {
+        new_screen.curs = term.screen.curs;
+        new_screen.saved_curs = term.screen.saved_curs;
+      }
+      term.screen = new_screen;
+    }
+    else
+      term.screen.lines = new_screen.lines;
     
     term_update_cs();
   }
 
-  if (reset && term.screen) {
+  if (reset && term.screen.lines) {
    /*
     * Yes, this _is_ supposed to honour background-colour-erase.
     */
@@ -585,7 +519,8 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
   botline++; // One below the scroll region: easier to calculate with
   int moved_lines = botline - topline - lines;
   
-  termline **top = term.screen + topline, **bot = term.screen + botline;
+  termline **top = term.screen.lines + topline;
+  termline **bot = term.screen.lines + botline;
   
   // Reuse lines that are being scrolled out of the scroll region
   termline *recycled[abs(lines)];
@@ -624,7 +559,7 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
     // normal screen and scrollback is actually enabled.
     if (sb && topline == 0 && term.which_screen == 0 && cfg.scrollback_lines) {
       for (int i = 0; i < lines; i++)
-        scrollback_push(compressline(term.screen[i]));
+        scrollback_push(compressline(term.screen.lines[i]));
  
       // Shift viewpoint accordingly if user is looking at scrollback
       if (term.disptop < 0)
@@ -657,35 +592,23 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
  * whole line, or parts thereof.
  */
 void
-term_erase_lots(int line_only, int from_begin, int to_end)
+term_erase_lots(bool line_only, bool from_begin, bool to_end)
 {
+  term_cursor *curs = &term.screen.curs;
   pos start, end;
-  int erase_lattr;
-  int erasing_lines_from_top = 0;
 
-  if (line_only) {
-    start.y = term.curs.y;
-    start.x = 0;
-    end.y = term.curs.y + 1;
-    end.x = 0;
-    erase_lattr = false;
-  }
-  else {
-    start.y = 0;
-    start.x = 0;
-    end.y = term.rows;
-    end.x = 0;
-    erase_lattr = true;
-  }
-  if (!from_begin) {
-    start = term.curs;
-  }
-  if (!to_end) {
-    end = term.curs;
-    incpos(end);
-  }
+  if (from_begin)
+    start = (pos){.y = line_only ? curs->y : 0, .x = 0};
+  else
+    start = (pos){.y = curs->y, .x = curs->x};
+
+  if (to_end)
+    end = (pos){.y = line_only ? curs->y + 1 : term.rows, .x = 0};
+  else
+    end = (pos){.y = curs->y, .x = curs->x}, incpos(end);
+  
   if (!from_begin || !to_end)
-    term_check_boundary(term.curs.x, term.curs.y);
+    term_check_boundary(curs->x, curs->y);
 
  /* Clear screen also forces a full window redraw, just in case. */
   if (start.y == 0 && start.x == 0 && end.y == term.rows)
@@ -693,8 +616,8 @@ term_erase_lots(int line_only, int from_begin, int to_end)
 
  /* Lines scrolled away shouldn't be brought back on if the terminal
   * resizes. */
-  if (start.y == 0 && start.x == 0 && end.x == 0 && erase_lattr)
-    erasing_lines_from_top = 1;
+  bool erasing_lines_from_top =
+    start.y == 0 && start.x == 0 && end.x == 0 && !line_only;
 
   if (erasing_lines_from_top) {
    /* If it's a whole number of lines, starting at the top, and
@@ -712,7 +635,7 @@ term_erase_lots(int line_only, int from_begin, int to_end)
     termline *ldata = lineptr(start.y);
     while (poslt(start, end)) {
       if (start.x == term.cols) {
-        if (!erase_lattr)
+        if (line_only)
           ldata->lattr &= ~(LATTR_WRAPPED | LATTR_WRAPPED2);
         else
           ldata->lattr = LATTR_NORM;
@@ -799,23 +722,24 @@ term_paint(void)
   */
 
  /* Has the cursor position or type changed ? */
-  int cursor;
+  term_cursor *curs = &term.screen.curs;
+  int curstype;
   if (term.cursor_on) {
     if (term.has_focus) {
       if (term.cblinker || !term_cursor_blinks())
-        cursor = TATTR_ACTCURS;
+        curstype = TATTR_ACTCURS;
       else
-        cursor = 0;
+        curstype = 0;
     }
     else
-      cursor = TATTR_PASCURS;
-    if (term.wrapnext)
-      cursor |= TATTR_RIGHTCURS;
+      curstype = TATTR_PASCURS;
+    if (curs->wrapnext)
+      curstype |= TATTR_RIGHTCURS;
   }
   else
-    cursor = 0;
+    curstype = 0;
  
-  int our_curs_y = term.curs.y - term.disptop, our_curs_x = term.curs.x;
+  int our_curs_y = curs->y - term.disptop, our_curs_x = curs->x;
   {
    /*
     * Adjust the cursor position:
@@ -826,7 +750,7 @@ term_paint(void)
     *    covering the _whole_ character, exactly as if it were
     *    one space to the left.
     */
-    termline *ldata = lineptr(term.curs.y);
+    termline *ldata = lineptr(curs->y);
     termchar *lchars = term_bidi_line(ldata, our_curs_y);
 
     if (lchars)
@@ -845,20 +769,21 @@ term_paint(void)
   * its previous position is visible on screen, invalidate its
   * previous position.
   */
-  if (term.dispcursy >= 0 &&
-      (term.curstype != cursor || term.dispcursy != our_curs_y ||
-       term.dispcursx != our_curs_x)) {
-    termchar *dispcurs = term.disptext[term.dispcursy]->chars + term.dispcursx;
+  if (term.dispcurs.y >= 0 &&
+      (term.curstype != curstype || term.dispcurs.y != our_curs_y ||
+       term.dispcurs.x != our_curs_x)) {
+    termchar *dispchar =
+      term.disptext[term.dispcurs.y]->chars + term.dispcurs.x;
 
-    if (term.dispcursx > 0 && dispcurs->chr == UCSWIDE)
-      dispcurs[-1].attr |= ATTR_INVALID;
-    if (term.dispcursx < term.cols - 1 && dispcurs[1].chr == UCSWIDE)
-      dispcurs[1].attr |= ATTR_INVALID;
-    dispcurs->attr |= ATTR_INVALID;
+    if (term.dispcurs.x > 0 && dispchar->chr == UCSWIDE)
+      dispchar[-1].attr |= ATTR_INVALID;
+    if (term.dispcurs.x < term.cols - 1 && dispchar[1].chr == UCSWIDE)
+      dispchar[1].attr |= ATTR_INVALID;
+    dispchar->attr |= ATTR_INVALID;
 
     term.curstype = 0;
   }
-  term.dispcursx = term.dispcursy = -1;
+  term.dispcurs = (pos){-1, -1};
 
  /* The normal screen data */
   for (int i = 0; i < term.rows; i++) {
@@ -932,10 +857,9 @@ term_paint(void)
         tattr |= ATTR_NARROW;
 
       if (i == our_curs_y && j == our_curs_x) {
-        tattr |= cursor;
-        term.curstype = cursor;
-        term.dispcursx = j;
-        term.dispcursy = i;
+        tattr |= curstype;
+        term.curstype = curstype;
+        term.dispcurs = (pos){.y = i, .x = j};
       }
 
      /* FULL-TERMCHAR */
@@ -1103,7 +1027,7 @@ term_update(void)
   if (term.seen_disp_event)
     update_sbar();
   term_paint();
-  win_set_sys_cursor(term.curs.x, term.curs.y - term.disptop);
+  win_set_sys_cursor(term.screen.curs.x, term.screen.curs.y - term.disptop);
 }
 
 /*
@@ -1165,10 +1089,11 @@ term_set_focus(bool has_focus)
 void
 term_update_cs()
 {
+  term_cursor *curs = &term.screen.curs;
   cs_set_mode(
-    term.oem_acs ? CSM_OEM :
-    term.utf ? CSM_UTF8 :
-    term.csets[term.cset_i] == CSET_OEM ? CSM_OEM : CSM_DEFAULT
+    curs->oem_acs ? CSM_OEM :
+    curs->utf ? CSM_UTF8 :
+    curs->csets[curs->g1] == CSET_OEM ? CSM_OEM : CSM_DEFAULT
   );
 }
 

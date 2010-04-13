@@ -186,9 +186,30 @@ typedef struct belltime {
   uint ticks;
 } belltime;
 
+typedef struct {
+  short x, y;
+  int attr;
+  bool wrapnext;
+  bool utf;
+  int oem_acs;
+  bool g1;
+  term_cset csets[2];
+} term_cursor;
+
+typedef struct {
+  termlines *lines;
+  int marg_t, marg_b;   /* scroll margins */
+  bool dec_om;
+  bool autowrap;
+  bool insert;
+  term_cursor curs, saved_curs;
+} term_screen;
+
 struct term {
-  termlines *screen;      /* lines on primary screen */
-  termlines *alt_screen;  /* lines on alternate screen */
+  term_screen screen, other_screen;
+
+  bool which_screen;      /* On alternate screen? */
+
   uchar **scrollback;     /* lines scrolled off top of screen */
   int disptop;            /* distance scrolled back (0 or -ve) */
   int sblen;              /* length of scrollback buffer */
@@ -197,28 +218,18 @@ struct term {
   int tempsblines;        /* number of lines of .scrollback that
                            * can be retrieved onto the terminal
                            * ("temporary scrollback") */
+  int  extra_sblines;     /* Extra scrollback lines: the lines on the primary
+                           * screen when "access scrollback from alternate
+                           * screen" is enabled. */
 
   termlines *disptext;  /* buffer of text on real screen */
-  int dispcursx, dispcursy;     /* location of cursor on real screen */
-  int curstype; /* type of cursor on real screen */
+  pos dispcurs;         /* location of cursor on real screen */
+  int curstype;         /* type of cursor on real screen */
 
-  int curr_attr, save_attr;
   termchar erase_char;
 
   bufchain *inbuf;      /* terminal input buffer */
-  pos  curs;     /* cursor */
-  pos  savecurs; /* saved cursor position */
-  int  marg_t, marg_b;   /* scroll margins */
-  bool dec_om;   /* DEC origin mode flag */
-  bool wrap, wrapnext;   /* wrap flags */
-  bool insert;   /* insert-mode flag */
 
-  term_cset csets[2];
-  bool cset_i;   /* 0 or 1: which char set */
-  term_cset save_csets[2];   /* saved with cursor position */
-  bool save_cset_i;
-
-  bool save_utf, save_wnext;     /* saved with cursor position */
   bool rvideo;   /* global reverse video flag */
   bool cursor_on;        /* cursor enabled flag */
   bool deccolm_allowed;  /* DECCOLM sequence for 80/132 cols allowed? */
@@ -229,28 +240,11 @@ struct term {
   bool blink_is_real;    /* Actually blink blinking text */
   bool echoing;  /* Does terminal want local echo? */
   bool editing;  /* Does terminal want local edit? */
-  int  oem_acs, save_oem_acs;    /* CSI 10,11,12m -> OEM charset */
-  bool utf;      /* Are we in toggleable UTF-8 mode? */
   bool printing, only_printing;  /* Are we doing ANSI printing? */
   int  print_state;      /* state of print-end-sequence scan */
   bufchain *printer_buf;        /* buffered data for printer */
 
  /* ESC 7 saved state for the alternate screen */
-  pos  alt_savecurs;
-  int  alt_save_attr;
-  bool alt_save_cset_i;
-  term_cset alt_save_csets[2];
-  bool alt_save_utf, alt_save_wnext;
-  int  alt_save_oem_acs;
-  int  alt_x, alt_y;
-  bool alt_om, alt_wrap, alt_wnext, alt_ins;
-  term_cset alt_csets[2];  
-  bool alt_cset_i;
-  int  alt_oem_acs;
-  bool alt_utf;
-  int  alt_t, alt_b;
-  int  alt_sblines;
-  bool which_screen;
 
   int  rows, cols;
   bool has_focus;

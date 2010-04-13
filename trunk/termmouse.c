@@ -378,7 +378,10 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
     p = term.selected ? term.sel_end : get_selpoint(p);
     
     static pos last_dest;
-    pos orig = state == MS_SEL_CHAR ? term.curs : last_dest;
+    pos orig =
+      state == MS_SEL_CHAR
+      ? (pos){.y = term.screen.curs.y, .x = term.screen.curs.x}
+      : last_dest;
     pos dest = p;
     
     bool forward = posle(orig, dest);
