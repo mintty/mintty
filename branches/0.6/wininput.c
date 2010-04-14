@@ -280,6 +280,7 @@ win_key_down(WPARAM wp, LPARAM lp)
  
   uint scancode = HIWORD(lp) & (KF_EXTENDED | 0xFF);
   bool extended = HIWORD(lp) & KF_EXTENDED;
+  bool repeat = HIWORD(lp) & KF_REPEAT;
   uint count = LOWORD(lp);
 
   uchar kbd[256];
@@ -577,8 +578,8 @@ win_key_down(WPARAM wp, LPARAM lp)
   
   switch(key) {
     when VK_MENU:
-      if (!shift && !is_key_down(VK_CONTROL))
-        alt_state = old_alt_state == ALT_NONE ? ALT_ALONE : old_alt_state;
+      if (!repeat && mods == MDK_ALT)
+        alt_state = (old_alt_state == ALT_NONE) ? ALT_ALONE : old_alt_state;
       return 1;
     when VK_RETURN:
       if (extended && !numlock && term.app_keypad)
