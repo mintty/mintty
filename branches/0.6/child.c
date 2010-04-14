@@ -128,7 +128,7 @@ static void
 error(char *action)
 {
   char *msg;
-  int len = asprintf(&msg, "Failed to %s: %s", action, strerror(errno));
+  int len = asprintf(&msg, "Failed to %s: %s.", action, strerror(errno));
   if (len > 0) {
     term_write(msg, len);
     free(msg);
@@ -181,8 +181,14 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
   }
 
   // Create the child process and pseudo terminal.
-  if ((pid = forkpty(&pty_fd, 0, 0, winp)) == -1)
-    error("create child process");
+  if ((pid = forkpty(&pty_fd, 0, 0, winp)) == -1) {
+    bool rebase_prompt = (errno == EAGAIN);
+    error("fork child process");
+    if (rebase_prompt) {
+      char msg[] = "\r\nDLL rebasing may be required. See 'rebaseall --help'.";
+      term_write(msg, sizeof msg - 1);
+    }
+  }
   else if (pid == 0) { // Child process.
 #if CYGWIN_VERSION_DLL_MAJOR < 1007
     // The Cygwin 1.5 DLL's trick of allocating a console on an invisible
