@@ -208,7 +208,7 @@ typedef struct {
 struct term {
   term_screen screen, other_screen;
 
-  bool which_screen;      /* On alternate screen? */
+  bool on_alt_screen;     /* On alternate screen? */
 
   uchar **scrollback;     /* lines scrolled off top of screen */
   int disptop;            /* distance scrolled back (0 or -ve) */

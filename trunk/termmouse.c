@@ -371,7 +371,7 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
     term_write(0, 0);
     
     // "Clicks place cursor" implementation.
-    if (!cfg.clicks_place_cursor || term.which_screen != 0 ||
+    if (!cfg.clicks_place_cursor || term.on_alt_screen ||
         term.app_cursor_keys || term.editing)
       return;
     
@@ -503,7 +503,7 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
     int lines = lines_per_notch * accu / NOTCH_DELTA;
     if (lines) {
       accu -= lines * NOTCH_DELTA / lines_per_notch;
-      if (!term.app_wheel && (!term.which_screen || cfg.alt_screen_scroll))
+      if (!term.app_wheel && (!term.on_alt_screen || cfg.alt_screen_scroll))
         term_scroll(0, -lines);
       else {
         // Send scroll distance as CSI a/b events
