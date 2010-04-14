@@ -118,8 +118,11 @@ term_reset(void)
   term.alt_utf = term.utf = term.save_utf = term.alt_save_utf = 0;
   term.alt_oem_acs = term.oem_acs = term.save_oem_acs = term.alt_save_oem_acs =
     0;
-  term.csets[0] = term.csets[1] = term.save_cset =
-    term.alt_save_cset = CSET_ASCII;
+  term.csets[0] = term.save_csets[0] =
+  term.csets[1] = term.save_csets[1] =
+  term.alt_csets[0] = term.alt_save_csets[0] =
+  term.alt_csets[1] = term.alt_save_csets[1] =
+    CSET_ASCII;
   term.rvideo = 0;
   term.in_vbell = false;
   term.cursor_on = true;
@@ -484,14 +487,6 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
     if (!reset && !keep_cur_pos)
       term.savecurs = term.alt_savecurs;
     term.alt_savecurs = tp;
-    t = term.save_cset_i;
-    if (!reset && !keep_cur_pos)
-      term.save_cset_i = term.alt_save_cset_i;
-    term.alt_save_cset_i = t;
-    t = term.save_cset;
-    if (!reset && !keep_cur_pos)
-      term.save_cset = term.alt_save_cset;
-    term.alt_save_cset = t;
     t = term.save_attr;
     if (!reset && !keep_cur_pos)
       term.save_attr = term.alt_save_attr;
@@ -508,6 +503,15 @@ term_swap_screen(int which, int reset, int keep_cur_pos)
     if (!reset && !keep_cur_pos)
       term.save_oem_acs = term.alt_save_oem_acs;
     term.alt_save_oem_acs = t;
+    t = term.save_cset_i;
+    if (!reset && !keep_cur_pos)
+      term.save_cset_i = term.alt_save_cset_i;
+    term.alt_save_cset_i = t;
+    term_cset tcs[2];
+    memcpy(tcs, term.save_csets, sizeof tcs);
+    if (!reset && !keep_cur_pos)
+      memcpy(term.save_csets, term.alt_save_csets, sizeof tcs);
+    memcpy(term.alt_save_csets, tcs, sizeof tcs);
     
     term_update_cs();
   }

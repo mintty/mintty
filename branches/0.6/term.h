@@ -97,7 +97,7 @@ typedef enum {
   CSET_GBCHR = 'A',   /* UK variant */
   CSET_LINEDRW = '0', /* Line drawing charset */
   CSET_OEM = 'U'      /* OEM Codepage 437 */
-} cset;
+} term_cset;
 
 typedef struct {
   int y, x;
@@ -146,9 +146,12 @@ struct term {
   bool dec_om;   /* DEC origin mode flag */
   bool wrap, wrapnext;   /* wrap flags */
   bool insert;   /* insert-mode flag */
+
+  term_cset csets[2];
   bool cset_i;   /* 0 or 1: which char set */
+  term_cset save_csets[2];   /* saved with cursor position */
   bool save_cset_i;
-  cset save_cset;   /* saved with cursor position */
+
   bool save_utf, save_wnext;     /* saved with cursor position */
   bool rvideo;   /* global reverse video flag */
   bool cursor_on;        /* cursor enabled flag */
@@ -170,11 +173,12 @@ struct term {
   pos  alt_savecurs;
   int  alt_save_attr;
   bool alt_save_cset_i;
-  cset alt_save_cset;
+  term_cset alt_save_csets[2];
   bool alt_save_utf, alt_save_wnext;
   int  alt_save_oem_acs;
   int  alt_x, alt_y;
   bool alt_om, alt_wrap, alt_wnext, alt_ins;
+  term_cset alt_csets[2];  
   bool alt_cset_i;
   int  alt_oem_acs;
   bool alt_utf;
@@ -201,8 +205,6 @@ struct term {
 
   int  cursor_type;
   int  cursor_blinks;
-
-  int  csets[2];
 
   int  esc_args[ARGS_MAX];
   int  esc_nargs;

@@ -88,11 +88,11 @@ save_cursor(void)
 {
   term.savecurs = term.curs;
   term.save_attr = term.curr_attr;
-  term.save_cset_i = term.cset_i;
   term.save_utf = term.utf;
   term.save_wnext = term.wrapnext;
-  term.save_cset = term.csets[term.cset_i];
   term.save_oem_acs = term.oem_acs;
+  term.save_cset_i = term.cset_i;
+  memcpy(term.save_csets, term.csets, sizeof term.csets);
 }
 
 /*
@@ -109,7 +109,6 @@ restore_cursor(void)
     term.curs.y = term.rows - 1;
 
   term.curr_attr = term.save_attr;
-  term.cset_i = term.save_cset_i;
   term.utf = term.save_utf;
   term.wrapnext = term.save_wnext;
  /*
@@ -118,10 +117,10 @@ restore_cursor(void)
   */
   if (term.wrapnext && term.curs.x < term.cols - 1)
     term.wrapnext = false;
-  term.csets[term.cset_i] = term.save_cset;
   term.oem_acs = term.save_oem_acs; 
+  term.cset_i = term.save_cset_i;
+  memcpy(term.csets, term.save_csets, sizeof term.csets);
 
-  set_erase_char();
   term_update_cs();
   seen_disp_event();
 }
@@ -1226,6 +1225,7 @@ term_write(const char *data, int len)
           when CSET_GBCHR:
             if (c == '#')
               wc = 0xA3; // pound sign
+          otherwise: ;
         }
         if (wc == 0x2010) {
          /* Many Windows fonts don't have the Unicode hyphen, but groff
