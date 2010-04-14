@@ -738,7 +738,7 @@ resizeline(termline *line, int cols)
 int
 sblines(void)
 {
-  if (term.which_screen == 0 || cfg.alt_screen_scroll)
+  if (!term.on_alt_screen || cfg.alt_screen_scroll)
     return term.sblines + term.extra_sblines;
   else
     return 0;

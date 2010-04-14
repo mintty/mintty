@@ -608,7 +608,7 @@ set_modes(bool state)
           term.deccolm_allowed = state;
         when 47: /* alternate screen */
           term.selected = false;
-          term_swap_screen(state, false, false);
+          term_switch_screen(state, false, false);
           term.disptop = 0;
         when 67: /* DECBKM: backarrow key mode */
           term.backspace_sends_bs = state;
@@ -625,7 +625,7 @@ set_modes(bool state)
           term.report_focus = state;      
         when 1047:       /* alternate screen */
           term.selected = false;
-          term_swap_screen(state, true, true);
+          term_switch_screen(state, true, true);
           term.disptop = 0;
         when 1048:       /* save/restore cursor */
           if (state)
@@ -636,7 +636,7 @@ set_modes(bool state)
           if (state)
             save_cursor();
           term.selected = false;
-          term_swap_screen(state, true, false);
+          term_switch_screen(state, true, false);
           if (!state)
             restore_cursor();
           term.disptop = 0;

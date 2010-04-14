@@ -138,12 +138,12 @@ term_reset(void)
   term.cursor_blinks = -1;
   term.blink_is_real = cfg.allow_blinking;
   term.erase_char = basic_erase_char;
-  term.which_screen = false;
+  term.on_alt_screen = false;
   term_print_finish();
   if (term.screen.lines) {
-    term_swap_screen(1, false, false);
+    term_switch_screen(1, false, false);
     term_erase_lots(false, true, true);
-    term_swap_screen(0, false, false);
+    term_switch_screen(0, false, false);
     term_erase_lots(false, true, true);
     term.screen.curs.y = term_last_nonempty_line() + 1;
     if (term.screen.curs.y == term.rows) {
@@ -289,8 +289,8 @@ term_resize(int newrows, int newcols)
   newrows = max(1, newrows);
   newcols = max(1, newcols);
 
-  int save_which_screen = term.which_screen;
-  term_swap_screen(0, false, false);
+  bool on_alt_screen = term.on_alt_screen;
+  term_switch_screen(0, false, false);
 
   term.selected = false;
 
@@ -418,7 +418,7 @@ term_resize(int newrows, int newcols)
   term.rows = newrows;
   term.cols = newcols;
 
-  term_swap_screen(save_which_screen, false, false);
+  term_switch_screen(on_alt_screen, false, false);
 
   update_sbar();
 }
@@ -430,15 +430,15 @@ term_resize(int newrows, int newcols)
  * alternate screen completely.
  */
 void
-term_swap_screen(bool which, bool reset, bool keep_curs)
+term_switch_screen(bool to_alt, bool reset, bool keep_curs)
 {
-  reset &= which;      /* do no resetting if which==0 */
+  reset &= to_alt; // don't reset when switching to the primary screen
 
-  if (which != term.which_screen) {
-    term.which_screen = which;
+  if (to_alt != term.on_alt_screen) {
+    term.on_alt_screen = to_alt;
 
     term.extra_sblines =
-      cfg.alt_screen_scroll && which ? term_last_nonempty_line() + 1 : 0;
+      cfg.alt_screen_scroll && to_alt ? term_last_nonempty_line() + 1 : 0;
     
     term_screen new_screen = term.other_screen;
     term.other_screen = term.screen;
@@ -557,7 +557,7 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
 
     // Only push lines into the scrollback when scrolling off the top of the
     // normal screen and scrollback is actually enabled.
-    if (sb && topline == 0 && term.which_screen == 0 && cfg.scrollback_lines) {
+    if (sb && topline == 0 && !term.on_alt_screen && cfg.scrollback_lines) {
       for (int i = 0; i < lines; i++)
         scrollback_push(compressline(term.screen.lines[i]));
  
@@ -651,7 +651,7 @@ term_erase_lots(bool line_only, bool from_begin, bool to_end)
  /* After an erase of lines from the top of the screen, we shouldn't
   * bring the lines back again if the terminal enlarges (since the user or
   * application has explictly thrown them away). */
-  if (erasing_lines_from_top && !(term.which_screen))
+  if (erasing_lines_from_top && !term.on_alt_screen)
     term.tempsblines = 0;
 }
 
