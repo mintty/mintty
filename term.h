@@ -115,7 +115,7 @@ typedef struct {
 const termchar basic_erase_char;
 
 typedef struct {
-  ushort lattr;
+  ushort attr;
   ushort cols;    /* number of real columns on the line */
   ushort size;    /* number of allocated termchars
                      (cc-lists may make this > cols) */
@@ -222,9 +222,9 @@ struct term {
                            * screen when "access scrollback from alternate
                            * screen" is enabled. */
 
-  termlines *disptext;  /* buffer of text on real screen */
-  pos dispcurs;         /* location of cursor on real screen */
-  int curstype;         /* type of cursor on real screen */
+  termlines *displines;   /* buffer of text on real screen */
+  pos dispcurs;           /* location of cursor on real screen */
+  int curstype;           /* type of cursor on real screen */
 
   termchar erase_char;
 

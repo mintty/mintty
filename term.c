@@ -376,14 +376,14 @@ term_resize(int newrows, int newcols)
   }
   
   // Make a new displayed text buffer.
-  if (term.disptext) {
+  if (term.displines) {
     for (int i = 0; i < term.rows; i++)
-      freeline(term.disptext[i]);
+      freeline(term.displines[i]);
   }
-  term.disptext = renewn(term.disptext, newrows);
+  term.displines = renewn(term.displines, newrows);
   for (int i = 0; i < newrows; i++) {
     termline *line = newline(newcols, false);
-    term.disptext[i] = line;
+    term.displines[i] = line;
     for (int j = 0; j < newcols; j++)
       line->chars[j].attr = ATTR_INVALID;
   }
@@ -485,22 +485,22 @@ term_switch_screen(bool to_alt, bool reset, bool keep_curs)
 void
 term_check_boundary(int x, int y)
 {
-  termline *ldata;
+  termline *line;
 
  /* Validate input coordinates, just in case. */
   if (x == 0 || x > term.cols)
     return;
 
-  ldata = lineptr(y);
+  line = lineptr(y);
   if (x == term.cols) {
-    ldata->lattr &= ~LATTR_WRAPPED2;
+    line->attr &= ~LATTR_WRAPPED2;
   }
   else {
-    if (ldata->chars[x].chr == UCSWIDE) {
-      clear_cc(ldata, x - 1);
-      clear_cc(ldata, x);
-      ldata->chars[x - 1].chr = ' ';
-      ldata->chars[x] = ldata->chars[x - 1];
+    if (line->chars[x].chr == UCSWIDE) {
+      clear_cc(line, x - 1);
+      clear_cc(line, x);
+      line->chars[x - 1].chr = ' ';
+      line->chars[x] = line->chars[x - 1];
     }
   }
 }
@@ -531,7 +531,7 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
       resizeline(line, term.cols);
       for (int j = 0; j < term.cols; j++)
         line->chars[j] = term.erase_char;
-      line->lattr = LATTR_NORM;
+      line->attr = LATTR_NORM;
     }
   }
 
@@ -632,18 +632,18 @@ term_erase_lots(bool line_only, bool from_begin, bool to_end)
       term_do_scroll(0, scrolllines - 1, scrolllines, true);
   }
   else {
-    termline *ldata = lineptr(start.y);
+    termline *line = lineptr(start.y);
     while (poslt(start, end)) {
       if (start.x == term.cols) {
         if (line_only)
-          ldata->lattr &= ~(LATTR_WRAPPED | LATTR_WRAPPED2);
+          line->attr &= ~(LATTR_WRAPPED | LATTR_WRAPPED2);
         else
-          ldata->lattr = LATTR_NORM;
+          line->attr = LATTR_NORM;
       }
       else
-        ldata->chars[start.x] = term.erase_char;
+        line->chars[start.x] = term.erase_char;
       if (incpos(start) && start.y < term.rows) {
-        ldata = lineptr(start.y);
+        line = lineptr(start.y);
       }
     }
   }
@@ -750,18 +750,18 @@ term_paint(void)
     *    covering the _whole_ character, exactly as if it were
     *    one space to the left.
     */
-    termline *ldata = lineptr(curs->y);
-    termchar *lchars = term_bidi_line(ldata, our_curs_y);
+    termline *line = lineptr(curs->y);
+    termchar *lchars = term_bidi_line(line, our_curs_y);
 
     if (lchars)
       our_curs_x = term.post_bidi_cache[our_curs_y].forward[our_curs_x];
     else
-      lchars = ldata->chars;
+      lchars = line->chars;
 
     if (our_curs_x > 0 && lchars[our_curs_x].chr == UCSWIDE)
       our_curs_x--;
 
-    unlineptr(ldata);
+    unlineptr(line);
   }
 
  /*
@@ -773,7 +773,7 @@ term_paint(void)
       (term.curstype != curstype || term.dispcurs.y != our_curs_y ||
        term.dispcurs.x != our_curs_x)) {
     termchar *dispchar =
-      term.disptext[term.dispcurs.y]->chars + term.dispcurs.x;
+      term.displines[term.dispcurs.y]->chars + term.dispcurs.x;
 
     if (term.dispcurs.x > 0 && dispchar->chr == UCSWIDE)
       dispchar[-1].attr |= ATTR_INVALID;
@@ -787,7 +787,7 @@ term_paint(void)
 
  /* The normal screen data */
   for (int i = 0; i < term.rows; i++) {
-    termline *ldata;
+    termline *line;
     termchar *lchars;
     int dirty_line, dirty_run;
     uint attr = 0;
@@ -800,15 +800,15 @@ term_paint(void)
 
     pos scrpos;
     scrpos.y = i + term.disptop;
-    ldata = lineptr(scrpos.y);
+    line = lineptr(scrpos.y);
 
    /* Do Arabic shaping and bidi. */
-    lchars = term_bidi_line(ldata, i);
+    lchars = term_bidi_line(line, i);
     if (lchars) {
       backward = term.post_bidi_cache[i].backward;
     }
     else {
-      lchars = ldata->chars;
+      lchars = line->chars;
       backward = null;
     }
 
@@ -847,13 +847,13 @@ term_paint(void)
       * Check the font we'll _probably_ be using to see if 
       * the character is wide when we don't want it to be.
       */
-      if (tchar != term.disptext[i]->chars[j].chr ||
+      if (tchar != term.displines[i]->chars[j].chr ||
           tattr !=
-          (term.disptext[i]->chars[j].attr & ~(ATTR_NARROW | DATTR_MASK))) {
+          (term.displines[i]->chars[j].attr & ~(ATTR_NARROW | DATTR_MASK))) {
         if ((tattr & ATTR_WIDE) == 0 && win_char_width(tchar) == 2)
           tattr |= ATTR_NARROW;
       }
-      else if (term.disptext[i]->chars[j].attr & ATTR_NARROW)
+      else if (term.displines[i]->chars[j].attr & ATTR_NARROW)
         tattr |= ATTR_NARROW;
 
       if (i == our_curs_y && j == our_curs_x) {
@@ -886,33 +886,33 @@ term_paint(void)
     laststart = 0;
     dirtyrect = false;
     for (int j = 0; j < term.cols; j++) {
-      if (term.disptext[i]->chars[j].attr & DATTR_STARTRUN) {
+      if (term.displines[i]->chars[j].attr & DATTR_STARTRUN) {
         laststart = j;
         dirtyrect = false;
       }
 
-      if (term.disptext[i]->chars[j].chr != newline[j].chr ||
-          (term.disptext[i]->chars[j].attr & ~DATTR_MASK)
+      if (term.displines[i]->chars[j].chr != newline[j].chr ||
+          (term.displines[i]->chars[j].attr & ~DATTR_MASK)
           != newline[j].attr) {
         int k;
 
         if (!dirtyrect) {
           for (k = laststart; k < j; k++)
-            term.disptext[i]->chars[k].attr |= ATTR_INVALID;
+            term.displines[i]->chars[k].attr |= ATTR_INVALID;
 
           dirtyrect = true;
         }
       }
 
       if (dirtyrect)
-        term.disptext[i]->chars[j].attr |= ATTR_INVALID;
+        term.displines[i]->chars[j].attr |= ATTR_INVALID;
     }
 
    /*
     * Finally, loop once more and actually do the drawing.
     */
-    dirty_run = dirty_line = (ldata->lattr != term.disptext[i]->lattr);
-    term.disptext[i]->lattr = ldata->lattr;
+    dirty_run = dirty_line = (line->attr != term.displines[i]->attr);
+    term.displines[i]->attr = line->attr;
 
     for (int j = 0; j < term.cols; j++) {
       bool break_run, do_copy;
@@ -920,7 +920,7 @@ term_paint(void)
       uint tattr = newline[j].attr;
       wchar tchar = newline[j].chr;
 
-      if ((term.disptext[i]->chars[j].attr ^ tattr) & ATTR_WIDE)
+      if ((term.displines[i]->chars[j].attr ^ tattr) & ATTR_WIDE)
         dirty_line = true;
 
       break_run = (tattr ^ attr) != 0;
@@ -936,8 +936,8 @@ term_paint(void)
         break_run = true;
 
       if (!dirty_line) {
-        if (term.disptext[i]->chars[j].chr == tchar &&
-            (term.disptext[i]->chars[j].attr & ~DATTR_MASK) == tattr)
+        if (term.displines[i]->chars[j].chr == tchar &&
+            (term.displines[i]->chars[j].attr & ~DATTR_MASK) == tattr)
           break_run = true;
         else if (!dirty_run && ccount == 1)
           break_run = true;
@@ -945,9 +945,9 @@ term_paint(void)
 
       if (break_run) {
         if ((dirty_run || last_run_dirty) && ccount > 0) {
-          win_text(start, i, ch, ccount, attr, ldata->lattr);
+          win_text(start, i, ch, ccount, attr, line->attr);
           if (attr & (TATTR_ACTCURS | TATTR_PASCURS))
-            win_cursor(start, i, ch, ccount, attr, ldata->lattr);
+            win_cursor(start, i, ch, ccount, attr, line->attr);
 
           updated_line = 1;
         }
@@ -959,7 +959,7 @@ term_paint(void)
 
       do_copy = false;
       if (!termchars_equal_override
-          (&term.disptext[i]->chars[j], d, tchar, tattr)) {
+          (&term.displines[i]->chars[j], d, tchar, tattr)) {
         do_copy = true;
         dirty_run = true;
       }
@@ -986,11 +986,11 @@ term_paint(void)
       }
 
       if (do_copy) {
-        copy_termchar(term.disptext[i], j, d);
-        term.disptext[i]->chars[j].chr = tchar;
-        term.disptext[i]->chars[j].attr = tattr;
+        copy_termchar(term.displines[i], j, d);
+        term.displines[i]->chars[j].chr = tchar;
+        term.displines[i]->chars[j].attr = tattr;
         if (start == j)
-          term.disptext[i]->chars[j].attr |= DATTR_STARTRUN;
+          term.displines[i]->chars[j].attr |= DATTR_STARTRUN;
       }
 
      /* If it's a wide char step along to the next one. */
@@ -1003,20 +1003,20 @@ term_paint(void)
           * Ever.
           */
           assert(!(i == our_curs_y && j == our_curs_x));
-          if (!termchars_equal(&term.disptext[i]->chars[j], d))
+          if (!termchars_equal(&term.displines[i]->chars[j], d))
             dirty_run = true;
-          copy_termchar(term.disptext[i], j, d);
+          copy_termchar(term.displines[i], j, d);
         }
       }
     }
     if (dirty_run && ccount > 0) {
-      win_text(start, i, ch, ccount, attr, ldata->lattr);
+      win_text(start, i, ch, ccount, attr, line->attr);
       if (attr & (TATTR_ACTCURS | TATTR_PASCURS))
-        win_cursor(start, i, ch, ccount, attr, ldata->lattr);
+        win_cursor(start, i, ch, ccount, attr, line->attr);
 
       updated_line = 1;
     }
-    unlineptr(ldata);
+    unlineptr(line);
   }
   free(ch);
 }
@@ -1046,12 +1046,12 @@ term_invalidate(int left, int top, int right, int bottom)
     bottom = term.rows - 1;
 
   for (int i = top; i <= bottom && i < term.rows; i++) {
-    if ((term.disptext[i]->lattr & LATTR_MODE) == LATTR_NORM)
+    if ((term.displines[i]->attr & LATTR_MODE) == LATTR_NORM)
       for (int j = left; j <= right && j < term.cols; j++)
-        term.disptext[i]->chars[j].attr |= ATTR_INVALID;
+        term.displines[i]->chars[j].attr |= ATTR_INVALID;
     else
       for (int j = left / 2; j <= right / 2 + 1 && j < term.cols; j++)
-        term.disptext[i]->chars[j].attr |= ATTR_INVALID;
+        term.displines[i]->chars[j].attr |= ATTR_INVALID;
   }
 }
 

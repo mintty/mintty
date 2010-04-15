@@ -126,7 +126,7 @@ insert_char(int n)
 {
   int dir = (n < 0 ? -1 : +1);
   int m;
-  termline *ldata;
+  termline *line;
   term_cursor *curs = &term.screen.curs;
 
   n = (n < 0 ? -n : n);
@@ -136,20 +136,20 @@ insert_char(int n)
   term_check_boundary(curs->x, curs->y);
   if (dir < 0)
     term_check_boundary(curs->x + n, curs->y);
-  ldata = lineptr(curs->y);
+  line = lineptr(curs->y);
   if (dir < 0) {
     for (int j = 0; j < m; j++)
-      move_termchar(ldata, ldata->chars + curs->x + j,
-                    ldata->chars + curs->x + j + n);
+      move_termchar(line, line->chars + curs->x + j,
+                    line->chars + curs->x + j + n);
     while (n--)
-      ldata->chars[curs->x + m++] = term.erase_char;
+      line->chars[curs->x + m++] = term.erase_char;
   }
   else {
     for (int j = m; j--;)
-      move_termchar(ldata, ldata->chars + curs->x + j + n,
-                    ldata->chars + curs->x + j);
+      move_termchar(line, line->chars + curs->x + j + n,
+                    line->chars + curs->x + j);
     while (n--)
-      ldata->chars[curs->x + n] = term.erase_char;
+      line->chars[curs->x + n] = term.erase_char;
   }
 }
 
@@ -180,12 +180,12 @@ static void
 write_tab(void)
 {
   term_cursor *curs = &term.screen.curs;
-  termline *ldata = lineptr(curs->y);
+  termline *line = lineptr(curs->y);
   do
     curs->x++;
   while (curs->x < term.cols - 1 && !term.tabs[curs->x]);
   
-  if ((ldata->lattr & LATTR_MODE) != LATTR_NORM) {
+  if ((line->attr & LATTR_MODE) != LATTR_NORM) {
     if (curs->x >= term.cols / 2)
       curs->x = term.cols / 2 - 1;
   }
@@ -268,7 +268,7 @@ write_char(wchar c, int width)
   }  
 
   if (curs->wrapnext && screen->autowrap && width > 0) {
-    cline->lattr |= LATTR_WRAPPED;
+    cline->attr |= LATTR_WRAPPED;
     if (curs->y == screen->marg_b)
       term_do_scroll(screen->marg_t, screen->marg_b, 1, true);
     else if (curs->y < term.rows - 1)
@@ -308,7 +308,7 @@ write_char(wchar c, int width)
       term_check_boundary(curs->x + 2, curs->y);
       if (curs->x == term.cols - 1) {
         cline->chars[curs->x] = term.erase_char;
-        cline->lattr |= LATTR_WRAPPED | LATTR_WRAPPED2;
+        cline->attr |= LATTR_WRAPPED | LATTR_WRAPPED2;
         if (curs->y == screen->marg_b)
           term_do_scroll(screen->marg_t, screen->marg_b, 1, true);
         else if (curs->y < term.rows - 1)
@@ -412,23 +412,23 @@ do_esc(uchar c)
       term.tabs[curs->x] = true;
     when ANSI('8', '#'):    /* DECALN: fills screen with Es :-) */
       for (int i = 0; i < term.rows; i++) {
-        termline *ldata = lineptr(i);
+        termline *line = lineptr(i);
         for (int j = 0; j < term.cols; j++) {
-          ldata->chars[j] =
+          line->chars[j] =
             (termchar){.cc_next = 0, .chr = 'E', .attr = ATTR_DEFAULT};
         }
-        ldata->lattr = LATTR_NORM;
+        line->attr = LATTR_NORM;
       }
       term.disptop = 0;
       seen_disp_event();
     when ANSI('3', '#'):  /* DECDHL: 2*height, top */
-      lineptr(curs->y)->lattr = LATTR_TOP;
+      lineptr(curs->y)->attr = LATTR_TOP;
     when ANSI('4', '#'):  /* DECDHL: 2*height, bottom */
-      lineptr(curs->y)->lattr = LATTR_BOT;
+      lineptr(curs->y)->attr = LATTR_BOT;
     when ANSI('5', '#'):  /* DECSWL: normal */
-      lineptr(curs->y)->lattr = LATTR_NORM;
+      lineptr(curs->y)->attr = LATTR_NORM;
     when ANSI('6', '#'):  /* DECDWL: 2*width */
-      lineptr(curs->y)->lattr = LATTR_WIDE;
+      lineptr(curs->y)->attr = LATTR_WIDE;
     when ANSI('A', '(') or ANSI('B', '(') or ANSI('0', '('):
      /* GZD4: G0 designate 94-set */
       curs->csets[0] = c;
