@@ -725,10 +725,7 @@ resizeline(termline *line, int cols)
 int
 sblines(void)
 {
-  if (!term.on_alt_screen || cfg.alt_screen_scroll)
-    return term.sblines + term.extra_sblines;
-  else
-    return 0;
+  return term.on_alt_screen ? 0 : term.sblines;
 }
 
 /*
@@ -743,10 +740,6 @@ fetch_line(int y)
   if (y >= 0) {
     assert(y < term.rows);
     line = term.screen.lines[y];
-  }
-  else if ((y += term.extra_sblines) >= 0) {
-    assert(y < term.rows);
-    line = term.other_screen.lines[y];
   }
   else {
     assert(y < term.sblines);

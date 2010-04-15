@@ -218,9 +218,6 @@ struct term {
   int tempsblines;        /* number of lines of .scrollback that
                            * can be retrieved onto the terminal
                            * ("temporary scrollback") */
-  int  extra_sblines;     /* Extra scrollback lines: the lines on the primary
-                           * screen when "access scrollback from alternate
-                           * screen" is enabled. */
 
   termlines *displines;   /* buffer of text on real screen */
   pos dispcurs;           /* location of cursor on real screen */
