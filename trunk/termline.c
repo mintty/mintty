@@ -16,7 +16,7 @@ newline(int cols, int bce)
   for (j = 0; j < cols; j++)
     line->chars[j] = (bce ? term.erase_char : basic_erase_char);
   line->cols = line->size = cols;
-  line->lattr = LATTR_NORM;
+  line->attr = LATTR_NORM;
   line->temporary = false;
   line->cc_free = 0;
 
@@ -304,7 +304,7 @@ makeliteral_cc(struct buf *b, termchar *c)
 }
 
 static void
-readliteral_chr(struct buf *buf, termchar *c, termline *unused(ldata))
+readliteral_chr(struct buf *buf, termchar *c, termline *unused(line))
 {
   uchar b = get(buf);
   if (b == 0 || (b >= 0x20 && b < 0x7F))
@@ -323,7 +323,7 @@ readliteral_chr(struct buf *buf, termchar *c, termline *unused(ldata))
 }
 
 static void
-readliteral_attr(struct buf *b, termchar *c, termline *unused(ldata))
+readliteral_attr(struct buf *b, termchar *c, termline *unused(line))
 {
   uint val, attr, colourbits;
 
@@ -354,29 +354,29 @@ readliteral_attr(struct buf *b, termchar *c, termline *unused(ldata))
 }
 
 static void
-readliteral_cc(struct buf *b, termchar *c, termline *ldata)
+readliteral_cc(struct buf *b, termchar *c, termline *line)
 {
   termchar n;
-  int x = c - ldata->chars;
+  int x = c - line->chars;
 
   c->cc_next = 0;
 
   while (1) {
-    readliteral_chr(b, &n, ldata);
+    readliteral_chr(b, &n, line);
     if (!n.chr)
       break;
-    add_cc(ldata, x, n.chr);
+    add_cc(line, x, n.chr);
   }
 }
 
 static void
-makerle(struct buf *b, termline *ldata,
+makerle(struct buf *b, termline *line,
         void (*makeliteral) (struct buf *b, termchar *c))
 {
   int hdrpos, hdrsize, n, prevlen, prevpos, thislen, thispos, prev2;
-  termchar *c = ldata->chars;
+  termchar *c = line->chars;
 
-  n = ldata->cols;
+  n = line->cols;
 
   hdrpos = b->len;
   hdrsize = 0;
@@ -505,7 +505,7 @@ makerle(struct buf *b, termline *ldata,
 
 
 uchar *
-compressline(termline *ldata)
+compressline(termline *line)
 {
   struct buf buffer = { null, 0, 0 }, *b = &buffer;
 
@@ -515,7 +515,7 @@ compressline(termline *ldata)
   * the last.
   */
   {
-    int n = ldata->cols;
+    int n = line->cols;
     while (n >= 128) {
       add(b, (uchar) ((n & 0x7F) | 0x80));
       n >>= 7;
@@ -524,10 +524,10 @@ compressline(termline *ldata)
   }
 
  /*
-  * Next store the lattrs; same principle.
+  * Next store the line attributes; same principle.
   */
   {
-    int n = ldata->lattr;
+    int n = line->attr;
     while (n >= 128) {
       add(b, (uchar) ((n & 0x7F) | 0x80));
       n >>= 7;
@@ -538,7 +538,7 @@ compressline(termline *ldata)
  /*
   * Now we store a sequence of separate run-length encoded
   * fragments, each containing exactly as many symbols as there
-  * are columns in the ldata.
+  * are columns in the line.
   * 
   * All of these have a common basic format:
   * 
@@ -548,9 +548,9 @@ compressline(termline *ldata)
   * 
   * The format of the `literals' varies between the fragments.
   */
-  makerle(b, ldata, makeliteral_chr);
-  makerle(b, ldata, makeliteral_attr);
-  makerle(b, ldata, makeliteral_cc);
+  makerle(b, line, makeliteral_chr);
+  makerle(b, line, makeliteral_attr);
+  makerle(b, line, makeliteral_cc);
 
  /*
   * Trim the allocated memory so we don't waste any, and return.
@@ -559,12 +559,12 @@ compressline(termline *ldata)
 }
 
 static void
-readrle(struct buf *b, termline *ldata,
-        void (*readliteral) (struct buf *b, termchar *c, termline *ldata))
+readrle(struct buf *b, termline *line,
+        void (*readliteral) (struct buf *b, termchar *c, termline *line))
 {
   int n = 0;
 
-  while (n < ldata->cols) {
+  while (n < line->cols) {
     int hdr = get(b);
 
     if (hdr >= 0x80) {
@@ -572,9 +572,9 @@ readrle(struct buf *b, termline *ldata,
 
       int pos = b->len, count = hdr + 2 - 0x80;
       while (count--) {
-        assert(n < ldata->cols);
+        assert(n < line->cols);
         b->len = pos;
-        readliteral(b, ldata->chars + n, ldata);
+        readliteral(b, line->chars + n, line);
         n++;
       }
     }
@@ -583,14 +583,14 @@ readrle(struct buf *b, termline *ldata,
 
       int count = hdr + 1;
       while (count--) {
-        assert(n < ldata->cols);
-        readliteral(b, ldata->chars + n, ldata);
+        assert(n < line->cols);
+        readliteral(b, line->chars + n, line);
         n++;
       }
     }
   }
 
-  assert(n == ldata->cols);
+  assert(n == line->cols);
 }
 
 termline *
@@ -598,7 +598,7 @@ decompressline(uchar *data, int *bytes_used)
 {
   int ncols, byte, shift;
   struct buf buffer, *b = &buffer;
-  termline *ldata;
+  termline *line;
 
   b->data = data;
   b->len = 0;
@@ -616,46 +616,46 @@ decompressline(uchar *data, int *bytes_used)
  /*
   * Now create the output termline.
   */
-  ldata = new(termline);
-  ldata->chars = newn(termchar, ncols);
-  ldata->cols = ldata->size = ncols;
-  ldata->temporary = true;
-  ldata->cc_free = 0;
+  line = new(termline);
+  line->chars = newn(termchar, ncols);
+  line->cols = line->size = ncols;
+  line->temporary = true;
+  line->cc_free = 0;
 
  /*
-  * We must set all the cc pointers in ldata->chars to 0 right
+  * We must set all the cc pointers in line->chars to 0 right
   * now, so that cc diagnostics that verify the integrity of the
   * whole line will make sense while we're in the middle of
   * building it up.
   */
   {
     int i;
-    for (i = 0; i < ldata->cols; i++)
-      ldata->chars[i].cc_next = 0;
+    for (i = 0; i < line->cols; i++)
+      line->chars[i].cc_next = 0;
   }
 
  /*
-  * Now read in the lattr.
+  * Now read in the line attributes.
   */
-  ldata->lattr = shift = 0;
+  line->attr = shift = 0;
   do {
     byte = get(b);
-    ldata->lattr |= (byte & 0x7F) << shift;
+    line->attr |= (byte & 0x7F) << shift;
     shift += 7;
   } while (byte & 0x80);
 
  /*
   * Now we read in each of the RLE streams in turn.
   */
-  readrle(b, ldata, readliteral_chr);
-  readrle(b, ldata, readliteral_attr);
-  readrle(b, ldata, readliteral_cc);
+  readrle(b, line, readliteral_chr);
+  readrle(b, line, readliteral_attr);
+  readrle(b, line, readliteral_cc);
 
  /* Return the number of bytes read, for diagnostic purposes. */
   if (bytes_used)
     *bytes_used = b->len;
 
-  return ldata;
+  return line;
 }
 
 /*
@@ -861,14 +861,14 @@ term_bidi_cache_store(int line, termchar *lbefore, termchar *lafter,
  * term.post_bidi_cache[scr_y].*.
  */
 termchar *
-term_bidi_line(termline *ldata, int scr_y)
+term_bidi_line(termline *line, int scr_y)
 {
   termchar *lchars;
   int it;
 
  /* Do Arabic shaping and bidi. */
 
-  if (!term_bidi_cache_hit(scr_y, ldata->chars, term.cols)) {
+  if (!term_bidi_cache_hit(scr_y, line->chars, term.cols)) {
 
     if (term.wcFromTo_size < term.cols) {
       term.wcFromTo_size = term.cols;
@@ -877,7 +877,7 @@ term_bidi_line(termline *ldata, int scr_y)
     }
 
     for (it = 0; it < term.cols; it++) {
-      wchar c = ldata->chars[it].chr;
+      wchar c = line->chars[it].chr;
       term.wcFrom[it].origwc = term.wcFrom[it].wc = c;
       term.wcFrom[it].index = it;
     }
@@ -885,23 +885,23 @@ term_bidi_line(termline *ldata, int scr_y)
     do_bidi(term.wcFrom, term.cols);
     do_shape(term.wcFrom, term.wcTo, term.cols);
 
-    if (term.ltemp_size < ldata->size) {
-      term.ltemp_size = ldata->size;
+    if (term.ltemp_size < line->size) {
+      term.ltemp_size = line->size;
       term.ltemp = renewn(term.ltemp, term.ltemp_size);
     }
 
-    memcpy(term.ltemp, ldata->chars, ldata->size * sizeof(termchar));
+    memcpy(term.ltemp, line->chars, line->size * sizeof(termchar));
 
     for (it = 0; it < term.cols; it++) {
-      term.ltemp[it] = ldata->chars[term.wcTo[it].index];
+      term.ltemp[it] = line->chars[term.wcTo[it].index];
       if (term.ltemp[it].cc_next)
         term.ltemp[it].cc_next -= it - term.wcTo[it].index;
 
       if (term.wcTo[it].origwc != term.wcTo[it].wc)
         term.ltemp[it].chr = term.wcTo[it].wc;
     }
-    term_bidi_cache_store(scr_y, ldata->chars, term.ltemp, term.wcTo,
-                          term.cols, ldata->size);
+    term_bidi_cache_store(scr_y, line->chars, term.ltemp, term.wcTo,
+                          term.cols, line->size);
 
     lchars = term.ltemp;
   }

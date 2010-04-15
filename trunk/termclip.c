@@ -53,7 +53,7 @@ get_selection(clip_workbuf *buf)
 
   while (poslt(start, end)) {
     bool nl = false;
-    termline *ldata = lineptr(start.y);
+    termline *line = lineptr(start.y);
     pos nlpos;
 
    /*
@@ -70,14 +70,14 @@ get_selection(clip_workbuf *buf)
     * because in normal selection mode this means we need a
     * newline at the end)...
     */
-    if (!(ldata->lattr & LATTR_WRAPPED)) {
-      while (nlpos.x && ldata->chars[nlpos.x - 1].chr == ' ' &&
-             !ldata->chars[nlpos.x - 1].cc_next && poslt(start, nlpos))
+    if (!(line->attr & LATTR_WRAPPED)) {
+      while (nlpos.x && line->chars[nlpos.x - 1].chr == ' ' &&
+             !line->chars[nlpos.x - 1].cc_next && poslt(start, nlpos))
         decpos(nlpos);
       if (poslt(nlpos, end))
         nl = true;
     }
-    else if (ldata->lattr & LATTR_WRAPPED2) {
+    else if (line->attr & LATTR_WRAPPED2) {
      /* Ignore the last char on the line in a WRAPPED2 line. */
       decpos(nlpos);
     }
@@ -99,22 +99,22 @@ get_selection(clip_workbuf *buf)
       wchar cbuf[16], *p;
       int x = start.x;
 
-      if (ldata->chars[x].chr == UCSWIDE) {
+      if (line->chars[x].chr == UCSWIDE) {
         start.x++;
         continue;
       }
 
       while (1) {
-        wchar c = ldata->chars[x].chr;
-        attr = ldata->chars[x].attr;
+        wchar c = line->chars[x].chr;
+        attr = line->chars[x].attr;
         cbuf[0] = c;
         cbuf[1] = 0;
 
         for (p = cbuf; *p; p++)
           clip_addchar(buf, *p, attr);
 
-        if (ldata->chars[x].cc_next)
-          x += ldata->chars[x].cc_next;
+        if (line->chars[x].cc_next)
+          x += line->chars[x].cc_next;
         else
           break;
       }
@@ -127,7 +127,7 @@ get_selection(clip_workbuf *buf)
     start.y++;
     start.x = term.sel_rect ? old_top_x : 0;
 
-    unlineptr(ldata);
+    unlineptr(line);
   }
   clip_addchar(buf, 0, 0);
 }
