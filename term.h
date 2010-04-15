@@ -137,8 +137,8 @@ void freeline(termline *);
 void resizeline(termline *, int);
 
 int sblines(void);
-termline *lineptr(int y);
-void unlineptr(termline *);
+termline *fetch_line(int y);
+void release_line(termline *);
 
 int termchars_equal(termchar *a, termchar *b);
 int termchars_equal_override(termchar *a, termchar *b, uint bchr, uint battr);

@@ -33,7 +33,7 @@ sel_spread_word(pos p, bool forward)
 {
   pos ret_p = p;
   
-  termline *line = lineptr(p.y);
+  termline *line = fetch_line(p.y);
   bool in_word = is_word_char(get_char(line, p.x));
   
   for (;;) {
@@ -45,16 +45,16 @@ sel_spread_word(pos p, bool forward)
         if (!(line->attr & LATTR_WRAPPED))
           break;
         p.x = 0;
-        unlineptr(line);
-        line = lineptr(++p.y);
+        release_line(line);
+        line = fetch_line(++p.y);
       }
     }
     else {
       if (p.x <= 0) {
         if (p.y <= -sblines())
           break;
-        unlineptr(line);
-        line = lineptr(--p.y);
+        release_line(line);
+        line = fetch_line(--p.y);
         if (!(line->attr & LATTR_WRAPPED))
           break;
         p.x = term.cols - ((line->attr & LATTR_WRAPPED2) != 0);
@@ -81,7 +81,7 @@ sel_spread_word(pos p, bool forward)
       ret_p = p;
   }
     
-  unlineptr(line);
+  release_line(line);
   return ret_p;
 }
 
@@ -97,7 +97,7 @@ sel_spread_half(pos p, bool forward)
       * In this mode, every character is a separate unit, except
       * for runs of spaces at the end of a non-wrapping line.
       */
-      termline *line = lineptr(p.y);
+      termline *line = fetch_line(p.y);
       if (!(line->attr & LATTR_WRAPPED)) {
         termchar *q = line->chars + term.cols;
         while (q > line->chars && q[-1].chr == ' ' && !q[-1].cc_next)
@@ -107,16 +107,16 @@ sel_spread_half(pos p, bool forward)
         if (p.x >= q - line->chars)
           p.x = forward ? term.cols - 1 : q - line->chars;
       }
-      unlineptr(line);
+      release_line(line);
     }
     when MS_SEL_WORD:
       p = sel_spread_word(p, forward); 
     when MS_SEL_LINE:
       if (forward) {
-        termline *line = lineptr(p.y);
+        termline *line = fetch_line(p.y);
         while (line->attr & LATTR_WRAPPED) {
-          unlineptr(line);
-          line = lineptr(++p.y);
+          release_line(line);
+          line = fetch_line(++p.y);
           p.x = 0;
         }
         int x = p.x;
@@ -125,14 +125,14 @@ sel_spread_half(pos p, bool forward)
           if (get_char(line, x) != ' ')
             p.x = x;
         } while (++x < line->cols);
-        unlineptr(line);
+        release_line(line);
       }
       else {
         p.x = 0;
         while (p.y > -sblines()) {
-          termline *line = lineptr(p.y - 1);
+          termline *line = fetch_line(p.y - 1);
           bool wrapped = line->attr & LATTR_WRAPPED;
-          unlineptr(line);
+          release_line(line);
           if (!wrapped)
             break;
           p.y--;
@@ -248,7 +248,7 @@ static pos
 get_selpoint(const pos p)
 {
   pos sp = { .y = p.y + term.disptop, .x = p.x };
-  termline *line = lineptr(sp.y);
+  termline *line = fetch_line(sp.y);
   if ((line->attr & LATTR_MODE) != LATTR_NORM)
     sp.x /= 2;
 
@@ -263,7 +263,7 @@ get_selpoint(const pos p)
   if (line->chars[sp.x].chr == UCSWIDE)
     sp.x--;
   
-  unlineptr(line);
+  release_line(line);
   return sp;
 }
 
@@ -390,9 +390,9 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
     
     uint count = 0;
     while (p.y != end.y) {
-      termline *line = lineptr(p.y);
+      termline *line = fetch_line(p.y);
       if (!(line->attr & LATTR_WRAPPED)) {
-        unlineptr(line);
+        release_line(line);
         return;
       }
       int cols = term.cols - ((line->attr & LATTR_WRAPPED2) != 0);
@@ -402,14 +402,14 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
       }
       p.y++;
       p.x = 0;
-      unlineptr(line);
+      release_line(line);
     }
-    termline *line = lineptr(p.y);
+    termline *line = fetch_line(p.y);
     for (int x = p.x; x < end.x; x++) {
       if (line->chars[x].chr != UCSWIDE)
         count++;
     }
-    unlineptr(line);
+    release_line(line);
     
     if (count)
       send_keys(forward ? "\e[C" : "\e[D", 3, count, false);

@@ -53,7 +53,7 @@ get_selection(clip_workbuf *buf)
 
   while (poslt(start, end)) {
     bool nl = false;
-    termline *line = lineptr(start.y);
+    termline *line = fetch_line(start.y);
     pos nlpos;
 
    /*
@@ -127,7 +127,7 @@ get_selection(clip_workbuf *buf)
     start.y++;
     start.x = term.sel_rect ? old_top_x : 0;
 
-    unlineptr(line);
+    release_line(line);
   }
   clip_addchar(buf, 0, 0);
 }
