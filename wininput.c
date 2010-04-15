@@ -71,6 +71,12 @@ win_update_menus(void)
     menu, IDM_FULLSCREEN, fullscreen_checked, IDM_FULLSCREEN,
     term.shortcut_override ? "&Fullscreen" : "&Fullscreen\tAlt+F11"
   );
+  
+  uint otherscreen_checked = term.show_other_screen ? MF_CHECKED : MF_UNCHECKED;
+  ModifyMenu(
+    menu, IDM_OTHERSCREEN, otherscreen_checked, IDM_OTHERSCREEN,
+    term.shortcut_override ? "&Other screen" : "&Other screen\tAlt+F12"
+  );
 
   uint options_enabled = config_wnd ? MF_GRAYED : MF_ENABLED;
   EnableMenuItem(menu, IDM_OPTIONS, options_enabled);
@@ -91,6 +97,7 @@ win_init_menus(void)
   AppendMenu(menu, MF_ENABLED, IDM_RESET, 0);
   AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_DEFSIZE, 0);
   AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN, 0);
+  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_OTHERSCREEN, 0);
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_OPTIONS, "&Options...");
 
