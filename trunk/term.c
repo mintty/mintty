@@ -375,6 +375,10 @@ term_resize(int newrows, int newcols)
     saved_curs->y += restore;
   }
   
+  // Resize lines
+  for (int i = 0; i < newrows; i++)
+    resizeline(lines[i], newcols);
+  
   // Make a new displayed text buffer.
   if (term.displines) {
     for (int i = 0; i < term.rows; i++)
@@ -528,9 +532,9 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
     memcpy(recycled, src, sizeof recycled);
     for (int i = 0; i < lines; i++) {
       termline *line = recycled[i];
-      resizeline(line, term.cols);
       for (int j = 0; j < term.cols; j++)
         line->chars[j] = term.erase_char;
+      line->cc_free = term.cols;
       line->attr = LATTR_NORM;
     }
   }
@@ -614,8 +618,7 @@ term_erase_lots(bool line_only, bool from_begin, bool to_end)
   if (start.y == 0 && start.x == 0 && end.y == term.rows)
     win_invalidate_all();
 
- /* Lines scrolled away shouldn't be brought back on if the terminal
-  * resizes. */
+ /* Lines scrolled away shouldn't be brought back on if the terminal resizes. */
   bool erasing_lines_from_top =
     start.y == 0 && start.x == 0 && end.x == 0 && !line_only;
 
