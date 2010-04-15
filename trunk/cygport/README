@@ -31,15 +31,15 @@ Canonical download:
 -------------------------------------------
 
 Build instructions:
-  unpack mintty-0.5.7-X-src.tar.bz2
+  unpack mintty-0.6.2-X-src.tar.bz2
     if you use setup to install this src package, it will be
     unpacked under /usr/src automatically
   cd /usr/src
-  cygport ./mintty-0.5.7-X.cygport all
+  cygport ./mintty-0.6.2-X.cygport all
 
 This will create:
-  /usr/src/mintty-0.5.7-X-src.tar.bz2
-  /usr/src/mintty-0.5.7-X.tar.bz2
+  /usr/src/mintty-0.6.2-X-src.tar.bz2
+  /usr/src/mintty-0.6.2-X.tar.bz2
 
 -------------------------------------------
 
@@ -48,15 +48,28 @@ Files included in the binary package:
   /etc/postinstall/mintty.sh
   /etc/preremove/mintty.sh
   /usr/bin/mintty.exe
-  /usr/share/doc/Cygwin/mintty-0.5.7.README
-  /usr/share/doc/mintty-0.5.7/COPYING
-  /usr/share/doc/mintty-0.5.7/LICENSE.Oxygen
-  /usr/share/doc/mintty-0.5.7/LICENSE.PuTTY
+  /usr/share/doc/Cygwin/mintty-0.6.2.README
+  /usr/share/doc/mintty-0.6.2/COPYING
+  /usr/share/doc/mintty-0.6.2/LICENSE.Oxygen
+  /usr/share/doc/mintty-0.6.2/LICENSE.PuTTY
   /usr/share/man/man1/mintty.1.gz
 
 ------------------
 
 Port Notes:
+
+----- mintty-0.6.2-1 -----
+* Defaulting to hold-on-error.
+* Support URL parameters in word selection.
+
+----- mintty-0.6.1-1 -----
+* Overhauled settings storage.
+* More xterm-compatible signal handling.
+* Improved handling of Ctrl and AltGr key combinations.
+* Various UI tweaks.
+
+----- mintty-0.5.8-1 -----
+* Fixed issue with non-ASCII chars in string settings, e.g. font name.
 
 ----- mintty-0.5.7-1 -----
 * No more assumptions about locales without explicit charset

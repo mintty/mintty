@@ -571,7 +571,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_CLOSE:
       win_show_mouse();
       if (!cfg.confirm_exit || confirm_exit())
-        child_kill();
+        child_kill((GetKeyState(VK_SHIFT) & 0x80) != 0);
       return 0;
     when WM_COMMAND or WM_SYSCOMMAND:
       switch (wp & ~0xF) {  /* low 4 bits reserved to Windows */
@@ -775,7 +775,7 @@ static const char help[] =
   "\n"
   "If a program is supplied, it is executed with its arguments. Otherwise, the\n"
   "shell to execute is looked up in the SHELL environment variable followed by\n"
-  "the user's shell setting in /etc/passwd. Failing that, /bin/bash is used. If\n"
+  "the user's shell setting in /etc/passwd. Failing that, /bin/sh is used. If\n"
   "the last argument is a single dash, the shell is invoked as a login shell.\n"
   "\n"
   "Options:\n"

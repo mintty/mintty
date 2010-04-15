@@ -22,22 +22,22 @@ get_char(termline *line, int x)
   return c;
 }
 
-static bool
-is_word_char(wchar c)
-{
-  return iswalnum(c) || strchr("#$%+-./:@\\_~", c);
-}
-
 static pos
 sel_spread_word(pos p, bool forward)
 {
   pos ret_p = p;
-  
   termline *line = fetch_line(p.y);
-  bool in_word = is_word_char(get_char(line, p.x));
   
   for (;;) {
-    pos prev_p = p;
+    wchar c = get_char(line, p.x);
+    if (iswalnum(c) || strchr("_#$%~", c))
+      ret_p = p;
+    else if (strchr(".@/\\", c)) {
+      if (!forward)
+        ret_p = p;
+    }
+    else if (!(strchr("&+-,.?", c) || c == (forward ? '=' : ':')))
+      break;
 
     if (forward) {
       p.x++;
@@ -61,24 +61,6 @@ sel_spread_word(pos p, bool forward)
       }
       p.x--;
     }
-    
-    wchar c = get_char(line, p.x);
-    if (is_word_char(c) != in_word)
-      break;
-    
-    if (forward) {
-      if (c == ':') {
-       /* Don't include colons when spreading forwards */
-        ret_p = prev_p;
-        break;
-      }
-      else {
-       /* Exclude periods and ls filetype indicators at end of word */
-        ret_p = strchr("./@", c) ? prev_p : p;
-      }
-    }
-    else
-      ret_p = p;
   }
     
   release_line(line);
@@ -270,10 +252,12 @@ get_selpoint(const pos p)
 static void
 send_keys(char *code, uint len, uint count, bool interactive)
 {
-  uint size = len * count;
-  char buf[size], *p = buf;
-  while (count--) { memcpy(p, code, len); p += len; }
-  ldisc_send(buf, size, interactive);
+  if (count) {
+    uint size = len * count;
+    char buf[size], *p = buf;
+    while (count--) { memcpy(p, code, len); p += len; }
+    ldisc_send(buf, size, interactive);
+  }
 }
 
 static bool
@@ -411,8 +395,7 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
     }
     release_line(line);
     
-    if (count)
-      send_keys(forward ? "\e[C" : "\e[D", 3, count, false);
+    send_keys(forward ? "\e[C" : "\e[D", 3, count, false);
     
     last_dest = dest;
   }
@@ -478,7 +461,7 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
   static int accu;
   accu += delta;
   
-  if (!term.app_wheel && is_app_mouse(&mods)) {
+  if (is_app_mouse(&mods)) {
     // Send as mouse events, with one event per notch.
     int notches = accu / NOTCH_DELTA;
     if (notches) {
@@ -503,7 +486,7 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
     int lines = lines_per_notch * accu / NOTCH_DELTA;
     if (lines) {
       accu -= lines * NOTCH_DELTA / lines_per_notch;
-      if (!term.app_wheel && (!term.on_alt_screen || cfg.alt_screen_scroll))
+      if (!term.on_alt_screen || cfg.alt_screen_scroll)
         term_scroll(0, -lines);
       else {
         // Send scroll distance as CSI a/b events
@@ -512,19 +495,14 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
         int pages = lines / term.rows;
         lines -= pages * term.rows;
         if (term.app_wheel) {
-          if (pages)
-            send_keys(up ? "\e[1;2a" : "\e[1;2b", 6, pages, true);
-          if (lines)
-            send_keys(up ? "\eOa" : "\eOb", 3, lines, true);
+          send_keys(up ? "\e[1;2a" : "\e[1;2b", 6, pages, true);
+          send_keys(up ? "\eOa" : "\eOb", 3, lines, true);
         }
         else {
-          if (pages)
-            send_keys(up ? "\e[5~" : "\e[6~", 4, pages, true);
-          if (lines) {
-            char code[3] =
-              {'\e',  term.app_cursor_keys ? 'O' : '[', up ? 'A' : 'B'};
-            send_keys(code, 3, lines, true);
-          }
+          send_keys(up ? "\e[5~" : "\e[6~", 4, pages, true);
+          char code[3] = 
+            {'\e',  term.app_cursor_keys ? 'O' : '[', up ? 'A' : 'B'};
+          send_keys(code, 3, lines, true);
         }
       }
     }

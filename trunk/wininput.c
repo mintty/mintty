@@ -7,6 +7,7 @@
 #include "linedisc.h"
 #include "config.h"
 #include "charset.h"
+#include "child.h"
 
 #include <math.h>
 #include <windowsx.h>
@@ -279,6 +280,7 @@ win_key_down(WPARAM wp, LPARAM lp)
  
   uint scancode = HIWORD(lp) & (KF_EXTENDED | 0xFF);
   bool extended = HIWORD(lp) & KF_EXTENDED;
+  bool repeat = HIWORD(lp) & KF_REPEAT;
   uint count = LOWORD(lp);
 
   uchar kbd[256];
@@ -349,11 +351,11 @@ win_key_down(WPARAM wp, LPARAM lp)
 
     // Alt+Fn shortcuts
     if (alt && VK_F1 <= key && key <= VK_F24) {
-      if (mods == MDK_ALT) {
+      if (!ctrl) {
         WPARAM cmd;
         switch (key) {
           when VK_F2:  cmd = IDM_NEW;
-          when VK_F4:  cmd = SC_CLOSE;
+          when VK_F4:  child_kill(shift); return 1;
           when VK_F8:  cmd = IDM_RESET;
           when VK_F10: cmd = IDM_DEFSIZE;
           when VK_F11: cmd = IDM_FULLSCREEN;
@@ -521,18 +523,20 @@ win_key_down(WPARAM wp, LPARAM lp)
   
   void ctrl_ch(uchar c) {
     esc_if(alt);
-    if (!shift)
-      ch(c);
-    else {
+    if (shift) {
       // Send C1 control char if the charset supports it.
       // Otherwise prefix the C0 char with ESC.
-      wchar wc = c | 0x80;
-      int l = cs_wcntombn(buf + len, &wc, cs_cur_max, 1);
-      if (l > 0 && buf[len] != '?')
-        len += l;
-      else
-        buf[0] = '\e', buf[1] = c, len = 2;
+      if (c < 0x20) {
+        wchar wc = c | 0x80;
+        int l = cs_wcntombn(buf + len, &wc, cs_cur_max, 1);
+        if (l > 0 && buf[len] != '?') {
+          len += l;
+          return;
+        }
+      };
+      esc_if(!alt);
     }
+    ch(c);
   }
   
   bool ctrl_key(void) {
@@ -574,8 +578,8 @@ win_key_down(WPARAM wp, LPARAM lp)
   
   switch(key) {
     when VK_MENU:
-      if (!shift && !is_key_down(VK_CONTROL))
-        alt_state = old_alt_state == ALT_NONE ? ALT_ALONE : old_alt_state;
+      if (!repeat && mods == MDK_ALT)
+        alt_state = (old_alt_state == ALT_NONE) ? ALT_ALONE : old_alt_state;
       return 1;
     when VK_RETURN:
       if (extended && !numlock && term.app_keypad)
