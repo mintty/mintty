@@ -244,8 +244,6 @@ struct term {
   int  print_state;      /* state of print-end-sequence scan */
   bufchain *printer_buf;        /* buffered data for printer */
 
- /* ESC 7 saved state for the alternate screen */
-
   int  rows, cols;
   bool has_focus;
   bool in_vbell;

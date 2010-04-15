@@ -5,9 +5,12 @@
 .\" You may distribute, use, and modify this man page under the terms
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
-.TH mintty 1 2010-03-07 0.6-beta4 Cygwin
+.TH mintty 1 2010-04-15 0.6.2 Cygwin
 
 .ad l
+.if '\*[.T]'utf8' \{\
+.char - \N'45'
+.\}
 
 .SH NAME
 
@@ -35,7 +38,7 @@ Otherwise, mintty looks for a shell to execute in the \fISHELL\fP environment
 variable.
 If that is not set, it reads the user's default shell setting from
 \fI/etc/passwd\fP.
-As a last resort, it falls back to \fI/bin/bash\fP.
+As a last resort, it falls back to \fI/bin/sh\fP.
 If a single dash is specified instead of a program name, the shell is invoked
 as a login shell.
 
@@ -91,9 +94,10 @@ Create a utmp entry.
 \fB-h\fP, \fB--hold\fP \fBnever\fP|\fBalways\fP|\fBerror\fP
 Determine whether to keep the terminal window open after the command exits.
 The argument can be abbreviated to a single letter.
-By default, the window is closed immediately.
-Alternatively, it can be set to always stay open, or to stay open only if
-the command finished with a non-zero exit code or due to a runtime error signal.
+By default, the window is kept open only if the child process terminated with a
+non-zero exit code or due to runtime error signal.
+Alternatively, it can be set to always stay open or to close as soon as the
+child process terminates.
 
 .TP
 \fB-c\fP, \fB--config\fP \fIFILENAME\fP
@@ -224,6 +228,18 @@ arrow.
 Holding down \fBShift\fP overrides mouse tracking mode and sends mouse
 events to the window instead, so that e.g. text can be selected and the context
 menu can be accessed.
+
+
+.SS Closing a session
+
+Clicking the window's close button, pressing \fBAlt+F4\fP, or choosing
+\fBClose\fP from the window menu sends a \fISIGHUP\fP signal to the process
+running in mintty, which normally causes it to exit.
+
+That signal can be ignored, though, in which case the program might have to be
+forced to terminate by sending a \fISIGKILL\fP signal instead.
+This can be done by holding down \fBShift\fP when using the close button,
+shortcut or menu item.
 
 
 .SS Shortcuts
@@ -613,7 +629,7 @@ current size.
 Show the scrollbar for accessing the scrollback buffer.
 
 .TP
-\fBEnable scrollback on alternate screen\fP (AltScreenScroll=0)
+\fBAccess scrollback from alternate screen\fP (AltScreenScroll=0)
 Fullscreen applications such as editors and viewers usually switch to a second
 screen buffer called the \fIalternate screen\fP.
 This allows the screen to be restored to its original content after the
@@ -762,7 +778,7 @@ pressed to get the \fBBreak\fP function.
 Where the modifier keys \fBShift\fP, \fBAlt\fP and \fBCtrl\fP are not handled
 as described in the sections above, they are encoded as a one-digit number that
 becomes part of the keycode.
-To obtain that number, add the values for each pressed modifier to 1:
+To obtain that number, add the numbers for each pressed modifier to 1:
 
 .RS
 .PD 0
@@ -1115,7 +1131,7 @@ The command simply needs to be appended to the target field of the shortcut
 (in the shortcut's properties):
 
 .RS
-Target:  \fCC:\\Cygwin\\bin\\mintty.exe \f(CBssh server\fR
+Target:  \fCC:\\Cygwin\\bin\\mintty.exe \f(CB/bin/ssh server\fR
 .RE
 
 The working directory for the session can be set in the "Start In:" field.
@@ -1173,7 +1189,7 @@ Another way to set variables for the program to be run in \fBmintty\fP is by
 invoking it through the \fBenv\fP command, e.g.:
 
 .RS
-\fCmintty env DISPLAY=:0 ssh -X server\fP
+\fCmintty /bin/env DISPLAY=:0 /bin/ssh -X server\fP
 .RE
 
 
@@ -1268,22 +1284,27 @@ following bindings useful:
 .nf
 \fC
 # Ctrl+Left/Right to move by whole words
-"\\e[1;5D": backward-word
 "\\e[1;5C": forward-word
+"\\e[1;5D": backward-word
 
 # Ctrl+Backspace/Delete to delete whole words
-"\\C-_": backward-kill-word
 "\\e[3;5~": kill-word
+"\\C-_": backward-kill-word
 
 # Ctrl+Shift+Backspace/Delete to delete to start/end of the line
-"\\e\\C-_": backward-kill-line
 "\\e[3;6~": kill-line
+"\\xC2\\x9F": backward-kill-line # for UTF-8
+#"\\x9F": backward-kill-line    # for ISO-8859-x
+#"\\e\\C-_": backward-kill-line  # for any other charset
 
 # Alt-Backspace for undo
 "\\e\\d": undo
 \fP
 .fi
 .RE
+
+(The Ctrl+Shift+Backspace keycode depends on the selected character set, so
+the appropriate binding needs to be chosen.)
 
 Finally, a couple of bindings for convenient searching of the command history.
 Just enter the first few characters of a previous command and press
@@ -1295,24 +1316,6 @@ Just enter the first few characters of a previous command and press
 # Ctrl-Up/Down for searching command history
 "\\e[1;5A": history-search-backward
 "\\e[1;5B": history-search-forward
-\fP
-.fi
-.RE
-
-
-.SS Enabling non-ASCII input in bash and readline
-
-By default, \fBreadline\fP treats the uppermost bit of input and output 
-characters as the "meta" flag.
-The following settings in \fI~/.inputrc\fP will disable that and thereby 
-allow the use of characters outside the 7-bit ASCII character set:
-
-.RS
-.nf
-\fC
-set input-meta on
-set convert-meta off
-set output-meta on
 \fP
 .fi
 .RE
@@ -1413,7 +1416,7 @@ Thanks also to KDE's Oxygen team for the program icon.
 
 .SH COPYRIGHT
 
-Copyright (C) 2008-10 Andy Koppe.
+Copyright (C) 2010 Andy Koppe.
 
 Mintty is released under the terms of the the \fIGNU General Public License\fP
 version 3 or later.

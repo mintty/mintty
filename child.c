@@ -35,6 +35,7 @@ HANDLE child_event;
 
 static HANDLE proc_event;
 static pid_t pid;
+static bool killed;
 static int status;
 static int pty_fd = -1, log_fd = -1;
 static int read_len;
@@ -49,7 +50,7 @@ signal_thread(void *unused(arg))
 {
   int sig;
   sigwait(&term_sigs, &sig);
-  if (pid)
+  if (pid > 0)
     kill(-pid, SIGHUP);
   exit(0);
 }
@@ -73,6 +74,7 @@ wait_thread(void *unused(arg))
     ;
   pid = 0;
   Sleep(100); // Give any ongoing output some time to finish.
+  pid = -1;
   SetEvent(child_event);
   return 0;
 }
@@ -87,13 +89,13 @@ child_proc(void)
     SetEvent(proc_event);
   }
 
-  if (pid)
+  if (pid >= 0)
     return;
-
+  
   logout(ut.ut_line);
 
   // No point hanging around if the user wants us dead.
-  if (hold == HOLD_NEVER)
+  if (killed || hold == HOLD_NEVER)
     exit(0);
     
   // Display a message if the child process died with an error. 
@@ -101,20 +103,21 @@ child_proc(void)
   char *s; 
   if (WIFEXITED(status)) {
     int code = WEXITSTATUS(status);
-    if (hold == HOLD_ERROR && code == 0)
+    if (code)
+      l = asprintf(&s, "%s: Exit %i", child_name, code); 
+    else if (hold == HOLD_ERROR)
       exit(0);
-    l = asprintf(&s, "\r\n%s: Exit %i", child_name, code); 
   }
   else if (WIFSIGNALED(status)) {
     int sig = WTERMSIG(status);
     int error_sigs =
       1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
       1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
-    if (hold == HOLD_ERROR && (error_sigs & 1<<sig) == 0)
+    if (hold == HOLD_ERROR && !(error_sigs & 1<<sig))
       exit(0);
-    l = asprintf(&s, "\r\n%s: %s", child_name, strsignal(sig));
+    l = asprintf(&s, "%s: %s", child_name, strsignal(sig));
   }
-  if (l != -1) {
+  if (l > 0) {
     term_write(s, l);
     free(s);
   }
@@ -125,12 +128,11 @@ static void
 error(char *action)
 {
   char *msg;
-  int len = asprintf(&msg, "Failed to %s: %s", action, strerror(errno));
+  int len = asprintf(&msg, "Failed to %s: %s.", action, strerror(errno));
   if (len > 0) {
     term_write(msg, len);
     free(msg);
   }
-  pid = 0;
 }
 
 static int
@@ -153,7 +155,7 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
   if (*argv && (argv[1] || strcmp(*argv, "-") != 0))
     cmd = *argv;
   else {
-    cmd = getenv("SHELL") ?: (pw ? pw->pw_shell : 0) ?: "/bin/bash";
+    cmd = getenv("SHELL") ?: (pw ? pw->pw_shell : 0) ?: "/bin/sh";
     char *last_slash = strrchr(cmd, '/');
     char *name = last_slash ? last_slash + 1 : cmd;
     if (*argv)
@@ -179,8 +181,14 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
   }
 
   // Create the child process and pseudo terminal.
-  if ((pid = forkpty(&pty_fd, 0, 0, winp)) == -1)
-    error("create child process");
+  if ((pid = forkpty(&pty_fd, 0, 0, winp)) == -1) {
+    bool rebase_prompt = (errno == EAGAIN);
+    error("fork child process");
+    if (rebase_prompt) {
+      char msg[] = "\r\nDLL rebasing may be required. See 'rebaseall --help'.";
+      term_write(msg, sizeof msg - 1);
+    }
+  }
   else if (pid == 0) { // Child process.
 #if CYGWIN_VERSION_DLL_MAJOR < 1007
     // The Cygwin 1.5 DLL's trick of allocating a console on an invisible
@@ -233,13 +241,8 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
     execvp(cmd, argv);
 
     // If we get here, exec failed.
-    char *msg = strdup(strerror(errno));
-    write(STDERR_FILENO, "exec: ", 6);
-    write(STDERR_FILENO, *argv, strlen(*argv));
-    write(STDERR_FILENO, ": ", 2);
-    write(STDERR_FILENO, msg, strlen(msg));
-    free(msg);
-    exit(1);
+    fprintf(stderr, "%s: %s\r\n", *argv, strerror(errno));
+    exit(errno == ENOENT || errno == ENOTDIR ? 127 : 126);
   }
   else { // Parent process.
     pty_fd = nonstdfd(pty_fd);
@@ -285,18 +288,18 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
 }
 
 void
-child_kill(void)
+child_kill(bool point_blank)
 { 
-  if (pid)
-    kill(-pid, SIGHUP);
-  else
+  if (pid <= 0)
     exit(0);
+  kill(-pid, point_blank ? SIGKILL : SIGHUP);
+  killed = true;
 }
 
 bool
 child_is_parent(void)
 {
-  if (!pid)
+  if (pid <= 0)
     return false;
   DIR *d = opendir("/proc");
   if (!d)
@@ -329,7 +332,7 @@ child_write(const char *buf, int len)
 { 
   if (pty_fd >= 0)
     write(pty_fd, buf, len); 
-  else if (!pid)
+  else if (pid < 0)
     exit(0);
 }
 
@@ -365,7 +368,7 @@ child_conv_path(const wchar *wpath)
     else
       exp_path = path;
   }
-  else if (*path != '/' && pid) {
+  else if (*path != '/' && pid > 0) {
     // Relative path: prepend child process' working directory
     char proc_cwd[32];
     sprintf(proc_cwd, "/proc/%u/cwd", pid);
