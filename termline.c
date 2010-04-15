@@ -725,7 +725,7 @@ resizeline(termline *line, int cols)
 int
 sblines(void)
 {
-  return term.on_alt_screen ? 0 : term.sblines;
+  return term.on_alt_screen ^ term.show_other_screen ? 0 : term.sblines;
 }
 
 /*
@@ -736,10 +736,13 @@ sblines(void)
 termline *
 fetch_line(int y)
 {
+  term_screen *screen =
+    term.show_other_screen ? &term.other_screen : &term.screen;
+
   termline *line;
   if (y >= 0) {
     assert(y < term.rows);
-    line = term.screen.lines[y];
+    line = screen->lines[y];
   }
   else {
     assert(y < term.sblines);
