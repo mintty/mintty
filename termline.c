@@ -768,10 +768,10 @@ lineptr(int y)
       y += term.sblen; // Scrollback has wrapped round
     uchar *cline = term.scrollback[y];
     line = decompressline(cline, null);
+    resizeline(line, term.cols);
   }
 
   assert(line);
-  resizeline(line, term.cols);
   return line;
 }
 
