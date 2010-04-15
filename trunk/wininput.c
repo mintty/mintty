@@ -75,7 +75,7 @@ win_update_menus(void)
   uint otherscreen_checked = term.show_other_screen ? MF_CHECKED : MF_UNCHECKED;
   ModifyMenu(
     menu, IDM_OTHERSCREEN, otherscreen_checked, IDM_OTHERSCREEN,
-    term.shortcut_override ? "&Other screen" : "&Other screen\tAlt+F12"
+    term.shortcut_override ? "Ot&her screen" : "Ot&her screen\tAlt+F12"
   );
 
   uint options_enabled = config_wnd ? MF_GRAYED : MF_ENABLED;
