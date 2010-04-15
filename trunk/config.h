@@ -66,7 +66,6 @@ typedef struct {
   // Window
   int cols, rows;
   bool scrollbar;
-  bool alt_screen_scroll;
   int scrollback_lines;
   bool confirm_exit;
   // Hidden

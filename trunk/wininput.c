@@ -381,8 +381,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     
     // Scrollback
-    if (mods && mods == (mod_keys)cfg.scroll_mod &&
-        (!term.on_alt_screen || cfg.alt_screen_scroll)) {
+    if (mods && mods == (mod_keys)cfg.scroll_mod && !term.on_alt_screen) {
       WPARAM scroll;
       switch (key) {
         when VK_HOME:  scroll = SB_TOP;

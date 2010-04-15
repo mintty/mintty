@@ -64,7 +64,6 @@ config cfg = {
   .cols = 80,
   .rows = 24,
   .scrollbar = true,
-  .alt_screen_scroll = false,
   .scrollback_lines = 10000,
   .confirm_exit = true,
   // Hidden
@@ -126,7 +125,6 @@ options[] = {
   {"Columns", OPT_INT, cfg_field(cols)},
   {"Rows", OPT_INT, cfg_field(rows)},
   {"Scrollbar", OPT_BOOL, cfg_field(scrollbar)},
-  {"AltScreenScroll", OPT_BOOL, cfg_field(alt_screen_scroll)},
   {"ScrollbackLines", OPT_INT, cfg_field(scrollback_lines)},
   {"ConfirmExit", OPT_BOOL, cfg_field(confirm_exit)},
   // Hidden
@@ -727,10 +725,6 @@ setup_config_box(controlbox * b)
   ctrl_checkbox(
     s, "Show scrollbar", 's', P(0),
     dlg_stdcheckbox_handler, I(offcfg(scrollbar))
-  );
-  ctrl_checkbox(
-    s, "Access scrollback from alternate screen", 'a', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(alt_screen_scroll))
   );
   ctrl_columns(s, 2, 53, 47);
   ctrl_editbox(

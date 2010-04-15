@@ -257,7 +257,6 @@ term_clear_scrollback(void)
   term.scrollback = 0;
   term.sblen = term.sblines = term.sbpos = 0;
   term.tempsblines = 0;
-  term.extra_sblines = 0;
   term.disptop = 0;
   update_sbar();
 }
@@ -402,7 +401,6 @@ term_resize(int newrows, int newcols)
   term.other_screen.lines = lines = renewn(lines, newrows);
   for (int i = 0; i < newrows; i++)
     lines[i] = newline(newcols, true);
-  term.extra_sblines = 0;
 
   // Reset tab stops
   term.tabs = renewn(term.tabs, newcols);
@@ -441,9 +439,6 @@ term_switch_screen(bool to_alt, bool reset, bool keep_curs)
   if (to_alt != term.on_alt_screen) {
     term.on_alt_screen = to_alt;
 
-    term.extra_sblines =
-      cfg.alt_screen_scroll && to_alt ? term_last_nonempty_line() + 1 : 0;
-    
     term_screen new_screen = term.other_screen;
     term.other_screen = term.screen;
     if (!reset) {
