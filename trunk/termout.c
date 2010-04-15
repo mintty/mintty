@@ -136,7 +136,7 @@ insert_char(int n)
   term_check_boundary(curs->x, curs->y);
   if (dir < 0)
     term_check_boundary(curs->x + n, curs->y);
-  line = lineptr(curs->y);
+  line = term.screen.lines[curs->y];
   if (dir < 0) {
     for (int j = 0; j < m; j++)
       move_termchar(line, line->chars + curs->x + j,
@@ -180,7 +180,7 @@ static void
 write_tab(void)
 {
   term_cursor *curs = &term.screen.curs;
-  termline *line = lineptr(curs->y);
+  termline *line = term.screen.lines[curs->y];
   do
     curs->x++;
   while (curs->x < term.cols - 1 && !term.tabs[curs->x]);
@@ -259,23 +259,23 @@ write_char(wchar c, int width)
 {
   term_screen *screen = &term.screen;
   term_cursor *curs = &screen->curs;
-  termline *cline = lineptr(curs->y);
+  termline *line = screen->lines[curs->y];
   void put_char(wchar c)
   {
-    clear_cc(cline, curs->x);
-    cline->chars[curs->x].chr = c;
-    cline->chars[curs->x].attr = curs->attr;
+    clear_cc(line, curs->x);
+    line->chars[curs->x].chr = c;
+    line->chars[curs->x].attr = curs->attr;
   }  
 
   if (curs->wrapnext && screen->autowrap && width > 0) {
-    cline->attr |= LATTR_WRAPPED;
+    line->attr |= LATTR_WRAPPED;
     if (curs->y == screen->marg_b)
       term_do_scroll(screen->marg_t, screen->marg_b, 1, true);
     else if (curs->y < term.rows - 1)
       curs->y++;
     curs->x = 0;
     curs->wrapnext = false;
-    cline = lineptr(curs->y);
+    line = screen->lines[curs->y];
   }
   if (screen->insert && width > 0)
     insert_char(width);
@@ -307,14 +307,14 @@ write_char(wchar c, int width)
       term_check_boundary(curs->x, curs->y);
       term_check_boundary(curs->x + 2, curs->y);
       if (curs->x == term.cols - 1) {
-        cline->chars[curs->x] = term.erase_char;
-        cline->attr |= LATTR_WRAPPED | LATTR_WRAPPED2;
+        line->chars[curs->x] = term.erase_char;
+        line->attr |= LATTR_WRAPPED | LATTR_WRAPPED2;
         if (curs->y == screen->marg_b)
           term_do_scroll(screen->marg_t, screen->marg_b, 1, true);
         else if (curs->y < term.rows - 1)
           curs->y++;
         curs->x = 0;
-        cline = lineptr(curs->y);
+        line = screen->lines[curs->y];
        /* Now we must term_check_boundary again, of course. */
         term_check_boundary(curs->x, curs->y);
         term_check_boundary(curs->x + 2, curs->y);
@@ -333,11 +333,11 @@ write_char(wchar c, int width)
         * If the previous character is
         * UCSWIDE, back up another one.
         */
-        if (cline->chars[x].chr == UCSWIDE) {
+        if (line->chars[x].chr == UCSWIDE) {
           assert(x > 0);
           x--;
         }
-        add_cc(cline, x, c);
+        add_cc(line, x, c);
         seen_disp_event();
       }
       return;
@@ -412,7 +412,7 @@ do_esc(uchar c)
       term.tabs[curs->x] = true;
     when ANSI('8', '#'):    /* DECALN: fills screen with Es :-) */
       for (int i = 0; i < term.rows; i++) {
-        termline *line = lineptr(i);
+        termline *line = screen->lines[i];
         for (int j = 0; j < term.cols; j++) {
           line->chars[j] =
             (termchar){.cc_next = 0, .chr = 'E', .attr = ATTR_DEFAULT};
@@ -422,13 +422,13 @@ do_esc(uchar c)
       term.disptop = 0;
       seen_disp_event();
     when ANSI('3', '#'):  /* DECDHL: 2*height, top */
-      lineptr(curs->y)->attr = LATTR_TOP;
+      screen->lines[curs->y]->attr = LATTR_TOP;
     when ANSI('4', '#'):  /* DECDHL: 2*height, bottom */
-      lineptr(curs->y)->attr = LATTR_BOT;
+      screen->lines[curs->y]->attr = LATTR_BOT;
     when ANSI('5', '#'):  /* DECSWL: normal */
-      lineptr(curs->y)->attr = LATTR_NORM;
+      screen->lines[curs->y]->attr = LATTR_NORM;
     when ANSI('6', '#'):  /* DECDWL: 2*width */
-      lineptr(curs->y)->attr = LATTR_WIDE;
+      screen->lines[curs->y]->attr = LATTR_WIDE;
     when ANSI('A', '(') or ANSI('B', '(') or ANSI('0', '('):
      /* GZD4: G0 designate 94-set */
       curs->csets[0] = c;
@@ -929,14 +929,13 @@ do_csi(uchar c)
     when 'X': {      /* ECH: write N spaces w/o moving cursor */
       int n = def_arg0;
       int p = curs->x;
-      termline *cline = lineptr(curs->y);
-
       if (n > term.cols - curs->x)
         n = term.cols - curs->x;
       term_check_boundary(curs->x, curs->y);
       term_check_boundary(curs->x + n, curs->y);
+      termline *line = screen->lines[curs->y];
       while (n--)
-        cline->chars[p++] = term.erase_char;
+        line->chars[p++] = term.erase_char;
       seen_disp_event();
     }
     when 'x': {      /* DECREQTPARM: report terminal characteristics */

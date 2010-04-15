@@ -8,36 +8,23 @@
 termline *
 newline(int cols, int bce)
 {
-  termline *line;
-  int j;
-
-  line = new(termline);
+  termline *line = new(termline);
   line->chars = newn(termchar, cols);
-  for (j = 0; j < cols; j++)
+  for (int j = 0; j < cols; j++)
     line->chars[j] = (bce ? term.erase_char : basic_erase_char);
   line->cols = line->size = cols;
   line->attr = LATTR_NORM;
   line->temporary = false;
   line->cc_free = 0;
-
   return line;
 }
 
 void
 freeline(termline *line)
 {
-  if (line) {
-    free(line->chars);
-    free(line);
-  }
-}
-
-void
-unlineptr(termline *line)
-{
   assert(line);
-  if (line->temporary)
-    freeline(line);
+  free(line->chars);
+  free(line);
 }
 
 /*
@@ -750,7 +737,7 @@ sblines(void)
  * (respectively).
  */
 termline *
-lineptr(int y)
+fetch_line(int y)
 {
   termline *line;
   if (y >= 0) {
@@ -773,6 +760,15 @@ lineptr(int y)
 
   assert(line);
   return line;
+}
+
+/* Release a screen or scrollback line */
+void
+release_line(termline *line)
+{
+  assert(line);
+  if (line->temporary)
+    freeline(line);
 }
 
 

@@ -489,23 +489,18 @@ term_switch_screen(bool to_alt, bool reset, bool keep_curs)
 void
 term_check_boundary(int x, int y)
 {
-  termline *line;
-
  /* Validate input coordinates, just in case. */
   if (x == 0 || x > term.cols)
     return;
 
-  line = lineptr(y);
-  if (x == term.cols) {
+  termline *line = term.screen.lines[y];
+  if (x == term.cols)
     line->attr &= ~LATTR_WRAPPED2;
-  }
-  else {
-    if (line->chars[x].chr == UCSWIDE) {
-      clear_cc(line, x - 1);
-      clear_cc(line, x);
-      line->chars[x - 1].chr = ' ';
-      line->chars[x] = line->chars[x - 1];
-    }
+  else if (line->chars[x].chr == UCSWIDE) {
+    clear_cc(line, x - 1);
+    clear_cc(line, x);
+    line->chars[x - 1].chr = ' ';
+    line->chars[x] = line->chars[x - 1];
   }
 }
 
@@ -635,7 +630,7 @@ term_erase_lots(bool line_only, bool from_begin, bool to_end)
       term_do_scroll(0, scrolllines - 1, scrolllines, true);
   }
   else {
-    termline *line = lineptr(start.y);
+    termline *line = term.screen.lines[start.y];
     while (poslt(start, end)) {
       if (start.x == term.cols) {
         if (line_only)
@@ -645,9 +640,8 @@ term_erase_lots(bool line_only, bool from_begin, bool to_end)
       }
       else
         line->chars[start.x] = term.erase_char;
-      if (incpos(start) && start.y < term.rows) {
-        line = lineptr(start.y);
-      }
+      if (incpos(start) && start.y < term.rows)
+        line = term.screen.lines[start.y];
     }
   }
 
@@ -753,7 +747,7 @@ term_paint(void)
     *    covering the _whole_ character, exactly as if it were
     *    one space to the left.
     */
-    termline *line = lineptr(curs->y);
+    termline *line = term.screen.lines[curs->y];
     termchar *lchars = term_bidi_line(line, our_curs_y);
 
     if (lchars)
@@ -763,8 +757,6 @@ term_paint(void)
 
     if (our_curs_x > 0 && lchars[our_curs_x].chr == UCSWIDE)
       our_curs_x--;
-
-    unlineptr(line);
   }
 
  /*
@@ -803,7 +795,7 @@ term_paint(void)
 
     pos scrpos;
     scrpos.y = i + term.disptop;
-    line = lineptr(scrpos.y);
+    line = fetch_line(scrpos.y);
 
    /* Do Arabic shaping and bidi. */
     lchars = term_bidi_line(line, i);
@@ -1019,7 +1011,7 @@ term_paint(void)
 
       updated_line = 1;
     }
-    unlineptr(line);
+    release_line(line);
   }
   free(ch);
 }
