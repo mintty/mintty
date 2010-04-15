@@ -138,7 +138,7 @@ update_mouse(mod_keys mods)
 {
   static bool app_mouse;
   bool new_app_mouse = 
-    term.mouse_mode &&
+    term.mouse_mode && !term.show_other_screen &&
     cfg.clicks_target_app ^ ((mods & cfg.click_target_mod) != 0);
   if (new_app_mouse != app_mouse) {
     HCURSOR cursor = LoadCursor(null, new_app_mouse ? IDC_ARROW : IDC_IBEAM);
@@ -359,6 +359,7 @@ win_key_down(WPARAM wp, LPARAM lp)
           when VK_F8:  cmd = IDM_RESET;
           when VK_F10: cmd = IDM_DEFSIZE;
           when VK_F11: cmd = IDM_FULLSCREEN;
+          when VK_F12: cmd = IDM_OTHERSCREEN;
           otherwise: return 1;
         }
         send_syscommand(cmd);
@@ -381,7 +382,8 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     
     // Scrollback
-    if (mods && mods == (mod_keys)cfg.scroll_mod && !term.on_alt_screen) {
+    if (mods && mods == (mod_keys)cfg.scroll_mod &&
+        (!term.on_alt_screen || term.show_other_screen)) {
       WPARAM scroll;
       switch (key) {
         when VK_HOME:  scroll = SB_TOP;

@@ -584,6 +584,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_RESET: reset_term();
         when IDM_DEFSIZE: default_size();
         when IDM_FULLSCREEN: win_maximise(win_is_fullscreen() ? 0 : 2);
+        when IDM_OTHERSCREEN: term_show_other_screen();
         when IDM_OPTIONS: win_open_config();
         when IDM_NEW:
           spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv);

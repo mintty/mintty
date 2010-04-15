@@ -156,6 +156,15 @@ term_reset(void)
   term.disptop = 0;
 }
 
+void
+term_show_other_screen(void)
+{
+  term.show_other_screen ^= true;
+  term.disptop = 0;
+  term.seen_disp_event = true;
+  win_schedule_update();
+}
+
 /*
  * Called from front end when a keypress occurs, to trigger
  * anything magical that needs to happen in that situation.
@@ -163,11 +172,10 @@ term_reset(void)
 void
 term_seen_key_event(void)
 {
- /*
-  * Reset the scrollback.
-  */
-  term.disptop = 0;   /* return to main screen */
-  term.seen_disp_event = true;  /* for scrollback-reset-on-activity */
+  /* Return to active screen and reset scrollback */
+  term.show_other_screen = false;
+  term.disptop = 0;
+  term.seen_disp_event = true;
   win_schedule_update();
 }
 
@@ -716,7 +724,7 @@ term_paint(void)
  /* Has the cursor position or type changed ? */
   term_cursor *curs = &term.screen.curs;
   int curstype;
-  if (term.cursor_on) {
+  if (term.cursor_on && !term.show_other_screen) {
     if (term.has_focus) {
       if (term.cblinker || !term_cursor_blinks())
         curstype = TATTR_ACTCURS;

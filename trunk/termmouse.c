@@ -273,7 +273,7 @@ is_app_mouse(mod_keys *mods_p)
 void
 term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
 {
-  if (is_app_mouse(&mods)) {
+  if (!term.show_other_screen && is_app_mouse(&mods)) {
     if (term.mouse_mode == MM_X10)
       mods = 0;
     send_mouse_event(0x1F + b, mods, box_pos(p));
@@ -461,7 +461,7 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
   static int accu;
   accu += delta;
   
-  if (is_app_mouse(&mods)) {
+  if (!term.show_other_screen && is_app_mouse(&mods)) {
     // Send as mouse events, with one event per notch.
     int notches = accu / NOTCH_DELTA;
     if (notches) {
@@ -486,7 +486,7 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
     int lines = lines_per_notch * accu / NOTCH_DELTA;
     if (lines) {
       accu -= lines * NOTCH_DELTA / lines_per_notch;
-      if (!term.on_alt_screen)
+      if (!term.on_alt_screen || term.show_other_screen)
         term_scroll(0, -lines);
       else {
         // Send scroll distance as CSI a/b events

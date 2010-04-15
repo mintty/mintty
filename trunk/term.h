@@ -209,6 +209,7 @@ struct term {
   term_screen screen, other_screen;
 
   bool on_alt_screen;     /* On alternate screen? */
+  bool show_other_screen;
 
   uchar **scrollback;     /* lines scrolled off top of screen */
   int disptop;            /* distance scrolled back (0 or -ve) */
@@ -346,6 +347,7 @@ void term_paste(wchar *, uint len);
 void term_send_paste(void);
 void term_cancel_paste(void);
 void term_reconfig(void);
+void term_show_other_screen(void);
 void term_seen_key_event(void);
 void term_write(const char *, int len);
 void term_set_focus(bool has_focus);
