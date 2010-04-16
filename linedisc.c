@@ -87,7 +87,7 @@ void
 ldisc_send(const char *buf, int len, bool interactive)
 {
   if (interactive)
-    term_reset_display();
+    term_reset_screen();
 
   int keyflag = 0;
 

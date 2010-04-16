@@ -16,7 +16,7 @@
 #define IDM_RESET       0x0050
 #define IDM_DEFSIZE     0x0060
 #define IDM_FULLSCREEN  0x0070
-#define IDM_OTHERSCREEN 0x0080
+#define IDM_FLIPSCREEN  0x0080
 #define IDM_OPTIONS     0x0090
 #define IDM_NEW         0x00a0
 

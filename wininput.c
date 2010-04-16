@@ -69,13 +69,13 @@ win_update_menus(void)
   uint fullscreen_checked = win_is_fullscreen() ? MF_CHECKED : MF_UNCHECKED;
   ModifyMenu(
     menu, IDM_FULLSCREEN, fullscreen_checked, IDM_FULLSCREEN,
-    term.shortcut_override ? "&Fullscreen" : "&Fullscreen\tAlt+F11"
+    term.shortcut_override ? "&Full Screen" : "&Full Screen\tAlt+F11"
   );
   
   uint otherscreen_checked = term.show_other_screen ? MF_CHECKED : MF_UNCHECKED;
   ModifyMenu(
-    menu, IDM_OTHERSCREEN, otherscreen_checked, IDM_OTHERSCREEN,
-    term.shortcut_override ? "Ot&her screen" : "Ot&her screen\tAlt+F12"
+    menu, IDM_FLIPSCREEN, otherscreen_checked, IDM_FLIPSCREEN,
+    term.shortcut_override ? "Flip &Screen" : "Flip &Screen\tAlt+F12"
   );
 
   uint options_enabled = config_wnd ? MF_GRAYED : MF_ENABLED;
@@ -91,13 +91,13 @@ win_init_menus(void)
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_COPY, 0);
   AppendMenu(menu, MF_ENABLED, IDM_PASTE, 0);
-  AppendMenu(menu, MF_SEPARATOR, 0, 0);
-  AppendMenu(menu, MF_ENABLED, IDM_SELALL, "&Select All");
+  AppendMenu(menu, MF_ENABLED, IDM_SELALL, "Select &All");
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_RESET, 0);
+  AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_DEFSIZE, 0);
   AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN, 0);
-  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_OTHERSCREEN, 0);
+  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_FLIPSCREEN, 0);
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_OPTIONS, "&Options...");
 
@@ -366,7 +366,7 @@ win_key_down(WPARAM wp, LPARAM lp)
           when VK_F8:  cmd = IDM_RESET;
           when VK_F10: cmd = IDM_DEFSIZE;
           when VK_F11: cmd = IDM_FULLSCREEN;
-          when VK_F12: cmd = IDM_OTHERSCREEN;
+          when VK_F12: cmd = IDM_FLIPSCREEN;
           otherwise: return 1;
         }
         send_syscommand(cmd);
