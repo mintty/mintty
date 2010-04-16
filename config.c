@@ -42,7 +42,6 @@ config cfg = {
   .charset = "",
   // Keys
   .backspace_sends_bs = false,
-  .alt_sends_esc = false,
   .ctrl_alt_is_altgr = false,
   .window_shortcuts = true,
   .zoom_shortcuts = true,
@@ -103,7 +102,6 @@ options[] = {
   {"Charset", OPT_STRING, cfg_field(charset)},
   // Keys
   {"BackspaceSendsBS", OPT_BOOL, cfg_field(backspace_sends_bs)},
-  {"AltSendsESC", OPT_BOOL, cfg_field(alt_sends_esc)},
   {"CtrlAltIsAltGr", OPT_BOOL, cfg_field(ctrl_alt_is_altgr)},
   {"WindowShortcuts", OPT_BOOL, cfg_field(window_shortcuts)},
   {"ZoomShortcuts", OPT_BOOL, cfg_field(zoom_shortcuts)},
@@ -595,10 +593,6 @@ setup_config_box(controlbox * b)
   ctrl_checkbox(
     s, "Backspace sends ^H", 'b', P(0),
     dlg_stdcheckbox_handler, I(offcfg(backspace_sends_bs))
-  );
-  ctrl_checkbox(
-    s, "Lone Alt sends ESC", 'l', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(alt_sends_esc))
   );
   ctrl_checkbox(
     s, "Ctrl+LeftAlt is AltGr", 'g', P(0),

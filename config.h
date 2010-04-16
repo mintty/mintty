@@ -45,7 +45,6 @@ typedef struct {
   char charset[32];
   // Keys
   bool backspace_sends_bs;
-  bool alt_sends_esc;
   bool ctrl_alt_is_altgr;
   bool window_shortcuts;
   bool zoom_shortcuts;
