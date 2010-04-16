@@ -72,17 +72,6 @@ set_erase_char(void)
 }
 
 /*
- * Call this whenever the terminal window state changes, to queue
- * an update.
- */
-static void
-seen_disp_event(void)
-{
-  term.seen_disp_event = true;  /* for scrollback-reset-on-activity */
-  win_schedule_update();
-}
-
-/*
  * Save the cursor and SGR mode.
  */
 static void
@@ -114,7 +103,6 @@ restore_cursor(void)
     curs->wrapnext = false;
 
   term_update_cs();
-  seen_disp_event();
 }
 
 /*
@@ -173,7 +161,6 @@ write_backspace(void)
     curs->wrapnext = false;
   else
     curs->x--;
-  seen_disp_event();
 }
 
 static void
@@ -193,8 +180,6 @@ write_tab(void)
     if (curs->x >= term.cols)
       curs->x = term.cols - 1;
   }
-  
-  seen_disp_event();
 }
 
 static void
@@ -202,7 +187,6 @@ write_return(void)
 {
   term.screen.curs.x = 0;
   term.screen.curs.wrapnext = false;
-  seen_disp_event();
 }
 
 static void
@@ -214,7 +198,6 @@ write_linefeed(void)
   else if (curs->y < term.rows - 1)
     curs->y++;
   curs->wrapnext = false;
-  seen_disp_event();
 }
 
 static bool
@@ -338,7 +321,6 @@ write_char(wchar c, int width)
           x--;
         }
         add_cc(line, x, c);
-        seen_disp_event();
       }
       return;
     otherwise:  // Anything else. Probably shouldn't get here.
@@ -349,7 +331,6 @@ write_char(wchar c, int width)
     curs->x--;
     curs->wrapnext = true;
   }
-  seen_disp_event();
 }
 
 static void
@@ -396,7 +377,6 @@ do_esc(uchar c)
       else if (curs->y > 0)
         curs->y--;
       curs->wrapnext = false;
-      seen_disp_event();
     when 'Z':  /* DECID: terminal type query */
       ldisc_send(primary_da, sizeof primary_da - 1, 0);
     when 'c':  /* RIS: restore power-on settings */
@@ -407,7 +387,6 @@ do_esc(uchar c)
         term.reset_132 = 0;
       }
       ldisc_send(null, 0, 0);
-      seen_disp_event();
     when 'H':  /* HTS: set a tab */
       term.tabs[curs->x] = true;
     when ANSI('8', '#'):    /* DECALN: fills screen with Es :-) */
@@ -420,7 +399,6 @@ do_esc(uchar c)
         line->attr = LATTR_NORM;
       }
       term.disptop = 0;
-      seen_disp_event();
     when ANSI('3', '#'):  /* DECDHL: 2*height, top */
       screen->lines[curs->y]->attr = LATTR_TOP;
     when ANSI('4', '#'):  /* DECDHL: 2*height, bottom */
@@ -603,7 +581,6 @@ set_modes(bool state)
           ldisc_send(null, 0, 0);
         when 25: /* DECTCEM: enable/disable cursor */
           term.cursor_on = state;
-          seen_disp_event();
         when 40: /* Allow/disallow DECCOLM (xterm c132 resource) */
           term.deccolm_allowed = state;
         when 47: /* alternate screen */
@@ -677,47 +654,36 @@ do_csi(uchar c)
   switch (ANSI(c, term.esc_query)) {
     when 'A':        /* CUU: move up N lines */
       move(curs->x, curs->y - def_arg0, 1);
-      seen_disp_event();
     when 'e':        /* VPR: move down N lines */
       move(curs->x, curs->y + def_arg0, 1);
-      seen_disp_event();
     when 'B':        /* CUD: Cursor down */
       move(curs->x, curs->y + def_arg0, 1);
-      seen_disp_event();
     when ANSI('c', '>'):     /* DA: report version */
       /* Terminal type 77 (ASCII 'M' for mintty) */
       if (!nargs || (nargs == 1 && arg0 == 0))
         ldisc_printf(0, "\e[>77;%u;0c", DECIMAL_VERSION);
     when 'a':        /* HPR: move right N cols */
       move(curs->x + def_arg0, curs->y, 1);
-      seen_disp_event();
     when 'C':        /* CUF: Cursor right */
       move(curs->x + def_arg0, curs->y, 1);
-      seen_disp_event();
     when 'D':        /* CUB: move left N cols */
       move(curs->x - def_arg0, curs->y, 1);
-      seen_disp_event();
     when 'E':        /* CNL: move down N lines and CR */
       move(0, curs->y + def_arg0, 1);
-      seen_disp_event();
     when 'F':        /* CPL: move up N lines and CR */
       move(0, curs->y - def_arg0, 1);
-      seen_disp_event();
     when 'G' or '`':  /* CHA or HPA: set horizontal posn */
       move(def_arg0 - 1, curs->y, 0);
-      seen_disp_event();
     when 'd':        /* VPA: set vertical posn */
       move(curs->x,
            ((screen->dec_om ? screen->marg_t : 0) +
             def_arg0 - 1), (screen->dec_om ? 2 : 0));
-      seen_disp_event();
     when 'H' or 'f':  /* CUP or HVP: set horz and vert posns at once */
       if (nargs < 2)
         arg1 = ARG_DEFAULT;
       move((arg1 ?: 1) - 1,
            ((screen->dec_om ? screen->marg_t : 0) +
             def_arg0 - 1), (screen->dec_om ? 2 : 0));
-      seen_disp_event();
     when 'J': {      /* ED: erase screen or parts of it */
       if (arg0 == 3) { /* Erase Saved Lines (xterm) */
         term_clear_scrollback();
@@ -728,32 +694,26 @@ do_csi(uchar c)
         bool above = arg0 == 1 || arg0 == 2;
         term_erase_lots(false, above, below);
       }
-      seen_disp_event();
     }
     when 'K': {      /* EL: erase line or parts of it */
       bool right = arg0 == 0 || arg0 == 2;
       bool left  = arg0 == 1 || arg0 == 2;
       term_erase_lots(true, left, right);
-      seen_disp_event();
     }
     when 'L':        /* IL: insert lines */
       if (curs->y <= screen->marg_b) {
         term_do_scroll(curs->y, screen->marg_b,
                        -def_arg0, false);
       }
-      seen_disp_event();
     when 'M':        /* DL: delete lines */
       if (curs->y <= screen->marg_b) {
         term_do_scroll(curs->y, screen->marg_b,
                        def_arg0, true);
       }
-      seen_disp_event();
     when '@':        /* ICH: insert chars */
       insert_char(def_arg0);
-      seen_disp_event();
     when 'P':        /* DCH: delete chars */
       insert_char(-def_arg0);
-      seen_disp_event();
     when 'c':        /* DA: terminal type query */
       ldisc_send(primary_da, sizeof primary_da - 1, 0);
     when 'n':        /* DSR: cursor position query */
@@ -815,7 +775,6 @@ do_csi(uchar c)
           * Origin mode - RDB
           */
           curs->y = (screen->dec_om ? screen->marg_t : 0);
-          seen_disp_event();
         }
       }
     when 'm':      /* SGR: set graphics rendition */
@@ -897,13 +856,11 @@ do_csi(uchar c)
       term_do_scroll(screen->marg_t, screen->marg_b,
                      def_arg0, true);
       curs->wrapnext = false;
-      seen_disp_event();
     when 'T':        /* SD: Scroll down */
       /* Avoid clash with hilight mouse tracking mode sequence */
       if (nargs <= 1) {
         term_do_scroll(screen->marg_t, screen->marg_b, -def_arg0, true);
         curs->wrapnext = false;
-        seen_disp_event();
       }
     when ANSI('|', '*'):     /* DECSNLS */
      /* 
@@ -936,7 +893,6 @@ do_csi(uchar c)
       termline *line = screen->lines[curs->y];
       while (n--)
         line->chars[p++] = term.erase_char;
-      seen_disp_event();
     }
     when 'x': {      /* DECREQTPARM: report terminal characteristics */
       if (arg0 <= 1)
@@ -1052,11 +1008,6 @@ term_write(const char *data, int len)
   if (term.in_term_write)
     return;
     
-  // Reset cursor blinking.
-  seen_disp_event();
-  term.cblinker = 1;
-  term_schedule_cblink();
-
  /*
   * During drag-selects, we do not process terminal input,
   * because the user will want the screen to hold still to
@@ -1065,6 +1016,10 @@ term_write(const char *data, int len)
   if (term_selecting())
     return;
     
+  // Reset cursor blinking.
+  term.cblinker = 1;
+  term_schedule_cblink();
+
  /*
   * Remove everything currently in `inbuf' and stick it up on the
   * in-memory display. There's a big state machine in here to
@@ -1358,5 +1313,6 @@ term_write(const char *data, int len)
     }
   }
   term.in_term_write = false;
+  win_schedule_update();
   term_print_flush();
 }

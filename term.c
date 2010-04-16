@@ -161,7 +161,6 @@ set_display(bool other_screen)
 {
   term.show_other_screen = other_screen;
   term.disptop = 0;
-  term.seen_disp_event = true;
   term_deselect();
   win_schedule_update();
 }
@@ -200,16 +199,6 @@ term_reconfig(void)
   }
   if (new_cfg.backspace_sends_bs != cfg.backspace_sends_bs)
     term.backspace_sends_bs = new_cfg.backspace_sends_bs;
-}
-
-/*
- * Update the scroll bar.
- */
-static void
-update_sbar(void)
-{
-  int nscroll = sblines();
-  win_set_sbar(nscroll + term.rows, nscroll + term.disptop, term.rows);
 }
 
 static void
@@ -267,7 +256,6 @@ term_clear_scrollback(void)
   term.sblen = term.sblines = term.sbpos = 0;
   term.tempsblines = 0;
   term.disptop = 0;
-  update_sbar();
 }
 
 /*
@@ -430,8 +418,6 @@ term_resize(int newrows, int newcols)
   term.cols = newcols;
 
   term_switch_screen(on_alt_screen, false, false);
-
-  update_sbar();
 }
 
 /*
@@ -1023,9 +1009,9 @@ term_paint(void)
 void
 term_update(void)
 {
-  if (term.seen_disp_event)
-    update_sbar();
   term_paint();
+  int lines = sblines();
+  win_set_sbar(lines + term.rows, lines + term.disptop, term.rows);
   win_set_sys_cursor(term.screen.curs.x, term.screen.curs.y - term.disptop);
 }
 
@@ -1070,7 +1056,6 @@ term_scroll(int rel, int where)
     term.disptop = sbtop;
   if (term.disptop > 0)
     term.disptop = 0;
-  update_sbar();
   win_update();
 }
 
