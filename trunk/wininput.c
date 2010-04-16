@@ -674,7 +674,6 @@ win_key_down(WPARAM wp, LPARAM lp)
   
   hide_mouse();
   term_cancel_paste();
-  term_seen_key_event();
 
   do {
     if (len) ldisc_send(buf, len, 1);

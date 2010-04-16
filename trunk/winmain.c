@@ -623,7 +623,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_CHAR or WM_SYSCHAR:
       {
         wchar wc = wp;
-        term_seen_key_event();
         luni_send(&wc, 1, 1);
         return 0;
       }
@@ -642,7 +641,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         if (len > 0) {
           char buf[len];
           ImmGetCompositionStringW(imc, GCS_RESULTSTR, buf, len);
-          term_seen_key_event();
           luni_send((wchar *)buf, len / 2, 1);
         }
         ImmReleaseContext(wnd, imc);
