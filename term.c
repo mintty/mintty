@@ -156,27 +156,28 @@ term_reset(void)
   term.disptop = 0;
 }
 
-void
-term_show_other_screen(void)
+static void
+set_display(bool other_screen)
 {
-  term.show_other_screen ^= true;
+  term.show_other_screen = other_screen;
   term.disptop = 0;
   term.seen_disp_event = true;
+  term_deselect();
   win_schedule_update();
 }
 
-/*
- * Called from front end when a keypress occurs, to trigger
- * anything magical that needs to happen in that situation.
- */
+/* Return to active screen and reset scrollback */
 void
-term_seen_key_event(void)
+term_reset_display(void)
 {
-  /* Return to active screen and reset scrollback */
-  term.show_other_screen = false;
-  term.disptop = 0;
-  term.seen_disp_event = true;
-  win_schedule_update();
+  set_display(false);
+}
+
+/* Switch display to other screen and reset scrollback */
+void
+term_show_other_screen(void)
+{
+  set_display(!term.show_other_screen);
 }
 
 /*

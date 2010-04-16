@@ -348,7 +348,7 @@ void term_send_paste(void);
 void term_cancel_paste(void);
 void term_reconfig(void);
 void term_show_other_screen(void);
-void term_seen_key_event(void);
+void term_reset_display(void);
 void term_write(const char *, int len);
 void term_set_focus(bool has_focus);
 int  term_cursor_type(void);

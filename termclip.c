@@ -161,8 +161,6 @@ term_open(void)
 void
 term_paste(wchar *data, uint len)
 {
-  term_seen_key_event();      /* pasted data counts */
-
   if (term.paste_buffer)
     free(term.paste_buffer);
   term.paste_pos = term.paste_len = 0;
