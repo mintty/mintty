@@ -245,7 +245,6 @@ struct term {
   int  rows, cols;
   bool has_focus;
   bool in_vbell;
-  bool seen_disp_event;
 
   bool shortcut_override;
   bool backspace_sends_bs;
