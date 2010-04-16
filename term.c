@@ -162,6 +162,13 @@ show_screen(bool other_screen)
   term.show_other_screen = other_screen;
   term.disptop = 0;
   term_deselect();
+
+  // Reset cursor blinking.
+  if (!other_screen) {
+    term.cblinker = 1;
+    term_schedule_cblink();
+  }
+
   win_schedule_update();
 }
 
