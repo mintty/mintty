@@ -215,7 +215,7 @@ send_mouse_event(char code, mod_keys mods, pos p)
   buf[3] = code | (mods & ~cfg.click_target_mod) << 2;
   buf[4] = p.x + 33;
   buf[5] = p.y + 33;
-  ldisc_send(buf, 6, 0);
+  ldisc_send(buf, 6, true);
 }
 
 static pos
