@@ -157,7 +157,7 @@ term_reset(void)
 }
 
 static void
-set_display(bool other_screen)
+show_screen(bool other_screen)
 {
   term.show_other_screen = other_screen;
   term.disptop = 0;
@@ -167,16 +167,16 @@ set_display(bool other_screen)
 
 /* Return to active screen and reset scrollback */
 void
-term_reset_display(void)
+term_reset_screen(void)
 {
-  set_display(false);
+  show_screen(false);
 }
 
 /* Switch display to other screen and reset scrollback */
 void
-term_show_other_screen(void)
+term_flip_screen(void)
 {
-  set_display(!term.show_other_screen);
+  show_screen(!term.show_other_screen);
 }
 
 /*

@@ -601,7 +601,7 @@ setup_config_box(controlbox * b)
 
   s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
   ctrl_checkbox(
-    s, "Menu and fullscreen (Alt+Space/Enter)", 'm', P(0),
+    s, "Menu and Full Screen (Alt+Space/Enter)", 'm', P(0),
     dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
   );
   ctrl_checkbox(
