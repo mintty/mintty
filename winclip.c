@@ -205,16 +205,15 @@ win_copy(const wchar *data, int *attr, int len)
     * the simple and slow way.
     */
     while (tindex < len2 && uindex < len && tdata[tindex] && udata[uindex]) {
-      if (tindex + 1 < len2 && tdata[tindex] == '\r' &&
-          tdata[tindex + 1] == '\n') {
-        tindex++;
-        uindex++;
-      }
+
+     /* Skip carriage returns */
+      if (tdata[tindex] == '\r')
+        tindex++, uindex++;
 
      /*
-      * Set text attributes
+      * Set text attributes, if any, except on newlines
       */
-      if (attr) {
+      if (attr && tdata[tindex] != '\n') {
         if (rtfsize < rtflen + 64) {
           rtfsize = rtflen + 512;
           rtf = renewn(rtf, rtfsize);
@@ -246,9 +245,6 @@ win_copy(const wchar *data, int *attr, int len)
             bgcolour++;
         }
 
-       /*
-        * Collect other attributes
-        */
         if (bold_mode != BOLD_COLOURS)
           attrBold = attr[tindex] & ATTR_BOLD;
         else
@@ -334,7 +330,7 @@ win_copy(const wchar *data, int *attr, int len)
         if (tdata[tindex + i] == '\\' || tdata[tindex + i] == '{' ||
             tdata[tindex + i] == '}')
           totallen += 2;
-        else if (tdata[tindex + i] == 0x0D || tdata[tindex + i] == 0x0A)
+        else if (tdata[tindex + i] == 0x0A)
           totallen += 6;        /* \par\r\n */
         else if (tdata[tindex + i] > 0x7E || tdata[tindex + i] < 0x20)
           totallen += 4;
@@ -355,7 +351,7 @@ win_copy(const wchar *data, int *attr, int len)
           rtf[rtflen++] = '\\';
           rtf[rtflen++] = tdata[tindex + i];
         }
-        else if (tdata[tindex + i] == 0x0D || tdata[tindex + i] == 0x0A) {
+        else if (tdata[tindex + i] == 0x0A) {
           rtflen += sprintf(rtf + rtflen, "\\par\r\n");
         }
         else if (tdata[tindex + i] > 0x7E || tdata[tindex + i] < 0x20) {
