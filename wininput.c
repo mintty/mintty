@@ -389,21 +389,26 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     
     // Scrollback
-    if (mods && mods == (mod_keys)cfg.scroll_mod &&
-        (!term.on_alt_screen || term.show_other_screen)) {
-      WPARAM scroll;
-      switch (key) {
-        when VK_HOME:  scroll = SB_TOP;
-        when VK_END:   scroll = SB_BOTTOM;
-        when VK_PRIOR: scroll = SB_PAGEUP;
-        when VK_NEXT:  scroll = SB_PAGEDOWN;
-        when VK_UP:    scroll = SB_LINEUP;
-        when VK_DOWN:  scroll = SB_LINEDOWN;
-        otherwise: goto not_scroll;
+    if (!term.on_alt_screen || term.show_other_screen) {
+      mod_keys scroll_mod = cfg.scroll_mod ?: 8;
+      if (cfg.pgupdn_scroll && (key == VK_PRIOR || key == VK_NEXT) &&
+          !(mods & ~scroll_mod))
+        mods ^= scroll_mod;
+      if (mods == scroll_mod) {
+        WPARAM scroll;
+        switch (key) {
+          when VK_HOME:  scroll = SB_TOP;
+          when VK_END:   scroll = SB_BOTTOM;
+          when VK_PRIOR: scroll = SB_PAGEUP;
+          when VK_NEXT:  scroll = SB_PAGEDOWN;
+          when VK_UP:    scroll = SB_LINEUP;
+          when VK_DOWN:  scroll = SB_LINEDOWN;
+          otherwise: goto not_scroll;
+        }
+        SendMessage(wnd, WM_VSCROLL, scroll, 0);
+        return 1;
+        not_scroll:;
       }
-      SendMessage(wnd, WM_VSCROLL, scroll, 0);
-      return 1;
-      not_scroll:;
     }
     
     // Copy&paste
