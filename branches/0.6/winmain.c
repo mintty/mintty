@@ -960,7 +960,8 @@ main(int argc, char *argv[])
   */
   wnd = CreateWindowW(class_name, 0,
                       WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
-                      x, y, 300, 200, null, null, inst, null);
+                      x, y, CW_USEDEFAULT, CW_USEDEFAULT,
+                      null, null, inst, null);
 
   update_transparency();
   
@@ -1051,7 +1052,11 @@ main(int argc, char *argv[])
   free(cmd);
   
   // Finally show the window!
-  ShowWindow(wnd, SW_SHOWDEFAULT);
+  STARTUPINFO sui;
+  GetStartupInfo(&sui);
+  ShowWindow(
+    wnd, sui.dwFlags & STARTF_USESHOWWINDOW ? sui.wShowWindow : SW_SHOW
+  );
   
   // Message loop.
   // Also monitoring child events.
