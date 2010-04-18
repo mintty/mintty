@@ -253,6 +253,7 @@ struct term {
   bool app_cursor_keys;
   bool app_keypad;
   bool app_wheel;
+  bool wheel_reporting;
   int  modify_other_keys;
   bool newline_mode;
   bool report_focus;

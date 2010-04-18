@@ -625,6 +625,8 @@ set_modes(bool state)
           term.escape_sends_fs = state;
         when 7783:       /* mintty only: Shortcut override */
           term.shortcut_override = state;
+        when 7786:       /* mintty only: Mousewheel reporting */
+          term.wheel_reporting = state;
         when 7787:       /* mintty only: Application mousewheel mode */
           term.app_wheel = state;
       }
