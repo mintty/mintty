@@ -49,6 +49,7 @@ config cfg = {
   .pgupdn_scroll = false,
   // Mouse
   .copy_on_select = false,
+  .copy_as_rtf = true,
   .clicks_place_cursor = false,
   .right_click_action = RC_SHOWMENU,
   .clicks_target_app = true,
@@ -110,6 +111,7 @@ options[] = {
   {"PgUpDnScroll", OPT_BOOL, cfg_field(pgupdn_scroll)},
   // Mouse
   {"CopyOnSelect", OPT_BOOL, cfg_field(copy_on_select)},
+  {"CopyAsRTF", OPT_BOOL, cfg_field(copy_as_rtf)},
   {"ClicksPlaceCursor", OPT_BOOL, cfg_field(clicks_place_cursor)},
   {"RightClickAction", OPT_INT, cfg_field(right_click_action)},
   {"ClicksTargetApp", OPT_INT, cfg_field(clicks_target_app)},
@@ -638,9 +640,13 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(copy_on_select))
   )->column = 0;
   ctrl_checkbox(
-    s, "Clicks place cursor", 'k', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(clicks_place_cursor))
+    s, "Copy as rich text", 'r', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(copy_as_rtf))
   )->column = 1;
+  ctrl_checkbox(
+    s, "Clicks place command line cursor", 'k', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(clicks_place_cursor))
+  );
 
   s = ctrl_getset(b, "Mouse", "rightclick", "Right click action");
   ctrl_radiobuttons(
