@@ -46,6 +46,7 @@ config cfg = {
   .window_shortcuts = true,
   .zoom_shortcuts = true,
   .scroll_mod = MDK_SHIFT,
+  .pgupdn_scroll = false,
   // Mouse
   .copy_on_select = false,
   .clicks_place_cursor = false,
@@ -106,6 +107,7 @@ options[] = {
   {"WindowShortcuts", OPT_BOOL, cfg_field(window_shortcuts)},
   {"ZoomShortcuts", OPT_BOOL, cfg_field(zoom_shortcuts)},
   {"ScrollMod", OPT_INT, cfg_field(scroll_mod)},
+  {"PgUpDnScroll", OPT_BOOL, cfg_field(pgupdn_scroll)},
   // Mouse
   {"CopyOnSelect", OPT_BOOL, cfg_field(copy_on_select)},
   {"ClicksPlaceCursor", OPT_BOOL, cfg_field(clicks_place_cursor)},
@@ -613,11 +615,15 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, null, '\0', 4, P(0),      
     dlg_stdradiobutton_handler, I(offcfg(scroll_mod)),
+    "Off", 'o', I(0),
     "Shift", 's', I(MDK_SHIFT),
     "Ctrl", 'c', I(MDK_CTRL),
     "Alt", 'a', I(MDK_ALT),
-    "Off", 'o', I(0),
     null
+  );
+  ctrl_checkbox(
+    s, "Page Up/Down scroll without modifier", 'p', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(pgupdn_scroll))
   );
 
  /*
@@ -657,10 +663,10 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, "Modifier for overriding default", '\0', 4, P(0),
     dlg_stdradiobutton_handler, I(offcfg(click_target_mod)),
+    "Off", 'o', I(0),
     "Shift", 's', I(MDK_SHIFT),
     "Ctrl", 'c', I(MDK_CTRL),
     "Alt", 'a', I(MDK_ALT),
-    "Off", 'o', I(0),
     null
   );
   

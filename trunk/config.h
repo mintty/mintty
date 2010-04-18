@@ -49,6 +49,7 @@ typedef struct {
   bool window_shortcuts;
   bool zoom_shortcuts;
   int scroll_mod;
+  bool pgupdn_scroll;
   // Mouse
   bool copy_on_select;
   bool clicks_place_cursor;
