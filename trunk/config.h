@@ -52,6 +52,7 @@ typedef struct {
   bool pgupdn_scroll;
   // Mouse
   bool copy_on_select;
+  bool copy_as_rtf;
   bool clicks_place_cursor;
   int right_click_action;
   int clicks_target_app;
