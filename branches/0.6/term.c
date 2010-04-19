@@ -943,6 +943,12 @@ term_paint(void)
       wchar tchar = d->chr;
       uint tattr = d->attr;
       
+     /* Many Windows fonts don't have the Unicode hyphen, but groff
+      * uses it for man pages, so display it as the ASCII version.
+      */
+      if (tchar == 0x2010)
+        tchar = '-';
+
       if (j < term.cols - 1 && d[1].chr == UCSWIDE)
         tattr |= ATTR_WIDE;
 
