@@ -8,9 +8,6 @@
 .TH mintty 1 2010-04-17 0.7-alpha Cygwin
 
 .ad l
-.if '\*[.T]'utf8' \{\
-.char - \N'45'
-.\}
 
 .SH NAME
 
@@ -94,10 +91,10 @@ Create a utmp entry.
 \fB-h\fP, \fB--hold\fP \fBnever\fP|\fBalways\fP|\fBerror\fP
 Determine whether to keep the terminal window open after the command exits.
 The argument can be abbreviated to a single letter.
-By default, the window is kept open only if the child process terminated with a
-non-zero exit code or due to runtime error signal.
-Alternatively, it can be set to always stay open or to close as soon as the
-child process terminates.
+By default, the window is closed as soon as the child process terminates.
+Alternatively, it can be set to always stay open or to stay open only if the 
+child process terminates with an error, i.e. a non-zero exit code or a runtime
+error signal.
 
 .TP
 \fB-c\fP, \fB--config\fP \fIFILENAME\fP

@@ -133,7 +133,7 @@ get_mods(void)
 {
   inline bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
   lctrl_time = 0;
-  lctrl &= is_key_down(VK_LCONTROL);
+  lctrl = is_key_down(VK_LCONTROL) && (lctrl || !is_key_down(VK_RMENU));
   return
     is_key_down(VK_SHIFT) * MDK_SHIFT |
     is_key_down(VK_MENU) * MDK_ALT |
@@ -294,7 +294,8 @@ win_key_down(WPARAM wp, LPARAM lp)
   GetKeyboardState(kbd);
   inline bool is_key_down(uchar vk) { return kbd[vk] & 0x80; }
   
-  // Distinguish real LeftCtrl from keypresses from messages sent for AltGr.
+  // Distinguish real LCONTROL keypresses from fake messages sent for AltGr.
+  // It's a fake if the next message is an RMENU with the same timestamp.
   if (key == VK_CONTROL && !extended) {
     lctrl = true;
     lctrl_time = GetMessageTime();
@@ -304,7 +305,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     lctrl_time = 0;
   }
   else
-    lctrl &= is_key_down(VK_LCONTROL);
+    lctrl = is_key_down(VK_LCONTROL) && (lctrl || !is_key_down(VK_RMENU));
 
   bool
     numlock = kbd[VK_NUMLOCK] & 1,
