@@ -1173,12 +1173,6 @@ term_write(const char *data, int len)
               wc = 0xA3; // pound sign
           otherwise: ;
         }
-        if (wc == 0x2010) {
-         /* Many Windows fonts don't have the Unicode hyphen, but groff
-          * uses it for man pages, so replace it with the ASCII version.
-          */
-          wc = '-';
-        }
         write_char(wc, width);
       }
       when SEEN_ESC or OSC_MAYBE_ST or DCS_MAYBE_ST:
