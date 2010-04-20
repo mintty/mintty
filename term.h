@@ -1,6 +1,8 @@
 #ifndef TERM_H
 #define TERM_H
 
+#include "termline.h"
+#include "tree234.h"
 #include "bufchain.h"
 #include "minibidi.h"
 
@@ -9,7 +11,7 @@
  * the character cell containing the right-hand half of a CJK wide
  * character.
  */
-enum { UCSWIDE = 0 };
+#define UCSWIDE 0
 
 /* Three attribute types: 
  * The ATTRs (normal attributes) are stored with the characters in
@@ -28,40 +30,41 @@ enum { UCSWIDE = 0 };
  *
  * ATTR_INVALID is an illegal colour combination.
  */
-enum {
-  ATTR_FGSHIFT   = 0,
-  ATTR_BGSHIFT   = 9,
-  ATTR_FGMASK    = 0x00001FFu,
-  ATTR_BGMASK    = 0x003FE00u,
-  ATTR_COLOURS   = 0x003FFFFu,
-  ATTR_INVALID   = 0x003FFFFu,
-  ATTR_BOLD      = 0x0040000u,
-  ATTR_DIM       = 0x0080000u,
-  ATTR_INVISIBLE = 0x0100000u,
-  ATTR_UNDER     = 0x0200000u,
-  ATTR_REVERSE   = 0x0400000u,
-  ATTR_BLINK     = 0x0800000u,
-  ATTR_WIDE      = 0x1000000u,
-  ATTR_NARROW    = 0x2000000u,
 
-  TATTR_RIGHTCURS = 0x10000000u, /* cursor-on-RHS */
-  TATTR_PASCURS   = 0x20000000u, /* passive cursor (box) */
-  TATTR_ACTCURS   = 0x40000000u, /* active cursor (block) */
-  TATTR_COMBINING = 0x80000000u, /* combining characters */
+#define TATTR_ACTCURS 	    0x40000000UL        /* active cursor (block) */
+#define TATTR_PASCURS 	    0x20000000UL        /* passive cursor (box) */
+#define TATTR_RIGHTCURS	    0x10000000UL        /* cursor-on-RHS */
+#define TATTR_COMBINING	    0x80000000UL        /* combining characters */
 
-  DATTR_STARTRUN  = 0x80000000u, /* start of redraw run */
-  DATTR_MASK      = 0xF0000000u,
+#define DATTR_STARTRUN      0x80000000UL        /* start of redraw run */
 
-  LATTR_NORM     = 0x00000000u,
-  LATTR_WIDE     = 0x00000001u,
-  LATTR_TOP      = 0x00000002u,
-  LATTR_BOT      = 0x00000003u,
-  LATTR_MODE     = 0x00000003u,
-  LATTR_WRAPPED  = 0x00000010u, /* this line wraps to next */
-  LATTR_WRAPPED2 = 0x00000020u, /* with WRAPPED: CJK wide character
-                                 * wrapped to next line, so last
-                                 * single-width cell is empty */
-};
+#define TDATTR_MASK         0xF0000000UL
+#define TATTR_MASK (TDATTR_MASK)
+#define DATTR_MASK (TDATTR_MASK)
+
+#define LATTR_NORM   0x00000000UL
+#define LATTR_WIDE   0x00000001UL
+#define LATTR_TOP    0x00000002UL
+#define LATTR_BOT    0x00000003UL
+#define LATTR_MODE   0x00000003UL
+#define LATTR_WRAPPED 0x00000010UL      /* this line wraps to next */
+#define LATTR_WRAPPED2 0x00000020UL     /* with WRAPPED: CJK wide character
+                                         * wrapped to next line, so last
+                                         * single-width cell is empty */
+#define ATTR_FGSHIFT   0
+#define ATTR_BGSHIFT   9
+#define ATTR_FGMASK    0x00001FFU
+#define ATTR_BGMASK    0x003FE00U
+#define ATTR_COLOURS   0x003FFFFU
+#define ATTR_INVALID   0x003FFFFU
+#define ATTR_BOLD      0x0040000U
+#define ATTR_DIM       0x0080000U
+#define ATTR_INVISIBLE 0x0100000U
+#define ATTR_UNDER     0x0200000U
+#define ATTR_REVERSE   0x0400000U
+#define ATTR_BLINK     0x0800000U
+#define ATTR_WIDE      0x1000000U
+#define ATTR_NARROW    0x2000000U
 
 /*
  * The definitive list of colour numbers stored in terminal
@@ -81,80 +84,14 @@ enum {
  *  - 260 is cursor foreground
  *  - 261 is cursor background
  */
-enum {
-  ATTR_DEFFG = 256 << ATTR_FGSHIFT,
-  ATTR_DEFBG = 258 << ATTR_BGSHIFT,
-  ATTR_DEFAULT = ATTR_DEFFG | ATTR_DEFBG,
-};
 
+#define ATTR_DEFFG   (256 << ATTR_FGSHIFT)
+#define ATTR_DEFBG   (258 << ATTR_BGSHIFT)
+#define ATTR_DEFAULT (ATTR_DEFFG | ATTR_DEFBG)
 
-typedef struct {
- /*
-  * The cc_next field is used to link multiple termchars
-  * together into a list, so as to fit more than one character
-  * into a character cell (Unicode combining characters).
-  * 
-  * cc_next is a relative offset into the current array of
-  * termchars. I.e. to advance to the next character in a list,
-  * one does `tc += tc->next'.
-  * 
-  * Zero means end of list.
-  */
-  short cc_next;
+#define TTYPE termchar
+#define TSIZE (sizeof(TTYPE))
 
- /*
-  * Any code in terminal.c which definitely needs to be changed
-  * when extra fields are added here is labelled with a comment
-  * saying FULL-TERMCHAR.
-  */
-  wchar chr;
-  uint attr;
-
-} termchar;
-
-const termchar basic_erase_char;
-
-typedef struct {
-  ushort attr;
-  ushort cols;    /* number of real columns on the line */
-  ushort size;    /* number of allocated termchars
-                     (cc-lists may make this > cols) */
-  bool temporary; /* true if decompressed from scrollback */
-  short cc_free;  /* offset to first cc in free list */
-  termchar *chars;
-} termline;
-
-typedef termline *termlines;
-
-typedef struct {
-  int width;
-  termchar *chars;
-  int *forward, *backward;      /* the permutations of line positions */
-} bidi_cache_entry;
-
-termline *newline(int cols, int bce);
-void freeline(termline *);
-void resizeline(termline *, int);
-
-int sblines(void);
-termline *fetch_line(int y);
-void release_line(termline *);
-
-int termchars_equal(termchar *a, termchar *b);
-int termchars_equal_override(termchar *a, termchar *b, uint bchr, uint battr);
-
-void copy_termchar(termline *destline, int x, termchar *src);
-void move_termchar(termline *line, termchar *dest, termchar *src);
-
-void add_cc(termline *, int col, wchar chr);
-void clear_cc(termline *, int col);
-
-uchar *compressline(termline *);
-termline *decompressline(uchar *, int *bytes_used);
-
-termchar *term_bidi_line(termline *, int scr_y);
-
-/* Traditional terminal character sets */
 typedef enum {
   CSET_ASCII = 'B',   /* Normal ASCII charset */
   CSET_GBCHR = 'A',   /* UK variant */
@@ -186,48 +123,36 @@ typedef struct belltime {
   uint ticks;
 } belltime;
 
-typedef struct {
-  short x, y;
-  int attr;
-  bool wrapnext;
-  bool utf;
-  int oem_acs;
-  bool g1;
-  term_cset csets[2];
-} term_cursor;
-
-typedef struct {
-  termlines *lines;
-  int marg_t, marg_b;   /* scroll margins */
-  bool dec_om;
-  bool autowrap;
-  bool insert;
-  term_cursor curs, saved_curs;
-} term_screen;
-
 struct term {
-  term_screen screen, other_screen;
+  tree234 *scrollback;  /* lines scrolled off top of screen */
+  tree234 *screen;      /* lines on primary screen */
+  tree234 *alt_screen;  /* lines on alternate screen */
+  int disptop;  /* distance scrolled back (0 or -ve) */
+  int tempsblines;      /* number of lines of .scrollback that
+                         * can be retrieved onto the terminal
+                         * ("temporary scrollback") */
 
-  bool on_alt_screen;     /* On alternate screen? */
-  bool show_other_screen;
+  termline **disptext;  /* buffer of text on real screen */
+  int dispcursx, dispcursy;     /* location of cursor on real screen */
+  int curstype; /* type of cursor on real screen */
 
-  uchar **scrollback;     /* lines scrolled off top of screen */
-  int disptop;            /* distance scrolled back (0 or -ve) */
-  int sblen;              /* length of scrollback buffer */
-  int sblines;            /* number of lines of scrollback */
-  int sbpos;              /* index of next scrollback position to be filled */
-  int tempsblines;        /* number of lines of .scrollback that
-                           * can be retrieved onto the terminal
-                           * ("temporary scrollback") */
-
-  termlines *displines;   /* buffer of text on real screen */
-  pos dispcurs;           /* location of cursor on real screen */
-  int curstype;           /* type of cursor on real screen */
-
-  termchar erase_char;
+  int default_attr, curr_attr, save_attr;
+  termchar basic_erase_char, erase_char;
 
   bufchain *inbuf;      /* terminal input buffer */
+  pos  curs;     /* cursor */
+  pos  savecurs; /* saved cursor position */
+  int  marg_t, marg_b;   /* scroll margins */
+  bool dec_om;   /* DEC origin mode flag */
+  bool wrap, wrapnext;   /* wrap flags */
+  bool insert;   /* insert-mode flag */
 
+  term_cset csets[2];
+  bool cset_i;   /* 0 or 1: which char set */
+  term_cset save_csets[2];   /* saved with cursor position */
+  bool save_cset_i;
+
+  bool save_utf, save_wnext;     /* saved with cursor position */
   bool rvideo;   /* global reverse video flag */
   bool cursor_on;        /* cursor enabled flag */
   bool deccolm_allowed;  /* DECCOLM sequence for 80/132 cols allowed? */
@@ -238,13 +163,33 @@ struct term {
   bool blink_is_real;    /* Actually blink blinking text */
   bool echoing;  /* Does terminal want local echo? */
   bool editing;  /* Does terminal want local edit? */
+  int  oem_acs, save_oem_acs;    /* CSI 10,11,12m -> OEM charset */
+  bool utf;      /* Are we in toggleable UTF-8 mode? */
   bool printing, only_printing;  /* Are we doing ANSI printing? */
   int  print_state;      /* state of print-end-sequence scan */
   bufchain *printer_buf;        /* buffered data for printer */
 
+ /* ESC 7 saved state for the alternate screen */
+  pos  alt_savecurs;
+  int  alt_save_attr;
+  bool alt_save_cset_i;
+  term_cset alt_save_csets[2];
+  bool alt_save_utf, alt_save_wnext;
+  int  alt_save_oem_acs;
+  int  alt_x, alt_y;
+  bool alt_om, alt_wrap, alt_wnext, alt_ins;
+  term_cset alt_csets[2];  
+  bool alt_cset_i;
+  int  alt_oem_acs;
+  bool alt_utf;
+  int  alt_t, alt_b;
+  int  alt_sblines;
+  bool which_screen;
+
   int  rows, cols;
   bool has_focus;
   bool in_vbell;
+  bool seen_disp_event;
 
   bool shortcut_override;
   bool backspace_sends_bs;
@@ -253,7 +198,6 @@ struct term {
   bool app_cursor_keys;
   bool app_keypad;
   bool app_wheel;
-  bool wheel_reporting;
   int  modify_other_keys;
   bool newline_mode;
   bool report_focus;
@@ -293,6 +237,9 @@ struct term {
  /* Scroll steps during selection when cursor out of window. */
   int sel_scroll;
   pos sel_pos;
+
+ /* Mask of attributes to pay attention to when painting. */
+  int attr_mask;
 
   wchar *paste_buffer;
   int paste_len, paste_pos;
@@ -347,8 +294,7 @@ void term_paste(wchar *, uint len);
 void term_send_paste(void);
 void term_cancel_paste(void);
 void term_reconfig(void);
-void term_flip_screen(void);
-void term_reset_screen(void);
+void term_seen_key_event(void);
 void term_write(const char *, int len);
 void term_set_focus(bool has_focus);
 int  term_cursor_type(void);

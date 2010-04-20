@@ -5,12 +5,9 @@
 .\" You may distribute, use, and modify this man page under the terms
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
-.TH mintty 1 2010-04-17 0.7-alpha Cygwin
+.TH mintty 1 2010-04-20 0.6.2 Cygwin
 
 .ad l
-.if '\*[.T]'utf8' \{\
-.char - \N'45'
-.\}
 
 .SH NAME
 
@@ -94,10 +91,10 @@ Create a utmp entry.
 \fB-h\fP, \fB--hold\fP \fBnever\fP|\fBalways\fP|\fBerror\fP
 Determine whether to keep the terminal window open after the command exits.
 The argument can be abbreviated to a single letter.
-By default, the window is kept open only if the child process terminated with a
-non-zero exit code or due to runtime error signal.
-Alternatively, it can be set to always stay open or to close as soon as the
-child process terminates.
+By default, the window is closed as soon as the child process terminates.
+Alternatively, it can be set to always stay open or to stay open only if the 
+child process terminates with an error, i.e. a non-zero exit code or a runtime
+error signal.
 
 .TP
 \fB-c\fP, \fB--config\fP \fIFILENAME\fP
@@ -932,6 +929,37 @@ This section lists control sequences implemented in mintty that are not
 supported by xterm.
 
 
+.SS Application mousewheel mode
+
+Application mousewheel mode allows the mousewheel to be distinguished from
+the cursor keys without enabling full xterm mouse tracking. The two sequences enable and disable it:
+
+.RS
+.TS
+tab(#) nospaces;
+LB        LB
+LfC       L.
+sequence #mode
+^[[?7787l#normal
+^[[?7787h#application
+.TE
+.RE
+
+When application mousewheel mode is on, mousewheel events are encoded as
+follows:
+
+.RS
+.TS
+tab(#);
+LB        LfC.
+line up  #^[Oa
+line down#^[Ob
+page up  #^[[1;2a
+page down#^[[1;2b
+.TE
+.RE
+
+
 .SS Escape keycode
 
 There are two settings controlling the keycode sent by the escape key.
@@ -984,61 +1012,6 @@ LfC       LfC.
 sequence #override
 ^[[?7783l#off
 ^[[?7783h#on
-.TE
-.RE
-
-
-.SS Mousewheel reporting
-
-Mintty includes support for sending mousewheel events to an application without
-having to enable full xterm mouse reporting, which takes over all mouse events
-and isn't supported by every application.
-
-Mousewheel reporting only happens on the \fIalternate screen\fP.
-On the primary screen, the mousewheel scrolls the scrollback buffer.
-
-The following two sequences enable or disable mousewheel reporting.
-It is enabled by default.
-
-.RS
-.TS
-tab(#) nospaces;
-LB        LB
-LfC       L.
-sequence #reporting
-^[[?7786l#disabled
-^[[?7786h#enabled
-.TE
-.RE
-
-By default, mousewheel events are reported as cursor key presses, which enables
-mousewheel scrolling in applications such as \fIless\fP without requiring any
-configuration.
-Alternatively, mousewheel reporting can be switched to \fBapplication mousewheel
-mode\fP, where the mousewheel sends its own separate keycodes that allow
-an application to treat the mousewheel differently from cursor keys:
-
-.RS
-.TS
-tab(#);
-LB        LfC.
-line up  #^[Oa
-line down#^[Ob
-page up  #^[[1;2a
-page down#^[[1;2b
-.TE
-.RE
-
-Application mousewheel mode is controlled by these sequences:
-
-.RS
-.TS
-tab(#) nospaces;
-LB        LB
-LfC       L.
-sequence #mode
-^[[?7787l#cursor
-^[[?7787h#application
 .TE
 .RE
 

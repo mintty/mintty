@@ -29,10 +29,10 @@ void term_schedule_tblink(void);
 void term_schedule_cblink(void);
 void term_schedule_vbell(int already_started, int startpoint);
 
-void term_switch_screen(bool to_alt, bool reset, bool keep_curs);
+void term_swap_screen(int which, int reset, int keep_cur_pos);
 void term_check_boundary(int x, int y);
-void term_do_scroll(int topline, int botline, int lines, bool sb);
-void term_erase_lots(bool line_only, bool from_begin, bool to_end);
+void term_do_scroll(int topline, int botline, int lines, int sb);
+void term_erase_lots(int line_only, int from_begin, int to_end);
 int  term_last_nonempty_line(void);
 
 static inline bool

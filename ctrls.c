@@ -54,9 +54,12 @@ ctrl_new_box(void)
 void
 ctrl_free_box(controlbox * b)
 {
-  for (int i = 0; i < b->nctrlsets; i++)
+  int i;
+
+  for (i = 0; i < b->nctrlsets; i++) {
     ctrl_free_set(b->ctrlsets[i]);
-  for (int i = 0; i < b->nfrees; i++)
+  }
+  for (i = 0; i < b->nfrees; i++)
     free(b->frees[i]);
   free(b->ctrlsets);
   free(b->frees);
@@ -66,10 +69,12 @@ ctrl_free_box(controlbox * b)
 void
 ctrl_free_set(controlset *s)
 {
+  int i;
+
   free(s->pathname);
   free(s->boxname);
   free(s->boxtitle);
-  for (int i = 0; i < s->ncontrols; i++) {
+  for (i = 0; i < s->ncontrols; i++) {
     ctrl_free(s->ctrls[i]);
   }
   free(s->ctrls);

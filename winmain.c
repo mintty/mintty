@@ -584,7 +584,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_RESET: reset_term();
         when IDM_DEFSIZE: default_size();
         when IDM_FULLSCREEN: win_maximise(win_is_fullscreen() ? 0 : 2);
-        when IDM_FLIPSCREEN: term_flip_screen();
         when IDM_OPTIONS: win_open_config();
         when IDM_NEW:
           spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv);
@@ -623,6 +622,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_CHAR or WM_SYSCHAR:
       {
         wchar wc = wp;
+        term_seen_key_event();
         luni_send(&wc, 1, 1);
         return 0;
       }
@@ -641,6 +641,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         if (len > 0) {
           char buf[len];
           ImmGetCompositionStringW(imc, GCS_RESULTSTR, buf, len);
+          term_seen_key_event();
           luni_send((wchar *)buf, len / 2, 1);
         }
         ImmReleaseContext(wnd, imc);
@@ -959,7 +960,8 @@ main(int argc, char *argv[])
   */
   wnd = CreateWindowW(class_name, 0,
                       WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
-                      x, y, 300, 200, null, null, inst, null);
+                      x, y, CW_USEDEFAULT, CW_USEDEFAULT,
+                      null, null, inst, null);
 
   update_transparency();
   
@@ -1006,9 +1008,10 @@ main(int argc, char *argv[])
   */
   {
     int size = (font_width + 15) / 16 * 2 * font_height;
-    char bits[size];
+    char *bits = newn(char, size);
     memset(bits, 0, size);
     caretbm = CreateBitmap(font_width, font_height, 1, 1, bits);
+    free(bits);
     CreateCaret(wnd, caretbm, font_width, font_height);
   }
 
@@ -1049,7 +1052,11 @@ main(int argc, char *argv[])
   free(cmd);
   
   // Finally show the window!
-  ShowWindow(wnd, SW_SHOWDEFAULT);
+  STARTUPINFO sui;
+  GetStartupInfo(&sui);
+  ShowWindow(
+    wnd, sui.dwFlags & STARTF_USESHOWWINDOW ? sui.wShowWindow : SW_SHOW
+  );
   
   // Message loop.
   // Also monitoring child events.

@@ -69,13 +69,7 @@ win_update_menus(void)
   uint fullscreen_checked = win_is_fullscreen() ? MF_CHECKED : MF_UNCHECKED;
   ModifyMenu(
     menu, IDM_FULLSCREEN, fullscreen_checked, IDM_FULLSCREEN,
-    term.shortcut_override ? "&Full Screen" : "&Full Screen\tAlt+F11"
-  );
-  
-  uint otherscreen_checked = term.show_other_screen ? MF_CHECKED : MF_UNCHECKED;
-  ModifyMenu(
-    menu, IDM_FLIPSCREEN, otherscreen_checked, IDM_FLIPSCREEN,
-    term.shortcut_override ? "Flip &Screen" : "Flip &Screen\tAlt+F12"
+    term.shortcut_override ? "&Fullscreen" : "&Fullscreen\tAlt+F11"
   );
 
   uint options_enabled = config_wnd ? MF_GRAYED : MF_ENABLED;
@@ -91,13 +85,12 @@ win_init_menus(void)
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_COPY, 0);
   AppendMenu(menu, MF_ENABLED, IDM_PASTE, 0);
-  AppendMenu(menu, MF_ENABLED, IDM_SELALL, "Select &All");
+  AppendMenu(menu, MF_SEPARATOR, 0, 0);
+  AppendMenu(menu, MF_ENABLED, IDM_SELALL, "&Select All");
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_RESET, 0);
-  AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_DEFSIZE, 0);
   AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN, 0);
-  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_FLIPSCREEN, 0);
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_OPTIONS, "&Options...");
 
@@ -133,7 +126,7 @@ get_mods(void)
 {
   inline bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
   lctrl_time = 0;
-  lctrl &= is_key_down(VK_LCONTROL);
+  lctrl = is_key_down(VK_LCONTROL) && (lctrl || !is_key_down(VK_RMENU));
   return
     is_key_down(VK_SHIFT) * MDK_SHIFT |
     is_key_down(VK_MENU) * MDK_ALT |
@@ -145,7 +138,7 @@ update_mouse(mod_keys mods)
 {
   static bool app_mouse;
   bool new_app_mouse = 
-    term.mouse_mode && !term.show_other_screen &&
+    term.mouse_mode &&
     cfg.clicks_target_app ^ ((mods & cfg.click_target_mod) != 0);
   if (new_app_mouse != app_mouse) {
     HCURSOR cursor = LoadCursor(null, new_app_mouse ? IDC_ARROW : IDC_IBEAM);
@@ -294,7 +287,8 @@ win_key_down(WPARAM wp, LPARAM lp)
   GetKeyboardState(kbd);
   inline bool is_key_down(uchar vk) { return kbd[vk] & 0x80; }
   
-  // Distinguish real LeftCtrl from keypresses from messages sent for AltGr.
+  // Distinguish real LCONTROL keypresses from fake messages sent for AltGr.
+  // It's a fake if the next message is an RMENU with the same timestamp.
   if (key == VK_CONTROL && !extended) {
     lctrl = true;
     lctrl_time = GetMessageTime();
@@ -304,7 +298,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     lctrl_time = 0;
   }
   else
-    lctrl &= is_key_down(VK_LCONTROL);
+    lctrl = is_key_down(VK_LCONTROL) && (lctrl || !is_key_down(VK_RMENU));
 
   bool
     numlock = kbd[VK_NUMLOCK] & 1,
@@ -366,7 +360,6 @@ win_key_down(WPARAM wp, LPARAM lp)
           when VK_F8:  cmd = IDM_RESET;
           when VK_F10: cmd = IDM_DEFSIZE;
           when VK_F11: cmd = IDM_FULLSCREEN;
-          when VK_F12: cmd = IDM_FLIPSCREEN;
           otherwise: return 1;
         }
         send_syscommand(cmd);
@@ -389,26 +382,21 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     
     // Scrollback
-    if (!term.on_alt_screen || term.show_other_screen) {
-      mod_keys scroll_mod = cfg.scroll_mod ?: 8;
-      if (cfg.pgupdn_scroll && (key == VK_PRIOR || key == VK_NEXT) &&
-          !(mods & ~scroll_mod))
-        mods ^= scroll_mod;
-      if (mods == scroll_mod) {
-        WPARAM scroll;
-        switch (key) {
-          when VK_HOME:  scroll = SB_TOP;
-          when VK_END:   scroll = SB_BOTTOM;
-          when VK_PRIOR: scroll = SB_PAGEUP;
-          when VK_NEXT:  scroll = SB_PAGEDOWN;
-          when VK_UP:    scroll = SB_LINEUP;
-          when VK_DOWN:  scroll = SB_LINEDOWN;
-          otherwise: goto not_scroll;
-        }
-        SendMessage(wnd, WM_VSCROLL, scroll, 0);
-        return 1;
-        not_scroll:;
+    if (mods && mods == (mod_keys)cfg.scroll_mod &&
+        (term.which_screen == 0 || cfg.alt_screen_scroll)) {
+      WPARAM scroll;
+      switch (key) {
+        when VK_HOME:  scroll = SB_TOP;
+        when VK_END:   scroll = SB_BOTTOM;
+        when VK_PRIOR: scroll = SB_PAGEUP;
+        when VK_NEXT:  scroll = SB_PAGEDOWN;
+        when VK_UP:    scroll = SB_LINEUP;
+        when VK_DOWN:  scroll = SB_LINEDOWN;
+        otherwise: goto not_scroll;
       }
+      SendMessage(wnd, WM_VSCROLL, scroll, 0);
+      return 1;
+      not_scroll:;
     }
     
     // Copy&paste
@@ -679,6 +667,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   
   hide_mouse();
   term_cancel_paste();
+  term_seen_key_event();
 
   do {
     if (len) ldisc_send(buf, len, 1);
@@ -696,7 +685,11 @@ win_key_up(WPARAM wp, LPARAM unused(lp))
   if (wp != VK_MENU)
     return false;
 
-  if (alt_state > ALT_ALONE) {
+  if (alt_state == ALT_ALONE) {
+    if (cfg.alt_sends_esc)
+      term.app_escape_key ? ldisc_send("\eO[", 3, 1) : ldisc_send("\e", 1, 1);
+  }
+  else if (alt_state > ALT_ALONE) {
     if (cs_cur_max == 1)
       ldisc_send((char[]){alt_char}, 1, 1);
     else {

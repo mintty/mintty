@@ -14,7 +14,7 @@
 
 const char *log_file = 0;
 bool utmp_enabled = false;
-hold_t hold = HOLD_ERROR;
+hold_t hold = HOLD_NEVER;
 
 #if CYGWIN_VERSION_API_MINOR >= 222
 static wchar *rc_filename = 0;
@@ -42,14 +42,13 @@ config cfg = {
   .charset = "",
   // Keys
   .backspace_sends_bs = false,
+  .alt_sends_esc = false,
   .ctrl_alt_is_altgr = false,
   .window_shortcuts = true,
   .zoom_shortcuts = true,
   .scroll_mod = MDK_SHIFT,
-  .pgupdn_scroll = false,
   // Mouse
   .copy_on_select = false,
-  .copy_as_rtf = true,
   .clicks_place_cursor = false,
   .right_click_action = RC_SHOWMENU,
   .clicks_target_app = true,
@@ -65,6 +64,7 @@ config cfg = {
   .cols = 80,
   .rows = 24,
   .scrollbar = true,
+  .alt_screen_scroll = false,
   .scrollback_lines = 10000,
   .confirm_exit = true,
   // Hidden
@@ -104,14 +104,13 @@ options[] = {
   {"Charset", OPT_STRING, cfg_field(charset)},
   // Keys
   {"BackspaceSendsBS", OPT_BOOL, cfg_field(backspace_sends_bs)},
+  {"AltSendsESC", OPT_BOOL, cfg_field(alt_sends_esc)},
   {"CtrlAltIsAltGr", OPT_BOOL, cfg_field(ctrl_alt_is_altgr)},
   {"WindowShortcuts", OPT_BOOL, cfg_field(window_shortcuts)},
   {"ZoomShortcuts", OPT_BOOL, cfg_field(zoom_shortcuts)},
   {"ScrollMod", OPT_INT, cfg_field(scroll_mod)},
-  {"PgUpDnScroll", OPT_BOOL, cfg_field(pgupdn_scroll)},
   // Mouse
   {"CopyOnSelect", OPT_BOOL, cfg_field(copy_on_select)},
-  {"CopyAsRTF", OPT_BOOL, cfg_field(copy_as_rtf)},
   {"ClicksPlaceCursor", OPT_BOOL, cfg_field(clicks_place_cursor)},
   {"RightClickAction", OPT_INT, cfg_field(right_click_action)},
   {"ClicksTargetApp", OPT_INT, cfg_field(clicks_target_app)},
@@ -127,6 +126,7 @@ options[] = {
   {"Columns", OPT_INT, cfg_field(cols)},
   {"Rows", OPT_INT, cfg_field(rows)},
   {"Scrollbar", OPT_BOOL, cfg_field(scrollbar)},
+  {"AltScreenScroll", OPT_BOOL, cfg_field(alt_screen_scroll)},
   {"ScrollbackLines", OPT_INT, cfg_field(scrollback_lines)},
   {"ConfirmExit", OPT_BOOL, cfg_field(confirm_exit)},
   // Hidden
@@ -599,13 +599,17 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(backspace_sends_bs))
   );
   ctrl_checkbox(
+    s, "Lone Alt sends ESC", 'l', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(alt_sends_esc))
+  );
+  ctrl_checkbox(
     s, "Ctrl+LeftAlt is AltGr", 'g', P(0),
     dlg_stdcheckbox_handler, I(offcfg(ctrl_alt_is_altgr))
   );
 
   s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
   ctrl_checkbox(
-    s, "Menu and Full Screen (Alt+Space/Enter)", 'm', P(0),
+    s, "Menu and fullscreen (Alt+Space/Enter)", 'm', P(0),
     dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
   );
   ctrl_checkbox(
@@ -617,15 +621,11 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, null, '\0', 4, P(0),      
     dlg_stdradiobutton_handler, I(offcfg(scroll_mod)),
-    "Off", 'o', I(0),
     "Shift", 's', I(MDK_SHIFT),
     "Ctrl", 'c', I(MDK_CTRL),
     "Alt", 'a', I(MDK_ALT),
+    "Off", 'o', I(0),
     null
-  );
-  ctrl_checkbox(
-    s, "Page Up/Down scroll without modifier", 'p', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(pgupdn_scroll))
   );
 
  /*
@@ -640,13 +640,9 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(copy_on_select))
   )->column = 0;
   ctrl_checkbox(
-    s, "Copy as rich text", 'r', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(copy_as_rtf))
-  )->column = 1;
-  ctrl_checkbox(
-    s, "Clicks place command line cursor", 'k', P(0),
+    s, "Clicks place cursor", 'k', P(0),
     dlg_stdcheckbox_handler, I(offcfg(clicks_place_cursor))
-  );
+  )->column = 1;
 
   s = ctrl_getset(b, "Mouse", "rightclick", "Right click action");
   ctrl_radiobuttons(
@@ -669,10 +665,10 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, "Modifier for overriding default", '\0', 4, P(0),
     dlg_stdradiobutton_handler, I(offcfg(click_target_mod)),
-    "Off", 'o', I(0),
     "Shift", 's', I(MDK_SHIFT),
     "Ctrl", 'c', I(MDK_CTRL),
     "Alt", 'a', I(MDK_ALT),
+    "Off", 'o', I(0),
     null
   );
   
@@ -731,6 +727,10 @@ setup_config_box(controlbox * b)
   ctrl_checkbox(
     s, "Show scrollbar", 's', P(0),
     dlg_stdcheckbox_handler, I(offcfg(scrollbar))
+  );
+  ctrl_checkbox(
+    s, "Access scrollback from alternate screen", 'a', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(alt_screen_scroll))
   );
   ctrl_columns(s, 2, 53, 47);
   ctrl_editbox(

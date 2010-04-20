@@ -26,7 +26,7 @@ static pos
 sel_spread_word(pos p, bool forward)
 {
   pos ret_p = p;
-  termline *line = fetch_line(p.y);
+  termline *line = lineptr(p.y);
   
   for (;;) {
     wchar c = get_char(line, p.x);
@@ -41,29 +41,29 @@ sel_spread_word(pos p, bool forward)
 
     if (forward) {
       p.x++;
-      if (p.x >= term.cols - ((line->attr & LATTR_WRAPPED2) != 0)) {
-        if (!(line->attr & LATTR_WRAPPED))
+      if (p.x >= term.cols - ((line->lattr & LATTR_WRAPPED2) != 0)) {
+        if (!(line->lattr & LATTR_WRAPPED))
           break;
         p.x = 0;
-        release_line(line);
-        line = fetch_line(++p.y);
+        unlineptr(line);
+        line = lineptr(++p.y);
       }
     }
     else {
       if (p.x <= 0) {
         if (p.y <= -sblines())
           break;
-        release_line(line);
-        line = fetch_line(--p.y);
-        if (!(line->attr & LATTR_WRAPPED))
+        unlineptr(line);
+        line = lineptr(--p.y);
+        if (!(line->lattr & LATTR_WRAPPED))
           break;
-        p.x = term.cols - ((line->attr & LATTR_WRAPPED2) != 0);
+        p.x = term.cols - ((line->lattr & LATTR_WRAPPED2) != 0);
       }
       p.x--;
     }
   }
     
-  release_line(line);
+  unlineptr(line);
   return ret_p;
 }
 
@@ -79,8 +79,8 @@ sel_spread_half(pos p, bool forward)
       * In this mode, every character is a separate unit, except
       * for runs of spaces at the end of a non-wrapping line.
       */
-      termline *line = fetch_line(p.y);
-      if (!(line->attr & LATTR_WRAPPED)) {
+      termline *line = lineptr(p.y);
+      if (!(line->lattr & LATTR_WRAPPED)) {
         termchar *q = line->chars + term.cols;
         while (q > line->chars && q[-1].chr == ' ' && !q[-1].cc_next)
           q--;
@@ -89,16 +89,16 @@ sel_spread_half(pos p, bool forward)
         if (p.x >= q - line->chars)
           p.x = forward ? term.cols - 1 : q - line->chars;
       }
-      release_line(line);
+      unlineptr(line);
     }
     when MS_SEL_WORD:
       p = sel_spread_word(p, forward); 
     when MS_SEL_LINE:
       if (forward) {
-        termline *line = fetch_line(p.y);
-        while (line->attr & LATTR_WRAPPED) {
-          release_line(line);
-          line = fetch_line(++p.y);
+        termline *line = lineptr(p.y);
+        while (line->lattr & LATTR_WRAPPED) {
+          unlineptr(line);
+          line = lineptr(++p.y);
           p.x = 0;
         }
         int x = p.x;
@@ -107,14 +107,14 @@ sel_spread_half(pos p, bool forward)
           if (get_char(line, x) != ' ')
             p.x = x;
         } while (++x < line->cols);
-        release_line(line);
+        unlineptr(line);
       }
       else {
         p.x = 0;
         while (p.y > -sblines()) {
-          termline *line = fetch_line(p.y - 1);
-          bool wrapped = line->attr & LATTR_WRAPPED;
-          release_line(line);
+          termline *line = lineptr(p.y - 1);
+          bool wrapped = line->lattr & LATTR_WRAPPED;
+          unlineptr(line);
           if (!wrapped)
             break;
           p.y--;
@@ -215,7 +215,7 @@ send_mouse_event(char code, mod_keys mods, pos p)
   buf[3] = code | (mods & ~cfg.click_target_mod) << 2;
   buf[4] = p.x + 33;
   buf[5] = p.y + 33;
-  ldisc_send(buf, 6, true);
+  ldisc_send(buf, 6, 0);
 }
 
 static pos
@@ -230,8 +230,8 @@ static pos
 get_selpoint(const pos p)
 {
   pos sp = { .y = p.y + term.disptop, .x = p.x };
-  termline *line = fetch_line(sp.y);
-  if ((line->attr & LATTR_MODE) != LATTR_NORM)
+  termline *line = lineptr(sp.y);
+  if ((line->lattr & LATTR_MODE) != LATTR_NORM)
     sp.x /= 2;
 
  /*
@@ -245,7 +245,7 @@ get_selpoint(const pos p)
   if (line->chars[sp.x].chr == UCSWIDE)
     sp.x--;
   
-  release_line(line);
+  unlineptr(line);
   return sp;
 }
 
@@ -273,7 +273,7 @@ is_app_mouse(mod_keys *mods_p)
 void
 term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
 {
-  if (!term.show_other_screen && is_app_mouse(&mods)) {
+  if (is_app_mouse(&mods)) {
     if (term.mouse_mode == MM_X10)
       mods = 0;
     send_mouse_event(0x1F + b, mods, box_pos(p));
@@ -355,17 +355,14 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
     term_write(0, 0);
     
     // "Clicks place cursor" implementation.
-    if (!cfg.clicks_place_cursor || term.on_alt_screen ||
+    if (!cfg.clicks_place_cursor || term.which_screen != 0 ||
         term.app_cursor_keys || term.editing)
       return;
     
     p = term.selected ? term.sel_end : get_selpoint(p);
     
     static pos last_dest;
-    pos orig =
-      state == MS_SEL_CHAR
-      ? (pos){.y = term.screen.curs.y, .x = term.screen.curs.x}
-      : last_dest;
+    pos orig = state == MS_SEL_CHAR ? term.curs : last_dest;
     pos dest = p;
     
     bool forward = posle(orig, dest);
@@ -374,26 +371,26 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
     
     uint count = 0;
     while (p.y != end.y) {
-      termline *line = fetch_line(p.y);
-      if (!(line->attr & LATTR_WRAPPED)) {
-        release_line(line);
+      termline *line = lineptr(p.y);
+      if (!(line->lattr & LATTR_WRAPPED)) {
+        unlineptr(line);
         return;
       }
-      int cols = term.cols - ((line->attr & LATTR_WRAPPED2) != 0);
+      int cols = term.cols - ((line->lattr & LATTR_WRAPPED2) != 0);
       for (int x = p.x; x < cols; x++) {
         if (line->chars[x].chr != UCSWIDE)
           count++;
       }
       p.y++;
       p.x = 0;
-      release_line(line);
+      unlineptr(line);
     }
-    termline *line = fetch_line(p.y);
+    termline *line = lineptr(p.y);
     for (int x = p.x; x < end.x; x++) {
       if (line->chars[x].chr != UCSWIDE)
         count++;
     }
-    release_line(line);
+    unlineptr(line);
     
     send_keys(forward ? "\e[C" : "\e[D", 3, count, false);
     
@@ -461,7 +458,7 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
   static int accu;
   accu += delta;
   
-  if (!term.show_other_screen && is_app_mouse(&mods)) {
+  if (is_app_mouse(&mods)) {
     // Send as mouse events, with one event per notch.
     int notches = accu / NOTCH_DELTA;
     if (notches) {
@@ -486,9 +483,9 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
     int lines = lines_per_notch * accu / NOTCH_DELTA;
     if (lines) {
       accu -= lines * NOTCH_DELTA / lines_per_notch;
-      if (!term.on_alt_screen || term.show_other_screen)
+      if (term.which_screen == 0 || cfg.alt_screen_scroll)
         term_scroll(0, -lines);
-      else if (term.wheel_reporting) {
+      else {
         // Send scroll distance as CSI a/b events
         bool up = lines > 0;
         lines = abs(lines);

@@ -95,7 +95,7 @@ child_proc(void)
   logout(ut.ut_line);
 
   // No point hanging around if the user wants us dead.
-  if (killed || hold == HOLD_NEVER)
+  if (killed)
     exit(0);
     
   // Display a message if the child process died with an error. 
@@ -103,7 +103,11 @@ child_proc(void)
   char *s; 
   if (WIFEXITED(status)) {
     int code = WEXITSTATUS(status);
-    if (code)
+    if (hold == HOLD_NEVER) {
+      if (code != 255)
+        exit(0);
+    }
+    else if (code)
       l = asprintf(&s, "%s: Exit %i", child_name, code); 
     else if (hold == HOLD_ERROR)
       exit(0);
@@ -242,7 +246,7 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
 
     // If we get here, exec failed.
     fprintf(stderr, "%s: %s\r\n", *argv, strerror(errno));
-    exit(errno == ENOENT || errno == ENOTDIR ? 127 : 126);
+    exit(255);
   }
   else { // Parent process.
     pty_fd = nonstdfd(pty_fd);
