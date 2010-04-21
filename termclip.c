@@ -178,7 +178,7 @@ term_paste(wchar *data, uint len)
   
  /* Assume a small paste will be OK in one go. */
   if (term.paste_len < 256) {
-    luni_send(term.paste_buffer, term.paste_len, 0);
+    luni_send(term.paste_buffer, term.paste_len, true);
     if (term.paste_buffer)
       free(term.paste_buffer);
     term.paste_buffer = 0;
@@ -208,7 +208,7 @@ term_send_paste(void)
       if (term.paste_buffer[term.paste_pos + n++] == '\r')
         break;
     }
-    luni_send(term.paste_buffer + term.paste_pos, n, 0);
+    luni_send(term.paste_buffer + term.paste_pos, n, true);
     term.paste_pos += n;
 
     if (term.paste_pos < term.paste_len)

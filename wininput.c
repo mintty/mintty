@@ -682,8 +682,8 @@ win_key_down(WPARAM wp, LPARAM lp)
   term_cancel_paste();
 
   do {
-    if (len) ldisc_send(buf, len, 1);
-    if (wlen) luni_send(wbuf, wlen, 1);
+    if (len) ldisc_send(buf, len, true);
+    if (wlen) luni_send(wbuf, wlen, true);
   } while (--count);
 
   return 1;
@@ -699,12 +699,12 @@ win_key_up(WPARAM wp, LPARAM unused(lp))
 
   if (alt_state > ALT_ALONE) {
     if (cs_cur_max == 1)
-      ldisc_send((char[]){alt_char}, 1, 1);
+      ldisc_send((char[]){alt_char}, 1, true);
     else {
       if (alt_char < 0x20)
         MultiByteToWideChar(CP_OEMCP, MB_USEGLYPHCHARS,
                             (char[]){alt_char}, 1, &alt_char, 1);
-      luni_send(&alt_char, 1, 1);
+      luni_send(&alt_char, 1, true);
     }
   }
   

@@ -215,7 +215,7 @@ send_mouse_event(char code, mod_keys mods, pos p)
   buf[3] = code | (mods & ~cfg.click_target_mod) << 2;
   buf[4] = p.x + 33;
   buf[5] = p.y + 33;
-  ldisc_send(buf, 6, true);
+  ldisc_send(buf, 6, false);
 }
 
 static pos
@@ -250,13 +250,13 @@ get_selpoint(const pos p)
 }
 
 static void
-send_keys(char *code, uint len, uint count, bool interactive)
+send_keys(char *code, uint len, uint count)
 {
   if (count) {
     uint size = len * count;
     char buf[size], *p = buf;
     while (count--) { memcpy(p, code, len); p += len; }
-    ldisc_send(buf, size, interactive);
+    ldisc_send(buf, size, false);
   }
 }
 
@@ -395,7 +395,7 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
     }
     release_line(line);
     
-    send_keys(forward ? "\e[C" : "\e[D", 3, count, false);
+    send_keys(forward ? "\e[C" : "\e[D", 3, count);
     
     last_dest = dest;
   }
@@ -495,14 +495,14 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
         int pages = lines / term.rows;
         lines -= pages * term.rows;
         if (term.app_wheel) {
-          send_keys(up ? "\e[1;2a" : "\e[1;2b", 6, pages, true);
-          send_keys(up ? "\eOa" : "\eOb", 3, lines, true);
+          send_keys(up ? "\e[1;2a" : "\e[1;2b", 6, pages);
+          send_keys(up ? "\eOa" : "\eOb", 3, lines);
         }
         else {
-          send_keys(up ? "\e[5~" : "\e[6~", 4, pages, true);
+          send_keys(up ? "\e[5~" : "\e[6~", 4, pages);
           char code[3] = 
             {'\e',  term.app_cursor_keys ? 'O' : '[', up ? 'A' : 'B'};
-          send_keys(code, 3, lines, true);
+          send_keys(code, 3, lines);
         }
       }
     }

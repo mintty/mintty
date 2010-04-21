@@ -33,6 +33,19 @@ static const wchar linedraw_chars[32] = {
   0x2502, 0x2264, 0x2265, 0x03c0, 0x2260, 0x00a3, 0x00b7, 0x0020
 };
 
+static void sendf(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
+static void sendf(const char *fmt, ...)
+{
+  va_list va;
+  va_start(va, fmt);
+  char *s;
+  int len = vasprintf(&s, fmt, va);
+  va_end(va);
+  if (len >= 0)
+    ldisc_send(s, len, false);
+  free(s);
+}
+
 /*
  * Move the cursor to a given position, clipping at boundaries. We
  * may or may not want to clip at the scroll margin: marg_clip is 0
@@ -378,7 +391,7 @@ do_esc(uchar c)
         curs->y--;
       curs->wrapnext = false;
     when 'Z':  /* DECID: terminal type query */
-      ldisc_send(primary_da, sizeof primary_da - 1, 0);
+      ldisc_send(primary_da, sizeof primary_da - 1, false);
     when 'c':  /* RIS: restore power-on settings */
       term_reset();
       term_clear_scrollback();
@@ -386,7 +399,7 @@ do_esc(uchar c)
         win_resize(term.rows, 80);
         term.reset_132 = 0;
       }
-      ldisc_send(null, 0, 0);
+      ldisc_flush();
     when 'H':  /* HTS: set a tab */
       term.tabs[curs->x] = true;
     when ANSI('8', '#'):    /* DECALN: fills screen with Es :-) */
@@ -578,7 +591,7 @@ set_modes(bool state)
           win_update_mouse();
         when 10: /* DECEDM: set local edit mode */
           term.editing = state;
-          ldisc_send(null, 0, 0);
+          ldisc_flush();
         when 25: /* DECTCEM: enable/disable cursor */
           term.cursor_on = state;
         when 40: /* Allow/disallow DECCOLM (xterm c132 resource) */
@@ -637,7 +650,7 @@ set_modes(bool state)
           term.screen.insert = state;
         when 12: /* SRM: set echo mode */
           term.echoing = !state;
-          ldisc_send(null, 0, 0);
+          ldisc_flush();
         when 20: /* LNM: Return sends ... */
           term.newline_mode = state;
       }
@@ -663,7 +676,7 @@ do_csi(uchar c)
     when ANSI('c', '>'):     /* DA: report version */
       /* Terminal type 77 (ASCII 'M' for mintty) */
       if (!nargs || (nargs == 1 && arg0 == 0))
-        ldisc_printf(0, "\e[>77;%u;0c", DECIMAL_VERSION);
+        sendf("\e[>77;%u;0c", DECIMAL_VERSION);
     when 'a':        /* HPR: move right N cols */
       move(curs->x + def_arg0, curs->y, 1);
     when 'C':        /* CUF: Cursor right */
@@ -717,12 +730,12 @@ do_csi(uchar c)
     when 'P':        /* DCH: delete chars */
       insert_char(-def_arg0);
     when 'c':        /* DA: terminal type query */
-      ldisc_send(primary_da, sizeof primary_da - 1, 0);
+      ldisc_send(primary_da, sizeof primary_da - 1, false);
     when 'n':        /* DSR: cursor position query */
       if (arg0 == 6)
-        ldisc_printf(0, "\e[%d;%dR", curs->y + 1, curs->x + 1);
+        sendf("\e[%d;%dR", curs->y + 1, curs->x + 1);
       else if (arg0 == 5) {
-        ldisc_send("\e[0n", 4, 0);
+        ldisc_send("\e[0n", 4, false);
       }
     when 'h' or ANSI_QUE('h'):  /* SM: toggle modes to high */
       set_modes(true);
@@ -824,15 +837,15 @@ do_csi(uchar c)
             if (nargs >= 2)
               win_maximise(arg1);
           when 11:
-            ldisc_send(win_is_iconic() ? "\e[1t" : "\e[2t", 4, 0);
+            ldisc_send(win_is_iconic() ? "\e[1t" : "\e[2t", 4, false);
           when 13:
             win_get_pos(&x, &y);
-            ldisc_printf(0, "\e[3;%d;%dt", x, y);
+            sendf("\e[3;%d;%dt", x, y);
           when 14:
             win_get_pixels(&x, &y);
-            ldisc_printf(0, "\e[4;%d;%dt", x, y);
+            sendf("\e[4;%d;%dt", x, y);
           when 18:
-            ldisc_printf(0, "\e[8;%d;%dt", term.rows, term.cols);
+            sendf("\e[8;%d;%dt", term.rows, term.cols);
           when 19:
            /*
             * Hmmm. Strictly speaking we
@@ -850,7 +863,7 @@ do_csi(uchar c)
             * what they would like it to do.
             */
           when 20 or 21:
-            ldisc_send("\e]l\e\\", 5, 0);
+            ldisc_send("\e]l\e\\", 5, false);
         }
       }
     }
@@ -898,7 +911,7 @@ do_csi(uchar c)
     }
     when 'x': {      /* DECREQTPARM: report terminal characteristics */
       if (arg0 <= 1)
-        ldisc_printf(0, "\e[%c;1;1;112;112;1;0x", '2' + arg0);
+        sendf("\e[%c;1;1;112;112;1;0x", '2' + arg0);
     }
     when 'Z': {       /* CBT */
       int i = def_arg0; 
@@ -947,12 +960,12 @@ do_colour_osc(uint i)
   }
   uint rgb, r, g, b;
   if (!strcmp(s, "?")) {
-    ldisc_printf(0, "\e]%u;", term.esc_args[0]);
+    sendf("\e]%u;", term.esc_args[0]);
     if (has_index_arg)
-      ldisc_printf(0, "%u;", i);
+      sendf("%u;", i);
     uint c = win_get_colour(i);
     r = red(c), g = green(c), b = blue(c);
-    ldisc_printf(0, "rgb:%04x/%04x/%04x\e\\", r * 0x101, g * 0x101, b * 0x101);
+    sendf("rgb:%04x/%04x/%04x\e\\", r * 0x101, g * 0x101, b * 0x101);
   }
   else if (sscanf(s, "#%6x%c", &rgb, &(char){0}) == 1)
     win_set_colour(i, rgb_to_colour(rgb));
@@ -982,7 +995,7 @@ do_osc(void)
       when 12: do_colour_osc(CURSOR_COLOUR_I);
       when 7770:
         if (!strcmp(s, "?"))
-          ldisc_printf(0, "\e]7770;%u\e\\", win_get_font_size());
+          sendf("\e]7770;%u\e\\", win_get_font_size());
         else {
           char *end;
           int i = strtol(s, &end, 10);
@@ -995,7 +1008,7 @@ do_osc(void)
         }
       when 701 or 7776:  // Set/get locale. 701 is from urxvt.
         if (!strcmp(s, "?"))
-          ldisc_printf(0, "\e]%u;%s\e\\", arg, cs_get_locale());
+          sendf("\e]%u;%s\e\\", arg, cs_get_locale());
         else
           cs_set_locale(s);
     }

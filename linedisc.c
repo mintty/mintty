@@ -71,16 +71,15 @@ ldisc_init(void)
 }
 
 void
-ldisc_printf(bool interactive, const char *fmt, ...)
+ldisc_flush(void)
 {
-  va_list va;
-  va_start(va, fmt);
-  char *s;
-  int len = vasprintf(&s, fmt, va);
-  va_end(va);
-  if (len >= 0)
-    ldisc_send(s, len, interactive);
-  free(s);
+  if (ldisc.buflen != 0) {
+    child_write(ldisc.buf, ldisc.buflen);
+    while (ldisc.buflen > 0) {
+      bsb(uclen(ldisc.buf[ldisc.buflen - 1]));
+      ldisc.buflen--;
+    }
+  }
 }
 
 void
@@ -181,13 +180,7 @@ ldisc_send(const char *buf, int len, bool interactive)
     }
   }
   else {
-    if (ldisc.buflen != 0) {
-      child_write(ldisc.buf, ldisc.buflen);
-      while (ldisc.buflen > 0) {
-        bsb(uclen(ldisc.buf[ldisc.buflen - 1]));
-        ldisc.buflen--;
-      }
-    }
+    ldisc_flush();
     if (len > 0) {
       if (term.echoing)
         term_write(buf, len);
