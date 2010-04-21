@@ -466,7 +466,7 @@ paste_hdrop(HDROP drop)
     free(fn);
   }
   buf_pos--;  // Drop trailing space
-  ldisc_send(buf, buf_pos, false);
+  ldisc_send(buf, buf_pos, true);
   free(buf);
 }
 

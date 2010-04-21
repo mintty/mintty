@@ -1080,7 +1080,7 @@ term_set_focus(bool has_focus)
     term.has_focus = has_focus;
     term_schedule_cblink();
     if (term.report_focus)
-      ldisc_send(has_focus ? "\e[I" : "\e[O", 3, 0);
+      ldisc_send(has_focus ? "\e[I" : "\e[O", 3, false);
   }
 }
 

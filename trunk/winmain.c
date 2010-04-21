@@ -437,7 +437,7 @@ reset_term(void)
   term_deselect();
   term_clear_scrollback();
   win_update();
-  ldisc_send(null, 0, 0);
+  ldisc_flush();
 }
 
 static void
@@ -462,7 +462,7 @@ win_reconfig(void)
   * Flush the line discipline's edit buffer in
   * case local editing has just been disabled.
   */
-  ldisc_send(null, 0, 0);
+  ldisc_flush();
   
  /* Pass new config data to the terminal */
   term_reconfig();
@@ -499,7 +499,7 @@ win_reconfig(void)
   bool old_ambig_wide = cs_ambig_wide;
   cs_reconfig();
   if (term.report_ambig_width && old_ambig_wide != cs_ambig_wide)
-    ldisc_send(cs_ambig_wide ? "\e[2W" : "\e[1W", 4, 0);
+    ldisc_send(cs_ambig_wide ? "\e[2W" : "\e[1W", 4, false);
 }
 
 uint
@@ -623,7 +623,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_CHAR or WM_SYSCHAR:
       {
         wchar wc = wp;
-        luni_send(&wc, 1, 1);
+        luni_send(&wc, 1, true);
         return 0;
       }
     when WM_INPUTLANGCHANGE:
@@ -641,7 +641,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         if (len > 0) {
           char buf[len];
           ImmGetCompositionStringW(imc, GCS_RESULTSTR, buf, len);
-          luni_send((wchar *)buf, len / 2, 1);
+          luni_send((wchar *)buf, len / 2, true);
         }
         ImmReleaseContext(wnd, imc);
         return 1;
