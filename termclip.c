@@ -202,21 +202,18 @@ term_send_paste(void)
   if (term.paste_len == 0)
     return;
 
-  while (term.paste_pos < term.paste_len) {
-    int n = 0;
-    while (n + term.paste_pos < term.paste_len) {
-      if (term.paste_buffer[term.paste_pos + n++] == '\r')
-        break;
-    }
-    luni_send(term.paste_buffer + term.paste_pos, n, true);
-    term.paste_pos += n;
-
-    if (term.paste_pos < term.paste_len)
-      return;
+  if (term.paste_pos < term.paste_len) {
+    int i = term.paste_pos;
+    while (i < term.paste_len && term.paste_buffer[i++] != '\r');
+    luni_send(term.paste_buffer + term.paste_pos, i - term.paste_pos, true);
+    term.paste_pos = i;
   }
-  free(term.paste_buffer);
-  term.paste_buffer = null;
-  term.paste_len = 0;
+
+  if (term.paste_pos == term.paste_len) {
+    free(term.paste_buffer);
+    term.paste_buffer = null;
+    term.paste_len = 0;
+  }
 }
 
 void
