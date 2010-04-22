@@ -5,10 +5,10 @@
 
 #include "termpriv.h"
 
-#include "linedisc.h"
 #include "win.h"
 #include "charset.h"
 #include "print.h"
+#include "child.h"
 
 struct term term;
 
@@ -127,7 +127,7 @@ term_reset(void)
   term.rvideo = 0;
   term.in_vbell = false;
   term.cursor_on = true;
-  term.editing = term.echoing = false;
+  term.echoing = false;
   term.shortcut_override = term.escape_sends_fs = term.app_escape_key = false;
   term.app_keypad = term.app_cursor_keys = term.app_wheel = false;
   term.wheel_reporting = true;
@@ -1080,7 +1080,7 @@ term_set_focus(bool has_focus)
     term.has_focus = has_focus;
     term_schedule_cblink();
     if (term.report_focus)
-      ldisc_send(has_focus ? "\e[I" : "\e[O", 3, false);
+      child_write(has_focus ? "\e[I" : "\e[O", 3);
   }
 }
 

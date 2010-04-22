@@ -7,7 +7,6 @@
 #include "charset.h"
 #include "child.h"
 #include "config.h"
-#include "linedisc.h"
 
 #include <winnls.h>
 #include <richedit.h>
@@ -466,7 +465,7 @@ paste_hdrop(HDROP drop)
     free(fn);
   }
   buf_pos--;  // Drop trailing space
-  ldisc_send(buf, buf_pos, true);
+  child_send(buf, buf_pos);
   free(buf);
 }
 

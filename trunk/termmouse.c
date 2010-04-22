@@ -4,8 +4,8 @@
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "termpriv.h"
-#include "linedisc.h"
 #include "win.h"
+#include "child.h"
 
 /*
  * Fetch the character at a particular position in a line array.
@@ -215,7 +215,7 @@ send_mouse_event(char code, mod_keys mods, pos p)
   buf[3] = code | (mods & ~cfg.click_target_mod) << 2;
   buf[4] = p.x + 33;
   buf[5] = p.y + 33;
-  ldisc_send(buf, 6, false);
+  child_write(buf, 6);
 }
 
 static pos
@@ -256,7 +256,7 @@ send_keys(char *code, uint len, uint count)
     uint size = len * count;
     char buf[size], *p = buf;
     while (count--) { memcpy(p, code, len); p += len; }
-    ldisc_send(buf, size, false);
+    child_write(buf, size);
   }
 }
 
@@ -355,8 +355,7 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
     term_write(0, 0);
     
     // "Clicks place cursor" implementation.
-    if (!cfg.clicks_place_cursor || term.on_alt_screen ||
-        term.app_cursor_keys || term.editing)
+    if (!cfg.clicks_place_cursor || term.on_alt_screen || term.app_cursor_keys)
       return;
     
     p = term.selected ? term.sel_end : get_selpoint(p);

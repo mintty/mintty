@@ -237,7 +237,6 @@ struct term {
   bool tblinker; /* When the blinking text is on */
   bool blink_is_real;    /* Actually blink blinking text */
   bool echoing;  /* Does terminal want local echo? */
-  bool editing;  /* Does terminal want local edit? */
   bool printing, only_printing;  /* Are we doing ANSI printing? */
   int  print_state;      /* state of print-end-sequence scan */
   bufchain *printer_buf;        /* buffered data for printer */
@@ -297,16 +296,6 @@ struct term {
   wchar *paste_buffer;
   int paste_len, paste_pos;
 
- /*
-  * child_read calls term_write, but it can also be called from
-  * the ldisc if the ldisc is called _within_ term_out. So we
-  * have to guard against re-entrancy - if from_backend is
-  * called recursively like this, it will simply add data to the
-  * end of the buffer term_out is in the process of working
-  * through.
-  */
-  bool in_term_write;
-  
  /* True when we've seen part of a multibyte input char */
   bool in_mb_char;
   

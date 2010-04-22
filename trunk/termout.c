@@ -5,10 +5,10 @@
 
 #include "termpriv.h"
 
-#include "linedisc.h"
 #include "win.h"
 #include "appinfo.h"
 #include "charset.h"
+#include "child.h"
 
 #include <sys/termios.h>
 
@@ -42,7 +42,7 @@ static void sendf(const char *fmt, ...)
   int len = vasprintf(&s, fmt, va);
   va_end(va);
   if (len >= 0)
-    ldisc_send(s, len, false);
+    child_write(s, len);
   free(s);
 }
 
@@ -237,7 +237,7 @@ write_ctrl(char c)
       if (term.newline_mode)
         write_return();
     when CTRL('E'):   /* ENQ: terminal type query */
-      ldisc_send(cfg.answerback, strlen(cfg.answerback), false);
+      child_write(cfg.answerback, strlen(cfg.answerback));
     when CTRL('N'):   /* LS1: Locking-shift one */
       term.screen.curs.g1 = true;
       term_update_cs();
@@ -391,7 +391,7 @@ do_esc(uchar c)
         curs->y--;
       curs->wrapnext = false;
     when 'Z':  /* DECID: terminal type query */
-      ldisc_send(primary_da, sizeof primary_da - 1, false);
+      child_write(primary_da, sizeof primary_da - 1);
     when 'c':  /* RIS: restore power-on settings */
       term_reset();
       term_clear_scrollback();
@@ -399,7 +399,6 @@ do_esc(uchar c)
         win_resize(term.rows, 80);
         term.reset_132 = 0;
       }
-      ldisc_flush();
     when 'H':  /* HTS: set a tab */
       term.tabs[curs->x] = true;
     when ANSI('8', '#'):    /* DECALN: fills screen with Es :-) */
@@ -589,9 +588,6 @@ set_modes(bool state)
         when 9:  /* X10_MOUSE */
           term.mouse_mode = state ? MM_X10 : 0;
           win_update_mouse();
-        when 10: /* DECEDM: set local edit mode */
-          term.editing = state;
-          ldisc_flush();
         when 25: /* DECTCEM: enable/disable cursor */
           term.cursor_on = state;
         when 40: /* Allow/disallow DECCOLM (xterm c132 resource) */
@@ -650,7 +646,6 @@ set_modes(bool state)
           term.screen.insert = state;
         when 12: /* SRM: set echo mode */
           term.echoing = !state;
-          ldisc_flush();
         when 20: /* LNM: Return sends ... */
           term.newline_mode = state;
       }
@@ -730,12 +725,12 @@ do_csi(uchar c)
     when 'P':        /* DCH: delete chars */
       insert_char(-def_arg0);
     when 'c':        /* DA: terminal type query */
-      ldisc_send(primary_da, sizeof primary_da - 1, false);
+      child_write(primary_da, sizeof primary_da - 1);
     when 'n':        /* DSR: cursor position query */
       if (arg0 == 6)
         sendf("\e[%d;%dR", curs->y + 1, curs->x + 1);
       else if (arg0 == 5) {
-        ldisc_send("\e[0n", 4, false);
+        child_write("\e[0n", 4);
       }
     when 'h' or ANSI_QUE('h'):  /* SM: toggle modes to high */
       set_modes(true);
@@ -837,7 +832,7 @@ do_csi(uchar c)
             if (nargs >= 2)
               win_maximise(arg1);
           when 11:
-            ldisc_send(win_is_iconic() ? "\e[1t" : "\e[2t", 4, false);
+            child_write(win_is_iconic() ? "\e[1t" : "\e[2t", 4);
           when 13:
             win_get_pos(&x, &y);
             sendf("\e[3;%d;%dt", x, y);
@@ -863,7 +858,7 @@ do_csi(uchar c)
             * what they would like it to do.
             */
           when 20 or 21:
-            ldisc_send("\e]l\e\\", 5, false);
+            child_write("\e]l\e\\", 5);
         }
       }
     }
@@ -1020,9 +1015,6 @@ term_write(const char *data, int len)
 {
   bufchain_add(term.inbuf, data, len);
 
-  if (term.in_term_write)
-    return;
-    
  /*
   * During drag-selects, we do not process terminal input,
   * because the user will want the screen to hold still to
@@ -1040,7 +1032,6 @@ term_write(const char *data, int len)
   * in-memory display. There's a big state machine in here to
   * process escape sequences...
   */
-  term.in_term_write = true;
   int unget = -1;
   uchar *chars = 0;
   int nchars = 0;
@@ -1321,7 +1312,6 @@ term_write(const char *data, int len)
       }
     }
   }
-  term.in_term_write = false;
   win_schedule_update();
   term_print_flush();
 }
