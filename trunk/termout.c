@@ -1010,56 +1010,42 @@ do_osc(void)
   }
 }
 
+/* Empty the input buffer */
 void
-term_write(const char *data, int len)
+term_flush(void)
 {
-  bufchain_add(term.inbuf, data, len);
+  term_write(term.inbuf, term.inbuf_pos);
+  free(term.inbuf);
+  term.inbuf = 0;
+  term.inbuf_pos = 0;
+  term.inbuf_size = 0;
+}
 
+void
+term_write(const char *buf, uint len)
+{
  /*
   * During drag-selects, we do not process terminal input,
   * because the user will want the screen to hold still to
   * be selected.
   */
-  if (term_selecting())
+  if (term_selecting()) {
+    if (term.inbuf_pos + len > term.inbuf_size) {
+      term.inbuf_size = max(term.inbuf_pos, term.inbuf_size * 4 + 4096);
+      term.inbuf = renewn(term.inbuf, term.inbuf_size);
+    }
+    memcpy(term.inbuf + term.inbuf_pos, buf, len);
+    term.inbuf_pos += len;
     return;
+  }
     
   // Reset cursor blinking.
   term.cblinker = 1;
   term_schedule_cblink();
 
- /*
-  * Remove everything currently in `inbuf' and stick it up on the
-  * in-memory display. There's a big state machine in here to
-  * process escape sequences...
-  */
-  int unget = -1;
-  uchar *chars = 0;
-  int nchars = 0;
-  while (nchars > 0 || unget != -1 || bufchain_size(term.inbuf) > 0) {
-    uchar c;
-    if (unget == -1) {
-      if (nchars == 0) {
-        void *ret;
-        bufchain_prefix(term.inbuf, &ret, &nchars);
-        uchar localbuf[256];
-        nchars = min(nchars, (int) sizeof localbuf);
-        memcpy(localbuf, ret, nchars);
-        bufchain_consume(term.inbuf, nchars);
-        chars = localbuf;
-        assert(chars != null);
-      }
-      c = *chars++;
-      nchars--;
-    }
-    else {
-      c = unget;
-      unget = -1;
-    }
-
-   /* Note only VT220+ are 8-bit VT102 is seven bit, it shouldn't even
-    * be able to display 8-bit characters, but I'll let that go 'cause
-    * of i18n.
-    */
+  uint pos = 0;
+  while (pos < len) {
+    uchar c = buf[pos++];
 
    /*
     * If we're printing, add the character to the printer
@@ -1106,12 +1092,12 @@ term_write(const char *data, int len)
         switch (cs_mb1towc(&wc, c)) {
           when 0: // NUL or low surrogate
             if (wc)
-              unget = c;
+              pos--;
           when -1: // Encoding error
             cs_mb1towc(0, 0); // Clear decoder state
             write_error();
             if (term.in_mb_char)
-              unget = c;
+              pos--;
             term.in_mb_char = false;
             continue;
           when -2: // Incomplete character
