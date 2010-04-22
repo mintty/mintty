@@ -84,7 +84,8 @@ child_proc(void)
 {
   if (read_len > 0) {
     term_write(read_buf, read_len);
-    write(log_fd, read_buf, read_len);
+    if (log_fd >= 0)
+      write(log_fd, read_buf, read_len);
     read_len = 0;
     SetEvent(proc_event);
   }
@@ -332,12 +333,30 @@ child_is_parent(void)
 }
 
 void
-child_write(const char *buf, int len)
+child_write(const char *buf, uint len)
 { 
   if (pty_fd >= 0)
     write(pty_fd, buf, len); 
   else if (pid < 0)
     exit(0);
+}
+
+void
+child_send(const char *buf, uint len)
+{
+  term_reset_screen();
+  if (term.echoing)
+    term_write(buf, len);
+  child_write(buf, len);
+}
+
+void
+child_sendw(const wchar *ws, uint wlen)
+{
+  char s[wlen * cs_cur_max];
+  int len = cs_wcntombn(s, ws, sizeof s, wlen);
+  if (len > 0)
+    child_send(s, len);
 }
 
 void

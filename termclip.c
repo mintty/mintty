@@ -6,7 +6,7 @@
 #include "termpriv.h"
 
 #include "win.h"
-#include "linedisc.h"
+#include "child.h"
 #include "charset.h"
 
 /*
@@ -178,7 +178,7 @@ term_paste(wchar *data, uint len)
   
  /* Assume a small paste will be OK in one go. */
   if (term.paste_len < 256) {
-    luni_send(term.paste_buffer, term.paste_len, true);
+    child_sendw(term.paste_buffer, term.paste_len);
     if (term.paste_buffer)
       free(term.paste_buffer);
     term.paste_buffer = 0;
@@ -205,7 +205,7 @@ term_send_paste(void)
   if (term.paste_pos < term.paste_len) {
     int i = term.paste_pos;
     while (i < term.paste_len && term.paste_buffer[i++] != '\r');
-    luni_send(term.paste_buffer + term.paste_pos, i - term.paste_pos, true);
+    child_sendw(term.paste_buffer + term.paste_pos, i - term.paste_pos);
     term.paste_pos = i;
   }
 

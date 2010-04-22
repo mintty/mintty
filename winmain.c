@@ -8,7 +8,6 @@
 #include "term.h"
 #include "config.h"
 #include "appinfo.h"
-#include "linedisc.h"
 #include "child.h"
 #include "charset.h"
 
@@ -437,7 +436,6 @@ reset_term(void)
   term_deselect();
   term_clear_scrollback();
   win_update();
-  ldisc_flush();
 }
 
 static void
@@ -458,12 +456,6 @@ update_transparency(void)
 void
 win_reconfig(void)
 {
- /*
-  * Flush the line discipline's edit buffer in
-  * case local editing has just been disabled.
-  */
-  ldisc_flush();
-  
  /* Pass new config data to the terminal */
   term_reconfig();
   
@@ -499,7 +491,7 @@ win_reconfig(void)
   bool old_ambig_wide = cs_ambig_wide;
   cs_reconfig();
   if (term.report_ambig_width && old_ambig_wide != cs_ambig_wide)
-    ldisc_send(cs_ambig_wide ? "\e[2W" : "\e[1W", 4, false);
+    child_write(cs_ambig_wide ? "\e[2W" : "\e[1W", 4);
 }
 
 uint
@@ -623,7 +615,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_CHAR or WM_SYSCHAR:
       {
         wchar wc = wp;
-        luni_send(&wc, 1, true);
+        child_sendw(&wc, 1);
         return 0;
       }
     when WM_INPUTLANGCHANGE:
@@ -641,7 +633,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         if (len > 0) {
           char buf[len];
           ImmGetCompositionStringW(imc, GCS_RESULTSTR, buf, len);
-          luni_send((wchar *)buf, len / 2, true);
+          child_sendw((wchar *)buf, len / 2);
         }
         ImmReleaseContext(wnd, imc);
         return 1;
@@ -992,7 +984,6 @@ main(int argc, char *argv[])
   */
   term_init();
   term_resize(rows, cols);
-  ldisc_init();
   
  /*
   * Initialise the fonts, simultaneously correcting the guesses

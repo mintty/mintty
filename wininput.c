@@ -4,7 +4,6 @@
 
 #include "winpriv.h"
 
-#include "linedisc.h"
 #include "config.h"
 #include "charset.h"
 #include "child.h"
@@ -682,8 +681,8 @@ win_key_down(WPARAM wp, LPARAM lp)
   term_cancel_paste();
 
   do {
-    if (len) ldisc_send(buf, len, true);
-    if (wlen) luni_send(wbuf, wlen, true);
+    if (len) child_send(buf, len);
+    if (wlen) child_sendw(wbuf, wlen);
   } while (--count);
 
   return 1;
@@ -699,12 +698,12 @@ win_key_up(WPARAM wp, LPARAM unused(lp))
 
   if (alt_state > ALT_ALONE) {
     if (cs_cur_max == 1)
-      ldisc_send((char[]){alt_char}, 1, true);
+      child_send((char[]){alt_char}, 1);
     else {
       if (alt_char < 0x20)
         MultiByteToWideChar(CP_OEMCP, MB_USEGLYPHCHARS,
                             (char[]){alt_char}, 1, &alt_char, 1);
-      luni_send(&alt_char, 1, true);
+      child_sendw(&alt_char, 1);
     }
   }
   
