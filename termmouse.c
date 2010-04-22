@@ -352,7 +352,7 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
       term_copy();
     
     // Flush any output held back during selection.
-    term_write(0, 0);
+    term_flush();
     
     // "Clicks place cursor" implementation.
     if (!cfg.clicks_place_cursor || term.on_alt_screen || term.app_cursor_keys)

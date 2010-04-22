@@ -226,7 +226,8 @@ struct term {
 
   termchar erase_char;
 
-  bufchain *inbuf;      /* terminal input buffer */
+  char *inbuf;      /* terminal input buffer */
+  uint inbuf_size, inbuf_pos;
 
   bool rvideo;   /* global reverse video flag */
   bool cursor_on;        /* cursor enabled flag */
@@ -338,7 +339,8 @@ void term_cancel_paste(void);
 void term_reconfig(void);
 void term_flip_screen(void);
 void term_reset_screen(void);
-void term_write(const char *, int len);
+void term_write(const char *, uint len);
+void term_flush(void);
 void term_set_focus(bool has_focus);
 int  term_cursor_type(void);
 bool term_cursor_blinks(void);

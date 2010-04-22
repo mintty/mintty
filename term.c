@@ -272,7 +272,6 @@ term_clear_scrollback(void)
 void
 term_init(void)
 {
-  term.inbuf = new_bufchain();
   term.printer_buf = new_bufchain();
   term.state = TOPLEVEL;
   term.dispcurs = (pos){-1, -1};
