@@ -21,9 +21,7 @@
 #define posPlt(p1,p2) ( (p1).y <= (p2).y && (p1).x < (p2).x )
 #define posPle(p1,p2) ( (p1).y <= (p2).y && (p1).x <= (p2).x )
 
-void term_print_setup(void);
 void term_print_finish(void);
-void term_print_flush(void);
 
 void term_schedule_tblink(void);
 void term_schedule_cblink(void);

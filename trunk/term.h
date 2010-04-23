@@ -1,7 +1,6 @@
 #ifndef TERM_H
 #define TERM_H
 
-#include "bufchain.h"
 #include "minibidi.h"
 
 /*
@@ -240,7 +239,8 @@ struct term {
   bool echoing;  /* Does terminal want local echo? */
   bool printing, only_printing;  /* Are we doing ANSI printing? */
   int  print_state;      /* state of print-end-sequence scan */
-  bufchain *printer_buf;        /* buffered data for printer */
+  char *printbuf;        /* buffered data for printer */
+  uint printbuf_size, printbuf_pos;
 
   int  rows, cols;
   bool has_focus;
