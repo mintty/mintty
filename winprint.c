@@ -64,7 +64,6 @@ printer_write(void *data, uint len)
   if (printer) {
     DWORD written;
     WritePrinter(printer, data, len, &written);
-    write(1, data, len);
   }
 }
 
