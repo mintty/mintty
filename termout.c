@@ -9,6 +9,7 @@
 #include "appinfo.h"
 #include "charset.h"
 #include "child.h"
+#include "print.h"
 
 #include <sys/termios.h>
 
@@ -742,10 +743,13 @@ do_csi(uchar c)
           term.printing = true;
           term.only_printing = !term.esc_query;
           term.print_state = 0;
-          term_print_setup();
+          printer_start_job(cfg.printer);
         }
-        else if (arg0 == 4 && term.printing)
+        else if (arg0 == 4 && term.printing) {
+          // Drop escape sequence from print buffer and finish printing.
+          while (term.printbuf[--term.printbuf_pos] != '\e');
           term_print_finish();
+        }
       }
     when 'g':        /* TBC: clear tabs */
       if (nargs == 1) {
@@ -1010,6 +1014,19 @@ do_osc(void)
   }
 }
 
+void
+term_print_finish(void)
+{
+  if (term.printing) {
+    printer_write(term.printbuf, term.printbuf_pos);
+    free(term.printbuf);
+    term.printbuf = 0;
+    term.printbuf_size = term.printbuf_pos = 0;
+    printer_finish_job();
+    term.printing = term.only_printing = false;
+  }
+}
+
 /* Empty the input buffer */
 void
 term_flush(void)
@@ -1046,13 +1063,17 @@ term_write(const char *buf, uint len)
   uint pos = 0;
   while (pos < len) {
     uchar c = buf[pos++];
-
+    
    /*
     * If we're printing, add the character to the printer
     * buffer.
     */
     if (term.printing) {
-      bufchain_add(term.printer_buf, &c, 1);
+      if (term.printbuf_pos >= term.printbuf_size) {
+        term.printbuf_size = term.printbuf_size * 4 + 4096;
+        term.printbuf = renewn(term.printbuf, term.printbuf_size);
+      }
+      term.printbuf[term.printbuf_pos++] = c;
 
      /*
       * If we're in print-only mode, we use a much simpler
@@ -1066,13 +1087,12 @@ term_write(const char *buf, uint len)
           term.print_state = 2;
         else if (c == '4' && term.print_state == 2)
           term.print_state = 3;
-        else if (c == 'i' && term.print_state == 3)
-          term.print_state = 4;
-        else
-          term.print_state = 0;
-        if (term.print_state == 4) {
+        else if (c == 'i' && term.print_state == 3) {
+          term.printbuf_pos -= 4;
           term_print_finish();
         }
+        else
+          term.print_state = 0;
         continue;
       }
     }
@@ -1299,5 +1319,8 @@ term_write(const char *buf, uint len)
     }
   }
   win_schedule_update();
-  term_print_flush();
+  if (term.printing) {
+    printer_write(term.printbuf, term.printbuf_pos);
+    term.printbuf_pos = 0;
+  }
 }

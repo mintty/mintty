@@ -7,7 +7,6 @@
 
 #include "win.h"
 #include "charset.h"
-#include "print.h"
 #include "child.h"
 
 struct term term;
@@ -272,7 +271,6 @@ term_clear_scrollback(void)
 void
 term_init(void)
 {
-  term.printer_buf = new_bufchain();
   term.state = TOPLEVEL;
   term.dispcurs = (pos){-1, -1};
   term_reset();
@@ -647,59 +645,6 @@ term_erase_lots(bool line_only, bool from_begin, bool to_end)
   * application has explictly thrown them away). */
   if (erasing_lines_from_top && !term.on_alt_screen)
     term.tempsblines = 0;
-}
-
-
-/*
- * ANSI printing routines.
- */
-void
-term_print_setup(void)
-{
-  bufchain_clear(term.printer_buf);
-  printer_start_job(cfg.printer);
-}
-
-void
-term_print_flush(void)
-{
-  void *data;
-  int len;
-  int size;
-  while ((size = bufchain_size(term.printer_buf)) > 5) {
-    bufchain_prefix(term.printer_buf, &data, &len);
-    if (len > size - 5)
-      len = size - 5;
-    printer_write(data, len);
-    bufchain_consume(term.printer_buf, len);
-  }
-}
-
-void
-term_print_finish(void)
-{
-  void *data;
-  int len, size;
-  char c;
-
-  if (!term.printing && !term.only_printing)
-    return;     /* we need do nothing */
-
-  term_print_flush();
-  while ((size = bufchain_size(term.printer_buf)) > 0) {
-    bufchain_prefix(term.printer_buf, &data, &len);
-    c = *(char *) data;
-    if (c == '\033' || c == '\233') {
-      bufchain_consume(term.printer_buf, size);
-      break;
-    }
-    else {
-      printer_write(&c, 1);
-      bufchain_consume(term.printer_buf, 1);
-    }
-  }
-  printer_finish_job();
-  term.printing = term.only_printing = false;
 }
 
 void
