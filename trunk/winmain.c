@@ -1060,7 +1060,7 @@ main(int argc, char *argv[])
         return msg.wParam;      
       if (!IsDialogMessage(config_wnd, &msg))
         DispatchMessage(&msg);
-      term_send_paste();
     }
+    term_send_paste();
   }
 }
