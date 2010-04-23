@@ -176,14 +176,7 @@ term_paste(wchar *data, uint len)
       term.paste_buffer[term.paste_len++] = '\r';
   }
   
- /* Assume a small paste will be OK in one go. */
-  if (term.paste_len < 256) {
-    child_sendw(term.paste_buffer, term.paste_len);
-    if (term.paste_buffer)
-      free(term.paste_buffer);
-    term.paste_buffer = 0;
-    term.paste_pos = term.paste_len = 0;
-  }
+  term_send_paste();
 }
 
 void
