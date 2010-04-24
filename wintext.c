@@ -44,6 +44,23 @@ bool font_ambig_wide;
 
 COLORREF colours[NALLCOLOURS];
 
+static colour 
+brighten(colour c)
+{
+  uint r = red(c), g = green(c), b = blue(c);   
+  uint s = min(85, 255 - max(max(r, g), b));
+  return make_colour(r + s, g + s, b + s);
+}
+
+static uint
+colour_dist(colour a, colour b)
+{
+  return
+    2 * sqr(red(a) - red(b)) +
+    4 * sqr(green(a) - green(b)) +
+    1 * sqr(blue(a) - blue(b));
+}
+
 #define CLEARTYPE_QUALITY 5
 
 static uint
@@ -378,17 +395,6 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   if (lattr != LATTR_NORM && x * 2 >= term.cols)
     return;
 
-  int cursor_type = term_cursor_type();
-  if ((attr & TATTR_ACTCURS) && cursor_type == CUR_BLOCK) {
-    attr &= ~(ATTR_REVERSE | ATTR_BLINK | ATTR_COLOURS |
-              ATTR_DIM | ATTR_INVISIBLE);
-    if (bold_mode == BOLD_COLOURS)
-      attr &= ~ATTR_BOLD;
-
-   /* cursor fg and bg */
-    attr |= 260 << ATTR_FGSHIFT | 261 << ATTR_BGSHIFT;
-  }
-
   uint nfont; 
   switch (lattr) {
     when LATTR_NORM: nfont = 0;
@@ -417,14 +423,11 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
 
   uint nfg = (attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
   uint nbg = (attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
+
   if (term.rvideo) {
-    if (nfg >= 260)
-      nfg ^= 1;
-    else if (nfg >= 256)
+    if (nfg >= 256)
       nfg ^= 2;
-    if (nbg >= 260)
-      nbg ^= 1;
-    else if (nbg >= 256)
+    if (nbg >= 256)
       nbg ^= 2;
   }
   if (bold_mode == BOLD_COLOURS) {
@@ -441,20 +444,33 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
         nbg |= 1;
     }
   }
+  
   colour fg = colours[nfg];
   colour bg = colours[nbg];
+  
   if (attr & ATTR_DIM) {
     fg = (fg & 0xFEFEFEFE) >> 1;
     if (!cfg.bold_as_bright)
       fg += (bg & 0xFEFEFEFE) >> 1;
   }
   if (attr & ATTR_REVERSE) {
-    colour t = fg;
-    fg = bg;
-    bg = t;
+    colour t = fg; fg = bg; bg = t;
   }
   if (attr & ATTR_INVISIBLE)
     fg = bg;
+
+  bool has_cursor = attr & (TATTR_ACTCURS | TATTR_PASCURS);
+  int cursor_type = term_cursor_type();
+  colour cursor_colour = 0;
+  
+  if (has_cursor) {
+   /* Swap cursor colours if too close to the background colour */
+    bool swap = colour_dist(colours[261], bg) < 32768;
+    cursor_colour = colours[261 - swap];
+    if ((attr & TATTR_ACTCURS) && cursor_type == CUR_BLOCK)
+      fg = colours[260 + swap], bg = cursor_colour;
+  }
+
   SelectObject(dc, fonts[nfont]);
   SetTextColor(dc, fg);
   SetBkColor(dc, bg);
@@ -522,10 +538,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
     DeleteObject(oldpen);
   }
   
- /* Draw cursor */
-  if (attr & (TATTR_ACTCURS | TATTR_PASCURS)) {
-    colour cursor_colour = colours[261 - term.rvideo];
-
+  if (has_cursor) {
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, cursor_colour));
     HBRUSH oldbrush = SelectObject(dc, GetStockObject(NULL_BRUSH));
     switch(cursor_type) {
@@ -600,23 +613,6 @@ win_set_sbar(int total, int start, int page)
   }
 }
 
-static colour 
-brighter(colour c)
-{
-  uint r = red(c), g = green(c), b = blue(c);   
-  uint s = min(85, 255 - max(max(r, g), b));
-  return make_colour(r + s, g + s, b + s);
-}
-
-static uint
-colour_dist(colour a, colour b)
-{
-  return
-    2 * sqr(red(a) - red(b)) +
-    4 * sqr(green(a) - green(b)) +
-    1 * sqr(blue(a) - blue(b));
-}
-
 void
 win_set_colour(uint n, colour c)
 {
@@ -625,9 +621,9 @@ win_set_colour(uint n, colour c)
   colours[n] = c;
   switch (n) {
     when 256:
-      colours[257] = brighter(c);
+      colours[257] = brighten(c);
     when 258:
-      colours[259] = brighter(c);
+      colours[259] = brighten(c);
     when 261: {
       // Set the colour of text under the cursor to whichever of foreground
       // and background colour is further away.
