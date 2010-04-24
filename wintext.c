@@ -309,94 +309,6 @@ win_schedule_update(void)
   }
 }
 
-/*
- * This is a wrapper to ExtTextOut() to force Windows to display
- * the precise glyphs we give it. Otherwise it would do its own
- * bidi and Arabic shaping, and we would end up uncertain which
- * characters it had put where.
- */
-static void
-exact_textout(int x, int y, CONST RECT * lprc, ushort * lpString,
-              UINT cbCount, CONST INT * lpDx, int opaque)
-{
-  GCP_RESULTSW gcpr;
-  char *buffer = newn(char, cbCount * 2 + 2);
-  char *classbuffer = newn(char, cbCount);
-  memset(&gcpr, 0, sizeof (gcpr));
-  memset(buffer, 0, cbCount * 2 + 2);
-  memset(classbuffer, GCPCLASS_NEUTRAL, cbCount);
-
-  gcpr.lStructSize = sizeof (gcpr);
-  gcpr.lpGlyphs = (void *) buffer;
-  gcpr.lpClass = (void *) classbuffer;
-  gcpr.nGlyphs = cbCount;
-
-  GetCharacterPlacementW(dc, lpString, cbCount, 0, &gcpr,
-                         FLI_MASK | GCP_CLASSIN | GCP_DIACRITIC);
-
-  ExtTextOut(dc, x, y + cfg.row_spacing,
-             ETO_GLYPH_INDEX | ETO_CLIPPED | (opaque ? ETO_OPAQUE : 0), lprc,
-             buffer, cbCount, lpDx);
-}
-
-/*
- * The exact_textout() wrapper, unfortunately, destroys the useful
- * Windows `font linking' behaviour: automatic handling of Unicode
- * code points not supported in this font by falling back to a font
- * which does contain them. Therefore, we adopt a multi-layered
- * approach: for any potentially-bidi text, we use exact_textout(),
- * and for everything else we use a simple ExtTextOut as we did
- * before exact_textout() was introduced.
- */
-static void
-general_textout(int x, int y, CONST RECT * lprc, ushort * lpString,
-                UINT cbCount, CONST INT * lpDx, int opaque)
-{
-  int i, j, xp, xn;
-  RECT newrc;
-
-  xp = xn = x;
-
-  for (i = 0; i < (int) cbCount;) {
-    int rtl = is_rtl(lpString[i]);
-
-    xn += lpDx[i];
-
-    for (j = i + 1; j < (int) cbCount; j++) {
-      if (rtl != is_rtl(lpString[j]))
-        break;
-      xn += lpDx[j];
-    }
-
-   /*
-    * Now [i,j) indicates a maximal substring of lpString
-    * which should be displayed using the same textout
-    * function.
-    */
-    if (rtl) {
-      newrc.left = lprc->left + xp - x;
-      newrc.right = lprc->left + xn - x;
-      newrc.top = lprc->top;
-      newrc.bottom = lprc->bottom;
-      exact_textout(xp, y, &newrc, lpString + i, j - i, lpDx + i, opaque);
-    }
-    else {
-      newrc.left = lprc->left + xp - x;
-      newrc.right = lprc->left + xn - x;
-      newrc.top = lprc->top;
-      newrc.bottom = lprc->bottom;
-      ExtTextOutW(dc, xp, y + cfg.row_spacing, 
-                  ETO_CLIPPED | (opaque ? ETO_OPAQUE : 0), &newrc,
-                  lpString + i, j - i, lpDx + i);
-    }
-
-    i = j;
-    xp = xn;
-  }
-
-  assert(xn - x == lprc->right - lprc->left);
-}
-
 static void
 another_font(int fontno)
 {
@@ -453,33 +365,19 @@ static void
 win_text_internal(int x, int y, wchar *text, int len,
                   int chars, uint attr, int lattr)
 {
-  COLORREF fg, bg, t;
-  int nfg, nbg, nfont;
-  RECT line_box;
-  int force_manual_underline = 0;
-  int fnt_width, char_width;
-
   lattr &= LATTR_MODE;
+  int char_width = font_width * (1 + (lattr != LATTR_NORM));
 
-  char_width = fnt_width = font_width * (1 + (lattr != LATTR_NORM));
+ /* Convert to window coordinates */
+  x = x * char_width + PADDING;
+  y = y * font_height + PADDING;
 
   if (attr & ATTR_WIDE)
     char_width *= 2;
 
-  int dxs[len];
-  for (int i = 0; i < len; i++)
-    dxs[i] = char_width;
-  if (chars < len)
-    dxs[chars] = 0;
-
  /* Only want the left half of double width lines */
   if (lattr != LATTR_NORM && x * 2 >= term.cols)
     return;
-
-  x *= fnt_width;
-  y *= font_height;
-  x += PADDING;
-  y += PADDING;
 
   if ((attr & TATTR_ACTCURS) && term_cursor_type() == CUR_BLOCK) {
     attr &= ~(ATTR_REVERSE | ATTR_BLINK | ATTR_COLOURS |
@@ -488,14 +386,14 @@ win_text_internal(int x, int y, wchar *text, int len,
       attr &= ~ATTR_BOLD;
 
    /* cursor fg and bg */
-    attr |= (260 << ATTR_FGSHIFT) | (261 << ATTR_BGSHIFT);
+    attr |= 260 << ATTR_FGSHIFT | 261 << ATTR_BGSHIFT;
   }
 
-  nfont = 0;
+  uint nfont; 
   switch (lattr) {
-    when LATTR_NORM: // do nothing
-    when LATTR_WIDE: nfont |= FONT_WIDE;
-    otherwise:       nfont |= FONT_WIDE + FONT_HIGH;
+    when LATTR_NORM: nfont = 0;
+    when LATTR_WIDE: nfont = FONT_WIDE;
+    otherwise:       nfont = FONT_WIDE + FONT_HIGH;
   }
   if (attr & ATTR_NARROW)
     nfont |= FONT_NARROW;
@@ -505,19 +403,20 @@ win_text_internal(int x, int y, wchar *text, int len,
   if (und_mode == UND_FONT && (attr & ATTR_UNDER))
     nfont |= FONT_UNDERLINE;
   another_font(nfont);
+  
+  bool force_manual_underline = false;
   if (!fonts[nfont]) {
     if (nfont & FONT_UNDERLINE)
-      force_manual_underline = 1;
-   /* Don't do the same for manual bold, it could be bad news. */
-
+      force_manual_underline = true;
+    // Don't force manual bold, it could be bad news.
     nfont &= ~(FONT_BOLD | FONT_UNDERLINE);
   }
   another_font(nfont);
   if (!fonts[nfont])
     nfont = FONT_NORMAL;
 
-  nfg = ((attr & ATTR_FGMASK) >> ATTR_FGSHIFT);
-  nbg = ((attr & ATTR_BGMASK) >> ATTR_BGSHIFT);
+  uint nfg = (attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
+  uint nbg = (attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
   if (term.rvideo) {
     if (nfg >= 260)
       nfg ^= 1;
@@ -542,15 +441,15 @@ win_text_internal(int x, int y, wchar *text, int len,
         nbg |= 1;
     }
   }
-  fg = colours[nfg];
-  bg = colours[nbg];
+  colour fg = colours[nfg];
+  colour bg = colours[nbg];
   if (attr & ATTR_DIM) {
     fg = (fg & 0xFEFEFEFE) >> 1;
     if (!cfg.bold_as_bright)
       fg += (bg & 0xFEFEFEFE) >> 1;
   }
   if (attr & ATTR_REVERSE) {
-    t = fg;
+    colour t = fg;
     fg = bg;
     bg = t;
   }
@@ -559,39 +458,65 @@ win_text_internal(int x, int y, wchar *text, int len,
   SelectObject(dc, fonts[nfont]);
   SetTextColor(dc, fg);
   SetBkColor(dc, bg);
-  if (attr & TATTR_COMBINING)
-    SetBkMode(dc, TRANSPARENT);
-  else
-    SetBkMode(dc, OPAQUE);
-  line_box.left = x;
-  line_box.top = y;
-  line_box.right = x + char_width * chars;
-  line_box.bottom = y + font_height;
+  
+ /* Check whether the text has any right-to-left characters */
+  bool has_rtl = false;
+  for (int i = 0; i < len && !has_rtl; i++)
+    has_rtl = is_rtl(text[i]);
 
- /* Only want the left half of double width lines */
-  if (line_box.right > font_width * term.cols + PADDING)
-    line_box.right = font_width * term.cols + PADDING;
-
- /* print Glyphs as they are, without Windows' Shaping */
-  general_textout(x, y - font_height * (lattr == LATTR_BOT),
-                  &line_box, text, len, dxs, !(attr & TATTR_COMBINING));
-
- /* And the shadow bold hack. */
-  if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD)) {
-    SetBkMode(dc, TRANSPARENT);
-    ExtTextOutW(dc, x + 1,
-                y - font_height * (lattr == LATTR_BOT) + cfg.row_spacing,
-                ETO_CLIPPED, &line_box, text, len, dxs);
+  uint eto_options = ETO_CLIPPED;
+  wchar glyphs[len];
+  if (has_rtl) {
+   /* We've already done right-to-left processing in the screen buffer,
+    * so stop Windows from doing it again (and hence undoing our work).
+    * Don't always use this path because GetCharacterPlacement doesn't
+    * do Windows font linking.
+    */
+    char classes[len];
+    memset(classes, GCPCLASS_NEUTRAL, len);
+    
+    GCP_RESULTSW gcpr = {
+      .lStructSize = sizeof(GCP_RESULTSW),
+      .lpClass = (void *)classes,
+      .lpGlyphs = glyphs,
+      .nGlyphs = len
+    };
+    
+    GetCharacterPlacementW(dc, text, len, 0, &gcpr,
+                           FLI_MASK | GCP_CLASSIN | GCP_DIACRITIC);
+    text = glyphs;
+    len = gcpr.nGlyphs;
+    eto_options |= ETO_GLYPH_INDEX;
   }
+
+  RECT box = {
+    .left = x, .top = y,
+    .right = min(x + char_width * chars, font_width * term.cols + PADDING),
+    .bottom = y + font_height
+  };
+  int yt = y + cfg.row_spacing - font_height * (lattr == LATTR_BOT);
+  uint eto_opaque = (attr & TATTR_COMBINING) ? 0 : ETO_OPAQUE;
+
+ /* Array with offsets between neighbouring characters */
+  int dxs[len];
+  for (int i = 0; i < len; i++)
+    dxs[i] = char_width;
+  if (chars < len)
+    dxs[chars] = 0;
+
+ /* Finally, draw the text */
+  ExtTextOutW(dc, x, yt, eto_options | eto_opaque, &box, text, len, dxs);
+
+ /* Shadow bold */
+  if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD))
+    ExtTextOutW(dc, x + 1, yt, eto_options, &box, text, len, dxs);
+
+ /* Manual underline */
   if (lattr != LATTR_TOP &&
       (force_manual_underline ||
        (und_mode == UND_LINE && (attr & ATTR_UNDER)))) {
-    HPEN oldpen;
-    int dec = descent;
-    if (lattr == LATTR_BOT)
-      dec = dec * 2 - font_height;
-
-    oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
+    int dec = (lattr == LATTR_BOT) ? descent * 2 - font_height : descent;
+    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
     MoveToEx(dc, x, y + dec, null);
     LineTo(dc, x + chars * char_width, y + dec);
     oldpen = SelectObject(dc, oldpen);
@@ -621,18 +546,17 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
 void
 win_cursor(int x, int y, uint attr, int lattr)
 {
-  int fnt_width;
-  int char_width;
   int cursor_type = term_cursor_type();
   colour cursor_colour = colours[261 - term.rvideo];
 
   lattr &= LATTR_MODE;
+  int char_width = font_width * (1 + (lattr != LATTR_NORM));
 
-  fnt_width = char_width = font_width * (1 + (lattr != LATTR_NORM));
+  x = x * char_width + PADDING;
+  y = y * font_height + PADDING;
+
   if (attr & ATTR_WIDE)
     char_width *= 2;
-  x = x * fnt_width + PADDING;
-  y = y * font_height + PADDING;
 
   HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, cursor_colour));
   HBRUSH oldbrush = SelectObject(dc, GetStockObject(NULL_BRUSH));
