@@ -378,7 +378,8 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   if (lattr != LATTR_NORM && x * 2 >= term.cols)
     return;
 
-  if ((attr & TATTR_ACTCURS) && term_cursor_type() == CUR_BLOCK) {
+  int cursor_type = term_cursor_type();
+  if ((attr & TATTR_ACTCURS) && cursor_type == CUR_BLOCK) {
     attr &= ~(ATTR_REVERSE | ATTR_BLINK | ATTR_COLOURS |
               ATTR_DIM | ATTR_INVISIBLE);
     if (bold_mode == BOLD_COLOURS)
@@ -464,7 +465,6 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
     has_rtl = is_rtl(text[i]);
 
   uint eto_options = ETO_CLIPPED;
-  wchar glyphs[len];
   if (has_rtl) {
    /* We've already done right-to-left processing in the screen buffer,
     * so stop Windows from doing it again (and hence undoing our work).
@@ -477,13 +477,12 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
     GCP_RESULTSW gcpr = {
       .lStructSize = sizeof(GCP_RESULTSW),
       .lpClass = (void *)classes,
-      .lpGlyphs = glyphs,
+      .lpGlyphs = text,
       .nGlyphs = len
     };
     
     GetCharacterPlacementW(dc, text, len, 0, &gcpr,
                            FLI_MASK | GCP_CLASSIN | GCP_DIACRITIC);
-    text = glyphs;
     len = gcpr.nGlyphs;
     eto_options |= ETO_GLYPH_INDEX;
   }
@@ -522,51 +521,40 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
   }
-}
+  
+ /* Draw cursor */
+  if (attr & (TATTR_ACTCURS | TATTR_PASCURS)) {
+    colour cursor_colour = colours[261 - term.rvideo];
 
-void
-win_cursor(int x, int y, uint attr, int lattr)
-{
-  int cursor_type = term_cursor_type();
-  colour cursor_colour = colours[261 - term.rvideo];
-
-  lattr &= LATTR_MODE;
-  int char_width = font_width * (1 + (lattr != LATTR_NORM));
-
-  x = x * char_width + PADDING;
-  y = y * font_height + PADDING;
-
-  if (attr & ATTR_WIDE)
-    char_width *= 2;
-
-  HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, cursor_colour));
-  HBRUSH oldbrush = SelectObject(dc, GetStockObject(NULL_BRUSH));
-  switch(cursor_type) {
-    when CUR_BLOCK:
-      if (attr & TATTR_PASCURS)
-        Rectangle(dc, x, y, x + char_width, y + font_height);
-    when CUR_LINE:
-      if (attr & TATTR_RIGHTCURS)
-        x += char_width - 1;
-      if (attr & TATTR_ACTCURS)
-        Rectangle(dc, x, y, x + 1, y + font_height);
-      else if (attr & TATTR_PASCURS) {
-        for (int dy = 0; dy < font_height; dy += 2)
-          SetPixel(dc, x, y + dy, cursor_colour);
-      } 
-    when CUR_UNDERSCORE:
-      y += min(descent, font_height - 2);
-      if (attr & TATTR_ACTCURS)
-        Rectangle(dc, x, y, x + char_width, y + 2);
-      else if (attr & TATTR_PASCURS) {
-        for (int dx = 0; dx < char_width; dx += 2) {
-          SetPixel(dc, x + dx, y, cursor_colour);
-          SetPixel(dc, x + dx, y + 1, cursor_colour);
-        }
-      } 
+    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, cursor_colour));
+    HBRUSH oldbrush = SelectObject(dc, GetStockObject(NULL_BRUSH));
+    switch(cursor_type) {
+      when CUR_BLOCK:
+        if (attr & TATTR_PASCURS)
+          Rectangle(dc, x, y, x + char_width, y + font_height);
+      when CUR_LINE:
+        if (attr & TATTR_RIGHTCURS)
+          x += char_width - 1;
+        if (attr & TATTR_ACTCURS)
+          Rectangle(dc, x, y, x + 1, y + font_height);
+        else if (attr & TATTR_PASCURS) {
+          for (int dy = 0; dy < font_height; dy += 2)
+            SetPixel(dc, x, y + dy, cursor_colour);
+        } 
+      when CUR_UNDERSCORE:
+        y += min(descent, font_height - 2);
+        if (attr & TATTR_ACTCURS)
+          Rectangle(dc, x, y, x + char_width, y + 2);
+        else if (attr & TATTR_PASCURS) {
+          for (int dx = 0; dx < char_width; dx += 2) {
+            SetPixel(dc, x + dx, y, cursor_colour);
+            SetPixel(dc, x + dx, y + 1, cursor_colour);
+          }
+        } 
+    }
+    SelectObject(dc, oldbrush);
+    DeleteObject(SelectObject(dc, oldpen));
   }
-  SelectObject(dc, oldbrush);
-  DeleteObject(SelectObject(dc, oldpen));
 }
 
 /* This function gets the actual width of a character in the normal font.

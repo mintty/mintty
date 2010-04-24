@@ -886,9 +886,6 @@ term_paint(void)
       if (break_run) {
         if ((dirty_run || last_run_dirty) && ccount > 0) {
           win_text(start, i, ch, ccount, attr, line->attr);
-          if (attr & (TATTR_ACTCURS | TATTR_PASCURS))
-            win_cursor(start, i, attr, line->attr);
-
           updated_line = 1;
         }
         start = j;
@@ -951,9 +948,6 @@ term_paint(void)
     }
     if (dirty_run && ccount > 0) {
       win_text(start, i, ch, ccount, attr, line->attr);
-      if (attr & (TATTR_ACTCURS | TATTR_PASCURS))
-        win_cursor(start, i, attr, line->attr);
-
       updated_line = 1;
     }
     release_line(line);
