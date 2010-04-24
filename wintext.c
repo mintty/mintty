@@ -619,7 +619,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
 }
 
 void
-win_cursor(int x, int y, wchar *text, int len, uint attr, int lattr)
+win_cursor(int x, int y, uint attr, int lattr)
 {
   int fnt_width;
   int char_width;
@@ -627,15 +627,6 @@ win_cursor(int x, int y, wchar *text, int len, uint attr, int lattr)
   colour cursor_colour = colours[261 - term.rvideo];
 
   lattr &= LATTR_MODE;
-
-  if ((attr & TATTR_ACTCURS) && cursor_type == CUR_BLOCK) {
-    if (*text != UCSWIDE) {
-      win_text(x, y, text, len, attr, lattr);
-      return;
-    }
-    cursor_type = CUR_LINE;
-    attr |= TATTR_RIGHTCURS;
-  }
 
   fnt_width = char_width = font_width * (1 + (lattr != LATTR_NORM));
   if (attr & ATTR_WIDE)

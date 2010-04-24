@@ -869,10 +869,6 @@ term_paint(void)
 
       break_run = (tattr ^ attr) != 0;
 
-     /* Special hack for VT100 Linedraw glyphs */
-      if (tchar >= 0x23BA && tchar <= 0x23BD)
-        break_run = true;
-
      /*
       * Break on both sides of any combined-character cell.
       */
@@ -891,7 +887,7 @@ term_paint(void)
         if ((dirty_run || last_run_dirty) && ccount > 0) {
           win_text(start, i, ch, ccount, attr, line->attr);
           if (attr & (TATTR_ACTCURS | TATTR_PASCURS))
-            win_cursor(start, i, ch, ccount, attr, line->attr);
+            win_cursor(start, i, attr, line->attr);
 
           updated_line = 1;
         }
@@ -956,7 +952,7 @@ term_paint(void)
     if (dirty_run && ccount > 0) {
       win_text(start, i, ch, ccount, attr, line->attr);
       if (attr & (TATTR_ACTCURS | TATTR_PASCURS))
-        win_cursor(start, i, ch, ccount, attr, line->attr);
+        win_cursor(start, i, attr, line->attr);
 
       updated_line = 1;
     }
