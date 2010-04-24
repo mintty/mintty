@@ -161,10 +161,10 @@ term_open(void)
 void
 term_paste(wchar *data, uint len)
 {
-  if (term.paste_buffer)
-    free(term.paste_buffer);
-  term.paste_pos = term.paste_len = 0;
+  term_cancel_paste();
+
   term.paste_buffer = newn(wchar, len);
+  term.paste_len = term.paste_pos = 0;
 
   // Copy data to the paste buffer, converting both Windows-style \r\n and
   // Unix-style \n line endings to \r, because that's what the Enter key sends.
@@ -176,17 +176,20 @@ term_paste(wchar *data, uint len)
       term.paste_buffer[term.paste_len++] = '\r';
   }
   
+  if (term.bracketed_paste)
+    child_write("\e[200~", 6);
   term_send_paste();
 }
 
 void
 term_cancel_paste(void)
 {
-  if (term.paste_len == 0)
-    return;
-  free(term.paste_buffer);
-  term.paste_buffer = null;
-  term.paste_len = 0;
+  if (term.paste_buffer) {
+    free(term.paste_buffer);
+    term.paste_buffer = 0;
+    if (term.bracketed_paste)
+      child_write("\e[201~", 6);
+  }
 }
 
 void
@@ -202,11 +205,8 @@ term_send_paste(void)
     term.paste_pos = i;
   }
 
-  if (term.paste_pos == term.paste_len) {
-    free(term.paste_buffer);
-    term.paste_buffer = null;
-    term.paste_len = 0;
-  }
+  if (term.paste_pos >= term.paste_len)
+    term_cancel_paste();
 }
 
 void

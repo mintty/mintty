@@ -627,6 +627,8 @@ set_modes(bool state)
           if (!state)
             restore_cursor();
           term.disptop = 0;
+        when 2004:       /* xterm bracketed paste mode */
+          term.bracketed_paste = state;
         when 7700:       /* mintty only: CJK ambigous width reporting */
           term.report_ambig_width = state;
         when 7727:       /* mintty only: Application escape key mode */

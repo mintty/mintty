@@ -258,6 +258,7 @@ struct term {
   bool newline_mode;
   bool report_focus;
   bool report_ambig_width;
+  bool bracketed_paste;
 
   int  cursor_type;
   int  cursor_blinks;
