@@ -361,9 +361,8 @@ another_font(int fontno)
  *
  * We are allowed to fiddle with the contents of `text'.
  */
-static void
-win_text_internal(int x, int y, wchar *text, int len,
-                  int chars, uint attr, int lattr)
+void
+win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
 {
   lattr &= LATTR_MODE;
   int char_width = font_width * (1 + (lattr != LATTR_NORM));
@@ -489,23 +488,24 @@ win_text_internal(int x, int y, wchar *text, int len,
     eto_options |= ETO_GLYPH_INDEX;
   }
 
+  bool combining = attr & TATTR_COMBINING;
+  int width = char_width * (combining ? 1 : len);
   RECT box = {
     .left = x, .top = y,
-    .right = min(x + char_width * chars, font_width * term.cols + PADDING),
+    .right = min(x + width, font_width * term.cols + PADDING),
     .bottom = y + font_height
   };
-  int yt = y + cfg.row_spacing - font_height * (lattr == LATTR_BOT);
-  uint eto_opaque = (attr & TATTR_COMBINING) ? 0 : ETO_OPAQUE;
-
+  
  /* Array with offsets between neighbouring characters */
   int dxs[len];
+  int dx = combining ? 0 : char_width;
   for (int i = 0; i < len; i++)
-    dxs[i] = char_width;
-  if (chars < len)
-    dxs[chars] = 0;
+    dxs[i] = dx;
+
+  int yt = y + cfg.row_spacing - font_height * (lattr == LATTR_BOT);
 
  /* Finally, draw the text */
-  ExtTextOutW(dc, x, yt, eto_options | eto_opaque, &box, text, len, dxs);
+  ExtTextOutW(dc, x, yt, eto_options | ETO_OPAQUE, &box, text, len, dxs);
 
  /* Shadow bold */
   if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD))
@@ -518,29 +518,10 @@ win_text_internal(int x, int y, wchar *text, int len,
     int dec = (lattr == LATTR_BOT) ? descent * 2 - font_height : descent;
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
     MoveToEx(dc, x, y + dec, null);
-    LineTo(dc, x + chars * char_width, y + dec);
+    LineTo(dc, x + len * char_width, y + dec);
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
   }
-}
-
-/*
- * Wrapper that handles combining characters.
- */
-void
-win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
-{
-  if (attr & TATTR_COMBINING) {
-    attr &= ~TATTR_COMBINING;
-    do {
-      uint n = 1 + ((*text & 0xFC00) == 0xD800);
-      win_text_internal(x, y, text, n, 1, attr, lattr);
-      len -= n, text += n;
-      attr |= TATTR_COMBINING;
-    } while (len > 0);
-  }
-  else
-    win_text_internal(x, y, text, len, len, attr, lattr);
 }
 
 void
