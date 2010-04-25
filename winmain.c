@@ -548,7 +548,7 @@ win_show_about(void)
 static LRESULT CALLBACK
 win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
 {
-  static bool ignore_clip, fullscr_on_max, resizing;
+  static bool fullscr_on_max, resizing;
 
   switch (message) {
     when WM_TIMER: {
@@ -635,13 +635,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         ImmReleaseContext(wnd, imc);
         return 1;
       }
-    when WM_IGNORE_CLIP:
-      ignore_clip = wp;     /* don't panic on DESTROYCLIPBOARD */
-    when WM_DESTROYCLIPBOARD:
-      if (!ignore_clip)
-        term_deselect();
-      ignore_clip = false;
-      return 0;
     when WM_PAINT:
       win_paint();
       return 0;

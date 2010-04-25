@@ -382,8 +382,6 @@ win_copy(const wchar *data, int *attr, int len)
   GlobalUnlock(clipdata);
   GlobalUnlock(clipdata2);
 
-  SendMessage(wnd, WM_IGNORE_CLIP, true, 0);
-
   if (OpenClipboard(wnd)) {
     EmptyClipboard();
     SetClipboardData(CF_UNICODETEXT, clipdata);
@@ -396,7 +394,6 @@ win_copy(const wchar *data, int *attr, int len)
     GlobalFree(clipdata);
     GlobalFree(clipdata2);
   }
-  SendMessage(wnd, WM_IGNORE_CLIP, false, 0);
 }
 
 static void

@@ -14,8 +14,7 @@ extern HWND config_wnd; // the options window
 extern HINSTANCE inst;  // The all-important instance handle
 
 enum {
-  WM_IGNORE_CLIP = WM_APP + 2,
-  WM_FULLSCR_ON_MAX = WM_APP + 3
+  WM_FULLSCR_ON_MAX = WM_APP + 2
 };
 
 enum {
