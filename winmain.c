@@ -282,6 +282,9 @@ reinit_fonts(void)
 static void
 resize_window(bool forced)
 {
+  if (IsIconic(wnd))
+    return;
+
  /* Current window sizes ... */
   RECT cr, wr;
   GetClientRect(wnd, &cr);
@@ -294,10 +297,8 @@ resize_window(bool forced)
   int term_height = client_height - 2 * PADDING;
   
   int cols = term.cols, rows = term.rows;
-  if (!client_width || !client_height) {
-   /* Oh, looks like we're minimised: do nothing */
-  }
-  else if (IsZoomed(wnd) || forced) {
+
+  if (IsZoomed(wnd) || forced) {
    /* We're fullscreen, or we were told to resize,
     * this means we must not change the size of
     * the window so the terminal has to change.
@@ -374,7 +375,7 @@ make_fullscreen(void)
   enable_glass(false);
   
  /* We may have changed size as a result */
-  resize_window(false);
+  resize_window(true);
 }
 
 /*
@@ -547,11 +548,7 @@ win_show_about(void)
 static LRESULT CALLBACK
 win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
 {
-  static bool ignore_clip, need_backend_resize, fullscr_on_max;
-  static int new_cols, new_rows;
-  static bool resizing;
-  static bool was_zoomed;
-  static int prev_rows, prev_cols;
+  static bool ignore_clip, fullscr_on_max, resizing;
 
   switch (message) {
     when WM_TIMER: {
@@ -670,11 +667,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_EXITSIZEMOVE:
       win_disable_tip();
       resizing = false;
-      if (need_backend_resize) {
-        need_backend_resize = false;
-        notify_resize(new_rows, new_cols);
-        win_invalidate_all();
-      }
+      resize_window(true);
     when WM_SIZING: {
      /*
       * This does two jobs:
@@ -715,38 +708,14 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         fullscr_on_max = false;
         make_fullscreen();
       }
-      int new_width = LOWORD(lp) - 2 * PADDING;
-      int new_height = HIWORD(lp) - 2 * PADDING;
-      new_cols = max(1, new_width / font_width);
-      new_rows = max(1, new_height / font_height);
-      if (resizing) {
-       /*
-        * Don't call child_size in mid-resize. (To prevent
-        * massive numbers of resize events getting sent.)
-        */
-        need_backend_resize = true;
-      }
-      else if (wp == SIZE_MAXIMIZED && !was_zoomed) {
-        was_zoomed = 1;
-        prev_rows = term.rows;
-        prev_cols = term.cols;
-        notify_resize(new_rows, new_cols);
-        resize_window(false);
-      }
-      else if (wp == SIZE_RESTORED && was_zoomed) {
-        was_zoomed = 0;
-        notify_resize(prev_rows, prev_cols);
-        resize_window(false);
-      }
-      else {
-       /* This is an unexpected resize, these will normally happen
-        * if the window is too large. Probably either the user
-        * selected a huge font or the screen size has changed.
-        *
-        * This is also called with minimize.
-        */
+
+     /*
+      * Don't call child_size in mid-resize. (To prevent
+      * massive numbers of resize events getting sent.)
+      */
+      if (!resizing)
         resize_window(true);
-      }
+
       update_sys_cursor();
       return 0;
     }
