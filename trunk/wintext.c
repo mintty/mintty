@@ -520,11 +520,14 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   int yt = y + cfg.row_spacing - font_height * (lattr == LATTR_BOT);
 
  /* Finally, draw the text */
-  ExtTextOutW(dc, x, yt, eto_options | ETO_OPAQUE, &box, text, len, dxs);
+  SetBkMode(dc, OPAQUE);
+  ExtTextOutW(dc, x, yt, eto_options, &box, text, len, dxs);
 
  /* Shadow bold */
-  if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD))
+  if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD)) {
+    SetBkMode(dc, TRANSPARENT);
     ExtTextOutW(dc, x + 1, yt, eto_options, &box, text, len, dxs);
+  }
 
  /* Manual underline */
   if (lattr != LATTR_TOP &&
