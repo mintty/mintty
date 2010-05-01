@@ -248,15 +248,6 @@ get_fullscreen_rect(RECT *rect)
     GetClientRect(GetDesktopWindow(), rect);
 }
 
-static void
-notify_resize(int rows, int cols)
-{
-  term_resize(rows, cols);
-  win_update();
-  struct winsize ws = {rows, cols, cols * font_width, rows * font_height};
-  child_resize(&ws);
-}
-
 void
 win_resize(int rows, int cols)
 {
@@ -264,19 +255,10 @@ win_resize(int rows, int cols)
   if (IsZoomed(wnd) || (rows == term.rows && cols == term.cols)) 
     return;
   
-  notify_resize(rows, cols);
   int width = extra_width + font_width * cols + 2 * PADDING;
   int height = extra_height + font_height * rows + 2 * PADDING;
   SetWindowPos(wnd, null, 0, 0, width, height,
                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
-  win_invalidate_all();
-}
-
-static void
-reinit_fonts(void)
-{
-  win_deinit_fonts();
-  win_init_fonts();
 }
 
 static void
@@ -322,9 +304,19 @@ resize_window(bool forced)
                  SWP_NOMOVE | SWP_NOZORDER);
   }
   
-  if (rows != term.rows || cols != term.cols)
-    notify_resize(rows, cols);
+  if (rows != term.rows || cols != term.cols) {
+    term_resize(rows, cols);
+    struct winsize ws = {rows, cols, cols * font_width, rows * font_height};
+    child_resize(&ws);
+  }
+}
 
+static void
+reinit_fonts(void)
+{
+  win_deinit_fonts();
+  win_init_fonts();
+  resize_window(false);
   win_invalidate_all();
 }
 
@@ -373,9 +365,6 @@ make_fullscreen(void)
   
  /* The glass effect doesn't work for fullscreen windows */
   enable_glass(false);
-  
- /* We may have changed size as a result */
-  resize_window(true);
 }
 
 /*
@@ -486,7 +475,6 @@ win_reconfig(void)
   win_reconfig_palette();
   update_transparency();
   win_invalidate_all();
-  resize_window(false);
   win_update_mouse();
 
   bool old_ambig_wide = cs_ambig_wide;
@@ -506,7 +494,6 @@ win_set_font_size(int size)
 {
   font_size = size ? sgn(font_size) * min(size, 72) : cfg.font.size;
   reinit_fonts();
-  resize_window(false);
 }
 
 void
