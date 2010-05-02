@@ -80,6 +80,8 @@ load_funcs(void)
 
 static int extra_width, extra_height;
 
+static bool fullscr_on_max;
+
 static HBITMAP caretbm;
 static int caret_x = -1, caret_y = -1;
 
@@ -404,7 +406,7 @@ win_maximise(int max)
   }
   else if (max) {
     if (max == 2)
-      SendMessage(wnd, WM_FULLSCR_ON_MAX, 0, 0);
+      fullscr_on_max = true;
     ShowWindow(wnd, SW_MAXIMIZE);
   }
 }
@@ -538,7 +540,7 @@ win_show_about(void)
 static LRESULT CALLBACK
 win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
 {
-  static bool fullscr_on_max, resizing;
+  static bool resizing;
 
   switch (message) {
     when WM_TIMER: {
@@ -642,7 +644,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       caret_x = caret_y = -1;   /* ensure caret is replaced next time */
       win_update();
       update_transparency();
-    when WM_FULLSCR_ON_MAX: fullscr_on_max = true;
     when WM_MOVE: update_sys_cursor();
     when WM_ENTERSIZEMOVE:
       win_enable_tip();
