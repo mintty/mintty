@@ -25,6 +25,19 @@ HWND wnd;
 HINSTANCE inst;
 HDC dc;
 
+bool win_is_full_screen;
+static bool fullscr_on_max;
+
+static int extra_width, extra_height;
+
+static bool resizing;
+
+static HBITMAP caretbm;
+static int caret_x = -1, caret_y = -1;
+
+static char **main_argv;
+
+
 #if WINVER < 0x500
 
 #define MONITOR_DEFAULTTONEAREST 2 
@@ -76,17 +89,6 @@ load_funcs(void)
   pDwmExtendFrameIntoClientArea =
     (void *)GetProcAddress(dwm, "DwmExtendFrameIntoClientArea");
 }
-
-
-static int extra_width, extra_height;
-
-bool win_is_full_screen;
-static bool fullscr_on_max;
-
-static HBITMAP caretbm;
-static int caret_x = -1, caret_y = -1;
-
-static char **main_argv;
 
 void
 win_set_timer(void (*cb)(void), uint ticks)
@@ -308,7 +310,6 @@ resize_window(bool forced)
   }
   
   if (rows != term.rows || cols != term.cols) {
-    printf("%ix%i\n", cols, rows);
     term_resize(rows, cols);
     win_update();
     struct winsize ws = {rows, cols, cols * font_width, rows * font_height};
@@ -535,8 +536,6 @@ win_show_about(void)
 static LRESULT CALLBACK
 win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
 {
-  static bool resizing;
-
   switch (message) {
     when WM_TIMER: {
       KillTimer(wnd, wp);
@@ -687,7 +686,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         fullscr_on_max = false;
         make_fullscreen();
       }
-      else if (!resizing)
+      
+      if (!resizing)
         resize_window(true);
 
       update_sys_cursor();
