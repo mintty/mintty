@@ -80,6 +80,7 @@ load_funcs(void)
 
 static int extra_width, extra_height;
 
+bool win_is_full_screen;
 static bool fullscr_on_max;
 
 static HBITMAP caretbm;
@@ -307,6 +308,7 @@ resize_window(bool forced)
   }
   
   if (rows != term.rows || cols != term.cols) {
+    printf("%ix%i\n", cols, rows);
     term_resize(rows, cols);
     win_update();
     struct winsize ws = {rows, cols, cols * font_width, rows * font_height};
@@ -333,19 +335,14 @@ win_is_glass_available(void)
 }
 
 static void
-enable_glass(bool enabled)
+update_glass(void)
 {
-  if (pDwmExtendFrameIntoClientArea)
+  if (pDwmExtendFrameIntoClientArea) {
+    bool enabled =
+      cfg.transparency < 0 && !win_is_fullscreen &&
+      !(cfg.opaque_when_focused && term.has_focus);
     pDwmExtendFrameIntoClientArea(wnd, &(MARGINS){enabled ? -1 : 0, 0, 0, 0});
-}
-
-/*
- * When the window is fullscreen, there's no caption.
- */
-bool
-win_is_fullscreen(void)
-{
-  return !(GetWindowLongPtr(wnd, GWL_STYLE) & WS_CAPTION);
+  }
 }
 
 /*
@@ -355,40 +352,38 @@ win_is_fullscreen(void)
 static void
 make_fullscreen(void)
 {
+  win_is_fullscreen = true;
+
  /* Remove the window furniture. */
   DWORD style = GetWindowLongPtr(wnd, GWL_STYLE);
   style &= ~(WS_CAPTION | WS_BORDER | WS_THICKFRAME);
   SetWindowLongPtr(wnd, GWL_STYLE, style);
+
+ /* The glass effect doesn't work for fullscreen windows */
+  update_glass();
 
  /* Resize ourselves to exactly cover the nearest monitor. */
   RECT ss;
   get_fullscreen_rect(&ss);
   SetWindowPos(wnd, HWND_TOP, ss.left, ss.top, ss.right - ss.left,
                ss.bottom - ss.top, SWP_FRAMECHANGED);
-  
- /* The glass effect doesn't work for fullscreen windows */
-  enable_glass(false);
 }
 
 /*
  * Clear the full-screen attributes.
  */
 static void
-clear_fullsceen(void)
+clear_fullscreen(void)
 {
-  DWORD oldstyle, style;
+  win_is_fullscreen = false;
+  update_glass();
 
  /* Reinstate the window furniture. */
-  style = oldstyle = GetWindowLongPtr(wnd, GWL_STYLE);
+  DWORD style = GetWindowLongPtr(wnd, GWL_STYLE);
   style |= WS_CAPTION | WS_BORDER | WS_THICKFRAME;
-  if (style != oldstyle) {
-    SetWindowLongPtr(wnd, GWL_STYLE, style);
-    SetWindowPos(wnd, null, 0, 0, 0, 0,
-                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-  }
-  
-  enable_glass(cfg.transparency < 0 &&
-               !(cfg.opaque_when_focused && term.has_focus));
+  SetWindowLongPtr(wnd, GWL_STYLE, style);
+  SetWindowPos(wnd, null, 0, 0, 0, 0,
+               SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 }
 
 /*
@@ -401,7 +396,7 @@ win_maximise(int max)
   if (IsZoomed(wnd)) {
     if (!max)
       ShowWindow(wnd, SW_RESTORE);
-    else if (max == 2 && !win_is_fullscreen())
+    else if (max == 2 && !win_is_fullscreen)
       make_fullscreen();
   }
   else if (max) {
@@ -443,7 +438,7 @@ update_transparency(void)
       pSetLayeredWindowAttributes(wnd, 0, alpha, LWA_ALPHA);
     }
   }
-  enable_glass(cfg.transparency < 0 && !win_is_fullscreen() && !opaque);
+  update_glass();
 }
 
 void
@@ -564,7 +559,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
           win_update();
         when IDM_RESET: reset_term();
         when IDM_DEFSIZE: default_size();
-        when IDM_FULLSCREEN: win_maximise(win_is_fullscreen() ? 0 : 2);
+        when IDM_FULLSCREEN: win_maximise(win_is_fullscreen ? 0 : 2);
         when IDM_FLIPSCREEN: term_flip_screen();
         when IDM_OPTIONS: win_open_config();
         when IDM_NEW:
@@ -686,18 +681,13 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       return ew || eh;
     }
     when WM_SIZE: {
-      if (wp == SIZE_RESTORED)
-        clear_fullsceen();
-      if (wp == SIZE_MAXIMIZED && fullscr_on_max) {
+      if (wp == SIZE_RESTORED && win_is_fullscreen)
+        clear_fullscreen();
+      else if (wp == SIZE_MAXIMIZED && fullscr_on_max) {
         fullscr_on_max = false;
         make_fullscreen();
       }
-
-     /*
-      * Don't call child_size in mid-resize. (To prevent
-      * massive numbers of resize events getting sent.)
-      */
-      if (!resizing)
+      else if (!resizing)
         resize_window(true);
 
       update_sys_cursor();
