@@ -14,10 +14,6 @@ extern HWND config_wnd; // the options window
 extern HINSTANCE inst;  // The all-important instance handle
 
 enum {
-  WM_FULLSCR_ON_MAX = WM_APP + 2
-};
-
-enum {
   NCFGCOLOURS = 22, 
   NEXTCOLOURS = 240,
   NALLCOLOURS = NCFGCOLOURS + NEXTCOLOURS
