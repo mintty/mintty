@@ -259,6 +259,7 @@ struct term {
   bool report_focus;
   bool report_ambig_width;
   bool bracketed_paste;
+  bool show_scrollbar;
 
   int  cursor_type;
   int  cursor_blinks;

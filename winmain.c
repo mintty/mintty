@@ -306,6 +306,7 @@ resize_window(bool forced)
   
   if (rows != term.rows || cols != term.cols) {
     term_resize(rows, cols);
+    win_update();
     struct winsize ws = {rows, cols, cols * font_width, rows * font_height};
     child_resize(&ws);
   }
@@ -444,23 +445,24 @@ update_transparency(void)
 }
 
 void
+win_update_scrollbar(void)
+{
+  bool enabled = cfg.scrollbar && term.show_scrollbar;
+  LONG flags = GetWindowLongPtr(wnd, GWL_STYLE);
+  bool was_enabled = flags & WS_VSCROLL;
+  if (enabled != was_enabled) {
+    SetWindowLongPtr(wnd, GWL_STYLE, flags ^ WS_VSCROLL);
+    SetWindowPos(wnd, null, 0, 0, 0, 0,
+                 SWP_NOACTIVATE | SWP_NOMOVE |
+                 SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+  }
+}
+
+void
 win_reconfig(void)
 {
  /* Pass new config data to the terminal */
   term_reconfig();
-  
- /* Enable or disable the scroll bar, etc */
-  if (new_cfg.scrollbar != cfg.scrollbar) {
-    LONG flag = GetWindowLongPtr(wnd, GWL_STYLE);
-    if (new_cfg.scrollbar)
-      flag |= WS_VSCROLL;
-    else
-      flag &= ~WS_VSCROLL;
-    SetWindowLongPtr(wnd, GWL_STYLE, flag);
-    SetWindowPos(wnd, null, 0, 0, 0, 0,
-                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE |
-                 SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-  }
   
   bool font_changed =
     memcmp(&new_cfg.font, &cfg.font, sizeof cfg.font) ||
@@ -472,6 +474,7 @@ win_reconfig(void)
     font_size = cfg.font.size;
     reinit_fonts();
   }
+  win_update_scrollbar();
   win_reconfig_palette();
   update_transparency();
   win_invalidate_all();
