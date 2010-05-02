@@ -591,6 +591,9 @@ set_modes(bool state)
           win_update_mouse();
         when 25: /* DECTCEM: enable/disable cursor */
           term.cursor_on = state;
+        when 30: /* Show scrollbar (rxvt) */
+          term.show_scrollbar = state;
+          win_update_scrollbar();
         when 40: /* Allow/disallow DECCOLM (xterm c132 resource) */
           term.deccolm_allowed = state;
         when 47: /* alternate screen */

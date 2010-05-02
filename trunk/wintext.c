@@ -603,10 +603,10 @@ win_char_width(int uc)
 void
 win_set_sbar(int total, int start, int page)
 {
-  if (cfg.scrollbar) {
+  if (cfg.scrollbar && term.show_scrollbar) {
     SCROLLINFO si;
     si.cbSize = sizeof (si);
-    si.fMask = SIF_ALL | SIF_DISABLENOSCROLL;	
+    si.fMask = SIF_ALL | SIF_DISABLENOSCROLL;
     si.nMin = 0;
     si.nMax = total - 1;
     si.nPage = page;
