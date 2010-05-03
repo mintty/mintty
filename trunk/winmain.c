@@ -317,6 +317,7 @@ resize_window(bool forced)
   
   if (rows != term.rows || cols != term.cols) {
     term_resize(rows, cols);
+    win_update();
     struct winsize ws = {rows, cols, cols * font_width, rows * font_height};
     child_resize(&ws);
   }
