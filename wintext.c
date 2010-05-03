@@ -681,9 +681,3 @@ win_reset_colours(void)
   // Foreground, background, cursor
   win_reconfig_palette();
 }
-
-void
-win_invalidate_all(void)
-{
-  InvalidateRect(wnd, null, true);
-}
