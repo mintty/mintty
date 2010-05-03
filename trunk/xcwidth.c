@@ -1,5 +1,5 @@
 // xcwidth.c (part of mintty)
-// Copyright 2009 Andy Koppe
+// Copyright 2009-10 Andy Koppe
 // Adapted from code by Markus Kuhn.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
