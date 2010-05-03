@@ -606,10 +606,6 @@ term_erase_lots(bool line_only, bool from_begin, bool to_end)
   if (!from_begin || !to_end)
     term_check_boundary(curs->x, curs->y);
 
- /* Clear screen also forces a full window redraw, just in case. */
-  if (start.y == 0 && start.x == 0 && end.y == term.rows)
-    win_invalidate_all();
-
  /* Lines scrolled away shouldn't be brought back on if the terminal resizes. */
   bool erasing_lines_from_top =
     start.y == 0 && start.x == 0 && end.x == 0 && !line_only;

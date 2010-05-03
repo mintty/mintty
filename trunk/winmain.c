@@ -266,6 +266,12 @@ win_resize(int rows, int cols)
                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
 }
 
+void
+win_invalidate_all(void)
+{
+  InvalidateRect(wnd, null, true);
+}
+
 static void
 resize_window(bool forced)
 {
@@ -311,10 +317,11 @@ resize_window(bool forced)
   
   if (rows != term.rows || cols != term.cols) {
     term_resize(rows, cols);
-    win_update();
     struct winsize ws = {rows, cols, cols * font_width, rows * font_height};
     child_resize(&ws);
   }
+
+  win_invalidate_all();
 }
 
 static void
@@ -323,7 +330,6 @@ reinit_fonts(void)
   win_deinit_fonts();
   win_init_fonts();
   resize_window(false);
-  win_invalidate_all();
 }
 
 bool
@@ -475,7 +481,6 @@ win_reconfig(void)
   win_update_scrollbar();
   win_reconfig_palette();
   update_transparency();
-  win_invalidate_all();
   win_update_mouse();
 
   bool old_ambig_wide = cs_ambig_wide;
