@@ -101,8 +101,7 @@ win_init_menus(void)
   AppendMenu(menu, MF_ENABLED, IDM_OPTIONS, "&Options...");
 
   sysmenu = GetSystemMenu(wnd, false);
-  InsertMenu(sysmenu, SC_CLOSE, MF_ENABLED, IDM_COPYTITLE, "Cop&y Title");
-  InsertMenu(sysmenu, SC_CLOSE, MF_SEPARATOR, 0, 0);
+  InsertMenu(sysmenu, SC_CLOSE, MF_ENABLED, IDM_COPYTITLE, "Copy &Title");
   InsertMenu(sysmenu, SC_CLOSE, MF_ENABLED, IDM_OPTIONS, "&Options...");
   InsertMenu(sysmenu, SC_CLOSE, MF_ENABLED, IDM_NEW, 0);
   InsertMenu(sysmenu, SC_CLOSE, MF_SEPARATOR, 0, 0);
