@@ -621,8 +621,12 @@ win_key_down(WPARAM wp, LPARAM lp)
         return 0;
       if (!ctrl)
         shift ? csi('Z') : ch('\t');
+      else if (cfg.switch_shortcuts) {
+        win_switch(shift);
+        return 0;
+      }
       else
-        term.modify_other_keys ? other_code('\t') : mod_csi('I');
+        term.modify_other_keys ? other_code('\t') : mod_csi('I');        
     when VK_ESCAPE:
       term.app_escape_key
       ? ss3('[')
