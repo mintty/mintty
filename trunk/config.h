@@ -1,14 +1,14 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-typedef uint32 colour;
+typedef uint colour;
 
 static inline colour
-make_colour(uint8 r, uint8 g, uint8 b) { return r | g << 8 | b << 16; }
+make_colour(uchar r, uchar g, uchar b) { return r | g << 8 | b << 16; }
 
-static inline uint8 red(colour c) { return c & 0xff; }
-static inline uint8 green(colour c) { return c >> 8 & 0xff; }
-static inline uint8 blue(colour c) { return c >> 16 & 0xff; }
+static inline uchar red(colour c) { return c & 0xff; }
+static inline uchar green(colour c) { return c >> 8 & 0xff; }
+static inline uchar blue(colour c) { return c >> 16 & 0xff; }
 
 typedef enum { HOLD_NEVER, HOLD_ALWAYS, HOLD_ERROR } hold_t;
 extern hold_t hold;
