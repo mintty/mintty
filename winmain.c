@@ -24,6 +24,7 @@
 HWND wnd;
 HINSTANCE inst;
 HDC dc;
+static ATOM class_atom;
 
 bool win_is_full_screen;
 static bool fullscr_on_max;
@@ -144,6 +145,35 @@ win_set_zorder(bool top)
 {
   SetWindowPos(wnd, top ? HWND_TOP : HWND_BOTTOM, 0, 0, 0, 0,
                SWP_NOMOVE | SWP_NOSIZE);
+}
+
+/*
+ *  Switch to next or previous application window in z-order
+ */
+void
+win_switch(bool back)
+{
+  HWND first_wnd = 0, last_wnd;
+  BOOL CALLBACK enum_proc(HWND curr_wnd, LPARAM unused(lp)) {
+    if (curr_wnd != wnd) {
+      WINDOWINFO curr_wnd_info;
+      curr_wnd_info.cbSize = sizeof(WINDOWINFO);
+      GetWindowInfo(curr_wnd, &curr_wnd_info);
+      if (class_atom == curr_wnd_info.atomWindowType) {
+        first_wnd = first_wnd ?: curr_wnd;
+        last_wnd = curr_wnd;
+      }
+    }
+    return true;
+  }
+  EnumWindows(enum_proc, 0);
+  if (first_wnd) {
+    if (back)
+      first_wnd = last_wnd;
+    else
+      SetWindowPos(wnd, last_wnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    BringWindowToTop(first_wnd);
+  }
 }
 
 /*
@@ -892,7 +922,7 @@ main(int argc, char *argv[])
 
   inst = GetModuleHandle(NULL);
 
-  RegisterClassW(&(WNDCLASSW){
+  class_atom = RegisterClassW(&(WNDCLASSW){
     .style = 0,
     .lpfnWndProc = win_proc,
     .cbClsExtra = 0,

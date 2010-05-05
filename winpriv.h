@@ -59,6 +59,8 @@ void win_init_drop_target(void);
 
 void win_copy_title(void);
 
+void win_switch(bool back);
+
 bool win_is_fullscreen;
 
 #endif

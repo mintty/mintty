@@ -45,6 +45,7 @@ config cfg = {
   .ctrl_alt_is_altgr = false,
   .window_shortcuts = true,
   .zoom_shortcuts = true,
+  .switch_shortcuts = true,
   .scroll_mod = MDK_SHIFT,
   .pgupdn_scroll = false,
   // Mouse
@@ -107,6 +108,7 @@ options[] = {
   {"CtrlAltIsAltGr", OPT_BOOL, cfg_field(ctrl_alt_is_altgr)},
   {"WindowShortcuts", OPT_BOOL, cfg_field(window_shortcuts)},
   {"ZoomShortcuts", OPT_BOOL, cfg_field(zoom_shortcuts)},
+  {"SwitchShortcuts", OPT_BOOL, cfg_field(switch_shortcuts)},
   {"ScrollMod", OPT_INT, cfg_field(scroll_mod)},
   {"PgUpDnScroll", OPT_BOOL, cfg_field(pgupdn_scroll)},
   // Mouse
@@ -594,14 +596,15 @@ setup_config_box(controlbox * b)
   ctrl_settitle(b, "Keys", "Keys");
   
   s = ctrl_getset(b, "Keys", "keys", null);
-  ctrl_checkbox(
-    s, "Backspace sends ^H", 'b', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(backspace_sends_bs))
-  );
+  ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
     s, "Ctrl+LeftAlt is AltGr", 'g', P(0),
     dlg_stdcheckbox_handler, I(offcfg(ctrl_alt_is_altgr))
-  );
+  )->column = 0;
+  ctrl_checkbox(
+    s, "Backspace sends ^H", 'b', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(backspace_sends_bs))
+  )->column = 1;
 
   s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
   ctrl_checkbox(
@@ -611,6 +614,10 @@ setup_config_box(controlbox * b)
   ctrl_checkbox(
     s, "Zoom (Ctrl+plus/minus/zero)", 'z', P(0),
     dlg_stdcheckbox_handler, I(offcfg(zoom_shortcuts))
+  );
+  ctrl_checkbox(
+    s, "Switch window (Ctrl+(Shift+)Tab)", 'w', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(switch_shortcuts))
   );
   
   s = ctrl_getset(b, "Keys", "scroll", "Modifier for scrolling");

@@ -48,6 +48,7 @@ typedef struct {
   bool ctrl_alt_is_altgr;
   bool window_shortcuts;
   bool zoom_shortcuts;
+  bool switch_shortcuts;
   int scroll_mod;
   bool pgupdn_scroll;
   // Mouse
