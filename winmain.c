@@ -105,6 +105,15 @@ win_set_title(char *title)
   }
 }
 
+void
+win_copy_title(void)
+{
+  int wlen = GetWindowTextLengthW(wnd);
+  wchar wtext[wlen + 1];
+  wlen = GetWindowTextW(wnd, wtext, wlen + 1);
+  win_copy(wtext, 0, wlen + 1);
+}
+
 /*
  * Minimise or restore the window in response to a server-side
  * request.
@@ -569,6 +578,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_OPTIONS: win_open_config();
         when IDM_NEW:
           spawnv(_P_DETACH, "/proc/self/exe", (void *) main_argv);
+        when IDM_COPYTITLE:
+          win_copy_title();
       }
     when WM_VSCROLL:
       switch (LOWORD(wp)) {
