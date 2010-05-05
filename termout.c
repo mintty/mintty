@@ -945,7 +945,7 @@ do_csi(uchar c)
 }
 
 static colour
-rgb_to_colour(uint32 rgb)
+rgb_to_colour(uint rgb)
 {
   return make_colour(rgb >> 16, rgb >> 8, rgb);
 }
