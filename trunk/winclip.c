@@ -88,7 +88,7 @@ win_copy(const wchar *data, int *attr, int len)
   memcpy(lock, data, len * sizeof (wchar));
   WideCharToMultiByte(CP_ACP, 0, data, len, lock2, len2, null, null);
 
-  if (cfg.copy_as_rtf) {
+  if (attr && cfg.copy_as_rtf) {
     wchar unitab[256];
     char *rtf = null;
     uchar *tdata = (uchar *) lock2;
@@ -123,67 +123,65 @@ win_copy(const wchar *data, int *attr, int len)
     * First - Determine all colours in use
     *    o  Foregound and background colours share the same palette
     */
-    if (attr) {
-      memset(palette, 0, sizeof (palette));
-      for (int i = 0; i < (len - 1); i++) {
-        fgcolour = ((attr[i] & ATTR_FGMASK) >> ATTR_FGSHIFT);
-        bgcolour = ((attr[i] & ATTR_BGMASK) >> ATTR_BGSHIFT);
+    memset(palette, 0, sizeof (palette));
+    for (int i = 0; i < (len - 1); i++) {
+      fgcolour = ((attr[i] & ATTR_FGMASK) >> ATTR_FGSHIFT);
+      bgcolour = ((attr[i] & ATTR_BGMASK) >> ATTR_BGSHIFT);
 
-        if (attr[i] & ATTR_REVERSE) {
-          int tmpcolour = fgcolour;     /* Swap foreground and background */
-          fgcolour = bgcolour;
-          bgcolour = tmpcolour;
-        }
-
-        if (bold_mode == BOLD_COLOURS && (attr[i] & ATTR_BOLD)) {
-          if (fgcolour < 8)     /* ANSI colours */
-            fgcolour += 8;
-          else if (fgcolour >= 256)     /* Default colours */
-            fgcolour++;
-        }
-
-        if (attr[i] & ATTR_BLINK) {
-          if (bgcolour < 8)     /* ANSI colours */
-            bgcolour += 8;
-          else if (bgcolour >= 256)     /* Default colours */
-            bgcolour++;
-        }
-
-        if (attr[i] & ATTR_INVISIBLE)
-          fgcolour = bgcolour;
-
-        palette[fgcolour]++;
-        palette[bgcolour]++;
+      if (attr[i] & ATTR_REVERSE) {
+        int tmpcolour = fgcolour;     /* Swap foreground and background */
+        fgcolour = bgcolour;
+        bgcolour = tmpcolour;
       }
 
-     /*
-      * Next - Create a reduced palette
-      */
-      numcolours = 0;
-      for (int i = 0; i < NALLCOLOURS; i++) {
-        if (palette[i] != 0)
-          palette[i] = ++numcolours;
+      if (bold_mode == BOLD_COLOURS && (attr[i] & ATTR_BOLD)) {
+        if (fgcolour < 8)     /* ANSI colours */
+          fgcolour += 8;
+        else if (fgcolour >= 256)     /* Default colours */
+          fgcolour++;
       }
 
-     /*
-      * Finally - Write the colour table
-      */
-      rtf = renewn(rtf, rtfsize + (numcolours * 25));
-      strcat(rtf, "{\\colortbl ;");
-      rtflen = strlen(rtf);
-
-      for (int i = 0; i < NALLCOLOURS; i++) {
-        if (palette[i] != 0) {
-          rtflen +=
-            sprintf(&rtf[rtflen], "\\red%d\\green%d\\blue%d;",
-                    GetRValue(colours[i]),
-                    GetGValue(colours[i]),
-                    GetBValue(colours[i]));
-        }
+      if (attr[i] & ATTR_BLINK) {
+        if (bgcolour < 8)     /* ANSI colours */
+          bgcolour += 8;
+        else if (bgcolour >= 256)     /* Default colours */
+          bgcolour++;
       }
-      strcpy(&rtf[rtflen], "}");
-      rtflen++;
+
+      if (attr[i] & ATTR_INVISIBLE)
+        fgcolour = bgcolour;
+
+      palette[fgcolour]++;
+      palette[bgcolour]++;
     }
+
+   /*
+    * Next - Create a reduced palette
+    */
+    numcolours = 0;
+    for (int i = 0; i < NALLCOLOURS; i++) {
+      if (palette[i] != 0)
+        palette[i] = ++numcolours;
+    }
+
+   /*
+    * Finally - Write the colour table
+    */
+    rtf = renewn(rtf, rtfsize + (numcolours * 25));
+    strcat(rtf, "{\\colortbl ;");
+    rtflen = strlen(rtf);
+
+    for (int i = 0; i < NALLCOLOURS; i++) {
+      if (palette[i] != 0) {
+        rtflen +=
+          sprintf(&rtf[rtflen], "\\red%d\\green%d\\blue%d;",
+                  GetRValue(colours[i]),
+                  GetGValue(colours[i]),
+                  GetBValue(colours[i]));
+      }
+    }
+    strcpy(&rtf[rtflen], "}");
+    rtflen++;
 
    /*
     * We want to construct a piece of RTF that specifies the
@@ -212,7 +210,7 @@ win_copy(const wchar *data, int *attr, int len)
      /*
       * Set text attributes, if any, except on newlines
       */
-      if (attr && tdata[tindex] != '\n') {
+      if (tdata[tindex] != '\n') {
         if (rtfsize < rtflen + 64) {
           rtfsize = rtflen + 512;
           rtf = renewn(rtf, rtfsize);
