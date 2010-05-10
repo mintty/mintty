@@ -30,13 +30,13 @@ sel_spread_word(pos p, bool forward)
   
   for (;;) {
     wchar c = get_char(line, p.x);
-    if (iswalnum(c) || strchr("_#$%~", c))
+    if (iswalnum(c) || strchr("_#~", c))
       ret_p = p;
     else if (strchr(".@/\\", c)) {
       if (!forward)
         ret_p = p;
     }
-    else if (!(strchr("&+-,.?", c) || c == (forward ? '=' : ':')))
+    else if (!(strchr("&+-,.?$%", c) || c == (forward ? '=' : ':')))
       break;
 
     if (forward) {
