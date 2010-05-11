@@ -1016,7 +1016,7 @@ main(int argc, char *argv[])
   SetWindowPos(wnd, null, 0, 0,
                term_width + extra_width + 2 * PADDING,
                term_height + extra_height + 2 * PADDING,
-               SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+               SWP_NOMOVE | SWP_NOZORDER);
 
   // Enable drag & drop.
   win_init_drop_target();
