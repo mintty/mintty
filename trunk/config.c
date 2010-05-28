@@ -612,12 +612,12 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
   );
   ctrl_checkbox(
-    s, "Zoom (Ctrl+plus/minus/zero)", 'z', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(zoom_shortcuts))
+    s, "Switch window (Ctrl+[Shift+]Tab)", 'w', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(switch_shortcuts))
   );
   ctrl_checkbox(
-    s, "Switch window (Ctrl+(Shift+)Tab)", 'w', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(switch_shortcuts))
+    s, "Zoom (Ctrl+plus/minus/zero)", 'z', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(zoom_shortcuts))
   );
   
   s = ctrl_getset(b, "Keys", "scroll", "Modifier for scrolling");

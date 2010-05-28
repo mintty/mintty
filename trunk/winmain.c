@@ -155,7 +155,7 @@ win_switch(bool back)
 {
   HWND first_wnd = 0, last_wnd;
   BOOL CALLBACK enum_proc(HWND curr_wnd, LPARAM unused(lp)) {
-    if (curr_wnd != wnd) {
+    if (curr_wnd != wnd && !IsIconic(curr_wnd)) {
       WINDOWINFO curr_wnd_info;
       curr_wnd_info.cbSize = sizeof(WINDOWINFO);
       GetWindowInfo(curr_wnd, &curr_wnd_info);
