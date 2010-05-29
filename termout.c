@@ -1119,11 +1119,12 @@ term_write(const char *buf, uint len)
             if (wc)
               pos--;
           when -1: // Encoding error
-            cs_mb1towc(0, 0); // Clear decoder state
             write_error();
-            if (term.in_mb_char)
+            if (term.in_mb_char || term.high_surrogate)
               pos--;
+            term.high_surrogate = 0;
             term.in_mb_char = false;
+            cs_mb1towc(0, 0); // Clear decoder state
             continue;
           when -2: // Incomplete character
             term.in_mb_char = true;
