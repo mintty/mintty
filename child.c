@@ -58,13 +58,18 @@ signal_thread(void *unused(arg))
 static void *
 read_thread(void *unused(arg))
 {
-  while ((read_len = read(pty_fd, read_buf, sizeof read_buf)) > 0) {
-    SetEvent(child_event);
-    WaitForSingleObject(proc_event, INFINITE);
-  };
-  close(pty_fd);
-  pty_fd = -1;
-  return 0;
+  for (;;) {
+    read_len = read(pty_fd, read_buf, sizeof read_buf);
+    if (read_len > 0) {
+      SetEvent(child_event);
+      WaitForSingleObject(proc_event, INFINITE);
+    }
+    else if (!read_len || errno != EINTR) {
+      close(pty_fd);
+      pty_fd = -1;
+      return 0;
+    }
+  }
 }
 
 static void *
