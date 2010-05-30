@@ -749,15 +749,14 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
 static const char help[] =
   "Usage: " APPNAME " [OPTION]... [ PROGRAM [ARG]... | - ]\n"
   "\n"
-  "If a program is supplied, it is executed with its arguments. Otherwise, the\n"
-  "shell to execute is looked up in the SHELL environment variable followed by\n"
-  "the user's shell setting in /etc/passwd. Failing that, /bin/sh is used. If\n"
-  "the last argument is a single dash, the shell is invoked as a login shell.\n"
+  "Start a new terminal session running the specified program or the user's shell.\n"
+  "If a dash is given instead of a program, invoke the shell as a login shell.\n"
   "\n"
   "Options:\n"
   "  -e, --exec            Treat remaining arguments as the command to execute\n"
   "  -p, --position X,Y    Open window at specified coordinates\n"
   "  -s, --size COLS,ROWS  Set screen size in characters\n"
+  "  -w, --window normal|min|max|full  Set initial window state\n"
   "  -t, --title TITLE     Set window title (default: the invoked command)\n"
   "      --class CLASS     Set window class name (default: " APPNAME ")\n"
   "  -i, --icon FILE[,IX]  Load window icon from file, optionally with index\n"
@@ -770,7 +769,7 @@ static const char help[] =
   "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = "+:HVuec:o:p:s:t:i:l:h:";
+static const char short_opts[] = "+:HVuec:o:p:s:w:t:i:l:h:";
 
 static const struct option
 opts[] = { 
@@ -782,6 +781,7 @@ opts[] = {
   {"option",   required_argument, 0, 'o'},
   {"position", required_argument, 0, 'p'},
   {"size",     required_argument, 0, 's'},
+  {"window",   required_argument, 0, 'w'},
   {"title",    required_argument, 0, 't'},
   {"class",    required_argument, 0, 'C'},
   {"icon",     required_argument, 0, 'i'},
@@ -811,9 +811,47 @@ error(bool syntax, char *format, ...)
   exit(1);
 }
 
+typedef struct {
+  const char *name;
+  uint val;
+} optarg_mapping;
+
+optarg_mapping
+window_optargs[] = {
+  {"normal", SW_SHOWNORMAL},
+  {"min", SW_SHOWMINIMIZED},
+  {"max", SW_SHOWMAXIMIZED},
+  {"full", 0},
+  {0, 0}
+};
+
+optarg_mapping
+hold_optargs[] = {
+  {"always", HOLD_ALWAYS},
+  {"never", HOLD_NEVER},
+  {"error", HOLD_ERROR},
+  {0, 0}
+};
+
+static uint
+lookup_optarg(char *opt, char *arg, optarg_mapping *mappings)
+{
+  int len = strlen(arg);
+  while (mappings->name) {
+    if (!memcmp(arg, mappings->name, len))
+      return mappings->val;
+    mappings++;
+  }
+  error(true, "invalid argument '%s' to option '%s'", arg, opt);
+}
+
 int
 main(int argc, char *argv[])
 {
+  STARTUPINFO sui;
+  GetStartupInfo(&sui);
+  uint show = sui.dwFlags & STARTF_USESHOWWINDOW ? sui.wShowWindow : SW_SHOW;
+  
   char *title = 0, *icon_file = 0;
   int x = CW_USEDEFAULT, y = CW_USEDEFAULT;
   bool size_override = false;
@@ -849,17 +887,10 @@ main(int argc, char *argv[])
         if (sscanf(optarg, "%u,%u%1s", &cols, &rows, (char[2]){}) != 2)
           error(true, "syntax error in size argument '%s'", optarg);
         size_override = true;
-      when 'h': {
-        int len = strlen(optarg);
-        if (memcmp(optarg, "always", len) == 0)
-          hold = HOLD_ALWAYS;
-        else if (memcmp(optarg, "never", len) == 0)
-          hold = HOLD_NEVER;
-        else if (memcmp(optarg, "error", len) == 0)
-          hold = HOLD_ERROR;
-        else
-          error(true, "invalid hold argument '%s'", optarg);
-      }
+      when 'w':
+        show = lookup_optarg("window", optarg, window_optargs);
+      when 'h':
+        hold = lookup_optarg("hold", optarg, hold_optargs);
       when 'C': {
         int len = mbstowcs(0, optarg, 0);
         if (len < 0)
@@ -1026,11 +1057,8 @@ main(int argc, char *argv[])
   free(cmd);
   
   // Finally show the window!
-  STARTUPINFO sui;
-  GetStartupInfo(&sui);
-  ShowWindow(
-    wnd, sui.dwFlags & STARTF_USESHOWWINDOW ? sui.wShowWindow : SW_SHOW
-  );
+  fullscr_on_max = !show;
+  ShowWindow(wnd, show ?: SW_SHOWMAXIMIZED);
   
   // Message loop.
   // Also monitoring child events.
