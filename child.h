@@ -12,6 +12,7 @@ void child_resize(struct winsize *winp);
 void child_proc(void);
 bool child_is_parent(void);
 const wchar *child_conv_path(const wchar *);
+void child_fork(char *argv[]);
 extern HANDLE child_event;
 
 #endif

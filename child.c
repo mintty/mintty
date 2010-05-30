@@ -440,3 +440,16 @@ child_conv_path(const wchar *wpath)
   
   return win_wpath;
 }
+
+void
+child_fork(char *argv[])
+{
+  if (fork() == 0) {
+    if (pty_fd >= 0)
+      close(pty_fd);
+    if (log_fd >= 0)
+      close(log_fd);
+    execv("/proc/self/exe", argv);
+    exit(255);
+  }
+}
