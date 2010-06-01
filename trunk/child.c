@@ -195,7 +195,8 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
     bool rebase_prompt = (errno == EAGAIN);
     error("fork child process");
     if (rebase_prompt) {
-      char msg[] = "\r\nDLL rebasing may be required. See 'rebaseall --help'.";
+      static const char msg[] =
+        "\r\nDLL rebasing may be required. See 'rebaseall --help'.";
       term_write(msg, sizeof msg - 1);
     }
   }
