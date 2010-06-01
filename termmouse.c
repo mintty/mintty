@@ -287,7 +287,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
       if (!alt) 
         win_popup_menu();
     }
-    else if (b == MBT_MIDDLE || (b == MBT_RIGHT && rca == RC_PASTE)) {
+    else if (b == ((rca == RC_PASTE) ? MBT_RIGHT : MBT_MIDDLE)) {
       if (!alt) {
         if (shift_ctrl)
           term_copy();
@@ -308,11 +308,11 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
       win_update();
     }
     else {
-      // Only selecting left clicks and extending right clicks should get here.
+      // Only clicks for selecting and extending should get here.
       p = get_selpoint(box_pos(p));
       term.mouse_state = count;
       term.sel_rect = alt;
-      if (b == MBT_RIGHT || shift_ctrl)
+      if (b != MBT_LEFT || shift_ctrl)
         sel_extend(p);
       else if (count == 1) {
         term.selected = false;
