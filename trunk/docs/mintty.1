@@ -5,7 +5,7 @@
 .\" You may distribute, use, and modify this man page under the terms
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
-.TH mintty 1 2010-04-17 0.7-alpha Cygwin
+.TH mintty 1 2010-06-04 0.7-beta3 Cygwin
 
 .ad l
 
@@ -60,6 +60,10 @@ Open the window with its top left corner at the specified coordinates.
 .TP
 \fB-s\fP, \fB--size\fP \fICOLS\fB,\fIROWS\fR
 Set the initial size of the window in character columns and rows.
+
+.TP
+\fB-w\fP, \fB--window\fP \fBnormal\fP|\fBmin\fP|\fBmax\fP|\fBfull\fP
+Set the initial window state: normal, minimized, maximized, or full screen.
 
 .TP
 \fB-t\fP, \fB--title\fP \fITITLE\fP
@@ -155,6 +159,9 @@ The selected region is copied as "rich text" as well as normal text,
 which means it can be pasted with colours and formatting into applications
 that support it, e.g. word processors.
 
+The window title can be copied using the \fBCopy Title\fP command in the window
+menu or the shortcut \fBShift+Ctrl+Ins\fP.
+
 The clipboard contents can be pasted using either the \fBPaste\fP menu command,
 the \fBShift+Ins\fP keyboard shortcut, or the middle mouse button.
 Not only text but also files and directories can be pasted,
@@ -185,9 +192,9 @@ The font size can be increased or decreased using the keyboard shortcuts
 \fBCtrl+zero\fP returns it to the size configured in the options dialog.
 
 
-.SS Fullscreen
+.SS Full screen
 
-Fullscreen mode can be toggled using either the \fBFullscreen\fP command in
+Full screen mode can be toggled using either the \fBFull Screen\fP command in
 the menu or either of the \fBAlt+Enter\fP and \fBAlt+F11\fP keyboard shortcuts.
 
 
@@ -216,6 +223,18 @@ to scroll line-by-line or the \fBPageUp\fP and \fBPageDown\fP keys to scroll
 page-by-page.
 
 
+.SS Flip screen
+
+Applications such as editors and file viewers normally use a terminal feature
+called the alternate screen, which is a second screen buffer without scrollback.
+When they exit, they switch back to the primary screen to restore the command
+line as it was before invoking the application.
+
+The \fBFlip Screen\fP menu command and \fBAlt+F12\fP shortcut allow looking
+at the primary screen while the alternate screen is active, and vice versa.
+For example, this allows to refer to past commands while editing a file.
+
+
 .SS Mouse tracking
 
 When an application activates mouse tracking, mouse events are sent to the
@@ -225,6 +244,12 @@ arrow.
 Holding down \fBShift\fP overrides mouse tracking mode and sends mouse
 events to the window instead, so that e.g. text can be selected and the context
 menu can be accessed.
+
+
+.SS Switching session
+
+The \fBCtrl+Tab\fP and \fBCtrl+Shift+Tab\fP shortcuts can be used to switch
+between mintty windows.  Minimised windows are skipped.
 
 
 .SS Closing a session
@@ -252,8 +277,11 @@ An overview of all the keyboard shortcuts.
 .IP "\- \fBAlt+F4\fP: Close"
 .IP "\- \fBAlt+F8\fP: Reset"
 .IP "\- \fBAlt+F10\fP: Default size"
-.IP "\- \fBAlt+F11\fP or \fBAlt+Enter\fP: Fullscreen"
+.IP "\- \fBAlt+F11\fP or \fBAlt+Enter\fP: Full screen"
+.IP "\- \fBAlt+F12\fP: Flip screen"
 .IP "\- \fBAlt+Space\fP: Window menu"
+.IP "\- \fBCtrl+Tab\fP: Next window"
+.IP "\- \fBCtrl+Shift+Tab\fP: Previous window"
 .RE
 
 .TP
@@ -369,7 +397,7 @@ The following cursor types are available:
 .RE
 
 .TP
-\fBEnable cursor blinking\fP (CursorBlinks=1)
+\fBCursor blink\fP (CursorBlinks=1)
 If enabled, the cursor blinks at the rate set in the Windows Keyboard control
 panel.
 
@@ -451,19 +479,6 @@ effect.
 Settings controlling keyboard behaviour.
 
 .TP
-\fBBackspace sends ^H\fP (BackspaceSendsBS=0)
-By default, mintty sends \fB^?\fP as the keycode for the backspace key.
-If this option is enabled, \fB^H\fP is sent instead.
-This also changes the Ctrl+Backspace code from \fB^_\fP to \fB^?\fP.
-
-.TP
-\fBLone Alt sends ESC\fP (AltSendsESC=0)
-The Alt key pressed on its own can be set to send the escape character
-\fB^[\fP.
-This can save the regular trip to the upper left corner of the keyboard
-for \fIvi\fP users.
-
-.TP
 \fBCtrl+LeftAlt is AltGr\fP (CtrlAltIsAltGr=0)
 The AltGr key on non-US Windows systems is a strange beast: pressing it is
 synonymous with pressing the left Ctrl key and the right Alt key at the
@@ -482,8 +497,19 @@ The setting makes no difference for keys without AltGr key bindings
 (e.g. any key on the standard US layout).
 
 .TP
-\fBMenu and fullscreen shortcuts\fP (WindowShortcuts=1)
+\fBBackspace sends ^H\fP (BackspaceSendsBS=0)
+By default, mintty sends \fB^?\fP as the keycode for the backspace key.
+If this option is enabled, \fB^H\fP is sent instead.
+This also changes the Ctrl+Backspace code from \fB^_\fP to \fB^?\fP.
+
+.TP
+\fBMenu and Full Screen shortcuts\fP (WindowShortcuts=1)
 Checkbox for enabling the \fBAlt+Space\fP and \fBAlt+Enter\fP shortcuts.
+
+.TP
+\fBSwitch window shortcuts\fP (SwitchShortcuts=1)
+Checkbox for enabling the \fBCtrl+Tab\fP and \fBCtrl+Shift+Tab\fP shortcuts
+for switching between mintty windows.
 
 .TP
 \fBZoom shortcuts\fP (ZoomShortcuts=1)
@@ -491,8 +517,7 @@ Checkbox for enabling the font zooming shortcuts \fBCtrl+plus/minus/zero\fP.
 
 .TP
 \fBModifier for scrolling\fP (ScrollMod=1)
-The modifier key that needs to be pressed together with the arrow up/down
-or page up/down keys to access the scrollback buffer.
+The modifier key that needs to be pressed together with the arrow up/down, Page Up/Down, or Home/End keys to access the scrollback buffer.
 The default is \fBShift\fP.
 The \fBOff\fP setting disables scrolling with keyboard shortcuts.
 
@@ -504,6 +529,14 @@ The \fBOff\fP setting disables scrolling with keyboard shortcuts.
 .IP "\- \fBOff\fP (0)"
 .RE
 
+.TP
+\fBPage Up/Down scroll without modifier\fP (PgUpDnScroll=0)
+If this is enabled, the scrollback buffer can be accessed using the Page Up/Down
+keys without pressing the 'modifier for scrolling' selected above.
+If the modifier is pressed anyway, plain Page Up/Down keycodes are sent to the
+application.
+This option does not affect the arrow keys and Home/End keys.
+
 
 .SS Mouse
 Settings controlling mouse support.
@@ -514,7 +547,14 @@ If enabled, the region selected with the mouse is copied to the clipboard as
 soon as the mouse button is released, thus emulating X Window behaviour.
 
 .TP
-\fBClicks place cursor\fP (ClicksPlaceCursor=0)
+\fBCopy as rich text\fP (CopyAsRTF=1)
+If this option is enabled, which it is by default, text is copied to the
+clipboard in rich text format (RTF) in addition to plain text format.
+RTF preserves colours and styles when pasting text into applications that
+support it, e.g. word processors.
+
+.TP
+\fBClicks place command line cursor\fP (ClicksPlaceCursor=0)
 If enabled, the command line cursor can be placed by pressing the left
 mouse button.
 This works by sending the number of cursor keycodes needed to get to the
@@ -523,6 +563,7 @@ destination.
 .TP
 \fBRight click action\fP (RightClickAction=0)
 Action to take when the right mouse button is pressed.
+If this is set to \fBPaste\fP, the middle button extends the selection region.
 
 .RS
 .PD 0
@@ -624,18 +665,6 @@ current size.
 .TP
 \fBShow scrollbar\fP (Scrollbar=1)
 Show the scrollbar for accessing the scrollback buffer.
-
-.TP
-\fBAccess scrollback from alternate screen\fP (AltScreenScroll=0)
-Fullscreen applications such as editors and viewers usually switch to a second
-screen buffer called the \fIalternate screen\fP.
-This allows the screen to be restored to its original content after the
-application finishes.
-
-By default, mousewheel events and the key combinations for scrolling the
-screen are sent to the application to enable scrolling within that application.
-If the option here is enabled, however, the command line history on the
-primary screen can be accessed instead.
 
 .TP
 \fBScrollback lines\fP (ScrollbackLines=10000)
