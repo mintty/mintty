@@ -13,7 +13,7 @@ Features include:
 * Small executable size (currently <120K). 
 
 Runtime requirements:
-  cygwin-1.7.1-1
+  cygwin-1.7.2-1
 
 Build requirements:
   binutils-20080624-2
@@ -31,15 +31,15 @@ Canonical download:
 -------------------------------------------
 
 Build instructions:
-  unpack mintty-0.6.2-X-src.tar.bz2
+  unpack mintty-0.7-beta3-X-src.tar.bz2
     if you use setup to install this src package, it will be
     unpacked under /usr/src automatically
   cd /usr/src
-  cygport ./mintty-0.6.2-X.cygport all
+  cygport ./mintty-0.7-beta3-X.cygport all
 
 This will create:
-  /usr/src/mintty-0.6.2-X-src.tar.bz2
-  /usr/src/mintty-0.6.2-X.tar.bz2
+  /usr/src/mintty-0.7-beta3-X-src.tar.bz2
+  /usr/src/mintty-0.7-beta3-X.tar.bz2
 
 -------------------------------------------
 
@@ -48,99 +48,61 @@ Files included in the binary package:
   /etc/postinstall/mintty.sh
   /etc/preremove/mintty.sh
   /usr/bin/mintty.exe
-  /usr/share/doc/Cygwin/mintty-0.6.2.README
-  /usr/share/doc/mintty-0.6.2/COPYING
-  /usr/share/doc/mintty-0.6.2/LICENSE.Oxygen
-  /usr/share/doc/mintty-0.6.2/LICENSE.PuTTY
+  /usr/share/doc/Cygwin/mintty-0.7-beta3.README
+  /usr/share/doc/mintty-0.7-beta3/COPYING
+  /usr/share/doc/mintty-0.7-beta3/LICENSE.Oxygen
+  /usr/share/doc/mintty-0.7-beta3/LICENSE.PuTTY
   /usr/share/man/man1/mintty.1.gz
 
 ------------------
 
 Port Notes:
 
+----- mintty-0.7-beta3-1 -----
+
 ----- mintty-0.6.2-1 -----
-* Defaulting to hold-on-error.
-* Support URL parameters in word selection.
 
 ----- mintty-0.6.1-1 -----
-* Overhauled settings storage.
-* More xterm-compatible signal handling.
-* Improved handling of Ctrl and AltGr key combinations.
-* Various UI tweaks.
 
 ----- mintty-0.5.8-1 -----
-* Fixed issue with non-ASCII chars in string settings, e.g. font name.
 
 ----- mintty-0.5.7-1 -----
-* No more assumptions about locales without explicit charset
-* Install scripts support non-admin setups
-* Added --class option
+* Improved install script support for non-admin setups
 
 ----- mintty-0.5.6-1 -----
-* Fixed RightAlt snafu on US keyboard
-* Tweaked implementation of dim attribute
 
 ----- mintty-0.5.5-1 -----
-* Added dim and invisible text attributes, UseSystemColours option
-* Program icon can be loaded from EXEs and DLLs as well
 
 ----- mintty-0.5.4-1 -----
-* Added TERM and Answerback options
 
 ----- mintty-0.5.3-1 -----
-* Fixed "clicks place cursor" for wide char
-* Added glass transparency setting
 
 ----- mintty-0.5.2-1 -----
-* Re-added option for ^H backspace.
-* Added control sequence for overriding all shortcuts.
 
 ----- mintty-0.5.1-1 -----
-* Added options for configuring Cygwin 1.7's locales.
-* Unicode support beyond the Basic Multilingual Plane.
-* Ctrl+click opening of files, folders, links.
-* Changed backspace key default to ^?.
 
 ----- mintty-0.4.4-1 -----
-* Tweaks and compatibility fixes.
 
 ----- mintty-0.4.3-1 -----
-* Skipping Windows 7 popup console workaround on Cygwin API >= 0.211.
-* Improved versioning.
-* Enhancements: custom icon, aplication escape key mode, DECSCUSR.
 
 ----- mintty-0.4.2-1 -----
-* Fixed bug that meant that codepage setting was ignored on output.
-* Removed C1 control character processing.
-* Various smaller fixes and improvements to the man page.
 
 ----- mintty-0.4.1-1 -----
-* Spit'n'polish
 
 ----- mintty-0.4.0-2 -----
 * Postinstall and preremove scripts were missing.
 
 ----- mintty-0.4.0-1 -----
-* Revamped options dialog with added Apply button.
-* Better keyboard handling, including xterm modifyOtherKeys mode.
-* Added --log and --hold options.
-* Lots of little fixes.
 
 ----- mintty-0.3.10-1 -----
-* Fixed a couple of codepage and font handling bugs introduced in 0.3.10.
 
 ----- mintty-0.3.9-1 -----
-* Improved support for East Asian languages.
-* Workaround for Windows 7 console popups.
 
 ----- mintty-0.3.8-1 -----
-* Added -e option and duplicate command.
 
 ----- mintty-0.3.7-1 -----
-* Quick respin to address a couple of xterm incompatibilities.
 
 ----- mintty-0.3.6-1 -----
-* Update to version 0.3.6. 
 * Replaced readme.html with manual page. Thanks to Lee D. Rothstein for 
 helping with that.
 
