@@ -1,3 +1,6 @@
+curr: 0.6.2-1
+prev: 0.6.1-1
+test: 0.7-beta3-1
 category: Shells
 requires: bash cygutils
 sdesc: "Terminal emulator with native Windows look and feel"
