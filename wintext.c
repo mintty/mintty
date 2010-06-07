@@ -521,7 +521,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
 
  /* Finally, draw the text */
   SetBkMode(dc, OPAQUE);
-  ExtTextOutW(dc, x, yt, eto_options, &box, text, len, dxs);
+  ExtTextOutW(dc, x, yt, eto_options | ETO_OPAQUE, &box, text, len, dxs);
 
  /* Shadow bold */
   if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD)) {
