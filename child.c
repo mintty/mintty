@@ -123,7 +123,7 @@ child_proc(void)
     int error_sigs =
       1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
       1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
-    if (hold == HOLD_ERROR && !(error_sigs & 1<<sig))
+    if (hold == HOLD_NEVER || (hold == HOLD_ERROR && !(error_sigs & 1<<sig)))
       exit(0);
     l = asprintf(&s, "%s: %s", child_name, strsignal(sig));
   }
