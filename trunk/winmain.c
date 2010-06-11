@@ -18,7 +18,6 @@
 #include <shellapi.h>
 
 #include <sys/cygwin.h>
-#include <cygwin/version.h>
 
 HWND wnd;
 HINSTANCE inst;
@@ -746,6 +745,18 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
   return DefWindowProcW(wnd, message, wp, lp);
 }
 
+void
+win_handle_msgs(void)
+{
+  MSG msg;
+  while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
+    if (msg.message == WM_QUIT)
+      exit(msg.wParam);      
+    if (!IsDialogMessage(config_wnd, &msg))
+      DispatchMessage(&msg);
+  }
+}
+
 static const char help[] =
   "Usage: " APPNAME " [OPTION]... [ PROGRAM [ARG]... | - ]\n"
   "\n"
@@ -1047,33 +1058,11 @@ main(int argc, char *argv[])
   // Enable drag & drop.
   win_init_drop_target();
 
-  // Create child process.
-  const char *lang = cs_init();
-  struct winsize ws = {term.rows, term.cols, term_width, term_height};
-  char *cmd = child_create(argv + optind, lang, &ws);
-  
-  // Set window title.
-  win_set_title(title ?: cmd);
-  free(cmd);
-  
   // Finally show the window!
   fullscr_on_max = !show;
   ShowWindow(wnd, show ?: SW_SHOWMAXIMIZED);
-  
-  // Message loop.
-  // Also monitoring child events.
-  for (;;) {
-    DWORD wakeup =
-      MsgWaitForMultipleObjects(1, &child_event, false, INFINITE, QS_ALLINPUT);
-    if (wakeup == WAIT_OBJECT_0)
-      child_proc();
-    MSG msg;
-    while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
-      if (msg.message == WM_QUIT)
-        return msg.wParam;      
-      if (!IsDialogMessage(config_wnd, &msg))
-        DispatchMessage(&msg);
-    }
-    term_send_paste();
-  }
+
+  // Create child process.
+  struct winsize ws = {term.rows, term.cols, term_width, term_height};
+  child_create(argv + optind, title, &ws);
 }
