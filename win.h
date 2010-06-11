@@ -3,6 +3,8 @@
 
 #include "config.h"
 
+void win_handle_msgs(void);
+
 void win_reconfig(void);
 
 void win_update(void);

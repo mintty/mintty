@@ -7,6 +7,7 @@
 #include "term.h"
 #include "config.h"
 #include "charset.h"
+#include "win.h"
 
 #include <pwd.h>
 #include <pty.h>
@@ -14,7 +15,6 @@
 #include <argz.h>
 #include <utmp.h>
 #include <dirent.h>
-#include <pthread.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/utsname.h>
@@ -31,108 +31,11 @@
 
 extern HWND wnd;
 
-HANDLE child_event;
-
-static HANDLE proc_event;
 static pid_t pid;
 static bool killed;
 static int status;
-static int pty_fd = -1, log_fd = -1;
-static int read_len;
-static char read_buf[4096];
+static int pty_fd = -1, log_fd = -1, win_fd;
 static struct utmp ut;
-static char *child_name;
-
-static sigset_t term_sigs;
-
-static void *
-signal_thread(void *unused(arg))
-{
-  int sig;
-  sigwait(&term_sigs, &sig);
-  if (pid > 0)
-    kill(-pid, SIGHUP);
-  exit(0);
-}
-
-static void *
-read_thread(void *unused(arg))
-{
-  for (;;) {
-    read_len = read(pty_fd, read_buf, sizeof read_buf);
-    if (read_len > 0) {
-      SetEvent(child_event);
-      WaitForSingleObject(proc_event, INFINITE);
-    }
-    else if (!read_len || errno != EINTR) {
-      close(pty_fd);
-      pty_fd = -1;
-      return 0;
-    }
-  }
-}
-
-static void *
-wait_thread(void *unused(arg))
-{
-  while (waitpid(pid, &status, 0) == -1 && errno == EINTR)
-    ;
-  pid = 0;
-  Sleep(100); // Give any ongoing output some time to finish.
-  pid = -1;
-  SetEvent(child_event);
-  return 0;
-}
-
-void
-child_proc(void)
-{
-  if (read_len > 0) {
-    term_write(read_buf, read_len);
-    if (log_fd >= 0)
-      write(log_fd, read_buf, read_len);
-    read_len = 0;
-    SetEvent(proc_event);
-  }
-
-  if (pid >= 0)
-    return;
-  
-  logout(ut.ut_line);
-
-  // No point hanging around if the user wants us dead.
-  if (killed)
-    exit(0);
-    
-  // Display a message if the child process died with an error. 
-  int l = -1;
-  char *s; 
-  if (WIFEXITED(status)) {
-    int code = WEXITSTATUS(status);
-    if (hold == HOLD_NEVER) {
-      if (code != 255)
-        exit(0);
-    }
-    else if (code)
-      l = asprintf(&s, "%s: Exit %i", child_name, code); 
-    else if (hold == HOLD_ERROR)
-      exit(0);
-  }
-  else if (WIFSIGNALED(status)) {
-    int sig = WTERMSIG(status);
-    int error_sigs =
-      1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
-      1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
-    if (hold == HOLD_NEVER || (hold == HOLD_ERROR && !(error_sigs & 1<<sig)))
-      exit(0);
-    l = asprintf(&s, "%s: %s", child_name, strsignal(sig));
-  }
-  if (l > 0) {
-    term_write(s, l);
-    free(s);
-  }
-  return;
-}
 
 static void
 error(char *action)
@@ -157,41 +60,60 @@ nonstdfd(int fd)
   return fd;
 }
 
-char *
-child_create(char *argv[], const char *lang, struct winsize *winp)
+static void
+sigexit(int sig)
 {
+  if (pid > 0)
+    kill(-pid, SIGHUP);
+  signal(sig, SIG_DFL);
+  kill(getpid(), sig);
+}
+
+static void
+sigchld(int unused(sig))
+{
+  if (waitpid(pid, &status, WNOHANG) == pid)
+    pid = 0;
+  else
+    signal(SIGCHLD, sigchld);
+}
+
+void
+child_create(char *argv[], char *title, struct winsize *winp)
+{
+  const char *lang = cs_init();
   struct passwd *pw = getpwuid(getuid());
-  char *cmd; 
+  char *cmd, *name; 
   if (*argv && (argv[1] || strcmp(*argv, "-") != 0))
-    cmd = *argv;
+    cmd = name = *argv;
   else {
     cmd = getenv("SHELL") ?: (pw ? pw->pw_shell : 0) ?: "/bin/sh";
     char *last_slash = strrchr(cmd, '/');
-    char *name = last_slash ? last_slash + 1 : cmd;
+    name = last_slash ? last_slash + 1 : cmd;
     if (*argv)
       asprintf(&name, "-%s", name);
     argv = (char *[]){name, 0};
   }
-  child_name = *argv;
   
   // Command line for window title.
-  char *argz;
-  size_t argz_len;
-  argz_create(argv, &argz, &argz_len);
-  argz_stringify(argz, argz_len, ' ');
+  if (!title) {
+    size_t len;
+    argz_create(argv, &title, &len);
+    argz_stringify(title, len, ' ');
+  }
+  win_set_title(title);
   
   // Open log file if any
   if (log_file) {
     int fd = open(log_file, O_WRONLY | O_CREAT);
-    if (fd == -1) {
+    if (fd < 0)
       error("open log file");
-      return argz;
-    }
-    log_fd = nonstdfd(fd);
+    else
+      log_fd = nonstdfd(fd);
   }
 
   // Create the child process and pseudo terminal.
-  if ((pid = forkpty(&pty_fd, 0, 0, winp)) == -1) {
+  if ((pid = forkpty(&pty_fd, 0, 0, winp)) < 0) {
     bool rebase_prompt = (errno == EAGAIN);
     error("fork child process");
     if (rebase_prompt) {
@@ -200,7 +122,7 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
       term_write(msg, sizeof msg - 1);
     }
   }
-  else if (pid == 0) { // Child process.
+  else if (!pid) { // Child process.
 #if CYGWIN_VERSION_DLL_MAJOR < 1007
     // The Cygwin 1.5 DLL's trick of allocating a console on an invisible
     // "window station" no longer works on Windows 7 due to a bug that
@@ -258,25 +180,15 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
   else { // Parent process.
     pty_fd = nonstdfd(pty_fd);
     
-    child_event = CreateEvent(null, false, false, null);
-    proc_event = CreateEvent(null, false, false, null);
-    
     // xterm and urxvt ignore SIGHUP, so let's do the same.
     signal(SIGHUP, SIG_IGN);
     
-    // SIGINT and SIGTERM are handled by signal_thread(). This is because the
-    // main thread spends most of its time in MsgWaitForMultipleObjects,
-    // during which Cygwin signals aren't handled.
-    sigemptyset(&term_sigs);
-    sigaddset(&term_sigs, SIGINT);
-    sigaddset(&term_sigs, SIGTERM);
-    pthread_sigmask(SIG_BLOCK, &term_sigs, null);
+    signal(SIGINT, sigexit);
+    signal(SIGTERM, sigexit);
+    signal(SIGQUIT, sigexit);
     
-    pthread_t thread;
-    pthread_create(&thread, 0, signal_thread, 0);
-    pthread_create(&thread, 0, wait_thread, 0);
-    pthread_create(&thread, 0, read_thread, 0);
-
+    signal(SIGCHLD, sigchld);
+    
     if (utmp_enabled) {
       ut.ut_type = USER_PROCESS;
       ut.ut_pid = pid;
@@ -294,8 +206,68 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
       login(&ut);
     }
   }
-  
-  return argz;
+
+  win_fd = open("/dev/windows", O_RDONLY);
+
+  for (;;) {
+    fd_set fds;
+    FD_ZERO(&fds);
+    if (pty_fd >= 0)
+      FD_SET(pty_fd, &fds);
+    FD_SET(win_fd, &fds);  
+    if (select(win_fd + 1, &fds, 0, 0, 0) > 0) {
+      if (pty_fd >= 0 && FD_ISSET(pty_fd, &fds)) {
+        static char buf[4096];
+        int len = read(pty_fd, buf, sizeof buf);
+        if (len > 0)
+          term_write(buf, len);
+        else
+          pty_fd = -1;
+      }
+      if (FD_ISSET(win_fd, &fds))
+        win_handle_msgs();
+      if (term.paste_len)
+        term_send_paste();
+    }
+
+    if (!pid) {
+      pid = -1;
+      
+      logout(ut.ut_line);
+
+      // No point hanging around if the user wants us dead.
+      if (killed)
+        exit(0);
+        
+      // Display a message if the child process died with an error. 
+      int l = 0;
+      char *s; 
+      if (WIFEXITED(status)) {
+        int code = WEXITSTATUS(status);
+        if (hold == HOLD_NEVER) {
+          if (code != 255)
+            exit(0);
+        }
+        else if (code)
+          l = asprintf(&s, "%s: Exit %i", name, code); 
+        else if (hold == HOLD_ERROR)
+          exit(0);
+      }
+      else if (WIFSIGNALED(status)) {
+        int sig = WTERMSIG(status);
+        int error_sigs =
+          1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
+          1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
+        if (hold == HOLD_NEVER || (hold == HOLD_ERROR && !(error_sigs & 1<<sig)))
+          exit(0);
+        l = asprintf(&s, "%s: %s", name, strsignal(sig));
+      }
+      if (l > 0) {
+        term_write(s, l);
+        free(s);
+      }
+    }
+  }
 }
 
 void
@@ -450,6 +422,7 @@ child_fork(char *argv[])
       close(pty_fd);
     if (log_fd >= 0)
       close(log_fd);
+    close(win_fd);
     execv("/proc/self/exe", argv);
     exit(255);
   }

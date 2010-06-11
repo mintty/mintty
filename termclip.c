@@ -195,9 +195,6 @@ term_cancel_paste(void)
 void
 term_send_paste(void)
 {
-  if (term.paste_len == 0)
-    return;
-
   if (term.paste_pos < term.paste_len) {
     int i = term.paste_pos;
     while (i < term.paste_len && term.paste_buffer[i++] != '\r');
