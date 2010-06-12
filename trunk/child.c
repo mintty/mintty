@@ -43,7 +43,7 @@ int forkpty(int *, char *, struct termios *, struct winsize *);
 
 extern HWND wnd;
 
-static pid_t pid;
+static pid_t pid = -1;
 static bool killed;
 static int status;
 static int pty_fd = -1, log_fd = -1, win_fd;
@@ -169,6 +169,8 @@ child_create(char *argv[], char *title, struct winsize *winp)
     exit(255);
   }
   else { // Parent process.
+    fcntl(pty_fd, F_SETFL, O_NONBLOCK);
+    
     // xterm and urxvt ignore SIGHUP, so let's do the same.
     signal(SIGHUP, SIG_IGN);
     
@@ -213,15 +215,27 @@ child_create(char *argv[], char *title, struct winsize *winp)
     FD_SET(win_fd, &fds);  
     if (select(win_fd + 1, &fds, 0, 0, 0) > 0) {
       if (pty_fd >= 0 && FD_ISSET(pty_fd, &fds)) {
+#if CYGWIN_VERSION_DLL_MAJOR >= 1005
         static char buf[4096];
         int len = read(pty_fd, buf, sizeof buf);
+#else
+        // Pty devices on old Cygwin version deliver only 4 bytes at a time,
+        // so call read() repeatedly until we have a worthwhile haul.
+        static char buf[512];
+        uint len = 0;
+        do {
+          int ret = read(pty_fd, buf + len, sizeof buf - len);
+          if (ret > 0)
+            len += ret;
+          else
+            break;
+        } while (len < sizeof buf);
+#endif
         if (len > 0) {
           term_write(buf, len);
           if (log_fd >= 0)
             write(log_fd, buf, len);
         }
-        else
-          pty_fd = -1;
       }
       if (FD_ISSET(win_fd, &fds))
         win_handle_msgs();
@@ -312,9 +326,9 @@ child_is_parent(void)
 void
 child_write(const char *buf, uint len)
 { 
-  if (pty_fd >= 0)
+  if (pid > 0)
     write(pty_fd, buf, len); 
-  else if (pid < 0)
+  else
     exit(0);
 }
 
