@@ -1,6 +1,8 @@
 #ifndef STD_H
 #define STD_H
 
+#include <cygwin/version.h>
+
 #include <assert.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -10,9 +12,20 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <ctype.h>
-#include <wctype.h>
 #include <wchar.h>
 #include <errno.h>
+
+#if CYGWIN_VERSION_API_MINOR >= 74
+#include <wctype.h>
+#else
+int iswalnum(wint_t);
+int iswalpha(wint_t);
+#endif
+
+#if CYGWIN_VERSION_API_MINOR < 70
+int asprintf(char **, const char *, ...);
+int vasprintf(char **, const char *, va_list);
+#endif
 
 #define WINVER 0x400
 #define _WIN32_WINNT WINVER

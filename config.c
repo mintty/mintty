@@ -201,14 +201,12 @@ load_config(char *filename)
 
   FILE *file = fopen(filename, "r");
   if (file) {
-    char *line;
-    size_t len;
-    while (line = 0, __getline(&line, &len, file) != -1) {
+    char line[256];
+    while (fgets(line, sizeof line, file)) {
       line[strcspn(line, "\r\n")] = 0;  /* trim newline */
       int i = parse_option(line);
       if (i >= 0 && !memchr(option_order, i, option_order_len))
         option_order[option_order_len++] = i;
-      free(line);
     }
     fclose(file);
   }
