@@ -237,10 +237,10 @@ child_create(char *argv[], char *title, struct winsize *winp)
             write(log_fd, buf, len);
         }
       }
+      if (term.paste_buffer)
+        term_send_paste();
       if (FD_ISSET(win_fd, &fds))
         win_handle_msgs();
-      if (term.paste_len)
-        term_send_paste();
     }
 
     if (!pid) {
