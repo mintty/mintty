@@ -182,7 +182,7 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
   
   // Open log file if any
   if (log_file) {
-    int fd = open(log_file, O_WRONLY | O_CREAT);
+    int fd = open(log_file, O_WRONLY | O_CREAT, 0600);
     if (fd == -1) {
       error("open log file");
       return argz;
@@ -221,6 +221,9 @@ child_create(char *argv[], const char *lang, struct winsize *winp)
       }
     }
 #endif
+
+    if (log_fd >= 0)
+      close(log_fd);
 
     // Reset signals
     signal(SIGHUP, SIG_DFL);
