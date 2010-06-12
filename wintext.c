@@ -321,7 +321,7 @@ void
 win_schedule_update(void)
 {
   if (!update_pending) {
-    SetTimer(wnd, (UINT_PTR)win_update, 10, null);
+    SetTimer(wnd, (UINT_PTR)win_update, 20, null);
     update_pending = true;
   }
 }
