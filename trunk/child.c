@@ -10,15 +10,27 @@
 #include "win.h"
 
 #include <pwd.h>
-#include <pty.h>
 #include <fcntl.h>
-#include <argz.h>
 #include <utmp.h>
 #include <dirent.h>
+#include <signal.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/utsname.h>
 #include <sys/cygwin.h>
+
+#if CYGWIN_VERSION_API_MINOR >= 91
+#include <argz.h>
+#else
+int argz_create (char *const argv[], char **argz, size_t *argz_len);
+void argz_stringify (char *argz, size_t argz_len, int sep);
+#endif
+
+#if CYGWIN_VERSION_API_MINOR >= 93
+#include <pty.h>
+#else
+int forkpty(int *, char *, struct termios *, struct winsize *);
+#endif
 
 #include <winbase.h>
 

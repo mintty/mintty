@@ -7,8 +7,10 @@
 
 #include "config.h"
 
+#if HAS_LOCALES
 #include <locale.h>
 #include <langinfo.h>
+#endif
 
 #include <winbase.h>
 #include <winnls.h>
