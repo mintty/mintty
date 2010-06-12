@@ -48,18 +48,6 @@ error(char *action)
   }
 }
 
-static int
-nonstdfd(int fd)
-{
-  // Move file descriptor out of standard range if necessary.
-  if (fd < 3) {
-    int old_fd = fd;
-    fd = fcntl(fd, F_DUPFD, 3);
-    close(old_fd);
-  }
-  return fd;
-}
-
 static void
 sigexit(int sig)
 {
@@ -169,8 +157,6 @@ child_create(char *argv[], char *title, struct winsize *winp)
     exit(255);
   }
   else { // Parent process.
-    pty_fd = nonstdfd(pty_fd);
-    
     // xterm and urxvt ignore SIGHUP, so let's do the same.
     signal(SIGHUP, SIG_IGN);
     
@@ -202,11 +188,9 @@ child_create(char *argv[], char *title, struct winsize *winp)
 
   // Open log file if any
   if (log_file) {
-    int fd = open(log_file, O_WRONLY | O_CREAT, 0600);
-    if (fd < 0)
+    log_fd = open(log_file, O_WRONLY | O_CREAT, 0600);
+    if (log_fd < 0)
       error("open log file");
-    else
-      log_fd = nonstdfd(fd);
   }
 
   for (;;) {
