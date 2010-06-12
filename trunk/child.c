@@ -103,15 +103,6 @@ child_create(char *argv[], char *title, struct winsize *winp)
   }
   win_set_title(title);
   
-  // Open log file if any
-  if (log_file) {
-    int fd = open(log_file, O_WRONLY | O_CREAT);
-    if (fd < 0)
-      error("open log file");
-    else
-      log_fd = nonstdfd(fd);
-  }
-
   // Create the child process and pseudo terminal.
   if ((pid = forkpty(&pty_fd, 0, 0, winp)) < 0) {
     bool rebase_prompt = (errno == EAGAIN);
@@ -209,6 +200,15 @@ child_create(char *argv[], char *title, struct winsize *winp)
 
   win_fd = open("/dev/windows", O_RDONLY);
 
+  // Open log file if any
+  if (log_file) {
+    int fd = open(log_file, O_WRONLY | O_CREAT, 0600);
+    if (fd < 0)
+      error("open log file");
+    else
+      log_fd = nonstdfd(fd);
+  }
+
   for (;;) {
     fd_set fds;
     FD_ZERO(&fds);
@@ -219,8 +219,11 @@ child_create(char *argv[], char *title, struct winsize *winp)
       if (pty_fd >= 0 && FD_ISSET(pty_fd, &fds)) {
         static char buf[4096];
         int len = read(pty_fd, buf, sizeof buf);
-        if (len > 0)
+        if (len > 0) {
           term_write(buf, len);
+          if (log_fd >= 0)
+            write(log_fd, buf, len);
+        }
         else
           pty_fd = -1;
       }
