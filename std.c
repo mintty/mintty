@@ -186,7 +186,7 @@ openpty(int *amaster, int *aslave, char *name,
           if (termp)
             tcsetattr (slave, TCSAFLUSH, termp);
           if (winp)
-            ioctl (slave, TIOCSWINSZ, (char *) winp);
+            ioctl (master, TIOCSWINSZ, (char *) winp);
           return 0;
         }
       close (master);
