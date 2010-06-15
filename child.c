@@ -436,7 +436,20 @@ child_fork(char *argv[])
     if (log_fd >= 0)
       close(log_fd);
     close(win_fd);
+
+#ifdef __MSYS__
+    // MSYS doesn't have the /proc filesystem, so use argv[0] instead.
+    // Strip enclosing quotes if present.
+    char *path = argv[0];
+    int len = strlen(path);
+    if (path[0] == '"' && path[len - 1] == '"') {
+      path = strdup(path + 1);
+      path[len - 2] = 0;
+    }
+    execvp(path, argv);
+#else
     execv("/proc/self/exe", argv);
+#endif
     exit(255);
   }
 }
