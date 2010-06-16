@@ -382,14 +382,17 @@ child_conv_path(const wchar *wpath)
     else
       exp_path = path;
   }
+#if CYGWIN_VERSION_DLL_MAJOR >= 1005
+  // Handle relative paths. This requires the /proc filesystem to find the
+  // child process working directory, which isn't available before Cygwin 1.5.
   else if (*path != '/' && pid > 0) {
-    // Relative path: prepend child process' working directory
     char proc_cwd[32];
     sprintf(proc_cwd, "/proc/%u/cwd", pid);
     char *cwd = realpath(proc_cwd, 0);
     asprintf(&exp_path, "%s/%s", cwd, path);
     free(cwd);
   }
+#endif
   else
     exp_path = path;
   
@@ -437,8 +440,10 @@ child_fork(char *argv[])
       close(log_fd);
     close(win_fd);
 
-#ifdef __MSYS__
-    // MSYS doesn't have the /proc filesystem, so use argv[0] instead.
+#if CYGWIN_VERSION_DLL_MAJOR >= 1005
+    execv("/proc/self/exe", argv);
+#else
+    // /proc/self/exe isn't available before Cygwin 1.5, so use argv[0] instead.
     // Strip enclosing quotes if present.
     char *path = argv[0];
     int len = strlen(path);
@@ -447,8 +452,6 @@ child_fork(char *argv[])
       path[len - 2] = 0;
     }
     execvp(path, argv);
-#else
-    execv("/proc/self/exe", argv);
 #endif
     exit(255);
   }
