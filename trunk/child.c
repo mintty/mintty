@@ -16,7 +16,6 @@
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
-#include <sys/utsname.h>
 #include <sys/cygwin.h>
 
 #if CYGWIN_VERSION_API_MINOR >= 91
@@ -115,24 +114,27 @@ child_create(char *argv[], char *title, struct winsize *winp)
   }
   else if (!pid) { // Child process.
 #if CYGWIN_VERSION_DLL_MAJOR < 1007
-    // The Cygwin 1.5 DLL's trick of allocating a console on an invisible
-    // "window station" no longer works on Windows 7 due to a bug that
-    // Microsoft don't intend to fix anytime soon.
-    // Hence, here's a hack that allocates a console for the child command
-    // and hides it. Annoyingly the console window still flashes up briefly.
-    // Cygwin 1.7 has a better workaround.
+    // Some native console programs require a console to be attached to the
+    // process, otherwise they pop one up themselves, which is rather annoying.
+    // Cygwin's exec function from 1.5 onwards automatically allocates a console
+    // on an invisible window station if necessary. Unfortunately that trick no
+    // longer works on Windows 7, which is why Cygwin 1.7 contains a new hack
+    // for creating the invisible console.
+    // On Cygwin versions before 1.5 and on Cygwin 1.5 running on Windows 7,
+    // we need to create the invisible console ourselves. The hack here is not
+    // as clever as Cygwin's, with the console briefly flashing up on startup,
+    // but it'll do.
+#if CYGWIN_VERSION_DLL_MAJOR == 1005
     DWORD win_version = GetVersion();
     win_version = ((win_version & 0xff) << 8) | ((win_version >> 8) & 0xff);
-    struct utsname un;
-    uname(&un);
-    if (win_version >= 0x0601 && un.release[2] == '5') {
+    if (win_version >= 0x0601)  // Windows 7 is NT 6.1.
+#endif
       if (AllocConsole()) {
         HMODULE kernel = LoadLibrary("kernel32");
         HWND (WINAPI *pGetConsoleWindow)(void) =
           (void *)GetProcAddress(kernel, "GetConsoleWindow");
         ShowWindowAsync(pGetConsoleWindow(), SW_HIDE);
       }
-    }
 #endif
 
     // Reset signals
