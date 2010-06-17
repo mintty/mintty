@@ -7,29 +7,18 @@
 #include "term.h"
 #include "config.h"
 #include "charset.h"
-#include "win.h"
 
 #include <pwd.h>
+#include <pty.h>
 #include <fcntl.h>
+#include <argz.h>
 #include <utmp.h>
 #include <dirent.h>
-#include <signal.h>
+#include <pthread.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
+#include <sys/utsname.h>
 #include <sys/cygwin.h>
-
-#if CYGWIN_VERSION_API_MINOR >= 91
-#include <argz.h>
-#else
-int argz_create (char *const argv[], char **argz, size_t *argz_len);
-void argz_stringify (char *argz, size_t argz_len, int sep);
-#endif
-
-#if CYGWIN_VERSION_API_MINOR >= 93
-#include <pty.h>
-#else
-int forkpty(int *, char *, struct termios *, struct winsize *);
-#endif
 
 #include <winbase.h>
 
@@ -42,11 +31,108 @@ int forkpty(int *, char *, struct termios *, struct winsize *);
 
 extern HWND wnd;
 
-static pid_t pid = -1;
+HANDLE child_event;
+
+static HANDLE proc_event;
+static pid_t pid;
 static bool killed;
 static int status;
-static int pty_fd = -1, log_fd = -1, win_fd;
+static int pty_fd = -1, log_fd = -1;
+static int read_len;
+static char read_buf[4096];
 static struct utmp ut;
+static char *child_name;
+
+static sigset_t term_sigs;
+
+static void *
+signal_thread(void *unused(arg))
+{
+  int sig;
+  sigwait(&term_sigs, &sig);
+  if (pid > 0)
+    kill(-pid, SIGHUP);
+  exit(0);
+}
+
+static void *
+read_thread(void *unused(arg))
+{
+  for (;;) {
+    read_len = read(pty_fd, read_buf, sizeof read_buf);
+    if (read_len > 0) {
+      SetEvent(child_event);
+      WaitForSingleObject(proc_event, INFINITE);
+    }
+    else if (!read_len || errno != EINTR) {
+      close(pty_fd);
+      pty_fd = -1;
+      return 0;
+    }
+  }
+}
+
+static void *
+wait_thread(void *unused(arg))
+{
+  while (waitpid(pid, &status, 0) == -1 && errno == EINTR)
+    ;
+  pid = 0;
+  Sleep(100); // Give any ongoing output some time to finish.
+  pid = -1;
+  SetEvent(child_event);
+  return 0;
+}
+
+void
+child_proc(void)
+{
+  if (read_len > 0) {
+    term_write(read_buf, read_len);
+    if (log_fd >= 0)
+      write(log_fd, read_buf, read_len);
+    read_len = 0;
+    SetEvent(proc_event);
+  }
+
+  if (pid >= 0)
+    return;
+  
+  logout(ut.ut_line);
+
+  // No point hanging around if the user wants us dead.
+  if (killed)
+    exit(0);
+    
+  // Display a message if the child process died with an error. 
+  int l = -1;
+  char *s; 
+  if (WIFEXITED(status)) {
+    int code = WEXITSTATUS(status);
+    if (hold == HOLD_NEVER) {
+      if (code != 255)
+        exit(0);
+    }
+    else if (code)
+      l = asprintf(&s, "%s: Exit %i", child_name, code); 
+    else if (hold == HOLD_ERROR)
+      exit(0);
+  }
+  else if (WIFSIGNALED(status)) {
+    int sig = WTERMSIG(status);
+    int error_sigs =
+      1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
+      1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
+    if (hold == HOLD_NEVER || (hold == HOLD_ERROR && !(error_sigs & 1<<sig)))
+      exit(0);
+    l = asprintf(&s, "%s: %s", child_name, strsignal(sig));
+  }
+  if (l > 0) {
+    term_write(s, l);
+    free(s);
+  }
+  return;
+}
 
 static void
 error(char *action)
@@ -59,51 +145,53 @@ error(char *action)
   }
 }
 
-static void
-sigexit(int sig)
+static int
+nonstdfd(int fd)
 {
-  if (pid > 0)
-    kill(-pid, SIGHUP);
-  signal(sig, SIG_DFL);
-  kill(getpid(), sig);
+  // Move file descriptor out of standard range if necessary.
+  if (fd < 3) {
+    int old_fd = fd;
+    fd = fcntl(fd, F_DUPFD, 3);
+    close(old_fd);
+  }
+  return fd;
 }
 
-static void
-sigchld(int unused(sig))
+char *
+child_create(char *argv[], const char *lang, struct winsize *winp)
 {
-  if (waitpid(pid, &status, WNOHANG) == pid)
-    pid = 0;
-  else
-    signal(SIGCHLD, sigchld);
-}
-
-void
-child_create(char *argv[], char *title, struct winsize *winp)
-{
-  const char *lang = cs_init();
   struct passwd *pw = getpwuid(getuid());
-  char *cmd, *name; 
+  char *cmd; 
   if (*argv && (argv[1] || strcmp(*argv, "-") != 0))
-    cmd = name = *argv;
+    cmd = *argv;
   else {
     cmd = getenv("SHELL") ?: (pw ? pw->pw_shell : 0) ?: "/bin/sh";
     char *last_slash = strrchr(cmd, '/');
-    name = last_slash ? last_slash + 1 : cmd;
+    char *name = last_slash ? last_slash + 1 : cmd;
     if (*argv)
       asprintf(&name, "-%s", name);
     argv = (char *[]){name, 0};
   }
+  child_name = *argv;
   
   // Command line for window title.
-  if (!title) {
-    size_t len;
-    argz_create(argv, &title, &len);
-    argz_stringify(title, len, ' ');
-  }
-  win_set_title(title);
+  char *argz;
+  size_t argz_len;
+  argz_create(argv, &argz, &argz_len);
+  argz_stringify(argz, argz_len, ' ');
   
+  // Open log file if any
+  if (log_file) {
+    int fd = open(log_file, O_WRONLY | O_CREAT, 0600);
+    if (fd == -1) {
+      error("open log file");
+      return argz;
+    }
+    log_fd = nonstdfd(fd);
+  }
+
   // Create the child process and pseudo terminal.
-  if ((pid = forkpty(&pty_fd, 0, 0, winp)) < 0) {
+  if ((pid = forkpty(&pty_fd, 0, 0, winp)) == -1) {
     bool rebase_prompt = (errno == EAGAIN);
     error("fork child process");
     if (rebase_prompt) {
@@ -112,30 +200,30 @@ child_create(char *argv[], char *title, struct winsize *winp)
       term_write(msg, sizeof msg - 1);
     }
   }
-  else if (!pid) { // Child process.
+  else if (pid == 0) { // Child process.
 #if CYGWIN_VERSION_DLL_MAJOR < 1007
-    // Some native console programs require a console to be attached to the
-    // process, otherwise they pop one up themselves, which is rather annoying.
-    // Cygwin's exec function from 1.5 onwards automatically allocates a console
-    // on an invisible window station if necessary. Unfortunately that trick no
-    // longer works on Windows 7, which is why Cygwin 1.7 contains a new hack
-    // for creating the invisible console.
-    // On Cygwin versions before 1.5 and on Cygwin 1.5 running on Windows 7,
-    // we need to create the invisible console ourselves. The hack here is not
-    // as clever as Cygwin's, with the console briefly flashing up on startup,
-    // but it'll do.
-#if CYGWIN_VERSION_DLL_MAJOR == 1005
+    // The Cygwin 1.5 DLL's trick of allocating a console on an invisible
+    // "window station" no longer works on Windows 7 due to a bug that
+    // Microsoft don't intend to fix anytime soon.
+    // Hence, here's a hack that allocates a console for the child command
+    // and hides it. Annoyingly the console window still flashes up briefly.
+    // Cygwin 1.7 has a better workaround.
     DWORD win_version = GetVersion();
     win_version = ((win_version & 0xff) << 8) | ((win_version >> 8) & 0xff);
-    if (win_version >= 0x0601)  // Windows 7 is NT 6.1.
-#endif
+    struct utsname un;
+    uname(&un);
+    if (win_version >= 0x0601 && un.release[2] == '5') {
       if (AllocConsole()) {
         HMODULE kernel = LoadLibrary("kernel32");
         HWND (WINAPI *pGetConsoleWindow)(void) =
           (void *)GetProcAddress(kernel, "GetConsoleWindow");
         ShowWindowAsync(pGetConsoleWindow(), SW_HIDE);
       }
+    }
 #endif
+
+    if (log_fd >= 0)
+      close(log_fd);
 
     // Reset signals
     signal(SIGHUP, SIG_DFL);
@@ -171,17 +259,27 @@ child_create(char *argv[], char *title, struct winsize *winp)
     exit(255);
   }
   else { // Parent process.
-    fcntl(pty_fd, F_SETFL, O_NONBLOCK);
+    pty_fd = nonstdfd(pty_fd);
+    
+    child_event = CreateEvent(null, false, false, null);
+    proc_event = CreateEvent(null, false, false, null);
     
     // xterm and urxvt ignore SIGHUP, so let's do the same.
     signal(SIGHUP, SIG_IGN);
     
-    signal(SIGINT, sigexit);
-    signal(SIGTERM, sigexit);
-    signal(SIGQUIT, sigexit);
+    // SIGINT and SIGTERM are handled by signal_thread(). This is because the
+    // main thread spends most of its time in MsgWaitForMultipleObjects,
+    // during which Cygwin signals aren't handled.
+    sigemptyset(&term_sigs);
+    sigaddset(&term_sigs, SIGINT);
+    sigaddset(&term_sigs, SIGTERM);
+    pthread_sigmask(SIG_BLOCK, &term_sigs, null);
     
-    signal(SIGCHLD, sigchld);
-    
+    pthread_t thread;
+    pthread_create(&thread, 0, signal_thread, 0);
+    pthread_create(&thread, 0, wait_thread, 0);
+    pthread_create(&thread, 0, read_thread, 0);
+
     if (utmp_enabled) {
       ut.ut_type = USER_PROCESS;
       ut.ut_pid = pid;
@@ -199,90 +297,8 @@ child_create(char *argv[], char *title, struct winsize *winp)
       login(&ut);
     }
   }
-
-  win_fd = open("/dev/windows", O_RDONLY);
-
-  // Open log file if any
-  if (log_file) {
-    log_fd = open(log_file, O_WRONLY | O_CREAT, 0600);
-    if (log_fd < 0)
-      error("open log file");
-  }
-
-  for (;;) {
-    fd_set fds;
-    FD_ZERO(&fds);
-    if (pty_fd >= 0)
-      FD_SET(pty_fd, &fds);
-    FD_SET(win_fd, &fds);  
-    if (select(win_fd + 1, &fds, 0, 0, 0) > 0) {
-      if (pty_fd >= 0 && FD_ISSET(pty_fd, &fds)) {
-#if CYGWIN_VERSION_DLL_MAJOR >= 1005
-        static char buf[4096];
-        int len = read(pty_fd, buf, sizeof buf);
-#else
-        // Pty devices on old Cygwin version deliver only 4 bytes at a time,
-        // so call read() repeatedly until we have a worthwhile haul.
-        static char buf[512];
-        uint len = 0;
-        do {
-          int ret = read(pty_fd, buf + len, sizeof buf - len);
-          if (ret > 0)
-            len += ret;
-          else
-            break;
-        } while (len < sizeof buf);
-#endif
-        if (len > 0) {
-          term_write(buf, len);
-          if (log_fd >= 0)
-            write(log_fd, buf, len);
-        }
-      }
-      if (term.paste_buffer)
-        term_send_paste();
-      if (FD_ISSET(win_fd, &fds))
-        win_handle_msgs();
-    }
-
-    if (!pid) {
-      pid = -1;
-      
-      logout(ut.ut_line);
-
-      // No point hanging around if the user wants us dead.
-      if (killed)
-        exit(0);
-        
-      // Display a message if the child process died with an error. 
-      int l = 0;
-      char *s; 
-      if (WIFEXITED(status)) {
-        int code = WEXITSTATUS(status);
-        if (hold == HOLD_NEVER) {
-          if (code != 255)
-            exit(0);
-        }
-        else if (code)
-          l = asprintf(&s, "%s: Exit %i", name, code); 
-        else if (hold == HOLD_ERROR)
-          exit(0);
-      }
-      else if (WIFSIGNALED(status)) {
-        int sig = WTERMSIG(status);
-        int error_sigs =
-          1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
-          1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
-        if (hold == HOLD_NEVER || (hold == HOLD_ERROR && !(error_sigs & 1<<sig)))
-          exit(0);
-        l = asprintf(&s, "%s: %s", name, strsignal(sig));
-      }
-      if (l > 0) {
-        term_write(s, l);
-        free(s);
-      }
-    }
-  }
+  
+  return argz;
 }
 
 void
@@ -328,9 +344,9 @@ child_is_parent(void)
 void
 child_write(const char *buf, uint len)
 { 
-  if (pid > 0)
+  if (pty_fd >= 0)
     write(pty_fd, buf, len); 
-  else
+  else if (pid < 0)
     exit(0);
 }
 
@@ -384,17 +400,14 @@ child_conv_path(const wchar *wpath)
     else
       exp_path = path;
   }
-#if CYGWIN_VERSION_DLL_MAJOR >= 1005
-  // Handle relative paths. This requires the /proc filesystem to find the
-  // child process working directory, which isn't available before Cygwin 1.5.
   else if (*path != '/' && pid > 0) {
+    // Relative path: prepend child process' working directory
     char proc_cwd[32];
     sprintf(proc_cwd, "/proc/%u/cwd", pid);
     char *cwd = realpath(proc_cwd, 0);
     asprintf(&exp_path, "%s/%s", cwd, path);
     free(cwd);
   }
-#endif
   else
     exp_path = path;
   
@@ -440,21 +453,7 @@ child_fork(char *argv[])
       close(pty_fd);
     if (log_fd >= 0)
       close(log_fd);
-    close(win_fd);
-
-#if CYGWIN_VERSION_DLL_MAJOR >= 1005
     execv("/proc/self/exe", argv);
-#else
-    // /proc/self/exe isn't available before Cygwin 1.5, so use argv[0] instead.
-    // Strip enclosing quotes if present.
-    char *path = argv[0];
-    int len = strlen(path);
-    if (path[0] == '"' && path[len - 1] == '"') {
-      path = strdup(path + 1);
-      path[len - 2] = 0;
-    }
-    execvp(path, argv);
-#endif
     exit(255);
   }
 }

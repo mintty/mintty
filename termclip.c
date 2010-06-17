@@ -195,13 +195,15 @@ term_cancel_paste(void)
 void
 term_send_paste(void)
 {
-  int i = term.paste_pos;
-  while (i < term.paste_len && term.paste_buffer[i++] != '\r');
-  child_sendw(term.paste_buffer + term.paste_pos, i - term.paste_pos);
-  if (i < term.paste_len)
-    term.paste_pos = i;
-  else
-    term_cancel_paste();
+  if (term.paste_buffer) {
+    int i = term.paste_pos;
+    while (i < term.paste_len && term.paste_buffer[i++] != '\r');
+    child_sendw(term.paste_buffer + term.paste_pos, i - term.paste_pos);
+    if (i < term.paste_len)
+      term.paste_pos = i;
+    else
+      term_cancel_paste();
+  }
 }
 
 void
