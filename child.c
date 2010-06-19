@@ -81,17 +81,17 @@ void
 child_create(char *argv[], char *title, struct winsize *winp)
 {
   const char *lang = cs_init();
-  struct passwd *pw = getpwuid(getuid());
-  char *cmd, *name; 
-  if (*argv && (argv[1] || strcmp(*argv, "-") != 0))
-    cmd = name = *argv;
+  char *cmd; 
+  if (*argv && (argv[1] || strcmp(*argv, "-")))
+    cmd = *argv;
   else {
+    struct passwd *pw = getpwuid(getuid());
     cmd = getenv("SHELL") ?: (pw ? pw->pw_shell : 0) ?: "/bin/sh";
-    char *last_slash = strrchr(cmd, '/');
-    name = last_slash ? last_slash + 1 : cmd;
+    char *slash = strrchr(cmd, '/');
+    char *arg0 = slash ? slash + 1 : cmd;
     if (*argv)
-      asprintf(&name, "-%s", name);
-    argv = (char *[]){name, 0};
+      asprintf(&arg0, "-%s", arg0);
+    argv = (char *[]){arg0, 0};
   }
   
   // Command line for window title.
@@ -167,7 +167,7 @@ child_create(char *argv[], char *title, struct winsize *winp)
     execvp(cmd, argv);
 
     // If we get here, exec failed.
-    fprintf(stderr, "%s: %s\r\n", *argv, strerror(errno));
+    fprintf(stderr, "%s: %s\r\n", cmd, strerror(errno));
     exit(255);
   }
   else { // Parent process.
@@ -195,7 +195,7 @@ child_create(char *argv[], char *title, struct winsize *winp)
           dev += 3;
         strncpy(ut.ut_id, dev ?: "?", sizeof ut.ut_id);      
       }
-      strncpy(ut.ut_user, (pw ? pw->pw_name : 0) ?: "?", sizeof ut.ut_user);
+      strncpy(ut.ut_user, getlogin() ?: "?", sizeof ut.ut_user);
       login(&ut);
     }
   }
@@ -259,14 +259,11 @@ child_create(char *argv[], char *title, struct winsize *winp)
       char *s; 
       if (WIFEXITED(status)) {
         int code = WEXITSTATUS(status);
-        if (hold == HOLD_NEVER) {
-          if (code != 255)
+        if (code != 255) {
+          if (hold == HOLD_NEVER || (hold == HOLD_ERROR && !code))
             exit(0);
+          l = asprintf(&s, "%s: Exit %i", cmd, code); 
         }
-        else if (code)
-          l = asprintf(&s, "%s: Exit %i", name, code); 
-        else if (hold == HOLD_ERROR)
-          exit(0);
       }
       else if (WIFSIGNALED(status)) {
         int sig = WTERMSIG(status);
@@ -275,7 +272,7 @@ child_create(char *argv[], char *title, struct winsize *winp)
           1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
         if (hold == HOLD_NEVER || (hold == HOLD_ERROR && !(error_sigs & 1<<sig)))
           exit(0);
-        l = asprintf(&s, "%s: %s", name, strsignal(sig));
+        l = asprintf(&s, "%s: %s", cmd, strsignal(sig));
       }
       if (l > 0) {
         term_write(s, l);
