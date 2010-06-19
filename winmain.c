@@ -13,11 +13,19 @@
 
 #include <locale.h>
 #include <getopt.h>
+#include <pwd.h>
 #include <imm.h>
 #include <winnls.h>
 #include <shellapi.h>
 
 #include <sys/cygwin.h>
+
+#if CYGWIN_VERSION_API_MINOR >= 91
+#include <argz.h>
+#else
+int argz_create (char *const argv[], char **argz, size_t *argz_len);
+void argz_stringify (char *argz, size_t argz_len, int sep);
+#endif
 
 HWND wnd;
 HINSTANCE inst;
@@ -96,12 +104,9 @@ win_set_timer(void (*cb)(void), uint ticks)
 void
 win_set_title(char *title)
 {
-  int wlen = cs_mbstowcs(0, title, 0);
-  if (wlen >= 0) {
-    wchar wtitle[wlen + 1];
-    cs_mbstowcs(wtitle, title, wlen + 1);
+  wchar wtitle[strlen(title) + 1];
+  if (cs_mbstowcs(wtitle, title, sizeof wtitle))
     SetWindowTextW(wnd, wtitle);
-  }
 }
 
 void
@@ -745,18 +750,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
   return DefWindowProcW(wnd, message, wp, lp);
 }
 
-void
-win_handle_msgs(void)
-{
-  MSG msg;
-  while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
-    if (msg.message == WM_QUIT)
-      exit(msg.wParam);      
-    if (!IsDialogMessage(config_wnd, &msg))
-      DispatchMessage(&msg);
-  }
-}
-
 static const char help[] =
   "Usage: " APPNAME " [OPTION]... [ PROGRAM [ARG]... | - ]\n"
   "\n"
@@ -859,6 +852,9 @@ lookup_optarg(char *opt, char *arg, optarg_mapping *mappings)
 int
 main(int argc, char *argv[])
 {
+  main_argv = argv;
+  setlocale(LC_CTYPE, "");
+
   STARTUPINFO sui;
   GetStartupInfo(&sui);
   uint show = sui.dwFlags & STARTF_USESHOWWINDOW ? sui.wShowWindow : SW_SHOW;
@@ -868,9 +864,6 @@ main(int argc, char *argv[])
   bool size_override = false;
   uint rows = 0, cols = 0;
   wchar *class_name = _W(APPNAME);
-
-  setlocale(LC_CTYPE, "");
-  main_argv = argv;
   
   load_config("/etc/minttyrc");
   
@@ -952,6 +945,33 @@ main(int argc, char *argv[])
       error(false, "could not load icon from '%s'", icon_file);
   }
 
+  // Work out what to execute.
+  char *cmd;
+  argv += optind;
+  if (*argv && (argv[1] || strcmp(*argv, "-")))
+    cmd = *argv;
+  else {
+    // Look up the user's shell.
+    struct passwd *pw = getpwuid(getuid());
+    cmd = getenv("SHELL") ?: (pw ? pw->pw_shell : 0) ?: "/bin/sh";
+    char *slash = strrchr(cmd, '/');
+    char *arg0 = slash ? slash + 1 : cmd;
+    if (*argv)
+      asprintf(&arg0, "-%s", arg0);
+    argv = (char *[]){arg0, 0};
+  }
+  
+  // Put child command line into window title if we haven't got one already.
+  if (!title) {
+    size_t len;
+    argz_create(argv, &title, &len);
+    argz_stringify(title, len, ' ');
+  }
+
+  wchar wtitle[strlen(title) + 1];
+  if (mbstowcs(wtitle, title, sizeof wtitle) == (size_t)-1)
+    *wtitle = 0;
+
   if (!size_override) {
     rows = cfg.rows;
     cols = cfg.cols;
@@ -976,7 +996,7 @@ main(int argc, char *argv[])
   * Its real size has to be set after loading the fonts and determining their
   * size, but the window has to exist to do that.
   */
-  wnd = CreateWindowW(class_name, 0,
+  wnd = CreateWindowW(class_name, wtitle,
                       WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
                       x, y, CW_USEDEFAULT, CW_USEDEFAULT,
                       null, null, inst, null);
@@ -1057,12 +1077,24 @@ main(int argc, char *argv[])
 
   // Enable drag & drop.
   win_init_drop_target();
+  
+  // Create child process.
+  struct winsize ws = {term.rows, term.cols, term_width, term_height};
+  child_create(cmd, argv, &ws);
 
   // Finally show the window!
   fullscr_on_max = !show;
   ShowWindow(wnd, show ?: SW_SHOWMAXIMIZED);
 
-  // Create child process.
-  struct winsize ws = {term.rows, term.cols, term_width, term_height};
-  child_create(argv + optind, title, &ws);
+  // Message loop.
+  for (;;) {
+    MSG msg;
+    while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
+      if (msg.message == WM_QUIT)
+        exit(msg.wParam);      
+      if (!IsDialogMessage(config_wnd, &msg))
+        DispatchMessage(&msg);
+    }
+    child_proc();
+  }
 }

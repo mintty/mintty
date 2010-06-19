@@ -7,7 +7,6 @@
 #include "term.h"
 #include "config.h"
 #include "charset.h"
-#include "win.h"
 
 #include <pwd.h>
 #include <fcntl.h>
@@ -17,13 +16,6 @@
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/cygwin.h>
-
-#if CYGWIN_VERSION_API_MINOR >= 91
-#include <argz.h>
-#else
-int argz_create (char *const argv[], char **argz, size_t *argz_len);
-void argz_stringify (char *argz, size_t argz_len, int sep);
-#endif
 
 #if CYGWIN_VERSION_API_MINOR >= 93
 #include <pty.h>
@@ -47,6 +39,7 @@ static bool killed;
 static int status;
 static int pty_fd = -1, log_fd = -1, win_fd;
 static struct utmp ut;
+static char *cmd;
 
 static void
 error(char *action)
@@ -78,29 +71,10 @@ sigchld(int unused(sig))
 }
 
 void
-child_create(char *argv[], char *title, struct winsize *winp)
+child_create(char *cmd_, char *argv[], struct winsize *winp)
 {
+  cmd = cmd_;
   const char *lang = cs_init();
-  char *cmd; 
-  if (*argv && (argv[1] || strcmp(*argv, "-")))
-    cmd = *argv;
-  else {
-    struct passwd *pw = getpwuid(getuid());
-    cmd = getenv("SHELL") ?: (pw ? pw->pw_shell : 0) ?: "/bin/sh";
-    char *slash = strrchr(cmd, '/');
-    char *arg0 = slash ? slash + 1 : cmd;
-    if (*argv)
-      asprintf(&arg0, "-%s", arg0);
-    argv = (char *[]){arg0, 0};
-  }
-  
-  // Command line for window title.
-  if (!title) {
-    size_t len;
-    argz_create(argv, &title, &len);
-    argz_stringify(title, len, ' ');
-  }
-  win_set_title(title);
   
   // Create the child process and pseudo terminal.
   if ((pid = forkpty(&pty_fd, 0, 0, winp)) < 0) {
@@ -208,7 +182,11 @@ child_create(char *argv[], char *title, struct winsize *winp)
     if (log_fd < 0)
       error("open log file");
   }
+}
 
+void
+child_proc(void)
+{
   for (;;) {
     fd_set fds;
     FD_ZERO(&fds);
@@ -242,7 +220,7 @@ child_create(char *argv[], char *title, struct winsize *winp)
       if (term.paste_buffer)
         term_send_paste();
       if (FD_ISSET(win_fd, &fds))
-        win_handle_msgs();
+        return;
     }
 
     if (!pid) {
