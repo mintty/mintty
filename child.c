@@ -365,17 +365,20 @@ child_conv_path(const wchar *wpath)
     }
     exp_path = asform("%s/%s", base, rest);
   }
+  else if (*path != '/') {
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
-  // Handle relative paths. This requires the /proc filesystem to find the
-  // child process working directory, which isn't available before Cygwin 1.5.
-  else if (*path != '/' && pid > 0) {
+    // Handle relative paths. This requires the /proc filesystem to find the
+    // child process working directory, which isn't available before Cygwin 1.5.
     char proc_cwd[32];
     sprintf(proc_cwd, "/proc/%u/cwd", pid);
     char *cwd = realpath(proc_cwd, 0);
-    exp_path = asform("%s/%s", cwd, path);
+    exp_path = cwd ? asform("%s/%s", cwd, path) : path;
     free(cwd);
-  }
+#else
+    // If we're lucky, the path is relative to the home directory.
+    exp_path = asform("%s/%s", home, path);
 #endif
+  }
   else
     exp_path = path;
   
