@@ -41,7 +41,7 @@ config cfg = {
   .locale = "",
   .charset = "",
   // Keys
-  .backspace_sends_bs = false,
+  .backspace_sends_bs = CYGWIN_VERSION_DLL_MAJOR < 1007,
   .ctrl_alt_is_altgr = false,
   .window_shortcuts = true,
   .zoom_shortcuts = true,
