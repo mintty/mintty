@@ -32,14 +32,13 @@ int forkpty(int *, char *, struct termios *, struct winsize *);
 #include <winuser.h>
 #endif
 
-extern HWND wnd;
+char *home, *cmd;
 
 static pid_t pid = -1;
 static bool killed;
 static int status;
 static int pty_fd = -1, log_fd = -1, win_fd;
 static struct utmp ut;
-static char *cmd;
 
 static void
 error(char *action)
@@ -71,9 +70,8 @@ sigchld(int unused(sig))
 }
 
 void
-child_create(char *cmd_, char *argv[], struct winsize *winp)
+child_create(char *argv[], struct winsize *winp)
 {
-  cmd = cmd_;
   const char *lang = cs_init();
   
   // Create the child process and pseudo terminal.
@@ -352,9 +350,20 @@ child_conv_path(const wchar *wpath)
       *rest++ = 0;
     else
       rest = "";
-    struct passwd *pw = *name ? getpwnam(name) : getpwuid(getuid());
-    char *home = pw ? pw->pw_dir : 0;
-    exp_path = home ? asform("%s/%s", home, rest) : path;
+    char *base;
+    if (!*name)
+      base = home;
+    else {
+#if CYGWIN_VERSION_DLL_MAJOR >= 1005
+      // Find named user's home directory
+      struct passwd *pw = getpwnam(name);
+      base = (pw ? pw->pw_dir : 0) ?: "";
+#else
+      // Pre-1.5 Cygwin simply copies HOME into pw_dir, which is no use here.
+      base = "";
+#endif
+    }
+    exp_path = asform("%s/%s", base, rest);
   }
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
   // Handle relative paths. This requires the /proc filesystem to find the
