@@ -864,9 +864,26 @@ main(int argc, char *argv[])
   uint rows = 0, cols = 0;
   wchar *class_name = _W(APPNAME);
   
+#if CYGWIN_VERSION_DLL_MAJOR >= 1005
+  // Before Cygwin 1.5, the passwd structure is faked.
+  struct passwd *pw = getpwuid(getuid());
+#endif
+  
+  home =
+    getenv("HOME") ?:
+#if CYGWIN_VERSION_DLL_MAJOR >= 1005
+    (pw && pw->pw_dir && *pw->pw_dir) ? pw->pw_dir :
+#endif
+    asform("/home/%s", getlogin());
+
+#if CYGWIN_VERSION_DLL_MAJOR < 1005
+  // Before Cygwin 1.5, HOME isn't set by the DLL, so do it here.
+  setenv("HOME", home, 0);
+#endif
+  
   load_config("/etc/minttyrc");
   
-  char *rc_file = asform("%s/.minttyrc", getenv("HOME") ?: "/tmp");
+  char *rc_file = asform("%s/.minttyrc", home);
   load_config(rc_file);
   free(rc_file);
 
@@ -944,14 +961,17 @@ main(int argc, char *argv[])
   }
 
   // Work out what to execute.
-  char *cmd;
   argv += optind;
   if (*argv && (argv[1] || strcmp(*argv, "-")))
     cmd = *argv;
   else {
     // Look up the user's shell.
-    struct passwd *pw = getpwuid(getuid());
-    cmd = getenv("SHELL") ?: (pw ? pw->pw_shell : 0) ?: "/bin/sh";
+    cmd =
+      getenv("SHELL") ?:
+#if CYGWIN_VERSION_DLL_MAJOR >= 1005
+      (pw && pw->pw_shell && *pw->pw_shell) ? pw->pw_shell :
+#endif
+      "/bin/bash";
     char *slash = strrchr(cmd, '/');
     char *arg0 = slash ? slash + 1 : cmd;
     if (*argv)
@@ -1078,7 +1098,7 @@ main(int argc, char *argv[])
   
   // Create child process.
   struct winsize ws = {term.rows, term.cols, term_width, term_height};
-  child_create(cmd, argv, &ws);
+  child_create(argv, &ws);
 
   // Finally show the window!
   fullscr_on_max = !show;
