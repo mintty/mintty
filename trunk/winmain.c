@@ -567,8 +567,7 @@ confirm_exit(void)
 void
 win_show_about(void)
 {
-  char *text;
-  asprintf(&text, "%s\n" ABOUT_TEXT, VERSION_TEXT);
+  char *text = asform("%s\n" ABOUT_TEXT, VERSION_TEXT);
   MessageBoxIndirect(&(MSGBOXPARAMS){
     .cbSize = sizeof(MSGBOXPARAMS),
     .hwndOwner = config_wnd,
@@ -809,8 +808,8 @@ error(bool syntax, char *format, ...)
   va_start(va, format);
   vasprintf(&msg, format, va);
   va_end(va);
-  asprintf(&msg, "%s: %s\n%s", main_argv[0], msg,
-            syntax ? "Try '--help' for more information.\n" : "");
+  msg = asform("%s: %s\n%s", main_argv[0], msg,
+               syntax ? "Try '--help' for more information.\n" : "");
   show_msg(stderr, msg);
   exit(1);
 }
@@ -867,8 +866,7 @@ main(int argc, char *argv[])
   
   load_config("/etc/minttyrc");
   
-  char *rc_file;
-  asprintf(&rc_file, "%s/.minttyrc", getenv("HOME") ?: "/tmp");
+  char *rc_file = asform("%s/.minttyrc", getenv("HOME") ?: "/tmp");
   load_config(rc_file);
   free(rc_file);
 
@@ -957,7 +955,7 @@ main(int argc, char *argv[])
     char *slash = strrchr(cmd, '/');
     char *arg0 = slash ? slash + 1 : cmd;
     if (*argv)
-      asprintf(&arg0, "-%s", arg0);
+      arg0 = asform("-%s", arg0);
     argv = (char *[]){arg0, 0};
   }
   

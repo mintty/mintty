@@ -1251,18 +1251,17 @@ dlg_label_change(control *ctrl, char const *text)
 void
 dlg_fontsel_set(control *ctrl, font_spec *fs)
 {
-  char *buf, *boldstr;
   winctrl *c = ctrl->plat_ctrl;
   assert(c && c->ctrl->type == CTRL_FONTSELECT);
 
   *(font_spec *) c->data = *fs;   /* structure copy */
 
-  boldstr = fs->isbold ? "bold, " : "";
-  if (!fs->size)
-    asprintf(&buf, "%s, %sdefault height", fs->name, boldstr);
-  else
-    asprintf(&buf, "%s, %s%d-%s", fs->name, boldstr, abs(fs->size),
-             fs->size < 0 ? "pixel" : "point");
+  char *boldstr = fs->isbold ? "bold, " : "";
+  char *buf =
+    fs->size
+    ? asform("%s, %s%d-%s", fs->name, boldstr, abs(fs->size),
+             fs->size < 0 ? "pixel" : "point")
+    : asform("%s, %sdefault height", fs->name, boldstr);
   SetDlgItemText(dlg.wnd, c->base_id + 1, buf);
   free(buf);
 }
@@ -1399,10 +1398,4 @@ windlg_add_tree(winctrls * wc)
 {
   assert(dlg.nctrltrees < (int) lengthof(dlg.controltrees));
   dlg.controltrees[dlg.nctrltrees++] = wc;
-}
-
-void
-windlg_cleanup(void)
-{
-  free(dlg.wintitle);
 }

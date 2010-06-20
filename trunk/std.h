@@ -26,6 +26,7 @@ int iswalpha(wint_t);
 int asprintf(char **, const char *, ...);
 int vasprintf(char **, const char *, va_list);
 #endif
+char *asform(const char *fmt, ...);
 
 #define WINVER 0x400
 #define _WIN32_WINNT WINVER

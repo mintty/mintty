@@ -80,7 +80,6 @@ extern windlg dlg;
 
 void windlg_init(void);
 void windlg_add_tree(winctrls *);
-void windlg_cleanup(void);
 
 void winctrl_init(winctrls *);
 void winctrl_cleanup(winctrls *);

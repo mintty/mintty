@@ -354,10 +354,7 @@ child_conv_path(const wchar *wpath)
       rest = "";
     struct passwd *pw = *name ? getpwnam(name) : getpwuid(getuid());
     char *home = pw ? pw->pw_dir : 0;
-    if (home)
-      asprintf(&exp_path, "%s/%s", home, rest);
-    else
-      exp_path = path;
+    exp_path = home ? asform("%s/%s", home, rest) : path;
   }
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
   // Handle relative paths. This requires the /proc filesystem to find the
@@ -366,7 +363,7 @@ child_conv_path(const wchar *wpath)
     char proc_cwd[32];
     sprintf(proc_cwd, "/proc/%u/cwd", pid);
     char *cwd = realpath(proc_cwd, 0);
-    asprintf(&exp_path, "%s/%s", cwd, path);
+    exp_path = asform("%s/%s", cwd, path);
     free(cwd);
   }
 #endif
