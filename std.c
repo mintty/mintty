@@ -33,6 +33,17 @@ asprintf(char **buf, const char *fmt, ...)
 
 #endif
 
+char *
+asform(const char *fmt, ...)
+{
+  char *s = 0;
+  va_list va;
+  va_start(va, fmt);
+  vasprintf(&s, fmt, va);
+  va_end(va);
+  return s;
+}
+
 
 #if CYGWIN_VERSION_API_MINOR < 74
 int iswalnum(wint_t wc) { return wc < 0x100 && isalnum(wc); }

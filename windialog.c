@@ -142,7 +142,7 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
       winctrl_init(&ctrls_panel);
       windlg_add_tree(&ctrls_base);
       windlg_add_tree(&ctrls_panel);
-      asprintf(&dlg.wintitle, "Options");
+      dlg.wintitle = "Options";
       new_cfg = cfg;
       dlg.data = &new_cfg;
 
@@ -242,7 +242,6 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
       winctrl_cleanup(&ctrls_base);
       winctrl_cleanup(&ctrls_panel);
       ctrl_free_box(ctrlbox);
-      windlg_cleanup();
       config_wnd = 0;
 
     when WM_NOTIFY: {

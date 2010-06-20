@@ -227,16 +227,16 @@ init_charset_menu(void)
   for (uint i = 0; i < lengthof(cs_descs); i++) {
     uint cp = cs_descs[i].cp;
     if (valid_codepage(cp) || (28591 <= cp && cp <= 28606))
-      asprintf((char **)p++, "%s (%s)", cs_name(cp), cs_descs[i].desc);
+      *p++ = asform("%s (%s)", cs_name(cp), cs_descs[i].desc);
   }
   
   const char *oem_cs = cs_name(GetOEMCP());
   if (*oem_cs == 'C')
-    asprintf((char **)p++, "%s (OEM codepage)", oem_cs);
+    *p++ = asform("%s (OEM codepage)", oem_cs);
 
   const char *ansi_cs = cs_name(GetACP());
   if (*ansi_cs == 'C')
-    asprintf((char **)p++, "%s (ANSI codepage)", ansi_cs);
+    *p++ = asform("%s (ANSI codepage)", ansi_cs);
 }
 
 static void
