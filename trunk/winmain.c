@@ -972,7 +972,7 @@ main(int argc, char *argv[])
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
       (pw && pw->pw_shell && *pw->pw_shell) ? pw->pw_shell :
 #endif
-      "/bin/bash";
+      "/bin/sh";
     char *slash = strrchr(cmd, '/');
     char *arg0 = slash ? slash + 1 : cmd;
     if (*argv)
