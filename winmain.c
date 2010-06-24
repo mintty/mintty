@@ -1110,7 +1110,7 @@ main(int argc, char *argv[])
     MSG msg;
     while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
       if (msg.message == WM_QUIT)
-        exit(msg.wParam);      
+        return msg.wParam;
       if (!IsDialogMessage(config_wnd, &msg))
         DispatchMessage(&msg);
     }
