@@ -204,18 +204,25 @@ static mouse_button clicked_button;
 void
 win_mouse_click(mouse_button b, LPARAM lp)
 {
-  win_show_mouse();
-  mod_keys mods = get_mods();
-  if (clicked_button) {
-    term_mouse_release(b, mods, get_mouse_pos(lp));
-    clicked_button = 0;
-  }
   static mouse_button last_button;
   static uint last_time, count;
+  static pos last_pos;
+
+  win_show_mouse();
+  mod_keys mods = get_mods();
+  pos p = get_mouse_pos(lp);
+  
+  if (clicked_button) {
+    term_mouse_release(b, mods, p);
+    clicked_button = 0;
+  }
+  
   uint t = GetMessageTime();
-  if (b != last_button || t - last_time > GetDoubleClickTime() || ++count > 3)
+  if (b != last_button || p.x != last_pos.x || p.y != last_pos.y ||
+      t - last_time > GetDoubleClickTime() || ++count > 3)
     count = 1;
-  term_mouse_click(b, mods, get_mouse_pos(lp), count);
+  term_mouse_click(b, mods, p, count);
+  last_pos = p;
   last_time = t;
   clicked_button = last_button = b;
   if (alt_state > ALT_NONE)
