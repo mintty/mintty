@@ -188,9 +188,9 @@ child_proc(void)
   for (;;) {
     fd_set fds;
     FD_ZERO(&fds);
+    FD_SET(win_fd, &fds);  
     if (pty_fd >= 0)
       FD_SET(pty_fd, &fds);
-    FD_SET(win_fd, &fds);  
     if (select(win_fd + 1, &fds, 0, 0, 0) > 0) {
       if (pty_fd >= 0 && FD_ISSET(pty_fd, &fds)) {
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
