@@ -414,11 +414,6 @@ sel_scroll_cb(void)
 void
 term_mouse_move(mouse_button b, mod_keys mods, pos p)
 {
-  static pos last_p;
-  if (poseq(p, last_p))
-    return;
-  last_p = p;
-  
   pos bp = box_pos(p);
   if (term_selecting()) {
     if (p.y < 0 || p.y >= term.rows) {

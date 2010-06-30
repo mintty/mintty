@@ -200,13 +200,14 @@ get_mouse_pos(LPARAM lp)
 }
 
 static mouse_button clicked_button;
+static pos last_pos;
 
 void
 win_mouse_click(mouse_button b, LPARAM lp)
 {
   static mouse_button last_button;
   static uint last_time, count;
-  static pos last_pos;
+  static pos last_click_pos;
 
   win_show_mouse();
   mod_keys mods = get_mods();
@@ -218,11 +219,12 @@ win_mouse_click(mouse_button b, LPARAM lp)
   }
   
   uint t = GetMessageTime();
-  if (b != last_button || p.x != last_pos.x || p.y != last_pos.y ||
+  if (b != last_button ||
+      p.x != last_click_pos.x || p.y != last_click_pos.y ||
       t - last_time > GetDoubleClickTime() || ++count > 3)
     count = 1;
   term_mouse_click(b, mods, p, count);
-  last_pos = p;
+  last_pos = last_click_pos = p;
   last_time = t;
   clicked_button = last_button = b;
   if (alt_state > ALT_NONE)
@@ -243,17 +245,14 @@ win_mouse_release(mouse_button b, LPARAM lp)
 void
 win_mouse_move(bool nc, LPARAM lp)
 {
-  // Windows seems to like to occasionally send MOUSEMOVE events even if the
-  // mouse hasn't moved. Don't do anything in this case.
-  static bool last_nc;
-  static LPARAM last_lp;
-  if (nc == last_nc && lp == last_lp)
+  pos p = get_mouse_pos(lp);
+  if (p.x == last_pos.x && p.y == last_pos.y)
     return;
-  last_nc = nc;
-  last_lp = lp;
+
+  last_pos = p;
   win_show_mouse();
   if (!nc)
-    term_mouse_move(clicked_button, get_mods(), get_mouse_pos(lp));
+    term_mouse_move(clicked_button, get_mods(), p);
 }
 
 void
