@@ -672,7 +672,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       return 0;
     when WM_SETFOCUS:
       term_set_focus(true);
-      CreateCaret(wnd, caretbm, font_width, font_height);
+      CreateCaret(wnd, caretbm, 0, 0);
       ShowCaret(wnd);
       flash_taskbar(false);  /* stop */
       win_update();
@@ -1022,42 +1022,32 @@ main(int argc, char *argv[])
                       x, y, CW_USEDEFAULT, CW_USEDEFAULT,
                       null, null, inst, null);
 
- /*
-  * Determine extra_{width,height}.
+ /* Initialise the terminal. (We have to do this _after_
+  * creating the window, since the terminal is the first thing
+  * which will call schedule_timer(), which will in turn call
+  * timer_change_cb() which will expect wnd to exist.)
   */
+  term_reset();
+  term_resize(rows, cols);
+  
+  // Initialise the fonts, thus also determining their width and height.
+  font_size = cfg.font.size;
+  win_init_fonts();
+  
+  // Resize the window, now we know what size we _really_ want it to be.
   RECT cr, wr;
   GetWindowRect(wnd, &wr);
   GetClientRect(wnd, &cr);
   extra_width = (wr.right - wr.left) - (cr.right - cr.left);
   extra_height = (wr.bottom - wr.top) - (cr.bottom - cr.top);
+  int term_width = font_width * term.cols;
+  int term_height = font_height * term.rows;
+  SetWindowPos(wnd, null, 0, 0,
+               term_width + extra_width + 2 * PADDING,
+               term_height + extra_height + 2 * PADDING,
+               SWP_NOMOVE | SWP_NOZORDER);
 
- /*
-  * Initialise the terminal. (We have to do this _after_
-  * creating the window, since the terminal is the first thing
-  * which will call schedule_timer(), which will in turn call
-  * timer_change_cb() which will expect wnd to exist.)
-  */
-  term_init();
-  term_resize(rows, cols);
-  
- /*
-  * Initialise the fonts, simultaneously correcting the guesses
-  * for font_{width,height}.
-  */
-  font_size = cfg.font.size;
-  win_init_fonts();
-  win_reset_colours();
-  
- /*
-  * Set up a caret bitmap, with no content.
-  */
-  caretbm = CreateBitmap(font_width, font_height, 1, 1,
-                         calloc(font_height, (font_width + 15) / 16 * 2));
-  CreateCaret(wnd, caretbm, font_width, font_height);
-
- /*
-  * Initialise the scroll bar.
-  */
+  // Initialise the scroll bar.
   SetScrollInfo(
     wnd, SB_VERT,
     &(SCROLLINFO){
@@ -1069,17 +1059,12 @@ main(int argc, char *argv[])
     false
   );
 
- /*
-  * Resize the window, now we know what size we _really_ want it to be.
-  */
-  int term_width = font_width * term.cols;
-  int term_height = font_height * term.rows;
-  SetWindowPos(wnd, null, 0, 0,
-               term_width + extra_width + 2 * PADDING,
-               term_height + extra_height + 2 * PADDING,
-               SWP_NOMOVE | SWP_NOZORDER);
+  // Set up an empty caret bitmap. We're painting the cursor manually.
+  caretbm = CreateBitmap(1, font_height, 1, 1, newn(short, font_height));
+  CreateCaret(wnd, caretbm, 0, 0);
 
-  // Initialize various stuff.
+  // Initialise various other stuff.
+  win_reset_colours();
   win_init_drop_target();
   win_init_menus();
   update_transparency();

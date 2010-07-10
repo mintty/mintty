@@ -115,6 +115,8 @@ term_screen_reset(term_screen *screen)
 void
 term_reset(void)
 {
+  term.state = TOPLEVEL;
+
   term_screen_reset(&term.screen);
   term_screen_reset(&term.other_screen);
   
@@ -265,17 +267,6 @@ term_clear_scrollback(void)
   term.sblen = term.sblines = term.sbpos = 0;
   term.tempsblines = 0;
   term.disptop = 0;
-}
-
-/*
- * Initialise the terminal.
- */
-void
-term_init(void)
-{
-  term.state = TOPLEVEL;
-  term.dispcurs = (pos){-1, -1};
-  term_reset();
 }
 
 /*
