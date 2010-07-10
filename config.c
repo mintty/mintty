@@ -34,7 +34,7 @@ config cfg = {
   .cursor_type = CUR_LINE,
   .cursor_blinks = true,
   // Text
-  .font = {.name = "Lucida Console", .isbold = false, .size = 10},
+  .font = {.name = "Lucida Console", .isbold = false, .size = 9},
   .font_quality = FQ_DEFAULT,
   .bold_as_bright = true,
   .allow_blinking = false,
