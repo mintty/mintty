@@ -998,13 +998,15 @@ main(int argc, char *argv[])
 
   inst = GetModuleHandle(NULL);
 
-  class_atom = RegisterClassW(&(WNDCLASSW){
+  class_atom = RegisterClassExW(&(WNDCLASSEXW){
+    .cbSize = sizeof(WNDCLASSEXW),
     .style = 0,
     .lpfnWndProc = win_proc,
     .cbClsExtra = 0,
     .cbWndExtra = 0,
     .hInstance = inst,
-    .hIcon = icon_file ? 0 : LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON)),
+    .hIcon = large_icon ?: LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON)),
+    .hIconSm = small_icon,
     .hCursor = LoadCursor(null, IDC_IBEAM),
     .hbrBackground = null,
     .lpszMenuName = null,
@@ -1020,28 +1022,15 @@ main(int argc, char *argv[])
                       x, y, CW_USEDEFAULT, CW_USEDEFAULT,
                       null, null, inst, null);
 
-  update_transparency();
-  
-  if (icon_file) {
-    if (small_icon)
-      SendMessage(wnd, WM_SETICON, ICON_SMALL, (LPARAM)small_icon);
-    if (large_icon)
-      SendMessage(wnd, WM_SETICON, ICON_BIG, (LPARAM)large_icon);
-  }
-
  /*
   * Determine extra_{width,height}.
   */
-  {
-    RECT cr, wr;
-    GetWindowRect(wnd, &wr);
-    GetClientRect(wnd, &cr);
-    extra_width = wr.right - wr.left - cr.right + cr.left;
-    extra_height = wr.bottom - wr.top - cr.bottom + cr.top;
-  }
+  RECT cr, wr;
+  GetWindowRect(wnd, &wr);
+  GetClientRect(wnd, &cr);
+  extra_width = (wr.right - wr.left) - (cr.right - cr.left);
+  extra_height = (wr.bottom - wr.top) - (cr.bottom - cr.top);
 
-  win_init_menus();
-  
  /*
   * Initialise the terminal. (We have to do this _after_
   * creating the window, since the terminal is the first thing
@@ -1062,27 +1051,23 @@ main(int argc, char *argv[])
  /*
   * Set up a caret bitmap, with no content.
   */
-  {
-    int size = (font_width + 15) / 16 * 2 * font_height;
-    char bits[size];
-    memset(bits, 0, size);
-    caretbm = CreateBitmap(font_width, font_height, 1, 1, bits);
-    CreateCaret(wnd, caretbm, font_width, font_height);
-  }
+  caretbm = CreateBitmap(font_width, font_height, 1, 1,
+                         calloc(font_height, (font_width + 15) / 16 * 2));
+  CreateCaret(wnd, caretbm, font_width, font_height);
 
  /*
   * Initialise the scroll bar.
   */
-  {
-    SCROLLINFO si;
-    si.cbSize = sizeof (si);
-    si.fMask = SIF_ALL | SIF_DISABLENOSCROLL;
-    si.nMin = 0;
-    si.nMax = term.rows - 1;
-    si.nPage = term.rows;
-    si.nPos = 0;
-    SetScrollInfo(wnd, SB_VERT, &si, false);
-  }
+  SetScrollInfo(
+    wnd, SB_VERT,
+    &(SCROLLINFO){
+      .cbSize = sizeof(SCROLLINFO),
+      .fMask = SIF_ALL | SIF_DISABLENOSCROLL,
+      .nMin = 0, .nMax = term.rows - 1,
+      .nPage = term.rows, .nPos = 0,
+    },
+    false
+  );
 
  /*
   * Resize the window, now we know what size we _really_ want it to be.
@@ -1094,8 +1079,10 @@ main(int argc, char *argv[])
                term_height + extra_height + 2 * PADDING,
                SWP_NOMOVE | SWP_NOZORDER);
 
-  // Enable drag & drop.
+  // Initialize various stuff.
   win_init_drop_target();
+  win_init_menus();
+  update_transparency();
   
   // Create child process.
   struct winsize ws = {term.rows, term.cols, term_width, term_height};
