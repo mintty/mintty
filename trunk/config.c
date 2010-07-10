@@ -65,7 +65,7 @@ config cfg = {
   // Window
   .cols = 80,
   .rows = 24,
-  .scrollbar = true,
+  .scrollbar = 1,
   .scrollback_lines = 10000,
   .confirm_exit = true,
   // Hidden
@@ -128,7 +128,7 @@ options[] = {
   // Window
   {"Columns", OPT_INT, cfg_field(cols)},
   {"Rows", OPT_INT, cfg_field(rows)},
-  {"Scrollbar", OPT_BOOL, cfg_field(scrollbar)},
+  {"Scrollbar", OPT_INT, cfg_field(scrollbar)},
   {"ScrollbackLines", OPT_INT, cfg_field(scrollback_lines)},
   {"ConfirmExit", OPT_BOOL, cfg_field(confirm_exit)},
   // Hidden
@@ -726,22 +726,26 @@ setup_config_box(controlbox * b)
     s, "Columns", 'c', 44, P(0), int_handler, I(offcfg(cols)), I(256)
   ))->column = 0;
   (rows_box = ctrl_editbox(
-    s, "Rows", 'r', 55, P(0), int_handler, I(offcfg(rows)), I(256)
+    s, "Rows", 'w', 55, P(0), int_handler, I(offcfg(rows)), I(256)
   ))->column = 2;
   ctrl_pushbutton(
     s, "Current size", 'u', P(0), current_size_handler, P(0)
   )->column = 4;
 
-  s = ctrl_getset(b, "Window", "scroll", "Scrolling");
-  ctrl_checkbox(
-    s, "Show scrollbar", 's', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(scrollbar))
-  );
-  ctrl_columns(s, 2, 53, 47);
+  s = ctrl_getset(b, "Window", "scroll", "Scrollback");
+  ctrl_columns(s, 2, 45, 55);
   ctrl_editbox(
-    s, "Scrollback lines", 'b', 38, P(0),
+    s, "Lines", 's', 57, P(0),
     int_handler, I(offcfg(scrollback_lines)), I(1000000)
   )->column = 0;
+  ctrl_radiobuttons(
+    s, "Scrollbar", '\0', 5, P(0),
+    dlg_stdradiobutton_handler, I(offcfg(scrollbar)),
+    "Left", 'l', I(-1),
+    "None", 'n', I(0),
+    "Right", 'r', I(1),
+    null
+  );
 
   s = ctrl_getset(b, "Window", "options", null);
   ctrl_checkbox(
