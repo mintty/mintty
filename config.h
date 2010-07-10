@@ -67,7 +67,7 @@ typedef struct {
   char answerback[80];
   // Window
   int cols, rows;
-  bool scrollbar;
+  int scrollbar;
   int scrollback_lines;
   bool confirm_exit;
   // Hidden

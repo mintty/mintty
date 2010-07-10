@@ -405,9 +405,9 @@ make_fullscreen(void)
   win_is_fullscreen = true;
 
  /* Remove the window furniture. */
-  DWORD style = GetWindowLongPtr(wnd, GWL_STYLE);
+  long style = GetWindowLong(wnd, GWL_STYLE);
   style &= ~(WS_CAPTION | WS_BORDER | WS_THICKFRAME);
-  SetWindowLongPtr(wnd, GWL_STYLE, style);
+  SetWindowLong(wnd, GWL_STYLE, style);
 
  /* The glass effect doesn't work for fullscreen windows */
   update_glass();
@@ -429,9 +429,9 @@ clear_fullscreen(void)
   update_glass();
 
  /* Reinstate the window furniture. */
-  DWORD style = GetWindowLongPtr(wnd, GWL_STYLE);
+  long style = GetWindowLong(wnd, GWL_STYLE);
   style |= WS_CAPTION | WS_BORDER | WS_THICKFRAME;
-  SetWindowLongPtr(wnd, GWL_STYLE, style);
+  SetWindowLong(wnd, GWL_STYLE, style);
   SetWindowPos(wnd, null, 0, 0, 0, 0,
                SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 }
@@ -482,7 +482,9 @@ update_transparency(void)
   bool opaque = cfg.opaque_when_focused && term.has_focus;
   if (pSetLayeredWindowAttributes) {
     int trans = max(cfg.transparency, 0);
-    SetWindowLong(wnd, GWL_EXSTYLE, trans ? WS_EX_LAYERED : 0);
+    long exstyle = GetWindowLong(wnd, GWL_EXSTYLE);
+    SetWindowLong(wnd, GWL_EXSTYLE,
+                  trans ? exstyle | WS_EX_LAYERED : exstyle & ~WS_EX_LAYERED);
     if (trans) {
       uchar alpha = opaque ? 255 : 255 - 16 * trans;
       pSetLayeredWindowAttributes(wnd, 0, alpha, LWA_ALPHA);
@@ -494,15 +496,17 @@ update_transparency(void)
 void
 win_update_scrollbar(void)
 {
-  bool enabled = cfg.scrollbar && term.show_scrollbar;
-  LONG flags = GetWindowLongPtr(wnd, GWL_STYLE);
-  bool was_enabled = flags & WS_VSCROLL;
-  if (enabled != was_enabled) {
-    SetWindowLongPtr(wnd, GWL_STYLE, flags ^ WS_VSCROLL);
-    SetWindowPos(wnd, null, 0, 0, 0, 0,
-                 SWP_NOACTIVATE | SWP_NOMOVE |
-                 SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-  }
+  int scrollbar = term.show_scrollbar ? cfg.scrollbar : 0;
+  long style = GetWindowLong(wnd, GWL_STYLE);
+  SetWindowLong(wnd, GWL_STYLE,
+                scrollbar ? style | WS_VSCROLL : style & ~WS_VSCROLL);
+  long exstyle = GetWindowLong(wnd, GWL_EXSTYLE);
+  SetWindowLong(wnd, GWL_EXSTYLE,
+                scrollbar < 0 ? exstyle | WS_EX_LEFTSCROLLBAR 
+                              : exstyle & ~WS_EX_LEFTSCROLLBAR);
+  SetWindowPos(wnd, null, 0, 0, 0, 0,
+               SWP_NOACTIVATE | SWP_NOMOVE |
+               SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 }
 
 void
@@ -1017,10 +1021,11 @@ main(int argc, char *argv[])
   * Its real size has to be set after loading the fonts and determining their
   * size, but the window has to exist to do that.
   */
-  wnd = CreateWindowW(class_name, wtitle,
-                      WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
-                      x, y, CW_USEDEFAULT, CW_USEDEFAULT,
-                      null, null, inst, null);
+  wnd = CreateWindowExW(cfg.scrollbar < 0 ? WS_EX_LEFTSCROLLBAR : 0,
+                        class_name, wtitle,
+                        WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
+                        x, y, CW_USEDEFAULT, CW_USEDEFAULT,
+                        null, null, inst, null);
 
  /* Initialise the terminal. (We have to do this _after_
   * creating the window, since the terminal is the first thing
