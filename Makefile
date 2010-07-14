@@ -51,8 +51,6 @@ cygwin17 = $(dir)-cygwin17.zip
 cygwin15 = $(dir)-cygwin15.zip
 msys = $(dir)-msys.zip
 
-all: bin src doc
-
 cygwin17: $(cygwin17)
 cygwin15: $(cygwin15)
 msys: $(msys)
@@ -106,7 +104,7 @@ $(doc): docs/$(name).1.pdf
 clean:
 	rm -f *.d *.o *.exe *.zip *.bz2 *.stackdump *.pdf docs/*.pdf
 
-.PHONY: all src bin src doc clean
+.PHONY: cygwin17 cygwin15 msys src src doc clean
 
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(MAKECMDGOALS),doc)
