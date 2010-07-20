@@ -11,6 +11,9 @@
 #include "win.h"
 
 #include <sys/cygwin.h>
+#include <winbase.h>
+#include <wingdi.h>
+#include <winuser.h>
 
 const char *log_file = 0;
 bool utmp_enabled = false;
@@ -215,37 +218,51 @@ load_config(char *filename)
 static void
 save_config(void)
 {
+  char *filename;
+
 #if CYGWIN_VERSION_API_MINOR >= 222
-  char *filename = cygwin_create_path(CCP_WIN_W_TO_POSIX, rc_filename);
-  FILE *file = fopen(filename, "w");
-  free(filename);
+  filename = cygwin_create_path(CCP_WIN_W_TO_POSIX, rc_filename);
 #else
-  FILE *file = fopen(rc_filename, "w");
+  filename = rc_filename;
 #endif
 
-  if (!file)
-    return;
+  FILE *file = fopen(filename, "w");
 
-  for (uint j = 0; j < option_order_len; j++) {
-    uint i = option_order[j];
-    fprintf(file, "%s=", options[i].name);
-    uint offset = options[i].offset;
-    switch (options[i].type) {
-      when OPT_BOOL:
-        fprintf(file, "%i\n", atoffset(bool, &cfg, offset));
-      when OPT_INT:
-        fprintf(file, "%i\n", atoffset(int, &cfg, offset));
-      when OPT_STRING:
-        fprintf(file, "%s\n", &atoffset(char, &cfg, offset));
-      when OPT_COLOUR: {
-        colour c = atoffset(colour, &cfg, offset);
-        fprintf(file, "%u,%u,%u\n", red(c), green(c), blue(c));
-      }
+  if (!file) {
+    char *msg;
+    int len = asprintf(&msg, "Could not save options to '%s':\n%s.",
+                       filename, strerror(errno));
+    if (len > 0) {
+      wchar wmsg[len + 1];
+      cs_mbstowcs(wmsg, msg, sizeof wmsg);
+      MessageBoxW(0, wmsg, 0, MB_ICONERROR);
+      free(msg);
     }
   }
-  
-  fclose(file);
-  return;
+  else {
+    for (uint j = 0; j < option_order_len; j++) {
+      uint i = option_order[j];
+      fprintf(file, "%s=", options[i].name);
+      uint offset = options[i].offset;
+      switch (options[i].type) {
+        when OPT_BOOL:
+          fprintf(file, "%i\n", atoffset(bool, &cfg, offset));
+        when OPT_INT:
+          fprintf(file, "%i\n", atoffset(int, &cfg, offset));
+        when OPT_STRING:
+          fprintf(file, "%s\n", &atoffset(char, &cfg, offset));
+        when OPT_COLOUR: {
+          colour c = atoffset(colour, &cfg, offset);
+          fprintf(file, "%u,%u,%u\n", red(c), green(c), blue(c));
+        }
+      }
+    }
+    fclose(file);
+  }
+
+#if CYGWIN_VERSION_API_MINOR >= 222
+  free(filename);
+#endif
 }
 
 
