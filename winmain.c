@@ -881,11 +881,6 @@ main(int argc, char *argv[])
 #endif
     asform("/home/%s", getlogin());
 
-#if CYGWIN_VERSION_DLL_MAJOR < 1005
-  // Before Cygwin 1.5, HOME isn't set by the DLL, so do it here.
-  setenv("HOME", home, 0);
-#endif
-  
   load_config("/etc/minttyrc");
   
   char *rc_file = asform("%s/.minttyrc", home);
