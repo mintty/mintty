@@ -73,7 +73,16 @@ void
 child_create(char *argv[], struct winsize *winp)
 {
   const char *lang = cs_init();
+
+  // xterm and urxvt ignore SIGHUP, so let's do the same.
+  signal(SIGHUP, SIG_IGN);
   
+  signal(SIGINT, sigexit);
+  signal(SIGTERM, sigexit);
+  signal(SIGQUIT, sigexit);
+  
+  signal(SIGCHLD, sigchld);
+
   // Create the child process and pseudo terminal.
   if ((pid = forkpty(&pty_fd, 0, 0, winp)) < 0) {
     bool rebase_prompt = (errno == EAGAIN);
@@ -140,19 +149,11 @@ child_create(char *argv[], struct winsize *winp)
 
     // If we get here, exec failed.
     fprintf(stderr, "%s: %s\r\n", cmd, strerror(errno));
+    Sleep(100);
     exit(255);
   }
   else { // Parent process.
     fcntl(pty_fd, F_SETFL, O_NONBLOCK);
-    
-    // xterm and urxvt ignore SIGHUP, so let's do the same.
-    signal(SIGHUP, SIG_IGN);
-    
-    signal(SIGINT, sigexit);
-    signal(SIGTERM, sigexit);
-    signal(SIGQUIT, sigexit);
-    
-    signal(SIGCHLD, sigchld);
     
     if (utmp_enabled) {
       ut.ut_type = USER_PROCESS;
