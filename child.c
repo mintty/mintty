@@ -262,9 +262,8 @@ child_proc(void)
 void
 child_kill(bool point_blank)
 { 
-  if (pid <= 0)
+  if (pid <= 0 || kill(-pid, point_blank ? SIGKILL : SIGHUP) < 0 || point_blank)
     exit(0);
-  kill(-pid, point_blank ? SIGKILL : SIGHUP);
   killed = true;
 }
 
