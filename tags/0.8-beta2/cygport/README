@@ -1,0 +1,119 @@
+mintty
+------------------------------------------
+mintty is a terminal emulator for Cygwin. It is based on code from 
+PuTTY 0.60 by Simon Tatham and team.
+
+Features include:
+* Xterm-compatible terminal emulation.
+* Native Windows user interface that tries to keep things simple.
+* Unicode support, not limited to the Basic Multilingual Plane
+* Drag & drop and copy & paste of text, files and folders. 
+* Options are stored in a text file. No registry entries.
+* Window transparency.
+* Small executable size (currently <120K). 
+
+Runtime requirements:
+  cygwin-1.7.2-1
+
+Build requirements:
+  binutils-20080624-2
+  cygport-0.4.4-1
+  gcc-core-3.4.4-3
+  make-3.81-1
+  w32api-3.12-1
+
+Canonical website:
+  http://mintty.googlecode.com
+
+Canonical download:
+  http://code.google.com/p/mintty/downloads/list
+
+-------------------------------------------
+
+Build instructions:
+  unpack mintty-0.7.1-X-src.tar.bz2
+    if you use setup to install this src package, it will be
+    unpacked under /usr/src automatically
+  cd /usr/src
+  cygport ./mintty-0.7.1-X.cygport all
+
+This will create:
+  /usr/src/mintty-0.7.1-X-src.tar.bz2
+  /usr/src/mintty-0.7.1-X.tar.bz2
+
+-------------------------------------------
+
+Files included in the binary package:
+
+  /etc/postinstall/mintty.sh
+  /etc/preremove/mintty.sh
+  /usr/bin/mintty.exe
+  /usr/share/doc/Cygwin/mintty-0.7.1.README
+  /usr/share/doc/mintty-0.7.1/COPYING
+  /usr/share/doc/mintty-0.7.1/LICENSE.Oxygen
+  /usr/share/doc/mintty-0.7.1/LICENSE.PuTTY
+  /usr/share/man/man1/mintty.1.gz
+
+------------------
+
+Port Notes:
+
+----- mintty-0.7.1-1 -----
+
+----- mintty-0.7-beta3-1 -----
+* Test release.
+
+----- mintty-0.6.2-1 -----
+
+----- mintty-0.6.1-1 -----
+
+----- mintty-0.5.8-1 -----
+
+----- mintty-0.5.7-1 -----
+* Improved install script support for non-admin setups.
+
+----- mintty-0.5.6-1 -----
+
+----- mintty-0.5.5-1 -----
+
+----- mintty-0.5.4-1 -----
+
+----- mintty-0.5.3-1 -----
+
+----- mintty-0.5.2-1 -----
+
+----- mintty-0.5.1-1 -----
+
+----- mintty-0.4.4-1 -----
+
+----- mintty-0.4.3-1 -----
+
+----- mintty-0.4.2-1 -----
+
+----- mintty-0.4.1-1 -----
+
+----- mintty-0.4.0-2 -----
+* Postinstall and preremove scripts were missing.
+
+----- mintty-0.4.0-1 -----
+
+----- mintty-0.3.10-1 -----
+
+----- mintty-0.3.9-1 -----
+
+----- mintty-0.3.8-1 -----
+
+----- mintty-0.3.7-1 -----
+
+----- mintty-0.3.6-1 -----
+* Replaced readme.html with manual page. Thanks to Lee D. Rothstein for 
+helping with that.
+
+----- mintty-0.3.5-1 -----
+* First attempt at Cygwin setup package. Thanks to Yaakov Selkovitz for 
+getting this off the ground by adding MinTTY to Cygports.
+
+Cygwin port maintained by:  Andy Koppe  cygwin@cygwin.com
+Please address questions to the Cygwin mailing list at 
+<cygwin@cygwin.com> or to the mintty discussion group at
+http://groups.google.com/group/mintty-discuss.
