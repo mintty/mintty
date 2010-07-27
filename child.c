@@ -34,7 +34,7 @@ int forkpty(int *, char *, struct termios *, struct winsize *);
 
 char *home, *cmd;
 
-static pid_t pid;
+static pid_t pid = -1;
 static bool killed;
 static int status;
 static int pty_fd = -1, log_fd = -1, win_fd;
@@ -54,10 +54,19 @@ error(char *action)
 static void
 sigexit(int sig)
 {
-  if (pid)
+  if (pid > 0)
     kill(-pid, SIGHUP);
   signal(sig, SIG_DFL);
   kill(getpid(), sig);
+}
+
+static void
+sigchld(int sig)
+{
+  if (waitpid(pid, &status, WNOHANG) == pid)
+    pid = 0;
+  else
+    signal(sig, sigchld);
 }
 
 void
@@ -72,11 +81,12 @@ child_create(char *argv[], struct winsize *winp)
   signal(SIGTERM, sigexit);
   signal(SIGQUIT, sigexit);
   
+  signal(SIGCHLD, sigchld);
+
   // Create the child process and pseudo terminal.
   pid = forkpty(&pty_fd, 0, 0, winp);
   
-  if (pid < 0) { // Fork failed.
-    pid = 0;
+  if (pid < 0) {
     bool rebase_prompt = (errno == EAGAIN);
     error("fork child process");
     if (rebase_prompt) {
@@ -213,8 +223,8 @@ child_proc(void)
         return;
     }
 
-    if (pid && waitpid(pid, &status, WNOHANG) == pid) {
-      pid = 0;
+    if (!pid) {
+      pid = -1;
       
       logout(ut.ut_line);
 
@@ -253,7 +263,7 @@ child_proc(void)
 void
 child_kill(bool point_blank)
 { 
-  if (!pid || kill(-pid, point_blank ? SIGKILL : SIGHUP) || point_blank)
+  if (pid <= 0 || kill(-pid, point_blank ? SIGKILL : SIGHUP) < 0 || point_blank)
     exit(0);
   killed = true;
 }
@@ -261,7 +271,7 @@ child_kill(bool point_blank)
 bool
 child_is_parent(void)
 {
-  if (!pid)
+  if (pid <= 0)
     return false;
   DIR *d = opendir("/proc");
   if (!d)
@@ -292,10 +302,8 @@ child_is_parent(void)
 void
 child_write(const char *buf, uint len)
 { 
-  if (pid)
+  if (pty_fd >= 0)
     write(pty_fd, buf, len); 
-  else
-    exit(0);
 }
 
 void
