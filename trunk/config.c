@@ -52,7 +52,7 @@ config cfg = {
   .scroll_mod = MDK_SHIFT,
   .pgupdn_scroll = false,
   // Mouse
-  .copy_on_select = false,
+  .copy_on_select = true,
   .copy_as_rtf = true,
   .clicks_place_cursor = false,
   .right_click_action = RC_SHOWMENU,

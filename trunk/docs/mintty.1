@@ -108,7 +108,7 @@ Read settings from the specified configuration file, in addition to
 .TP
 \fB-o\fP, \fB--option\fP \fINAME\fP=\fIVALUE\fP
 Override the named config file option with the given value, e.g.
-\fC-o CopyOnSelect=1\fP.
+\fC-o ScrollbackLines=1000\fP.
 
 .TP
 \fB-H\fP, \fB--help\fP
@@ -121,8 +121,8 @@ Print version information and exit.
 
 .SH USAGE
 
-Mintty aims to adhere to both Windows and Unix usage conventions.
-Where they conflict, the Windows conventions usually take precedence.
+Mintty tries to adhere to both Windows and Unix usage conventions.
+Where they conflict, an option is usually provided.
 This section primarily describes the default configuration;
 see the \fBCONFIGURATION\fP section on how it can be customised.
 
@@ -148,12 +148,11 @@ Double-clicking or triple-clicking selects a whole word or line, whereby word
 selection includes special characters that commonly appear in file names and
 URLs.
 
-In the default configuration, selected text has to be explicitly copied
-to the clipboard using either the \fBCopy\fP menu command, the
-\fBCtrl+Ins\fP keyboard shortcut, or the middle mouse button combined
-with \fBShift\fP.
-X-like copy-on-select behaviour can be enabled on the \fBMouse\fP page of the
-options dialog.
+By default, selected text is automatically copied to the clipboard.
+This can be disabled on on the \fBMouse\fP page of the options dialog.
+Selected text can also be copied manually using either the \fBCopy\fP menu
+command, the \fBCtrl+Ins\fP keyboard shortcut, or the middle mouse button
+combined with \fBShift\fP.
 
 The selected region is copied as "rich text" as well as normal text,
 which means it can be pasted with colours and formatting into applications
@@ -542,7 +541,7 @@ This option does not affect the arrow keys and Home/End keys.
 Settings controlling mouse support.
 
 .TP
-\fBCopy on select\fP (CopyOnSelect=0)
+\fBCopy on select\fP (CopyOnSelect=1)
 If enabled, the region selected with the mouse is copied to the clipboard as
 soon as the mouse button is released, thus emulating X Window behaviour.
 
