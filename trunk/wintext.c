@@ -543,20 +543,31 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   
   if (has_cursor) {
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, cursor_colour));
-    HBRUSH oldbrush = SelectObject(dc, GetStockObject(NULL_BRUSH));
     switch(cursor_type) {
       when CUR_BLOCK:
-        if (attr & TATTR_PASCURS)
+        if (attr & TATTR_PASCURS) {
+          HBRUSH oldbrush = SelectObject(dc, GetStockObject(NULL_BRUSH));
           Rectangle(dc, x, y, x + char_width, y + font_height);
-      when CUR_LINE:
+          SelectObject(dc, oldbrush);
+        }
+      when CUR_LINE: {
+        int caret_width;
+        SystemParametersInfo(SPI_GETCARETWIDTH, 0, &caret_width, 0);
+        if (caret_width > char_width)
+          caret_width = char_width;
         if (attr & TATTR_RIGHTCURS)
-          x += char_width - 1;
-        if (attr & TATTR_ACTCURS)
-          Rectangle(dc, x, y, x + 1, y + font_height);
+          x += char_width - caret_width;
+        if (attr & TATTR_ACTCURS) {
+          HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(cursor_colour));
+          Rectangle(dc, x, y, x + caret_width, y + font_height);
+          SelectObject(dc, oldbrush);
+        }
         else if (attr & TATTR_PASCURS) {
           for (int dy = 0; dy < font_height; dy += 2)
-            SetPixel(dc, x, y + dy, cursor_colour);
-        } 
+            Polyline(
+              dc, (POINT[]){{x, y + dy}, {x + caret_width, y + dy}}, 2);
+        }
+      }
       when CUR_UNDERSCORE:
         y += min(descent, font_height - 2);
         if (attr & TATTR_ACTCURS)
@@ -568,7 +579,6 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
           }
         } 
     }
-    SelectObject(dc, oldbrush);
     DeleteObject(SelectObject(dc, oldpen));
   }
 }
