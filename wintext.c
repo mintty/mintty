@@ -551,7 +551,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
           SelectObject(dc, oldbrush);
         }
       when CUR_LINE: {
-        int caret_width;
+        int caret_width = 1;
         SystemParametersInfo(SPI_GETCARETWIDTH, 0, &caret_width, 0);
         if (caret_width > char_width)
           caret_width = char_width;
