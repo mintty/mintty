@@ -560,7 +560,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
         if (attr & TATTR_ACTCURS) {
           HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(cursor_colour));
           Rectangle(dc, x, y, x + caret_width, y + font_height);
-          SelectObject(dc, oldbrush);
+          DeleteObject(SelectObject(dc, oldbrush));
         }
         else if (attr & TATTR_PASCURS) {
           for (int dy = 0; dy < font_height; dy += 2)
