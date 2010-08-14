@@ -326,45 +326,34 @@ resize_window(bool forced)
   GetWindowRect(wnd, &wr);
   int client_width = cr.right - cr.left;
   int client_height = cr.bottom - cr.top;
-  extra_width = wr.right - wr.left - client_width;
-  extra_height = wr.bottom - wr.top - client_height;
+  int extra_width = wr.right - wr.left - client_width;
+  int extra_height = wr.bottom - wr.top - client_height;
   int term_width = client_width - 2 * PADDING;
   int term_height = client_height - 2 * PADDING;
   
-  int cols = term.cols, rows = term.rows;
-
   if (IsZoomed(wnd) || forced) {
    /* We're fullscreen, or we were told to resize,
     * this means we must not change the size of
     * the window so the terminal has to change.
     */
-    cols = term_width / font_width;
-    rows = term_height / font_height;
+    int cols = max(1, term_width / font_width);
+    int rows = max(1, term_height / font_height);
+    if (rows != term.rows || cols != term.cols) {
+      term_resize(rows, cols);
+      win_update();
+      struct winsize ws = {rows, cols, cols * font_width, rows * font_height};
+      child_resize(&ws);
+    }
+    win_invalidate_all();
   }
-  else if (term_width != cols * font_width ||
-           term_height != rows * font_height) {
+  else if (term_width != term.cols * font_width ||
+           term_height != term.rows * font_height) {
    /* Window size isn't what's needed. Let's change it then. */
-   /* Make sure the window isn't bigger than the screen. */
-    static RECT ss;
-    get_fullscreen_rect(&ss);
-    int max_client_width = ss.right - ss.left - extra_width;
-    int max_client_height = ss.bottom - ss.top - extra_height;
-    cols = min(cols, (max_client_width - 2 * PADDING) / font_width);
-    rows = min(rows, (max_client_height - 2 * PADDING) / font_height);
     SetWindowPos(wnd, null, 0, 0,
-                 font_width * cols + 2 * PADDING + extra_width, 
-                 font_height * rows + 2 * PADDING + extra_height,
+                 font_width * term.cols + 2 * PADDING + extra_width, 
+                 font_height * term.rows + 2 * PADDING + extra_height,
                  SWP_NOMOVE | SWP_NOZORDER);
   }
-  
-  if (rows != term.rows || cols != term.cols) {
-    term_resize(rows, cols);
-    win_update();
-    struct winsize ws = {rows, cols, cols * font_width, rows * font_height};
-    child_resize(&ws);
-  }
-
-  win_invalidate_all();
 }
 
 static void
