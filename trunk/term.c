@@ -191,10 +191,7 @@ term_flip_screen(void)
   show_screen(!term.show_other_screen);
 }
 
-/*
- * When the user reconfigures us, we need to abandon a print job if
- * the user has disabled printing.
- */
+/* Apply changed settings */
 void
 term_reconfig(void)
 {
@@ -205,10 +202,6 @@ term_reconfig(void)
   cfg.cursor_blinks = new_cfg.cursor_blinks;
   term_schedule_tblink();
   term_schedule_cblink();
-  if (new_cfg.scrollback_lines != cfg.scrollback_lines) {
-    cfg.scrollback_lines = new_cfg.scrollback_lines;
-    term_resize(term.rows, term.cols);
-  }
   if (new_cfg.backspace_sends_bs != cfg.backspace_sends_bs)
     term.backspace_sends_bs = new_cfg.backspace_sends_bs;
 }
@@ -276,14 +269,6 @@ term_clear_scrollback(void)
 void
 term_resize(int newrows, int newcols)
 {
-  if (newrows == term.rows && newcols == term.cols)
-    return;     /* nothing to do */
-
- /* Behave sensibly if we're given zero (or negative) rows/cols */
-
-  newrows = max(1, newrows);
-  newcols = max(1, newcols);
-
   bool on_alt_screen = term.on_alt_screen;
   term_switch_screen(0, false, false);
 
