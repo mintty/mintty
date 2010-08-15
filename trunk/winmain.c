@@ -296,26 +296,22 @@ get_fullscreen_rect(RECT *rect)
 }
 
 void
-win_resize(int rows, int cols)
-{
- /* If the window is maximized suppress resizing attempts */
-  if (IsZoomed(wnd) || (rows == term.rows && cols == term.cols)) 
-    return;
-  
-  int width = extra_width + font_width * cols + 2 * PADDING;
-  int height = extra_height + font_height * rows + 2 * PADDING;
-  SetWindowPos(wnd, null, 0, 0, width, height,
-               SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
-}
-
-void
 win_invalidate_all(void)
 {
   InvalidateRect(wnd, null, true);
 }
 
+void
+win_resize(int rows, int cols)
+{
+  SetWindowPos(wnd, null, 0, 0,
+               font_width * cols + 2 * PADDING + extra_width,
+               font_height * rows + 2 * PADDING + extra_height,
+               SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
+}
+
 static void
-resize_window(bool forced)
+adapt_term_size(void)
 {
   if (IsIconic(wnd))
     return;
@@ -330,30 +326,14 @@ resize_window(bool forced)
   extra_height = wr.bottom - wr.top - client_height;
   int term_width = client_width - 2 * PADDING;
   int term_height = client_height - 2 * PADDING;
-  
-  if (IsZoomed(wnd) || forced) {
-   /* We're fullscreen, or we were told to resize,
-    * this means we must not change the size of
-    * the window so the terminal has to change.
-    */
-    int cols = max(1, term_width / font_width);
-    int rows = max(1, term_height / font_height);
-    if (rows != term.rows || cols != term.cols) {
-      term_resize(rows, cols);
-      struct winsize ws = {rows, cols, cols * font_width, rows * font_height};
-      child_resize(&ws);
-    }
-    win_invalidate_all();
+  int cols = max(1, term_width / font_width);
+  int rows = max(1, term_height / font_height);
+  if (rows != term.rows || cols != term.cols) {
+    term_resize(rows, cols);
+    struct winsize ws = {rows, cols, cols * font_width, rows * font_height};
+    child_resize(&ws);
   }
-  else if (term_width != term.cols * font_width ||
-           term_height != term.rows * font_height) {
-   /* Window size isn't what's needed. Let's change it then. */
-    SetWindowPos(wnd, null, 0, 0,
-                 font_width * term.cols + 2 * PADDING + extra_width, 
-                 font_height * term.rows + 2 * PADDING + extra_height,
-                 SWP_NOMOVE | SWP_NOZORDER);
-    win_invalidate_all();
-  }
+  win_invalidate_all();
 }
 
 static void
@@ -361,7 +341,10 @@ reinit_fonts(void)
 {
   win_deinit_fonts();
   win_init_fonts();
-  resize_window(false);
+  if (IsZoomed(wnd))
+    adapt_term_size();
+  else
+    win_resize(term.rows, term.cols);
 }
 
 bool
@@ -684,7 +667,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_EXITSIZEMOVE:
       win_disable_tip();
       resizing = false;
-      resize_window(true);
+      adapt_term_size();
     when WM_SIZING: {
      /*
       * This does two jobs:
@@ -727,7 +710,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       }
       
       if (!resizing)
-        resize_window(true);
+        adapt_term_size();
 
       update_sys_cursor();
       return 0;
