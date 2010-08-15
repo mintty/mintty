@@ -72,6 +72,7 @@ typedef struct {
   bool confirm_exit;
   // Hidden
   int col_spacing, row_spacing;
+  char word_chars[32];
   colour ansi_colours[16];
 } config;
 

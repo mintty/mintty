@@ -74,6 +74,7 @@ config cfg = {
   // Hidden
   .col_spacing = 0,
   .row_spacing = 0,
+  .word_chars = "",
   .ansi_colours = {
     0x000000, 0x0000BF, 0x00BF00, 0x00BFBF,
     0xBF0000, 0xBF00BF, 0xBFBF00, 0xBFBFBF,
@@ -151,6 +152,9 @@ options[] = {
   // Character spaceing
   {"ColSpacing", OPT_INT, cfg_field(col_spacing)},
   {"RowSpacing", OPT_INT, cfg_field(row_spacing)},
+  
+  // Word selection characters
+  {"WordChars", OPT_STRING, cfg_field(word_chars)},
   
   // ANSI colours
   {"Black", OPT_COLOUR, cfg_field(ansi_colours[0])},

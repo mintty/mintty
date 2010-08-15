@@ -684,11 +684,24 @@ pressed and the command invoked by mintty still has child processes.
 This is intended to help avoid closing programs accidentally.
 
 
-.SS ANSI Colours
-The default ANSI colours.  These can only be set in config files (and on the
-command line using \fB--option\fP).
+.SS Config-file only settings
+The following settings do not appear in the options dialog, i.e. they can
+only be set in config files or using the \fB--option\fP command line option.
 
-Here are the 16 colour settings along with their default values:
+.TP
+\fBWord selection characters\fP (WordChars=)
+By default, this string setting is empty, in which case double-click word
+selection uses the default algorithm that is geared towards picking out
+filenames and URLs.
+
+If a string is specified here, word selection only picks out characters in the
+string along with alphanumeric characters.  For example, specifying just the
+underscore character (WordChars=_) would allow selecting identifiers in many
+programming languages.
+
+.TP
+\fBANSI colours\fP
+These are the 16 ANSI colour settings along with their default values:
 
 .RS
 .PD 0
