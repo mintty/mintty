@@ -39,7 +39,7 @@ typedef struct {
   // Text
   font_spec font;
   int font_quality;
-  bool bold_as_bright;
+  bool bold_as_colour;
   bool allow_blinking;
   char locale[32];
   char charset[32];
@@ -72,6 +72,7 @@ typedef struct {
   bool confirm_exit;
   // Hidden
   int col_spacing, row_spacing;
+  colour ansi_colours[16];
 } config;
 
 extern config cfg, new_cfg;

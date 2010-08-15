@@ -39,7 +39,7 @@ config cfg = {
   // Text
   .font = {.name = "Lucida Console", .isbold = false, .size = 9},
   .font_quality = FQ_DEFAULT,
-  .bold_as_bright = true,
+  .bold_as_colour = true,
   .allow_blinking = false,
   .locale = "",
   .charset = "",
@@ -73,13 +73,19 @@ config cfg = {
   .confirm_exit = true,
   // Hidden
   .col_spacing = 0,
-  .row_spacing = 0
+  .row_spacing = 0,
+  .ansi_colours = {
+    0x000000, 0x0000BF, 0x00BF00, 0x00BFBF,
+    0xBF0000, 0xBF00BF, 0xBFBF00, 0xBFBFBF,
+    0x404040, 0x4040FF, 0x40FF40, 0x40FFFF,
+    0xFF4040, 0xFF40FF, 0xFFFF40, 0xFFFFFF
+  }
 };
 
 #define offcfg(option) offsetof(config, option)
 #define cfg_field(option) sizeof(cfg.option), offcfg(option)
 
-typedef enum { OPT_BOOL, OPT_INT, OPT_STRING, OPT_COLOUR } opt_type;
+typedef enum { OPT_BOOL, OPT_INT, OPT_STRING, OPT_COLOUR, OPT_COMPAT } opt_type;
 
 static const struct {
   const char *name;
@@ -97,15 +103,17 @@ options[] = {
   {"OpaqueWhenFocused", OPT_BOOL, cfg_field(opaque_when_focused)},
   {"CursorType", OPT_INT, cfg_field(cursor_type)},
   {"CursorBlinks", OPT_BOOL, cfg_field(cursor_blinks)},
+
   // Text
   {"Font", OPT_STRING, cfg_field(font.name)},
   {"FontIsBold", OPT_BOOL, cfg_field(font.isbold)},
   {"FontHeight", OPT_INT, cfg_field(font.size)},
   {"FontQuality", OPT_INT, cfg_field(font_quality)},
-  {"BoldAsBright", OPT_BOOL, cfg_field(bold_as_bright)},
+  {"BoldAsColour", OPT_BOOL, cfg_field(bold_as_colour)},
   {"AllowBlinking", OPT_BOOL, cfg_field(allow_blinking)},
   {"Locale", OPT_STRING, cfg_field(locale)},
   {"Charset", OPT_STRING, cfg_field(charset)},
+
   // Keys
   {"BackspaceSendsBS", OPT_BOOL, cfg_field(backspace_sends_bs)},
   {"CtrlAltIsAltGr", OPT_BOOL, cfg_field(ctrl_alt_is_altgr)},
@@ -114,6 +122,7 @@ options[] = {
   {"SwitchShortcuts", OPT_BOOL, cfg_field(switch_shortcuts)},
   {"ScrollMod", OPT_INT, cfg_field(scroll_mod)},
   {"PgUpDnScroll", OPT_BOOL, cfg_field(pgupdn_scroll)},
+
   // Mouse
   {"CopyOnSelect", OPT_BOOL, cfg_field(copy_on_select)},
   {"CopyAsRTF", OPT_BOOL, cfg_field(copy_as_rtf)},
@@ -121,6 +130,7 @@ options[] = {
   {"RightClickAction", OPT_INT, cfg_field(right_click_action)},
   {"ClicksTargetApp", OPT_INT, cfg_field(clicks_target_app)},
   {"ClickTargetMod", OPT_INT, cfg_field(click_target_mod)},
+
   // Output
   {"Printer", OPT_STRING, cfg_field(printer)},
   {"BellSound", OPT_BOOL, cfg_field(bell_sound)},
@@ -128,15 +138,40 @@ options[] = {
   {"BellTaskbar", OPT_BOOL, cfg_field(bell_taskbar)},
   {"Term", OPT_STRING, cfg_field(term)},
   {"Answerback", OPT_STRING, cfg_field(answerback)},
+
   // Window
   {"Columns", OPT_INT, cfg_field(cols)},
   {"Rows", OPT_INT, cfg_field(rows)},
   {"Scrollbar", OPT_INT, cfg_field(scrollbar)},
   {"ScrollbackLines", OPT_INT, cfg_field(scrollback_lines)},
   {"ConfirmExit", OPT_BOOL, cfg_field(confirm_exit)},
+
   // Hidden
+  
+  // Character spaceing
   {"ColSpacing", OPT_INT, cfg_field(col_spacing)},
   {"RowSpacing", OPT_INT, cfg_field(row_spacing)},
+  
+  // ANSI colours
+  {"Black", OPT_COLOUR, cfg_field(ansi_colours[0])},
+  {"Red", OPT_COLOUR, cfg_field(ansi_colours[1])},
+  {"Green", OPT_COLOUR, cfg_field(ansi_colours[2])},
+  {"Yellow", OPT_COLOUR, cfg_field(ansi_colours[3])},
+  {"Blue", OPT_COLOUR, cfg_field(ansi_colours[4])},
+  {"Magenta", OPT_COLOUR, cfg_field(ansi_colours[5])},
+  {"Cyan", OPT_COLOUR, cfg_field(ansi_colours[6])},
+  {"White", OPT_COLOUR, cfg_field(ansi_colours[7])},
+  {"BoldBlack", OPT_COLOUR, cfg_field(ansi_colours[8])},
+  {"BoldRed", OPT_COLOUR, cfg_field(ansi_colours[9])},
+  {"BoldGreen", OPT_COLOUR, cfg_field(ansi_colours[10])},
+  {"BoldYellow", OPT_COLOUR, cfg_field(ansi_colours[11])},
+  {"BoldBlue", OPT_COLOUR, cfg_field(ansi_colours[12])},
+  {"BoldMagenta", OPT_COLOUR, cfg_field(ansi_colours[13])},
+  {"BoldCyan", OPT_COLOUR, cfg_field(ansi_colours[14])},
+  {"BoldWhite", OPT_COLOUR, cfg_field(ansi_colours[15])},
+
+  // Backward compatibility
+  {"BoldAsBright", OPT_BOOL | OPT_COMPAT, cfg_field(bold_as_colour)}
 };
 
 static uchar option_order[lengthof(options)];
@@ -170,7 +205,7 @@ parse_option(char *option)
   
   char *val = eq + 1;
   uint offset = options[i].offset;
-  switch (options[i].type) {
+  switch (options[i].type & ~OPT_COMPAT) {
     when OPT_BOOL:
       atoffset(bool, &cfg, offset) = atoi(val);
     when OPT_INT:
@@ -588,8 +623,8 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Text", "effects", null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
-    s, "Show bold as bright", 'b', P(0), dlg_stdcheckbox_handler,
-    I(offcfg(bold_as_bright))
+    s, "Show bold as colour", 'b', P(0), dlg_stdcheckbox_handler,
+    I(offcfg(bold_as_colour))
   )->column = 0;
   ctrl_checkbox(
     s, "Allow blinking", 'a', P(0),
