@@ -30,7 +30,14 @@ sel_spread_word(pos p, bool forward)
   
   for (;;) {
     wchar c = get_char(line, p.x);
-    if (iswalnum(c) || strchr("_#~+-", c))
+    if (iswalnum(c))
+      ret_p = p;
+    else if (term.mouse_state != MS_OPENING && *cfg.word_chars) {
+      if (!strchr(cfg.word_chars, c))
+        break;
+      ret_p = p;
+    }
+    else if (strchr("_#~+-", c))
       ret_p = p;
     else if (strchr(".@/\\", c)) {
       if (!forward)
@@ -91,7 +98,7 @@ sel_spread_half(pos p, bool forward)
       }
       release_line(line);
     }
-    when MS_SEL_WORD:
+    when MS_SEL_WORD or MS_OPENING:
       p = sel_spread_word(p, forward); 
     when MS_SEL_LINE:
       if (forward) {
@@ -298,13 +305,12 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     else if (b == MBT_LEFT && mods == MDK_CTRL) {
       // Open word under cursor
       p = get_selpoint(box_pos(p));
-      term.mouse_state = MS_SEL_WORD;
+      term.mouse_state = MS_OPENING;
       term.selected = true;
       term.sel_rect = false;
       term.sel_start = term.sel_end = term.sel_anchor = p;
       incpos(term.sel_end);
       sel_spread();
-      term.mouse_state = MS_OPENING;
       win_update();
     }
     else {
