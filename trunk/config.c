@@ -277,18 +277,20 @@ save_config(void)
   else {
     for (uint j = 0; j < option_order_len; j++) {
       uint i = option_order[j];
-      fprintf(file, "%s=", options[i].name);
-      uint offset = options[i].offset;
-      switch (options[i].type) {
-        when OPT_BOOL:
-          fprintf(file, "%i\n", atoffset(bool, &cfg, offset));
-        when OPT_INT:
-          fprintf(file, "%i\n", atoffset(int, &cfg, offset));
-        when OPT_STRING:
-          fprintf(file, "%s\n", &atoffset(char, &cfg, offset));
-        when OPT_COLOUR: {
-          colour c = atoffset(colour, &cfg, offset);
-          fprintf(file, "%u,%u,%u\n", red(c), green(c), blue(c));
+      if (!(options[i].type & OPT_COMPAT)) {
+        fprintf(file, "%s=", options[i].name);
+        uint offset = options[i].offset;
+        switch (options[i].type) {
+          when OPT_BOOL:
+            fprintf(file, "%i\n", atoffset(bool, &cfg, offset));
+          when OPT_INT:
+            fprintf(file, "%i\n", atoffset(int, &cfg, offset));
+          when OPT_STRING:
+            fprintf(file, "%s\n", &atoffset(char, &cfg, offset));
+          when OPT_COLOUR: {
+            colour c = atoffset(colour, &cfg, offset);
+            fprintf(file, "%u,%u,%u\n", red(c), green(c), blue(c));
+          }
         }
       }
     }
