@@ -568,7 +568,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       return 0;
     }
     when WM_CLOSE:
-      win_show_mouse();
       if (!cfg.confirm_exit || confirm_exit())
         child_kill((GetKeyState(VK_SHIFT) & 0x80) != 0);
       return 0;
