@@ -369,7 +369,7 @@ win_key_down(WPARAM wp, LPARAM lp)
         WPARAM cmd;
         switch (key) {
           when VK_F2:  cmd = IDM_NEW;
-          when VK_F4:  child_kill(shift); return 1;
+          when VK_F4:  cmd = SC_CLOSE;
           when VK_F8:  cmd = IDM_RESET;
           when VK_F10: cmd = IDM_DEFSIZE;
           when VK_F11: cmd = IDM_FULLSCREEN;

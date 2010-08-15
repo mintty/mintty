@@ -531,14 +531,19 @@ win_zoom_font(int zoom)
 static bool
 confirm_exit(void)
 {
-  return
-    !child_is_parent() ||
+  if (!child_is_parent())
+    return true;
+
+  int ret =
     MessageBox(
       wnd,
       "Processes are running in session.\n"
       "Exit anyway?",
       APPNAME, MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON2
-    ) == IDOK;
+    );
+
+  // Treat failure to show the dialog as confirmation.
+  return !ret || ret == IDOK;
 }
 
 void
