@@ -1147,7 +1147,7 @@ environment.
 
 .SS Cursor style
 
-The VT510 DECCSUSR sequence can be used to control cursor shape and blinking.
+The VT510 DECSCUSR sequence can be used to control cursor shape and blinking.
 
 .RS
 \fC^[[ \fIarg\fC \fISP\fC q\fR
@@ -1273,7 +1273,7 @@ number:
 For example, to turn yellow (colour 3) up to its full brightness:
 
 .RS
-\fCecho $'\\e]4;3;255,255,0\\a'\fP
+\fCecho -ne '\\e]4;3;255,255,0\\a'\fP
 .RE
 
 Sequences such as this can be included in scripts or on the \fBmintty\fP
@@ -1315,7 +1315,7 @@ With these settings, the \fBEsc\fP key can also be used to interrupt
 processes by setting its keycode to \fB^\\\fP:
 
 .RS
-\fCecho $'\e[?7728h'\fP
+\fCecho -ne '\e[?7728h'\fP
 .RE
 
 The standard escape character \fB^[\fP cannot be used for that purpose
