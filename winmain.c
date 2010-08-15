@@ -1008,6 +1008,34 @@ main(int argc, char *argv[])
                         x, y, width, height,
                         null, null, inst, null);
 
+  // Correct autoplacement, which likes to put part of the window under the
+  // taskbar when the window size approaches the work area size.
+  if (x == (int)CW_USEDEFAULT) {
+    GetWindowRect(wnd, &wr);
+    
+    // Fetch work area size.
+    RECT ar;
+    if (pMonitorFromWindow) {
+      HMONITOR mon;
+      mon = pMonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+      MONITORINFO mi;
+      mi.cbSize = sizeof (mi);
+      pGetMonitorInfo(mon, &mi);
+      ar = mi.rcWork;
+    }
+    else
+      SystemParametersInfo(SPI_GETWORKAREA, 0, &ar, 0);
+    
+    // Correct edges. Top and left win if the window is too big.
+    wr.left -= max(0, wr.right - ar.right);
+    wr.top -= max(0, wr.bottom - ar.bottom);
+    wr.left = max(wr.left, ar.left);
+    wr.top = max(wr.top, ar.top);
+    
+    SetWindowPos(wnd, 0, wr.left, wr.top, 0, 0,
+                 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+  }
+
   // Initialise the terminal.
   term_reset();
   term_resize(rows, cols);
