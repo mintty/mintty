@@ -326,8 +326,8 @@ resize_window(bool forced)
   GetWindowRect(wnd, &wr);
   int client_width = cr.right - cr.left;
   int client_height = cr.bottom - cr.top;
-  int extra_width = wr.right - wr.left - client_width;
-  int extra_height = wr.bottom - wr.top - client_height;
+  extra_width = wr.right - wr.left - client_width;
+  extra_height = wr.bottom - wr.top - client_height;
   int term_width = client_width - 2 * PADDING;
   int term_height = client_height - 2 * PADDING;
   
@@ -340,7 +340,6 @@ resize_window(bool forced)
     int rows = max(1, term_height / font_height);
     if (rows != term.rows || cols != term.cols) {
       term_resize(rows, cols);
-      win_update();
       struct winsize ws = {rows, cols, cols * font_width, rows * font_height};
       child_resize(&ws);
     }
@@ -353,6 +352,7 @@ resize_window(bool forced)
                  font_width * term.cols + 2 * PADDING + extra_width, 
                  font_height * term.rows + 2 * PADDING + extra_height,
                  SWP_NOMOVE | SWP_NOZORDER);
+    win_invalidate_all();
   }
 }
 
@@ -854,7 +854,6 @@ main(int argc, char *argv[])
   
   char *title = 0, *icon_file = 0;
   int x = CW_USEDEFAULT, y = CW_USEDEFAULT;
-  bool size_override = false;
   uint rows = 0, cols = 0;
   wchar *class_name = _W(APPNAME);
   
@@ -894,7 +893,6 @@ main(int argc, char *argv[])
       when 's':
         if (sscanf(optarg, "%u,%u%1s", &cols, &rows, (char[2]){}) != 2)
           error(true, "syntax error in size argument '%s'", optarg);
-        size_override = true;
       when 'w':
         show = lookup_optarg("window", optarg, window_optargs);
       when 'h':
@@ -979,13 +977,12 @@ main(int argc, char *argv[])
   if (mbstowcs(wtitle, title, sizeof wtitle) == (size_t)-1)
     *wtitle = 0;
 
-  if (!size_override) {
-    rows = cfg.rows;
-    cols = cfg.cols;
-  }
+  rows = rows ?: max(1, cfg.rows);
+  cols = cols ?: max(1, cfg.cols);
 
   inst = GetModuleHandle(NULL);
 
+  // The window class.
   class_atom = RegisterClassExW(&(WNDCLASSEXW){
     .cbSize = sizeof(WNDCLASSEXW),
     .style = 0,
@@ -1001,40 +998,36 @@ main(int argc, char *argv[])
     .lpszClassName = class_name,
   });
 
- /* Create initial window.
-  * Its real size has to be set after loading the fonts and determining their
-  * size, but the window has to exist to do that.
-  */
-  wnd = CreateWindowExW(cfg.scrollbar < 0 ? WS_EX_LEFTSCROLLBAR : 0,
-                        class_name, wtitle,
-                        WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
-                        x, y, CW_USEDEFAULT, CW_USEDEFAULT,
-                        null, null, inst, null);
-
- /* Initialise the terminal. (We have to do this _after_
-  * creating the window, since the terminal is the first thing
-  * which will call schedule_timer(), which will in turn call
-  * timer_change_cb() which will expect wnd to exist.)
-  */
-  term_reset();
-  term_resize(rows, cols);
-  
   // Initialise the fonts, thus also determining their width and height.
   font_size = cfg.font.size;
   win_init_fonts();
   
-  // Resize the window, now we know what size we _really_ want it to be.
-  RECT cr, wr;
-  GetWindowRect(wnd, &wr);
-  GetClientRect(wnd, &cr);
-  extra_width = (wr.right - wr.left) - (cr.right - cr.left);
-  extra_height = (wr.bottom - wr.top) - (cr.bottom - cr.top);
-  int term_width = font_width * term.cols;
-  int term_height = font_height * term.rows;
-  SetWindowPos(wnd, null, 0, 0,
-               term_width + extra_width + 2 * PADDING,
-               term_height + extra_height + 2 * PADDING,
-               SWP_NOMOVE | SWP_NOZORDER);
+  // Determine window size.
+  int term_width = font_width * cols;
+  int term_height = font_height * rows;
+
+  RECT cr = {0, 0, term_width + 2 * PADDING, term_height + 2 * PADDING};
+  RECT wr = cr;
+  AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, false);
+  int width = wr.right - wr.left;
+  int height = wr.bottom - wr.top;
+  
+  if (cfg.scrollbar)
+    width += GetSystemMetrics(SM_CXVSCROLL);
+  
+  extra_width = width - (cr.right - cr.left);
+  extra_height = height - (cr.bottom - cr.top);
+  
+  // Create initial window.
+  wnd = CreateWindowExW(cfg.scrollbar < 0 ? WS_EX_LEFTSCROLLBAR : 0,
+                        class_name, wtitle,
+                        WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
+                        x, y, width, height,
+                        null, null, inst, null);
+
+  // Initialise the terminal.
+  term_reset();
+  term_resize(rows, cols);
 
   // Initialise the scroll bar.
   SetScrollInfo(
@@ -1042,8 +1035,8 @@ main(int argc, char *argv[])
     &(SCROLLINFO){
       .cbSize = sizeof(SCROLLINFO),
       .fMask = SIF_ALL | SIF_DISABLENOSCROLL,
-      .nMin = 0, .nMax = term.rows - 1,
-      .nPage = term.rows, .nPos = 0,
+      .nMin = 0, .nMax = rows - 1,
+      .nPage = rows, .nPos = 0,
     },
     false
   );
@@ -1059,8 +1052,7 @@ main(int argc, char *argv[])
   update_transparency();
   
   // Create child process.
-  struct winsize ws = {term.rows, term.cols, term_width, term_height};
-  child_create(argv, &ws);
+  child_create(argv, &(struct winsize){rows, cols, term_width, term_height});
 
   // Finally show the window!
   fullscr_on_max = !show;
