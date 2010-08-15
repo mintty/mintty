@@ -113,7 +113,7 @@ win_init_fonts(void)
   for (i = 0; i < FONT_MAXNO; i++)
     fonts[i] = null;
 
-  bold_mode = cfg.bold_as_bright ? BOLD_COLOURS : BOLD_FONT;
+  bold_mode = cfg.bold_as_colour ? BOLD_COLOURS : BOLD_FONT;
   und_mode = UND_FONT;
 
   if (cfg.font.isbold) {
@@ -450,7 +450,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   
   if (attr & ATTR_DIM) {
     fg = (fg & 0xFEFEFEFE) >> 1;
-    if (!cfg.bold_as_bright)
+    if (!cfg.bold_as_colour)
       fg += (bg & 0xFEFEFEFE) >> 1;
   }
   if (attr & ATTR_REVERSE) {
@@ -664,14 +664,7 @@ win_reconfig_palette(void)
 void
 win_reset_colours(void)
 {
-  static const colour
-  ansi_colours[16] = {
-    0x000000, 0x0000BF, 0x00BF00, 0x00BFBF,
-    0xBF0000, 0xBF00BF, 0xBFBF00, 0xBFBFBF,
-    0x404040, 0x4040FF, 0x40FF40, 0x40FFFF,
-    0xFF4040, 0xFF40FF, 0xFFFF40, 0xFFFFFF
-  };
-  memcpy(colours, ansi_colours, sizeof ansi_colours);
+  memcpy(colours, cfg.ansi_colours, sizeof cfg.ansi_colours);
 
   // Colour cube
   int i = 16;

@@ -159,6 +159,8 @@ term_reset(void)
   term_schedule_tblink();
   term_schedule_cblink();
   term.disptop = 0;
+  
+  win_reset_colours();
 }
 
 static void

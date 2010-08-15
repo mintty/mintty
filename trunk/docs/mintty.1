@@ -430,9 +430,9 @@ Select the amount of font smoothing from the following choices:
 .RE
 
 .TP
-\fBShow bold as bright\fP (BoldAsBright=1)
-By default, text with the ANSI bold attribute set is displayed with
-increased brightness.
+\fBShow bold as colour\fP (BoldAsColour=1)
+By default, text with the ANSI bold attribute set is displayed with a
+different colour, usually with increased brightness.
 Alternatively, it can be shown using a bold font, which tends to look better
 with black-on-white text.
 Additionally, this option controls how the 'half-bright' (or 'dim') text
@@ -682,6 +682,33 @@ By default, it is shown on the right-hand side.
 If enabled, ask for confirmation when the close button or \fIAlt+F4\fP is 
 pressed and the command invoked by mintty still has child processes.
 This is intended to help avoid closing programs accidentally.
+
+
+.SS ANSI Colours
+The default ANSI colours.  These can only be set in config files (and on the
+command line using \fB--option\fP).
+
+Here are the 16 colour settings along with their default values:
+
+.RS
+.PD 0
+.IP "\- \fBBlack\fP=0,0,0"
+.IP "\- \fBRed\fP=191,0,0"
+.IP "\- \fBGreen\fP=0,191,0"
+.IP "\- \fBYellow\fP=191,191,0"
+.IP "\- \fBBlue\fP=0,0,191"
+.IP "\- \fBMagenta\fP=191,0,191"
+.IP "\- \fBCyan\fP=0,191,191"
+.IP "\- \fBWhite\fP=191,191,191"
+.IP "\- \fBBoldBlack\fP=64,64,64"
+.IP "\- \fBBoldRed\fP=255,64,64"
+.IP "\- \fBBoldGreen\fP=64,255,64"
+.IP "\- \fBBoldYellow\fP=255,255,64"
+.IP "\- \fBBoldBlue\fP=64,64,255"
+.IP "\- \fBBoldMagenta\fP=255,64,255"
+.IP "\- \fBBoldCyan\fP=64,255,255"
+.IP "\- \fBBoldWhite\fP=255,255,255"
+.RE
 
 
 .SH KEYCODES
@@ -1257,27 +1284,6 @@ for the Cygwin runtime system.
 Many of them apply to the Cygwin console only, but others can be useful
 with any Cygwin process.
 See \fIhttp://www.cygwin.com/cygwin-ug-net/using-cygwinenv.html\fP for details.
-
-
-.SS Changing the ANSI colours
-
-A number of settings can be controlled through terminal control sequences,
-including the colour values for the 16 ANSI colours.
-Here is the xterm sequence for this, whereby \fInum\fP stands for the ANSI
-number:
-
-.RS
-\fC^[]4;\fInum\fP;\fIred\fP,\fIgreen\fP,\fIblue\fP^G\fR
-.RE
-
-For example, to turn yellow (colour 3) up to its full brightness:
-
-.RS
-\fCecho $'\\e]4;3;255,255,0\\a'\fP
-.RE
-
-Sequences such as this can be included in scripts or on the \fBmintty\fP
-command line with the help of \fBsh -c\fP.
 
 
 .SS Terminal line settings

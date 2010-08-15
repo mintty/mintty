@@ -489,7 +489,7 @@ win_reconfig(void)
   
   bool font_changed =
     memcmp(&new_cfg.font, &cfg.font, sizeof cfg.font) ||
-    new_cfg.bold_as_bright != cfg.bold_as_bright ||
+    new_cfg.bold_as_colour != cfg.bold_as_colour||
     new_cfg.font_quality != cfg.font_quality;
   
   /* Copy the new config and refresh everything */
@@ -1057,7 +1057,6 @@ main(int argc, char *argv[])
   CreateCaret(wnd, caretbm, 0, 0);
 
   // Initialise various other stuff.
-  win_reset_colours();
   win_init_drop_target();
   win_init_menus();
   update_transparency();
