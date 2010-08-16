@@ -651,14 +651,6 @@ win_set_colour(uint n, colour c)
 colour win_get_colour(uint n) { return n < 262 ? colours[n] : 0; }
 
 void
-win_reconfig_palette(void)
-{
-  win_set_colour(FG_COLOUR_I, cfg.fg_colour);
-  win_set_colour(BG_COLOUR_I, cfg.bg_colour);
-  win_set_colour(CURSOR_COLOUR_I, cfg.cursor_colour);
-}
-
-void
 win_reset_colours(void)
 {
   memcpy(colours, cfg.ansi_colours, sizeof cfg.ansi_colours);
@@ -679,5 +671,7 @@ win_reset_colours(void)
   }
 
   // Foreground, background, cursor
-  win_reconfig_palette();
+  win_set_colour(FG_COLOUR_I, cfg.fg_colour);
+  win_set_colour(BG_COLOUR_I, cfg.bg_colour);
+  win_set_colour(CURSOR_COLOUR_I, cfg.cursor_colour);
 }
