@@ -905,6 +905,8 @@ main(int argc, char *argv[])
     }
   }
   
+  finish_config();
+
   load_funcs();
 
   HICON small_icon = 0, large_icon = 0;

@@ -354,12 +354,6 @@ with decimal 8-bit values (i.e. ranging from 0 to 255).
 .RE
 
 .TP
-\fBUse system colours instead\fP (UseSystemColours=0)
-If this checkbox is ticked, the Windows-wide colour settings are used instead of
-the colours chosen above.
-(These are the same colours as used for example in Notepad.)
-
-.TP
 \fBTransparency\fP (Transparency=0)
 Window transparency level, with the following choices:
 
@@ -698,6 +692,12 @@ If a string is specified here, word selection only picks out characters in the
 string along with alphanumeric characters.  For example, specifying just the
 underscore character (WordChars=_) would allow selecting identifiers in many
 programming languages.
+
+.TP
+\fBUse system colours\fP (UseSystemColours=0)
+If this is set to a non-zero value, the Windows-wide colour settings are used
+instead of the foreground, background, and cursor colours chosen on the Looks
+page of the options dialog.
 
 .TP
 \fBANSI colours\fP

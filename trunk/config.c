@@ -31,7 +31,6 @@ config cfg = {
   .fg_colour = 0xBFBFBF,
   .bg_colour = 0x000000,
   .cursor_colour = 0xBFBFBF,
-  .use_system_colours = false,
   .transparency = 0,
   .opaque_when_focused = false,
   .cursor_type = CUR_LINE,
@@ -75,6 +74,7 @@ config cfg = {
   .col_spacing = 0,
   .row_spacing = 0,
   .word_chars = "",
+  .use_system_colours = false,
   .ansi_colours = {
     0x000000, 0x0000BF, 0x00BF00, 0x00BFBF,
     0xBF0000, 0xBF00BF, 0xBFBF00, 0xBFBFBF,
@@ -99,7 +99,6 @@ options[] = {
   {"ForegroundColour", OPT_COLOUR, cfg_field(fg_colour)},
   {"BackgroundColour", OPT_COLOUR, cfg_field(bg_colour)},
   {"CursorColour", OPT_COLOUR, cfg_field(cursor_colour)},
-  {"UseSystemColours", OPT_BOOL, cfg_field(use_system_colours)},
   {"Transparency", OPT_INT, cfg_field(transparency)},
   {"OpaqueWhenFocused", OPT_BOOL, cfg_field(opaque_when_focused)},
   {"CursorType", OPT_INT, cfg_field(cursor_type)},
@@ -175,6 +174,7 @@ options[] = {
   {"BoldWhite", OPT_COLOUR, cfg_field(ansi_colours[15])},
 
   // Backward compatibility
+  {"UseSystemColours", OPT_BOOL | OPT_COMPAT, cfg_field(use_system_colours)},
   {"BoldAsBright", OPT_BOOL | OPT_COMPAT, cfg_field(bold_as_colour)}
 };
 
@@ -229,6 +229,13 @@ parse_option(char *option)
   return i;
 }
 
+static void
+remember_option(int i)
+{
+  if (!memchr(option_order, i, option_order_len))
+    option_order[option_order_len++] = i;
+}
+
 void
 load_config(char *filename)
 {
@@ -247,10 +254,26 @@ load_config(char *filename)
     while (fgets(line, sizeof line, file)) {
       line[strcspn(line, "\r\n")] = 0;  /* trim newline */
       int i = parse_option(line);
-      if (i >= 0 && !memchr(option_order, i, option_order_len))
-        option_order[option_order_len++] = i;
+      if (i >= 0)
+        remember_option(i);
     }
     fclose(file);
+  }
+}
+
+void
+finish_config(void)
+{
+  if (cfg.use_system_colours) {
+    // Translate 'UseSystemColours' to colour settings.
+    cfg.fg_colour = cfg.cursor_colour = GetSysColor(COLOR_WINDOWTEXT);
+    cfg.bg_colour = GetSysColor(COLOR_WINDOW);
+
+    // Make sure they're written to the config file.
+    // This assumes that the colour options are the first three in options[].
+    remember_option(0);
+    remember_option(1);
+    remember_option(2);
   }
 }
 
@@ -570,11 +593,6 @@ setup_config_box(controlbox * b)
   ctrl_pushbutton(
     s, "Cursor...", 'c', P(0), colour_handler, P(&new_cfg.cursor_colour)
   )->column = 2;
-  //ctrl_columns(s, 1, 100);
-  ctrl_checkbox(
-    s, "Use system colours instead", 's', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(use_system_colours))
-  );
   
   s = ctrl_getset(b, "Looks", "trans", "Transparency");
   bool with_glass = win_is_glass_available();
@@ -594,18 +612,17 @@ setup_config_box(controlbox * b)
   );
 
   s = ctrl_getset(b, "Looks", "curtype", "Cursor");
-  ctrl_columns(s, 2, 80, 20);
   ctrl_radiobuttons(
-    s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
+    s, null, '\0', 4 + with_glass, P(0), dlg_stdradiobutton_handler,
     I(offcfg(cursor_type)),
     "Line", 'n', I(CUR_LINE), 
     "Block", 'k', I(CUR_BLOCK),
     "Underscore", 'u', I(CUR_UNDERSCORE),
     null
-  )->column = 0;
+  );
   ctrl_checkbox(
-    s, "Blink", 'e', P(0), dlg_stdcheckbox_handler, I(offcfg(cursor_blinks))
-  )->column = 1;
+    s, "Blinking", 'e', P(0), dlg_stdcheckbox_handler, I(offcfg(cursor_blinks))
+  );
 
  /*
   * The Text panel.
