@@ -494,6 +494,15 @@ win_reconfig(void)
     new_cfg.bold_as_colour != cfg.bold_as_colour||
     new_cfg.font_quality != cfg.font_quality;
   
+  if (new_cfg.fg_colour != cfg.fg_colour)
+    win_set_colour(FG_COLOUR_I, new_cfg.fg_colour);
+  
+  if (new_cfg.bg_colour != cfg.bg_colour)
+    win_set_colour(BG_COLOUR_I, new_cfg.bg_colour);
+  
+  if (new_cfg.cursor_colour != cfg.cursor_colour)
+    win_set_colour(CURSOR_COLOUR_I, new_cfg.cursor_colour);
+  
   /* Copy the new config and refresh everything */
   cfg = new_cfg;
   if (font_changed) {
@@ -501,7 +510,6 @@ win_reconfig(void)
     reinit_fonts();
   }
   win_update_scrollbar();
-  win_reconfig_palette();
   update_transparency();
   win_update_mouse();
 

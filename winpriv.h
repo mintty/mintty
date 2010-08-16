@@ -35,8 +35,6 @@ void win_paint(void);
 void win_init_fonts(void);
 void win_deinit_fonts(void);
 
-void win_reconfig_palette(void);
-
 void win_open_config(void);
 
 void win_enable_tip(void);
