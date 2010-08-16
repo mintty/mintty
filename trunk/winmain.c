@@ -343,8 +343,10 @@ reinit_fonts(void)
   win_init_fonts();
   if (IsZoomed(wnd))
     adapt_term_size();
-  else
+  else {
+    win_invalidate_all();
     win_resize(term.rows, term.cols);
+  }
 }
 
 bool
