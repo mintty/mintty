@@ -305,7 +305,9 @@ void
 child_write(const char *buf, uint len)
 { 
   if (pty_fd >= 0)
-    write(pty_fd, buf, len); 
+    write(pty_fd, buf, len);
+  else
+    child_kill(false);
 }
 
 void
