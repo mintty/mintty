@@ -515,7 +515,9 @@ term_handler(control *ctrl, void *unused(data), int event)
       dlg_listbox_clear(ctrl);
       dlg_listbox_add(ctrl, "xterm");
       dlg_listbox_add(ctrl, "xterm-256color");
+      dlg_listbox_add(ctrl, "xterm-vt220");
       dlg_listbox_add(ctrl, "vt100");
+      dlg_listbox_add(ctrl, "vt220");
       dlg_update_done(ctrl);
       dlg_editbox_set(ctrl, new_cfg.term);
     when EVENT_VALCHANGE or EVENT_SELCHANGE:

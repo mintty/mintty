@@ -130,7 +130,7 @@ term_reset(void)
   term.cursor_on = true;
   term.echoing = false;
   term.shortcut_override = term.escape_sends_fs = term.app_escape_key = false;
-  term.vt220_keys = false;
+  term.vt220_keys = strstr(cfg.term, "vt220");
   term.app_keypad = term.app_cursor_keys = term.app_wheel = false;
   term.mouse_mode = MM_NONE;
   term.wheel_reporting = true;
@@ -207,6 +207,8 @@ term_reconfig(void)
   term_schedule_cblink();
   if (new_cfg.backspace_sends_bs != cfg.backspace_sends_bs)
     term.backspace_sends_bs = new_cfg.backspace_sends_bs;
+  if (strcmp(new_cfg.term, cfg.term))
+    term.vt220_keys = strstr(new_cfg.term, "vt220");
 }
 
 static void
