@@ -5,7 +5,7 @@
 .\" You may distribute, use, and modify this man page under the terms
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
-.TH mintty 1 2010-08-05 0.8.1 Cygwin
+.TH mintty 1 2010-08-22 0.9-alpha Cygwin
 
 .ad l
 
@@ -1187,7 +1187,7 @@ environment.
 
 .SS Cursor style
 
-The VT510 DECCSUSR sequence can be used to control cursor shape and blinking.
+The VT510 DECSCUSR sequence can be used to control cursor shape and blinking.
 
 .RS
 \fC^[[ \fIarg\fC \fISP\fC q\fR
@@ -1334,7 +1334,7 @@ With these settings, the \fBEsc\fP key can also be used to interrupt
 processes by setting its keycode to \fB^\\\fP:
 
 .RS
-\fCecho $'\e[?7728h'\fP
+\fCecho -ne '\e[?7728h'\fP
 .RE
 
 The standard escape character \fB^[\fP cannot be used for that purpose
