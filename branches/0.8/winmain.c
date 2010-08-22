@@ -829,7 +829,7 @@ window_optargs[] = {
   {"normal", SW_SHOWNORMAL},
   {"min", SW_SHOWMINIMIZED},
   {"max", SW_SHOWMAXIMIZED},
-  {"full", 0},
+  {"full", UINT_MAX},
   {0, 0}
 };
 
@@ -1074,8 +1074,8 @@ main(int argc, char *argv[])
   child_create(argv, &ws);
 
   // Finally show the window!
-  fullscr_on_max = !show;
-  ShowWindow(wnd, show ?: SW_SHOWMAXIMIZED);
+  fullscr_on_max = (show == UINT_MAX);
+  ShowWindow(wnd, fullscr_on_max ? SW_SHOWMAXIMIZED : show);
 
   // Message loop.
   for (;;) {
