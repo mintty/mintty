@@ -633,6 +633,8 @@ set_modes(bool state)
           if (!state)
             restore_cursor();
           term.disptop = 0;
+        when 1061:       /* VT220 keyboard emulation */
+          term.vt220_keys = state;
         when 2004:       /* xterm bracketed paste mode */
           term.bracketed_paste = state;
         when 7700:       /* mintty only: CJK ambigous width reporting */

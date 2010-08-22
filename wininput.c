@@ -465,10 +465,14 @@ win_key_down(WPARAM wp, LPARAM lp)
   bool app_pad_key(char symbol) {
     if (extended)
       return false;
-    if (term.app_keypad && !term.app_cursor_keys) {
+    // Mintty-specific: produce app_pad codes not only when vt220 mode is on,
+    // but also in PC-style mode when app_cursor_keys is off, to allow the
+    // numpad keys to be distinguished from the cursor/editing keys.
+    if (term.app_keypad && (!term.app_cursor_keys || term.vt220_keys)) {
       // If NumLock is on, Shift must have been pressed to override it and
       // get a VK code for an editing or cursor key code.
-      mods |= numlock;
+      if (numlock)
+        mods |= MDK_SHIFT;
       app_pad_code(symbol);
       return true;
     }
@@ -640,21 +644,25 @@ win_key_down(WPARAM wp, LPARAM lp)
       ctrl_ch(ctrl & !extended ? CTRL('\\') : CTRL(']'));
     when VK_CANCEL:
       ctrl_ch(CTRL('\\'));
-    when VK_F1 ... VK_F4:
-      mod_ss3(key - VK_F1 + 'P');
-    when VK_F5 ... VK_F24:
-      tilde_code(
-        (uchar[]){
-          15, 17, 18, 19, 20, 21, 23, 24, 25, 26,
-          28, 29, 31, 32, 33, 34, 36, 37, 38, 39
-        }[key - VK_F5]
-      );
+    when VK_F1 ... VK_F24:
+      if (term.vt220_keys && ctrl && VK_F3 <= key && key <= VK_F10)
+        key += 10, mods &= ~MDK_CTRL;
+      if (key <= VK_F4)
+        mod_ss3(key - VK_F1 + 'P');
+      else {
+        tilde_code(
+          (uchar[]){
+            15, 17, 18, 19, 20, 21, 23, 24, 25, 26,
+            28, 29, 31, 32, 33, 34, 42, 43, 44, 45
+          }[key - VK_F5]
+        );
+      }
     when VK_INSERT: edit_key(2, '0');
     when VK_DELETE: edit_key(3, '.');
     when VK_PRIOR:  edit_key(5, '9');
     when VK_NEXT:   edit_key(6, '3');
-    when VK_HOME:   cursor_key('H', '7');
-    when VK_END:    cursor_key('F', '1');
+    when VK_HOME:   term.vt220_keys ? edit_key(1, '7') : cursor_key('H', '7');
+    when VK_END:    term.vt220_keys ? edit_key(4, '1') : cursor_key('F', '1');
     when VK_UP:     cursor_key('A', '8');
     when VK_DOWN:   cursor_key('B', '2');
     when VK_LEFT:   cursor_key('D', '4');
@@ -664,7 +672,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       if (mods || (term.app_keypad && !numlock) || !layout())
         app_pad_code(key - VK_MULTIPLY + '*');
     when VK_NUMPAD0 ... VK_NUMPAD9:
-        !(term.app_keypad && !term.app_cursor_keys) 
+        (!term.app_keypad || term.app_cursor_keys) 
         && alt_code_key(key - VK_NUMPAD0)
         ?: layout()
         ?: app_pad_code(key - VK_NUMPAD0 + '0');
