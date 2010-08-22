@@ -130,6 +130,7 @@ term_reset(void)
   term.cursor_on = true;
   term.echoing = false;
   term.shortcut_override = term.escape_sends_fs = term.app_escape_key = false;
+  term.vt220_keys = false;
   term.app_keypad = term.app_cursor_keys = term.app_wheel = false;
   term.mouse_mode = MM_NONE;
   term.wheel_reporting = true;
