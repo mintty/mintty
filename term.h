@@ -246,7 +246,6 @@ struct term {
   bool has_focus;
   bool in_vbell;
 
-  bool vt220_keys;
   bool shortcut_override;
   bool backspace_sends_bs;
   bool escape_sends_fs;

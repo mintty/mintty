@@ -113,7 +113,7 @@ win_init_fonts(void)
   for (i = 0; i < FONT_MAXNO; i++)
     fonts[i] = null;
 
-  bold_mode = cfg.bold_as_colour ? BOLD_COLOURS : BOLD_FONT;
+  bold_mode = cfg.bold_as_bright ? BOLD_COLOURS : BOLD_FONT;
   und_mode = UND_FONT;
 
   if (cfg.font.isbold) {
@@ -450,7 +450,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   
   if (attr & ATTR_DIM) {
     fg = (fg & 0xFEFEFEFE) >> 1;
-    if (!cfg.bold_as_colour)
+    if (!cfg.bold_as_bright)
       fg += (bg & 0xFEFEFEFE) >> 1;
   }
   if (attr & ATTR_REVERSE) {
@@ -651,9 +651,27 @@ win_set_colour(uint n, colour c)
 colour win_get_colour(uint n) { return n < 262 ? colours[n] : 0; }
 
 void
+win_reconfig_palette(void)
+{
+  bool sys = cfg.use_system_colours;
+  colour sys_fg = GetSysColor(COLOR_WINDOWTEXT);
+  colour sys_bg = GetSysColor(COLOR_WINDOW);
+  win_set_colour(FG_COLOUR_I, sys ? sys_fg : cfg.fg_colour);
+  win_set_colour(BG_COLOUR_I, sys ? sys_bg : cfg.bg_colour);
+  win_set_colour(CURSOR_COLOUR_I, sys ? sys_fg : cfg.cursor_colour);
+}
+
+void
 win_reset_colours(void)
 {
-  memcpy(colours, cfg.ansi_colours, sizeof cfg.ansi_colours);
+  static const colour
+  ansi_colours[16] = {
+    0x000000, 0x0000BF, 0x00BF00, 0x00BFBF,
+    0xBF0000, 0xBF00BF, 0xBFBF00, 0xBFBFBF,
+    0x404040, 0x4040FF, 0x40FF40, 0x40FFFF,
+    0xFF4040, 0xFF40FF, 0xFFFF40, 0xFFFFFF
+  };
+  memcpy(colours, ansi_colours, sizeof ansi_colours);
 
   // Colour cube
   int i = 16;
@@ -671,7 +689,5 @@ win_reset_colours(void)
   }
 
   // Foreground, background, cursor
-  win_set_colour(FG_COLOUR_I, cfg.fg_colour);
-  win_set_colour(BG_COLOUR_I, cfg.bg_colour);
-  win_set_colour(CURSOR_COLOUR_I, cfg.cursor_colour);
+  win_reconfig_palette();
 }

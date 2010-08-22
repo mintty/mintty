@@ -130,7 +130,6 @@ term_reset(void)
   term.cursor_on = true;
   term.echoing = false;
   term.shortcut_override = term.escape_sends_fs = term.app_escape_key = false;
-  term.vt220_keys = strstr(cfg.term, "vt220");
   term.app_keypad = term.app_cursor_keys = term.app_wheel = false;
   term.mouse_mode = MM_NONE;
   term.wheel_reporting = true;
@@ -160,8 +159,6 @@ term_reset(void)
   term_schedule_tblink();
   term_schedule_cblink();
   term.disptop = 0;
-  
-  win_reset_colours();
 }
 
 static void
@@ -194,7 +191,10 @@ term_flip_screen(void)
   show_screen(!term.show_other_screen);
 }
 
-/* Apply changed settings */
+/*
+ * When the user reconfigures us, we need to abandon a print job if
+ * the user has disabled printing.
+ */
 void
 term_reconfig(void)
 {
@@ -205,10 +205,12 @@ term_reconfig(void)
   cfg.cursor_blinks = new_cfg.cursor_blinks;
   term_schedule_tblink();
   term_schedule_cblink();
+  if (new_cfg.scrollback_lines != cfg.scrollback_lines) {
+    cfg.scrollback_lines = new_cfg.scrollback_lines;
+    term_resize(term.rows, term.cols);
+  }
   if (new_cfg.backspace_sends_bs != cfg.backspace_sends_bs)
     term.backspace_sends_bs = new_cfg.backspace_sends_bs;
-  if (strcmp(new_cfg.term, cfg.term))
-    term.vt220_keys = strstr(new_cfg.term, "vt220");
 }
 
 static void
@@ -274,6 +276,14 @@ term_clear_scrollback(void)
 void
 term_resize(int newrows, int newcols)
 {
+  if (newrows == term.rows && newcols == term.cols)
+    return;     /* nothing to do */
+
+ /* Behave sensibly if we're given zero (or negative) rows/cols */
+
+  newrows = max(1, newrows);
+  newcols = max(1, newcols);
+
   bool on_alt_screen = term.on_alt_screen;
   term_switch_screen(0, false, false);
 

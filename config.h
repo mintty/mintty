@@ -31,6 +31,7 @@ enum { RC_SHOWMENU, RC_PASTE, RC_EXTEND };
 typedef struct {
   // Looks
   colour fg_colour, bg_colour, cursor_colour;
+  bool use_system_colours;
   int transparency;
   bool opaque_when_focused;
   int cursor_type;
@@ -38,7 +39,7 @@ typedef struct {
   // Text
   font_spec font;
   int font_quality;
-  bool bold_as_colour;
+  bool bold_as_bright;
   bool allow_blinking;
   char locale[32];
   char charset[32];
@@ -71,15 +72,11 @@ typedef struct {
   bool confirm_exit;
   // Hidden
   int col_spacing, row_spacing;
-  char word_chars[32];
-  bool use_system_colours;
-  colour ansi_colours[16];
 } config;
 
 extern config cfg, new_cfg;
 
 int parse_option(char *option);
 void load_config(char *filename);
-void finish_config(void);
 
 #endif

@@ -31,6 +31,7 @@ config cfg = {
   .fg_colour = 0xBFBFBF,
   .bg_colour = 0x000000,
   .cursor_colour = 0xBFBFBF,
+  .use_system_colours = false,
   .transparency = 0,
   .opaque_when_focused = false,
   .cursor_type = CUR_LINE,
@@ -38,7 +39,7 @@ config cfg = {
   // Text
   .font = {.name = "Lucida Console", .isbold = false, .size = 9},
   .font_quality = FQ_DEFAULT,
-  .bold_as_colour = true,
+  .bold_as_bright = true,
   .allow_blinking = false,
   .locale = "",
   .charset = "",
@@ -72,21 +73,13 @@ config cfg = {
   .confirm_exit = true,
   // Hidden
   .col_spacing = 0,
-  .row_spacing = 0,
-  .word_chars = "",
-  .use_system_colours = false,
-  .ansi_colours = {
-    0x000000, 0x0000BF, 0x00BF00, 0x00BFBF,
-    0xBF0000, 0xBF00BF, 0xBFBF00, 0xBFBFBF,
-    0x404040, 0x4040FF, 0x40FF40, 0x40FFFF,
-    0xFF4040, 0xFF40FF, 0xFFFF40, 0xFFFFFF
-  }
+  .row_spacing = 0
 };
 
 #define offcfg(option) offsetof(config, option)
 #define cfg_field(option) sizeof(cfg.option), offcfg(option)
 
-typedef enum { OPT_BOOL, OPT_INT, OPT_STRING, OPT_COLOUR, OPT_COMPAT } opt_type;
+typedef enum { OPT_BOOL, OPT_INT, OPT_STRING, OPT_COLOUR } opt_type;
 
 static const struct {
   const char *name;
@@ -99,21 +92,20 @@ options[] = {
   {"ForegroundColour", OPT_COLOUR, cfg_field(fg_colour)},
   {"BackgroundColour", OPT_COLOUR, cfg_field(bg_colour)},
   {"CursorColour", OPT_COLOUR, cfg_field(cursor_colour)},
+  {"UseSystemColours", OPT_BOOL, cfg_field(use_system_colours)},
   {"Transparency", OPT_INT, cfg_field(transparency)},
   {"OpaqueWhenFocused", OPT_BOOL, cfg_field(opaque_when_focused)},
   {"CursorType", OPT_INT, cfg_field(cursor_type)},
   {"CursorBlinks", OPT_BOOL, cfg_field(cursor_blinks)},
-
   // Text
   {"Font", OPT_STRING, cfg_field(font.name)},
   {"FontIsBold", OPT_BOOL, cfg_field(font.isbold)},
   {"FontHeight", OPT_INT, cfg_field(font.size)},
   {"FontQuality", OPT_INT, cfg_field(font_quality)},
-  {"BoldAsColour", OPT_BOOL, cfg_field(bold_as_colour)},
+  {"BoldAsBright", OPT_BOOL, cfg_field(bold_as_bright)},
   {"AllowBlinking", OPT_BOOL, cfg_field(allow_blinking)},
   {"Locale", OPT_STRING, cfg_field(locale)},
   {"Charset", OPT_STRING, cfg_field(charset)},
-
   // Keys
   {"BackspaceSendsBS", OPT_BOOL, cfg_field(backspace_sends_bs)},
   {"CtrlAltIsAltGr", OPT_BOOL, cfg_field(ctrl_alt_is_altgr)},
@@ -122,7 +114,6 @@ options[] = {
   {"SwitchShortcuts", OPT_BOOL, cfg_field(switch_shortcuts)},
   {"ScrollMod", OPT_INT, cfg_field(scroll_mod)},
   {"PgUpDnScroll", OPT_BOOL, cfg_field(pgupdn_scroll)},
-
   // Mouse
   {"CopyOnSelect", OPT_BOOL, cfg_field(copy_on_select)},
   {"CopyAsRTF", OPT_BOOL, cfg_field(copy_as_rtf)},
@@ -130,7 +121,6 @@ options[] = {
   {"RightClickAction", OPT_INT, cfg_field(right_click_action)},
   {"ClicksTargetApp", OPT_INT, cfg_field(clicks_target_app)},
   {"ClickTargetMod", OPT_INT, cfg_field(click_target_mod)},
-
   // Output
   {"Printer", OPT_STRING, cfg_field(printer)},
   {"BellSound", OPT_BOOL, cfg_field(bell_sound)},
@@ -138,44 +128,15 @@ options[] = {
   {"BellTaskbar", OPT_BOOL, cfg_field(bell_taskbar)},
   {"Term", OPT_STRING, cfg_field(term)},
   {"Answerback", OPT_STRING, cfg_field(answerback)},
-
   // Window
   {"Columns", OPT_INT, cfg_field(cols)},
   {"Rows", OPT_INT, cfg_field(rows)},
   {"Scrollbar", OPT_INT, cfg_field(scrollbar)},
   {"ScrollbackLines", OPT_INT, cfg_field(scrollback_lines)},
   {"ConfirmExit", OPT_BOOL, cfg_field(confirm_exit)},
-
   // Hidden
-  
-  // Character spaceing
   {"ColSpacing", OPT_INT, cfg_field(col_spacing)},
   {"RowSpacing", OPT_INT, cfg_field(row_spacing)},
-  
-  // Word selection characters
-  {"WordChars", OPT_STRING, cfg_field(word_chars)},
-  
-  // ANSI colours
-  {"Black", OPT_COLOUR, cfg_field(ansi_colours[0])},
-  {"Red", OPT_COLOUR, cfg_field(ansi_colours[1])},
-  {"Green", OPT_COLOUR, cfg_field(ansi_colours[2])},
-  {"Yellow", OPT_COLOUR, cfg_field(ansi_colours[3])},
-  {"Blue", OPT_COLOUR, cfg_field(ansi_colours[4])},
-  {"Magenta", OPT_COLOUR, cfg_field(ansi_colours[5])},
-  {"Cyan", OPT_COLOUR, cfg_field(ansi_colours[6])},
-  {"White", OPT_COLOUR, cfg_field(ansi_colours[7])},
-  {"BoldBlack", OPT_COLOUR, cfg_field(ansi_colours[8])},
-  {"BoldRed", OPT_COLOUR, cfg_field(ansi_colours[9])},
-  {"BoldGreen", OPT_COLOUR, cfg_field(ansi_colours[10])},
-  {"BoldYellow", OPT_COLOUR, cfg_field(ansi_colours[11])},
-  {"BoldBlue", OPT_COLOUR, cfg_field(ansi_colours[12])},
-  {"BoldMagenta", OPT_COLOUR, cfg_field(ansi_colours[13])},
-  {"BoldCyan", OPT_COLOUR, cfg_field(ansi_colours[14])},
-  {"BoldWhite", OPT_COLOUR, cfg_field(ansi_colours[15])},
-
-  // Backward compatibility
-  {"UseSystemColours", OPT_BOOL | OPT_COMPAT, cfg_field(use_system_colours)},
-  {"BoldAsBright", OPT_BOOL | OPT_COMPAT, cfg_field(bold_as_colour)}
 };
 
 static uchar option_order[lengthof(options)];
@@ -209,7 +170,7 @@ parse_option(char *option)
   
   char *val = eq + 1;
   uint offset = options[i].offset;
-  switch (options[i].type & ~OPT_COMPAT) {
+  switch (options[i].type) {
     when OPT_BOOL:
       atoffset(bool, &cfg, offset) = atoi(val);
     when OPT_INT:
@@ -227,13 +188,6 @@ parse_option(char *option)
     }
   }
   return i;
-}
-
-static void
-remember_option(int i)
-{
-  if (!memchr(option_order, i, option_order_len))
-    option_order[option_order_len++] = i;
 }
 
 void
@@ -254,26 +208,10 @@ load_config(char *filename)
     while (fgets(line, sizeof line, file)) {
       line[strcspn(line, "\r\n")] = 0;  /* trim newline */
       int i = parse_option(line);
-      if (i >= 0)
-        remember_option(i);
+      if (i >= 0 && !memchr(option_order, i, option_order_len))
+        option_order[option_order_len++] = i;
     }
     fclose(file);
-  }
-}
-
-void
-finish_config(void)
-{
-  if (cfg.use_system_colours) {
-    // Translate 'UseSystemColours' to colour settings.
-    cfg.fg_colour = cfg.cursor_colour = GetSysColor(COLOR_WINDOWTEXT);
-    cfg.bg_colour = GetSysColor(COLOR_WINDOW);
-
-    // Make sure they're written to the config file.
-    // This assumes that the colour options are the first three in options[].
-    remember_option(0);
-    remember_option(1);
-    remember_option(2);
   }
 }
 
@@ -304,20 +242,18 @@ save_config(void)
   else {
     for (uint j = 0; j < option_order_len; j++) {
       uint i = option_order[j];
-      if (!(options[i].type & OPT_COMPAT)) {
-        fprintf(file, "%s=", options[i].name);
-        uint offset = options[i].offset;
-        switch (options[i].type) {
-          when OPT_BOOL:
-            fprintf(file, "%i\n", atoffset(bool, &cfg, offset));
-          when OPT_INT:
-            fprintf(file, "%i\n", atoffset(int, &cfg, offset));
-          when OPT_STRING:
-            fprintf(file, "%s\n", &atoffset(char, &cfg, offset));
-          when OPT_COLOUR: {
-            colour c = atoffset(colour, &cfg, offset);
-            fprintf(file, "%u,%u,%u\n", red(c), green(c), blue(c));
-          }
+      fprintf(file, "%s=", options[i].name);
+      uint offset = options[i].offset;
+      switch (options[i].type) {
+        when OPT_BOOL:
+          fprintf(file, "%i\n", atoffset(bool, &cfg, offset));
+        when OPT_INT:
+          fprintf(file, "%i\n", atoffset(int, &cfg, offset));
+        when OPT_STRING:
+          fprintf(file, "%s\n", &atoffset(char, &cfg, offset));
+        when OPT_COLOUR: {
+          colour c = atoffset(colour, &cfg, offset);
+          fprintf(file, "%u,%u,%u\n", red(c), green(c), blue(c));
         }
       }
     }
@@ -515,9 +451,7 @@ term_handler(control *ctrl, void *unused(data), int event)
       dlg_listbox_clear(ctrl);
       dlg_listbox_add(ctrl, "xterm");
       dlg_listbox_add(ctrl, "xterm-256color");
-      dlg_listbox_add(ctrl, "xterm-vt220");
       dlg_listbox_add(ctrl, "vt100");
-      dlg_listbox_add(ctrl, "vt220");
       dlg_update_done(ctrl);
       dlg_editbox_set(ctrl, new_cfg.term);
     when EVENT_VALCHANGE or EVENT_SELCHANGE:
@@ -595,6 +529,11 @@ setup_config_box(controlbox * b)
   ctrl_pushbutton(
     s, "Cursor...", 'c', P(0), colour_handler, P(&new_cfg.cursor_colour)
   )->column = 2;
+  //ctrl_columns(s, 1, 100);
+  ctrl_checkbox(
+    s, "Use system colours instead", 's', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(use_system_colours))
+  );
   
   s = ctrl_getset(b, "Looks", "trans", "Transparency");
   bool with_glass = win_is_glass_available();
@@ -614,17 +553,18 @@ setup_config_box(controlbox * b)
   );
 
   s = ctrl_getset(b, "Looks", "curtype", "Cursor");
+  ctrl_columns(s, 2, 80, 20);
   ctrl_radiobuttons(
-    s, null, '\0', 4 + with_glass, P(0), dlg_stdradiobutton_handler,
+    s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
     I(offcfg(cursor_type)),
     "Line", 'n', I(CUR_LINE), 
     "Block", 'k', I(CUR_BLOCK),
     "Underscore", 'u', I(CUR_UNDERSCORE),
     null
-  );
+  )->column = 0;
   ctrl_checkbox(
-    s, "Blinking", 'e', P(0), dlg_stdcheckbox_handler, I(offcfg(cursor_blinks))
-  );
+    s, "Blink", 'e', P(0), dlg_stdcheckbox_handler, I(offcfg(cursor_blinks))
+  )->column = 1;
 
  /*
   * The Text panel.
@@ -648,8 +588,8 @@ setup_config_box(controlbox * b)
   s = ctrl_getset(b, "Text", "effects", null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
-    s, "Show bold as colour", 'b', P(0), dlg_stdcheckbox_handler,
-    I(offcfg(bold_as_colour))
+    s, "Show bold as bright", 'b', P(0), dlg_stdcheckbox_handler,
+    I(offcfg(bold_as_bright))
   )->column = 0;
   ctrl_checkbox(
     s, "Allow blinking", 'a', P(0),
