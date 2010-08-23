@@ -934,15 +934,6 @@ term_paint(void)
   free(ch);
 }
 
-void
-term_update(void)
-{
-  term_paint();
-  int lines = sblines();
-  win_set_sbar(lines + term.rows, lines + term.disptop, term.rows);
-  win_set_sys_cursor(term.screen.curs.x, term.screen.curs.y - term.disptop);
-}
-
 /*
  * Paint the window in response to a WM_PAINT message.
  */

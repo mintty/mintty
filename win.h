@@ -14,9 +14,7 @@ void win_set_sys_cursor(int x, int y);
 void win_update_mouse(void);
 void win_capture_mouse(void);
 void win_bell(void);
-
 void win_set_title(char *);
-void win_set_sbar(int, int, int);
 
 enum { FG_COLOUR_I = 256, BG_COLOUR_I = 258, CURSOR_COLOUR_I = 261 };
 colour win_get_colour(uint i);
