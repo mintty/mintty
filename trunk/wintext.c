@@ -313,8 +313,24 @@ win_update(void)
     update_pending = false;
   }
   dc = GetDC(wnd);
-  term_update();
+  term_paint();
   ReleaseDC(wnd, dc);
+
+  // Update scrollbar
+  if (cfg.scrollbar && term.show_scrollbar) {
+    int lines = sblines();
+    SCROLLINFO si = {
+      .cbSize = sizeof si,
+      .fMask = SIF_ALL | SIF_DISABLENOSCROLL,
+      .nMin = 0,
+      .nMax = lines + term.rows - 1,
+      .nPage = term.rows,
+      .nPos = lines + term.disptop
+    };
+    SetScrollInfo(wnd, SB_VERT, &si, true);
+  }
+
+  win_set_sys_cursor(term.screen.curs.x, term.screen.curs.y - term.disptop);
 }
 
 void
@@ -608,22 +624,6 @@ win_char_width(int uc)
   ibuf /= font_width;
 
   return ibuf;
-}
-
-void
-win_set_sbar(int total, int start, int page)
-{
-  if (cfg.scrollbar && term.show_scrollbar) {
-    SCROLLINFO si;
-    si.cbSize = sizeof (si);
-    si.fMask = SIF_ALL | SIF_DISABLENOSCROLL;
-    si.nMin = 0;
-    si.nMax = total - 1;
-    si.nPage = page;
-    si.nPos = start;
-    if (wnd)
-      SetScrollInfo(wnd, SB_VERT, &si, true);
-  }
 }
 
 void
