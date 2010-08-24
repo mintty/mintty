@@ -395,7 +395,6 @@ do_esc(uchar c)
       child_write(primary_da, sizeof primary_da - 1);
     when 'c':  /* RIS: restore power-on settings */
       term_reset();
-      term_clear_scrollback();
       if (term.reset_132) {
         win_resize(term.rows, 80);
         term.reset_132 = 0;
@@ -1329,7 +1328,7 @@ term_write(const char *buf, uint len)
       }
     }
   }
-  win_schedule_update();
+  win_update();
   if (term.printing) {
     printer_write(term.printbuf, term.printbuf_pos);
     term.printbuf_pos = 0;
