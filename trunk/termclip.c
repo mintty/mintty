@@ -212,14 +212,4 @@ term_select_all(void)
   term.selected = true;
   if (cfg.copy_on_select)
     term_copy();
-  win_update();
-}
-
-void
-term_deselect(void)
-{
-  if (term.selected) {
-    term.selected = false;
-    win_update();
-  }
 }

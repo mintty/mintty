@@ -250,13 +250,11 @@ win_deinit_fonts(void)
 
 static HDC dc;
 
-static bool update_pending;
+static enum { UPDATE_IDLE, UPDATE_BLOCKED, UPDATE_PENDING } update_state;
 
 void
 win_paint(void)
 {
-  HideCaret(wnd);
-
   PAINTSTRUCT p;
   dc = BeginPaint(wnd, &p);
 
@@ -267,8 +265,7 @@ win_paint(void)
     (p.rcPaint.bottom - PADDING - 1) / font_height
   );
 
-  if (!update_pending)
-    term_paint();
+  term_paint();
 
   if (p.fErase || p.rcPaint.left < PADDING ||
       p.rcPaint.top < PADDING ||
@@ -301,17 +298,18 @@ win_paint(void)
   SelectObject(dc, GetStockObject(WHITE_PEN));
   
   EndPaint(wnd, &p);
-  
-  ShowCaret(wnd);
 }
 
-void
-win_update(void)
+static void
+do_update(void)
 {
-  if (update_pending) {
-    KillTimer(wnd, (UINT_PTR)win_update);
-    update_pending = false;
+  if (update_state == UPDATE_BLOCKED) {
+    update_state = UPDATE_IDLE;
+    return;
   }
+
+  update_state = UPDATE_BLOCKED;
+
   dc = GetDC(wnd);
   term_paint();
   ReleaseDC(wnd, dc);
@@ -331,15 +329,17 @@ win_update(void)
   }
 
   win_set_sys_cursor(term.screen.curs.x, term.screen.curs.y - term.disptop);
+
+  SetTimer(wnd, (UINT_PTR)do_update, 16, null);
 }
 
 void
-win_schedule_update(void)
+win_update(void)
 {
-  if (!update_pending) {
-    SetTimer(wnd, (UINT_PTR)win_update, 20, null);
-    update_pending = true;
-  }
+  if (update_state == UPDATE_IDLE)
+    do_update();
+  else
+    update_state = UPDATE_PENDING;
 }
 
 static void

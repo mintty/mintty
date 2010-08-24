@@ -55,9 +55,6 @@ term_schedule_cblink(void)
     term.cblinker = 1;  /* reset when not in use */
 }
 
-/*
- * Call to begin a visual bell.
- */
 static void
 vbell_cb(void)
 {
@@ -157,9 +154,10 @@ term_reset(void)
       term_do_scroll(0, term.rows - 1, 1, true);
     }
   }
+  term.selected = false;
   term_schedule_tblink();
   term_schedule_cblink();
-  term.disptop = 0;
+  term_clear_scrollback();
   
   win_reset_colours();
 }
@@ -169,7 +167,7 @@ show_screen(bool other_screen)
 {
   term.show_other_screen = other_screen;
   term.disptop = 0;
-  term_deselect();
+  term.selected = false;
 
   // Reset cursor blinking.
   if (!other_screen) {
@@ -177,7 +175,7 @@ show_screen(bool other_screen)
     term_schedule_cblink();
   }
 
-  win_schedule_update();
+  win_update();
 }
 
 /* Return to active screen and reset scrollback */

@@ -29,7 +29,6 @@ void argz_stringify (char *argz, size_t argz_len, int sep);
 
 HWND wnd;
 HINSTANCE inst;
-HDC dc;
 static ATOM class_atom;
 
 bool win_is_full_screen;
@@ -442,15 +441,6 @@ default_size(void)
 }
 
 static void
-reset_term(void)
-{
-  term_reset();
-  term_deselect();
-  term_clear_scrollback();
-  win_update();
-}
-
-static void
 update_transparency(void)
 {
   bool opaque = cfg.opaque_when_focused && term.has_focus;
@@ -591,8 +581,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_OPEN: term_open();
         when IDM_COPY: term_copy();
         when IDM_PASTE: win_paste();
-        when IDM_SELALL: term_select_all();
-        when IDM_RESET: reset_term();
+        when IDM_SELALL: term_select_all(); win_update();
+        when IDM_RESET: term_reset(); win_update();
         when IDM_DEFSIZE: default_size();
         when IDM_FULLSCREEN: win_maximise(win_is_fullscreen ? 0 : 2);
         when IDM_FLIPSCREEN: term_flip_screen();
