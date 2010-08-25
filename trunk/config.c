@@ -7,7 +7,6 @@
 #include "ctrls.h"
 #include "print.h"
 #include "charset.h"
-#include "term.h"
 #include "win.h"
 
 #include <sys/cygwin.h>
@@ -156,22 +155,22 @@ options[] = {
   {"WordChars", OPT_STRING, cfg_field(word_chars)},
   
   // ANSI colours
-  {"Black", OPT_COLOUR, cfg_field(ansi_colours[0])},
-  {"Red", OPT_COLOUR, cfg_field(ansi_colours[1])},
-  {"Green", OPT_COLOUR, cfg_field(ansi_colours[2])},
-  {"Yellow", OPT_COLOUR, cfg_field(ansi_colours[3])},
-  {"Blue", OPT_COLOUR, cfg_field(ansi_colours[4])},
-  {"Magenta", OPT_COLOUR, cfg_field(ansi_colours[5])},
-  {"Cyan", OPT_COLOUR, cfg_field(ansi_colours[6])},
-  {"White", OPT_COLOUR, cfg_field(ansi_colours[7])},
-  {"BoldBlack", OPT_COLOUR, cfg_field(ansi_colours[8])},
-  {"BoldRed", OPT_COLOUR, cfg_field(ansi_colours[9])},
-  {"BoldGreen", OPT_COLOUR, cfg_field(ansi_colours[10])},
-  {"BoldYellow", OPT_COLOUR, cfg_field(ansi_colours[11])},
-  {"BoldBlue", OPT_COLOUR, cfg_field(ansi_colours[12])},
-  {"BoldMagenta", OPT_COLOUR, cfg_field(ansi_colours[13])},
-  {"BoldCyan", OPT_COLOUR, cfg_field(ansi_colours[14])},
-  {"BoldWhite", OPT_COLOUR, cfg_field(ansi_colours[15])},
+  {"Black", OPT_COLOUR, cfg_field(ansi_colours[BLACK_I])},
+  {"Red", OPT_COLOUR, cfg_field(ansi_colours[RED_I])},
+  {"Green", OPT_COLOUR, cfg_field(ansi_colours[GREEN_I])},
+  {"Yellow", OPT_COLOUR, cfg_field(ansi_colours[YELLOW_I])},
+  {"Blue", OPT_COLOUR, cfg_field(ansi_colours[BLUE_I])},
+  {"Magenta", OPT_COLOUR, cfg_field(ansi_colours[MAGENTA_I])},
+  {"Cyan", OPT_COLOUR, cfg_field(ansi_colours[CYAN_I])},
+  {"White", OPT_COLOUR, cfg_field(ansi_colours[WHITE_I])},
+  {"BoldBlack", OPT_COLOUR, cfg_field(ansi_colours[BOLD_BLACK_I])},
+  {"BoldRed", OPT_COLOUR, cfg_field(ansi_colours[BOLD_RED_I])},
+  {"BoldGreen", OPT_COLOUR, cfg_field(ansi_colours[BOLD_GREEN_I])},
+  {"BoldYellow", OPT_COLOUR, cfg_field(ansi_colours[BOLD_YELLOW_I])},
+  {"BoldBlue", OPT_COLOUR, cfg_field(ansi_colours[BOLD_BLUE_I])},
+  {"BoldMagenta", OPT_COLOUR, cfg_field(ansi_colours[BOLD_MAGENTA_I])},
+  {"BoldCyan", OPT_COLOUR, cfg_field(ansi_colours[BOLD_CYAN_I])},
+  {"BoldWhite", OPT_COLOUR, cfg_field(ansi_colours[BOLD_WHITE_I])},
 
   // Backward compatibility
   {"UseSystemColours", OPT_BOOL | OPT_COMPAT, cfg_field(use_system_colours)},

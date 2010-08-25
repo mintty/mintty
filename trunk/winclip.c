@@ -101,7 +101,7 @@ win_copy(const wchar *data, int *attr, int len)
     int bgcolour, lastbgcolour = 0;
     int attrBold, lastAttrBold = 0;
     int attrUnder, lastAttrUnder = 0;
-    int palette[NALLCOLOURS];
+    int palette[COLOUR_NUM];
     int numcolours;
 
     for (int i = 0; i < 256; i++)
@@ -159,7 +159,7 @@ win_copy(const wchar *data, int *attr, int len)
     * Next - Create a reduced palette
     */
     numcolours = 0;
-    for (int i = 0; i < NALLCOLOURS; i++) {
+    for (int i = 0; i < COLOUR_NUM; i++) {
       if (palette[i] != 0)
         palette[i] = ++numcolours;
     }
@@ -171,7 +171,7 @@ win_copy(const wchar *data, int *attr, int len)
     strcat(rtf, "{\\colortbl ;");
     rtflen = strlen(rtf);
 
-    for (int i = 0; i < NALLCOLOURS; i++) {
+    for (int i = 0; i < COLOUR_NUM; i++) {
       if (palette[i] != 0) {
         rtflen +=
           sprintf(&rtf[rtflen], "\\red%d\\green%d\\blue%d;",

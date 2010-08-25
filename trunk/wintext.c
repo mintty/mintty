@@ -43,7 +43,7 @@ static bool font_dualwidth;
 
 bool font_ambig_wide;
 
-COLORREF colours[NALLCOLOURS];
+COLORREF colours[COLOUR_NUM];
 
 static colour 
 brighten(colour c)
@@ -274,7 +274,7 @@ win_paint(void)
       p.rcPaint.bottom >= PADDING + font_height * term.rows) {
     HBRUSH fillcolour, oldbrush;
     HPEN edge, oldpen;
-    colour bg_colour = colours[term.rvideo ? 256 : 258];
+    colour bg_colour = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
     fillcolour = CreateSolidBrush(bg_colour);
     oldbrush = SelectObject(dc, fillcolour);
     edge = CreatePen(PS_SOLID, 0, bg_colour);
@@ -455,32 +455,32 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   if (!fonts[nfont])
     nfont = FONT_NORMAL;
 
-  uint nfg = (attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
-  uint nbg = (attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
+  colour_i fgi = (attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
+  colour_i bgi = (attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
 
   if (term.rvideo) {
-    if (nfg >= 256)
-      nfg ^= 2;
-    if (nbg >= 256)
-      nbg ^= 2;
+    if (fgi >= 256)
+      fgi ^= 2;
+    if (bgi >= 256)
+      bgi ^= 2;
   }
   if (bold_mode == BOLD_COLOURS) {
     if (attr & ATTR_BOLD) {
-      if (nfg < 8)
-        nfg |= 8;
-      else if (nfg >= 256)
-        nfg |= 1;
+      if (fgi < 8)
+        fgi |= 8;
+      else if (fgi >= 256)
+        fgi |= 1;
     }
     if (attr & ATTR_BLINK) {
-      if (nbg < 8)
-        nbg |= 8;
-      else if (nbg >= 256)
-        nbg |= 1;
+      if (bgi < 8)
+        bgi |= 8;
+      else if (bgi >= 256)
+        bgi |= 1;
     }
   }
   
-  colour fg = colours[nfg];
-  colour bg = colours[nbg];
+  colour fg = colours[fgi];
+  colour bg = colours[bgi];
   
   if (attr & ATTR_DIM) {
     fg = (fg & 0xFEFEFEFE) >> 1;
@@ -499,10 +499,10 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   
   if (has_cursor) {
    /* Swap cursor colours if too close to the background colour */
-    bool swap = colour_dist(colours[261], bg) < 32768;
-    cursor_colour = colours[261 - swap];
+    bool swap = colour_dist(colours[CURSOR_COLOUR_I], bg) < 32768;
+    cursor_colour = colours[CURSOR_COLOUR_I - swap];
     if ((attr & TATTR_ACTCURS) && cursor_type == CUR_BLOCK)
-      fg = colours[260 + swap], bg = cursor_colour;
+      fg = colours[CURSOR_COLOUR_I - !swap], bg = cursor_colour;
   }
 
   SelectObject(dc, fonts[nfont]);
@@ -645,28 +645,31 @@ win_char_width(int uc)
 }
 
 void
-win_set_colour(uint n, colour c)
+win_set_colour(colour_i i, colour c)
 {
-  if (n >= 262)
+  if (i >= COLOUR_NUM)
     return;
-  colours[n] = c;
-  switch (n) {
-    when 256:
-      colours[257] = brighten(c);
-    when 258:
-      colours[259] = brighten(c);
-    when 261: {
+  colours[i] = c;
+  switch (i) {
+    when FG_COLOUR_I:
+      colours[BOLD_FG_COLOUR_I] = brighten(c);
+    when BOLD_BG_COLOUR_I:
+      colours[BOLD_BG_COLOUR_I] = brighten(c);
+    when CURSOR_COLOUR_I: {
       // Set the colour of text under the cursor to whichever of foreground
-      // and background colour is further away.
-      colour fg = colours[256], bg = colours[258];
-      colours[260] = colour_dist(c, fg) > colour_dist(c, bg) ? fg : bg;
+      // and background colour is further away from the cursor colour.
+      colour fg = colours[FG_COLOUR_I], bg = colours[BG_COLOUR_I];
+      colours[CURSOR_TEXT_COLOUR_I] =
+        colour_dist(c, fg) > colour_dist(c, bg) ? fg : bg;
     }
+    otherwise:
+      break;
   }
   // Redraw everything.
   win_invalidate_all();
 }
 
-colour win_get_colour(uint n) { return n < 262 ? colours[n] : 0; }
+colour win_get_colour(colour_i i) { return i < COLOUR_NUM ? colours[i] : 0; }
 
 void
 win_reset_colours(void)
@@ -674,7 +677,7 @@ win_reset_colours(void)
   memcpy(colours, cfg.ansi_colours, sizeof cfg.ansi_colours);
 
   // Colour cube
-  int i = 16;
+  colour_i i = 16;
   for (uint r = 0; r < 6; r++)
     for (uint g = 0; g < 6; g++)
       for (uint b = 0; b < 6; b++)
@@ -685,7 +688,7 @@ win_reset_colours(void)
   // Grayscale
   for (uint s = 0; s < 24; s++) {
     uint c = s * 10 + 8;
-    colours[i++] = RGB(c,c,c);
+    colours[i++] = RGB(c, c, c);
   }
 
   // Foreground, background, cursor

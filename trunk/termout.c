@@ -534,15 +534,13 @@ do_sgr(void)
       when 38: /* xterm 256-colour mode */
         if (i + 2 < nargs && term.esc_args[i + 1] == 5) {
           curs->attr &= ~ATTR_FGMASK;
-          curs->attr |= ((term.esc_args[i + 2] & 0xFF)
-                             << ATTR_FGSHIFT);
+          curs->attr |= ((term.esc_args[i + 2] & 0xFF) << ATTR_FGSHIFT);
           i += 2;
         }
       when 48: /* xterm 256-colour mode */
         if (i + 2 < nargs && term.esc_args[i + 1] == 5) {
           curs->attr &= ~ATTR_BGMASK;
-          curs->attr |= ((term.esc_args[i + 2] & 0xFF)
-                             << ATTR_BGSHIFT);
+          curs->attr |= ((term.esc_args[i + 2] & 0xFF) << ATTR_BGSHIFT);
           i += 2;
         }
     }
