@@ -1,14 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-typedef uint colour;
-
-static inline colour
-make_colour(uchar r, uchar g, uchar b) { return r | g << 8 | b << 16; }
-
-static inline uchar red(colour c) { return c & 0xff; }
-static inline uchar green(colour c) { return c >> 8 & 0xff; }
-static inline uchar blue(colour c) { return c >> 16 & 0xff; }
+#include "term.h"
 
 typedef enum { HOLD_NEVER, HOLD_ALWAYS, HOLD_ERROR } hold_t;
 extern hold_t hold;

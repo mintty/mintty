@@ -1,7 +1,7 @@
 #ifndef WIN_H
 #define WIN_H
 
-#include "config.h"
+#include "term.h"
 
 void win_reconfig(void);
 
@@ -14,10 +14,10 @@ void win_capture_mouse(void);
 void win_bell(void);
 void win_set_title(char *);
 
-enum { FG_COLOUR_I = 256, BG_COLOUR_I = 258, CURSOR_COLOUR_I = 261 };
-colour win_get_colour(uint i);
-void win_set_colour(uint i, colour);
+colour win_get_colour(colour_i);
+void win_set_colour(colour_i, colour);
 void win_reset_colours(void);
+
 void win_invalidate_all(void);
 
 void win_move(int x, int y);

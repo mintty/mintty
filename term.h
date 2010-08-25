@@ -3,6 +3,66 @@
 
 #include "minibidi.h"
 
+// Colour values
+
+typedef uint colour;
+
+static inline colour
+make_colour(uchar r, uchar g, uchar b) { return r | g << 8 | b << 16; }
+
+static inline uchar red(colour c) { return c & 0xff; }
+static inline uchar green(colour c) { return c >> 8 & 0xff; }
+static inline uchar blue(colour c) { return c >> 16 & 0xff; }
+
+
+// Colour numbers
+
+typedef enum {
+  // ANSI colours
+  BLACK_I   = 0,
+  RED_I     = 1,
+  GREEN_I   = 2,
+  YELLOW_I  = 3,
+  BLUE_I    = 4,
+  MAGENTA_I = 5,
+  CYAN_I    = 6,
+  WHITE_I   = 7,
+  
+  // Bold ANSI colours
+  BOLD_BLACK_I   = 8,
+  BOLD_RED_I     = 9,
+  BOLD_GREEN_I   = 10,
+  BOLD_YELLOW_I  = 11,
+  BOLD_BLUE_I    = 12,
+  BOLD_MAGENTA_I = 13,
+  BOLD_CYAN_I    = 14,
+  BOLD_WHITE_I   = 15,
+
+  // Colour numbers 16 through 231 are occupied by a 6x6x6 colour cube,
+  // with R at most significant and B at least. (36*R + 6*G + B + 16)
+  
+  // Colour numbers 232 through 255 are occupied by a uniform series of
+  // gray shades running between black and white but not including either
+  // on grounds of redundancy.
+
+  // Default foreground
+  FG_COLOUR_I      = 256,
+  BOLD_FG_COLOUR_I = 257,
+  
+  // Default background
+  BG_COLOUR_I      = 258,
+  BOLD_BG_COLOUR_I = 259,
+  
+  // Cursor colours
+  CURSOR_TEXT_COLOUR_I = 260,
+  CURSOR_COLOUR_I      = 261,
+  
+  // Number of colours
+  COLOUR_NUM = 262
+
+} colour_i;
+
+
 /*
  * UCSWIDE is a special value used in the terminal data to signify
  * the character cell containing the right-hand half of a CJK wide
@@ -62,27 +122,9 @@ enum {
                                  * single-width cell is empty */
 };
 
-/*
- * The definitive list of colour numbers stored in terminal
- * attribute words is kept here. It is:
- * 
- *  - 0-7 are ANSI colours (KRGYBMCW).
- *  - 8-15 are the bold versions of those colours.
- *  - 16-255 are the remains of the xterm 256-colour mode (a
- *    216-colour cube with R at most significant and B at least,
- *    followed by a uniform series of grey shades running between
- *    black and white but not including either on grounds of
- *    redundancy).
- *  - 256 is default foreground
- *  - 257 is default bold foreground
- *  - 258 is default background
- *  - 259 is default bold background
- *  - 260 is cursor foreground
- *  - 261 is cursor background
- */
 enum {
-  ATTR_DEFFG = 256 << ATTR_FGSHIFT,
-  ATTR_DEFBG = 258 << ATTR_BGSHIFT,
+  ATTR_DEFFG = FG_COLOUR_I << ATTR_FGSHIFT,
+  ATTR_DEFBG = BG_COLOUR_I << ATTR_BGSHIFT,
   ATTR_DEFAULT = ATTR_DEFFG | ATTR_DEFBG,
 };
 

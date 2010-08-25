@@ -3,7 +3,6 @@
 
 #include "win.h"
 #include "winids.h"
-#include "term.h"
 
 #include <winbase.h>
 #include <wingdi.h>
@@ -13,12 +12,7 @@ extern HWND wnd;        // the main terminal window
 extern HWND config_wnd; // the options window
 extern HINSTANCE inst;  // The all-important instance handle
 
-enum {
-  NCFGCOLOURS = 22, 
-  NEXTCOLOURS = 240,
-  NALLCOLOURS = NCFGCOLOURS + NEXTCOLOURS
-};
-extern COLORREF colours[NALLCOLOURS];
+extern COLORREF colours[COLOUR_NUM];
 
 extern LOGFONT lfont;
 
