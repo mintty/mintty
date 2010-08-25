@@ -32,8 +32,6 @@ enum { PADDING = 1 };
 
 void win_paint(void);
 
-void win_set_sys_cursor(int x, int y);
-
 void win_init_fonts(void);
 void win_deinit_fonts(void);
 

@@ -9,6 +9,7 @@
 #include "minibidi.h"
 
 #include <winnls.h>
+#include <imm.h>
 
 enum {
   FONT_NORMAL     = 0,
@@ -328,8 +329,25 @@ do_update(void)
     SetScrollInfo(wnd, SB_VERT, &si, true);
   }
 
-  win_set_sys_cursor(term.screen.curs.x, term.screen.curs.y - term.disptop);
+  // Move the system caret and the IME window.
+  // (We maintain a caret, even though it's invisible, for the benefit of
+  // blind people: apparently some helper software tracks the system caret,
+  // so we should arrange to have one.)
+  static int old_x, old_y;
+  static bool old_focus;
+  int x = term.screen.curs.x * font_width + PADDING;
+  int y = (term.screen.curs.y - term.disptop) * font_height + PADDING;
+  if (term.has_focus && (x != old_x || y != old_y || !old_focus)) {
+    old_x = x, old_y = y;
+    SetCaretPos(x, y);
+    HIMC imc = ImmGetContext(wnd);
+    COMPOSITIONFORM cf = { .dwStyle = CFS_POINT, .ptCurrentPos = {x, y} };
+    ImmSetCompositionWindow(imc, &cf);
+    ImmReleaseContext(wnd, imc);
+  }
+  old_focus = term.has_focus;
 
+  // Schedule next update.
   SetTimer(wnd, (UINT_PTR)do_update, 16, null);
 }
 

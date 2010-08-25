@@ -39,7 +39,6 @@ static int extra_width, extra_height;
 static bool resizing;
 
 static HBITMAP caretbm;
-static int caret_x = -1, caret_y = -1;
 
 static char **main_argv;
 
@@ -240,40 +239,6 @@ win_bell(void)
     MessageBeep(MB_OK);
   if (cfg.bell_taskbar && !term.has_focus)
     flash_taskbar(true);
-}
-
-static void
-update_sys_cursor(void)
-{
-  if (term.has_focus && caret_x >= 0 && caret_y >= 0) {
-    SetCaretPos(caret_x, caret_y);
-
-    HIMC imc = ImmGetContext(wnd);
-    COMPOSITIONFORM cf = {
-      .dwStyle = CFS_POINT,
-      .ptCurrentPos = {caret_x, caret_y}
-    };
-    ImmSetCompositionWindow(imc, &cf);
-    ImmReleaseContext(wnd, imc);
-  }
-}
-
-/*
- * Move the system caret. (We maintain one, even though it's
- * invisible, for the benefit of blind people: apparently some
- * helper software tracks the system caret, so we should arrange to
- * have one.)
- */
-void
-win_set_sys_cursor(int x, int y)
-{
-  int cx = x * font_width + PADDING;
-  int cy = y * font_height + PADDING;
-  if (cx != caret_x || cy != caret_y) {
-    caret_x = cx;
-    caret_y = cy;
-    update_sys_cursor();
-  }
 }
 
 /* Get the rect/size of a full screen window using the nearest available
@@ -627,8 +592,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         child_sendw(&wc, 1);
         return 0;
       }
-    when WM_INPUTLANGCHANGE:
-      update_sys_cursor();
     when WM_IME_STARTCOMPOSITION:
       {
         HIMC imc = ImmGetContext(wnd);
@@ -661,10 +624,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       win_show_mouse();
       term_set_focus(false);
       DestroyCaret();
-      caret_x = caret_y = -1;   /* ensure caret is replaced next time */
       win_update();
       update_transparency();
-    when WM_MOVE: update_sys_cursor();
     when WM_ENTERSIZEMOVE:
       win_enable_tip();
       resizing = true;
@@ -716,7 +677,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       if (!resizing)
         adapt_term_size();
 
-      update_sys_cursor();
       return 0;
     }
     when WM_INITMENU:
