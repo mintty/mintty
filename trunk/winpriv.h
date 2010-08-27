@@ -7,10 +7,12 @@
 #include <winbase.h>
 #include <wingdi.h>
 #include <winuser.h>
+#include <imm.h>
 
-extern HWND wnd;        // the main terminal window
-extern HWND config_wnd; // the options window
 extern HINSTANCE inst;  // The all-important instance handle
+extern HWND wnd;        // the main terminal window
+extern HIMC imc;        // the input method context
+extern HWND config_wnd; // the options window
 
 extern COLORREF colours[COLOUR_NUM];
 
@@ -54,5 +56,6 @@ void win_copy_title(void);
 void win_switch(bool back);
 
 bool win_is_fullscreen;
+bool win_ime_open;
 
 #endif

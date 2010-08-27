@@ -14,8 +14,6 @@
 #include <locale.h>
 #include <getopt.h>
 #include <pwd.h>
-#include <imm.h>
-#include <winnls.h>
 #include <shellapi.h>
 
 #include <sys/cygwin.h>
@@ -27,11 +25,15 @@ int argz_create (char *const argv[], char **argz, size_t *argz_len);
 void argz_stringify (char *argz, size_t argz_len, int sep);
 #endif
 
-HWND wnd;
 HINSTANCE inst;
+HWND wnd;
+HIMC imc;
+
 static ATOM class_atom;
 
 bool win_is_full_screen;
+bool win_ime_open;
+
 static bool fullscr_on_max;
 
 static int extra_width, extra_height;
@@ -493,6 +495,15 @@ win_zoom_font(int zoom)
   win_set_font_size(zoom ? max(1, abs(font_size) + zoom) : 0);
 }
 
+static void
+set_ime_open(bool open)
+{
+  if (open != win_ime_open) {
+    win_ime_open = open;
+    win_update();
+  }
+}
+
 static bool
 confirm_exit(void)
 {
@@ -592,22 +603,22 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         child_sendw(&wc, 1);
         return 0;
       }
+    when WM_INPUTLANGCHANGE:
+      set_ime_open(ImmIsIME(GetKeyboardLayout(0)) && ImmGetOpenStatus(imc));
+      win_update();
+    when WM_IME_NOTIFY:
+      if (wp == IMN_SETOPENSTATUS)
+        set_ime_open(ImmGetOpenStatus(imc));
     when WM_IME_STARTCOMPOSITION:
-      {
-        HIMC imc = ImmGetContext(wnd);
-        ImmSetCompositionFont(imc, &lfont);
-        ImmReleaseContext(wnd, imc);
-      }
+      ImmSetCompositionFont(imc, &lfont);
     when WM_IME_COMPOSITION:
       if (lp & GCS_RESULTSTR) {
-        HIMC imc = ImmGetContext(wnd);
         LONG len = ImmGetCompositionStringW(imc, GCS_RESULTSTR, null, 0);
         if (len > 0) {
           char buf[len];
           ImmGetCompositionStringW(imc, GCS_RESULTSTR, buf, len);
           child_sendw((wchar *)buf, len / 2);
         }
-        ImmReleaseContext(wnd, imc);
         return 1;
       }
     when WM_PAINT:
@@ -973,6 +984,9 @@ main(int argc, char *argv[])
                         WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
                         x, y, width, height,
                         null, null, inst, null);
+
+  // The input method context.
+  imc = ImmGetContext(wnd);
 
   // Correct autoplacement, which likes to put part of the window under the
   // taskbar when the window size approaches the work area size.

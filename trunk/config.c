@@ -74,6 +74,7 @@ config cfg = {
   .row_spacing = 0,
   .word_chars = "",
   .use_system_colours = false,
+  .ime_cursor_colour = DEFAULT_COLOUR,
   .ansi_colours = {
     0x000000, 0x0000BF, 0x00BF00, 0x00BFBF,
     0xBF0000, 0xBF00BF, 0xBFBF00, 0xBFBFBF,
@@ -153,6 +154,9 @@ options[] = {
   
   // Word selection characters
   {"WordChars", OPT_STRING, cfg_field(word_chars)},
+  
+  // IME cursor colour
+  {"IMECursorColour", OPT_COLOUR, cfg_field(ime_cursor_colour)},
   
   // ANSI colours
   {"Black", OPT_COLOUR, cfg_field(ansi_colours[BLACK_I])},

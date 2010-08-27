@@ -66,6 +66,7 @@ typedef struct {
   int col_spacing, row_spacing;
   char word_chars[32];
   bool use_system_colours;
+  colour ime_cursor_colour;
   colour ansi_colours[16];
 } config;
 

@@ -333,10 +333,8 @@ do_update(void)
   if (term.has_focus && (x != old_x || y != old_y || !old_focus)) {
     old_x = x, old_y = y;
     SetCaretPos(x, y);
-    HIMC imc = ImmGetContext(wnd);
     COMPOSITIONFORM cf = { .dwStyle = CFS_POINT, .ptCurrentPos = {x, y} };
     ImmSetCompositionWindow(imc, &cf);
-    ImmReleaseContext(wnd, imc);
   }
   old_focus = term.has_focus;
 
@@ -491,11 +489,18 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   colour cursor_colour = 0;
   
   if (has_cursor) {
-   /* Swap cursor colours if too close to the background colour */
-    bool swap = colour_dist(colours[CURSOR_COLOUR_I], bg) < 32768;
-    cursor_colour = colours[CURSOR_COLOUR_I - swap];
-    if ((attr & TATTR_ACTCURS) && cursor_type == CUR_BLOCK)
-      fg = colours[CURSOR_COLOUR_I - !swap], bg = cursor_colour;
+    colour wanted_cursor_colour =
+      colours[win_ime_open ? IME_CURSOR_COLOUR_I : CURSOR_COLOUR_I];
+    
+    bool too_close = colour_dist(wanted_cursor_colour, bg) < 32768;
+    
+    cursor_colour =
+      too_close ? colours[CURSOR_TEXT_COLOUR_I] : wanted_cursor_colour;
+    
+    if ((attr & TATTR_ACTCURS) && cursor_type == CUR_BLOCK) {
+      bg = cursor_colour;
+      fg = too_close ? wanted_cursor_colour : colours[CURSOR_TEXT_COLOUR_I];
+    }
   }
 
   SelectObject(dc, fonts[nfont]);
@@ -654,6 +659,7 @@ win_set_colour(colour_i i, colour c)
       colour fg = colours[FG_COLOUR_I], bg = colours[BG_COLOUR_I];
       colours[CURSOR_TEXT_COLOUR_I] =
         colour_dist(c, fg) > colour_dist(c, bg) ? fg : bg;
+      colours[IME_CURSOR_COLOUR_I] = c;
     }
     otherwise:
       break;
@@ -688,4 +694,6 @@ win_reset_colours(void)
   win_set_colour(FG_COLOUR_I, cfg.fg_colour);
   win_set_colour(BG_COLOUR_I, cfg.bg_colour);
   win_set_colour(CURSOR_COLOUR_I, cfg.cursor_colour);
+  if (cfg.ime_cursor_colour != DEFAULT_COLOUR)
+    win_set_colour(IME_CURSOR_COLOUR_I, cfg.ime_cursor_colour);
 }
