@@ -266,19 +266,16 @@ win_paint(void)
     (p.rcPaint.bottom - PADDING - 1) / font_height
   );
 
-  term_paint();
+  if (update_state != UPDATE_PENDING)
+    term_paint();
 
   if (p.fErase || p.rcPaint.left < PADDING ||
       p.rcPaint.top < PADDING ||
       p.rcPaint.right >= PADDING + font_width * term.cols ||
       p.rcPaint.bottom >= PADDING + font_height * term.rows) {
-    HBRUSH fillcolour, oldbrush;
-    HPEN edge, oldpen;
     colour bg_colour = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
-    fillcolour = CreateSolidBrush(bg_colour);
-    oldbrush = SelectObject(dc, fillcolour);
-    edge = CreatePen(PS_SOLID, 0, bg_colour);
-    oldpen = SelectObject(dc, edge);
+    HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(bg_colour));
+    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, bg_colour));
 
     IntersectClipRect(dc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
                       p.rcPaint.bottom);
@@ -287,16 +284,12 @@ win_paint(void)
                     PADDING + font_width * term.cols,
                     PADDING + font_height * term.rows);
 
-    Rectangle(dc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
-              p.rcPaint.bottom);
+    Rectangle(dc, p.rcPaint.left, p.rcPaint.top,
+                  p.rcPaint.right, p.rcPaint.bottom);
 
-    SelectObject(dc, oldbrush);
-    DeleteObject(fillcolour);
-    SelectObject(dc, oldpen);
-    DeleteObject(edge);
+    DeleteObject(SelectObject(dc, oldbrush));
+    DeleteObject(SelectObject(dc, oldpen));
   }
-  SelectObject(dc, GetStockObject(SYSTEM_FONT));
-  SelectObject(dc, GetStockObject(WHITE_PEN));
   
   EndPaint(wnd, &p);
 }
