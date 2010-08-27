@@ -7,6 +7,8 @@
 
 typedef uint colour;
 
+enum { DEFAULT_COLOUR = UINT_MAX };
+
 static inline colour
 make_colour(uchar r, uchar g, uchar b) { return r | g << 8 | b << 16; }
 
@@ -56,9 +58,10 @@ typedef enum {
   // Cursor colours
   CURSOR_TEXT_COLOUR_I = 260,
   CURSOR_COLOUR_I      = 261,
-  
+  IME_CURSOR_COLOUR_I  = 262,
+
   // Number of colours
-  COLOUR_NUM = 262
+  COLOUR_NUM = 263
 
 } colour_i;
 

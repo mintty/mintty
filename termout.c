@@ -960,7 +960,7 @@ do_colour_osc(uint i)
   if (has_index_arg) {
     int len = 0;
     sscanf(s, "%u;%n", &i, &len);
-    if (!len || i >= 262)
+    if (!len || i >= COLOUR_NUM)
       return;
     s += len;
   }
