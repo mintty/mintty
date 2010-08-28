@@ -250,8 +250,8 @@ win_deinit_fonts(void)
 }
 
 static HDC dc;
-
 static enum { UPDATE_IDLE, UPDATE_BLOCKED, UPDATE_PENDING } update_state;
+static bool ime_open;
 
 void
 win_paint(void)
@@ -322,21 +322,19 @@ do_update(void)
     SetScrollInfo(wnd, SB_VERT, &si, true);
   }
 
-  // Move the system caret and the IME window.
+  // Update the positions of the system caret and the IME window.
   // (We maintain a caret, even though it's invisible, for the benefit of
   // blind people: apparently some helper software tracks the system caret,
   // so we should arrange to have one.)
-  static int old_x, old_y;
-  static bool old_focus;
-  int x = term.screen.curs.x * font_width + PADDING;
-  int y = (term.screen.curs.y - term.disptop) * font_height + PADDING;
-  if (term.has_focus && (x != old_x || y != old_y || !old_focus)) {
-    old_x = x, old_y = y;
+  if (term.has_focus) {
+    int x = term.screen.curs.x * font_width + PADDING;
+    int y = (term.screen.curs.y - term.disptop) * font_height + PADDING;
     SetCaretPos(x, y);
-    COMPOSITIONFORM cf = { .dwStyle = CFS_POINT, .ptCurrentPos = {x, y} };
-    ImmSetCompositionWindow(imc, &cf);
+    if (ime_open) {
+      COMPOSITIONFORM cf = {.dwStyle = CFS_POINT, .ptCurrentPos = {x, y}};
+      ImmSetCompositionWindow(imc, &cf);
+    }
   }
-  old_focus = term.has_focus;
 
   // Schedule next update.
   SetTimer(wnd, (UINT_PTR)do_update, 16, null);
@@ -396,6 +394,16 @@ another_font(int fontno)
 
   fontflag[fontno] = 1;
 }
+
+void
+win_set_ime_open(bool open)
+{
+  if (open != ime_open) {
+    ime_open = open;
+    win_update();
+  }
+}
+
 
 /*
  * Draw a line of text in the window, at given character
@@ -490,7 +498,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   
   if (has_cursor) {
     colour wanted_cursor_colour =
-      colours[win_ime_open ? IME_CURSOR_COLOUR_I : CURSOR_COLOUR_I];
+      colours[ime_open ? IME_CURSOR_COLOUR_I : CURSOR_COLOUR_I];
     
     bool too_close = colour_dist(wanted_cursor_colour, bg) < 32768;
     

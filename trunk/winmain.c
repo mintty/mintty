@@ -32,7 +32,6 @@ HIMC imc;
 static ATOM class_atom;
 
 bool win_is_full_screen;
-bool win_ime_open;
 
 static bool fullscr_on_max;
 
@@ -495,15 +494,6 @@ win_zoom_font(int zoom)
   win_set_font_size(zoom ? max(1, abs(font_size) + zoom) : 0);
 }
 
-static void
-set_ime_open(bool open)
-{
-  if (open != win_ime_open) {
-    win_ime_open = open;
-    win_update();
-  }
-}
-
 static bool
 confirm_exit(void)
 {
@@ -604,11 +594,10 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         return 0;
       }
     when WM_INPUTLANGCHANGE:
-      set_ime_open(ImmIsIME(GetKeyboardLayout(0)) && ImmGetOpenStatus(imc));
-      win_update();
+      win_set_ime_open(ImmIsIME(GetKeyboardLayout(0)) && ImmGetOpenStatus(imc));
     when WM_IME_NOTIFY:
       if (wp == IMN_SETOPENSTATUS)
-        set_ime_open(ImmGetOpenStatus(imc));
+        win_set_ime_open(ImmGetOpenStatus(imc));
     when WM_IME_STARTCOMPOSITION:
       ImmSetCompositionFont(imc, &lfont);
     when WM_IME_COMPOSITION:
@@ -627,10 +616,10 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_SETFOCUS:
       term_set_focus(true);
       CreateCaret(wnd, caretbm, 0, 0);
-      ShowCaret(wnd);
       flash_taskbar(false);  /* stop */
       win_update();
       update_transparency();
+      ShowCaret(wnd);
     when WM_KILLFOCUS:
       win_show_mouse();
       term_set_focus(false);
