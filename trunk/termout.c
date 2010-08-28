@@ -1326,7 +1326,7 @@ term_write(const char *buf, uint len)
       }
     }
   }
-  win_update();
+  win_schedule_update();
   if (term.printing) {
     printer_write(term.printbuf, term.printbuf_pos);
     term.printbuf_pos = 0;
