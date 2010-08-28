@@ -337,7 +337,7 @@ do_update(void)
   }
 
   // Schedule next update.
-  SetTimer(wnd, (UINT_PTR)do_update, 16, null);
+  win_set_timer(do_update, 16);
 }
 
 void
@@ -347,6 +347,14 @@ win_update(void)
     do_update();
   else
     update_state = UPDATE_PENDING;
+}
+
+void
+win_schedule_update(void)
+{
+  if (update_state == UPDATE_IDLE)
+    win_set_timer(do_update, 16);
+  update_state = UPDATE_PENDING;
 }
 
 static void

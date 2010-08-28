@@ -6,6 +6,7 @@
 void win_reconfig(void);
 
 void win_update(void);
+void win_schedule_update(void);
 
 int  win_char_width(int uc);
 void win_text(int, int, wchar *, int, uint, int);
