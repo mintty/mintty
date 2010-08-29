@@ -375,6 +375,7 @@ void term_mouse_wheel(int delta, int lines_per_notch, mod_keys, pos);
 void term_select_all(void);
 void term_paint(void);
 void term_invalidate(int left, int top, int right, int bottom);
+void term_invalidate_cursor(void);
 void term_blink(int set_cursor);
 void term_open(void);
 void term_copy(void);

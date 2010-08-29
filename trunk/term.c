@@ -813,7 +813,7 @@ term_paint(void)
       }
 
       if (term.displines[i]->chars[j].chr != newline[j].chr ||
-          (term.displines[i]->chars[j].attr & ~DATTR_MASK)
+          (term.displines[i]->chars[j].attr & ~DATTR_STARTRUN)
           != newline[j].attr) {
         int k;
 
@@ -854,7 +854,7 @@ term_paint(void)
 
       if (!dirty_line) {
         if (term.displines[i]->chars[j].chr == tchar &&
-            (term.displines[i]->chars[j].attr & ~DATTR_MASK) == tattr)
+            (term.displines[i]->chars[j].attr & ~DATTR_STARTRUN) == tattr)
           break_run = true;
         else if (!dirty_run && ccount == 1)
           break_run = true;
@@ -932,9 +932,6 @@ term_paint(void)
   free(ch);
 }
 
-/*
- * Paint the window in response to a WM_PAINT message.
- */
 void
 term_invalidate(int left, int top, int right, int bottom)
 {
@@ -955,6 +952,14 @@ term_invalidate(int left, int top, int right, int bottom)
       for (int j = left / 2; j <= right / 2 + 1 && j < term.cols; j++)
         term.displines[i]->chars[j].attr |= ATTR_INVALID;
   }
+}
+
+void
+term_invalidate_cursor(void)
+{
+  int x = term.dispcurs.x, y = term.dispcurs.y;
+  if (term.dispcurs.x >= 0)
+    term_invalidate(x, y, x, y);
 }
 
 /*
