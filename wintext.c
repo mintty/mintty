@@ -408,6 +408,7 @@ win_set_ime_open(bool open)
 {
   if (open != ime_open) {
     ime_open = open;
+    term_invalidate_cursor();
     win_update();
   }
 }
