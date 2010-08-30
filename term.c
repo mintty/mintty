@@ -374,7 +374,6 @@ term_resize(int newrows, int newcols)
     for (int j = 0; j < newcols; j++)
       line->chars[j].attr = ATTR_INVALID;
   }
-  term.dispcurs = (pos){-1, -1};
 
   // Make a new alternate screen.
   lines = term.other_screen.lines;
@@ -675,27 +674,6 @@ term_paint(void)
       our_curs_x--;
   }
 
- /*
-  * If the cursor is not where it was last time we painted, and
-  * its previous position is visible on screen, invalidate its
-  * previous position.
-  */
-  if (term.dispcurs.y >= 0 &&
-      (term.curstype != curstype || term.dispcurs.y != our_curs_y ||
-       term.dispcurs.x != our_curs_x)) {
-    termchar *dispchar =
-      term.displines[term.dispcurs.y]->chars + term.dispcurs.x;
-
-    if (term.dispcurs.x > 0 && dispchar->chr == UCSWIDE)
-      dispchar[-1].attr |= ATTR_INVALID;
-    if (term.dispcurs.x < term.cols - 1 && dispchar[1].chr == UCSWIDE)
-      dispchar[1].attr |= ATTR_INVALID;
-    dispchar->attr |= ATTR_INVALID;
-
-    term.curstype = 0;
-  }
-  term.dispcurs = (pos){-1, -1};
-
  /* The normal screen data */
   for (int i = 0; i < term.rows; i++) {
     pos scrpos;
@@ -764,11 +742,8 @@ term_paint(void)
       else if (dispchars[j].attr & ATTR_NARROW)
         tattr |= ATTR_NARROW;
 
-      if (i == our_curs_y && j == our_curs_x) {
+      if (i == our_curs_y && j == our_curs_x)
         tattr |= curstype;
-        term.curstype = curstype;
-        term.dispcurs = (pos){.y = i, .x = j};
-      }
 
      /* FULL-TERMCHAR */
       newchars[j].attr = tattr;
@@ -874,10 +849,11 @@ term_paint(void)
 
       if (do_copy) {
         copy_termchar(displine, j, d);  // may change displine->chars
-        displine->chars[j].chr = tchar;
-        displine->chars[j].attr = tattr;
+        dispchars = displine->chars;
+        dispchars[j].chr = tchar;
+        dispchars[j].attr = tattr;
         if (start == j)
-          displine->chars[j].attr |= DATTR_STARTRUN;
+          dispchars[j].attr |= DATTR_STARTRUN;
       }
 
      /* If it's a wide char step along to the next one. */
@@ -920,14 +896,6 @@ term_invalidate(int left, int top, int right, int bottom)
       for (int j = left / 2; j <= right / 2 + 1 && j < term.cols; j++)
         term.displines[i]->chars[j].attr |= ATTR_INVALID;
   }
-}
-
-void
-term_invalidate_cursor(void)
-{
-  int x = term.dispcurs.x, y = term.dispcurs.y;
-  if (term.dispcurs.x >= 0)
-    term_invalidate(x, y, x, y);
 }
 
 /*
