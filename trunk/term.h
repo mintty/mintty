@@ -265,8 +265,6 @@ struct term {
                            * ("temporary scrollback") */
 
   termlines *displines;   /* buffer of text on real screen */
-  pos dispcurs;           /* location of cursor on real screen */
-  int curstype;           /* type of cursor on real screen */
 
   termchar erase_char;
 
@@ -375,7 +373,6 @@ void term_mouse_wheel(int delta, int lines_per_notch, mod_keys, pos);
 void term_select_all(void);
 void term_paint(void);
 void term_invalidate(int left, int top, int right, int bottom);
-void term_invalidate_cursor(void);
 void term_blink(int set_cursor);
 void term_open(void);
 void term_copy(void);
