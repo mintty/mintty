@@ -898,15 +898,10 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
 static void
 winctrl_set_focus(control *ctrl, int has_focus)
 {
-  if (has_focus) {
-    if (dlg.focused)
-      dlg.lastfocused = dlg.focused;
+  if (has_focus)
     dlg.focused = ctrl;
-  }
-  else if (!has_focus && dlg.focused == ctrl) {
-    dlg.lastfocused = dlg.focused;
+  else if (!has_focus && dlg.focused == ctrl)
     dlg.focused = null;
-  }
 }
 
 static void
@@ -1274,31 +1269,6 @@ dlg_fontsel_get(control *ctrl, font_spec *fs)
   *fs = *(font_spec *) c->data;  /* structure copy */
 }
 
-/*
- * Bracketing a large set of updates in these two functions will
- * cause the front end (if possible) to delay updating the screen
- * until it's all complete, thus avoiding flicker.
- */
-void
-dlg_update_start(control *ctrl)
-{
-  winctrl *c = ctrl->plat_ctrl;
-  if (c && c->ctrl->type == CTRL_LISTBOX) {
-    SendDlgItemMessage(dlg.wnd, c->base_id + 1, WM_SETREDRAW, false, 0);
-  }
-}
-
-void
-dlg_update_done(control *ctrl)
-{
-  winctrl *c = ctrl->plat_ctrl;
-  if (c && c->ctrl->type == CTRL_LISTBOX) {
-    HWND hw = GetDlgItem(dlg.wnd, c->base_id + 1);
-    SendMessage(hw, WM_SETREDRAW, true, 0);
-    InvalidateRect(hw, null, true);
-  }
-}
-
 #if 0 // Unused
 void
 dlg_enable(control *ctrl, bool enable)
@@ -1387,10 +1357,9 @@ windlg_init(void)
   dlg.nctrltrees = 0;
   dlg.data = null;
   dlg.ended = false;
-  dlg.focused = dlg.lastfocused = null;
+  dlg.focused = null;
   memset(dlg.shortcuts, 0, sizeof (dlg.shortcuts));
   dlg.wnd = null;
-  dlg.wintitle = null;
 }
 
 void
