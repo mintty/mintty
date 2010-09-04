@@ -214,6 +214,26 @@ void
 child_proc(void)
 {
   for (;;) {
+    if (term.paste_buffer)
+      term_send_paste();
+
+    if (child_status != -1 && pty_fd == -1) {
+      int l = 0;
+      char *s = 0; 
+      if (WIFEXITED(child_status)) {
+        int code = WEXITSTATUS(child_status);
+        if (code && code != 255)
+          l = asprintf(&s, "%s: Exit %i", cmd, code); 
+      }
+      else if (WIFSIGNALED(child_status))
+        l = asprintf(&s, "%s: %s", cmd, strsignal(WTERMSIG(child_status)));
+
+      if (s)
+        term_write(s, l);
+
+      child_status = -1;
+    }
+
     fd_set fds;
     FD_ZERO(&fds);
     FD_SET(win_fd, &fds);  
@@ -242,35 +262,11 @@ child_proc(void)
           if (log_fd >= 0)
             write(log_fd, buf, len);
         }
-        else {
+        else
           pty_fd = -1;
-          usleep(10000);  // Leave a bit of time for SIGCHLD.
-        }
       }
-      if (term.paste_buffer)
-        term_send_paste();
       if (FD_ISSET(win_fd, &fds))
         return;
-    }
-
-    int status = child_status;
-    if (status != -1) {
-      child_status = -1;
-
-      int l = 0;
-      char *s; 
-      if (WIFEXITED(status)) {
-        int code = WEXITSTATUS(status);
-        if (code && code != 255)
-          l = asprintf(&s, "%s: Exit %i", cmd, code); 
-      }
-      else
-        l = asprintf(&s, "%s: %s", cmd, strsignal(WTERMSIG(status)));
-
-      if (l > 0) {
-        term_write(s, l);
-        free(s);
-      }
     }
   }
 }
