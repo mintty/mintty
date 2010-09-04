@@ -8,9 +8,6 @@
 #include "config.h"
 #include "minibidi.h"
 
-#include <winnls.h>
-#include <imm.h>
-
 enum {
   FONT_NORMAL     = 0,
   FONT_BOLD       = 1,

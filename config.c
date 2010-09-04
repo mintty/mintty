@@ -397,7 +397,6 @@ static void
 printerbox_handler(control *ctrl, void *unused(data), int event)
 {
   if (event == EVENT_REFRESH) {
-    dlg_update_start(ctrl);
     dlg_listbox_clear(ctrl);
     dlg_listbox_add(ctrl, PRINTER_DISABLED_STRING);
     uint num = printer_start_enum();
@@ -407,7 +406,6 @@ printerbox_handler(control *ctrl, void *unused(data), int event)
     dlg_editbox_set(
       ctrl, *new_cfg.printer ? new_cfg.printer : PRINTER_DISABLED_STRING
     );
-    dlg_update_done(ctrl);
   }
   else if (event == EVENT_VALCHANGE || event == EVENT_SELCHANGE) {
     dlg_editbox_get(ctrl, new_cfg.printer, sizeof (cfg.printer));
@@ -437,12 +435,10 @@ locale_handler(control *ctrl, void *unused(data), int event)
   char *locale = new_cfg.locale;
   switch (event) {
     when EVENT_REFRESH:
-      dlg_update_start(ctrl);
       dlg_listbox_clear(ctrl);
       const char *l;
       for (int i = 0; (l = locale_menu[i]); i++)
         dlg_listbox_add(ctrl, l);
-      dlg_update_done(ctrl);
       dlg_editbox_set(ctrl, locale);
     when EVENT_UNFOCUS:
       dlg_editbox_set(ctrl, locale);
@@ -463,12 +459,10 @@ charset_handler(control *ctrl, void *unused(data), int event)
   char *charset = new_cfg.charset;
   switch (event) {
     when EVENT_REFRESH:
-      dlg_update_start(ctrl);
       dlg_listbox_clear(ctrl);
       const char *cs;
       for (int i = 0; (cs = charset_menu[i]); i++)
         dlg_listbox_add(ctrl, cs);
-      dlg_update_done(ctrl);
       update_charset();
     when EVENT_UNFOCUS:
       dlg_editbox_set(ctrl, charset);
@@ -514,14 +508,12 @@ term_handler(control *ctrl, void *unused(data), int event)
 {
   switch (event) {
     when EVENT_REFRESH:
-      dlg_update_start(ctrl);
       dlg_listbox_clear(ctrl);
       dlg_listbox_add(ctrl, "xterm");
       dlg_listbox_add(ctrl, "xterm-256color");
       dlg_listbox_add(ctrl, "xterm-vt220");
       dlg_listbox_add(ctrl, "vt100");
       dlg_listbox_add(ctrl, "vt220");
-      dlg_update_done(ctrl);
       dlg_editbox_set(ctrl, new_cfg.term);
     when EVENT_VALCHANGE or EVENT_SELCHANGE:
       dlg_editbox_get(ctrl, new_cfg.term, sizeof cfg.term);

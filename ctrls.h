@@ -447,13 +447,6 @@ void dlg_listbox_add(control *, char const *text);
 void dlg_fontsel_set(control *, font_spec *);
 void dlg_fontsel_get(control *, font_spec *);
 /*
- * Bracketing a large set of updates in these two functions will
- * cause the front end (if possible) to delay updating the screen
- * until it's all complete, thus avoiding flicker.
- */
-void dlg_update_start(control *);
-void dlg_update_done(control *);
-/*
  * Enable or disable a control.
  */
 void dlg_enable(control *, bool);

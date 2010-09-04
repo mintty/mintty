@@ -21,10 +21,7 @@ void setup_config_box(controlbox *);
 
 /*
  * These are the various bits of data required to handle the
- * portable-dialog stuff in the config box. Having them at file
- * scope in here isn't too bad a place to put them; if we were ever
- * to need more than one config box per process we could always
- * shift them to a per-config-box structure stored in GWL_USERDATA.
+ * portable-dialog stuff in the config box.
  */
 static controlbox *ctrlbox;
 /*
@@ -38,24 +35,6 @@ windlg dlg;
 
 #define PRINTER_DISABLED_STRING "None (printing disabled)"
 
-static void
-force_normal(HWND wnd)
-{
-  static int recurse = 0;
-
-  WINDOWPLACEMENT wp;
-
-  if (recurse)
-    return;
-  recurse = 1;
-
-  wp.length = sizeof (wp);
-  if (GetWindowPlacement(wnd, &wp) && wp.showCmd == SW_SHOWMAXIMIZED) {
-    wp.showCmd = SW_SHOWNORMAL;
-    SetWindowPlacement(wnd, &wp);
-  }
-  recurse = 0;
-}
 enum {
   IDCX_TVSTATIC = 1001,
   IDCX_TREEVIEW,
@@ -142,7 +121,6 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
       winctrl_init(&ctrls_panel);
       windlg_add_tree(&ctrls_base);
       windlg_add_tree(&ctrls_panel);
-      dlg.wintitle = "Options";
       new_cfg = cfg;
       dlg.data = &new_cfg;
 
@@ -150,16 +128,12 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
       GetWindowRect(GetParent(wnd), &r);
       dlg.wnd = wnd;
       create_controls(wnd, "");        /* Open and Cancel buttons etc */
-      SetWindowText(wnd, dlg.wintitle);
-      SetWindowLongPtr(wnd, GWLP_USERDATA, 0);
       SendMessage(wnd, WM_SETICON, (WPARAM) ICON_BIG,
                   (LPARAM) LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON)));
 
      /*
       * Create the tree view.
       */
-      WPARAM font = SendMessage(wnd, WM_GETFONT, 0, 0);
-
       r.left = 3;
       r.right = r.left + 64;
       r.top = 3;
@@ -172,7 +146,7 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
                        | TVS_SHOWSELALWAYS, r.left, r.top, r.right - r.left,
                        r.bottom - r.top, wnd, (HMENU) IDCX_TREEVIEW, inst,
                        null);
-      font = SendMessage(wnd, WM_GETFONT, 0, 0);
+      WPARAM font = SendMessage(wnd, WM_GETFONT, 0, 0);
       SendMessage(treeview, WM_SETFONT, font, MAKELPARAM(true, 0));
       treeview_faff tvfaff;
       tvfaff.treeview = treeview;
@@ -251,8 +225,6 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
         TVITEM item;
         char buffer[64];
 
-        SendMessage(wnd, WM_SETREDRAW, false, 0);
-
         item.hItem = i;
         item.pszText = buffer;
         item.cchTextMax = sizeof (buffer);
@@ -272,19 +244,11 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
         
         create_controls(wnd, (char *) item.lParam);
         dlg_refresh(null); /* set up control values */
-        SendMessage(wnd, WM_SETREDRAW, true, 0);
-        InvalidateRect(wnd, null, true);
-        SetFocus(((LPNMHDR) lParam)->hwndFrom); /* ensure focus stays */
       }
     }
     
     when WM_CLOSE:
       DestroyWindow(wnd);
-
-     /* Grrr Explorer will maximize Dialogs! */
-    when WM_SIZE:
-      if (wParam == SIZE_MAXIMIZED)
-        force_normal(wnd);
 
     when WM_COMMAND or WM_DRAWITEM: { 
       int ret = winctrl_handle_command(msg, wParam, lParam);
@@ -307,7 +271,7 @@ win_open_config(void)
   InitCommonControls();
 
   RegisterClass(&(WNDCLASS){
-    .style = CS_DBLCLKS | CS_SAVEBITS,
+    .style = CS_DBLCLKS,
     .lpfnWndProc = DefDlgProc,
     .cbClsExtra = 0,
     .cbWndExtra = DLGWINDOWEXTRA + 2 * sizeof (LONG_PTR),
@@ -320,4 +284,5 @@ win_open_config(void)
   });
   config_wnd = CreateDialog(inst, MAKEINTRESOURCE(IDD_MAINBOX),
                             wnd, config_dialog_proc);
+  ShowWindow(config_wnd, SW_SHOW);
 }  
