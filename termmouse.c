@@ -284,7 +284,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     if (term.mouse_mode == MM_X10)
       mods = 0;
     send_mouse_event(0x1F + b, mods, box_pos(p));
-    term.mouse_state = MS_CLICKED;
+    term.mouse_state = b;
   }
   else {  
     bool alt = mods & MDK_ALT;
@@ -316,7 +316,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     else {
       // Only clicks for selecting and extending should get here.
       p = get_selpoint(box_pos(p));
-      term.mouse_state = count;
+      term.mouse_state = -count;
       term.sel_rect = alt;
       if (b != MBT_LEFT || shift_ctrl)
         sel_extend(p);
@@ -339,12 +339,12 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
 }
 
 void
-term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
+term_mouse_release(mod_keys mods, pos p)
 {
   p = box_pos(p);
   int state = term.mouse_state;
-  term.mouse_state = MS_IDLE;
-  if (state == MS_CLICKED) {
+  term.mouse_state = 0;
+  if (state >= 0) {
     if (term.mouse_mode >= MM_VT200)
       send_mouse_event(0x23, mods, p);
   }
@@ -353,7 +353,8 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
     term.selected = false;
     win_update();
   }
-  else if (state != MS_IDLE) {
+  else {
+    // Finish selection.
     if (term.selected && cfg.copy_on_select)
       term_copy();
     
@@ -409,7 +410,7 @@ term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
 static void
 sel_scroll_cb(void)
 {
-  if (term_selecting() && term.sel_scroll != 0) {
+  if (term_selecting() && term.sel_scroll) {
     term_scroll(0, term.sel_scroll);
     sel_drag(get_selpoint(term.sel_pos));
     win_update();
@@ -418,12 +419,12 @@ sel_scroll_cb(void)
 }
 
 void
-term_mouse_move(mouse_button b, mod_keys mods, pos p)
+term_mouse_move(mod_keys mods, pos p)
 {
   pos bp = box_pos(p);
   if (term_selecting()) {
     if (p.y < 0 || p.y >= term.rows) {
-      if (term.sel_scroll == 0) 
+      if (!term.sel_scroll) 
         win_set_timer(sel_scroll_cb, 200);
       term.sel_scroll = p.y < 0 ? p.y : p.y - term.rows + 1;
       term.sel_pos = bp;
@@ -437,19 +438,17 @@ term_mouse_move(mouse_button b, mod_keys mods, pos p)
     win_update();
   }
   else if (term.mouse_state == MS_OPENING) {
-    term.mouse_state = MS_IDLE;
+    term.mouse_state = 0;
     term.selected = false;
     win_update();
   }
+  else if (term.mouse_state > 0) {
+    if (term.mouse_mode >= MM_BTN_EVENT)
+      send_mouse_event(0x3F + term.mouse_state, mods, bp);
+  }
   else {
-    if (term.mouse_state == MS_CLICKED) {
-      if (term.mouse_mode >= MM_BTN_EVENT)
-        send_mouse_event(0x3F + b, mods, bp);
-    }
-    else {
-      if (term.mouse_mode == MM_ANY_EVENT)
+    if (term.mouse_mode == MM_ANY_EVENT)
         send_mouse_event(0x43, mods, bp);
-    }
   }
 }
 

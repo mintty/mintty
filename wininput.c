@@ -199,7 +199,6 @@ get_mouse_pos(LPARAM lp)
   return translate_pos(GET_X_LPARAM(lp), GET_Y_LPARAM(lp));  
 }
 
-static mouse_button clicked_button;
 static pos last_pos;
 
 void
@@ -213,11 +212,6 @@ win_mouse_click(mouse_button b, LPARAM lp)
   mod_keys mods = get_mods();
   pos p = get_mouse_pos(lp);
   
-  if (clicked_button) {
-    term_mouse_release(b, mods, p);
-    clicked_button = 0;
-  }
-  
   uint t = GetMessageTime();
   if (b != last_button ||
       p.x != last_click_pos.x || p.y != last_click_pos.y ||
@@ -226,21 +220,18 @@ win_mouse_click(mouse_button b, LPARAM lp)
   term_mouse_click(b, mods, p, count);
   last_pos = last_click_pos = p;
   last_time = t;
-  clicked_button = last_button = b;
+  last_button = b;
   if (alt_state > ALT_NONE)
     alt_state = ALT_CANCELLED;
 }
 
 void
-win_mouse_release(mouse_button b, LPARAM lp)
+win_mouse_release(LPARAM lp)
 {
   win_show_mouse();
-  if (b == clicked_button) {
-    term_mouse_release(b, get_mods(), get_mouse_pos(lp));
-    clicked_button = 0;
-    ReleaseCapture();
-  }
-}  
+  term_mouse_release(get_mods(), get_mouse_pos(lp));
+  ReleaseCapture();
+}
 
 void
 win_mouse_move(bool nc, LPARAM lp)
@@ -252,7 +243,7 @@ win_mouse_move(bool nc, LPARAM lp)
   last_pos = p;
   win_show_mouse();
   if (!nc)
-    term_mouse_move(clicked_button, get_mods(), p);
+    term_mouse_move(get_mods(), p);
 }
 
 void
