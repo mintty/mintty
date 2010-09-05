@@ -3,69 +3,6 @@
 
 #include "minibidi.h"
 
-// Colour values
-
-typedef uint colour;
-
-enum { DEFAULT_COLOUR = UINT_MAX };
-
-static inline colour
-make_colour(uchar r, uchar g, uchar b) { return r | g << 8 | b << 16; }
-
-static inline uchar red(colour c) { return c & 0xff; }
-static inline uchar green(colour c) { return c >> 8 & 0xff; }
-static inline uchar blue(colour c) { return c >> 16 & 0xff; }
-
-
-// Colour numbers
-
-typedef enum {
-  // ANSI colours
-  BLACK_I   = 0,
-  RED_I     = 1,
-  GREEN_I   = 2,
-  YELLOW_I  = 3,
-  BLUE_I    = 4,
-  MAGENTA_I = 5,
-  CYAN_I    = 6,
-  WHITE_I   = 7,
-  
-  // Bold ANSI colours
-  BOLD_BLACK_I   = 8,
-  BOLD_RED_I     = 9,
-  BOLD_GREEN_I   = 10,
-  BOLD_YELLOW_I  = 11,
-  BOLD_BLUE_I    = 12,
-  BOLD_MAGENTA_I = 13,
-  BOLD_CYAN_I    = 14,
-  BOLD_WHITE_I   = 15,
-
-  // Colour numbers 16 through 231 are occupied by a 6x6x6 colour cube,
-  // with R at most significant and B at least. (36*R + 6*G + B + 16)
-  
-  // Colour numbers 232 through 255 are occupied by a uniform series of
-  // gray shades running between black and white but not including either
-  // on grounds of redundancy.
-
-  // Default foreground
-  FG_COLOUR_I      = 256,
-  BOLD_FG_COLOUR_I = 257,
-  
-  // Default background
-  BG_COLOUR_I      = 258,
-  BOLD_BG_COLOUR_I = 259,
-  
-  // Cursor colours
-  CURSOR_TEXT_COLOUR_I = 260,
-  CURSOR_COLOUR_I      = 261,
-  IME_CURSOR_COLOUR_I  = 262,
-
-  // Number of colours
-  COLOUR_NUM = 263
-
-} colour_i;
-
-
 /*
  * UCSWIDE is a special value used in the terminal data to signify
  * the character cell containing the right-hand half of a CJK wide
@@ -125,9 +62,27 @@ enum {
                                  * single-width cell is empty */
 };
 
+/*
+ * The definitive list of colour numbers stored in terminal
+ * attribute words is kept here. It is:
+ * 
+ *  - 0-7 are ANSI colours (KRGYBMCW).
+ *  - 8-15 are the bold versions of those colours.
+ *  - 16-255 are the remains of the xterm 256-colour mode (a
+ *    216-colour cube with R at most significant and B at least,
+ *    followed by a uniform series of grey shades running between
+ *    black and white but not including either on grounds of
+ *    redundancy).
+ *  - 256 is default foreground
+ *  - 257 is default bold foreground
+ *  - 258 is default background
+ *  - 259 is default bold background
+ *  - 260 is cursor foreground
+ *  - 261 is cursor background
+ */
 enum {
-  ATTR_DEFFG = FG_COLOUR_I << ATTR_FGSHIFT,
-  ATTR_DEFBG = BG_COLOUR_I << ATTR_BGSHIFT,
+  ATTR_DEFFG = 256 << ATTR_FGSHIFT,
+  ATTR_DEFBG = 258 << ATTR_BGSHIFT,
   ATTR_DEFAULT = ATTR_DEFFG | ATTR_DEFBG,
 };
 
@@ -211,7 +166,7 @@ typedef struct {
 } pos;
 
 typedef enum {
-  MBT_LEFT = 1, MBT_MIDDLE = 2, MBT_RIGHT = 3
+  MBT_NONE = 0, MBT_LEFT = 1, MBT_MIDDLE = 2, MBT_RIGHT = 3
 } mouse_button;
 
 typedef enum {
@@ -265,6 +220,8 @@ struct term {
                            * ("temporary scrollback") */
 
   termlines *displines;   /* buffer of text on real screen */
+  pos dispcurs;           /* location of cursor on real screen */
+  int curstype;           /* type of cursor on real screen */
 
   termchar erase_char;
 
@@ -289,7 +246,6 @@ struct term {
   bool has_focus;
   bool in_vbell;
 
-  bool vt220_keys;
   bool shortcut_override;
   bool backspace_sends_bs;
   bool escape_sends_fs;
@@ -329,11 +285,9 @@ struct term {
   } mouse_mode;
 
   enum {
-    // The state can be one of the mouse buttons or one of the cases here.
-    MS_SEL_CHAR = -1, MS_SEL_WORD = -2, MS_SEL_LINE = -3, MS_OPENING = -4
+    MS_OPENING = -2, MS_CLICKED = -1, MS_IDLE = 0,
+    MS_SEL_CHAR = 1, MS_SEL_WORD = 2, MS_SEL_LINE = 3
   } mouse_state;
-  
-  bool ext_mouse_pos;  // Extended mouse position reporting (using UTF-8)
   
   bool sel_rect, selected;
   pos sel_start, sel_end, sel_anchor;
@@ -369,11 +323,13 @@ void term_scroll(int, int);
 void term_reset(void);
 void term_clear_scrollback(void);
 void term_mouse_click(mouse_button, mod_keys, pos, int count);
-void term_mouse_release(mod_keys, pos);
-void term_mouse_move(mod_keys, pos);
+void term_mouse_release(mouse_button, mod_keys, pos);
+void term_mouse_move(mouse_button, mod_keys, pos);
 void term_mouse_wheel(int delta, int lines_per_notch, mod_keys, pos);
+void term_deselect(void);
 void term_select_all(void);
 void term_paint(void);
+void term_update(void);
 void term_invalidate(int left, int top, int right, int bottom);
 void term_blink(int set_cursor);
 void term_open(void);

@@ -395,6 +395,7 @@ do_esc(uchar c)
       child_write(primary_da, sizeof primary_da - 1);
     when 'c':  /* RIS: restore power-on settings */
       term_reset();
+      term_clear_scrollback();
       if (term.reset_132) {
         win_resize(term.rows, 80);
         term.reset_132 = 0;
@@ -534,13 +535,15 @@ do_sgr(void)
       when 38: /* xterm 256-colour mode */
         if (i + 2 < nargs && term.esc_args[i + 1] == 5) {
           curs->attr &= ~ATTR_FGMASK;
-          curs->attr |= ((term.esc_args[i + 2] & 0xFF) << ATTR_FGSHIFT);
+          curs->attr |= ((term.esc_args[i + 2] & 0xFF)
+                             << ATTR_FGSHIFT);
           i += 2;
         }
       when 48: /* xterm 256-colour mode */
         if (i + 2 < nargs && term.esc_args[i + 1] == 5) {
           curs->attr &= ~ATTR_BGMASK;
-          curs->attr |= ((term.esc_args[i + 2] & 0xFF) << ATTR_BGSHIFT);
+          curs->attr |= ((term.esc_args[i + 2] & 0xFF)
+                             << ATTR_BGSHIFT);
           i += 2;
         }
     }
@@ -613,8 +616,6 @@ set_modes(bool state)
           win_update_mouse();
         when 1004: /* FOCUS_EVENT_MOUSE */
           term.report_focus = state;      
-        when 1005: /* EXT_MODE_MOUSE */
-          term.ext_mouse_pos = state;      
         when 1047:       /* alternate screen */
           term.selected = false;
           term_switch_screen(state, true, true);
@@ -632,8 +633,6 @@ set_modes(bool state)
           if (!state)
             restore_cursor();
           term.disptop = 0;
-        when 1061:       /* VT220 keyboard emulation */
-          term.vt220_keys = state;
         when 2004:       /* xterm bracketed paste mode */
           term.bracketed_paste = state;
         when 7700:       /* mintty only: CJK ambigous width reporting */
@@ -962,7 +961,7 @@ do_colour_osc(uint i)
   if (has_index_arg) {
     int len = 0;
     sscanf(s, "%u;%n", &i, &len);
-    if (!len || i >= COLOUR_NUM)
+    if (!len || i >= 262)
       return;
     s += len;
   }

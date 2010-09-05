@@ -8,6 +8,8 @@
 #include "config.h"
 #include "minibidi.h"
 
+#include <winnls.h>
+
 enum {
   FONT_NORMAL     = 0,
   FONT_BOLD       = 1,
@@ -40,7 +42,7 @@ static bool font_dualwidth;
 
 bool font_ambig_wide;
 
-COLORREF colours[COLOUR_NUM];
+COLORREF colours[NALLCOLOURS];
 
 static colour 
 brighten(colour c)
@@ -111,7 +113,7 @@ win_init_fonts(void)
   for (i = 0; i < FONT_MAXNO; i++)
     fonts[i] = null;
 
-  bold_mode = cfg.bold_as_colour ? BOLD_COLOURS : BOLD_FONT;
+  bold_mode = cfg.bold_as_bright ? BOLD_COLOURS : BOLD_FONT;
   und_mode = UND_FONT;
 
   if (cfg.font.isbold) {
@@ -247,12 +249,14 @@ win_deinit_fonts(void)
 }
 
 static HDC dc;
-static enum { UPDATE_IDLE, UPDATE_BLOCKED, UPDATE_PENDING } update_state;
-static bool ime_open;
+
+static bool update_pending;
 
 void
 win_paint(void)
 {
+  HideCaret(wnd);
+
   PAINTSTRUCT p;
   dc = BeginPaint(wnd, &p);
 
@@ -263,16 +267,20 @@ win_paint(void)
     (p.rcPaint.bottom - PADDING - 1) / font_height
   );
 
-  if (update_state != UPDATE_PENDING)
+  if (!update_pending)
     term_paint();
 
   if (p.fErase || p.rcPaint.left < PADDING ||
       p.rcPaint.top < PADDING ||
       p.rcPaint.right >= PADDING + font_width * term.cols ||
       p.rcPaint.bottom >= PADDING + font_height * term.rows) {
-    colour bg_colour = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
-    HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(bg_colour));
-    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, bg_colour));
+    HBRUSH fillcolour, oldbrush;
+    HPEN edge, oldpen;
+    colour bg_colour = colours[term.rvideo ? 256 : 258];
+    fillcolour = CreateSolidBrush(bg_colour);
+    oldbrush = SelectObject(dc, fillcolour);
+    edge = CreatePen(PS_SOLID, 0, bg_colour);
+    oldpen = SelectObject(dc, edge);
 
     IntersectClipRect(dc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
                       p.rcPaint.bottom);
@@ -281,77 +289,41 @@ win_paint(void)
                     PADDING + font_width * term.cols,
                     PADDING + font_height * term.rows);
 
-    Rectangle(dc, p.rcPaint.left, p.rcPaint.top,
-                  p.rcPaint.right, p.rcPaint.bottom);
+    Rectangle(dc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
+              p.rcPaint.bottom);
 
-    DeleteObject(SelectObject(dc, oldbrush));
-    DeleteObject(SelectObject(dc, oldpen));
+    SelectObject(dc, oldbrush);
+    DeleteObject(fillcolour);
+    SelectObject(dc, oldpen);
+    DeleteObject(edge);
   }
+  SelectObject(dc, GetStockObject(SYSTEM_FONT));
+  SelectObject(dc, GetStockObject(WHITE_PEN));
   
   EndPaint(wnd, &p);
-}
-
-static void
-do_update(void)
-{
-  if (update_state == UPDATE_BLOCKED) {
-    update_state = UPDATE_IDLE;
-    return;
-  }
-
-  update_state = UPDATE_BLOCKED;
-
-  dc = GetDC(wnd);
-  term_paint();
-  ReleaseDC(wnd, dc);
-
-  // Update scrollbar
-  if (cfg.scrollbar && term.show_scrollbar) {
-    int lines = sblines();
-    SCROLLINFO si = {
-      .cbSize = sizeof si,
-      .fMask = SIF_ALL | SIF_DISABLENOSCROLL,
-      .nMin = 0,
-      .nMax = lines + term.rows - 1,
-      .nPage = term.rows,
-      .nPos = lines + term.disptop
-    };
-    SetScrollInfo(wnd, SB_VERT, &si, true);
-  }
-
-  // Update the positions of the system caret and the IME window.
-  // (We maintain a caret, even though it's invisible, for the benefit of
-  // blind people: apparently some helper software tracks the system caret,
-  // so we should arrange to have one.)
-  if (term.has_focus) {
-    int x = term.screen.curs.x * font_width + PADDING;
-    int y = (term.screen.curs.y - term.disptop) * font_height + PADDING;
-    SetCaretPos(x, y);
-    if (ime_open) {
-      COMPOSITIONFORM cf = {.dwStyle = CFS_POINT, .ptCurrentPos = {x, y}};
-      ImmSetCompositionWindow(imc, &cf);
-    }
-  }
-
-  // Schedule next update.
-  win_set_timer(do_update, 16);
+  
+  ShowCaret(wnd);
 }
 
 void
 win_update(void)
 {
-  if (update_state == UPDATE_IDLE)
-    do_update();
-  else
-    update_state = UPDATE_PENDING;
+  if (update_pending) {
+    KillTimer(wnd, (UINT_PTR)win_update);
+    update_pending = false;
+  }
+  dc = GetDC(wnd);
+  term_update();
+  ReleaseDC(wnd, dc);
 }
 
 void
 win_schedule_update(void)
 {
-  if (update_state == UPDATE_IDLE)
-    win_set_timer(do_update, 16);
-  update_state = UPDATE_PENDING;
+  if (!update_pending) {
+    SetTimer(wnd, (UINT_PTR)win_update, 20, null);
+    update_pending = true;
+  }
 }
 
 static void
@@ -399,16 +371,6 @@ another_font(int fontno)
 
   fontflag[fontno] = 1;
 }
-
-void
-win_set_ime_open(bool open)
-{
-  if (open != ime_open) {
-    ime_open = open;
-    win_invalidate_all();
-  }
-}
-
 
 /*
  * Draw a line of text in the window, at given character
@@ -459,36 +421,36 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   if (!fonts[nfont])
     nfont = FONT_NORMAL;
 
-  colour_i fgi = (attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
-  colour_i bgi = (attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
+  uint nfg = (attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
+  uint nbg = (attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
 
   if (term.rvideo) {
-    if (fgi >= 256)
-      fgi ^= 2;
-    if (bgi >= 256)
-      bgi ^= 2;
+    if (nfg >= 256)
+      nfg ^= 2;
+    if (nbg >= 256)
+      nbg ^= 2;
   }
   if (bold_mode == BOLD_COLOURS) {
     if (attr & ATTR_BOLD) {
-      if (fgi < 8)
-        fgi |= 8;
-      else if (fgi >= 256)
-        fgi |= 1;
+      if (nfg < 8)
+        nfg |= 8;
+      else if (nfg >= 256)
+        nfg |= 1;
     }
     if (attr & ATTR_BLINK) {
-      if (bgi < 8)
-        bgi |= 8;
-      else if (bgi >= 256)
-        bgi |= 1;
+      if (nbg < 8)
+        nbg |= 8;
+      else if (nbg >= 256)
+        nbg |= 1;
     }
   }
   
-  colour fg = colours[fgi];
-  colour bg = colours[bgi];
+  colour fg = colours[nfg];
+  colour bg = colours[nbg];
   
   if (attr & ATTR_DIM) {
     fg = (fg & 0xFEFEFEFE) >> 1;
-    if (!cfg.bold_as_colour)
+    if (!cfg.bold_as_bright)
       fg += (bg & 0xFEFEFEFE) >> 1;
   }
   if (attr & ATTR_REVERSE) {
@@ -502,18 +464,11 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   colour cursor_colour = 0;
   
   if (has_cursor) {
-    colour wanted_cursor_colour =
-      colours[ime_open ? IME_CURSOR_COLOUR_I : CURSOR_COLOUR_I];
-    
-    bool too_close = colour_dist(wanted_cursor_colour, bg) < 32768;
-    
-    cursor_colour =
-      too_close ? colours[CURSOR_TEXT_COLOUR_I] : wanted_cursor_colour;
-    
-    if ((attr & TATTR_ACTCURS) && cursor_type == CUR_BLOCK) {
-      bg = cursor_colour;
-      fg = too_close ? wanted_cursor_colour : colours[CURSOR_TEXT_COLOUR_I];
-    }
+   /* Swap cursor colours if too close to the background colour */
+    bool swap = colour_dist(colours[261], bg) < 32768;
+    cursor_colour = colours[261 - swap];
+    if ((attr & TATTR_ACTCURS) && cursor_type == CUR_BLOCK)
+      fg = colours[260 + swap], bg = cursor_colour;
   }
 
   SelectObject(dc, fonts[nfont]);
@@ -656,40 +611,70 @@ win_char_width(int uc)
 }
 
 void
-win_set_colour(colour_i i, colour c)
+win_set_sbar(int total, int start, int page)
 {
-  if (i >= COLOUR_NUM)
+  if (cfg.scrollbar && term.show_scrollbar) {
+    SCROLLINFO si;
+    si.cbSize = sizeof (si);
+    si.fMask = SIF_ALL | SIF_DISABLENOSCROLL;
+    si.nMin = 0;
+    si.nMax = total - 1;
+    si.nPage = page;
+    si.nPos = start;
+    if (wnd)
+      SetScrollInfo(wnd, SB_VERT, &si, true);
+  }
+}
+
+void
+win_set_colour(uint n, colour c)
+{
+  if (n >= 262)
     return;
-  colours[i] = c;
-  switch (i) {
-    when FG_COLOUR_I:
-      colours[BOLD_FG_COLOUR_I] = brighten(c);
-    when BOLD_BG_COLOUR_I:
-      colours[BOLD_BG_COLOUR_I] = brighten(c);
-    when CURSOR_COLOUR_I: {
+  colours[n] = c;
+  switch (n) {
+    when 256:
+      colours[257] = brighten(c);
+    when 258:
+      colours[259] = brighten(c);
+    when 261: {
       // Set the colour of text under the cursor to whichever of foreground
-      // and background colour is further away from the cursor colour.
-      colour fg = colours[FG_COLOUR_I], bg = colours[BG_COLOUR_I];
-      colours[CURSOR_TEXT_COLOUR_I] =
-        colour_dist(c, fg) > colour_dist(c, bg) ? fg : bg;
-      colours[IME_CURSOR_COLOUR_I] = c;
+      // and background colour is further away.
+      colour fg = colours[256], bg = colours[258];
+      colours[260] = colour_dist(c, fg) > colour_dist(c, bg) ? fg : bg;
     }
-    otherwise:
-      break;
   }
   // Redraw everything.
   win_invalidate_all();
 }
 
-colour win_get_colour(colour_i i) { return i < COLOUR_NUM ? colours[i] : 0; }
+colour win_get_colour(uint n) { return n < 262 ? colours[n] : 0; }
+
+void
+win_reconfig_palette(void)
+{
+  bool sys = cfg.use_system_colours;
+  colour sys_fg = GetSysColor(COLOR_WINDOWTEXT);
+  colour sys_bg = GetSysColor(COLOR_WINDOW);
+  win_set_colour(FG_COLOUR_I, sys ? sys_fg : cfg.fg_colour);
+  win_set_colour(BG_COLOUR_I, sys ? sys_bg : cfg.bg_colour);
+  win_set_colour(CURSOR_COLOUR_I, sys ? sys_fg : cfg.cursor_colour);
+}
 
 void
 win_reset_colours(void)
 {
-  memcpy(colours, cfg.ansi_colours, sizeof cfg.ansi_colours);
+  static const colour
+  ansi_colours[16] = {
+    0x000000, 0x0000BF, 0x00BF00, 0x00BFBF,
+    0xBF0000, 0xBF00BF, 0xBFBF00, 0xBFBFBF,
+    0x404040, 0x4040FF, 0x40FF40, 0x40FFFF,
+    0xFF4040, 0xFF40FF, 0xFFFF40, 0xFFFFFF
+  };
+  memcpy(colours, ansi_colours, sizeof ansi_colours);
 
   // Colour cube
-  colour_i i = 16;
+  int i = 16;
   for (uint r = 0; r < 6; r++)
     for (uint g = 0; g < 6; g++)
       for (uint b = 0; b < 6; b++)
@@ -700,13 +685,9 @@ win_reset_colours(void)
   // Grayscale
   for (uint s = 0; s < 24; s++) {
     uint c = s * 10 + 8;
-    colours[i++] = RGB(c, c, c);
+    colours[i++] = RGB(c,c,c);
   }
 
   // Foreground, background, cursor
-  win_set_colour(FG_COLOUR_I, cfg.fg_colour);
-  win_set_colour(BG_COLOUR_I, cfg.bg_colour);
-  win_set_colour(CURSOR_COLOUR_I, cfg.cursor_colour);
-  if (cfg.ime_cursor_colour != DEFAULT_COLOUR)
-    win_set_colour(IME_CURSOR_COLOUR_I, cfg.ime_cursor_colour);
+  win_reconfig_palette();
 }

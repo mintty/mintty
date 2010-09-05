@@ -1,7 +1,14 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include "term.h"
+typedef uint colour;
+
+static inline colour
+make_colour(uchar r, uchar g, uchar b) { return r | g << 8 | b << 16; }
+
+static inline uchar red(colour c) { return c & 0xff; }
+static inline uchar green(colour c) { return c >> 8 & 0xff; }
+static inline uchar blue(colour c) { return c >> 16 & 0xff; }
 
 typedef enum { HOLD_NEVER, HOLD_ALWAYS, HOLD_ERROR } hold_t;
 extern hold_t hold;
@@ -24,6 +31,7 @@ enum { RC_SHOWMENU, RC_PASTE, RC_EXTEND };
 typedef struct {
   // Looks
   colour fg_colour, bg_colour, cursor_colour;
+  bool use_system_colours;
   int transparency;
   bool opaque_when_focused;
   int cursor_type;
@@ -31,7 +39,7 @@ typedef struct {
   // Text
   font_spec font;
   int font_quality;
-  bool bold_as_colour;
+  bool bold_as_bright;
   bool allow_blinking;
   char locale[32];
   char charset[32];
@@ -64,16 +72,11 @@ typedef struct {
   bool confirm_exit;
   // Hidden
   int col_spacing, row_spacing;
-  char word_chars[32];
-  bool use_system_colours;
-  colour ime_cursor_colour;
-  colour ansi_colours[16];
 } config;
 
 extern config cfg, new_cfg;
 
 int parse_option(char *option);
 void load_config(char *filename);
-void finish_config(void);
 
 #endif

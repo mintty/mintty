@@ -30,14 +30,7 @@ sel_spread_word(pos p, bool forward)
   
   for (;;) {
     wchar c = get_char(line, p.x);
-    if (iswalnum(c))
-      ret_p = p;
-    else if (term.mouse_state != MS_OPENING && *cfg.word_chars) {
-      if (!strchr(cfg.word_chars, c))
-        break;
-      ret_p = p;
-    }
-    else if (strchr("_#~+-", c))
+    if (iswalnum(c) || strchr("_#~+-", c))
       ret_p = p;
     else if (strchr(".@/\\", c)) {
       if (!forward)
@@ -98,7 +91,7 @@ sel_spread_half(pos p, bool forward)
       }
       release_line(line);
     }
-    when MS_SEL_WORD or MS_OPENING:
+    when MS_SEL_WORD:
       p = sel_spread_word(p, forward); 
     when MS_SEL_LINE:
       if (forward) {
@@ -218,28 +211,11 @@ sel_extend(pos selpoint)
 static void
 send_mouse_event(char code, mod_keys mods, pos p)
 {
-  char buf[8] = "\e[M";
-  uint len = 3;
-  buf[len++] = code | (mods & ~cfg.click_target_mod) << 2;
-  
-  void encode_coord(int c) {
-    c += ' ' + 1;
-    if (!term.ext_mouse_pos)
-      buf[len++] = c < 0x100 ? c : 0; 
-    else if (c < 0x80)
-      buf[len++] = c;
-    else if (c < 0x800) {
-      buf[len++] = 0xC0 + (c >> 6);
-      buf[len++] = 0x80 + (c & 0x3F);
-    }
-    else
-      buf[len++] = 0;
-  }
-  
-  encode_coord(p.x);
-  encode_coord(p.y);
-
-  child_write(buf, len);
+  char buf[6] = "\e[M";
+  buf[3] = code | (mods & ~cfg.click_target_mod) << 2;
+  buf[4] = p.x + 33;
+  buf[5] = p.y + 33;
+  child_write(buf, 6);
 }
 
 static pos
@@ -301,7 +277,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     if (term.mouse_mode == MM_X10)
       mods = 0;
     send_mouse_event(0x1F + b, mods, box_pos(p));
-    term.mouse_state = b;
+    term.mouse_state = MS_CLICKED;
   }
   else {  
     bool alt = mods & MDK_ALT;
@@ -322,18 +298,19 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     else if (b == MBT_LEFT && mods == MDK_CTRL) {
       // Open word under cursor
       p = get_selpoint(box_pos(p));
-      term.mouse_state = MS_OPENING;
+      term.mouse_state = MS_SEL_WORD;
       term.selected = true;
       term.sel_rect = false;
       term.sel_start = term.sel_end = term.sel_anchor = p;
       incpos(term.sel_end);
       sel_spread();
+      term.mouse_state = MS_OPENING;
       win_update();
     }
     else {
       // Only clicks for selecting and extending should get here.
       p = get_selpoint(box_pos(p));
-      term.mouse_state = -count;
+      term.mouse_state = count;
       term.sel_rect = alt;
       if (b != MBT_LEFT || shift_ctrl)
         sel_extend(p);
@@ -356,12 +333,12 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
 }
 
 void
-term_mouse_release(mod_keys mods, pos p)
+term_mouse_release(mouse_button unused(b), mod_keys mods, pos p)
 {
   p = box_pos(p);
   int state = term.mouse_state;
-  term.mouse_state = 0;
-  if (state >= 0) {
+  term.mouse_state = MS_IDLE;
+  if (state == MS_CLICKED) {
     if (term.mouse_mode >= MM_VT200)
       send_mouse_event(0x23, mods, p);
   }
@@ -370,8 +347,7 @@ term_mouse_release(mod_keys mods, pos p)
     term.selected = false;
     win_update();
   }
-  else {
-    // Finish selection.
+  else if (state != MS_IDLE) {
     if (term.selected && cfg.copy_on_select)
       term_copy();
     
@@ -427,7 +403,7 @@ term_mouse_release(mod_keys mods, pos p)
 static void
 sel_scroll_cb(void)
 {
-  if (term_selecting() && term.sel_scroll) {
+  if (term_selecting() && term.sel_scroll != 0) {
     term_scroll(0, term.sel_scroll);
     sel_drag(get_selpoint(term.sel_pos));
     win_update();
@@ -436,12 +412,12 @@ sel_scroll_cb(void)
 }
 
 void
-term_mouse_move(mod_keys mods, pos p)
+term_mouse_move(mouse_button b, mod_keys mods, pos p)
 {
   pos bp = box_pos(p);
   if (term_selecting()) {
     if (p.y < 0 || p.y >= term.rows) {
-      if (!term.sel_scroll) 
+      if (term.sel_scroll == 0) 
         win_set_timer(sel_scroll_cb, 200);
       term.sel_scroll = p.y < 0 ? p.y : p.y - term.rows + 1;
       term.sel_pos = bp;
@@ -455,17 +431,19 @@ term_mouse_move(mod_keys mods, pos p)
     win_update();
   }
   else if (term.mouse_state == MS_OPENING) {
-    term.mouse_state = 0;
+    term.mouse_state = MS_IDLE;
     term.selected = false;
     win_update();
   }
-  else if (term.mouse_state > 0) {
-    if (term.mouse_mode >= MM_BTN_EVENT)
-      send_mouse_event(0x3F + term.mouse_state, mods, bp);
-  }
   else {
-    if (term.mouse_mode == MM_ANY_EVENT)
+    if (term.mouse_state == MS_CLICKED) {
+      if (term.mouse_mode >= MM_BTN_EVENT)
+        send_mouse_event(0x3F + b, mods, bp);
+    }
+    else {
+      if (term.mouse_mode == MM_ANY_EVENT)
         send_mouse_event(0x43, mods, bp);
+    }
   }
 }
 
