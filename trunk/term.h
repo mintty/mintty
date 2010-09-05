@@ -211,7 +211,7 @@ typedef struct {
 } pos;
 
 typedef enum {
-  MBT_NONE = 0, MBT_LEFT = 1, MBT_MIDDLE = 2, MBT_RIGHT = 3
+  MBT_LEFT = 1, MBT_MIDDLE = 2, MBT_RIGHT = 3
 } mouse_button;
 
 typedef enum {
@@ -329,8 +329,8 @@ struct term {
   } mouse_mode;
 
   enum {
-    MS_OPENING = -2, MS_CLICKED = -1, MS_IDLE = 0,
-    MS_SEL_CHAR = 1, MS_SEL_WORD = 2, MS_SEL_LINE = 3
+    // The state can be one of the mouse buttons or one of the cases here.
+    MS_SEL_CHAR = -1, MS_SEL_WORD = -2, MS_SEL_LINE = -3, MS_OPENING = -4
   } mouse_state;
   
   bool sel_rect, selected;
@@ -367,8 +367,8 @@ void term_scroll(int, int);
 void term_reset(void);
 void term_clear_scrollback(void);
 void term_mouse_click(mouse_button, mod_keys, pos, int count);
-void term_mouse_release(mouse_button, mod_keys, pos);
-void term_mouse_move(mouse_button, mod_keys, pos);
+void term_mouse_release(mod_keys, pos);
+void term_mouse_move(mod_keys, pos);
 void term_mouse_wheel(int delta, int lines_per_notch, mod_keys, pos);
 void term_select_all(void);
 void term_paint(void);
