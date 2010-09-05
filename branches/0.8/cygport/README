@@ -13,7 +13,7 @@ Features include:
 * Small executable size (currently <120K). 
 
 Runtime requirements:
-  cygwin-1.7.2-1
+  cygwin-1.7.6-1
 
 Build requirements:
   binutils-20080624-2
@@ -26,20 +26,20 @@ Canonical website:
   http://mintty.googlecode.com
 
 Canonical download:
-  http://code.google.com/p/mintty/downloads/list
+  http://code.google.com/p/mintty/downloads
 
 -------------------------------------------
 
 Build instructions:
-  unpack mintty-0.8.2-1-src.tar.bz2
+  unpack mintty-0.8.3-1-src.tar.bz2
     if you use setup to install this src package, it will be
     unpacked under /usr/src automatically
   cd /usr/src
-  cygport ./mintty-0.8.2-1.cygport all
+  cygport ./mintty-0.8.3-1.cygport all
 
 This will create:
-  /usr/src/mintty-0.8.2-1-src.tar.bz2
-  /usr/src/mintty-0.8.2-1.tar.bz2
+  /usr/src/mintty-0.8.3-1-src.tar.bz2
+  /usr/src/mintty-0.8.3-1.tar.bz2
 
 -------------------------------------------
 
@@ -48,19 +48,21 @@ Files included in the binary package:
   /etc/postinstall/mintty.sh
   /etc/preremove/mintty.sh
   /usr/bin/mintty.exe
-  /usr/share/doc/Cygwin/mintty-0.8.2.README
-  /usr/share/doc/mintty-0.8.2/COPYING
-  /usr/share/doc/mintty-0.8.2/LICENSE.Oxygen
-  /usr/share/doc/mintty-0.8.2/LICENSE.PuTTY
+  /usr/share/doc/Cygwin/mintty-0.8.3.README
+  /usr/share/doc/mintty-0.8.3/COPYING
+  /usr/share/doc/mintty-0.8.3/LICENSE.Oxygen
+  /usr/share/doc/mintty-0.8.3/LICENSE.PuTTY
   /usr/share/man/man1/mintty.1.gz
 
 ------------------
 
 Port Notes:
 
+----- mintty-0.8.3-1 -----
+
 ----- mintty-0.8.2-1 -----
 * Replaced test of whether the All Users start menu is writable from 
-install scripts, at that can be wrong on noacl mounts.
+install scripts, as that can be wrong on noacl mounts.
 
 ----- mintty-0.8.1-1 -----
 
