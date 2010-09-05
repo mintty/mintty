@@ -218,11 +218,28 @@ sel_extend(pos selpoint)
 static void
 send_mouse_event(char code, mod_keys mods, pos p)
 {
-  char buf[6] = "\e[M";
-  buf[3] = code | (mods & ~cfg.click_target_mod) << 2;
-  buf[4] = p.x + 33;
-  buf[5] = p.y + 33;
-  child_write(buf, 6);
+  char buf[8] = "\e[M";
+  uint len = 3;
+  buf[len++] = code | (mods & ~cfg.click_target_mod) << 2;
+  
+  void encode_coord(int c) {
+    c += ' ' + 1;
+    if (!term.ext_mouse_pos)
+      buf[len++] = c < 0x100 ? c : 0; 
+    else if (c < 0x80)
+      buf[len++] = c;
+    else if (c < 0x800) {
+      buf[len++] = 0xC0 + (c >> 6);
+      buf[len++] = 0x80 + (c & 0x3F);
+    }
+    else
+      buf[len++] = 0;
+  }
+  
+  encode_coord(p.x);
+  encode_coord(p.y);
+
+  child_write(buf, len);
 }
 
 static pos
