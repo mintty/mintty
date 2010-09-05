@@ -202,7 +202,7 @@ init_locale_menu(void)
     locale_menu[count++] = strdup(locale);
   }
   
-  HMODULE kernel = LoadLibrary("kernel32");
+  HMODULE kernel = GetModuleHandle("kernel32");
   LANGID WINAPI (*pGetUserDefaultUILanguage)(void) = 
     (void *)GetProcAddress(kernel, "GetUserDefaultUILanguage");
   LANGID WINAPI (*pGetSystemDefaultUILanguage)(void) = 

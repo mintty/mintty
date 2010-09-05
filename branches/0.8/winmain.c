@@ -83,18 +83,23 @@ static HRESULT (WINAPI *pDwmExtendFrameIntoClientArea)(HWND, const MARGINS *);
 static void
 load_funcs(void)
 {
-  HMODULE user = LoadLibrary("user32");
+  HMODULE user = GetModuleHandle("user32");
   pMonitorFromWindow = (void *)GetProcAddress(user, "MonitorFromWindow");
   pGetMonitorInfo = (void *)GetProcAddress(user, "GetMonitorInfoA");
   pFlashWindowEx = (void *)GetProcAddress(user, "FlashWindowEx");
   pSetLayeredWindowAttributes =
     (void *)GetProcAddress(user, "SetLayeredWindowAttributes");
   
-  HMODULE dwm = LoadLibrary("dwmapi");
-  pDwmIsCompositionEnabled =
-    (void *)GetProcAddress(dwm, "DwmIsCompositionEnabled");
-  pDwmExtendFrameIntoClientArea =
-    (void *)GetProcAddress(dwm, "DwmExtendFrameIntoClientArea");
+  char dwm_path[MAX_PATH];
+  uint len = GetSystemDirectory(dwm_path, MAX_PATH);
+  if (len && len < MAX_PATH - sizeof("\\dwmapi.dll")) {
+    strcat(dwm_path, "\\dwmapi.dll");
+    HMODULE dwm = LoadLibrary(dwm_path);
+    pDwmIsCompositionEnabled =
+      (void *)GetProcAddress(dwm, "DwmIsCompositionEnabled");
+    pDwmExtendFrameIntoClientArea =
+      (void *)GetProcAddress(dwm, "DwmExtendFrameIntoClientArea");
+  }
 }
 
 void
