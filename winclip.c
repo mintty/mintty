@@ -307,9 +307,8 @@ win_copy(const wchar *data, int *attr, int len)
         blen = alen = 0;
       }
       else {
-        multilen =
-          WideCharToMultiByte(CP_ACP, 0, unitab + uindex, 1, null, 0, null,
-                              null);
+        multilen = WideCharToMultiByte(CP_ACP, 0, &udata[uindex], 1,
+                                                  null, 0, null, null);
         if (multilen != 1) {
           blen = sprintf(before, "{\\uc%d\\u%d", multilen, udata[uindex]);
           alen = 1;
