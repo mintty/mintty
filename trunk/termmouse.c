@@ -382,14 +382,18 @@ term_mouse_release(mod_keys mods, pos p)
     if (!cfg.clicks_place_cursor || term.on_alt_screen || term.app_cursor_keys)
       return;
     
-    p = term.selected ? term.sel_end : get_selpoint(p);
+    pos dest = term.selected ? term.sel_end : get_selpoint(p);
     
+    static bool moved_previously;
     static pos last_dest;
-    pos orig =
-      state == MS_SEL_CHAR
-      ? (pos){.y = term.screen.curs.y, .x = term.screen.curs.x}
-      : last_dest;
-    pos dest = p;
+    
+    pos orig;
+    if (state == MS_SEL_CHAR)
+      orig = (pos){.y = term.screen.curs.y, .x = term.screen.curs.x};
+    else if (moved_previously)
+      orig = last_dest;
+    else
+      return;
     
     bool forward = posle(orig, dest);
     pos end = forward ? dest : orig;
@@ -400,6 +404,7 @@ term_mouse_release(mod_keys mods, pos p)
       termline *line = fetch_line(p.y);
       if (!(line->attr & LATTR_WRAPPED)) {
         release_line(line);
+        moved_previously = false;
         return;
       }
       int cols = term.cols - ((line->attr & LATTR_WRAPPED2) != 0);
@@ -420,6 +425,7 @@ term_mouse_release(mod_keys mods, pos p)
     
     send_keys(forward ? "\e[C" : "\e[D", 3, count);
     
+    moved_previously = true;
     last_dest = dest;
   }
 }
