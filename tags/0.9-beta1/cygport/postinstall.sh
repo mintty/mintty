@@ -1,8 +1,7 @@
-{ PROGS=$(/bin/cygpath -AP)
-  /bin/mkdir -p "$PROGS/Cygwin" &&
-  /bin/mkshortcut -AP -n Cygwin/mintty -a - -d Terminal /bin/mintty.exe &&
+ALL=$CYGWINFORALL
+PROGS=$(/bin/cygpath -P $ALL)
+/bin/mkdir -p "$PROGS/Cygwin" &&
+/bin/mkshortcut -P $ALL -n Cygwin/mintty -a - -d Terminal /bin/mintty &&
+if [ "$ALL" ]; then
   /bin/chmod a+r "$PROGS/Cygwin/mintty.lnk"
-} ||
-{ /bin/mkdir -p "$(/bin/cygpath -P)/Cygwin" &&
-  /bin/mkshortcut -P -n Cygwin/mintty -a - -d Terminal /bin/mintty.exe
-}
+fi
