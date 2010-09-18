@@ -275,7 +275,7 @@ win_key_down(WPARAM wp, LPARAM lp)
 {
   uint key = wp;
 
-  if (key == VK_PROCESSKEY) {
+  if (key == VK_PROCESSKEY || key == 0xE7 /* VK_PACKET */) {
     TranslateMessage(
       &(MSG){.hwnd = wnd, .message = WM_KEYDOWN, .wParam = wp, .lParam = lp}
     );
