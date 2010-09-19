@@ -22,18 +22,6 @@
 
 static const char primary_da[] = "\e[?1;2c";
 
- /* The vt100 linedraw characters.
-  * Windows fonts don't tend to have the horizontal line characters at
-  * different levels (0x23BA..0x23BD), hence they've been replaced
-  * with approximations here (0x00af, 0x2500, 0x005f).
-  */
-static const wchar linedraw_chars[32] = {
-  0x2666, 0x2592, 0x2409, 0x240c, 0x240d, 0x240a, 0x00b0, 0x00b1,
-  0x2424, 0x240b, 0x2518, 0x2510, 0x250c, 0x2514, 0x253c, 0x00af,
-  0x2500, 0x2500, 0x2500, 0x005f, 0x251c, 0x2524, 0x2534, 0x252c,
-  0x2502, 0x2264, 0x2265, 0x03c0, 0x2260, 0x00a3, 0x00b7, 0x0020
-};
-
 static void sendf(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 static void sendf(const char *fmt, ...)
 {
@@ -1186,8 +1174,8 @@ term_write(const char *buf, uint len)
         
         switch(term.screen.curs.csets[term.screen.curs.g1]) {
           when CSET_LINEDRW:
-            if (0x60 <= wc && wc < 0x80)
-              wc = linedraw_chars[wc - 0x60];
+            if (0x60 <= wc && wc <= 0x7E)
+              wc = win_linedraw_chars[wc - 0x60];
           when CSET_GBCHR:
             if (c == '#')
               wc = 0xA3; // pound sign

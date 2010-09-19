@@ -24,6 +24,48 @@ LOGFONT lfont;
 static HFONT fonts[FONT_MAXNO];
 static int fontflag[FONT_MAXNO];
 
+enum {LDRAW_CHAR_NUM = 31, LDRAW_CHAR_TRIES = 4};
+
+// VT100 linedraw character mappings for current font.
+wchar win_linedraw_chars[LDRAW_CHAR_NUM];
+
+// Possible linedraw character mappings, in order of decreasing suitability.
+// The last resort for each is an ASCII character, which we assume will be
+// available in any font. 
+static const wchar linedraw_chars[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES] = {
+  {0x25C6, 0x2666, '*'},           // 0x60 '`' Diamond 
+  {0x2592, '#'},                   // 0x61 'a' Checkerboard (error)
+  {0x2409, 0x2192, 0x01AD, 't'},   // 0x62 'b' Horizontal tab
+  {0x240C, 0x21A1, 0x0192, 'f'},   // 0x63 'c' Form feed
+  {0x240D, 0x21B5, 0x027C, 'r'},   // 0x64 'd' Carriage return
+  {0x240A, 0x21B4, 0x019E, 'n'},   // 0x65 'e' Linefeed
+  {0x00B0, 'o'},                   // 0x66 'f' Degree symbol
+  {0x00B1, '~'},                   // 0x67 'g' Plus/minus
+  {0x2424, 0x21B4, 0x019E, 'n'},   // 0x68 'h' Newline
+  {0x240B, 0x2193, 0x028B, 'v'},   // 0x69 'i' Vertical tab
+  {0x2518, '+'},                   // 0x6A 'j' Lower-right corner
+  {0x2510, '+'},                   // 0x6B 'k' Upper-right corner
+  {0x250C, '+'},                   // 0x6C 'l' Upper-left corner
+  {0x2514, '+'},                   // 0x6D 'm' Lower-left corner
+  {0x253C, '+'},                   // 0x6E 'n' Crossing lines
+  {0x23BA, 0x203E, 0x00AF, '-'},   // 0x6F 'o' High horizontal line
+  {0x23BB, 0x203E, 0x00AF, '-'},   // 0x70 'p' Medium-high horizontal line
+  {0x2500, 0x2013, '-'},           // 0x71 'q' Middle horizontal line
+  {0x23BC, '_'},                   // 0x72 'r' Medium-low horizontal line
+  {0x23BF, '_'},                   // 0x73 's' Low horizontal line
+  {0x251C, '+'},                   // 0x74 't' Left "T"
+  {0x2524, '+'},                   // 0x75 'u' Right "T"
+  {0x2534, '+'},                   // 0x76 'v' Bottom "T"
+  {0x252C, '+'},                   // 0x77 'w' Top "T"
+  {0x2502, '|'},                   // 0x78 'x' Vertical bar
+  {0x2264, '#'},                   // 0x79 'y' Less than or equal to
+  {0x2265, '#'},                   // 0x7A 'z' Greater than or equal to
+  {0x03C0, '#'},                   // 0x7B '{' Pi
+  {0x2260, '#'},                   // 0x7C '|' Not equal to
+  {0x00A3, 'L'},                   // 0x7D '}' UK pound sign
+  {0x00B7, '.'},                   // 0x7E '~' Centered dot
+};
+
 enum bold_mode bold_mode;
 
 static enum {
@@ -141,14 +183,37 @@ win_init_fonts(void)
   font_width = tm.tmAveCharWidth + cfg.col_spacing;
   font_dualwidth = (tm.tmMaxCharWidth >= tm.tmAveCharWidth * 3 / 2);
   
+  // Determine whether ambiguous-width characters are wide in this font */
   float latin_char_width, greek_char_width, line_char_width;
   GetCharWidthFloatW(dc, 0x0041, 0x0041, &latin_char_width);
   GetCharWidthFloatW(dc, 0x03B1, 0x03B1, &greek_char_width);
   GetCharWidthFloatW(dc, 0x2500, 0x2500, &line_char_width);
-  
+
   font_ambig_wide =
     greek_char_width >= latin_char_width * 1.5 ||
     line_char_width  >= latin_char_width * 1.5;
+  
+  // Initialise VT100 linedraw character mappings.
+  if (!pGetGlyphIndicesW) {
+    // Can't tell what glyphs are available: default to proper Unicode mappings
+    for (uint i = 0; i < LDRAW_CHAR_NUM; i++)
+      win_linedraw_chars[i] = *linedraw_chars[i];
+  }
+  else {
+    // See what glyphs are available.
+    ushort glyphs[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES];
+    pGetGlyphIndicesW(dc, *linedraw_chars, LDRAW_CHAR_NUM * LDRAW_CHAR_TRIES,
+                      *glyphs, true);
+    
+    // For each character, try the list of possible mappings until either we
+    // find one that has a glyph in the font or we hit the ASCII fallback.
+    for (uint i = 0; i < LDRAW_CHAR_NUM; i++) {
+      uint j = 0;
+      while (linedraw_chars[i][j] >= 0x80 && glyphs[i][j] == 0xFFFF)
+        j++;
+      win_linedraw_chars[i] = linedraw_chars[i][j];
+    }
+  }
 
   fonts[FONT_UNDERLINE] = create_font(fw_dontcare, true);
 

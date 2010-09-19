@@ -89,6 +89,9 @@ load_funcs(void)
   pSetLayeredWindowAttributes =
     (void *)GetProcAddress(user, "SetLayeredWindowAttributes");
   
+  HMODULE gdi = GetModuleHandle("gdi32");
+  pGetGlyphIndicesW = (void *)GetProcAddress(gdi, "GetGlyphIndicesW");
+  
   char dwm_path[MAX_PATH];
   uint len = GetSystemDirectory(dwm_path, MAX_PATH);
   if (len && len < MAX_PATH - sizeof("\\dwmapi.dll")) {

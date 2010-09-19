@@ -49,4 +49,6 @@ bool win_is_glass_available(void);
 int get_tick_count(void);
 int cursor_blink_ticks(void);
 
+extern wchar win_linedraw_chars[31];
+
 #endif
