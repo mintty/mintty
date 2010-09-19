@@ -48,9 +48,9 @@ static const wchar linedraw_chars[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES] = {
   {0x250C, '+'},                   // 0x6C 'l' Upper-left corner
   {0x2514, '+'},                   // 0x6D 'm' Lower-left corner
   {0x253C, '+'},                   // 0x6E 'n' Crossing lines
-  {0x23BA, 0x203E, 0x00AF, '-'},   // 0x6F 'o' High horizontal line
-  {0x23BB, 0x203E, 0x00AF, '-'},   // 0x70 'p' Medium-high horizontal line
-  {0x2500, 0x2013, '-'},           // 0x71 'q' Middle horizontal line
+  {0x23BA, 0x00AF, '-'},           // 0x6F 'o' High horizontal line
+  {0x23BB, 0x00AF, '-'},           // 0x70 'p' Medium-high horizontal line
+  {0x2500, '-'},                   // 0x71 'q' Middle horizontal line
   {0x23BC, '_'},                   // 0x72 'r' Medium-low horizontal line
   {0x23BF, '_'},                   // 0x73 's' Low horizontal line
   {0x251C, '+'},                   // 0x74 't' Left "T"
@@ -209,7 +209,8 @@ win_init_fonts(void)
     // find one that has a glyph in the font or we hit the ASCII fallback.
     for (uint i = 0; i < LDRAW_CHAR_NUM; i++) {
       uint j = 0;
-      while (linedraw_chars[i][j] >= 0x80 && glyphs[i][j] == 0xFFFF)
+      while (linedraw_chars[i][j] >= 0x80 &&
+             (glyphs[i][j] == 0xFFFF || glyphs[i][j] == 0x1F))
         j++;
       win_linedraw_chars[i] = linedraw_chars[i][j];
     }
