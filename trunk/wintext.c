@@ -8,6 +8,8 @@
 #include "config.h"
 #include "minibidi.h"
 
+#include <winnls.h>
+
 enum {
   FONT_NORMAL     = 0,
   FONT_BOLD       = 1,
@@ -719,6 +721,17 @@ win_char_width(int uc)
   ibuf /= font_width;
 
   return ibuf;
+}
+
+/* Try to combine a base and combining character into a precomposed one.
+ * Returns 0 if unsuccessful.
+ */
+wchar
+win_combine_chars(wchar c, wchar cc)
+{
+  wchar cs[2];
+  int len = FoldStringW(MAP_PRECOMPOSED, (wchar[]){c, cc}, 2, cs, 2);
+  return len == 1 ? *cs : 0;
 }
 
 void

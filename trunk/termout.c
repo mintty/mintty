@@ -309,11 +309,9 @@ write_char(wchar c, int width)
       put_char(UCSWIDE);
     when 0:  // Combining character.
       if (curs->x > 0) {
-        int x = curs->x - 1;
        /* If we're in wrapnext state, the character
         * to combine with is _here_, not to our left. */
-        if (curs->wrapnext)
-          x++;
+        int x = curs->x - !curs->wrapnext;
        /*
         * If the previous character is
         * UCSWIDE, back up another one.
@@ -322,7 +320,12 @@ write_char(wchar c, int width)
           assert(x > 0);
           x--;
         }
-        add_cc(line, x, c);
+       /* Try to precompose with the cell's base codepoint */
+        wchar pc = win_combine_chars(line->chars[x].chr, c);
+        if (pc)
+          line->chars[x].chr = pc;
+        else
+          add_cc(line, x, c);
       }
       return;
     otherwise:  // Anything else. Probably shouldn't get here.
