@@ -8,7 +8,6 @@ void win_reconfig(void);
 void win_update(void);
 void win_schedule_update(void);
 
-int  win_char_width(int uc);
 void win_text(int, int, wchar *, int, uint, int);
 void win_update_mouse(void);
 void win_capture_mouse(void);
@@ -49,6 +48,8 @@ bool win_is_glass_available(void);
 int get_tick_count(void);
 int cursor_blink_ticks(void);
 
+int win_char_width(int uc);
+wchar win_combine_chars(wchar bc, wchar cc);
 extern wchar win_linedraw_chars[31];
 
 #endif
