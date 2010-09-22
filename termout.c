@@ -475,7 +475,7 @@ do_sgr(void)
         curs->attr |= ATTR_BOLD;
       when 2:  /* enable dim */
         curs->attr |= ATTR_DIM;
-      when 4 or 21:  /* enable underline */
+      when 4:  /* enable underline */
         curs->attr |= ATTR_UNDER;
       when 5:  /* enable blink */
         curs->attr |= ATTR_BLINK;
@@ -486,7 +486,7 @@ do_sgr(void)
       when 10 ... 12: /* OEM acs off */
         curs->oem_acs = term.esc_args[i] - 10;
         term_update_cs();
-      when 22: /* disable bold */
+      when 21 or 22: /* disable bold */
         curs->attr &= ~(ATTR_BOLD | ATTR_DIM);
       when 24: /* disable underline */
         curs->attr &= ~ATTR_UNDER;
