@@ -229,11 +229,15 @@ send_mouse_event(char code, mod_keys mods, pos p)
     else if (c < 0x80)
       buf[len++] = c;
     else if (c < 0x800) {
+      // In extended mouse mode, positions from 96 to 2015 are encoded as a
+      // two-byte UTF-8 sequence (as introduced in xterm #262.)
       buf[len++] = 0xC0 + (c >> 6);
       buf[len++] = 0x80 + (c & 0x3F);
     }
-    else
+    else {
+      // Xterm reports out-of-range positions as a NUL byte.
       buf[len++] = 0;
+    }
   }
   
   encode_coord(p.x);
