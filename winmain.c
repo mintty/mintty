@@ -160,23 +160,28 @@ win_set_zorder(bool top)
 /*
  *  Switch to next or previous application window in z-order
  */
+
+static HWND first_wnd, last_wnd;
+
+static BOOL CALLBACK
+wnd_enum_proc(HWND curr_wnd, LPARAM unused(lp)) {
+  if (curr_wnd != wnd && !IsIconic(curr_wnd)) {
+    WINDOWINFO curr_wnd_info;
+    curr_wnd_info.cbSize = sizeof(WINDOWINFO);
+    GetWindowInfo(curr_wnd, &curr_wnd_info);
+    if (class_atom == curr_wnd_info.atomWindowType) {
+      first_wnd = first_wnd ?: curr_wnd;
+      last_wnd = curr_wnd;
+    }
+  }
+  return true;
+}
+ 
 void
 win_switch(bool back)
 {
-  HWND first_wnd = 0, last_wnd;
-  BOOL CALLBACK enum_proc(HWND curr_wnd, LPARAM unused(lp)) {
-    if (curr_wnd != wnd && !IsIconic(curr_wnd)) {
-      WINDOWINFO curr_wnd_info;
-      curr_wnd_info.cbSize = sizeof(WINDOWINFO);
-      GetWindowInfo(curr_wnd, &curr_wnd_info);
-      if (class_atom == curr_wnd_info.atomWindowType) {
-        first_wnd = first_wnd ?: curr_wnd;
-        last_wnd = curr_wnd;
-      }
-    }
-    return true;
-  }
-  EnumWindows(enum_proc, 0);
+  first_wnd = 0, last_wnd = 0;
+  EnumWindows(wnd_enum_proc, 0);
   if (first_wnd) {
     if (back)
       first_wnd = last_wnd;
