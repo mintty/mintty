@@ -142,17 +142,18 @@ configuration.
 .SS Copy & paste
 
 Screen contents can be selected by holding down the left mouse button and
-dragging the mouse.
+dragging the mouse.  If Alt is held down before the left mouse button, a 
+rectangular block instead of whole lines will be selected.
 The selection can be extended by holding down \fBShift\fP while left-clicking.
 Double-clicking or triple-clicking selects a whole word or line, whereby word
 selection includes special characters that commonly appear in file names and
 URLs.
 
 By default, selected text is automatically copied to the clipboard.
-This can be disabled on on the \fBMouse\fP page of the options dialog.
+This can be disabled on the \fBMouse\fP page of the options dialog.
 Selected text can also be copied manually using either the \fBCopy\fP menu
 command, the \fBCtrl+Ins\fP keyboard shortcut, or the middle mouse button
-combined with \fBShift\fP.
+combined with \fBShift\fP. 
 
 The selected region is copied as "rich text" as well as normal text,
 which means it can be pasted with colours and formatting into applications
@@ -1475,6 +1476,15 @@ bindkey "^[[1;6I" prev
 \fP
 .fi
 .RE
+
+
+.SS Compose key
+
+Mintty uses the Windows keyboard layout system with its "dead key" mechanism
+for entering accented characters.  X11, on the other hand, has the compose key
+mechanism for this purpose.  The open source \fBAllChars\fP utility available
+from \fIhttp://allchars.zwolnet.com\fP can be used to emulate that approach
+on Windows.
 
 
 .SH LIMITATIONS
