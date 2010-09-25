@@ -154,8 +154,16 @@ term_open(void)
     return;
   clip_workbuf buf;
   get_selection(&buf);
-  win_open(buf.textbuf); // textbuf is freed by win_open
   free(buf.attrbuf);
+  
+  // Don't bother opening if it's all whitespace.
+  wchar *p = buf.textbuf;
+  while (iswspace(*p))
+    p++;
+  if (*p)
+    win_open(buf.textbuf); // textbuf is freed by win_open
+  else
+    free(buf.textbuf);
 }
 
 void
