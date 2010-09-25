@@ -138,7 +138,6 @@ static void
 sel_spread(void)
 {
   term.sel_start = sel_spread_half(term.sel_start, false);
-  decpos(term.sel_end);
   term.sel_end = sel_spread_half(term.sel_end, true);
   incpos(term.sel_end);
 }
@@ -160,7 +159,6 @@ sel_drag(pos selpoint)
       term.sel_start = term.sel_anchor;
       term.sel_end = selpoint;
     }
-    incpos(term.sel_end);
     sel_spread();
   }
   else {
@@ -330,7 +328,6 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
       term.selected = true;
       term.sel_rect = false;
       term.sel_start = term.sel_end = term.sel_anchor = p;
-      incpos(term.sel_end);
       sel_spread();
       win_update();
     }
@@ -350,7 +347,6 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
         term.selected = true;
         term.sel_rect = false;
         term.sel_start = term.sel_end = term.sel_anchor = p;
-        incpos(term.sel_end);
         sel_spread();
       }
       win_capture_mouse();
