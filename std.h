@@ -20,6 +20,7 @@
 #else
 int iswalnum(wint_t);
 int iswalpha(wint_t);
+int iswspace(wint_t);
 #endif
 
 #if CYGWIN_VERSION_API_MINOR < 70

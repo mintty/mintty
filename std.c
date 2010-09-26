@@ -48,6 +48,7 @@ asform(const char *fmt, ...)
 #if CYGWIN_VERSION_API_MINOR < 74
 int iswalnum(wint_t wc) { return wc < 0x100 && isalnum(wc); }
 int iswalpha(wint_t wc) { return wc < 0x100 && isalpha(wc); }
+int iswspace(wint_t wc) { return wc < 0x100 && isspace(wc); }
 #endif
 
 
