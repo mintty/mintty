@@ -1,5 +1,5 @@
-SRC_URI="http://mintty.googlecode.com/files/mintty-0.9-beta1-src.tar.bz2"
-SRC_DIR=mintty-0.9-beta1
+SRC_URI="http://mintty.googlecode.com/files/mintty-0.9-beta2-src.tar.bz2"
+SRC_DIR=mintty-0.9-beta2
 PKG_HINTS=setup
 _CYGPORT_RESTRICT_postinst_doc_=1
 
