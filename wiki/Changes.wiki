@@ -1,3 +1,6 @@
+#summary Notable changes in each released version
+#labels Featured
+
 === 0.9-beta2 (26 Sep 2010) ===
  * Fixed crash in Ctrl+Tab handling that showed up on some setups.
  * Handle VK_PACKET virtual key, to ensure compatibility with the !AllChars utility for emulating a Compose key on Windows.
@@ -78,7 +81,7 @@ Copy & paste:
  * Added 'Copy as rich text' option, which is on by default. Mintty always copied text both as plain text and as rich text, whereby the latter allows pasting with colours and formatting into applications that support it. Sometimes that's not what's wanted, hence the option.
  * Don't clear the selection when another program copies something to the clipboard.
  * In word selection, don't include dollar and percent signs at the start or end of a word. Do include plus and minus.
- * Added xterm bracketed paste mode, which allows programs to differentiate between keyboard input and pasted text. See [http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#Bracketed Paste Mode].
+ * Added xterm bracketed paste mode, which allows programs to differentiate between keyboard input and pasted text. See [http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#Bracketed%20Paste%20Mode].
 
 Input:
  * Added mintty-specific control sequence for enabling (`\e[7786h`) or disabling (`\e[7786l`) mousewheel reporting on the alternate screen. This is what allows mousewheel scrolling in 'less' and others. It's enabled by default.
@@ -119,7 +122,7 @@ Text display:
 
 Keyboard:
  * Ctrl+!AltGr combinations now work as they do in X11, for example, Ctrl+!AltGr+Q on a German keyboard yields `^@`, because !AltGr+Q yields @. (Thanks to Thomas Wolff for his help with this knotty issue.)
- * The AltGr key on non-US keyboards acts as a second Alt key in any key combinations that the Windows keyboard layout does not have a keycode for. This can be more convenient than the left Alt key.
+ * The !AltGr key on non-US keyboards acts as a second Alt key in any key combinations that the Windows keyboard layout does not have a keycode for. This can be more convenient than the left Alt key.
  * Ctrl+Shift combinations now send control characters in the C1 range (U+0080..U+009F), encoded in the selected charset. For example Ctrl+Shift+A will send 0x81 in any of the ISO charsets, and 0x92 followed by 0x81 in UTF-8. Where C1 control chars aren't supported, Ctrl+Shift combinations continue to send the same code as Ctrl+Alt combinations (i.e., ESC followed by `^A` in the case of Ctrl+Shift+A).
 
 Locales and charsets:
