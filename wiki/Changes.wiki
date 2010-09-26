@@ -1,6 +1,6 @@
 === 0.9-beta2 (26 Sep 2010) ===
  * Fixed crash in Ctrl+Tab handling that showed up on some setups.
- * Handle VK_PACKET virtual key, to ensure compatibility with the AllChars utility for emulating a Compose key on Windows.
+ * Handle VK_PACKET virtual key, to ensure compatibility with the !AllChars utility for emulating a Compose key on Windows.
  * Added automatic fallback scheme for VT100 line drawing characters. If appropriate Unicode characters aren't available in the selected font, ASCII approximations are used instead.
  * Changed the SGR 21 sequence from setting the underline attribute to selecting normal intensity, for compatibility with the Linux console. (Xterm ignored this one.)
  * Normalise incoming combining characters to the precomposed from, as xterm does. This makes them look better on screen.
@@ -13,13 +13,13 @@ Display issues:
  * The options dialog no longer flashes when changing page while transparency is enabled, as happened on non-Aero systems.
 
 Colours:
- * Added ability to set the 16 ANSI colours in the config file (or on the command line via the -o option), like so: 'Blue=0,0,255' or 'BoldGreen=128,255,128'. The manual has all the colour names.
- * Added ability to switch cursor colour depending on whether the Input Method Editor (IME) is active. This is activated by setting 'IMECursorColour' in the config file (or via the -o option). So, for example, adding 'IMECursorColour=255,0,0' to ~/.minttyrc will turn the cursor red when the IME is active. (IMEs allow entering characters that aren't on the keyboard and are crucial for East Asian languages.)
+ * Added ability to set the 16 ANSI colours in the config file (or on the command line via the -o option), like so: 'Blue=0,0,255' or '!BoldGreen=128,255,128'. The manual has all the colour names.
+ * Added ability to switch cursor colour depending on whether the Input Method Editor (IME) is active. This is activated by setting '!IMECursorColour' in the config file (or via the -o option). So, for example, adding '!IMECursorColour=255,0,0' to ~/.minttyrc will turn the cursor red when the IME is active. (IMEs allow entering characters that aren't on the keyboard and are crucial for East Asian languages.)
  * Renamed 'Show bold is bright' setting to 'Show bold as colour'.
- * Removed the 'Use system colours instead' checkbox from the options dialog. The 'UseSystemColours' config file setting remains.
+ * Removed the 'Use system colours instead' checkbox from the options dialog. The '!UseSystemColours' config file setting remains.
 
 Selection:
- * Added config-file only 'WordChars' setting for controlling the characters selected by a double click. By default, mintty uses an algorithm that's geared towards picking out filenames and URLs. If 'WordChars' is set, that algorithm is disabled, and instead only letters, digits, and the characters specified with this setting are selected. For example, setting 'WordChars=`_`' would ensure that C identifiers are picked out correctly.
+ * Added config-file only '!WordChars' setting for controlling the characters selected by a double click. By default, mintty uses an algorithm that's geared towards picking out filenames and URLs. If '!WordChars' is set, that algorithm is disabled, and instead only letters, digits, and the characters specified with this setting are selected. For example, setting '!WordChars=`_`' would ensure that C identifiers are picked out correctly.
  * Fixed a crash that occurred when copying lots of text on systems with a doublebyte default codepage.
 
 Xterm compatibility:
@@ -29,7 +29,7 @@ Xterm compatibility:
 
 Misc:
  * Alt+F4 prompts for exit confirmation if the shell has any child processes, as already happens with the close button. (There's an option for disabling this.)
- * Added a tip to the manual on how to use Ctrl[+Shift]+Tab to switch session in GNU screen.
+ * Added a tip to the manual on how to use Ctrl+Tab and Ctrl+Shift+Tab to switch session in GNU screen.
 
 === 0.8.3 (5 Sep 2010) ===
  * Guard against Windows DLL hijacking vulnerability.
@@ -78,7 +78,7 @@ Copy & paste:
  * Added 'Copy as rich text' option, which is on by default. Mintty always copied text both as plain text and as rich text, whereby the latter allows pasting with colours and formatting into applications that support it. Sometimes that's not what's wanted, hence the option.
  * Don't clear the selection when another program copies something to the clipboard.
  * In word selection, don't include dollar and percent signs at the start or end of a word. Do include plus and minus.
- * Added xterm bracketed paste mode, which allows programs to differentiate between keyboard input and pasted text. See http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#Bracketed Paste Mode
+ * Added xterm bracketed paste mode, which allows programs to differentiate between keyboard input and pasted text. See [http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#Bracketed Paste Mode].
 
 Input:
  * Added mintty-specific control sequence for enabling (`\e[7786h`) or disabling (`\e[7786l`) mousewheel reporting on the alternate screen. This is what allows mousewheel scrolling in 'less' and others. It's enabled by default.
@@ -94,7 +94,7 @@ Other:
  * Tweaked double-click selection and Ctrl-click opening to recognise URLs with parameters.
  * Added ability to kill the child process outright using SIGKILL instead of SIGHUP by holding down Shift while using the close button, Alt+F4 shortcut, or menu item.
  * Support maximized startup on Windows 7.
- * Fixed issue when copying text that caused black blocks to appear at the end of lines when pasting into some applications, e.g. WordPad.
+ * Fixed issue when copying text that caused black blocks to appear at the end of lines when pasting into some applications, e.g. Wordpad.
  * Fixed an issue with the left Ctrl key not being recognised when it was pressed while another window was active.
  * Keep the mintty window open showing an error message if invoking the shell or specified command fails.
  * Changed fallback shell back to /bin/sh.
@@ -115,10 +115,10 @@ Config-file handling:
 
 Text display:
  * Bold glyphs should no longer get clipped on the left edge, although depending on the size of the glyphs they might now get clipped on the right.
- * The ColSpacing and RowSpacing allow pixels to be added or removed between characters. Currently, these don't appear in the options dialog, i.e. they have to be specified in a config file or on the command line. ColSpacing=1 can avoid the problem with bold glyphs being clipped, whereas RowSpacing=-1 works nicely with the Consolas fonts, which normally leaves a bit too much space between lines. (Thanks to Paul Martin for the idea.)
+ * The !ColSpacing and !RowSpacing allow pixels to be added or removed between characters. Currently, these don't appear in the options dialog, i.e. they have to be specified in a config file or on the command line. !ColSpacing=1 can avoid the problem with bold glyphs being clipped, whereas !RowSpacing=-1 works nicely with the Consolas fonts, which normally leaves a bit too much space between lines. (Thanks to Paul Martin for the idea.)
 
 Keyboard:
- * Ctrl+AltGr combinations now work as they do in X11, for example, Ctrl+AltGr+Q on a German keyboard yields `^@`, because AltGr+Q yields @. (Thanks to Thomas Wolff for his help with this knotty issue.)
+ * Ctrl+!AltGr combinations now work as they do in X11, for example, Ctrl+!AltGr+Q on a German keyboard yields `^@`, because !AltGr+Q yields @. (Thanks to Thomas Wolff for his help with this knotty issue.)
  * The AltGr key on non-US keyboards acts as a second Alt key in any key combinations that the Windows keyboard layout does not have a keycode for. This can be more convenient than the left Alt key.
  * Ctrl+Shift combinations now send control characters in the C1 range (U+0080..U+009F), encoded in the selected charset. For example Ctrl+Shift+A will send 0x81 in any of the ISO charsets, and 0x92 followed by 0x81 in UTF-8. Where C1 control chars aren't supported, Ctrl+Shift combinations continue to send the same code as Ctrl+Alt combinations (i.e., ESC followed by `^A` in the case of Ctrl+Shift+A).
 
@@ -142,7 +142,7 @@ Misc:
 
 === 0.5.7 (26 Jan 2010) ===
  * Ctrl+slash now sends `^_` as in xterm.
- * New --class command line option allows to change the name of mintty's window class. That can make it easier to distinguish different mintty windows in scripting tools like AutoHotKey.
+ * New --class command line option allows to change the name of mintty's window class. That can make it easier to distinguish different mintty windows in scripting tools like !AutoHotKey.
  * Dim mode is no longer limited to the 16 basic colours.
  * Drop long path prefix ('\\?\') from Windows paths when opening files or directories. Some programs couldn't deal with those properly.
  * Bring the charset support into line with upcoming changes in Cygwin 1.7.2: use nl_langinfo(CODESET) instead of making assumptions about locales without explicit charsets, and allow three-letter language codes.
@@ -152,14 +152,14 @@ Misc:
  * Fixed handling of right Alt key on US keyboards, which was broken in 0.5.5.
  * Changed the dim text attribute implementation to blend foreground and background colour, but only when the "Show bold as bright" option is off. This yields better results with black-on-white colour schemes.
  * Added support for decimal colour values in colour setting sequences, e.g. `\e]10;255,255,0\a`.
- * When Ctrl is pressed together with a digit or symbol key, check whether Shift+key yields a character corresponding to a control char (after first trying the plain char followed by AltGr+key). For example, Ctrl+6 on a US keyboard will now send `^^` (0x1E), because Shift+6 is `^`. This is for compatibility with the console.
+ * When Ctrl is pressed together with a digit or symbol key, check whether Shift+key yields a character corresponding to a control char (after first trying the plain char followed by !AltGr+key). For example, Ctrl+6 on a US keyboard will now send `^^` (0x1E), because Shift+6 is `^`. This is for compatibility with the console.
 
 === 0.5.5 (22 Dec 2009) ===
  * Extended the --icon option to be able to load the program icon from executables and DLLs as well as .ICO files. An icon index can also be specified, e.g. '--icon C:/Windows/explorer.exe,6'.
  * Added 'Use system colours' checkbox for overriding the colour settings with the standard Windows text and background colours (usually black-on-white, as seen e.g. in notepad).
  * The 'Opaque when focused' setting now applies in glass transparency mode too.
  * Implemented dim and invisible text attributes as specified in ECMA-48. These are selected with the `\e[2m` and `\e[8m` sequences.
- * Fixed the 'Ctrl+LeftAlt is AltGr' setting, which was applied the wrong way round.
+ * Fixed the 'Ctrl+!LeftAlt is !AltGr' setting, which was applied the wrong way round.
 
 === 0.5.4 (21 Nov 2009) ===
  * Reintroduced options for setting the TERM variable and `^E` answerback. (They're on the 'Output' page of the options dialog.)
@@ -188,7 +188,7 @@ Misc:
 Keyboard:
  * The default backspace keycode now is `^?` rather than `^H`, to make Ctrl+H available as a shortcut for other purposes, particularly as the help key in emacs. The backspace keycode option is gone. Instead, the DECBKM control sequence for changing the backspace keycode is now supported.
  * The escape keycode option was replaced with a mintty-specific control sequence: `\e[?7728h` to switch to `^\`, and `\e[?7728l` for standard `^[`.
- * Added 'Ctrl+Alt is AltGr' option. This is on by default, for standard Windows behaviour. If switched off, Ctrl+LeftAlt is treated separately from AltGr.
+ * Added 'Ctrl+Alt is !AltGr' option. This is on by default, for standard Windows behaviour. If switched off, Ctrl+!LeftAlt is treated separately from !AltGr.
  * The backspace keycode change means that the default Ctrl+Backspace code also changes, from `^?` to `^_`. Any keybindings in .inputrc and elsewhere will need to be adjusted accordingly.
 
 Scrollback:
@@ -230,7 +230,7 @@ Other:
 
 === 0.4.2 (28 Jun 2009) ===
  * Fixed a rather bad bug that meant that the ISO-8859-1 codepage was used for output in non-Unicode mode no matter the codepage setting.
- * Fixed erroneous NumLock detection, which broke numpad support in 'orpie'.
+ * Fixed erroneous !NumLock detection, which broke numpad support in 'orpie'.
  * Fixed a problem with window resizing (again): after restoring from maximized state, part of the bottom line would disappear behind the window border.
  * The colour of text under a block cursor now is set to whichever of the foreground and background colours is further away (in colour space) from the cursor colour, to try to ensure legibility.
  * Dropped support for C1 control characters (i.e. 0x80 to 0x9F). This is a VT220 feature, whereas MinTTY only claims to be a VT100  via its "primary device attribute" string. Removing support makes Cygwin's /bin/ascii utility work correctly with any 8-bit codepage and decreases the likelihood of accidental binary output messing up the terminal settings. Rxvt doesn't support the C1 control characters either, but xterm does. Please let me know of any applications where this incompatibility causes problems.
@@ -242,8 +242,8 @@ Other:
  * The window title can now include characters from the full Unicode range rather than being limited to the system's ANSI codepage.
  * When resizing the window, the sizetip moves with the upper left corner of the window rather than being marooned at its original position.
  * Added one pixel of padding inside the window border to stop characters from touching it. (PuTTY had that, but I'd unwisely removed it.)
- * Alt+Numpad codes work when NumLock is off as well. In UTF-8 mode, Alt+1 to Alt+31 are interpreted as graphical OEM characters, e.g. Alt+3 is ♥ and Alt+1 is ☺.
- * Alt works as the Meta modifier for AltGr combinations, e.g. Alt+AltGr+7 on a German keyboard now sends `^[{` rather than just `{`.
+ * Alt+Numpad codes work when !NumLock is off as well. In UTF-8 mode, Alt+1 to Alt+31 are interpreted as graphical OEM characters, e.g. Alt+3 is ♥ and Alt+1 is ☺.
+ * Alt works as the Meta modifier for !AltGr combinations, e.g. Alt+!AltGr+7 on a German keyboard now sends `^[{` rather than just `{`.
  * Added Xterm window focus reporting. (`^[[?1004h` to enable, `^[[?1004l` disable. `^[[I` is sent for focus in and `^[[O` for focus out.)
  * Applications can ask to be notified when the width of the "CJK Ambiguous Width" characters changes due to the user changing font. `^[[?7700h` to enable, `^[[?7700l` to disable. ^[[1W is sent for cjknarrow mode, and `^[[2W` for cjkwide mode. Removed attempted SIGWINCH notification for the same purpose, because it didn't work.
  * Bell overload detection wasn't working, but I decided to remove it instead of fixing it and to switch off the bell in the default config, because I'm guessing most people don't want to be beeped or flashed at by their terminal anyway.
@@ -262,7 +262,7 @@ Other:
  * The exit confirmation dialog when there are child processes can be disabled.
  * A utmp entry is created only if requested using the new --utmp option. (This is because utmp logging seems to often hang for about half a minute on Windows 7, for whatever reason.)
  * Decreasing the window size once again crops lines, because the attempted fix for this turned out to have a bug.
- * As is standard on Windows, AltGr now is always treated the same as Ctrl+Alt.
+ * As is standard on Windows, !AltGr now is always treated the same as Ctrl+Alt.
  * The control sequences sent by the mousewheel outside application mouse mode have changed. The previous scheme that tied the encoding to the "modifier for scrolling with cursor keys" was a bad idea, because it meant that the configuration of any program using it had to change depending on that setting.
  * MinTTY now has its own identity, instead of pretending to be an old xterm. The `^E` answerback string is "mintty", the `^[[c` primary device attribute command reports a vt100, and the `^[[>c` secondary DA command reports terminal type 77 (ASCII 'M') and version 400. The TERM variable remains set to "xterm", to avoid termcap/terminfo trouble.
  * Applications can get the whole numpad to send "application keypad mode" sequences by enabling "DECKPAM" and disabling "DECCKM". This diverges from xterm's behaviour in its default "PC-style function key" setting, but allows applications to tell numpad keys apart from their equivalents on the small keypads.
