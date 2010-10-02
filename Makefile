@@ -44,7 +44,7 @@ $(exe): $(objs)
 	-du -b $@
 
 src = $(dir)-src.tar.bz2
-doc = $(dir).pdf
+pdf = $(dir).pdf
 bz2 = $(dir).exe.bz2
 
 cygwin17 = $(dir)-cygwin17.zip
@@ -55,7 +55,7 @@ cygwin17: $(cygwin17)
 cygwin15: $(cygwin15)
 msys: $(msys)
 src: $(src)
-doc: $(doc)
+doc: $(pdf) docs/$(name).1.html
 bz2: $(bz2)
 
 $(bz2): $(exe)
@@ -89,7 +89,7 @@ $(src): $(srcs)
 	tar cjf $@ $(dir)
 	rm -rf $(dir)
 
-$(doc): docs/$(name).1.pdf
+$(pdf): docs/$(name).1.pdf
 	cp $< $@
 
 %.o %.d: %.c
@@ -101,8 +101,11 @@ $(doc): docs/$(name).1.pdf
 %.1.pdf: %.1
 	groff -t -man -Tps $< | ps2pdf - $@
 
+%.1.html: %.1
+	groff -t -man -Thtml $< >$@
+
 clean:
-	rm -f *.d *.o *.exe *.zip *.bz2 *.stackdump *.pdf docs/*.pdf
+	rm -f *.d *.o *.exe *.zip *.bz2 *.pdf docs/$(name).1.*
 
 .PHONY: cygwin17 cygwin15 msys src src doc clean
 
