@@ -99,7 +99,7 @@ Number and symbol key combinations that are not handled either by the Windows ke
 
 Cursor keycodes without modifier keys depend on whether "application cursor key mode" (controlled by the [http://vt100.net/docs/vt510-rm/DECCKM DECCKM] sequence) is enabled. Application cursor mode is ignored if any modifier keys are down, and the modifier code is inserted into the keycode as shown.
 
-By default, the [http://en.wikipedia.org/wiki/Home_key Home] and [http://en.wikipedia.org/wiki/End_key End] keys are considered cursor keys. If VT220 keyboard mode is enabled, they are treated as [KeyCodes#Editing-keys editing keys] instead. See the next section for their keycodes in that case.
+By default, the [http://en.wikipedia.org/wiki/Home_key Home] and [http://en.wikipedia.org/wiki/End_key End] keys are considered cursor keys. If VT220 keyboard mode is enabled, they are treated as [Keycodes#Editing-keys editing keys] instead. See the next section for their keycodes in that case.
 
 || *Key*   || *plain* || *app*  || *modified*    ||
 || *Up*    || `^[[A`  || `^[OA` || `^[[1;`_m_`A` ||
@@ -122,7 +122,7 @@ There is no special application mode for the keys in the block that's usually ab
 || *Home*  || `^[[1~` || `^[[1;`_m_`~` ||
 || *End*   || `^[[4~` || `^[[4;`_m_`~` ||
 
-As mentioned in the [KeyCodes#Cursor-keys cursor keys] section, the Home and End keycodes shown here are only used if VT220 keyboard mode is enabled.
+As mentioned in the [Keycodes#Cursor-keys cursor keys] section, the Home and End keycodes shown here are only used if VT220 keyboard mode is enabled.
 
 
 == Function keys ==
@@ -161,6 +161,6 @@ The Windows [http://en.wikipedia.org/wiki/Alt_code Alt+Numpad method] for enteri
 
 == Mousewheel ==
 
-In xterm [http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#Mouse%20Tracking mouse tracking] modes, the mousewheel is treated is a pair of mouse buttons. However, the mousewheel can also be used for scrolling in applications such as *[http://www.greenwoodsoftware.com/less less]* that do not support xterm mouse reporting but that do use the alternate screen. Under those circumstances, mousewheel events are encoded as cursor up/down and page up/down keys. See the sections on the [KeyCodes#Cursor-keys cursor keys] and [KeyCodes#Editing-keys editing keys] for details.
+In xterm [http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#Mouse%20Tracking mouse tracking] modes, the mousewheel is treated is a pair of mouse buttons. However, the mousewheel can also be used for scrolling in applications such as *[http://www.greenwoodsoftware.com/less less]* that do not support xterm mouse reporting but that do use the alternate screen. Under those circumstances, mousewheel events are encoded as cursor up/down and page up/down keys. See the sections on the [Keycodes#Cursor-keys cursor keys] and [Keycodes#Editing-keys editing keys] for details.
 
 The number of line up/down events sent per mousewheel notch depends on the relevant Windows setting on the _Wheel_ tab of the _Mouse_ control panel. Page up/down codes can be sent by holding down _Shift_ while scrolling. The Windows wheel setting can also be set to always scroll by a whole screen at a time.
