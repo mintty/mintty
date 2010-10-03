@@ -3,7 +3,7 @@
 
 === 0.9.1 (3 Oct 2010) ===
 Documentation:
- * Turned some man page sections into wiki pages (at http://code.google.com/p/mintty/w): keycodes, control sequences, and tips. 
+ * Turned some man page sections into wiki pages (at [http://code.google.com/p/mintty/w]): keycodes, control sequences, and tips. 
  * Added a tip on how to use Ctrl+Tab and Ctrl+Shift+Tab to switch session in GNU screen.
  * Added a wiki page with past changes and one listing PuTTY issues that are addressed in mintty.
 
