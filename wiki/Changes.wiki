@@ -1,38 +1,40 @@
 #summary Notable changes in each released version
 #labels Featured
 
-=== 0.9-beta2 (26 Sep 2010) ===
- * Fixed crash in Ctrl+Tab handling that showed up on some setups.
- * Handle VK_PACKET virtual key, to ensure compatibility with the !AllChars utility for emulating a Compose key on Windows.
- * Added automatic fallback scheme for VT100 line drawing characters. If appropriate Unicode characters aren't available in the selected font, ASCII approximations are used instead.
- * Changed the SGR 21 sequence from setting the underline attribute to selecting normal intensity, for compatibility with the Linux console. (Xterm ignored this one.)
- * Normalise incoming combining characters to the precomposed from, as xterm does. This makes them look better on screen.
+=== 0.9.1 (3 Oct 2010) ===
+Documentation:
+ * Turned some man page sections into wiki pages (at http://code.google.com/p/mintty/w): keycodes, control sequences, and tips. 
+ * Added a tip on how to use Ctrl+Tab and Ctrl+Shift+Tab to switch session in GNU screen.
+ * Added a wiki page with past changes and one listing PuTTY issues that are addressed in mintty.
 
-=== 0.9-beta1 (10 Sep 2010) ===
 Display issues:
  * On multimonitor systems, the window size is no longer limited to the size of a single monitor.
- * The program window should no longer be opened with parts off the screen or obscured by the taskbar (unless of course the window is too big too fit into the available workspace).
+ * The program window should no longer be opened with parts off the screen or obscured by the taskbar (unless of course the window is too big to fit into the available workspace).
  * Fixed an issue with cursor flicker on Vista and 7 with Aero disabled.
  * The options dialog no longer flashes when changing page while transparency is enabled, as happened on non-Aero systems.
+ * Added automatic fallback scheme for VT100 line drawing characters. If appropriate Unicode characters aren't available in the selected font, ASCII approximations are used instead.
 
 Colours:
- * Added ability to set the 16 ANSI colours in the config file (or on the command line via the -o option), like so: 'Blue=0,0,255' or '!BoldGreen=128,255,128'. The manual has all the colour names.
- * Added ability to switch cursor colour depending on whether the Input Method Editor (IME) is active. This is activated by setting '!IMECursorColour' in the config file (or via the -o option). So, for example, adding '!IMECursorColour=255,0,0' to ~/.minttyrc will turn the cursor red when the IME is active. (IMEs allow entering characters that aren't on the keyboard and are crucial for East Asian languages.)
- * Renamed 'Show bold is bright' setting to 'Show bold as colour'.
- * Removed the 'Use system colours instead' checkbox from the options dialog. The '!UseSystemColours' config file setting remains.
+ * Added ability to set the 16 ANSI colours in the config file (or on the command line via the -o option), like so: `Blue=0,0,255` or `BoldGreen=128,255,128`. The manual has all the colour names.
+ * Added ability to switch cursor colour depending on whether the Input Method Editor (IME) is active. This is activated by setting _IMECursorColour_ in the config file (or via the -o option). So, for example, adding `IMECursorColour=255,0,0` to _~/.minttyrc_ will turn the cursor red when the IME is active. (IMEs allow entering characters that aren't on the keyboard and are crucial for East Asian languages.)
+ * Renamed _Show bold is bright_ setting to _Show bold as colour_.
+ * Removed the _Use system colours instead_ checkbox from the options dialog. The _!UseSystemColours_ config file setting remains.
 
 Selection:
- * Added config-file only '!WordChars' setting for controlling the characters selected by a double click. By default, mintty uses an algorithm that's geared towards picking out filenames and URLs. If '!WordChars' is set, that algorithm is disabled, and instead only letters, digits, and the characters specified with this setting are selected. For example, setting '!WordChars=`_`' would ensure that C identifiers are picked out correctly.
+ * Added config-file only _!WordChars_ setting for controlling the characters selected by a double click. By default, mintty uses an algorithm that's geared towards picking out filenames and URLs. If !WordChars is set, that algorithm is disabled, and instead only letters, digits, and the characters specified with this setting are selected. For example, setting `WordChars=_` would ensure that C identifiers are picked out correctly.
  * Fixed a crash that occurred when copying lots of text on systems with a doublebyte default codepage.
 
 Xterm compatibility:
  * Added support for xterm's VT220-style function key mode (as opposed to the default "PC-style" keycodes), where Ctrl+F3 through Ctrl+F10 act as F13 through F20, the Home and End keys send different keycodes, and the numpad sends "application keypad" codes if enabled with the DECPAM sequence.
  * In mouse tracking mode, concurrent mouse button presses are now handled in the same way as they are in xterm, i.e. mintty no longer sends a fake mouse release event when the second button is pressed.
  * 'Extended Mouse Mode' as introduced in xterm #262 is now supported. This allows row/column positions greater than 255 (and up to 2015) to be reported, in case you do get that 30'' monitor ...
+ * Normalise incoming combining characters to the precomposed from, as xterm does. This makes them look better on screen.
 
 Misc:
+ * Fixed crash in Ctrl+Tab handling that showed up on some setups.
+ * Handle VK_PACKET virtual key, to ensure compatibility with the _!AllChars_ utility for emulating a Compose key on Windows.
  * Alt+F4 prompts for exit confirmation if the shell has any child processes, as already happens with the close button. (There's an option for disabling this.)
- * Added a tip to the manual on how to use Ctrl+Tab and Ctrl+Shift+Tab to switch session in GNU screen.
+ * Changed the SGR 21 sequence from setting the underline attribute to selecting normal intensity, for compatibility with the Linux console. (Xterm ignores this one.)
 
 === 0.8.3 (5 Sep 2010) ===
  * Guard against Windows DLL hijacking vulnerability.
