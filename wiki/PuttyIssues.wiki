@@ -1,4 +1,4 @@
-#summary PuTTY issues addressed by mintty
+#summary PuTTY issues addressed in mintty
 
 Mintty addresses the following PuTTY bugs and wishes from the list at http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist, some of them only partially. Many of the issues on that list regard PuTTY's networking functions, which of course no longer apply to mintty.
 
@@ -18,7 +18,7 @@ Semi-bugs:
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/dbcs-breakage.html dbcs-breakage]: Double-byte charsets such as GBK or SJIS work fine.
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/scroll-button-hang.html scroll-button-hang]: Mouse click and scrollwheel handling has been redesigned and this issue has not been seen with mintty.
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/sgr21.html sgr21]: The SGR 21 sequence does the same as in the Linux console, i.e. selecting normal text intensity.
- * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/window-placement.html window-placement]: Initial window placement follows default Windows behaviour (by using AdjustWindowRect and GetWindowDC(0) as suggested).
+ * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/window-placement.html window-placement]: Initial window placement follows default Windows behaviour (by using !AdjustWindowRect and GetWindowDC(0) as suggested).
 
 "Fun" wishes:
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/autoscroll-accel.html autoscroll-accel]: Scrolling speed during selections is proportional to how far the mouse pointer is outside the window.
@@ -28,8 +28,8 @@ Semi-bugs:
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/cmdline-any-option.html cmdline-any-option]: All config-file settings can be specified on the command line via the -o option.
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/config-inheritance.html config-inheritance]: This is sort-of implemented through the ability to specify multiple config files on the command line.
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/config-locations.html config-locations]: Mintty stores its configuration in a file rather than the registry.
- * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/right-alt.html right-alt]: The right Alt/AltGr key acts as AltGr when the keyboard layout assigns a character to the key combination being pressed. Otherwise, it acts as a second Alt key.
- * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/unicode-mappings.html unicode-mappings]: The Unicode hyphen character (U+2010) is mapped to ASCII hyphen/minus on display. This should probably depend on whether the glyph is really missing from the font though (e.g. using GetGlyphIndices).
+ * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/right-alt.html right-alt]: The right Alt/!AltGr key acts as !AltGr when the keyboard layout assigns a character to the key combination being pressed. Otherwise, it acts as a second Alt key.
+ * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/unicode-mappings.html unicode-mappings]: The Unicode hyphen character (U+2010) is mapped to ASCII hyphen/minus on display. This should probably depend on whether the glyph is really missing from the font though (e.g. using !GetGlyphIndices).
 
 "Fun" unsure wishes:
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/env-passthrough.html env-passthrough]: All environment variables are passed through to the child process, except that TERM and possibly LANG are set. This isn't optional though.

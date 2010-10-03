@@ -1,4 +1,4 @@
-#summary Tips on setting up mintty and some other programs
+#summary Tips on setting up mintty and related programs
 #labels Featured
 
 <wiki:toc>

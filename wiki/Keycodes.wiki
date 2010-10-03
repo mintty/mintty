@@ -1,5 +1,4 @@
 #summary Character sequences sent by keys in mintty
-#labels Featured
 
 <wiki:toc/>
 
