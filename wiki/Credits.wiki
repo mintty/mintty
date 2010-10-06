@@ -1,0 +1,20 @@
+#summary Distinguished contributors
+
+Thanks to everyone who has contributed to mintty in some way, in particular:
+
+ * [http://www.chiark.greenend.org.uk/~sgtatham Simon Tatham] and the [http://www.chiark.greenend.org.uk/~sgtatham/putty/team.html PuTTY team]. Mintty is based on PuTTY's terminal emulation and Windows frontend parts.
+ * Mark Edgar, author of the [http://code.google.com/p/puttycyg PuTTYcyg] patch for using PuTTY as a Cygwin terminal, which provided much inspiration. Mintty actually started as a hacked PuTTYcyg (although its code for hooking into Cygwin was fully replaced along the way).
+ * [http://www.kde.org KDE]'s [http://www.oxygen-icons.org Oxygen] team, for the sleek program icon (which was designed for [http://konsole.kde.org Konsole]).
+ * [http://www.cl.cam.ac.uk/~mgk25 Markus Kuhn], for his free [http://www.cl.cam.ac.uk/~mgk25/unicode.html advice], [http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c code] and [http://www.cl.cam.ac.uk/~mgk25/ucs/examples tests] for supporting Unicode.
+ * Ahmad Khalifa, for PuTTY's [http://en.wikipedia.org/wiki/Bi-directional_text BiDI] (bi-directional text) implementation.
+ * [http://invisible-island.net Thomas Dickey], for setting the de-facto terminal standard for Unix terminals with [http://invisible-island.net/xterm/xterm.html xterm], documenting it in [visible-island.net/xterm/ctlseqs/ctlseqs.html lots of detail], and being very responsive to questions and suggestions.
+ * The authors of Cygwin's [http://sourceforge.net/projects/rxvt rxvt], particularly Chuck Wilson, who adapted it to use Win32 directly instead of requiring an X server. While no longer developed, rxvt remains an important reference for how a Cygwin terminal should work.
+ * Corinna Vinschen, for Cygwin 1.7's locale and charset implementation, which allowed mintty to gain a crucial advantage over rxvt: Unicode support.
+ * Chris Faylor, for the Cygwin pty implementation, which mintty very much depends on, especially for its speed.
+ * Murray Anderson, Andrew Aylett, and Alexander Noack: mintty's earliest adopters, who helped to find and fix the most egregious bugs before mintty was announced to the Cygwin world.
+ * Yaakov Selkowitz, for creating mintty's initial Cygwin [http://cygwin.com/setup.exe setup.exe] package and the cygport tool that is used to build it.
+ * Lee D. Rothstein, for his help in writing a man page for mintty.
+ * Thomas Wolff, author of the [http://towo.net/mined mined] Unicode editor, for lots of much-needed help in improving mintty's terminal emulation and locale support and making it more xterm-compatible.
+ * Chris Sutcliffe, for packaging mintty for MSYS, and always testing the latest broken svn versions.
+ * Iwamuro Motonori, for valuable advice regarding support for East Asian languages.
+ * The many users who have helped to improve mintty by reporting bugs and suggesting enhancements.
