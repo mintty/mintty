@@ -11,7 +11,8 @@ exe := $(name).exe
 dir := $(name)-$(version)
 
 srcs := $(wildcard Makefile *.c *.h *.rc *.mft icon/*.ico icon/*.png)
-srcs += $(wildcard COPYING LICENSE* INSTALL docs/* scripts/*)
+srcs += $(wildcard COPYING LICENSE* INSTALL)
+srcs += $(wildcard docs/mintty.1 docs/readme*.html scripts/*)
 
 c_srcs := $(wildcard *.c)
 rc_srcs := $(wildcard *.rc)
@@ -55,7 +56,7 @@ cygwin17: $(cygwin17)
 cygwin15: $(cygwin15)
 msys: $(msys)
 src: $(src)
-doc: $(pdf) docs/$(name).1.html
+pdf: $(pdf)
 bz2: $(bz2)
 
 $(bz2): $(exe)
@@ -101,17 +102,14 @@ $(pdf): docs/$(name).1.pdf
 %.1.pdf: %.1
 	groff -t -man -Tps $< | ps2pdf - $@
 
-%.1.html: %.1
-	groff -t -man -Thtml $< >$@
-
 clean:
 	rm -f *.d *.o *.exe *.zip *.bz2 *.pdf docs/$(name).1.*
 
-.PHONY: cygwin17 cygwin15 msys src src doc clean
+.PHONY: cygwin17 cygwin15 msys src pdf clean
 
 ifneq ($(MAKECMDGOALS),clean)
-ifneq ($(MAKECMDGOALS),doc)
 ifneq ($(MAKECMDGOALS),src)
+ifneq ($(MAKECMDGOALS),pdf)
 include $(deps)
 endif
 endif
