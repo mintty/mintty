@@ -822,9 +822,9 @@ main(int argc, char *argv[])
   struct passwd *pw = getpwuid(getuid());
 #endif
   
-  home = home ?:
+  home = home ? strdup(home) :
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
-    (pw && pw->pw_dir && *pw->pw_dir) ? pw->pw_dir :
+    (pw && pw->pw_dir && *pw->pw_dir) ? strdup(pw->pw_dir) :
 #endif
     asform("/home/%s", getlogin());
 
@@ -914,10 +914,11 @@ main(int argc, char *argv[])
     cmd = *argv;
   else {
     // Look up the user's shell.
-    cmd =
-      getenv("SHELL") ?:
+    cmd = getenv("SHELL");
+
+    cmd = cmd ? strdup(cmd) :
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
-      (pw && pw->pw_shell && *pw->pw_shell) ? pw->pw_shell :
+      (pw && pw->pw_shell && *pw->pw_shell) ? strdup(pw->pw_shell) :
 #endif
       "/bin/sh";
     char *slash = strrchr(cmd, '/');
