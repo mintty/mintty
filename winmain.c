@@ -815,13 +815,14 @@ main(int argc, char *argv[])
   uint rows = 0, cols = 0;
   wchar *class_name = _W(APPNAME);
   
+  home = getenv("HOME");
+
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
   // Before Cygwin 1.5, the passwd structure is faked.
   struct passwd *pw = getpwuid(getuid());
 #endif
   
-  home =
-    getenv("HOME") ?:
+  home = home ?:
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
     (pw && pw->pw_dir && *pw->pw_dir) ? pw->pw_dir :
 #endif
