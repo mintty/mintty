@@ -377,12 +377,22 @@ child_conv_path(const wchar *wpath)
   }
   else if (*path != '/') {
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
-    // Handle relative paths. This requires the /proc filesystem to find the
-    // child process working directory, which isn't available before Cygwin 1.5.
-    char proc_cwd[32];
-    sprintf(proc_cwd, "/proc/%u/cwd", pid);
-    char *cwd = realpath(proc_cwd, 0);
-    exp_path = cwd ? asform("%s/%s", cwd, path) : path;
+    // Handle relative paths. Finding the foreground process working directory
+    // requires the /proc filesystem, which isn't available before Cygwin 1.5.
+    
+    // Find pty's foreground process, if any. Fall back to child process.
+    int fg_pid = (pty_fd >= 0) ? tcgetpgrp(pty_fd) : 0;
+    if (fg_pid <= 0)
+      fg_pid = pid;
+    
+    char *cwd = 0;
+    if (fg_pid > 0) {
+      char proc_cwd[32];
+      sprintf(proc_cwd, "/proc/%u/cwd", fg_pid);
+      cwd = realpath(proc_cwd, 0);
+    }
+    
+    exp_path = asform("%s/%s", cwd ?: home, path);
     free(cwd);
 #else
     // If we're lucky, the path is relative to the home directory.
