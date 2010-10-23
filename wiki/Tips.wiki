@@ -11,8 +11,6 @@ Shortcuts are also a convenient way to start mintty with additional options and 
 
  Target: `C:\Cygwin\bin\mintty.exe /bin/ssh server`
 
-The working directory for the session can be set in the _Start In_ field. (But note that the bash login profile cd's to the user's home directory.) Another convenient feature of shortcuts is the ability to assign global shortcut keys.
-
 The *[http://www.cygwin.com/cygwin-ug-net/using-effectively.html#using-cygutils cygutils]* package provides the *mkshortcut* utility for creating shortcuts from the command line. See its manual page for details.
 
 
@@ -48,6 +46,15 @@ The *[http://www.opengroup.org/onlinepubs/9699919799/utilities/env.html env]* ut
 
 {{{
 mintty /bin/env DISPLAY=:0 /bin/ssh -X server
+}}}
+
+
+== Starting in a particular directory ==
+
+The working directory for a mintty session can be set in the _Start In_ field of a shortcut, or by changing directory in an invoking script. Note, however, that Cygwin's _/etc/profile_ script for login shells automatically changes to the user's home directory. The profile script can be told not to do this by setting a variable called _CHERE_INVOKING_, like this:
+
+{{{
+mintty /bin/env CHERE_INVOKING=1 /bin/bash -l
 }}}
 
 
@@ -134,7 +141,7 @@ let &t_te.="\e[0 q"
 
 == Avoiding escape timeout issues in vim ==
 
-A historical flaw of Unix terminals is that the keycode of the escape key, i.e. the escape character, also appears at the start of many other keycodes. This means that on seeing an escape character, an application cannot be sure whether to treat it as an escape key press or whether to expect more characters to complete a longer keycode.
+It's a historical flaw of Unix terminals that the keycode of the escape key, i.e. the escape character, also appears at the start of many other keycodes. This means that on seeing an escape character, an application cannot be sure whether to treat it as an escape key press or whether to expect more characters to complete a longer keycode.
 
 Therefore they tend to employ a timeout to decide. The delay on the escape key can be annoying though, particularly with the mode-dependent cursor above enabled.  The timeout approach can also fail on slow connections or a heavily loaded machine.
 
@@ -145,6 +152,12 @@ let &t_ti.="\e[?7727h"
 let &t_te.="\e[?7727l"
 noremap <Esc>O[ <Esc>
 noremap! <Esc>O[ <Esc>
+}}}
+
+Note that the last line causes vi-compatible behaviour to be used when pressing Esc on the command line: the command is executed rather than cancelled as is the default for vim. If the latter is preferred, replace the last line with a mapping to `^C`:
+
+{{{
+noremap! <Esc>O[ <C-c>
 }}}
 
 
@@ -161,3 +174,39 @@ bindkey "^[[1;6I" prev
 == Compose key ==
 
 Mintty uses the Windows keyboard layout system with its "dead key" mechanism for entering accented characters. X11, on the other hand, has the compose key mechanism for this purpose. The open source *[http://allchars.zwolnet.com AllChars]* utility can be used to emulate that approach on Windows.
+
+
+== Changing colours ==
+
+The default foreground, background and cursor colours can be changed in the options dialog, or by specifying the _!ForegroundColour_, _!BackgroundColour_ and _!CursorColour_ settings in the configuration file or on the command line.
+
+However, they can also be changed from within the terminal using the xterm control sequences for this purpose, for example:
+
+{{{
+echo -ne '\e]10;#000000\a'  # Black foreground
+echo -ne '\e]11;#C0C0C0\a'  # Light gray background
+echo -ne '\e]12;#00FF00\a'  # Green cursor
+}}}
+
+In mintty, the RGB colour values can also be specified using a comma-separated decimal notation, for example `255,0,0` instead of `#FF0000` for red. [http://en.wikipedia.org/wiki/X11_color_names X11 colour names] are not currently supported though.
+
+The 16 [http://en.wikipedia.org/wiki/ANSI_escape_code#Colors ANSI colours] can be set in the configuration file or on the command line using settings such as _Blue_ or _!BoldMagenta_. These are documented in the [http://mintty.googlecode.com/svn/trunk/docs/mintty.1.html#27 configuration section] of the manual. They can also be changed using xterm control sequences. Here they are with their default values:
+
+{{{
+echo -ne '\e]4;0;#000000\a'   # black
+echo -ne '\e]4;1;#BF0000\a'   # red
+echo -ne '\e]4;2;#00BF00\a'   # green
+echo -ne '\e]4;3;#BFBF00\a'   # yellow
+echo -ne '\e]4;4;#0000BF\a'   # blue
+echo -ne '\e]4;5;#BF00BF\a'   # magenta
+echo -ne '\e]4;6;#00BFBF\a'   # cyan
+echo -ne '\e]4;7;#BFBFBF\a'   # white (light grey really)
+echo -ne '\e]4;8;#404040\a'   # bold black (i.e. dark grey)
+echo -ne '\e]4;9;#FF4040\a'   # bold red
+echo -ne '\e]4;10;#40FF40\a'  # bold green
+echo -ne '\e]4;11;#FFFF40\a'  # bold yellow
+echo -ne '\e]4;12;#4040FF\a'  # bold blue
+echo -ne '\e]4;13;#FF40FF\a'  # bold magenta
+echo -ne '\e]4;14;#40FFFF\a'  # bold cyan
+echo -ne '\e]4;15;#FFFFFF\a'  # bold white
+}}}
