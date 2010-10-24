@@ -43,7 +43,8 @@ char *asform(const char *fmt, ...);
 #define unused(arg) unused_##arg __attribute__((unused))
 #define no_return __attribute__((noreturn)) void
 
-typedef wchar_t wchar;
+typedef uint xchar;     // UTF-32
+typedef wchar_t wchar;  // UTF-16
 typedef wint_t wint;
 
 typedef signed char schar;

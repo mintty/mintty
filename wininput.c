@@ -123,7 +123,7 @@ typedef enum {
   ALT_OCT = 8, ALT_DEC = 10, ALT_HEX = 16
 } alt_state_t;
 static alt_state_t alt_state;
-static wchar alt_char;
+static uint alt_code;
 
 static bool lctrl;  // Is left Ctrl pressed?
 static long lctrl_time;
@@ -447,8 +447,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   bool alt_code_key(char digit) {
     if (old_alt_state > ALT_ALONE && digit < old_alt_state) {
       alt_state = old_alt_state;
-      alt_char *= alt_state;
-      alt_char += digit;
+      alt_code = alt_code * alt_state + digit;
       return true;
     }
     return false;
@@ -456,7 +455,7 @@ win_key_down(WPARAM wp, LPARAM lp)
 
   bool alt_code_numpad_key(char digit) {
     if (old_alt_state == ALT_ALONE) {
-      alt_char = digit;
+      alt_code = digit;
       alt_state = digit ? ALT_DEC : ALT_OCT;
       return true;
     }
@@ -667,7 +666,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     when VK_CLEAR:  cursor_key('E', '5');
     when VK_MULTIPLY ... VK_DIVIDE:
       if (key == VK_ADD && old_alt_state == ALT_ALONE)
-        alt_state = ALT_HEX, alt_char = 0;
+        alt_state = ALT_HEX, alt_code = 0;
       else if (mods || (term.app_keypad && !numlock) || !layout())
         app_pad_code(key - VK_MULTIPLY + '*');
     when VK_NUMPAD0 ... VK_NUMPAD9:
@@ -712,14 +711,25 @@ win_key_up(WPARAM wp, LPARAM unused(lp))
   if (wp != VK_MENU)
     return false;
 
-  if (alt_state > ALT_ALONE && alt_char) {
-    if (cs_cur_max == 1)
-      child_send((char[]){alt_char}, 1);
-    else {
-      if (alt_char < 0x20)
+  if (alt_state > ALT_ALONE && alt_code) {
+    if (cs_cur_max < 4) {
+      char buf[4];
+      int pos = sizeof buf;
+      do
+        buf[--pos] = alt_code;
+      while (alt_code >>= 8);
+      child_send(buf + pos, sizeof buf - pos);
+    }
+    else if (alt_code < 0x10000) {
+      wchar wc = alt_code;
+      if (wc < 0x20)
         MultiByteToWideChar(CP_OEMCP, MB_USEGLYPHCHARS,
-                            (char[]){alt_char}, 1, &alt_char, 1);
-      child_sendw(&alt_char, 1);
+                            (char[]){wc}, 1, &wc, 1);
+      child_sendw(&wc, 1);
+    }
+    else {
+      xchar xc = alt_code;
+      child_sendw((wchar[]){high_surrogate(xc), low_surrogate(xc)}, 2);
     }
   }
   
