@@ -1132,14 +1132,12 @@ term_write(const char *buf, uint len)
         wchar hwc = term.high_surrogate;
         term.high_surrogate = 0;
         
-        // Low surrogate
-        if ((wc & 0xFC00) == 0xDC00) {
+        if (is_low_surrogate(wc)) {
           if (hwc) {
             #if HAS_LOCALES
             int width = wcswidth((wchar[]){hwc, wc}, 2);
             #else
-            xchar xc = 0x10000 + ((hwc & 0x3FF) << 10 | (wc & 0x3FF));
-            int width = xcwidth(xc);
+            int width = xcwidth(combine_surrogates(hwc, wc));
             #endif
             write_char(hwc, width);
             write_char(wc, 0);
@@ -1152,8 +1150,7 @@ term_write(const char *buf, uint len)
         if (hwc) // Previous high surrogate not followed by low one
           write_error();
         
-        // High surrogate
-        if ((wc & 0xFC00) == 0xD800) {
+        if (is_high_surrogate(wc)) {
           term.high_surrogate = wc;
           continue;
         }
