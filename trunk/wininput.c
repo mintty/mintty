@@ -319,6 +319,12 @@ win_key_down(WPARAM wp, LPARAM lp)
 
   update_mouse(mods);
 
+  if (key == VK_MENU) {
+    if (!repeat && mods == MDK_ALT && alt_state == ALT_NONE)
+      alt_state = ALT_ALONE;
+    return 1;
+  }
+
   alt_state_t old_alt_state = alt_state;
   if (alt_state > ALT_NONE)
     alt_state = ALT_CANCELLED;
@@ -599,10 +605,6 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
   
   switch(key) {
-    when VK_MENU:
-      if (!repeat && mods == MDK_ALT)
-        alt_state = (old_alt_state == ALT_NONE) ? ALT_ALONE : old_alt_state;
-      return 1;
     when VK_RETURN:
       if (extended && !numlock && term.app_keypad)
         mod_ss3('M');
