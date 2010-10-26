@@ -1,5 +1,5 @@
 <HTML><HEAD>
-<TITLE>mintty.1</TITLE>
+<TITLE>Manual Page - mintty(1)</TITLE>
 <BODY bgcolor=#F0F0F0 text=#000000 link=#0000ff vlink=#C000C0 alink=#ff0000><A NAME=top></A>
 <!-- .\" mintty man page -->
 <!-- .\" -->
@@ -8,7 +8,7 @@
 <!-- .\" You may distribute, use, and modify this man page under the terms -->
 <!-- .\" of the GNU Free Documentation License (GFDL), Version 1.3, -->
 <!-- .\" 3 November 2008 (or later) as specified. -->
-<!-- .TH mintty 1 2010-10-03 0.9.1 Cygwin -->
+<!-- .TH mintty 1 2010-10-26 0.9.2 Cygwin -->
 <CENTER>
 <H1><HR><I>Manual Reference Pages &nbsp;-&nbsp;</I><NOBR>mintty (1)</NOBR><HR></H1>
 </CENTER>
@@ -46,29 +46,28 @@ mintty - Cygwin terminal emulator
 &nbsp; &nbsp; &nbsp;<A HREF=#13>Reset</A><BR>
 &nbsp; &nbsp; &nbsp;<A HREF=#14>Scrolling</A><BR>
 &nbsp; &nbsp; &nbsp;<A HREF=#15>Flip screen</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#16>Mouse tracking</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#17>Switching session</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#18>Closing a session</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#19>Shortcuts</A><BR>
-<A HREF=#20>Configuration</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#21>Looks</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#22>Text</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#23>Keys</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#24>Mouse</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#25>Output</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#26>Window</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#27>Config-file only settings</A><BR>
-<A HREF=#28>Limitations</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#29>Console issue</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#30>Termcap/terminfo</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#31>Missing xterm features</A><BR>
-<A HREF=#32>See Also</A><BR>
-<A HREF=#33>Acknowledgements</A><BR>
-<A HREF=#34>Copyright</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#16>Switching session</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#17>Closing a session</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#18>Mouse tracking</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#19>Alt codes</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#20>Shortcuts</A><BR>
+<A HREF=#21>Configuration</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#22>Looks</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#23>Text</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#24>Keys</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#25>Mouse</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#26>Output</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#27>Window</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#28>Config-file only settings</A><BR>
+<A HREF=#29>Limitations</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#30>Console issue</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#31>Termcap/terminfo</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#32>Missing xterm features</A><BR>
+<A HREF=#33>See Also</A><BR>
+<A HREF=#34>License</A><BR>
 <A HREF=#35>Contact</A><BR>
-<A HREF=#36>Author</A><BR>
 </BLOCKQUOTE>
-<A name=37>
+<A name=36>
 
      <H3>SYNOPSIS</H3>
 
@@ -123,8 +122,7 @@ as a login shell.
 <BLOCKQUOTE>
 <P>
 The standard GNU option formats are accepted, with single dashes
-introducing short options and double dashes introducing long options,
-e.g. <B>-o arg</B>, <B>--option arg</B>, and <B>--option=arg</B>.
+introducing short options and double dashes introducing long options.
 <P>
 <!-- .TP -->
 <TABLE cellpadding=3>
@@ -254,7 +252,7 @@ Print version information and exit.
 Mintty tries to adhere to both Windows and Unix usage conventions.
 Where they conflict, an option is usually provided.
 This section primarily describes the default configuration;
-see the <B><A HREF=#20>CONFIGURATION</A></B> section on how it can be customised.
+see the <B><A HREF=#21>CONFIGURATION</A></B> section on how it can be customised.
 <P>
 <P>
 <!-- .SS Menus -->
@@ -292,7 +290,7 @@ selection includes special characters that commonly appear in file names and
 URLs.
 <P>
 By default, selected text is automatically copied to the clipboard.
-This can be disabled on the <B><A HREF=#24>Mouse</A></B> page of the options dialog.
+This can be disabled on the <B><A HREF=#25>Mouse</A></B> page of the options dialog.
 Selected text can also be copied manually using either the <B>Copy</B> menu
 command, the <B>Ctrl+Ins</B> keyboard shortcut, or the middle mouse button
 combined with <B>Shift</B>.
@@ -425,26 +423,9 @@ at the primary screen while the alternate screen is active, and vice versa.
 For example, this allows to refer to past commands while editing a file.
 <P>
 <P>
-<!-- .SS Mouse tracking -->
-</BLOCKQUOTE>
-<A name=16>
-
-    <H4>&nbsp; &nbsp; Mouse tracking</H4>
-</A>
-<BLOCKQUOTE>
-<P>
-When an application activates mouse tracking, mouse events are sent to the
-application rather than being treated as window events.
-This is indicated by the mouse pointer changing from an <B>I</B> shape to an
-arrow.
-Holding down <B>Shift</B> overrides mouse tracking mode and sends mouse
-events to the window instead, so that e.g. text can be selected and the context
-menu can be accessed.
-<P>
-<P>
 <!-- .SS Switching session -->
 </BLOCKQUOTE>
-<A name=17>
+<A name=16>
 
     <H4>&nbsp; &nbsp; Switching session</H4>
 </A>
@@ -456,7 +437,7 @@ between mintty windows.  Minimised windows are skipped.
 <P>
 <!-- .SS Closing a session -->
 </BLOCKQUOTE>
-<A name=18>
+<A name=17>
 
     <H4>&nbsp; &nbsp; Closing a session</H4>
 </A>
@@ -472,9 +453,52 @@ This can be done by holding down <B>Shift</B> when using the close button,
 shortcut or menu item.
 <P>
 <P>
-<!-- .SS Shortcuts -->
+<!-- .SS Mouse tracking -->
+</BLOCKQUOTE>
+<A name=18>
+
+    <H4>&nbsp; &nbsp; Mouse tracking</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+When an application activates mouse tracking, mouse events are sent to the
+application rather than being treated as window events.
+This is indicated by the mouse pointer changing from an <B>I</B> shape to an
+arrow.
+Holding down <B>Shift</B> overrides mouse tracking mode and sends mouse
+events to the window instead, so that e.g. text can be selected and the context
+menu can be accessed.
+<P>
+<P>
+<!-- .SS Alt codes -->
 </BLOCKQUOTE>
 <A name=19>
+
+    <H4>&nbsp; &nbsp; Alt codes</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+The Windows Alt+Numpad method for entering character codes is supported,
+whereby the Alt key has to be held while entering the character code.
+Only the first key has to be on the numpad; subsequent digits can be entered
+both on the numpad or the main part of the keyboard.
+<P>
+If the first key is the <B>&#146;+&#146;</B> on the numpad, the code is interpreted as
+hexadecimal, whereby digits A through F can be entered using the letter keys.
+If the first key is a zero, the code is interpreted as octal.
+If the first key is any other digit from 1 to 9, the code is interpreted as
+decimal.
+<P>
+For UTF-8 and other Unicode encodings such as GB18030, the entered code is
+interpreted as a Unicode codepoint and encoded accordingly before it is sent.
+For other encodings, the entered code is sent as is. If it doesn&#146;t fit into one
+byte, it is sent as multiple bytes, with the the most significant non-zero byte
+first.
+<P>
+<P>
+<!-- .SS Shortcuts -->
+</BLOCKQUOTE>
+<A name=20>
 
     <H4>&nbsp; &nbsp; Shortcuts</H4>
 </A>
@@ -567,7 +591,7 @@ An overview of all the keyboard shortcuts.
 <!-- .SH CONFIGURATION -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
-<A name=20>
+<A name=21>
 
      <H3>CONFIGURATION</H3>
 
@@ -595,7 +619,7 @@ file is shown.
 <P>
 <!-- .SS Looks -->
 </BLOCKQUOTE>
-<A name=21>
+<A name=22>
 
     <H4>&nbsp; &nbsp; Looks</H4>
 </A>
@@ -682,7 +706,7 @@ panel.
 <!-- .SS Text -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
-<A name=22>
+<A name=23>
 
     <H4>&nbsp; &nbsp; Text</H4>
 </A>
@@ -784,7 +808,7 @@ effect.
 <!-- .SS Keys -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
-<A name=23>
+<A name=24>
 
     <H4>&nbsp; &nbsp; Keys</H4>
 </A>
@@ -878,7 +902,7 @@ This option does not affect the arrow keys and Home/End keys.
 <!-- .SS Mouse -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
-<A name=24>
+<A name=25>
 
     <H4>&nbsp; &nbsp; Mouse</H4>
 </A>
@@ -939,7 +963,7 @@ xterm-style mouse reporting.
 In that mode, mouse clicks can be sent either to the application to process
 as it sees fit, or to the window for the usual actions such as select and paste.
 <P>
-- <B><A HREF=#26>Window</A></B> (0)
+- <B><A HREF=#27>Window</A></B> (0)
 <!-- .br -->
 <!-- Need break --><BR>
 - <B>Application</B> (1)
@@ -971,7 +995,7 @@ The <B>Off</B> setting disables overriding.
 <!-- .SS Output -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
-<A name=25>
+<A name=26>
 
     <H4>&nbsp; &nbsp; Output</H4>
 </A>
@@ -1040,7 +1064,7 @@ By default, this is empty.
 <!-- .SS Window -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
-<A name=26>
+<A name=27>
 
     <H4>&nbsp; &nbsp; Window</H4>
 </A>
@@ -1105,7 +1129,7 @@ This is intended to help avoid closing programs accidentally.
 <!-- .SS Config-file only settings -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
-<A name=27>
+<A name=28>
 
     <H4>&nbsp; &nbsp; Config-file only settings</H4>
 </A>
@@ -1207,7 +1231,7 @@ These are the 16 ANSI colour settings along with their default values:
 <!-- .SH LIMITATIONS -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
-<A name=28>
+<A name=29>
 
      <H3>LIMITATIONS</H3>
 
@@ -1216,7 +1240,7 @@ These are the 16 ANSI colour settings along with their default values:
 <P>
 <!-- .SS Console issue -->
 </BLOCKQUOTE>
-<A name=29>
+<A name=30>
 
     <H4>&nbsp; &nbsp; Console issue</H4>
 </A>
@@ -1235,7 +1259,7 @@ Programs that access the console as a file should be fine though.
 <P>
 <!-- .SS Termcap/terminfo -->
 </BLOCKQUOTE>
-<A name=30>
+<A name=31>
 
     <H4>&nbsp; &nbsp; Termcap/terminfo</H4>
 </A>
@@ -1247,7 +1271,7 @@ instead, it simply pretends to be an xterm.
 <P>
 <!-- .SS Missing xterm features -->
 </BLOCKQUOTE>
-<A name=31>
+<A name=32>
 
     <H4>&nbsp; &nbsp; Missing xterm features</H4>
 </A>
@@ -1264,7 +1288,7 @@ are missing.  Significant omissions should be reported as bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=32>
+<A name=33>
 
      <H3>SEE ALSO</H3>
 
@@ -1281,27 +1305,14 @@ for example:
 <!-- .br -->
 <!-- Need break --><BR>
 - Tips: <I><A HREF="http://code.google.com/p/mintty/wiki/Tips">http://code.google.com/p/mintty/wiki/Tips</A></I>
+- Contributors: <I><A HREF="http://code.google.com/p/mintty/wiki/Credits">http://code.google.com/p/mintty/wiki/Credits</A></I>
 <P>
 <P>
-<!-- .SH ACKNOWLEDGEMENTS -->
-</BLOCKQUOTE>
-<A name=33>
-
-     <H3>ACKNOWLEDGEMENTS</H3>
-
-</A>
-<BLOCKQUOTE>
-<P>
-Mintty is based on PuTTY version 0.60 by Simon Tatham and contributors,
-so big thanks to everyone involved.
-Thanks also to KDE&#146;s Oxygen team for the program icon.
-<P>
-<P>
-<!-- .SH COPYRIGHT -->
+<!-- .SH LICENSE -->
 </BLOCKQUOTE>
 <A name=34>
 
-     <H3>COPYRIGHT</H3>
+     <H3>LICENSE</H3>
 
 </A>
 <BLOCKQUOTE>
@@ -1329,20 +1340,7 @@ Please report bugs or suggest enhancements via the issue tracker at
 Questions can be sent to the discussion group at
 <I><A HREF="http://groups.google.com/group/mintty-discuss">http://groups.google.com/group/mintty-discuss</A></I> or
 the Cygwin mailing list at <I><A HREF="mailto:cygwin@cygwin.com">cygwin@cygwin.com</A></I>.
-<P>
-<P>
-<!-- .SH AUTHOR -->
-</BLOCKQUOTE>
-<A name=36>
-
-     <H3>AUTHOR</H3>
-
-</A>
-<BLOCKQUOTE>
-<P>
-This manual page was written by Andy Koppe with much appreciated help
-from Lee D. Rothstein.
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>0.9.1</I></TD> <TD width=33% align=center>mintty (1)</TD> <TD align=right width=33%><I>2010-10-03</I></TD> </TR></TABLE><FONT SIZE=-1>Generated by <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer 1.07</A> from mintty.1 using man macros.</FONT>
+<TABLE width=100%><TR> <TD width=33%><I>0.9.2</I></TD> <TD width=33% align=center>mintty (1)</TD> <TD align=right width=33%><I>2010-10-26</I></TD> </TR></TABLE><FONT SIZE=-1>Generated by <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer 1.07</A> from ./mintty.1 using man macros.</FONT>
 </BODY></HTML>
