@@ -153,11 +153,6 @@ F1 through F4 send numpad-style keycodes, because they emulate the four [http://
 The numbers in the keycodes really are that irregular. Only twelve function keys are usually available on a PC keyboard, but in VT220 keyboard mode, the Ctrl modifier adds 10 to the function key number, so that for example Ctrl+F3 sends the F13 keycode.
 
 
-== Alt+Numpad ==
-
-The Windows [http://en.wikipedia.org/wiki/Alt_code Alt+Numpad method] for entering character codes is supported, whereby the Alt key has to be held while entering the character's Unicode codepoint. If the first digit entered is a zero, the codepoint is interpreted as octal, otherwise as decimal. Hexadecimal input is not yet supported. The codepoint is encoded using the selected character encoding before it is sent.
-
-
 == Mousewheel ==
 
 In xterm [http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#Mouse%20Tracking mouse tracking] modes, the mousewheel is treated is a pair of mouse buttons. However, the mousewheel can also be used for scrolling in applications such as *[http://www.greenwoodsoftware.com/less less]* that do not support xterm mouse reporting but that do use the alternate screen. Under those circumstances, mousewheel events are encoded as cursor up/down and page up/down keys. See the sections on the [Keycodes#Cursor_keys cursor keys] and [Keycodes#Editing_keys editing keys] for details.

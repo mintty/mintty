@@ -1,4 +1,5 @@
 #summary Distinguished contributors
+#labels Featured
 
 Thanks to everyone who has contributed to mintty in some way, in particular:
 
