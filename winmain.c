@@ -935,13 +935,6 @@ main(int argc, char *argv[])
     argz_stringify(title, len, ' ');
   }
 
-  wchar wtitle[strlen(title) + 1];
-  if (mbstowcs(wtitle, title, sizeof wtitle) == (size_t)-1)
-    *wtitle = 0;
-
-  rows = rows ?: max(1, cfg.rows);
-  cols = cols ?: max(1, cfg.cols);
-
   inst = GetModuleHandle(NULL);
 
   // The window class.
@@ -965,6 +958,9 @@ main(int argc, char *argv[])
   win_init_fonts();
   
   // Determine window size.
+  rows = rows ?: max(1, cfg.rows);
+  cols = cols ?: max(1, cfg.cols);
+
   int term_width = font_width * cols;
   int term_height = font_height * rows;
 
@@ -980,12 +976,18 @@ main(int argc, char *argv[])
   extra_width = width - (cr.right - cr.left);
   extra_height = height - (cr.bottom - cr.top);
   
-  // Create initial window.
+  // Convert window title to Unicode.
+  size_t title_size = strlen(title) + 1;
+  wchar *wtitle = newn(wchar, title_size);
+  mbstowcs(wtitle, title, title_size);
+
+  // Create initial window.  
   wnd = CreateWindowExW(cfg.scrollbar < 0 ? WS_EX_LEFTSCROLLBAR : 0,
                         class_name, wtitle,
                         WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
                         x, y, width, height,
                         null, null, inst, null);
+  free(wtitle);
 
   // The input method context.
   imc = ImmGetContext(wnd);
