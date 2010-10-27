@@ -112,7 +112,7 @@ void
 win_set_title(char *title)
 {
   wchar wtitle[strlen(title) + 1];
-  if (cs_mbstowcs(wtitle, title, sizeof wtitle))
+  if (cs_mbstowcs(wtitle, title, lengthof(wtitle)) >= 0)
     SetWindowTextW(wnd, wtitle);
 }
 

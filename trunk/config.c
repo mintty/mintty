@@ -299,8 +299,8 @@ save_config(void)
                        filename, strerror(errno));
     if (len > 0) {
       wchar wmsg[len + 1];
-      cs_mbstowcs(wmsg, msg, sizeof wmsg);
-      MessageBoxW(0, wmsg, 0, MB_ICONERROR);
+      if (cs_mbstowcs(wmsg, msg, lengthof(wmsg)) >= 0)
+        MessageBoxW(0, wmsg, 0, MB_ICONERROR);
       free(msg);
     }
   }
