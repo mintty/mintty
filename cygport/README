@@ -31,15 +31,15 @@ Canonical download:
 -------------------------------------------
 
 Build instructions:
-  unpack mintty-0.9.2-2-src.tar.bz2
+  unpack mintty-0.9.2-3-src.tar.bz2
     if you use setup to install this src package, it will be
     unpacked under /usr/src automatically
   cd /usr/src
-  cygport ./mintty-0.9.2-2.cygport all
+  cygport ./mintty-0.9.2-3.cygport all
 
 This will create:
-  /usr/src/mintty-0.9.2-2-src.tar.bz2
-  /usr/src/mintty-0.9.2-2.tar.bz2
+  /usr/src/mintty-0.9.2-3-src.tar.bz2
+  /usr/src/mintty-0.9.2-3.tar.bz2
 
 -------------------------------------------
 
@@ -58,12 +58,14 @@ Files included in the binary package:
 
 Port Notes:
 
+----- mintty-0.9.2-3 -----
+* Passing a cygpath-created path to mkshortcut didn't work when 
+non-ASCII characters were involved, so instead cd into the start
+menu Cygwin folder before invoking mkshortcut. This still avoids
+mkshortcut stumbling over a symlink called Cygwin in the root dir.
+
 ----- mintty-0.9.2-2 -----
-* Reinstate use of mkshortcut's -P option, because passing a
-cygpath-created path didn't work when non-ASCII characters were 
-involved, due to mkshortcut's lack of UTF-8 support.
-Instead, cd to /proc to avoid the possibility of mkshortcut being
-led astray by a symlink called 'Cygwin' in the cwd.
+* Withdrawn before release.
 
 ----- mintty-0.9.2-1 -----
 * Avoid mkshortcut's -P option and rely solely on cygpath to find the 
