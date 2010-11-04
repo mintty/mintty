@@ -1,6 +1,8 @@
-PROGS=$(/bin/cygpath -P $CYGWINFORALL)
+cd /proc  # Avoid possible 'Cygwin' symlink in cwd leading mkshortcut astray
+ALL=$CYGWINFORALL
+PROGS=$(/bin/cygpath -P $ALL)
 /bin/mkdir -p "$PROGS/Cygwin" &&
-/bin/mkshortcut -n "$PROGS/Cygwin/mintty" -a - -d Terminal /bin/mintty &&
-if [ "$CYGWINFORALL" ]; then
+/bin/mkshortcut -P $ALL -n "Cygwin/mintty" -a - -d Terminal /bin/mintty &&
+if [ "$ALL" ]; then
   /bin/chmod a+r "$PROGS/Cygwin/mintty.lnk"
 fi
