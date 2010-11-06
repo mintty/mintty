@@ -319,12 +319,7 @@ reinit_fonts(void)
 {
   win_deinit_fonts();
   win_init_fonts();
-  if (IsZoomed(wnd))
-    adapt_term_size();
-  else {
-    win_invalidate_all();
-    win_resize(term.rows, term.cols);
-  }
+  adapt_term_size();
 }
 
 bool
