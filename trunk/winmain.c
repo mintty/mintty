@@ -492,8 +492,11 @@ win_get_font_size(void)
 void
 win_set_font_size(int size)
 {
-  font_size = size ? sgn(font_size) * min(size, 72) : cfg.font.size;
-  reinit_fonts();
+  int new_font_size = size ? sgn(font_size) * min(size, 72) : cfg.font.size;
+  if (new_font_size != font_size) {
+    font_size = new_font_size;
+    reinit_fonts();
+  }
 }
 
 void
