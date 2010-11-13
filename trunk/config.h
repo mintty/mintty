@@ -3,7 +3,7 @@
 
 #include "term.h"
 
-typedef enum { HOLD_NEVER, HOLD_ALWAYS, HOLD_ERROR } hold_t;
+typedef enum { HOLD_DEFAULT, HOLD_NEVER, HOLD_ALWAYS, HOLD_ERROR } hold_t;
 extern hold_t hold;
 
 extern const char *log_file;

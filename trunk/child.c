@@ -68,20 +68,25 @@ sigchld(int sig)
 
   int saved_errno = errno;
   if (waitpid(pid, &status, WNOHANG) > 0) {
-    if (killed)
+    if (killed || hold == HOLD_NEVER)
       exit(0);
-    else if (WIFEXITED(status)) {
-      int code = WEXITSTATUS(status);
-      if (code != 255 && (hold == HOLD_NEVER || (hold == HOLD_ERROR && !code)))
+    else if (hold == HOLD_DEFAULT) {
+      if (WIFSIGNALED(status) || WEXITSTATUS(status) != 255)
         exit(0);
     }
-    else {
-      int sig = WTERMSIG(status);
-      const int error_sigs =
-        1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
-        1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
-      if (hold == HOLD_NEVER || (hold == HOLD_ERROR && !(error_sigs & 1<<sig)))
-        exit(0);
+    else if (hold == HOLD_ERROR) {
+      if (WIFEXITED(status)) {
+        if (WEXITSTATUS(status) == 0)
+          exit(0);
+      }
+      else {
+        int sig = WTERMSIG(status);
+        const int error_sigs =
+          1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
+          1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
+        if (error_sigs & 1<<sig)
+          exit(0);
+      }
     }
     pid = 0;
   }
