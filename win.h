@@ -8,7 +8,7 @@ void win_reconfig(void);
 void win_update(void);
 void win_schedule_update(void);
 
-void win_text(int, int, wchar *, int, uint, int);
+void win_text(int x, int y, wchar *text, int len, uint attr, int lattr);
 void win_update_mouse(void);
 void win_capture_mouse(void);
 void win_bell(void);
@@ -22,7 +22,7 @@ void win_invalidate_all(void);
 
 void win_move(int x, int y);
 void win_resize(int rows, int cols);
-void win_maximise(int);
+void win_maximise(int max);
 void win_set_zorder(bool top);
 void win_set_iconic(bool);
 void win_update_scrollbar(void);
@@ -35,8 +35,8 @@ void win_zoom_font(int);
 void win_set_font_size(int);
 uint win_get_font_size(void);
 
-void win_open(const wchar *);
-void win_copy(const wchar *, int *attrs, int len);
+void win_open(const wchar *path);
+void win_copy(const wchar *data, int *attrs, int len);
 void win_paste(void);
 
 void win_set_timer(void_fn cb, uint ticks);
@@ -48,7 +48,7 @@ bool win_is_glass_available(void);
 int get_tick_count(void);
 int cursor_blink_ticks(void);
 
-int win_char_width(int uc);
+int win_char_width(xchar);
 wchar win_combine_chars(wchar bc, wchar cc);
 extern wchar win_linedraw_chars[31];
 

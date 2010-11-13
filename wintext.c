@@ -699,7 +699,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
 /* This function gets the actual width of a character in the normal font.
  */
 int
-win_char_width(int uc)
+win_char_width(xchar c)
 {
   int ibuf = 0;
 
@@ -710,11 +710,11 @@ win_char_width(int uc)
     return 1;
 
  /* Speedup, I know of no font where ascii is the wrong width */
-  if (uc >= ' ' && uc <= '~')
+  if (c >= ' ' && c <= '~')
     return 1;
 
   SelectObject(dc, fonts[FONT_NORMAL]);
-  if (!GetCharWidth32W(dc, uc, uc, &ibuf))
+  if (!GetCharWidth32W(dc, c, c, &ibuf))
     return 0;
 
   ibuf += font_width / 2 - 1;

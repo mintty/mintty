@@ -384,7 +384,7 @@ clear_fullscreen(void)
 }
 
 /*
- * Maximise or restore the window in response to a server-side.
+ * Maximise or restore the window in response to a server-side request.
  * Argument value of 2 means go fullscreen.
  */
 void
