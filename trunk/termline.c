@@ -74,13 +74,10 @@ add_cc(termline *line, int col, wchar chr)
     line->size += 16 + (line->size - line->cols) / 2;
     line->chars = renewn(line->chars, line->size);
     line->cc_free = n;
-    while (n < line->size) {
-      if (n + 1 < line->size)
-        line->chars[n].cc_next = 1;
-      else
-        line->chars[n].cc_next = 0;
-      n++;
-    }
+    do
+      line->chars[n].cc_next = 1;
+    while (++n < line->size - 1);
+    line->chars[n].cc_next = 1;
   }
 
  /*
@@ -643,6 +640,22 @@ decompressline(uchar *data, int *bytes_used)
     *bytes_used = b->len;
 
   return line;
+}
+
+/*
+ * Clear a line, throwing away any combining characters.
+ */
+void
+clearline(termline *line)
+{
+  line->attr = LATTR_NORM;
+  for (int j = 0; j < line->cols; j++)
+    line->chars[j] = term.erase_char;
+  if (line->size > line->cols) {
+    line->size = line->cols;
+    line->chars = renewn(line->chars, line->size);
+    line->cc_free = 0;
+  }
 }
 
 /*

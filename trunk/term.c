@@ -501,13 +501,8 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
   termline *recycled[abs(lines)];
   void recycle(termline **src) {
     memcpy(recycled, src, sizeof recycled);
-    for (int i = 0; i < lines; i++) {
-      termline *line = recycled[i];
-      for (int j = 0; j < line->cols; j++)
-        line->chars[j] = term.erase_char;
-      line->cc_free = line->cols;
-      line->attr = LATTR_NORM;
-    }
+    for (int i = 0; i < lines; i++)
+      clearline(recycled[i]);
   }
 
   if (down) {
