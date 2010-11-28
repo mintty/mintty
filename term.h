@@ -178,6 +178,7 @@ typedef struct {
 
 termline *newline(int cols, int bce);
 void freeline(termline *);
+void clearline(termline *);
 void resizeline(termline *, int);
 
 int sblines(void);
