@@ -63,11 +63,27 @@ sigexit(int sig)
 static void
 sigchld(int sig)
 {
-  if (!pid)
-    return;
-
   int saved_errno = errno;
-  if (waitpid(pid, &status, WNOHANG) > 0) {
+  
+  for (;;) {
+    errno = 0;
+    int chld_status, chld_pid = waitpid(-1, &chld_status, WNOHANG);
+
+    // Try again if the wrong process died or waitpid was interrupted
+    if ((chld_pid > 0 && chld_pid != pid) ||
+        (chld_pid == -1 && errno == EINTR))
+      continue;
+
+    // Stop trying if there are no more processes to reap
+    if (chld_pid <= 0)
+      break;
+
+    // Record that the child process is gone
+    assert(chld_pid == pid);
+    pid = 0;
+    status = chld_status;
+    
+    // Decide whether we want to exit now or later
     if (killed || hold == HOLD_NEVER)
       exit(0);
     else if (hold == HOLD_DEFAULT) {
@@ -80,20 +96,17 @@ sigchld(int sig)
           exit(0);
       }
       else {
-        int sig = WTERMSIG(status);
         const int error_sigs =
           1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
           1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
-        if (error_sigs & 1<<sig)
+        if (error_sigs & 1<<WTERMSIG(status))
           exit(0);
       }
     }
-    pid = 0;
   }
-  else
-    signal(sig, sigchld);
   
   errno = saved_errno;
+  signal(sig, sigchld);
 }
 
 void
