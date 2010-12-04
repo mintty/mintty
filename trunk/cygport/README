@@ -31,15 +31,15 @@ Canonical download:
 -------------------------------------------
 
 Build instructions:
-  unpack mintty-0.9.2-3-src.tar.bz2
+  unpack mintty-0.9.3-1-src.tar.bz2
     if you use setup to install this src package, it will be
     unpacked under /usr/src automatically
   cd /usr/src
-  cygport ./mintty-0.9.2-3.cygport all
+  cygport ./mintty-0.9.3-1.cygport all
 
 This will create:
-  /usr/src/mintty-0.9.2-3-src.tar.bz2
-  /usr/src/mintty-0.9.2-3.tar.bz2
+  /usr/src/mintty-0.9.3-1-src.tar.bz2
+  /usr/src/mintty-0.9.3-1.tar.bz2
 
 -------------------------------------------
 
@@ -57,6 +57,8 @@ Files included in the binary package:
 ------------------
 
 Port Notes:
+
+----- mintty-0.9.3-1 -----
 
 ----- mintty-0.9.2-3 -----
 * Passing a cygpath-created path to mkshortcut didn't work when 
