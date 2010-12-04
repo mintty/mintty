@@ -523,22 +523,6 @@ confirm_exit(void)
   return !ret || ret == IDOK;
 }
 
-void
-win_show_about(void)
-{
-  char *text = asform("%s\n" ABOUT_TEXT, VERSION_TEXT);
-  MessageBoxIndirect(&(MSGBOXPARAMS){
-    .cbSize = sizeof(MSGBOXPARAMS),
-    .hwndOwner = config_wnd,
-    .hInstance = inst,
-    .lpszCaption = APPNAME,
-    .dwStyle = MB_USERICON | MB_OK,
-    .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
-    .lpszText = text
-  });
-  free(text);
-}
-
 static LRESULT CALLBACK
 win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
 {

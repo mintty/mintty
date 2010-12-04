@@ -10,9 +10,6 @@
 #include "win.h"
 
 #include <sys/cygwin.h>
-#include <winbase.h>
-#include <wingdi.h>
-#include <winuser.h>
 
 const char *log_file = 0;
 bool utmp_enabled = false;
@@ -269,8 +266,8 @@ finish_config(void)
 {
   if (cfg.use_system_colours) {
     // Translate 'UseSystemColours' to colour settings.
-    cfg.fg_colour = cfg.cursor_colour = GetSysColor(COLOR_WINDOWTEXT);
-    cfg.bg_colour = GetSysColor(COLOR_WINDOW);
+    cfg.fg_colour = cfg.cursor_colour = win_get_sys_colour(true);
+    cfg.bg_colour = win_get_sys_colour(false);
 
     // Make sure they're written to the config file.
     // This assumes that the colour options are the first three in options[].
@@ -300,7 +297,7 @@ save_config(void)
     if (len > 0) {
       wchar wmsg[len + 1];
       if (cs_mbstowcs(wmsg, msg, lengthof(wmsg)) >= 0)
-        MessageBoxW(0, wmsg, 0, MB_ICONERROR);
+        win_show_error(wmsg);
       free(msg);
     }
   }

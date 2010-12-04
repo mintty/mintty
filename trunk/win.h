@@ -17,6 +17,7 @@ void win_set_title(char *);
 colour win_get_colour(colour_i);
 void win_set_colour(colour_i, colour);
 void win_reset_colours(void);
+colour win_get_sys_colour(bool fg);
 
 void win_invalidate_all(void);
 
@@ -42,6 +43,7 @@ void win_paste(void);
 void win_set_timer(void_fn cb, uint ticks);
 
 void win_show_about(void);
+void win_show_error(wchar *);
 
 bool win_is_glass_available(void);
 
