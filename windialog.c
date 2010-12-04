@@ -286,3 +286,25 @@ win_open_config(void)
                             wnd, config_dialog_proc);
   ShowWindow(config_wnd, SW_SHOW);
 }  
+
+void
+win_show_about(void)
+{
+  char *text = asform("%s\n" ABOUT_TEXT, VERSION_TEXT);
+  MessageBoxIndirect(&(MSGBOXPARAMS){
+    .cbSize = sizeof(MSGBOXPARAMS),
+    .hwndOwner = config_wnd,
+    .hInstance = inst,
+    .lpszCaption = APPNAME,
+    .dwStyle = MB_USERICON | MB_OK,
+    .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
+    .lpszText = text
+  });
+  free(text);
+}
+
+void
+win_show_error(wchar *wmsg)
+{
+  MessageBoxW(0, wmsg, 0, MB_ICONERROR);
+}
