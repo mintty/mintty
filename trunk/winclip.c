@@ -28,7 +28,7 @@ shell_exec_thread(void *data)
         FORMAT_MESSAGE_FROM_SYSTEM | 64,
         0, error, 0, msg, sizeof msg, 0
       );
-      MessageBox(0, msg, 0, 0);
+      MessageBox(0, msg, 0, MB_ICONERROR);
     }
   }
   free(wpath);
@@ -57,6 +57,8 @@ win_open(const wchar *wpath)
     free((void *)wpath);
     if (conv_wpath)
       shell_exec(conv_wpath);
+    else
+      MessageBox(0, strerror(errno), 0, MB_ICONERROR);
   }
 }
 
