@@ -2,7 +2,7 @@
 #labels Featured
 
 === 0.9.3 (4 Dec 2010) ===
- * Disabled flow control with ^S and ^Q by default, to stop unwary users from accidentally "hanging" their terminal and to make those keys available for other functions. To re-enable, use `stty stop ^S start ^Q`.
+ * Disabled flow control with `^S` and `^Q` by default, to stop unwary users from accidentally "hanging" their terminal and to make those keys available for other functions. To re-enable, use `stty stop ^S start ^Q`.
  * Stopped resizing the window when changing font size with Ctrl+plus/minus/zero or Ctrl+mousewheel. This follows the example of KDE's Konsole and is more consistent with other programs that have this feature.
  * Changed interpretation of the `--hold=never` command line option (or `-hn` for short) such that the window should really never stay open after the shell process finishes. The default remains to leave the window open when the shell process exits with status 255. This is used to signal failure to execute the shell command, and it is also used by ssh to indicate connection failure.
  * Tweaked SIGCHLD handling to reap all dead processes that come mintty's way, not just the shell process.
