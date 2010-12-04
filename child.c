@@ -430,7 +430,7 @@ child_conv_path(const wchar *wpath)
   
   // Drop long path prefix if possible,
   // because some programs have trouble with them.
-  if (wcslen(win_wpath) < MAX_PATH) {
+  if (win_wpath && wcslen(win_wpath) < MAX_PATH) {
     wchar *old_win_wpath = win_wpath;
     if (wcsncmp(win_wpath, L"\\\\?\\UNC\\", 8) == 0) {
       win_wpath = wcsdup(win_wpath + 6);
