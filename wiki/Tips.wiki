@@ -64,7 +64,13 @@ Terminal line settings can be viewed or changed with the *[http://www.opengroup.
 
 See the stty manual for all the details, but here are a few examples. The commands can be included in shell startup files to make them permanent.
 
-To change the key for deleting a whole word from _Ctrl+W_ to _Ctrl+Backspace_:
+The terminal line driver has a flow control feature that normally allows terminal output to be stopped with _Ctrl+S_ and restarted with _Ctrl+Q_. However, due to the scrollback feature in modern terminals, there is little need for this. Hence, in order to prevent unaware users from getting confused by stopping terminal output accidentally, and to make those key combinations available for other uses, mintty disables the flow control keys by default. If required, they can be re-enabled with the following command:
+
+{{{
+stty stop '^S' start '^Q'
+}}}
+
+There are a number of more useful settings as well though. For example, to change the key for deleting a whole word from _Ctrl+W_ to _Ctrl+Backspace_:
 
 {{{
 stty werase '^_'
