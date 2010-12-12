@@ -184,7 +184,7 @@ child_create(char *argv[], struct winsize *winp)
     struct termios attr;
     tcgetattr(0, &attr);
     attr.c_cc[VERASE] = cfg.backspace_sends_bs ? CTRL('H') : CDEL;
-    attr.c_cc[VSTOP] = attr.c_cc[VSTART] = 0;
+    attr.c_iflag |= IXANY;
     tcsetattr(0, TCSANOW, &attr);
     
     // Invoke command
