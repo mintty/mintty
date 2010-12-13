@@ -67,7 +67,6 @@ void
 ctrl_free_set(controlset *s)
 {
   free(s->pathname);
-  free(s->boxname);
   free(s->boxtitle);
   for (int i = 0; i < s->ncontrols; i++) {
     ctrl_free(s->ctrls[i]);
@@ -82,7 +81,7 @@ ctrl_free_set(controlset *s)
  *should be inserted.
  */
 static int
-ctrl_find_set(controlbox * b, char *path, int start)
+ctrl_find_set(controlbox * b, char *path)
 {
   int i, last, thisone;
 
@@ -96,7 +95,7 @@ ctrl_find_set(controlbox * b, char *path, int start)
     * we should return the index of the first entry in which
     * _fewer_ path elements match than they did last time.
     */
-    if ((start && thisone == INT_MAX) || thisone < last)
+    if (thisone == INT_MAX || thisone < last)
       return i;
     last = thisone;
   }
@@ -112,7 +111,7 @@ int
 ctrl_find_path(controlbox * b, char *path, int index)
 {
   if (index < 0)
-    index = ctrl_find_set(b, path, 1);
+    index = ctrl_find_set(b, path);
   else
     index++;
 
@@ -122,59 +121,53 @@ ctrl_find_path(controlbox * b, char *path, int index)
     return -1;
 }
 
-/*set up a panel title. */
-controlset *
-ctrl_settitle(controlbox * b, char *path, char *title)
+static void
+insert_controlset(controlbox *b, int index, controlset *s)
 {
-
-  controlset *s = new(controlset);
-  int index = ctrl_find_set(b, path, 1);
-  s->pathname = strdup(path);
-  s->boxname = null;
-  s->boxtitle = strdup(title);
-  s->ncontrols = s->ctrlsize = 0;
-  s->ncolumns = 0;      /* this is a title! */
-  s->ctrls = null;
   if (b->nctrlsets >= b->ctrlsetsize) {
     b->ctrlsetsize = b->nctrlsets + 32;
     b->ctrlsets = renewn(b->ctrlsets, b->ctrlsetsize);
   }
   if (index < b->nctrlsets)
     memmove(&b->ctrlsets[index + 1], &b->ctrlsets[index],
-            (b->nctrlsets - index) *sizeof (*b->ctrlsets));
+            (b->nctrlsets - index) * sizeof(*b->ctrlsets));
   b->ctrlsets[index] = s;
   b->nctrlsets++;
-  return s;
 }
 
-/* Retrieve a pointer to a controlset, creating it if absent. */
+/* Create a controlset. */
 controlset *
-ctrl_getset(controlbox * b, char *path, char *name, char *boxtitle)
+ctrl_new_set(controlbox *b, char *path, char *title)
 {
-  controlset *s;
-  int index = ctrl_find_set(b, path, 1);
-  while (index < b->nctrlsets && !strcmp(b->ctrlsets[index]->pathname, path)) {
-    if (b->ctrlsets[index]->boxname &&
-        !strcmp(b->ctrlsets[index]->boxname, name))
-      return b->ctrlsets[index];
+  // See whether this path exists already
+  int index = ctrl_find_set(b, path);
+
+  // If not, and it's not an empty path, set up a title.
+  if (index == b->nctrlsets && *path) {
+    char *title = strrchr(path, '/');
+    title = title ? title + 1 : path;
+    controlset *s = new(controlset);
+    s->pathname = strdup(path);
+    s->boxtitle = strdup(title);
+    s->ncontrols = s->ctrlsize = 0;
+    s->ncolumns = 0;      /* this is a title! */
+    s->ctrls = null;
+    insert_controlset(b, index, s);
     index++;
   }
-  s = new(controlset);
+
+  // Skip existing sets for the same path.
+  while (index < b->nctrlsets && !strcmp(b->ctrlsets[index]->pathname, path))
+    index++;
+  
+  controlset *s = new(controlset);
   s->pathname = strdup(path);
-  s->boxname = strdup(name);
-  s->boxtitle = boxtitle ? strdup(boxtitle) : null;
+  s->boxtitle = title ? strdup(title) : null;
   s->ncolumns = 1;
   s->ncontrols = s->ctrlsize = 0;
   s->ctrls = null;
-  if (b->nctrlsets >= b->ctrlsetsize) {
-    b->ctrlsetsize = b->nctrlsets + 32;
-    b->ctrlsets = renewn(b->ctrlsets, b->ctrlsetsize);
-  }
-  if (index < b->nctrlsets)
-    memmove(&b->ctrlsets[index + 1], &b->ctrlsets[index],
-            (b->nctrlsets - index) *sizeof (*b->ctrlsets));
-  b->ctrlsets[index] = s;
-  b->nctrlsets++;
+  insert_controlset(b, index, s);
+
   return s;
 }
 

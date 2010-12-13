@@ -628,21 +628,21 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
 
   base_id = *id;
 
- /* Start a containing box, if we have a boxname. */
-  if (s->boxname && *s->boxname) {
+  if (!s->ncolumns) {
+   /* Draw a title. */
+    winctrl *c = new_winctrl(base_id, strdup(s->boxtitle));
+    winctrl_add(wc, c);
+    paneltitle(cp, base_id);
+    base_id++;
+  }
+  else if (*s->pathname) {
+   /* Start a containing box. */
     winctrl *c = new_winctrl(base_id, null);
     winctrl_add(wc, c);
     beginbox(cp, s->boxtitle, base_id);
     base_id++;
   }
 
- /* Draw a title, if we have one. */
-  if (!s->boxname && s->boxtitle) {
-    winctrl *c = new_winctrl(base_id, strdup(s->boxtitle));
-    winctrl_add(wc, c);
-    paneltitle(cp, base_id);
-    base_id++;
-  }
 
  /* Initially we have just one column. */
   ncols = 1;
@@ -891,7 +891,7 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
       cp->ypos = columns[i].ypos;
   *id = base_id;
 
-  if (s->boxname && *s->boxname)
+  if (s->ncolumns && *s->pathname)
     endbox(cp);
 }
 
