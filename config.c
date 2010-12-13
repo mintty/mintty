@@ -558,7 +558,7 @@ setup_config_box(controlbox * b)
   * The standard panel that appears at the bottom of all panels:
   * Open, Cancel, Apply etc.
   */
-  s = ctrl_getset(b, "", "", "");
+  s = ctrl_new_set(b, "", "");
   ctrl_columns(s, 5, 20, 20, 20, 20, 20);
   c = ctrl_pushbutton(s, "About...", 0, P(0), about_handler, P(0));
   c->column = 0;
@@ -574,9 +574,7 @@ setup_config_box(controlbox * b)
  /*
   * The Looks panel.
   */
-  ctrl_settitle(b, "Looks", "Looks");
-
-  s = ctrl_getset(b, "Looks", "colours", "Colours");
+  s = ctrl_new_set(b, "Looks", "Colours");
   ctrl_columns(s, 3, 33, 33, 33);
   ctrl_pushbutton(
     s, "Foreground...", 'f', P(0), colour_handler, P(&new_cfg.fg_colour)
@@ -588,7 +586,7 @@ setup_config_box(controlbox * b)
     s, "Cursor...", 'c', P(0), colour_handler, P(&new_cfg.cursor_colour)
   )->column = 2;
   
-  s = ctrl_getset(b, "Looks", "trans", "Transparency");
+  s = ctrl_new_set(b, "Looks", "Transparency");
   bool with_glass = win_is_glass_available();
   ctrl_radiobuttons(
     s, null, '\0', 4 + with_glass, P(0), dlg_stdradiobutton_handler,
@@ -605,7 +603,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(opaque_when_focused))
   );
 
-  s = ctrl_getset(b, "Looks", "curtype", "Cursor");
+  s = ctrl_new_set(b, "Looks", "Cursor");
   ctrl_radiobuttons(
     s, null, '\0', 4 + with_glass, P(0), dlg_stdradiobutton_handler,
     I(offcfg(cursor_type)),
@@ -621,9 +619,7 @@ setup_config_box(controlbox * b)
  /*
   * The Text panel.
   */
-  ctrl_settitle(b, "Text", "Text");
-
-  s = ctrl_getset(b, "Text", "font", "Font");
+  s = ctrl_new_set(b, "Text", "Font");
   ctrl_fontsel(
     s, null, '\0', P(0), dlg_stdfontsel_handler, I(offcfg(font))
   );
@@ -637,7 +633,7 @@ setup_config_box(controlbox * b)
     null
   );
 
-  s = ctrl_getset(b, "Text", "effects", null);
+  s = ctrl_new_set(b, "Text", null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
     s, "Show bold as colour", 'b', P(0), dlg_stdcheckbox_handler,
@@ -648,7 +644,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(allow_blinking))
   )->column = 1;
 
-  s = ctrl_getset(b, "Text", "locale", null);
+  s = ctrl_new_set(b, "Text", null);
   ctrl_columns(s, 2, 29, 71);
   (locale_box = ctrl_combobox(
     s, "Locale", 'l', 100, P(0), locale_handler, P(0), P(0)
@@ -660,9 +656,7 @@ setup_config_box(controlbox * b)
  /*
   * The Keys panel.
   */
-  ctrl_settitle(b, "Keys", "Keys");
-  
-  s = ctrl_getset(b, "Keys", "keys", null);
+  s = ctrl_new_set(b, "Keys", null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
     s, "Ctrl+LeftAlt is AltGr", 'g', P(0),
@@ -673,7 +667,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(backspace_sends_bs))
   )->column = 1;
 
-  s = ctrl_getset(b, "Keys", "shortcuts", "Shortcuts");
+  s = ctrl_new_set(b, "Keys", "Shortcuts");
   ctrl_checkbox(
     s, "Menu and Full Screen (Alt+Space/Enter)", 'm', P(0),
     dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
@@ -687,7 +681,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(zoom_shortcuts))
   );
   
-  s = ctrl_getset(b, "Keys", "scroll", "Modifier for scrolling");
+  s = ctrl_new_set(b, "Keys", "Modifier for scrolling");
   ctrl_radiobuttons(
     s, null, '\0', 4, P(0),      
     dlg_stdradiobutton_handler, I(offcfg(scroll_mod)),
@@ -705,9 +699,7 @@ setup_config_box(controlbox * b)
  /*
   * The Mouse panel.
   */
-  ctrl_settitle(b, "Mouse", "Mouse");
-
-  s = ctrl_getset(b, "Mouse", "mouseopts", null);
+  s = ctrl_new_set(b, "Mouse", null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
     s, "Copy on select", 'y', P(0),
@@ -722,7 +714,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(clicks_place_cursor))
   );
 
-  s = ctrl_getset(b, "Mouse", "rightclick", "Right click action");
+  s = ctrl_new_set(b, "Mouse", "Right click action");
   ctrl_radiobuttons(
     s, null, '\0', 4, P(0), dlg_stdradiobutton_handler,
     I(offcfg(right_click_action)),
@@ -732,7 +724,7 @@ setup_config_box(controlbox * b)
     null
   );
   
-  s = ctrl_getset(b, "Mouse", "mousemode", "Application mouse mode");
+  s = ctrl_new_set(b, "Mouse", "Application mouse mode");
   ctrl_radiobuttons(
     s, "Default click target", '\0', 4, P(0), dlg_stdradiobutton_handler,
     I(offcfg(clicks_target_app)),
@@ -753,14 +745,12 @@ setup_config_box(controlbox * b)
  /*
   * The Output panel.
   */
-  ctrl_settitle(b, "Output", "Output");
-
-  s = ctrl_getset(b, "Output", "printer", "Printer");
+  s = ctrl_new_set(b, "Output", "Printer");
   ctrl_combobox(
     s, null, '\0', 100, P(0), printerbox_handler, P(0), P(0)
   );
 
-  s = ctrl_getset(b, "Output", "bell", "Bell");
+  s = ctrl_new_set(b, "Output", "Bell");
   ctrl_checkbox(
     s, "Play sound", 'p', P(0),
     dlg_stdcheckbox_handler, I(offcfg(bell_sound))
@@ -774,7 +764,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(bell_taskbar))
   );
 
-  s = ctrl_getset(b, "Output", "ids", null);
+  s = ctrl_new_set(b, "Output", null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_combobox(
     s, "TERM (at startup)", 't', 100, P(0), term_handler, P(0), P(0)
@@ -787,9 +777,7 @@ setup_config_box(controlbox * b)
  /*
   * The Window panel.
   */
-  ctrl_settitle(b, "Window", "Window");
-
-  s = ctrl_getset(b, "Window", "size", "Default size");
+  s = ctrl_new_set(b, "Window", "Default size");
   ctrl_columns(s, 5, 35, 3, 28, 4, 30);
   (cols_box = ctrl_editbox(
     s, "Columns", 'c', 44, P(0), int_handler, I(offcfg(cols)), I(256)
@@ -801,7 +789,7 @@ setup_config_box(controlbox * b)
     s, "Current size", 'u', P(0), current_size_handler, P(0)
   )->column = 4;
 
-  s = ctrl_getset(b, "Window", "scroll", "Scrollback");
+  s = ctrl_new_set(b, "Window", "Scrollback");
   ctrl_columns(s, 2, 45, 55);
   ctrl_editbox(
     s, "Lines", 's', 57, P(0),
@@ -816,7 +804,7 @@ setup_config_box(controlbox * b)
     null
   );
 
-  s = ctrl_getset(b, "Window", "options", null);
+  s = ctrl_new_set(b, "Window", null);
   ctrl_checkbox(
     s, "Ask for exit confirmation", 'x', P(0),
     dlg_stdcheckbox_handler, I(offcfg(confirm_exit))

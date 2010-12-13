@@ -313,13 +313,9 @@ struct control {
  * structures, together with a panel name and a title for the whole
  * set. In Windows and any similar-looking GUI, each `controlset'
  * in the config will be a container box within a panel.
- * 
- * Special case: if `boxname' is null, the control set gives an
- * overall title for an entire panel of controls.
  */
 typedef struct {
   char *pathname;       /* panel path, e.g. "SSH/Tunnels" */
-  char *boxname;        /* internal short name of controlset */
   char *boxtitle;       /* title of container box */
   int ncolumns; /* current no. of columns at bottom */
   int ncontrols;        /* number of `control' in array */
@@ -347,10 +343,8 @@ void ctrl_free_box(controlbox *);
  * Standard functions used for populating a controlbox structure.
  */
 
-/* Set up a panel title. */
-controlset *ctrl_settitle(controlbox *, char *path, char *title);
-/* Retrieve a pointer to a controlset, creating it if absent. */
-controlset *ctrl_getset(controlbox *, char *path, char *name, char *boxtitle);
+/* Create a controlset. */
+controlset *ctrl_new_set(controlbox *, char *path, char *title);
 void ctrl_free_set(controlset *);
 
 void ctrl_free(control *);
