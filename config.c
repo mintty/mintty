@@ -53,19 +53,19 @@ config cfg = {
   .right_click_action = RC_SHOWMENU,
   .clicks_target_app = true,
   .click_target_mod = MDK_SHIFT,
-  // Output
-  .printer = "",
-  .bell_sound = false,
-  .bell_flash = false,
-  .bell_taskbar = true,
-  .term = "xterm",
-  .answerback = "",
   // Window
   .cols = 80,
   .rows = 24,
   .scrollbar = 1,
   .scrollback_lines = 10000,
   .confirm_exit = true,
+  // Terminal
+  .term = "xterm",
+  .answerback = "",
+  .bell_sound = false,
+  .bell_flash = false,
+  .bell_taskbar = true,
+  .printer = "",
   // Hidden
   .col_spacing = 0,
   .row_spacing = 0,
@@ -128,20 +128,20 @@ options[] = {
   {"ClicksTargetApp", OPT_INT, cfg_field(clicks_target_app)},
   {"ClickTargetMod", OPT_INT, cfg_field(click_target_mod)},
 
-  // Output
-  {"Printer", OPT_STRING, cfg_field(printer)},
-  {"BellSound", OPT_BOOL, cfg_field(bell_sound)},
-  {"BellFlash", OPT_BOOL, cfg_field(bell_flash)},
-  {"BellTaskbar", OPT_BOOL, cfg_field(bell_taskbar)},
-  {"Term", OPT_STRING, cfg_field(term)},
-  {"Answerback", OPT_STRING, cfg_field(answerback)},
-
   // Window
   {"Columns", OPT_INT, cfg_field(cols)},
   {"Rows", OPT_INT, cfg_field(rows)},
   {"Scrollbar", OPT_INT, cfg_field(scrollbar)},
   {"ScrollbackLines", OPT_INT, cfg_field(scrollback_lines)},
   {"ConfirmExit", OPT_BOOL, cfg_field(confirm_exit)},
+
+  // Terminal
+  {"Term", OPT_STRING, cfg_field(term)},
+  {"Answerback", OPT_STRING, cfg_field(answerback)},
+  {"BellSound", OPT_BOOL, cfg_field(bell_sound)},
+  {"BellFlash", OPT_BOOL, cfg_field(bell_flash)},
+  {"BellTaskbar", OPT_BOOL, cfg_field(bell_taskbar)},
+  {"Printer", OPT_STRING, cfg_field(printer)},
 
   // Hidden
   
@@ -613,7 +613,7 @@ setup_config_box(controlbox * b)
     null
   );
   ctrl_checkbox(
-    s, "Blinking", 'e', P(0), dlg_stdcheckbox_handler, I(offcfg(cursor_blinks))
+    s, "Blinking", 'g', P(0), dlg_stdcheckbox_handler, I(offcfg(cursor_blinks))
   );
 
  /*
@@ -692,7 +692,7 @@ setup_config_box(controlbox * b)
     null
   );
   ctrl_checkbox(
-    s, "Page Up/Down scroll without modifier", 'p', P(0),
+    s, "PgUp and PgDn scroll without modifier", 'p', P(0),
     dlg_stdcheckbox_handler, I(offcfg(pgupdn_scroll))
   );
 
@@ -743,38 +743,6 @@ setup_config_box(controlbox * b)
   );
   
  /*
-  * The Output panel.
-  */
-  s = ctrl_new_set(b, "Output", "Printer");
-  ctrl_combobox(
-    s, null, '\0', 100, P(0), printerbox_handler, P(0), P(0)
-  );
-
-  s = ctrl_new_set(b, "Output", "Bell");
-  ctrl_checkbox(
-    s, "Play sound", 'p', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(bell_sound))
-  );
-  ctrl_checkbox(
-    s, "Flash screen", 'f', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(bell_flash))
-  );
-  ctrl_checkbox(
-    s, "Highlight in taskbar", 'h', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(bell_taskbar))
-  );
-
-  s = ctrl_new_set(b, "Output", null);
-  ctrl_columns(s, 2, 50, 50);
-  ctrl_combobox(
-    s, "TERM (at startup)", 't', 100, P(0), term_handler, P(0), P(0)
-  )->column = 0;
-  ctrl_editbox(
-    s, "Answerback", 'a', 100, P(0),
-    string_handler, I(offcfg(answerback)), I(sizeof cfg.answerback)
-  )->column = 1;
-
- /*
   * The Window panel.
   */
   s = ctrl_new_set(b, "Window", "Default size");
@@ -808,5 +776,38 @@ setup_config_box(controlbox * b)
   ctrl_checkbox(
     s, "Ask for exit confirmation", 'x', P(0),
     dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
+  );
+
+ /*
+  * The Emulation panel.
+  */
+  s = ctrl_new_set(b, "Terminal", null);
+  ctrl_columns(s, 2, 50, 50);
+  ctrl_combobox(
+    s, "Type", 't', 100, P(0), term_handler, P(0), P(0)
+  )->column = 0;
+  ctrl_editbox(
+    s, "Answerback", 'a', 100, P(0),
+    string_handler, I(offcfg(answerback)), I(sizeof cfg.answerback)
+  )->column = 1;
+
+  s = ctrl_new_set(b, "Terminal", "Bell");
+  ctrl_columns(s, 3, 25, 25, 50);
+  ctrl_checkbox(
+    s, "Sound", 's', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(bell_sound))
+  )->column = 0;
+  ctrl_checkbox(
+    s, "Flash", 'f', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(bell_flash))
+  )->column = 1;
+  ctrl_checkbox(
+    s, "Taskbar highlight", 'h', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(bell_taskbar))
+  )->column = 2;
+
+  s = ctrl_new_set(b, "Terminal", "Printer");
+  ctrl_combobox(
+    s, null, '\0', 100, P(0), printerbox_handler, P(0), P(0)
   );
 }
