@@ -50,18 +50,18 @@ typedef struct {
   int right_click_action;
   int clicks_target_app;
   int click_target_mod;
-  // Output
-  char printer[64];
-  bool bell_sound;
-  bool bell_flash;
-  bool bell_taskbar;
-  char term[32];
-  char answerback[80];
   // Window
   int cols, rows;
   int scrollbar;
   int scrollback_lines;
   bool confirm_exit;
+  // Output
+  char term[32];
+  char answerback[80];
+  bool bell_sound;
+  bool bell_flash;
+  bool bell_taskbar;
+  char printer[64];
   // Hidden
   int col_spacing, row_spacing;
   char word_chars[32];
