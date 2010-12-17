@@ -264,6 +264,10 @@ load_config(char *filename)
 void
 finish_config(void)
 {
+  // Ignore charset setting if we haven't got a locale.
+  if (!*cfg.locale)
+    *cfg.charset = 0;
+  
   if (cfg.use_system_colours) {
     // Translate 'UseSystemColours' to colour settings.
     cfg.fg_colour = cfg.cursor_colour = win_get_sys_colour(true);
@@ -412,18 +416,10 @@ printerbox_handler(control *ctrl, void *unused(data), int event)
 }
 
 static void
-update_charset(void)
+set_charset(char *charset)
 {
-  dlg_editbox_set(charset_box, *new_cfg.locale ? new_cfg.charset : "");
-}
-
-static void
-update_locale(void)
-{
-  if (*new_cfg.charset && !*new_cfg.locale) {
-    strcpy(new_cfg.locale, "C");
-    dlg_editbox_set(locale_box, new_cfg.locale);
-  }
+  strcpy(new_cfg.charset, charset);
+  dlg_editbox_set(charset_box, charset);
 }
 
 static void
@@ -439,14 +435,29 @@ locale_handler(control *ctrl, void *unused(data), int event)
       dlg_editbox_set(ctrl, locale);
     when EVENT_UNFOCUS:
       dlg_editbox_set(ctrl, locale);
-      update_charset();
-    when EVENT_VALCHANGE or EVENT_SELCHANGE:
+      if (!*locale)
+        set_charset("");
+    when EVENT_VALCHANGE:
       dlg_editbox_get(ctrl, locale, sizeof cfg.locale);
-      if (event == EVENT_SELCHANGE) {
-        if (*locale == '(')
-          *locale = 0;
-        update_charset();
+    when EVENT_SELCHANGE:
+      dlg_editbox_get(ctrl, locale, sizeof cfg.locale);
+      if (*locale == '(' || !*locale) {
+        *locale = 0;
+        set_charset("");
       }
+#if HAS_LOCALES
+      else if (!*new_cfg.charset)
+        set_charset("UTF-8");
+#endif
+  }
+}
+
+static void
+check_locale(void)
+{
+  if (!*new_cfg.locale) {
+    strcpy(new_cfg.locale, "C");
+    dlg_editbox_set(locale_box, "C");
   }
 }
 
@@ -460,18 +471,20 @@ charset_handler(control *ctrl, void *unused(data), int event)
       const char *cs;
       for (int i = 0; (cs = charset_menu[i]); i++)
         dlg_listbox_add(ctrl, cs);
-      update_charset();
+      dlg_editbox_set(ctrl, charset);
     when EVENT_UNFOCUS:
       dlg_editbox_set(ctrl, charset);
-      update_locale();
-    when EVENT_VALCHANGE or EVENT_SELCHANGE:
+      if (*charset)
+        check_locale();
+    when EVENT_VALCHANGE:
       dlg_editbox_get(ctrl, charset, sizeof cfg.charset);
-      if (event == EVENT_SELCHANGE) {
-        if (*charset == '(')
-          *charset = 0;
-        else 
-          *strchr(charset, ' ') = 0;
-        update_locale();
+    when EVENT_SELCHANGE:
+      dlg_editbox_get(ctrl, charset, sizeof cfg.charset);
+      if (*charset == '(')
+        *charset = 0;
+      else {
+        *strchr(charset, ' ') = 0;
+        check_locale();
       }
   }
 }
