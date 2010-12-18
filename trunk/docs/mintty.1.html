@@ -8,7 +8,7 @@
 <!-- .\" You may distribute, use, and modify this man page under the terms -->
 <!-- .\" of the GNU Free Documentation License (GFDL), Version 1.3, -->
 <!-- .\" 3 November 2008 (or later) as specified. -->
-<!-- .TH mintty 1 2010-12-04 0.9.3 Cygwin -->
+<!-- .TH mintty 1 2010-12-18 0.9.4 Cygwin -->
 <CENTER>
 <H1><HR><I>Manual Reference Pages &nbsp;-&nbsp;</I><NOBR>mintty (1)</NOBR><HR></H1>
 </CENTER>
@@ -56,9 +56,9 @@ mintty - Cygwin terminal emulator
 &nbsp; &nbsp; &nbsp;<A HREF=#23>Text</A><BR>
 &nbsp; &nbsp; &nbsp;<A HREF=#24>Keys</A><BR>
 &nbsp; &nbsp; &nbsp;<A HREF=#25>Mouse</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#26>Output</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#27>Window</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#28>Config-file only settings</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#26>Window</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#27>Terminal</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#28>Hidden</A><BR>
 <A HREF=#29>Limitations</A><BR>
 &nbsp; &nbsp; &nbsp;<A HREF=#30>Console issue</A><BR>
 &nbsp; &nbsp; &nbsp;<A HREF=#31>Termcap/terminfo</A><BR>
@@ -558,7 +558,7 @@ An overview of all the keyboard shortcuts.
 - <B>Shift+PgUp</B>: Page up
 <!-- .br -->
 <!-- Need break --><BR>
-- <B>Shift+PgDown</B>: Page down
+- <B>Shift+PgDn</B>: Page down
 <!-- .br -->
 <!-- Need break --><BR>
 - <B>Shift+Home</B>: Top
@@ -876,7 +876,8 @@ Checkbox for enabling the font zooming shortcuts <B>Ctrl+plus/minus/zero</B>.
 <TR valign=top><TD colspan=2>
 <B>Modifier for scrolling</B> (ScrollMod=1)
 </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The modifier key that needs to be pressed together with the arrow up/down, Page Up/Down, or Home/End keys to access the scrollback buffer.
+The modifier key that needs to be pressed together with the arrow up/down,
+PgUp/PgDn, or Home/End keys to access the scrollback buffer.
 The default is <B>Shift</B>.
 The <B>Off</B> setting disables scrolling with keyboard shortcuts.
 <P>
@@ -894,13 +895,13 @@ The <B>Off</B> setting disables scrolling with keyboard shortcuts.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
-<B>Page Up/Down scroll without modifier</B> (PgUpDnScroll=0)
+<B>PgUp and PgDn scroll without modifier</B> (PgUpDnScroll=0)
 </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-If this is enabled, the scrollback buffer can be accessed using the Page Up/Down
-keys without pressing the &#146;modifier for scrolling&#146; selected above.
-If the modifier is pressed anyway, plain Page Up/Down keycodes are sent to the
+If this is enabled, the scrollback buffer can be accessed by just pressing
+PgUp or PgDn, without the &#146;modifier for scrolling&#146; selected above.
+If the modifier is pressed anyway, plain PgUp/PgDn keycodes are sent to the
 application.
-This option does not affect the arrow keys and Home/End keys.
+This option does not affect the arrow keys or Home/End keys.
 <P>
 <P>
 <!-- .SS Mouse -->
@@ -967,7 +968,7 @@ xterm-style mouse reporting.
 In that mode, mouse clicks can be sent either to the application to process
 as it sees fit, or to the window for the usual actions such as select and paste.
 <P>
-- <B><A HREF=#27>Window</A></B> (0)
+- <B><A HREF=#26>Window</A></B> (0)
 <!-- .br -->
 <!-- Need break --><BR>
 - <B>Application</B> (1)
@@ -996,79 +997,10 @@ The <B>Off</B> setting disables overriding.
 - <B>Off</B> (0)
 <P>
 <P>
-<!-- .SS Output -->
-</TD></TR>
-<TR></TR></TABLE></BLOCKQUOTE>
-<A name=26>
-
-    <H4>&nbsp; &nbsp; Output</H4>
-</A>
-<BLOCKQUOTE>
-Settings for output devices other than the screen.
-<P>
-<!-- .TP -->
-<TABLE cellpadding=3>
-<TR valign=top><TD colspan=2>
-<B>Printer</B> (Printer=)
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The ANSI standard defines control sequences for sending text to a printer,
-which are used by some terminal applications such as the mail reader
-<B>pine</B>.
-The Windows printer to send such text to can be selected here.
-By default, printing is disabled.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD width=6% nowrap>
-<B>Bell</B>
-</TD><TD valign=bottom>
-The three checkboxes here determine what effects the bell character <B>^G</B>
-has.
-Taskbar highlighting, which is enabled by default, changes the colour of
-mintty&#146;s taskbar entry in case its window is not active already.
-<P>
-- <B>Play Sound</B> (BellSound=0)
-<!-- .br -->
-<!-- Need break --><BR>
-- <B>Flash Screen</B> (BellFlash=0)
-<!-- .br -->
-<!-- Need break --><BR>
-- <B>Highlight in taskbar</B> (BellTaskbar=1)
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<B>TERM</B> (Term=xterm)
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The TERM variable setting at mintty startup.
-Choices available from the dropdown list are <B>xterm</B>, <B>xterm-256color</B>,
-<B>xterm-vt220</B>, <B>vt220</B>, and <B>vt100</B>.
-<P>
-If the setting contains "vt220", xterm VT220-style function key mode is enabled
-instead of the default PC-style function key mode.
-(This can otherwise be set with the DECSET 1061 control sequence.)
-<P>
-Apart from that, this setting has no effect on mintty&#146;s terminal emulation,
-but it does tell applications what features to expect.
-<P>
-The <B>xterm-256color</B> setting enables 256-color mode in some applications,
-but may not be recognised at all by others, which is why plain <B>xterm</B>
-is the default.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<B>Answerback</B> (Answerback=)
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-<P>
-The answerback string is sent in response to the <B>^E</B> (ENQ) character.
-By default, this is empty.
-<P>
-<P>
 <!-- .SS Window -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
-<A name=27>
+<A name=26>
 
     <H4>&nbsp; &nbsp; Window</H4>
 </A>
@@ -1130,12 +1062,81 @@ pressed and the command invoked by mintty still has child processes.
 This is intended to help avoid closing programs accidentally.
 <P>
 <P>
-<!-- .SS Config-file only settings -->
+<!-- .SS Terminal -->
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=27>
+
+    <H4>&nbsp; &nbsp; Terminal</H4>
+</A>
+<BLOCKQUOTE>
+Terminal emulation settings.
+<P>
+<!-- .TP -->
+<TABLE cellpadding=3>
+<TR valign=top><TD colspan=2>
+<B>Type</B> (Term=xterm)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The terminal type.  This determines the setting of the TERM environment variable
+at mintty startup.
+Choices available from the dropdown list are <B>xterm</B>, <B>xterm-256color</B>,
+<B>xterm-vt220</B>, <B>vt220</B>, and <B>vt100</B>.
+<P>
+If the setting contains "vt220", xterm VT220-style function key mode is enabled
+instead of the default PC-style function key mode.
+(This can otherwise be set with the DECSET 1061 control sequence.)
+<P>
+Apart from that, this setting has no effect on mintty&#146;s terminal emulation,
+i.e. all the features are always available. However, the TERM setting does tell
+applications what features they can use.
+<P>
+The <B>xterm-256color</B> setting enables 256-color mode in some applications,
+but may not be recognised at all by others, which is why plain <B>xterm</B>
+is the default.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Answerback</B> (Answerback=)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+<P>
+The answerback string is sent in response to the <B>^E</B> (ENQ) character.
+By default, this is empty.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD width=6% nowrap>
+<B>Bell</B>
+</TD><TD valign=bottom>
+The three checkboxes here determine what effects the bell character <B>^G</B>
+has.  Only taskbar highlighting is enabled by default.
+<P>
+- <B>Sound</B> (BellSound=0): Play the system&#146;s default beep sound.
+<P>
+- <B>Flash</B> (BellFlash=0): Briefly invert the foreground and background
+colours.
+<P>
+- <B>Taskbar highlight</B> (BellTaskbar=1): Change the colour of the taskbar
+entry if the mintty window is not active.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Printer</B> (Printer=)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The ANSI standard defines control sequences for sending text to a printer,
+which are used by some terminal applications such as the mail reader
+<B>pine</B>.
+The Windows printer to send such text to can be selected here.
+By default, printing is disabled.
+<P>
+<P>
+<!-- .SS Hidden -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
 <A name=28>
 
-    <H4>&nbsp; &nbsp; Config-file only settings</H4>
+    <H4>&nbsp; &nbsp; Hidden</H4>
 </A>
 <BLOCKQUOTE>
 The following settings do not appear in the options dialog, i.e. they can
@@ -1348,5 +1349,5 @@ Questions can be sent to the discussion group at
 the Cygwin mailing list at <I><A HREF="mailto:cygwin@cygwin.com">cygwin@cygwin.com</A></I>.
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>0.9.3</I></TD> <TD width=33% align=center>mintty (1)</TD> <TD align=right width=33%><I>2010-12-04</I></TD> </TR></TABLE><FONT SIZE=-1>Generated by <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer 1.07</A> from ./mintty.1 using man macros.</FONT>
+<TABLE width=100%><TR> <TD width=33%><I>0.9.4</I></TD> <TD width=33% align=center>mintty (1)</TD> <TD align=right width=33%><I>2010-12-18</I></TD> </TR></TABLE><FONT SIZE=-1>Generated by <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer 1.07</A> from ./mintty.1 using man macros.</FONT>
 </BODY></HTML>
