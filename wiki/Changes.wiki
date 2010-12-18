@@ -1,6 +1,11 @@
 #summary Notable changes in each released version
 #labels Featured
 
+=== 0.9.4 (18 Dec 2010) ===
+ * Reinstated flow control with `^S` and `^Q`, following protests. Hence the stty command to enable it in 0.9.3 is no longer needed. `stty -ixon` can be used to disable it and make `^S` and `^Q` available for other functions again.
+ * The `ixany` terminal flag is set instead, which tells the terminal driver to restart output on any input character rather than just `^Q`, thus still stopping users from "hanging" their terminal.
+ * Tweaked the layout and wording of some options. Renamed the 'Output' pane to 'Terminal'.
+
 === 0.9.3 (4 Dec 2010) ===
  * Disabled flow control with `^S` and `^Q` by default, to stop unwary users from accidentally "hanging" their terminal and to make those keys available for other functions. To re-enable, use `stty stop ^S start ^Q`.
  * Stopped resizing the window when changing font size with Ctrl+plus/minus/zero or Ctrl+mousewheel. This follows the example of KDE's Konsole and is more consistent with other programs that have this feature.
