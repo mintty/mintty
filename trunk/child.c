@@ -180,11 +180,12 @@ child_create(char *argv[], struct winsize *winp)
       setenv("LANG", lang, true);
     }
 
-    // Set backspace keycode
+    // Terminal line settings
     struct termios attr;
     tcgetattr(0, &attr);
     attr.c_cc[VERASE] = cfg.backspace_sends_bs ? CTRL('H') : CDEL;
-    attr.c_iflag |= IXANY;
+    attr.c_iflag |= IXANY | IMAXBEL;
+    attr.c_lflag |= ECHOE | ECHOK | ECHOCTL | ECHOKE;
     tcsetattr(0, TCSANOW, &attr);
     
     // Invoke command
