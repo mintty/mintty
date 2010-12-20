@@ -621,10 +621,12 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       update_transparency();
     when WM_ENTERSIZEMOVE:
       resizing = true;
-    when WM_EXITSIZEMOVE:
-      win_destroy_tip();
-      resizing = false;
-      adapt_term_size();
+    when WM_EXITSIZEMOVE or WM_CAPTURECHANGED:
+      if (resizing) {
+        resizing = false;
+        win_destroy_tip();
+        adapt_term_size();
+      }
     when WM_SIZING: {
      /*
       * This does two jobs:
