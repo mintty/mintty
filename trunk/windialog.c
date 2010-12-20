@@ -290,7 +290,6 @@ win_open_config(void)
 void
 win_show_about(void)
 {
-  char *text = asform("%s\n" ABOUT_TEXT, VERSION_TEXT);
   MessageBoxIndirect(&(MSGBOXPARAMS){
     .cbSize = sizeof(MSGBOXPARAMS),
     .hwndOwner = config_wnd,
@@ -298,9 +297,8 @@ win_show_about(void)
     .lpszCaption = APPNAME,
     .dwStyle = MB_USERICON | MB_OK,
     .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
-    .lpszText = text
+    .lpszText = VERSION_TEXT "\n" ABOUT_TEXT
   });
-  free(text);
 }
 
 void
