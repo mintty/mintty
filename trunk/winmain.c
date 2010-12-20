@@ -620,16 +620,15 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       win_update();
       update_transparency();
     when WM_ENTERSIZEMOVE:
-      win_enable_tip();
       resizing = true;
     when WM_EXITSIZEMOVE:
-      win_disable_tip();
+      win_destroy_tip();
       resizing = false;
       adapt_term_size();
     when WM_SIZING: {
      /*
       * This does two jobs:
-      * 1) Keep the sizetip uptodate
+      * 1) Keep the tip uptodate
       * 2) Make sure the window size is _stepped_ in units of the font size.
       */
       LPRECT r = (LPRECT) lp;
@@ -655,7 +654,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       else if (wp == WMSZ_LEFT)
         r->left += ew;
       
-      win_update_tip(r->left + extra_width, r->top + extra_height, cols, rows);
+      win_show_tip(r->left + extra_width, r->top + extra_height, cols, rows);
       
       return ew || eh;
     }

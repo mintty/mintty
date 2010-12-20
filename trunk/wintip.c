@@ -10,7 +10,6 @@ static HFONT tip_font;
 static COLORREF tip_bg;
 static COLORREF tip_text;
 static HWND tip_wnd;
-static bool tip_enabled;
 
 static LRESULT CALLBACK
 tip_proc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
@@ -66,11 +65,8 @@ tip_proc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 }
 
 void
-win_update_tip(int x, int y, int cols, int rows)
+win_show_tip(int x, int y, int cols, int rows)
 {
-  if (!tip_enabled)
-    return;
-
   if (!tip_wnd) {
     NONCLIENTMETRICS nci;
 
@@ -115,17 +111,10 @@ win_update_tip(int x, int y, int cols, int rows)
 }
 
 void
-win_enable_tip(void)
-{
-  tip_enabled = true;
-}
-
-void
-win_disable_tip(void)
+win_destroy_tip(void)
 {
   if (tip_wnd) {
     DestroyWindow(tip_wnd);
     tip_wnd = null;
   }
-  tip_enabled = false;
 }
