@@ -29,11 +29,15 @@ cc_opts =  \
 ld_opts := -mwindows -lcomctl32 -limm32 -lwinspool -lole32 /lib/w32api/libuuid.a
 
 ifdef debug
-cc_opts += -DDMALLOC -g
-ld_opts += -ldmallocth
+cc_opts += -g
 else
 cc_opts += -DNDEBUG -fomit-frame-pointer -Os
 ld_opts += -s
+endif
+
+ifdef dmalloc
+cc_opts += -DDMALLOC
+ld_opts += -ldmallocth
 endif
 
 cc := gcc
