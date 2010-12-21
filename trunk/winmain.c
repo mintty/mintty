@@ -898,17 +898,23 @@ main(int argc, char *argv[])
   else {
     // Look up the user's shell.
     cmd = getenv("SHELL");
-
     cmd = cmd ? strdup(cmd) :
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
       (pw && pw->pw_shell && *pw->pw_shell) ? strdup(pw->pw_shell) :
 #endif
       "/bin/sh";
+
+    // Determine the program name argument.
     char *slash = strrchr(cmd, '/');
     char *arg0 = slash ? slash + 1 : cmd;
+
+    // Prepend '-' if a login shell was requested.
     if (*argv)
       arg0 = asform("-%s", arg0);
-    argv = (char *[]){arg0, 0};
+
+    // Create new argument array.
+    argv = newn(char *, 2);
+    *argv = arg0;
   }
   
   // Put child command line into window title if we haven't got one already.
