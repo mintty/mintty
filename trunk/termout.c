@@ -242,6 +242,9 @@ write_ctrl(char c)
 static void
 write_char(wchar c, int width)
 {
+  if (!c)
+    return;
+  
   term_screen *screen = &term.screen;
   term_cursor *curs = &screen->curs;
   termline *line = screen->lines[curs->y];
