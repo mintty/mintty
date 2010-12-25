@@ -274,8 +274,10 @@ child_proc(void)
           if (log_fd >= 0)
             write(log_fd, buf, len);
         }
-        else
+        else {
           pty_fd = -1;
+          term.cursor_on = false;
+        }
       }
       if (FD_ISSET(win_fd, &fds))
         return;
