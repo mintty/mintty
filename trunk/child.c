@@ -176,7 +176,12 @@ child_create(char *argv[], struct winsize *winp)
     
     if (lang) {
       unsetenv("LC_ALL");
+      unsetenv("LC_COLLATE");
       unsetenv("LC_CTYPE");
+      unsetenv("LC_MONETARY");
+      unsetenv("LC_NUMERIC");
+      unsetenv("LC_TIME");
+      unsetenv("LC_MESSAGES");
       setenv("LANG", lang, true);
     }
 
