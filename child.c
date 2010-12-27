@@ -146,6 +146,13 @@ child_create(char *argv[], struct winsize *winp)
 
     // If we get here, exec failed.
     fprintf(stderr, "%s: %s\r\n", cmd, strerror(errno));
+
+#if CYGWIN_VERSION_DLL_MAJOR < 1005
+    // Before Cygwin 1.5, the message above doesn't appear if we exit
+    // immediately. So have a little nap first.
+    usleep(200000);
+#endif
+
     exit(255);
   }
   else { // Parent process.
