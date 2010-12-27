@@ -35,7 +35,6 @@ int forkpty(int *, char *, struct termios *, struct winsize *);
 char *home, *cmd;
 
 static pid_t pid;
-static int status = -1;
 static bool killed;
 static int pty_fd = -1, log_fd = -1, win_fd;
 static struct utmp ut;
@@ -60,24 +59,6 @@ sigexit(int sig)
   kill(getpid(), sig);
 }
 
-static void
-sigchld(int sig)
-{
-  int saved_errno = errno;
-  
-  for (;;) {
-    errno = 0;
-    int chld_status, chld_pid = waitpid(-1, &chld_status, WNOHANG);
-    if (chld_pid == pid)
-      pid = 0, status = chld_status;
-    else if (chld_pid <= 0 && errno != EINTR)
-      break;
-  }
-  
-  errno = saved_errno;
-  signal(sig, sigchld);
-}
-
 void
 child_create(char *argv[], struct winsize *winp)
 {
@@ -90,8 +71,6 @@ child_create(char *argv[], struct winsize *winp)
   signal(SIGTERM, sigexit);
   signal(SIGQUIT, sigexit);
   
-  signal(SIGCHLD, sigchld);
-
   // Create the child process and pseudo terminal.
   pid = forkpty(&pty_fd, 0, 0, winp);
   if (pid < 0) {
@@ -207,51 +186,56 @@ child_proc(void)
     if (term.paste_buffer)
       term_send_paste();
 
+    struct timeval timeout = {0, 100000}, *timeout_p = 0;
     fd_set fds;
     FD_ZERO(&fds);
     FD_SET(win_fd, &fds);  
     if (pty_fd >= 0)
       FD_SET(pty_fd, &fds);
-    else if (status >= 0 || (pid && waitpid(pid, &status, WNOHANG) == pid)) {
-      // Decide whether we want to exit now or later
-      if (killed || hold == HOLD_NEVER)
-        exit(0);
-      else if (hold == HOLD_DEFAULT) {
-        if (WIFSIGNALED(status) || WEXITSTATUS(status) != 255)
+    else if (pid) {
+      int status;
+      if (waitpid(pid, &status, WNOHANG) == pid) {
+        pid = 0;
+        
+        // Decide whether we want to exit now or later
+        if (killed || hold == HOLD_NEVER)
           exit(0);
-      }
-      else if (hold == HOLD_ERROR) {
+        else if (hold == HOLD_DEFAULT) {
+          if (WIFSIGNALED(status) || WEXITSTATUS(status) != 255)
+            exit(0);
+        }
+        else if (hold == HOLD_ERROR) {
+          if (WIFEXITED(status)) {
+            if (WEXITSTATUS(status) == 0)
+              exit(0);
+          }
+          else {
+            const int error_sigs =
+              1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
+              1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
+            if (!(error_sigs & 1<<WTERMSIG(status)))
+              exit(0);
+          }
+        }
+      
+        int l = 0;
+        char *s = 0; 
         if (WIFEXITED(status)) {
-          if (WEXITSTATUS(status) == 0)
-            exit(0);
+          int code = WEXITSTATUS(status);
+          if (code && code != 255)
+            l = asprintf(&s, "%s: Exit %i", cmd, code); 
         }
-        else {
-          const int error_sigs =
-            1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
-            1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
-          if (!(error_sigs & 1<<WTERMSIG(status)))
-            exit(0);
-        }
-      }
-    
-      int l = 0;
-      char *s = 0; 
-      if (WIFEXITED(status)) {
-        int code = WEXITSTATUS(status);
-        if (code && code != 255)
-          l = asprintf(&s, "%s: Exit %i", cmd, code); 
-      }
-      else if (WIFSIGNALED(status))
-        l = asprintf(&s, "%s: %s", cmd, strsignal(WTERMSIG(status)));
+        else if (WIFSIGNALED(status))
+          l = asprintf(&s, "%s: %s", cmd, strsignal(WTERMSIG(status)));
 
-      if (s)
-        term_write(s, l);
-
-      status = -1;
-      pid = 0;
+        if (s)
+          term_write(s, l);
+      }
+      else // Pty gone, but process still there: keep checking
+        timeout_p = &timeout;
     }
     
-    if (select(win_fd + 1, &fds, 0, 0, 0) > 0) {
+    if (select(win_fd + 1, &fds, 0, 0, timeout_p) > 0) {
       if (pty_fd >= 0 && FD_ISSET(pty_fd, &fds)) {
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
         static char buf[4096];
@@ -274,10 +258,8 @@ child_proc(void)
           if (log_fd >= 0)
             write(log_fd, buf, len);
         }
-        else {
+        else
           pty_fd = -1;
-          term.cursor_on = false;
-        }
       }
       if (FD_ISSET(win_fd, &fds))
         return;
