@@ -5,7 +5,7 @@
 .\" You may distribute, use, and modify this man page under the terms
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
-.TH mintty 1 2010-12-18 0.9.4 Cygwin
+.TH mintty 1 2010-12-28 mintty\ 0.9.5
 
 .ad l
 
@@ -474,13 +474,14 @@ code followed by a two-letter country code, for instance \fBen_US\fP or
 drop-down list for this setting.  Alternatively, the language-neutral "C"
 locale can be selected.
 
-If no locale is set here, which is the default, the locale and character set
-specified via the environment variables \fILC_ALL\fP, \fILC_CTYPE\fP or
-\fILANG\fP are used instead.
+If no locale is set here, which is the default, mintty uses the locale and
+character set specified via the environment variables \fILC_ALL\fP,
+\fILC_CTYPE\fP or \fILANG\fP.
 
-If a locale is set, however, it will override any environment variable setting:
-\fILC_ALL\fP and \fILC_CTYPE\fP are cleared, while \fILANG\fP is set according
-to the chosen locale and character set.
+If the locale option is set, however, it will override any environment
+variable setting: \fILC_ALL\fP and the \fILC_*\fP variables for specific
+locale categories are cleared, while \fILANG\fP is set according to the
+selected locale and character set.
 
 .TP
 \fBCharacter set\fP (Charset=)
