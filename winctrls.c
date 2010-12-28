@@ -920,8 +920,7 @@ select_font(winctrl *c)
   lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
   lf.lfQuality = DEFAULT_QUALITY;
   lf.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
-  strncpy(lf.lfFaceName, fs.name, sizeof (lf.lfFaceName) - 1);
-  lf.lfFaceName[sizeof (lf.lfFaceName) - 1] = '\0';
+  strlcpy(lf.lfFaceName, fs.name, sizeof lf.lfFaceName);
 
   CHOOSEFONT cf;
   cf.lStructSize = sizeof (cf);
@@ -932,8 +931,7 @@ select_font(winctrl *c)
     CF_SCREENFONTS | CF_NOSCRIPTSEL;
 
   if (ChooseFont(&cf)) {
-    strncpy(fs.name, lf.lfFaceName, sizeof (fs.name) - 1);
-    fs.name[sizeof (fs.name) - 1] = '\0';
+    strlcpy(fs.name, lf.lfFaceName, sizeof fs.name);
     fs.isbold = (lf.lfWeight == FW_BOLD);
     fs.size = cf.iPointSize / 10;
     dlg_fontsel_set(c->ctrl, &fs);
