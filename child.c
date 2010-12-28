@@ -159,6 +159,7 @@ child_create(char *argv[], struct winsize *winp)
     
     if (utmp_enabled) {
       struct utmp ut;
+      memset(&ut, 0, sizeof ut);
       ut.ut_type = USER_PROCESS;
       ut.ut_pid = pid;
       ut.ut_time = time(0);
@@ -170,12 +171,10 @@ child_create(char *argv[], struct winsize *winp)
         if (!strncmp(dev, "tty", 3))
           dev += 3;
         strlcpy(ut.ut_id, dev, sizeof ut.ut_id);
-        strlcpy(ut.ut_user, getlogin() ?: "?", sizeof ut.ut_user);
-        if (gethostname(ut.ut_host, sizeof ut.ut_host))
-          *ut.ut_host = 0;
-        ut.ut_addr = 0;
-        login(&ut);
       }
+      strlcpy(ut.ut_user, getlogin() ?: "?", sizeof ut.ut_user);
+      gethostname(ut.ut_host, sizeof ut.ut_host);
+      login(&ut);
     }
   }
 
