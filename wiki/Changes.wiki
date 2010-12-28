@@ -1,6 +1,17 @@
 #summary Notable changes in each released version
 #labels Featured
 
+=== 0.9.5 (28 Dec 2010) ===
+ * Enabled ECHOCTL, ECHOE, ECHOK, ECHOKE, and IMAXBEL terminal line flags at startup, for compatibility with other terminal emulators and `stty sane`.
+ * Worked around occasional failure to deliver SIGCHLD by redesigning exit handling yet again.
+ * When keeping the window open after the command is finished, the cursor is switched off and the window has to be closed with the Close button or Alt+F4, rather than just any key.
+ * With `--hold=error`, the check for runtime error signals was the wrong way round.
+ * Worked around failure of 'bbLean' window manager to send WM_EXITSIZEMOVE when finishing a resize.
+ * When the locale is set in the options, all LC_* environent variables rather than just now LC_ALL and LC_CTYPE are now cleared. (LANG is set according to the selected locale.)
+ * Added hostname to utmp entry.
+ * Fixed a bug confusing NUL characters with wide characters.
+ * Fixed a bug that caused a failure to invoke the user's shell in debug builds.
+ 
 === 0.9.4 (18 Dec 2010) ===
  * Reinstated flow control with `^S` and `^Q`, following protests. Hence the stty command to enable it in 0.9.3 is no longer needed. `stty -ixon` can be used to disable it and make `^S` and `^Q` available for other functions again.
  * The `ixany` terminal flag is set instead, which tells the terminal driver to restart output on any input character rather than just `^Q`, thus still stopping users from "hanging" their terminal.
