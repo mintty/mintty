@@ -945,3 +945,12 @@ term_cursor_blinks(void)
 {
   return term.cursor_blinks == -1 ? cfg.cursor_blinks : term.cursor_blinks;
 }
+
+void
+term_hide_cursor(void)
+{
+  if (term.cursor_on) {
+    term.cursor_on = false;
+    win_update();
+  }
+}

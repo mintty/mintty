@@ -81,6 +81,7 @@ child_create(char *argv[], struct winsize *winp)
         "\r\nDLL rebasing may be required. See 'rebaseall --help'.";
       term_write(msg, sizeof msg - 1);
     }
+    term_hide_cursor();
   }
   else if (!pid) { // Child process.
 #if CYGWIN_VERSION_DLL_MAJOR < 1007
@@ -267,8 +268,10 @@ child_proc(void)
           if (log_fd >= 0)
             write(log_fd, buf, len);
         }
-        else
+        else {
           pty_fd = -1;
+          term_hide_cursor();
+        }
       }
       if (FD_ISSET(win_fd, &fds))
         return;
@@ -322,8 +325,6 @@ child_write(const char *buf, uint len)
 { 
   if (pty_fd >= 0)
     write(pty_fd, buf, len);
-  else
-    child_kill(false);
 }
 
 void

@@ -376,7 +376,6 @@ void term_mouse_wheel(int delta, int lines_per_notch, mod_keys, pos);
 void term_select_all(void);
 void term_paint(void);
 void term_invalidate(int left, int top, int right, int bottom);
-void term_blink(int set_cursor);
 void term_open(void);
 void term_copy(void);
 void term_paste(wchar *, uint len);
@@ -390,5 +389,6 @@ void term_flush(void);
 void term_set_focus(bool has_focus);
 int  term_cursor_type(void);
 bool term_cursor_blinks(void);
+void term_hide_cursor(void);
 
 #endif
