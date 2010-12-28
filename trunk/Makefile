@@ -107,7 +107,7 @@ $(pdf): docs/$(name).1.pdf
 	groff -t -man -Tps $< | ps2pdf - $@
 
 clean:
-	rm -f *.d *.o *.exe *.zip *.bz2 *.pdf docs/$(name).1.*
+	rm -f *.d *.o *.exe *.zip *.bz2 *.pdf docs/*.pdf
 
 .PHONY: cygwin17 cygwin15 msys src pdf clean
 
