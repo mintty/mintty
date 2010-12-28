@@ -23,6 +23,10 @@ int iswalpha(wint_t);
 int iswspace(wint_t);
 #endif
 
+#if CYGWIN_VERSION_API_MINOR < 53
+#define strlcpy(dst, src, len) snprintf(dst, len, "%s", src)
+#endif
+
 #if CYGWIN_VERSION_API_MINOR < 70
 int asprintf(char **, const char *, ...);
 int vasprintf(char **, const char *, va_list);

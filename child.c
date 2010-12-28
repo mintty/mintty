@@ -37,7 +37,6 @@ char *home, *cmd;
 static pid_t pid;
 static bool killed;
 static int pty_fd = -1, log_fd = -1, win_fd;
-static struct utmp ut;
 
 static void
 error(char *action)
@@ -159,20 +158,24 @@ child_create(char *argv[], struct winsize *winp)
     fcntl(pty_fd, F_SETFL, O_NONBLOCK);
     
     if (utmp_enabled) {
+      struct utmp ut;
       ut.ut_type = USER_PROCESS;
       ut.ut_pid = pid;
       ut.ut_time = time(0);
       char *dev = ptsname(pty_fd);
       if (dev) {
-        if (strncmp(dev, "/dev/", 5) == 0)
+        if (!strncmp(dev, "/dev/", 5))
           dev += 5;
-        strncpy(ut.ut_line, dev ?: "?", sizeof ut.ut_line);
-        if (strncmp(dev, "pty", 3) == 0 || strncmp(dev, "tty", 3) == 0)
+        strlcpy(ut.ut_line, dev, sizeof ut.ut_line);
+        if (!strncmp(dev, "tty", 3))
           dev += 3;
-        strncpy(ut.ut_id, dev ?: "?", sizeof ut.ut_id);      
+        strlcpy(ut.ut_id, dev, sizeof ut.ut_id);
+        strlcpy(ut.ut_user, getlogin() ?: "?", sizeof ut.ut_user);
+        if (gethostname(ut.ut_host, sizeof ut.ut_host))
+          *ut.ut_host = 0;
+        ut.ut_addr = 0;
+        login(&ut);
       }
-      strncpy(ut.ut_user, getlogin() ?: "?", sizeof ut.ut_user);
-      login(&ut);
     }
   }
 
