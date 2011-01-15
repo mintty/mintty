@@ -743,7 +743,7 @@ win_set_colour(colour_i i, colour c)
   switch (i) {
     when FG_COLOUR_I:
       colours[BOLD_FG_COLOUR_I] = brighten(c);
-    when BOLD_BG_COLOUR_I:
+    when BG_COLOUR_I:
       colours[BOLD_BG_COLOUR_I] = brighten(c);
     when CURSOR_COLOUR_I: {
       // Set the colour of text under the cursor to whichever of foreground
