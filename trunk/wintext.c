@@ -68,11 +68,8 @@ static const wchar linedraw_chars[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES] = {
   {0x00B7, '.'},                   // 0x7E '~' Centered dot
 };
 
-enum bold_mode bold_mode;
-
-static enum {
-  UND_LINE, UND_FONT
-} und_mode;
+static enum {BOLD_NONE, BOLD_SHADOW, BOLD_FONT} bold_mode;
+static enum {UND_LINE, UND_FONT} und_mode;
 static int descent;
 
 // Current font size (with any zooming)
@@ -155,7 +152,7 @@ win_init_fonts(void)
   for (i = 0; i < FONT_MAXNO; i++)
     fonts[i] = null;
 
-  bold_mode = cfg.bold_as_colour ? BOLD_COLOURS : BOLD_FONT;
+  bold_mode = cfg.bold_as_font ? BOLD_FONT : BOLD_NONE;
   und_mode = UND_FONT;
 
   if (cfg.font.isbold) {
@@ -539,7 +536,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   if (attr & ATTR_BOLD) {
     if (fgi < 8)
       fgi |= 8;
-    else if (fgi >= 256 && cfg.bold_as_colour)
+    else if (fgi >= 256 && !cfg.bold_as_font)
       fgi |= 1;
   }
   if (attr & ATTR_BLINK) {
@@ -554,7 +551,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   
   if (attr & ATTR_DIM) {
     fg = (fg & 0xFEFEFEFE) >> 1; // Halve the brightness.
-    if (fgi >= 256 && !cfg.bold_as_colour)
+    if (fgi >= 256 && cfg.bold_as_font)
       fg += (bg & 0xFEFEFEFE) >> 1; // Blend with background.
   }
   if (attr & ATTR_REVERSE) {

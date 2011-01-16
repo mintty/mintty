@@ -136,18 +136,18 @@ win_copy(const wchar *data, int *attr, int len)
         bgcolour = tmpcolour;
       }
 
-      if (bold_mode == BOLD_COLOURS && (attr[i] & ATTR_BOLD)) {
+      if (attr[i] & ATTR_BOLD) {
         if (fgcolour < 8)     /* ANSI colours */
           fgcolour += 8;
-        else if (fgcolour >= 256)     /* Default colours */
-          fgcolour++;
+        else if (fgcolour >= 256 && !cfg.bold_as_font)  /* Default colours */
+          fgcolour |= 1;
       }
 
       if (attr[i] & ATTR_BLINK) {
         if (bgcolour < 8)     /* ANSI colours */
           bgcolour += 8;
         else if (bgcolour >= 256)     /* Default colours */
-          bgcolour++;
+          bgcolour |= 1;
       }
 
       if (attr[i] & ATTR_INVISIBLE)
@@ -230,25 +230,21 @@ win_copy(const wchar *data, int *attr, int len)
           bgcolour = tmpcolour;
         }
 
-        if (bold_mode == BOLD_COLOURS && (attr[tindex] & ATTR_BOLD)) {
+        if (attr[tindex] & ATTR_BOLD) {
           if (fgcolour < 8)     /* ANSI colours */
             fgcolour += 8;
-          else if (fgcolour >= 256)     /* Default colours */
-            fgcolour++;
+          else if (fgcolour >= 256 && !cfg.bold_as_font)  /* Default colours */
+            fgcolour |= 1;
         }
 
         if (attr[tindex] & ATTR_BLINK) {
           if (bgcolour < 8)     /* ANSI colours */
             bgcolour += 8;
           else if (bgcolour >= 256)     /* Default colours */
-            bgcolour++;
+            bgcolour |= 1;
         }
 
-        if (bold_mode != BOLD_COLOURS)
-          attrBold = attr[tindex] & ATTR_BOLD;
-        else
-          attrBold = 0;
-
+        attrBold = cfg.bold_as_font ? (attr[tindex] & ATTR_BOLD) : 0;
         attrUnder = attr[tindex] & ATTR_UNDER;
 
        /*
@@ -263,7 +259,7 @@ win_copy(const wchar *data, int *attr, int len)
             bgcolour = -1;      /* No coloring */
 
           if (fgcolour >= 256) {        /* Default colour */
-            if (bold_mode == BOLD_COLOURS && (fgcolour & 1) && bgcolour == -1)
+            if (!cfg.bold_as_font && (fgcolour & 1) && bgcolour == -1)
               attrBold = ATTR_BOLD;     /* Emphasize text with bold attribute */
 
             fgcolour = -1;      /* No coloring */

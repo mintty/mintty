@@ -1,5 +1,5 @@
 // config.c (part of mintty)
-// Copyright 2008-10 Andy Koppe
+// Copyright 2008-11 Andy Koppe
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -34,7 +34,7 @@ config cfg = {
   // Text
   .font = {.name = "Lucida Console", .isbold = false, .size = 9},
   .font_quality = FQ_DEFAULT,
-  .bold_as_colour = true,
+  .bold_as_font = false,
   .allow_blinking = false,
   .locale = "",
   .charset = "",
@@ -83,7 +83,10 @@ config cfg = {
 #define offcfg(option) offsetof(config, option)
 #define cfg_field(option) sizeof(cfg.option), offcfg(option)
 
-typedef enum { OPT_BOOL, OPT_INT, OPT_STRING, OPT_COLOUR, OPT_COMPAT } opt_type;
+typedef enum {
+  OPT_BOOL, OPT_NEGBOOL, OPT_INT, OPT_STRING, OPT_COLOUR,
+  OPT_COMPAT = 8
+} opt_type;
 
 static const struct {
   const char *name;
@@ -106,7 +109,7 @@ options[] = {
   {"FontIsBold", OPT_BOOL, cfg_field(font.isbold)},
   {"FontHeight", OPT_INT, cfg_field(font.size)},
   {"FontQuality", OPT_INT, cfg_field(font_quality)},
-  {"BoldAsColour", OPT_BOOL, cfg_field(bold_as_colour)},
+  {"BoldAsFont", OPT_BOOL, cfg_field(bold_as_font)},
   {"AllowBlinking", OPT_BOOL, cfg_field(allow_blinking)},
   {"Locale", OPT_STRING, cfg_field(locale)},
   {"Charset", OPT_STRING, cfg_field(charset)},
@@ -175,7 +178,8 @@ options[] = {
 
   // Backward compatibility
   {"UseSystemColours", OPT_BOOL | OPT_COMPAT, cfg_field(use_system_colours)},
-  {"BoldAsBright", OPT_BOOL | OPT_COMPAT, cfg_field(bold_as_colour)}
+  {"BoldAsBright", OPT_NEGBOOL | OPT_COMPAT, cfg_field(bold_as_font)},
+  {"BoldAsColour", OPT_NEGBOOL | OPT_COMPAT, cfg_field(bold_as_font)}
 };
 
 static uchar option_order[lengthof(options)];
@@ -212,6 +216,8 @@ parse_option(char *option)
   switch (options[i].type & ~OPT_COMPAT) {
     when OPT_BOOL:
       atoffset(bool, &cfg, offset) = atoi(val);
+    when OPT_NEGBOOL:
+      atoffset(bool, &cfg, offset) = !atoi(val);
     when OPT_INT:
       atoffset(int, &cfg, offset) = atoi(val);
     when OPT_STRING:
@@ -645,8 +651,8 @@ setup_config_box(controlbox * b)
   s = ctrl_new_set(b, "Text", null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
-    s, "Show bold as colour", 'b', P(0), dlg_stdcheckbox_handler,
-    I(offcfg(bold_as_colour))
+    s, "Show bold as font", 'b', P(0), dlg_stdcheckbox_handler,
+    I(offcfg(bold_as_font))
   )->column = 0;
   ctrl_checkbox(
     s, "Allow blinking", 'a', P(0),
