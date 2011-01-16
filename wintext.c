@@ -1,5 +1,5 @@
 // wintext.c (part of mintty)
-// Copyright 2008-10 Andy Koppe
+// Copyright 2008-11 Andy Koppe
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -536,28 +536,26 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
     if (bgi >= 256)
       bgi ^= 2;
   }
-  if (bold_mode == BOLD_COLOURS) {
-    if (attr & ATTR_BOLD) {
-      if (fgi < 8)
-        fgi |= 8;
-      else if (fgi >= 256)
-        fgi |= 1;
-    }
-    if (attr & ATTR_BLINK) {
-      if (bgi < 8)
-        bgi |= 8;
-      else if (bgi >= 256)
-        bgi |= 1;
-    }
+  if (attr & ATTR_BOLD) {
+    if (fgi < 8)
+      fgi |= 8;
+    else if (fgi >= 256 && cfg.bold_as_colour)
+      fgi |= 1;
+  }
+  if (attr & ATTR_BLINK) {
+    if (bgi < 8)
+      bgi |= 8;
+    else if (bgi >= 256)
+      bgi |= 1;
   }
   
   colour fg = colours[fgi];
   colour bg = colours[bgi];
   
   if (attr & ATTR_DIM) {
-    fg = (fg & 0xFEFEFEFE) >> 1;
-    if (!cfg.bold_as_colour)
-      fg += (bg & 0xFEFEFEFE) >> 1;
+    fg = (fg & 0xFEFEFEFE) >> 1; // Halve the brightness.
+    if (fgi >= 256 && !cfg.bold_as_colour)
+      fg += (bg & 0xFEFEFEFE) >> 1; // Blend with background.
   }
   if (attr & ATTR_REVERSE) {
     colour t = fg; fg = bg; bg = t;
