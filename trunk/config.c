@@ -41,11 +41,12 @@ config cfg = {
   // Keys
   .backspace_sends_bs = CYGWIN_VERSION_DLL_MAJOR < 1007,
   .ctrl_alt_is_altgr = false,
+  .clip_shortcuts = true,
   .window_shortcuts = true,
-  .zoom_shortcuts = true,
   .switch_shortcuts = true,
-  .scroll_mod = MDK_SHIFT,
-  .pgupdn_scroll = false,
+  .zoom_shortcuts = true,
+  .alt_fn_shortcuts = true,
+  .ctrl_shift_shortcuts = false,
   // Mouse
   .copy_on_select = true,
   .copy_as_rtf = true,
@@ -58,7 +59,8 @@ config cfg = {
   .rows = 24,
   .scrollbar = 1,
   .scrollback_lines = 10000,
-  .confirm_exit = true,
+  .scroll_mod = MDK_SHIFT,
+  .pgupdn_scroll = false,
   // Terminal
   .term = "xterm",
   .answerback = "",
@@ -66,6 +68,7 @@ config cfg = {
   .bell_flash = false,
   .bell_taskbar = true,
   .printer = "",
+  .confirm_exit = true,
   // Hidden
   .col_spacing = 0,
   .row_spacing = 0,
@@ -117,11 +120,12 @@ options[] = {
   // Keys
   {"BackspaceSendsBS", OPT_BOOL, cfg_field(backspace_sends_bs)},
   {"CtrlAltIsAltGr", OPT_BOOL, cfg_field(ctrl_alt_is_altgr)},
+  {"ClipShortcuts", OPT_BOOL, cfg_field(clip_shortcuts)},
   {"WindowShortcuts", OPT_BOOL, cfg_field(window_shortcuts)},
-  {"ZoomShortcuts", OPT_BOOL, cfg_field(zoom_shortcuts)},
   {"SwitchShortcuts", OPT_BOOL, cfg_field(switch_shortcuts)},
-  {"ScrollMod", OPT_INT, cfg_field(scroll_mod)},
-  {"PgUpDnScroll", OPT_BOOL, cfg_field(pgupdn_scroll)},
+  {"ZoomShortcuts", OPT_BOOL, cfg_field(zoom_shortcuts)},
+  {"AltFnShortcuts", OPT_BOOL, cfg_field(alt_fn_shortcuts)},
+  {"CtrlShiftShortcuts", OPT_BOOL, cfg_field(ctrl_shift_shortcuts)},
 
   // Mouse
   {"CopyOnSelect", OPT_BOOL, cfg_field(copy_on_select)},
@@ -136,7 +140,8 @@ options[] = {
   {"Rows", OPT_INT, cfg_field(rows)},
   {"Scrollbar", OPT_INT, cfg_field(scrollbar)},
   {"ScrollbackLines", OPT_INT, cfg_field(scrollback_lines)},
-  {"ConfirmExit", OPT_BOOL, cfg_field(confirm_exit)},
+  {"ScrollMod", OPT_INT, cfg_field(scroll_mod)},
+  {"PgUpDnScroll", OPT_BOOL, cfg_field(pgupdn_scroll)},
 
   // Terminal
   {"Term", OPT_STRING, cfg_field(term)},
@@ -145,10 +150,11 @@ options[] = {
   {"BellFlash", OPT_BOOL, cfg_field(bell_flash)},
   {"BellTaskbar", OPT_BOOL, cfg_field(bell_taskbar)},
   {"Printer", OPT_STRING, cfg_field(printer)},
+  {"ConfirmExit", OPT_BOOL, cfg_field(confirm_exit)},
 
   // Hidden
   
-  // Character spaceing
+  // Character spacing
   {"ColSpacing", OPT_INT, cfg_field(col_spacing)},
   {"RowSpacing", OPT_INT, cfg_field(row_spacing)},
   
@@ -610,11 +616,11 @@ setup_config_box(controlbox * b)
     "Low", 'l', I(1),
     with_glass ? "Med." : "Medium", 'm', I(2), 
     "High", 'h', I(3), 
-    with_glass ? "Glass" : null, 'g', I(-1), 
+    with_glass ? "Glass" : null, 's', I(-1), 
     null
   );
   ctrl_checkbox(
-    s, "Opaque when focused", 'p', P(0),
+    s, "Opaque when focused", 'q', P(0),
     dlg_stdcheckbox_handler, I(offcfg(opaque_when_focused))
   );
 
@@ -672,43 +678,39 @@ setup_config_box(controlbox * b)
   * The Keys panel.
   */
   s = ctrl_new_set(b, "Keys", null);
-  ctrl_columns(s, 2, 50, 50);
-  ctrl_checkbox(
-    s, "Ctrl+LeftAlt is AltGr", 'g', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(ctrl_alt_is_altgr))
-  )->column = 0;
   ctrl_checkbox(
     s, "Backspace sends ^H", 'b', P(0),
     dlg_stdcheckbox_handler, I(offcfg(backspace_sends_bs))
-  )->column = 1;
+  );
+  ctrl_checkbox(
+    s, "Ctrl+LeftAlt is AltGr", 'g', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(ctrl_alt_is_altgr))
+  );
 
   s = ctrl_new_set(b, "Keys", "Shortcuts");
+  ctrl_checkbox(
+    s, "Copy and Paste (Ctrl/Shift+Ins)", 'y', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(clip_shortcuts))
+  );
   ctrl_checkbox(
     s, "Menu and Full Screen (Alt+Space/Enter)", 'm', P(0),
     dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
   );
   ctrl_checkbox(
-    s, "Switch window (Ctrl+[Shift+]Tab)", 'w', P(0),
+    s, "Switch window (Ctrl+[Shift+]Tab)", 's', P(0),
     dlg_stdcheckbox_handler, I(offcfg(switch_shortcuts))
   );
   ctrl_checkbox(
     s, "Zoom (Ctrl+plus/minus/zero)", 'z', P(0),
     dlg_stdcheckbox_handler, I(offcfg(zoom_shortcuts))
   );
-  
-  s = ctrl_new_set(b, "Keys", "Modifier for scrolling");
-  ctrl_radiobuttons(
-    s, null, '\0', 4, P(0),      
-    dlg_stdradiobutton_handler, I(offcfg(scroll_mod)),
-    "Off", 'o', I(0),
-    "Shift", 's', I(MDK_SHIFT),
-    "Ctrl", 'c', I(MDK_CTRL),
-    "Alt", 'a', I(MDK_ALT),
-    null
+  ctrl_checkbox(
+    s, "Alt+Fn shortcuts", 'a', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(alt_fn_shortcuts))
   );
   ctrl_checkbox(
-    s, "PgUp and PgDn scroll without modifier", 'p', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(pgupdn_scroll))
+    s, "Ctrl+Shift+letter shortcuts", 'c', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(ctrl_shift_shortcuts))
   );
 
  /*
@@ -750,10 +752,10 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, "Modifier for overriding default", '\0', 4, P(0),
     dlg_stdradiobutton_handler, I(offcfg(click_target_mod)),
-    "Off", 'o', I(0),
     "Shift", 's', I(MDK_SHIFT),
     "Ctrl", 'c', I(MDK_CTRL),
     "Alt", 'a', I(MDK_ALT),
+    "Off", 'o', I(0),
     null
   );
   
@@ -763,7 +765,7 @@ setup_config_box(controlbox * b)
   s = ctrl_new_set(b, "Window", "Default size");
   ctrl_columns(s, 5, 35, 3, 28, 4, 30);
   (cols_box = ctrl_editbox(
-    s, "Columns", 'c', 44, P(0), int_handler, I(offcfg(cols)), I(256)
+    s, "Columns", 'm', 44, P(0), int_handler, I(offcfg(cols)), I(256)
   ))->column = 0;
   (rows_box = ctrl_editbox(
     s, "Rows", 'w', 55, P(0), int_handler, I(offcfg(rows)), I(256)
@@ -772,29 +774,36 @@ setup_config_box(controlbox * b)
     s, "Current size", 'u', P(0), current_size_handler, P(0)
   )->column = 4;
 
-  s = ctrl_new_set(b, "Window", "Scrollback");
-  ctrl_columns(s, 2, 45, 55);
+  s = ctrl_new_set(b, "Window", null);
+  ctrl_columns(s, 2, 66, 34);
   ctrl_editbox(
-    s, "Lines", 's', 57, P(0),
+    s, "Scrollback lines", 'b', 50, P(0),
     int_handler, I(offcfg(scrollback_lines)), I(1000000)
   )->column = 0;
   ctrl_radiobuttons(
-    s, "Scrollbar", '\0', 5, P(0),
+    s, "Scrollbar", '\0', 4, P(0),
     dlg_stdradiobutton_handler, I(offcfg(scrollbar)),
     "Left", 'l', I(-1),
     "None", 'n', I(0),
     "Right", 'r', I(1),
     null
   );
-
-  s = ctrl_new_set(b, "Window", null);
+  ctrl_radiobuttons(
+    s, "Modifier for scrolling", '\0', 4, P(0),      
+    dlg_stdradiobutton_handler, I(offcfg(scroll_mod)),
+    "Shift", 's', I(MDK_SHIFT),
+    "Ctrl", 'c', I(MDK_CTRL),
+    "Alt", 'a', I(MDK_ALT),
+    "Off", 'o', I(0),
+    null
+  );
   ctrl_checkbox(
-    s, "Ask for exit confirmation", 'x', P(0),
-    dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
+    s, "PgUp and PgDn scroll without modifier", 'p', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(pgupdn_scroll))
   );
 
  /*
-  * The Emulation panel.
+  * The Terminal panel.
   */
   s = ctrl_new_set(b, "Terminal", null);
   ctrl_columns(s, 2, 50, 50);
@@ -817,12 +826,18 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, I(offcfg(bell_flash))
   )->column = 1;
   ctrl_checkbox(
-    s, "Taskbar highlight", 'h', P(0),
+    s, "Highlight in taskbar", 'h', P(0),
     dlg_stdcheckbox_handler, I(offcfg(bell_taskbar))
   )->column = 2;
 
   s = ctrl_new_set(b, "Terminal", "Printer");
   ctrl_combobox(
     s, null, '\0', 100, P(0), printerbox_handler, P(0), P(0)
+  );
+
+  s = ctrl_new_set(b, "Terminal", null);
+  ctrl_checkbox(
+    s, "Prompt about running processes on close", 'p', P(0),
+    dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
   );
 }

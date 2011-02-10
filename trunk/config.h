@@ -38,11 +38,12 @@ typedef struct {
   // Keys
   bool backspace_sends_bs;
   bool ctrl_alt_is_altgr;
+  bool clip_shortcuts;
   bool window_shortcuts;
-  bool zoom_shortcuts;
   bool switch_shortcuts;
-  int scroll_mod;
-  bool pgupdn_scroll;
+  bool zoom_shortcuts;
+  bool alt_fn_shortcuts;
+  bool ctrl_shift_shortcuts;
   // Mouse
   bool copy_on_select;
   bool copy_as_rtf;
@@ -52,16 +53,18 @@ typedef struct {
   int click_target_mod;
   // Window
   int cols, rows;
-  int scrollbar;
   int scrollback_lines;
-  bool confirm_exit;
-  // Output
+  int scrollbar;
+  int scroll_mod;
+  bool pgupdn_scroll;
+  // Terminal
   char term[32];
   char answerback[80];
   bool bell_sound;
   bool bell_flash;
   bool bell_taskbar;
   char printer[64];
+  bool confirm_exit;
   // Hidden
   int col_spacing, row_spacing;
   char word_chars[32];

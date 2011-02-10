@@ -1,5 +1,5 @@
 // win.c (part of mintty)
-// Copyright 2008-10 Andy Koppe
+// Copyright 2008-11 Andy Koppe
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -515,7 +515,7 @@ confirm_exit(void)
     MessageBox(
       wnd,
       "Processes are running in session.\n"
-      "Exit anyway?",
+      "Close anyway?",
       APPNAME, MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON2
     );
 
