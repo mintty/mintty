@@ -1,5 +1,5 @@
 // wininput.c (part of mintty)
-// Copyright 2008-10 Andy Koppe
+// Copyright 2008-11 Andy Koppe
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "winpriv.h"
@@ -26,20 +26,25 @@ static HMENU menu, sysmenu;
 void
 win_update_menus(void)
 {
+  bool shorts = !term.shortcut_override;
+  bool clip = shorts && cfg.clip_shortcuts;
+  bool alt_fn = shorts && cfg.alt_fn_shortcuts;
+  bool ct_sh = shorts && cfg.ctrl_shift_shortcuts;
+
   ModifyMenu(
     sysmenu, IDM_NEW, 0, IDM_NEW,
-    term.shortcut_override ? "Ne&w" : "Ne&w\tAlt+F2" 
+    alt_fn ? "Ne&w\tAlt+F2" : ct_sh ? "Ne&w\tCtrl+Shift+N" : "Ne&w"
   );
   ModifyMenu(
     sysmenu, SC_CLOSE, 0, SC_CLOSE,
-    term.shortcut_override ? "&Close" : "&Close\tAlt+F4" 
+    alt_fn ? "&Close\tAlt+F4" : ct_sh ? "&Close\tCtrl+Shift+Q" : "&Close"
   ); 
 
   uint sel_enabled = term.selected ? MF_ENABLED : MF_GRAYED;
   EnableMenuItem(menu, IDM_OPEN, sel_enabled);
   ModifyMenu(
     menu, IDM_COPY, sel_enabled, IDM_COPY,
-    term.shortcut_override ? "&Copy" : "&Copy\tCtrl+Ins"
+    clip ? "&Copy\tCtrl+Ins" : ct_sh ? "&Copy\tCtrl+Shift+C" : "&Copy"
   );
 
   uint paste_enabled =
@@ -49,12 +54,12 @@ win_update_menus(void)
     ? MF_ENABLED : MF_GRAYED;
   ModifyMenu(
     menu, IDM_PASTE, paste_enabled, IDM_PASTE,
-    term.shortcut_override ? "&Paste" : "&Paste\tShift+Ins"
+    clip ? "&Paste\tShift+Ins" : ct_sh ? "&Paste\tCtrl+Shift+V" : "&Paste"
   );
 
   ModifyMenu(
     menu, IDM_RESET, 0, IDM_RESET,
-    term.shortcut_override ?  "&Reset" : "&Reset\tAlt+F8"
+    alt_fn ? "&Reset\tAlt+F8" : ct_sh ? "&Reset\tCtrl+Shift+R" : "&Reset" 
   );
 
   uint defsize_enabled = 
@@ -62,19 +67,22 @@ win_update_menus(void)
     ? MF_ENABLED : MF_GRAYED;
   ModifyMenu(
     menu, IDM_DEFSIZE, defsize_enabled, IDM_DEFSIZE,
-    term.shortcut_override ? "&Default size" : "&Default size\tAlt+F10"
+    alt_fn ? "&Default size\tAlt+F10" :
+    ct_sh ? "&Default size\tCtrl+Shift+D" : "&Default size"
   );
 
   uint fullscreen_checked = win_is_fullscreen ? MF_CHECKED : MF_UNCHECKED;
   ModifyMenu(
     menu, IDM_FULLSCREEN, fullscreen_checked, IDM_FULLSCREEN,
-    term.shortcut_override ? "&Full Screen" : "&Full Screen\tAlt+F11"
+    alt_fn ? "&Full Screen\tAlt+F11" :
+    ct_sh ? "&Full Screen\tCtrl+Shift+F" : "&Full Screen"
   );
-  
+
   uint otherscreen_checked = term.show_other_screen ? MF_CHECKED : MF_UNCHECKED;
   ModifyMenu(
     menu, IDM_FLIPSCREEN, otherscreen_checked, IDM_FLIPSCREEN,
-    term.shortcut_override ? "Flip &Screen" : "Flip &Screen\tAlt+F12"
+    alt_fn ? "Flip &Screen\tAlt+F12" :
+    ct_sh ? "Flip &Screen\tCtrl+Shift+S" : "Flip &Screen"
   );
 
   uint options_enabled = config_wnd ? MF_GRAYED : MF_ENABLED;
@@ -348,6 +356,15 @@ win_key_down(WPARAM wp, LPARAM lp)
   
   if (!term.shortcut_override) {
 
+    // Copy&paste
+    if (cfg.clip_shortcuts && key == VK_INSERT && mods && !alt) {
+      if (ctrl)
+        term_copy();
+      if (shift)
+        win_paste();
+      return 1;
+    }
+
     // Window menu and fullscreen
     if (cfg.window_shortcuts && alt && !ctrl) {
       if (key == VK_RETURN) {
@@ -360,24 +377,6 @@ win_key_down(WPARAM wp, LPARAM lp)
       }
     }
 
-    // Alt+Fn shortcuts
-    if (alt && VK_F1 <= key && key <= VK_F24) {
-      if (!ctrl) {
-        WPARAM cmd;
-        switch (key) {
-          when VK_F2:  cmd = IDM_NEW;
-          when VK_F4:  cmd = SC_CLOSE;
-          when VK_F8:  cmd = IDM_RESET;
-          when VK_F10: cmd = IDM_DEFSIZE;
-          when VK_F11: cmd = IDM_FULLSCREEN;
-          when VK_F12: cmd = IDM_FLIPSCREEN;
-          otherwise: return 1;
-        }
-        send_syscommand(cmd);
-      }
-      return 1;
-    }
-    
     // Font zooming
     if (cfg.zoom_shortcuts && mods == MDK_CTRL) {
       int zoom;
@@ -390,6 +389,37 @@ win_key_down(WPARAM wp, LPARAM lp)
       win_zoom_font(zoom);
       return 1;
       not_zoom:;
+    }
+    
+    // Alt+Fn shortcuts
+    if (cfg.alt_fn_shortcuts && alt && VK_F1 <= key && key <= VK_F24) {
+      if (!ctrl) {
+        switch (key) {
+          when VK_F2:  send_syscommand(IDM_NEW);
+          when VK_F4:  send_syscommand(SC_CLOSE);
+          when VK_F8:  send_syscommand(IDM_RESET);
+          when VK_F10: send_syscommand(IDM_DEFSIZE);
+          when VK_F11: send_syscommand(IDM_FULLSCREEN);
+          when VK_F12: send_syscommand(IDM_FLIPSCREEN);
+        }
+      }
+      return 1;
+    }
+    
+    // Ctrl+Shift+letter shortcuts
+    if (cfg.ctrl_shift_shortcuts &&
+        mods == (MDK_CTRL | MDK_SHIFT) && 'A' <= key && key <= 'Z') {
+      switch (key) {
+        when 'C': term_copy();
+        when 'V': win_paste();
+        when 'N': send_syscommand(IDM_NEW);
+        when 'Q': send_syscommand(SC_CLOSE);
+        when 'R': send_syscommand(IDM_RESET);
+        when 'D': send_syscommand(IDM_DEFSIZE);
+        when 'F': send_syscommand(IDM_FULLSCREEN);
+        when 'S': send_syscommand(IDM_FLIPSCREEN);
+      }
+      return 1;
     }
     
     // Scrollback
@@ -412,15 +442,6 @@ win_key_down(WPARAM wp, LPARAM lp)
         SendMessage(wnd, WM_VSCROLL, scroll, 0);
         return 1;
         not_scroll:;
-      }
-    }
-    
-    // Copy&paste
-    if (key == VK_INSERT) {
-      switch ((int)mods) {
-        when MDK_CTRL: term_copy(); return 1;
-        when MDK_SHIFT: win_paste(); return 1;
-        when MDK_CTRL | MDK_SHIFT: win_copy_title(); return 1;
       }
     }
   }
