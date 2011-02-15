@@ -77,7 +77,7 @@ add_cc(termline *line, int col, wchar chr)
     do
       line->chars[n].cc_next = 1;
     while (++n < line->size - 1);
-    line->chars[n].cc_next = 1;
+    line->chars[n].cc_next = 0;  // Terminates the free list.
   }
 
  /*
