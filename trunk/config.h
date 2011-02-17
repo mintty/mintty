@@ -31,7 +31,8 @@ typedef struct {
   // Text
   font_spec font;
   int font_quality;
-  bool bold_as_font;
+  char bold_as_font;    // 0 = false, 1 = true, -1 = undefined
+  bool bold_as_colour;
   bool allow_blinking;
   char locale[32];
   char charset[32];

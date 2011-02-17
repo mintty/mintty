@@ -533,7 +533,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
     if (bgi >= 256)
       bgi ^= 2;
   }
-  if (attr & ATTR_BOLD) {
+  if (attr & ATTR_BOLD && cfg.bold_as_colour) {
     if (fgi < 8)
       fgi |= 8;
     else if (fgi >= 256 && !cfg.bold_as_font)
@@ -551,7 +551,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   
   if (attr & ATTR_DIM) {
     fg = (fg & 0xFEFEFEFE) >> 1; // Halve the brightness.
-    if (fgi >= 256 && cfg.bold_as_font)
+    if (!cfg.bold_as_colour || fgi >= 256)
       fg += (bg & 0xFEFEFEFE) >> 1; // Blend with background.
   }
   if (attr & ATTR_REVERSE) {

@@ -34,7 +34,8 @@ config cfg = {
   // Text
   .font = {.name = "Lucida Console", .isbold = false, .size = 9},
   .font_quality = FQ_DEFAULT,
-  .bold_as_font = false,
+  .bold_as_font = -1,  // -1 means "the opposite of bold_as_colour"
+  .bold_as_colour = true,
   .allow_blinking = false,
   .locale = "",
   .charset = "",
@@ -87,7 +88,7 @@ config cfg = {
 #define cfg_field(option) sizeof(cfg.option), offcfg(option)
 
 typedef enum {
-  OPT_BOOL, OPT_NEGBOOL, OPT_INT, OPT_STRING, OPT_COLOUR,
+  OPT_BOOL, OPT_INT, OPT_STRING, OPT_COLOUR,
   OPT_COMPAT = 8
 } opt_type;
 
@@ -113,6 +114,7 @@ options[] = {
   {"FontHeight", OPT_INT, cfg_field(font.size)},
   {"FontQuality", OPT_INT, cfg_field(font_quality)},
   {"BoldAsFont", OPT_BOOL, cfg_field(bold_as_font)},
+  {"BoldAsColour", OPT_BOOL, cfg_field(bold_as_colour)},
   {"AllowBlinking", OPT_BOOL, cfg_field(allow_blinking)},
   {"Locale", OPT_STRING, cfg_field(locale)},
   {"Charset", OPT_STRING, cfg_field(charset)},
@@ -184,8 +186,7 @@ options[] = {
 
   // Backward compatibility
   {"UseSystemColours", OPT_BOOL | OPT_COMPAT, cfg_field(use_system_colours)},
-  {"BoldAsBright", OPT_NEGBOOL | OPT_COMPAT, cfg_field(bold_as_font)},
-  {"BoldAsColour", OPT_NEGBOOL | OPT_COMPAT, cfg_field(bold_as_font)}
+  {"BoldAsBright", OPT_BOOL | OPT_COMPAT, cfg_field(bold_as_colour)},
 };
 
 static uchar option_order[lengthof(options)];
@@ -222,8 +223,6 @@ parse_option(char *option)
   switch (options[i].type & ~OPT_COMPAT) {
     when OPT_BOOL:
       atoffset(bool, &cfg, offset) = atoi(val);
-    when OPT_NEGBOOL:
-      atoffset(bool, &cfg, offset) = !atoi(val);
     when OPT_INT:
       atoffset(int, &cfg, offset) = atoi(val);
     when OPT_STRING:
@@ -286,6 +285,12 @@ finish_config(void)
     remember_option(0);
     remember_option(1);
     remember_option(2);
+  }
+  
+  // bold_as_font used to be implied by !bold_as_colour.
+  if (cfg.bold_as_font == -1) {
+    cfg.bold_as_font = !cfg.bold_as_colour;
+    remember_option(find_option("BoldAsFont"));
   }
 }
 
@@ -644,26 +649,31 @@ setup_config_box(controlbox * b)
   ctrl_fontsel(
     s, null, '\0', P(0), dlg_stdfontsel_handler, I(offcfg(font))
   );
+
+  s = ctrl_new_set(b, "Text", null);
+  ctrl_columns(s, 2, 50, 50);
   ctrl_radiobuttons(
-    s, "Smoothing", '\0', 4, P(0), dlg_stdradiobutton_handler, 
+    s, "Font smoothing", '\0', 2, P(0), dlg_stdradiobutton_handler, 
     I(offcfg(font_quality)),
     "Default", 'd', I(FQ_DEFAULT),
     "None", 'n', I(FQ_NONANTIALIASED),
     "Partial", 'p', I(FQ_ANTIALIASED),
     "Full", 'f', I(FQ_CLEARTYPE),
     null
-  );
+  )->column = 1;
 
-  s = ctrl_new_set(b, "Text", null);
-  ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
-    s, "Show bold as font", 'b', P(0), dlg_stdcheckbox_handler,
+    s, "Show bold as font", 's', P(0), dlg_stdcheckbox_handler,
     I(offcfg(bold_as_font))
+  )->column = 0;
+  ctrl_checkbox(
+    s, "Show bold as colour", 'b', P(0), dlg_stdcheckbox_handler,
+    I(offcfg(bold_as_colour))
   )->column = 0;
   ctrl_checkbox(
     s, "Allow blinking", 'a', P(0),
     dlg_stdcheckbox_handler, I(offcfg(allow_blinking))
-  )->column = 1;
+  )->column = 0;
 
   s = ctrl_new_set(b, "Text", null);
   ctrl_columns(s, 2, 29, 71);

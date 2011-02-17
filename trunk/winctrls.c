@@ -1,5 +1,5 @@
 // winctrls.c (part of mintty)
-// Copyright 2008-10 Andy Koppe
+// Copyright 2008-11 Andy Koppe
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -291,13 +291,13 @@ staticbtn(ctrlpos * cp, char *stext, int sid, char *btext, int bid)
   rwid = cp->width + GAPBETWEEN - rpos;
 
   r.left = GAPBETWEEN;
-  r.top = cp->ypos + (height - STATICHEIGHT) / 2;
+  r.top = cp->ypos + (height - STATICHEIGHT) / 2 - 1;
   r.right = lwid;
   r.bottom = STATICHEIGHT;
   doctl(cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, stext, sid);
 
   r.left = rpos;
-  r.top = cp->ypos + (height - PUSHBTNHEIGHT) / 2;
+  r.top = cp->ypos + (height - PUSHBTNHEIGHT) / 2 - 1;
   r.right = rwid;
   r.bottom = PUSHBTNHEIGHT;
   doctl(cp, r, "BUTTON",
