@@ -456,6 +456,7 @@ win_reconfig(void)
   bool font_changed =
     memcmp(&new_cfg.font, &cfg.font, sizeof cfg.font) ||
     new_cfg.bold_as_font != cfg.bold_as_font ||
+    new_cfg.bold_as_colour != cfg.bold_as_colour ||
     new_cfg.font_quality != cfg.font_quality;
   
   if (new_cfg.fg_colour != cfg.fg_colour)

@@ -136,7 +136,7 @@ win_copy(const wchar *data, int *attr, int len)
         bgcolour = tmpcolour;
       }
 
-      if (attr[i] & ATTR_BOLD) {
+      if (attr[i] & ATTR_BOLD && cfg.bold_as_colour) {
         if (fgcolour < 8)     /* ANSI colours */
           fgcolour += 8;
         else if (fgcolour >= 256 && !cfg.bold_as_font)  /* Default colours */
@@ -230,7 +230,7 @@ win_copy(const wchar *data, int *attr, int len)
           bgcolour = tmpcolour;
         }
 
-        if (attr[tindex] & ATTR_BOLD) {
+        if (attr[tindex] & ATTR_BOLD && cfg.bold_as_colour) {
           if (fgcolour < 8)     /* ANSI colours */
             fgcolour += 8;
           else if (fgcolour >= 256 && !cfg.bold_as_font)  /* Default colours */
@@ -259,7 +259,7 @@ win_copy(const wchar *data, int *attr, int len)
             bgcolour = -1;      /* No coloring */
 
           if (fgcolour >= 256) {        /* Default colour */
-            if (!cfg.bold_as_font && (fgcolour & 1) && bgcolour == -1)
+            if (cfg.bold_as_colour && (fgcolour & 1) && bgcolour == -1)
               attrBold = ATTR_BOLD;     /* Emphasize text with bold attribute */
 
             fgcolour = -1;      /* No coloring */
