@@ -24,8 +24,8 @@ Semi-bugs:
 "Fun" wishes:
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/autoscroll-accel.html autoscroll-accel]: Scrolling speed during selections is proportional to how far the mouse pointer is outside the window.
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/bold-font-colour.html bold-font-colour]: Mintty has separate options for showing the ANSI bold attribute with a thicker font or brighter colour, allowing both to be enabled at the same time.
-* [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/cmdline-licence.html cmdline-licence]: `mintty --version` prints a brief copyright and licence statement.
-* [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/startup-fullscreen.html startup-fullscreen]: The `--window=full` command line option (or -wf for short) allows to start mintty in fullscreen mode. That's passed on to additional sessions opened with Alt+F2.
+ * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/cmdline-licence.html cmdline-licence]: `mintty --version` prints a brief copyright and licence statement.
+ * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/startup-fullscreen.html startup-fullscreen]: The `--window=full` command line option (or -wf for short) allows to start mintty in fullscreen mode. That's passed on to additional sessions opened with Alt+F2.
 
 "Tricky" wishes:
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/cmdline-any-option.html cmdline-any-option]: All config-file settings can be specified on the command line via the -o option.
