@@ -1,6 +1,14 @@
 #summary Notable changes in each released version
 #labels Featured
 
+=== 0.9.6 (20 Feb 2011) ===
+* Fixed crash triggered by lots of combining characters on the same line.
+* Corrected initialisation of the bold background colour. (This is used to display the blink attribute when blinking is disabled.)
+* Added _Show bold as font_ option. Previously, disabling _Show bold as colour_ would cause text with the bold attribute to be displayed with a thicker font instead of a brighter colour. Having these as separate options allows bold text to be shown with both a thicker font and a brighter colour, which is the default in xterm and others. The mintty default remains bold-as-colour-only.
+* Added options that allow to disable the copy and paste shortcuts Ctrl+Ins and Shift+Ins as well as the various Alt+Fn window command shortcuts.
+* Added an option for enabling a set of Ctrl+Shift+letter shortcuts as found in KDE Konsole and GNOME Terminal, as an alternative to the Ctrl/Shift+Ins and Alt+Fn shortcuts. Examples include Ctrl+Shift+V for paste and Ctrl+Shift+N for opening a new window. (These only appear in menus if the corresponding default shortcuts are disabled.)
+* Tweaked option wording and placement (again). The scrolling option now are all on the Window pane of the options dialog.
+
 === 0.9.5 (28 Dec 2010) ===
  * Enabled ECHOCTL, ECHOE, ECHOK, ECHOKE, and IMAXBEL terminal line flags at startup, for compatibility with other terminal emulators and `stty sane`.
  * Worked around occasional failure to deliver SIGCHLD by redesigning exit handling yet again.

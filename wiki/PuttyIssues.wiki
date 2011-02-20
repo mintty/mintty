@@ -6,6 +6,7 @@ Bugs:
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/assert-fail-newsavelines.html assert-fail-newsavelines]: Negative scrollback size settings are ignored.
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/assert-line-not-null.html assert-line-not-null]: Screen lines are now stored in an array rather than a tree, and this issue hasn't been seen.
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/change-scrollback-altscr.html change-scrollback-altscr]: The alternate screen is no longer cleared when the scrollback size is changed.
+ * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/ctrl-pgupdn-config.html ctrl-pgupdn-config]: Line-by-line scrolling is done with Shift+arrow up/down rather than misappropriating PgUp/Dn. The modifier is configurable, and the scrolling shortcuts can be disabled altogether.
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/keyboard-problems.html keyboard-problems]: It looks like these are all gone, probably mostly due to fixes to the Windows keyboard layouts. IME handling seems fine too.
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/resize.html resize]: Resize handling has been much simplified and seems fairly solid now. Font resizing has been split off into a separate feature (using Ctrl+plus/minus/zero or Ctrl+mousewheel).
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/startup-unselected.html startup-unselected]: Startup handling has been redesigned and mintty behaves correctly when invoked e.g. with `cygstart --showna`.
@@ -22,7 +23,9 @@ Semi-bugs:
 
 "Fun" wishes:
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/autoscroll-accel.html autoscroll-accel]: Scrolling speed during selections is proportional to how far the mouse pointer is outside the window.
- * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/startup-fullscreen.html startup-fullscreen]: The --window=full command line option (or -wf for short) allows to start mintty in fullscreen mode. That's passed on to additional sessions opened with Alt+F2.
+ * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/bold-font-colour.html bold-font-colour]: Mintty has separate options for showing the ANSI bold attribute with a thicker font or brighter colour, allowing both to be enabled at the same time.
+* [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/cmdline-licence.html cmdline-licence]: `mintty --version` prints a brief copyright and licence statement.
+* [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/startup-fullscreen.html startup-fullscreen]: The `--window=full` command line option (or -wf for short) allows to start mintty in fullscreen mode. That's passed on to additional sessions opened with Alt+F2.
 
 "Tricky" wishes:
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/cmdline-any-option.html cmdline-any-option]: All config-file settings can be specified on the command line via the -o option.
@@ -50,6 +53,7 @@ Semi-bugs:
 
 "Taxing" unsure wishes:
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/function-keys.html function-keys]: PuTTY's various options for function key codes and Home/End are gone. Instead, mintty concentrates on emulating Thomas Dickey's latest xterm keycodes correctly, and that seems fairly successful in avoiding keycode issues.
+ * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/modified-fkeys.html modified-fkeys]: Mintty implements xterm's default scheme for encoding modified function, arrow and editing keys.
  * [http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/win-command-prompt.html win-command-prompt]: Acting as a local terminal of course is the whole point of mintty. It's intended primarily for Cygwin programs, including network clients such as ssh, rsh, or telnet. Native Windows command line programs can be run too, but as pointed out in the PuTTY wish, there are problems with that. See [http://code.google.com/p/mintty/issues/detail?id=56 issue 56] for more on the latter.
 
 Non-wishes:
