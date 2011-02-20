@@ -3,12 +3,12 @@
 <BODY bgcolor=#F0F0F0 text=#000000 link=#0000ff vlink=#C000C0 alink=#ff0000><A NAME=top></A>
 <!-- .\" mintty man page -->
 <!-- .\" -->
-<!-- .\" This 'man' page is Copyright 2009 Lee D. Rothstein, 2009-10 Andy Koppe -->
+<!-- .\" This 'man' page is Copyright 2009 Lee D. Rothstein, 2009-11 Andy Koppe -->
 <!-- .\" -->
 <!-- .\" You may distribute, use, and modify this man page under the terms -->
 <!-- .\" of the GNU Free Documentation License (GFDL), Version 1.3, -->
 <!-- .\" 3 November 2008 (or later) as specified. -->
-<!-- .TH mintty 1 2010-12-28 mintty\ 0.9.5 -->
+<!-- .TH mintty 1 2010-02-20 mintty\ 0.9.6 -->
 <CENTER>
 <H1><HR><I>Manual Reference Pages &nbsp;-&nbsp;</I><NOBR>mintty (1)</NOBR><HR></H1>
 </CENTER>
@@ -304,7 +304,7 @@ which means it can be pasted with colours and formatting into applications
 that support it, e.g. word processors.
 <P>
 The window title can be copied using the <B>Copy Title</B> command in the window
-menu or the shortcut <B>Shift+Ctrl+Ins</B>.
+menu.
 <P>
 The clipboard contents can be pasted using either the <B>Paste</B> menu command,
 the <B>Shift+Ins</B> keyboard shortcut, or the middle mouse button.
@@ -513,39 +513,6 @@ An overview of all the keyboard shortcuts.
 <!-- .TP -->
 <TABLE cellpadding=3>
 <TR valign=top><TD colspan=2>
-<B>Window commands</B>
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-<P>
-- <B>Alt+F2</B>: New
-<!-- .br -->
-<!-- Need break --><BR>
-- <B>Alt+F4</B>: Close
-<!-- .br -->
-<!-- Need break --><BR>
-- <B>Alt+F8</B>: Reset
-<!-- .br -->
-<!-- Need break --><BR>
-- <B>Alt+F10</B>: Default size
-<!-- .br -->
-<!-- Need break --><BR>
-- <B>Alt+F11</B> or <B>Alt+Enter</B>: Full screen
-<!-- .br -->
-<!-- Need break --><BR>
-- <B>Alt+F12</B>: Flip screen
-<!-- .br -->
-<!-- Need break --><BR>
-- <B>Alt+Space</B>: Window menu
-<!-- .br -->
-<!-- Need break --><BR>
-- <B>Ctrl+Tab</B>: Next window
-<!-- .br -->
-<!-- Need break --><BR>
-- <B>Ctrl+Shift+Tab</B>: Previous window
-<P>
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
 <B>Scrollback</B>
 </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
 <P>
@@ -576,6 +543,41 @@ An overview of all the keyboard shortcuts.
 <!-- .br -->
 <!-- Need break --><BR>
 - <B>Shift+Ins</B>: Paste
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Shift+Ins</B>: Copy and paste
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Window commands</B>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+<P>
+- <B>Alt+F2</B>: New
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Alt+F4</B>: Close
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Alt+F8</B>: Reset
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Alt+F10</B>: Default size
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Alt+F11</B> or <B>Alt+Enter</B>: Full screen
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Alt+F12</B>: Flip screen
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Alt+Space</B>: Window menu
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Tab</B>: Next window
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Shift+Tab</B>: Previous window
 <P>
 <!-- .TP -->
 </TD></TR>
@@ -591,6 +593,39 @@ An overview of all the keyboard shortcuts.
 <!-- Need break --><BR>
 - <B>Ctrl+zero</B>: Back to configured font size
 <P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Ctrl+Shift+letter shortcuts</B>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+<P>
+An alternative set of shortcuts for clipboard and window commands using
+<B>Ctrl+Shift+letter</B> combinations is available.  These can be enabled on the
+Keys pane of the options dialog.
+<P>
+- <B>Ctrl+Shift+C</B>: Copy
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Shift+V</B>: Paste
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Shift+N</B>: New
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Shift+Q</B>: Close
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Shift+R</B>: Reset
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Shift+D</B>: Default size
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Shift+F</B>: Full screen
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Shift+S</B>: Flip screen
+<P>
 <P>
 <!-- .SH CONFIGURATION -->
 </TD></TR>
@@ -603,8 +638,9 @@ An overview of all the keyboard shortcuts.
 <BLOCKQUOTE>
 <P>
 Mintty has a graphical options dialog that can be reached via the context menu
-or the window menu.  As usual, both <B>Apply</B> and <B>OK</B> apply any changes
-made, but <B>OK</B> also closes the dialog.  <B>Cancel</B> discards changes.
+or the window menu.  As usual, both the <B>Apply</B> and <B>OK</B> buttons apply
+any changes made, but <B>OK</B> also closes the dialog.
+<B>Cancel</B> discards changes.
 <P>
 Settings are stored in INI-style configuration files.  By default, settings are
 read from <I>/etc/minttyrc</I> and <I>~/.minttyrc</I>.  Additional config files
@@ -612,6 +648,7 @@ can be specified using the <B>--config</B> command line option.  These are read
 in order, with settings in later files overriding those in earlier ones.
 Configuration changes are saved to the last config file, usually
 <I>~/.minttyrc</I>.
+Settings can also be specified on the command line using <B>--option</B>.
 <P>
 The following sections explain the settings on each pane of the options
 dialog.
@@ -672,8 +709,8 @@ The <B>Glass</B> option is only available on Vista and above with desktop
 compositing enabled.
 To make this reasonably usable, the glass colour needs to be set to be as dark
 as possible in the Windows control panel: choose <I>Personalize</I> from the
-desktop context menu, click on <I>Window Color</I>, turn the color intensity up
-to the maximum, show the color mixer, and turn the brightness down to black.
+desktop context menu, click on <I>Window Color</I>, turn the colour intensity up
+to the maximum, show the colour mixer, and turn the brightness down to black.
 <P>
 <!-- .TP -->
 </TD></TR>
@@ -698,13 +735,15 @@ The following cursor types are available:
 <!-- Need break --><BR>
 - <B>Line</B> (2)
 <P>
+The line cursor is displayed with the width set in the Accessibility Options
+control panel.
+<P>
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
 <B>Cursor blink</B> (CursorBlinks=1)
 </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-If enabled, the cursor blinks at the rate set in the Windows Keyboard control
-panel.
+If enabled, the cursor blinks at the rate set in the Keyboard control panel.
 <P>
 <P>
 <!-- .SS Text -->
@@ -723,7 +762,7 @@ Settings controlling text display.
 <B>Font selection</B>
 </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
 Clicking on the <B>Select</B> button opens a dialog where the font and its
-properties can be chosen.
+properties can be chosen.  Font styles other than <B>Bold</B> are ignored.
 In the config file, this corresponds to the following entries:
 <P>
 - <B>Font</B> (Font=Lucida Console)
@@ -737,7 +776,43 @@ In the config file, this corresponds to the following entries:
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
-<B>Smoothing</B> (FontQuality=0)
+<B>Show bold as colour</B> (BoldAsFont=0)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+When this option is enabled, the ANSI bold (or &#146;intense&#146;) text attribute is
+shown as a bold-style font.  Where a bold variant of the selected font that
+has the same width as the base font is available, that is used; otherwise, the
+bolding is simulated by rendering the text twice with a one-pixel offset.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Show bold as colour</B> (BoldAsColour=1)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+By default, text with the ANSI bold attribute set is displayed with a
+different colour, usually with increased brightness.  This can be disabled
+here.
+<P>
+Note that when <B>BoldAsFont</B> is enabled, only bold text in one of the eight
+ANSI colours has its colour changed, i.e. bold text without an explicitly
+spefified colour is shown with a bold font only.  This matches <B>xterm</B> behaviour.
+<P>
+This option also controls how the &#146;half-bright&#146; (or &#146;dim&#146;) text
+attribute is displayed: if it is on, half-bright text is
+shown with halved foreground colour brightness; otherwise, it is shown
+by blending the foreground colour with the background colour.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Allow blinking</B> (AllowBlinking=0)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+When text blinking is disabled, as it is by default, the blink attribute is
+instead displayed as a bold background colour.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Font smoothing</B> (FontQuality=0)
 </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
 Select the amount of font smoothing from the following choices:
 <P>
@@ -751,28 +826,6 @@ Select the amount of font smoothing from the following choices:
 <!-- .br -->
 <!-- Need break --><BR>
 - <B>Full</B> (3): Subpixel anti-aliasing (ClearType)
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<B>Show bold as colour</B> (BoldAsColour=1)
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-By default, text with the ANSI bold attribute set is displayed with a
-different colour, usually with increased brightness.
-Alternatively, it can be shown using a bold font, which tends to look better
-with black-on-white text.
-Additionally, this option controls how the &#146;half-bright&#146; (or &#146;dim&#146;) text
-attribute is displayed: if it is on, half-bright text is
-shown with halved foreground colour brightness, otherwise, it is shown
-with the foreground colour blended with the background colour.
-<P>
-<!-- .TP -->
-</TD></TR>
-<TR valign=top><TD colspan=2>
-<B>Allow blinking</B> (AllowBlinking=0)
-</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-ANSI text blinking is diabled by default, on the grounds that blinking
-text is a crime against aesthetic decency.
 <P>
 <!-- .TP -->
 </TD></TR>
@@ -823,6 +876,15 @@ Settings controlling keyboard behaviour.
 <!-- .TP -->
 <TABLE cellpadding=3>
 <TR valign=top><TD colspan=2>
+<B>Backspace sends ^H</B> (BackspaceSendsBS=0)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+By default, mintty sends <B>^?</B> as the keycode for the backspace key.
+If this option is enabled, <B>^H</B> is sent instead.
+This also changes the <B>Ctrl+Backspace</B> code from <B>^_</B> to <B>^?</B>.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
 <B>Ctrl+LeftAlt is AltGr</B> (CtrlAltIsAltGr=0)
 </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
 The AltGr key on non-US Windows systems is a strange beast: pressing it is
@@ -844,18 +906,18 @@ The setting makes no difference for keys without AltGr key bindings
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
-<B>Backspace sends ^H</B> (BackspaceSendsBS=0)
+<B>Copy and Paste shortcuts</B> (ClipShortcuts=1)
 </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-By default, mintty sends <B>^?</B> as the keycode for the backspace key.
-If this option is enabled, <B>^H</B> is sent instead.
-This also changes the Ctrl+Backspace code from <B>^_</B> to <B>^?</B>.
+Checkbox for enabling the clipboard shortcuts <B>Ctrl+Ins</B> for copying and
+<B>Shift+Ins</B> for pasting.
 <P>
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
 <B>Menu and Full Screen shortcuts</B> (WindowShortcuts=1)
 </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-Checkbox for enabling the <B>Alt+Space</B> and <B>Alt+Enter</B> shortcuts.
+Checkbox for enabling the <B>Alt+Space</B> and <B>Alt+Enter</B> shortcuts for
+showing the window menu and toggling full screen mode.
 <P>
 <!-- .TP -->
 </TD></TR>
@@ -875,34 +937,28 @@ Checkbox for enabling the font zooming shortcuts <B>Ctrl+plus/minus/zero</B>.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
-<B>Modifier for scrolling</B> (ScrollMod=1)
+<B>Alt+Fn shortcuts</B> (AltFnShortcuts=1)
 </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The modifier key that needs to be pressed together with the arrow up/down,
-PgUp/PgDn, or Home/End keys to access the scrollback buffer.
-The default is <B>Shift</B>.
-The <B>Off</B> setting disables scrolling with keyboard shortcuts.
-<P>
-- <B>Shift</B> (1)
-<!-- .br -->
-<!-- Need break --><BR>
-- <B>Ctrl</B> (4)
-<!-- .br -->
-<!-- Need break --><BR>
-- <B>Alt</B> (2)
-<!-- .br -->
-<!-- Need break --><BR>
-- <B>Off</B> (0)
+Checkbox for enabling the use of combinations of Alt and functions keys as
+shortcuts, for example <B>Alt+F4</B> for closing the window or <B>Alt+F11</B>
+fortoggling  full screen mode.  Disable to have <B>Alt+Fn</B> combinations
+sent to applications instead.
 <P>
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
-<B>PgUp and PgDn scroll without modifier</B> (PgUpDnScroll=0)
+<B>Ctrl+Shift+letter shortcuts</B> (CtrlShiftShortcuts=0)
 </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-If this is enabled, the scrollback buffer can be accessed by just pressing
-PgUp or PgDn, without the &#146;modifier for scrolling&#146; selected above.
-If the modifier is pressed anyway, plain PgUp/PgDn keycodes are sent to the
-application.
-This option does not affect the arrow keys or Home/End keys.
+Checkbox for enabling alternative clipboard and window command shortcuts
+using <B>Ctrl+Shift+letter</B> combinations such as <B>Ctrl+Shift+V</B> for
+paste or <B>Ctrl+Shift+N</B> for starting a new session.
+<P>
+These can replace the <B>Ctrl/Shift+Ins</B> and <B>Alt+Fn</B> shortcuts, whereby
+they show up in menus only if the corresponding default shortcuts are disabled.
+<P>
+See the shortcuts section above for the list of shortcuts controlled by this
+option.  When it is disabled, Ctrl+Shift+letter combinations are sent to
+applications as C1 control characters instead.
 <P>
 <P>
 <!-- .SS Mouse -->
@@ -1056,11 +1112,34 @@ By default, it is shown on the right-hand side.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
-<B>Ask for exit confirmation</B> (ConfirmExit=1)
+<B>Modifier for scrolling</B> (ScrollMod=1)
 </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-If enabled, ask for confirmation when the close button or <I>Alt+F4</I> is
-pressed and the command invoked by mintty still has child processes.
-This is intended to help avoid closing programs accidentally.
+The modifier key that needs to be pressed together with the arrow up/down,
+PgUp/PgDn, or Home/End keys to access the scrollback buffer.
+The default is <B>Shift</B>.
+The <B>Off</B> setting disables scrolling with keyboard shortcuts.
+<P>
+- <B>Shift</B> (1)
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl</B> (4)
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Alt</B> (2)
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Off</B> (0)
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>PgUp and PgDn scroll without modifier</B> (PgUpDnScroll=0)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+If this is enabled, the scrollback buffer can be accessed by just pressing
+PgUp or PgDn, without the &#146;modifier for scrolling&#146; selected above.
+If the modifier is pressed anyway, plain PgUp/PgDn keycodes are sent to the
+application.
+This option does not affect the arrow keys or Home/End keys.
 <P>
 <P>
 <!-- .SS Terminal -->
@@ -1117,8 +1196,8 @@ has.  Only taskbar highlighting is enabled by default.
 - <B>Flash</B> (BellFlash=0): Briefly invert the foreground and background
 colours.
 <P>
-- <B>Taskbar highlight</B> (BellTaskbar=1): Change the colour of the taskbar
-entry if the mintty window is not active.
+- <B>Highlight in taskbar</B> (BellTaskbar=1): Change the colour of mintty&#146;s
+taskbar entry if the mintty window is not active.
 <P>
 <!-- .TP -->
 </TD></TR>
@@ -1130,6 +1209,15 @@ which are used by some terminal applications such as the mail reader
 <B>pine</B>.
 The Windows printer to send such text to can be selected here.
 By default, printing is disabled.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Prompt about running processes on close</B> (ConfirmExit=1)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+If enabled, ask for confirmation when the close button or <I>Alt+F4</I> is
+pressed and the command invoked by mintty still has child processes.
+This is intended to help avoid closing programs accidentally.
 <P>
 <P>
 <!-- .SS Hidden -->
@@ -1350,5 +1438,5 @@ Questions can be sent to the discussion group at
 the Cygwin mailing list at <I><A HREF="mailto:cygwin@cygwin.com">cygwin@cygwin.com</A></I>.
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>mintty 0.9.5</I></TD> <TD width=33% align=center>mintty (1)</TD> <TD align=right width=33%><I>2010-12-28</I></TD> </TR></TABLE><FONT SIZE=-1>Generated by <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer 1.07</A> from ./mintty.1 using man macros.</FONT>
+<TABLE width=100%><TR> <TD width=33%><I>mintty 0.9.6</I></TD> <TD width=33% align=center>mintty (1)</TD> <TD align=right width=33%><I>2010-02-20</I></TD> </TR></TABLE><FONT SIZE=-1>Generated by <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer 1.07</A> from ./mintty.1 using man macros.</FONT>
 </BODY></HTML>
