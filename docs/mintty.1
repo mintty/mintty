@@ -1,11 +1,11 @@
 .\" mintty man page
 .\"
-.\" This 'man' page is Copyright 2009 Lee D. Rothstein, 2009-10 Andy Koppe
+.\" This 'man' page is Copyright 2009 Lee D. Rothstein, 2009-11 Andy Koppe
 .\"
 .\" You may distribute, use, and modify this man page under the terms
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
-.TH mintty 1 2010-12-28 mintty\ 0.9.5
+.TH mintty 1 2010-02-20 mintty\ 0.9.6
 
 .ad l
 
@@ -163,7 +163,7 @@ which means it can be pasted with colours and formatting into applications
 that support it, e.g. word processors.
 
 The window title can be copied using the \fBCopy Title\fP command in the window
-menu or the shortcut \fBShift+Ctrl+Ins\fP.
+menu.
 
 The clipboard contents can be pasted using either the \fBPaste\fP menu command,
 the \fBShift+Ins\fP keyboard shortcut, or the middle mouse button.
@@ -292,28 +292,6 @@ first.
 An overview of all the keyboard shortcuts.
 
 .TP
-\fBWindow commands\fP
-
-\- \fBAlt+F2\fP: New
-.br
-\- \fBAlt+F4\fP: Close
-.br
-\- \fBAlt+F8\fP: Reset
-.br
-\- \fBAlt+F10\fP: Default size
-.br
-\- \fBAlt+F11\fP or \fBAlt+Enter\fP: Full screen
-.br
-\- \fBAlt+F12\fP: Flip screen
-.br
-\- \fBAlt+Space\fP: Window menu
-.br
-\- \fBCtrl+Tab\fP: Next window
-.br
-\- \fBCtrl+Shift+Tab\fP: Previous window
-
-
-.TP
 \fBScrollback\fP
 
 \- \fBShift+Up\fP: Line up
@@ -334,6 +312,29 @@ An overview of all the keyboard shortcuts.
 \- \fBCtrl+Ins\fP: Copy
 .br
 \- \fBShift+Ins\fP: Paste
+.br
+\- \fBCtrl+Shift+Ins\fP: Copy and paste
+
+.TP
+\fBWindow commands\fP
+
+\- \fBAlt+F2\fP: New
+.br
+\- \fBAlt+F4\fP: Close
+.br
+\- \fBAlt+F8\fP: Reset
+.br
+\- \fBAlt+F10\fP: Default size
+.br
+\- \fBAlt+F11\fP or \fBAlt+Enter\fP: Full screen
+.br
+\- \fBAlt+F12\fP: Flip screen
+.br
+\- \fBAlt+Space\fP: Window menu
+.br
+\- \fBCtrl+Tab\fP: Next window
+.br
+\- \fBCtrl+Shift+Tab\fP: Previous window
 
 .TP
 \fBFont zoom\fP
@@ -344,12 +345,36 @@ An overview of all the keyboard shortcuts.
 .br
 \- \fBCtrl+zero\fP: Back to configured font size
 
+.TP
+\fBCtrl+Shift+letter shortcuts\fP
+
+An alternative set of shortcuts for clipboard and window commands using
+\fBCtrl+Shift+letter\fP combinations is available.  These can be enabled on the
+Keys pane of the options dialog.
+
+\- \fBCtrl+Shift+C\fP: Copy
+.br
+\- \fBCtrl+Shift+V\fP: Paste
+.br
+\- \fBCtrl+Shift+N\fP: New
+.br
+\- \fBCtrl+Shift+Q\fP: Close
+.br
+\- \fBCtrl+Shift+R\fP: Reset
+.br
+\- \fBCtrl+Shift+D\fP: Default size
+.br
+\- \fBCtrl+Shift+F\fP: Full screen
+.br
+\- \fBCtrl+Shift+S\fP: Flip screen
+
 
 .SH CONFIGURATION
 
 Mintty has a graphical options dialog that can be reached via the context menu
-or the window menu.  As usual, both \fBApply\fP and \fBOK\fP apply any changes
-made, but \fBOK\fP also closes the dialog.  \fBCancel\fP discards changes.
+or the window menu.  As usual, both the \fBApply\fP and \fBOK\fP buttons apply
+any changes made, but \fBOK\fP also closes the dialog.
+\fBCancel\fP discards changes.
 
 Settings are stored in INI-style configuration files.  By default, settings are
 read from \fI/etc/minttyrc\fP and \fI~/.minttyrc\fP.  Additional config files
@@ -357,6 +382,7 @@ can be specified using the \fB--config\fP command line option.  These are read
 in order, with settings in later files overriding those in earlier ones.
 Configuration changes are saved to the last config file, usually
 \fI~/.minttyrc\fP.
+Settings can also be specified on the command line using \fB--option\fP.
 
 The following sections explain the settings on each pane of the options
 dialog.
@@ -399,8 +425,8 @@ The \fBGlass\fP option is only available on Vista and above with desktop
 compositing enabled.
 To make this reasonably usable, the glass colour needs to be set to be as dark
 as possible in the Windows control panel: choose \fIPersonalize\fP from the
-desktop context menu, click on \fIWindow Color\fP, turn the color intensity up
-to the maximum, show the color mixer, and turn the brightness down to black.
+desktop context menu, click on \fIWindow Color\fP, turn the colour intensity up
+to the maximum, show the colour mixer, and turn the brightness down to black.
 
 .TP
 \fBOpaque when focused\fP (OpaqueWhenFocused=0)
@@ -417,10 +443,12 @@ The following cursor types are available:
 .br
 \- \fBLine\fP (2)
 
+The line cursor is displayed with the width set in the Accessibility Options
+control panel.
+
 .TP
 \fBCursor blink\fP (CursorBlinks=1)
-If enabled, the cursor blinks at the rate set in the Windows Keyboard control
-panel.
+If enabled, the cursor blinks at the rate set in the Keyboard control panel.
 
 
 .SS Text
@@ -429,7 +457,7 @@ Settings controlling text display.
 .TP
 \fBFont selection\fP
 Clicking on the \fBSelect\fP button opens a dialog where the font and its
-properties can be chosen.
+properties can be chosen.  Font styles other than \fBBold\fP are ignored.
 In the config file, this corresponds to the following entries:
 
 \- \fBFont\fP (Font=Lucida Console)
@@ -439,7 +467,34 @@ In the config file, this corresponds to the following entries:
 \- \fBSize\fP (FontHeight=9)
 
 .TP
-\fBSmoothing\fP (FontQuality=0)
+\fBShow bold as colour\fP (BoldAsFont=0)
+When this option is enabled, the ANSI bold (or 'intense') text attribute is
+shown as a bold-style font.  Where a bold variant of the selected font that
+has the same width as the base font is available, that is used; otherwise, the
+bolding is simulated by rendering the text twice with a one-pixel offset.
+
+.TP
+\fBShow bold as colour\fP (BoldAsColour=1)
+By default, text with the ANSI bold attribute set is displayed with a
+different colour, usually with increased brightness.  This can be disabled
+here.
+
+Note that when \fBBoldAsFont\fP is enabled, only bold text in one of the eight
+ANSI colours has its colour changed, i.e. bold text without an explicitly
+spefified colour is shown with a bold font only.  This matches \fBxterm\fP behaviour.
+
+This option also controls how the 'half-bright' (or 'dim') text
+attribute is displayed: if it is on, half-bright text is
+shown with halved foreground colour brightness; otherwise, it is shown
+by blending the foreground colour with the background colour.
+
+.TP
+\fBAllow blinking\fP (AllowBlinking=0)
+When text blinking is disabled, as it is by default, the blink attribute is
+instead displayed as a bold background colour.
+
+.TP
+\fBFont smoothing\fP (FontQuality=0)
 Select the amount of font smoothing from the following choices:
 
 \- \fBDefault\fP (0): Use Windows setting
@@ -449,22 +504,6 @@ Select the amount of font smoothing from the following choices:
 \- \fBPartial\fP (2): Greyscale anti-aliasing
 .br
 \- \fBFull\fP (3): Subpixel anti-aliasing (ClearType)
-
-.TP
-\fBShow bold as colour\fP (BoldAsColour=1)
-By default, text with the ANSI bold attribute set is displayed with a
-different colour, usually with increased brightness.
-Alternatively, it can be shown using a bold font, which tends to look better
-with black-on-white text.
-Additionally, this option controls how the 'half-bright' (or 'dim') text
-attribute is displayed: if it is on, half-bright text is
-shown with halved foreground colour brightness, otherwise, it is shown
-with the foreground colour blended with the background colour.
-
-.TP
-\fBAllow blinking\fP (AllowBlinking=0)
-ANSI text blinking is diabled by default, on the grounds that blinking
-text is a crime against aesthetic decency.
 
 .TP
 \fBLocale\fP (Locale=)
@@ -500,6 +539,12 @@ effect.
 Settings controlling keyboard behaviour.
 
 .TP
+\fBBackspace sends ^H\fP (BackspaceSendsBS=0)
+By default, mintty sends \fB^?\fP as the keycode for the backspace key.
+If this option is enabled, \fB^H\fP is sent instead.
+This also changes the \fBCtrl+Backspace\fP code from \fB^_\fP to \fB^?\fP.
+
+.TP
 \fBCtrl+LeftAlt is AltGr\fP (CtrlAltIsAltGr=0)
 The AltGr key on non-US Windows systems is a strange beast: pressing it is
 synonymous with pressing the left Ctrl key and the right Alt key at the
@@ -518,14 +563,14 @@ The setting makes no difference for keys without AltGr key bindings
 (e.g. any key on the standard US layout).
 
 .TP
-\fBBackspace sends ^H\fP (BackspaceSendsBS=0)
-By default, mintty sends \fB^?\fP as the keycode for the backspace key.
-If this option is enabled, \fB^H\fP is sent instead.
-This also changes the Ctrl+Backspace code from \fB^_\fP to \fB^?\fP.
+\fBCopy and Paste shortcuts\fP (ClipShortcuts=1)
+Checkbox for enabling the clipboard shortcuts \fBCtrl+Ins\fP for copying and
+\fBShift+Ins\fP for pasting.
 
 .TP
 \fBMenu and Full Screen shortcuts\fP (WindowShortcuts=1)
-Checkbox for enabling the \fBAlt+Space\fP and \fBAlt+Enter\fP shortcuts.
+Checkbox for enabling the \fBAlt+Space\fP and \fBAlt+Enter\fP shortcuts for
+showing the window menu and toggling full screen mode.
 
 .TP
 \fBSwitch window shortcuts\fP (SwitchShortcuts=1)
@@ -537,27 +582,24 @@ for switching between mintty windows.
 Checkbox for enabling the font zooming shortcuts \fBCtrl+plus/minus/zero\fP.
 
 .TP
-\fBModifier for scrolling\fP (ScrollMod=1)
-The modifier key that needs to be pressed together with the arrow up/down,
-PgUp/PgDn, or Home/End keys to access the scrollback buffer.
-The default is \fBShift\fP.
-The \fBOff\fP setting disables scrolling with keyboard shortcuts.
-
-\- \fBShift\fP (1)
-.br
-\- \fBCtrl\fP (4)
-.br
-\- \fBAlt\fP (2)
-.br
-\- \fBOff\fP (0)
+\fBAlt+Fn shortcuts\fP (AltFnShortcuts=1)
+Checkbox for enabling the use of combinations of Alt and functions keys as
+shortcuts, for example \fBAlt+F4\fP for closing the window or \fBAlt+F11\fP
+fortoggling  full screen mode.  Disable to have \fBAlt+Fn\fP combinations
+sent to applications instead.
 
 .TP
-\fBPgUp and PgDn scroll without modifier\fP (PgUpDnScroll=0)
-If this is enabled, the scrollback buffer can be accessed by just pressing
-PgUp or PgDn, without the 'modifier for scrolling' selected above.
-If the modifier is pressed anyway, plain PgUp/PgDn keycodes are sent to the
-application.
-This option does not affect the arrow keys or Home/End keys.
+\fBCtrl+Shift+letter shortcuts\fP (CtrlShiftShortcuts=0)
+Checkbox for enabling alternative clipboard and window command shortcuts
+using \fBCtrl+Shift+letter\fP combinations such as \fBCtrl+Shift+V\fP for
+paste or \fBCtrl+Shift+N\fP for starting a new session.
+
+These can replace the \fBCtrl/Shift+Ins\fP and \fBAlt+Fn\fP shortcuts, whereby
+they show up in menus only if the corresponding default shortcuts are disabled.
+
+See the shortcuts section above for the list of shortcuts controlled by this
+option.  When it is disabled, Ctrl+Shift+letter combinations are sent to
+applications as C1 control characters instead.
 
 
 .SS Mouse
@@ -654,10 +696,27 @@ By default, it is shown on the right-hand side.
 \- \fBRight\fP (1)
 
 .TP
-\fBAsk for exit confirmation\fP (ConfirmExit=1)
-If enabled, ask for confirmation when the close button or \fIAlt+F4\fP is 
-pressed and the command invoked by mintty still has child processes.
-This is intended to help avoid closing programs accidentally.
+\fBModifier for scrolling\fP (ScrollMod=1)
+The modifier key that needs to be pressed together with the arrow up/down,
+PgUp/PgDn, or Home/End keys to access the scrollback buffer.
+The default is \fBShift\fP.
+The \fBOff\fP setting disables scrolling with keyboard shortcuts.
+
+\- \fBShift\fP (1)
+.br
+\- \fBCtrl\fP (4)
+.br
+\- \fBAlt\fP (2)
+.br
+\- \fBOff\fP (0)
+
+.TP
+\fBPgUp and PgDn scroll without modifier\fP (PgUpDnScroll=0)
+If this is enabled, the scrollback buffer can be accessed by just pressing
+PgUp or PgDn, without the 'modifier for scrolling' selected above.
+If the modifier is pressed anyway, plain PgUp/PgDn keycodes are sent to the
+application.
+This option does not affect the arrow keys or Home/End keys.
 
 
 .SS Terminal
@@ -698,8 +757,8 @@ has.  Only taskbar highlighting is enabled by default.
 \- \fBFlash\fP (BellFlash=0): Briefly invert the foreground and background
 colours.
 
-\- \fBTaskbar highlight\fP (BellTaskbar=1): Change the colour of the taskbar
-entry if the mintty window is not active.
+\- \fBHighlight in taskbar\fP (BellTaskbar=1): Change the colour of mintty's
+taskbar entry if the mintty window is not active.
 
 .TP
 \fBPrinter\fP (Printer=)
@@ -708,6 +767,12 @@ which are used by some terminal applications such as the mail reader
 \fBpine\fP.
 The Windows printer to send such text to can be selected here.
 By default, printing is disabled.
+
+.TP
+\fBPrompt about running processes on close\fP (ConfirmExit=1)
+If enabled, ask for confirmation when the close button or \fIAlt+F4\fP is 
+pressed and the command invoked by mintty still has child processes.
+This is intended to help avoid closing programs accidentally.
 
 
 .SS Hidden
