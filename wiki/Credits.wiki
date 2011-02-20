@@ -13,6 +13,7 @@ Thanks to everyone who has contributed to mintty in some way, in particular:
  * The authors of Cygwin's [http://sourceforge.net/projects/rxvt rxvt], particularly Chuck Wilson, who adapted it to use Win32 directly instead of requiring an X server. While no longer developed, rxvt remains an important reference for how a Cygwin terminal should work.
  * Corinna Vinschen, for Cygwin 1.7's locale and charset implementation, which allowed mintty to gain a crucial advantage over rxvt: Unicode support.
  * Christopher Faylor, for the Cygwin [http://en.wikipedia.org/wiki/Pseudo_terminal pty] implementation, which mintty very much depends on, especially for its speed.
+ * [http://untidy.net Simon Steele], for [http://www.pnotepad.org Programmer's Notepad], a relatively simple yet powerful open source editor for Windows that makes mintty code a joy to work on.
  * Murray Anderson, Andrew Aylett and Alexander Noack: mintty's earliest adopters, who helped to find and fix the most egregious bugs before mintty was announced to the Cygwin world.
  * Yaakov Selkowitz, for creating mintty's initial Cygwin [http://cygwin.com/setup.exe setup.exe] package and the cygport tool that is used to build it.
  * Lee D. Rothstein, for his help in writing a man page for mintty.
@@ -20,3 +21,6 @@ Thanks to everyone who has contributed to mintty in some way, in particular:
  * Chris Sutcliffe, for packaging mintty for [http://www.mingw.org/wiki/MSYS MSYS], and always testing the latest broken svn versions.
  * Iwamuro Motonori, for valuable advice regarding support for East Asian languages.
  * The many users who have helped to improve mintty by reporting bugs and suggesting enhancements.
+
+Cheers,<br>
+Andy
