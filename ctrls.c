@@ -236,13 +236,12 @@ ctrl_columns(controlset *s, int ncolumns, ...)
 }
 
 control *
-ctrl_editbox(controlset *s, char *label, char shortcut, int percentage,
+ctrl_editbox(controlset *s, char *label, int percentage,
              intorptr helpctx, handler_fn handler, intorptr context,
              intorptr context2)
 {
   control *c = ctrl_new(s, CTRL_EDITBOX, helpctx, handler, context);
   c->label = label ? strdup(label) : null;
-  c->editbox.shortcut = shortcut;
   c->editbox.percentwidth = percentage;
   c->editbox.password = 0;
   c->editbox.has_list = 0;
@@ -251,13 +250,12 @@ ctrl_editbox(controlset *s, char *label, char shortcut, int percentage,
 }
 
 control *
-ctrl_combobox(controlset *s, char *label, char shortcut, int percentage,
+ctrl_combobox(controlset *s, char *label, int percentage,
               intorptr helpctx, handler_fn handler, intorptr context,
               intorptr context2)
 {
   control *c = ctrl_new(s, CTRL_EDITBOX, helpctx, handler, context);
   c->label = label ? strdup(label) : null;
-  c->editbox.shortcut = shortcut;
   c->editbox.percentwidth = percentage;
   c->editbox.password = 0;
   c->editbox.has_list = 1;
@@ -267,12 +265,10 @@ ctrl_combobox(controlset *s, char *label, char shortcut, int percentage,
 
 /*
  * `ncolumns' is followed by (alternately) radio button titles and
- * intorptrs, until a null in place of a title string is seen. Each
- * title is expected to be followed by a shortcut _iff_ `shortcut'
- * is NO_SHORTCUT.
+ * intorptrs, until a null in place of a title string is seen.
  */
 control *
-ctrl_radiobuttons(controlset *s, char *label, char shortcut,
+ctrl_radiobuttons(controlset *s, char *label,
                   int ncolumns, intorptr helpctx, handler_fn handler,
                   intorptr context, ...)
 {
@@ -280,7 +276,6 @@ ctrl_radiobuttons(controlset *s, char *label, char shortcut,
   int i;
   control *c = ctrl_new(s, CTRL_RADIO, helpctx, handler, context);
   c->label = label ? strdup(label) : null;
-  c->radio.shortcut = shortcut;
   c->radio.ncolumns = ncolumns;
  /*
   * Initial pass along variable argument list to count the
@@ -290,16 +285,10 @@ ctrl_radiobuttons(controlset *s, char *label, char shortcut,
   i = 0;
   while (va_arg(ap, char *) != null) {
     i++;
-    if (c->radio.shortcut == NO_SHORTCUT)
-      (void) va_arg(ap, int);   /* char promotes to int in arg lists */
     (void) va_arg(ap, intorptr);
   }
   va_end(ap);
   c->radio.nbuttons = i;
-  if (c->radio.shortcut == NO_SHORTCUT)
-    c->radio.shortcuts = newn(char, c->radio.nbuttons);
-  else
-    c->radio.shortcuts = null;
   c->radio.buttons = newn(char *, c->radio.nbuttons);
   c->radio.buttondata = newn(intorptr, c->radio.nbuttons);
  /*
@@ -309,8 +298,6 @@ ctrl_radiobuttons(controlset *s, char *label, char shortcut,
   va_start(ap, context);
   for (i = 0; i < c->radio.nbuttons; i++) {
     c->radio.buttons[i] = strdup(va_arg(ap, char *));
-    if (c->radio.shortcut == NO_SHORTCUT)
-      c->radio.shortcuts[i] = va_arg(ap, int);
    /* char promotes to int in arg lists */
     c->radio.buttondata[i] = va_arg(ap, intorptr);
   }
@@ -319,34 +306,31 @@ ctrl_radiobuttons(controlset *s, char *label, char shortcut,
 }
 
 control *
-ctrl_pushbutton(controlset *s, char *label, char shortcut,
+ctrl_pushbutton(controlset *s, char *label,
                 intorptr helpctx, handler_fn handler, intorptr context)
 {
   control *c = ctrl_new(s, CTRL_BUTTON, helpctx, handler, context);
   c->label = label ? strdup(label) : null;
-  c->button.shortcut = shortcut;
   c->button.isdefault = 0;
   c->button.iscancel = 0;
   return c;
 }
 
 control *
-ctrl_fontsel(controlset *s, char *label, char shortcut, intorptr helpctx,
+ctrl_fontsel(controlset *s, char *label, intorptr helpctx,
              handler_fn handler, intorptr context)
 {
   control *c = ctrl_new(s, CTRL_FONTSELECT, helpctx, handler, context);
   c->label = label ? strdup(label) : null;
-  c->fontselect.shortcut = shortcut;
   return c;
 }
 
 control *
-ctrl_checkbox(controlset *s, char *label, char shortcut,
+ctrl_checkbox(controlset *s, char *label,
               intorptr helpctx, handler_fn handler, intorptr context)
 {
   control *c = ctrl_new(s, CTRL_CHECKBOX, helpctx, handler, context);
   c->label = label ? strdup(label) : null;
-  c->checkbox.shortcut = shortcut;
   return c;
 }
 
@@ -359,7 +343,7 @@ ctrl_free(control *ctrl)
       for (int i = 0; i < ctrl->radio.nbuttons; i++)
         free(ctrl->radio.buttons[i]);
       free(ctrl->radio.buttons);
-      free(ctrl->radio.shortcuts);
+
       free(ctrl->radio.buttondata);
     when CTRL_COLUMNS:
       free(ctrl->columns.percentages);

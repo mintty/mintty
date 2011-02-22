@@ -38,12 +38,6 @@ typedef struct winctrl {
   int base_id;
   int num_ids;
  /*
-  * Remember what keyboard shortcuts were used by this control,
-  * so that when we remove it again we can take them out of the
-  * list in the dlgparam.
-  */
-  char shortcuts[MAX_SHORTCUTS_PER_CTRL];
- /*
   * Some controls need a piece of allocated memory in which to
   * store temporary data about the control.
   */
@@ -67,7 +61,6 @@ typedef struct {
   int nctrltrees;
   void *data;   /* data to pass in refresh events */
   control *focused; /* which ctrl has focus now/before */
-  char shortcuts[128];  /* track which shortcuts in use */
   int coloursel_wanted; /* has an event handler asked for
                          * a colour selector? */
   colour coloursel_result;  /* 0-255 */
@@ -84,6 +77,5 @@ void winctrl_init(winctrls *);
 void winctrl_cleanup(winctrls *);
 void winctrl_layout(winctrls *, ctrlpos *, controlset *, int *id);
 int winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam);
-void winctrl_rem_shortcuts(winctrl *);
 
 #endif
