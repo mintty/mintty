@@ -147,16 +147,6 @@ struct control {
   * be able to store a piece of `void *' or `int' data.
   */
   intorptr context;
- /*
-  * For any control, we also allow the storage of a piece of
-  * data for use by context-sensitive help. For example, on
-  * Windows you can click the magic question mark and then
-  * click a control, and help for that control should spring
-  * up. Hence, here is a slot in which to store per-control
-  * data that a particular platform-specific driver can use
-  * to ensure it brings up the right piece of help text.
-  */
-  intorptr helpctx;
   union {
     struct {
      /*
@@ -344,29 +334,24 @@ void *ctrl_alloc(controlbox *, size_t size);
 
 /* `ncolumns' is followed by that many percentages, as integers. */
 control *ctrl_columns(controlset *, int ncolumns, ...);
-control *ctrl_editbox(controlset *, char *label,
-                      int percentage, intorptr helpctx,
+control *ctrl_editbox(controlset *, char *label, int percentage,
                       handler_fn handler, intorptr context, intorptr context2);
-control *ctrl_combobox(controlset *, char *label,
-                       int percentage, intorptr helpctx,
+control *ctrl_combobox(controlset *, char *label, int percentage,
                        handler_fn handler, intorptr context, intorptr context2);
 /*
  * `ncolumns' is followed by (alternately) radio button titles and
  * intorptrs, until a null in place of a title string is seen.
  */
-control *ctrl_radiobuttons(controlset *, char *label,
-                           int ncolumns, intorptr helpctx,
+control *ctrl_radiobuttons(controlset *, char *label, int ncolumns,
                            handler_fn handler, intorptr context, ...);
 control *ctrl_pushbutton(controlset *, char *label,
-                         intorptr helpctx, handler_fn handler,
-                         intorptr context);
-control *ctrl_droplist(controlset *, char *label,
-                       int percentage, intorptr helpctx,
+                         handler_fn handler, intorptr context);
+control *ctrl_droplist(controlset *, char *label, int percentage,
                        handler_fn handler, intorptr context);
 control *ctrl_fontsel(controlset *, char *label,
-                      intorptr helpctx, handler_fn handler, intorptr context);
+                      handler_fn handler, intorptr context);
 control *ctrl_checkbox(controlset *, char *label,
-                       intorptr helpctx, handler_fn handler, intorptr context);
+                       handler_fn handler, intorptr context);
 
 /*
  * Standard handler routines to cover most of the common cases in

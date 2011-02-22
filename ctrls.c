@@ -190,8 +190,7 @@ ctrl_alloc(controlbox * b, size_t size)
 }
 
 static control *
-ctrl_new(controlset *s, int type, intorptr helpctx, handler_fn handler,
-         intorptr context)
+ctrl_new(controlset *s, int type, handler_fn handler, intorptr context)
 {
   control *c = new(control);
   if (s->ncontrols >= s->ctrlsize) {
@@ -204,7 +203,6 @@ ctrl_new(controlset *s, int type, intorptr helpctx, handler_fn handler,
   */
   c->type = type;
   c->column = COLUMN_FIELD(0, s->ncolumns);
-  c->helpctx = helpctx;
   c->handler = handler;
   c->context = context;
   c->label = null;
@@ -216,7 +214,7 @@ ctrl_new(controlset *s, int type, intorptr helpctx, handler_fn handler,
 control *
 ctrl_columns(controlset *s, int ncolumns, ...)
 {
-  control *c = ctrl_new(s, CTRL_COLUMNS, P(null), null, P(null));
+  control *c = ctrl_new(s, CTRL_COLUMNS, null, P(null));
   assert(s->ncolumns == 1 || ncolumns == 1);
   c->columns.ncols = ncolumns;
   s->ncolumns = ncolumns;
@@ -237,10 +235,9 @@ ctrl_columns(controlset *s, int ncolumns, ...)
 
 control *
 ctrl_editbox(controlset *s, char *label, int percentage,
-             intorptr helpctx, handler_fn handler, intorptr context,
-             intorptr context2)
+             handler_fn handler, intorptr context, intorptr context2)
 {
-  control *c = ctrl_new(s, CTRL_EDITBOX, helpctx, handler, context);
+  control *c = ctrl_new(s, CTRL_EDITBOX, handler, context);
   c->label = label ? strdup(label) : null;
   c->editbox.percentwidth = percentage;
   c->editbox.password = 0;
@@ -251,10 +248,9 @@ ctrl_editbox(controlset *s, char *label, int percentage,
 
 control *
 ctrl_combobox(controlset *s, char *label, int percentage,
-              intorptr helpctx, handler_fn handler, intorptr context,
-              intorptr context2)
+              handler_fn handler, intorptr context, intorptr context2)
 {
-  control *c = ctrl_new(s, CTRL_EDITBOX, helpctx, handler, context);
+  control *c = ctrl_new(s, CTRL_EDITBOX, handler, context);
   c->label = label ? strdup(label) : null;
   c->editbox.percentwidth = percentage;
   c->editbox.password = 0;
@@ -268,13 +264,12 @@ ctrl_combobox(controlset *s, char *label, int percentage,
  * intorptrs, until a null in place of a title string is seen.
  */
 control *
-ctrl_radiobuttons(controlset *s, char *label,
-                  int ncolumns, intorptr helpctx, handler_fn handler,
-                  intorptr context, ...)
+ctrl_radiobuttons(controlset *s, char *label, int ncolumns,
+                  handler_fn handler, intorptr context, ...)
 {
   va_list ap;
   int i;
-  control *c = ctrl_new(s, CTRL_RADIO, helpctx, handler, context);
+  control *c = ctrl_new(s, CTRL_RADIO, handler, context);
   c->label = label ? strdup(label) : null;
   c->radio.ncolumns = ncolumns;
  /*
@@ -307,9 +302,9 @@ ctrl_radiobuttons(controlset *s, char *label,
 
 control *
 ctrl_pushbutton(controlset *s, char *label,
-                intorptr helpctx, handler_fn handler, intorptr context)
+                handler_fn handler, intorptr context)
 {
-  control *c = ctrl_new(s, CTRL_BUTTON, helpctx, handler, context);
+  control *c = ctrl_new(s, CTRL_BUTTON, handler, context);
   c->label = label ? strdup(label) : null;
   c->button.isdefault = 0;
   c->button.iscancel = 0;
@@ -317,19 +312,19 @@ ctrl_pushbutton(controlset *s, char *label,
 }
 
 control *
-ctrl_fontsel(controlset *s, char *label, intorptr helpctx,
+ctrl_fontsel(controlset *s, char *label,
              handler_fn handler, intorptr context)
 {
-  control *c = ctrl_new(s, CTRL_FONTSELECT, helpctx, handler, context);
+  control *c = ctrl_new(s, CTRL_FONTSELECT, handler, context);
   c->label = label ? strdup(label) : null;
   return c;
 }
 
 control *
 ctrl_checkbox(controlset *s, char *label,
-              intorptr helpctx, handler_fn handler, intorptr context)
+              handler_fn handler, intorptr context)
 {
-  control *c = ctrl_new(s, CTRL_CHECKBOX, helpctx, handler, context);
+  control *c = ctrl_new(s, CTRL_CHECKBOX, handler, context);
   c->label = label ? strdup(label) : null;
   return c;
 }
