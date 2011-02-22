@@ -10,15 +10,11 @@
  * General principles:
  *  - _All_ pointers in this structure are expected to point to
  *    dynamically allocated things, unless otherwise indicated.
- *  - `char' fields giving keyboard shortcuts are expected to be
- *    NO_SHORTCUT if no shortcut is desired for a particular control.
  *  - The `label' field can often be null, which will cause the
  *    control to not have a label at all. This doesn't apply to
  *    checkboxes and push buttons, in which the label is not
  *    separate from the control.
  */
-
-#define NO_SHORTCUT '\0'
 
 enum {
   CTRL_EDITBOX,    /* label plus edit box */
@@ -163,7 +159,6 @@ struct control {
   intorptr helpctx;
   union {
     struct {
-      char shortcut;      /* keyboard shortcut */
      /*
       * Percentage of the dialog-box width used by the edit box.
       * If this is set to 100, the label is on its own line;
@@ -186,13 +181,6 @@ struct control {
       intorptr context2;
     } editbox;
     struct {
-     /*
-      * `shortcut' here is a single keyboard shortcut which is
-      * expected to select the whole group of radio buttons. It
-      * can be NO_SHORTCUT if required, and there is also a way
-      * to place individual shortcuts on each button; see below.
-      */
-      char shortcut;
      /*
       * There are separate fields for `ncolumns' and `nbuttons'
       * for several reasons.
@@ -225,22 +213,12 @@ struct control {
       */
       char **buttons;     /* `nbuttons' button labels */
      /*
-      * This points to a dynamically allocated array of `char'
-      * giving the individual keyboard shortcuts for each radio
-      * button. The array may be null if none are required.
-      */
-      char *shortcuts;    /* `nbuttons' shortcuts; may be null */
-     /*
       * This points to a dynamically allocated array of
       * intorptr, giving helpful data for each button.
       */
       intorptr *buttondata;       /* `nbuttons' entries; may be null */
     } radio;
     struct {
-      char shortcut;
-    } checkbox;
-    struct {
-      char shortcut;
      /*
       * At least Windows has the concept of a `default push
       * button', which gets implicitly pressed when you hit
@@ -254,7 +232,6 @@ struct control {
       int iscancel;
     } button;
     struct {
-      char shortcut;      /* keyboard shortcut */
      /*
       * Height of the list box, in approximate number of lines.
       * If this is zero, the list is a drop-down list.
@@ -297,9 +274,6 @@ struct control {
       * `percentages' may be null if ncols==1, to save space.
       */
     } columns;
-    struct {
-      char shortcut;
-    } fontselect;
   };
   
   /* Space for storing platform-specific control data */
@@ -370,30 +344,28 @@ void *ctrl_alloc(controlbox *, size_t size);
 
 /* `ncolumns' is followed by that many percentages, as integers. */
 control *ctrl_columns(controlset *, int ncolumns, ...);
-control *ctrl_editbox(controlset *, char *label, char shortcut,
+control *ctrl_editbox(controlset *, char *label,
                       int percentage, intorptr helpctx,
                       handler_fn handler, intorptr context, intorptr context2);
-control *ctrl_combobox(controlset *, char *label, char shortcut,
+control *ctrl_combobox(controlset *, char *label,
                        int percentage, intorptr helpctx,
                        handler_fn handler, intorptr context, intorptr context2);
 /*
  * `ncolumns' is followed by (alternately) radio button titles and
- * intorptrs, until a null in place of a title string is seen. Each
- * title is expected to be followed by a shortcut _iff_ `shortcut'
- * is NO_SHORTCUT.
+ * intorptrs, until a null in place of a title string is seen.
  */
 control *ctrl_radiobuttons(controlset *, char *label,
-                           char shortcut, int ncolumns, intorptr helpctx,
+                           int ncolumns, intorptr helpctx,
                            handler_fn handler, intorptr context, ...);
-control *ctrl_pushbutton(controlset *, char *label, char shortcut,
+control *ctrl_pushbutton(controlset *, char *label,
                          intorptr helpctx, handler_fn handler,
                          intorptr context);
-control *ctrl_droplist(controlset *, char *label, char shortcut,
+control *ctrl_droplist(controlset *, char *label,
                        int percentage, intorptr helpctx,
                        handler_fn handler, intorptr context);
-control *ctrl_fontsel(controlset *, char *label, char shortcut,
+control *ctrl_fontsel(controlset *, char *label,
                       intorptr helpctx, handler_fn handler, intorptr context);
-control *ctrl_checkbox(controlset *, char *label, char shortcut,
+control *ctrl_checkbox(controlset *, char *label,
                        intorptr helpctx, handler_fn handler, intorptr context);
 
 /*
@@ -441,17 +413,9 @@ void dlg_listbox_add(control *, char const *text);
 void dlg_fontsel_set(control *, font_spec *);
 void dlg_fontsel_get(control *, font_spec *);
 /*
- * Enable or disable a control.
- */
-void dlg_enable(control *, bool);
-/*
  * Set input focus into a particular control.
  */
 void dlg_set_focus(control *);
-/*
- * Change the label text on a control.
- */
-void dlg_label_change(control *, char const *text);
 /*
  * This function signals to the front end that the dialog's
  * processing is completed.

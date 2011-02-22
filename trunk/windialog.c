@@ -238,7 +238,6 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if (item)
               DestroyWindow(item);
           }
-          winctrl_rem_shortcuts(c);
         }
         winctrl_cleanup(&ctrls_panel);
         

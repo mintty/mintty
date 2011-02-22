@@ -497,66 +497,6 @@ listbox(ctrlpos * cp, char *stext, int sid, int lid, int lines)
  * Platform-specific side of portable dialog-box mechanism.
  */
 
-/*
- * This function takes a string, escapes all the ampersands, and
- * places a single (unescaped) ampersand in front of the first
- * occurrence of the given shortcut character (which may be
- * NO_SHORTCUT).
- * 
- * Return value is a malloc'ed copy of the processed version of the
- * string.
- */
-static char *
-shortcut_escape(const char *text, char shortcut)
-{
-  char *ret;
-  char const *p;
-  char *q;
-
-  if (!text)
-    return null;        /* free won't choke on this */
-
-  ret = newn(char, 2 * strlen(text) + 1);       /* size potentially doubles! */
-  shortcut = tolower((uchar) shortcut);
-
-  p = text;
-  q = ret;
-  while (*p) {
-    if (shortcut != NO_SHORTCUT && tolower((uchar) * p) == shortcut) {
-      *q++ = '&';
-      shortcut = NO_SHORTCUT;   /* stop it happening twice */
-    }
-    else if (*p == '&') {
-      *q++ = '&';
-    }
-    *q++ = *p++;
-  }
-  *q = '\0';
-  return ret;
-}
-
-void
-winctrl_add_shortcuts(winctrl * c)
-{
-  for (size_t i = 0; i < lengthof(c->shortcuts); i++)
-    if (c->shortcuts[i] != NO_SHORTCUT) {
-      uchar s = tolower((uchar) c->shortcuts[i]);
-      assert(!dlg.shortcuts[s]);
-      dlg.shortcuts[s] = true;
-    }
-}
-
-void
-winctrl_rem_shortcuts(winctrl * c)
-{
-  for (size_t i = 0; i < lengthof(c->shortcuts); i++)
-    if (c->shortcuts[i] != NO_SHORTCUT) {
-      uchar s = tolower((uchar) c->shortcuts[i]);
-      assert(dlg.shortcuts[s]);
-      dlg.shortcuts[s] = false;
-    }
-}
-
 void
 winctrl_init(winctrls *wc)
 {
@@ -609,7 +549,6 @@ new_winctrl(int base_id, void *data)
   c->base_id = base_id;
   c->num_ids = 1;
   c->data = data;
-  memset(c->shortcuts, NO_SHORTCUT, sizeof(c->shortcuts));
   return c;
 }
 
@@ -621,8 +560,6 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
 
   ctrlpos pos;
 
-  char shortcuts[MAX_SHORTCUTS_PER_CTRL];
-  int nshortcuts;
   int actual_base_id, base_id, num_ids;
   void *data;
 
@@ -729,10 +666,6 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
    /* Most controls don't need anything in c->data. */
     data = null;
 
-   /* And they all start off with no shortcuts registered. */
-    memset(shortcuts, NO_SHORTCUT, sizeof(shortcuts));
-    nshortcuts = 0;
-
    /* Almost all controls start at base_id. */
     actual_base_id = base_id;
 
@@ -740,85 +673,62 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
     * Now we're ready to actually create the control, by
     * switching on its type.
     */
-    char *escaped = 0;
     switch (ctrl->type) {
       when CTRL_EDITBOX: {
         num_ids = 2;    /* static, edit */
-        escaped = shortcut_escape(ctrl->label, ctrl->editbox.shortcut);
-        shortcuts[nshortcuts++] = ctrl->editbox.shortcut;
         if (ctrl->editbox.percentwidth == 100) {
           if (ctrl->editbox.has_list)
-            combobox(&pos, escaped, base_id, base_id + 1);
+            combobox(&pos, ctrl->label, base_id, base_id + 1);
           else
-            editboxfw(&pos, ctrl->editbox.password, escaped, base_id,
+            editboxfw(&pos, ctrl->editbox.password, ctrl->label, base_id,
                       base_id + 1);
         }
         else {
           if (ctrl->editbox.has_list) {
-            staticcombo(&pos, escaped, base_id, base_id + 1,
+            staticcombo(&pos, ctrl->label, base_id, base_id + 1,
                         ctrl->editbox.percentwidth);
           }
           else {
             (ctrl->editbox.password ? staticpassedit : staticedit)
-              (&pos, escaped, base_id, base_id + 1, ctrl->editbox.percentwidth);
+              (&pos, ctrl->label, base_id, base_id + 1, ctrl->editbox.percentwidth);
           }
         }
       }
       when CTRL_RADIO: {
         num_ids = ctrl->radio.nbuttons + 1;     /* label as well */
-        
-        escaped = shortcut_escape(ctrl->label, ctrl->radio.shortcut);
-        shortcuts[nshortcuts++] = ctrl->radio.shortcut;
-
         radio buttons[ctrl->radio.nbuttons];
 
         for (int i = 0; i < ctrl->radio.nbuttons; i++) {
-          buttons[i].text =
-            shortcut_escape(ctrl->radio.buttons[i],
-                            (char) (ctrl->radio.shortcuts ? ctrl->radio.
-                                    shortcuts[i] : NO_SHORTCUT));
+          buttons[i].text = ctrl->radio.buttons[i];
           buttons[i].id = base_id + 1 + i;
-          if (ctrl->radio.shortcuts) {
-            assert(nshortcuts < MAX_SHORTCUTS_PER_CTRL);
-            shortcuts[nshortcuts++] = ctrl->radio.shortcuts[i];
-          }
         }
 
-        radioline_common(&pos, escaped, base_id, ctrl->radio.ncolumns,
+        radioline_common(&pos, ctrl->label, base_id, ctrl->radio.ncolumns,
                          buttons, ctrl->radio.nbuttons);
-
-        for (int i = 0; i < ctrl->radio.nbuttons; i++)
-          free(buttons[i].text);
       }
       when CTRL_CHECKBOX: {
         num_ids = 1;
-        escaped = shortcut_escape(ctrl->label, ctrl->checkbox.shortcut);
-        shortcuts[nshortcuts++] = ctrl->checkbox.shortcut;
-        checkbox(&pos, escaped, base_id);
+        checkbox(&pos, ctrl->label, base_id);
       }
       when CTRL_BUTTON: {
-        escaped = shortcut_escape(ctrl->label, ctrl->button.shortcut);
-        shortcuts[nshortcuts++] = ctrl->button.shortcut;
         if (ctrl->button.iscancel)
           actual_base_id = IDCANCEL;
         num_ids = 1;
-        button(&pos, escaped, actual_base_id, ctrl->button.isdefault);
+        button(&pos, ctrl->label, actual_base_id, ctrl->button.isdefault);
       }
       when CTRL_LISTBOX: {
         num_ids = 2;
-        escaped = shortcut_escape(ctrl->label, ctrl->listbox.shortcut);
-        shortcuts[nshortcuts++] = ctrl->listbox.shortcut;
         if (ctrl->listbox.height == 0) {
          /* Drop-down list. */
           if (ctrl->listbox.percentwidth == 100)
-            staticddlbig(&pos, escaped, base_id, base_id + 1);
+            staticddlbig(&pos, ctrl->label, base_id, base_id + 1);
           else
-            staticddl(&pos, escaped, base_id, base_id + 1,
+            staticddl(&pos, ctrl->label, base_id, base_id + 1,
                       ctrl->listbox.percentwidth);
         }
         else {
          /* Ordinary list. */
-          listbox(&pos, escaped, base_id, base_id + 1, ctrl->listbox.height);
+          listbox(&pos, ctrl->label, base_id, base_id + 1, ctrl->listbox.height);
         }
         if (ctrl->listbox.ncols) {
          /*
@@ -841,8 +751,6 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
       }
       when CTRL_FONTSELECT: {
         num_ids = 3;
-        shortcuts[nshortcuts++] = ctrl->fontselect.shortcut;
-        //statictext(&pos, escaped, 1, base_id);
         staticbtn(&pos, "", base_id + 1, "&Select...", base_id + 2);
         data = new(font_spec);
       }
@@ -850,7 +758,6 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
         assert(!"Can't happen");
         num_ids = 0;    /* placate gcc */
     }
-    free(escaped);
 
    /*
     * Create a `winctrl' for this control, and advance
@@ -863,9 +770,7 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
       c->base_id = actual_base_id;
       c->num_ids = num_ids;
       c->data = data;
-      memcpy(c->shortcuts, shortcuts, sizeof (shortcuts));
       winctrl_add(wc, c);
-      winctrl_add_shortcuts(c);
       if (actual_base_id == base_id)
         base_id += num_ids;
     }
@@ -1206,42 +1111,6 @@ dlg_listbox_add(control *ctrl, char const *text)
 }
 
 void
-dlg_label_change(control *ctrl, char const *text)
-{
-  winctrl *c = ctrl->plat_ctrl;
-  char *escaped = 0;
-  int id = -1;
-
-  assert(c);
-  switch (c->ctrl->type) {
-    when CTRL_EDITBOX:
-      escaped = shortcut_escape(text, c->ctrl->editbox.shortcut);
-      id = c->base_id;
-    when CTRL_RADIO:
-      escaped = shortcut_escape(text, c->ctrl->radio.shortcut);
-      id = c->base_id;
-    when CTRL_CHECKBOX:
-      escaped = shortcut_escape(text, ctrl->checkbox.shortcut);
-      id = c->base_id;
-    when CTRL_BUTTON:
-      escaped = shortcut_escape(text, ctrl->button.shortcut);
-      id = c->base_id;
-    when CTRL_LISTBOX:
-      escaped = shortcut_escape(text, ctrl->listbox.shortcut);
-      id = c->base_id;
-    when CTRL_FONTSELECT:
-      escaped = shortcut_escape(text, ctrl->fontselect.shortcut);
-      id = c->base_id;
-    otherwise:
-      assert(!"Can't happen");
-  }
-  if (escaped) {
-    SetDlgItemText(dlg.wnd, id, escaped);
-    free(escaped);
-  }
-}
-
-void
 dlg_fontsel_set(control *ctrl, font_spec *fs)
 {
   winctrl *c = ctrl->plat_ctrl;
@@ -1266,15 +1135,6 @@ dlg_fontsel_get(control *ctrl, font_spec *fs)
   assert(c && c->ctrl->type == CTRL_FONTSELECT);
   *fs = *(font_spec *) c->data;  /* structure copy */
 }
-
-#if 0 // Unused
-void
-dlg_enable(control *ctrl, bool enable)
-{
-  winctrl *c = ctrl->plat_ctrl;
-  EnableWindow(GetDlgItem(dlg.wnd, c->base_id + 1), enable);
-}
-#endif
 
 void
 dlg_set_focus(control *ctrl)
@@ -1356,7 +1216,6 @@ windlg_init(void)
   dlg.data = null;
   dlg.ended = false;
   dlg.focused = null;
-  memset(dlg.shortcuts, 0, sizeof (dlg.shortcuts));
   dlg.wnd = null;
 }
 
