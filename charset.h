@@ -24,7 +24,7 @@ static inline bool
 is_low_surrogate(wchar wc)
 { return (wc & 0xFC00) == 0xDC00; }
 
-static inline bool
+static inline xchar
 combine_surrogates(wchar hwc, wchar lwc)
 { return 0x10000 + ((hwc & 0x3FF) << 10) + (lwc & 0x3FF); }
 
