@@ -9,6 +9,7 @@
 #include "charset.h"
 #include "win.h"
 
+#include <termios.h>
 #include <sys/cygwin.h>
 
 const char *log_file = 0;
@@ -40,7 +41,7 @@ config cfg = {
   .locale = "",
   .charset = "",
   // Keys
-  .backspace_sends_bs = CYGWIN_VERSION_DLL_MAJOR < 1007,
+  .backspace_sends_bs = CERASE == '\b',
   .ctrl_alt_is_altgr = false,
   .clip_shortcuts = true,
   .window_shortcuts = true,
@@ -663,7 +664,7 @@ setup_config_box(controlbox * b)
   )->column = 1;
 
   ctrl_checkbox(
-    s, "&Show bold as font",
+    s, "Sho&w bold as font",
     dlg_stdcheckbox_handler, I(offcfg(bold_as_font))
   )->column = 0;
   ctrl_checkbox(
