@@ -37,8 +37,8 @@ win_update_menus(void)
   );
   ModifyMenu(
     sysmenu, SC_CLOSE, 0, SC_CLOSE,
-    alt_fn ? "&Close\tAlt+F4" : ct_sh ? "&Close\tCtrl+Shift+Q" : "&Close"
-  ); 
+    alt_fn ? "&Close\tAlt+F4" : ct_sh ? "&Close\tCtrl+Shift+W" : "&Close"
+  );
 
   uint sel_enabled = term.selected ? MF_ENABLED : MF_GRAYED;
   EnableMenuItem(menu, IDM_OPEN, sel_enabled);
@@ -413,7 +413,7 @@ win_key_down(WPARAM wp, LPARAM lp)
         when 'C': term_copy();
         when 'V': win_paste();
         when 'N': send_syscommand(IDM_NEW);
-        when 'Q': send_syscommand(SC_CLOSE);
+        when 'W': send_syscommand(SC_CLOSE);
         when 'R': send_syscommand(IDM_RESET);
         when 'D': send_syscommand(IDM_DEFSIZE);
         when 'F': send_syscommand(IDM_FULLSCREEN);
