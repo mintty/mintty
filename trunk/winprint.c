@@ -22,7 +22,7 @@ printer_start_enum(void)
   return num;
 }
 
-char *
+string
 printer_get_name(uint i)
 {
   return printer_info[i].pPrinterName;
@@ -45,9 +45,9 @@ static const DOC_INFO_1 doc_info = {
 };
 
 void
-printer_start_job(char *printer_name)
+printer_start_job(string printer_name)
 {
-  if (OpenPrinter(printer_name, &printer, 0)) {
+  if (OpenPrinter((char *)printer_name, &printer, 0)) {
     if (StartDocPrinter(printer, 1, (LPBYTE)&doc_info)) {
       if (StartPagePrinter(printer))
         return;

@@ -6,11 +6,11 @@
 typedef enum { HOLD_DEFAULT, HOLD_NEVER, HOLD_ALWAYS, HOLD_ERROR } hold_t;
 extern hold_t hold;
 
-extern const char *log_file;
+extern string log_file;
 extern bool utmp_enabled;
 
 typedef struct {
-  char name[64];
+  string name;
   bool isbold;
   int size;
 } font_spec;
@@ -34,8 +34,8 @@ typedef struct {
   char bold_as_font;    // 0 = false, 1 = true, -1 = undefined
   bool bold_as_colour;
   bool allow_blinking;
-  char locale[32];
-  char charset[32];
+  string locale;
+  string charset;
   // Keys
   bool backspace_sends_bs;
   bool ctrl_alt_is_altgr;
@@ -59,16 +59,16 @@ typedef struct {
   int scroll_mod;
   bool pgupdn_scroll;
   // Terminal
-  char term[32];
-  char answerback[80];
+  string term;
+  string answerback;
   bool bell_sound;
   bool bell_flash;
   bool bell_taskbar;
-  char printer[64];
+  string printer;
   bool confirm_exit;
   // Hidden
   int col_spacing, row_spacing;
-  char word_chars[32];
+  string word_chars;
   bool use_system_colours;
   colour ime_cursor_colour;
   colour ansi_colours[16];
@@ -76,8 +76,10 @@ typedef struct {
 
 extern config cfg, new_cfg;
 
-int parse_option(char *option);
-void load_config(char *filename);
+int parse_option(string option);
+void load_config(string filename);
+void start_config(void);
 void finish_config(void);
+void copy_config(config *dst, const config *src);
 
 #endif

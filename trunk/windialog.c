@@ -33,8 +33,6 @@ static winctrls ctrls_base, ctrls_panel;
 
 windlg dlg;
 
-#define PRINTER_DISABLED_STRING "None (printing disabled)"
-
 enum {
   IDCX_TVSTATIC = 1001,
   IDCX_TREEVIEW,
@@ -180,7 +178,6 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
         * to see A/D _explicitly_ before encountering
         * A/D/E.
         */
-        assert(j == ctrl_path_elements(s->pathname) - 1);
 
         c = strrchr(s->pathname, '/');
         if (!c)

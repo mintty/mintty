@@ -12,18 +12,17 @@
 #include <termios.h>
 #include <sys/cygwin.h>
 
-const char *log_file = 0;
+string log_file = 0;
 bool utmp_enabled = false;
 hold_t hold = HOLD_DEFAULT;
 
 #if CYGWIN_VERSION_API_MINOR >= 222
-static wchar *rc_filename = 0;
+static wstring rc_filename = 0;
 #else
-static char *rc_filename = 0;
+static string rc_filename = 0;
 #endif
 
-config new_cfg;
-config cfg = {
+const config default_cfg = {
   // Looks
   .fg_colour = 0xBFBFBF,
   .bg_colour = 0x000000,
@@ -85,116 +84,123 @@ config cfg = {
   }
 };
 
-#define offcfg(option) offsetof(config, option)
-#define cfg_field(option) sizeof(cfg.option), offcfg(option)
+config cfg, new_cfg;
 
 typedef enum {
-  OPT_BOOL, OPT_INT, OPT_STRING, OPT_COLOUR,
+  OPT_STRING, OPT_BOOL, OPT_INT, OPT_COLOUR,
   OPT_COMPAT = 8
 } opt_type;
 
+static const uchar opt_type_sizes[] = {
+  [OPT_STRING] = sizeof(string),
+  [OPT_BOOL] = sizeof(bool),
+  [OPT_INT] = sizeof(int),
+  [OPT_COLOUR] = sizeof(colour)
+};
+
+#define offcfg(option) offsetof(config, option)
+
 static const struct {
-  const char *name;
+  string name;
   uchar type;
-  uchar size;
-  ushort offset;
+  uchar offset;
 }
 options[] = {
   // Looks
-  {"ForegroundColour", OPT_COLOUR, cfg_field(fg_colour)},
-  {"BackgroundColour", OPT_COLOUR, cfg_field(bg_colour)},
-  {"CursorColour", OPT_COLOUR, cfg_field(cursor_colour)},
-  {"Transparency", OPT_INT, cfg_field(transparency)},
-  {"OpaqueWhenFocused", OPT_BOOL, cfg_field(opaque_when_focused)},
-  {"CursorType", OPT_INT, cfg_field(cursor_type)},
-  {"CursorBlinks", OPT_BOOL, cfg_field(cursor_blinks)},
+  {"ForegroundColour", OPT_COLOUR, offcfg(fg_colour)},
+  {"BackgroundColour", OPT_COLOUR, offcfg(bg_colour)},
+  {"CursorColour", OPT_COLOUR, offcfg(cursor_colour)},
+  {"Transparency", OPT_INT, offcfg(transparency)},
+  {"OpaqueWhenFocused", OPT_BOOL, offcfg(opaque_when_focused)},
+  {"CursorType", OPT_INT, offcfg(cursor_type)},
+  {"CursorBlinks", OPT_BOOL, offcfg(cursor_blinks)},
 
   // Text
-  {"Font", OPT_STRING, cfg_field(font.name)},
-  {"FontIsBold", OPT_BOOL, cfg_field(font.isbold)},
-  {"FontHeight", OPT_INT, cfg_field(font.size)},
-  {"FontQuality", OPT_INT, cfg_field(font_quality)},
-  {"BoldAsFont", OPT_BOOL, cfg_field(bold_as_font)},
-  {"BoldAsColour", OPT_BOOL, cfg_field(bold_as_colour)},
-  {"AllowBlinking", OPT_BOOL, cfg_field(allow_blinking)},
-  {"Locale", OPT_STRING, cfg_field(locale)},
-  {"Charset", OPT_STRING, cfg_field(charset)},
+  {"Font", OPT_STRING, offcfg(font.name)},
+  {"FontIsBold", OPT_BOOL, offcfg(font.isbold)},
+  {"FontHeight", OPT_INT, offcfg(font.size)},
+  {"FontQuality", OPT_INT, offcfg(font_quality)},
+  {"BoldAsFont", OPT_BOOL, offcfg(bold_as_font)},
+  {"BoldAsColour", OPT_BOOL, offcfg(bold_as_colour)},
+  {"AllowBlinking", OPT_BOOL, offcfg(allow_blinking)},
+  {"Locale", OPT_STRING, offcfg(locale)},
+  {"Charset", OPT_STRING, offcfg(charset)},
 
   // Keys
-  {"BackspaceSendsBS", OPT_BOOL, cfg_field(backspace_sends_bs)},
-  {"CtrlAltIsAltGr", OPT_BOOL, cfg_field(ctrl_alt_is_altgr)},
-  {"ClipShortcuts", OPT_BOOL, cfg_field(clip_shortcuts)},
-  {"WindowShortcuts", OPT_BOOL, cfg_field(window_shortcuts)},
-  {"SwitchShortcuts", OPT_BOOL, cfg_field(switch_shortcuts)},
-  {"ZoomShortcuts", OPT_BOOL, cfg_field(zoom_shortcuts)},
-  {"AltFnShortcuts", OPT_BOOL, cfg_field(alt_fn_shortcuts)},
-  {"CtrlShiftShortcuts", OPT_BOOL, cfg_field(ctrl_shift_shortcuts)},
+  {"BackspaceSendsBS", OPT_BOOL, offcfg(backspace_sends_bs)},
+  {"CtrlAltIsAltGr", OPT_BOOL, offcfg(ctrl_alt_is_altgr)},
+  {"ClipShortcuts", OPT_BOOL, offcfg(clip_shortcuts)},
+  {"WindowShortcuts", OPT_BOOL, offcfg(window_shortcuts)},
+  {"SwitchShortcuts", OPT_BOOL, offcfg(switch_shortcuts)},
+  {"ZoomShortcuts", OPT_BOOL, offcfg(zoom_shortcuts)},
+  {"AltFnShortcuts", OPT_BOOL, offcfg(alt_fn_shortcuts)},
+  {"CtrlShiftShortcuts", OPT_BOOL, offcfg(ctrl_shift_shortcuts)},
 
   // Mouse
-  {"CopyOnSelect", OPT_BOOL, cfg_field(copy_on_select)},
-  {"CopyAsRTF", OPT_BOOL, cfg_field(copy_as_rtf)},
-  {"ClicksPlaceCursor", OPT_BOOL, cfg_field(clicks_place_cursor)},
-  {"RightClickAction", OPT_INT, cfg_field(right_click_action)},
-  {"ClicksTargetApp", OPT_INT, cfg_field(clicks_target_app)},
-  {"ClickTargetMod", OPT_INT, cfg_field(click_target_mod)},
+  {"CopyOnSelect", OPT_BOOL, offcfg(copy_on_select)},
+  {"CopyAsRTF", OPT_BOOL, offcfg(copy_as_rtf)},
+  {"ClicksPlaceCursor", OPT_BOOL, offcfg(clicks_place_cursor)},
+  {"RightClickAction", OPT_INT, offcfg(right_click_action)},
+  {"ClicksTargetApp", OPT_INT, offcfg(clicks_target_app)},
+  {"ClickTargetMod", OPT_INT, offcfg(click_target_mod)},
 
   // Window
-  {"Columns", OPT_INT, cfg_field(cols)},
-  {"Rows", OPT_INT, cfg_field(rows)},
-  {"Scrollbar", OPT_INT, cfg_field(scrollbar)},
-  {"ScrollbackLines", OPT_INT, cfg_field(scrollback_lines)},
-  {"ScrollMod", OPT_INT, cfg_field(scroll_mod)},
-  {"PgUpDnScroll", OPT_BOOL, cfg_field(pgupdn_scroll)},
+  {"Columns", OPT_INT, offcfg(cols)},
+  {"Rows", OPT_INT, offcfg(rows)},
+  {"Scrollbar", OPT_INT, offcfg(scrollbar)},
+  {"ScrollbackLines", OPT_INT, offcfg(scrollback_lines)},
+  {"ScrollMod", OPT_INT, offcfg(scroll_mod)},
+  {"PgUpDnScroll", OPT_BOOL, offcfg(pgupdn_scroll)},
 
   // Terminal
-  {"Term", OPT_STRING, cfg_field(term)},
-  {"Answerback", OPT_STRING, cfg_field(answerback)},
-  {"BellSound", OPT_BOOL, cfg_field(bell_sound)},
-  {"BellFlash", OPT_BOOL, cfg_field(bell_flash)},
-  {"BellTaskbar", OPT_BOOL, cfg_field(bell_taskbar)},
-  {"Printer", OPT_STRING, cfg_field(printer)},
-  {"ConfirmExit", OPT_BOOL, cfg_field(confirm_exit)},
+  {"Term", OPT_STRING, offcfg(term)},
+  {"Answerback", OPT_STRING, offcfg(answerback)},
+  {"BellSound", OPT_BOOL, offcfg(bell_sound)},
+  {"BellFlash", OPT_BOOL, offcfg(bell_flash)},
+  {"BellTaskbar", OPT_BOOL, offcfg(bell_taskbar)},
+  {"Printer", OPT_STRING, offcfg(printer)},
+  {"ConfirmExit", OPT_BOOL, offcfg(confirm_exit)},
 
   // Hidden
   
   // Character spacing
-  {"ColSpacing", OPT_INT, cfg_field(col_spacing)},
-  {"RowSpacing", OPT_INT, cfg_field(row_spacing)},
+  {"ColSpacing", OPT_INT, offcfg(col_spacing)},
+  {"RowSpacing", OPT_INT, offcfg(row_spacing)},
   
   // Word selection characters
-  {"WordChars", OPT_STRING, cfg_field(word_chars)},
+  {"WordChars", OPT_STRING, offcfg(word_chars)},
   
   // IME cursor colour
-  {"IMECursorColour", OPT_COLOUR, cfg_field(ime_cursor_colour)},
+  {"IMECursorColour", OPT_COLOUR, offcfg(ime_cursor_colour)},
   
   // ANSI colours
-  {"Black", OPT_COLOUR, cfg_field(ansi_colours[BLACK_I])},
-  {"Red", OPT_COLOUR, cfg_field(ansi_colours[RED_I])},
-  {"Green", OPT_COLOUR, cfg_field(ansi_colours[GREEN_I])},
-  {"Yellow", OPT_COLOUR, cfg_field(ansi_colours[YELLOW_I])},
-  {"Blue", OPT_COLOUR, cfg_field(ansi_colours[BLUE_I])},
-  {"Magenta", OPT_COLOUR, cfg_field(ansi_colours[MAGENTA_I])},
-  {"Cyan", OPT_COLOUR, cfg_field(ansi_colours[CYAN_I])},
-  {"White", OPT_COLOUR, cfg_field(ansi_colours[WHITE_I])},
-  {"BoldBlack", OPT_COLOUR, cfg_field(ansi_colours[BOLD_BLACK_I])},
-  {"BoldRed", OPT_COLOUR, cfg_field(ansi_colours[BOLD_RED_I])},
-  {"BoldGreen", OPT_COLOUR, cfg_field(ansi_colours[BOLD_GREEN_I])},
-  {"BoldYellow", OPT_COLOUR, cfg_field(ansi_colours[BOLD_YELLOW_I])},
-  {"BoldBlue", OPT_COLOUR, cfg_field(ansi_colours[BOLD_BLUE_I])},
-  {"BoldMagenta", OPT_COLOUR, cfg_field(ansi_colours[BOLD_MAGENTA_I])},
-  {"BoldCyan", OPT_COLOUR, cfg_field(ansi_colours[BOLD_CYAN_I])},
-  {"BoldWhite", OPT_COLOUR, cfg_field(ansi_colours[BOLD_WHITE_I])},
+  {"Black", OPT_COLOUR, offcfg(ansi_colours[BLACK_I])},
+  {"Red", OPT_COLOUR, offcfg(ansi_colours[RED_I])},
+  {"Green", OPT_COLOUR, offcfg(ansi_colours[GREEN_I])},
+  {"Yellow", OPT_COLOUR, offcfg(ansi_colours[YELLOW_I])},
+  {"Blue", OPT_COLOUR, offcfg(ansi_colours[BLUE_I])},
+  {"Magenta", OPT_COLOUR, offcfg(ansi_colours[MAGENTA_I])},
+  {"Cyan", OPT_COLOUR, offcfg(ansi_colours[CYAN_I])},
+  {"White", OPT_COLOUR, offcfg(ansi_colours[WHITE_I])},
+  {"BoldBlack", OPT_COLOUR, offcfg(ansi_colours[BOLD_BLACK_I])},
+  {"BoldRed", OPT_COLOUR, offcfg(ansi_colours[BOLD_RED_I])},
+  {"BoldGreen", OPT_COLOUR, offcfg(ansi_colours[BOLD_GREEN_I])},
+  {"BoldYellow", OPT_COLOUR, offcfg(ansi_colours[BOLD_YELLOW_I])},
+  {"BoldBlue", OPT_COLOUR, offcfg(ansi_colours[BOLD_BLUE_I])},
+  {"BoldMagenta", OPT_COLOUR, offcfg(ansi_colours[BOLD_MAGENTA_I])},
+  {"BoldCyan", OPT_COLOUR, offcfg(ansi_colours[BOLD_CYAN_I])},
+  {"BoldWhite", OPT_COLOUR, offcfg(ansi_colours[BOLD_WHITE_I])},
 
   // Backward compatibility
-  {"UseSystemColours", OPT_BOOL | OPT_COMPAT, cfg_field(use_system_colours)},
-  {"BoldAsBright", OPT_BOOL | OPT_COMPAT, cfg_field(bold_as_colour)},
+  {"UseSystemColours", OPT_BOOL | OPT_COMPAT, offcfg(use_system_colours)},
+  {"BoldAsBright", OPT_BOOL | OPT_COMPAT, offcfg(bold_as_colour)},
 };
 
 static uchar option_order[lengthof(options)];
 static uint option_order_len;
 
 static int
-find_option(char *name)
+find_option(string name)
 {
   for (uint i = 0; i < lengthof(options); i++) {
     if (!strcasecmp(name, options[i].name))
@@ -204,9 +210,9 @@ find_option(char *name)
 }
 
 int
-parse_option(char *option)
+parse_option(string option)
 {
-  char *eq= strchr(option, '=');
+  string eq = strchr(option, '=');
   if (!eq)
     return -1;
   
@@ -219,15 +225,15 @@ parse_option(char *option)
   if (i < 0)
     return i;
   
-  char *val = eq + 1;
+  string val = eq + 1;
   uint offset = options[i].offset;
   switch (options[i].type & ~OPT_COMPAT) {
+    when OPT_STRING:
+      strset(&atoffset(string, &cfg, offset), val);
     when OPT_BOOL:
       atoffset(bool, &cfg, offset) = atoi(val);
     when OPT_INT:
       atoffset(int, &cfg, offset) = atoi(val);
-    when OPT_STRING:
-      strlcpy(&atoffset(char, &cfg, offset), val, options[i].size);
     when OPT_COLOUR: {
       uint r, g, b;
       if (sscanf(val, "%u,%u,%u", &r, &g, &b) == 3)
@@ -245,11 +251,11 @@ remember_option(int i)
 }
 
 void
-load_config(char *filename)
+load_config(string filename)
 {
   option_order_len = 0;
 
-  free(rc_filename);
+  delete(rc_filename);
 #if CYGWIN_VERSION_API_MINOR >= 222
   rc_filename = cygwin_create_path(CCP_POSIX_TO_WIN_W, filename);
 #else
@@ -270,11 +276,32 @@ load_config(char *filename)
 }
 
 void
+copy_config(config *dst, const config *src)
+{
+  for (uint i = 0; i < lengthof(options); i++) {
+    uint offset = options[i].offset;
+    opt_type type = options[i].type;
+    if (options[i].type & OPT_COMPAT)
+      ; // skip
+    else if (options[i].type == OPT_STRING)
+      strset(&atoffset(string, dst, offset), atoffset(string, src, offset));
+    else
+      memcpy((void *)dst + offset, (void *)src + offset, opt_type_sizes[type]);
+  }
+}
+
+void
+start_config(void)
+{
+  copy_config(&cfg, &default_cfg);
+}
+
+void
 finish_config(void)
 {
   // Ignore charset setting if we haven't got a locale.
   if (!*cfg.locale)
-    *cfg.charset = 0;
+    strset(&cfg.charset, "");
   
   if (cfg.use_system_colours) {
     // Translate 'UseSystemColours' to colour settings.
@@ -298,7 +325,7 @@ finish_config(void)
 static void
 save_config(void)
 {
-  char *filename;
+  string filename;
 
 #if CYGWIN_VERSION_API_MINOR >= 222
   filename = cygwin_create_path(CCP_WIN_W_TO_POSIX, rc_filename);
@@ -316,7 +343,7 @@ save_config(void)
       wchar wmsg[len + 1];
       if (cs_mbstowcs(wmsg, msg, lengthof(wmsg)) >= 0)
         win_show_error(wmsg);
-      free(msg);
+      delete(msg);
     }
   }
   else {
@@ -326,12 +353,12 @@ save_config(void)
         fprintf(file, "%s=", options[i].name);
         uint offset = options[i].offset;
         switch (options[i].type) {
+          when OPT_STRING:
+            fprintf(file, "%s\n", atoffset(string, &cfg, offset));
           when OPT_BOOL:
             fprintf(file, "%i\n", atoffset(bool, &cfg, offset));
           when OPT_INT:
             fprintf(file, "%i\n", atoffset(int, &cfg, offset));
-          when OPT_STRING:
-            fprintf(file, "%s\n", &atoffset(char, &cfg, offset));
           when OPT_COLOUR: {
             colour c = atoffset(colour, &cfg, offset);
             fprintf(file, "%u,%u,%u\n", red(c), green(c), blue(c));
@@ -343,7 +370,7 @@ save_config(void)
   }
 
 #if CYGWIN_VERSION_API_MINOR >= 222
-  free(filename);
+  delete(filename);
 #endif
 }
 
@@ -355,9 +382,13 @@ apply_config(void)
 {
   // Record what's changed
   for (uint i = 0; i < lengthof(options); i++) {
-    uint offset = options[i].offset, size = options[i].size;
-    if (memcmp((char *)&cfg + offset, (char *)&new_cfg + offset, size) &&
-        !memchr(option_order, i, option_order_len))
+    opt_type type = options[i].type;
+    uint size = opt_type_sizes[type], off = options[i].offset;
+    bool changed =
+      type == OPT_STRING
+      ? strcmp(atoffset(string, &cfg, off), atoffset(string, &new_cfg, off))
+      : memcmp((void *)&cfg + off, (void *)&new_cfg + off, size);
+    if (changed && !memchr(option_order, i, option_order_len))
       option_order[option_order_len++] = i;
   }
   
@@ -406,44 +437,43 @@ current_size_handler(control *unused(ctrl), void *unused(data), int event)
   }
 }
 
-const char PRINTER_DISABLED_STRING[] = "None (printing disabled)";
-
 static void
 printerbox_handler(control *ctrl, void *unused(data), int event)
 {
+  static const char NONE[] = "None (printing disabled)";
+  string printer = new_cfg.printer;
   if (event == EVENT_REFRESH) {
     dlg_listbox_clear(ctrl);
-    dlg_listbox_add(ctrl, PRINTER_DISABLED_STRING);
+    dlg_listbox_add(ctrl, NONE);
     uint num = printer_start_enum();
     for (uint i = 0; i < num; i++)
       dlg_listbox_add(ctrl, printer_get_name(i));
     printer_finish_enum();
-    dlg_editbox_set(
-      ctrl, *new_cfg.printer ? new_cfg.printer : PRINTER_DISABLED_STRING
-    );
+    dlg_editbox_set(ctrl, *printer ? printer : NONE);
   }
   else if (event == EVENT_VALCHANGE || event == EVENT_SELCHANGE) {
-    dlg_editbox_get(ctrl, new_cfg.printer, sizeof (cfg.printer));
-    if (strcmp(new_cfg.printer, PRINTER_DISABLED_STRING) == 0)
-      *new_cfg.printer = '\0';
+    dlg_editbox_get(ctrl, &printer);
+    if (!strcmp(printer, NONE))
+      strset(&printer, "");
+    new_cfg.printer = printer;
   }
 }
 
 static void
-set_charset(char *charset)
+set_charset(string charset)
 {
-  strcpy(new_cfg.charset, charset);
+  strset(&new_cfg.charset, charset);
   dlg_editbox_set(charset_box, charset);
 }
 
 static void
 locale_handler(control *ctrl, void *unused(data), int event)
 {
-  char *locale = new_cfg.locale;
+  string locale = new_cfg.locale;
   switch (event) {
     when EVENT_REFRESH:
       dlg_listbox_clear(ctrl);
-      const char *l;
+      string l;
       for (int i = 0; (l = locale_menu[i]); i++)
         dlg_listbox_add(ctrl, l);
       dlg_editbox_set(ctrl, locale);
@@ -452,17 +482,18 @@ locale_handler(control *ctrl, void *unused(data), int event)
       if (!*locale)
         set_charset("");
     when EVENT_VALCHANGE:
-      dlg_editbox_get(ctrl, locale, sizeof cfg.locale);
+      dlg_editbox_get(ctrl, &new_cfg.locale);
     when EVENT_SELCHANGE:
-      dlg_editbox_get(ctrl, locale, sizeof cfg.locale);
-      if (*locale == '(' || !*locale) {
-        *locale = 0;
+      dlg_editbox_get(ctrl, &new_cfg.locale);
+      if (*locale == '(')
+        strset(&locale, "");
+      if (!*locale)
         set_charset("");
-      }
 #if HAS_LOCALES
       else if (!*new_cfg.charset)
         set_charset("UTF-8");
 #endif
+      new_cfg.locale = locale;
   }
 }
 
@@ -470,7 +501,7 @@ static void
 check_locale(void)
 {
   if (!*new_cfg.locale) {
-    strcpy(new_cfg.locale, "C");
+    strset(&new_cfg.locale, "C");
     dlg_editbox_set(locale_box, "C");
   }
 }
@@ -478,11 +509,11 @@ check_locale(void)
 static void
 charset_handler(control *ctrl, void *unused(data), int event)
 {
-  char *charset = new_cfg.charset;
+  string charset = new_cfg.charset;
   switch (event) {
     when EVENT_REFRESH:
       dlg_listbox_clear(ctrl);
-      const char *cs;
+      string cs;
       for (int i = 0; (cs = charset_menu[i]); i++)
         dlg_listbox_add(ctrl, cs);
       dlg_editbox_set(ctrl, charset);
@@ -491,15 +522,16 @@ charset_handler(control *ctrl, void *unused(data), int event)
       if (*charset)
         check_locale();
     when EVENT_VALCHANGE:
-      dlg_editbox_get(ctrl, charset, sizeof cfg.charset);
+      dlg_editbox_get(ctrl, &new_cfg.charset);
     when EVENT_SELCHANGE:
-      dlg_editbox_get(ctrl, charset, sizeof cfg.charset);
+      dlg_editbox_get(ctrl, &charset);
       if (*charset == '(')
-        *charset = 0;
+        strset(&charset, "");
       else {
         *strchr(charset, ' ') = 0;
         check_locale();
       }
+      new_cfg.charset = charset;
   }
 }
 
@@ -540,7 +572,7 @@ term_handler(control *ctrl, void *unused(data), int event)
       dlg_listbox_add(ctrl, "vt220");
       dlg_editbox_set(ctrl, new_cfg.term);
     when EVENT_VALCHANGE or EVENT_SELCHANGE:
-      dlg_editbox_get(ctrl, new_cfg.term, sizeof cfg.term);
+      dlg_editbox_get(ctrl, &new_cfg.term);
   }
 }
 
@@ -548,16 +580,19 @@ static void
 int_handler(control *ctrl, void *data, int event)
 {
   int offset = ctrl->context.i;
-  int limit = ctrl->editbox.context2.i;
   int *field = &atoffset(int, data, offset);
-  char buf[16];
   switch (event) {
-    when EVENT_VALCHANGE:
-      dlg_editbox_get(ctrl, buf, lengthof(buf));
-      *field = max(0, min(atoi(buf), limit));
-    when EVENT_REFRESH:
+    when EVENT_VALCHANGE: {
+      string val = 0;
+      dlg_editbox_get(ctrl, &val);
+      *field = max(0, atoi(val));
+      delete(val);
+    }
+    when EVENT_REFRESH: {
+      char buf[16];
       sprintf(buf, "%i", *field);
       dlg_editbox_set(ctrl, buf);
+    }
   }
 }
 
@@ -565,13 +600,12 @@ static void
 string_handler(control *ctrl, void *data, int event)
 {
   int offset = ctrl->context.i;
-  int size = ctrl->editbox.context2.i;
-  char *buf = &atoffset(char, data, offset);
+  string *ps = &atoffset(string, data, offset);
   switch (event) {
     when EVENT_VALCHANGE:
-      dlg_editbox_get(ctrl, buf, size);
+      dlg_editbox_get(ctrl, ps);
     when EVENT_REFRESH:
-      dlg_editbox_set(ctrl, buf);
+      dlg_editbox_set(ctrl, *ps);
   }
 }
 
@@ -822,23 +856,19 @@ setup_config_box(controlbox * b)
     s, "&Type", 100, term_handler, P(0), P(0)
   )->column = 0;
   ctrl_editbox(
-    s, "&Answerback", 100,
-    string_handler, I(offcfg(answerback)), I(sizeof cfg.answerback)
+    s, "&Answerback", 100, string_handler, I(offcfg(answerback)), I(0)
   )->column = 1;
 
   s = ctrl_new_set(b, "Terminal", "Bell");
   ctrl_columns(s, 3, 25, 25, 50);
   ctrl_checkbox(
-    s, "&Sound",
-    dlg_stdcheckbox_handler, I(offcfg(bell_sound))
+    s, "&Sound", dlg_stdcheckbox_handler, I(offcfg(bell_sound))
   )->column = 0;
   ctrl_checkbox(
-    s, "&Flash",
-    dlg_stdcheckbox_handler, I(offcfg(bell_flash))
+    s, "&Flash", dlg_stdcheckbox_handler, I(offcfg(bell_flash))
   )->column = 1;
   ctrl_checkbox(
-    s, "&Highlight in taskbar",
-    dlg_stdcheckbox_handler, I(offcfg(bell_taskbar))
+    s, "&Highlight in taskbar", dlg_stdcheckbox_handler, I(offcfg(bell_taskbar))
   )->column = 2;
 
   s = ctrl_new_set(b, "Terminal", "Printer");
