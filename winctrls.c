@@ -836,7 +836,7 @@ select_font(winctrl *c)
     CF_SCREENFONTS | CF_NOSCRIPTSEL;
 
   if (ChooseFont(&cf)) {
-    strlcpy(fs.name, lf.lfFaceName, sizeof fs.name);
+    strset(&fs.name, lf.lfFaceName);
     fs.isbold = (lf.lfWeight == FW_BOLD);
     fs.size = cf.iPointSize / 10;
     dlg_fontsel_set(c->ctrl, &fs);
@@ -1049,23 +1049,23 @@ dlg_radiobutton_get(control *ctrl)
 }
 
 void
-dlg_checkbox_set(control *ctrl, int checked)
+dlg_checkbox_set(control *ctrl, bool checked)
 {
   winctrl *c = ctrl->plat_ctrl;
   assert(c && c->ctrl->type == CTRL_CHECKBOX);
-  CheckDlgButton(dlg.wnd, c->base_id, (checked != 0));
+  CheckDlgButton(dlg.wnd, c->base_id, checked);
 }
 
-int
+bool
 dlg_checkbox_get(control *ctrl)
 {
   winctrl *c = ctrl->plat_ctrl;
   assert(c && c->ctrl->type == CTRL_CHECKBOX);
-  return 0 != IsDlgButtonChecked(dlg.wnd, c->base_id);
+  return IsDlgButtonChecked(dlg.wnd, c->base_id);
 }
 
 void
-dlg_editbox_set(control *ctrl, char const *text)
+dlg_editbox_set(control *ctrl, string text)
 {
   winctrl *c = ctrl->plat_ctrl;
   assert(c && c->ctrl->type == CTRL_EDITBOX);
@@ -1073,12 +1073,16 @@ dlg_editbox_set(control *ctrl, char const *text)
 }
 
 void
-dlg_editbox_get(control *ctrl, char *buffer, int length)
+dlg_editbox_get(control *ctrl, string *text_p)
 {
   winctrl *c = ctrl->plat_ctrl;
   assert(c && c->ctrl->type == CTRL_EDITBOX);
-  GetDlgItemText(dlg.wnd, c->base_id + 1, buffer, length);
-  buffer[length - 1] = '\0';
+  HWND wnd = GetDlgItem(dlg.wnd, c->base_id + 1);
+  int size = GetWindowTextLength(wnd) + 1;
+  char *text = (char *)*text_p;
+  text = renewn(text, size);
+  GetWindowText(wnd, text, size);
+  *text_p = text;
 }
 
 /* The `listbox' functions also apply to combo boxes. */
@@ -1097,7 +1101,7 @@ dlg_listbox_clear(control *ctrl)
 }
 
 void
-dlg_listbox_add(control *ctrl, char const *text)
+dlg_listbox_add(control *ctrl, string text)
 {
   winctrl *c = ctrl->plat_ctrl;
   int msg;

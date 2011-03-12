@@ -49,12 +49,14 @@ char *asform(const char *fmt, ...);
 
 typedef uint xchar;     // UTF-32
 typedef wchar_t wchar;  // UTF-16
-typedef wint_t wint;
 
 typedef signed char schar;
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
+
+typedef const char *string;
+typedef const wchar *wstring;
 
 typedef void (*void_fn)(void);
 
@@ -70,6 +72,9 @@ typedef void (*void_fn)(void);
 #define new(type) ((type *)malloc(sizeof(type)))
 #define newn(type, n) ((type *)calloc((n), sizeof(type)))
 #define renewn(p, n) ((typeof(p)) realloc((p), sizeof(*p) * (n)))
+static inline void delete(const void *p) { free((void *)p); }
+
+void strset(string *sp, string s);
 
 #define when break; case
 #define or : case

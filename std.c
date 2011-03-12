@@ -2,6 +2,13 @@
 // Copyright 2010 Andy Koppe
 // Licensed under the terms of the GNU General Public License v3 or later.
 
+void
+strset(string *sp, string s)
+{
+  uint size = strlen(s) + 1;
+  *sp = memcpy(renewn((char *)*sp, size), s, size);
+}
+
 #if CYGWIN_VERSION_API_MINOR < 70
 
 int

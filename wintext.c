@@ -425,7 +425,7 @@ another_font(int fontno)
   int basefont;
   int fw_dontcare, fw_bold;
   int u, w, x;
-  char *s;
+  string s;
 
   if (fontno < 0 || fontno >= FONT_MAXNO || fontflag[fontno])
     return;

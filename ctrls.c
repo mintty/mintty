@@ -10,18 +10,6 @@
  * describing window controls.
  */
 
-int
-ctrl_path_elements(char *path)
-{
-  int i = 1;
-  while (*path) {
-    if (*path == '/')
-      i++;
-    path++;
-  }
-  return i;
-}
-
 /* Return the number of matching path elements at the starts of p1 and p2,
  * or INT_MAX if the paths are identical. */
 int

@@ -388,13 +388,13 @@ void dlg_stdfontsel_handler(control *, void *data, int event);
  */
 void dlg_radiobutton_set(control *, int whichbutton);
 int dlg_radiobutton_get(control *);
-void dlg_checkbox_set(control *, int checked);
-int dlg_checkbox_get(control *);
-void dlg_editbox_set(control *, char const *text);
-void dlg_editbox_get(control *, char *buffer, int length);
+void dlg_checkbox_set(control *, bool);
+bool dlg_checkbox_get(control *);
+void dlg_editbox_set(control *, string);
+void dlg_editbox_get(control *, string *);
 /* The `listbox' functions also apply to combo boxes. */
 void dlg_listbox_clear(control *);
-void dlg_listbox_add(control *, char const *text);
+void dlg_listbox_add(control *, string);
 void dlg_fontsel_set(control *, font_spec *);
 void dlg_fontsel_get(control *, font_spec *);
 /*
@@ -448,7 +448,7 @@ void dlg_refresh(control *);
  *      }
  */
 int ctrl_find_path(controlbox *, char *path, int index);
-int ctrl_path_elements(char *path);
+
 /* Return the number of matching path elements at the starts of p1 and p2,
  * or INT_MAX if the paths are identical. */
 int ctrl_path_compare(char *p1, char *p2);

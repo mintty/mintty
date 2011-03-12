@@ -812,6 +812,8 @@ main(int argc, char *argv[])
 #endif
     asform("/home/%s", getlogin());
 
+  start_config();
+
   load_config("/etc/minttyrc");
   
   char *rc_file = asform("%s/.minttyrc", home);
