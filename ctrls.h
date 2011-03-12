@@ -164,11 +164,6 @@ struct control {
       * list box.)
       */
       int has_list;
-     /*
-      * Edit boxes tend to need two items of context, so here's
-      * a spare.
-      */
-      intorptr context2;
     } editbox;
     struct {
      /*
@@ -335,9 +330,9 @@ void *ctrl_alloc(controlbox *, size_t size);
 /* `ncolumns' is followed by that many percentages, as integers. */
 control *ctrl_columns(controlset *, int ncolumns, ...);
 control *ctrl_editbox(controlset *, char *label, int percentage,
-                      handler_fn handler, intorptr context, intorptr context2);
+                      handler_fn handler, intorptr context);
 control *ctrl_combobox(controlset *, char *label, int percentage,
-                       handler_fn handler, intorptr context, intorptr context2);
+                       handler_fn handler, intorptr context);
 /*
  * `ncolumns' is followed by (alternately) radio button titles and
  * intorptrs, until a null in place of a title string is seen.
