@@ -223,27 +223,25 @@ ctrl_columns(controlset *s, int ncolumns, ...)
 
 control *
 ctrl_editbox(controlset *s, char *label, int percentage,
-             handler_fn handler, intorptr context, intorptr context2)
+             handler_fn handler, intorptr context)
 {
   control *c = ctrl_new(s, CTRL_EDITBOX, handler, context);
   c->label = label ? strdup(label) : null;
   c->editbox.percentwidth = percentage;
   c->editbox.password = 0;
   c->editbox.has_list = 0;
-  c->editbox.context2 = context2;
   return c;
 }
 
 control *
 ctrl_combobox(controlset *s, char *label, int percentage,
-              handler_fn handler, intorptr context, intorptr context2)
+              handler_fn handler, intorptr context)
 {
   control *c = ctrl_new(s, CTRL_EDITBOX, handler, context);
   c->label = label ? strdup(label) : null;
   c->editbox.percentwidth = percentage;
   c->editbox.password = 0;
   c->editbox.has_list = 1;
-  c->editbox.context2 = context2;
   return c;
 }
 

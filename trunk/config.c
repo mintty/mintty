@@ -713,10 +713,10 @@ setup_config_box(controlbox * b)
   s = ctrl_new_set(b, "Text", null);
   ctrl_columns(s, 2, 29, 71);
   (locale_box = ctrl_combobox(
-    s, "&Locale", 100, locale_handler, P(0), P(0)
+    s, "&Locale", 100, locale_handler, P(0)
   ))->column = 0;
   (charset_box = ctrl_combobox(
-    s, "&Character set", 100, charset_handler, P(0), P(0)
+    s, "&Character set", 100, charset_handler, P(0)
   ))->column = 1;
 
  /*
@@ -810,10 +810,10 @@ setup_config_box(controlbox * b)
   s = ctrl_new_set(b, "Window", "Default size");
   ctrl_columns(s, 5, 35, 3, 28, 4, 30);
   (cols_box = ctrl_editbox(
-    s, "Colu&mns", 44, int_handler, I(offcfg(cols)), I(256)
+    s, "Colu&mns", 44, int_handler, I(offcfg(cols))
   ))->column = 0;
   (rows_box = ctrl_editbox(
-    s, "Ro&ws", 55, int_handler, I(offcfg(rows)), I(256)
+    s, "Ro&ws", 55, int_handler, I(offcfg(rows))
   ))->column = 2;
   ctrl_pushbutton(
     s, "C&urrent size", current_size_handler, P(0)
@@ -822,8 +822,7 @@ setup_config_box(controlbox * b)
   s = ctrl_new_set(b, "Window", null);
   ctrl_columns(s, 2, 66, 34);
   ctrl_editbox(
-    s, "Scroll&back lines", 50,
-    int_handler, I(offcfg(scrollback_lines)), I(1000000)
+    s, "Scroll&back lines", 50, int_handler, I(offcfg(scrollback_lines))
   )->column = 0;
   ctrl_radiobuttons(
     s, "Scrollbar", 4,
@@ -853,10 +852,10 @@ setup_config_box(controlbox * b)
   s = ctrl_new_set(b, "Terminal", null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_combobox(
-    s, "&Type", 100, term_handler, P(0), P(0)
+    s, "&Type", 100, term_handler, P(0)
   )->column = 0;
   ctrl_editbox(
-    s, "&Answerback", 100, string_handler, I(offcfg(answerback)), I(0)
+    s, "&Answerback", 100, string_handler, I(offcfg(answerback))
   )->column = 1;
 
   s = ctrl_new_set(b, "Terminal", "Bell");
@@ -873,7 +872,7 @@ setup_config_box(controlbox * b)
 
   s = ctrl_new_set(b, "Terminal", "Printer");
   ctrl_combobox(
-    s, null, 100, printerbox_handler, P(0), P(0)
+    s, null, 100, printerbox_handler, P(0)
   );
 
   s = ctrl_new_set(b, "Terminal", null);
