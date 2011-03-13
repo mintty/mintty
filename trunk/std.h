@@ -67,7 +67,7 @@ typedef void (*void_fn)(void);
 
 #define lengthof(array) (sizeof(array) / sizeof(*(array)))
 #define endof(array) (&(array)[lengthof(array)])
-#define atoffset(type, data, offset) (*((type *)((char *)(data) + (offset))))
+#define atoffset(type, data, offset) (*((type *)((char *)&(data) + (offset))))
 
 #define new(type) ((type *)malloc(sizeof(type)))
 #define newn(type, n) ((type *)calloc((n), sizeof(type)))

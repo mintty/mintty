@@ -229,15 +229,15 @@ parse_option(string option)
   uint offset = options[i].offset;
   switch (options[i].type & ~OPT_COMPAT) {
     when OPT_STRING:
-      strset(&atoffset(string, &cfg, offset), val);
+      strset(&atoffset(string, cfg, offset), val);
     when OPT_BOOL:
-      atoffset(bool, &cfg, offset) = atoi(val);
+      atoffset(bool, cfg, offset) = atoi(val);
     when OPT_INT:
-      atoffset(int, &cfg, offset) = atoi(val);
+      atoffset(int, cfg, offset) = atoi(val);
     when OPT_COLOUR: {
       uint r, g, b;
       if (sscanf(val, "%u,%u,%u", &r, &g, &b) == 3)
-        atoffset(colour, &cfg, offset) = make_colour(r, g, b);
+        atoffset(colour, cfg, offset) = make_colour(r, g, b);
     }
   }
   return i;
@@ -284,7 +284,7 @@ copy_config(config *dst, const config *src)
     if (options[i].type & OPT_COMPAT)
       ; // skip
     else if (options[i].type == OPT_STRING)
-      strset(&atoffset(string, dst, offset), atoffset(string, src, offset));
+      strset(&atoffset(string, *dst, offset), atoffset(string, *src, offset));
     else
       memcpy((void *)dst + offset, (void *)src + offset, opt_type_sizes[type]);
   }
@@ -354,13 +354,13 @@ save_config(void)
         uint offset = options[i].offset;
         switch (options[i].type) {
           when OPT_STRING:
-            fprintf(file, "%s\n", atoffset(string, &cfg, offset));
+            fprintf(file, "%s\n", atoffset(string, cfg, offset));
           when OPT_BOOL:
-            fprintf(file, "%i\n", atoffset(bool, &cfg, offset));
+            fprintf(file, "%i\n", atoffset(bool, cfg, offset));
           when OPT_INT:
-            fprintf(file, "%i\n", atoffset(int, &cfg, offset));
+            fprintf(file, "%i\n", atoffset(int, cfg, offset));
           when OPT_COLOUR: {
-            colour c = atoffset(colour, &cfg, offset);
+            colour c = atoffset(colour, cfg, offset);
             fprintf(file, "%u,%u,%u\n", red(c), green(c), blue(c));
           }
         }
@@ -386,7 +386,7 @@ apply_config(void)
     uint size = opt_type_sizes[type], off = options[i].offset;
     bool changed =
       type == OPT_STRING
-      ? strcmp(atoffset(string, &cfg, off), atoffset(string, &new_cfg, off))
+      ? strcmp(atoffset(string, cfg, off), atoffset(string, new_cfg, off))
       : memcmp((void *)&cfg + off, (void *)&new_cfg + off, size);
     if (changed && !memchr(option_order, i, option_order_len))
       option_order[option_order_len++] = i;
@@ -397,7 +397,7 @@ apply_config(void)
 }
 
 static void
-ok_handler(control *unused(ctrl), void *unused(data), int event)
+ok_handler(control *unused(ctrl), int event)
 {
   if (event == EVENT_ACTION) {
     apply_config();
@@ -406,28 +406,28 @@ ok_handler(control *unused(ctrl), void *unused(data), int event)
 }
 
 static void
-cancel_handler(control *unused(ctrl), void *unused(data), int event)
+cancel_handler(control *unused(ctrl), int event)
 {
   if (event == EVENT_ACTION)
     dlg_end();
 }
 
 static void
-apply_handler(control *unused(ctrl), void *unused(data), int event)
+apply_handler(control *unused(ctrl), int event)
 {
   if (event == EVENT_ACTION)
     apply_config();
 }
 
 static void
-about_handler(control *unused(ctrl), void *unused(data), int event)
+about_handler(control *unused(ctrl), int event)
 {
   if (event == EVENT_ACTION)
     win_show_about();
 }
 
 static void
-current_size_handler(control *unused(ctrl), void *unused(data), int event)
+current_size_handler(control *unused(ctrl), int event)
 {
   if (event == EVENT_ACTION) {
     new_cfg.cols = term.cols;
@@ -438,7 +438,7 @@ current_size_handler(control *unused(ctrl), void *unused(data), int event)
 }
 
 static void
-printerbox_handler(control *ctrl, void *unused(data), int event)
+printerbox_handler(control *ctrl, int event)
 {
   static const char NONE[] = "None (printing disabled)";
   string printer = new_cfg.printer;
@@ -467,7 +467,7 @@ set_charset(string charset)
 }
 
 static void
-locale_handler(control *ctrl, void *unused(data), int event)
+locale_handler(control *ctrl, int event)
 {
   string locale = new_cfg.locale;
   switch (event) {
@@ -507,7 +507,7 @@ check_locale(void)
 }
 
 static void
-charset_handler(control *ctrl, void *unused(data), int event)
+charset_handler(control *ctrl, int event)
 {
   string charset = new_cfg.charset;
   switch (event) {
@@ -536,31 +536,7 @@ charset_handler(control *ctrl, void *unused(data), int event)
 }
 
 static void
-colour_handler(control *ctrl, void *unused(data), int event)
-{
-  colour *colour_p = ctrl->context.p;
-  if (event == EVENT_ACTION) {
-   /*
-    * Start a colour selector, which will send us an
-    * EVENT_CALLBACK when it's finished and allow us to
-    * pick up the results.
-    */
-    dlg_coloursel_start(*colour_p);
-  }
-  else if (event == EVENT_CALLBACK) {
-   /*
-    * Collect the results of the colour selector. Will
-    * return nonzero on success, or zero if the colour
-    * selector did nothing (user hit Cancel, for example).
-    */
-    colour result;
-    if (dlg_coloursel_results(&result))
-      *colour_p = result;
-  }
-}
-
-static void
-term_handler(control *ctrl, void *unused(data), int event)
+term_handler(control *ctrl, int event)
 {
   switch (event) {
     when EVENT_REFRESH:
@@ -576,39 +552,6 @@ term_handler(control *ctrl, void *unused(data), int event)
   }
 }
 
-static void
-int_handler(control *ctrl, void *data, int event)
-{
-  int offset = ctrl->context.i;
-  int *field = &atoffset(int, data, offset);
-  switch (event) {
-    when EVENT_VALCHANGE: {
-      string val = 0;
-      dlg_editbox_get(ctrl, &val);
-      *field = max(0, atoi(val));
-      delete(val);
-    }
-    when EVENT_REFRESH: {
-      char buf[16];
-      sprintf(buf, "%i", *field);
-      dlg_editbox_set(ctrl, buf);
-    }
-  }
-}
-
-static void
-string_handler(control *ctrl, void *data, int event)
-{
-  int offset = ctrl->context.i;
-  string *ps = &atoffset(string, data, offset);
-  switch (event) {
-    when EVENT_VALCHANGE:
-      dlg_editbox_get(ctrl, ps);
-    when EVENT_REFRESH:
-      dlg_editbox_set(ctrl, *ps);
-  }
-}
-
 void
 setup_config_box(controlbox * b)
 {
@@ -621,15 +564,15 @@ setup_config_box(controlbox * b)
   */
   s = ctrl_new_set(b, "", "");
   ctrl_columns(s, 5, 20, 20, 20, 20, 20);
-  c = ctrl_pushbutton(s, "About...", about_handler, P(0));
+  c = ctrl_pushbutton(s, "About...", about_handler, 0);
   c->column = 0;
-  c = ctrl_pushbutton(s, "OK", ok_handler, P(0));
+  c = ctrl_pushbutton(s, "OK", ok_handler, 0);
   c->button.isdefault = true;
   c->column = 2;
-  c = ctrl_pushbutton(s, "Cancel", cancel_handler, P(0));
+  c = ctrl_pushbutton(s, "Cancel", cancel_handler, 0);
   c->button.iscancel = true;
   c->column = 3;
-  c = ctrl_pushbutton(s, "Apply", apply_handler, P(0));
+  c = ctrl_pushbutton(s, "Apply", apply_handler, 0);
   c->column = 4;
 
  /*
@@ -638,43 +581,43 @@ setup_config_box(controlbox * b)
   s = ctrl_new_set(b, "Looks", "Colours");
   ctrl_columns(s, 3, 33, 33, 33);
   ctrl_pushbutton(
-    s, "&Foreground...", colour_handler, P(&new_cfg.fg_colour)
+    s, "&Foreground...", dlg_stdcolour_handler, &new_cfg.fg_colour
   )->column = 0;
   ctrl_pushbutton(
-    s, "&Background...", colour_handler, P(&new_cfg.bg_colour)
+    s, "&Background...", dlg_stdcolour_handler, &new_cfg.bg_colour
   )->column = 1;
   ctrl_pushbutton(
-    s, "&Cursor...", colour_handler, P(&new_cfg.cursor_colour)
+    s, "&Cursor...", dlg_stdcolour_handler, &new_cfg.cursor_colour
   )->column = 2;
   
   s = ctrl_new_set(b, "Looks", "Transparency");
   bool with_glass = win_is_glass_available();
   ctrl_radiobuttons(
     s, null, 4 + with_glass,
-    dlg_stdradiobutton_handler, I(offcfg(transparency)),
-    "&Off", I(0),
-    "&Low", I(1),
-    with_glass ? "&Med." : "&Medium", I(2), 
-    "&High", I(3), 
-    with_glass ? "Gla&ss" : null, I(-1), 
+    dlg_stdradiobutton_handler, &new_cfg.transparency,
+    "&Off", 0,
+    "&Low", 1,
+    with_glass ? "&Med." : "&Medium", 2,
+    "&High", 3,
+    with_glass ? "Gla&ss" : null, -1,
     null
   );
   ctrl_checkbox(
     s, "Opa&que when focused",
-    dlg_stdcheckbox_handler, I(offcfg(opaque_when_focused))
+    dlg_stdcheckbox_handler, &new_cfg.opaque_when_focused
   );
 
   s = ctrl_new_set(b, "Looks", "Cursor");
   ctrl_radiobuttons(
     s, null, 4 + with_glass,
-    dlg_stdradiobutton_handler, I(offcfg(cursor_type)),
-    "Li&ne", I(CUR_LINE), 
-    "Bloc&k", I(CUR_BLOCK),
-    "&Underscore", I(CUR_UNDERSCORE),
+    dlg_stdradiobutton_handler, &new_cfg.cursor_type,
+    "Li&ne", CUR_LINE, 
+    "Bloc&k", CUR_BLOCK,
+    "&Underscore", CUR_UNDERSCORE,
     null
   );
   ctrl_checkbox(
-    s, "Blinkin&g", dlg_stdcheckbox_handler, I(offcfg(cursor_blinks))
+    s, "Blinkin&g", dlg_stdcheckbox_handler, &new_cfg.cursor_blinks
   );
 
  /*
@@ -682,41 +625,41 @@ setup_config_box(controlbox * b)
   */
   s = ctrl_new_set(b, "Text", "Font");
   ctrl_fontsel(
-    s, null, dlg_stdfontsel_handler, I(offcfg(font))
+    s, null, dlg_stdfontsel_handler, &new_cfg.font
   );
 
   s = ctrl_new_set(b, "Text", null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_radiobuttons(
     s, "Font smoothing", 2,
-    dlg_stdradiobutton_handler, I(offcfg(font_quality)),
-    "&Default", I(FQ_DEFAULT),
-    "&None", I(FQ_NONANTIALIASED),
-    "&Partial", I(FQ_ANTIALIASED),
-    "&Full", I(FQ_CLEARTYPE),
+    dlg_stdradiobutton_handler, &new_cfg.font_quality,
+    "&Default", FQ_DEFAULT,
+    "&None", FQ_NONANTIALIASED,
+    "&Partial", FQ_ANTIALIASED,
+    "&Full", FQ_CLEARTYPE,
     null
   )->column = 1;
 
   ctrl_checkbox(
     s, "Sho&w bold as font",
-    dlg_stdcheckbox_handler, I(offcfg(bold_as_font))
+    dlg_stdcheckbox_handler, &new_cfg.bold_as_font
   )->column = 0;
   ctrl_checkbox(
     s, "Show &bold as colour",
-    dlg_stdcheckbox_handler, I(offcfg(bold_as_colour))
+    dlg_stdcheckbox_handler, &new_cfg.bold_as_colour
   )->column = 0;
   ctrl_checkbox(
     s, "&Allow blinking",
-    dlg_stdcheckbox_handler, I(offcfg(allow_blinking))
+    dlg_stdcheckbox_handler, &new_cfg.allow_blinking
   )->column = 0;
 
   s = ctrl_new_set(b, "Text", null);
   ctrl_columns(s, 2, 29, 71);
   (locale_box = ctrl_combobox(
-    s, "&Locale", 100, locale_handler, P(0)
+    s, "&Locale", 100, locale_handler, 0
   ))->column = 0;
   (charset_box = ctrl_combobox(
-    s, "&Character set", 100, charset_handler, P(0)
+    s, "&Character set", 100, charset_handler, 0
   ))->column = 1;
 
  /*
@@ -725,37 +668,37 @@ setup_config_box(controlbox * b)
   s = ctrl_new_set(b, "Keys", null);
   ctrl_checkbox(
     s, "&Backspace sends ^H",
-    dlg_stdcheckbox_handler, I(offcfg(backspace_sends_bs))
+    dlg_stdcheckbox_handler, &new_cfg.backspace_sends_bs
   );
   ctrl_checkbox(
     s, "Ctrl+LeftAlt is Alt&Gr",
-    dlg_stdcheckbox_handler, I(offcfg(ctrl_alt_is_altgr))
+    dlg_stdcheckbox_handler, &new_cfg.ctrl_alt_is_altgr
   );
 
   s = ctrl_new_set(b, "Keys", "Shortcuts");
   ctrl_checkbox(
     s, "Cop&y and Paste (Ctrl/Shift+Ins)",
-    dlg_stdcheckbox_handler, I(offcfg(clip_shortcuts))
+    dlg_stdcheckbox_handler, &new_cfg.clip_shortcuts
   );
   ctrl_checkbox(
     s, "&Menu and Full Screen (Alt+Space/Enter)",
-    dlg_stdcheckbox_handler, I(offcfg(window_shortcuts))
+    dlg_stdcheckbox_handler, &new_cfg.window_shortcuts
   );
   ctrl_checkbox(
     s, "&Switch window (Ctrl+[Shift+]Tab)",
-    dlg_stdcheckbox_handler, I(offcfg(switch_shortcuts))
+    dlg_stdcheckbox_handler, &new_cfg.switch_shortcuts
   );
   ctrl_checkbox(
     s, "&Zoom (Ctrl+plus/minus/zero)",
-    dlg_stdcheckbox_handler, I(offcfg(zoom_shortcuts))
+    dlg_stdcheckbox_handler, &new_cfg.zoom_shortcuts
   );
   ctrl_checkbox(
     s, "&Alt+Fn shortcuts",
-    dlg_stdcheckbox_handler, I(offcfg(alt_fn_shortcuts))
+    dlg_stdcheckbox_handler, &new_cfg.alt_fn_shortcuts
   );
   ctrl_checkbox(
     s, "&Ctrl+Shift+letter shortcuts",
-    dlg_stdcheckbox_handler, I(offcfg(ctrl_shift_shortcuts))
+    dlg_stdcheckbox_handler, &new_cfg.ctrl_shift_shortcuts
   );
 
  /*
@@ -765,42 +708,42 @@ setup_config_box(controlbox * b)
   ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
     s, "Cop&y on select",
-    dlg_stdcheckbox_handler, I(offcfg(copy_on_select))
+    dlg_stdcheckbox_handler, &new_cfg.copy_on_select
   )->column = 0;
   ctrl_checkbox(
     s, "Copy as &rich text",
-    dlg_stdcheckbox_handler, I(offcfg(copy_as_rtf))
+    dlg_stdcheckbox_handler, &new_cfg.copy_as_rtf
   )->column = 1;
   ctrl_checkbox(
     s, "Clic&ks place command line cursor",
-    dlg_stdcheckbox_handler, I(offcfg(clicks_place_cursor))
+    dlg_stdcheckbox_handler, &new_cfg.clicks_place_cursor
   );
 
   s = ctrl_new_set(b, "Mouse", "Right click action");
   ctrl_radiobuttons(
     s, null, 4,
-    dlg_stdradiobutton_handler, I(offcfg(right_click_action)),
-    "&Paste", I(RC_PASTE),
-    "E&xtend", I(RC_EXTEND),
-    "Show &menu", I(RC_SHOWMENU),
+    dlg_stdradiobutton_handler, &new_cfg.right_click_action,
+    "&Paste", RC_PASTE,
+    "E&xtend", RC_EXTEND,
+    "Show &menu", RC_SHOWMENU,
     null
   );
   
   s = ctrl_new_set(b, "Mouse", "Application mouse mode");
   ctrl_radiobuttons(
     s, "Default click target", 4,
-    dlg_stdradiobutton_handler, I(offcfg(clicks_target_app)),
-    "&Window", I(0),
-    "Applicatio&n", I(1),
+    dlg_stdradiobutton_handler, &new_cfg.clicks_target_app,
+    "&Window", 0,
+    "Applicatio&n", 1,
     null
   );
   ctrl_radiobuttons(
     s, "Modifier for overriding default", 4,
-    dlg_stdradiobutton_handler, I(offcfg(click_target_mod)),
-    "&Shift", I(MDK_SHIFT),
-    "&Ctrl", I(MDK_CTRL),
-    "&Alt", I(MDK_ALT),
-    "&Off", I(0),
+    dlg_stdradiobutton_handler, &new_cfg.click_target_mod,
+    "&Shift", MDK_SHIFT,
+    "&Ctrl", MDK_CTRL,
+    "&Alt", MDK_ALT,
+    "&Off", 0,
     null
   );
   
@@ -810,40 +753,41 @@ setup_config_box(controlbox * b)
   s = ctrl_new_set(b, "Window", "Default size");
   ctrl_columns(s, 5, 35, 3, 28, 4, 30);
   (cols_box = ctrl_editbox(
-    s, "Colu&mns", 44, int_handler, I(offcfg(cols))
+    s, "Colu&mns", 44, dlg_stdintbox_handler, &new_cfg.cols
   ))->column = 0;
   (rows_box = ctrl_editbox(
-    s, "Ro&ws", 55, int_handler, I(offcfg(rows))
+    s, "Ro&ws", 55, dlg_stdintbox_handler, &new_cfg.rows
   ))->column = 2;
   ctrl_pushbutton(
-    s, "C&urrent size", current_size_handler, P(0)
+    s, "C&urrent size", current_size_handler, 0
   )->column = 4;
 
   s = ctrl_new_set(b, "Window", null);
   ctrl_columns(s, 2, 66, 34);
   ctrl_editbox(
-    s, "Scroll&back lines", 50, int_handler, I(offcfg(scrollback_lines))
+    s, "Scroll&back lines", 50,
+    dlg_stdintbox_handler, &new_cfg.scrollback_lines
   )->column = 0;
   ctrl_radiobuttons(
     s, "Scrollbar", 4,
-    dlg_stdradiobutton_handler, I(offcfg(scrollbar)),
-    "&Left", I(-1),
-    "&None", I(0),
-    "&Right", I(1),
+    dlg_stdradiobutton_handler, &new_cfg.scrollbar,
+    "&Left", -1,
+    "&None", 0,
+    "&Right", 1,
     null
   );
   ctrl_radiobuttons(
     s, "Modifier for scrolling", 4,
-    dlg_stdradiobutton_handler, I(offcfg(scroll_mod)),
-    "&Shift", I(MDK_SHIFT),
-    "&Ctrl", I(MDK_CTRL),
-    "&Alt", I(MDK_ALT),
-    "&Off", I(0),
+    dlg_stdradiobutton_handler, &new_cfg.scroll_mod,
+    "&Shift", MDK_SHIFT,
+    "&Ctrl", MDK_CTRL,
+    "&Alt", MDK_ALT,
+    "&Off", 0,
     null
   );
   ctrl_checkbox(
     s, "&PgUp and PgDn scroll without modifier",
-    dlg_stdcheckbox_handler, I(offcfg(pgupdn_scroll))
+    dlg_stdcheckbox_handler, &new_cfg.pgupdn_scroll
   );
 
  /*
@@ -852,32 +796,32 @@ setup_config_box(controlbox * b)
   s = ctrl_new_set(b, "Terminal", null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_combobox(
-    s, "&Type", 100, term_handler, P(0)
+    s, "&Type", 100, term_handler, 0
   )->column = 0;
   ctrl_editbox(
-    s, "&Answerback", 100, string_handler, I(offcfg(answerback))
+    s, "&Answerback", 100, dlg_stdstringbox_handler, &new_cfg.answerback
   )->column = 1;
 
   s = ctrl_new_set(b, "Terminal", "Bell");
   ctrl_columns(s, 3, 25, 25, 50);
   ctrl_checkbox(
-    s, "&Sound", dlg_stdcheckbox_handler, I(offcfg(bell_sound))
+    s, "&Sound", dlg_stdcheckbox_handler, &new_cfg.bell_sound
   )->column = 0;
   ctrl_checkbox(
-    s, "&Flash", dlg_stdcheckbox_handler, I(offcfg(bell_flash))
+    s, "&Flash", dlg_stdcheckbox_handler, &new_cfg.bell_flash
   )->column = 1;
   ctrl_checkbox(
-    s, "&Highlight in taskbar", dlg_stdcheckbox_handler, I(offcfg(bell_taskbar))
+    s, "&Highlight in taskbar", dlg_stdcheckbox_handler, &new_cfg.bell_taskbar
   )->column = 2;
 
   s = ctrl_new_set(b, "Terminal", "Printer");
   ctrl_combobox(
-    s, null, 100, printerbox_handler, P(0)
+    s, null, 100, printerbox_handler, 0
   );
 
   s = ctrl_new_set(b, "Terminal", null);
   ctrl_checkbox(
     s, "&Prompt about running processes on close",
-    dlg_stdcheckbox_handler, I(offcfg(confirm_exit))
+    dlg_stdcheckbox_handler, &new_cfg.confirm_exit
   );
 }

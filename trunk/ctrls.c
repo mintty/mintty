@@ -178,7 +178,7 @@ ctrl_alloc(controlbox * b, size_t size)
 }
 
 static control *
-ctrl_new(controlset *s, int type, handler_fn handler, intorptr context)
+ctrl_new(controlset *s, int type, handler_fn handler, void *context)
 {
   control *c = new(control);
   if (s->ncontrols >= s->ctrlsize) {
@@ -202,13 +202,12 @@ ctrl_new(controlset *s, int type, handler_fn handler, intorptr context)
 control *
 ctrl_columns(controlset *s, int ncolumns, ...)
 {
-  control *c = ctrl_new(s, CTRL_COLUMNS, null, P(null));
+  control *c = ctrl_new(s, CTRL_COLUMNS, 0, 0);
   assert(s->ncolumns == 1 || ncolumns == 1);
   c->columns.ncols = ncolumns;
   s->ncolumns = ncolumns;
-  if (ncolumns == 1) {
+  if (ncolumns == 1)
     c->columns.percentages = null;
-  }
   else {
     va_list ap;
     int i;
@@ -223,7 +222,7 @@ ctrl_columns(controlset *s, int ncolumns, ...)
 
 control *
 ctrl_editbox(controlset *s, char *label, int percentage,
-             handler_fn handler, intorptr context)
+             handler_fn handler, void *context)
 {
   control *c = ctrl_new(s, CTRL_EDITBOX, handler, context);
   c->label = label ? strdup(label) : null;
@@ -235,7 +234,7 @@ ctrl_editbox(controlset *s, char *label, int percentage,
 
 control *
 ctrl_combobox(controlset *s, char *label, int percentage,
-              handler_fn handler, intorptr context)
+              handler_fn handler, void *context)
 {
   control *c = ctrl_new(s, CTRL_EDITBOX, handler, context);
   c->label = label ? strdup(label) : null;
@@ -246,12 +245,12 @@ ctrl_combobox(controlset *s, char *label, int percentage,
 }
 
 /*
- * `ncolumns' is followed by (alternately) radio button titles and
- * intorptrs, until a null in place of a title string is seen.
+ * `ncolumns' is followed by (alternately) radio button labels and
+ * values, until a null in place of a title string is seen.
  */
 control *
 ctrl_radiobuttons(controlset *s, char *label, int ncolumns,
-                  handler_fn handler, intorptr context, ...)
+                  handler_fn handler, void *context, ...)
 {
   va_list ap;
   int i;
@@ -264,23 +263,22 @@ ctrl_radiobuttons(controlset *s, char *label, int ncolumns,
   */
   va_start(ap, context);
   i = 0;
-  while (va_arg(ap, char *) != null) {
+  while (va_arg(ap, string)) {
+    va_arg(ap, int);
     i++;
-    (void) va_arg(ap, intorptr);
   }
   va_end(ap);
   c->radio.nbuttons = i;
-  c->radio.buttons = newn(char *, c->radio.nbuttons);
-  c->radio.buttondata = newn(intorptr, c->radio.nbuttons);
+  c->radio.labels = newn(string, c->radio.nbuttons);
+  c->radio.vals = newn(int, c->radio.nbuttons);
  /*
   *second pass along variable argument list to actually fill in
   * the structure.
   */
   va_start(ap, context);
   for (i = 0; i < c->radio.nbuttons; i++) {
-    c->radio.buttons[i] = strdup(va_arg(ap, char *));
-   /* char promotes to int in arg lists */
-    c->radio.buttondata[i] = va_arg(ap, intorptr);
+    c->radio.labels[i] = strdup(va_arg(ap, string));
+    c->radio.vals[i] = va_arg(ap, int);
   }
   va_end(ap);
   return c;
@@ -288,7 +286,7 @@ ctrl_radiobuttons(controlset *s, char *label, int ncolumns,
 
 control *
 ctrl_pushbutton(controlset *s, char *label,
-                handler_fn handler, intorptr context)
+                handler_fn handler, void *context)
 {
   control *c = ctrl_new(s, CTRL_BUTTON, handler, context);
   c->label = label ? strdup(label) : null;
@@ -299,7 +297,7 @@ ctrl_pushbutton(controlset *s, char *label,
 
 control *
 ctrl_fontsel(controlset *s, char *label,
-             handler_fn handler, intorptr context)
+             handler_fn handler, void *context)
 {
   control *c = ctrl_new(s, CTRL_FONTSELECT, handler, context);
   c->label = label ? strdup(label) : null;
@@ -308,7 +306,7 @@ ctrl_fontsel(controlset *s, char *label,
 
 control *
 ctrl_checkbox(controlset *s, char *label,
-              handler_fn handler, intorptr context)
+              handler_fn handler, void *context)
 {
   control *c = ctrl_new(s, CTRL_CHECKBOX, handler, context);
   c->label = label ? strdup(label) : null;
@@ -322,10 +320,9 @@ ctrl_free(control *ctrl)
   switch (ctrl->type) {
     when CTRL_RADIO:
       for (int i = 0; i < ctrl->radio.nbuttons; i++)
-        free(ctrl->radio.buttons[i]);
-      free(ctrl->radio.buttons);
-
-      free(ctrl->radio.buttondata);
+        delete(ctrl->radio.labels[i]);
+      free(ctrl->radio.labels);
+      free(ctrl->radio.vals);
     when CTRL_COLUMNS:
       free(ctrl->columns.percentages);
   }
@@ -333,78 +330,80 @@ ctrl_free(control *ctrl)
 }
 
 void
-dlg_stdradiobutton_handler(control *ctrl, void *data, int event)
+dlg_stdradiobutton_handler(control *ctrl, int event)
 {
-  int button;
- /*
-  * For a standard radio button set, the context parameter gives
-  * offsetof(targetfield, Config), and the extra data per button
-  * gives the value the target field should take if that button
-  * is the one selected.
-  */
+  int *ip = ctrl->context;
   if (event == EVENT_REFRESH) {
-    for (button = 0; button < ctrl->radio.nbuttons; button++)
-      if (atoffset(int, data, ctrl->context.i) ==
-          ctrl->radio.buttondata[button].i)
+    int button;
+    for (button = 0; button < ctrl->radio.nbuttons; button++) {
+      if (ctrl->radio.vals[button] == *ip)
         break;
-   /* We expected that `break' to happen, in all circumstances. */
+    }
     assert(button < ctrl->radio.nbuttons);
     dlg_radiobutton_set(ctrl, button);
   }
   else if (event == EVENT_VALCHANGE) {
-    button = dlg_radiobutton_get(ctrl);
-    assert(button >= 0 && button < ctrl->radio.nbuttons);
-    atoffset(int, data, ctrl->context.i) =
-      ctrl->radio.buttondata[button].i;
+    int button = dlg_radiobutton_get(ctrl);
+    *ip = ctrl->radio.vals[button];
   }
 }
 
 void
-dlg_stdcheckbox_handler(control *ctrl, void *data, int event)
+dlg_stdcheckbox_handler(control *ctrl, int event)
 {
-  int offset, invert;
+  bool *bp = ctrl->context;
+  if (event == EVENT_REFRESH)
+    dlg_checkbox_set(ctrl, *bp);
+  else if (event == EVENT_VALCHANGE)
+    *bp = dlg_checkbox_get(ctrl);
+}
 
- /*
-  * For a standard checkbox, the context parameter gives
-  * offsetof(targetfield, Config), optionally ORed with
-  * CHECKBOX_INVERT.
-  */
-  offset = ctrl->context.i;
-  if (offset & CHECKBOX_INVERT) {
-    offset &= ~CHECKBOX_INVERT;
-    invert = 1;
+void
+dlg_stdfontsel_handler(control *ctrl, int event)
+{
+  font_spec *fp = ctrl->context;
+  if (event == EVENT_REFRESH)
+    dlg_fontsel_set(ctrl, fp);
+  else if (event == EVENT_VALCHANGE)
+    dlg_fontsel_get(ctrl, fp);
+}
+
+void
+dlg_stdstringbox_handler(control *ctrl, int event)
+{
+  string *sp = ctrl->context;
+  if (event == EVENT_VALCHANGE)
+    dlg_editbox_get(ctrl, sp);
+  else if (event == EVENT_REFRESH)
+    dlg_editbox_set(ctrl, *sp);
+}
+
+void
+dlg_stdintbox_handler(control *ctrl, int event)
+{
+  int *ip = ctrl->context;
+  if (event == EVENT_VALCHANGE) {
+      string val = 0;
+      dlg_editbox_get(ctrl, &val);
+      *ip = max(0, atoi(val));
+      delete(val);
   }
-  else
-    invert = 0;
-
- /*
-  * C lacks a logical XOR, so the following code uses the idiom
-  * (!a ^ !b) to obtain the logical XOR of a and b. (That is, 1
-  * iff exactly one of a and b is nonzero, otherwise 0.)
-  */
-
-  if (event == EVENT_REFRESH) {
-    dlg_checkbox_set(ctrl, !atoffset(bool, data, offset) ^ !invert);
-  }
-  else if (event == EVENT_VALCHANGE) {
-    atoffset(bool, data, offset) = !dlg_checkbox_get(ctrl) ^ !invert;
+  else if (event == EVENT_REFRESH) {
+    char buf[16];
+    sprintf(buf, "%i", *ip);
+    dlg_editbox_set(ctrl, buf);
   }
 }
 
 void
-dlg_stdfontsel_handler(control *ctrl, void *data, int event)
+dlg_stdcolour_handler(control *ctrl, int event)
 {
- /*
-  * The standard font selector handler expects the `context'
-  * field to contain the `offsetof' a font_spec field in the
-  *structure pointed to by `data'.
-  */
-  int offset = ctrl->context.i;
-
-  if (event == EVENT_REFRESH) {
-    dlg_fontsel_set(ctrl, &atoffset(font_spec, data, offset));
-  }
-  else if (event == EVENT_VALCHANGE) {
-    dlg_fontsel_get(ctrl, &atoffset(font_spec, data, offset));
+  colour *cp = ctrl->context;
+  if (event == EVENT_ACTION)
+    dlg_coloursel_start(*cp);
+  else if (event == EVENT_CALLBACK) {
+    colour c;
+    if (dlg_coloursel_results(&c))
+      *cp = c;
   }
 }

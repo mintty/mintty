@@ -11,8 +11,8 @@ extern bool utmp_enabled;
 
 typedef struct {
   string name;
-  bool isbold;
   int size;
+  bool isbold;
 } font_spec;
 
 enum { CUR_BLOCK, CUR_UNDERSCORE, CUR_LINE };

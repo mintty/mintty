@@ -27,38 +27,6 @@ enum {
 };
 
 /*
- * Many controls have `intorptr' unions for storing user data,
- * since the user might reasonably want to store either an integer
- * or a void * pointer. Here I define a union, and two convenience
- * functions to create that union from actual integers or pointers.
- * 
- * The convenience functions are declared as inline if possible.
- * Otherwise, they're declared here and defined when this header is
- * included with DEFINE_INTORPTR_FNS defined. This is a total pain,
- * but such is life.
- */
-typedef union {
-  void *p;
-  int i;
-} intorptr;
-
-static always_inline intorptr
-I(int i)
-{
-  intorptr ret;
-  ret.i = i;
-  return ret;
-}
-
-static always_inline intorptr
-P(void *p)
-{
-  intorptr ret;
-  ret.p = p;
-  return ret;
-}
-
-/*
  * Each control has an `int' field specifying which columns it
  * occupies in a multi-column part of the dialog box. These macros
  * pack and unpack that field.
@@ -102,8 +70,7 @@ enum {
 
 typedef struct control control;
 
-typedef void (*handler_fn) (control *, void *data, int event);
-
+typedef void (*handler_fn)(control *, int event);
 
 struct control {
   int type;
@@ -144,9 +111,9 @@ struct control {
   handler_fn handler;
  /*
   * Almost all of the above functions will find it useful to
-  * be able to store a piece of `void *' or `int' data.
+  * be able to store a piece of `void *' data.
   */
-  intorptr context;
+  void *context;
   union {
     struct {
      /*
@@ -196,12 +163,12 @@ struct control {
       * pointers, each of which points to a dynamically
       * allocated string.
       */
-      char **buttons;     /* `nbuttons' button labels */
+      string *labels;     /* `nbuttons' button labels */
      /*
-      * This points to a dynamically allocated array of
-      * intorptr, giving helpful data for each button.
+      * This points to a dynamically allocated array,
+      * with the value corresponding to each button.
       */
-      intorptr *buttondata;       /* `nbuttons' entries; may be null */
+      int *vals;         /* `nbuttons' entries; may be null */
     } radio;
     struct {
      /*
@@ -330,52 +297,35 @@ void *ctrl_alloc(controlbox *, size_t size);
 /* `ncolumns' is followed by that many percentages, as integers. */
 control *ctrl_columns(controlset *, int ncolumns, ...);
 control *ctrl_editbox(controlset *, char *label, int percentage,
-                      handler_fn handler, intorptr context);
+                      handler_fn handler, void *context);
 control *ctrl_combobox(controlset *, char *label, int percentage,
-                       handler_fn handler, intorptr context);
+                       handler_fn handler, void *context);
 /*
  * `ncolumns' is followed by (alternately) radio button titles and
- * intorptrs, until a null in place of a title string is seen.
+ * integers, until a null in place of a title string is seen.
  */
 control *ctrl_radiobuttons(controlset *, char *label, int ncolumns,
-                           handler_fn handler, intorptr context, ...);
+                           handler_fn handler, void *context, ...);
 control *ctrl_pushbutton(controlset *, char *label,
-                         handler_fn handler, intorptr context);
+                         handler_fn handler, void *context);
 control *ctrl_droplist(controlset *, char *label, int percentage,
-                       handler_fn handler, intorptr context);
+                       handler_fn handler, void *context);
 control *ctrl_fontsel(controlset *, char *label,
-                      handler_fn handler, intorptr context);
+                      handler_fn handler, void *context);
 control *ctrl_checkbox(controlset *, char *label,
-                       handler_fn handler, intorptr context);
+                       handler_fn handler, void *context);
 
 /*
  * Standard handler routines to cover most of the common cases in
  * the config box.
  */
-/*
- * The standard radio-button handler expects the main `context'
- * field to contain the `offsetof' of an int field in the structure
- * pointed to by `data', and expects each of the individual button
- * data to give a value for that int field.
- */
-void dlg_stdradiobutton_handler(control *, void *data, int event);
 
-/*
- * The standard checkbox handler expects the main `context' field
- * to contain the `offsetof' an int field in the structure pointed
- * to by `data', optionally ORed with CHECKBOX_INVERT to indicate
- * that the sense of the datum is opposite to the sense of the
- * checkbox.
- */
-#define CHECKBOX_INVERT (1<<30)
-void dlg_stdcheckbox_handler(control *, void *data, int event);
-
-/*
- * The standard font-selector handler expects the main `context'
- * field to contain the `offsetof' a Font field in the structure
- * pointed to by `data'.
- */
-void dlg_stdfontsel_handler(control *, void *data, int event);
+void dlg_stdcheckbox_handler(control *, int event);
+void dlg_stdstringbox_handler(control *, int event);
+void dlg_stdintbox_handler(control *, int event);
+void dlg_stdradiobutton_handler(control *, int event);
+void dlg_stdfontsel_handler(control *, int event);
+void dlg_stdcolour_handler(control *, int event);
 
 /*
  * Routines the platform-independent dialog code can call to read
