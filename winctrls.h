@@ -59,7 +59,6 @@ typedef struct {
   HWND wnd;    /* the wnd of the dialog box */
   winctrls *controltrees[8];    /* can have several of these */
   int nctrltrees;
-  void *data;   /* data to pass in refresh events */
   control *focused; /* which ctrl has focus now/before */
   int coloursel_wanted; /* has an event handler asked for
                          * a colour selector? */

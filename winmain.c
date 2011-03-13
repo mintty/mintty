@@ -454,7 +454,9 @@ win_reconfig(void)
   term_reconfig();
   
   bool font_changed =
-    memcmp(&new_cfg.font, &cfg.font, sizeof cfg.font) ||
+    strcmp(new_cfg.font.name, cfg.font.name) ||    
+    new_cfg.font.size != cfg.font.size ||
+    new_cfg.font.isbold != cfg.font.isbold ||
     new_cfg.bold_as_font != cfg.bold_as_font ||
     new_cfg.bold_as_colour != cfg.bold_as_colour ||
     new_cfg.font_quality != cfg.font_quality;
@@ -469,7 +471,7 @@ win_reconfig(void)
     win_set_colour(CURSOR_COLOUR_I, new_cfg.cursor_colour);
   
   /* Copy the new config and refresh everything */
-  cfg = new_cfg;
+  copy_config(&cfg, &new_cfg);
   if (font_changed) {
     font_size = cfg.font.size;
     reinit_fonts();

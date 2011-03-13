@@ -64,7 +64,7 @@ ctrlposinit(ctrlpos * cp, HWND wnd, int leftborder, int rightborder,
 
 static HWND
 doctl(ctrlpos * cp, RECT r, char *wclass, int wstyle, int exstyle, 
-      char *wtext, int wid)
+      string wtext, int wid)
 {
   HWND ctl;
  /*
@@ -193,7 +193,7 @@ combobox(ctrlpos * cp, char *text, int staticid, int listid)
 }
 
 typedef struct {
-  char *text;
+  string label;
   int id;
 } radio;
 
@@ -218,9 +218,6 @@ radioline_common(ctrlpos * cp, char *text, int id, int nacross,
   group = WS_GROUP;
   i = 0;
   for (j = 0; j < nbuttons; j++) {
-    char *btext = buttons[j].text;
-    int bid = buttons[j].id;
-
     if (i == nacross) {
       cp->ypos += r.bottom + (nacross > 1 ? GAPBETWEEN : GAPWITHIN);
       i = 0;
@@ -234,7 +231,7 @@ radioline_common(ctrlpos * cp, char *text, int id, int nacross,
     r.bottom = RADIOHEIGHT;
     doctl(cp, r, "BUTTON",
           BS_NOTIFY | BS_AUTORADIOBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP |
-          group, 0, btext, bid);
+          group, 0, buttons[j].label, buttons[j].id);
     group = 0;
     i++;
   }
@@ -699,7 +696,7 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
         radio buttons[ctrl->radio.nbuttons];
 
         for (int i = 0; i < ctrl->radio.nbuttons; i++) {
-          buttons[i].text = ctrl->radio.buttons[i];
+          buttons[i].label = ctrl->radio.labels[i];
           buttons[i].id = base_id + 1 + i;
         }
 
@@ -840,7 +837,7 @@ select_font(winctrl *c)
     fs.isbold = (lf.lfWeight == FW_BOLD);
     fs.size = cf.iPointSize / 10;
     dlg_fontsel_set(c->ctrl, &fs);
-    c->ctrl->handler(c->ctrl, dlg.data, EVENT_VALCHANGE);
+    c->ctrl->handler(c->ctrl, EVENT_VALCHANGE);
   }
 }
 
@@ -922,21 +919,21 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
             * checked before generating an event.
             */
             if (IsDlgButtonChecked(dlg.wnd, LOWORD(wParam)))
-              ctrl->handler(ctrl, dlg.data, EVENT_VALCHANGE);
+              ctrl->handler(ctrl, EVENT_VALCHANGE);
         }
       when CTRL_CHECKBOX:
         switch (note) {
           when BN_SETFOCUS or BN_KILLFOCUS:
             winctrl_set_focus(ctrl, note == BN_SETFOCUS);
           when BN_CLICKED or BN_DOUBLECLICKED:
-            ctrl->handler(ctrl, dlg.data, EVENT_VALCHANGE);
+            ctrl->handler(ctrl, EVENT_VALCHANGE);
         }
       when CTRL_BUTTON:
         switch (note) {
           when BN_SETFOCUS or BN_KILLFOCUS:
             winctrl_set_focus(ctrl, note == BN_SETFOCUS);
           when BN_CLICKED or BN_DOUBLECLICKED:
-            ctrl->handler(ctrl, dlg.data, EVENT_ACTION);
+            ctrl->handler(ctrl, EVENT_ACTION);
         }
       when CTRL_FONTSELECT:
         if (id == 2) {
@@ -958,10 +955,10 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
           winctrl_set_focus(ctrl, note == BN_SETFOCUS);
         else if (note == LBN_DBLCLK) {
           SetCapture(dlg.wnd);
-          ctrl->handler(ctrl, dlg.data, EVENT_ACTION);
+          ctrl->handler(ctrl, EVENT_ACTION);
         }
         else if (note == LBN_SELCHANGE)
-          ctrl->handler(ctrl, dlg.data, EVENT_SELCHANGE);
+          ctrl->handler(ctrl, EVENT_SELCHANGE);
       when CTRL_EDITBOX:
         if (ctrl->editbox.has_list) {
           switch (note) {
@@ -969,7 +966,7 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
               winctrl_set_focus(ctrl, true);
             when CBN_KILLFOCUS:
               winctrl_set_focus(ctrl, false);
-              ctrl->handler(ctrl, dlg.data, EVENT_UNFOCUS);
+              ctrl->handler(ctrl, EVENT_UNFOCUS);
             when CBN_SELCHANGE: {
               int index = SendDlgItemMessage(
                             dlg.wnd, c->base_id + 1, CB_GETCURSEL, 0, 0);
@@ -979,10 +976,10 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
               SendDlgItemMessage(
                 dlg.wnd, c->base_id + 1, CB_GETLBTEXT, index, (LPARAM) text);
               SetDlgItemText(dlg.wnd, c->base_id + 1, text);
-              ctrl->handler(ctrl, dlg.data, EVENT_SELCHANGE);
+              ctrl->handler(ctrl, EVENT_SELCHANGE);
             }
             when CBN_EDITCHANGE:
-              ctrl->handler(ctrl, dlg.data, EVENT_VALCHANGE);
+              ctrl->handler(ctrl, EVENT_VALCHANGE);
           }
         }
         else {
@@ -991,9 +988,9 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
               winctrl_set_focus(ctrl, true);
             when EN_KILLFOCUS:
               winctrl_set_focus(ctrl, false);
-              ctrl->handler(ctrl, dlg.data, EVENT_UNFOCUS);
+              ctrl->handler(ctrl, EVENT_UNFOCUS);
             when EN_CHANGE:
-              ctrl->handler(ctrl, dlg.data, EVENT_VALCHANGE);
+              ctrl->handler(ctrl, EVENT_VALCHANGE);
           }
         }
     }
@@ -1014,7 +1011,7 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
     cc.Flags = CC_FULLOPEN | CC_RGBINIT;
     dlg.coloursel_ok = ChooseColor(&cc);
     dlg.coloursel_result = cc.rgbResult;
-    ctrl->handler(ctrl, dlg.data, EVENT_CALLBACK);
+    ctrl->handler(ctrl, EVENT_CALLBACK);
   }
 
   return ret;
@@ -1183,7 +1180,7 @@ dlg_refresh(control *ctrl)
     for (int i = 0; i < dlg.nctrltrees; i++) {
       for (winctrl *c = dlg.controltrees[i]->first; c; c = c->next) {
         if (c->ctrl && c->ctrl->handler) {
-          c->ctrl->handler(c->ctrl, dlg.data, EVENT_REFRESH);
+          c->ctrl->handler(c->ctrl, EVENT_REFRESH);
         }
       }
     }
@@ -1193,7 +1190,7 @@ dlg_refresh(control *ctrl)
     * Send EVENT_REFRESH to a specific control.
     */
     if (ctrl->handler != null)
-      ctrl->handler(ctrl, dlg.data, EVENT_REFRESH);
+      ctrl->handler(ctrl, EVENT_REFRESH);
   }
 }
 
@@ -1205,11 +1202,11 @@ dlg_coloursel_start(colour c)
 }
 
 int
-dlg_coloursel_results(colour *res_p)
+dlg_coloursel_results(colour *cp)
 {
-  bool ok = dlg.coloursel_ok ;
+  bool ok = dlg.coloursel_ok;
   if (ok)
-    *res_p = dlg.coloursel_result;
+    *cp = dlg.coloursel_result;
   return ok;
 }
 
@@ -1217,7 +1214,6 @@ void
 windlg_init(void)
 {
   dlg.nctrltrees = 0;
-  dlg.data = null;
   dlg.ended = false;
   dlg.focused = null;
   dlg.wnd = null;
