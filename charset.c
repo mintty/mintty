@@ -330,17 +330,18 @@ cs_set_locale(const char *locale)
 void
 cs_reconfig(void)
 {
+  delete(config_locale);
   if (*cfg.locale) {
-    static char buf[sizeof cfg.locale + sizeof cfg.charset];
-    snprintf(buf, sizeof buf, "%s%s%s",
-             cfg.locale, *cfg.charset ? "." : "", cfg.charset);
-    config_locale = buf;
+    config_locale =
+      asform("%s%s%s", cfg.locale, *cfg.charset ? "." : "", cfg.charset);
 #if HAS_LOCALES
-    if (setlocale(LC_CTYPE, buf) &&
+    if (setlocale(LC_CTYPE, config_locale) &&
         wcwidth(0x3B1) == 2 && !font_ambig_wide) {
       // Attach "@cjknarrow" to locale if using an ambig-narrow font
       // with an ambig-wide locale setting
-      strcat(buf, "@cjknarrow");
+      string l = config_locale;
+      config_locale = asform("%s@cjknarrow", l);
+      delete(l);
     }
 #endif
   }
