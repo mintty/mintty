@@ -26,7 +26,7 @@ cc_opts =  \
   -std=gnu99 -Wall -Wextra -Werror -Wundef \
   -march=i586 -mtune=pentium-m
 
-ld_opts := -mwindows -lcomctl32 -limm32 -lwinspool -lole32 /lib/w32api/libuuid.a
+ld_opts := -mwindows -limm32 -lwinspool -lole32 /lib/w32api/libuuid.a
 
 ifdef debug
 cc_opts += -g

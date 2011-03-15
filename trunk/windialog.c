@@ -262,8 +262,6 @@ win_open_config(void)
 {
   if (config_wnd)
     return;
-  
-  InitCommonControls();
 
   RegisterClass(&(WNDCLASS){
     .style = CS_DBLCLKS,
