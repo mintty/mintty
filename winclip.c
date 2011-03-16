@@ -36,15 +36,15 @@ shell_exec_thread(void *data)
 }
 
 static void
-shell_exec(const wchar *wpath)
+shell_exec(wstring wpath)
 {
   CreateThread(0, 0, shell_exec_thread, (void *)wpath, 0, 0);
 }
 
 void
-win_open(const wchar *wpath)
+win_open(wstring wpath)
 {
-  const wchar *p = wpath;
+  wstring p = wpath;
   while (iswalpha(*p)) p++;
   
   if (*wpath == '\\' || *p == ':') {
@@ -53,8 +53,8 @@ win_open(const wchar *wpath)
   }
   else {
     // Need to convert POSIX path to Windows first
-    const wchar *conv_wpath = child_conv_path(wpath);
-    free((void *)wpath);
+    wstring conv_wpath = child_conv_path(wpath);
+    delete(wpath);
     if (conv_wpath)
       shell_exec(conv_wpath);
     else

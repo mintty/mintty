@@ -36,7 +36,7 @@ void win_zoom_font(int);
 void win_set_font_size(int);
 uint win_get_font_size(void);
 
-void win_open(const wchar *path);
+void win_open(wstring path);
 void win_copy(const wchar *data, int *attrs, int len);
 void win_paste(void);
 

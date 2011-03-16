@@ -440,7 +440,7 @@ current_size_handler(control *unused(ctrl), int event)
 static void
 printerbox_handler(control *ctrl, int event)
 {
-  static const char NONE[] = "None (printing disabled)";
+  const string NONE = "None (printing disabled)";
   string printer = new_cfg.printer;
   if (event == EVENT_REFRESH) {
     dlg_listbox_clear(ctrl);

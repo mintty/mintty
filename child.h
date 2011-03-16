@@ -13,7 +13,7 @@ void child_send(const char *, uint len);
 void child_sendw(const wchar *, uint len);
 void child_resize(struct winsize *winp);
 bool child_is_parent(void);
-const wchar *child_conv_path(const wchar *);
+wstring child_conv_path(wstring);
 void child_fork(char *argv[]);
 
 #endif

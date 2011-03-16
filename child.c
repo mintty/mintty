@@ -61,7 +61,7 @@ sigexit(int sig)
 void
 child_create(char *argv[], struct winsize *winp)
 {
-  const char *lang = cs_init();
+  string lang = cs_init();
 
   // xterm and urxvt ignore SIGHUP, so let's do the same.
   signal(SIGHUP, SIG_IGN);
@@ -352,8 +352,8 @@ child_resize(struct winsize *winp)
     ioctl(pty_fd, TIOCSWINSZ, winp);
 }
 
-const wchar *
-child_conv_path(const wchar *wpath)
+wstring
+child_conv_path(wstring wpath)
 {
   int wlen = wcslen(wpath);
   int len = wlen * cs_cur_max;
