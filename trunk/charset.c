@@ -17,12 +17,9 @@
 
 static cs_mode mode = CSM_DEFAULT;
 
-static const char *env_locale, *config_locale, *term_locale;
+static string env_locale, config_locale, term_locale, default_locale;
+static uint codepage, default_codepage;
 
-static const char *default_locale;
-static uint default_codepage;
-
-static uint codepage;
 static wchar cp_default_wchar;
 static char cp_default_char[4];
 
@@ -40,7 +37,7 @@ extern bool font_ambig_wide;
 
 static const struct {
   ushort cp;
-  const char *name;
+  string name;
 }
 cs_names[] = {
   { CP_UTF8, "UTF-8"},
@@ -79,7 +76,7 @@ cs_names[] = {
 
 static const struct {
   ushort cp;
-  const char *desc;
+  string desc;
 }
 cs_descs[] = {
   { CP_UTF8, "Unicode"},
@@ -115,17 +112,17 @@ cs_descs[] = {
   {     949, "Korean"},
 };
 
-const char *locale_menu[8];
-const char *charset_menu[lengthof(cs_descs) + 4];
+string locale_menu[8];
+string charset_menu[lengthof(cs_descs) + 4];
 
 static void
-strtoupper(char *dst, const char *src)
+strtoupper(char *dst, string src)
 {
   while ((*dst++ = toupper((uchar)*src++)));
 }
 
 // Return the charset name for a codepage number.
-static const char *
+static string
 cs_name(uint cp)
 {
   for (uint i = 0; i < lengthof(cs_names); i++) {
@@ -151,7 +148,7 @@ valid_codepage(uint cp)
 
 // Find the codepage number for a charset name.
 static uint
-cs_codepage(const char *name)
+cs_codepage(string name)
 {
   if (!*name)
     return CP_DEFAULT;
@@ -223,18 +220,18 @@ init_charset_menu(void)
 {
   charset_menu[0] = "(Default)";
   
-  const char **p = charset_menu + 1;
+  string *p = charset_menu + 1;
   for (uint i = 0; i < lengthof(cs_descs); i++) {
     uint cp = cs_descs[i].cp;
     if (valid_codepage(cp) || (28591 <= cp && cp <= 28606))
       *p++ = asform("%s (%s)", cs_name(cp), cs_descs[i].desc);
   }
   
-  const char *oem_cs = cs_name(GetOEMCP());
+  string oem_cs = cs_name(GetOEMCP());
   if (*oem_cs == 'C')
     *p++ = asform("%s (OEM codepage)", oem_cs);
 
-  const char *ansi_cs = cs_name(GetACP());
+  string ansi_cs = cs_name(GetACP());
   if (*ansi_cs == 'C')
     *p++ = asform("%s (ANSI codepage)", ansi_cs);
 }
@@ -293,7 +290,7 @@ update_locale(void)
 {
   default_locale = term_locale ?: config_locale ?: env_locale;
 
-  const char *charset;
+  string charset;
 #if HAS_LOCALES
   valid_default_locale = setlocale(LC_CTYPE, default_locale);
   if (valid_default_locale) {
@@ -302,7 +299,7 @@ update_locale(void)
   }
   else {
 #endif
-    const char *dot = strchr(default_locale, '.');
+    string dot = strchr(default_locale, '.');
     charset = dot ? dot + 1 : "";
     cs_ambig_wide = font_ambig_wide;
 #if HAS_LOCALES
@@ -313,16 +310,16 @@ update_locale(void)
   update_mode();
 }
 
-const char *
+string
 cs_get_locale(void)
 {
   return default_locale;
 }
 
 void
-cs_set_locale(const char *locale)
+cs_set_locale(string locale)
 {
-  free((void *)term_locale);
+  delete(term_locale);
   term_locale = *locale ? strdup(locale) : 0;
   update_locale();
 }
@@ -351,20 +348,20 @@ cs_reconfig(void)
   update_locale();
 }
 
-static const char *
-getlocenv(const char *name)
+static string
+getlocenv(string name)
 {
-  const char *val = getenv(name);
+  string val = getenv(name);
   return val && *val ? val : 0;
 }
   
-const char *
+string
 cs_init(void)
 {
   init_locale_menu();
   init_charset_menu();
   
-  const char *lang = 0;
+  string lang = 0;
   env_locale =
     getlocenv("LC_ALL") ?: getlocenv("LC_CTYPE") ?: getlocenv("LANG");
   if (!env_locale) {

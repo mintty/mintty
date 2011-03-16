@@ -28,11 +28,11 @@ static inline xchar
 combine_surrogates(wchar hwc, wchar lwc)
 { return 0x10000 + ((hwc & 0x3FF) << 10) + (lwc & 0x3FF); }
 
-const char *cs_init(void);
+string cs_init(void);
 void cs_reconfig(void);
 
-const char *cs_get_locale(void);
-void cs_set_locale(const char *);
+string cs_get_locale(void);
+void cs_set_locale(string);
 
 typedef enum { CSM_DEFAULT, CSM_OEM, CSM_UTF8 } cs_mode;
 void cs_set_mode(cs_mode);
@@ -45,7 +45,7 @@ int cs_mbstowcs(wchar *ws, const char *s, size_t wlen);
 int cs_mb1towc(wchar *pwc, char c);
 wchar cs_btowc_glyph(char);
 
-extern const char *locale_menu[];
-extern const char *charset_menu[];
+extern string locale_menu[];
+extern string charset_menu[];
 
 #endif

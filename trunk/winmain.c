@@ -732,7 +732,7 @@ opts[] = {
 };
 
 static void
-show_msg(FILE *stream, const char *msg)
+show_msg(FILE *stream, string msg)
 {
   if (fputs(msg, stream) < 0 || fflush(stream) < 0)
     MessageBox(0, msg, APPNAME, MB_OK);
@@ -753,7 +753,7 @@ error(bool syntax, char *format, ...)
 }
 
 typedef struct {
-  const char *name;
+  string name;
   uint val;
 } optarg_mapping;
 
