@@ -262,19 +262,25 @@ win_open_config(void)
 {
   if (config_wnd)
     return;
-
-  RegisterClass(&(WNDCLASS){
-    .style = CS_DBLCLKS,
-    .lpfnWndProc = DefDlgProc,
-    .cbClsExtra = 0,
-    .cbWndExtra = DLGWINDOWEXTRA + 2 * sizeof (LONG_PTR),
-    .hInstance = inst,
-    .hIcon = null,
-    .hCursor = LoadCursor(null, IDC_ARROW),
-    .hbrBackground = (HBRUSH) (COLOR_BACKGROUND + 1),
-    .lpszMenuName = null,
-    .lpszClassName = "ConfigBox"
-  });
+  
+  static bool initialised = false;
+  if (!initialised) {
+    InitCommonControls();
+    RegisterClass(&(WNDCLASS){
+      .style = CS_DBLCLKS,
+      .lpfnWndProc = DefDlgProc,
+      .cbClsExtra = 0,
+      .cbWndExtra = DLGWINDOWEXTRA + 2 * sizeof (LONG_PTR),
+      .hInstance = inst,
+      .hIcon = null,
+      .hCursor = LoadCursor(null, IDC_ARROW),
+      .hbrBackground = (HBRUSH) (COLOR_BACKGROUND + 1),
+      .lpszMenuName = null,
+      .lpszClassName = "ConfigBox"
+    });
+    initialised = true;
+  }
+  
   config_wnd = CreateDialog(inst, MAKEINTRESOURCE(IDD_MAINBOX),
                             wnd, config_dialog_proc);
   ShowWindow(config_wnd, SW_SHOW);
