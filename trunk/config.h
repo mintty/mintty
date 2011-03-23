@@ -76,9 +76,9 @@ typedef struct {
 
 extern config cfg, new_cfg;
 
-int parse_option(string option);
+void init_config(void);
 void load_config(string filename);
-void start_config(void);
+void parse_arg_option(string);
 void finish_config(void);
 void copy_config(config *dst, const config *src);
 
