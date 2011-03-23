@@ -85,6 +85,7 @@ const config default_cfg = {
 };
 
 config cfg, new_cfg;
+static config file_cfg;
 
 typedef enum {
   OPT_STRING, OPT_BOOL, OPT_INT, OPT_COLOUR,
@@ -196,9 +197,6 @@ options[] = {
   {"BoldAsBright", OPT_BOOL | OPT_COMPAT, offcfg(bold_as_colour)},
 };
 
-static uchar option_order[lengthof(options)];
-static uint option_order_len;
-
 static int
 find_option(string name)
 {
@@ -209,7 +207,24 @@ find_option(string name)
   return -1;
 }
 
-int
+static uchar file_opts[lengthof(options)], arg_opts[lengthof(options)];
+static uint file_opts_num, arg_opts_num;
+
+static void
+remember_file_option(uint i)
+{
+  if (!memchr(file_opts, i, file_opts_num))
+    file_opts[file_opts_num++] = i;
+}
+
+static void
+remember_arg_option(uint i)
+{
+  if (!memchr(arg_opts, i, arg_opts_num))
+    arg_opts[arg_opts_num++] = i;
+}
+
+static int
 parse_option(string option)
 {
   string eq = strchr(option, '=');
@@ -243,17 +258,18 @@ parse_option(string option)
   return i;
 }
 
-static void
-remember_option(int i)
+void
+parse_arg_option(string option)
 {
-  if (!memchr(option_order, i, option_order_len))
-    option_order[option_order_len++] = i;
+  int i = parse_option(option);
+  if (i >= 0)
+    remember_arg_option(i);
 }
 
 void
 load_config(string filename)
 {
-  option_order_len = 0;
+  file_opts_num = arg_opts_num = 0;
 
   delete(rc_filename);
 #if CYGWIN_VERSION_API_MINOR >= 222
@@ -269,10 +285,12 @@ load_config(string filename)
       line[strcspn(line, "\r\n")] = 0;  /* trim newline */
       int i = parse_option(line);
       if (i >= 0)
-        remember_option(i);
+        remember_file_option(i);
     }
     fclose(file);
   }
+  
+  copy_config(&file_cfg, &cfg);
 }
 
 void
@@ -291,7 +309,7 @@ copy_config(config *dst, const config *src)
 }
 
 void
-start_config(void)
+init_config(void)
 {
   copy_config(&cfg, &default_cfg);
 }
@@ -310,15 +328,15 @@ finish_config(void)
 
     // Make sure they're written to the config file.
     // This assumes that the colour options are the first three in options[].
-    remember_option(0);
-    remember_option(1);
-    remember_option(2);
+    remember_file_option(0);
+    remember_file_option(1);
+    remember_file_option(2);
   }
   
   // bold_as_font used to be implied by !bold_as_colour.
   if (cfg.bold_as_font == -1) {
     cfg.bold_as_font = !cfg.bold_as_colour;
-    remember_option(find_option("BoldAsFont"));
+    remember_file_option(find_option("BoldAsFont"));
   }
 }
 
@@ -347,20 +365,22 @@ save_config(void)
     }
   }
   else {
-    for (uint j = 0; j < option_order_len; j++) {
-      uint i = option_order[j];
+    for (uint j = 0; j < file_opts_num; j++) {
+      uint i = file_opts[j];
       if (!(options[i].type & OPT_COMPAT)) {
         fprintf(file, "%s=", options[i].name);
         uint offset = options[i].offset;
+        void *cfg_p = memchr(arg_opts, i, arg_opts_num) ? &file_cfg : &cfg;
+        void *val_p = cfg_p + offset;
         switch (options[i].type) {
           when OPT_STRING:
-            fprintf(file, "%s\n", atoffset(string, cfg, offset));
+            fprintf(file, "%s\n", *(string *)val_p);
           when OPT_BOOL:
-            fprintf(file, "%i\n", atoffset(bool, cfg, offset));
+            fprintf(file, "%i\n", *(bool *)val_p);
           when OPT_INT:
-            fprintf(file, "%i\n", atoffset(int, cfg, offset));
+            fprintf(file, "%i\n", *(int *)val_p);
           when OPT_COLOUR: {
-            colour c = atoffset(colour, cfg, offset);
+            colour c = *(colour *)val_p;
             fprintf(file, "%u,%u,%u\n", red(c), green(c), blue(c));
           }
         }
@@ -388,8 +408,8 @@ apply_config(void)
       type == OPT_STRING
       ? strcmp(atoffset(string, cfg, off), atoffset(string, new_cfg, off))
       : memcmp((void *)&cfg + off, (void *)&new_cfg + off, size);
-    if (changed && !memchr(option_order, i, option_order_len))
-      option_order[option_order_len++] = i;
+    if (changed && !memchr(arg_opts, i, arg_opts_num))
+      remember_file_option(i);
   }
   
   win_reconfig();

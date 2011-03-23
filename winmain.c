@@ -814,7 +814,7 @@ main(int argc, char *argv[])
 #endif
     asform("/home/%s", getlogin());
 
-  start_config();
+  init_config();
 
   load_config("/etc/minttyrc");
   
@@ -829,7 +829,7 @@ main(int argc, char *argv[])
     char *longopt = argv[optind - 1], *shortopt = (char[]){'-', optopt, 0};
     switch (opt) {
       when 'c': load_config(optarg);
-      when 'o': parse_option(optarg);
+      when 'o': parse_arg_option(optarg);
       when 't': title = optarg;
       when 'i': icon_file = optarg;
       when 'l': log_file = optarg;
