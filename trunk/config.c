@@ -89,7 +89,7 @@ static config file_cfg;
 
 typedef enum {
   OPT_STRING, OPT_BOOL, OPT_INT, OPT_COLOUR,
-  OPT_COMPAT = 8
+  OPT_LEGACY = 8
 } opt_type;
 
 static const uchar opt_type_sizes[] = {
@@ -193,8 +193,8 @@ options[] = {
   {"BoldWhite", OPT_COLOUR, offcfg(ansi_colours[BOLD_WHITE_I])},
 
   // Backward compatibility
-  {"UseSystemColours", OPT_BOOL | OPT_COMPAT, offcfg(use_system_colours)},
-  {"BoldAsBright", OPT_BOOL | OPT_COMPAT, offcfg(bold_as_colour)},
+  {"UseSystemColours", OPT_BOOL | OPT_LEGACY, offcfg(use_system_colours)},
+  {"BoldAsBright", OPT_BOOL | OPT_LEGACY, offcfg(bold_as_colour)},
 };
 
 static int
@@ -210,18 +210,47 @@ find_option(string name)
 static uchar file_opts[lengthof(options)], arg_opts[lengthof(options)];
 static uint file_opts_num, arg_opts_num;
 
+static bool
+seen_file_option(uint i)
+{
+  return memchr(file_opts, i, file_opts_num);
+}
+
 static void
 remember_file_option(uint i)
 {
-  if (!memchr(file_opts, i, file_opts_num))
+  if (!seen_file_option(i))
     file_opts[file_opts_num++] = i;
+}
+
+static bool
+seen_arg_option(uint i)
+{
+  return memchr(arg_opts, i, arg_opts_num);
 }
 
 static void
 remember_arg_option(uint i)
 {
-  if (!memchr(arg_opts, i, arg_opts_num))
+  if (!seen_arg_option(i))
     arg_opts[arg_opts_num++] = i;
+}
+
+static void
+check_legacy_options(void (*remember_option)(uint))
+{
+  if (cfg.use_system_colours) {
+    // Translate 'UseSystemColours' to colour settings.
+    cfg.fg_colour = cfg.cursor_colour = win_get_sys_colour(true);
+    cfg.bg_colour = win_get_sys_colour(false);
+    cfg.use_system_colours = false;
+
+    // Make sure they're written to the config file.
+    // This assumes that the colour options are the first three in options[].
+    remember_option(0);
+    remember_option(1);
+    remember_option(2);
+  }
 }
 
 static int
@@ -242,7 +271,7 @@ parse_option(string option)
   
   string val = eq + 1;
   uint offset = options[i].offset;
-  switch (options[i].type & ~OPT_COMPAT) {
+  switch (options[i].type & ~OPT_LEGACY) {
     when OPT_STRING:
       strset(&atoffset(string, cfg, offset), val);
     when OPT_BOOL:
@@ -262,8 +291,10 @@ void
 parse_arg_option(string option)
 {
   int i = parse_option(option);
-  if (i >= 0)
+  if (i >= 0) {
     remember_arg_option(i);
+    check_legacy_options(remember_arg_option);
+  }
 }
 
 void
@@ -290,6 +321,8 @@ load_config(string filename)
     fclose(file);
   }
   
+  check_legacy_options(remember_file_option);
+  
   copy_config(&file_cfg, &cfg);
 }
 
@@ -299,7 +332,7 @@ copy_config(config *dst, const config *src)
   for (uint i = 0; i < lengthof(options); i++) {
     uint offset = options[i].offset;
     opt_type type = options[i].type;
-    if (options[i].type & OPT_COMPAT)
+    if (options[i].type & OPT_LEGACY)
       ; // skip
     else if (options[i].type == OPT_STRING)
       strset(&atoffset(string, *dst, offset), atoffset(string, *src, offset));
@@ -320,18 +353,6 @@ finish_config(void)
   // Ignore charset setting if we haven't got a locale.
   if (!*cfg.locale)
     strset(&cfg.charset, "");
-  
-  if (cfg.use_system_colours) {
-    // Translate 'UseSystemColours' to colour settings.
-    cfg.fg_colour = cfg.cursor_colour = win_get_sys_colour(true);
-    cfg.bg_colour = win_get_sys_colour(false);
-
-    // Make sure they're written to the config file.
-    // This assumes that the colour options are the first three in options[].
-    remember_file_option(0);
-    remember_file_option(1);
-    remember_file_option(2);
-  }
   
   // bold_as_font used to be implied by !bold_as_colour.
   if (cfg.bold_as_font == -1) {
@@ -367,10 +388,10 @@ save_config(void)
   else {
     for (uint j = 0; j < file_opts_num; j++) {
       uint i = file_opts[j];
-      if (!(options[i].type & OPT_COMPAT)) {
+      if (!(options[i].type & OPT_LEGACY)) {
         fprintf(file, "%s=", options[i].name);
         uint offset = options[i].offset;
-        void *cfg_p = memchr(arg_opts, i, arg_opts_num) ? &file_cfg : &cfg;
+        void *cfg_p = seen_arg_option(i) ? &file_cfg : &cfg;
         void *val_p = cfg_p + offset;
         switch (options[i].type) {
           when OPT_STRING:
@@ -408,7 +429,7 @@ apply_config(void)
       type == OPT_STRING
       ? strcmp(atoffset(string, cfg, off), atoffset(string, new_cfg, off))
       : memcmp((void *)&cfg + off, (void *)&new_cfg + off, size);
-    if (changed && !memchr(arg_opts, i, arg_opts_num))
+    if (changed && !seen_arg_option(i))
       remember_file_option(i);
   }
   
