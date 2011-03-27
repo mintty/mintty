@@ -158,7 +158,7 @@ child_create(char *argv[], struct winsize *winp)
   else { // Parent process.
     fcntl(pty_fd, F_SETFL, O_NONBLOCK);
     
-    if (utmp_enabled) {
+    if (cfg.utmp) {
       struct utmp ut;
       memset(&ut, 0, sizeof ut);
       ut.ut_type = USER_PROCESS;
@@ -182,8 +182,8 @@ child_create(char *argv[], struct winsize *winp)
   win_fd = open("/dev/windows", O_RDONLY);
 
   // Open log file if any
-  if (log_file) {
-    log_fd = open(log_file, O_WRONLY | O_CREAT, 0600);
+  if (*cfg.log) {
+    log_fd = open(cfg.log, O_WRONLY | O_CREAT, 0600);
     if (log_fd < 0)
       error("open log file");
   }
@@ -208,13 +208,13 @@ child_proc(void)
         pid = 0;
         
         // Decide whether we want to exit now or later
-        if (killed || hold == HOLD_NEVER)
+        if (killed || cfg.hold == HOLD_NEVER)
           exit(0);
-        else if (hold == HOLD_DEFAULT) {
+        else if (cfg.hold == HOLD_DEFAULT) {
           if (WIFSIGNALED(status) || WEXITSTATUS(status) != 255)
             exit(0);
         }
-        else if (hold == HOLD_ERROR) {
+        else if (cfg.hold == HOLD_ERROR) {
           if (WIFEXITED(status)) {
             if (WEXITSTATUS(status) == 0)
               exit(0);

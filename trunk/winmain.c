@@ -29,20 +29,16 @@ HINSTANCE inst;
 HWND wnd;
 HIMC imc;
 
-static ATOM class_atom;
-
 bool win_is_full_screen;
 
-static bool fullscr_on_max;
+static char **main_argv;
+static ATOM class_atom;
 
 static int extra_width, extra_height;
-
+static bool fullscr_on_max;
 static bool resizing;
 
 static HBITMAP caretbm;
-
-static char **main_argv;
-
 
 #if WINVER < 0x500
 
@@ -699,7 +695,7 @@ static const char help[] =
   "  -s, --size COLS,ROWS  Set screen size in characters\n"
   "  -w, --window normal|min|max|full  Set initial window state\n"
   "  -t, --title TITLE     Set window title (default: the invoked command)\n"
-  "      --class CLASS     Set window class name (default: " APPNAME ")\n"
+  "  -C, --class CLASS     Set window class name (default: " APPNAME ")\n"
   "  -i, --icon FILE[,IX]  Load window icon from file, optionally with index\n"
   "  -l, --log FILE        Log output to file\n"
   "  -u, --utmp            Create a utmp entry\n"
@@ -710,7 +706,7 @@ static const char help[] =
   "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = "+:HVuec:o:p:s:w:t:i:l:h:";
+static const char short_opts[] = "+:HVuec:o:p:s:w:t:C:i:l:h:";
 
 static const struct option
 opts[] = { 
@@ -754,7 +750,7 @@ error(bool syntax, char *format, ...)
 
 typedef struct {
   string name;
-  uint val;
+  int val;
 } optarg_mapping;
 
 optarg_mapping
@@ -762,7 +758,7 @@ window_optargs[] = {
   {"normal", SW_SHOWNORMAL},
   {"min", SW_SHOWMINIMIZED},
   {"max", SW_SHOWMAXIMIZED},
-  {"full", UINT_MAX},
+  {"full", -1},
   {0, 0}
 };
 
@@ -774,7 +770,7 @@ hold_optargs[] = {
   {0, 0}
 };
 
-static uint
+static int
 lookup_optarg(char *opt, char *arg, optarg_mapping *mappings)
 {
   int len = strlen(arg);
@@ -790,37 +786,34 @@ int
 main(int argc, char *argv[])
 {
   main_argv = argv;
+  load_funcs();
   setlocale(LC_CTYPE, "");
 
-  STARTUPINFO sui;
-  GetStartupInfo(&sui);
-  uint show = sui.dwFlags & STARTF_USESHOWWINDOW ? sui.wShowWindow : SW_SHOW;
-  
-  char *title = 0, *icon_file = 0;
-  int x = CW_USEDEFAULT, y = CW_USEDEFAULT;
-  uint rows = 0, cols = 0;
-  wchar *class_name = _W(APPNAME);
-  
+  // Determine home directory.
   home = getenv("HOME");
-
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
   // Before Cygwin 1.5, the passwd structure is faked.
   struct passwd *pw = getpwuid(getuid());
 #endif
-  
   home = home ? strdup(home) :
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
     (pw && pw->pw_dir && *pw->pw_dir) ? strdup(pw->pw_dir) :
 #endif
     asform("/home/%s", getlogin());
 
+  // Load config files and process command line options.
   init_config();
 
-  load_config("/etc/minttyrc");
+  // Set size and position defaults.
+  STARTUPINFO sui;
+  GetStartupInfo(&sui);
+  cfg.window = sui.dwFlags & STARTF_USESHOWWINDOW ? sui.wShowWindow : SW_SHOW;
+  cfg.x = cfg.y = CW_USEDEFAULT;
   
-  char *rc_file = asform("%s/.minttyrc", home);
+  load_config("/etc/minttyrc");
+  string rc_file = asform("%s/.minttyrc", home);
   load_config(rc_file);
-  free(rc_file);
+  delete(rc_file);
 
   for (;;) {
     int opt = getopt_long(argc, argv, short_opts, opts, 0);
@@ -830,27 +823,23 @@ main(int argc, char *argv[])
     switch (opt) {
       when 'c': load_config(optarg);
       when 'o': parse_arg_option(optarg);
-      when 't': title = optarg;
-      when 'i': icon_file = optarg;
-      when 'l': log_file = optarg;
-      when 'u': utmp_enabled = true;
+      when 't': strset(&cfg.title, optarg);
+      when 'C': strset(&cfg.class, optarg);
+      when 'i': strset(&cfg.icon, optarg);
+      when 'l': strset(&cfg.log, optarg);
+      when 'u': cfg.utmp = true;
       when 'p':
-        if (sscanf(optarg, "%i,%i%1s", &x, &y, (char[2]){}) != 2)
+        if (sscanf(optarg, "%i,%i%1s", &cfg.x, &cfg.y, (char[2]){}) != 2)
           error(true, "syntax error in position argument '%s'", optarg);
       when 's':
-        if (sscanf(optarg, "%u,%u%1s", &cols, &rows, (char[2]){}) != 2)
+        if (sscanf(optarg, "%u,%u%1s", &cfg.cols, &cfg.rows, (char[2]){}) != 2)
           error(true, "syntax error in size argument '%s'", optarg);
+        remember_arg("Columns");
+        remember_arg("Rows");
       when 'w':
-        show = lookup_optarg("window", optarg, window_optargs);
+        cfg.window = lookup_optarg("window", optarg, window_optargs);
       when 'h':
-        hold = lookup_optarg("hold", optarg, hold_optargs);
-      when 'C': {
-        int len = mbstowcs(0, optarg, 0);
-        if (len < 0)
-          error(false, "invalid character in class name '%s'", optarg);
-        class_name = newn(wchar, len + 1);
-        mbstowcs(class_name, optarg, len + 1);
-      }
+        cfg.hold = lookup_optarg("hold", optarg, hold_optargs);
       when 'H':
         show_msg(stdout, help);
         return 0;
@@ -866,35 +855,6 @@ main(int argc, char *argv[])
   }
   
   finish_config();
-
-  load_funcs();
-
-  HICON small_icon = 0, large_icon = 0;
-  if (icon_file) {
-    uint icon_index = 0;
-    char *comma = strrchr(icon_file, ',');
-    if (comma) {
-      char *start = comma + 1, *end;
-      icon_index = strtoul(start, &end, 0);
-      if (start != end && !*end)
-        *comma = 0;
-      else
-        icon_index = 0;
-    }
-#if CYGWIN_VERSION_API_MINOR >= 181
-    wchar *win_icon_file = cygwin_create_path(CCP_POSIX_TO_WIN_W, icon_file);
-    if (!win_icon_file)
-      error(false, "invalid icon file path '%s'", icon_file);
-    ExtractIconExW(win_icon_file, icon_index, &large_icon, &small_icon, 1);
-    free(win_icon_file);
-#else
-    char win_icon_file[MAX_PATH];
-    cygwin_conv_to_win32_path(icon_file, win_icon_file);
-    ExtractIconExA(win_icon_file, icon_index, &large_icon, &small_icon, 1);
-#endif
-    if (!small_icon || !large_icon)
-      error(false, "could not load icon from '%s'", icon_file);
-  }
 
   // Work out what to execute.
   argv += optind;
@@ -922,14 +882,48 @@ main(int argc, char *argv[])
     *argv = arg0;
   }
   
-  // Put child command line into window title if we haven't got one already.
-  if (!title) {
-    size_t len;
-    argz_create(argv, &title, &len);
-    argz_stringify(title, len, ' ');
+  // Load icon if specified.
+  HICON small_icon = 0, large_icon = 0;
+  if (*cfg.icon) {
+    uint icon_index = 0;
+    char *comma = strrchr(cfg.icon, ',');
+    if (comma) {
+      char *start = comma + 1, *end;
+      icon_index = strtoul(start, &end, 0);
+      if (start != end && !*end)
+        *comma = 0;
+      else
+        icon_index = 0;
+    }
+#if CYGWIN_VERSION_API_MINOR >= 181
+    wchar *win_icon_file = cygwin_create_path(CCP_POSIX_TO_WIN_W, cfg.icon);
+    if (!win_icon_file)
+      error(false, "invalid icon file path '%s'", cfg.icon);
+    ExtractIconExW(win_icon_file, icon_index, &large_icon, &small_icon, 1);
+    free(win_icon_file);
+#else
+    char win_icon_file[MAX_PATH];
+    cygwin_conv_to_win32_path(cfg.icon, win_icon_file);
+    ExtractIconExA(win_icon_file, icon_index, &large_icon, &small_icon, 1);
+#endif
+    if (!small_icon || !large_icon)
+      error(false, "could not load icon from '%s'", cfg.icon);
   }
 
   inst = GetModuleHandle(NULL);
+
+  // Window class name.
+  wstring wclass = _W(APPNAME);
+  if (*cfg.class) {
+    size_t size = mbstowcs(0, cfg.class, 0) + 1;
+    if (size) {
+      wchar *buf = newn(wchar, size);
+      mbstowcs(buf, cfg.class, size);
+      wclass = buf;
+    }
+    else
+      fputs("Using default class name due to invalid characters.\n", stderr);
+  }
 
   // The window class.
   class_atom = RegisterClassExW(&(WNDCLASSEXW){
@@ -944,19 +938,17 @@ main(int argc, char *argv[])
     .hCursor = LoadCursor(null, IDC_IBEAM),
     .hbrBackground = null,
     .lpszMenuName = null,
-    .lpszClassName = class_name,
+    .lpszClassName = wclass,
   });
+
 
   // Initialise the fonts, thus also determining their width and height.
   font_size = cfg.font.size;
   win_init_fonts();
   
-  // Determine window size.
-  rows = rows ?: max(1, cfg.rows);
-  cols = cols ?: max(1, cfg.cols);
-
-  int term_width = font_width * cols;
-  int term_height = font_height * rows;
+  // Determine window sizes.
+  int term_width = font_width * cfg.cols;
+  int term_height = font_height * cfg.rows;
 
   RECT cr = {0, 0, term_width + 2 * PADDING, term_height + 2 * PADDING};
   RECT wr = cr;
@@ -970,25 +962,48 @@ main(int argc, char *argv[])
   extra_width = width - (cr.right - cr.left);
   extra_height = height - (cr.bottom - cr.top);
   
-  // Convert window title to Unicode.
-  size_t title_size = strlen(title) + 1;
-  wchar *wtitle = newn(wchar, title_size);
-  mbstowcs(wtitle, title, title_size);
+  // Put child command line into window title if we haven't got one already.
+  string title = cfg.title;
+  if (!*title) {
+    size_t len;
+    char *argz;
+    argz_create(argv, &argz, &len);
+    argz_stringify(argz, len, ' ');
+    title = argz;
+  }
 
-  // Create initial window.  
+  // Convert title to Unicode. Default to application name if unsuccessful.
+  wstring wtitle = _W(APPNAME);
+  {
+    size_t size = mbstowcs(0, title, 0) + 1;
+    if (size) {
+      wchar *buf = newn(wchar, size);
+      mbstowcs(buf, title, size);
+      wtitle = buf;
+    }
+    else
+      fputs("Using default title due to invalid characters.\n", stderr);
+  }
+
+  // Having x == CW_USEDEFAULT but not still triggers the default positioning,
+  // whereas y==CW_USEFAULT but not x results in an invisible window, so to
+  // avoid the latter, require both x and y to be set for custom positioning.
+  if (cfg.y == (int)CW_USEDEFAULT)
+    cfg.x = CW_USEDEFAULT;
+
+  // Create initial window.
   wnd = CreateWindowExW(cfg.scrollbar < 0 ? WS_EX_LEFTSCROLLBAR : 0,
-                        class_name, wtitle,
+                        wclass, wtitle,
                         WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
-                        x, y, width, height,
+                        cfg.x, cfg.y, width, height,
                         null, null, inst, null);
-  free(wtitle);
 
   // The input method context.
   imc = ImmGetContext(wnd);
 
   // Correct autoplacement, which likes to put part of the window under the
   // taskbar when the window size approaches the work area size.
-  if (x == (int)CW_USEDEFAULT) {
+  if (cfg.x == (int)CW_USEDEFAULT) {
     GetWindowRect(wnd, &wr);
     
     // Fetch work area size.
@@ -1016,7 +1031,7 @@ main(int argc, char *argv[])
 
   // Initialise the terminal.
   term_reset();
-  term_resize(rows, cols);
+  term_resize(cfg.rows, cfg.cols);
 
   // Initialise the scroll bar.
   SetScrollInfo(
@@ -1024,8 +1039,8 @@ main(int argc, char *argv[])
     &(SCROLLINFO){
       .cbSize = sizeof(SCROLLINFO),
       .fMask = SIF_ALL | SIF_DISABLENOSCROLL,
-      .nMin = 0, .nMax = rows - 1,
-      .nPage = rows, .nPos = 0,
+      .nMin = 0, .nMax = cfg.rows - 1,
+      .nPage = cfg.rows, .nPos = 0,
     },
     false
   );
@@ -1040,11 +1055,13 @@ main(int argc, char *argv[])
   update_transparency();
   
   // Create child process.
-  child_create(argv, &(struct winsize){rows, cols, term_width, term_height});
+  child_create(
+    argv, &(struct winsize){cfg.rows, cfg.cols, term_width, term_height}
+  );
 
   // Finally show the window!
-  fullscr_on_max = (show == UINT_MAX);
-  ShowWindow(wnd, fullscr_on_max ? SW_SHOWMAXIMIZED : show);
+  fullscr_on_max = (cfg.window == -1);
+  ShowWindow(wnd, fullscr_on_max ? SW_SHOWMAXIMIZED : cfg.window);
 
   // Message loop.
   for (;;) {
