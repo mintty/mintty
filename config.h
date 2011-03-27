@@ -3,22 +3,15 @@
 
 #include "term.h"
 
-typedef enum { HOLD_DEFAULT, HOLD_NEVER, HOLD_ALWAYS, HOLD_ERROR } hold_t;
-extern hold_t hold;
-
-extern string log_file;
-extern bool utmp_enabled;
-
 typedef struct {
   string name;
   int size;
   bool isbold;
 } font_spec;
 
+enum { HOLD_DEFAULT, HOLD_NEVER, HOLD_ALWAYS, HOLD_ERROR };
 enum { CUR_BLOCK, CUR_UNDERSCORE, CUR_LINE };
-
 enum { FQ_DEFAULT, FQ_ANTIALIASED, FQ_NONANTIALIASED, FQ_CLEARTYPE };
-
 enum { RC_SHOWMENU, RC_PASTE, RC_EXTEND };
 
 typedef struct {
@@ -66,6 +59,15 @@ typedef struct {
   bool bell_taskbar;
   string printer;
   bool confirm_exit;
+  // Command line
+  int x, y;
+  int window;
+  string title;
+  string class;
+  string icon;
+  string log;
+  bool utmp;
+  int hold;
   // Hidden
   int col_spacing, row_spacing;
   string word_chars;
@@ -79,6 +81,7 @@ extern config cfg, new_cfg;
 void init_config(void);
 void load_config(string filename);
 void parse_arg_option(string);
+void remember_arg(string);
 void finish_config(void);
 void copy_config(config *dst, const config *src);
 

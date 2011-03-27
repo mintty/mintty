@@ -12,10 +12,6 @@
 #include <termios.h>
 #include <sys/cygwin.h>
 
-string log_file = 0;
-bool utmp_enabled = false;
-hold_t hold = HOLD_DEFAULT;
-
 #if CYGWIN_VERSION_API_MINOR >= 222
 static wstring rc_filename = 0;
 #else
@@ -70,6 +66,13 @@ const config default_cfg = {
   .bell_taskbar = true,
   .printer = "",
   .confirm_exit = true,
+  // Command line
+  .title = "",
+  .class = "",
+  .icon = "",
+  .log = "",
+  .utmp = false,
+  .hold = HOLD_DEFAULT,
   // Hidden
   .col_spacing = 0,
   .row_spacing = 0,
@@ -162,6 +165,17 @@ options[] = {
   {"Printer", OPT_STRING, offcfg(printer)},
   {"ConfirmExit", OPT_BOOL, offcfg(confirm_exit)},
 
+  // Command line
+  {"X", OPT_INT, offcfg(x)},
+  {"Y", OPT_INT, offcfg(y)},
+  {"Window", OPT_INT, offcfg(window)},
+  {"Title", OPT_STRING, offcfg(title)},
+  {"Class", OPT_STRING, offcfg(class)},
+  {"Icon", OPT_STRING, offcfg(icon)},
+  {"Log", OPT_STRING, offcfg(log)},
+  {"Utmp", OPT_BOOL, offcfg(utmp)},
+  {"Hold", OPT_INT, offcfg(hold)},
+
   // Hidden
   
   // Character spacing
@@ -234,6 +248,12 @@ remember_arg_option(uint i)
 {
   if (!seen_arg_option(i))
     arg_opts[arg_opts_num++] = i;
+}
+
+void
+remember_arg(string option)
+{
+  remember_arg_option(find_option(option));
 }
 
 static void
@@ -350,6 +370,11 @@ init_config(void)
 void
 finish_config(void)
 {
+  // Avoid negative sizes.
+  cfg.rows = max(1, cfg.rows);
+  cfg.cols = max(1, cfg.cols);
+  cfg.scrollback_lines = max(0, cfg.scrollback_lines);
+  
   // Ignore charset setting if we haven't got a locale.
   if (!*cfg.locale)
     strset(&cfg.charset, "");
