@@ -354,6 +354,11 @@ win_key_down(WPARAM wp, LPARAM lp)
     return 1;
   }
   
+  // Exit when pressing Enter or Escape while holding the window open after
+  // the child process has died.
+  if ((key == VK_RETURN || key == VK_ESCAPE) && !mods && !child_is_alive())
+    exit(0);
+  
   if (!term.shortcut_override) {
 
     // Copy&paste

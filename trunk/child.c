@@ -232,7 +232,7 @@ child_proc(void)
         char *s = 0; 
         if (WIFEXITED(status)) {
           int code = WEXITSTATUS(status);
-          if (code && code != 255)
+          if (code && cfg.hold != HOLD_DEFAULT)
             l = asprintf(&s, "%s: Exit %i", cmd, code); 
         }
         else if (WIFSIGNALED(status))
@@ -287,6 +287,12 @@ child_kill(bool point_blank)
       point_blank)
     exit(0);
   killed = true;
+}
+
+bool
+child_is_alive(void)
+{
+    return pid;
 }
 
 bool
