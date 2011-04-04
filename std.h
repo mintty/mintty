@@ -33,7 +33,7 @@ int vasprintf(char **, const char *, va_list);
 #endif
 char *asform(const char *fmt, ...);
 
-#define WINVER 0x400
+#define WINVER 0x500  // Windows 2000
 #define _WIN32_WINNT WINVER
 #define _WIN32_IE WINVER
 

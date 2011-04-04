@@ -56,6 +56,4 @@ void win_set_ime_open(bool);
 
 bool win_is_fullscreen;
 
-DWORD (WINAPI *pGetGlyphIndicesW)(HDC,LPCWSTR,int,LPWORD,DWORD);
-
 #endif

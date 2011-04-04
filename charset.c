@@ -115,22 +115,6 @@ cs_descs[] = {
 string locale_menu[8];
 string charset_menu[lengthof(cs_descs) + 4];
 
-static LANGID WINAPI (*pGetUserDefaultUILanguage)(void);
-static LANGID WINAPI (*pGetSystemDefaultUILanguage)(void);
-static BOOL WINAPI (*pGetCPInfoExW)(UINT,DWORD,LPCPINFOEXW);
-
-static void
-load_funcs(void)
-{
-  HMODULE kernel = GetModuleHandle("kernel32");
-  pGetUserDefaultUILanguage =
-    (void *)GetProcAddress(kernel, "GetUserDefaultUILanguage");
-  pGetSystemDefaultUILanguage =
-    (void *)GetProcAddress(kernel, "GetSystemDefaultUILanguage");
-  pGetCPInfoExW =
-    (void *)GetProcAddress(kernel, "GetCPInfoExW");
-}
-
 static void
 strtoupper(char *dst, string src)
 {
@@ -216,12 +200,10 @@ init_locale_menu(void)
   }
   
   locale_menu[count++] = "(Default)";
-  if (pGetUserDefaultUILanguage)
-    add_lcid(pGetUserDefaultUILanguage());
+  add_lcid(GetUserDefaultUILanguage());
   add_lcid(LOCALE_USER_DEFAULT);
   add_lcid(LOCALE_SYSTEM_DEFAULT);
-  if (pGetSystemDefaultUILanguage)
-    add_lcid(pGetSystemDefaultUILanguage());
+  add_lcid(GetSystemDefaultUILanguage());
   locale_menu[count++] = "C";
 }
 
@@ -249,25 +231,14 @@ init_charset_menu(void)
 static void
 get_cp_info(void)
 {
-  if (pGetCPInfoExW) {
-    CPINFOEXW cpi;
-    pGetCPInfoExW(codepage, 0, &cpi);
-    cs_cur_max = cpi.MaxCharSize;
-    cp_default_wchar = cpi.UnicodeDefaultChar;
-    int len =
-      WideCharToMultiByte(codepage, 0, &cp_default_wchar, 1,
-                          cp_default_char, sizeof cp_default_char - 1, 0, 0);
-    cp_default_char[len] = 0;
-  }
-  else {
-    CPINFO cpi;
-    GetCPInfo(codepage, &cpi);
-    cs_cur_max = cpi.MaxCharSize;
-    memcpy(cp_default_char, cpi.DefaultChar, MAX_DEFAULTCHAR);
-    cp_default_char[MAX_DEFAULTCHAR] = 0;
-    MultiByteToWideChar(codepage, 0, cp_default_char, -1, &cp_default_wchar, 1);
-  }
-
+  CPINFOEXW cpi;
+  GetCPInfoExW(codepage, 0, &cpi);
+  cs_cur_max = cpi.MaxCharSize;
+  cp_default_wchar = cpi.UnicodeDefaultChar;
+  int len =
+    WideCharToMultiByte(codepage, 0, &cp_default_wchar, 1,
+                        cp_default_char, sizeof cp_default_char - 1, 0, 0);
+  cp_default_char[len] = 0;
 }
 
 static void
@@ -379,8 +350,6 @@ getlocenv(string name)
 string
 cs_init(void)
 {
-  load_funcs();
-
   init_locale_menu();
   init_charset_menu();
   

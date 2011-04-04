@@ -193,26 +193,19 @@ win_init_fonts(void)
     line_char_width  >= latin_char_width * 1.5;
   
   // Initialise VT100 linedraw character mappings.
-  if (!pGetGlyphIndicesW) {
-    // Can't tell what glyphs are available: default to proper Unicode mappings
-    for (uint i = 0; i < LDRAW_CHAR_NUM; i++)
-      win_linedraw_chars[i] = *linedraw_chars[i];
-  }
-  else {
-    // See what glyphs are available.
-    ushort glyphs[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES];
-    pGetGlyphIndicesW(dc, *linedraw_chars, LDRAW_CHAR_NUM * LDRAW_CHAR_TRIES,
-                      *glyphs, true);
-    
-    // For each character, try the list of possible mappings until either we
-    // find one that has a glyph in the font or we hit the ASCII fallback.
-    for (uint i = 0; i < LDRAW_CHAR_NUM; i++) {
-      uint j = 0;
-      while (linedraw_chars[i][j] >= 0x80 &&
-             (glyphs[i][j] == 0xFFFF || glyphs[i][j] == 0x1F))
-        j++;
-      win_linedraw_chars[i] = linedraw_chars[i][j];
-    }
+  // See what glyphs are available.
+  ushort glyphs[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES];
+  GetGlyphIndicesW(dc, *linedraw_chars, LDRAW_CHAR_NUM * LDRAW_CHAR_TRIES,
+                   *glyphs, true);
+  
+  // For each character, try the list of possible mappings until either we
+  // find one that has a glyph in the font or we hit the ASCII fallback.
+  for (uint i = 0; i < LDRAW_CHAR_NUM; i++) {
+    uint j = 0;
+    while (linedraw_chars[i][j] >= 0x80 &&
+           (glyphs[i][j] == 0xFFFF || glyphs[i][j] == 0x1F))
+      j++;
+    win_linedraw_chars[i] = linedraw_chars[i][j];
   }
 
   fonts[FONT_UNDERLINE] = create_font(fw_dontcare, true);
