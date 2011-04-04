@@ -40,24 +40,7 @@ static bool resizing;
 
 static HBITMAP caretbm;
 
-#if WINVER < 0x500
-
-#define MONITOR_DEFAULTTONEAREST 2 
-
-#define FLASHW_STOP 0
-#define FLASHW_CAPTION 1
-#define FLASHW_TRAY 2
-#define FLASHW_TIMER 4
-
-typedef struct {
-  UINT  cbSize;
-  HWND  hwnd;
-  DWORD dwFlags;
-  UINT  uCount;
-  DWORD dwTimeout;
-} FLASHWINFO, *PFLASHWINFO;
-
-#define LWA_ALPHA	0x02
+#if WINVER < 0x600
 
 typedef struct {
   int cxLeftWidth;
@@ -68,26 +51,12 @@ typedef struct {
 
 #endif
 
-static HMONITOR (WINAPI *pMonitorFromWindow)(HWND,DWORD);
-static BOOL (WINAPI *pGetMonitorInfo)(HMONITOR,LPMONITORINFO);
-static BOOL (WINAPI *pFlashWindowEx)(PFLASHWINFO);
-static BOOL (WINAPI *pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD);
 static HRESULT (WINAPI *pDwmIsCompositionEnabled)(BOOL *);
 static HRESULT (WINAPI *pDwmExtendFrameIntoClientArea)(HWND, const MARGINS *);
 
 static void
 load_funcs(void)
 {
-  HMODULE user = GetModuleHandle("user32");
-  pMonitorFromWindow = (void *)GetProcAddress(user, "MonitorFromWindow");
-  pGetMonitorInfo = (void *)GetProcAddress(user, "GetMonitorInfoA");
-  pFlashWindowEx = (void *)GetProcAddress(user, "FlashWindowEx");
-  pSetLayeredWindowAttributes =
-    (void *)GetProcAddress(user, "SetLayeredWindowAttributes");
-  
-  HMODULE gdi = GetModuleHandle("gdi32");
-  pGetGlyphIndicesW = (void *)GetProcAddress(gdi, "GetGlyphIndicesW");
-  
   char dwm_path[MAX_PATH];
   uint len = GetSystemDirectory(dwm_path, MAX_PATH);
   if (len && len < MAX_PATH - sizeof("\\dwmapi.dll")) {
@@ -226,9 +195,8 @@ static void
 flash_taskbar(bool enable)
 {
   static bool enabled;
-  if (enable != enabled && pFlashWindowEx) {
-    
-    pFlashWindowEx(&(FLASHWINFO){
+  if (enable != enabled) {
+    FlashWindowEx(&(FLASHWINFO){
       .cbSize = sizeof(FLASHWINFO),
       .hwnd = wnd,
       .dwFlags = enable ? FLASHW_TRAY | FLASHW_TIMER : FLASHW_STOP,
@@ -251,22 +219,12 @@ win_bell(void)
     flash_taskbar(true);
 }
 
-/* Get the rect/size of a full screen window using the nearest available
- * monitor in multimon systems; default to something sensible if only
- * one monitor is present. */
 static void
-get_fullscreen_rect(RECT *rect)
+get_monitor_info(MONITORINFO *mip)
 {
-  if (pMonitorFromWindow) {
-    HMONITOR mon;
-    MONITORINFO mi;
-    mon = pMonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
-    mi.cbSize = sizeof (mi);
-    pGetMonitorInfo(mon, &mi);
-    *rect = mi.rcMonitor;
-  }
-  else
-    GetClientRect(GetDesktopWindow(), rect);
+  HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+  mip->cbSize = sizeof(MONITORINFO);
+  GetMonitorInfo(mon, mip);
 }
 
 void
@@ -356,10 +314,11 @@ make_fullscreen(void)
   update_glass();
 
  /* Resize ourselves to exactly cover the nearest monitor. */
-  RECT ss;
-  get_fullscreen_rect(&ss);
-  SetWindowPos(wnd, HWND_TOP, ss.left, ss.top, ss.right - ss.left,
-               ss.bottom - ss.top, SWP_FRAMECHANGED);
+  MONITORINFO mi;
+  get_monitor_info(&mi);
+  RECT fr = mi.rcMonitor;
+  SetWindowPos(wnd, HWND_TOP, fr.left, fr.top,
+               fr.right - fr.left, fr.bottom - fr.top, SWP_FRAMECHANGED);
 }
 
 /*
@@ -414,16 +373,15 @@ static void
 update_transparency(void)
 {
   bool opaque = cfg.opaque_when_focused && term.has_focus;
-  if (pSetLayeredWindowAttributes) {
-    int trans = max(cfg.transparency, 0);
-    long exstyle = GetWindowLong(wnd, GWL_EXSTYLE);
-    SetWindowLong(wnd, GWL_EXSTYLE,
-                  trans ? exstyle | WS_EX_LAYERED : exstyle & ~WS_EX_LAYERED);
-    if (trans) {
-      uchar alpha = opaque ? 255 : 255 - 16 * trans;
-      pSetLayeredWindowAttributes(wnd, 0, alpha, LWA_ALPHA);
-    }
+  int trans = max(cfg.transparency, 0);
+  long exstyle = GetWindowLong(wnd, GWL_EXSTYLE);
+  SetWindowLong(wnd, GWL_EXSTYLE,
+                trans ? exstyle | WS_EX_LAYERED : exstyle & ~WS_EX_LAYERED);
+  if (trans) {
+    uchar alpha = opaque ? 255 : 255 - 16 * trans;
+    SetLayeredWindowAttributes(wnd, 0, alpha, LWA_ALPHA);
   }
+
   update_glass();
 }
 
@@ -1004,20 +962,11 @@ main(int argc, char *argv[])
   // Correct autoplacement, which likes to put part of the window under the
   // taskbar when the window size approaches the work area size.
   if (cfg.x == (int)CW_USEDEFAULT) {
+    RECT wr;
     GetWindowRect(wnd, &wr);
-    
-    // Fetch work area size.
-    RECT ar;
-    if (pMonitorFromWindow) {
-      HMONITOR mon;
-      mon = pMonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
-      MONITORINFO mi;
-      mi.cbSize = sizeof (mi);
-      pGetMonitorInfo(mon, &mi);
-      ar = mi.rcWork;
-    }
-    else
-      SystemParametersInfo(SPI_GETWORKAREA, 0, &ar, 0);
+    MONITORINFO mi;
+    get_monitor_info(&mi);
+    RECT ar = mi.rcWork;
     
     // Correct edges. Top and left win if the window is too big.
     wr.left -= max(0, wr.right - ar.right);
