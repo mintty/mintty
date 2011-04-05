@@ -217,16 +217,18 @@ scrollback_push(uchar *line)
     if (term.sblen < cfg.scrollback_lines) {
       // Expand buffer
       assert(term.sbpos == 0);
-      int new_sblen = min(cfg.scrollback_lines, term.sblen * 10 + 1000);
+      int new_sblen = min(cfg.scrollback_lines, term.sblen * 3 + 1024);
       term.scrollback = renewn(term.scrollback, new_sblen);
       term.sbpos = term.sblen;
       term.sblen = new_sblen;
     }
-    else {
+    else if (term.sblines) {
       // Throw away the oldest line
       free(term.scrollback[term.sbpos]);
       term.sblines--;
     }
+    else
+      return;
   }
   assert(term.sblines < term.sblen);
   assert(term.sbpos < term.sblen);
