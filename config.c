@@ -324,23 +324,24 @@ set_option(string name, string val)
   if (i < 0)
     return i;
   
-  uint offset = options[i].offset;
+  void *val_p = (void *)&cfg + options[i].offset;
+  
   switch (options[i].type & ~OPT_LEGACY) {
     when OPT_STRING:
-      strset(&atoffset(string, cfg, offset), val);
+      strset(val_p, val);
     when OPT_BOOL:
-      atoffset(bool, cfg, offset) = atoi(val);
+      *(bool *)val_p = atoi(val);
     when OPT_INT:
-      atoffset(int, cfg, offset) = atoi(val);
+      *(int *)val_p = atoi(val);
     when OPT_COLOUR: {
       uint r, g, b;
       if (sscanf(val, "%u,%u,%u", &r, &g, &b) == 3)
-        atoffset(colour, cfg, offset) = make_colour(r, g, b);
+        *(colour *)val_p = make_colour(r, g, b);
     }
     when OPT_WINDOW:
-      lookup_opt_val(name, &atoffset(int, cfg, offset), window_vals, val);
+      lookup_opt_val(name, val_p, window_vals, val);
     when OPT_HOLD:
-      lookup_opt_val(name, &atoffset(int, cfg, offset), hold_vals, val);
+      lookup_opt_val(name, val_p, hold_vals, val);
   }
   return i;
 }
@@ -411,17 +412,19 @@ load_config(string filename)
 }
 
 void
-copy_config(config *dst, const config *src)
+copy_config(config *dst_p, const config *src_p)
 {
   for (uint i = 0; i < lengthof(options); i++) {
-    uint offset = options[i].offset;
     opt_type type = options[i].type;
-    if (options[i].type & OPT_LEGACY)
-      ; // skip
-    else if (options[i].type == OPT_STRING)
-      strset(&atoffset(string, *dst, offset), atoffset(string, *src, offset));
-    else
-      memcpy((void *)dst + offset, (void *)src + offset, opt_type_sizes[type]);
+    if (!(options[i].type & OPT_LEGACY)) {
+      uint offset = options[i].offset;
+      void *dst_val_p = (void *)dst_p + offset;
+      void *src_val_p = (void *)src_p + offset;
+      if (options[i].type == OPT_STRING)
+        strset(dst_val_p, *(string *)src_val_p);
+      else
+        memcpy(dst_val_p, src_val_p, opt_type_sizes[type]);
+    }
   }
 }
 
@@ -492,9 +495,8 @@ save_config(void)
       uint i = file_opts[j];
       if (!(options[i].type & OPT_LEGACY)) {
         fprintf(file, "%s=", options[i].name);
-        uint offset = options[i].offset;
         void *cfg_p = seen_arg_option(i) ? &file_cfg : &cfg;
-        void *val_p = cfg_p + offset;
+        void *val_p = cfg_p + options[i].offset;
         switch (options[i].type) {
           when OPT_STRING:
             fprintf(file, "%s", *(string *)val_p);
@@ -531,11 +533,14 @@ apply_config(void)
   // Record what's changed
   for (uint i = 0; i < lengthof(options); i++) {
     opt_type type = options[i].type;
-    uint size = opt_type_sizes[type], off = options[i].offset;
+    uint size = opt_type_sizes[type];
+    uint offset = options[i].offset;
+    void *val_p = (void *)&cfg + offset;
+    void *new_val_p = (void *)&new_cfg + offset;
     bool changed =
       type == OPT_STRING
-      ? strcmp(atoffset(string, cfg, off), atoffset(string, new_cfg, off))
-      : memcmp((void *)&cfg + off, (void *)&new_cfg + off, size);
+      ? strcmp(*(string *)val_p, *(string *)new_val_p)
+      : memcmp(val_p, new_val_p, size);
     if (changed && !seen_arg_option(i))
       remember_file_option(i);
   }
