@@ -706,40 +706,6 @@ error(bool syntax, char *format, ...)
   exit(1);
 }
 
-typedef struct {
-  string name;
-  int val;
-} optarg_mapping;
-
-optarg_mapping
-window_optargs[] = {
-  {"normal", SW_SHOWNORMAL},
-  {"min", SW_SHOWMINIMIZED},
-  {"max", SW_SHOWMAXIMIZED},
-  {"full", -1},
-  {0, 0}
-};
-
-optarg_mapping
-hold_optargs[] = {
-  {"always", HOLD_ALWAYS},
-  {"never", HOLD_NEVER},
-  {"error", HOLD_ERROR},
-  {0, 0}
-};
-
-static int
-lookup_optarg(char *opt, char *arg, optarg_mapping *mappings)
-{
-  int len = strlen(arg);
-  while (mappings->name) {
-    if (!memcmp(arg, mappings->name, len))
-      return mappings->val;
-    mappings++;
-  }
-  error(true, "invalid argument '%s' to option '%s'", arg, opt);
-}
-
 int
 main(int argc, char *argv[])
 {
@@ -779,13 +745,6 @@ main(int argc, char *argv[])
       break;
     char *longopt = argv[optind - 1], *shortopt = (char[]){'-', optopt, 0};
     switch (opt) {
-      when 'c': load_config(optarg);
-      when 'o': parse_arg_option(optarg);
-      when 't': strset(&cfg.title, optarg);
-      when 'C': strset(&cfg.class, optarg);
-      when 'i': strset(&cfg.icon, optarg);
-      when 'l': strset(&cfg.log, optarg);
-      when 'u': cfg.utmp = true;
       when 'p':
         if (sscanf(optarg, "%i,%i%1s", &cfg.x, &cfg.y, (char[2]){}) != 2)
           error(true, "syntax error in position argument '%s'", optarg);
@@ -794,10 +753,15 @@ main(int argc, char *argv[])
           error(true, "syntax error in size argument '%s'", optarg);
         remember_arg("Columns");
         remember_arg("Rows");
-      when 'w':
-        cfg.window = lookup_optarg("window", optarg, window_optargs);
-      when 'h':
-        cfg.hold = lookup_optarg("hold", optarg, hold_optargs);
+      when 'w': set_arg_option("Window", optarg);
+      when 't': set_arg_option("Title", optarg);
+      when 'C': set_arg_option("Class", optarg);
+      when 'i': set_arg_option("Icon", optarg);
+      when 'l': set_arg_option("Log", optarg);
+      when 'u': cfg.utmp = true;
+      when 'h': set_arg_option("Hold", optarg);
+      when 'c': load_config(optarg);
+      when 'o': parse_arg_option(optarg);
       when 'H':
         show_msg(stdout, help);
         return 0;
