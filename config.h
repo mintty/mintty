@@ -9,7 +9,7 @@ typedef struct {
   bool isbold;
 } font_spec;
 
-enum { HOLD_DEFAULT, HOLD_NEVER, HOLD_ALWAYS, HOLD_ERROR };
+enum { HOLD_NEVER, HOLD_START, HOLD_ALWAYS, HOLD_ERROR };
 enum { CUR_BLOCK, CUR_UNDERSCORE, CUR_LINE };
 enum { FQ_DEFAULT, FQ_ANTIALIASED, FQ_NONANTIALIASED, FQ_CLEARTYPE };
 enum { RC_SHOWMENU, RC_PASTE, RC_EXTEND };
@@ -80,6 +80,7 @@ extern config cfg, new_cfg;
 
 void init_config(void);
 void load_config(string filename);
+void set_arg_option(string name, string val);
 void parse_arg_option(string);
 void remember_arg(string);
 void finish_config(void);

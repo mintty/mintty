@@ -72,7 +72,7 @@ const config default_cfg = {
   .icon = "",
   .log = "",
   .utmp = false,
-  .hold = HOLD_DEFAULT,
+  .hold = HOLD_START,
   // Hidden
   .col_spacing = 0,
   .row_spacing = 0,
@@ -92,6 +92,7 @@ static config file_cfg;
 
 typedef enum {
   OPT_STRING, OPT_BOOL, OPT_INT, OPT_COLOUR,
+  OPT_WINDOW, OPT_HOLD,
   OPT_LEGACY = 8
 } opt_type;
 
@@ -99,7 +100,9 @@ static const uchar opt_type_sizes[] = {
   [OPT_STRING] = sizeof(string),
   [OPT_BOOL] = sizeof(bool),
   [OPT_INT] = sizeof(int),
-  [OPT_COLOUR] = sizeof(colour)
+  [OPT_COLOUR] = sizeof(colour),
+  [OPT_HOLD] = sizeof(int),
+  [OPT_WINDOW] = sizeof(int)
 };
 
 #define offcfg(option) offsetof(config, option)
@@ -168,13 +171,13 @@ options[] = {
   // Command line
   {"X", OPT_INT, offcfg(x)},
   {"Y", OPT_INT, offcfg(y)},
-  {"Window", OPT_INT, offcfg(window)},
+  {"Window", OPT_WINDOW, offcfg(window)},
   {"Title", OPT_STRING, offcfg(title)},
   {"Class", OPT_STRING, offcfg(class)},
   {"Icon", OPT_STRING, offcfg(icon)},
   {"Log", OPT_STRING, offcfg(log)},
   {"Utmp", OPT_BOOL, offcfg(utmp)},
-  {"Hold", OPT_INT, offcfg(hold)},
+  {"Hold", OPT_HOLD, offcfg(hold)},
 
   // Hidden
   
@@ -209,6 +212,29 @@ options[] = {
   // Backward compatibility
   {"UseSystemColours", OPT_BOOL | OPT_LEGACY, offcfg(use_system_colours)},
   {"BoldAsBright", OPT_BOOL | OPT_LEGACY, offcfg(bold_as_colour)},
+};
+
+typedef const struct {
+  string name;
+  int val;
+} opt_val;
+
+static opt_val
+window_vals[] = {
+  {"normal", 1}, // SW_SHOWNORMAL
+  {"min", 2},    // SW_SHOWMINIMIZED
+  {"max", 3},    // SW_SHOWMAXIMIZED
+  {"full", -1},
+  {0, 0}
+};
+
+static opt_val
+hold_vals[] = {
+  {"never", HOLD_NEVER},
+  {"start", HOLD_START},
+  {"always", HOLD_ALWAYS},
+  {"error", HOLD_ERROR},
+  {0, 0}
 };
 
 static int
@@ -273,23 +299,31 @@ check_legacy_options(void (*remember_option)(uint))
   }
 }
 
-static int
-parse_option(string option)
+static void
+lookup_opt_val(string opt, int *ip, opt_val *vals, string val)
 {
-  string eq = strchr(option, '=');
-  if (!eq)
-    return -1;
-  
-  uint name_len = eq - option;
-  char name[name_len + 1];
-  memcpy(name, option, name_len);
-  name[name_len] = 0;
-  
+  int len = strlen(val);
+  if (!len) {
+    fprintf(stderr, "Ignoring empty value to option '%s'.\n", opt);
+    return;
+  }
+  while (vals->name) {
+    if (!strncasecmp(val, vals->name, len)) {
+      *ip = vals->val;
+      return;
+    }
+    vals++;
+  }
+  fprintf(stderr, "Ignoring invalid value '%s' for option '%s'.\n", val, opt);
+}
+
+static int
+set_option(string name, string val)
+{
   int i = find_option(name);
   if (i < 0)
     return i;
   
-  string val = eq + 1;
   uint offset = options[i].offset;
   switch (options[i].type & ~OPT_LEGACY) {
     when OPT_STRING:
@@ -303,18 +337,48 @@ parse_option(string option)
       if (sscanf(val, "%u,%u,%u", &r, &g, &b) == 3)
         atoffset(colour, cfg, offset) = make_colour(r, g, b);
     }
+    when OPT_WINDOW:
+      lookup_opt_val(name, &atoffset(int, cfg, offset), window_vals, val);
+    when OPT_HOLD:
+      lookup_opt_val(name, &atoffset(int, cfg, offset), hold_vals, val);
   }
   return i;
+}
+
+static int
+parse_option(string option)
+{
+  string eq = strchr(option, '=');
+  if (!eq)
+    return -1;
+  
+  uint name_len = eq - option;
+  char name[name_len + 1];
+  memcpy(name, option, name_len);
+  name[name_len] = 0;
+  
+  return set_option(name, eq + 1);
+}
+
+static void
+check_arg_option(int i)
+{
+  if (i >= 0) {
+    remember_arg_option(i);
+    check_legacy_options(remember_arg_option);
+  }
+}
+
+void
+set_arg_option(string name, string val)
+{
+  check_arg_option(set_option(name, val));
 }
 
 void
 parse_arg_option(string option)
 {
-  int i = parse_option(option);
-  if (i >= 0) {
-    remember_arg_option(i);
-    check_legacy_options(remember_arg_option);
-  }
+  check_arg_option(parse_option(option));
 }
 
 void
@@ -387,6 +451,19 @@ finish_config(void)
 }
 
 static void
+print_opt_val(FILE *file, opt_val *vals, int val)
+{
+  while (vals->name) {
+    if (vals->val == val) {
+      fputs(vals->name, file);
+      return;
+    }
+    vals++;
+  }
+  fprintf(file, "%i", val);
+}
+
+static void
 save_config(void)
 {
   string filename;
@@ -420,16 +497,21 @@ save_config(void)
         void *val_p = cfg_p + offset;
         switch (options[i].type) {
           when OPT_STRING:
-            fprintf(file, "%s\n", *(string *)val_p);
+            fprintf(file, "%s", *(string *)val_p);
           when OPT_BOOL:
-            fprintf(file, "%i\n", *(bool *)val_p);
+            fprintf(file, "%i", *(bool *)val_p);
           when OPT_INT:
-            fprintf(file, "%i\n", *(int *)val_p);
+            fprintf(file, "%i", *(int *)val_p);
           when OPT_COLOUR: {
             colour c = *(colour *)val_p;
-            fprintf(file, "%u,%u,%u\n", red(c), green(c), blue(c));
+            fprintf(file, "%u,%u,%u", red(c), green(c), blue(c));
           }
+          when OPT_WINDOW:
+            print_opt_val(file, window_vals, *(int *)val_p);
+          when OPT_HOLD:
+            print_opt_val(file, hold_vals, *(int *)val_p);
         }
+        fputc('\n', file);
       }
     }
     fclose(file);

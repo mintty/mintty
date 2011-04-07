@@ -210,7 +210,7 @@ child_proc(void)
         // Decide whether we want to exit now or later
         if (killed || cfg.hold == HOLD_NEVER)
           exit(0);
-        else if (cfg.hold == HOLD_DEFAULT) {
+        else if (cfg.hold == HOLD_START) {
           if (WIFSIGNALED(status) || WEXITSTATUS(status) != 255)
             exit(0);
         }
@@ -232,7 +232,7 @@ child_proc(void)
         char *s = 0; 
         if (WIFEXITED(status)) {
           int code = WEXITSTATUS(status);
-          if (code && cfg.hold != HOLD_DEFAULT)
+          if (code && cfg.hold != HOLD_START)
             l = asprintf(&s, "%s: Exit %i", cmd, code); 
         }
         else if (WIFSIGNALED(status))
