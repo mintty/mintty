@@ -232,8 +232,8 @@ static opt_val
 hold_vals[] = {
   {"never", HOLD_NEVER},
   {"start", HOLD_START},
-  {"always", HOLD_ALWAYS},
   {"error", HOLD_ERROR},
+  {"always", HOLD_ALWAYS},
   {0, 0}
 };
 
@@ -244,6 +244,7 @@ find_option(string name)
     if (!strcasecmp(name, options[i].name))
       return i;
   }
+  fprintf(stderr, "Ignoring unknown option '%s'.\n", name);
   return -1;
 }
 
@@ -300,21 +301,33 @@ check_legacy_options(void (*remember_option)(uint))
 }
 
 static void
-lookup_opt_val(string opt, int *ip, opt_val *vals, string val)
+lookup_opt_val(string opt, int *val_p, opt_val *opt_vals, string val_str)
 {
-  int len = strlen(val);
+  int len = strlen(val_str);
   if (!len) {
-    fprintf(stderr, "Ignoring empty value to option '%s'.\n", opt);
+    fprintf(stderr, "Ignoring empty value for option '%s'.\n", opt);
     return;
   }
-  while (vals->name) {
-    if (!strncasecmp(val, vals->name, len)) {
-      *ip = vals->val;
+  for (opt_val *o = opt_vals; o->name; o++) {
+    if (!strncasecmp(val_str, o->name, len)) {
+      *val_p = o->val;
       return;
     }
-    vals++;
   }
-  fprintf(stderr, "Ignoring invalid value '%s' for option '%s'.\n", val, opt);
+  // Value not found: try interpreting it as a number.
+  char *val_end;
+  int val = strtol(val_str, &val_end, 0);
+  if (val_end != val_str) {
+    // Got a number: check that it's valid for the option.
+    for (opt_val *o = opt_vals; o->name; o++) {
+      if (o->val == val) {
+        *val_p = o->val;
+        return;
+      }
+    }
+  }
+  fprintf(stderr, "Ignoring invalid value '%s' for option '%s'.\n",
+                  val_str, opt);
 }
 
 static int
@@ -454,16 +467,14 @@ finish_config(void)
 }
 
 static void
-print_opt_val(FILE *file, opt_val *vals, int val)
+print_opt_val(FILE *file, opt_val *opt_vals, int val)
 {
-  while (vals->name) {
-    if (vals->val == val) {
-      fputs(vals->name, file);
+  for (opt_val *o = opt_vals; o->name; o++) {
+    if (o->val == val) {
+      fputs(o->name, file);
       return;
     }
-    vals++;
   }
-  fprintf(file, "%i", val);
 }
 
 static void
