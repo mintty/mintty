@@ -353,8 +353,10 @@ static int
 parse_option(string option)
 {
   string eq = strchr(option, '=');
-  if (!eq)
+  if (!eq) {
+    fprintf(stderr, "Ignoring option '%s' with missing value.\n", option);
     return -1;
+  }
   
   uint name_len = eq - option;
   char name[name_len + 1];
