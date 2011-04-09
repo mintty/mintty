@@ -214,9 +214,11 @@ static opt_val
 *const opt_vals[] = {
   [OPT_BOOL] = (opt_val[]) {
     {"no", false},
-    {"yes", true}
+    {"yes", true},
+    {0, 0}
   },
   [OPT_WINDOW] = (opt_val[]){
+    {"hide", 0},   // SW_HIDE
     {"normal", 1}, // SW_SHOWNORMAL
     {"min", 2},    // SW_SHOWMINIMIZED
     {"max", 3},    // SW_SHOWMAXIMIZED
@@ -537,9 +539,9 @@ apply_config(void)
       when OPT_STRING:
         changed = strcmp(*(string *)val_p, *(string *)new_val_p);
       when OPT_INT or OPT_COLOUR:
-        changed = (*(int *)val_p == *(int *)new_val_p);
+        changed = (*(int *)val_p != *(int *)new_val_p);
       otherwise:
-        changed = (*(char *)val_p == *(char *)new_val_p);
+        changed = (*(char *)val_p != *(char *)new_val_p);
     }
     if (changed && !seen_arg_option(i))
       remember_file_option(i);
