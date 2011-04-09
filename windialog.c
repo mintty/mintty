@@ -6,7 +6,6 @@
 #include "winpriv.h"
 
 #include "ctrls.h"
-#include "config.h"
 #include "winctrls.h"
 #include "winids.h"
 #include "appinfo.h"

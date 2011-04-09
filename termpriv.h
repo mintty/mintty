@@ -7,8 +7,6 @@
 
 #include "term.h"
 
-#include "config.h"
-
 #define incpos(p) ((p).x == term.cols ? ((p).x = 0, (p).y++, 1) : ((p).x++, 0))
 #define decpos(p) ((p).x == 0 ? ((p).x = term.cols, (p).y--, 1) : ((p).x--, 0))
 

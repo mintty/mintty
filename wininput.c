@@ -4,7 +4,6 @@
 
 #include "winpriv.h"
 
-#include "config.h"
 #include "charset.h"
 #include "child.h"
 

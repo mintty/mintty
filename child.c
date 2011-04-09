@@ -5,7 +5,6 @@
 #include "child.h"
 
 #include "term.h"
-#include "config.h"
 #include "charset.h"
 
 #include <pwd.h>

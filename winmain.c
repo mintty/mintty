@@ -6,7 +6,6 @@
 #include "winpriv.h"
 
 #include "term.h"
-#include "config.h"
 #include "appinfo.h"
 #include "child.h"
 #include "charset.h"
@@ -413,7 +412,7 @@ win_reconfig(void)
     new_cfg.font.isbold != cfg.font.isbold ||
     new_cfg.bold_as_font != cfg.bold_as_font ||
     new_cfg.bold_as_colour != cfg.bold_as_colour ||
-    new_cfg.font_quality != cfg.font_quality;
+    new_cfg.font_smoothing != cfg.font_smoothing;
   
   if (new_cfg.fg_colour != cfg.fg_colour)
     win_set_colour(FG_COLOUR_I, new_cfg.fg_colour);

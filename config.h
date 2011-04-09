@@ -1,7 +1,31 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include "term.h"
+
+// Enums for various options.
+
+typedef enum { MDK_SHIFT = 1, MDK_ALT = 2, MDK_CTRL = 4 } mod_keys;
+enum { HOLD_NEVER, HOLD_START, HOLD_ERROR, HOLD_ALWAYS };
+enum { CUR_BLOCK, CUR_UNDERSCORE, CUR_LINE };
+enum { FS_DEFAULT, FS_PARTIAL, FS_NONE, FS_FULL };
+enum { RC_MENU, RC_PASTE, RC_EXTEND };
+
+
+// Colour values.
+
+typedef uint colour;
+
+enum { DEFAULT_COLOUR = UINT_MAX };
+
+static inline colour
+make_colour(uchar r, uchar g, uchar b) { return r | g << 8 | b << 16; }
+
+static inline uchar red(colour c) { return c & 0xff; }
+static inline uchar green(colour c) { return c >> 8 & 0xff; }
+static inline uchar blue(colour c) { return c >> 16 & 0xff; }
+
+
+// Font properties.
 
 typedef struct {
   string name;
@@ -9,21 +33,19 @@ typedef struct {
   bool isbold;
 } font_spec;
 
-enum { HOLD_NEVER, HOLD_START, HOLD_ERROR, HOLD_ALWAYS };
-enum { CUR_BLOCK, CUR_UNDERSCORE, CUR_LINE };
-enum { FQ_DEFAULT, FQ_ANTIALIASED, FQ_NONANTIALIASED, FQ_CLEARTYPE };
-enum { RC_SHOWMENU, RC_PASTE, RC_EXTEND };
+
+// Configuration data.
 
 typedef struct {
   // Looks
   colour fg_colour, bg_colour, cursor_colour;
-  int transparency;
+  char transparency;
   bool opaque_when_focused;
-  int cursor_type;
+  char cursor_type;
   bool cursor_blinks;
   // Text
   font_spec font;
-  int font_quality;
+  char font_smoothing;
   char bold_as_font;    // 0 = false, 1 = true, -1 = undefined
   bool bold_as_colour;
   bool allow_blinking;
@@ -42,14 +64,14 @@ typedef struct {
   bool copy_on_select;
   bool copy_as_rtf;
   bool clicks_place_cursor;
-  int right_click_action;
-  int clicks_target_app;
-  int click_target_mod;
+  char right_click_action;
+  bool clicks_target_app;
+  char click_target_mod;
   // Window
   int cols, rows;
   int scrollback_lines;
-  int scrollbar;
-  int scroll_mod;
+  char scrollbar;
+  char scroll_mod;
   bool pgupdn_scroll;
   // Terminal
   string term;
