@@ -2,20 +2,7 @@
 #define TERM_H
 
 #include "minibidi.h"
-
-// Colour values
-
-typedef uint colour;
-
-enum { DEFAULT_COLOUR = UINT_MAX };
-
-static inline colour
-make_colour(uchar r, uchar g, uchar b) { return r | g << 8 | b << 16; }
-
-static inline uchar red(colour c) { return c & 0xff; }
-static inline uchar green(colour c) { return c >> 8 & 0xff; }
-static inline uchar blue(colour c) { return c >> 16 & 0xff; }
-
+#include "config.h"
 
 // Colour numbers
 
@@ -214,10 +201,6 @@ typedef struct {
 typedef enum {
   MBT_LEFT = 1, MBT_MIDDLE = 2, MBT_RIGHT = 3
 } mouse_button;
-
-typedef enum {
-  MDK_SHIFT = 1, MDK_ALT = 2, MDK_CTRL = 4
-} mod_keys;
 
 enum {
   ARGS_MAX = 32,     /* max # of esc sequence arguments */

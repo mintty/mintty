@@ -3,7 +3,7 @@
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
-#include "config.h"
+#include "term.h"
 #include "ctrls.h"
 #include "print.h"
 #include "charset.h"
@@ -29,7 +29,7 @@ const config default_cfg = {
   .cursor_blinks = true,
   // Text
   .font = {.name = "Lucida Console", .isbold = false, .size = 9},
-  .font_quality = FQ_DEFAULT,
+  .font_smoothing = FS_DEFAULT,
   .bold_as_font = -1,  // -1 means "the opposite of bold_as_colour"
   .bold_as_colour = true,
   .allow_blinking = false,
@@ -48,7 +48,7 @@ const config default_cfg = {
   .copy_on_select = true,
   .copy_as_rtf = true,
   .clicks_place_cursor = false,
-  .right_click_action = RC_SHOWMENU,
+  .right_click_action = RC_MENU,
   .clicks_target_app = true,
   .click_target_mod = MDK_SHIFT,
   // Window
@@ -91,9 +91,10 @@ config cfg, new_cfg;
 static config file_cfg;
 
 typedef enum {
-  OPT_BOOL, OPT_WINDOW, OPT_HOLD,
-  OPT_STRING, OPT_INT, OPT_COLOUR,
-  OPT_LEGACY = 8
+  OPT_BOOL, OPT_MOD, OPT_TRANS, OPT_CURSOR, OPT_FONTSMOOTH,
+  OPT_RIGHTCLICK, OPT_SCROLLBAR, OPT_WINDOW, OPT_HOLD,
+  OPT_INT, OPT_COLOUR, OPT_STRING,
+  OPT_LEGACY = 16
 } opt_type;
 
 #define offcfg(option) offsetof(config, option)
@@ -108,16 +109,16 @@ options[] = {
   {"ForegroundColour", OPT_COLOUR, offcfg(fg_colour)},
   {"BackgroundColour", OPT_COLOUR, offcfg(bg_colour)},
   {"CursorColour", OPT_COLOUR, offcfg(cursor_colour)},
-  {"Transparency", OPT_INT, offcfg(transparency)},
+  {"Transparency", OPT_TRANS, offcfg(transparency)},
   {"OpaqueWhenFocused", OPT_BOOL, offcfg(opaque_when_focused)},
-  {"CursorType", OPT_INT, offcfg(cursor_type)},
+  {"CursorType", OPT_CURSOR, offcfg(cursor_type)},
   {"CursorBlinks", OPT_BOOL, offcfg(cursor_blinks)},
 
   // Text
   {"Font", OPT_STRING, offcfg(font.name)},
   {"FontIsBold", OPT_BOOL, offcfg(font.isbold)},
   {"FontHeight", OPT_INT, offcfg(font.size)},
-  {"FontQuality", OPT_INT, offcfg(font_quality)},
+  {"FontSmoothing", OPT_FONTSMOOTH, offcfg(font_smoothing)},
   {"BoldAsFont", OPT_BOOL, offcfg(bold_as_font)},
   {"BoldAsColour", OPT_BOOL, offcfg(bold_as_colour)},
   {"AllowBlinking", OPT_BOOL, offcfg(allow_blinking)},
@@ -138,16 +139,16 @@ options[] = {
   {"CopyOnSelect", OPT_BOOL, offcfg(copy_on_select)},
   {"CopyAsRTF", OPT_BOOL, offcfg(copy_as_rtf)},
   {"ClicksPlaceCursor", OPT_BOOL, offcfg(clicks_place_cursor)},
-  {"RightClickAction", OPT_INT, offcfg(right_click_action)},
-  {"ClicksTargetApp", OPT_INT, offcfg(clicks_target_app)},
-  {"ClickTargetMod", OPT_INT, offcfg(click_target_mod)},
+  {"RightClickAction", OPT_RIGHTCLICK, offcfg(right_click_action)},
+  {"ClicksTargetApp", OPT_BOOL, offcfg(clicks_target_app)},
+  {"ClickTargetMod", OPT_MOD, offcfg(click_target_mod)},
 
   // Window
   {"Columns", OPT_INT, offcfg(cols)},
   {"Rows", OPT_INT, offcfg(rows)},
-  {"Scrollbar", OPT_INT, offcfg(scrollbar)},
   {"ScrollbackLines", OPT_INT, offcfg(scrollback_lines)},
-  {"ScrollMod", OPT_INT, offcfg(scroll_mod)},
+  {"Scrollbar", OPT_SCROLLBAR, offcfg(scrollbar)},
+  {"ScrollMod", OPT_MOD, offcfg(scroll_mod)},
   {"PgUpDnScroll", OPT_BOOL, offcfg(pgupdn_scroll)},
 
   // Terminal
@@ -203,6 +204,7 @@ options[] = {
   // Backward compatibility
   {"UseSystemColours", OPT_BOOL | OPT_LEGACY, offcfg(use_system_colours)},
   {"BoldAsBright", OPT_BOOL | OPT_LEGACY, offcfg(bold_as_colour)},
+  {"FontQuality", OPT_FONTSMOOTH | OPT_LEGACY, offcfg(font_smoothing)},
 };
 
 typedef const struct {
@@ -215,6 +217,46 @@ static opt_val
   [OPT_BOOL] = (opt_val[]) {
     {"no", false},
     {"yes", true},
+    {0, 0}
+  },
+  [OPT_MOD] = (opt_val[]) {
+    {"off", 0},
+    {"shift", MDK_SHIFT},
+    {"alt", MDK_ALT},
+    {"ctrl", MDK_CTRL},
+    {0, 0}
+  },
+  [OPT_TRANS] = (opt_val[]) {
+    {"off", 0},
+    {"low", 1},
+    {"medium", 2},
+    {"high", 3},
+    {"glass", -1},
+    {0, 0}
+  },
+  [OPT_CURSOR] = (opt_val[]) {
+    {"line", CUR_LINE},
+    {"block", CUR_BLOCK},
+    {"underscore", CUR_UNDERSCORE},
+    {0, 0}
+  },
+  [OPT_FONTSMOOTH] = (opt_val[]) {
+    {"default", FS_DEFAULT},
+    {"none", FS_NONE},
+    {"partial", FS_PARTIAL},
+    {"full", FS_FULL},
+    {0, 0}
+  },
+  [OPT_RIGHTCLICK] = (opt_val[]) {
+    {"paste", RC_PASTE},
+    {"extend", RC_EXTEND},
+    {"menu", RC_MENU},
+    {0, 0}
+  },
+  [OPT_SCROLLBAR] = (opt_val[]) {
+    {"left", -1},
+    {"right", 1},
+    {"none", 0},
     {0, 0}
   },
   [OPT_WINDOW] = (opt_val[]){
@@ -325,7 +367,7 @@ set_option(string name, string val_str)
       }
       for (opt_val *o = opt_vals[type]; o->name; o++) {
         if (!strncasecmp(val_str, o->name, len)) {
-          *(int *)val_p = o->val;
+          *(char *)val_p = o->val;
           return i;
         }
       }
@@ -789,11 +831,11 @@ setup_config_box(controlbox * b)
   ctrl_columns(s, 2, 50, 50);
   ctrl_radiobuttons(
     s, "Font smoothing", 2,
-    dlg_stdradiobutton_handler, &new_cfg.font_quality,
-    "&Default", FQ_DEFAULT,
-    "&None", FQ_NONANTIALIASED,
-    "&Partial", FQ_ANTIALIASED,
-    "&Full", FQ_CLEARTYPE,
+    dlg_stdradiobutton_handler, &new_cfg.font_smoothing,
+    "&Default", FS_DEFAULT,
+    "&None", FS_NONE,
+    "&Partial", FS_PARTIAL,
+    "&Full", FS_FULL,
     null
   )->column = 1;
 
@@ -882,7 +924,7 @@ setup_config_box(controlbox * b)
     dlg_stdradiobutton_handler, &new_cfg.right_click_action,
     "&Paste", RC_PASTE,
     "E&xtend", RC_EXTEND,
-    "Show &menu", RC_SHOWMENU,
+    "Show &menu", RC_MENU,
     null
   );
   
@@ -890,8 +932,8 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, "Default click target", 4,
     dlg_stdradiobutton_handler, &new_cfg.clicks_target_app,
-    "&Window", 0,
-    "Applicatio&n", 1,
+    "&Window", false,
+    "Applicatio&n", true,
     null
   );
   ctrl_radiobuttons(

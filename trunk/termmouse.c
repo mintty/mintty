@@ -309,7 +309,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     bool alt = mods & MDK_ALT;
     bool shift_ctrl = mods & (MDK_SHIFT | MDK_CTRL);
     int rca = cfg.right_click_action;
-    if (b == MBT_RIGHT && (rca == RC_SHOWMENU || shift_ctrl)) {
+    if (b == MBT_RIGHT && (rca == RC_MENU || shift_ctrl)) {
       if (!alt) 
         win_popup_menu();
     }

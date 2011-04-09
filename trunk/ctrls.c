@@ -332,11 +332,11 @@ ctrl_free(control *ctrl)
 void
 dlg_stdradiobutton_handler(control *ctrl, int event)
 {
-  int *ip = ctrl->context;
+  char *val_p = ctrl->context;
   if (event == EVENT_REFRESH) {
     int button;
     for (button = 0; button < ctrl->radio.nbuttons; button++) {
-      if (ctrl->radio.vals[button] == *ip)
+      if (ctrl->radio.vals[button] == *val_p)
         break;
     }
     assert(button < ctrl->radio.nbuttons);
@@ -344,7 +344,7 @@ dlg_stdradiobutton_handler(control *ctrl, int event)
   }
   else if (event == EVENT_VALCHANGE) {
     int button = dlg_radiobutton_get(ctrl);
-    *ip = ctrl->radio.vals[button];
+    *val_p = ctrl->radio.vals[button];
   }
 }
 

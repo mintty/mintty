@@ -6,7 +6,6 @@
 #include "winpriv.h"
 #include "charset.h"
 #include "child.h"
-#include "config.h"
 
 #include <winnls.h>
 #include <richedit.h>

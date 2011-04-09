@@ -5,7 +5,6 @@
 
 #include "winpriv.h"
 
-#include "config.h"
 #include "minibidi.h"
 
 #include <winnls.h>
@@ -100,16 +99,15 @@ colour_dist(colour a, colour b)
     1 * sqr(blue(a) - blue(b));
 }
 
-#define CLEARTYPE_QUALITY 5
-
 static uint
-get_font_quality(void) {
-  switch (cfg.font_quality) {
-    when FQ_ANTIALIASED: return ANTIALIASED_QUALITY;
-    when FQ_NONANTIALIASED: return NONANTIALIASED_QUALITY;
-    when FQ_CLEARTYPE: return CLEARTYPE_QUALITY;
-    otherwise: return DEFAULT_QUALITY;
-  }
+get_font_quality(void) {  
+  return
+    (uchar[]){
+      [FS_DEFAULT] = DEFAULT_QUALITY,
+      [FS_NONE] = NONANTIALIASED_QUALITY,
+      [FS_PARTIAL] = ANTIALIASED_QUALITY,
+      [FS_FULL] = CLEARTYPE_QUALITY
+    }[(int)cfg.font_smoothing];
 }
 
 static HFONT
@@ -418,7 +416,6 @@ another_font(int fontno)
   int basefont;
   int fw_dontcare, fw_bold;
   int u, w, x;
-  string s;
 
   if (fontno < 0 || fontno >= FONT_MAXNO || fontflag[fontno])
     return;
@@ -438,7 +435,6 @@ another_font(int fontno)
 
   w = fw_dontcare;
   u = false;
-  s = cfg.font.name;
   x = font_width;
 
   if (fontno & FONT_WIDE)
@@ -453,7 +449,7 @@ another_font(int fontno)
   fonts[fontno] =
     CreateFont(font_height * (1 + !!(fontno & FONT_HIGH)), x, 0, 0, w, false, u,
                false, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-               get_font_quality(), FIXED_PITCH | FF_DONTCARE, s);
+               get_font_quality(), FIXED_PITCH | FF_DONTCARE, cfg.font.name);
 
   fontflag[fontno] = 1;
 }
