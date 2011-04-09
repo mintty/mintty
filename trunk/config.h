@@ -61,13 +61,13 @@ typedef struct {
   bool confirm_exit;
   // Command line
   int x, y;
-  int window;
+  char window;
   string title;
   string class;
   string icon;
   string log;
   bool utmp;
-  int hold;
+  char hold;
   // Hidden
   int col_spacing, row_spacing;
   string word_chars;
