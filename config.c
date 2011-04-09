@@ -91,19 +91,10 @@ config cfg, new_cfg;
 static config file_cfg;
 
 typedef enum {
-  OPT_STRING, OPT_BOOL, OPT_INT, OPT_COLOUR,
-  OPT_WINDOW, OPT_HOLD,
+  OPT_BOOL, OPT_WINDOW, OPT_HOLD,
+  OPT_STRING, OPT_INT, OPT_COLOUR,
   OPT_LEGACY = 8
 } opt_type;
-
-static const uchar opt_type_sizes[] = {
-  [OPT_STRING] = sizeof(string),
-  [OPT_BOOL] = sizeof(bool),
-  [OPT_INT] = sizeof(int),
-  [OPT_COLOUR] = sizeof(colour),
-  [OPT_HOLD] = sizeof(int),
-  [OPT_WINDOW] = sizeof(int)
-};
 
 #define offcfg(option) offsetof(config, option)
 
@@ -216,25 +207,29 @@ options[] = {
 
 typedef const struct {
   string name;
-  int val;
+  char val;
 } opt_val;
 
 static opt_val
-window_vals[] = {
-  {"normal", 1}, // SW_SHOWNORMAL
-  {"min", 2},    // SW_SHOWMINIMIZED
-  {"max", 3},    // SW_SHOWMAXIMIZED
-  {"full", -1},
-  {0, 0}
-};
-
-static opt_val
-hold_vals[] = {
-  {"never", HOLD_NEVER},
-  {"start", HOLD_START},
-  {"error", HOLD_ERROR},
-  {"always", HOLD_ALWAYS},
-  {0, 0}
+*const opt_vals[] = {
+  [OPT_BOOL] = (opt_val[]) {
+    {"no", false},
+    {"yes", true}
+  },
+  [OPT_WINDOW] = (opt_val[]){
+    {"normal", 1}, // SW_SHOWNORMAL
+    {"min", 2},    // SW_SHOWMINIMIZED
+    {"max", 3},    // SW_SHOWMAXIMIZED
+    {"full", -1},
+    {0, 0}
+  },
+  [OPT_HOLD] = (opt_val[]) {
+    {"never", HOLD_NEVER},
+    {"start", HOLD_START},
+    {"error", HOLD_ERROR},
+    {"always", HOLD_ALWAYS},
+    {0, 0}
+  }
 };
 
 static int
@@ -300,61 +295,54 @@ check_legacy_options(void (*remember_option)(uint))
   }
 }
 
-static void
-lookup_opt_val(string opt, int *val_p, opt_val *opt_vals, string val_str)
-{
-  int len = strlen(val_str);
-  if (!len) {
-    fprintf(stderr, "Ignoring empty value for option '%s'.\n", opt);
-    return;
-  }
-  for (opt_val *o = opt_vals; o->name; o++) {
-    if (!strncasecmp(val_str, o->name, len)) {
-      *val_p = o->val;
-      return;
-    }
-  }
-  // Value not found: try interpreting it as a number.
-  char *val_end;
-  int val = strtol(val_str, &val_end, 0);
-  if (val_end != val_str) {
-    // Got a number: check that it's valid for the option.
-    for (opt_val *o = opt_vals; o->name; o++) {
-      if (o->val == val) {
-        *val_p = o->val;
-        return;
-      }
-    }
-  }
-  fprintf(stderr, "Ignoring invalid value '%s' for option '%s'.\n",
-                  val_str, opt);
-}
-
 static int
-set_option(string name, string val)
+set_option(string name, string val_str)
 {
   int i = find_option(name);
   if (i < 0)
     return i;
   
   void *val_p = (void *)&cfg + options[i].offset;
+  uint type = options[i].type & ~OPT_LEGACY;
   
-  switch (options[i].type & ~OPT_LEGACY) {
+  switch (type) {
     when OPT_STRING:
-      strset(val_p, val);
-    when OPT_BOOL:
-      *(bool *)val_p = atoi(val);
+      strset(val_p, val_str);
     when OPT_INT:
-      *(int *)val_p = atoi(val);
+      *(int *)val_p = atoi(val_str);
     when OPT_COLOUR: {
       uint r, g, b;
-      if (sscanf(val, "%u,%u,%u", &r, &g, &b) == 3)
+      if (sscanf(val_str, "%u,%u,%u", &r, &g, &b) == 3)
         *(colour *)val_p = make_colour(r, g, b);
     }
-    when OPT_WINDOW:
-      lookup_opt_val(name, val_p, window_vals, val);
-    when OPT_HOLD:
-      lookup_opt_val(name, val_p, hold_vals, val);
+    otherwise: {
+      int len = strlen(val_str);
+      if (!len) {
+        fprintf(stderr, "Ignoring empty value for option '%s'.\n", name);
+        return -1;
+      }
+      for (opt_val *o = opt_vals[type]; o->name; o++) {
+        if (!strncasecmp(val_str, o->name, len)) {
+          *(int *)val_p = o->val;
+          return i;
+        }
+      }
+      // Value not found: try interpreting it as a number.
+      char *val_end;
+      int val = strtol(val_str, &val_end, 0);
+      if (val_end != val_str) {
+        // Got a number: check that it's valid for the option.
+        for (opt_val *o = opt_vals[type]; o->name; o++) {
+          if (o->val == val) {
+            *(char *)val_p = val;
+            return i;
+          }
+        }
+      }
+      fprintf(stderr, "Ignoring invalid value '%s' for option '%s'.\n",
+                      val_str, name);
+      return -1;
+    }
   }
   return i;
 }
@@ -429,14 +417,18 @@ copy_config(config *dst_p, const config *src_p)
 {
   for (uint i = 0; i < lengthof(options); i++) {
     opt_type type = options[i].type;
-    if (!(options[i].type & OPT_LEGACY)) {
+    if (!(type & OPT_LEGACY)) {
       uint offset = options[i].offset;
       void *dst_val_p = (void *)dst_p + offset;
       void *src_val_p = (void *)src_p + offset;
-      if (options[i].type == OPT_STRING)
-        strset(dst_val_p, *(string *)src_val_p);
-      else
-        memcpy(dst_val_p, src_val_p, opt_type_sizes[type]);
+      switch (type) {
+        when OPT_STRING:
+          strset(dst_val_p, *(string *)src_val_p);
+        when OPT_INT or OPT_COLOUR:
+          *(int *)dst_val_p = *(int *)src_val_p;
+        otherwise:
+          *(char *)dst_val_p = *(char *)src_val_p;
+      }
     }
   }
 }
@@ -467,17 +459,6 @@ finish_config(void)
 }
 
 static void
-print_opt_val(FILE *file, opt_val *opt_vals, int val)
-{
-  for (opt_val *o = opt_vals; o->name; o++) {
-    if (o->val == val) {
-      fputs(o->name, file);
-      return;
-    }
-  }
-}
-
-static void
 save_config(void)
 {
   string filename;
@@ -504,25 +485,29 @@ save_config(void)
   else {
     for (uint j = 0; j < file_opts_num; j++) {
       uint i = file_opts[j];
-      if (!(options[i].type & OPT_LEGACY)) {
+      opt_type type = options[i].type;
+      if (!(type & OPT_LEGACY)) {
         fprintf(file, "%s=", options[i].name);
         void *cfg_p = seen_arg_option(i) ? &file_cfg : &cfg;
         void *val_p = cfg_p + options[i].offset;
-        switch (options[i].type) {
+        switch (type) {
           when OPT_STRING:
             fprintf(file, "%s", *(string *)val_p);
-          when OPT_BOOL:
-            fprintf(file, "%i", *(bool *)val_p);
           when OPT_INT:
             fprintf(file, "%i", *(int *)val_p);
           when OPT_COLOUR: {
             colour c = *(colour *)val_p;
             fprintf(file, "%u,%u,%u", red(c), green(c), blue(c));
           }
-          when OPT_WINDOW:
-            print_opt_val(file, window_vals, *(int *)val_p);
-          when OPT_HOLD:
-            print_opt_val(file, hold_vals, *(int *)val_p);
+          otherwise: {
+            int val = *(char *)val_p;
+            for (opt_val *o = opt_vals[type]; o->name; o++) {
+              if (o->val == val) {
+                fputs(o->name, file);
+                break;
+              }
+            }
+          }
         }
         fputc('\n', file);
       }
@@ -544,14 +529,18 @@ apply_config(void)
   // Record what's changed
   for (uint i = 0; i < lengthof(options); i++) {
     opt_type type = options[i].type;
-    uint size = opt_type_sizes[type];
     uint offset = options[i].offset;
     void *val_p = (void *)&cfg + offset;
     void *new_val_p = (void *)&new_cfg + offset;
-    bool changed =
-      type == OPT_STRING
-      ? strcmp(*(string *)val_p, *(string *)new_val_p)
-      : memcmp(val_p, new_val_p, size);
+    bool changed;
+    switch (type) {
+      when OPT_STRING:
+        changed = strcmp(*(string *)val_p, *(string *)new_val_p);
+      when OPT_INT or OPT_COLOUR:
+        changed = (*(int *)val_p == *(int *)new_val_p);
+      otherwise:
+        changed = (*(char *)val_p == *(char *)new_val_p);
+    }
     if (changed && !seen_arg_option(i))
       remember_file_option(i);
   }
