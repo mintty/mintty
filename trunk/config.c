@@ -352,19 +352,26 @@ set_option(string name, string val_str)
   switch (type) {
     when OPT_STRING:
       strset(val_p, val_str);
-    when OPT_INT:
-      *(int *)val_p = atoi(val_str);
+      return i;
+    when OPT_INT: {
+      char *val_end;
+      int val = strtol(val_str, &val_end, 0);
+      if (val_end != val_str) {
+        *(int *)val_p = val;
+        return i;
+      }
+    }
     when OPT_COLOUR: {
       uint r, g, b;
-      if (sscanf(val_str, "%u,%u,%u", &r, &g, &b) == 3)
+      if (sscanf(val_str, "%u,%u,%u", &r, &g, &b) == 3) {
         *(colour *)val_p = make_colour(r, g, b);
+        return i;
+      }
     }
     otherwise: {
       int len = strlen(val_str);
-      if (!len) {
-        fprintf(stderr, "Ignoring empty value for option '%s'.\n", name);
-        return -1;
-      }
+      if (!len)
+        break;
       for (opt_val *o = opt_vals[type]; o->name; o++) {
         if (!strncasecmp(val_str, o->name, len)) {
           *(char *)val_p = o->val;
@@ -383,12 +390,11 @@ set_option(string name, string val_str)
           }
         }
       }
-      fprintf(stderr, "Ignoring invalid value '%s' for option '%s'.\n",
-                      val_str, name);
-      return -1;
     }
   }
-  return i;
+  fprintf(stderr, "Ignoring invalid value '%s' for option '%s'.\n",
+                  val_str, name);
+  return -1;
 }
 
 static int
