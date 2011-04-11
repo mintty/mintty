@@ -400,18 +400,26 @@ set_option(string name, string val_str)
 static int
 parse_option(string option)
 {
-  string eq = strchr(option, '=');
+  const char *eq = strchr(option, '=');
   if (!eq) {
-    fprintf(stderr, "Ignoring option '%s' with missing value.\n", option);
+    fprintf(stderr, "Ignoring malformed option '%s'.\n", option);
     return -1;
   }
   
-  uint name_len = eq - option;
+  const char *name_end = eq;
+  while (isspace((uchar)name_end[-1]))
+    name_end--;
+  
+  uint name_len = name_end - option;
   char name[name_len + 1];
   memcpy(name, option, name_len);
   name[name_len] = 0;
   
-  return set_option(name, eq + 1);
+  const char *val = eq + 1;
+  while (isspace((uchar)*val))
+    val++;
+  
+  return set_option(name, val);
 }
 
 static void
