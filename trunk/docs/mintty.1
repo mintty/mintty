@@ -388,8 +388,6 @@ The following sections explain the settings on each pane of the options
 dialog.
 For each setting, its name in the config file is shown in parentheses,
 along with its default value, e.g. Columns=80.
-For multiple-choice settings, the value representing each choice in the config
-file is shown.
 
 
 .SS Looks
@@ -408,18 +406,18 @@ with decimal 8-bit values (i.e. ranging from 0 to 255).
 \- \fBCursor\fP (CursorColour=191,191,191)
 
 .TP
-\fBTransparency\fP (Transparency=0)
+\fBTransparency\fP (Transparency=off)
 Window transparency level, with the following choices:
 
-\- \fBOff\fP (0)
+\- \fBOff\fP
 .br
-\- \fBLow\fP (1)
+\- \fBLow\fP
 .br
-\- \fBMedium\fP (2)
+\- \fBMedium\fP
 .br
-\- \fBHigh\fP (3)
+\- \fBHigh\fP
 .br
-\- \fBGlass\fP (-1)
+\- \fBGlass\fP
 
 The \fBGlass\fP option is only available on Vista and above with desktop
 compositing enabled.
@@ -429,25 +427,25 @@ desktop context menu, click on \fIWindow Color\fP, turn the colour intensity up
 to the maximum, show the colour mixer, and turn the brightness down to black.
 
 .TP
-\fBOpaque when focused\fP (OpaqueWhenFocused=0)
+\fBOpaque when focused\fP (OpaqueWhenFocused=no)
 Enable to make the window opaque when it is active (to avoid background
 distractions when working in it).
 
 .TP
-\fBCursor\fP (CursorType=2)
+\fBCursor\fP (CursorType=line)
 The following cursor types are available:
 
-\- \fBBlock\fP (0)
+\- \fBLine\fP
 .br
-\- \fBUnderscore\fP (1)
+\- \fBBlock\fP
 .br
-\- \fBLine\fP (2)
+\- \fBUnderscore\fP
 
 The line cursor is displayed with the width set in the Accessibility Options
 control panel.
 
 .TP
-\fBCursor blink\fP (CursorBlinks=1)
+\fBCursor blink\fP (CursorBlinks=yes)
 If enabled, the cursor blinks at the rate set in the Keyboard control panel.
 
 
@@ -462,19 +460,19 @@ In the config file, this corresponds to the following entries:
 
 \- \fBFont\fP (Font=Lucida Console)
 .br
-\- \fBStyle\fP (FontIsBold=0)
+\- \fBStyle\fP (FontIsBold=no)
 .br
 \- \fBSize\fP (FontHeight=9)
 
 .TP
-\fBShow bold as colour\fP (BoldAsFont=0)
+\fBShow bold as colour\fP (BoldAsFont=no)
 When this option is enabled, the ANSI bold (or 'intense') text attribute is
 shown as a bold-style font.  Where a bold variant of the selected font that
 has the same width as the base font is available, that is used; otherwise, the
 bolding is simulated by rendering the text twice with a one-pixel offset.
 
 .TP
-\fBShow bold as colour\fP (BoldAsColour=1)
+\fBShow bold as colour\fP (BoldAsColour=yes)
 By default, text with the ANSI bold attribute set is displayed with a
 different colour, usually with increased brightness.  This can be disabled
 here.
@@ -489,21 +487,21 @@ shown with halved foreground colour brightness; otherwise, it is shown
 by blending the foreground colour with the background colour.
 
 .TP
-\fBAllow blinking\fP (AllowBlinking=0)
+\fBAllow blinking\fP (AllowBlinking=no)
 When text blinking is disabled, as it is by default, the blink attribute is
-instead displayed as a bold background colour.
+displayed as a bold background colour instead.
 
 .TP
-\fBFont smoothing\fP (FontQuality=0)
+\fBFont smoothing\fP (FontSmoothing=default)
 Select the amount of font smoothing from the following choices:
 
-\- \fBDefault\fP (0): Use Windows setting
+\- \fBDefault\fP: Use Windows setting.
 .br
-\- \fBNone\fP (1): With all the jaggies
+\- \fBNone\fP: With all the jaggies.
 .br
-\- \fBPartial\fP (2): Greyscale anti-aliasing
+\- \fBPartial\fP: Greyscale anti-aliasing.
 .br
-\- \fBFull\fP (3): Subpixel anti-aliasing (ClearType)
+\- \fBFull\fP: Subpixel anti-aliasing ("ClearType").
 
 .TP
 \fBLocale\fP (Locale=)
@@ -539,13 +537,13 @@ effect.
 Settings controlling keyboard behaviour.
 
 .TP
-\fBBackspace sends ^H\fP (BackspaceSendsBS=0)
+\fBBackspace sends ^H\fP (BackspaceSendsBS=no)
 By default, mintty sends \fB^?\fP as the keycode for the backspace key.
 If this option is enabled, \fB^H\fP is sent instead.
 This also changes the \fBCtrl+Backspace\fP code from \fB^_\fP to \fB^?\fP.
 
 .TP
-\fBCtrl+LeftAlt is AltGr\fP (CtrlAltIsAltGr=0)
+\fBCtrl+LeftAlt is AltGr\fP (CtrlAltIsAltGr=no)
 The AltGr key on non-US Windows systems is a strange beast: pressing it is
 synonymous with pressing the left Ctrl key and the right Alt key at the
 same time, and Windows programs usually treat any Ctrl+Alt combination as
@@ -563,33 +561,33 @@ The setting makes no difference for keys without AltGr key bindings
 (e.g. any key on the standard US layout).
 
 .TP
-\fBCopy and Paste shortcuts\fP (ClipShortcuts=1)
+\fBCopy and Paste shortcuts\fP (ClipShortcuts=yes)
 Checkbox for enabling the clipboard shortcuts \fBCtrl+Ins\fP for copying and
 \fBShift+Ins\fP for pasting.
 
 .TP
-\fBMenu and Full Screen shortcuts\fP (WindowShortcuts=1)
+\fBMenu and Full Screen shortcuts\fP (WindowShortcuts=yes)
 Checkbox for enabling the \fBAlt+Space\fP and \fBAlt+Enter\fP shortcuts for
 showing the window menu and toggling full screen mode.
 
 .TP
-\fBSwitch window shortcuts\fP (SwitchShortcuts=1)
+\fBSwitch window shortcuts\fP (SwitchShortcuts=yes)
 Checkbox for enabling the \fBCtrl+Tab\fP and \fBCtrl+Shift+Tab\fP shortcuts
 for switching between mintty windows.
 
 .TP
-\fBZoom shortcuts\fP (ZoomShortcuts=1)
+\fBZoom shortcuts\fP (ZoomShortcuts=yes)
 Checkbox for enabling the font zooming shortcuts \fBCtrl+plus/minus/zero\fP.
 
 .TP
-\fBAlt+Fn shortcuts\fP (AltFnShortcuts=1)
+\fBAlt+Fn shortcuts\fP (AltFnShortcuts=yes)
 Checkbox for enabling the use of combinations of Alt and functions keys as
 shortcuts, for example \fBAlt+F4\fP for closing the window or \fBAlt+F11\fP
 fortoggling  full screen mode.  Disable to have \fBAlt+Fn\fP combinations
 sent to applications instead.
 
 .TP
-\fBCtrl+Shift+letter shortcuts\fP (CtrlShiftShortcuts=0)
+\fBCtrl+Shift+letter shortcuts\fP (CtrlShiftShortcuts=no)
 Checkbox for enabling alternative clipboard and window command shortcuts
 using \fBCtrl+Shift+letter\fP combinations such as \fBCtrl+Shift+V\fP for
 paste or \fBCtrl+Shift+N\fP for starting a new session.
@@ -606,48 +604,48 @@ applications as C1 control characters instead.
 Settings controlling mouse support.
 
 .TP
-\fBCopy on select\fP (CopyOnSelect=1)
+\fBCopy on select\fP (CopyOnSelect=yes)
 If enabled, the region selected with the mouse is copied to the clipboard as
 soon as the mouse button is released, thus emulating X Window behaviour.
 
 .TP
-\fBCopy as rich text\fP (CopyAsRTF=1)
+\fBCopy as rich text\fP (CopyAsRTF=yes)
 If this option is enabled, which it is by default, text is copied to the
 clipboard in rich text format (RTF) in addition to plain text format.
 RTF preserves colours and styles when pasting text into applications that
 support it, e.g. word processors.
 
 .TP
-\fBClicks place command line cursor\fP (ClicksPlaceCursor=0)
+\fBClicks place command line cursor\fP (ClicksPlaceCursor=no)
 If enabled, the command line cursor can be placed by pressing the left
 mouse button.
 This works by sending the number of cursor keycodes needed to get to the
 destination.
 
 .TP
-\fBRight click action\fP (RightClickAction=0)
+\fBRight click action\fP (RightClickAction=menu)
 Action to take when the right mouse button is pressed.
 If this is set to \fBPaste\fP, the middle button extends the selection region.
 
-\- \fBPaste\fP (1): Paste the clipboard contents.
+\- \fBPaste\fP: Paste the clipboard contents.
 .br
-\- \fBExtend\fP (2): Extend the selected region.
+\- \fBExtend\fP: Extend the selected region.
 .br
-\- \fBShow menu\fP (0): Show the context menu.
+\- \fBShow menu\fP: Show the context menu.
 
 .TP
-\fBDefault click target\fP (ClicksTargetApp=1)
+\fBDefault click target\fP (ClicksTargetApp=yes)
 This applies to application mouse mode, i.e. when the application activates
 xterm-style mouse reporting.
 In that mode, mouse clicks can be sent either to the application to process
 as it sees fit, or to the window for the usual actions such as select and paste.
 
-\- \fBWindow\fP (0)
+\- \fBWindow\fP
 .br
-\- \fBApplication\fP (1)
+\- \fBApplication\fP
 
 .TP
-\fBModifier key for overriding default\fP (ClickTargetMod=1)
+\fBModifier key for overriding default\fP (ClickTargetMod=shift)
 The modifier key selected here can be used to override the click target in
 application mouse mode.
 With the default settings, clicks are sent to the application and Shift needs
@@ -655,13 +653,13 @@ to be held to trigger window actions instead.
 
 The \fBOff\fP setting disables overriding.
 
-\- \fBShift\fP (1)
+\- \fBShift\fP
 .br
-\- \fBCtrl\fP (4)
+\- \fBCtrl\fP
 .br
-\- \fBAlt\fP (2)
+\- \fBAlt\fP
 .br
-\- \fBOff\fP (0)
+\- \fBOff\fP
 
 
 .SS Window
@@ -685,33 +683,33 @@ current size.
 The maximum number of lines to keep in the scrollback buffer.
 
 .TP
-\fBScrollbar\fP (Scrollbar=1)
+\fBScrollbar\fP (Scrollbar=right)
 The scrollbar can be shown on either side of the window or just hidden.
 By default, it is shown on the right-hand side.
 
-\- \fBLeft\fP (-1)
+\- \fBLeft\fP
 .br
-\- \fBNone\fP (0)
+\- \fBNone\fP
 .br
-\- \fBRight\fP (1)
+\- \fBRight\fP
 
 .TP
-\fBModifier for scrolling\fP (ScrollMod=1)
+\fBModifier for scrolling\fP (ScrollMod=shift)
 The modifier key that needs to be pressed together with the arrow up/down,
 PgUp/PgDn, or Home/End keys to access the scrollback buffer.
 The default is \fBShift\fP.
 The \fBOff\fP setting disables scrolling with keyboard shortcuts.
 
-\- \fBShift\fP (1)
+\- \fBShift\fP
 .br
-\- \fBCtrl\fP (4)
+\- \fBCtrl\fP
 .br
-\- \fBAlt\fP (2)
+\- \fBAlt\fP
 .br
-\- \fBOff\fP (0)
+\- \fBOff\fP
 
 .TP
-\fBPgUp and PgDn scroll without modifier\fP (PgUpDnScroll=0)
+\fBPgUp and PgDn scroll without modifier\fP (PgUpDnScroll=no)
 If this is enabled, the scrollback buffer can be accessed by just pressing
 PgUp or PgDn, without the 'modifier for scrolling' selected above.
 If the modifier is pressed anyway, plain PgUp/PgDn keycodes are sent to the
@@ -752,12 +750,12 @@ By default, this is empty.
 The three checkboxes here determine what effects the bell character \fB^G\fP
 has.  Only taskbar highlighting is enabled by default.
 
-\- \fBSound\fP (BellSound=0): Play the system's default beep sound.
+\- \fBSound\fP (BellSound=no): Play the system's default beep sound.
 
-\- \fBFlash\fP (BellFlash=0): Briefly invert the foreground and background
+\- \fBFlash\fP (BellFlash=no): Briefly invert the foreground and background
 colours.
 
-\- \fBHighlight in taskbar\fP (BellTaskbar=1): Change the colour of mintty's
+\- \fBHighlight in taskbar\fP (BellTaskbar=yes): Change the colour of mintty's
 taskbar entry if the mintty window is not active.
 
 .TP
@@ -769,7 +767,7 @@ The Windows printer to send such text to can be selected here.
 By default, printing is disabled.
 
 .TP
-\fBPrompt about running processes on close\fP (ConfirmExit=1)
+\fBPrompt about running processes on close\fP (ConfirmExit=yes)
 If enabled, ask for confirmation when the close button or \fIAlt+F4\fP is 
 pressed and the command invoked by mintty still has child processes.
 This is intended to help avoid closing programs accidentally.
@@ -791,8 +789,8 @@ underscore character (WordChars=_) would allow selecting identifiers in many
 programming languages.
 
 .TP
-\fBUse system colours\fP (UseSystemColours=0)
-If this is set to a non-zero value, the Windows-wide colour settings are used
+\fBUse system colours\fP (UseSystemColours=no)
+If this is set, the Windows-wide colour settings are used
 instead of the foreground, background, and cursor colours chosen on the Looks
 page of the options dialog.
 
