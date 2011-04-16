@@ -647,40 +647,40 @@ static const char help[] =
   "If a dash is given instead of a program, invoke the shell as a login shell.\n"
   "\n"
   "Options:\n"
+  "  -c, --config FILE     Load specified config file\n"
   "  -e, --exec            Treat remaining arguments as the command to execute\n"
-  "  -p, --position X,Y    Open window at specified coordinates\n"
-  "  -s, --size COLS,ROWS  Set screen size in characters\n"
-  "  -w, --window normal|min|max|full  Set initial window state\n"
-  "  -t, --title TITLE     Set window title (default: the invoked command)\n"
-  "  -C, --class CLASS     Set window class name (default: " APPNAME ")\n"
+  "  -h, --hold never|start|error|always  Keep window open after command finishes\n"
   "  -i, --icon FILE[,IX]  Load window icon from file, optionally with index\n"
   "  -l, --log FILE        Log output to file\n"
-  "  -u, --utmp            Create a utmp entry\n"
-  "  -h, --hold never|always|error  Keep window open after command terminates?\n"
-  "  -c, --config FILE     Load specified config file\n"
   "  -o, --option OPT=VAL  Override config file option with given value\n"
+  "  -p, --position X,Y    Open window at specified coordinates\n"
+  "  -s, --size COLS,ROWS  Set screen size in characters\n"
+  "  -t, --title TITLE     Set window title (default: the invoked command)\n"
+  "  -u, --utmp            Create a utmp entry\n"
+  "  -w, --window normal|min|max|full|hide  Set initial window state\n"
+  "      --class CLASS     Set window class name (default: " APPNAME ")\n"
   "  -H, --help            Display help and exit\n"
   "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = "+:HVuec:o:p:s:w:t:C:i:l:h:";
+static const char short_opts[] = "+:c:eh:i:l:o:p:s:t:uw:HV";
 
 static const struct option
 opts[] = { 
-  {"help",     no_argument,       0, 'H'},
-  {"version",  no_argument,       0, 'V'},
-  {"exec",     no_argument,       0, 'e'},
-  {"utmp",     no_argument,       0, 'u'},
   {"config",   required_argument, 0, 'c'},
+  {"exec",     no_argument,       0, 'e'},
+  {"hold",     required_argument, 0, 'h'},
+  {"icon",     required_argument, 0, 'i'},
+  {"log",      required_argument, 0, 'l'},
+  {"utmp",     no_argument,       0, 'u'},
   {"option",   required_argument, 0, 'o'},
   {"position", required_argument, 0, 'p'},
   {"size",     required_argument, 0, 's'},
-  {"window",   required_argument, 0, 'w'},
   {"title",    required_argument, 0, 't'},
+  {"window",   required_argument, 0, 'w'},
   {"class",    required_argument, 0, 'C'},
-  {"icon",     required_argument, 0, 'i'},
-  {"log",      required_argument, 0, 'l'},
-  {"hold",     required_argument, 0, 'h'},
+  {"help",     no_argument,       0, 'H'},
+  {"version",  no_argument,       0, 'V'},
   {0, 0, 0, 0}
 };
 
@@ -744,6 +744,11 @@ main(int argc, char *argv[])
       break;
     char *longopt = argv[optind - 1], *shortopt = (char[]){'-', optopt, 0};
     switch (opt) {
+      when 'c': load_config(optarg);
+      when 'h': set_arg_option("Hold", optarg);
+      when 'i': set_arg_option("Icon", optarg);
+      when 'l': set_arg_option("Log", optarg);
+      when 'o': parse_arg_option(optarg);
       when 'p':
         if (sscanf(optarg, "%i,%i%1s", &cfg.x, &cfg.y, (char[2]){}) != 2)
           error(true, "syntax error in position argument '%s'", optarg);
@@ -752,15 +757,10 @@ main(int argc, char *argv[])
           error(true, "syntax error in size argument '%s'", optarg);
         remember_arg("Columns");
         remember_arg("Rows");
-      when 'w': set_arg_option("Window", optarg);
       when 't': set_arg_option("Title", optarg);
-      when 'C': set_arg_option("Class", optarg);
-      when 'i': set_arg_option("Icon", optarg);
-      when 'l': set_arg_option("Log", optarg);
       when 'u': cfg.utmp = true;
-      when 'h': set_arg_option("Hold", optarg);
-      when 'c': load_config(optarg);
-      when 'o': parse_arg_option(optarg);
+      when 'w': set_arg_option("Window", optarg);
+      when 'C': set_arg_option("Class", optarg);
       when 'H':
         show_msg(stdout, help);
         return 0;

@@ -46,34 +46,32 @@ The standard GNU option formats are accepted, with single dashes
 introducing short options and double dashes introducing long options.
 
 .TP
+\fB-c\fP, \fB--config\fP \fIFILENAME\fP
+Read settings from the specified configuration file, in addition to
+\fI/etc/minttyrc\fP and \fI~/.minttyrc\fP.
+
+.TP
 \fB-e\fP, \fB--exec\fP \fIPROGRAM\fP [\fIARG\fP ...]
 Execute the specified program in the terminal session and pass on any additional
 arguments.
-This option can be omitted, in which case the first non-option argument, if any,
+
+This option is present for compatibility with other terminal emulators only.
+It can be omitted, in which case the first non-option argument, if any,
 is taken as the name of the program to execute.
 
 .TP
-\fB-p\fP, \fB--position\fP \fIX\fB,\fIY\fR
-Open the window with its top left corner at the specified coordinates.
+\fB-h\fP, \fB--hold\fP \fBnever\fP|\fBstart\fP|\fBerror\fP|\fBalways\fP
+Determine whether to keep the terminal window open after the command exits.
+The argument can be abbreviated to a single letter.
 
-.TP
-\fB-s\fP, \fB--size\fP \fICOLS\fB,\fIROWS\fR
-Set the initial size of the window in character columns and rows.
+By default, the window is closed as soon as the child process terminates,
+except if it exits with status 255, which is used to indicate failure to
+execute the shell command. (Exit status 255 is also used by \fBssh\fP to
+indicate connection errors.)
 
-.TP
-\fB-w\fP, \fB--window\fP \fBnormal\fP|\fBmin\fP|\fBmax\fP|\fBfull\fP
-Set the initial window state: normal, minimized, maximized, or full screen.
-
-.TP
-\fB-t\fP, \fB--title\fP \fITITLE\fP
-Use \fITITLE\fP as the initial window title.
-By default, the title is set to the executed command.
-
-.TP
-\fB--class\fP \fICLASS\fP
-Use \fICLASS\fP as the window class name of the main window.
-This allows scripting tools to distinguish different mintty instances.
-The default is "mintty".
+Alternatively, the window can be set to never stay open, to always stay open,
+or to stay open only if the child process terminates with an error, i.e. with
+a non-zero exit status or due to a signal indicating a runtime error.
 
 .TP
 \fB-i\fP, \fB--icon\fP \fIFILE\fP[\fB,\fIINDEX\fR]
@@ -87,31 +85,37 @@ Copy all output into the specified log file.
 (See also \fIscript\fP(1) for a more flexible logging tool.)
 
 .TP
+\fB-o\fP, \fB--option\fP \fINAME\fP=\fIVALUE\fP
+Override the named config file option with the given value, e.g.
+\fC-o ScrollbackLines=1000\fP.
+
+.TP
+\fB-p\fP, \fB--position\fP \fIX\fB,\fIY\fR
+Open the window with its top left corner at the specified coordinates.
+
+.TP
+\fB-s\fP, \fB--size\fP \fICOLS\fB,\fIROWS\fR
+Set the default size of the window in character columns and rows.
+
+.TP
+\fB-t\fP, \fB--title\fP \fITITLE\fP
+Use \fITITLE\fP as the initial window title.
+By default, the title is set to the executed command.
+
+.TP
 \fB-u\fP, \fB--utmp\fP
 Create a utmp entry.
 
 .TP
-\fB-h\fP, \fB--hold\fP \fBnever\fP|\fBalways\fP|\fBerror\fP
-Determine whether to keep the terminal window open after the command exits.
-The argument can be abbreviated to a single letter.
-
-By default, the window is closed as soon as the child process terminates,
-except if it exits with status 255, which is used to indicate failure to
-execute the shell command.
-
-Alternatively, the window can be set to never stay open, to always stay open,
-or to stay open only if the child process terminates with an error, i.e. with
-a non-zero exit code or due to a signal indicating a runtime error.
+\fB-w\fP, \fB--window\fP \fBnormal\fP|\fBmin\fP|\fBmax\fP|\fBfull\fP|\fBhide\fP
+Set the initial window state: normal, minimised, maximised, full screen,
+or hidden.
 
 .TP
-\fB-c\fP, \fB--config\fP \fIFILENAME\fP
-Read settings from the specified configuration file, in addition to
-\fI/etc/minttyrc\fP and \fI~/.minttyrc\fP.
-
-.TP
-\fB-o\fP, \fB--option\fP \fINAME\fP=\fIVALUE\fP
-Override the named config file option with the given value, e.g.
-\fC-o ScrollbackLines=1000\fP.
+\fB--class\fP \fICLASS\fP
+Use \fICLASS\fP as the window class name of the main window.
+This allows scripting tools to distinguish different mintty instances.
+The default is "mintty".
 
 .TP
 \fB-H\fP, \fB--help\fP

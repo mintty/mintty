@@ -82,20 +82,21 @@ typedef struct {
   string printer;
   bool confirm_exit;
   // Command line
-  int x, y;
-  char window;
-  string title;
   string class;
+  char hold;
   string icon;
   string log;
+  string title;
   bool utmp;
-  char hold;
-  // Hidden
+  char window;
+  int x, y;
+  // "Hidden"
   int col_spacing, row_spacing;
   string word_chars;
-  bool use_system_colours;
   colour ime_cursor_colour;
   colour ansi_colours[16];
+  // Legacy
+  bool use_system_colours;
 } config;
 
 extern config cfg, new_cfg;

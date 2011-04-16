@@ -67,13 +67,13 @@ const config default_cfg = {
   .printer = "",
   .confirm_exit = true,
   // Command line
-  .title = "",
   .class = "",
+  .hold = HOLD_START,
   .icon = "",
   .log = "",
   .utmp = false,
-  .hold = HOLD_START,
-  // Hidden
+  .title = "",
+  // "Hidden"
   .col_spacing = 0,
   .row_spacing = 0,
   .word_chars = "",
@@ -161,26 +161,20 @@ options[] = {
   {"ConfirmExit", OPT_BOOL, offcfg(confirm_exit)},
 
   // Command line
-  {"X", OPT_INT, offcfg(x)},
-  {"Y", OPT_INT, offcfg(y)},
-  {"Window", OPT_WINDOW, offcfg(window)},
-  {"Title", OPT_STRING, offcfg(title)},
   {"Class", OPT_STRING, offcfg(class)},
+  {"Hold", OPT_HOLD, offcfg(hold)},
   {"Icon", OPT_STRING, offcfg(icon)},
   {"Log", OPT_STRING, offcfg(log)},
+  {"Title", OPT_STRING, offcfg(title)},
   {"Utmp", OPT_BOOL, offcfg(utmp)},
-  {"Hold", OPT_HOLD, offcfg(hold)},
+  {"Window", OPT_WINDOW, offcfg(window)},
+  {"X", OPT_INT, offcfg(x)},
+  {"Y", OPT_INT, offcfg(y)},
 
-  // Hidden
-  
-  // Character spacing
+  // "Hidden"
   {"ColSpacing", OPT_INT, offcfg(col_spacing)},
   {"RowSpacing", OPT_INT, offcfg(row_spacing)},
-  
-  // Word selection characters
   {"WordChars", OPT_STRING, offcfg(word_chars)},
-  
-  // IME cursor colour
   {"IMECursorColour", OPT_COLOUR, offcfg(ime_cursor_colour)},
   
   // ANSI colours
@@ -201,7 +195,7 @@ options[] = {
   {"BoldCyan", OPT_COLOUR, offcfg(ansi_colours[BOLD_CYAN_I])},
   {"BoldWhite", OPT_COLOUR, offcfg(ansi_colours[BOLD_WHITE_I])},
 
-  // Backward compatibility
+  // Legacy
   {"UseSystemColours", OPT_BOOL | OPT_LEGACY, offcfg(use_system_colours)},
   {"BoldAsBright", OPT_BOOL | OPT_LEGACY, offcfg(bold_as_colour)},
   {"FontQuality", OPT_FONTSMOOTH | OPT_LEGACY, offcfg(font_smoothing)},
