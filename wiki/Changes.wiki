@@ -1,6 +1,17 @@
 #summary Notable changes in each released version
 #labels Featured
 
+=== 0.9.7 (17 Apr 2011) ===
+ * Fixed crash when scrollback size is set to zero.
+ * Fixed support for codepoints beyond the Basic Multilingual Plane (BMP) in Cygwin 1.5 and MSYS. 
+ * NT4 support is officially gone. It had been broken since version 0.6.1 anyway, without anyone complaining.
+ * When the window is held open after the shell finished and no more processes are attached, hitting Enter or Escape will now close the window.
+ * Changed the optional Ctrl+Shift shortcut for closing the window from Ctrl+Shift+Q to the more standard-compliant Ctrl+Shift+W.
+ * Added config file versions of command line options: Class, Hold, Icon, Log, Title, Utmp, Window, X, Y.
+ * Multiple-choice settings are now written with named values rather than integers, e.g. `CursorType=block` instead of the rather non-obvious `CursorType=0`. Similarly, Boolean settings are written as `yes` or `no` instead of `0` or `1`. Integer values of course remain supported for backward compatibility.
+ * String settings no longer have arbitrary length restrictions.
+ * Unknown settings and invalid values now trigger warnings.
+
 === 0.9.6 (20 Feb 2011) ===
  * Fixed crash triggered by lots of combining characters on the same line.
  * Corrected initialisation of the bold background colour. (This is used to display the blink attribute when blinking is disabled.)
