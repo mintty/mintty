@@ -814,15 +814,29 @@ copied into.  If it is empty, as it is by default, no logging is done.
 See also the \fIscript\fP(1) utility for a more flexible logging solution.
 
 .TP
+\fBWindow title\fP (Title=)
+The \fBTitle\fP setting can be used to determine the initial window title.
+If it is empty, as it is by default, the title is set to the command being run.
+
+.TP
 \fBUtmp record\fP (Utmp=false)
 If enabled, an entry for the session is written into the system's \fIutmp\fP
 file for recording logins, so that the session appears for example in the
 output of the \fIwho\fP(1) utility.
 
 .TP
-\fBWindow title\fP (Title=)
-The \fBTitle\fP setting can be used to determine the initial window title.
-If it is empty, as it is by default, the title is set to the command being run.
+\fBInitial window state\fP (Window=normal)
+This setting determines how the terminal window should be shown at startup:
+
+\- \fBnormal\fP (default)
+.br
+\- \fBmin\fP (minimised)
+.br
+\- \fBmax\fP (maximised)
+.br
+\- \fBfull\fP (full screen)
+.br
+\- \fBhide\fP (invisible)
 
 .TP
 \fBWindow position\fP (X=, Y=)

@@ -1278,6 +1278,14 @@ See also the <I>script</I>(1) utility for a more flexible logging solution.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
+<B>Window title</B> (Title=)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The <B>Title</B> setting can be used to determine the initial window title.
+If it is empty, as it is by default, the title is set to the command being run.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
 <B>Utmp record</B> (Utmp=false)
 </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
 If enabled, an entry for the session is written into the system&#146;s <I>utmp</I>
@@ -1287,10 +1295,23 @@ output of the <I>who</I>(1) utility.
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
-<B>Window title</B> (Title=)
+<B>Initial window state</B> (Window=normal)
 </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
-The <B>Title</B> setting can be used to determine the initial window title.
-If it is empty, as it is by default, the title is set to the command being run.
+This setting determines how the terminal window should be shown at startup:
+<P>
+- <B>normal</B> (default)
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>min</B> (minimised)
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>max</B> (maximised)
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>full</B> (full screen)
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>hide</B> (invisible)
 <P>
 <!-- .TP -->
 </TD></TR>
