@@ -1,5 +1,5 @@
 // child.c (part of mintty)
-// Copyright 2008-10 Andy Koppe
+// Copyright 2008-11 Andy Koppe
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "child.h"
