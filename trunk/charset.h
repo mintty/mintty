@@ -3,9 +3,15 @@
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1007
   #define HAS_LOCALES 1
+
+  static inline int mbslen(string s) { return mbstowcs(0, s, 0); }
 #else
   #define HAS_LOCALES 0
+
   int xcwidth(xchar c);
+
+  // Pre Cygwin 1.5, the return value of mbstowcs() isn't standard compliant
+  static inline int mbslen(string s) { return strlen(s); }
 #endif
 
 static inline wchar
