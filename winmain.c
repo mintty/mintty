@@ -836,7 +836,7 @@ main(int argc, char *argv[])
   // Window class name.
   wstring wclass = _W(APPNAME);
   if (*cfg.class) {
-    size_t size = mbstowcs(0, cfg.class, 0) + 1;
+    size_t size = mbslen(cfg.class) + 1;
     if (size) {
       wchar *buf = newn(wchar, size);
       mbstowcs(buf, cfg.class, size);
@@ -896,7 +896,7 @@ main(int argc, char *argv[])
   // Convert title to Unicode. Default to application name if unsuccessful.
   wstring wtitle = _W(APPNAME);
   {
-    size_t size = mbstowcs(0, title, 0) + 1;
+    size_t size = mbslen(title) + 1;
     if (size) {
       wchar *buf = newn(wchar, size);
       mbstowcs(buf, title, size);
