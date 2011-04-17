@@ -61,13 +61,14 @@ is taken as the name of the program to execute.
 
 .TP
 \fB-h\fP, \fB--hold\fP \fBnever\fP|\fBstart\fP|\fBerror\fP|\fBalways\fP
-Determine whether to keep the terminal window open after the command exits.
+Determine whether to keep the terminal window open when the command has
+finished and no more processes are connected to the terminal.
 The argument can be abbreviated to a single letter.
 
-By default, the window is closed as soon as the child process terminates,
-except if it exits with status 255, which is used to indicate failure to
-execute the shell command. (Exit status 255 is also used by \fBssh\fP to
-indicate connection errors.)
+By default, the window is closed immediately, except if the child process has
+exited with status 255, which is used to indicate failure to execute the shell
+command.  (Exit status 255 is also used by \fBssh\fP to indicate connection
+errors.)
 
 Alternatively, the window can be set to never stay open, to always stay open,
 or to stay open only if the child process terminates with an error, i.e. with
@@ -75,9 +76,9 @@ a non-zero exit status or due to a signal indicating a runtime error.
 
 .TP
 \fB-i\fP, \fB--icon\fP \fIFILE\fP[\fB,\fIINDEX\fR]
-Load the window icon from an executable, DLL, or icon file.
-A comma-separated index can be used to select an icon in a file with multiple
-icons.
+Load the window icon from an executable, DLL, or icon file.  The optional
+comma-separated index can be used to select a particular icon in a file with
+multiple icons.
 
 .TP
 \fB-l\fP, \fB--log\fP \fIFILE\fP
@@ -777,9 +778,70 @@ pressed and the command invoked by mintty still has child processes.
 This is intended to help avoid closing programs accidentally.
 
 
-.SS Hidden
-The following settings do not appear in the options dialog, i.e. they can
-only be set in config files or using the \fB--option\fP command line option.
+.SS Command line
+The settings here are config file versions of command line options
+described in the OPTIONS section.  They do not appear in the options dialog.
+
+.TP
+\fBHolding the window open\fP (Hold=start)
+The \fBHold\fP setting determines whether to keep the terminal window open when
+the command has finished and no more processes are connected to the terminal.
+It takes the following values:
+
+\- \fBnever\fP: Don't keep the window open.
+
+\- \fBstart\fP: Only keep the window open if the command exited with
+status 255, which is used to indicate failure to start the command.
+This is the default.
+
+\- \fBerror\fP:  Keep the window open if the command exited with a non-zero
+status or it was terminated by a signal indicating a runtime error.
+
+\- \fBalways\fP: Always keep the window open.
+
+.TP
+\fBWindow icon\fP (Icon=)
+The \fBIcon\fP setting with format \fIFILE\fP[\fB,\fIINDEX\fR] allows to load
+the window icon from an executable, DLL, or icon file.
+The optional comma-separated index can be used to select a particular icon in
+a file with multiple icons.
+If the setting is empty, as it is by default, mintty's program icon is used.
+
+.TP
+\fBLog file\fP (Log=)
+The \fBLog\fP setting can be used to specify a log file that all output is
+copied into.  If it is empty, as it is by default, no logging is done.
+See also the \fIscript\fP(1) utility for a more flexible logging solution.
+
+.TP
+\fBUtmp record\fP (Utmp=false)
+If enabled, an entry for the session is written into the system's \fIutmp\fP
+file for recording logins, so that the session appears for example in the
+output of the \fIwho\fP(1) utility.
+
+.TP
+\fBWindow title\fP (Title=)
+The \fBTitle\fP setting can be used to determine the initial window title.
+If it is empty, as it is by default, the title is set to the command being run.
+
+.TP
+\fBWindow position\fP (X=, Y=)
+\fBX\fP and \fBY\fP are integer settings that can be used to determine the
+initial coordinates of the top left corner of the terminal window.
+By default, these are unset, which means that the position suggested by the
+window manager is used.
+
+.TP
+\fBWindow class name\fP (Class=mintty)
+The \fBClass\fP setting determines the name of the window class of the terminal
+window.  This can be used to help Windows scripting tools such as AutoHotKey to
+distinguish different mintty windows.  The name defaults to "mintty".
+
+
+.SS \(lqHidden\(rq settings
+The following settings appear neither in the options dialog nor as command line
+options, which means they can only be set in config files or using the
+\fB--option\fP command line option.
 
 .TP
 \fBWord selection characters\fP (WordChars=)
