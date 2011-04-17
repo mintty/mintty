@@ -1,5 +1,5 @@
 // std.c (part of mintty)
-// Copyright 2010 Andy Koppe
+// Copyright 2010-11 Andy Koppe
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 void
