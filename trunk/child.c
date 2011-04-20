@@ -60,7 +60,7 @@ sigexit(int sig)
 void
 child_create(char *argv[], struct winsize *winp)
 {
-  string lang = cs_init();
+  string lang = cs_lang();
 
   // xterm and urxvt ignore SIGHUP, so let's do the same.
   signal(SIGHUP, SIG_IGN);

@@ -710,8 +710,9 @@ main(int argc, char *argv[])
 {
   main_argv = argv;
   load_funcs();
-  setlocale(LC_CTYPE, "");
-
+  init_config();
+  cs_init();
+  
   // Determine home directory.
   home = getenv("HOME");
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
@@ -723,9 +724,6 @@ main(int argc, char *argv[])
     (pw && pw->pw_dir && *pw->pw_dir) ? strdup(pw->pw_dir) :
 #endif
     asform("/home/%s", getlogin());
-
-  // Load config files and process command line options.
-  init_config();
 
   // Set size and position defaults.
   STARTUPINFO sui;
@@ -836,14 +834,37 @@ main(int argc, char *argv[])
   // Window class name.
   wstring wclass = _W(APPNAME);
   if (*cfg.class) {
-    size_t size = mbslen(cfg.class) + 1;
+    size_t size = cs_mbstowcs(0, cfg.class, 0) + 1;
     if (size) {
       wchar *buf = newn(wchar, size);
-      mbstowcs(buf, cfg.class, size);
+      cs_mbstowcs(buf, cfg.class, size);
       wclass = buf;
     }
     else
       fputs("Using default class name due to invalid characters.\n", stderr);
+  }
+
+  // Put child command line into window title if we haven't got one already.
+  string title = cfg.title;
+  if (!*title) {
+    size_t len;
+    char *argz;
+    argz_create(argv, &argz, &len);
+    argz_stringify(argz, len, ' ');
+    title = argz;
+  }
+
+  // Convert title to Unicode. Default to application name if unsuccessful.
+  wstring wtitle = _W(APPNAME);
+  {
+    size_t size = cs_mbstowcs(0, title, 0) + 1;
+    if (size) {
+      wchar *buf = newn(wchar, size);
+      cs_mbstowcs(buf, title, size);
+      wtitle = buf;
+    }
+    else
+      fputs("Using default title due to invalid characters.\n", stderr);
   }
 
   // The window class.
@@ -867,6 +888,11 @@ main(int argc, char *argv[])
   font_size = cfg.font.size;
   win_init_fonts();
   
+  // Reconfigure the charset module now that arguments have been converted,
+  // the locale/charset settings have been loaded, and the font width has
+  // been determined.
+  cs_reconfig();
+  
   // Determine window sizes.
   int term_width = font_width * cfg.cols;
   int term_height = font_height * cfg.rows;
@@ -883,29 +909,6 @@ main(int argc, char *argv[])
   extra_width = width - (cr.right - cr.left);
   extra_height = height - (cr.bottom - cr.top);
   
-  // Put child command line into window title if we haven't got one already.
-  string title = cfg.title;
-  if (!*title) {
-    size_t len;
-    char *argz;
-    argz_create(argv, &argz, &len);
-    argz_stringify(argz, len, ' ');
-    title = argz;
-  }
-
-  // Convert title to Unicode. Default to application name if unsuccessful.
-  wstring wtitle = _W(APPNAME);
-  {
-    size_t size = mbslen(title) + 1;
-    if (size) {
-      wchar *buf = newn(wchar, size);
-      mbstowcs(buf, title, size);
-      wtitle = buf;
-    }
-    else
-      fputs("Using default title due to invalid characters.\n", stderr);
-  }
-
   // Having x == CW_USEDEFAULT but not still triggers the default positioning,
   // whereas y==CW_USEFAULT but not x results in an invisible window, so to
   // avoid the latter, require both x and y to be set for custom positioning.
