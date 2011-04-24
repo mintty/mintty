@@ -317,7 +317,8 @@ struct term {
     MS_SEL_CHAR = -1, MS_SEL_WORD = -2, MS_SEL_LINE = -3, MS_OPENING = -4
   } mouse_state;
   
-  bool ext_mouse_pos;  // Extended mouse position reporting (using UTF-8)
+  bool ext_mouse_pos;  // Xterm extended mouse position reporting (using UTF-8)
+  bool proper_mouse_seq;  // Use urxvt's proper CSI sequence for mouse reports.
   
   bool sel_rect, selected;
   pos sel_start, sel_end, sel_anchor;
