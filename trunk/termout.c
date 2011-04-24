@@ -1,5 +1,5 @@
 // termout.c (part of mintty)
-// Copyright 2008-10 Andy Koppe
+// Copyright 2008-11 Andy Koppe
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -21,19 +21,6 @@
 #define ANSI_QUE(x)	ANSI(x,true)
 
 static const char primary_da[] = "\e[?1;2c";
-
-static void sendf(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
-static void sendf(const char *fmt, ...)
-{
-  va_list va;
-  va_start(va, fmt);
-  char *s;
-  int len = vasprintf(&s, fmt, va);
-  va_end(va);
-  if (len >= 0)
-    child_write(s, len);
-  free(s);
-}
 
 /*
  * Move the cursor to a given position, clipping at boundaries. We
@@ -675,7 +662,7 @@ do_csi(uchar c)
     when ANSI('c', '>'):     /* DA: report version */
       /* Terminal type 77 (ASCII 'M' for mintty) */
       if (!nargs || (nargs == 1 && arg0 == 0))
-        sendf("\e[>77;%u;0c", DECIMAL_VERSION);
+        child_printf("\e[>77;%u;0c", DECIMAL_VERSION);
     when 'a':        /* HPR: move right N cols */
       move(curs->x + def_arg0, curs->y, 1);
     when 'C':        /* CUF: Cursor right */
@@ -732,7 +719,7 @@ do_csi(uchar c)
       child_write(primary_da, sizeof primary_da - 1);
     when 'n':        /* DSR: cursor position query */
       if (arg0 == 6)
-        sendf("\e[%d;%dR", curs->y + 1, curs->x + 1);
+        child_printf("\e[%d;%dR", curs->y + 1, curs->x + 1);
       else if (arg0 == 5) {
         child_write("\e[0n", 4);
       }
@@ -842,12 +829,12 @@ do_csi(uchar c)
             child_write(win_is_iconic() ? "\e[1t" : "\e[2t", 4);
           when 13:
             win_get_pos(&x, &y);
-            sendf("\e[3;%d;%dt", x, y);
+            child_printf("\e[3;%d;%dt", x, y);
           when 14:
             win_get_pixels(&x, &y);
-            sendf("\e[4;%d;%dt", x, y);
+            child_printf("\e[4;%d;%dt", x, y);
           when 18:
-            sendf("\e[8;%d;%dt", term.rows, term.cols);
+            child_printf("\e[8;%d;%dt", term.rows, term.cols);
           when 19:
            /*
             * Hmmm. Strictly speaking we
@@ -913,7 +900,7 @@ do_csi(uchar c)
     }
     when 'x': {      /* DECREQTPARM: report terminal characteristics */
       if (arg0 <= 1)
-        sendf("\e[%c;1;1;112;112;1;0x", '2' + arg0);
+        child_printf("\e[%c;1;1;112;112;1;0x", '2' + arg0);
     }
     when 'Z': {       /* CBT */
       int i = def_arg0; 
@@ -962,12 +949,12 @@ do_colour_osc(uint i)
   }
   uint rgb, r, g, b;
   if (!strcmp(s, "?")) {
-    sendf("\e]%u;", term.esc_args[0]);
+    child_printf("\e]%u;", term.esc_args[0]);
     if (has_index_arg)
-      sendf("%u;", i);
+      child_printf("%u;", i);
     uint c = win_get_colour(i);
     r = red(c), g = green(c), b = blue(c);
-    sendf("rgb:%04x/%04x/%04x\e\\", r * 0x101, g * 0x101, b * 0x101);
+    child_printf("rgb:%04x/%04x/%04x\e\\", r * 0x101, g * 0x101, b * 0x101);
   }
   else if (sscanf(s, "#%6x%c", &rgb, &(char){0}) == 1)
     win_set_colour(i, rgb_to_colour(rgb));
@@ -997,7 +984,7 @@ do_osc(void)
       when 12: do_colour_osc(CURSOR_COLOUR_I);
       when 7770:
         if (!strcmp(s, "?"))
-          sendf("\e]7770;%u\e\\", win_get_font_size());
+          child_printf("\e]7770;%u\e\\", win_get_font_size());
         else {
           char *end;
           int i = strtol(s, &end, 10);
@@ -1010,7 +997,7 @@ do_osc(void)
         }
       when 701 or 7776:  // Set/get locale. 701 is from urxvt.
         if (!strcmp(s, "?"))
-          sendf("\e]%u;%s\e\\", arg, cs_get_locale());
+          child_printf("\e]%u;%s\e\\", arg, cs_get_locale());
         else
           cs_set_locale(s);
     }
