@@ -333,6 +333,21 @@ child_write(const char *buf, uint len)
 }
 
 void
+child_printf(const char *fmt, ...)
+{
+  if (pty_fd >= 0) {
+    va_list va;
+    va_start(va, fmt);
+    char *s;
+    int len = vasprintf(&s, fmt, va);
+    va_end(va);
+    if (len >= 0)
+      write(pty_fd, s, len);
+    free(s);
+  }
+}
+
+void
 child_send(const char *buf, uint len)
 {
   term_reset_screen();
