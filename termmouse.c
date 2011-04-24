@@ -1,5 +1,5 @@
 // termmouse.c (part of mintty)
-// Copyright 2008-10 Andy Koppe
+// Copyright 2008-11 Andy Koppe
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -216,32 +216,41 @@ sel_extend(pos selpoint)
 static void
 send_mouse_event(char code, mod_keys mods, pos p)
 {
-  char buf[8] = "\e[M";
-  uint len = 3;
-  buf[len++] = code | (mods & ~cfg.click_target_mod) << 2;
+  code |= (mods & ~cfg.click_target_mod) << 2;
   
-  void encode_coord(int c) {
-    c += ' ' + 1;
-    if (!term.ext_mouse_pos)
-      buf[len++] = c < 0x100 ? c : 0; 
-    else if (c < 0x80)
-      buf[len++] = c;
-    else if (c < 0x800) {
-      // In extended mouse mode, positions from 96 to 2015 are encoded as a
-      // two-byte UTF-8 sequence (as introduced in xterm #262.)
-      buf[len++] = 0xC0 + (c >> 6);
-      buf[len++] = 0x80 + (c & 0x3F);
-    }
-    else {
-      // Xterm reports out-of-range positions as a NUL byte.
-      buf[len++] = 0;
-    }
+  if (term.proper_mouse_seq) {
+    // Urxvt's proper CSI sequence with unlimited coordinates.
+    child_printf("\e[%u;%u;%uM", code, p.x, p.y);
   }
-  
-  encode_coord(p.x);
-  encode_coord(p.y);
+  else {
+    // Xterm's hacky but traditional character offset approach.
+    char buf[8] = "\e[M";
+    uint len = 3;
+    
+    void encode_coord(int c) {
+      c += ' ' + 1;
+      if (!term.ext_mouse_pos)
+        buf[len++] = c < 0x100 ? c : 0; 
+      else if (c < 0x80)
+        buf[len++] = c;
+      else if (c < 0x800) {
+        // In extended mouse mode, positions from 96 to 2015 are encoded as a
+        // two-byte UTF-8 sequence (as introduced in xterm #262.)
+        buf[len++] = 0xC0 + (c >> 6);
+        buf[len++] = 0x80 + (c & 0x3F);
+      }
+      else {
+        // Xterm reports out-of-range positions as a NUL byte.
+        buf[len++] = 0;
+      }
+    }
+    
+    buf[len++] = code;
+    encode_coord(p.x);
+    encode_coord(p.y);
 
-  child_write(buf, len);
+    child_write(buf, len);
+  }
 }
 
 static pos
