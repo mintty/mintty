@@ -211,6 +211,8 @@ static opt_val
   [OPT_BOOL] = (opt_val[]) {
     {"no", false},
     {"yes", true},
+    {"false", false},
+    {"true", true},
     {0, 0}
   },
   [OPT_MOD] = (opt_val[]) {
