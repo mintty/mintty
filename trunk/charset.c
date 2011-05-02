@@ -24,6 +24,8 @@ static string config_locale;   // Locale configured in the options.
 static string env_locale;      // Locale determined by the environment.
 #if HAS_LOCALES
 static string sys_locale;      // System default locale (if no env_locale).
+static bool valid_default_locale, use_locale;
+bool cs_ambig_wide;
 #else
 static const char sys_locale[] = "C";
 #endif
@@ -33,17 +35,7 @@ static uint codepage, default_codepage;
 static wchar cp_default_wchar;
 static char cp_default_char[4];
 
-#if HAS_LOCALES
-static bool valid_default_locale, use_locale, changed_locale;
-enum { CP_DEFAULT = CP_UTF8 };
-#else
-enum { CP_DEFAULT = CP_ACP };
-#endif
-
-bool cs_ambig_wide;
 int cs_cur_max;
-
-extern bool font_ambig_wide;
 
 static const struct {
   ushort cp;
@@ -160,10 +152,7 @@ valid_codepage(uint cp)
 static uint
 cs_codepage(string name)
 {
-  if (!*name)
-    return CP_DEFAULT;
-  
-  uint cp = CP_DEFAULT;
+  uint cp = CP_ACP;
   char upname[strlen(name) + 1];
   strtoupper(upname, name);
   uint iso;
@@ -173,20 +162,25 @@ cs_codepage(string name)
     if (iso && iso <= 16 && iso != 12)
       cp = 28590 + iso;
   }
-  else if (sscanf(upname, "CP%u", &cp) != 1 &&
-           sscanf(upname, "WIN%u", &cp) != 1 &&
-           sscanf(upname, "%u", &cp) != 1) {
+  else if (sscanf(upname, "CP%u", &cp) == 1 ||
+           sscanf(upname, "WIN%u", &cp) == 1 ||
+           sscanf(upname, "%u", &cp) == 1) {
+    // Got a codepage number.
+  }
+  else {
+    // Search the charset table.
     for (uint i = 0; i < lengthof(cs_names); i++) {
-      char cs_upname[8];
-      strtoupper(cs_upname, cs_names[i].name);
-      if (!memcmp(upname, cs_upname, strlen(cs_upname))) {
+      if (!strcasecmp(name, cs_names[i].name)) {
         cp = cs_names[i].cp;
         break;
       }
     }
   }
   
-  return valid_codepage(cp) ? cp : CP_DEFAULT;
+  return
+    cp == CP_ACP ? GetACP() :
+    cp == CP_OEMCP ? GetOEMCP() :
+    valid_codepage(cp) ? cp : GetACP();
 }
 
 static void
@@ -265,7 +259,6 @@ update_mode(void)
     cs_ambig_wide ? "ja_JP.UTF-8" : "C.UTF-8"
   );
   use_locale = use_default_locale || mode == CSM_UTF8;
-  changed_locale = true;
   if (use_locale)
     cs_cur_max = MB_CUR_MAX;
   else
@@ -290,25 +283,35 @@ cs_set_mode(cs_mode new_mode)
 static void
 update_locale(void)
 {
-  default_locale = term_locale ?: config_locale ?: env_locale ?: sys_locale;
+  delete(default_locale);
 
-  string charset;
+  string locale = term_locale ?: config_locale ?: env_locale ?: sys_locale;
+  string dot = strchr(locale, '.');
+  string charset = dot ? dot + 1 : locale;
+
 #if HAS_LOCALES
-  valid_default_locale = setlocale(LC_CTYPE, default_locale);
+  string set_locale = setlocale(LC_CTYPE, locale);
+  if (!set_locale) {
+    locale = asform("C.%s", charset);
+    set_locale = setlocale(LC_CTYPE, locale);
+    delete(locale);
+  }
+
+  valid_default_locale = set_locale;
   if (valid_default_locale) {
-    charset = nl_langinfo(CODESET);
+    default_codepage = cs_codepage(nl_langinfo(CODESET));
+    default_locale = strdup(set_locale);
     cs_ambig_wide = wcwidth(0x3B1) == 2;
   }
   else {
 #endif
-    string dot = strchr(default_locale, '.');
-    charset = dot ? dot + 1 : "";
-    cs_ambig_wide = font_ambig_wide;
+    default_codepage = cs_codepage(charset);
+    default_locale = asform("C.%u", default_codepage);
 #if HAS_LOCALES
+    cs_ambig_wide = font_ambig_wide;
   }
 #endif
-  default_codepage = cs_codepage(charset);
-  
+
   update_mode();
 }
 
