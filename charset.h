@@ -5,7 +5,6 @@
   #define HAS_LOCALES 1
 #else
   #define HAS_LOCALES 0
-  int xcwidth(xchar c);
 #endif
 
 static inline wchar
@@ -39,9 +38,6 @@ void cs_set_locale(string);
 typedef enum { CSM_DEFAULT, CSM_OEM, CSM_UTF8 } cs_mode;
 void cs_set_mode(cs_mode);
 
-int cs_cur_max;
-bool cs_ambig_wide;
-
 int cs_wcntombn(char *s, const wchar *ws, size_t len, size_t wlen);
 int cs_mbstowcs(wchar *ws, const char *s, size_t wlen);
 int cs_mb1towc(wchar *pwc, char c);
@@ -49,5 +45,16 @@ wchar cs_btowc_glyph(char);
 
 extern string locale_menu[];
 extern string charset_menu[];
+
+int cs_cur_max;
+
+extern bool font_ambig_wide;
+
+#if HAS_LOCALES
+extern bool cs_ambig_wide;
+#else
+#define cs_ambig_wide font_ambig_wide
+int xcwidth(xchar c);
+#endif
 
 #endif
