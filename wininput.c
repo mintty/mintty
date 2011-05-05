@@ -443,9 +443,8 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
   
   // Keycode buffers
-  char buf[12];
-  wchar wbuf[8];
-  int len = 0, wlen = 0;
+  char buf[32];
+  int len = 0;
 
   inline void ch(char c) { buf[len++] = c; }
   inline void esc_if(bool b) { if (b) ch('\e'); }
@@ -508,14 +507,23 @@ win_key_down(WPARAM wp, LPARAM lp)
 
   // Keyboard layout
   bool layout(void) {
-    wlen = ToUnicode(key, scancode, kbd, wbuf, lengthof(wbuf), 0);
-    if (!wlen)
-      return 0;
-    if (wlen > 0)
-      esc_if(alt);
-    else
-      wlen = 0;
-    return 1;
+    // ToUnicode returns up to 4 wchars according to
+    // http://blogs.msdn.com/b/michkap/archive/2006/03/24/559169.aspx.
+    wchar wbuf[4];  
+    int wlen = ToUnicode(key, scancode, kbd, wbuf, lengthof(wbuf), 0);
+    if (!wlen)     // Unassigned.
+      return false;
+    if (wlen < 0)  // Dead key.
+      return true;
+
+    esc_if(alt);
+    
+    // Check that the keycode can be converted to the current charset
+    // before returning success.
+    int mblen = cs_wcntombn(buf + len, wbuf, lengthof(buf) - len, wlen);
+    bool ok = mblen > 0;
+    len = ok ? len + mblen : 0;
+    return ok;
   }
   
   wchar undead_keycode(void) {
@@ -712,10 +720,10 @@ win_key_down(WPARAM wp, LPARAM lp)
   hide_mouse();
   term_cancel_paste();
 
-  do {
-    if (len) child_send(buf, len);
-    if (wlen) child_sendw(wbuf, wlen);
-  } while (--count);
+  if (len) {
+    while (count--)
+      child_send(buf, len);
+  }
 
   return 1;
 }
