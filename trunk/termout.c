@@ -434,14 +434,6 @@ do_sgr(void)
   * cursor type, this was selected by
   * CSI 7m.
   *
-  * when 2:
-  *  This is sometimes DIM, eg on the
-  *  GIGI and Linux
-  * when 8:
-  *  This is sometimes INVIS various ANSI.
-  * when 21:
-  *  This like 22 disables BOLD, DIM and INVIS
-  *
   * The ANSI colours appear on any
   * terminal that has colour (obviously)
   * but the interaction between sgr0 and
@@ -974,35 +966,33 @@ do_colour_osc(uint i)
 static void
 do_osc(void)
 {
-  if (!term.osc_w) { // "wordness" is ignored
-    uint arg = term.esc_args[0];
-    char *s = term.osc_string;
-    s[term.osc_strlen] = 0;
-    switch (arg) {
-      when 0 or 2 or 21: win_set_title(s);  // ignore icon title
-      when 4:  do_colour_osc(0);
-      when 10: do_colour_osc(FG_COLOUR_I);
-      when 11: do_colour_osc(BG_COLOUR_I);
-      when 12: do_colour_osc(CURSOR_COLOUR_I);
-      when 7770:
-        if (!strcmp(s, "?"))
-          child_printf("\e]7770;%u\e\\", win_get_font_size());
-        else {
-          char *end;
-          int i = strtol(s, &end, 10);
-          if (*end)
-            ; // Ignore if parameter contains unexpected characters
-          else if (*s == '+' || *s == '-')
-            win_zoom_font(i);
-          else
-            win_set_font_size(i);
-        }
-      when 701 or 7776:  // Set/get locale. 701 is from urxvt.
-        if (!strcmp(s, "?"))
-          child_printf("\e]%u;%s\e\\", arg, cs_get_locale());
+  uint arg = term.esc_args[0];
+  char *s = term.osc_string;
+  s[term.osc_strlen] = 0;
+  switch (arg) {
+    when 0 or 2 or 21: win_set_title(s);  // ignore icon title
+    when 4:  do_colour_osc(0);
+    when 10: do_colour_osc(FG_COLOUR_I);
+    when 11: do_colour_osc(BG_COLOUR_I);
+    when 12: do_colour_osc(CURSOR_COLOUR_I);
+    when 7770:
+      if (!strcmp(s, "?"))
+        child_printf("\e]7770;%u\e\\", win_get_font_size());
+      else {
+        char *end;
+        int i = strtol(s, &end, 10);
+        if (*end)
+          ; // Ignore if parameter contains unexpected characters
+        else if (*s == '+' || *s == '-')
+          win_zoom_font(i);
         else
-          cs_set_locale(s);
-    }
+          win_set_font_size(i);
+      }
+    when 701 or 7776:  // Set/get locale. 701 is from urxvt.
+      if (!strcmp(s, "?"))
+        child_printf("\e]%u;%s\e\\", arg, cs_get_locale());
+      else
+        cs_set_locale(s);
   }
 }
 
@@ -1220,7 +1210,6 @@ term_write(const char *buf, uint len)
           term.state = TOPLEVEL;
         }
       when SEEN_OSC: {
-        term.osc_w = false;
         switch (c) {
           when 'P':  /* Linux palette sequence */
             term.state = SEEN_OSC_P;
@@ -1228,35 +1217,18 @@ term_write(const char *buf, uint len)
           when 'R':  /* Linux palette reset */
             win_reset_colours();
             term.state = TOPLEVEL;
-          when 'W':  /* word-set */
-            term.state = SEEN_OSC_W;
-            term.osc_w = true;
-          when '0' ... '9':
+          when '0' ... '9':  /* OSC command number */
             term.esc_args[0] = 10 * term.esc_args[0] + c - '0';
-          otherwise: {
-            if (c == 'L' && term.esc_args[0] == 2) {
-              // Grotty hack to support xterm and DECterm title
-              // sequences concurrently.
-              term.esc_args[0] = 1;
-            }
-            else {
-              term.state = OSC_STRING;
-              term.osc_strlen = 0;
-            }
-          }
+          otherwise:
+            term.state = OSC_STRING;
+            term.osc_strlen = 0;
+            // The command number has to be terminated with a semicolon,
+            // otherwise the command is invalid.
+            if (c != ';')
+              term.esc_args[0] = -1;
         }
       }
       when OSC_STRING: {
-       /*
-        * This OSC stuff is EVIL. It takes just one character to get into
-        * sysline mode and it's not initially obvious how to get out.
-        * So I've added CR and LF as string aborts.
-        * This shouldn't effect compatibility as I believe embedded 
-        * control characters are supposed to be interpreted (maybe?) 
-        * and they don't display anything useful anyway.
-        *
-        * -- RDB
-        */
         switch (c) {
          /*
           * These characters terminate the string; ST and BEL
@@ -1290,13 +1262,6 @@ term_write(const char *buf, uint len)
           term.state = TOPLEVEL;
         }
       }
-      when SEEN_OSC_W:
-        if ('0' <= c && c <= '9')
-          term.esc_args[0] = 10 * term.esc_args[0] + c - '0';
-        else {
-          term.state = OSC_STRING;
-          term.osc_strlen = 0;
-        }
       when SEEN_DCS: {
        /* Parse and ignore Device Control String (DCS) sequences */
         switch (c) {

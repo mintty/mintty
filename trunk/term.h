@@ -298,13 +298,12 @@ struct term {
 
   int  osc_strlen;
   char osc_string[OSC_STR_MAX + 1];
-  bool osc_w;
 
   uchar *tabs;
 
   enum {
     TOPLEVEL, SEEN_ESC, SEEN_CSI,
-    SEEN_OSC, SEEN_OSC_W, SEEN_OSC_P, OSC_STRING, OSC_MAYBE_ST,
+    SEEN_OSC, SEEN_OSC_P, OSC_STRING, OSC_MAYBE_ST,
     SEEN_DCS, DCS_MAYBE_ST
   } state;
 
