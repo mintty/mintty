@@ -350,7 +350,6 @@ do_esc(uchar c)
       term.esc_query = false;
     when ']':  /* OSC: xterm escape sequences */
       term.state = SEEN_OSC;
-      term.esc_args[0] = 0;
     when 'P':  /* DCS: Device Control String sequences */
       term.state = SEEN_DCS;
     when '7':  /* DECSC: save cursor */
@@ -966,10 +965,9 @@ do_colour_osc(uint i)
 static void
 do_osc(void)
 {
-  uint arg = term.esc_args[0];
   char *s = term.osc_string;
   s[term.osc_strlen] = 0;
-  switch (arg) {
+  switch (term.osc_num) {
     when 0 or 2 or 21: win_set_title(s);  // ignore icon title
     when 4:  do_colour_osc(0);
     when 10: do_colour_osc(FG_COLOUR_I);
@@ -990,7 +988,7 @@ do_osc(void)
       }
     when 701 or 7776:  // Set/get locale. 701 is from urxvt.
       if (!strcmp(s, "?"))
-        child_printf("\e]%u;%s\e\\", arg, cs_get_locale());
+        child_printf("\e]%u;%s\e\\", term.osc_num, cs_get_locale());
       else
         cs_set_locale(s);
   }
@@ -1209,34 +1207,44 @@ term_write(const char *buf, uint len)
           do_csi(c);
           term.state = TOPLEVEL;
         }
-      when SEEN_OSC: {
+      when SEEN_OSC:
+        term.osc_strlen = 0;
         switch (c) {
           when 'P':  /* Linux palette sequence */
-            term.state = SEEN_OSC_P;
-            term.osc_strlen = 0;
+            term.state = OSC_PALETTE;
           when 'R':  /* Linux palette reset */
             win_reset_colours();
             term.state = TOPLEVEL;
           when '0' ... '9':  /* OSC command number */
-            term.esc_args[0] = 10 * term.esc_args[0] + c - '0';
-          otherwise:
+            term.osc_num = c - '0';
+            term.state = OSC_NUM;
+          when ';':
+            term.osc_num = 0;
             term.state = OSC_STRING;
-            term.osc_strlen = 0;
-            // The command number has to be terminated with a semicolon,
-            // otherwise the command is invalid.
-            if (c != ';')
-              term.esc_args[0] = -1;
+          when '\a' or '\n' or '\r':
+            term.state = TOPLEVEL;
+          when '\e':
+            term.state = SEEN_ESC;
+          otherwise:
+            term.osc_num = -1;
+            term.state = OSC_STRING;
         }
-      }
-      when OSC_STRING: {
+      when OSC_NUM:
         switch (c) {
-         /*
-          * These characters terminate the string; ST and BEL
-          * terminate the sequence and trigger instant
-          * processing of it, whereas ESC goes back to SEEN_ESC
-          * mode unless it is followed by \, in which case it is
-          * synonymous with ST in the first place.
-          */
+          when '0' ... '9':  /* OSC command number */
+            term.osc_num = term.osc_num * 10 + c - '0';
+          when ';':
+            term.state = OSC_STRING;
+          when '\a' or '\n' or '\r':
+            term.state = TOPLEVEL;
+          when '\e':
+            term.state = SEEN_ESC;
+          otherwise:
+            term.osc_num = -1;
+            term.state = OSC_STRING;
+        }
+      when OSC_STRING:
+        switch (c) {
           when '\n' or '\r':
             term.state = TOPLEVEL;
           when '\a':
@@ -1248,21 +1256,19 @@ term_write(const char *buf, uint len)
             if (term.osc_strlen < OSC_STR_MAX)
               term.osc_string[term.osc_strlen++] = c;
         }
-      }
-      when SEEN_OSC_P: {
-        if (!isxdigit(c)) {
+      when OSC_PALETTE:
+        if (!isxdigit(c))
           term.state = TOPLEVEL;
-          break;
+        else {
+          term.osc_string[term.osc_strlen++] = c;
+          if (term.osc_strlen == 7) {
+            uint n, rgb;
+            sscanf(term.osc_string, "%1x%6x", &n, &rgb);
+            win_set_colour(n, rgb_to_colour(rgb));
+            term.state = TOPLEVEL;
+          }
         }
-        term.osc_string[term.osc_strlen++] = c;
-        if (term.osc_strlen == 7) {
-          uint n, rgb;
-          sscanf(term.osc_string, "%1x%6x", &n, &rgb);
-          win_set_colour(n, rgb_to_colour(rgb));
-          term.state = TOPLEVEL;
-        }
-      }
-      when SEEN_DCS: {
+      when SEEN_DCS:
        /* Parse and ignore Device Control String (DCS) sequences */
         switch (c) {
           when '\n' or '\r' or '\a':
@@ -1270,7 +1276,6 @@ term_write(const char *buf, uint len)
           when '\e':
             term.state = DCS_MAYBE_ST;
         }
-      }
     }
   }
   win_schedule_update();

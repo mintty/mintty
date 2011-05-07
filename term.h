@@ -296,6 +296,7 @@ struct term {
   int  esc_nargs;
   int  esc_query;
 
+  int  osc_num;
   int  osc_strlen;
   char osc_string[OSC_STR_MAX + 1];
 
@@ -303,7 +304,7 @@ struct term {
 
   enum {
     TOPLEVEL, SEEN_ESC, SEEN_CSI,
-    SEEN_OSC, SEEN_OSC_P, OSC_STRING, OSC_MAYBE_ST,
+    SEEN_OSC, OSC_NUM, OSC_STRING, OSC_MAYBE_ST, OSC_PALETTE,
     SEEN_DCS, DCS_MAYBE_ST
   } state;
 
