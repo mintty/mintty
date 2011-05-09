@@ -21,15 +21,17 @@ colour win_get_sys_colour(bool fg);
 
 void win_invalidate_all(void);
 
-void win_move(int x, int y);
-void win_resize(int rows, int cols);
+void win_set_pos(int x, int y);
+void win_set_chars(int rows, int cols);
+void win_set_pixels(int height, int width);
 void win_maximise(int max);
 void win_set_zorder(bool top);
 void win_set_iconic(bool);
 void win_update_scrollbar(void);
 bool win_is_iconic(void);
-void win_get_pos(int *x, int *y);
-void win_get_pixels(int *x, int *y);
+void win_get_pos(int *xp, int *yp);
+void win_get_pixels(int *height_p, int *width_p);
+void win_get_screen_chars(int *rows_p, int *cols_p);
 void win_popup_menu(void);
 
 void win_zoom_font(int);

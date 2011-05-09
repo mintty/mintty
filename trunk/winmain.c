@@ -90,38 +90,6 @@ win_copy_title(void)
 }
 
 /*
- * Minimise or restore the window in response to a server-side
- * request.
- */
-void
-win_set_iconic(bool iconic)
-{
-  if (iconic ^ IsIconic(wnd))
-    ShowWindow(wnd, iconic ? SW_MINIMIZE : SW_RESTORE);
-}
-
-/*
- * Move the window in response to a server-side request.
- */
-void
-win_move(int x, int y)
-{
-  if (!IsZoomed(wnd))
-    SetWindowPos(wnd, null, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-}
-
-/*
- * Move the window to the top or bottom of the z-order in response
- * to a server-side request.
- */
-void
-win_set_zorder(bool top)
-{
-  SetWindowPos(wnd, top ? HWND_TOP : HWND_BOTTOM, 0, 0, 0, 0,
-               SWP_NOMOVE | SWP_NOSIZE);
-}
-
-/*
  *  Switch to next or previous application window in z-order
  */
 
@@ -155,36 +123,95 @@ win_switch(bool back)
   }
 }
 
+static void
+get_monitor_info(MONITORINFO *mip)
+{
+  HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+  mip->cbSize = sizeof(MONITORINFO);
+  GetMonitorInfo(mon, mip);
+}
+
 /*
- * Report whether the window is iconic, for terminal reports.
+ * Minimise or restore the window in response to a server-side
+ * request.
  */
+void
+win_set_iconic(bool iconic)
+{
+  if (iconic ^ IsIconic(wnd))
+    ShowWindow(wnd, iconic ? SW_MINIMIZE : SW_RESTORE);
+}
+
+/*
+ * Move the window in response to a server-side request.
+ */
+void
+win_set_pos(int x, int y)
+{
+  if (!IsZoomed(wnd))
+    SetWindowPos(wnd, null, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+}
+
+/*
+ * Move the window to the top or bottom of the z-order in response
+ * to a server-side request.
+ */
+void
+win_set_zorder(bool top)
+{
+  SetWindowPos(wnd, top ? HWND_TOP : HWND_BOTTOM, 0, 0, 0, 0,
+               SWP_NOMOVE | SWP_NOSIZE);
+}
+
 bool
 win_is_iconic(void)
-{ return IsIconic(wnd); }
+{
+  return IsIconic(wnd);
+}
 
-/*
- * Report the window's position, for terminal reports.
- */
 void
-win_get_pos(int *x, int *y)
+win_get_pos(int *xp, int *yp)
 {
   RECT r;
   GetWindowRect(wnd, &r);
-  *x = r.left;
-  *y = r.top;
+  *xp = r.left;
+  *yp = r.top;
 }
 
-/*
- * Report the window's pixel size, for terminal reports.
- */
 void
-win_get_pixels(int *x, int *y)
+win_get_pixels(int *height_p, int *width_p)
 {
   RECT r;
   GetWindowRect(wnd, &r);
-  *x = r.right - r.left;
-  *y = r.bottom - r.top;
+  *height_p = r.bottom - r.top;
+  *width_p = r.right - r.left;
 }
+
+void
+win_get_screen_chars(int *rows_p, int *cols_p)
+{
+  MONITORINFO mi;
+  get_monitor_info(&mi);
+  RECT fr = mi.rcMonitor;
+  *rows_p = (fr.bottom - fr.top) / font_height;
+  *cols_p = (fr.right - fr.left) / font_width;
+}
+
+void
+win_set_pixels(int height, int width)
+{
+  SetWindowPos(wnd, null, 0, 0,
+               width + 2 * PADDING + extra_width,
+               height + 2 * PADDING + extra_height,
+               SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
+}
+
+void
+win_set_chars(int rows, int cols)
+{
+  win_set_pixels(rows * font_height, cols * font_width);
+}
+
 
 // Clockwork
 int get_tick_count(void) { return GetTickCount(); }
@@ -218,27 +245,10 @@ win_bell(void)
     flash_taskbar(true);
 }
 
-static void
-get_monitor_info(MONITORINFO *mip)
-{
-  HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
-  mip->cbSize = sizeof(MONITORINFO);
-  GetMonitorInfo(mon, mip);
-}
-
 void
 win_invalidate_all(void)
 {
   InvalidateRect(wnd, null, true);
-}
-
-void
-win_resize(int rows, int cols)
-{
-  SetWindowPos(wnd, null, 0, 0,
-               font_width * cols + 2 * PADDING + extra_width,
-               font_height * rows + 2 * PADDING + extra_height,
-               SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
 }
 
 static void
@@ -365,7 +375,7 @@ default_size(void)
 {
   if (IsZoomed(wnd))
     ShowWindow(wnd, SW_RESTORE);
-  win_resize(cfg.rows, cfg.cols);
+  win_set_chars(cfg.rows, cfg.cols);
 }
 
 static void
