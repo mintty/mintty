@@ -376,7 +376,7 @@ do_esc(uchar c)
     when 'c':  /* RIS: restore power-on settings */
       term_reset();
       if (term.reset_132) {
-        win_resize(term.rows, 80);
+        win_set_chars(term.rows, 80);
         term.reset_132 = 0;
       }
     when 'H':  /* HTS: set a tab */
@@ -425,27 +425,7 @@ do_esc(uchar c)
 static void
 do_sgr(void)
 {
- /* Set Graphics Rendition.
-  *
-  * A VT100 without the AVO only had one
-  * attribute, either underline or
-  * reverse video depending on the
-  * cursor type, this was selected by
-  * CSI 7m.
-  *
-  * The ANSI colours appear on any
-  * terminal that has colour (obviously)
-  * but the interaction between sgr0 and
-  * the colours varies but is usually
-  * related to the background colour
-  * erase item. The interaction between
-  * colour attributes and the mono ones
-  * is also very implementation
-  * dependent.
-  *
-  * The 39 and 49 attributes are likely
-  * to be unimplemented.
-  */
+ /* Set Graphics Rendition. */
   int nargs = term.esc_nargs;
   for (int i = 0; i < nargs; i++) {
     term_cursor *curs = &term.screen.curs;
@@ -485,8 +465,7 @@ do_sgr(void)
       when 90 ... 97:
        /* aixterm-style bright foreground */
         curs->attr &= ~ATTR_FGMASK;
-        curs->attr |= ((term.esc_args[i] - 90 + 8)
-                           << ATTR_FGSHIFT);
+        curs->attr |= ((term.esc_args[i] - 90 + 8) << ATTR_FGSHIFT);
       when 39: /* default-foreground */
         curs->attr &= ~ATTR_FGMASK;
         curs->attr |= ATTR_DEFFG;
@@ -498,8 +477,7 @@ do_sgr(void)
       when 100 ... 107:
        /* aixterm-style bright background */
         curs->attr &= ~ATTR_BGMASK;
-        curs->attr |= ((term.esc_args[i] - 100 + 8)
-                           << ATTR_BGSHIFT);
+        curs->attr |= ((term.esc_args[i] - 100 + 8) << ATTR_BGSHIFT);
       when 49: /* default-background */
         curs->attr &= ~ATTR_BGMASK;
         curs->attr |= ATTR_DEFBG;
@@ -537,7 +515,7 @@ set_modes(bool state)
         when 3:  /* DECCOLM: 80/132 columns */
           if (term.deccolm_allowed) {
             term.selected = false;
-            win_resize(term.rows, state ? 132 : 80);
+            win_set_chars(term.rows, state ? 132 : 80);
             term.reset_132 = state;
             term.other_screen.marg_t = term.screen.marg_t = 0;
             term.other_screen.marg_b = term.screen.marg_b = term.rows - 1;
@@ -637,6 +615,62 @@ set_modes(bool state)
   }
 }
 
+/*
+ * dtterm window operations and xterm extensions.
+ */
+static void
+do_winop(void)
+{
+  int nargs = term.esc_nargs;
+  int arg1 = term.esc_args[1], arg2 = term.esc_args[2];
+  switch (term.esc_args[0]) {
+    when 1: win_set_iconic(false);
+    when 2: win_set_iconic(true);
+    when 3:
+      if (nargs >= 3)
+        win_set_pos(arg1, arg2);
+    when 4:
+      if (nargs >= 3)
+        win_set_pixels(arg1, arg2);
+    when 5: // move to top
+      win_set_zorder(true);
+    when 6: // move to bottom
+      win_set_zorder(false);
+    when 7: // refresh
+      win_invalidate_all();
+    when 8:
+      if (nargs >= 3)
+        win_set_chars(arg1 ?: cfg.rows, arg2 ?: cfg.cols);
+    when 9:  // maximise
+      if (nargs >= 2)
+        win_maximise(arg1);
+    when 10:  // fullscreen
+      if (nargs >= 2)
+        win_maximise(arg1 ? 2 : 0);
+    when 11:
+      child_write(win_is_iconic() ? "\e[1t" : "\e[2t", 4);
+    when 13: {
+      int x, y;
+      win_get_pos(&x, &y);
+      child_printf("\e[3;%d;%dt", x, y);
+    }
+    when 14: {
+      int height, width;
+      win_get_pixels(&height, &width);
+      child_printf("\e[4;%d;%dt", height, width);
+    }
+    when 18:
+      child_printf("\e[8;%d;%dt", term.rows, term.cols);
+    when 19: {
+      int rows, cols;
+      win_get_screen_chars(&rows, &cols);
+      child_printf("\e[9;%d;%dt", rows, cols);
+    }
+    when 20 or 21:
+      child_write("\e]l\e\\", 5);
+  }
+}
+
 static void
 do_csi(uchar c)
 {
@@ -670,14 +704,14 @@ do_csi(uchar c)
       move(def_arg0 - 1, curs->y, 0);
     when 'd':        /* VPA: set vertical posn */
       move(curs->x,
-           ((screen->dec_om ? screen->marg_t : 0) +
-            def_arg0 - 1), (screen->dec_om ? 2 : 0));
+           (screen->dec_om ? screen->marg_t : 0) + def_arg0 - 1,
+           screen->dec_om ? 2 : 0);
     when 'H' or 'f':  /* CUP or HVP: set horz and vert posns at once */
       if (nargs < 2)
         arg1 = ARG_DEFAULT;
       move((arg1 ?: 1) - 1,
-           ((screen->dec_om ? screen->marg_t : 0) +
-            def_arg0 - 1), (screen->dec_om ? 2 : 0));
+           (screen->dec_om ? screen->marg_t : 0) + def_arg0 - 1,
+           screen->dec_om ? 2 : 0);
     when 'J': {      /* ED: erase screen or parts of it */
       if (arg0 == 3) { /* Erase Saved Lines (xterm) */
         term_clear_scrollback();
@@ -695,15 +729,11 @@ do_csi(uchar c)
       term_erase_lots(true, left, right);
     }
     when 'L':        /* IL: insert lines */
-      if (curs->y <= screen->marg_b) {
-        term_do_scroll(curs->y, screen->marg_b,
-                       -def_arg0, false);
-      }
+      if (curs->y <= screen->marg_b)
+        term_do_scroll(curs->y, screen->marg_b, -def_arg0, false);
     when 'M':        /* DL: delete lines */
-      if (curs->y <= screen->marg_b) {
-        term_do_scroll(curs->y, screen->marg_b,
-                       def_arg0, true);
-      }
+      if (curs->y <= screen->marg_b)
+        term_do_scroll(curs->y, screen->marg_b, def_arg0, true);
     when '@':        /* ICH: insert chars */
       insert_char(def_arg0);
     when 'P':        /* DCH: delete chars */
@@ -713,9 +743,8 @@ do_csi(uchar c)
     when 'n':        /* DSR: cursor position query */
       if (arg0 == 6)
         child_printf("\e[%d;%dR", curs->y + 1, curs->x + 1);
-      else if (arg0 == 5) {
+      else if (arg0 == 5)
         child_write("\e[0n", 4);
-      }
     when 'h' or ANSI_QUE('h'):  /* SM: toggle modes to high */
       set_modes(true);
     when 'l' or ANSI_QUE('l'):  /* RM: toggle modes to low */
@@ -780,78 +809,21 @@ do_csi(uchar c)
       save_cursor();
     when 'u':        /* restore cursor */
       restore_cursor();
-    when 't': {      /* DECSLPP: set page size - ie window height */
+    when 't':        /* DECSLPP: set page size - ie window height */
      /*
-      * VT340/VT420 sequence DECSLPP, DEC only allows values
-      *  24/25/36/48/72/144 other emulators (eg dtterm) use
-      * illegal values (eg first arg 1..9) for window changing 
-      * and reports.
+      * VT340/VT420 sequence DECSLPP, for setting the height of the window.
+      * DEC only allowed values 24/25/36/48/72/144, so dtterm and xterm
+      * claimed values below 24 for various window operations, and also
+      * allowed any number of rows from 24 and above to be set.
       */
-      if (nargs <= 1 && (arg0 < 1 || arg0 >= 24)) {
-        win_resize((arg0 ?: 24), term.cols);
+      if (arg0 >= 24) {
+        win_set_chars(arg0, term.cols);
         term.selected = false;
       }
-      else if (nargs >= 1 && arg0 >= 1 && arg0 < 24) {
-        int x, y;
-        switch (arg0) {
-          when 1: win_set_iconic(false);
-          when 2: win_set_iconic(true);
-          when 3:
-            if (nargs >= 3)
-              win_move(arg1, term.esc_args[2]);
-          when 4:
-           /* We should resize the window to a given
-            * size in pixels here, but currently our
-            * resizing code isn't healthy enough to
-            * manage it. */
-          when 5:
-           /* move to top */
-            win_set_zorder(true);
-          when 6:
-           /* move to bottom */
-            win_set_zorder(false);
-          when 8:
-            if (nargs >= 3) {
-              win_resize(arg1 ?: cfg.rows,
-                         term.esc_args[2] ?: cfg.cols);
-            }
-          when 9:
-            if (nargs >= 2)
-              win_maximise(arg1);
-          when 11:
-            child_write(win_is_iconic() ? "\e[1t" : "\e[2t", 4);
-          when 13:
-            win_get_pos(&x, &y);
-            child_printf("\e[3;%d;%dt", x, y);
-          when 14:
-            win_get_pixels(&x, &y);
-            child_printf("\e[4;%d;%dt", x, y);
-          when 18:
-            child_printf("\e[8;%d;%dt", term.rows, term.cols);
-          when 19:
-           /*
-            * Hmmm. Strictly speaking we
-            * should return `the size of the
-            * screen in characters', but
-            * that's not easy: (a) window
-            * furniture being what it is it's
-            * hard to compute, and (b) in
-            * resize-font mode maximising the
-            * window wouldn't change the
-            * number of characters. *shrug*. I
-            * think we'll ignore it for the
-            * moment and see if anyone
-            * complains, and then ask them
-            * what they would like it to do.
-            */
-          when 20 or 21:
-            child_write("\e]l\e\\", 5);
-        }
-      }
-    }
+      else
+        do_winop();
     when 'S':        /* SU: Scroll up */
-      term_do_scroll(screen->marg_t, screen->marg_b,
-                     def_arg0, true);
+      term_do_scroll(screen->marg_t, screen->marg_b, def_arg0, true);
       curs->wrapnext = false;
     when 'T':        /* SD: Scroll down */
       /* Avoid clash with hilight mouse tracking mode sequence */
@@ -867,7 +839,7 @@ do_csi(uchar c)
       * (24..49 AIUI) with no default specified.
       */
       if (nargs == 1 && arg0 > 0) {
-        win_resize(arg0 ?: cfg.rows, term.cols);
+        win_set_chars(arg0 ?: cfg.rows, term.cols);
         term.selected = false;
       }
     when ANSI('|', '$'):     /* DECSCPP */
@@ -877,7 +849,7 @@ do_csi(uchar c)
       * I'll allow any.
       */
       if (nargs <= 1) {
-        win_resize(term.rows, arg0 ?: cfg.cols);
+        win_set_chars(term.rows, arg0 ?: cfg.cols);
         term.selected = false;
       }
     when 'X': {      /* ECH: write N spaces w/o moving cursor */
