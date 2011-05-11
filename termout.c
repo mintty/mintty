@@ -345,8 +345,8 @@ do_esc(uchar c)
   switch (ANSI(c, term.esc_query)) {
     when '[':  /* enter CSI mode */
       term.state = SEEN_CSI;
-      term.esc_nargs = 1;
-      term.esc_args[0] = ARG_DEFAULT;
+      term.csi_argc = 1;
+      memset(term.csi_argv, 0, sizeof(term.csi_argv));
       term.esc_query = false;
     when ']':  /* OSC: xterm escape sequences */
       term.state = SEEN_OSC;
@@ -426,10 +426,10 @@ static void
 do_sgr(void)
 {
  /* Set Graphics Rendition. */
-  int nargs = term.esc_nargs;
-  for (int i = 0; i < nargs; i++) {
+  uint argc = term.csi_argc;
+  for (uint i = 0; i < argc; i++) {
     term_cursor *curs = &term.screen.curs;
-    switch (term.esc_args[i]) {
+    switch (term.csi_argv[i]) {
       when 0:  /* restore defaults */
         curs->attr = ATTR_DEFAULT;
       when 1:  /* enable bold */
@@ -445,7 +445,7 @@ do_sgr(void)
       when 8:  /* enable invisible text */
         curs->attr |= ATTR_INVISIBLE;
       when 10 ... 12: /* OEM acs off */
-        curs->oem_acs = term.esc_args[i] - 10;
+        curs->oem_acs = term.csi_argv[i] - 10;
         term_update_cs();
       when 21 or 22: /* disable bold */
         curs->attr &= ~(ATTR_BOLD | ATTR_DIM);
@@ -461,11 +461,11 @@ do_sgr(void)
        /* foreground */
         curs->attr &= ~ATTR_FGMASK;
         curs->attr |=
-          (term.esc_args[i] - 30) << ATTR_FGSHIFT;
+          (term.csi_argv[i] - 30) << ATTR_FGSHIFT;
       when 90 ... 97:
        /* aixterm-style bright foreground */
         curs->attr &= ~ATTR_FGMASK;
-        curs->attr |= ((term.esc_args[i] - 90 + 8) << ATTR_FGSHIFT);
+        curs->attr |= ((term.csi_argv[i] - 90 + 8) << ATTR_FGSHIFT);
       when 39: /* default-foreground */
         curs->attr &= ~ATTR_FGMASK;
         curs->attr |= ATTR_DEFFG;
@@ -473,24 +473,24 @@ do_sgr(void)
        /* background */
         curs->attr &= ~ATTR_BGMASK;
         curs->attr |=
-          (term.esc_args[i] - 40) << ATTR_BGSHIFT;
+          (term.csi_argv[i] - 40) << ATTR_BGSHIFT;
       when 100 ... 107:
        /* aixterm-style bright background */
         curs->attr &= ~ATTR_BGMASK;
-        curs->attr |= ((term.esc_args[i] - 100 + 8) << ATTR_BGSHIFT);
+        curs->attr |= ((term.csi_argv[i] - 100 + 8) << ATTR_BGSHIFT);
       when 49: /* default-background */
         curs->attr &= ~ATTR_BGMASK;
         curs->attr |= ATTR_DEFBG;
       when 38: /* xterm 256-colour mode */
-        if (i + 2 < nargs && term.esc_args[i + 1] == 5) {
+        if (i + 2 < argc && term.csi_argv[i + 1] == 5) {
           curs->attr &= ~ATTR_FGMASK;
-          curs->attr |= ((term.esc_args[i + 2] & 0xFF) << ATTR_FGSHIFT);
+          curs->attr |= ((term.csi_argv[i + 2] & 0xFF) << ATTR_FGSHIFT);
           i += 2;
         }
       when 48: /* xterm 256-colour mode */
-        if (i + 2 < nargs && term.esc_args[i + 1] == 5) {
+        if (i + 2 < argc && term.csi_argv[i + 1] == 5) {
           curs->attr &= ~ATTR_BGMASK;
-          curs->attr |= ((term.esc_args[i + 2] & 0xFF) << ATTR_BGSHIFT);
+          curs->attr |= ((term.csi_argv[i + 2] & 0xFF) << ATTR_BGSHIFT);
           i += 2;
         }
     }
@@ -504,8 +504,8 @@ do_sgr(void)
 static void
 set_modes(bool state)
 {
-  for (int i = 0; i < term.esc_nargs; i++) {
-    int mode = term.esc_args[i];
+  for (uint i = 0; i < term.csi_argc; i++) {
+    int mode = term.csi_argv[i];
     if (term.esc_query) {
       switch (mode) {
         when 1:  /* DECCKM: application cursor keys */
@@ -621,34 +621,19 @@ set_modes(bool state)
 static void
 do_winop(void)
 {
-  int nargs = term.esc_nargs;
-  int arg1 = term.esc_args[1], arg2 = term.esc_args[2];
-  switch (term.esc_args[0]) {
+  int arg1 = term.csi_argv[1], arg2 = term.csi_argv[2];
+  switch (term.csi_argv[0]) {
     when 1: win_set_iconic(false);
     when 2: win_set_iconic(true);
-    when 3:
-      if (nargs >= 3)
-        win_set_pos(arg1, arg2);
-    when 4:
-      if (nargs >= 3)
-        win_set_pixels(arg1, arg2);
-    when 5: // move to top
-      win_set_zorder(true);
-    when 6: // move to bottom
-      win_set_zorder(false);
-    when 7: // refresh
-      win_invalidate_all();
-    when 8:
-      if (nargs >= 3)
-        win_set_chars(arg1 ?: cfg.rows, arg2 ?: cfg.cols);
-    when 9:  // maximise
-      if (nargs >= 2)
-        win_maximise(arg1);
-    when 10:  // fullscreen
-      if (nargs >= 2)
-        win_maximise(arg1 ? 2 : 0);
-    when 11:
-      child_write(win_is_iconic() ? "\e[1t" : "\e[2t", 4);
+    when 3: win_set_pos(arg1, arg2);
+    when 4: win_set_pixels(arg1, arg2);
+    when 5: win_set_zorder(true);  // top
+    when 6: win_set_zorder(false); // bottom
+    when 7: win_invalidate_all();  // refresh
+    when 8: win_set_chars(arg1 ?: cfg.rows, arg2 ?: cfg.cols);
+    when 9: win_maximise(arg1);
+    when 10: win_maximise(arg1 ? 2 : 0);  // fullscreen
+    when 11: child_write(win_is_iconic() ? "\e[1t" : "\e[2t", 4);
     when 13: {
       int x, y;
       win_get_pos(&x, &y);
@@ -659,15 +644,13 @@ do_winop(void)
       win_get_pixels(&height, &width);
       child_printf("\e[4;%d;%dt", height, width);
     }
-    when 18:
-      child_printf("\e[8;%d;%dt", term.rows, term.cols);
+    when 18: child_printf("\e[8;%d;%dt", term.rows, term.cols);
     when 19: {
       int rows, cols;
       win_get_screen_chars(&rows, &cols);
       child_printf("\e[9;%d;%dt", rows, cols);
     }
-    when 20 or 21:
-      child_write("\e]l\e\\", 5);
+    when 20 or 21: child_write("\e]l\e\\", 5);
   }
 }
 
@@ -676,41 +659,36 @@ do_csi(uchar c)
 {
   term_screen *screen = &term.screen;
   term_cursor *curs = &screen->curs;
-  int arg0 = term.esc_args[0], arg1 = term.esc_args[1];
-  int def_arg0 = arg0 ?: 1;  // first arg with default
-  int nargs = term.esc_nargs;
+  int arg0 = term.csi_argv[0], arg1 = term.csi_argv[1];
+  int arg0_def1 = arg0 ?: 1;  // first arg with default 1
   switch (ANSI(c, term.esc_query)) {
     when 'A':        /* CUU: move up N lines */
-      move(curs->x, curs->y - def_arg0, 1);
+      move(curs->x, curs->y - arg0_def1, 1);
     when 'e':        /* VPR: move down N lines */
-      move(curs->x, curs->y + def_arg0, 1);
+      move(curs->x, curs->y + arg0_def1, 1);
     when 'B':        /* CUD: Cursor down */
-      move(curs->x, curs->y + def_arg0, 1);
+      move(curs->x, curs->y + arg0_def1, 1);
     when ANSI('c', '>'):     /* DA: report version */
-      /* Terminal type 77 (ASCII 'M' for mintty) */
-      if (!nargs || (nargs == 1 && arg0 == 0))
-        child_printf("\e[>77;%u;0c", DECIMAL_VERSION);
+      child_printf("\e[>77;%u;0c", DECIMAL_VERSION);
     when 'a':        /* HPR: move right N cols */
-      move(curs->x + def_arg0, curs->y, 1);
+      move(curs->x + arg0_def1, curs->y, 1);
     when 'C':        /* CUF: Cursor right */
-      move(curs->x + def_arg0, curs->y, 1);
+      move(curs->x + arg0_def1, curs->y, 1);
     when 'D':        /* CUB: move left N cols */
-      move(curs->x - def_arg0, curs->y, 1);
+      move(curs->x - arg0_def1, curs->y, 1);
     when 'E':        /* CNL: move down N lines and CR */
-      move(0, curs->y + def_arg0, 1);
+      move(0, curs->y + arg0_def1, 1);
     when 'F':        /* CPL: move up N lines and CR */
-      move(0, curs->y - def_arg0, 1);
+      move(0, curs->y - arg0_def1, 1);
     when 'G' or '`':  /* CHA or HPA: set horizontal posn */
-      move(def_arg0 - 1, curs->y, 0);
+      move(arg0_def1 - 1, curs->y, 0);
     when 'd':        /* VPA: set vertical posn */
       move(curs->x,
-           (screen->dec_om ? screen->marg_t : 0) + def_arg0 - 1,
+           (screen->dec_om ? screen->marg_t : 0) + arg0_def1 - 1,
            screen->dec_om ? 2 : 0);
     when 'H' or 'f':  /* CUP or HVP: set horz and vert posns at once */
-      if (nargs < 2)
-        arg1 = ARG_DEFAULT;
       move((arg1 ?: 1) - 1,
-           (screen->dec_om ? screen->marg_t : 0) + def_arg0 - 1,
+           (screen->dec_om ? screen->marg_t : 0) + arg0_def1 - 1,
            screen->dec_om ? 2 : 0);
     when 'J': {      /* ED: erase screen or parts of it */
       if (arg0 == 3) { /* Erase Saved Lines (xterm) */
@@ -718,8 +696,8 @@ do_csi(uchar c)
         term.disptop = 0;
       }
       else {
-        bool below = arg0 == 0 || arg0 == 2;
         bool above = arg0 == 1 || arg0 == 2;
+        bool below = arg0 == 0 || arg0 == 2;
         term_erase_lots(false, above, below);
       }
     }
@@ -730,14 +708,14 @@ do_csi(uchar c)
     }
     when 'L':        /* IL: insert lines */
       if (curs->y <= screen->marg_b)
-        term_do_scroll(curs->y, screen->marg_b, -def_arg0, false);
+        term_do_scroll(curs->y, screen->marg_b, -arg0_def1, false);
     when 'M':        /* DL: delete lines */
       if (curs->y <= screen->marg_b)
-        term_do_scroll(curs->y, screen->marg_b, def_arg0, true);
+        term_do_scroll(curs->y, screen->marg_b, arg0_def1, true);
     when '@':        /* ICH: insert chars */
-      insert_char(def_arg0);
+      insert_char(arg0_def1);
     when 'P':        /* DCH: delete chars */
-      insert_char(-def_arg0);
+      insert_char(-arg0_def1);
     when 'c':        /* DA: terminal type query */
       child_write(primary_da, sizeof primary_da - 1);
     when 'n':        /* DSR: cursor position query */
@@ -750,60 +728,35 @@ do_csi(uchar c)
     when 'l' or ANSI_QUE('l'):  /* RM: toggle modes to low */
       set_modes(false);
     when 'i' or ANSI_QUE('i'):  /* MC: Media copy */
-      if (nargs == 1) {
-        if (arg0 == 5 && *cfg.printer) {
-          term.printing = true;
-          term.only_printing = !term.esc_query;
-          term.print_state = 0;
-          printer_start_job(cfg.printer);
-        }
-        else if (arg0 == 4 && term.printing) {
-          // Drop escape sequence from print buffer and finish printing.
-          while (term.printbuf[--term.printbuf_pos] != '\e');
-          term_print_finish();
-        }
+      if (arg0 == 5 && *cfg.printer) {
+        term.printing = true;
+        term.only_printing = !term.esc_query;
+        term.print_state = 0;
+        printer_start_job(cfg.printer);
+      }
+      else if (arg0 == 4 && term.printing) {
+        // Drop escape sequence from print buffer and finish printing.
+        while (term.printbuf[--term.printbuf_pos] != '\e');
+        term_print_finish();
       }
     when 'g':        /* TBC: clear tabs */
-      if (nargs == 1) {
-        if (arg0 == 0) {
-          term.tabs[curs->x] = false;
-        }
-        else if (arg0 == 3) {
-          int i;
-          for (i = 0; i < term.cols; i++)
-            term.tabs[i] = false;
-        }
+      if (!arg0)
+        term.tabs[curs->x] = false;
+      else if (arg0 == 3) {
+        for (int i = 0; i < term.cols; i++)
+          term.tabs[i] = false;
       }
-    when 'r':        /* DECSTBM: set scroll margins */
-      if (nargs <= 2) {
-        int top = def_arg0 - 1;
-        int bot = (
-          nargs <= 1 || arg1 == 0
-          ? term.rows 
-          : (arg1 ?: term.rows)
-        ) - 1;
-        if (bot >= term.rows)
-          bot = term.rows - 1;
-       /* VTTEST Bug 9 - if region is less than 2 lines
-        * don't change region.
-        */
-        if (bot - top > 0) {
-          screen->marg_t = top;
-          screen->marg_b = bot;
-          curs->x = 0;
-         /*
-          * I used to think the cursor should be
-          * placed at the top of the newly marginned
-          * area. Apparently not: VMS TPU falls over
-          * if so.
-          *
-          * Well actually it should for
-          * Origin mode - RDB
-          */
-          curs->y = (screen->dec_om ? screen->marg_t : 0);
-        }
+    when 'r': {      /* DECSTBM: set scroll margins */
+      int top = arg0_def1 - 1;
+      int bot = (arg1 ? min(arg1, term.rows) : term.rows) - 1;
+      if (bot > top) {
+        screen->marg_t = top;
+        screen->marg_b = bot;
+        curs->x = 0;
+        curs->y = screen->dec_om ? screen->marg_t : 0;
       }
-    when 'm':      /* SGR: set graphics rendition */
+    }
+    when 'm':        /* SGR: set graphics rendition */
       do_sgr();
     when 's':        /* save cursor */
       save_cursor();
@@ -823,12 +776,12 @@ do_csi(uchar c)
       else
         do_winop();
     when 'S':        /* SU: Scroll up */
-      term_do_scroll(screen->marg_t, screen->marg_b, def_arg0, true);
+      term_do_scroll(screen->marg_t, screen->marg_b, arg0_def1, true);
       curs->wrapnext = false;
     when 'T':        /* SD: Scroll down */
-      /* Avoid clash with hilight mouse tracking mode sequence */
-      if (nargs <= 1) {
-        term_do_scroll(screen->marg_t, screen->marg_b, -def_arg0, true);
+      /* Avoid clash with unsupported hilight mouse tracking mode sequence */
+      if (term.csi_argc <= 1) {
+        term_do_scroll(screen->marg_t, screen->marg_b, -arg0_def1, true);
         curs->wrapnext = false;
       }
     when ANSI('|', '*'):     /* DECSNLS */
@@ -838,60 +791,50 @@ do_csi(uchar c)
       * support any size in reasonable range
       * (24..49 AIUI) with no default specified.
       */
-      if (nargs == 1 && arg0 > 0) {
-        win_set_chars(arg0 ?: cfg.rows, term.cols);
-        term.selected = false;
-      }
+      win_set_chars(arg0 ?: cfg.rows, term.cols);
+      term.selected = false;
     when ANSI('|', '$'):     /* DECSCPP */
      /*
       * Set number of columns per page
       * Docs imply range is only 80 or 132, but
       * I'll allow any.
       */
-      if (nargs <= 1) {
-        win_set_chars(term.rows, arg0 ?: cfg.cols);
-        term.selected = false;
-      }
+      win_set_chars(term.rows, arg0 ?: cfg.cols);
+      term.selected = false;
     when 'X': {      /* ECH: write N spaces w/o moving cursor */
-      int n = def_arg0;
+      int n = min(arg0_def1, term.cols - curs->x);
       int p = curs->x;
-      if (n > term.cols - curs->x)
-        n = term.cols - curs->x;
       term_check_boundary(curs->x, curs->y);
       term_check_boundary(curs->x + n, curs->y);
       termline *line = screen->lines[curs->y];
       while (n--)
         line->chars[p++] = term.erase_char;
     }
-    when 'x': {      /* DECREQTPARM: report terminal characteristics */
-      if (arg0 <= 1)
-        child_printf("\e[%c;1;1;112;112;1;0x", '2' + arg0);
-    }
-    when 'Z': {       /* CBT */
-      int i = def_arg0; 
-      while (--i >= 0 && curs->x > 0) {
-        do {
+    when 'x':        /* DECREQTPARM: report terminal characteristics */
+      child_printf("\e[%c;1;1;112;112;1;0x", '2' + arg0);
+    when 'Z': {      /* CBT (Cursor Backward Tabulation) */
+      int n = arg0_def1; 
+      while (--n >= 0 && curs->x > 0) {
+        do
           curs->x--;
-        } while (curs->x > 0 && !term.tabs[curs->x]);
+        while (curs->x > 0 && !term.tabs[curs->x]);
       }
     }
     when ANSI('m', '>'):     /* xterm: modifier key setting */
       /* only the modifyOtherKeys setting is implemented */
-      if (!nargs)
+      if (!arg0)
         term.modify_other_keys = 0;
       else if (arg0 == 4)
-        term.modify_other_keys = nargs > 1 ? arg1 : 0;
+        term.modify_other_keys = arg1;
     when ANSI('n', '>'):     /* xterm: modifier key setting */
       /* only the modifyOtherKeys setting is implemented */
-      if (nargs == 1 && arg0 == 4)
+      if (arg0 == 4)
         term.modify_other_keys = 0;
     when ANSI('q', ' '):     /* DECSCUSR: set cursor style */
-      if (nargs == 1) {
-        term.cursor_type = arg0 ? (arg0 - 1) / 2 : -1;
-        term.cursor_blinks = arg0 ? arg0 % 2 : -1;
-        term_schedule_cblink();
-      }
-   }
+      term.cursor_type = arg0 ? (arg0 - 1) / 2 : -1;
+      term.cursor_blinks = arg0 ? arg0 % 2 : -1;
+      term_schedule_cblink();
+  }
 }
 
 static colour
@@ -914,7 +857,7 @@ do_colour_osc(uint i)
   }
   uint rgb, r, g, b;
   if (!strcmp(s, "?")) {
-    child_printf("\e]%u;", term.esc_args[0]);
+    child_printf("\e]%u;", term.csi_argv[0]);
     if (has_index_arg)
       child_printf("%u;", i);
     uint c = win_get_colour(i);
@@ -1156,16 +1099,13 @@ term_write(const char *buf, uint len)
           do_esc(c);
       when SEEN_CSI:
         if (isdigit(c)) {
-          if (term.esc_nargs <= ARGS_MAX) {
-            if (term.esc_args[term.esc_nargs - 1] == ARG_DEFAULT)
-              term.esc_args[term.esc_nargs - 1] = 0;
-            term.esc_args[term.esc_nargs - 1] =
-              10 * term.esc_args[term.esc_nargs - 1] + c - '0';
-          }
+          uint i = term.csi_argc - 1;
+          if (i < lengthof(term.csi_argv))
+            term.csi_argv[i] = 10 * term.csi_argv[i] + c - '0';
         }
         else if (c == ';') {
-          if (++term.esc_nargs <= ARGS_MAX)
-            term.esc_args[term.esc_nargs - 1] = ARG_DEFAULT;
+          if (term.csi_argc < lengthof(term.csi_argv))
+            term.csi_argc++;
         }
         else if (c < '@') {
           if (term.esc_query)
