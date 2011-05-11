@@ -202,11 +202,6 @@ typedef enum {
   MBT_LEFT = 1, MBT_MIDDLE = 2, MBT_RIGHT = 3
 } mouse_button;
 
-enum {
-  ARGS_MAX = 32,     /* max # of esc sequence arguments */
-  ARG_DEFAULT = 0   /* if an arg isn't specified */
-};
-
 enum { OSC_STR_MAX = 2048 };
 
 typedef struct belltime {
@@ -292,9 +287,10 @@ struct term {
   int  cursor_type;
   int  cursor_blinks;
 
-  int  esc_args[ARGS_MAX];
-  int  esc_nargs;
   int  esc_query;
+
+  uint csi_argc;
+  uint csi_argv[32];
 
   int  osc_num;
   int  osc_strlen;
