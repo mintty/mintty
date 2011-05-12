@@ -287,7 +287,7 @@ struct term {
   int  cursor_type;
   int  cursor_blinks;
 
-  int  esc_query;
+  uchar esc_mod;  // Modifier character in escape sequences
 
   uint csi_argc;
   uint csi_argv[32];
@@ -299,9 +299,8 @@ struct term {
   uchar *tabs;
 
   enum {
-    TOPLEVEL, SEEN_ESC, SEEN_CSI,
-    SEEN_OSC, OSC_NUM, OSC_STRING, OSC_MAYBE_ST, OSC_PALETTE,
-    SEEN_DCS, DCS_MAYBE_ST
+    NORMAL, ESCAPE, CSI_ARGS, DCS_STRING, DCS_ESCAPE,
+    OSC_START, OSC_NUM, OSC_STRING, OSC_ESCAPE, OSC_PALETTE
   } state;
 
   enum {
