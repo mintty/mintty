@@ -112,7 +112,7 @@ term_screen_reset(term_screen *screen)
 void
 term_reset(void)
 {
-  term.state = TOPLEVEL;
+  term.state = NORMAL;
 
   term_screen_reset(&term.screen);
   term_screen_reset(&term.other_screen);

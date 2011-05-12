@@ -13,12 +13,10 @@
 
 #include <sys/termios.h>
 
-/*
- * Terminal emulator.
+/* This combines two characters into one value, for the purpose of pairing
+ * any modifier byte and the final byte in escape sequences.
  */
-
-#define ANSI(x,y)	((x)+((y)<<8))
-#define ANSI_QUE(x)	ANSI(x,true)
+#define CPAIR(x, y) ((x) << 8 | (y))
 
 static const char primary_da[] = "\e[?1;2c";
 
@@ -194,8 +192,8 @@ write_ctrl(char c)
 {
   switch (c) {
     when '\e':   /* ESC: Escape */
-      term.state = SEEN_ESC;
-      term.esc_query = false;
+      term.state = ESCAPE;
+      term.esc_mod = 0;
     when '\a':   /* BEL: Bell */
       write_bell();
     when '\b':     /* BS: Back space */
@@ -341,17 +339,17 @@ do_esc(uchar c)
 {
   term_screen *screen = &term.screen;
   term_cursor *curs = &screen->curs;
-  term.state = TOPLEVEL;
-  switch (ANSI(c, term.esc_query)) {
+  term.state = NORMAL;
+  switch (CPAIR(term.esc_mod, c)) {
     when '[':  /* enter CSI mode */
-      term.state = SEEN_CSI;
+      term.state = CSI_ARGS;
       term.csi_argc = 1;
       memset(term.csi_argv, 0, sizeof(term.csi_argv));
-      term.esc_query = false;
+      term.esc_mod = 0;
     when ']':  /* OSC: xterm escape sequences */
-      term.state = SEEN_OSC;
+      term.state = OSC_START;
     when 'P':  /* DCS: Device Control String sequences */
-      term.state = SEEN_DCS;
+      term.state = DCS_STRING;
     when '7':  /* DECSC: save cursor */
       save_cursor();
     when '8':  /* DECRC: restore cursor */
@@ -381,7 +379,7 @@ do_esc(uchar c)
       }
     when 'H':  /* HTS: set a tab */
       term.tabs[curs->x] = true;
-    when ANSI('8', '#'):    /* DECALN: fills screen with Es :-) */
+    when CPAIR('#', '8'):    /* DECALN: fills screen with Es :-) */
       for (int i = 0; i < term.rows; i++) {
         termline *line = screen->lines[i];
         for (int j = 0; j < term.cols; j++) {
@@ -391,32 +389,32 @@ do_esc(uchar c)
         line->attr = LATTR_NORM;
       }
       term.disptop = 0;
-    when ANSI('3', '#'):  /* DECDHL: 2*height, top */
+    when CPAIR('#', '3'):  /* DECDHL: 2*height, top */
       screen->lines[curs->y]->attr = LATTR_TOP;
-    when ANSI('4', '#'):  /* DECDHL: 2*height, bottom */
+    when CPAIR('#', '4'):  /* DECDHL: 2*height, bottom */
       screen->lines[curs->y]->attr = LATTR_BOT;
-    when ANSI('5', '#'):  /* DECSWL: normal */
+    when CPAIR('#', '5'):  /* DECSWL: normal */
       screen->lines[curs->y]->attr = LATTR_NORM;
-    when ANSI('6', '#'):  /* DECDWL: 2*width */
+    when CPAIR('#', '6'):  /* DECDWL: 2*width */
       screen->lines[curs->y]->attr = LATTR_WIDE;
-    when ANSI('A', '(') or ANSI('B', '(') or ANSI('0', '('):
+    when CPAIR('(', 'A') or CPAIR('(', 'B') or CPAIR('(', '0'):
      /* GZD4: G0 designate 94-set */
       curs->csets[0] = c;
       term_update_cs();
-    when ANSI('U', '('):  /* G0: OEM character set */
+    when CPAIR('(', 'U'):  /* G0: OEM character set */
       curs->csets[0] = CSET_OEM;
       term_update_cs();
-    when ANSI('A', ')') or ANSI('B', ')') or ANSI('0', ')'):
+    when CPAIR(')', 'A') or CPAIR(')', 'B') or CPAIR(')', '0'):
      /* G1D4: G1-designate 94-set */
       curs->csets[1] = c;
       term_update_cs();
-    when ANSI('U', ')'): /* G1: OEM character set */
+    when CPAIR(')', 'U'): /* G1: OEM character set */
       curs->csets[1] = CSET_OEM;
       term_update_cs();
-    when ANSI('8', '%') or ANSI('G', '%'):
+    when CPAIR('%', '8') or CPAIR('%', 'G'):
       curs->utf = true;
       term_update_cs();
-    when ANSI('@', '%'):
+    when CPAIR('%', '@'):
       curs->utf = false;
       term_update_cs();
   }
@@ -505,9 +503,9 @@ static void
 set_modes(bool state)
 {
   for (uint i = 0; i < term.csi_argc; i++) {
-    int mode = term.csi_argv[i];
-    if (term.esc_query) {
-      switch (mode) {
+    int arg = term.csi_argv[i];
+    if (term.esc_mod) {
+      switch (arg) {
         when 1:  /* DECCKM: application cursor keys */
           term.app_cursor_keys = state;
         when 2:  /* DECANM: VT52 mode */
@@ -603,7 +601,7 @@ set_modes(bool state)
       }
     }
     else {
-      switch (mode) {
+      switch (arg) {
         when 4:  /* IRM: set insert mode */
           term.screen.insert = state;
         when 12: /* SRM: set echo mode */
@@ -661,14 +659,14 @@ do_csi(uchar c)
   term_cursor *curs = &screen->curs;
   int arg0 = term.csi_argv[0], arg1 = term.csi_argv[1];
   int arg0_def1 = arg0 ?: 1;  // first arg with default 1
-  switch (ANSI(c, term.esc_query)) {
+  switch (CPAIR(term.esc_mod, c)) {
     when 'A':        /* CUU: move up N lines */
       move(curs->x, curs->y - arg0_def1, 1);
     when 'e':        /* VPR: move down N lines */
       move(curs->x, curs->y + arg0_def1, 1);
     when 'B':        /* CUD: Cursor down */
       move(curs->x, curs->y + arg0_def1, 1);
-    when ANSI('c', '>'):     /* DA: report version */
+    when CPAIR('>', 'c'):     /* DA: report version */
       child_printf("\e[>77;%u;0c", DECIMAL_VERSION);
     when 'a':        /* HPR: move right N cols */
       move(curs->x + arg0_def1, curs->y, 1);
@@ -723,14 +721,14 @@ do_csi(uchar c)
         child_printf("\e[%d;%dR", curs->y + 1, curs->x + 1);
       else if (arg0 == 5)
         child_write("\e[0n", 4);
-    when 'h' or ANSI_QUE('h'):  /* SM: toggle modes to high */
+    when 'h' or CPAIR('?', 'h'):  /* SM: toggle modes to high */
       set_modes(true);
-    when 'l' or ANSI_QUE('l'):  /* RM: toggle modes to low */
+    when 'l' or CPAIR('?', 'l'):  /* RM: toggle modes to low */
       set_modes(false);
-    when 'i' or ANSI_QUE('i'):  /* MC: Media copy */
+    when 'i' or CPAIR('?', 'i'):  /* MC: Media copy */
       if (arg0 == 5 && *cfg.printer) {
         term.printing = true;
-        term.only_printing = !term.esc_query;
+        term.only_printing = !term.esc_mod;
         term.print_state = 0;
         printer_start_job(cfg.printer);
       }
@@ -784,7 +782,7 @@ do_csi(uchar c)
         term_do_scroll(screen->marg_t, screen->marg_b, -arg0_def1, true);
         curs->wrapnext = false;
       }
-    when ANSI('|', '*'):     /* DECSNLS */
+    when CPAIR('*', '|'):     /* DECSNLS */
      /* 
       * Set number of lines on screen
       * VT420 uses VGA like hardware and can
@@ -793,7 +791,7 @@ do_csi(uchar c)
       */
       win_set_chars(arg0 ?: cfg.rows, term.cols);
       term.selected = false;
-    when ANSI('|', '$'):     /* DECSCPP */
+    when CPAIR('$', '|'):     /* DECSCPP */
      /*
       * Set number of columns per page
       * Docs imply range is only 80 or 132, but
@@ -820,17 +818,17 @@ do_csi(uchar c)
         while (curs->x > 0 && !term.tabs[curs->x]);
       }
     }
-    when ANSI('m', '>'):     /* xterm: modifier key setting */
+    when CPAIR('>', 'm'):     /* xterm: modifier key setting */
       /* only the modifyOtherKeys setting is implemented */
       if (!arg0)
         term.modify_other_keys = 0;
       else if (arg0 == 4)
         term.modify_other_keys = arg1;
-    when ANSI('n', '>'):     /* xterm: modifier key setting */
+    when CPAIR('>', 'n'):     /* xterm: modifier key setting */
       /* only the modifyOtherKeys setting is implemented */
       if (arg0 == 4)
         term.modify_other_keys = 0;
-    when ANSI('q', ' '):     /* DECSCUSR: set cursor style */
+    when CPAIR(' ', 'q'):     /* DECSCUSR: set cursor style */
       term.cursor_type = arg0 ? (arg0 - 1) / 2 : -1;
       term.cursor_blinks = arg0 ? arg0 % 2 : -1;
       term_schedule_cblink();
@@ -993,7 +991,7 @@ term_write(const char *buf, uint len)
     }
 
     switch (term.state) {
-      when TOPLEVEL: {
+      when NORMAL: {
         
         wchar wc;
 
@@ -1078,26 +1076,22 @@ term_write(const char *buf, uint len)
         }
         write_char(wc, width);
       }
-      when SEEN_ESC or OSC_MAYBE_ST or DCS_MAYBE_ST:
+      when ESCAPE or OSC_ESCAPE or DCS_ESCAPE:
        /*
-        * OSC_MAYBE_ST is virtually identical to SEEN_ESC, with the
+        * OSC_ESCAPE is virtually identical to ESCAPE, with the
         * exception that we have an OSC sequence in the pipeline,
         * and _if_ we see a backslash, we process it.
         */
-        if (c == '\\' && term.state != SEEN_ESC) {
-          if (term.state == OSC_MAYBE_ST)
+        if (c == '\\' && term.state != ESCAPE) {
+          if (term.state == OSC_ESCAPE)
             do_osc();
-          term.state = TOPLEVEL;
+          term.state = NORMAL;
         }
-        else if (c >= ' ' && c <= '/') {
-          if (term.esc_query)
-            term.esc_query = -1;
-          else
-            term.esc_query = c;
-        }
+        else if (c >= ' ' && c <= '/')
+          term.esc_mod = term.esc_mod ? 0xFF : c;
         else
           do_esc(c);
-      when SEEN_CSI:
+      when CSI_ARGS:
         if (isdigit(c)) {
           uint i = term.csi_argc - 1;
           if (i < lengthof(term.csi_argv))
@@ -1107,26 +1101,20 @@ term_write(const char *buf, uint len)
           if (term.csi_argc < lengthof(term.csi_argv))
             term.csi_argc++;
         }
-        else if (c < '@') {
-          if (term.esc_query)
-            term.esc_query = -1;
-          else if (c == '?')
-            term.esc_query = true;
-          else
-            term.esc_query = c;
-        }
+        else if (c < '@')
+          term.esc_mod = term.esc_mod ? 0xFF : c;
         else {
           do_csi(c);
-          term.state = TOPLEVEL;
+          term.state = NORMAL;
         }
-      when SEEN_OSC:
+      when OSC_START:
         term.osc_strlen = 0;
         switch (c) {
           when 'P':  /* Linux palette sequence */
             term.state = OSC_PALETTE;
           when 'R':  /* Linux palette reset */
             win_reset_colours();
-            term.state = TOPLEVEL;
+            term.state = NORMAL;
           when '0' ... '9':  /* OSC command number */
             term.osc_num = c - '0';
             term.state = OSC_NUM;
@@ -1134,9 +1122,9 @@ term_write(const char *buf, uint len)
             term.osc_num = 0;
             term.state = OSC_STRING;
           when '\a' or '\n' or '\r':
-            term.state = TOPLEVEL;
+            term.state = NORMAL;
           when '\e':
-            term.state = SEEN_ESC;
+            term.state = ESCAPE;
           otherwise:
             term.osc_num = -1;
             term.state = OSC_STRING;
@@ -1148,9 +1136,9 @@ term_write(const char *buf, uint len)
           when ';':
             term.state = OSC_STRING;
           when '\a' or '\n' or '\r':
-            term.state = TOPLEVEL;
+            term.state = NORMAL;
           when '\e':
-            term.state = SEEN_ESC;
+            term.state = ESCAPE;
           otherwise:
             term.osc_num = -1;
             term.state = OSC_STRING;
@@ -1158,35 +1146,35 @@ term_write(const char *buf, uint len)
       when OSC_STRING:
         switch (c) {
           when '\n' or '\r':
-            term.state = TOPLEVEL;
+            term.state = NORMAL;
           when '\a':
             do_osc();
-            term.state = TOPLEVEL;
+            term.state = NORMAL;
           when '\e':
-            term.state = OSC_MAYBE_ST;
+            term.state = OSC_ESCAPE;
           otherwise:
             if (term.osc_strlen < OSC_STR_MAX)
               term.osc_string[term.osc_strlen++] = c;
         }
       when OSC_PALETTE:
         if (!isxdigit(c))
-          term.state = TOPLEVEL;
+          term.state = NORMAL;
         else {
           term.osc_string[term.osc_strlen++] = c;
           if (term.osc_strlen == 7) {
             uint n, rgb;
             sscanf(term.osc_string, "%1x%6x", &n, &rgb);
             win_set_colour(n, rgb_to_colour(rgb));
-            term.state = TOPLEVEL;
+            term.state = NORMAL;
           }
         }
-      when SEEN_DCS:
+      when DCS_STRING:
        /* Parse and ignore Device Control String (DCS) sequences */
         switch (c) {
           when '\n' or '\r' or '\a':
-            term.state = TOPLEVEL;
+            term.state = NORMAL;
           when '\e':
-            term.state = DCS_MAYBE_ST;
+            term.state = DCS_ESCAPE;
         }
     }
   }
