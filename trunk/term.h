@@ -299,7 +299,7 @@ struct term {
   uchar *tabs;
 
   enum {
-    NORMAL, ESCAPE, CSI_ARGS, DCS_STRING, DCS_ESCAPE,
+    NORMAL, ESCAPE, CSI_ARGS, IGNORE_STRING,
     OSC_START, OSC_NUM, OSC_STRING, OSC_ESCAPE, OSC_PALETTE
   } state;
 
