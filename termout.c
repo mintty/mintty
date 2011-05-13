@@ -348,8 +348,8 @@ do_esc(uchar c)
       term.esc_mod = 0;
     when ']':  /* OSC: xterm escape sequences */
       term.state = OSC_START;
-    when 'P':  /* DCS: Device Control String sequences */
-      term.state = DCS_STRING;
+    when 'P' or '^' or '_':  /* DCS, PM, APC: ignore string */
+      term.state = IGNORE_STRING;
     when '7':  /* DECSC: save cursor */
       save_cursor();
     when '8':  /* DECRC: restore cursor */
@@ -1076,7 +1076,7 @@ term_write(const char *buf, uint len)
         }
         write_char(wc, width);
       }
-      when ESCAPE or OSC_ESCAPE or DCS_ESCAPE:
+      when ESCAPE or OSC_ESCAPE:
        /*
         * OSC_ESCAPE is virtually identical to ESCAPE, with the
         * exception that we have an OSC sequence in the pipeline,
@@ -1126,8 +1126,7 @@ term_write(const char *buf, uint len)
           when '\e':
             term.state = ESCAPE;
           otherwise:
-            term.osc_num = -1;
-            term.state = OSC_STRING;
+            term.state = IGNORE_STRING;
         }
       when OSC_NUM:
         switch (c) {
@@ -1140,8 +1139,7 @@ term_write(const char *buf, uint len)
           when '\e':
             term.state = ESCAPE;
           otherwise:
-            term.osc_num = -1;
-            term.state = OSC_STRING;
+            term.state = IGNORE_STRING;
         }
       when OSC_STRING:
         switch (c) {
@@ -1168,13 +1166,12 @@ term_write(const char *buf, uint len)
             term.state = NORMAL;
           }
         }
-      when DCS_STRING:
-       /* Parse and ignore Device Control String (DCS) sequences */
+      when IGNORE_STRING:
         switch (c) {
           when '\n' or '\r' or '\a':
             term.state = NORMAL;
           when '\e':
-            term.state = DCS_ESCAPE;
+            term.state = ESCAPE;
         }
     }
   }
