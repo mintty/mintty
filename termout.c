@@ -187,43 +187,6 @@ write_linefeed(void)
   curs->wrapnext = false;
 }
 
-static bool
-write_ctrl(char c)
-{
-  switch (c) {
-    when '\e':   /* ESC: Escape */
-      term.state = ESCAPE;
-      term.esc_mod = 0;
-    when '\a':   /* BEL: Bell */
-      write_bell();
-    when '\b':     /* BS: Back space */
-      write_backspace();
-    when '\t':     /* HT: Character tabulation */
-      write_tab();
-    when '\v':   /* VT: Line tabulation */
-      write_linefeed();
-    when '\f':   /* FF: Form feed */
-      write_linefeed();
-    when '\r':   /* CR: Carriage return */
-      write_return();
-    when '\n':   /* LF: Line feed */
-      write_linefeed();
-      if (term.newline_mode)
-        write_return();
-    when CTRL('E'):   /* ENQ: terminal type query */
-      child_write(cfg.answerback, strlen(cfg.answerback));
-    when CTRL('N'):   /* LS1: Locking-shift one */
-      term.screen.curs.g1 = true;
-      term_update_cs();
-    when CTRL('O'):   /* LS0: Locking-shift zero */
-      term.screen.curs.g1 = false;
-      term_update_cs();
-    otherwise:
-      return false;
-  }
-  return true;
-}
-
 static void
 write_char(wchar c, int width)
 {
@@ -332,6 +295,44 @@ write_error(void)
   // Write 'Medium Shade' character from vt100 linedraw set,
   // which looks appropriately erroneous.
   write_char(0x2592, 1);
+}
+
+/* Process control character, returning whether it has been recognised. */
+static bool
+do_ctrl(char c)
+{
+  switch (c) {
+    when '\e':   /* ESC: Escape */
+      term.state = ESCAPE;
+      term.esc_mod = 0;
+    when '\a':   /* BEL: Bell */
+      write_bell();
+    when '\b':     /* BS: Back space */
+      write_backspace();
+    when '\t':     /* HT: Character tabulation */
+      write_tab();
+    when '\v':   /* VT: Line tabulation */
+      write_linefeed();
+    when '\f':   /* FF: Form feed */
+      write_linefeed();
+    when '\r':   /* CR: Carriage return */
+      write_return();
+    when '\n':   /* LF: Line feed */
+      write_linefeed();
+      if (term.newline_mode)
+        write_return();
+    when CTRL('E'):   /* ENQ: terminal type query */
+      child_write(cfg.answerback, strlen(cfg.answerback));
+    when CTRL('N'):   /* LS1: Locking-shift one */
+      term.screen.curs.g1 = true;
+      term_update_cs();
+    when CTRL('O'):   /* LS0: Locking-shift zero */
+      term.screen.curs.g1 = false;
+      term_update_cs();
+    otherwise:
+      return false;
+  }
+  return true;
 }
 
 static void
@@ -1050,7 +1051,7 @@ term_write(const char *buf, uint len)
         
         // Control characters
         if (wc < 0x20 || wc == 0x7F) {
-          if (!write_ctrl(wc) && c == wc) {
+          if (!do_ctrl(wc) && c == wc) {
             wc = cs_btowc_glyph(c);
             if (wc != c)
               write_char(wc, 1);
@@ -1077,31 +1078,30 @@ term_write(const char *buf, uint len)
         write_char(wc, width);
       }
       when ESCAPE or OSC_ESCAPE:
-       /*
-        * OSC_ESCAPE is virtually identical to ESCAPE, with the
-        * exception that we have an OSC sequence in the pipeline,
-        * and _if_ we see a backslash, we process it.
-        */
-        if (c == '\\' && term.state != ESCAPE) {
-          if (term.state == OSC_ESCAPE)
-            do_osc();
+        if (c < 0x20)
+          do_ctrl(c);
+        else if (c < 0x30)
+          term.esc_mod = term.esc_mod ? 0xFF : c;
+        else if (c == '\\' && term.state == OSC_ESCAPE) {
+          /* Process OSC sequence if we see ST. */
+          do_osc();
           term.state = NORMAL;
         }
-        else if (c >= ' ' && c <= '/')
-          term.esc_mod = term.esc_mod ? 0xFF : c;
         else
           do_esc(c);
       when CSI_ARGS:
-        if (isdigit(c)) {
-          uint i = term.csi_argc - 1;
-          if (i < lengthof(term.csi_argv))
-            term.csi_argv[i] = 10 * term.csi_argv[i] + c - '0';
-        }
+        if (c < 0x20)
+          do_ctrl(c);
         else if (c == ';') {
           if (term.csi_argc < lengthof(term.csi_argv))
             term.csi_argc++;
         }
-        else if (c < '@')
+        else if (c >= '0' && c <= '9') {
+          uint i = term.csi_argc - 1;
+          if (i < lengthof(term.csi_argv))
+            term.csi_argv[i] = 10 * term.csi_argv[i] + c - '0';
+        }
+        else if (c < 0x40)
           term.esc_mod = term.esc_mod ? 0xFF : c;
         else {
           do_csi(c);
@@ -1155,15 +1155,24 @@ term_write(const char *buf, uint len)
               term.osc_string[term.osc_strlen++] = c;
         }
       when OSC_PALETTE:
-        if (!isxdigit(c))
-          term.state = NORMAL;
-        else {
+        if (isxdigit(c)) {
+          // The dodgy Linux palette sequence: keep going until we have
+          // seven hexadecimal digits.
           term.osc_string[term.osc_strlen++] = c;
           if (term.osc_strlen == 7) {
             uint n, rgb;
             sscanf(term.osc_string, "%1x%6x", &n, &rgb);
             win_set_colour(n, rgb_to_colour(rgb));
             term.state = NORMAL;
+          }
+        }
+        else {
+          // End of sequence. Put the character back unless the sequence was 
+          // terminated properly.
+          term.state = NORMAL;
+          if (c != '\a') {
+            pos--;
+            continue;
           }
         }
       when IGNORE_STRING:
