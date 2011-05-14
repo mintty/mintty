@@ -342,14 +342,18 @@ do_esc(uchar c)
   term_cursor *curs = &screen->curs;
   term.state = NORMAL;
   switch (CPAIR(term.esc_mod, c)) {
-    when '[':  /* enter CSI mode */
+    when '[':  /* CSI: control sequence introducer */
       term.state = CSI_ARGS;
       term.csi_argc = 1;
       memset(term.csi_argv, 0, sizeof(term.csi_argv));
       term.esc_mod = 0;
-    when ']':  /* OSC: xterm escape sequences */
+    when ']':  /* OSC: operating system command */
       term.state = OSC_START;
-    when 'P' or '^' or '_':  /* DCS, PM, APC: ignore string */
+    when 'P':  /* DCS: device control string */
+      term.state = CMD_STRING;
+      term.cmd_num = -1;
+      term.cmd_len = 0;
+    when '^' or '_': /* PM: privacy message, APC: application program command */
       term.state = IGNORE_STRING;
     when '7':  /* DECSC: save cursor */
       save_cursor();
@@ -426,74 +430,58 @@ do_sgr(void)
 {
  /* Set Graphics Rendition. */
   uint argc = term.csi_argc;
+  uint attr = term.screen.curs.attr;
   for (uint i = 0; i < argc; i++) {
-    term_cursor *curs = &term.screen.curs;
     switch (term.csi_argv[i]) {
-      when 0:  /* restore defaults */
-        curs->attr = ATTR_DEFAULT;
-      when 1:  /* enable bold */
-        curs->attr |= ATTR_BOLD;
-      when 2:  /* enable dim */
-        curs->attr |= ATTR_DIM;
-      when 4:  /* enable underline */
-        curs->attr |= ATTR_UNDER;
-      when 5:  /* enable blink */
-        curs->attr |= ATTR_BLINK;
-      when 7:  /* enable reverse video */
-        curs->attr |= ATTR_REVERSE;
-      when 8:  /* enable invisible text */
-        curs->attr |= ATTR_INVISIBLE;
-      when 10 ... 12: /* OEM acs off */
-        curs->oem_acs = term.csi_argv[i] - 10;
+      when 0: attr = ATTR_DEFAULT;
+      when 1: attr |= ATTR_BOLD;
+      when 2: attr |= ATTR_DIM;
+      when 4: attr |= ATTR_UNDER;
+      when 5: attr |= ATTR_BLINK;
+      when 7: attr |= ATTR_REVERSE;
+      when 8: attr |= ATTR_INVISIBLE;
+      when 10 ... 12:
+        term.screen.curs.oem_acs = term.csi_argv[i] - 10;
         term_update_cs();
-      when 21 or 22: /* disable bold */
-        curs->attr &= ~(ATTR_BOLD | ATTR_DIM);
-      when 24: /* disable underline */
-        curs->attr &= ~ATTR_UNDER;
-      when 25: /* disable blink */
-        curs->attr &= ~ATTR_BLINK;
-      when 27: /* disable reverse video */
-        curs->attr &= ~ATTR_REVERSE;
-      when 28: /* disable invisible text */
-        curs->attr &= ~ATTR_INVISIBLE;
-      when 30 ... 37:
-       /* foreground */
-        curs->attr &= ~ATTR_FGMASK;
-        curs->attr |=
-          (term.csi_argv[i] - 30) << ATTR_FGSHIFT;
-      when 90 ... 97:
-       /* aixterm-style bright foreground */
-        curs->attr &= ~ATTR_FGMASK;
-        curs->attr |= ((term.csi_argv[i] - 90 + 8) << ATTR_FGSHIFT);
-      when 39: /* default-foreground */
-        curs->attr &= ~ATTR_FGMASK;
-        curs->attr |= ATTR_DEFFG;
-      when 40 ... 47:
-       /* background */
-        curs->attr &= ~ATTR_BGMASK;
-        curs->attr |=
-          (term.csi_argv[i] - 40) << ATTR_BGSHIFT;
-      when 100 ... 107:
-       /* aixterm-style bright background */
-        curs->attr &= ~ATTR_BGMASK;
-        curs->attr |= ((term.csi_argv[i] - 100 + 8) << ATTR_BGSHIFT);
-      when 49: /* default-background */
-        curs->attr &= ~ATTR_BGMASK;
-        curs->attr |= ATTR_DEFBG;
-      when 38: /* xterm 256-colour mode */
+      when 21: attr &= ~ATTR_BOLD;
+      when 22: attr &= ~(ATTR_BOLD | ATTR_DIM);
+      when 24: attr &= ~ATTR_UNDER;
+      when 25: attr &= ~ATTR_BLINK;
+      when 27: attr &= ~ATTR_REVERSE;
+      when 28: attr &= ~ATTR_INVISIBLE;
+      when 30 ... 37: /* foreground */
+        attr &= ~ATTR_FGMASK;
+        attr |= (term.csi_argv[i] - 30) << ATTR_FGSHIFT;
+      when 90 ... 97: /* bright foreground */
+        attr &= ~ATTR_FGMASK;
+        attr |= ((term.csi_argv[i] - 90 + 8) << ATTR_FGSHIFT);
+      when 38: /* 256-colour foreground */
         if (i + 2 < argc && term.csi_argv[i + 1] == 5) {
-          curs->attr &= ~ATTR_FGMASK;
-          curs->attr |= ((term.csi_argv[i + 2] & 0xFF) << ATTR_FGSHIFT);
+          attr &= ~ATTR_FGMASK;
+          attr |= ((term.csi_argv[i + 2] & 0xFF) << ATTR_FGSHIFT);
           i += 2;
         }
-      when 48: /* xterm 256-colour mode */
+      when 39: /* default foreground */
+        attr &= ~ATTR_FGMASK;
+        attr |= ATTR_DEFFG;
+      when 40 ... 47: /* background */
+        attr &= ~ATTR_BGMASK;
+        attr |= (term.csi_argv[i] - 40) << ATTR_BGSHIFT;
+      when 100 ... 107: /* bright background */
+        attr &= ~ATTR_BGMASK;
+        attr |= ((term.csi_argv[i] - 100 + 8) << ATTR_BGSHIFT);
+      when 48: /* 256-colour background */
         if (i + 2 < argc && term.csi_argv[i + 1] == 5) {
-          curs->attr &= ~ATTR_BGMASK;
-          curs->attr |= ((term.csi_argv[i + 2] & 0xFF) << ATTR_BGSHIFT);
+          attr &= ~ATTR_BGMASK;
+          attr |= ((term.csi_argv[i + 2] & 0xFF) << ATTR_BGSHIFT);
           i += 2;
         }
+      when 49: /* default background */
+        attr &= ~ATTR_BGMASK;
+        attr |= ATTR_DEFBG;
     }
   }
+  term.screen.curs.attr = attr;
   set_erase_char();
 }
 
@@ -836,6 +824,68 @@ do_csi(uchar c)
   }
 }
 
+static void
+do_dcs(void)
+{
+  // Only DECRQSS (Request Status String) is implemented.
+  // No DECUDK (User-Defined Keys) or xterm termcap/terminfo data.
+
+  char *s = term.cmd_buf;
+
+  if (*s++ != '$')
+    return;
+  
+  if (!strcmp(s, "qm")) { // SGR
+    char buf[64], *p = buf;
+    p += sprintf(p, "\eP1$r0");
+
+    uint attr = term.screen.curs.attr;
+
+    if (attr & ATTR_BOLD)
+      p += sprintf(p, ";1");
+    if (attr & ATTR_DIM)
+      p += sprintf(p, ";2");
+    if (attr & ATTR_UNDER)
+      p += sprintf(p, ";4");
+    if (attr & ATTR_BLINK)
+      p += sprintf(p, ";5");
+    if (attr & ATTR_REVERSE)
+      p += sprintf(p, ";7");
+    if (attr & ATTR_INVISIBLE)
+      p += sprintf(p, ";8");
+
+    if (term.screen.curs.oem_acs)
+      p += sprintf(p, ";%u", 10 + term.screen.curs.oem_acs);
+
+    uint fg = (attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
+    if (fg != FG_COLOUR_I) {
+      if (fg < 16)
+        p += sprintf(p, ";%u", (fg < 8 ? 30 : 90) + (fg & 7));
+      else
+        p += sprintf(p, ";38;5;%u", fg);
+    }
+
+    uint bg = (attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
+    if (bg != BG_COLOUR_I) {
+      if (bg < 16)
+        p += sprintf(p, ";%u", (bg < 8 ? 40 : 100) + (bg & 7));
+      else
+        p += sprintf(p, ";48;5;%u", bg);
+    }
+
+    p += sprintf(p, "m\e\\");  // m for SGR, followed by ST
+
+    child_write(buf, p - buf);
+  }
+  else if (!strcmp(s, "qr"))  // DECSTBM (scroll margins)
+    child_printf("\eP1$r%u;%ur\e\\",
+                 term.screen.marg_t + 1, term.screen.marg_b + 1);
+  else if (!strcmp(s, "q\"p"))  // DECSCL (conformance level)
+    child_write("\eP1$r61\"p\e\\", 11);  // report as VT100
+  else
+    child_write((char[]){CTRL('X')}, 1);
+}
+
 static colour
 rgb_to_colour(uint rgb)
 {
@@ -845,7 +895,7 @@ rgb_to_colour(uint rgb)
 static void
 do_colour_osc(uint i)
 {
-  char *s = term.osc_string;
+  char *s = term.cmd_buf;
   bool has_index_arg = !i;
   if (has_index_arg) {
     int len = 0;
@@ -874,14 +924,15 @@ do_colour_osc(uint i)
 }
 
 /*
- * Process an OSC sequence: set window title or icon name.
+ * Process OSC and DCS command sequences.
  */
 static void
-do_osc(void)
+do_cmd(void)
 {
-  char *s = term.osc_string;
-  s[term.osc_strlen] = 0;
-  switch (term.osc_num) {
+  char *s = term.cmd_buf;
+  s[term.cmd_len] = 0;
+  switch (term.cmd_num) {
+    when -1: do_dcs();
     when 0 or 2 or 21: win_set_title(s);  // ignore icon title
     when 4:  do_colour_osc(0);
     when 10: do_colour_osc(FG_COLOUR_I);
@@ -902,7 +953,7 @@ do_osc(void)
       }
     when 701 or 7776:  // Set/get locale. 701 is from urxvt.
       if (!strcmp(s, "?"))
-        child_printf("\e]%u;%s\e\\", term.osc_num, cs_get_locale());
+        child_printf("\e]%u;%s\e\\", term.cmd_num, cs_get_locale());
       else
         cs_set_locale(s);
   }
@@ -1077,14 +1128,14 @@ term_write(const char *buf, uint len)
         }
         write_char(wc, width);
       }
-      when ESCAPE or OSC_ESCAPE:
+      when ESCAPE or CMD_ESCAPE:
         if (c < 0x20)
           do_ctrl(c);
         else if (c < 0x30)
           term.esc_mod = term.esc_mod ? 0xFF : c;
-        else if (c == '\\' && term.state == OSC_ESCAPE) {
-          /* Process OSC sequence if we see ST. */
-          do_osc();
+        else if (c == '\\' && term.state == CMD_ESCAPE) {
+          /* Process DCS or OSC sequence if we see ST. */
+          do_cmd();
           term.state = NORMAL;
         }
         else
@@ -1108,7 +1159,7 @@ term_write(const char *buf, uint len)
           term.state = NORMAL;
         }
       when OSC_START:
-        term.osc_strlen = 0;
+        term.cmd_len = 0;
         switch (c) {
           when 'P':  /* Linux palette sequence */
             term.state = OSC_PALETTE;
@@ -1116,11 +1167,11 @@ term_write(const char *buf, uint len)
             win_reset_colours();
             term.state = NORMAL;
           when '0' ... '9':  /* OSC command number */
-            term.osc_num = c - '0';
+            term.cmd_num = c - '0';
             term.state = OSC_NUM;
           when ';':
-            term.osc_num = 0;
-            term.state = OSC_STRING;
+            term.cmd_num = 0;
+            term.state = CMD_STRING;
           when '\a' or '\n' or '\r':
             term.state = NORMAL;
           when '\e':
@@ -1131,9 +1182,9 @@ term_write(const char *buf, uint len)
       when OSC_NUM:
         switch (c) {
           when '0' ... '9':  /* OSC command number */
-            term.osc_num = term.osc_num * 10 + c - '0';
+            term.cmd_num = term.cmd_num * 10 + c - '0';
           when ';':
-            term.state = OSC_STRING;
+            term.state = CMD_STRING;
           when '\a' or '\n' or '\r':
             term.state = NORMAL;
           when '\e':
@@ -1141,27 +1192,14 @@ term_write(const char *buf, uint len)
           otherwise:
             term.state = IGNORE_STRING;
         }
-      when OSC_STRING:
-        switch (c) {
-          when '\n' or '\r':
-            term.state = NORMAL;
-          when '\a':
-            do_osc();
-            term.state = NORMAL;
-          when '\e':
-            term.state = OSC_ESCAPE;
-          otherwise:
-            if (term.osc_strlen < OSC_STR_MAX)
-              term.osc_string[term.osc_strlen++] = c;
-        }
       when OSC_PALETTE:
         if (isxdigit(c)) {
           // The dodgy Linux palette sequence: keep going until we have
           // seven hexadecimal digits.
-          term.osc_string[term.osc_strlen++] = c;
-          if (term.osc_strlen == 7) {
+          term.cmd_buf[term.cmd_len++] = c;
+          if (term.cmd_len == 7) {
             uint n, rgb;
-            sscanf(term.osc_string, "%1x%6x", &n, &rgb);
+            sscanf(term.cmd_buf, "%1x%6x", &n, &rgb);
             win_set_colour(n, rgb_to_colour(rgb));
             term.state = NORMAL;
           }
@@ -1174,6 +1212,19 @@ term_write(const char *buf, uint len)
             pos--;
             continue;
           }
+        }
+      when CMD_STRING:
+        switch (c) {
+          when '\n' or '\r':
+            term.state = NORMAL;
+          when '\a':
+            do_cmd();
+            term.state = NORMAL;
+          when '\e':
+            term.state = CMD_ESCAPE;
+          otherwise:
+            if (term.cmd_len < lengthof(term.cmd_buf) - 1)
+              term.cmd_buf[term.cmd_len++] = c;
         }
       when IGNORE_STRING:
         switch (c) {

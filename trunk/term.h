@@ -202,8 +202,6 @@ typedef enum {
   MBT_LEFT = 1, MBT_MIDDLE = 2, MBT_RIGHT = 3
 } mouse_button;
 
-enum { OSC_STR_MAX = 2048 };
-
 typedef struct belltime {
   struct belltime *next;
   uint ticks;
@@ -211,7 +209,7 @@ typedef struct belltime {
 
 typedef struct {
   short x, y;
-  int attr;
+  uint attr;
   bool wrapnext;
   bool utf;
   int oem_acs;
@@ -292,15 +290,16 @@ struct term {
   uint csi_argc;
   uint csi_argv[32];
 
-  int  osc_num;
-  int  osc_strlen;
-  char osc_string[OSC_STR_MAX + 1];
+  int  cmd_num;        // OSC command number, or -1 for DCS
+  char cmd_buf[2048];  // OSC or DCS string buffer and length
+  uint cmd_len;
 
   uchar *tabs;
 
   enum {
-    NORMAL, ESCAPE, CSI_ARGS, IGNORE_STRING,
-    OSC_START, OSC_NUM, OSC_STRING, OSC_ESCAPE, OSC_PALETTE
+    NORMAL, ESCAPE, CSI_ARGS,
+    IGNORE_STRING, CMD_STRING, CMD_ESCAPE,
+    OSC_START, OSC_NUM, OSC_PALETTE
   } state;
 
   enum {
