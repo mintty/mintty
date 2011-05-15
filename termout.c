@@ -433,7 +433,7 @@ do_sgr(void)
   uint attr = term.screen.curs.attr;
   for (uint i = 0; i < argc; i++) {
     switch (term.csi_argv[i]) {
-      when 0: attr = ATTR_DEFAULT;
+      when 0: attr = ATTR_DEFAULT | (attr & ATTR_PROTECTED);
       when 1: attr |= ATTR_BOLD;
       when 2: attr |= ATTR_DIM;
       when 4: attr |= ATTR_UNDER;
@@ -507,7 +507,7 @@ set_modes(bool state)
             term.other_screen.marg_t = term.screen.marg_t = 0;
             term.other_screen.marg_b = term.screen.marg_b = term.rows - 1;
             move(0, 0, 0);
-            term_erase_lots(false, true, true);
+            term_erase(false, false, true, true);
           }
         when 5:  /* DECSCNM: reverse video */
           if (state != term.rvideo) {
@@ -677,21 +677,21 @@ do_csi(uchar c)
       move((arg1 ?: 1) - 1,
            (screen->dec_om ? screen->marg_t : 0) + arg0_def1 - 1,
            screen->dec_om ? 2 : 0);
-    when 'J': {      /* ED: erase screen or parts of it */
-      if (arg0 == 3) { /* Erase Saved Lines (xterm) */
+    when 'J' or CPAIR('?', 'J'): { /* ED/DECSED: (selective) erase in display */
+      if (arg0 == 3 && !term.esc_mod) { /* Erase Saved Lines (xterm) */
         term_clear_scrollback();
         term.disptop = 0;
       }
       else {
         bool above = arg0 == 1 || arg0 == 2;
         bool below = arg0 == 0 || arg0 == 2;
-        term_erase_lots(false, above, below);
+        term_erase(term.esc_mod, false, above, below);
       }
     }
-    when 'K': {      /* EL: erase line or parts of it */
+    when 'K' or CPAIR('?', 'K'): { /* EL/DECSEL: (selective) erase in line */
       bool right = arg0 == 0 || arg0 == 2;
       bool left  = arg0 == 1 || arg0 == 2;
-      term_erase_lots(true, left, right);
+      term_erase(term.esc_mod, true, left, right);
     }
     when 'L':        /* IL: insert lines */
       if (curs->y <= screen->marg_b)
@@ -821,6 +821,11 @@ do_csi(uchar c)
       term.cursor_type = arg0 ? (arg0 - 1) / 2 : -1;
       term.cursor_blinks = arg0 ? arg0 % 2 : -1;
       term_schedule_cblink();
+    when CPAIR('"', 'q'):  /* DECSCA: select character protection attribute */
+      switch (arg0) {
+        when 0 or 2: term.screen.curs.attr &= ~ATTR_PROTECTED;
+        when 1: term.screen.curs.attr |= ATTR_PROTECTED;
+      }
   }
 }
 
@@ -835,11 +840,11 @@ do_dcs(void)
   if (*s++ != '$')
     return;
   
+  uint attr = term.screen.curs.attr;
+
   if (!strcmp(s, "qm")) { // SGR
     char buf[64], *p = buf;
     p += sprintf(p, "\eP1$r0");
-
-    uint attr = term.screen.curs.attr;
 
     if (attr & ATTR_BOLD)
       p += sprintf(p, ";1");
@@ -882,6 +887,8 @@ do_dcs(void)
                  term.screen.marg_t + 1, term.screen.marg_b + 1);
   else if (!strcmp(s, "q\"p"))  // DECSCL (conformance level)
     child_write("\eP1$r61\"p\e\\", 11);  // report as VT100
+  else if (!strcmp(s, "q\"q"))  // DECSCA (protection attribute)
+    child_printf("\eP1$r%u\"q\e\\", (attr & ATTR_PROTECTED) != 0);
   else
     child_write((char[]){CTRL('X')}, 1);
 }
