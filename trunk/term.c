@@ -146,9 +146,9 @@ term_reset(void)
   term_print_finish();
   if (term.screen.lines) {
     term_switch_screen(1, false, false);
-    term_erase_lots(false, true, true);
+    term_erase(false, false, true, true);
     term_switch_screen(0, false, false);
-    term_erase_lots(false, true, true);
+    term_erase(false, false, true, true);
     term.screen.curs.y = term_last_nonempty_line() + 1;
     if (term.screen.curs.y == term.rows) {
       term.screen.curs.y--;
@@ -442,7 +442,7 @@ term_switch_screen(bool to_alt, bool reset, bool keep_curs)
    /*
     * Yes, this _is_ supposed to honour background-colour-erase.
     */
-    term_erase_lots(false, true, true);
+    term_erase(false, false, true, true);
   }
 }
 
@@ -565,7 +565,7 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
  * whole line, or parts thereof.
  */
 void
-term_erase_lots(bool line_only, bool from_begin, bool to_end)
+term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
 {
   term_cursor *curs = &term.screen.curs;
   pos start, end;
@@ -585,7 +585,7 @@ term_erase_lots(bool line_only, bool from_begin, bool to_end)
 
  /* Lines scrolled away shouldn't be brought back on if the terminal resizes. */
   bool erasing_lines_from_top =
-    start.y == 0 && start.x == 0 && end.x == 0 && !line_only;
+    start.y == 0 && start.x == 0 && end.x == 0 && !line_only && !selective;
 
   if (erasing_lines_from_top) {
    /* If it's a whole number of lines, starting at the top, and
@@ -598,6 +598,12 @@ term_erase_lots(bool line_only, bool from_begin, bool to_end)
     }
     if (scrolllines > 0)
       term_do_scroll(0, scrolllines - 1, scrolllines, true);
+
+   /* After an erase of lines from the top of the screen, we shouldn't
+    * bring the lines back again if the terminal enlarges (since the user or
+    * application has explictly thrown them away). */
+    if (!term.on_alt_screen)
+      term.tempsblines = 0;
   }
   else {
     termline *line = term.screen.lines[start.y];
@@ -608,18 +614,12 @@ term_erase_lots(bool line_only, bool from_begin, bool to_end)
         else
           line->attr = LATTR_NORM;
       }
-      else
+      else if (!selective || !(line->chars[start.x].attr & ATTR_PROTECTED))
         line->chars[start.x] = term.erase_char;
       if (incpos(start) && start.y < term.rows)
         line = term.screen.lines[start.y];
     }
   }
-
- /* After an erase of lines from the top of the screen, we shouldn't
-  * bring the lines back again if the terminal enlarges (since the user or
-  * application has explictly thrown them away). */
-  if (erasing_lines_from_top && !term.on_alt_screen)
-    term.tempsblines = 0;
 }
 
 void

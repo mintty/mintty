@@ -82,7 +82,6 @@ enum {
   ATTR_BGSHIFT   = 9,
   ATTR_FGMASK    = 0x00001FFu,
   ATTR_BGMASK    = 0x003FE00u,
-  ATTR_COLOURS   = 0x003FFFFu,
   ATTR_INVALID   = 0x003FFFFu,
   ATTR_BOLD      = 0x0040000u,
   ATTR_DIM       = 0x0080000u,
@@ -90,8 +89,9 @@ enum {
   ATTR_UNDER     = 0x0200000u,
   ATTR_REVERSE   = 0x0400000u,
   ATTR_BLINK     = 0x0800000u,
-  ATTR_WIDE      = 0x1000000u,
-  ATTR_NARROW    = 0x2000000u,
+  ATTR_PROTECTED = 0x1000000u,
+  ATTR_WIDE      = 0x2000000u,
+  ATTR_NARROW    = 0x4000000u,
 
   TATTR_RIGHTCURS = 0x10000000u, /* cursor-on-RHS */
   TATTR_PASCURS   = 0x20000000u, /* passive cursor (box) */
