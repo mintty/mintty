@@ -1,6 +1,17 @@
 #summary Notable changes in each released version
 #labels Featured
 
+=== 0.9.8 (21 May 2011) ===
+ * Fixed a security issue with the OSC 701 sequence for setting and querying the terminal's locale, which allowed an arbitrary string (not including line endings) to be set as the locale and then echoed back as if typed by the user. Querying the locale now will only return valid locale strings.
+ * Dropped the mintty-specific OSC 7776 sequence, which did the same as OSC 701 (as introduced by rxvt-unicode).
+ * Implemented rxvt-unicode's private mode 1015 for encoding mouse events, which unlike standard xterm mouse reporting uses properly formed CSI sequences and which allows for unlimited mouse coordinates.
+ * Implemented missing xterm control sequences for window operations: set pixel size, get screen size in characters, refresh window, full screen.
+ * Implemented selective erase, where the DECSCA sequence can be used to set a protection attribute on characters, which are then left alone by the DECSED (selective erase in display) and DECSEL (selective erase in line) operations.
+ * Implemented DECRQSS sequences for requesting various paremeters including current text attributes and scroll margins.
+ * Tightened up parsing of control sequences and brought it more into line with xterm. Control characters within ESC and CSI sequences now get processed. Missing CSI parameters are treated as zero, whereas extraneous parameters are ignored. APC and PM string sequences now get parsed and ignored.
+ * If an AltGr key combination yields a character that can't be encoded in the current charset, the AltGr is treated as Alt instead.
+ * `true` and `false` are now recognised as values for Boolean configuration settings, in addition to `yes` and `no`.
+
 === 0.9.7 (17 Apr 2011) ===
  * Fixed crash when scrollback size is set to zero.
  * Fixed support for codepoints beyond the Basic Multilingual Plane (BMP) in Cygwin 1.5 and MSYS. 
