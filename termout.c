@@ -958,9 +958,9 @@ do_cmd(void)
         else
           win_set_font_size(i);
       }
-    when 701 or 7776:  // Set/get locale. 701 is from urxvt.
+    when 701:  // Set/get locale (from urxvt).
       if (!strcmp(s, "?"))
-        child_printf("\e]%u;%s\e\\", term.cmd_num, cs_get_locale());
+        child_printf("\e]701;%s\e\\", cs_get_locale());
       else
         cs_set_locale(s);
   }
