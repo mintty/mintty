@@ -16,11 +16,11 @@ Runtime requirements:
   cygwin-1.7.9-1
 
 Build requirements:
-  binutils-20080624-2
-  cygport-0.10.4-1
-  gcc-core-3.4.4-3
-  make-3.81-1
-  w32api-3.17-1
+  binutils
+  cygport
+  gcc-core
+  make
+  w32api
 
 Canonical website:
   http://mintty.googlecode.com
@@ -31,15 +31,15 @@ Canonical download:
 -------------------------------------------
 
 Build instructions:
-  unpack mintty-0.9.7-1-src.tar.bz2
+  unpack mintty-0.9.8-1-src.tar.bz2
     if you use setup to install this src package, it will be
     unpacked under /usr/src automatically
   cd /usr/src
-  cygport ./mintty-0.9.7-1.cygport all
+  cygport ./mintty-0.9.8-1.cygport all
 
 This will create:
-  /usr/src/mintty-0.9.7-1-src.tar.bz2
-  /usr/src/mintty-0.9.7-1.tar.bz2
+  /usr/src/mintty-0.9.8-1-src.tar.bz2
+  /usr/src/mintty-0.9.8-1.tar.bz2
 
 -------------------------------------------
 
@@ -56,7 +56,16 @@ Files included in the binary package:
 
 ------------------
 
+Cygwin port maintained by:  Andy Koppe  cygwin@cygwin.com
+Please address questions to the Cygwin mailing list at 
+<cygwin@cygwin.com> or to the mintty discussion group at
+http://groups.google.com/group/mintty-discuss.
+
+-------------------
+
 Port Notes:
+
+----- mintty-0.9.8-1 -----
 
 ----- mintty-0.9.7-1 -----
 
@@ -152,8 +161,3 @@ helping with that.
 ----- mintty-0.3.5-1 -----
 * First attempt at Cygwin setup package. Thanks to Yaakov Selkovitz for 
 getting this off the ground by adding MinTTY to Cygports.
-
-Cygwin port maintained by:  Andy Koppe  cygwin@cygwin.com
-Please address questions to the Cygwin mailing list at 
-<cygwin@cygwin.com> or to the mintty discussion group at
-http://groups.google.com/group/mintty-discuss.
