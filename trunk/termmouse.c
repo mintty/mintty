@@ -370,7 +370,7 @@ term_mouse_release(mod_keys mods, pos p)
   p = box_pos(p);
   int state = term.mouse_state;
   term.mouse_state = 0;
-  if (state >= 0) {
+  if (!term.show_other_screen && is_app_mouse(&mods)) {
     if (term.mouse_mode >= MM_VT200)
       send_mouse_event(0x23, mods, p);
   }
