@@ -550,7 +550,6 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
     fg = bg;
 
   bool has_cursor = attr & (TATTR_ACTCURS | TATTR_PASCURS);
-  int cursor_type = term_cursor_type();
   colour cursor_colour = 0;
   
   if (has_cursor) {
@@ -562,7 +561,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
     cursor_colour =
       too_close ? colours[CURSOR_TEXT_COLOUR_I] : wanted_cursor_colour;
     
-    if ((attr & TATTR_ACTCURS) && cursor_type == CUR_BLOCK) {
+    if ((attr & TATTR_ACTCURS) && term_cursor_type() == CUR_BLOCK) {
       bg = cursor_colour;
       fg = too_close ? wanted_cursor_colour : colours[CURSOR_TEXT_COLOUR_I];
     }
@@ -640,7 +639,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   
   if (has_cursor) {
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, cursor_colour));
-    switch(cursor_type) {
+    switch(term_cursor_type()) {
       when CUR_BLOCK:
         if (attr & TATTR_PASCURS) {
           HBRUSH oldbrush = SelectObject(dc, GetStockObject(NULL_BRUSH));
