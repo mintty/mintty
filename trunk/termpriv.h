@@ -33,7 +33,7 @@ int  term_last_nonempty_line(void);
 
 static inline bool
 term_selecting(void)
-{ return term.mouse_state < 0 && term.mouse_state != MS_OPENING; }
+{ return term.mouse_state < 0 && term.mouse_state >= MS_SEL_LINE; }
 
 void term_update_cs(void);
 

@@ -298,7 +298,7 @@ send_keys(char *code, uint len, uint count)
 static bool
 is_app_mouse(mod_keys *mods_p)
 {
-  if (!term.mouse_mode)
+  if (!term.mouse_mode || term.show_other_screen)
     return false;
   bool override = *mods_p & cfg.click_target_mod;
   *mods_p &= ~cfg.click_target_mod;
@@ -308,7 +308,7 @@ is_app_mouse(mod_keys *mods_p)
 void
 term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
 {
-  if (!term.show_other_screen && is_app_mouse(&mods)) {
+  if (is_app_mouse(&mods)) {
     if (term.mouse_mode == MM_X10)
       mods = 0;
     send_mouse_event(0x1F + b, mods, box_pos(p));
@@ -316,19 +316,16 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
   }
   else {  
     bool alt = mods & MDK_ALT;
-    bool shift_ctrl = mods & (MDK_SHIFT | MDK_CTRL);
+    bool shift_or_ctrl = mods & (MDK_SHIFT | MDK_CTRL);
     int rca = cfg.right_click_action;
-    if (b == MBT_RIGHT && (rca == RC_MENU || shift_ctrl)) {
+    term.mouse_state = 0;
+    if (b == MBT_RIGHT && (rca == RC_MENU || shift_or_ctrl)) {
       if (!alt) 
         win_popup_menu();
     }
     else if (b == ((rca == RC_PASTE) ? MBT_RIGHT : MBT_MIDDLE)) {
-      if (!alt) {
-        if (shift_ctrl)
-          term_copy();
-        else
-          win_paste();
-      }
+      if (!alt)
+        term.mouse_state = shift_or_ctrl ? MS_COPYING : MS_PASTING;
     }
     else if (b == MBT_LEFT && mods == MDK_CTRL) {
       // Open word under cursor
@@ -345,7 +342,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
       p = get_selpoint(box_pos(p));
       term.mouse_state = -count;
       term.sel_rect = alt;
-      if (b != MBT_LEFT || shift_ctrl)
+      if (b != MBT_LEFT || shift_or_ctrl)
         sel_extend(p);
       else if (count == 1) {
         term.selected = false;
@@ -367,75 +364,78 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
 void
 term_mouse_release(mod_keys mods, pos p)
 {
-  p = box_pos(p);
   int state = term.mouse_state;
   term.mouse_state = 0;
-  if (!term.show_other_screen && is_app_mouse(&mods)) {
-    if (term.mouse_mode >= MM_VT200)
-      send_mouse_event(0x23, mods, p);
-  }
-  else if (state == MS_OPENING) {
-    term_open();
-    term.selected = false;
-    win_update();
-  }
-  else {
-    // Finish selection.
-    if (term.selected && cfg.copy_on_select)
-      term_copy();
-    
-    // Flush any output held back during selection.
-    term_flush();
-    
-    // "Clicks place cursor" implementation.
-    if (!cfg.clicks_place_cursor || term.on_alt_screen || term.app_cursor_keys)
-      return;
-    
-    pos dest = term.selected ? term.sel_end : get_selpoint(p);
-    
-    static bool moved_previously;
-    static pos last_dest;
-    
-    pos orig;
-    if (state == MS_SEL_CHAR)
-      orig = (pos){.y = term.screen.curs.y, .x = term.screen.curs.x};
-    else if (moved_previously)
-      orig = last_dest;
-    else
-      return;
-    
-    bool forward = posle(orig, dest);
-    pos end = forward ? dest : orig;
-    p = forward ? orig : dest;
-    
-    uint count = 0;
-    while (p.y != end.y) {
-      termline *line = fetch_line(p.y);
-      if (!(line->attr & LATTR_WRAPPED)) {
-        release_line(line);
-        moved_previously = false;
+  switch (state) {
+    when MS_COPYING: term_copy();
+    when MS_PASTING: win_paste();
+    when MS_OPENING:
+      term_open();
+      term.selected = false;
+      win_update();
+    when MS_SEL_CHAR or MS_SEL_WORD or MS_SEL_LINE: {
+      // Finish selection.
+      if (term.selected && cfg.copy_on_select)
+        term_copy();
+      
+      // Flush any output held back during selection.
+      term_flush();
+      
+      // "Clicks place cursor" implementation.
+      if (!cfg.clicks_place_cursor || term.on_alt_screen || term.app_cursor_keys)
         return;
+      
+      pos dest = term.selected ? term.sel_end : get_selpoint(box_pos(p));
+      
+      static bool moved_previously;
+      static pos last_dest;
+      
+      pos orig;
+      if (state == MS_SEL_CHAR)
+        orig = (pos){.y = term.screen.curs.y, .x = term.screen.curs.x};
+      else if (moved_previously)
+        orig = last_dest;
+      else
+        return;
+      
+      bool forward = posle(orig, dest);
+      pos end = forward ? dest : orig;
+      p = forward ? orig : dest;
+      
+      uint count = 0;
+      while (p.y != end.y) {
+        termline *line = fetch_line(p.y);
+        if (!(line->attr & LATTR_WRAPPED)) {
+          release_line(line);
+          moved_previously = false;
+          return;
+        }
+        int cols = term.cols - ((line->attr & LATTR_WRAPPED2) != 0);
+        for (int x = p.x; x < cols; x++) {
+          if (line->chars[x].chr != UCSWIDE)
+            count++;
+        }
+        p.y++;
+        p.x = 0;
+        release_line(line);
       }
-      int cols = term.cols - ((line->attr & LATTR_WRAPPED2) != 0);
-      for (int x = p.x; x < cols; x++) {
+      termline *line = fetch_line(p.y);
+      for (int x = p.x; x < end.x; x++) {
         if (line->chars[x].chr != UCSWIDE)
           count++;
       }
-      p.y++;
-      p.x = 0;
       release_line(line);
+      
+      send_keys(forward ? "\e[C" : "\e[D", 3, count);
+      
+      moved_previously = true;
+      last_dest = dest;
     }
-    termline *line = fetch_line(p.y);
-    for (int x = p.x; x < end.x; x++) {
-      if (line->chars[x].chr != UCSWIDE)
-        count++;
-    }
-    release_line(line);
-    
-    send_keys(forward ? "\e[C" : "\e[D", 3, count);
-    
-    moved_previously = true;
-    last_dest = dest;
+    default:
+      if (is_app_mouse(&mods)) {
+        if (term.mouse_mode >= MM_VT200)
+          send_mouse_event(0x23, mods, box_pos(p));
+      }
   }
 }
 
@@ -480,7 +480,7 @@ term_mouse_move(mod_keys mods, pos p)
   }
   else {
     if (term.mouse_mode == MM_ANY_EVENT)
-        send_mouse_event(0x43, mods, bp);
+      send_mouse_event(0x43, mods, bp);
   }
 }
 
@@ -492,7 +492,7 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
   static int accu;
   accu += delta;
   
-  if (!term.show_other_screen && is_app_mouse(&mods)) {
+  if (is_app_mouse(&mods)) {
     // Send as mouse events, with one event per notch.
     int notches = accu / NOTCH_DELTA;
     if (notches) {

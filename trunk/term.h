@@ -307,8 +307,9 @@ struct term {
   } mouse_mode;
 
   enum {
-    // The state can be one of the mouse buttons or one of the cases here.
-    MS_SEL_CHAR = -1, MS_SEL_WORD = -2, MS_SEL_LINE = -3, MS_OPENING = -4
+    // The state can be zero, one of the mouse buttons or one of the cases here.
+    MS_SEL_CHAR = -1, MS_SEL_WORD = -2, MS_SEL_LINE = -3,
+    MS_COPYING = -4, MS_PASTING = -5, MS_OPENING = -6
   } mouse_state;
   
   bool ext_mouse_pos;  // Xterm extended mouse position reporting (using UTF-8)
