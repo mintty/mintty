@@ -525,12 +525,6 @@ set_modes(bool state)
           win_update_mouse();
         when 25: /* DECTCEM: enable/disable cursor */
           term.cursor_on = state;
-        when 30: /* Show scrollbar (rxvt) */
-          if (state != term.show_scrollbar) {
-            term.show_scrollbar = state;
-            if (cfg.scrollbar)
-              win_update_scrollbar();
-          }
         when 40: /* Allow/disallow DECCOLM (xterm c132 resource) */
           term.deccolm_allowed = state;
         when 47: /* alternate screen */
@@ -575,17 +569,25 @@ set_modes(bool state)
           term.vt220_keys = state;
         when 2004:       /* xterm bracketed paste mode */
           term.bracketed_paste = state;
-        when 7700:       /* mintty only: CJK ambigous width reporting */
+
+        /* Mintty private modes */
+        when 7700:       /* CJK ambigous width reporting */
           term.report_ambig_width = state;
-        when 7727:       /* mintty only: Application escape key mode */
+        when 7727:       /* Application escape key mode */
           term.app_escape_key = state;
-        when 7728:       /* mintty only: Escape sends FS (instead of ESC) */
+        when 7728:       /* Escape sends FS (instead of ESC) */
           term.escape_sends_fs = state;
-        when 7783:       /* mintty only: Shortcut override */
+        when 7766:       /* Show/hide scrollbar (if enabled in config) */
+          if (state != term.show_scrollbar) {
+            term.show_scrollbar = state;
+            if (cfg.scrollbar)
+              win_update_scrollbar();
+          }
+        when 7783:       /* Shortcut override */
           term.shortcut_override = state;
-        when 7786:       /* mintty only: Mousewheel reporting */
+        when 7786:       /* Mousewheel reporting */
           term.wheel_reporting = state;
-        when 7787:       /* mintty only: Application mousewheel mode */
+        when 7787:       /* Application mousewheel mode */
           term.app_wheel = state;
       }
     }
