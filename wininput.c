@@ -700,19 +700,17 @@ win_key_down(WPARAM wp, LPARAM lp)
         ?: layout()
         ?: app_pad_code(key - VK_NUMPAD0 + '0');
     when 'A' ... 'Z' or ' ':
-      if ((key != ' ' && alt_code_key(key - 'A' + 0xA)) || char_key())
-        break;
-      if (term.modify_other_keys > 1)
-        modify_other_key();
-      else if (!ctrl_key())
-        ctrl_ch(CTRL(key));
+      key != ' ' && alt_code_key(key - 'A' + 0xA) ?:
+      char_key() ?:
+      term.modify_other_keys <= 1 ? ctrl_key() :
+      term.modify_other_keys ? modify_other_key() :
+      ctrl_ch(CTRL(key));
     when '0' ... '9' or VK_OEM_1 ... VK_OEM_102:
-      if ((key <= '9' && alt_code_key(key - '0')) || char_key())
-        break;
-      if (term.modify_other_keys)
-        modify_other_key();
-      else if (!ctrl_key())
-        app_pad_code(key <= '9' ? key : key - VK_OEM_PLUS + '+');
+      key <= '9' && alt_code_key(key - '0') ?:
+      char_key() ?:
+      term.modify_other_keys <= 1 && ctrl_key() ?:
+      term.modify_other_keys ? modify_other_key() :
+      app_pad_code(key <= '9' ? key : key - VK_OEM_PLUS + '+');
     otherwise:
       return 0;
   }
