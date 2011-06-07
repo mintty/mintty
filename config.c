@@ -224,9 +224,9 @@ static opt_val
   },
   [OPT_TRANS] = (opt_val[]) {
     {"off", 0},
-    {"low", 1},
-    {"medium", 2},
-    {"high", 3},
+    {"low", 16},
+    {"medium", 32},
+    {"high", 48},
     {"glass", -1},
     {0, 0}
   },
@@ -378,13 +378,8 @@ set_option(string name, string val_str)
       char *val_end;
       int val = strtol(val_str, &val_end, 0);
       if (val_end != val_str) {
-        // Got a number: check that it's valid for the option.
-        for (opt_val *o = opt_vals[type]; o->name; o++) {
-          if (o->val == val) {
-            *(char *)val_p = val;
-            return i;
-          }
-        }
+        *(char *)val_p = val;
+        return i;
       }
     }
   }
@@ -512,6 +507,9 @@ finish_config(void)
     cfg.bold_as_font = !cfg.bold_as_colour;
     remember_file_option(find_option("BoldAsFont"));
   }
+  
+  if (0 < cfg.transparency && cfg.transparency <= 3)
+    cfg.transparency *= 16;
 }
 
 static void
@@ -557,12 +555,15 @@ save_config(void)
           }
           otherwise: {
             int val = *(char *)val_p;
-            for (opt_val *o = opt_vals[type]; o->name; o++) {
-              if (o->val == val) {
-                fputs(o->name, file);
+            opt_val *o = opt_vals[type];
+            for (; o->name; o++) {
+              if (o->val == val)
                 break;
-              }
             }
+            if (o->name)
+              fputs(o->name, file);
+            else
+              fprintf(file, "%u", val);
           }
         }
         fputc('\n', file);
@@ -805,9 +806,9 @@ setup_config_box(controlbox * b)
     s, null, 4 + with_glass,
     dlg_stdradiobutton_handler, &new_cfg.transparency,
     "&Off", 0,
-    "&Low", 1,
-    with_glass ? "&Med." : "&Medium", 2,
-    "&High", 3,
+    "&Low", 16,
+    with_glass ? "&Med." : "&Medium", 32,
+    "&High", 48,
     with_glass ? "Gla&ss" : null, -1,
     null
   );
