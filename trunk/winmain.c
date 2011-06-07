@@ -381,14 +381,14 @@ default_size(void)
 static void
 update_transparency(void)
 {
-  bool opaque = cfg.opaque_when_focused && term.has_focus;
   int trans = max(cfg.transparency, 0);
   long exstyle = GetWindowLong(wnd, GWL_EXSTYLE);
   SetWindowLong(wnd, GWL_EXSTYLE,
                 trans ? exstyle | WS_EX_LAYERED : exstyle & ~WS_EX_LAYERED);
   if (trans) {
-    uchar alpha = opaque ? 255 : 255 - 16 * trans;
-    SetLayeredWindowAttributes(wnd, 0, alpha, LWA_ALPHA);
+    if (cfg.opaque_when_focused && term.has_focus)
+      trans = 0;
+    SetLayeredWindowAttributes(wnd, 0, 255 - trans, LWA_ALPHA);
   }
 
   update_glass();
