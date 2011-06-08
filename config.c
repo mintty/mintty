@@ -223,11 +223,11 @@ static opt_val
     {0, 0}
   },
   [OPT_TRANS] = (opt_val[]) {
-    {"off", 0},
-    {"low", 16},
-    {"medium", 32},
-    {"high", 48},
-    {"glass", -1},
+    {"off", TR_OFF},
+    {"low", TR_LOW},
+    {"medium", TR_MEDIUM},
+    {"high", TR_HIGH},
+    {"glass", TR_GLASS},
     {0, 0}
   },
   [OPT_CURSOR] = (opt_val[]) {
@@ -563,7 +563,7 @@ save_config(void)
             if (o->name)
               fputs(o->name, file);
             else
-              fprintf(file, "%u", val);
+              fprintf(file, "%i", val);
           }
         }
         fputc('\n', file);
@@ -805,11 +805,11 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, null, 4 + with_glass,
     dlg_stdradiobutton_handler, &new_cfg.transparency,
-    "&Off", 0,
-    "&Low", 16,
-    with_glass ? "&Med." : "&Medium", 32,
-    "&High", 48,
-    with_glass ? "Gla&ss" : null, -1,
+    "&Off", TR_OFF,
+    "&Low", TR_LOW,
+    with_glass ? "&Med." : "&Medium", TR_MEDIUM,
+    "&High", TR_HIGH,
+    with_glass ? "Gla&ss" : null, TR_GLASS,
     null
   );
   ctrl_checkbox(

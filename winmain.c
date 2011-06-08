@@ -299,7 +299,7 @@ update_glass(void)
 {
   if (pDwmExtendFrameIntoClientArea) {
     bool enabled =
-      cfg.transparency < 0 && !win_is_fullscreen &&
+      cfg.transparency == TR_GLASS && !win_is_fullscreen &&
       !(cfg.opaque_when_focused && term.has_focus);
     pDwmExtendFrameIntoClientArea(wnd, &(MARGINS){enabled ? -1 : 0, 0, 0, 0});
   }
@@ -381,14 +381,16 @@ default_size(void)
 static void
 update_transparency(void)
 {
-  int trans = max(cfg.transparency, 0);
-  long exstyle = GetWindowLong(wnd, GWL_EXSTYLE);
-  SetWindowLong(wnd, GWL_EXSTYLE,
-                trans ? exstyle | WS_EX_LAYERED : exstyle & ~WS_EX_LAYERED);
+  int trans = cfg.transparency;
+  if (trans == TR_GLASS)
+    trans = 0;
+  long style = GetWindowLong(wnd, GWL_EXSTYLE);
+  style = trans ? style | WS_EX_LAYERED : style & ~WS_EX_LAYERED;
+  SetWindowLong(wnd, GWL_EXSTYLE, style);
   if (trans) {
     if (cfg.opaque_when_focused && term.has_focus)
       trans = 0;
-    SetLayeredWindowAttributes(wnd, 0, 255 - trans, LWA_ALPHA);
+    SetLayeredWindowAttributes(wnd, 0, 255 - (uchar)trans, LWA_ALPHA);
   }
 
   update_glass();
