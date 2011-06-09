@@ -947,7 +947,12 @@ do_cmd(void)
     when 10: do_colour_osc(FG_COLOUR_I);
     when 11: do_colour_osc(BG_COLOUR_I);
     when 12: do_colour_osc(CURSOR_COLOUR_I);
-    when 7770:
+    when 701:  // Set/get locale (from urxvt).
+      if (!strcmp(s, "?"))
+        child_printf("\e]701;%s\e\\", cs_get_locale());
+      else
+        cs_set_locale(s);
+    when 7770:  // Change font size.
       if (!strcmp(s, "?"))
         child_printf("\e]7770;%u\e\\", win_get_font_size());
       else {
@@ -960,11 +965,26 @@ do_cmd(void)
         else
           win_set_font_size(i);
       }
-    when 701:  // Set/get locale (from urxvt).
-      if (!strcmp(s, "?"))
-        child_printf("\e]701;%s\e\\", cs_get_locale());
-      else
-        cs_set_locale(s);
+    when 7771: {  // Enquire about font support for a list of characters
+      if (*s++ != '?')
+        return;
+      wchar wcs[sizeof(term.cmd_len)];
+      uint n = 0;
+      while (*s) {
+        if (*s++ != ';')
+          return;
+        wcs[n++] = strtoul(s, &s, 10);
+      }
+      win_check_glyphs(wcs, n);
+      s = term.cmd_buf;
+      for (size_t i = 0; i < n; i++) {
+        *s++ = ';';
+        if (wcs[i])
+          s += sprintf(s, "%u", wcs[i]);
+      }
+      *s = 0;
+      child_printf("\e]7771;!%s\e\\", term.cmd_buf);
+    }
   }
 }
 
