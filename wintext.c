@@ -679,6 +679,23 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   }
 }
 
+/* Check availability of characters in the current font.
+ * Zeroes each of the characters in the input array that isn't available.
+ */
+void
+win_check_glyphs(wchar *wcs, uint num)
+{
+  HDC dc = GetDC(wnd);
+  SelectObject(dc, fonts[FONT_NORMAL]);
+  ushort glyphs[num];
+  GetGlyphIndicesW(dc, wcs, num, glyphs, true);
+  for (size_t i = 0; i < num; i++) {
+    if (glyphs[i] == 0xFFFF || glyphs[i] == 0x1F)
+      wcs[i] = 0;
+  }
+  ReleaseDC(wnd, dc);
+}
+
 /* This function gets the actual width of a character in the normal font.
  */
 int
