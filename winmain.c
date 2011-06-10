@@ -251,8 +251,8 @@ win_invalidate_all(void)
   InvalidateRect(wnd, null, true);
 }
 
-static void
-adapt_term_size(void)
+void
+win_adapt_term_size(void)
 {
   if (IsIconic(wnd))
     return;
@@ -275,14 +275,6 @@ adapt_term_size(void)
     child_resize(&ws);
   }
   win_invalidate_all();
-}
-
-static void
-reinit_fonts(void)
-{
-  win_deinit_fonts();
-  win_init_fonts();
-  adapt_term_size();
 }
 
 bool
@@ -438,8 +430,8 @@ win_reconfig(void)
   /* Copy the new config and refresh everything */
   copy_config(&cfg, &new_cfg);
   if (font_changed) {
-    font_size = cfg.font.size;
-    reinit_fonts();
+    win_init_fonts(cfg.font.size);
+    win_adapt_term_size();
   }
   win_update_scrollbar();
   update_transparency();
@@ -449,28 +441,6 @@ win_reconfig(void)
   cs_reconfig();
   if (term.report_ambig_width && old_ambig_wide != cs_ambig_wide)
     child_write(cs_ambig_wide ? "\e[2W" : "\e[1W", 4);
-}
-
-uint
-win_get_font_size(void)
-{
-  return abs(font_size);
-}
-
-void
-win_set_font_size(int size)
-{
-  int new_font_size = size ? sgn(font_size) * min(size, 72) : cfg.font.size;
-  if (new_font_size != font_size) {
-    font_size = new_font_size;
-    reinit_fonts();
-  }
-}
-
-void
-win_zoom_font(int zoom)
-{
-  win_set_font_size(zoom ? max(1, abs(font_size) + zoom) : 0);
 }
 
 static bool
@@ -593,7 +563,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       if (resizing) {
         resizing = false;
         win_destroy_tip();
-        adapt_term_size();
+        win_adapt_term_size();
       }
     when WM_SIZING: {
      /*
@@ -637,7 +607,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       }
       
       if (!resizing)
-        adapt_term_size();
+        win_adapt_term_size();
 
       return 0;
     }
@@ -897,8 +867,7 @@ main(int argc, char *argv[])
 
 
   // Initialise the fonts, thus also determining their width and height.
-  font_size = cfg.font.size;
-  win_init_fonts();
+  win_init_fonts(cfg.font.size);
   
   // Reconfigure the charset module now that arguments have been converted,
   // the locale/charset settings have been loaded, and the font width has
