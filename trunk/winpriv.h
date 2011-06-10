@@ -18,15 +18,15 @@ extern COLORREF colours[COLOUR_NUM];
 
 extern LOGFONT lfont;
 
-extern int font_size;
 extern int font_width, font_height;
 
 enum { PADDING = 1 };
 
 void win_paint(void);
 
-void win_init_fonts(void);
-void win_deinit_fonts(void);
+void win_init_fonts(int size);
+
+void win_adapt_term_size(void);
 
 void win_open_config(void);
 

@@ -23,7 +23,7 @@ enum {
 
 LOGFONT lfont;
 static HFONT fonts[FONT_MAXNO];
-static int fontflag[FONT_MAXNO];
+static bool fontflag[FONT_MAXNO];
 
 enum {LDRAW_CHAR_NUM = 31, LDRAW_CHAR_TRIES = 4};
 
@@ -72,7 +72,7 @@ static enum {UND_LINE, UND_FONT} und_mode;
 static int descent;
 
 // Current font size (with any zooming)
-int font_size; 
+static int font_size; 
 
 // Font screen dimensions
 int font_width, font_height;
@@ -140,15 +140,22 @@ create_font(int weight, bool underline)
  *   be done in a pinch).
  */
 void
-win_init_fonts(void)
+win_init_fonts(int size)
 {
   TEXTMETRIC tm;
   int fontsize[3];
   int i;
   int fw_dontcare, fw_bold;
 
-  for (i = 0; i < FONT_MAXNO; i++)
-    fonts[i] = null;
+  font_size = size;
+
+  for (i = 0; i < FONT_MAXNO; i++) {
+    if (fonts[i]) {
+      DeleteObject(fonts[i]);
+      fonts[i] = 0;
+    }
+    fontflag[i] = 0;
+  }
 
   bold_mode = cfg.bold_as_font ? BOLD_FONT : BOLD_NONE;
   und_mode = UND_FONT;
@@ -164,9 +171,7 @@ win_init_fonts(void)
 
   HDC dc = GetDC(wnd);
   font_height =
-    font_size > 0
-    ? -MulDiv(font_size, GetDeviceCaps(dc, LOGPIXELSY), 72)
-    : font_size;
+    size > 0 ? -MulDiv(size, GetDeviceCaps(dc, LOGPIXELSY), 72) : size;
   font_width = 0;
 
   fonts[FONT_NORMAL] = create_font(fw_dontcare, false);
@@ -290,16 +295,26 @@ win_init_fonts(void)
   fontflag[0] = fontflag[1] = fontflag[2] = 1;
 }
 
-void
-win_deinit_fonts(void)
+uint
+win_get_font_size(void)
 {
-  int i;
-  for (i = 0; i < FONT_MAXNO; i++) {
-    if (fonts[i])
-      DeleteObject(fonts[i]);
-    fonts[i] = 0;
-    fontflag[i] = 0;
+  return abs(font_size);
+}
+
+void
+win_set_font_size(int size)
+{
+  size = size ? sgn(font_size) * min(size, 72) : cfg.font.size;
+  if (size != font_size) {
+    win_init_fonts(size);
+    win_adapt_term_size();
   }
+}
+
+void
+win_zoom_font(int zoom)
+{
+  win_set_font_size(zoom ? max(1, abs(font_size) + zoom) : 0);
 }
 
 static HDC dc;
