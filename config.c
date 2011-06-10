@@ -59,11 +59,7 @@ const config default_cfg = {
   .scroll_mod = MDK_SHIFT,
   .pgupdn_scroll = false,
   // Terminal
-#if CYGWIN_VERSION_DLL_MAJOR >= 1007
-  .term = "xterm-256color",
-#else
   .term = "xterm",
-#endif
   .answerback = "",
   .bell_sound = false,
   .bell_flash = false,
