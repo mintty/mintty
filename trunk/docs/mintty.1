@@ -5,7 +5,7 @@
 .\" You may distribute, use, and modify this man page under the terms
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
-.TH mintty 1 2011-05-21 mintty\ 0.9.8
+.TH mintty 1 2011-06-12 mintty\ 0.9.9
 
 .ad l
 
@@ -430,6 +430,10 @@ To make this reasonably usable, the glass colour needs to be set to be as dark
 as possible in the Windows control panel: choose \fIPersonalize\fP from the
 desktop context menu, click on \fIWindow Color\fP, turn the colour intensity up
 to the maximum, show the colour mixer, and turn the brightness down to black.
+
+Numeric transparency values ranging from 4 to 254 can be specified in config
+files or on the command line.  (Values below 4 are multiplied by 16, for
+backward compatibility reasons.)
 
 .TP
 \fBOpaque when focused\fP (OpaqueWhenFocused=no)
