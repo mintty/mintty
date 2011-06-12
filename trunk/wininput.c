@@ -705,7 +705,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     when 'A' ... 'Z' or ' ':
       key != ' ' && alt_code_key(key - 'A' + 0xA) ?:
       char_key() ?:
-      term.modify_other_keys <= 1 ? ctrl_key() :
+      term.modify_other_keys <= 1 && ctrl_key() ?:
       term.modify_other_keys ? modify_other_key() :
       ctrl_ch(CTRL(key));
     when '0' ... '9' or VK_OEM_1 ... VK_OEM_102:
@@ -716,7 +716,6 @@ win_key_down(WPARAM wp, LPARAM lp)
       key <= '9' ? app_pad_code(key) :
       VK_OEM_PLUS <= key && key <= VK_OEM_PERIOD
       ? app_pad_code(key - VK_OEM_PLUS + '+') : 0;
-      ;
     otherwise:
       return 0;
   }
