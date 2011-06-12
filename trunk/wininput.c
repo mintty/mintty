@@ -710,7 +710,10 @@ win_key_down(WPARAM wp, LPARAM lp)
       char_key() ?:
       term.modify_other_keys <= 1 && ctrl_key() ?:
       term.modify_other_keys ? modify_other_key() :
-      app_pad_code(key <= '9' ? key : key - VK_OEM_PLUS + '+');
+      key <= '9' ? app_pad_code(key) :
+      VK_OEM_PLUS <= key && key <= VK_OEM_PERIOD
+      ? app_pad_code(key - VK_OEM_PLUS + '+') : 0;
+      ;
     otherwise:
       return 0;
   }
