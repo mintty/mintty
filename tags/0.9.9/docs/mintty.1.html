@@ -1,0 +1,1560 @@
+<HTML><HEAD>
+<TITLE>Manual Page - mintty(1)</TITLE>
+<BODY bgcolor=#F0F0F0 text=#000000 link=#0000ff vlink=#C000C0 alink=#ff0000><A NAME=top></A>
+<!-- .\" mintty man page -->
+<!-- .\" -->
+<!-- .\" This 'man' page is Copyright 2009 Lee D. Rothstein, 2009-11 Andy Koppe -->
+<!-- .\" -->
+<!-- .\" You may distribute, use, and modify this man page under the terms -->
+<!-- .\" of the GNU Free Documentation License (GFDL), Version 1.3, -->
+<!-- .\" 3 November 2008 (or later) as specified. -->
+<!-- .TH mintty 1 2011-06-12 mintty\ 0.9.9 -->
+<CENTER>
+<H1><HR><I>Manual Reference Pages &nbsp;-&nbsp;</I><NOBR>mintty (1)</NOBR><HR></H1>
+</CENTER>
+<P>
+<!-- .ad l -->
+<!-- ignored unsupported tag .ad -->
+<P>
+<!-- .SH NAME -->
+<A name=0>
+
+     <H3>NAME</H3>
+
+</A>
+<BLOCKQUOTE>
+<P>
+mintty - Cygwin terminal emulator
+<P>
+<P>
+<!-- .SH SYNOPSIS -->
+</BLOCKQUOTE>
+<A name=contents></A><H3>CONTENTS</H3></A>
+<BLOCKQUOTE>
+<A HREF=#1>Synopsis</A><BR>
+<A HREF=#2>Description</A><BR>
+<A HREF=#3>Invocation</A><BR>
+<A HREF=#4>Options</A><BR>
+<A HREF=#5>Usage</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#6>Menus</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#7>Copy & paste</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#8>Drag & drop</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#9>Opening files, directories and URLs</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#10>Font zoom</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#11>Full screen</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#12>Default size</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#13>Reset</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#14>Scrolling</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#15>Flip screen</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#16>Switching session</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#17>Closing a session</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#18>Mouse tracking</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#19>Alt codes</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#20>Shortcuts</A><BR>
+<A HREF=#21>Configuration</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#22>Looks</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#23>Text</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#24>Keys</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#25>Mouse</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#26>Window</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#27>Terminal</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#28>Command line</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#29>Hidden settings</A><BR>
+<A HREF=#30>Limitations</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#31>Console issue</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#32>Termcap/terminfo</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#33>Missing xterm features</A><BR>
+<A HREF=#34>See Also</A><BR>
+<A HREF=#35>License</A><BR>
+<A HREF=#36>Contact</A><BR>
+</BLOCKQUOTE>
+<A name=37>
+
+     <H3>SYNOPSIS</H3>
+
+</A>
+<BLOCKQUOTE>
+<P>
+<B>mintty</B> [<I>OPTION</I>]... [ <B>-</B> | <I>PROGRAM</I> [<I>ARG</I>]... ]
+<P>
+<P>
+<!-- .SH DESCRIPTION -->
+</BLOCKQUOTE>
+<A name=2>
+
+     <H3>DESCRIPTION</H3>
+
+</A>
+<BLOCKQUOTE>
+<P>
+<B>Mintty</B> is a terminal emulator for Cygwin with a native Windows user
+interface and minimalist design.
+Its terminal emulation is largely compatible with <B>xterm</B>, but it does not
+require an X server.
+<P>
+<P>
+<!-- .SH INVOCATION -->
+</BLOCKQUOTE>
+<A name=3>
+
+     <H3>INVOCATION</H3>
+
+</A>
+<BLOCKQUOTE>
+<P>
+If a program name is supplied on the command line, this is executed with any
+additional arguments given.
+Otherwise, mintty looks for a shell to execute in the <I>SHELL</I> environment
+variable.
+If that is not set, it reads the user&#146;s default shell setting from
+<I>/etc/passwd</I>.
+As a last resort, it falls back to <I>/bin/sh</I>.
+If a single dash is specified instead of a program name, the shell is invoked
+as a login shell.
+<P>
+<P>
+<!-- .SH OPTIONS -->
+</BLOCKQUOTE>
+<A name=4>
+
+     <H3>OPTIONS</H3>
+
+</A>
+<BLOCKQUOTE>
+<P>
+The standard GNU option formats are accepted, with single dashes
+introducing short options and double dashes introducing long options.
+<P>
+<!-- .TP -->
+<TABLE cellpadding=3>
+<TR valign=top><TD colspan=2>
+<B>-c</B>, <B>--config</B> <I>FILENAME</I>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Read settings from the specified configuration file, in addition to
+<I>/etc/minttyrc</I> and <I>~/.minttyrc</I>.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>-e</B>, <B>--exec</B> <I>PROGRAM</I> [<I>ARG</I> ...]
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Execute the specified program in the terminal session and pass on any additional
+arguments.
+<P>
+This option is present for compatibility with other terminal emulators only.
+It can be omitted, in which case the first non-option argument, if any,
+is taken as the name of the program to execute.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>-h</B>, <B>--hold</B> <B>never</B>|<B>start</B>|<B>error</B>|<B>always</B>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Determine whether to keep the terminal window open when the command has
+finished and no more processes are connected to the terminal.
+The argument can be abbreviated to a single letter.
+<P>
+By default, the window is closed immediately, except if the child process has
+exited with status 255, which is used to indicate failure to execute the shell
+command.  (Exit status 255 is also used by <B>ssh</B> to indicate connection
+errors.)
+<P>
+Alternatively, the window can be set to never stay open, to always stay open,
+or to stay open only if the child process terminates with an error, i.e. with
+a non-zero exit status or due to a signal indicating a runtime error.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>-i</B>, <B>--icon</B> <I>FILE</I>[<B>,</B><I>INDEX</I>]
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Load the window icon from an executable, DLL, or icon file.  The optional
+comma-separated index can be used to select a particular icon in a file with
+multiple icons.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>-l</B>, <B>--log</B> <I>FILE</I>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Copy all output into the specified log file.
+(See also <I>script</I>(1) for a more flexible logging tool.)
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>-o</B>, <B>--option</B> <I>NAME</I>=<I>VALUE</I>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Override the named config file option with the given value, e.g.
+<TT>-o ScrollbackLines=1000</TT>.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>-p</B>, <B>--position</B> <I>X</I><B>,</B><I>Y</I>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Open the window with its top left corner at the specified coordinates.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>-s</B>, <B>--size</B> <I>COLS</I><B>,</B><I>ROWS</I>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Set the default size of the window in character columns and rows.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>-t</B>, <B>--title</B> <I>TITLE</I>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Use <I>TITLE</I> as the initial window title.
+By default, the title is set to the executed command.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>-u</B>, <B>--utmp</B>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Create a utmp entry.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>-w</B>, <B>--window</B> <B>normal</B>|<B>min</B>|<B>max</B>|<B>full</B>|<B>hide</B>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Set the initial window state: normal, minimised, maximised, full screen,
+or hidden.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>--class</B> <I>CLASS</I>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Use <I>CLASS</I> as the window class name of the main window.
+This allows scripting tools to distinguish different mintty instances.
+The default is "mintty".
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>-H</B>, <B>--help</B>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Display a brief help message and exit.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>-V</B>, <B>--version</B>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Print version information and exit.
+<P>
+<P>
+<!-- .SH USAGE -->
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=5>
+
+     <H3>USAGE</H3>
+
+</A>
+<BLOCKQUOTE>
+<P>
+Mintty tries to adhere to both Windows and Unix usage conventions.
+Where they conflict, an option is usually provided.
+This section primarily describes the default configuration;
+see the <B><A HREF=#21>CONFIGURATION</A></B> section on how it can be customised.
+<P>
+<P>
+<!-- .SS Menus -->
+</BLOCKQUOTE>
+<A name=6>
+
+    <H4>&nbsp; &nbsp; Menus</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+The context menu can be opened by right-clicking the mouse or by
+pressing the <B>Menu</B> key that is normally located next to the right Ctrl key.
+<P>
+Mintty also adds a couple of items to the window menu, which can be accessed
+by clicking on the program icon or pressing <B>Alt+Space</B>.
+<P>
+Both menus have an entry that leads to the options dialog for changing mintty&#146;s
+configuration.
+<P>
+<P>
+<!-- .SS Copy & paste -->
+</BLOCKQUOTE>
+<A name=7>
+
+    <H4>&nbsp; &nbsp; Copy & paste</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+Screen contents can be selected by holding down the left mouse button and
+dragging the mouse.  If Alt is held down before the left mouse button, a
+rectangular block instead of whole lines will be selected.
+The selection can be extended by holding down <B>Shift</B> while left-clicking.
+Double-clicking or triple-clicking selects a whole word or line, whereby word
+selection includes special characters that commonly appear in file names and
+URLs.
+<P>
+By default, selected text is automatically copied to the clipboard.
+This can be disabled on the <B><A HREF=#25>Mouse</A></B> page of the options dialog.
+Selected text can also be copied manually using either the <B>Copy</B> menu
+command, the <B>Ctrl+Ins</B> keyboard shortcut, or the middle mouse button
+combined with <B>Shift</B>.
+<P>
+The selected region is copied as "rich text" as well as normal text,
+which means it can be pasted with colours and formatting into applications
+that support it, e.g. word processors.
+<P>
+The window title can be copied using the <B>Copy Title</B> command in the window
+menu.
+<P>
+The clipboard contents can be pasted using either the <B>Paste</B> menu command,
+the <B>Shift+Ins</B> keyboard shortcut, or the middle mouse button.
+Not only text but also files and directories can be pasted,
+whereby the latter are inserted as Cygwin filenames.
+Shell quoting is added to filenames that contain spaces or special characters.
+<P>
+<P>
+<!-- .SS Drag & drop -->
+</BLOCKQUOTE>
+<A name=8>
+
+    <H4>&nbsp; &nbsp; Drag & drop</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+Text, files and directories can be dropped into the mintty window.
+They are inserted in the same way as if they were pasted from the clipboard.
+<P>
+<P>
+<!-- .SS Opening files, directories and URLs -->
+</BLOCKQUOTE>
+<A name=9>
+
+    <H4>&nbsp; &nbsp; Opening files, directories and URLs</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+Files, directories and URLs can be opened either by holding <B>Ctrl</B> while
+left-clicking on them, or by selecting them and choosing the <B>Open</B>
+command from the context menu.
+Please note that opening a file or directory with a relative path only works
+correctly if the path refers to the current working directory of the process
+invoked by mintty.
+<P>
+<P>
+<!-- .SS Font zoom -->
+</BLOCKQUOTE>
+<A name=10>
+
+    <H4>&nbsp; &nbsp; Font zoom</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+The font size can be increased or decreased using the keyboard shortcuts
+<B>Ctrl+plus</B> and <B>Ctrl+minus</B>, or by holding <B>Ctrl</B> while rolling
+the mousewheel.  <B>Ctrl+zero</B> returns the font size to the default.
+<P>
+<P>
+<!-- .SS Full screen -->
+</BLOCKQUOTE>
+<A name=11>
+
+    <H4>&nbsp; &nbsp; Full screen</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+Full screen mode can be toggled using either the <B><A HREF=#11>Full Screen</A></B> command in
+the menu or either of the <B>Alt+Enter</B> and <B>Alt+F11</B> keyboard shortcuts.
+<P>
+<P>
+<!-- .SS Default size -->
+</BLOCKQUOTE>
+<A name=12>
+
+    <H4>&nbsp; &nbsp; Default size</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+If the window has been resized, it can be returned to the default size set in
+the Window pane of the options using the <B><A HREF=#12>Default size</A></B> command in the
+menu or the <B>Alt+F10</B> shortcut.
+<P>
+<P>
+<!-- .SS Reset -->
+</BLOCKQUOTE>
+<A name=13>
+
+    <H4>&nbsp; &nbsp; Reset</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+Sometimes a faulty application or printing a binary file will leave the
+terminal in an unusable state. In that case, resetting the terminal&#146;s state
+via the <B><A HREF=#13>Reset</A></B> command in the menu or the <B>Alt+F8</B> keyboard shortcut
+may help.
+<P>
+<P>
+<!-- .SS Scrolling -->
+</BLOCKQUOTE>
+<A name=14>
+
+    <H4>&nbsp; &nbsp; Scrolling</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+Mintty has a scrollback buffer that can hold up to 10000 lines in the default
+configuration.
+It can be accessed using the scrollbar, the mouse wheel, or the keyboard.
+Hold the <B>Shift</B> key while pressing the <B>Up</B> and <B>Down</B> arrow keys
+to scroll line-by-line or the <B>PageUp</B> and <B>PageDown</B> keys to scroll
+page-by-page.
+<P>
+<P>
+<!-- .SS Flip screen -->
+</BLOCKQUOTE>
+<A name=15>
+
+    <H4>&nbsp; &nbsp; Flip screen</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+Applications such as editors and file viewers normally use a terminal feature
+called the alternate screen, which is a second screen buffer without scrollback.
+When they exit, they switch back to the primary screen to restore the command
+line as it was before invoking the application.
+<P>
+The <B><A HREF=#15>Flip Screen</A></B> menu command and <B>Alt+F12</B> shortcut allow looking
+at the primary screen while the alternate screen is active, and vice versa.
+For example, this allows to refer to past commands while editing a file.
+<P>
+<P>
+<!-- .SS Switching session -->
+</BLOCKQUOTE>
+<A name=16>
+
+    <H4>&nbsp; &nbsp; Switching session</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+The <B>Ctrl+Tab</B> and <B>Ctrl+Shift+Tab</B> shortcuts can be used to switch
+between mintty windows.  Minimised windows are skipped.
+<P>
+<P>
+<!-- .SS Closing a session -->
+</BLOCKQUOTE>
+<A name=17>
+
+    <H4>&nbsp; &nbsp; Closing a session</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+Clicking the window&#146;s close button, pressing <B>Alt+F4</B>, or choosing
+<B>Close</B> from the window menu sends a <I>SIGHUP</I> signal to the process
+running in mintty, which normally causes it to exit.
+<P>
+That signal can be ignored, though, in which case the program might have to be
+forced to terminate by sending a <I>SIGKILL</I> signal instead.
+This can be done by holding down <B>Shift</B> when using the close button,
+shortcut or menu item.
+<P>
+<P>
+<!-- .SS Mouse tracking -->
+</BLOCKQUOTE>
+<A name=18>
+
+    <H4>&nbsp; &nbsp; Mouse tracking</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+When an application activates mouse tracking, mouse events are sent to the
+application rather than being treated as window events.
+This is indicated by the mouse pointer changing from an <B>I</B> shape to an
+arrow.
+Holding down <B>Shift</B> overrides mouse tracking mode and sends mouse
+events to the window instead, so that e.g. text can be selected and the context
+menu can be accessed.
+<P>
+<P>
+<!-- .SS Alt codes -->
+</BLOCKQUOTE>
+<A name=19>
+
+    <H4>&nbsp; &nbsp; Alt codes</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+The Windows Alt+Numpad method for entering character codes is supported,
+whereby the Alt key has to be held while entering the character code.
+Only the first key has to be on the numpad; subsequent digits can be entered
+both on the numpad or the main part of the keyboard.
+<P>
+If the first key is the <B>&#146;+&#146;</B> on the numpad, the code is interpreted as
+hexadecimal, whereby digits A through F can be entered using the letter keys.
+If the first key is a zero, the code is interpreted as octal.
+If the first key is any other digit from 1 to 9, the code is interpreted as
+decimal.
+<P>
+For UTF-8 and other Unicode encodings such as GB18030, the entered code is
+interpreted as a Unicode codepoint and encoded accordingly before it is sent.
+For other encodings, the entered code is sent as is. If it doesn&#146;t fit into one
+byte, it is sent as multiple bytes, with the the most significant non-zero byte
+first.
+<P>
+<P>
+<!-- .SS Shortcuts -->
+</BLOCKQUOTE>
+<A name=20>
+
+    <H4>&nbsp; &nbsp; Shortcuts</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+An overview of all the keyboard shortcuts.
+<P>
+<!-- .TP -->
+<TABLE cellpadding=3>
+<TR valign=top><TD colspan=2>
+<B>Scrollback</B>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+<P>
+- <B>Shift+Up</B>: Line up
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Shift+Down</B>: Line down
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Shift+PgUp</B>: Page up
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Shift+PgDn</B>: Page down
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Shift+Home</B>: Top
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Shift+End</B>: Bottom
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Copy and paste</B>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+<P>
+- <B>Ctrl+Ins</B>: Copy
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Shift+Ins</B>: Paste
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Shift+Ins</B>: Copy and paste
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Window commands</B>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+<P>
+- <B>Alt+F2</B>: New
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Alt+F4</B>: Close
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Alt+F8</B>: Reset
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Alt+F10</B>: Default size
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Alt+F11</B> or <B>Alt+Enter</B>: Full screen
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Alt+F12</B>: Flip screen
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Alt+Space</B>: Window menu
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Tab</B>: Next window
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Shift+Tab</B>: Previous window
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B><A HREF=#10>Font zoom</A></B>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+<P>
+- <B>Ctrl+plus</B>: Zoom in
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+minus</B>: Zoom out
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+zero</B>: Back to configured font size
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Ctrl+Shift+letter shortcuts</B>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+<P>
+An alternative set of shortcuts for clipboard and window commands using
+<B>Ctrl+Shift+letter</B> combinations is available.  These can be enabled on the
+Keys pane of the options dialog.
+<P>
+- <B>Ctrl+Shift+C</B>: Copy
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Shift+V</B>: Paste
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Shift+N</B>: New
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Shift+W</B>: Close
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Shift+R</B>: Reset
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Shift+D</B>: Default size
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Shift+F</B>: Full screen
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl+Shift+S</B>: Flip screen
+<P>
+<P>
+<!-- .SH CONFIGURATION -->
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=21>
+
+     <H3>CONFIGURATION</H3>
+
+</A>
+<BLOCKQUOTE>
+<P>
+Mintty has a graphical options dialog that can be reached via the context menu
+or the window menu.  As usual, both the <B>Apply</B> and <B>OK</B> buttons apply
+any changes made, but <B>OK</B> also closes the dialog.
+<B>Cancel</B> discards changes.
+<P>
+Settings are stored in INI-style configuration files.  By default, settings are
+read from <I>/etc/minttyrc</I> and <I>~/.minttyrc</I>.  Additional config files
+can be specified using the <B>--config</B> command line option.  These are read
+in order, with settings in later files overriding those in earlier ones.
+Configuration changes are saved to the last config file, usually
+<I>~/.minttyrc</I>.
+Settings can also be specified on the command line using <B>--option</B>.
+<P>
+The following sections explain the settings on each pane of the options
+dialog.
+For each setting, its name in the config file is shown in parentheses,
+along with its default value, e.g. Columns=80.
+<P>
+<P>
+<!-- .SS Looks -->
+</BLOCKQUOTE>
+<A name=22>
+
+    <H4>&nbsp; &nbsp; Looks</H4>
+</A>
+<BLOCKQUOTE>
+Settings affecting mintty&#146;s appearance.
+<P>
+<!-- .TP -->
+<TABLE cellpadding=3>
+<TR valign=top><TD colspan=2>
+<B>Colours</B>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Clicking on one of the buttons here opens the colour selection dialog.
+In the config file, colours are represented as comma-separated RGB triples
+with decimal 8-bit values (i.e. ranging from 0 to 255).
+<P>
+- <B>Foreground</B> (ForegroundColour=191,191,191)
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Background</B> (BackgroundColour=0,0,0)
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Cursor</B> (CursorColour=191,191,191)
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Transparency</B> (Transparency=off)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Window transparency level, with the following choices:
+<P>
+- <B>Off</B>
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Low</B>
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Medium</B>
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>High</B>
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Glass</B>
+<P>
+The <B>Glass</B> option is only available on Vista and above with desktop
+compositing enabled.
+To make this reasonably usable, the glass colour needs to be set to be as dark
+as possible in the Windows control panel: choose <I>Personalize</I> from the
+desktop context menu, click on <I>Window Color</I>, turn the colour intensity up
+to the maximum, show the colour mixer, and turn the brightness down to black.
+<P>
+Numeric transparency values ranging from 4 to 254 can be specified in config
+files or on the command line.  (Values below 4 are multiplied by 16, for
+backward compatibility reasons.)
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Opaque when focused</B> (OpaqueWhenFocused=no)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Enable to make the window opaque when it is active (to avoid background
+distractions when working in it).
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Cursor</B> (CursorType=line)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The following cursor types are available:
+<P>
+- <B>Line</B>
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Block</B>
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Underscore</B>
+<P>
+The line cursor is displayed with the width set in the Accessibility Options
+control panel.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Cursor blink</B> (CursorBlinks=yes)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+If enabled, the cursor blinks at the rate set in the Keyboard control panel.
+<P>
+<P>
+<!-- .SS Text -->
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=23>
+
+    <H4>&nbsp; &nbsp; Text</H4>
+</A>
+<BLOCKQUOTE>
+Settings controlling text display.
+<P>
+<!-- .TP -->
+<TABLE cellpadding=3>
+<TR valign=top><TD colspan=2>
+<B>Font selection</B>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Clicking on the <B>Select</B> button opens a dialog where the font and its
+properties can be chosen.  Font styles other than <B>Bold</B> are ignored.
+In the config file, this corresponds to the following entries:
+<P>
+- <B>Font</B> (Font=Lucida Console)
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Style</B> (FontIsBold=no)
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Size</B> (FontHeight=9)
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Show bold as colour</B> (BoldAsFont=no)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+When this option is enabled, the ANSI bold (or &#146;intense&#146;) text attribute is
+shown as a bold-style font.  Where a bold variant of the selected font that
+has the same width as the base font is available, that is used; otherwise, the
+bolding is simulated by rendering the text twice with a one-pixel offset.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Show bold as colour</B> (BoldAsColour=yes)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+By default, text with the ANSI bold attribute set is displayed with a
+different colour, usually with increased brightness.  This can be disabled
+here.
+<P>
+Note that when <B>BoldAsFont</B> is enabled, only bold text in one of the eight
+ANSI colours has its colour changed, i.e. bold text without an explicitly
+spefified colour is shown with a bold font only.  This matches <B>xterm</B> behaviour.
+<P>
+This option also controls how the &#146;half-bright&#146; (or &#146;dim&#146;) text
+attribute is displayed: if it is on, half-bright text is
+shown with halved foreground colour brightness; otherwise, it is shown
+by blending the foreground colour with the background colour.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Allow blinking</B> (AllowBlinking=no)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+When text blinking is disabled, as it is by default, the blink attribute is
+displayed as a bold background colour instead.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Font smoothing</B> (FontSmoothing=default)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Select the amount of font smoothing from the following choices:
+<P>
+- <B>Default</B>: Use Windows setting.
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>None</B>: With all the jaggies.
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Partial</B>: Greyscale anti-aliasing.
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Full</B>: Subpixel anti-aliasing ("ClearType").
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Locale</B> (Locale=)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The locale setting consists of a lowercase two-letter or three-letter language
+code followed by a two-letter country code, for instance <B>en_US</B> or
+<B>zh_CN</B>.  The Windows default system and user locales are shown in the
+drop-down list for this setting.  Alternatively, the language-neutral "C"
+locale can be selected.
+<P>
+If no locale is set here, which is the default, mintty uses the locale and
+character set specified via the environment variables <I>LC_ALL</I>,
+<I>LC_CTYPE</I> or <I>LANG</I>.
+<P>
+If the locale option is set, however, it will override any environment
+variable setting: <I>LC_ALL</I> and the <I>LC_*</I> variables for specific
+locale categories are cleared, while <I>LANG</I> is set according to the
+selected locale and character set.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Character set</B> (Charset=)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The character set to be used for encoding input and decoding output.
+If no locale is set, this setting is ignored.
+<P>
+While changing the character set takes effect immediately for text input and
+ouput, it does not affect the processes already running in mintty.
+This is because the environment variables of a running process cannot be
+changed from outside that process.
+Therefore mintty needs to be restarted for a character set change to take full
+effect.
+<P>
+<P>
+<!-- .SS Keys -->
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=24>
+
+    <H4>&nbsp; &nbsp; Keys</H4>
+</A>
+<BLOCKQUOTE>
+Settings controlling keyboard behaviour.
+<P>
+<!-- .TP -->
+<TABLE cellpadding=3>
+<TR valign=top><TD colspan=2>
+<B>Backspace sends ^H</B> (BackspaceSendsBS=no)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+By default, mintty sends <B>^?</B> as the keycode for the backspace key.
+If this option is enabled, <B>^H</B> is sent instead.
+This also changes the <B>Ctrl+Backspace</B> code from <B>^_</B> to <B>^?</B>.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Ctrl+LeftAlt is AltGr</B> (CtrlAltIsAltGr=no)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The AltGr key on non-US Windows systems is a strange beast: pressing it is
+synonymous with pressing the left Ctrl key and the right Alt key at the
+same time, and Windows programs usually treat any Ctrl+Alt combination as
+AltGr.
+<P>
+Some programs, however, chief among them Microsoft&#146;s very own Office, do not
+treat Ctrl+LeftAlt as AltGr, so that Ctrl+LeftAlt combinations can be used in
+command shortcuts even when a key has an AltGr character binding.
+<P>
+By default, mintty follows Office&#146;s approach, because a number of terminal
+programs make use of Ctrl+Alt shortcuts.
+The "standard" Windows behaviour can be restored by ticking the checkbox here.
+<P>
+The setting makes no difference for keys without AltGr key bindings
+(e.g. any key on the standard US layout).
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Copy and Paste shortcuts</B> (ClipShortcuts=yes)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Checkbox for enabling the clipboard shortcuts <B>Ctrl+Ins</B> for copying and
+<B>Shift+Ins</B> for pasting.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Menu and Full Screen shortcuts</B> (WindowShortcuts=yes)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Checkbox for enabling the <B>Alt+Space</B> and <B>Alt+Enter</B> shortcuts for
+showing the window menu and toggling full screen mode.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Switch window shortcuts</B> (SwitchShortcuts=yes)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Checkbox for enabling the <B>Ctrl+Tab</B> and <B>Ctrl+Shift+Tab</B> shortcuts
+for switching between mintty windows.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Zoom shortcuts</B> (ZoomShortcuts=yes)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Checkbox for enabling the font zooming shortcuts <B>Ctrl+plus/minus/zero</B>.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Alt+Fn shortcuts</B> (AltFnShortcuts=yes)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Checkbox for enabling the use of combinations of Alt and functions keys as
+shortcuts, for example <B>Alt+F4</B> for closing the window or <B>Alt+F11</B>
+fortoggling  full screen mode.  Disable to have <B>Alt+Fn</B> combinations
+sent to applications instead.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Ctrl+Shift+letter shortcuts</B> (CtrlShiftShortcuts=no)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Checkbox for enabling alternative clipboard and window command shortcuts
+using <B>Ctrl+Shift+letter</B> combinations such as <B>Ctrl+Shift+V</B> for
+paste or <B>Ctrl+Shift+N</B> for starting a new session.
+<P>
+These can replace the <B>Ctrl/Shift+Ins</B> and <B>Alt+Fn</B> shortcuts, whereby
+they show up in menus only if the corresponding default shortcuts are disabled.
+<P>
+See the shortcuts section above for the list of shortcuts controlled by this
+option.  When it is disabled, Ctrl+Shift+letter combinations are sent to
+applications as C1 control characters instead.
+<P>
+<P>
+<!-- .SS Mouse -->
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=25>
+
+    <H4>&nbsp; &nbsp; Mouse</H4>
+</A>
+<BLOCKQUOTE>
+Settings controlling mouse support.
+<P>
+<!-- .TP -->
+<TABLE cellpadding=3>
+<TR valign=top><TD colspan=2>
+<B>Copy on select</B> (CopyOnSelect=yes)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+If enabled, the region selected with the mouse is copied to the clipboard as
+soon as the mouse button is released, thus emulating X Window behaviour.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Copy as rich text</B> (CopyAsRTF=yes)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+If this option is enabled, which it is by default, text is copied to the
+clipboard in rich text format (RTF) in addition to plain text format.
+RTF preserves colours and styles when pasting text into applications that
+support it, e.g. word processors.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Clicks place command line cursor</B> (ClicksPlaceCursor=no)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+If enabled, the command line cursor can be placed by pressing the left
+mouse button.
+This works by sending the number of cursor keycodes needed to get to the
+destination.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Right click action</B> (RightClickAction=menu)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Action to take when the right mouse button is pressed.
+If this is set to <B>Paste</B>, the middle button extends the selection region.
+<P>
+- <B>Paste</B>: Paste the clipboard contents.
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Extend</B>: Extend the selected region.
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Show menu</B>: Show the context menu.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Default click target</B> (ClicksTargetApp=yes)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+This applies to application mouse mode, i.e. when the application activates
+xterm-style mouse reporting.
+In that mode, mouse clicks can be sent either to the application to process
+as it sees fit, or to the window for the usual actions such as select and paste.
+<P>
+- <B><A HREF=#26>Window</A></B>
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Application</B>
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Modifier key for overriding default</B> (ClickTargetMod=shift)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The modifier key selected here can be used to override the click target in
+application mouse mode.
+With the default settings, clicks are sent to the application and Shift needs
+to be held to trigger window actions instead.
+<P>
+The <B>Off</B> setting disables overriding.
+<P>
+- <B>Shift</B>
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl</B>
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Alt</B>
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Off</B>
+<P>
+<P>
+<!-- .SS Window -->
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=26>
+
+    <H4>&nbsp; &nbsp; Window</H4>
+</A>
+<BLOCKQUOTE>
+Window properties.
+<P>
+<!-- .TP -->
+<TABLE cellpadding=3>
+<TR valign=top><TD colspan=2>
+<B>Columns</B> (Columns=80)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Default width of the window, in character cells.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Rows</B> (Rows=24)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Default height of the window, in character cells.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Current size</B>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Pressing this button sets the default width and height to the window&#146;s
+current size.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Scrollback lines</B> (ScrollbackLines=10000)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The maximum number of lines to keep in the scrollback buffer.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Scrollbar</B> (Scrollbar=right)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The scrollbar can be shown on either side of the window or just hidden.
+By default, it is shown on the right-hand side.
+<P>
+- <B>Left</B>
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>None</B>
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Right</B>
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Modifier for scrolling</B> (ScrollMod=shift)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The modifier key that needs to be pressed together with the arrow up/down,
+PgUp/PgDn, or Home/End keys to access the scrollback buffer.
+The default is <B>Shift</B>.
+The <B>Off</B> setting disables scrolling with keyboard shortcuts.
+<P>
+- <B>Shift</B>
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Ctrl</B>
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Alt</B>
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Off</B>
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>PgUp and PgDn scroll without modifier</B> (PgUpDnScroll=no)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+If this is enabled, the scrollback buffer can be accessed by just pressing
+PgUp or PgDn, without the &#146;modifier for scrolling&#146; selected above.
+If the modifier is pressed anyway, plain PgUp/PgDn keycodes are sent to the
+application.
+This option does not affect the arrow keys or Home/End keys.
+<P>
+<P>
+<!-- .SS Terminal -->
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=27>
+
+    <H4>&nbsp; &nbsp; Terminal</H4>
+</A>
+<BLOCKQUOTE>
+Terminal emulation settings.
+<P>
+<!-- .TP -->
+<TABLE cellpadding=3>
+<TR valign=top><TD colspan=2>
+<B>Type</B> (Term=xterm)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The terminal type.  This determines the setting of the TERM environment variable
+at mintty startup.
+Choices available from the dropdown list are <B>xterm</B>, <B>xterm-256color</B>,
+<B>xterm-vt220</B>, <B>vt220</B>, and <B>vt100</B>.
+<P>
+If the setting contains "vt220", xterm VT220-style function key mode is enabled
+instead of the default PC-style function key mode.
+(This can otherwise be set with the DECSET 1061 control sequence.)
+<P>
+Apart from that, this setting has no effect on mintty&#146;s terminal emulation,
+i.e. all the features are always available. However, the TERM setting does tell
+applications what features they can use.
+<P>
+The <B>xterm-256color</B> setting enables 256-color mode in some applications,
+but may not be recognised at all by others, which is why plain <B>xterm</B>
+is the default.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Answerback</B> (Answerback=)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+<P>
+The answerback string is sent in response to the <B>^E</B> (ENQ) character.
+By default, this is empty.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD width=6% nowrap>
+<B>Bell</B>
+</TD><TD valign=bottom>
+The three checkboxes here determine what effects the bell character <B>^G</B>
+has.  Only taskbar highlighting is enabled by default.
+<P>
+- <B>Sound</B> (BellSound=no): Play the system&#146;s default beep sound.
+<P>
+- <B>Flash</B> (BellFlash=no): Briefly invert the foreground and background
+colours.
+<P>
+- <B>Highlight in taskbar</B> (BellTaskbar=yes): Change the colour of mintty&#146;s
+taskbar entry if the mintty window is not active.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Printer</B> (Printer=)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The ANSI standard defines control sequences for sending text to a printer,
+which are used by some terminal applications such as the mail reader
+<B>pine</B>.
+The Windows printer to send such text to can be selected here.
+By default, printing is disabled.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Prompt about running processes on close</B> (ConfirmExit=yes)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+If enabled, ask for confirmation when the close button or <I>Alt+F4</I> is
+pressed and the command invoked by mintty still has child processes.
+This is intended to help avoid closing programs accidentally.
+<P>
+<P>
+<!-- .SS Command line -->
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=28>
+
+    <H4>&nbsp; &nbsp; Command line</H4>
+</A>
+<BLOCKQUOTE>
+The settings here are config file versions of command line options
+described in the OPTIONS section.  They do not appear in the options dialog.
+<P>
+<!-- .TP -->
+<TABLE cellpadding=3>
+<TR valign=top><TD colspan=2>
+<B>Holding the window open</B> (Hold=start)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The <B>Hold</B> setting determines whether to keep the terminal window open when
+the command has finished and no more processes are connected to the terminal.
+It takes the following values:
+<P>
+- <B>never</B>: Don&#146;t keep the window open.
+<P>
+- <B>start</B>: Only keep the window open if the command exited with
+status 255, which is used to indicate failure to start the command.
+This is the default.
+<P>
+- <B>error</B>:  Keep the window open if the command exited with a non-zero
+status or it was terminated by a signal indicating a runtime error.
+<P>
+- <B>always</B>: Always keep the window open.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Window icon</B> (Icon=)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The <B>Icon</B> setting with format <I>FILE</I>[<B>,</B><I>INDEX</I>] allows to load
+the window icon from an executable, DLL, or icon file.
+The optional comma-separated index can be used to select a particular icon in
+a file with multiple icons.
+If the setting is empty, as it is by default, mintty&#146;s program icon is used.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Log file</B> (Log=)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The <B>Log</B> setting can be used to specify a log file that all output is
+copied into.  If it is empty, as it is by default, no logging is done.
+See also the <I>script</I>(1) utility for a more flexible logging solution.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Window title</B> (Title=)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The <B>Title</B> setting can be used to determine the initial window title.
+If it is empty, as it is by default, the title is set to the command being run.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Utmp record</B> (Utmp=no)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+If enabled, an entry for the session is written into the system&#146;s <I>utmp</I>
+file for recording logins, so that the session appears for example in the
+output of the <I>who</I>(1) utility.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Initial window state</B> (Window=normal)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+This setting determines how the terminal window should be shown at startup:
+<P>
+- <B>normal</B> (default)
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>min</B> (minimised)
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>max</B> (maximised)
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>full</B> (full screen)
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>hide</B> (invisible)
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Window position</B> (X=, Y=)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+<B>X</B> and <B>Y</B> are integer settings that can be used to determine the
+initial coordinates of the top left corner of the terminal window.
+By default, these are unset, which means that the position suggested by the
+window manager is used.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Window class name</B> (Class=mintty)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The <B>Class</B> setting determines the name of the window class of the terminal
+window.  This can be used to help Windows scripting tools such as AutoHotKey to
+distinguish different mintty windows.  The name defaults to "mintty".
+<P>
+<P>
+<!-- .SS Hidden settings -->
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=29>
+
+    <H4>&nbsp; &nbsp; Hidden settings</H4>
+</A>
+<BLOCKQUOTE>
+The following settings appear neither in the options dialog nor as command line
+options, which means they can only be set in config files or using the
+<B>--option</B> command line option.
+<P>
+<!-- .TP -->
+<TABLE cellpadding=3>
+<TR valign=top><TD colspan=2>
+<B>Word selection characters</B> (WordChars=)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+By default, this string setting is empty, in which case double-click word
+selection uses the default algorithm that is geared towards picking out
+filenames and URLs.
+<P>
+If a string is specified here, word selection only picks out characters in the
+string along with alphanumeric characters.  For example, specifying just the
+underscore character (WordChars=_) would allow selecting identifiers in many
+programming languages.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>Use system colours</B> (UseSystemColours=no)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+If this is set, the Windows-wide colour settings are used
+instead of the foreground, background, and cursor colours chosen on the Looks
+page of the options dialog.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>IME cursor colour</B> (IMECursorColour=)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+The cursor colour can be set to change when the Input Method Editor (IME) for
+entering characters not available directly on the keyboard is active.
+The setting is a RGB triplet such as 255,0,0 for bright red.
+<P>
+By default, this is unset, which means that the cursor colour does not change.
+The colour can also be changed using xterm&#146;s OSC 4 control sequence with
+colour number 262.
+<P>
+<!-- .TP -->
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>ANSI colours</B>
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+These are the 16 ANSI colour settings along with their default values:
+<P>
+- <B>Black</B>=0,0,0
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Red</B>=191,0,0
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Green</B>=0,191,0
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Yellow</B>=191,191,0
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Blue</B>=0,0,191
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Magenta</B>=191,0,191
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>Cyan</B>=0,191,191
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>White</B>=191,191,191
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>BoldBlack</B>=64,64,64
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>BoldRed</B>=255,64,64
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>BoldGreen</B>=64,255,64
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>BoldYellow</B>=255,255,64
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>BoldBlue</B>=64,64,255
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>BoldMagenta</B>=255,64,255
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>BoldCyan</B>=64,255,255
+<!-- .br -->
+<!-- Need break --><BR>
+- <B>BoldWhite</B>=255,255,255
+<P>
+<P>
+<!-- .SH LIMITATIONS -->
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=30>
+
+     <H3>LIMITATIONS</H3>
+
+</A>
+<BLOCKQUOTE>
+<P>
+<!-- .SS Console issue -->
+</BLOCKQUOTE>
+<A name=31>
+
+    <H4>&nbsp; &nbsp; Console issue</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+Mintty is not a full replacement for the Windows console window that Cygwin
+uses by default.
+Like xterm and rxvt, mintty communicates with the child process through a
+pseudo terminal device, which Cygwin emulates using Windows pipes.
+This means that native Windows command line programs started in mintty see
+a pipe rather than a console device.
+As a consequence, such programs often disable interactive input. Also,
+direct calls to low-level Win32 console functions will fail.
+Programs that access the console as a file should be fine though.
+<P>
+<P>
+<!-- .SS Termcap/terminfo -->
+</BLOCKQUOTE>
+<A name=32>
+
+    <H4>&nbsp; &nbsp; Termcap/terminfo</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+Mintty does not have its own <I>termcap</I> or <I>terminfo</I> entries;
+instead, it simply pretends to be an xterm.
+<P>
+<P>
+<!-- .SS Missing xterm features -->
+</BLOCKQUOTE>
+<A name=33>
+
+    <H4>&nbsp; &nbsp; Missing xterm features</H4>
+</A>
+<BLOCKQUOTE>
+<P>
+Mintty is nowhere near as configurable as xterm.  Of xterm&#146;s keyboard modes,
+only the default PC-style and VT220-style are available.  8-bit control
+characters are not supported, nor are ISO2022 character sets.  There is no
+Tektronix 4014 emulation.  Mouse highlighting mode is not implemeted.
+<P>
+The majority of xterm&#146;s many control sequences is implemented, but quite a few
+are missing.  Significant omissions should be reported as bugs.
+<P>
+<P>
+<!-- .SH SEE ALSO -->
+</BLOCKQUOTE>
+<A name=34>
+
+     <H3>SEE ALSO</H3>
+
+</A>
+<BLOCKQUOTE>
+<P>
+Additional information can be found on the wiki on the mintty project page,
+for example:
+<P>
+- Keycodes: <I><A HREF="http://code.google.com/p/mintty/wiki/Keycodes">http://code.google.com/p/mintty/wiki/Keycodes</A></I>
+<!-- .br -->
+<!-- Need break --><BR>
+- Control sequences: <I><A HREF="http://code.google.com/p/mintty/wiki/CtrlSeqs">http://code.google.com/p/mintty/wiki/CtrlSeqs</A></I>
+<!-- .br -->
+<!-- Need break --><BR>
+- Tips: <I><A HREF="http://code.google.com/p/mintty/wiki/Tips">http://code.google.com/p/mintty/wiki/Tips</A></I>
+<!-- .br -->
+<!-- Need break --><BR>
+- Contributors: <I><A HREF="http://code.google.com/p/mintty/wiki/Credits">http://code.google.com/p/mintty/wiki/Credits</A></I>
+<P>
+<P>
+<!-- .SH LICENSE -->
+</BLOCKQUOTE>
+<A name=35>
+
+     <H3>LICENSE</H3>
+
+</A>
+<BLOCKQUOTE>
+<P>
+Copyright (C) 2011 Andy Koppe.
+<P>
+Mintty is released under the terms of the the <I>GNU General Public License</I>
+version 3 or later.
+See <I><A HREF="http://gnu.org/licenses/gpl/html">http://gnu.org/licenses/gpl/html</A></I> for the license text.
+<P>
+There is NO WARRANTY, to the extent permitted by law.
+<P>
+<P>
+<!-- .SH CONTACT -->
+</BLOCKQUOTE>
+<A name=36>
+
+     <H3>CONTACT</H3>
+
+</A>
+<BLOCKQUOTE>
+<P>
+Please report bugs or suggest enhancements via the issue tracker at
+<I><A HREF="http://code.google.com/p/mintty/issues">http://code.google.com/p/mintty/issues</A></I>.
+Questions can be sent to the discussion group at
+<I><A HREF="http://groups.google.com/group/mintty-discuss">http://groups.google.com/group/mintty-discuss</A></I> or
+the Cygwin mailing list at <I><A HREF="mailto:cygwin@cygwin.com">cygwin@cygwin.com</A></I>.
+</BLOCKQUOTE>
+<P><HR>
+<TABLE width=100%><TR> <TD width=33%><I>mintty 0.9.9</I></TD> <TD width=33% align=center>mintty (1)</TD> <TD align=right width=33%><I>2011-06-12</I></TD> </TR></TABLE><FONT SIZE=-1>Generated by <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer 1.07</A> from ./mintty.1 using man macros.</FONT>
+</BODY></HTML>
