@@ -28,6 +28,15 @@ When application escape key mode is off, the escape key can be be configured to 
 || `^[[?7728h` || `^\`      ||
 
 
+== Scrollbar hiding ==
+
+These sequences can be used to hide or show the scrollbar, whereby the window size remains the same but the number of character columns is changed to account for the width of the scrollbar. If the the scrollbar is disabled in the options, it will always remain hidden.
+
+|| *sequence*  || *scrollbar* ||
+|| `^[[?7766l` || hide        ||
+|| `^[[?7766h` || show        ||
+
+
 == Shortcut override mode ==
 
 When shortcut override mode is on, all shortcut key combinations are sent to the application instead of triggering window commands.
@@ -86,6 +95,15 @@ The following _OSC_ ("operating system command") sequences can be used to change
 || `^[]7770;^G`         || default           ||
 
 As usual, OSC sequences can also be terminated with `^[\` (_ST_, the string terminator) instead of `^G`. When the font size is queried, a sequence that would restore the current size is sent, terminated with _ST_: `^[]7700;`_num_`^[\`.
+
+
+== Font coverage ==
+
+Fonts vary widely in their Unicode coverage, i.e. they usually miss glyphs for many characters. The following sequence can be used to enquire about support for a specified list of characters.
+
+ `^[]7771;?;`_char0_`;`_char1_...`^G`
+
+Characters shall be specified with their decimal Unicode codepoint. Any number of characters can be given. Mintty replies with the same sequence, except that the question mark is replaced with an exclamation mark and that codes for characters that the current font does not have a glyph for are omitted.
 
 
 == Locale ==

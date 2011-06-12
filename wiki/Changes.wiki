@@ -1,5 +1,14 @@
-#summary Notable changes in each released version
+#summary Notable changes in each release
 #labels Featured
+
+=== 0.9.9 (12 June 2011) ===
+ * The transparency level can now be set to any value ranging from 4 to 254 in the config file or in the command line. (For backward compatibility, values below 4 are multiplied by 16. 255 is "Glass".)
+ * Implemented mintty-specific OSC sequence 7771 for checking which characters are available in the currently selected font.
+ * Ctrl+symbol and Ctrl+number combinations that yield control characters are no longer overridden in xterm "modifyOtherKeys" mode level 1, but only level 2.
+ * Stopped sending bogus control sequences for some Ctrl+symbol combinations. Also stopped trying to add Shift to Ctrl+symbol combinations to obtain a control character. That's only done for Ctrl+number combinations now.
+ * Moved implementation of private mode 30 (as introduced by rxvt) for hiding and showing the scrollbar to the mintty-specific private mode 7766, because it doesn't do quite the same thing: instead of changing window size to account for the width of the scrollbar, mintty changes the number of character columns.
+ * Stopped rogue mouse release events being sent when application mouse mode is overridden with Shift.
+ * Middle button paste now happens on release rather than click of the button, as in xterm and rxvt.
 
 === 0.9.8 (21 May 2011) ===
  * Fixed a security issue with the OSC 701 sequence for setting and querying the terminal's locale, which allowed an arbitrary string (not including line endings) to be set as the locale and then echoed back as if typed by the user. Querying the locale now will only return valid locale strings.
@@ -7,9 +16,9 @@
  * Implemented rxvt-unicode's private mode 1015 for encoding mouse events, which unlike standard xterm mouse reporting uses properly formed CSI sequences and which allows for unlimited mouse coordinates.
  * Implemented missing xterm control sequences for window operations: set pixel size, get screen size in characters, refresh window, full screen.
  * Implemented selective erase, where the DECSCA sequence can be used to set a protection attribute on characters, which are then left alone by the DECSED (selective erase in display) and DECSEL (selective erase in line) operations.
- * Implemented DECRQSS sequences for requesting various paremeters including current text attributes and scroll margins.
+ * Implemented DECRQSS sequences for requesting various parameters including current text attributes and scroll margins.
  * Tightened up parsing of control sequences and brought it more into line with xterm. Control characters within ESC and CSI sequences now get processed. Missing CSI parameters are treated as zero, whereas extraneous parameters are ignored. APC and PM string sequences now get parsed and ignored.
- * If an AltGr key combination yields a character that can't be encoded in the current charset, the AltGr is treated as Alt instead.
+ * If an !AltGr key combination yields a character that can't be encoded in the current charset, the !AltGr is treated as Alt instead.
  * `true` and `false` are now recognised as values for Boolean configuration settings, in addition to `yes` and `no`.
 
 === 0.9.7 (17 Apr 2011) ===
