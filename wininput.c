@@ -610,10 +610,13 @@ win_key_down(WPARAM wp, LPARAM lp)
       if (try_key())
         return true;
       shift = is_key_down(VK_SHIFT);
-      kbd[VK_SHIFT] ^= 0x80;  // Toggle Shift state
-      if (try_key())
-        return true;
-      kbd[VK_SHIFT] ^= 0x80;  // Restore Shift state
+      if (shift || (key >= '0' && key <= '9')) {
+        // For number keys, try toggling shift state off, otherwise only on.
+        kbd[VK_SHIFT] ^= 0x80;
+        if (try_key())
+          return true;
+        kbd[VK_SHIFT] ^= 0x80;
+      }
       return false;
     }
     
