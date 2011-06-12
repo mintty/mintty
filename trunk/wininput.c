@@ -705,8 +705,8 @@ win_key_down(WPARAM wp, LPARAM lp)
     when 'A' ... 'Z' or ' ':
       key != ' ' && alt_code_key(key - 'A' + 0xA) ?:
       char_key() ?:
-      term.modify_other_keys <= 1 && ctrl_key() ?:
-      term.modify_other_keys ? modify_other_key() :
+      term.modify_other_keys > 1 ? modify_other_key() :
+      ctrl_key() ?:
       ctrl_ch(CTRL(key));
     when '0' ... '9' or VK_OEM_1 ... VK_OEM_102:
       key <= '9' && alt_code_key(key - '0') ?:
