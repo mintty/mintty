@@ -43,7 +43,7 @@ sel_spread_word(pos p, bool forward)
       if (!forward)
         ret_p = p;
     }
-    else if (!(strchr("&,?$%", c) || c == (forward ? '=' : ':')))
+    else if (!(strchr("&,;?$%", c) || c == (forward ? '=' : ':')))
       break;
 
     if (forward) {
