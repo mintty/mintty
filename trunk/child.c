@@ -170,7 +170,7 @@ child_create(char *argv[], struct winsize *winp)
         strlcpy(ut.ut_line, dev, sizeof ut.ut_line);
         if (!strncmp(dev, "tty", 3))
           dev += 3;
-        strlcpy(ut.ut_id, dev, sizeof ut.ut_id);
+        strncpy(ut.ut_id, dev, sizeof ut.ut_id);
       }
       strlcpy(ut.ut_user, getlogin() ?: "?", sizeof ut.ut_user);
       gethostname(ut.ut_host, sizeof ut.ut_host);
