@@ -474,7 +474,8 @@ win_set_ime_open(bool open)
 {
   if (open != ime_open) {
     ime_open = open;
-    win_invalidate_all();
+    term.cursor_invalid = true;
+    win_update();
   }
 }
 

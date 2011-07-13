@@ -822,6 +822,7 @@ do_csi(uchar c)
     when CPAIR(' ', 'q'):     /* DECSCUSR: set cursor style */
       term.cursor_type = arg0 ? (arg0 - 1) / 2 : -1;
       term.cursor_blinks = arg0 ? arg0 % 2 : -1;
+      term.cursor_invalid = true;
       term_schedule_cblink();
     when CPAIR('"', 'q'):  /* DECSCA: select character protection attribute */
       switch (arg0) {

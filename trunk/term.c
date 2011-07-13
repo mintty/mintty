@@ -716,6 +716,9 @@ term_paint(void)
         (!term.has_focus ? TATTR_PASCURS :
          term.cblinker || !term_cursor_blinks() ? TATTR_ACTCURS : 0) |
         (term.screen.curs.wrapnext ? TATTR_RIGHTCURS : 0);
+      
+      if (term.cursor_invalid)
+        dispchars[curs_x].attr |= ATTR_INVALID;
     }
 
    /*
@@ -840,6 +843,8 @@ term_paint(void)
       win_text(start, i, text, textlen, attr, line->attr);
     release_line(line);
   }
+
+  term.cursor_invalid = false;
 }
 
 void
