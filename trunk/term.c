@@ -625,54 +625,11 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
 void
 term_paint(void)
 {
- /* Depends on:
-  * screen array, disptop, scrtop,
-  * selection, cfg.blinkpc, blink_is_real, tblinker, 
-  * curs.y, curs.x, cblinker, cfg.cursor_blinks, cursor_on, has_focus, wrapnext
-  */
+ /* The display line that the cursor is on, or -1 if the cursor is invisible. */
+  int curs_y =
+    term.cursor_on && !term.show_other_screen
+    ? term.screen.curs.y - term.disptop : -1;
 
- /* Has the cursor position or type changed ? */
-  term_cursor *curs = &term.screen.curs;
-  int curstype;
-  if (term.cursor_on && !term.show_other_screen) {
-    if (term.has_focus) {
-      if (term.cblinker || !term_cursor_blinks())
-        curstype = TATTR_ACTCURS;
-      else
-        curstype = 0;
-    }
-    else
-      curstype = TATTR_PASCURS;
-    if (curs->wrapnext)
-      curstype |= TATTR_RIGHTCURS;
-  }
-  else
-    curstype = 0;
- 
-  int our_curs_y = curs->y - term.disptop, our_curs_x = curs->x;
-  {
-   /*
-    * Adjust the cursor position:
-    *  - for bidi
-    *  - in the case where it's resting on the right-hand half
-    *    of a CJK wide character. xterm's behaviour here,
-    *    which seems adequate to me, is to display the cursor
-    *    covering the _whole_ character, exactly as if it were
-    *    one space to the left.
-    */
-    termline *line = term.screen.lines[curs->y];
-    termchar *chars = term_bidi_line(line, our_curs_y);
-
-    if (chars)
-      our_curs_x = term.post_bidi_cache[our_curs_y].forward[our_curs_x];
-    else
-      chars = line->chars;
-
-    if (our_curs_x > 0 && chars[our_curs_x].chr == UCSWIDE)
-      our_curs_x--;
-  }
-
- /* The normal screen data */
   for (int i = 0; i < term.rows; i++) {
     pos scrpos;
     scrpos.y = i + term.disptop;
@@ -680,13 +637,9 @@ term_paint(void)
    /* Do Arabic shaping and bidi. */
     termline *line = fetch_line(scrpos.y);
     termchar *chars = term_bidi_line(line, i);
-    int *backward;
-    if (chars)
-      backward = term.post_bidi_cache[i].backward;
-    else {
-      chars = line->chars;
-      backward = null;
-    }
+    int *backward = chars ? term.post_bidi_cache[i].backward : 0;
+    int *forward = chars ? term.post_bidi_cache[i].forward : 0;
+    chars = chars ?: line->chars;
 
     termline *displine = term.displines[i];
     termchar *dispchars = displine->chars;
@@ -740,14 +693,29 @@ term_paint(void)
       else if (dispchars[j].attr & ATTR_NARROW)
         tattr |= ATTR_NARROW;
 
-      if (i == our_curs_y && j == our_curs_x)
-        tattr |= curstype;
-
      /* FULL-TERMCHAR */
       newchars[j].attr = tattr;
       newchars[j].chr = tchar;
      /* Combining characters are still read from chars */
       newchars[j].cc_next = 0;
+    }
+
+    if (i == curs_y) {
+     /* Determine the column the cursor is on, taking bidi into account and
+      * moving it one column to the left when it's on the right half of a
+      * wide character.
+      */
+      int curs_x = term.screen.curs.x;
+      if (forward)
+        curs_x = forward[curs_x];
+      if (curs_x > 0 && chars[curs_x].chr == UCSWIDE)
+        curs_x--;
+
+     /* Determine cursor cell attributes. */
+      newchars[curs_x].attr |=
+        (!term.has_focus ? TATTR_PASCURS :
+         term.cblinker || !term_cursor_blinks() ? TATTR_ACTCURS : 0) |
+        (term.screen.curs.wrapnext ? TATTR_RIGHTCURS : 0);
     }
 
    /*
