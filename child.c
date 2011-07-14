@@ -158,23 +158,28 @@ child_create(char *argv[], struct winsize *winp)
     fcntl(pty_fd, F_SETFL, O_NONBLOCK);
     
     if (cfg.utmp) {
-      struct utmp ut;
-      memset(&ut, 0, sizeof ut);
-      ut.ut_type = USER_PROCESS;
-      ut.ut_pid = pid;
-      ut.ut_time = time(0);
       char *dev = ptsname(pty_fd);
       if (dev) {
+        struct utmp ut;
+        memset(&ut, 0, sizeof ut);
+
         if (!strncmp(dev, "/dev/", 5))
           dev += 5;
         strlcpy(ut.ut_line, dev, sizeof ut.ut_line);
+
         if (!strncmp(dev, "tty", 3))
           dev += 3;
+        if (!strncmp(dev, "pts/", 4))
+          dev += 4;
         strncpy(ut.ut_id, dev, sizeof ut.ut_id);
+
+        ut.ut_type = USER_PROCESS;
+        ut.ut_pid = pid;
+        ut.ut_time = time(0);
+        strlcpy(ut.ut_user, getlogin() ?: "?", sizeof ut.ut_user);
+        gethostname(ut.ut_host, sizeof ut.ut_host);
+        login(&ut);
       }
-      strlcpy(ut.ut_user, getlogin() ?: "?", sizeof ut.ut_user);
-      gethostname(ut.ut_host, sizeof ut.ut_host);
-      login(&ut);
     }
   }
 
