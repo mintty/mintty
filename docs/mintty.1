@@ -381,18 +381,18 @@ or the window menu.  As usual, both the \fBApply\fP and \fBOK\fP buttons apply
 any changes made, but \fBOK\fP also closes the dialog.
 \fBCancel\fP discards changes.
 
-Settings are stored in INI-style configuration files.  By default, settings are
-read from \fI/etc/minttyrc\fP and \fI~/.minttyrc\fP.  Additional config files
-can be specified using the \fB--config\fP command line option.  These are read
-in order, with settings in later files overriding those in earlier ones.
-Configuration changes are saved to the last config file, usually
-\fI~/.minttyrc\fP.
+In configuration files, settings are stored as \fINAME\fP=\fIVALUE\fP pairs,
+with one per line.  By default, they are read from \fI/etc/minttyrc\fP and
+\fI~/.minttyrc\fP.  Additional configuration files can be specified using the
+\fB--config\fP command line option.  These are read in order, with settings in
+later files overriding those in earlier ones.  Configuration changes are saved
+to the last file specified, or \fI~/.minttyrc\fP if none is given.
 Settings can also be specified on the command line using \fB--option\fP.
 
 The following sections explain the settings on each pane of the options
-dialog.
+dialog, followed by settings that do not appear in the dialog.
 For each setting, its name in the config file is shown in parentheses,
-along with its default value, e.g. Columns=80.
+along with its default value.
 
 
 .SS Looks
@@ -969,6 +969,8 @@ for example:
 \- Tips: \fIhttp://code.google.com/p/mintty/wiki/Tips\fP
 .br
 \- Contributors: \fIhttp://code.google.com/p/mintty/wiki/Credits\fP
+.br
+\- Changelog: \fIhttp://code.google.com/p/mintty/wiki/Changes\fP
 
 
 .SH LICENSE
