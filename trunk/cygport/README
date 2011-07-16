@@ -57,9 +57,14 @@ Files included in the binary package:
 ------------------
 
 Cygwin port maintained by:  Andy Koppe  cygwin@cygwin.com
+
 Please address questions to the Cygwin mailing list at 
 <cygwin@cygwin.com> or to the mintty discussion group at
 http://groups.google.com/group/mintty-discuss.
+
+The port notes below list packaging changes only.
+Please see this page for a list of changes to mintty:
+http://code.google.com/p/mintty/wiki/Changes
 
 -------------------
 
