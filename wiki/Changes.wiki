@@ -1,12 +1,17 @@
 #summary Notable changes in each release
 #labels Featured
 
+=== 1.0.1 (24 July 2011) ===
+ * Fixed a bug in the creation of utmp entries that limited the number of mintty entries to 10. Also prepared for the possibility of Cygwin switching to the Unix98 pty naming scheme.
+ * Included semicolon in word selection, for the sake of URLs using them to separate parameters.
+ * The cursor now is updated immediately when its shape is changed using the DECSCUSR control sequence.
+
 === 0.9.9 (12 June 2011) ===
  * The transparency level can now be set to any value ranging from 4 to 254 in the config file or in the command line. (For backward compatibility, values below 4 are multiplied by 16. 255 is "Glass".)
  * Implemented mintty-specific OSC sequence 7771 for checking which characters are available in the currently selected font.
  * Ctrl+symbol and Ctrl+number combinations that yield control characters are no longer overridden in xterm "modifyOtherKeys" mode level 1, but only level 2.
  * Stopped sending bogus control sequences for some Ctrl+symbol combinations. Also stopped trying to add Shift to Ctrl+symbol combinations to obtain a control character. That's only done for Ctrl+number combinations now.
- * Moved implementation of private mode 30 (as introduced by rxvt) for hiding and showing the scrollbar to the mintty-specific private mode 7766, because it doesn't do quite the same thing: instead of changing window size to account for the width of the scrollbar, mintty changes the number of character columns.
+ * Moved implementation of private mode 30 for hiding and showing the scrollbar (as introduced by rxvt) to the mintty-specific private mode 7766, because it doesn't do quite the same thing: instead of changing window size to account for the width of the scrollbar, mintty changes the number of character columns.
  * Stopped rogue mouse release events being sent when application mouse mode is overridden with Shift.
  * Middle button paste now happens on release rather than click of the button, as in xterm and rxvt.
 
