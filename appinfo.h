@@ -12,11 +12,11 @@
 #define AUTHOR  "Andy Koppe"
 #define YEAR    "2011"
 
-#define VERSION "1.0.1"
+#define VERSION "1.1-alpha"
 #define MAJOR_VERSION  1
-#define MINOR_VERSION  0
-#define PATCH_NUMBER   1
-#define BUILD_NUMBER   1
+#define MINOR_VERSION  1
+#define PATCH_NUMBER   0
+#define BUILD_NUMBER   0
 
 #if defined BRANCH && defined REVISION
 #undef VERSION
