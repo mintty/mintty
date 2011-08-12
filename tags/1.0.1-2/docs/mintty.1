@@ -1,0 +1,993 @@
+.\" mintty man page
+.\"
+.\" This 'man' page is Copyright 2009 Lee D. Rothstein, 2009-11 Andy Koppe
+.\"
+.\" You may distribute, use, and modify this man page under the terms
+.\" of the GNU Free Documentation License (GFDL), Version 1.3,
+.\" 3 November 2008 (or later) as specified.
+.TH mintty 1 2011-07-24 mintty\ 1.0.1
+
+.ad l
+
+.SH NAME
+
+mintty - Cygwin terminal emulator
+
+
+.SH SYNOPSIS
+
+\fBmintty\fP [\fIOPTION\fP]... [ \fB-\fP | \fIPROGRAM\fP [\fIARG\fP]... ]
+
+
+.SH DESCRIPTION
+
+\fBMintty\fP is a terminal emulator for Cygwin with a native Windows user
+interface and minimalist design.
+Its terminal emulation is largely compatible with \fBxterm\fP, but it does not
+require an X server.
+
+
+.SH INVOCATION
+
+If a program name is supplied on the command line, this is executed with any
+additional arguments given.
+Otherwise, mintty looks for a shell to execute in the \fISHELL\fP environment
+variable.
+If that is not set, it reads the user's default shell setting from
+\fI/etc/passwd\fP.
+As a last resort, it falls back to \fI/bin/sh\fP.
+If a single dash is specified instead of a program name, the shell is invoked
+as a login shell.
+
+
+.SH OPTIONS
+
+The standard GNU option formats are accepted, with single dashes
+introducing short options and double dashes introducing long options.
+
+.TP
+\fB-c\fP, \fB--config\fP \fIFILENAME\fP
+Read settings from the specified configuration file, in addition to
+\fI/etc/minttyrc\fP and \fI~/.minttyrc\fP.
+
+.TP
+\fB-e\fP, \fB--exec\fP \fIPROGRAM\fP [\fIARG\fP ...]
+Execute the specified program in the terminal session and pass on any additional
+arguments.
+
+This option is present for compatibility with other terminal emulators only.
+It can be omitted, in which case the first non-option argument, if any,
+is taken as the name of the program to execute.
+
+.TP
+\fB-h\fP, \fB--hold\fP \fBnever\fP|\fBstart\fP|\fBerror\fP|\fBalways\fP
+Determine whether to keep the terminal window open when the command has
+finished and no more processes are connected to the terminal.
+The argument can be abbreviated to a single letter.
+
+By default, the window is closed immediately, except if the child process has
+exited with status 255, which is used to indicate failure to execute the shell
+command.  (Exit status 255 is also used by \fBssh\fP to indicate connection
+errors.)
+
+Alternatively, the window can be set to never stay open, to always stay open,
+or to stay open only if the child process terminates with an error, i.e. with
+a non-zero exit status or due to a signal indicating a runtime error.
+
+.TP
+\fB-i\fP, \fB--icon\fP \fIFILE\fP[\fB,\fIINDEX\fR]
+Load the window icon from an executable, DLL, or icon file.  The optional
+comma-separated index can be used to select a particular icon in a file with
+multiple icons.
+
+.TP
+\fB-l\fP, \fB--log\fP \fIFILE\fP
+Copy all output into the specified log file.
+(See also \fIscript\fP(1) for a more flexible logging tool.)
+
+.TP
+\fB-o\fP, \fB--option\fP \fINAME\fP=\fIVALUE\fP
+Override the named config file option with the given value, e.g.
+\fC-o ScrollbackLines=1000\fP.
+
+.TP
+\fB-p\fP, \fB--position\fP \fIX\fB,\fIY\fR
+Open the window with its top left corner at the specified coordinates.
+
+.TP
+\fB-s\fP, \fB--size\fP \fICOLS\fB,\fIROWS\fR
+Set the default size of the window in character columns and rows.
+
+.TP
+\fB-t\fP, \fB--title\fP \fITITLE\fP
+Use \fITITLE\fP as the initial window title.
+By default, the title is set to the executed command.
+
+.TP
+\fB-u\fP, \fB--utmp\fP
+Create a utmp entry.
+
+.TP
+\fB-w\fP, \fB--window\fP \fBnormal\fP|\fBmin\fP|\fBmax\fP|\fBfull\fP|\fBhide\fP
+Set the initial window state: normal, minimised, maximised, full screen,
+or hidden.
+
+.TP
+\fB--class\fP \fICLASS\fP
+Use \fICLASS\fP as the window class name of the main window.
+This allows scripting tools to distinguish different mintty instances.
+The default is "mintty".
+
+.TP
+\fB-H\fP, \fB--help\fP
+Display a brief help message and exit.
+
+.TP
+\fB-V\fP, \fB--version\fP
+Print version information and exit.
+
+
+.SH USAGE
+
+Mintty tries to adhere to both Windows and Unix usage conventions.
+Where they conflict, an option is usually provided.
+This section primarily describes the default configuration;
+see the \fBCONFIGURATION\fP section on how it can be customised.
+
+
+.SS Menus
+
+The context menu can be opened by right-clicking the mouse or by
+pressing the \fBMenu\fP key that is normally located next to the right Ctrl key.
+
+Mintty also adds a couple of items to the window menu, which can be accessed 
+by clicking on the program icon or pressing \fBAlt+Space\fP.
+
+Both menus have an entry that leads to the options dialog for changing mintty's
+configuration.
+
+
+.SS Copy & paste
+
+Screen contents can be selected by holding down the left mouse button and
+dragging the mouse.  If Alt is held down before the left mouse button, a 
+rectangular block instead of whole lines will be selected.
+The selection can be extended by holding down \fBShift\fP while left-clicking.
+Double-clicking or triple-clicking selects a whole word or line, whereby word
+selection includes special characters that commonly appear in file names and
+URLs.
+
+By default, selected text is automatically copied to the clipboard.
+This can be disabled on the \fBMouse\fP page of the options dialog.
+Selected text can also be copied manually using either the \fBCopy\fP menu
+command, the \fBCtrl+Ins\fP keyboard shortcut, or the middle mouse button
+combined with \fBShift\fP. 
+
+The selected region is copied as "rich text" as well as normal text,
+which means it can be pasted with colours and formatting into applications
+that support it, e.g. word processors.
+
+The window title can be copied using the \fBCopy Title\fP command in the window
+menu.
+
+The clipboard contents can be pasted using either the \fBPaste\fP menu command,
+the \fBShift+Ins\fP keyboard shortcut, or the middle mouse button.
+Not only text but also files and directories can be pasted,
+whereby the latter are inserted as Cygwin filenames.
+Shell quoting is added to filenames that contain spaces or special characters.
+
+
+.SS Drag & drop
+
+Text, files and directories can be dropped into the mintty window.
+They are inserted in the same way as if they were pasted from the clipboard.
+
+
+.SS Opening files, directories and URLs
+
+Files, directories and URLs can be opened either by holding \fBCtrl\fP while
+left-clicking on them, or by selecting them and choosing the \fBOpen\fP
+command from the context menu.
+Please note that opening a file or directory with a relative path only works
+correctly if the path refers to the current working directory of the process
+invoked by mintty.
+
+
+.SS Font zoom
+
+The font size can be increased or decreased using the keyboard shortcuts
+\fBCtrl+plus\fP and \fBCtrl+minus\fP, or by holding \fBCtrl\fP while rolling
+the mousewheel.  \fBCtrl+zero\fP returns the font size to the default.
+
+
+.SS Full screen
+
+Full screen mode can be toggled using either the \fBFull Screen\fP command in
+the menu or either of the \fBAlt+Enter\fP and \fBAlt+F11\fP keyboard shortcuts.
+
+
+.SS Default size
+
+If the window has been resized, it can be returned to the default size set in
+the Window pane of the options using the \fBDefault size\fP command in the
+menu or the \fBAlt+F10\fP shortcut.
+
+
+.SS Reset
+
+Sometimes a faulty application or printing a binary file will leave the
+terminal in an unusable state. In that case, resetting the terminal's state
+via the \fBReset\fP command in the menu or the \fBAlt+F8\fP keyboard shortcut
+may help.
+
+
+.SS Scrolling
+
+Mintty has a scrollback buffer that can hold up to 10000 lines in the default
+configuration.
+It can be accessed using the scrollbar, the mouse wheel, or the keyboard.
+Hold the \fBShift\fP key while pressing the \fBUp\fP and \fBDown\fP arrow keys
+to scroll line-by-line or the \fBPageUp\fP and \fBPageDown\fP keys to scroll
+page-by-page.
+
+
+.SS Flip screen
+
+Applications such as editors and file viewers normally use a terminal feature
+called the alternate screen, which is a second screen buffer without scrollback.
+When they exit, they switch back to the primary screen to restore the command
+line as it was before invoking the application.
+
+The \fBFlip Screen\fP menu command and \fBAlt+F12\fP shortcut allow looking
+at the primary screen while the alternate screen is active, and vice versa.
+For example, this allows to refer to past commands while editing a file.
+
+
+.SS Switching session
+
+The \fBCtrl+Tab\fP and \fBCtrl+Shift+Tab\fP shortcuts can be used to switch
+between mintty windows.  Minimised windows are skipped.
+
+
+.SS Closing a session
+
+Clicking the window's close button, pressing \fBAlt+F4\fP, or choosing
+\fBClose\fP from the window menu sends a \fISIGHUP\fP signal to the process
+running in mintty, which normally causes it to exit.
+
+That signal can be ignored, though, in which case the program might have to be
+forced to terminate by sending a \fISIGKILL\fP signal instead.
+This can be done by holding down \fBShift\fP when using the close button,
+shortcut or menu item.
+
+
+.SS Mouse tracking
+
+When an application activates mouse tracking, mouse events are sent to the
+application rather than being treated as window events.
+This is indicated by the mouse pointer changing from an \fBI\fP shape to an
+arrow.
+Holding down \fBShift\fP overrides mouse tracking mode and sends mouse
+events to the window instead, so that e.g. text can be selected and the context
+menu can be accessed.
+
+
+.SS Alt codes
+
+The Windows Alt+Numpad method for entering character codes is supported,
+whereby the Alt key has to be held while entering the character code.
+Only the first key has to be on the numpad; subsequent digits can be entered
+both on the numpad or the main part of the keyboard.
+
+If the first key is the \fB'+'\fP on the numpad, the code is interpreted as
+hexadecimal, whereby digits A through F can be entered using the letter keys.
+If the first key is a zero, the code is interpreted as octal.
+If the first key is any other digit from 1 to 9, the code is interpreted as
+decimal.
+
+For UTF-8 and other Unicode encodings such as GB18030, the entered code is
+interpreted as a Unicode codepoint and encoded accordingly before it is sent.
+For other encodings, the entered code is sent as is. If it doesn't fit into one
+byte, it is sent as multiple bytes, with the the most significant non-zero byte
+first.
+
+
+.SS Shortcuts
+
+An overview of all the keyboard shortcuts.
+
+.TP
+\fBScrollback\fP
+
+\- \fBShift+Up\fP: Line up
+.br
+\- \fBShift+Down\fP: Line down
+.br
+\- \fBShift+PgUp\fP: Page up
+.br
+\- \fBShift+PgDn\fP: Page down
+.br
+\- \fBShift+Home\fP: Top
+.br
+\- \fBShift+End\fP: Bottom
+
+.TP
+\fBCopy and paste\fP
+
+\- \fBCtrl+Ins\fP: Copy
+.br
+\- \fBShift+Ins\fP: Paste
+.br
+\- \fBCtrl+Shift+Ins\fP: Copy and paste
+
+.TP
+\fBWindow commands\fP
+
+\- \fBAlt+F2\fP: New
+.br
+\- \fBAlt+F4\fP: Close
+.br
+\- \fBAlt+F8\fP: Reset
+.br
+\- \fBAlt+F10\fP: Default size
+.br
+\- \fBAlt+F11\fP or \fBAlt+Enter\fP: Full screen
+.br
+\- \fBAlt+F12\fP: Flip screen
+.br
+\- \fBAlt+Space\fP: Window menu
+.br
+\- \fBCtrl+Tab\fP: Next window
+.br
+\- \fBCtrl+Shift+Tab\fP: Previous window
+
+.TP
+\fBFont zoom\fP
+
+\- \fBCtrl+plus\fP: Zoom in
+.br
+\- \fBCtrl+minus\fP: Zoom out
+.br
+\- \fBCtrl+zero\fP: Back to configured font size
+
+.TP
+\fBCtrl+Shift+letter shortcuts\fP
+
+An alternative set of shortcuts for clipboard and window commands using
+\fBCtrl+Shift+letter\fP combinations is available.  These can be enabled on the
+Keys pane of the options dialog.
+
+\- \fBCtrl+Shift+C\fP: Copy
+.br
+\- \fBCtrl+Shift+V\fP: Paste
+.br
+\- \fBCtrl+Shift+N\fP: New
+.br
+\- \fBCtrl+Shift+W\fP: Close
+.br
+\- \fBCtrl+Shift+R\fP: Reset
+.br
+\- \fBCtrl+Shift+D\fP: Default size
+.br
+\- \fBCtrl+Shift+F\fP: Full screen
+.br
+\- \fBCtrl+Shift+S\fP: Flip screen
+
+
+.SH CONFIGURATION
+
+Mintty has a graphical options dialog that can be reached via the context menu
+or the window menu.  As usual, both the \fBApply\fP and \fBOK\fP buttons apply
+any changes made, but \fBOK\fP also closes the dialog.
+\fBCancel\fP discards changes.
+
+In configuration files, settings are stored as \fINAME\fP=\fIVALUE\fP pairs,
+with one per line.  By default, they are read from \fI/etc/minttyrc\fP and
+\fI~/.minttyrc\fP.  Additional configuration files can be specified using the
+\fB--config\fP command line option.  These are read in order, with settings in
+later files overriding those in earlier ones.  Configuration changes are saved
+to the last file specified, or \fI~/.minttyrc\fP if none is given.
+Settings can also be specified on the command line using \fB--option\fP.
+
+The following sections explain the settings on each pane of the options
+dialog, followed by settings that do not appear in the dialog.
+For each setting, its name in the config file is shown in parentheses,
+along with its default value.
+
+
+.SS Looks
+Settings affecting mintty's appearance.
+
+.TP
+\fBColours\fP
+Clicking on one of the buttons here opens the colour selection dialog.
+In the config file, colours are represented as comma-separated RGB triples
+with decimal 8-bit values (i.e. ranging from 0 to 255).
+
+\- \fBForeground\fP (ForegroundColour=191,191,191)
+.br
+\- \fBBackground\fP (BackgroundColour=0,0,0)
+.br
+\- \fBCursor\fP (CursorColour=191,191,191)
+
+.TP
+\fBTransparency\fP (Transparency=off)
+Window transparency level, with the following choices:
+
+\- \fBOff\fP
+.br
+\- \fBLow\fP
+.br
+\- \fBMedium\fP
+.br
+\- \fBHigh\fP
+.br
+\- \fBGlass\fP
+
+The \fBGlass\fP option is only available on Vista and above with desktop
+compositing enabled.
+To make this reasonably usable, the glass colour needs to be set to be as dark
+as possible in the Windows control panel: choose \fIPersonalize\fP from the
+desktop context menu, click on \fIWindow Color\fP, turn the colour intensity up
+to the maximum, show the colour mixer, and turn the brightness down to black.
+
+Numeric transparency values ranging from 4 to 254 can be specified in config
+files or on the command line.  (Values below 4 are multiplied by 16, for
+backward compatibility reasons.)
+
+.TP
+\fBOpaque when focused\fP (OpaqueWhenFocused=no)
+Enable to make the window opaque when it is active (to avoid background
+distractions when working in it).
+
+.TP
+\fBCursor\fP (CursorType=line)
+The following cursor types are available:
+
+\- \fBLine\fP
+.br
+\- \fBBlock\fP
+.br
+\- \fBUnderscore\fP
+
+The line cursor is displayed with the width set in the Accessibility Options
+control panel.
+
+.TP
+\fBCursor blink\fP (CursorBlinks=yes)
+If enabled, the cursor blinks at the rate set in the Keyboard control panel.
+
+
+.SS Text
+Settings controlling text display.
+
+.TP
+\fBFont selection\fP
+Clicking on the \fBSelect\fP button opens a dialog where the font and its
+properties can be chosen.  Font styles other than \fBBold\fP are ignored.
+In the config file, this corresponds to the following entries:
+
+\- \fBFont\fP (Font=Lucida Console)
+.br
+\- \fBStyle\fP (FontIsBold=no)
+.br
+\- \fBSize\fP (FontHeight=9)
+
+.TP
+\fBShow bold as colour\fP (BoldAsFont=no)
+When this option is enabled, the ANSI bold (or 'intense') text attribute is
+shown as a bold-style font.  Where a bold variant of the selected font that
+has the same width as the base font is available, that is used; otherwise, the
+bolding is simulated by rendering the text twice with a one-pixel offset.
+
+.TP
+\fBShow bold as colour\fP (BoldAsColour=yes)
+By default, text with the ANSI bold attribute set is displayed with a
+different colour, usually with increased brightness.  This can be disabled
+here.
+
+Note that when \fBBoldAsFont\fP is enabled, only bold text in one of the eight
+ANSI colours has its colour changed, i.e. bold text without an explicitly
+spefified colour is shown with a bold font only.  This matches \fBxterm\fP behaviour.
+
+This option also controls how the 'half-bright' (or 'dim') text
+attribute is displayed: if it is on, half-bright text is
+shown with halved foreground colour brightness; otherwise, it is shown
+by blending the foreground colour with the background colour.
+
+.TP
+\fBAllow blinking\fP (AllowBlinking=no)
+When text blinking is disabled, as it is by default, the blink attribute is
+displayed as a bold background colour instead.
+
+.TP
+\fBFont smoothing\fP (FontSmoothing=default)
+Select the amount of font smoothing from the following choices:
+
+\- \fBDefault\fP: Use Windows setting.
+.br
+\- \fBNone\fP: With all the jaggies.
+.br
+\- \fBPartial\fP: Greyscale anti-aliasing.
+.br
+\- \fBFull\fP: Subpixel anti-aliasing ("ClearType").
+
+.TP
+\fBLocale\fP (Locale=)
+The locale setting consists of a lowercase two-letter or three-letter language
+code followed by a two-letter country code, for instance \fBen_US\fP or
+\fBzh_CN\fP.  The Windows default system and user locales are shown in the
+drop-down list for this setting.  Alternatively, the language-neutral "C"
+locale can be selected.
+
+If no locale is set here, which is the default, mintty uses the locale and
+character set specified via the environment variables \fILC_ALL\fP,
+\fILC_CTYPE\fP or \fILANG\fP.
+
+If the locale option is set, however, it will override any environment
+variable setting: \fILC_ALL\fP and the \fILC_*\fP variables for specific
+locale categories are cleared, while \fILANG\fP is set according to the
+selected locale and character set.
+
+.TP
+\fBCharacter set\fP (Charset=)
+The character set to be used for encoding input and decoding output.
+If no locale is set, this setting is ignored.
+
+While changing the character set takes effect immediately for text input and
+ouput, it does not affect the processes already running in mintty.
+This is because the environment variables of a running process cannot be
+changed from outside that process.
+Therefore mintty needs to be restarted for a character set change to take full
+effect.
+
+
+.SS Keys
+Settings controlling keyboard behaviour.
+
+.TP
+\fBBackspace sends ^H\fP (BackspaceSendsBS=no)
+By default, mintty sends \fB^?\fP as the keycode for the backspace key.
+If this option is enabled, \fB^H\fP is sent instead.
+This also changes the \fBCtrl+Backspace\fP code from \fB^_\fP to \fB^?\fP.
+
+.TP
+\fBCtrl+LeftAlt is AltGr\fP (CtrlAltIsAltGr=no)
+The AltGr key on non-US Windows systems is a strange beast: pressing it is
+synonymous with pressing the left Ctrl key and the right Alt key at the
+same time, and Windows programs usually treat any Ctrl+Alt combination as
+AltGr.
+
+Some programs, however, chief among them Microsoft's very own Office, do not
+treat Ctrl+LeftAlt as AltGr, so that Ctrl+LeftAlt combinations can be used in
+command shortcuts even when a key has an AltGr character binding.
+
+By default, mintty follows Office's approach, because a number of terminal
+programs make use of Ctrl+Alt shortcuts.
+The "standard" Windows behaviour can be restored by ticking the checkbox here.
+
+The setting makes no difference for keys without AltGr key bindings
+(e.g. any key on the standard US layout).
+
+.TP
+\fBCopy and Paste shortcuts\fP (ClipShortcuts=yes)
+Checkbox for enabling the clipboard shortcuts \fBCtrl+Ins\fP for copying and
+\fBShift+Ins\fP for pasting.
+
+.TP
+\fBMenu and Full Screen shortcuts\fP (WindowShortcuts=yes)
+Checkbox for enabling the \fBAlt+Space\fP and \fBAlt+Enter\fP shortcuts for
+showing the window menu and toggling full screen mode.
+
+.TP
+\fBSwitch window shortcuts\fP (SwitchShortcuts=yes)
+Checkbox for enabling the \fBCtrl+Tab\fP and \fBCtrl+Shift+Tab\fP shortcuts
+for switching between mintty windows.
+
+.TP
+\fBZoom shortcuts\fP (ZoomShortcuts=yes)
+Checkbox for enabling the font zooming shortcuts \fBCtrl+plus/minus/zero\fP.
+
+.TP
+\fBAlt+Fn shortcuts\fP (AltFnShortcuts=yes)
+Checkbox for enabling the use of combinations of Alt and functions keys as
+shortcuts, for example \fBAlt+F4\fP for closing the window or \fBAlt+F11\fP
+fortoggling  full screen mode.  Disable to have \fBAlt+Fn\fP combinations
+sent to applications instead.
+
+.TP
+\fBCtrl+Shift+letter shortcuts\fP (CtrlShiftShortcuts=no)
+Checkbox for enabling alternative clipboard and window command shortcuts
+using \fBCtrl+Shift+letter\fP combinations such as \fBCtrl+Shift+V\fP for
+paste or \fBCtrl+Shift+N\fP for starting a new session.
+
+These can replace the \fBCtrl/Shift+Ins\fP and \fBAlt+Fn\fP shortcuts, whereby
+they show up in menus only if the corresponding default shortcuts are disabled.
+
+See the shortcuts section above for the list of shortcuts controlled by this
+option.  When it is disabled, Ctrl+Shift+letter combinations are sent to
+applications as C1 control characters instead.
+
+
+.SS Mouse
+Settings controlling mouse support.
+
+.TP
+\fBCopy on select\fP (CopyOnSelect=yes)
+If enabled, the region selected with the mouse is copied to the clipboard as
+soon as the mouse button is released, thus emulating X Window behaviour.
+
+.TP
+\fBCopy as rich text\fP (CopyAsRTF=yes)
+If this option is enabled, which it is by default, text is copied to the
+clipboard in rich text format (RTF) in addition to plain text format.
+RTF preserves colours and styles when pasting text into applications that
+support it, e.g. word processors.
+
+.TP
+\fBClicks place command line cursor\fP (ClicksPlaceCursor=no)
+If enabled, the command line cursor can be placed by pressing the left
+mouse button.
+This works by sending the number of cursor keycodes needed to get to the
+destination.
+
+.TP
+\fBRight click action\fP (RightClickAction=menu)
+Action to take when the right mouse button is pressed.
+If this is set to \fBPaste\fP, the middle button extends the selection region.
+
+\- \fBPaste\fP: Paste the clipboard contents.
+.br
+\- \fBExtend\fP: Extend the selected region.
+.br
+\- \fBShow menu\fP: Show the context menu.
+
+.TP
+\fBDefault click target\fP (ClicksTargetApp=yes)
+This applies to application mouse mode, i.e. when the application activates
+xterm-style mouse reporting.
+In that mode, mouse clicks can be sent either to the application to process
+as it sees fit, or to the window for the usual actions such as select and paste.
+
+\- \fBWindow\fP
+.br
+\- \fBApplication\fP
+
+.TP
+\fBModifier key for overriding default\fP (ClickTargetMod=shift)
+The modifier key selected here can be used to override the click target in
+application mouse mode.
+With the default settings, clicks are sent to the application and Shift needs
+to be held to trigger window actions instead.
+
+The \fBOff\fP setting disables overriding.
+
+\- \fBShift\fP
+.br
+\- \fBCtrl\fP
+.br
+\- \fBAlt\fP
+.br
+\- \fBOff\fP
+
+
+.SS Window
+Window properties.
+
+.TP
+\fBColumns\fP (Columns=80)
+Default width of the window, in character cells.
+
+.TP
+\fBRows\fP (Rows=24)
+Default height of the window, in character cells.
+
+.TP
+\fBCurrent size\fP
+Pressing this button sets the default width and height to the window's
+current size.
+
+.TP
+\fBScrollback lines\fP (ScrollbackLines=10000)
+The maximum number of lines to keep in the scrollback buffer.
+
+.TP
+\fBScrollbar\fP (Scrollbar=right)
+The scrollbar can be shown on either side of the window or just hidden.
+By default, it is shown on the right-hand side.
+
+\- \fBLeft\fP
+.br
+\- \fBNone\fP
+.br
+\- \fBRight\fP
+
+.TP
+\fBModifier for scrolling\fP (ScrollMod=shift)
+The modifier key that needs to be pressed together with the arrow up/down,
+PgUp/PgDn, or Home/End keys to access the scrollback buffer.
+The default is \fBShift\fP.
+The \fBOff\fP setting disables scrolling with keyboard shortcuts.
+
+\- \fBShift\fP
+.br
+\- \fBCtrl\fP
+.br
+\- \fBAlt\fP
+.br
+\- \fBOff\fP
+
+.TP
+\fBPgUp and PgDn scroll without modifier\fP (PgUpDnScroll=no)
+If this is enabled, the scrollback buffer can be accessed by just pressing
+PgUp or PgDn, without the 'modifier for scrolling' selected above.
+If the modifier is pressed anyway, plain PgUp/PgDn keycodes are sent to the
+application.
+This option does not affect the arrow keys or Home/End keys.
+
+
+.SS Terminal
+Terminal emulation settings.
+
+.TP
+\fBType\fP (Term=xterm)
+The terminal type.  This determines the setting of the TERM environment variable
+at mintty startup.
+Choices available from the dropdown list are \fBxterm\fP, \fBxterm-256color\fP,
+\fBxterm-vt220\fP, \fBvt220\fP, and \fBvt100\fP.
+
+If the setting contains "vt220", xterm VT220-style function key mode is enabled
+instead of the default PC-style function key mode.
+(This can otherwise be set with the DECSET 1061 control sequence.)
+
+Apart from that, this setting has no effect on mintty's terminal emulation,
+i.e. all the features are always available. However, the TERM setting does tell
+applications what features they can use.
+
+The \fBxterm-256color\fP setting enables 256-color mode in some applications,
+but may not be recognised at all by others, which is why plain \fBxterm\fP
+is the default.
+
+.TP
+\fBAnswerback\fP (Answerback=)
+
+The answerback string is sent in response to the \fB^E\fP (ENQ) character.
+By default, this is empty.
+
+.TP
+\fBBell\fP
+The three checkboxes here determine what effects the bell character \fB^G\fP
+has.  Only taskbar highlighting is enabled by default.
+
+\- \fBSound\fP (BellSound=no): Play the system's default beep sound.
+
+\- \fBFlash\fP (BellFlash=no): Briefly invert the foreground and background
+colours.
+
+\- \fBHighlight in taskbar\fP (BellTaskbar=yes): Change the colour of mintty's
+taskbar entry if the mintty window is not active.
+
+.TP
+\fBPrinter\fP (Printer=)
+The ANSI standard defines control sequences for sending text to a printer,
+which are used by some terminal applications such as the mail reader
+\fBpine\fP.
+The Windows printer to send such text to can be selected here.
+By default, printing is disabled.
+
+.TP
+\fBPrompt about running processes on close\fP (ConfirmExit=yes)
+If enabled, ask for confirmation when the close button or \fIAlt+F4\fP is 
+pressed and the command invoked by mintty still has child processes.
+This is intended to help avoid closing programs accidentally.
+
+
+.SS Command line
+The settings here are config file versions of command line options
+described in the OPTIONS section.  They do not appear in the options dialog.
+
+.TP
+\fBHolding the window open\fP (Hold=start)
+The \fBHold\fP setting determines whether to keep the terminal window open when
+the command has finished and no more processes are connected to the terminal.
+It takes the following values:
+
+\- \fBnever\fP: Don't keep the window open.
+
+\- \fBstart\fP: Only keep the window open if the command exited with
+status 255, which is used to indicate failure to start the command.
+This is the default.
+
+\- \fBerror\fP:  Keep the window open if the command exited with a non-zero
+status or it was terminated by a signal indicating a runtime error.
+
+\- \fBalways\fP: Always keep the window open.
+
+.TP
+\fBWindow icon\fP (Icon=)
+The \fBIcon\fP setting with format \fIFILE\fP[\fB,\fIINDEX\fR] allows to load
+the window icon from an executable, DLL, or icon file.
+The optional comma-separated index can be used to select a particular icon in
+a file with multiple icons.
+If the setting is empty, as it is by default, mintty's program icon is used.
+
+.TP
+\fBLog file\fP (Log=)
+The \fBLog\fP setting can be used to specify a log file that all output is
+copied into.  If it is empty, as it is by default, no logging is done.
+See also the \fIscript\fP(1) utility for a more flexible logging solution.
+
+.TP
+\fBWindow title\fP (Title=)
+The \fBTitle\fP setting can be used to determine the initial window title.
+If it is empty, as it is by default, the title is set to the command being run.
+
+.TP
+\fBUtmp record\fP (Utmp=no)
+If enabled, an entry for the session is written into the system's \fIutmp\fP
+file for recording logins, so that the session appears for example in the
+output of the \fIwho\fP(1) utility.
+
+.TP
+\fBInitial window state\fP (Window=normal)
+This setting determines how the terminal window should be shown at startup:
+
+\- \fBnormal\fP (default)
+.br
+\- \fBmin\fP (minimised)
+.br
+\- \fBmax\fP (maximised)
+.br
+\- \fBfull\fP (full screen)
+.br
+\- \fBhide\fP (invisible)
+
+.TP
+\fBWindow position\fP (X=, Y=)
+\fBX\fP and \fBY\fP are integer settings that can be used to determine the
+initial coordinates of the top left corner of the terminal window.
+By default, these are unset, which means that the position suggested by the
+window manager is used.
+
+.TP
+\fBWindow class name\fP (Class=mintty)
+The \fBClass\fP setting determines the name of the window class of the terminal
+window.  This can be used to help Windows scripting tools such as AutoHotKey to
+distinguish different mintty windows.  The name defaults to "mintty".
+
+
+.SS Hidden settings
+The following settings appear neither in the options dialog nor as command line
+options, which means they can only be set in config files or using the
+\fB--option\fP command line option.
+
+.TP
+\fBWord selection characters\fP (WordChars=)
+By default, this string setting is empty, in which case double-click word
+selection uses the default algorithm that is geared towards picking out
+filenames and URLs.
+
+If a string is specified here, word selection only picks out characters in the
+string along with alphanumeric characters.  For example, specifying just the
+underscore character (WordChars=_) would allow selecting identifiers in many
+programming languages.
+
+.TP
+\fBUse system colours\fP (UseSystemColours=no)
+If this is set, the Windows-wide colour settings are used
+instead of the foreground, background, and cursor colours chosen on the Looks
+page of the options dialog.
+
+.TP
+\fBIME cursor colour\fP (IMECursorColour=)
+The cursor colour can be set to change when the Input Method Editor (IME) for
+entering characters not available directly on the keyboard is active.
+The setting is a RGB triplet such as 255,0,0 for bright red.
+
+By default, this is unset, which means that the cursor colour does not change.
+The colour can also be changed using xterm's OSC 4 control sequence with
+colour number 262.
+
+.TP
+\fBANSI colours\fP
+These are the 16 ANSI colour settings along with their default values:
+
+\- \fBBlack\fP=0,0,0
+.br
+\- \fBRed\fP=191,0,0
+.br
+\- \fBGreen\fP=0,191,0
+.br
+\- \fBYellow\fP=191,191,0
+.br
+\- \fBBlue\fP=0,0,191
+.br
+\- \fBMagenta\fP=191,0,191
+.br
+\- \fBCyan\fP=0,191,191
+.br
+\- \fBWhite\fP=191,191,191
+.br
+\- \fBBoldBlack\fP=64,64,64
+.br
+\- \fBBoldRed\fP=255,64,64
+.br
+\- \fBBoldGreen\fP=64,255,64
+.br
+\- \fBBoldYellow\fP=255,255,64
+.br
+\- \fBBoldBlue\fP=64,64,255
+.br
+\- \fBBoldMagenta\fP=255,64,255
+.br
+\- \fBBoldCyan\fP=64,255,255
+.br
+\- \fBBoldWhite\fP=255,255,255
+
+
+.SH LIMITATIONS
+
+.SS Console issue
+
+Mintty is not a full replacement for the Windows console window that Cygwin
+uses by default.
+Like xterm and rxvt, mintty communicates with the child process through a
+pseudo terminal device, which Cygwin emulates using Windows pipes.
+This means that native Windows command line programs started in mintty see
+a pipe rather than a console device.
+As a consequence, such programs often disable interactive input. Also,
+direct calls to low-level Win32 console functions will fail.
+Programs that access the console as a file should be fine though.
+
+
+.SS Termcap/terminfo
+
+Mintty does not have its own \fItermcap\fP or \fIterminfo\fP entries;
+instead, it simply pretends to be an xterm.
+
+
+.SS Missing xterm features
+
+Mintty is nowhere near as configurable as xterm.  Of xterm's keyboard modes,
+only the default PC-style and VT220-style are available.  8-bit control
+characters are not supported, nor are ISO2022 character sets.  There is no
+Tektronix 4014 emulation.  Mouse highlighting mode is not implemeted.
+
+The majority of xterm's many control sequences is implemented, but quite a few
+are missing.  Significant omissions should be reported as bugs.
+
+
+.SH SEE ALSO
+
+Additional information can be found on the wiki on the mintty project page,
+for example:
+
+\- Keycodes: \fIhttp://code.google.com/p/mintty/wiki/Keycodes\fP
+.br
+\- Control sequences: \fIhttp://code.google.com/p/mintty/wiki/CtrlSeqs\fP
+.br
+\- Tips: \fIhttp://code.google.com/p/mintty/wiki/Tips\fP
+.br
+\- Contributors: \fIhttp://code.google.com/p/mintty/wiki/Credits\fP
+.br
+\- Changelog: \fIhttp://code.google.com/p/mintty/wiki/Changes\fP
+
+
+.SH LICENSE
+
+Copyright (C) 2011 Andy Koppe.
+
+Mintty is released under the terms of the the \fIGNU General Public License\fP
+version 3 or later.
+See \fIhttp://gnu.org/licenses/gpl/html\fP for the license text.
+
+There is NO WARRANTY, to the extent permitted by law.
+
+
+.SH CONTACT
+
+Please report bugs or suggest enhancements via the issue tracker at
+\fIhttp://code.google.com/p/mintty/issues\fP.
+Questions can be sent to the discussion group at
+\fIhttp://groups.google.com/group/mintty-discuss\fP or
+the Cygwin mailing list at \fIcygwin@cygwin.com\fP.
