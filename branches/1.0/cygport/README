@@ -45,8 +45,6 @@ This will create:
 
 Files included in the binary package:
 
-  /etc/postinstall/mintty.sh
-  /etc/preremove/mintty.sh
   /usr/bin/mintty.exe
   /usr/share/doc/Cygwin/mintty.README
   /usr/share/doc/mintty/COPYING
@@ -69,6 +67,11 @@ http://code.google.com/p/mintty/wiki/Changes
 -------------------
 
 Port Notes:
+
+----- mintty-1.0.1-2 -----
+* Dropped postinstall and preremove scripts for start menu shortcut
+creation and removal now that mintty is becoming the default Cygwin
+terminal with shortcuts created by setup.exe.
 
 ----- mintty-1.0.1-1 -----
 * Dropped chmod on the shortcut, which doesn't actually appear to be 
