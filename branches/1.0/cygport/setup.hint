@@ -1,5 +1,4 @@
 category: Shells Base
-requires: bash cygutils
 sdesc: "Terminal emulator with native Windows look and feel"
 ldesc: "Mintty is a terminal emulator for Cygwin. It is based on code 
 from PuTTY 0.60 by Simon Tatham and team.
