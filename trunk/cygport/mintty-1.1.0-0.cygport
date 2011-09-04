@@ -5,7 +5,7 @@ _CYGPORT_RESTRICT_postinst_doc_=1
 src_compile() {
   lndirs
   cd ${B}
-  cygmake -j4 cc=gcc-3
+  cygmake
 }
 
 src_install() {
