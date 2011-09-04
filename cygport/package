@@ -1,4 +1,4 @@
 #!/bin/bash
 cygport mintty-*.cygport prep
-cp README setup.hint postinstall.sh preremove.sh mintty-*/CYGWIN-PATCHES
+cp README setup.hint mintty-*/CYGWIN-PATCHES
 cygport mintty-*.cygport compile install package
