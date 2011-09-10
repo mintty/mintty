@@ -23,11 +23,8 @@ static string term_locale;     // Locale set via terminal control sequences.
 static string config_locale;   // Locale configured in the options.
 static string env_locale;      // Locale determined by the environment.
 #if HAS_LOCALES
-static string sys_locale;      // System default locale (if no env_locale).
 static bool valid_default_locale, use_locale;
 bool cs_ambig_wide;
-#else
-static const char sys_locale[] = "C";
 #endif
 
 static uint codepage, default_codepage;
@@ -285,7 +282,7 @@ update_locale(void)
 {
   delete(default_locale);
 
-  string locale = term_locale ?: config_locale ?: env_locale ?: sys_locale;
+  string locale = term_locale ?: config_locale ?: env_locale;
   string dot = strchr(locale, '.');
   string charset = dot ? dot + 1 : locale;
 
@@ -367,14 +364,12 @@ cs_init(void)
   init_charset_menu();
   
   env_locale =
-    getlocenv("LC_ALL") ?: getlocenv("LC_CTYPE") ?: getlocenv("LANG");
-  
-  if (env_locale)
-    env_locale = strdup(env_locale);
 #if HAS_LOCALES
-  else
-    sys_locale = strdup(setlocale(LC_CTYPE, "") ?: "C");
+    setlocale(LC_CTYPE, "") ?:
 #endif
+    getlocenv("LC_ALL") ?: getlocenv("LC_CTYPE") ?: getlocenv("LANG");
+
+  env_locale = env_locale ? strdup(env_locale) : "C";
 
   cs_reconfig();
 }
@@ -382,13 +377,7 @@ cs_init(void)
 string
 cs_lang(void)
 {
-#if HAS_LOCALES
-  return
-    config_locale ?:
-    (!env_locale && strcmp(sys_locale, "C")) ? sys_locale : 0;
-#else
   return config_locale;
-#endif
 }
 
 int
