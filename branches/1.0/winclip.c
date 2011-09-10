@@ -63,7 +63,7 @@ win_open(wstring wpath)
 
 
 void
-win_copy(const wchar *data, int *attr, int len)
+win_copy(const wchar *data, uint *attrs, int len)
 {
   HGLOBAL clipdata, clipdata2, clipdata3 = 0;
   int len2;
@@ -89,7 +89,7 @@ win_copy(const wchar *data, int *attr, int len)
   memcpy(lock, data, len * sizeof (wchar));
   WideCharToMultiByte(CP_ACP, 0, data, len, lock2, len2, null, null);
 
-  if (attr && cfg.copy_as_rtf) {
+  if (attrs && cfg.copy_as_rtf) {
     wchar unitab[256];
     char *rtf = null;
     uchar *tdata = (uchar *) lock2;
@@ -126,30 +126,31 @@ win_copy(const wchar *data, int *attr, int len)
     */
     memset(palette, 0, sizeof (palette));
     for (int i = 0; i < (len - 1); i++) {
-      fgcolour = ((attr[i] & ATTR_FGMASK) >> ATTR_FGSHIFT);
-      bgcolour = ((attr[i] & ATTR_BGMASK) >> ATTR_BGSHIFT);
+      uint attr = attrs[i];
+      fgcolour = (attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
+      bgcolour = (attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
 
-      if (attr[i] & ATTR_REVERSE) {
+      if (attr & ATTR_REVERSE) {
         int tmpcolour = fgcolour;     /* Swap foreground and background */
         fgcolour = bgcolour;
         bgcolour = tmpcolour;
       }
 
-      if (attr[i] & ATTR_BOLD && cfg.bold_as_colour) {
+      if ((attr & ATTR_BOLD) && cfg.bold_as_colour) {
         if (fgcolour < 8)     /* ANSI colours */
           fgcolour += 8;
         else if (fgcolour >= 256 && !cfg.bold_as_font)  /* Default colours */
           fgcolour |= 1;
       }
 
-      if (attr[i] & ATTR_BLINK) {
+      if (attr & ATTR_BLINK) {
         if (bgcolour < 8)     /* ANSI colours */
           bgcolour += 8;
         else if (bgcolour >= 256)     /* Default colours */
           bgcolour |= 1;
       }
 
-      if (attr[i] & ATTR_INVISIBLE)
+      if (attr & ATTR_INVISIBLE)
         fgcolour = bgcolour;
 
       palette[fgcolour]++;
@@ -212,6 +213,9 @@ win_copy(const wchar *data, int *attr, int len)
       * Set text attributes, if any, except on newlines
       */
       if (tdata[tindex] != '\n') {
+
+        uint attr = attrs[uindex];
+
         if (rtfsize < rtflen + 64) {
           rtfsize = rtflen + 512;
           rtf = renewn(rtf, rtfsize);
@@ -220,31 +224,31 @@ win_copy(const wchar *data, int *attr, int len)
        /*
         * Determine foreground and background colours
         */
-        fgcolour = ((attr[tindex] & ATTR_FGMASK) >> ATTR_FGSHIFT);
-        bgcolour = ((attr[tindex] & ATTR_BGMASK) >> ATTR_BGSHIFT);
+        fgcolour = (attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
+        bgcolour = (attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
 
-        if (attr[tindex] & ATTR_REVERSE) {
+        if (attr & ATTR_REVERSE) {
           int tmpcolour = fgcolour;     /* Swap foreground and background */
           fgcolour = bgcolour;
           bgcolour = tmpcolour;
         }
 
-        if (attr[tindex] & ATTR_BOLD && cfg.bold_as_colour) {
+        if ((attr & ATTR_BOLD) && cfg.bold_as_colour) {
           if (fgcolour < 8)     /* ANSI colours */
             fgcolour += 8;
           else if (fgcolour >= 256 && !cfg.bold_as_font)  /* Default colours */
             fgcolour |= 1;
         }
 
-        if (attr[tindex] & ATTR_BLINK) {
+        if (attr & ATTR_BLINK) {
           if (bgcolour < 8)     /* ANSI colours */
             bgcolour += 8;
           else if (bgcolour >= 256)     /* Default colours */
             bgcolour |= 1;
         }
 
-        attrBold = cfg.bold_as_font ? (attr[tindex] & ATTR_BOLD) : 0;
-        attrUnder = attr[tindex] & ATTR_UNDER;
+        attrBold = cfg.bold_as_font ? (attr & ATTR_BOLD) : 0;
+        attrUnder = attr & ATTR_UNDER;
 
        /*
         * Reverse video
@@ -253,7 +257,7 @@ win_copy(const wchar *data, int *attr, int len)
         *   o  Special case where bolded text is displayed using the default
         *      foregound and background colours - force to bolded RTF.
         */
-        if (!(attr[tindex] & ATTR_REVERSE)) {
+        if (!(attr & ATTR_REVERSE)) {
           if (bgcolour >= 256)  /* Default color */
             bgcolour = -1;      /* No coloring */
 
@@ -265,7 +269,7 @@ win_copy(const wchar *data, int *attr, int len)
           }
         }
 
-        if (attr[tindex] & ATTR_INVISIBLE)
+        if (attr & ATTR_INVISIBLE)
           fgcolour = bgcolour;
 
        /*
@@ -317,6 +321,7 @@ win_copy(const wchar *data, int *attr, int len)
           after[0] = '\0';
         }
       }
+      printf("%i\n", multilen);
       assert(tindex + multilen <= len2);
       totallen = blen + alen;
       for (int i = 0; i < multilen; i++) {
@@ -364,6 +369,8 @@ win_copy(const wchar *data, int *attr, int len)
     rtf[rtflen++] = '}';        /* Terminate RTF stream */
     rtf[rtflen++] = '\0';
     rtf[rtflen++] = '\0';
+
+    puts(rtf);
 
     clipdata3 = GlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE, rtflen);
     if (clipdata3 && (lock3 = GlobalLock(clipdata3)) != null) {
