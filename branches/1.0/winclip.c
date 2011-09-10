@@ -321,7 +321,6 @@ win_copy(const wchar *data, uint *attrs, int len)
           after[0] = '\0';
         }
       }
-      printf("%i\n", multilen);
       assert(tindex + multilen <= len2);
       totallen = blen + alen;
       for (int i = 0; i < multilen; i++) {
@@ -369,8 +368,6 @@ win_copy(const wchar *data, uint *attrs, int len)
     rtf[rtflen++] = '}';        /* Terminate RTF stream */
     rtf[rtflen++] = '\0';
     rtf[rtflen++] = '\0';
-
-    puts(rtf);
 
     clipdata3 = GlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE, rtflen);
     if (clipdata3 && (lock3 = GlobalLock(clipdata3)) != null) {
