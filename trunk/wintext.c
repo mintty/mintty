@@ -702,7 +702,8 @@ void
 win_check_glyphs(wchar *wcs, uint num)
 {
   HDC dc = GetDC(wnd);
-  SelectObject(dc, fonts[FONT_NORMAL]);
+  bool bold = (bold_mode == BOLD_FONT) && (term.screen.curs.attr & ATTR_BOLD);
+  SelectObject(dc, fonts[bold ? FONT_BOLD : FONT_NORMAL]);
   ushort glyphs[num];
   GetGlyphIndicesW(dc, wcs, num, glyphs, true);
   for (size_t i = 0; i < num; i++) {

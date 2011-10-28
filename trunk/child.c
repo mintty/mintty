@@ -167,9 +167,9 @@ child_create(char *argv[], struct winsize *winp)
           dev += 5;
         strlcpy(ut.ut_line, dev, sizeof ut.ut_line);
 
-        if (!strncmp(dev, "tty", 3))
+        if (dev[1] == 't' && dev[2] == 'y')
           dev += 3;
-        if (!strncmp(dev, "pts/", 4))
+        else if (!strncmp(dev, "pts/", 4))
           dev += 4;
         strncpy(ut.ut_id, dev, sizeof ut.ut_id);
 
