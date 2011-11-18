@@ -21,29 +21,17 @@ deps := $(objs:.o=.d)
 
 cpp_opts = -MMD -MP $(defines)
 
-cc := gcc
-rc := windres --preprocessor '$(cc) -E -xc-header -DRC_INVOKED $(cpp_opts)'
+cc_opts =  \
+  $(cpp_opts) -include std.h \
+  -std=gnu99 -Wall -Wextra -Werror -Wundef \
+  -march=i586 -mtune=pentium-m
 
-cc_opts = \
-  $(cpp_opts) -include std.h -std=gnu99 \
-  -Wall -Wextra -Werror -Wundef \
-  -march=i686
-
-# Tune for Atom on gcc >= 4.5, and Pentium M otherwise.
-ifeq ($(shell VER=`$(cc) -dumpversion`; expr $${VER%.*} '>=' 4.5), 1)
-  cc_opts += -mtune=atom
-else
-  cc_opts += -mtune=pentium-m
-endif
-
-ld_opts := \
-  -mwindows -lcomctl32 -limm32 -lwinspool -lole32 /lib/w32api/libuuid.a \
-  -static-libgcc
+ld_opts := -mwindows -lcomctl32 -limm32 -lwinspool -lole32 /lib/w32api/libuuid.a
 
 ifdef debug
 cc_opts += -g
 else
-cc_opts += -DNDEBUG -fomit-frame-pointer -O2
+cc_opts += -DNDEBUG -fomit-frame-pointer -Os
 ld_opts += -s
 endif
 
@@ -51,6 +39,10 @@ ifdef dmalloc
 cc_opts += -DDMALLOC
 ld_opts += -ldmallocth
 endif
+
+cc := gcc
+rc_cpp := $(cc) -E -xc-header -DRC_INVOKED $(cpp_opts)
+rc := windres --preprocessor '$(rc_cpp)'
 
 $(exe): $(objs)
 	$(cc) -o $@ $^ $(ld_opts)
