@@ -167,9 +167,9 @@ child_create(char *argv[], struct winsize *winp)
           dev += 5;
         strlcpy(ut.ut_line, dev, sizeof ut.ut_line);
 
-        if (!strncmp(dev, "tty", 3))
+        if (dev[1] == 't' && dev[2] == 'y')
           dev += 3;
-        if (!strncmp(dev, "pts/", 4))
+        else if (!strncmp(dev, "pts/", 4))
           dev += 4;
         strncpy(ut.ut_id, dev, sizeof ut.ut_id);
 
@@ -187,7 +187,7 @@ child_create(char *argv[], struct winsize *winp)
 
   // Open log file if any
   if (*cfg.log) {
-    log_fd = open(cfg.log, O_WRONLY | O_CREAT, 0600);
+    log_fd = open(cfg.log, O_WRONLY | O_CREAT | O_TRUNC, 0600);
     if (log_fd < 0)
       error("open log file");
   }

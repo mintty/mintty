@@ -41,7 +41,7 @@ uint win_get_font_size(void);
 void win_check_glyphs(wchar *wcs, uint num);
 
 void win_open(wstring path);
-void win_copy(const wchar *data, int *attrs, int len);
+void win_copy(const wchar *data, uint *attrs, int len);
 void win_paste(void);
 
 void win_set_timer(void_fn cb, uint ticks);

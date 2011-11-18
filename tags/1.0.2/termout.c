@@ -639,7 +639,6 @@ do_winop(void)
       win_get_screen_chars(&rows, &cols);
       child_printf("\e[9;%d;%dt", rows, cols);
     }
-    when 20 or 21: child_write("\e]l\e\\", 5);
   }
 }
 

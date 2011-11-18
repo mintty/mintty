@@ -17,8 +17,8 @@ typedef struct {
   int bufpos;   /* amount of actual data */
   wchar *textbuf;       /* buffer for copied text */
   wchar *textptr;       /* = textbuf + bufpos (current insertion point) */
-  int *attrbuf; /* buffer for copied attributes */
-  int *attrptr; /* = attrbuf + bufpos */
+  uint *attrbuf; /* buffer for copied attributes */
+  uint *attrptr; /* = attrbuf + bufpos */
 } clip_workbuf;
 
 static void
@@ -47,7 +47,7 @@ get_selection(clip_workbuf *buf)
   buf->buflen = 5120;
   buf->bufpos = 0;
   buf->textptr = buf->textbuf = newn(wchar, buf->buflen);
-  buf->attrptr = buf->attrbuf = newn(int, buf->buflen);
+  buf->attrptr = buf->attrbuf = newn(uint, buf->buflen);
 
   old_top_x = start.x;    /* needed for rect==1 */
 
