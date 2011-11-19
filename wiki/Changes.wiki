@@ -1,6 +1,14 @@
 #summary Notable changes in each release
 #labels Featured
 
+=== 1.0.2 (19 November 2011) ===
+ * Fixed a bug that caused attributes for the wrong cells to be picked up when copying characters on systems with a double-byte default codepage.
+ * Added missing O_TRUNC flag when opening a log file.
+ * Take bold attribute into account when determining font coverage via the OSC 7771 sequence.
+ * Ignore title request sequence instead of sending an empty reply.
+ * On Cygwin 1.7, stop setting LANG to the system default locale (currently "C.UTF-8") if the locale isn't set either in the environment or in the options.
+ * Reflect Cygwin 1.7.10 name change of pty master devices from "/dev/ttyN" to "/dev/ptyN" when creating utmp entries.
+
 === 1.0.1 (24 July 2011) ===
  * Fixed a bug in the creation of utmp entries that limited the number of mintty entries to 10. Also prepared for the possibility of Cygwin switching to the Unix98 pty naming scheme.
  * Included semicolon in word selection, for the sake of URLs using them to separate parameters.
