@@ -498,9 +498,13 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
   
   botline++; // One below the scroll region: easier to calculate with
   
+  // Don't try to scroll more than the number of lines in the scroll region.
+  int lines_in_region = botline - topline;
+  lines = min(lines, lines_in_region);
+  
   // Number of lines that are moved up or down as they are.
   // The rest are scrolled out of the region and replaced by empty lines.
-  int moved_lines = botline - topline - lines;
+  int moved_lines = lines_in_region - lines;
   
   // Useful pointers to the top and (one below the) bottom lines.
   termline **top = term.screen.lines + topline;
