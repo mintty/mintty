@@ -83,10 +83,41 @@ win_set_title(char *title)
 void
 win_copy_title(void)
 {
-  int wlen = GetWindowTextLengthW(wnd);
-  wchar wtext[wlen + 1];
-  wlen = GetWindowTextW(wnd, wtext, wlen + 1);
-  win_copy(wtext, 0, wlen + 1);
+  int len = GetWindowTextLengthW(wnd);
+  wchar title[len + 1];
+  len = GetWindowTextW(wnd, title, len + 1);
+  win_copy(title, 0, len + 1);
+}
+
+/*
+ * Title stack (implemented as fixed-size circular buffer)
+ */
+static wstring titles[16];
+static uint titles_i;
+
+void
+win_save_title(void)
+{
+  int len = GetWindowTextLengthW(wnd);
+  wchar *title = newn(wchar, len + 1);
+  GetWindowTextW(wnd, title, len + 1);
+  delete(titles[titles_i]);
+  titles[titles_i++] = title;
+  if (titles_i == lengthof(titles))
+    titles_i = 0;
+}
+
+void
+win_restore_title(void)
+{
+  if (!titles_i)
+    titles_i = lengthof(titles);
+  wstring title = titles[--titles_i];
+  if (title) {
+    SetWindowTextW(wnd, title);
+    delete(title);
+    titles[titles_i] = 0;
+  }
 }
 
 /*

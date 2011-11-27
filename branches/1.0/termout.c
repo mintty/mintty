@@ -639,6 +639,12 @@ do_winop(void)
       win_get_screen_chars(&rows, &cols);
       child_printf("\e[9;%d;%dt", rows, cols);
     }
+    when 22:
+      if (arg1 == 0 || arg1 == 2)
+        win_save_title();
+    when 23:
+      if (arg1 == 0 || arg1 == 2)
+        win_restore_title();
   }
 }
 
