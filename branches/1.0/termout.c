@@ -695,10 +695,10 @@ do_csi(uchar c)
       term_erase(term.esc_mod, true, left, right);
     }
     when 'L':        /* IL: insert lines */
-      if (curs->y <= screen->marg_b)
+      if (curs->y >= screen->marg_t && curs->y <= screen->marg_b)
         term_do_scroll(curs->y, screen->marg_b, -arg0_def1, false);
     when 'M':        /* DL: delete lines */
-      if (curs->y <= screen->marg_b)
+      if (curs->y >= screen->marg_t && curs->y <= screen->marg_b)
         term_do_scroll(curs->y, screen->marg_b, arg0_def1, true);
     when '@':        /* ICH: insert chars */
       insert_char(arg0_def1);
