@@ -491,16 +491,27 @@ term_check_boundary(int x, int y)
 void
 term_do_scroll(int topline, int botline, int lines, bool sb)
 {
-  bool down = lines < 0;
-  lines = abs(lines);
+  assert(botline >= topline && lines != 0);
+  
+  bool down = lines < 0; // Scrolling downwards?
+  lines = abs(lines);    // Number of lines to scroll by
   
   botline++; // One below the scroll region: easier to calculate with
-  int moved_lines = botline - topline - lines;
   
+  // Don't try to scroll more than the number of lines in the scroll region.
+  int lines_in_region = botline - topline;
+  lines = min(lines, lines_in_region);
+  
+  // Number of lines that are moved up or down as they are.
+  // The rest are scrolled out of the region and replaced by empty lines.
+  int moved_lines = lines_in_region - lines;
+  
+  // Useful pointers to the top and (one below the) bottom lines.
   termline **top = term.screen.lines + topline;
   termline **bot = term.screen.lines + botline;
   
-  // Reuse lines that are being scrolled out of the scroll region
+  // Reuse lines that are being scrolled out of the scroll region,
+  // clearing their content.
   termline *recycled[abs(lines)];
   void recycle(termline **src) {
     memcpy(recycled, src, sizeof recycled);
@@ -525,7 +536,7 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
     scroll_pos(&term.sel_anchor);
     scroll_pos(&term.sel_end);
   }
-  else if (lines > 0) {
+  else {
     int seltop = topline;
 
     // Only push lines into the scrollback when scrolling off the top of the
