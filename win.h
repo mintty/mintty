@@ -12,7 +12,10 @@ void win_text(int x, int y, wchar *text, int len, uint attr, int lattr);
 void win_update_mouse(void);
 void win_capture_mouse(void);
 void win_bell(void);
+
 void win_set_title(char *);
+void win_save_title(void);
+void win_restore_title(void);
 
 colour win_get_colour(colour_i);
 void win_set_colour(colour_i, colour);

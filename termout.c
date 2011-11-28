@@ -639,7 +639,12 @@ do_winop(void)
       win_get_screen_chars(&rows, &cols);
       child_printf("\e[9;%d;%dt", rows, cols);
     }
-    when 20 or 21: child_write("\e]l\e\\", 5);
+    when 22:
+      if (arg1 == 0 || arg1 == 2)
+        win_save_title();
+    when 23:
+      if (arg1 == 0 || arg1 == 2)
+        win_restore_title();
   }
 }
 
@@ -696,10 +701,10 @@ do_csi(uchar c)
       term_erase(term.esc_mod, true, left, right);
     }
     when 'L':        /* IL: insert lines */
-      if (curs->y <= screen->marg_b)
+      if (curs->y >= screen->marg_t && curs->y <= screen->marg_b)
         term_do_scroll(curs->y, screen->marg_b, -arg0_def1, false);
     when 'M':        /* DL: delete lines */
-      if (curs->y <= screen->marg_b)
+      if (curs->y >= screen->marg_t && curs->y <= screen->marg_b)
         term_do_scroll(curs->y, screen->marg_b, arg0_def1, true);
     when '@':        /* ICH: insert chars */
       insert_char(arg0_def1);
