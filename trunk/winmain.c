@@ -540,8 +540,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_RBUTTONDOWN: win_mouse_click(MBT_RIGHT, lp);
     when WM_MBUTTONDOWN: win_mouse_click(MBT_MIDDLE, lp);
     when WM_LBUTTONUP or WM_RBUTTONUP or WM_MBUTTONUP: win_mouse_release(lp);
-    when WM_MOUSEMOVE: win_mouse_move(false, lp);
-    when WM_NCMOUSEMOVE: win_mouse_move(true, lp);
+    when WM_MOUSEMOVE: win_mouse_move(lp);
+    when WM_NCMOUSEMOVE: win_show_mouse();
     when WM_MOUSEWHEEL: win_mouse_wheel(wp, lp);
     when WM_KEYDOWN or WM_SYSKEYDOWN:
       if (win_key_down(wp, lp))
@@ -550,11 +550,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       if (win_key_up(wp, lp))
         return 0;
     when WM_CHAR or WM_SYSCHAR:
-      {
-        wchar wc = wp;
-        child_sendw(&wc, 1);
-        return 0;
-      }
+      child_sendw(&(wchar){wp}, 1);
+      return 0;
     when WM_INPUTLANGCHANGE:
       win_set_ime_open(ImmIsIME(GetKeyboardLayout(0)) && ImmGetOpenStatus(imc));
     when WM_IME_NOTIFY:
