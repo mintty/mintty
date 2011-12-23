@@ -217,8 +217,7 @@ win_mouse_click(mouse_button b, LPARAM lp)
       t - last_time > GetDoubleClickTime() || ++count > 3)
     count = 1;
   term_mouse_click(b, mods, p, count);
-  last_click_pos = p;
-  last_pos = (pos){INT_MIN, INT_MIN};
+  last_pos = last_click_pos = p;
   last_time = t;
   last_button = b;
   if (alt_state > ALT_NONE)
@@ -236,12 +235,12 @@ win_mouse_release(LPARAM lp)
 void
 win_mouse_move(bool nc, LPARAM lp)
 {
-  win_show_mouse();
   pos p = get_mouse_pos(lp);
   if (p.x == last_pos.x && p.y == last_pos.y)
     return;
 
   last_pos = p;
+  win_show_mouse();
   if (!nc)
     term_mouse_move(get_mods(), p);
 }
