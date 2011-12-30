@@ -540,8 +540,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_RBUTTONDOWN: win_mouse_click(MBT_RIGHT, lp);
     when WM_MBUTTONDOWN: win_mouse_click(MBT_MIDDLE, lp);
     when WM_LBUTTONUP or WM_RBUTTONUP or WM_MBUTTONUP: win_mouse_release(lp);
-    when WM_MOUSEMOVE: win_mouse_move(lp);
-    when WM_NCMOUSEMOVE: win_show_mouse();
+    when WM_MOUSEMOVE: win_mouse_move(false, lp);
+    when WM_NCMOUSEMOVE: win_mouse_move(true, lp);
     when WM_MOUSEWHEEL: win_mouse_wheel(wp, lp);
     when WM_KEYDOWN or WM_SYSKEYDOWN:
       if (win_key_down(wp, lp))
@@ -550,8 +550,11 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       if (win_key_up(wp, lp))
         return 0;
     when WM_CHAR or WM_SYSCHAR:
-      child_sendw(&(wchar){wp}, 1);
-      return 0;
+      {
+        wchar wc = wp;
+        child_sendw(&wc, 1);
+        return 0;
+      }
     when WM_INPUTLANGCHANGE:
       win_set_ime_open(ImmIsIME(GetKeyboardLayout(0)) && ImmGetOpenStatus(imc));
     when WM_IME_NOTIFY:
@@ -701,18 +704,30 @@ show_msg(FILE *stream, string msg)
     MessageBox(0, msg, APPNAME, MB_OK);
 }
 
-static no_return __attribute__((format(printf, 2, 3)))
-error(bool syntax, char *format, ...) 
+static no_return __attribute__((format(printf, 1, 2)))
+error(char *format, ...) 
 {
   char *msg;
   va_list va;
   va_start(va, format);
   vasprintf(&msg, format, va);
   va_end(va);
-  msg = asform("%s: %s\n%s", main_argv[0], msg,
-               syntax ? "Try '--help' for more information.\n" : "");
+  msg = asform("%s: %s\nTry '--help' for more information.\n",
+               main_argv[0], msg);
   show_msg(stderr, msg);
   exit(1);
+}
+
+static void __attribute__((format(printf, 1, 2)))
+warn(char *format, ...) 
+{
+  char *msg;
+  va_list va;
+  va_start(va, format);
+  vasprintf(&msg, format, va);
+  va_end(va);
+  msg = asform("%s: %s\n", main_argv[0], msg);
+  show_msg(stderr, msg);
 }
 
 int
@@ -759,10 +774,10 @@ main(int argc, char *argv[])
       when 'o': parse_arg_option(optarg);
       when 'p':
         if (sscanf(optarg, "%i,%i%1s", &cfg.x, &cfg.y, (char[2]){}) != 2)
-          error(true, "syntax error in position argument '%s'", optarg);
+          error("syntax error in position argument '%s'", optarg);
       when 's':
         if (sscanf(optarg, "%u,%u%1s", &cfg.cols, &cfg.rows, (char[2]){}) != 2)
-          error(true, "syntax error in size argument '%s'", optarg);
+          error("syntax error in size argument '%s'", optarg);
         remember_arg("Columns");
         remember_arg("Rows");
       when 't': set_arg_option("Title", optarg);
@@ -776,9 +791,9 @@ main(int argc, char *argv[])
         show_msg(stdout, VERSION_TEXT);
         return 0;
       when '?':
-        error(true, "unknown option '%s'", optopt ? shortopt : longopt);
+        error("unknown option '%s'", optopt ? shortopt : longopt);
       when ':':
-        error(true, "option '%s' requires an argument",
+        error("option '%s' requires an argument",
               longopt[1] == '-' ? longopt : shortopt);
     }
   }
@@ -812,10 +827,11 @@ main(int argc, char *argv[])
   }
   
   // Load icon if specified.
-  HICON small_icon = 0, large_icon = 0;
+  HICON large_icon = 0, small_icon = 0;
   if (*cfg.icon) {
+    string icon_file = strdup(cfg.icon);
     uint icon_index = 0;
-    char *comma = strrchr(cfg.icon, ',');
+    char *comma = strrchr(icon_file, ',');
     if (comma) {
       char *start = comma + 1, *end;
       icon_index = strtoul(start, &end, 0);
@@ -824,19 +840,33 @@ main(int argc, char *argv[])
       else
         icon_index = 0;
     }
+    SetLastError(0);
 #if CYGWIN_VERSION_API_MINOR >= 181
-    wchar *win_icon_file = cygwin_create_path(CCP_POSIX_TO_WIN_W, cfg.icon);
-    if (!win_icon_file)
-      error(false, "invalid icon file path '%s'", cfg.icon);
-    ExtractIconExW(win_icon_file, icon_index, &large_icon, &small_icon, 1);
-    free(win_icon_file);
+    wchar *win_icon_file = cygwin_create_path(CCP_POSIX_TO_WIN_W, icon_file);
+    if (win_icon_file) {
+      ExtractIconExW(win_icon_file, icon_index, &large_icon, &small_icon, 1);
+      free(win_icon_file);
+    }
 #else
     char win_icon_file[MAX_PATH];
-    cygwin_conv_to_win32_path(cfg.icon, win_icon_file);
+    cygwin_conv_to_win32_path(icon_file, win_icon_file);
     ExtractIconExA(win_icon_file, icon_index, &large_icon, &small_icon, 1);
 #endif
-    if (!small_icon || !large_icon)
-      error(false, "could not load icon from '%s'", cfg.icon);
+    if (!large_icon) {
+      small_icon = 0;
+      uint error = GetLastError();
+      if (error) {
+        char msg[1024];
+        FormatMessage(
+          FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK,
+          0, error, 0, msg, sizeof msg, 0
+        );
+        warn("could not load icon from '%s': %s", cfg.icon, msg);
+      }
+      else
+        warn("could not load icon from '%s'", cfg.icon);
+    }
+    delete(icon_file);
   }
 
   inst = GetModuleHandle(NULL);

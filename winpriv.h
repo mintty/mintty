@@ -40,7 +40,7 @@ void win_show_mouse(void);
 void win_mouse_click(mouse_button, LPARAM);
 void win_mouse_release(LPARAM);
 void win_mouse_wheel(WPARAM, LPARAM);
-void win_mouse_move(LPARAM);
+void win_mouse_move(bool nc, LPARAM);
 
 bool win_key_down(WPARAM, LPARAM);
 bool win_key_up(WPARAM, LPARAM);

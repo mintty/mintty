@@ -844,6 +844,7 @@ term_paint(void)
         * be on the right-hand half of this character.
         * Ever.
         */
+        assert(!(i == our_curs_y && j == our_curs_x));
         if (!termchars_equal(&dispchars[j], d))
           dirty_run = true;
         copy_termchar(displine, j, d);
