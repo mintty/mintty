@@ -31,15 +31,15 @@ Canonical download:
 -------------------------------------------
 
 Build instructions:
-  unpack mintty-1.0.2-1-src.tar.bz2
+  unpack mintty-1.0.3-1-src.tar.bz2
     if you use setup to install this src package, it will be
     unpacked under /usr/src automatically
   cd /usr/src
-  cygport mintty-1.0.2-1.cygport all
+  cygport mintty-1.0.3-1.cygport all
 
 This will create:
-  /usr/src/mintty-1.0.2-1-src.tar.bz2
-  /usr/src/mintty-1.0.2-1.tar.bz2
+  /usr/src/mintty-1.0.3-1-src.tar.bz2
+  /usr/src/mintty-1.0.3-1.tar.bz2
 
 -------------------------------------------
 
@@ -67,6 +67,8 @@ http://code.google.com/p/mintty/wiki/Changes
 -------------------
 
 Port Notes:
+
+----- mintty-1.0.3-1 -----
 
 ----- mintty-1.0.2-1 -----
 * Dropped postinstall and preremove scripts for start menu shortcut
