@@ -1,6 +1,11 @@
 #summary Notable changes in each release
 #labels Featured
 
+=== 1.0.3 (30 December 2011) ===
+ * Fixed crash when trying to insert or erase out-of-range lines.
+ * Implemented xterm title stack feature (limited to 16 entries).
+ * Failure to load a custom program icon now triggers a warning rather than a fatal error.
+
 === 1.0.2 (19 November 2011) ===
  * Fixed a bug that caused attributes for the wrong cells to be picked up when copying characters on systems with a double-byte default codepage.
  * Added missing O_TRUNC flag when opening a log file.
