@@ -15,6 +15,13 @@
 #include <wchar.h>
 #include <errno.h>
 
+#if CYGWIN_VERSION_API_MINOR >= 91
+#include <argz.h>
+#else
+int argz_create (char *const argv[], char **argz, size_t *argz_len);
+void argz_stringify (char *argz, size_t argz_len, int sep);
+#endif
+
 #if CYGWIN_VERSION_API_MINOR >= 74
 #include <wctype.h>
 #else
@@ -31,6 +38,7 @@ int iswspace(wint_t);
 int asprintf(char **, const char *, ...);
 int vasprintf(char **, const char *, va_list);
 #endif
+
 char *asform(const char *fmt, ...);
 
 #define WINVER 0x500  // Windows 2000
@@ -47,18 +55,18 @@ char *asform(const char *fmt, ...);
 #define unused(arg) unused_##arg __attribute__((unused))
 #define no_return __attribute__((noreturn)) void
 
-typedef uint xchar;     // UTF-32
-typedef wchar_t wchar;  // UTF-16
-
 typedef signed char schar;
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
 
+typedef void (*void_fn)(void);
+
+typedef uint xchar;     // UTF-32
+typedef wchar_t wchar;  // UTF-16
+
 typedef const char *string;
 typedef const wchar *wstring;
-
-typedef void (*void_fn)(void);
 
 #define null ((void *) 0)
 
