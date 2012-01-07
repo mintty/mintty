@@ -17,13 +17,6 @@
 
 #include <sys/cygwin.h>
 
-#if CYGWIN_VERSION_API_MINOR >= 91
-#include <argz.h>
-#else
-int argz_create (char *const argv[], char **argz, size_t *argz_len);
-void argz_stringify (char *argz, size_t argz_len, int sep);
-#endif
-
 HINSTANCE inst;
 HWND wnd;
 HIMC imc;
