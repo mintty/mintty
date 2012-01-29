@@ -1,5 +1,5 @@
 // termmouse.c (part of mintty)
-// Copyright 2008-11 Andy Koppe
+// Copyright 2008-12 Andy Koppe
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -327,6 +327,8 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
       if (!alt)
         term.mouse_state = shift_or_ctrl ? MS_COPYING : MS_PASTING;
     }
+    else if (b == MBT_LEFT && mods == MDK_SHIFT && rca == RC_EXTEND)
+      term.mouse_state = MS_PASTING;
     else if (b == MBT_LEFT && mods == MDK_CTRL) {
       // Open word under cursor
       p = get_selpoint(box_pos(p));
