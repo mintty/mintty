@@ -217,6 +217,7 @@ static void
 send_mouse_event(char code, mod_keys mods, pos p)
 {
   code |= (mods & ~cfg.click_target_mod) << 2;
+  p.x++, p.y++;
   
   if (term.proper_mouse_seq) {
     // Urxvt's proper CSI sequence with unlimited coordinates.
@@ -228,7 +229,7 @@ send_mouse_event(char code, mod_keys mods, pos p)
     uint len = 3;
     
     void encode_coord(int c) {
-      c += ' ' + 1;
+      c += ' ';
       if (!term.ext_mouse_pos)
         buf[len++] = c < 0x100 ? c : 0; 
       else if (c < 0x80)
