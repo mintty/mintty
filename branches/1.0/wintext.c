@@ -51,7 +51,7 @@ static const wchar linedraw_chars[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES] = {
   {0x253C, '+'},                   // 0x6E 'n' Crossing lines
   {0x23BA, 0x00AF, '-'},           // 0x6F 'o' High horizontal line
   {0x23BB, 0x00AF, '-'},           // 0x70 'p' Medium-high horizontal line
-  {0x2500, '-'},                   // 0x71 'q' Middle horizontal line
+  {0x2500, 0x2015, 0x2014, '-'},   // 0x71 'q' Middle horizontal line
   {0x23BC, '_'},                   // 0x72 'r' Medium-low horizontal line
   {0x23BF, '_'},                   // 0x73 's' Low horizontal line
   {0x251C, '+'},                   // 0x74 't' Left "T"
