@@ -252,7 +252,6 @@ struct term {
   bool cursor_on;        /* cursor enabled flag */
   bool deccolm_allowed;  /* DECCOLM sequence for 80/132 cols allowed? */
   bool reset_132;        /* Flag ESC c resets to 80 cols */
-  bool use_bce;  /* Use Background coloured erase */
   bool cblinker; /* When blinking is the cursor on ? */
   bool tblinker; /* When the blinking text is on */
   bool blink_is_real;    /* Actually blink blinking text */

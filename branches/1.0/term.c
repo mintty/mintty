@@ -137,7 +137,6 @@ term_reset(void)
   term.bracketed_paste = false;
   term.show_scrollbar = true;
 
-  term.use_bce = true;
   term.cursor_type = -1;
   term.cursor_blinks = -1;
   term.blink_is_real = cfg.allow_blinking;

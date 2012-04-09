@@ -50,14 +50,6 @@ move(int x, int y, int marg_clip)
   curs->wrapnext = false;
 }
 
-static void
-set_erase_char(void)
-{
-  term.erase_char = basic_erase_char;
-  if (term.use_bce)
-    term.erase_char.attr = term.screen.curs.attr & (ATTR_FGMASK | ATTR_BGMASK);
-}
-
 /*
  * Save the cursor and SGR mode.
  */
@@ -482,7 +474,7 @@ do_sgr(void)
     }
   }
   term.screen.curs.attr = attr;
-  set_erase_char();
+  term.erase_char.attr = attr & (ATTR_FGMASK | ATTR_BGMASK);
 }
 
 /*
