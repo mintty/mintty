@@ -225,10 +225,10 @@ win_mouse_click(mouse_button b, LPARAM lp)
 }
 
 void
-win_mouse_release(LPARAM lp)
+win_mouse_release(mouse_button b, LPARAM lp)
 {
   win_show_mouse();
-  term_mouse_release(get_mods(), get_mouse_pos(lp));
+  term_mouse_release(b, get_mods(), get_mouse_pos(lp));
   ReleaseCapture();
 }
 

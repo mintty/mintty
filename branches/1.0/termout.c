@@ -536,10 +536,12 @@ set_modes(bool state)
           win_update_mouse();
         when 1004: /* FOCUS_EVENT_MOUSE */
           term.report_focus = state;
-        when 1005: /* EXT_MODE_MOUSE */
-          term.ext_mouse_pos = state;
-        when 1015: /* use proper CSI sequence for mouse reports (from urxvt) */
-          term.proper_mouse_seq = state;
+        when 1005: /* Xterm's UTF8 encoding for mouse positions */
+          term.mouse_enc = state ? ME_UTF8 : 0;
+        when 1006: /* Xterm's CSI-style mouse encoding */
+          term.mouse_enc = state ? ME_XTERM_CSI : 0;
+        when 1015: /* Urxvt's CSI-style mouse encoding */
+          term.mouse_enc = state ? ME_URXVT_CSI : 0;
         when 1047:       /* alternate screen */
           term.selected = false;
           term_switch_screen(state, true, true);

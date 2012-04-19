@@ -130,7 +130,7 @@ term_reset(void)
   term.vt220_keys = strstr(cfg.term, "vt220");
   term.app_keypad = term.app_cursor_keys = term.app_wheel = false;
   term.mouse_mode = MM_NONE;
-  term.proper_mouse_seq = term.ext_mouse_pos = false;
+  term.mouse_enc = ME_X10;
   term.wheel_reporting = true;
   term.modify_other_keys = 0;
   term.report_focus = term.report_ambig_width = 0;

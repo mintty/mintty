@@ -302,19 +302,29 @@ struct term {
     OSC_START, OSC_NUM, OSC_PALETTE
   } state;
 
+  // Mouse mode
   enum {
-    MM_NONE, MM_X10, MM_VT200, MM_BTN_EVENT, MM_ANY_EVENT
+    MM_NONE,
+    MM_X10,       // just clicks
+    MM_VT200,     // click and release
+    MM_BTN_EVENT, // click, release, and drag with button down
+    MM_ANY_EVENT  // click, release, and any movement
   } mouse_mode;
+
+  // Mouse encoding
+  enum {
+    ME_X10,        // CSI M followed by one byte each for event, X and Y
+    ME_UTF8,       // Same as X10, but with UTF-8 encoded X and Y (ugly!)
+    ME_URXVT_CSI,  // CSI event ; x ; y M
+    ME_XTERM_CSI   // CSI > event ; x ; y M/m
+  } mouse_enc;
 
   enum {
     // The state can be zero, one of the mouse buttons or one of the cases here.
     MS_SEL_CHAR = -1, MS_SEL_WORD = -2, MS_SEL_LINE = -3,
     MS_COPYING = -4, MS_PASTING = -5, MS_OPENING = -6
   } mouse_state;
-  
-  bool ext_mouse_pos;  // Xterm extended mouse position reporting (using UTF-8)
-  bool proper_mouse_seq;  // Use urxvt's proper CSI sequence for mouse reports.
-  
+
   bool sel_rect, selected;
   pos sel_start, sel_end, sel_anchor;
   
@@ -349,7 +359,7 @@ void term_scroll(int, int);
 void term_reset(void);
 void term_clear_scrollback(void);
 void term_mouse_click(mouse_button, mod_keys, pos, int count);
-void term_mouse_release(mod_keys, pos);
+void term_mouse_release(mouse_button, mod_keys, pos);
 void term_mouse_move(mod_keys, pos);
 void term_mouse_wheel(int delta, int lines_per_notch, mod_keys, pos);
 void term_select_all(void);

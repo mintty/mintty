@@ -38,7 +38,7 @@ void win_update_menus(void);
 
 void win_show_mouse(void);
 void win_mouse_click(mouse_button, LPARAM);
-void win_mouse_release(LPARAM);
+void win_mouse_release(mouse_button, LPARAM);
 void win_mouse_wheel(WPARAM, LPARAM);
 void win_mouse_move(bool nc, LPARAM);
 
