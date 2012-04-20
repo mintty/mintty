@@ -213,28 +213,38 @@ sel_extend(pos selpoint)
   sel_drag(selpoint);
 }
 
+typedef enum {
+  MA_CLICK = 0,
+  MA_MOVE = 1,
+  MA_WHEEL = 2,
+  MA_RELEASE = 3
+} mouse_action;
+
 static void
-send_mouse_event(bool release, char code, mod_keys mods, pos p)
+send_mouse_event(mouse_action a, mouse_button b, mod_keys mods, pos p)
 {
   uint x = p.x + 1, y = p.y + 1;
-  code |= (mods & ~cfg.click_target_mod) << 2;
   
-  if (term.mouse_enc == ME_XTERM_CSI) {
-    child_printf("\e[<%u;%u;%u%c", code, x, y, (release ? 'm' : 'M'));
-    return;
-  }
-
-  code = release ? 0x23 : code + 0x20;
-
-  if (term.mouse_enc == ME_URXVT_CSI)
-    child_printf("\e[%u;%u;%uM", code, x, y);
+  uint code = b ? b - 1 : 0x3;
+  
+  if (a != MA_RELEASE)
+    code |= a * 0x20;
+  else if (term.mouse_enc != ME_XTERM_CSI)
+    code = 0x3;
+  
+  code |= (mods & ~cfg.click_target_mod) * 0x4;
+  
+  if (term.mouse_enc == ME_XTERM_CSI)
+    child_printf("\e[<%u;%u;%u%c", code, x, y, (a == MA_RELEASE ? 'm' : 'M'));
+  else if (term.mouse_enc == ME_URXVT_CSI)
+    child_printf("\e[%u;%u;%uM", code + 0x20, x, y);
   else {
     // Xterm's hacky but traditional character offset approach.
     char buf[8] = "\e[M";
     uint len = 3;
     
     void encode_coord(uint c) {
-      c += ' ';
+      c += 0x20;
       if (term.mouse_enc != ME_UTF8)
         buf[len++] = c < 0x100 ? c : 0; 
       else if (c < 0x80)
@@ -251,7 +261,7 @@ send_mouse_event(bool release, char code, mod_keys mods, pos p)
       }
     }
     
-    buf[len++] = code;
+    buf[len++] = code + 0x20;
     encode_coord(x);
     encode_coord(y);
 
@@ -317,7 +327,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
   if (is_app_mouse(&mods)) {
     if (term.mouse_mode == MM_X10)
       mods = 0;
-    send_mouse_event(false, b - 1, mods, box_pos(p));
+    send_mouse_event(MA_CLICK, b, mods, box_pos(p));
     term.mouse_state = b;
   }
   else {  
@@ -442,7 +452,7 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
     default:
       if (is_app_mouse(&mods)) {
         if (term.mouse_mode >= MM_VT200)
-          send_mouse_event(true, b - 1, mods, box_pos(p));
+          send_mouse_event(MA_RELEASE, b, mods, box_pos(p));
       }
   }
 }
@@ -484,11 +494,11 @@ term_mouse_move(mod_keys mods, pos p)
   }
   else if (term.mouse_state > 0) {
     if (term.mouse_mode >= MM_BTN_EVENT)
-      send_mouse_event(false, 0x1F + term.mouse_state, mods, bp);
+      send_mouse_event(MA_MOVE, term.mouse_state, mods, bp);
   }
   else {
     if (term.mouse_mode == MM_ANY_EVENT)
-      send_mouse_event(false, 0x23, mods, bp);
+      send_mouse_event(MA_MOVE, 0, mods, bp);
   }
 }
 
@@ -505,9 +515,9 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
     int notches = accu / NOTCH_DELTA;
     if (notches) {
       accu -= NOTCH_DELTA * notches;
-      char code = 0x40 | (notches < 0);
+      mouse_button b = (notches < 0) + 1;
       notches = abs(notches);
-      do send_mouse_event(false, code, mods, p); while (--notches);
+      do send_mouse_event(MA_WHEEL, b, mods, p); while (--notches);
     }
   }
   else if (mods == MDK_CTRL) {
