@@ -223,10 +223,11 @@ typedef struct {
   termlines *lines;
   int marg_t, marg_b;   /* scroll margins */
   bool insert;
-  term_cursor curs, saved_curs;
+  term_cursor saved_curs;
 } term_screen;
 
 struct term {
+  term_cursor curs;
   term_screen screen, other_screen;
 
   bool on_alt_screen;     /* On alternate screen? */

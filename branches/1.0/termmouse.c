@@ -410,7 +410,7 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
       
       pos orig;
       if (state == MS_SEL_CHAR)
-        orig = (pos){.y = term.screen.curs.y, .x = term.screen.curs.x};
+        orig = (pos){.y = term.curs.y, .x = term.curs.x};
       else if (moved_previously)
         orig = last_dest;
       else

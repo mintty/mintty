@@ -30,7 +30,7 @@ static void
 move(int x, int y, int marg_clip)
 {
   term_screen *screen = &term.screen;
-  term_cursor *curs = &screen->curs;
+  term_cursor *curs = &term.curs;
   if (x < 0)
     x = 0;
   if (x >= term.cols)
@@ -56,7 +56,7 @@ move(int x, int y, int marg_clip)
 static void
 save_cursor(void)
 {
-  term.screen.saved_curs = term.screen.curs;
+  term.screen.saved_curs = term.curs;
 }
 
 /*
@@ -65,7 +65,7 @@ save_cursor(void)
 static void
 restore_cursor(void)
 {
-  term_cursor *curs = &term.screen.curs;
+  term_cursor *curs = &term.curs;
   *curs = term.screen.saved_curs;
   term.erase_char.attr = curs->attr & (ATTR_FGMASK | ATTR_BGMASK);
   
@@ -95,7 +95,7 @@ insert_char(int n)
   int dir = (n < 0 ? -1 : +1);
   int m;
   termline *line;
-  term_cursor *curs = &term.screen.curs;
+  term_cursor *curs = &term.curs;
 
   n = (n < 0 ? -n : n);
   if (n > term.cols - curs->x)
@@ -132,7 +132,7 @@ write_bell(void)
 static void
 write_backspace(void)
 {
-  term_cursor *curs = &term.screen.curs;
+  term_cursor *curs = &term.curs;
   if (curs->x == 0 && (curs->y == 0 || !curs->autowrap))
    /* do nothing */ ;
   else if (curs->x == 0 && curs->y > 0)
@@ -146,7 +146,7 @@ write_backspace(void)
 static void
 write_tab(void)
 {
-  term_cursor *curs = &term.screen.curs;
+  term_cursor *curs = &term.curs;
   termline *line = term.screen.lines[curs->y];
   do
     curs->x++;
@@ -165,14 +165,14 @@ write_tab(void)
 static void
 write_return(void)
 {
-  term.screen.curs.x = 0;
-  term.screen.curs.wrapnext = false;
+  term.curs.x = 0;
+  term.curs.wrapnext = false;
 }
 
 static void
 write_linefeed(void)
 {
-  term_cursor *curs = &term.screen.curs;
+  term_cursor *curs = &term.curs;
   if (curs->y == term.screen.marg_b)
     term_do_scroll(term.screen.marg_t, term.screen.marg_b, 1, true);
   else if (curs->y < term.rows - 1)
@@ -187,7 +187,7 @@ write_char(wchar c, int width)
     return;
   
   term_screen *screen = &term.screen;
-  term_cursor *curs = &screen->curs;
+  term_cursor *curs = &term.curs;
   termline *line = screen->lines[curs->y];
   void put_char(wchar c)
   {
@@ -317,10 +317,10 @@ do_ctrl(char c)
     when CTRL('E'):   /* ENQ: terminal type query */
       child_write(cfg.answerback, strlen(cfg.answerback));
     when CTRL('N'):   /* LS1: Locking-shift one */
-      term.screen.curs.g1 = true;
+      term.curs.g1 = true;
       term_update_cs();
     when CTRL('O'):   /* LS0: Locking-shift zero */
-      term.screen.curs.g1 = false;
+      term.curs.g1 = false;
       term_update_cs();
     otherwise:
       return false;
@@ -332,7 +332,7 @@ static void
 do_esc(uchar c)
 {
   term_screen *screen = &term.screen;
-  term_cursor *curs = &screen->curs;
+  term_cursor *curs = &term.curs;
   term.state = NORMAL;
   switch (CPAIR(term.esc_mod, c)) {
     when '[':  /* CSI: control sequence introducer */
@@ -423,7 +423,7 @@ do_sgr(void)
 {
  /* Set Graphics Rendition. */
   uint argc = term.csi_argc;
-  uint attr = term.screen.curs.attr;
+  uint attr = term.curs.attr;
   for (uint i = 0; i < argc; i++) {
     switch (term.csi_argv[i]) {
       when 0: attr = ATTR_DEFAULT | (attr & ATTR_PROTECTED);
@@ -434,7 +434,7 @@ do_sgr(void)
       when 7: attr |= ATTR_REVERSE;
       when 8: attr |= ATTR_INVISIBLE;
       when 10 ... 12:
-        term.screen.curs.oem_acs = term.csi_argv[i] - 10;
+        term.curs.oem_acs = term.csi_argv[i] - 10;
         term_update_cs();
       when 21: attr &= ~ATTR_BOLD;
       when 22: attr &= ~(ATTR_BOLD | ATTR_DIM);
@@ -474,7 +474,7 @@ do_sgr(void)
         attr |= ATTR_DEFBG;
     }
   }
-  term.screen.curs.attr = attr;
+  term.curs.attr = attr;
   term.erase_char.attr = attr & (ATTR_FGMASK | ATTR_BGMASK);
 }
 
@@ -508,9 +508,9 @@ set_modes(bool state)
             win_invalidate_all();
           }
         when 6:  /* DECOM: DEC origin mode */
-          term.screen.curs.origin = state;
+          term.curs.origin = state;
         when 7:  /* DECAWM: auto wrap */
-          term.screen.curs.autowrap = state;
+          term.curs.autowrap = state;
         when 8:  /* DECARM: auto key repeat */
           // ignore
         when 9:  /* X10_MOUSE */
@@ -522,7 +522,7 @@ set_modes(bool state)
           term.deccolm_allowed = state;
         when 47: /* alternate screen */
           term.selected = false;
-          term_switch_screen(state, false, false);
+          term_switch_screen(state, false);
           term.disptop = 0;
         when 67: /* DECBKM: backarrow key mode */
           term.backspace_sends_bs = state;
@@ -545,7 +545,7 @@ set_modes(bool state)
           term.mouse_enc = state ? ME_URXVT_CSI : 0;
         when 1047:       /* alternate screen */
           term.selected = false;
-          term_switch_screen(state, true, true);
+          term_switch_screen(state, true);
           term.disptop = 0;
         when 1048:       /* save/restore cursor */
           if (state)
@@ -556,7 +556,7 @@ set_modes(bool state)
           if (state)
             save_cursor();
           term.selected = false;
-          term_switch_screen(state, true, false);
+          term_switch_screen(state, true);
           if (!state)
             restore_cursor();
           term.disptop = 0;
@@ -647,7 +647,7 @@ static void
 do_csi(uchar c)
 {
   term_screen *screen = &term.screen;
-  term_cursor *curs = &screen->curs;
+  term_cursor *curs = &term.curs;
   int arg0 = term.csi_argv[0], arg1 = term.csi_argv[1];
   int arg0_def1 = arg0 ?: 1;  // first arg with default 1
   switch (CPAIR(term.esc_mod, c)) {
@@ -826,8 +826,8 @@ do_csi(uchar c)
       term_schedule_cblink();
     when CPAIR('"', 'q'):  /* DECSCA: select character protection attribute */
       switch (arg0) {
-        when 0 or 2: term.screen.curs.attr &= ~ATTR_PROTECTED;
-        when 1: term.screen.curs.attr |= ATTR_PROTECTED;
+        when 0 or 2: term.curs.attr &= ~ATTR_PROTECTED;
+        when 1: term.curs.attr |= ATTR_PROTECTED;
       }
   }
 }
@@ -843,7 +843,7 @@ do_dcs(void)
   if (*s++ != '$')
     return;
   
-  uint attr = term.screen.curs.attr;
+  uint attr = term.curs.attr;
 
   if (!strcmp(s, "qm")) { // SGR
     char buf[64], *p = buf;
@@ -862,8 +862,8 @@ do_dcs(void)
     if (attr & ATTR_INVISIBLE)
       p += sprintf(p, ";8");
 
-    if (term.screen.curs.oem_acs)
-      p += sprintf(p, ";%u", 10 + term.screen.curs.oem_acs);
+    if (term.curs.oem_acs)
+      p += sprintf(p, ";%u", 10 + term.curs.oem_acs);
 
     uint fg = (attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
     if (fg != FG_COLOUR_I) {
@@ -1077,8 +1077,8 @@ term_write(const char *buf, uint len)
         
         wchar wc;
 
-        if (term.screen.curs.oem_acs && !memchr("\e\n\r\b", c, 4)) {
-          if (term.screen.curs.oem_acs == 2)
+        if (term.curs.oem_acs && !memchr("\e\n\r\b", c, 4)) {
+          if (term.curs.oem_acs == 2)
             c |= 0x80;
           write_char(cs_btowc_glyph(c), 1);
           continue;
@@ -1147,7 +1147,7 @@ term_write(const char *buf, uint len)
         int width = xcwidth(wc);
         #endif
         
-        switch(term.screen.curs.csets[term.screen.curs.g1]) {
+        switch(term.curs.csets[term.curs.g1]) {
           when CSET_LINEDRW:
             if (0x60 <= wc && wc <= 0x7E)
               wc = win_linedraw_chars[wc - 0x60];
