@@ -133,7 +133,7 @@ static void
 write_backspace(void)
 {
   term_cursor *curs = &term.screen.curs;
-  if (curs->x == 0 && (curs->y == 0 || !term.screen.autowrap))
+  if (curs->x == 0 && (curs->y == 0 || !curs->autowrap))
    /* do nothing */ ;
   else if (curs->x == 0 && curs->y > 0)
     curs->x = term.cols - 1, curs->y--;
@@ -196,7 +196,7 @@ write_char(wchar c, int width)
     line->chars[curs->x].attr = curs->attr;
   }  
 
-  if (curs->wrapnext && screen->autowrap && width > 0) {
+  if (curs->wrapnext && curs->autowrap && width > 0) {
     line->attr |= LATTR_WRAPPED;
     if (curs->y == screen->marg_b)
       term_do_scroll(screen->marg_t, screen->marg_b, 1, true);
@@ -508,9 +508,9 @@ set_modes(bool state)
             win_invalidate_all();
           }
         when 6:  /* DECOM: DEC origin mode */
-          term.screen.dec_om = state;
+          term.screen.curs.origin = state;
         when 7:  /* DECAWM: auto wrap */
-          term.screen.autowrap = state;
+          term.screen.curs.autowrap = state;
         when 8:  /* DECARM: auto key repeat */
           // ignore
         when 9:  /* X10_MOUSE */
@@ -673,12 +673,12 @@ do_csi(uchar c)
       move(arg0_def1 - 1, curs->y, 0);
     when 'd':        /* VPA: set vertical posn */
       move(curs->x,
-           (screen->dec_om ? screen->marg_t : 0) + arg0_def1 - 1,
-           screen->dec_om ? 2 : 0);
+           (curs->origin ? screen->marg_t : 0) + arg0_def1 - 1,
+           curs->origin ? 2 : 0);
     when 'H' or 'f':  /* CUP or HVP: set horz and vert posns at once */
       move((arg1 ?: 1) - 1,
-           (screen->dec_om ? screen->marg_t : 0) + arg0_def1 - 1,
-           screen->dec_om ? 2 : 0);
+           (curs->origin ? screen->marg_t : 0) + arg0_def1 - 1,
+           curs->origin ? 2 : 0);
     when 'J' or CPAIR('?', 'J'): { /* ED/DECSED: (selective) erase in display */
       if (arg0 == 3 && !term.esc_mod) { /* Erase Saved Lines (xterm) */
         term_clear_scrollback();
@@ -742,7 +742,7 @@ do_csi(uchar c)
         screen->marg_t = top;
         screen->marg_b = bot;
         curs->x = 0;
-        curs->y = screen->dec_om ? screen->marg_t : 0;
+        curs->y = curs->origin ? screen->marg_t : 0;
       }
     }
     when 'm':        /* SGR: set graphics rendition */

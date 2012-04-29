@@ -94,6 +94,7 @@ term_cursor_reset(term_cursor *curs)
 {
   curs->attr = ATTR_DEFAULT;
   curs->csets[0] = curs->csets[1] = CSET_ASCII;
+  curs->autowrap = true;
 }
 
 static void
@@ -102,7 +103,6 @@ term_screen_reset(term_screen *screen)
   termlines *lines = screen->lines;
   memset(screen, 0, sizeof(term_screen));
   screen->lines = lines;
-  screen->autowrap = true;
   if (term.rows != -1) 
     screen->marg_b = term.rows - 1;
   term_cursor_reset(&screen->curs);

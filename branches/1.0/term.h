@@ -210,18 +210,18 @@ typedef struct belltime {
 typedef struct {
   short x, y;
   uint attr;
+  bool origin;
+  bool autowrap;
   bool wrapnext;
   bool utf;
-  int oem_acs;
   bool g1;
   term_cset csets[2];
+  uchar oem_acs;
 } term_cursor;
 
 typedef struct {
   termlines *lines;
   int marg_t, marg_b;   /* scroll margins */
-  bool dec_om;
-  bool autowrap;
   bool insert;
   term_cursor curs, saved_curs;
 } term_screen;
