@@ -219,17 +219,12 @@ typedef struct {
   uchar oem_acs;
 } term_cursor;
 
-typedef struct {
-  termlines *lines;
-  term_cursor saved_curs;
-} term_screen;
-
 struct term {
-  term_cursor curs;
-  term_screen screen, other_screen;
-
   bool on_alt_screen;     /* On alternate screen? */
   bool show_other_screen;
+
+  termlines *lines, *other_lines;
+  term_cursor curs, saved_cursors[2];
 
   uchar **scrollback;     /* lines scrolled off top of screen */
   int disptop;            /* distance scrolled back (0 or -ve) */

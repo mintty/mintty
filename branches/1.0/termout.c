@@ -55,7 +55,7 @@ move(int x, int y, int marg_clip)
 static void
 save_cursor(void)
 {
-  term.screen.saved_curs = term.curs;
+  term.saved_cursors[term.on_alt_screen] = term.curs;
 }
 
 /*
@@ -65,7 +65,7 @@ static void
 restore_cursor(void)
 {
   term_cursor *curs = &term.curs;
-  *curs = term.screen.saved_curs;
+  *curs = term.saved_cursors[term.on_alt_screen];
   term.erase_char.attr = curs->attr & (ATTR_FGMASK | ATTR_BGMASK);
   
  /* Make sure the window hasn't shrunk since the save */
@@ -103,7 +103,7 @@ insert_char(int n)
   term_check_boundary(curs->x, curs->y);
   if (dir < 0)
     term_check_boundary(curs->x + n, curs->y);
-  line = term.screen.lines[curs->y];
+  line = term.lines[curs->y];
   if (dir < 0) {
     for (int j = 0; j < m; j++)
       move_termchar(line, line->chars + curs->x + j,
@@ -146,12 +146,12 @@ static void
 write_tab(void)
 {
   term_cursor *curs = &term.curs;
-  termline *line = term.screen.lines[curs->y];
+
   do
     curs->x++;
   while (curs->x < term.cols - 1 && !term.tabs[curs->x]);
   
-  if ((line->attr & LATTR_MODE) != LATTR_NORM) {
+  if ((term.lines[curs->y]->attr & LATTR_MODE) != LATTR_NORM) {
     if (curs->x >= term.cols / 2)
       curs->x = term.cols / 2 - 1;
   }
@@ -185,9 +185,8 @@ write_char(wchar c, int width)
   if (!c)
     return;
   
-  term_screen *screen = &term.screen;
   term_cursor *curs = &term.curs;
-  termline *line = screen->lines[curs->y];
+  termline *line = term.lines[curs->y];
   void put_char(wchar c)
   {
     clear_cc(line, curs->x);
@@ -203,7 +202,7 @@ write_char(wchar c, int width)
       curs->y++;
     curs->x = 0;
     curs->wrapnext = false;
-    line = screen->lines[curs->y];
+    line = term.lines[curs->y];
   }
   if (term.insert && width > 0)
     insert_char(width);
@@ -242,7 +241,7 @@ write_char(wchar c, int width)
         else if (curs->y < term.rows - 1)
           curs->y++;
         curs->x = 0;
-        line = screen->lines[curs->y];
+        line = term.lines[curs->y];
        /* Now we must term_check_boundary again, of course. */
         term_check_boundary(curs->x, curs->y);
         term_check_boundary(curs->x + 2, curs->y);
@@ -330,7 +329,6 @@ do_ctrl(char c)
 static void
 do_esc(uchar c)
 {
-  term_screen *screen = &term.screen;
   term_cursor *curs = &term.curs;
   term.state = NORMAL;
   switch (CPAIR(term.esc_mod, c)) {
@@ -378,7 +376,7 @@ do_esc(uchar c)
       term.tabs[curs->x] = true;
     when CPAIR('#', '8'):    /* DECALN: fills screen with Es :-) */
       for (int i = 0; i < term.rows; i++) {
-        termline *line = screen->lines[i];
+        termline *line = term.lines[i];
         for (int j = 0; j < term.cols; j++) {
           line->chars[j] =
             (termchar){.cc_next = 0, .chr = 'E', .attr = ATTR_DEFAULT};
@@ -387,13 +385,13 @@ do_esc(uchar c)
       }
       term.disptop = 0;
     when CPAIR('#', '3'):  /* DECDHL: 2*height, top */
-      screen->lines[curs->y]->attr = LATTR_TOP;
+      term.lines[curs->y]->attr = LATTR_TOP;
     when CPAIR('#', '4'):  /* DECDHL: 2*height, bottom */
-      screen->lines[curs->y]->attr = LATTR_BOT;
+      term.lines[curs->y]->attr = LATTR_BOT;
     when CPAIR('#', '5'):  /* DECSWL: normal */
-      screen->lines[curs->y]->attr = LATTR_NORM;
+      term.lines[curs->y]->attr = LATTR_NORM;
     when CPAIR('#', '6'):  /* DECDWL: 2*width */
-      screen->lines[curs->y]->attr = LATTR_WIDE;
+      term.lines[curs->y]->attr = LATTR_WIDE;
     when CPAIR('(', 'A') or CPAIR('(', 'B') or CPAIR('(', '0'):
      /* GZD4: G0 designate 94-set */
       curs->csets[0] = c;
@@ -645,7 +643,6 @@ do_winop(void)
 static void
 do_csi(uchar c)
 {
-  term_screen *screen = &term.screen;
   term_cursor *curs = &term.curs;
   int arg0 = term.csi_argv[0], arg1 = term.csi_argv[1];
   int arg0_def1 = arg0 ?: 1;  // first arg with default 1
@@ -794,7 +791,7 @@ do_csi(uchar c)
       int p = curs->x;
       term_check_boundary(curs->x, curs->y);
       term_check_boundary(curs->x + n, curs->y);
-      termline *line = screen->lines[curs->y];
+      termline *line = term.lines[curs->y];
       while (n--)
         line->chars[p++] = term.erase_char;
     }

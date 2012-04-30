@@ -79,7 +79,7 @@ int
 term_last_nonempty_line(void)
 {
   for (int i = term.rows - 1; i >= 0; i--) {
-    termline *line = term.screen.lines[i];
+    termline *line = term.lines[i];
     if (line) {
       for (int j = 0; j < line->cols; j++)
         if (!termchars_equal(&line->chars[j], &term.erase_char))
@@ -97,23 +97,14 @@ term_cursor_reset(term_cursor *curs)
   curs->autowrap = true;
 }
 
-static void
-term_screen_reset(term_screen *screen)
-{
-  termlines *lines = screen->lines;
-  memset(screen, 0, sizeof(term_screen));
-  screen->lines = lines;
-  term_cursor_reset(&screen->saved_curs);
-}
-
 void
 term_reset(void)
 {
   term.state = NORMAL;
 
   term_cursor_reset(&term.curs);
-  term_screen_reset(&term.screen);
-  term_screen_reset(&term.other_screen);
+  term_cursor_reset(&term.saved_cursors[0]);
+  term_cursor_reset(&term.saved_cursors[1]);
   
   term.backspace_sends_bs = cfg.backspace_sends_bs;
   if (term.tabs) {
@@ -145,7 +136,7 @@ term_reset(void)
   term.erase_char = basic_erase_char;
   term.on_alt_screen = false;
   term_print_finish();
-  if (term.screen.lines) {
+  if (term.lines) {
     term_switch_screen(1, false);
     term_erase(false, false, true, true);
     term_switch_screen(0, false);
@@ -304,9 +295,9 @@ term_resize(int newrows, int newcols)
   *    away.
   */
 
-  termlines *lines = term.screen.lines;
+  termlines *lines = term.lines;
   term_cursor *curs = &term.curs;
-  term_cursor *saved_curs = &term.screen.saved_curs;
+  term_cursor *saved_curs = &term.saved_cursors[term.on_alt_screen];
 
   // Shrink the screen if newrows < rows
   if (newrows < term.rows) {
@@ -333,7 +324,7 @@ term_resize(int newrows, int newcols)
     saved_curs->y = max(0, saved_curs->y - store);
   }
 
-  term.screen.lines = lines = renewn(lines, newrows);
+  term.lines = lines = renewn(lines, newrows);
   
   // Expand the screen if newrows > rows
   if (newrows > term.rows) {
@@ -380,12 +371,12 @@ term_resize(int newrows, int newcols)
   }
 
   // Make a new alternate screen.
-  lines = term.other_screen.lines;
+  lines = term.other_lines;
   if (lines) {
     for (int i = 0; i < term.rows; i++)
       freeline(lines[i]);
   }
-  term.other_screen.lines = lines = renewn(lines, newrows);
+  term.other_lines = lines = renewn(lines, newrows);
   for (int i = 0; i < newrows; i++)
     lines[i] = newline(newcols, true);
 
@@ -423,16 +414,12 @@ term_switch_screen(bool to_alt, bool reset)
 
   term.on_alt_screen = to_alt;
 
-  term_screen old_screen = term.screen;
-
-  if (to_alt && reset) {
-    term.screen.lines = term.other_screen.lines;
+  termlines *oldlines = term.lines;
+  term.lines = term.other_lines;
+  term.other_lines = oldlines;
+  
+  if (to_alt && reset)
     term_erase(false, false, true, true);
-  }
-  else
-    term.screen = term.other_screen;
-
-  term.other_screen = old_screen;
 }
 
 /*
@@ -461,7 +448,7 @@ term_check_boundary(int x, int y)
   if (x == 0 || x > term.cols)
     return;
 
-  termline *line = term.screen.lines[y];
+  termline *line = term.lines[y];
   if (x == term.cols)
     line->attr &= ~LATTR_WRAPPED2;
   else if (line->chars[x].chr == UCSWIDE) {
@@ -496,8 +483,8 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
   int moved_lines = lines_in_region - lines;
   
   // Useful pointers to the top and (one below the) bottom lines.
-  termline **top = term.screen.lines + topline;
-  termline **bot = term.screen.lines + botline;
+  termline **top = term.lines + topline;
+  termline **bot = term.lines + botline;
   
   // Reuse lines that are being scrolled out of the scroll region,
   // clearing their content.
@@ -532,7 +519,7 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
     // normal screen and scrollback is actually enabled.
     if (sb && topline == 0 && !term.on_alt_screen && cfg.scrollback_lines) {
       for (int i = 0; i < lines; i++)
-        scrollback_push(compressline(term.screen.lines[i]));
+        scrollback_push(compressline(term.lines[i]));
  
       // Shift viewpoint accordingly if user is looking at scrollback
       if (term.disptop < 0)
@@ -606,7 +593,7 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
       term.tempsblines = 0;
   }
   else {
-    termline *line = term.screen.lines[start.y];
+    termline *line = term.lines[start.y];
     while (poslt(start, end)) {
       if (start.x == term.cols) {
         if (line_only)
@@ -617,7 +604,7 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
       else if (!selective || !(line->chars[start.x].attr & ATTR_PROTECTED))
         line->chars[start.x] = term.erase_char;
       if (incpos(start) && start.y < term.rows)
-        line = term.screen.lines[start.y];
+        line = term.lines[start.y];
     }
   }
 }
