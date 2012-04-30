@@ -221,8 +221,6 @@ typedef struct {
 
 typedef struct {
   termlines *lines;
-  int marg_t, marg_b;   /* scroll margins */
-  bool insert;
   term_cursor saved_curs;
 } term_screen;
 
@@ -257,6 +255,8 @@ struct term {
   bool tblinker; /* When the blinking text is on */
   bool blink_is_real;    /* Actually blink blinking text */
   bool echoing;  /* Does terminal want local echo? */
+  bool insert;   /* Insert mode */
+  int marg_top, marg_bot;  /* scroll margins */
   bool printing, only_printing;  /* Are we doing ANSI printing? */
   int  print_state;      /* state of print-end-sequence scan */
   char *printbuf;        /* buffered data for printer */

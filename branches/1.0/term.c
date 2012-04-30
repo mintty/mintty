@@ -103,8 +103,6 @@ term_screen_reset(term_screen *screen)
   termlines *lines = screen->lines;
   memset(screen, 0, sizeof(term_screen));
   screen->lines = lines;
-  if (term.rows != -1) 
-    screen->marg_b = term.rows - 1;
   term_cursor_reset(&screen->saved_curs);
 }
 
@@ -126,6 +124,7 @@ term_reset(void)
   term.in_vbell = false;
   term.cursor_on = true;
   term.echoing = false;
+  term.insert = false;
   term.shortcut_override = term.escape_sends_fs = term.app_escape_key = false;
   term.vt220_keys = strstr(cfg.term, "vt220");
   term.app_keypad = term.app_cursor_keys = term.app_wheel = false;
@@ -136,6 +135,9 @@ term_reset(void)
   term.report_focus = term.report_ambig_width = 0;
   term.bracketed_paste = false;
   term.show_scrollbar = true;
+
+  term.marg_top = 0;
+  term.marg_bot = term.rows - 1;
 
   term.cursor_type = -1;
   term.cursor_blinks = -1;
@@ -279,8 +281,8 @@ term_resize(int newrows, int newcols)
 
   term.selected = false;
 
-  term.screen.marg_t = term.other_screen.marg_t = 0;
-  term.screen.marg_b = term.other_screen.marg_b = newrows - 1;
+  term.marg_top = 0;
+  term.marg_bot = newrows - 1;
 
  /*
   * Resize the screen and scrollback. We only need to shift

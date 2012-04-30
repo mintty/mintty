@@ -29,17 +29,16 @@ static const char primary_da[] = "\e[?1;2c";
 static void
 move(int x, int y, int marg_clip)
 {
-  term_screen *screen = &term.screen;
   term_cursor *curs = &term.curs;
   if (x < 0)
     x = 0;
   if (x >= term.cols)
     x = term.cols - 1;
   if (marg_clip) {
-    if ((curs->y >= screen->marg_t || marg_clip == 2) && y < screen->marg_t)
-      y = screen->marg_t;
-    if ((curs->y <= screen->marg_b || marg_clip == 2) && y > screen->marg_b)
-      y = screen->marg_b;
+    if ((curs->y >= term.marg_top || marg_clip == 2) && y < term.marg_top)
+      y = term.marg_top;
+    if ((curs->y <= term.marg_bot || marg_clip == 2) && y > term.marg_bot)
+      y = term.marg_bot;
   }
   if (y < 0)
     y = 0;
@@ -173,8 +172,8 @@ static void
 write_linefeed(void)
 {
   term_cursor *curs = &term.curs;
-  if (curs->y == term.screen.marg_b)
-    term_do_scroll(term.screen.marg_t, term.screen.marg_b, 1, true);
+  if (curs->y == term.marg_bot)
+    term_do_scroll(term.marg_top, term.marg_bot, 1, true);
   else if (curs->y < term.rows - 1)
     curs->y++;
   curs->wrapnext = false;
@@ -198,15 +197,15 @@ write_char(wchar c, int width)
 
   if (curs->wrapnext && curs->autowrap && width > 0) {
     line->attr |= LATTR_WRAPPED;
-    if (curs->y == screen->marg_b)
-      term_do_scroll(screen->marg_t, screen->marg_b, 1, true);
+    if (curs->y == term.marg_bot)
+      term_do_scroll(term.marg_top, term.marg_bot, 1, true);
     else if (curs->y < term.rows - 1)
       curs->y++;
     curs->x = 0;
     curs->wrapnext = false;
     line = screen->lines[curs->y];
   }
-  if (screen->insert && width > 0)
+  if (term.insert && width > 0)
     insert_char(width);
   switch (width) {
     when 1:  // Normal character.
@@ -238,8 +237,8 @@ write_char(wchar c, int width)
       if (curs->x == term.cols - 1) {
         line->chars[curs->x] = term.erase_char;
         line->attr |= LATTR_WRAPPED | LATTR_WRAPPED2;
-        if (curs->y == screen->marg_b)
-          term_do_scroll(screen->marg_t, screen->marg_b, 1, true);
+        if (curs->y == term.marg_bot)
+          term_do_scroll(term.marg_top, term.marg_bot, 1, true);
         else if (curs->y < term.rows - 1)
           curs->y++;
         curs->x = 0;
@@ -362,8 +361,8 @@ do_esc(uchar c)
       write_return();
       write_linefeed();
     when 'M':  /* RI: reverse index - backwards LF */
-      if (curs->y == screen->marg_t)
-        term_do_scroll(screen->marg_t, screen->marg_b, -1, true);
+      if (curs->y == term.marg_top)
+        term_do_scroll(term.marg_top, term.marg_bot, -1, true);
       else if (curs->y > 0)
         curs->y--;
       curs->wrapnext = false;
@@ -497,8 +496,8 @@ set_modes(bool state)
             term.selected = false;
             win_set_chars(term.rows, state ? 132 : 80);
             term.reset_132 = state;
-            term.other_screen.marg_t = term.screen.marg_t = 0;
-            term.other_screen.marg_b = term.screen.marg_b = term.rows - 1;
+            term.marg_top = 0;
+            term.marg_bot = term.rows - 1;
             move(0, 0, 0);
             term_erase(false, false, true, true);
           }
@@ -589,7 +588,7 @@ set_modes(bool state)
     else {
       switch (arg) {
         when 4:  /* IRM: set insert mode */
-          term.screen.insert = state;
+          term.insert = state;
         when 12: /* SRM: set echo mode */
           term.echoing = !state;
         when 20: /* LNM: Return sends ... */
@@ -673,11 +672,11 @@ do_csi(uchar c)
       move(arg0_def1 - 1, curs->y, 0);
     when 'd':        /* VPA: set vertical posn */
       move(curs->x,
-           (curs->origin ? screen->marg_t : 0) + arg0_def1 - 1,
+           (curs->origin ? term.marg_top : 0) + arg0_def1 - 1,
            curs->origin ? 2 : 0);
     when 'H' or 'f':  /* CUP or HVP: set horz and vert posns at once */
       move((arg1 ?: 1) - 1,
-           (curs->origin ? screen->marg_t : 0) + arg0_def1 - 1,
+           (curs->origin ? term.marg_top : 0) + arg0_def1 - 1,
            curs->origin ? 2 : 0);
     when 'J' or CPAIR('?', 'J'): { /* ED/DECSED: (selective) erase in display */
       if (arg0 == 3 && !term.esc_mod) { /* Erase Saved Lines (xterm) */
@@ -696,11 +695,11 @@ do_csi(uchar c)
       term_erase(term.esc_mod, true, left, right);
     }
     when 'L':        /* IL: insert lines */
-      if (curs->y >= screen->marg_t && curs->y <= screen->marg_b)
-        term_do_scroll(curs->y, screen->marg_b, -arg0_def1, false);
+      if (curs->y >= term.marg_top && curs->y <= term.marg_bot)
+        term_do_scroll(curs->y, term.marg_bot, -arg0_def1, false);
     when 'M':        /* DL: delete lines */
-      if (curs->y >= screen->marg_t && curs->y <= screen->marg_b)
-        term_do_scroll(curs->y, screen->marg_b, arg0_def1, true);
+      if (curs->y >= term.marg_top && curs->y <= term.marg_bot)
+        term_do_scroll(curs->y, term.marg_bot, arg0_def1, true);
     when '@':        /* ICH: insert chars */
       insert_char(arg0_def1);
     when 'P':        /* DCH: delete chars */
@@ -739,10 +738,10 @@ do_csi(uchar c)
       int top = arg0_def1 - 1;
       int bot = (arg1 ? min(arg1, term.rows) : term.rows) - 1;
       if (bot > top) {
-        screen->marg_t = top;
-        screen->marg_b = bot;
+        term.marg_top = top;
+        term.marg_bot = bot;
         curs->x = 0;
-        curs->y = curs->origin ? screen->marg_t : 0;
+        curs->y = curs->origin ? term.marg_top : 0;
       }
     }
     when 'm':        /* SGR: set graphics rendition */
@@ -765,12 +764,12 @@ do_csi(uchar c)
       else
         do_winop();
     when 'S':        /* SU: Scroll up */
-      term_do_scroll(screen->marg_t, screen->marg_b, arg0_def1, true);
+      term_do_scroll(term.marg_top, term.marg_bot, arg0_def1, true);
       curs->wrapnext = false;
     when 'T':        /* SD: Scroll down */
       /* Avoid clash with unsupported hilight mouse tracking mode sequence */
       if (term.csi_argc <= 1) {
-        term_do_scroll(screen->marg_t, screen->marg_b, -arg0_def1, true);
+        term_do_scroll(term.marg_top, term.marg_bot, -arg0_def1, true);
         curs->wrapnext = false;
       }
     when CPAIR('*', '|'):     /* DECSNLS */
@@ -886,8 +885,7 @@ do_dcs(void)
     child_write(buf, p - buf);
   }
   else if (!strcmp(s, "qr"))  // DECSTBM (scroll margins)
-    child_printf("\eP1$r%u;%ur\e\\",
-                 term.screen.marg_t + 1, term.screen.marg_b + 1);
+    child_printf("\eP1$r%u;%ur\e\\", term.marg_top + 1, term.marg_bot + 1);
   else if (!strcmp(s, "q\"p"))  // DECSCL (conformance level)
     child_write("\eP1$r61\"p\e\\", 11);  // report as VT100
   else if (!strcmp(s, "q\"q"))  // DECSCA (protection attribute)
