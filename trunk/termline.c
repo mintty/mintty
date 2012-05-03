@@ -720,13 +720,12 @@ sblines(void)
 termline *
 fetch_line(int y)
 {
-  term_screen *screen =
-    term.show_other_screen ? &term.other_screen : &term.screen;
+  termlines *lines = term.show_other_screen ? term.other_lines : term.lines;
 
   termline *line;
   if (y >= 0) {
     assert(y < term.rows);
-    line = screen->lines[y];
+    line = lines[y];
   }
   else {
     assert(y < term.sblines);
