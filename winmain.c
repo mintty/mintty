@@ -532,7 +532,9 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_LBUTTONDOWN: win_mouse_click(MBT_LEFT, lp);
     when WM_RBUTTONDOWN: win_mouse_click(MBT_RIGHT, lp);
     when WM_MBUTTONDOWN: win_mouse_click(MBT_MIDDLE, lp);
-    when WM_LBUTTONUP or WM_RBUTTONUP or WM_MBUTTONUP: win_mouse_release(lp);
+    when WM_LBUTTONUP: win_mouse_release(MBT_LEFT, lp);
+    when WM_RBUTTONUP: win_mouse_release(MBT_RIGHT, lp);
+    when WM_MBUTTONUP: win_mouse_release(MBT_MIDDLE, lp);
     when WM_MOUSEMOVE: win_mouse_move(lp);
     when WM_NCMOUSEMOVE: win_show_mouse();
     when WM_MOUSEWHEEL: win_mouse_wheel(wp, lp);

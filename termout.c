@@ -29,17 +29,16 @@ static const char primary_da[] = "\e[?1;2c";
 static void
 move(int x, int y, int marg_clip)
 {
-  term_screen *screen = &term.screen;
-  term_cursor *curs = &screen->curs;
+  term_cursor *curs = &term.curs;
   if (x < 0)
     x = 0;
   if (x >= term.cols)
     x = term.cols - 1;
   if (marg_clip) {
-    if ((curs->y >= screen->marg_t || marg_clip == 2) && y < screen->marg_t)
-      y = screen->marg_t;
-    if ((curs->y <= screen->marg_b || marg_clip == 2) && y > screen->marg_b)
-      y = screen->marg_b;
+    if ((curs->y >= term.marg_top || marg_clip == 2) && y < term.marg_top)
+      y = term.marg_top;
+    if ((curs->y <= term.marg_bot || marg_clip == 2) && y > term.marg_bot)
+      y = term.marg_bot;
   }
   if (y < 0)
     y = 0;
@@ -50,21 +49,13 @@ move(int x, int y, int marg_clip)
   curs->wrapnext = false;
 }
 
-static void
-set_erase_char(void)
-{
-  term.erase_char = basic_erase_char;
-  if (term.use_bce)
-    term.erase_char.attr = term.screen.curs.attr & (ATTR_FGMASK | ATTR_BGMASK);
-}
-
 /*
  * Save the cursor and SGR mode.
  */
 static void
 save_cursor(void)
 {
-  term.screen.saved_curs = term.screen.curs;
+  term.saved_cursors[term.on_alt_screen] = term.curs;
 }
 
 /*
@@ -73,8 +64,9 @@ save_cursor(void)
 static void
 restore_cursor(void)
 {
-  term_cursor *curs = &term.screen.curs;
-  *curs = term.screen.saved_curs;
+  term_cursor *curs = &term.curs;
+  *curs = term.saved_cursors[term.on_alt_screen];
+  term.erase_char.attr = curs->attr & (ATTR_FGMASK | ATTR_BGMASK);
   
  /* Make sure the window hasn't shrunk since the save */
   if (curs->x >= term.cols)
@@ -102,7 +94,7 @@ insert_char(int n)
   int dir = (n < 0 ? -1 : +1);
   int m;
   termline *line;
-  term_cursor *curs = &term.screen.curs;
+  term_cursor *curs = &term.curs;
 
   n = (n < 0 ? -n : n);
   if (n > term.cols - curs->x)
@@ -111,7 +103,7 @@ insert_char(int n)
   term_check_boundary(curs->x, curs->y);
   if (dir < 0)
     term_check_boundary(curs->x + n, curs->y);
-  line = term.screen.lines[curs->y];
+  line = term.lines[curs->y];
   if (dir < 0) {
     for (int j = 0; j < m; j++)
       move_termchar(line, line->chars + curs->x + j,
@@ -139,8 +131,8 @@ write_bell(void)
 static void
 write_backspace(void)
 {
-  term_cursor *curs = &term.screen.curs;
-  if (curs->x == 0 && (curs->y == 0 || !term.screen.autowrap))
+  term_cursor *curs = &term.curs;
+  if (curs->x == 0 && (curs->y == 0 || !curs->autowrap))
    /* do nothing */ ;
   else if (curs->x == 0 && curs->y > 0)
     curs->x = term.cols - 1, curs->y--;
@@ -153,13 +145,13 @@ write_backspace(void)
 static void
 write_tab(void)
 {
-  term_cursor *curs = &term.screen.curs;
-  termline *line = term.screen.lines[curs->y];
+  term_cursor *curs = &term.curs;
+
   do
     curs->x++;
   while (curs->x < term.cols - 1 && !term.tabs[curs->x]);
   
-  if ((line->attr & LATTR_MODE) != LATTR_NORM) {
+  if ((term.lines[curs->y]->attr & LATTR_MODE) != LATTR_NORM) {
     if (curs->x >= term.cols / 2)
       curs->x = term.cols / 2 - 1;
   }
@@ -172,16 +164,16 @@ write_tab(void)
 static void
 write_return(void)
 {
-  term.screen.curs.x = 0;
-  term.screen.curs.wrapnext = false;
+  term.curs.x = 0;
+  term.curs.wrapnext = false;
 }
 
 static void
 write_linefeed(void)
 {
-  term_cursor *curs = &term.screen.curs;
-  if (curs->y == term.screen.marg_b)
-    term_do_scroll(term.screen.marg_t, term.screen.marg_b, 1, true);
+  term_cursor *curs = &term.curs;
+  if (curs->y == term.marg_bot)
+    term_do_scroll(term.marg_top, term.marg_bot, 1, true);
   else if (curs->y < term.rows - 1)
     curs->y++;
   curs->wrapnext = false;
@@ -193,9 +185,8 @@ write_char(wchar c, int width)
   if (!c)
     return;
   
-  term_screen *screen = &term.screen;
-  term_cursor *curs = &screen->curs;
-  termline *line = screen->lines[curs->y];
+  term_cursor *curs = &term.curs;
+  termline *line = term.lines[curs->y];
   void put_char(wchar c)
   {
     clear_cc(line, curs->x);
@@ -203,17 +194,17 @@ write_char(wchar c, int width)
     line->chars[curs->x].attr = curs->attr;
   }  
 
-  if (curs->wrapnext && screen->autowrap && width > 0) {
+  if (curs->wrapnext && curs->autowrap && width > 0) {
     line->attr |= LATTR_WRAPPED;
-    if (curs->y == screen->marg_b)
-      term_do_scroll(screen->marg_t, screen->marg_b, 1, true);
+    if (curs->y == term.marg_bot)
+      term_do_scroll(term.marg_top, term.marg_bot, 1, true);
     else if (curs->y < term.rows - 1)
       curs->y++;
     curs->x = 0;
     curs->wrapnext = false;
-    line = screen->lines[curs->y];
+    line = term.lines[curs->y];
   }
-  if (screen->insert && width > 0)
+  if (term.insert && width > 0)
     insert_char(width);
   switch (width) {
     when 1:  // Normal character.
@@ -245,12 +236,12 @@ write_char(wchar c, int width)
       if (curs->x == term.cols - 1) {
         line->chars[curs->x] = term.erase_char;
         line->attr |= LATTR_WRAPPED | LATTR_WRAPPED2;
-        if (curs->y == screen->marg_b)
-          term_do_scroll(screen->marg_t, screen->marg_b, 1, true);
+        if (curs->y == term.marg_bot)
+          term_do_scroll(term.marg_top, term.marg_bot, 1, true);
         else if (curs->y < term.rows - 1)
           curs->y++;
         curs->x = 0;
-        line = screen->lines[curs->y];
+        line = term.lines[curs->y];
        /* Now we must term_check_boundary again, of course. */
         term_check_boundary(curs->x, curs->y);
         term_check_boundary(curs->x + 2, curs->y);
@@ -324,10 +315,10 @@ do_ctrl(char c)
     when CTRL('E'):   /* ENQ: terminal type query */
       child_write(cfg.answerback, strlen(cfg.answerback));
     when CTRL('N'):   /* LS1: Locking-shift one */
-      term.screen.curs.g1 = true;
+      term.curs.g1 = true;
       term_update_cs();
     when CTRL('O'):   /* LS0: Locking-shift zero */
-      term.screen.curs.g1 = false;
+      term.curs.g1 = false;
       term_update_cs();
     otherwise:
       return false;
@@ -338,8 +329,7 @@ do_ctrl(char c)
 static void
 do_esc(uchar c)
 {
-  term_screen *screen = &term.screen;
-  term_cursor *curs = &screen->curs;
+  term_cursor *curs = &term.curs;
   term.state = NORMAL;
   switch (CPAIR(term.esc_mod, c)) {
     when '[':  /* CSI: control sequence introducer */
@@ -369,8 +359,8 @@ do_esc(uchar c)
       write_return();
       write_linefeed();
     when 'M':  /* RI: reverse index - backwards LF */
-      if (curs->y == screen->marg_t)
-        term_do_scroll(screen->marg_t, screen->marg_b, -1, true);
+      if (curs->y == term.marg_top)
+        term_do_scroll(term.marg_top, term.marg_bot, -1, true);
       else if (curs->y > 0)
         curs->y--;
       curs->wrapnext = false;
@@ -386,7 +376,7 @@ do_esc(uchar c)
       term.tabs[curs->x] = true;
     when CPAIR('#', '8'):    /* DECALN: fills screen with Es :-) */
       for (int i = 0; i < term.rows; i++) {
-        termline *line = screen->lines[i];
+        termline *line = term.lines[i];
         for (int j = 0; j < term.cols; j++) {
           line->chars[j] =
             (termchar){.cc_next = 0, .chr = 'E', .attr = ATTR_DEFAULT};
@@ -395,13 +385,13 @@ do_esc(uchar c)
       }
       term.disptop = 0;
     when CPAIR('#', '3'):  /* DECDHL: 2*height, top */
-      screen->lines[curs->y]->attr = LATTR_TOP;
+      term.lines[curs->y]->attr = LATTR_TOP;
     when CPAIR('#', '4'):  /* DECDHL: 2*height, bottom */
-      screen->lines[curs->y]->attr = LATTR_BOT;
+      term.lines[curs->y]->attr = LATTR_BOT;
     when CPAIR('#', '5'):  /* DECSWL: normal */
-      screen->lines[curs->y]->attr = LATTR_NORM;
+      term.lines[curs->y]->attr = LATTR_NORM;
     when CPAIR('#', '6'):  /* DECDWL: 2*width */
-      screen->lines[curs->y]->attr = LATTR_WIDE;
+      term.lines[curs->y]->attr = LATTR_WIDE;
     when CPAIR('(', 'A') or CPAIR('(', 'B') or CPAIR('(', '0'):
      /* GZD4: G0 designate 94-set */
       curs->csets[0] = c;
@@ -430,7 +420,7 @@ do_sgr(void)
 {
  /* Set Graphics Rendition. */
   uint argc = term.csi_argc;
-  uint attr = term.screen.curs.attr;
+  uint attr = term.curs.attr;
   for (uint i = 0; i < argc; i++) {
     switch (term.csi_argv[i]) {
       when 0: attr = ATTR_DEFAULT | (attr & ATTR_PROTECTED);
@@ -441,7 +431,7 @@ do_sgr(void)
       when 7: attr |= ATTR_REVERSE;
       when 8: attr |= ATTR_INVISIBLE;
       when 10 ... 12:
-        term.screen.curs.oem_acs = term.csi_argv[i] - 10;
+        term.curs.oem_acs = term.csi_argv[i] - 10;
         term_update_cs();
       when 21: attr &= ~ATTR_BOLD;
       when 22: attr &= ~(ATTR_BOLD | ATTR_DIM);
@@ -481,8 +471,8 @@ do_sgr(void)
         attr |= ATTR_DEFBG;
     }
   }
-  term.screen.curs.attr = attr;
-  set_erase_char();
+  term.curs.attr = attr;
+  term.erase_char.attr = attr & (ATTR_FGMASK | ATTR_BGMASK);
 }
 
 /*
@@ -504,8 +494,8 @@ set_modes(bool state)
             term.selected = false;
             win_set_chars(term.rows, state ? 132 : 80);
             term.reset_132 = state;
-            term.other_screen.marg_t = term.screen.marg_t = 0;
-            term.other_screen.marg_b = term.screen.marg_b = term.rows - 1;
+            term.marg_top = 0;
+            term.marg_bot = term.rows - 1;
             move(0, 0, 0);
             term_erase(false, false, true, true);
           }
@@ -515,9 +505,9 @@ set_modes(bool state)
             win_invalidate_all();
           }
         when 6:  /* DECOM: DEC origin mode */
-          term.screen.dec_om = state;
+          term.curs.origin = state;
         when 7:  /* DECAWM: auto wrap */
-          term.screen.autowrap = state;
+          term.curs.autowrap = state;
         when 8:  /* DECARM: auto key repeat */
           // ignore
         when 9:  /* X10_MOUSE */
@@ -529,7 +519,7 @@ set_modes(bool state)
           term.deccolm_allowed = state;
         when 47: /* alternate screen */
           term.selected = false;
-          term_switch_screen(state, false, false);
+          term_switch_screen(state, false);
           term.disptop = 0;
         when 67: /* DECBKM: backarrow key mode */
           term.backspace_sends_bs = state;
@@ -544,13 +534,15 @@ set_modes(bool state)
           win_update_mouse();
         when 1004: /* FOCUS_EVENT_MOUSE */
           term.report_focus = state;
-        when 1005: /* EXT_MODE_MOUSE */
-          term.ext_mouse_pos = state;
-        when 1015: /* use proper CSI sequence for mouse reports (from urxvt) */
-          term.proper_mouse_seq = state;
+        when 1005: /* Xterm's UTF8 encoding for mouse positions */
+          term.mouse_enc = state ? ME_UTF8 : 0;
+        when 1006: /* Xterm's CSI-style mouse encoding */
+          term.mouse_enc = state ? ME_XTERM_CSI : 0;
+        when 1015: /* Urxvt's CSI-style mouse encoding */
+          term.mouse_enc = state ? ME_URXVT_CSI : 0;
         when 1047:       /* alternate screen */
           term.selected = false;
-          term_switch_screen(state, true, true);
+          term_switch_screen(state, true);
           term.disptop = 0;
         when 1048:       /* save/restore cursor */
           if (state)
@@ -561,7 +553,7 @@ set_modes(bool state)
           if (state)
             save_cursor();
           term.selected = false;
-          term_switch_screen(state, true, false);
+          term_switch_screen(state, true);
           if (!state)
             restore_cursor();
           term.disptop = 0;
@@ -594,7 +586,7 @@ set_modes(bool state)
     else {
       switch (arg) {
         when 4:  /* IRM: set insert mode */
-          term.screen.insert = state;
+          term.insert = state;
         when 12: /* SRM: set echo mode */
           term.echoing = !state;
         when 20: /* LNM: Return sends ... */
@@ -651,8 +643,7 @@ do_winop(void)
 static void
 do_csi(uchar c)
 {
-  term_screen *screen = &term.screen;
-  term_cursor *curs = &screen->curs;
+  term_cursor *curs = &term.curs;
   int arg0 = term.csi_argv[0], arg1 = term.csi_argv[1];
   int arg0_def1 = arg0 ?: 1;  // first arg with default 1
   switch (CPAIR(term.esc_mod, c)) {
@@ -678,12 +669,12 @@ do_csi(uchar c)
       move(arg0_def1 - 1, curs->y, 0);
     when 'd':        /* VPA: set vertical posn */
       move(curs->x,
-           (screen->dec_om ? screen->marg_t : 0) + arg0_def1 - 1,
-           screen->dec_om ? 2 : 0);
+           (curs->origin ? term.marg_top : 0) + arg0_def1 - 1,
+           curs->origin ? 2 : 0);
     when 'H' or 'f':  /* CUP or HVP: set horz and vert posns at once */
       move((arg1 ?: 1) - 1,
-           (screen->dec_om ? screen->marg_t : 0) + arg0_def1 - 1,
-           screen->dec_om ? 2 : 0);
+           (curs->origin ? term.marg_top : 0) + arg0_def1 - 1,
+           curs->origin ? 2 : 0);
     when 'J' or CPAIR('?', 'J'): { /* ED/DECSED: (selective) erase in display */
       if (arg0 == 3 && !term.esc_mod) { /* Erase Saved Lines (xterm) */
         term_clear_scrollback();
@@ -701,11 +692,11 @@ do_csi(uchar c)
       term_erase(term.esc_mod, true, left, right);
     }
     when 'L':        /* IL: insert lines */
-      if (curs->y >= screen->marg_t && curs->y <= screen->marg_b)
-        term_do_scroll(curs->y, screen->marg_b, -arg0_def1, false);
+      if (curs->y >= term.marg_top && curs->y <= term.marg_bot)
+        term_do_scroll(curs->y, term.marg_bot, -arg0_def1, false);
     when 'M':        /* DL: delete lines */
-      if (curs->y >= screen->marg_t && curs->y <= screen->marg_b)
-        term_do_scroll(curs->y, screen->marg_b, arg0_def1, true);
+      if (curs->y >= term.marg_top && curs->y <= term.marg_bot)
+        term_do_scroll(curs->y, term.marg_bot, arg0_def1, true);
     when '@':        /* ICH: insert chars */
       insert_char(arg0_def1);
     when 'P':        /* DCH: delete chars */
@@ -744,10 +735,10 @@ do_csi(uchar c)
       int top = arg0_def1 - 1;
       int bot = (arg1 ? min(arg1, term.rows) : term.rows) - 1;
       if (bot > top) {
-        screen->marg_t = top;
-        screen->marg_b = bot;
+        term.marg_top = top;
+        term.marg_bot = bot;
         curs->x = 0;
-        curs->y = screen->dec_om ? screen->marg_t : 0;
+        curs->y = curs->origin ? term.marg_top : 0;
       }
     }
     when 'm':        /* SGR: set graphics rendition */
@@ -770,12 +761,12 @@ do_csi(uchar c)
       else
         do_winop();
     when 'S':        /* SU: Scroll up */
-      term_do_scroll(screen->marg_t, screen->marg_b, arg0_def1, true);
+      term_do_scroll(term.marg_top, term.marg_bot, arg0_def1, true);
       curs->wrapnext = false;
     when 'T':        /* SD: Scroll down */
       /* Avoid clash with unsupported hilight mouse tracking mode sequence */
       if (term.csi_argc <= 1) {
-        term_do_scroll(screen->marg_t, screen->marg_b, -arg0_def1, true);
+        term_do_scroll(term.marg_top, term.marg_bot, -arg0_def1, true);
         curs->wrapnext = false;
       }
     when CPAIR('*', '|'):     /* DECSNLS */
@@ -800,7 +791,7 @@ do_csi(uchar c)
       int p = curs->x;
       term_check_boundary(curs->x, curs->y);
       term_check_boundary(curs->x + n, curs->y);
-      termline *line = screen->lines[curs->y];
+      termline *line = term.lines[curs->y];
       while (n--)
         line->chars[p++] = term.erase_char;
     }
@@ -831,8 +822,8 @@ do_csi(uchar c)
       term_schedule_cblink();
     when CPAIR('"', 'q'):  /* DECSCA: select character protection attribute */
       switch (arg0) {
-        when 0 or 2: term.screen.curs.attr &= ~ATTR_PROTECTED;
-        when 1: term.screen.curs.attr |= ATTR_PROTECTED;
+        when 0 or 2: term.curs.attr &= ~ATTR_PROTECTED;
+        when 1: term.curs.attr |= ATTR_PROTECTED;
       }
   }
 }
@@ -848,7 +839,7 @@ do_dcs(void)
   if (*s++ != '$')
     return;
   
-  uint attr = term.screen.curs.attr;
+  uint attr = term.curs.attr;
 
   if (!strcmp(s, "qm")) { // SGR
     char buf[64], *p = buf;
@@ -867,8 +858,8 @@ do_dcs(void)
     if (attr & ATTR_INVISIBLE)
       p += sprintf(p, ";8");
 
-    if (term.screen.curs.oem_acs)
-      p += sprintf(p, ";%u", 10 + term.screen.curs.oem_acs);
+    if (term.curs.oem_acs)
+      p += sprintf(p, ";%u", 10 + term.curs.oem_acs);
 
     uint fg = (attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
     if (fg != FG_COLOUR_I) {
@@ -891,8 +882,7 @@ do_dcs(void)
     child_write(buf, p - buf);
   }
   else if (!strcmp(s, "qr"))  // DECSTBM (scroll margins)
-    child_printf("\eP1$r%u;%ur\e\\",
-                 term.screen.marg_t + 1, term.screen.marg_b + 1);
+    child_printf("\eP1$r%u;%ur\e\\", term.marg_top + 1, term.marg_bot + 1);
   else if (!strcmp(s, "q\"p"))  // DECSCL (conformance level)
     child_write("\eP1$r61\"p\e\\", 11);  // report as VT100
   else if (!strcmp(s, "q\"q"))  // DECSCA (protection attribute)
@@ -1082,8 +1072,8 @@ term_write(const char *buf, uint len)
         
         wchar wc;
 
-        if (term.screen.curs.oem_acs && !memchr("\e\n\r\b", c, 4)) {
-          if (term.screen.curs.oem_acs == 2)
+        if (term.curs.oem_acs && !memchr("\e\n\r\b", c, 4)) {
+          if (term.curs.oem_acs == 2)
             c |= 0x80;
           write_char(cs_btowc_glyph(c), 1);
           continue;
@@ -1152,7 +1142,7 @@ term_write(const char *buf, uint len)
         int width = xcwidth(wc);
         #endif
         
-        switch(term.screen.curs.csets[term.screen.curs.g1]) {
+        switch(term.curs.csets[term.curs.g1]) {
           when CSET_LINEDRW:
             if (0x60 <= wc && wc <= 0x7E)
               wc = win_linedraw_chars[wc - 0x60];

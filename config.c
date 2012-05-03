@@ -80,10 +80,22 @@ const config default_cfg = {
   .use_system_colours = false,
   .ime_cursor_colour = DEFAULT_COLOUR,
   .ansi_colours = {
-    0x000000, 0x0000BF, 0x00BF00, 0x00BFBF,
-    0xBF0000, 0xBF00BF, 0xBFBF00, 0xBFBFBF,
-    0x404040, 0x4040FF, 0x40FF40, 0x40FFFF,
-    0xFF4040, 0xFF40FF, 0xFFFF40, 0xFFFFFF
+    [BLACK_I]        = 0x000000,
+    [RED_I]          = 0x0000BF,
+    [GREEN_I]        = 0x00BF00,
+    [YELLOW_I]       = 0x00BFBF,
+    [BLUE_I]         = 0xBF0000,
+    [MAGENTA_I]      = 0xBF00BF,
+    [CYAN_I]         = 0xBFBF00,
+    [WHITE_I]        = 0xBFBFBF,
+    [BOLD_BLACK_I]   = 0x404040,
+    [BOLD_RED_I]     = 0x4040FF,
+    [BOLD_GREEN_I]   = 0x40FF40,
+    [BOLD_YELLOW_I]  = 0x40FFFF,
+    [BOLD_BLUE_I]    = 0xFF6060,
+    [BOLD_MAGENTA_I] = 0xFF40FF,
+    [BOLD_CYAN_I]    = 0xFFFF40,
+    [BOLD_WHITE_I]   = 0xFFFFFF,
   }
 };
 

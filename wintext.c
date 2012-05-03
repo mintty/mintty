@@ -51,7 +51,7 @@ static const wchar linedraw_chars[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES] = {
   {0x253C, '+'},                   // 0x6E 'n' Crossing lines
   {0x23BA, 0x00AF, '-'},           // 0x6F 'o' High horizontal line
   {0x23BB, 0x00AF, '-'},           // 0x70 'p' Medium-high horizontal line
-  {0x2500, '-'},                   // 0x71 'q' Middle horizontal line
+  {0x2500, 0x2015, 0x2014, '-'},   // 0x71 'q' Middle horizontal line
   {0x23BC, '_'},                   // 0x72 'r' Medium-low horizontal line
   {0x23BF, '_'},                   // 0x73 's' Low horizontal line
   {0x251C, '+'},                   // 0x74 't' Left "T"
@@ -395,8 +395,8 @@ do_update(void)
   // blind people: apparently some helper software tracks the system caret,
   // so we should arrange to have one.)
   if (term.has_focus) {
-    int x = term.screen.curs.x * font_width + PADDING;
-    int y = (term.screen.curs.y - term.disptop) * font_height + PADDING;
+    int x = term.curs.x * font_width + PADDING;
+    int y = (term.curs.y - term.disptop) * font_height + PADDING;
     SetCaretPos(x, y);
     if (ime_open) {
       COMPOSITIONFORM cf = {.dwStyle = CFS_POINT, .ptCurrentPos = {x, y}};
@@ -702,7 +702,7 @@ void
 win_check_glyphs(wchar *wcs, uint num)
 {
   HDC dc = GetDC(wnd);
-  bool bold = (bold_mode == BOLD_FONT) && (term.screen.curs.attr & ATTR_BOLD);
+  bool bold = (bold_mode == BOLD_FONT) && (term.curs.attr & ATTR_BOLD);
   SelectObject(dc, fonts[bold ? FONT_BOLD : FONT_NORMAL]);
   ushort glyphs[num];
   GetGlyphIndicesW(dc, wcs, num, glyphs, true);
