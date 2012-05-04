@@ -192,13 +192,15 @@ translate_pos(int x, int y)
   };
 }
 
+static LPARAM last_lp = -1;
+static pos last_pos = {-1, -1};
+
 static pos
 get_mouse_pos(LPARAM lp)
 {
+  last_lp = lp;
   return translate_pos(GET_X_LPARAM(lp), GET_Y_LPARAM(lp));  
 }
-
-static pos last_pos;
 
 void
 win_mouse_click(mouse_button b, LPARAM lp)
@@ -235,10 +237,8 @@ win_mouse_release(mouse_button b, LPARAM lp)
 void
 win_mouse_move(LPARAM lp)
 {
-  static LPARAM last_lp = -1;
   if (lp == last_lp)
     return;
-  last_lp = lp;
 
   win_show_mouse();
 
