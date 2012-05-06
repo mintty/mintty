@@ -1,11 +1,11 @@
 .\" mintty man page
 .\"
-.\" This 'man' page is Copyright 2009 Lee D. Rothstein, 2009-11 Andy Koppe
+.\" This 'man' page is Copyright 2009 Lee D. Rothstein, 2009-12 Andy Koppe
 .\"
 .\" You may distribute, use, and modify this man page under the terms
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
-.TH mintty 1 2011-12-30 mintty\ 1.0.3
+.TH mintty 1 2012-05-06 mintty\ 1.1-beta1
 
 .ad l
 
@@ -634,13 +634,17 @@ destination.
 .TP
 \fBRight click action\fP (RightClickAction=menu)
 Action to take when the right mouse button is pressed.
-If this is set to \fBPaste\fP, the middle button extends the selection region.
 
 \- \fBPaste\fP: Paste the clipboard contents.
 .br
 \- \fBExtend\fP: Extend the selected region.
 .br
 \- \fBShow menu\fP: Show the context menu.
+
+If this is set to \fBPaste\fP, the middle button extends the selected region
+instead of pasting the clipboard. If it is set to \fBExtend\fP, a left click
+with \fBShift\fP pressed pastes the clipboard instead of extending the
+selection.
 
 .TP
 \fBDefault click target\fP (ClicksTargetApp=yes)
@@ -916,7 +920,7 @@ These are the 16 ANSI colour settings along with their default values:
 .br
 \- \fBBoldYellow\fP=255,255,64
 .br
-\- \fBBoldBlue\fP=64,64,255
+\- \fBBoldBlue\fP=96,96,255
 .br
 \- \fBBoldMagenta\fP=255,64,255
 .br
