@@ -211,7 +211,7 @@ echo -ne '\e]4;8;#404040\a'   # bold black (i.e. dark grey)
 echo -ne '\e]4;9;#FF4040\a'   # bold red
 echo -ne '\e]4;10;#40FF40\a'  # bold green
 echo -ne '\e]4;11;#FFFF40\a'  # bold yellow
-echo -ne '\e]4;12;#4040FF\a'  # bold blue
+echo -ne '\e]4;12;#6060FF\a'  # bold blue
 echo -ne '\e]4;13;#FF40FF\a'  # bold magenta
 echo -ne '\e]4;14;#40FFFF\a'  # bold cyan
 echo -ne '\e]4;15;#FFFFFF\a'  # bold white

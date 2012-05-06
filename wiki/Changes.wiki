@@ -1,6 +1,21 @@
 #summary Notable changes in each release
 #labels Featured
 
+=== 1.1-beta1 (06 May 2012) ===
+ * Implemented xterm's private mode 1006 for encoding mouse events, which unlike the other three existing encodings includes the button number in button release events.
+ * Fixed off-by-one error in encoding of mouse coordinates in urxvt's private mode 1015.
+ * Tweaked mouse handling to make it easier to select a single character.
+ * When the right click action is set to extend the selection, a left click with Shift pressed now pastes the clipboard instead of extending the selection, as in rxvt.
+ * Improved handling of VK_PACKET messages, which tools like !AutoHotKey or !AllChars use to send characters, so as to accept characters outside the system's ANSI codepage.
+ * Tweaked RTF clipboard output to make it work in Lotus Notes.
+ * Turned up brightness of ANSI bold blue by a couple of notches.
+ * Re-rendered the program icon in true colour rather than 256 colours, with proper alpha channel.
+ * Fixed a bug where the background erase colour wasn't being updated when a saved cursor was restored.
+ * Fixed some xterm incompatibilities regarding saved cursors and the alternate screen: origin and autowrap mode should be saved with the cursor, and the alternate screen shouldn't have its own cursor, scroll margins or insert mode.
+ * Added manifest spell to keep the Program Compatibility Assistant away.
+ * Changed compiler options to build for i686 rather i586, and optimise for speed rather than size.
+ * On Cygwin 1.7, mintty is now built using gcc 4.5 rather than 3.4, and tuned for the Atom processor (because Atom's in-order architecture should have most to gain from this).
+
 === 1.0.3 (30 December 2011) ===
  * Fixed crash when trying to insert or erase out-of-range lines.
  * Implemented xterm title stack feature (limited to 16 entries).
