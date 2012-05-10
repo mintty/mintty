@@ -21,9 +21,11 @@ enum { DEFAULT_COLOUR = UINT_MAX };
 static inline colour
 make_colour(uchar r, uchar g, uchar b) { return r | g << 8 | b << 16; }
 
-static inline uchar red(colour c) { return c & 0xff; }
-static inline uchar green(colour c) { return c >> 8 & 0xff; }
-static inline uchar blue(colour c) { return c >> 16 & 0xff; }
+bool parse_colour(string, colour *);
+
+static inline uchar red(colour c) { return c; }
+static inline uchar green(colour c) { return c >> 8; }
+static inline uchar blue(colour c) { return c >> 16; }
 
 
 // Font properties.

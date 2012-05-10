@@ -347,6 +347,22 @@ check_legacy_options(void (*remember_option)(uint))
   }
 }
 
+bool
+parse_colour(string s, colour *cp)
+{
+  uint r, g, b;
+  if (sscanf(s, "%u,%u,%u%c", &r, &g, &b, &(char){0}) == 3);
+  else if (sscanf(s, "#%2x%2x%2x%c", &r, &g, &b, &(char){0}) == 3);
+  else if (sscanf(s, "rgb:%2x/%2x/%2x%c", &r, &g, &b, &(char){0}) == 3);
+  else if (sscanf(s, "rgb:%4x/%4x/%4x%c", &r, &g, &b, &(char){0}) == 3)
+    r >>=8, g >>= 8, b >>= 8;
+  else
+    return false;  
+
+  *cp = make_colour(r, g, b);
+  return true;
+}
+
 static int
 set_option(string name, string val_str)
 {
@@ -369,13 +385,9 @@ set_option(string name, string val_str)
         return i;
       }
     }
-    when OPT_COLOUR: {
-      uint r, g, b;
-      if (sscanf(val_str, "%u,%u,%u", &r, &g, &b) == 3) {
-        *(colour *)val_p = make_colour(r, g, b);
+    when OPT_COLOUR:
+      if (parse_colour(val_str, val_p))
         return i;
-      }
-    }
     otherwise: {
       int len = strlen(val_str);
       if (!len)
