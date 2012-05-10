@@ -891,12 +891,6 @@ do_dcs(void)
     child_write((char[]){CTRL('X')}, 1);
 }
 
-static colour
-rgb_to_colour(uint rgb)
-{
-  return make_colour(rgb >> 16, rgb >> 8, rgb);
-}
-
 static void
 do_colour_osc(uint i)
 {
@@ -909,23 +903,17 @@ do_colour_osc(uint i)
       return;
     s += len;
   }
-  uint rgb, r, g, b;
+  colour c;
   if (!strcmp(s, "?")) {
     child_printf("\e]%u;", term.csi_argv[0]);
     if (has_index_arg)
       child_printf("%u;", i);
-    uint c = win_get_colour(i);
-    r = red(c), g = green(c), b = blue(c);
-    child_printf("rgb:%04x/%04x/%04x\e\\", r * 0x101, g * 0x101, b * 0x101);
+    c = win_get_colour(i);
+    child_printf("rgb:%04x/%04x/%04x\e\\",
+                 red(c) * 0x101, green(c) * 0x101, blue(c) * 0x101);
   }
-  else if (sscanf(s, "#%6x%c", &rgb, &(char){0}) == 1)
-    win_set_colour(i, rgb_to_colour(rgb));
-  else if (sscanf(s, "rgb:%2x/%2x/%2x%c", &r, &g, &b, &(char){0}) == 3)
-    win_set_colour(i, make_colour(r, g, b));
-  else if (sscanf(s, "rgb:%4x/%4x/%4x%c", &r, &g, &b, &(char){0}) == 3)
-    win_set_colour(i, make_colour(r >> 8, g >> 8, b >> 8));
-  else if (sscanf(s, "%i,%i,%i%c", &r, &g, &b, &(char){0}) == 3)
-    win_set_colour(i, make_colour(r, g, b));
+  else if (parse_colour(s, &c))
+    win_set_colour(i, c);
 }
 
 /*
@@ -1223,9 +1211,9 @@ term_write(const char *buf, uint len)
           // seven hexadecimal digits.
           term.cmd_buf[term.cmd_len++] = c;
           if (term.cmd_len == 7) {
-            uint n, rgb;
-            sscanf(term.cmd_buf, "%1x%6x", &n, &rgb);
-            win_set_colour(n, rgb_to_colour(rgb));
+            uint n, r, g, b;
+            sscanf(term.cmd_buf, "%1x%2x%2x%2x", &n, &r, &g, &b);
+            win_set_colour(n, make_colour(r, g, b));
             term.state = NORMAL;
           }
         }
