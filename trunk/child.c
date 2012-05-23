@@ -187,9 +187,13 @@ child_create(char *argv[], struct winsize *winp)
 
   // Open log file if any
   if (*cfg.log) {
-    log_fd = open(cfg.log, O_WRONLY | O_CREAT | O_TRUNC, 0600);
-    if (log_fd < 0)
-      error("open log file");
+    if (!strcmp(cfg.log, "-"))
+      log_fd = fileno(stdout);
+    else {
+      log_fd = open(cfg.log, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+      if (log_fd < 0)
+        error("open log file");
+    }
   }
 }
 

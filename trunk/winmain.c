@@ -656,7 +656,7 @@ static const char help[] =
   "  -e, --exec            Treat remaining arguments as the command to execute\n"
   "  -h, --hold never|start|error|always  Keep window open after command finishes\n"
   "  -i, --icon FILE[,IX]  Load window icon from file, optionally with index\n"
-  "  -l, --log FILE        Log output to file\n"
+  "  -l, --log FILE|-      Log output to file or stdout\n"
   "  -o, --option OPT=VAL  Override config file option with given value\n"
   "  -p, --position X,Y    Open window at specified coordinates\n"
   "  -s, --size COLS,ROWS  Set screen size in characters\n"
