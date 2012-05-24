@@ -115,7 +115,7 @@ create_font(int weight, bool underline)
 {
   return 
     CreateFont(
-      font_height, font_width, 0, 0, weight, false, underline, false,
+      font_height, 0, 0, 0, weight, false, underline, false,
       DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
       get_font_quality(), FIXED_PITCH | FF_DONTCARE,
       cfg.font.name
