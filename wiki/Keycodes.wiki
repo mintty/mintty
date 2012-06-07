@@ -51,17 +51,18 @@ If Shift is held in addition to a control character combination, the correspondi
 
 The keys here send the usual control characters, but there are a few mintty-specific additions that make combinations with modifier keys available as separate keycodes.
 
-|| *Key*    || *plain* || *Shift*  || *Crtl*    || *Ctrl+Shift* ||
+|| *Key*    || *plain* || *Shift*  || *Ctrl*    || *Ctrl+Shift* ||
 || *Tab*    || `^I`    || `^[[Z`   || `^[[1;5I` || `^[[1;6I`    ||
 || *Space*  || _SP_    || _SP_     || `^@`      || _U+0080_     ||
 || *Enter*  || `^M`    || `^J`     || `^^`      || _U+009E_     ||
 || *Back*   || `^?`    || `^?`     || `^_`      || _U+009F_     ||
 || *Escape* || `^[`    || _U+009B_ ||
-|| *Pause*  || `^]`    || _U+009C_ ||
-|| *Break*  || `^\`    || _U+009D_ ||
+|| *Break*  || `^\`    || _U+009C_ ||
+|| *Pause*  || `^]`    || _U+009D_ ||
 
 [http://en.wikipedia.org/wiki/Pause_key Pause and Break] usually share a key, whereby Ctrl has to be pressed to get the Break function.
 
+See the [#Ctrl previous section] for how Unicode codepoints such as _U+009B_ are encoded.
 
 == Modifier key encodings ==
 
