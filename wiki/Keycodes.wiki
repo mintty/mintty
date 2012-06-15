@@ -29,15 +29,17 @@ For key combinations involving [http://en.wikipedia.org/wiki/Control_key Ctrl], 
 
 If the keyboard layout does not yield a character from the table below, the key's "[http://msdn.microsoft.com/en-us/library/ms927178.aspx virtual keycode]" is tried instead, which usually corresponds to the US keyboard layout. This allows control characters to be entered when using a non-Latin keyboard layout.
 
-If Shift is held in addition to a control character combination, the corresponding character from the so-called [http://en.wikipedia.org/wiki/C1_controls C1 control] character set is sent. The C1 control characters are shown as Unicode codepoints in the table below. How exactly C1 control characters are sent depends on the selected character encoding. In [http://en.wikipedia.org/wiki/ISO/IEC_8859 ISO-8859] encodings, they are encoded as single bytes, e.g. `\x81` for _U+0081_. With [http://en.wikipedia.org/wiki/UTF-8 UTF-8], they are encoded as two-byte sequences, which effectively means that the character code is prefixed with a `\xC2` byte, so for example _U+0081_ becomes `\xC2\x81`. C1 codepoints that are not supported by the selected character encoding are sent by prefixing the corresponding ASCII control character with an _ESC_ character, so _U+0081_ would be sent as `^[^A`.
+If Shift is held in addition to a control character combination, the corresponding character from the so-called [http://en.wikipedia.org/wiki/C1_controls C1 control] character set is sent (unless the resulting combination corresponds to a different control character in the first place). If the control character combination already contained a Shift, the second Shift key needs to be pressed to achieve this.
 
-|| *Key*  || *Ctrl* || *Ctrl+Shift* ||
+The C1 control characters are shown as Unicode codepoints in the table below. How exactly C1 control characters are sent depends on the selected character encoding. In [http://en.wikipedia.org/wiki/ISO/IEC_8859 ISO-8859] encodings, they are encoded as single bytes, e.g. `\x81` for _U+0081_. With [http://en.wikipedia.org/wiki/UTF-8 UTF-8], they are encoded as two-byte sequences, which effectively means that the character code is prefixed with a `\xC2` byte, so for example _U+0081_ becomes `\xC2\x81`. C1 codepoints that are not supported by the selected character encoding are sent by prefixing the corresponding ASCII control character with an _ESC_ character, so _U+0081_ would be sent as `^[^A`.
+
+|| *Char* || *Ctrl* || *Ctrl+Shift* ||
 || *@*    || `^@`   || _U+0080_     ||
-|| *A*    || `^A`   || _U+0081_     ||
-|| *B*    || `^B`   || _U+0082_     ||
+|| *a*    || `^A`   || _U+0081_     ||
+|| *b*    || `^B`   || _U+0082_     ||
 || ...    ||
-|| *Y*    || `^Y`   || _U+0099_     ||
-|| *Z*    || `^Z`   || _U+009A_     ||
+|| *y*    || `^Y`   || _U+0099_     ||
+|| *z*    || `^Z`   || _U+009A_     ||
 || *[*    || `^[`   || _U+009B_     ||
 || *\*    || `^\`   || _U+009C_     ||
 || *]*    || `^]`   || _U+009D_     ||
