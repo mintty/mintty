@@ -235,7 +235,7 @@ win_mouse_release(mouse_button b, LPARAM lp)
 }
 
 void
-win_mouse_move(LPARAM lp)
+win_mouse_move(bool nc, LPARAM lp)
 {
   if (lp == last_lp)
     return;
@@ -243,8 +243,9 @@ win_mouse_move(LPARAM lp)
   win_show_mouse();
 
   pos p = get_mouse_pos(lp);
-  if (p.x == last_pos.x && p.y == last_pos.y)
+  if (nc || (p.x == last_pos.x && p.y == last_pos.y))
     return;
+
   last_pos = p;
   term_mouse_move(get_mods(), p);
 }
