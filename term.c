@@ -503,7 +503,7 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
 
     // Move selection markers if they're within the scroll region
     void scroll_pos(pos *p) {
-      if (p->y >= topline && p->y < botline) {
+      if (!term.show_other_screen && p->y >= topline && p->y < botline) {
         if ((p->y += lines) >= botline)
           *p = (pos){.y = botline, .x = 0};
       }
@@ -535,7 +535,7 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
 
     // Move selection markers if they're within the scroll region
     void scroll_pos(pos *p) {
-      if (p->y >= seltop && p->y < botline) {
+      if (!term.show_other_screen && p->y >= seltop && p->y < botline) {
         if ((p->y -= lines) < seltop)
           *p = (pos){.y = seltop, .x = 0};
       }
