@@ -225,10 +225,10 @@ win_mouse_click(mouse_button b, LPARAM lp)
 }
 
 void
-win_mouse_release(mouse_button b, LPARAM lp)
+win_mouse_release(LPARAM lp)
 {
   win_show_mouse();
-  term_mouse_release(b, get_mods(), get_mouse_pos(lp));
+  term_mouse_release(get_mods(), get_mouse_pos(lp));
   ReleaseCapture();
 }
 
@@ -274,7 +274,7 @@ win_key_down(WPARAM wp, LPARAM lp)
 {
   uint key = wp;
 
-  if (key == VK_PROCESSKEY) {
+  if (key == VK_PROCESSKEY || key == 0xE7 /* VK_PACKET */) {
     TranslateMessage(
       &(MSG){.hwnd = wnd, .message = WM_KEYDOWN, .wParam = wp, .lParam = lp}
     );
@@ -715,8 +715,6 @@ win_key_down(WPARAM wp, LPARAM lp)
       key <= '9' ? app_pad_code(key) :
       VK_OEM_PLUS <= key && key <= VK_OEM_PERIOD
       ? app_pad_code(key - VK_OEM_PLUS + '+') : 0;
-    when VK_PACKET:
-      layout();
     otherwise:
       return 0;
   }
