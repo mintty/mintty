@@ -5,7 +5,7 @@
 .\" You may distribute, use, and modify this man page under the terms
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
-.TH mintty 1 2012-05-06 mintty\ 1.1-beta1
+.TH mintty 1 2012-06-16 mintty\ 1.1.1
 
 .ad l
 
@@ -81,8 +81,9 @@ comma-separated index can be used to select a particular icon in a file with
 multiple icons.
 
 .TP
-\fB-l\fP, \fB--log\fP \fIFILE\fP
-Copy all output into the specified log file.
+\fB-l\fP, \fB--log\fP \fIFILE\fP|\fB-\fP
+Copy all output into the specified log file, or standard output if a dash is
+given instead of a file name.
 (See also \fIscript\fP(1) for a more flexible logging tool.)
 
 .TP
@@ -173,8 +174,8 @@ menu.
 The clipboard contents can be pasted using either the \fBPaste\fP menu command,
 the \fBShift+Ins\fP keyboard shortcut, or the middle mouse button.
 Not only text but also files and directories can be pasted,
-whereby the latter are inserted as Cygwin filenames.
-Shell quoting is added to filenames that contain spaces or special characters.
+whereby the latter are inserted as Cygwin file names.
+Shell quoting is added to file names that contain spaces or special characters.
 
 
 .SS Drag & drop
@@ -401,8 +402,9 @@ Settings affecting mintty's appearance.
 .TP
 \fBColours\fP
 Clicking on one of the buttons here opens the colour selection dialog.
-In the config file, colours are represented as comma-separated RGB triples
-with decimal 8-bit values (i.e. ranging from 0 to 255).
+In the settings, colours are represented as comma-separated RGB triples
+with decimal 8-bit values ranging from 0 to 255. X-style hexadecimal
+colour specifications such as #RRGGBB or rgb:RR/GG/BB can be used as well.
 
 \- \fBForeground\fP (ForegroundColour=191,191,191)
 .br
@@ -869,7 +871,7 @@ options, which means they can only be set in config files or using the
 \fBWord selection characters\fP (WordChars=)
 By default, this string setting is empty, in which case double-click word
 selection uses the default algorithm that is geared towards picking out
-filenames and URLs.
+file names and URLs.
 
 If a string is specified here, word selection only picks out characters in the
 string along with alphanumeric characters.  For example, specifying just the
@@ -894,7 +896,10 @@ colour number 262.
 
 .TP
 \fBANSI colours\fP
-These are the 16 ANSI colour settings along with their default values:
+These are the 16 ANSI colour settings along with their default values.
+Colours are represented as comma-separated RGB triples with decimal 8-bit values
+ranging from 0 to 255. X-style hexadecimal colour specifications such as #RRGGBB
+or rgb:RR/GG/BB can be used as well.
 
 \- \fBBlack\fP=0,0,0
 .br
