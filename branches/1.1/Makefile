@@ -1,0 +1,128 @@
+name := mintty
+
+rev := $(shell svn info 2>/dev/null | grep Revision | sed "s/Revision: //" || echo 0)
+ifneq ($(rev),)
+defines := -DREVISION=$(rev) -DBRANCH=$(shell basename `pwd`)
+endif
+
+version := $(shell echo $(shell echo VERSION | cpp -P $(defines) --include appinfo.h))
+
+exe := $(name).exe
+dir := $(name)-$(version)
+
+srcs := $(wildcard Makefile *.c *.h *.rc *.mft icon/*.ico icon/*.png)
+srcs += $(wildcard COPYING LICENSE* INSTALL)
+srcs += $(wildcard docs/mintty.1 docs/readme*.html scripts/*)
+
+c_srcs := $(wildcard *.c)
+rc_srcs := $(wildcard *.rc)
+objs := $(c_srcs:.c=.o) $(rc_srcs:.rc=.o)
+deps := $(objs:.o=.d)
+
+cpp_opts = -MMD -MP $(defines)
+
+cc := gcc
+rc := windres --preprocessor '$(cc) -E -xc-header -DRC_INVOKED $(cpp_opts)'
+
+cc_opts = \
+  $(cpp_opts) -include std.h -std=gnu99 \
+  -Wall -Wextra -Werror -Wundef \
+  -march=i686
+
+# Tune for Atom on gcc >= 4.5, and Pentium M otherwise.
+ifeq ($(shell VER=`$(cc) -dumpversion`; expr $${VER%.*} '>=' 4.5), 1)
+  cc_opts += -mtune=atom
+else
+  cc_opts += -mtune=pentium-m
+endif
+
+ld_opts := \
+  -mwindows -lcomctl32 -limm32 -lwinspool -lole32 /lib/w32api/libuuid.a \
+  -static-libgcc
+
+ifdef debug
+cc_opts += -g
+else
+cc_opts += -DNDEBUG -fomit-frame-pointer -O2
+ld_opts += -s
+endif
+
+ifdef dmalloc
+cc_opts += -DDMALLOC
+ld_opts += -ldmallocth
+endif
+
+$(exe): $(objs)
+	$(cc) -o $@ $^ $(ld_opts)
+	-du -b $@
+
+src = $(dir)-src.tar.bz2
+pdf = $(dir).pdf
+bz2 = $(dir).exe.bz2
+
+cygwin17 = $(dir)-cygwin17.zip
+cygwin15 = $(dir)-cygwin15.zip
+msys = $(dir)-msys.zip
+
+cygwin17: $(cygwin17)
+cygwin15: $(cygwin15)
+msys: $(msys)
+src: $(src)
+pdf: $(pdf)
+bz2: $(bz2)
+
+$(bz2): $(exe)
+	bzip2 -k $<
+	mv $<.bz2 $@
+
+$(cygwin17): $(exe) docs/readme.html scripts/create_shortcut-cygwin17.js
+	cp scripts/create_shortcut-cygwin17.js scripts/create_shortcut.js
+	rm -f $@
+	zip -9 -j $@ $< docs/readme.html scripts/create_shortcut.js
+	rm scripts/create_shortcut.js
+	-du -b $@
+
+$(cygwin15): $(exe) docs/readme.html scripts/create_shortcut-cygwin15.js
+	cp scripts/create_shortcut-cygwin15.js scripts/create_shortcut.js
+	rm -f $@
+	zip -9 -j $@ $< docs/readme.html scripts/create_shortcut.js
+	rm scripts/create_shortcut.js
+	-du -b $@
+
+$(msys): $(exe) docs/readme-msys.html
+	rm -f $@
+	zip -9 -j $@ $< docs/readme-msys.html
+	-du -b $@
+
+$(src): $(srcs)
+	rm -rf $(dir)
+	mkdir $(dir)
+	cp -ax --parents $^ $(dir)
+	rm -f $@
+	tar cjf $@ $(dir)
+	rm -rf $(dir)
+
+$(pdf): docs/$(name).1.pdf
+	cp $< $@
+
+%.o %.d: %.c
+	$(cc) $< -c $(cc_opts)
+
+%.o %.d: %.rc
+	$(rc) $< $(<:.rc=.o)
+
+%.1.pdf: %.1
+	groff -t -man -Tps $< | ps2pdf - $@
+
+clean:
+	rm -f *.d *.o *.exe *.zip *.bz2 *.pdf docs/*.pdf
+
+.PHONY: cygwin17 cygwin15 msys src pdf clean
+
+ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(MAKECMDGOALS),src)
+ifneq ($(MAKECMDGOALS),pdf)
+include $(deps)
+endif
+endif
+endif
