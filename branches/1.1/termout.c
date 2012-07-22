@@ -952,7 +952,7 @@ do_cmd(void)
     when 7771: {  // Enquire about font support for a list of characters
       if (*s++ != '?')
         return;
-      wchar wcs[sizeof(term.cmd_len)];
+      wchar wcs[term.cmd_len];
       uint n = 0;
       while (*s) {
         if (*s++ != ';')
