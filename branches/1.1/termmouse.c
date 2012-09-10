@@ -444,7 +444,10 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
       }
       release_line(line);
       
-      send_keys(forward ? "\e[C" : "\e[D", 3, count);
+      char code[3] = 
+        {'\e', term.app_cursor_keys ? 'O' : '[', forward ? 'C' : 'D'};
+
+      send_keys(code, 3, count);
       
       moved_previously = true;
       last_dest = dest;
@@ -550,7 +553,7 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
         else {
           send_keys(up ? "\e[5~" : "\e[6~", 4, pages);
           char code[3] = 
-            {'\e',  term.app_cursor_keys ? 'O' : '[', up ? 'A' : 'B'};
+            {'\e', term.app_cursor_keys ? 'O' : '[', up ? 'A' : 'B'};
           send_keys(code, 3, lines);
         }
       }
