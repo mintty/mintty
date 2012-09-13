@@ -1,6 +1,11 @@
 #summary Notable changes in each release
 #labels Featured
 
+=== 1.1.2 (13 September 2012) ===
+ * Fixed buffer overflow in processing of the control sequence for querying font coverage.
+ * Tweaked default double-click word selection algorithm to handle shell variable references (_$FOO_ and _%FOO%_) and also exclamation marks in URLs.
+ * Changed clicks-place-cursor feature to respect application cursor key mode when sending left/right arrow keycodes.
+
 === 1.1.1 (16 June 2012) ===
 Colours:
  * Turned up brightness of ANSI bold blue by a couple of notches.
