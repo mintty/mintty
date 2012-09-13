@@ -1,0 +1,187 @@
+mintty
+------------------------------------------
+mintty is a terminal emulator for Cygwin. It is based on code from 
+PuTTY 0.60 by Simon Tatham and team.
+
+Features include:
+* Xterm-compatible terminal emulation.
+* Native Windows user interface that tries to keep things simple.
+* Unicode support, not limited to the Basic Multilingual Plane
+* Drag & drop and copy & paste of text, files and folders. 
+* Options are stored in a text file. No registry entries.
+* Window transparency.
+* Small executable size.
+
+Runtime requirements:
+  cygwin-1.7.9-1
+
+Build requirements:
+  binutils
+  cygport
+  gcc-core
+  make
+  w32api
+
+Canonical website:
+  http://mintty.googlecode.com
+
+Canonical download:
+  http://code.google.com/p/mintty/downloads
+
+-------------------------------------------
+
+Build instructions:
+  unpack mintty-1.1.2-1-src.tar.bz2
+    if you use setup to install this src package, it will be
+    unpacked under /usr/src automatically
+  cd /usr/src
+  cygport mintty-1.1.2-1.cygport all
+
+This will create:
+  /usr/src/mintty-1.1.2-1-src.tar.bz2
+  /usr/src/mintty-1.1.2-1.tar.bz2
+
+-------------------------------------------
+
+Files included in the binary package:
+
+  /usr/bin/mintty.exe
+  /usr/share/doc/Cygwin/mintty.README
+  /usr/share/doc/mintty/COPYING
+  /usr/share/doc/mintty/LICENSE.Oxygen
+  /usr/share/doc/mintty/LICENSE.PuTTY
+  /usr/share/man/man1/mintty.1.gz
+
+------------------
+
+Cygwin port maintained by:  Andy Koppe  cygwin@cygwin.com
+
+Please address questions to the Cygwin mailing list at 
+<cygwin@cygwin.com> or to the mintty discussion group at
+http://groups.google.com/group/mintty-discuss.
+
+The port notes below list packaging changes only.
+Please see this page for a list of changes to mintty:
+http://code.google.com/p/mintty/wiki/Changes
+
+-------------------
+
+Port Notes:
+
+----- mintty-1.1.2-1 -----
+
+----- mintty-1.1.1-1 -----
+
+----- mintty-1.1.0-1 -----
+* Test release for 1.1-beta1.
+* Now building with default gcc rather than forcing gcc-3.
+
+----- mintty-1.0.3-1 -----
+
+----- mintty-1.0.2-1 -----
+* Dropped postinstall and preremove scripts for start menu shortcut
+creation and removal now that mintty is becoming the default Cygwin
+terminal with shortcuts created by setup.exe.
+
+----- mintty-1.0.1-1 -----
+* Dropped chmod on the shortcut, which doesn't actually appear to be 
+necessary.
+
+----- mintty-0.9.9-1 -----
+
+----- mintty-0.9.8-1 -----
+
+----- mintty-0.9.7-1 -----
+
+----- mintty-0.9.6-1 -----
+
+----- mintty-0.9.5-1 -----
+
+----- mintty-0.9.4-1 -----
+
+----- mintty-0.9.3-1 -----
+
+----- mintty-0.9.2-3 -----
+* Passing a cygpath-created path to mkshortcut didn't work when 
+non-ASCII characters were involved, so instead cd into the start
+menu Cygwin folder before invoking mkshortcut. This still avoids
+mkshortcut stumbling over a symlink called Cygwin in the root dir.
+
+----- mintty-0.9.2-2 -----
+* Withdrawn before release.
+
+----- mintty-0.9.2-1 -----
+* Avoid mkshortcut's -P option and rely solely on cygpath to find the 
+start menu's Programs folder. 
+
+----- mintty-0.9.1-1 -----
+
+----- mintty-0.9b2-1 -----
+* Another test release.
+
+----- mintty-0.9b1-1 -----
+* Test release. Use setup.exe's new CYGWINFORALL variable to decide 
+where to create the mintty start menu shortcut.
+
+----- mintty-0.8.3-1 -----
+
+----- mintty-0.8.2-1 -----
+* Replaced test of whether the All Users start menu is writable from 
+install scripts, as that can be wrong on noacl mounts.
+
+----- mintty-0.8.1-1 -----
+
+----- mintty-0.7.1-1 -----
+
+----- mintty-0.7-beta3-1 -----
+* Test release.
+
+----- mintty-0.6.2-1 -----
+
+----- mintty-0.6.1-1 -----
+
+----- mintty-0.5.8-1 -----
+
+----- mintty-0.5.7-1 -----
+* Improved install script support for non-admin setups.
+
+----- mintty-0.5.6-1 -----
+
+----- mintty-0.5.5-1 -----
+
+----- mintty-0.5.4-1 -----
+
+----- mintty-0.5.3-1 -----
+
+----- mintty-0.5.2-1 -----
+
+----- mintty-0.5.1-1 -----
+
+----- mintty-0.4.4-1 -----
+
+----- mintty-0.4.3-1 -----
+
+----- mintty-0.4.2-1 -----
+
+----- mintty-0.4.1-1 -----
+
+----- mintty-0.4.0-2 -----
+* Postinstall and preremove scripts were missing.
+
+----- mintty-0.4.0-1 -----
+
+----- mintty-0.3.10-1 -----
+
+----- mintty-0.3.9-1 -----
+
+----- mintty-0.3.8-1 -----
+
+----- mintty-0.3.7-1 -----
+
+----- mintty-0.3.6-1 -----
+* Replaced readme.html with manual page. Thanks to Lee D. Rothstein for 
+helping with that.
+
+----- mintty-0.3.5-1 -----
+* First attempt at Cygwin setup package. Thanks to Yaakov Selkovitz for 
+getting this off the ground by adding MinTTY to Cygports.

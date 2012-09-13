@@ -1,0 +1,19 @@
+SRC_URI="http://mintty.googlecode.com/files/mintty-${PV}-src.tar.bz2"
+PKG_HINTS=setup
+_CYGPORT_RESTRICT_postinst_doc_=1
+
+src_compile() {
+  lndirs
+  cd ${B}
+  cygmake
+}
+
+src_install() {
+  cd ${B}
+  dobin mintty.exe
+  insinto /usr/share/man/man1
+  doins docs/mintty.1
+  dodoc COPYING
+  dodoc LICENSE.Oxygen
+  dodoc LICENSE.PuTTY
+}
