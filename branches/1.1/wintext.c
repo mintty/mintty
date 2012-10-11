@@ -569,17 +569,18 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   colour cursor_colour = 0;
   
   if (has_cursor) {
-    colour wanted_cursor_colour =
-      colours[ime_open ? IME_CURSOR_COLOUR_I : CURSOR_COLOUR_I];
+    cursor_colour = colours[ime_open ? IME_CURSOR_COLOUR_I : CURSOR_COLOUR_I];
     
-    bool too_close = colour_dist(wanted_cursor_colour, bg) < 32768;
+    bool too_close = colour_dist(cursor_colour, bg) < 32768;
     
-    cursor_colour =
-      too_close ? colours[CURSOR_TEXT_COLOUR_I] : wanted_cursor_colour;
+    if (too_close)
+      cursor_colour = fg;
     
     if ((attr & TATTR_ACTCURS) && term_cursor_type() == CUR_BLOCK) {
+      fg = colours[CURSOR_TEXT_COLOUR_I];
+      if (too_close && colour_dist(cursor_colour, fg) < 32768)
+        fg = bg;
       bg = cursor_colour;
-      fg = too_close ? wanted_cursor_colour : colours[CURSOR_TEXT_COLOUR_I];
     }
   }
 
