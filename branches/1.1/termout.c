@@ -905,7 +905,7 @@ do_colour_osc(uint i)
   }
   colour c;
   if (!strcmp(s, "?")) {
-    child_printf("\e]%u;", term.csi_argv[0]);
+    child_printf("\e]%u;", term.cmd_num);
     if (has_index_arg)
       child_printf("%u;", i);
     c = win_get_colour(i);
