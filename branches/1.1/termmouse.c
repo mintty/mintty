@@ -533,8 +533,9 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
   else if (!(mods & ~MDK_SHIFT)) {
     // Scroll, taking the lines_per_notch setting into account.
     // Scroll by a page per notch if setting is -1 or Shift is pressed.
+    int lines_per_page = max(1, term.rows - 1);
     if (lines_per_notch == -1 || mods & MDK_SHIFT)
-      lines_per_notch = max(1, term.rows - 1);
+      lines_per_notch = lines_per_page;
     int lines = lines_per_notch * accu / NOTCH_DELTA;
     if (lines) {
       accu -= lines * NOTCH_DELTA / lines_per_notch;
@@ -544,8 +545,8 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
         // Send scroll distance as CSI a/b events
         bool up = lines > 0;
         lines = abs(lines);
-        int pages = lines / term.rows;
-        lines -= pages * term.rows;
+        int pages = lines / lines_per_page;
+        lines -= pages * lines_per_page;
         if (term.app_wheel) {
           send_keys(up ? "\e[1;2a" : "\e[1;2b", 6, pages);
           send_keys(up ? "\eOa" : "\eOb", 3, lines);
