@@ -519,8 +519,8 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when SB_TOP:      term_scroll(+1, 0);
         when SB_LINEDOWN: term_scroll(0, +1);
         when SB_LINEUP:   term_scroll(0, -1);
-        when SB_PAGEDOWN: term_scroll(0, +term.rows);
-        when SB_PAGEUP:   term_scroll(0, -term.rows);
+        when SB_PAGEDOWN: term_scroll(0, +max(1, term.rows - 1));
+        when SB_PAGEUP:   term_scroll(0, -max(1, term.rows - 1));
         when SB_THUMBPOSITION or SB_THUMBTRACK: {
           SCROLLINFO info;
           info.cbSize = sizeof(SCROLLINFO);

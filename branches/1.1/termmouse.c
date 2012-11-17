@@ -534,7 +534,7 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
     // Scroll, taking the lines_per_notch setting into account.
     // Scroll by a page per notch if setting is -1 or Shift is pressed.
     if (lines_per_notch == -1 || mods & MDK_SHIFT)
-      lines_per_notch = term.rows;
+      lines_per_notch = max(1, term.rows - 1);
     int lines = lines_per_notch * accu / NOTCH_DELTA;
     if (lines) {
       accu -= lines * NOTCH_DELTA / lines_per_notch;
