@@ -1,5 +1,5 @@
 // win.c (part of mintty)
-// Copyright 2008-12 Andy Koppe
+// Copyright 2008-13 Andy Koppe
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -46,14 +46,27 @@ typedef struct {
 static HRESULT (WINAPI *pDwmIsCompositionEnabled)(BOOL *);
 static HRESULT (WINAPI *pDwmExtendFrameIntoClientArea)(HWND, const MARGINS *);
 
-static void
-load_funcs(void)
+// Helper for loading a system library. Using LoadLibrary() directly is insecure
+// because Windows might be searching the current working directory first.
+static HMODULE
+load_sys_library(string name)
 {
-  char dwm_path[MAX_PATH];
-  uint len = GetSystemDirectory(dwm_path, MAX_PATH);
-  if (len && len < MAX_PATH - sizeof("\\dwmapi.dll")) {
-    strcat(dwm_path, "\\dwmapi.dll");
-    HMODULE dwm = LoadLibrary(dwm_path);
+  char path[MAX_PATH];
+  uint len = GetSystemDirectory(path, MAX_PATH);
+  if (len && len + strlen(name) + 1 < MAX_PATH) {
+    path[len] = '\\';
+    strcpy(&path[len + 1], name);
+    return LoadLibrary(path);
+  }
+  else
+    return 0;
+}
+
+static void
+load_dwm_funcs(void)
+{
+  HMODULE dwm = load_sys_library("dwmapi.dll");
+  if (dwm) {
     pDwmIsCompositionEnabled =
       (void *)GetProcAddress(dwm, "DwmIsCompositionEnabled");
     pDwmExtendFrameIntoClientArea =
@@ -726,7 +739,7 @@ int
 main(int argc, char *argv[])
 {
   main_argv = argv;
-  load_funcs();
+  load_dwm_funcs();
   init_config();
   cs_init();
   
