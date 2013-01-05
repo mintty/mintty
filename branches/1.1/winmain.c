@@ -874,6 +874,22 @@ main(int argc, char *argv[])
     delete(icon_file);
   }
 
+  // Set the AppID if specified and the required function is available.
+  if (*cfg.app_id) {
+    HMODULE shell = load_sys_library("shell32.dll");
+    HRESULT (WINAPI *pSetAppID)(PCWSTR) =
+      (void *)GetProcAddress(shell, "SetCurrentProcessExplicitAppUserModelID");
+
+    if (pSetAppID) {
+      size_t size = cs_mbstowcs(0, cfg.app_id, 0) + 1;
+      if (size) {
+        wchar buf[size];
+        cs_mbstowcs(buf, cfg.app_id, size);
+        pSetAppID(buf);
+      }
+    }
+  }
+
   inst = GetModuleHandle(NULL);
 
   // Window class name.
