@@ -1,5 +1,5 @@
 // config.c (part of mintty)
-// Copyright 2008-12 Andy Koppe
+// Copyright 2008-13 Andy Koppe
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -74,6 +74,7 @@ const config default_cfg = {
   .utmp = false,
   .title = "",
   // "Hidden"
+  .app_id = "",
   .col_spacing = 0,
   .row_spacing = 0,
   .word_chars = "",
@@ -184,6 +185,7 @@ options[] = {
   {"Y", OPT_INT, offcfg(y)},
 
   // "Hidden"
+  {"AppID", OPT_STRING, offcfg(app_id)},
   {"ColSpacing", OPT_INT, offcfg(col_spacing)},
   {"RowSpacing", OPT_INT, offcfg(row_spacing)},
   {"WordChars", OPT_STRING, offcfg(word_chars)},

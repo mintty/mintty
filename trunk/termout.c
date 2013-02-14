@@ -905,7 +905,7 @@ do_colour_osc(uint i)
   }
   colour c;
   if (!strcmp(s, "?")) {
-    child_printf("\e]%u;", term.csi_argv[0]);
+    child_printf("\e]%u;", term.cmd_num);
     if (has_index_arg)
       child_printf("%u;", i);
     c = win_get_colour(i);
@@ -952,7 +952,7 @@ do_cmd(void)
     when 7771: {  // Enquire about font support for a list of characters
       if (*s++ != '?')
         return;
-      wchar wcs[sizeof(term.cmd_len)];
+      wchar wcs[term.cmd_len];
       uint n = 0;
       while (*s) {
         if (*s++ != ';')
