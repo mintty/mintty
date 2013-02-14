@@ -5,7 +5,7 @@
 .\" You may distribute, use, and modify this man page under the terms
 .\" of the GNU Free Documentation License (GFDL), Version 1.3,
 .\" 3 November 2008 (or later) as specified.
-.TH mintty 1 2012-06-16 mintty\ 1.1.1
+.TH mintty 1 2012-09-13 mintty\ 1.1.2
 
 .ad l
 
@@ -862,10 +862,26 @@ window.  This can be used to help Windows scripting tools such as AutoHotKey to
 distinguish different mintty windows.  The name defaults to "mintty".
 
 
-.SS Hidden settings
+.SS "Hidden" settings
 The following settings appear neither in the options dialog nor as command line
 options, which means they can only be set in config files or using the
 \fB--option\fP command line option.
+
+.TP
+\fBApplication ID\fp (AppID=)
+Windows 7 and above use the application ID for grouping taskbar items.
+By default this setting is empty, in which case Windows groups taskbar
+items automatically based on their icon and command line.  This can be
+overridden by setting the AppID to a custom string, in which case windows
+with the same AppID are grouped together.
+
+Note that Windows shortcut files have their own AppID.  Hence, if an AppID is
+specified in the mintty settings, but not on a taskbar-pinned shortcut for
+invoking mintty, clicking the pinned shortcut will result in a separate taskbar
+item for the new mintty window, rather than being grouped with the shortcut.
+To avoid this, the shortcut's AppID has to be set to the same string, which can
+be done using the \fBwin7appid\fP utility available from
+\fIhttp://win7appid.googlecode.com\fP.
 
 .TP
 \fBWord selection characters\fP (WordChars=)
@@ -984,7 +1000,7 @@ for example:
 
 .SH LICENSE
 
-Copyright (C) 2011 Andy Koppe.
+Copyright (C) 2012 Andy Koppe.
 
 Mintty is released under the terms of the the \fIGNU General Public License\fP
 version 3 or later.
