@@ -1,128 +1,127 @@
-name := mintty
+# Interesting make targets:
+# - exe: Just the executable. This is the default.
+# - src: Source tarball.
+# - zip: Zip for standalone release.
+# - pdf: PDF version of the manual page.
+# - clean: Delete generated files.
+#
+# Variables intended for setting on the make command line.
+# - TARGET: target triple for cross compiling
+# - RELEASE: define to generate release version
+# - DEBUG: define to enable debug build
+# - DMALLOC: define to enable the dmalloc heap debugging library
+#
+# The values of the RELEASE, DEBUG and DMALLOC variables do not matter,
+# it's just about whether they're defined, so e.g. 'make DEBUG=1' will 
+# trigger a debug build.
 
-rev := $(shell svn info 2>/dev/null | grep Revision | sed "s/Revision: //" || echo 0)
-ifneq ($(rev),)
-defines := -DREVISION=$(rev) -DBRANCH=$(shell basename `pwd`)
+NAME := mintty
+
+ifdef TARGET
+  CC := $(TARGET)-gcc
+  RC := $(TARGET)-windres
+else
+  CC := gcc
+  RC := windres
+  TARGET := $(shell $(CC) -dumpmachine)
 endif
 
-version := $(shell echo $(shell echo VERSION | cpp -P $(defines) --include appinfo.h))
+ifeq ($(TARGET), i686-pc-cygwin)
+  platform := cygwin
+  zip_files := docs/readme.html scripts/create_shortcut.js
+else ifeq ($(TARGET), x86_64-pc-cygwin)
+  platform := cygwin64
+else ifeq ($(TARGET), i686-pc-msys)
+  platform := msys
+  zip_files := docs/readme-msys.html
+else
+  $(error Target '$(TARGET)' not supported)
+endif
 
-exe := $(name).exe
-dir := $(name)-$(version)
+ifndef RELEASE
+  svn_rev := $(shell svn info 2>/dev/null | grep ^Revision: | sed 's/Revision: //')
+  ifneq ($(svn_rev),)
+    svn_dir := $(shell basename "`svn info | grep ^URL:`")
+    svn_defs := -DSVN_DIR=$(svn_dir) -DSVN_REV=$(svn_rev)
+  endif
+endif
 
-srcs := $(wildcard Makefile *.c *.h *.rc *.mft icon/*.ico icon/*.png)
-srcs += $(wildcard COPYING LICENSE* INSTALL)
-srcs += $(wildcard docs/mintty.1 docs/readme*.html scripts/*)
+version := \
+  $(shell echo $(shell echo VERSION | cpp -P $(svn_defs) --include appinfo.h))
+name_ver := $(NAME)-$(version)
+
+src_files := $(wildcard Makefile *.c *.h *.rc *.mft COPYING LICENSE* INSTALL)
+src_files += $(wildcard docs/$(NAME).1 docs/readme*.html scripts/* icon/*)
 
 c_srcs := $(wildcard *.c)
 rc_srcs := $(wildcard *.rc)
 objs := $(c_srcs:.c=.o) $(rc_srcs:.rc=.o)
-deps := $(objs:.o=.d)
 
-cpp_opts = -MMD -MP $(defines)
+CPPFLAGS := $(svn_defs)
+CFLAGS := -std=gnu99 -include std.h -Wall -Wextra -Wundef -Werror
 
-cc := gcc
-rc := windres --preprocessor '$(cc) -E -xc-header -DRC_INVOKED $(cpp_opts)'
+ifeq ($(shell VER=`$(CC) -dumpversion`; expr $${VER%.*} '>=' 4.5), 1)
+  CFLAGS += -mtune=atom
+endif
 
-cc_opts = \
-  $(cpp_opts) -include std.h -std=gnu99 \
-  -Wall -Wextra -Werror -Wundef \
-  -march=i686
+LDFLAGS := -L$(shell $(CC) -print-sysroot)/usr/lib/w32api -static-libgcc
+LDLIBS := -mwindows -lcomctl32 -limm32 -lwinspool -lole32 -luuid
 
-# Tune for Atom on gcc >= 4.5, and Pentium M otherwise.
-ifeq ($(shell VER=`$(cc) -dumpversion`; expr $${VER%.*} '>=' 4.5), 1)
-  cc_opts += -mtune=atom
+ifdef DEBUG
+  CFLAGS += -g
 else
-  cc_opts += -mtune=pentium-m
+  CPPFLAGS += -DNDEBUG
+  CFLAGS += -fomit-frame-pointer -O2
+  LDFLAGS += -s
 endif
 
-ld_opts := \
-  -mwindows -lcomctl32 -limm32 -lwinspool -lole32 /lib/w32api/libuuid.a \
-  -static-libgcc
-
-ifdef debug
-cc_opts += -g
-else
-cc_opts += -DNDEBUG -fomit-frame-pointer -O2
-ld_opts += -s
+ifdef DMALLOC
+  CPPFLAGS += -DDMALLOC
+  LDLIBS += -ldmallocth
 endif
 
-ifdef dmalloc
-cc_opts += -DDMALLOC
-ld_opts += -ldmallocth
-endif
+.PHONY: exe src zip pdf clean
 
+exe := $(NAME).exe
+exe: $(exe)
 $(exe): $(objs)
-	$(cc) -o $@ $^ $(ld_opts)
+	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 	-du -b $@
 
-src = $(dir)-src.tar.bz2
-pdf = $(dir).pdf
-bz2 = $(dir).exe.bz2
-
-cygwin17 = $(dir)-cygwin17.zip
-cygwin15 = $(dir)-cygwin15.zip
-msys = $(dir)-msys.zip
-
-cygwin17: $(cygwin17)
-cygwin15: $(cygwin15)
-msys: $(msys)
+src := $(name_ver)-src.tar.bz2
 src: $(src)
+$(src): $(src_files)
+	rm -rf $(name_ver)
+	mkdir $(name_ver)
+	cp -ax --parents $^ $(name_ver)
+	rm -f $@
+	tar cjf $@ $(name_ver)
+	rm -rf $(name_ver)
+
+zip := $(name_ver)-$(platform).zip
+zip: $(zip)
+$(zip): $(exe) $(zip_files)
+	zip -9 -j $@ $^
+	-du -b $@
+
+pdf := $(name_ver).pdf
 pdf: $(pdf)
-bz2: $(bz2)
-
-$(bz2): $(exe)
-	bzip2 -k $<
-	mv $<.bz2 $@
-
-$(cygwin17): $(exe) docs/readme.html scripts/create_shortcut-cygwin17.js
-	cp scripts/create_shortcut-cygwin17.js scripts/create_shortcut.js
-	rm -f $@
-	zip -9 -j $@ $< docs/readme.html scripts/create_shortcut.js
-	rm scripts/create_shortcut.js
-	-du -b $@
-
-$(cygwin15): $(exe) docs/readme.html scripts/create_shortcut-cygwin15.js
-	cp scripts/create_shortcut-cygwin15.js scripts/create_shortcut.js
-	rm -f $@
-	zip -9 -j $@ $< docs/readme.html scripts/create_shortcut.js
-	rm scripts/create_shortcut.js
-	-du -b $@
-
-$(msys): $(exe) docs/readme-msys.html
-	rm -f $@
-	zip -9 -j $@ $< docs/readme-msys.html
-	-du -b $@
-
-$(src): $(srcs)
-	rm -rf $(dir)
-	mkdir $(dir)
-	cp -ax --parents $^ $(dir)
-	rm -f $@
-	tar cjf $@ $(dir)
-	rm -rf $(dir)
-
-$(pdf): docs/$(name).1.pdf
-	cp $< $@
-
-%.o %.d: %.c
-	$(cc) $< -c $(cc_opts)
-
-%.o %.d: %.rc
-	$(rc) $< $(<:.rc=.o)
-
-%.1.pdf: %.1
+$(pdf): docs/$(NAME).1
 	groff -t -man -Tps $< | ps2pdf - $@
 
 clean:
-	rm -f *.d *.o *.exe *.zip *.bz2 *.pdf docs/*.pdf
+	rm -f *.d *.o *.exe *.zip *.pdf docs/*.pdf
 
-.PHONY: cygwin17 cygwin15 msys src pdf clean
+%.o %.d: %.c
+	$(CC) -c -MMD -MP $(CPPFLAGS) $(CFLAGS) $<
+
+%.o %.d: %.rc
+	$(RC) --preprocessor '$(CC) -E -xc -DRC_INVOKED -MMD -MP $(CPPFLAGS)' $< $*.o
 
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(MAKECMDGOALS),src)
 ifneq ($(MAKECMDGOALS),pdf)
-include $(deps)
+-include $(objs:.o=.d)
 endif
 endif
 endif

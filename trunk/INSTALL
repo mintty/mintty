@@ -6,9 +6,4 @@ devices (ptys).
 To compile, just run 'make'. (Add a -j option as desired.)
 To install, simply copy mintty.exe to an appropriate place, e.g. /bin.
 
-'make src' creates a source tarball.
-'make cygwin17' creates a zip for binary release for Cygwin 1.7.
-'make cygwin15' creates a zip for binary release for Cygwin 1.5.
-'make msys' creates a zip for binary release for MSYS.
-'make doc' creates a PDF version of the man page. (Needs ps2pdf.)
-'make clean' removes created files.
+See the top of the Makefile for further make targets and options.
