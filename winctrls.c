@@ -83,7 +83,7 @@ doctl(ctrlpos * cp, RECT r, char *wclass, int wstyle, int exstyle,
   if (cp->wnd) {
     ctl =
       CreateWindowEx(exstyle, wclass, wtext, wstyle, r.left, r.top, r.right,
-                     r.bottom, cp->wnd, (HMENU) wid, inst, null);
+                     r.bottom, cp->wnd, (HMENU)(INT_PTR)wid, inst, null);
     SendMessage(ctl, WM_SETFONT, cp->font, MAKELPARAM(true, 0));
 
     if (!strcmp(wclass, "LISTBOX")) {
