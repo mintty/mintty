@@ -344,7 +344,7 @@ make_fullscreen(void)
   win_is_fullscreen = true;
 
  /* Remove the window furniture. */
-  long style = GetWindowLong(wnd, GWL_STYLE);
+  LONG style = GetWindowLong(wnd, GWL_STYLE);
   style &= ~(WS_CAPTION | WS_BORDER | WS_THICKFRAME);
   SetWindowLong(wnd, GWL_STYLE, style);
 
@@ -369,7 +369,7 @@ clear_fullscreen(void)
   update_glass();
 
  /* Reinstate the window furniture. */
-  long style = GetWindowLong(wnd, GWL_STYLE);
+  LONG style = GetWindowLong(wnd, GWL_STYLE);
   style |= WS_CAPTION | WS_BORDER | WS_THICKFRAME;
   SetWindowLong(wnd, GWL_STYLE, style);
   SetWindowPos(wnd, null, 0, 0, 0, 0,
@@ -413,7 +413,7 @@ update_transparency(void)
   int trans = cfg.transparency;
   if (trans == TR_GLASS)
     trans = 0;
-  long style = GetWindowLong(wnd, GWL_EXSTYLE);
+  LONG style = GetWindowLong(wnd, GWL_EXSTYLE);
   style = trans ? style | WS_EX_LAYERED : style & ~WS_EX_LAYERED;
   SetWindowLong(wnd, GWL_EXSTYLE, style);
   if (trans) {
@@ -429,10 +429,10 @@ void
 win_update_scrollbar(void)
 {
   int scrollbar = term.show_scrollbar ? cfg.scrollbar : 0;
-  long style = GetWindowLong(wnd, GWL_STYLE);
+  LONG style = GetWindowLong(wnd, GWL_STYLE);
   SetWindowLong(wnd, GWL_STYLE,
                 scrollbar ? style | WS_VSCROLL : style & ~WS_VSCROLL);
-  long exstyle = GetWindowLong(wnd, GWL_EXSTYLE);
+  LONG exstyle = GetWindowLong(wnd, GWL_EXSTYLE);
   SetWindowLong(wnd, GWL_EXSTYLE,
                 scrollbar < 0 ? exstyle | WS_EX_LEFTSCROLLBAR 
                               : exstyle & ~WS_EX_LEFTSCROLLBAR);

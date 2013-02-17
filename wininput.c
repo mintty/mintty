@@ -125,7 +125,7 @@ static alt_state_t alt_state;
 static uint alt_code;
 
 static bool lctrl;  // Is left Ctrl pressed?
-static long lctrl_time;
+static int lctrl_time;
 
 static mod_keys
 get_mods(void)
