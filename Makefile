@@ -6,7 +6,7 @@
 # - clean: Delete generated files.
 #
 # Variables intended for setting on the make command line.
-# - TARGET: target triple for cross compiling
+# - HOST: target triple for cross compiling
 # - RELEASE: define to generate release version
 # - DEBUG: define to enable debug build
 # - DMALLOC: define to enable the dmalloc heap debugging library
@@ -17,25 +17,25 @@
 
 NAME := mintty
 
-ifdef TARGET
-  CC := $(TARGET)-gcc
-  RC := $(TARGET)-windres
+ifdef HOST
+  CC := $(HOST)-gcc
+  RC := $(HOST)-windres
 else
   CC := gcc
   RC := windres
-  TARGET := $(shell $(CC) -dumpmachine)
+  HOST := $(shell $(CC) -dumpmachine)
 endif
 
-ifeq ($(TARGET), i686-pc-cygwin)
+ifeq ($(HOST), i686-pc-cygwin)
   platform := cygwin
   zip_files := docs/readme.html scripts/create_shortcut.js
-else ifeq ($(TARGET), x86_64-pc-cygwin)
+else ifeq ($(HOST), x86_64-pc-cygwin)
   platform := cygwin64
-else ifeq ($(TARGET), i686-pc-msys)
+else ifeq ($(HOST), i686-pc-msys)
   platform := msys
   zip_files := docs/readme-msys.html
 else
-  $(error Target '$(TARGET)' not supported)
+  $(error Host '$(HOST)' not supported)
 endif
 
 ifndef RELEASE
