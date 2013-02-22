@@ -630,7 +630,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   for (int i = 0; i < len; i++)
     dxs[i] = dx;
 
-  int yt = y + cfg.row_spacing - font_height * (lattr == LATTR_BOT);
+  int yt = y - (lattr == LATTR_BOT ? font_height : 0);
 
  /* Finally, draw the text */
   SetBkMode(dc, OPAQUE);
