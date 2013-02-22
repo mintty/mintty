@@ -64,7 +64,7 @@ ifeq ($(shell VER=`$(CC) -dumpversion`; expr $${VER%.*} '>=' 4.5), 1)
   CFLAGS += -mtune=atom
 endif
 
-LDFLAGS := -L$(shell $(CC) -print-sysroot)/usr/lib/w32api -static-libgcc
+LDFLAGS := -L$(shell $(CC) -print-file-name=w32api) -static-libgcc
 LDLIBS := -mwindows -lcomctl32 -limm32 -lwinspool -lole32 -luuid
 
 ifdef DEBUG
