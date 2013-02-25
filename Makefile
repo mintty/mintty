@@ -6,7 +6,7 @@
 # - clean: Delete generated files.
 #
 # Variables intended for setting on the make command line.
-# - HOST: target triple for cross compiling
+# - TARGET: target triple for cross compiling
 # - RELEASE: define to generate release version
 # - DEBUG: define to enable debug build
 # - DMALLOC: define to enable the dmalloc heap debugging library
@@ -17,25 +17,25 @@
 
 NAME := mintty
 
-ifdef HOST
-  CC := $(HOST)-gcc
-  RC := $(HOST)-windres
+ifdef TARGET
+  CC := $(TARGET)-gcc
+  RC := $(TARGET)-windres
 else
   CC := gcc
   RC := windres
-  HOST := $(shell $(CC) -dumpmachine)
+  TARGET := $(shell $(CC) -dumpmachine)
 endif
 
-ifeq ($(HOST), i686-pc-cygwin)
+ifeq ($(TARGET), i686-pc-cygwin)
   platform := cygwin
   zip_files := docs/readme.html scripts/create_shortcut.js
-else ifeq ($(HOST), x86_64-pc-cygwin)
+else ifeq ($(TARGET), x86_64-pc-cygwin)
   platform := cygwin64
-else ifeq ($(HOST), i686-pc-msys)
+else ifeq ($(TARGET), i686-pc-msys)
   platform := msys
   zip_files := docs/readme-msys.html
 else
-  $(error Host '$(HOST)' not supported)
+  $(error Target '$(TARGET)' not supported)
 endif
 
 ifndef RELEASE
@@ -118,10 +118,4 @@ clean:
 %.o %.d: %.rc
 	$(RC) --preprocessor '$(CC) -E -xc -DRC_INVOKED -MMD -MP $(CPPFLAGS)' $< $*.o
 
-ifneq ($(MAKECMDGOALS),clean)
-ifneq ($(MAKECMDGOALS),src)
-ifneq ($(MAKECMDGOALS),pdf)
--include $(objs:.o=.d)
-endif
-endif
-endif
+-include $(wildcard *.d)
