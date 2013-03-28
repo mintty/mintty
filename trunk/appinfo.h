@@ -15,7 +15,7 @@
 #define MAJOR_VERSION  1
 #define MINOR_VERSION  2
 #define PATCH_NUMBER   0
-#define BUILD_NUMBER   0
+#define BUILD_NUMBER   1
 
 #if defined SVN_DIR && defined SVN_REV
   #undef BUILD_NUMBER
