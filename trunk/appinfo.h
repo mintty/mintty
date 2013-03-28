@@ -39,7 +39,7 @@
 #define COPYRIGHT "(C) " YEAR " " AUTHOR
 
 #define VERSION_TEXT \
-  APPNAME " " VERSION "\n" \
+  APPNAME " " VERSION " (" STRINGIFY(TARGET) ")\n" \
   COPYRIGHT "\n" \
   "License GPLv3+: GNU GPL version 3 or later\n" \
   "There is no warranty, to the extent permitted by law.\n"

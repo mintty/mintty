@@ -38,16 +38,18 @@ else
   $(error Target '$(TARGET)' not supported)
 endif
 
+CPPFLAGS := -DTARGET=$(TARGET)
+
 ifndef RELEASE
   svn_rev := $(shell svn info 2>/dev/null | grep ^Revision: | sed 's/Revision: //')
   ifneq ($(svn_rev),)
-    svn_dir := $(shell basename "`svn info | grep ^URL:`")
-    svn_defs := -DSVN_DIR=$(svn_dir) -DSVN_REV=$(svn_rev)
+    CPPFLAGS += -DSVN_DIR=$(shell basename "`svn info | grep ^URL:`") \
+                -DSVN_REV=$(svn_rev)
   endif
 endif
 
 version := \
-  $(shell echo $(shell echo VERSION | cpp -P $(svn_defs) --include appinfo.h))
+  $(shell echo $(shell echo VERSION | cpp -P $(CPPFLAGS) --include appinfo.h))
 name_ver := $(NAME)-$(version)
 
 src_files := $(wildcard Makefile *.c *.h *.rc *.mft COPYING LICENSE* INSTALL)
@@ -57,7 +59,6 @@ c_srcs := $(wildcard *.c)
 rc_srcs := $(wildcard *.rc)
 objs := $(c_srcs:.c=.o) $(rc_srcs:.rc=.o)
 
-CPPFLAGS := $(svn_defs)
 CFLAGS := -std=gnu99 -include std.h -Wall -Wextra -Wundef -Werror
 
 ifeq ($(shell VER=`$(CC) -dumpversion`; expr $${VER%.*} '>=' 4.5), 1)
