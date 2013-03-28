@@ -113,10 +113,10 @@ $(pdf): docs/$(NAME).1
 clean:
 	rm -f *.d *.o *.exe *.zip *.pdf docs/*.pdf
 
-%.o %.d: %.c
+%.o: %.c
 	$(CC) -c -MMD -MP $(CPPFLAGS) $(CFLAGS) $<
 
-%.o %.d: %.rc
+%.o: %.rc
 	$(RC) --preprocessor '$(CC) -E -xc -DRC_INVOKED -MMD -MP $(CPPFLAGS)' $< $*.o
 
 -include $(wildcard *.d)
