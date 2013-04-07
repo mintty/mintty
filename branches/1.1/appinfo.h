@@ -10,12 +10,12 @@
 #define APPDESC "Terminal"
 #define WEBSITE "http://mintty.googlecode.com"
 #define AUTHOR  "Andy Koppe"
-#define YEAR    "2012"
+#define YEAR    "2013"
 
-#define VERSION "1.1.2"
+#define VERSION "1.1.3"
 #define MAJOR_VERSION  1
 #define MINOR_VERSION  1
-#define PATCH_NUMBER   2
+#define PATCH_NUMBER   3
 #define BUILD_NUMBER   1
 
 #if defined BRANCH && defined REVISION

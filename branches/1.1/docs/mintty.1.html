@@ -3,12 +3,12 @@
 <BODY bgcolor=#F0F0F0 text=#000000 link=#0000ff vlink=#C000C0 alink=#ff0000><A NAME=top></A>
 <!-- .\" mintty man page -->
 <!-- .\" -->
-<!-- .\" This 'man' page is Copyright 2009 Lee D. Rothstein, 2009-12 Andy Koppe -->
+<!-- .\" This 'man' page is Copyright 2009 Lee D. Rothstein, 2009-13 Andy Koppe -->
 <!-- .\" -->
 <!-- .\" You may distribute, use, and modify this man page under the terms -->
 <!-- .\" of the GNU Free Documentation License (GFDL), Version 1.3, -->
 <!-- .\" 3 November 2008 (or later) as specified. -->
-<!-- .TH mintty 1 2012-09-13 mintty\ 1.1.2 -->
+<!-- .TH mintty 1 2013-04-07 mintty\ 1.1.3 -->
 <CENTER>
 <H1><HR><I>Manual Reference Pages &nbsp;-&nbsp;</I><NOBR>mintty (1)</NOBR><HR></H1>
 </CENTER>
@@ -59,16 +59,15 @@ mintty - Cygwin terminal emulator
 &nbsp; &nbsp; &nbsp;<A HREF=#26>Window</A><BR>
 &nbsp; &nbsp; &nbsp;<A HREF=#27>Terminal</A><BR>
 &nbsp; &nbsp; &nbsp;<A HREF=#28>Command line</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#29>Hidden settings</A><BR>
-<A HREF=#30>Limitations</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#31>Console issue</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#32>Termcap/terminfo</A><BR>
-&nbsp; &nbsp; &nbsp;<A HREF=#33>Missing xterm features</A><BR>
-<A HREF=#34>See Also</A><BR>
-<A HREF=#35>License</A><BR>
-<A HREF=#36>Contact</A><BR>
+<A HREF=#29>Limitations</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#30>Console issue</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#31>Termcap/terminfo</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#32>Missing xterm features</A><BR>
+<A HREF=#33>See Also</A><BR>
+<A HREF=#34>License</A><BR>
+<A HREF=#35>Contact</A><BR>
 </BLOCKQUOTE>
-<A name=37>
+<A name=36>
 
      <H3>SYNOPSIS</H3>
 
@@ -786,7 +785,7 @@ In the config file, this corresponds to the following entries:
 <!-- .TP -->
 </TD></TR>
 <TR valign=top><TD colspan=2>
-<B>Show bold as colour</B> (BoldAsFont=no)
+<B>Show bold as font</B> (BoldAsFont=no)
 </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
 When this option is enabled, the ANSI bold (or &#146;intense&#146;) text attribute is
 shown as a bold-style font.  Where a bold variant of the selected font that
@@ -1343,10 +1342,10 @@ window.  This can be used to help Windows scripting tools such as AutoHotKey to
 distinguish different mintty windows.  The name defaults to "mintty".
 <P>
 <P>
-<!-- .SS Hidden settings -->
+<!-- .SS "Hidden" settings -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
-<A name=29>
+<A name=>
 
     <H4>&nbsp; &nbsp; Hidden settings</H4>
 </A>
@@ -1357,6 +1356,25 @@ options, which means they can only be set in config files or using the
 <P>
 <!-- .TP -->
 <TABLE cellpadding=3>
+<TR valign=top><TD colspan=2>
+<B>Application ID</B><TT> (AppID=)
+</TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
+Windows 7 and above use the application ID for grouping taskbar items.
+By default this setting is empty, in which case Windows groups taskbar
+items automatically based on their icon and command line.  This can be
+overridden by setting the AppID to a custom string, in which case windows
+with the same AppID are grouped together.
+<P>
+Note that Windows shortcut files have their own AppID.  Hence, if an AppID is
+specified in the mintty settings, but not on a taskbar-pinned shortcut for
+invoking mintty, clicking the pinned shortcut will result in a separate taskbar
+item for the new mintty window, rather than being grouped with the shortcut.
+To avoid this, the shortcut&#146;s AppID has to be set to the same string, which can
+be done using the </TT><B>win7appid</B> utility available from
+<I><A HREF="http://win7appid.googlecode.com">http://win7appid.googlecode.com</A></I>.
+<P>
+<!-- .TP -->
+</TD></TR>
 <TR valign=top><TD colspan=2>
 <B>Word selection characters</B> (WordChars=)
 </TD></TR><TR valign=top><TD width=6%>&nbsp;</TD><TD>
@@ -1452,7 +1470,7 @@ or rgb:RR/GG/BB can be used as well.
 <!-- .SH LIMITATIONS -->
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
-<A name=30>
+<A name=29>
 
      <H3>LIMITATIONS</H3>
 
@@ -1461,7 +1479,7 @@ or rgb:RR/GG/BB can be used as well.
 <P>
 <!-- .SS Console issue -->
 </BLOCKQUOTE>
-<A name=31>
+<A name=30>
 
     <H4>&nbsp; &nbsp; Console issue</H4>
 </A>
@@ -1480,7 +1498,7 @@ Programs that access the console as a file should be fine though.
 <P>
 <!-- .SS Termcap/terminfo -->
 </BLOCKQUOTE>
-<A name=32>
+<A name=31>
 
     <H4>&nbsp; &nbsp; Termcap/terminfo</H4>
 </A>
@@ -1492,7 +1510,7 @@ instead, it simply pretends to be an xterm.
 <P>
 <!-- .SS Missing xterm features -->
 </BLOCKQUOTE>
-<A name=33>
+<A name=32>
 
     <H4>&nbsp; &nbsp; Missing xterm features</H4>
 </A>
@@ -1509,7 +1527,7 @@ are missing.  Significant omissions should be reported as bugs.
 <P>
 <!-- .SH SEE ALSO -->
 </BLOCKQUOTE>
-<A name=34>
+<A name=33>
 
      <H3>SEE ALSO</H3>
 
@@ -1536,14 +1554,14 @@ for example:
 <P>
 <!-- .SH LICENSE -->
 </BLOCKQUOTE>
-<A name=35>
+<A name=34>
 
      <H3>LICENSE</H3>
 
 </A>
 <BLOCKQUOTE>
 <P>
-Copyright (C) 2012 Andy Koppe.
+Copyright (C) 2013 Andy Koppe.
 <P>
 Mintty is released under the terms of the the <I>GNU General Public License</I>
 version 3 or later.
@@ -1554,7 +1572,7 @@ There is NO WARRANTY, to the extent permitted by law.
 <P>
 <!-- .SH CONTACT -->
 </BLOCKQUOTE>
-<A name=36>
+<A name=35>
 
      <H3>CONTACT</H3>
 
@@ -1568,5 +1586,5 @@ Questions can be sent to the discussion group at
 the Cygwin mailing list at <I><A HREF="mailto:cygwin@cygwin.com">cygwin@cygwin.com</A></I>.
 </BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>mintty 1.1.2</I></TD> <TD width=33% align=center>mintty (1)</TD> <TD align=right width=33%><I>2012-09-13</I></TD> </TR></TABLE><FONT SIZE=-1>Generated by <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer 1.07</A> from mintty.1 using man macros.</FONT>
+<TABLE width=100%><TR> <TD width=33%><I>mintty 1.1.3</I></TD> <TD width=33% align=center>mintty (1)</TD> <TD align=right width=33%><I>2013-04-07</I></TD> </TR></TABLE><FONT SIZE=-1>Generated by <A HREF="http://www.squarebox.co.uk/download/manServer.shtml">manServer 1.07</A> from mintty.1 using man macros.</FONT>
 </BODY></HTML>
