@@ -1,6 +1,12 @@
 #summary Notable changes in each release
 #labels Featured
 
+=== 1.1.3 (7 April 2013) ===
+ * Tweaked cursor colour handling to avoid the cursor becoming invisible under certain circumstances.
+ * Fixed incorrect response to OSC sequence for querying colour settings.
+ * Page-by-page scrolling now scrolls by one line less than a whole page.
+ * Added '!AppID' setting for overriding the default taskbar grouping on Windows 7 and above. (Note that the !AppID of a pinned shortcut is separate from that of the program pointed to. It can be set with the free [http://code.google.com/p/win7appid win7appid] utility.)
+
 === 1.1.2 (13 September 2012) ===
  * Fixed buffer overflow in processing of the control sequence for querying font coverage.
  * Tweaked default double-click word selection algorithm to handle shell variable references (_$FOO_ and _%FOO%_) and also exclamation marks in URLs.
