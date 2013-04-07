@@ -125,7 +125,7 @@ static alt_state_t alt_state;
 static uint alt_code;
 
 static bool lctrl;  // Is left Ctrl pressed?
-static int lctrl_time;
+static long lctrl_time;
 
 static mod_keys
 get_mods(void)
@@ -702,24 +702,24 @@ win_key_down(WPARAM wp, LPARAM lp)
       else if (mods || (term.app_keypad && !numlock) || !layout())
         app_pad_code(key - VK_MULTIPLY + '*');
     when VK_NUMPAD0 ... VK_NUMPAD9:
-      if ((term.app_cursor_keys || !term.app_keypad) &&
-          alt_code_numpad_key(key - VK_NUMPAD0));
-      else if (layout());
-      else app_pad_code(key - VK_NUMPAD0 + '0');
+        (!term.app_keypad || term.app_cursor_keys) 
+        && alt_code_numpad_key(key - VK_NUMPAD0)
+        ?: layout()
+        ?: app_pad_code(key - VK_NUMPAD0 + '0');
     when 'A' ... 'Z' or ' ':
-      if (key != ' ' && alt_code_key(key - 'A' + 0xA));
-      else if (char_key());
-      else if (term.modify_other_keys > 1) modify_other_key();
-      else if (ctrl_key());
-      else ctrl_ch(CTRL(key));
+      key != ' ' && alt_code_key(key - 'A' + 0xA) ?:
+      char_key() ?:
+      term.modify_other_keys > 1 ? modify_other_key() :
+      ctrl_key() ?:
+      ctrl_ch(CTRL(key));
     when '0' ... '9' or VK_OEM_1 ... VK_OEM_102:
-      if (key <= '9' && alt_code_key(key - '0'));
-      else if (char_key());
-      else if (term.modify_other_keys <= 1 && ctrl_key());
-      else if (term.modify_other_keys) modify_other_key();
-      else if (key <= '9') app_pad_code(key);
-      else if (VK_OEM_PLUS <= key && key <= VK_OEM_PERIOD)
-        app_pad_code(key - VK_OEM_PLUS + '+');
+      key <= '9' && alt_code_key(key - '0') ?:
+      char_key() ?:
+      term.modify_other_keys <= 1 && ctrl_key() ?:
+      term.modify_other_keys ? modify_other_key() :
+      key <= '9' ? app_pad_code(key) :
+      VK_OEM_PLUS <= key && key <= VK_OEM_PERIOD
+      ? app_pad_code(key - VK_OEM_PLUS + '+') : 0;
     when VK_PACKET:
       layout();
     otherwise:

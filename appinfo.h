@@ -12,21 +12,17 @@
 #define AUTHOR  "Andy Koppe"
 #define YEAR    "2013"
 
+#define VERSION "1.1.3"
 #define MAJOR_VERSION  1
-#define MINOR_VERSION  2
-#define PATCH_NUMBER   0
+#define MINOR_VERSION  1
+#define PATCH_NUMBER   3
 #define BUILD_NUMBER   1
 
-#if defined SVN_DIR && defined SVN_REV
-  #undef BUILD_NUMBER
-  #define BUILD_NUMBER SVN_REV
-  #define VERSION STRINGIFY(svn-SVN_DIR-CONCAT(r,SVN_REV))
-#elif PATCH_NUMBER
-  #define VERSION STRINGIGY(MAJOR_VERSION.MINOR_VERSION.PATCH_NUMBER)
-#elif BUILD_NUMBER
-  #define VERSION STRINGIFY(MAJOR_VERSION.MINOR_VERSION-CONCAT(beta,BUILD_NUMBER))
-#else
-  #define VERSION STRINGIFY(MAJOR_VERSION.MINOR_VERSION-alpha)
+#if defined BRANCH && defined REVISION
+#undef VERSION
+#undef BUILD_NUMBER
+#define VERSION STRINGIFY(CONCAT(svn-BRANCH-r,REVISION))
+#define BUILD_NUMBER REVISION
 #endif
 
 #define POINT_VERSION \
@@ -39,7 +35,7 @@
 #define COPYRIGHT "(C) " YEAR " " AUTHOR
 
 #define VERSION_TEXT \
-  APPNAME " " VERSION " (" STRINGIFY(TARGET) ")\n" \
+  APPNAME " " VERSION "\n" \
   COPYRIGHT "\n" \
   "License GPLv3+: GNU GPL version 3 or later\n" \
   "There is no warranty, to the extent permitted by law.\n"

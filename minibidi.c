@@ -804,7 +804,7 @@ do_bidi(bidi_char * line, int count)
   uchar currentEmbedding;
   uchar currentOverride;
   uchar tempType;
-  int i, j, yes, bover;
+  int i, j, imax, yes, bover;
 
  /* Check the presence of R or AL types as optimization */
   yes = 0;
@@ -1193,14 +1193,17 @@ do_bidi(bidi_char * line, int count)
   * level or higher
   */
  /* we flip the character string and leave the level array */
+  imax = 0;
   i = 0;
   tempType = levels[0];
   while (i < count) {
-    if (levels[i] > tempType)
+    if (levels[i] > tempType) {
       tempType = levels[i];
+      imax = i;
+    }
     i++;
   }
- /* maximum level in tempType. */
+ /* maximum level in tempType, its index in imax. */
   while (tempType > 0) {        /* loop from highest level to the least odd, */
    /* which i assume is 1 */
     flipThisRun(line, levels, tempType, count);

@@ -19,7 +19,7 @@ static DWORD WINAPI
 shell_exec_thread(void *data)
 {
   wchar *wpath = data;
-  if ((INT_PTR)ShellExecuteW(wnd, 0, wpath, 0, 0, SW_SHOWNORMAL) <= 32) {
+  if ((int)ShellExecuteW(wnd, 0, wpath, 0, 0, SW_SHOWNORMAL) <= 32) {
     uint error = GetLastError();
     if (error != ERROR_CANCELLED) {
       char msg[1024];
@@ -500,7 +500,7 @@ win_paste(void)
   CloseClipboard();
 }
 
-static volatile LONG dt_ref_count;
+static volatile long dt_ref_count;
 
 static FORMATETC dt_format = { 0, null, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 

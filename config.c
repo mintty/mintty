@@ -115,7 +115,7 @@ typedef enum {
 static const struct {
   string name;
   uchar type;
-  ushort offset;
+  uchar offset;
 }
 options[] = {
   // Looks
