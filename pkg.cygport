@@ -1,0 +1,35 @@
+CATEGORY="Base Shells"
+DEPEND="make gcc-core w32api"
+HOMEPAGE="http://mintty.googlecode.com"
+SRC_URI="http://mintty.googlecode.com/files/mintty-${PV}-src.tar.bz2"
+SUMMARY="Terminal emulator with native Windows look and feel"
+DESCRIPTION="\
+Mintty is a terminal emulator for Cygwin. It is based on code
+from PuTTY 0.60 by Simon Tatham and team.
+
+Features include:
+* Xterm-compatible terminal emulation.
+* Full Unicode support.
+* Native Windows user interface that tries to keep things simple.
+* Graphical options dialog. Options stored in a text file.
+* Drag & drop and copy & paste of text, files and folders.
+* Extensive mouse support.
+* Window transparency."
+
+_CYGPORT_RESTRICT_postinst_doc_=1
+
+src_compile() {
+  lndirs
+  cd ${B}
+  cygmake
+}
+
+src_install() {
+  cd ${B}
+  dobin mintty.exe
+  insinto /usr/share/man/man1
+  doins docs/mintty.1
+  dodoc COPYING
+  dodoc LICENSE.Oxygen
+  dodoc LICENSE.PuTTY
+}

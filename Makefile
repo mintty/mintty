@@ -7,13 +7,12 @@
 #
 # Variables intended for setting on the make command line.
 # - TARGET: target triple for cross compiling
-# - RELEASE: define to generate release version
+# - RELEASE: release number for packaging
 # - DEBUG: define to enable debug build
 # - DMALLOC: define to enable the dmalloc heap debugging library
 #
-# The values of the RELEASE, DEBUG and DMALLOC variables do not matter,
-# it's just about whether they're defined, so e.g. 'make DEBUG=1' will 
-# trigger a debug build.
+# The values of DEBUG and DMALLOC variables do not matter, it's just about
+# whether they're defined, so e.g. 'make DEBUG=1' will trigger a debug build.
 
 NAME := mintty
 
@@ -81,7 +80,7 @@ ifdef DMALLOC
   LDLIBS += -ldmallocth
 endif
 
-.PHONY: exe src zip pdf clean
+.PHONY: exe src pkg zip pdf clean
 
 exe := $(NAME).exe
 exe: $(exe)
@@ -99,6 +98,12 @@ $(src): $(src_files)
 	tar cjf $@ $(name_ver)
 	rm -rf $(name_ver)
 
+pkg := $(name_ver)-$(RELEASE)
+pkg: $(pkg)
+$(pkg): pkg.cygport $(src)
+	cp pkg.cygport $(pkg).cygport
+	cygport $(pkg).cygport almostall
+
 zip := $(name_ver)-$(platform).zip
 zip: $(zip)
 $(zip): $(exe) $(zip_files)
@@ -111,7 +116,7 @@ $(pdf): docs/$(NAME).1
 	groff -t -man -Tps $< | ps2pdf - $@
 
 clean:
-	rm -f *.d *.o *.exe *.zip *.pdf docs/*.pdf
+	rm -rf *.d *.o $(NAME)*
 
 %.o: %.c
 	$(CC) -c -MMD -MP $(CPPFLAGS) $(CFLAGS) $<
