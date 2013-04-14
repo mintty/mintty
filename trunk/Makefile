@@ -98,11 +98,13 @@ $(src): $(src_files)
 	tar cjf $@ $(name_ver)
 	rm -rf $(name_ver)
 
+ifdef RELEASE
 pkg := $(name_ver)-$(RELEASE)
 pkg: $(pkg)
 $(pkg): pkg.cygport $(src)
 	cp pkg.cygport $(pkg).cygport
 	cygport $(pkg).cygport almostall
+endif
 
 zip := $(name_ver)-$(platform).zip
 zip: $(zip)
