@@ -9,7 +9,7 @@ try { cygbase = sh.RegRead(softkey + cygkey); }
 catch (e) {
   try { cygbase = sh.RegRead(softkey64 + cygkey); }
   catch (e) {
-    ws.Echo("Error: Could not find Cygwin 1.7 registry key.");
+    ws.Echo("Error: Could not find Cygwin registry key.");
     ws.Quit(1); 
   }
 }

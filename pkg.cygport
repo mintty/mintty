@@ -1,5 +1,5 @@
 CATEGORY="Base Shells"
-DEPEND="make gcc-core w32api"
+DEPEND="gcc-core"
 HOMEPAGE="http://mintty.googlecode.com"
 SRC_URI="http://mintty.googlecode.com/files/mintty-${PV}-src.tar.bz2"
 SUMMARY="Terminal emulator with native Windows look and feel"

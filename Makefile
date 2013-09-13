@@ -1,6 +1,7 @@
 # Interesting make targets:
 # - exe: Just the executable. This is the default.
 # - src: Source tarball.
+# - pkg: Cygwin package.
 # - zip: Zip for standalone release.
 # - pdf: PDF version of the manual page.
 # - clean: Delete generated files.
@@ -26,10 +27,13 @@ else
 endif
 
 ifeq ($(TARGET), i686-pc-cygwin)
-  platform := cygwin
+  platform := cygwin32
+  cygport_opts := --32
   zip_files := docs/readme.html scripts/create_shortcut.js
 else ifeq ($(TARGET), x86_64-pc-cygwin)
   platform := cygwin64
+  cygport_opts := --64
+  zip_files := docs/readme.html scripts/create_shortcut.js
 else ifeq ($(TARGET), i686-pc-msys)
   platform := msys
   zip_files := docs/readme-msys.html
@@ -103,7 +107,7 @@ pkg := $(name_ver)-$(RELEASE)
 pkg: $(pkg)
 $(pkg): pkg.cygport $(src)
 	cp pkg.cygport $(pkg).cygport
-	cygport $(pkg).cygport almostall
+	cygport $(cygport_opts) $(pkg).cygport almostall
 endif
 
 zip := $(name_ver)-$(platform).zip
