@@ -90,8 +90,8 @@ endif
 #############################################################################
 # build
 
-#DEPOPT=-MMD -MP
-DEPOPT=
+DEPOPT=-MMD -MP
+#DEPOPT=
 
 %.o: %.c
 	$(CC) -c $(DEPOPT) $(CPPFLAGS) $(CFLAGS) $<
@@ -110,7 +110,7 @@ $(exe): $(objs)
 #############################################################################
 # release targets
 
-REL := ../release
+DIST := ../release
 
 ifndef RELEASE
 RELEASE=0
@@ -125,14 +125,14 @@ $(pkg): $(cygport) $(src)
 	cygport $(cygport_opts) $(pkg).cygport almostall
 endif
 
-zip := $(REL)/$(name_ver)-$(platform).zip
+zip := $(DIST)/$(name_ver)-$(platform).zip
 zip: $(zip)
 $(zip): $(exe) $(zip_files)
-	mkdir -p $(REL)
+	mkdir -p $(DIST)
 	zip -9 -j $@ $^
 	-du -b $@
 
-pdf := $(REL)/$(name_ver).pdf
+pdf := $(DIST)/$(name_ver).pdf
 pdf: $(pdf)
 $(pdf): ../docs/$(NAME).1
 	groff -t -man -Tps $< | ps2pdf - $@
