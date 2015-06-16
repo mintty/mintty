@@ -1,11 +1,8 @@
+NAME=mintty
 CATEGORY="Base Shells"
-DEPEND="gcc-core"
-HOMEPAGE="http://mintty.googlecode.com"
-SRC_URI="http://mintty.googlecode.com/files/mintty-${PV}-src.tar.bz2"
-SUMMARY="Terminal emulator with native Windows look and feel"
-DESCRIPTION="\
-Mintty is a terminal emulator for Cygwin. It is based on code
-from PuTTY 0.60 by Simon Tatham and team.
+SUMMARY="Cygwin Terminal – terminal emulator with native Windows look and feel"
+DESCRIPTION="Mintty is a terminal emulator for Cygwin. It is based on code
+from PuTTY 0.60 by Simon Tatham and team, and features from xterm.
 
 Features include:
 * Xterm-compatible terminal emulation.
@@ -15,6 +12,11 @@ Features include:
 * Drag & drop and copy & paste of text, files and folders.
 * Extensive mouse support.
 * Window transparency."
+
+HOMEPAGE="http://mintty.github.io"
+SRC_URI="https://github.com/${NAME}/release/${NAME}-${VERSION}-src.tar.bz2"
+
+DEPEND="gcc-core make"
 
 RESTRICT=postinst_doc
 
@@ -29,4 +31,5 @@ src_install() {
   dobin mintty.exe
   doman docs/mintty.1
   dodoc COPYING LICENSE.Oxygen LICENSE.PuTTY
+  dodoc cygwin/README cygwin/setup.hint
 }
