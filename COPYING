@@ -1,10 +1,10 @@
-mintty is copyright 2008-13 Andy Koppe.
-Licensed under the terms of the GNU General Public License version 3 or later. 
+mintty is copyright 2008-13 Andy Koppe, 2015 Thomas Wolff.
+Licensed under the terms of the GNU General Public License version 3 or later.
 The license text can be found in the accompanying LICENSE file, at
 /usr/share/doc/common-licenses/GPL-3.0 on Cygwin installs, or on the GNU
 website at http://www.gnu.org/licenses/gpl.html.
 
-Sources are available from the project page at http://code.google.com/p/mintty.
+Sources are available from the project page at http://mintty.github.io/.
 
 Based on PuTTY version 0.60 by Simon Tatham and contributors.
 Big thanks to everyone involved for their work on PuTTY.

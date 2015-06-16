@@ -13,7 +13,7 @@ Features include:
 * Small executable size.
 
 Runtime requirements:
-  cygwin-1.7.9-1
+  cygwin
 
 Build requirements:
   binutils
@@ -23,23 +23,23 @@ Build requirements:
   w32api
 
 Canonical website:
-  http://mintty.googlecode.com
+  http://mintty.github.io/
 
 Canonical download:
-  http://code.google.com/p/mintty/downloads
+  from canonical website
 
 -------------------------------------------
 
 Build instructions:
-  unpack mintty-1.1.3-1-src.tar.bz2
+  unpack mintty-${RELEASE}-src.tar.bz2
     if you use setup to install this src package, it will be
     unpacked under /usr/src automatically
   cd /usr/src
-  cygport mintty-1.1.3-1.cygport all
+  cygport mintty-${RELEASE}.cygport all
 
 This will create:
-  /usr/src/mintty-1.1.3-1-src.tar.bz2
-  /usr/src/mintty-1.1.3-1.tar.bz2
+  /usr/src/mintty-${RELEASE}-src.tar.bz2
+  /usr/src/mintty-${RELEASE}.tar.bz2
 
 -------------------------------------------
 
@@ -54,15 +54,16 @@ Files included in the binary package:
 
 ------------------
 
-Cygwin port maintained by:  Andy Koppe  cygwin@cygwin.com
+Cygwin port created by: Andy Koppe
+Cygwin port maintained by: Thomas Wolff
 
-Please address questions to the Cygwin mailing list at 
-<cygwin@cygwin.com> or to the mintty discussion group at
-http://groups.google.com/group/mintty-discuss.
+Please report bugs or suggest features following the guidelines 
+on the canonical website.
+
+Please address questions to the Cygwin mailing list at <cygwin@cygwin.com>.
 
 The port notes below list packaging changes only.
-Please see this page for a list of changes to mintty:
-http://code.google.com/p/mintty/wiki/Changes
+Please check the canonical website for a list of changes to mintty.
 
 -------------------
 

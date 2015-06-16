@@ -1,0 +1,1223 @@
+<!-- Creator     : groff version 1.22.3 -->
+<!-- CreationDate: Tue Jun 16 14:21:46 2015 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title>mintty</title>
+
+</head>
+<body>
+
+<h1 align="center">mintty</h1>
+
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#INVOCATION">INVOCATION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#USAGE">USAGE</a><br>
+<a href="#CONFIGURATION">CONFIGURATION</a><br>
+<a href="#LIMITATIONS">LIMITATIONS</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+<a href="#LICENSE">LICENSE</a><br>
+<a href="#CONTACT">CONTACT</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">mintty - Cygwin
+terminal emulator</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>mintty</b>
+[<i>OPTION</i>]... [ <b>-</b> | <i>PROGRAM</i>
+[<i>ARG</i>]... ]</p>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>Mintty</b>
+is a terminal emulator for Cygwin with a native Windows user
+interface and minimalist design. Its terminal emulation is
+largely compatible with <b>xterm</b>, but it does not
+require an X server.</p>
+
+<h2>INVOCATION
+<a name="INVOCATION"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">If a program
+name is supplied on the command line, this is executed with
+any additional arguments given. Otherwise, mintty looks for
+a shell to execute in the <i>SHELL</i> environment variable.
+If that is not set, it reads the user&rsquo;s default shell
+setting from <i>/etc/passwd</i>. As a last resort, it falls
+back to <i>/bin/sh</i>. If a single dash is specified
+instead of a program name, the shell is invoked as a login
+shell.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">The standard
+GNU option formats are accepted, with single dashes
+introducing short options and double dashes introducing long
+options. <b><br>
+-c</b>, <b>--config</b> <i>FILENAME</i></p>
+
+<p style="margin-left:22%;">Read settings from the
+specified configuration file, in addition to
+<i>/etc/minttyrc</i> and <i>~/.minttyrc</i>.</p>
+
+<p style="margin-left:11%;"><b>-e</b>, <b>--exec</b>
+<i>PROGRAM</i> [<i>ARG</i> ...]</p>
+
+<p style="margin-left:22%;">Execute the specified program
+in the terminal session and pass on any additional
+arguments.</p>
+
+<p style="margin-left:22%; margin-top: 1em">This option is
+present for compatibility with other terminal emulators
+only. It can be omitted, in which case the first non-option
+argument, if any, is taken as the name of the program to
+execute.</p>
+
+<p style="margin-left:11%;"><b>-h</b>, <b>--hold
+never</b>|<b>start</b>|<b>error</b>|<b>always</b></p>
+
+<p style="margin-left:22%;">Determine whether to keep the
+terminal window open when the command has finished and no
+more processes are connected to the terminal. The argument
+can be abbreviated to a single letter.</p>
+
+<p style="margin-left:22%; margin-top: 1em">By default, the
+window is closed immediately, except if the child process
+has exited with status 255, which is used to indicate
+failure to execute the shell command. (Exit status 255 is
+also used by <b>ssh</b> to indicate connection errors.)</p>
+
+<p style="margin-left:22%; margin-top: 1em">Alternatively,
+the window can be set to never stay open, to always stay
+open, or to stay open only if the child process terminates
+with an error, i.e. with a non-zero exit status or due to a
+signal indicating a runtime error.</p>
+
+<p style="margin-left:11%;"><b>-i</b>, <b>--icon</b>
+<i>FILE</i>[<b>,</b><i>INDEX</i>]</p>
+
+<p style="margin-left:22%;">Load the window icon from an
+executable, DLL, or icon file. The optional comma-separated
+index can be used to select a particular icon in a file with
+multiple icons.</p>
+
+<p style="margin-left:11%;"><b>-l</b>, <b>--log</b>
+<i>FILE</i>|<b>-</b></p>
+
+<p style="margin-left:22%;">Copy all output into the
+specified log file, or standard output if a dash is given
+instead of a file name. (See also <i>script</i>(1) for a
+more flexible logging tool.)</p>
+
+<p style="margin-left:11%;"><b>-o</b>, <b>--option</b>
+<i>NAME</i>=<i>VALUE</i></p>
+
+<p style="margin-left:22%;">Override the named config file
+option with the given value, e.g. <tt>-o
+ScrollbackLines=1000</tt>.</p>
+
+<p style="margin-left:11%;"><b>-p</b>, <b>--position</b>
+<i>X</i><b>,</b><i>Y</i></p>
+
+<p style="margin-left:22%;">Open the window with its top
+left corner at the specified coordinates.</p>
+
+<p style="margin-left:11%;"><b>-s</b>, <b>--size</b>
+<i>COLS</i><b>,</b><i>ROWS</i></p>
+
+<p style="margin-left:22%;">Set the default size of the
+window in character columns and rows.</p>
+
+<p style="margin-left:11%;"><b>-t</b>, <b>--title</b>
+<i>TITLE</i></p>
+
+<p style="margin-left:22%;">Use <i>TITLE</i> as the initial
+window title. By default, the title is set to the executed
+command.</p>
+
+<p style="margin-left:11%;"><b>-u</b>, <b>--utmp</b></p>
+
+<p style="margin-left:22%;">Create a utmp entry.</p>
+
+<p style="margin-left:11%;"><b>-w</b>, <b>--window
+normal</b>|<b>min</b>|<b>max</b>|<b>full</b>|<b>hide</b></p>
+
+<p style="margin-left:22%;">Set the initial window state:
+normal, minimised, maximised, full screen, or hidden.</p>
+
+<p style="margin-left:11%;"><b>--class</b> <i>CLASS</i></p>
+
+<p style="margin-left:22%;">Use <i>CLASS</i> as the window
+class name of the main window. This allows scripting tools
+to distinguish different mintty instances. The default is
+&quot;mintty&quot;.</p>
+
+<p style="margin-left:11%;"><b>-H</b>, <b>--help</b></p>
+
+<p style="margin-left:22%;">Display a brief help message
+and exit.</p>
+
+<p style="margin-left:11%;"><b>-V</b>, <b>--version</b></p>
+
+<p style="margin-left:22%;">Print version information and
+exit.</p>
+
+<h2>USAGE
+<a name="USAGE"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Mintty tries to
+adhere to both Windows and Unix usage conventions. Where
+they conflict, an option is usually provided. This section
+primarily describes the default configuration; see the
+<b>CONFIGURATION</b> section on how it can be
+customised.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Menus</b>
+<br>
+The context menu can be opened by right-clicking the mouse
+or by pressing the <b>Menu</b> key that is normally located
+next to the right Ctrl key.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Mintty also
+adds a couple of items to the window menu, which can be
+accessed by clicking on the program icon or pressing
+<b>Alt+Space</b>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Both menus have
+an entry that leads to the options dialog for changing
+mintty&rsquo;s configuration.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Copy &amp;
+paste</b> <br>
+Screen contents can be selected by holding down the left
+mouse button and dragging the mouse. If Alt is held down
+before the left mouse button, a rectangular block instead of
+whole lines will be selected. The selection can be extended
+by holding down <b>Shift</b> while left-clicking.
+Double-clicking or triple-clicking selects a whole word or
+line, whereby word selection includes special characters
+that commonly appear in file names and URLs.</p>
+
+<p style="margin-left:11%; margin-top: 1em">By default,
+selected text is automatically copied to the clipboard. This
+can be disabled on the <b>Mouse</b> page of the options
+dialog. Selected text can also be copied manually using
+either the <b>Copy</b> menu command, the <b>Ctrl+Ins</b>
+keyboard shortcut, or the middle mouse button combined with
+<b>Shift</b>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">The selected
+region is copied as &quot;rich text&quot; as well as normal
+text, which means it can be pasted with colours and
+formatting into applications that support it, e.g. word
+processors.</p>
+
+<p style="margin-left:11%; margin-top: 1em">The window
+title can be copied using the <b>Copy Title</b> command in
+the window menu.</p>
+
+<p style="margin-left:11%; margin-top: 1em">The clipboard
+contents can be pasted using either the <b>Paste</b> menu
+command, the <b>Shift+Ins</b> keyboard shortcut, or the
+middle mouse button. Not only text but also files and
+directories can be pasted, whereby the latter are inserted
+as Cygwin file names. Shell quoting is added to file names
+that contain spaces or special characters.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Drag &amp;
+drop</b> <br>
+Text, files and directories can be dropped into the mintty
+window. They are inserted in the same way as if they were
+pasted from the clipboard.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Opening
+files, directories and URLs</b> <br>
+Files, directories and URLs can be opened either by holding
+<b>Ctrl</b> while left-clicking on them, or by selecting
+them and choosing the <b>Open</b> command from the context
+menu. Please note that opening a file or directory with a
+relative path only works correctly if the path refers to the
+current working directory of the process invoked by
+mintty.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Font
+zoom</b> <br>
+The font size can be increased or decreased using the
+keyboard shortcuts <b>Ctrl+plus</b> and <b>Ctrl+minus</b>,
+or by holding <b>Ctrl</b> while rolling the mousewheel.
+<b>Ctrl+zero</b> returns the font size to the default.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Full
+screen</b> <br>
+Full screen mode can be toggled using either the <b>Full
+Screen</b> command in the menu or either of the
+<b>Alt+Enter</b> and <b>Alt+F11</b> keyboard shortcuts.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Default
+size</b> <br>
+If the window has been resized, it can be returned to the
+default size set in the Window pane of the options using the
+<b>Default size</b> command in the menu or the
+<b>Alt+F10</b> shortcut.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Reset</b>
+<br>
+Sometimes a faulty application or printing a binary file
+will leave the terminal in an unusable state. In that case,
+resetting the terminal&rsquo;s state via the <b>Reset</b>
+command in the menu or the <b>Alt+F8</b> keyboard shortcut
+may help.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>Scrolling</b>
+<br>
+Mintty has a scrollback buffer that can hold up to 10000
+lines in the default configuration. It can be accessed using
+the scrollbar, the mouse wheel, or the keyboard. Hold the
+<b>Shift</b> key while pressing the <b>Up</b> and
+<b>Down</b> arrow keys to scroll line-by-line or the
+<b>PageUp</b> and <b>PageDown</b> keys to scroll
+page-by-page.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Flip
+screen</b> <br>
+Applications such as editors and file viewers normally use a
+terminal feature called the alternate screen, which is a
+second screen buffer without scrollback. When they exit,
+they switch back to the primary screen to restore the
+command line as it was before invoking the application.</p>
+
+<p style="margin-left:11%; margin-top: 1em">The <b>Flip
+Screen</b> menu command and <b>Alt+F12</b> shortcut allow
+looking at the primary screen while the alternate screen is
+active, and vice versa. For example, this allows to refer to
+past commands while editing a file.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Switching
+session</b> <br>
+The <b>Ctrl+Tab</b> and <b>Ctrl+Shift+Tab</b> shortcuts can
+be used to switch between mintty windows. Minimised windows
+are skipped.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Closing a
+session</b> <br>
+Clicking the window&rsquo;s close button, pressing
+<b>Alt+F4</b>, or choosing <b>Close</b> from the window menu
+sends a <i>SIGHUP</i> signal to the process running in
+mintty, which normally causes it to exit.</p>
+
+<p style="margin-left:11%; margin-top: 1em">That signal can
+be ignored, though, in which case the program might have to
+be forced to terminate by sending a <i>SIGKILL</i> signal
+instead. This can be done by holding down <b>Shift</b> when
+using the close button, shortcut or menu item.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Mouse
+tracking</b> <br>
+When an application activates mouse tracking, mouse events
+are sent to the application rather than being treated as
+window events. This is indicated by the mouse pointer
+changing from an <b>I</b> shape to an arrow. Holding down
+<b>Shift</b> overrides mouse tracking mode and sends mouse
+events to the window instead, so that e.g. text can be
+selected and the context menu can be accessed.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Alt
+codes</b> <br>
+The Windows Alt+Numpad method for entering character codes
+is supported, whereby the Alt key has to be held while
+entering the character code. Only the first key has to be on
+the numpad; subsequent digits can be entered both on the
+numpad or the main part of the keyboard.</p>
+
+<p style="margin-left:11%; margin-top: 1em">If the first
+key is the <b>&rsquo;+&rsquo;</b> on the numpad, the code is
+interpreted as hexadecimal, whereby digits A through F can
+be entered using the letter keys. If the first key is a
+zero, the code is interpreted as octal. If the first key is
+any other digit from 1 to 9, the code is interpreted as
+decimal.</p>
+
+<p style="margin-left:11%; margin-top: 1em">For UTF-8 and
+other Unicode encodings such as GB18030, the entered code is
+interpreted as a Unicode codepoint and encoded accordingly
+before it is sent. For other encodings, the entered code is
+sent as is. If it doesn&rsquo;t fit into one byte, it is
+sent as multiple bytes, with the the most significant
+non-zero byte first.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>Shortcuts</b>
+<br>
+An overview of all the keyboard shortcuts. <b><br>
+Scrollback</b></p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Shift+Up</b>: Line up <br>
+&minus; <b>Shift+Down</b>: Line down <br>
+&minus; <b>Shift+PgUp</b>: Page up <br>
+&minus; <b>Shift+PgDn</b>: Page down <br>
+&minus; <b>Shift+Home</b>: Top <br>
+&minus; <b>Shift+End</b>: Bottom</p>
+
+<p style="margin-left:11%;"><b>Copy and paste</b></p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Ctrl+Ins</b>: Copy <br>
+&minus; <b>Shift+Ins</b>: Paste <br>
+&minus; <b>Ctrl+Shift+Ins</b>: Copy and paste</p>
+
+<p style="margin-left:11%;"><b>Window commands</b></p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Alt+F2</b>: New <br>
+&minus; <b>Alt+F4</b>: Close <br>
+&minus; <b>Alt+F8</b>: Reset <br>
+&minus; <b>Alt+F10</b>: Default size <br>
+&minus; <b>Alt+F11</b> or <b>Alt+Enter</b>: Full screen <br>
+&minus; <b>Alt+F12</b>: Flip screen <br>
+&minus; <b>Alt+Space</b>: Window menu <br>
+&minus; <b>Ctrl+Tab</b>: Next window <br>
+&minus; <b>Ctrl+Shift+Tab</b>: Previous window</p>
+
+<p style="margin-left:11%;"><b>Font zoom</b></p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Ctrl+plus</b>: Zoom in <br>
+&minus; <b>Ctrl+minus</b>: Zoom out <br>
+&minus; <b>Ctrl+zero</b>: Back to configured font size</p>
+
+<p style="margin-left:11%;"><b>Ctrl+Shift+letter
+shortcuts</b></p>
+
+<p style="margin-left:22%; margin-top: 1em">An alternative
+set of shortcuts for clipboard and window commands using
+<b>Ctrl+Shift+letter</b> combinations is available. These
+can be enabled on the Keys pane of the options dialog.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Ctrl+Shift+C</b>: Copy <br>
+&minus; <b>Ctrl+Shift+V</b>: Paste <br>
+&minus; <b>Ctrl+Shift+N</b>: New <br>
+&minus; <b>Ctrl+Shift+W</b>: Close <br>
+&minus; <b>Ctrl+Shift+R</b>: Reset <br>
+&minus; <b>Ctrl+Shift+D</b>: Default size <br>
+&minus; <b>Ctrl+Shift+F</b>: Full screen <br>
+&minus; <b>Ctrl+Shift+S</b>: Flip screen</p>
+
+<h2>CONFIGURATION
+<a name="CONFIGURATION"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Mintty has a
+graphical options dialog that can be reached via the context
+menu or the window menu. As usual, both the <b>Apply</b> and
+<b>OK</b> buttons apply any changes made, but <b>OK</b> also
+closes the dialog. <b>Cancel</b> discards changes.</p>
+
+<p style="margin-left:11%; margin-top: 1em">In
+configuration files, settings are stored as
+<i>NAME</i>=<i>VALUE</i> pairs, with one per line. By
+default, they are read from <i>/etc/minttyrc</i> and
+<i>~/.minttyrc</i>. Additional configuration files can be
+specified using the <b>--config</b> command line option.
+These are read in order, with settings in later files
+overriding those in earlier ones. Configuration changes are
+saved to the last file specified, or <i>~/.minttyrc</i> if
+none is given. Settings can also be specified on the command
+line using <b>--option</b>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">The following
+sections explain the settings on each pane of the options
+dialog, followed by settings that do not appear in the
+dialog. For each setting, its name in the config file is
+shown in parentheses, along with its default value.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Looks</b>
+<br>
+Settings affecting mintty&rsquo;s appearance. <b><br>
+Colours</b></p>
+
+<p style="margin-left:22%;">Clicking on one of the buttons
+here opens the colour selection dialog. In the settings,
+colours are represented as comma-separated RGB triples with
+decimal 8-bit values ranging from 0 to 255. X-style
+hexadecimal colour specifications such as #RRGGBB or
+rgb:RR/GG/BB can be used as well.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Foreground</b> (ForegroundColour=191,191,191) <br>
+&minus; <b>Background</b> (BackgroundColour=0,0,0) <br>
+&minus; <b>Cursor</b> (CursorColour=191,191,191)</p>
+
+<p style="margin-left:11%;"><b>Transparency</b>
+(Transparency=off)</p>
+
+<p style="margin-left:22%;">Window transparency level, with
+the following choices:</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Off</b> <br>
+&minus; <b>Low</b> <br>
+&minus; <b>Medium</b> <br>
+&minus; <b>High</b> <br>
+&minus; <b>Glass</b></p>
+
+<p style="margin-left:22%; margin-top: 1em">The
+<b>Glass</b> option is only available on Vista and above
+with desktop compositing enabled. To make this reasonably
+usable, the glass colour needs to be set to be as dark as
+possible in the Windows control panel: choose
+<i>Personalize</i> from the desktop context menu, click on
+<i>Window Color</i>, turn the colour intensity up to the
+maximum, show the colour mixer, and turn the brightness down
+to black.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Numeric
+transparency values ranging from 4 to 254 can be specified
+in config files or on the command line. (Values below 4 are
+multiplied by 16, for backward compatibility reasons.)</p>
+
+<p style="margin-left:11%;"><b>Opaque when focused</b>
+(OpaqueWhenFocused=no)</p>
+
+<p style="margin-left:22%;">Enable to make the window
+opaque when it is active (to avoid background distractions
+when working in it).</p>
+
+<p style="margin-left:11%;"><b>Cursor</b>
+(CursorType=line)</p>
+
+<p style="margin-left:22%;">The following cursor types are
+available:</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Line</b> <br>
+&minus; <b>Block</b> <br>
+&minus; <b>Underscore</b></p>
+
+<p style="margin-left:22%; margin-top: 1em">The line cursor
+is displayed with the width set in the Accessibility Options
+control panel.</p>
+
+<p style="margin-left:11%;"><b>Cursor blink</b>
+(CursorBlinks=yes)</p>
+
+<p style="margin-left:22%;">If enabled, the cursor blinks
+at the rate set in the Keyboard control panel.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Text</b>
+<br>
+Settings controlling text display. <b><br>
+Font selection</b></p>
+
+<p style="margin-left:22%;">Clicking on the <b>Select</b>
+button opens a dialog where the font and its properties can
+be chosen. Font styles other than <b>Bold</b> are ignored.
+In the config file, this corresponds to the following
+entries:</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Font</b> (Font=Lucida Console) <br>
+&minus; <b>Style</b> (FontIsBold=no) <br>
+&minus; <b>Size</b> (FontHeight=9)</p>
+
+<p style="margin-left:11%;"><b>Show bold as font</b>
+(BoldAsFont=no)</p>
+
+<p style="margin-left:22%;">When this option is enabled,
+the ANSI bold (or &rsquo;intense&rsquo;) text attribute is
+shown as a bold-style font. Where a bold variant of the
+selected font that has the same width as the base font is
+available, that is used; otherwise, the bolding is simulated
+by rendering the text twice with a one-pixel offset.</p>
+
+<p style="margin-left:11%;"><b>Show bold as colour</b>
+(BoldAsColour=yes)</p>
+
+<p style="margin-left:22%;">By default, text with the ANSI
+bold attribute set is displayed with a different colour,
+usually with increased brightness. This can be disabled
+here.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note that when
+<b>BoldAsFont</b> is enabled, only bold text in one of the
+eight ANSI colours has its colour changed, i.e. bold text
+without an explicitly spefified colour is shown with a bold
+font only. This matches <b>xterm</b> behaviour.</p>
+
+<p style="margin-left:22%; margin-top: 1em">This option
+also controls how the &rsquo;half-bright&rsquo; (or
+&rsquo;dim&rsquo;) text attribute is displayed: if it is on,
+half-bright text is shown with halved foreground colour
+brightness; otherwise, it is shown by blending the
+foreground colour with the background colour.</p>
+
+<p style="margin-left:11%;"><b>Allow blinking</b>
+(AllowBlinking=no)</p>
+
+<p style="margin-left:22%;">When text blinking is disabled,
+as it is by default, the blink attribute is displayed as a
+bold background colour instead.</p>
+
+<p style="margin-left:11%;"><b>Font smoothing</b>
+(FontSmoothing=default)</p>
+
+<p style="margin-left:22%;">Select the amount of font
+smoothing from the following choices:</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Default</b>: Use Windows setting. <br>
+&minus; <b>None</b>: With all the jaggies. <br>
+&minus; <b>Partial</b>: Greyscale anti-aliasing. <br>
+&minus; <b>Full</b>: Subpixel anti-aliasing
+(&quot;ClearType&quot;).</p>
+
+<p style="margin-left:11%;"><b>Locale</b> (Locale=)</p>
+
+<p style="margin-left:22%;">The locale setting consists of
+a lowercase two-letter or three-letter language code
+followed by a two-letter country code, for instance
+<b>en_US</b> or <b>zh_CN</b>. The Windows default system and
+user locales are shown in the drop-down list for this
+setting. Alternatively, the language-neutral &quot;C&quot;
+locale can be selected.</p>
+
+<p style="margin-left:22%; margin-top: 1em">If no locale is
+set here, which is the default, mintty uses the locale and
+character set specified via the environment variables
+<i>LC_ALL</i>, <i>LC_CTYPE</i> or <i>LANG</i>.</p>
+
+<p style="margin-left:22%; margin-top: 1em">If the locale
+option is set, however, it will override any environment
+variable setting: <i>LC_ALL</i> and the <i>LC_*</i>
+variables for specific locale categories are cleared, while
+<i>LANG</i> is set according to the selected locale and
+character set.</p>
+
+<p style="margin-left:11%;"><b>Character set</b>
+(Charset=)</p>
+
+<p style="margin-left:22%;">The character set to be used
+for encoding input and decoding output. If no locale is set,
+this setting is ignored.</p>
+
+<p style="margin-left:22%; margin-top: 1em">While changing
+the character set takes effect immediately for text input
+and ouput, it does not affect the processes already running
+in mintty. This is because the environment variables of a
+running process cannot be changed from outside that process.
+Therefore mintty needs to be restarted for a character set
+change to take full effect.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Keys</b>
+<br>
+Settings controlling keyboard behaviour. <b><br>
+Backspace sends ^H</b> (BackspaceSendsBS=no)</p>
+
+<p style="margin-left:22%;">By default, mintty sends
+<b>^?</b> as the keycode for the backspace key. If this
+option is enabled, <b>^H</b> is sent instead. This also
+changes the <b>Ctrl+Backspace</b> code from <b>^_</b> to
+<b>^?</b>.</p>
+
+<p style="margin-left:11%;"><b>Ctrl+LeftAlt is AltGr</b>
+(CtrlAltIsAltGr=no)</p>
+
+<p style="margin-left:22%;">The AltGr key on non-US Windows
+systems is a strange beast: pressing it is synonymous with
+pressing the left Ctrl key and the right Alt key at the same
+time, and Windows programs usually treat any Ctrl+Alt
+combination as AltGr.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Some programs,
+however, chief among them Microsoft&rsquo;s very own Office,
+do not treat Ctrl+LeftAlt as AltGr, so that Ctrl+LeftAlt
+combinations can be used in command shortcuts even when a
+key has an AltGr character binding.</p>
+
+<p style="margin-left:22%; margin-top: 1em">By default,
+mintty follows Office&rsquo;s approach, because a number of
+terminal programs make use of Ctrl+Alt shortcuts. The
+&quot;standard&quot; Windows behaviour can be restored by
+ticking the checkbox here.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The setting
+makes no difference for keys without AltGr key bindings
+(e.g. any key on the standard US layout).</p>
+
+<p style="margin-left:11%;"><b>Copy and Paste shortcuts</b>
+(ClipShortcuts=yes)</p>
+
+<p style="margin-left:22%;">Checkbox for enabling the
+clipboard shortcuts <b>Ctrl+Ins</b> for copying and
+<b>Shift+Ins</b> for pasting.</p>
+
+<p style="margin-left:11%;"><b>Menu and Full Screen
+shortcuts</b> (WindowShortcuts=yes)</p>
+
+<p style="margin-left:22%;">Checkbox for enabling the
+<b>Alt+Space</b> and <b>Alt+Enter</b> shortcuts for showing
+the window menu and toggling full screen mode.</p>
+
+<p style="margin-left:11%;"><b>Switch window shortcuts</b>
+(SwitchShortcuts=yes)</p>
+
+<p style="margin-left:22%;">Checkbox for enabling the
+<b>Ctrl+Tab</b> and <b>Ctrl+Shift+Tab</b> shortcuts for
+switching between mintty windows.</p>
+
+<p style="margin-left:11%;"><b>Zoom shortcuts</b>
+(ZoomShortcuts=yes)</p>
+
+<p style="margin-left:22%;">Checkbox for enabling the font
+zooming shortcuts <b>Ctrl+plus/minus/zero</b>.</p>
+
+<p style="margin-left:11%;"><b>Alt+Fn shortcuts</b>
+(AltFnShortcuts=yes)</p>
+
+<p style="margin-left:22%;">Checkbox for enabling the use
+of combinations of Alt and functions keys as shortcuts, for
+example <b>Alt+F4</b> for closing the window or
+<b>Alt+F11</b> fortoggling full screen mode. Disable to have
+<b>Alt+Fn</b> combinations sent to applications instead.</p>
+
+<p style="margin-left:11%;"><b>Ctrl+Shift+letter
+shortcuts</b> (CtrlShiftShortcuts=no)</p>
+
+<p style="margin-left:22%;">Checkbox for enabling
+alternative clipboard and window command shortcuts using
+<b>Ctrl+Shift+letter</b> combinations such as
+<b>Ctrl+Shift+V</b> for paste or <b>Ctrl+Shift+N</b> for
+starting a new session.</p>
+
+<p style="margin-left:22%; margin-top: 1em">These can
+replace the <b>Ctrl/Shift+Ins</b> and <b>Alt+Fn</b>
+shortcuts, whereby they show up in menus only if the
+corresponding default shortcuts are disabled.</p>
+
+<p style="margin-left:22%; margin-top: 1em">See the
+shortcuts section above for the list of shortcuts controlled
+by this option. When it is disabled, Ctrl+Shift+letter
+combinations are sent to applications as C1 control
+characters instead.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Mouse</b>
+<br>
+Settings controlling mouse support. <b><br>
+Copy on select</b> (CopyOnSelect=yes)</p>
+
+<p style="margin-left:22%;">If enabled, the region selected
+with the mouse is copied to the clipboard as soon as the
+mouse button is released, thus emulating X Window
+behaviour.</p>
+
+<p style="margin-left:11%;"><b>Copy as rich text</b>
+(CopyAsRTF=yes)</p>
+
+<p style="margin-left:22%;">If this option is enabled,
+which it is by default, text is copied to the clipboard in
+rich text format (RTF) in addition to plain text format. RTF
+preserves colours and styles when pasting text into
+applications that support it, e.g. word processors.</p>
+
+<p style="margin-left:11%;"><b>Clicks place command line
+cursor</b> (ClicksPlaceCursor=no)</p>
+
+<p style="margin-left:22%;">If enabled, the command line
+cursor can be placed by pressing the left mouse button. This
+works by sending the number of cursor keycodes needed to get
+to the destination.</p>
+
+<p style="margin-left:11%;"><b>Right click action</b>
+(RightClickAction=menu)</p>
+
+<p style="margin-left:22%;">Action to take when the right
+mouse button is pressed.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Paste</b>: Paste the clipboard contents. <br>
+&minus; <b>Extend</b>: Extend the selected region. <br>
+&minus; <b>Show menu</b>: Show the context menu.</p>
+
+<p style="margin-left:22%; margin-top: 1em">If this is set
+to <b>Paste</b>, the middle button extends the selected
+region instead of pasting the clipboard. If it is set to
+<b>Extend</b>, a left click with <b>Shift</b> pressed pastes
+the clipboard instead of extending the selection.</p>
+
+<p style="margin-left:11%;"><b>Default click target</b>
+(ClicksTargetApp=yes)</p>
+
+<p style="margin-left:22%;">This applies to application
+mouse mode, i.e. when the application activates xterm-style
+mouse reporting. In that mode, mouse clicks can be sent
+either to the application to process as it sees fit, or to
+the window for the usual actions such as select and
+paste.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Window</b> <br>
+&minus; <b>Application</b></p>
+
+<p style="margin-left:11%;"><b>Modifier key for overriding
+default</b> (ClickTargetMod=shift)</p>
+
+<p style="margin-left:22%;">The modifier key selected here
+can be used to override the click target in application
+mouse mode. With the default settings, clicks are sent to
+the application and Shift needs to be held to trigger window
+actions instead.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The <b>Off</b>
+setting disables overriding.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Shift</b> <br>
+&minus; <b>Ctrl</b> <br>
+&minus; <b>Alt</b> <br>
+&minus; <b>Off</b></p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Window</b>
+<br>
+Window properties. <b><br>
+Columns</b> (Columns=80)</p>
+
+<p style="margin-left:22%;">Default width of the window, in
+character cells.</p>
+
+<p style="margin-left:11%;"><b>Rows</b> (Rows=24)</p>
+
+<p style="margin-left:22%;">Default height of the window,
+in character cells.</p>
+
+<p style="margin-left:11%;"><b>Current size</b></p>
+
+<p style="margin-left:22%;">Pressing this button sets the
+default width and height to the window&rsquo;s current
+size.</p>
+
+<p style="margin-left:11%;"><b>Scrollback lines</b>
+(ScrollbackLines=10000)</p>
+
+<p style="margin-left:22%;">The maximum number of lines to
+keep in the scrollback buffer.</p>
+
+<p style="margin-left:11%;"><b>Scrollbar</b>
+(Scrollbar=right)</p>
+
+<p style="margin-left:22%;">The scrollbar can be shown on
+either side of the window or just hidden. By default, it is
+shown on the right-hand side.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Left</b> <br>
+&minus; <b>None</b> <br>
+&minus; <b>Right</b></p>
+
+<p style="margin-left:11%;"><b>Modifier for scrolling</b>
+(ScrollMod=shift)</p>
+
+<p style="margin-left:22%;">The modifier key that needs to
+be pressed together with the arrow up/down, PgUp/PgDn, or
+Home/End keys to access the scrollback buffer. The default
+is <b>Shift</b>. The <b>Off</b> setting disables scrolling
+with keyboard shortcuts.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Shift</b> <br>
+&minus; <b>Ctrl</b> <br>
+&minus; <b>Alt</b> <br>
+&minus; <b>Off</b></p>
+
+<p style="margin-left:11%;"><b>PgUp and PgDn scroll without
+modifier</b> (PgUpDnScroll=no)</p>
+
+<p style="margin-left:22%;">If this is enabled, the
+scrollback buffer can be accessed by just pressing PgUp or
+PgDn, without the &rsquo;modifier for scrolling&rsquo;
+selected above. If the modifier is pressed anyway, plain
+PgUp/PgDn keycodes are sent to the application. This option
+does not affect the arrow keys or Home/End keys.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>Terminal</b>
+<br>
+Terminal emulation settings. <b><br>
+Type</b> (Term=xterm)</p>
+
+<p style="margin-left:22%;">The terminal type. This
+determines the setting of the TERM environment variable at
+mintty startup. Choices available from the dropdown list are
+<b>xterm</b>, <b>xterm-256color</b>, <b>xterm-vt220</b>,
+<b>vt220</b>, and <b>vt100</b>.</p>
+
+<p style="margin-left:22%; margin-top: 1em">If the setting
+contains &quot;vt220&quot;, xterm VT220-style function key
+mode is enabled instead of the default PC-style function key
+mode. (This can otherwise be set with the DECSET 1061
+control sequence.)</p>
+
+<p style="margin-left:22%; margin-top: 1em">Apart from
+that, this setting has no effect on mintty&rsquo;s terminal
+emulation, i.e. all the features are always available.
+However, the TERM setting does tell applications what
+features they can use.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The
+<b>xterm-256color</b> setting enables 256-color mode in some
+applications, but may not be recognised at all by others,
+which is why plain <b>xterm</b> is the default.</p>
+
+<p style="margin-left:11%;"><b>Answerback</b>
+(Answerback=)</p>
+
+<p style="margin-left:22%; margin-top: 1em">The answerback
+string is sent in response to the <b>^E</b> (ENQ) character.
+By default, this is empty.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="6%">
+
+
+<p><b>Bell</b></p></td>
+<td width="5%"></td>
+<td width="78%">
+
+
+<p>The three checkboxes here determine what effects the
+bell character <b>^G</b> has. Only taskbar highlighting is
+enabled by default.</p></td></tr>
+</table>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Sound</b> (BellSound=no): Play the system&rsquo;s default
+beep sound.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Flash</b> (BellFlash=no): Briefly invert the foreground
+and background colours.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Highlight in taskbar</b> (BellTaskbar=yes): Change the
+colour of mintty&rsquo;s taskbar entry if the mintty window
+is not active.</p>
+
+<p style="margin-left:11%;"><b>Printer</b> (Printer=)</p>
+
+<p style="margin-left:22%;">The ANSI standard defines
+control sequences for sending text to a printer, which are
+used by some terminal applications such as the mail reader
+<b>pine</b>. The Windows printer to send such text to can be
+selected here. By default, printing is disabled.</p>
+
+<p style="margin-left:11%;"><b>Prompt about running
+processes on close</b> (ConfirmExit=yes)</p>
+
+<p style="margin-left:22%;">If enabled, ask for
+confirmation when the close button or <i>Alt+F4</i> is
+pressed and the command invoked by mintty still has child
+processes. This is intended to help avoid closing programs
+accidentally.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Command
+line</b> <br>
+The settings here are config file versions of command line
+options described in the OPTIONS section. They do not appear
+in the options dialog. <b><br>
+Holding the window open</b> (Hold=start)</p>
+
+<p style="margin-left:22%;">The <b>Hold</b> setting
+determines whether to keep the terminal window open when the
+command has finished and no more processes are connected to
+the terminal. It takes the following values:</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>never</b>: Don&rsquo;t keep the window open.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>start</b>: Only keep the window open if the command
+exited with status 255, which is used to indicate failure to
+start the command. This is the default.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>error</b>: Keep the window open if the command exited
+with a non-zero status or it was terminated by a signal
+indicating a runtime error.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>always</b>: Always keep the window open.</p>
+
+<p style="margin-left:11%;"><b>Window icon</b> (Icon=)</p>
+
+<p style="margin-left:22%;">The <b>Icon</b> setting with
+format <i>FILE</i>[<b>,</b><i>INDEX</i>] allows to load the
+window icon from an executable, DLL, or icon file. The
+optional comma-separated index can be used to select a
+particular icon in a file with multiple icons. If the
+setting is empty, as it is by default, mintty&rsquo;s
+program icon is used.</p>
+
+<p style="margin-left:11%;"><b>Log file</b> (Log=)</p>
+
+<p style="margin-left:22%;">The <b>Log</b> setting can be
+used to specify a log file that all output is copied into.
+If it is empty, as it is by default, no logging is done. See
+also the <i>script</i>(1) utility for a more flexible
+logging solution.</p>
+
+<p style="margin-left:11%;"><b>Window title</b>
+(Title=)</p>
+
+<p style="margin-left:22%;">The <b>Title</b> setting can be
+used to determine the initial window title. If it is empty,
+as it is by default, the title is set to the command being
+run.</p>
+
+<p style="margin-left:11%;"><b>Utmp record</b>
+(Utmp=no)</p>
+
+<p style="margin-left:22%;">If enabled, an entry for the
+session is written into the system&rsquo;s <i>utmp</i> file
+for recording logins, so that the session appears for
+example in the output of the <i>who</i>(1) utility.</p>
+
+<p style="margin-left:11%;"><b>Initial window state</b>
+(Window=normal)</p>
+
+<p style="margin-left:22%;">This setting determines how the
+terminal window should be shown at startup:</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>normal</b> (default) <br>
+&minus; <b>min</b> (minimised) <br>
+&minus; <b>max</b> (maximised) <br>
+&minus; <b>full</b> (full screen) <br>
+&minus; <b>hide</b> (invisible)</p>
+
+<p style="margin-left:11%;"><b>Window position</b> (X=,
+Y=)</p>
+
+<p style="margin-left:22%;"><b>X</b> and <b>Y</b> are
+integer settings that can be used to determine the initial
+coordinates of the top left corner of the terminal window.
+By default, these are unset, which means that the position
+suggested by the window manager is used.</p>
+
+<p style="margin-left:11%;"><b>Window class name</b>
+(Class=mintty)</p>
+
+<p style="margin-left:22%;">The <b>Class</b> setting
+determines the name of the window class of the terminal
+window. This can be used to help Windows scripting tools
+such as AutoHotKey to distinguish different mintty windows.
+The name defaults to &quot;mintty&quot;.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Hidden
+settings</b> <br>
+The following settings appear neither in the options dialog
+nor as command line options, which means they can only be
+set in config files or using the <b>--option</b> command
+line option. <b><br>
+Application ID</b> (AppID=)</p>
+
+<p style="margin-left:22%;">Windows 7 and above use the
+application ID for grouping taskbar items. By default this
+setting is empty, in which case Windows groups taskbar items
+automatically based on their icon and command line. This can
+be overridden by setting the AppID to a custom string, in
+which case windows with the same AppID are grouped
+together.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note that
+Windows shortcut files have their own AppID. Hence, if an
+AppID is specified in the mintty settings, but not on a
+taskbar-pinned shortcut for invoking mintty, clicking the
+pinned shortcut will result in a separate taskbar item for
+the new mintty window, rather than being grouped with the
+shortcut. To avoid this, the shortcut&rsquo;s AppID has to
+be set to the same string, which can be done using the
+<b>win7appid</b> utility available from
+<i>http://win7appid.googlecode.com</i>.</p>
+
+<p style="margin-left:11%;"><b>Word selection
+characters</b> (WordChars=)</p>
+
+<p style="margin-left:22%;">By default, this string setting
+is empty, in which case double-click word selection uses the
+default algorithm that is geared towards picking out file
+names and URLs.</p>
+
+<p style="margin-left:22%; margin-top: 1em">If a string is
+specified here, word selection only picks out characters in
+the string along with alphanumeric characters. For example,
+specifying just the underscore character (WordChars=_) would
+allow selecting identifiers in many programming
+languages.</p>
+
+<p style="margin-left:11%;"><b>Use system colours</b>
+(UseSystemColours=no)</p>
+
+<p style="margin-left:22%;">If this is set, the
+Windows-wide colour settings are used instead of the
+foreground, background, and cursor colours chosen on the
+Looks page of the options dialog.</p>
+
+<p style="margin-left:11%;"><b>IME cursor colour</b>
+(IMECursorColour=)</p>
+
+<p style="margin-left:22%;">The cursor colour can be set to
+change when the Input Method Editor (IME) for entering
+characters not available directly on the keyboard is active.
+The setting is a RGB triplet such as 255,0,0 for bright
+red.</p>
+
+<p style="margin-left:22%; margin-top: 1em">By default,
+this is unset, which means that the cursor colour does not
+change. The colour can also be changed using xterm&rsquo;s
+OSC 4 control sequence with colour number 262.</p>
+
+<p style="margin-left:11%;"><b>ANSI colours</b></p>
+
+<p style="margin-left:22%;">These are the 16 ANSI colour
+settings along with their default values. Colours are
+represented as comma-separated RGB triples with decimal
+8-bit values ranging from 0 to 255. X-style hexadecimal
+colour specifications such as #RRGGBB or rgb:RR/GG/BB can be
+used as well.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Black</b>=0,0,0 <br>
+&minus; <b>Red</b>=191,0,0 <br>
+&minus; <b>Green</b>=0,191,0 <br>
+&minus; <b>Yellow</b>=191,191,0 <br>
+&minus; <b>Blue</b>=0,0,191 <br>
+&minus; <b>Magenta</b>=191,0,191 <br>
+&minus; <b>Cyan</b>=0,191,191 <br>
+&minus; <b>White</b>=191,191,191 <br>
+&minus; <b>BoldBlack</b>=64,64,64 <br>
+&minus; <b>BoldRed</b>=255,64,64 <br>
+&minus; <b>BoldGreen</b>=64,255,64 <br>
+&minus; <b>BoldYellow</b>=255,255,64 <br>
+&minus; <b>BoldBlue</b>=96,96,255 <br>
+&minus; <b>BoldMagenta</b>=255,64,255 <br>
+&minus; <b>BoldCyan</b>=64,255,255 <br>
+&minus; <b>BoldWhite</b>=255,255,255</p>
+
+<h2>LIMITATIONS
+<a name="LIMITATIONS"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>Console
+issue</b> <br>
+Mintty is not a full replacement for the Windows console
+window that Cygwin uses by default. Like xterm and rxvt,
+mintty communicates with the child process through a pseudo
+terminal device, which Cygwin emulates using Windows pipes.
+This means that native Windows command line programs started
+in mintty see a pipe rather than a console device. As a
+consequence, such programs often disable interactive input.
+Also, direct calls to low-level Win32 console functions will
+fail. Programs that access the console as a file should be
+fine though.</p>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>Termcap/terminfo</b>
+<br>
+Mintty does not have its own <i>termcap</i> or
+<i>terminfo</i> entries; instead, it simply pretends to be
+an xterm.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Missing
+xterm features</b> <br>
+Mintty is nowhere near as configurable as xterm. Of
+xterm&rsquo;s keyboard modes, only the default PC-style and
+VT220-style are available. 8-bit control characters are not
+supported, nor are ISO2022 character sets. There is no
+Tektronix 4014 emulation. Mouse highlighting mode is not
+implemeted.</p>
+
+<p style="margin-left:11%; margin-top: 1em">The majority of
+xterm&rsquo;s many control sequences is implemented, but
+quite a few are missing. Significant omissions should be
+reported as bugs.</p>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Additional
+information can be found on the wiki on the mintty project
+page <i>https://github.com/mintty/mintty/wiki</i>.</p>
+
+<h2>LICENSE
+<a name="LICENSE"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Copyright (C)
+2013 Andy Koppe (C) 2015 Thomas Wolff</p>
+
+<p style="margin-left:11%; margin-top: 1em">Mintty is
+released under the terms of the the <i>GNU General Public
+License</i> version 3 or later. See
+<i>http://gnu.org/licenses/gpl/html</i> for the license
+text.</p>
+
+<p style="margin-left:11%; margin-top: 1em">There is NO
+WARRANTY, to the extent permitted by law.</p>
+
+<h2>CONTACT
+<a name="CONTACT"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em">Please report
+bugs or suggest enhancements via the issue tracker at
+<i>https://github.com/mintty/mintty/issues</i>. Questions
+can be sent to the Cygwin mailing list at
+<i>cygwin@cygwin.com</i>.</p>
+<hr>
+</body>
+</html>

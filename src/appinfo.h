@@ -1,49 +1,57 @@
 #ifndef APPINFO_H
 #define APPINFO_H
 
+#define APPNAME "mintty"
+#define WEBSITE "http://mintty.github.io/"
+
+#define MAJOR_VERSION  2
+#define MINOR_VERSION  0
+#define PATCH_NUMBER   1
+#define BUILD_NUMBER   0
+
+// needed for res.rc
+#define APPDESC "Terminal"
+#define AUTHOR  "Andy Koppe, Thomas Wolff"
+#define YEAR    "2015"
+
+
 #define CONCAT_(a,b) a##b
 #define CONCAT(a,b) CONCAT_(a,b)
 #define STRINGIFY_(s) #s
 #define STRINGIFY(s) STRINGIFY_(s)
 
-#define APPNAME "mintty"
-#define APPDESC "Terminal"
-#define WEBSITE "http://mintty.googlecode.com"
-#define AUTHOR  "Andy Koppe"
-#define YEAR    "2013"
-
-#define MAJOR_VERSION  1
-#define MINOR_VERSION  2
-#define PATCH_NUMBER   0
-#define BUILD_NUMBER   1
-
-#if defined SVN_DIR && defined SVN_REV
+#if defined SVN_DIR && defined SVN_REV	// deprecated
   #undef BUILD_NUMBER
   #define BUILD_NUMBER SVN_REV
   #define VERSION STRINGIFY(svn-SVN_DIR-CONCAT(r,SVN_REV))
 #elif PATCH_NUMBER
-  #define VERSION STRINGIGY(MAJOR_VERSION.MINOR_VERSION.PATCH_NUMBER)
+  #define VERSION STRINGIFY(MAJOR_VERSION.MINOR_VERSION.PATCH_NUMBER)
 #elif BUILD_NUMBER
   #define VERSION STRINGIFY(MAJOR_VERSION.MINOR_VERSION-CONCAT(beta,BUILD_NUMBER))
 #else
   #define VERSION STRINGIFY(MAJOR_VERSION.MINOR_VERSION-alpha)
 #endif
 
+
+// needed for res.rc
 #define POINT_VERSION \
   STRINGIFY(MAJOR_VERSION.MINOR_VERSION.PATCH_NUMBER.BUILD_NUMBER)
 #define COMMA_VERSION \
   MAJOR_VERSION,MINOR_VERSION,PATCH_NUMBER,BUILD_NUMBER
+#define COPYRIGHT "(C) " YEAR " " AUTHOR
+
+// needed for secondary device attributes report
 #define DECIMAL_VERSION \
   (MAJOR_VERSION * 10000 + MINOR_VERSION * 100 + PATCH_NUMBER)
 
-#define COPYRIGHT "(C) " YEAR " " AUTHOR
-
+// needed for mintty -V and Options... - About...
 #define VERSION_TEXT \
   APPNAME " " VERSION " (" STRINGIFY(TARGET) ")\n" \
   COPYRIGHT "\n" \
   "License GPLv3+: GNU GPL version 3 or later\n" \
   "There is no warranty, to the extent permitted by law.\n"
 
+// needed for Options... - About...
 #define ABOUT_TEXT \
   "Thanks to Simon Tatham and the other contributors for their\n"\
   "great work on PuTTY, which mintty is largely based on. Thanks\n" \

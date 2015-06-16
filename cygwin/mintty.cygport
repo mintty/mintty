@@ -28,7 +28,7 @@ src_compile() {
 
 src_install() {
   cd ${B}
-  dobin mintty.exe
+  dobin src/mintty.exe
   doman docs/mintty.1
   dodoc COPYING LICENSE.Oxygen LICENSE.PuTTY
   dodoc cygwin/README cygwin/setup.hint

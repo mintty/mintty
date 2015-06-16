@@ -17,8 +17,7 @@ enum {
   FONT_WIDE       = 0x04,
   FONT_HIGH       = 0x08,
   FONT_NARROW     = 0x10,
-  FONT_MAXNO      = 0x1F,
-  FONT_SHIFT      = 5
+  FONT_MAXNO      = 0x20,
 };
 
 LOGFONT lfont;
@@ -124,7 +123,7 @@ create_font(int weight, bool underline)
  
 /*
  * Initialise all the fonts we will need initially. There may be as many as
- * three or as few as one.  The other (poentially) twentyone fonts are done
+ * three or as few as one. The other (potentially) twentyone fonts are done
  * if/when they are needed.
  *
  * We also:
