@@ -461,6 +461,12 @@ win_key_down(WPARAM wp, LPARAM lp)
     len = sprintf(buf, mods ? "\e[%i;%c~" : "\e[%i~", code, mods + '1');
   }
   void other_code(wchar c) {
+#ifdef support_alt_meta_combinations
+    // not too useful as mintty doesn't support Alt even with F-keys at all
+    if (altgr && is_key_down(VK_LMENU))
+      len = sprintf(buf, "\e[%u;%du", c, mods + 9);
+    else
+#endif
     len = sprintf(buf, "\e[%u;%cu", c, mods + '1');
   }
   void app_pad_code(char c) { mod_ss3(c - '0' + 'p'); }
@@ -547,10 +553,18 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
   
   void modify_other_key(void) {  
-    kbd[VK_CONTROL] = 0;
     wchar wc = undead_keycode();
-    if (wc)
+    if (!wc) {
+      if (mods & MDK_SHIFT) {
+        kbd[VK_SHIFT] = 0;
+        wc = undead_keycode();
+      }
+    }
+    if (wc) {
+      if (altgr && !is_key_down(VK_LMENU))
+        mods &= ~ MDK_ALT;
       other_code(wc);
+    }
   }
   
   bool char_key(void) {
