@@ -336,6 +336,7 @@ do_esc(uchar c)
       term.state = CSI_ARGS;
       term.csi_argc = 1;
       memset(term.csi_argv, 0, sizeof(term.csi_argv));
+      memset(term.csi_argv_defined, 0, sizeof(term.csi_argv_defined));
       term.esc_mod = 0;
     when ']':  /* OSC: operating system command */
       term.state = OSC_START;
@@ -431,6 +432,11 @@ do_sgr(void)
       when 7: attr |= ATTR_REVERSE;
       when 8: attr |= ATTR_INVISIBLE;
       when 10 ... 12:
+        // mode 10 is the configured Character set
+        // mode 11 is the VGA character set (CP437 + control range graphics)
+        // mode 12 is a weird feature from the Linux console,
+        // cloning the VGA character set (CP437) into the ASCII range;
+        // should we disable it? (not supported by cygwin console)
         term.curs.oem_acs = term.csi_argv[i] - 10;
         term_update_cs();
       when 21: attr &= ~ATTR_BOLD;
@@ -447,9 +453,15 @@ do_sgr(void)
         attr |= ((term.csi_argv[i] - 90 + 8) << ATTR_FGSHIFT);
       when 38: /* 256-colour foreground */
         if (i + 2 < argc && term.csi_argv[i + 1] == 5) {
+          // set foreground to palette colour
           attr &= ~ATTR_FGMASK;
           attr |= ((term.csi_argv[i + 2] & 0xFF) << ATTR_FGSHIFT);
           i += 2;
+        }
+        else if (i + 4 < argc && term.csi_argv[i + 1] == 2) {
+          // set foreground to RGB match
+          //... ignore for now
+          i += 4;
         }
       when 39: /* default foreground */
         attr &= ~ATTR_FGMASK;
@@ -462,9 +474,15 @@ do_sgr(void)
         attr |= ((term.csi_argv[i] - 100 + 8) << ATTR_BGSHIFT);
       when 48: /* 256-colour background */
         if (i + 2 < argc && term.csi_argv[i + 1] == 5) {
+          // set background to palette colour
           attr &= ~ATTR_BGMASK;
           attr |= ((term.csi_argv[i + 2] & 0xFF) << ATTR_BGSHIFT);
           i += 2;
+        }
+        else if (i + 4 < argc && term.csi_argv[i + 1] == 2) {
+          // set background to RGB match
+          //... ignore for now
+          i += 4;
         }
       when 49: /* default background */
         attr &= ~ATTR_BGMASK;
@@ -569,17 +587,19 @@ set_modes(bool state)
           term.app_escape_key = state;
         when 7728:       /* Escape sends FS (instead of ESC) */
           term.escape_sends_fs = state;
-        when 7766:       /* Show/hide scrollbar (if enabled in config) */
+        when 7766:       /* 'B': Show/hide scrollbar (if enabled in config) */
           if (state != term.show_scrollbar) {
             term.show_scrollbar = state;
             if (cfg.scrollbar)
               win_update_scrollbar();
           }
-        when 7783:       /* Shortcut override */
+        when 7767:       /* 'C': Changed font reporting */
+          term.report_font_changed = state;
+        when 7783:       /* 'S': Shortcut override */
           term.shortcut_override = state;
-        when 7786:       /* Mousewheel reporting */
+        when 7786:       /* 'V': Mousewheel reporting */
           term.wheel_reporting = state;
-        when 7787:       /* Application mousewheel mode */
+        when 7787:       /* 'W': Application mousewheel mode */
           term.app_wheel = state;
       }
     }
@@ -611,7 +631,12 @@ do_winop(void)
     when 5: win_set_zorder(true);  // top
     when 6: win_set_zorder(false); // bottom
     when 7: win_invalidate_all();  // refresh
-    when 8: win_set_chars(arg1 ?: cfg.rows, arg2 ?: cfg.cols);
+    when 8: {
+      int def1 = term.csi_argv_defined[1], def2 = term.csi_argv_defined[2];
+      int rows, cols;
+      win_get_screen_chars(&rows, &cols);
+      win_set_chars(arg1 ?: def1 ? rows : term.rows, arg2 ?: def2 ? cols : term.cols);
+    }
     when 9: win_maximise(arg1);
     when 10: win_maximise(arg1 ? 2 : 0);  // fullscreen
     when 11: child_write(win_is_iconic() ? "\e[1t" : "\e[2t", 4);
@@ -1164,6 +1189,7 @@ term_write(const char *buf, uint len)
           uint i = term.csi_argc - 1;
           if (i < lengthof(term.csi_argv))
             term.csi_argv[i] = 10 * term.csi_argv[i] + c - '0';
+            term.csi_argv_defined[i] = 1;
         }
         else if (c < 0x40)
           term.esc_mod = term.esc_mod ? 0xFF : c;
