@@ -476,7 +476,12 @@ win_reconfig(void)
 
   bool old_ambig_wide = cs_ambig_wide;
   cs_reconfig();
-  if (term.report_ambig_width && old_ambig_wide != cs_ambig_wide)
+  if (term.report_font_changed && font_changed)
+    if (term.report_ambig_width)
+      child_write(cs_ambig_wide ? "\e[2W" : "\e[1W", 4);
+    else
+      child_write("\e[0W", 4);
+  else if (term.report_ambig_width && old_ambig_wide != cs_ambig_wide)
     child_write(cs_ambig_wide ? "\e[2W" : "\e[1W", 4);
 }
 

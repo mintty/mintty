@@ -123,7 +123,9 @@ term_reset(void)
   term.mouse_enc = ME_X10;
   term.wheel_reporting = true;
   term.modify_other_keys = 0;
-  term.report_focus = term.report_ambig_width = 0;
+  term.report_focus = 0;
+  term.report_font_changed = 0;
+  term.report_ambig_width = 0;
   term.bracketed_paste = false;
   term.show_scrollbar = true;
 

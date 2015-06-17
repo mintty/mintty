@@ -89,6 +89,21 @@ Applications can ask to be notified when the width of the so-called [ambiguous w
 When enabled, `^[[1W` is sent when changing to an "ambiguous narrow" font and `^[[2W` is sent when changing to an "ambiguous wide" font.
 
 
+## Font change reporting ##
+
+Applications can ask to be notified when the font has been changed.
+
+| **sequence**  | **reporting** |
+|:--------------|:--------------|
+| `^[[?7767l`   | disabled      |
+| `^[[?7767h`   | enabled       |
+
+When enabled, `^[[0W` is sent when the font has changed, 
+unless ambiguous width reporting is enabled too, in which case 
+either `^[[1W` or `^[[2W` is sent as described above;
+so if both reporting modes are enabled, only one report is sent.
+
+
 ## Font size ##
 
 The following _OSC_ ("operating system command") sequences can be used to change and query font size:
