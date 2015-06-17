@@ -1,3 +1,9 @@
+  * Fixed CSI 8;...t handling of default and zero values (issue #408).
+  * Parsing RGB color setting controls CSI 38;2;r;g;b m, ignoring them but avoiding misinterpretation of RGB values as further controls.
+  * Reporting mode for font changes (issue #355).
+  * Treating AltGr similarly to Shift in modifyOtherKeys mode (issue #272).
+  * Fixed fonts array index limit https://cygwin.com/ml/cygwin/2015-02/msg00415.html
+
 ### 1.1.3 (7 April 2013) ###
   * Tweaked cursor colour handling to avoid the cursor becoming invisible under certain circumstances.
   * Fixed incorrect response to OSC sequence for querying colour settings.
