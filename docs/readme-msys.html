@@ -32,13 +32,16 @@ Otherwise, you need to ensure that Windows is able to find the MSYS DLL (<i>msys
 Start it from within an existing MSYS session.
 </li>
 <li>
+Create a shortcut to <i>msys.bat</i> with the additional parameter <code>--mintty</code>.
+</li>
+<li>
+Create a shortcut to <i>mintty.exe</i> with the parameter <code>/bin/bash -l</code>.
+</li>
+<li>
 Place <i>mintty.exe</i> alongside <i>msys-1.0.dll</i> in the MSYS <i>/bin</i> directory and start it from there.
 </li>
 <li>
 Add the MSYS <i>/bin</i> directory (e.g. <i>C:\MSYS\bin</i>) to the Windows <i>PATH</i> variable, which can be found under 'Environment Variables' on the 'Advanced' tab of the System Properties control panel.
-</li>
-<li>
-Create a shortcut to <i>mintty.exe</i> with the working directory set to the MSYS <i>/bin</i> directory.
 </li>
 </ul>
 <p>
