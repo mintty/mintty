@@ -11,7 +11,7 @@
 
 // needed for res.rc
 #define APPDESC "Terminal"
-#define AUTHOR  "Andy Koppe, Thomas Wolff"
+#define AUTHOR  "Andy Koppe"
 #define YEAR    "2015"
 
 
