@@ -1,5 +1,6 @@
+  * True Colour support (#431) (using 38;2;r;g;b m) alpha.
+  * Added MSYS setup hint (#426).
   * Fixed CSI 8;...t handling of default and zero values (issue #408).
-  * Parsing RGB color setting controls CSI 38;2;r;g;b m, ignoring them but avoiding misinterpretation of RGB values as further controls.
   * Reporting mode for font changes (issue #355).
   * Treating AltGr similarly to Shift in modifyOtherKeys mode (issue #272).
   * Fixed fonts array index limit https://cygwin.com/ml/cygwin/2015-02/msg00415.html
