@@ -149,6 +149,9 @@ clean:
 #############################################################################
 # development and debug targets
 
+tags:	*.c *.h
+	ctags -w *.c *.h
+
 getappinfo=$(shell echo "$(1)" ; echo "$(1)" | cpp -P $(CPPFLAGS) --include appinfo.h)
 
 ver:
