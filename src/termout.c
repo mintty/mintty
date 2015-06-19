@@ -66,8 +66,9 @@ restore_cursor(void)
 {
   term_cursor *curs = &term.curs;
   *curs = term.saved_cursors[term.on_alt_screen];
-  term.erase_char.attr = curs->attr & (ATTR_FGMASK | ATTR_BGMASK);
-  
+  term.erase_char.attr = curs->attr;
+  term.erase_char.attr.attr &= (ATTR_FGMASK | ATTR_BGMASK);
+
  /* Make sure the window hasn't shrunk since the save */
   if (curs->x >= term.cols)
     curs->x = term.cols - 1;
@@ -150,7 +151,7 @@ write_tab(void)
   do
     curs->x++;
   while (curs->x < term.cols - 1 && !term.tabs[curs->x]);
-  
+
   if ((term.lines[curs->y]->attr & LATTR_MODE) != LATTR_NORM) {
     if (curs->x >= term.cols / 2)
       curs->x = term.cols / 2 - 1;
@@ -184,7 +185,7 @@ write_char(wchar c, int width)
 {
   if (!c)
     return;
-  
+
   term_cursor *curs = &term.curs;
   termline *line = term.lines[curs->y];
   void put_char(wchar c)
@@ -192,7 +193,7 @@ write_char(wchar c, int width)
     clear_cc(line, curs->x);
     line->chars[curs->x].chr = c;
     line->chars[curs->x].attr = curs->attr;
-  }  
+  }
 
   if (curs->wrapnext && curs->autowrap && width > 0) {
     line->attr |= LATTR_WRAPPED;
@@ -380,7 +381,7 @@ do_esc(uchar c)
         termline *line = term.lines[i];
         for (int j = 0; j < term.cols; j++) {
           line->chars[j] =
-            (termchar){.cc_next = 0, .chr = 'E', .attr = ATTR_DEFAULT};
+            (termchar) {.cc_next = 0, .chr = 'E', .attr = CATTR_DEFAULT};
         }
         line->attr = LATTR_NORM;
       }
@@ -421,16 +422,19 @@ do_sgr(void)
 {
  /* Set Graphics Rendition. */
   uint argc = term.csi_argc;
-  uint attr = term.curs.attr;
+  cattr attr = term.curs.attr;
+  uint prot = attr.attr & ATTR_PROTECTED;
   for (uint i = 0; i < argc; i++) {
     switch (term.csi_argv[i]) {
-      when 0: attr = ATTR_DEFAULT | (attr & ATTR_PROTECTED);
-      when 1: attr |= ATTR_BOLD;
-      when 2: attr |= ATTR_DIM;
-      when 4: attr |= ATTR_UNDER;
-      when 5: attr |= ATTR_BLINK;
-      when 7: attr |= ATTR_REVERSE;
-      when 8: attr |= ATTR_INVISIBLE;
+      when 0:
+        attr = CATTR_DEFAULT;
+        attr.attr |= prot;
+      when 1: attr.attr |= ATTR_BOLD;
+      when 2: attr.attr |= ATTR_DIM;
+      when 4: attr.attr |= ATTR_UNDER;
+      when 5: attr.attr |= ATTR_BLINK;
+      when 7: attr.attr |= ATTR_REVERSE;
+      when 8: attr.attr |= ATTR_INVISIBLE;
       when 10 ... 12:
         // mode 10 is the configured Character set
         // mode 11 is the VGA character set (CP437 + control range graphics)
@@ -439,58 +443,69 @@ do_sgr(void)
         // should we disable it? (not supported by cygwin console)
         term.curs.oem_acs = term.csi_argv[i] - 10;
         term_update_cs();
-      when 21: attr &= ~ATTR_BOLD;
-      when 22: attr &= ~(ATTR_BOLD | ATTR_DIM);
-      when 24: attr &= ~ATTR_UNDER;
-      when 25: attr &= ~ATTR_BLINK;
-      when 27: attr &= ~ATTR_REVERSE;
-      when 28: attr &= ~ATTR_INVISIBLE;
+      when 21: attr.attr &= ~ATTR_BOLD;
+      when 22: attr.attr &= ~(ATTR_BOLD | ATTR_DIM);
+      when 24: attr.attr &= ~ATTR_UNDER;
+      when 25: attr.attr &= ~ATTR_BLINK;
+      when 27: attr.attr &= ~ATTR_REVERSE;
+      when 28: attr.attr &= ~ATTR_INVISIBLE;
       when 30 ... 37: /* foreground */
-        attr &= ~ATTR_FGMASK;
-        attr |= (term.csi_argv[i] - 30) << ATTR_FGSHIFT;
+        attr.attr &= ~ATTR_FGMASK;
+        attr.attr |= (term.csi_argv[i] - 30) << ATTR_FGSHIFT;
       when 90 ... 97: /* bright foreground */
-        attr &= ~ATTR_FGMASK;
-        attr |= ((term.csi_argv[i] - 90 + 8) << ATTR_FGSHIFT);
+        attr.attr &= ~ATTR_FGMASK;
+        attr.attr |= ((term.csi_argv[i] - 90 + 8) << ATTR_FGSHIFT);
       when 38: /* 256-colour foreground */
         if (i + 2 < argc && term.csi_argv[i + 1] == 5) {
           // set foreground to palette colour
-          attr &= ~ATTR_FGMASK;
-          attr |= ((term.csi_argv[i + 2] & 0xFF) << ATTR_FGSHIFT);
+          attr.attr &= ~ATTR_FGMASK;
+          attr.attr |= ((term.csi_argv[i + 2] & 0xFF) << ATTR_FGSHIFT);
           i += 2;
         }
         else if (i + 4 < argc && term.csi_argv[i + 1] == 2) {
-          // set foreground to RGB match
-          //... ignore for now
+          // set foreground to RGB
+          attr.attr &= ~ATTR_FGMASK;
+          attr.attr |= TRUE_COLOUR << ATTR_FGSHIFT;
+          uint r = term.csi_argv[i + 2];
+          uint g = term.csi_argv[i + 3];
+          uint b = term.csi_argv[i + 4];
+          attr.truefg = make_colour(r, g, b);
           i += 4;
         }
       when 39: /* default foreground */
-        attr &= ~ATTR_FGMASK;
-        attr |= ATTR_DEFFG;
+        attr.attr &= ~ATTR_FGMASK;
+        attr.attr |= ATTR_DEFFG;
       when 40 ... 47: /* background */
-        attr &= ~ATTR_BGMASK;
-        attr |= (term.csi_argv[i] - 40) << ATTR_BGSHIFT;
+        attr.attr &= ~ATTR_BGMASK;
+        attr.attr |= (term.csi_argv[i] - 40) << ATTR_BGSHIFT;
       when 100 ... 107: /* bright background */
-        attr &= ~ATTR_BGMASK;
-        attr |= ((term.csi_argv[i] - 100 + 8) << ATTR_BGSHIFT);
+        attr.attr &= ~ATTR_BGMASK;
+        attr.attr |= ((term.csi_argv[i] - 100 + 8) << ATTR_BGSHIFT);
       when 48: /* 256-colour background */
         if (i + 2 < argc && term.csi_argv[i + 1] == 5) {
           // set background to palette colour
-          attr &= ~ATTR_BGMASK;
-          attr |= ((term.csi_argv[i + 2] & 0xFF) << ATTR_BGSHIFT);
+          attr.attr &= ~ATTR_BGMASK;
+          attr.attr |= ((term.csi_argv[i + 2] & 0xFF) << ATTR_BGSHIFT);
           i += 2;
         }
         else if (i + 4 < argc && term.csi_argv[i + 1] == 2) {
-          // set background to RGB match
-          //... ignore for now
+          // set background to RGB
+          attr.attr &= ~ATTR_BGMASK;
+          attr.attr |= TRUE_COLOUR << ATTR_BGSHIFT;
+          uint r = term.csi_argv[i + 2];
+          uint g = term.csi_argv[i + 3];
+          uint b = term.csi_argv[i + 4];
+          attr.truebg = make_colour(r, g, b);
           i += 4;
         }
       when 49: /* default background */
-        attr &= ~ATTR_BGMASK;
-        attr |= ATTR_DEFBG;
+        attr.attr &= ~ATTR_BGMASK;
+        attr.attr |= ATTR_DEFBG;
     }
   }
   term.curs.attr = attr;
-  term.erase_char.attr = attr & (ATTR_FGMASK | ATTR_BGMASK);
+  term.erase_char.attr = attr;
+  term.erase_char.attr.attr &= (ATTR_FGMASK | ATTR_BGMASK);
 }
 
 /*
@@ -795,7 +810,7 @@ do_csi(uchar c)
         curs->wrapnext = false;
       }
     when CPAIR('*', '|'):     /* DECSNLS */
-     /* 
+     /*
       * Set number of lines on screen
       * VT420 uses VGA like hardware and can
       * support any size in reasonable range
@@ -823,7 +838,7 @@ do_csi(uchar c)
     when 'x':        /* DECREQTPARM: report terminal characteristics */
       child_printf("\e[%c;1;1;112;112;1;0x", '2' + arg0);
     when 'Z': {      /* CBT (Cursor Backward Tabulation) */
-      int n = arg0_def1; 
+      int n = arg0_def1;
       while (--n >= 0 && curs->x > 0) {
         do
           curs->x--;
@@ -847,8 +862,8 @@ do_csi(uchar c)
       term_schedule_cblink();
     when CPAIR('"', 'q'):  /* DECSCA: select character protection attribute */
       switch (arg0) {
-        when 0 or 2: term.curs.attr &= ~ATTR_PROTECTED;
-        when 1: term.curs.attr |= ATTR_PROTECTED;
+        when 0 or 2: term.curs.attr.attr &= ~ATTR_PROTECTED;
+        when 1: term.curs.attr.attr |= ATTR_PROTECTED;
       }
   }
 }
@@ -863,30 +878,30 @@ do_dcs(void)
 
   if (*s++ != '$')
     return;
-  
-  uint attr = term.curs.attr;
+
+  cattr attr = term.curs.attr;
 
   if (!strcmp(s, "qm")) { // SGR
     char buf[64], *p = buf;
     p += sprintf(p, "\eP1$r0");
 
-    if (attr & ATTR_BOLD)
+    if (attr.attr & ATTR_BOLD)
       p += sprintf(p, ";1");
-    if (attr & ATTR_DIM)
+    if (attr.attr & ATTR_DIM)
       p += sprintf(p, ";2");
-    if (attr & ATTR_UNDER)
+    if (attr.attr & ATTR_UNDER)
       p += sprintf(p, ";4");
-    if (attr & ATTR_BLINK)
+    if (attr.attr & ATTR_BLINK)
       p += sprintf(p, ";5");
-    if (attr & ATTR_REVERSE)
+    if (attr.attr & ATTR_REVERSE)
       p += sprintf(p, ";7");
-    if (attr & ATTR_INVISIBLE)
+    if (attr.attr & ATTR_INVISIBLE)
       p += sprintf(p, ";8");
 
     if (term.curs.oem_acs)
       p += sprintf(p, ";%u", 10 + term.curs.oem_acs);
 
-    uint fg = (attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
+    uint fg = (attr.attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
     if (fg != FG_COLOUR_I) {
       if (fg < 16)
         p += sprintf(p, ";%u", (fg < 8 ? 30 : 90) + (fg & 7));
@@ -894,7 +909,7 @@ do_dcs(void)
         p += sprintf(p, ";38;5;%u", fg);
     }
 
-    uint bg = (attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
+    uint bg = (attr.attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
     if (bg != BG_COLOUR_I) {
       if (bg < 16)
         p += sprintf(p, ";%u", (bg < 8 ? 40 : 100) + (bg & 7));
@@ -911,7 +926,7 @@ do_dcs(void)
   else if (!strcmp(s, "q\"p"))  // DECSCL (conformance level)
     child_write("\eP1$r61\"p\e\\", 11);  // report as VT100
   else if (!strcmp(s, "q\"q"))  // DECSCA (protection attribute)
-    child_printf("\eP1$r%u\"q\e\\", (attr & ATTR_PROTECTED) != 0);
+    child_printf("\eP1$r%u\"q\e\\", (attr.attr & ATTR_PROTECTED) != 0);
   else
     child_write((char[]){CTRL('X')}, 1);
 }
@@ -1038,7 +1053,7 @@ term_write(const char *buf, uint len)
     term.inbuf_pos += len;
     return;
   }
-    
+
   // Reset cursor blinking.
   term.cblinker = 1;
   term_schedule_cblink();
@@ -1046,7 +1061,7 @@ term_write(const char *buf, uint len)
   uint pos = 0;
   while (pos < len) {
     uchar c = buf[pos++];
-    
+
    /*
     * If we're printing, add the character to the printer
     * buffer.
@@ -1082,7 +1097,7 @@ term_write(const char *buf, uint len)
 
     switch (term.state) {
       when NORMAL: {
-        
+
         wchar wc;
 
         if (term.curs.oem_acs && !memchr("\e\n\r\b", c, 4)) {
@@ -1091,7 +1106,7 @@ term_write(const char *buf, uint len)
           write_char(cs_btowc_glyph(c), 1);
           continue;
         }
-        
+
         switch (cs_mb1towc(&wc, c)) {
           when 0: // NUL or low surrogate
             if (wc)
@@ -1108,13 +1123,13 @@ term_write(const char *buf, uint len)
             term.in_mb_char = true;
             continue;
         }
-        
+
         term.in_mb_char = false;
-        
-        // Fetch previous high surrogate 
+
+        // Fetch previous high surrogate
         wchar hwc = term.high_surrogate;
         term.high_surrogate = 0;
-        
+
         if (is_low_surrogate(wc)) {
           if (hwc) {
             #if HAS_LOCALES
@@ -1129,15 +1144,15 @@ term_write(const char *buf, uint len)
             write_error();
           continue;
         }
-        
+
         if (hwc) // Previous high surrogate not followed by low one
           write_error();
-        
+
         if (is_high_surrogate(wc)) {
           term.high_surrogate = wc;
           continue;
         }
-        
+
         // Control characters
         if (wc < 0x20 || wc == 0x7F) {
           if (!do_ctrl(wc) && c == wc) {
@@ -1154,7 +1169,7 @@ term_write(const char *buf, uint len)
         #else
         int width = xcwidth(wc);
         #endif
-        
+
         switch(term.curs.csets[term.curs.g1]) {
           when CSET_LINEDRW:
             if (0x60 <= wc && wc <= 0x7E)
@@ -1244,7 +1259,7 @@ term_write(const char *buf, uint len)
           }
         }
         else {
-          // End of sequence. Put the character back unless the sequence was 
+          // End of sequence. Put the character back unless the sequence was
           // terminated properly.
           term.state = NORMAL;
           if (c != '\a') {

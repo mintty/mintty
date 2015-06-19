@@ -106,7 +106,7 @@ get_selection(clip_workbuf *buf)
 
       while (1) {
         wchar c = line->chars[x].chr;
-        attr = line->chars[x].attr;
+        attr = line->chars[x].attr.attr;
         cbuf[0] = c;
         cbuf[1] = 0;
 

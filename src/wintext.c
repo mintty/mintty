@@ -31,9 +31,9 @@ wchar win_linedraw_chars[LDRAW_CHAR_NUM];
 
 // Possible linedraw character mappings, in order of decreasing suitability.
 // The last resort for each is an ASCII character, which we assume will be
-// available in any font. 
+// available in any font.
 static const wchar linedraw_chars[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES] = {
-  {0x25C6, 0x2666, '*'},           // 0x60 '`' Diamond 
+  {0x25C6, 0x2666, '*'},           // 0x60 '`' Diamond
   {0x2592, '#'},                   // 0x61 'a' Checkerboard (error)
   {0x2409, 0x2192, 0x01AD, 't'},   // 0x62 'b' Horizontal tab
   {0x240C, 0x21A1, 0x0192, 'f'},   // 0x63 'c' Form feed
@@ -71,7 +71,7 @@ static enum {UND_LINE, UND_FONT} und_mode;
 static int descent;
 
 // Current font size (with any zooming)
-static int font_size; 
+static int font_size;
 
 // Font screen dimensions
 int font_width, font_height;
@@ -81,10 +81,10 @@ bool font_ambig_wide;
 
 COLORREF colours[COLOUR_NUM];
 
-static colour 
+static colour
 brighten(colour c)
 {
-  uint r = red(c), g = green(c), b = blue(c);   
+  uint r = red(c), g = green(c), b = blue(c);
   uint s = min(85, 255 - max(max(r, g), b));
   return make_colour(r + s, g + s, b + s);
 }
@@ -99,7 +99,7 @@ colour_dist(colour a, colour b)
 }
 
 static uint
-get_font_quality(void) {  
+get_font_quality(void) {
   return
     (uchar[]){
       [FS_DEFAULT] = DEFAULT_QUALITY,
@@ -112,7 +112,7 @@ get_font_quality(void) {
 static HFONT
 create_font(int weight, bool underline)
 {
-  return 
+  return
     CreateFont(
       font_height, 0, 0, 0, weight, false, underline, false,
       DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
@@ -120,7 +120,7 @@ create_font(int weight, bool underline)
       cfg.font.name
     );
 }
- 
+
 /*
  * Initialise all the fonts we will need initially. There may be as many as
  * three or as few as one. The other (potentially) twentyone fonts are done
@@ -133,7 +133,7 @@ create_font(int weight, bool underline)
  *
  * - verify that the bold font is the same width as the ordinary
  *   one, and engage shadow bolding if not.
- * 
+ *
  * - verify that the underlined font is the same width as the
  *   ordinary one (manual underlining by means of line drawing can
  *   be done in a pinch).
@@ -183,7 +183,7 @@ win_init_fonts(int size)
   font_height = tm.tmHeight + cfg.row_spacing;
   font_width = tm.tmAveCharWidth + cfg.col_spacing;
   font_dualwidth = (tm.tmMaxCharWidth >= tm.tmAveCharWidth * 3 / 2);
-  
+
   // Determine whether ambiguous-width characters are wide in this font */
   float latin_char_width, greek_char_width, line_char_width;
   GetCharWidthFloatW(dc, 0x0041, 0x0041, &latin_char_width);
@@ -193,13 +193,13 @@ win_init_fonts(int size)
   font_ambig_wide =
     greek_char_width >= latin_char_width * 1.5 ||
     line_char_width  >= latin_char_width * 1.5;
-  
+
   // Initialise VT100 linedraw character mappings.
   // See what glyphs are available.
   ushort glyphs[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES];
   GetGlyphIndicesW(dc, *linedraw_chars, LDRAW_CHAR_NUM * LDRAW_CHAR_TRIES,
                    *glyphs, true);
-  
+
   // For each character, try the list of possible mappings until either we
   // find one that has a glyph in the font or we hit the ASCII fallback.
   for (uint i = 0; i < LDRAW_CHAR_NUM; i++) {
@@ -259,7 +259,7 @@ win_init_fonts(int size)
       fonts[FONT_UNDERLINE] = 0;
     }
   }
-  
+
   if (bold_mode == BOLD_FONT)
     fonts[FONT_BOLD] = create_font(fw_bold, false);
 
@@ -357,7 +357,7 @@ win_paint(void)
     DeleteObject(SelectObject(dc, oldbrush));
     DeleteObject(SelectObject(dc, oldpen));
   }
-  
+
   EndPaint(wnd, &p);
 }
 
@@ -486,7 +486,7 @@ win_set_ime_open(bool open)
  * We are allowed to fiddle with the contents of `text'.
  */
 void
-win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
+win_text(int x, int y, wchar *text, int len, cattr attr, int lattr)
 {
   lattr &= LATTR_MODE;
   int char_width = font_width * (1 + (lattr != LATTR_NORM));
@@ -495,28 +495,28 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   x = x * char_width + PADDING;
   y = y * font_height + PADDING;
 
-  if (attr & ATTR_WIDE)
+  if (attr.attr & ATTR_WIDE)
     char_width *= 2;
 
  /* Only want the left half of double width lines */
   if (lattr != LATTR_NORM && x * 2 >= term.cols)
     return;
 
-  uint nfont; 
+  uint nfont;
   switch (lattr) {
     when LATTR_NORM: nfont = 0;
     when LATTR_WIDE: nfont = FONT_WIDE;
     otherwise:       nfont = FONT_WIDE + FONT_HIGH;
   }
-  if (attr & ATTR_NARROW)
+  if (attr.attr & ATTR_NARROW)
     nfont |= FONT_NARROW;
 
-  if (bold_mode == BOLD_FONT && (attr & ATTR_BOLD))
+  if (bold_mode == BOLD_FONT && (attr.attr & ATTR_BOLD))
     nfont |= FONT_BOLD;
-  if (und_mode == UND_FONT && (attr & ATTR_UNDER))
+  if (und_mode == UND_FONT && (attr.attr & ATTR_UNDER))
     nfont |= FONT_UNDERLINE;
   another_font(nfont);
-  
+
   bool force_manual_underline = false;
   if (!fonts[nfont]) {
     if (nfont & FONT_UNDERLINE)
@@ -528,54 +528,54 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   if (!fonts[nfont])
     nfont = FONT_NORMAL;
 
-  colour_i fgi = (attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
-  colour_i bgi = (attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
+  colour_i fgi = (attr.attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
+  colour_i bgi = (attr.attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
 
   if (term.rvideo) {
     if (fgi >= 256)
-      fgi ^= 2;
+      fgi ^= 2;     // [BOLD_]FG_COLOUR_I <-> [BOLD_]BG_COLOUR_I
     if (bgi >= 256)
-      bgi ^= 2;
+      bgi ^= 2;     // [BOLD_]FG_COLOUR_I <-> [BOLD_]BG_COLOUR_I
   }
-  if (attr & ATTR_BOLD && cfg.bold_as_colour) {
+  if (attr.attr & ATTR_BOLD && cfg.bold_as_colour) {
     if (fgi < 8)
-      fgi |= 8;
+      fgi |= 8;     // (BLACK|...|WHITE)_I -> BOLD_(BLACK|...|WHITE)_I
     else if (fgi >= 256 && !cfg.bold_as_font)
-      fgi |= 1;
+      fgi |= 1;     // (FG|BG)_COLOUR_I -> BOLD_(FG|BG)_COLOUR_I
   }
-  if (attr & ATTR_BLINK) {
+  if (attr.attr & ATTR_BLINK) {
     if (bgi < 8)
       bgi |= 8;
     else if (bgi >= 256)
       bgi |= 1;
   }
-  
-  colour fg = colours[fgi];
-  colour bg = colours[bgi];
-  
-  if (attr & ATTR_DIM) {
+
+  colour fg = fgi >= TRUE_COLOUR ? attr.truefg : colours[fgi];
+  colour bg = bgi >= TRUE_COLOUR ? attr.truebg : colours[bgi];
+
+  if (attr.attr & ATTR_DIM) {
     fg = (fg & 0xFEFEFEFE) >> 1; // Halve the brightness.
     if (!cfg.bold_as_colour || fgi >= 256)
       fg += (bg & 0xFEFEFEFE) >> 1; // Blend with background.
   }
-  if (attr & ATTR_REVERSE) {
+  if (attr.attr & ATTR_REVERSE) {
     colour t = fg; fg = bg; bg = t;
   }
-  if (attr & ATTR_INVISIBLE)
+  if (attr.attr & ATTR_INVISIBLE)
     fg = bg;
 
-  bool has_cursor = attr & (TATTR_ACTCURS | TATTR_PASCURS);
+  bool has_cursor = attr.attr & (TATTR_ACTCURS | TATTR_PASCURS);
   colour cursor_colour = 0;
-  
+
   if (has_cursor) {
     cursor_colour = colours[ime_open ? IME_CURSOR_COLOUR_I : CURSOR_COLOUR_I];
-    
+
     bool too_close = colour_dist(cursor_colour, bg) < 32768;
-    
+
     if (too_close)
       cursor_colour = fg;
-    
-    if ((attr & TATTR_ACTCURS) && term_cursor_type() == CUR_BLOCK) {
+
+    if ((attr.attr & TATTR_ACTCURS) && term_cursor_type() == CUR_BLOCK) {
       fg = colours[CURSOR_TEXT_COLOUR_I];
       if (too_close && colour_dist(cursor_colour, fg) < 32768)
         fg = bg;
@@ -586,7 +586,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   SelectObject(dc, fonts[nfont]);
   SetTextColor(dc, fg);
   SetBkColor(dc, bg);
-  
+
  /* Check whether the text has any right-to-left characters */
   bool has_rtl = false;
   for (int i = 0; i < len && !has_rtl; i++)
@@ -601,28 +601,28 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
     */
     char classes[len];
     memset(classes, GCPCLASS_NEUTRAL, len);
-    
+
     GCP_RESULTSW gcpr = {
       .lStructSize = sizeof(GCP_RESULTSW),
       .lpClass = (void *)classes,
       .lpGlyphs = text,
       .nGlyphs = len
     };
-    
+
     GetCharacterPlacementW(dc, text, len, 0, &gcpr,
                            FLI_MASK | GCP_CLASSIN | GCP_DIACRITIC);
     len = gcpr.nGlyphs;
     eto_options |= ETO_GLYPH_INDEX;
   }
 
-  bool combining = attr & TATTR_COMBINING;
+  bool combining = attr.attr & TATTR_COMBINING;
   int width = char_width * (combining ? 1 : len);
   RECT box = {
     .left = x, .top = y,
     .right = min(x + width, font_width * term.cols + PADDING),
     .bottom = y + font_height
   };
-  
+
  /* Array with offsets between neighbouring characters */
   int dxs[len];
   int dx = combining ? 0 : char_width;
@@ -636,7 +636,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
   ExtTextOutW(dc, x, yt, eto_options | ETO_OPAQUE, &box, text, len, dxs);
 
  /* Shadow bold */
-  if (bold_mode == BOLD_SHADOW && (attr & ATTR_BOLD)) {
+  if (bold_mode == BOLD_SHADOW && (attr.attr & ATTR_BOLD)) {
     SetBkMode(dc, TRANSPARENT);
     ExtTextOutW(dc, x + 1, yt, eto_options, &box, text, len, dxs);
   }
@@ -644,7 +644,7 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
  /* Manual underline */
   if (lattr != LATTR_TOP &&
       (force_manual_underline ||
-       (und_mode == UND_LINE && (attr & ATTR_UNDER)))) {
+       (und_mode == UND_LINE && (attr.attr & ATTR_UNDER)))) {
     int dec = (lattr == LATTR_BOT) ? descent * 2 - font_height : descent;
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
     MoveToEx(dc, x, y + dec, null);
@@ -652,12 +652,12 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
   }
-  
+
   if (has_cursor) {
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, cursor_colour));
     switch(term_cursor_type()) {
       when CUR_BLOCK:
-        if (attr & TATTR_PASCURS) {
+        if (attr.attr & TATTR_PASCURS) {
           HBRUSH oldbrush = SelectObject(dc, GetStockObject(NULL_BRUSH));
           Rectangle(dc, x, y, x + char_width, y + font_height);
           SelectObject(dc, oldbrush);
@@ -667,14 +667,14 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
         SystemParametersInfo(SPI_GETCARETWIDTH, 0, &caret_width, 0);
         if (caret_width > char_width)
           caret_width = char_width;
-        if (attr & TATTR_RIGHTCURS)
+        if (attr.attr & TATTR_RIGHTCURS)
           x += char_width - caret_width;
-        if (attr & TATTR_ACTCURS) {
+        if (attr.attr & TATTR_ACTCURS) {
           HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(cursor_colour));
           Rectangle(dc, x, y, x + caret_width, y + font_height);
           DeleteObject(SelectObject(dc, oldbrush));
         }
-        else if (attr & TATTR_PASCURS) {
+        else if (attr.attr & TATTR_PASCURS) {
           for (int dy = 0; dy < font_height; dy += 2)
             Polyline(
               dc, (POINT[]){{x, y + dy}, {x + caret_width, y + dy}}, 2);
@@ -682,14 +682,14 @@ win_text(int x, int y, wchar *text, int len, uint attr, int lattr)
       }
       when CUR_UNDERSCORE:
         y += min(descent, font_height - 2);
-        if (attr & TATTR_ACTCURS)
+        if (attr.attr & TATTR_ACTCURS)
           Rectangle(dc, x, y, x + char_width, y + 2);
-        else if (attr & TATTR_PASCURS) {
+        else if (attr.attr & TATTR_PASCURS) {
           for (int dx = 0; dx < char_width; dx += 2) {
             SetPixel(dc, x + dx, y, cursor_colour);
             SetPixel(dc, x + dx, y + 1, cursor_colour);
           }
-        } 
+        }
     }
     DeleteObject(SelectObject(dc, oldpen));
   }
@@ -702,7 +702,7 @@ void
 win_check_glyphs(wchar *wcs, uint num)
 {
   HDC dc = GetDC(wnd);
-  bool bold = (bold_mode == BOLD_FONT) && (term.curs.attr & ATTR_BOLD);
+  bool bold = (bold_mode == BOLD_FONT) && (term.curs.attr.attr & ATTR_BOLD);
   SelectObject(dc, fonts[bold ? FONT_BOLD : FONT_NORMAL]);
   ushort glyphs[num];
   GetGlyphIndicesW(dc, wcs, num, glyphs, true);
@@ -798,7 +798,7 @@ win_reset_colours(void)
         colours[i++] = RGB (r ? r * 40 + 55 : 0,
                             g ? g * 40 + 55 : 0,
                             b ? b * 40 + 55 : 0);
-  
+
   // Grayscale
   for (uint s = 0; s < 24; s++) {
     uint c = s * 10 + 8;

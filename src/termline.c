@@ -131,12 +131,12 @@ clear_cc(termline *line, int col)
  * fields to be.
  */
 int
-termchars_equal_override(termchar *a, termchar *b, uint bchr, uint battr)
+termchars_equal_override(termchar *a, termchar *b, uint bchr, cattr battr)
 {
  /* FULL-TERMCHAR */
   if (a->chr != bchr)
     return false;
-  if ((a->attr & ~DATTR_MASK) != (battr & ~DATTR_MASK))
+  if ((a->attr.attr & ~DATTR_MASK) != (battr.attr & ~DATTR_MASK))
     return false;
   while (a->cc_next || b->cc_next) {
     if (!a->cc_next || !b->cc_next)
@@ -235,9 +235,10 @@ makeliteral_attr(struct buf *b, termchar *c)
   * ensures that attribute values remain 16-bit _unless_ the
   * user uses extended colour.
   */
-  uint attr, colourbits;
-
-  attr = c->attr;
+  uint colourbits;
+  uint attr = c->attr.attr;
+  uint truefg = c->attr.truefg;
+  uint truebg = c->attr.truebg;
 
   assert(ATTR_BGSHIFT > ATTR_FGSHIFT);
 
@@ -264,6 +265,13 @@ makeliteral_attr(struct buf *b, termchar *c)
     add(b, (uchar) ((attr >> 8) & 0xFF));
     add(b, (uchar) (attr & 0xFF));
   }
+
+  add(b, (uchar) ((truefg >> 16) & 0xFF));
+  add(b, (uchar) ((truefg >> 8) & 0xFF));
+  add(b, (uchar) (truefg & 0xFF));
+  add(b, (uchar) ((truebg >> 16) & 0xFF));
+  add(b, (uchar) ((truebg >> 8) & 0xFF));
+  add(b, (uchar) (truebg & 0xFF));
 }
 
 static void
@@ -309,7 +317,7 @@ readliteral_chr(struct buf *buf, termchar *c, termline *unused(line))
 static void
 readliteral_attr(struct buf *b, termchar *c, termline *unused(line))
 {
-  uint val, attr, colourbits;
+  uint val, attr, colourbits, fg, bg;
 
   val = get(b) << 8;
   val |= get(b);
@@ -334,7 +342,16 @@ readliteral_attr(struct buf *b, termchar *c, termline *unused(line))
   attr |= (colourbits >> 4) << (ATTR_BGSHIFT + 4);
   attr |= (colourbits & 0xF) << (ATTR_FGSHIFT + 4);
 
-  c->attr = attr;
+  fg = get(b) << 16;
+  fg |= get(b) << 8;
+  fg |= get(b);
+  bg = get(b) << 16;
+  bg |= get(b) << 8;
+  bg |= get(b);
+
+  c->attr.attr = attr;
+  c->attr.truefg = fg;
+  c->attr.truebg = bg;
 }
 
 static void

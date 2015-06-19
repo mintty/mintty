@@ -16,7 +16,7 @@ typedef enum {
   MAGENTA_I = 5,
   CYAN_I    = 6,
   WHITE_I   = 7,
-  
+
   // Bold ANSI colours
   BOLD_BLACK_I   = 8,
   BOLD_RED_I     = 9,
@@ -29,7 +29,7 @@ typedef enum {
 
   // Colour numbers 16 through 231 are occupied by a 6x6x6 colour cube,
   // with R at most significant and B at least. (36*R + 6*G + B + 16)
-  
+
   // Colour numbers 232 through 255 are occupied by a uniform series of
   // gray shades running between black and white but not including either
   // on grounds of redundancy.
@@ -37,18 +37,23 @@ typedef enum {
   // Default foreground
   FG_COLOUR_I      = 256,
   BOLD_FG_COLOUR_I = 257,
-  
+
   // Default background
   BG_COLOUR_I      = 258,
   BOLD_BG_COLOUR_I = 259,
-  
+
   // Cursor colours
   CURSOR_TEXT_COLOUR_I = 260,
   CURSOR_COLOUR_I      = 261,
   IME_CURSOR_COLOUR_I  = 262,
 
   // Number of colours
-  COLOUR_NUM = 263
+  COLOUR_NUM = 263,
+
+  // True Colour indicator
+  // assert (TRUE_COLOUR % 4) == 0 so that checking x >= TRUE_COLOUR
+  // is resistant to previous |= 1 or ^= 2 (win_text)
+  TRUE_COLOUR = 0x180
 
 } colour_i;
 
@@ -60,7 +65,7 @@ typedef enum {
  */
 enum { UCSWIDE = 0 };
 
-/* Three attribute types: 
+/* Three attribute types:
  * The ATTRs (normal attributes) are stored with the characters in
  * the main display arrays
  *
@@ -69,7 +74,7 @@ enum { UCSWIDE = 0 };
  *
  * The LATTRs (line attributes) are an entirely disjoint space of
  * flags.
- * 
+ *
  * The DATTRs (display attributes) are internal to terminal.c (but
  * defined here because their values have to match the others
  * here); they reuse the TATTR_* space but are always masked off
@@ -118,17 +123,24 @@ enum {
   ATTR_DEFAULT = ATTR_DEFFG | ATTR_DEFBG,
 };
 
+typedef struct {
+  uint attr;
+  uint truefg;
+  uint truebg;
+} cattr;
+
+extern const cattr CATTR_DEFAULT;
 
 typedef struct {
  /*
   * The cc_next field is used to link multiple termchars
   * together into a list, so as to fit more than one character
   * into a character cell (Unicode combining characters).
-  * 
+  *
   * cc_next is a relative offset into the current array of
   * termchars. I.e. to advance to the next character in a list,
   * one does `tc += tc->next'.
-  * 
+  *
   * Zero means end of list.
   */
   short cc_next;
@@ -139,11 +151,11 @@ typedef struct {
   * saying FULL-TERMCHAR.
   */
   wchar chr;
-  uint attr;
+  cattr attr;
 
 } termchar;
 
-const termchar basic_erase_char;
+/*const*/ termchar basic_erase_char;
 
 typedef struct {
   ushort attr;
@@ -173,7 +185,7 @@ termline *fetch_line(int y);
 void release_line(termline *);
 
 int termchars_equal(termchar *a, termchar *b);
-int termchars_equal_override(termchar *a, termchar *b, uint bchr, uint battr);
+int termchars_equal_override(termchar *a, termchar *b, uint bchr, cattr battr);
 
 void copy_termchar(termline *destline, int x, termchar *src);
 void move_termchar(termline *line, termchar *dest, termchar *src);
@@ -209,7 +221,7 @@ typedef struct belltime {
 
 typedef struct {
   short x, y;
-  uint attr;
+  cattr attr;
   bool origin;
   bool autowrap;
   bool wrapnext;
@@ -325,7 +337,7 @@ struct term {
 
   bool sel_rect, selected;
   pos sel_start, sel_end, sel_anchor;
-  
+
  /* Scroll steps during selection when cursor out of window. */
   int sel_scroll;
   pos sel_pos;
@@ -335,7 +347,7 @@ struct term {
 
  /* True when we've seen part of a multibyte input char */
   bool in_mb_char;
-  
+
  /* Non-zero when we've seen the first half of a surrogate pair */
   wchar high_surrogate;
 

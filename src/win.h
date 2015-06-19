@@ -8,7 +8,7 @@ void win_reconfig(void);
 void win_update(void);
 void win_schedule_update(void);
 
-void win_text(int x, int y, wchar *text, int len, uint attr, int lattr);
+void win_text(int x, int y, wchar *text, int len, cattr attr, int lattr);
 void win_update_mouse(void);
 void win_capture_mouse(void);
 void win_bell(void);
