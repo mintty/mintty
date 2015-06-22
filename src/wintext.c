@@ -10,14 +10,16 @@
 #include <winnls.h>
 
 enum {
-  FONT_NORMAL     = 0,
-  FONT_BOLD       = 1,
-  FONT_UNDERLINE  = 2,
-  FONT_BOLDUND    = 3,
-  FONT_WIDE       = 0x04,
-  FONT_HIGH       = 0x08,
-  FONT_NARROW     = 0x10,
-  FONT_MAXNO      = 0x20,
+  FONT_NORMAL    = 0x00,
+  FONT_BOLD      = 0x01,
+  FONT_UNDERLINE = 0x02,
+  FONT_BOLDUND   = FONT_BOLD | FONT_UNDERLINE,
+  FONT_ITALIC    = 0x04,
+  FONT_STRIKEOUT = 0x08,
+  FONT_WIDE      = 0x10,
+  FONT_HIGH      = 0x20,
+  FONT_NARROW    = 0x40,
+  FONT_MAXNO     = 0x80
 };
 
 LOGFONT lfont;
@@ -429,7 +431,7 @@ another_font(int fontno)
 {
   int basefont;
   int fw_dontcare, fw_bold;
-  int u, w, x;
+  int u, w, i, s, x;
 
   if (fontno < 0 || fontno >= FONT_MAXNO || fontflag[fontno])
     return;
@@ -448,6 +450,8 @@ another_font(int fontno)
   }
 
   w = fw_dontcare;
+  i = false;
+  s = false;
   u = false;
   x = font_width;
 
@@ -457,12 +461,16 @@ another_font(int fontno)
     x = (x + 1) / 2;
   if (fontno & FONT_BOLD)
     w = fw_bold;
+  if (fontno & FONT_ITALIC)
+    i = true;
+  if (fontno & FONT_STRIKEOUT)
+    s = true;
   if (fontno & FONT_UNDERLINE)
     u = true;
 
   fonts[fontno] =
-    CreateFont(font_height * (1 + !!(fontno & FONT_HIGH)), x, 0, 0, w, false, u,
-               false, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+    CreateFont(font_height * (1 + !!(fontno & FONT_HIGH)), x, 0, 0, w, i, u, s,
+               DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                get_font_quality(), FIXED_PITCH | FF_DONTCARE, cfg.font.name);
 
   fontflag[fontno] = 1;
@@ -515,6 +523,10 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr)
     nfont |= FONT_BOLD;
   if (und_mode == UND_FONT && (attr.attr & ATTR_UNDER))
     nfont |= FONT_UNDERLINE;
+  if (attr.attr & ATTR_ITALIC)
+    nfont |= FONT_ITALIC;
+  if (attr.attr & ATTR_STRIKEOUT)
+    nfont |= FONT_STRIKEOUT;
   another_font(nfont);
 
   bool force_manual_underline = false;
@@ -703,7 +715,8 @@ win_check_glyphs(wchar *wcs, uint num)
 {
   HDC dc = GetDC(wnd);
   bool bold = (bold_mode == BOLD_FONT) && (term.curs.attr.attr & ATTR_BOLD);
-  SelectObject(dc, fonts[bold ? FONT_BOLD : FONT_NORMAL]);
+  bool italic = term.curs.attr.attr & ATTR_ITALIC;
+  SelectObject(dc, fonts[(bold ? FONT_BOLD : FONT_NORMAL) | italic ? FONT_ITALIC : 0]);
   ushort glyphs[num];
   GetGlyphIndicesW(dc, wcs, num, glyphs, true);
   for (size_t i = 0; i < num; i++) {

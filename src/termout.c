@@ -431,10 +431,12 @@ do_sgr(void)
         attr.attr |= prot;
       when 1: attr.attr |= ATTR_BOLD;
       when 2: attr.attr |= ATTR_DIM;
+      when 3: attr.attr |= ATTR_ITALIC;
       when 4: attr.attr |= ATTR_UNDER;
       when 5: attr.attr |= ATTR_BLINK;
       when 7: attr.attr |= ATTR_REVERSE;
       when 8: attr.attr |= ATTR_INVISIBLE;
+      when 9: attr.attr |= ATTR_STRIKEOUT;
       when 10 ... 12:
         // mode 10 is the configured Character set
         // mode 11 is the VGA character set (CP437 + control range graphics)
@@ -445,10 +447,12 @@ do_sgr(void)
         term_update_cs();
       when 21: attr.attr &= ~ATTR_BOLD;
       when 22: attr.attr &= ~(ATTR_BOLD | ATTR_DIM);
+      when 23: attr.attr &= ~ATTR_ITALIC;
       when 24: attr.attr &= ~ATTR_UNDER;
       when 25: attr.attr &= ~ATTR_BLINK;
       when 27: attr.attr &= ~ATTR_REVERSE;
       when 28: attr.attr &= ~ATTR_INVISIBLE;
+      when 29: attr.attr &= ~ATTR_STRIKEOUT;
       when 30 ... 37: /* foreground */
         attr.attr &= ~ATTR_FGMASK;
         attr.attr |= (term.csi_argv[i] - 30) << ATTR_FGSHIFT;
@@ -889,6 +893,8 @@ do_dcs(void)
       p += sprintf(p, ";1");
     if (attr.attr & ATTR_DIM)
       p += sprintf(p, ";2");
+    if (attr.attr & ATTR_ITALIC)
+      p += sprintf(p, ";3");
     if (attr.attr & ATTR_UNDER)
       p += sprintf(p, ";4");
     if (attr.attr & ATTR_BLINK)
@@ -897,6 +903,8 @@ do_dcs(void)
       p += sprintf(p, ";7");
     if (attr.attr & ATTR_INVISIBLE)
       p += sprintf(p, ";8");
+    if (attr.attr & ATTR_STRIKEOUT)
+      p += sprintf(p, ";9");
 
     if (term.curs.oem_acs)
       p += sprintf(p, ";%u", 10 + term.curs.oem_acs);

@@ -102,6 +102,9 @@ win_copy(const wchar *data, uint *attrs, int len)
     int bgcolour, lastbgcolour = 0;
     int attrBold, lastAttrBold = 0;
     int attrUnder, lastAttrUnder = 0;
+    int attrItalic, lastAttrItalic = 0;
+    int attrStrikeout, lastAttrStrikeout = 0;
+    int attrHidden, lastAttrHidden = 0;
     int palette[COLOUR_NUM];
     int numcolours;
 
@@ -249,6 +252,9 @@ win_copy(const wchar *data, uint *attrs, int len)
 
         attrBold = cfg.bold_as_font ? (attr & ATTR_BOLD) : 0;
         attrUnder = attr & ATTR_UNDER;
+        attrItalic = attr & ATTR_ITALIC;
+        attrStrikeout = attr & ATTR_STRIKEOUT;
+        attrHidden = attr & ATTR_INVISIBLE;
 
        /*
         * Reverse video
@@ -294,10 +300,25 @@ win_copy(const wchar *data, uint *attrs, int len)
           rtflen += sprintf(&rtf[rtflen], "%s", attrBold ? "\\b " : "\\b0 ");
         }
 
+        if (lastAttrItalic != attrItalic) {
+          lastAttrItalic = attrItalic;
+          rtflen += sprintf(&rtf[rtflen], "%s", attrItalic ? "\\i " : "\\i0 ");
+        }
+
         if (lastAttrUnder != attrUnder) {
           lastAttrUnder = attrUnder;
           rtflen +=
             sprintf(&rtf[rtflen], "%s", attrUnder ? "\\ul " : "\\ulnone ");
+        }
+
+        if (lastAttrStrikeout != attrStrikeout) {
+          lastAttrStrikeout = attrStrikeout;
+          rtflen += sprintf(&rtf[rtflen], "%s", attrStrikeout ? "\\strike " : "\\strike0 ");
+        }
+
+        if (lastAttrHidden != attrHidden) {
+          lastAttrHidden = attrHidden;
+          rtflen += sprintf(&rtf[rtflen], "%s", attrHidden ? "\\v " : "\\v0 ");
         }
       }
 
