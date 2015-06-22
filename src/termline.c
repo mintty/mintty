@@ -138,6 +138,10 @@ termchars_equal_override(termchar *a, termchar *b, uint bchr, cattr battr)
     return false;
   if ((a->attr.attr & ~DATTR_MASK) != (battr.attr & ~DATTR_MASK))
     return false;
+  if (a->attr.truefg != battr.truefg)
+    return false;
+  if (a->attr.truebg != battr.truebg)
+    return false;
   while (a->cc_next || b->cc_next) {
     if (!a->cc_next || !b->cc_next)
       return false;     /* one cc-list ends, other does not */

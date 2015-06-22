@@ -1,5 +1,5 @@
   * Enabled character attributes italic (#418, #152) and strikeout.
-  * True Colour support (#431) (using 38;2;r;g;b m) alpha.
+  * True Colour support (#431) (using 38;2;r;g;b m).
   * Added MSYS setup hint (#426).
   * Fixed CSI 8;...t handling of default and zero values (issue #408).
   * Reporting mode for font changes (issue #355).

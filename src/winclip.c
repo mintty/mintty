@@ -120,7 +120,7 @@ win_copy(const wchar *data, uint *attrs, int len)
 
    /*
     * Add colour palette
-    * {\colortbl ;\red255\green0\blue0;\red0\green0\blue128;}
+    * {\colortbl;\red255\green0\blue0;\red0\green0\blue128;...}
     */
 
    /*
@@ -173,7 +173,7 @@ win_copy(const wchar *data, uint *attrs, int len)
     * Finally - Write the colour table
     */
     rtf = renewn(rtf, rtfsize + (numcolours * 25));
-    strcat(rtf, "{\\colortbl ;");
+    strcat(rtf, "{\\colortbl;");
     rtflen = strlen(rtf);
 
     for (int i = 0; i < COLOUR_NUM; i++) {

@@ -739,8 +739,10 @@ term_paint(void)
         dirtyrect = false;
       }
 
-      if (dispchars[j].chr != newchars[j].chr ||
-          (dispchars[j].attr.attr & ~DATTR_STARTRUN) != newchars[j].attr.attr) {
+      if (dispchars[j].chr != newchars[j].chr
+          || (dispchars[j].attr.truefg != newchars[j].attr.truefg)
+          || (dispchars[j].attr.truebg != newchars[j].attr.truebg)
+          || (dispchars[j].attr.attr & ~DATTR_STARTRUN) != newchars[j].attr.attr) {
         if (!dirtyrect) {
           for (int k = laststart; k < j; k++)
             dispchars[k].attr.attr |= ATTR_INVALID;
