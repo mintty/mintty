@@ -773,6 +773,31 @@ colours.
 \- \fBHighlight in taskbar\fP (BellTaskbar=yes): Change the colour of mintty's
 taskbar entry if the mintty window is not active.
 
+Further configuration options are currently available for 
+\fI/etc/minttyrc\fP and \fI~/.minttyrc\fP or as \fB-o\fP command line option only:
+
+\- \fB\fP (BellType=0): Preferred system sound, values:
+.RS
+.RS
+\fB1\fP : Default Beep
+.RE
+.RS
+\fB2\fP : Critical Stop
+.RE
+.RS
+\fB3\fP : Question
+.RE
+.RS
+\fB4\fP : Exclamation
+.RE
+.RS
+\fB5\fP : Asterisk
+.RE
+
+\- \fB\fP (BellFreq=0): Beep sound frequency (overrides system sounds).
+
+\- \fB\fP (BellLen=0): Beep sound length.
+
 .TP
 \fBPrinter\fP (Printer=)
 The ANSI standard defines control sequences for sending text to a printer,

@@ -1,3 +1,4 @@
+  * Added configuration options BellType, BellFreq, BellLen (~ #369).
   * Enabled character attributes italic (#418, #152) and strikeout.
   * True Colour support (#431) (using 38;2;r;g;b m).
   * Added MSYS setup hint (#426).

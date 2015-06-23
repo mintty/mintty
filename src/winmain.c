@@ -276,8 +276,19 @@ flash_taskbar(bool enable)
 void
 win_bell(void)
 {
-  if (cfg.bell_sound)
-    MessageBeep(MB_OK);
+  if (cfg.bell_sound || cfg.bell_type) {
+    if (cfg.bell_freq)
+      Beep(cfg.bell_freq, cfg.bell_len);
+    else {
+      // 0  MB_OK               Default Beep
+      // 1  MB_ICONSTOP         Critical Stop
+      // 2  MB_ICONQUESTION     Question
+      // 3  MB_ICONEXCLAMATION  Exclamation
+      // 4  MB_ICONASTERISK     Asterisk
+      // ?  0xFFFFFFFF          Simple Beep
+      MessageBeep((cfg.bell_type - 1) * 16);
+    }
+  }
   if (cfg.bell_taskbar && !term.has_focus)
     flash_taskbar(true);
 }

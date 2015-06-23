@@ -80,6 +80,9 @@ typedef struct {
   string term;
   string answerback;
   bool bell_sound;
+  int bell_type;
+  int bell_freq;
+  int bell_len;
   bool bell_flash;
   bool bell_taskbar;
   string printer;
