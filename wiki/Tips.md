@@ -213,3 +213,17 @@ echo -ne '\e]4;13;#FF40FF\a'  # bold magenta
 echo -ne '\e]4;14;#40FFFF\a'  # bold cyan
 echo -ne '\e]4;15;#FFFFFF\a'  # bold white
 ```
+
+## Ambiguous width setting ##
+
+A number of Unicode characters have an "ambiguous width" property due to 
+legacy issues with dedicated CJK fonts, meaning they can be narrow 
+(single-cell width) or wide (double-cell width) in a terminal.
+
+To select ambiguous-width characters to appear wide (as some applications 
+may expect), mintty should be run in a CJK locale (character encoding does 
+not need to be CJK) and with a respective CJK font, e.g.:
+
+```
+LC_ALL=zh_SG.utf8 mintty -o Font="MS Mincho" &
+```
