@@ -146,6 +146,9 @@ $(html): ../docs/$(NAME).1
 clean:
 	rm -rf *.d *.o $(NAME)*
 
+check:
+	if egrep -a -e "^(printf|#define debug)" *.[hc]; then false; fi
+
 #############################################################################
 # development and debug targets
 

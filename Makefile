@@ -57,7 +57,10 @@ REL := 0
 arch := $(shell uname -m)
 
 cygport := $(name_ver)-$(REL).cygport
-pkg: binpkg srcpkg
+pkg: check binpkg srcpkg
+
+check:
+	cd src; $(MAKE) check
 
 binpkg:
 	cp cygwin/mintty.cygport $(DIST)/$(cygport)
