@@ -637,6 +637,7 @@ set_modes(bool state)
 
 /*
  * dtterm window operations and xterm extensions.
+   CSI Ps ; Ps ; Ps t
  */
 static void
 do_winop(void)
@@ -656,8 +657,38 @@ do_winop(void)
       win_get_screen_chars(&rows, &cols);
       win_set_chars(arg1 ?: def1 ? rows : term.rows, arg2 ?: def2 ? cols : term.cols);
     }
-    when 9: win_maximise(arg1);
-    when 10: win_maximise(arg1 ? 2 : 0);  // fullscreen
+    when 9: {
+      // Ps = 9 ; 0  -> Restore maximized window.
+      // Ps = 9 ; 1  -> Maximize window (i.e., resize to screen size).
+      // Ps = 9 ; 2  -> Maximize window vertically.
+      // Ps = 9 ; 3  -> Maximize window horizontally.
+      if (arg1 == 2) {
+        // maximize window vertically
+#ifdef not_good
+        int cols = term.cols;
+        win_maximise(1);
+        win_set_chars(term.rows, cols);
+#endif
+      }
+      else if (arg1 == 3) {
+        // maximize window horizontally
+#ifdef not_good
+        int rows = term.rows;
+        win_maximise(1);
+        win_set_chars(rows, term.cols);
+#endif
+      }
+      else
+        win_maximise(arg1);
+    }
+    when 10:
+      // Ps = 1 0 ; 0  -> Undo full-screen mode.
+      // Ps = 1 0 ; 1  -> Change to full-screen.
+      // Ps = 1 0 ; 2  -> Toggle full-screen.
+      if (arg1 == 2)
+        win_maximise(-2);
+      else
+        win_maximise(arg1 ? 2 : 0);
     when 11: child_write(win_is_iconic() ? "\e[1t" : "\e[2t", 4);
     when 13: {
       int x, y;

@@ -394,6 +394,8 @@ clear_fullscreen(void)
 void
 win_maximise(int max)
 {
+  if (max == -2) // toggle full screen
+    max = win_is_fullscreen ? 0 : 2;
   if (IsZoomed(wnd)) {
     if (!max)
       ShowWindow(wnd, SW_RESTORE);

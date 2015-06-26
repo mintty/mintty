@@ -1,3 +1,5 @@
+  * Fixed CSI 10;2t to toggle full-screen mode.
+  * Fixed CSI 9;2t and 9;3t to do nothing like in xterm.
   * Implemented and enabled character attribute italic (#418, #152).
   * Implemented character attribute strikeout; disabled due to missing bit.
   * Added configuration options BellType, BellFreq, BellLen (~ #369).
