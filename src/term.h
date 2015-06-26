@@ -72,33 +72,33 @@ enum { UCSWIDE = 0 };
  * The TATTRs (temporary attributes) are generated on the fly, they
  * can overlap with characters but not with normal attributes.
  *
- * The LATTRs (line attributes) are an entirely disjoint space of
- * flags.
- *
- * The DATTRs (display attributes) are internal to terminal.c (but
- * defined here because their values have to match the others
- * here); they reuse the TATTR_* space but are always masked off
+ * The DATTRs (display attributes) are internal to term.c/termline.c
+ * (but defined here because their values have to match the others here);
+ * they reuse the TATTR_* space but are always masked off
  * before sending to the front end.
  *
  * ATTR_INVALID is an illegal colour combination.
+ *
+ * The LATTRs (line attributes) are an entirely disjoint space of
+ * flags.
  */
 enum {
-  ATTR_FGSHIFT   = 0,
-  ATTR_BGSHIFT   = 9,
-  ATTR_FGMASK    = 0x0001FFu,
-  ATTR_BGMASK    = 0x03FE00u,
-  ATTR_INVALID   = 0x03FFFFu,
-  ATTR_BOLD      = 0x040000u,
-  ATTR_DIM       = 0x080000u,
-  ATTR_ITALIC    = 0x100000u,
-  ATTR_UNDER     = 0x200000u,
-  ATTR_REVERSE   = 0x400000u,
-  ATTR_STRIKEOUT = 0x800000u,
-  ATTR_INVISIBLE = 0x01000000u,
-  ATTR_BLINK     = 0x02000000u,
-  ATTR_PROTECTED = 0x04000000u,
-  ATTR_WIDE      = 0x10000000u,
-  ATTR_NARROW    = 0x20000000u,
+  ATTR_FGSHIFT    = 0,
+  ATTR_BGSHIFT    = 9,
+  ATTR_FGMASK     = 0x000001FFu,
+  ATTR_BGMASK     = 0x0003FE00u,
+  ATTR_INVALID    = 0x0003FFFFu,
+  ATTR_BOLD       = 0x00040000u,
+  ATTR_DIM        = 0x00080000u,
+  ATTR_ITALIC     = 0x00100000u,
+  ATTR_UNDER      = 0x00200000u,
+  ATTR_REVERSE    = 0x00400000u,
+  ATTR_STRIKEOUT  = 0x00000000u, /* not supported */
+  ATTR_INVISIBLE  = 0x00800000u,
+  ATTR_BLINK      = 0x01000000u,
+  ATTR_PROTECTED  = 0x02000000u,
+  ATTR_WIDE       = 0x04000000u,
+  ATTR_NARROW     = 0x08000000u,
 
   TATTR_RIGHTCURS = 0x10000000u, /* cursor-on-RHS */
   TATTR_PASCURS   = 0x20000000u, /* passive cursor (box) */
@@ -108,13 +108,13 @@ enum {
   DATTR_STARTRUN  = 0x80000000u, /* start of redraw run */
   DATTR_MASK      = 0xF0000000u,
 
-  LATTR_NORM     = 0x00000000u,
-  LATTR_WIDE     = 0x00000001u,
-  LATTR_TOP      = 0x00000002u,
-  LATTR_BOT      = 0x00000003u,
-  LATTR_MODE     = 0x00000003u,
-  LATTR_WRAPPED  = 0x00000010u, /* this line wraps to next */
-  LATTR_WRAPPED2 = 0x00000020u, /* with WRAPPED: CJK wide character
+  LATTR_NORM      = 0x00000000u,
+  LATTR_WIDE      = 0x00000001u,
+  LATTR_TOP       = 0x00000002u,
+  LATTR_BOT       = 0x00000003u,
+  LATTR_MODE      = 0x00000003u,
+  LATTR_WRAPPED   = 0x00000010u, /* this line wraps to next */
+  LATTR_WRAPPED2  = 0x00000020u, /* with WRAPPED: CJK wide character
                                  * wrapped to next line, so last
                                  * single-width cell is empty */
 };
