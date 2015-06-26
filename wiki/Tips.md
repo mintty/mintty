@@ -227,3 +227,11 @@ not need to be CJK) and with a respective CJK font, e.g.:
 ```
 LC_ALL=zh_SG.utf8 mintty -o Font="MS Mincho" &
 ```
+
+## Running mintty stand-alone ##
+
+To install mintty outside a cygwin environment, follow a few rules:
+* Find out which libraries (dlls from the cygwin /bin directory) mintty needs in addition to cygwin1.dll and install them all, or:
+* Compile mintty statically.
+* Call the directory in which to install mintty and libraries 'bin'.
+
