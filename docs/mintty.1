@@ -395,6 +395,10 @@ dialog, followed by settings that do not appear in the dialog.
 For each setting, its name in the config file is shown in parentheses,
 along with its default value.
 
+If there is only a name in parentheses, there is currently 
+no GUI configuration facility for that option 
+(see also Hidden settings below).
+
 
 .SS Looks
 Settings affecting mintty's appearance.
@@ -554,7 +558,7 @@ If this option is enabled, \fB^H\fP is sent instead.
 This also changes the \fBCtrl+Backspace\fP code from \fB^_\fP to \fB^?\fP.
 
 .TP
-\fB\fP (DeleteSendsDEL=no)
+\fB\fP(DeleteSendsDEL=no)
 By default, mintty sends VT100 Remove as the keycode for the keypad Del key.
 If this option is set =true, \fB^?\fP (ASCII DEL) is sent instead.
 
@@ -639,7 +643,7 @@ This works by sending the number of cursor keycodes needed to get to the
 destination.
 
 .TP
-\fB(Middle click action)\fP (MiddleClickAction=paste)
+\fB\fP(MiddleClickAction=paste)
 Action to take when the middle mouse button is pressed.
 
 \- \fBPaste\fP: Paste the clipboard contents.
@@ -660,7 +664,7 @@ Action to take when the right mouse button is pressed.
 .br
 \- \fBEnter\fP: Simulate \fBEnter\fP/\fBReturn\fP key.
 .br
-\- \fBShow menu\fP: Show the context menu.
+\- \fBMenu\fP: Show the context menu.
 
 If this is set to \fBPaste\fP, the middle button extends the selected region
 instead of pasting the clipboard. If it is set to \fBExtend\fP, a left click
@@ -696,7 +700,7 @@ The \fBOff\fP setting disables overriding.
 \- \fBOff\fP
 
 .TP
-\fB\fP (HideMouse=on)
+\fB\fP(HideMouse=on)
 By default, mintty automatically hides the cross-hair mouse cursor when 
 keyboard input is being entered. Setting this option =false keeps the cursor.
 
@@ -711,6 +715,14 @@ Default width of the window, in character cells.
 .TP
 \fBRows\fP (Rows=24)
 Default height of the window, in character cells.
+
+.TP
+\fB\fP(RowSpacing=0)
+Additional row padding; RowSpacing=-1 works nicely with the Consolas fonts.
+
+.TP
+\fB\fP(ColSpacing=0)
+Additional column padding; ColSpacing=1 can avoid boldened glyphs being clipped.
 
 .TP
 \fBCurrent size\fP
@@ -800,7 +812,7 @@ taskbar entry if the mintty window is not active.
 Further configuration options are currently available for 
 \fI/etc/minttyrc\fP and \fI~/.minttyrc\fP or as \fB-o\fP command line option only:
 
-\- \fB\fP (BellType=0): Preferred system sound, values:
+\-\fB\fP (BellType=0): Preferred system sound, values:
 .RS
 .RS
 \fB1\fP : Default Beep
@@ -814,9 +826,10 @@ Further configuration options are currently available for
 \fB5\fP : Asterisk
 .RE
 
-\- \fB\fP (BellFreq=0): Beep sound frequency (overrides system sounds).
+\-\fB\fP (BellFreq=0): Beep sound frequency (overrides system sounds).
 
-\- \fB\fP (BellLen=400): Beep sound length (if frequency beep selected).
+\-\fB\fP (BellLen=400): Beep sound length (applies to frequency beep).
+.RE
 
 .TP
 \fBPrinter\fP (Printer=)
