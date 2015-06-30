@@ -577,6 +577,8 @@ set_modes(bool state)
           term.mouse_enc = state ? ME_XTERM_CSI : 0;
         when 1015: /* Urxvt's CSI-style mouse encoding */
           term.mouse_enc = state ? ME_URXVT_CSI : 0;
+        when 1037:
+          term.delete_sends_del = state;
         when 1047:       /* alternate screen */
           term.selected = false;
           term_switch_screen(state, true);

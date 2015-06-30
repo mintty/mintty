@@ -14,7 +14,7 @@ struct term term;
 const cattr CATTR_DEFAULT =
             {.attr = ATTR_DEFAULT, .truefg = 0, .truebg = 0};
 
-termchar basic_erase_char = {.cc_next = 0, .chr = ' ', 
+termchar basic_erase_char = {.cc_next = 0, .chr = ' ',
                     /* CATTR_DEFAULT */
                     .attr = {.attr = ATTR_DEFAULT, .truefg = 0, .truebg = 0}
                     };
@@ -112,6 +112,7 @@ term_reset(void)
   term_cursor_reset(&term.saved_cursors[1]);
 
   term.backspace_sends_bs = cfg.backspace_sends_bs;
+  term.delete_sends_del = cfg.delete_sends_del;
   if (term.tabs) {
     for (int i = 0; i < term.cols; i++)
       term.tabs[i] = (i % 8 == 0);
@@ -205,6 +206,8 @@ term_reconfig(void)
   term_schedule_cblink();
   if (new_cfg.backspace_sends_bs != cfg.backspace_sends_bs)
     term.backspace_sends_bs = new_cfg.backspace_sends_bs;
+  if (new_cfg.delete_sends_del != cfg.delete_sends_del)
+    term.delete_sends_del = new_cfg.delete_sends_del;
   if (strcmp(new_cfg.term, cfg.term))
     term.vt220_keys = strstr(new_cfg.term, "vt220");
 }

@@ -115,8 +115,8 @@ enum {
   LATTR_MODE      = 0x00000003u,
   LATTR_WRAPPED   = 0x00000010u, /* this line wraps to next */
   LATTR_WRAPPED2  = 0x00000020u, /* with WRAPPED: CJK wide character
-                                 * wrapped to next line, so last
-                                 * single-width cell is empty */
+                                  * wrapped to next line, so last
+                                  * single-width cell is empty */
 };
 
 enum {
@@ -278,6 +278,7 @@ struct term {
   bool vt220_keys;
   bool shortcut_override;
   bool backspace_sends_bs;
+  bool delete_sends_del;
   bool escape_sends_fs;
   bool app_escape_key;
   bool app_cursor_keys;
