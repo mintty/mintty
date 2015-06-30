@@ -1007,7 +1007,7 @@ do_cmd(void)
   s[term.cmd_len] = 0;
   switch (term.cmd_num) {
     when -1: do_dcs();
-    when 0 or 2 or 21: win_set_title(s);  // ignore icon title
+    when 0 or 2: win_set_title(s);  // ignore icon title
     when 4:  do_colour_osc(0);
     when 10: do_colour_osc(FG_COLOUR_I);
     when 11: do_colour_osc(BG_COLOUR_I);
