@@ -324,7 +324,7 @@ An overview of all the keyboard shortcuts.
 .TP
 \fBWindow commands\fP
 
-\- \fBAlt+F2\fP: New
+\- \fBAlt+F2\fP: New (clone)
 .br
 \- \fBAlt+F4\fP: Close
 .br
@@ -549,9 +549,14 @@ Settings controlling keyboard behaviour.
 
 .TP
 \fBBackspace sends ^H\fP (BackspaceSendsBS=no)
-By default, mintty sends \fB^?\fP as the keycode for the backspace key.
+By default, mintty sends \fB^?\fP (ASCII DEL) as the keycode for the backspace key.
 If this option is enabled, \fB^H\fP is sent instead.
 This also changes the \fBCtrl+Backspace\fP code from \fB^_\fP to \fB^?\fP.
+
+.TP
+\fB\fP (DeleteSendsDEL=no)
+By default, mintty sends VT100 Remove as the keycode for the keypad Del key.
+If this option is set =true, \fB^?\fP (ASCII DEL) is sent instead.
 
 .TP
 \fBCtrl+LeftAlt is AltGr\fP (CtrlAltIsAltGr=no)
@@ -634,12 +639,26 @@ This works by sending the number of cursor keycodes needed to get to the
 destination.
 
 .TP
+\fB(Middle click action)\fP (MiddleClickAction=paste)
+Action to take when the middle mouse button is pressed.
+
+\- \fBPaste\fP: Paste the clipboard contents.
+.br
+\- \fBExtend\fP: Extend the selected region.
+.br
+\- \fBEnter\fP: Simulate \fBEnter\fP/\fBReturn\fP key.
+.br
+\- \fBVoid\fP: Do nothing.
+
+.TP
 \fBRight click action\fP (RightClickAction=menu)
 Action to take when the right mouse button is pressed.
 
 \- \fBPaste\fP: Paste the clipboard contents.
 .br
 \- \fBExtend\fP: Extend the selected region.
+.br
+\- \fBEnter\fP: Simulate \fBEnter\fP/\fBReturn\fP key.
 .br
 \- \fBShow menu\fP: Show the context menu.
 
@@ -675,6 +694,11 @@ The \fBOff\fP setting disables overriding.
 \- \fBAlt\fP
 .br
 \- \fBOff\fP
+
+.TP
+\fB\fP (HideMouse=on)
+By default, mintty automatically hides the cross-hair mouse cursor when 
+keyboard input is being entered. Setting this option =false keeps the cursor.
 
 
 .SS Window
@@ -780,23 +804,19 @@ Further configuration options are currently available for
 .RS
 .RS
 \fB1\fP : Default Beep
-.RE
-.RS
+.br
 \fB2\fP : Critical Stop
-.RE
-.RS
+.br
 \fB3\fP : Question
-.RE
-.RS
+.br
 \fB4\fP : Exclamation
-.RE
-.RS
+.br
 \fB5\fP : Asterisk
 .RE
 
 \- \fB\fP (BellFreq=0): Beep sound frequency (overrides system sounds).
 
-\- \fB\fP (BellLen=400): Beep sound length.
+\- \fB\fP (BellLen=400): Beep sound length (if frequency beep selected).
 
 .TP
 \fBPrinter\fP (Printer=)
@@ -918,6 +938,10 @@ If a string is specified here, word selection only picks out characters in the
 string along with alphanumeric characters.  For example, specifying just the
 underscore character (WordChars=_) would allow selecting identifiers in many
 programming languages.
+
+.TP
+\fBWord selection exclusion characters\fP (WordCharsExcl=)
+This string can list characters that are to be excluded from word selection.
 
 .TP
 \fBUse system colours\fP (UseSystemColours=no)
