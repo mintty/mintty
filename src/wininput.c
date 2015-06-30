@@ -39,7 +39,7 @@ win_update_menus(void)
   );
 
   uint paste_enabled =
-    IsClipboardFormatAvailable(CF_TEXT) || 
+    IsClipboardFormatAvailable(CF_TEXT) ||
     IsClipboardFormatAvailable(CF_UNICODETEXT) ||
     IsClipboardFormatAvailable(CF_HDROP)
     ? MF_ENABLED : MF_GRAYED;
@@ -50,10 +50,10 @@ win_update_menus(void)
 
   ModifyMenu(
     menu, IDM_RESET, 0, IDM_RESET,
-    alt_fn ? "&Reset\tAlt+F8" : ct_sh ? "&Reset\tCtrl+Shift+R" : "&Reset" 
+    alt_fn ? "&Reset\tAlt+F8" : ct_sh ? "&Reset\tCtrl+Shift+R" : "&Reset"
   );
 
-  uint defsize_enabled = 
+  uint defsize_enabled =
     IsZoomed(wnd) || term.cols != cfg.cols || term.rows != cfg.rows
     ? MF_ENABLED : MF_GRAYED;
   ModifyMenu(
@@ -143,7 +143,7 @@ static void
 update_mouse(mod_keys mods)
 {
   static bool app_mouse;
-  bool new_app_mouse = 
+  bool new_app_mouse =
     term.mouse_mode && !term.show_other_screen &&
     cfg.clicks_target_app ^ ((mods & cfg.click_target_mod) != 0);
   if (new_app_mouse != app_mouse) {
@@ -177,7 +177,7 @@ static void
 hide_mouse()
 {
   POINT p;
-  if (mouse_showing && GetCursorPos(&p) && WindowFromPoint(p) == wnd) {
+  if (cfg.hide_mouse && mouse_showing && GetCursorPos(&p) && WindowFromPoint(p) == wnd) {
     ShowCursor(false);
     mouse_showing = false;
   }
@@ -188,7 +188,7 @@ translate_pos(int x, int y)
 {
   return (pos){
     .x = floorf((x - PADDING) / (float)font_width ),
-    .y = floorf((y - PADDING) / (float)font_height), 
+    .y = floorf((y - PADDING) / (float)font_height),
   };
 }
 
@@ -199,7 +199,7 @@ static pos
 get_mouse_pos(LPARAM lp)
 {
   last_lp = lp;
-  return translate_pos(GET_X_LPARAM(lp), GET_Y_LPARAM(lp));  
+  return translate_pos(GET_X_LPARAM(lp), GET_Y_LPARAM(lp));
 }
 
 void
@@ -212,7 +212,7 @@ win_mouse_click(mouse_button b, LPARAM lp)
   win_show_mouse();
   mod_keys mods = get_mods();
   pos p = get_mouse_pos(lp);
-  
+
   uint t = GetMessageTime();
   if (b != last_button ||
       p.x != last_click_pos.x || p.y != last_click_pos.y ||
@@ -251,7 +251,7 @@ win_mouse_move(bool nc, LPARAM lp)
 }
 
 void
-win_mouse_wheel(WPARAM wp, LPARAM lp)      
+win_mouse_wheel(WPARAM wp, LPARAM lp)
 {
   // WM_MOUSEWHEEL reports screen coordinates rather than client coordinates
   POINT wpos = {.x = GET_X_LPARAM(lp), .y = GET_Y_LPARAM(lp)};
@@ -274,7 +274,7 @@ send_syscommand(WPARAM cmd)
   SendMessage(wnd, WM_SYSCOMMAND, cmd, ' ');
 }
 
-bool 
+bool
 win_key_down(WPARAM wp, LPARAM lp)
 {
   uint key = wp;
@@ -285,7 +285,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     );
     return 1;
   }
- 
+
   uint scancode = HIWORD(lp) & (KF_EXTENDED | 0xFF);
   bool extended = HIWORD(lp) & KF_EXTENDED;
   bool repeat = HIWORD(lp) & KF_REPEAT;
@@ -294,7 +294,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   uchar kbd[256];
   GetKeyboardState(kbd);
   inline bool is_key_down(uchar vk) { return kbd[vk] & 0x80; }
-  
+
   // Distinguish real LCONTROL keypresses from fake messages sent for AltGr.
   // It's a fake if the next message is an RMENU with the same timestamp.
   if (key == VK_CONTROL && !extended) {
@@ -332,7 +332,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   alt_state_t old_alt_state = alt_state;
   if (alt_state > ALT_NONE)
     alt_state = ALT_CANCELLED;
-  
+
   // Context and window menus
   if (key == VK_APPS) {
     if (shift)
@@ -349,12 +349,12 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     return 1;
   }
-  
+
   // Exit when pressing Enter or Escape while holding the window open after
   // the child process has died.
   if ((key == VK_RETURN || key == VK_ESCAPE) && !mods && !child_is_alive())
     exit(0);
-  
+
   if (!term.shortcut_override) {
 
     // Copy&paste
@@ -391,7 +391,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       return 1;
       not_zoom:;
     }
-    
+
     // Alt+Fn shortcuts
     if (cfg.alt_fn_shortcuts && alt && VK_F1 <= key && key <= VK_F24) {
       if (!ctrl) {
@@ -406,7 +406,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       }
       return 1;
     }
-    
+
     // Ctrl+Shift+letter shortcuts
     if (cfg.ctrl_shift_shortcuts &&
         mods == (MDK_CTRL | MDK_SHIFT) && 'A' <= key && key <= 'Z') {
@@ -422,7 +422,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       }
       return 1;
     }
-    
+
     // Scrollback
     if (!term.on_alt_screen || term.show_other_screen) {
       mod_keys scroll_mod = cfg.scroll_mod ?: 8;
@@ -446,7 +446,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       }
     }
   }
-  
+
   // Keycode buffers
   char buf[32];
   int len = 0;
@@ -505,12 +505,16 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     return symbol != '.' && alt_code_numpad_key(symbol - '0');
   }
-  
+
   void edit_key(uchar code, char symbol) {
-    if (!app_pad_key(symbol))
-      tilde_code(code);
+    if (!app_pad_key(symbol)) {
+      if (code != 3 || ctrl || alt || shift || !term.delete_sends_del)
+        tilde_code(code);
+      else
+        ch(CDEL);
+    }
   }
-  
+
   void cursor_key(char code, char symbol) {
     if (!app_pad_key(symbol))
       mods ? mod_csi(code) : term.app_cursor_keys ? ss3(code) : csi(code);
@@ -520,7 +524,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   bool layout(void) {
     // ToUnicode returns up to 4 wchars according to
     // http://blogs.msdn.com/b/michkap/archive/2006/03/24/559169.aspx.
-    wchar wbuf[4];  
+    wchar wbuf[4];
     int wlen = ToUnicode(key, scancode, kbd, wbuf, lengthof(wbuf), 0);
     if (!wlen)     // Unassigned.
       return false;
@@ -528,7 +532,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       return true;
 
     esc_if(alt);
-    
+
     // Check that the keycode can be converted to the current charset
     // before returning success.
     int mblen = cs_wcntombn(buf + len, wbuf, lengthof(buf) - len, wlen);
@@ -536,7 +540,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     len = ok ? len + mblen : 0;
     return ok;
   }
-  
+
   wchar undead_keycode(void) {
     wchar wc;
     int len = ToUnicode(key, scancode, kbd, &wc, 1, 0);
@@ -551,8 +555,8 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     return len == 1 ? wc : 0;
   }
-  
-  void modify_other_key(void) {  
+
+  void modify_other_key(void) {
     wchar wc = undead_keycode();
     if (!wc) {
       if (mods & MDK_SHIFT) {
@@ -566,10 +570,10 @@ win_key_down(WPARAM wp, LPARAM lp)
       other_code(wc);
     }
   }
-  
+
   bool char_key(void) {
     alt = lalt & !ctrl_lalt_altgr;
-    
+
     // Sync keyboard layout with our idea of AltGr.
     kbd[VK_CONTROL] = altgr ? 0x80 : 0;
 
@@ -577,11 +581,11 @@ win_key_down(WPARAM wp, LPARAM lp)
     // Need to check there's a Ctrl that isn't part of Ctrl+LeftAlt==AltGr.
     if ((ctrl & !ctrl_lalt_altgr) | (lctrl & rctrl))
       return false;
-    
+
     // Try the layout.
     if (layout())
       return true;
-    
+
     if (ralt) {
       // Try with RightAlt/AltGr key treated as Alt.
       kbd[VK_CONTROL] = 0;
@@ -591,7 +595,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     return !ctrl;
   }
-  
+
   void ctrl_ch(uchar c) {
     esc_if(alt);
     if (shift) {
@@ -609,7 +613,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     ch(c);
   }
-  
+
   bool ctrl_key(void) {
     bool try_key(void) {
       wchar wc = undead_keycode();
@@ -623,7 +627,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       ctrl_ch(c);
       return true;
     }
-    
+
     bool try_shifts(void) {
       shift = is_key_down(VK_LSHIFT) & is_key_down(VK_RSHIFT);
       if (try_key())
@@ -637,7 +641,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       }
       return false;
     }
-    
+
     if (try_shifts())
       return true;
     if (altgr) {
@@ -648,7 +652,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
     return false;
   }
-  
+
   switch(key) {
     when VK_RETURN:
       if (extended && !numlock && term.app_keypad)
@@ -677,7 +681,7 @@ win_key_down(WPARAM wp, LPARAM lp)
         return 1;
       }
       else
-        term.modify_other_keys ? other_code('\t') : mod_csi('I');        
+        term.modify_other_keys ? other_code('\t') : mod_csi('I');
     when VK_ESCAPE:
       term.app_escape_key
       ? ss3('[')
@@ -739,7 +743,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     otherwise:
       return 0;
   }
-  
+
   hide_mouse();
   term_cancel_paste();
 
@@ -780,7 +784,7 @@ win_key_up(WPARAM wp, LPARAM unused(lp))
       child_sendw((wchar[]){high_surrogate(xc), low_surrogate(xc)}, 2);
     }
   }
-  
+
   alt_state = ALT_NONE;
   return true;
 }
