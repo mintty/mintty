@@ -641,16 +641,17 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr)
   for (int i = 0; i < len; i++)
     dxs[i] = dx;
 
-  int yt = y - (lattr == LATTR_BOT ? font_height : 0);
+  int yt = y + (cfg.row_spacing / 2) - (lattr == LATTR_BOT ? font_height : 0);
+  int xt = x + (cfg.col_spacing / 2);
 
  /* Finally, draw the text */
   SetBkMode(dc, OPAQUE);
-  ExtTextOutW(dc, x, yt, eto_options | ETO_OPAQUE, &box, text, len, dxs);
+  ExtTextOutW(dc, xt, yt, eto_options | ETO_OPAQUE, &box, text, len, dxs);
 
  /* Shadow bold */
   if (bold_mode == BOLD_SHADOW && (attr.attr & ATTR_BOLD)) {
     SetBkMode(dc, TRANSPARENT);
-    ExtTextOutW(dc, x + 1, yt, eto_options, &box, text, len, dxs);
+    ExtTextOutW(dc, xt + 1, yt, eto_options, &box, text, len, dxs);
   }
 
  /* Manual underline */
