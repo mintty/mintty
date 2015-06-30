@@ -64,11 +64,11 @@ child_create(char *argv[], struct winsize *winp)
 
   // xterm and urxvt ignore SIGHUP, so let's do the same.
   signal(SIGHUP, SIG_IGN);
-  
+
   signal(SIGINT, sigexit);
   signal(SIGTERM, sigexit);
   signal(SIGQUIT, sigexit);
-  
+
   // Create the child process and pseudo terminal.
   pid = forkpty(&pty_fd, 0, 0, winp);
   if (pid < 0) {
@@ -120,7 +120,7 @@ child_create(char *argv[], struct winsize *winp)
     signal(SIGTTOU, SIG_IGN);
 
     setenv("TERM", cfg.term, true);
-    
+
     if (lang) {
       unsetenv("LC_ALL");
       unsetenv("LC_COLLATE");
@@ -139,7 +139,7 @@ child_create(char *argv[], struct winsize *winp)
     attr.c_iflag |= IXANY | IMAXBEL;
     attr.c_lflag |= ECHOE | ECHOK | ECHOCTL | ECHOKE;
     tcsetattr(0, TCSANOW, &attr);
-    
+
     // Invoke command
     execvp(cmd, argv);
 
@@ -156,7 +156,7 @@ child_create(char *argv[], struct winsize *winp)
   }
   else { // Parent process.
     fcntl(pty_fd, F_SETFL, O_NONBLOCK);
-    
+
     if (cfg.utmp) {
       char *dev = ptsname(pty_fd);
       if (dev) {
@@ -207,14 +207,14 @@ child_proc(void)
     struct timeval timeout = {0, 100000}, *timeout_p = 0;
     fd_set fds;
     FD_ZERO(&fds);
-    FD_SET(win_fd, &fds);  
+    FD_SET(win_fd, &fds);
     if (pty_fd >= 0)
       FD_SET(pty_fd, &fds);
     else if (pid) {
       int status;
       if (waitpid(pid, &status, WNOHANG) == pid) {
         pid = 0;
-        
+
         // Decide whether we want to exit now or later
         if (killed || cfg.hold == HOLD_NEVER)
           exit(0);
@@ -229,19 +229,19 @@ child_proc(void)
           }
           else {
             const int error_sigs =
-              1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE | 
+              1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE |
               1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
             if (!(error_sigs & 1<<WTERMSIG(status)))
               exit(0);
           }
         }
-      
+
         int l = 0;
-        char *s = 0; 
+        char *s = 0;
         if (WIFEXITED(status)) {
           int code = WEXITSTATUS(status);
           if (code && cfg.hold != HOLD_START)
-            l = asprintf(&s, "%s: Exit %i", cmd, code); 
+            l = asprintf(&s, "%s: Exit %i", cmd, code);
         }
         else if (WIFSIGNALED(status))
           l = asprintf(&s, "%s: %s", cmd, strsignal(WTERMSIG(status)));
@@ -252,7 +252,7 @@ child_proc(void)
       else // Pty gone, but process still there: keep checking
         timeout_p = &timeout;
     }
-    
+
     if (select(win_fd + 1, &fds, 0, 0, timeout_p) > 0) {
       if (pty_fd >= 0 && FD_ISSET(pty_fd, &fds)) {
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
@@ -289,9 +289,9 @@ child_proc(void)
 
 void
 child_kill(bool point_blank)
-{ 
+{
   if (!pid ||
-      kill(-pid, point_blank ? SIGKILL : SIGHUP) < 0 || 
+      kill(-pid, point_blank ? SIGKILL : SIGHUP) < 0 ||
       point_blank)
     exit(0);
   killed = true;
@@ -336,7 +336,7 @@ child_is_parent(void)
 
 void
 child_write(const char *buf, uint len)
-{ 
+{
   if (pty_fd >= 0)
     write(pty_fd, buf, len);
 }
@@ -376,7 +376,7 @@ child_sendw(const wchar *ws, uint wlen)
 
 void
 child_resize(struct winsize *winp)
-{ 
+{
   if (pty_fd >= 0)
     ioctl(pty_fd, TIOCSWINSZ, winp);
 }
@@ -389,7 +389,7 @@ child_conv_path(wstring wpath)
   char path[len];
   len = cs_wcntombn(path, wpath, len, wlen);
   path[len] = 0;
-  
+
   char *exp_path;  // expanded path
   if (*path == '~') {
     // Tilde expansion
@@ -418,19 +418,19 @@ child_conv_path(wstring wpath)
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
     // Handle relative paths. Finding the foreground process working directory
     // requires the /proc filesystem, which isn't available before Cygwin 1.5.
-    
+
     // Find pty's foreground process, if any. Fall back to child process.
     int fg_pid = (pty_fd >= 0) ? tcgetpgrp(pty_fd) : 0;
     if (fg_pid <= 0)
       fg_pid = pid;
-    
+
     char *cwd = 0;
     if (fg_pid > 0) {
       char proc_cwd[32];
       sprintf(proc_cwd, "/proc/%u/cwd", fg_pid);
       cwd = realpath(proc_cwd, 0);
     }
-    
+
     exp_path = asform("%s/%s", cwd ?: home, path);
     free(cwd);
 #else
@@ -440,14 +440,14 @@ child_conv_path(wstring wpath)
   }
   else
     exp_path = path;
-  
+
 #if CYGWIN_VERSION_DLL_MAJOR >= 1007
 #if CYGWIN_VERSION_API_MINOR >= 222
   // CW_INT_SETLOCALE was introduced in API 0.222
   cygwin_internal(CW_INT_SETLOCALE);
 #endif
   wchar *win_wpath = cygwin_create_path(CCP_POSIX_TO_WIN_W, exp_path);
-  
+
   // Drop long path prefix if possible,
   // because some programs have trouble with them.
   if (win_wpath && wcslen(win_wpath) < MAX_PATH) {
@@ -468,15 +468,15 @@ child_conv_path(wstring wpath)
   wchar *win_wpath = newn(wchar, MAX_PATH);
   MultiByteToWideChar(0, 0, win_path, -1, win_wpath, MAX_PATH);
 #endif
-  
+
   if (exp_path != path)
     free(exp_path);
-  
+
   return win_wpath;
 }
 
 void
-child_fork(char *argv[])
+child_fork(int argc, char *argv[])
 {
   if (fork() == 0) {
     if (pty_fd >= 0)
@@ -485,8 +485,33 @@ child_fork(char *argv[])
       close(log_fd);
     close(win_fd);
 
+    // add child parameters
+    int newparams = 4;
+    char * * newargv = malloc((argc + newparams + 1) * sizeof(char *));
+    int i = 0, j = 0;
+    int addnew = 1;
+    while (1) {
+      if (addnew && (! argv[i] || strcmp (argv[i], "-e") == 0)) {
+        addnew = 0;
+        // insert additional parameters here
+        newargv[j++] = "-o";
+        char parbuf1[28];
+        sprintf (parbuf1, "Rows=%d", term.rows);
+        newargv[j++] = parbuf1;
+        newargv[j++] = "-o";
+        char parbuf2[31];
+        sprintf (parbuf2, "Columns=%d", term.cols);
+        newargv[j++] = parbuf2;
+      }
+      newargv[j] = argv[i];
+      if (! argv[i])
+        break;
+      i++;
+      j++;
+    }
+
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
-    execv("/proc/self/exe", argv);
+    execv("/proc/self/exe", newargv);
 #else
     // /proc/self/exe isn't available before Cygwin 1.5, so use argv[0] instead.
     // Strip enclosing quotes if present.
@@ -496,7 +521,7 @@ child_fork(char *argv[])
       path = strdup(path + 1);
       path[len - 2] = 0;
     }
-    execvp(path, argv);
+    execvp(path, newargv);
 #endif
     exit(255);
   }

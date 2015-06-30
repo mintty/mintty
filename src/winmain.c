@@ -24,6 +24,7 @@ HIMC imc;
 bool win_is_full_screen;
 
 static char **main_argv;
+static int main_argc;
 static ATOM class_atom;
 
 static int extra_width, extra_height;
@@ -145,7 +146,7 @@ wnd_enum_proc(HWND curr_wnd, LPARAM unused(lp)) {
   }
   return true;
 }
- 
+
 void
 win_switch(bool back)
 {
@@ -305,6 +306,10 @@ win_adapt_term_size(void)
   if (IsIconic(wnd))
     return;
 
+// #233 attempt:
+//  if (!win_is_fullscreen)
+//    win_set_chars(term.rows, term.cols);
+
  /* Current window sizes ... */
   RECT cr, wr;
   GetClientRect(wnd, &cr);
@@ -447,7 +452,7 @@ win_update_scrollbar(void)
                 scrollbar ? style | WS_VSCROLL : style & ~WS_VSCROLL);
   LONG exstyle = GetWindowLong(wnd, GWL_EXSTYLE);
   SetWindowLong(wnd, GWL_EXSTYLE,
-                scrollbar < 0 ? exstyle | WS_EX_LEFTSCROLLBAR 
+                scrollbar < 0 ? exstyle | WS_EX_LEFTSCROLLBAR
                               : exstyle & ~WS_EX_LEFTSCROLLBAR);
   SetWindowPos(wnd, null, 0, 0, 0, 0,
                SWP_NOACTIVATE | SWP_NOMOVE |
@@ -459,24 +464,24 @@ win_reconfig(void)
 {
  /* Pass new config data to the terminal */
   term_reconfig();
-  
+
   bool font_changed =
-    strcmp(new_cfg.font.name, cfg.font.name) ||    
+    strcmp(new_cfg.font.name, cfg.font.name) ||
     new_cfg.font.size != cfg.font.size ||
     new_cfg.font.isbold != cfg.font.isbold ||
     new_cfg.bold_as_font != cfg.bold_as_font ||
     new_cfg.bold_as_colour != cfg.bold_as_colour ||
     new_cfg.font_smoothing != cfg.font_smoothing;
-  
+
   if (new_cfg.fg_colour != cfg.fg_colour)
     win_set_colour(FG_COLOUR_I, new_cfg.fg_colour);
-  
+
   if (new_cfg.bg_colour != cfg.bg_colour)
     win_set_colour(BG_COLOUR_I, new_cfg.bg_colour);
-  
+
   if (new_cfg.cursor_colour != cfg.cursor_colour)
     win_set_colour(CURSOR_COLOUR_I, new_cfg.cursor_colour);
-  
+
   /* Copy the new config and refresh everything */
   copy_config(&cfg, &new_cfg);
   if (font_changed) {
@@ -541,7 +546,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_FULLSCREEN: win_maximise(win_is_fullscreen ? 0 : 2);
         when IDM_FLIPSCREEN: term_flip_screen();
         when IDM_OPTIONS: win_open_config();
-        when IDM_NEW: child_fork(main_argv);
+        when IDM_NEW: child_fork(main_argc, main_argv);
         when IDM_COPYTITLE: win_copy_title();
       }
     when WM_VSCROLL:
@@ -630,10 +635,10 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       int height = r->bottom - r->top - extra_height - 2 * PADDING;
       int cols = max(1, (float)width / font_width + 0.5);
       int rows = max(1, (float)height / font_height + 0.5);
-      
+
       int ew = width - cols * font_width;
       int eh = height - rows * font_height;
-      
+
       if (wp >= WMSZ_BOTTOM) {
         wp -= WMSZ_BOTTOM;
         r->bottom -= eh;
@@ -642,14 +647,14 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         wp -= WMSZ_TOP;
         r->top += eh;
       }
-      
+
       if (wp == WMSZ_RIGHT)
         r->right -= ew;
       else if (wp == WMSZ_LEFT)
         r->left += ew;
-      
+
       win_show_tip(r->left + extra_width, r->top + extra_height, cols, rows);
-      
+
       return ew || eh;
     }
     when WM_SIZE: {
@@ -659,7 +664,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         fullscr_on_max = false;
         make_fullscreen();
       }
-      
+
       if (!resizing)
         win_adapt_term_size();
 
@@ -702,7 +707,7 @@ static const char help[] =
 static const char short_opts[] = "+:c:eh:i:l:o:p:s:t:uw:HV";
 
 static const struct option
-opts[] = { 
+opts[] = {
   {"config",   required_argument, 0, 'c'},
   {"exec",     no_argument,       0, 'e'},
   {"hold",     required_argument, 0, 'h'},
@@ -728,7 +733,7 @@ show_msg(FILE *stream, string msg)
 }
 
 static no_return __attribute__((format(printf, 1, 2)))
-error(char *format, ...) 
+error(char *format, ...)
 {
   char *msg;
   va_list va;
@@ -742,7 +747,7 @@ error(char *format, ...)
 }
 
 static void __attribute__((format(printf, 1, 2)))
-warn(char *format, ...) 
+warn(char *format, ...)
 {
   char *msg;
   va_list va;
@@ -757,10 +762,11 @@ int
 main(int argc, char *argv[])
 {
   main_argv = argv;
+  main_argc = argc;
   load_dwm_funcs();
   init_config();
   cs_init();
-  
+
   // Determine home directory.
   home = getenv("HOME");
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
@@ -778,7 +784,7 @@ main(int argc, char *argv[])
   GetStartupInfo(&sui);
   cfg.window = sui.dwFlags & STARTF_USESHOWWINDOW ? sui.wShowWindow : SW_SHOW;
   cfg.x = cfg.y = CW_USEDEFAULT;
-  
+
   load_config("/etc/minttyrc");
   string rc_file = asform("%s/.minttyrc", home);
   load_config(rc_file);
@@ -820,7 +826,7 @@ main(int argc, char *argv[])
               longopt[1] == '-' ? longopt : shortopt);
     }
   }
-  
+
   finish_config();
 
   // Work out what to execute.
@@ -848,7 +854,7 @@ main(int argc, char *argv[])
     argv = newn(char *, 2);
     *argv = arg0;
   }
-  
+
   // Load icon if specified.
   HICON large_icon = 0, small_icon = 0;
   if (*cfg.icon) {
@@ -965,12 +971,12 @@ main(int argc, char *argv[])
 
   // Initialise the fonts, thus also determining their width and height.
   win_init_fonts(cfg.font.size);
-  
+
   // Reconfigure the charset module now that arguments have been converted,
   // the locale/charset settings have been loaded, and the font width has
   // been determined.
   cs_reconfig();
-  
+
   // Determine window sizes.
   int term_width = font_width * cfg.cols;
   int term_height = font_height * cfg.rows;
@@ -980,13 +986,13 @@ main(int argc, char *argv[])
   AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, false);
   int width = wr.right - wr.left;
   int height = wr.bottom - wr.top;
-  
+
   if (cfg.scrollbar)
     width += GetSystemMetrics(SM_CXVSCROLL);
-  
+
   extra_width = width - (cr.right - cr.left);
   extra_height = height - (cr.bottom - cr.top);
-  
+
   // Having x == CW_USEDEFAULT but not still triggers the default positioning,
   // whereas y==CW_USEFAULT but not x results in an invisible window, so to
   // avoid the latter, require both x and y to be set for custom positioning.
@@ -1011,13 +1017,13 @@ main(int argc, char *argv[])
     MONITORINFO mi;
     get_monitor_info(&mi);
     RECT ar = mi.rcWork;
-    
+
     // Correct edges. Top and left win if the window is too big.
     wr.left -= max(0, wr.right - ar.right);
     wr.top -= max(0, wr.bottom - ar.bottom);
     wr.left = max(wr.left, ar.left);
     wr.top = max(wr.top, ar.top);
-    
+
     SetWindowPos(wnd, 0, wr.left, wr.top, 0, 0,
                  SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
   }
@@ -1046,7 +1052,7 @@ main(int argc, char *argv[])
   win_init_drop_target();
   win_init_menus();
   update_transparency();
-  
+
   // Create child process.
   child_create(
     argv, &(struct winsize){cfg.rows, cfg.cols, term_width, term_height}

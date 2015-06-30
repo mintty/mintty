@@ -16,6 +16,6 @@ void child_resize(struct winsize *winp);
 bool child_is_alive(void);
 bool child_is_parent(void);
 wstring child_conv_path(wstring);
-void child_fork(char *argv[]);
+void child_fork(int argc, char *argv[]);
 
 #endif
