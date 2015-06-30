@@ -1,3 +1,5 @@
+  * Documented RowSpacing/ColSpacing; tweaked to distribute padding evenly.
+  * Added off/on as alternative Boolean configuration values.
   * Configuration option WordCharsExcl to exclude characters from word selection (#450).
   * Alt-F2 creates new window of same size as current one (#275).
   * Configuration file .minttyrc can contain empty lines and comment lines starting with #.

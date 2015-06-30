@@ -352,6 +352,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     else if ((b == MBT_RIGHT && rca == RC_ENTER) ||
              (b == MBT_MIDDLE && mca == MC_ENTER)) {
       child_send("\r", 1);
+    }
     else if (b == MBT_LEFT && mods == MDK_SHIFT && rca == RC_EXTEND)
       term.mouse_state = MS_PASTING;
     else if (b == MBT_LEFT && mods == MDK_CTRL) {
