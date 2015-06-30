@@ -1,3 +1,10 @@
+  * Configuration option WordCharsExcl to exclude characters from word selection (#450).
+  * Alt-F2 creates new window of same size as current one (#275).
+  * Configuration file .minttyrc can contain empty lines and comment lines starting with #.
+  * Option MiddleClickAction=void disables mouse-middle-click pasting (#384).
+  * Option to simulate Enter/Return with mouse-click (#425).
+  * Option DeleteSendsDEL and associated switching sequence CSI ? 1037 h/l to switch keypad Del key sending DEL or Remove (#406).
+  * Option HideMouse=false disables mouse cursor hiding on keyboard input (#403).
   * Fixed CSI 10;2t to toggle full-screen mode.
   * Fixed CSI 9;2t and 9;3t to do nothing like in xterm.
   * Implemented and enabled character attribute italic (#418, #152).
