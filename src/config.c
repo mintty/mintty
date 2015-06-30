@@ -37,6 +37,7 @@ const config default_cfg = {
   .charset = "",
   // Keys
   .backspace_sends_bs = CERASE == '\b',
+  .delete_sends_del = false,
   .ctrl_alt_is_altgr = false,
   .clip_shortcuts = true,
   .window_shortcuts = true,
@@ -48,9 +49,11 @@ const config default_cfg = {
   .copy_on_select = true,
   .copy_as_rtf = true,
   .clicks_place_cursor = false,
+  .middle_click_action = MC_PASTE,
   .right_click_action = RC_MENU,
   .clicks_target_app = true,
   .click_target_mod = MDK_SHIFT,
+  .hide_mouse = true,
   // Window
   .cols = 80,
   .rows = 24,
@@ -81,6 +84,7 @@ const config default_cfg = {
   .col_spacing = 0,
   .row_spacing = 0,
   .word_chars = "",
+  .word_chars_excl = "",
   .use_system_colours = false,
   .ime_cursor_colour = DEFAULT_COLOUR,
   .ansi_colours = {
@@ -108,7 +112,7 @@ static config file_cfg;
 
 typedef enum {
   OPT_BOOL, OPT_MOD, OPT_TRANS, OPT_CURSOR, OPT_FONTSMOOTH,
-  OPT_RIGHTCLICK, OPT_SCROLLBAR, OPT_WINDOW, OPT_HOLD,
+  OPT_MIDDLECLICK, OPT_RIGHTCLICK, OPT_SCROLLBAR, OPT_WINDOW, OPT_HOLD,
   OPT_INT, OPT_COLOUR, OPT_STRING,
   OPT_LEGACY = 16
 } opt_type;
@@ -143,6 +147,7 @@ options[] = {
 
   // Keys
   {"BackspaceSendsBS", OPT_BOOL, offcfg(backspace_sends_bs)},
+  {"DeleteSendsDEL", OPT_BOOL, offcfg(delete_sends_del)},
   {"CtrlAltIsAltGr", OPT_BOOL, offcfg(ctrl_alt_is_altgr)},
   {"ClipShortcuts", OPT_BOOL, offcfg(clip_shortcuts)},
   {"WindowShortcuts", OPT_BOOL, offcfg(window_shortcuts)},
@@ -155,9 +160,11 @@ options[] = {
   {"CopyOnSelect", OPT_BOOL, offcfg(copy_on_select)},
   {"CopyAsRTF", OPT_BOOL, offcfg(copy_as_rtf)},
   {"ClicksPlaceCursor", OPT_BOOL, offcfg(clicks_place_cursor)},
+  {"MiddleClickAction", OPT_MIDDLECLICK, offcfg(middle_click_action)},
   {"RightClickAction", OPT_RIGHTCLICK, offcfg(right_click_action)},
   {"ClicksTargetApp", OPT_BOOL, offcfg(clicks_target_app)},
   {"ClickTargetMod", OPT_MOD, offcfg(click_target_mod)},
+  {"HideMouse", OPT_BOOL, offcfg(hide_mouse)},
 
   // Window
   {"Columns", OPT_INT, offcfg(cols)},
@@ -195,8 +202,9 @@ options[] = {
   {"ColSpacing", OPT_INT, offcfg(col_spacing)},
   {"RowSpacing", OPT_INT, offcfg(row_spacing)},
   {"WordChars", OPT_STRING, offcfg(word_chars)},
+  {"WordCharsExcl", OPT_STRING, offcfg(word_chars_excl)},
   {"IMECursorColour", OPT_COLOUR, offcfg(ime_cursor_colour)},
-  
+
   // ANSI colours
   {"Black", OPT_COLOUR, offcfg(ansi_colours[BLACK_I])},
   {"Red", OPT_COLOUR, offcfg(ansi_colours[RED_I])},
@@ -263,7 +271,15 @@ static opt_val
     {"full", FS_FULL},
     {0, 0}
   },
+  [OPT_MIDDLECLICK] = (opt_val[]) {
+    {"enter", MC_ENTER},
+    {"paste", MC_PASTE},
+    {"extend", MC_EXTEND},
+    {"void", MC_VOID},
+    {0, 0}
+  },
   [OPT_RIGHTCLICK] = (opt_val[]) {
+    {"enter", RC_ENTER},
     {"paste", RC_PASTE},
     {"extend", RC_EXTEND},
     {"menu", RC_MENU},
@@ -365,7 +381,7 @@ parse_colour(string s, colour *cp)
   else if (sscanf(s, "rgb:%4x/%4x/%4x%c", &r, &g, &b, &(char){0}) == 3)
     r >>=8, g >>= 8, b >>= 8;
   else
-    return false;  
+    return false;
 
   *cp = make_colour(r, g, b);
   return true;
@@ -377,10 +393,10 @@ set_option(string name, string val_str)
   int i = find_option(name);
   if (i < 0)
     return i;
-  
+
   void *val_p = (void *)&cfg + options[i].offset;
   uint type = options[i].type & ~OPT_LEGACY;
-  
+
   switch (type) {
     when OPT_STRING:
       strset(val_p, val_str);
@@ -428,20 +444,20 @@ parse_option(string option)
     fprintf(stderr, "Ignoring malformed option '%s'.\n", option);
     return -1;
   }
-  
+
   const char *name_end = eq;
   while (isspace((uchar)name_end[-1]))
     name_end--;
-  
+
   uint name_len = name_end - option;
   char name[name_len + 1];
   memcpy(name, option, name_len);
   name[name_len] = 0;
-  
+
   const char *val = eq + 1;
   while (isspace((uchar)*val))
     val++;
-  
+
   return set_option(name, val);
 }
 
@@ -483,15 +499,17 @@ load_config(string filename)
     char line[256];
     while (fgets(line, sizeof line, file)) {
       line[strcspn(line, "\r\n")] = 0;  /* trim newline */
-      int i = parse_option(line);
-      if (i >= 0)
-        remember_file_option(i);
+      if (line[0] != '#' && line[0] != '\0') {
+        int i = parse_option(line);
+        if (i >= 0)
+          remember_file_option(i);
+      }
     }
     fclose(file);
   }
-  
+
   check_legacy_options(remember_file_option);
-  
+
   copy_config(&file_cfg, &cfg);
 }
 
@@ -529,17 +547,17 @@ finish_config(void)
   cfg.rows = max(1, cfg.rows);
   cfg.cols = max(1, cfg.cols);
   cfg.scrollback_lines = max(0, cfg.scrollback_lines);
-  
+
   // Ignore charset setting if we haven't got a locale.
   if (!*cfg.locale)
     strset(&cfg.charset, "");
-  
+
   // bold_as_font used to be implied by !bold_as_colour.
   if (cfg.bold_as_font == -1) {
     cfg.bold_as_font = !cfg.bold_as_colour;
     remember_file_option(find_option("BoldAsFont"));
   }
-  
+
   if (0 < cfg.transparency && cfg.transparency <= 3)
     cfg.transparency *= 16;
 }
@@ -633,7 +651,7 @@ apply_config(void)
     if (changed && !seen_arg_option(i))
       remember_file_option(i);
   }
-  
+
   win_reconfig();
   save_config();
 }
@@ -831,7 +849,7 @@ setup_config_box(controlbox * b)
   ctrl_pushbutton(
     s, "&Cursor...", dlg_stdcolour_handler, &new_cfg.cursor_colour
   )->column = 2;
-  
+
   s = ctrl_new_set(b, "Looks", "Transparency");
   bool with_glass = win_is_glass_available();
   ctrl_radiobuttons(
@@ -853,7 +871,7 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, null, 4 + with_glass,
     dlg_stdradiobutton_handler, &new_cfg.cursor_type,
-    "Li&ne", CUR_LINE, 
+    "Li&ne", CUR_LINE,
     "Bloc&k", CUR_BLOCK,
     "&Underscore", CUR_UNDERSCORE,
     null
@@ -970,7 +988,7 @@ setup_config_box(controlbox * b)
     "Show &menu", RC_MENU,
     null
   );
-  
+
   s = ctrl_new_set(b, "Mouse", "Application mouse mode");
   ctrl_radiobuttons(
     s, "Default click target", 4,
@@ -988,7 +1006,7 @@ setup_config_box(controlbox * b)
     "&Off", 0,
     null
   );
-  
+
  /*
   * The Window panel.
   */
