@@ -241,6 +241,8 @@ static opt_val
     {"yes", true},
     {"false", false},
     {"true", true},
+    {"off", false},
+    {"on", true},
     {0, 0}
   },
   [OPT_MOD] = (opt_val[]) {
