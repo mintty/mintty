@@ -30,6 +30,7 @@ static ATOM class_atom;
 static int extra_width, extra_height;
 static bool fullscr_on_max;
 static bool resizing;
+static bool title_settable = true;
 
 static HBITMAP caretbm;
 
@@ -82,9 +83,11 @@ win_set_timer(void (*cb)(void), uint ticks)
 void
 win_set_title(char *title)
 {
-  wchar wtitle[strlen(title) + 1];
-  if (cs_mbstowcs(wtitle, title, lengthof(wtitle)) >= 0)
-    SetWindowTextW(wnd, wtitle);
+  if (title_settable) {
+    wchar wtitle[strlen(title) + 1];
+    if (cs_mbstowcs(wtitle, title, lengthof(wtitle)) >= 0)
+      SetWindowTextW(wnd, wtitle);
+  }
 }
 
 void
@@ -305,10 +308,6 @@ win_adapt_term_size(void)
 {
   if (IsIconic(wnd))
     return;
-
-// #233 attempt:
-//  if (!win_is_fullscreen)
-//    win_set_chars(term.rows, term.cols);
 
  /* Current window sizes ... */
   RECT cr, wr;
@@ -704,7 +703,7 @@ static const char help[] =
   "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = "+:c:eh:i:l:o:p:s:t:uw:HV";
+static const char short_opts[] = "+:c:eh:i:l:o:p:s:t:T:uw:HV";
 
 static const struct option
 opts[] = {
@@ -718,6 +717,7 @@ opts[] = {
   {"position", required_argument, 0, 'p'},
   {"size",     required_argument, 0, 's'},
   {"title",    required_argument, 0, 't'},
+  {"Title",    required_argument, 0, 'T'},
   {"window",   required_argument, 0, 'w'},
   {"class",    required_argument, 0, 'C'},
   {"help",     no_argument,       0, 'H'},
@@ -810,6 +810,9 @@ main(int argc, char *argv[])
         remember_arg("Columns");
         remember_arg("Rows");
       when 't': set_arg_option("Title", optarg);
+      when 'T':
+        set_arg_option("Title", optarg);
+        title_settable = false;
       when 'u': cfg.utmp = true;
       when 'w': set_arg_option("Window", optarg);
       when 'C': set_arg_option("Class", optarg);

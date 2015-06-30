@@ -1,3 +1,4 @@
+  * Option -T to set unchangeable window title (-T) (#385).
   * Documented RowSpacing/ColSpacing; tweaked to distribute padding evenly.
   * Added off/on as alternative Boolean configuration values.
   * Configuration option WordCharsExcl to exclude characters from word selection (#450).
