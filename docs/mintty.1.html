@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Tue Jun 16 14:21:46 2015 -->
+<!-- CreationDate: Wed Jul  1 17:30:51 2015 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -167,6 +167,14 @@ window in character columns and rows.</p>
 <p style="margin-left:22%;">Use <i>TITLE</i> as the initial
 window title. By default, the title is set to the executed
 command.</p>
+
+<p style="margin-left:11%;"><b>-T</b>, <b>--Title</b>
+<i>TITLE</i></p>
+
+<p style="margin-left:22%;">Use <i>TITLE</i> as the
+permanent window title. The title is not changeable by
+control sequences. This feature is only available on the
+command line.</p>
 
 <p style="margin-left:11%;"><b>-u</b>, <b>--utmp</b></p>
 
@@ -405,7 +413,7 @@ Scrollback</b></p>
 <p style="margin-left:11%;"><b>Window commands</b></p>
 
 <p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Alt+F2</b>: New <br>
+<b>Alt+F2</b>: New (clone) <br>
 &minus; <b>Alt+F4</b>: Close <br>
 &minus; <b>Alt+F8</b>: Reset <br>
 &minus; <b>Alt+F10</b>: Default size <br>
@@ -468,6 +476,11 @@ sections explain the settings on each pane of the options
 dialog, followed by settings that do not appear in the
 dialog. For each setting, its name in the config file is
 shown in parentheses, along with its default value.</p>
+
+<p style="margin-left:11%; margin-top: 1em">If there is
+only a name in parentheses, there is currently no GUI
+configuration facility for that option (see also Hidden
+settings below).</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Looks</b>
 <br>
@@ -652,10 +665,16 @@ Settings controlling keyboard behaviour. <b><br>
 Backspace sends ^H</b> (BackspaceSendsBS=no)</p>
 
 <p style="margin-left:22%;">By default, mintty sends
-<b>^?</b> as the keycode for the backspace key. If this
-option is enabled, <b>^H</b> is sent instead. This also
-changes the <b>Ctrl+Backspace</b> code from <b>^_</b> to
-<b>^?</b>.</p>
+<b>^?</b> (ASCII DEL) as the keycode for the backspace key.
+If this option is enabled, <b>^H</b> is sent instead. This
+also changes the <b>Ctrl+Backspace</b> code from <b>^_</b>
+to <b>^?</b>.</p>
+
+<p style="margin-left:11%;">(DeleteSendsDEL=no)</p>
+
+<p style="margin-left:22%;">By default, mintty sends VT100
+Remove as the keycode for the keypad Del key. If this option
+is set =true, <b>^?</b> (ASCII DEL) is sent instead.</p>
 
 <p style="margin-left:11%;"><b>Ctrl+LeftAlt is AltGr</b>
 (CtrlAltIsAltGr=no)</p>
@@ -765,6 +784,18 @@ cursor can be placed by pressing the left mouse button. This
 works by sending the number of cursor keycodes needed to get
 to the destination.</p>
 
+<p style="margin-left:11%;">(MiddleClickAction=paste)</p>
+
+<p style="margin-left:22%;">Action to take when the middle
+mouse button is pressed.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+<b>Paste</b>: Paste the clipboard contents. <br>
+&minus; <b>Extend</b>: Extend the selected region. <br>
+&minus; <b>Enter</b>: Simulate <b>Enter</b>/<b>Return</b>
+key. <br>
+&minus; <b>Void</b>: Do nothing.</p>
+
 <p style="margin-left:11%;"><b>Right click action</b>
 (RightClickAction=menu)</p>
 
@@ -774,7 +805,9 @@ mouse button is pressed.</p>
 <p style="margin-left:22%; margin-top: 1em">&minus;
 <b>Paste</b>: Paste the clipboard contents. <br>
 &minus; <b>Extend</b>: Extend the selected region. <br>
-&minus; <b>Show menu</b>: Show the context menu.</p>
+&minus; <b>Enter</b>: Simulate <b>Enter</b>/<b>Return</b>
+key. <br>
+&minus; <b>Menu</b>: Show the context menu.</p>
 
 <p style="margin-left:22%; margin-top: 1em">If this is set
 to <b>Paste</b>, the middle button extends the selected
@@ -814,6 +847,13 @@ setting disables overriding.</p>
 &minus; <b>Alt</b> <br>
 &minus; <b>Off</b></p>
 
+<p style="margin-left:11%;">(HideMouse=on)</p>
+
+<p style="margin-left:22%;">By default, mintty
+automatically hides the cross-hair mouse cursor when
+keyboard input is being entered. Setting this option =false
+keeps the cursor.</p>
+
 <p style="margin-left:11%; margin-top: 1em"><b>Window</b>
 <br>
 Window properties. <b><br>
@@ -826,6 +866,16 @@ character cells.</p>
 
 <p style="margin-left:22%;">Default height of the window,
 in character cells.</p>
+
+<p style="margin-left:11%;">(RowSpacing=0)</p>
+
+<p style="margin-left:22%;">Additional row padding;
+RowSpacing=-1 works nicely with the Consolas fonts.</p>
+
+<p style="margin-left:11%;">(ColSpacing=0)</p>
+
+<p style="margin-left:22%;">Additional column padding;
+ColSpacing=1 can avoid boldened glyphs being clipped.</p>
 
 <p style="margin-left:11%;"><b>Current size</b></p>
 
@@ -941,6 +991,28 @@ and background colours.</p>
 <b>Highlight in taskbar</b> (BellTaskbar=yes): Change the
 colour of mintty&rsquo;s taskbar entry if the mintty window
 is not active.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Further
+configuration options are currently available for
+<i>/etc/minttyrc</i> and <i>~/.minttyrc</i> or as <b>-o</b>
+command line option only:</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+(BellType=0): Preferred system sound, values:</p>
+
+<p style="margin-left:32%;"><b>1</b> : Default Beep <b><br>
+2</b> : Critical Stop <b><br>
+3</b> : Question <b><br>
+4</b> : Exclamation <b><br>
+5</b> : Asterisk</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+(BellFreq=0): Beep sound frequency (overrides system
+sounds).</p>
+
+<p style="margin-left:22%; margin-top: 1em">&minus;
+(BellLen=400): Beep sound length (applies to frequency
+beep).</p>
 
 <p style="margin-left:11%;"><b>Printer</b> (Printer=)</p>
 
@@ -1093,6 +1165,29 @@ the string along with alphanumeric characters. For example,
 specifying just the underscore character (WordChars=_) would
 allow selecting identifiers in many programming
 languages.</p>
+
+<p style="margin-left:11%;"><b>Word selection exclusion
+characters</b> (WordCharsExcl=)</p>
+
+<p style="margin-left:22%;">This string can list characters
+that are to be excluded from word selection.</p>
+
+<p style="margin-left:11%;"><b>Break key remapping</b>
+(Break=)</p>
+
+<p style="margin-left:22%;">This option can attach a
+specific string to the Break key. If the string is a number,
+a corresponding Escape sequence will be generated, applying
+Shift/Control/Alt modifiers as to function and keypad keys.
+For example, Break=2 would effectively turn the Break key
+into an Insert key.</p>
+
+<p style="margin-left:11%;"><b>Pause key remapping</b>
+(Pause=)</p>
+
+<p style="margin-left:22%;">This option can attach a
+specific string to the Pause key. See Break key
+remapping.</p>
 
 <p style="margin-left:11%;"><b>Use system colours</b>
 (UseSystemColours=no)</p>

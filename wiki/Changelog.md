@@ -1,26 +1,36 @@
+### 2.0.1 (1 July 2015) ###
+Display:
   * Fixed bold display by overstriking if BoldAsFont unset.
-  * Options Break and Pause to configure mappings for these keys (#399).
-  * Option -T to set unchangeable window title (#385).
-  * Documented RowSpacing/ColSpacing; tweaked to distribute padding evenly.
-  * Added off/on as alternative Boolean configuration values.
-  * Configuration option WordCharsExcl to exclude characters from word selection (#450).
+  * Implemented and enabled character attribute italic (#418, #152).
+  * Implemented character attribute strikeout; disabled due to missing bit.
+  * True Colour support (#431) (using ESC [ 38;2;r;g;b m).
+
+Window:
   * Alt-F2 creates new window of same size as current one (#275).
+  * Option -T to set unchangeable window title (#385).
+  * Fixed CSI 10;2t to toggle full-screen mode.
+  * Fixed CSI 9;2t and 9;3t to do nothing like in xterm.
+  * Fixed CSI 8;...t handling of default and zero values (issue #408).
+  * Reporting mode for font changes (issue #335).
+
+Keyboard:
+  * Option DeleteSendsDEL and associated switching sequence CSI ? 1037 h/l to switch keypad Del key sending DEL or Remove (#406).
+  * Treating AltGr similarly to Shift in modifyOtherKeys mode (issue #272).
+  * Options Break and Pause to configure mappings for these keys (#399).
+
+Other Options:
+  * Added off/on as alternative Boolean configuration values.
+  * Added configuration options BellType, BellFreq, BellLen (~ #369).
+  * Option HideMouse=false disables mouse cursor hiding on keyboard input (#403).
+  * Configuration option WordCharsExcl to exclude characters from word selection (#450).
   * Configuration file .minttyrc can contain empty lines and comment lines starting with #.
   * Option MiddleClickAction=void disables mouse-middle-click pasting (#384).
   * Option to simulate Enter/Return with mouse-click (#425).
-  * Option DeleteSendsDEL and associated switching sequence CSI ? 1037 h/l to switch keypad Del key sending DEL or Remove (#406).
-  * Option HideMouse=false disables mouse cursor hiding on keyboard input (#403).
-  * Fixed CSI 10;2t to toggle full-screen mode.
-  * Fixed CSI 9;2t and 9;3t to do nothing like in xterm.
-  * Implemented and enabled character attribute italic (#418, #152).
-  * Implemented character attribute strikeout; disabled due to missing bit.
-  * Added configuration options BellType, BellFreq, BellLen (~ #369).
-  * True Colour support (#431) (using 38;2;r;g;b m).
-  * Added MSYS setup hint (#426).
-  * Fixed CSI 8;...t handling of default and zero values (issue #408).
-  * Reporting mode for font changes (issue #335).
-  * Treating AltGr similarly to Shift in modifyOtherKeys mode (issue #272).
+  * Documented RowSpacing/ColSpacing; tweaked to distribute padding evenly.
+
+Other:
   * Fixed fonts array index limit https://cygwin.com/ml/cygwin/2015-02/msg00415.html
+  * Added MSYS setup hint (#426).
 
 ### 1.1.3 (7 April 2013) ###
   * Tweaked cursor colour handling to avoid the cursor becoming invisible under certain circumstances.
