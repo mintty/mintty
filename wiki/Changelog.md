@@ -1,3 +1,4 @@
+  * Fixed bold display by overstriking if BoldAsFont unset.
   * Options Break and Pause to configure mappings for these keys (#399).
   * Option -T to set unchangeable window title (#385).
   * Documented RowSpacing/ColSpacing; tweaked to distribute padding evenly.
