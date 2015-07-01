@@ -963,6 +963,17 @@ programming languages.
 This string can list characters that are to be excluded from word selection.
 
 .TP
+\fBBreak key remapping\fP (Break=)
+This option can attach a specific string to the Break key.
+If the string is a number, a corresponding Escape sequence will be generated, 
+applying Shift/Control/Alt modifiers as to function and keypad keys.
+For example, Break=2 would effectively turn the Break key into an Insert key.
+
+.TP
+\fBPause key remapping\fP (Pause=)
+This option can attach a specific string to the Pause key. See Break key remapping.
+
+.TP
 \fBUse system colours\fP (UseSystemColours=no)
 If this is set, the Windows-wide colour settings are used
 instead of the foreground, background, and cursor colours chosen on the Looks

@@ -470,6 +470,13 @@ win_key_down(WPARAM wp, LPARAM lp)
     len = sprintf(buf, "\e[%u;%cu", c, mods + '1');
   }
   void app_pad_code(char c) { mod_ss3(c - '0' + 'p'); }
+  void strcode(string s) {
+    unsigned int code;
+    if (sscanf (s, "%u", & code) == 1)
+      tilde_code(code);
+    else
+      len = sprintf(buf, "%s", s);
+  }
 
   bool alt_code_key(char digit) {
     if (old_alt_state > ALT_ALONE && digit < old_alt_state) {
@@ -687,9 +694,15 @@ win_key_down(WPARAM wp, LPARAM lp)
       ? ss3('[')
       : ctrl_ch(term.escape_sends_fs ? CTRL('\\') : CTRL('['));
     when VK_PAUSE:
-      ctrl_ch(ctrl & !extended ? CTRL('\\') : CTRL(']'));
+      if (cfg.pause_string)
+        strcode(cfg.pause_string);
+      else
+        ctrl_ch(ctrl & !extended ? CTRL('\\') : CTRL(']'));
     when VK_CANCEL:
-      ctrl_ch(CTRL('\\'));
+      if (cfg.break_string)
+        strcode(cfg.break_string);
+      else
+        ctrl_ch(CTRL('\\'));
     when VK_F1 ... VK_F24:
       if (term.vt220_keys && ctrl && VK_F3 <= key && key <= VK_F10)
         key += 10, mods &= ~MDK_CTRL;

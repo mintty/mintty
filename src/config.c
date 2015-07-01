@@ -45,6 +45,8 @@ const config default_cfg = {
   .zoom_shortcuts = true,
   .alt_fn_shortcuts = true,
   .ctrl_shift_shortcuts = false,
+  .break_string = "",
+  .pause_string = "",
   // Mouse
   .copy_on_select = true,
   .copy_as_rtf = true,
@@ -155,6 +157,8 @@ options[] = {
   {"ZoomShortcuts", OPT_BOOL, offcfg(zoom_shortcuts)},
   {"AltFnShortcuts", OPT_BOOL, offcfg(alt_fn_shortcuts)},
   {"CtrlShiftShortcuts", OPT_BOOL, offcfg(ctrl_shift_shortcuts)},
+  {"Break", OPT_STRING, offcfg(break_string)},
+  {"Pause", OPT_STRING, offcfg(pause_string)},
 
   // Mouse
   {"CopyOnSelect", OPT_BOOL, offcfg(copy_on_select)},

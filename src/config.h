@@ -65,6 +65,8 @@ typedef struct {
   bool zoom_shortcuts;
   bool alt_fn_shortcuts;
   bool ctrl_shift_shortcuts;
+  string break_string;
+  string pause_string;
   // Mouse
   bool copy_on_select;
   bool copy_as_rtf;
