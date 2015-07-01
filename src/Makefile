@@ -146,8 +146,12 @@ $(html): ../docs/$(NAME).1
 clean:
 	rm -rf *.d *.o $(NAME)*
 
+stripsupp=sed -e "/supportedOS/ s,>.*,>," -e t -e d
 check:
 	if egrep -a -e "^(printf|#define debug)" *.[hc]; then false; fi
+	strings /usr/lib/default-manifest.o | $(stripsupp) > .osdef
+	$(stripsupp) res.mft > .osmin
+	diff .osdef .osmin
 
 #############################################################################
 # development and debug targets
