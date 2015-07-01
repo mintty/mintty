@@ -147,11 +147,13 @@ clean:
 	rm -rf *.d *.o $(NAME)*
 
 stripsupp=sed -e "/supportedOS/ s,>.*,>," -e t -e d
+defsupp=/usr/lib/default-manifest.o
 check:
 	if egrep -a -e "^(printf|#define debug)" *.[hc]; then false; fi
-	strings /usr/lib/default-manifest.o | $(stripsupp) > .osdef
 	$(stripsupp) res.mft > .osmin
-	diff .osdef .osmin
+	cat "$(defsupp)" /dev/null | strings | $(stripsupp) > .osdef
+	if [ -f "$(defsupp)" ]; then diff .osdef .osmin; else true; fi
+	rm -f .osdef .osmin
 
 #############################################################################
 # development and debug targets
