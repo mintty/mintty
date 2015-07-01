@@ -33,7 +33,8 @@ TARUSER := --owner=root --group=root --owner=mintty --group=cygwin
 src_files := Makefile COPYING LICENSE* INSTALL VERSION
 src_files += src/Makefile src/*.c src/*.h src/*.rc src/*.mft
 src_files += cygwin/*.cygport cygwin/README* cygwin/setup.hint
-src_files += docs/*.1 docs/*.html icon/* scripts/*
+src_files += docs/*.1 docs/*.html icon/*
+#src_files += scripts/*
 
 generated := docs/$(NAME).1.html
 
