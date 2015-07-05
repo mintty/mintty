@@ -58,7 +58,9 @@ REL := 0
 arch := $(shell uname -m)
 
 cygport := $(name_ver)-$(REL).cygport
-pkg: check binpkg srcpkg
+pkg: $(DIST) tar check binpkg srcpkg
+$(DIST):
+	mkdir $(DIST)
 
 check:
 	cd src; $(MAKE) check
