@@ -790,11 +790,11 @@ main(int argc, char *argv[])
   load_config(rc_file);
   delete(rc_file);
 
-  if (getenv("MINED_ROWS")) {
-    set_arg_option("Rows", getenv("MINED_ROWS"));
+  if (getenv("MINTTY_ROWS")) {
+    set_arg_option("Rows", getenv("MINTTY_ROWS"));
   }
-  if (getenv("MINED_COLS")) {
-    set_arg_option("Columns", getenv("MINED_COLS"));
+  if (getenv("MINTTY_COLS")) {
+    set_arg_option("Columns", getenv("MINTTY_COLS"));
   }
 
   for (;;) {

@@ -512,10 +512,10 @@ child_fork(int argc, char *argv[])
     }
 
     char parbuf1[34];
-    sprintf (parbuf1, "MINED_ROWS=%d", term.rows);
+    sprintf (parbuf1, "MINTTY_ROWS=%d", term.rows);
     putenv (parbuf1);
     char parbuf2[34];
-    sprintf (parbuf2, "MINED_COLS=%d", term.cols);
+    sprintf (parbuf2, "MINTTY_COLS=%d", term.cols);
     putenv (parbuf2);
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
