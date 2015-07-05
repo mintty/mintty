@@ -1,3 +1,6 @@
+### 2.0.2 (5 July 2015) ###
+  * Hotfix Alt-F2.
+
 ### 2.0.1 (1 July 2015) ###
 Display:
   * Fixed bold display by overstriking if BoldAsFont unset.

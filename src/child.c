@@ -486,12 +486,13 @@ child_fork(int argc, char *argv[])
     close(win_fd);
 
     // add child parameters
-    int newparams = 4;
+    int newparams = 0;
     char * * newargv = malloc((argc + newparams + 1) * sizeof(char *));
     int i = 0, j = 0;
     int addnew = 1;
     while (1) {
-      if (addnew && (! argv[i] || strcmp (argv[i], "-e") == 0)) {
+      // hotfix, clean up later
+      if (0 && addnew && (! argv[i] || strcmp (argv[i], "-e") == 0)) {
         addnew = 0;
         // insert additional parameters here
         newargv[j++] = "-o";
@@ -509,6 +510,13 @@ child_fork(int argc, char *argv[])
       i++;
       j++;
     }
+
+    char parbuf1[34];
+    sprintf (parbuf1, "MINED_ROWS=%d", term.rows);
+    putenv (parbuf1);
+    char parbuf2[34];
+    sprintf (parbuf2, "MINED_COLS=%d", term.cols);
+    putenv (parbuf2);
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
     execv("/proc/self/exe", newargv);

@@ -790,6 +790,13 @@ main(int argc, char *argv[])
   load_config(rc_file);
   delete(rc_file);
 
+  if (getenv("MINED_ROWS")) {
+    set_arg_option("Rows", getenv("MINED_ROWS"));
+  }
+  if (getenv("MINED_COLS")) {
+    set_arg_option("Columns", getenv("MINED_COLS"));
+  }
+
   for (;;) {
     int opt = getopt_long(argc, argv, short_opts, opts, 0);
     if (opt == -1 || opt == 'e')
