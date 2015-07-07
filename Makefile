@@ -30,11 +30,12 @@ name_ver := $(NAME)-$(version)
 DIST := release
 TARUSER := --owner=root --group=root --owner=mintty --group=cygwin
 
-src_files := Makefile COPYING LICENSE* INSTALL VERSION
-src_files += src/Makefile src/*.c src/*.h src/*.rc src/*.mft
-src_files += cygwin/*.cygport cygwin/README* cygwin/setup.hint
-src_files += docs/*.1 docs/*.html icon/*
-#src_files += scripts/*
+arch_files := Makefile COPYING LICENSE* INSTALL VERSION
+arch_files += src/Makefile src/*.c src/*.h src/*.rc src/*.mft
+arch_files += cygwin/*.cygport cygwin/README* cygwin/setup.hint
+arch_files += docs/*.1 docs/*.html icon/*
+arch_files += wiki/*
+#arch_files += scripts/*
 
 generated := docs/$(NAME).1.html
 
@@ -44,7 +45,7 @@ docs/$(NAME).1.html: docs/$(NAME).1
 
 src := $(DIST)/$(name_ver)-src.tar.bz2
 tar: $(generated) $(src)
-$(src): $(src_files)
+$(src): $(arch_files)
 	mkdir -p $(DIST)
 	rm -rf $(name_ver)
 	mkdir $(name_ver)
