@@ -485,15 +485,15 @@ child_fork(int argc, char *argv[])
       close(log_fd);
     close(win_fd);
 
+#ifdef add_child_parameters
     // add child parameters
     int newparams = 0;
     char * * newargv = malloc((argc + newparams + 1) * sizeof(char *));
     int i = 0, j = 0;
-    int addnew = 1;
+    bool addnew = true;
     while (1) {
-      // hotfix, clean up later
-      if (0 && addnew && (! argv[i] || strcmp (argv[i], "-e") == 0)) {
-        addnew = 0;
+      if (addnew && (! argv[i] || strcmp (argv[i], "-e") == 0 || strcmp (argv[i], "-") == 0)) {
+        addnew = false;
         // insert additional parameters here
         newargv[j++] = "-o";
         char parbuf1[28];
@@ -510,7 +510,12 @@ child_fork(int argc, char *argv[])
       i++;
       j++;
     }
+    argv = newargv;
+#else
+    (void) argc;
+#endif
 
+    // provide environment to clone size
     char parbuf1[34];
     sprintf (parbuf1, "MINTTY_ROWS=%d", term.rows);
     putenv (parbuf1);
@@ -519,7 +524,7 @@ child_fork(int argc, char *argv[])
     putenv (parbuf2);
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
-    execv("/proc/self/exe", newargv);
+    execv("/proc/self/exe", argv);
 #else
     // /proc/self/exe isn't available before Cygwin 1.5, so use argv[0] instead.
     // Strip enclosing quotes if present.
@@ -529,7 +534,7 @@ child_fork(int argc, char *argv[])
       path = strdup(path + 1);
       path[len - 2] = 0;
     }
-    execvp(path, newargv);
+    execvp(path, argv);
 #endif
     exit(255);
   }
