@@ -543,17 +543,24 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr)
   colour_i fgi = (attr.attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
   colour_i bgi = (attr.attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
 
+  bool apply_shadow = true;
   if (term.rvideo) {
     if (fgi >= 256)
-      fgi ^= 2;     // [BOLD_]FG_COLOUR_I <-> [BOLD_]BG_COLOUR_I
+      fgi ^= 2;     // (BOLD_)?FG_COLOUR_I <-> (BOLD_)?BG_COLOUR_I
     if (bgi >= 256)
-      bgi ^= 2;     // [BOLD_]FG_COLOUR_I <-> [BOLD_]BG_COLOUR_I
+      bgi ^= 2;     // (BOLD_)?FG_COLOUR_I <-> (BOLD_)?BG_COLOUR_I
   }
   if (attr.attr & ATTR_BOLD && cfg.bold_as_colour) {
-    if (fgi < 8)
+    if (fgi < 8) {
+      if (colours[fgi] != colours[fgi | 8])
+        apply_shadow = false;
       fgi |= 8;     // (BLACK|...|WHITE)_I -> BOLD_(BLACK|...|WHITE)_I
-    else if (fgi >= 256 && !cfg.bold_as_font)
+    }
+    else if (fgi >= 256 && !cfg.bold_as_font) {
+      if (colours[fgi] != colours[fgi | 1])
+        apply_shadow = false;
       fgi |= 1;     // (FG|BG)_COLOUR_I -> BOLD_(FG|BG)_COLOUR_I
+    }
   }
   if (attr.attr & ATTR_BLINK) {
     if (bgi < 8)
@@ -649,7 +656,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr)
   ExtTextOutW(dc, xt, yt, eto_options | ETO_OPAQUE, &box, text, len, dxs);
 
  /* Shadow bold */
-  if (bold_mode == BOLD_SHADOW && (attr.attr & ATTR_BOLD)) {
+  if (apply_shadow && bold_mode == BOLD_SHADOW && (attr.attr & ATTR_BOLD)) {
     SetBkMode(dc, TRANSPARENT);
     ExtTextOutW(dc, xt + 1, yt, eto_options, &box, text, len, dxs);
   }
