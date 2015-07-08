@@ -32,4 +32,6 @@ src_install() {
   doman docs/mintty.1
   dodoc COPYING LICENSE.Oxygen LICENSE.PuTTY
   dodoc cygwin/README cygwin/setup.hint
+
+  make_desktop_entry mintty "Cygwin Terminal" utilities-terminal "System;TerminalEmulator;" "" "OnlyShowIn=X-Cygwin;"
 }
