@@ -437,7 +437,7 @@ do_sgr(void)
       when 7: attr.attr |= ATTR_REVERSE;
       when 8: attr.attr |= ATTR_INVISIBLE;
       when 9: attr.attr |= ATTR_STRIKEOUT;
-      when 10 ... 12:
+      when 10 ... 11:  // ... 12 disabled
         // mode 10 is the configured Character set
         // mode 11 is the VGA character set (CP437 + control range graphics)
         // mode 12 is a weird feature from the Linux console,
