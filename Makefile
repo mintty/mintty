@@ -32,7 +32,7 @@ TARUSER := --owner=root --group=root --owner=mintty --group=cygwin
 
 arch_files := Makefile COPYING LICENSE* INSTALL VERSION
 arch_files += src/Makefile src/*.c src/*.h src/*.rc src/*.mft
-arch_files += cygwin/*.cygport cygwin/README* cygwin/setup.hint
+arch_files += cygwin/*.cygport cygwin/README* cygwin/setup.hint cygwin/hi*.png
 arch_files += docs/*.1 docs/*.html icon/*
 arch_files += wiki/*
 #arch_files += scripts/*
