@@ -33,5 +33,10 @@ src_install() {
   dodoc COPYING LICENSE.Oxygen LICENSE.PuTTY
   dodoc cygwin/README cygwin/setup.hint
 
-  make_desktop_entry mintty "Cygwin Terminal" utilities-terminal "System;TerminalEmulator;" "" "OnlyShowIn=X-Cygwin;"
+  make_desktop_entry mintty "Cygwin Terminal" mintty "System;TerminalEmulator" "" "OnlyShowIn=X-Cygwin;"
+  for i in 16 24 32 48 64 256
+  do
+    insinto /usr/share/icons/hicolor/${i}x${i}/apps
+    newins cygwin/hi${i}-apps-mintty.png mintty.png
+  done
 }
