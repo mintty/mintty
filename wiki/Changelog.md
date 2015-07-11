@@ -1,3 +1,9 @@
+### 2.0.3 (11 July 2015) ###
+  * Implemented (but not enabled) character attributes doubly-underlined and overlined; disabled overlayed "non-bold" attribute (SGR 21).
+  * Desktop entry for xdg menu.
+  * Tweaked boldening to cover all cases and options properly (~ #459).
+  * Disabled obscure character encoding mode 12 (from Linux console) which would render ASCII codes as Greek.
+
 ### 2.0.2 (5 July 2015) ###
   * Hotfix Alt-F2.
 
