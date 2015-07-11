@@ -93,6 +93,8 @@ enum {
   ATTR_STRIKEOUT  = 0x00000000u, /* not supported */
   ATTR_INVISIBLE  = 0x00800000u,
   ATTR_BLINK      = 0x01000000u,
+  ATTR_DOUBLYUND  = 0x00000000u, /* not supported */
+  ATTR_OVERL      = 0x00000000u, /* not supported */
   ATTR_PROTECTED  = 0x02000000u,
   ATTR_WIDE       = 0x04000000u,
   ATTR_NARROW     = 0x08000000u,

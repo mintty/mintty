@@ -664,11 +664,32 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr)
  /* Manual underline */
   if (lattr != LATTR_TOP &&
       (force_manual_underline ||
-       (und_mode == UND_LINE && (attr.attr & ATTR_UNDER)))) {
+       (und_mode == UND_LINE && (attr.attr & ATTR_UNDER)) ||
+       (attr.attr & ATTR_DOUBLYUND))) {
     int dec = (lattr == LATTR_BOT) ? descent * 2 - font_height : descent;
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
     MoveToEx(dc, x, y + dec, null);
     LineTo(dc, x + len * char_width, y + dec);
+    oldpen = SelectObject(dc, oldpen);
+    DeleteObject(oldpen);
+  }
+
+ /* Doubly underline */
+  if (lattr != LATTR_TOP && attr.attr & ATTR_DOUBLYUND) {
+    int dec = (lattr == LATTR_BOT) ? descent * 2 - font_height : descent;
+    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
+    MoveToEx(dc, x, y + dec + 2, null);
+    LineTo(dc, x + len * char_width, y + dec + 2);
+    oldpen = SelectObject(dc, oldpen);
+    DeleteObject(oldpen);
+  }
+
+ /* Overline */
+  if (lattr != LATTR_TOP && attr.attr & ATTR_OVERL) {
+    //int dec = (lattr == LATTR_BOT) ? descent * 2 - font_height : descent;
+    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
+    MoveToEx(dc, x, y - 1, null);
+    LineTo(dc, x + len * char_width, y - 1);
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
   }

@@ -445,10 +445,11 @@ do_sgr(void)
         // should we disable it? (not supported by cygwin console)
         term.curs.oem_acs = term.csi_argv[i] - 10;
         term_update_cs();
-      when 21: attr.attr &= ~ATTR_BOLD;
+      //when 21: attr.attr &= ~ATTR_BOLD;
+      when 21: attr.attr |= ATTR_DOUBLYUND;
       when 22: attr.attr &= ~(ATTR_BOLD | ATTR_DIM);
       when 23: attr.attr &= ~ATTR_ITALIC;
-      when 24: attr.attr &= ~ATTR_UNDER;
+      when 24: attr.attr &= ~(ATTR_UNDER | ATTR_DOUBLYUND);
       when 25: attr.attr &= ~ATTR_BLINK;
       when 27: attr.attr &= ~ATTR_REVERSE;
       when 28: attr.attr &= ~ATTR_INVISIBLE;
@@ -456,6 +457,8 @@ do_sgr(void)
       when 30 ... 37: /* foreground */
         attr.attr &= ~ATTR_FGMASK;
         attr.attr |= (term.csi_argv[i] - 30) << ATTR_FGSHIFT;
+      when 53: attr.attr |= ATTR_OVERL;
+      when 55: attr.attr &= ~ATTR_OVERL;
       when 90 ... 97: /* bright foreground */
         attr.attr &= ~ATTR_FGMASK;
         attr.attr |= ((term.csi_argv[i] - 90 + 8) << ATTR_FGSHIFT);
