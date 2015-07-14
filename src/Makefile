@@ -40,6 +40,9 @@ else ifeq ($(TARGET), x86_64-pc-cygwin)
 else ifeq ($(TARGET), i686-pc-msys)
   platform := msys
   zip_files := ../docs/readme-msys.html
+else ifeq ($(TARGET), x86_64-pc-msys)
+  platform := msys
+  zip_files := ../docs/readme-msys.html
 else
   $(error Target '$(TARGET)' not supported)
 endif
