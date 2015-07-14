@@ -508,13 +508,51 @@ confirm_exit(void)
   if (!child_is_parent())
     return true;
 
-  int ret =
-    MessageBox(
-      wnd,
-      "Processes are running in session.\n"
-      "Close anyway?",
-      APPNAME, MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON2
-    );
+  /* retrieve list of child processes */
+  char * proccmd = "procps -t ";
+  char * tty = child_tty();
+  char cmd[strlen(proccmd) + strlen(tty) + 1];
+  sprintf (cmd, "%s%s", proccmd, tty);
+  FILE * procps = popen (cmd, "r");
+  char * msg_pre = "Processes are running in session:\n";
+  char * msg_post = "Close anyway?";
+  char * msg = malloc (strlen (msg_pre) + 1);
+  strcpy (msg, msg_pre);
+  if (procps) {
+    char line[999];  // use very long input despite narrow msg box
+                     // to avoid high risk of clipping within UTF-8 
+                     // and failing the wide character transformation
+    while (fgets(line, sizeof line, procps)) {
+      line[strcspn(line, "\r\n")] = 0;  /* trim newline */
+      msg = realloc (msg, strlen (msg) + strlen (line) + 2);
+      strcat (msg, line);
+      strcat (msg, "\n");
+    }
+    fclose(procps);
+  }
+  msg = realloc (msg, strlen (msg) + strlen (msg_post) + 1);
+  strcat (msg, msg_post);
+
+  size_t size = cs_mbstowcs(0, msg, 0) + 1;
+  int ret;
+  if (size) {
+    wchar msgw[size];
+    cs_mbstowcs(msgw, msg, size);
+    wchar appn[strlen(APPNAME) * 2 + 1];
+    cs_mbstowcs(appn, APPNAME, sizeof appn);
+    ret =
+      MessageBoxW(
+        wnd, msgw,
+        appn, MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON2
+      );
+  }
+  else {
+    ret =
+      MessageBox(
+        wnd, msg,
+        APPNAME, MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON2
+      );
+  }
 
   // Treat failure to show the dialog as confirmation.
   return !ret || ret == IDOK;

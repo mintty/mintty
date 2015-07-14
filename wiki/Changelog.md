@@ -1,3 +1,5 @@
+  * Displaying child process list on exit confirmation (#448).
+
 ### 2.0.3 (11 July 2015) ###
   * Implemented (but not enabled) character attributes doubly-underlined and overlined; disabled overlayed "non-bold" attribute (SGR 21).
   * Desktop entry for xdg menu.

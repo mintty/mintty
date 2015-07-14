@@ -197,6 +197,12 @@ child_create(char *argv[], struct winsize *winp)
   }
 }
 
+char *
+child_tty(void)
+{
+  return ptsname(pty_fd);
+}
+
 void
 child_proc(void)
 {
