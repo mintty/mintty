@@ -509,10 +509,17 @@ confirm_exit(void)
     return true;
 
   /* retrieve list of child processes */
-  char * proccmd = "procps -t ";
+#define dont_use_procps
+#ifdef use_procps
+  char * pscmd = "procps -o pid,ruser=USER -o comm -t %s";
+#else
+  char * pscmd = "ps -ef";
+#endif
   char * tty = child_tty();
-  char cmd[strlen(proccmd) + strlen(tty) + 1];
-  sprintf (cmd, "%s%s", proccmd, tty);
+  if (strrchr (tty, '/'))
+    tty = strrchr (tty, '/') + 1;
+  char cmd[strlen(pscmd) + strlen(tty) + 1];
+  sprintf (cmd, pscmd , tty);
   FILE * procps = popen (cmd, "r");
   char * msg_pre = "Processes are running in session:\n";
   char * msg_post = "Close anyway?";
@@ -524,9 +531,14 @@ confirm_exit(void)
                      // and failing the wide character transformation
     while (fgets(line, sizeof line, procps)) {
       line[strcspn(line, "\r\n")] = 0;  /* trim newline */
-      msg = realloc (msg, strlen (msg) + strlen (line) + 2);
-      strcat (msg, line);
-      strcat (msg, "\n");
+#ifndef use_procps
+      if (strstr (line, tty))  // should check column position too...
+#endif
+      {
+        msg = realloc (msg, strlen (msg) + strlen (line) + 2);
+        strcat (msg, line);
+        strcat (msg, "\n");
+      }
     }
     fclose(procps);
   }
