@@ -509,17 +509,12 @@ confirm_exit(void)
     return true;
 
   /* retrieve list of child processes */
-#define dont_use_procps
-#ifdef use_procps
-  char * pscmd = "procps -o pid,ruser=USER -o comm -t %s";
-#else
-  char * pscmd = "ps -ef";
-#endif
+  char * pscmd = "procps -o pid,ruser=USER -o comm -t %s 2> /dev/null || ps -ef";
   char * tty = child_tty();
   if (strrchr (tty, '/'))
     tty = strrchr (tty, '/') + 1;
   char cmd[strlen(pscmd) + strlen(tty) + 1];
-  sprintf (cmd, pscmd , tty);
+  sprintf (cmd, pscmd, tty, tty);
   FILE * procps = popen (cmd, "r");
   char * msg_pre = "Processes are running in session:\n";
   char * msg_post = "Close anyway?";
@@ -529,12 +524,18 @@ confirm_exit(void)
     char line[999];  // use very long input despite narrow msg box
                      // to avoid high risk of clipping within UTF-8 
                      // and failing the wide character transformation
+    bool first = true;
+    bool filter_tty = false;
     while (fgets(line, sizeof line, procps)) {
       line[strcspn(line, "\r\n")] = 0;  /* trim newline */
-#ifndef use_procps
-      if (strstr (line, tty))  // should check column position too...
-#endif
+      if (first || !filter_tty || strstr (line, tty))  // should check column position too...
       {
+        if (first) {
+          if (strstr (line, "TTY")) {
+            filter_tty = true;
+          }
+          first = false;
+        }
         msg = realloc (msg, strlen (msg) + strlen (line) + 2);
         strcat (msg, line);
         strcat (msg, "\n");
@@ -550,7 +551,7 @@ confirm_exit(void)
   if (size) {
     wchar msgw[size];
     cs_mbstowcs(msgw, msg, size);
-    wchar appn[strlen(APPNAME) * 2 + 1];
+    wchar appn[strlen(APPNAME) + 1];
     cs_mbstowcs(appn, APPNAME, sizeof appn);
     ret =
       MessageBoxW(
