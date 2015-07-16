@@ -1,3 +1,4 @@
+  * Added options -B frame and -B void to reduce window border (#7).
   * Displaying child process list on exit confirmation (#448).
 
 ### 2.0.3 (11 July 2015) ###
