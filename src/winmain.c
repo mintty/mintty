@@ -100,6 +100,17 @@ win_copy_title(void)
   win_copy(title, 0, len + 1);
 }
 
+void
+win_prefix_title(const char * prefix)
+{
+  int len = GetWindowTextLengthW(wnd);
+  wchar ptitle[strlen(prefix) + len + 1];
+  int plen = cs_mbstowcs(ptitle, prefix, lengthof(ptitle));
+  wchar * title = & ptitle[plen];
+  len = GetWindowTextW(wnd, title, len + 1);
+  SetWindowTextW(wnd, ptitle);
+}
+
 /*
  * Title stack (implemented as fixed-size circular buffer)
  */

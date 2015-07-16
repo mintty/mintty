@@ -7,6 +7,8 @@
 #include "term.h"
 #include "charset.h"
 
+#include "win.h"  /* win_prefix_title */
+
 #include <pwd.h>
 #include <fcntl.h>
 #include <utmp.h>
@@ -244,16 +246,31 @@ child_proc(void)
 
         int l = 0;
         char *s = 0;
+        bool err = true;
         if (WIFEXITED(status)) {
           int code = WEXITSTATUS(status);
-          if (code && cfg.hold != HOLD_START)
+          if (code == 0)
+            err = false;
+          if ((code || cfg.exit_write) && cfg.hold != HOLD_START)
             l = asprintf(&s, "%s: Exit %i", cmd, code);
         }
         else if (WIFSIGNALED(status))
           l = asprintf(&s, "%s: %s", cmd, strsignal(WTERMSIG(status)));
 
-        if (s)
+        if (!s && cfg.exit_write) {
+          s = "TERMINATED";
+          l = 10;
+        }
+        if (s) {
+          if (err)
+            term_write("\033[30;41m\033[K", 11);
+          else
+            term_write("\033[30;42m\033[K", 11);
           term_write(s, l);
+        }
+
+        if (cfg.exit_title && *cfg.exit_title)
+          win_prefix_title (cfg.exit_title);
       }
       else // Pty gone, but process still there: keep checking
         timeout_p = &timeout;

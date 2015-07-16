@@ -1035,6 +1035,18 @@ or rgb:RR/GG/BB can be used as well.
 .br
 \- \fBBoldWhite\fP=255,255,255
 
+.TP
+\fBWrite if exited\fP (ExitWrite=no)
+Together with a hold option that keeps the terminal open after its child 
+process terminated, this option always writes an exit indication to the 
+screen. By default, only an error exit code is displayed.
+
+.TP
+\fBChange title if exited\fP (ExitTitle=)
+Together with a hold option that keeps the terminal open after its child 
+process terminated, this option prefixes the window title with its string, 
+for example -o ExitTitle="TERMINATED: " or (in minttyrc) ExitTitle=TERMINATED: .
+
 
 .SH LIMITATIONS
 
