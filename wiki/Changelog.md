@@ -1,3 +1,4 @@
+  * Tweaked to exit while background process is running (#319).
   * Trying to detach from caller's terminal in order to not suppress signals when started from Cygwin console.
   * Shift syncs font and window zooming (#233, #204).
   * Added termination indicator config options ExitWrite and ExitTitle (#437).
