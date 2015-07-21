@@ -964,9 +964,13 @@ main(int argc, char *argv[])
 
   finish_config();
 
-  // try to detach from caller's terminal (~daemonize)
-  if (fork() > 0) exit(0);
-  setsid();
+  // if started from console, try to detach from caller's terminal (~daemonize)
+  // in order to not suppress signals
+  // (indicated by isatty if linked with -mwindows)
+  if (!isatty(0)) {
+    if (fork() > 0) exit(0);
+    setsid();
+  }
 
   // Work out what to execute.
   argv += optind;
