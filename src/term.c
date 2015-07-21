@@ -277,6 +277,7 @@ term_clear_scrollback(void)
 void
 term_resize(int newrows, int newcols)
 {
+  trace_resize(("--- term_resize %d %d\n", newrows, newcols));
   bool on_alt_screen = term.on_alt_screen;
   term_switch_screen(0, false);
 

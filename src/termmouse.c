@@ -535,11 +535,11 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
       do send_mouse_event(MA_WHEEL, b, mods, p); while (--notches);
     }
   }
-  else if (mods == MDK_CTRL) {
+  else if ((mods & ~MDK_SHIFT) == MDK_CTRL) {
     int zoom = accu / NOTCH_DELTA;
     if (zoom) {
       accu -= NOTCH_DELTA * zoom;
-      win_zoom_font(zoom);
+      win_zoom_font(zoom, mods & MDK_SHIFT);
     }
   }
   else if (!(mods & ~MDK_SHIFT)) {

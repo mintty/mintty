@@ -1029,9 +1029,22 @@ do_cmd(void)
         if (*end)
           ; // Ignore if parameter contains unexpected characters
         else if (*s == '+' || *s == '-')
-          win_zoom_font(i);
+          win_zoom_font(i, false);
         else
-          win_set_font_size(i);
+          win_set_font_size(i, false);
+      }
+    when 7777:  // Change font and window size.
+      if (!strcmp(s, "?"))
+        child_printf("\e]7777;%u\e\\", win_get_font_size());
+      else {
+        char *end;
+        int i = strtol(s, &end, 10);
+        if (*end)
+          ; // Ignore if parameter contains unexpected characters
+        else if (*s == '+' || *s == '-')
+          win_zoom_font(i, true);
+        else
+          win_set_font_size(i, true);
       }
     when 7771: {  // Enquire about font support for a list of characters
       if (*s++ != '?')

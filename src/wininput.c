@@ -379,7 +379,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
 
     // Font zooming
-    if (cfg.zoom_shortcuts && mods == MDK_CTRL) {
+    if (cfg.zoom_shortcuts && (mods & ~MDK_SHIFT) == MDK_CTRL) {
       int zoom;
       switch (key) {
         when VK_OEM_PLUS or VK_ADD:       zoom = 1;
@@ -387,7 +387,7 @@ win_key_down(WPARAM wp, LPARAM lp)
         when '0' or VK_NUMPAD0:           zoom = 0;
         otherwise: goto not_zoom;
       }
-      win_zoom_font(zoom);
+      win_zoom_font(zoom, mods & MDK_SHIFT);
       return 1;
       not_zoom:;
     }

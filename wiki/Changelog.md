@@ -1,3 +1,4 @@
+  * Shift syncs font and window zooming (#233, #204).
   * Added termination indicator config options ExitWrite and ExitTitle (#437).
   * Added options -B frame and -B void to reduce window border (#7).
   * Displaying child process list on exit confirmation (#448).

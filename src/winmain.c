@@ -201,6 +201,7 @@ win_set_iconic(bool iconic)
 void
 win_set_pos(int x, int y)
 {
+  trace_resize(("--- win_set_pos %d %d\n", x, y));
   if (!IsZoomed(wnd))
     SetWindowPos(wnd, null, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
@@ -253,6 +254,7 @@ win_get_screen_chars(int *rows_p, int *cols_p)
 void
 win_set_pixels(int height, int width)
 {
+  trace_resize(("--- win_set_pixels %d %d\n", height, width));
   SetWindowPos(wnd, null, 0, 0,
                width + 2 * PADDING + extra_width,
                height + 2 * PADDING + extra_height,
@@ -262,6 +264,7 @@ win_set_pixels(int height, int width)
 void
 win_set_chars(int rows, int cols)
 {
+  trace_resize(("--- win_set_chars %d×%d\n", rows, cols));
   win_set_pixels(rows * font_height, cols * font_width);
 }
 
@@ -316,10 +319,17 @@ win_invalidate_all(void)
 }
 
 void
-win_adapt_term_size(void)
+win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
 {
+  trace_resize(("--- win_adapt_term_size full %d Zoomed %d\n", win_is_fullscreen, IsZoomed(wnd)));
   if (IsIconic(wnd))
     return;
+
+  if (sync_size_with_font && !win_is_fullscreen) {
+    win_set_chars(term.rows, term.cols);
+    win_invalidate_all();
+    return;
+  }
 
  /* Current window sizes ... */
   RECT cr, wr;
@@ -331,6 +341,39 @@ win_adapt_term_size(void)
   extra_height = wr.bottom - wr.top - client_height;
   int term_width = client_width - 2 * PADDING;
   int term_height = client_height - 2 * PADDING;
+
+  if (scale_font_with_size) {
+    // calc preliminary size (without font scaling), as below
+    // should use term_height rather than rows; calc and store in term_resize
+    int cols0 = max(1, term_width / font_width);
+    int rows0 = max(1, term_height / font_height);
+
+    // rows0/term.rows gives a rough scaling factor for font_height
+    // cols0/term.cols gives a rough scaling factor for font_width
+    // font_height, font_width give a rough scaling indication for font_size
+    // height or width could be considered more according to preference
+    bool bigger = rows0 * cols0 > term.rows * term.cols;
+    int font_size1 =
+      // heuristic best approach taken...
+      // bigger
+      //   ? max(font_size * rows0 / term.rows, font_size * cols0 / term.cols)
+      //   : min(font_size * rows0 / term.rows, font_size * cols0 / term.cols);
+      // bigger
+      //   ? font_size * rows0 / term.rows + 2
+      //   : font_size * rows0 / term.rows;
+      bigger
+        ? (font_size * rows0 / term.rows + font_size * cols0 / term.cols) / 2 + 1
+        : (font_size * rows0 / term.rows + font_size * cols0 / term.cols) / 2;
+      // bigger
+      //   ? font_size * rows0 * cols0 / (term.rows * term.cols)
+      //   : font_size * rows0 * cols0 / (term.rows * term.cols);
+      trace_resize(("term size %d %d -> %d %d\n", term.rows, term.cols, rows0, cols0));
+      trace_resize(("font size %d -> %d\n", font_size, font_size1));
+
+    if (font_size1 != font_size)
+      win_set_font_size(font_size1, false);
+  }
+
   int cols = max(1, term_width / font_width);
   int rows = max(1, term_height / font_height);
   if (rows != term.rows || cols != term.cols) {
@@ -480,6 +523,7 @@ win_update_scrollbar(void)
 void
 win_reconfig(void)
 {
+  trace_resize(("--- win_reconfig\n"));
  /* Pass new config data to the terminal */
   term_reconfig();
 
@@ -504,7 +548,8 @@ win_reconfig(void)
   copy_config(&cfg, &new_cfg);
   if (font_changed) {
     win_init_fonts(cfg.font.size);
-    win_adapt_term_size();
+    trace_resize((" (win_reconfig -> win_adapt_term_size)\n"));
+    win_adapt_term_size(true, false);
   }
   win_update_scrollbar();
   update_transparency();
@@ -686,14 +731,18 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       win_update();
       update_transparency();
     when WM_ENTERSIZEMOVE:
+      trace_resize(("--- WM_ENTERSIZEMOVE VK_SHIFT %02X\n", GetKeyState(VK_SHIFT)));
       resizing = true;
-    when WM_EXITSIZEMOVE or WM_CAPTURECHANGED:
+    when WM_EXITSIZEMOVE or WM_CAPTURECHANGED:  // after mouse-drag resizing
+      trace_resize(("--- WM_EXITSIZEMOVE (resizing %d) VK_SHIFT %02X\n", resizing, GetKeyState(VK_SHIFT)));
       if (resizing) {
         resizing = false;
         win_destroy_tip();
-        win_adapt_term_size();
+        trace_resize((" (win_proc -> win_adapt_term_size)\n"));
+        win_adapt_term_size(GetKeyState(VK_SHIFT) & 0x80, false);
       }
-    when WM_SIZING: {
+    when WM_SIZING: {  // mouse-drag window resizing
+      trace_resize(("--- WM_SIZING (resizing %d) VK_SHIFT %02X\n", resizing, GetKeyState(VK_SHIFT)));
      /*
       * This does two jobs:
       * 1) Keep the tip uptodate
@@ -727,6 +776,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       return ew || eh;
     }
     when WM_SIZE: {
+      trace_resize(("--- WM_SIZE (resizing %d) VK_SHIFT %02X\n", resizing, GetKeyState(VK_SHIFT)));
       if (wp == SIZE_RESTORED && win_is_fullscreen)
         clear_fullscreen();
       else if (wp == SIZE_MAXIMIZED && fullscr_on_max) {
@@ -734,8 +784,10 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         make_fullscreen();
       }
 
-      if (!resizing)
-        win_adapt_term_size();
+      if (!resizing) {
+        trace_resize((" (win_proc -> win_adapt_term_size)\n"));
+        win_adapt_term_size(false, GetKeyState(VK_SHIFT) & 0x80);
+      }
 
       return 0;
     }

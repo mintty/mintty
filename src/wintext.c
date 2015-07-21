@@ -73,7 +73,7 @@ static enum {UND_LINE, UND_FONT} und_mode;
 static int descent;
 
 // Current font size (with any zooming)
-static int font_size;
+int font_size;
 
 // Font screen dimensions
 int font_width, font_height;
@@ -143,6 +143,7 @@ create_font(int weight, bool underline)
 void
 win_init_fonts(int size)
 {
+  trace_resize(("--- init_fonts %d\n", size));
   TEXTMETRIC tm;
   int fontsize[3];
   int i;
@@ -303,19 +304,22 @@ win_get_font_size(void)
 }
 
 void
-win_set_font_size(int size)
+win_set_font_size(int size, bool sync_size_with_font)
 {
+  trace_resize(("--- win_set_font_size %d %d×%d\n", size, term.rows, term.cols));
   size = size ? sgn(font_size) * min(size, 72) : cfg.font.size;
   if (size != font_size) {
     win_init_fonts(size);
-    win_adapt_term_size();
+    trace_resize((" (win_set_font_size -> win_adapt_term_size)\n"));
+    win_adapt_term_size(sync_size_with_font, false);
   }
 }
 
 void
-win_zoom_font(int zoom)
+win_zoom_font(int zoom, bool sync_size_with_font)
 {
-  win_set_font_size(zoom ? max(1, abs(font_size) + zoom) : 0);
+  trace_resize(("--- win_zoom_font %d\n", zoom));
+  win_set_font_size(zoom ? max(1, abs(font_size) + zoom) : 0, sync_size_with_font);
 }
 
 static HDC dc;
@@ -412,6 +416,7 @@ do_update(void)
 void
 win_update(void)
 {
+  trace_resize(("----- win_update\n"));
   if (update_state == UPDATE_IDLE)
     do_update();
   else

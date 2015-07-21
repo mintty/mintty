@@ -210,6 +210,16 @@ invoked by mintty.
 The font size can be increased or decreased using the keyboard shortcuts
 \fBCtrl+plus\fP and \fBCtrl+minus\fP, or by holding \fBCtrl\fP while rolling
 the mousewheel.  \fBCtrl+zero\fP returns the font size to the default.
+If Shift is also held while resizing, the window will be resized to scale 
+together with the font, keeping the terminal character size if possible.
+
+
+.SS Drag resize
+
+The usual windows function to drag on the window border resizes the terminal.
+If Shift is also held while resizing, the font will be scaled along with 
+the resizing. Note that due to the different height/width factors, this 
+is not a precise operation.
 
 
 .SS Full screen
@@ -343,7 +353,10 @@ An overview of all the keyboard shortcuts.
 .br
 \- \fBAlt+F10\fP: Default size
 .br
-\- \fBAlt+F11\fP or \fBAlt+Enter\fP: Full screen
+\- \fBAlt+F11\fP or \fBAlt+Enter\fP: Toggle full screen
+.br
+\- \fBShift+Alt+F11\fP or \fBShift+Alt+Enter\fP: Toggle full screen and zoom font
+(Note that due to the different height/width factors, this is not a precise operation)
 .br
 \- \fBAlt+F12\fP: Flip screen
 .br
@@ -356,9 +369,13 @@ An overview of all the keyboard shortcuts.
 .TP
 \fBFont zoom\fP
 
-\- \fBCtrl+plus\fP: Zoom in
+\- \fBCtrl+plus\fP: Zoom font in
 .br
-\- \fBCtrl+minus\fP: Zoom out
+\- \fBCtrl+minus\fP: Zoom font out
+.br
+\- \fBCtrl+Shift+plus\fP: Zoom font and window in
+.br
+\- \fBCtrl+Shift+minus\fP: Zoom font and window out
 .br
 \- \fBCtrl+zero\fP: Back to configured font size
 

@@ -18,6 +18,7 @@ extern COLORREF colours[COLOUR_NUM];
 
 extern LOGFONT lfont;
 
+extern int font_size;
 extern int font_width, font_height;
 
 enum { PADDING = 1 };
@@ -26,7 +27,7 @@ void win_paint(void);
 
 void win_init_fonts(int size);
 
-void win_adapt_term_size(void);
+void win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size);
 
 void win_open_config(void);
 
