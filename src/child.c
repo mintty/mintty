@@ -218,7 +218,8 @@ child_proc(void)
     FD_SET(win_fd, &fds);
     if (pty_fd >= 0)
       FD_SET(pty_fd, &fds);
-    else if (pid) {
+    //else  // see issue #319
+    if (pid) {
       int status;
       if (waitpid(pid, &status, WNOHANG) == pid) {
         pid = 0;
@@ -272,7 +273,8 @@ child_proc(void)
         if (cfg.exit_title && *cfg.exit_title)
           win_prefix_title (cfg.exit_title);
       }
-      else // Pty gone, but process still there: keep checking
+      //else // see #319 // Pty gone, but process still there: keep checking
+      if (pid != 0 && pty_fd < 0) // Pty gone, but process still there: keep checking
         timeout_p = &timeout;
     }
 
