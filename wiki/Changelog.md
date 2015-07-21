@@ -1,3 +1,4 @@
+  * Trying to detach from caller's terminal in order to not suppress signals when started from Cygwin console.
   * Shift syncs font and window zooming (#233, #204).
   * Added termination indicator config options ExitWrite and ExitTitle (#437).
   * Added options -B frame and -B void to reduce window border (#7).

@@ -964,6 +964,10 @@ main(int argc, char *argv[])
 
   finish_config();
 
+  // try to detach from caller's terminal (~daemonize)
+  if (fork() > 0) exit(0);
+  setsid();
+
   // Work out what to execute.
   argv += optind;
   if (*argv && (argv[1] || strcmp(*argv, "-")))
