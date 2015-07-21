@@ -5,6 +5,7 @@
 # - pkg: Cygwin package.
 # - pdf: PDF version of the manual page.
 # - clean: Delete generated files.
+# - upload: Upload cygwin packages for publishing.
 
 # Variables intended for setting on the make command line.
 # - RELEASE: release number for packaging
@@ -77,4 +78,7 @@ srcpkg: $(DIST)/$(name_ver)-$(REL)-src.tar.xz
 
 $(DIST)/$(name_ver)-$(REL)-src.tar.xz: $(DIST)/$(name_ver)-src.tar.bz2
 	cd $(DIST); tar cJf $(name_ver)-$(REL)-src.tar.xz $(TARUSER) $(name_ver)-src.tar.bz2 $(name_ver)-$(REL).cygport
+
+upload:
+	REL=$(REL) cygwin/upload.sftp
 

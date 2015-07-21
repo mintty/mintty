@@ -1,0 +1,30 @@
+#! /bin/sh
+
+version=`echo VERSION | cpp -P --include src/appinfo.h`
+version=`eval echo $version`
+rel=${REL-0}
+pkg=mintty-$version-$rel
+
+ID_RSA=${ID_RSA-$HOME/.ssh/id_rsa}
+
+echo Uploading $pkg
+echo Command: sftp -i $ID_RSA cygwin@cygwin.com
+
+cd release
+touch '!ready'
+sftp -b - -i $ID_RSA cygwin@cygwin.com <</EOSFTP
+
+#mkdir x86/release/mintty
+#mkdir x86_64/release/mintty
+
+put $pkg.i686/$pkg.tar.xz x86/release/mintty/
+put $pkg.x86_64/$pkg.tar.xz x86_64/release/mintty/
+
+put $pkg-src.tar.xz x86/release/mintty/
+put $pkg-src.tar.xz x86_64/release/mintty/
+
+#put /dev/null x86/release/!ready
+put !ready x86/release/
+put !ready x86_64/release/
+
+/EOSFTP
