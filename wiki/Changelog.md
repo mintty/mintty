@@ -1,3 +1,4 @@
+  * Trying to keep window position within monitor work area on resizing (#79).
   * Tweaked to exit while background process is running (#319).
   * Trying to detach from caller's terminal in order to not suppress signals when started from Cygwin console.
   * Shift syncs font and window zooming (#233, #204).
