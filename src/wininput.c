@@ -679,12 +679,21 @@ win_key_down(WPARAM wp, LPARAM lp)
       else
         ctrl_ch(term.backspace_sends_bs ? CDEL : CTRL('_'));
     when VK_TAB:
-      if (alt)
-        return 0;
+      if (alt) {
+        if (cfg.switch_shortcuts) {
+          // does not work as Alt+TAB is not passed here anyway;
+          // could try something with KeyboardHook:
+          // http://www.codeproject.com/Articles/14485/Low-level-Windows-API-hooks-from-C-to-stop-unwante
+          win_switch(shift, true);
+          return 1;
+        }
+        else
+          return 0;
+      }
       if (!ctrl)
         shift ? csi('Z') : ch('\t');
       else if (cfg.switch_shortcuts) {
-        win_switch(shift);
+        win_switch(shift, false);
         return 1;
       }
       else

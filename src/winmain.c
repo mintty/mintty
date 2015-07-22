@@ -163,7 +163,7 @@ wnd_enum_proc(HWND curr_wnd, LPARAM unused(lp)) {
 }
 
 void
-win_switch(bool back)
+win_switch(bool back, bool alternate)
 {
   first_wnd = 0, last_wnd = 0;
   EnumWindows(wnd_enum_proc, 0);
@@ -171,7 +171,8 @@ win_switch(bool back)
     if (back)
       first_wnd = last_wnd;
     else
-      SetWindowPos(wnd, last_wnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+      SetWindowPos(wnd, last_wnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE
+                       | (alternate ? SWP_NOZORDER : SWP_NOREPOSITION));
     BringWindowToTop(first_wnd);
   }
 }
