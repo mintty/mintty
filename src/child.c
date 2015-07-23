@@ -205,6 +205,8 @@ child_tty(void)
   return ptsname(pty_fd);
 }
 
+#define patch_319
+
 void
 child_proc(void)
 {
