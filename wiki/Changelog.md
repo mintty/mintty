@@ -1,3 +1,4 @@
+### 2.1.1 (23 July 2015) ###
   * Tweaked Ctrl+TAB to not put current window into the background (~ #260).
   * Ctrl+click spawning: Syncing environment to Windows to avoid dropping environment after Alt-F2 (#360).
   * Trying to keep window position within monitor work area on resizing (#79).

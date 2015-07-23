@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Wed Jul  1 17:30:51 2015 -->
+<!-- CreationDate: Thu Jul 23 08:29:56 2015 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -176,6 +176,13 @@ permanent window title. The title is not changeable by
 control sequences. This feature is only available on the
 command line.</p>
 
+<p style="margin-left:11%;"><b>-B</b>, <b>--Border
+frame</b>|<b>void</b></p>
+
+<p style="margin-left:22%;">Suppress window title, display
+only a frame or no border. This feature is only available on
+the command line.</p>
+
 <p style="margin-left:11%;"><b>-u</b>, <b>--utmp</b></p>
 
 <p style="margin-left:22%;">Create a utmp entry.</p>
@@ -288,13 +295,25 @@ zoom</b> <br>
 The font size can be increased or decreased using the
 keyboard shortcuts <b>Ctrl+plus</b> and <b>Ctrl+minus</b>,
 or by holding <b>Ctrl</b> while rolling the mousewheel.
-<b>Ctrl+zero</b> returns the font size to the default.</p>
+<b>Ctrl+zero</b> returns the font size to the default. If
+Shift is also held while resizing, the window will be
+resized to scale together with the font, keeping the
+terminal character size if possible.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Drag
+resize</b> <br>
+The usual windows function to drag on the window border
+resizes the terminal. If Shift is also held while resizing,
+the font will be scaled along with the resizing. Note that
+due to the different height/width factors, this is not a
+precise operation.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Full
 screen</b> <br>
 Full screen mode can be toggled using either the <b>Full
 Screen</b> command in the menu or either of the
-<b>Alt+Enter</b> and <b>Alt+F11</b> keyboard shortcuts.</p>
+<b>Alt+Enter</b> and <b>Alt+F11</b> keyboard shortcuts, or
+the generic window title functions.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Default
 size</b> <br>
@@ -417,7 +436,12 @@ Scrollback</b></p>
 &minus; <b>Alt+F4</b>: Close <br>
 &minus; <b>Alt+F8</b>: Reset <br>
 &minus; <b>Alt+F10</b>: Default size <br>
-&minus; <b>Alt+F11</b> or <b>Alt+Enter</b>: Full screen <br>
+&minus; <b>Alt+F11</b> or <b>Alt+Enter</b>: Toggle full
+screen <br>
+&minus; <b>Shift+Alt+F11</b> or <b>Shift+Alt+Enter</b>:
+Toggle full screen and zoom font (Note that due to the
+different height/width factors, this is not a precise
+operation) <br>
 &minus; <b>Alt+F12</b>: Flip screen <br>
 &minus; <b>Alt+Space</b>: Window menu <br>
 &minus; <b>Ctrl+Tab</b>: Next window <br>
@@ -426,8 +450,11 @@ Scrollback</b></p>
 <p style="margin-left:11%;"><b>Font zoom</b></p>
 
 <p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Ctrl+plus</b>: Zoom in <br>
-&minus; <b>Ctrl+minus</b>: Zoom out <br>
+<b>Ctrl+plus</b>: Zoom font in <br>
+&minus; <b>Ctrl+minus</b>: Zoom font out <br>
+&minus; <b>Ctrl+Shift+plus</b>: Zoom font and window in <br>
+&minus; <b>Ctrl+Shift+minus</b>: Zoom font and window out
+<br>
 &minus; <b>Ctrl+zero</b>: Back to configured font size</p>
 
 <p style="margin-left:11%;"><b>Ctrl+Shift+letter
@@ -1029,7 +1056,9 @@ processes on close</b> (ConfirmExit=yes)</p>
 confirmation when the close button or <i>Alt+F4</i> is
 pressed and the command invoked by mintty still has child
 processes. This is intended to help avoid closing programs
-accidentally.</p>
+accidentally. If possible, mintty also displays a list of
+running child processes, using the procps command if
+installed, or the ps command.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Command
 line</b> <br>
@@ -1237,6 +1266,24 @@ used as well.</p>
 &minus; <b>BoldMagenta</b>=255,64,255 <br>
 &minus; <b>BoldCyan</b>=64,255,255 <br>
 &minus; <b>BoldWhite</b>=255,255,255</p>
+
+<p style="margin-left:11%;"><b>Write if exited</b>
+(ExitWrite=no)</p>
+
+<p style="margin-left:22%;">Together with a hold option
+that keeps the terminal open after its child process
+terminated, this option always writes an exit indication to
+the screen. By default, only an error exit code is
+displayed.</p>
+
+<p style="margin-left:11%;"><b>Change title if exited</b>
+(ExitTitle=)</p>
+
+<p style="margin-left:22%;">Together with a hold option
+that keeps the terminal open after its child process
+terminated, this option prefixes the window title with its
+string, for example -o ExitTitle=&quot;TERMINATED: &quot; or
+(in minttyrc) ExitTitle=TERMINATED: .</p>
 
 <h2>LIMITATIONS
 <a name="LIMITATIONS"></a>
