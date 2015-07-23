@@ -31,6 +31,7 @@ static int extra_width, extra_height;
 static bool fullscr_on_max;
 static bool resizing;
 static bool title_settable = true;
+static bool daemonize = false;
 static string border_style = 0;
 
 static HBITMAP caretbm;
@@ -847,7 +848,7 @@ static const char help[] =
   "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = "+:c:eh:i:l:o:p:s:t:T:B:uw:HV";
+static const char short_opts[] = "+:c:eh:i:l:o:p:s:t:T:B:uw:HV:D";
 
 static const struct option
 opts[] = {
@@ -867,6 +868,7 @@ opts[] = {
   {"class",    required_argument, 0, 'C'},
   {"help",     no_argument,       0, 'H'},
   {"version",  no_argument,       0, 'V'},
+  {"daemon",   no_argument,       0, 'D'},
   {0, 0, 0, 0}
 };
 
@@ -970,6 +972,8 @@ main(int argc, char *argv[])
       when 'u': cfg.utmp = true;
       when 'w': set_arg_option("Window", optarg);
       when 'C': set_arg_option("Class", optarg);
+      when 'D':
+        daemonize = true;
       when 'H':
         show_msg(stdout, help);
         return 0;
@@ -989,7 +993,7 @@ main(int argc, char *argv[])
   // if started from console, try to detach from caller's terminal (~daemonize)
   // in order to not suppress signals
   // (indicated by isatty if linked with -mwindows)
-  if (!isatty(0)) {
+  if (daemonize && !isatty(0)) {
     if (fork() > 0) exit(0);
     setsid();
   }
