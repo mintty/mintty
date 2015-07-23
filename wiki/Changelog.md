@@ -1,4 +1,5 @@
-  * Reverting patch (#319) after crash reports.
+### 2.1.2 (24 July 2015) ###
+  * Detach from caller's terminal only with option -D.
 
 ### 2.1.1 (23 July 2015) ###
   * Tweaked Ctrl+TAB to not put current window into the background (~ #260).
