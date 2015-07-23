@@ -1,3 +1,5 @@
+  * Reverting patch (#319) after crash reports.
+
 ### 2.1.1 (23 July 2015) ###
   * Tweaked Ctrl+TAB to not put current window into the background (~ #260).
   * Ctrl+click spawning: Syncing environment to Windows to avoid dropping environment after Alt-F2 (#360).
