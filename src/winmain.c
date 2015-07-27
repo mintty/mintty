@@ -31,7 +31,7 @@ static int extra_width, extra_height;
 static bool fullscr_on_max;
 static bool resizing;
 static bool title_settable = true;
-static bool daemonize = false;
+static bool daemonize = true;
 static string border_style = 0;
 
 static HBITMAP caretbm;
@@ -47,8 +47,8 @@ typedef struct {
 
 #endif
 
-static HRESULT (WINAPI *pDwmIsCompositionEnabled)(BOOL *);
-static HRESULT (WINAPI *pDwmExtendFrameIntoClientArea)(HWND, const MARGINS *);
+static HRESULT (WINAPI * pDwmIsCompositionEnabled)(BOOL *) = 0;
+static HRESULT (WINAPI * pDwmExtendFrameIntoClientArea)(HWND, const MARGINS *) = 0;
 
 // Helper for loading a system library. Using LoadLibrary() directly is insecure
 // because Windows might be searching the current working directory first.
@@ -848,7 +848,7 @@ static const char help[] =
   "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = "+:c:eh:i:l:o:p:s:t:T:B:uw:HV:D";
+static const char short_opts[] = "+:c:eh:i:l:o:p:s:t:T:B:uw:HV:d";
 
 static const struct option
 opts[] = {
@@ -868,7 +868,7 @@ opts[] = {
   {"class",    required_argument, 0, 'C'},
   {"help",     no_argument,       0, 'H'},
   {"version",  no_argument,       0, 'V'},
-  {"daemon",   no_argument,       0, 'D'},
+  {"nodaemon", no_argument,       0, 'd'},
   {0, 0, 0, 0}
 };
 
@@ -910,7 +910,6 @@ main(int argc, char *argv[])
 {
   main_argv = argv;
   main_argc = argc;
-  load_dwm_funcs();
   init_config();
   cs_init();
 
@@ -972,8 +971,8 @@ main(int argc, char *argv[])
       when 'u': cfg.utmp = true;
       when 'w': set_arg_option("Window", optarg);
       when 'C': set_arg_option("Class", optarg);
-      when 'D':
-        daemonize = true;
+      when 'd':
+        daemonize = false;
       when 'H':
         show_msg(stdout, help);
         return 0;
@@ -992,11 +991,19 @@ main(int argc, char *argv[])
 
   // if started from console, try to detach from caller's terminal (~daemonize)
   // in order to not suppress signals
-  // (indicated by isatty if linked with -mwindows)
+  // (indicated by isatty if linked with -mwindows as ttyname() is null)
   if (daemonize && !isatty(0)) {
-    if (fork() > 0) exit(0);
-    setsid();
+    int pid = fork();
+    if (pid < 0) {
+      error("could not detach from caller");
+      exit(9);
+    }
+    if (pid > 0)
+      exit(0);    // exit parent process
   }
+  setsid();  // detach child process
+
+  load_dwm_funcs();  // must be called after the fork() above!
 
   // Work out what to execute.
   argv += optind;
