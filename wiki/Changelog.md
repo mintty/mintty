@@ -1,3 +1,8 @@
+  * Enabled Shift-Ctrl-0 to zoom back font and window (#233).
+  * Fixed crash after conditional daemonizing (#464, #465).
+  * Made conditional daemonizing the default again.
+  * New option -d to disable daemonizing as a workaround just in case...
+
 ### 2.1.2 (24 July 2015) ###
   * Detach from caller's terminal only with option -D.
 
