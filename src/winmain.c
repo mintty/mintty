@@ -711,6 +711,9 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_MOUSEMOVE: win_mouse_move(false, lp);
     when WM_NCMOUSEMOVE: win_mouse_move(true, lp);
     when WM_MOUSEWHEEL: win_mouse_wheel(wp, lp);
+    when WM_INPUTLANGCHANGEREQUEST:  // catch Shift-Control-0
+      if (win_key_down('0', lp))
+        return 0;
     when WM_KEYDOWN or WM_SYSKEYDOWN:
       if (win_key_down(wp, lp))
         return 0;
