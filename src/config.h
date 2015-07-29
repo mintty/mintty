@@ -73,6 +73,7 @@ typedef struct {
   bool clicks_place_cursor;
   char middle_click_action;
   char right_click_action;
+  bool zoom_mouse;
   bool clicks_target_app;
   char click_target_mod;
   bool hide_mouse;
