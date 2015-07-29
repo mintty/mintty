@@ -84,6 +84,7 @@ const config default_cfg = {
   .log = "",
   .utmp = false,
   .title = "",
+  .daemonize = true,
   // "Hidden"
   .app_id = "",
   .col_spacing = 0,

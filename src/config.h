@@ -105,6 +105,7 @@ typedef struct {
   bool utmp;
   char window;
   int x, y;
+  bool daemonize;
   // "Hidden"
   string app_id;
   int col_spacing, row_spacing;
