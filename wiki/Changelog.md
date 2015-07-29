@@ -1,4 +1,9 @@
-  * Enabled Shift-Ctrl-0 to zoom back font and window (#233).
+Zooming:
+  * Control-middle-mouse click resets zooming, complementing Control-mouse-wheel scroll in analogy to Control-+/-/0.
+  * New option ZoomMouse=off to disable mouse-wheel zooming.
+  * Enabled Shift-Ctrl-0 to reset zooming for font and window (#233).
+
+Fixes̈:
   * Fixed crash after conditional daemonizing (#464, #465).
   * Made conditional daemonizing the default again.
   * New option -d to disable daemonizing as a workaround just in case...

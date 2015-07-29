@@ -209,9 +209,12 @@ invoked by mintty.
 
 The font size can be increased or decreased using the keyboard shortcuts
 \fBCtrl+plus\fP and \fBCtrl+minus\fP, or by holding \fBCtrl\fP while rolling
-the mousewheel.  \fBCtrl+zero\fP returns the font size to the default.
+the mousewheel.  \fBCtrl+zero\fP or \fBCtrl+middle-mouse click\fP 
+returns the font size to the default.
 If Shift is also held while resizing, the window will be resized to scale 
 together with the font, keeping the terminal character size if possible.
+Zooming by keyboard or mouse can be disabled, respectively, with options 
+ZoomShortcuts=no or ZoomMouse=no.
 
 
 .SS Drag resize
@@ -699,6 +702,10 @@ If this is set to \fBPaste\fP, the middle button extends the selected region
 instead of pasting the clipboard. If it is set to \fBExtend\fP, a left click
 with \fBShift\fP pressed pastes the clipboard instead of extending the
 selection.
+
+.TP
+\fBMouse zooming\fP (ZoomMouse=yes)
+Enabling font zooming with \fBCtrl+mouse-wheel/middle-mouse-click\fP.
 
 .TP
 \fBDefault click target\fP (ClicksTargetApp=yes)
