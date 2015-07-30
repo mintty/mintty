@@ -996,14 +996,13 @@ main(int argc, char *argv[])
   // (indicated by isatty if linked with -mwindows as ttyname() is null)
   if (cfg.daemonize && !isatty(0)) {
     pid_t pid = fork();
-    if (pid < 0) {
+    if (pid < 0)
       error("could not detach from caller");
-      exit(9);
-    }
     if (pid > 0)
       exit(0);    // exit parent process
+
+    setsid();  // detach child process
   }
-  setsid();  // detach child process
 
   load_dwm_funcs();  // must be called after the fork() above!
 
