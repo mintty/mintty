@@ -31,7 +31,6 @@ static int extra_width, extra_height;
 static bool fullscr_on_max;
 static bool resizing;
 static bool title_settable = true;
-static bool daemonize = true;
 static string border_style = 0;
 
 static HBITMAP caretbm;
@@ -975,7 +974,7 @@ main(int argc, char *argv[])
       when 'w': set_arg_option("Window", optarg);
       when 'C': set_arg_option("Class", optarg);
       when 'd':
-        daemonize = false;
+        cfg.daemonize = false;
       when 'H':
         show_msg(stdout, help);
         return 0;
@@ -992,11 +991,11 @@ main(int argc, char *argv[])
 
   finish_config();
 
-  // if started from console, try to detach from caller's terminal (~daemonize)
+  // if started from console, try to detach from caller's terminal (~daemonizing)
   // in order to not suppress signals
   // (indicated by isatty if linked with -mwindows as ttyname() is null)
-  if (daemonize && !isatty(0)) {
-    int pid = fork();
+  if (cfg.daemonize && !isatty(0)) {
+    pid_t pid = fork();
     if (pid < 0) {
       error("could not detach from caller");
       exit(9);

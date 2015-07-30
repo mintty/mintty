@@ -198,6 +198,7 @@ options[] = {
   // Command line
   {"Class", OPT_STRING, offcfg(class)},
   {"Hold", OPT_HOLD, offcfg(hold)},
+  {"Daemonize", OPT_BOOL, offcfg(daemonize)},
   {"ExitWrite", OPT_BOOL, offcfg(exit_write)},
   {"ExitTitle", OPT_STRING, offcfg(exit_title)},
   {"Icon", OPT_STRING, offcfg(icon)},

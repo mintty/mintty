@@ -5,6 +5,7 @@ Zooming:
 
 Fixes̈:
   * Fixed crash after conditional daemonizing (#464, #465).
+  * Apply daemonizing for cloned window (Alt-F2) to avoid zombie process (thanks to Paul Townsend).
   * Made conditional daemonizing the default again.
   * New option -d to disable daemonizing as a workaround just in case...
 

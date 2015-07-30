@@ -131,6 +131,13 @@ This allows scripting tools to distinguish different mintty instances.
 The default is "mintty".
 
 .TP
+\fB-d\fP, \fB--nodaemon\fP
+Do not apply "daemonizing".
+By default, mintty tries to detach itself from the invoking terminal 
+in order to avoid disabled signal reception, and when cloning the window 
+(Alt-F2) in order to avoid a remaining zombie process.
+
+.TP
 \fB-H\fP, \fB--help\fP
 Display a brief help message and exit.
 
@@ -588,11 +595,13 @@ Settings controlling keyboard behaviour.
 By default, mintty sends \fB^?\fP (ASCII DEL) as the keycode for the backspace key.
 If this option is enabled, \fB^H\fP is sent instead.
 This also changes the \fBCtrl+Backspace\fP code from \fB^_\fP to \fB^?\fP.
+(Corresponds to the xterm BackarrowKey resource.)
 
 .TP
 \fB\fP(DeleteSendsDEL=no)
 By default, mintty sends VT100 Remove as the keycode for the keypad Del key.
-If this option is set =true, \fB^?\fP (ASCII DEL) is sent instead.
+If this option is enabled, \fB^?\fP (ASCII DEL) is sent instead.
+(Corresponds to the xterm DeleteIsDEL resource.)
 
 .TP
 \fBCtrl+LeftAlt is AltGr\fP (CtrlAltIsAltGr=no)
@@ -1099,7 +1108,7 @@ instead, it simply pretends to be an xterm.
 Mintty is nowhere near as configurable as xterm.  Of xterm's keyboard modes,
 only the default PC-style and VT220-style are available.  8-bit control
 characters are not supported, nor are ISO2022 character sets.  There is no
-Tektronix 4014 emulation.  Mouse highlighting mode is not implemeted.
+Tektronix 4014 emulation.  Mouse highlighting mode is not implemented.
 
 The majority of xterm's many control sequences is implemented, but quite a few
 are missing.  Significant omissions should be reported as bugs.
