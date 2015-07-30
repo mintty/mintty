@@ -1,3 +1,5 @@
+  * With position option, "centre" or "center" can be specified (#208).
+
 Zooming:
   * Control-middle-mouse click resets zooming, complementing Control-mouse-wheel scroll in analogy to Control-+/-/0.
   * New option ZoomMouse=off to disable mouse-wheel zooming.

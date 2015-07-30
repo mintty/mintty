@@ -32,6 +32,7 @@ static bool fullscr_on_max;
 static bool resizing;
 static bool title_settable = true;
 static string border_style = 0;
+static bool center = false;
 
 static HBITMAP caretbm;
 
@@ -957,7 +958,9 @@ main(int argc, char *argv[])
       when 'l': set_arg_option("Log", optarg);
       when 'o': parse_arg_option(optarg);
       when 'p':
-        if (sscanf(optarg, "%i,%i%1s", &cfg.x, &cfg.y, (char[2]){}) != 2)
+        if (strcmp(optarg, "center") == 0 || strcmp(optarg, "centre") == 0)
+          center = true;
+        else if (sscanf(optarg, "%i,%i%1s", &cfg.x, &cfg.y, (char[2]){}) != 2)
           error("syntax error in position argument '%s'", optarg);
       when 's':
         if (sscanf(optarg, "%u,%u%1s", &cfg.cols, &cfg.rows, (char[2]){}) != 2)
@@ -1170,17 +1173,28 @@ main(int argc, char *argv[])
   extra_width = width - (cr.right - cr.left);
   extra_height = height - (cr.bottom - cr.top);
 
-  // Having x == CW_USEDEFAULT but not still triggers the default positioning,
-  // whereas y==CW_USEFAULT but not x results in an invisible window, so to
-  // avoid the latter, require both x and y to be set for custom positioning.
+  // Having x == CW_USEDEFAULT but not y still triggers default positioning,
+  // whereas y == CW_USEDEFAULT but not x results in an invisible window,
+  // so to avoid the latter,
+  // require both x and y to be set for custom positioning.
   if (cfg.y == (int)CW_USEDEFAULT)
     cfg.x = CW_USEDEFAULT;
+
+  int x = cfg.x;
+  int y = cfg.y;
+  if (center) {
+    MONITORINFO mi;
+    get_monitor_info(&mi);
+    RECT ar = mi.rcWork;
+    x = (ar.right - width) / 2;
+    y = (ar.bottom - height) / 2;
+  }
 
   // Create initial window.
   wnd = CreateWindowExW(cfg.scrollbar < 0 ? WS_EX_LEFTSCROLLBAR : 0,
                         wclass, wtitle,
                         WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
-                        cfg.x, cfg.y, width, height,
+                        x, y, width, height,
                         null, null, inst, null);
 
   if (border_style) {
