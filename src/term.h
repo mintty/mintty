@@ -90,11 +90,11 @@ enum {
   ATTR_ITALIC     = 0x00100000u,
   ATTR_UNDER      = 0x00200000u,
   ATTR_REVERSE    = 0x00400000u,
-  ATTR_STRIKEOUT  = 0x00000000u, /* not supported */
+  ATTR_STRIKEOUT  = 0x400000000u, /* not supported */
   ATTR_INVISIBLE  = 0x00800000u,
   ATTR_BLINK      = 0x01000000u,
-  ATTR_DOUBLYUND  = 0x00000000u, /* not supported */
-  ATTR_OVERL      = 0x00000000u, /* not supported */
+  ATTR_DOUBLYUND  = 0x200000000u, /* not supported */
+  ATTR_OVERL      = 0x100000000u, /* not supported */
   ATTR_PROTECTED  = 0x02000000u,
   ATTR_WIDE       = 0x04000000u,
   ATTR_NARROW     = 0x08000000u,
@@ -129,7 +129,7 @@ enum {
 };
 
 typedef struct {
-  uint attr;
+  unsigned long long attr;
   uint truefg;
   uint truebg;
 } cattr;
