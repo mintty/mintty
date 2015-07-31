@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Thu Jul 23 08:29:56 2015 -->
+<!-- CreationDate: Thu Jul 30 17:42:03 2015 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -153,7 +153,9 @@ ScrollbackLines=1000</tt>.</p>
 <i>X</i><b>,</b><i>Y</i></p>
 
 <p style="margin-left:22%;">Open the window with its top
-left corner at the specified coordinates.</p>
+left corner at the specified coordinates. Instead of
+coordinates, &quot;centre&quot; or &quot;center&quot; can be
+specified.</p>
 
 <p style="margin-left:11%;"><b>-s</b>, <b>--size</b>
 <i>COLS</i><b>,</b><i>ROWS</i></p>
@@ -199,6 +201,15 @@ normal, minimised, maximised, full screen, or hidden.</p>
 class name of the main window. This allows scripting tools
 to distinguish different mintty instances. The default is
 &quot;mintty&quot;.</p>
+
+<p style="margin-left:11%;"><b>-d</b>,
+<b>--nodaemon</b></p>
+
+<p style="margin-left:22%;">Do not apply
+&quot;daemonizing&quot;. By default, mintty tries to detach
+itself from the invoking terminal in order to avoid disabled
+signal reception, and when cloning the window (Alt-F2) in
+order to avoid a remaining zombie process.</p>
 
 <p style="margin-left:11%;"><b>-H</b>, <b>--help</b></p>
 
@@ -295,10 +306,12 @@ zoom</b> <br>
 The font size can be increased or decreased using the
 keyboard shortcuts <b>Ctrl+plus</b> and <b>Ctrl+minus</b>,
 or by holding <b>Ctrl</b> while rolling the mousewheel.
-<b>Ctrl+zero</b> returns the font size to the default. If
-Shift is also held while resizing, the window will be
-resized to scale together with the font, keeping the
-terminal character size if possible.</p>
+<b>Ctrl+zero</b> or <b>Ctrl+middle-mouse click</b> returns
+the font size to the default. If Shift is also held while
+resizing, the window will be resized to scale together with
+the font, keeping the terminal character size if possible.
+Zooming by keyboard or mouse can be disabled, respectively,
+with options ZoomShortcuts=no or ZoomMouse=no.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Drag
 resize</b> <br>
@@ -695,13 +708,15 @@ Backspace sends ^H</b> (BackspaceSendsBS=no)</p>
 <b>^?</b> (ASCII DEL) as the keycode for the backspace key.
 If this option is enabled, <b>^H</b> is sent instead. This
 also changes the <b>Ctrl+Backspace</b> code from <b>^_</b>
-to <b>^?</b>.</p>
+to <b>^?</b>. (Corresponds to the xterm BackarrowKey
+resource.)</p>
 
 <p style="margin-left:11%;">(DeleteSendsDEL=no)</p>
 
 <p style="margin-left:22%;">By default, mintty sends VT100
 Remove as the keycode for the keypad Del key. If this option
-is set =true, <b>^?</b> (ASCII DEL) is sent instead.</p>
+is enabled, <b>^?</b> (ASCII DEL) is sent instead.
+(Corresponds to the xterm DeleteIsDEL resource.)</p>
 
 <p style="margin-left:11%;"><b>Ctrl+LeftAlt is AltGr</b>
 (CtrlAltIsAltGr=no)</p>
@@ -841,6 +856,12 @@ to <b>Paste</b>, the middle button extends the selected
 region instead of pasting the clipboard. If it is set to
 <b>Extend</b>, a left click with <b>Shift</b> pressed pastes
 the clipboard instead of extending the selection.</p>
+
+<p style="margin-left:11%;"><b>Mouse zooming</b>
+(ZoomMouse=yes)</p>
+
+<p style="margin-left:22%;">Enabling font zooming with
+<b>Ctrl+mouse-wheel/middle-mouse-click</b>.</p>
 
 <p style="margin-left:11%;"><b>Default click target</b>
 (ClicksTargetApp=yes)</p>
@@ -1317,7 +1338,7 @@ xterm&rsquo;s keyboard modes, only the default PC-style and
 VT220-style are available. 8-bit control characters are not
 supported, nor are ISO2022 character sets. There is no
 Tektronix 4014 emulation. Mouse highlighting mode is not
-implemeted.</p>
+implemented.</p>
 
 <p style="margin-left:11%; margin-top: 1em">The majority of
 xterm&rsquo;s many control sequences is implemented, but

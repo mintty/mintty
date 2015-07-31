@@ -1,4 +1,6 @@
+### 2.1.3 (30 July 2015) ###
   * With position option, "centre" or "center" can be specified (#208).
+  * Enabled new character attributes strikeout, doubly-underlined, overlined.
 
 Zooming:
   * Control-middle-mouse click resets zooming, complementing Control-mouse-wheel scroll in analogy to Control-+/-/0.
