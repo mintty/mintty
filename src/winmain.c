@@ -764,7 +764,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       if (resizing) {
         resizing = false;
         win_destroy_tip();
-        trace_resize((" (win_proc -> win_adapt_term_size)\n"));
+        trace_resize((" (win_proc (WM_EXITSIZEMOVE) -> win_adapt_term_size)\n"));
         win_adapt_term_size(GetKeyState(VK_SHIFT) & 0x80, false);
       }
     when WM_SIZING: {  // mouse-drag window resizing
@@ -811,7 +811,7 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
       }
 
       if (!resizing) {
-        trace_resize((" (win_proc -> win_adapt_term_size)\n"));
+        trace_resize((" (win_proc (WM_SIZE) -> win_adapt_term_size)\n"));
         win_adapt_term_size(false, GetKeyState(VK_SHIFT) & 0x80);
       }
 
@@ -997,7 +997,11 @@ main(int argc, char *argv[])
   // if started from console, try to detach from caller's terminal (~daemonizing)
   // in order to not suppress signals
   // (indicated by isatty if linked with -mwindows as ttyname() is null)
-  if (cfg.daemonize && !isatty(0)) {
+  bool daemonize = cfg.daemonize && !isatty(0);
+  // disable daemonizing if started from ConEmu
+  if (getenv("ConEmuPID"))
+    daemonize = false;
+  if (daemonize) {  // detach from parent process and terminal
     pid_t pid = fork();
     if (pid < 0)
       error("could not detach from caller");
