@@ -689,10 +689,21 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
         when IDM_PASTE: win_paste();
         when IDM_SELALL: term_select_all(); win_update();
         when IDM_RESET: term_reset(); win_update();
-        when IDM_DEFSIZE: default_size();
+        when IDM_DEFSIZE:
+          default_size();
+        when IDM_DEFSIZE_ZOOM:
+          default_size();
+#ifdef doesnotwork_after_shift_drag
+          if (GetKeyState(VK_SHIFT) & 0x80) {
+            win_set_font_size(cfg.font.size, false);
+            default_size();
+          }
+#endif
         when IDM_FULLSCREEN or IDM_FULLSCREEN_ZOOM:
           if ((wp & ~0xF) == IDM_FULLSCREEN_ZOOM)
             zoom_token = 1;
+          else
+            zoom_token = -4;
           win_maximise(win_is_fullscreen ? 0 : 2);
         when IDM_FLIPSCREEN: term_flip_screen();
         when IDM_OPTIONS: win_open_config();
@@ -832,6 +843,17 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
 
       if (!resizing) {
         trace_resize((" (win_proc (WM_SIZE) -> win_adapt_term_size)\n"));
+        // enable font zooming on Shift unless
+#ifdef does_not_enable_shift_maximize_initially
+        // - triggered by Windows shortcut (with Windows key)
+        // - triggered by Ctrl+Shift+F (zoom_token < 0)
+        if ((zoom_token >= 0) && !(GetKeyState(VK_LWIN) & 0x80))
+          zoom_token = 1;
+#else
+        // - triggered by Windows shortcut (with Windows key)
+        if (!(GetKeyState(VK_LWIN) & 0x80))
+          zoom_token = 1;
+#endif
         bool scale_font = (zoom_token > 0) && (GetKeyState(VK_SHIFT) & 0x80);
         win_adapt_term_size(false, scale_font);
         if (zoom_token > 0)
