@@ -9,16 +9,18 @@
  * attempt to store information in them. Hence all these identifiers have
  * the low 4 bits clear. Also, identifiers should < 0xF000. */
 
-#define IDM_OPEN        0x0010
-#define IDM_COPY        0x0020
-#define IDM_PASTE       0x0030
-#define IDM_SELALL      0x0040
-#define IDM_RESET       0x0050
-#define IDM_DEFSIZE     0x0060
-#define IDM_FULLSCREEN  0x0070
-#define IDM_FLIPSCREEN  0x0080
-#define IDM_OPTIONS     0x0090
-#define IDM_NEW         0x00a0
-#define IDM_COPYTITLE   0x00b0
+#define IDM_OPEN            0x0010
+#define IDM_COPY            0x0020
+#define IDM_PASTE           0x0030
+#define IDM_SELALL          0x0040
+#define IDM_RESET           0x0050
+#define IDM_DEFSIZE         0x0060
+#define IDM_FULLSCREEN      0x0070
+#define IDM_FULLSCREEN_ZOOM 0x0080
+#define IDM_FLIPSCREEN      0x0090
+#define IDM_OPTIONS         0x00A0
+#define IDM_NEW             0x00B0
+#define IDM_COPYTITLE       0x00C0
+#define IDM_SEARCH          0x00D0
 
 #endif
