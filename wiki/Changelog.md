@@ -1,3 +1,7 @@
+### 2.1.4 (6 Aug 2015) ###
+  * Not zooming font on Shift+Windows shortcuts (#467), by heuristic analysis of Windows messages.
+  * Not daemonizing if started from ConEmu (#466), by heuristic check of $ConEmuPID.
+
 ### 2.1.3 (30 July 2015) ###
   * With position option, "centre" or "center" can be specified (#208).
   * Enabled new character attributes strikeout, doubly-underlined, overlined.
