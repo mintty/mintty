@@ -57,7 +57,7 @@ win_update_menus(void)
     IsZoomed(wnd) || term.cols != cfg.cols || term.rows != cfg.rows
     ? MF_ENABLED : MF_GRAYED;
   ModifyMenu(
-    menu, IDM_DEFSIZE, defsize_enabled, IDM_DEFSIZE,
+    menu, IDM_DEFSIZE_ZOOM, defsize_enabled, IDM_DEFSIZE_ZOOM,
     alt_fn ? "&Default size\tAlt+F10" :
     ct_sh ? "&Default size\tCtrl+Shift+D" : "&Default size"
   );
@@ -93,7 +93,7 @@ win_init_menus(void)
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED, IDM_RESET, 0);
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
-  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_DEFSIZE, 0);
+  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_DEFSIZE_ZOOM, 0);
   AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN_ZOOM, 0);
   AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_FLIPSCREEN, 0);
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
@@ -400,7 +400,7 @@ win_key_down(WPARAM wp, LPARAM lp)
           when VK_F2:  send_syscommand(IDM_NEW);
           when VK_F4:  send_syscommand(SC_CLOSE);
           when VK_F8:  send_syscommand(IDM_RESET);
-          when VK_F10: send_syscommand(IDM_DEFSIZE);
+          when VK_F10: send_syscommand(IDM_DEFSIZE_ZOOM);
           when VK_F11: send_syscommand(IDM_FULLSCREEN_ZOOM);
           when VK_F12: send_syscommand(IDM_FLIPSCREEN);
         }

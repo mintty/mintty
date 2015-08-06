@@ -15,12 +15,13 @@
 #define IDM_SELALL          0x0040
 #define IDM_RESET           0x0050
 #define IDM_DEFSIZE         0x0060
-#define IDM_FULLSCREEN      0x0070
-#define IDM_FULLSCREEN_ZOOM 0x0080
-#define IDM_FLIPSCREEN      0x0090
-#define IDM_OPTIONS         0x00A0
-#define IDM_NEW             0x00B0
-#define IDM_COPYTITLE       0x00C0
-#define IDM_SEARCH          0x00D0
+#define IDM_DEFSIZE_ZOOM    0x0070
+#define IDM_FULLSCREEN      0x0080
+#define IDM_FULLSCREEN_ZOOM 0x0090
+#define IDM_FLIPSCREEN      0x00A0
+#define IDM_OPTIONS         0x00B0
+#define IDM_NEW             0x00C0
+#define IDM_COPYTITLE       0x00D0
+#define IDM_SEARCH          0x00E0
 
 #endif
