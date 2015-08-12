@@ -911,10 +911,6 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
           r->left, r->top, r->right - r->left, r->bottom - r->top,
           SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
         win_adapt_term_size(false, true);
-
-        char buf[256];
-        sprintf(buf, "SM_CXVSCROLL=%d", GetSystemMetrics(SM_CXVSCROLL));
-        SetWindowTextA(wnd, buf);
         return 0;
       }
       break;
