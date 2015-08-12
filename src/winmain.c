@@ -80,6 +80,45 @@ load_dwm_funcs(void)
   }
 }
 
+static bool per_monitor_dpi_aware = false;
+
+#define WM_DPICHANGED 0x02E0
+const int Process_System_DPI_Aware = 1;
+const int Process_Per_Monitor_DPI_Aware  = 2;
+const int MDT_Effective_DPI = 0;
+static HRESULT (WINAPI * pGetProcessDpiAwareness)(HANDLE hprocess, int* value) = 0;
+static HRESULT (WINAPI * pSetProcessDpiAwareness)(int value) = 0;
+
+static void
+load_shcore_funcs(void)
+{
+  HMODULE shc = load_sys_library("shcore.dll");
+  if (shc) {
+    pGetProcessDpiAwareness =
+      (void *)GetProcAddress(shc, "GetProcessDpiAwareness");
+    pSetProcessDpiAwareness =
+      (void *)GetProcAddress(shc, "SetProcessDpiAwareness");
+  }
+}
+
+static bool
+set_per_monitor_dpi_aware()
+{
+  if (pSetProcessDpiAwareness && pGetProcessDpiAwareness) {
+    HRESULT hr = pSetProcessDpiAwareness(Process_Per_Monitor_DPI_Aware);
+    // E_ACCESSDENIED:
+    // The DPI awareness is already set, either by calling this API previously
+    // or through the application (.exe) manifest.
+    if (hr != E_ACCESSDENIED && !SUCCEEDED(hr))
+      pSetProcessDpiAwareness(Process_System_DPI_Aware);
+
+    int awareness = 0;
+    return SUCCEEDED(pGetProcessDpiAwareness(NULL, &awareness)) &&
+      awareness == Process_Per_Monitor_DPI_Aware;
+  }
+  return false;
+}
+
 void
 win_set_timer(void (*cb)(void), uint ticks)
 { SetTimer(wnd, (UINT_PTR)cb, ticks, null); }
@@ -865,6 +904,20 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
     when WM_INITMENU:
       win_update_menus();
       return 0;
+    when WM_DPICHANGED:
+      if (per_monitor_dpi_aware) {
+        LPRECT r = (LPRECT) lp;
+        SetWindowPos(wnd, 0,
+          r->left, r->top, r->right - r->left, r->bottom - r->top,
+          SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
+        win_adapt_term_size(false, true);
+
+        char buf[256];
+        sprintf(buf, "SM_CXVSCROLL=%d", GetSystemMetrics(SM_CXVSCROLL));
+        SetWindowTextA(wnd, buf);
+        return 0;
+      }
+      break;
   }
  /*
   * Any messages we don't process completely above are passed through to
@@ -1058,6 +1111,9 @@ main(int argc, char *argv[])
 
   load_dwm_funcs();  // must be called after the fork() above!
 
+  load_shcore_funcs();
+  per_monitor_dpi_aware = set_per_monitor_dpi_aware();
+
   // Work out what to execute.
   argv += optind;
   if (*argv && (argv[1] || strcmp(*argv, "-")))
@@ -1245,6 +1301,18 @@ main(int argc, char *argv[])
                         WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
                         x, y, width, height,
                         null, null, inst, null);
+
+  if (per_monitor_dpi_aware) {
+    if (cfg.x != (int)CW_USEDEFAULT) {
+      // The first SetWindowPos actually set x and y
+      SetWindowPos(wnd, NULL, x, y, width, height,
+        SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
+      // Then, we are placed the windows on the correct monitor and we can
+      // now interpret width/height in correct DPI.
+      SetWindowPos(wnd, NULL, x, y, width, height,
+        SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
+    }
+  }
 
   if (border_style) {
     LONG style = GetWindowLong(wnd, GWL_STYLE);
