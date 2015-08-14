@@ -87,6 +87,8 @@ const config default_cfg = {
   .daemonize = true,
   // "Hidden"
   .app_id = "",
+  .relaunch_command = "",
+  .relaunch_display_name = "",
   .col_spacing = 0,
   .row_spacing = 0,
   .word_chars = "",
@@ -212,6 +214,8 @@ options[] = {
   // "Hidden"
   {"AppID", OPT_STRING, offcfg(app_id)},
   {"ColSpacing", OPT_INT, offcfg(col_spacing)},
+  {"RelaunchCommand", OPT_STRING, offcfg(relaunch_command)},
+  {"RelaunchDisplayName", OPT_STRING, offcfg(relaunch_display_name)},
   {"RowSpacing", OPT_INT, offcfg(row_spacing)},
   {"WordChars", OPT_STRING, offcfg(word_chars)},
   {"WordCharsExcl", OPT_STRING, offcfg(word_chars_excl)},
