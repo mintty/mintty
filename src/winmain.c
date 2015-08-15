@@ -17,6 +17,10 @@
 #include <shellapi.h>
 
 #include <sys/cygwin.h>
+#if WINVER >= 0x601
+#include <propsys.h>
+#include <propkey.h>
+#endif
 
 HINSTANCE inst;
 HWND wnd;
@@ -1262,6 +1266,38 @@ main(int argc, char *argv[])
     SetWindowPos(wnd, null, 0, 0, 0, 0,
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
   }
+
+#if WINVER >= 0x601
+  // Set the app ID explicitly
+  if (*cfg.app_id) {
+    HMODULE shell = load_sys_library("shell32.dll");
+    HRESULT (WINAPI *pGetPropertyStore)(HWND hwnd, REFIID riid, void **ppv) =
+      (void *)GetProcAddress(shell, "SHGetPropertyStoreForWindow");
+
+    if (pGetPropertyStore) {
+      size_t size;
+      IPropertyStore *pps;
+      HRESULT hr;
+      PROPVARIANT var;
+
+      hr = pGetPropertyStore(wnd, &IID_IPropertyStore, (void **) &pps);
+      if (SUCCEEDED(hr)) {
+        if (*cfg.app_id &&
+            (size = cs_mbstowcs(0, cfg.app_id, 0) + 1)) {
+          var.pwszVal = malloc(size * sizeof(wchar));
+          if (var.pwszVal) {
+            cs_mbstowcs(var.pwszVal, cfg.app_id, size);
+            var.vt = VT_LPWSTR;
+            pps->lpVtbl->SetValue(pps,
+                &PKEY_AppUserModel_ID, &var);
+          }
+        }
+        pps->lpVtbl->Commit(pps);
+        pps->lpVtbl->Release(pps);
+      }
+    }
+  }
+#endif
 
   // The input method context.
   imc = ImmGetContext(wnd);
