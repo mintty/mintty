@@ -47,6 +47,10 @@ typedef struct {
   int cyBottomHeight;
 } MARGINS;
 
+#else
+
+#include <uxtheme.h>
+
 #endif
 
 static HRESULT (WINAPI * pDwmIsCompositionEnabled)(BOOL *) = 0;
