@@ -598,7 +598,7 @@ confirm_exit(void)
     return true;
 
   /* retrieve list of child processes */
-  char * pscmd = "procps -o pid,ruser=USER -o comm -t %s 2> /dev/null || ps -ef";
+  char * pscmd = "/bin/procps -o pid,ruser=USER -o comm -t %s 2> /dev/null || /bin/ps -ef";
   char * tty = child_tty();
   if (strrchr (tty, '/'))
     tty = strrchr (tty, '/') + 1;
@@ -630,7 +630,7 @@ confirm_exit(void)
         strcat (msg, "\n");
       }
     }
-    fclose(procps);
+    pclose(procps);
   }
   msg = realloc (msg, strlen (msg) + strlen (msg_post) + 1);
   strcat (msg, msg_post);
