@@ -28,6 +28,11 @@ version := \
   $(shell echo $(shell echo VERSION | cpp -P $(CPPFLAGS) --include src/appinfo.h))
 name_ver := $(NAME)-$(version)
 
+changelogversion := $(shell sed -e '1 s,^\#* *\([0-9.]*\).*,\1,' -e t -e d wiki/Changelog.md)
+
+ver:
+	test $(version) = $(changelogversion)
+
 DIST := release
 TARUSER := --owner=root --group=root --owner=mintty --group=cygwin
 
@@ -60,7 +65,7 @@ REL := 0
 arch := $(shell uname -m)
 
 cygport := $(name_ver)-$(REL).cygport
-pkg: $(DIST) tar check binpkg srcpkg
+pkg: $(DIST) ver tar check binpkg srcpkg
 $(DIST):
 	mkdir $(DIST)
 
