@@ -160,6 +160,14 @@ these _OSC_ sequences introduced by **[rxvt-unicode](http://software.schmorp.de/
 The locale string used here should take the same format as in the locale environment variables such as _LANG_. When the locale is queried, a sequence that would set the current locale is sent, e.g. `^[]701;C.UTF-8^G`. An empty _loc_ string selects the locale configured in the options or the environment.
 
 
+## Window title ##
+
+The following _OSC_ ("operating system command") sequence can be used to copy 
+the window title to the Windows clipboard (like menu function "Copy Title"):
+
+> `^[]7721;1^G`
+
+
 ## Cursor style ##
 
 The VT510 _[DECSCUSR](http://vt100.net/docs/vt510-rm/DECSCUSR)_ sequence can be used to control cursor shape and blinking.

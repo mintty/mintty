@@ -1,3 +1,5 @@
+  * New OSC sequence to copy the window title to the clipboard (#303).
+
 ### 2.1.5 (19 Aug 2015) ###
   * Guard Shift-Ctrl-0 detection (#233) to avoid interference with keyboard switchers (#472).
   * Basic fixes for displaying child process list on exit confirmation (#448).

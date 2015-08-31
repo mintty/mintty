@@ -48,8 +48,6 @@ bool win_key_up(WPARAM, LPARAM);
 
 void win_init_drop_target(void);
 
-void win_copy_title(void);
-
 void win_switch(bool back, bool alternate);
 
 void win_set_ime_open(bool);

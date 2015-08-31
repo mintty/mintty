@@ -1020,6 +1020,8 @@ do_cmd(void)
         child_printf("\e]701;%s\e\\", cs_get_locale());
       else
         cs_set_locale(s);
+    when 7721:  // Copy window title to clipboard.
+        win_copy_title();
     when 7770:  // Change font size.
       if (!strcmp(s, "?"))
         child_printf("\e]7770;%u\e\\", win_get_font_size());
