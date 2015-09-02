@@ -229,8 +229,8 @@ ZoomShortcuts=no or ZoomMouse=no.
 
 The usual windows function to drag on the window border resizes the terminal.
 If Shift is also held while resizing, the font will be scaled along with 
-the resizing. Note that due to the different height/width factors, this 
-is not a precise operation.
+the resizing, unless disabled with ZoomFontWithWindow=false.
+Note that due to the different height/width factors, this is not a precise operation.
 
 
 .SS Full screen
@@ -1081,6 +1081,11 @@ screen. By default, only an error exit code is displayed.
 Together with a hold option that keeps the terminal open after its child 
 process terminated, this option prefixes the window title with its string, 
 for example -o ExitTitle="TERMINATED: " or (in minttyrc) ExitTitle=TERMINATED: .
+
+.TP
+\fBDisable font zooming coupled with window zooming\fP (ZoomFontWithWindow=yes)
+If this option is set to false, Shift-coupled font-with-window zooming is disabled, 
+except for the keyboard zoom functions Shift+Alt+Enter/F11 and the Shift+menu function.
 
 
 .SH LIMITATIONS

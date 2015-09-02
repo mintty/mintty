@@ -63,6 +63,7 @@ typedef struct {
   bool window_shortcuts;
   bool switch_shortcuts;
   bool zoom_shortcuts;
+  bool zoom_font_with_window;
   bool alt_fn_shortcuts;
   bool ctrl_shift_shortcuts;
   string break_string;

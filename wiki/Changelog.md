@@ -1,3 +1,4 @@
+  * New option ZoomFontWithWindow to disable Shift-coupled font-with-window zooming (#476).
   * New OSC sequence to copy the window title to the clipboard (#303).
 
 ### 2.1.5 (19 Aug 2015) ###
