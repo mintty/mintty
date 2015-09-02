@@ -3,6 +3,7 @@
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "winpriv.h"
+#include "winsearch.h"
 
 #include "charset.h"
 #include "child.h"
@@ -49,6 +50,11 @@ win_update_menus(void)
   );
 
   ModifyMenu(
+    menu, IDM_SEARCH, 0, IDM_SEARCH,
+    alt_fn ? "S&earch\tAlt+F3" : ct_sh ? "S&earch\tCtrl+Shift+H" : "S&earch"
+  );
+
+  ModifyMenu(
     menu, IDM_RESET, 0, IDM_RESET,
     alt_fn ? "&Reset\tAlt+F8" : ct_sh ? "&Reset\tCtrl+Shift+R" : "&Reset"
   );
@@ -91,6 +97,7 @@ win_init_menus(void)
   AppendMenu(menu, MF_ENABLED, IDM_PASTE, 0);
   AppendMenu(menu, MF_ENABLED, IDM_SELALL, "Select &All");
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
+  AppendMenu(menu, MF_ENABLED, IDM_SEARCH, 0);
   AppendMenu(menu, MF_ENABLED, IDM_RESET, 0);
   AppendMenu(menu, MF_SEPARATOR, 0, 0);
   AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_DEFSIZE_ZOOM, 0);
@@ -218,6 +225,8 @@ win_mouse_click(mouse_button b, LPARAM lp)
       p.x != last_click_pos.x || p.y != last_click_pos.y ||
       t - last_time > GetDoubleClickTime() || ++count > 3)
     count = 1;
+
+  SetFocus(wnd);  // in case focus was in search bar
   term_mouse_click(b, mods, p, count);
   last_pos = (pos){INT_MIN, INT_MIN};
   last_click_pos = p;
@@ -398,6 +407,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       if (!ctrl) {
         switch (key) {
           when VK_F2:  send_syscommand(IDM_NEW);
+          when VK_F3:  send_syscommand(IDM_SEARCH);
           when VK_F4:  send_syscommand(SC_CLOSE);
           when VK_F8:  send_syscommand(IDM_RESET);
           when VK_F10: send_syscommand(IDM_DEFSIZE_ZOOM);
@@ -420,6 +430,7 @@ win_key_down(WPARAM wp, LPARAM lp)
         when 'D': send_syscommand(IDM_DEFSIZE);
         when 'F': send_syscommand(IDM_FULLSCREEN);
         when 'S': send_syscommand(IDM_FLIPSCREEN);
+        when 'H': send_syscommand(IDM_SEARCH);
       }
       return 1;
     }

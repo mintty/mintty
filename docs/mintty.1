@@ -263,6 +263,9 @@ It can be accessed using the scrollbar, the mouse wheel, or the keyboard.
 Hold the \fBShift\fP key while pressing the \fBUp\fP and \fBDown\fP arrow keys
 to scroll line-by-line or the \fBPageUp\fP and \fBPageDown\fP keys to scroll
 page-by-page.
+Alt-F3 opens a search bar with an input field for a search string. Matches are 
+highlighted in the scrollback buffer. Enter/Shift+Enter find the next/previous 
+position of the match and scrolls the scrollback buffer accordingly.
 
 
 .SS Flip screen
@@ -344,6 +347,8 @@ An overview of all the keyboard shortcuts.
 \- \fBShift+Home\fP: Top
 .br
 \- \fBShift+End\fP: Bottom
+.br
+\- \fBAlt+F3\fP: Search
 
 .TP
 \fBCopy and paste\fP
@@ -358,6 +363,8 @@ An overview of all the keyboard shortcuts.
 \fBWindow commands\fP
 
 \- \fBAlt+F2\fP: New (clone)
+.br
+\- \fBAlt+F3\fP: Search (in scrollback buffer)
 .br
 \- \fBAlt+F4\fP: Close
 .br
@@ -403,6 +410,8 @@ Keys pane of the options dialog.
 \- \fBCtrl+Shift+V\fP: Paste
 .br
 \- \fBCtrl+Shift+N\fP: New
+.br
+\- \fBCtrl+Shift+H\fP: Search scrollback buffer
 .br
 \- \fBCtrl+Shift+W\fP: Close
 .br
@@ -1069,6 +1078,23 @@ or rgb:RR/GG/BB can be used as well.
 \- \fBBoldCyan\fP=64,255,255
 .br
 \- \fBBoldWhite\fP=255,255,255
+
+.TP
+\fBScrollback search colours\fP
+The highlighting colours of search matches can be configured.
+
+\- \fBSearchForegroundColour\fP=\fIblack\fP
+.br
+\- \fBSearchBackgroundColour\fP=\fIlight yellow\fP
+.br
+\- \fBSearchCurrentColour\fP=\fIbright yellow\fP
+
+.TP
+\fBScrollback search bar\fP (SearchBar=)
+This string option can customize the order of items in the search bar.
+Use x (close button), </> (previous/next buttons), s (search string) to 
+select the order of these fields in the search bar; missing fields will 
+be appended in a default order.
 
 .TP
 \fBWrite if exited\fP (ExitWrite=no)

@@ -4,6 +4,7 @@
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "winpriv.h"
+#include "winsearch.h"
 
 #include "minibidi.h"
 
@@ -378,6 +379,10 @@ do_update(void)
   update_state = UPDATE_BLOCKED;
 
   dc = GetDC(wnd);
+
+  win_paint_exclude_search(dc);
+  term_update_search();
+
   term_paint();
   ReleaseDC(wnd, dc);
 
@@ -590,6 +595,15 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr)
 
   bool has_cursor = attr.attr & (TATTR_ACTCURS | TATTR_PASCURS);
   colour cursor_colour = 0;
+
+  if (attr.attr & TATTR_CURRESULT) {
+    bg = cfg.search_current_colour;
+    fg = cfg.search_fg_colour;
+  }
+  else if (attr.attr & TATTR_RESULT) {
+    bg = cfg.search_bg_colour;
+    fg = cfg.search_fg_colour;
+  }
 
   if (has_cursor) {
     cursor_colour = colours[ime_open ? IME_CURSOR_COLOUR_I : CURSOR_COLOUR_I];

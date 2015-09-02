@@ -4,7 +4,9 @@
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #define dont_debug_resize
+
 #include "winpriv.h"
+#include "winsearch.h"
 
 #include "term.h"
 #include "appinfo.h"
@@ -399,6 +401,10 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
       win_set_font_size(font_size1, false);
   }
 
+  if (win_search_visible()) {
+    term_height -= SEARCHBAR_HEIGHT;
+  }
+
   int cols = max(1, term_width / font_width);
   int rows = max(1, term_height / font_height);
   if (rows != term.rows || cols != term.cols) {
@@ -407,6 +413,10 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
     child_resize(&ws);
   }
   win_invalidate_all();
+
+  win_update_search();
+  term_schedule_search_update();
+  win_schedule_update();
 }
 
 bool
@@ -705,6 +715,10 @@ win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
           else
             zoom_token = -4;
           win_maximise(win_is_fullscreen ? 0 : 2);
+
+          term_schedule_search_update();
+          win_update_search();
+        when IDM_SEARCH: win_open_search();
         when IDM_FLIPSCREEN: term_flip_screen();
         when IDM_OPTIONS: win_open_config();
         when IDM_NEW: child_fork(main_argc, main_argv);

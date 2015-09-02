@@ -43,6 +43,7 @@ typedef struct {
 typedef struct {
   // Looks
   colour fg_colour, bg_colour, cursor_colour;
+  colour search_fg_colour, search_bg_colour, search_current_colour;
   char transparency;
   bool opaque_when_focused;
   char cursor_type;
@@ -84,6 +85,7 @@ typedef struct {
   char scrollbar;
   char scroll_mod;
   bool pgupdn_scroll;
+  string search_bar;
   // Terminal
   string term;
   string answerback;

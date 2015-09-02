@@ -22,6 +22,9 @@ const config default_cfg = {
   // Looks
   .fg_colour = 0xBFBFBF,
   .bg_colour = 0x000000,
+  .search_fg_colour = 0x000000,
+  .search_bg_colour = 0x00DDDD,
+  .search_current_colour = 0x0099DD,
   .cursor_colour = 0xBFBFBF,
   .transparency = 0,
   .opaque_when_focused = false,
@@ -65,6 +68,7 @@ const config default_cfg = {
   .scrollback_lines = 10000,
   .scroll_mod = MDK_SHIFT,
   .pgupdn_scroll = false,
+  .search_bar = "",
   // Terminal
   .term = "xterm",
   .answerback = "",
@@ -135,6 +139,9 @@ options[] = {
   // Looks
   {"ForegroundColour", OPT_COLOUR, offcfg(fg_colour)},
   {"BackgroundColour", OPT_COLOUR, offcfg(bg_colour)},
+  {"SearchForegroundColour", OPT_COLOUR, offcfg(search_fg_colour)},
+  {"SearchBackgroundColour", OPT_COLOUR, offcfg(search_bg_colour)},
+  {"SearchCurrentColour", OPT_COLOUR, offcfg(search_current_colour)},
   {"CursorColour", OPT_COLOUR, offcfg(cursor_colour)},
   {"Transparency", OPT_TRANS, offcfg(transparency)},
   {"OpaqueWhenFocused", OPT_BOOL, offcfg(opaque_when_focused)},
@@ -184,6 +191,7 @@ options[] = {
   {"Scrollbar", OPT_SCROLLBAR, offcfg(scrollbar)},
   {"ScrollMod", OPT_MOD, offcfg(scroll_mod)},
   {"PgUpDnScroll", OPT_BOOL, offcfg(pgupdn_scroll)},
+  {"SearchBar", OPT_STRING, offcfg(search_bar)},
 
   // Terminal
   {"Term", OPT_STRING, offcfg(term)},

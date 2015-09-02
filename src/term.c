@@ -8,6 +8,7 @@
 #include "win.h"
 #include "charset.h"
 #include "child.h"
+#include "winsearch.h"
 
 struct term term;
 
@@ -210,6 +211,241 @@ term_reconfig(void)
     term.delete_sends_del = new_cfg.delete_sends_del;
   if (strcmp(new_cfg.term, cfg.term))
     term.vt220_keys = strstr(new_cfg.term, "vt220");
+}
+
+bool in_result(pos abspos, pos respos) {
+  return
+    (abspos.x + abspos.y * term.cols >= respos.x + respos.y * term.cols) &&
+    (abspos.x + abspos.y * term.cols <  respos.x + respos.y * term.cols + term.results.query_length);
+}
+
+bool
+in_results_recurse(pos abspos, int lo, int hi) {
+  if (hi - lo == 0) {
+    return false;
+  }
+  int mid = (lo + hi) / 2;
+  pos respos = term.results.results[mid];
+  if (respos.x + respos.y * term.cols > abspos.x + abspos.y * term.cols) {
+    return in_results_recurse(abspos, lo, mid);
+  } else if (respos.x + respos.y * term.cols + term.results.query_length <= abspos.x + abspos.y * term.cols) {
+    return in_results_recurse(abspos, mid + 1, hi);
+  }
+  return true;
+}
+
+int
+in_results(pos scrpos)
+{
+  if (term.results.length == 0) {
+    return 0;
+  }
+
+  pos abspos = {
+    .x = scrpos.x,
+    .y = scrpos.y + term.sblines
+  };
+
+  int match = in_results_recurse(abspos, 0, term.results.length);
+  match += in_result(abspos, term.results.results[term.results.current]);
+  return match;
+}
+
+void
+results_add(pos abspos)
+{
+  assert(term.results.capacity > 0);
+  if (term.results.length == term.results.capacity) {
+    term.results.capacity *= 2;
+    term.results.results = renewn(term.results.results, term.results.capacity);
+  }
+
+  term.results.results[term.results.length] = abspos;
+  ++term.results.length;
+}
+
+void
+results_partial_clear(int pos)
+{
+  int i = term.results.length;
+  while (i > 0 && term.results.results[i - 1].y >= pos) {
+    --i;
+  }
+  term.results.length = i;
+}
+
+void
+term_set_search(wchar * needle)
+{
+  free(term.results.query);
+  term.results.query = needle;
+
+  term.results.update_type = FULL_UPDATE;
+  term.results.query_length = wcslen(needle);
+}
+
+void
+circbuf_init(circbuf * cb, int sz)
+{
+  cb->capacity = sz;
+  cb->length = 0;
+  cb->start = 0;
+  cb->buf = newn(termline*, sz);
+}
+
+void
+circbuf_destroy(circbuf * cb)
+{
+  cb->capacity = 0;
+  cb->length = 0;
+  cb->start = 0;
+
+  // Free any termlines we have left.
+  for (int i = 0; i < cb->capacity; ++i) {
+    if (cb->buf[i] == NULL)
+      continue;
+    release_line(cb->buf[i]);
+  }
+  free(cb->buf);
+  cb->buf = NULL;
+}
+
+void
+circbuf_push(circbuf * cb, termline * tl)
+{
+  int pos = (cb->start + cb->length) % cb->capacity;
+
+  if (cb->length < cb->capacity) {
+    ++cb->length;
+  } else {
+    ++cb->start;
+    release_line(cb->buf[pos]);
+  }
+  cb->buf[pos] = tl;
+}
+
+termline *
+circbuf_get(circbuf * cb, int i)
+{
+  assert(i < cb->length);
+  return cb->buf[(cb->start + i) % cb->capacity];
+}
+
+void
+term_update_search()
+{
+  int update_type = term.results.update_type;
+  if (term.results.update_type == NO_UPDATE)
+    return;
+  term.results.update_type = NO_UPDATE;
+
+  if (term.results.query_length == 0)
+    return;
+
+  circbuf cb;
+  // Allocate room for the circular buffer of termlines.
+  int lcurr = 0;
+  if (update_type == PARTIAL_UPDATE) {
+    // How much of the backscroll we need to update on a partial update?
+    // Do a ceil: (x + y - 1) / y
+    // On query_length - 1
+    int pstart = -((term.results.query_length + term.cols - 2) / term.cols) + term.sblines;
+    lcurr = lcurr > pstart ? lcurr:pstart;
+    results_partial_clear(lcurr);
+  } else {
+    term_clear_results();
+  }
+  int llen = term.results.query_length / term.cols + 1;
+  if (llen < 2)
+    llen = 2;
+
+  circbuf_init(&cb, llen);
+
+  // Fill in our starting set of termlines.
+  for (int i = lcurr; i < term.rows + term.sblines && cb.length < cb.capacity; ++i) {
+    circbuf_push(&cb, fetch_line(i - term.sblines));
+  }
+
+  int cpos = term.cols * lcurr;
+  int npos = 0;
+  int end = term.cols * (term.rows + term.sblines);
+
+  // Loop over every character and search for query.
+  while (cpos < end) {
+    // Determine the current position.
+    int x = (cpos % term.cols);
+    int y = (cpos / term.cols);
+
+    // If our current position isn't in the buffer, add it in.
+    if (y - lcurr >= llen) {
+      circbuf_push(&cb, fetch_line(lcurr + llen - term.sblines));
+      ++lcurr;
+    }
+    termline * lll = circbuf_get(&cb, y - lcurr);
+    termchar * chr = lll->chars + x;
+
+    if (npos == 0 && cpos + term.results.query_length >= end)
+      break;
+
+    if (chr->chr != term.results.query[npos]) {
+      // Skip the second cell of any wide characters
+      if (chr->chr == UCSWIDE) {
+        ++cpos; continue;
+      }
+      cpos -= npos - 1;
+      npos = 0;
+      continue;
+    }
+
+    ++npos;
+
+    if (term.results.query_length == npos) {
+      int start = cpos - npos + 1;
+      pos respos = {
+        .x = start % term.cols,
+        .y = start / term.cols,
+      };
+      results_add(respos);
+      npos = 0;
+    }
+
+    ++cpos;
+  }
+
+  circbuf_destroy(&cb);
+}
+
+void
+term_schedule_search_update()
+{
+  term.results.update_type = FULL_UPDATE;
+}
+
+void
+term_schedule_search_partial_update()
+{
+  if (term.results.update_type == NO_UPDATE) {
+    term.results.update_type = PARTIAL_UPDATE;
+  }
+}
+
+void
+term_clear_results(void)
+{
+  term.results.results = renewn(term.results.results, 16);
+  term.results.current = 0;
+  term.results.length = 0;
+  term.results.capacity = 16;
+}
+
+void
+term_clear_search(void)
+{
+  term_clear_results();
+  term.results.update_type = NO_UPDATE;
+  free(term.results.query);
+  term.results.query = NULL;
+  term.results.query_length = 0;
 }
 
 static void
@@ -673,6 +909,16 @@ term_paint(void)
         );
       if (term.in_vbell || selected)
         tattr.attr ^= ATTR_REVERSE;
+
+      int match = in_results(scrpos);
+      if (match > 0) {
+        tattr.attr |= TATTR_RESULT;
+        if (match > 1) {
+          tattr.attr |= TATTR_CURRESULT;
+        }
+      } else {
+        tattr.attr &= ~TATTR_RESULT;
+      }
 
      /* 'Real' blinking ? */
       if (term.blink_is_real && (tattr.attr & ATTR_BLINK)) {
