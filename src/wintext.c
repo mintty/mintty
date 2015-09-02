@@ -84,14 +84,6 @@ bool font_ambig_wide;
 
 COLORREF colours[COLOUR_NUM];
 
-static colour
-brighten(colour c)
-{
-  uint r = red(c), g = green(c), b = blue(c);
-  uint s = min(85, 255 - max(max(r, g), b));
-  return make_colour(r + s, g + s, b + s);
-}
-
 static uint
 colour_dist(colour a, colour b)
 {
@@ -99,6 +91,30 @@ colour_dist(colour a, colour b)
     2 * sqr(red(a) - red(b)) +
     4 * sqr(green(a) - green(b)) +
     1 * sqr(blue(a) - blue(b));
+}
+
+static colour
+brighten(colour c)
+{
+  uint r = red(c), g = green(c), b = blue(c);
+
+//  uint s = min(85, 255 - max(max(r, g), b));
+//  colour bright = make_colour(r + s, g + s, b + s);
+
+  float dim = 0.4;  // MUST be >= 0 AND <= 1 !
+  int r_ = r + (255 - r) * dim;
+  int g_ = g + (255 - g) * dim;
+  int b_ = b + (255 - b) * dim;
+  colour bright = make_colour(r_, g_, b_);
+  if (colour_dist(c, bright) < 33333) {
+    dim = 0.2;
+    r_ = r * (1 - dim);
+    g_ = g * (1 - dim);
+    b_ = b * (1 - dim);
+    bright = make_colour(r_, g_, b_);
+  }
+
+  return bright;
 }
 
 static uint
