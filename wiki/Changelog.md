@@ -1,4 +1,5 @@
-  * Feature to search scrollback buffer (#85); shortcuts Alt+F3 or Shift+Ctrl+H; configuration options.
+  * Support BoldAsColour without BoldAsFont for plain text (#468).
+  * Feature to search scrollback buffer (#85); shortcuts Alt+F3 or Shift+Ctrl+H; configuration options (thanks to Kai).
   * New option ZoomFontWithWindow to disable Shift-coupled font-with-window zooming (#476).
   * New OSC sequence to copy the window title to the clipboard (#303).
 
