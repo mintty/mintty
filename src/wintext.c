@@ -854,7 +854,10 @@ win_set_colour(colour_i i, colour c)
   win_invalidate_all();
 }
 
-colour win_get_colour(colour_i i) { return i < COLOUR_NUM ? colours[i] : 0; }
+colour win_get_colour(colour_i i)
+{
+  return i < COLOUR_NUM ? colours[i] : 0;
+}
 
 colour
 win_get_sys_colour(bool fg)
