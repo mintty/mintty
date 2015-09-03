@@ -976,16 +976,32 @@ do_dcs(void)
 }
 
 static void
-do_colour_osc(uint i)
+do_colour_osc(bool has_index_arg, uint i)
 {
   char *s = term.cmd_buf;
-  bool has_index_arg = !i;
   if (has_index_arg) {
+    int osc = i;
     int len = 0;
     sscanf(s, "%u;%n", &i, &len);
     if (!len || i >= COLOUR_NUM)
       return;
     s += len;
+    if (osc == 5) {
+      if (i == 0)
+        i = BOLD_FG_COLOUR_I;
+#ifdef other_color_substitutes
+      else if (i == 1)
+        i = UNDERLINE_FG_COLOUR_I;
+      else if (i == 2)
+        i = BLINK_FG_COLOUR_I;
+      else if (i == 3)
+        i = REVERSE_FG_COLOUR_I;
+      else if (i == 4)
+        i = ITALIC_FG_COLOUR_I;
+#endif
+      else
+        return;
+    }
   }
   colour c;
   if (!strcmp(s, "?")) {
@@ -1011,10 +1027,11 @@ do_cmd(void)
   switch (term.cmd_num) {
     when -1: do_dcs();
     when 0 or 2: win_set_title(s);  // ignore icon title
-    when 4:  do_colour_osc(0);
-    when 10: do_colour_osc(FG_COLOUR_I);
-    when 11: do_colour_osc(BG_COLOUR_I);
-    when 12: do_colour_osc(CURSOR_COLOUR_I);
+    when 4:  do_colour_osc(true, 4);
+    when 5:  do_colour_osc(true, 5);
+    when 10: do_colour_osc(false, FG_COLOUR_I);
+    when 11: do_colour_osc(false, BG_COLOUR_I);
+    when 12: do_colour_osc(false, CURSOR_COLOUR_I);
     when 701:  // Set/get locale (from urxvt).
       if (!strcmp(s, "?"))
         child_printf("\e]701;%s\e\\", cs_get_locale());
