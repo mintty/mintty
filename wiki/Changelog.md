@@ -1,7 +1,12 @@
+New Feature (thanks to Kai (twitter:@sixhundredns)):
+  * Search scrollback buffer (#85); shortcuts Alt+F3 or Shift+Ctrl+H; configuration options.
+
+Further Changes:
+  * Support X11 color names for colour specifications (options and OSC sequences).
   * Support BoldAsColour without BoldAsFont for plain text (#468).
-  * Feature to search scrollback buffer (#85); shortcuts Alt+F3 or Shift+Ctrl+H; configuration options (thanks to Kai).
+  * New xterm OSC sequence (5;0;rgb) to define colour for bold attribute (#468).
   * New option ZoomFontWithWindow to disable Shift-coupled font-with-window zooming (#476).
-  * New OSC sequence to copy the window title to the clipboard (#303).
+  * New private OSC sequence to copy the window title to the clipboard (#303).
 
 ### 2.1.5 (19 Aug 2015) ###
   * Guard Shift-Ctrl-0 detection (#233) to avoid interference with keyboard switchers (#472).

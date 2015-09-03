@@ -395,6 +395,13 @@ check_legacy_options(void (*remember_option)(uint))
   }
 }
 
+static struct {
+  uchar r, g, b;
+  char * name;
+} xcolours[] = {
+#include "rgb.t"
+};
+
 bool
 parse_colour(string s, colour *cp)
 {
@@ -404,8 +411,19 @@ parse_colour(string s, colour *cp)
   else if (sscanf(s, "rgb:%2x/%2x/%2x%c", &r, &g, &b, &(char){0}) == 3);
   else if (sscanf(s, "rgb:%4x/%4x/%4x%c", &r, &g, &b, &(char){0}) == 3)
     r >>=8, g >>= 8, b >>= 8;
-  else
-    return false;
+  else {
+    int coli = -1;
+    for (uint i = 0; i < lengthof(xcolours); i++)
+      if (!strcmp(s, xcolours[i].name)) {
+        r = xcolours[i].r;
+        g = xcolours[i].g;
+        b = xcolours[i].b;
+        coli = i;
+        break;
+      }
+    if (coli < 0)
+      return false;
+  }
 
   *cp = make_colour(r, g, b);
   return true;
