@@ -56,6 +56,7 @@ prev_result(void)
     }
   }
   else {
+    term.results.current = term.results.length - 1;
     searched = true;
   }
   scroll_to_result();
