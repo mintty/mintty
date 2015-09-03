@@ -98,22 +98,18 @@ brighten(colour c)
 {
   uint r = red(c), g = green(c), b = blue(c);
 
-//  uint s = min(85, 255 - max(max(r, g), b));
-//  colour bright = make_colour(r + s, g + s, b + s);
-
-  float dim = 0.4;  // MUST be >= 0 AND <= 1 !
-  int r_ = r + (255 - r) * dim;
-  int g_ = g + (255 - g) * dim;
-  int b_ = b + (255 - b) * dim;
-  colour bright = make_colour(r_, g_, b_);
-  if (colour_dist(c, bright) < 33333) {
-    dim = 0.2;
-    r_ = r * (1 - dim);
-    g_ = g * (1 - dim);
-    b_ = b * (1 - dim);
-    bright = make_colour(r_, g_, b_);
+  uint s = min(85, 255 - max(max(r, g), b));
+  colour bright = make_colour(r + s, g + s, b + s);
+#ifdef debug_brighten
+  printf ("old bright %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
+#endif
+  if (colour_dist(c, bright) < 22222) {
+    int sub = 70;
+    bright = make_colour(max(0, (int)r - sub), max(0, (int)g - sub), max(0, (int)b - sub));
+#ifdef debug_brighten
+    printf ("fix bright %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
+#endif
   }
-
   return bright;
 }
 
