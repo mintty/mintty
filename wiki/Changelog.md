@@ -8,6 +8,7 @@ Further Changes:
   * New xterm OSC sequence (5;0;rgb) to define colour for bold attribute (#468).
   * New option ZoomFontWithWindow to disable Shift-coupled font-with-window zooming (#476).
   * New private OSC sequence to copy the window title to the clipboard (#303).
+  * Trying to enforce initial focus (#57).
 
 ### 2.1.5 (19 Aug 2015) ###
   * Guard Shift-Ctrl-0 detection (#233) to avoid interference with keyboard switchers (#472).

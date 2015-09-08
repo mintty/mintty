@@ -1400,6 +1400,7 @@ main(int argc, char *argv[])
   // Finally show the window!
   fullscr_on_max = (cfg.window == -1);
   ShowWindow(wnd, fullscr_on_max ? SW_SHOWMAXIMIZED : cfg.window);
+  SetFocus(wnd);
 
   // Message loop.
   for (;;) {
