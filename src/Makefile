@@ -99,7 +99,7 @@ DEPOPT=-MMD -MP
 %.o: %.c
 	$(CC) -c $(DEPOPT) $(CPPFLAGS) $(CFLAGS) $<
 
-%.o: %.rc
+%.o: %.rc %.mft
 	$(RC) --preprocessor '$(CC) -E -xc -DRC_INVOKED $(DEPOPT) $(CPPFLAGS)' $< $*.o
 
 exe := $(NAME).exe
