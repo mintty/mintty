@@ -233,6 +233,16 @@ the resizing, unless disabled with ZoomFontWithWindow=false.
 Note that due to the different height/width factors, this is not a precise operation.
 
 
+.SS DPI change
+
+When DPI setting changes (by reconfiguration of display properties 
+"what's on your screen ... smaller/medium/larger" or moving the mintty window 
+between monitors with different DPI settings), mintty adapts its screen 
+size to avoid Windows blurred auto-adaptation. If Shift is also held during 
+the change, the font will be scaled too, roughly maintaining the screen 
+dimensions.
+
+
 .SS Full screen
 
 Full screen mode can be toggled using either the \fBFull Screen\fP command in

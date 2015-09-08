@@ -2,6 +2,7 @@ New Feature (thanks to Kai (twitter:@sixhundredns)):
   * Search scrollback buffer (#85); shortcuts Alt+F3 or Shift+Ctrl+H; configuration options.
 
 Further Changes:
+  * Per-monitor DPI support (#470).
   * Support X11 color names for colour specifications (options and OSC sequences).
   * Support BoldAsColour without BoldAsFont for plain text (#468).
   * New xterm OSC sequence (5;0;rgb) to define colour for bold attribute (#468).
