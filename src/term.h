@@ -241,7 +241,13 @@ typedef struct {
 } circbuf;
 
 typedef struct {
-    pos * results;
+    int x;
+    int y;
+    int len;
+} result;
+
+typedef struct {
+    result * results;
     wchar * query;
     int query_length;
     int capacity;
