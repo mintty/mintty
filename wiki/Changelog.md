@@ -6,8 +6,10 @@ Further Changes:
   * Support X11 color names for colour specifications (options and OSC sequences).
   * Support BoldAsColour without BoldAsFont for plain text (#468).
   * New xterm OSC sequence (5;0;rgb) to define colour for bold attribute (#468).
+  * Option -s accepts special values "maxwidth" or "maxheight" (#171).
   * New option ZoomFontWithWindow to disable Shift-coupled font-with-window zooming (#476).
   * New private OSC sequence to copy the window title to the clipboard (#303).
+  * Supporting xterm sequences to maximize window vertically/horizontally (#394).
   * Trying to enforce initial focus (#57).
 
 ### 2.1.5 (19 Aug 2015) ###

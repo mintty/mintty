@@ -37,6 +37,8 @@ static int zoom_token = 0;  // for heuristic handling of Shift zoom (#467, #476)
 static bool title_settable = true;
 static string border_style = 0;
 static bool center = false;
+static bool maxwidth = false;
+static bool maxheight = false;
 
 static HBITMAP caretbm;
 
@@ -314,23 +316,126 @@ win_set_pixels(int height, int width)
                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
 }
 
+bool
+win_is_glass_available(void)
+{
+  BOOL result = false;
+  if (pDwmIsCompositionEnabled)
+    pDwmIsCompositionEnabled(&result);
+  return result;
+}
+
+static void
+update_glass(void)
+{
+  if (pDwmExtendFrameIntoClientArea) {
+    bool enabled =
+      cfg.transparency == TR_GLASS && !win_is_fullscreen &&
+      !(cfg.opaque_when_focused && term.has_focus);
+    pDwmExtendFrameIntoClientArea(wnd, &(MARGINS){enabled ? -1 : 0, 0, 0, 0});
+  }
+}
+
+/*
+ * Go full-screen. This should only be called when we are already
+ * maximised.
+ */
+static void
+make_fullscreen(void)
+{
+  win_is_fullscreen = true;
+
+ /* Remove the window furniture. */
+  LONG style = GetWindowLong(wnd, GWL_STYLE);
+  style &= ~(WS_CAPTION | WS_BORDER | WS_THICKFRAME);
+  SetWindowLong(wnd, GWL_STYLE, style);
+
+ /* The glass effect doesn't work for fullscreen windows */
+  update_glass();
+
+ /* Resize ourselves to exactly cover the nearest monitor. */
+  MONITORINFO mi;
+  get_monitor_info(&mi);
+  RECT fr = mi.rcMonitor;
+  SetWindowPos(wnd, HWND_TOP, fr.left, fr.top,
+               fr.right - fr.left, fr.bottom - fr.top, SWP_FRAMECHANGED);
+}
+
+/*
+ * Clear the full-screen attributes.
+ */
+static void
+clear_fullscreen(void)
+{
+  win_is_fullscreen = false;
+  update_glass();
+
+ /* Reinstate the window furniture. */
+  LONG style = GetWindowLong(wnd, GWL_STYLE);
+  if (border_style) {
+    if (strcmp (border_style, "void") != 0) {
+      style |= WS_THICKFRAME;
+    }
+  }
+  else {
+    style |= WS_CAPTION | WS_BORDER | WS_THICKFRAME;
+  }
+  SetWindowLong(wnd, GWL_STYLE, style);
+  SetWindowPos(wnd, null, 0, 0, 0, 0,
+               SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+}
+
+void
+win_set_geom(int y, int x, int height, int width)
+{
+  trace_resize(("--- win_set_geom %d %d %d %d\n", y, x, height, width));
+
+  if (win_is_fullscreen)
+    clear_fullscreen();
+
+  MONITORINFO mi;
+  get_monitor_info(&mi);
+  RECT ar = mi.rcWork;
+
+  int scr_height = ar.bottom - ar.top, scr_width = ar.right - ar.left;
+  int term_x, term_y, term_height, term_width;
+  win_get_pixels(&term_height, &term_width);
+  win_get_pos(&term_x, &term_y);
+
+  if (x >= 0)
+    term_x = x;
+  if (y >= 0)
+    term_y = y;
+  if (width == 0)
+    term_width = scr_width;
+  else if (width > 0)
+    term_width = width;
+  if (height == 0)
+    term_height = scr_height;
+  else if (height > 0)
+    term_height = height;
+
+  SetWindowPos(wnd, null, term_x, term_y, term_width, term_height,
+               SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOZORDER);
+}
+
 static void
 win_fix_position(void)
 {
-    RECT wr;
-    GetWindowRect(wnd, &wr);
-    MONITORINFO mi;
-    get_monitor_info(&mi);
-    RECT ar = mi.rcWork;
+  RECT wr;
+  GetWindowRect(wnd, &wr);
+  MONITORINFO mi;
+  get_monitor_info(&mi);
+  RECT ar = mi.rcWork;
 
-    // Correct edges. Top and left win if the window is too big.
-    wr.left -= max(0, wr.right - ar.right);
-    wr.top -= max(0, wr.bottom - ar.bottom);
-    wr.left = max(wr.left, ar.left);
-    wr.top = max(wr.top, ar.top);
+  // Correct edges. Top and left win if the window is too big.
+  wr.left -= max(0, wr.right - ar.right);
+  wr.top -= max(0, wr.bottom - ar.bottom);
+  wr.left = max(wr.left, ar.left);
+  wr.top = max(wr.top, ar.top);
 
-    SetWindowPos(wnd, 0, wr.left, wr.top, 0, 0,
-                 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+  SetWindowPos(wnd, 0, wr.left, wr.top, 0, 0,
+               SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
 void
@@ -464,75 +569,6 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
   win_update_search();
   term_schedule_search_update();
   win_schedule_update();
-}
-
-bool
-win_is_glass_available(void)
-{
-  BOOL result = false;
-  if (pDwmIsCompositionEnabled)
-    pDwmIsCompositionEnabled(&result);
-  return result;
-}
-
-static void
-update_glass(void)
-{
-  if (pDwmExtendFrameIntoClientArea) {
-    bool enabled =
-      cfg.transparency == TR_GLASS && !win_is_fullscreen &&
-      !(cfg.opaque_when_focused && term.has_focus);
-    pDwmExtendFrameIntoClientArea(wnd, &(MARGINS){enabled ? -1 : 0, 0, 0, 0});
-  }
-}
-
-/*
- * Go full-screen. This should only be called when we are already
- * maximised.
- */
-static void
-make_fullscreen(void)
-{
-  win_is_fullscreen = true;
-
- /* Remove the window furniture. */
-  LONG style = GetWindowLong(wnd, GWL_STYLE);
-  style &= ~(WS_CAPTION | WS_BORDER | WS_THICKFRAME);
-  SetWindowLong(wnd, GWL_STYLE, style);
-
- /* The glass effect doesn't work for fullscreen windows */
-  update_glass();
-
- /* Resize ourselves to exactly cover the nearest monitor. */
-  MONITORINFO mi;
-  get_monitor_info(&mi);
-  RECT fr = mi.rcMonitor;
-  SetWindowPos(wnd, HWND_TOP, fr.left, fr.top,
-               fr.right - fr.left, fr.bottom - fr.top, SWP_FRAMECHANGED);
-}
-
-/*
- * Clear the full-screen attributes.
- */
-static void
-clear_fullscreen(void)
-{
-  win_is_fullscreen = false;
-  update_glass();
-
- /* Reinstate the window furniture. */
-  LONG style = GetWindowLong(wnd, GWL_STYLE);
-  if (border_style) {
-    if (strcmp (border_style, "void") != 0) {
-      style |= WS_THICKFRAME;
-    }
-  }
-  else {
-    style |= WS_CAPTION | WS_BORDER | WS_THICKFRAME;
-  }
-  SetWindowLong(wnd, GWL_STYLE, style);
-  SetWindowPos(wnd, null, 0, 0, 0, 0,
-               SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 }
 
 /*
@@ -1089,10 +1125,16 @@ main(int argc, char *argv[])
         else if (sscanf(optarg, "%i,%i%1s", &cfg.x, &cfg.y, (char[2]){}) != 2)
           error("syntax error in position argument '%s'", optarg);
       when 's':
-        if (sscanf(optarg, "%u,%u%1s", &cfg.cols, &cfg.rows, (char[2]){}) != 2)
+        if (strcmp(optarg, "maxwidth") == 0)
+          maxwidth = true;
+        else if (strcmp(optarg, "maxheight") == 0)
+          maxheight = true;
+        else if (sscanf(optarg, "%u,%u%1s", &cfg.cols, &cfg.rows, (char[2]){}) == 2) {
+          remember_arg("Columns");
+          remember_arg("Rows");
+        }
+        else
           error("syntax error in size argument '%s'", optarg);
-        remember_arg("Columns");
-        remember_arg("Rows");
       when 't': set_arg_option("Title", optarg);
       when 'T':
         set_arg_option("Title", optarg);
@@ -1318,12 +1360,22 @@ main(int argc, char *argv[])
 
   int x = cfg.x;
   int y = cfg.y;
-  if (center) {
+  if (center || maxwidth || maxheight) {
     MONITORINFO mi;
     get_monitor_info(&mi);
     RECT ar = mi.rcWork;
-    x = (ar.right - width) / 2;
-    y = (ar.bottom - height) / 2;
+    if (center) {
+      x = (ar.right - width) / 2;
+      y = (ar.bottom - height) / 2;
+    }
+    if (maxwidth) {
+      x = 0;
+      width = ar.right - ar.left;
+    }
+    if (maxheight) {
+      x = 0;
+      height = ar.bottom - ar.top;
+    }
   }
 
   // Create initial window.
