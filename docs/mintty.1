@@ -99,6 +99,12 @@ Instead of coordinates, "centre" or "center" can be specified.
 .TP
 \fB-s\fP, \fB--size\fP \fICOLS\fB,\fIROWS\fR
 Set the default size of the window in character columns and rows.
+Instead of coordinates, "maxwidth" or "maxheight" can be specified;
+this can be combined with another parameter \fB-s\fP for the other dimension.
+The dimension for which "max" is applied is ignored in further \fB-s\fP or 
+\fB-p\fP parameters.
+For example, \fBmintty -s maxwidth -p 0,0 -s 0,10\fP will start a window 
+at full screen width, positioned at the top of the screen, with 10 lines.
 
 .TP
 \fB-t\fP, \fB--title\fP \fITITLE\fP
