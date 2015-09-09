@@ -669,19 +669,11 @@ do_winop(void)
       // Ps = 9 ; 3  -> Maximize window horizontally.
       if (arg1 == 2) {
         // maximize window vertically
-#ifdef not_good
-        int cols = term.cols;
-        win_maximise(1);
-        win_set_chars(term.rows, cols);
-#endif
+        win_set_geom(0, -1, 0, -1);
       }
       else if (arg1 == 3) {
         // maximize window horizontally
-#ifdef not_good
-        int rows = term.rows;
-        win_maximise(1);
-        win_set_chars(rows, term.cols);
-#endif
+        win_set_geom(-1, 0, -1, 0);
       }
       else
         win_maximise(arg1);
