@@ -10,7 +10,9 @@ Further Changes:
   * New option ZoomFontWithWindow to disable Shift-coupled font-with-window zooming (#476).
   * New private OSC sequence to copy the window title to the clipboard (#303).
   * Supporting xterm sequences to maximize window vertically/horizontally (#394).
+  * New option -R to report window position and size on exit (~#477).
   * Trying to enforce initial focus (#57).
+  * Changed action buttons in Options dialog; Apply does not save changes.
 
 ### 2.1.5 (19 Aug 2015) ###
   * Guard Shift-Ctrl-0 detection (#233) to avoid interference with keyboard switchers (#472).

@@ -449,9 +449,16 @@ Keys pane of the options dialog.
 .SH CONFIGURATION
 
 Mintty has a graphical options dialog that can be reached via the context menu
-or the window menu.  As usual, both the \fBApply\fP and \fBOK\fP buttons apply
-any changes made, but \fBOK\fP also closes the dialog.
-\fBCancel\fP discards changes.
+or the window menu.  It has the following action buttons:
+
+\- \fBCancel\fP: discards changes.
+.br
+\- \fBSave\fP: applies and saves changes and closes the dialog.
+.br
+\- \fBApply\fP: applies changes to the current instance of mintty 
+  but does not save them to the configuration file. So using \fBApply\fP 
+  then \fBCancel\fP, local changes can be applied without affecting further 
+  instances of mintty.
 
 In configuration files, settings are stored as \fINAME\fP=\fIVALUE\fP pairs,
 with one per line.  By default, they are read from \fI/etc/minttyrc\fP and

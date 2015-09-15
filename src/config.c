@@ -673,7 +673,7 @@ save_config(void)
 static control *cols_box, *rows_box, *locale_box, *charset_box;
 
 static void
-apply_config(void)
+apply_config(bool save)
 {
   // Record what's changed
   for (uint i = 0; i < lengthof(options); i++) {
@@ -695,14 +695,15 @@ apply_config(void)
   }
 
   win_reconfig();
-  save_config();
+  if (save)
+    save_config();
 }
 
 static void
 ok_handler(control *unused(ctrl), int event)
 {
   if (event == EVENT_ACTION) {
-    apply_config();
+    apply_config(true);
     dlg_end();
   }
 }
@@ -718,7 +719,7 @@ static void
 apply_handler(control *unused(ctrl), int event)
 {
   if (event == EVENT_ACTION)
-    apply_config();
+    apply_config(false);
 }
 
 static void
@@ -868,7 +869,7 @@ setup_config_box(controlbox * b)
   ctrl_columns(s, 5, 20, 20, 20, 20, 20);
   c = ctrl_pushbutton(s, "About...", about_handler, 0);
   c->column = 0;
-  c = ctrl_pushbutton(s, "OK", ok_handler, 0);
+  c = ctrl_pushbutton(s, "Save", ok_handler, 0);
   c->button.isdefault = true;
   c->column = 2;
   c = ctrl_pushbutton(s, "Cancel", cancel_handler, 0);
