@@ -760,10 +760,22 @@ static LRESULT CALLBACK
 win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
 {
 #ifdef debug_windows_messages
+static struct {
+  uint wm_;
+  char * wm_name;
+} wm_names[] = {
+#include "wm_names.t"
+};
+  char * wm_name = "?";
+  for (uint i = 0; i < lengthof(wm_names); i++)
+    if (message == wm_names[i].wm_) {
+      wm_name = wm_names[i].wm_name;
+      break;
+    }
   if (message != WM_TIMER && message != WM_NCHITTEST && message != WM_MOUSEMOVE && message != WM_SETCURSOR && message != WM_NCMOUSEMOVE
      && (message != WM_KEYDOWN || !(lp & 0x40000000))
      )
-    printf ("[%d] win_proc %04X (%04X %04X)\n", (int)time(0), message, wp, (int)lp);
+    printf ("[%d] win_proc %04X %s (%04X %08X)\n", (int)time(0), message, wm_name, (unsigned)wp, (unsigned)lp);
 #endif
   switch (message) {
     when WM_TIMER: {
