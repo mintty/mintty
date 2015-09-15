@@ -981,6 +981,8 @@ do_colour_osc(bool has_index_arg, uint i)
     if (osc == 5) {
       if (i == 0)
         i = BOLD_FG_COLOUR_I;
+        // should we also flag that bold colour has been set explicitly 
+        // so it isn't overriden when setting foreground colour?
 #ifdef other_color_substitutes
       else if (i == 1)
         i = UNDERLINE_FG_COLOUR_I;

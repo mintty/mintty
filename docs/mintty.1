@@ -468,6 +468,11 @@ later files overriding those in earlier ones.  Configuration changes are saved
 to the last file specified, or \fI~/.minttyrc\fP if none is given.
 Settings can also be specified on the command line using \fB--option\fP.
 
+Be careful when running multiple instances of mintty. If options are saved 
+from different instances, obviously they can overwrite each other; if 
+different mintty versions are run (e.g. from cygwin and msys sharing the same 
+home directory), options may even get dropped from the configuration file.
+
 The following sections explain the settings on each pane of the options
 dialog, followed by settings that do not appear in the dialog.
 For each setting, its name in the config file is shown in parentheses,

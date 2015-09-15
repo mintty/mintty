@@ -832,6 +832,8 @@ win_set_colour(colour_i i, colour c)
   colours[i] = c;
   switch (i) {
     when FG_COLOUR_I:
+      // should we make this conditional, 
+      // unless bold colour has been set explicitly?
       colours[BOLD_FG_COLOUR_I] = brighten(c);
     when BG_COLOUR_I:
       colours[BOLD_BG_COLOUR_I] = brighten(c);
