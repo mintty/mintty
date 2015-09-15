@@ -11,6 +11,8 @@
 #define trace_resize(params)
 #endif
 
+void exit_mintty();
+void report_pos();
 void win_reconfig(void);
 
 void win_update(void);

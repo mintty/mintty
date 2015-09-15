@@ -36,6 +36,7 @@ static bool resizing;
 static int zoom_token = 0;  // for heuristic handling of Shift zoom (#467, #476)
 static bool title_settable = true;
 static string border_style = 0;
+static string report_geom = 0;
 static bool center = false;
 static bool maxwidth = false;
 static bool maxheight = false;
@@ -1013,27 +1014,28 @@ static const char help[] =
   "  -V, --version         Print version information and exit\n"
 ;
 
-static const char short_opts[] = "+:c:eh:i:l:o:p:s:t:T:B:uw:HV:d";
+static const char short_opts[] = "+:c:eh:i:l:o:p:s:t:T:B:R:uw:HV:d";
 
 static const struct option
 opts[] = {
-  {"config",   required_argument, 0, 'c'},
-  {"exec",     no_argument,       0, 'e'},
-  {"hold",     required_argument, 0, 'h'},
-  {"icon",     required_argument, 0, 'i'},
-  {"log",      required_argument, 0, 'l'},
-  {"utmp",     no_argument,       0, 'u'},
-  {"option",   required_argument, 0, 'o'},
-  {"position", required_argument, 0, 'p'},
-  {"size",     required_argument, 0, 's'},
-  {"title",    required_argument, 0, 't'},
-  {"Title",    required_argument, 0, 'T'},
-  {"Border",   required_argument, 0, 'B'},
-  {"window",   required_argument, 0, 'w'},
-  {"class",    required_argument, 0, 'C'},
-  {"help",     no_argument,       0, 'H'},
-  {"version",  no_argument,       0, 'V'},
-  {"nodaemon", no_argument,       0, 'd'},
+  {"config",    required_argument, 0, 'c'},
+  {"exec",      no_argument,       0, 'e'},
+  {"hold",      required_argument, 0, 'h'},
+  {"icon",      required_argument, 0, 'i'},
+  {"log",       required_argument, 0, 'l'},
+  {"utmp",      no_argument,       0, 'u'},
+  {"option",    required_argument, 0, 'o'},
+  {"position",  required_argument, 0, 'p'},
+  {"size",      required_argument, 0, 's'},
+  {"title",     required_argument, 0, 't'},
+  {"Title",     required_argument, 0, 'T'},
+  {"Border",    required_argument, 0, 'B'},
+  {"Reportpos", required_argument, 0, 'R'},
+  {"window",    required_argument, 0, 'w'},
+  {"class",     required_argument, 0, 'C'},
+  {"help",      no_argument,       0, 'H'},
+  {"version",   no_argument,       0, 'V'},
+  {"nodaemon",  no_argument,       0, 'd'},
   {0, 0, 0, 0}
 };
 
@@ -1068,6 +1070,31 @@ warn(char *format, ...)
   va_end(va);
   msg = asform("%s: %s\n", main_argv[0], msg);
   show_msg(stderr, msg);
+}
+
+void
+report_pos()
+{
+  if (report_geom) {
+    int x, y;
+    win_get_pos(&x, &y);
+    printf("%s", main_argv[0]);
+    if (IsZoomed(wnd))
+      printf(*report_geom == 'o' ? " -o Window=full" : " -w full");
+    else if (IsIconic(wnd))
+      printf(*report_geom == 'o' ? " -o Window=min" : " -w min");
+    else
+      printf(*report_geom == 'o' ? " -o X=%d -o Y=%d" : " -p %d,%d", x, y);
+    printf(*report_geom == 'o' ? " -o Columns=%d -o Rows=%d" : " -s %d,%d", term.cols, term.rows);
+    printf("\n");
+  }
+}
+
+void
+exit_mintty()
+{
+  report_pos();
+  exit(0);
 }
 
 int
@@ -1141,6 +1168,8 @@ main(int argc, char *argv[])
         title_settable = false;
       when 'B':
         border_style = strdup (optarg);
+      when 'R':
+        report_geom = strdup (optarg);
       when 'u': cfg.utmp = true;
       when 'w': set_arg_option("Window", optarg);
       when 'C': set_arg_option("Class", optarg);

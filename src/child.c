@@ -56,6 +56,7 @@ sigexit(int sig)
   if (pid)
     kill(-pid, SIGHUP);
   signal(sig, SIG_DFL);
+  report_pos();
   kill(getpid(), sig);
 }
 
@@ -230,22 +231,22 @@ child_proc(void)
 
         // Decide whether we want to exit now or later
         if (killed || cfg.hold == HOLD_NEVER)
-          exit(0);
+          exit_mintty();
         else if (cfg.hold == HOLD_START) {
           if (WIFSIGNALED(status) || WEXITSTATUS(status) != 255)
-            exit(0);
+            exit_mintty();
         }
         else if (cfg.hold == HOLD_ERROR) {
           if (WIFEXITED(status)) {
             if (WEXITSTATUS(status) == 0)
-              exit(0);
+              exit_mintty();
           }
           else {
             const int error_sigs =
               1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE |
               1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
             if (!(error_sigs & 1<<WTERMSIG(status)))
-              exit(0);
+              exit_mintty();
           }
         }
 
@@ -325,7 +326,7 @@ child_kill(bool point_blank)
   if (!pid ||
       kill(-pid, point_blank ? SIGKILL : SIGHUP) < 0 ||
       point_blank)
-    exit(0);
+    exit_mintty();
   killed = true;
 }
 
@@ -528,7 +529,7 @@ child_fork(int argc, char *argv[])
       exit(255);
     }
     if (clone > 0) {  // new parent / previous child
-      exit (0);  // exit and make the grandchild a daemon
+      exit(0);  // exit and make the grandchild a daemon
     }
   }
 
