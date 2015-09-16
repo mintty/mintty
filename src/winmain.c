@@ -38,6 +38,8 @@ static bool title_settable = true;
 static string border_style = 0;
 static string report_geom = 0;
 static bool center = false;
+static bool right = false;
+static bool bottom = false;
 static bool maxwidth = false;
 static bool maxheight = false;
 
@@ -1161,6 +1163,10 @@ main(int argc, char *argv[])
       when 'p':
         if (strcmp(optarg, "center") == 0 || strcmp(optarg, "centre") == 0)
           center = true;
+        else if (strcmp(optarg, "right") == 0)
+          right = true;
+        else if (strcmp(optarg, "bottom") == 0)
+          bottom = true;
         else if (sscanf(optarg, "%i,%i%1s", &cfg.x, &cfg.y, (char[2]){}) != 2)
           error("syntax error in position argument '%s'", optarg);
       when 's':
@@ -1401,10 +1407,15 @@ main(int argc, char *argv[])
 
   int x = cfg.x;
   int y = cfg.y;
-  if (center || maxwidth || maxheight) {
+  if (center || right || bottom || maxwidth || maxheight) {
     MONITORINFO mi;
     get_monitor_info(&mi);
     RECT ar = mi.rcWork;
+
+    if (right)
+      x += ar.right - width;
+    if (bottom)
+      y += ar.bottom - height;
     if (center) {
       x = (ar.right - width) / 2;
       y = (ar.bottom - height) / 2;

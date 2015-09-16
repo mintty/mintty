@@ -12,6 +12,7 @@ Further Changes:
   * Supporting xterm sequences to maximize window vertically/horizontally (#394).
   * New option -R to report window position and size on exit (~#477).
   * Trying to enforce initial focus (#57).
+  * Options -p right and -p bottom to align window position (#288).
   * Changed action buttons in Options dialog; Apply does not save changes.
 
 ### 2.1.5 (19 Aug 2015) ###
