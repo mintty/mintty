@@ -30,16 +30,19 @@ static char **main_argv;
 static int main_argc;
 static ATOM class_atom;
 
-static int extra_width, extra_height;
-static bool fullscr_on_max;
+static int extra_width, extra_height, norm_extra_width, norm_extra_height;
+static bool go_fullscr_on_max;
 static bool resizing;
 static int zoom_token = 0;  // for heuristic handling of Shift zoom (#467, #476)
 static bool title_settable = true;
 static string border_style = 0;
 static string report_geom = 0;
+static int monitor = 0;
 static bool center = false;
 static bool right = false;
 static bool bottom = false;
+static bool left = false;
+static bool top = false;
 static bool maxwidth = false;
 static bool maxheight = false;
 
@@ -340,8 +343,7 @@ update_glass(void)
 }
 
 /*
- * Go full-screen. This should only be called when we are already
- * maximised.
+ * Go full-screen. This should only be called when we are already maximised.
  */
 static void
 make_fullscreen(void)
@@ -521,6 +523,10 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
   int client_height = cr.bottom - cr.top;
   extra_width = wr.right - wr.left - client_width;
   extra_height = wr.bottom - wr.top - client_height;
+  if (!win_is_fullscreen) {
+    norm_extra_width = extra_width;
+    norm_extra_height = extra_height;
+  }
   int term_width = client_width - 2 * PADDING;
   int term_height = client_height - 2 * PADDING;
 
@@ -591,7 +597,7 @@ win_maximise(int max)
   }
   else if (max) {
     if (max == 2)
-      fullscr_on_max = true;
+      go_fullscr_on_max = true;
     ShowWindow(wnd, SW_MAXIMIZE);
   }
 }
@@ -949,8 +955,8 @@ static struct {
       trace_resize(("# WM_SIZE (resizing %d) VK_SHIFT %02X\n", resizing, GetKeyState(VK_SHIFT)));
       if (wp == SIZE_RESTORED && win_is_fullscreen)
         clear_fullscreen();
-      else if (wp == SIZE_MAXIMIZED && fullscr_on_max) {
-        fullscr_on_max = false;
+      else if (wp == SIZE_MAXIMIZED && go_fullscr_on_max) {
+        go_fullscr_on_max = false;
         make_fullscreen();
       }
 
@@ -1091,15 +1097,29 @@ report_pos()
 {
   if (report_geom) {
     int x, y;
-    win_get_pos(&x, &y);
+    //win_get_pos(&x, &y);  // would not consider maximised/minimised
+    WINDOWPLACEMENT placement;
+    placement.length = sizeof(WINDOWPLACEMENT);
+    GetWindowPlacement(wnd, &placement);
+    x = placement.rcNormalPosition.left;
+    y = placement.rcNormalPosition.top;
+    int cols = term.cols;
+    int rows = term.rows;
+    cols = (placement.rcNormalPosition.right - placement.rcNormalPosition.left - norm_extra_width - 2 * PADDING) / font_width;
+    rows = (placement.rcNormalPosition.bottom - placement.rcNormalPosition.top - norm_extra_height - 2 * PADDING) / font_height;
+
     printf("%s", main_argv[0]);
-    if (IsZoomed(wnd))
-      printf(*report_geom == 'o' ? " -o Window=full" : " -w full");
+    printf(*report_geom == 'o' ? " -o Columns=%d -o Rows=%d" : " -s %d,%d", cols, rows);
+    printf(*report_geom == 'o' ? " -o X=%d -o Y=%d" : " -p %d,%d", x, y);
+    char * winstate = 0;
+    if (win_is_fullscreen)
+      winstate = "full";
+    else if (IsZoomed(wnd))
+      winstate = "max";
     else if (IsIconic(wnd))
-      printf(*report_geom == 'o' ? " -o Window=min" : " -w min");
-    else
-      printf(*report_geom == 'o' ? " -o X=%d -o Y=%d" : " -p %d,%d", x, y);
-    printf(*report_geom == 'o' ? " -o Columns=%d -o Rows=%d" : " -s %d,%d", term.cols, term.rows);
+      winstate = "min";
+    if (winstate)
+      printf(*report_geom == 'o' ? " -o Window=%s" : " -w %s", winstate);
     printf("\n");
   }
 }
@@ -1167,7 +1187,15 @@ main(int argc, char *argv[])
           right = true;
         else if (strcmp(optarg, "bottom") == 0)
           bottom = true;
-        else if (sscanf(optarg, "%i,%i%1s", &cfg.x, &cfg.y, (char[2]){}) != 2)
+        else if (strcmp(optarg, "left") == 0)
+          left = true;
+        else if (strcmp(optarg, "top") == 0)
+          top = true;
+        else if (sscanf(optarg, "#%i%1s", &monitor, (char[2]){}) == 1)
+          ;
+        else if (sscanf(optarg, "%i,%i%1s", &cfg.x, &cfg.y, (char[2]){}) == 2)
+          ;
+        else
           error("syntax error in position argument '%s'", optarg);
       when 's':
         if (strcmp(optarg, "maxwidth") == 0)
@@ -1388,7 +1416,14 @@ main(int argc, char *argv[])
 
   RECT cr = {0, 0, term_width + 2 * PADDING, term_height + 2 * PADDING};
   RECT wr = cr;
-  AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, false);
+  LONG window_style = WS_OVERLAPPEDWINDOW;
+  if (border_style) {
+    if (strcmp (border_style, "void") == 0)
+      window_style &= ~(WS_CAPTION | WS_BORDER | WS_THICKFRAME);
+    else
+      window_style &= ~(WS_CAPTION | WS_BORDER);
+  }
+  AdjustWindowRect(&wr, window_style, false);
   int width = wr.right - wr.left;
   int height = wr.bottom - wr.top;
 
@@ -1397,6 +1432,8 @@ main(int argc, char *argv[])
 
   extra_width = width - (cr.right - cr.left);
   extra_height = height - (cr.bottom - cr.top);
+  norm_extra_width = extra_width;
+  norm_extra_height = extra_height;
 
   // Having x == CW_USEDEFAULT but not y still triggers default positioning,
   // whereas y == CW_USEDEFAULT but not x results in an invisible window,
@@ -1407,25 +1444,36 @@ main(int argc, char *argv[])
 
   int x = cfg.x;
   int y = cfg.y;
-  if (center || right || bottom || maxwidth || maxheight) {
+  if (x == CW_USEDEFAULT) {
+    if (left || right)
+      x = 0;
+    if (top || bottom)
+      y = 0;
+  }
+  if (center || right || bottom || left || top || maxwidth || maxheight) {
     MONITORINFO mi;
     get_monitor_info(&mi);
     RECT ar = mi.rcWork;
 
     if (right)
-      x += ar.right - width;
+      x += ar.right - ar.left - width;
+    else if (left)
+      x += ar.left;
+    else if (center)
+      x = (ar.right - ar.left - width) / 2;
     if (bottom)
-      y += ar.bottom - height;
-    if (center) {
-      x = (ar.right - width) / 2;
-      y = (ar.bottom - height) / 2;
-    }
+      y += ar.bottom - ar.top - height;
+    else if (top)
+      y += ar.top;
+    else if (center)
+      y = (ar.bottom - ar.top - height) / 2;
+
     if (maxwidth) {
-      x = 0;
+      x = ar.left;
       width = ar.right - ar.left;
     }
     if (maxheight) {
-      x = 0;
+      x = ar.top;
       height = ar.bottom - ar.top;
     }
   }
@@ -1433,12 +1481,12 @@ main(int argc, char *argv[])
   // Create initial window.
   wnd = CreateWindowExW(cfg.scrollbar < 0 ? WS_EX_LEFTSCROLLBAR : 0,
                         wclass, wtitle,
-                        WS_OVERLAPPEDWINDOW | (cfg.scrollbar ? WS_VSCROLL : 0),
+                        window_style | (cfg.scrollbar ? WS_VSCROLL : 0),
                         x, y, width, height,
                         null, null, inst, null);
 
   if (per_monitor_dpi_aware) {
-    if (cfg.x != (int)CW_USEDEFAULT) {
+    if (x != (int)CW_USEDEFAULT) {
       // The first SetWindowPos actually set x and y
       SetWindowPos(wnd, NULL, x, y, width, height,
         SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
@@ -1467,7 +1515,7 @@ main(int argc, char *argv[])
 
   // Correct autoplacement, which likes to put part of the window under the
   // taskbar when the window size approaches the work area size.
-  if (cfg.x == (int)CW_USEDEFAULT) {
+  if (x == (int)CW_USEDEFAULT) {
     win_fix_position();
   }
 
@@ -1502,8 +1550,8 @@ main(int argc, char *argv[])
   );
 
   // Finally show the window!
-  fullscr_on_max = (cfg.window == -1);
-  ShowWindow(wnd, fullscr_on_max ? SW_SHOWMAXIMIZED : cfg.window);
+  go_fullscr_on_max = (cfg.window == -1);
+  ShowWindow(wnd, go_fullscr_on_max ? SW_SHOWMAXIMIZED : cfg.window);
   SetFocus(wnd);
 
   // Message loop.

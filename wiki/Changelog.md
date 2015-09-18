@@ -10,7 +10,8 @@ Further Changes:
   * New option ZoomFontWithWindow to disable Shift-coupled font-with-window zooming (#476).
   * New private OSC sequence to copy the window title to the clipboard (#303).
   * Supporting xterm sequences to maximize window vertically/horizontally (#394).
-  * New option -R to report window position and size on exit (~#477).
+  * New option -R to report window geometry on exit (~#477).
+  * Fixed initial terminal size if reduced border is specified (#7).
   * Trying to enforce initial focus (#57).
   * Options -p right and -p bottom to align window position (#288).
   * Changed action buttons in Options dialog; Apply does not save changes.
