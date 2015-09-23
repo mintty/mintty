@@ -231,7 +231,7 @@ makeliteral_attr(struct buf *b, termchar *c)
   * store a two-byte value with the top bit clear (indicating
   * just that value), or a four-byte value with the top bit set
   * (indicating the same value with its top bit clear).
-  * 
+  *
   * However, first I permute the bits of the attribute value, so
   * that the eight bits of colour (four in each of fg and bg)
   * which are never non-zero unless xterm 256-colour mode is in
@@ -398,7 +398,7 @@ makerle(struct buf *b, termline *line,
      /*
       * This literal precisely matches the previous one.
       * Turn it into a run if it's worthwhile.
-      * 
+      *
       * With one-byte literals, it costs us two bytes to
       * encode a run, plus another byte to write the header
       * to resume normal output; so a three-element run is
@@ -411,7 +411,7 @@ makerle(struct buf *b, termline *line,
 
        /*
         * It's worth encoding a run. Start at prevpos,
-        * unless hdrsize==0 in which case we can back up
+        * unless hdrsize == 0 in which case we can back up
         * another one and start by overwriting hdrpos.
         */
 
@@ -544,13 +544,13 @@ compressline(termline *line)
   * Now we store a sequence of separate run-length encoded
   * fragments, each containing exactly as many symbols as there
   * are columns in the line.
-  * 
+  *
   * All of these have a common basic format:
-  * 
+  *
   *  - a byte 00-7F indicates that X+1 literals follow it
   *  - a byte 80-FF indicates that a single literal follows it
   *    and expects to be repeated (X-0x80)+2 times.
-  * 
+  *
   * The format of the `literals' varies between the fragments.
   */
   makerle(b, line, makeliteral_chr);

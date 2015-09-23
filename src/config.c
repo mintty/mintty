@@ -406,9 +406,12 @@ bool
 parse_colour(string s, colour *cp)
 {
   uint r, g, b;
-  if (sscanf(s, "%u,%u,%u%c", &r, &g, &b, &(char){0}) == 3);
-  else if (sscanf(s, "#%2x%2x%2x%c", &r, &g, &b, &(char){0}) == 3);
-  else if (sscanf(s, "rgb:%2x/%2x/%2x%c", &r, &g, &b, &(char){0}) == 3);
+  if (sscanf(s, "%u,%u,%u%c", &r, &g, &b, &(char){0}) == 3)
+    ;
+  else if (sscanf(s, "#%2x%2x%2x%c", &r, &g, &b, &(char){0}) == 3)
+    ;
+  else if (sscanf(s, "rgb:%2x/%2x/%2x%c", &r, &g, &b, &(char){0}) == 3)
+    ;
   else if (sscanf(s, "rgb:%4x/%4x/%4x%c", &r, &g, &b, &(char){0}) == 3)
     r >>=8, g >>= 8, b >>= 8;
   else {
