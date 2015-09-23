@@ -20,6 +20,9 @@ NAME := mintty
 
 .PHONY: exe src pkg zip pdf clean
 
+#BINDIR = ../bin/$(TARGET)
+BINDIR = ../bin/$(platform)
+
 ifdef TARGET
   CC := $(TARGET)-gcc
   RC := $(TARGET)-windres
@@ -67,6 +70,7 @@ name_ver := $(NAME)-$(version)
 c_srcs := $(wildcard *.c)
 rc_srcs := $(wildcard *.rc)
 objs := $(c_srcs:.c=.o) $(rc_srcs:.rc=.o)
+bins := $(patsubst %.o,$(BINDIR)/%.o,$(objs))
 
 CFLAGS := -std=gnu99 -include std.h -Wall -Wextra -Wundef -Werror
 
@@ -93,19 +97,36 @@ endif
 #############################################################################
 # build
 
+all:	bin
+
 DEPOPT=-MMD -MP
 #DEPOPT=
 
 %.o: %.c
 	$(CC) -c $(DEPOPT) $(CPPFLAGS) $(CFLAGS) $<
 
+$(BINDIR)/%.o: %.c
+	$(CC) -c $(DEPOPT) $(CPPFLAGS) $(CFLAGS) $< -o $(BINDIR)/$*.o
+
 %.o: %.rc %.mft
 	$(RC) --preprocessor '$(CC) -E -xc -DRC_INVOKED $(DEPOPT) $(CPPFLAGS)' $< $*.o
+
+$(BINDIR)/%.o: %.rc %.mft
+	$(RC) --preprocessor '$(CC) -E -xc -DRC_INVOKED $(DEPOPT) $(CPPFLAGS)' $< $(BINDIR)/$*.o
 
 exe := $(NAME).exe
 exe: $(exe)
 $(exe): $(objs)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
+	-du -b $@
+
+bin := $(BINDIR)/$(NAME).exe
+bin: $(BINDIR) $(bin)
+$(BINDIR):
+	mkdir -p $(BINDIR)
+$(bin): $(bins)
+	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
+	cp -f $@ .	# support simpler debugging and unchanged cygport
 	-du -b $@
 
 -include $(wildcard *.d)
@@ -178,6 +199,11 @@ wm_names.t:	# Windows Message names, only for debugging
 #	->
 #		{0x0000, "WM_NULL"},
 	sed -e 's/^#define \(WM_[^ ]*\) \(0x[0-9A-Fa-f]*\)$$/	{\2, "\1"},/' -e t -e d /usr/include/w32api/winuser.h > wm_names.t
+
+target:
+	echo $(TARGET)
+	echo $(BINDIR)
+	echo $(bins)
 
 getappinfo=$(shell echo "$(1)" ; echo "$(1)" | cpp -P $(CPPFLAGS) --include appinfo.h)
 
