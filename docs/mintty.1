@@ -98,6 +98,14 @@ Instead of coordinates, "centre" or "center" can be specified to place
 the window in the screen centre, and "right" or "bottom" can be specified 
 to align the right or bottom window border with the right or bottom 
 screen border (together with another option -p to specify an offset).
+Option "# N" where N is a number places the window on monitor N.
+Multiple -p options can be combined; coordinates have a different meaning 
+depending on other options:
+With "left", "top", or "# N", related coordinates are relative to the monitor.
+With "right" or "bottom", related coordinates adjust the right or bottom 
+window border relative to the monitor.
+Otherwise, coordinates are absolute and address the common multi-monitor 
+address space as provided by Windows.
 
 .TP
 \fB-s\fP, \fB--size\fP \fICOLS\fB,\fIROWS\fR

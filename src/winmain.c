@@ -238,11 +238,28 @@ win_switch(bool back, bool alternate)
 }
 
 static void
-get_monitor_info(MONITORINFO *mip)
+get_my_monitor_info(MONITORINFO *mip)
 {
   HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
   mip->cbSize = sizeof(MONITORINFO);
   GetMonitorInfo(mon, mip);
+}
+
+static void
+get_monitor_info (int moni, MONITORINFO *mip)
+{
+  BOOL CALLBACK
+  monitor_enum (HMONITOR hMonitor, HDC hdcMonitor, LPRECT monp, LPARAM dwData)
+  {
+    (void)hdcMonitor, (void)monp, (void)dwData;
+
+    GetMonitorInfo(hMonitor, mip);
+
+    return --moni > 0;
+  }
+
+  mip->cbSize = sizeof(MONITORINFO);
+  EnumDisplayMonitors(0, 0, monitor_enum, 0);
 }
 
 /*
@@ -306,7 +323,7 @@ void
 win_get_screen_chars(int *rows_p, int *cols_p)
 {
   MONITORINFO mi;
-  get_monitor_info(&mi);
+  get_my_monitor_info(&mi);
   RECT fr = mi.rcMonitor;
   *rows_p = (fr.bottom - fr.top) / font_height;
   *cols_p = (fr.right - fr.left) / font_width;
@@ -360,7 +377,7 @@ make_fullscreen(void)
 
  /* Resize ourselves to exactly cover the nearest monitor. */
   MONITORINFO mi;
-  get_monitor_info(&mi);
+  get_my_monitor_info(&mi);
   RECT fr = mi.rcMonitor;
   SetWindowPos(wnd, HWND_TOP, fr.left, fr.top,
                fr.right - fr.left, fr.bottom - fr.top, SWP_FRAMECHANGED);
@@ -399,7 +416,7 @@ win_set_geom(int y, int x, int height, int width)
     clear_fullscreen();
 
   MONITORINFO mi;
-  get_monitor_info(&mi);
+  get_my_monitor_info(&mi);
   RECT ar = mi.rcWork;
 
   int scr_height = ar.bottom - ar.top, scr_width = ar.right - ar.left;
@@ -430,7 +447,7 @@ win_fix_position(void)
   RECT wr;
   GetWindowRect(wnd, &wr);
   MONITORINFO mi;
-  get_monitor_info(&mi);
+  get_my_monitor_info(&mi);
   RECT ar = mi.rcWork;
 
   // Correct edges. Top and left win if the window is too big.
@@ -781,7 +798,7 @@ static struct {
       break;
     }
   if (message != WM_TIMER && message != WM_NCHITTEST && message != WM_MOUSEMOVE && message != WM_SETCURSOR && message != WM_NCMOUSEMOVE
-     && (message != WM_KEYDOWN || !(lp & 0x40000000))
+      && (message != WM_KEYDOWN || !(lp & 0x40000000))
      )
     printf ("[%d] win_proc %04X %s (%04X %08X)\n", (int)time(0), message, wm_name, (unsigned)wp, (unsigned)lp);
 #endif
@@ -1444,39 +1461,13 @@ main(int argc, char *argv[])
 
   int x = cfg.x;
   int y = cfg.y;
-  if (x == CW_USEDEFAULT) {
-    if (left || right)
-      x = 0;
-    if (top || bottom)
-      y = 0;
-  }
-  if (center || right || bottom || left || top || maxwidth || maxheight) {
-    MONITORINFO mi;
-    get_monitor_info(&mi);
-    RECT ar = mi.rcWork;
 
-    if (right)
-      x += ar.right - ar.left - width;
-    else if (left)
-      x += ar.left;
-    else if (center)
-      x = (ar.right - ar.left - width) / 2;
-    if (bottom)
-      y += ar.bottom - ar.top - height;
-    else if (top)
-      y += ar.top;
-    else if (center)
-      y = (ar.bottom - ar.top - height) / 2;
-
-    if (maxwidth) {
-      x = ar.left;
-      width = ar.right - ar.left;
-    }
-    if (maxheight) {
-      x = ar.top;
-      height = ar.bottom - ar.top;
-    }
-  }
+#define dont_debug_position
+#ifdef debug_position
+#define printpos(tag, x, y, mon)	printf ("%s %d %d (%ld %ld %ld %ld)\n", tag, x, y, mon.left, mon.top, mon.right, mon.bottom);
+#else
+#define printpos(tag, x, y, mon)
+#endif
 
   // Create initial window.
   wnd = CreateWindowExW(cfg.scrollbar < 0 ? WS_EX_LEFTSCROLLBAR : 0,
@@ -1485,8 +1476,78 @@ main(int argc, char *argv[])
                         x, y, width, height,
                         null, null, inst, null);
 
+  // Adapt window position (and maybe size) to special parameters
+  // also select monitor if requested
+  if (center || right || bottom || left || top || maxwidth || maxheight
+      || monitor > 0
+     ) {
+    MONITORINFO mi;
+    get_my_monitor_info(&mi);
+    RECT ar = mi.rcWork;
+    printpos ("cre", x, y, ar);
+
+    if (monitor > 0) {
+      MONITORINFO monmi;
+      get_monitor_info(monitor, &monmi);
+      RECT monar = monmi.rcWork;
+
+      if (x == (int)CW_USEDEFAULT) {
+        // Shift and scale assigned default position to selected monitor.
+        win_get_pos(&x, &y);
+        printpos ("def", x, y, ar);
+        x = monar.left + (x - ar.left) * (monar.right - monar.left) / (ar.right - ar.left);
+        y = monar.top + (y - ar.top) * (monar.bottom - monar.top) / (ar.bottom - ar.top);
+      }
+      else {
+        // Shift selected position to selected monitor.
+        x += monar.left - ar.left;
+        y += monar.top - ar.top;
+      }
+
+      ar = monar;
+      printpos ("mon", x, y, ar);
+    }
+
+    if (cfg.x == (int)CW_USEDEFAULT) {
+      if (monitor == 0)
+        win_get_pos(&x, &y);
+      if (left || right)
+        cfg.x = 0;
+      if (top || bottom)
+        cfg.y = 0;
+        printpos ("fix", x, y, ar);
+    }
+
+    if (left)
+      x = ar.left + cfg.x;
+    else if (right)
+      x = ar.right - cfg.x - width;
+    else if (center)
+      x = (ar.left + ar.right - width) / 2;
+    if (top)
+      y = ar.top + cfg.y;
+    else if (bottom)
+      y = ar.bottom - cfg.y - height;
+    else if (center)
+      y = (ar.top + ar.bottom - height) / 2;
+      printpos ("pos", x, y, ar);
+
+    if (maxwidth) {
+      x = ar.left;
+      width = ar.right - ar.left;
+    }
+    if (maxheight) {
+      y = ar.top;
+      height = ar.bottom - ar.top;
+    }
+    printpos ("fin", x, y, ar);
+
+    SetWindowPos(wnd, NULL, x, y, width, height,
+      SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
+  }
+
   if (per_monitor_dpi_aware) {
-    if (x != (int)CW_USEDEFAULT) {
+    if (cfg.x != (int)CW_USEDEFAULT) {
       // The first SetWindowPos actually set x and y
       SetWindowPos(wnd, NULL, x, y, width, height,
         SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
@@ -1515,7 +1576,7 @@ main(int argc, char *argv[])
 
   // Correct autoplacement, which likes to put part of the window under the
   // taskbar when the window size approaches the work area size.
-  if (x == (int)CW_USEDEFAULT) {
+  if (cfg.x == (int)CW_USEDEFAULT) {
     win_fix_position();
   }
 
