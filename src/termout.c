@@ -968,21 +968,21 @@ do_dcs(void)
 }
 
 static void
-do_colour_osc(bool has_index_arg, uint i)
+do_colour_osc(bool has_index_arg, uint i, bool reset)
 {
   char *s = term.cmd_buf;
   if (has_index_arg) {
     int osc = i;
     int len = 0;
     sscanf(s, "%u;%n", &i, &len);
-    if (!len || i >= COLOUR_NUM)
+    if ((reset ? len != 0 : len == 0) || i >= COLOUR_NUM)
       return;
     s += len;
-    if (osc == 5) {
+    if (osc % 100 == 5) {
       if (i == 0)
         i = BOLD_FG_COLOUR_I;
         // should we also flag that bold colour has been set explicitly 
-        // so it isn't overriden when setting foreground colour?
+        // so it isn't overridden when setting foreground colour?
 #ifdef other_color_substitutes
       else if (i == 1)
         i = UNDERLINE_FG_COLOUR_I;
@@ -998,7 +998,9 @@ do_colour_osc(bool has_index_arg, uint i)
     }
   }
   colour c;
-  if (!strcmp(s, "?")) {
+  if (reset)
+    win_set_colour(i, (colour)-1);
+  else if (!strcmp(s, "?")) {
     child_printf("\e]%u;", term.cmd_num);
     if (has_index_arg)
       child_printf("%u;", i);
@@ -1021,11 +1023,13 @@ do_cmd(void)
   switch (term.cmd_num) {
     when -1: do_dcs();
     when 0 or 2: win_set_title(s);  // ignore icon title
-    when 4:  do_colour_osc(true, 4);
-    when 5:  do_colour_osc(true, 5);
-    when 10: do_colour_osc(false, FG_COLOUR_I);
-    when 11: do_colour_osc(false, BG_COLOUR_I);
-    when 12: do_colour_osc(false, CURSOR_COLOUR_I);
+    when 4:   do_colour_osc(true, 4, false);
+    when 5:   do_colour_osc(true, 5, false);
+    when 104: do_colour_osc(true, 4, true);
+    when 105: do_colour_osc(true, 5, true);
+    when 10:  do_colour_osc(false, FG_COLOUR_I, false);
+    when 11:  do_colour_osc(false, BG_COLOUR_I, false);
+    when 12:  do_colour_osc(false, CURSOR_COLOUR_I, false);
     when 701:  // Set/get locale (from urxvt).
       if (!strcmp(s, "?"))
         child_printf("\e]701;%s\e\\", cs_get_locale());
