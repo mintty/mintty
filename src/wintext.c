@@ -83,6 +83,7 @@ static bool font_dualwidth;
 bool font_ambig_wide;
 
 COLORREF colours[COLOUR_NUM];
+static bool bold_colour_selected = false;
 
 static uint
 colour_dist(colour a, colour b)
@@ -829,12 +830,24 @@ win_set_colour(colour_i i, colour c)
 {
   if (i >= COLOUR_NUM)
     return;
+  if (c == (colour)-1) {
+    // ... reset to default ...
+    if (i == BOLD_FG_COLOUR_I) {
+      bold_colour_selected = false;
+      // prefer cfg.bold_colour
+      colours[BOLD_FG_COLOUR_I] = brighten(colours[FG_COLOUR_I]);
+    }
+    return;
+  }
   colours[i] = c;
   switch (i) {
     when FG_COLOUR_I:
       // should we make this conditional, 
       // unless bold colour has been set explicitly?
-      colours[BOLD_FG_COLOUR_I] = brighten(c);
+      if (!bold_colour_selected)
+        colours[BOLD_FG_COLOUR_I] = brighten(c);
+    when BOLD_FG_COLOUR_I:
+      bold_colour_selected = true;
     when BG_COLOUR_I:
       colours[BOLD_BG_COLOUR_I] = brighten(c);
     when CURSOR_COLOUR_I: {
