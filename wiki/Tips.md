@@ -214,6 +214,14 @@ echo -ne '\e]4;14;#40FFFF\a'  # bold cyan
 echo -ne '\e]4;15;#FFFFFF\a'  # bold white
 ```
 
+Different notations are accepted for colour specifications:
+* ```#RRGGBB``` (256 hex values, see examples above)
+* ```rrr,ggg,bbb``` (256 decimal values)
+* ```rgb:RR/GG/BB``` (256 hex values)
+* ```rgb:RRRR/GGGG/BBBB``` (65536 hex values)
+* *color-name* (using X11 color names, e.g. ```echo -ne '\e]10;bisque2\a'```)
+
+
 ## Ambiguous width setting ##
 
 A number of Unicode characters have an "ambiguous width" property due to 
@@ -227,6 +235,25 @@ not need to be CJK) and with a respective CJK font, e.g.:
 ```
 LC_ALL=zh_SG.utf8 mintty -o Font="MS Mincho" &
 ```
+
+
+## Passing arguments from an environment with different character set ##
+
+To pass non-ASCII parameters to a command run from mintty using a specific 
+character encoding, proper conversion must be crafted.
+See issue [issue #463](https://github.com/mintty/mintty/issues/463) 
+for a discussion.
+For example, for a desktop shortcut to start a GBK-encoded mintty 
+starting in a specific directory with a non-ASCII name, 
+use this command line as a shortcut target:
+
+```
+C:\cygwin\bin\mintty.exe -o Locale=C -o Charset=GBK /bin/bash -l -c "cd `echo D:/桌面 | iconv -f UTF-8`; exec bash"
+```
+
+So the initial shell, interpreting its ```cd``` parameters already in GBK 
+encoding, will see it properly converted.
+
 
 ## Running mintty stand-alone ##
 
