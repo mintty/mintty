@@ -129,7 +129,8 @@ $(bin): $(bins)
 	cp -f $@ .	# support simpler debugging and unchanged cygport
 	-du -b $@
 
--include $(wildcard *.d)
+#-include $(wildcard *.d)
+-include $(wildcard $(BINDIR)/*.d)
 
 #############################################################################
 # generate
@@ -177,7 +178,8 @@ $(html): ../docs/$(NAME).1
 	groff -t -man -Thtml $< > $@
 
 clean:
-	rm -rf *.d *.o $(NAME)*
+	#rm -rf *.d *.o $(NAME)*
+	rm -rf $(BINDIR)/*.d $(BINDIR)/*.o $(BINDIR)/$(NAME)*
 
 stripsupp=sed -e "/supportedOS/ s,>.*,>," -e t -e d
 defsupp=/usr/lib/default-manifest.o
