@@ -69,7 +69,7 @@ static const wchar linedraw_chars[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES] = {
   {0x00B7, '.'},                   // 0x7E '~' Centered dot
 };
 
-static enum {BOLD_NONE, BOLD_SHADOW, BOLD_FONT} bold_mode;
+static enum {/*unused*/BOLD_NONE, BOLD_SHADOW, BOLD_FONT} bold_mode;
 static enum {UND_LINE, UND_FONT} und_mode;
 static int descent;
 
@@ -575,13 +575,19 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr)
   }
   if (attr.attr & ATTR_BOLD && cfg.bold_as_colour) {
     if (fgi < 8) {
-      if (colours[fgi] != colours[fgi | 8])
-        apply_shadow = false;
+      apply_shadow = false;
+#ifdef enforce_bold
+      if (colours[fgi] == colours[fgi | 8])
+        apply_shadow = true;
+#endif
       fgi |= 8;     // (BLACK|...|WHITE)_I -> BOLD_(BLACK|...|WHITE)_I
     }
-    else if (fgi >= 256 && !cfg.bold_as_font) {
-      if (colours[fgi] != colours[fgi | 1])
-        apply_shadow = false;
+    else if (fgi >= 256 && fgi != TRUE_COLOUR && !cfg.bold_as_font) {
+      apply_shadow = false;
+#ifdef enforce_bold
+      if (colours[fgi] == colours[fgi | 1])
+        apply_shadow = true;
+#endif
       fgi |= 1;     // (FG|BG)_COLOUR_I -> BOLD_(FG|BG)_COLOUR_I
     }
   }
@@ -687,7 +693,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr)
   SetBkMode(dc, OPAQUE);
   ExtTextOutW(dc, xt, yt, eto_options | ETO_OPAQUE, &box, text, len, dxs);
 
- /* Shadow bold */
+ /* Shadow/Overstrike bold */
   if (apply_shadow && bold_mode == BOLD_SHADOW && (attr.attr & ATTR_BOLD)) {
     SetBkMode(dc, TRANSPARENT);
     ExtTextOutW(dc, xt + 1, yt, eto_options, &box, text, len, dxs);
