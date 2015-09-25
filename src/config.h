@@ -42,7 +42,7 @@ typedef struct {
 
 typedef struct {
   // Looks
-  colour fg_colour, bg_colour, cursor_colour;
+  colour fg_colour, bold_colour, bg_colour, cursor_colour;
   colour search_fg_colour, search_bg_colour, search_current_colour;
   char transparency;
   bool opaque_when_focused;

@@ -834,8 +834,10 @@ win_set_colour(colour_i i, colour c)
     // ... reset to default ...
     if (i == BOLD_FG_COLOUR_I) {
       bold_colour_selected = false;
-      // prefer cfg.bold_colour
-      colours[BOLD_FG_COLOUR_I] = brighten(colours[FG_COLOUR_I]);
+      if (cfg.bold_colour != (colour)-1)
+        colours[BOLD_FG_COLOUR_I] = cfg.bold_colour;
+      else
+        colours[BOLD_FG_COLOUR_I] = brighten(colours[FG_COLOUR_I]);
     }
     return;
   }
@@ -844,8 +846,12 @@ win_set_colour(colour_i i, colour c)
     when FG_COLOUR_I:
       // should we make this conditional, 
       // unless bold colour has been set explicitly?
-      if (!bold_colour_selected)
-        colours[BOLD_FG_COLOUR_I] = brighten(c);
+      if (!bold_colour_selected) {
+        if (cfg.bold_colour != (colour)-1)
+          colours[BOLD_FG_COLOUR_I] = cfg.bold_colour;
+        else
+          colours[BOLD_FG_COLOUR_I] = brighten(c);
+      }
     when BOLD_FG_COLOUR_I:
       bold_colour_selected = true;
     when BG_COLOUR_I:

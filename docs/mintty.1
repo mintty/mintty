@@ -1128,6 +1128,18 @@ or rgb:RR/GG/BB can be used as well. Also X11 color names are supported.
 \- \fBBoldWhite\fP=255,255,255
 
 .TP
+\fBBold substitution colour\fP
+The colour to be used instead of the bold attribute can be configured.
+The bold substitution colour is only applied if option BoldAsFont is false 
+and option BoldAsColour is true.
+The default is \fInone\fP, meaning that a brightened colour derived from 
+the effective foreground colour is used.
+The bold substitution colour can also be set and reset with the respective xterm OSC 
+control sequences.
+
+\- \fBBoldColour\fP=
+
+.TP
 \fBScrollback search colours\fP
 The highlighting colours of search matches can be configured.
 
