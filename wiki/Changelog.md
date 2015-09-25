@@ -1,24 +1,28 @@
-New Feature (thanks to Kai (twitter:@sixhundredns)):
+Major New Search Feature (thanks to Kai (twitter:@sixhundredns)):
   * Search scrollback buffer (#85); shortcuts Alt+F3 or Shift+Ctrl+H; configuration options.
 
 Window and Multi-Monitor support:
-  * Per-monitor DPI support (#470).
-  * Option -s accepts special values "maxwidth" or "maxheight" (#171).
-  * Options -p right and -p bottom to align window position (#288).
   * Option -p "# N" to select monitor (#288).
+  * Options -p right and -p bottom to align window position (#288).
+  * Option -s accepts special values "maxwidth" or "maxheight" (#171).
+  * Per-monitor DPI support (#470).
   * Fixed initial terminal size if reduced border is specified (#7).
   * Trying to enforce initial focus (#57).
   * New option ZoomFontWithWindow to disable Shift-coupled font-with-window zooming (#476).
 
-Terminal Features:
-  * Support X11 color names for colour specifications (options and OSC sequences).
+Bold attribute handline:
   * Support BoldAsColour without BoldAsFont for plain text (#468).
+  * New option BoldColour (#468, #478).
+  * Not enforcing bold-overstriking if bold colour explicitly redefined (#468, #478).
   * New xterm OSC sequence (5;0;rgb) to define colour for bold attribute (#468).
   * New xterm OSC sequence (105;0) to reset colour for bold attribute (#468).
+
+Other terminal features:
+  * Support X11 color names for colour specifications (options and OSC sequences).
   * Supporting xterm sequences to maximize window vertically/horizontally (#394).
   * New private OSC sequence to copy the window title to the clipboard (#303).
 
-Further Changes:
+Further changes:
   * New option -R to report window geometry on exit (~#477).
   * Changed action buttons in Options dialog; Apply does not save changes.
 
