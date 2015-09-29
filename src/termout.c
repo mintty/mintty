@@ -94,17 +94,17 @@ insert_char(int n)
 {
   int dir = (n < 0 ? -1 : +1);
   int m;
-  termline *line;
   term_cursor *curs = &term.curs;
+  termline *line = term.lines[curs->y];
+  int cols = min(line->cols, line->size);
 
   n = (n < 0 ? -n : n);
-  if (n > term.cols - curs->x)
-    n = term.cols - curs->x;
-  m = term.cols - curs->x - n;
+  if (n > cols - curs->x)
+    n = cols - curs->x;
+  m = cols - curs->x - n;
   term_check_boundary(curs->x, curs->y);
   if (dir < 0)
     term_check_boundary(curs->x + n, curs->y);
-  line = term.lines[curs->y];
   if (dir < 0) {
     for (int j = 0; j < m; j++)
       move_termchar(line, line->chars + curs->x + j,
@@ -859,11 +859,12 @@ do_csi(uchar c)
       win_set_chars(term.rows, arg0 ?: cfg.cols);
       term.selected = false;
     when 'X': {      /* ECH: write N spaces w/o moving cursor */
-      int n = min(arg0_def1, term.cols - curs->x);
+      termline *line = term.lines[curs->y];
+      int cols = min(line->cols, line->size);
+      int n = min(arg0_def1, cols - curs->x);
       int p = curs->x;
       term_check_boundary(curs->x, curs->y);
       term_check_boundary(curs->x + n, curs->y);
-      termline *line = term.lines[curs->y];
       while (n--)
         line->chars[p++] = term.erase_char;
     }

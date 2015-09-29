@@ -808,6 +808,8 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
 }
 
 
+#define inclpos(p, size) ((p).x == size ? ((p).x = 0, (p).y++, 1) : ((p).x++, 0))
+
 /*
  * Erase a large portion of the screen: the whole screen, or the
  * whole line, or parts thereof.
@@ -856,7 +858,8 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
   else {
     termline *line = term.lines[start.y];
     while (poslt(start, end)) {
-      if (start.x == term.cols) {
+      int cols = min(line->cols, line->size);
+      if (start.x == cols) {
         if (line_only)
           line->attr &= ~(LATTR_WRAPPED | LATTR_WRAPPED2);
         else
@@ -864,7 +867,7 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
       }
       else if (!selective || !(line->chars[start.x].attr.attr & ATTR_PROTECTED))
         line->chars[start.x] = term.erase_char;
-      if (incpos(start) && start.y < term.rows)
+      if (inclpos(start, cols) && start.y < term.rows)
         line = term.lines[start.y];
     }
   }

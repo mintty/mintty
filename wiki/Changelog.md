@@ -18,6 +18,7 @@ Bold attribute handline:
   * New xterm OSC sequence (105;0) to reset colour for bold attribute (#468).
 
 Other terminal features:
+  * Fixed character operations beyond terminal width (#480).
   * Support X11 color names for colour specifications (options and OSC sequences).
   * Supporting xterm sequences to maximize window vertically/horizontally (#394).
   * New private OSC sequence to copy the window title to the clipboard (#303).
