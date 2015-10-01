@@ -1027,13 +1027,23 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, &new_cfg.clicks_place_cursor
   );
 
-  s = ctrl_new_set(b, "Mouse", "Right click action");
+  s = ctrl_new_set(b, "Mouse", "Click actions");
   ctrl_radiobuttons(
-    s, null, 4,
+    s, "Right mouse button", 4,
     dlg_stdradiobutton_handler, &new_cfg.right_click_action,
     "&Paste", RC_PASTE,
     "E&xtend", RC_EXTEND,
-    "Show &menu", RC_MENU,
+    "&Menu", RC_MENU,
+    "Ente&r", RC_ENTER,
+    null
+  );
+  ctrl_radiobuttons(
+    s, "Middle mouse button", 4,
+    dlg_stdradiobutton_handler, &new_cfg.middle_click_action,
+    "&Paste", MC_PASTE,
+    "E&xtend", MC_EXTEND,
+    "&Nothing", MC_VOID,
+    "Ente&r", MC_ENTER,
     null
   );
 
