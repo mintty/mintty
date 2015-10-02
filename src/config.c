@@ -12,6 +12,8 @@
 #include <termios.h>
 #include <sys/cygwin.h>
 
+#define dont_debug_config
+
 #if CYGWIN_VERSION_API_MINOR >= 222
 static wstring rc_filename = 0;
 #else
@@ -530,15 +532,23 @@ parse_arg_option(string option)
 }
 
 void
-load_config(string filename)
+load_config(string filename, bool to_save)
 {
-  file_opts_num = arg_opts_num = 0;
+  if (access(filename, R_OK) == 0 && access(filename, W_OK) < 0)
+    to_save = false;
 
-  delete(rc_filename);
+  if (to_save) {
+    file_opts_num = arg_opts_num = 0;
+
+    delete(rc_filename);
 #if CYGWIN_VERSION_API_MINOR >= 222
-  rc_filename = cygwin_create_path(CCP_POSIX_TO_WIN_W, filename);
+    rc_filename = cygwin_create_path(CCP_POSIX_TO_WIN_W, filename);
 #else
-  rc_filename = strdup(filename);
+    rc_filename = strdup(filename);
+#endif
+  }
+#ifdef debug_config
+  printf ("will save to %s? %d\n", filename, to_save);
 #endif
 
   FILE *file = fopen(filename, "r");
@@ -548,7 +558,7 @@ load_config(string filename)
       line[strcspn(line, "\r\n")] = 0;  /* trim newline */
       if (line[0] != '#' && line[0] != '\0') {
         int i = parse_option(line);
-        if (i >= 0)
+        if (to_save && i >= 0)
           remember_file_option(i);
       }
     }
@@ -974,10 +984,15 @@ setup_config_box(controlbox * b)
   * The Keys panel.
   */
   s = ctrl_new_set(b, "Keys", null);
+  ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
-    s, "&Backspace sends ^H",
+    s, "&Backarrow sends ^H",
     dlg_stdcheckbox_handler, &new_cfg.backspace_sends_bs
-  );
+  )->column = 0;
+  ctrl_checkbox(
+    s, "&Delete sends DEL",
+    dlg_stdcheckbox_handler, &new_cfg.delete_sends_del
+  )->column = 1;
   ctrl_checkbox(
     s, "Ctrl+LeftAlt is Alt&Gr",
     dlg_stdcheckbox_handler, &new_cfg.ctrl_alt_is_altgr
