@@ -13,7 +13,7 @@ Features include:
 * Extensive mouse support.
 * Window transparency."
 
-HOMEPAGE="http://mintty.github.io"
+HOMEPAGE="http://mintty.github.io/"
 SRC_URI="https://github.com/${NAME}/release/${NAME}-${VERSION}-src.tar.bz2"
 
 DEPEND="gcc-core make"
@@ -28,7 +28,7 @@ src_compile() {
 
 src_install() {
   cd ${B}
-  dobin src/mintty.exe
+  dobin bin/mintty.exe
   doman docs/mintty.1
   dodoc COPYING LICENSE.Oxygen LICENSE.PuTTY
   dodoc cygwin/README cygwin/setup.hint

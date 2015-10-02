@@ -20,8 +20,9 @@ NAME := mintty
 
 .PHONY: exe src pkg zip pdf clean
 
-#BINDIR = ../bin/$(TARGET)
-BINDIR = ../bin/$(platform)
+BINFOLDER = ../bin
+#BINDIR = $(BINFOLDER)/$(TARGET)
+BINDIR = $(BINFOLDER)/$(platform)
 
 ifdef TARGET
   CC := $(TARGET)-gcc
@@ -113,6 +114,7 @@ $(BINDIR)/%.o: %.c
 
 $(BINDIR)/%.o: %.rc %.mft
 	$(RC) --preprocessor '$(CC) -E -xc -DRC_INVOKED $(DEPOPT) $(CPPFLAGS)' $< $(BINDIR)/$*.o
+	-mv $*.d $(BINDIR)/
 
 exe := $(NAME).exe
 exe: $(exe)
@@ -126,7 +128,8 @@ $(BINDIR):
 	mkdir -p $(BINDIR)
 $(bin): $(bins)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
-	cp -f $@ .	# support simpler debugging and unchanged cygport
+	cp -f $@ $(BINFOLDER)/		# for 'dobin' install in .cygport
+	-test -f `basename $@` && cp -f $@ ./	# support simpler debugging
 	-du -b $@
 
 #-include $(wildcard *.d)
