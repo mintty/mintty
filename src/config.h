@@ -22,7 +22,7 @@ enum { DEFAULT_COLOUR = UINT_MAX };
 static inline colour
 make_colour(uchar r, uchar g, uchar b) { return r | g << 8 | b << 16; }
 
-bool parse_colour(string, colour *);
+extern bool parse_colour(string, colour *);
 
 static inline uchar red(colour c) { return c; }
 static inline uchar green(colour c) { return c >> 8; }
@@ -122,12 +122,12 @@ typedef struct {
 
 extern config cfg, new_cfg;
 
-void init_config(void);
-void load_config(string filename);
-void set_arg_option(string name, string val);
-void parse_arg_option(string);
-void remember_arg(string);
-void finish_config(void);
-void copy_config(config *dst, const config *src);
+extern void init_config(void);
+extern void load_config(string filename, bool to_save);
+extern void set_arg_option(string name, string val);
+extern void parse_arg_option(string);
+extern void remember_arg(string);
+extern void finish_config(void);
+extern void copy_config(config *dst, const config *src);
 
 #endif
