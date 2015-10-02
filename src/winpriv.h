@@ -21,37 +21,37 @@ extern LOGFONT lfont;
 extern int font_size;
 extern int font_width, font_height;
 
+extern bool win_is_fullscreen;
+
 enum { PADDING = 1 };
 
-void win_paint(void);
+extern void win_paint(void);
 
-void win_init_fonts(int size);
+extern void win_init_fonts(int size);
 
-void win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size);
+extern void win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size);
 
-void win_open_config(void);
+extern void win_open_config(void);
 
-void win_show_tip(int x, int y, int cols, int rows);
-void win_destroy_tip(void);
+extern void win_show_tip(int x, int y, int cols, int rows);
+extern void win_destroy_tip(void);
 
-void win_init_menus(void);
-void win_update_menus(void);
+extern void win_init_menus(void);
+extern void win_update_menus(void);
 
-void win_show_mouse(void);
-void win_mouse_click(mouse_button, LPARAM);
-void win_mouse_release(mouse_button, LPARAM);
-void win_mouse_wheel(WPARAM, LPARAM);
-void win_mouse_move(bool nc, LPARAM);
+extern void win_show_mouse(void);
+extern void win_mouse_click(mouse_button, LPARAM);
+extern void win_mouse_release(mouse_button, LPARAM);
+extern void win_mouse_wheel(WPARAM, LPARAM);
+extern void win_mouse_move(bool nc, LPARAM);
 
-bool win_key_down(WPARAM, LPARAM);
-bool win_key_up(WPARAM, LPARAM);
+extern bool win_key_down(WPARAM, LPARAM);
+extern bool win_key_up(WPARAM, LPARAM);
 
-void win_init_drop_target(void);
+extern void win_init_drop_target(void);
 
-void win_switch(bool back, bool alternate);
+extern void win_switch(bool back, bool alternate);
 
-void win_set_ime_open(bool);
-
-bool win_is_fullscreen;
+extern void win_set_ime_open(bool);
 
 #endif
