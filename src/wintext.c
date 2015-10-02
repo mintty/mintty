@@ -94,23 +94,58 @@ colour_dist(colour a, colour b)
     1 * sqr(blue(a) - blue(b));
 }
 
+#define dont_debug_brighten
+
 static colour
-brighten(colour c)
+brighten(colour c, colour against)
 {
   uint r = red(c), g = green(c), b = blue(c);
+  // "brighten" away from the background:
+  // if we are closer to black than the contrast reference, rather darken
+  bool darken = colour_dist(c, 0) < colour_dist(against, 0);
+#ifdef debug_brighten
+  printf ("bright %06X against %06X\n", c, against);
+#endif
 
-  uint s = min(85, 255 - max(max(r, g), b));
-  colour bright = make_colour(r + s, g + s, b + s);
-#ifdef debug_brighten
-  printf ("old bright %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
-#endif
-  if (colour_dist(c, bright) < 22222) {
-    int sub = 70;
-    bright = make_colour(max(0, (int)r - sub), max(0, (int)g - sub), max(0, (int)b - sub));
-#ifdef debug_brighten
-    printf ("fix bright %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
-#endif
+  uint _brighter() {
+    uint s = min(85, 255 - max(max(r, g), b));
+    return make_colour(r + s, g + s, b + s);
   }
+  uint _darker() {
+    int sub = 70;
+    return make_colour(max(0, (int)r - sub), max(0, (int)g - sub), max(0, (int)b - sub));
+  }
+
+  colour bright;
+  uint thrsh = 22222;  // contrast threshhold;
+                       // if we're closer to either fg or bg,
+                       // turn "brightening" into the other direction
+
+  if (darken) {
+    bright = _darker();
+#ifdef debug_brighten
+    printf ("darken %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
+#endif
+    if (colour_dist(bright, c) < thrsh || colour_dist(bright, against) < thrsh) {
+      bright = _brighter();
+#ifdef debug_brighten
+      printf ("   fix %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
+#endif
+    }
+  }
+  else {
+    bright = _brighter();
+#ifdef debug_brighten
+    printf ("bright %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
+#endif
+    if (colour_dist(bright, c) < thrsh || colour_dist(bright, against) < thrsh) {
+      bright = _darker();
+#ifdef debug_brighten
+      printf ("   fix %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
+#endif
+    }
+  }
+
   return bright;
 }
 
@@ -843,11 +878,14 @@ win_set_colour(colour_i i, colour c)
       if (cfg.bold_colour != (colour)-1)
         colours[BOLD_FG_COLOUR_I] = cfg.bold_colour;
       else
-        colours[BOLD_FG_COLOUR_I] = brighten(colours[FG_COLOUR_I]);
+        colours[BOLD_FG_COLOUR_I] = brighten(colours[FG_COLOUR_I], colours[BG_COLOUR_I]);
     }
     return;
   }
   colours[i] = c;
+#ifdef debug_brighten
+  printf ("colours[%d] = %06X\n", i, c);
+#endif
   switch (i) {
     when FG_COLOUR_I:
       // should we make this conditional, 
@@ -855,13 +893,18 @@ win_set_colour(colour_i i, colour c)
       if (!bold_colour_selected) {
         if (cfg.bold_colour != (colour)-1)
           colours[BOLD_FG_COLOUR_I] = cfg.bold_colour;
-        else
-          colours[BOLD_FG_COLOUR_I] = brighten(c);
+        else {
+          colours[BOLD_FG_COLOUR_I] = brighten(c, colours[BG_COLOUR_I]);
+          // renew this too as brighten() may refer to contrast colour:
+          colours[BOLD_BG_COLOUR_I] = brighten(colours[BG_COLOUR_I], colours[FG_COLOUR_I]);
+        }
       }
     when BOLD_FG_COLOUR_I:
       bold_colour_selected = true;
     when BG_COLOUR_I:
-      colours[BOLD_BG_COLOUR_I] = brighten(c);
+      colours[BOLD_BG_COLOUR_I] = brighten(c, colours[FG_COLOUR_I]);
+      // renew this too as brighten() may refer to contrast colour:
+      colours[BOLD_FG_COLOUR_I] = brighten(colours[FG_COLOUR_I], colours[BG_COLOUR_I]);
     when CURSOR_COLOUR_I: {
       // Set the colour of text under the cursor to whichever of foreground
       // and background colour is further away from the cursor colour.
