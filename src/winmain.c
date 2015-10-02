@@ -19,6 +19,10 @@
 #include <shellapi.h>
 
 #include <sys/cygwin.h>
+#if WINVER >= 0x601
+#include <propsys.h>
+#include <propkey.h>
+#endif
 
 HINSTANCE inst;
 HWND wnd;
@@ -56,6 +60,10 @@ typedef struct {
   int cyTopHeight;
   int cyBottomHeight;
 } MARGINS;
+
+#else
+
+#include <uxtheme.h>
 
 #endif
 
@@ -1570,6 +1578,58 @@ main(int argc, char *argv[])
     SetWindowPos(wnd, null, 0, 0, 0, 0,
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
   }
+
+#if WINVER >= 0x601
+  // Set the app ID explicitly, as well as the relaunch command and display name
+  if (*cfg.app_id || *cfg.relaunch_command || *cfg.relaunch_display_name) {
+    HMODULE shell = load_sys_library("shell32.dll");
+    HRESULT (WINAPI *pGetPropertyStore)(HWND hwnd, REFIID riid, void **ppv) =
+      (void *)GetProcAddress(shell, "SHGetPropertyStoreForWindow");
+
+    if (pGetPropertyStore) {
+      size_t size;
+      IPropertyStore *pps;
+      HRESULT hr;
+      PROPVARIANT var;
+
+      hr = pGetPropertyStore(wnd, &IID_IPropertyStore, (void **) &pps);
+      if (SUCCEEDED(hr)) {
+        if (*cfg.app_id &&
+            (size = cs_mbstowcs(0, cfg.app_id, 0) + 1)) {
+          var.pwszVal = malloc(size * sizeof(wchar));
+          if (var.pwszVal) {
+            cs_mbstowcs(var.pwszVal, cfg.app_id, size);
+            var.vt = VT_LPWSTR;
+            pps->lpVtbl->SetValue(pps,
+                &PKEY_AppUserModel_ID, &var);
+          }
+        }
+        if (*cfg.relaunch_command &&
+            (size = cs_mbstowcs(0, cfg.relaunch_command, 0) + 1)) {
+          var.pwszVal = malloc(size * sizeof(wchar));
+          if (var.pwszVal) {
+            cs_mbstowcs(var.pwszVal, cfg.relaunch_command, size);
+            var.vt = VT_LPWSTR;
+            pps->lpVtbl->SetValue(pps,
+                &PKEY_AppUserModel_RelaunchCommand, &var);
+          }
+        }
+        if (*cfg.relaunch_display_name &&
+            (size = cs_mbstowcs(0, cfg.relaunch_display_name, 0) + 1)) {
+          var.pwszVal = malloc(size * sizeof(wchar));
+          if (var.pwszVal) {
+            cs_mbstowcs(var.pwszVal, cfg.relaunch_display_name, size);
+            var.vt = VT_LPWSTR;
+            pps->lpVtbl->SetValue(pps,
+                &PKEY_AppUserModel_RelaunchDisplayNameResource, &var);
+          }
+        }
+        pps->lpVtbl->Commit(pps);
+        pps->lpVtbl->Release(pps);
+      }
+    }
+  }
+#endif
 
   // The input method context.
   imc = ImmGetContext(wnd);

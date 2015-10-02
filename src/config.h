@@ -110,7 +110,7 @@ typedef struct {
   int x, y;
   bool daemonize;
   // "Hidden"
-  string app_id;
+  string app_id, relaunch_command, relaunch_display_name;
   int col_spacing, row_spacing;
   string word_chars;
   string word_chars_excl;
