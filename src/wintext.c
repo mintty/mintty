@@ -103,7 +103,6 @@ brighten(colour c, colour against)
   // "brighten" away from the background:
   // if we are closer to black than the contrast reference, rather darken
   bool darken = colour_dist(c, 0) < colour_dist(against, 0);
-  darken = false;
 #ifdef debug_brighten
   printf ("%s %06X against %06X\n", darken ? "darkening" : "brighting", c, against);
 #endif
@@ -130,7 +129,7 @@ brighten(colour c, colour against)
     if (colour_dist(bright, c) < thrsh || colour_dist(bright, against) < thrsh) {
       bright = _brighter();
 #ifdef debug_brighten
-      printf ("   fix %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
+      printf ("   fix %06X -> %06X dist %d/%d\n", c, bright, colour_dist(bright, c), colour_dist(bright, against));
 #endif
     }
   }
@@ -142,7 +141,7 @@ brighten(colour c, colour against)
     if (colour_dist(bright, c) < thrsh || colour_dist(bright, against) < thrsh) {
       bright = _darker();
 #ifdef debug_brighten
-      printf ("   fix %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
+      printf ("   fix %06X -> %06X dist %d/%d\n", c, bright, colour_dist(bright, c), colour_dist(bright, against));
 #endif
     }
   }
