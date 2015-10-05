@@ -103,8 +103,9 @@ brighten(colour c, colour against)
   // "brighten" away from the background:
   // if we are closer to black than the contrast reference, rather darken
   bool darken = colour_dist(c, 0) < colour_dist(against, 0);
+  darken = false;
 #ifdef debug_brighten
-  printf ("bright %06X against %06X\n", c, against);
+  printf ("%s %06X against %06X\n", darken ? "darkening" : "brighting", c, against);
 #endif
 
   uint _brighter() {
@@ -124,7 +125,7 @@ brighten(colour c, colour against)
   if (darken) {
     bright = _darker();
 #ifdef debug_brighten
-    printf ("darken %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
+    printf ("darker %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
 #endif
     if (colour_dist(bright, c) < thrsh || colour_dist(bright, against) < thrsh) {
       bright = _brighter();
@@ -136,7 +137,7 @@ brighten(colour c, colour against)
   else {
     bright = _brighter();
 #ifdef debug_brighten
-    printf ("bright %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
+    printf ("lightr %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
 #endif
     if (colour_dist(bright, c) < thrsh || colour_dist(bright, against) < thrsh) {
       bright = _darker();
@@ -902,9 +903,15 @@ win_set_colour(colour_i i, colour c)
     when BOLD_FG_COLOUR_I:
       bold_colour_selected = true;
     when BG_COLOUR_I:
-      colours[BOLD_BG_COLOUR_I] = brighten(c, colours[FG_COLOUR_I]);
-      // renew this too as brighten() may refer to contrast colour:
-      colours[BOLD_FG_COLOUR_I] = brighten(colours[FG_COLOUR_I], colours[BG_COLOUR_I]);
+      if (!bold_colour_selected) {
+        if (cfg.bold_colour != (colour)-1)
+          colours[BOLD_FG_COLOUR_I] = cfg.bold_colour;
+        else {
+          colours[BOLD_BG_COLOUR_I] = brighten(c, colours[FG_COLOUR_I]);
+          // renew this too as brighten() may refer to contrast colour:
+          colours[BOLD_FG_COLOUR_I] = brighten(colours[FG_COLOUR_I], colours[BG_COLOUR_I]);
+        }
+      }
     when CURSOR_COLOUR_I: {
       // Set the colour of text under the cursor to whichever of foreground
       // and background colour is further away from the cursor colour.
