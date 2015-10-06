@@ -14,6 +14,7 @@ Bold attribute handline:
   * Support BoldAsColour without BoldAsFont for plain text (#468).
   * New option BoldColour (#468, #478).
   * Not enforcing bold-overstriking if bold colour explicitly redefined (#468, #478).
+  * Tweaked smart brightening (for BoldAsColour), considering contrast to both normal colour and background.
   * New xterm OSC sequence (5;0;rgb) to define colour for bold attribute (#468).
   * New xterm OSC sequence (105;0) to reset colour for bold attribute (#468).
 
@@ -23,9 +24,11 @@ Other terminal features:
   * Supporting xterm sequences to maximize window vertically/horizontally (#394).
   * New private OSC sequence to copy the window title to the clipboard (#303).
 
-Further changes:
-  * New option -R to report window geometry on exit (~#477).
+Configuration:
+  * New option -C to load additional configuration file without saving to it, particularly for use with colour schemes.
+  * Added some Options menu configuration items (for previously introduced new options).
   * Changed action buttons in Options dialog; Apply does not save changes.
+  * New option -R to report window geometry on exit (~#477).
 
 ### 2.1.5 (19 Aug 2015) ###
   * Guard Shift-Ctrl-0 detection (#233) to avoid interference with keyboard switchers (#472).

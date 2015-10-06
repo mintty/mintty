@@ -148,7 +148,7 @@ It's a historical flaw of Unix terminals that the keycode of the escape key, i.e
 
 Therefore they tend to employ a timeout to decide. The delay on the escape key can be annoying though, particularly with the mode-dependent cursor above enabled.  The timeout approach can also fail on slow connections or a heavily loaded machine.
 
-Mintty's "application escape key mode" can be used to avoid this by switching the escape key to an unambiguous keycode. Add the following to _~/.vimrc_ to employ it in vim:
+Mintty's “application escape key mode” can be used to avoid this by switching the escape key to an unambiguous keycode. Add the following to _~/.vimrc_ to employ it in vim:
 
 ```
 let &t_ti.="\e[?7727h"
@@ -176,7 +176,7 @@ bindkey "^[[1;6I" prev
 
 ## Compose key ##
 
-Mintty uses the Windows keyboard layout system with its "dead key" mechanism for entering accented characters. X11, on the other hand, has the compose key mechanism for this purpose. The open source **[AllChars](http://allchars.zwolnet.com)** utility can be used to emulate that approach on Windows.
+Mintty uses the Windows keyboard layout system with its “dead key” mechanism for entering accented characters. X11, on the other hand, has the compose key mechanism for this purpose. The open source **[AllChars](http://allchars.zwolnet.com)** utility can be used to emulate that approach on Windows.
 
 
 ## Changing colours ##
@@ -222,9 +222,38 @@ Different notations are accepted for colour specifications:
 * *color-name* (using X11 color names, e.g. ```echo -ne '\e]10;bisque2\a'```)
 
 
+## Using colour schemes ##
+
+Colour schemes (that redefine ANSI colours and possibly foreground/background 
+colours) can be loaded with the option ```-C``` (capital C) or ```--loadconfig``` 
+which loads a configuration file read-only, i.e. configuration changes 
+are not saved to this file.
+
+There is an excellent colour scheme designer available:
+[4bit Terminal Color Scheme Designer](http://ciembor.github.io/4bit/#) 
+which lets you download a tuned colour scheme (top-right button “Get Scheme”).
+A number of colour schemes have been published for mintty, e.g.
+https://github.com/oumu/mintty-color-schemes or
+https://github.com/mavnn/mintty-colors-solarized .
+
+
+## Providing fonts ##
+
+To provide additional fonts for use with mintty, monospace fonts can be 
+installed in Windows. Note that font installation in X11 does not make 
+a font available for mintty as mintty is not an X windows application.
+Some monospace fonts are not explicitly marked as such in the font file.
+In that case the font will not be listed in the mintty Options – Text – Font 
+selection menu. It can still be used by explicit selection, e.g.:
+
+```
+mintty -o Font="Linux Libertine Mono"
+```
+
+
 ## Ambiguous width setting ##
 
-A number of Unicode characters have an "ambiguous width" property due to 
+A number of Unicode characters have an “ambiguous width” property due to 
 legacy issues with dedicated CJK fonts, meaning they can be narrow 
 (single-cell width) or wide (double-cell width) in a terminal.
 
@@ -241,7 +270,7 @@ LC_ALL=zh_SG.utf8 mintty -o Font="MS Mincho" &
 
 To pass non-ASCII parameters to a command run from mintty using a specific 
 character encoding, proper conversion must be crafted.
-See issue [issue #463](https://github.com/mintty/mintty/issues/463) 
+See [issue #463](https://github.com/mintty/mintty/issues/463) 
 for a discussion.
 For example, for a desktop shortcut to start a GBK-encoded mintty 
 starting in a specific directory with a non-ASCII name, 
