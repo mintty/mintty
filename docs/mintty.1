@@ -264,8 +264,11 @@ ZoomShortcuts=no or ZoomMouse=no.
 
 The usual windows function to drag on the window border resizes the terminal.
 If Shift is also held while resizing, the font will be scaled along with 
-the resizing, unless disabled with ZoomFontWithWindow=false.
-Note that due to the different height/width factors, this is not a precise operation.
+the resizing, unless disabled with ZoomFontWithWindow=false 
+(which would help to avoid interference with certain shifted hotkeys configured 
+to resize the window).
+Note that due to the different height/width factors, coupled font zooming 
+is not a precise operation.
 
 
 .SS DPI change
@@ -308,9 +311,15 @@ It can be accessed using the scrollbar, the mouse wheel, or the keyboard.
 Hold the \fBShift\fP key while pressing the \fBUp\fP and \fBDown\fP arrow keys
 to scroll line-by-line or the \fBPageUp\fP and \fBPageDown\fP keys to scroll
 page-by-page.
+
+
+.SS Searching in the text and scrollback buffer
+
 Alt-F3 opens a search bar with an input field for a search string. Matches are 
 highlighted in the scrollback buffer. Enter/Shift+Enter find the next/previous 
 position of the match and scrolls the scrollback buffer accordingly.
+The appearance of the search bar and the matching highlight colours can be 
+customized.
 
 
 .SS Flip screen
