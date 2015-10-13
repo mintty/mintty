@@ -20,6 +20,12 @@
 
 #include <sys/cygwin.h>
 
+#if CYGWIN_VERSION_DLL_MAJOR >= 1007
+#include <propsys.h>
+#include <propkey.h>
+#endif
+
+
 HINSTANCE inst;
 HWND wnd;
 HIMC imc;
@@ -48,7 +54,8 @@ static bool left = false;
 static bool top = false;
 static bool maxwidth = false;
 static bool maxheight = false;
-static bool setup_properties = false;
+static bool store_taskbar_properties = false;
+static bool prevent_pinning = false;
 
 static HBITMAP caretbm;
 
@@ -114,7 +121,7 @@ load_shcore_funcs(void)
 {
   HMODULE shc = load_sys_library("shcore.dll");
 #ifdef debug_dpi
-  printf ("load_shcore_funcs shc %d\n", !!shc);
+  printf("load_shcore_funcs shc %d\n", !!shc);
 #endif
   if (shc) {
     pGetProcessDpiAwareness =
@@ -122,7 +129,7 @@ load_shcore_funcs(void)
     pSetProcessDpiAwareness =
       (void *)GetProcAddress(shc, "SetProcessDpiAwareness");
 #ifdef debug_dpi
-      printf ("SetProcessDpiAwareness %d GetProcessDpiAwareness %d\n", !!pSetProcessDpiAwareness, !!pGetProcessDpiAwareness);
+      printf("SetProcessDpiAwareness %d GetProcessDpiAwareness %d\n", !!pSetProcessDpiAwareness, !!pGetProcessDpiAwareness);
 #endif
   }
 }
@@ -788,6 +795,7 @@ confirm_exit(void)
 }
 
 #define dont_debug_windows_messages
+#define dont_debug_windows_mouse_messages
 
 static LRESULT CALLBACK
 win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
@@ -805,10 +813,14 @@ static struct {
       wm_name = wm_names[i].wm_name;
       break;
     }
-  if (message != WM_TIMER && message != WM_NCHITTEST && message != WM_MOUSEMOVE && message != WM_SETCURSOR && message != WM_NCMOUSEMOVE
-      && (message != WM_KEYDOWN || !(lp & 0x40000000))
+  if ((message != WM_KEYDOWN || !(lp & 0x40000000))
+      && message != WM_TIMER && message != WM_NCHITTEST
+#ifndef debug_windows_mouse_messages
+      && message != WM_SETCURSOR
+      && message != WM_MOUSEMOVE && message != WM_NCMOUSEMOVE
+#endif
      )
-    printf ("[%d] win_proc %04X %s (%04X %08X)\n", (int)time(0), message, wm_name, (unsigned)wp, (unsigned)lp);
+    printf("[%d] win_proc %04X %s (%04X %08X)\n", (int)time(0), message, wm_name, (unsigned)wp, (unsigned)lp);
 #endif
   switch (message) {
     when WM_TIMER: {
@@ -1014,7 +1026,7 @@ static struct {
       return 0;
     when WM_DPICHANGED:
 #ifdef debug_dpi
-      printf ("WM_DPICHANGED %d\n", per_monitor_dpi_aware);
+      printf("WM_DPICHANGED %d\n", per_monitor_dpi_aware);
 #endif
       if (per_monitor_dpi_aware) {
         LPRECT r = (LPRECT) lp;
@@ -1082,7 +1094,8 @@ opts[] = {
   {"help",       no_argument,       0, 'H'},
   {"version",    no_argument,       0, 'V'},
   {"nodaemon",   no_argument,       0, 'd'},
-  {"properties", no_argument,       0, ''},  // short option not enabled
+  {"nopin",      no_argument,       0, ''},  // short option not enabled
+  {"store-taskbar-properties", no_argument, 0, ''},  // no short option
   {0, 0, 0, 0}
 };
 
@@ -1159,9 +1172,159 @@ exit_mintty()
 }
 
 static void
-configure_properties()
+configure_taskbar()
 {
-  // insert patch #471 here if desired
+#ifdef patch_jumplist
+#include "jumplist.h"
+  char ** jump_list_title = {
+    "title1", "", "", "mä€", "", "", "", "", "", "", 
+  };
+  char ** jump_list_cmd = {
+    "-o Rows=15", "-o Rows=20", "", "-t mö€", "", "", "", "", "", "", 
+  };
+  setup_jumplist(jump_list_title, jump_list_cmd);
+#endif
+
+#if CYGWIN_VERSION_DLL_MAJOR >= 1007
+  // patch #471 ... expanded
+  const char * app_id = cfg.app_id;
+  const char * relaunch_icon = cfg.icon;
+  const char * relaunch_display_name = cfg.app_name;
+  const char * relaunch_command = cfg.app_launch_cmd;
+
+#define dont_debug_properties
+
+  // If an icon is configured but no app_id, we can derive one from the 
+  // icon in order to enable proper taskbar grouping by common icon.
+  if (relaunch_icon && *relaunch_icon && (!app_id || !*app_id)) {
+    const char * iconbasename = strrchr(cfg.icon, '/');
+    if (iconbasename)
+      iconbasename ++;
+    else {
+      iconbasename = strrchr(cfg.icon, '\\');
+      if (iconbasename)
+        iconbasename ++;
+      else
+        iconbasename = cfg.icon;
+    }
+    char * derived_app_id = malloc(strlen(iconbasename) + 7 + 1);
+    strcpy(derived_app_id, "Mintty.");
+    strcat(derived_app_id, iconbasename);
+    app_id = derived_app_id;
+  }
+  // If app_name is configured but no app_launch_cmd, we need an app_id 
+  // to make app_name effective as taskbar title, so invent one.
+  if (relaunch_display_name && *relaunch_display_name && 
+      (!app_id || !*app_id)) {
+    app_id = "Mintty.AppID";
+  }
+
+  // Set the app ID explicitly, as well as the relaunch command and display name
+  if (prevent_pinning || (app_id && *app_id)) {
+    HMODULE shell = load_sys_library("shell32.dll");
+    HRESULT (WINAPI *pGetPropertyStore)(HWND hwnd, REFIID riid, void **ppv) =
+      (void *)GetProcAddress(shell, "SHGetPropertyStoreForWindow");
+#ifdef debug_properties
+      printf("SHGetPropertyStoreForWindow linked %d\n", !!pGetPropertyStore);
+#endif
+    if (pGetPropertyStore) {
+      size_t size;
+      IPropertyStore *pps;
+      HRESULT hr;
+      PROPVARIANT var;
+
+      hr = pGetPropertyStore(wnd, &IID_IPropertyStore, (void **) &pps);
+#ifdef debug_properties
+      printf("IPropertyStore found %d\n", SUCCEEDED(hr));
+#endif
+      if (SUCCEEDED(hr)) {
+        // doc: https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459%28v=vs.85%29.aspx
+        // def: typedef struct tagPROPVARIANT PROPVARIANT: propidl.h
+        // def: enum VARENUM (VT_*): wtypes.h
+        // def: PKEY_*: propkey.h
+        if (relaunch_command && *relaunch_command && store_taskbar_properties
+            && (size = cs_mbstowcs(0, relaunch_command, 0) + 1)) {
+          var.pwszVal = malloc(size * sizeof(wchar));
+          if (var.pwszVal) {
+#ifdef debug_properties
+            printf("AppUserModel_RelaunchCommand=%s\n", relaunch_command);
+#endif
+            cs_mbstowcs(var.pwszVal, relaunch_command, size);
+            var.vt = VT_LPWSTR;
+            pps->lpVtbl->SetValue(pps,
+                &PKEY_AppUserModel_RelaunchCommand, &var);
+          }
+        }
+        if (relaunch_display_name && *relaunch_display_name &&
+            (size = cs_mbstowcs(0, relaunch_display_name, 0) + 1)) {
+          var.pwszVal = malloc(size * sizeof(wchar));
+          if (var.pwszVal) {
+#ifdef debug_properties
+            printf("AppUserModel_RelaunchDisplayNameResource=%s\n", relaunch_display_name);
+#endif
+            cs_mbstowcs(var.pwszVal, relaunch_display_name, size);
+            var.vt = VT_LPWSTR;
+            pps->lpVtbl->SetValue(pps,
+                &PKEY_AppUserModel_RelaunchDisplayNameResource, &var);
+          }
+        }
+        if (relaunch_icon && *relaunch_icon &&
+            (size = cs_mbstowcs(0, relaunch_icon, 0) + 1)) {
+          var.pwszVal = malloc(size * sizeof(wchar));
+          if (var.pwszVal) {
+#ifdef debug_properties
+            printf("AppUserModel_RelaunchIconResource=%s\n", relaunch_icon);
+#endif
+            cs_mbstowcs(var.pwszVal, relaunch_icon, size);
+            var.vt = VT_LPWSTR;
+            pps->lpVtbl->SetValue(pps,
+                &PKEY_AppUserModel_RelaunchIconResource, &var);
+          }
+        }
+        if (prevent_pinning) {
+          var.boolVal = VARIANT_TRUE;
+#ifdef debug_properties
+          printf("AppUserModel_PreventPinning=%d\n", var.boolVal);
+#endif
+          var.vt = VT_BOOL;
+          // PreventPinning must be set before setting ID
+          pps->lpVtbl->SetValue(pps,
+              &PKEY_AppUserModel_PreventPinning, &var);
+        }
+#ifdef set_userpinned
+DEFINE_PROPERTYKEY(PKEY_AppUserModel_StartPinOption, 0x9f4c2855,0x9f79,0x4B39,0xa8,0xd0,0xe1,0xd4,0x2d,0xe1,0xd5,0xf3,12);
+#define APPUSERMODEL_STARTPINOPTION_USERPINNED 2
+#warning needs Windows 8/10 to build...
+        {
+          var.uintVal = APPUSERMODEL_STARTPINOPTION_USERPINNED;
+#ifdef debug_properties
+          printf("AppUserModel_StartPinOption=%d\n", var.uintVal);
+#endif
+          var.vt = VT_UINT;
+          pps->lpVtbl->SetValue(pps,
+              &PKEY_AppUserModel_StartPinOption, &var);
+        }
+#endif
+        if (app_id && *app_id &&
+            (size = cs_mbstowcs(0, app_id, 0) + 1)) {
+          var.pwszVal = malloc(size * sizeof(wchar));
+          if (var.pwszVal) {
+#ifdef debug_properties
+            printf("AppUserModel_ID=%s\n", app_id);
+#endif
+            cs_mbstowcs(var.pwszVal, app_id, size);
+            var.vt = VT_LPWSTR;  // VT_EMPTY should remove but has no effect
+            pps->lpVtbl->SetValue(pps,
+                &PKEY_AppUserModel_ID, &var);
+          }
+        }
+
+        pps->lpVtbl->Commit(pps);
+        pps->lpVtbl->Release(pps);
+      }
+    }
+  }
+#endif
 }
 
 int
@@ -1251,7 +1414,10 @@ main(int argc, char *argv[])
       when 'R':
         report_geom = strdup (optarg);
       when 'u': cfg.utmp = true;
-      when '': setup_properties = true;
+      when '':
+        prevent_pinning = true;
+        store_taskbar_properties = true;
+      when '': store_taskbar_properties = true;
       when 'w': set_arg_option("Window", optarg);
       when '': set_arg_option("Class", optarg);
       when 'd':
@@ -1294,7 +1460,7 @@ main(int argc, char *argv[])
   load_shcore_funcs();
   per_monitor_dpi_aware = set_per_monitor_dpi_aware();
 #ifdef debug_dpi
-  printf ("per_monitor_dpi_aware %d\n", per_monitor_dpi_aware);
+  printf("per_monitor_dpi_aware %d\n", per_monitor_dpi_aware);
 #endif
 
   // Work out what to execute.
@@ -1482,7 +1648,7 @@ main(int argc, char *argv[])
 
 #define dont_debug_position
 #ifdef debug_position
-#define printpos(tag, x, y, mon)	printf ("%s %d %d (%ld %ld %ld %ld)\n", tag, x, y, mon.left, mon.top, mon.right, mon.bottom);
+#define printpos(tag, x, y, mon)	printf("%s %d %d (%ld %ld %ld %ld)\n", tag, x, y, mon.left, mon.top, mon.right, mon.bottom);
 #else
 #define printpos(tag, x, y, mon)
 #endif
@@ -1589,8 +1755,7 @@ main(int argc, char *argv[])
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
   }
 
-  if (setup_properties)
-    configure_properties ();
+  configure_taskbar();
 
   // The input method context.
   imc = ImmGetContext(wnd);

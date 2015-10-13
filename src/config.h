@@ -111,6 +111,8 @@ typedef struct {
   bool daemonize;
   // "Hidden"
   string app_id;
+  string app_name;
+  string app_launch_cmd;
   int col_spacing, row_spacing;
   string word_chars;
   string word_chars_excl;

@@ -95,6 +95,8 @@ const config default_cfg = {
   .daemonize = true,
   // "Hidden"
   .app_id = "",
+  .app_name = "",
+  .app_launch_cmd = "",
   .col_spacing = 0,
   .row_spacing = 0,
   .word_chars = "",
@@ -225,6 +227,8 @@ options[] = {
 
   // "Hidden"
   {"AppID", OPT_STRING, offcfg(app_id)},
+  {"AppName", OPT_STRING, offcfg(app_name)},
+  {"AppLaunchCmd", OPT_STRING, offcfg(app_launch_cmd)},
   {"ColSpacing", OPT_INT, offcfg(col_spacing)},
   {"RowSpacing", OPT_INT, offcfg(row_spacing)},
   {"WordChars", OPT_STRING, offcfg(word_chars)},
