@@ -509,7 +509,7 @@ child_conv_path(wstring wpath)
 }
 
 void
-child_fork(int argc, char *argv[])
+child_fork(int argc, char *argv[], int moni)
 {
   pid_t clone = fork();
 
@@ -577,6 +577,10 @@ child_fork(int argc, char *argv[])
     char parbuf2[34];
     sprintf (parbuf2, "MINTTY_COLS=%d", term.cols);
     putenv (parbuf2);
+    // provide environment to select monitor
+    char parbuf3[34];
+    sprintf (parbuf3, "MINTTY_MONITOR=%d", moni);
+    putenv (parbuf3);
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
     execv("/proc/self/exe", argv);

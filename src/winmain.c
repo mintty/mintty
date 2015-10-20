@@ -261,8 +261,10 @@ get_my_monitor_info(MONITORINFO *mip)
 }
 
 static void
-get_monitor_info (int moni, MONITORINFO *mip)
+get_monitor_info(int moni, MONITORINFO *mip)
 {
+  mip->cbSize = sizeof(MONITORINFO);
+
   BOOL CALLBACK
   monitor_enum (HMONITOR hMonitor, HDC hdcMonitor, LPRECT monp, LPARAM dwData)
   {
@@ -273,8 +275,134 @@ get_monitor_info (int moni, MONITORINFO *mip)
     return --moni > 0;
   }
 
-  mip->cbSize = sizeof(MONITORINFO);
   EnumDisplayMonitors(0, 0, monitor_enum, 0);
+}
+
+#define dont_debug_display_monitors_mockup
+#define dont_debug_display_monitors
+
+#ifdef debug_display_monitors_mockup
+# define debug_display_monitors
+static const RECT monitors[] = {
+  //(RECT){.left = 0, .top = 0, .right = 1920, .bottom = 1200},
+    //    44
+    // 3  11  2
+    //     5   6
+  {0, 0, 1920, 1200},
+  {1920, 0, 3000, 1080},
+  {-800, 200, 0, 600},
+  {0, -1080, 1920, 0},
+  {1300, 1200, 2100, 1800},
+  {2100, 1320, 2740, 1800},
+};
+static long primary_monitor = 2 - 1;
+static long current_monitor = 1 - 1;  // assumption for MonitorFromWindow
+#endif
+
+/*
+   search_monitors(&x, &y, 0, false, &moninfo)
+     returns number of monitors;
+       stores smallest width/height of all monitors
+       stores info of current monitor
+   search_monitors(&x, &y, 0, true, &moninfo)
+     returns number of monitors;
+       stores smallest width/height of all monitors
+       stores info of primary monitor
+   search_monitors(&x, &y, mon, false/true, 0)
+     returns index of given monitor (0/primary if not found)
+ */
+int
+search_monitors(int * minx, int * miny, HMONITOR lookup_mon, bool get_primary, MONITORINFO *mip)
+{
+#ifdef debug_display_monitors_mockup
+  BOOL
+  EnumDisplayMonitors(HDC hdc, LPCRECT lprcClip, MONITORENUMPROC lpfnEnum, LPARAM dwData)
+  {
+    (void)lprcClip;
+    for (unsigned long moni = 0; moni < lengthof(monitors); moni++) {
+      RECT monrect = monitors[moni];
+      HMONITOR hMonitor = (HMONITOR)(moni + 1);
+      HDC hdcMonitor = hdc;
+      //if (hdc) hdcMonitor = (HDC)...;
+      //if (hdc) monrect = intersect(hdc.rect, monrect);
+      //if (hdc) hdcMonitor.rect = intersection(hdc.rect, lprcClip, monrect);
+      if (lpfnEnum(hMonitor, hdcMonitor, &monrect, dwData) == FALSE)
+        return TRUE;
+    }
+    return TRUE;
+  }
+
+  BOOL GetMonitorInfo(HMONITOR hMonitor, LPMONITORINFO lpmi)
+  {
+    long moni = (long)hMonitor - 1;
+    lpmi->rcMonitor = monitors[moni];
+    lpmi->rcWork = monitors[moni];
+    lpmi->dwFlags = 0;
+    if (moni == primary_monitor)
+      lpmi->dwFlags = MONITORINFOF_PRIMARY;
+    return TRUE;
+  }
+
+  HMONITOR MonitorFromWindow(HWND hwnd, DWORD dwFlags)
+  {
+    (void)hwnd, (void)dwFlags;
+    return (HMONITOR)current_monitor + 1;
+  }
+#endif
+
+  int moni = 0;
+  int moni_found = 0;
+  * minx = 0;
+  * miny = 0;
+  HMONITOR refmon = 0;
+
+  BOOL CALLBACK
+  monitor_enum(HMONITOR hMonitor, HDC hdcMonitor, LPRECT monp, LPARAM dwData)
+  {
+    (void)hdcMonitor, (void)monp, (void)dwData;
+
+    moni ++;
+    if (hMonitor == lookup_mon) {
+      // looking for index of specific monitor
+      moni_found = moni;
+      return FALSE;
+    }
+
+    MONITORINFO mi;
+    mi.cbSize = sizeof(MONITORINFO);
+    GetMonitorInfo(hMonitor, &mi);
+
+    if (get_primary && (mi.dwFlags & MONITORINFOF_PRIMARY)) {
+      moni_found = moni;  // fallback to be overridden by monitor found later
+      refmon = hMonitor;
+    }
+
+    // determining smallest monitor width and height
+    RECT fr = mi.rcMonitor;
+    if (*minx == 0 || *minx > fr.right - fr.left)
+      *minx = fr.right - fr.left;
+    if (*miny == 0 || *miny > fr.bottom - fr.top)
+      *miny = fr.bottom - fr.top;
+
+#ifdef debug_display_monitors
+    if (!lookup_mon)
+      printf("Monitor %d: %d,%d...%d,%d %s\n", moni, fr.left, fr.top, fr.right, fr.bottom, mi.dwFlags & MONITORINFOF_PRIMARY ? "primary" : "");
+#endif
+
+    return TRUE;
+  }
+
+  EnumDisplayMonitors(0, 0, monitor_enum, 0);
+  if (lookup_mon) {
+    return moni_found;
+  }
+  else {
+    if (!refmon)
+      refmon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+    mip->cbSize = sizeof(MONITORINFO);
+    GetMonitorInfo(refmon, mip);
+    return moni;  // number of monitors
+  }
 }
 
 /*
@@ -862,7 +990,7 @@ static struct {
         when IDM_SEARCH: win_open_search();
         when IDM_FLIPSCREEN: term_flip_screen();
         when IDM_OPTIONS: win_open_config();
-        when IDM_NEW: child_fork(main_argc, main_argv);
+        when IDM_NEW: child_fork(main_argc, main_argv, (int)lp - ' ');
         when IDM_COPYTITLE: win_copy_title();
       }
     when WM_VSCROLL:
@@ -1176,17 +1304,19 @@ configure_taskbar()
 {
 #ifdef patch_jumplist
 #include "jumplist.h"
+  // test data
   char ** jump_list_title = {
     "title1", "", "", "mä€", "", "", "", "", "", "", 
   };
   char ** jump_list_cmd = {
     "-o Rows=15", "-o Rows=20", "", "-t mö€", "", "", "", "", "", "", 
   };
+  // the patch offered in issue #290 does not seem to work
   setup_jumplist(jump_list_title, jump_list_cmd);
 #endif
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1007
-  // patch #471 ... expanded
+  // initial patch (issue #471) contributed by Johannes Schindelin
   const char * app_id = cfg.app_id;
   const char * relaunch_icon = cfg.icon;
   const char * relaunch_display_name = cfg.app_name;
@@ -1358,13 +1488,6 @@ main(int argc, char *argv[])
   load_config(rc_file, true);
   delete(rc_file);
 
-  if (getenv("MINTTY_ROWS")) {
-    set_arg_option("Rows", getenv("MINTTY_ROWS"));
-  }
-  if (getenv("MINTTY_COLS")) {
-    set_arg_option("Columns", getenv("MINTTY_COLS"));
-  }
-
   for (;;) {
     int opt = getopt_long(argc, argv, short_opts, opts, 0);
     if (opt == -1 || opt == 'e')
@@ -1434,6 +1557,16 @@ main(int argc, char *argv[])
         error("option '%s' requires an argument",
               longopt[1] == '-' ? longopt : shortopt);
     }
+  }
+
+  if (getenv("MINTTY_ROWS")) {
+    set_arg_option("Rows", getenv("MINTTY_ROWS"));
+  }
+  if (getenv("MINTTY_COLS")) {
+    set_arg_option("Columns", getenv("MINTTY_COLS"));
+  }
+  if (getenv("MINTTY_MONITOR")) {
+    monitor = atoi(getenv("MINTTY_MONITOR"));
   }
 
   finish_config();
@@ -1800,6 +1933,21 @@ main(int argc, char *argv[])
   go_fullscr_on_max = (cfg.window == -1);
   ShowWindow(wnd, go_fullscr_on_max ? SW_SHOWMAXIMIZED : cfg.window);
   SetFocus(wnd);
+
+#ifdef debug_display_monitors_mockup
+  {
+    int x, y;
+    MONITORINFO mi;
+    int n = search_monitors(&x, &y, 0, false, &mi);
+    printf("%d monitors, smallest %dx%d, current %d,%d...%d,%d\n", n, x, y, mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom);
+    n = search_monitors(&x, &y, 0, true, &mi);
+    printf("%d monitors, smallest %dx%d, primary %d,%d...%d,%d\n", n, x, y, mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom);
+    n = search_monitors(&x, &y, (HMONITOR)(current_monitor + 1), false, 0);
+    printf("current monitor: %d\n", n);
+    n = search_monitors(&x, &y, (HMONITOR)(primary_monitor + 1), false, 0);
+    printf("primary monitor: %d\n", n);
+  }
+#endif
 
   // Message loop.
   for (;;) {

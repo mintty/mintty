@@ -51,6 +51,7 @@ extern bool win_key_up(WPARAM, LPARAM);
 extern void win_init_drop_target(void);
 
 extern void win_switch(bool back, bool alternate);
+extern int search_monitors(int * minx, int * miny, HMONITOR lookup_mon, bool get_primary, MONITORINFO *mip);
 
 extern void win_set_ime_open(bool);
 
