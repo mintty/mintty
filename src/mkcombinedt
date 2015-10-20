@@ -1,0 +1,47 @@
+#! /bin/sh -f
+
+#WGET="curl -R -O --connect-timeout 55"
+WGET="wget -N -t 1 --timeout=55"
+
+$WGET http://unicode.org/Public/UNIDATA/UnicodeData.txt
+
+LC_ALL=C
+export LC_ALL
+
+# scan UnicodeData.txt:
+#	0060;GRAVE ACCENT;Sk;0;ON;;;;;N;SPACING GRAVE;;;;
+#	0300;COMBINING GRAVE ACCENT;Mn;230;NSM;;;;;N;NON-SPACING GRAVE;;;;
+#	00A8;DIAERESIS;Sk;0;ON;<compat> 0020 0308;;;;N;SPACING DIAERESIS;;;;
+#	0308;COMBINING DIAERESIS;Mn;230;NSM;;;;;N;NON-SPACING DIAERESIS;;;;
+#	00AF;MACRON;Sk;0;ON;<compat> 0020 0304;;;;N;SPACING MACRON;;;;
+#	0304;COMBINING MACRON;Mn;230;NSM;;;;;N;NON-SPACING MACRON;;;;
+#	00B4;ACUTE ACCENT;Sk;0;ON;<compat> 0020 0301;;;;N;SPACING ACUTE;;;;
+#	0301;COMBINING ACUTE ACCENT;Mn;230;NSM;;;;;N;NON-SPACING ACUTE;;;;
+#	00B8;CEDILLA;Sk;0;ON;<compat> 0020 0327;;;;N;SPACING CEDILLA;;;;
+#	0327;COMBINING CEDILLA;Mn;202;NSM;;;;;N;NON-SPACING CEDILLA;;;;
+# find matches:
+#	0300	0060
+#	0308	00A8
+#	0304	00AF
+#	0301	00B4
+#	0327	00B8
+# generate sed script:
+#	s,0x0300},0x0060},g
+
+sed	-e 's/^\([^;]*\);COMBINING \([^;]*\);[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;\([^;]*\);.*/\2	\1/' \
+	-e t -e d UnicodeData.txt | sort > .combining
+sed	-e 's/^\([^	]*\)	\([^	]*\).*/;\1;/' .combining > .combining-names
+fgrep -f .combining-names UnicodeData.txt |
+sed	-e 's/^\([^;]*\);\([^;]*\);.*/\2	\1/' | sort > .spacing
+join -t '	' .combining .spacing |
+cut -d '	' -f 2,3 |
+sed -e 's/^/s,0x/' -e 's/	/},0x/' -e 's/$/},g/' > .spacing.sed
+
+# scan UnicodeData.txt:
+#	1E80;LATIN CAPITAL LETTER W WITH GRAVE;Lu;0;L;0057 0300;;;;N;;;;1E81;
+# generate mapping:
+#	{0x1E80, 0x0057, 0x0060},
+
+sed	-e 's/^\([^;]*\);[^;]*;[^;]*;[^;]*;[^;]*;\([0-9A-F][0-9A-F]*\) \([0-9A-F][0-9A-F]*\);.*/	{0x\1, 0x\2, 0x\3},/' \
+	-e 't goon' -e d -e ': goon' -f .spacing.sed UnicodeData.txt
+

@@ -571,6 +571,14 @@ win_key_down(WPARAM wp, LPARAM lp)
       mods ? mod_csi(code) : term.app_cursor_keys ? ss3(code) : csi(code);
   }
 
+static struct {
+  unsigned int combined;
+  unsigned int base;
+  unsigned int spacing;
+} comb_subst[] = {
+#include "combined.t"
+};
+
   // Keyboard layout
   bool layout(void) {
     // ToUnicode returns up to 4 wchars according to
@@ -585,9 +593,26 @@ win_key_down(WPARAM wp, LPARAM lp)
 
     esc_if(alt);
 
+    // Substitute accent compositions not supported by Windows
+    if (wlen == 2)
+      for (unsigned int i = 0; i < lengthof(comb_subst); i++)
+        if (comb_subst[i].spacing == wbuf[0] && comb_subst[i].base == wbuf[1]) {
+          wbuf[0] = comb_subst[i].combined;
+          wlen = 1;
+          break;
+        }
+
     // Check that the keycode can be converted to the current charset
     // before returning success.
     int mblen = cs_wcntombn(buf + len, wbuf, lengthof(buf) - len, wlen);
+#ifdef debug_ToUnicode
+    printf("wlen %d:", wlen);
+    for (int i = 0; i < wlen; i ++) printf(" %04X", wbuf[i] & 0xFFFF);
+    printf("\n");
+    printf("mblen %d:", mblen);
+    for (int i = 0; i < mblen; i ++) printf(" %02X", buf[i] & 0xFF);
+    printf("\n");
+#endif
     bool ok = mblen > 0;
     len = ok ? len + mblen : 0;
     return ok;

@@ -144,6 +144,9 @@ rgb:	# /usr/share/X11/rgb.txt X11 color names
 #		{255, 250, 250, "snow"},
 	sed -e 's,	, ,g' -e 's/ *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([^ ].*[^ ]\) */	{\1, \2, \3, "\4"},/' /usr/share/X11/rgb.txt > rgb.t
 
+combined.t:	# UnicodeData.txt
+	sh ./mkcombinedt > combined.t
+
 #############################################################################
 # release targets
 
