@@ -1316,6 +1316,95 @@ configure_taskbar()
 #endif
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1007
+  // initial patch (issue #471) contributed by Johannes Schindelin
+  const char * app_id = cfg.app_id;
+  const char * relaunch_icon = cfg.icon;
+  const char * relaunch_display_name = cfg.app_name;
+  const char * relaunch_command = cfg.app_launch_cmd;
+
+#define dont_debug_properties
+
+  // Set the app ID explicitly, as well as the relaunch command and display name
+  if (prevent_pinning || (app_id && *app_id)) {
+    HMODULE shell = load_sys_library("shell32.dll");
+    HRESULT (WINAPI *pGetPropertyStore)(HWND hwnd, REFIID riid, void **ppv) =
+      (void *)GetProcAddress(shell, "SHGetPropertyStoreForWindow");
+#ifdef debug_properties
+      printf("SHGetPropertyStoreForWindow linked %d\n", !!pGetPropertyStore);
+#endif
+    if (pGetPropertyStore) {
+      size_t size;
+      IPropertyStore *pps;
+      HRESULT hr;
+      PROPVARIANT var;
+
+      hr = pGetPropertyStore(wnd, &IID_IPropertyStore, (void **) &pps);
+#ifdef debug_properties
+      printf("IPropertyStore found %d\n", SUCCEEDED(hr));
+#endif
+      if (SUCCEEDED(hr)) {
+        // doc: https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459%28v=vs.85%29.aspx
+        // def: typedef struct tagPROPVARIANT PROPVARIANT: propidl.h
+        // def: enum VARENUM (VT_*): wtypes.h
+        // def: PKEY_*: propkey.h
+        if (relaunch_command && *relaunch_command && store_taskbar_properties
+            && (size = cs_mbstowcs(0, relaunch_command, 0) + 1)) {
+          var.pwszVal = malloc(size * sizeof(wchar));
+          if (var.pwszVal) {
+#ifdef debug_properties
+            printf("AppUserModel_RelaunchCommand=%s\n", relaunch_command);
+#endif
+            cs_mbstowcs(var.pwszVal, relaunch_command, size);
+            var.vt = VT_LPWSTR;
+            pps->lpVtbl->SetValue(pps,
+                &PKEY_AppUserModel_RelaunchCommand, &var);
+          }
+        }
+        if (relaunch_display_name && *relaunch_display_name &&
+            (size = cs_mbstowcs(0, relaunch_display_name, 0) + 1)) {
+          var.pwszVal = malloc(size * sizeof(wchar));
+          if (var.pwszVal) {
+#ifdef debug_properties
+            printf("AppUserModel_RelaunchDisplayNameResource=%s\n", relaunch_display_name);
+#endif
+            cs_mbstowcs(var.pwszVal, relaunch_display_name, size);
+            var.vt = VT_LPWSTR;
+            pps->lpVtbl->SetValue(pps,
+                &PKEY_AppUserModel_RelaunchDisplayNameResource, &var);
+          }
+        }
+        if (relaunch_icon && *relaunch_icon &&
+            (size = cs_mbstowcs(0, relaunch_icon, 0) + 1)) {
+          var.pwszVal = malloc(size * sizeof(wchar));
+          if (var.pwszVal) {
+#ifdef debug_properties
+            printf("AppUserModel_RelaunchIconResource=%s\n", relaunch_icon);
+#endif
+            cs_mbstowcs(var.pwszVal, relaunch_icon, size);
+            var.vt = VT_LPWSTR;
+            pps->lpVtbl->SetValue(pps,
+                &PKEY_AppUserModel_RelaunchIconResource, &var);
+          }
+        }
+        if (app_id && *app_id &&
+            (size = cs_mbstowcs(0, app_id, 0) + 1)) {
+          var.pwszVal = malloc(size * sizeof(wchar));
+          if (var.pwszVal) {
+#ifdef debug_properties
+            printf("AppUserModel_ID=%s\n", app_id);
+#endif
+            cs_mbstowcs(var.pwszVal, app_id, size);
+            var.vt = VT_LPWSTR;  // VT_EMPTY should remove but has no effect
+            pps->lpVtbl->SetValue(pps,
+                &PKEY_AppUserModel_ID, &var);
+          }
+        }
+
+        pps->lpVtbl->Commit(pps);
+        pps->lpVtbl->Release(pps);
+      }
+    }
+  }
 #endif
 }
 
