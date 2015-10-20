@@ -1511,7 +1511,7 @@ main(int argc, char *argv[])
           left = true;
         else if (strcmp(optarg, "top") == 0)
           top = true;
-        else if (sscanf(optarg, "#%i%1s", &monitor, (char[2]){}) == 1)
+        else if (sscanf(optarg, "@%i%1s", &monitor, (char[2]){}) == 1)
           ;
         else if (sscanf(optarg, "%i,%i%1s", &cfg.x, &cfg.y, (char[2]){}) == 2)
           ;

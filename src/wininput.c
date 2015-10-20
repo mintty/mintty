@@ -387,6 +387,8 @@ win_key_down(WPARAM wp, LPARAM lp)
         when VK_END  : alt_F2_monix--; alt_F2_moniy++;
         when VK_DOWN : alt_F2_moniy++;
         when VK_NEXT : alt_F2_monix++; alt_F2_moniy++;
+        when VK_INSERT or VK_DELETE:
+                       alt_F2_monix = 0; alt_F2_moniy = 0; alt_F2_home = false;
       }
     }
     return 1;
