@@ -806,9 +806,11 @@ win_key_down(WPARAM wp, LPARAM lp)
       else if (VK_OEM_PLUS <= key && key <= VK_OEM_PERIOD)
         app_pad_code(key - VK_OEM_PLUS + '+');
     when VK_PACKET:
-      layout();
+      if (!layout())
+        return false;
     otherwise:
-      return 0;
+      if (!layout())
+        return false;
   }
 
   hide_mouse();
