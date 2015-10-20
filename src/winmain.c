@@ -1324,6 +1324,31 @@ configure_taskbar()
 
 #define dont_debug_properties
 
+  // If an icon is configured but no app_id, we can derive one from the 
+  // icon in order to enable proper taskbar grouping by common icon.
+  if (relaunch_icon && *relaunch_icon && (!app_id || !*app_id)) {
+    const char * iconbasename = strrchr(cfg.icon, '/');
+    if (iconbasename)
+      iconbasename ++;
+    else {
+      iconbasename = strrchr(cfg.icon, '\\');
+      if (iconbasename)
+        iconbasename ++;
+      else
+        iconbasename = cfg.icon;
+    }
+    char * derived_app_id = malloc(strlen(iconbasename) + 7 + 1);
+    strcpy(derived_app_id, "Mintty.");
+    strcat(derived_app_id, iconbasename);
+    app_id = derived_app_id;
+  }
+  // If app_name is configured but no app_launch_cmd, we need an app_id 
+  // to make app_name effective as taskbar title, so invent one.
+  if (relaunch_display_name && *relaunch_display_name && 
+      (!app_id || !*app_id)) {
+    app_id = "Mintty.AppID";
+  }
+
   // Set the app ID explicitly, as well as the relaunch command and display name
   if (prevent_pinning || (app_id && *app_id)) {
     HMODULE shell = load_sys_library("shell32.dll");
@@ -1386,6 +1411,30 @@ configure_taskbar()
                 &PKEY_AppUserModel_RelaunchIconResource, &var);
           }
         }
+        if (prevent_pinning) {
+          var.boolVal = VARIANT_TRUE;
+#ifdef debug_properties
+          printf("AppUserModel_PreventPinning=%d\n", var.boolVal);
+#endif
+          var.vt = VT_BOOL;
+          // PreventPinning must be set before setting ID
+          pps->lpVtbl->SetValue(pps,
+              &PKEY_AppUserModel_PreventPinning, &var);
+        }
+#ifdef set_userpinned
+DEFINE_PROPERTYKEY(PKEY_AppUserModel_StartPinOption, 0x9f4c2855,0x9f79,0x4B39,0xa8,0xd0,0xe1,0xd4,0x2d,0xe1,0xd5,0xf3,12);
+#define APPUSERMODEL_STARTPINOPTION_USERPINNED 2
+#warning needs Windows 8/10 to build...
+        {
+          var.uintVal = APPUSERMODEL_STARTPINOPTION_USERPINNED;
+#ifdef debug_properties
+          printf("AppUserModel_StartPinOption=%d\n", var.uintVal);
+#endif
+          var.vt = VT_UINT;
+          pps->lpVtbl->SetValue(pps,
+              &PKEY_AppUserModel_StartPinOption, &var);
+        }
+#endif
         if (app_id && *app_id &&
             (size = cs_mbstowcs(0, app_id, 0) + 1)) {
           var.pwszVal = malloc(size * sizeof(wchar));
