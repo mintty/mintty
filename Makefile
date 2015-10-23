@@ -12,7 +12,9 @@
 # - TARGET: target triple for cross compiling
 
 exe:
-	cd src; $(MAKE) exe
+	#cd src; $(MAKE) exe
+	#cd src; $(MAKE) bin
+	cd src; $(MAKE)
 
 zip:
 	cd src; $(MAKE) zip
