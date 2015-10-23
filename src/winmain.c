@@ -1020,7 +1020,7 @@ static struct {
     when WM_MOUSEWHEEL: win_mouse_wheel(wp, lp);
     when WM_INPUTLANGCHANGEREQUEST:  // catch Shift-Control-0
       if ((GetKeyState(VK_SHIFT) & 0x80) && (GetKeyState(VK_CONTROL) & 0x80))
-        if (win_key_down('0', lp))
+        if (win_key_down('0', 0x000B0001))
           return 0;
     when WM_KEYDOWN or WM_SYSKEYDOWN:
       if (win_key_down(wp, lp))
@@ -1523,6 +1523,10 @@ main(int argc, char *argv[])
         else if (strcmp(optarg, "maxheight") == 0)
           maxheight = true;
         else if (sscanf(optarg, "%u,%u%1s", &cfg.cols, &cfg.rows, (char[2]){}) == 2) {
+          remember_arg("Columns");
+          remember_arg("Rows");
+        }
+        else if (sscanf(optarg, "%ux%u%1s", &cfg.cols, &cfg.rows, (char[2]){}) == 2) {
           remember_arg("Columns");
           remember_arg("Rows");
         }
