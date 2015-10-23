@@ -124,6 +124,7 @@ term_reset(void)
   term.echoing = false;
   term.insert = false;
   term.shortcut_override = term.escape_sends_fs = term.app_escape_key = false;
+  term.app_control = 0;
   term.vt220_keys = strstr(cfg.term, "vt220");
   term.app_keypad = term.app_cursor_keys = term.app_wheel = false;
   term.mouse_mode = MM_NONE;

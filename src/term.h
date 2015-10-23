@@ -316,6 +316,7 @@ struct term {
   bool delete_sends_del;
   bool escape_sends_fs;
   bool app_escape_key;
+  unsigned int app_control;
   bool app_cursor_keys;
   bool app_keypad;
   bool app_wheel;

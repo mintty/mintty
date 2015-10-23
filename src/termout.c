@@ -625,6 +625,11 @@ set_modes(bool state)
           term.wheel_reporting = state;
         when 7787:       /* 'W': Application mousewheel mode */
           term.app_wheel = state;
+        /* Application control key modes */
+        when 77000 ... 77031: {
+          int ctrl = arg - 77000;
+          term.app_control = (term.app_control & ~(1 << ctrl)) | (state << ctrl);
+        }
       }
     }
     else {

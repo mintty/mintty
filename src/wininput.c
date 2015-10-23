@@ -293,10 +293,36 @@ send_syscommand(WPARAM cmd)
   SendMessage(wnd, WM_SYSCOMMAND, cmd, ' ');
 }
 
+#define debug_virtual_key_codes
+
+#ifdef debug_virtual_key_codes
+static struct {
+  uint vk_;
+  char * vk_name;
+} vk_names[] = {
+#include "vk_names.t"
+};
+
+static string
+vk_name(uint key)
+{
+  for (uint i = 0; i < lengthof(vk_names); i++)
+    if (key == vk_names[i].vk_)
+      return vk_names[i].vk_name;
+  static char vk_name[3];
+  sprintf(vk_name, "%02X", key & 0xFF);
+  return vk_name;
+}
+#endif
+
 bool
 win_key_down(WPARAM wp, LPARAM lp)
 {
   uint key = wp;
+
+#ifdef debug_virtual_key_codes
+  printf("win_key_down %s\n", vk_name(key));
+#endif
 
   if (key == VK_PROCESSKEY) {
     TranslateMessage(
@@ -694,8 +720,24 @@ static struct {
   }
 
   bool ctrl_key(void) {
+    bool try_appctrl(wchar wc) {
+      switch (wc) {
+        when '@' or '[' ... '_' or 'a' ... 'z':
+          if (term.app_control & (1 << (wc & 0x1F))) {
+            mods = ctrl * MDK_CTRL;
+            other_code((wc & 0x1F) + '@');
+            return true;
+          }
+      }
+      return false;
+    }
+
     bool try_key(void) {
-      wchar wc = undead_keycode();
+      wchar wc = undead_keycode();  // should we fold that out into ctrl_key?
+
+      if (try_appctrl(wc))
+        return true;
+
       char c;
       switch (wc) {
         when '@' or '[' ... '_' or 'a' ... 'z': c = CTRL(wc);
@@ -854,6 +896,10 @@ static struct {
 bool
 win_key_up(WPARAM wp, LPARAM unused(lp))
 {
+#ifdef debug_virtual_key_codes
+  printf("  win_key_up %s\n", vk_name((uint)wp));
+#endif
+
   win_update_mouse();
 
   if (alt_F2_pending) {
