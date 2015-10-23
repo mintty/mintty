@@ -28,6 +28,35 @@ When application escape key mode is off, the escape key can be be configured to 
 | `^[[?7728h`   | `^\`        |
 
 
+## Control key codes ##
+
+Application control key mode can be configured per control key.
+It facilitates more distinction between different keys, as well as 
+usage of Ctrl+[ in various applications that would normally handle 
+the ESC character as a generic key code prefix.
+Possible distinctions:
+  * Esc key and Ctrl+[ key
+  * Tab character and Ctrl+I key
+  * NUL character sent by Ctrl+space and NUL key code sent by Ctrl+@
+
+As a generic feature, this configuration is accepted for all control 
+characters. Generated key codes are similar to those sent in the xterm 
+modifyOtherKeys mode, but normalized to a contiguous range of codes using 
+capital ASCII character codes, and indicating the control modifier only.
+Settings can be combined in a common sequence like `^[[?77009;77027h`.
+The respective setting is cleared with a corresponding sequence ending with `l`.
+
+| **sequence**  | **input** | **key code** |
+|:--------------|:----------|:-------------|
+| `^[[?77000h`  | Ctrl+@    | `^[[64;5u`   |
+| ...           |           |              |
+| `^[[?77009h`  | Ctrl+I    | `^[[73;5u`   |
+| ...           |           |              |
+| `^[[?77027h`  | Ctrl+[    | `^[[91;5u`   |
+| ...           |           |              |
+| `^[[?77031h`  | Ctrl+_    | `^[[95;5u`   |
+
+
 ## Scrollbar hiding ##
 
 These sequences can be used to hide or show the scrollbar, whereby the window size remains the same but the number of character columns is changed to account for the width of the scrollbar. If the the scrollbar is disabled in the options, it will always remain hidden.
