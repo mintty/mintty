@@ -284,6 +284,21 @@ So the initial shell, interpreting its ```cd``` parameters already in GBK
 encoding, will see it properly converted.
 
 
+## Multi-monitor support ##
+
+Mintty supports multiple monitors with two features:
+
+A mintty window can be placed on a specific monitor with the 
+command-line option `-p @N` where N is the number of the monitor.
+
+A new mintty window cloned with Alt+F2 can be placed on a selected monitor 
+while F2 is being held; press cursor and other keys on the numeric keypad 
+to navigate the monitor grid to the desired target monitor, then release F2.
+
+Note also the generic Windows hotkeys to move the current window to 
+the left or right neighbour monitor: Win+Shift+cursor-left/right.
+
+
 ## Running mintty stand-alone ##
 
 To install mintty outside a cygwin environment, follow a few rules:
