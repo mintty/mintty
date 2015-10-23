@@ -21,3 +21,15 @@ Thanks to everyone who has contributed to mintty in some way, in particular:
 
 Cheers,<br>
 Andy
+
+And, continuing from release 2.0.1, more thanks particularly to:
+
+  * First of all, Andy Koppe, for having undergone the effort of adapting the terminal application and crafting it to an excellent piece of software, enhancing it over many years towards its capability to be the new Cygwin terminal, dealing with lots of bug reports and suggestions (including my own) and maintaining its stability and reputation.
+  * Paul Townsend, for advice on Unix-style process handling and daemonizing, avoiding zombie processes.
+  * James Darnley, for a patch demonstrating how to deal with the Windows Options menu.
+  * Takashi Kawasaki, for a patch dealing with the Windows DPI handling features.
+  * Johannes Schindelin, for advice about the obscure area of Windows taskbar properties configuration.
+  * Kai (twitter:@sixhundredns), for the new Search feature and his cooperation to improve and integrate it.
+
+Cheers,<br>
+Thomas

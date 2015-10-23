@@ -1,37 +1,46 @@
+
 Major New Search Feature (thanks to Kai (twitter:@sixhundredns)):
   * Search scrollback buffer (#85); shortcuts Alt+F3 or Shift+Ctrl+H; configuration options.
 
-Window and Multi-Monitor support:
-  * Option -p "# N" to select monitor (#288).
+Window placement and Multi-Monitor support:
+  * Option -p @N to select monitor (#288).
+  * Interactive feature to tweak Alt+F2 to select monitor.
   * Options -p right and -p bottom to align window position (#288).
   * Option -s accepts special values "maxwidth" or "maxheight" (#171).
-  * Per-monitor DPI support (#470).
+  * Per-monitor DPI support (#470, thanks to Takashi Kawasaki).
   * Fixed initial terminal size if reduced border is specified (#7).
   * Trying to enforce initial focus (#57).
   * New option ZoomFontWithWindow to disable Shift-coupled font-with-window zooming (#476).
+  * Accepting xterm-compatible syntax in size parameter, like -s 80x24.
 
-Bold attribute handline:
+Keyboard input:
+  * Supporting layout-specified key input for all cases (#483, thanks to maxime1986).
+  * Combining accented characters that are not supported by Windows (#484).
+  * Reenabled Ctrl+_ (if _ is Shift+- on keyboard layout).
+
+Bold attribute handling:
+  * Tweaked smart brightening (for BoldAsColour), considering contrast to both normal colour and background.
   * Support BoldAsColour without BoldAsFont for plain text (#468).
   * New option BoldColour (#468, #478).
   * Not enforcing bold-overstriking if bold colour explicitly redefined (#468, #478).
-  * Tweaked smart brightening (for BoldAsColour), considering contrast to both normal colour and background.
-  * New xterm OSC sequence (5;0;rgb) to define colour for bold attribute (#468).
-  * New xterm OSC sequence (105;0) to reset colour for bold attribute (#468).
+  * New xterm OSC sequences (5;0;rgb/105;0) to define/reset colour for bold attribute (#468).
 
 Other terminal features:
   * Fixed character operations beyond terminal width (#480).
-  * Support X11 color names for colour specifications (options and OSC sequences).
+  * Supporting X11 color names for colour specifications in OSC sequences.
   * Supporting xterm sequences to maximize window vertically/horizontally (#394).
   * New private OSC sequence to copy the window title to the clipboard (#303).
 
 Configuration:
-  * New option -C to load additional configuration file without saving to it, particularly for use with colour schemes.
-  * Added some Options menu configuration items (for previously introduced new options).
   * Changed action buttons in Options dialog; Apply does not save changes.
+  * Added some Options menu configuration items (for previously introduced new options, thanks for the pattern to James Darnley #384).
+  * New option -C to load additional configuration file without saving to it, particularly for use with colour schemes.
+  * Supporting X11 color names for colour specifications in options.
   * New option -R to report window geometry on exit (~#477).
+  * Optional Windows taskbar integration (#471, thanks to Johannes Schindelin).
 
 ### 2.1.5 (19 Aug 2015) ###
-  * Guard Shift-Ctrl-0 detection (#233) to avoid interference with keyboard switchers (#472).
+  * Guard Shift+Ctrl+0 detection (#233) to avoid interference with keyboard switchers (#472).
   * Basic fixes for displaying child process list on exit confirmation (#448).
 
 ### 2.1.4 (6 Aug 2015) ###
@@ -45,11 +54,11 @@ Configuration:
 Zooming:
   * Control-middle-mouse click resets zooming, complementing Control-mouse-wheel scroll in analogy to Control-+/-/0.
   * New option ZoomMouse=off to disable mouse-wheel zooming.
-  * Enabled Shift-Ctrl-0 to reset zooming for font and window (#233).
+  * Enabled Shift+Ctrl+0 to reset zooming for font and window (#233).
 
 Fixes̈:
   * Fixed crash after conditional daemonizing (#464, #465).
-  * Apply daemonizing for cloned window (Alt-F2) to avoid zombie process (thanks to Paul Townsend).
+  * Apply daemonizing for cloned window (Alt+F2) to avoid zombie process (thanks to Paul Townsend).
   * Made conditional daemonizing the default again.
   * New option -d to disable daemonizing as a workaround just in case...
 
@@ -58,7 +67,7 @@ Fixes̈:
 
 ### 2.1.1 (23 July 2015) ###
   * Tweaked Ctrl+TAB to not put current window into the background (~ #260).
-  * Ctrl+click spawning: Syncing environment to Windows to avoid dropping environment after Alt-F2 (#360).
+  * Ctrl+click spawning: Syncing environment to Windows to avoid dropping environment after Alt+F2 (#360).
   * Trying to keep window position within monitor work area on resizing (#79).
   * Tweaked to exit while background process is running (#319).
   * Trying to detach from caller's terminal in order to not suppress signals when started from Cygwin console.
@@ -74,7 +83,7 @@ Fixes̈:
   * Disabled obscure character encoding mode 12 (from Linux console) which would render ASCII codes as Greek.
 
 ### 2.0.2 (5 July 2015) ###
-  * Hotfix Alt-F2.
+  * Hotfix Alt+F2.
 
 ### 2.0.1 (1 July 2015) ###
 Display:
@@ -84,7 +93,7 @@ Display:
   * True Colour support (#431) (using ESC [ 38;2;r;g;b m).
 
 Window:
-  * Alt-F2 creates new window of same size as current one (#275).
+  * Alt+F2 creates new window of same size as current one (#275).
   * Option -T to set unchangeable window title (#385).
   * Fixed CSI 10;2t to toggle full-screen mode.
   * Fixed CSI 9;2t and 9;3t to do nothing like in xterm.
@@ -331,7 +340,7 @@ Other:
   * Lots of internal changes aimed at improving speed and maintainability.
 
 ### 0.6.2 (21 Apr 2010) ###
-  * Tweaked double-click selection and Ctrl-click opening to recognise URLs with parameters.
+  * Tweaked double-click selection and Ctrl+click opening to recognise URLs with parameters.
   * Added ability to kill the child process outright using SIGKILL instead of SIGHUP by holding down Shift while using the close button, Alt+F4 shortcut, or menu item.
   * Support maximized startup on Windows 7.
   * Fixed issue when copying text that caused black blocks to appear at the end of lines when pasting into some applications, e.g. Wordpad.
@@ -571,7 +580,7 @@ Other:
   * F1 to F4 send xterm-compatible VT220-style keycodes.
   * The first click on the options dialog is no longer ignored.
   * The scrollbar is shown by default.
-  * Closing on Alt-F4 can be disabled (on the Window panel).
+  * Closing on Alt+F4 can be disabled (on the Window panel).
   * Characters can be entered via Alt+Numpad codes. Extending on the standard Windows behaviour, codepoints beyond 255 are supported and octal codes can be entered by typing zero as the first digit.
 
 ### 0.3.1 (1 Jan 2009) ###
