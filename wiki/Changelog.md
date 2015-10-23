@@ -16,6 +16,7 @@ Window placement and Multi-Monitor support:
 Keyboard input:
   * Supporting layout-specified key input for all cases (#483, thanks to maxime1986).
   * Combining accented characters that are not supported by Windows (#484).
+  * Application control key mode (#405).
   * Reenabled Ctrl+_ (if _ is Shift+- on keyboard layout).
 
 Bold attribute handling:
