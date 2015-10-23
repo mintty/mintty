@@ -401,7 +401,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     exit_mintty();
 
   if (alt_F2_pending) {
-    if (!extended) {
+    if (!extended) {  // only accept numeric keypad
       alt_F2_modifier = key;
       switch (key) {
         when VK_HOME : alt_F2_monix--; alt_F2_moniy--;
@@ -448,9 +448,15 @@ win_key_down(WPARAM wp, LPARAM lp)
     if (cfg.zoom_shortcuts && (mods & ~MDK_SHIFT) == MDK_CTRL) {
       int zoom;
       switch (key) {
-        when VK_OEM_PLUS or VK_ADD:       zoom = 1;
-        when VK_OEM_MINUS or VK_SUBTRACT: zoom = -1;
-        when '0' or VK_NUMPAD0:           zoom = 0;
+        // numeric keypad keys:
+        when VK_SUBTRACT:  zoom = -1;
+        when VK_ADD:       zoom = 1;
+        when VK_NUMPAD0:   zoom = 0;
+          // Shift+VK_NUMPAD0 would be VK_INSERT but don't mangle that!
+        // normal keys:
+        when VK_OEM_MINUS: zoom = -1; if (mods & MDK_SHIFT) goto not_zoom;
+        when VK_OEM_PLUS:  zoom = 1; if (mods & MDK_SHIFT) goto not_zoom;
+        when '0':          zoom = 0; if (mods & MDK_SHIFT) goto not_zoom;
         otherwise: goto not_zoom;
       }
       win_zoom_font(zoom, mods & MDK_SHIFT);
