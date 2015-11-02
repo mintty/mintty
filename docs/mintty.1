@@ -263,19 +263,28 @@ The font size can be increased or decreased using the keyboard shortcuts
 or by holding \fBCtrl\fP while rolling the mousewheel.
 \fBCtrl+zero\fP or \fBCtrl+middle-mouse click\fP returns the font size 
 to the default.
-If Shift is also held while resizing, the window will be resized to scale 
-together with the font (unless the shifted key has a valid mapping to a 
-control character), keeping the terminal character size if possible.
+.br
+\fIShift-coupled window-with-font zooming:\fP
+If Shift is also held while zooming, the window will be resized to scale 
+together with the font, keeping the terminal character size if possible.
+This is not applied to the shifted numeric keypad "0" (which has other 
+meaning) and to the shifted normal (non-keypad) "-" and "+" keys 
+(because the shifted key could have a valid mapping, e.g. Ctrl+_, or the 
+"+" key could be shifted itself already).
+.br
 Zooming by keyboard or mouse can be disabled, respectively, with options 
 ZoomShortcuts=no or ZoomMouse=no.
 
 .SS Drag resize
 
 The usual windows function to drag on the window border resizes the terminal.
+.br
+\fIShift-coupled font-with-window zooming:\fP
 If Shift is also held while resizing, the font will be scaled along with 
 the resizing, unless disabled with ZoomFontWithWindow=false 
 (which would help to avoid interference with certain shifted hotkeys configured 
 to resize the window).
+.br
 Note that due to the different height/width factors, coupled font zooming 
 is not a precise operation.
 
@@ -439,12 +448,18 @@ An overview of all the keyboard shortcuts.
 Multi-monitor selection support: Alt+F2 will only spawn a new window 
 after F2 has been released. While F2 is being held, the target monitor 
 can be selected with a sequence of numeric keypad keys:
-cursor-up/down/left/right (8/2/4/6) navigate the target focus to the 
-respective neighbour in the monitor grid; the diagonal keys (7/9/1/3) 
-combine two directions respectively; the central key (5) sets the target 
-focus to the Windows "primary" monitor; the Ins key (0) or Del resets it 
-to the current monitor. These navigation controls can be applied repeatedly 
-to select a monitor further away.
+.br
+\(en cursor-up/down/left/right (8/2/4/6) navigate the target focus to the 
+respective neighbour in the monitor grid; 
+.br
+\(en the diagonal keys (7/9/1/3) combine two directions respectively; 
+.br
+\(en the central key (5) sets the target focus to the Windows "primary" monitor; 
+.br
+\(en the Ins key (0) or Del resets the focus to the current monitor.
+.br
+These navigation controls can be applied repeatedly to select a monitor further away.
+
 Note that a heuristic algorithm is used, based on the size of the smallest 
 monitor attached to the system, so the target may not always be selected 
 as expected if multiple monitors of different size are available or 
@@ -1074,14 +1089,22 @@ The command to use if a shortcut pinned to the Windows 7 taskbar is invoked.
 This is only effective if combined with an AppName option and the 
 command-line option --store-taskbar-properties to make it persistent.
 It should also be combined with an explicit AppID (mintty will otherwise 
-generate an AppID but that may not be desired). An explicit icon supplied 
-with the -i option will also be stored with the persistent properties.
+generate an AppID but that may not be desired).
 
 Note: The command must be given in Windows pathname syntax (e.g. 
-AppLaunchCmd='C:\cygwin\bin\mintty -T mytitle -').
+AppLaunchCmd='C:\\cygwin\\bin\\mintty -T mytitle -').
 
-Warning: Once made persistent, the stored properties associated with a 
-specific AppID cannot be removed again with normal means.
+Note: An explicit icon supplied with the -i option can also be stored with 
+the persistent properties; note, however, that for this purpose, it 
+must be given in Windows pathname syntax and it must include a 
+resource index; also, for consistent appearance, another -i option 
+referring to the same icon should be included in the AppLaunchCmd.
+
+Example:
+mintty -o AppID=Mintty.Pintest.1 -o AppName=Mintty.Pintest -o AppLaunchCmd="C:\\cygwin\\bin\\mintty -i /cygdrive/c/Windows/System32/calc.exe -" -i C:\\Windows\\System32\\calc.exe,0 --store-taskbar-properties -
+
+\fBWarning:\fP Once made persistent, the stored properties associated with 
+a specific AppID cannot be removed or even modified again with normal means.
 
 .TP
 \fBWord selection characters\fP (WordChars=)

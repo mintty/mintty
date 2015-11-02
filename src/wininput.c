@@ -293,7 +293,7 @@ send_syscommand(WPARAM cmd)
   SendMessage(wnd, WM_SYSCOMMAND, cmd, ' ');
 }
 
-#define debug_virtual_key_codes
+#define dont_debug_virtual_key_codes
 
 #ifdef debug_virtual_key_codes
 static struct {
@@ -454,9 +454,13 @@ win_key_down(WPARAM wp, LPARAM lp)
         when VK_NUMPAD0:   zoom = 0;
           // Shift+VK_NUMPAD0 would be VK_INSERT but don't mangle that!
         // normal keys:
-        when VK_OEM_MINUS: zoom = -1; if (mods & MDK_SHIFT) goto not_zoom;
-        when VK_OEM_PLUS:  zoom = 1; if (mods & MDK_SHIFT) goto not_zoom;
-        when '0':          zoom = 0; if (mods & MDK_SHIFT) goto not_zoom;
+        //   depending on keyboard layout, these may already be shifted!
+        //   thus better ignore the shift state, at least for -/+
+        //   maybe even check layout() first?
+        //   - something could be assigned to Ctrl+-/+
+        when VK_OEM_MINUS: zoom = -1; mods &= ~MDK_SHIFT;
+        when VK_OEM_PLUS:  zoom = 1; mods &= ~MDK_SHIFT;
+        when '0':          zoom = 0;
         otherwise: goto not_zoom;
       }
       win_zoom_font(zoom, mods & MDK_SHIFT);

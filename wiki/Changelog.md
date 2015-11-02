@@ -17,7 +17,9 @@ Keyboard input:
   * Supporting layout-specified key input for all cases (#483, thanks to maxime1986).
   * Combining accented characters that are not supported by Windows (#484).
   * Application control key mode (#405).
+  * Tweaked/disabled shift-coupled window-with-font zooming on some keys; thus:
   * Reenabled Ctrl+_ (if _ is Shift+- on keyboard layout).
+  * Avoiding inadvertent window-with-font zooming if "+" is a shifted key.
 
 Bold attribute handling:
   * Tweaked smart brightening (for BoldAsColour), considering contrast to both normal colour and background.
