@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Thu Aug  6 18:05:53 2015 -->
+<!-- CreationDate: Tue Nov  3 17:31:41 2015 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -40,8 +40,8 @@
 </h2>
 
 
-<p style="margin-left:11%; margin-top: 1em">mintty - Cygwin
-terminal emulator</p>
+<p style="margin-left:11%; margin-top: 1em">mintty &ndash;
+Cygwin terminal emulator</p>
 
 <h2>SYNOPSIS
 <a name="SYNOPSIS"></a>
@@ -91,7 +91,19 @@ options. <b><br>
 
 <p style="margin-left:22%;">Read settings from the
 specified configuration file, in addition to
-<i>/etc/minttyrc</i> and <i>~/.minttyrc</i>.</p>
+<i>/etc/minttyrc</i> and <i>~/.minttyrc</i>. Configuration
+changes are saved to the last file thus specified and not
+read-only at the time of loading.</p>
+
+<p style="margin-left:11%;"><b>-C</b>, <b>--loadconfig</b>
+<i>FILENAME</i></p>
+
+<p style="margin-left:22%;">Read settings from the
+specified configuration file, in addition to
+<i>/etc/minttyrc</i> and <i>~/.minttyrc</i>. The file is not
+taken into account for saving configuration changes. This is
+useful to mix-in partial configuration variants,
+particularly colour schemes.</p>
 
 <p style="margin-left:11%;"><b>-e</b>, <b>--exec</b>
 <i>PROGRAM</i> [<i>ARG</i> ...]</p>
@@ -155,13 +167,47 @@ ScrollbackLines=1000</tt>.</p>
 <p style="margin-left:22%;">Open the window with its top
 left corner at the specified coordinates. Instead of
 coordinates, &quot;centre&quot; or &quot;center&quot; can be
-specified.</p>
+specified to place the window in the screen centre, and
+&quot;right&quot; or &quot;bottom&quot; can be specified to
+align the right or bottom window border with the right or
+bottom screen border (together with another option -p to
+specify an offset).</p>
+
+<p style="margin-left:22%; margin-top: 1em">Option value
+&quot;@N&quot; where N is a number places the window on
+monitor N.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Multiple -p
+options can be combined; coordinates have a different
+meaning depending on other options: <br>
+&ndash; With &quot;left&quot;, &quot;top&quot;, or
+&quot;@N&quot;, related coordinates are relative to the
+monitor. <br>
+&ndash; With &quot;right&quot; or &quot;bottom&quot;,
+related coordinates adjust the right or bottom window border
+relative to the monitor. <br>
+&ndash; Otherwise, coordinates are absolute and address the
+common multi-monitor address space as provided by
+Windows.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note: For
+another option to select the monitor for a new mintty
+window, see the description of Alt+F2.</p>
 
 <p style="margin-left:11%;"><b>-s</b>, <b>--size</b>
 <i>COLS</i><b>,</b><i>ROWS</i></p>
 
 <p style="margin-left:22%;">Set the default size of the
-window in character columns and rows.</p>
+window in character columns and rows. (The xterm-like syntax
+<i>COLS</i><b>x</b><i>ROWS</i> is accepted too.) Instead of
+coordinates, &quot;maxwidth&quot; or &quot;maxheight&quot;
+can be specified; this can be combined with another
+parameter <b>-s</b> for the other dimension. The dimension
+for which &quot;max&quot; is applied is ignored in further
+<b>-s</b> or <b>-p</b> parameters. For example, <b>mintty -s
+maxwidth -p 0,0 -s 0,10</b> will start a window at full
+screen width, positioned at the top of the screen, with 10
+lines.</p>
 
 <p style="margin-left:11%;"><b>-t</b>, <b>--title</b>
 <i>TITLE</i></p>
@@ -208,8 +254,31 @@ to distinguish different mintty instances. The default is
 <p style="margin-left:22%;">Do not apply
 &quot;daemonizing&quot;. By default, mintty tries to detach
 itself from the invoking terminal in order to avoid disabled
-signal reception, and when cloning the window (Alt-F2) in
+signal reception, and when cloning the window (Alt+F2) in
 order to avoid a remaining zombie process.</p>
+
+<p style="margin-left:11%;"><b>-R</b>, <b>--Reportpos</b>
+<i>mode</i></p>
+
+<p style="margin-left:22%;">Report position and size of
+window before mintty exits. This can be used to manage last
+window positions and reopen mintty windows accordingly. Mode
+is &quot;s&quot; or &quot;o&quot; to choose short or long
+option syntax. The restored (i.e. neither maximised nor
+minimised) geometry is reported and min/max/fullscreen
+information is added.</p>
+
+
+<p style="margin-left:11%;"><b>--store-taskbar-properties</b></p>
+
+<p style="margin-left:22%;">Enable persistent storage of
+Windows taskbar properties together with options AppName and
+AppLaunchCmd.</p>
+
+<p style="margin-left:11%;"><b>--nopin</b></p>
+
+<p style="margin-left:22%;">Prevent pinning of the mintty
+window to the Windows taskbar.</p>
 
 <p style="margin-left:11%;"><b>-H</b>, <b>--help</b></p>
 
@@ -304,22 +373,44 @@ mintty.</p>
 <p style="margin-left:11%; margin-top: 1em"><b>Font
 zoom</b> <br>
 The font size can be increased or decreased using the
-keyboard shortcuts <b>Ctrl+plus</b> and <b>Ctrl+minus</b>,
-or by holding <b>Ctrl</b> while rolling the mousewheel.
-<b>Ctrl+zero</b> or <b>Ctrl+middle-mouse click</b> returns
-the font size to the default. If Shift is also held while
-resizing, the window will be resized to scale together with
-the font, keeping the terminal character size if possible.
+keyboard shortcuts <b>Ctrl+(keypad-)plus</b> and
+<b>Ctrl+(keypad-)minus</b>, or by holding <b>Ctrl</b> while
+rolling the mousewheel. <b>Ctrl+zero</b> or
+<b>Ctrl+middle-mouse click</b> returns the font size to the
+default. <i><br>
+Shift-coupled window-with-font zooming:</i> If Shift is also
+held while zooming, the window will be resized to scale
+together with the font, keeping the terminal character size
+if possible. This is not applied to the shifted numeric
+keypad &quot;0&quot; (which has other meaning) and to the
+shifted normal (non-keypad) &quot;-&quot; and &quot;+&quot;
+keys (because the shifted key could have a valid mapping,
+e.g. Ctrl+_, or the &quot;+&quot; key could be shifted
+itself already). <br>
 Zooming by keyboard or mouse can be disabled, respectively,
 with options ZoomShortcuts=no or ZoomMouse=no.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Drag
 resize</b> <br>
 The usual windows function to drag on the window border
-resizes the terminal. If Shift is also held while resizing,
-the font will be scaled along with the resizing. Note that
-due to the different height/width factors, this is not a
-precise operation.</p>
+resizes the terminal. <i><br>
+Shift-coupled font-with-window zooming:</i> If Shift is also
+held while resizing, the font will be scaled along with the
+resizing, unless disabled with ZoomFontWithWindow=false
+(which would help to avoid interference with certain shifted
+hotkeys configured to resize the window). <br>
+Note that due to the different height/width factors, coupled
+font zooming is not a precise operation.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>DPI
+change</b> <br>
+When DPI setting changes (by reconfiguration of display
+properties &quot;what&rsquo;s on your screen ...
+smaller/medium/larger&quot; or moving the mintty window
+between monitors with different DPI settings), mintty adapts
+its screen size to avoid Windows blurred auto-adaptation. If
+Shift is also held during the change, the font will be
+scaled too, roughly maintaining the screen dimensions.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Full
 screen</b> <br>
@@ -353,6 +444,15 @@ the scrollbar, the mouse wheel, or the keyboard. Hold the
 <b>Down</b> arrow keys to scroll line-by-line or the
 <b>PageUp</b> and <b>PageDown</b> keys to scroll
 page-by-page.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Searching in
+the text and scrollback buffer</b> <br>
+Alt-F3 opens a search bar with an input field for a search
+string. Matches are highlighted in the scrollback buffer.
+Enter/Shift+Enter find the next/previous position of the
+match and scrolls the scrollback buffer accordingly. The
+appearance of the search bar and the matching highlight
+colours can be customized.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Flip
 screen</b> <br>
@@ -427,49 +527,76 @@ non-zero byte first.</p>
 An overview of all the keyboard shortcuts. <b><br>
 Scrollback</b></p>
 
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Shift+Up</b>: Line up <br>
-&minus; <b>Shift+Down</b>: Line down <br>
-&minus; <b>Shift+PgUp</b>: Page up <br>
-&minus; <b>Shift+PgDn</b>: Page down <br>
-&minus; <b>Shift+Home</b>: Top <br>
-&minus; <b>Shift+End</b>: Bottom</p>
+<p style="margin-left:22%;">&ndash; <b>Shift+Up</b>: Line
+up <br>
+&ndash; <b>Shift+Down</b>: Line down <br>
+&ndash; <b>Shift+PgUp</b>: Page up <br>
+&ndash; <b>Shift+PgDn</b>: Page down <br>
+&ndash; <b>Shift+Home</b>: Top <br>
+&ndash; <b>Shift+End</b>: Bottom <br>
+&ndash; <b>Alt+F3</b>: Search</p>
 
 <p style="margin-left:11%;"><b>Copy and paste</b></p>
 
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Ctrl+Ins</b>: Copy <br>
-&minus; <b>Shift+Ins</b>: Paste <br>
-&minus; <b>Ctrl+Shift+Ins</b>: Copy and paste</p>
+<p style="margin-left:22%;">&ndash; <b>Ctrl+Ins</b>: Copy
+<br>
+&ndash; <b>Shift+Ins</b>: Paste <br>
+&ndash; <b>Ctrl+Shift+Ins</b>: Copy and paste</p>
 
 <p style="margin-left:11%;"><b>Window commands</b></p>
 
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Alt+F2</b>: New (clone) <br>
-&minus; <b>Alt+F4</b>: Close <br>
-&minus; <b>Alt+F8</b>: Reset <br>
-&minus; <b>Alt+F10</b>: Default terminal size (rows/columns)
+<p style="margin-left:22%;">&ndash; <b>Alt+F2</b>: New
+(clone); see notes below <br>
+&ndash; <b>Alt+F3</b>: Search (in scrollback buffer) <br>
+&ndash; <b>Alt+F4</b>: Close <br>
+&ndash; <b>Alt+F8</b>: Reset <br>
+&ndash; <b>Alt+F10</b>: Default terminal size (rows/columns)
 <br>
-&minus; <b>Alt+F11</b> or <b>Alt+Enter</b>: Toggle full
+&ndash; <b>Alt+F11</b> or <b>Alt+Enter</b>: Toggle full
 screen <br>
-&minus; <b>Shift+Alt+F11</b> or <b>Shift+Alt+Enter</b>:
+&ndash; <b>Shift+Alt+F11</b> or <b>Shift+Alt+Enter</b>:
 Toggle full screen and zoom font (Note that due to the
 different height/width factors, this is not a precise
 operation) <br>
-&minus; <b>Alt+F12</b>: Flip screen <br>
-&minus; <b>Alt+Space</b>: Window menu <br>
-&minus; <b>Ctrl+Tab</b>: Next window <br>
-&minus; <b>Ctrl+Shift+Tab</b>: Previous window</p>
+&ndash; <b>Alt+F12</b>: Flip screen <br>
+&ndash; <b>Alt+Space</b>: Window menu <br>
+&ndash; <b>Ctrl+Tab</b>: Next window <br>
+&ndash; <b>Ctrl+Shift+Tab</b>: Previous window</p>
+
+<p style="margin-left:22%; margin-top: 1em">Multi-monitor
+selection support: Alt+F2 will only spawn a new window after
+F2 has been released. While F2 is being held, the target
+monitor can be selected with a sequence of numeric keypad
+keys: <br>
+&ndash; cursor-up/down/left/right (8/2/4/6) navigate the
+target focus to the respective neighbour in the monitor
+grid; <br>
+&ndash; the diagonal keys (7/9/1/3) combine two directions
+respectively; <br>
+&ndash; the central key (5) sets the target focus to the
+Windows &quot;primary&quot; monitor; <br>
+&ndash; the Ins key (0) or Del resets the focus to the
+current monitor. <br>
+These navigation controls can be applied repeatedly to
+select a monitor further away.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note that a
+heuristic algorithm is used, based on the size of the
+smallest monitor attached to the system, so the target may
+not always be selected as expected if multiple monitors of
+different size are available or monitors are not arranged in
+a regular grid.</p>
 
 <p style="margin-left:11%;"><b>Font zoom</b></p>
 
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Ctrl+plus</b>: Zoom font in <br>
-&minus; <b>Ctrl+minus</b>: Zoom font out <br>
-&minus; <b>Ctrl+Shift+plus</b>: Zoom font and window in <br>
-&minus; <b>Ctrl+Shift+minus</b>: Zoom font and window out
-<br>
-&minus; <b>Ctrl+zero</b>: Back to configured font size</p>
+<p style="margin-left:22%;">&ndash;
+<b>Ctrl+(keypad-)plus</b>: Zoom font in <br>
+&ndash; <b>Ctrl+(keypad-)minus</b>: Zoom font out <br>
+&ndash; <b>Ctrl+Shift+(keypad-)plus</b>: Zoom font and
+window in <br>
+&ndash; <b>Ctrl+Shift+(keypad-)minus</b>: Zoom font and
+window out <br>
+&ndash; <b>Ctrl+zero</b>: Back to configured font size</p>
 
 <p style="margin-left:11%;"><b>Ctrl+Shift+letter
 shortcuts</b></p>
@@ -477,19 +604,18 @@ shortcuts</b></p>
 <p style="margin-left:22%; margin-top: 1em">An alternative
 set of shortcuts for clipboard and window commands using
 <b>Ctrl+Shift+letter</b> combinations is available. These
-can be enabled on the Keys pane of the options dialog.</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Ctrl+Shift+C</b>: Copy <br>
-&minus; <b>Ctrl+Shift+V</b>: Paste <br>
-&minus; <b>Ctrl+Shift+N</b>: New <br>
-&minus; <b>Ctrl+Shift+W</b>: Close <br>
-&minus; <b>Ctrl+Shift+R</b>: Reset <br>
-&minus; <b>Ctrl+Shift+D</b>: Default terminal size
+can be enabled on the Keys pane of the options dialog. <br>
+&ndash; <b>Ctrl+Shift+C</b>: Copy <br>
+&ndash; <b>Ctrl+Shift+V</b>: Paste <br>
+&ndash; <b>Ctrl+Shift+N</b>: New <br>
+&ndash; <b>Ctrl+Shift+H</b>: Search scrollback buffer <br>
+&ndash; <b>Ctrl+Shift+W</b>: Close <br>
+&ndash; <b>Ctrl+Shift+R</b>: Reset <br>
+&ndash; <b>Ctrl+Shift+D</b>: Default terminal size
 (rows/columns) <br>
-&minus; <b>Ctrl+Shift+F</b>: Full screen (not zooming font
+&ndash; <b>Ctrl+Shift+F</b>: Full screen (not zooming font
 despite Shift) <br>
-&minus; <b>Ctrl+Shift+S</b>: Flip screen</p>
+&ndash; <b>Ctrl+Shift+S</b>: Flip screen</p>
 
 <h2>CONFIGURATION
 <a name="CONFIGURATION"></a>
@@ -498,21 +624,39 @@ despite Shift) <br>
 
 <p style="margin-left:11%; margin-top: 1em">Mintty has a
 graphical options dialog that can be reached via the context
-menu or the window menu. As usual, both the <b>Apply</b> and
-<b>OK</b> buttons apply any changes made, but <b>OK</b> also
-closes the dialog. <b>Cancel</b> discards changes.</p>
+menu or the window menu. It has the following action
+buttons: <br>
+&ndash; <b>Cancel</b>: discards changes. <br>
+&ndash; <b>Save</b>: applies and saves changes and closes
+the dialog. <br>
+&ndash; <b>Apply</b>: applies changes to the current
+instance of mintty <br>
+but does not save them to the configuration file. So using
+<b>Apply</b> <br>
+then <b>Cancel</b>, local changes can be applied without
+affecting further <br>
+instances of mintty.</p>
 
 <p style="margin-left:11%; margin-top: 1em">In
 configuration files, settings are stored as
 <i>NAME</i>=<i>VALUE</i> pairs, with one per line. By
 default, they are read from <i>/etc/minttyrc</i> and
 <i>~/.minttyrc</i>. Additional configuration files can be
-specified using the <b>--config</b> command line option.
-These are read in order, with settings in later files
-overriding those in earlier ones. Configuration changes are
-saved to the last file specified, or <i>~/.minttyrc</i> if
-none is given. Settings can also be specified on the command
-line using <b>--option</b>.</p>
+specified using the <b>-c</b>/<b>--config</b> or
+<b>-C</b>/<b>--loadconfig</b> command line options. These
+are read in order, with settings in later files overriding
+those in earlier ones. Configuration changes are saved to
+the last writable file specified with
+<b>-c</b>/<b>--config</b>, or <i>~/.minttyrc</i> if none is
+given. Individual settings can also be specified on the
+command line using the <b>-o</b>/<b>--option</b>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Be careful when
+running multiple instances of mintty. If options are saved
+from different instances, obviously they can overwrite each
+other; if different mintty versions are run (e.g. from
+cygwin and msys sharing the same home directory), options
+may even get dropped from the configuration file.</p>
 
 <p style="margin-left:11%; margin-top: 1em">The following
 sections explain the settings on each pane of the options
@@ -535,25 +679,23 @@ here opens the colour selection dialog. In the settings,
 colours are represented as comma-separated RGB triples with
 decimal 8-bit values ranging from 0 to 255. X-style
 hexadecimal colour specifications such as #RRGGBB or
-rgb:RR/GG/BB can be used as well.</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Foreground</b> (ForegroundColour=191,191,191) <br>
-&minus; <b>Background</b> (BackgroundColour=0,0,0) <br>
-&minus; <b>Cursor</b> (CursorColour=191,191,191)</p>
+rgb:RR/GG/BB can be used as well. Also X11 color names are
+supported. <br>
+&ndash; <b>Foreground</b> (ForegroundColour=191,191,191)
+<br>
+&ndash; <b>Background</b> (BackgroundColour=0,0,0) <br>
+&ndash; <b>Cursor</b> (CursorColour=191,191,191)</p>
 
 <p style="margin-left:11%;"><b>Transparency</b>
 (Transparency=off)</p>
 
 <p style="margin-left:22%;">Window transparency level, with
-the following choices:</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Off</b> <br>
-&minus; <b>Low</b> <br>
-&minus; <b>Medium</b> <br>
-&minus; <b>High</b> <br>
-&minus; <b>Glass</b></p>
+the following choices: <br>
+&ndash; <b>Off</b> <br>
+&ndash; <b>Low</b> <br>
+&ndash; <b>Medium</b> <br>
+&ndash; <b>High</b> <br>
+&ndash; <b>Glass</b></p>
 
 <p style="margin-left:22%; margin-top: 1em">The
 <b>Glass</b> option is only available on Vista and above
@@ -581,12 +723,10 @@ when working in it).</p>
 (CursorType=line)</p>
 
 <p style="margin-left:22%;">The following cursor types are
-available:</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Line</b> <br>
-&minus; <b>Block</b> <br>
-&minus; <b>Underscore</b></p>
+available: <br>
+&ndash; <b>Line</b> <br>
+&ndash; <b>Block</b> <br>
+&ndash; <b>Underscore</b></p>
 
 <p style="margin-left:22%; margin-top: 1em">The line cursor
 is displayed with the width set in the Accessibility Options
@@ -607,12 +747,10 @@ Font selection</b></p>
 button opens a dialog where the font and its properties can
 be chosen. Font styles other than <b>Bold</b> are ignored.
 In the config file, this corresponds to the following
-entries:</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Font</b> (Font=Lucida Console) <br>
-&minus; <b>Style</b> (FontIsBold=no) <br>
-&minus; <b>Size</b> (FontHeight=9)</p>
+entries: <br>
+&ndash; <b>Font</b> (Font=Lucida Console) <br>
+&ndash; <b>Style</b> (FontIsBold=no) <br>
+&ndash; <b>Size</b> (FontHeight=9)</p>
 
 <p style="margin-left:11%;"><b>Show bold as font</b>
 (BoldAsFont=no)</p>
@@ -656,13 +794,11 @@ bold background colour instead.</p>
 (FontSmoothing=default)</p>
 
 <p style="margin-left:22%;">Select the amount of font
-smoothing from the following choices:</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Default</b>: Use Windows setting. <br>
-&minus; <b>None</b>: With all the jaggies. <br>
-&minus; <b>Partial</b>: Greyscale anti-aliasing. <br>
-&minus; <b>Full</b>: Subpixel anti-aliasing
+smoothing from the following choices: <br>
+&ndash; <b>Default</b>: Use Windows setting. <br>
+&ndash; <b>None</b>: With all the jaggies. <br>
+&ndash; <b>Partial</b>: Greyscale anti-aliasing. <br>
+&ndash; <b>Full</b>: Subpixel anti-aliasing
 (&quot;ClearType&quot;).</p>
 
 <p style="margin-left:11%;"><b>Locale</b> (Locale=)</p>
@@ -832,27 +968,23 @@ to the destination.</p>
 <p style="margin-left:11%;">(MiddleClickAction=paste)</p>
 
 <p style="margin-left:22%;">Action to take when the middle
-mouse button is pressed.</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Paste</b>: Paste the clipboard contents. <br>
-&minus; <b>Extend</b>: Extend the selected region. <br>
-&minus; <b>Enter</b>: Simulate <b>Enter</b>/<b>Return</b>
+mouse button is pressed. <br>
+&ndash; <b>Paste</b>: Paste the clipboard contents. <br>
+&ndash; <b>Extend</b>: Extend the selected region. <br>
+&ndash; <b>Enter</b>: Simulate <b>Enter</b>/<b>Return</b>
 key. <br>
-&minus; <b>Void</b>: Do nothing.</p>
+&ndash; <b>Void</b>: Do nothing.</p>
 
 <p style="margin-left:11%;"><b>Right click action</b>
 (RightClickAction=menu)</p>
 
 <p style="margin-left:22%;">Action to take when the right
-mouse button is pressed.</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Paste</b>: Paste the clipboard contents. <br>
-&minus; <b>Extend</b>: Extend the selected region. <br>
-&minus; <b>Enter</b>: Simulate <b>Enter</b>/<b>Return</b>
+mouse button is pressed. <br>
+&ndash; <b>Paste</b>: Paste the clipboard contents. <br>
+&ndash; <b>Extend</b>: Extend the selected region. <br>
+&ndash; <b>Enter</b>: Simulate <b>Enter</b>/<b>Return</b>
 key. <br>
-&minus; <b>Menu</b>: Show the context menu.</p>
+&ndash; <b>Menu</b>: Show the context menu.</p>
 
 <p style="margin-left:22%; margin-top: 1em">If this is set
 to <b>Paste</b>, the middle button extends the selected
@@ -873,12 +1005,10 @@ the clipboard instead of extending the selection.</p>
 mouse mode, i.e. when the application activates xterm-style
 mouse reporting. In that mode, mouse clicks can be sent
 either to the application to process as it sees fit, or to
-the window for the usual actions such as select and
-paste.</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Window</b> <br>
-&minus; <b>Application</b></p>
+the window for the usual actions such as select and paste.
+<br>
+&ndash; <b>Window</b> <br>
+&ndash; <b>Application</b></p>
 
 <p style="margin-left:11%;"><b>Modifier key for overriding
 default</b> (ClickTargetMod=shift)</p>
@@ -890,13 +1020,11 @@ the application and Shift needs to be held to trigger window
 actions instead.</p>
 
 <p style="margin-left:22%; margin-top: 1em">The <b>Off</b>
-setting disables overriding.</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Shift</b> <br>
-&minus; <b>Ctrl</b> <br>
-&minus; <b>Alt</b> <br>
-&minus; <b>Off</b></p>
+setting disables overriding. <br>
+&ndash; <b>Shift</b> <br>
+&ndash; <b>Ctrl</b> <br>
+&ndash; <b>Alt</b> <br>
+&ndash; <b>Off</b></p>
 
 <p style="margin-left:11%;">(HideMouse=on)</p>
 
@@ -945,12 +1073,10 @@ keep in the scrollback buffer.</p>
 
 <p style="margin-left:22%;">The scrollbar can be shown on
 either side of the window or just hidden. By default, it is
-shown on the right-hand side.</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Left</b> <br>
-&minus; <b>None</b> <br>
-&minus; <b>Right</b></p>
+shown on the right-hand side. <br>
+&ndash; <b>Left</b> <br>
+&ndash; <b>None</b> <br>
+&ndash; <b>Right</b></p>
 
 <p style="margin-left:11%;"><b>Modifier for scrolling</b>
 (ScrollMod=shift)</p>
@@ -959,13 +1085,11 @@ shown on the right-hand side.</p>
 be pressed together with the arrow up/down, PgUp/PgDn, or
 Home/End keys to access the scrollback buffer. The default
 is <b>Shift</b>. The <b>Off</b> setting disables scrolling
-with keyboard shortcuts.</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Shift</b> <br>
-&minus; <b>Ctrl</b> <br>
-&minus; <b>Alt</b> <br>
-&minus; <b>Off</b></p>
+with keyboard shortcuts. <br>
+&ndash; <b>Shift</b> <br>
+&ndash; <b>Ctrl</b> <br>
+&ndash; <b>Alt</b> <br>
+&ndash; <b>Off</b></p>
 
 <p style="margin-left:11%;"><b>PgUp and PgDn scroll without
 modifier</b> (PgUpDnScroll=no)</p>
@@ -1030,26 +1154,20 @@ bell character <b>^G</b> has. Only taskbar highlighting is
 enabled by default.</p></td></tr>
 </table>
 
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Sound</b> (BellSound=no): Play the system&rsquo;s default
-beep sound.</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Flash</b> (BellFlash=no): Briefly invert the foreground
-and background colours.</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Highlight in taskbar</b> (BellTaskbar=yes): Change the
-colour of mintty&rsquo;s taskbar entry if the mintty window
-is not active.</p>
+<p style="margin-left:22%;">&ndash; <b>Sound</b>
+(BellSound=no): Play the system&rsquo;s default beep sound.
+<br>
+&ndash; <b>Flash</b> (BellFlash=no): Briefly invert the
+foreground and background colours. <br>
+&ndash; <b>Highlight in taskbar</b> (BellTaskbar=yes):
+Change the colour of mintty&rsquo;s taskbar entry if the
+mintty window is not active.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Further
 configuration options are currently available for
 <i>/etc/minttyrc</i> and <i>~/.minttyrc</i> or as <b>-o</b>
-command line option only:</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-(BellType=0): Preferred system sound, values:</p>
+command line option only: <br>
+&ndash; (BellType=0): Preferred system sound, values:</p>
 
 <p style="margin-left:32%;"><b>1</b> : Default Beep <b><br>
 2</b> : Critical Stop <b><br>
@@ -1057,13 +1175,10 @@ command line option only:</p>
 4</b> : Exclamation <b><br>
 5</b> : Asterisk</p>
 
-<p style="margin-left:22%; margin-top: 1em">&minus;
-(BellFreq=0): Beep sound frequency (overrides system
-sounds).</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-(BellLen=400): Beep sound length (applies to frequency
-beep).</p>
+<p style="margin-left:22%;">&ndash; (BellFreq=0): Beep
+sound frequency (overrides system sounds). <br>
+&ndash; (BellLen=400): Beep sound length (applies to
+frequency beep).</p>
 
 <p style="margin-left:11%;"><b>Printer</b> (Printer=)</p>
 
@@ -1094,23 +1209,15 @@ Holding the window open</b> (Hold=start)</p>
 <p style="margin-left:22%;">The <b>Hold</b> setting
 determines whether to keep the terminal window open when the
 command has finished and no more processes are connected to
-the terminal. It takes the following values:</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>never</b>: Don&rsquo;t keep the window open.</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>start</b>: Only keep the window open if the command
-exited with status 255, which is used to indicate failure to
-start the command. This is the default.</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>error</b>: Keep the window open if the command exited
-with a non-zero status or it was terminated by a signal
-indicating a runtime error.</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>always</b>: Always keep the window open.</p>
+the terminal. It takes the following values: <br>
+&ndash; <b>never</b>: Don&rsquo;t keep the window open. <br>
+&ndash; <b>start</b>: Only keep the window open if the
+command exited with status 255, which is used to indicate
+failure to start the command. This is the default. <br>
+&ndash; <b>error</b>: Keep the window open if the command
+exited with a non-zero status or it was terminated by a
+signal indicating a runtime error. <br>
+&ndash; <b>always</b>: Always keep the window open.</p>
 
 <p style="margin-left:11%;"><b>Window icon</b> (Icon=)</p>
 
@@ -1150,14 +1257,12 @@ example in the output of the <i>who</i>(1) utility.</p>
 (Window=normal)</p>
 
 <p style="margin-left:22%;">This setting determines how the
-terminal window should be shown at startup:</p>
-
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>normal</b> (default) <br>
-&minus; <b>min</b> (minimised) <br>
-&minus; <b>max</b> (maximised) <br>
-&minus; <b>full</b> (full screen) <br>
-&minus; <b>hide</b> (invisible)</p>
+terminal window should be shown at startup: <br>
+&ndash; <b>normal</b> (default) <br>
+&ndash; <b>min</b> (minimised) <br>
+&ndash; <b>max</b> (maximised) <br>
+&ndash; <b>full</b> (full screen) <br>
+&ndash; <b>hide</b> (invisible)</p>
 
 <p style="margin-left:11%;"><b>Window position</b> (X=,
 Y=)</p>
@@ -1193,16 +1298,50 @@ be overridden by setting the AppID to a custom string, in
 which case windows with the same AppID are grouped
 together.</p>
 
-<p style="margin-left:22%; margin-top: 1em">Note that
-Windows shortcut files have their own AppID. Hence, if an
-AppID is specified in the mintty settings, but not on a
-taskbar-pinned shortcut for invoking mintty, clicking the
-pinned shortcut will result in a separate taskbar item for
-the new mintty window, rather than being grouped with the
-shortcut. To avoid this, the shortcut&rsquo;s AppID has to
-be set to the same string, which can be done using the
-<b>win7appid</b> utility available from
-<i>http://win7appid.googlecode.com</i>.</p>
+<p style="margin-left:11%;"><b>Application Taskbar Shortcut
+Title</b> (AppName=)</p>
+
+<p style="margin-left:22%;">The title of the Windows 7
+taskbar shortcut. If the shortcut is pinned, the title is
+kept only if it was made persistent as described for
+AppLaunchCmd.</p>
+
+<p style="margin-left:11%;"><b>Application Taskbar Shortcut
+Launch CommandTitle</b> (AppLaunchCmd=)</p>
+
+<p style="margin-left:22%;">The command to use if a
+shortcut pinned to the Windows 7 taskbar is invoked. This is
+only effective if combined with an AppName option and the
+command-line option --store-taskbar-properties to make it
+persistent. It should also be combined with an explicit
+AppID (mintty will otherwise generate an AppID but that may
+not be desired).</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note: The
+command must be given in Windows pathname syntax (e.g.
+AppLaunchCmd=&rsquo;C:\cygwin\bin\mintty -T mytitle
+-&rsquo;).</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note: An
+explicit icon supplied with the -i option can also be stored
+with the persistent properties; note, however, that for this
+purpose, it must be given in Windows pathname syntax and it
+must include a resource index; also, for consistent
+appearance, another -i option referring to the same icon
+should be included in the AppLaunchCmd.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Example: mintty
+-o AppID=Mintty.Pintest.1 -o AppName=Mintty.Pintest -o
+AppLaunchCmd=&quot;C:\cygwin\bin\mintty -i
+/cygdrive/c/Windows/System32/calc.exe -&quot; -i
+C:\Windows\System32\calc.exe,0 --store-taskbar-properties
+-</p>
+
+
+<p style="margin-left:22%; margin-top: 1em"><b>Warning:</b>
+Once made persistent, the stored properties associated with
+a specific AppID cannot be removed or even modified again
+with normal means.</p>
 
 <p style="margin-left:11%;"><b>Word selection
 characters</b> (WordChars=)</p>
@@ -1231,9 +1370,9 @@ that are to be excluded from word selection.</p>
 <p style="margin-left:22%;">This option can attach a
 specific string to the Break key. If the string is a number,
 a corresponding Escape sequence will be generated, applying
-Shift/Control/Alt modifiers as to function and keypad keys.
-For example, Break=2 would effectively turn the Break key
-into an Insert key.</p>
+Shift/Ctrl/Alt modifiers as to function and keypad keys. For
+example, Break=2 would effectively turn the Break key into
+an Insert key.</p>
 
 <p style="margin-left:11%;"><b>Pause key remapping</b>
 (Pause=)</p>
@@ -1271,25 +1410,54 @@ settings along with their default values. Colours are
 represented as comma-separated RGB triples with decimal
 8-bit values ranging from 0 to 255. X-style hexadecimal
 colour specifications such as #RRGGBB or rgb:RR/GG/BB can be
-used as well.</p>
+used as well. Also X11 color names are supported. <br>
+&ndash; <b>Black</b>=0,0,0 <br>
+&ndash; <b>Red</b>=191,0,0 <br>
+&ndash; <b>Green</b>=0,191,0 <br>
+&ndash; <b>Yellow</b>=191,191,0 <br>
+&ndash; <b>Blue</b>=0,0,191 <br>
+&ndash; <b>Magenta</b>=191,0,191 <br>
+&ndash; <b>Cyan</b>=0,191,191 <br>
+&ndash; <b>White</b>=191,191,191 <br>
+&ndash; <b>BoldBlack</b>=64,64,64 <br>
+&ndash; <b>BoldRed</b>=255,64,64 <br>
+&ndash; <b>BoldGreen</b>=64,255,64 <br>
+&ndash; <b>BoldYellow</b>=255,255,64 <br>
+&ndash; <b>BoldBlue</b>=96,96,255 <br>
+&ndash; <b>BoldMagenta</b>=255,64,255 <br>
+&ndash; <b>BoldCyan</b>=64,255,255 <br>
+&ndash; <b>BoldWhite</b>=255,255,255</p>
 
-<p style="margin-left:22%; margin-top: 1em">&minus;
-<b>Black</b>=0,0,0 <br>
-&minus; <b>Red</b>=191,0,0 <br>
-&minus; <b>Green</b>=0,191,0 <br>
-&minus; <b>Yellow</b>=191,191,0 <br>
-&minus; <b>Blue</b>=0,0,191 <br>
-&minus; <b>Magenta</b>=191,0,191 <br>
-&minus; <b>Cyan</b>=0,191,191 <br>
-&minus; <b>White</b>=191,191,191 <br>
-&minus; <b>BoldBlack</b>=64,64,64 <br>
-&minus; <b>BoldRed</b>=255,64,64 <br>
-&minus; <b>BoldGreen</b>=64,255,64 <br>
-&minus; <b>BoldYellow</b>=255,255,64 <br>
-&minus; <b>BoldBlue</b>=96,96,255 <br>
-&minus; <b>BoldMagenta</b>=255,64,255 <br>
-&minus; <b>BoldCyan</b>=64,255,255 <br>
-&minus; <b>BoldWhite</b>=255,255,255</p>
+<p style="margin-left:11%;"><b>Bold substitution colour</b>
+(BoldColour=)</p>
+
+<p style="margin-left:22%;">The colour to be used instead
+of the bold attribute can be configured. The bold
+substitution colour is only applied if option BoldAsFont is
+false and option BoldAsColour is true. The default is
+<i>none</i>, meaning that a brightened colour derived from
+the effective foreground colour is used. The bold
+substitution colour can also be set and reset with the
+respective xterm OSC control sequences.</p>
+
+<p style="margin-left:11%;"><b>Scrollback search
+colours</b></p>
+
+<p style="margin-left:22%;">The highlighting colours of
+search matches can be configured. <br>
+&ndash; <b>SearchForegroundColour</b>=<i>black</i> <br>
+&ndash; <b>SearchBackgroundColour</b>=<i>light yellow</i>
+<br>
+&ndash; <b>SearchCurrentColour</b>=<i>bright yellow</i></p>
+
+<p style="margin-left:11%;"><b>Scrollback search bar</b>
+(SearchBar=)</p>
+
+<p style="margin-left:22%;">This string option can
+customize the order of items in the search bar. Use x (close
+button), &lt;/&gt; (previous/next buttons), s (search
+string) to select the order of these fields in the search
+bar; missing fields will be appended in a default order.</p>
 
 <p style="margin-left:11%;"><b>Write if exited</b>
 (ExitWrite=no)</p>
@@ -1308,6 +1476,15 @@ that keeps the terminal open after its child process
 terminated, this option prefixes the window title with its
 string, for example -o ExitTitle=&quot;TERMINATED: &quot; or
 (in minttyrc) ExitTitle=TERMINATED: .</p>
+
+<p style="margin-left:11%;"><b>Disable Shift-coupled
+implicit font zooming</b> (ZoomFontWithWindow=yes)</p>
+
+<p style="margin-left:22%;">If this option is set to false,
+implicit font zooming coupled with window zooming by the
+Shift key is disabled, except for the keyboard zoom
+functions Shift+Alt+Enter/F11 and the Shift+menu
+function.</p>
 
 <h2>LIMITATIONS
 <a name="LIMITATIONS"></a>

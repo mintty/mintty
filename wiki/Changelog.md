@@ -1,3 +1,4 @@
+### 2.2.1 (3 Nov 2015) ###
 
 Major New Search Feature (thanks to Kai (twitter:@sixhundredns)):
   * Search scrollback buffer (#85); shortcuts Alt+F3 or Shift+Ctrl+H; configuration options.
@@ -41,6 +42,7 @@ Configuration:
   * Supporting X11 color names for colour specifications in options.
   * New option -R to report window geometry on exit (~#477).
   * Optional Windows taskbar integration (#471, thanks to Johannes Schindelin).
+  * Not inhibiting size options in nested invocation from Alt+F2.
 
 ### 2.1.5 (19 Aug 2015) ###
   * Guard Shift+Ctrl+0 detection (#233) to avoid interference with keyboard switchers (#472).

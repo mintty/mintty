@@ -40,6 +40,7 @@ TARUSER := --owner=root --group=root --owner=mintty --group=cygwin
 
 arch_files := Makefile COPYING LICENSE* INSTALL VERSION
 arch_files += src/Makefile src/*.c src/*.h src/*.rc src/*.mft
+arch_files += src/combined.t src/rgb.t
 arch_files += cygwin/*.cygport cygwin/README* cygwin/setup.hint
 arch_files += docs/*.1 docs/*.html icon/*
 arch_files += wiki/*
