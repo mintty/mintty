@@ -662,9 +662,16 @@ static struct {
     // Substitute accent compositions not supported by Windows
     if (wlen == 2)
       for (unsigned int i = 0; i < lengthof(comb_subst); i++)
-        if (comb_subst[i].spacing == wbuf[0] && comb_subst[i].base == wbuf[1]) {
-          wbuf[0] = comb_subst[i].combined;
-          wlen = 1;
+        if (comb_subst[i].spacing == wbuf[0] && comb_subst[i].base == wbuf[1]
+            && comb_subst[i].combined < 0xFFFF  // -> wchar/UTF-16: BMP only
+           ) {
+          wchar wtmp = comb_subst[i].combined;
+          short mblen = cs_wcntombn(buf + len, &wtmp, lengthof(buf) - len, 1);
+          // short to recognise 0xFFFD as negative (WideCharToMultiByte...?)
+          if (mblen > 0) {
+            wbuf[0] = comb_subst[i].combined;
+            wlen = 1;
+          }
           break;
         }
 
