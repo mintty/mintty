@@ -1565,12 +1565,15 @@ main(int argc, char *argv[])
 
   if (getenv("MINTTY_ROWS")) {
     set_arg_option("Rows", getenv("MINTTY_ROWS"));
+    unsetenv("MINTTY_ROWS");
   }
   if (getenv("MINTTY_COLS")) {
     set_arg_option("Columns", getenv("MINTTY_COLS"));
+    unsetenv("MINTTY_COLS");
   }
   if (getenv("MINTTY_MONITOR")) {
     monitor = atoi(getenv("MINTTY_MONITOR"));
+    unsetenv("MINTTY_MONITOR");
   }
 
   finish_config();

@@ -570,17 +570,18 @@ child_fork(int argc, char *argv[], int moni)
     (void) argc;
 #endif
 
+    void setenvi(char * env, int val) {
+      char valbuf[22];
+      sprintf(valbuf, "%d", val);
+      setenv(env, valbuf, true);
+    }
+
     // provide environment to clone size
-    char parbuf1[34];
-    sprintf (parbuf1, "MINTTY_ROWS=%d", term.rows);
-    putenv (parbuf1);
-    char parbuf2[34];
-    sprintf (parbuf2, "MINTTY_COLS=%d", term.cols);
-    putenv (parbuf2);
+    setenvi("MINTTY_ROWS", term.rows);
+    setenvi("MINTTY_COLS", term.cols);
     // provide environment to select monitor
-    char parbuf3[34];
-    sprintf (parbuf3, "MINTTY_MONITOR=%d", moni);
-    putenv (parbuf3);
+    if (moni > 0)
+      setenvi("MINTTY_MONITOR", moni);
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
     execv("/proc/self/exe", argv);
