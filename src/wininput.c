@@ -444,30 +444,6 @@ win_key_down(WPARAM wp, LPARAM lp)
       }
     }
 
-    // Font zooming
-    if (cfg.zoom_shortcuts && (mods & ~MDK_SHIFT) == MDK_CTRL) {
-      int zoom;
-      switch (key) {
-        // numeric keypad keys:
-        when VK_SUBTRACT:  zoom = -1;
-        when VK_ADD:       zoom = 1;
-        when VK_NUMPAD0:   zoom = 0;
-          // Shift+VK_NUMPAD0 would be VK_INSERT but don't mangle that!
-        // normal keys:
-        //   depending on keyboard layout, these may already be shifted!
-        //   thus better ignore the shift state, at least for -/+
-        //   maybe even check layout() first?
-        //   - something could be assigned to Ctrl+-/+
-        when VK_OEM_MINUS: zoom = -1; mods &= ~MDK_SHIFT;
-        when VK_OEM_PLUS:  zoom = 1; mods &= ~MDK_SHIFT;
-        when '0':          zoom = 0;
-        otherwise: goto not_zoom;
-      }
-      win_zoom_font(zoom, mods & MDK_SHIFT);
-      return 1;
-      not_zoom:;
-    }
-
     // Alt+Fn shortcuts
     if (cfg.alt_fn_shortcuts && alt && VK_F1 <= key && key <= VK_F24) {
       if (!ctrl) {
@@ -527,6 +503,58 @@ win_key_down(WPARAM wp, LPARAM lp)
         not_scroll:;
       }
     }
+
+    // Font zooming
+    if (cfg.zoom_shortcuts && (mods & ~MDK_SHIFT) == MDK_CTRL) {
+      int zoom;
+      switch (key) {
+        // numeric keypad keys:
+        // -- handle these ahead, i.e. here
+        when VK_SUBTRACT:  zoom = -1;
+        when VK_ADD:       zoom = 1;
+        when VK_NUMPAD0:   zoom = 0;
+          // Shift+VK_NUMPAD0 would be VK_INSERT but don't mangle that!
+        // normal keys:
+        // -- handle these in the course of layout() and other checking,
+        // -- see below
+        //when VK_OEM_MINUS: zoom = -1; mods &= ~MDK_SHIFT;
+        //when VK_OEM_PLUS:  zoom = 1; mods &= ~MDK_SHIFT;
+        //when '0':          zoom = 0;
+        otherwise: goto not_zoom;
+      }
+      win_zoom_font(zoom, mods & MDK_SHIFT);
+      return 1;
+      not_zoom:;
+    }
+  }
+
+  bool zoom_hotkey(void) {
+    if (!term.shortcut_override && cfg.zoom_shortcuts
+        && (mods & ~MDK_SHIFT) == MDK_CTRL) {
+      int zoom;
+      switch (key) {
+        // numeric keypad keys:
+        // -- handle these ahead, see above
+        //when VK_SUBTRACT:  zoom = -1;
+        //when VK_ADD:       zoom = 1;
+        //when VK_NUMPAD0:   zoom = 0;
+          // Shift+VK_NUMPAD0 would be VK_INSERT but don't mangle that!
+        // normal keys:
+        // -- handle these in the course of layout() and other checking,
+        // -- so handle the case that something is assigned to them
+        // -- e.g. Ctrl+Shift+- -> Ctrl+_
+        // -- or even a custom Ctrl+- mapping
+        // depending on keyboard layout, these may already be shifted!
+        // thus better ignore the shift state, at least for -/+
+        when VK_OEM_MINUS: zoom = -1; mods &= ~MDK_SHIFT;
+        when VK_OEM_PLUS:  zoom = 1; mods &= ~MDK_SHIFT;
+        when '0':          zoom = 0;
+        otherwise: return 0;
+      }
+      win_zoom_font(zoom, mods & MDK_SHIFT);
+      return 1;
+    }
+    return 0;
   }
 
   // Keycode buffers
@@ -881,6 +909,7 @@ static struct {
       else if (char_key());
       else if (term.modify_other_keys <= 1 && ctrl_key());
       else if (term.modify_other_keys) modify_other_key();
+      else if (zoom_hotkey());
       else if (key <= '9') app_pad_code(key);
       else if (VK_OEM_PLUS <= key && key <= VK_OEM_PERIOD)
         app_pad_code(key - VK_OEM_PLUS + '+');
