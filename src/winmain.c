@@ -1326,7 +1326,11 @@ configure_taskbar()
 
   // If an icon is configured but no app_id, we can derive one from the 
   // icon in order to enable proper taskbar grouping by common icon.
-  if (relaunch_icon && *relaunch_icon && (!app_id || !*app_id)) {
+  // However, this has an undesirable side-effect if a shortcut is 
+  // pinned (presumably getting some implicit AppID from Windows) and 
+  // instances are started from there (with a different AppID...).
+  // Disabled.
+  if (false && relaunch_icon && *relaunch_icon && (!app_id || !*app_id)) {
     const char * iconbasename = strrchr(cfg.icon, '/');
     if (iconbasename)
       iconbasename ++;
