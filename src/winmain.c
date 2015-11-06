@@ -690,7 +690,7 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
   int term_width = client_width - 2 * PADDING;
   int term_height = client_height - 2 * PADDING;
 
-  if (scale_font_with_size) {
+  if (scale_font_with_size && term.cols != 0 && term.rows != 0) {
     // calc preliminary size (without font scaling), as below
     // should use term_height rather than rows; calc and store in term_resize
     int cols0 = max(1, term_width / font_width);
