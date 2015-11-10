@@ -723,6 +723,8 @@ do_csi(uchar c)
   term_cursor *curs = &term.curs;
   int arg0 = term.csi_argv[0], arg1 = term.csi_argv[1];
   int arg0_def1 = arg0 ?: 1;  // first arg with default 1
+  if (arg0_def1 < 0)
+    arg0_def1 = INT_MAX;
   switch (CPAIR(term.esc_mod, c)) {
     when 'A':        /* CUU: move up N lines */
       move(curs->x, curs->y - arg0_def1, 1);
