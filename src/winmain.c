@@ -33,6 +33,8 @@ HIMC imc;
 static char **main_argv;
 static int main_argc;
 static ATOM class_atom;
+static bool invoked_from_shortcut = false;
+static bool invoked_with_appid = false;
 
 static int extra_width, extra_height, norm_extra_width, norm_extra_height;
 
@@ -1324,6 +1326,8 @@ configure_taskbar()
 
 #define dont_debug_properties
 
+#ifdef two_witty_ideas_with_bad_side_effects
+#warning automatic derivation of an AppId is likely not a good idea
   // If an icon is configured but no app_id, we can derive one from the 
   // icon in order to enable proper taskbar grouping by common icon.
   // However, this has an undesirable side-effect if a shortcut is 
@@ -1348,10 +1352,11 @@ configure_taskbar()
   }
   // If app_name is configured but no app_launch_cmd, we need an app_id 
   // to make app_name effective as taskbar title, so invent one.
-  if (relaunch_display_name && *relaunch_display_name && 
+  if (false && relaunch_display_name && *relaunch_display_name && 
       (!app_id || !*app_id)) {
     app_id = "Mintty.AppID";
   }
+#endif
 
   // Set the app ID explicitly, as well as the relaunch command and display name
   if (prevent_pinning || (app_id && *app_id)) {
@@ -1486,6 +1491,9 @@ main(int argc, char *argv[])
   GetStartupInfo(&sui);
   cfg.window = sui.dwFlags & STARTF_USESHOWWINDOW ? sui.wShowWindow : SW_SHOW;
   cfg.x = cfg.y = CW_USEDEFAULT;
+  invoked_from_shortcut = sui.dwFlags & STARTF_TITLEISLINKNAME;
+  invoked_with_appid = sui.dwFlags & STARTF_TITLEISAPPID;
+  // shortcut or AppId would be found in sui.lpTitle
 
   load_config("/etc/minttyrc", true);
   string rc_file = asform("%s/.minttyrc", home);
