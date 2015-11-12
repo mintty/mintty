@@ -1,4 +1,5 @@
 
+  * Fixed New window option from window title menu on multi-monitor systems (#491).
   * Tweaked taskbar grouping behaviour (#486).
   * Fixed start on other monitor in Windows 10 / MinGW (#489, thanks to rupor).
 
