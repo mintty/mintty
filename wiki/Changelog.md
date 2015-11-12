@@ -1,3 +1,4 @@
+### 2.2.2 (12 Nov 2015) ###
 
   * Tweaked taskbar grouping behaviour (#486).
   * Advice on avoiding trouble with taskbar grouping and icon consistence in manual page and wiki Tips page (#420, #486, ~#471).

@@ -1335,7 +1335,7 @@ configure_taskbar()
   // pinned (presumably getting some implicit AppID from Windows) and 
   // instances are started from there (with a different AppID...).
   // Disabled.
-  if (false && relaunch_icon && *relaunch_icon && (!app_id || !*app_id)) {
+  if (relaunch_icon && *relaunch_icon && (!app_id || !*app_id)) {
     const char * iconbasename = strrchr(cfg.icon, '/');
     if (iconbasename)
       iconbasename ++;
@@ -1353,7 +1353,7 @@ configure_taskbar()
   }
   // If app_name is configured but no app_launch_cmd, we need an app_id 
   // to make app_name effective as taskbar title, so invent one.
-  if (false && relaunch_display_name && *relaunch_display_name && 
+  if (relaunch_display_name && *relaunch_display_name && 
       (!app_id || !*app_id)) {
     app_id = "Mintty.AppID";
   }

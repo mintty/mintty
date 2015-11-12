@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Tue Nov  3 17:31:41 2015 -->
+<!-- CreationDate: Thu Nov 12 17:56:35 2015 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -145,6 +145,13 @@ signal indicating a runtime error.</p>
 executable, DLL, or icon file. The optional comma-separated
 index can be used to select a particular icon in a file with
 multiple icons.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+About interaction problems of icon, shortcut, and the
+Windows taskbar: In a Windows desktop shortcut, to achieve
+consistent icon behaviour, the same icon should be specified
+in the shortcut properties (Change Icon...) and the mintty
+command line (Target:).</p>
 
 <p style="margin-left:11%;"><b>-l</b>, <b>--log</b>
 <i>FILE</i>|<b>-</b></p>
@@ -1229,6 +1236,10 @@ particular icon in a file with multiple icons. If the
 setting is empty, as it is by default, mintty&rsquo;s
 program icon is used.</p>
 
+<p style="margin-left:22%; margin-top: 1em">For interaction
+problems of icon, shortcut, and the Windows taskbar, see the
+note for the -i option above.</p>
+
 <p style="margin-left:11%;"><b>Log file</b> (Log=)</p>
 
 <p style="margin-left:22%;">The <b>Log</b> setting can be
@@ -1297,6 +1308,25 @@ automatically based on their icon and command line. This can
 be overridden by setting the AppID to a custom string, in
 which case windows with the same AppID are grouped
 together.</p>
+
+
+<p style="margin-left:22%; margin-top: 1em"><i>Warning:</i>
+Using this option in a Windows desktop shortcut may cause
+trouble with taskbar grouping behaviour. If you need to do
+that, the shortcut itself should also get attached with the
+same AppId.</p>
+
+
+<p style="margin-left:22%; margin-top: 1em"><i>Explanation:</i>
+Note that Windows shortcut files have their own AppID.
+Hence, if an AppID is specified in the mintty settings, but
+not on a taskbar-pinned shortcut for invoking mintty,
+clicking the pinned shortcut will result in a separate
+taskbar item for the new mintty window, rather than being
+grouped with the shortcut. To avoid this, the
+shortcut&rsquo;s AppID has to be set to the same string,
+which can be done using the <b>win7appid</b> utility
+available from <i>http://win7appid.googlecode.com</i>.</p>
 
 <p style="margin-left:11%;"><b>Application Taskbar Shortcut
 Title</b> (AppName=)</p>

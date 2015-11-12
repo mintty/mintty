@@ -34,7 +34,8 @@ name_ver := $(NAME)-$(version)
 changelogversion := $(shell sed -e '1 s,^\#* *\([0-9.]*\).*,\1,' -e t -e d wiki/Changelog.md)
 
 ver:
-	test $(version) = $(changelogversion)
+	echo checking same version in changelog and source
+	test "$(version)" = "$(changelogversion)"
 
 DIST := release
 TARUSER := --owner=root --group=root --owner=mintty --group=cygwin
