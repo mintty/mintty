@@ -722,6 +722,10 @@ do_csi(uchar c)
 {
   term_cursor *curs = &term.curs;
   int arg0 = term.csi_argv[0], arg1 = term.csi_argv[1];
+  if (arg0 < 0)
+    arg0 = 0;
+  if (arg1 < 0)
+    arg1 = 0;
   int arg0_def1 = arg0 ?: 1;  // first arg with default 1
   switch (CPAIR(term.esc_mod, c)) {
     when 'A':        /* CUU: move up N lines */
@@ -742,13 +746,13 @@ do_csi(uchar c)
       move(0, curs->y + arg0_def1, 1);
     when 'F':        /* CPL: move up N lines and CR */
       move(0, curs->y - arg0_def1, 1);
-    when 'G' or '`':  /* CHA or HPA: set horizontal posn */
+    when 'G' or '`':  /* CHA or HPA: set horizontal position */
       move(arg0_def1 - 1, curs->y, 0);
-    when 'd':        /* VPA: set vertical posn */
+    when 'd':        /* VPA: set vertical position */
       move(curs->x,
            (curs->origin ? term.marg_top : 0) + arg0_def1 - 1,
            curs->origin ? 2 : 0);
-    when 'H' or 'f':  /* CUP or HVP: set horz and vert posns at once */
+    when 'H' or 'f':  /* CUP or HVP: set horiz. and vert. positions at once */
       move((arg1 ?: 1) - 1,
            (curs->origin ? term.marg_top : 0) + arg0_def1 - 1,
            curs->origin ? 2 : 0);
@@ -867,11 +871,13 @@ do_csi(uchar c)
       termline *line = term.lines[curs->y];
       int cols = min(line->cols, line->size);
       int n = min(arg0_def1, cols - curs->x);
-      int p = curs->x;
-      term_check_boundary(curs->x, curs->y);
-      term_check_boundary(curs->x + n, curs->y);
-      while (n--)
-        line->chars[p++] = term.erase_char;
+      if (n > 0) {
+        int p = curs->x;
+        term_check_boundary(curs->x, curs->y);
+        term_check_boundary(curs->x + n, curs->y);
+        while (n--)
+          line->chars[p++] = term.erase_char;
+      }
     }
     when 'x':        /* DECREQTPARM: report terminal characteristics */
       child_printf("\e[%c;1;1;112;112;1;0x", '2' + arg0);
@@ -1177,7 +1183,6 @@ term_write(const char *buf, uint len)
 
     switch (term.state) {
       when NORMAL: {
-
         wchar wc;
 
         if (term.curs.oem_acs && !memchr("\e\n\r\b", c, 4)) {
@@ -1284,6 +1289,8 @@ term_write(const char *buf, uint len)
           uint i = term.csi_argc - 1;
           if (i < lengthof(term.csi_argv))
             term.csi_argv[i] = 10 * term.csi_argv[i] + c - '0';
+            if ((int)term.csi_argv[i] < 0)
+              term.csi_argv[i] = INT_MAX;  // capture overflow
             term.csi_argv_defined[i] = 1;
         }
         else if (c < 0x40)
@@ -1317,6 +1324,8 @@ term_write(const char *buf, uint len)
         switch (c) {
           when '0' ... '9':  /* OSC command number */
             term.cmd_num = term.cmd_num * 10 + c - '0';
+            if (term.cmd_num < 0)
+              term.cmd_num = -99;  // prevent wrong valid param
           when ';':
             term.state = CMD_STRING;
           when '\a' or '\n' or '\r':

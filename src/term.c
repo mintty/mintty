@@ -707,7 +707,7 @@ void
 term_check_boundary(int x, int y)
 {
  /* Validate input coordinates, just in case. */
-  if (x == 0 || x > term.cols)
+  if (x <= 0 || x > term.cols)
     return;
 
   termline *line = term.lines[y];
