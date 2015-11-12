@@ -1,14 +1,31 @@
 
 
-## Using shortcuts to start mintty ##
+## Using desktop shortcuts to start mintty ##
 
-The Cygwin [setup.exe](http://cygwin.com/setup.exe) package for mintty installs a shortcut in the Windows start menu under _All Programs/Cygwin_. That starts mintty with a '-' (i.e. a single dash) as its only argument, which tells it to invoke the user's default shell as a login shell.
+The Cygwin [setup.exe](http://cygwin.com/setup.exe) package for mintty 
+installs a shortcut in the Windows start menu under _All Programs/Cygwin_.
+It starts mintty with a '-' (i.e. a single dash) as its only argument, 
+which tells it to invoke the user's default shell as a login shell.
 
-Shortcuts are also a convenient way to start mintty with additional options and different commands. For example, shortcuts for access to remote machines can be created by invoking **[ssh](http://www.openssh.com)**. The command simply needs to be appended to the target field of the shortcut's properties:
+Shortcuts are also a convenient way to start mintty with additional options and different commands. 
+For example, shortcuts for access to remote machines can be created by 
+invoking **[ssh](http://www.openssh.com)**. The command simply needs 
+to be appended to the target field of the shortcut's properties:
 
 > Target: `C:\Cygwin\bin\mintty.exe /bin/ssh server`
 
-The **[cygutils](http://www.cygwin.com/cygwin-ug-net/using-effectively.html#using-cygutils)** package provides the **mkshortcut** utility for creating shortcuts from the command line. See its manual page for details.
+The **[cygutils](http://www.cygwin.com/cygwin-ug-net/using-effectively.html#using-cygutils)** package 
+provides the **mkshortcut** utility for creating shortcuts from the command line. 
+See its manual page for details.
+
+_Note:_ About interaction problems of icon, shortcut, and the Windows taskbar:
+In a Windows desktop shortcut, to achieve consistent icon behaviour, 
+the same icon should be specified in the shortcut properties (Change Icon...) 
+and the mintty command line (Target:).
+
+_Note:_ It is suggested to _not_ use the option AppID in a Windows desktop 
+shortcut, or follow the advice about avoiding trouble with taskbar grouping 
+in the manual page.
 
 
 ## Starting mintty from a batch file ##

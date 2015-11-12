@@ -1,8 +1,9 @@
 
   * Tweaked taskbar grouping behaviour (#486).
+  * Advice on avoiding trouble with taskbar grouping and icon consistence in manual page and wiki Tips page (#420, #486, ~#471).
   * Fixed New window option from window title menu on multi-monitor systems (#491).
   * Fixed start on other monitor in Windows 10 / MinGW (#489, thanks to rupor).
-  * Guarding against escape sequence parameter overflow (~#490).
+  * Guarding against escape sequence parameter overflow (~#490, thanks to Iwamoto Kouichi).
 
 ### 2.2.1 (3 Nov 2015) ###
 
