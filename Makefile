@@ -6,6 +6,7 @@
 # - pdf: PDF version of the manual page.
 # - clean: Delete generated files.
 # - upload: Upload cygwin packages for publishing.
+# - ann: Create cygwin announcement mail.
 
 # Variables intended for setting on the make command line.
 # - RELEASE: release number for packaging
@@ -89,4 +90,19 @@ $(DIST)/$(name_ver)-$(REL)-src.tar.xz: $(DIST)/$(name_ver)-src.tar.bz2
 
 upload:
 	REL=$(REL) cygwin/upload.sftp
+
+announcement=cygwin/announcement.$(version)
+
+ann:	announcement
+announcement:
+	echo To: cygwin-announce@cygwin.com > $(announcement)
+	echo Subject: Updated: mintty $(version) >> $(announcement)
+	echo >> $(announcement)
+	echo I have uploaded mintty $(version) with the following changes: >> $(announcement)
+	sed -n -e 1d -e "/^#/ q" -e p wiki/Changelog.md >> $(announcement)
+	echo The homepage is at http://mintty.github.io/ >> $(announcement)
+	echo It also links to the issue tracker. >> $(announcement)
+	echo  >> $(announcement)
+	echo ------ >> $(announcement)
+	echo Thomas >> $(announcement)
 

@@ -187,14 +187,22 @@ clean:
 	#rm -rf *.d *.o $(NAME)*
 	rm -rf $(BINDIR)/*.d $(BINDIR)/*.o $(BINDIR)/$(NAME)*
 
+check:	checksrc checkresource
+
+# check whether supportedOS Id list is up-to-date
 stripsupp=sed -e "/supportedOS/ s,>.*,>," -e t -e d
 defsupp=/usr/lib/default-manifest.o
-check:
-	if egrep -a -e "^(printf|#define debug)" *.[hc]; then false; fi
+checkresource:
 	$(stripsupp) res.mft > .osmin
 	cat "$(defsupp)" /dev/null | strings | $(stripsupp) > .osdef
 	if [ -f "$(defsupp)" ]; then diff .osdef .osmin; else true; fi
 	rm -f .osdef .osmin
+
+# check whether sources are free of remaining debugging code
+checksrc:
+	if egrep -a -e "^(printf|#define debug)" *.[hc]; then false; fi
+	if egrep -e "^(if|do|for|while) *[({]" *.c; then false; fi
+	if egrep -e "\((false|0) *&" *.c; then false; fi
 
 #############################################################################
 # development and debug targets
