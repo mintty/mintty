@@ -1601,7 +1601,7 @@ main(int argc, char *argv[])
   if (daemonize) {  // detach from parent process and terminal
     pid_t pid = fork();
     if (pid < 0)
-      error("could not detach from caller");
+      fprintf(stderr, "Mintty could not detach from caller, starting anyway.\n");
     if (pid > 0)
       exit(0);  // exit parent process
 
