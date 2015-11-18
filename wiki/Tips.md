@@ -193,7 +193,14 @@ bindkey "^[[1;6I" prev
 
 ## Compose key ##
 
-Mintty uses the Windows keyboard layout system with its “dead key” mechanism for entering accented characters. X11, on the other hand, has the compose key mechanism for this purpose. The open source **[AllChars](http://allchars.zwolnet.com)** utility can be used to emulate that approach on Windows.
+Mintty uses the Windows keyboard layout system with its “dead key” mechanism 
+for entering accented characters, enhanced by self-composed characters 
+for dead-key combinations that Windows does not support (e.g. ẃ).
+X11, on the other hand, has the Compose key mechanism for this purpose. 
+The open source **[AllChars](http://allchars.zwolnet.com)** utility 
+can be used to emulate that approach on Windows; however, the old 
+version of it does not yet support Unicode while the new version does 
+not yet run stable.
 
 
 ## Changing colours ##
@@ -210,7 +217,12 @@ echo -ne '\e]12;#00FF00\a'  # Green cursor
 
 In mintty, the RGB colour values can also be specified using a comma-separated decimal notation, for example `255,0,0` instead of `#FF0000` for red. [X11 colour names](http://en.wikipedia.org/wiki/X11_color_names) are not currently supported though.
 
-The 16 [ANSI colours](http://en.wikipedia.org/wiki/ANSI_escape_code#Colors) can be set in the configuration file or on the command line using settings such as _Blue_ or _BoldMagenta_. These are documented in the [configuration section](http://mintty.googlecode.com/svn/trunk/docs/mintty.1.html#27) of the manual. They can also be changed using xterm control sequences. Here they are with their default values:
+The 16 [ANSI colours](http://en.wikipedia.org/wiki/ANSI_escape_code#Colors) 
+can be set in the configuration file or on the command line using settings 
+such as _Blue_ or _BoldMagenta_. These are documented in the 
+[configuration section](http://mintty.github.io/mintty.1.html#CONFIGURATION) 
+of the manual. They can also be changed using xterm control sequences. 
+Here they are with their default values:
 
 ```
 echo -ne '\e]4;0;#000000\a'   # black
@@ -276,10 +288,10 @@ legacy issues with dedicated CJK fonts, meaning they can be narrow
 
 To select ambiguous-width characters to appear wide (as some applications 
 may expect), mintty should be run in a CJK locale (character encoding does 
-not need to be CJK) and with a respective CJK font, e.g.:
+not need to be CJK), e.g.:
 
 ```
-LC_ALL=zh_SG.utf8 mintty -o Font="MS Mincho" &
+LC_CTYPE=zh_SG.utf8 mintty &
 ```
 
 

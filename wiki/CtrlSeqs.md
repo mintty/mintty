@@ -2,11 +2,21 @@
 
 ## Introduction ##
 
-Mintty's terminal emulation is aimed at compatibility with **[xterm](http://invisible-island.net/xterm/xterm.html)**. Most of the xterm control sequences documented at http://invisible-island.net/xterm/ctlseqs/ctlseqs.html are supported. Please [report as bugs](http://code.google.com/p/mintty/issues) any incompatibilities or unimplemented sequences that would be useful.
+Mintty's terminal emulation is aimed at compatibility with 
+**[xterm](http://invisible-island.net/xterm/xterm.html)**. 
+Most of the xterm control sequences documented at 
+http://invisible-island.net/xterm/ctlseqs/ctlseqs.html are supported. 
+Please [report as bugs](https://github.com/mintty/mintty/issues) 
+any incompatibilities or unimplemented sequences that would be useful.
 
-Some sequences that were introduced by other terminals such as the [Linux console](http://www.kernel.org/doc/man-pages/online/pages/man4/console_codes.4.html), and that aren't available in xterm, are also supported.
+Some sequences that were introduced by other terminals such as the 
+[Linux console](http://www.kernel.org/doc/man-pages/online/pages/man4/console_codes.4.html), 
+and that aren't available in xterm, are also supported.
 
-This page only lists control sequences that are specific to mintty. [Caret notation](http://en.wikipedia.org/wiki/Caret_notation) is used to show control characters. The full details of all supported control sequences are only available in the [source code](http://code.google.com/p/mintty/source/browse/trunk/termout.c).
+This page only lists control sequences that are specific to mintty. 
+[Caret notation](http://en.wikipedia.org/wiki/Caret_notation) is used to show control characters. 
+The full details of all supported control sequences are only available in the 
+[source code](https://github.com/mintty/mintty/blob/master/src/termout.c).
 
 
 ## Escape keycode ##
