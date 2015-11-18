@@ -379,7 +379,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     alt_state = ALT_CANCELLED;
 
   // Context and window menus
-  if (key == VK_APPS) {
+  if (key == VK_APPS && !cfg.key_menu) {
     if (shift)
       send_syscommand(SC_KEYMENU);
     else {
@@ -862,15 +862,30 @@ static struct {
       ? ss3('[')
       : ctrl_ch(term.escape_sends_fs ? CTRL('\\') : CTRL('['));
     when VK_PAUSE:
-      if (cfg.pause_string)
-        strcode(cfg.pause_string);
+      if (cfg.key_pause)
+        strcode(cfg.key_pause);
       else
         ctrl_ch(ctrl & !extended ? CTRL('\\') : CTRL(']'));
     when VK_CANCEL:
-      if (cfg.break_string)
-        strcode(cfg.break_string);
+      if (cfg.key_break)
+        strcode(cfg.key_break);
       else
         ctrl_ch(CTRL('\\'));
+    when VK_SNAPSHOT:
+      if (cfg.key_prtscreen)
+        strcode(cfg.key_prtscreen);
+      else if (!layout())
+        return false;
+    when VK_APPS:
+      if (cfg.key_menu)
+        strcode(cfg.key_menu);
+      else if (!layout())
+        return false;
+    when VK_SCROLL:
+      if (cfg.key_scrlock)
+        strcode(cfg.key_scrlock);
+      else if (!layout())
+        return false;
     when VK_F1 ... VK_F24:
       if (term.vt220_keys && ctrl && VK_F3 <= key && key <= VK_F10)
         key += 10, mods &= ~MDK_CTRL;

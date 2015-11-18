@@ -1,3 +1,6 @@
+  * Extended special key redefinition options (#494).
+  * Not failing to start if daemonizing fails (#493).
+
 ### 2.2.2 (12 Nov 2015) ###
 
   * Tweaked taskbar grouping behaviour (#486).

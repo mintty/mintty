@@ -52,8 +52,11 @@ const config default_cfg = {
   .zoom_font_with_window = true,
   .alt_fn_shortcuts = true,
   .ctrl_shift_shortcuts = false,
-  .break_string = "",
-  .pause_string = "",
+  .key_prtscreen = "",	// VK_SNAPSHOT
+  .key_pause = "",	// VK_PAUSE
+  .key_break = "",	// VK_CANCEL
+  .key_menu = "",	// VK_APPS
+  .key_scrlock = "",	// VK_SCROLL
   // Mouse
   .copy_on_select = true,
   .copy_as_rtf = true,
@@ -176,8 +179,13 @@ options[] = {
   {"ZoomFontWithWindow", OPT_BOOL, offcfg(zoom_font_with_window)},
   {"AltFnShortcuts", OPT_BOOL, offcfg(alt_fn_shortcuts)},
   {"CtrlShiftShortcuts", OPT_BOOL, offcfg(ctrl_shift_shortcuts)},
-  {"Break", OPT_STRING, offcfg(break_string)},
-  {"Pause", OPT_STRING, offcfg(pause_string)},
+  {"Key_PrintScreen", OPT_STRING, offcfg(key_prtscreen)},
+  {"Key_Pause", OPT_STRING, offcfg(key_pause)},
+  {"Key_Break", OPT_STRING, offcfg(key_break)},
+  {"Key_Menu", OPT_STRING, offcfg(key_menu)},
+  {"Key_ScrollLock", OPT_STRING, offcfg(key_scrlock)},
+  {"Break", OPT_STRING, offcfg(key_break)},  // compatibility alternative
+  {"Pause", OPT_STRING, offcfg(key_pause)},  // compatibility alternative
 
   // Mouse
   {"CopyOnSelect", OPT_BOOL, offcfg(copy_on_select)},
