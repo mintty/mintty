@@ -1595,6 +1595,9 @@ main(int argc, char *argv[])
   // in order to not suppress signals
   // (indicated by isatty if linked with -mwindows as ttyname() is null)
   bool daemonize = cfg.daemonize && !isatty(0);
+  // disable daemonizing if started from desktop
+  if (invoked_from_shortcut)
+    daemonize = false;
   // disable daemonizing if started from ConEmu
   if (getenv("ConEmuPID"))
     daemonize = false;
