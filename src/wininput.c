@@ -379,7 +379,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     alt_state = ALT_CANCELLED;
 
   // Context and window menus
-  if (key == VK_APPS && !cfg.key_menu) {
+  if (key == VK_APPS && (!cfg.key_menu || !*cfg.key_menu)) {
     if (shift)
       send_syscommand(SC_KEYMENU);
     else {
