@@ -33,7 +33,9 @@ int forkpty(int *, char *, struct termios *, struct winsize *);
 #include <winuser.h>
 #endif
 
-char *home, *cmd;
+char * home;
+char * cmd;
+bool icon_is_from_shortcut = false;
 
 static pid_t pid;
 static bool killed;
@@ -515,12 +517,12 @@ child_fork(int argc, char *argv[], int moni)
 
   if (cfg.daemonize) {
     if (clone < 0) {
-      error ("fork child daemon");
+      error("fork child daemon");
       return;  // assume next fork will fail too
     }
     if (clone > 0) {  // parent waits for intermediate child
       int status;
-      waitpid (clone, &status, 0);
+      waitpid(clone, &status, 0);
       return;
     }
 
@@ -547,16 +549,16 @@ child_fork(int argc, char *argv[], int moni)
     int i = 0, j = 0;
     bool addnew = true;
     while (1) {
-      if (addnew && (! argv[i] || strcmp (argv[i], "-e") == 0 || strcmp (argv[i], "-") == 0)) {
+      if (addnew && (! argv[i] || strcmp(argv[i], "-e") == 0 || strcmp(argv[i], "-") == 0)) {
         addnew = false;
         // insert additional parameters here
         newargv[j++] = "-o";
         char parbuf1[28];
-        sprintf (parbuf1, "Rows=%d", term.rows);
+        sprintf(parbuf1, "Rows=%d", term.rows);
         newargv[j++] = parbuf1;
         newargv[j++] = "-o";
         char parbuf2[31];
-        sprintf (parbuf2, "Columns=%d", term.cols);
+        sprintf(parbuf2, "Columns=%d", term.cols);
         newargv[j++] = parbuf2;
       }
       newargv[j] = argv[i];
@@ -582,6 +584,9 @@ child_fork(int argc, char *argv[], int moni)
     // provide environment to select monitor
     if (moni > 0)
       setenvi("MINTTY_MONITOR", moni);
+    // propagate shortcut-inherited icon
+    if (icon_is_from_shortcut)
+      setenv("MINTTY_ICON", cfg.icon, true);
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
     execv("/proc/self/exe", argv);

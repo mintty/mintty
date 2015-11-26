@@ -1,3 +1,4 @@
+  * Deriving icon from shortcut (#471, ~#420, ~~#486).
   * Extended special key redefinition options (#494).
   * Not failing to start if daemonizing fails (#493).
 

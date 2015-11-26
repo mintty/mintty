@@ -5,6 +5,7 @@
 
 extern char * home;
 extern char * cmd;
+extern bool icon_is_from_shortcut;
 
 extern void child_create(char * argv[], struct winsize * winp);
 extern void child_proc(void);

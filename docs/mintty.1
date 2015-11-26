@@ -89,7 +89,9 @@ multiple icons.
 \fINote:\fP About interaction problems of icon, shortcut, and the Windows taskbar:
 In a Windows desktop shortcut, to achieve consistent icon behaviour, 
 the same icon should be specified in the shortcut properties (Change Icon...) 
-and the mintty command line (Target:).
+and the mintty command line (Target:),
+or (beginning 2.2.3) no icon should be specified on the command line as 
+mintty will then take the icon from the invoking shortcut.
 
 .TP
 \fB-l\fP, \fB--log\fP \fIFILE\fP|\fB-\fP
@@ -1026,7 +1028,8 @@ a file with multiple icons.
 If the setting is empty, as it is by default, mintty's program icon is used.
 
 For interaction problems of icon, shortcut, and the Windows taskbar, 
-see the note for the -i option above.
+see the note for the -i option above. Note that specifying an Icon= 
+option prevents mintty from deriving the icon from an invoking shortcut.
 
 .TP
 \fBLog file\fP (Log=)

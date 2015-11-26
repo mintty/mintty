@@ -21,7 +21,9 @@ See its manual page for details.
 _Note:_ About interaction problems of icon, shortcut, and the Windows taskbar:
 In a Windows desktop shortcut, to achieve consistent icon behaviour, 
 the same icon should be specified in the shortcut properties (Change Icon...) 
-and the mintty command line (Target:).
+and the mintty command line (Target:),
+or (beginning 2.2.3) no icon should be specified on the command line as 
+mintty will then take the icon from the invoking shortcut.
 
 _Note:_ It is suggested to _not_ use the option AppID in a Windows desktop 
 shortcut, or follow the advice about avoiding trouble with taskbar grouping 
