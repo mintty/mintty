@@ -1054,21 +1054,27 @@ static struct {
     when WM_PAINT:
       win_paint();
       return 0;
+    when WM_ACTIVATE:
+      if((wp & 0xF) != WA_INACTIVE) {
+        flash_taskbar(false);  /* stop */
+        term_set_focus(true, true);
+      } else {
+        term_set_focus(false, true);
+      }
+      update_transparency();
     when WM_SETFOCUS:
       trace_resize(("# WM_SETFOCUS VK_SHIFT %02X\n", GetKeyState(VK_SHIFT)));
-      term_set_focus(true);
+      term_set_focus(true, false);
       CreateCaret(wnd, caretbm, 0, 0);
-      flash_taskbar(false);  /* stop */
+      //flash_taskbar(false);  /* stop; not needed when leaving search bar */
       win_update();
-      update_transparency();
       ShowCaret(wnd);
       zoom_token = -4;
     when WM_KILLFOCUS:
       win_show_mouse();
-      term_set_focus(false);
+      term_set_focus(false, false);
       DestroyCaret();
       win_update();
-      update_transparency();
     when WM_MOVING:
       trace_resize(("# WM_MOVING VK_SHIFT %02X\n", GetKeyState(VK_SHIFT)));
       zoom_token = -4;
