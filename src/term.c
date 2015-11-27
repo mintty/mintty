@@ -1154,11 +1154,14 @@ term_scroll(int rel, int where)
 }
 
 void
-term_set_focus(bool has_focus)
+term_set_focus(bool has_focus, bool may_report)
 {
   if (has_focus != term.has_focus) {
     term.has_focus = has_focus;
     term_schedule_cblink();
+  }
+  if (has_focus != term.focus_reported && may_report) {
+    term.focus_reported = has_focus;
     if (term.report_focus)
       child_write(has_focus ? "\e[I" : "\e[O", 3);
   }

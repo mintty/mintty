@@ -308,6 +308,7 @@ struct term {
 
   int  rows, cols;
   bool has_focus;
+  bool focus_reported;
   bool in_vbell;
 
   bool vt220_keys;
@@ -427,7 +428,7 @@ void term_flip_screen(void);
 void term_reset_screen(void);
 void term_write(const char *, uint len);
 void term_flush(void);
-void term_set_focus(bool has_focus);
+void term_set_focus(bool has_focus, bool may_report);
 int  term_cursor_type(void);
 bool term_cursor_blinks(void);
 void term_hide_cursor(void);
