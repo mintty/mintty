@@ -8,9 +8,9 @@
 static HANDLE printer;
 
 static const DOC_INFO_1 doc_info = {
-  .pDocName = "Remote printer output",
+  .pDocName = "Mintty ANSI printer output",
   .pOutputFile = null,
-  .pDatatype = "RAW"
+  .pDatatype = "TEXT"
 };
 
 void
@@ -28,7 +28,7 @@ printer_start_job(string printer_name)
 }
 
 void
-printer_write(void *data, uint len)
+printer_write(char *data, uint len)
 {
   if (printer) {
     DWORD written;
