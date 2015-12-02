@@ -200,7 +200,7 @@ checkresource:
 
 # check whether sources are free of remaining debugging code
 checksrc:
-	if egrep -a -e "^(printf|#define debug)" *.[hc]; then false; fi
+	if egrep -a -e "^(f*printf|#define debug)" *.[hc]; then false; fi
 	if egrep -e "^(if|do|for|while) *[({]" *.c; then false; fi
 	if egrep -e "\((false|0) *&" *.c; then false; fi
 
