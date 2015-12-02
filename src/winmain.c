@@ -26,6 +26,12 @@
 #endif
 
 
+#define dont_debuglog
+#ifdef debuglog
+  FILE * mtlog = 0;
+#endif
+
+
 HINSTANCE inst;
 HWND wnd;
 HIMC imc;
@@ -1313,8 +1319,8 @@ exit_mintty()
 static char *
 get_shortcut_icon_location(wchar * iconfile)
 {
-  IShellLinkW *shell_link;
-  IPersistFile *persist_file;
+  IShellLinkW * shell_link;
+  IPersistFile * persist_file;
   HRESULT hres = OleInitialize(NULL);
   if (hres != S_FALSE && hres != S_OK)
     return 0;
@@ -1338,16 +1344,38 @@ get_shortcut_icon_location(wchar * iconfile)
 
   if (SUCCEEDED(hres)) {
     WCHAR wil[MAX_PATH];
-    static char il[MAX_PATH * 3];
+    char il[MAX_PATH * cs_cur_max];
     int index;
     shell_link->lpVtbl->GetIconLocation(shell_link, wil, sizeof wil, &index);
-    wcstombs(il, wil, sizeof il);
+    cs_wcstombs(il, wil, sizeof il);
     if (index) {
       char _num[22];
       sprintf(_num, ",%d", index);
       strncat(il, _num, sizeof il - strlen(_num) - 1);
     }
-    result = il;
+    /* Resolve leading Windows environment variable component.  */
+    char * fin;
+    if (il[0] == '%' && il[1] && il[1] != '%' && (fin = strchr(&il[2], '%'))) {
+      char var[fin - il];
+      char * cop = var;
+      for (char * v = &il[1]; *v != '%'; v++) {
+        if (*v >= 'a' && *v <= 'z')
+          *cop = *v - 'a' + 'A';
+        else
+          *cop = *v;
+        cop++;
+      }
+      *cop = '\0';
+
+      char * val = getenv(var);
+      if (val) {
+        char resolvil[strlen(val) + strlen(il) + 1];
+        sprintf(resolvil, "%s%s", val, fin+1);
+        result = strdup(resolvil);
+      }
+    }
+    if (!result)
+      result = strdup(il);
   }
 
   /* Release the pointer to the IPersistFile interface. */
@@ -1530,6 +1558,9 @@ main(int argc, char *argv[])
 {
   main_argv = argv;
   main_argc = argc;
+#ifdef debuglog
+  mtlog = fopen("/tmp/mtlog", "a");
+#endif
   init_config();
   cs_init();
 
@@ -1654,7 +1685,6 @@ main(int argc, char *argv[])
 
 #define dont_debug_icon
 #ifdef debug_icon
-  FILE * mtlog = fopen("/tmp/mtlog", "a");
   fprintf(mtlog, "cfgicon %s\n", cfg.icon);
   fprintf(mtlog, "shorcut %d %s\n", invoked_from_shortcut, (char *)cygwin_create_path(CCP_WIN_W_TO_POSIX, sui.lpTitle));
   if (invoked_from_shortcut) {
