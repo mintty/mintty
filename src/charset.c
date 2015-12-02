@@ -128,7 +128,7 @@ cs_name(uint cp)
     if (cp == cs_names[i].cp)
       return cs_names[i].name;
   }
-  
+
   static char buf[16];
   if (cp >= 28591 && cp <= 28606)
     sprintf(buf, "ISO-8859-%u", cp - 28590);
@@ -173,7 +173,7 @@ cs_codepage(string name)
       }
     }
   }
-  
+
   return
     cp == CP_ACP ? GetACP() :
     cp == CP_OEMCP ? GetOEMCP() :
@@ -184,7 +184,7 @@ static void
 init_locale_menu(void)
 {
   uint count = 0;
-  
+
   void add_lcid(LCID lcid) {
     char locale[8];
     int lang_len = GetLocaleInfo(lcid, LOCALE_SISO639LANGNAME,
@@ -199,7 +199,7 @@ init_locale_menu(void)
         return;
     locale_menu[count++] = strdup(locale);
   }
-  
+
   locale_menu[count++] = "(Default)";
   add_lcid(GetUserDefaultUILanguage());
   add_lcid(LOCALE_USER_DEFAULT);
@@ -212,14 +212,14 @@ static void
 init_charset_menu(void)
 {
   charset_menu[0] = "(Default)";
-  
+
   string *p = charset_menu + 1;
   for (uint i = 0; i < lengthof(cs_descs); i++) {
     uint cp = cs_descs[i].cp;
     if (valid_codepage(cp) || (28591 <= cp && cp <= 28606))
       *p++ = asform("%s (%s)", cs_name(cp), cs_descs[i].desc);
   }
-  
+
   string oem_cs = cs_name(GetOEMCP());
   if (*oem_cs == 'C')
     *p++ = asform("%s (OEM codepage)", oem_cs);
@@ -245,7 +245,7 @@ get_cp_info(void)
 static void
 update_mode(void)
 {
-  codepage = 
+  codepage =
     mode == CSM_UTF8 ? CP_UTF8 : mode == CSM_OEM  ? 437 : default_codepage;
 
 #if HAS_LOCALES
@@ -346,7 +346,7 @@ cs_reconfig(void)
   }
   else
     config_locale = 0;
-  
+
   update_locale();
 }
 
@@ -356,13 +356,13 @@ getlocenv(string name)
   string val = getenv(name);
   return val && *val ? val : 0;
 }
-  
+
 void
 cs_init(void)
 {
   init_locale_menu();
   init_charset_menu();
-  
+
   env_locale =
 #if HAS_LOCALES
     setlocale(LC_CTYPE, "") ?:
@@ -398,6 +398,16 @@ cs_wcntombn(char *s, const wchar *ws, size_t len, size_t wlen)
   }
 #endif
   return WideCharToMultiByte(codepage, 0, ws, wlen, s, len, 0, 0);
+}
+
+int
+cs_wcstombs(char *s, const wchar *ws, size_t len)
+{
+  size_t mbslen = cs_wcntombn(s, ws, len, wcslen(ws));
+  if (mbslen >= len)
+    mbslen = len - 1;
+  s[mbslen] = '\0';
+  return mbslen;
 }
 
 int

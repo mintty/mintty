@@ -27,26 +27,27 @@ static inline xchar
 combine_surrogates(wchar hwc, wchar lwc)
 { return 0x10000 + ((hwc & 0x3FF) << 10) + (lwc & 0x3FF); }
 
-void cs_init(void);
-void cs_reconfig(void);
+extern void cs_init(void);
+extern void cs_reconfig(void);
 
-string cs_lang(void);
+extern string cs_lang(void);
 
-string cs_get_locale(void);
-void cs_set_locale(string);
+extern string cs_get_locale(void);
+extern void cs_set_locale(string);
 
 typedef enum { CSM_DEFAULT, CSM_OEM, CSM_UTF8 } cs_mode;
-void cs_set_mode(cs_mode);
+extern void cs_set_mode(cs_mode);
 
-int cs_wcntombn(char *s, const wchar *ws, size_t len, size_t wlen);
-int cs_mbstowcs(wchar *ws, const char *s, size_t wlen);
-int cs_mb1towc(wchar *pwc, char c);
-wchar cs_btowc_glyph(char);
+extern int cs_wcntombn(char *s, const wchar *ws, size_t len, size_t wlen);
+extern int cs_wcstombs(char *s, const wchar *ws, size_t len);
+extern int cs_mbstowcs(wchar *ws, const char *s, size_t wlen);
+extern int cs_mb1towc(wchar *pwc, char c);
+extern wchar cs_btowc_glyph(char);
 
 extern string locale_menu[];
 extern string charset_menu[];
 
-int cs_cur_max;
+extern int cs_cur_max;
 
 extern bool font_ambig_wide;
 
@@ -54,7 +55,7 @@ extern bool font_ambig_wide;
 extern bool cs_ambig_wide;
 #else
 #define cs_ambig_wide font_ambig_wide
-int xcwidth(xchar c);
+extern int xcwidth(xchar c);
 #endif
 
 #endif
