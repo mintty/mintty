@@ -244,6 +244,19 @@ ctrl_combobox(controlset *s, char *label, int percentage,
   return c;
 }
 
+control *
+ctrl_listbox(controlset *s, char *label, int lines, int percentage,
+              handler_fn handler, void *context)
+{
+  control *c = ctrl_new(s, CTRL_LISTBOX, handler, context);
+  c->label = label ? strdup(label) : null;
+  c->listbox.percentwidth = percentage;
+  c->listbox.height = lines;
+  c->listbox.ncols = 0;
+  c->listbox.percentages = 0;
+  return c;
+}
+
 /*
  * `ncolumns' is followed by (alternately) radio button labels and
  * values, until a null in place of a title string is seen.

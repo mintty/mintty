@@ -300,6 +300,8 @@ control *ctrl_editbox(controlset *, char *label, int percentage,
                       handler_fn handler, void *context);
 control *ctrl_combobox(controlset *, char *label, int percentage,
                        handler_fn handler, void *context);
+control *ctrl_listbox(controlset *, char *label, int lines, int percentage,
+                       handler_fn handler, void *context);
 /*
  * `ncolumns' is followed by (alternately) radio button titles and
  * integers, until a null in place of a title string is seen.
@@ -336,10 +338,13 @@ int dlg_radiobutton_get(control *);
 void dlg_checkbox_set(control *, bool);
 bool dlg_checkbox_get(control *);
 void dlg_editbox_set(control *, string);
+void dlg_editbox_set_w(control *, wstring);
 void dlg_editbox_get(control *, string *);
+void dlg_editbox_get_w(control *, wstring *);
 /* The `listbox' functions also apply to combo boxes. */
 void dlg_listbox_clear(control *);
 void dlg_listbox_add(control *, string);
+void dlg_listbox_add_w(control *, wstring);
 void dlg_fontsel_set(control *, font_spec *);
 void dlg_fontsel_get(control *, font_spec *);
 /*

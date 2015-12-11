@@ -1070,15 +1070,73 @@ dlg_editbox_set(control *ctrl, string text)
 }
 
 void
+dlg_editbox_set_w(control *ctrl, wstring text)
+{
+  winctrl *c = ctrl->plat_ctrl;
+  assert(c &&
+         (c->ctrl->type == CTRL_EDITBOX
+         ||c->ctrl->type == CTRL_LISTBOX));
+  if (c->ctrl->type != CTRL_LISTBOX) {
+    SetDlgItemTextW(dlg.wnd, c->base_id + 1, text);
+  }
+  else {
+    HWND wnd = GetDlgItem(dlg.wnd, c->base_id + 1);
+    int len = wcslen(text);
+    wchar * buf = newn(wchar, len + 1);
+    int n = SendMessageW(wnd, LB_GETCOUNT, 0, (LPARAM)0);
+    for (int i = 0; i < n; i++) {
+      int ilen = SendMessageW(wnd, LB_GETTEXTLEN, i, (LPARAM)0);
+      if (ilen > len) {
+        buf = renewn(buf, ilen + 1);
+        len = ilen;
+      }
+      SendMessageW(wnd, LB_GETTEXT, i, (LPARAM)buf);
+      if (wcscmp(buf, text) == 0) {
+        SendMessageW(wnd, LB_SETCURSEL, i, (LPARAM)0);
+        break;
+      }
+    }
+    free(buf);
+  }
+}
+
+void
 dlg_editbox_get(control *ctrl, string *text_p)
 {
   winctrl *c = ctrl->plat_ctrl;
-  assert(c && c->ctrl->type == CTRL_EDITBOX);
+  assert(c &&
+         (c->ctrl->type == CTRL_EDITBOX
+         ||c->ctrl->type == CTRL_LISTBOX));
   HWND wnd = GetDlgItem(dlg.wnd, c->base_id + 1);
   int size = GetWindowTextLength(wnd) + 1;
   char *text = (char *)*text_p;
   text = renewn(text, size);
   GetWindowText(wnd, text, size);
+  *text_p = text;
+}
+
+void
+dlg_editbox_get_w(control *ctrl, wstring *text_p)
+{
+  winctrl *c = ctrl->plat_ctrl;
+  assert(c &&
+         (c->ctrl->type == CTRL_EDITBOX
+         ||c->ctrl->type == CTRL_LISTBOX));
+  HWND wnd = GetDlgItem(dlg.wnd, c->base_id + 1);
+  wchar *text = (wchar *)*text_p;
+  if (c->ctrl->type != CTRL_LISTBOX) {
+    int size = GetWindowTextLengthW(wnd) + 1;
+    text = renewn(text, size);
+    GetWindowTextW(wnd, text, size);
+    //GetDlgItemTextW(dlg.wnd, c->base_id + 1, text, size);  // same
+  }
+  else {
+    // from a listbox, GetWindowTextW goofs up non-ANSI characters, thus:
+    int n = SendMessageW(wnd, LB_GETCURSEL, 0, (LPARAM)0);
+    int len = SendMessageW(wnd, LB_GETTEXTLEN, n, (LPARAM)0);
+    text = renewn(text, len + 1);
+    SendMessageW(wnd, LB_GETTEXT, n, (LPARAM)text);
+  }
   *text_p = text;
 }
 
@@ -1109,6 +1167,20 @@ dlg_listbox_add(control *ctrl, string text)
   msg = (c->ctrl->type == CTRL_LISTBOX &&
          c->ctrl->listbox.height != 0 ? LB_ADDSTRING : CB_ADDSTRING);
   SendDlgItemMessage(dlg.wnd, c->base_id + 1, msg, 0, (LPARAM) text);
+}
+
+void
+dlg_listbox_add_w(control *ctrl, wstring text)
+{
+  winctrl *c = ctrl->plat_ctrl;
+  int msg;
+  assert(c &&
+         (c->ctrl->type == CTRL_LISTBOX ||
+          (c->ctrl->type == CTRL_EDITBOX &&
+           c->ctrl->editbox.has_list)));
+  msg = (c->ctrl->type == CTRL_LISTBOX &&
+         c->ctrl->listbox.height != 0 ? LB_ADDSTRING : CB_ADDSTRING);
+  SendDlgItemMessageW(dlg.wnd, c->base_id + 1, msg, 0, (LPARAM) text);
 }
 
 void
