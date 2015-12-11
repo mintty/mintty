@@ -420,6 +420,50 @@ cs_mbstowcs(wchar *ws, const char *s, size_t wlen)
   return MultiByteToWideChar(codepage, 0, s, -1, ws, wlen) - 1;
 }
 
+char *
+cs__wcstoutf(const wchar * ws)
+{
+  int size1 = WideCharToMultiByte(CP_UTF8, 0, ws, -1, 0, 0, 0, 0);
+  char * s = malloc(size1);  // includes terminating NUL
+  WideCharToMultiByte(CP_UTF8, 0, ws, -1, s, size1, 0, 0);
+  return s;
+}
+
+wchar *
+cs__utftowcs(const char * s)
+{
+  int size1 = MultiByteToWideChar(CP_UTF8, 0, s, -1, 0, 0);
+  wchar * ws = malloc(size1 * sizeof(wchar));  // includes terminating NUL
+  MultiByteToWideChar(CP_UTF8, 0, s, -1, ws, size1);
+  return ws;
+}
+
+wchar *
+cs__mbstowcs(const char * s)
+{
+  int size1 = MultiByteToWideChar(codepage, 0, s, -1, 0, 0);
+  wchar * ws = malloc(size1 * sizeof(wchar));  // includes terminating NUL
+  MultiByteToWideChar(codepage, 0, s, -1, ws, size1);
+  return ws;
+}
+
+wchar *
+cs__utforansitowcs(const char * s)
+{
+  int size1 = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, s, -1, 0, 0);
+  if (size1 > 0) {
+    wchar * ws = malloc(size1 * sizeof(wchar));  // includes terminating NUL
+    MultiByteToWideChar(CP_UTF8, 0, s, -1, ws, size1);
+    return ws;
+  }
+  else {
+    size1 = MultiByteToWideChar(CP_ACP, 0, s, -1, 0, 0);
+    wchar * ws = malloc(size1 * sizeof(wchar));  // includes terminating NUL
+    MultiByteToWideChar(CP_ACP, 0, s, -1, ws, size1);
+    return ws;
+  }
+}
+
 int
 cs_mb1towc(wchar *pwc, char c)
 {
