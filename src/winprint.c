@@ -14,9 +14,9 @@ static const DOC_INFO_1 doc_info = {
 };
 
 void
-printer_start_job(string printer_name)
+printer_start_job(wstring printer_name)
 {
-  if (OpenPrinter((char *)printer_name, &printer, 0)) {
+  if (OpenPrinterW((wchar *)printer_name, &printer, 0)) {
     if (StartDocPrinter(printer, 1, (LPBYTE)&doc_info)) {
       if (StartPagePrinter(printer))
         return;
