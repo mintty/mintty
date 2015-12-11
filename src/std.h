@@ -82,6 +82,7 @@ typedef const wchar *wstring;
 static inline void delete(const void *p) { free((void *)p); }
 
 void strset(string *sp, string s);
+void wstrset(wstring *sp, wstring s);
 
 #define when break; case
 #define or : case

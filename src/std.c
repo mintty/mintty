@@ -9,6 +9,13 @@ strset(string *sp, string s)
   *sp = memcpy(renewn((char *)*sp, size), s, size);
 }
 
+void
+wstrset(wstring *sp, wstring s)
+{
+  uint size = wcslen(s) + 1;
+  *sp = memcpy(renewn((wchar *)*sp, size), s, size * sizeof(wchar));
+}
+
 #if CYGWIN_VERSION_API_MINOR < 70
 
 int
