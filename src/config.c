@@ -84,7 +84,7 @@ const config default_cfg = {
   .bell_len = 400,
   .bell_flash = false,
   .bell_taskbar = true,
-  .printer = "",
+  .printer = L"",
   .confirm_exit = true,
   // Command line
   .class = "",
@@ -132,7 +132,7 @@ static config file_cfg;
 typedef enum {
   OPT_BOOL, OPT_MOD, OPT_TRANS, OPT_CURSOR, OPT_FONTSMOOTH,
   OPT_MIDDLECLICK, OPT_RIGHTCLICK, OPT_SCROLLBAR, OPT_WINDOW, OPT_HOLD,
-  OPT_INT, OPT_COLOUR, OPT_STRING,
+  OPT_INT, OPT_COLOUR, OPT_STRING, OPT_WSTRING,
   OPT_LEGACY = 16
 } opt_type;
 
@@ -216,7 +216,7 @@ options[] = {
   {"BellLen", OPT_INT, offcfg(bell_len)},
   {"BellFlash", OPT_BOOL, offcfg(bell_flash)},
   {"BellTaskbar", OPT_BOOL, offcfg(bell_taskbar)},
-  {"Printer", OPT_STRING, offcfg(printer)},
+  {"Printer", OPT_WSTRING, offcfg(printer)},
   {"ConfirmExit", OPT_BOOL, offcfg(confirm_exit)},
 
   // Command line
@@ -449,7 +449,7 @@ parse_colour(string s, colour *cp)
 }
 
 static int
-set_option(string name, string val_str)
+set_option(string name, string val_str, bool from_file)
 {
   int i = find_option(name);
   if (i < 0)
@@ -462,6 +462,16 @@ set_option(string name, string val_str)
     when OPT_STRING:
       strset(val_p, val_str);
       return i;
+    when OPT_WSTRING: {
+      wchar * ws;
+      if (from_file)
+        ws = cs__utforansitowcs(val_str);
+      else
+        ws = cs__mbstowcs(val_str);
+      wstrset(val_p, ws);
+      free(ws);
+      return i;
+    }
     when OPT_INT: {
       char *val_end;
       int val = strtol(val_str, &val_end, 0);
@@ -498,7 +508,7 @@ set_option(string name, string val_str)
 }
 
 static int
-parse_option(string option)
+parse_option(string option, bool from_file)
 {
   const char *eq = strchr(option, '=');
   if (!eq) {
@@ -519,7 +529,7 @@ parse_option(string option)
   while (isspace((uchar)*val))
     val++;
 
-  return set_option(name, val);
+  return set_option(name, val, from_file);
 }
 
 static void
@@ -534,13 +544,13 @@ check_arg_option(int i)
 void
 set_arg_option(string name, string val)
 {
-  check_arg_option(set_option(name, val));
+  check_arg_option(set_option(name, val, false));
 }
 
 void
 parse_arg_option(string option)
 {
-  check_arg_option(parse_option(option));
+  check_arg_option(parse_option(option, false));
 }
 
 void
@@ -569,7 +579,7 @@ load_config(string filename, bool to_save)
     while (fgets(line, sizeof line, file)) {
       line[strcspn(line, "\r\n")] = 0;  /* trim newline */
       if (line[0] != '#' && line[0] != '\0') {
-        int i = parse_option(line);
+        int i = parse_option(line, true);
         if (to_save && i >= 0)
           remember_file_option(i);
       }
@@ -594,6 +604,8 @@ copy_config(config *dst_p, const config *src_p)
       switch (type) {
         when OPT_STRING:
           strset(dst_val_p, *(string *)src_val_p);
+        when OPT_WSTRING:
+          wstrset(dst_val_p, *(wstring *)src_val_p);
         when OPT_INT or OPT_COLOUR:
           *(int *)dst_val_p = *(int *)src_val_p;
         otherwise:
@@ -666,6 +678,11 @@ save_config(void)
         switch (type) {
           when OPT_STRING:
             fprintf(file, "%s", *(string *)val_p);
+          when OPT_WSTRING: {
+            char * s = cs__wcstoutf(*(wstring *)val_p);
+            fprintf(file, "%s", s);
+            free(s);
+          }
           when OPT_INT:
             fprintf(file, "%i", *(int *)val_p);
           when OPT_COLOUR: {
@@ -712,6 +729,8 @@ apply_config(bool save)
     switch (type) {
       when OPT_STRING:
         changed = strcmp(*(string *)val_p, *(string *)new_val_p);
+      when OPT_WSTRING:
+        changed = wcscmp(*(wstring *)val_p, *(wstring *)new_val_p);
       when OPT_INT or OPT_COLOUR:
         changed = (*(int *)val_p != *(int *)new_val_p);
       otherwise:
@@ -770,21 +789,21 @@ current_size_handler(control *unused(ctrl), int event)
 static void
 printerbox_handler(control *ctrl, int event)
 {
-  const string NONE = "None (printing disabled)";
-  string printer = new_cfg.printer;
+  const wstring NONE = L"None (printing disabled)";
+  wstring printer = new_cfg.printer;
   if (event == EVENT_REFRESH) {
     dlg_listbox_clear(ctrl);
-    dlg_listbox_add(ctrl, NONE);
+    dlg_listbox_add_w(ctrl, NONE);
     uint num = printer_start_enum();
     for (uint i = 0; i < num; i++)
-      dlg_listbox_add(ctrl, printer_get_name(i));
+      dlg_listbox_add_w(ctrl, (wchar *)printer_get_name(i));
     printer_finish_enum();
-    dlg_editbox_set(ctrl, *printer ? printer : NONE);
+    dlg_editbox_set_w(ctrl, *printer ? printer : NONE);
   }
   else if (event == EVENT_VALCHANGE || event == EVENT_SELCHANGE) {
-    dlg_editbox_get(ctrl, &printer);
-    if (!strcmp(printer, NONE))
-      strset(&printer, "");
+    dlg_editbox_get_w(ctrl, &printer);
+    if (!wcscmp(printer, NONE))
+      wstrset(&printer, L"");
     new_cfg.printer = printer;
   }
 }
@@ -1160,9 +1179,16 @@ setup_config_box(controlbox * b)
   )->column = 2;
 
   s = ctrl_new_set(b, "Terminal", "Printer");
+#ifdef use_combobox_for_wstring
+#warning Windows goofs up non-ANSI characters read from a combobox listbox
   ctrl_combobox(
     s, null, 100, printerbox_handler, 0
   );
+#else
+  ctrl_listbox(
+    s, null, 4, 100, printerbox_handler, 0
+  );
+#endif
 
   s = ctrl_new_set(b, "Terminal", null);
   ctrl_checkbox(
