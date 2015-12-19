@@ -728,9 +728,9 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
       // bigger
       //   ? font_size * rows0 * cols0 / (term.rows * term.cols)
       //   : font_size * rows0 * cols0 / (term.rows * term.cols);
-	
-	trace_resize(("term size %d %d -> %d %d\n", term.rows, term.cols, rows0, cols0));
-	trace_resize(("font size %d -> %d\n", font_size, font_size1));
+
+    trace_resize(("term size %d %d -> %d %d\n", term.rows, term.cols, rows0, cols0));
+    trace_resize(("font size %d -> %d\n", font_size, font_size1));
 
     if (font_size1 != font_size)
       win_set_font_size(font_size1, false);
@@ -1163,7 +1163,7 @@ static struct {
 #endif
         bool scale_font = (cfg.zoom_font_with_window || zoom_token > 2)
                           && (zoom_token > 0) && (GetKeyState(VK_SHIFT) & 0x80);
-		
+
         win_adapt_term_size(false, scale_font);
         if (zoom_token > 0)
           zoom_token = zoom_token >> 1;
@@ -1180,16 +1180,17 @@ static struct {
         WORD x_dpi = LOWORD(wp);
 
 #ifdef debug_dpi
-	    printf("WM_DPICHANGED %d L,T,R,B=%d,%d,%d,%d WxH=%dx%d, %d -> %d\n", per_monitor_dpi_aware, r->left, r->top, r->right, r->bottom, r->right - r->left, r->bottom - r->top, last_dpi, x_dpi);
+        printf("WM_DPICHANGED %d L,T,R,B=%d,%d,%d,%d WxH=%dx%d, %d -> %d\n", per_monitor_dpi_aware, r->left, r->top, r->right, r->bottom, r->right - r->left, r->bottom - r->top, last_dpi, x_dpi);
 #endif
-		if (last_dpi < 0) {
-        	int font_size1 = round((double)font_size * x_dpi / last_dpi);
-        	win_set_font_size(font_size1, false);
+        if (last_dpi < 0) {
+          int font_size1 = round((double)font_size * x_dpi / last_dpi);
+          win_set_font_size(font_size1, false);
+
 #ifdef debug_dpi
-        	printf("font_size: %d -> %d\n", font_size, font_size1);
+          printf("font_size: %d -> %d\n", font_size, font_size1);
 #endif
-		}
-		last_dpi = x_dpi;
+        }
+        last_dpi = x_dpi;
 
 #ifdef debug_dpi
         printf("SM_CXVSCROLL %d\n", GetSystemMetrics(SM_CXVSCROLL));
@@ -1199,7 +1200,7 @@ static struct {
           r->left, r->top, r->right - r->left, r->bottom - r->top,
           SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
 
-		win_adapt_term_size(false, true);
+        win_adapt_term_size(false, true);
         return 0;
       }
       break;
@@ -1932,7 +1933,7 @@ main(int argc, char *argv[])
 
 #define dont_debug_position
 #ifdef debug_position
-#define printpos(tag, x, y, mon)	printf("%s %d %d (%ld %ld %ld %ld)\n", tag, x, y, mon.left, mon.top, mon.right, mon.bottom);
+#define printpos(tag, x, y, mon)  printf("%s %d %d (%ld %ld %ld %ld)\n", tag, x, y, mon.left, mon.top, mon.right, mon.bottom);
 #else
 #define printpos(tag, x, y, mon)
 #endif
