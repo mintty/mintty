@@ -30,6 +30,7 @@ const config default_cfg = {
   .search_current_colour = 0x0099DD,
   .cursor_colour = 0xBFBFBF,
   .transparency = 0,
+  .blurred = false,
   .opaque_when_focused = false,
   .cursor_type = CUR_LINE,
   .cursor_blinks = true,
@@ -77,9 +78,10 @@ const config default_cfg = {
   .search_bar = "",
   // Terminal
   .term = "xterm",
-  .answerback = "",
+  .answerback = L"",
   .bell_sound = false,
-  .bell_type = 0,
+  .bell_type = 1,
+  .bell_file = L"",
   .bell_freq = 0,
   .bell_len = 400,
   .bell_flash = false,
@@ -87,19 +89,19 @@ const config default_cfg = {
   .printer = L"",
   .confirm_exit = true,
   // Command line
-  .class = "",
+  .class = L"",
   .hold = HOLD_START,
   .exit_write = false,
-  .exit_title = "",
+  .exit_title = L"",
   .icon = "",
   .log = "",
   .utmp = false,
-  .title = "",
+  .title = L"",
   .daemonize = true,
   // "Hidden"
-  .app_id = "",
-  .app_name = "",
-  .app_launch_cmd = "",
+  .app_id = L"",
+  .app_name = L"",
+  .app_launch_cmd = L"",
   .col_spacing = 0,
   .row_spacing = 0,
   .word_chars = "",
@@ -153,6 +155,7 @@ options[] = {
   {"SearchCurrentColour", OPT_COLOUR, offcfg(search_current_colour)},
   {"CursorColour", OPT_COLOUR, offcfg(cursor_colour)},
   {"Transparency", OPT_TRANS, offcfg(transparency)},
+  {"Blur", OPT_BOOL, offcfg(blurred)},
   {"OpaqueWhenFocused", OPT_BOOL, offcfg(opaque_when_focused)},
   {"CursorType", OPT_CURSOR, offcfg(cursor_type)},
   {"CursorBlinks", OPT_BOOL, offcfg(cursor_blinks)},
@@ -209,9 +212,10 @@ options[] = {
 
   // Terminal
   {"Term", OPT_STRING, offcfg(term)},
-  {"Answerback", OPT_STRING, offcfg(answerback)},
+  {"Answerback", OPT_WSTRING, offcfg(answerback)},
   {"BellSound", OPT_BOOL, offcfg(bell_sound)},
   {"BellType", OPT_INT, offcfg(bell_type)},
+  {"BellFile", OPT_WSTRING, offcfg(bell_file)},
   {"BellFreq", OPT_INT, offcfg(bell_freq)},
   {"BellLen", OPT_INT, offcfg(bell_len)},
   {"BellFlash", OPT_BOOL, offcfg(bell_flash)},
@@ -220,23 +224,23 @@ options[] = {
   {"ConfirmExit", OPT_BOOL, offcfg(confirm_exit)},
 
   // Command line
-  {"Class", OPT_STRING, offcfg(class)},
+  {"Class", OPT_WSTRING, offcfg(class)},
   {"Hold", OPT_HOLD, offcfg(hold)},
   {"Daemonize", OPT_BOOL, offcfg(daemonize)},
   {"ExitWrite", OPT_BOOL, offcfg(exit_write)},
-  {"ExitTitle", OPT_STRING, offcfg(exit_title)},
+  {"ExitTitle", OPT_WSTRING, offcfg(exit_title)},
   {"Icon", OPT_STRING, offcfg(icon)},
   {"Log", OPT_STRING, offcfg(log)},
-  {"Title", OPT_STRING, offcfg(title)},
+  {"Title", OPT_WSTRING, offcfg(title)},
   {"Utmp", OPT_BOOL, offcfg(utmp)},
   {"Window", OPT_WINDOW, offcfg(window)},
   {"X", OPT_INT, offcfg(x)},
   {"Y", OPT_INT, offcfg(y)},
 
   // "Hidden"
-  {"AppID", OPT_STRING, offcfg(app_id)},
-  {"AppName", OPT_STRING, offcfg(app_name)},
-  {"AppLaunchCmd", OPT_STRING, offcfg(app_launch_cmd)},
+  {"AppID", OPT_WSTRING, offcfg(app_id)},
+  {"AppName", OPT_WSTRING, offcfg(app_name)},
+  {"AppLaunchCmd", OPT_WSTRING, offcfg(app_launch_cmd)},
   {"ColSpacing", OPT_INT, offcfg(col_spacing)},
   {"RowSpacing", OPT_INT, offcfg(row_spacing)},
   {"WordChars", OPT_STRING, offcfg(word_chars)},
@@ -789,21 +793,30 @@ current_size_handler(control *unused(ctrl), int event)
 static void
 printerbox_handler(control *ctrl, int event)
 {
-  const wstring NONE = L"None (printing disabled)";
+  const wstring NONE = L"◇ None (printing disabled) ◇";  // ♢◇
+  const wstring CFG_NONE = L"";
+  const wstring DEFAULT = L"◆ Default printer ◆";  // ♦◆
+  const wstring CFG_DEFAULT = L"*";
   wstring printer = new_cfg.printer;
   if (event == EVENT_REFRESH) {
     dlg_listbox_clear(ctrl);
     dlg_listbox_add_w(ctrl, NONE);
+    dlg_listbox_add_w(ctrl, DEFAULT);
     uint num = printer_start_enum();
     for (uint i = 0; i < num; i++)
       dlg_listbox_add_w(ctrl, (wchar *)printer_get_name(i));
     printer_finish_enum();
-    dlg_editbox_set_w(ctrl, *printer ? printer : NONE);
+    if (*printer == '*')
+      dlg_editbox_set_w(ctrl, DEFAULT);
+    else
+      dlg_editbox_set_w(ctrl, *printer ? printer : NONE);
   }
   else if (event == EVENT_VALCHANGE || event == EVENT_SELCHANGE) {
     dlg_editbox_get_w(ctrl, &printer);
     if (!wcscmp(printer, NONE))
-      wstrset(&printer, L"");
+      wstrset(&printer, CFG_NONE);
+    else if (!wcscmp(printer, DEFAULT))
+      wstrset(&printer, CFG_DEFAULT);
     new_cfg.printer = printer;
   }
 }
@@ -901,6 +914,50 @@ term_handler(control *ctrl, int event)
   }
 }
 
+//  1 -> 0x00000000 MB_OK              Default Beep
+//  2 -> 0x00000010 MB_ICONSTOP        Critical Stop
+//  3 -> 0x00000020 MB_ICONQUESTION    Question
+//  4 -> 0x00000030 MB_ICONEXCLAMATION Exclamation
+//  5 -> 0x00000040 MB_ICONASTERISK    Asterisk
+// -1 -> 0xFFFFFFFF                    Simple Beep
+static string beeps[] = {
+  "simple",
+  "none",
+  "default",
+  "Critical Stop",
+  "Question",
+  "Exclamation",
+  "Asterisk",
+};
+
+static void
+bell_handler(control *ctrl, int event)
+{
+  switch (event) {
+    when EVENT_REFRESH:
+      dlg_listbox_clear(ctrl);
+      int sel = -1;
+      for (uint i = 0; i < lengthof(beeps); i++) {
+        dlg_listbox_add(ctrl, beeps[i]);
+        if ((int)i == new_cfg.bell_type + 1)
+          sel = i;
+      }
+      if (sel >= 0)
+        dlg_editbox_set(ctrl, beeps[sel]);
+    when EVENT_VALCHANGE or EVENT_SELCHANGE: {
+      char * beep = malloc(0);
+      dlg_editbox_get(ctrl, (string *)&beep);
+      for (uint i = 0; i < lengthof(beeps); i++) {
+        if (!strcmp(beep, beeps[i])) {
+          new_cfg.bell_type = i - 1;
+          break;
+        }
+      }
+      free(beep);
+    }
+  }
+}
+
 void
 setup_config_box(controlbox * b)
 {
@@ -951,10 +1008,23 @@ setup_config_box(controlbox * b)
     with_glass ? "Gla&ss" : null, TR_GLASS,
     null
   );
+#define support_blurred
+#ifdef support_blurred
+  ctrl_columns(s, 2, with_glass ? 80 : 75, with_glass ? 20 : 25);
+  ctrl_checkbox(
+    s, "Opa&que when focused",
+    dlg_stdcheckbox_handler, &new_cfg.opaque_when_focused
+  )->column = 0;
+  ctrl_checkbox(
+    s, "&Blur",
+    dlg_stdcheckbox_handler, &new_cfg.blurred
+  )->column = 1;
+#else
   ctrl_checkbox(
     s, "Opa&que when focused",
     dlg_stdcheckbox_handler, &new_cfg.opaque_when_focused
   );
+#endif
 
   s = ctrl_new_set(b, "Looks", "Cursor");
   ctrl_radiobuttons(
@@ -1166,10 +1236,10 @@ setup_config_box(controlbox * b)
     s, "&Answerback", 100, dlg_stdstringbox_handler, &new_cfg.answerback
   )->column = 1;
 
-  s = ctrl_new_set(b, "Terminal", "Bell");
-  ctrl_columns(s, 3, 25, 25, 50);
-  ctrl_checkbox(
-    s, "&Sound", dlg_stdcheckbox_handler, &new_cfg.bell_sound
+  s = ctrl_new_set(b, "Terminal", "Bell sound (overridden by BellFreq or BellFile)");
+  ctrl_columns(s, 3, 36, 19, 45);
+  ctrl_combobox(
+    s, null, 100, bell_handler, 0
   )->column = 0;
   ctrl_checkbox(
     s, "&Flash", dlg_stdcheckbox_handler, &new_cfg.bell_flash
