@@ -429,6 +429,15 @@ cs__wcstoutf(const wchar * ws)
   return s;
 }
 
+char *
+cs__wcstombs(const wchar * ws)
+{
+  int size1 = WideCharToMultiByte(codepage, 0, ws, -1, 0, 0, 0, 0);
+  char * s = malloc(size1);  // includes terminating NUL
+  WideCharToMultiByte(codepage, 0, ws, -1, s, size1, 0, 0);
+  return s;
+}
+
 wchar *
 cs__utftowcs(const char * s)
 {

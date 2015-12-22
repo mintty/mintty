@@ -26,7 +26,7 @@ void win_bell(void);
 void win_set_title(char *);
 void win_save_title(void);
 void win_restore_title(void);
-void win_prefix_title(const char *);
+void win_prefix_title(const wstring);
 void win_copy_title(void);
 
 colour win_get_colour(colour_i);

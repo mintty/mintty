@@ -44,6 +44,7 @@ extern int cs_mbstowcs(wchar *ws, const char *s, size_t wlen);
 extern int cs_mb1towc(wchar *pwc, char c);
 extern wchar cs_btowc_glyph(char);
 
+extern char * cs__wcstombs(const wchar * ws);
 extern char * cs__wcstoutf(const wchar * ws);
 extern wchar * cs__mbstowcs(const char * s);
 extern wchar * cs__utftowcs(const char * s);

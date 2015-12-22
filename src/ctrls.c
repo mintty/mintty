@@ -384,11 +384,11 @@ dlg_stdfontsel_handler(control *ctrl, int event)
 void
 dlg_stdstringbox_handler(control *ctrl, int event)
 {
-  string *sp = ctrl->context;
+  wstring *sp = ctrl->context;
   if (event == EVENT_VALCHANGE)
-    dlg_editbox_get(ctrl, sp);
+    dlg_editbox_get_w(ctrl, sp);
   else if (event == EVENT_REFRESH)
-    dlg_editbox_set(ctrl, *sp);
+    dlg_editbox_set_w(ctrl, *sp);
 }
 
 void
