@@ -33,8 +33,7 @@ printer_get_name(uint i)
   return printer_info[i].pPrinterName;
 }
 
-#ifdef debug_printer
-static wchar *
+wstring
 printer_get_default(void)
 {
   static wchar dp[99];
@@ -42,9 +41,8 @@ printer_get_default(void)
   if (GetDefaultPrinterW(dp, &len))
     return dp;
   else
-    return 0;
+    return L"";
 }
-#endif
 
 void
 printer_finish_enum(void)

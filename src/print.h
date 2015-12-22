@@ -1,12 +1,15 @@
 #ifndef PRINT_H
 #define PRINT_H
 
-uint printer_start_enum(void);
-wstring printer_get_name(uint);
-void printer_finish_enum(void);
+// printers information
+extern uint printer_start_enum(void);
+extern wstring printer_get_name(uint);
+extern void printer_finish_enum(void);
+extern wstring printer_get_default(void);
 
-void printer_start_job(wstring printer_name);
-void printer_write(char *, uint len);
-void printer_finish_job(void);
+// printer output
+extern void printer_start_job(wstring printer_name);
+extern void printer_write(char *, uint len);
+extern void printer_finish_job(void);
 
 #endif
