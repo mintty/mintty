@@ -313,8 +313,12 @@ do_ctrl(char c)
       write_linefeed();
       if (term.newline_mode)
         write_return();
-    when CTRL('E'):   /* ENQ: terminal type query */
-      child_write(cfg.answerback, strlen(cfg.answerback));
+    when CTRL('E'): {  /* ENQ: terminal type query */
+      //child_write(cfg.answerback, strlen(cfg.answerback));
+      char * ab = cs__wcstombs(cfg.answerback);
+      child_write(ab, strlen(ab));
+      free(ab);
+    }
     when CTRL('N'):   /* LS1: Locking-shift one */
       term.curs.g1 = true;
       term_update_cs();
@@ -798,7 +802,10 @@ do_csi(uchar c)
         term.printing = true;
         term.only_printing = !term.esc_mod;
         term.print_state = 0;
-        printer_start_job(cfg.printer);
+        if (*cfg.printer == '*')
+          printer_start_job(printer_get_default());
+        else
+          printer_start_job(cfg.printer);
       }
       else if (arg0 == 4 && term.printing) {
         // Drop escape sequence from print buffer and finish printing.
