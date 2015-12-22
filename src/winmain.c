@@ -84,6 +84,7 @@ typedef struct {
 
 static HRESULT (WINAPI * pDwmIsCompositionEnabled)(BOOL *) = 0;
 static HRESULT (WINAPI * pDwmExtendFrameIntoClientArea)(HWND, const MARGINS *) = 0;
+static HRESULT (WINAPI * pDwmEnableBlurBehindWindow)(HWND, void *) = 0;
 
 // Helper for loading a system library. Using LoadLibrary() directly is insecure
 // because Windows might be searching the current working directory first.
@@ -110,6 +111,8 @@ load_dwm_funcs(void)
       (void *)GetProcAddress(dwm, "DwmIsCompositionEnabled");
     pDwmExtendFrameIntoClientArea =
       (void *)GetProcAddress(dwm, "DwmExtendFrameIntoClientArea");
+    pDwmEnableBlurBehindWindow =
+      (void *)GetProcAddress(dwm, "DwmEnableBlurBehindWindow");
   }
 }
 
@@ -184,11 +187,12 @@ win_copy_title(void)
 }
 
 void
-win_prefix_title(const char * prefix)
+win_prefix_title(const wstring prefix)
 {
   int len = GetWindowTextLengthW(wnd);
-  wchar ptitle[strlen(prefix) + len + 1];
-  int plen = cs_mbstowcs(ptitle, prefix, lengthof(ptitle));
+  int plen = wcslen(prefix);
+  wchar ptitle[plen + len + 1];
+  wcscpy(ptitle, prefix);
   wchar * title = & ptitle[plen];
   len = GetWindowTextW(wnd, title, len + 1);
   SetWindowTextW(wnd, ptitle);
@@ -500,6 +504,36 @@ win_is_glass_available(void)
 }
 
 static void
+update_blur(void)
+{
+  if (pDwmEnableBlurBehindWindow) {
+    bool blur =
+      cfg.transparency && cfg.blurred && !win_is_fullscreen &&
+      !(cfg.opaque_when_focused && term.has_focus);
+#define dont_use_dwmapi_h
+#ifdef use_dwmapi_h
+#warning dwmapi_include_shown_for_documentation
+#include <dwmapi.h>
+    DWM_BLURBEHIND bb;
+#else
+    struct {
+      DWORD dwFlags;
+      BOOL  fEnable;
+      HRGN  hRgnBlur;
+      BOOL  fTransitionOnMaximized;
+    } bb;
+#define DWM_BB_ENABLE 1
+#endif
+    bb.dwFlags = DWM_BB_ENABLE;
+    bb.fEnable = blur;
+    bb.hRgnBlur = NULL;
+    bb.fTransitionOnMaximized = FALSE;
+
+    pDwmEnableBlurBehindWindow(wnd, &bb);
+  }
+}
+
+static void
 update_glass(void)
 {
   if (pDwmExtendFrameIntoClientArea) {
@@ -647,17 +681,22 @@ void
 win_bell(void)
 {
   if (cfg.bell_sound || cfg.bell_type) {
-    if (cfg.bell_freq)
-      Beep(cfg.bell_freq, cfg.bell_len);
-    else {
-      // 0  MB_OK               Default Beep
-      // 1  MB_ICONSTOP         Critical Stop
-      // 2  MB_ICONQUESTION     Question
-      // 3  MB_ICONEXCLAMATION  Exclamation
-      // 4  MB_ICONASTERISK     Asterisk
-      // ?  0xFFFFFFFF          Simple Beep
-      MessageBeep((cfg.bell_type - 1) * 16);
+    if (cfg.bell_file && *cfg.bell_file
+     && PlaySoundW(cfg.bell_file, NULL, SND_ASYNC | SND_FILENAME)) {
+      // played
     }
+    else if (cfg.bell_freq)
+      Beep(cfg.bell_freq, cfg.bell_len);
+    else if (cfg.bell_type > 0) {
+      //  1 -> 0x00000000 MB_OK              Default Beep
+      //  2 -> 0x00000010 MB_ICONSTOP        Critical Stop
+      //  3 -> 0x00000020 MB_ICONQUESTION    Question
+      //  4 -> 0x00000030 MB_ICONEXCLAMATION Exclamation
+      //  5 -> 0x00000040 MB_ICONASTERISK    Asterisk
+      // -1 -> 0xFFFFFFFF                    Simple Beep
+      MessageBeep((cfg.bell_type - 1) * 16);
+    } else if (cfg.bell_type < 0)
+      MessageBeep(0xFFFFFFFF);
   }
   if (cfg.bell_taskbar && !term.has_focus)
     flash_taskbar(true);
@@ -796,6 +835,7 @@ update_transparency(void)
     SetLayeredWindowAttributes(wnd, 0, 255 - (uchar)trans, LWA_ALPHA);
   }
 
+  update_blur();
   update_glass();
 }
 
@@ -1406,10 +1446,10 @@ configure_taskbar()
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1007
   // initial patch (issue #471) contributed by Johannes Schindelin
-  const char * app_id = cfg.app_id;
+  wchar * app_id = (wchar *) cfg.app_id;
   const char * relaunch_icon = cfg.icon;
-  const char * relaunch_display_name = cfg.app_name;
-  const char * relaunch_command = cfg.app_launch_cmd;
+  wchar * relaunch_display_name = (wchar *) cfg.app_name;
+  wchar * relaunch_command = (wchar *) cfg.app_launch_cmd;
 
 #define dont_debug_properties
 
@@ -1468,31 +1508,23 @@ configure_taskbar()
         // def: typedef struct tagPROPVARIANT PROPVARIANT: propidl.h
         // def: enum VARENUM (VT_*): wtypes.h
         // def: PKEY_*: propkey.h
-        if (relaunch_command && *relaunch_command && store_taskbar_properties
-            && (size = cs_mbstowcs(0, relaunch_command, 0) + 1)) {
-          var.pwszVal = malloc(size * sizeof(wchar));
-          if (var.pwszVal) {
+        if (relaunch_command && *relaunch_command && store_taskbar_properties) {
 #ifdef debug_properties
-            printf("AppUserModel_RelaunchCommand=%s\n", relaunch_command);
+          printf("AppUserModel_RelaunchCommand=%ls\n", relaunch_command);
 #endif
-            cs_mbstowcs(var.pwszVal, relaunch_command, size);
-            var.vt = VT_LPWSTR;
-            pps->lpVtbl->SetValue(pps,
-                &PKEY_AppUserModel_RelaunchCommand, &var);
-          }
+          var.pwszVal = relaunch_command;
+          var.vt = VT_LPWSTR;
+          pps->lpVtbl->SetValue(pps,
+              &PKEY_AppUserModel_RelaunchCommand, &var);
         }
-        if (relaunch_display_name && *relaunch_display_name &&
-            (size = cs_mbstowcs(0, relaunch_display_name, 0) + 1)) {
-          var.pwszVal = malloc(size * sizeof(wchar));
-          if (var.pwszVal) {
+        if (relaunch_display_name && *relaunch_display_name) {
 #ifdef debug_properties
-            printf("AppUserModel_RelaunchDisplayNameResource=%s\n", relaunch_display_name);
+          printf("AppUserModel_RelaunchDisplayNameResource=%ls\n", relaunch_display_name);
 #endif
-            cs_mbstowcs(var.pwszVal, relaunch_display_name, size);
-            var.vt = VT_LPWSTR;
-            pps->lpVtbl->SetValue(pps,
-                &PKEY_AppUserModel_RelaunchDisplayNameResource, &var);
-          }
+          var.pwszVal = relaunch_display_name;
+          var.vt = VT_LPWSTR;
+          pps->lpVtbl->SetValue(pps,
+              &PKEY_AppUserModel_RelaunchDisplayNameResource, &var);
         }
         if (relaunch_icon && *relaunch_icon &&
             (size = cs_mbstowcs(0, relaunch_icon, 0) + 1)) {
@@ -1531,18 +1563,14 @@ DEFINE_PROPERTYKEY(PKEY_AppUserModel_StartPinOption, 0x9f4c2855,0x9f79,0x4B39,0x
               &PKEY_AppUserModel_StartPinOption, &var);
         }
 #endif
-        if (app_id && *app_id &&
-            (size = cs_mbstowcs(0, app_id, 0) + 1)) {
-          var.pwszVal = malloc(size * sizeof(wchar));
-          if (var.pwszVal) {
+        if (app_id && *app_id) {
 #ifdef debug_properties
-            printf("AppUserModel_ID=%s\n", app_id);
+          printf("AppUserModel_ID=%ls\n", app_id);
 #endif
-            cs_mbstowcs(var.pwszVal, app_id, size);
-            var.vt = VT_LPWSTR;  // VT_EMPTY should remove but has no effect
-            pps->lpVtbl->SetValue(pps,
-                &PKEY_AppUserModel_ID, &var);
-          }
+          var.pwszVal = app_id;
+          var.vt = VT_LPWSTR;  // VT_EMPTY should remove but has no effect
+          pps->lpVtbl->SetValue(pps,
+              &PKEY_AppUserModel_ID, &var);
         }
 
         pps->lpVtbl->Commit(pps);
@@ -1802,52 +1830,35 @@ main(int argc, char *argv[])
     HRESULT (WINAPI *pSetAppID)(PCWSTR) =
       (void *)GetProcAddress(shell, "SetCurrentProcessExplicitAppUserModelID");
 
-    if (pSetAppID) {
-      size_t size = cs_mbstowcs(0, cfg.app_id, 0) + 1;
-      if (size) {
-        wchar buf[size];
-        cs_mbstowcs(buf, cfg.app_id, size);
-        pSetAppID(buf);
-      }
-    }
+    if (pSetAppID)
+      pSetAppID(cfg.app_id);
   }
 
   inst = GetModuleHandle(NULL);
 
   // Window class name.
   wstring wclass = _W(APPNAME);
-  if (*cfg.class) {
-    size_t size = cs_mbstowcs(0, cfg.class, 0) + 1;
-    if (size) {
-      wchar *buf = newn(wchar, size);
-      cs_mbstowcs(buf, cfg.class, size);
-      wclass = buf;
-    }
-    else
-      fputs("Using default class name due to invalid characters.\n", stderr);
-  }
+  if (*cfg.class)
+    wclass = cfg.class;
 
   // Put child command line into window title if we haven't got one already.
-  string title = cfg.title;
-  if (!*title) {
+  wstring wtitle = cfg.title;
+  if (!*wtitle) {
     size_t len;
     char *argz;
     argz_create(argv, &argz, &len);
     argz_stringify(argz, len, ' ');
-    title = argz;
-  }
-
-  // Convert title to Unicode. Default to application name if unsuccessful.
-  wstring wtitle = _W(APPNAME);
-  {
+    char * title = argz;
     size_t size = cs_mbstowcs(0, title, 0) + 1;
     if (size) {
       wchar *buf = newn(wchar, size);
       cs_mbstowcs(buf, title, size);
       wtitle = buf;
     }
-    else
-      fputs("Using default title due to invalid characters.\n", stderr);
+    else {
+      fputs("Using default title due to invalid characters in program name.\n", stderr);
+      wtitle = _W(APPNAME);
+    }
   }
 
   // The window class.
