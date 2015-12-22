@@ -1,4 +1,7 @@
-  * Support for Unicode configuration strings and printer names.
+  * Added configuration option BellFile (#369) to play wav sounds.
+  * Enhanced bell sound selection in Options menu.
+  * Support for Unicode configuration strings and Unicode printer names.
+  * Support for printing with terminal character set.
   * Deriving icon from shortcut (#471, ~#420, ~~#486).
   * Not switching transparency when entering search bar (#497, thanks to Kai).
   * Extended special key redefinition options (#494).

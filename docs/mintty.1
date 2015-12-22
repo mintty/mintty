@@ -949,23 +949,16 @@ By default, this is empty.
 
 .TP
 \fBBell\fP
-The three checkboxes here determine what effects the bell character \fB^G\fP
-has.  Only taskbar highlighting is enabled by default.
-.br
-\(en \fBSound\fP (BellSound=no): Play the system's default beep sound.
-.br
-\(en \fBFlash\fP (BellFlash=no): Briefly invert the foreground and background
-colours.
-.br
-\(en \fBHighlight in taskbar\fP (BellTaskbar=yes): Change the colour of mintty's
-taskbar entry if the mintty window is not active.
 
-Further configuration options are currently available for 
-\fI/etc/minttyrc\fP and \fI~/.minttyrc\fP or as \fB-o\fP command line option only:
+The three options here determine what effects the bell character \fB^G\fP
+has.  Only taskbar highlighting is enabled by default.
+.RS
+\(en\fB\fP (BellType=1): Preferred system sound, values:
+.RS
+\fB-1\fP : Simple Beep
 .br
-\(en\fB\fP (BellType=0): Preferred system sound, values:
-.RS
-.RS
+\fB0\fP : No Beep
+.br
 \fB1\fP : Default Beep
 .br
 \fB2\fP : Critical Stop
@@ -976,6 +969,16 @@ Further configuration options are currently available for
 .br
 \fB5\fP : Asterisk
 .RE
+\(en \fBFlash\fP (BellFlash=no): Briefly invert the foreground and background
+colours.
+.br
+\(en \fBHighlight in taskbar\fP (BellTaskbar=yes): Change the colour of mintty's
+taskbar entry if the mintty window is not active.
+
+Further configuration options are currently available for 
+\fI/etc/minttyrc\fP and \fI~/.minttyrc\fP or as \fB-o\fP command line option only:
+.br
+\(en\fB\fP (BellFile=): D:/.../soundfile.wav (overrides system sounds).
 .br
 \(en\fB\fP (BellFreq=0): Beep sound frequency (overrides system sounds).
 .br
@@ -1025,11 +1028,13 @@ The \fBIcon\fP setting with format \fIFILE\fP[\fB,\fIINDEX\fR] allows to load
 the window icon from an executable, DLL, or icon file.
 The optional comma-separated index can be used to select a particular icon in
 a file with multiple icons.
-If the setting is empty, as it is by default, mintty's program icon is used.
+
+If the setting is empty, as it is by default, mintty's program icon is used, 
+unless mintty was invoked from a desktop shortcut in which case it uses 
+the shortcut icon.
 
 For interaction problems of icon, shortcut, and the Windows taskbar, 
-see the note for the -i option above. Note that specifying an Icon= 
-option prevents mintty from deriving the icon from an invoking shortcut.
+see the note for the -i option above.
 
 .TP
 \fBLog file\fP (Log=)
@@ -1149,8 +1154,7 @@ This string can list characters that are to be excluded from word selection.
 \fBSpecial key remapping\fP
 These options can attach a specific string to some special keys.
 If the string is a number, a corresponding Escape sequence will be generated, 
-applying Shift/Ctrl/Alt modifiers as to function and keypad keys.
-For example, Key_Break=2 would turn the Break key into an Insert key.
+applying Shift/Ctrl/Alt modifiers, following the pattern of function keys.
 .br
 \(en \fBKey_PrintScreen\fP=
 .br
@@ -1162,9 +1166,11 @@ For example, Key_Break=2 would turn the Break key into an Insert key.
 .br
 \(en \fBKey_ScrollLock\fP=
 
-.TP
-\fBPause key remapping\fP (Pause=)
-This option can attach a specific string to the Pause key. See Break key remapping.
+Examples:
+.br
+Key_Break=2 would turn the Break key into an Insert key
+.br
+Key_Menu=29 would make the Menu key send the same escape sequence as in xterm
 
 .TP
 \fBUse system colours\fP (UseSystemColours=no)
