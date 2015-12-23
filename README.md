@@ -3,6 +3,8 @@ also available for [MSYS](http://mingw.org/wiki/MSYS).
 
 #### Overview ####
 
+[![Join the chat at https://gitter.im/mintty/mintty](https://badges.gitter.im/mintty/mintty.svg)](https://gitter.im/mintty/mintty?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 For an introduction, see the [Mintty homepage](http://mintty.github.io/).
 
 #### Bugs and Enhancements ####
