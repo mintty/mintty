@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Thu Nov 12 17:56:35 2015 -->
+<!-- CreationDate: Thu Jan 14 16:31:38 2016 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -151,7 +151,9 @@ About interaction problems of icon, shortcut, and the
 Windows taskbar: In a Windows desktop shortcut, to achieve
 consistent icon behaviour, the same icon should be specified
 in the shortcut properties (Change Icon...) and the mintty
-command line (Target:).</p>
+command line (Target:), or (beginning 2.2.3) no icon should
+be specified on the command line as mintty will then take
+the icon from the invoking shortcut.</p>
 
 <p style="margin-left:11%;"><b>-l</b>, <b>--log</b>
 <i>FILE</i>|<b>-</b></p>
@@ -260,9 +262,22 @@ to distinguish different mintty instances. The default is
 
 <p style="margin-left:22%;">Do not apply
 &quot;daemonizing&quot;. By default, mintty tries to detach
-itself from the invoking terminal in order to avoid disabled
-signal reception, and when cloning the window (Alt+F2) in
-order to avoid a remaining zombie process.</p>
+itself from the invoking terminal when started from a Cygwin
+Console in order to avoid disabled signal reception, and
+when cloning the window (Alt+F2) in order to avoid a
+remaining zombie process.</p>
+
+<p style="margin-left:11%;"><b>-D</b>, <b>--daemon</b></p>
+
+<p style="margin-left:22%;">Enforce
+&quot;daemonizing&quot;. By default, mintty tries to detach
+itself from the invoking terminal only as described above.
+With this option, it tries to detach always. This makes a
+difference if a Windows &quot;Shortcut key&quot; is
+configured in a Windows desktop shortcut for starting
+mintty. Without daemonizing, the shortcut key will focus an
+already running instance of mintty, with daemonizing it
+always starts a new instance.</p>
 
 <p style="margin-left:11%;"><b>-R</b>, <b>--Reportpos</b>
 <i>mode</i></p>
@@ -1063,6 +1078,13 @@ RowSpacing=-1 works nicely with the Consolas fonts.</p>
 <p style="margin-left:22%;">Additional column padding;
 ColSpacing=1 can avoid boldened glyphs being clipped.</p>
 
+<p style="margin-left:11%;">(Padding=1)</p>
+
+<p style="margin-left:22%;">Window padding; margin between
+text and window border. The effective value is limited by
+the character cell width (scaling with font zooming). No
+fixed limit is imposed with a negative value.</p>
+
 <p style="margin-left:11%;"><b>Current size</b></p>
 
 <p style="margin-left:22%;">Pressing this button sets the
@@ -1156,16 +1178,27 @@ By default, this is empty.</p>
 <td width="78%">
 
 
-<p>The three checkboxes here determine what effects the
-bell character <b>^G</b> has. Only taskbar highlighting is
-enabled by default.</p></td></tr>
+<p>The three options here determine what effects the bell
+character <b>^G</b> has. Default beep and taskbar
+highlighting are enabled by default. Mintty can also play
+wave sounds configured in <i>~/.minttyrc</i>, or frequency
+beeps.</p> </td></tr>
 </table>
 
-<p style="margin-left:22%;">&ndash; <b>Sound</b>
-(BellSound=no): Play the system&rsquo;s default beep sound.
-<br>
-&ndash; <b>Flash</b> (BellFlash=no): Briefly invert the
-foreground and background colours. <br>
+<p style="margin-left:22%;">&ndash; (BellType=1): Preferred
+system sound, values:</p>
+
+<p style="margin-left:32%;"><b>-1</b> : Simple Beep <b><br>
+0</b> : No Beep <b><br>
+1</b> : Default Beep <b><br>
+2</b> : Critical Stop <b><br>
+3</b> : Question <b><br>
+4</b> : Exclamation <b><br>
+5</b> : Asterisk</p>
+
+<p style="margin-left:22%;">&ndash; <b>Flash</b>
+(BellFlash=no): Briefly invert the foreground and background
+colours. <br>
 &ndash; <b>Highlight in taskbar</b> (BellTaskbar=yes):
 Change the colour of mintty&rsquo;s taskbar entry if the
 mintty window is not active.</p>
@@ -1174,16 +1207,10 @@ mintty window is not active.</p>
 configuration options are currently available for
 <i>/etc/minttyrc</i> and <i>~/.minttyrc</i> or as <b>-o</b>
 command line option only: <br>
-&ndash; (BellType=0): Preferred system sound, values:</p>
-
-<p style="margin-left:32%;"><b>1</b> : Default Beep <b><br>
-2</b> : Critical Stop <b><br>
-3</b> : Question <b><br>
-4</b> : Exclamation <b><br>
-5</b> : Asterisk</p>
-
-<p style="margin-left:22%;">&ndash; (BellFreq=0): Beep
-sound frequency (overrides system sounds). <br>
+&ndash; (BellFile=): D:/.../soundfile.wav (overrides system
+sounds). <br>
+&ndash; (BellFreq=0): Beep sound frequency (overrides system
+sounds). <br>
 &ndash; (BellLen=400): Beep sound length (applies to
 frequency beep).</p>
 
@@ -1232,9 +1259,12 @@ signal indicating a runtime error. <br>
 format <i>FILE</i>[<b>,</b><i>INDEX</i>] allows to load the
 window icon from an executable, DLL, or icon file. The
 optional comma-separated index can be used to select a
-particular icon in a file with multiple icons. If the
-setting is empty, as it is by default, mintty&rsquo;s
-program icon is used.</p>
+particular icon in a file with multiple icons.</p>
+
+<p style="margin-left:22%; margin-top: 1em">If the setting
+is empty, as it is by default, mintty&rsquo;s program icon
+is used, unless mintty was invoked from a desktop shortcut
+in which case it uses the shortcut icon.</p>
 
 <p style="margin-left:22%; margin-top: 1em">For interaction
 problems of icon, shortcut, and the Windows taskbar, see the
@@ -1325,8 +1355,9 @@ clicking the pinned shortcut will result in a separate
 taskbar item for the new mintty window, rather than being
 grouped with the shortcut. To avoid this, the
 shortcut&rsquo;s AppID has to be set to the same string,
-which can be done using the <b>win7appid</b> utility
-available from <i>http://win7appid.googlecode.com</i>.</p>
+which can be done using the <b>Win7AppId</b> utility
+available cloned in the mintty utils repository
+<i>https://github.com/mintty/utils</i>.</p>
 
 <p style="margin-left:11%;"><b>Application Taskbar Shortcut
 Title</b> (AppName=)</p>
@@ -1337,15 +1368,14 @@ kept only if it was made persistent as described for
 AppLaunchCmd.</p>
 
 <p style="margin-left:11%;"><b>Application Taskbar Shortcut
-Launch CommandTitle</b> (AppLaunchCmd=)</p>
+Launch Command</b> (AppLaunchCmd=)</p>
 
 <p style="margin-left:22%;">The command to use if a
 shortcut pinned to the Windows 7 taskbar is invoked. This is
 only effective if combined with an AppName option and the
 command-line option --store-taskbar-properties to make it
-persistent. It should also be combined with an explicit
-AppID (mintty will otherwise generate an AppID but that may
-not be desired).</p>
+persistent. It should also be combined with an explicit and
+unique AppID.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Note: The
 command must be given in Windows pathname syntax (e.g.
@@ -1371,7 +1401,8 @@ C:\Windows\System32\calc.exe,0 --store-taskbar-properties
 <p style="margin-left:22%; margin-top: 1em"><b>Warning:</b>
 Once made persistent, the stored properties associated with
 a specific AppID cannot be removed or even modified again
-with normal means.</p>
+with normal means. For this reason, it is advisable to use
+temporary AppIDs for testing (like MyMintty.1).</p>
 
 <p style="margin-left:11%;"><b>Word selection
 characters</b> (WordChars=)</p>
@@ -1394,22 +1425,24 @@ characters</b> (WordCharsExcl=)</p>
 <p style="margin-left:22%;">This string can list characters
 that are to be excluded from word selection.</p>
 
-<p style="margin-left:11%;"><b>Break key remapping</b>
-(Break=)</p>
+<p style="margin-left:11%;"><b>Special key
+remapping</b></p>
 
-<p style="margin-left:22%;">This option can attach a
-specific string to the Break key. If the string is a number,
-a corresponding Escape sequence will be generated, applying
-Shift/Ctrl/Alt modifiers as to function and keypad keys. For
-example, Break=2 would effectively turn the Break key into
-an Insert key.</p>
+<p style="margin-left:22%;">These options can attach a
+specific string to some special keys. If the string is a
+number, a corresponding Escape sequence will be generated,
+applying Shift/Ctrl/Alt modifiers, following the pattern of
+function keys. <br>
+&ndash; <b>Key_PrintScreen</b>= <br>
+&ndash; <b>Key_Pause</b>= <br>
+&ndash; <b>Key_Break</b>= <br>
+&ndash; <b>Key_Menu</b>= <br>
+&ndash; <b>Key_ScrollLock</b>=</p>
 
-<p style="margin-left:11%;"><b>Pause key remapping</b>
-(Pause=)</p>
-
-<p style="margin-left:22%;">This option can attach a
-specific string to the Pause key. See Break key
-remapping.</p>
+<p style="margin-left:22%; margin-top: 1em">Examples: <br>
+Key_Break=2 would turn the Break key into an Insert key <br>
+Key_Menu=29 would make the Menu key send the same escape
+sequence as in xterm</p>
 
 <p style="margin-left:11%;"><b>Use system colours</b>
 (UseSystemColours=no)</p>

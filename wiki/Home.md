@@ -1,5 +1,6 @@
 Mintty is a [terminal emulator](http://en.wikipedia.org/wiki/Terminal_emulator) 
-for [Cygwin](http://cygwin.com) and [MSYS](http://mingw.org/wiki/MSYS).
+for [Cygwin](http://cygwin.com), [MSYS](http://mingw.org/wiki/MSYS) 
+and [Msys2](https://github.com/msys2).
 For an introduction and overview, see the [mintty homepage](http://mintty.github.io/).
 
 Further information:

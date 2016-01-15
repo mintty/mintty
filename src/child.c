@@ -267,7 +267,7 @@ child_proc(void)
 
         if (!s && cfg.exit_write) {
           s = "TERMINATED";
-          l = 10;
+          l = strlen(s);
         }
         if (s) {
           if (err)

@@ -1,11 +1,25 @@
-  * Added configuration option BellFile (#369) to play wav sounds.
-  * Enhanced bell sound selection in Options menu.
-  * Support for Unicode configuration strings and Unicode printer names.
-  * Support for printing with terminal character set.
+
+Desktop integration:
   * Deriving icon from shortcut (#471, ~#420, ~~#486).
-  * Not switching transparency when entering search bar (#497, thanks to Kai).
-  * Extended special key redefinition options (#494).
+  * New option -D with impact to shortcut key behaviour (~#499).
   * Not failing to start if daemonizing fails (#493).
+
+Terminal layout:
+  * Not switching transparency when entering search bar (#497, thanks to Kai).
+  * New option Padding (#511).
+  * Adjusting window to font change (#429) and sending notification if enabled.
+
+Keyboard:
+  * Extended special key redefinition options (#494).
+
+Bell:
+  * Added configuration option BellFile (#369) to play wav sounds.
+  * Enhanced bell sound selection in Options menu; option BellSound obsolete.
+
+Configuration and printing:
+  * Support for Unicode configuration strings and Unicode printer names.
+  * Support for printing fixed and tweaked, using terminal character set.
+  * Indicating Printing status in window title, in case of pseudo-blocking.
 
 ### 2.2.2 (12 Nov 2015) ###
 

@@ -3,6 +3,7 @@
 # - tar: Source tarball.
 # - zip: Zip for standalone release.
 # - pkg: Cygwin package.
+# - html: HTML version of the manual page.
 # - pdf: PDF version of the manual page.
 # - clean: Delete generated files.
 # - upload: Upload cygwin packages for publishing.
@@ -12,6 +13,8 @@
 # - RELEASE: release number for packaging
 # - TARGET: target triple for cross compiling
 
+NAME := mintty
+
 exe:
 	#cd src; $(MAKE) exe
 	#cd src; $(MAKE) bin
@@ -20,13 +23,14 @@ exe:
 zip:
 	cd src; $(MAKE) zip
 
+html: docs/$(NAME).1.html
+
 pdf:
 	cd src; $(MAKE) pdf
 
 clean:
 	cd src; $(MAKE) clean
 
-NAME := mintty
 version := \
   $(shell echo $(shell echo VERSION | cpp -P $(CPPFLAGS) --include src/appinfo.h))
 name_ver := $(NAME)-$(version)

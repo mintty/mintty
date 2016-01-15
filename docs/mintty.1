@@ -173,9 +173,19 @@ The default is "mintty".
 .TP
 \fB-d\fP, \fB--nodaemon\fP
 Do not apply "daemonizing".
-By default, mintty tries to detach itself from the invoking terminal 
-in order to avoid disabled signal reception, and when cloning the window 
-(Alt+F2) in order to avoid a remaining zombie process.
+By default, mintty tries to detach itself from the invoking terminal when 
+started from a Cygwin Console in order to avoid disabled signal reception, 
+and when cloning the window (Alt+F2) in order to avoid a remaining zombie process.
+
+.TP
+\fB-D\fP, \fB--daemon\fP
+Enforce "daemonizing".
+By default, mintty tries to detach itself from the invoking terminal only 
+as described above. With this option, it tries to detach always.
+This makes a difference if a Windows "Shortcut key" is configured in a 
+Windows desktop shortcut for starting mintty. Without daemonizing, the 
+shortcut key will focus an already running instance of mintty, with 
+daemonizing it always starts a new instance.
 
 .TP
 \fB-R\fP, \fB--Reportpos\fP \fImode\fP
@@ -877,6 +887,12 @@ Additional row padding; RowSpacing=-1 works nicely with the Consolas fonts.
 Additional column padding; ColSpacing=1 can avoid boldened glyphs being clipped.
 
 .TP
+\fB\fP(Padding=1)
+Window padding; margin between text and window border. The effective value 
+is limited by the character cell width (scaling with font zooming).
+No fixed limit is imposed with a negative value.
+
+.TP
 \fBCurrent size\fP
 Pressing this button sets the default width and height to the window's
 current size.
@@ -951,7 +967,9 @@ By default, this is empty.
 \fBBell\fP
 
 The three options here determine what effects the bell character \fB^G\fP
-has.  Only taskbar highlighting is enabled by default.
+has.  Default beep and taskbar highlighting are enabled by default.
+Mintty can also play wave sounds configured in \fI~/.minttyrc\fP, 
+or frequency beeps.
 .RS
 \(en\fB\fP (BellType=1): Preferred system sound, values:
 .RS
@@ -1100,11 +1118,11 @@ the shortcut itself should also get attached with the same AppId.
 \fIExplanation:\fP Note that Windows shortcut files have their own AppID.
 Hence, if an AppID is specified in the mintty settings, but not on a 
 taskbar-pinned shortcut for invoking mintty, clicking the pinned 
-shortcut will result in a separate taskbar item for the new mintty 
-window, rather than being grouped with the shortcut.
+shortcut will result in a separate taskbar item for the new mintty window, 
+rather than being grouped with the shortcut.
 To avoid this, the shortcut's AppID has to be set to the same string, 
-which can be done using the \fBwin7appid\fP utility available from
-\fIhttp://win7appid.googlecode.com\fP.
+which can be done using the \fBWin7AppId\fP utility available cloned in 
+the mintty utils repository \fIhttps://github.com/mintty/utils\fP.
 
 .TP
 \fBApplication Taskbar Shortcut Title\fP (AppName=)
@@ -1113,12 +1131,11 @@ the title is kept only if it was made persistent as described for
 AppLaunchCmd.
 
 .TP
-\fBApplication Taskbar Shortcut Launch CommandTitle\fP (AppLaunchCmd=)
+\fBApplication Taskbar Shortcut Launch Command\fP (AppLaunchCmd=)
 The command to use if a shortcut pinned to the Windows 7 taskbar is invoked.
 This is only effective if combined with an AppName option and the 
 command-line option --store-taskbar-properties to make it persistent.
-It should also be combined with an explicit AppID (mintty will otherwise 
-generate an AppID but that may not be desired).
+It should also be combined with an explicit and unique AppID.
 
 Note: The command must be given in Windows pathname syntax (e.g. 
 AppLaunchCmd='C:\\cygwin\\bin\\mintty -T mytitle -').
@@ -1134,6 +1151,8 @@ mintty -o AppID=Mintty.Pintest.1 -o AppName=Mintty.Pintest -o AppLaunchCmd="C:\\
 
 \fBWarning:\fP Once made persistent, the stored properties associated with 
 a specific AppID cannot be removed or even modified again with normal means.
+For this reason, it is advisable to use temporary AppIDs for testing 
+(like MyMintty.1).
 
 .TP
 \fBWord selection characters\fP (WordChars=)

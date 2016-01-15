@@ -18,6 +18,12 @@ The **[cygutils](http://www.cygwin.com/cygwin-ug-net/using-effectively.html#usin
 provides the **mkshortcut** utility for creating shortcuts from the command line. 
 See its manual page for details.
 
+A Windows shortcut can be associated with a **Shortcut key** so an instance 
+of mintty can be started using a hotkey. By default, an already running 
+instance would be focussed again with the associated hotkey. To have a 
+new instance started with every usage of the hotkey, use the command-line 
+option ```-D``` for mintty in the shortcut target.
+
 _Note:_ About interaction problems of icon, shortcut, and the Windows taskbar:
 In a Windows desktop shortcut, to achieve consistent icon behaviour, 
 the same icon should be specified in the shortcut properties (Change Icon...) 
@@ -217,7 +223,10 @@ echo -ne '\e]11;#C0C0C0\a'  # Light gray background
 echo -ne '\e]12;#00FF00\a'  # Green cursor
 ```
 
-In mintty, the RGB colour values can also be specified using a comma-separated decimal notation, for example `255,0,0` instead of `#FF0000` for red. [X11 colour names](http://en.wikipedia.org/wiki/X11_color_names) are not currently supported though.
+In mintty, the RGB colour values can also be specified using a comma-separated decimal notation, 
+for example `255,0,0` instead of `#FF0000` for red. 
+[X11 colour names](http://en.wikipedia.org/wiki/X11_color_names) 
+are supported, too. See the examples below for all options.
 
 The 16 [ANSI colours](http://en.wikipedia.org/wiki/ANSI_escape_code#Colors) 
 can be set in the configuration file or on the command line using settings 
