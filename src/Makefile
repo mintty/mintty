@@ -42,10 +42,14 @@ else ifeq ($(TARGET), x86_64-pc-cygwin)
   cygport_opts := --64
   zip_files := ../docs/readme.html ../scripts/create_shortcut.js
 else ifeq ($(TARGET), i686-pc-msys)
-  platform := msys
+  ifeq ("${MSYSCON}", "")
+    platform := msys
+  else
+    platform := msys32
+  endif
   zip_files := ../docs/readme-msys.html
 else ifeq ($(TARGET), x86_64-pc-msys)
-  platform := msys
+  platform := msys64
   zip_files := ../docs/readme-msys.html
 else
   $(error Target '$(TARGET)' not supported)
@@ -223,8 +227,9 @@ vk_names.t:	# Windows Virtual Key Code names, only for debugging
 	sed -e 's/^#define \(VK_[^ ]*\) \(0x[0-9A-Fa-f]*\)$$/	{\2, "\1"},/' -e t -e d /usr/include/w32api/winuser.h > vk_names.t
 
 target:
-	echo $(TARGET)
-	echo $(BINDIR)
+	echo TARGET $(TARGET)
+	echo platform $(platform)
+	echo BINDIR $(BINDIR)
 	echo $(bins)
 
 getappinfo=$(shell echo "$(1)" ; echo "$(1)" | cpp -P $(CPPFLAGS) --include appinfo.h)
