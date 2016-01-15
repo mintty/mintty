@@ -1,5 +1,6 @@
 #include "print.h"
 #include "charset.h"
+#include "win.h"  // win_prefix_title, win_unprefix_title
 #include <sys/cygwin.h>
 #include <fcntl.h>
 
@@ -44,6 +45,8 @@ printer_start_job(wstring printer_name)
 
   pd = open(pf, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0600);
   if (pd >= 0) {
+    win_prefix_title(L"[Printing...] ");
+
     printer = printer_name;
     write(pd, &BOM, 2);
   }
@@ -74,25 +77,43 @@ printer_finish_job(void)
   if (printer) {
     close(pd);
 
+#if CYGWIN_VERSION_DLL_MAJOR >= 1007
     char * wf = (char *)cygwin_create_path(CCP_POSIX_TO_WIN_A, pf);
+#else
+    char * wf = newn(char, MAX_PATH);
+    cygwin_conv_to_win32_path(pf, wf);
+#endif
+
     char * pn = cs__wcstoutf(printer);
 
     strcpy(strchr(pf, '\0') - 4, ".cmd");
-    int cmdd = open(pf, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0700);
+    int cmdfile = open(pf, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0700);
 
-    char * cmdformat = "@chcp 65001\r\n@start /min notepad /w /pt \"%s\" \"%s\"";
-    char * cmd = malloc(strlen(cmdformat) - 4 + strlen(wf) + strlen(pn) + 1);
-    sprintf(cmd, cmdformat, wf, pn);
+    // chcp 65001 tricks Windows into accepting UTF-8 printer and file names
+    // but it needs to be restored
 
-    write(cmdd, cmd, strlen(cmd));
-    close(cmdd);
+    // retrieve current value of `chcp`
+    // which is not necessarily the same as GetOEMCP() !
+    FILE * chcpcom = popen ("chcp.com | sed -e 's,.*:,,' -e 's, ,,'", "r");
+    char line[99];
+    fgets(line, sizeof line, chcpcom);
+    pclose(chcpcom);
+    int chcp = atoi(line);
+
+    char * cmdformat = "@chcp 65001 > nul:\r\n@start /min notepad /w /pt \"%s\" \"%s\"\r\n@chcp %d > nul:";
+    char cmd[strlen(cmdformat) - 6 + strlen(wf) + strlen(pn) + 22 + 1];
+    sprintf(cmd, cmdformat, wf, pn, chcp);
+
+    write(cmdfile, cmd, strlen(cmd));
+    close(cmdfile);
 
     system(pf);
 
-    free(cmd);
     free(wf);
     free(pn);
     free(pf);
     printer = 0;
+
+    win_unprefix_title(L"[Printing...] ");
   }
 }

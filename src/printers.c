@@ -37,7 +37,7 @@ wstring
 printer_get_default(void)
 {
   static wchar dp[99];
-  unsigned long len = sizeof dp;
+  DWORD len = sizeof dp;
   if (GetDefaultPrinterW(dp, &len))
     return dp;
   else
