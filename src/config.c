@@ -12,7 +12,11 @@
 #include <termios.h>
 #include <sys/cygwin.h>
 
+
 #define dont_debug_config
+
+#define dont_support_blurred
+
 
 #if CYGWIN_VERSION_API_MINOR >= 222
 static wstring rc_filename = 0;
@@ -98,12 +102,14 @@ const config default_cfg = {
   .utmp = false,
   .title = L"",
   .daemonize = true,
+  .daemonize_always = false,
   // "Hidden"
   .app_id = L"",
   .app_name = L"",
   .app_launch_cmd = L"",
   .col_spacing = 0,
   .row_spacing = 0,
+  .padding = 1,
   .word_chars = "",
   .word_chars_excl = "",
   .use_system_colours = false,
@@ -155,7 +161,9 @@ options[] = {
   {"SearchCurrentColour", OPT_COLOUR, offcfg(search_current_colour)},
   {"CursorColour", OPT_COLOUR, offcfg(cursor_colour)},
   {"Transparency", OPT_TRANS, offcfg(transparency)},
+#ifdef support_blurred
   {"Blur", OPT_BOOL, offcfg(blurred)},
+#endif
   {"OpaqueWhenFocused", OPT_BOOL, offcfg(opaque_when_focused)},
   {"CursorType", OPT_CURSOR, offcfg(cursor_type)},
   {"CursorBlinks", OPT_BOOL, offcfg(cursor_blinks)},
@@ -227,6 +235,7 @@ options[] = {
   {"Class", OPT_WSTRING, offcfg(class)},
   {"Hold", OPT_HOLD, offcfg(hold)},
   {"Daemonize", OPT_BOOL, offcfg(daemonize)},
+  {"DaemonizeAlways", OPT_BOOL, offcfg(daemonize_always)},
   {"ExitWrite", OPT_BOOL, offcfg(exit_write)},
   {"ExitTitle", OPT_WSTRING, offcfg(exit_title)},
   {"Icon", OPT_STRING, offcfg(icon)},
@@ -243,6 +252,7 @@ options[] = {
   {"AppLaunchCmd", OPT_WSTRING, offcfg(app_launch_cmd)},
   {"ColSpacing", OPT_INT, offcfg(col_spacing)},
   {"RowSpacing", OPT_INT, offcfg(row_spacing)},
+  {"Padding", OPT_INT, offcfg(padding)},
   {"WordChars", OPT_STRING, offcfg(word_chars)},
   {"WordCharsExcl", OPT_STRING, offcfg(word_chars_excl)},
   {"IMECursorColour", OPT_COLOUR, offcfg(ime_cursor_colour)},
@@ -1008,7 +1018,6 @@ setup_config_box(controlbox * b)
     with_glass ? "Gla&ss" : null, TR_GLASS,
     null
   );
-#define support_blurred
 #ifdef support_blurred
   ctrl_columns(s, 2, with_glass ? 80 : 75, with_glass ? 20 : 25);
   ctrl_checkbox(

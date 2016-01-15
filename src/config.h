@@ -114,11 +114,13 @@ typedef struct {
   char window;
   int x, y;
   bool daemonize;
+  bool daemonize_always;
   // "Hidden"
   wstring app_id;
   wstring app_name;
   wstring app_launch_cmd;
   int col_spacing, row_spacing;
+  int padding;
   string word_chars;
   string word_chars_excl;
   colour ime_cursor_colour;
