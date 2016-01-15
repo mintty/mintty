@@ -23,7 +23,7 @@ extern int font_width, font_height;
 
 extern bool win_is_fullscreen;
 
-enum { PADDING = 1 };
+extern int PADDING;
 
 extern void win_paint(void);
 

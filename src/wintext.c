@@ -78,6 +78,7 @@ int font_size;
 
 // Font screen dimensions
 int font_width, font_height;
+int PADDING = 1;
 static bool font_dualwidth;
 
 bool font_ambig_wide;
@@ -235,6 +236,9 @@ win_init_fonts(int size)
   font_height = tm.tmHeight + cfg.row_spacing;
   font_width = tm.tmAveCharWidth + cfg.col_spacing;
   font_dualwidth = (tm.tmMaxCharWidth >= tm.tmAveCharWidth * 3 / 2);
+  PADDING = tm.tmAveCharWidth;
+  if (cfg.padding >= 0 && cfg.padding < PADDING)
+    PADDING = cfg.padding;
 
   // Determine whether ambiguous-width characters are wide in this font */
   float latin_char_width, greek_char_width, line_char_width;
