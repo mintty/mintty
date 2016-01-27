@@ -432,9 +432,28 @@ cs__wcstoutf(const wchar * ws)
 char *
 cs__wcstombs(const wchar * ws)
 {
-  int size1 = WideCharToMultiByte(codepage, 0, ws, -1, 0, 0, 0, 0);
+  char defchar = '?';
+  int size1 = WideCharToMultiByte(codepage, WC_NO_BEST_FIT_CHARS, ws, -1, 0, 0, 0, 0);
   char * s = malloc(size1);  // includes terminating NUL
-  WideCharToMultiByte(codepage, 0, ws, -1, s, size1, 0, 0);
+  WideCharToMultiByte(codepage, WC_NO_BEST_FIT_CHARS, ws, -1, s, size1, &defchar, 0);
+  return s;
+}
+
+char *
+cs__wcstombs_dropill(const wchar * ws)
+{
+  char defchar = '\0';
+  int illegal = 0;
+  int size1 = WideCharToMultiByte(codepage, WC_NO_BEST_FIT_CHARS, ws, -1, 0, 0, 0, 0);
+  char * s = malloc(size1);  // includes terminating NUL
+  WideCharToMultiByte(codepage, WC_NO_BEST_FIT_CHARS, ws, -1, s, size1, &defchar, &illegal);
+  if (illegal) {
+    int i = 0;
+    for (int k = 0; k < size1; k++)
+      if (s[k])
+        s[i++] = s[k];
+    s[i] = '\0';
+  }
   return s;
 }
 
