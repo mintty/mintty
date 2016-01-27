@@ -3,6 +3,11 @@
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
+#define dont_debuglog
+#ifdef debuglog
+  FILE * mtlog = 0;
+#endif
+
 #define dont_debug_resize
 
 #include "winpriv.h"
@@ -28,12 +33,6 @@
 #endif
 
 
-#define dont_debuglog
-#ifdef debuglog
-  FILE * mtlog = 0;
-#endif
-
-
 HINSTANCE inst;
 HWND wnd;
 HIMC imc;
@@ -46,9 +45,33 @@ static bool invoked_from_shortcut = false;
 static bool invoked_with_appid = false;
 #endif
 
-#if CYGWIN_VERSION_API_MINOR < 74
-// needed for MSys
-#define wcscpy(targ, src) memcpy(targ, src, (wcslen(src) + 1) * sizeof(wchar))
+#if CYGWIN_VERSION_API_MINOR < 74 || defined(TEST_WCS)
+// needed for MinGW MSYS
+#define wcscpy(tgt, src) memcpy(tgt, src, (wcslen(src) + 1) * sizeof(wchar))
+# ifdef TEST_WCS
+#define wcsdup _wcsdup
+#define wcschr _wcschr
+#define wcsncmp _wcsncmp
+# endif
+# ifdef need_wcsdup
+static wchar *
+wcsdup(const wchar * s)
+{
+  wchar * dup = newn(wchar, wcslen(s) + 1);
+  wcscpy(dup, s);
+  return dup;
+}
+# endif
+static wchar *
+wcschr(const wchar * s, wchar c)
+{
+  while (* s) {
+    if (* s == c)
+      return (wchar *)s;
+    s ++;
+  }
+  return 0;
+}
 static int
 wcsncmp(const wchar * s1, const wchar * s2, int len)
 {
@@ -1412,7 +1435,7 @@ exit_mintty()
 
 #include <shlobj.h>
 
-static char *
+static wchar *
 get_shortcut_icon_location(wchar * iconfile)
 {
   IShellLinkW * shell_link;
@@ -1436,25 +1459,31 @@ get_shortcut_icon_location(wchar * iconfile)
   /* Load the shortcut.  */
   hres = persist_file->lpVtbl->Load(persist_file, iconfile, STGM_READ);
 
-  char * result = 0;
+  wchar * result = 0;
 
   if (SUCCEEDED(hres)) {
     WCHAR wil[MAX_PATH + 1];
-    char il[MAX_PATH * cs_cur_max + 1];
     int index;
     shell_link->lpVtbl->GetIconLocation(shell_link, wil, lengthof(wil), &index);
-    cs_wcstombs(il, wil, sizeof il);
+
+    wchar * wicon = wil;
+
+    /* Append ,icon-index if non-zero.  */
+    wchar * widx = L"";
     if (index) {
-      char _num[22];
-      sprintf(_num, ",%d", index);
-      strncat(il, _num, sizeof il - strlen(_num) - 1);
+      char idx[22];
+      sprintf(idx, ",%d", index);
+      widx = cs__mbstowcs(idx);
     }
+
     /* Resolve leading Windows environment variable component.  */
-    char * fin;
-    if (il[0] == '%' && il[1] && il[1] != '%' && (fin = strchr(&il[2], '%'))) {
-      char var[fin - il];
+    wchar * wenv = L"";
+    wchar * fin;
+    if (wil[0] == '%' && wil[1] && wil[1] != '%' && (fin = wcschr(&wil[2], '%'))) {
+      char var[fin - wil];
       char * cop = var;
-      for (char * v = &il[1]; *v != '%'; v++) {
+      wchar * v;
+      for (v = &wil[1]; *v != '%'; v++) {
         if (*v >= 'a' && *v <= 'z')
           *cop = *v - 'a' + 'A';
         else
@@ -1462,16 +1491,23 @@ get_shortcut_icon_location(wchar * iconfile)
         cop++;
       }
       *cop = '\0';
+      v ++;
+      wicon = v;
 
       char * val = getenv(var);
       if (val) {
-        char resolvil[strlen(val) + strlen(il) + 1];
-        sprintf(resolvil, "%s%s", val, fin+1);
-        result = strdup(resolvil);
+        wenv = cs__mbstowcs(val);
       }
     }
-    if (!result)
-      result = strdup(il);
+
+    result = newn(wchar, wcslen(wenv) + wcslen(wicon) + wcslen(widx) + 1);
+    wcscpy(result, wenv);
+    wcscpy(&result[wcslen(result)], wicon);
+    wcscpy(&result[wcslen(result)], widx);
+    if (* widx)
+      free(widx);
+    if (* wenv)
+      free(wenv);
   }
 
   /* Release the pointer to the IPersistFile interface. */
@@ -1505,7 +1541,7 @@ configure_taskbar()
 #if CYGWIN_VERSION_DLL_MAJOR >= 1007
   // initial patch (issue #471) contributed by Johannes Schindelin
   wchar * app_id = (wchar *) cfg.app_id;
-  const char * relaunch_icon = cfg.icon;
+  wchar * relaunch_icon = (wchar *) cfg.icon;
   wchar * relaunch_display_name = (wchar *) cfg.app_name;
   wchar * relaunch_command = (wchar *) cfg.app_launch_cmd;
 
@@ -1552,7 +1588,6 @@ configure_taskbar()
       printf("SHGetPropertyStoreForWindow linked %d\n", !!pGetPropertyStore);
 #endif
     if (pGetPropertyStore) {
-      size_t size;
       IPropertyStore *pps;
       HRESULT hr;
       PROPVARIANT var;
@@ -1584,18 +1619,14 @@ configure_taskbar()
           pps->lpVtbl->SetValue(pps,
               &PKEY_AppUserModel_RelaunchDisplayNameResource, &var);
         }
-        if (relaunch_icon && *relaunch_icon &&
-            (size = cs_mbstowcs(0, relaunch_icon, 0) + 1)) {
-          var.pwszVal = malloc(size * sizeof(wchar));
-          if (var.pwszVal) {
+        if (relaunch_icon && *relaunch_icon) {
 #ifdef debug_properties
-            printf("AppUserModel_RelaunchIconResource=%s\n", relaunch_icon);
+          printf("AppUserModel_RelaunchIconResource=%ls\n", relaunch_icon);
 #endif
-            cs_mbstowcs(var.pwszVal, relaunch_icon, size);
-            var.vt = VT_LPWSTR;
-            pps->lpVtbl->SetValue(pps,
-                &PKEY_AppUserModel_RelaunchIconResource, &var);
-          }
+          var.pwszVal = relaunch_icon;
+          var.vt = VT_LPWSTR;
+          pps->lpVtbl->SetValue(pps,
+              &PKEY_AppUserModel_RelaunchIconResource, &var);
         }
         if (prevent_pinning) {
           var.boolVal = VARIANT_TRUE;
@@ -1646,6 +1677,14 @@ main(int argc, char *argv[])
   main_argc = argc;
 #ifdef debuglog
   mtlog = fopen("/tmp/mtlog", "a");
+  {
+    char timbuf [22];
+    struct timeval now;
+    gettimeofday (& now, 0);
+    strftime (timbuf, sizeof (timbuf), "%Y-%m-%d %H:%M:%S", localtime (& now.tv_sec));
+    fprintf(mtlog, "[%s.%03d] %s\n", timbuf, (int)now.tv_usec / 1000, argv[0]);
+    fflush(mtlog);
+  }
 #endif
   init_config();
   cs_init();
@@ -1671,12 +1710,35 @@ main(int argc, char *argv[])
   invoked_from_shortcut = sui.dwFlags & STARTF_TITLEISLINKNAME;
   invoked_with_appid = sui.dwFlags & STARTF_TITLEISAPPID;
   // shortcut or AppId would be found in sui.lpTitle
+# ifdef debuglog
+  fprintf(mtlog, "shortcut %d %s\n", invoked_from_shortcut, (char *)cygwin_create_path(CCP_WIN_W_TO_POSIX, sui.lpTitle));
+# endif
 #endif
 
   load_config("/etc/minttyrc", true);
   string rc_file = asform("%s/.minttyrc", home);
   load_config(rc_file, true);
   delete(rc_file);
+
+  if (getenv("MINTTY_ICON")) {
+    //cfg.icon = strdup(getenv("MINTTY_ICON"));
+    cfg.icon = cs__utftowcs(getenv("MINTTY_ICON"));
+    icon_is_from_shortcut = true;
+    unsetenv("MINTTY_ICON");
+  }
+
+#if CYGWIN_VERSION_DLL_MAJOR >= 1005
+  if (invoked_from_shortcut) {
+    wchar * icon = get_shortcut_icon_location(sui.lpTitle);
+# ifdef debuglog
+    fprintf(mtlog, "icon <%ls>\n", icon); fflush(mtlog);
+# endif
+    if (icon) {
+      cfg.icon = icon;
+      icon_is_from_shortcut = true;
+    }
+  }
+#endif
 
   for (;;) {
     int opt = getopt_long(argc, argv, short_opts, opts, 0);
@@ -1727,9 +1789,9 @@ main(int argc, char *argv[])
         set_arg_option("Title", optarg);
         title_settable = false;
       when 'B':
-        border_style = strdup (optarg);
+        border_style = strdup(optarg);
       when 'R':
-        report_geom = strdup (optarg);
+        report_geom = strdup(optarg);
       when 'u': cfg.utmp = true;
       when '':
         prevent_pinning = true;
@@ -1755,40 +1817,26 @@ main(int argc, char *argv[])
     }
   }
 
+  finish_config();
+
+  int term_rows = cfg.rows;
+  int term_cols = cfg.cols;
   if (getenv("MINTTY_ROWS")) {
-    set_arg_option("Rows", getenv("MINTTY_ROWS"));
+    term_rows = atoi(getenv("MINTTY_ROWS"));
+    if (term_rows < 1)
+      term_rows = cfg.rows;
     unsetenv("MINTTY_ROWS");
   }
   if (getenv("MINTTY_COLS")) {
-    set_arg_option("Columns", getenv("MINTTY_COLS"));
+    term_cols = atoi(getenv("MINTTY_COLS"));
+    if (term_cols < 1)
+      term_cols = cfg.cols;
     unsetenv("MINTTY_COLS");
   }
   if (getenv("MINTTY_MONITOR")) {
     monitor = atoi(getenv("MINTTY_MONITOR"));
     unsetenv("MINTTY_MONITOR");
   }
-  if (getenv("MINTTY_ICON")) {
-    cfg.icon = getenv("MINTTY_ICON");
-    icon_is_from_shortcut = true;
-    unsetenv("MINTTY_ICON");
-  }
-
-#if CYGWIN_VERSION_DLL_MAJOR >= 1005
-#ifdef debuglog
-  fprintf(mtlog, "cfgicon %s\n", cfg.icon);
-  fprintf(mtlog, "shorcut %d %s\n", invoked_from_shortcut, (char *)cygwin_create_path(CCP_WIN_W_TO_POSIX, sui.lpTitle));
-  if (invoked_from_shortcut) {
-    char * icon = get_shortcut_icon_location(sui.lpTitle);
-    fprintf(mtlog, "icon %s\n", icon);
-  }
-#endif
-  if (invoked_from_shortcut && (!cfg.icon || !*cfg.icon)) {
-    cfg.icon = get_shortcut_icon_location(sui.lpTitle);
-    icon_is_from_shortcut = true;
-  }
-#endif
-
-  finish_config();
 
   // if started from console, try to detach from caller's terminal (~daemonizing)
   // in order to not suppress signals
@@ -1849,7 +1897,8 @@ main(int argc, char *argv[])
   // Load icon if specified.
   HICON large_icon = 0, small_icon = 0;
   if (*cfg.icon) {
-    string icon_file = strdup(cfg.icon);
+    //string icon_file = strdup(cfg.icon);
+    string icon_file = cs__wcstoutf(cfg.icon);
     uint icon_index = 0;
     char *comma = strrchr(icon_file, ',');
     if (comma) {
@@ -1862,7 +1911,22 @@ main(int argc, char *argv[])
     }
     SetLastError(0);
 #if CYGWIN_VERSION_API_MINOR >= 181
+# ifdef HAS_LOCALES
+    char * valid_locale = setlocale(LC_CTYPE, 0);
+    if (valid_locale) {
+      valid_locale = strdup(valid_locale);
+      setlocale(LC_CTYPE, "C.UTF-8");
+      cygwin_internal(CW_INT_SETLOCALE);  // fix internal locale
+    }
+# endif
     wchar *win_icon_file = cygwin_create_path(CCP_POSIX_TO_WIN_W, icon_file);
+# ifdef HAS_LOCALES
+    if (valid_locale) {
+      setlocale(LC_CTYPE, valid_locale);
+      cygwin_internal(CW_INT_SETLOCALE);  // fix internal locale
+      free(valid_locale);
+    }
+# endif
     if (win_icon_file) {
       ExtractIconExW(win_icon_file, icon_index, &large_icon, &small_icon, 1);
       free(win_icon_file);
@@ -1881,10 +1945,10 @@ main(int argc, char *argv[])
           FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK,
           0, error, 0, msg, sizeof msg, 0
         );
-        warn("Could not load icon from '%s': %s", cfg.icon, msg);
+        warn("could not load icon from '%s': %s", cs__wcstombs(cfg.icon), msg);
       }
       else
-        warn("Could not load icon from '%s'", cfg.icon);
+        warn("could not load icon from '%s'", cs__wcstombs(cfg.icon));
     }
     delete(icon_file);
   }
@@ -1952,8 +2016,8 @@ main(int argc, char *argv[])
   cs_reconfig();
 
   // Determine window sizes.
-  int term_width = font_width * cfg.cols;
-  int term_height = font_height * cfg.rows;
+  int term_width = font_width * term_cols;
+  int term_height = font_height * term_rows;
 
   RECT cr = {0, 0, term_width + 2 * PADDING, term_height + 2 * PADDING};
   RECT wr = cr;
@@ -2108,7 +2172,7 @@ main(int argc, char *argv[])
 
   // Initialise the terminal.
   term_reset();
-  term_resize(cfg.rows, cfg.cols);
+  term_resize(term_rows, term_cols);
 
   // Initialise the scroll bar.
   SetScrollInfo(
@@ -2116,8 +2180,8 @@ main(int argc, char *argv[])
     &(SCROLLINFO){
       .cbSize = sizeof(SCROLLINFO),
       .fMask = SIF_ALL | SIF_DISABLENOSCROLL,
-      .nMin = 0, .nMax = cfg.rows - 1,
-      .nPage = cfg.rows, .nPos = 0,
+      .nMin = 0, .nMax = term_rows - 1,
+      .nPage = term_rows, .nPos = 0,
     },
     false
   );
@@ -2133,7 +2197,7 @@ main(int argc, char *argv[])
 
   // Create child process.
   child_create(
-    argv, &(struct winsize){cfg.rows, cfg.cols, term_width, term_height}
+    argv, &(struct winsize){term_rows, term_cols, term_width, term_height}
   );
 
   // Finally show the window!
