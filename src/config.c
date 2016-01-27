@@ -97,8 +97,8 @@ const config default_cfg = {
   .hold = HOLD_START,
   .exit_write = false,
   .exit_title = L"",
-  .icon = "",
-  .log = "",
+  .icon = L"",
+  .log = L"",
   .utmp = false,
   .title = L"",
   .daemonize = true,
@@ -195,8 +195,8 @@ options[] = {
   {"Key_Break", OPT_STRING, offcfg(key_break)},
   {"Key_Menu", OPT_STRING, offcfg(key_menu)},
   {"Key_ScrollLock", OPT_STRING, offcfg(key_scrlock)},
-  {"Break", OPT_STRING, offcfg(key_break)},  // compatibility alternative
-  {"Pause", OPT_STRING, offcfg(key_pause)},  // compatibility alternative
+  {"Break", OPT_STRING | OPT_LEGACY, offcfg(key_break)},
+  {"Pause", OPT_STRING | OPT_LEGACY, offcfg(key_pause)},
 
   // Mouse
   {"CopyOnSelect", OPT_BOOL, offcfg(copy_on_select)},
@@ -238,8 +238,8 @@ options[] = {
   {"DaemonizeAlways", OPT_BOOL, offcfg(daemonize_always)},
   {"ExitWrite", OPT_BOOL, offcfg(exit_write)},
   {"ExitTitle", OPT_WSTRING, offcfg(exit_title)},
-  {"Icon", OPT_STRING, offcfg(icon)},
-  {"Log", OPT_STRING, offcfg(log)},
+  {"Icon", OPT_WSTRING, offcfg(icon)},
+  {"Log", OPT_WSTRING, offcfg(log)},
   {"Title", OPT_WSTRING, offcfg(title)},
   {"Utmp", OPT_BOOL, offcfg(utmp)},
   {"Window", OPT_WINDOW, offcfg(window)},

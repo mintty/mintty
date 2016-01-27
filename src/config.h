@@ -107,8 +107,8 @@ typedef struct {
   char hold;
   bool exit_write;
   wstring exit_title;
-  string icon;
-  string log;
+  wstring icon;
+  wstring log;
   wstring title;
   bool utmp;
   char window;
