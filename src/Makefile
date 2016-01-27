@@ -133,7 +133,9 @@ $(BINDIR):
 $(bin): $(bins)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 	cp -f $@ $(BINFOLDER)/		# for 'dobin' install in .cygport
-	-test -f `basename $@` && cp -f $@ ./	# support simpler debugging
+	# support simpler debugging:
+	-test -f `basename $@` && cp -fp $@ ./ || true
+	# report size of exe:
 	-type du && du -b $@ || true
 
 #-include $(wildcard *.d)
@@ -207,6 +209,7 @@ checksrc:
 	if egrep -a -e "^(f*printf|#define debug)" *.[hc]; then false; fi
 	if egrep -e "^(if|do|for|while) *[({]" *.c; then false; fi
 	if egrep -e "\((false|0) *&" *.c; then false; fi
+	if egrep -e "& 0($|[^x])" *.c; then false; fi
 
 #############################################################################
 # development and debug targets
@@ -225,6 +228,9 @@ vk_names.t:	# Windows Virtual Key Code names, only for debugging
 #	->
 #		{0x09, "VK_TAB"},
 	sed -e 's/^#define \(VK_[^ ]*\) \(0x[0-9A-Fa-f]*\)$$/	{\2, "\1"},/' -e t -e d /usr/include/w32api/winuser.h > vk_names.t
+
+winids.t:	winids.h
+	sed -e 's/#define *\(IDM_[^ ]*\).*/	{\1, "\1"},/' -e t -e d winids.h > winids.t
 
 target:
 	echo TARGET $(TARGET)

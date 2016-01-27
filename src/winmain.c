@@ -93,6 +93,7 @@ bool win_is_fullscreen;
 static bool go_fullscr_on_max;
 static bool resizing;
 static int zoom_token = 0;  // for heuristic handling of Shift zoom (#467, #476)
+static bool default_size_token = false;
 
 // Options
 static bool title_settable = true;
@@ -1036,13 +1037,13 @@ confirm_exit(void)
   return !ret || ret == IDOK;
 }
 
-#define dont_debug_windows_messages
-#define dont_debug_windows_mouse_messages
+#define dont_debug_messages
+#define dont_debug_mouse_messages
 
 static LRESULT CALLBACK
 win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
 {
-#ifdef debug_windows_messages
+#ifdef debug_messages
 static struct {
   uint wm_;
   char * wm_name;
@@ -1057,10 +1058,10 @@ static struct {
     }
   if ((message != WM_KEYDOWN || !(lp & 0x40000000))
       && message != WM_TIMER && message != WM_NCHITTEST
-#ifndef debug_windows_mouse_messages
+# ifndef debug_mouse_messages
       && message != WM_SETCURSOR
       && message != WM_MOUSEMOVE && message != WM_NCMOUSEMOVE
-#endif
+# endif
      )
     printf("[%d] win_proc %04X %s (%04X %08X)\n", (int)time(0), message, wm_name, (unsigned)wp, (unsigned)lp);
 #endif
@@ -1075,7 +1076,22 @@ static struct {
       if (!cfg.confirm_exit || confirm_exit())
         child_kill((GetKeyState(VK_SHIFT) & 0x80) != 0);
       return 0;
-    when WM_COMMAND or WM_SYSCOMMAND:
+    when WM_COMMAND or WM_SYSCOMMAND: {
+# ifdef debug_messages
+      static struct {
+        uint idm_;
+        char * idm_name;
+      } idm_names[] = {
+# include "winids.t"
+      };
+      char * idm_name = "?";
+      for (uint i = 0; i < lengthof(idm_names); i++)
+        if ((wp & ~0xF) == idm_names[i].idm_) {
+          idm_name = idm_names[i].idm_name;
+          break;
+        }
+      printf("                   %s\n", idm_name);
+# endif
       switch (wp & ~0xF) {  /* low 4 bits reserved to Windows */
         when IDM_OPEN: term_open();
         when IDM_COPY: term_copy();
@@ -1085,13 +1101,19 @@ static struct {
         when IDM_DEFSIZE:
           default_size();
         when IDM_DEFSIZE_ZOOM:
-          default_size();
-#ifdef doesnotwork_after_shift_drag
           if (GetKeyState(VK_SHIFT) & 0x80) {
-            win_set_font_size(cfg.font.size, false);
+            // Shift+Alt+F10 should restore both window size and font size
+
+            // restore default font size first:
+            win_zoom_font(0, false);
+
+            // restore window size:
+            default_size_token = true;
+            default_size();  // or defer to WM_PAINT
+          }
+          else {
             default_size();
           }
-#endif
         when IDM_FULLSCREEN or IDM_FULLSCREEN_ZOOM:
           if ((wp & ~0xF) == IDM_FULLSCREEN_ZOOM)
             zoom_token = 4;  // override cfg.zoom_font_with_window == 0
@@ -1108,6 +1130,7 @@ static struct {
         when IDM_NEW_MONI: child_fork(main_argc, main_argv, (int)lp - ' ');
         when IDM_COPYTITLE: win_copy_title();
       }
+    }
     when WM_VSCROLL:
       switch (LOWORD(wp)) {
         when SB_BOTTOM:   term_scroll(-1, 0);
@@ -1174,6 +1197,14 @@ static struct {
       font_cs_reconfig(true);
     when WM_PAINT:
       win_paint();
+
+#ifdef handle_default_size_asynchronously
+      if (default_size_token) {
+        default_size();
+        default_size_token = false;
+      }
+#endif
+
       return 0;
     when WM_ACTIVATE:
       if((wp & 0xF) != WA_INACTIVE) {
@@ -1271,10 +1302,12 @@ static struct {
             zoom_token = 1;
 #endif
         bool scale_font = (cfg.zoom_font_with_window || zoom_token > 2)
-                          && (zoom_token > 0) && (GetKeyState(VK_SHIFT) & 0x80);
+                       && (zoom_token > 0) && (GetKeyState(VK_SHIFT) & 0x80)
+                       && !default_size_token;
         win_adapt_term_size(false, scale_font);
         if (zoom_token > 0)
           zoom_token = zoom_token >> 1;
+        default_size_token = false;
       }
 
       return 0;
