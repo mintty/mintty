@@ -17,6 +17,9 @@
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/cygwin.h>
+# ifdef HAS_LOCALES
+#include <locale.h>
+# endif
 
 #if CYGWIN_VERSION_API_MINOR >= 93
 #include <pty.h>
@@ -36,6 +39,7 @@ int forkpty(int *, char *, struct termios *, struct winsize *);
 char * home;
 char * cmd;
 bool icon_is_from_shortcut = false;
+bool clone_size_token = true;
 
 static pid_t pid;
 static bool killed;
@@ -79,7 +83,7 @@ child_create(char *argv[], struct winsize *winp)
   if (pid < 0) {
     pid = 0;
     bool rebase_prompt = (errno == EAGAIN);
-    error("fork child process");
+    error("could not fork child process");
     if (rebase_prompt) {
       static const char msg[] =
         "\r\nDLL rebasing may be required. See 'rebaseall --help'.";
@@ -192,12 +196,37 @@ child_create(char *argv[], struct winsize *winp)
 
   // Open log file if any
   if (*cfg.log) {
-    if (!strcmp(cfg.log, "-"))
+    char * log = cs__wcstoutf(cfg.log);
+    if (!strcmp(log, "-"))
       log_fd = fileno(stdout);
     else {
-      log_fd = open(cfg.log, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+# ifdef HAS_LOCALES
+      char * valid_locale = setlocale(LC_CTYPE, 0);
+      if (valid_locale) {
+        valid_locale = strdup(valid_locale);
+        setlocale(LC_CTYPE, "C.UTF-8");
+        cygwin_internal(CW_INT_SETLOCALE);  // fix internal locale
+      }
+# endif
+
+      char * format = strchr(log, '%');
+      if (format && * ++ format == 'd') {
+        char logf[strlen(log + 20)];
+        sprintf(logf, log, getpid());
+        log_fd = open(logf, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+      } else
+        log_fd = open(log, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+
+# ifdef HAS_LOCALES
+      if (valid_locale) {
+        setlocale(LC_CTYPE, valid_locale);
+        cygwin_internal(CW_INT_SETLOCALE);  // fix internal locale
+        free(valid_locale);
+      }
+# endif
+
       if (log_fd < 0)
-        error("open log file");
+        error("could not open log file");
     }
   }
 }
@@ -477,10 +506,10 @@ child_conv_path(wstring wpath)
     exp_path = path;
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1007
-#if CYGWIN_VERSION_API_MINOR >= 222
+# if CYGWIN_VERSION_API_MINOR >= 222
   // CW_INT_SETLOCALE was introduced in API 0.222
   cygwin_internal(CW_INT_SETLOCALE);
-#endif
+# endif
   wchar *win_wpath = cygwin_create_path(CCP_POSIX_TO_WIN_W, exp_path);
 
   // Drop long path prefix if possible,
@@ -517,7 +546,7 @@ child_fork(int argc, char *argv[], int moni)
 
   if (cfg.daemonize) {
     if (clone < 0) {
-      error("fork child daemon");
+      error("could not fork child daemon");
       return;  // assume next fork will fail too
     }
     if (clone > 0) {  // parent waits for intermediate child
@@ -579,14 +608,17 @@ child_fork(int argc, char *argv[], int moni)
     }
 
     // provide environment to clone size
-    setenvi("MINTTY_ROWS", term.rows);
-    setenvi("MINTTY_COLS", term.cols);
+    if (clone_size_token) {
+      setenvi("MINTTY_ROWS", term.rows);
+      setenvi("MINTTY_COLS", term.cols);
+    } else
+      clone_size_token = true;
     // provide environment to select monitor
     if (moni > 0)
       setenvi("MINTTY_MONITOR", moni);
     // propagate shortcut-inherited icon
     if (icon_is_from_shortcut)
-      setenv("MINTTY_ICON", cfg.icon, true);
+      setenv("MINTTY_ICON", cs__wcstoutf(cfg.icon), true);
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
     execv("/proc/self/exe", argv);
