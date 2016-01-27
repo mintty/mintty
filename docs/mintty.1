@@ -91,12 +91,14 @@ In a Windows desktop shortcut, to achieve consistent icon behaviour,
 the same icon should be specified in the shortcut properties (Change Icon...) 
 and the mintty command line (Target:),
 or (beginning 2.2.3) no icon should be specified on the command line as 
-mintty will then take the icon from the invoking shortcut.
+mintty will then take the icon from the invoking shortcut, 
+also resolving a leading Windows environment variable (like %SystemRoot%).
 
 .TP
 \fB-l\fP, \fB--log\fP \fIFILE\fP|\fB-\fP
 Copy all output into the specified log file, or standard output if a dash is
 given instead of a file name.
+If FILE contains \fB%d\fP it will be substituted with the process ID.
 (See also \fIscript\fP(1) for a more flexible logging tool.)
 
 .TP
@@ -325,6 +327,7 @@ or the generic window title functions.
 If the window has been resized, it can be returned to the default size set in
 the Window pane of the options using the \fBDefault size\fP command in the
 menu or the \fBAlt+F10\fP shortcut.
+\fBShift+Alt+F10\fP also restores the font size to its default.
 
 .SS Reset
 
@@ -439,7 +442,9 @@ An overview of all the keyboard shortcuts.
 .TP
 \fBWindow commands\fP
 .br
-\(en \fBAlt+F2\fP: New (clone); see notes below
+\(en \fBAlt+F2\fP: New (clone window at current size); see notes below
+.br
+\(en \fBShift+Alt+F2\fP: New (clone window at configured size); see notes below
 .br
 \(en \fBAlt+F3\fP: Search (in scrollback buffer)
 .br
@@ -448,6 +453,8 @@ An overview of all the keyboard shortcuts.
 \(en \fBAlt+F8\fP: Reset
 .br
 \(en \fBAlt+F10\fP: Default terminal size (rows/columns)
+.br
+\(en \fBShift+Alt+F10\fP: Default terminal size (rows/columns) and font size
 .br
 \(en \fBAlt+F11\fP or \fBAlt+Enter\fP: Toggle full screen
 .br
@@ -531,8 +538,8 @@ or the window menu.  It has the following action buttons:
 .br
 \(en \fBApply\fP: applies changes to the current instance of mintty 
   but does not save them to the configuration file. So using \fBApply\fP 
-  then \fBCancel\fP, local changes can be applied without affecting further 
-  instances of mintty.
+  then \fBCancel\fP, local changes can be applied (and tested) without 
+  affecting further instances of mintty.
 
 In configuration files, settings are stored as \fINAME\fP=\fIVALUE\fP pairs,
 with one per line.  By default, they are read from \fI/etc/minttyrc\fP and
@@ -544,6 +551,18 @@ Configuration changes are saved to the last writable file specified with
 \fB-c\fP/\fB--config\fP, or \fI~/.minttyrc\fP if none is given.
 Individual settings can also be specified on the command line using the 
 \fB-o\fP/\fB--option\fP.
+
+Note: Many string values in the \fIminttyrc\fP files, especially those 
+referring to file names or Windows items, are \fBUnicode-enabled\fP, 
+meaning they are expected to be UTF-8-encoded in the configuration 
+file independently of the encoding the terminal runs in; as a fallback, 
+if the configuration value is not valid UTF-8, it is interpreted in 
+the system ANSI encoding.
+(This does not apply to the same configuration settings when given on the 
+command-line.)
+.br
+Unicode-enabled settings: BellFile, Title, ExitTitle, Icon, Log, Printer, 
+Answerback, Class, AppID, AppName, AppLaunchCmd.
 
 Be careful when running multiple instances of mintty. If options are saved 
 from different instances, obviously they can overwrite each other; if 
@@ -565,9 +584,11 @@ Settings affecting mintty's appearance.
 .TP
 \fBColours\fP
 Clicking on one of the buttons here opens the colour selection dialog.
-In the settings, colours are represented as comma-separated RGB triples
-with decimal 8-bit values ranging from 0 to 255. X-style hexadecimal
-colour specifications such as #RRGGBB or rgb:RR/GG/BB can be used as well.
+.br
+In the settings (.minttyrc or command-line options), colours are 
+represented as comma-separated RGB triples with decimal 8-bit values 
+ranging from 0 to 255. X-style hexadecimal colour specifications such 
+as #RRGGBB, rgb:RR/GG/BB or rgb:RRRR/GGGG/BBBB can be used as well.
 Also X11 color names are supported.
 .br
 \(en \fBForeground\fP (ForegroundColour=191,191,191)
@@ -975,7 +996,7 @@ or frequency beeps.
 .RS
 \fB-1\fP : Simple Beep
 .br
-\fB0\fP : No Beep
+\fB0\fP : No Beep (overrides BellFile and BellFreq)
 .br
 \fB1\fP : Default Beep
 .br
@@ -1058,6 +1079,7 @@ see the note for the -i option above.
 \fBLog file\fP (Log=)
 The \fBLog\fP setting can be used to specify a log file that all output is
 copied into.  If it is empty, as it is by default, no logging is done.
+If it contains \fB%d\fP it will be substituted with the process ID.
 See also the \fIscript\fP(1) utility for a more flexible logging solution.
 
 .TP
@@ -1211,8 +1233,10 @@ colour number 262.
 \fBANSI colours\fP
 These are the 16 ANSI colour settings along with their default values.
 Colours are represented as comma-separated RGB triples with decimal 8-bit values
-ranging from 0 to 255. X-style hexadecimal colour specifications such as #RRGGBB
-or rgb:RR/GG/BB can be used as well. Also X11 color names are supported.
+ranging from 0 to 255. 
+X-style hexadecimal colour specifications such as #RRGGBB, 
+rgb:RR/GG/BB or rgb:RRRR/GGGG/BBBB can be used as well. 
+Also X11 color names are supported.
 .br
 \(en \fBBlack\fP=0,0,0
 .br

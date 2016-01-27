@@ -3,6 +3,9 @@ Desktop integration:
   * Deriving icon from shortcut (#471, ~#420, ~~#486).
   * New option -D with impact to shortcut key behaviour (~#499).
   * Not failing to start if daemonizing fails (#493).
+  * Shift+Alt+F2 clones the window at the configured size.
+  * Fixed Alt+F10 to restore the configured size even in Alt+F2-cloned window.
+  * Fixed Shift+Alt+F10 to restore both window size and font size.
 
 Terminal layout:
   * Not switching transparency when entering search bar (#497, thanks to Kai).
@@ -17,6 +20,7 @@ Bell:
   * Enhanced bell sound selection in Options menu; option BellSound obsolete.
 
 Configuration and printing:
+  * Support process ID substitution in log file name (for %d).
   * Support for Unicode configuration strings and Unicode printer names.
   * Support for printing fixed and tweaked, using terminal character set.
   * Indicating Printing status in window title, in case of pseudo-blocking.
