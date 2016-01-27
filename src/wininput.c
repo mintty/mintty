@@ -15,7 +15,7 @@
 
 static HMENU menu, sysmenu;
 static bool alt_F2_pending = false;
-static uint alt_F2_modifier = 0;
+static bool alt_F2_shifted = false;
 static bool alt_F2_home = false;
 static int alt_F2_monix = 0, alt_F2_moniy = 0;
 
@@ -353,16 +353,15 @@ win_key_down(WPARAM wp, LPARAM lp)
   else
     lctrl = is_key_down(VK_LCONTROL) && (lctrl || !is_key_down(VK_RMENU));
 
-  bool
-    numlock = kbd[VK_NUMLOCK] & 1,
-    shift = is_key_down(VK_SHIFT),
-    lalt = is_key_down(VK_LMENU),
-    ralt = is_key_down(VK_RMENU),
-    alt = lalt | ralt,
-    rctrl = is_key_down(VK_RCONTROL),
-    ctrl = lctrl | rctrl,
-    ctrl_lalt_altgr = cfg.ctrl_alt_is_altgr & ctrl & lalt & !ralt,
-    altgr = ralt | ctrl_lalt_altgr;
+  bool numlock = kbd[VK_NUMLOCK] & 1;
+  bool shift = is_key_down(VK_SHIFT);
+  bool lalt = is_key_down(VK_LMENU);
+  bool ralt = is_key_down(VK_RMENU);
+  bool alt = lalt | ralt;
+  bool rctrl = is_key_down(VK_RCONTROL);
+  bool ctrl = lctrl | rctrl;
+  bool ctrl_lalt_altgr = cfg.ctrl_alt_is_altgr & ctrl & lalt & !ralt;
+  bool altgr = ralt | ctrl_lalt_altgr;
 
   mod_keys mods = shift * MDK_SHIFT | alt * MDK_ALT | ctrl * MDK_CTRL;
 
@@ -402,7 +401,6 @@ win_key_down(WPARAM wp, LPARAM lp)
 
   if (alt_F2_pending) {
     if (!extended) {  // only accept numeric keypad
-      alt_F2_modifier = key;
       switch (key) {
         when VK_HOME : alt_F2_monix--; alt_F2_moniy--;
         when VK_UP   : alt_F2_moniy--;
@@ -449,10 +447,14 @@ win_key_down(WPARAM wp, LPARAM lp)
       if (!ctrl) {
         switch (key) {
           when VK_F2:
-            // send_syscommand(IDM_NEW);
-            alt_F2_modifier = 0;
-            alt_F2_home = false; alt_F2_monix = 0; alt_F2_moniy = 0;
+            // defer send_syscommand(IDM_NEW) until key released
+            // monitor cursor keys to collect parameters meanwhile
             alt_F2_pending = true;
+            alt_F2_home = false; alt_F2_monix = 0; alt_F2_moniy = 0;
+            if (mods & MDK_SHIFT)
+              alt_F2_shifted = true;
+            else
+              alt_F2_shifted = false;
           when VK_F3:  send_syscommand(IDM_SEARCH);
           when VK_F4:  send_syscommand(SC_CLOSE);
           when VK_F8:  send_syscommand(IDM_RESET);
@@ -965,6 +967,12 @@ win_key_up(WPARAM wp, LPARAM unused(lp))
 
   if (alt_F2_pending) {
     if ((uint)wp == VK_F2) {
+      inline bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
+      if (is_key_down(VK_SHIFT))
+        alt_F2_shifted = true;
+      if (alt_F2_shifted)
+        clone_size_token = false;
+
       alt_F2_pending = false;
 
       // Calculate heuristic approximation of selected monitor position
