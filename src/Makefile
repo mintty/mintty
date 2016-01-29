@@ -42,7 +42,8 @@ else ifeq ($(TARGET), x86_64-pc-cygwin)
   cygport_opts := --64
   zip_files := ../docs/readme.html ../scripts/create_shortcut.js
 else ifeq ($(TARGET), i686-pc-msys)
-  ifeq ("${MSYSCON}", "")
+  MSYS=$(shell uname -r | sed -e 's,\..*,,')
+  ifeq ("$(MSYS)", "1")
     platform := msys
   else
     platform := msys32

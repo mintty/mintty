@@ -19,8 +19,8 @@ Bell:
   * Added configuration option BellFile (#369) to play wav sounds.
   * Enhanced bell sound selection in Options menu; option BellSound obsolete.
 
-Configuration and printing:
-  * Support process ID substitution in log file name (for %d).
+Configuration and Printing:
+  * Support process ID substitution (for %d) in log file name.
   * Support for Unicode configuration strings and Unicode printer names.
   * Support for printing fixed and tweaked, using terminal character set.
   * Indicating Printing status in window title, in case of pseudo-blocking.

@@ -45,14 +45,23 @@ static bool invoked_from_shortcut = false;
 static bool invoked_with_appid = false;
 #endif
 
+
 #if CYGWIN_VERSION_API_MINOR < 74 || defined(TEST_WCS)
 // needed for MinGW MSYS
-#define wcscpy(tgt, src) memcpy(tgt, src, (wcslen(src) + 1) * sizeof(wchar))
+
+# if CYGWIN_VERSION_DLL_MAJOR >= 1005
+# define need_wcschr
+# endif
+# define dont_need_wcsdup
+
 # ifdef TEST_WCS
 #define wcsdup _wcsdup
 #define wcschr _wcschr
 #define wcsncmp _wcsncmp
 # endif
+
+#define wcscpy(tgt, src) memcpy(tgt, src, (wcslen(src) + 1) * sizeof(wchar))
+
 # ifdef need_wcsdup
 static wchar *
 wcsdup(const wchar * s)
@@ -62,6 +71,8 @@ wcsdup(const wchar * s)
   return dup;
 }
 # endif
+
+# ifdef need_wcschr
 static wchar *
 wcschr(const wchar * s, wchar c)
 {
@@ -72,6 +83,8 @@ wcschr(const wchar * s, wchar c)
   }
   return 0;
 }
+# endif
+
 static int
 wcsncmp(const wchar * s1, const wchar * s2, int len)
 {
@@ -84,7 +97,9 @@ wcsncmp(const wchar * s1, const wchar * s2, int len)
       return 0;
   return 0;
 }
+
 #endif
+
 
 static int extra_width, extra_height, norm_extra_width, norm_extra_height;
 
@@ -768,6 +783,33 @@ win_invalidate_all(void)
   InvalidateRect(wnd, null, true);
 }
 
+static void
+win_adjust_borders()
+{
+  int term_width = font_width * cfg.cols;
+  int term_height = font_height * cfg.rows;
+  RECT cr = {0, 0, term_width + 2 * PADDING, term_height + 2 * PADDING};
+  RECT wr = cr;
+  LONG window_style = WS_OVERLAPPEDWINDOW;
+  if (border_style) {
+    if (strcmp (border_style, "void") == 0)
+      window_style &= ~(WS_CAPTION | WS_BORDER | WS_THICKFRAME);
+    else
+      window_style &= ~(WS_CAPTION | WS_BORDER);
+  }
+  AdjustWindowRect(&wr, window_style, false);
+  int width = wr.right - wr.left;
+  int height = wr.bottom - wr.top;
+
+  if (cfg.scrollbar)
+    width += GetSystemMetrics(SM_CXVSCROLL);
+
+  extra_width = width - (cr.right - cr.left);
+  extra_height = height - (cr.bottom - cr.top);
+  norm_extra_width = extra_width;
+  norm_extra_height = extra_height;
+}
+
 void
 win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
 {
@@ -1072,10 +1114,12 @@ static struct {
       cb();
       return 0;
     }
+
     when WM_CLOSE:
       if (!cfg.confirm_exit || confirm_exit())
         child_kill((GetKeyState(VK_SHIFT) & 0x80) != 0);
       return 0;
+
     when WM_COMMAND or WM_SYSCOMMAND: {
 # ifdef debug_messages
       static struct {
@@ -1131,6 +1175,7 @@ static struct {
         when IDM_COPYTITLE: win_copy_title();
       }
     }
+
     when WM_VSCROLL:
       switch (LOWORD(wp)) {
         when SB_BOTTOM:   term_scroll(-1, 0);
@@ -1147,6 +1192,7 @@ static struct {
           term_scroll(1, info.nTrackPos);
         }
       }
+
     when WM_MOUSEMOVE: win_mouse_move(false, lp);
     when WM_NCMOUSEMOVE: win_mouse_move(true, lp);
     when WM_MOUSEWHEEL: win_mouse_wheel(wp, lp);
@@ -1156,26 +1202,34 @@ static struct {
     when WM_LBUTTONUP: win_mouse_release(MBT_LEFT, lp);
     when WM_RBUTTONUP: win_mouse_release(MBT_RIGHT, lp);
     when WM_MBUTTONUP: win_mouse_release(MBT_MIDDLE, lp);
+
     when WM_KEYDOWN or WM_SYSKEYDOWN:
       if (win_key_down(wp, lp))
         return 0;
+
     when WM_KEYUP or WM_SYSKEYUP:
       if (win_key_up(wp, lp))
         return 0;
+
     when WM_CHAR or WM_SYSCHAR:
       child_sendw(&(wchar){wp}, 1);
       return 0;
+
     when WM_INPUTLANGCHANGEREQUEST:  // catch Shift-Control-0
       if ((GetKeyState(VK_SHIFT) & 0x80) && (GetKeyState(VK_CONTROL) & 0x80))
         if (win_key_down('0', 0x000B0001))
           return 0;
+
     when WM_INPUTLANGCHANGE:
       win_set_ime_open(ImmIsIME(GetKeyboardLayout(0)) && ImmGetOpenStatus(imc));
+
     when WM_IME_NOTIFY:
       if (wp == IMN_SETOPENSTATUS)
         win_set_ime_open(ImmGetOpenStatus(imc));
+
     when WM_IME_STARTCOMPOSITION:
       ImmSetCompositionFont(imc, &lfont);
+
     when WM_IME_COMPOSITION:
       if (lp & GCS_RESULTSTR) {
         LONG len = ImmGetCompositionStringW(imc, GCS_RESULTSTR, null, 0);
@@ -1186,16 +1240,41 @@ static struct {
         }
         return 1;
       }
-    when WM_THEMECHANGED:
-      // this would kind of handle switching off the Performance Option
-      // "Use visual styles on windows and borders"
-      // but would reduce the actual terminal size...
-      // also it does not handle switching on the option
+
+    when WM_THEMECHANGED or WM_WININICHANGE:
+      // Size of window border (border, title bar, scrollbar) changed by:
+      //   Performance Option "Use visual styles on windows and borders"
+      //     -> Windows sends WM_THEMECHANGED
+      //   Personalization of window geometry (e.g. Title Bar Size)
+      //     -> Windows sends WM_WININICHANGE
+      // But none of all this Windows crap actually redraws the whole 
+      // window including the title - what the screw is missing?!?
+      win_adjust_borders();
+
       //font_cs_reconfig(true);
-      //?win_set_chars(term.rows, term.cols);
+      win_adapt_term_size(false, false);
+      update_transparency();
+      //win_invalidate_all();
+      RECT wr;
+      GetWindowRect(wnd, &wr);
+      InvalidateRect(wnd, &wr, true);
+
+      RedrawWindow(wnd, &wr, null, 
+                   RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+      ShowWindow(wnd, SW_SHOWNA);
+      SetWindowPos(wnd, null,
+                   wr.left, wr.top, wr.right - wr.left, wr.bottom - wr.top,
+                   SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOZORDER);
+
+      win_update();
+
+      //win_paint();
+      UpdateWindow(wnd);
+
     when WM_FONTCHANGE:
       font_cs_reconfig(true);
-    when WM_PAINT:
+
+    when WM_PAINT: {
       win_paint();
 
 #ifdef handle_default_size_asynchronously
@@ -1206,6 +1285,8 @@ static struct {
 #endif
 
       return 0;
+    }
+
     when WM_ACTIVATE:
       if((wp & 0xF) != WA_INACTIVE) {
         flash_taskbar(false);  /* stop */
@@ -1214,6 +1295,7 @@ static struct {
         term_set_focus(false, true);
       }
       update_transparency();
+
     when WM_SETFOCUS:
       trace_resize(("# WM_SETFOCUS VK_SHIFT %02X\n", GetKeyState(VK_SHIFT)));
       term_set_focus(true, false);
@@ -1222,17 +1304,21 @@ static struct {
       win_update();
       ShowCaret(wnd);
       zoom_token = -4;
+
     when WM_KILLFOCUS:
       win_show_mouse();
       term_set_focus(false, false);
       DestroyCaret();
       win_update();
+
     when WM_MOVING:
       trace_resize(("# WM_MOVING VK_SHIFT %02X\n", GetKeyState(VK_SHIFT)));
       zoom_token = -4;
+
     when WM_ENTERSIZEMOVE:
       trace_resize(("# WM_ENTERSIZEMOVE VK_SHIFT %02X\n", GetKeyState(VK_SHIFT)));
       resizing = true;
+
     when WM_EXITSIZEMOVE or WM_CAPTURECHANGED:  // after mouse-drag resizing
       trace_resize(("# WM_EXITSIZEMOVE (resizing %d) VK_SHIFT %02X\n", resizing, GetKeyState(VK_SHIFT)));
       bool shift = GetKeyState(VK_SHIFT) & 0x80;
@@ -1242,6 +1328,7 @@ static struct {
         trace_resize((" (win_proc (WM_EXITSIZEMOVE) -> win_adapt_term_size)\n"));
         win_adapt_term_size(shift, false);
       }
+
     when WM_SIZING: {  // mouse-drag window resizing
       trace_resize(("# WM_SIZING (resizing %d) VK_SHIFT %02X\n", resizing, GetKeyState(VK_SHIFT)));
       zoom_token = 2;
@@ -1277,6 +1364,7 @@ static struct {
 
       return ew || eh;
     }
+
     when WM_SIZE: {
       trace_resize(("# WM_SIZE (resizing %d) VK_SHIFT %02X\n", resizing, GetKeyState(VK_SHIFT)));
       if (wp == SIZE_RESTORED && win_is_fullscreen)
@@ -1312,9 +1400,11 @@ static struct {
 
       return 0;
     }
+
     when WM_INITMENU:
       win_update_menus();
       return 0;
+
     when WM_DPICHANGED:
 #ifdef debug_dpi
       printf("WM_DPICHANGED %d\n", per_monitor_dpi_aware);
@@ -1944,19 +2034,23 @@ main(int argc, char *argv[])
     }
     SetLastError(0);
 #if CYGWIN_VERSION_API_MINOR >= 181
-# ifdef HAS_LOCALES
+# if HAS_LOCALES
     char * valid_locale = setlocale(LC_CTYPE, 0);
     if (valid_locale) {
       valid_locale = strdup(valid_locale);
       setlocale(LC_CTYPE, "C.UTF-8");
+#  if CYGWIN_VERSION_API_MINOR >= 222
       cygwin_internal(CW_INT_SETLOCALE);  // fix internal locale
+#  endif
     }
 # endif
     wchar *win_icon_file = cygwin_create_path(CCP_POSIX_TO_WIN_W, icon_file);
-# ifdef HAS_LOCALES
+# if HAS_LOCALES
     if (valid_locale) {
       setlocale(LC_CTYPE, valid_locale);
+#  if CYGWIN_VERSION_API_MINOR >= 222
       cygwin_internal(CW_INT_SETLOCALE);  // fix internal locale
+#  endif
       free(valid_locale);
     }
 # endif

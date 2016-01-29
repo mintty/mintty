@@ -17,7 +17,7 @@
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/cygwin.h>
-# ifdef HAS_LOCALES
+# if HAS_LOCALES
 #include <locale.h>
 # endif
 
@@ -200,12 +200,14 @@ child_create(char *argv[], struct winsize *winp)
     if (!strcmp(log, "-"))
       log_fd = fileno(stdout);
     else {
-# ifdef HAS_LOCALES
+# if HAS_LOCALES
       char * valid_locale = setlocale(LC_CTYPE, 0);
       if (valid_locale) {
         valid_locale = strdup(valid_locale);
         setlocale(LC_CTYPE, "C.UTF-8");
+#  if CYGWIN_VERSION_API_MINOR >= 222
         cygwin_internal(CW_INT_SETLOCALE);  // fix internal locale
+#  endif
       }
 # endif
 
@@ -217,10 +219,12 @@ child_create(char *argv[], struct winsize *winp)
       } else
         log_fd = open(log, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 
-# ifdef HAS_LOCALES
+# if HAS_LOCALES
       if (valid_locale) {
         setlocale(LC_CTYPE, valid_locale);
+#  if CYGWIN_VERSION_API_MINOR >= 222
         cygwin_internal(CW_INT_SETLOCALE);  // fix internal locale
+#  endif
         free(valid_locale);
       }
 # endif
