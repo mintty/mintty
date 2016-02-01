@@ -378,7 +378,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     alt_state = ALT_CANCELLED;
 
   // Context and window menus
-  if (key == VK_APPS && (!cfg.key_menu || !*cfg.key_menu)) {
+  if (key == VK_APPS && !*cfg.key_menu) {
     if (shift)
       send_syscommand(SC_KEYMENU);
     else {
@@ -821,6 +821,18 @@ static struct {
     return false;
   }
 
+  bool vk_special(string key_mapped) {
+    if (!* key_mapped) {
+      if (!layout())
+        return false;
+    }
+    else if ((key_mapped[0] & ~037) == 0 && key_mapped[1] == 0)
+      ctrl_ch(key_mapped[0]);
+    else
+      strcode(key_mapped);
+    return true;
+  }
+
   switch(key) {
     when VK_RETURN:
       if (extended && !numlock && term.app_keypad)
@@ -864,29 +876,19 @@ static struct {
       ? ss3('[')
       : ctrl_ch(term.escape_sends_fs ? CTRL('\\') : CTRL('['));
     when VK_PAUSE:
-      if (cfg.key_pause)
-        strcode(cfg.key_pause);
-      else
-        ctrl_ch(ctrl & !extended ? CTRL('\\') : CTRL(']'));
+      if (!vk_special(ctrl & !extended ? cfg.key_break : cfg.key_pause))
+        return false;
     when VK_CANCEL:
-      if (cfg.key_break)
-        strcode(cfg.key_break);
-      else
-        ctrl_ch(CTRL('\\'));
+      if (!vk_special(cfg.key_break))
+        return false;
     when VK_SNAPSHOT:
-      if (cfg.key_prtscreen)
-        strcode(cfg.key_prtscreen);
-      else if (!layout())
+      if (!vk_special(cfg.key_prtscreen))
         return false;
     when VK_APPS:
-      if (cfg.key_menu)
-        strcode(cfg.key_menu);
-      else if (!layout())
+      if (!vk_special(cfg.key_menu))
         return false;
     when VK_SCROLL:
-      if (cfg.key_scrlock)
-        strcode(cfg.key_scrlock);
-      else if (!layout())
+      if (!vk_special(cfg.key_scrlock))
         return false;
     when VK_F1 ... VK_F24:
       if (term.vt220_keys && ctrl && VK_F3 <= key && key <= VK_F10)

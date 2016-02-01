@@ -992,7 +992,7 @@ has.  Default beep and taskbar highlighting are enabled by default.
 Mintty can also play wave sounds configured in \fI~/.minttyrc\fP, 
 or frequency beeps.
 .RS
-\(en\fB\fP (BellType=1): Preferred system sound, values:
+\(en \fBBell system type\fP (BellType=1): Preferred system sound, values:
 .RS
 \fB-1\fP : Simple Beep
 .br
@@ -1014,7 +1014,8 @@ colours.
 \(en \fBHighlight in taskbar\fP (BellTaskbar=yes): Change the colour of mintty's
 taskbar entry if the mintty window is not active.
 
-Further configuration options are currently available for 
+Further configuration options for a \fBBell wave file\fP or a 
+\fBBell frequency beep\fP are currently available for 
 \fI/etc/minttyrc\fP and \fI~/.minttyrc\fP or as \fB-o\fP command line option only:
 .br
 \(en\fB\fP (BellFile=): D:/.../soundfile.wav (overrides system sounds).
@@ -1197,15 +1198,21 @@ These options can attach a specific string to some special keys.
 If the string is a number, a corresponding Escape sequence will be generated, 
 applying Shift/Ctrl/Alt modifiers, following the pattern of function keys.
 .br
-\(en \fBKey_PrintScreen\fP=
+If the string value contains a single control character, some generic 
+Alt or Shift modification is applied.
+For \fBPause\fP and \fBBreak\fP, control characters are the default values, 
+they can be cleared with an empty assignment. For empty values, the default 
+layout of the keyboard is applied.
 .br
-\(en \fBKey_Pause\fP=
+\(en \fBKey_Pause\fP=^] \fI(Ctrl+])\fP
 .br
-\(en \fBKey_Break\fP=
+\(en \fBKey_Break\fP=^\\ \fI(Ctrl+\\)\fP
 .br
 \(en \fBKey_Menu\fP=
 .br
 \(en \fBKey_ScrollLock\fP=
+.br
+\(en \fBKey_PrintScreen\fP=
 
 Examples:
 .br

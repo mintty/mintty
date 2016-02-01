@@ -58,8 +58,8 @@ const config default_cfg = {
   .alt_fn_shortcuts = true,
   .ctrl_shift_shortcuts = false,
   .key_prtscreen = "",	// VK_SNAPSHOT
-  .key_pause = "",	// VK_PAUSE
-  .key_break = "",	// VK_CANCEL
+  .key_pause = "",	// VK_PAUSE
+  .key_break = "",	// VK_CANCEL
   .key_menu = "",	// VK_APPS
   .key_scrlock = "",	// VK_SCROLL
   // Mouse
