@@ -6,6 +6,7 @@ Desktop integration:
   * Shift+Alt+F2 clones the window at the configured size.
   * Fixed Alt+F10 to restore the configured size even in Alt+F2-cloned window.
   * Fixed Shift+Alt+F10 to restore both window size and font size.
+  * Handling changing window frame geometry (e.g. Personalization) (~#429).
 
 Terminal layout:
   * Not switching transparency when entering search bar (#497, thanks to Kai).
@@ -14,6 +15,7 @@ Terminal layout:
 
 Keyboard:
   * Extended special key redefinition options (#494).
+  * Fixed broken Pause/Break key defaults (#515), tweaked configuration.
 
 Bell:
   * Added configuration option BellFile (#369) to play wav sounds.

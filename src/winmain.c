@@ -756,8 +756,7 @@ void
 win_bell(void)
 {
   if (cfg.bell_sound || cfg.bell_type) {
-    if (cfg.bell_file && *cfg.bell_file
-     && PlaySoundW(cfg.bell_file, NULL, SND_ASYNC | SND_FILENAME)) {
+    if (*cfg.bell_file && PlaySoundW(cfg.bell_file, NULL, SND_ASYNC | SND_FILENAME)) {
       // played
     }
     else if (cfg.bell_freq)
@@ -1241,40 +1240,24 @@ static struct {
         return 1;
       }
 
-    when WM_THEMECHANGED or WM_WININICHANGE:
+    when WM_THEMECHANGED or WM_WININICHANGE or WM_SYSCOLORCHANGE:
       // Size of window border (border, title bar, scrollbar) changed by:
-      //   Performance Option "Use visual styles on windows and borders"
-      //     -> Windows sends WM_THEMECHANGED
       //   Personalization of window geometry (e.g. Title Bar Size)
-      //     -> Windows sends WM_WININICHANGE
-      // But none of all this Windows crap actually redraws the whole 
-      // window including the title - what the screw is missing?!?
+      //     -> Windows sends WM_SYSCOLORCHANGE
+      //   Performance Option "Use visual styles on windows and borders"
+      //     -> Windows sends WM_THEMECHANGED and WM_SYSCOLORCHANGE
+      // and in both case a couple of WM_WININICHANGE
+
       win_adjust_borders();
-
-      //font_cs_reconfig(true);
-      win_adapt_term_size(false, false);
-      update_transparency();
-      //win_invalidate_all();
-      RECT wr;
-      GetWindowRect(wnd, &wr);
-      InvalidateRect(wnd, &wr, true);
-
-      RedrawWindow(wnd, &wr, null, 
-                   RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
-      ShowWindow(wnd, SW_SHOWNA);
-      SetWindowPos(wnd, null,
-                   wr.left, wr.top, wr.right - wr.left, wr.bottom - wr.top,
-                   SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOZORDER);
-
-      win_update();
-
-      //win_paint();
-      UpdateWindow(wnd);
+      RedrawWindow(wnd, null, null, 
+                   RDW_FRAME | RDW_INVALIDATE |
+                   RDW_UPDATENOW | RDW_ALLCHILDREN);
+      win_update_search();
 
     when WM_FONTCHANGE:
       font_cs_reconfig(true);
 
-    when WM_PAINT: {
+    when WM_PAINT:
       win_paint();
 
 #ifdef handle_default_size_asynchronously
@@ -1285,7 +1268,6 @@ static struct {
 #endif
 
       return 0;
-    }
 
     when WM_ACTIVATE:
       if((wp & 0xF) != WA_INACTIVE) {
