@@ -1258,6 +1258,7 @@ setup_config_box(controlbox * b)
   )->column = 2;
 
   s = ctrl_new_set(b, "Terminal", "Printer");
+#define dont_use_combobox_for_wstring
 #ifdef use_combobox_for_wstring
 #warning Windows goofs up non-ANSI characters read from a combobox listbox
   ctrl_combobox(

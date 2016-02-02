@@ -1,6 +1,7 @@
 // ctrls.c (part of mintty)
 // Copyright 2008-11 Andy Koppe
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
+// (corresponds to putty:dialog.c)
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "ctrls.h"

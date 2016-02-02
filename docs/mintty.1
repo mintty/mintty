@@ -1167,7 +1167,10 @@ Note: An explicit icon supplied with the -i option can also be stored with
 the persistent properties; note, however, that for this purpose, it 
 must be given in Windows pathname syntax and it must include a 
 resource index; also, for consistent appearance, another -i option 
-referring to the same icon should be included in the AppLaunchCmd.
+referring to the same icon should be included in the AppLaunchCmd 
+(if the mintty invocation does not include an icon parameter but was 
+started from a desktop shortcut, the icon in the AppLaunchCmd should 
+be consistent with that one, respectively).
 
 Example:
 mintty -o AppID=Mintty.Pintest.1 -o AppName=Mintty.Pintest -o AppLaunchCmd="C:\\cygwin\\bin\\mintty -i /cygdrive/c/Windows/System32/calc.exe -" -i C:\\Windows\\System32\\calc.exe,0 --store-taskbar-properties -

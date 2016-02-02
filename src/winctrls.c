@@ -1,6 +1,7 @@
 // winctrls.c (part of mintty)
 // Copyright 2008-11 Andy Koppe
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
+// (corresponds to putty:windows/winctrls.c)
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "winctrls.h"
@@ -506,8 +507,14 @@ winctrl_cleanup(winctrls *wc)
   winctrl *c = wc->first;
   while (c) {
     winctrl *next = c->next;
-    if (c->ctrl)
+    if (c->ctrl) {
       c->ctrl->plat_ctrl = null;
+#ifdef another_attempt_to_workaround_Windows_ANSI_only_bug
+      if (c->data && c->ctrl->type == CTRL_EDITBOX && c->ctrl->editbox.has_list) {
+        //free c->data nested items
+      }
+#endif
+    }
     free(c->data);
     free(c);
     c = next;
@@ -1127,11 +1134,18 @@ dlg_editbox_get_w(control *ctrl, wstring *text_p)
   if (c->ctrl->type != CTRL_LISTBOX) {
     int size = GetWindowTextLengthW(wnd) + 1;
     text = renewn(text, size);
+    // Windows goofs up non-ANSI characters here...
     GetWindowTextW(wnd, text, size);
     //GetDlgItemTextW(dlg.wnd, c->base_id + 1, text, size);  // same
   }
+#ifdef another_attempt_to_workaround_Windows_ANSI_only_bug
+  else if (c->data && c->ctrl->type == CTRL_EDITBOX && c->ctrl->editbox.has_list) {
+    int n = SendMessageW(wnd, LB_GETCURSEL, 0, (LPARAM)0);
+    // retrieve locally stored copy...
+  }
+#endif
   else {
-    // from a listbox, GetWindowTextW goofs up non-ANSI characters, thus:
+    // failed attempt to workaround the Windows bug mentioned above:
     int n = SendMessageW(wnd, LB_GETCURSEL, 0, (LPARAM)0);
     int len = SendMessageW(wnd, LB_GETTEXTLEN, n, (LPARAM)0);
     text = renewn(text, len + 1);
@@ -1181,6 +1195,12 @@ dlg_listbox_add_w(control *ctrl, wstring text)
   msg = (c->ctrl->type == CTRL_LISTBOX &&
          c->ctrl->listbox.height != 0 ? LB_ADDSTRING : CB_ADDSTRING);
   SendDlgItemMessageW(dlg.wnd, c->base_id + 1, msg, 0, (LPARAM) text);
+
+#ifdef another_attempt_to_workaround_Windows_ANSI_only_bug
+  if (c->ctrl->type == CTRL_EDITBOX && c->ctrl->editbox.has_list) {
+    //store string locally...
+  }
+#endif
 }
 
 void
