@@ -1262,7 +1262,7 @@ term_write(const char *buf, uint len)
         int width = xcwidth(wc);
         #endif
 
-        switch(term.curs.csets[term.curs.g1]) {
+        switch (term.curs.csets[term.curs.g1]) {
           when CSET_LINEDRW:
             if (0x60 <= wc && wc <= 0x7E)
               wc = win_linedraw_chars[wc - 0x60];

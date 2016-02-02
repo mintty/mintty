@@ -833,7 +833,7 @@ static struct {
     return true;
   }
 
-  switch(key) {
+  switch (key) {
     when VK_RETURN:
       if (extended && !numlock && term.app_keypad)
         mod_ss3('M');

@@ -1270,7 +1270,7 @@ static struct {
       return 0;
 
     when WM_ACTIVATE:
-      if((wp & 0xF) != WA_INACTIVE) {
+      if ((wp & 0xF) != WA_INACTIVE) {
         flash_taskbar(false);  /* stop */
         term_set_focus(true, true);
       } else {

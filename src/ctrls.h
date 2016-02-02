@@ -227,7 +227,7 @@ struct control {
       */
     } columns;
   };
-  
+
   /* Space for storing platform-specific control data */
   void *plat_ctrl;
 };

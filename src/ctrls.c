@@ -147,7 +147,7 @@ ctrl_new_set(controlbox *b, char *path, char *title)
   // Skip existing sets for the same path.
   while (index < b->nctrlsets && !strcmp(b->ctrlsets[index]->pathname, path))
     index++;
-  
+
   controlset *s = new(controlset);
   s->pathname = strdup(path);
   s->boxtitle = title ? strdup(title) : null;
