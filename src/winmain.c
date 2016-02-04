@@ -655,7 +655,7 @@ clear_fullscreen(void)
  /* Reinstate the window furniture. */
   LONG style = GetWindowLong(wnd, GWL_STYLE);
   if (border_style) {
-    if (strcmp (border_style, "void") != 0) {
+    if (strcmp(border_style, "void") != 0) {
       style |= WS_THICKFRAME;
     }
   }
@@ -791,7 +791,7 @@ win_adjust_borders()
   RECT wr = cr;
   LONG window_style = WS_OVERLAPPEDWINDOW;
   if (border_style) {
-    if (strcmp (border_style, "void") == 0)
+    if (strcmp(border_style, "void") == 0)
       window_style &= ~(WS_CAPTION | WS_BORDER | WS_THICKFRAME);
     else
       window_style &= ~(WS_CAPTION | WS_BORDER);
@@ -1018,15 +1018,15 @@ confirm_exit(void)
   /* retrieve list of child processes */
   char * pscmd = "/bin/procps -o pid,ruser=USER -o comm -t %s 2> /dev/null || /bin/ps -ef";
   char * tty = child_tty();
-  if (strrchr (tty, '/'))
-    tty = strrchr (tty, '/') + 1;
+  if (strrchr(tty, '/'))
+    tty = strrchr(tty, '/') + 1;
   char cmd[strlen(pscmd) + strlen(tty) + 1];
-  sprintf (cmd, pscmd, tty, tty);
-  FILE * procps = popen (cmd, "r");
+  sprintf(cmd, pscmd, tty, tty);
+  FILE * procps = popen(cmd, "r");
   char * msg_pre = "Processes are running in session:\n";
   char * msg_post = "Close anyway?";
-  char * msg = malloc (strlen (msg_pre) + 1);
-  strcpy (msg, msg_pre);
+  char * msg = malloc(strlen(msg_pre) + 1);
+  strcpy(msg, msg_pre);
   if (procps) {
     char line[999];  // use very long input despite narrow msg box
                      // to avoid high risk of clipping within UTF-8 
@@ -1035,23 +1035,23 @@ confirm_exit(void)
     bool filter_tty = false;
     while (fgets(line, sizeof line, procps)) {
       line[strcspn(line, "\r\n")] = 0;  /* trim newline */
-      if (first || !filter_tty || strstr (line, tty))  // should check column position too...
+      if (first || !filter_tty || strstr(line, tty))  // should check column position too...
       {
         if (first) {
-          if (strstr (line, "TTY")) {
+          if (strstr(line, "TTY")) {
             filter_tty = true;
           }
           first = false;
         }
-        msg = realloc (msg, strlen (msg) + strlen (line) + 2);
-        strcat (msg, line);
-        strcat (msg, "\n");
+        msg = realloc(msg, strlen(msg) + strlen(line) + 2);
+        strcat(msg, line);
+        strcat(msg, "\n");
       }
     }
     pclose(procps);
   }
-  msg = realloc (msg, strlen (msg) + strlen (msg_post) + 1);
-  strcat (msg, msg_post);
+  msg = realloc(msg, strlen(msg) + strlen(msg_post) + 1);
+  strcat(msg, msg_post);
 
   size_t size = cs_mbstowcs(0, msg, 0) + 1;
   int ret;
@@ -1786,7 +1786,7 @@ main(int argc, char *argv[])
     char timbuf [22];
     struct timeval now;
     gettimeofday (& now, 0);
-    strftime (timbuf, sizeof (timbuf), "%Y-%m-%d %H:%M:%S", localtime (& now.tv_sec));
+    strftime(timbuf, sizeof (timbuf), "%Y-%m-%d %H:%M:%S", localtime(& now.tv_sec));
     fprintf(mtlog, "[%s.%03d] %s\n", timbuf, (int)now.tv_usec / 1000, argv[0]);
     fflush(mtlog);
   }
@@ -2132,7 +2132,7 @@ main(int argc, char *argv[])
   RECT wr = cr;
   LONG window_style = WS_OVERLAPPEDWINDOW;
   if (border_style) {
-    if (strcmp (border_style, "void") == 0)
+    if (strcmp(border_style, "void") == 0)
       window_style &= ~(WS_CAPTION | WS_BORDER | WS_THICKFRAME);
     else
       window_style &= ~(WS_CAPTION | WS_BORDER);
@@ -2181,7 +2181,7 @@ main(int argc, char *argv[])
     MONITORINFO mi;
     get_my_monitor_info(&mi);
     RECT ar = mi.rcWork;
-    printpos ("cre", x, y, ar);
+    printpos("cre", x, y, ar);
 
     if (monitor > 0) {
       MONITORINFO monmi;
@@ -2191,7 +2191,7 @@ main(int argc, char *argv[])
       if (x == (int)CW_USEDEFAULT) {
         // Shift and scale assigned default position to selected monitor.
         win_get_pos(&x, &y);
-        printpos ("def", x, y, ar);
+        printpos("def", x, y, ar);
         x = monar.left + (x - ar.left) * (monar.right - monar.left) / (ar.right - ar.left);
         y = monar.top + (y - ar.top) * (monar.bottom - monar.top) / (ar.bottom - ar.top);
       }
@@ -2202,7 +2202,7 @@ main(int argc, char *argv[])
       }
 
       ar = monar;
-      printpos ("mon", x, y, ar);
+      printpos("mon", x, y, ar);
     }
 
     if (cfg.x == (int)CW_USEDEFAULT) {
@@ -2212,7 +2212,7 @@ main(int argc, char *argv[])
         cfg.x = 0;
       if (top || bottom)
         cfg.y = 0;
-        printpos ("fix", x, y, ar);
+        printpos("fix", x, y, ar);
     }
 
     if (left)
@@ -2227,7 +2227,7 @@ main(int argc, char *argv[])
       y = ar.bottom - cfg.y - height;
     else if (center)
       y = (ar.top + ar.bottom - height) / 2;
-      printpos ("pos", x, y, ar);
+      printpos("pos", x, y, ar);
 
     if (maxwidth) {
       x = ar.left;
@@ -2237,7 +2237,7 @@ main(int argc, char *argv[])
       y = ar.top;
       height = ar.bottom - ar.top;
     }
-    printpos ("fin", x, y, ar);
+    printpos("fin", x, y, ar);
 
     SetWindowPos(wnd, NULL, x, y, width, height,
       SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
@@ -2257,7 +2257,7 @@ main(int argc, char *argv[])
 
   if (border_style) {
     LONG style = GetWindowLong(wnd, GWL_STYLE);
-    if (strcmp (border_style, "void") == 0) {
+    if (strcmp(border_style, "void") == 0) {
       style &= ~(WS_CAPTION | WS_BORDER | WS_THICKFRAME);
     }
     else {
