@@ -1,5 +1,5 @@
 // winctrls.c (part of mintty)
-// Copyright 2008-11 Andy Koppe
+// Copyright 2008-11 Andy Koppe, 2015-2016 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // (corresponds to putty:windows/winctrls.c)
 // Licensed under the terms of the GNU General Public License v3 or later.
@@ -509,11 +509,6 @@ winctrl_cleanup(winctrls *wc)
     winctrl *next = c->next;
     if (c->ctrl) {
       c->ctrl->plat_ctrl = null;
-#ifdef another_attempt_to_workaround_Windows_ANSI_only_bug
-      if (c->data && c->ctrl->type == CTRL_EDITBOX && c->ctrl->editbox.has_list) {
-        //free c->data nested items
-      }
-#endif
     }
     free(c->data);
     free(c);
@@ -977,12 +972,12 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
             when CBN_SELCHANGE: {
               int index = SendDlgItemMessage(
                             dlg.wnd, c->base_id + 1, CB_GETCURSEL, 0, 0);
-              int len = SendDlgItemMessage(
+              int wlen = SendDlgItemMessageW(
                           dlg.wnd, c->base_id + 1, CB_GETLBTEXTLEN, index, 0);
-              char text[len + 1];
-              SendDlgItemMessage(
-                dlg.wnd, c->base_id + 1, CB_GETLBTEXT, index, (LPARAM) text);
-              SetDlgItemText(dlg.wnd, c->base_id + 1, text);
+              wchar wtext[wlen + 1];
+              SendDlgItemMessageW(
+                dlg.wnd, c->base_id + 1, CB_GETLBTEXT, index, (LPARAM) wtext);
+              SetDlgItemTextW(dlg.wnd, c->base_id + 1, wtext);
               ctrl->handler(ctrl, EVENT_SELCHANGE);
             }
             when CBN_EDITCHANGE:
@@ -1132,20 +1127,19 @@ dlg_editbox_get_w(control *ctrl, wstring *text_p)
   HWND wnd = GetDlgItem(dlg.wnd, c->base_id + 1);
   wchar *text = (wchar *)*text_p;
   if (c->ctrl->type != CTRL_LISTBOX) {
+    // handle single-line editbox (with optional popup list)
     int size = GetWindowTextLengthW(wnd) + 1;
     text = renewn(text, size);
-    // Windows goofs up non-ANSI characters here...
+    // In the popup editbox (combobox), 
+    // Windows goofs up non-ANSI characters here unless the 
+    // WM_COMMAND dialog callback function winctrl_handle_command above 
+    // (case CBN_SELCHANGE) also uses the Unicode function versions 
+    // SendDlgItemMessageW and SetDlgItemTextW
     GetWindowTextW(wnd, text, size);
     //GetDlgItemTextW(dlg.wnd, c->base_id + 1, text, size);  // same
   }
-#ifdef another_attempt_to_workaround_Windows_ANSI_only_bug
-  else if (c->data && c->ctrl->type == CTRL_EDITBOX && c->ctrl->editbox.has_list) {
-    int n = SendMessageW(wnd, LB_GETCURSEL, 0, (LPARAM)0);
-    // retrieve locally stored copy...
-  }
-#endif
   else {
-    // failed attempt to workaround the Windows bug mentioned above:
+    // handle multi-line listbox
     int n = SendMessageW(wnd, LB_GETCURSEL, 0, (LPARAM)0);
     int len = SendMessageW(wnd, LB_GETTEXTLEN, n, (LPARAM)0);
     text = renewn(text, len + 1);
@@ -1195,12 +1189,6 @@ dlg_listbox_add_w(control *ctrl, wstring text)
   msg = (c->ctrl->type == CTRL_LISTBOX &&
          c->ctrl->listbox.height != 0 ? LB_ADDSTRING : CB_ADDSTRING);
   SendDlgItemMessageW(dlg.wnd, c->base_id + 1, msg, 0, (LPARAM) text);
-
-#ifdef another_attempt_to_workaround_Windows_ANSI_only_bug
-  if (c->ctrl->type == CTRL_EDITBOX && c->ctrl->editbox.has_list) {
-    //store string locally...
-  }
-#endif
 }
 
 void
