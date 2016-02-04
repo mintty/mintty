@@ -20,6 +20,7 @@ Keyboard:
 Bell:
   * Added configuration option BellFile (#369) to play wav sounds.
   * Enhanced bell sound selection in Options menu; option BellSound obsolete.
+  * Test button for bell sound in Options menu.
 
 Configuration and Printing:
   * Support process ID substitution (for %d) in log file name.

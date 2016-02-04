@@ -753,26 +753,26 @@ flash_taskbar(bool enable)
  * Bell.
  */
 void
-win_bell(void)
+win_bell(config * conf)
 {
-  if (cfg.bell_sound || cfg.bell_type) {
-    if (*cfg.bell_file && PlaySoundW(cfg.bell_file, NULL, SND_ASYNC | SND_FILENAME)) {
+  if (conf->bell_sound || conf->bell_type) {
+    if (*conf->bell_file && PlaySoundW(conf->bell_file, NULL, SND_ASYNC | SND_FILENAME)) {
       // played
     }
-    else if (cfg.bell_freq)
-      Beep(cfg.bell_freq, cfg.bell_len);
-    else if (cfg.bell_type > 0) {
+    else if (conf->bell_freq)
+      Beep(conf->bell_freq, conf->bell_len);
+    else if (conf->bell_type > 0) {
       //  1 -> 0x00000000 MB_OK              Default Beep
       //  2 -> 0x00000010 MB_ICONSTOP        Critical Stop
       //  3 -> 0x00000020 MB_ICONQUESTION    Question
       //  4 -> 0x00000030 MB_ICONEXCLAMATION Exclamation
       //  5 -> 0x00000040 MB_ICONASTERISK    Asterisk
       // -1 -> 0xFFFFFFFF                    Simple Beep
-      MessageBeep((cfg.bell_type - 1) * 16);
-    } else if (cfg.bell_type < 0)
+      MessageBeep((conf->bell_type - 1) * 16);
+    } else if (conf->bell_type < 0)
       MessageBeep(0xFFFFFFFF);
   }
-  if (cfg.bell_taskbar && !term.has_focus)
+  if (conf->bell_taskbar && !term.has_focus)
     flash_taskbar(true);
 }
 

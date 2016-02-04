@@ -968,6 +968,13 @@ bell_handler(control *ctrl, int event)
   }
 }
 
+static void
+bell_tester(control *unused(ctrl), int event)
+{
+  if (event == EVENT_ACTION)
+    win_bell(&new_cfg);
+}
+
 void
 setup_config_box(controlbox * b)
 {
@@ -1256,6 +1263,23 @@ setup_config_box(controlbox * b)
   ctrl_checkbox(
     s, "&Highlight in taskbar", dlg_stdcheckbox_handler, &new_cfg.bell_taskbar
   )->column = 2;
+  ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
+  ctrl_columns(s, 2, 80, 20);
+#ifdef use_bellfileselection
+  ctrl_combobox(
+    s, "&Wave", 65,
+    bellfile_selector, &new_cfg.bell_file
+  )->column = 0;
+#else
+#ifdef use_belleditbox
+  ctrl_editbox(
+    s, "&Wave", 80, dlg_stdstringbox_handler, &new_cfg.bell_file
+  )->column = 0;
+#endif
+#endif
+  ctrl_pushbutton(
+    s, "> &Test", bell_tester, 0
+  )->column = 1;
 
   s = ctrl_new_set(b, "Terminal", "Printer");
 #ifdef use_multi_listbox_for_printers
