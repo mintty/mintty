@@ -1,5 +1,5 @@
 // config.c (part of mintty)
-// Copyright 2008-13 Andy Koppe
+// Copyright 2008-13 Andy Koppe, 2015-2016 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -1258,15 +1258,13 @@ setup_config_box(controlbox * b)
   )->column = 2;
 
   s = ctrl_new_set(b, "Terminal", "Printer");
-#define dont_use_combobox_for_wstring
-#ifdef use_combobox_for_wstring
-#warning Windows goofs up non-ANSI characters read from a combobox listbox
-  ctrl_combobox(
-    s, null, 100, printerbox_handler, 0
-  );
-#else
+#ifdef use_multi_listbox_for_printers
   ctrl_listbox(
     s, null, 4, 100, printerbox_handler, 0
+  );
+#else
+  ctrl_combobox(
+    s, null, 100, printerbox_handler, 0
   );
 #endif
 
