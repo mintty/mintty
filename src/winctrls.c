@@ -323,9 +323,15 @@ button(ctrlpos * cp, char *btext, int bid, int defbtn)
   if (defbtn && cp->wnd)
     SendMessage(cp->wnd, DM_SETDEFID, bid, 0);
 
-  doctl(cp, r, "BUTTON",
-        BS_NOTIFY | WS_CHILD | WS_VISIBLE | WS_TABSTOP |
-        (defbtn ? BS_DEFPUSHBUTTON : 0) | BS_PUSHBUTTON, 0, btext, bid);
+  HWND but = 
+    doctl(cp, r, "BUTTON",
+          BS_NOTIFY | WS_CHILD | WS_VISIBLE | WS_TABSTOP |
+          (defbtn ? BS_DEFPUSHBUTTON : 0) | BS_PUSHBUTTON, 0, btext, bid);
+  // this is a special hack until a generic solution is crafted 
+  // for Unicode labels and maybe other fancy stuff
+  if (!strcmp(btext, "&Play")) {
+    SendMessageW(but, WM_SETTEXT, 0, (LPARAM)L"► &Play");
+  }
 
   cp->ypos += PUSHBTNHEIGHT + GAPBETWEEN;
 }
