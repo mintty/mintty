@@ -1267,7 +1267,7 @@ setup_config_box(controlbox * b)
   ctrl_columns(s, 2, 80, 20);
 #ifdef use_bellfileselection
   ctrl_combobox(
-    s, "&Wave", 65,
+    s, "&Wave", 80,
     bellfile_selector, &new_cfg.bell_file
   )->column = 0;
 #else
@@ -1278,7 +1278,7 @@ setup_config_box(controlbox * b)
 #endif
 #endif
   ctrl_pushbutton(
-    s, "> &Test", bell_tester, 0
+    s, "&Play", bell_tester, 0
   )->column = 1;
 
   s = ctrl_new_set(b, "Terminal", "Printer");
