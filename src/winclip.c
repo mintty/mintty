@@ -596,19 +596,29 @@ static __stdcall HRESULT
 dt_drop(IDropTarget *this, IDataObject *obj,
         DWORD keys, POINTL pos, DWORD *effect_p)
 {
-  dt_drag_enter(this, obj, keys, pos, effect_p);
-  if (!effect_p)
-    return 0;
-  STGMEDIUM stgmed;
-  if (obj->lpVtbl->GetData(obj, &dt_format, &stgmed) != S_OK)
-    return 0;
-  HGLOBAL data = stgmed.hGlobal;
-  if (!data)
-    return 0;
-  switch (dt_format.cfFormat) {
-    when CF_TEXT: paste_text(stgmed.hGlobal);
-    when CF_UNICODETEXT: paste_unicode_text(data);
-    when CF_HDROP: paste_hdrop(data);
+  // check whether drag-and-drop target is the terminal window
+  // not the Options menu or any of its controls
+  POINT p = {.x = pos.x, .y = pos.y};
+  HWND h = WindowFromPoint(p);
+  if (h == wnd) {
+    dt_drag_enter(this, obj, keys, pos, effect_p);
+    if (!effect_p)
+      return 0;
+    STGMEDIUM stgmed;
+    if (obj->lpVtbl->GetData(obj, &dt_format, &stgmed) != S_OK)
+      return 0;
+    HGLOBAL data = stgmed.hGlobal;
+    if (!data)
+      return 0;
+    switch (dt_format.cfFormat) {
+      when CF_TEXT: paste_text(stgmed.hGlobal);
+      when CF_UNICODETEXT: paste_unicode_text(data);
+      when CF_HDROP: paste_hdrop(data);
+    }
+  }
+  else if (h && dt_format.cfFormat == CF_HDROP) {
+    // support filename drag-and-drop to certain input fields
+    //SendMessage(h, ...);
   }
   return 0;
 }
