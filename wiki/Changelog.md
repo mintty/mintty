@@ -1,3 +1,4 @@
+### 2.2.3 (7 Feb 2016) ###
 
 Desktop integration:
   * Deriving icon from shortcut (#471, ~#420, ~~#486).
@@ -6,6 +7,7 @@ Desktop integration:
   * Shift+Alt+F2 clones the window at the configured size.
   * Fixed Alt+F10 to restore the configured size even in Alt+F2-cloned window.
   * Fixed Shift+Alt+F10 to restore both window size and font size.
+  * Limiting drag-and-drop pasting to actual terminal window, not Options menu.
   * Handling changing window frame geometry (e.g. Personalization) (~#429).
 
 Terminal layout:
@@ -491,7 +493,7 @@ Locales and charsets:
   * The 'Codepage' option is now called 'Character set', and there's a new 'Locale' option for language and territory.
   * If no locale is set in the options, mintty uses the locale specified via the environment variables LC\_ALL, LC\_CTYPE, or LANG.
   * If the locale option is set, the character set is appended to it and the LANG variable set accordingly and LC\_ALL and LC\_CTYPE are cleared.
-  * e @cjknarrow locale modifier is automatically appended to LANG if an ambiguous-narrow font is used with an East Asian locale. (See also http://www.cygwin.com/1.7/cygwin-ug-net/setup-locale.html)
+  * The @cjknarrow locale modifier is automatically appended to LANG if an ambiguous-narrow font is used with an East Asian locale. (See also http://www.cygwin.com/1.7/cygwin-ug-net/setup-locale.html)
   * Any character sets supported by Cygwin or Windows can be used. The dropdown menu lists many of those supported by Cygwin, including UTF-8, the ISO charsets, and also the system's OEM and ANSI codepages. Other Windows codepages can be entered manually using the CP123 format. (Just entering the number works too.)
   * East Asian double-byte character sets such as GBK or eucJP are now supported (if they are installed).
   * Unicode characters outside the basic multilingual plane can now be displayed if a suitable font is available, which should always be the case on Vista and 7. (Please note, however, that currently many programs do not support these correctly, due to Windows' use of UTF-16 to represent Unicode).

@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Thu Jan 14 16:31:38 2016 -->
+<!-- CreationDate: Fri Feb  5 18:44:56 2016 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -153,15 +153,18 @@ consistent icon behaviour, the same icon should be specified
 in the shortcut properties (Change Icon...) and the mintty
 command line (Target:), or (beginning 2.2.3) no icon should
 be specified on the command line as mintty will then take
-the icon from the invoking shortcut.</p>
+the icon from the invoking shortcut, also resolving a
+leading Windows environment variable (like
+%SystemRoot%).</p>
 
 <p style="margin-left:11%;"><b>-l</b>, <b>--log</b>
 <i>FILE</i>|<b>-</b></p>
 
 <p style="margin-left:22%;">Copy all output into the
 specified log file, or standard output if a dash is given
-instead of a file name. (See also <i>script</i>(1) for a
-more flexible logging tool.)</p>
+instead of a file name. If FILE contains <b>%d</b> it will
+be substituted with the process ID. (See also
+<i>script</i>(1) for a more flexible logging tool.)</p>
 
 <p style="margin-left:11%;"><b>-o</b>, <b>--option</b>
 <i>NAME</i>=<i>VALUE</i></p>
@@ -446,7 +449,8 @@ size</b> <br>
 If the window has been resized, it can be returned to the
 default size set in the Window pane of the options using the
 <b>Default size</b> command in the menu or the
-<b>Alt+F10</b> shortcut.</p>
+<b>Alt+F10</b> shortcut. <b>Shift+Alt+F10</b> also restores
+the font size to its default.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Reset</b>
 <br>
@@ -568,12 +572,16 @@ up <br>
 <p style="margin-left:11%;"><b>Window commands</b></p>
 
 <p style="margin-left:22%;">&ndash; <b>Alt+F2</b>: New
-(clone); see notes below <br>
+(clone window at current size); see notes below <br>
+&ndash; <b>Shift+Alt+F2</b>: New (clone window at configured
+size); see notes below <br>
 &ndash; <b>Alt+F3</b>: Search (in scrollback buffer) <br>
 &ndash; <b>Alt+F4</b>: Close <br>
 &ndash; <b>Alt+F8</b>: Reset <br>
 &ndash; <b>Alt+F10</b>: Default terminal size (rows/columns)
 <br>
+&ndash; <b>Shift+Alt+F10</b>: Default terminal size
+(rows/columns) and font size <br>
 &ndash; <b>Alt+F11</b> or <b>Alt+Enter</b>: Toggle full
 screen <br>
 &ndash; <b>Shift+Alt+F11</b> or <b>Shift+Alt+Enter</b>:
@@ -655,9 +663,9 @@ the dialog. <br>
 instance of mintty <br>
 but does not save them to the configuration file. So using
 <b>Apply</b> <br>
-then <b>Cancel</b>, local changes can be applied without
-affecting further <br>
-instances of mintty.</p>
+then <b>Cancel</b>, local changes can be applied (and
+tested) without <br>
+affecting further instances of mintty.</p>
 
 <p style="margin-left:11%; margin-top: 1em">In
 configuration files, settings are stored as
@@ -672,6 +680,19 @@ the last writable file specified with
 <b>-c</b>/<b>--config</b>, or <i>~/.minttyrc</i> if none is
 given. Individual settings can also be specified on the
 command line using the <b>-o</b>/<b>--option</b>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Note: Many
+string values in the <i>minttyrc</i> files, especially those
+referring to file names or Windows items, are
+<b>Unicode-enabled</b>, meaning they are expected to be
+UTF-8-encoded in the configuration file independently of the
+encoding the terminal runs in; as a fallback, if the
+configuration value is not valid UTF-8, it is interpreted in
+the system ANSI encoding. (This does not apply to the same
+configuration settings when given on the command-line.) <br>
+Unicode-enabled settings: BellFile, Title, ExitTitle, Icon,
+Log, Printer, Answerback, Class, AppID, AppName,
+AppLaunchCmd.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Be careful when
 running multiple instances of mintty. If options are saved
@@ -697,12 +718,13 @@ Settings affecting mintty&rsquo;s appearance. <b><br>
 Colours</b></p>
 
 <p style="margin-left:22%;">Clicking on one of the buttons
-here opens the colour selection dialog. In the settings,
-colours are represented as comma-separated RGB triples with
-decimal 8-bit values ranging from 0 to 255. X-style
-hexadecimal colour specifications such as #RRGGBB or
-rgb:RR/GG/BB can be used as well. Also X11 color names are
-supported. <br>
+here opens the colour selection dialog. <br>
+In the settings (.minttyrc or command-line options), colours
+are represented as comma-separated RGB triples with decimal
+8-bit values ranging from 0 to 255. X-style hexadecimal
+colour specifications such as #RRGGBB, rgb:RR/GG/BB or
+rgb:RRRR/GGGG/BBBB can be used as well. Also X11 color names
+are supported. <br>
 &ndash; <b>Foreground</b> (ForegroundColour=191,191,191)
 <br>
 &ndash; <b>Background</b> (BackgroundColour=0,0,0) <br>
@@ -1185,11 +1207,11 @@ wave sounds configured in <i>~/.minttyrc</i>, or frequency
 beeps.</p> </td></tr>
 </table>
 
-<p style="margin-left:22%;">&ndash; (BellType=1): Preferred
-system sound, values:</p>
+<p style="margin-left:22%;">&ndash; <b>Bell system type</b>
+(BellType=1): Preferred system sound, values:</p>
 
 <p style="margin-left:32%;"><b>-1</b> : Simple Beep <b><br>
-0</b> : No Beep <b><br>
+0</b> : No Beep (overrides BellFile and BellFreq) <b><br>
 1</b> : Default Beep <b><br>
 2</b> : Critical Stop <b><br>
 3</b> : Question <b><br>
@@ -1204,7 +1226,8 @@ Change the colour of mintty&rsquo;s taskbar entry if the
 mintty window is not active.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Further
-configuration options are currently available for
+configuration options for a <b>Bell wave file</b> or a
+<b>Bell frequency beep</b> are currently available for
 <i>/etc/minttyrc</i> and <i>~/.minttyrc</i> or as <b>-o</b>
 command line option only: <br>
 &ndash; (BellFile=): D:/.../soundfile.wav (overrides system
@@ -1274,9 +1297,10 @@ note for the -i option above.</p>
 
 <p style="margin-left:22%;">The <b>Log</b> setting can be
 used to specify a log file that all output is copied into.
-If it is empty, as it is by default, no logging is done. See
-also the <i>script</i>(1) utility for a more flexible
-logging solution.</p>
+If it is empty, as it is by default, no logging is done. If
+it contains <b>%d</b> it will be substituted with the
+process ID. See also the <i>script</i>(1) utility for a more
+flexible logging solution.</p>
 
 <p style="margin-left:11%;"><b>Window title</b>
 (Title=)</p>
@@ -1388,7 +1412,11 @@ with the persistent properties; note, however, that for this
 purpose, it must be given in Windows pathname syntax and it
 must include a resource index; also, for consistent
 appearance, another -i option referring to the same icon
-should be included in the AppLaunchCmd.</p>
+should be included in the AppLaunchCmd (if the mintty
+invocation does not include an icon parameter but was
+started from a desktop shortcut, the icon in the
+AppLaunchCmd should be consistent with that one,
+respectively).</p>
 
 <p style="margin-left:22%; margin-top: 1em">Example: mintty
 -o AppID=Mintty.Pintest.1 -o AppName=Mintty.Pintest -o
@@ -1433,11 +1461,17 @@ specific string to some special keys. If the string is a
 number, a corresponding Escape sequence will be generated,
 applying Shift/Ctrl/Alt modifiers, following the pattern of
 function keys. <br>
-&ndash; <b>Key_PrintScreen</b>= <br>
-&ndash; <b>Key_Pause</b>= <br>
-&ndash; <b>Key_Break</b>= <br>
+If the string value contains a single control character,
+some generic Alt or Shift modification is applied. For
+<b>Pause</b> and <b>Break</b>, control characters are the
+default values, they can be cleared with an empty
+assignment. For empty values, the default layout of the
+keyboard is applied. <br>
+&ndash; <b>Key_Pause</b>=^] <i>(Ctrl+])</i> <br>
+&ndash; <b>Key_Break</b>=^\ <i>(Ctrl+\)</i> <br>
 &ndash; <b>Key_Menu</b>= <br>
-&ndash; <b>Key_ScrollLock</b>=</p>
+&ndash; <b>Key_ScrollLock</b>= <br>
+&ndash; <b>Key_PrintScreen</b>=</p>
 
 <p style="margin-left:22%; margin-top: 1em">Examples: <br>
 Key_Break=2 would turn the Break key into an Insert key <br>
@@ -1472,8 +1506,9 @@ OSC 4 control sequence with colour number 262.</p>
 settings along with their default values. Colours are
 represented as comma-separated RGB triples with decimal
 8-bit values ranging from 0 to 255. X-style hexadecimal
-colour specifications such as #RRGGBB or rgb:RR/GG/BB can be
-used as well. Also X11 color names are supported. <br>
+colour specifications such as #RRGGBB, rgb:RR/GG/BB or
+rgb:RRRR/GGGG/BBBB can be used as well. Also X11 color names
+are supported. <br>
 &ndash; <b>Black</b>=0,0,0 <br>
 &ndash; <b>Red</b>=191,0,0 <br>
 &ndash; <b>Green</b>=0,191,0 <br>
