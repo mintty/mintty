@@ -1,3 +1,6 @@
+  * Fixed format substitution for log file in case of excess % conversions.
+  * Improved and fixed format of child creation error messages.
+
 ### 2.2.3 (7 Feb 2016) ###
 
 Desktop integration:

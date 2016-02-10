@@ -961,7 +961,7 @@ font_cs_reconfig(bool font_changed)
 {
   if (font_changed) {
     win_init_fonts(cfg.font.size);
-    trace_resize((" (win_reconfig -> win_adapt_term_size)\n"));
+    trace_resize((" (font_cs_reconfig -> win_adapt_term_size)\n"));
     win_adapt_term_size(true, false);
   }
   win_update_scrollbar();
@@ -2047,12 +2047,12 @@ main(int argc, char *argv[])
 #endif
     if (!large_icon) {
       small_icon = 0;
-      uint error = GetLastError();
-      if (error) {
+      uint err = GetLastError();
+      if (err) {
         char msg[1024];
         FormatMessage(
           FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK,
-          0, error, 0, msg, sizeof msg, 0
+          0, err, 0, msg, sizeof msg, 0
         );
         warn("could not load icon from '%s': %s", cs__wcstombs(cfg.icon), msg);
       }
