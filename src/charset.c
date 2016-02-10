@@ -429,13 +429,17 @@ cs__wcstoutf(const wchar * ws)
   return s;
 }
 
+//#define WC_OPT WC_NO_BEST_FIT_CHARS	// broken, may return empty result
+#define WC_OPT 0
+
 char *
 cs__wcstombs(const wchar * ws)
 {
   char defchar = '?';
-  int size1 = WideCharToMultiByte(codepage, WC_NO_BEST_FIT_CHARS, ws, -1, 0, 0, 0, 0);
+  char * defcharpoi = (codepage == CP_UTF8 ? 0 : &defchar);
+  int size1 = WideCharToMultiByte(codepage, WC_OPT, ws, -1, 0, 0, 0, 0);
   char * s = malloc(size1);  // includes terminating NUL
-  WideCharToMultiByte(codepage, WC_NO_BEST_FIT_CHARS, ws, -1, s, size1, &defchar, 0);
+  WideCharToMultiByte(codepage, WC_OPT, ws, -1, s, size1, defcharpoi, 0);
   return s;
 }
 
@@ -443,10 +447,11 @@ char *
 cs__wcstombs_dropill(const wchar * ws)
 {
   char defchar = '\0';
+  char * defcharpoi = (codepage == CP_UTF8 ? 0 : &defchar);
   int illegal = 0;
-  int size1 = WideCharToMultiByte(codepage, WC_NO_BEST_FIT_CHARS, ws, -1, 0, 0, 0, 0);
+  int size1 = WideCharToMultiByte(codepage, WC_OPT, ws, -1, 0, 0, 0, 0);
   char * s = malloc(size1);  // includes terminating NUL
-  WideCharToMultiByte(codepage, WC_NO_BEST_FIT_CHARS, ws, -1, s, size1, &defchar, &illegal);
+  WideCharToMultiByte(codepage, WC_OPT, ws, -1, s, size1, defcharpoi, &illegal);
   if (illegal) {
     int i = 0;
     for (int k = 0; k < size1; k++)
