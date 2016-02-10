@@ -90,7 +90,7 @@ child_create(char *argv[], struct winsize *winp)
     childerror("could not fork child process", true);
     if (rebase_prompt) {
       static const char msg[] =
-        "\033[30;43m\033[KDLL rebasing may be required. See 'rebaseall --help'.\r\n";
+        "\033[30;43m\033[KDLL rebasing may be required. See 'rebaseall / rebase --help'.\r\n";
       term_write(msg, sizeof msg - 1);
     }
     term_hide_cursor();
