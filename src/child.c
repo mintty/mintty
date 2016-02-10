@@ -17,9 +17,6 @@
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/cygwin.h>
-# if HAS_LOCALES
-#include <locale.h>
-# endif
 
 #if CYGWIN_VERSION_API_MINOR >= 93
 #include <pty.h>
@@ -46,10 +43,13 @@ static bool killed;
 static int pty_fd = -1, log_fd = -1, win_fd;
 
 static void
-error(char *action)
+childerror(char * action, bool from_fork)
 {
-  char *msg;
-  int len = asprintf(&msg, "\033[30;41m\033[KFailed to %s: %s.", action, strerror(errno));
+  char * msg;
+  char * err = strerror(errno);
+  if (from_fork && errno == ENOENT)
+    err = "There are no available terminals";
+  int len = asprintf(&msg, "\033[30;41m\033[KError: %s: %s.\r\n", action, err);
   if (len > 0) {
     term_write(msg, len);
     free(msg);
@@ -83,10 +83,14 @@ child_create(char *argv[], struct winsize *winp)
   if (pid < 0) {
     pid = 0;
     bool rebase_prompt = (errno == EAGAIN);
-    error("could not fork child process");
+    //ENOENT  There are no available terminals.
+    //EAGAIN  Cannot allocate sufficient memory to allocate a task structure.
+    //EAGAIN  Not possible to create a new process; RLIMIT_NPROC limit.
+    //ENOMEM  Memory is tight.
+    childerror("could not fork child process", true);
     if (rebase_prompt) {
       static const char msg[] =
-        "\r\nDLL rebasing may be required. See 'rebaseall --help'.";
+        "\033[30;43m\033[KDLL rebasing may be required. See 'rebaseall --help'.\r\n";
       term_write(msg, sizeof msg - 1);
     }
     term_hide_cursor();
@@ -196,42 +200,25 @@ child_create(char *argv[], struct winsize *winp)
 
   // Open log file if any
   if (*cfg.log) {
-    char * log = cs__wcstoutf(cfg.log);
+    //char * log = cs__wcstoutf(cfg.log);
+    char * log = cygwin_create_path(CCP_WIN_W_TO_POSIX, cfg.log);
+
     if (!strcmp(log, "-"))
       log_fd = fileno(stdout);
     else {
-# if HAS_LOCALES
-      char * valid_locale = setlocale(LC_CTYPE, 0);
-      if (valid_locale) {
-        valid_locale = strdup(valid_locale);
-        setlocale(LC_CTYPE, "C.UTF-8");
-#  if CYGWIN_VERSION_API_MINOR >= 222
-        cygwin_internal(CW_INT_SETLOCALE);  // fix internal locale
-#  endif
-      }
-# endif
-
       char * format = strchr(log, '%');
-      if (format && * ++ format == 'd') {
+      if (format && * ++ format == 'd' && !strchr(format, '%')) {
         char logf[strlen(log + 20)];
         sprintf(logf, log, getpid());
         log_fd = open(logf, O_WRONLY | O_CREAT | O_TRUNC, 0600);
       } else
         log_fd = open(log, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 
-# if HAS_LOCALES
-      if (valid_locale) {
-        setlocale(LC_CTYPE, valid_locale);
-#  if CYGWIN_VERSION_API_MINOR >= 222
-        cygwin_internal(CW_INT_SETLOCALE);  // fix internal locale
-#  endif
-        free(valid_locale);
-      }
-# endif
-
       if (log_fd < 0)
-        error("could not open log file");
+        childerror("could not open log file", false);
     }
+
+    free(log);
   }
 }
 
@@ -550,7 +537,7 @@ child_fork(int argc, char *argv[], int moni)
 
   if (cfg.daemonize) {
     if (clone < 0) {
-      error("could not fork child daemon");
+      childerror("could not fork child daemon", true);
       return;  // assume next fork will fail too
     }
     if (clone > 0) {  // parent waits for intermediate child
