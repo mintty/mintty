@@ -49,7 +49,7 @@ childerror(char * action, bool from_fork)
   char * err = strerror(errno);
   if (from_fork && errno == ENOENT)
     err = "There are no available terminals";
-  int len = asprintf(&msg, "\033[30;41m\033[KError: %s: %s.\r\n", action, err);
+  int len = asprintf(&msg, "\033[30;41m\033[KError: %s: %s.\033[0m\r\n", action, err);
   if (len > 0) {
     term_write(msg, len);
     free(msg);
@@ -90,7 +90,7 @@ child_create(char *argv[], struct winsize *winp)
     childerror("could not fork child process", true);
     if (rebase_prompt) {
       static const char msg[] =
-        "\033[30;43m\033[KDLL rebasing may be required. See 'rebaseall / rebase --help'.\r\n";
+        "\033[30;43m\033[KDLL rebasing may be required. See 'rebaseall / rebase --help'.\033[0m\r\n";
       term_write(msg, sizeof msg - 1);
     }
     term_hide_cursor();
@@ -200,7 +200,9 @@ child_create(char *argv[], struct winsize *winp)
 
   // Open log file if any
   if (*cfg.log) {
-    //char * log = cs__wcstoutf(cfg.log);
+    // use cygwin conversion function to escape unencoded characters 
+    // and thus avoid the locale trick (2.2.3)
+    //char * log = cygwin_create_path(CCP_WIN_W_TO_POSIX | CCP_RELATIVE, cfg.log);
     char * log = cygwin_create_path(CCP_WIN_W_TO_POSIX, cfg.log);
 
     if (!strcmp(log, "-"))
@@ -211,11 +213,15 @@ child_create(char *argv[], struct winsize *winp)
         char logf[strlen(log + 20)];
         sprintf(logf, log, getpid());
         log_fd = open(logf, O_WRONLY | O_CREAT | O_TRUNC, 0600);
-      } else
+      }
+      else
         log_fd = open(log, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 
-      if (log_fd < 0)
+      if (log_fd < 0) {
+        // report message and filename:
         childerror("could not open log file", false);
+        childerror(log, false);
+      }
     }
 
     free(log);
@@ -602,7 +608,8 @@ child_fork(int argc, char *argv[], int moni)
     if (clone_size_token) {
       setenvi("MINTTY_ROWS", term.rows);
       setenvi("MINTTY_COLS", term.cols);
-    } else
+    }
+    else
       clone_size_token = true;
     // provide environment to select monitor
     if (moni > 0)

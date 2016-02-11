@@ -1470,6 +1470,13 @@ show_msg(FILE *stream, string msg)
     MessageBox(0, msg, APPNAME, MB_OK);
 }
 
+static void
+show_msg_w(FILE *stream, wstring msg)
+{
+  if (fprintf(stream, "%ls", msg) < 0 || fputs("\n", stream) < 0 || fflush(stream) < 0)
+    MessageBoxW(0, msg, _W(APPNAME), MB_OK);
+}
+
 static no_return __attribute__((format(printf, 1, 2)))
 error(char *format, ...)
 {
@@ -1484,6 +1491,7 @@ error(char *format, ...)
   exit(1);
 }
 
+#ifdef old_warn
 static void __attribute__((format(printf, 1, 2)))
 warn(char *format, ...)
 {
@@ -1494,6 +1502,16 @@ warn(char *format, ...)
   va_end(va);
   msg = asform("%s: %s\n", main_argv[0], msg);
   show_msg(stderr, msg);
+}
+#endif
+
+static void
+warnw(wstring msg, wstring file, wstring err)
+{
+  wstring format = (err && *err) ? L"%s: %ls '%ls':\n%ls" : L"%s: %ls '%ls'";
+  wchar mess[wcslen(format) + strlen(main_argv[0]) + wcslen(msg) + wcslen(file) + (err ? wcslen(err) : 0)];
+  swprintf(mess, lengthof(mess), format, main_argv[0], msg, file, err);
+  show_msg_w(stderr, mess);
 }
 
 void
@@ -2003,6 +2021,8 @@ main(int argc, char *argv[])
   HICON large_icon = 0, small_icon = 0;
   if (*cfg.icon) {
     //string icon_file = strdup(cfg.icon);
+    // could use cygwin_create_path(CCP_WIN_W_TO_POSIX, cfg.icon) instead 
+    // to avoid the locale trick below
     string icon_file = cs__wcstoutf(cfg.icon);
     uint icon_index = 0;
     char *comma = strrchr(icon_file, ',');
@@ -2049,15 +2069,15 @@ main(int argc, char *argv[])
       small_icon = 0;
       uint err = GetLastError();
       if (err) {
-        char msg[1024];
-        FormatMessage(
+        wchar winmsg[1024];
+        FormatMessageW(
           FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK,
-          0, err, 0, msg, sizeof msg, 0
+          0, err, 0, winmsg, lengthof(winmsg), 0
         );
-        warn("could not load icon from '%s': %s", cs__wcstombs(cfg.icon), msg);
+        warnw(L"could not load icon file", cfg.icon, winmsg);
       }
       else
-        warn("could not load icon from '%s'", cs__wcstombs(cfg.icon));
+        warnw(L"could not load icon file", cfg.icon, L"");
     }
     delete(icon_file);
   }
