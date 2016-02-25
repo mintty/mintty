@@ -127,7 +127,7 @@ window border relative to the monitor.
 \(en Otherwise, coordinates are absolute and address the common multi-monitor 
 address space as provided by Windows.
 
-Note: For another option to select the monitor for a new mintty window, 
+\fINote:\fP For another option to select the monitor for a new mintty window, 
 see the description of Alt+F2.
 
 .TP
@@ -552,7 +552,7 @@ Configuration changes are saved to the last writable file specified with
 Individual settings can also be specified on the command line using the 
 \fB-o\fP/\fB--option\fP.
 
-Note: Many string values in the \fIminttyrc\fP files, especially those 
+\fINote:\fP Many string values in the \fIminttyrc\fP files, especially those 
 referring to file names or Windows items, are \fBUnicode-enabled\fP, 
 meaning they are expected to be UTF-8-encoded in the configuration 
 file independently of the encoding the terminal runs in; as a fallback, 
@@ -561,8 +561,8 @@ the system ANSI encoding.
 (This does not apply to the same configuration settings when given on the 
 command-line.)
 .br
-Unicode-enabled settings: BellFile, Title, ExitTitle, Icon, Log, Printer, 
-Answerback, Class, AppID, AppName, AppLaunchCmd.
+Unicode-enabled settings: BellFile, ThemeFile, Title, ExitTitle, Icon, Log, 
+Printer, Answerback, Class, AppID, AppName, AppLaunchCmd.
 
 Be careful when running multiple instances of mintty. If options are saved 
 from different instances, obviously they can overwrite each other; if 
@@ -596,6 +596,13 @@ Also X11 color names are supported.
 \(en \fBBackground\fP (BackgroundColour=0,0,0)
 .br
 \(en \fBCursor\fP (CursorColour=191,191,191)
+
+\(en \fBTheme\fP (ThemeFile=): 
+The popup offers theme files as stored in the resource directory 
+$HOME/.mintty/themes for selection as a colour scheme.
+The option can also be set to a filename (like D:/.../solarized-light.minttyrc).
+.br
+\fINote:\fP This option does not work on the command line; use \fB-C\fP instead.
 
 .TP
 \fBTransparency\fP (Transparency=off)
@@ -980,19 +987,16 @@ is the default.
 
 .TP
 \fBAnswerback\fP (Answerback=)
-
 The answerback string is sent in response to the \fB^E\fP (ENQ) character.
 By default, this is empty.
 
 .TP
 \fBBell\fP
-
-The three options here determine what effects the bell character \fB^G\fP
-has.  Default beep and taskbar highlighting are enabled by default.
-Mintty can also play wave sounds configured in \fI~/.minttyrc\fP, 
-or frequency beeps.
+The options here determine what effects the bell character \fB^G\fP has.
+Default beep and taskbar highlighting are enabled by default.
+Mintty can also play wave sounds or frequency beeps.
 .RS
-\(en \fBBell system type\fP (BellType=1): Preferred system sound, values:
+\(en \fBBell system sound\fP (BellType=1): Preferred system sound, values:
 .RS
 \fB-1\fP : Simple Beep
 .br
@@ -1008,17 +1012,23 @@ or frequency beeps.
 .br
 \fB5\fP : Asterisk
 .RE
+\(en \fBWave\fP (BellFile=): 
+The popup offers wave files as stored in the resource directory 
+$HOME/.mintty/sounds for selection. The option can also be set 
+to a filename (like D:/.../soundfile.wav).
+This setting overrides the Bell system sound except No Beep.
+.br
+\(en \fBPlay\fP: The button plays the selected sound for testing.
+The sound is also played when it is changed.
+.br
 \(en \fBFlash\fP (BellFlash=no): Briefly invert the foreground and background
 colours.
 .br
 \(en \fBHighlight in taskbar\fP (BellTaskbar=yes): Change the colour of mintty's
 taskbar entry if the mintty window is not active.
 
-Further configuration options for a \fBBell wave file\fP or a 
-\fBBell frequency beep\fP are currently available for 
-\fI/etc/minttyrc\fP and \fI~/.minttyrc\fP or as \fB-o\fP command line option only:
-.br
-\(en\fB\fP (BellFile=): D:/.../soundfile.wav (overrides system sounds).
+A simple \fBfrequency beep\fP can be configured in the configuration file 
+or on the command line:
 .br
 \(en\fB\fP (BellFreq=0): Beep sound frequency (overrides system sounds).
 .br
@@ -1027,11 +1037,15 @@ Further configuration options for a \fBBell wave file\fP or a
 
 .TP
 \fBPrinter\fP (Printer=)
-The ANSI standard defines control sequences for sending text to a printer,
+The ANSI standard defines control sequences ("Media Copy") for sending 
+text to a printer,
 which are used by some terminal applications such as the mail reader
 \fBpine\fP.
 The Windows printer to send such text to can be selected here.
 By default, printing is disabled.
+If printing gets disabled in the Options menu, an active print connection 
+will be ended; if the printer is changed, an active print connection 
+will be continued with the previous printer.
 
 .TP
 \fBPrompt about running processes on close\fP (ConfirmExit=yes)
@@ -1160,12 +1174,12 @@ This is only effective if combined with an AppName option and the
 command-line option --store-taskbar-properties to make it persistent.
 It should also be combined with an explicit and unique AppID.
 
-Note: The command must be given in Windows pathname syntax (e.g. 
+\fINote:\fP The command must be given in Windows pathname syntax (e.g. 
 AppLaunchCmd='C:\\cygwin\\bin\\mintty -T mytitle -').
 
-Note: An explicit icon supplied with the -i option can also be stored with 
-the persistent properties; note, however, that for this purpose, it 
-must be given in Windows pathname syntax and it must include a 
+\fINote:\fP An explicit icon supplied with the -i option can also be stored 
+with the persistent properties; note, however, that for this purpose, 
+it must be given in Windows pathname syntax and it must include a 
 resource index; also, for consistent appearance, another -i option 
 referring to the same icon should be included in the AppLaunchCmd 
 (if the mintty invocation does not include an icon parameter but was 
