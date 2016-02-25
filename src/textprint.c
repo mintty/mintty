@@ -77,7 +77,7 @@ printer_finish_job(void)
   if (printer) {
     close(pd);
 
-#if CYGWIN_VERSION_DLL_MAJOR >= 1007
+#if CYGWIN_VERSION_API_MINOR >= 181
     char * wf = (char *)cygwin_create_path(CCP_POSIX_TO_WIN_A, pf);
 #else
     char * wf = newn(char, MAX_PATH);

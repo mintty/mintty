@@ -439,7 +439,7 @@ paste_hdrop(HDROP drop)
   uint n = DragQueryFileW(drop, -1, 0, 0);
   for (uint i = 0; i < n; i++) {
 
-#if CYGWIN_VERSION_DLL_MAJOR >= 1007
+#if CYGWIN_VERSION_API_MINOR >= 181
     uint wfn_len = DragQueryFileW(drop, i, 0, 0);
     wchar wfn[wfn_len + 1];
     DragQueryFileW(drop, i, wfn, wfn_len + 1);

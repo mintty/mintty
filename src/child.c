@@ -33,9 +33,6 @@ int forkpty(int *, char *, struct termios *, struct winsize *);
 #include <winuser.h>
 #endif
 
-char * home;
-char * cmd;
-bool icon_is_from_shortcut = false;
 bool clone_size_token = true;
 
 static pid_t pid;
@@ -202,8 +199,15 @@ child_create(char *argv[], struct winsize *winp)
   if (*cfg.log) {
     // use cygwin conversion function to escape unencoded characters 
     // and thus avoid the locale trick (2.2.3)
+#if CYGWIN_VERSION_API_MINOR >= 181
     //char * log = cygwin_create_path(CCP_WIN_W_TO_POSIX | CCP_RELATIVE, cfg.log);
     char * log = cygwin_create_path(CCP_WIN_W_TO_POSIX, cfg.log);
+#else
+    char * logrel = cs__wcstombs(cfg.log);
+    char * log = newn(char, MAX_PATH);
+    cygwin_conv_to_full_posix_path(logrel, log);
+    free(logrel);
+#endif
 
     if (!strcmp(log, "-"))
       log_fd = fileno(stdout);
@@ -502,7 +506,7 @@ child_conv_path(wstring wpath)
   else
     exp_path = path;
 
-#if CYGWIN_VERSION_DLL_MAJOR >= 1007
+#if CYGWIN_VERSION_API_MINOR >= 181
 # if CYGWIN_VERSION_API_MINOR >= 222
   // CW_INT_SETLOCALE was introduced in API 0.222
   cygwin_internal(CW_INT_SETLOCALE);
