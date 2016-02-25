@@ -4,6 +4,8 @@
 # - zip: Zip for standalone release.
 # - clean: Delete generated files.
 
+# make parameter CCOPT, e.g. for make CCOPT=-Wno-unused
+
 #############################################################################
 # Variables intended for setting on the make command line.
 # - RELEASE: release number for packaging
@@ -108,11 +110,14 @@ all:	bin
 DEPOPT=-MMD -MP
 #DEPOPT=
 
+CCOPT=
+CCFLAGS:=$(CFLAGS) $(CCOPT)
+
 %.o: %.c
-	$(CC) -c $(DEPOPT) $(CPPFLAGS) $(CFLAGS) $<
+	$(CC) -c $(DEPOPT) $(CPPFLAGS) $(CCFLAGS) $<
 
 $(BINDIR)/%.o: %.c
-	$(CC) -c $(DEPOPT) $(CPPFLAGS) $(CFLAGS) $< -o $(BINDIR)/$*.o
+	$(CC) -c $(DEPOPT) $(CPPFLAGS) $(CCFLAGS) $< -o $(BINDIR)/$*.o
 
 %.o: %.rc %.mft
 	$(RC) --preprocessor '$(CC) -E -xc -DRC_INVOKED $(DEPOPT) $(CPPFLAGS)' $< $*.o
