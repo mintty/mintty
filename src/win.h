@@ -11,6 +11,10 @@
 #define trace_resize(params)
 #endif
 
+extern char * home;
+extern char * cmd;
+extern bool icon_is_from_shortcut;
+
 void exit_mintty();
 void report_pos();
 void win_reconfig(void);

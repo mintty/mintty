@@ -262,12 +262,15 @@ Different notations are accepted for colour specifications:
 * *color-name* (using X11 color names, e.g. ```echo -ne '\e]10;bisque2\a'```)
 
 
-## Using colour schemes ##
+## Using colour schemes (“Themes”) ##
 
 Colour schemes (that redefine ANSI colours and possibly foreground/background 
 colours) can be loaded with the option ```-C``` (capital C) or ```--loadconfig``` 
 which loads a configuration file read-only, i.e. configuration changes 
-are not saved to this file.
+are not saved to this file, or with the new setting _ThemeFile_.
+
+In the Options menu, section _Looks_, the _Theme_ popup offers theme files 
+as stored in the resource directory $HOME/.mintty/themes for selection.
 
 There is an excellent colour scheme designer available:
 [4bit Terminal Color Scheme Designer](http://ciembor.github.io/4bit/#) 

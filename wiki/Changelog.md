@@ -1,5 +1,14 @@
+Configuration and Options menu:
+  * Colour schemes: New option ThemeFile, configuration also in Options menu (~#193).
+  * Configuration of .wav bell sounds (option BellFile, #369) in Options menu.
+  * Resource directory $HOME/.mintty for theme and bell files.
+
+Start and error handling:
+  * Fixed -C/--loadconfig to not overwrite common options in main config file.
   * Fixed format substitution for log file in case of excess % conversions.
+  * Report full pathname of log file if creation fails.
   * Improved and fixed format of child creation error messages.
+  * Improved reporting failed icon loading with non-ANSI icon filenames.
 
 ### 2.2.3 (7 Feb 2016) ###
 

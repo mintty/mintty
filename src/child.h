@@ -3,9 +3,6 @@
 
 #include <sys/termios.h>
 
-extern char * home;
-extern char * cmd;
-extern bool icon_is_from_shortcut;
 extern bool clone_size_token;
 
 extern void child_create(char * argv[], struct winsize * winp);
