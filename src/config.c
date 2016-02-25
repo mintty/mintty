@@ -18,6 +18,11 @@
 #define dont_support_blurred
 
 
+#if CYGWIN_VERSION_API_MINOR < 74
+// needed for MinGW MSYS
+#define wcscpy(tgt, src) memcpy(tgt, src, (wcslen(src) + 1) * sizeof(wchar))
+#endif
+
 #if CYGWIN_VERSION_API_MINOR >= 222
 static wstring rc_filename = 0;
 #else
@@ -29,10 +34,11 @@ const config default_cfg = {
   .fg_colour = 0xBFBFBF,
   .bold_colour = (colour)-1,
   .bg_colour = 0x000000,
+  .cursor_colour = 0xBFBFBF,
   .search_fg_colour = 0x000000,
   .search_bg_colour = 0x00DDDD,
   .search_current_colour = 0x0099DD,
-  .cursor_colour = 0xBFBFBF,
+  .theme_file = L"",
   .transparency = 0,
   .blurred = false,
   .opaque_when_focused = false,
@@ -134,8 +140,7 @@ const config default_cfg = {
   }
 };
 
-config cfg, new_cfg;
-static config file_cfg;
+config cfg, new_cfg, file_cfg;
 
 typedef enum {
   OPT_BOOL, OPT_MOD, OPT_TRANS, OPT_CURSOR, OPT_FONTSMOOTH,
@@ -152,14 +157,19 @@ static const struct {
   ushort offset;
 }
 options[] = {
-  // Looks
+  // Colour base options;
+  // check_legacy_options() assumes these are the first three here:
   {"ForegroundColour", OPT_COLOUR, offcfg(fg_colour)},
-  {"BoldColour", OPT_COLOUR, offcfg(bold_colour)},
   {"BackgroundColour", OPT_COLOUR, offcfg(bg_colour)},
+  {"UseSystemColours", OPT_BOOL | OPT_LEGACY, offcfg(use_system_colours)},
+
+  // Looks
+  {"BoldColour", OPT_COLOUR, offcfg(bold_colour)},
+  {"CursorColour", OPT_COLOUR, offcfg(cursor_colour)},
   {"SearchForegroundColour", OPT_COLOUR, offcfg(search_fg_colour)},
   {"SearchBackgroundColour", OPT_COLOUR, offcfg(search_bg_colour)},
   {"SearchCurrentColour", OPT_COLOUR, offcfg(search_current_colour)},
-  {"CursorColour", OPT_COLOUR, offcfg(cursor_colour)},
+  {"ThemeFile", OPT_WSTRING, offcfg(theme_file)},
   {"Transparency", OPT_TRANS, offcfg(transparency)},
 #ifdef support_blurred
   {"Blur", OPT_BOOL, offcfg(blurred)},
@@ -276,7 +286,6 @@ options[] = {
   {"BoldWhite", OPT_COLOUR, offcfg(ansi_colours[BOLD_WHITE_I])},
 
   // Legacy
-  {"UseSystemColours", OPT_BOOL | OPT_LEGACY, offcfg(use_system_colours)},
   {"BoldAsBright", OPT_BOOL | OPT_LEGACY, offcfg(bold_as_colour)},
   {"FontQuality", OPT_FONTSMOOTH | OPT_LEGACY, offcfg(font_smoothing)},
 };
@@ -373,7 +382,8 @@ find_option(string name)
   return -1;
 }
 
-static uchar file_opts[lengthof(options)], arg_opts[lengthof(options)];
+static uchar file_opts[lengthof(options)];
+static uchar arg_opts[lengthof(options)];
 static uint file_opts_num, arg_opts_num;
 
 static bool
@@ -385,6 +395,11 @@ seen_file_option(uint i)
 static void
 remember_file_option(uint i)
 {
+  if (i > 255) {
+    fprintf(stderr, "Internal error: too many options.\n");
+    exit(1);
+  }
+
   if (!seen_file_option(i))
     file_opts[file_opts_num++] = i;
 }
@@ -398,6 +413,11 @@ seen_arg_option(uint i)
 static void
 remember_arg_option(uint i)
 {
+  if (i > 255) {
+    fprintf(stderr, "Internal error: too many options.\n");
+    exit(1);
+  }
+
   if (!seen_arg_option(i))
     arg_opts[arg_opts_num++] = i;
 }
@@ -567,11 +587,53 @@ parse_arg_option(string option)
   check_arg_option(parse_option(option, false));
 }
 
+#ifdef debug_theme
+#define trace_theme(params)	printf params
+#else
+#define trace_theme(params)
+#endif
+
+static void
+load_theme(wstring theme)
+{
+  wchar * theme_file = (wchar *)theme;
+  bool free_theme_file = false;
+  if (*theme && !wcschr(theme, L'/') && !wcschr(theme, L'\\')) {
+    string subfolder = ".mintty/themes";
+    char rcdir[strlen(home) + strlen(subfolder) + 2];
+    sprintf(rcdir, "%s/%s", home, subfolder);
+    wchar * rcpat = cygwin_create_path(CCP_POSIX_TO_WIN_W, rcdir);
+    int len = wcslen(rcpat);
+    rcpat = renewn(rcpat, len + wcslen(theme_file) + 2);
+    rcpat[len++] = L'/';
+    wcscpy(&rcpat[len], theme_file);
+    theme_file = rcpat;
+    free_theme_file = true;
+  }
+  char * filename = cygwin_create_path(CCP_WIN_W_TO_POSIX, theme_file);
+  if (free_theme_file)
+    free(theme_file);
+  trace_theme(("load_theme -> <%s>\n", filename));
+  load_config(filename, false);
+  free(filename);
+}
+
 void
 load_config(string filename, bool to_save)
 {
+#ifdef old_config
+#else
+  if (!to_save) {
+    // restore base configuration, without theme mix-ins
+    copy_config(&cfg, &file_cfg);
+    trace_theme(("[loa] copy_config cfg<-file\n"));
+  }
+#endif
+
   if (access(filename, R_OK) == 0 && access(filename, W_OK) < 0)
     to_save = false;
+
+  wchar * old_theme_file = wcsdup(cfg.theme_file);
 
   if (to_save) {
     file_opts_num = arg_opts_num = 0;
@@ -603,7 +665,20 @@ load_config(string filename, bool to_save)
 
   check_legacy_options(remember_file_option);
 
+#ifdef old_config
   copy_config(&file_cfg, &cfg);
+#else
+  if (to_save) {
+    copy_config(&file_cfg, &cfg);
+    trace_theme(("[sav] copy_config file<-cfg\n"));
+  }
+
+  bool theme_changed = wcscmp(old_theme_file, cfg.theme_file);
+  free(old_theme_file);
+
+  if (to_save && theme_changed)
+    load_theme(cfg.theme_file);
+#endif
 }
 
 void
@@ -633,6 +708,7 @@ void
 init_config(void)
 {
   copy_config(&cfg, &default_cfg);
+  trace_theme(("[ini] copy_config cfg<-default\n"));
 }
 
 void
@@ -687,7 +763,11 @@ save_config(void)
       opt_type type = options[i].type;
       if (!(type & OPT_LEGACY)) {
         fprintf(file, "%s=", options[i].name);
+#ifdef old_config
         void *cfg_p = seen_arg_option(i) ? &file_cfg : &cfg;
+#else
+        void *cfg_p = &file_cfg;
+#endif
         void *val_p = cfg_p + options[i].offset;
         switch (type) {
           when OPT_STRING:
@@ -737,7 +817,11 @@ apply_config(bool save)
   for (uint i = 0; i < lengthof(options); i++) {
     opt_type type = options[i].type;
     uint offset = options[i].offset;
+#ifdef old_config
     void *val_p = (void *)&cfg + offset;
+#else
+    void *val_p = (void *)&file_cfg + offset;
+#endif
     void *new_val_p = (void *)&new_cfg + offset;
     bool changed;
     switch (type) {
@@ -754,9 +838,29 @@ apply_config(bool save)
       remember_file_option(i);
   }
 
-  win_reconfig();
+#ifdef old_config
+  win_reconfig();  // copy_config(&cfg, &new_cfg);
   if (save)
     save_config();
+#else
+  copy_config(&file_cfg, &new_cfg);
+  trace_theme(("[app] copy_config file<-new\n"));
+  if (save)
+    save_config();
+  bool had_theme = !!*cfg.theme_file;
+
+  win_reconfig();  // copy_config(&cfg, &new_cfg);
+  trace_theme(("[rec] copy_config cfg<-new\n"));
+  trace_theme(("green %06X new %06X file %06X bg %06X new %06X file %06X\n", cfg.ansi_colours[GREEN_I], new_cfg.ansi_colours[GREEN_I], file_cfg.ansi_colours[GREEN_I], cfg.bg_colour, new_cfg.bg_colour, file_cfg.bg_colour));
+
+  if (*cfg.theme_file) {
+    load_theme(cfg.theme_file);
+    trace_theme(("green %06X new %06X file %06X bg %06X new %06X file %06X\n", cfg.ansi_colours[GREEN_I], new_cfg.ansi_colours[GREEN_I], file_cfg.ansi_colours[GREEN_I], cfg.bg_colour, new_cfg.bg_colour, file_cfg.bg_colour));
+    win_reset_colours();
+  }
+  else if (had_theme)
+    win_reset_colours();
+#endif
 }
 
 static void
@@ -964,7 +1068,93 @@ bell_handler(control *ctrl, int event)
         }
       }
       free(beep);
+      win_bell(&new_cfg);
     }
+  }
+}
+
+#include "winpriv.h"  // home
+
+static void
+add_file_resources(control *ctrl, wstring pattern)
+{
+  string subfolder = ".mintty";
+  char rcdir[strlen(home) + strlen(subfolder) + 2];
+  sprintf(rcdir, "%s/%s", home, subfolder);
+  wchar * rcpat = cygwin_create_path(CCP_POSIX_TO_WIN_W, rcdir);
+  int len = wcslen(rcpat);
+  rcpat = renewn(rcpat, len + wcslen(pattern) + 2);
+  rcpat[len++] = L'/';
+  wcscpy(&rcpat[len], pattern);
+
+  wstring suf = wcsrchr(pattern, L'.');
+  int sufl = suf ? wcslen(suf) : 0;
+
+  WIN32_FIND_DATAW ffd;
+  HANDLE hFind = FindFirstFileW(rcpat, &ffd);
+  int ok = hFind != INVALID_HANDLE_VALUE;
+  //if (!ok) retry with "/usr/share/mintty"?
+  //(then check also win_bell() and load_theme())
+  while (ok) {
+    if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+      // skip
+    }
+    else {
+      //LARGE_INTEGER filesize = {.LowPart = ffd.nFileSizeLow, .HighPart = ffd.nFileSizeHigh};
+      //long s = filesize.QuadPart;
+
+      // strip suffix
+      int len = wcslen(ffd.cFileName);
+      if (ffd.cFileName[0] != '.' && ffd.cFileName[len - 1] != '~') {
+        ffd.cFileName[len - sufl] = 0;
+        dlg_listbox_add_w(ctrl, ffd.cFileName);
+      }
+    }
+    ok = FindNextFileW(hFind, &ffd);
+  }
+  FindClose(hFind);
+}
+
+static void
+bellfile_handler(control *ctrl, int event)
+{
+  const wstring NONE = L"◇ None (system sound) ◇";  // ♢◇
+  const wstring CFG_NONE = L"";
+  wstring bell_file = new_cfg.bell_file;
+  if (event == EVENT_REFRESH) {
+    dlg_listbox_clear(ctrl);
+    dlg_listbox_add_w(ctrl, NONE);
+    add_file_resources(ctrl, L"sounds/*.wav"); //  dlg_listbox_add_w(ctrl, L"...");
+    // strip std dir prefix...
+    dlg_editbox_set_w(ctrl, *bell_file ? bell_file : NONE);
+  }
+  else if (event == EVENT_VALCHANGE || event == EVENT_SELCHANGE) {
+    dlg_editbox_get_w(ctrl, &bell_file);
+    if (!wcscmp(bell_file, NONE))
+      wstrset(&bell_file, CFG_NONE);
+    // add std dir prefix?
+    new_cfg.bell_file = bell_file;
+    win_bell(&new_cfg);
+  }
+}
+
+static void
+theme_handler(control *ctrl, int event)
+{
+  const wstring NONE = L"◇ None ◇";  // ♢◇
+  const wstring CFG_NONE = L"";
+  wstring theme_file = new_cfg.theme_file;
+  if (event == EVENT_REFRESH) {
+    dlg_listbox_clear(ctrl);
+    dlg_listbox_add_w(ctrl, NONE);
+    add_file_resources(ctrl, L"themes/*"); //  dlg_listbox_add_w(ctrl, L"...");
+    dlg_editbox_set_w(ctrl, *theme_file ? theme_file : NONE);
+  }
+  else if (event == EVENT_VALCHANGE || event == EVENT_SELCHANGE) {
+    dlg_editbox_get_w(ctrl, &theme_file);
+    if (!wcscmp(theme_file, NONE))
+      wstrset(&theme_file, CFG_NONE);
+    new_cfg.theme_file = theme_file;
   }
 }
 
@@ -1012,6 +1202,9 @@ setup_config_box(controlbox * b)
   ctrl_pushbutton(
     s, "&Cursor...", dlg_stdcolour_handler, &new_cfg.cursor_colour
   )->column = 2;
+  ctrl_combobox(
+    s, "&Theme", 80, theme_handler, &new_cfg.theme_file
+  );
 
   s = ctrl_new_set(b, "Looks", "Transparency");
   bool with_glass = win_is_glass_available();
@@ -1252,7 +1445,7 @@ setup_config_box(controlbox * b)
     s, "&Answerback", 100, dlg_stdstringbox_handler, &new_cfg.answerback
   )->column = 1;
 
-  s = ctrl_new_set(b, "Terminal", "Bell sound (overridden by BellFreq or BellFile)");
+  s = ctrl_new_set(b, "Terminal", "Bell (sound overridden by Wave/BellFile or BellFreq)");
   ctrl_columns(s, 3, 36, 19, 45);
   ctrl_combobox(
     s, null, 100, bell_handler, 0
@@ -1264,18 +1457,15 @@ setup_config_box(controlbox * b)
     s, "&Highlight in taskbar", dlg_stdcheckbox_handler, &new_cfg.bell_taskbar
   )->column = 2;
   ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
-  ctrl_columns(s, 2, 80, 20);
-#ifdef use_bellfileselection
-  ctrl_combobox(
-    s, "&Wave", 80,
-    bellfile_selector, &new_cfg.bell_file
-  )->column = 0;
-#else
+  ctrl_columns(s, 2, 82, 18);
 #ifdef use_belleditbox
   ctrl_editbox(
-    s, "&Wave", 80, dlg_stdstringbox_handler, &new_cfg.bell_file
+    s, "&Wave", 83, dlg_stdstringbox_handler, &new_cfg.bell_file
   )->column = 0;
-#endif
+#else
+  ctrl_combobox(
+    s, "&Wave", 83, bellfile_handler, &new_cfg.bell_file
+  )->column = 0;
 #endif
   ctrl_pushbutton(
     s, "&Play", bell_tester, 0

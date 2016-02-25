@@ -44,6 +44,7 @@ typedef struct {
   // Looks
   colour fg_colour, bold_colour, bg_colour, cursor_colour;
   colour search_fg_colour, search_bg_colour, search_current_colour;
+  wstring theme_file;
   char transparency;
   bool blurred;
   bool opaque_when_focused;
@@ -129,7 +130,7 @@ typedef struct {
   bool use_system_colours;
 } config;
 
-extern config cfg, new_cfg;
+extern config cfg, new_cfg, file_cfg;
 
 extern void init_config(void);
 extern void load_config(string filename, bool to_save);
