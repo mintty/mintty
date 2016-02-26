@@ -819,7 +819,7 @@ select_font(winctrl *c)
 {
   font_spec fs = *(font_spec *) c->data;
   HDC dc = GetDC(0);
-  LOGFONT lf;
+  LOGFONTW lf;
   lf.lfHeight = -MulDiv(fs.size, GetDeviceCaps(dc, LOGPIXELSY), 72);
   ReleaseDC(0, dc);
   lf.lfWidth = lf.lfEscapement = lf.lfOrientation = 0;
@@ -830,9 +830,16 @@ select_font(winctrl *c)
   lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
   lf.lfQuality = DEFAULT_QUALITY;
   lf.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
-  strlcpy(lf.lfFaceName, fs.name, sizeof lf.lfFaceName);
+#if CYGWIN_VERSION_API_MINOR >= 201
+  swprintf(lf.lfFaceName, lengthof(lf.lfFaceName), L"%ls", fs.name);
+#else
+  if (wcslen(fs.name) < lengthof(lf.lfFaceName))
+    wcscpy(lf.lfFaceName, fs.name);
+  else
+    wcscpy(lf.lfFaceName, L"Lucida Console");
+#endif
 
-  CHOOSEFONT cf;
+  CHOOSEFONTW cf;
   cf.lStructSize = sizeof (cf);
   cf.hwndOwner = dlg.wnd;
   cf.lpLogFont = &lf;
@@ -840,8 +847,8 @@ select_font(winctrl *c)
     CF_FIXEDPITCHONLY | CF_FORCEFONTEXIST | CF_INITTOLOGFONTSTRUCT |
     CF_SCREENFONTS | CF_NOSCRIPTSEL;
 
-  if (ChooseFont(&cf)) {
-    strset(&fs.name, lf.lfFaceName);
+  if (ChooseFontW(&cf)) {
+    wstrset(&fs.name, lf.lfFaceName);
     fs.isbold = (lf.lfWeight == FW_BOLD);
     fs.size = cf.iPointSize / 10;
     dlg_fontsel_set(c->ctrl, &fs);
@@ -1205,14 +1212,29 @@ dlg_fontsel_set(control *ctrl, font_spec *fs)
 
   *(font_spec *) c->data = *fs;   /* structure copy */
 
-  char *boldstr = fs->isbold ? "bold, " : "";
-  char *buf =
+  char * boldstr = fs->isbold ? "bold, " : "";
+#if CYGWIN_VERSION_API_MINOR >= 201
+  int wsize = wcslen(fs->name) + strlen(boldstr) + fs->size ? 31 : 17;
+  wchar * wbuf = newn(wchar, wsize);
+  if (fs->size)
+    swprintf(wbuf, wsize, L"%ls, %s%d-%s", fs->name, boldstr, abs(fs->size),
+             fs->size < 0 ? "pixel" : "point");
+  else
+    swprintf(wbuf, wsize, L"%ls, %sdefault height", fs->name, boldstr);
+  SetDlgItemTextW(dlg.wnd, c->base_id + 1, wbuf);
+  free(wbuf);
+#else
+  // no swprintf, don't like to fiddle label together for old MinGW
+  char * fn = cs__wcstombs(fs->name);
+  char * buf =
     fs->size
-    ? asform("%s, %s%d-%s", fs->name, boldstr, abs(fs->size),
+    ? asform("%s, %s%d-%s", fn, boldstr, abs(fs->size),
              fs->size < 0 ? "pixel" : "point")
-    : asform("%s, %sdefault height", fs->name, boldstr);
+    : asform("%s, %sdefault height", fn, boldstr);
+  free(fn);
   SetDlgItemText(dlg.wnd, c->base_id + 1, buf);
   free(buf);
+#endif
 }
 
 void

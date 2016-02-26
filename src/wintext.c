@@ -165,7 +165,7 @@ static HFONT
 create_font(int weight, bool underline)
 {
   return
-    CreateFont(
+    CreateFontW(
       font_height, 0, 0, 0, weight, false, underline, false,
       DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
       get_font_quality(), FIXED_PITCH | FF_DONTCARE,
@@ -531,9 +531,9 @@ another_font(int fontno)
     u = true;
 
   fonts[fontno] =
-    CreateFont(font_height * (1 + !!(fontno & FONT_HIGH)), x, 0, 0, w, i, u, s,
-               DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-               get_font_quality(), FIXED_PITCH | FF_DONTCARE, cfg.font.name);
+    CreateFontW(font_height * (1 + !!(fontno & FONT_HIGH)), x, 0, 0, w, i, u, s,
+                DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+                get_font_quality(), FIXED_PITCH | FF_DONTCARE, cfg.font.name);
 
   fontflag[fontno] = 1;
 }

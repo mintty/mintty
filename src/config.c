@@ -45,7 +45,7 @@ const config default_cfg = {
   .cursor_type = CUR_LINE,
   .cursor_blinks = true,
   // Text
-  .font = {.name = "Lucida Console", .isbold = false, .size = 9},
+  .font = {.name = L"Lucida Console", .isbold = false, .size = 9},
   .font_smoothing = FS_DEFAULT,
   .bold_as_font = -1,  // -1 means "the opposite of bold_as_colour"
   .bold_as_colour = true,
@@ -179,7 +179,7 @@ options[] = {
   {"CursorBlinks", OPT_BOOL, offcfg(cursor_blinks)},
 
   // Text
-  {"Font", OPT_STRING, offcfg(font.name)},
+  {"Font", OPT_WSTRING, offcfg(font.name)},
   {"FontIsBold", OPT_BOOL, offcfg(font.isbold)},
   {"FontHeight", OPT_INT, offcfg(font.size)},
   {"FontSmoothing", OPT_FONTSMOOTH, offcfg(font_smoothing)},
@@ -593,7 +593,7 @@ parse_arg_option(string option)
 #define trace_theme(params)
 #endif
 
-static void
+void
 load_theme(wstring theme)
 {
   wchar * theme_file = (wchar *)theme;
@@ -676,8 +676,10 @@ load_config(string filename, bool to_save)
   bool theme_changed = wcscmp(old_theme_file, cfg.theme_file);
   free(old_theme_file);
 
+#ifdef mis_config
   if (to_save && theme_changed)
     load_theme(cfg.theme_file);
+#endif
 #endif
 }
 
@@ -905,7 +907,7 @@ current_size_handler(control *unused(ctrl), int event)
 }
 
 static void
-printerbox_handler(control *ctrl, int event)
+printer_handler(control *ctrl, int event)
 {
   const wstring NONE = L"◇ None (printing disabled) ◇";  // ♢◇
   const wstring CFG_NONE = L"";
@@ -1474,11 +1476,11 @@ setup_config_box(controlbox * b)
   s = ctrl_new_set(b, "Terminal", "Printer");
 #ifdef use_multi_listbox_for_printers
   ctrl_listbox(
-    s, null, 4, 100, printerbox_handler, 0
+    s, null, 4, 100, printer_handler, 0
   );
 #else
   ctrl_combobox(
-    s, null, 100, printerbox_handler, 0
+    s, null, 100, printer_handler, 0
   );
 #endif
 

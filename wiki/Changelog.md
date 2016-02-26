@@ -2,6 +2,7 @@ Configuration and Options menu:
   * Colour schemes: New option ThemeFile, configuration also in Options menu (~#193).
   * Configuration of .wav bell sounds (option BellFile, #369) in Options menu.
   * Resource directory $HOME/.mintty for theme and bell files.
+  * Unicode-enabled Font setting (so e.g. mintty -o Font=Sütterlin works).
 
 Start and error handling:
   * Fixed -C/--loadconfig to not overwrite common options in main config file.

@@ -118,11 +118,20 @@ win_copy(const wchar *data, uint *attrs, int len)
       MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS,
                           (char[]){i}, 1, unitab + i, 1);
 
-    rtfsize = 100 + strlen(cfg.font.name);
+    char * rtffontname = newn(char, wcslen(cfg.font.name) * 9 + 1);
+    char * rtffnpoi = rtffontname;
+    for (uint i = 0; i < wcslen(cfg.font.name); i++)
+      if (!(cfg.font.name[i] & 0xFF80) && !strchr("\\;{}", cfg.font.name[i]))
+        *rtffnpoi++ = cfg.font.name[i];
+      else
+        rtffnpoi += sprintf(rtffnpoi, "\\u%d '", cfg.font.name[i]);
+    *rtffnpoi = '\0';
+    rtfsize = 100 + strlen(rtffontname);
     rtf = newn(char, rtfsize);
     rtflen = sprintf(rtf,
       "{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0\\fmodern %s;}}\\f0\\fs%d",
-      cfg.font.name, cfg.font.size * 2);
+      rtffontname, cfg.font.size * 2);
+    free(rtffontname);
 
    /*
     * Add colour palette
@@ -131,7 +140,7 @@ win_copy(const wchar *data, uint *attrs, int len)
 
    /*
     * First - Determine all colours in use
-    *    o  Foregound and background colours share the same palette
+    *    o  Foreground and background colours share the same palette
     */
     memset(palette, 0, sizeof (palette));
     for (int i = 0; i < (len - 1); i++) {

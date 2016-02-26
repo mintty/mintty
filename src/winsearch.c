@@ -224,7 +224,7 @@ win_toggle_search(bool show, bool focus)
                                      0, 0, 0, 0,
                                      search_wnd, NULL, inst, NULL);
 
-    search_font = CreateFont(ctrl_height - 4, 0, 0, 0, FW_DONTCARE, false, false, false,
+    search_font = CreateFontW(ctrl_height - 4, 0, 0, 0, FW_DONTCARE, false, false, false,
                              DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                              DEFAULT_QUALITY, FIXED_PITCH | FF_DONTCARE,
                              cfg.font.name);

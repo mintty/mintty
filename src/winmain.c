@@ -1008,7 +1008,7 @@ win_reconfig(void)
   term_reconfig();
 
   bool font_changed =
-    strcmp(new_cfg.font.name, cfg.font.name) ||
+    wcscmp(new_cfg.font.name, cfg.font.name) ||
     new_cfg.font.size != cfg.font.size ||
     new_cfg.font.isbold != cfg.font.isbold ||
     new_cfg.bold_as_font != cfg.bold_as_font ||
@@ -1967,6 +1967,9 @@ main(int argc, char *argv[])
               longopt[1] == '-' ? longopt : shortopt);
     }
   }
+  copy_config(&file_cfg, &cfg);
+  if (*cfg.theme_file)
+    load_theme(cfg.theme_file);
 
   finish_config();
 
