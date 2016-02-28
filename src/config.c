@@ -633,7 +633,9 @@ load_config(string filename, bool to_save)
   if (access(filename, R_OK) == 0 && access(filename, W_OK) < 0)
     to_save = false;
 
+#ifdef mis_config
   wchar * old_theme_file = wcsdup(cfg.theme_file);
+#endif
 
   if (to_save) {
     file_opts_num = arg_opts_num = 0;
@@ -673,10 +675,10 @@ load_config(string filename, bool to_save)
     trace_theme(("[sav] copy_config file<-cfg\n"));
   }
 
+#ifdef mis_config
   bool theme_changed = wcscmp(old_theme_file, cfg.theme_file);
   free(old_theme_file);
 
-#ifdef mis_config
   if (to_save && theme_changed)
     load_theme(cfg.theme_file);
 #endif
