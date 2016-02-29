@@ -1298,6 +1298,7 @@ static struct {
         term_set_focus(false, true);
       }
       update_transparency();
+      win_key_reset();
 
     when WM_SETFOCUS:
       trace_resize(("# WM_SETFOCUS VK_SHIFT %02X\n", GetKeyState(VK_SHIFT)));

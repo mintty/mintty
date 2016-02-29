@@ -1,3 +1,6 @@
+Keyboard:
+  * Workaround for occasional Alt state inconsistencies after window focus changes (#519).
+
 Configuration and Options menu:
   * Colour schemes: New option ThemeFile, configuration also in Options menu (~#193).
   * Configuration of .wav bell sounds (option BellFile, #369) in Options menu.

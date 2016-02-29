@@ -315,6 +315,12 @@ vk_name(uint key)
 }
 #endif
 
+void
+win_key_reset()
+{
+  alt_state = ALT_NONE;
+}
+
 bool
 win_key_down(WPARAM wp, LPARAM lp)
 {
@@ -581,7 +587,9 @@ win_key_down(WPARAM wp, LPARAM lp)
 #endif
     len = sprintf(buf, "\e[%u;%cu", c, mods + '1');
   }
-  void app_pad_code(char c) { mod_ss3(c - '0' + 'p'); }
+  void app_pad_code(char c) {
+    mod_ss3(c - '0' + 'p');
+  }
   void strcode(string s) {
     unsigned int code;
     if (sscanf (s, "%u", & code) == 1)
