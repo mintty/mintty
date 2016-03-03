@@ -906,7 +906,11 @@ Default height of the window, in character cells.
 
 .TP
 \fB\fP(RowSpacing=0)
-Additional row padding; RowSpacing=-1 works nicely with the Consolas fonts.
+Additional row padding.
+
+\fINote:\fP Mintty adjusts row spacing according to the font metrics, to 
+compensate for tight or tall spacing of some fonts (e.g. Consolas, FreeMono, Monaco).
+The RowSpacing value is added to that.
 
 .TP
 \fB\fP(ColSpacing=0)
@@ -916,7 +920,8 @@ Additional column padding; ColSpacing=1 can avoid boldened glyphs being clipped.
 \fB\fP(Padding=1)
 Window padding; margin between text and window border. The effective value 
 is limited by the character cell width (scaling with font zooming).
-No fixed limit is imposed with a negative value.
+A negative value indicates that always the character cell width shall be used,
+without fixed limit.
 
 .TP
 \fBCurrent size\fP

@@ -26,6 +26,7 @@ enum {
 LOGFONT lfont;
 static HFONT fonts[FONT_MAXNO];
 static bool fontflag[FONT_MAXNO];
+static int row_spacing;
 
 enum {LDRAW_CHAR_NUM = 31, LDRAW_CHAR_TRIES = 4};
 
@@ -173,6 +174,19 @@ create_font(int weight, bool underline)
     );
 }
 
+static int
+row_padding(int i, int e)
+{
+  if (i == 0 && e == 0)
+    return 2;
+  else {
+    int exc = 0;
+    if (i > 3)
+      exc = i - 3;
+    return e - exc;
+  }
+}
+
 /*
  * Initialise all the fonts we will need initially. There may be as many as
  * three or as few as one. The other (potentially) twentyone fonts are done
@@ -232,8 +246,15 @@ win_init_fonts(int size)
 
   SelectObject(dc, fonts[FONT_NORMAL]);
   GetTextMetrics(dc, &tm);
+  row_spacing = row_padding(tm.tmInternalLeading, tm.tmExternalLeading);
+  row_spacing += cfg.row_spacing;
+  if (row_spacing < -tm.tmDescent)
+    row_spacing = -tm.tmDescent;
+  if (tm.tmCharSet) {
+    // warn about specific charsets?
+  }
 
-  font_height = tm.tmHeight + cfg.row_spacing;
+  font_height = tm.tmHeight + row_spacing;
   font_width = tm.tmAveCharWidth + cfg.col_spacing;
   font_dualwidth = (tm.tmMaxCharWidth >= tm.tmAveCharWidth * 3 / 2);
   PADDING = tm.tmAveCharWidth;
@@ -725,7 +746,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr)
   for (int i = 0; i < len; i++)
     dxs[i] = dx;
 
-  int yt = y + (cfg.row_spacing / 2) - (lattr == LATTR_BOT ? font_height : 0);
+  int yt = y + (row_spacing / 2) - (lattr == LATTR_BOT ? font_height : 0);
   int xt = x + (cfg.col_spacing / 2);
 
  /* Finally, draw the text */

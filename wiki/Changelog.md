@@ -1,3 +1,6 @@
+Font / window layout:
+  * Mintty adjusts row spacing according to the font metrics, to compensate for tight or tall spacing of some fonts (e.g. Consolas, FreeMono, Monaco). (The RowSpacing value is added to that.)
+
 Keyboard:
   * Workaround for occasional Alt state inconsistencies after window focus changes (#519).
 
