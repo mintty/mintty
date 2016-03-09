@@ -34,6 +34,7 @@ static inline uchar blue(colour c) { return c >> 16; }
 typedef struct {
   wstring name;
   int size;
+  int weight;
   bool isbold;
 } font_spec;
 
@@ -140,5 +141,6 @@ extern void parse_arg_option(string);
 extern void remember_arg(string);
 extern void finish_config(void);
 extern void copy_config(config *dst, const config *src);
+extern void apply_config(bool save);
 
 #endif

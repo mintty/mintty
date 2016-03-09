@@ -26,6 +26,8 @@ enum {
 LOGFONT lfont;
 static HFONT fonts[FONT_MAXNO];
 static bool fontflag[FONT_MAXNO];
+static int fw_norm = FW_NORMAL;
+static int fw_bold = FW_BOLD;
 static int row_spacing;
 
 enum {LDRAW_CHAR_NUM = 31, LDRAW_CHAR_TRIES = 4};
@@ -187,6 +189,88 @@ row_padding(int i, int e)
   }
 }
 
+#define trace_font(params)	
+
+static void
+adjust_font_weights()
+{
+  LOGFONTW lf;
+#if CYGWIN_VERSION_API_MINOR >= 201
+  swprintf(lf.lfFaceName, lengthof(lf.lfFaceName), L"%ls", cfg.font.name);
+#else
+  if (wcslen(fs.name) < lengthof(lf.lfFaceName))
+    wcscpy(lf.lfFaceName, cfg.font.name);
+  else
+    wcscpy(lf.lfFaceName, L"Lucida Console");
+#endif
+  //lf.lfCharSet = DEFAULT_CHARSET;  // would report all included ranges
+  lf.lfCharSet = ANSI_CHARSET;
+  lf.lfPitchAndFamily = 0;
+
+  // find the closest available widths such that
+  // fw_norm_0 <= fw_norm <= fw_norm_1
+  // fw_bold_0 <= fw_bold <= fw_bold_1
+  int fw_norm_0 = 0;
+  int fw_bold_0 = 0;
+  int fw_norm_1 = 1000;
+  int fw_bold_1 = 1001;
+  bool font_found = false;
+
+  int CALLBACK enum_fonts(const LOGFONTW * lfp, const TEXTMETRICW * tmp, DWORD fontType, LPARAM lParam)
+  {
+    (void)tmp;
+    (void)fontType;
+    (void)lParam;
+
+    font_found = true;
+    if (lfp->lfWeight > fw_norm_0 && lfp->lfWeight <= fw_norm)
+      fw_norm_0 = lfp->lfWeight;
+    if (lfp->lfWeight > fw_bold_0 && lfp->lfWeight <= fw_bold)
+      fw_bold_0 = lfp->lfWeight;
+    if (lfp->lfWeight < fw_norm_1 && lfp->lfWeight >= fw_norm)
+      fw_norm_1 = lfp->lfWeight;
+    if (lfp->lfWeight < fw_bold_1 && lfp->lfWeight >= fw_bold)
+      fw_bold_1 = lfp->lfWeight;
+
+    return 1;  // continue
+  }
+
+  HDC dc = GetDC(0);
+  EnumFontFamiliesExW(dc, &lf, enum_fonts, 0, 0);
+  trace_font(("fw (%d)%d(%d)/(%d)%d(%d) -> ", fw_norm_0, fw_norm, fw_norm_1, fw_bold_0, fw_bold, fw_bold_1));
+  ReleaseDC(0, dc);
+
+  // check if no font found
+  if (!font_found) {
+    fw_norm = 400;
+    fw_bold = 700;
+    trace_font(("//\n"));
+    return;
+  }
+  // find available widths closest to selected widths
+  if (abs(fw_norm - fw_norm_0) <= abs(fw_norm - fw_norm_1) && fw_norm_0 > 0)
+    fw_norm = fw_norm_0;
+  else
+    fw_norm = fw_norm_1;
+  if (abs(fw_bold - fw_bold_0) < abs(fw_bold - fw_bold_1) || fw_bold_1 > 1000)
+    fw_bold = fw_bold_0;
+  else
+    fw_bold = fw_bold_1;
+  // distinguish bold from normal
+  if (fw_bold == fw_norm) {
+    trace_font(("fw %d/%d -> ", fw_norm, fw_bold));
+    if (fw_norm_0 < fw_norm && fw_norm_0 > 0)
+      fw_norm = fw_norm_0;
+    if (fw_bold - fw_norm < 300) {
+      if (fw_bold_1 > fw_bold && fw_bold_1 < 1001)
+        fw_bold = fw_bold_1;
+      else
+        fw_bold = min(fw_norm + 300, 1000);
+    }
+  }
+  trace_font(("fw %d/%d\n", fw_norm, fw_bold));
+}
+
 /*
  * Initialise all the fonts we will need initially. There may be as many as
  * three or as few as one. The other (potentially) twentyone fonts are done
@@ -211,7 +295,6 @@ win_init_fonts(int size)
   TEXTMETRIC tm;
   int fontsize[3];
   int i;
-  int fw_dontcare, fw_bold;
 
   font_size = size;
 
@@ -226,12 +309,18 @@ win_init_fonts(int size)
   bold_mode = cfg.bold_as_font ? BOLD_FONT : BOLD_SHADOW;
   und_mode = UND_FONT;
 
-  if (cfg.font.isbold) {
-    fw_dontcare = FW_BOLD;
+  if (cfg.font.weight) {
+    fw_norm = cfg.font.weight;
+    fw_bold = min(fw_norm + 300, 1000);
+    // adjust selected font weights to available font weights
+    adjust_font_weights();
+  }
+  else if (cfg.font.isbold) {
+    fw_norm = FW_BOLD;
     fw_bold = FW_HEAVY;
   }
   else {
-    fw_dontcare = FW_DONTCARE;
+    fw_norm = FW_DONTCARE;
     fw_bold = FW_BOLD;
   }
 
@@ -240,9 +329,10 @@ win_init_fonts(int size)
     size > 0 ? -MulDiv(size, GetDeviceCaps(dc, LOGPIXELSY), 72) : size;
   font_width = 0;
 
-  fonts[FONT_NORMAL] = create_font(fw_dontcare, false);
+  fonts[FONT_NORMAL] = create_font(fw_norm, false);
 
   GetObject(fonts[FONT_NORMAL], sizeof (LOGFONT), &lfont);
+  trace_font(("font %s %ld it %d cs %d\n", lfont.lfFaceName, lfont.lfWeight, lfont.lfItalic, lfont.lfCharSet));
 
   SelectObject(dc, fonts[FONT_NORMAL]);
   GetTextMetrics(dc, &tm);
@@ -287,7 +377,7 @@ win_init_fonts(int size)
     win_linedraw_chars[i] = linedraw_chars[i][j];
   }
 
-  fonts[FONT_UNDERLINE] = create_font(fw_dontcare, true);
+  fonts[FONT_UNDERLINE] = create_font(fw_norm, true);
 
  /*
   * Some fonts, e.g. 9-pt Courier, draw their underlines
@@ -513,7 +603,6 @@ static void
 another_font(int fontno)
 {
   int basefont;
-  int fw_dontcare, fw_bold;
   int u, w, i, s, x;
 
   if (fontno < 0 || fontno >= FONT_MAXNO || fontflag[fontno])
@@ -523,16 +612,7 @@ another_font(int fontno)
   if (basefont != fontno && !fontflag[basefont])
     another_font(basefont);
 
-  if (cfg.font.isbold) {
-    fw_dontcare = FW_BOLD;
-    fw_bold = FW_HEAVY;
-  }
-  else {
-    fw_dontcare = FW_DONTCARE;
-    fw_bold = FW_BOLD;
-  }
-
-  w = fw_dontcare;
+  w = fw_norm;
   i = false;
   s = false;
   u = false;

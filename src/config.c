@@ -45,7 +45,7 @@ const config default_cfg = {
   .cursor_type = CUR_LINE,
   .cursor_blinks = true,
   // Text
-  .font = {.name = L"Lucida Console", .isbold = false, .size = 9},
+  .font = {.name = L"Lucida Console", .size = 9, .weight = 400, .isbold = false},
   .font_smoothing = FS_DEFAULT,
   .bold_as_font = -1,  // -1 means "the opposite of bold_as_colour"
   .bold_as_colour = true,
@@ -180,8 +180,10 @@ options[] = {
 
   // Text
   {"Font", OPT_WSTRING, offcfg(font.name)},
-  {"FontIsBold", OPT_BOOL, offcfg(font.isbold)},
+  {"FontSize", OPT_INT | OPT_LEGACY, offcfg(font.size)},
   {"FontHeight", OPT_INT, offcfg(font.size)},
+  {"FontWeight", OPT_INT, offcfg(font.weight)},
+  {"FontIsBold", OPT_BOOL, offcfg(font.isbold)},
   {"FontSmoothing", OPT_FONTSMOOTH, offcfg(font_smoothing)},
   {"BoldAsFont", OPT_BOOL, offcfg(bold_as_font)},
   {"BoldAsColour", OPT_BOOL, offcfg(bold_as_colour)},
@@ -814,7 +816,7 @@ save_config(void)
 
 static control *cols_box, *rows_box, *locale_box, *charset_box;
 
-static void
+void
 apply_config(bool save)
 {
   // Record what's changed

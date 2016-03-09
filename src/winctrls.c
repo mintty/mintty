@@ -824,7 +824,7 @@ select_font(winctrl *c)
   ReleaseDC(0, dc);
   lf.lfWidth = lf.lfEscapement = lf.lfOrientation = 0;
   lf.lfItalic = lf.lfUnderline = lf.lfStrikeOut = 0;
-  lf.lfWeight = (fs.isbold ? FW_BOLD : 0);
+  lf.lfWeight = fs.weight ? fs.weight : fs.isbold ? FW_BOLD : 0;
   lf.lfCharSet = DEFAULT_CHARSET;
   lf.lfOutPrecision = OUT_DEFAULT_PRECIS;
   lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
@@ -839,18 +839,53 @@ select_font(winctrl *c)
     wcscpy(lf.lfFaceName, L"Lucida Console");
 #endif
 
+#ifdef font_menu_apply_button
+  UINT APIENTRY applyfont(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
+  {
+    (void)lParam;
+    if (uiMsg == WM_COMMAND && wParam == 1026) {
+      LOGFONTW lff;
+      SendMessageW(hdlg, WM_CHOOSEFONT_GETLOGFONT, 0, (LPARAM)&lff);
+//printf("%d %d %ld %ls\n", uiMsg, wParam, lParam, lff.lfFaceName);
+      wstrset(&fs.name, lf.lfFaceName);
+      fs.size = lf.lfHeight;
+      fs.weight = lf.lfWeight;
+      fs.isbold = (lf.lfWeight >= FW_BOLD);
+      ...
+      dlg_fontsel_...
+      copy_config...
+      apply_config(false);
+    }
+    return 0;  // default processing
+  }
+#endif
+
   CHOOSEFONTW cf;
   cf.lStructSize = sizeof (cf);
   cf.hwndOwner = dlg.wnd;
   cf.lpLogFont = &lf;
+#ifdef font_menu_apply_button
+  cf.lpfnHook = applyfont;
+#endif
   cf.Flags =
-    CF_FIXEDPITCHONLY | CF_FORCEFONTEXIST | CF_INITTOLOGFONTSTRUCT |
-    CF_SCREENFONTS | CF_NOSCRIPTSEL;
+    CF_INITTOLOGFONTSTRUCT | CF_FORCEFONTEXIST
+    | CF_FIXEDPITCHONLY | CF_NOVERTFONTS
+    | CF_NOSCRIPTSEL
+    | CF_SCRIPTSONLY    // exclude fonts with OEM or SYMBOL charset range
+#ifdef font_menu_apply_button
+    | CF_APPLY | CF_ENABLEHOOK
+#endif
+    ;
 
+  // open font selection menu
   if (ChooseFontW(&cf)) {
+    // font selection menu closed with OK
     wstrset(&fs.name, lf.lfFaceName);
-    fs.isbold = (lf.lfWeight == FW_BOLD);
+    // here we could enumerate font widths and adjust...
+    // rather doing that in win_init_fonts
     fs.size = cf.iPointSize / 10;
+    fs.weight = lf.lfWeight;
+    fs.isbold = (lf.lfWeight >= FW_BOLD);
     dlg_fontsel_set(c->ctrl, &fs);
     c->ctrl->handler(c->ctrl, EVENT_VALCHANGE);
   }
@@ -1212,15 +1247,32 @@ dlg_fontsel_set(control *ctrl, font_spec *fs)
 
   *(font_spec *) c->data = *fs;   /* structure copy */
 
-  char * boldstr = fs->isbold ? "bold, " : "";
+  int boldness = (fs->weight - 1) / 111;
+  static char * boldnesses[] = {
+    "Thin, ",
+    "Extralight, ",
+    "Light, ",
+    "",
+    "Medium, ",
+    "Semibold, ",
+    "Bold, ",
+    "Extrabold, ",
+    "Heavy, "
+  };
+  if (boldness < 0)
+    boldness = 0;
+  else if (boldness >= (int)lengthof(boldnesses))
+    boldness = lengthof(boldnesses) - 1;
+  //char * boldstr = fs->isbold ? "bold, " : "";
+  char * boldstr = boldnesses[boldness];
 #if CYGWIN_VERSION_API_MINOR >= 201
   int wsize = wcslen(fs->name) + strlen(boldstr) + fs->size ? 31 : 17;
   wchar * wbuf = newn(wchar, wsize);
   if (fs->size)
-    swprintf(wbuf, wsize, L"%ls, %s%d-%s", fs->name, boldstr, abs(fs->size),
-             fs->size < 0 ? "pixel" : "point");
+    swprintf(wbuf, wsize, L"%ls, %s%d%s", fs->name, boldstr, abs(fs->size),
+             fs->size < 0 ? "px" : "pt");
   else
-    swprintf(wbuf, wsize, L"%ls, %sdefault height", fs->name, boldstr);
+    swprintf(wbuf, wsize, L"%ls, %sdefault size", fs->name, boldstr);
   SetDlgItemTextW(dlg.wnd, c->base_id + 1, wbuf);
   free(wbuf);
 #else
@@ -1228,9 +1280,9 @@ dlg_fontsel_set(control *ctrl, font_spec *fs)
   char * fn = cs__wcstombs(fs->name);
   char * buf =
     fs->size
-    ? asform("%s, %s%d-%s", fn, boldstr, abs(fs->size),
-             fs->size < 0 ? "pixel" : "point")
-    : asform("%s, %sdefault height", fn, boldstr);
+    ? asform("%s, %s%d%s", fn, boldstr, abs(fs->size),
+             fs->size < 0 ? "px" : "pt")
+    : asform("%s, %sdefault size", fn, boldstr);
   free(fn);
   SetDlgItemText(dlg.wnd, c->base_id + 1, buf);
   free(buf);
