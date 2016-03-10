@@ -130,7 +130,7 @@ exe := $(NAME).exe
 exe: $(exe)
 $(exe): $(objs)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
-	-du -b $@
+	#-du -b $@
 
 bin := $(BINDIR)/$(NAME).exe
 bin: $(BINDIR) $(bin)
@@ -142,7 +142,7 @@ $(bin): $(bins)
 	# support simpler debugging:
 	-test -f `basename $@` && cp -fp $@ ./ || true
 	# report size of exe:
-	-type du && du -b $@ || true
+	#-type du && du -b $@ || true
 
 #-include $(wildcard *.d)
 -include $(wildcard $(BINDIR)/*.d)
@@ -182,7 +182,7 @@ zip: $(zip)
 $(zip): $(exe) $(zip_files)
 	mkdir -p $(DIST)
 	zip -9 -j $@ $^
-	-du -b $@
+	#-du -b $@
 
 pdf := $(DIST)/$(name_ver).pdf
 pdf: $(pdf)

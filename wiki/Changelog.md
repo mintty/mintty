@@ -1,14 +1,22 @@
-Font / window layout:
+Font configuration:
   * Mintty adjusts row spacing according to the font metrics, to compensate for tight or tall spacing of some fonts (e.g. Consolas, FreeMono, Monaco). (The RowSpacing value is added to that.)
+  * Adjusting font weight selection to available font weights (#520).
+  * New option FontWeight supports more specific font weight selection (#520).
+  * Font selection menu has its own Apply button.
+  * Excluding fonts with OEM or SYMBOL charset from font selection menu.
+  * Excluding vertical fonts from font selection menu.
+  * New option ShowHiddenFonts to offer monospace fonts marked to Hide in the menu.
+  * Unicode-enabled Font setting (so e.g. mintty -o Font=Sütterlin works).
 
-Keyboard:
-  * Workaround for occasional Alt state inconsistencies after window focus changes (#519).
-
-Configuration and Options menu:
+Themes, Configuration, and Options menu:
   * Colour schemes: New option ThemeFile, configuration also in Options menu (~#193).
   * Configuration of .wav bell sounds (option BellFile, #369) in Options menu.
   * Resource directory $HOME/.mintty for theme and bell files.
-  * Unicode-enabled Font setting (so e.g. mintty -o Font=Sütterlin works).
+
+Keyboard and mouse features:
+  * Workaround for occasional Alt state inconsistencies after window focus changes (#519).
+  * Compose key on wiki pages: replace AllChars with WinCompose.
+  * Opening marked "www." addresses also without "http:" prefix (#345).
 
 Start and error handling:
   * Fixed -C/--loadconfig to not overwrite common options in main config file.

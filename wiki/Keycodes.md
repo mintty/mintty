@@ -1,10 +1,30 @@
 ## Keyboard layout ##
 
-The Windows keyboard layout is used to translate alphanumeric and symbol key presses into characters, which means that the keyboard layout can be switched using the standard Windows mechanisms for that purpose. [AltGr](http://en.wikipedia.org/wiki/AltGr_key) combinations, [dead keys](http://en.wikipedia.org/wiki/Dead_key), and [input method editors](http://en.wikipedia.org/wiki/Input_method_editor) (IMEs) are all supported.
+The Windows keyboard layout is used to translate alphanumeric and symbol key 
+presses into characters, which means that the keyboard layout can be 
+switched using the standard Windows mechanisms for that purpose. 
+[AltGr](http://en.wikipedia.org/wiki/AltGr_key) combinations, 
+[dead keys](http://en.wikipedia.org/wiki/Dead_key), and 
+[input method editors](http://en.wikipedia.org/wiki/Input_method_editor) (IMEs) 
+are all supported.
 
-Should the available keyboard layouts lack required features, Microsoft's **[Keyboard Layout Creator](http://www.microsoft.com/Globaldev/tools/msklc.mspx)** can be used to create custom keyboard layouts. Mintty does not implement an X11-style [compose key](http://en.wikipedia.org/wiki/Compose_key), but the open source **[AllChars](http://allchars.zwolnet.com)** utility can be used to emulate one.
+Windows support for dead key combinations is limited to ANSI character ranges;
+mintty extends that to Unicode by supporting combinations like ẃ.
 
-For other keys and key combinations, mintty sends [xterm keycodes](http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#PC-Style%20Function%20Keys), with a few minor changes and some additions. Below, [Caret notation](http://en.wikipedia.org/wiki/Caret_notation) is used to show control characters.
+Should the available keyboard layouts lack required features, Microsoft's 
+**[Keyboard Layout Creator](http://www.microsoft.com/Globaldev/tools/msklc.mspx)** 
+can be used to create custom keyboard layouts.
+
+Mintty does not implement an 
+X11-style [compose key](http://en.wikipedia.org/wiki/Compose_key); 
+a seamless and stable tool to emulate a **Compose Key for Windows** is 
+**[WinCompose](https://github.com/SamHocevar/wincompose)**.
+
+For other keys and key combinations, mintty sends 
+[xterm keycodes](http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#PC-Style%20Function%20Keys), 
+with a few minor changes and some additions. 
+Below, [Caret notation](http://en.wikipedia.org/wiki/Caret_notation) 
+is used to show control characters.
 
 
 ## Alt and Meta ##

@@ -204,11 +204,11 @@ bindkey "^[[1;6I" prev
 Mintty uses the Windows keyboard layout system with its “dead key” mechanism 
 for entering accented characters, enhanced by self-composed characters 
 for dead-key combinations that Windows does not support (e.g. ẃ).
-X11, on the other hand, has the Compose key mechanism for this purpose. 
-The open source **[AllChars](http://allchars.zwolnet.com)** utility 
-can be used to emulate that approach on Windows; however, the old 
-version of it does not yet support Unicode while the new version does 
-not yet run stable.
+
+X11, on the other hand, has the Compose key mechanism for this purpose.
+
+The most seamless and stable **Compose Key for Windows** is 
+**[WinCompose](https://github.com/SamHocevar/wincompose)**.
 
 
 ## Changing colours ##
@@ -280,18 +280,37 @@ https://github.com/oumu/mintty-color-schemes or
 https://github.com/mavnn/mintty-colors-solarized .
 
 
-## Providing fonts ##
+## Providing and selecting fonts ##
 
 To provide additional fonts for use with mintty, monospace fonts can be 
 installed in Windows. Note that font installation in X11 does not make 
 a font available for mintty as mintty is not an X windows application.
 Some monospace fonts are not explicitly marked as such in the font file.
-In that case the font will not be listed in the mintty Options – Text – Font 
-selection menu. It can still be used by explicit selection, e.g.:
+In that case the font will not be listed in the mintty 
+Options – Text – Font selection menu. 
+It can still be used by explicit selection, e.g.:
 
 ```
 mintty -o Font="Linux Libertine Mono"
 ```
+
+Also, Unicode font names are now supported, e.g.
+```
+mintty -o Font=Sütterlin
+mintty -o Font=옹달샘
+```
+
+The font selection menu lists monospace fonts unless marked to Hide 
+in the Fonts folder of the system Control Panel.
+To include them in the fonts offered in the menu (e.g. to select any of 
+DotumChe, GulimChe, GungsuhChe, MingLiU, MS Gothic, MS Mincho, NSimSun, 
+Simplified Arabic Fixed), do either of:
+* uncheck “Hide fonts based on language settings” in Fonts ▸ Font settings
+* Hide/Show fonts individually from their context menu
+* set the mintty hidden setting ShowHiddenFonts=true
+
+Fonts with an OEM or SYMBOL character set are further excluded from the 
+menu. Fonts not listed in the menu can be configured with the Font option.
 
 
 ## Ambiguous width setting ##
