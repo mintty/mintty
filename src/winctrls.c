@@ -782,8 +782,7 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
 
     if (colstart >= 0) {
      /*
-      * Update the ypos in all columns crossed by this
-      * control.
+      * Update the ypos in all columns crossed by this control.
       */
       int i;
       for (i = colstart; i < colstart + colspan; i++)
@@ -813,6 +812,10 @@ winctrl_set_focus(control *ctrl, int has_focus)
   else if (!has_focus && dlg.focused == ctrl)
     dlg.focused = null;
 }
+
+#ifndef CF_INACTIVEFONTS
+#define CF_INACTIVEFONTS __MSABI_LONG (0x02000000)
+#endif
 
 static void
 select_font(winctrl *c)
@@ -851,9 +854,8 @@ select_font(winctrl *c)
       fs.size = lf.lfHeight;
       fs.weight = lf.lfWeight;
       fs.isbold = (lf.lfWeight >= FW_BOLD);
+      // apply font
       ...
-      dlg_fontsel_...
-      copy_config...
       apply_config(false);
     }
     return 0;  // default processing
@@ -876,6 +878,9 @@ select_font(winctrl *c)
     | CF_APPLY | CF_ENABLEHOOK
 #endif
     ;
+  if (new_cfg.show_hidden_fonts)
+    // include fonts marked to Hide in Fonts Control Panel
+    cf.Flags |= CF_INACTIVEFONTS;
 
   // open font selection menu
   if (ChooseFontW(&cf)) {

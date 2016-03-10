@@ -660,9 +660,23 @@ In the config file, this corresponds to the following entries:
 .br
 \(en \fBFont\fP (Font=Lucida Console)
 .br
-\(en \fBStyle\fP (FontIsBold=no)
+\(en \fBStyle\fP (FontWeight=400, FontIsBold=no)
 .br
 \(en \fBSize\fP (FontHeight=9)
+
+Further settings can be given in the config file:
+.br
+\(en \fBFont boldness\fP (FontWeight=400): This is an implicit value after 
+selecting a font in the font selection menu, or can be specified in the 
+config file or on the command line for font selection. Typical weights 
+are \fBNormal\fP/\fBRegular\fP (FontWeight=400) and \fBBold\fP (FontWeight=700 
+or FontIsBold=yes) but if a font family has a different scheme or more than 
+2 font weights, the weight value can be used for more specific selection.
+.br
+\(en \fBShow "hidden" fonts\fP (ShowHiddenFonts=no)
+This hidden settings enables display of monospace fonts in the font selection 
+menu even if they are marked to Hide in the Windows Font settings (from the 
+Control Panel \(em Fonts folder).
 
 .TP
 \fBShow bold as font\fP (BoldAsFont=no)
