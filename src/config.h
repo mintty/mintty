@@ -53,7 +53,6 @@ typedef struct {
   bool cursor_blinks;
   // Text
   font_spec font;
-  bool show_hidden_fonts;
   char font_smoothing;
   char bold_as_font;    // 0 = false, 1 = true, -1 = undefined
   bool bold_as_colour;
