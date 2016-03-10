@@ -821,8 +821,8 @@ static void
 select_font(winctrl *c)
 {
   font_spec fs = *(font_spec *) c->data;
-  HDC dc = GetDC(0);
   LOGFONTW lf;
+  HDC dc = GetDC(0);
   lf.lfHeight = -MulDiv(fs.size, GetDeviceCaps(dc, LOGPIXELSY), 72);
   ReleaseDC(0, dc);
   lf.lfWidth = lf.lfEscapement = lf.lfOrientation = 0;
@@ -842,41 +842,39 @@ select_font(winctrl *c)
     wcscpy(lf.lfFaceName, L"Lucida Console");
 #endif
 
-#ifdef font_menu_apply_button
   UINT APIENTRY applyfont(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
   {
     (void)lParam;
     if (uiMsg == WM_COMMAND && wParam == 1026) {
-      LOGFONTW lff;
-      SendMessageW(hdlg, WM_CHOOSEFONT_GETLOGFONT, 0, (LPARAM)&lff);
-//printf("%d %d %ld %ls\n", uiMsg, wParam, lParam, lff.lfFaceName);
-      wstrset(&fs.name, lf.lfFaceName);
-      fs.size = lf.lfHeight;
-      fs.weight = lf.lfWeight;
-      fs.isbold = (lf.lfWeight >= FW_BOLD);
+      LOGFONTW lfapply;
+      SendMessageW(hdlg, WM_CHOOSEFONT_GETLOGFONT, 0, (LPARAM)&lfapply);
+      wstrset(&fs.name, lfapply.lfFaceName);
+      HDC dc = GetDC(0);
+      fs.size = -MulDiv(lfapply.lfHeight, 72, GetDeviceCaps(dc, LOGPIXELSY));
+      ReleaseDC(0, dc);
+      fs.weight = lfapply.lfWeight;
+      fs.isbold = (lfapply.lfWeight >= FW_BOLD);
       // apply font
-      ...
+      //new_cfg.font = fs; // not needed
       apply_config(false);
+      //call dlg_stdfontsel_handler to update font spec label
+      c->ctrl->handler(c->ctrl, EVENT_REFRESH);
+      //-> calls dlg_fontsel_set(c->ctrl, &fs);
     }
     return 0;  // default processing
   }
-#endif
 
   CHOOSEFONTW cf;
   cf.lStructSize = sizeof (cf);
   cf.hwndOwner = dlg.wnd;
   cf.lpLogFont = &lf;
-#ifdef font_menu_apply_button
   cf.lpfnHook = applyfont;
-#endif
   cf.Flags =
     CF_INITTOLOGFONTSTRUCT | CF_FORCEFONTEXIST
     | CF_FIXEDPITCHONLY | CF_NOVERTFONTS
     | CF_NOSCRIPTSEL
     | CF_SCRIPTSONLY    // exclude fonts with OEM or SYMBOL charset range
-#ifdef font_menu_apply_button
-    | CF_APPLY | CF_ENABLEHOOK
-#endif
+    | CF_APPLY | CF_ENABLEHOOK  // enable Apply button
     ;
   if (new_cfg.show_hidden_fonts)
     // include fonts marked to Hide in Fonts Control Panel
@@ -892,6 +890,7 @@ select_font(winctrl *c)
     fs.weight = lf.lfWeight;
     fs.isbold = (lf.lfWeight >= FW_BOLD);
     dlg_fontsel_set(c->ctrl, &fs);
+    //call dlg_stdfontsel_handler
     c->ctrl->handler(c->ctrl, EVENT_VALCHANGE);
   }
 }
