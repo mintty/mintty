@@ -3,6 +3,8 @@ Font configuration:
   * Adjusting font weight selection to available font weights (#520).
   * New option FontWeight supports more specific font weight selection (#520).
   * Font selection menu has its own Apply button.
+  * Fonts with name problems (long names, #507) can be selected with the Apply button.
+  * Warnings for font not found or not supporting ANSI character set.
   * Excluding fonts with OEM or SYMBOL charset from font selection menu.
   * Excluding vertical fonts from font selection menu.
   * New option ShowHiddenFonts to offer monospace fonts marked to Hide in the menu.

@@ -189,7 +189,13 @@ row_padding(int i, int e)
   }
 }
 
+#define dont_debug_fonts
+
+#ifdef debug_fonts
+#define trace_font(params)	printf params
+#else
 #define trace_font(params)	
+#endif
 
 static void
 adjust_font_weights()
@@ -222,6 +228,8 @@ adjust_font_weights()
     (void)tmp;
     (void)fontType;
     (void)lParam;
+
+    trace_font(("%ls %ld it %d cs %d %s\n", lfp->lfFaceName, lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
 
     font_found = true;
     if (lfp->lfWeight > fw_norm_0 && lfp->lfWeight <= fw_norm)
