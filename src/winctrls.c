@@ -848,18 +848,18 @@ select_font(winctrl *c)
     if (uiMsg == WM_COMMAND && wParam == 1026) {
       LOGFONTW lfapply;
       SendMessageW(hdlg, WM_CHOOSEFONT_GETLOGFONT, 0, (LPARAM)&lfapply);
-      wstrset(&fs.name, lfapply.lfFaceName);
+      font_spec * fsp = &new_cfg.font;
+      wstrset(&fsp->name, lfapply.lfFaceName);
       HDC dc = GetDC(0);
-      fs.size = -MulDiv(lfapply.lfHeight, 72, GetDeviceCaps(dc, LOGPIXELSY));
+      fsp->size = -MulDiv(lfapply.lfHeight, 72, GetDeviceCaps(dc, LOGPIXELSY));
       ReleaseDC(0, dc);
-      fs.weight = lfapply.lfWeight;
-      fs.isbold = (lfapply.lfWeight >= FW_BOLD);
+      fsp->weight = lfapply.lfWeight;
+      fsp->isbold = (lfapply.lfWeight >= FW_BOLD);
       // apply font
-      //new_cfg.font = fs; // not needed
       apply_config(false);
-      //call dlg_stdfontsel_handler to update font spec label
-      c->ctrl->handler(c->ctrl, EVENT_REFRESH);
-      //-> calls dlg_fontsel_set(c->ctrl, &fs);
+      // update font spec label
+      c->ctrl->handler(c->ctrl, EVENT_REFRESH);  // -> dlg_stdfontsel_handler
+      //or dlg_fontsel_set(c->ctrl, fsp);
     }
     return 0;  // default processing
   }

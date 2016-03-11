@@ -309,6 +309,9 @@ Simplified Arabic Fixed), do either of:
 * Hide/Show fonts individually from their context menu
 * set the mintty hidden setting ShowHiddenFonts=true
 
+Some fonts with a name problem (e.g. Meslo LG S for Powerline) can be 
+selected using the new Apply button in the font selection menu.
+
 Fonts with an OEM or SYMBOL character set are further excluded from the 
 menu. Fonts not listed in the menu can be configured with the Font option.
 
