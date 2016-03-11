@@ -203,9 +203,10 @@ adjust_font_weights()
   else
     wcscpy(lf.lfFaceName, L"Lucida Console");
 #endif
-  //lf.lfCharSet = DEFAULT_CHARSET;  // would report all included ranges
-  lf.lfCharSet = ANSI_CHARSET;
   lf.lfPitchAndFamily = 0;
+  //lf.lfCharSet = ANSI_CHARSET;   // report only ANSI character range
+  // use this to avoid double error popup (e.g. Font=David):
+  lf.lfCharSet = DEFAULT_CHARSET;  // report all supported char ranges
 
   // find the closest available widths such that
   // fw_norm_0 <= fw_norm <= fw_norm_1
@@ -242,6 +243,7 @@ adjust_font_weights()
 
   // check if no font found
   if (!font_found) {
+    MessageBoxW(0, L"Font not found, using system substitute", cfg.font.name, MB_ICONWARNING);
     fw_norm = 400;
     fw_bold = 700;
     trace_font(("//\n"));
@@ -341,7 +343,7 @@ win_init_fonts(int size)
   if (row_spacing < -tm.tmDescent)
     row_spacing = -tm.tmDescent;
   if (tm.tmCharSet) {
-    // warn about specific charsets?
+    MessageBoxW(0, L"Font does not support ANSI character range", cfg.font.name, MB_ICONWARNING);
   }
 
   font_height = tm.tmHeight + row_spacing;
