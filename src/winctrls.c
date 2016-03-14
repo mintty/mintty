@@ -817,6 +817,14 @@ winctrl_set_focus(control *ctrl, int has_focus)
 #define CF_INACTIVEFONTS __MSABI_LONG (0x02000000)
 #endif
 
+#define dont_debug_fontsel
+
+#ifdef debug_fontsel
+#define trace_fontsel(params)	printf params
+#else
+#define trace_fontsel(params)	
+#endif
+
 static void
 select_font(winctrl *c)
 {
@@ -845,11 +853,12 @@ select_font(winctrl *c)
   UINT APIENTRY applyfont(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
   {
     (void)lParam;
-    if (uiMsg == WM_COMMAND && wParam == 1026) {
+    if (uiMsg == WM_COMMAND && wParam == 1026) {  // Apply
       LOGFONTW lfapply;
       SendMessageW(hdlg, WM_CHOOSEFONT_GETLOGFONT, 0, (LPARAM)&lfapply);
       font_spec * fsp = &new_cfg.font;
       wstrset(&fsp->name, lfapply.lfFaceName);
+      trace_fontsel(("apply <%ls>\n", lfapply.lfFaceName));
       HDC dc = GetDC(0);
       fsp->size = -MulDiv(lfapply.lfHeight, 72, GetDeviceCaps(dc, LOGPIXELSY));
       ReleaseDC(0, dc);
@@ -860,6 +869,30 @@ select_font(winctrl *c)
       // update font spec label
       c->ctrl->handler(c->ctrl, EVENT_REFRESH);  // -> dlg_stdfontsel_handler
       //or dlg_fontsel_set(c->ctrl, fsp);
+    }
+    else if (uiMsg == WM_COMMAND && wParam == 1) {  // OK
+#ifdef failed_workaround_for_no_font_issue
+      /*
+        Trying to work-around issue #507
+        "There is no font with that name."
+        "Choose a font from the list of fonts."
+        as it occurs with Meslo LG L DZ for Powerline
+      */
+      LOGFONTW lfapply;
+      SendMessageW(hdlg, WM_CHOOSEFONT_GETLOGFONT, 0, (LPARAM)&lfapply);
+      // lfapply.lfFaceName is "Meslo LG L DZ for Powerline"
+      HWND wnd = GetDlgItem(hdlg, c->base_id +99);
+      int size = GetWindowTextLengthW(wnd) + 1;
+      wchar * fn = newn(wchar, size);
+      GetWindowTextW(wnd, fn, size);
+      // fn is "Meslo LG L DZ for Powerline RegularForPowerline"
+      // trying to fix the inconsistency with
+      SetWindowTextW(wnd, lfapply.lfFaceName);
+      // does not help...
+      // what a crap!
+#endif
+    }
+    else if (uiMsg == WM_COMMAND && wParam == 2) {  // Cancel
     }
     return 0;  // default processing
   }
@@ -883,6 +916,7 @@ select_font(winctrl *c)
   // open font selection menu
   if (ChooseFontW(&cf)) {
     // font selection menu closed with OK
+    trace_fontsel(("OK <%ls>\n", lf.lfFaceName));
     wstrset(&fs.name, lf.lfFaceName);
     // here we could enumerate font widths and adjust...
     // rather doing that in win_init_fonts
@@ -1249,6 +1283,7 @@ dlg_fontsel_set(control *ctrl, font_spec *fs)
   winctrl *c = ctrl->plat_ctrl;
   assert(c && c->ctrl->type == CTRL_FONTSELECT);
 
+  trace_fontsel(("fontsel_set <%ls>\n", fs->name));
   *(font_spec *) c->data = *fs;   /* structure copy */
 
   int boldness = (fs->weight - 1) / 111;
@@ -1298,6 +1333,7 @@ dlg_fontsel_get(control *ctrl, font_spec *fs)
 {
   winctrl *c = ctrl->plat_ctrl;
   assert(c && c->ctrl->type == CTRL_FONTSELECT);
+  trace_fontsel(("fontsel_get <%ls>\n", ((font_spec*)c->data)->name));
   *fs = *(font_spec *) c->data;  /* structure copy */
 }
 
