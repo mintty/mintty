@@ -1026,7 +1026,7 @@ win_reconfig(void)
     win_set_colour(CURSOR_COLOUR_I, new_cfg.cursor_colour);
 
   /* Copy the new config and refresh everything */
-  copy_config(&cfg, &new_cfg);
+  copy_config("win_reconfig", &cfg, &new_cfg);
 
   font_cs_reconfig(font_changed);
 }
@@ -1969,7 +1969,7 @@ main(int argc, char *argv[])
               longopt[1] == '-' ? longopt : shortopt);
     }
   }
-  copy_config(&file_cfg, &cfg);
+  copy_config("main after -o", &file_cfg, &cfg);
   if (*cfg.theme_file)
     load_theme(cfg.theme_file);
 

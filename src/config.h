@@ -141,7 +141,7 @@ extern void set_arg_option(string name, string val);
 extern void parse_arg_option(string);
 extern void remember_arg(string);
 extern void finish_config(void);
-extern void copy_config(config *dst, const config *src);
+extern void copy_config(char * tag, config * dst, const config * src);
 extern void apply_config(bool save);
 
 #endif

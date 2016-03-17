@@ -121,8 +121,6 @@ determine_geometry(HWND wnd)
   dialog_height = 100 * (r.bottom - r.top) / normr.bottom;
 }
 
-#define trace_theme(params)
-
 /*
  * This function is the configuration box.
  * (Being a dialog procedure, in general it returns 0 if the default
@@ -141,11 +139,10 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
       windlg_add_tree(&ctrls_base);
       windlg_add_tree(&ctrls_panel);
 #ifdef old_config
-      copy_config(&new_cfg, &cfg);
+      copy_config("dialog", &new_cfg, &cfg);
 #else
-      copy_config(&new_cfg, &file_cfg);
+      copy_config("dialog", &new_cfg, &file_cfg);
 #endif
-      trace_theme(("[dlg] copy_config new<-file\n"));
 
       RECT r;
       GetWindowRect(GetParent(wnd), &r);

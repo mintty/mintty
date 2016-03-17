@@ -14,6 +14,7 @@ Themes, Configuration, and Options menu:
   * Colour schemes: New option ThemeFile, configuration also in Options menu (~#193).
   * Configuration of .wav bell sounds (option BellFile, #369) in Options menu.
   * Resource directory $HOME/.mintty for theme and bell files.
+  * Fixed -o settings to also be saved when changed in Options menu.
 
 Keyboard and mouse features:
   * Workaround for occasional Alt state inconsistencies after window focus changes (#519).
