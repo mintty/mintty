@@ -1,3 +1,5 @@
+### 2.2.4 (20 Mar 2016) ###
+
 Font configuration:
   * Mintty adjusts row spacing according to the font metrics, to compensate for tight or tall spacing of some fonts (e.g. Consolas, FreeMono, Monaco). (The RowSpacing value is added to that.)
   * Adjusting font weight selection to available font weights (#520).
