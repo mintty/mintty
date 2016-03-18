@@ -10,7 +10,7 @@
 # Variables intended for setting on the make command line.
 # - RELEASE: release number for packaging
 # - TARGET: target triple for cross compiling
-#	values: i686-pc-cygwin, x86_64-pc-cygwin, i686-pc-msys
+#	values: i686-pc-cygwin, x86_64-pc-cygwin, i686-pc-msys, x86_64-pc-msys
 # - DEBUG: define to enable debug build
 # - DMALLOC: define to enable the dmalloc heap debugging library
 #
