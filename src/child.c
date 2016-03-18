@@ -199,15 +199,7 @@ child_create(char *argv[], struct winsize *winp)
   if (*cfg.log) {
     // use cygwin conversion function to escape unencoded characters 
     // and thus avoid the locale trick (2.2.3)
-#if CYGWIN_VERSION_API_MINOR >= 181
-    //char * log = cygwin_create_path(CCP_WIN_W_TO_POSIX | CCP_RELATIVE, cfg.log);
-    char * log = cygwin_create_path(CCP_WIN_W_TO_POSIX, cfg.log);
-#else
-    char * logrel = cs__wcstombs(cfg.log);
-    char * log = newn(char, MAX_PATH);
-    cygwin_conv_to_full_posix_path(logrel, log);
-    free(logrel);
-#endif
+    char * log = path_win_w_to_posix(cfg.log);
 
     if (!strcmp(log, "-"))
       log_fd = fileno(stdout);
@@ -506,13 +498,11 @@ child_conv_path(wstring wpath)
   else
     exp_path = path;
 
-#if CYGWIN_VERSION_API_MINOR >= 181
 # if CYGWIN_VERSION_API_MINOR >= 222
   // CW_INT_SETLOCALE was introduced in API 0.222
   cygwin_internal(CW_INT_SETLOCALE);
 # endif
-  wchar *win_wpath = cygwin_create_path(CCP_POSIX_TO_WIN_W, exp_path);
-
+  wchar *win_wpath = path_posix_to_win_w(exp_path);
   // Drop long path prefix if possible,
   // because some programs have trouble with them.
   if (win_wpath && wcslen(win_wpath) < MAX_PATH) {
@@ -527,12 +517,6 @@ child_conv_path(wstring wpath)
       free(old_win_wpath);
     }
   }
-#else
-  char win_path[MAX_PATH];
-  cygwin_conv_to_win32_path(exp_path, win_path);
-  wchar *win_wpath = newn(wchar, MAX_PATH);
-  MultiByteToWideChar(0, 0, win_path, -1, win_wpath, MAX_PATH);
-#endif
 
   if (exp_path != path)
     free(exp_path);

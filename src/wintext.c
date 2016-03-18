@@ -5,6 +5,7 @@
 
 #include "winpriv.h"
 #include "winsearch.h"
+#include "charset.h"  // wcscpy
 
 #include "minibidi.h"
 
@@ -204,7 +205,7 @@ adjust_font_weights()
 #if CYGWIN_VERSION_API_MINOR >= 201
   swprintf(lf.lfFaceName, lengthof(lf.lfFaceName), L"%ls", cfg.font.name);
 #else
-  if (wcslen(fs.name) < lengthof(lf.lfFaceName))
+  if (wcslen(cfg.font.name) < lengthof(lf.lfFaceName))
     wcscpy(lf.lfFaceName, cfg.font.name);
   else
     wcscpy(lf.lfFaceName, L"Lucida Console");

@@ -50,58 +50,6 @@ static bool invoked_with_appid = false;
 #endif
 
 
-#if CYGWIN_VERSION_API_MINOR < 74 || defined(TEST_WCS)
-// needed for MinGW MSYS
-
-# ifdef TEST_WCS
-#define wcsdup _wcsdup
-#define wcschr _wcschr
-#define wcsncmp _wcsncmp
-# endif
-
-#define wcscpy(tgt, src) memcpy(tgt, src, (wcslen(src) + 1) * sizeof(wchar))
-
-# ifdef need_all_wcs_functions
-
-# if CYGWIN_VERSION_API_MINOR < 207
-static wchar *
-wcsdup(const wchar * s)
-{
-  wchar * dup = newn(wchar, wcslen(s) + 1);
-  wcscpy(dup, s);
-  return dup;
-}
-# endif
-
-static wchar *
-wcschr(const wchar * s, wchar c)
-{
-  while (* s) {
-    if (* s == c)
-      return (wchar *)s;
-    s ++;
-  }
-  return 0;
-}
-
-# endif
-
-static int
-wcsncmp(const wchar * s1, const wchar * s2, int len)
-{
-  for (int i = 0; i < len; i++)
-    if (s1[i] < s2[i])
-      return -1;
-    else if (s1[i] > s2[i])
-      return 1;
-    else if (s1[i] == 0)
-      return 0;
-  return 0;
-}
-
-#endif
-
-
 static int extra_width, extra_height, norm_extra_width, norm_extra_height;
 
 // State
@@ -763,7 +711,7 @@ win_bell(config * conf)
       string subfolder = ".mintty/sounds";
       char rcdir[strlen(home) + strlen(subfolder) + 2];
       sprintf(rcdir, "%s/%s", home, subfolder);
-      wchar * rcpat = cygwin_create_path(CCP_POSIX_TO_WIN_W, rcdir);
+      wchar * rcpat = path_posix_to_win_w(rcdir);
       int len = wcslen(rcpat);
       rcpat = renewn(rcpat, len + wcslen(bell_file) + 6);
       rcpat[len++] = L'/';
@@ -1864,7 +1812,7 @@ main(int argc, char *argv[])
   invoked_with_appid = sui.dwFlags & STARTF_TITLEISAPPID;
   // shortcut or AppId would be found in sui.lpTitle
 # ifdef debuglog
-  fprintf(mtlog, "shortcut %d %s\n", invoked_from_shortcut, (char *)cygwin_create_path(CCP_WIN_W_TO_POSIX, sui.lpTitle));
+  fprintf(mtlog, "shortcut %d %ls\n", invoked_from_shortcut, sui.lpTitle);
 # endif
 #endif
 
@@ -2054,8 +2002,7 @@ main(int argc, char *argv[])
   HICON large_icon = 0, small_icon = 0;
   if (*cfg.icon) {
     //string icon_file = strdup(cfg.icon);
-    // could use cygwin_create_path(CCP_WIN_W_TO_POSIX, cfg.icon) instead 
-    // to avoid the locale trick below
+    // could use path_win_w_to_posix(cfg.icon) to avoid the locale trick below
     string icon_file = cs__wcstoutf(cfg.icon);
     uint icon_index = 0;
     char *comma = strrchr(icon_file, ',');
@@ -2068,36 +2015,30 @@ main(int argc, char *argv[])
         icon_index = 0;
     }
     SetLastError(0);
-#if CYGWIN_VERSION_API_MINOR >= 181
-# if HAS_LOCALES
+#if HAS_LOCALES
     char * valid_locale = setlocale(LC_CTYPE, 0);
     if (valid_locale) {
       valid_locale = strdup(valid_locale);
       setlocale(LC_CTYPE, "C.UTF-8");
-#  if CYGWIN_VERSION_API_MINOR >= 222
+# if CYGWIN_VERSION_API_MINOR >= 222
       cygwin_internal(CW_INT_SETLOCALE);  // fix internal locale
-#  endif
-    }
 # endif
-    wchar *win_icon_file = cygwin_create_path(CCP_POSIX_TO_WIN_W, icon_file);
-# if HAS_LOCALES
+    }
+#endif
+    wchar *win_icon_file = path_posix_to_win_w(icon_file);
+#if HAS_LOCALES
     if (valid_locale) {
       setlocale(LC_CTYPE, valid_locale);
-#  if CYGWIN_VERSION_API_MINOR >= 222
+# if CYGWIN_VERSION_API_MINOR >= 222
       cygwin_internal(CW_INT_SETLOCALE);  // fix internal locale
-#  endif
+# endif
       free(valid_locale);
     }
-# endif
+#endif
     if (win_icon_file) {
       ExtractIconExW(win_icon_file, icon_index, &large_icon, &small_icon, 1);
       free(win_icon_file);
     }
-#else
-    char win_icon_file[MAX_PATH];
-    cygwin_conv_to_win32_path(icon_file, win_icon_file);
-    ExtractIconExA(win_icon_file, icon_index, &large_icon, &small_icon, 1);
-#endif
     if (!large_icon) {
       small_icon = 0;
       uint err = GetLastError();

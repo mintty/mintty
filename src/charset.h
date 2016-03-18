@@ -66,3 +66,136 @@ extern int xcwidth(xchar c);
 #endif
 
 #endif
+
+
+#ifdef __CYGWIN__
+#include <sys/cygwin.h>
+# if CYGWIN_VERSION_API_MINOR >= 181
+
+static inline char *
+path_win_w_to_posix(const wchar * wp)
+{ return cygwin_create_path(CCP_WIN_W_TO_POSIX, wp); }
+
+static inline wchar *
+path_posix_to_win_w(const char * p)
+{ return cygwin_create_path(CCP_POSIX_TO_WIN_W, p); }
+
+static inline char *
+path_posix_to_win_a(const char * p)
+{ return cygwin_create_path(CCP_POSIX_TO_WIN_A, p); }
+
+# else
+#include <winbase.h>
+#include <winnls.h>
+
+static inline char *
+path_win_w_to_posix(const wchar * wp)
+{
+  char * mp = cs__wcstombs(wp);
+  char * p = newn(char, MAX_PATH);
+  cygwin_conv_to_full_posix_path(mp, p);
+  free(mp);
+  p = renewn(p, strlen(p) + 1);
+  return p;
+}
+
+static inline wchar *
+path_posix_to_win_w(const char * p)
+{
+  char ap[MAX_PATH];
+  cygwin_conv_to_win32_path(p, ap);
+  wchar * wp = newn(wchar, MAX_PATH);
+  MultiByteToWideChar(0, 0, ap, -1, wp, MAX_PATH);
+  wp = renewn(wp, wcslen(wp) + 1);
+  return wp;
+}
+
+static inline char *
+path_posix_to_win_a(const char * p)
+{
+  char * ap = newn(char, MAX_PATH);
+  cygwin_conv_to_win32_path(p, ap);
+  ap = renewn(ap, strlen(ap) + 1);
+  return ap;
+}
+
+# endif
+#else
+
+#warning port to midipix...
+
+#endif
+
+
+# ifdef TEST_WCS
+#define wcsdup _wcsdup
+#define wcschr _wcschr
+#define wcsrchr _wcsrchr
+#define wcsncmp _wcsncmp
+# endif
+
+#if CYGWIN_VERSION_API_MINOR < 74 || defined(TEST_WCS)
+// needed for MinGW MSYS
+
+#define wcscpy(tgt, src) memcpy(tgt, src, (wcslen(src) + 1) * sizeof(wchar))
+
+static wchar *
+wcschr(const wchar * s, wchar c)
+{
+  while (* s) {
+    if (* s == c)
+      return (wchar *)s;
+    s ++;
+  }
+  return 0;
+}
+
+static wchar *
+wcsrchr(const wchar * s, wchar c)
+{
+  wchar * res = 0;
+  while (* s) {
+    if (* s == c)
+      res = (wchar *)s;
+    s ++;
+  }
+  return res;
+}
+
+static int
+wcsncmp(const wchar * s1, const wchar * s2, int len)
+{
+  for (int i = 0; i < len; i++)
+    if (s1[i] < s2[i])
+      return -1;
+    else if (s1[i] > s2[i])
+      return 1;
+    else if (s1[i] == 0)
+      return 0;
+  return 0;
+}
+
+#endif
+
+#if CYGWIN_VERSION_API_MINOR < 207 || defined(TEST_WCS)
+
+static wchar *
+wcsdup(const wchar * s)
+{
+  wchar * dup = newn(wchar, wcslen(s) + 1);
+  wcscpy(dup, s);
+  return dup;
+}
+
+static void
+_unused(void)
+{
+  (void)_unused;
+  (void)wcsdup;
+  (void)wcschr;
+  (void)wcsrchr;
+  (void)wcsncmp;
+}
+
+#endif
+

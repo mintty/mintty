@@ -448,18 +448,10 @@ paste_hdrop(HDROP drop)
   uint n = DragQueryFileW(drop, -1, 0, 0);
   for (uint i = 0; i < n; i++) {
 
-#if CYGWIN_VERSION_API_MINOR >= 181
     uint wfn_len = DragQueryFileW(drop, i, 0, 0);
     wchar wfn[wfn_len + 1];
     DragQueryFileW(drop, i, wfn, wfn_len + 1);
-    char *fn = cygwin_create_path(CCP_WIN_W_TO_POSIX, wfn);
-#else
-    uint wfn_len = DragQueryFileA(drop, i, 0, 0);
-    char wfn[wfn_len + 1];
-    DragQueryFileA(drop, i, wfn, wfn_len + 1);
-    char *fn = newn(char, MAX_PATH);
-    cygwin_conv_to_full_posix_path(wfn, fn);
-#endif
+    char *fn = path_win_w_to_posix(wfn);
 
     bool has_tick = false, needs_quotes = false, needs_dollar = false;
     for (char *p = fn; *p && !needs_dollar; p++) {

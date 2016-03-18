@@ -7,6 +7,7 @@
 #include "winctrls.h"
 
 #include "winpriv.h"
+#include "charset.h"  // wcscpy
 
 #define _RPCNDR_H
 #define _WTYPES_H
@@ -814,7 +815,11 @@ winctrl_set_focus(control *ctrl, int has_focus)
 }
 
 #ifndef CF_INACTIVEFONTS
+# ifdef __MSABI_LONG
 #define CF_INACTIVEFONTS __MSABI_LONG (0x02000000)
+# else
+#define CF_INACTIVEFONTS 0x02000000
+# endif
 #endif
 
 #define dont_debug_fontsel

@@ -77,12 +77,7 @@ printer_finish_job(void)
   if (printer) {
     close(pd);
 
-#if CYGWIN_VERSION_API_MINOR >= 181
-    char * wf = (char *)cygwin_create_path(CCP_POSIX_TO_WIN_A, pf);
-#else
-    char * wf = newn(char, MAX_PATH);
-    cygwin_conv_to_win32_path(pf, wf);
-#endif
+    char * wf = path_posix_to_win_a(pf);
 
     char * pn = cs__wcstoutf(printer);
 

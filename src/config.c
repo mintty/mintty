@@ -18,16 +18,7 @@
 #define dont_support_blurred
 
 
-#if CYGWIN_VERSION_API_MINOR < 74
-// needed for MinGW MSYS
-#define wcscpy(tgt, src) memcpy(tgt, src, (wcslen(src) + 1) * sizeof(wchar))
-#endif
-
-#if CYGWIN_VERSION_API_MINOR >= 222
 static wstring rc_filename = 0;
-#else
-static string rc_filename = 0;
-#endif
 
 const config default_cfg = {
   // Looks
@@ -612,7 +603,7 @@ load_theme(wstring theme)
     string subfolder = ".mintty/themes";
     char rcdir[strlen(home) + strlen(subfolder) + 2];
     sprintf(rcdir, "%s/%s", home, subfolder);
-    wchar * rcpat = cygwin_create_path(CCP_POSIX_TO_WIN_W, rcdir);
+    wchar * rcpat = path_posix_to_win_w(rcdir);
     int len = wcslen(rcpat);
     rcpat = renewn(rcpat, len + wcslen(theme_file) + 2);
     rcpat[len++] = L'/';
@@ -620,7 +611,7 @@ load_theme(wstring theme)
     theme_file = rcpat;
     free_theme_file = true;
   }
-  char * filename = cygwin_create_path(CCP_WIN_W_TO_POSIX, theme_file);
+  char * filename = path_win_w_to_posix(theme_file);
   if (free_theme_file)
     free(theme_file);
   load_config(filename, false);
@@ -643,11 +634,7 @@ load_config(string filename, bool to_save)
     file_opts_num = arg_opts_num = 0;
 
     delete(rc_filename);
-#if CYGWIN_VERSION_API_MINOR >= 222
-    rc_filename = cygwin_create_path(CCP_POSIX_TO_WIN_W, filename);
-#else
-    rc_filename = strdup(filename);
-#endif
+    rc_filename = path_posix_to_win_w(filename);
   }
 #ifdef debug_config
   printf ("will save to %s? %d\n", filename, to_save);
@@ -738,11 +725,7 @@ save_config(void)
 {
   string filename;
 
-#if CYGWIN_VERSION_API_MINOR >= 222
-  filename = cygwin_create_path(CCP_WIN_W_TO_POSIX, rc_filename);
-#else
-  filename = rc_filename;
-#endif
+  filename = path_win_w_to_posix(rc_filename);
 
   FILE *file = fopen(filename, "w");
 
@@ -799,9 +782,7 @@ save_config(void)
     fclose(file);
   }
 
-#if CYGWIN_VERSION_API_MINOR >= 222
   delete(filename);
-#endif
 }
 
 
@@ -1065,7 +1046,7 @@ add_file_resources(control *ctrl, wstring pattern)
   string subfolder = ".mintty";
   char rcdir[strlen(home) + strlen(subfolder) + 2];
   sprintf(rcdir, "%s/%s", home, subfolder);
-  wchar * rcpat = cygwin_create_path(CCP_POSIX_TO_WIN_W, rcdir);
+  wchar * rcpat = path_posix_to_win_w(rcdir);
   int len = wcslen(rcpat);
   rcpat = renewn(rcpat, len + wcslen(pattern) + 2);
   rcpat[len++] = L'/';
