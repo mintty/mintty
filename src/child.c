@@ -199,11 +199,11 @@ child_create(char *argv[], struct winsize *winp)
   if (*cfg.log) {
     // use cygwin conversion function to escape unencoded characters 
     // and thus avoid the locale trick (2.2.3)
-    char * log = path_win_w_to_posix(cfg.log);
 
-    if (!strcmp(log, "-"))
+    if (!wcscmp(cfg.log, L"-"))
       log_fd = fileno(stdout);
     else {
+      char * log = path_win_w_to_posix(cfg.log);
       char * format = strchr(log, '%');
       if (format && * ++ format == 'd' && !strchr(format, '%')) {
         char logf[strlen(log + 20)];
@@ -218,9 +218,9 @@ child_create(char *argv[], struct winsize *winp)
         childerror("could not open log file", false);
         childerror(log, false);
       }
-    }
 
-    free(log);
+      free(log);
+    }
   }
 }
 
