@@ -202,8 +202,10 @@ static UINT
 get_default_charset()
 {
   CHARSETINFO csi;
-  TranslateCharsetInfo((DWORD *)GetSystemDefaultLCID(), &csi, TCI_SRCLOCALE);
-  return csi.ciCharset;
+  if (TranslateCharsetInfo((DWORD *)GetSystemDefaultLCID(), &csi, TCI_SRCLOCALE))
+    return csi.ciCharset;
+  else
+    return DEFAULT_CHARSET;
 }
 
 static void
@@ -235,7 +237,7 @@ adjust_font_weights()
   bool ansi_found = false;
 #endif
   int default_charset = get_default_charset();
-  bool cs_found = false;
+  bool cs_found = default_charset == DEFAULT_CHARSET;
 
   int CALLBACK enum_fonts(const LOGFONTW * lfp, const TEXTMETRICW * tmp, DWORD fontType, LPARAM lParam)
   {
@@ -250,7 +252,7 @@ adjust_font_weights()
     if (lfp->lfCharSet == ANSI_CHARSET)
       ansi_found = true;
 #endif
-    if (lfp->lfCharSet == default_charset)
+    if (lfp->lfCharSet == default_charset || lfp->lfCharSet == DEFAULT_CHARSET)
       cs_found = true;
 
     if (lfp->lfWeight > fw_norm_0 && lfp->lfWeight <= fw_norm)
