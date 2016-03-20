@@ -1,3 +1,7 @@
+### 2.3.2 (20 Mar 2016) ###
+
+  * Fixed 64 bit adaptation for weird Windows function.
+
 ### 2.3.1 (20 Mar 2016) ###
 
   * Fixed character set support warning for non-Western system locales (#527).

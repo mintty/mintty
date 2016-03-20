@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Fri Feb  5 18:44:56 2016 -->
+<!-- CreationDate: Fri Mar 18 23:16:28 2016 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -103,10 +103,11 @@ specified configuration file, in addition to
 <i>/etc/minttyrc</i> and <i>~/.minttyrc</i>. The file is not
 taken into account for saving configuration changes. This is
 useful to mix-in partial configuration variants,
-particularly colour schemes.</p>
+particularly colour schemes. However, <b>-o
+ThemeFile=</b><i>FILENAME</i> <b>may be preferable.</b></p>
 
-<p style="margin-left:11%;"><b>-e</b>, <b>--exec</b>
-<i>PROGRAM</i> [<i>ARG</i> ...]</p>
+<p style="margin-left:11%;"><b>-e, --exec</b>
+<i>PROGRAM</i> <b>[</b><i>ARG</i> <b>...]</b></p>
 
 <p style="margin-left:22%;">Execute the specified program
 in the terminal session and pass on any additional
@@ -202,8 +203,8 @@ relative to the monitor. <br>
 common multi-monitor address space as provided by
 Windows.</p>
 
-<p style="margin-left:22%; margin-top: 1em">Note: For
-another option to select the monitor for a new mintty
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+For another option to select the monitor for a new mintty
 window, see the description of Alt+F2.</p>
 
 <p style="margin-left:11%;"><b>-s</b>, <b>--size</b>
@@ -365,7 +366,8 @@ keyboard shortcut, or the middle mouse button combined with
 region is copied as &quot;rich text&quot; as well as normal
 text, which means it can be pasted with colours and
 formatting into applications that support it, e.g. word
-processors.</p>
+processors (&quot;true colour&quot; attributes are not
+supported).</p>
 
 <p style="margin-left:11%; margin-top: 1em">The window
 title can be copied using the <b>Copy Title</b> command in
@@ -387,13 +389,13 @@ pasted from the clipboard.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Opening
 files, directories and URLs</b> <br>
-Files, directories and URLs can be opened either by holding
-<b>Ctrl</b> while left-clicking on them, or by selecting
-them and choosing the <b>Open</b> command from the context
-menu. Please note that opening a file or directory with a
-relative path only works correctly if the path refers to the
-current working directory of the process invoked by
-mintty.</p>
+Files, directories, URLs and web addresses beginning with
+&quot;www.&quot; can be opened either by holding <b>Ctrl</b>
+while left-clicking on them, or by selecting them and
+choosing the <b>Open</b> command from the context menu.
+Please note that opening a file or directory with a relative
+path only works correctly if the path refers to the current
+working directory of the process invoked by mintty.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Font
 zoom</b> <br>
@@ -681,18 +683,18 @@ the last writable file specified with
 given. Individual settings can also be specified on the
 command line using the <b>-o</b>/<b>--option</b>.</p>
 
-<p style="margin-left:11%; margin-top: 1em">Note: Many
-string values in the <i>minttyrc</i> files, especially those
-referring to file names or Windows items, are
+<p style="margin-left:11%; margin-top: 1em"><i>Note:</i>
+Many string values in the <i>minttyrc</i> files, especially
+those referring to file names or Windows items, are
 <b>Unicode-enabled</b>, meaning they are expected to be
 UTF-8-encoded in the configuration file independently of the
 encoding the terminal runs in; as a fallback, if the
 configuration value is not valid UTF-8, it is interpreted in
 the system ANSI encoding. (This does not apply to the same
 configuration settings when given on the command-line.) <br>
-Unicode-enabled settings: BellFile, Title, ExitTitle, Icon,
-Log, Printer, Answerback, Class, AppID, AppName,
-AppLaunchCmd.</p>
+Unicode-enabled settings: BellFile, ThemeFile, Title,
+ExitTitle, Icon, Log, Font, Printer, Answerback, Class,
+AppID, AppName, AppLaunchCmd.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Be careful when
 running multiple instances of mintty. If options are saved
@@ -729,6 +731,12 @@ are supported. <br>
 <br>
 &ndash; <b>Background</b> (BackgroundColour=0,0,0) <br>
 &ndash; <b>Cursor</b> (CursorColour=191,191,191)</p>
+
+<p style="margin-left:22%; margin-top: 1em">&ndash;
+<b>Theme</b> (ThemeFile=): The popup offers theme files as
+stored in the resource directory $HOME/.mintty/themes for
+selection as a colour scheme. The option can also be set to
+a filename (like D:/.../solarized-light.minttyrc).</p>
 
 <p style="margin-left:11%;"><b>Transparency</b>
 (Transparency=off)</p>
@@ -793,8 +801,30 @@ be chosen. Font styles other than <b>Bold</b> are ignored.
 In the config file, this corresponds to the following
 entries: <br>
 &ndash; <b>Font</b> (Font=Lucida Console) <br>
-&ndash; <b>Style</b> (FontIsBold=no) <br>
-&ndash; <b>Size</b> (FontHeight=9)</p>
+&ndash; <b>Font style</b> (FontWeight=400, FontIsBold=no)
+<br>
+&ndash; <b>Size</b> (FontHeight=9) <br>
+The font selection dialog also offers an <b>Apply</b> button
+for convenient testing how the selected font looks. Its
+function is the same as the <b>Apply</b> button of the
+Options dialog.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Further
+settings can be given in the config file: <br>
+&ndash; <b>Font boldness</b> (FontWeight=400): This is an
+implicit value after selecting a font in the font selection
+menu, or can be specified in the config file or on the
+command line for font selection. Typical weights are
+<b>Normal</b>/<b>Regular</b> (FontWeight=400) and
+<b>Bold</b> (FontWeight=700 or FontIsBold=yes) but if a font
+family has a different scheme or more than 2 font weights,
+the weight value can be used for more specific selection.
+<br>
+&ndash; <b>Show &quot;hidden&quot; fonts</b>
+(ShowHiddenFonts=no) This hidden settings enables display of
+monospace fonts in the font selection menu even if they are
+marked to Hide in the Windows Font settings (from the
+Control Panel &mdash; Fonts folder).</p>
 
 <p style="margin-left:11%;"><b>Show bold as font</b>
 (BoldAsFont=no)</p>
@@ -1092,8 +1122,13 @@ in character cells.</p>
 
 <p style="margin-left:11%;">(RowSpacing=0)</p>
 
-<p style="margin-left:22%;">Additional row padding;
-RowSpacing=-1 works nicely with the Consolas fonts.</p>
+<p style="margin-left:22%;">Additional row padding.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+Mintty adjusts row spacing according to the font metrics, to
+compensate for tight or tall spacing of some fonts (e.g.
+Consolas, FreeMono, Monaco). The RowSpacing value is added
+to that.</p>
 
 <p style="margin-left:11%;">(ColSpacing=0)</p>
 
@@ -1104,8 +1139,9 @@ ColSpacing=1 can avoid boldened glyphs being clipped.</p>
 
 <p style="margin-left:22%;">Window padding; margin between
 text and window border. The effective value is limited by
-the character cell width (scaling with font zooming). No
-fixed limit is imposed with a negative value.</p>
+the character cell width (scaling with font zooming). A
+negative value indicates that always the character cell
+width shall be used, without fixed limit.</p>
 
 <p style="margin-left:11%;"><b>Current size</b></p>
 
@@ -1184,9 +1220,9 @@ which is why plain <b>xterm</b> is the default.</p>
 <p style="margin-left:11%;"><b>Answerback</b>
 (Answerback=)</p>
 
-<p style="margin-left:22%; margin-top: 1em">The answerback
-string is sent in response to the <b>^E</b> (ENQ) character.
-By default, this is empty.</p>
+<p style="margin-left:22%;">The answerback string is sent
+in response to the <b>^E</b> (ENQ) character. By default,
+this is empty.</p>
 
 <table width="100%" border="0" rules="none" frame="void"
        cellspacing="0" cellpadding="0">
@@ -1200,15 +1236,14 @@ By default, this is empty.</p>
 <td width="78%">
 
 
-<p>The three options here determine what effects the bell
+<p>The options here determine what effects the bell
 character <b>^G</b> has. Default beep and taskbar
 highlighting are enabled by default. Mintty can also play
-wave sounds configured in <i>~/.minttyrc</i>, or frequency
-beeps.</p> </td></tr>
+wave sounds or frequency beeps.</p></td></tr>
 </table>
 
-<p style="margin-left:22%;">&ndash; <b>Bell system type</b>
-(BellType=1): Preferred system sound, values:</p>
+<p style="margin-left:22%;">&ndash; <b>Bell system
+sound</b> (BellType=1): Preferred system sound, values:</p>
 
 <p style="margin-left:32%;"><b>-1</b> : Simple Beep <b><br>
 0</b> : No Beep (overrides BellFile and BellFreq) <b><br>
@@ -1218,20 +1253,23 @@ beeps.</p> </td></tr>
 4</b> : Exclamation <b><br>
 5</b> : Asterisk</p>
 
-<p style="margin-left:22%;">&ndash; <b>Flash</b>
-(BellFlash=no): Briefly invert the foreground and background
-colours. <br>
+<p style="margin-left:22%;">&ndash; <b>Wave</b>
+(BellFile=): The popup offers wave files as stored in the
+resource directory $HOME/.mintty/sounds for selection. The
+option can also be set to a filename (like
+D:/.../soundfile.wav). This setting overrides the Bell
+system sound except No Beep. <br>
+&ndash; <b>Play</b>: The button plays the selected sound for
+testing. The sound is also played when it is changed. <br>
+&ndash; <b>Flash</b> (BellFlash=no): Briefly invert the
+foreground and background colours. <br>
 &ndash; <b>Highlight in taskbar</b> (BellTaskbar=yes):
 Change the colour of mintty&rsquo;s taskbar entry if the
 mintty window is not active.</p>
 
-<p style="margin-left:22%; margin-top: 1em">Further
-configuration options for a <b>Bell wave file</b> or a
-<b>Bell frequency beep</b> are currently available for
-<i>/etc/minttyrc</i> and <i>~/.minttyrc</i> or as <b>-o</b>
-command line option only: <br>
-&ndash; (BellFile=): D:/.../soundfile.wav (overrides system
-sounds). <br>
+<p style="margin-left:22%; margin-top: 1em">A simple
+<b>frequency beep</b> can be configured in the configuration
+file or on the command line: <br>
 &ndash; (BellFreq=0): Beep sound frequency (overrides system
 sounds). <br>
 &ndash; (BellLen=400): Beep sound length (applies to
@@ -1240,10 +1278,14 @@ frequency beep).</p>
 <p style="margin-left:11%;"><b>Printer</b> (Printer=)</p>
 
 <p style="margin-left:22%;">The ANSI standard defines
-control sequences for sending text to a printer, which are
-used by some terminal applications such as the mail reader
-<b>pine</b>. The Windows printer to send such text to can be
-selected here. By default, printing is disabled.</p>
+control sequences (&quot;Media Copy&quot;) for sending text
+to a printer, which are used by some terminal applications
+such as the mail reader <b>pine</b>. The Windows printer to
+send such text to can be selected here. By default, printing
+is disabled. If printing gets disabled in the Options menu,
+an active print connection will be ended; if the printer is
+changed, an active print connection will be continued with
+the previous printer.</p>
 
 <p style="margin-left:11%;"><b>Prompt about running
 processes on close</b> (ConfirmExit=yes)</p>
@@ -1401,12 +1443,12 @@ command-line option --store-taskbar-properties to make it
 persistent. It should also be combined with an explicit and
 unique AppID.</p>
 
-<p style="margin-left:22%; margin-top: 1em">Note: The
-command must be given in Windows pathname syntax (e.g.
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+The command must be given in Windows pathname syntax (e.g.
 AppLaunchCmd=&rsquo;C:\cygwin\bin\mintty -T mytitle
 -&rsquo;).</p>
 
-<p style="margin-left:22%; margin-top: 1em">Note: An
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i> An
 explicit icon supplied with the -i option can also be stored
 with the persistent properties; note, however, that for this
 purpose, it must be given in Windows pathname syntax and it
