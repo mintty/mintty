@@ -1,3 +1,8 @@
+### 2.3.1 (20 Mar 2016) ###
+
+  * Fixed character set support warning for non-Western system locales (#527).
+  * Fixed log output to stdout (-l "-") (#528).
+
 ### 2.2.4 (20 Mar 2016) ###
 
 Font configuration:
