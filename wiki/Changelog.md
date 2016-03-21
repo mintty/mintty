@@ -1,3 +1,8 @@
+### 2.3.3 (21 Mar 2016) ###
+
+  * Limit font warning to fonts with neither ANSI nor system locale support (#527).
+  * Also include OEM/SYMBOL fonts with option -o ShowHiddenFonts=yes.
+
 ### 2.3.2 (20 Mar 2016) ###
 
   * Fixed 64 bit adaptation for weird Windows function.
