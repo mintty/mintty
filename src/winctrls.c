@@ -911,12 +911,13 @@ select_font(winctrl *c)
     CF_INITTOLOGFONTSTRUCT | CF_FORCEFONTEXIST
     | CF_FIXEDPITCHONLY | CF_NOVERTFONTS
     | CF_NOSCRIPTSEL
-    | CF_SCRIPTSONLY    // exclude fonts with OEM or SYMBOL charset range
     | CF_APPLY | CF_ENABLEHOOK  // enable Apply button
     ;
   if (new_cfg.show_hidden_fonts)
     // include fonts marked to Hide in Fonts Control Panel
     cf.Flags |= CF_INACTIVEFONTS;
+  else
+    cf.Flags |= CF_SCRIPTSONLY; // exclude fonts with OEM or SYMBOL charset
 
   // open font selection menu
   if (ChooseFontW(&cf)) {
