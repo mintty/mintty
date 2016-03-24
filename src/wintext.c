@@ -207,8 +207,12 @@ static UINT
 get_default_charset()
 {
   CHARSETINFO csi;
-  long int lcid = GetSystemDefaultLCID();
-  if (TranslateCharsetInfo((DWORD *)lcid, &csi, TCI_SRCLOCALE))
+
+  //long int lcid = GetSystemDefaultLCID();
+  //int ok = TranslateCharsetInfo((DWORD *)lcid, &csi, TCI_SRCLOCALE);
+  long int acp = GetACP();
+  int ok = TranslateCharsetInfo((DWORD *)acp, &csi, TCI_SRCCODEPAGE);
+  if (ok)
     return csi.ciCharset;
   else
     return DEFAULT_CHARSET;
