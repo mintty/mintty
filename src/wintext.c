@@ -208,8 +208,6 @@ get_default_charset()
 {
   CHARSETINFO csi;
 
-  //long int lcid = GetSystemDefaultLCID();
-  //int ok = TranslateCharsetInfo((DWORD *)lcid, &csi, TCI_SRCLOCALE);
   long int acp = GetACP();
   int ok = TranslateCharsetInfo((DWORD *)acp, &csi, TCI_SRCCODEPAGE);
   if (ok)
@@ -383,8 +381,9 @@ win_init_fonts(int size)
   row_spacing += cfg.row_spacing;
   if (row_spacing < -tm.tmDescent)
     row_spacing = -tm.tmDescent;
-#ifdef check_charset_1
-  if (tm.tmCharSet != get_default_charset()) {
+#ifdef check_charset_only_for_returned_font
+  int default_charset = get_default_charset();
+  if (tm.tmCharSet != default_charset && default_charset != DEFAULT_CHARSET) {
     MessageBoxW(0, L"Font does not support system locale", cfg.font.name, MB_ICONWARNING);
   }
 #endif

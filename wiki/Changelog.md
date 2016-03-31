@@ -1,3 +1,5 @@
+  * Workaround for suspected compilation problem (#530).
+
 ### 2.3.3 (21 Mar 2016) ###
 
   * Limit font warning to fonts with neither ANSI nor system locale support (#527).
