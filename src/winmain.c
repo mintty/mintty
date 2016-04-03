@@ -2043,8 +2043,8 @@ main(int argc, char *argv[])
       small_icon = 0;
       uint err = GetLastError();
       if (err) {
-        int wmlen = 1273;
-        wchar winmsg[wmlen];  // constant and < 1273 => issue #530
+        int wmlen = 1024;  // size of heap-allocated array
+        wchar winmsg[wmlen];  // constant and < 1273 or 1705 => issue #530
         //wchar * winmsg = newn(wchar, wmlen);  // free below!
         FormatMessageW(
           FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK,
