@@ -1,4 +1,6 @@
-  * Workaround for suspected compilation problem (#530).
+### 2.3.4 (3 Apr 2016) ###
+
+  * Workaround for suspected compilation problem causing crash after daemonizing (#530).
 
 ### 2.3.3 (21 Mar 2016) ###
 
