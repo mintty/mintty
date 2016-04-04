@@ -998,9 +998,10 @@ confirm_exit(void)
   char * msg = malloc(strlen(msg_pre) + 1);
   strcpy(msg, msg_pre);
   if (procps) {
-    char line[999];  // use very long input despite narrow msg box
-                     // to avoid high risk of clipping within UTF-8 
-                     // and failing the wide character transformation
+    int ll = 999;  // use very long input despite narrow msg box
+                   // to avoid high risk of clipping within UTF-8 
+                   // and failing the wide character transformation
+    char line[ll]; // heap-allocated to prevent #530
     bool first = true;
     bool filter_tty = false;
     while (fgets(line, sizeof line, procps)) {
