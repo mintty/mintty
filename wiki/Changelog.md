@@ -1,3 +1,7 @@
+### 2.3.5 (4 Apr 2016) ###
+
+  * Reenable combined bold as font and colour for some mono-weight fonts (#536).
+
 ### 2.3.4 (3 Apr 2016) ###
 
   * Workaround for suspected compilation problem causing crash after daemonizing (#530).
