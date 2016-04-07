@@ -910,6 +910,7 @@ select_font(winctrl *c)
   cf.Flags =
     CF_INITTOLOGFONTSTRUCT | CF_FORCEFONTEXIST
     | CF_FIXEDPITCHONLY | CF_NOVERTFONTS
+    | CF_SCREENFONTS  // needed on Windows XP
     | CF_NOSCRIPTSEL
     | CF_APPLY | CF_ENABLEHOOK  // enable Apply button
     ;
