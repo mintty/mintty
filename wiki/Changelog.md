@@ -1,3 +1,5 @@
+  * Limit automatic row spacing adjustment to negative case, in order to prevent breaking box characters.
+
 ### 2.3.5 (4 Apr 2016) ###
 
   * Reenable combined bold as font and colour for some mono-weight fonts (#536).

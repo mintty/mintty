@@ -181,12 +181,16 @@ static int
 row_padding(int i, int e)
 {
   if (i == 0 && e == 0)
-    return 2;
+    return 0;  // 2 sometimes looks nicer but may break box characters
   else {
     int exc = 0;
     if (i > 3)
       exc = i - 3;
-    return e - exc;
+    int adj = e - exc;
+    if (adj <= 0)
+      return adj;
+    else
+      return 0;  // return adj may look nicer but break box characters
   }
 }
 
@@ -385,6 +389,10 @@ win_init_fonts(int size)
   row_spacing += cfg.row_spacing;
   if (row_spacing < -tm.tmDescent)
     row_spacing = -tm.tmDescent;
+    trace_font(("row spacing int %ld ext %ld -> %+d; add %+d -> %+d; desc %ld -> %+d %ls\n", 
+      (long int)tm.tmInternalLeading, (long int)tm.tmExternalLeading, row_padding(tm.tmInternalLeading, tm.tmExternalLeading),
+      cfg.row_spacing, row_padding(tm.tmInternalLeading, tm.tmExternalLeading) + cfg.row_spacing,
+      (long int)tm.tmDescent, row_spacing, cfg.font.name));
 #ifdef check_charset_only_for_returned_font
   int default_charset = get_default_charset();
   if (tm.tmCharSet != default_charset && default_charset != DEFAULT_CHARSET) {
