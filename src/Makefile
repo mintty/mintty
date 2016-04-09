@@ -113,14 +113,11 @@ DEPOPT=-MMD -MP
 CCOPT=
 CCFLAGS:=$(CFLAGS) $(CCOPT)
 
-%.o: %.c
-	$(CC) -c $(DEPOPT) $(CPPFLAGS) $(CCFLAGS) $<
+$(BINDIR)/term%.o: term%.c
+	$(CC) -c $(DEPOPT) $(CPPFLAGS) $(CCFLAGS) $< -o $(BINDIR)/term$*.o
 
 $(BINDIR)/%.o: %.c
-	$(CC) -c $(DEPOPT) $(CPPFLAGS) $(CCFLAGS) $< -o $(BINDIR)/$*.o
-
-%.o: %.rc %.mft
-	$(RC) --preprocessor '$(CC) -E -xc -DRC_INVOKED $(DEPOPT) $(CPPFLAGS)' $< $*.o
+	$(CC) -c $(DEPOPT) $(CPPFLAGS) $(CCFLAGS) -fstack-check $< -o $(BINDIR)/$*.o
 
 $(BINDIR)/%.o: %.rc %.mft
 	$(RC) --preprocessor '$(CC) -E -xc -DRC_INVOKED $(DEPOPT) $(CPPFLAGS)' $< $(BINDIR)/$*.o
