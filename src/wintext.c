@@ -202,6 +202,15 @@ row_padding(int i, int e)
 #define trace_font(params)	
 #endif
 
+static void
+show_msg(wstring msg, wstring title)
+{
+  if (fprintf(stderr, "%ls", title) < 0 || fputs("\n", stderr) < 0 ||
+      fprintf(stderr, "%ls", msg) < 0 || fputs("\n", stderr) < 0 ||
+      fflush(stderr) < 0)
+    MessageBoxW(0, msg, title, MB_ICONWARNING);
+}
+
 #ifndef TCI_SRCLOCALE
 //old MinGW
 #define TCI_SRCLOCALE 0x1000
@@ -282,14 +291,14 @@ adjust_font_weights()
 
   // check if no font found
   if (!font_found) {
-    MessageBoxW(0, L"Font not found, using system substitute", cfg.font.name, MB_ICONWARNING);
+    show_msg(L"Font not found, using system substitute", cfg.font.name);
     fw_norm = 400;
     fw_bold = 700;
     trace_font(("//\n"));
     return;
   }
   if (!ansi_found && !cs_found) {
-    MessageBoxW(0, L"Font has limited support for character ranges", cfg.font.name, MB_ICONWARNING);
+    show_msg(L"Font has limited support for character ranges", cfg.font.name);
   }
 
   // find available widths closest to selected widths
@@ -396,7 +405,7 @@ win_init_fonts(int size)
 #ifdef check_charset_only_for_returned_font
   int default_charset = get_default_charset();
   if (tm.tmCharSet != default_charset && default_charset != DEFAULT_CHARSET) {
-    MessageBoxW(0, L"Font does not support system locale", cfg.font.name, MB_ICONWARNING);
+    show_msg(L"Font does not support system locale", cfg.font.name);
   }
 #endif
 

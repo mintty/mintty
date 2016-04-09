@@ -1438,7 +1438,7 @@ opts[] = {
 static void
 show_msg(FILE *stream, string msg)
 {
-  if (fputs(msg, stream) < 0 || fflush(stream) < 0)
+  if (fputs(msg, stream) < 0 || fputs("\n", stream) < 0 || fflush(stream) < 0)
     MessageBox(0, msg, APPNAME, MB_OK);
 }
 
@@ -1487,8 +1487,13 @@ warnw(wstring msg, wstring file, wstring err)
   show_msg_w(stderr, mess);
 #else
   //MinGW
-  (void)msg; (void)file; (void)err; (void)show_msg_w;
-  string mess = "could not load icon file";
+  (void)show_msg_w;
+  string format = (err && *err) ? "%s: %s '%s':\n%s" : "%s: %s '%s'";
+  string _msg = cs__wcstombs(msg);
+  string _file = cs__wcstombs(file);
+  string _err = cs__wcstombs(err);
+  char mess[strlen(format) + strlen(main_argv[0]) + strlen(_msg) + strlen(_file) + (err ? strlen(_err) : 0)];
+  sprintf(mess, format, main_argv[0], _msg, _file, _err);
   show_msg(stderr, mess);
 #endif
 }
