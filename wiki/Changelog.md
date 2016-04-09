@@ -1,3 +1,5 @@
+  * Showing font warning on stderr rather than message box if possible (#527).
+  * Fixed font selection menu on Windows XP.
   * Limit automatic row spacing adjustment to negative case, in order to prevent breaking box characters.
 
 ### 2.3.5 (4 Apr 2016) ###
