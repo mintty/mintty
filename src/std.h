@@ -3,6 +3,10 @@
 
 #include <cygwin/version.h>
 
+//unhide some definitions
+#define _XOPEN_SOURCE
+#define _GNU_SOURCE
+
 #include <assert.h>
 #include <limits.h>
 #include <stdbool.h>
