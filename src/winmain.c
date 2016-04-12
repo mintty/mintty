@@ -1494,6 +1494,9 @@ warnw(wstring msg, wstring file, wstring err)
   string _err = cs__wcstombs(err);
   char mess[strlen(format) + strlen(main_argv[0]) + strlen(_msg) + strlen(_file) + (err ? strlen(_err) : 0)];
   sprintf(mess, format, main_argv[0], _msg, _file, _err);
+  free(_msg);
+  free(_file);
+  free(_err);
   show_msg(stderr, mess);
 #endif
 }
