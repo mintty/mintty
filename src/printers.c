@@ -7,7 +7,7 @@
 #define dont_debug_printer
 
 
-static PRINTER_INFO_4W *printer_info;
+static PRINTER_INFO_4W * printer_info = null;
 
 uint
 printer_start_enum(void)
@@ -18,7 +18,7 @@ printer_start_enum(void)
                   0, 4, (LPBYTE)printer_info, size, &size, &num) &&
     GetLastError() == ERROR_INSUFFICIENT_BUFFER
   ) {
-    printer_info = realloc(printer_info, size);
+    printer_info = _realloc(printer_info, size);
   }
 
   return num;
