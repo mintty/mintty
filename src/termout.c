@@ -1049,6 +1049,16 @@ do_cmd(void)
     when 10:  do_colour_osc(false, FG_COLOUR_I, false);
     when 11:  do_colour_osc(false, BG_COLOUR_I, false);
     when 12:  do_colour_osc(false, CURSOR_COLOUR_I, false);
+    when 7:  // Set working directory (from Mac Terminal) for Alt+F2
+      // extract dirname from file://host/path scheme
+      if (!strncmp(s, "file:", 5))
+        s += 5;
+      if (!strncmp(s, "//localhost/", 12))
+        s += 11;
+      else if (!strncmp(s, "///", 3))
+        s += 2;
+      if (*s == '/')
+        child_set_fork_dir(s);
     when 701:  // Set/get locale (from urxvt).
       if (!strcmp(s, "?"))
         child_printf("\e]701;%s\e\\", cs_get_locale());

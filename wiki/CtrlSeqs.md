@@ -207,6 +207,21 @@ the window title to the Windows clipboard (like menu function "Copy Title"):
 > `^[]7721;1^G`
 
 
+## Working directory ##
+
+The following _OSC_ ("operating system command") sequence can be used to 
+inform mintty about the current working directory (used in the Mac terminal), 
+in order to spawn a new (cloned) terminal window in that directory 
+(e.g. Alt+F2):
+
+> `^[]7;`_file-URL_`^G`
+
+The _file-URL_ liberally follows a `file:` URL scheme; examples are
+  * `file:///home/tmp`
+  * `//localhost/home/tmp`
+  * `/home/tmp`
+
+
 ## Cursor style ##
 
 The VT510 _[DECSCUSR](http://vt100.net/docs/vt510-rm/DECSCUSR)_ sequence can be used to control cursor shape and blinking.

@@ -18,5 +18,6 @@ extern bool child_is_parent(void);
 extern char * child_tty(void);
 extern wstring child_conv_path(wstring);
 extern void child_fork(int argc, char * argv[], int moni);
+extern void child_set_fork_dir(char *);
 
 #endif

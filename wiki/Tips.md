@@ -349,6 +349,22 @@ So the initial shell, interpreting its ```cd``` parameters already in GBK
 encoding, will see it properly converted.
 
 
+## Spawning a new terminal window in the same directory ##
+
+With Alt+F2, normally another mintty window would be opened in the 
+home directory (or where the current one was started), while it may 
+be desirable to open it in the same directory as the current working 
+directory. This can be achieved with some interaction between the shell 
+and the terminal, as applied e.g. by the Mac Terminal.
+The shell can inform the terminal about a changed directory with the 
+OSC 7 control sequence (see the [[CtrlSeqs]] wiki page), embedded in 
+the prompt:
+
+```
+PS1="\[\e]7;\w\a\]$PS1"
+```
+
+
 ## Multi-monitor support ##
 
 Mintty supports multiple monitors with two features:

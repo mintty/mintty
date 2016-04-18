@@ -35,6 +35,8 @@ int forkpty(int *, char *, struct termios *, struct winsize *);
 
 bool clone_size_token = true;
 
+string child_dir = null;
+
 static pid_t pid;
 static bool killed;
 static int pty_fd = -1, log_fd = -1, win_fd;
@@ -46,7 +48,7 @@ childerror(char * action, bool from_fork)
   char * err = strerror(errno);
   if (from_fork && errno == ENOENT)
     err = "There are no available terminals";
-  int len = asprintf(&msg, "\033[30;41m\033[KError: %s: %s.\033[0m\r\n", action, err);
+  int len = asprintf(&msg, "\033[30;%dm\033[KError: %s: %s.\033[0m\r\n", from_fork ? 41 : 43, action, err);
   if (len > 0) {
     term_write(msg, len);
     free(msg);
@@ -154,7 +156,7 @@ child_create(char *argv[], struct winsize *winp)
     execvp(cmd, argv);
 
     // If we get here, exec failed.
-    fprintf(stderr, "\r\n\033[30;41m\033[KFailed to run %s: %s\r\n", cmd, strerror(errno));
+    fprintf(stderr, "\033[30;41m\033[KFailed to run %s: %s\r\n", cmd, strerror(errno));
 
 #if CYGWIN_VERSION_DLL_MAJOR < 1005
     // Before Cygwin 1.5, the message above doesn't appear if we exit
@@ -525,6 +527,12 @@ child_conv_path(wstring wpath)
 }
 
 void
+child_set_fork_dir(char * dir)
+{
+  strset(&child_dir, dir);
+}
+
+void
 child_fork(int argc, char *argv[], int moni)
 {
   pid_t clone = fork();
@@ -555,6 +563,9 @@ child_fork(int argc, char *argv[], int moni)
     if (log_fd >= 0)
       close(log_fd);
     close(win_fd);
+
+    if (child_dir)
+      chdir(child_dir);
 
 #ifdef add_child_parameters
     // add child parameters
