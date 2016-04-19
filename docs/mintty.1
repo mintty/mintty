@@ -677,8 +677,8 @@ are \fBNormal\fP/\fBRegular\fP (FontWeight=400) and \fBBold\fP (FontWeight=700
 or FontIsBold=yes) but if a font family has a different scheme or more than 
 2 font weights, the weight value can be used for more specific selection.
 .br
-\(en \fBShow "hidden" fonts\fP (ShowHiddenFonts=no)
-This hidden settings enables display of monospace fonts in the font selection 
+\(en \fBShow "hidden" fonts\fP (ShowHiddenFonts=no):
+This hidden setting enables display of monospace fonts in the font selection 
 menu even if they are marked to Hide in the Windows Font settings (from the 
 Control Panel \(em Fonts folder).
 
@@ -738,6 +738,10 @@ variable setting: \fILC_ALL\fP and the \fILC_*\fP variables for specific
 locale categories are cleared, while \fILANG\fP is set according to the
 selected locale and character set.
 
+\fINote:\fP This means, while not strictly necessary, that also locale variables 
+unrelated to the terminal character set (e.g. LC_MESSAGES) are cleared 
+to avoid confusion.
+
 .TP
 \fBCharacter set\fP (Charset=)
 The character set to be used for encoding input and decoding output.
@@ -747,7 +751,7 @@ While changing the character set takes effect immediately for text input and
 ouput, it does not affect the processes already running in mintty.
 This is because the environment variables of a running process cannot be
 changed from outside that process.
-Therefore mintty needs to be restarted for a character set change to take full
+Therefore mintty should be restarted for a character set change to take full
 effect.
 
 .SS Keys

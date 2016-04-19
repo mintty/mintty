@@ -1,3 +1,4 @@
+  * Escape sequence OSC 7 informs terminal of current working directory, to be cloned on Alt+F2.
   * Showing font warning on stderr rather than message box if possible (#527).
   * Fixed font selection menu on Windows XP.
   * Limit automatic row spacing adjustment to negative case, in order to prevent breaking box characters.
