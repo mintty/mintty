@@ -642,7 +642,7 @@ load_config(string filename, bool to_save)
 
   FILE *file = fopen(filename, "r");
   if (file) {
-    char line[256];
+    static char line[256];
     while (fgets(line, sizeof line, file)) {
       line[strcspn(line, "\r\n")] = 0;  /* trim newline */
       if (line[0] != '#' && line[0] != '\0') {
