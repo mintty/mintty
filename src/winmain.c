@@ -1573,8 +1573,11 @@ get_shortcut_icon_location(wchar * iconfile)
 
   if (SUCCEEDED(hres)) {
     WCHAR wil[MAX_PATH + 1];
+    * wil = 0;
     int index;
-    shell_link->lpVtbl->GetIconLocation(shell_link, wil, lengthof(wil), &index);
+    hres = shell_link->lpVtbl->GetIconLocation(shell_link, wil, MAX_PATH, &index);
+    if (!SUCCEEDED(hres) || !*wil)
+      goto iconex;
 
     wchar * wicon = wil;
 
@@ -1619,6 +1622,7 @@ get_shortcut_icon_location(wchar * iconfile)
     if (* wenv)
       free(wenv);
   }
+  iconex:
 
   /* Release the pointer to the IPersistFile interface. */
   persist_file->lpVtbl->Release(persist_file);
