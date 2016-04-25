@@ -676,6 +676,9 @@ config file or on the command line for font selection. Typical weights
 are \fBNormal\fP/\fBRegular\fP (FontWeight=400) and \fBBold\fP (FontWeight=700 
 or FontIsBold=yes) but if a font family has a different scheme or more than 
 2 font weights, the weight value can be used for more specific selection.
+If a font family has no bold weight but boldness was requested, mintty 
+does not adhere to this scheme but enforces bold font selection; however, 
+in this case the bold attribute may not be effective.
 .br
 \(en \fBShow "hidden" fonts\fP (ShowHiddenFonts=no):
 This hidden setting enables display of monospace fonts in the font selection 

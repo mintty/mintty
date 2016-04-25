@@ -304,15 +304,15 @@ adjust_font_weights()
   // find available widths closest to selected widths
   if (abs(fw_norm - fw_norm_0) <= abs(fw_norm - fw_norm_1) && fw_norm_0 > 0)
     fw_norm = fw_norm_0;
-  else
+  else if (fw_norm_1 < 1000)
     fw_norm = fw_norm_1;
   if (abs(fw_bold - fw_bold_0) < abs(fw_bold - fw_bold_1) || fw_bold_1 > 1000)
     fw_bold = fw_bold_0;
-  else
+  else if (fw_bold_1 < 1001)
     fw_bold = fw_bold_1;
-  // distinguish bold from normal
-  if (fw_bold == fw_norm) {
-    trace_font((" -> %d=", fw_norm));
+  // ensure bold is bolder than normal
+  if (fw_bold <= fw_norm) {
+    trace_font((" -> %d/%d", fw_norm, fw_bold));
     if (fw_norm_0 < fw_norm && fw_norm_0 > 0)
       fw_norm = fw_norm_0;
     if (fw_bold - fw_norm < 300) {
@@ -321,6 +321,15 @@ adjust_font_weights()
       else
         fw_bold = min(fw_norm + 300, 1000);
     }
+  }
+  // enforce preselected boldness
+  int selweight = cfg.font.weight;
+  if (selweight < 700 && cfg.font.isbold)
+    selweight = 700;
+  if (selweight - fw_norm >= 300) {
+    trace_font((" -> %d(%d)/%d", fw_norm, selweight, fw_bold));
+    fw_norm = selweight;
+    fw_bold = min(fw_norm + 300, 1000);
   }
   trace_font((" -> %d/%d\n", fw_norm, fw_bold));
 }
