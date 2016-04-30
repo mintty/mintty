@@ -208,13 +208,21 @@ child_create(char *argv[], struct winsize *winp)
       char * log = path_win_w_to_posix(cfg.log);
       char * format = strchr(log, '%');
       if (format && * ++ format == 'd' && !strchr(format, '%')) {
-        char logf[strlen(log + 20)];
+        char * logf = newn(char, strlen(log) + 20);
         sprintf(logf, log, getpid());
-        log_fd = open(logf, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+        free(log);
+        log = logf;
       }
-      else
-        log_fd = open(log, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+      else if (format) {
+        struct timeval now;
+        gettimeofday (& now, 0);
+        char * logf = newn(char, MAX_PATH + 1);
+        strftime (logf, MAX_PATH, log, localtime (& now.tv_sec));
+        free(log);
+        log = logf;
+      }
 
+      log_fd = open(log, O_WRONLY | O_CREAT | O_EXCL, 0600);
       if (log_fd < 0) {
         // report message and filename:
         childerror("could not open log file", false);
