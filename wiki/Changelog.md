@@ -1,7 +1,15 @@
-  * Escape sequence OSC 7 informs terminal of current working directory, to be cloned on Alt+F2.
+Font configuration:
+  * Tweaked font weight selection (#520) to enforce selected boldness.
   * Showing font warning on stderr rather than message box if possible (#527).
   * Fixed font selection menu on Windows XP.
   * Limit automatic row spacing adjustment to negative case, in order to prevent breaking box characters.
+
+Keyboard:
+  * AltGr+space menu invocation may be overridden by keyboard layout (#542).
+
+Other:
+  * Escape sequence OSC 7 informs terminal of current working directory, to be cloned on Alt+F2.
+  * Log file name supports strftime pattern (#546).
 
 ### 2.3.5 (4 Apr 2016) ###
 
