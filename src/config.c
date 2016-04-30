@@ -44,6 +44,7 @@ const config default_cfg = {
   .allow_blinking = false,
   .locale = "",
   .charset = "",
+  .old_fontmenu = false,
   // Keys
   .backspace_sends_bs = CERASE == '\b',
   .delete_sends_del = false,
@@ -183,6 +184,7 @@ options[] = {
   {"AllowBlinking", OPT_BOOL, offcfg(allow_blinking)},
   {"Locale", OPT_STRING, offcfg(locale)},
   {"Charset", OPT_STRING, offcfg(charset)},
+  {"OldFontMenu", OPT_BOOL, offcfg(old_fontmenu)},
 
   // Keys
   {"BackspaceSendsBS", OPT_BOOL, offcfg(backspace_sends_bs)},

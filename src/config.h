@@ -60,6 +60,7 @@ typedef struct {
   bool allow_blinking;
   string locale;
   string charset;
+  bool old_fontmenu;
   // Keys
   bool backspace_sends_bs;
   bool delete_sends_del;
