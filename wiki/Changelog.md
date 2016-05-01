@@ -1,3 +1,5 @@
+### 2.3.6 (30 Apr 2016) ###
+
 Font configuration:
   * Tweaked font weight selection (#520) to enforce selected boldness.
   * Showing font warning on stderr rather than message box if possible (#527).

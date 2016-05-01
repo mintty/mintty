@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Fri Mar 18 23:16:28 2016 -->
+<!-- CreationDate: Sat Apr 30 20:27:30 2016 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -331,8 +331,9 @@ customised.</p>
 <p style="margin-left:11%; margin-top: 1em"><b>Menus</b>
 <br>
 The context menu can be opened by right-clicking the mouse
-or by pressing the <b>Menu</b> key that is normally located
-next to the right Ctrl key.</p>
+(with Shift in case right-click has been redefined) or by
+pressing the <b>Menu</b> key that is normally located next
+to the right Ctrl key.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Mintty also
 adds a couple of items to the window menu, which can be
@@ -818,10 +819,13 @@ command line for font selection. Typical weights are
 <b>Normal</b>/<b>Regular</b> (FontWeight=400) and
 <b>Bold</b> (FontWeight=700 or FontIsBold=yes) but if a font
 family has a different scheme or more than 2 font weights,
-the weight value can be used for more specific selection.
-<br>
+the weight value can be used for more specific selection. If
+a font family has no bold weight but boldness was requested,
+mintty does not adhere to this scheme but enforces bold font
+selection; however, in this case the bold attribute may not
+be effective. <br>
 &ndash; <b>Show &quot;hidden&quot; fonts</b>
-(ShowHiddenFonts=no) This hidden settings enables display of
+(ShowHiddenFonts=no): This hidden setting enables display of
 monospace fonts in the font selection menu even if they are
 marked to Hide in the Windows Font settings (from the
 Control Panel &mdash; Fonts folder).</p>
@@ -847,7 +851,7 @@ here.</p>
 <p style="margin-left:22%; margin-top: 1em">Note that when
 <b>BoldAsFont</b> is enabled, only bold text in one of the
 eight ANSI colours has its colour changed, i.e. bold text
-without an explicitly spefified colour is shown with a bold
+without an explicitly specified colour is shown with a bold
 font only. This matches <b>xterm</b> behaviour.</p>
 
 <p style="margin-left:22%; margin-top: 1em">This option
@@ -897,6 +901,11 @@ variables for specific locale categories are cleared, while
 <i>LANG</i> is set according to the selected locale and
 character set.</p>
 
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+This means, while not strictly necessary, that also locale
+variables unrelated to the terminal character set (e.g.
+LC_MESSAGES) are cleared to avoid confusion.</p>
+
 <p style="margin-left:11%;"><b>Character set</b>
 (Charset=)</p>
 
@@ -909,7 +918,7 @@ the character set takes effect immediately for text input
 and ouput, it does not affect the processes already running
 in mintty. This is because the environment variables of a
 running process cannot be changed from outside that process.
-Therefore mintty needs to be restarted for a character set
+Therefore mintty should be restarted for a character set
 change to take full effect.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Keys</b>
@@ -1341,8 +1350,15 @@ note for the -i option above.</p>
 used to specify a log file that all output is copied into.
 If it is empty, as it is by default, no logging is done. If
 it contains <b>%d</b> it will be substituted with the
-process ID. See also the <i>script</i>(1) utility for a more
-flexible logging solution.</p>
+process ID. If it contains <b>%</b> placeholders other than
+a single <b>%d</b>, the log file name will be constructed by
+calling strftime(3) on the pattern; note that this is likely
+to fail if a placeholder expands with &quot;/&quot;
+(%D).</p>
+
+<p style="margin-left:22%; margin-top: 1em">See also the
+<i>script</i>(1) utility for a more flexible logging
+solution.</p>
 
 <p style="margin-left:11%;"><b>Window title</b>
 (Title=)</p>
