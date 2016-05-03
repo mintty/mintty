@@ -270,7 +270,8 @@ They are inserted in the same way as if they were pasted from the clipboard.
 .SS Opening files, directories and URLs
 
 Files, directories, URLs and web addresses beginning with "www." can be 
-opened either by holding \fBCtrl\fP while left-clicking on them, or by 
+opened either by holding \fBCtrl\fP while left-clicking on them (or 
+double-clicking, if and as enabled by option OpeningClicks), or by 
 selecting them and choosing the \fBOpen\fP command from the context menu.
 Please note that opening a file or directory with a relative path only works
 correctly if the path refers to the current working directory of the process
@@ -883,10 +884,6 @@ with \fBShift\fP pressed pastes the clipboard instead of extending the
 selection.
 
 .TP
-\fBMouse zooming\fP (ZoomMouse=yes)
-Enabling font zooming with \fBCtrl+mouse-wheel/middle-mouse-click\fP.
-
-.TP
 \fBDefault click target\fP (ClicksTargetApp=yes)
 This applies to application mouse mode, i.e. when the application activates
 xterm-style mouse reporting.
@@ -1172,7 +1169,7 @@ distinguish different mintty windows.  The name defaults to "mintty".
 .SS "Hidden" settings
 The following settings appear neither in the options dialog nor as command line
 options, which means they can only be set in config files or using the
-\fB--option\fP command line option.
+\fB--option\fP or \fB-o\fP command line option.
 
 .TP
 \fBApplication ID\fP (AppID=)
@@ -1368,6 +1365,17 @@ process terminated, this option prefixes the window title with its string,
 for example -o ExitTitle="TERMINATED: " or (in minttyrc) ExitTitle=TERMINATED: .
 
 .TP
+\fBConfigure document opening by mouse click\fP (OpeningClicks=1)
+Enabling opening files, directories or URLs with mouse clicking, 
+in addition to the context menu. Values 1, 2, or 3 require Ctrl+mouse-click, 
+double-click, or triple-click, respectively, to invoke the document opening.
+Value 0 disables click-opening.
+
+.TP
+\fBMouse zooming\fP (ZoomMouse=yes)
+Enabling font zooming with \fBCtrl+mouse-wheel/middle-mouse-click\fP.
+
+.TP
 \fBDisable Shift-coupled implicit font zooming\fP (ZoomFontWithWindow=yes)
 If this option is set to false, implicit font zooming coupled with 
 window zooming by the Shift key is disabled, 
@@ -1400,7 +1408,7 @@ characters are not supported, nor are ISO2022 character sets.  There is no
 Tektronix 4014 emulation.  Mouse highlighting mode is not implemented.
 
 The majority of xterm's many control sequences is implemented, but quite a few
-are missing.  Significant omissions should be reported as bugs.
+are missing.  Significant omissions should be reported to the issue tracker.
 
 .SH SEE ALSO
 
@@ -1409,11 +1417,11 @@ Additional information can be found on the wiki on the mintty project page
 
 .SH LICENSE
 
-Copyright (C) 2013 Andy Koppe (C) 2015 Thomas Wolff
+Copyright (C) 2013 Andy Koppe (C) 2016 Thomas Wolff
 
 Mintty is released under the terms of the the \fIGNU General Public License\fP
-version 3 or later.
-See \fIhttp://gnu.org/licenses/gpl/html\fP for the license text.
+version 3.
+See \fIhttp://gnu.org/licenses/gpl\fP for the license text.
 
 There is NO WARRANTY, to the extent permitted by law.
 
@@ -1421,4 +1429,6 @@ There is NO WARRANTY, to the extent permitted by law.
 
 Please report bugs or suggest enhancements via the issue tracker at
 \fIhttps://github.com/mintty/mintty/issues\fP.
-Questions can be sent to the Cygwin mailing list at \fIcygwin@cygwin.com\fP.
+Questions can be sent to the Cygwin mailing list at \fIcygwin@cygwin.com\fP, 
+to the Mintty discussion issue \fIhttps://github.com/mintty/mintty/issues/500\fP, 
+or to the Gitter chat (experimental) \fIhttps://gitter.im/mintty/mintty\fP.

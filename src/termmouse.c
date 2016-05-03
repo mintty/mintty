@@ -360,17 +360,19 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     else if (b == MBT_LEFT && mods == MDK_SHIFT && rca == RC_EXTEND)
       term.mouse_state = MS_PASTING;
     else if (b == MBT_LEFT && mods == MDK_CTRL) {
-      // Open word under cursor
-      p = get_selpoint(box_pos(p));
-      term.mouse_state = MS_OPENING;
-      term.selected = true;
-      term.sel_rect = false;
-      term.sel_start = term.sel_end = term.sel_anchor = p;
-      sel_spread();
-      win_update();
+      if (count == cfg.opening_clicks) {
+        // Open word under cursor
+        p = get_selpoint(box_pos(p));
+        term.mouse_state = MS_OPENING;
+        term.selected = true;
+        term.sel_rect = false;
+        term.sel_start = term.sel_end = term.sel_anchor = p;
+        sel_spread();
+        win_update();
+      }
     }
-    else if (b == MBT_MIDDLE && mca == MC_VOID)
-      (void) 0;
+    else if (b == MBT_MIDDLE && mca == MC_VOID) {
+    }
     else {
       // Only clicks for selecting and extending should get here.
       p = get_selpoint(box_pos(p));

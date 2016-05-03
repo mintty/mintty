@@ -1,3 +1,5 @@
+  * Option OpeningClicks configures whether documents are opened on single/double/triple Ctrl+mouse-click (#545).
+
 ### 2.3.6 (30 Apr 2016) ###
 
 Font configuration:

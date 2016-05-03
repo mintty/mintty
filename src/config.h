@@ -83,6 +83,7 @@ typedef struct {
   bool clicks_place_cursor;
   char middle_click_action;
   char right_click_action;
+  int opening_clicks;
   bool zoom_mouse;
   bool clicks_target_app;
   char click_target_mod;
