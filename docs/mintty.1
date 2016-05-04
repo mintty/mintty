@@ -246,8 +246,8 @@ URLs.
 By default, selected text is automatically copied to the clipboard.
 This can be disabled on the \fBMouse\fP page of the options dialog.
 Selected text can also be copied manually using either the \fBCopy\fP menu
-command, the \fBCtrl+Ins\fP keyboard shortcut, or the middle mouse button
-combined with \fBShift\fP.
+command, the \fBCtrl+Ins\fP or \fBCtrl+C\fP keyboard shortcuts, 
+or the middle mouse button combined with \fBShift\fP.
 
 The selected region is copied as "rich text" as well as normal text,
 which means it can be pasted with colours and formatting into applications
@@ -257,7 +257,8 @@ The window title can be copied using the \fBCopy Title\fP command in the window
 menu.
 
 The clipboard contents can be pasted using either the \fBPaste\fP menu command,
-the \fBShift+Ins\fP keyboard shortcut, or the middle mouse button.
+the \fBShift+Ins\fP or \fBCtrl+V\fP keyboard shortcuts, 
+or the middle mouse button.
 Not only text but also files and directories can be pasted,
 whereby the latter are inserted as Cygwin file names.
 Shell quoting is added to file names that contain spaces or special characters.
@@ -273,9 +274,9 @@ Files, directories, URLs and web addresses beginning with "www." can be
 opened either by holding \fBCtrl\fP while left-clicking on them (or 
 double-clicking, if and as enabled by option OpeningClicks), or by 
 selecting them and choosing the \fBOpen\fP command from the context menu.
-Please note that opening a file or directory with a relative path only works
-correctly if the path refers to the current working directory of the process
-invoked by mintty.
+Please note that a relative file or directory path is interpreted as relative 
+to the current working directory of the terminal foreground process if that 
+can be determined.
 
 .SS Font zoom
 
@@ -511,6 +512,8 @@ An alternative set of shortcuts for clipboard and window commands using
 \fBCtrl+Shift+letter\fP combinations is available.  These can be enabled on the
 Keys pane of the options dialog.
 .br
+\(en \fBCtrl+Shift+A\fP: Select all
+.br
 \(en \fBCtrl+Shift+C\fP: Copy
 .br
 \(en \fBCtrl+Shift+V\fP: Paste
@@ -601,7 +604,7 @@ Also X11 color names are supported.
 
 \(en \fBTheme\fP (ThemeFile=): 
 The popup offers theme files as stored in the resource directory 
-$HOME/.mintty/themes for selection as a colour scheme.
+\fI~/.mintty/themes\fP for selection as a colour scheme.
 The option can also be set to a filename (like D:/.../solarized-light.minttyrc).
 
 .TP
@@ -1040,7 +1043,7 @@ Mintty can also play wave sounds or frequency beeps.
 .RE
 \(en \fBWave\fP (BellFile=): 
 The popup offers wave files as stored in the resource directory 
-$HOME/.mintty/sounds for selection. The option can also be set 
+\fI~/.mintty/sounds\fP for selection. The option can also be set 
 to a filename (like D:/.../soundfile.wav).
 This setting overrides the Bell system sound except No Beep.
 .br

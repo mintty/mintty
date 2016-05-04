@@ -487,6 +487,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     if (cfg.ctrl_shift_shortcuts &&
         mods == (MDK_CTRL | MDK_SHIFT) && 'A' <= key && key <= 'Z') {
       switch (key) {
+        when 'A': term_select_all();
         when 'C': term_copy();
         when 'V': win_paste();
         when 'N': send_syscommand(IDM_NEW);
