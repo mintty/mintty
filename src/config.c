@@ -56,6 +56,7 @@ const config default_cfg = {
   .zoom_font_with_window = true,
   .alt_fn_shortcuts = true,
   .ctrl_shift_shortcuts = false,
+  .ctrl_exchange_shift = false,
   .key_prtscreen = "",	// VK_SNAPSHOT
   .key_pause = "",	// VK_PAUSE
   .key_break = "",	// VK_CANCEL
@@ -198,6 +199,7 @@ options[] = {
   {"ZoomFontWithWindow", OPT_BOOL, offcfg(zoom_font_with_window)},
   {"AltFnShortcuts", OPT_BOOL, offcfg(alt_fn_shortcuts)},
   {"CtrlShiftShortcuts", OPT_BOOL, offcfg(ctrl_shift_shortcuts)},
+  {"CtrlExchangeShift", OPT_BOOL, offcfg(ctrl_exchange_shift)},
   {"Key_PrintScreen", OPT_STRING, offcfg(key_prtscreen)},
   {"Key_Pause", OPT_STRING, offcfg(key_pause)},
   {"Key_Break", OPT_STRING, offcfg(key_break)},

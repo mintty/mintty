@@ -1,3 +1,4 @@
+  * Option CtrlExchangeShiftExchange exchanges Control characters with Ctrl+Shift shortcuts (#524).
   * Shortcut key Shift+Ctrl+A for "Select All".
   * Option OpeningClicks configures whether documents are opened on single/double/triple Ctrl+mouse-click (#545).
 

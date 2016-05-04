@@ -484,8 +484,9 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
 
     // Ctrl+Shift+letter shortcuts
-    if (cfg.ctrl_shift_shortcuts &&
-        mods == (MDK_CTRL | MDK_SHIFT) && 'A' <= key && key <= 'Z') {
+    if (cfg.ctrl_shift_shortcuts && 'A' <= key && key <= 'Z' &&
+        mods == (cfg.ctrl_exchange_shift ? MDK_CTRL : (MDK_CTRL | MDK_SHIFT))
+       ) {
       switch (key) {
         when 'A': term_select_all();
         when 'C': term_copy();
@@ -788,7 +789,7 @@ static struct {
 
   void ctrl_ch(uchar c) {
     esc_if(alt);
-    if (shift) {
+    if (shift && !cfg.ctrl_exchange_shift) {
       // Send C1 control char if the charset supports it.
       // Otherwise prefix the C0 char with ESC.
       if (c < 0x20) {
