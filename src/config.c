@@ -13,8 +13,6 @@
 #include <sys/cygwin.h>
 
 
-#define dont_debug_config
-
 #define dont_support_blurred
 
 
@@ -636,17 +634,17 @@ load_config(string filename, bool to_save)
   if (access(filename, R_OK) == 0 && access(filename, W_OK) < 0)
     to_save = false;
 
-  if (to_save) {
-    file_opts_num = arg_opts_num = 0;
-
-    delete(rc_filename);
-    rc_filename = path_posix_to_win_w(filename);
-  }
-#ifdef debug_config
-  printf ("will save to %s? %d\n", filename, to_save);
-#endif
-
   FILE *file = fopen(filename, "r");
+
+  if (to_save) {
+    if (file || (!rc_filename && strstr(filename, "/.minttyrc"))) {
+      file_opts_num = arg_opts_num = 0;
+
+      delete(rc_filename);
+      rc_filename = path_posix_to_win_w(filename);
+    }
+  }
+
   if (file) {
     static char line[256];
     while (fgets(line, sizeof line, file)) {

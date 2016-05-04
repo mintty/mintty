@@ -1,3 +1,4 @@
+  * Loading config also from XDG default config dir (#525) or Windows AppData dir (#201).
   * Option CtrlExchangeShiftExchange exchanges Control characters with Ctrl+Shift shortcuts (#524).
   * Shortcut key Shift+Ctrl+A for "Select All".
   * Option OpeningClicks configures whether documents are opened on single/double/triple Ctrl+mouse-click (#545).
