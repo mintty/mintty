@@ -1,3 +1,4 @@
+  * Fix drag-and-drop file/folder to also honour bracketed paste mode (#440).
   * Application keypad modified keys send sequences like in xterm (#506).
   * Loading config also from XDG default config dir (#525) or Windows AppData dir (#201).
   * Option CtrlExchangeShiftExchange exchanges Control characters with Ctrl+Shift shortcuts (#524).

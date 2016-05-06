@@ -488,8 +488,12 @@ paste_hdrop(HDROP drop)
     free(fn);
   }
   buf_pos--;  // Drop trailing space
+  if (term.bracketed_paste)
+    child_write("\e[200~", 6);
   child_send(buf, buf_pos);
   free(buf);
+  if (term.bracketed_paste)
+    child_write("\e[201~", 6);
 }
 
 static void
