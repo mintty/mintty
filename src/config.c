@@ -13,8 +13,6 @@
 #include <sys/cygwin.h>
 
 
-#define dont_debug_config
-
 #define dont_support_blurred
 
 
@@ -44,6 +42,7 @@ const config default_cfg = {
   .allow_blinking = false,
   .locale = "",
   .charset = "",
+  .old_fontmenu = false,
   // Keys
   .backspace_sends_bs = CERASE == '\b',
   .delete_sends_del = false,
@@ -55,6 +54,7 @@ const config default_cfg = {
   .zoom_font_with_window = true,
   .alt_fn_shortcuts = true,
   .ctrl_shift_shortcuts = false,
+  .ctrl_exchange_shift = false,
   .key_prtscreen = "",	// VK_SNAPSHOT
   .key_pause = "",	// VK_PAUSE
   .key_break = "",	// VK_CANCEL
@@ -66,6 +66,7 @@ const config default_cfg = {
   .clicks_place_cursor = false,
   .middle_click_action = MC_PASTE,
   .right_click_action = RC_MENU,
+  .opening_clicks = 1,
   .zoom_mouse = true,
   .clicks_target_app = true,
   .click_target_mod = MDK_SHIFT,
@@ -183,6 +184,7 @@ options[] = {
   {"AllowBlinking", OPT_BOOL, offcfg(allow_blinking)},
   {"Locale", OPT_STRING, offcfg(locale)},
   {"Charset", OPT_STRING, offcfg(charset)},
+  {"OldFontMenu", OPT_BOOL, offcfg(old_fontmenu)},
 
   // Keys
   {"BackspaceSendsBS", OPT_BOOL, offcfg(backspace_sends_bs)},
@@ -195,6 +197,7 @@ options[] = {
   {"ZoomFontWithWindow", OPT_BOOL, offcfg(zoom_font_with_window)},
   {"AltFnShortcuts", OPT_BOOL, offcfg(alt_fn_shortcuts)},
   {"CtrlShiftShortcuts", OPT_BOOL, offcfg(ctrl_shift_shortcuts)},
+  {"CtrlExchangeShift", OPT_BOOL, offcfg(ctrl_exchange_shift)},
   {"Key_PrintScreen", OPT_STRING, offcfg(key_prtscreen)},
   {"Key_Pause", OPT_STRING, offcfg(key_pause)},
   {"Key_Break", OPT_STRING, offcfg(key_break)},
@@ -209,6 +212,7 @@ options[] = {
   {"ClicksPlaceCursor", OPT_BOOL, offcfg(clicks_place_cursor)},
   {"MiddleClickAction", OPT_MIDDLECLICK, offcfg(middle_click_action)},
   {"RightClickAction", OPT_RIGHTCLICK, offcfg(right_click_action)},
+  {"OpeningClicks", OPT_INT, offcfg(opening_clicks)},
   {"ZoomMouse", OPT_BOOL, offcfg(zoom_mouse)},
   {"ClicksTargetApp", OPT_BOOL, offcfg(clicks_target_app)},
   {"ClickTargetMod", OPT_MOD, offcfg(click_target_mod)},
@@ -630,17 +634,17 @@ load_config(string filename, bool to_save)
   if (access(filename, R_OK) == 0 && access(filename, W_OK) < 0)
     to_save = false;
 
-  if (to_save) {
-    file_opts_num = arg_opts_num = 0;
-
-    delete(rc_filename);
-    rc_filename = path_posix_to_win_w(filename);
-  }
-#ifdef debug_config
-  printf ("will save to %s? %d\n", filename, to_save);
-#endif
-
   FILE *file = fopen(filename, "r");
+
+  if (to_save) {
+    if (file || (!rc_filename && strstr(filename, "/.minttyrc"))) {
+      file_opts_num = arg_opts_num = 0;
+
+      delete(rc_filename);
+      rc_filename = path_posix_to_win_w(filename);
+    }
+  }
+
   if (file) {
     static char line[256];
     while (fgets(line, sizeof line, file)) {

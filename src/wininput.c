@@ -321,6 +321,14 @@ win_key_reset()
   alt_state = ALT_NONE;
 }
 
+#define dont_debug_key
+
+#ifdef debug_key
+#define trace_key(tag)	printf(" <-%s\n", tag)
+#else
+#define trace_key(tag)	
+#endif
+
 bool
 win_key_down(WPARAM wp, LPARAM lp)
 {
@@ -435,6 +443,8 @@ win_key_down(WPARAM wp, LPARAM lp)
       return 1;
     }
 
+#ifdef check_alt_ret_space_first
+    // Moved to switch() below so we can override it with layout().
     // Window menu and fullscreen
     if (cfg.window_shortcuts && alt && !ctrl) {
       if (key == VK_RETURN) {
@@ -447,6 +457,7 @@ win_key_down(WPARAM wp, LPARAM lp)
         return 1;
       }
     }
+#endif
 
     // Alt+Fn shortcuts
     if (cfg.alt_fn_shortcuts && alt && VK_F1 <= key && key <= VK_F24) {
@@ -473,9 +484,11 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
 
     // Ctrl+Shift+letter shortcuts
-    if (cfg.ctrl_shift_shortcuts &&
-        mods == (MDK_CTRL | MDK_SHIFT) && 'A' <= key && key <= 'Z') {
+    if (cfg.ctrl_shift_shortcuts && 'A' <= key && key <= 'Z' &&
+        mods == (cfg.ctrl_exchange_shift ? MDK_CTRL : (MDK_CTRL | MDK_SHIFT))
+       ) {
       switch (key) {
+        when 'A': term_select_all();
         when 'C': term_copy();
         when 'V': win_paste();
         when 'N': send_syscommand(IDM_NEW);
@@ -588,6 +601,17 @@ win_key_down(WPARAM wp, LPARAM lp)
     len = sprintf(buf, "\e[%u;%cu", c, mods + '1');
   }
   void app_pad_code(char c) {
+    void mod_appl_xterm(char c) {len = sprintf(buf, "\eO%c%c", mods + '1', c);}
+    if (mods && term.app_keypad) switch (key) {
+      when VK_DIVIDE or VK_MULTIPLY or VK_SUBTRACT or VK_ADD or VK_RETURN:
+        mod_appl_xterm(c - '0' + 'p');
+        return;
+    }
+    if (term.vt220_keys && mods && term.app_keypad) switch (key) {
+      when VK_CLEAR or VK_PRIOR ... VK_DOWN or VK_INSERT or VK_DELETE:
+        mod_appl_xterm(c - '0' + 'p');
+        return;
+    }
     mod_ss3(c - '0' + 'p');
   }
   void strcode(string s) {
@@ -756,9 +780,27 @@ static struct {
     return !ctrl;
   }
 
+  bool altgr_key(void) {
+    if (!altgr)
+      return false;
+
+    alt = lalt & !ctrl_lalt_altgr;
+
+    // Sync keyboard layout with our idea of AltGr.
+    kbd[VK_CONTROL] = altgr ? 0x80 : 0;
+
+    // Don't handle Ctrl combinations here.
+    // Need to check there's a Ctrl that isn't part of Ctrl+LeftAlt==AltGr.
+    if ((ctrl & !ctrl_lalt_altgr) | (lctrl & rctrl))
+      return false;
+
+    // Try the layout.
+    return layout();
+  }
+
   void ctrl_ch(uchar c) {
     esc_if(alt);
-    if (shift) {
+    if (shift && !cfg.ctrl_exchange_shift) {
       // Send C1 control char if the charset supports it.
       // Otherwise prefix the C0 char with ESC.
       if (c < 0x20) {
@@ -843,8 +885,15 @@ static struct {
 
   switch (key) {
     when VK_RETURN:
+      if (!term.shortcut_override && cfg.window_shortcuts && alt && !ctrl) {
+        trace_resize (("--- Alt-Enter (shift %d)", shift));
+        send_syscommand(IDM_FULLSCREEN_ZOOM);
+        return 1;
+      }
+      else
       if (extended && !numlock && term.app_keypad)
-        mod_ss3('M');
+        //mod_ss3('M');
+        app_pad_code('M' - '@');
       else if (!extended && term.modify_other_keys && (shift || ctrl))
         other_code('\r');
       else if (!ctrl)
@@ -932,19 +981,33 @@ static struct {
           alt_code_numpad_key(key - VK_NUMPAD0));
       else if (layout());
       else app_pad_code(key - VK_NUMPAD0 + '0');
-    when 'A' ... 'Z' or ' ':
-      if (key != ' ' && alt_code_key(key - 'A' + 0xA));
-      else if (char_key());
-      else if (term.modify_other_keys > 1) modify_other_key();
-      else if (ctrl_key());
-      else ctrl_ch(CTRL(key));
+    when 'A' ... 'Z' or ' ': {
+      bool check_menu = key == VK_SPACE && !term.shortcut_override
+                        && cfg.window_shortcuts && alt && !ctrl;
+      if (altgr_key()) trace_key("altgr");
+      else
+      if (check_menu) {
+        send_syscommand(SC_KEYMENU);
+        return 1;
+      }
+      else
+      if (key != ' ' && alt_code_key(key - 'A' + 0xA)) trace_key("alt");
+      else if (char_key()) trace_key("char");
+      else if (term.modify_other_keys > 1)
+        modify_other_key();
+      else if (ctrl_key()) trace_key("ctrl");
+      else
+        ctrl_ch(CTRL(key));
+    }
     when '0' ... '9' or VK_OEM_1 ... VK_OEM_102:
       if (key <= '9' && alt_code_key(key - '0'));
       else if (char_key());
       else if (term.modify_other_keys <= 1 && ctrl_key());
-      else if (term.modify_other_keys) modify_other_key();
+      else if (term.modify_other_keys)
+        modify_other_key();
       else if (zoom_hotkey());
-      else if (key <= '9') app_pad_code(key);
+      else if (key <= '9')
+        app_pad_code(key);
       else if (VK_OEM_PLUS <= key && key <= VK_OEM_PERIOD)
         app_pad_code(key - VK_OEM_PLUS + '+');
     when VK_PACKET:

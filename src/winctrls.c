@@ -846,14 +846,10 @@ select_font(winctrl *c)
   lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
   lf.lfQuality = DEFAULT_QUALITY;
   lf.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
-#if CYGWIN_VERSION_API_MINOR >= 201
-  swprintf(lf.lfFaceName, lengthof(lf.lfFaceName), L"%ls", fs.name);
-#else
   if (wcslen(fs.name) < lengthof(lf.lfFaceName))
     wcscpy(lf.lfFaceName, fs.name);
   else
-    wcscpy(lf.lfFaceName, L"Lucida Console");
-#endif
+    lf.lfFaceName[0] = 0;
 
   UINT_PTR CALLBACK fonthook(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
   {
@@ -919,6 +915,10 @@ select_font(winctrl *c)
     cf.Flags |= CF_INACTIVEFONTS;
   else
     cf.Flags |= CF_SCRIPTSONLY; // exclude fonts with OEM or SYMBOL charset
+  if (cfg.old_fontmenu)
+    cf.Flags =
+      CF_FIXEDPITCHONLY | CF_FORCEFONTEXIST | CF_INITTOLOGFONTSTRUCT |
+      CF_SCREENFONTS | CF_NOSCRIPTSEL;
 
   // open font selection menu
   if (ChooseFontW(&cf)) {

@@ -1829,8 +1829,22 @@ main(int argc, char *argv[])
 # endif
 #endif
 
+  // Load config files
+  // try global config file
   load_config("/etc/minttyrc", true);
-  string rc_file = asform("%s/.minttyrc", home);
+  // try Windows config location (#201)
+  char * appdata = getenv("APPDATA");
+  if (appdata && *appdata) {
+    string rc_file = asform("%s/mintty/config", appdata);
+    load_config(rc_file, true);
+    delete(rc_file);
+  }
+  // try XDG config base directory default location (#525)
+  string rc_file = asform("%s/.config/mintty/config", home);
+  load_config(rc_file, true);
+  delete(rc_file);
+  // try home config file
+  rc_file = asform("%s/.minttyrc", home);
   load_config(rc_file, true);
   delete(rc_file);
 

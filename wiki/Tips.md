@@ -189,6 +189,16 @@ noremap! <Esc>O[ <C-c>
 ```
 
 
+## Keyboard not working as expected in certain applications (e.g. vim) ##
+
+If for example the PgUp and PgDn keys do not work in your editor, the reason 
+may be that in the mintty Options, the Terminal Type was set to "vt100" 
+and based on the resulting setting of the environment variable TERM, 
+the application expects other key sequences than mintty sends.
+(While mintty could be changed to send VT100 application keypad codes in 
+that case, the current behaviour is compatible with xterm.)
+
+
 ## Using Ctrl+Tab to switch session in GNU Screen ##
 
 The _Ctrl+Tab_ and _Ctrl+Shift+Tab_ key combinations can be used to switch session in **[GNU Screen](http://www.gnu.org/software/screen)**. In order to do do, their use as shortcuts for switching mintty windows needs to be disabled on the _Keys_ page of the options, and their keycodes need to be mapped in _~/.screenrc_:
@@ -352,7 +362,7 @@ encoding, will see it properly converted.
 ## Spawning a new terminal window in the same directory ##
 
 With Alt+F2, normally another mintty window would be opened in the 
-home directory (or where the current one was started), while it may 
+home directory (or where the current window was started), while it may 
 be desirable to open it in the same directory as the current working 
 directory. This can be achieved with some interaction between the shell 
 and the terminal, as applied e.g. by the Mac Terminal.
