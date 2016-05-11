@@ -8,6 +8,9 @@ typedef struct {
 
 int do_bidi(bidi_char * line, int count);
 int do_shape(bidi_char * line, bidi_char * to, int count);
+
+uchar bidi_class(wchar ch);
+bool is_rtl_class(uchar bc);
 bool is_rtl(wchar c);
 
 #endif

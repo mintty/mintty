@@ -1,3 +1,4 @@
+  * Workaround for glyph confusion (#285).
   * Escape sequence OSC 7 with empty string restores the default behaviour.
   * Fix drag-and-drop file/folder to also honour bracketed paste mode (#440).
   * Application keypad modified keys send sequences like in xterm (#506).

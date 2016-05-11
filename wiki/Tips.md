@@ -269,7 +269,7 @@ Different notations are accepted for colour specifications:
 * ```rrr,ggg,bbb``` (256 decimal values)
 * ```rgb:RR/GG/BB``` (256 hex values)
 * ```rgb:RRRR/GGGG/BBBB``` (65536 hex values)
-* *color-name* (using X11 color names, e.g. ```echo -ne '\e]10;bisque2\a'```)
+* _color-name_ (using X11 color names, e.g. ```echo -ne '\e]10;bisque2\a'```)
 
 
 ## Using colour schemes (“Themes”) ##

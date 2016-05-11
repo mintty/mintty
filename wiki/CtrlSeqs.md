@@ -220,6 +220,7 @@ The _file-URL_ liberally follows a `file:` URL scheme; examples are
   * `file:///home/tmp`
   * `//localhost/home/tmp`
   * `/home/tmp`
+  * _(empty)_ to restore the default behaviour
 
 
 ## Cursor style ##

@@ -726,6 +726,26 @@ win_set_ime_open(bool open)
 }
 
 
+#define dont_debug_win_text
+
+#ifdef debug_win_text
+
+void trace_line(char * tag, wchar * text, int len)
+{
+  bool show = false;
+  for (int i = 0; i < len; i++)
+    if (text[i] & 0xFF00) show = true;
+  if (show) {
+    printf("%s", tag);
+    for (int i = 0; i < len; i++) printf(" %04X", text[i]);
+    printf("\n");
+  }
+}
+
+#else
+#define trace_line(tag, text, len)	
+#endif
+
 /*
  * Draw a line of text in the window, at given character
  * coordinates, in given attributes.
@@ -733,8 +753,9 @@ win_set_ime_open(bool open)
  * We are allowed to fiddle with the contents of `text'.
  */
 void
-win_text(int x, int y, wchar *text, int len, cattr attr, int lattr)
+win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl)
 {
+  trace_line("win_text:", text, len);
   lattr &= LATTR_MODE;
   int char_width = font_width * (1 + (lattr != LATTR_NORM));
 
@@ -869,9 +890,12 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr)
   SetBkColor(dc, bg);
 
  /* Check whether the text has any right-to-left characters */
+#ifdef check_rtl_here
+#warning now passed as a parameter to avoid redundant checking
   bool has_rtl = false;
   for (int i = 0; i < len && !has_rtl; i++)
     has_rtl = is_rtl(text[i]);
+#endif
 
   uint eto_options = ETO_CLIPPED;
   if (has_rtl) {
@@ -890,8 +914,10 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr)
       .nGlyphs = len
     };
 
+    trace_line(" <ChrPlc:", text, len);
     GetCharacterPlacementW(dc, text, len, 0, &gcpr,
                            FLI_MASK | GCP_CLASSIN | GCP_DIACRITIC);
+    trace_line(" >ChrPlc:", text, len);
     len = gcpr.nGlyphs;
     eto_options |= ETO_GLYPH_INDEX;
   }
@@ -915,6 +941,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr)
 
  /* Finally, draw the text */
   SetBkMode(dc, OPAQUE);
+  trace_line(" TextOut:", text, len);
   ExtTextOutW(dc, xt, yt, eto_options | ETO_OPAQUE, &box, text, len, dxs);
 
  /* Shadow/Overstrike bold */

@@ -1025,6 +1025,8 @@ term_paint(void)
     */
     wchar text[max(term.cols, 16)];
     int textlen = 0;
+    bool has_rtl = false;
+    uchar bc = 0;
     bool dirty_run = (line->attr != displine->attr);
     bool dirty_line = dirty_run;
     cattr attr = CATTR_DEFAULT;
@@ -1040,6 +1042,14 @@ term_paint(void)
       if ((dispchars[j].attr.attr ^ tattr.attr) & ATTR_WIDE)
         dirty_line = true;
 
+#define dont_debug_run
+
+#ifdef debug_run
+#define trace_run(tag)	({if (tchar != ' ') printf("break (%s) %04X\n", tag, tchar);})
+#else
+#define trace_run(tag)	(void)0
+#endif
+
       bool break_run = (tattr.attr != attr.attr)
                        || (tattr.truefg != attr.truefg)
                        || (tattr.truebg != attr.truebg);
@@ -1048,21 +1058,28 @@ term_paint(void)
       * Break on both sides of any combined-character cell.
       */
       if (d->cc_next || (j > 0 && d[-1].cc_next))
-        break_run = true;
+        trace_run("cc"), break_run = true;
 
       if (!dirty_line) {
         if (dispchars[j].chr == tchar &&
             (dispchars[j].attr.attr & ~DATTR_STARTRUN) == tattr.attr)
           break_run = true;
         else if (!dirty_run && textlen == 1)
-          break_run = true;
+          trace_run("len"), break_run = true;
       }
+
+      uchar tbc = bidi_class(tchar);
+      if (textlen && tbc != bc)
+        // break at RTL and other changes to avoid glyph confusion (#285)
+        trace_run("bc"), break_run = true;
+      bc = tbc;
 
       if (break_run) {
         if (dirty_run && textlen)
-          win_text(start, i, text, textlen, attr, line->attr);
+          win_text(start, i, text, textlen, attr, line->attr, has_rtl);
         start = j;
         textlen = 0;
+        has_rtl = false;
         attr = tattr;
         dirty_run = dirty_line;
       }
@@ -1072,6 +1089,8 @@ term_paint(void)
       dirty_run |= do_copy;
 
       text[textlen++] = tchar;
+      if (!has_rtl)
+        has_rtl = is_rtl_class(tbc);
 
       if (d->cc_next) {
         termchar *dd = d;
@@ -1105,7 +1124,7 @@ term_paint(void)
       }
     }
     if (dirty_run && textlen)
-      win_text(start, i, text, textlen, attr, line->attr);
+      win_text(start, i, text, textlen, attr, line->attr, has_rtl);
     release_line(line);
   }
 

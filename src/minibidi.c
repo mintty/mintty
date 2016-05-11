@@ -56,9 +56,9 @@ enum {
 
 /* Shaping Types */
 enum {
-  SL,   /* Left-Joining, doesnt exist in U+0600 - U+06FF */
-  SR,   /* Right-Joining, ie has Isolated, Final */
-  SD,   /* Dual-Joining, ie has Isolated, Final, Initial, Medial */
+  SL,   /* Left-Joining, doesn't exist in U+0600 - U+06FF */
+  SR,   /* Right-Joining, i.e. has Isolated, Final */
+  SD,   /* Dual-Joining, i.e. has Isolated, Final, Initial, Medial */
   SU,   /* Non-Joining */
   SC    /* Join-Causing, like U+0640 (TATWEEL) */
 };
@@ -188,8 +188,8 @@ flipThisRun(bidi_char * from, uchar * level, int max, int count)
  UnicodeData.txt
  
  */
-static uchar
-getType(wchar ch)
+uchar
+bidi_class(wchar ch)
 {
   static const struct {
     wchar first, last;
@@ -554,6 +554,22 @@ getType(wchar ch)
  * would have flagged them anyway.)
  */
 bool
+is_rtl_class(uchar bc)
+{
+ /*
+  * After careful reading of the Unicode bidi algorithm (URL as
+  * given at the top of this file) I believe that the only
+  * character classes which can possibly cause trouble are R,
+  * AL, RLE and RLO. I think that any string containing no
+  * character in any of those classes will be displayed
+  * uniformly left-to-right by the Unicode bidi algorithm.
+  */
+  const int mask = (1 << R) | (1 << AL) | (1 << RLE) | (1 << RLO);
+
+  return mask & (1 << (bc));
+}
+
+bool
 is_rtl(wchar c)
 {
  /*
@@ -566,7 +582,7 @@ is_rtl(wchar c)
   */
   const int mask = (1 << R) | (1 << AL) | (1 << RLE) | (1 << RLO);
 
-  return mask & (1 << (getType(c)));
+  return mask & (1 << (bidi_class(c)));
 }
 
 /*
@@ -809,7 +825,7 @@ do_bidi(bidi_char * line, int count)
  /* Check the presence of R or AL types as optimization */
   yes = 0;
   for (i = 0; i < count; i++) {
-    int type = getType(line[i].wc);
+    int type = bidi_class(line[i].wc);
     if (type == R || type == AL) {
       yes = 1;
       break;
@@ -835,7 +851,7 @@ do_bidi(bidi_char * line, int count)
   */
   paragraphLevel = 0;
   for (i = 0; i < count; i++) {
-    int type = getType(line[i].wc);
+    int type = bidi_class(line[i].wc);
     if (type == R || type == AL) {
       paragraphLevel = 1;
       break;
@@ -871,7 +887,7 @@ do_bidi(bidi_char * line, int count)
   */
   bover = 0;
   for (i = 0; i < count; i++) {
-    tempType = getType(line[i].wc);
+    tempType = bidi_class(line[i].wc);
     switch (tempType) {
       when RLE:
         currentEmbedding = levels[i] = leastGreaterOdd(currentEmbedding);
@@ -1151,7 +1167,7 @@ do_bidi(bidi_char * line, int count)
   * modified by the previous phase.
   */
   j = count - 1;
-  while (j > 0 && (getType(line[j].wc) == WS)) {
+  while (j > 0 && (bidi_class(line[j].wc) == WS)) {
     j--;
   }
   if (j < (count - 1)) {
@@ -1159,13 +1175,13 @@ do_bidi(bidi_char * line, int count)
       levels[j] = paragraphLevel;
   }
   for (i = 0; i < count; i++) {
-    tempType = getType(line[i].wc);
+    tempType = bidi_class(line[i].wc);
     if (tempType == WS) {
       j = i;
-      while (j < count && (getType(line[j].wc) == WS)) {
+      while (j < count && (bidi_class(line[j].wc) == WS)) {
         j++;
       }
-      if (j == count || getType(line[j].wc) == B || getType(line[j].wc) == S) {
+      if (j == count || bidi_class(line[j].wc) == B || bidi_class(line[j].wc) == S) {
         for (j--; j >= i; j--) {
           levels[j] = paragraphLevel;
         }
