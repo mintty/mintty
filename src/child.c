@@ -572,7 +572,7 @@ child_fork(int argc, char *argv[], int moni)
       close(log_fd);
     close(win_fd);
 
-    if (child_dir)
+    if (child_dir && *child_dir)
       chdir(child_dir);
 
 #ifdef add_child_parameters
