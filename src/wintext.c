@@ -734,7 +734,7 @@ void trace_line(char * tag, wchar * text, int len)
 {
   bool show = false;
   for (int i = 0; i < len; i++)
-    if (text[i] & 0xFF00) show = true;
+    if (text[i] != ' ') show = true;
   if (show) {
     printf("%s", tag);
     for (int i = 0; i < len; i++) printf(" %04X", text[i]);
@@ -759,16 +759,17 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
   lattr &= LATTR_MODE;
   int char_width = font_width * (1 + (lattr != LATTR_NORM));
 
+ /* Only want the left half of double width lines */
+  // check this before scaling up x to pixels!
+  if (lattr != LATTR_NORM && x * 2 >= term.cols)
+    return;
+
  /* Convert to window coordinates */
   x = x * char_width + PADDING;
   y = y * font_height + PADDING;
 
   if (attr.attr & ATTR_WIDE)
     char_width *= 2;
-
- /* Only want the left half of double width lines */
-  if (lattr != LATTR_NORM && x * 2 >= term.cols)
-    return;
 
   uint nfont;
   switch (lattr) {
@@ -948,6 +949,10 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
   if (apply_shadow && bold_mode == BOLD_SHADOW && (attr.attr & ATTR_BOLD)) {
     SetBkMode(dc, TRANSPARENT);
     ExtTextOutW(dc, xt + 1, yt, eto_options, &box, text, len, dxs);
+    if (lattr != LATTR_NORM) {
+      ExtTextOutW(dc, xt + 2, yt, eto_options, &box, text, len, dxs);
+      //ExtTextOutW(dc, xt + 3, yt, eto_options, &box, text, len, dxs);
+    }
   }
 
  /* Manual underline */

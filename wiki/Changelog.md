@@ -1,3 +1,4 @@
+  * Fixed double-width line display (#551).
   * Workaround for glyph confusion (#285).
   * Escape sequence OSC 7 with empty string restores the default behaviour.
   * Fix drag-and-drop file/folder to also honour bracketed paste mode (#440).
