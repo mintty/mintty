@@ -570,6 +570,22 @@ is_rtl_class(uchar bc)
 }
 
 bool
+is_sep_class(uchar bc)
+{
+ /*
+  * After careful reading of the Unicode bidi algorithm (URL as
+  * given at the top of this file) I believe that the only
+  * character classes which can possibly cause trouble are R,
+  * AL, RLE and RLO. I think that any string containing no
+  * character in any of those classes will be displayed
+  * uniformly left-to-right by the Unicode bidi algorithm.
+  */
+  const int mask = (1 << B) | (1 << BN) | (1 << S) | (1 << WS);
+
+  return mask & (1 << (bc));
+}
+
+bool
 is_rtl(wchar c)
 {
  /*

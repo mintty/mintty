@@ -1069,7 +1069,7 @@ term_paint(void)
       }
 
       uchar tbc = bidi_class(tchar);
-      if (textlen && tbc != bc)
+      if (textlen && tbc != bc && !is_sep_class(tbc) && !is_sep_class(bc))
         // break at RTL and other changes to avoid glyph confusion (#285)
         trace_run("bc"), break_run = true;
       bc = tbc;
