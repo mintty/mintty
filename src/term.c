@@ -897,7 +897,7 @@ term_paint(void)
     termchar *dispchars = displine->chars;
     termchar newchars[term.cols];
 
-  /*
+   /*
     * First loop: work along the line deciding what we want
     * each character cell to look like.
     */
@@ -1038,6 +1038,7 @@ term_paint(void)
       termchar *d = chars + j;
       cattr tattr = newchars[j].attr;
       wchar tchar = newchars[j].chr;
+      //wchar tchar2 = j + 1 < term.cols ? d[1].chr : 0;
 
       if ((dispchars[j].attr.attr ^ tattr.attr) & ATTR_WIDE)
         dirty_line = true;
@@ -1045,7 +1046,7 @@ term_paint(void)
 #define dont_debug_run
 
 #ifdef debug_run
-#define trace_run(tag)	({if (tchar != ' ') printf("break (%s) %04X\n", tag, tchar);})
+#define trace_run(tag)	({if (tchar & 0xFF00) printf("break (%s) %04X\n", tag, tchar);})
 #else
 #define trace_run(tag)	(void)0
 #endif
@@ -1069,6 +1070,15 @@ term_paint(void)
       }
 
       uchar tbc = bidi_class(tchar);
+#ifdef dont_break_at_non_BMP
+#warning would need buffer overflow handling!
+#warning has no effect this way, and does not seem to be needed...
+      if ((tchar & 0xFC00) == 0xD800 && (tchar2 & 0xFC00) == 0xDC00)
+        tbc = bidi_class(((ucschar) (tchar - 0xD7C0) << 10) | (tchar2 & 0x03FF));
+      else
+        tbc = bidi_class(tchar);
+#endif
+
       if (textlen && tbc != bc && !is_sep_class(tbc) && !is_sep_class(bc))
         // break at RTL and other changes to avoid glyph confusion (#285)
         trace_run("bc"), break_run = true;

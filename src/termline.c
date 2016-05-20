@@ -848,6 +848,18 @@ term_bidi_cache_store(int line, termchar *lbefore, termchar *lafter,
   }
 }
 
+#ifdef debug_bidi
+void trace_bidi(char * tag, bidi_char * wc)
+{
+  printf("%s", tag);
+  for (int i = 0; i < term.cols; i++)
+    if (wc[i].wc != ' ') printf(" %04X", wc[i].wc);
+  printf("\n");
+}
+#else
+#define trace_bidi(tag, wc)	
+#endif
+
 /*
  * Prepare the bidi information for a screen line. Returns the
  * transformed list of termchars, or null if no transformation at
@@ -873,13 +885,27 @@ term_bidi_line(termline *line, int scr_y)
     }
 
     for (it = 0; it < term.cols; it++) {
-      wchar c = line->chars[it].chr;
+      ucschar c = line->chars[it].chr;
+
+      if ((c & 0xFC00) == 0xD800) {
+        int off = line->chars[it].cc_next;
+        if (off) {
+          ucschar low_surrogate = line->chars[it + off].chr;
+          if ((low_surrogate & 0xFC00) == 0xDC00) {
+            c = ((c - 0xD7C0) << 10) | (low_surrogate & 0x03FF);
+          }
+        }
+      }
+
       term.wcFrom[it].origwc = term.wcFrom[it].wc = c;
       term.wcFrom[it].index = it;
     }
 
+    trace_bidi("=", term.wcFrom);
     do_bidi(term.wcFrom, term.cols);
+    trace_bidi(":", term.wcFrom);
     do_shape(term.wcFrom, term.wcTo, term.cols);
+    trace_bidi("~", term.wcTo);
 
     if (term.ltemp_size < line->size) {
       term.ltemp_size = line->size;
