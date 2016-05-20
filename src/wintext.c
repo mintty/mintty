@@ -168,6 +168,9 @@ get_font_quality(void) {
 static HFONT
 create_font(int weight, bool underline)
 {
+#ifdef debug_create_font
+  printf("font [??]: %d 0 w%4d i0 u%d s0\n", font_height, weight, underline);
+#endif
   return
     CreateFontW(
       font_height, 0, 0, 0, weight, false, underline, false,
@@ -418,6 +421,9 @@ win_init_fonts(int size)
   }
 #endif
 
+  // to be checked: whether usages of font_height should include row_spacing
+  // (and likewise for font_width);
+  // for font creation, as a workaround, row_spacing is removed again
   font_height = tm.tmHeight + row_spacing;
   font_width = tm.tmAveCharWidth + cfg.col_spacing;
   font_dualwidth = (tm.tmMaxCharWidth >= tm.tmAveCharWidth * 3 / 2);
@@ -707,8 +713,13 @@ another_font(int fontno)
   if (fontno & FONT_UNDERLINE)
     u = true;
 
+#ifdef debug_create_font
+  printf("font [%02X]: %d %d w%4d i%d u%d s%d\n", fontno, font_height * (1 + !!(fontno & FONT_HIGH)), x, w, i, u, s);
+#endif
   fonts[fontno] =
-    CreateFontW(font_height * (1 + !!(fontno & FONT_HIGH)), x, 0, 0, w, i, u, s,
+    // workaround: remove effect of row_spacing from font creation;
+    // to be checked: usages of font_height elsewhere
+    CreateFontW((font_height - row_spacing) * (1 + !!(fontno & FONT_HIGH)), x, 0, 0, w, i, u, s,
                 DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                 get_font_quality(), FIXED_PITCH | FF_DONTCARE, cfg.font.name);
 
@@ -956,32 +967,38 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
   }
 
  /* Manual underline */
+  colour ul = fg;
+  int uloff = (lattr == LATTR_BOT) ? descent * 2 - font_height : descent;
+#define dont_debug_underline
+#ifdef debug_underline
+  ul = 0x80202020;
+  force_manual_underline = true;
+  uloff = (lattr == LATTR_BOT) ? font_height * 2 - 1 : font_height - 1;
+#endif
+
   if (lattr != LATTR_TOP &&
       (force_manual_underline ||
        (und_mode == UND_LINE && (attr.attr & ATTR_UNDER)) ||
        (attr.attr & ATTR_DOUBLYUND))) {
-    int dec = (lattr == LATTR_BOT) ? descent * 2 - font_height : descent;
-    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
-    MoveToEx(dc, x, y + dec, null);
-    LineTo(dc, x + len * char_width, y + dec);
+    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, ul));
+    MoveToEx(dc, x, y + uloff, null);
+    LineTo(dc, x + len * char_width, y + uloff);
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
   }
 
  /* Doubly underline */
   if (lattr != LATTR_TOP && attr.attr & ATTR_DOUBLYUND) {
-    int dec = (lattr == LATTR_BOT) ? descent * 2 - font_height : descent;
-    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
-    MoveToEx(dc, x, y + dec + 2, null);
-    LineTo(dc, x + len * char_width, y + dec + 2);
+    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, ul));
+    MoveToEx(dc, x, y + uloff + 2, null);
+    LineTo(dc, x + len * char_width, y + uloff - 2);
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
   }
 
  /* Overline */
   if (lattr != LATTR_TOP && attr.attr & ATTR_OVERL) {
-    //int dec = (lattr == LATTR_BOT) ? descent * 2 - font_height : descent;
-    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
+    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, ul));
     MoveToEx(dc, x, y - 1, null);
     LineTo(dc, x + len * char_width, y - 1);
     oldpen = SelectObject(dc, oldpen);
