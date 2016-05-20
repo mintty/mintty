@@ -1,4 +1,4 @@
-#############################################################################
+ #############################################################################
 # Interesting make targets:
 # - exe: Just the executable. This is the default.
 # - zip: Zip for standalone release.
@@ -156,6 +156,9 @@ rgb:	# /usr/share/X11/rgb.txt # X11 color names
 combined.t:	# UnicodeData.txt
 	sh ./mkcombinedt > combined.t
 
+bidiclasses.t:	# UnicodeData.txt
+	sh ./mkbidiclasses > bidiclasses.t
+
 #############################################################################
 # release targets
 
@@ -225,6 +228,7 @@ wm_names.t:	# Windows Message names, only for debugging
 #	->
 #		{0x0000, "WM_NULL"},
 	sed -e 's/^#define \(WM_[^ ]*\) \(0x[0-9A-Fa-f]*\)$$/	{\2, "\1"},/' -e t -e d /usr/include/w32api/winuser.h > wm_names.t
+	echo '	{0x02E0, "WM_DPICHANGED"},' >> wm_names.t
 
 vk_names.t:	# Windows Virtual Key Code names, only for debugging
 #	#define VK_TAB 0x09
@@ -232,8 +236,8 @@ vk_names.t:	# Windows Virtual Key Code names, only for debugging
 #		{0x09, "VK_TAB"},
 	sed -e 's/^#define \(VK_[^ ]*\) \(0x[0-9A-Fa-f]*\)$$/	{\2, "\1"},/' -e t -e d /usr/include/w32api/winuser.h > vk_names.t
 
-winids.t:	winids.h
-	sed -e 's/#define *\(IDM_[^ ]*\).*/	{\1, "\1"},/' -e t -e d winids.h > winids.t
+winidm_names.t:	winids.h
+	sed -e 's/#define *\(IDM_[^ ]*\).*/	{\1, "\1"},/' -e t -e d winids.h > winidm_names.t
 
 target:
 	echo TARGET $(TARGET)

@@ -1096,7 +1096,7 @@ static struct {
         uint idm_;
         char * idm_name;
       } idm_names[] = {
-# include "winids.t"
+# include "winidm_names.t"
       };
       char * idm_name = "?";
       for (uint i = 0; i < lengthof(idm_names); i++)

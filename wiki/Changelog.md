@@ -1,11 +1,20 @@
+Text display:
   * Fixed double-width line display (#551).
+  * Enabled non-BMP right-to-left display.
+  * Fixed italic font height and underline placement with option RowSpacing.
   * Workaround for glyph confusion (#285).
-  * Escape sequence OSC 7 with empty string restores the default behaviour.
-  * Fix drag-and-drop file/folder to also honour bracketed paste mode (#440).
+
+Terminal input / Keyboard:
   * Application keypad modified keys send sequences like in xterm (#506).
-  * Loading config also from XDG default config dir (#525) or Windows AppData dir (#201).
   * Option CtrlExchangeShiftExchange exchanges Control characters with Ctrl+Shift shortcuts (#524).
+  * Fix drag-and-drop file/folder to also honour bracketed paste mode (#440).
+
+Terminal control:
+  * Escape sequence OSC 7 with empty string restores the default behaviour.
   * Shortcut key Shift+Ctrl+A for "Select All".
+
+Configuration:
+  * Loading config also from XDG default config dir (#525) or Windows AppData dir (#201).
   * Option OpeningClicks configures whether documents are opened on single/double/triple Ctrl+mouse-click (#545).
 
 ### 2.3.6 (30 Apr 2016) ###
