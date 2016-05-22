@@ -1,0 +1,36 @@
+#! /bin/sh
+
+unidata=etc/UnicodeData.txt
+
+(
+cat <<\/EOS
+first=
+item () {
+	if [ -z "$first" ]
+	then	first=$1
+		val=$2
+	fi
+	last=$1
+}
+range () {
+	echo "    {0x$first, 0x$last, $val},"
+	first=
+}
+/EOS
+sed -e "s,^\([^;]*\);[^;]*;[^;]*;[^;]*;\([^;]*\);.*,\1	\2," "$unidata" |
+uniq -f1 --group=append | sed -e "s,^$,range," -e t -e "s,^,item ,"
+) | sh | grep -v ", ON}"
+
+exit
+
+According to minibidi.c, this should have worked:
+perl -ne 'split ";"; $num = hex $_[0]; $type = $_[4];' \
+ -e '$fl = ($_[1] =~ /First/ ? 1 : $_[1] =~ /Last/ ? 2 : 0);' \
+ -e 'if ($type eq $runtype and ($runend == $num-1 or ' \
+ -e '    ($fl==2 and $pfl==1))) {$runend = $num;} else { &reset; }' \
+ -e '$pfl=$fl; END { &reset }; sub reset {' \
+ -e 'printf"        {0x%04x, 0x%04x, %s},\n",$runstart,$runend,$runtype' \
+ -e '  if defined $runstart and $runtype ne "ON";' \
+ -e '$runstart=$runend=$num; $runtype=$type;}' \
+ UnicodeData.txt
+

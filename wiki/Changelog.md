@@ -1,3 +1,5 @@
+### 2.3.7 (22 May 2016) ###
+
 Text display:
   * Fixed double-width line display (#551).
   * Enabled non-BMP right-to-left display.
