@@ -2,6 +2,7 @@ Text display:
   * Fixed double-width line display (#551).
   * Enabled non-BMP right-to-left display.
   * Fixed italic font height and underline placement with option RowSpacing.
+  * Tweaked underline handling and positioning (~#551).
   * Workaround for glyph confusion (#285).
 
 Terminal input / Keyboard:
