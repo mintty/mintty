@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Sat Apr 30 20:27:30 2016 -->
+<!-- CreationDate: Sun May 22 13:10:40 2016 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -90,21 +90,21 @@ options. <b><br>
 -c</b>, <b>--config</b> <i>FILENAME</i></p>
 
 <p style="margin-left:22%;">Read settings from the
-specified configuration file, in addition to
-<i>/etc/minttyrc</i> and <i>~/.minttyrc</i>. Configuration
-changes are saved to the last file thus specified and not
-read-only at the time of loading.</p>
+specified configuration file, in addition to the default
+config files. Configuration changes are saved to the last
+file thus specified and not read-only at the time of
+loading.</p>
 
 <p style="margin-left:11%;"><b>-C</b>, <b>--loadconfig</b>
 <i>FILENAME</i></p>
 
 <p style="margin-left:22%;">Read settings from the
-specified configuration file, in addition to
-<i>/etc/minttyrc</i> and <i>~/.minttyrc</i>. The file is not
-taken into account for saving configuration changes. This is
-useful to mix-in partial configuration variants,
-particularly colour schemes. However, <b>-o
-ThemeFile=</b><i>FILENAME</i> <b>may be preferable.</b></p>
+specified configuration file, in addition to the default
+config files. The file is not taken into account for saving
+configuration changes. This is useful to mix-in partial
+configuration variants, particularly colour schemes.
+However, <b>-o ThemeFile=</b><i>FILENAME</i> <b>may be
+preferable.</b></p>
 
 <p style="margin-left:11%;"><b>-e, --exec</b>
 <i>PROGRAM</i> <b>[</b><i>ARG</i> <b>...]</b></p>
@@ -359,9 +359,9 @@ that commonly appear in file names and URLs.</p>
 selected text is automatically copied to the clipboard. This
 can be disabled on the <b>Mouse</b> page of the options
 dialog. Selected text can also be copied manually using
-either the <b>Copy</b> menu command, the <b>Ctrl+Ins</b>
-keyboard shortcut, or the middle mouse button combined with
-<b>Shift</b>.</p>
+either the <b>Copy</b> menu command, the <b>Ctrl+Ins</b> or
+<b>Ctrl+C</b> keyboard shortcuts, or the middle mouse button
+combined with <b>Shift</b>.</p>
 
 <p style="margin-left:11%; margin-top: 1em">The selected
 region is copied as &quot;rich text&quot; as well as normal
@@ -376,11 +376,11 @@ the window menu.</p>
 
 <p style="margin-left:11%; margin-top: 1em">The clipboard
 contents can be pasted using either the <b>Paste</b> menu
-command, the <b>Shift+Ins</b> keyboard shortcut, or the
-middle mouse button. Not only text but also files and
-directories can be pasted, whereby the latter are inserted
-as Cygwin file names. Shell quoting is added to file names
-that contain spaces or special characters.</p>
+command, the <b>Shift+Ins</b> or <b>Ctrl+V</b> keyboard
+shortcuts, or the middle mouse button. Not only text but
+also files and directories can be pasted, whereby the latter
+are inserted as Cygwin file names. Shell quoting is added to
+file names that contain spaces or special characters.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Drag &amp;
 drop</b> <br>
@@ -392,11 +392,13 @@ pasted from the clipboard.</p>
 files, directories and URLs</b> <br>
 Files, directories, URLs and web addresses beginning with
 &quot;www.&quot; can be opened either by holding <b>Ctrl</b>
-while left-clicking on them, or by selecting them and
+while left-clicking on them (or double-clicking, if and as
+enabled by option OpeningClicks), or by selecting them and
 choosing the <b>Open</b> command from the context menu.
-Please note that opening a file or directory with a relative
-path only works correctly if the path refers to the current
-working directory of the process invoked by mintty.</p>
+Please note that a relative file or directory path is
+interpreted as relative to the current working directory of
+the terminal foreground process if that can be
+determined.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Font
 zoom</b> <br>
@@ -638,6 +640,7 @@ shortcuts</b></p>
 set of shortcuts for clipboard and window commands using
 <b>Ctrl+Shift+letter</b> combinations is available. These
 can be enabled on the Keys pane of the options dialog. <br>
+&ndash; <b>Ctrl+Shift+A</b>: Select all <br>
 &ndash; <b>Ctrl+Shift+C</b>: Copy <br>
 &ndash; <b>Ctrl+Shift+V</b>: Paste <br>
 &ndash; <b>Ctrl+Shift+N</b>: New <br>
@@ -673,20 +676,23 @@ affecting further instances of mintty.</p>
 <p style="margin-left:11%; margin-top: 1em">In
 configuration files, settings are stored as
 <i>NAME</i>=<i>VALUE</i> pairs, with one per line. By
-default, they are read from <i>/etc/minttyrc</i> and
-<i>~/.minttyrc</i>. Additional configuration files can be
-specified using the <b>-c</b>/<b>--config</b> or
+default, they are read from any file of
+<i>/etc/minttyrc</i>, <i>$APPDATA/mintty/config</i>,
+<i>~/.config/mintty/config</i>, <i>~/.minttyrc</i>, in this
+order. Additional configuration files can be specified using
+the <b>-c</b>/<b>--config</b> or
 <b>-C</b>/<b>--loadconfig</b> command line options. These
-are read in order, with settings in later files overriding
-those in earlier ones. Configuration changes are saved to
-the last writable file specified with
-<b>-c</b>/<b>--config</b>, or <i>~/.minttyrc</i> if none is
-given. Individual settings can also be specified on the
-command line using the <b>-o</b>/<b>--option</b>.</p>
+are read in order after the default config files, with
+settings in later files overriding those in earlier ones.
+Configuration changes are saved to the last writable file
+read by default or specified with <b>-c</b>/<b>--config</b>,
+or <i>~/.minttyrc</i> if none is given. Individual settings
+can also be specified on the command line using the
+<b>-o</b>/<b>--option</b>.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><i>Note:</i>
-Many string values in the <i>minttyrc</i> files, especially
-those referring to file names or Windows items, are
+Many string values in the config files, especially those
+referring to file names or Windows items, are
 <b>Unicode-enabled</b>, meaning they are expected to be
 UTF-8-encoded in the configuration file independently of the
 encoding the terminal runs in; as a fallback, if the
@@ -722,12 +728,12 @@ Colours</b></p>
 
 <p style="margin-left:22%;">Clicking on one of the buttons
 here opens the colour selection dialog. <br>
-In the settings (.minttyrc or command-line options), colours
-are represented as comma-separated RGB triples with decimal
-8-bit values ranging from 0 to 255. X-style hexadecimal
-colour specifications such as #RRGGBB, rgb:RR/GG/BB or
-rgb:RRRR/GGGG/BBBB can be used as well. Also X11 color names
-are supported. <br>
+In the settings (config file or command-line options),
+colours are represented as comma-separated RGB triples with
+decimal 8-bit values ranging from 0 to 255. X-style
+hexadecimal colour specifications such as #RRGGBB,
+rgb:RR/GG/BB or rgb:RRRR/GGGG/BBBB can be used as well. Also
+X11 color names are supported. <br>
 &ndash; <b>Foreground</b> (ForegroundColour=191,191,191)
 <br>
 &ndash; <b>Background</b> (BackgroundColour=0,0,0) <br>
@@ -735,7 +741,7 @@ are supported. <br>
 
 <p style="margin-left:22%; margin-top: 1em">&ndash;
 <b>Theme</b> (ThemeFile=): The popup offers theme files as
-stored in the resource directory $HOME/.mintty/themes for
+stored in the resource directory <i>~/.mintty/themes</i> for
 selection as a colour scheme. The option can also be set to
 a filename (like D:/.../solarized-light.minttyrc).</p>
 
@@ -1075,12 +1081,6 @@ region instead of pasting the clipboard. If it is set to
 <b>Extend</b>, a left click with <b>Shift</b> pressed pastes
 the clipboard instead of extending the selection.</p>
 
-<p style="margin-left:11%;"><b>Mouse zooming</b>
-(ZoomMouse=yes)</p>
-
-<p style="margin-left:22%;">Enabling font zooming with
-<b>Ctrl+mouse-wheel/middle-mouse-click</b>.</p>
-
 <p style="margin-left:11%;"><b>Default click target</b>
 (ClicksTargetApp=yes)</p>
 
@@ -1264,8 +1264,8 @@ sound</b> (BellType=1): Preferred system sound, values:</p>
 
 <p style="margin-left:22%;">&ndash; <b>Wave</b>
 (BellFile=): The popup offers wave files as stored in the
-resource directory $HOME/.mintty/sounds for selection. The
-option can also be set to a filename (like
+resource directory <i>~/.mintty/sounds</i> for selection.
+The option can also be set to a filename (like
 D:/.../soundfile.wav). This setting overrides the Bell
 system sound except No Beep. <br>
 &ndash; <b>Play</b>: The button plays the selected sound for
@@ -1409,8 +1409,8 @@ The name defaults to &quot;mintty&quot;.</p>
 settings</b> <br>
 The following settings appear neither in the options dialog
 nor as command line options, which means they can only be
-set in config files or using the <b>--option</b> command
-line option. <b><br>
+set in config files or using the <b>--option</b> or
+<b>-o</b> command line option. <b><br>
 Application ID</b> (AppID=)</p>
 
 <p style="margin-left:22%;">Windows 7 and above use the
@@ -1630,8 +1630,31 @@ displayed.</p>
 <p style="margin-left:22%;">Together with a hold option
 that keeps the terminal open after its child process
 terminated, this option prefixes the window title with its
-string, for example -o ExitTitle=&quot;TERMINATED: &quot; or
-(in minttyrc) ExitTitle=TERMINATED: .</p>
+string, for example -o ExitTitle=&quot;TERMINATED:
+&quot;.</p>
+
+<p style="margin-left:11%;"><b>Configure document opening
+by mouse click</b> (OpeningClicks=1)</p>
+
+<p style="margin-left:22%;">Enabling opening files,
+directories or URLs with mouse clicking, in addition to the
+context menu. Values 1, 2, or 3 require Ctrl+mouse-click,
+double-click, or triple-click, respectively, to invoke the
+document opening. Value 0 disables click-opening.</p>
+
+<p style="margin-left:11%;"><b>Control key and shortcut
+Shift exchange</b> (CtrlExchangeShift=no)</p>
+
+<p style="margin-left:22%;">Exchange the range of Control
+characters with the range of Ctrl+Shift shortcuts, so that
+for example Ctrl+V will paste and Ctrl+Shift+V will enter a
+Control+V character.</p>
+
+<p style="margin-left:11%;"><b>Mouse zooming</b>
+(ZoomMouse=yes)</p>
+
+<p style="margin-left:22%;">Enabling font zooming with
+<b>Ctrl+mouse-wheel/middle-mouse-click</b>.</p>
 
 <p style="margin-left:11%;"><b>Disable Shift-coupled
 implicit font zooming</b> (ZoomFontWithWindow=yes)</p>
@@ -1679,7 +1702,7 @@ implemented.</p>
 <p style="margin-left:11%; margin-top: 1em">The majority of
 xterm&rsquo;s many control sequences is implemented, but
 quite a few are missing. Significant omissions should be
-reported as bugs.</p>
+reported to the issue tracker.</p>
 
 <h2>SEE ALSO
 <a name="SEE ALSO"></a>
@@ -1696,13 +1719,12 @@ page <i>https://github.com/mintty/mintty/wiki</i>.</p>
 
 
 <p style="margin-left:11%; margin-top: 1em">Copyright (C)
-2013 Andy Koppe (C) 2015 Thomas Wolff</p>
+2013 Andy Koppe (C) 2016 Thomas Wolff</p>
 
 <p style="margin-left:11%; margin-top: 1em">Mintty is
 released under the terms of the the <i>GNU General Public
-License</i> version 3 or later. See
-<i>http://gnu.org/licenses/gpl/html</i> for the license
-text.</p>
+License</i> version 3. See
+<i>http://gnu.org/licenses/gpl</i> for the license text.</p>
 
 <p style="margin-left:11%; margin-top: 1em">There is NO
 WARRANTY, to the extent permitted by law.</p>
@@ -1716,7 +1738,10 @@ WARRANTY, to the extent permitted by law.</p>
 bugs or suggest enhancements via the issue tracker at
 <i>https://github.com/mintty/mintty/issues</i>. Questions
 can be sent to the Cygwin mailing list at
-<i>cygwin@cygwin.com</i>.</p>
+<i>cygwin@cygwin.com</i>, to the Mintty discussion issue
+<i>https://github.com/mintty/mintty/issues/500</i>, or to
+the Gitter chat (experimental)
+<i>https://gitter.im/mintty/mintty</i>.</p>
 <hr>
 </body>
 </html>
