@@ -1,7 +1,3 @@
-make[1]: Entering directory '/cygdrive/d/home/tools/mintty/src'
-cd etc; wget -N -t 1 --timeout=55 http://unicode.org/Public/UNIDATA/UnicodeData.txt
-/cygdrive/d/home/mt/src/etc
-make[1]: Leaving directory '/cygdrive/d/home/tools/mintty/src'
     {0x0000, 0x0008, BN},
     {0x0009, 0x0009, S},
     {0x000A, 0x000A, B},
