@@ -147,17 +147,25 @@ $(bin): $(bins)
 #############################################################################
 # generate
 
+#WGET=curl -R -O --connect-timeout 55
+WGET=wget -N -t 1 --timeout=55
+
 rgb:	# /usr/share/X11/rgb.txt # X11 color names
 #	255 250 250		snow
 #	->
 #		{255, 250, 250, "snow"},
 	sed -e 's,	, ,g' -e 's/ *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([^ ].*[^ ]\) */	{\1, \2, \3, "\4"},/' /usr/share/X11/rgb.txt > rgb.t
 
-combined.t:	# UnicodeData.txt
+combined.t:	# etc/UnicodeData.txt
 	sh ./mkcombinedt > combined.t
 
-bidiclasses.t:	# UnicodeData.txt
+bidiclasses.t:	# etc/UnicodeData.txt
 	sh ./mkbidiclasses > bidiclasses.t
+
+unicode:	etc/UnicodeData.txt
+
+etc/UnicodeData.txt:
+	cd etc; $(WGET) http://unicode.org/Public/UNIDATA/UnicodeData.txt
 
 #############################################################################
 # release targets

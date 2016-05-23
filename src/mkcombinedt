@@ -1,9 +1,7 @@
 #! /bin/sh -f
 
-#WGET="curl -R -O --connect-timeout 55"
-WGET="wget -N -t 1 --timeout=55"
-
-$WGET http://unicode.org/Public/UNIDATA/UnicodeData.txt
+unidata=etc/UnicodeData.txt
+make $unidata
 
 LC_ALL=C
 export LC_ALL
@@ -29,9 +27,9 @@ export LC_ALL
 #	s,0x0300},0x0060},g
 
 sed	-e 's/^\([^;]*\);COMBINING \([^;]*\);[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;\([^;]*\);.*/\2	\1/' \
-	-e t -e d UnicodeData.txt | sort > .combining
+	-e t -e d "$unidata" | sort > .combining
 sed	-e 's/^\([^	]*\)	\([^	]*\).*/;\1;/' .combining > .combining-names
-fgrep -f .combining-names UnicodeData.txt |
+fgrep -f .combining-names "$unidata" |
 sed	-e 's/^\([^;]*\);\([^;]*\);.*/\2	\1/' | sort > .spacing
 join -t '	' .combining .spacing |
 cut -d '	' -f 2,3 |
@@ -43,5 +41,5 @@ sed -e 's/^/s,0x/' -e 's/	/},0x/' -e 's/$/},g/' > .spacing.sed
 #	{0x1E80, 0x0057, 0x0060},
 
 sed	-e 's/^\([^;]*\);[^;]*;[^;]*;[^;]*;[^;]*;\([0-9A-F][0-9A-F]*\) \([0-9A-F][0-9A-F]*\);.*/	{0x\1, 0x\2, 0x\3},/' \
-	-e 't goon' -e d -e ': goon' -f .spacing.sed UnicodeData.txt
+	-e 't goon' -e d -e ': goon' -f .spacing.sed "$unidata"
 
