@@ -40,7 +40,7 @@ wchar win_linedraw_chars[LDRAW_CHAR_NUM];
 // The last resort for each is an ASCII character, which we assume will be
 // available in any font.
 static const wchar linedraw_chars[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES] = {
-  {0x25C6, 0x2666, '*'},           // 0x60 '`' Diamond
+  {0x2666, 0x25C6, '*'},           // 0x60 '`' Diamond ♦ ◆
   {0x2592, '#'},                   // 0x61 'a' Checkerboard (error)
   {0x2409, 0x2192, 0x01AD, 't'},   // 0x62 'b' Horizontal tab
   {0x240C, 0x21A1, 0x0192, 'f'},   // 0x63 'c' Form feed
@@ -55,11 +55,11 @@ static const wchar linedraw_chars[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES] = {
   {0x250C, '+'},                   // 0x6C 'l' Upper-left corner
   {0x2514, '+'},                   // 0x6D 'm' Lower-left corner
   {0x253C, '+'},                   // 0x6E 'n' Crossing lines
-  {0x23BA, 0x00AF, '-'},           // 0x6F 'o' High horizontal line
-  {0x23BB, 0x00AF, '-'},           // 0x70 'p' Medium-high horizontal line
-  {0x2500, 0x2015, 0x2014, '-'},   // 0x71 'q' Middle horizontal line
-  {0x23BC, '_'},                   // 0x72 'r' Medium-low horizontal line
-  {0x23BF, '_'},                   // 0x73 's' Low horizontal line
+  {0x23BA, 0x203E, ' '},           // 0x6F 'o' High horizontal line
+  {0x23BB, 0x207B, ' '},           // 0x70 'p' Medium-high horizontal line
+  {0x2500, 0x2014, '-'},           // 0x71 'q' Middle horizontal line
+  {0x23BC, 0x208B, ' '},           // 0x72 'r' Medium-low horizontal line
+  {0x23BD, '_'},                   // 0x73 's' Low horizontal line
   {0x251C, '+'},                   // 0x74 't' Left "T"
   {0x2524, '+'},                   // 0x75 'u' Right "T"
   {0x2534, '+'},                   // 0x76 'v' Bottom "T"
