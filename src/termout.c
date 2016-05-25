@@ -1272,16 +1272,31 @@ term_write(const char *buf, uint len)
         int width = xcwidth(wc);
         #endif
 
+        unsigned long long asav = term.curs.attr.attr;
         switch (term.curs.csets[term.curs.g1]) {
-          when CSET_LINEDRW:
-            if (0x60 <= wc && wc <= 0x7E)
-              wc = win_linedraw_chars[wc - 0x60];
+          when CSET_LINEDRW:  // VT100 line drawing characters
+            if (0x60 <= wc && wc <= 0x7E) {
+              wchar dispwc = win_linedraw_chars[wc - 0x60];
+              if (dispwc == ' ') {
+                static uchar linedraw_code[31] = {
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                  0b1001, 0b1100, 0b0110, 0b0011, 0b1111,  // ┘┐┌└┼
+                  0x10, 0x20, 0x30, 0x40, 0x50,            // ¯¯─__
+                  0b0111, 0b1101, 0b1011, 0b1110, 0b0101,  // ├┤┴┬│
+                  0, 0, 0, 0, 0, 0
+                };
+                uchar dispcode = linedraw_code[wc - 0x60];
+                term.curs.attr.attr |= ((unsigned long long)dispcode) << 40;
+              }
+              wc = dispwc;
+            }
           when CSET_GBCHR:
             if (c == '#')
               wc = 0xA3; // pound sign
           otherwise: ;
         }
         write_char(wc, width);
+        term.curs.attr.attr = asav;
       }
       when ESCAPE or CMD_ESCAPE:
         if (c < 0x20)

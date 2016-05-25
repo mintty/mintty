@@ -337,7 +337,7 @@ adjust_font_weights()
   trace_font((" -> %d/%d\n", fw_norm, fw_bold));
 }
 
-#define dont_draw_vt100_line_drawing_chars
+#define draw_vt100_line_drawing_chars
 
 /*
  * Initialise all the fonts we will need initially. There may be as many as
@@ -1058,7 +1058,6 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
   uloff += line_width / 2;
   if (uloff >= font_height)
     uloff = font_height - 1;
-printf("font %d desc %d uloff %d\n", font_height, descent, uloff);
 
 #ifdef debug_underline
   ul = 0x802020E0;
