@@ -895,14 +895,16 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
   if (has_cursor) {
     cursor_colour = colours[ime_open ? IME_CURSOR_COLOUR_I : CURSOR_COLOUR_I];
 
-    bool too_close = colour_dist(cursor_colour, bg) < 32768;
+    //uint mindist = 32768;
+    uint mindist = 8000;
+    bool too_close = colour_dist(cursor_colour, bg) < mindist;
 
-    if (too_close)
+    if (0 && too_close)
       cursor_colour = fg;
 
     if ((attr.attr & TATTR_ACTCURS) && term_cursor_type() == CUR_BLOCK) {
       fg = colours[CURSOR_TEXT_COLOUR_I];
-      if (too_close && colour_dist(cursor_colour, fg) < 32768)
+      if (too_close && colour_dist(cursor_colour, fg) < mindist)
         fg = bg;
       bg = cursor_colour;
     }
