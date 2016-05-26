@@ -1281,7 +1281,11 @@ term_write(const char *buf, uint len)
                 static uchar linedraw_code[31] = {
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                   0b1001, 0b1100, 0b0110, 0b0011, 0b1111,  // ┘┐┌└┼
+#ifdef middle_line_is_box_drawing
+                  0x10, 0x20, 0b1010, 0x40, 0x50,          // ¯¯─__
+#else
                   0x10, 0x20, 0x30, 0x40, 0x50,            // ¯¯─__
+#endif
                   0b0111, 0b1101, 0b1011, 0b1110, 0b0101,  // ├┤┴┬│
                   0, 0, 0, 0, 0, 0
                 };

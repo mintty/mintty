@@ -458,6 +458,7 @@ win_init_fonts(int size)
            (glyphs[i][j] == 0xFFFF || glyphs[i][j] == 0x1F))
       j++;
 #ifdef draw_vt100_line_drawing_chars
+#define debug_vt100_line_drawing_chars
     if ('j' - 0x60 <= i && i <= 'x' - 0x60)
       win_linedraw_chars[i] = ' ';
     else
@@ -976,35 +977,37 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
     }
   }
 
-  int line_width = (3 + !!(attr.attr & ATTR_BOLD) + (lattr >= LATTR_TOP))
-                   * font_height / 40;
+  int line_width = (3
+                    + (attr.attr & ATTR_BOLD ? 2 : 0)
+                    + (lattr >= LATTR_WIDE ? 2 : 0)
+                    + (lattr >= LATTR_TOP ? 2 : 0)
+                   ) * font_height / 40;
 
-#define debug_vt100
-#ifdef debug_vt100
+#ifdef debug_vt100_line_drawing_chars
   fg = 0x00FF0000;
 #endif
   int graph = (attr.attr >> 40) & 0xFF;
-  if (graph >> 4) {
+  if (graph >> 4) {  // VT100 horizontal lines ⎺⎻⎼⎽ (─)
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
-    int groff = font_height * (graph >> 4) / 5 - font_height / 10 - 1;
-    if (lattr == LATTR_TOP)
-      groff *= 2;
-    else if (lattr == LATTR_BOT)
-      groff = groff * 2 - font_height;
+    int yoff = font_height * (graph >> 4) / 5 - font_height / 10 - line_width / 2;
+    if (lattr >= LATTR_TOP)
+      yoff *= 2;
+    if (lattr == LATTR_BOT)
+      yoff -= font_height;
     for (int l = 0; l < line_width; l++) {
-      MoveToEx(dc, x, y + groff + l, null);
-      LineTo(dc, x + len * char_width, y + groff + l);
+      MoveToEx(dc, x, y + yoff + l, null);
+      LineTo(dc, x + len * char_width, y + yoff + l);
     }
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
   }
-  else if (graph) {
+  else if (graph) {  // VT100 box drawing characters ┘┐┌└┼├┤┴┬│ (─)
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
     int y0 = (lattr == LATTR_BOT) ? y - font_height : y;
-    int yoff = font_height / 2 - 1;
-    if (lattr == LATTR_TOP || lattr == LATTR_BOT)
-      yoff = font_height - 1;
-    int xoff = char_width / 2 - 1;
+    int yoff = font_height * 3 / 5 - font_height / 10 - line_width / 2;
+    if (lattr >= LATTR_TOP)
+      yoff *= 2;
+    int xoff = (char_width - line_width) / 2;
     for (int i = 0; i < len; i++) {
       if (graph & 0b1010) {
         int xl, xr;
@@ -1015,34 +1018,26 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
         if (graph & 0b0010)
           xr = x + (i + 1) * char_width - 1;
         else
-          xr = x + i * char_width + xoff + (attr.attr & ATTR_BOLD ? 2 : 1);
-        MoveToEx(dc, xl, y0 + yoff, null);
-        LineTo(dc, xr, y0 + yoff);
-        MoveToEx(dc, xl, y0 + yoff + 1, null);
-        LineTo(dc, xr, y0 + yoff + 1);
-        if (attr.attr & ATTR_BOLD) {
-          MoveToEx(dc, xl, y0 + yoff + 2, null);
-          LineTo(dc, xr, y0 + yoff + 2);
+          xr = x + i * char_width + xoff + line_width - 1;
+        for (int l = 0; l < line_width; l++) {
+          MoveToEx(dc, xl, y0 + yoff + l, null);
+          LineTo(dc, xr, y0 + yoff + l);
         }
       }
       if (graph & 0b0101) {
         int xi = x + i * char_width + xoff;
         int yt, yb;
-        if (graph & 0b0100)
-          yb = y0 + (lattr >= LATTR_TOP ? 2 : 1) * font_height - 1;
-        else
-          yb = y0 + yoff + (attr.attr & ATTR_BOLD ? 2 : 1);
         if (graph & 0b0001)
           yt = y0;
         else
           yt = y0 + yoff;
-        MoveToEx(dc, xi, yt, null);
-        LineTo(dc, xi, yb);
-        MoveToEx(dc, xi + 1, yt, null);
-        LineTo(dc, xi + 1, yb);
-        if (attr.attr & ATTR_BOLD) {
-          MoveToEx(dc, xi + 2, yt, null);
-          LineTo(dc, xi + 2, yb);
+        if (graph & 0b0100)
+          yb = y0 + (lattr >= LATTR_TOP ? 2 : 1) * font_height - 1;
+        else
+          yb = y0 + yoff + line_width - 1;
+        for (int l = 0; l < line_width; l++) {
+          MoveToEx(dc, xi + l, yt, null);
+          LineTo(dc, xi + l, yb);
         }
       }
     }
