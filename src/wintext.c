@@ -896,11 +896,20 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
     cursor_colour = colours[ime_open ? IME_CURSOR_COLOUR_I : CURSOR_COLOUR_I];
 
     //uint mindist = 32768;
-    uint mindist = 8000;
+    uint mindist = 22222;
+    //uint mindist = 8000;
     bool too_close = colour_dist(cursor_colour, bg) < mindist;
 
-    if (0 && too_close)
-      cursor_colour = fg;
+    if (too_close) {
+      //cursor_colour = fg;
+      colour ccfg = brighten(cursor_colour, fg);
+      colour ccbg = brighten(cursor_colour, bg);
+      if (colour_dist(ccfg, bg) < mindist
+          && colour_dist(ccfg, bg) < colour_dist(ccbg, bg))
+        cursor_colour = ccbg;
+      else
+        cursor_colour = ccfg;
+    }
 
     if ((attr.attr & TATTR_ACTCURS) && term_cursor_type() == CUR_BLOCK) {
       fg = colours[CURSOR_TEXT_COLOUR_I];

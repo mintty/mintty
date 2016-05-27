@@ -1,3 +1,7 @@
+  * Tweak manual underline to scale with font and avoid scroll glitches.
+  * Tweak VT100 line drawing graphics (~#551).
+  * Handle low-contrast of configured cursor colours more gracefully (#548).
+
 ### 2.3.7 (22 May 2016) ###
 
 Text display:
