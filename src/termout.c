@@ -1277,21 +1277,20 @@ term_write(const char *buf, uint len)
           when CSET_LINEDRW:  // VT100 line drawing characters
             if (0x60 <= wc && wc <= 0x7E) {
               wchar dispwc = win_linedraw_chars[wc - 0x60];
-              if (dispwc == ' ') {
+#define draw_vt100_line_drawing_chars
+#ifdef draw_vt100_line_drawing_chars
+              if ('j' <= wc && wc <= 'x') {
                 static uchar linedraw_code[31] = {
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                   0b1001, 0b1100, 0b0110, 0b0011, 0b1111,  // ┘┐┌└┼
-#ifdef middle_line_is_box_drawing
-                  0x10, 0x20, 0b1010, 0x40, 0x50,          // ¯¯─__
-#else
-                  0x10, 0x20, 0x30, 0x40, 0x50,            // ¯¯─__
-#endif
+                  0x10, 0x20, 0b1010, 0x40, 0x50,          // ⎺⎻─⎼⎽
                   0b0111, 0b1101, 0b1011, 0b1110, 0b0101,  // ├┤┴┬│
                   0, 0, 0, 0, 0, 0
                 };
                 uchar dispcode = linedraw_code[wc - 0x60];
-                term.curs.attr.attr |= ((unsigned long long)dispcode) << 40;
+                term.curs.attr.attr |= ((unsigned long long)dispcode) << ATTR_GRAPH_SHIFT;
               }
+#endif
               wc = dispwc;
             }
           when CSET_GBCHR:

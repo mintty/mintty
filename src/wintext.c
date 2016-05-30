@@ -37,6 +37,9 @@ enum {LDRAW_CHAR_NUM = 31, LDRAW_CHAR_TRIES = 4};
 wchar win_linedraw_chars[LDRAW_CHAR_NUM];
 
 // Possible linedraw character mappings, in order of decreasing suitability.
+// The first choice is the same as used by xterm in most cases,
+// except the diamond for which the narrower form is more authentic
+// (see http://vt100.net/docs/vt220-rm/table2-4.html).
 // The last resort for each is an ASCII character, which we assume will be
 // available in any font.
 static const wchar linedraw_chars[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES] = {
@@ -337,7 +340,7 @@ adjust_font_weights()
   trace_font((" -> %d/%d\n", fw_norm, fw_bold));
 }
 
-#define draw_vt100_line_drawing_chars
+#define dont_debug_font_scaling
 
 /*
  * Initialise all the fonts we will need initially. There may be as many as
@@ -399,6 +402,9 @@ win_init_fonts(int size)
   HDC dc = GetDC(wnd);
   font_height =
     size > 0 ? -MulDiv(size, GetDeviceCaps(dc, LOGPIXELSY), 72) : size;
+#ifdef debug_font_scaling
+  printf("size %d -> height %d\n", size, font_height);
+#endif
   font_width = 0;
 
   fonts[FONT_NORMAL] = create_font(fw_norm, false);
@@ -457,13 +463,7 @@ win_init_fonts(int size)
     while (linedraw_chars[i][j] >= 0x80 &&
            (glyphs[i][j] == 0xFFFF || glyphs[i][j] == 0x1F))
       j++;
-#ifdef draw_vt100_line_drawing_chars
-#define debug_vt100_line_drawing_chars
-    if ('j' - 0x60 <= i && i <= 'x' - 0x60)
-      win_linedraw_chars[i] = ' ';
-    else
-#endif
-      win_linedraw_chars[i] = linedraw_chars[i][j];
+    win_linedraw_chars[i] = linedraw_chars[i][j];
   }
 
   fonts[FONT_UNDERLINE] = create_font(fw_norm, true);
@@ -973,6 +973,12 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
   int yt = y + (row_spacing / 2) - (lattr == LATTR_BOT ? font_height : 0);
   int xt = x + (cfg.col_spacing / 2);
 
+  int graph = (attr.attr >> ATTR_GRAPH_SHIFT) & 0xFF;
+  if (graph) {
+    for (int i = 0; i < len; i++)
+      text[i] = ' ';
+  }
+
  /* Finally, draw the text */
   SetBkMode(dc, OPAQUE);
   trace_line(" TextOut:", text, len);
@@ -994,11 +1000,11 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
                     + (lattr >= LATTR_TOP ? 2 : 0)
                    ) * font_height / 40;
 
+#define debug_vt100_line_drawing_chars
 #ifdef debug_vt100_line_drawing_chars
   fg = 0x00FF0000;
 #endif
-  int graph = (attr.attr >> 40) & 0xFF;
-  if (graph >> 4) {  // VT100 horizontal lines ⎺⎻⎼⎽ (─)
+  if (graph >> 4) {  // VT100 horizontal lines ⎺⎻(─)⎼⎽
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
     int yoff = font_height * (graph >> 4) / 5 - font_height / 10 - line_width / 2;
     if (lattr >= LATTR_TOP)
@@ -1012,7 +1018,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
   }
-  else if (graph) {  // VT100 box drawing characters ┘┐┌└┼├┤┴┬│ (─)
+  else if (graph) {  // VT100 box drawing characters ┘┐┌└┼ ─ ├┤┴┬│
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
     int y0 = (lattr == LATTR_BOT) ? y - font_height : y;
     int yoff = font_height * 3 / 5 - font_height / 10 - line_width / 2;
@@ -1027,9 +1033,9 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
         else
           xl = x + i * char_width + xoff;
         if (graph & 0b0010)
-          xr = x + (i + 1) * char_width - 1;
+          xr = x + (i + 1) * char_width;
         else
-          xr = x + i * char_width + xoff + line_width - 1;
+          xr = x + i * char_width + xoff + line_width;
         for (int l = 0; l < line_width; l++) {
           MoveToEx(dc, xl, y0 + yoff + l, null);
           LineTo(dc, xr, y0 + yoff + l);
@@ -1043,9 +1049,9 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
         else
           yt = y0 + yoff;
         if (graph & 0b0100)
-          yb = y0 + (lattr >= LATTR_TOP ? 2 : 1) * font_height - 1;
+          yb = y0 + (lattr >= LATTR_TOP ? 2 : 1) * font_height;
         else
-          yb = y0 + yoff + line_width - 1;
+          yb = y0 + yoff + line_width;
         for (int l = 0; l < line_width; l++) {
           MoveToEx(dc, xi + l, yt, null);
           LineTo(dc, xi + l, yb);

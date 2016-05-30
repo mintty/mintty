@@ -99,16 +99,19 @@ enum {
   ATTR_WIDE       = 0x04000000u,
   ATTR_NARROW     = 0x08000000u,
 
-  TATTR_RIGHTCURS = 0x0100000000u, /* cursor-on-RHS */
-  TATTR_PASCURS   = 0x0200000000u, /* passive cursor (box) */
-  TATTR_ACTCURS   = 0x0400000000u, /* active cursor (block) */
-  TATTR_COMBINING = 0x0800000000u, /* combining characters */
+  GRAPH_MASK      = 0x00FF00000000u,
+  ATTR_GRAPH_SHIFT = 32,
 
-  TATTR_RESULT    = 0x1000000000u, /* search result */
-  TATTR_CURRESULT = 0x2000000000u, /* current search result */
+  TATTR_RIGHTCURS = 0x010000000000u, /* cursor-on-RHS */
+  TATTR_PASCURS   = 0x020000000000u, /* passive cursor (box) */
+  TATTR_ACTCURS   = 0x040000000000u, /* active cursor (block) */
+  TATTR_COMBINING = 0x080000000000u, /* combining characters */
 
-  DATTR_STARTRUN  = 0x0800000000u, /* start of redraw run */
-  DATTR_MASK      = 0x0F00000000u,
+  TATTR_RESULT    = 0x100000000000u, /* search result */
+  TATTR_CURRESULT = 0x200000000000u, /* current search result */
+
+  DATTR_STARTRUN  = 0x080000000000u, /* start of redraw run */
+  DATTR_MASK      = 0x0F0000000000u,
 };
 
 /* Line attributes.
