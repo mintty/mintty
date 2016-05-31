@@ -464,6 +464,11 @@ win_init_fonts(int size)
            (glyphs[i][j] == 0xFFFF || glyphs[i][j] == 0x1F))
       j++;
     win_linedraw_chars[i] = linedraw_chars[i][j];
+#define draw_vt100_line_drawing_chars
+#ifdef draw_vt100_line_drawing_chars
+    if ('j' - '`' <= i && i <= 'x' - '`')
+      win_linedraw_chars[i] = linedraw_chars[i][0];
+#endif
   }
 
   fonts[FONT_UNDERLINE] = create_font(fw_norm, true);
@@ -1000,7 +1005,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
                     + (lattr >= LATTR_TOP ? 2 : 0)
                    ) * font_height / 40;
 
-#define debug_vt100_line_drawing_chars
+#define dont_debug_vt100_line_drawing_chars
 #ifdef debug_vt100_line_drawing_chars
   fg = 0x00FF0000;
 #endif

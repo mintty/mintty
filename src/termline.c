@@ -241,6 +241,7 @@ makeliteral_attr(struct buf *b, termchar *c)
   */
   uint colourbits;
   uint attr = c->attr.attr;
+  uint graph = c->attr.attr >> ATTR_GRAPH_SHIFT;
   uint truefg = c->attr.truefg;
   uint truebg = c->attr.truebg;
 
@@ -269,6 +270,7 @@ makeliteral_attr(struct buf *b, termchar *c)
     add(b, (uchar) ((attr >> 8) & 0xFF));
     add(b, (uchar) (attr & 0xFF));
   }
+  add(b, graph);
 
   add(b, (uchar) ((truefg >> 16) & 0xFF));
   add(b, (uchar) ((truefg >> 8) & 0xFF));
@@ -321,17 +323,19 @@ readliteral_chr(struct buf *buf, termchar *c, termline *unused(line))
 static void
 readliteral_attr(struct buf *b, termchar *c, termline *unused(line))
 {
-  uint val, attr, colourbits, fg, bg;
+  unsigned long long val, attr;
+  uint colourbits;
+  uint fg, bg;
 
   val = get(b) << 8;
   val |= get(b);
-
   if (val >= 0x8000) {
     val &= ~0x8000;
     val <<= 16;
     val |= get(b) << 8;
     val |= get(b);
   }
+  uint graph = get(b);
 
   colourbits = (val >> (32 - 9)) & 0xFF;
   attr = (val & ((1 << (32 - 9)) - 1));
@@ -352,6 +356,8 @@ readliteral_attr(struct buf *b, termchar *c, termline *unused(line))
   bg = get(b) << 16;
   bg |= get(b) << 8;
   bg |= get(b);
+
+  attr |= (unsigned long long)graph << ATTR_GRAPH_SHIFT;
 
   c->attr.attr = attr;
   c->attr.truefg = fg;
