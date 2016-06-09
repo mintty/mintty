@@ -1393,6 +1393,27 @@ If this option is set to false, implicit font zooming coupled with
 window zooming by the Shift key is disabled, 
 except for the keyboard zoom functions Shift+Alt+Enter/F11 and the Shift+menu function.
 
+.TP
+\fBHandling of DPI changes\fP (HandleDPI=true)
+By default, in Windows 10, when the window is moved to another monitor 
+that has a different DPI value ("scaling factor") configured, this is 
+considered to compensate by appropriate scaling.
+This option can be set to false to suppress DPI adjustments.
+
+.TP
+\fBWide display of Indic characters\fP (WideIndic=false)
+Setting this option, Indic characters with glyphs wider than a single 
+character cell will be displayed in double-width (like CJK characters).
+
+Notes: This is an experimental feature as there is no authoritative 
+source of information about which Indic characters should be considered wide.
+Most screen applications will not cooperate with this feature as their 
+assumption of character widths is mostly based on the system locale 
+(with the notable exception of the Unicode editor MinEd which supports 
+Indic wide display with version 2016.26).
+This feature may be removed from a future version of mintty if it turns out 
+to be useless.
+
 .SH LIMITATIONS
 
 .SS Console issue

@@ -377,6 +377,9 @@ PROMPT_COMMAND='echo -ne "\e]7;$PWD\a" ; '"$PROMPT_COMMAND"
 The sequence could also be output by shell aliases or functions changing the directory.
 It cannot be embedded in the prompt itself with ```\w``` as that is using some shortcuts.
 
+Note that after remote login, the directory path may be meaningless 
+unless the remote and local paths match.
+
 
 ## Multi-monitor support ##
 

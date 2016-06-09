@@ -1,6 +1,9 @@
-  * Tweak manual underline to scale with font and avoid scroll glitches.
-  * Tweak VT100 line drawing graphics (~#551).
-  * Handle low-contrast of configured cursor colours more gracefully (#548).
+  * Tweaked manual underline to scale with font and avoid scroll glitches.
+  * Manual drawing of VT100 line drawing graphics (#130, ~#551).
+  * Handling low-contrast of configured cursor colours more gracefully (#548).
+  * Tweaked DPI changes to stabilize roundtrips of font and window size (#470).
+  * Option HandleDPI=false to disable handling of DPI changes (#547, #492).
+  * Option WideIndic for double-width display of wide Indic characters (#553) (experimental).
 
 ### 2.3.7 (22 May 2016) ###
 
