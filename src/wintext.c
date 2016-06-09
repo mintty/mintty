@@ -402,6 +402,10 @@ win_init_fonts(int size)
   HDC dc = GetDC(wnd);
   font_height =
     size > 0 ? -MulDiv(size, GetDeviceCaps(dc, LOGPIXELSY), 72) : size;
+  // we might think about considering GetDpiForMonitor to scale the 
+  // font size here,
+  // but in fact this is already achieved by the handling of WM_DPICHANGED, 
+  // see there; (unless we would want to consider it initially)
 #ifdef debug_font_scaling
   printf("size %d -> height %d\n", size, font_height);
 #endif
@@ -956,8 +960,8 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
     trace_line(" <ChrPlc:", text, len);
     GetCharacterPlacementW(dc, text, len, 0, &gcpr,
                            FLI_MASK | GCP_CLASSIN | GCP_DIACRITIC);
-    trace_line(" >ChrPlc:", text, len);
     len = gcpr.nGlyphs;
+    trace_line(" >ChrPlc:", text, len);
     eto_options |= ETO_GLYPH_INDEX;
   }
 

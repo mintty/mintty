@@ -127,6 +127,7 @@ typedef struct {
   wstring app_launch_cmd;
   int col_spacing, row_spacing;
   int padding;
+  bool handle_dpichanged;
   string word_chars;
   string word_chars_excl;
   colour ime_cursor_colour;
