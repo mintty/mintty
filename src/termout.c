@@ -1266,10 +1266,14 @@ term_write(const char *buf, uint len)
         }
 
         // Everything else
+        int width;
+        if (cfg.wide_indic && wc >= 0x0900 && indicwide(wc))
+          width = 2;
+        else
         #if HAS_LOCALES
-        int width = wcwidth(wc);
+          width = wcwidth(wc);
         #else
-        int width = xcwidth(wc);
+          width = xcwidth(wc);
         #endif
 
         unsigned long long asav = term.curs.attr.attr;

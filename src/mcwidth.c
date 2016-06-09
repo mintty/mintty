@@ -5,6 +5,33 @@
 
 #include "charset.h"
 
+typedef struct {
+  xchar first;
+  xchar last;
+} interval;
+
+/* auxiliary function for binary search in interval table */
+static bool
+bisearch(xchar c, const interval table[], int len)
+{
+  int min = 0, max = len - 1;
+
+  if (c < table[0].first || c > table[max].last)
+    return false;
+  while (max >= min) {
+    int mid = (min + max) / 2;
+    if (c > table[mid].last)
+      min = mid + 1;
+    else if (c < table[mid].first)
+      max = mid - 1;
+    else
+      return true;
+  }
+
+  return false;
+}
+
+
 #if !HAS_LOCALES
 
 /*
@@ -67,32 +94,6 @@
  * Latest version: http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c
  */
 
-typedef struct {
-  xchar first;
-  xchar last;
-} interval;
-
-/* auxiliary function for binary search in interval table */
-static bool
-bisearch(xchar c, const interval table[], int len)
-{
-  int min = 0, max = len - 1;
-
-  if (c < table[0].first || c > table[max].last)
-    return false;
-  while (max >= min) {
-    int mid = (min + max) / 2;
-    if (c > table[mid].last)
-      min = mid + 1;
-    else if (c < table[mid].first)
-      max = mid - 1;
-    else
-      return true;
-  }
-
-  return false;
-}
-
 
 /* The following function defines the column width of an ISO 10646
  * character as follows:
@@ -122,8 +123,8 @@ bisearch(xchar c, const interval table[], int len)
  *      ISO 8859-1 and WGL4 characters, Unicode control characters,
  *      etc.) have a column width of 1.
  *
- * This implementation assumes that wchar_t characters are encoded
- * in ISO 10646.
+ * This implementation assumes that xchar (rather than wchar_t) characters 
+ * are encoded in ISO 10646.
  */
 
 /* sorted list of non-overlapping intervals of non-spacing characters */
@@ -339,3 +340,13 @@ xcwidth(xchar c)
 }
 
 #endif
+
+static const interval indic[] = {
+#include "indicwide.t"
+};
+
+bool
+indicwide(xchar c)
+{
+  return bisearch(c, indic, lengthof(indic));
+}

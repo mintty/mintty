@@ -65,6 +65,8 @@ extern bool cs_ambig_wide;
 extern int xcwidth(xchar c);
 #endif
 
+extern bool indicwide(xchar c);
+
 #endif
 
 
