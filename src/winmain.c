@@ -1398,11 +1398,20 @@ static struct {
         // this RECT is adjusted with respect to the monitor dpi already,
         // so we don't need to consider GetDpiForMonitor
         LPRECT r = (LPRECT) lp;
-        long width = (r->right - r->left);
-        long height = (r->bottom - r->top);
+        // try to stabilize font size roundtrip; 
+        // heuristic tweak of window size to compensate for 
+        // font scaling rounding errors that would continuously 
+        // decrease the window size if moving between monitors repeatedly
+        long width = (r->right - r->left) * 20 / 19;
+        long height = (r->bottom - r->top) * 20 / 19;
         SetWindowPos(wnd, 0, r->left, r->top, width, height,
                      SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
+        int y = term.rows, x = term.cols;
         win_adapt_term_size(false, true);
+        // try to stabilize terminal size roundtrip
+        win_set_chars(y, x);  // also clips to desktop size (win_fix_position)
+                              // but not stripping taskbar (?)
+                              // as win_fix_position would do initially
 #ifdef debug_dpi
         printf("SM_CXVSCROLL %d\n", GetSystemMetrics(SM_CXVSCROLL));
 #endif
