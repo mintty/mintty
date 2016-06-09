@@ -169,7 +169,7 @@ child_create(char *argv[], struct winsize *winp)
   else { // Parent process.
     fcntl(pty_fd, F_SETFL, O_NONBLOCK);
 
-    if (cfg.utmp) {
+    if (cfg.create_utmp) {
       char *dev = ptsname(pty_fd);
       if (dev) {
         struct utmp ut;

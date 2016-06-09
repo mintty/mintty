@@ -1,7 +1,12 @@
 #ifndef STD_H
 #define STD_H
 
+#ifdef __CYGWIN__
 #include <cygwin/version.h>
+#else
+#define CYGWIN_VERSION_DLL_MAJOR 1007
+#define CYGWIN_VERSION_API_MINOR 201
+#endif
 
 //unhide some definitions
 #define _GNU_SOURCE
@@ -67,7 +72,7 @@ typedef unsigned int uint;
 typedef void (*void_fn)(void);
 
 typedef uint xchar;     // UTF-32
-typedef wchar_t wchar;  // UTF-16
+typedef WCHAR wchar;    // UTF-16
 
 typedef const char *string;
 typedef const wchar *wstring;

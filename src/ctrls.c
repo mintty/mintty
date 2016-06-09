@@ -67,7 +67,7 @@ ctrl_free_set(controlset *s)
 /*
  * Find the index of first controlset in a controlbox for a given
  * path. If that path doesn't exist, return the index where it
- *should be inserted.
+ * should be inserted.
  */
 static int
 ctrl_find_set(controlbox * b, char *path)

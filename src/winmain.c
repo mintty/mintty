@@ -1091,7 +1091,7 @@ static struct {
   uint wm_;
   char * wm_name;
 } wm_names[] = {
-#include "wm_names.t"
+#include "_wm.t"
 };
   char * wm_name = "?";
   for (uint i = 0; i < lengthof(wm_names); i++)
@@ -1127,7 +1127,7 @@ static struct {
         uint idm_;
         char * idm_name;
       } idm_names[] = {
-# include "winidm_names.t"
+# include "_winidm.t"
       };
       char * idm_name = "?";
       for (uint i = 0; i < lengthof(idm_names); i++)
@@ -1963,7 +1963,7 @@ main(int argc, char *argv[])
         border_style = strdup(optarg);
       when 'R':
         report_geom = strdup(optarg);
-      when 'u': cfg.utmp = true;
+      when 'u': cfg.create_utmp = true;
       when '':
         prevent_pinning = true;
         store_taskbar_properties = true;

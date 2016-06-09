@@ -300,7 +300,7 @@ static struct {
   uint vk_;
   char * vk_name;
 } vk_names[] = {
-#include "vk_names.t"
+#include "_vk.t"
 };
 
 static string
