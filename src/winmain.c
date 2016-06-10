@@ -866,6 +866,9 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
       trace_resize(("term size %d %d -> %d %d\n", term.rows, term.cols, rows0, cols0));
       trace_resize(("font size %d -> %d\n", font_size, font_size1));
 
+    // heuristic attempt to stabilize font size roundtrips, esp after fullscreen
+    if (!bigger) font_size1 = font_size1 * 20 / 19;
+
     if (font_size1 != font_size)
       win_set_font_size(font_size1, false);
   }
