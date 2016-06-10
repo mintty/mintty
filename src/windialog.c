@@ -138,11 +138,7 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
       winctrl_init(&ctrls_panel);
       windlg_add_tree(&ctrls_base);
       windlg_add_tree(&ctrls_panel);
-#ifdef old_config
-      copy_config("dialog", &new_cfg, &cfg);
-#else
       copy_config("dialog", &new_cfg, &file_cfg);
-#endif
 
       RECT r;
       GetWindowRect(GetParent(wnd), &r);
@@ -221,6 +217,7 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
         */
         TreeView_SelectItem(treeview, hfirst);
       }
+
      /*
       * Set focus into the first available control.
       */
@@ -275,6 +272,26 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
       if (dlg.ended)
         DestroyWindow(wnd);
       return ret;
+    }
+
+    when WM_USER: {
+      HWND target = (HWND)wParam;
+      printf("winctrls [%8p] target %8p:\n", wnd, target);
+      control * ctrl = null;
+      for (winctrl *c = ctrls_panel.first; c && !ctrl; c = c->next) {
+        if (c->ctrl)
+          for (int k = 0; k < c->num_ids; k++) {
+            if (target == GetDlgItem(wnd, c->base_id + k)) {
+              ctrl = c->ctrl;
+              break;
+            }
+        }
+      }
+      if (ctrl)
+        dlg_editbox_set_w(ctrl, L"Test");
+      //todo:
+      // call ctrl->handler(ctrl, EVENT_DROP) instead
+      // move this to winctrls.c? (like winctrl_handle_command)
     }
   }
   return 0;

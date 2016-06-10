@@ -532,6 +532,30 @@ win_paste(void)
   CloseClipboard();
 }
 
+static wchar *
+paste_dialog(HANDLE data, CLIPFORMAT cf)
+{
+  if (cf == CF_UNICODETEXT) {
+    //cf. paste_unicode_text(data);
+    // used for URLs
+    // used for data:... schemes (http://ciembor.github.io/4bit/#)
+    wchar * s = wcsdup(GlobalLock(data));
+    GlobalUnlock(data);
+    return s;
+  }
+  else if (cf == CF_HDROP) {
+    //cf. paste_hdrop(data);
+    // used for filenames
+    if (1 == DragQueryFileW(data, -1, 0, 0)) {
+      uint wbuflen = DragQueryFileW(data, 0, 0, 0) + 1;
+      wchar * wc = newn(wchar, wbuflen);
+      DragQueryFileW(data, 0, wc, wbuflen);
+      return wc;
+    }
+  }
+  return null;
+}
+
 static volatile LONG dt_ref_count;
 
 static FORMATETC dt_format = { 0, null, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
@@ -621,9 +645,36 @@ dt_drop(IDropTarget *this, IDataObject *obj,
       when CF_HDROP: paste_hdrop(data);
     }
   }
-  else if (h && dt_format.cfFormat == CF_HDROP) {
-    // support filename drag-and-drop to certain input fields
-    //SendMessage(h, ...);
+  else {
+    // support drag-and-drop to certain input fields
+    char cn[10];
+    HWND combo = null;
+    // find the SendMessage target window
+    while (h && (GetClassName(h, cn, sizeof cn), strcmp(cn, "ConfigBox") != 0)) {
+      // pick up the actual drag-and-drop target widget
+      if (strcmp(cn, "ComboBox") == 0)
+        combo = h;
+      h = GetParent(h);
+    }
+    if (!h)
+      return 0;
+
+    dt_drag_enter(this, obj, keys, pos, effect_p);
+    if (!effect_p)
+      return 0;
+    STGMEDIUM stgmed;
+    if (obj->lpVtbl->GetData(obj, &dt_format, &stgmed) != S_OK)
+      return 0;
+    HGLOBAL data = stgmed.hGlobal;
+    if (!data)
+      return 0;
+
+    wchar * drop = paste_dialog(data, dt_format.cfFormat);
+    if (drop) {
+      // this will only work with the "ConfigBox" target
+      SendMessage(h, WM_USER, (WPARAM)combo, (LPARAM)drop);
+      free(drop);
+    }
   }
   return 0;
 }

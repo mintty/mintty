@@ -15,8 +15,7 @@
 #include <commdlg.h>
 
 /*
- * winctrls.c: routines to self-manage the controls in a dialog
- * box.
+ * winctrls.c: routines to self-manage the controls in a dialog box.
  */
 
 /*
@@ -65,7 +64,9 @@ ctrlposinit(ctrlpos * cp, HWND wnd, int leftborder, int rightborder,
 }
 
 static HWND
-doctl(ctrlpos * cp, RECT r, char *wclass, int wstyle, int exstyle, 
+doctl(control * ctrl, 
+      ctrlpos * cp, RECT r, 
+      char * wclass, int wstyle, int exstyle, 
       string wtext, int wid)
 {
   HWND ctl;
@@ -86,7 +87,23 @@ doctl(ctrlpos * cp, RECT r, char *wclass, int wstyle, int exstyle,
     ctl =
       CreateWindowEx(exstyle, wclass, wtext, wstyle, r.left, r.top, r.right,
                      r.bottom, cp->wnd, (HMENU)(INT_PTR)wid, inst, null);
+#ifdef debug_widgets
+    printf("%8p %s %d '%s'\n", ctl, wclass, exstyle, wtext);
+#endif
     SendMessage(ctl, WM_SETFONT, cp->font, MAKELPARAM(true, 0));
+    if (ctrl)
+      ctrl->widget = ctl;
+
+#ifdef register_sub_widgets
+    // find magically created sub-widgets
+    BOOL CALLBACK enumwin(HWND hwnd, LPARAM lParam)
+    {
+      (void)lParam;
+      ctrl->subwidget = hwnd;  // for action (not needed for drag-and-drop)
+      return FALSE;  // don't proceed; register first sub-widget only
+    }
+    EnumChildWindows(ctl, enumwin, 0);
+#endif
 
     if (!strcmp(wclass, "LISTBOX")) {
      /*
@@ -138,7 +155,7 @@ endbox(ctrlpos * cp)
   r.right = cp->width;
   r.top = cp->boxystart;
   r.bottom = cp->ypos - cp->boxystart;
-  doctl(cp, r, "BUTTON", BS_GROUPBOX | WS_CHILD | WS_VISIBLE, 0,
+  doctl(null, cp, r, "BUTTON", BS_GROUPBOX | WS_CHILD | WS_VISIBLE, 0,
         cp->boxtext ? cp->boxtext : "", cp->boxid);
   cp->ypos += GAPYBOX;
 }
@@ -147,7 +164,8 @@ endbox(ctrlpos * cp)
  * A static line, followed by a full-width edit box.
  */
 static void
-editboxfw(ctrlpos * cp, int password, char *text, int staticid, int editid)
+editbox(control * ctrl, ctrlpos * cp, int password, char * text, 
+        int staticid, int editid)
 {
   RECT r;
 
@@ -157,12 +175,12 @@ editboxfw(ctrlpos * cp, int password, char *text, int staticid, int editid)
   if (text) {
     r.top = cp->ypos;
     r.bottom = STATICHEIGHT;
-    doctl(cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, text, staticid);
+    doctl(null, cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, text, staticid);
     cp->ypos += STATICHEIGHT + GAPWITHIN;
   }
   r.top = cp->ypos;
   r.bottom = EDITHEIGHT;
-  doctl(cp, r, "EDIT",
+  doctl(ctrl, cp, r, "EDIT",
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL | (password ?
                                                                ES_PASSWORD : 0),
         WS_EX_CLIENTEDGE, "", editid);
@@ -173,7 +191,7 @@ editboxfw(ctrlpos * cp, int password, char *text, int staticid, int editid)
  * A static line, followed by a full-width combo box.
  */
 static void
-combobox(ctrlpos * cp, char *text, int staticid, int listid)
+combobox(control * ctrl, ctrlpos * cp, char *text, int staticid, int listid)
 {
   RECT r;
 
@@ -183,12 +201,12 @@ combobox(ctrlpos * cp, char *text, int staticid, int listid)
   if (text) {
     r.top = cp->ypos;
     r.bottom = STATICHEIGHT;
-    doctl(cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, text, staticid);
+    doctl(null, cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, text, staticid);
     cp->ypos += STATICHEIGHT + GAPWITHIN;
   }
   r.top = cp->ypos;
   r.bottom = COMBOHEIGHT * 10;
-  doctl(cp, r, "COMBOBOX",
+  doctl(ctrl, cp, r, "COMBOBOX",
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWN |
         CBS_HASSTRINGS, WS_EX_CLIENTEDGE, "", listid);
   cp->ypos += COMBOHEIGHT + GAPBETWEEN;
@@ -214,7 +232,7 @@ radioline_common(ctrlpos * cp, char *text, int id, int nacross,
     r.right = cp->width;
     r.bottom = STATICHEIGHT;
     cp->ypos += r.bottom + GAPWITHIN;
-    doctl(cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, text, id);
+    doctl(null, cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, text, id);
   }
 
   group = WS_GROUP;
@@ -231,7 +249,7 @@ radioline_common(ctrlpos * cp, char *text, int id, int nacross,
       r.right = cp->width - r.left;
     r.top = cp->ypos;
     r.bottom = RADIOHEIGHT;
-    doctl(cp, r, "BUTTON",
+    doctl(null, cp, r, "BUTTON",
           BS_NOTIFY | BS_AUTORADIOBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP |
           group, 0, buttons[j].label, buttons[j].id);
     group = 0;
@@ -253,7 +271,7 @@ checkbox(ctrlpos * cp, char *text, int id)
   r.right = cp->width;
   r.bottom = CHECKBOXHEIGHT;
   cp->ypos += r.bottom + GAPBETWEEN;
-  doctl(cp, r, "BUTTON",
+  doctl(null, cp, r, "BUTTON",
         BS_NOTIFY | BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 0,
         text, id);
 }
@@ -271,7 +289,7 @@ paneltitle(ctrlpos * cp, int id)
   r.right = cp->width;
   r.bottom = TITLEHEIGHT;
   cp->ypos += r.bottom + GAPBETWEEN;
-  doctl(cp, r, "STATIC", WS_CHILD | WS_VISIBLE | SS_OWNERDRAW, 0, null, id);
+  doctl(null, cp, r, "STATIC", WS_CHILD | WS_VISIBLE | SS_OWNERDRAW, 0, null, id);
 }
 
 /*
@@ -293,13 +311,13 @@ staticbtn(ctrlpos * cp, char *stext, int sid, char *btext, int bid)
   r.top = cp->ypos + (height - STATICHEIGHT) / 2 - 1;
   r.right = lwid;
   r.bottom = STATICHEIGHT;
-  doctl(cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, stext, sid);
+  doctl(null, cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, stext, sid);
 
   r.left = rpos;
   r.top = cp->ypos + (height - PUSHBTNHEIGHT) / 2 - 1;
   r.right = rwid;
   r.bottom = PUSHBTNHEIGHT;
-  doctl(cp, r, "BUTTON",
+  doctl(null, cp, r, "BUTTON",
         BS_NOTIFY | WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON, 0,
         btext, bid);
 
@@ -325,7 +343,7 @@ button(ctrlpos * cp, char *btext, int bid, int defbtn)
     SendMessage(cp->wnd, DM_SETDEFID, bid, 0);
 
   HWND but = 
-    doctl(cp, r, "BUTTON",
+    doctl(null, cp, r, "BUTTON",
           BS_NOTIFY | WS_CHILD | WS_VISIBLE | WS_TABSTOP |
           (defbtn ? BS_DEFPUSHBUTTON : 0) | BS_PUSHBUTTON, 0, btext, bid);
   // this is a special hack until a generic solution is crafted 
@@ -356,13 +374,13 @@ staticedit_internal(ctrlpos * cp, char *stext, int sid, int eid,
   r.top = cp->ypos + (height - STATICHEIGHT) / 2;
   r.right = lwid;
   r.bottom = STATICHEIGHT;
-  doctl(cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, stext, sid);
+  doctl(null, cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, stext, sid);
 
   r.left = rpos;
   r.top = cp->ypos + (height - EDITHEIGHT) / 2;
   r.right = rwid;
   r.bottom = EDITHEIGHT;
-  doctl(cp, r, "EDIT",
+  doctl(null, cp, r, "EDIT",
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL | style,
         WS_EX_CLIENTEDGE, "", eid);
 
@@ -400,13 +418,13 @@ staticddl(ctrlpos * cp, char *stext, int sid, int lid, int percentlist)
   r.top = cp->ypos + (height - STATICHEIGHT) / 2;
   r.right = lwid;
   r.bottom = STATICHEIGHT;
-  doctl(cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, stext, sid);
+  doctl(null, cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, stext, sid);
 
   r.left = rpos;
   r.top = cp->ypos + (height - EDITHEIGHT) / 2;
   r.right = rwid;
   r.bottom = COMBOHEIGHT * 4;
-  doctl(cp, r, "COMBOBOX",
+  doctl(null, cp, r, "COMBOBOX",
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST |
         CBS_HASSTRINGS, WS_EX_CLIENTEDGE, "", lid);
 
@@ -431,13 +449,13 @@ staticcombo(ctrlpos * cp, char *stext, int sid, int lid, int percentlist)
   r.top = cp->ypos + (height - STATICHEIGHT) / 2;
   r.right = lwid;
   r.bottom = STATICHEIGHT;
-  doctl(cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, stext, sid);
+  doctl(null, cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, stext, sid);
 
   r.left = rpos;
   r.top = cp->ypos + (height - EDITHEIGHT) / 2;
   r.right = rwid;
   r.bottom = COMBOHEIGHT * 10;
-  doctl(cp, r, "COMBOBOX",
+  doctl(null, cp, r, "COMBOBOX",
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWN |
         CBS_HASSTRINGS, WS_EX_CLIENTEDGE, "", lid);
 
@@ -457,7 +475,7 @@ staticddlbig(ctrlpos * cp, char *stext, int sid, int lid)
     r.top = cp->ypos;
     r.right = cp->width;
     r.bottom = STATICHEIGHT;
-    doctl(cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, stext, sid);
+    doctl(null, cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, stext, sid);
     cp->ypos += STATICHEIGHT;
   }
 
@@ -465,7 +483,7 @@ staticddlbig(ctrlpos * cp, char *stext, int sid, int lid)
   r.top = cp->ypos;
   r.right = cp->width;
   r.bottom = COMBOHEIGHT * 4;
-  doctl(cp, r, "COMBOBOX",
+  doctl(null, cp, r, "COMBOBOX",
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | CBS_DROPDOWNLIST |
         CBS_HASSTRINGS, WS_EX_CLIENTEDGE, "", lid);
   cp->ypos += COMBOHEIGHT + GAPBETWEEN;
@@ -475,7 +493,7 @@ staticddlbig(ctrlpos * cp, char *stext, int sid, int lid)
  * A list box with a static labelling it.
  */
 static void
-listbox(ctrlpos * cp, char *stext, int sid, int lid, int lines)
+listbox(control * ctrl, ctrlpos * cp, char *stext, int sid, int lid, int lines)
 {
   RECT r;
 
@@ -485,7 +503,7 @@ listbox(ctrlpos * cp, char *stext, int sid, int lid, int lines)
     r.right = cp->width;
     r.bottom = STATICHEIGHT;
     cp->ypos += r.bottom + GAPWITHIN;
-    doctl(cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, stext, sid);
+    doctl(null, cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, stext, sid);
   }
 
   r.left = GAPBETWEEN;
@@ -493,7 +511,7 @@ listbox(ctrlpos * cp, char *stext, int sid, int lid, int lines)
   r.right = cp->width;
   r.bottom = LISTHEIGHT + (lines - 1) * LISTINCREMENT;
   cp->ypos += r.bottom + GAPBETWEEN;
-  doctl(cp, r, "LISTBOX",
+  doctl(ctrl, cp, r, "LISTBOX",
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY |
         LBS_HASSTRINGS | LBS_USETABSTOPS, WS_EX_CLIENTEDGE, "", lid);
 }
@@ -684,10 +702,10 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
         num_ids = 2;    /* static, edit */
         if (ctrl->editbox.percentwidth == 100) {
           if (ctrl->editbox.has_list)
-            combobox(&pos, ctrl->label, base_id, base_id + 1);
+            combobox(ctrl, &pos, ctrl->label, base_id, base_id + 1);
           else
-            editboxfw(&pos, ctrl->editbox.password, ctrl->label, base_id,
-                      base_id + 1);
+            editbox(ctrl, &pos, ctrl->editbox.password, ctrl->label, 
+                    base_id, base_id + 1);
         }
         else {
           if (ctrl->editbox.has_list) {
@@ -734,7 +752,7 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
         }
         else {
          /* Ordinary list. */
-          listbox(&pos, ctrl->label, base_id, base_id + 1, ctrl->listbox.height);
+          listbox(ctrl, &pos, ctrl->label, base_id, base_id + 1, ctrl->listbox.height);
         }
         if (ctrl->listbox.ncols) {
          /*
@@ -915,7 +933,7 @@ select_font(winctrl *c)
     cf.Flags |= CF_INACTIVEFONTS;
   else
     cf.Flags |= CF_SCRIPTSONLY; // exclude fonts with OEM or SYMBOL charset
-  if (cfg.old_fontmenu)
+  if (new_cfg.old_fontmenu)
     cf.Flags =
       CF_FIXEDPITCHONLY | CF_FORCEFONTEXIST | CF_INITTOLOGFONTSTRUCT |
       CF_SCREENFONTS | CF_NOSCRIPTSEL;

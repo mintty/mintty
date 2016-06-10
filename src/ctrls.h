@@ -65,12 +65,13 @@ enum {
   EVENT_VALCHANGE,
   EVENT_SELCHANGE,
   EVENT_UNFOCUS,
-  EVENT_CALLBACK
+  EVENT_CALLBACK,
+  EVENT_DROP
 };
 
 typedef struct control control;
 
-typedef void (*handler_fn)(control *, int event);
+typedef void (* handler_fn)(control *, int event);
 
 struct control {
   int type;
@@ -87,7 +88,7 @@ struct control {
   * 
   * For CTRL_COLUMNS, this field MUST be null.
   */
-  char *label;
+  char * label;
  /*
   * Indicate which column(s) this control occupies. This can
   * be unpacked into starting column and column span by the
@@ -110,10 +111,17 @@ struct control {
   */
   handler_fn handler;
  /*
+  * Identify a drag-and-drop target control by its widget ("Window") 
+  * as due to the obscure wisdom of Windows design, drag-and-drop events 
+  * are handled completely different from other events and particularly 
+  * do not provide a "Control identifier".
+  */
+  void * widget;
+ /*
   * Almost all of the above functions will find it useful to
   * be able to store a piece of `void *' data.
   */
-  void *context;
+  void * context;
   union {
     struct {
      /*
@@ -163,12 +171,12 @@ struct control {
       * pointers, each of which points to a dynamically
       * allocated string.
       */
-      string *labels;     /* `nbuttons' button labels */
+      string * labels;     /* `nbuttons' button labels */
      /*
       * This points to a dynamically allocated array,
       * with the value corresponding to each button.
       */
-      int *vals;         /* `nbuttons' entries; may be null */
+      int * vals;       /* `nbuttons' entries; may be null */
     } radio;
     struct {
      /*
@@ -188,7 +196,7 @@ struct control {
       * Height of the list box, in approximate number of lines.
       * If this is zero, the list is a drop-down list.
       */
-      int height; /* height in lines */
+      int height;       /* height in lines */
      /*
       * Percentage of the dialog-box width used by the list box.
       * If this is set to 100, the label is on its own line;
@@ -207,13 +215,13 @@ struct control {
       * `percentages' must be null.
       */
       int ncols;  /* number of columns */
-      int *percentages;   /* % width of each column */
+      int * percentages;   /* % width of each column */
     } listbox;
 
     struct {
      /* In this variant, `label' MUST be null. */
-      int ncols;  /* number of columns */
-      int *percentages;   /* % width of each column */
+      int ncols;                /* number of columns */
+      int * percentages;        /* % width of each column */
      /*
       * Every time this control type appears, exactly one of
       * `ncols' and the previous number of columns MUST be one.
@@ -229,7 +237,7 @@ struct control {
   };
 
   /* Space for storing platform-specific control data */
-  void *plat_ctrl;
+  void * plat_ctrl;
 };
 
 #undef STANDARD_PREFIX
@@ -241,12 +249,12 @@ struct control {
  * in the config will be a container box within a panel.
  */
 typedef struct {
-  char *pathname;       /* panel path, e.g. "SSH/Tunnels" */
-  char *boxtitle;       /* title of container box */
-  int ncolumns; /* current no. of columns at bottom */
+  char * pathname;      /* panel path, e.g. "SSH/Tunnels" */
+  char * boxtitle;      /* title of container box */
+  int ncolumns;         /* current no. of columns at bottom */
   int ncontrols;        /* number of `control' in array */
-  int ctrlsize; /* allocated size of array */
-  control **ctrls;      /* actual array */
+  int ctrlsize;         /* allocated size of array */
+  control * * ctrls;    /* actual array */
 } controlset;
 
 /*
@@ -254,15 +262,15 @@ typedef struct {
  * controls.
  */
 typedef struct {
-  int nctrlsets;        /* number of ctrlsets */
-  int ctrlsetsize;      /* ctrlset size */
-  controlset **ctrlsets;        /* actual array of ctrlsets */
+  int nctrlsets;                /* number of ctrlsets */
+  int ctrlsetsize;              /* ctrlset size */
+  controlset * * ctrlsets;      /* actual array of ctrlsets */
   int nfrees;
   int freesize;
-  void **frees; /* array of aux data areas to free */
+  void * * frees;               /* array of aux data areas to free */
 } controlbox;
 
-controlbox *ctrl_new_box(void);
+controlbox * ctrl_new_box(void);
 void ctrl_free_box(controlbox *);
 
 /*
@@ -270,7 +278,7 @@ void ctrl_free_box(controlbox *);
  */
 
 /* Create a controlset. */
-controlset *ctrl_new_set(controlbox *, char *path, char *title);
+controlset * ctrl_new_set(controlbox *, char * path, char * title);
 void ctrl_free_set(controlset *);
 
 void ctrl_free(control *);
@@ -283,7 +291,7 @@ void ctrl_free(control *);
  * to hold modifiable per-instance things. It's mostly here for
  * allocating structures to be passed as control handler params.
  */
-void *ctrl_alloc(controlbox *, size_t size);
+void * ctrl_alloc(controlbox *, size_t size);
 
 /*
  * Individual routines to create `control' structures in a controlset.
@@ -295,27 +303,27 @@ void *ctrl_alloc(controlbox *, size_t size);
  */
 
 /* `ncolumns' is followed by that many percentages, as integers. */
-control *ctrl_columns(controlset *, int ncolumns, ...);
-control *ctrl_editbox(controlset *, char *label, int percentage,
-                      handler_fn handler, void *context);
-control *ctrl_combobox(controlset *, char *label, int percentage,
-                       handler_fn handler, void *context);
-control *ctrl_listbox(controlset *, char *label, int lines, int percentage,
-                       handler_fn handler, void *context);
+control * ctrl_columns(controlset *, int ncolumns, ...);
+control * ctrl_editbox(controlset *, char * label, int percentage,
+                       handler_fn handler, void * context);
+control * ctrl_combobox(controlset *, char * label, int percentage,
+                        handler_fn handler, void * context);
+control * ctrl_listbox(controlset *, char * label, int lines, int percentage,
+                       handler_fn handler, void * context);
 /*
  * `ncolumns' is followed by (alternately) radio button titles and
  * integers, until a null in place of a title string is seen.
  */
-control *ctrl_radiobuttons(controlset *, char *label, int ncolumns,
-                           handler_fn handler, void *context, ...);
-control *ctrl_pushbutton(controlset *, char *label,
-                         handler_fn handler, void *context);
-control *ctrl_droplist(controlset *, char *label, int percentage,
-                       handler_fn handler, void *context);
-control *ctrl_fontsel(controlset *, char *label,
-                      handler_fn handler, void *context);
-control *ctrl_checkbox(controlset *, char *label,
-                       handler_fn handler, void *context);
+control * ctrl_radiobuttons(controlset *, char * label, int ncolumns,
+                            handler_fn handler, void * context, ...);
+control * ctrl_pushbutton(controlset *, char * label,
+                          handler_fn handler, void * context);
+control * ctrl_droplist(controlset *, char * label, int percentage,
+                        handler_fn handler, void * context);
+control * ctrl_fontsel(controlset *, char * label,
+                       handler_fn handler, void * context);
+control * ctrl_checkbox(controlset *, char * label,
+                        handler_fn handler, void * context);
 
 /*
  * Standard handler routines to cover most of the common cases in
@@ -397,10 +405,10 @@ void dlg_refresh(control *);
  *          ... process this controlset ...
  *      }
  */
-int ctrl_find_path(controlbox *, char *path, int index);
+int ctrl_find_path(controlbox *, char * path, int index);
 
 /* Return the number of matching path elements at the starts of p1 and p2,
  * or INT_MAX if the paths are identical. */
-int ctrl_path_compare(char *p1, char *p2);
+int ctrl_path_compare(char * p1, char * p2);
 
 #endif
