@@ -648,14 +648,20 @@ dt_drop(IDropTarget *this, IDataObject *obj,
   else {
     // support drag-and-drop to certain input fields
     char cn[10];
-    HWND combo = null;
+    HWND widget = null;
     // find the SendMessage target window
     while (h && (GetClassName(h, cn, sizeof cn), strcmp(cn, "ConfigBox") != 0)) {
+#ifdef debug_dragndrop
+      printf("%8p (%s) ", h, cn);
+#endif
       // pick up the actual drag-and-drop target widget
-      if (strcmp(cn, "ComboBox") == 0)
-        combo = h;
+      if (strcmp(cn, "ComboBox") == 0 || strcmp(cn, "Button") == 0)
+        widget = h;  // or unconditionally use the last before ConfigBox?
       h = GetParent(h);
     }
+#ifdef debug_dragndrop
+    printf("%8p (%s)\n", h, h ? cn : "");
+#endif
     if (!h)
       return 0;
 
@@ -672,7 +678,7 @@ dt_drop(IDropTarget *this, IDataObject *obj,
     wchar * drop = paste_dialog(data, dt_format.cfFormat);
     if (drop) {
       // this will only work with the "ConfigBox" target
-      SendMessage(h, WM_USER, (WPARAM)combo, (LPARAM)drop);
+      SendMessage(h, WM_USER, (WPARAM)widget, (LPARAM)drop);
       free(drop);
     }
   }

@@ -32,6 +32,8 @@ static controlbox *ctrlbox;
 static winctrls ctrls_base, ctrls_panel;
 
 windlg dlg;
+wstring dragndrop;
+
 static int dialog_height;  // dummy
 
 enum {
@@ -143,8 +145,13 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
       RECT r;
       GetWindowRect(GetParent(wnd), &r);
       dlg.wnd = wnd;
+
+     /*
+      * Create the actual GUI widgets.
+      */
       // here we need the correct DIALOG_HEIGHT already
       create_controls(wnd, "");        /* Open and Cancel buttons etc */
+
       SendMessage(wnd, WM_SETICON, (WPARAM) ICON_BIG,
                   (LPARAM) LoadIcon(inst, MAKEINTRESOURCE(IDI_MAINICON)));
 
@@ -276,22 +283,32 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     when WM_USER: {
       HWND target = (HWND)wParam;
-      printf("winctrls [%8p] target %8p:\n", wnd, target);
+      // could delegate this to winctrls.c, like winctrl_handle_command;
+      // but then we'd have to fiddle with the location of dragndrop
+     /*
+      * Look up the window handle in our data; find the control.
+        (Hmm, apparently it works without looking for the widget entry 
+        that was particularly introduced for this purpose...)
+      */
       control * ctrl = null;
       for (winctrl *c = ctrls_panel.first; c && !ctrl; c = c->next) {
         if (c->ctrl)
           for (int k = 0; k < c->num_ids; k++) {
+#ifdef debug_dragndrop
+            printf(" [->%8p] %8p\n", target, GetDlgItem(wnd, c->base_id + k));
+#endif
             if (target == GetDlgItem(wnd, c->base_id + k)) {
               ctrl = c->ctrl;
               break;
             }
         }
       }
-      if (ctrl)
-        dlg_editbox_set_w(ctrl, L"Test");
-      //todo:
-      // call ctrl->handler(ctrl, EVENT_DROP) instead
-      // move this to winctrls.c? (like winctrl_handle_command)
+      if (ctrl) {
+        //dlg_editbox_set_w(ctrl, L"Test");  // may hit unrelated items...
+        // drop the drag-and-drop contents here
+        dragndrop = (wstring)lParam;
+        ctrl->handler(ctrl, EVENT_DROP);
+      }
     }
   }
   return 0;
@@ -316,7 +333,7 @@ win_open_config(void)
       .hInstance = inst,
       .hIcon = null,
       .hCursor = LoadCursor(null, IDC_ARROW),
-      .hbrBackground = (HBRUSH) (COLOR_BACKGROUND + 1),
+      .hbrBackground = (HBRUSH)(COLOR_BACKGROUND + 1),
       .lpszMenuName = null,
       .lpszClassName = "ConfigBox"
     });

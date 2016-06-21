@@ -91,8 +91,12 @@ doctl(control * ctrl,
     printf("%8p %s %d '%s'\n", ctl, wclass, exstyle, wtext);
 #endif
     SendMessage(ctl, WM_SETFONT, cp->font, MAKELPARAM(true, 0));
-    if (ctrl)
+    if (ctrl) {
       ctrl->widget = ctl;
+#ifdef debug_dragndrop
+      printf("%d %s %8p\n", ctrl->type, ctrl->label, ctl);
+#endif
+    }
 
 #ifdef register_sub_widgets
     // find magically created sub-widgets
@@ -328,7 +332,7 @@ staticbtn(ctrlpos * cp, char *stext, int sid, char *btext, int bid)
  * A simple push button.
  */
 static void
-button(ctrlpos * cp, char *btext, int bid, int defbtn)
+button(control * ctrl, ctrlpos * cp, char *btext, int bid, int defbtn)
 {
   RECT r;
 
@@ -343,7 +347,7 @@ button(ctrlpos * cp, char *btext, int bid, int defbtn)
     SendMessage(cp->wnd, DM_SETDEFID, bid, 0);
 
   HWND but = 
-    doctl(null, cp, r, "BUTTON",
+    doctl(ctrl, cp, r, "BUTTON",
           BS_NOTIFY | WS_CHILD | WS_VISIBLE | WS_TABSTOP |
           (defbtn ? BS_DEFPUSHBUTTON : 0) | BS_PUSHBUTTON, 0, btext, bid);
   // this is a special hack until a generic solution is crafted 
@@ -351,6 +355,12 @@ button(ctrlpos * cp, char *btext, int bid, int defbtn)
   if (!strcmp(btext, "&Play")) {
     SendMessageW(but, WM_SETTEXT, 0, (LPARAM)L"► &Play");
   }
+#ifdef need_to_disable_widgets_here
+  // another hack to disable a widget initially
+  if (!strcmp(btext, "Store")) {
+    EnableWindow(but, FALSE);
+  }
+#endif
 
   cp->ypos += PUSHBTNHEIGHT + GAPBETWEEN;
 }
@@ -738,7 +748,7 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
         if (ctrl->button.iscancel)
           actual_base_id = IDCANCEL;
         num_ids = 1;
-        button(&pos, ctrl->label, actual_base_id, ctrl->button.isdefault);
+        button(ctrl, &pos, ctrl->label, actual_base_id, ctrl->button.isdefault);
       }
       when CTRL_LISTBOX: {
         num_ids = 2;

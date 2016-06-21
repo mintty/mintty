@@ -69,6 +69,8 @@ enum {
   EVENT_DROP
 };
 
+extern wstring dragndrop;  // drop drag-and-drop contents here
+
 typedef struct control control;
 
 typedef void (* handler_fn)(control *, int event);
