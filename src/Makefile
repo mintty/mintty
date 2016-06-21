@@ -165,6 +165,7 @@ bidiclasses.t:	# etc/UnicodeData.txt
 unicode:	etc/UnicodeData.txt
 
 etc/UnicodeData.txt:
+	mkdir -p etc
 	cd etc; $(WGET) http://unicode.org/Public/UNIDATA/UnicodeData.txt
 
 #############################################################################

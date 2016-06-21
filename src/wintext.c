@@ -1013,6 +1013,23 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
 #ifdef debug_vt100_line_drawing_chars
   fg = 0x00FF0000;
 #endif
+
+#if __GNUC__ >= 5
+#define DRAW_HORIZ 0b1010
+#define DRAW_LEFT  0b1000
+#define DRAW_RIGHT 0b0010
+#define DRAW_VERT  0b0101
+#define DRAW_UP    0b0001
+#define DRAW_DOWN  0b0100
+#else // < 4.3
+#define DRAW_HORIZ 0xA
+#define DRAW_LEFT  0x8
+#define DRAW_RIGHT 0x2
+#define DRAW_VERT  0x5
+#define DRAW_UP    0x1
+#define DRAW_DOWN  0x4
+#endif
+
   if (graph >> 4) {  // VT100 horizontal lines ⎺⎻(─)⎼⎽
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
     int yoff = font_height * (graph >> 4) / 5 - font_height / 10 - line_width / 2;
@@ -1035,13 +1052,13 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
       yoff *= 2;
     int xoff = (char_width - line_width) / 2;
     for (int i = 0; i < len; i++) {
-      if (graph & 0b1010) {
+      if (graph & DRAW_HORIZ) {
         int xl, xr;
-        if (graph & 0b1000)
+        if (graph & DRAW_LEFT)
           xl = x + i * char_width;
         else
           xl = x + i * char_width + xoff;
-        if (graph & 0b0010)
+        if (graph & DRAW_RIGHT)
           xr = x + (i + 1) * char_width;
         else
           xr = x + i * char_width + xoff + line_width;
@@ -1050,14 +1067,14 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
           LineTo(dc, xr, y0 + yoff + l);
         }
       }
-      if (graph & 0b0101) {
+      if (graph & DRAW_VERT) {
         int xi = x + i * char_width + xoff;
         int yt, yb;
-        if (graph & 0b0001)
+        if (graph & DRAW_UP)
           yt = y0;
         else
           yt = y0 + yoff;
-        if (graph & 0b0100)
+        if (graph & DRAW_DOWN)
           yb = y0 + (lattr >= LATTR_TOP ? 2 : 1) * font_height;
         else
           yb = y0 + yoff + line_width;
