@@ -18,6 +18,8 @@
 
 static wstring rc_filename = 0;
 
+
+// all entries need initialisation in options[] or crash...
 const config default_cfg = {
   // Looks
   .fg_colour = 0xBFBFBF,
@@ -28,6 +30,7 @@ const config default_cfg = {
   .search_bg_colour = 0x00DDDD,
   .search_current_colour = 0x0099DD,
   .theme_file = L"",
+  .colour_scheme = "",
   .transparency = 0,
   .blurred = false,
   .opaque_when_focused = false,
@@ -165,6 +168,7 @@ options[] = {
   {"SearchBackgroundColour", OPT_COLOUR, offcfg(search_bg_colour)},
   {"SearchCurrentColour", OPT_COLOUR, offcfg(search_current_colour)},
   {"ThemeFile", OPT_WSTRING, offcfg(theme_file)},
+  {"ColourScheme", OPT_STRING, offcfg(colour_scheme)},
   {"Transparency", OPT_TRANS, offcfg(transparency)},
 #ifdef support_blurred
   {"Blur", OPT_BOOL, offcfg(blurred)},
@@ -627,6 +631,35 @@ load_theme(wstring theme)
 }
 
 void
+load_scheme(string cs)
+{
+  copy_config("scheme", &cfg, &file_cfg);
+
+  // analyse scheme description
+  char * scheme = strdup(cs);
+  char * sch = scheme;
+  char * param = scheme;
+  char * value = null;
+  while (*sch) {
+    if (*sch == '=') {
+      *sch++ = '\0';
+      value = sch;
+    }
+    else if (*sch == ';') {
+      *sch++ = '\0';
+      if (value) {
+        set_option(param, value, false);
+      }
+      param = sch;
+      value = null;
+    }
+    else
+      sch++;
+  }
+  free(scheme);
+}
+
+void
 load_config(string filename, bool to_save)
 {
   trace_theme(("load_config <%s> %d\n", filename, to_save));
@@ -650,7 +683,7 @@ load_config(string filename, bool to_save)
   }
 
   if (file) {
-    static char line[256];
+    static char line[444];
     while (fgets(line, sizeof line, file)) {
       line[strcspn(line, "\r\n")] = 0;  /* trim newline */
       if (line[0] != '#' && line[0] != '\0') {
@@ -828,7 +861,11 @@ apply_config(bool save)
     save_config();
   bool had_theme = !!*cfg.theme_file;
 
-  if (*cfg.theme_file) {
+  if (*cfg.colour_scheme) {
+    load_scheme(cfg.colour_scheme);
+    win_reset_colours();
+  }
+  else if (*cfg.theme_file) {
     load_theme(cfg.theme_file);
     win_reset_colours();
   }
@@ -1066,7 +1103,9 @@ add_file_resources(control *ctrl, wstring pattern)
   WIN32_FIND_DATAW ffd;
   HANDLE hFind = FindFirstFileW(rcpat, &ffd);
   int ok = hFind != INVALID_HANDLE_VALUE;
-  //if (!ok) retry with "/usr/share/mintty"?
+  //try /usr/share/mintty , $APPDATA/mintty , ~/.config/mintty , ~/.mintty
+  // reverse!
+  // until ok || GetLastError() == ERROR_FILE_NOT_FOUND (empty valid dir)
   //(then check also win_bell() and load_theme())
   while (ok) {
     if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
@@ -1097,7 +1136,7 @@ bellfile_handler(control *ctrl, int event)
   if (event == EVENT_REFRESH) {
     dlg_listbox_clear(ctrl);
     dlg_listbox_add_w(ctrl, NONE);
-    add_file_resources(ctrl, L"sounds/*.wav"); //  dlg_listbox_add_w(ctrl, L"...");
+    add_file_resources(ctrl, L"sounds/*.wav");
     // strip std dir prefix...
     dlg_editbox_set_w(ctrl, *bell_file ? bell_file : NONE);
   }
@@ -1109,6 +1148,24 @@ bellfile_handler(control *ctrl, int event)
     new_cfg.bell_file = bell_file;
     win_bell(&new_cfg);
   }
+  else if (event == EVENT_DROP) {
+    dlg_editbox_set_w(ctrl, dragndrop);
+    wstrset(&new_cfg.bell_file, dragndrop);
+    win_bell(&new_cfg);
+  }
+}
+
+static control * theme = null;
+static control * store_button = null;
+
+static void
+enable_widget(control * ctrl, bool enable)
+{
+  if (!ctrl)
+    return;
+
+  HWND wid = ctrl->widget;
+  EnableWindow(wid, enable);
 }
 
 static void
@@ -1116,18 +1173,88 @@ theme_handler(control *ctrl, int event)
 {
   const wstring NONE = L"◇ None ◇";  // ♢◇
   const wstring CFG_NONE = L"";
-  wstring theme_file = new_cfg.theme_file;
+  wstring theme_name = new_cfg.theme_file;
   if (event == EVENT_REFRESH) {
     dlg_listbox_clear(ctrl);
     dlg_listbox_add_w(ctrl, NONE);
-    add_file_resources(ctrl, L"themes/*"); //  dlg_listbox_add_w(ctrl, L"...");
-    dlg_editbox_set_w(ctrl, *theme_file ? theme_file : NONE);
+    add_file_resources(ctrl, L"themes/*");
+#ifdef attempt_to_keep_scheme_hidden
+    if (*new_cfg.colour_scheme)
+      // don't do this, rather keep previously entered name to store scheme
+      // scheme string will not be entered here anyway
+      dlg_editbox_set_w(ctrl, L"");
+    else
+#endif
+    dlg_editbox_set_w(ctrl, *theme_name ? theme_name : NONE);
   }
-  else if (event == EVENT_VALCHANGE || event == EVENT_SELCHANGE) {
-    dlg_editbox_get_w(ctrl, &theme_file);
-    if (!wcscmp(theme_file, NONE))
-      wstrset(&theme_file, CFG_NONE);
-    new_cfg.theme_file = theme_file;
+  else if (event == EVENT_SELCHANGE) {  // pull-down selection
+    dlg_editbox_get_w(ctrl, &theme_name);
+    if (wcscmp(theme_name, NONE) == 0)
+      wstrset(&theme_name, CFG_NONE);
+    new_cfg.theme_file = theme_name;
+    // clear pending colour scheme
+    strset(&new_cfg.colour_scheme, "");
+    enable_widget(store_button, false);
+  }
+  else if (event == EVENT_VALCHANGE) {  // pasted or typed-in
+    dlg_editbox_get_w(ctrl, &theme_name);
+    new_cfg.theme_file = theme_name;
+    enable_widget(store_button, 
+                  *new_cfg.colour_scheme && *theme_name
+                  && !wcschr(theme_name, L'/') && !wcschr(theme_name, L'\\')
+                 );
+  }
+  else if (event == EVENT_DROP) {
+    if (wcsncmp(L"data:text/plain,", dragndrop, 16) == 0) {
+      dlg_editbox_set_w(ctrl, L"");
+      wstrset(&new_cfg.theme_file, L"");
+      // un-URL-escape scheme description
+      char * scheme = cs__wcstoutf(&dragndrop[16]);
+      char * url = scheme;
+      char * sch = scheme;
+      while (*url) {
+        int c;
+        if (sscanf(url, "%%%02X", &c) == 1) {
+          url += 3;
+        }
+        else
+          c = *url++;
+        if (c == '\n')
+          *sch++ = ';';
+        else if (c != '\r')
+          *sch++ = c;
+      }
+      *sch = '\0';
+      strset(&new_cfg.colour_scheme, scheme);
+      free(scheme);
+    }
+    else {
+      dlg_editbox_set_w(ctrl, dragndrop);
+      wstrset(&new_cfg.theme_file, dragndrop);
+    }
+    enable_widget(store_button, false);
+  }
+}
+
+#define dont_debug_dragndrop
+
+static void
+scheme_saver(control *ctrl, int event)
+{
+  if (event == EVENT_REFRESH) {
+    wstring theme_name = new_cfg.theme_file;
+    enable_widget(ctrl, 
+                  *new_cfg.colour_scheme && *theme_name
+                  && !wcschr(theme_name, L'/') && !wcschr(theme_name, L'\\')
+                 );
+  }
+  else if (event == EVENT_ACTION) {
+#ifdef debug_dragndrop
+    printf("%ls <- <%s>\n", new_cfg.theme_file, new_cfg.colour_scheme);
+#endif
+    if (*new_cfg.colour_scheme && *new_cfg.theme_file) {
+      // save colour_scheme to theme_file
+    }
   }
 }
 
@@ -1136,6 +1263,18 @@ bell_tester(control *unused(ctrl), int event)
 {
   if (event == EVENT_ACTION)
     win_bell(&new_cfg);
+}
+
+static void
+url_opener(control *ctrl, int event)
+{
+  if (event == EVENT_ACTION) {
+    wstring url = ctrl->context;
+    win_open(wcsdup(url));
+  }
+  else if (event == EVENT_DROP) {
+    theme_handler(theme, EVENT_DROP);
+  }
 }
 
 void
@@ -1175,9 +1314,15 @@ setup_config_box(controlbox * b)
   ctrl_pushbutton(
     s, "&Cursor...", dlg_stdcolour_handler, &new_cfg.cursor_colour
   )->column = 2;
-  ctrl_combobox(
+  theme = ctrl_combobox(
     s, "&Theme", 80, theme_handler, &new_cfg.theme_file
   );
+  ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
+  ctrl_columns(s, 2, 80, 20);
+  ctrl_pushbutton(s, "Color Scheme Designer", url_opener, L"http://ciembor.github.io/4bit/")
+    ->column = 0;
+  (store_button = ctrl_pushbutton(s, "Store", scheme_saver, 0))
+    ->column = 1;
 
   s = ctrl_new_set(b, "Looks", "Transparency");
   bool with_glass = win_is_glass_available();

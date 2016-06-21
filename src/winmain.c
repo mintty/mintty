@@ -1535,9 +1535,9 @@ warnw(wstring msg, wstring file, wstring err)
   //MinGW
   (void)show_msg_w;
   string format = (err && *err) ? "%s: %s '%s':\n%s" : "%s: %s '%s'";
-  string _msg = cs__wcstombs(msg);
-  string _file = cs__wcstombs(file);
-  string _err = cs__wcstombs(err);
+  char * _msg = cs__wcstombs(msg);
+  char * _file = cs__wcstombs(file);
+  char * _err = cs__wcstombs(err);
   char mess[strlen(format) + strlen(main_argv[0]) + strlen(_msg) + strlen(_file) + (err ? strlen(_err) : 0)];
   sprintf(mess, format, main_argv[0], _msg, _file, _err);
   free(_msg);
@@ -1991,7 +1991,9 @@ main(int argc, char *argv[])
     }
   }
   copy_config("main after -o", &file_cfg, &cfg);
-  if (*cfg.theme_file)
+  if (*cfg.colour_scheme)
+    load_scheme(cfg.colour_scheme);
+  else if (*cfg.theme_file)
     load_theme(cfg.theme_file);
 
   finish_config();
