@@ -560,3 +560,83 @@ cs_btowc_glyph(char c)
   MultiByteToWideChar(codepage, MB_USEGLYPHCHARS, &c, 1, &wc, 1);
   return wc;
 }
+
+#if defined(__midipix__) || defined(debug_wcs)
+
+unsigned int
+wcslen(const wchar * s)
+{
+  int len = 0;
+  while (s && *s++)
+    len++;
+  return len;
+}
+
+int
+wcscmp(const wchar * s1, const wchar * s2)
+{
+  for (int i = 0; ; i++)
+    if (s1[i] < s2[i])
+      return -1;
+    else if (s1[i] > s2[i])
+      return 1;
+    else if (s1[i] == 0)
+      return 0;
+  return 0;
+}
+
+#endif
+
+#if CYGWIN_VERSION_API_MINOR < 74 || defined(__midipix__) || defined(debug_wcs)
+// needed for MinGW MSYS
+
+wchar *
+wcschr(const wchar * s, wchar c)
+{
+  while (* s) {
+    if (* s == c)
+      return (wchar *)s;
+    s ++;
+  }
+  return 0;
+}
+
+wchar *
+wcsrchr(const wchar * s, wchar c)
+{
+  wchar * res = 0;
+  while (* s) {
+    if (* s == c)
+      res = (wchar *)s;
+    s ++;
+  }
+  return res;
+}
+
+int
+wcsncmp(const wchar * s1, const wchar * s2, int len)
+{
+  for (int i = 0; i < len; i++)
+    if (s1[i] < s2[i])
+      return -1;
+    else if (s1[i] > s2[i])
+      return 1;
+    else if (s1[i] == 0)
+      return 0;
+  return 0;
+}
+
+#endif
+
+#if CYGWIN_VERSION_API_MINOR < 207 || defined(__midipix__) || defined(debug_wcs)
+
+wchar *
+wcsdup(const wchar * s)
+{
+  wchar * dup = newn(wchar, wcslen(s) + 1);
+  wcscpy(dup, s);
+  return dup;
+}
+
+#endif
+
