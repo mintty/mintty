@@ -1,3 +1,10 @@
+Configuration:
+  * Drag-and-drop for Theme and Wave sound file name configuration (#193).
+  * Link to Color Scheme Configurator in Options menu (#193).
+  * Drag-and-drop and Store from Color Scheme Configurator (#193).
+  * Loading theme and bell sound resources also from XDG default config dir (#525), Windows AppData dir, or /usr/share/mintty.
+  * Enabling cygwin path style for wave file configuration.
+
 Text display:
   * Tweaked manual underline to scale with font and avoid scroll glitches.
   * Manual drawing of VT100 line drawing graphics (#130, ~#551).

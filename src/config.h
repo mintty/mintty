@@ -143,6 +143,7 @@ extern config cfg, new_cfg, file_cfg;
 extern void init_config(void);
 extern void load_config(string filename, bool to_save);
 extern void load_theme(wstring theme);
+extern char * get_resource_file(wstring sub, wstring res, bool towrite);
 extern void load_scheme(string colour_scheme);
 extern void set_arg_option(string name, string val);
 extern void parse_arg_option(string);

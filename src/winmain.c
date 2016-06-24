@@ -712,23 +712,41 @@ void
 win_bell(config * conf)
 {
   if (conf->bell_sound || conf->bell_type) {
-    wchar * bell_file = (wchar *)conf->bell_file;
-    bool free_bell_file = false;
-    if (*bell_file && !wcschr(bell_file, L'/') && !wcschr(bell_file, L'\\')) {
-      string subfolder = ".mintty/sounds";
-      char rcdir[strlen(home) + strlen(subfolder) + 2];
-      sprintf(rcdir, "%s/%s", home, subfolder);
-      wchar * rcpat = path_posix_to_win_w(rcdir);
-      int len = wcslen(rcpat);
-      rcpat = renewn(rcpat, len + wcslen(bell_file) + 6);
-      rcpat[len++] = L'/';
-      wcscpy(&rcpat[len], bell_file);
-      len = wcslen(rcpat);
-      wcscpy(&rcpat[len], L".wav");
-      bell_file = rcpat;
-      free_bell_file = true;
+    wchar * bell_name = (wchar *)conf->bell_file;
+    bool free_bell_name = false;
+    if (*bell_name) {
+      if (wcschr(bell_name, L'/') || wcschr(bell_name, L'\\')) {
+        if (bell_name[1] != ':') {
+          char * bf = path_win_w_to_posix(bell_name);
+          bell_name = path_posix_to_win_w(bf);
+          free(bf);
+          free_bell_name = true;
+        }
+      }
+      else {
+        wchar * bell_file = bell_name;
+        char * bf;
+        if (!wcschr(bell_name, '.')) {
+          int len = wcslen(bell_name);
+          bell_file = newn(wchar, len + 5);
+          wcscpy(bell_file, bell_name);
+          wcscpy(&bell_file[len], L".wav");
+          bf = get_resource_file(L"sounds", bell_file, false);
+          free(bell_file);
+        }
+        else
+          bf = get_resource_file(L"sounds", bell_name, false);
+        if (bf) {
+          bell_name = path_posix_to_win_w(bf);
+          free(bf);
+          free_bell_name = true;
+        }
+        else
+          bell_name = null;
+      }
     }
-    if (*bell_file && PlaySoundW(bell_file, NULL, SND_ASYNC | SND_FILENAME)) {
+
+    if (bell_name && *bell_name && PlaySoundW(bell_name, NULL, SND_ASYNC | SND_FILENAME)) {
       // played
     }
     else if (conf->bell_freq)
@@ -744,8 +762,8 @@ win_bell(config * conf)
     } else if (conf->bell_type < 0)
       MessageBeep(0xFFFFFFFF);
 
-    if (free_bell_file)
-      free(bell_file);
+    if (free_bell_name)
+      free(bell_name);
   }
 
   if (conf->bell_taskbar && !term.has_focus)
