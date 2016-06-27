@@ -11,6 +11,7 @@ Text display:
   * Handling low-contrast of configured cursor colours more gracefully (#548).
   * Option WideIndic for double-width display of wide Indic characters (#553) (experimental).
   * Not combining characters to unexisting glyphs.
+  * Preventing mangled digit rendering if surrounded by certain scripts (~#285).
 
 Window handling:
   * Tweaked DPI changes to stabilize roundtrips of font and window size (#470).

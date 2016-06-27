@@ -45,12 +45,6 @@ shapetypes[(xh)-SHAPE_FIRST].type : SU) /*)) */
 #define leastGreaterOdd(x) ( ((x)+1) | 1 )
 #define leastGreaterEven(x) ( ((x)+2) &~ 1 )
 
-/* character types */
-enum {
-  L, LRE, LRO, R, AL, RLE, RLO, PDF, EN, ES, ET, AN, CS, NSM, BN, B, S, WS, ON,
-  LRI, RLI, FSI, PDI
-};
-
 /* Shaping Types */
 enum {
   SL,   /* Left-Joining, doesn't exist in U+0600 - U+06FF */
@@ -245,6 +239,14 @@ bool
 is_sep_class(uchar bc)
 {
   const int mask = (1 << B) | (1 << S) | (1 << BN) | (1 << WS);
+
+  return mask & (1 << (bc));
+}
+
+bool
+is_dig_class(uchar bc)
+{
+  const int mask = (1 << EN);
 
   return mask & (1 << (bc));
 }
