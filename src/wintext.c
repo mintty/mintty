@@ -1236,7 +1236,18 @@ win_combine_chars(wchar c, wchar cc)
 {
   wchar cs[2];
   int len = FoldStringW(MAP_PRECOMPOSED, (wchar[]){c, cc}, 2, cs, 2);
-  return len == 1 ? *cs : 0;
+  if (len == 1) {  // check whether the combined glyph exists
+    ushort glyph;
+    HDC dc = GetDC(wnd);
+    GetGlyphIndicesW(dc, cs, 1, &glyph, true);
+    ReleaseDC(wnd, dc);
+    if (glyph == 0xFFFF)
+      return 0;
+    else
+      return *cs;
+  }
+  else
+    return 0;
 }
 
 void

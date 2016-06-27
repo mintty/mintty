@@ -10,6 +10,7 @@ Text display:
   * Manual drawing of VT100 line drawing graphics (#130, ~#551).
   * Handling low-contrast of configured cursor colours more gracefully (#548).
   * Option WideIndic for double-width display of wide Indic characters (#553) (experimental).
+  * Not combining characters to unexisting glyphs.
 
 Window handling:
   * Tweaked DPI changes to stabilize roundtrips of font and window size (#470).
