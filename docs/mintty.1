@@ -577,6 +577,11 @@ from different instances, obviously they can overwrite each other; if
 different mintty versions are run (e.g. from cygwin and msys sharing the same 
 home directory), options may even get dropped from the configuration file.
 
+Additional resource files are used for colour schemes (option ThemeFile, 
+subdirectory \fIthemes\fP) and wave files (option BellFile, subdirectory \fIsounds\fP) 
+within the mintty resource directories \fI~/.mintty\fP, \fI~/.config/mintty\fP, 
+\fI$APPDATA/mintty\fP, \fI/usr/share/mintty\fP.
+
 The following sections explain the settings on each pane of the options
 dialog, followed by settings that do not appear in the dialog.
 For each setting, its name in the config file is shown in parentheses,
@@ -606,8 +611,8 @@ Also X11 color names are supported.
 \(en \fBCursor\fP (CursorColour=191,191,191)
 
 \(en \fBTheme\fP (ThemeFile=): 
-The popup offers theme files as stored in the resource directory 
-\fI~/.mintty/themes\fP for selection as a colour scheme.
+The popup offers theme files as stored in a resource subdirectory 
+\fIthemes\fP for selection as a colour scheme.
 The option can also be set to a filename (like D:/.../solarized-light.minttyrc).
 
 .TP
@@ -1045,8 +1050,8 @@ Mintty can also play wave sounds or frequency beeps.
 \fB5\fP : Asterisk
 .RE
 \(en \fBWave\fP (BellFile=): 
-The popup offers wave files as stored in the resource directory 
-\fI~/.mintty/sounds\fP for selection. The option can also be set 
+The popup offers wave files as stored in a resource subdirectory 
+\fIsounds\fP for selection. The option can also be set 
 to a filename (like D:/.../soundfile.wav).
 This setting overrides the Bell system sound except No Beep.
 .br
@@ -1330,6 +1335,15 @@ Also X11 color names are supported.
 \(en \fBBoldCyan\fP=64,255,255
 .br
 \(en \fBBoldWhite\fP=255,255,255
+
+.TP
+\fBDownloaded colour scheme\fP (ColourScheme=)
+This setting is not intended for manual configuration. It can store a 
+colour scheme as downloaded from the Color Scheme Configurator via 
+drag-and-drop to the Options menu. If the colour scheme is stored 
+to a colour scheme file, this setting is not used anymore.
+See the Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips\fP 
+about this mechanism.
 
 .TP
 \fBBold substitution colour\fP (BoldColour=)

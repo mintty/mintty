@@ -1,5 +1,23 @@
 
 
+## Configuring mintty ##
+
+Mintty supports a number of common places to look for and save its 
+configuration and resources.
+
+For its configuration file, it reads ```/etc/minttyrc```, ```$APPDATA/mintty/config```, 
+```~/.config/mintty/config```, ```~/.minttyrc```, in this order.
+
+For resource files to configure a colour scheme or wave file for the bell character,
+it looks for subfolders ```themes``` or ```sounds```, respectively, in one 
+of the directories ```~/.mintty```, ```~/.config/mintty```, 
+```$APPDATA/mintty```, ```/usr/share/mintty```, whichever is found first.
+
+The ~/.config/mintty folder is the XDG default base directory.
+The $APPDATA/mintty folder is especially useful to share common configuration 
+for various installations of mintty (e.g. cygwin 32/64 Bit, MSYS, Git Bash).
+
+
 ## Using desktop shortcuts to start mintty ##
 
 The Cygwin [setup.exe](http://cygwin.com/setup.exe) package for mintty 
@@ -280,11 +298,19 @@ which loads a configuration file read-only, i.e. configuration changes
 are not saved to this file, or with the new setting _ThemeFile_.
 
 In the Options menu, section _Looks_, the _Theme_ popup offers theme files 
-as stored in the resource directory $HOME/.mintty/themes for selection.
+as stored in a resource directory for selection.
 
 There is an excellent colour scheme designer available:
 [4bit Terminal Color Scheme Designer](http://ciembor.github.io/4bit/#) 
 which lets you download a tuned colour scheme (top-right button “Get Scheme”).
+Click on the button “Color Scheme Designer” below the Theme field 
+to open the designer page and start your design. You can either download 
+the scheme file (“Get Scheme” – “mintty”) or drag-and-drop the download link 
+directly to the mintty Options menu, to either the Theme field or the 
+Color Scheme Designer button. You can then click Apply to test the design 
+and if you like it, you can enter a theme name in the Theme field and then 
+click the “Store” button to store the colour scheme.
+
 A number of colour schemes have been published for mintty, e.g.
 https://github.com/oumu/mintty-color-schemes or
 https://github.com/mavnn/mintty-colors-solarized .

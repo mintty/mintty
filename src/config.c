@@ -658,7 +658,7 @@ get_resource_file(wstring sub, wstring res, bool towrite)
 
     char * resfn = path_win_w_to_posix(rf);
     free(rf);
-    fd = open(resfn, towrite ? O_CREAT | O_EXCL | O_WRONLY | O_BINARY : O_RDONLY | O_BINARY);
+    fd = open(resfn, towrite ? O_CREAT | O_EXCL | O_WRONLY | O_BINARY : O_RDONLY | O_BINARY, 0644);
     if (fd >= 0) {
       close(fd);
       return resfn;
@@ -1168,7 +1168,6 @@ add_file_resources(control *ctrl, wstring pattern)
     if (GetLastError() == ERROR_FILE_NOT_FOUND)  // empty valid dir
       break;
   }
-//check also win_bell() and load_theme() !!
 
   while (ok) {
     if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
@@ -1304,8 +1303,8 @@ theme_handler(control *ctrl, int event)
 static void
 scheme_saver(control *ctrl, int event)
 {
+  wstring theme_name = new_cfg.theme_file;
   if (event == EVENT_REFRESH) {
-    wstring theme_name = new_cfg.theme_file;
     enable_widget(ctrl, 
                   *new_cfg.colour_scheme && *theme_name
                   && !wcschr(theme_name, L'/') && !wcschr(theme_name, L'\\')
@@ -1315,9 +1314,27 @@ scheme_saver(control *ctrl, int event)
 #ifdef debug_dragndrop
     printf("%ls <- <%s>\n", new_cfg.theme_file, new_cfg.colour_scheme);
 #endif
-    if (*new_cfg.colour_scheme && *new_cfg.theme_file) {
-      // save colour_scheme to theme_file
-    }
+    if (*new_cfg.colour_scheme && *theme_name)
+      if (!wcschr(theme_name, L'/') && !wcschr(theme_name, L'\\')) {
+        char * sn = get_resource_file(L"themes", theme_name, true);
+        if (sn) {
+          // save colour_scheme to theme_file
+          FILE * thf = fopen(sn, "w");
+          free(sn);
+          if (thf) {
+            char * sch = (char *)new_cfg.colour_scheme;
+            for (int i = 0; sch[i]; i++) {
+              if (sch[i] == ';')
+                sch[i] = '\n';
+            }
+            fprintf(thf, "%s", sch);
+            fclose(thf);
+
+            strset(&new_cfg.colour_scheme, "");
+            enable_widget(store_button, false);
+          }
+        }
+      }
   }
 }
 
