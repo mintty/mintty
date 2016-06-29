@@ -19,7 +19,7 @@ enum {
 
 uchar bidi_class(ucschar ch);
 bool is_sep_class(uchar bc);
-bool is_dig_class(uchar bc);
+bool is_punct_class(uchar bc);
 bool is_rtl_class(uchar bc);
 
 #endif

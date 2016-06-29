@@ -244,9 +244,9 @@ is_sep_class(uchar bc)
 }
 
 bool
-is_dig_class(uchar bc)
+is_punct_class(uchar bc)
 {
-  const int mask = (1 << EN);
+  const int mask = (1 << BN) | (1 << CS) | (1 << EN) | (1 << ES) | (1 << ET) | (1 << ON);
 
   return mask & (1 << (bc));
 }

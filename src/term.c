@@ -1083,7 +1083,7 @@ term_paint(void)
         if (!is_sep_class(tbc) && !is_sep_class(bc))
           // break at RTL and other changes to avoid glyph confusion (#285)
           trace_run("bc"), break_run = true;
-        else if (is_dig_class(tbc) || is_dig_class(bc))
+        else if (is_punct_class(tbc) || is_punct_class(bc))
           // break at digit to avoid adaptation to script style
           trace_run("bc"), break_run = true;
       }
