@@ -777,6 +777,59 @@ void trace_line(char * tag, wchar * text, int len)
 #define trace_line(tag, text, len)	
 #endif
 
+#ifdef combsubst
+static wchar
+combsubst(wchar comb)
+{
+  static const struct {
+    wchar comb;
+    wchar subst;
+  } lookup[] = {
+    {0x0300, 0x0060},
+    {0x0301, 0x00B4},
+    {0x0302, 0x02C6},
+    {0x0303, 0x02DC},
+    {0x0304, 0x00AF},
+    {0x0305, 0x203E},
+    {0x0306, 0x02D8},
+    {0x0307, 0x02D9},
+    {0x0308, 0x00A8},
+    {0x030A, 0x02DA},
+    {0x030B, 0x02DD},
+    {0x030C, 0x02C7},
+    {0x0327, 0x00B8},
+    {0x0328, 0x02DB},
+    {0x0332, 0x005F},
+    {0x0333, 0x2017},
+    {0x033E, 0x2E2F},
+    {0x0342, 0x1FC0},
+    {0x0343, 0x1FBD},
+    {0x0344, 0x0385},
+    {0x0345, 0x037A},
+    {0x3099, 0x309B},
+    {0x309A, 0x309C},
+    {0xA67C, 0xA67E},
+    {0xA67D, 0xA67F},
+  };
+
+  int i, j, k;
+
+  i = -1;
+  j = lengthof(lookup);
+
+  while (j - i > 1) {
+    k = (i + j) / 2;
+    if (comb < lookup[k].comb)
+      j = k;
+    else if (comb > lookup[k].comb)
+      i = k;
+    else
+      return lookup[k].subst;
+  }
+  return comb;
+}
+#endif
+
 /*
  * Draw a line of text in the window, at given character
  * coordinates, in given attributes.
@@ -979,6 +1032,13 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
   for (int i = 0; i < len; i++)
     dxs[i] = dx;
 
+#ifdef combsubst
+ /* Substitute combining characters by overprinting lookalike glyphs */
+  if (combining)
+    for (int i = 0; i < len; i++)
+      text[i] = combsubst(text[i]);
+#endif
+
   int yt = y + (row_spacing / 2) - (lattr == LATTR_BOT ? font_height : 0);
   int xt = x + (cfg.col_spacing / 2);
 
@@ -988,20 +1048,43 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
       text[i] = ' ';
   }
 
- /* Finally, draw the text */
-  SetBkMode(dc, OPAQUE);
-  trace_line(" TextOut:", text, len);
-  ExtTextOutW(dc, xt, yt, eto_options | ETO_OPAQUE, &box, text, len, dxs);
-
- /* Shadow/Overstrike bold */
+ /* Determine Shadow/Overstrike bold width */
+  int xwidth = 1;
   if (apply_shadow && bold_mode == BOLD_SHADOW && (attr.attr & ATTR_BOLD)) {
-    SetBkMode(dc, TRANSPARENT);
-    ExtTextOutW(dc, xt + 1, yt, eto_options, &box, text, len, dxs);
+    xwidth = 2;
     if (lattr != LATTR_NORM) {
-      ExtTextOutW(dc, xt + 2, yt, eto_options, &box, text, len, dxs);
-      //ExtTextOutW(dc, xt + 3, yt, eto_options, &box, text, len, dxs);
+      xwidth = 3; // 4?
     }
   }
+
+ /* Finally, draw the text */
+  SetBkMode(dc, OPAQUE);
+  uint overwropt = ETO_OPAQUE;
+  trace_line(" TextOut:", text, len);
+  for (int xoff = 0; xoff < xwidth; xoff++)
+    if (combining) {
+      // Workaround for mangled display of combining characters;
+      // Arabic shaping should not be affected as the transformed 
+      // presentation forms are not combining characters anymore at this point.
+      // Repeat the workaround for bold/wide below.
+
+      // base character
+      ExtTextOutW(dc, xt, yt, eto_options | overwropt, &box, text, 1, dxs);
+      if (overwropt) {
+        SetBkMode(dc, TRANSPARENT);
+        overwropt = 0;
+      }
+      // combining characters
+      for (int i = 1; i < len; i++)
+        ExtTextOutW(dc, xt, yt, eto_options, &box, &text[i], 1, dxs);
+    }
+    else {
+      ExtTextOutW(dc, xt, yt, eto_options | overwropt, &box, text, len, dxs);
+      if (overwropt) {
+        SetBkMode(dc, TRANSPARENT);
+        overwropt = 0;
+      }
+    }
 
   int line_width = (3
                     + (attr.attr & ATTR_BOLD ? 2 : 0)
