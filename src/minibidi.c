@@ -14,8 +14,9 @@
  * Author: Ahmad Khalifa
  * (www.arabeyes.org - under MIT license)
  *
- * Modified: Thomas Wolff: extended bidi class detection to consider 
- * non-BMP characters
+ * Modified: Thomas Wolff:
+ * - extended bidi class detection to consider non-BMP characters
+ * - fixed mirroring of '('
  *
  ************************************************************************/
 
@@ -24,7 +25,6 @@
  * =====
  * - Explicit marks need to be handled (they are not 100% now)
  * - Ligatures
- * - fix Mirroring
  */
 
 
@@ -457,7 +457,7 @@ mirror(ucschar c)
     {0xFF5B, 0xFF5D}, {0xFF5D, 0xFF5B}, {0xFF5F, 0xFF60}, {0xFF60, 0xFF5F},
     {0xFF62, 0xFF63}, {0xFF63, 0xFF62}
   };
-  int i = 0;
+  int i = -1;
   int j = lengthof(pairs);
   while (j - i > 1) {
     int k = (i + j) / 2;
