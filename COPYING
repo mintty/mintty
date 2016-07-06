@@ -1,8 +1,13 @@
-mintty is copyright 2008-13 Andy Koppe, 2015 Thomas Wolff.
-Licensed under the terms of the GNU General Public License version 3 or later.
-The license text can be found in the accompanying LICENSE file, at
-/usr/share/doc/common-licenses/GPL-3.0 on Cygwin installs, or on the GNU
-website at http://www.gnu.org/licenses/gpl.html.
+mintty is copyright 2008-13 Andy Koppe, 2015-16 Thomas Wolff.
+
+Licensed under the terms of the GNU General Public License version 3 or later,
+amended with the bundling clause to clarify ambiguous interpretation.
+
+The bundling clause can be found in the accompanying file LICENSE.bundling.
+
+The GPL license text can be found in the accompanying file LICENSE.GPL, 
+at /usr/share/doc/common-licenses/GPL-3.0 on Cygwin installs, 
+or on the GNU website at http://www.gnu.org/licenses/gpl.html.
 
 Sources are available from the project page at http://mintty.github.io/.
 

@@ -1,0 +1,24 @@
+GPL bundling license
+
+The applicable license is the GNU General Public License version 3 or later,
+amended with the following interpretation of unclear details:
+
+
+Bundling clause
+
+The GPL defines a "covered work" as "either the unmodified Program or 
+a work based on the Program".
+
+Here we define "bundling" as delivering the "work" (mintty) together 
+with other software and possibly configuring its installation, e.g. 
+in order to provide a stand-alone deployment of text-based software 
+in a window environment.
+
+(Note that the "aggregate" mentioned in GPL section 5 may be interpreted 
+slightly differently.)
+
+License declaration:
+Inclusion of mintty in a bundle does not cause the GPL license to 
+apply to the other parts of the bundle, with the exception of section 11, 
+the patents clause.
+
