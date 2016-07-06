@@ -69,6 +69,7 @@ void win_set_timer(void_fn cb, uint ticks);
 
 void win_show_about(void);
 void win_show_error(wchar *);
+void win_show_warning(wchar *);
 
 bool win_is_glass_available(void);
 

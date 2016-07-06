@@ -371,3 +371,9 @@ win_show_error(wchar *wmsg)
 {
   MessageBoxW(0, wmsg, 0, MB_ICONERROR);
 }
+
+void
+win_show_warning(wchar *wmsg)
+{
+  MessageBoxW(0, wmsg, 0, MB_ICONWARNING);
+}
