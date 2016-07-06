@@ -1966,14 +1966,10 @@ main(int argc, char *argv[])
           maxwidth = true;
         else if (strcmp(optarg, "maxheight") == 0)
           maxheight = true;
-        else if (sscanf(optarg, "%u,%u%1s", &cfg.cols, &cfg.rows, (char[2]){}) == 2) {
-          remember_arg("Columns");
-          remember_arg("Rows");
-        }
-        else if (sscanf(optarg, "%ux%u%1s", &cfg.cols, &cfg.rows, (char[2]){}) == 2) {
-          remember_arg("Columns");
-          remember_arg("Rows");
-        }
+        else if (sscanf(optarg, "%u,%u%1s", &cfg.cols, &cfg.rows, (char[2]){}) == 2)
+          ;
+        else if (sscanf(optarg, "%ux%u%1s", &cfg.cols, &cfg.rows, (char[2]){}) == 2)
+          ;
         else
           error("syntax error in size argument '%s'", optarg);
       when 't': set_arg_option("Title", optarg);
