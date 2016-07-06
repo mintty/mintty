@@ -13,8 +13,8 @@ it looks for subfolders ```themes``` or ```sounds```, respectively, in one
 of the directories ```~/.mintty```, ```~/.config/mintty```, 
 ```$APPDATA/mintty```, ```/usr/share/mintty```, whichever is found first.
 
-The ~/.config/mintty folder is the XDG default base directory.
-The $APPDATA/mintty folder is especially useful to share common configuration 
+The ```~/.config/mintty``` folder is the XDG default base directory.
+The ```$APPDATA/mintty``` folder is especially useful to share common configuration 
 for various installations of mintty (e.g. cygwin 32/64 Bit, MSYS, Git Bash).
 
 
@@ -299,6 +299,18 @@ are not saved to this file, or with the new setting _ThemeFile_.
 
 In the Options menu, section _Looks_, the _Theme_ popup offers theme files 
 as stored in a resource directory for selection.
+This dialog field can be used in different ways:
+* Popup the selection to choose a theme configured in your resource directory
+* Insert a file name (e.g. by pasting or drag-and-drop from Windows Explorer)
+* Drag-and-drop a theme file from the Internet (may be embedded in HTML page)
+* Drag-and-drop a colour scheme directly from the Color Scheme Designer (see below)
+
+After drag-and-drop of a colour scheme, you may Apply it for testing;
+to keep the scheme in your popup selection, assign a name to it by typing it 
+into the Theme field, then click the “Store” button. After downloading a 
+theme file, the name will be filled with its basename as a suggestion.
+As long as a colour scheme is loaded but not yet stored, and a name is 
+available in the Theme field, the “Store” button will be enabled.
 
 There is an excellent colour scheme designer available:
 [4bit Terminal Color Scheme Designer](http://ciembor.github.io/4bit/#) 
@@ -312,8 +324,9 @@ and if you like it, you can enter a theme name in the Theme field and then
 click the “Store” button to store the colour scheme.
 
 A number of colour schemes have been published for mintty, e.g.
-https://github.com/oumu/mintty-color-schemes or
-https://github.com/mavnn/mintty-colors-solarized .
+* https://github.com/oumu/mintty-color-schemes
+* https://github.com/mavnn/mintty-colors-solarized
+* https://github.com/PhilipDaniels/mintty/tree/master/themes
 
 
 ## Providing and selecting fonts ##
@@ -341,15 +354,18 @@ in the Fonts folder of the system Control Panel.
 To include them in the fonts offered in the menu (e.g. to select any of 
 DotumChe, GulimChe, GungsuhChe, MingLiU, MS Gothic, MS Mincho, NSimSun, 
 Simplified Arabic Fixed), do either of:
-* uncheck “Hide fonts based on language settings” in Fonts ▸ Font settings
+* Uncheck “Hide fonts based on language settings” in Fonts ▸ Font settings
 * Hide/Show fonts individually from their context menu
-* set the mintty hidden setting ShowHiddenFonts=true
+* Set the mintty hidden setting ShowHiddenFonts=true
+
+The latter setting also includes fonts with an OEM or SYMBOL character set.
 
 Some fonts with a name problem (e.g. Meslo LG S for Powerline) can be 
 selected using the new Apply button in the font selection menu.
 
-Fonts with an OEM or SYMBOL character set are further excluded from the 
-menu. Fonts not listed in the menu can be configured with the Font option.
+Fonts not listed in the menu can be configured with the Font setting.
+
+The old font selection and menu format can be chosen with setting OldFontMenu.
 
 
 ## Ambiguous width setting ##

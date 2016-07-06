@@ -224,7 +224,7 @@ see the \fBCONFIGURATION\fP section on how it can be customised.
 .SS Menus
 
 The context menu can be opened by right-clicking the mouse (with Shift 
-in case right-click has been redefined) or by
+in case right-click has been redefined or redirected to the application) or by
 pressing the \fBMenu\fP key that is normally located next to the right Ctrl key.
 
 Mintty also adds a couple of items to the window menu, which can be accessed 
@@ -1137,6 +1137,10 @@ the log file name will be constructed by calling strftime(3) on the
 pattern; note that this is likely to fail if a placeholder expands with 
 "/" (%D).
 
+Note: If the requested log file exists already, mintty does not overwrite it 
+but reports an error. To configure logging in the config file, use some 
+\fB%\fP placeholders to create distinct log files.
+
 See also the \fIscript\fP(1) utility for a more flexible logging solution.
 
 .TP
@@ -1339,9 +1343,11 @@ Also X11 color names are supported.
 .TP
 \fBDownloaded colour scheme\fP (ColourScheme=)
 This setting is not intended for manual configuration. It can store a 
-colour scheme as downloaded from the Color Scheme Configurator via 
-drag-and-drop to the Options menu. If the colour scheme is stored 
-to a colour scheme file, this setting is not used anymore.
+colour scheme as downloaded from the Color Scheme Configurator or from 
+a theme file on the web via drag-and-drop to the Options menu.
+After the colour scheme is stored to a colour scheme file, this setting 
+is not used anymore.
+
 See the Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips\fP 
 about this mechanism.
 

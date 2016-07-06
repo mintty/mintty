@@ -17,6 +17,7 @@
 
 
 static wstring rc_filename = 0;
+static char linebuf[444];
 
 
 // all entries need initialisation in options[] or crash...
@@ -743,11 +744,10 @@ load_config(string filename, bool to_save)
   }
 
   if (file) {
-    static char line[444];
-    while (fgets(line, sizeof line, file)) {
-      line[strcspn(line, "\r\n")] = 0;  /* trim newline */
-      if (line[0] != '#' && line[0] != '\0') {
-        int i = parse_option(line, true);
+    while (fgets(linebuf, sizeof linebuf, file)) {
+      linebuf[strcspn(linebuf, "\r\n")] = 0;  /* trim newline */
+      if (linebuf[0] != '#' && linebuf[0] != '\0') {
+        int i = parse_option(linebuf, true);
         if (to_save && i >= 0)
           remember_file_option("load", i);
       }
@@ -1230,6 +1230,66 @@ enable_widget(control * ctrl, bool enable)
   EnableWindow(wid, enable);
 }
 
+static char *
+download_scheme(char * url)
+{
+  if (strchr(url, '\''))
+    return null;  // Insecure link
+
+  static string cmdpat = "curl '%s' -o - 2> /dev/null";
+  char * cmd = newn(char, strlen(cmdpat) -1 + strlen(url));
+  sprintf(cmd, cmdpat, url);
+  FILE * sf = popen(cmd, "r");
+  if (!sf)
+    return null;
+
+  char * sch = null;
+  while (fgets(linebuf, sizeof(linebuf) - 1, sf)) {
+    char * eq = linebuf;
+    while ((eq = strchr(++eq, '='))) {
+      int dum;
+      if (sscanf(eq, "= %d , %d , %d", &dum, &dum, &dum) == 3) {
+        char *cp = eq;
+        while (strchr("=0123456789, ", *cp))
+          cp++;
+        *cp++ = ';';
+        *cp = '\0';
+        cp = eq;
+        if (cp != linebuf)
+          cp--;
+        while (strchr("BCFGMRWYacdeghiklnorstuwy ", *cp)) {
+          eq = cp;
+          if (cp == linebuf)
+            break;
+          else
+            cp--;
+        }
+        while (*eq == ' ')
+          eq++;
+        if (*eq != '=') {
+          // squeeze white space
+          char * src = eq;
+          char * dst = eq;
+          while (*src) {
+            if (*src != ' ' && *src != '\t')
+              *dst++ = *src;
+            src++;
+          }
+          *dst = '\0';
+
+          int len = sch ? strlen(sch) : 0;
+          sch = renewn(sch, len + strlen(eq) + 1);
+          strcpy(&sch[len], eq);
+        }
+        break;
+      }
+    }
+  }
+  pclose(sf);
+
+  return sch;
+}
+
 static void
 theme_handler(control *ctrl, int event)
 {
@@ -1289,12 +1349,43 @@ theme_handler(control *ctrl, int event)
       *sch = '\0';
       strset(&new_cfg.colour_scheme, scheme);
       free(scheme);
+      enable_widget(store_button, false);
+    }
+    else if (wcsncmp(L"http:", dragndrop, 5) == 0
+          || wcsncmp(L"https:", dragndrop, 6) == 0
+          || wcsncmp(L"ftp:", dragndrop, 4) == 0
+          || wcsncmp(L"ftps:", dragndrop, 5) == 0
+            ) {
+      char * url = cs__wcstoutf(dragndrop);
+      char * sch = download_scheme(url);
+      if (sch) {
+        wchar * urlpoi = wcschr(dragndrop, '?');
+        if (urlpoi)
+          *urlpoi = 0;
+        urlpoi = wcsrchr(dragndrop, '/');
+        if (urlpoi) {
+          // set theme name proposal to url base name
+          urlpoi++;
+          dlg_editbox_set_w(ctrl, urlpoi);
+          wstrset(&new_cfg.theme_file, urlpoi);
+          // set scheme
+          strset(&new_cfg.colour_scheme, sch);
+
+          enable_widget(store_button, true);
+        }
+        free(sch);
+      }
+      else {
+        win_bell(&new_cfg);  // Could not load web theme
+        win_show_warning(L"Could not load web theme");
+      }
+      free(url);
     }
     else {
       dlg_editbox_set_w(ctrl, dragndrop);
       wstrset(&new_cfg.theme_file, dragndrop);
+      enable_widget(store_button, false);
     }
-    enable_widget(store_button, false);
   }
 }
 
@@ -1333,6 +1424,14 @@ scheme_saver(control *ctrl, int event)
             strset(&new_cfg.colour_scheme, "");
             enable_widget(store_button, false);
           }
+          else {
+            win_bell(&new_cfg);  // Cannot write theme file
+            win_show_warning(L"Cannot write theme file");
+          }
+        }
+        else {
+          win_bell(&new_cfg);  // Cannot store theme file
+          win_show_warning(L"Cannot store theme file");
         }
       }
   }
