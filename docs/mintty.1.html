@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Sun May 22 13:10:40 2016 -->
+<!-- CreationDate: Wed Jul  6 16:34:54 2016 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -331,9 +331,10 @@ customised.</p>
 <p style="margin-left:11%; margin-top: 1em"><b>Menus</b>
 <br>
 The context menu can be opened by right-clicking the mouse
-(with Shift in case right-click has been redefined) or by
-pressing the <b>Menu</b> key that is normally located next
-to the right Ctrl key.</p>
+(with Shift in case right-click has been redefined or
+redirected to the application) or by pressing the
+<b>Menu</b> key that is normally located next to the right
+Ctrl key.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Mintty also
 adds a couple of items to the window menu, which can be
@@ -710,6 +711,14 @@ other; if different mintty versions are run (e.g. from
 cygwin and msys sharing the same home directory), options
 may even get dropped from the configuration file.</p>
 
+<p style="margin-left:11%; margin-top: 1em">Additional
+resource files are used for colour schemes (option
+ThemeFile, subdirectory <i>themes</i>) and wave files
+(option BellFile, subdirectory <i>sounds</i>) within the
+mintty resource directories <i>~/.mintty</i>,
+<i>~/.config/mintty</i>, <i>$APPDATA/mintty</i>,
+<i>/usr/share/mintty</i>.</p>
+
 <p style="margin-left:11%; margin-top: 1em">The following
 sections explain the settings on each pane of the options
 dialog, followed by settings that do not appear in the
@@ -741,9 +750,17 @@ X11 color names are supported. <br>
 
 <p style="margin-left:22%; margin-top: 1em">&ndash;
 <b>Theme</b> (ThemeFile=): The popup offers theme files as
-stored in the resource directory <i>~/.mintty/themes</i> for
+stored in a resource subdirectory <i>themes</i> for
 selection as a colour scheme. The option can also be set to
 a filename (like D:/.../solarized-light.minttyrc).</p>
+
+<p style="margin-left:22%; margin-top: 1em">The field can
+also be used as a drag-and-drop target for colour schemes
+downloaded from the Color Scheme Configurator, or for theme
+files from the web (note that the program <b>curl</b> needs
+to be installed for the latter option). See the Tips wiki
+page <i>https://github.com/mintty/mintty/wiki/Tips</i> about
+this mechanism.</p>
 
 <p style="margin-left:11%;"><b>Transparency</b>
 (Transparency=off)</p>
@@ -1263,9 +1280,9 @@ sound</b> (BellType=1): Preferred system sound, values:</p>
 5</b> : Asterisk</p>
 
 <p style="margin-left:22%;">&ndash; <b>Wave</b>
-(BellFile=): The popup offers wave files as stored in the
-resource directory <i>~/.mintty/sounds</i> for selection.
-The option can also be set to a filename (like
+(BellFile=): The popup offers wave files as stored in a
+resource subdirectory <i>sounds</i> for selection. The
+option can also be set to a filename (like
 D:/.../soundfile.wav). This setting overrides the Bell
 system sound except No Beep. <br>
 &ndash; <b>Play</b>: The button plays the selected sound for
@@ -1355,6 +1372,12 @@ a single <b>%d</b>, the log file name will be constructed by
 calling strftime(3) on the pattern; note that this is likely
 to fail if a placeholder expands with &quot;/&quot;
 (%D).</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note: If the
+requested log file exists already, mintty does not overwrite
+it but reports an error. To configure logging in the config
+file, use some <b>%</b> placeholders to create distinct log
+files.</p>
 
 <p style="margin-left:22%; margin-top: 1em">See also the
 <i>script</i>(1) utility for a more flexible logging
@@ -1584,6 +1607,20 @@ are supported. <br>
 &ndash; <b>BoldCyan</b>=64,255,255 <br>
 &ndash; <b>BoldWhite</b>=255,255,255</p>
 
+<p style="margin-left:11%;"><b>Downloaded colour scheme</b>
+(ColourScheme=)</p>
+
+<p style="margin-left:22%;">This setting is not intended
+for manual configuration. It can store a colour scheme as
+downloaded from the Color Scheme Configurator or from a
+theme file on the web via drag-and-drop to the Options menu.
+After the colour scheme is stored to a colour scheme file,
+this setting is not used anymore.</p>
+
+<p style="margin-left:22%; margin-top: 1em">See the Tips
+wiki page <i>https://github.com/mintty/mintty/wiki/Tips</i>
+about this mechanism.</p>
+
 <p style="margin-left:11%;"><b>Bold substitution colour</b>
 (BoldColour=)</p>
 
@@ -1664,6 +1701,33 @@ implicit font zooming coupled with window zooming by the
 Shift key is disabled, except for the keyboard zoom
 functions Shift+Alt+Enter/F11 and the Shift+menu
 function.</p>
+
+<p style="margin-left:11%;"><b>Handling of DPI changes</b>
+(HandleDPI=true)</p>
+
+<p style="margin-left:22%;">By default, in Windows 10, when
+the window is moved to another monitor that has a different
+DPI value (&quot;scaling factor&quot;) configured, this is
+considered to compensate by appropriate scaling. This option
+can be set to false to suppress DPI adjustments.</p>
+
+<p style="margin-left:11%;"><b>Wide display of Indic
+characters</b> (WideIndic=false)</p>
+
+<p style="margin-left:22%;">Setting this option, Indic
+characters with glyphs wider than a single character cell
+will be displayed in double-width (like CJK characters).</p>
+
+<p style="margin-left:22%; margin-top: 1em">Notes: This is
+an experimental feature as there is no authoritative source
+of information about which Indic characters should be
+considered wide. Most screen applications will not cooperate
+with this feature as their assumption of character widths is
+mostly based on the system locale (with the notable
+exception of the Unicode editor MinEd which supports Indic
+wide display with version 2016.26). This feature may be
+removed from a future version of mintty if it turns out to
+be useless.</p>
 
 <h2>LIMITATIONS
 <a name="LIMITATIONS"></a>

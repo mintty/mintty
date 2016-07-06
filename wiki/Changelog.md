@@ -1,18 +1,23 @@
+### 2.4.0 (9 Jul 2016) ###
+
 Configuration:
   * Drag-and-drop for Theme and Wave sound file name configuration (#193).
   * Link to Color Scheme Configurator in Options menu (#193).
   * Drag-and-drop and Store from Color Scheme Configurator (#193).
+  * Drag-and-drop and Store from theme file on the web (#193).
   * Loading theme and bell sound resources also from XDG default config dir (#525), Windows AppData dir, or /usr/share/mintty.
   * Enabling cygwin path style for wave file configuration.
+  * Size option -s is not persisted in config file on Save.
 
 Text display:
+  * Handling low-contrast of configured cursor colours more gracefully (#548).
   * Tweaked manual underline to scale with font and avoid scroll glitches.
   * Manual drawing of VT100 line drawing graphics (#130, ~#551).
-  * Handling low-contrast of configured cursor colours more gracefully (#548).
-  * Option WideIndic for double-width display of wide Indic characters (#553) (experimental).
+  * Fixed right-to-left mirroring of '('.
   * Not combining characters to unexisting glyphs.
   * Preventing mangled digit rendering if surrounded by certain scripts (~#285).
   * Preventing mangled combining characters by drawing them separately (~#553, #295).
+  * Option WideIndic for double-width display of wide Indic characters (#553) (experimental).
 
 Window handling:
   * Tweaked DPI changes to stabilize roundtrips of font and window size (#470).

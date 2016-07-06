@@ -1151,8 +1151,8 @@ add_file_resources(control *ctrl, wstring pattern)
 
   init_config_dirs();
   WIN32_FIND_DATAW ffd;
-  HANDLE hFind;
-  int ok;
+  HANDLE hFind = NULL;
+  int ok = false;
   for (int i = last_config_dir; i >= 0; i--) {
     wchar * rcpat = path_posix_to_win_w(config_dirs[i]);
     int len = wcslen(rcpat);

@@ -305,6 +305,9 @@ This dialog field can be used in different ways:
 * Drag-and-drop a theme file from the Internet (may be embedded in HTML page)
 * Drag-and-drop a colour scheme directly from the Color Scheme Designer (see below)
 
+Note that the drag-and-drop theme file option needs the program ```curl```
+to be installed (and properly configured for a proxy if needed).
+
 After drag-and-drop of a colour scheme, you may Apply it for testing;
 to keep the scheme in your popup selection, assign a name to it by typing it 
 into the Theme field, then click the “Store” button. After downloading a 
