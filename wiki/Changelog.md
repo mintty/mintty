@@ -1,3 +1,5 @@
+  * Reverted separate display of combining characters (#565).
+
 ### 2.4.0 (9 Jul 2016) ###
 
 Configuration:

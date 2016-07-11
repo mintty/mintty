@@ -1061,6 +1061,10 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
   SetBkMode(dc, OPAQUE);
   uint overwropt = ETO_OPAQUE;
   trace_line(" TextOut:", text, len);
+  // The combining characters separate rendering trick below makes 
+  // some combining characters better (~#553, #295), others worse (#565);
+  // reverting.
+  combining = false;
   for (int xoff = 0; xoff < xwidth; xoff++)
     if (combining) {
       // Workaround for mangled display of combining characters;
