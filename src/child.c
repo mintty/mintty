@@ -42,13 +42,13 @@ static bool killed;
 static int pty_fd = -1, log_fd = -1, win_fd;
 
 static void
-childerror(char * action, bool from_fork)
+childerror(char * action, bool from_fork, int code)
 {
   char * msg;
   char * err = strerror(errno);
   if (from_fork && errno == ENOENT)
     err = "There are no available terminals";
-  int len = asprintf(&msg, "\033[30;%dm\033[KError: %s: %s.\033[0m\r\n", from_fork ? 41 : 43, action, err);
+  int len = asprintf(&msg, "\033[30;%dm\033[KError: %s: %s (%d).\033[0m\r\n", from_fork ? 41 : 43, action, err, code);
   if (len > 0) {
     term_write(msg, len);
     free(msg);
@@ -80,18 +80,20 @@ child_create(char *argv[], struct winsize *winp)
   // Create the child process and pseudo terminal.
   pid = forkpty(&pty_fd, 0, 0, winp);
   if (pid < 0) {
-    pid = 0;
     bool rebase_prompt = (errno == EAGAIN);
     //ENOENT  There are no available terminals.
     //EAGAIN  Cannot allocate sufficient memory to allocate a task structure.
     //EAGAIN  Not possible to create a new process; RLIMIT_NPROC limit.
     //ENOMEM  Memory is tight.
-    childerror("could not fork child process", true);
+    childerror("could not fork child process", true, pid);
     if (rebase_prompt) {
       static const char msg[] =
         "\033[30;43m\033[KDLL rebasing may be required. See 'rebaseall / rebase --help'.\033[0m\r\n";
       term_write(msg, sizeof msg - 1);
     }
+
+    pid = 0;
+
     term_hide_cursor();
   }
   else if (!pid) { // Child process.
@@ -225,8 +227,8 @@ child_create(char *argv[], struct winsize *winp)
       log_fd = open(log, O_WRONLY | O_CREAT | O_EXCL, 0600);
       if (log_fd < 0) {
         // report message and filename:
-        childerror("could not open log file", false);
-        childerror(log, false);
+        childerror("could not open log file", false, 0);
+        childerror(log, false, 0);
       }
 
       free(log);
@@ -547,7 +549,7 @@ child_fork(int argc, char *argv[], int moni)
 
   if (cfg.daemonize) {
     if (clone < 0) {
-      childerror("could not fork child daemon", true);
+      childerror("could not fork child daemon", true, 0);
       return;  // assume next fork will fail too
     }
     if (clone > 0) {  // parent waits for intermediate child

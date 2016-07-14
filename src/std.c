@@ -192,6 +192,7 @@ openpty(int *amaster, int *aslave, char *name,
 {
   int master, slave;
   char pts[TTY_NAME_MAX];
+  int errret = -2;
 
   if ((master = open ("/dev/ptmx", O_RDWR | O_NOCTTY)) >= 0)
     {
@@ -213,9 +214,10 @@ openpty(int *amaster, int *aslave, char *name,
           return 0;
         }
       close (master);
+      errret = -3;
     }
   errno = ENOENT;
-  return -1;
+  return errret;
 }
 
 int
@@ -224,8 +226,10 @@ forkpty(int *amaster, char *name,
 {
   int master, slave, pid;
 
-  if (openpty (&master, &slave, name, termp, winp) == -1)
-    return -1;
+  int ret = openpty (&master, &slave, name, termp, winp);
+  if (ret < 0)
+    return ret;
+
   switch (pid = fork ())
     {
       case -1:
