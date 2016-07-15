@@ -761,7 +761,8 @@ win_set_ime_open(bool open)
 
 #ifdef debug_win_text
 
-void trace_line(char * tag, wchar * text, int len)
+void
+trace_line(char * tag, wchar * text, int len)
 {
   bool show = false;
   for (int i = 0; i < len; i++)
@@ -777,7 +778,6 @@ void trace_line(char * tag, wchar * text, int len)
 #define trace_line(tag, text, len)	
 #endif
 
-#ifdef combsubst
 static wchar
 combsubst(wchar comb)
 {
@@ -828,7 +828,6 @@ combsubst(wchar comb)
   }
   return comb;
 }
-#endif
 
 /*
  * Draw a line of text in the window, at given character
@@ -1021,9 +1020,8 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
   bool combining = attr.attr & TATTR_COMBINING;
   int width = char_width * (combining ? 1 : len);
   RECT box = {
-    .left = x, .top = y,
-    .right = min(x + width, font_width * term.cols + PADDING),
-    .bottom = y + font_height
+    .top = y, .bottom = y + font_height,
+    .left = x, .right = min(x + width, font_width * term.cols + PADDING)
   };
 
  /* Array with offsets between neighbouring characters */
@@ -1032,12 +1030,16 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
   for (int i = 0; i < len; i++)
     dxs[i] = dx;
 
-#ifdef combsubst
- /* Substitute combining characters by overprinting lookalike glyphs */
-  if (combining)
+  bool let_windows_combine = false;
+  if (combining) {
+   /* Substitute combining characters by overprinting lookalike glyphs */
     for (int i = 0; i < len; i++)
       text[i] = combsubst(text[i]);
-#endif
+   /* Determine characters that should be combined by Windows */
+    if (len == 2)
+      if (text[0] == 'i' && (text[1] == 0x030F || text[1] == 0x0311))
+        let_windows_combine = true;
+  }
 
   int yt = y + (row_spacing / 2) - (lattr == LATTR_BOT ? font_height : 0);
   int xt = x + (cfg.col_spacing / 2);
@@ -1051,6 +1053,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
  /* Determine Shadow/Overstrike bold width */
   int xwidth = 1;
   if (apply_shadow && bold_mode == BOLD_SHADOW && (attr.attr & ATTR_BOLD)) {
+    // This could be scaled with font size, but at risk of clipping
     xwidth = 2;
     if (lattr != LATTR_NORM) {
       xwidth = 3; // 4?
@@ -1061,10 +1064,14 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
   SetBkMode(dc, OPAQUE);
   uint overwropt = ETO_OPAQUE;
   trace_line(" TextOut:", text, len);
-  // The combining characters separate rendering trick below makes 
-  // some combining characters better (~#553, #295), others worse (#565);
-  // reverting.
-  combining = false;
+  // The combining characters separate rendering trick *alone* 
+  // makes some combining characters better (~#553, #295), 
+  // others worse (#565); however, together with the 
+  // substitute combining characters trick it seems to be the best 
+  // workaround for combining characters rendering issues.
+  // Yet disabling it for some (heuristically determined) cases:
+  if (let_windows_combine)
+    combining = false;  // disable separate combining characters display
   for (int xoff = 0; xoff < xwidth; xoff++)
     if (combining) {
       // Workaround for mangled display of combining characters;
@@ -1315,6 +1322,8 @@ win_char_width(xchar c)
   return ibuf;
 }
 
+#define dont_debug_win_combine
+
 /* Try to combine a base and combining character into a precomposed one.
  * Returns 0 if unsuccessful.
  */
@@ -1328,6 +1337,9 @@ win_combine_chars(wchar c, wchar cc)
     HDC dc = GetDC(wnd);
     GetGlyphIndicesW(dc, cs, 1, &glyph, true);
     ReleaseDC(wnd, dc);
+#ifdef debug_win_combine
+    printf("win_combine %04X %04X -> %04X\n", c, cc, glyph == 0xFFFF ? 0 : *cs);
+#endif
     if (glyph == 0xFFFF)
       return 0;
     else

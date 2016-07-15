@@ -1,4 +1,4 @@
-  * Reverted separate display of combining characters (#565).
+  * Combined enhancement for rendering of combined characters (#565).
 
 ### 2.4.0 (9 Jul 2016) ###
 
