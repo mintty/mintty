@@ -45,7 +45,7 @@ printer_start_job(wstring printer_name)
 
   pd = open(pf, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0600);
   if (pd >= 0) {
-    win_prefix_title(L"[Printing...] ");
+    win_prefix_title(_W("[Printing...] "));
 
     printer = printer_name;
     write(pd, &BOM, 2);
@@ -109,6 +109,6 @@ printer_finish_job(void)
     free(pf);
     printer = 0;
 
-    win_unprefix_title(L"[Printing...] ");
+    win_unprefix_title(_W("[Printing...] "));
   }
 }

@@ -730,12 +730,12 @@ win_bell(config * conf)
           int len = wcslen(bell_name);
           bell_file = newn(wchar, len + 5);
           wcscpy(bell_file, bell_name);
-          wcscpy(&bell_file[len], L".wav");
-          bf = get_resource_file(L"sounds", bell_file, false);
+          wcscpy(&bell_file[len], W(".wav"));
+          bf = get_resource_file(W("sounds"), bell_file, false);
           free(bell_file);
         }
         else
-          bf = get_resource_file(L"sounds", bell_name, false);
+          bf = get_resource_file(W("sounds"), bell_name, false);
         if (bf) {
           bell_name = path_posix_to_win_w(bf);
           free(bf);
@@ -1510,7 +1510,7 @@ static void
 show_msg_w(FILE *stream, wstring msg)
 {
   if (fprintf(stream, "%ls", msg) < 0 || fputs("\n", stream) < 0 || fflush(stream) < 0)
-    MessageBoxW(0, msg, _W(APPNAME), MB_OK);
+    MessageBoxW(0, msg, W(APPNAME), MB_OK);
 }
 
 static no_return __attribute__((format(printf, 1, 2)))
@@ -1545,7 +1545,7 @@ static void
 warnw(wstring msg, wstring file, wstring err)
 {
 #if CYGWIN_VERSION_API_MINOR >= 201
-  wstring format = (err && *err) ? L"%s: %ls '%ls':\n%ls" : L"%s: %ls '%ls'";
+  wstring format = (err && *err) ? W("%s: %ls '%ls':\n%ls") : W("%s: %ls '%ls'");
   wchar mess[wcslen(format) + strlen(main_argv[0]) + wcslen(msg) + wcslen(file) + (err ? wcslen(err) : 0)];
   swprintf(mess, lengthof(mess), format, main_argv[0], msg, file, err);
   show_msg_w(stderr, mess);
@@ -1646,7 +1646,7 @@ get_shortcut_icon_location(wchar * iconfile)
     wchar * wicon = wil;
 
     /* Append ,icon-index if non-zero.  */
-    wchar * widx = L"";
+    wchar * widx = W("");
     if (index) {
       char idx[22];
       sprintf(idx, ",%d", index);
@@ -1654,7 +1654,7 @@ get_shortcut_icon_location(wchar * iconfile)
     }
 
     /* Resolve leading Windows environment variable component.  */
-    wchar * wenv = L"";
+    wchar * wenv = W("");
     wchar * fin;
     if (wil[0] == '%' && wil[1] && wil[1] != '%' && (fin = wcschr(&wil[2], '%'))) {
       char var[fin - wil];
@@ -1707,10 +1707,10 @@ configure_taskbar()
 #include "jumplist.h"
   // test data
   wchar * jump_list_title[] = {
-    L"title1", L"", L"", L"mä€", L"", L"", L"", L"", L"", L"", 
+    W("title1"), W(""), W(""), W("mä€"), W(""), W(""), W(""), W(""), W(""), W(""), 
   };
   wchar * jump_list_cmd[] = {
-    L"-o Rows=15", L"-o Rows=20", L"", L"-t mö€", L"", L"", L"", L"", L"", L"", 
+    W("-o Rows=15"), W("-o Rows=20"), W(""), W("-t mö€"), W(""), W(""), W(""), W(""), W(""), W(""), 
   };
   // the patch offered in issue #290 does not seem to work
   setup_jumplist(jump_list_title, jump_list_cmd);
@@ -2139,10 +2139,10 @@ main(int argc, char *argv[])
           FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK,
           0, err, 0, winmsg, wmlen, 0
         );
-        warnw(L"could not load icon file", cfg.icon, winmsg);
+        warnw(_W("could not load icon file"), cfg.icon, winmsg);
       }
       else
-        warnw(L"could not load icon file", cfg.icon, L"");
+        warnw(_W("could not load icon file"), cfg.icon, W(""));
     }
     delete(icon_file);
   }
@@ -2160,7 +2160,7 @@ main(int argc, char *argv[])
   inst = GetModuleHandle(NULL);
 
   // Window class name.
-  wstring wclass = _W(APPNAME);
+  wstring wclass = W(APPNAME);
   if (*cfg.class)
     wclass = cfg.class;
 
@@ -2180,7 +2180,7 @@ main(int argc, char *argv[])
     }
     else {
       fputs("Using default title due to invalid characters in program name.\n", stderr);
-      wtitle = _W(APPNAME);
+      wtitle = W(APPNAME);
     }
   }
 

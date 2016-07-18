@@ -353,7 +353,7 @@ button(control * ctrl, ctrlpos * cp, char *btext, int bid, int defbtn)
   // this is a special hack until a generic solution is crafted 
   // for Unicode labels and maybe other fancy stuff
   if (!strcmp(btext, "&Play")) {
-    SendMessageW(but, WM_SETTEXT, 0, (LPARAM)L"► &Play");
+    SendMessageW(but, WM_SETTEXT, 0, (LPARAM)_W("► &Play"));
   }
 #ifdef need_to_disable_widgets_here
   // another hack to disable a widget initially
@@ -1343,10 +1343,10 @@ dlg_fontsel_set(control *ctrl, font_spec *fs)
   int wsize = wcslen(fs->name) + strlen(boldstr) + fs->size ? 31 : 17;
   wchar * wbuf = newn(wchar, wsize);
   if (fs->size)
-    swprintf(wbuf, wsize, L"%ls, %s%d%s", fs->name, boldstr, abs(fs->size),
+    swprintf(wbuf, wsize, W("%ls, %s%d%s"), fs->name, boldstr, abs(fs->size),
              fs->size < 0 ? "px" : "pt");
   else
-    swprintf(wbuf, wsize, L"%ls, %sdefault size", fs->name, boldstr);
+    swprintf(wbuf, wsize, W("%ls, %sdefault size"), fs->name, boldstr);
   SetDlgItemTextW(dlg.wnd, c->base_id + 1, wbuf);
   free(wbuf);
 #else

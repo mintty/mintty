@@ -41,7 +41,7 @@ printer_get_default(void)
   if (GetDefaultPrinterW(dp, &len))
     return dp;
   else
-    return L"";
+    return W("");
 }
 
 void

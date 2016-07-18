@@ -11,6 +11,7 @@
 
 #include <winnls.h>
 
+
 enum {
   FONT_NORMAL    = 0x00,
   FONT_BOLD      = 0x01,
@@ -168,11 +169,13 @@ get_font_quality(void) {
     }[(int)cfg.font_smoothing];
 }
 
+#define dont_debug_create_font
+
 static HFONT
 create_font(int weight, bool underline)
 {
 #ifdef debug_create_font
-  printf("font [??]: %d 0 w%4d i0 u%d s0\n", font_height, weight, underline);
+  printf("font [??]: %d (%d) 0 w%4d i0 u%d s0\n", font_height, font_size, weight, underline);
 #endif
   return
     CreateFontW(
@@ -240,12 +243,12 @@ adjust_font_weights()
 {
   LOGFONTW lf;
 #if CYGWIN_VERSION_API_MINOR >= 201
-  swprintf(lf.lfFaceName, lengthof(lf.lfFaceName), L"%ls", cfg.font.name);
+  swprintf(lf.lfFaceName, lengthof(lf.lfFaceName), W("%ls"), cfg.font.name);
 #else
   if (wcslen(cfg.font.name) < lengthof(lf.lfFaceName))
     wcscpy(lf.lfFaceName, cfg.font.name);
   else
-    wcscpy(lf.lfFaceName, L"Lucida Console");
+    wcscpy(lf.lfFaceName, W"Lucida Console"));
 #endif
   lf.lfPitchAndFamily = 0;
   //lf.lfCharSet = ANSI_CHARSET;   // report only ANSI character range
@@ -270,7 +273,8 @@ adjust_font_weights()
     (void)fontType;
     (void)lParam;
 
-    trace_font(("%ls %ld it %d cs %d %s\n", lfp->lfFaceName, (long int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
+    //trace_font(("%ls %ldx%ld (%ldx%ld) %ld it %d cs %d %s\n", lfp->lfFaceName, (long int)lfp->lfWidth, (long int)lfp->lfHeight, (long int)tmp->tmAveCharWidth, (long int)tmp->tmHeight, (long int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
+    trace_font(("%ls %ldx%ld %ld it %d cs %d %s\n", lfp->lfFaceName, (long int)lfp->lfWidth, (long int)lfp->lfHeight, (long int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
 
     font_found = true;
     if (lfp->lfCharSet == ANSI_CHARSET)
@@ -297,14 +301,14 @@ adjust_font_weights()
 
   // check if no font found
   if (!font_found) {
-    show_msg(L"Font not found, using system substitute", cfg.font.name);
+    show_msg(_W("Font not found, using system substitute"), cfg.font.name);
     fw_norm = 400;
     fw_bold = 700;
     trace_font(("//\n"));
     return;
   }
   if (!ansi_found && !cs_found) {
-    show_msg(L"Font has limited support for character ranges", cfg.font.name);
+    show_msg(_W("Font has limited support for character ranges"), cfg.font.name);
   }
 
   // find available widths closest to selected widths
@@ -419,7 +423,7 @@ win_init_fonts(int size)
   SelectObject(dc, fonts[FONT_NORMAL]);
   GetTextMetrics(dc, &tm);
   row_spacing = row_padding(tm.tmInternalLeading, tm.tmExternalLeading);
-  trace_font(("h %ld asc %ld dsc %ld ild %ld eld %ld %ls\n", tm.tmHeight, tm.tmAscent, tm.tmDescent, tm.tmInternalLeading, tm.tmExternalLeading, cfg.font.name));
+  trace_font(("h %ld asc %ld dsc %ld ild %ld eld %ld %ls\n", (long int)tm.tmHeight, (long int)tm.tmAscent, (long int)tm.tmDescent, (long int)tm.tmInternalLeading, (long int)tm.tmExternalLeading, cfg.font.name));
   row_spacing += cfg.row_spacing;
   if (row_spacing < -tm.tmDescent)
     row_spacing = -tm.tmDescent;
@@ -430,7 +434,7 @@ win_init_fonts(int size)
 #ifdef check_charset_only_for_returned_font
   int default_charset = get_default_charset();
   if (tm.tmCharSet != default_charset && default_charset != DEFAULT_CHARSET) {
-    show_msg(L"Font does not support system locale", cfg.font.name);
+    show_msg(_W("Font does not support system locale"), cfg.font.name);
   }
 #endif
 
@@ -734,7 +738,7 @@ another_font(int fontno)
     u = true;
 
 #ifdef debug_create_font
-  printf("font [%02X]: %d %d w%4d i%d u%d s%d\n", fontno, font_height * (1 + !!(fontno & FONT_HIGH)), x, w, i, u, s);
+  printf("font [%02X]: %d (%d) %d w%4d i%d u%d s%d\n", fontno, font_height * (1 + !!(fontno & FONT_HIGH)), font_size, x, w, i, u, s);
 #endif
   fonts[fontno] =
     // workaround: remove effect of row_spacing from font creation;

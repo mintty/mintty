@@ -79,8 +79,15 @@ typedef const wchar *wstring;
 
 #define null ((void *) 0)
 
+#if __GNUC__ >= 5
+#define __W(s) u##s
+#else
 #define __W(s) L##s
+#endif
+#define W(s) __W(s)
+// to be enhanced to use gettext:
 #define _W(s) __W(s)
+#define _(s) s
 
 #define lengthof(array) (sizeof(array) / sizeof(*(array)))
 #define endof(array) (&(array)[lengthof(array)])
