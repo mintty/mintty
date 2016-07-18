@@ -85,7 +85,8 @@ static int descent;
 int font_size;
 
 // Font screen dimensions
-int font_width, font_height;
+int font_width, font_height;  // includes spacing
+static int font_height_phys;  // pure font height, without spacing
 int PADDING = 1;
 static bool font_dualwidth;
 
@@ -169,17 +170,25 @@ get_font_quality(void) {
     }[(int)cfg.font_smoothing];
 }
 
-#define dont_debug_create_font
+#define debug_create_font
+
+#define debug_fonts
+
+#ifdef debug_fonts
+#define trace_font(params)	printf params
+#else
+#define trace_font(params)	
+#endif
 
 static HFONT
 create_font(int weight, bool underline)
 {
 #ifdef debug_create_font
-  printf("font [??]: %d (%d) 0 w%4d i0 u%d s0\n", font_height, font_size, weight, underline);
+  printf("font [??]: %d (size %d) 0 w%4d i0 u%d s0\n", font_height_phys, font_size, weight, underline);
 #endif
   return
     CreateFontW(
-      font_height, 0, 0, 0, weight, false, underline, false,
+      font_height_phys, 0, 0, 0, weight, false, underline, false,
       DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
       get_font_quality(), FIXED_PITCH | FF_DONTCARE,
       cfg.font.name
@@ -202,14 +211,6 @@ row_padding(int i, int e)
       return 0;  // return adj may look nicer but break box characters
   }
 }
-
-#define dont_debug_fonts
-
-#ifdef debug_fonts
-#define trace_font(params)	printf params
-#else
-#define trace_font(params)	
-#endif
 
 static void
 show_msg(wstring msg, wstring title)
@@ -344,8 +345,6 @@ adjust_font_weights()
   trace_font((" -> %d/%d\n", fw_norm, fw_bold));
 }
 
-#define dont_debug_font_scaling
-
 /*
  * Initialise all the fonts we will need initially. There may be as many as
  * three or as few as one. The other (potentially) twentyone fonts are done
@@ -404,15 +403,12 @@ win_init_fonts(int size)
   }
 
   HDC dc = GetDC(wnd);
-  font_height =
-    size > 0 ? -MulDiv(size, GetDeviceCaps(dc, LOGPIXELSY), 72) : size;
+  font_height_phys =
+    size > 0 ? -MulDiv(size, GetDeviceCaps(dc, LOGPIXELSY), 72) : -size;
   // we might think about considering GetDpiForMonitor to scale the 
   // font size here,
   // but in fact this is already achieved by the handling of WM_DPICHANGED, 
   // see there; (unless we would want to consider it initially)
-#ifdef debug_font_scaling
-  printf("size %d -> height %d\n", size, font_height);
-#endif
   font_width = 0;
 
   fonts[FONT_NORMAL] = create_font(fw_norm, false);
@@ -447,6 +443,9 @@ win_init_fonts(int size)
   PADDING = tm.tmAveCharWidth;
   if (cfg.padding >= 0 && cfg.padding < PADDING)
     PADDING = cfg.padding;
+#ifdef debug_create_font
+  printf("size %d -> height %d -> height %d\n", size, font_height_phys, font_height);
+#endif
 
   // Determine whether ambiguous-width characters are wide in this font */
   float latin_char_width, greek_char_width, line_char_width;
@@ -738,12 +737,12 @@ another_font(int fontno)
     u = true;
 
 #ifdef debug_create_font
-  printf("font [%02X]: %d (%d) %d w%4d i%d u%d s%d\n", fontno, font_height * (1 + !!(fontno & FONT_HIGH)), font_size, x, w, i, u, s);
+  printf("font [%02X]: %d (size %d) %d w%4d i%d u%d s%d\n", fontno, font_height_phys * (1 + !!(fontno & FONT_HIGH)), font_size, x, w, i, u, s);
 #endif
   fonts[fontno] =
     // workaround: remove effect of row_spacing from font creation;
     // to be checked: usages of font_height elsewhere
-    CreateFontW((font_height - row_spacing) * (1 + !!(fontno & FONT_HIGH)), x, 0, 0, w, i, u, s,
+    CreateFontW(font_height_phys * (1 + !!(fontno & FONT_HIGH)), x, 0, 0, w, i, u, s,
                 DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                 get_font_quality(), FIXED_PITCH | FF_DONTCARE, cfg.font.name);
 
