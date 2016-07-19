@@ -499,8 +499,9 @@ win_get_pixels(int *height_p, int *width_p)
 {
   RECT r;
   GetWindowRect(wnd, &r);
-  *height_p = r.bottom - r.top;
-  *width_p = r.right - r.left;
+  // report inner pixel size, without padding, like xterm:
+  *height_p = r.bottom - r.top - extra_height - 2 * PADDING;
+  *width_p = r.right - r.left - extra_width - 2 * PADDING;
 }
 
 void
@@ -509,8 +510,8 @@ win_get_screen_chars(int *rows_p, int *cols_p)
   MONITORINFO mi;
   get_my_monitor_info(&mi);
   RECT fr = mi.rcMonitor;
-  *rows_p = (fr.bottom - fr.top) / font_height;
-  *cols_p = (fr.right - fr.left) / font_width;
+  *rows_p = (fr.bottom - fr.top - 2 * PADDING) / cell_height;
+  *cols_p = (fr.right - fr.left - 2 * PADDING) / cell_width;
 }
 
 void
@@ -518,8 +519,8 @@ win_set_pixels(int height, int width)
 {
   trace_resize(("--- win_set_pixels %d %d\n", height, width));
   SetWindowPos(wnd, null, 0, 0,
-               width + 2 * PADDING + extra_width,
-               height + 2 * PADDING + extra_height,
+               width + extra_width + 2 * PADDING,
+               height + extra_height + 2 * PADDING,
                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
 }
 
@@ -636,7 +637,8 @@ win_set_geom(int y, int x, int height, int width)
   RECT ar = mi.rcWork;
 
   int scr_height = ar.bottom - ar.top, scr_width = ar.right - ar.left;
-  int term_x, term_y, term_height, term_width;
+  int term_height, term_width;
+  int term_x, term_y;
   win_get_pixels(&term_height, &term_width);
   win_get_pos(&term_x, &term_y);
 
@@ -653,7 +655,8 @@ win_set_geom(int y, int x, int height, int width)
   else if (height > 0)
     term_height = height;
 
-  SetWindowPos(wnd, null, term_x, term_y, term_width, term_height,
+  SetWindowPos(wnd, null, term_x, term_y,
+               term_width + 2 * PADDING, term_height + 2 * PADDING,
                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOZORDER);
 }
 
@@ -680,7 +683,7 @@ void
 win_set_chars(int rows, int cols)
 {
   trace_resize(("--- win_set_chars %d×%d\n", rows, cols));
-  win_set_pixels(rows * font_height, cols * font_width);
+  win_set_pixels(rows * cell_height, cols * cell_width);
   win_fix_position();
 }
 
@@ -779,8 +782,8 @@ win_invalidate_all(void)
 static void
 win_adjust_borders()
 {
-  int term_width = font_width * cfg.cols;
-  int term_height = font_height * cfg.rows;
+  int term_width = cell_width * cfg.cols;
+  int term_height = cell_height * cfg.rows;
   RECT cr = {0, 0, term_width + 2 * PADDING, term_height + 2 * PADDING};
   RECT wr = cr;
   LONG window_style = WS_OVERLAPPEDWINDOW;
@@ -859,12 +862,12 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
   if (scale_font_with_size && term.cols != 0 && term.rows != 0) {
     // calc preliminary size (without font scaling), as below
     // should use term_height rather than rows; calc and store in term_resize
-    int cols0 = max(1, term_width / font_width);
-    int rows0 = max(1, term_height / font_height);
+    int cols0 = max(1, term_width / cell_width);
+    int rows0 = max(1, term_height / cell_height);
 
-    // rows0/term.rows gives a rough scaling factor for font_height
-    // cols0/term.cols gives a rough scaling factor for font_width
-    // font_height, font_width give a rough scaling indication for font_size
+    // rows0/term.rows gives a rough scaling factor for cell_height
+    // cols0/term.cols gives a rough scaling factor for cell_width
+    // cell_height, cell_width give a rough scaling indication for font_size
     // height or width could be considered more according to preference
     bool bigger = rows0 * cols0 > term.rows * term.cols;
     int font_size1 =
@@ -895,11 +898,11 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
     term_height -= SEARCHBAR_HEIGHT;
   }
 
-  int cols = max(1, term_width / font_width);
-  int rows = max(1, term_height / font_height);
+  int cols = max(1, term_width / cell_width);
+  int rows = max(1, term_height / cell_height);
   if (rows != term.rows || cols != term.cols) {
     term_resize(rows, cols);
-    struct winsize ws = {rows, cols, cols * font_width, rows * font_height};
+    struct winsize ws = {rows, cols, cols * cell_width, rows * cell_height};
     child_resize(&ws);
   }
   win_invalidate_all();
@@ -1346,11 +1349,11 @@ static struct {
       LPRECT r = (LPRECT) lp;
       int width = r->right - r->left - extra_width - 2 * PADDING;
       int height = r->bottom - r->top - extra_height - 2 * PADDING;
-      int cols = max(1, (float)width / font_width + 0.5);
-      int rows = max(1, (float)height / font_height + 0.5);
+      int cols = max(1, (float)width / cell_width + 0.5);
+      int rows = max(1, (float)height / cell_height + 0.5);
 
-      int ew = width - cols * font_width;
-      int eh = height - rows * font_height;
+      int ew = width - cols * cell_width;
+      int eh = height - rows * cell_height;
 
       if (wp >= WMSZ_BOTTOM) {
         wp -= WMSZ_BOTTOM;
@@ -1578,8 +1581,8 @@ report_pos()
     y = placement.rcNormalPosition.top;
     int cols = term.cols;
     int rows = term.rows;
-    cols = (placement.rcNormalPosition.right - placement.rcNormalPosition.left - norm_extra_width - 2 * PADDING) / font_width;
-    rows = (placement.rcNormalPosition.bottom - placement.rcNormalPosition.top - norm_extra_height - 2 * PADDING) / font_height;
+    cols = (placement.rcNormalPosition.right - placement.rcNormalPosition.left - norm_extra_width - 2 * PADDING) / cell_width;
+    rows = (placement.rcNormalPosition.bottom - placement.rcNormalPosition.top - norm_extra_height - 2 * PADDING) / cell_height;
 
     printf("%s", main_argv[0]);
     printf(*report_geom == 'o' ? " -o Columns=%d -o Rows=%d" : " -s %d,%d", cols, rows);
@@ -2210,8 +2213,8 @@ main(int argc, char *argv[])
   cs_reconfig();
 
   // Determine window sizes.
-  int term_width = font_width * term_cols;
-  int term_height = font_height * term_rows;
+  int term_width = cell_width * term_cols;
+  int term_height = cell_height * term_rows;
 
   RECT cr = {0, 0, term_width + 2 * PADDING, term_height + 2 * PADDING};
   RECT wr = cr;
@@ -2381,7 +2384,7 @@ main(int argc, char *argv[])
   );
 
   // Set up an empty caret bitmap. We're painting the cursor manually.
-  caretbm = CreateBitmap(1, font_height, 1, 1, newn(short, font_height));
+  caretbm = CreateBitmap(1, cell_height, 1, 1, newn(short, cell_height));
   CreateCaret(wnd, caretbm, 0, 0);
 
   // Initialise various other stuff.

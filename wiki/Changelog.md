@@ -1,4 +1,7 @@
   * Combined enhancement for rendering of combined characters (#565).
+  * Enforce font selection at uniform size, to ensure using bold font.
+  * Restored self-drawn, overstriking bold mode (#567).
+  * Fixed ESC[14t to report same pixel size as xterm would (without padding).
 
 ### 2.4.0 (9 Jul 2016) ###
 

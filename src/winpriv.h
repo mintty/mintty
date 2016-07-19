@@ -18,12 +18,12 @@ extern COLORREF colours[COLOUR_NUM];
 
 extern LOGFONT lfont;
 
-extern int font_size;
-extern int font_width, font_height;
+extern int font_size;  // logical font size, as configured (< 0: pixel size)
+extern int cell_width, cell_height;  // includes spacing
+extern int PADDING;
+
 
 extern bool win_is_fullscreen;
-
-extern int PADDING;
 
 extern void win_paint(void);
 

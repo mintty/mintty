@@ -198,8 +198,8 @@ static pos
 translate_pos(int x, int y)
 {
   return (pos){
-    .x = floorf((x - PADDING) / (float)font_width ),
-    .y = floorf((y - PADDING) / (float)font_height),
+    .x = floorf((x - PADDING) / (float)cell_width),
+    .y = floorf((y - PADDING) / (float)cell_height),
   };
 }
 
