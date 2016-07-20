@@ -128,6 +128,7 @@ load_dwm_funcs(void)
 #define dont_debug_dpi
 
 static bool per_monitor_dpi_aware = false;
+static uint dpi;
 
 #define WM_DPICHANGED 0x02E0
 const int Process_System_DPI_Aware = 1;
@@ -135,9 +136,7 @@ const int Process_Per_Monitor_DPI_Aware  = 2;
 const int MDT_Effective_DPI = 0;
 static HRESULT (WINAPI * pGetProcessDpiAwareness)(HANDLE hprocess, int * value) = 0;
 static HRESULT (WINAPI * pSetProcessDpiAwareness)(int value) = 0;
-#ifdef debug_dpi
 static HRESULT (WINAPI * pGetDpiForMonitor)(HMONITOR mon, int type, uint * x, uint * y) = 0;
-#endif
 
 static void
 load_shcore_funcs(void)
@@ -151,10 +150,8 @@ load_shcore_funcs(void)
       (void *)GetProcAddress(shc, "GetProcessDpiAwareness");
     pSetProcessDpiAwareness =
       (void *)GetProcAddress(shc, "SetProcessDpiAwareness");
-#ifdef debug_dpi
     pGetDpiForMonitor =
       (void *)GetProcAddress(shc, "GetDpiForMonitor");
-#endif
 #ifdef debug_dpi
     printf("SetProcessDpiAwareness %d GetProcessDpiAwareness %d GetDpiForMonitor %d\n", !!pSetProcessDpiAwareness, !!pGetProcessDpiAwareness, !!pGetDpiForMonitor);
 #endif
@@ -1414,11 +1411,22 @@ static struct {
       win_update_menus();
       return 0;
 
-    when WM_DPICHANGED:
+    when WM_DPICHANGED: {
 #ifdef debug_dpi
       printf("WM_DPICHANGED %d\n", per_monitor_dpi_aware);
 #endif
-      if (per_monitor_dpi_aware && cfg.handle_dpichanged) {
+      bool dpi_changed = true;
+      if (pGetDpiForMonitor) {
+///check: is this the target monitor already?
+        HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+        uint x, y;
+        pGetDpiForMonitor(mon, 0, &x, &y);  // MDT_EFFECTIVE_DPI
+        if (y != dpi) {
+          dpi_changed = false;
+          dpi = y;
+        }
+      }
+      if (dpi_changed && per_monitor_dpi_aware && cfg.handle_dpichanged) {
         // this RECT is adjusted with respect to the monitor dpi already,
         // so we don't need to consider GetDpiForMonitor
         LPRECT r = (LPRECT) lp;
@@ -1433,15 +1441,19 @@ static struct {
         int y = term.rows, x = term.cols;
         win_adapt_term_size(false, true);
         // try to stabilize terminal size roundtrip
-        win_set_chars(y, x);  // also clips to desktop size (win_fix_position)
-                              // but not stripping taskbar (?)
-                              // as win_fix_position would do initially
+        if (term.rows != y || term.cols != x) {
+          // win_fix_position also clips the window to desktop size
+          // but does not strip taskbar (?)
+          // as win_fix_position would do initially (??)
+          win_set_chars(y, x);
+        }
 #ifdef debug_dpi
         printf("SM_CXVSCROLL %d\n", GetSystemMetrics(SM_CXVSCROLL));
 #endif
         return 0;
       }
       break;
+    }
   }
  /*
   * Any messages we don't process completely above are passed through to
@@ -2340,6 +2352,12 @@ main(int argc, char *argv[])
       // now interpret width/height in correct DPI.
       SetWindowPos(wnd, NULL, x, y, width, height,
         SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
+    }
+    // retrieve initial monitor DPI
+    if (pGetDpiForMonitor) {
+      HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+      uint x;
+      pGetDpiForMonitor(mon, 0, &x, &dpi);  // MDT_EFFECTIVE_DPI
     }
   }
 
