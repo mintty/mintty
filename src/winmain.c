@@ -1412,20 +1412,24 @@ static struct {
       return 0;
 
     when WM_DPICHANGED: {
-#ifdef debug_dpi
-      printf("WM_DPICHANGED %d\n", per_monitor_dpi_aware);
-#endif
       bool dpi_changed = true;
-      if (pGetDpiForMonitor) {
-///check: is this the target monitor already?
+      if (per_monitor_dpi_aware && cfg.handle_dpichanged && pGetDpiForMonitor) {
         HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
         uint x, y;
         pGetDpiForMonitor(mon, 0, &x, &y);  // MDT_EFFECTIVE_DPI
+#ifdef debug_dpi
+        printf("WM_DPICHANGED %d -> %d (aware %d handle %d)\n", dpi, y, per_monitor_dpi_aware, cfg.handle_dpichanged);
+#endif
         if (y != dpi) {
-          dpi_changed = false;
           dpi = y;
         }
+        else
+          dpi_changed = false;
       }
+#ifdef debug_dpi
+      else
+        printf("WM_DPICHANGED (aware %d handle %d)\n", per_monitor_dpi_aware, cfg.handle_dpichanged);
+#endif
       if (dpi_changed && per_monitor_dpi_aware && cfg.handle_dpichanged) {
         // this RECT is adjusted with respect to the monitor dpi already,
         // so we don't need to consider GetDpiForMonitor
@@ -1443,8 +1447,6 @@ static struct {
         // try to stabilize terminal size roundtrip
         if (term.rows != y || term.cols != x) {
           // win_fix_position also clips the window to desktop size
-          // but does not strip taskbar (?)
-          // as win_fix_position would do initially (??)
           win_set_chars(y, x);
         }
 #ifdef debug_dpi
