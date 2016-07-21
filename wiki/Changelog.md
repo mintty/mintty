@@ -1,3 +1,4 @@
+  * Tweak and guard DPI change handling (#566, #470).
   * Combined enhancement for rendering of combined characters (#565).
   * Enforce font selection at uniform size, to ensure using bold font.
   * Restored self-drawn, overstriking bold mode (#567).
