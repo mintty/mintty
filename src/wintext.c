@@ -19,10 +19,10 @@ enum {
   FONT_BOLDUND   = FONT_BOLD | FONT_UNDERLINE,
   FONT_ITALIC    = 0x04,
   FONT_STRIKEOUT = 0x08,
-  FONT_WIDE      = 0x10,
-  FONT_HIGH      = 0x20,
+  FONT_HIGH      = 0x10,
+  FONT_WIDE      = 0x20,
   FONT_NARROW    = 0x40,
-  FONT_MAXNO     = 0x80
+  FONT_MAXNO     = FONT_WIDE + FONT_NARROW
 };
 
 LOGFONT lfont;
@@ -873,6 +873,10 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
     when LATTR_WIDE: nfont = FONT_WIDE;
     otherwise:       nfont = FONT_WIDE + FONT_HIGH;
   }
+
+  if (attr.attr & ATTR_EXPAND)
+    nfont |= FONT_WIDE;
+  else
   if (attr.attr & ATTR_NARROW)
     nfont |= FONT_NARROW;
 
@@ -897,6 +901,8 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
     // Don't force manual bold, it could be bad news.
     nfont &= ~(FONT_BOLD | FONT_UNDERLINE);
   }
+  if ((nfont & (FONT_WIDE | FONT_NARROW)) == (FONT_WIDE | FONT_NARROW))
+    nfont &= ~(FONT_WIDE | FONT_NARROW);
   another_font(nfont);
   if (!fonts[nfont])
     nfont = FONT_NORMAL;

@@ -951,6 +951,8 @@ term_paint(void)
           tattr.attr != (dispchars[j].attr.attr & ~(ATTR_NARROW | DATTR_MASK))) {
         if ((tattr.attr & ATTR_WIDE) == 0 && win_char_width(tchar) == 2)
           tattr.attr |= ATTR_NARROW;
+        else if (tattr.attr & ATTR_WIDE && win_char_width(tchar) == 1)
+          tattr.attr |= ATTR_EXPAND;
       }
       else if (dispchars[j].attr.attr & ATTR_NARROW)
         tattr.attr |= ATTR_NARROW;
