@@ -66,6 +66,7 @@ extern int xcwidth(xchar c);
 #endif
 
 extern bool indicwide(xchar c);
+extern bool extrawide(xchar c);
 
 #endif
 

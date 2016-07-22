@@ -130,6 +130,7 @@ typedef struct {
   int padding;
   bool handle_dpichanged;
   bool wide_indic;
+  bool wide_extra;
   string word_chars;
   string word_chars_excl;
   colour ime_cursor_colour;

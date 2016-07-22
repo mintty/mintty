@@ -6,6 +6,7 @@ Text display:
   * Enforce font selection at uniform size, to ensure using bold font.
   * Restored self-drawn, overstriking bold mode (#567).
   * Stretching narrow characters that are expected wide (#123).
+  * Option WideExtra for double-width display of extra wide/long Unicode characters (experimental).
 
 Terminal:
   * Fixed ESC[14t to report same pixel size as xterm would (without padding).

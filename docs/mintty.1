@@ -1440,6 +1440,23 @@ Indic wide display with version 2016.26).
 This feature may be removed from a future version of mintty if it turns out 
 to be useless.
 
+.TP
+\fBWide display of long Unicode characters\fP (WideExtra=false)
+Setting this option, a number of Unicode characters that are supposed 
+to be "wide" or "long" will be displayed in double-width (like CJK characters).
+
+Notes: This is an experimental feature.
+Most screen applications will not cooperate with this feature as their 
+assumption of character widths is mostly based on the system locale 
+(with the notable exception of the Unicode editor MinEd which supports 
+Extra wide display with version 2016.26).
+This feature may be removed from a future version of mintty if it turns out 
+to be useless.
+The list of extra Unicode characters considered "wide" is 
+U+2001, U+2003, U+2014, U+27DD..U+27DE, U+27F5..U+27FF, 
+U+2910, U+296A..U+296D, U+2B33, U+2E0E..U+2E11, U+2E3A..U+2E3B;
+this list is subject to change in future versions.
+
 .SH LIMITATIONS
 
 .SS Console issue

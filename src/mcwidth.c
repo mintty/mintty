@@ -350,3 +350,13 @@ indicwide(xchar c)
 {
   return bisearch(c, indic, lengthof(indic));
 }
+
+static const interval extra[] = {
+#include "longchars.t"
+};
+
+bool
+extrawide(xchar c)
+{
+  return bisearch(c, extra, lengthof(extra));
+}
