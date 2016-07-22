@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Wed Jul  6 16:34:54 2016 -->
+<!-- CreationDate: Fri Jul 22 16:52:22 2016 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -806,7 +806,8 @@ available: <br>
 
 <p style="margin-left:22%; margin-top: 1em">The line cursor
 is displayed with the width set in the Accessibility Options
-control panel.</p>
+control panel / Ease of Access Center, mouse panel or
+Optimize visual display.</p>
 
 <p style="margin-left:11%;"><b>Cursor blink</b>
 (CursorBlinks=yes)</p>
@@ -1728,6 +1729,27 @@ exception of the Unicode editor MinEd which supports Indic
 wide display with version 2016.26). This feature may be
 removed from a future version of mintty if it turns out to
 be useless.</p>
+
+<p style="margin-left:11%;"><b>Wide display of long Unicode
+characters</b> (WideExtra=false)</p>
+
+<p style="margin-left:22%;">Setting this option, a number
+of Unicode characters that are supposed to be
+&quot;wide&quot; or &quot;long&quot; will be displayed in
+double-width (like CJK characters).</p>
+
+<p style="margin-left:22%; margin-top: 1em">Notes: This is
+an experimental feature. Most screen applications will not
+cooperate with this feature as their assumption of character
+widths is mostly based on the system locale (with the
+notable exception of the Unicode editor MinEd which supports
+Extra wide display with version 2016.26). This feature may
+be removed from a future version of mintty if it turns out
+to be useless. The list of extra Unicode characters
+considered &quot;wide&quot; is U+2001, U+2003, U+2014,
+U+27DD..U+27DE, U+27F5..U+27FF, U+2910, U+296A..U+296D,
+U+2B33, U+2E0E..U+2E11, U+2E3A..U+2E3B; this list is subject
+to change in future versions.</p>
 
 <h2>LIMITATIONS
 <a name="LIMITATIONS"></a>

@@ -249,7 +249,7 @@ adjust_font_weights()
   if (wcslen(cfg.font.name) < lengthof(lf.lfFaceName))
     wcscpy(lf.lfFaceName, cfg.font.name);
   else
-    wcscpy(lf.lfFaceName, W"Lucida Console"));
+    wcscpy(lf.lfFaceName, W("Lucida Console"));
 #endif
   lf.lfPitchAndFamily = 0;
   //lf.lfCharSet = ANSI_CHARSET;   // report only ANSI character range

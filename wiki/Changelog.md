@@ -1,3 +1,5 @@
+### 2.4.1 (23 Jul 2016) ###
+
 Window handling:
   * Tweak and guard DPI change handling (#566, #470).
 
