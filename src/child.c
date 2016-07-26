@@ -47,8 +47,8 @@ childerror(char * action, bool from_fork, int code)
   char * msg;
   char * err = strerror(errno);
   if (from_fork && errno == ENOENT)
-    err = "There are no available terminals";
-  int len = asprintf(&msg, "\033[30;%dm\033[KError: %s: %s (%d).\033[0m\r\n", from_fork ? 41 : 43, action, err, code);
+    err = _("There are no available terminals");
+  int len = asprintf(&msg, "\033[30;%dm\033[K%s: %s: %s (%d).\033[0m\r\n", from_fork ? 41 : 43, _("Error"), action, err, code);
   if (len > 0) {
     term_write(msg, len);
     free(msg);
@@ -85,11 +85,12 @@ child_create(char *argv[], struct winsize *winp)
     //EAGAIN  Cannot allocate sufficient memory to allocate a task structure.
     //EAGAIN  Not possible to create a new process; RLIMIT_NPROC limit.
     //ENOMEM  Memory is tight.
-    childerror("could not fork child process", true, pid);
+    childerror(_("could not fork child process"), true, pid);
     if (rebase_prompt) {
-      static const char msg[] =
-        "\033[30;43m\033[KDLL rebasing may be required. See 'rebaseall / rebase --help'.\033[0m\r\n";
-      term_write(msg, sizeof msg - 1);
+      term_write("\033[30;43m\033[K", 11);
+      string msg = _("DLL rebasing may be required. See 'rebaseall / rebase --help'.");
+      term_write(msg, strlen(msg));
+      term_write("\033[0m\r\n", 6);
     }
 
     pid = 0;
@@ -204,7 +205,7 @@ child_create(char *argv[], struct winsize *winp)
     // use cygwin conversion function to escape unencoded characters 
     // and thus avoid the locale trick (2.2.3)
 
-    if (!wcscmp(cfg.log, L"-"))
+    if (!wcscmp(cfg.log, W("-")))
       log_fd = fileno(stdout);
     else {
       char * log = path_win_w_to_posix(cfg.log);
@@ -227,7 +228,7 @@ child_create(char *argv[], struct winsize *winp)
       log_fd = open(log, O_WRONLY | O_CREAT | O_EXCL, 0600);
       if (log_fd < 0) {
         // report message and filename:
-        childerror("could not open log file", false, 0);
+        childerror(_("could not open log file"), false, 0);
         childerror(log, false, 0);
       }
 
@@ -300,7 +301,7 @@ child_proc(void)
           l = asprintf(&s, "%s: %s", cmd, strsignal(WTERMSIG(status)));
 
         if (!s && cfg.exit_write) {
-          s = "TERMINATED";
+          s = _("TERMINATED");
           l = strlen(s);
         }
         if (s) {
@@ -519,12 +520,12 @@ child_conv_path(wstring wpath)
   // because some programs have trouble with them.
   if (win_wpath && wcslen(win_wpath) < MAX_PATH) {
     wchar *old_win_wpath = win_wpath;
-    if (wcsncmp(win_wpath, L"\\\\?\\UNC\\", 8) == 0) {
+    if (wcsncmp(win_wpath, W("\\\\?\\UNC\\"), 8) == 0) {
       win_wpath = wcsdup(win_wpath + 6);
       win_wpath[0] = '\\';  // Replace "\\?\UNC\" prefix with "\\"
       free(old_win_wpath);
     }
-    else if (wcsncmp(win_wpath, L"\\\\?\\", 4) == 0) {
+    else if (wcsncmp(win_wpath, W("\\\\?\\"), 4) == 0) {
       win_wpath = wcsdup(win_wpath + 4);  // Drop "\\?\" prefix
       free(old_win_wpath);
     }
@@ -549,7 +550,7 @@ child_fork(int argc, char *argv[], int moni)
 
   if (cfg.daemonize) {
     if (clone < 0) {
-      childerror("could not fork child daemon", true, 0);
+      childerror(_("could not fork child daemon"), true, 0);
       return;  // assume next fork will fail too
     }
     if (clone > 0) {  // parent waits for intermediate child

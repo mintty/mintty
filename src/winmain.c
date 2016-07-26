@@ -1544,20 +1544,6 @@ error(char *format, ...)
   exit(1);
 }
 
-#ifdef old_warn
-static void __attribute__((format(printf, 1, 2)))
-warn(char *format, ...)
-{
-  char *msg;
-  va_list va;
-  va_start(va, format);
-  vasprintf(&msg, format, va);
-  va_end(va);
-  msg = asform("%s: %s\n", main_argv[0], msg);
-  show_msg(stderr, msg);
-}
-#endif
-
 static void
 warnw(wstring msg, wstring file, wstring err)
 {

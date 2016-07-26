@@ -200,7 +200,7 @@ init_locale_menu(void)
     locale_menu[count++] = strdup(locale);
   }
 
-  locale_menu[count++] = "(Default)";
+  locale_menu[count++] = __("(Default)");
   add_lcid(GetUserDefaultUILanguage());
   add_lcid(LOCALE_USER_DEFAULT);
   add_lcid(LOCALE_SYSTEM_DEFAULT);
@@ -211,7 +211,7 @@ init_locale_menu(void)
 static void
 init_charset_menu(void)
 {
-  charset_menu[0] = "(Default)";
+  charset_menu[0] = __("(Default)");
 
   string *p = charset_menu + 1;
   for (uint i = 0; i < lengthof(cs_descs); i++) {
@@ -222,11 +222,11 @@ init_charset_menu(void)
 
   string oem_cs = cs_name(GetOEMCP());
   if (*oem_cs == 'C')
-    *p++ = asform("%s (OEM codepage)", oem_cs);
+    *p++ = asform("%s %s", oem_cs, "(OEM codepage)");
 
   string ansi_cs = cs_name(GetACP());
   if (*ansi_cs == 'C')
-    *p++ = asform("%s (ANSI codepage)", ansi_cs);
+    *p++ = asform("%s %s", ansi_cs, "(ANSI codepage)");
 }
 
 static void
