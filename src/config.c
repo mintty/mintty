@@ -86,7 +86,7 @@ const config default_cfg = {
   // Terminal
   .term = "xterm",
   .answerback = W(""),
-  .bell_sound = false,
+  .bell_sound = true,
   .bell_type = 1,
   .bell_file = W(""),
   .bell_freq = 0,
