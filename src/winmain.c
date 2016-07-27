@@ -1114,7 +1114,7 @@ static struct {
 } wm_names[] = {
 #include "_wm.t"
 };
-  char * wm_name = "?";
+  char * wm_name = "WM_?";
   for (uint i = 0; i < lengthof(wm_names); i++)
     if (message == wm_names[i].wm_) {
       wm_name = wm_names[i].wm_name;
@@ -1150,13 +1150,13 @@ static struct {
       } idm_names[] = {
 # include "_winidm.t"
       };
-      char * idm_name = "?";
+      char * idm_name = "IDM_?";
       for (uint i = 0; i < lengthof(idm_names); i++)
         if ((wp & ~0xF) == idm_names[i].idm_) {
           idm_name = idm_names[i].idm_name;
           break;
         }
-      printf("                   %s\n", idm_name);
+      printf("                           %04X %s\n", wp, idm_name);
 # endif
       switch (wp & ~0xF) {  /* low 4 bits reserved to Windows */
         when IDM_OPEN: term_open();

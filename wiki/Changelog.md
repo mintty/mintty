@@ -1,3 +1,5 @@
+### 2.4.2 (27 Jul 2016) ###
+
   * Revert change (#123) that spoiled wide character display (#570).
   * Changed bell to make sound by default (like xterm) (#568).
 
