@@ -1314,6 +1314,8 @@ win_check_glyphs(wchar *wcs, uint num)
   ReleaseDC(wnd, dc);
 }
 
+#define dont_debug_win_char_width
+
 /* This function gets the actual width of a character in the normal font.
    Usage: determine whether to trim an ambiguous wide character 
    (of a CJK ambiguous-wide font such as BatangChe) to normal width 
@@ -1337,15 +1339,20 @@ win_char_width(xchar c)
   SelectObject(dc, fonts[FONT_NORMAL]);
   if (!GetCharWidth32W(dc, c, c, &ibuf))
     return 0;
+#ifdef debug_win_char_width
+    printf("win_char_width %04X %d (cell %d)\n", c, ibuf, cell_width);
+#endif
 
   // report char as wide if its width is more than 1½ cells
   ibuf += cell_width / 2 - 1;
   ibuf /= cell_width;
-#ifdef debug_ambiguous_char_width
+#ifdef debug_win_char_width
   if (c >= '~') {
     float char_width;
     GetCharWidthFloatW(dc, c, c, &char_width);
-    printf("win_char_width %04X: %d %f\n", c, ibuf, char_width);
+    ABC abc;
+    GetCharABCWidthsW(dc, c, c, &abc);
+    printf("               %04X float %d %f abc %d %d %d\n", c, ibuf, char_width, abc.abcA, abc.abcB, abc.abcC);
   }
 #endif
 
