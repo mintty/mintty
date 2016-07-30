@@ -19,7 +19,7 @@
  */
 #define CPAIR(x, y) ((x) << 8 | (y))
 
-static const char primary_da[] = "\e[?1;2;6;22c";
+static const char primary_da[] = "\e[?1;2;4;6;22c";
 
 /*
  * Move the cursor to a given position, clipping at boundaries. We
