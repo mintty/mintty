@@ -10,6 +10,7 @@
 #include "charset.h"
 #include "child.h"
 #include "print.h"
+#include "sixel.h"
 
 #include <sys/termios.h>
 
@@ -346,7 +347,7 @@ do_esc(uchar c)
     when ']':  /* OSC: operating system command */
       term.state = OSC_START;
     when 'P':  /* DCS: device control string */
-      term.state = CMD_STRING;
+      term.state = DCS_START;
       term.cmd_num = -1;
       term.cmd_len = 0;
     when '^' or '_': /* PM: privacy message, APC: application program command */
@@ -373,6 +374,7 @@ do_esc(uchar c)
     when 'Z':  /* DECID: terminal type query */
       child_write(primary_da, sizeof primary_da - 1);
     when 'c':  /* RIS: restore power-on settings */
+      win_clear_images();
       term_reset();
       if (term.reset_132) {
         win_set_chars(term.rows, 80);
@@ -926,64 +928,160 @@ do_dcs(void)
   // No DECUDK (User-Defined Keys) or xterm termcap/terminfo data.
 
   char *s = term.cmd_buf;
-
-  if (*s++ != '$')
-    return;
-
+  unsigned char *dst;
+  unsigned char *src;
+  unsigned char *pixels;
+  int i;
+  imglist *img;
   cattr attr = term.curs.attr;
+  int status = (-1);
+  int color;
+  static sixel_state_t st;
+  int width;
+  int height;
+  int alloc_pixelwidth, alloc_pixelheight;
+  int cell_width, cell_height;
+  int x, y;
+  int x0;
+  int attr0;
 
-  if (!strcmp(s, "qm")) { // SGR
-    char buf[64], *p = buf;
-    p += sprintf(p, "\eP1$r0");
+  switch (term.dcs_cmd) {
+  when 'q':
+    switch (term.state) {
+    when DCS_PASSTHROUGH:
+      status = sixel_parser_parse(&st, (unsigned char *)s, term.cmd_len);
+      if (status < 0)
+         return;
 
-    if (attr.attr & ATTR_BOLD)
-      p += sprintf(p, ";1");
-    if (attr.attr & ATTR_DIM)
-      p += sprintf(p, ";2");
-    if (attr.attr & ATTR_ITALIC)
-      p += sprintf(p, ";3");
-    if (attr.attr & ATTR_UNDER)
-      p += sprintf(p, ";4");
-    if (attr.attr & ATTR_BLINK)
-      p += sprintf(p, ";5");
-    if (attr.attr & ATTR_REVERSE)
-      p += sprintf(p, ";7");
-    if (attr.attr & ATTR_INVISIBLE)
-      p += sprintf(p, ";8");
-    if (attr.attr & ATTR_STRIKEOUT)
-      p += sprintf(p, ";9");
+    when DCS_ESCAPE:
+      status = sixel_parser_parse(&st, (unsigned char *)s, term.cmd_len);
+      if (status < 0)
+         return;
 
-    if (term.curs.oem_acs)
-      p += sprintf(p, ";%u", 10 + term.curs.oem_acs);
+      status = sixel_parser_finalize(&st);
+      if (status < 0)
+         return;
 
-    uint fg = (attr.attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
-    if (fg != FG_COLOUR_I) {
-      if (fg < 16)
-        p += sprintf(p, ";%u", (fg < 8 ? 30 : 90) + (fg & 7));
-      else
-        p += sprintf(p, ";38;5;%u", fg);
+      win_get_pixels(&height, &width);
+      cell_width = width / term.cols;
+      cell_height = height / term.rows;
+      alloc_pixelwidth = (st.image.width + cell_width - 1) / cell_width * cell_width;
+      alloc_pixelheight = (st.image.height + cell_height - 1) / cell_height * cell_height;
+      src = st.image.data;
+      dst = pixels = (unsigned char *)calloc(1, alloc_pixelwidth * alloc_pixelheight * 4);
+      for (y = 0; y < st.image.height; ++y) {
+        for (x = 0; x < st.image.width; ++x) {
+          color = st.image.palette[*src++];
+          *dst++ = color >> 0 & 0xff;    /* r */
+          *dst++ = color >> 8 & 0xff;    /* g */
+          *dst++ = color >> 16 & 0xff;   /* b */
+          dst++;                         /* a */
+        }
+        dst += 4 * (alloc_pixelwidth - st.image.width);
+      }
+
+      img = (imglist *)malloc(sizeof(imglist));
+      img->pixels = pixels;
+      img->hdc = NULL;
+      img->top = term.virtuallines + term.curs.y;
+      img->left = term.curs.x;
+      img->pixelwidth = alloc_pixelwidth;
+      img->pixelheight = alloc_pixelheight;
+      img->next = NULL;
+
+      x0 = term.curs.x;
+      attr0 = term.curs.attr.attr;
+
+      term.curs.attr.attr = ATTR_INVALID;
+
+      for (i = 0; i < alloc_pixelheight / cell_height; ++i) {
+        term.curs.x = x0;
+        for (x = x0; x < x0 + alloc_pixelwidth / cell_width && x < term.cols; ++x) {
+          write_char(0x20, 1);
+          term.lines[term.curs.y]->chars[term.curs.x - 1].attr.attr = ATTR_INVALID;
+        }
+        write_linefeed();
+      }
+
+      term.curs.attr.attr = attr0;
+
+      if (term.imgs.first == NULL) {
+        term.imgs.first = term.imgs.last = img;
+      } else {
+        imglist *cur;
+        for (cur = term.imgs.first; cur; cur = cur->next) {
+          if (img->top >= cur->top && img->top * cell_height + img->pixelheight <= cur->top * cell_height + cur->pixelheight &&
+              img->left >= cur->left && img->left * cell_width + img->pixelwidth <= cur->left * cell_width + cur->pixelwidth) {
+              memcpy(cur->pixels, img->pixels, img->pixelwidth * img->pixelheight * 4);
+              free(img->pixels);
+              return;
+          }
+        }
+        term.imgs.last->next = img;
+        term.imgs.last = img;
+      }
+
+    otherwise:
+      /* parser st initialization */
+      status = sixel_parser_init(&st);
+      if (status < 0)
+        return;
     }
 
-    uint bg = (attr.attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
-    if (bg != BG_COLOUR_I) {
-      if (bg < 16)
-        p += sprintf(p, ";%u", (bg < 8 ? 40 : 100) + (bg & 7));
-      else
-        p += sprintf(p, ";48;5;%u", bg);
+  when CPAIR('$', 'q'):
+    if (!strcmp(s, "m")) { // SGR
+      char buf[64], *p = buf;
+      p += sprintf(p, "\eP1$r0");
+
+      if (attr.attr & ATTR_BOLD)
+        p += sprintf(p, ";1");
+      if (attr.attr & ATTR_DIM)
+        p += sprintf(p, ";2");
+      if (attr.attr & ATTR_ITALIC)
+        p += sprintf(p, ";3");
+      if (attr.attr & ATTR_UNDER)
+        p += sprintf(p, ";4");
+      if (attr.attr & ATTR_BLINK)
+        p += sprintf(p, ";5");
+      if (attr.attr & ATTR_REVERSE)
+        p += sprintf(p, ";7");
+      if (attr.attr & ATTR_INVISIBLE)
+        p += sprintf(p, ";8");
+      if (attr.attr & ATTR_STRIKEOUT)
+        p += sprintf(p, ";9");
+
+      if (term.curs.oem_acs)
+        p += sprintf(p, ";%u", 10 + term.curs.oem_acs);
+
+      uint fg = (attr.attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
+      if (fg != FG_COLOUR_I) {
+        if (fg < 16)
+          p += sprintf(p, ";%u", (fg < 8 ? 30 : 90) + (fg & 7));
+        else
+          p += sprintf(p, ";38;5;%u", fg);
+      }
+
+      uint bg = (attr.attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
+      if (bg != BG_COLOUR_I) {
+        if (bg < 16)
+          p += sprintf(p, ";%u", (bg < 8 ? 40 : 100) + (bg & 7));
+        else
+          p += sprintf(p, ";48;5;%u", bg);
+      }
+
+      p += sprintf(p, "m\e\\");  // m for SGR, followed by ST
+
+      child_write(buf, p - buf);
     }
-
-    p += sprintf(p, "m\e\\");  // m for SGR, followed by ST
-
-    child_write(buf, p - buf);
-  }
-  else if (!strcmp(s, "qr"))  // DECSTBM (scroll margins)
+  when 'r':  // DECSTBM (scroll margins)
     child_printf("\eP1$r%u;%ur\e\\", term.marg_top + 1, term.marg_bot + 1);
-  else if (!strcmp(s, "q\"p"))  // DECSCL (conformance level)
+  when CPAIR('"', 'p'):  // DECSCL (conformance level)
     child_write("\eP1$r61\"p\e\\", 11);  // report as VT100
-  else if (!strcmp(s, "q\"q"))  // DECSCA (protection attribute)
+  when CPAIR('"', 'q'):  // DECSCA (protection attribute)
     child_printf("\eP1$r%u\"q\e\\", (attr.attr & ATTR_PROTECTED) != 0);
-  else
+  otherwise:
     child_write((char[]){CTRL('X')}, 1);
+  }
 }
 
 static void
@@ -1039,8 +1137,8 @@ do_cmd(void)
 {
   char *s = term.cmd_buf;
   s[term.cmd_len] = 0;
+
   switch (term.cmd_num) {
-    when -1: do_dcs();
     when 0 or 2: win_set_title(s);  // ignore icon title
     when 4:   do_colour_osc(true, 4, false);
     when 5:   do_colour_osc(true, 5, false);
@@ -1427,6 +1525,100 @@ term_write(const char *buf, uint len)
           when '\e':
             term.state = ESCAPE;
         }
+      when DCS_START:
+        term.cmd_len = 0;
+        term.dcs_cmd = 0;
+        switch (c) {
+          when '@' ... '~':  /* DCS cmd final byte */
+            term.dcs_cmd = c;
+            do_dcs();
+            term.state = DCS_PASSTHROUGH;
+          when '\e':
+            term.state = DCS_ESCAPE;
+          when '0' ... '9':  /* DCS parameter */
+            term.state = DCS_PARAM;
+          when ';':          /* DCS separator */
+            term.state = DCS_PARAM;
+          when ':':
+            term.state = DCS_IGNORE;
+          when '<' ... '?':
+            term.dcs_cmd = c;
+            term.state = DCS_PARAM;
+          when ' ' ... '/':  /* DCS intermediate byte */
+            term.dcs_cmd = c;
+            term.state = DCS_INTERMEDIATE;
+          otherwise:
+            term.state = DCS_IGNORE;
+        }
+      when DCS_PARAM:
+        switch (c) {
+          when '@' ... '~':  /* DCS cmd final byte */
+            term.dcs_cmd = term.dcs_cmd << 8 | c;
+            do_dcs();
+            term.state = DCS_PASSTHROUGH;
+          when '\e':
+            term.state = DCS_ESCAPE;
+          when '0' ... '9':  /* DCS parameter */
+          when ';':          /* DCS separator */
+          when ':':
+            term.state = DCS_IGNORE;
+          when '<' ... '?':
+            term.dcs_cmd = term.dcs_cmd << 8 | c;
+            term.state = DCS_PARAM;
+          when ' ' ... '/':  /* DCS intermediate byte */
+            term.dcs_cmd = term.dcs_cmd << 8 | c;
+            term.state = DCS_INTERMEDIATE;
+          otherwise:
+            term.state = DCS_IGNORE;
+        }
+      when DCS_INTERMEDIATE:
+        switch (c) {
+          when '@' ... '~':  /* DCS cmd final byte */
+            term.dcs_cmd = term.dcs_cmd << 8 | c;
+            do_dcs();
+            term.state = DCS_PASSTHROUGH;
+          when '\e':
+            term.state = DCS_ESCAPE;
+          when '0' ... '?':  /* DCS parameter byte */
+            term.state = DCS_IGNORE;
+          when ' ' ... '/':  /* DCS intermediate byte */
+            term.dcs_cmd = term.dcs_cmd << 8 | c;
+          otherwise:
+            term.state = DCS_IGNORE;
+        }
+      when DCS_PASSTHROUGH:
+        switch (c) {
+          when '\e':
+            term.state = DCS_ESCAPE;
+          otherwise:
+            if (term.cmd_len < lengthof(term.cmd_buf) - 1) {
+              term.cmd_buf[term.cmd_len++] = c;
+            } else {
+              do_dcs();
+              term.cmd_buf[0] = c;
+              term.cmd_len = 1;
+            }
+        }
+      when DCS_IGNORE:
+        switch (c) {
+          when '\e':
+            term.state = ESCAPE;
+        }
+      when DCS_ESCAPE:
+        if (c < 0x20) {
+          do_ctrl(c);
+          term.state = NORMAL;
+	} else if (c < 0x30) {
+          term.esc_mod = term.esc_mod ? 0xFF : c;
+          term.state = ESCAPE;
+        } else if (c == '\\') {
+          /* Process DCS sequence if we see ST. */
+          do_dcs();
+          term.state = NORMAL;
+        } else {
+          term.state = ESCAPE;
+          do_esc(c);
+	}
     }
   }
   term_schedule_search_partial_update();
