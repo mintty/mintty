@@ -646,6 +646,89 @@ win_paint(void)
   EndPaint(wnd, &p);
 }
 
+void win_clear_images(void)
+{
+  imglist *img, *prev;
+
+  for (img = term.imgs.first; img; ) {
+    if (img->hdc)
+      ReleaseDC(wnd, img->hdc);
+    else
+      free(img->pixels);
+    prev = img;
+    img = img->next;
+    free(prev);
+  }
+
+  for (img = term.imgs.altfirst; img; ) {
+    if (img->hdc)
+      ReleaseDC(wnd, img->hdc);
+    else
+      free(img->pixels);
+    prev = img;
+    img = img->next;
+    free(prev);
+  }
+
+  term.imgs.first = NULL;
+  term.imgs.last = NULL;
+  term.imgs.first = NULL;
+  term.imgs.last = NULL;
+}
+
+static void
+image_paint(void)
+{
+  imglist *img, *prev = NULL;
+  BITMAPINFO bmpinfo;
+  unsigned char *pixels;
+  HBITMAP hbmp;
+
+  for (img = term.imgs.first; img; ) {
+    if (img && img->top + img->pixelheight / cell_height - term.virtuallines < - term.sblen) {
+      if (img->hdc)
+        ReleaseDC(wnd, img->hdc);
+      else
+        free(img->pixels);
+      if (img == term.imgs.first)
+        term.imgs.first = img->next;
+      if (img == term.imgs.last)
+        term.imgs.last = prev;
+      if (prev)
+        prev->next = img->next;
+      prev = img;
+      img = img->next;
+      free(prev);
+    } else {
+      if (img->hdc == NULL) {
+        bmpinfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bmpinfo.bmiHeader.biWidth = img->pixelwidth;
+        bmpinfo.bmiHeader.biHeight = - img->pixelheight;
+        bmpinfo.bmiHeader.biPlanes = 1;
+        bmpinfo.bmiHeader.biBitCount = 32;
+        bmpinfo.bmiHeader.biCompression = BI_RGB;
+        pixels = malloc(img->pixelwidth * img->pixelheight * 4);
+        if (pixels) {
+          img->hdc = CreateCompatibleDC(dc);
+          hbmp = CreateDIBSection(dc, &bmpinfo, DIB_RGB_COLORS, (void**)&pixels, NULL, 0);
+          SelectObject(img->hdc, hbmp);
+          memcpy(pixels, img->pixels, img->pixelwidth * img->pixelheight * 4);
+          free(img->pixels);
+          img->pixels = pixels;
+        }
+      }
+      if ((img->top - term.virtuallines - term.disptop) * cell_height + img->pixelheight > 0) {
+        BitBlt(dc, img->left * cell_width + PADDING,
+               (img->top - term.virtuallines - term.disptop) * cell_height + PADDING,
+               img->pixelwidth, img->pixelheight, img->hdc,
+               0, 0, SRCCOPY);
+      }
+      prev = img;
+      img = img->next;
+    }
+  }
+}
+
 static void
 do_update(void)
 {
@@ -662,6 +745,8 @@ do_update(void)
   term_update_search();
 
   term_paint();
+  image_paint();
+
   ReleaseDC(wnd, dc);
 
   // Update scrollbar

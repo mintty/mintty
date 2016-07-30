@@ -137,6 +137,12 @@ term_reset(void)
   term.bracketed_paste = false;
   term.show_scrollbar = true;
 
+  term.virtuallines = 0;
+  term.imgs.first = NULL;
+  term.imgs.last = NULL;
+  term.imgs.altfirst = NULL;
+  term.imgs.altlast = NULL;
+
   term.marg_top = 0;
   term.marg_bot = term.rows - 1;
 
@@ -464,6 +470,7 @@ term_clear_search(void)
 static void
 scrollback_push(uchar *line)
 {
+  term.virtuallines++;
   if (term.sblines == term.sblen) {
     // Need to make space for the new line.
     if (term.sblen < cfg.scrollback_lines) {
@@ -671,6 +678,8 @@ term_resize(int newrows, int newcols)
 void
 term_switch_screen(bool to_alt, bool reset)
 {
+  imglist *first, *last;
+
   if (to_alt == term.on_alt_screen)
     return;
 
@@ -679,6 +688,13 @@ term_switch_screen(bool to_alt, bool reset)
   termlines *oldlines = term.lines;
   term.lines = term.other_lines;
   term.other_lines = oldlines;
+
+  first = term.imgs.first;
+  last = term.imgs.last;
+  term.imgs.first = term.imgs.altfirst;
+  term.imgs.last = term.imgs.altlast;
+  term.imgs.altfirst = first;
+  term.imgs.altlast = last;
 
   if (to_alt && reset)
     term_erase(false, false, true, true);

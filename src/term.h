@@ -273,6 +273,25 @@ typedef struct {
   uchar oem_acs;
 } term_cursor;
 
+typedef struct _imglist {
+  unsigned char *pixels;
+  unsigned char *palette;
+  int ncolors;
+  void *hdc;
+  int top;
+  int left;
+  int pixelwidth;
+  int pixelheight;
+  struct _imglist *next;
+} imglist;
+
+typedef struct {
+  imglist *first;
+  imglist *last;
+  imglist *altfirst;
+  imglist *altlast;
+} termimgs;
+
 struct term {
   bool on_alt_screen;     /* On alternate screen? */
   bool show_other_screen;
@@ -288,6 +307,7 @@ struct term {
   int tempsblines;        /* number of lines of .scrollback that
                            * can be retrieved onto the terminal
                            * ("temporary scrollback") */
+  long long int virtuallines;
 
   termlines *displines;   /* buffer of text on real screen */
 
@@ -348,13 +368,22 @@ struct term {
   int  cmd_num;        // OSC command number, or -1 for DCS
   char cmd_buf[2048];  // OSC or DCS string buffer and length
   uint cmd_len;
+  int dcs_cmd;
 
   uchar *tabs;
 
   enum {
     NORMAL, ESCAPE, CSI_ARGS,
     IGNORE_STRING, CMD_STRING, CMD_ESCAPE,
-    OSC_START, OSC_NUM, OSC_PALETTE
+    OSC_START,
+    OSC_NUM,
+    OSC_PALETTE,
+    DCS_START,
+    DCS_PARAM,
+    DCS_INTERMEDIATE,
+    DCS_PASSTHROUGH,
+    DCS_IGNORE,
+    DCS_ESCAPE
   } state;
 
   // Mouse mode
@@ -408,6 +437,8 @@ struct term {
 
   // Search results
   termresults results;
+
+  termimgs imgs;
 };
 
 extern struct term term;
