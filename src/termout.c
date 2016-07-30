@@ -996,10 +996,8 @@ do_dcs(void)
 
       for (i = 0; i < alloc_pixelheight / cell_height; ++i) {
         term.curs.x = x0;
-        for (x = x0; x < x0 + alloc_pixelwidth / cell_width && x < term.cols; ++x) {
+        for (x = x0; x < x0 + alloc_pixelwidth / cell_width && x < term.cols; ++x)
           write_char(0x20, 1);
-          term.lines[term.curs.y]->chars[term.curs.x - 1].attr.attr = ATTR_INVALID;
-        }
         write_linefeed();
       }
 
