@@ -404,7 +404,7 @@ win_init_fonts(int size)
 
   HDC dc = GetDC(wnd);
   font_height =
-    size > 0 ? -MulDiv(size, GetDeviceCaps(dc, LOGPIXELSY), 72) : -size;
+    size > 0 ? -MulDiv(size, GetDeviceCaps(dc, LOGPIXELSY) * dpi, 72 * 96) : -size;
   // we might think about considering GetDpiForMonitor to scale the 
   // font size here,
   // but in fact this is already achieved by the handling of WM_DPICHANGED, 

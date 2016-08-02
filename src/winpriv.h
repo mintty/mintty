@@ -24,6 +24,7 @@ extern int PADDING;
 
 
 extern bool win_is_fullscreen;
+extern uint dpi;
 
 extern void win_paint(void);
 

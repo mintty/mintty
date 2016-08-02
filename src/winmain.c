@@ -50,6 +50,10 @@ static bool invoked_with_appid = false;
 #endif
 
 
+//filled by win_adjust_borders:
+static LONG window_style;
+static int term_width, term_height;
+static int width, height;
 static int extra_width, extra_height, norm_extra_width, norm_extra_height;
 
 // State
@@ -128,7 +132,7 @@ load_dwm_funcs(void)
 #define dont_debug_dpi
 
 static bool per_monitor_dpi_aware = false;
-static uint dpi;
+uint dpi = 96;
 
 #define WM_DPICHANGED 0x02E0
 const int Process_System_DPI_Aware = 1;
@@ -777,13 +781,13 @@ win_invalidate_all(void)
 }
 
 static void
-win_adjust_borders()
+win_adjust_borders(int t_width, int t_height)
 {
-  int term_width = cell_width * cfg.cols;
-  int term_height = cell_height * cfg.rows;
+  term_width = t_width;
+  term_height = t_height;
   RECT cr = {0, 0, term_width + 2 * PADDING, term_height + 2 * PADDING};
   RECT wr = cr;
-  LONG window_style = WS_OVERLAPPEDWINDOW;
+  window_style = WS_OVERLAPPEDWINDOW;
   if (border_style) {
     if (strcmp(border_style, "void") == 0)
       window_style &= ~(WS_CAPTION | WS_BORDER | WS_THICKFRAME);
@@ -791,8 +795,8 @@ win_adjust_borders()
       window_style &= ~(WS_CAPTION | WS_BORDER);
   }
   AdjustWindowRect(&wr, window_style, false);
-  int width = wr.right - wr.left;
-  int height = wr.bottom - wr.top;
+  width = wr.right - wr.left;
+  height = wr.bottom - wr.top;
 
   if (cfg.scrollbar)
     width += GetSystemMetrics(SM_CXVSCROLL);
@@ -1156,7 +1160,7 @@ static struct {
           idm_name = idm_names[i].idm_name;
           break;
         }
-      printf("                           %04X %s\n", wp, idm_name);
+      printf("                           %04X %s\n", (int)wp, idm_name);
 # endif
       switch (wp & ~0xF) {  /* low 4 bits reserved to Windows */
         when IDM_OPEN: term_open();
@@ -1271,7 +1275,7 @@ static struct {
       //     -> Windows sends WM_THEMECHANGED and WM_SYSCOLORCHANGE
       // and in both case a couple of WM_WININICHANGE
 
-      win_adjust_borders();
+      win_adjust_borders(cell_width * cfg.cols, cell_height * cfg.rows);
       RedrawWindow(wnd, null, null, 
                    RDW_FRAME | RDW_INVALIDATE |
                    RDW_UPDATENOW | RDW_ALLCHILDREN);
@@ -1317,6 +1321,10 @@ static struct {
       DestroyCaret();
       win_update();
 
+    when WM_INITMENU:
+      win_update_menus();
+      return 0;
+
     when WM_MOVING:
       trace_resize(("# WM_MOVING VK_SHIFT %02X\n", GetKeyState(VK_SHIFT)));
       zoom_token = -4;
@@ -1324,16 +1332,6 @@ static struct {
     when WM_ENTERSIZEMOVE:
       trace_resize(("# WM_ENTERSIZEMOVE VK_SHIFT %02X\n", GetKeyState(VK_SHIFT)));
       resizing = true;
-
-    when WM_EXITSIZEMOVE or WM_CAPTURECHANGED:  // after mouse-drag resizing
-      trace_resize(("# WM_EXITSIZEMOVE (resizing %d) VK_SHIFT %02X\n", resizing, GetKeyState(VK_SHIFT)));
-      bool shift = GetKeyState(VK_SHIFT) & 0x80;
-      if (resizing) {
-        resizing = false;
-        win_destroy_tip();
-        trace_resize((" (win_proc (WM_EXITSIZEMOVE) -> win_adapt_term_size)\n"));
-        win_adapt_term_size(shift, false);
-      }
 
     when WM_SIZING: {  // mouse-drag window resizing
       trace_resize(("# WM_SIZING (resizing %d) VK_SHIFT %02X\n", resizing, GetKeyState(VK_SHIFT)));
@@ -1407,11 +1405,48 @@ static struct {
       return 0;
     }
 
-    when WM_INITMENU:
-      win_update_menus();
-      return 0;
+    when WM_EXITSIZEMOVE or WM_CAPTURECHANGED: { // after mouse-drag resizing
+      trace_resize(("# WM_EXITSIZEMOVE (resizing %d) VK_SHIFT %02X\n", resizing, GetKeyState(VK_SHIFT)));
+      bool shift = GetKeyState(VK_SHIFT) & 0x80;
+
+      if (resizing) {
+        resizing = false;
+        win_destroy_tip();
+        trace_resize((" (win_proc (WM_EXITSIZEMOVE) -> win_adapt_term_size)\n"));
+        win_adapt_term_size(shift, false);
+      }
+    }
+
+    when WM_WINDOWPOSCHANGED: {
+#     define WP ((WINDOWPOS *) lp)
+      trace_resize(("# WM_WINDOWPOSCHANGED (resizing %d) %d %d @ %d %d\n", resizing, WP->cy, WP->cx, WP->y, WP->x));
+      bool dpi_changed = true;
+      if (per_monitor_dpi_aware && cfg.handle_dpichanged && pGetDpiForMonitor) {
+        HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+        uint x, y;
+        pGetDpiForMonitor(mon, 0, &x, &y);  // MDT_EFFECTIVE_DPI
+#ifdef debug_dpi
+        printf("WM_WINDOWPOSCHANGED %d -> %d (aware %d handle %d)\n", dpi, y, per_monitor_dpi_aware, cfg.handle_dpichanged);
+#endif
+        if (y != dpi) {
+          dpi = y;
+        }
+        else
+          dpi_changed = false;
+      }
+
+      if (dpi_changed && per_monitor_dpi_aware && cfg.handle_dpichanged) {
+        // remaining glitch:
+        // start mintty -p @1; move it to other monitor;
+        // columns will be less
+        //win_init_fonts(cfg.font.size);
+        font_cs_reconfig(true);
+        win_adapt_term_size(true, false);
+      }
+    }
 
     when WM_DPICHANGED: {
+#ifdef handle_dpi_on_dpichanged
       bool dpi_changed = true;
       if (per_monitor_dpi_aware && cfg.handle_dpichanged && pGetDpiForMonitor) {
         HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
@@ -1430,6 +1465,7 @@ static struct {
       else
         printf("WM_DPICHANGED (aware %d handle %d)\n", per_monitor_dpi_aware, cfg.handle_dpichanged);
 #endif
+
       if (dpi_changed && per_monitor_dpi_aware && cfg.handle_dpichanged) {
         // this RECT is adjusted with respect to the monitor dpi already,
         // so we don't need to consider GetDpiForMonitor
@@ -1455,6 +1491,7 @@ static struct {
         return 0;
       }
       break;
+#endif
     }
   }
  /*
@@ -2213,29 +2250,7 @@ main(int argc, char *argv[])
   cs_reconfig();
 
   // Determine window sizes.
-  int term_width = cell_width * term_cols;
-  int term_height = cell_height * term_rows;
-
-  RECT cr = {0, 0, term_width + 2 * PADDING, term_height + 2 * PADDING};
-  RECT wr = cr;
-  LONG window_style = WS_OVERLAPPEDWINDOW;
-  if (border_style) {
-    if (strcmp(border_style, "void") == 0)
-      window_style &= ~(WS_CAPTION | WS_BORDER | WS_THICKFRAME);
-    else
-      window_style &= ~(WS_CAPTION | WS_BORDER);
-  }
-  AdjustWindowRect(&wr, window_style, false);
-  int width = wr.right - wr.left;
-  int height = wr.bottom - wr.top;
-
-  if (cfg.scrollbar)
-    width += GetSystemMetrics(SM_CXVSCROLL);
-
-  extra_width = width - (cr.right - cr.left);
-  extra_height = height - (cr.bottom - cr.top);
-  norm_extra_width = extra_width;
-  norm_extra_height = extra_height;
+  win_adjust_borders(cell_width * term_cols, cell_height * term_rows);
 
   // Having x == CW_USEDEFAULT but not y still triggers default positioning,
   // whereas y == CW_USEDEFAULT but not x results in an invisible window,
@@ -2346,6 +2361,14 @@ main(int argc, char *argv[])
       HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
       uint x;
       pGetDpiForMonitor(mon, 0, &x, &dpi);  // MDT_EFFECTIVE_DPI
+#ifdef debug_dpi
+      printf("initial dpi %d\n", dpi);
+#endif
+      // recalculate effective font size and adjust window
+      if (dpi != 96) {
+        font_cs_reconfig(true);
+        win_set_chars(cfg.rows, cfg.cols);
+      }
     }
   }
 
