@@ -1,3 +1,8 @@
+### 2.4.3 (23 Aug 2016) ###
+
+  * Fix trails when moving other window over mintty under certain conditions (#576).
+  * Fix format of double child creation error message.
+
 ### 2.4.2 (27 Jul 2016) ###
 
   * Revert change (#123) that spoiled wide character display (#570).

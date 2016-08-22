@@ -310,6 +310,7 @@ child_proc(void)
           else
             term_write("\033[30;42m\033[K", 11);
           term_write(s, l);
+          term_write("\r\n", 2);
         }
 
         if (cfg.exit_title && *cfg.exit_title)
