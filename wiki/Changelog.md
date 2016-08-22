@@ -1,3 +1,7 @@
+### 2.5.0 (23 Aug 2016) ###
+
+  * Revise DPI handling (#470; #492, #487); always consider individual monitor DPI.
+
 ### 2.4.3 (23 Aug 2016) ###
 
   * Fix trails when moving other window over mintty under certain conditions (#576).
