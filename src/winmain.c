@@ -831,8 +831,8 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
     uint x, y;
     pGetDpiForMonitor(mon, 0, &x, &y);  // MDT_EFFECTIVE_DPI
     // we might think about scaling the font size by this factor,
-    // but in fact this is already achieved by the handling of WM_DPICHANGED, 
-    // see there; (unless we would want to consider it initially)
+    // but this is handled elsewhere; (used to be via WM_DPICHANGED, 
+    // now via WM_WINDOWPOSCHANGED and initially)
     printf(" eff %d", y);
   }
   printf("\n");
@@ -1480,6 +1480,7 @@ static struct {
                      SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
         int y = term.rows, x = term.cols;
         win_adapt_term_size(false, true);
+        //?win_init_fonts(cfg.font.size);
         // try to stabilize terminal size roundtrip
         if (term.rows != y || term.cols != x) {
           // win_fix_position also clips the window to desktop size
