@@ -1,3 +1,5 @@
+  * Fix disappearing VT100 graphic characters when font size too small (#578).
+
 ### 2.5.0 (23 Aug 2016) ###
 
   * Revise DPI handling (#470; #492, #487); always consider individual monitor DPI.
