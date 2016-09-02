@@ -129,25 +129,32 @@ load_dwm_funcs(void)
   }
 }
 
-#define dont_debug_dpi
+#define debug_dpi
 
 static bool per_monitor_dpi_aware = false;
 uint dpi = 96;
 
 #define WM_DPICHANGED 0x02E0
 const int Process_System_DPI_Aware = 1;
-const int Process_Per_Monitor_DPI_Aware  = 2;
-const int MDT_Effective_DPI = 0;
+const int Process_Per_Monitor_DPI_Aware = 2;
 static HRESULT (WINAPI * pGetProcessDpiAwareness)(HANDLE hprocess, int * value) = 0;
 static HRESULT (WINAPI * pSetProcessDpiAwareness)(int value) = 0;
 static HRESULT (WINAPI * pGetDpiForMonitor)(HMONITOR mon, int type, uint * x, uint * y) = 0;
 
+DECLARE_HANDLE(DPI_AWARENESS_CONTEXT);
+#define DPI_AWARENESS_CONTEXT_UNAWARE           ((DPI_AWARENESS_CONTEXT)-1)
+#define DPI_AWARENESS_CONTEXT_SYSTEM_AWARE      ((DPI_AWARENESS_CONTEXT)-2)
+#define DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE ((DPI_AWARENESS_CONTEXT)-3)
+static DPI_AWARENESS_CONTEXT (WINAPI * pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT dpic) = 0;
+static HRESULT (WINAPI * pEnableNonClientDpiScaling)(HWND win) = 0;
+
 static void
-load_shcore_funcs(void)
+load_dpi_funcs(void)
 {
   HMODULE shc = load_sys_library("shcore.dll");
+  HMODULE user = load_sys_library("user32.dll");
 #ifdef debug_dpi
-  printf("load_shcore_funcs shc %d\n", !!shc);
+  printf("load_dpi_funcs shcore %d user32 %d\n", !!shc, !!user);
 #endif
   if (shc) {
     pGetProcessDpiAwareness =
@@ -156,15 +163,36 @@ load_shcore_funcs(void)
       (void *)GetProcAddress(shc, "SetProcessDpiAwareness");
     pGetDpiForMonitor =
       (void *)GetProcAddress(shc, "GetDpiForMonitor");
+  }
+  if (user) {
+    pSetThreadDpiAwarenessContext =
+      (void *)GetProcAddress(user, "SetThreadDpiAwarenessContext");
+    pEnableNonClientDpiScaling =
+      (void *)GetProcAddress(user, "EnableNonClientDpiScaling");
+  }
 #ifdef debug_dpi
-    printf("SetProcessDpiAwareness %d GetProcessDpiAwareness %d GetDpiForMonitor %d\n", !!pSetProcessDpiAwareness, !!pGetProcessDpiAwareness, !!pGetDpiForMonitor);
+  printf("SetProcessDpiAwareness %d GetProcessDpiAwareness %d GetDpiForMonitor %d SetThreadDpiAwarenessContext %d EnableNonClientDpiScaling %d\n", !!pSetProcessDpiAwareness, !!pGetProcessDpiAwareness, !!pGetDpiForMonitor, !!pSetThreadDpiAwarenessContext, !!pEnableNonClientDpiScaling);
 #endif
+}
+
+void
+set_dpi_auto_scaling(bool on)
+{
+  if (pSetThreadDpiAwarenessContext) {
+    if (on)
+      pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_UNAWARE);
+    else
+      pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
   }
 }
 
 static bool
 set_per_monitor_dpi_aware()
 {
+  if (pSetThreadDpiAwarenessContext) {
+    if (pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE))
+      return true;
+  }
   if (pSetProcessDpiAwareness && pGetProcessDpiAwareness) {
     HRESULT hr = pSetProcessDpiAwareness(Process_Per_Monitor_DPI_Aware);
     // E_ACCESSDENIED:
@@ -2096,7 +2124,7 @@ main(int argc, char *argv[])
 
   load_dwm_funcs();  // must be called after the fork() above!
 
-  load_shcore_funcs();
+  load_dpi_funcs();
   per_monitor_dpi_aware = set_per_monitor_dpi_aware();
 #ifdef debug_dpi
   printf("per_monitor_dpi_aware %d\n", per_monitor_dpi_aware);
@@ -2276,6 +2304,13 @@ main(int argc, char *argv[])
                         window_style | (cfg.scrollbar ? WS_VSCROLL : 0),
                         x, y, width, height,
                         null, null, inst, null);
+  if (pEnableNonClientDpiScaling) {
+    BOOL res = pEnableNonClientDpiScaling(wnd);
+    (void)res;
+#ifdef debug_dpi
+    printf("EnableNonClientDpiScaling: %d\n", !!res);
+#endif
+  }
 
   // Adapt window position (and maybe size) to special parameters
   // also select monitor if requested

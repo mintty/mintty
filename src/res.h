@@ -10,3 +10,13 @@
 // value is already needed before it would be available that way - totally insane!
 // Therefore, its setting is taken out to this common include file.
 #define DIALOG_HEIGHT 182
+
+#define DIALOG_TITLE "Options"
+
+#define DIALOG_FONT "MS Shell Dlg"
+//#define DIALOG_FONT "Tahoma"
+
+//#define DIALOG_FONT "Calibri"
+//#define DIALOG_FONT "Trebuchet MS"
+//#define DIALOG_FONT "Lucida Sans Unicode"
+

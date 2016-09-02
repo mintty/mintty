@@ -119,8 +119,8 @@ $(BINDIR)/term%.o: term%.c
 $(BINDIR)/%.o: %.c
 	$(CC) -c $(DEPOPT) $(CPPFLAGS) $(CCFLAGS) -fstack-check $< -o $(BINDIR)/$*.o
 
-$(BINDIR)/%.o: %.rc %.mft
-	$(RC) --preprocessor '$(CC) -E -xc -DRC_INVOKED $(DEPOPT) $(CPPFLAGS)' $< $(BINDIR)/$*.o
+$(BINDIR)/%.o: %.rc %.h %.mft
+	$(RC) -c 65001 --preprocessor '$(CC) -E -xc -DRC_INVOKED $(DEPOPT) $(CPPFLAGS)' $< $(BINDIR)/$*.o
 	-mv $*.d $(BINDIR)/
 
 exe := $(NAME).exe

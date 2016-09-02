@@ -322,6 +322,8 @@ win_open_config(void)
   if (config_wnd)
     return;
 
+  set_dpi_auto_scaling(true);
+
   static bool initialised = false;
   if (!initialised) {
     InitCommonControls();
@@ -350,6 +352,8 @@ win_open_config(void)
   determine_geometry(config_wnd);  // dummy call
 
   ShowWindow(config_wnd, SW_SHOW);
+
+  set_dpi_auto_scaling(false);
 }
 
 void
