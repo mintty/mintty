@@ -95,6 +95,7 @@ const config default_cfg = {
   .bell_taskbar = true,
   .printer = W(""),
   .confirm_exit = true,
+  .allow_set_selection = false,
   // Command line
   .class = W(""),
   .hold = HOLD_START,
@@ -247,6 +248,7 @@ options[] = {
   {"BellTaskbar", OPT_BOOL, offcfg(bell_taskbar)},
   {"Printer", OPT_WSTRING, offcfg(printer)},
   {"ConfirmExit", OPT_BOOL, offcfg(confirm_exit)},
+  {"AllowSetSelection", OPT_BOOL, offcfg(allow_set_selection)},
 
   // Command line
   {"Class", OPT_WSTRING, offcfg(class)},

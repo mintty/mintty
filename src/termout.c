@@ -12,6 +12,7 @@
 #include "print.h"
 #include "sixel.h"
 #include "winimg.h"
+#include "base64.h"
 
 #include <sys/termios.h>
 
@@ -1212,6 +1213,48 @@ do_colour_osc(bool has_index_arg, uint i, bool reset)
 }
 
 /*
+ * OSC52: \e]52;[cp0-6];?|base64-string\07"
+ * Only system clipboard is supported now.
+ */
+static void do_clipboard(void)
+{
+
+  char *s = term.cmd_buf;
+  char *output;
+  int len;
+  int ret;
+
+  if (!cfg.allow_set_selection) {
+    return;
+  }
+
+  while (*s != ';' && *s != '\0') {
+    s += 1;
+  }
+  if (*s != ';') {
+    return;
+  }
+  s += 1;
+  if (*s == '?') {
+    /* Read from clipboard is unspported */
+    return;
+  }
+  len = strlen(s);
+
+  output = malloc(len + 1);
+  if (output == NULL) {
+    return;
+  }
+
+  ret = base64_decode_clip(s, len, output, len);
+  if (ret > 0) {
+    output[ret] = '\0';
+    win_copy_text(output);
+  }
+  free(output);
+}
+
+/*
  * Process OSC command sequences.
  */
 static void
@@ -1292,6 +1335,7 @@ do_cmd(void)
       *s = 0;
       child_printf("\e]7771;!%s\e\\", term.cmd_buf);
     }
+    when 52: do_clipboard();
   }
 }
 
