@@ -231,6 +231,17 @@ win_copy_title(void)
   win_copy(title, 0, len + 1);
 }
 
+void win_copy_text(const char *s)
+{
+  wchar text[strlen(s) + 1];
+  int size;
+
+  size = cs_mbstowcs(text, s, lengthof(text));
+  if (size > 0 && size < (int)lengthof(text)) {
+     win_copy(text, 0, size);
+  }
+}
+
 void
 win_prefix_title(const wstring prefix)
 {
@@ -2433,6 +2444,7 @@ main(int argc, char *argv[])
   }
 
   // Initialise the terminal.
+  term_init();
   term_reset();
   term_resize(term_rows, term_cols);
 
@@ -2486,8 +2498,10 @@ main(int argc, char *argv[])
   for (;;) {
     MSG msg;
     while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
-      if (msg.message == WM_QUIT)
+      if (msg.message == WM_QUIT) {
+        term_release();
         return msg.wParam;
+      }
       if (!IsDialogMessage(config_wnd, &msg))
         DispatchMessage(&msg);
     }

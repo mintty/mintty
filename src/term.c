@@ -103,6 +103,31 @@ term_cursor_reset(term_cursor *curs)
   curs->autowrap = true;
 }
 
+void term_init(void)
+{
+  char *buf;
+  int buf_size;
+
+  buf_size = cfg.cmd_buf_size;
+  if (buf_size < DEFAULT_CMD_BUF_SIZE) {
+    buf_size = DEFAULT_CMD_BUF_SIZE;
+  }
+  buf = (char *)malloc(buf_size);
+  if (buf == NULL) {
+    buf_size = DEFAULT_CMD_BUF_SIZE;
+    buf = (char *)malloc(buf_size);
+  }
+  term.cmd_buf = buf;
+  term.cmd_buf_size = buf_size;
+}
+
+void term_release(void)
+{
+  free(term.cmd_buf);
+  term.cmd_buf = NULL;
+  term.cmd_buf_size = 0;
+}
+
 void
 term_reset(void)
 {

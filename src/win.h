@@ -33,6 +33,7 @@ void win_restore_title(void);
 void win_prefix_title(const wstring);
 void win_unprefix_title(const wstring);
 void win_copy_title(void);
+void win_copy_text(const char *s);
 
 colour win_get_colour(colour_i);
 void win_set_colour(colour_i, colour);
