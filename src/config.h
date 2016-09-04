@@ -18,6 +18,7 @@ enum { TR_OFF = 0, TR_LOW = 16, TR_MEDIUM = 32, TR_HIGH = 48, TR_GLASS = -1 };
 typedef uint colour;
 
 enum { DEFAULT_COLOUR = UINT_MAX };
+enum { DEFAULT_CMD_BUF_SIZE = 2048 };
 
 static inline colour
 make_colour(uchar r, uchar g, uchar b) { return r | g << 8 | b << 16; }
@@ -109,6 +110,7 @@ typedef struct {
   bool bell_taskbar;
   wstring printer;
   bool confirm_exit;
+  int cmd_buf_size;
   // Command line
   wstring class;
   char hold;

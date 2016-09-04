@@ -1038,22 +1038,27 @@ static void do_clipboard(void)
   // Only system clipboard is supported now.
 
   char *s = term.cmd_buf;
-  char output[sizeof(term.cmd_buf)];
+  char *output;
   int len;
   int ret;
 
-  len = strlen(s);
+  len = term.cmd_len;
   if (len < 2)
     return;
 
   if (s[1] != ';')
     return;
 
-  ret = base64_decode_clip(s+2, len - 2, output, sizeof(output)-1);
+  output = (char *)malloc(len-1);
+  if (output == NULL) {
+    return;
+  }
+  ret = base64_decode_clip(s+2, len - 2, output, len-2);
   if (ret > 0) {
     output[ret] = '\0';
     win_copy_text(output);
   }
+  free(output);
 }
 /*
  * Process OSC and DCS command sequences.
@@ -1442,7 +1447,7 @@ term_write(const char *buf, uint len)
           when '\e':
             term.state = CMD_ESCAPE;
           otherwise:
-            if (term.cmd_len < lengthof(term.cmd_buf) - 1)
+            if (term.cmd_len < term.cmd_buf_size - 1)
               term.cmd_buf[term.cmd_len++] = c;
         }
       when IGNORE_STRING:

@@ -106,6 +106,7 @@ const config default_cfg = {
   .title = W(""),
   .daemonize = true,
   .daemonize_always = false,
+  .cmd_buf_size = DEFAULT_CMD_BUF_SIZE,
   // "Hidden"
   .app_id = W(""),
   .app_name = W(""),
@@ -247,6 +248,7 @@ options[] = {
   {"BellTaskbar", OPT_BOOL, offcfg(bell_taskbar)},
   {"Printer", OPT_WSTRING, offcfg(printer)},
   {"ConfirmExit", OPT_BOOL, offcfg(confirm_exit)},
+  {"CmdBufSize", OPT_INT, offcfg(cmd_buf_size)},
 
   // Command line
   {"Class", OPT_WSTRING, offcfg(class)},

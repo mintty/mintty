@@ -2444,6 +2444,7 @@ main(int argc, char *argv[])
   }
 
   // Initialise the terminal.
+  term_init();
   term_reset();
   term_resize(term_rows, term_cols);
 
@@ -2497,8 +2498,10 @@ main(int argc, char *argv[])
   for (;;) {
     MSG msg;
     while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
-      if (msg.message == WM_QUIT)
+      if (msg.message == WM_QUIT) {
+        term_release();
         return msg.wParam;
+      }
       if (!IsDialogMessage(config_wnd, &msg))
         DispatchMessage(&msg);
     }
