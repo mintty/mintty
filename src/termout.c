@@ -1049,7 +1049,7 @@ static void do_clipboard(void)
   if (s[1] != ';')
     return;
 
-  ret = base64_decode(s+2, len - 2, output, sizeof(output)-1);
+  ret = base64_decode_clip(s+2, len - 2, output, sizeof(output)-1);
   if (ret > 0) {
     output[ret] = '\0';
     win_copy_text(output);

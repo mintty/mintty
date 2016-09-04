@@ -126,6 +126,14 @@ static int do_decode(const char *input, int ilen, char *out)
 	return i;
 }
 
+int base64_decode_clip(const char *input, int ilen, char *out, int olen)
+{
+	if ((ilen % 4) != 0) {
+		ilen = ilen / 4 * 4;
+	}
+	return base64_decode(input, ilen, out, olen);
+}
+
 int base64_decode(const char *input, int ilen, char *out, int olen)
 {
 	int dec_len;
