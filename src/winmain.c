@@ -231,6 +231,17 @@ win_copy_title(void)
   win_copy(title, 0, len + 1);
 }
 
+void win_copy_text(const char *s)
+{
+  wchar text[strlen(s) + 1];
+  int size;
+
+  size = cs_mbstowcs(text, s, lengthof(text));
+  if (size > 0 && size < (int)lengthof(text)) {
+     win_copy(text, 0, size);
+  }
+}
+
 void
 win_prefix_title(const wstring prefix)
 {

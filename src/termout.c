@@ -10,6 +10,7 @@
 #include "charset.h"
 #include "child.h"
 #include "print.h"
+#include "base64.h"
 
 #include <sys/termios.h>
 
@@ -1031,6 +1032,29 @@ do_colour_osc(bool has_index_arg, uint i, bool reset)
     win_set_colour(i, c);
 }
 
+static void do_clipboard(void)
+{
+  // OSC52: \e]52;c;base64-string\07"
+  // Only system clipboard is supported now.
+
+  char *s = term.cmd_buf;
+  char output[sizeof(term.cmd_buf)];
+  int len;
+  int ret;
+
+  len = strlen(s);
+  if (len < 2)
+    return;
+
+  if (s[1] != ';')
+    return;
+
+  ret = base64_decode(s+2, len - 2, output, sizeof(output)-1);
+  if (ret > 0) {
+    output[ret] = '\0';
+    win_copy_text(output);
+  }
+}
 /*
  * Process OSC and DCS command sequences.
  */
@@ -1112,6 +1136,7 @@ do_cmd(void)
       *s = 0;
       child_printf("\e]7771;!%s\e\\", term.cmd_buf);
     }
+    when 52: do_clipboard();
   }
 }
 
