@@ -864,7 +864,11 @@ select_font(winctrl *c)
   font_spec fs = *(font_spec *) c->data;
   LOGFONTW lf;
   HDC dc = GetDC(0);
+ /* We could have the idea to consider `dpi` here, like for MulDiv in 
+  * win_init_fonts, but that's wrong.
+  */
   lf.lfHeight = -MulDiv(fs.size, GetDeviceCaps(dc, LOGPIXELSY), 72);
+  trace_fontsel(("Choose size (%d) %d -> lfHeight %d\n", cfg.font.size, fs.size, lf.lfHeight));
   ReleaseDC(0, dc);
   lf.lfWidth = lf.lfEscapement = lf.lfOrientation = 0;
   lf.lfItalic = lf.lfUnderline = lf.lfStrikeOut = 0;
@@ -887,9 +891,9 @@ select_font(winctrl *c)
       SendMessageW(hdlg, WM_CHOOSEFONT_GETLOGFONT, 0, (LPARAM)&lfapply);
       font_spec * fsp = &new_cfg.font;
       wstrset(&fsp->name, lfapply.lfFaceName);
-      trace_fontsel(("apply <%ls>\n", lfapply.lfFaceName));
       HDC dc = GetDC(0);
       fsp->size = -MulDiv(lfapply.lfHeight, 72, GetDeviceCaps(dc, LOGPIXELSY));
+      trace_fontsel(("Apply lfHeight %d -> size %d <%ls>\n", lfapply.lfHeight, fsp->size, lfapply.lfFaceName));
       ReleaseDC(0, dc);
       fsp->weight = lfapply.lfWeight;
       fsp->isbold = (lfapply.lfWeight >= FW_BOLD);
@@ -951,11 +955,11 @@ select_font(winctrl *c)
   // open font selection menu
   if (ChooseFontW(&cf)) {
     // font selection menu closed with OK
-    trace_fontsel(("OK <%ls>\n", lf.lfFaceName));
     wstrset(&fs.name, lf.lfFaceName);
     // here we could enumerate font widths and adjust...
     // rather doing that in win_init_fonts
     fs.size = cf.iPointSize / 10;
+    trace_fontsel(("OK iPointSize %d -> size %d <%ls>\n", cf.iPointSize, fs.size, lf.lfFaceName));
     fs.weight = lf.lfWeight;
     fs.isbold = (lf.lfWeight >= FW_BOLD);
     dlg_fontsel_set(c->ctrl, &fs);
@@ -1340,7 +1344,7 @@ dlg_fontsel_set(control *ctrl, font_spec *fs)
   //char * boldstr = fs->isbold ? "bold, " : "";
   char * boldstr = boldnesses[boldness];
 #if CYGWIN_VERSION_API_MINOR >= 201
-  int wsize = wcslen(fs->name) + strlen(boldstr) + fs->size ? 31 : 17;
+  int wsize = wcslen(fs->name) + strlen(boldstr) + (fs->size ? 31 : 17);
   wchar * wbuf = newn(wchar, wsize);
   if (fs->size)
     swprintf(wbuf, wsize, W("%ls, %s%d%s"), fs->name, boldstr, abs(fs->size),
