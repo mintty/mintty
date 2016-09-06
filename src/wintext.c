@@ -407,7 +407,7 @@ win_init_fonts(int size)
 #ifdef debug_dpi
   printf("dpi %d dev %d\n", dpi, GetDeviceCaps(dc, LOGPIXELSY));
 #endif
-  if (cfg.handle_dpichanged)
+  if (cfg.handle_dpichanged && per_monitor_dpi_aware)
     font_height =
       size > 0 ? -MulDiv(size, dpi, 72) : -size;
       // dpi is determined initially and via WM_WINDOWPOSCHANGED;
