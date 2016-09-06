@@ -20,6 +20,18 @@ termchar basic_erase_char = {.cc_next = 0, .chr = ' ',
                     .attr = {.attr = ATTR_DEFAULT, .truefg = 0, .truebg = 0}
                     };
 
+static bool
+vt220(string term)
+{
+  char * vt = strstr(term, "vt");
+  if (vt) {
+    unsigned int ver;
+    if (sscanf(vt + 2, "%u", &ver) == 1 && ver >= 220)
+      return true;
+  }
+  return false;
+}
+
 /*
  * Call when the terminal's blinking-text settings change, or when
  * a text blink has just occurred.
@@ -125,7 +137,7 @@ term_reset(void)
   term.insert = false;
   term.shortcut_override = term.escape_sends_fs = term.app_escape_key = false;
   term.app_control = 0;
-  term.vt220_keys = strstr(cfg.term, "vt220");
+  term.vt220_keys = vt220(cfg.term);
   term.app_keypad = term.app_cursor_keys = term.app_wheel = false;
   term.mouse_mode = MM_NONE;
   term.mouse_enc = ME_X10;
@@ -221,7 +233,7 @@ term_reconfig(void)
   if (new_cfg.delete_sends_del != cfg.delete_sends_del)
     term.delete_sends_del = new_cfg.delete_sends_del;
   if (strcmp(new_cfg.term, cfg.term))
-    term.vt220_keys = strstr(new_cfg.term, "vt220");
+    term.vt220_keys = vt220(new_cfg.term);
 }
 
 bool in_result(pos abspos, result run) {
@@ -1094,10 +1106,18 @@ term_paint(void)
       if (d->cc_next || (j > 0 && d[-1].cc_next))
         trace_run("cc"), break_run = true;
 
+#ifdef workaround_combining_double_issue_553
+     /*
+      * ... but not after a COMBINING DOUBLE (class 233 or 234)
+      */
+      if (textlen && text[textlen - 1] >= 0x035C && text[textlen - 1] <= 0x0362)
+        trace_run("dbl"), break_run = false;
+#endif
+
       if (!dirty_line) {
         if (dispchars[j].chr == tchar &&
             (dispchars[j].attr.attr & ~DATTR_STARTRUN) == tattr.attr)
-          break_run = true;
+          trace_run("str"), break_run = true;
         else if (!dirty_run && textlen == 1)
           trace_run("len"), break_run = true;
       }
@@ -1115,10 +1135,10 @@ term_paint(void)
       if (textlen && tbc != bc) {
         if (!is_sep_class(tbc) && !is_sep_class(bc))
           // break at RTL and other changes to avoid glyph confusion (#285)
-          trace_run("bc"), break_run = true;
+          trace_run("bcs"), break_run = true;
         else if (is_punct_class(tbc) || is_punct_class(bc))
           // break at digit to avoid adaptation to script style
-          trace_run("bc"), break_run = true;
+          trace_run("bcp"), break_run = true;
       }
       bc = tbc;
 

@@ -1094,6 +1094,7 @@ term_handler(control *ctrl, int event)
       dlg_listbox_add(ctrl, "xterm-vt220");
       dlg_listbox_add(ctrl, "vt100");
       dlg_listbox_add(ctrl, "vt220");
+      dlg_listbox_add(ctrl, "vt340");
       dlg_editbox_set(ctrl, new_cfg.term);
     when EVENT_VALCHANGE or EVENT_SELCHANGE:
       dlg_editbox_get(ctrl, &new_cfg.term);

@@ -1014,10 +1014,13 @@ Terminal emulation settings.
 The terminal type.  This determines the setting of the TERM environment variable
 at mintty startup.
 Choices available from the dropdown list are \fBxterm\fP, \fBxterm-256color\fP,
-\fBxterm-vt220\fP, \fBvt220\fP, and \fBvt100\fP.
+\fBxterm-vt220\fP, \fBvt100\fP, \fBvt220\fP, \fBvt340\fP.
+The option \fBvt340\fP facilitates a terminal ID indication corresponding 
+to the Sixel graphics feature (but there is no mutual dependence between 
+this setting and that feature).
 
-If the setting contains "vt220", xterm VT220-style function key mode is enabled
-instead of the default PC-style function key mode.
+If the setting contains "vt220" or higher, xterm VT220-style function 
+key mode is enabled instead of the default PC-style function key mode.
 (This can otherwise be set with the DECSET 1061 control sequence.)
 
 Apart from that, this setting has no effect on mintty's terminal emulation,
