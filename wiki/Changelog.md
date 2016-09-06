@@ -1,4 +1,9 @@
-  * Fix disappearing VT100 graphic characters when font size too small (#578).
+### 2.5.1 (6 Sep 2016) ###
+
+  * Fixed disappearing VT100 graphic characters when font size too small (#578).
+  * Fixed font scaling behaviour in Windows 7 and XP (#492).
+  * Fixed DPI scaling of Options menu (#492).
+  * Fixed font description formatting in Options menu.
 
 ### 2.5.0 (23 Aug 2016) ###
 
@@ -635,7 +640,7 @@ Keyboard:
 
 Scrollback:
   * Added an option to enable the command line scrollback when on the alternate screen (used by fullscreen apps such as editors). This option is off by default, in which case the mousewheel now sends standard cursor keycodes when on the alternate screen. Hence, mousewheel scrolling in 'less' should now work without special configuration.
-  * The mintty-0.4 mousewheel keycodes can be enabled and disabled using the new control sequences  `\e[?7787h` and `\e[?7787l`. These can be used to distinguish the mousewheel from the cursor keys without enabling full mouse reporting.
+  * The mintty-0.4 mousewheel keycodes can be enabled and disabled using the new control sequences `\e[?7787h` and `\e[?7787l`. These can be used to distinguish the mousewheel from the cursor keys without enabling full mouse reporting.
 
 Locales and charsets:
   * The 'Codepage' option is now called 'Character set', and there's a new 'Locale' option for language and territory.
@@ -675,7 +680,7 @@ Other:
   * Fixed erroneous NumLock detection, which broke numpad support in 'orpie'.
   * Fixed a problem with window resizing (again): after restoring from maximized state, part of the bottom line would disappear behind the window border.
   * The colour of text under a block cursor now is set to whichever of the foreground and background colours is further away (in colour space) from the cursor colour, to try to ensure legibility.
-  * Dropped support for C1 control characters (i.e. 0x80 to 0x9F). This is a VT220 feature, whereas MinTTY only claims to be a VT100  via its "primary device attribute" string. Removing support makes Cygwin's /bin/ascii utility work correctly with any 8-bit codepage and decreases the likelihood of accidental binary output messing up the terminal settings. Rxvt doesn't support the C1 control characters either, but xterm does. Please let me know of any applications where this incompatibility causes problems.
+  * Dropped support for C1 control characters (i.e. 0x80 to 0x9F). This is a VT220 feature, whereas MinTTY only claims to be a VT100 via its "primary device attribute" string. Removing support makes Cygwin's /bin/ascii utility work correctly with any 8-bit codepage and decreases the likelihood of accidental binary output messing up the terminal settings. Rxvt doesn't support the C1 control characters either, but xterm does. Please let me know of any applications where this incompatibility causes problems.
   * Added a long version of the -e option ("--exec"), and documented them in the manual page and --help output.
   * Changed the man page tip on setting environment variables to use the 'env' command instead of 'sh -c'.
   * Added a tip on making bash and readline 8-bit clean, to allow non-ASCII input and output.

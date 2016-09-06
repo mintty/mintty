@@ -69,7 +69,7 @@ The respective setting is cleared with a corresponding sequence ending with `l`.
 
 ## Scrollbar hiding ##
 
-These sequences can be used to hide or show the scrollbar, whereby the window size remains the same but the number of character columns is changed to account for the width of the scrollbar. If the the scrollbar is disabled in the options, it will always remain hidden.
+These sequences can be used to hide or show the scrollbar, whereby the window size remains the same but the number of character columns is changed to account for the width of the scrollbar. If the scrollbar is disabled in the options, it will always remain hidden.
 
 | **sequence**  | **scrollbar** |
 |:--------------|:--------------|
@@ -210,7 +210,7 @@ the window title to the Windows clipboard (like menu function "Copy Title"):
 ## Working directory ##
 
 The following _OSC_ ("operating system command") sequence can be used to 
-inform mintty about the current working directory (used in the Mac terminal), 
+inform mintty about the current working directory (as used in the Mac terminal), 
 in order to spawn a new (cloned) terminal window in that directory 
 (e.g. Alt+F2):
 

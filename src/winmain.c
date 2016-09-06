@@ -129,7 +129,7 @@ load_dwm_funcs(void)
   }
 }
 
-#define debug_dpi
+#define dont_debug_dpi
 
 bool per_monitor_dpi_aware = false;
 uint dpi = 96;

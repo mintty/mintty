@@ -16,7 +16,7 @@ Semi-bugs:
   * [da-response](http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/da-response.html): Mintty sends the same response to a DA (device attribute) request as xterm does: `\e[?1;2c`.
   * [dbcs-breakage](http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/dbcs-breakage.html): Double-byte charsets such as GBK or SJIS work fine.
   * [scroll-button-hang](http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/scroll-button-hang.html): Mouse click and scrollwheel handling has been redesigned and this issue has not been seen with mintty.
-  * [sgr21](http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/sgr21.html): The SGR 21 sequence does the same as in the Linux console, i.e. selecting normal text intensity.
+  * ([sgr21](http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/sgr21.html): The SGR 21 sequence does the same as in the Linux console, i.e. selecting normal text intensity.) – Overridden by new function to set doubly-underlined mode.
   * [window-placement](http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/window-placement.html): Initial window placement follows default Windows behaviour (by using AdjustWindowRect and GetWindowDC(0) as suggested).
 
 "Fun" wishes:
