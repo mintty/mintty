@@ -20,7 +20,9 @@
  */
 #define CPAIR(x, y) ((x) << 8 | (y))
 
-static const char primary_da[] = "\e[?1;2;4;6;22c";
+static string primary_da1 = "\e[?1;2c";
+static string primary_da2 = "\e[?62;1;2;4;6;22c";
+static string primary_da3 = "\e[?63;1;2;4;6;22c";
 
 /*
  * Move the cursor to a given position, clipping at boundaries. We
@@ -180,6 +182,26 @@ write_linefeed(void)
   else if (curs->y < term.rows - 1)
     curs->y++;
   curs->wrapnext = false;
+}
+
+static void
+write_primary_da(void)
+{
+  string primary_da = primary_da3;
+  char * vt = strstr(cfg.term, "vt");
+  if (vt) {
+    unsigned int ver;
+    if (sscanf(vt + 2, "%u", &ver) == 1) {
+      if (ver >= 300)
+        primary_da = primary_da3;
+      else if (ver >= 200)
+        primary_da = primary_da2;
+      else
+        primary_da = primary_da1;
+    }
+  }
+printf("ESC%s\n", primary_da + 1);
+  child_write(primary_da, strlen(primary_da));
 }
 
 static void
@@ -371,7 +393,7 @@ do_esc(uchar c)
         curs->y--;
       curs->wrapnext = false;
     when 'Z':  /* DECID: terminal type query */
-      child_write(primary_da, sizeof primary_da - 1);
+      write_primary_da();
     when 'c':  /* RIS: restore power-on settings */
       winimgs_clear();
       term_reset();
@@ -796,7 +818,7 @@ do_csi(uchar c)
     when 'P':        /* DCH: delete chars */
       insert_char(-arg0_def1);
     when 'c':        /* DA: terminal type query */
-      child_write(primary_da, sizeof primary_da - 1);
+      write_primary_da();
     when 'n':        /* DSR: cursor position query */
       if (arg0 == 6)
         child_printf("\e[%d;%dR", curs->y + 1, curs->x + 1);
