@@ -73,6 +73,8 @@ void win_show_warning(wchar *);
 
 bool win_is_glass_available(void);
 
+void win_clear_images(void);
+
 int get_tick_count(void);
 int cursor_blink_ticks(void);
 

@@ -137,6 +137,16 @@ term_reset(void)
   term.bracketed_paste = false;
   term.show_scrollbar = true;
 
+  term.virtuallines = 0;
+  term.imgs.parser_state = NULL;
+  term.imgs.first = NULL;
+  term.imgs.last = NULL;
+  term.imgs.altfirst = NULL;
+  term.imgs.altlast = NULL;
+  term.sixel_display = 0;
+  term.sixel_scrolls_right = 0;
+  term.sixel_scrolls_left = 0;
+
   term.marg_top = 0;
   term.marg_bot = term.rows - 1;
 
@@ -569,6 +579,7 @@ term_resize(int newrows, int newcols)
     for (int i = 0; i < store; i++) {
       termline *line = lines[i];
       scrollback_push(compressline(line));
+      term.virtuallines++;
       freeline(line);
     }
 
@@ -582,6 +593,9 @@ term_resize(int newrows, int newcols)
     // Adjust cursor position
     curs->y = max(0, curs->y - store);
     saved_curs->y = max(0, saved_curs->y - store);
+
+    // Adjust image position
+    term.virtuallines += min(0, store);
   }
 
   term.lines = lines = renewn(lines, newrows);
@@ -611,6 +625,9 @@ term_resize(int newrows, int newcols)
     // Adjust cursor position
     curs->y += restore;
     saved_curs->y += restore;
+
+    // Adjust image position
+    term.virtuallines -= restore;
   }
 
   // Resize lines
@@ -671,6 +688,8 @@ term_resize(int newrows, int newcols)
 void
 term_switch_screen(bool to_alt, bool reset)
 {
+  imglist *first, *last;
+
   if (to_alt == term.on_alt_screen)
     return;
 
@@ -679,6 +698,13 @@ term_switch_screen(bool to_alt, bool reset)
   termlines *oldlines = term.lines;
   term.lines = term.other_lines;
   term.other_lines = oldlines;
+
+  first = term.imgs.first;
+  last = term.imgs.last;
+  term.imgs.first = term.imgs.altfirst;
+  term.imgs.last = term.imgs.altlast;
+  term.imgs.altfirst = first;
+  term.imgs.altlast = last;
 
   if (to_alt && reset)
     term_erase(false, false, true, true);
@@ -776,6 +802,8 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
   }
   else {
     int seltop = topline;
+
+    term.virtuallines += lines;
 
     // Only push lines into the scrollback when scrolling off the top of the
     // normal screen and scrollback is actually enabled.
