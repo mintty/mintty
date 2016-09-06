@@ -8,6 +8,7 @@
 #include "charset.h"  // wcscpy
 
 #include "minibidi.h"
+#include "winimg.h"
 
 #include <winnls.h>
 
@@ -615,8 +616,10 @@ win_paint(void)
     (p.rcPaint.bottom - PADDING - 1) / cell_height
   );
 
-  if (update_state != UPDATE_PENDING)
+  if (update_state != UPDATE_PENDING) {
     term_paint();
+    winimg_paint();
+  }
 
   if (p.fErase || p.rcPaint.left < PADDING ||
       p.rcPaint.top < PADDING ||
@@ -659,6 +662,8 @@ do_update(void)
   term_update_search();
 
   term_paint();
+  winimg_paint();
+
   ReleaseDC(wnd, dc);
 
   // Update scrollbar

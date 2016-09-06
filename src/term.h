@@ -58,12 +58,14 @@ typedef enum {
 } colour_i;
 
 
-/*
+/* Special Characters:
  * UCSWIDE is a special value used in the terminal data to signify
  * the character cell containing the right-hand half of a CJK wide
  * character.
+ * SIXELCH is a special character which represents a part of SIXEL graphics.
  */
-enum { UCSWIDE = 0 };
+enum { UCSWIDE = 0,
+       SIXELCH = 1 };
 
 /* Three character attribute types:
  * The ATTRs (normal attributes) are stored with the characters in
@@ -273,6 +275,39 @@ typedef struct {
   uchar oem_acs;
 } term_cursor;
 
+typedef struct {
+  void *fp;
+  uint ref_counter;
+  uint amount;
+} tempfile_t;
+
+typedef struct {
+  tempfile_t *tempfile;
+  size_t position;
+} temp_strage_t;
+
+typedef struct _imglist {
+  unsigned char *pixels;
+  void *hdc;
+  void *hbmp;
+  temp_strage_t *strage;
+  int top;
+  int left;
+  int width;
+  int height;
+  int pixelwidth;
+  int pixelheight;
+  struct _imglist *next;
+} imglist;
+
+typedef struct {
+  void *parser_state;
+  imglist *first;
+  imglist *last;
+  imglist *altfirst;
+  imglist *altlast;
+} termimgs;
+
 struct term {
   bool on_alt_screen;     /* On alternate screen? */
   bool show_other_screen;
@@ -288,6 +323,7 @@ struct term {
   int tempsblines;        /* number of lines of .scrollback that
                            * can be retrieved onto the terminal
                            * ("temporary scrollback") */
+  long long int virtuallines;
 
   termlines *displines;   /* buffer of text on real screen */
 
@@ -335,6 +371,12 @@ struct term {
   bool bracketed_paste;
   bool show_scrollbar;
 
+  bool sixel_display;  // true if sixel scrolling mode is off
+  bool sixel_scrolls_right;  // on: sixel scrolling leaves cursor to right of graphic
+                             // off(default): the position after sixel depends on sixel_scrolls_left
+  bool sixel_scrolls_left;   // on: sixel scrolling moves cursor to beginning of the line
+                             // off(default): sixel scrolling moves cursor to left of graphics
+  bool private_color_registers;
   int  cursor_type;
   int  cursor_blinks;
   bool cursor_invalid;
@@ -348,13 +390,22 @@ struct term {
   int  cmd_num;        // OSC command number, or -1 for DCS
   char cmd_buf[2048];  // OSC or DCS string buffer and length
   uint cmd_len;
+  int dcs_cmd;
 
   uchar *tabs;
 
   enum {
     NORMAL, ESCAPE, CSI_ARGS,
     IGNORE_STRING, CMD_STRING, CMD_ESCAPE,
-    OSC_START, OSC_NUM, OSC_PALETTE
+    OSC_START,
+    OSC_NUM,
+    OSC_PALETTE,
+    DCS_START,
+    DCS_PARAM,
+    DCS_INTERMEDIATE,
+    DCS_PASSTHROUGH,
+    DCS_IGNORE,
+    DCS_ESCAPE
   } state;
 
   // Mouse mode
@@ -408,6 +459,8 @@ struct term {
 
   // Search results
   termresults results;
+
+  termimgs imgs;
 };
 
 extern struct term term;
