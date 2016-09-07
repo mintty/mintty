@@ -1,3 +1,7 @@
+  * Sixel graphics support (#572, thanks to Hayaki Saito).
+  * VT340 terminal ID configuration option (corresponding to Sixel feature).
+  * Fixed primary DA response, depending on configured terminal ID.
+
 ### 2.5.1 (6 Sep 2016) ###
 
   * Fixed disappearing VT100 graphic characters when font size too small (#578).

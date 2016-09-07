@@ -17,6 +17,11 @@ See LICENSE.PuTTY for PuTTY's copyright notice, contributors, and license.
 The sources of PuTTY 0.60 can be downloaded from
 ftp://ftp.chiark.greenend.org.uk/users/sgtatham/putty-0.60.
 
+Sixel code (sixel.c) is relicensed under GPL like mintty with the 
+permission of its author (kmiya@culti); Sixel colour conversion code 
+(sixel_hls.c) is licensed by its author Ross Combs under the license 
+quoted in the source file.
+
 The program icon is the apps/utilities-terminal icon from KDE's Oxygen theme,
 retrieved from http://websvn.kde.org/trunk/KDE/kdebase/runtime/pics/oxygen. 
 Thanks to the KDE artists for their sleek design. The Oxygen icons are licensed

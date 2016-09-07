@@ -150,6 +150,7 @@ term_reset(void)
   term.show_scrollbar = true;
 
   term.virtuallines = 0;
+  term.altvirtuallines = 0;
   term.imgs.parser_state = NULL;
   term.imgs.first = NULL;
   term.imgs.last = NULL;
@@ -701,6 +702,7 @@ void
 term_switch_screen(bool to_alt, bool reset)
 {
   imglist *first, *last;
+  long long int offset;
 
   if (to_alt == term.on_alt_screen)
     return;
@@ -711,12 +713,16 @@ term_switch_screen(bool to_alt, bool reset)
   term.lines = term.other_lines;
   term.other_lines = oldlines;
 
+  /* swap image list */
   first = term.imgs.first;
   last = term.imgs.last;
+  offset = term.virtuallines;
   term.imgs.first = term.imgs.altfirst;
   term.imgs.last = term.imgs.altlast;
+  term.virtuallines = term.altvirtuallines;
   term.imgs.altfirst = first;
   term.imgs.altlast = last;
+  term.altvirtuallines = offset;
 
   if (to_alt && reset)
     term_erase(false, false, true, true);

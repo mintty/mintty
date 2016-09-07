@@ -324,6 +324,7 @@ struct term {
                            * can be retrieved onto the terminal
                            * ("temporary scrollback") */
   long long int virtuallines;
+  long long int altvirtuallines;
 
   termlines *displines;   /* buffer of text on real screen */
 

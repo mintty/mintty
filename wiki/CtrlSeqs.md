@@ -223,6 +223,23 @@ The _file-URL_ liberally follows a `file:` URL scheme; examples are
   * _(empty)_ to restore the default behaviour
 
 
+## Sixel graphics end position ##
+
+After output of a sixel image in sixel scrolling mode, 
+the final cursor position can be next to the right bottom of the image, 
+below the left bottom of the image (default), or at the line beginning 
+below the image (like xterm). The mintty private sequence 7730 chooses 
+between the latter two options and is overridden by the xterm 
+control sequence 8452.
+
+| **sequence**  | **exit position**    |
+|:--------------|:---------------------|
+| `^[[?7730h`   | line beginning below |
+| `^[[?7730l`   | below left bottom    |
+| `^[[?8452h`   | next to right bottom |
+| `^[[?8452l`   | below image          |
+
+
 ## Cursor style ##
 
 The VT510 _[DECSCUSR](http://vt100.net/docs/vt510-rm/DECSCUSR)_ sequence can be used to control cursor shape and blinking.

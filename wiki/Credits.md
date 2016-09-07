@@ -30,6 +30,7 @@ And, continuing from release 2.0.1, more thanks particularly to:
   * Takashi Kawasaki, for a patch dealing with the Windows DPI handling features.
   * Johannes Schindelin, for advice about the obscure area of Windows taskbar properties configuration.
   * Kai (twitter:@sixhundredns), for the new Search feature and his cooperation to improve and integrate it.
+  * Hayaki Saito (saitoha.github.io), for the new Sixel graphics feature and his cooperation to improve and integrate it.
 
 Cheers,<br>
 Thomas
