@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Fri Jul 22 16:52:22 2016 -->
+<!-- CreationDate: Thu Sep  8 00:49:44 2016 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -1225,13 +1225,17 @@ Type</b> (Term=xterm)</p>
 determines the setting of the TERM environment variable at
 mintty startup. Choices available from the dropdown list are
 <b>xterm</b>, <b>xterm-256color</b>, <b>xterm-vt220</b>,
-<b>vt220</b>, and <b>vt100</b>.</p>
+<b>vt100</b>, <b>vt220</b>, <b>vt340</b>. The option
+<b>vt340</b> facilitates a terminal ID indication
+corresponding to the Sixel graphics feature (but there is no
+mutual dependence between this setting and that
+feature).</p>
 
 <p style="margin-left:22%; margin-top: 1em">If the setting
-contains &quot;vt220&quot;, xterm VT220-style function key
-mode is enabled instead of the default PC-style function key
-mode. (This can otherwise be set with the DECSET 1061
-control sequence.)</p>
+contains &quot;vt220&quot; or higher, xterm VT220-style
+function key mode is enabled instead of the default PC-style
+function key mode. (This can otherwise be set with the
+DECSET 1061 control sequence.)</p>
 
 <p style="margin-left:22%; margin-top: 1em">Apart from
 that, this setting has no effect on mintty&rsquo;s terminal

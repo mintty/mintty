@@ -1,3 +1,5 @@
+### 2.6.0 (8 Sep 2016) ###
+
   * Sixel graphics support (#572, thanks to Hayaki Saito).
   * VT340 terminal ID configuration option (corresponding to Sixel feature).
   * Fixed primary DA response, depending on configured terminal ID.

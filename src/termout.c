@@ -200,7 +200,6 @@ write_primary_da(void)
         primary_da = primary_da1;
     }
   }
-printf("ESC%s\n", primary_da + 1);
   child_write(primary_da, strlen(primary_da));
 }
 
