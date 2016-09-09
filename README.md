@@ -4,7 +4,9 @@ and [Msys2](https://github.com/msys2).
 
 #### Overview ####
 
-For an introduction, see the [Mintty homepage](http://mintty.github.io/).
+For an introduction, see the [Mintty homepage](http://mintty.github.io/),
+also linking to the [Wiki](https://github.com/mintty/mintty/wiki) 
+and the [manual page](http://mintty.github.io/mintty.1.html).
 
 #### Bugs and Enhancements ####
 

@@ -260,7 +260,7 @@ Zooming:
   * New option ZoomMouse=off to disable mouse-wheel zooming.
   * Enabled Shift+Ctrl+0 to reset zooming for font and window (#233).
 
-Fixes̈:
+Fixes:
   * Fixed crash after conditional daemonizing (#464, #465).
   * Apply daemonizing for cloned window (Alt+F2) to avoid zombie process (thanks to Paul Townsend).
   * Made conditional daemonizing the default again.
