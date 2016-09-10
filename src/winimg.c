@@ -372,8 +372,8 @@ winimg_paint(void)
               ExcludeClipRect(dc,
                               x * wide_factor * cell_width + PADDING,
                               y * cell_height + PADDING,
-                              (x + 1) * wide_factor * cell_width + 1,
-                              (y + 1) * cell_height + 1);
+                              (x + 1) * wide_factor * cell_width + PADDING,
+                              (y + 1) * cell_height + PADDING);
           }
         }
         StretchBlt(dc, left * cell_width + PADDING, top * cell_height + PADDING,
