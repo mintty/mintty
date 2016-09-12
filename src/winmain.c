@@ -1177,8 +1177,9 @@ static struct {
   switch (message) {
     when WM_NCCREATE:
       if (pEnableNonClientDpiScaling) {
-        CREATESTRUCT * csp = (CREATESTRUCT *)lp;
-        BOOL res = pEnableNonClientDpiScaling(csp->hwndParent);
+        resizing = true;
+        BOOL res = pEnableNonClientDpiScaling(wnd);
+        resizing = false;
         (void)res;
 #ifdef debug_dpi
         uint err = GetLastError();
