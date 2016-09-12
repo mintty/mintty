@@ -1,4 +1,5 @@
   * Retaining config file comments (#574).
+  * Enabling auto-scaling of window decoration (#547, #517, thanks to Jason Mansour #588).
   * Tweaks for Sixel graphics feature.
 
 ### 2.6.0 (8 Sep 2016) ###
