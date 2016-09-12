@@ -1,3 +1,6 @@
+  * Retaining config file comments (#574).
+  * Tweaks for Sixel graphics feature.
+
 ### 2.6.0 (8 Sep 2016) ###
 
   * Sixel graphics support (#572, thanks to Hayaki Saito).

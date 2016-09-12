@@ -400,14 +400,33 @@ find_option(string name)
   return -1;
 }
 
-static uchar file_opts[lengthof(options)];
+#define MAX_COMMENTS (lengthof(options) * 3)
+static struct {
+  char * comment;
+  uchar opti;
+} file_opts[lengthof(options) + MAX_COMMENTS];
 static uchar arg_opts[lengthof(options)];
-static uint file_opts_num, arg_opts_num;
+static uint file_opts_num = 0;
+static uint arg_opts_num;
+
+static void
+clear_opts()
+{
+  for (uint n = 0; n < file_opts_num; n++)
+    if (file_opts[n].comment)
+      free(file_opts[n].comment);
+  file_opts_num = 0;
+  arg_opts_num = 0;
+}
 
 static bool
 seen_file_option(uint i)
 {
-  return memchr(file_opts, i, file_opts_num);
+//  return memchr(file_opts, i, file_opts_num);
+  for (uint n = 0; n < file_opts_num; n++)
+    if (!file_opts[n].comment && file_opts[n].opti == i)
+      return true;
+  return false;
 }
 
 static bool
@@ -421,13 +440,28 @@ remember_file_option(char * tag, uint i)
 {
   (void)tag;
   trace_theme(("[%s] remember_file_option (file %d arg %d) %d %s\n", tag, seen_file_option(i), seen_arg_option(i), i, options[i].name));
-  if (i > 255) {
+  if (file_opts_num >= lengthof(file_opts)) {
     fprintf(stderr, "Internal error: too many options.\n");
     exit(1);
   }
 
-  if (!seen_file_option(i))
-    file_opts[file_opts_num++] = i;
+  if (!seen_file_option(i)) {
+    file_opts[file_opts_num].comment = null;
+    file_opts[file_opts_num].opti = i;
+    file_opts_num++;
+  }
+}
+
+static void
+remember_file_comment(char * comment)
+{
+  trace_theme(("[] remember_file_comment <%s>\n", comment));
+  if (file_opts_num >= lengthof(file_opts)) {
+    fprintf(stderr, "Internal error: too many options/comments.\n");
+    exit(1);
+  }
+
+  file_opts[file_opts_num++].comment = strdup(comment);
 }
 
 static void
@@ -435,7 +469,7 @@ remember_arg_option(char * tag, uint i)
 {
   (void)tag;
   trace_theme(("[%s] remember_arg_option (file %d arg %d) %d %s\n", tag, seen_file_option(i), seen_arg_option(i), i, options[i].name));
-  if (i > 255) {
+  if (arg_opts_num >= lengthof(arg_opts)) {
     fprintf(stderr, "Internal error: too many options.\n");
     exit(1);
   }
@@ -738,7 +772,7 @@ load_config(string filename, bool to_save)
 
   if (to_save) {
     if (file || (!rc_filename && strstr(filename, "/.minttyrc"))) {
-      file_opts_num = arg_opts_num = 0;
+      clear_opts();
 
       delete(rc_filename);
       rc_filename = path_posix_to_win_w(filename);
@@ -748,7 +782,10 @@ load_config(string filename, bool to_save)
   if (file) {
     while (fgets(linebuf, sizeof linebuf, file)) {
       linebuf[strcspn(linebuf, "\r\n")] = 0;  /* trim newline */
-      if (linebuf[0] != '#' && linebuf[0] != '\0') {
+      if (linebuf[0] == '#' || linebuf[0] == '\0') {
+        remember_file_comment(linebuf);
+      }
+      else {
         int i = parse_option(linebuf, true);
         if (to_save && i >= 0)
           remember_file_option("load", i);
@@ -845,7 +882,11 @@ save_config(void)
   }
   else {
     for (uint j = 0; j < file_opts_num; j++) {
-      uint i = file_opts[j];
+      if (file_opts[j].comment) {
+        fprintf(file, "%s\n", file_opts[j].comment);
+        continue;
+      }
+      uint i = file_opts[j].opti;
       opt_type type = options[i].type;
       if (!(type & OPT_LEGACY)) {
         fprintf(file, "%s=", options[i].name);
