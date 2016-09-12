@@ -107,6 +107,11 @@ get_selection(clip_workbuf *buf)
       while (1) {
         wchar c = line->chars[x].chr;
         attr = line->chars[x].attr.attr;
+#ifdef substitute_SIXEL_image
+        if (c == SIXELCH) {
+          c = 0xFFFD;  // representation of choice (configurable?)
+        }
+#endif
         cbuf[0] = c;
         cbuf[1] = 0;
 
