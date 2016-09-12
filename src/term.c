@@ -115,6 +115,17 @@ term_cursor_reset(term_cursor *curs)
   curs->autowrap = true;
 }
 
+
+void term_init(void)
+{
+  term_cmd_buf_init();
+}
+
+void term_release(void)
+{
+  term_cmd_buf_release();
+}
+
 void
 term_reset(void)
 {

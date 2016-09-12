@@ -1,3 +1,7 @@
+// base64.c (part of mintty)
+// Copyright 2016 Jianbin Kang
+// Licensed under the terms of the GNU General Public License v3 or later.
+
 #include <errno.h>
 #include <stdint.h>
 #include "base64.h"

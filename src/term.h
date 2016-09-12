@@ -389,7 +389,8 @@ struct term {
   uint csi_argv_defined[32];
 
   int  cmd_num;        // OSC command number, or -1 for DCS
-  char cmd_buf[2048];  // OSC or DCS string buffer and length
+  char *cmd_buf;       // OSC or DCS string buffer and length
+  uint cmd_buf_cap;
   uint cmd_len;
   int dcs_cmd;
 
@@ -498,5 +499,10 @@ void term_schedule_search_update(void);
 void term_update_search(void);
 void term_clear_results(void);
 void term_clear_search(void);
+
+void term_init(void);
+void term_release(void);
+void term_cmd_buf_init(void);
+void term_cmd_buf_release(void);
 
 #endif

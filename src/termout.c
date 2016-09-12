@@ -16,6 +16,10 @@
 
 #include <sys/termios.h>
 
+#define TERM_CMD_BUF_MIN_SIZE       (2048)
+#define TERM_CMD_BUF_INC_STEP       (2048)
+#define TERM_CMD_BUF_MAX_SIZE       (1024 * 1024)
+
 /* This combines two characters into one value, for the purpose of pairing
  * any modifier byte and the final byte in escape sequences.
  */
@@ -24,6 +28,70 @@
 static string primary_da1 = "\e[?1;2c";
 static string primary_da2 = "\e[?62;1;2;4;6;22c";
 static string primary_da3 = "\e[?63;1;2;4;6;22c";
+
+
+static inline bool term_cmd_buf_is_full(void)
+{
+  /* Need 1 more for null byte */
+  if (term.cmd_len + 1 >= term.cmd_buf_cap) {
+    return true;
+  }
+  return false;
+}
+
+static inline void term_cmd_buf_push(char c)
+{
+  term.cmd_buf[term.cmd_len] = c;
+  term.cmd_len += 1;
+}
+
+static bool term_cmd_buf_increase(void)
+{
+  uint new_size;
+  char *new_buf;
+
+  if (term.cmd_buf_cap >= TERM_CMD_BUF_MAX_SIZE) {
+    /* Server sends too many cmd data */
+    return false;
+  }
+  new_size = term.cmd_buf_cap + TERM_CMD_BUF_INC_STEP;
+  if (new_size >= TERM_CMD_BUF_MAX_SIZE) {
+    new_size = TERM_CMD_BUF_MAX_SIZE;
+  }
+  new_buf = realloc(term.cmd_buf, new_size);
+  if (new_buf == NULL) {
+    return false;
+  }
+  term.cmd_buf = new_buf;
+  term.cmd_buf_cap = new_size;
+  return true;
+}
+
+static void term_push_cmd(char c)
+{
+  bool is_increased;
+
+  if (!term_cmd_buf_is_full()) {
+    term_cmd_buf_push(c);
+    return;
+  }
+  is_increased = term_cmd_buf_increase();
+  if (!is_increased) {
+    return;
+  }
+  term_cmd_buf_push(c);
+}
+
+void term_cmd_buf_init(void)
+{
+  term_cmd_buf_increase();
+}
+
+void term_cmd_buf_release(void)
+{
+  free(term.cmd_buf);
+  term.cmd_buf_cap = 0;
+}
 
 /*
  * Move the cursor to a given position, clipping at boundaries. We
@@ -1614,7 +1682,7 @@ term_write(const char *buf, uint len)
         if (isxdigit(c)) {
           // The dodgy Linux palette sequence: keep going until we have
           // seven hexadecimal digits.
-          term.cmd_buf[term.cmd_len++] = c;
+          term_push_cmd(c);
           if (term.cmd_len == 7) {
             uint n, r, g, b;
             sscanf(term.cmd_buf, "%1x%2x%2x%2x", &n, &r, &g, &b);
@@ -1641,8 +1709,7 @@ term_write(const char *buf, uint len)
           when '\e':
             term.state = CMD_ESCAPE;
           otherwise:
-            if (term.cmd_len < lengthof(term.cmd_buf) - 1)
-              term.cmd_buf[term.cmd_len++] = c;
+            term_push_cmd(c);
         }
       when IGNORE_STRING:
         switch (c) {
@@ -1719,8 +1786,8 @@ term_write(const char *buf, uint len)
             term.state = DCS_ESCAPE;
             term.esc_mod = 0;
           otherwise:
-            if (term.cmd_len < lengthof(term.cmd_buf) - 1) {
-              term.cmd_buf[term.cmd_len++] = c;
+            if (!term_cmd_buf_is_full()) {
+              term_cmd_buf_push(c);
             } else {
               do_dcs();
               term.cmd_buf[0] = c;
