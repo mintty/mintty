@@ -500,9 +500,4 @@ void term_update_search(void);
 void term_clear_results(void);
 void term_clear_search(void);
 
-void term_init(void);
-void term_release(void);
-void term_cmd_buf_init(void);
-void term_cmd_buf_release(void);
-
 #endif
