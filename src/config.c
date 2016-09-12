@@ -783,12 +783,17 @@ load_config(string filename, bool to_save)
     while (fgets(linebuf, sizeof linebuf, file)) {
       linebuf[strcspn(linebuf, "\r\n")] = 0;  /* trim newline */
       if (linebuf[0] == '#' || linebuf[0] == '\0') {
-        remember_file_comment(linebuf);
+        if (to_save)
+          remember_file_comment(linebuf);
       }
       else {
         int i = parse_option(linebuf, true);
-        if (to_save && i >= 0)
-          remember_file_option("load", i);
+        if (to_save) {
+          if (i >= 0)
+            remember_file_option("load", i);
+          else
+            remember_file_comment(linebuf);
+        }
       }
     }
     fclose(file);
