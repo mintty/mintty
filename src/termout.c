@@ -16,8 +16,8 @@
 
 #include <sys/termios.h>
 
-#define TERM_CMD_BUF_INC_STEP       (128)
-#define TERM_CMD_BUF_MAX_SIZE       (1024 * 1024)
+#define TERM_CMD_BUF_INC_STEP 128
+#define TERM_CMD_BUF_MAX_SIZE (1024 * 1024)
 
 /* This combines two characters into one value, for the purpose of pairing
  * any modifier byte and the final byte in escape sequences.
@@ -40,11 +40,12 @@ static bool term_push_cmd(char c)
   }
 
   if (term.cmd_buf_cap >= TERM_CMD_BUF_MAX_SIZE) {
-    /* Server sends too many cmd data */
+    /* Server sends too many cmd characters */
     return false;
   }
   new_size = term.cmd_buf_cap + TERM_CMD_BUF_INC_STEP;
   if (new_size >= TERM_CMD_BUF_MAX_SIZE) {
+    // cosmetic limitation (relevant limitation above)
     new_size = TERM_CMD_BUF_MAX_SIZE;
   }
   term.cmd_buf = renewn(term.cmd_buf, new_size);
@@ -1264,7 +1265,7 @@ static void do_clipboard(void)
   }
   s += 1;
   if (*s == '?') {
-    /* Read from clipboard is unspported */
+    /* Reading from clipboard is unsupported */
     return;
   }
   len = strlen(s);

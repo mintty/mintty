@@ -1037,6 +1037,11 @@ The answerback string is sent in response to the \fB^E\fP (ENQ) character.
 By default, this is empty.
 
 .TP
+\fBAllow control sequence to set selection\fP (AllowSetSelection=false)
+If enabled, the terminal control sequence OSC 52 is allowed to set the 
+clipboard selection for pasting (using base64-encoded contents, like xterm).
+
+.TP
 \fBBell\fP
 The options here determine what effects the bell character \fB^G\fP has.
 Default beep and taskbar highlighting are enabled by default.

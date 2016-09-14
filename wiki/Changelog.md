@@ -1,5 +1,6 @@
   * Retaining config file comments (#574).
   * Enabling auto-scaling of window decoration (#547, #517, thanks to Jason Mansour #588).
+  * Option AllowSetSelection to enable OSC 52 control sequence to set clipboard for pasting (#258, thanks to kangjianbin).
   * Tweaks for Sixel graphics feature.
 
 ### 2.6.0 (8 Sep 2016) ###
