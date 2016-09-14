@@ -390,7 +390,8 @@ struct term {
   uint csi_argv_defined[32];
 
   int  cmd_num;        // OSC command number, or -1 for DCS
-  char cmd_buf[2048];  // OSC or DCS string buffer and length
+  char *cmd_buf;       // OSC or DCS string buffer and length
+  uint cmd_buf_cap;
   uint cmd_len;
   int dcs_cmd;
 
