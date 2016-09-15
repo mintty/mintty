@@ -1,6 +1,6 @@
 #! /bin/sh -f
 
-unidata=etc/UnicodeData.txt
+unidata=UnicodeData.txt
 make $unidata >&2
 
 LC_ALL=C

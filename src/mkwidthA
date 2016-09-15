@@ -1,0 +1,21 @@
+#! /bin/sh
+
+# generate WIDTH-A file, listing Unicode characters with width property
+# Ambiguous, from EastAsianWidth.txt
+
+if make EastAsianWidth.txt >&2
+then	true
+else	echo Could not acquire Unicode data file EastAsianWidth.txt >&2
+	exit 1
+fi
+if make UnicodeData.txt >&2
+then	true
+else	echo Could not acquire Unicode data file UnicodeData.txt >&2
+	exit 1
+fi
+
+sed -e "s,^\([^;]*\);A,\1," -e t -e d EastAsianWidth.txt > width-a-new
+rm -f WIDTH-A
+echo "# UAX #11: East Asian Ambiguous" > WIDTH-A
+uniset +width-a-new compact >> WIDTH-A
+rm -f width-a-new

@@ -1,4 +1,4 @@
- #############################################################################
+#############################################################################
 # Interesting make targets:
 # - exe: Just the executable. This is the default.
 # - zip: Zip for standalone release.
@@ -156,17 +156,27 @@ rgb:	# /usr/share/X11/rgb.txt # X11 color names
 #		{255, 250, 250, "snow"},
 	sed -e 's,	, ,g' -e 's/ *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([^ ].*[^ ]\) */	{\1, \2, \3, "\4"},/' /usr/share/X11/rgb.txt > rgb.t
 
-combined.t:	# etc/UnicodeData.txt
+unidata:	combining.t ambiguous.t combined.t bidiclasses.t
+
+combining.t:	# UnicodeData.txt Blocks.txt
+	uniset +cat=Me +cat=Mn +cat=Cf -00AD +1160-11FF +200B +D7B0-D7C6 +D7CB-D7FB c > combining.t
+
+ambiguous.t:	# UnicodeData.txt Blocks.txt WIDTH-A
+	uniset +WIDTH-A -cat=Me -cat=Mn -cat=Cf c > ambiguous.t
+
+WIDTH-A:	# UnicodeData.txt Blocks.txt EastAsianWidth.txt
+	sh ./mkwidthA
+
+combined.t:	# UnicodeData.txt
 	sh ./mkcombinedt > combined.t
 
-bidiclasses.t:	# etc/UnicodeData.txt
+bidiclasses.t:	# UnicodeData.txt
 	sh ./mkbidiclasses > bidiclasses.t
 
-unicode:	etc/UnicodeData.txt
+unicode:	UnicodeData.txt Blocks.txt EastAsianWidth.txt
 
-etc/UnicodeData.txt:
-	mkdir -p etc
-	cd etc; $(WGET) http://unicode.org/Public/UNIDATA/UnicodeData.txt
+%.txt:
+	$(WGET) http://unicode.org/Public/UNIDATA/$@
 
 #############################################################################
 # release targets
@@ -236,8 +246,10 @@ _wm.t:	# Windows Message names, only for debugging
 #	#define WM_NULL 0x0000
 #	->
 #		{0x0000, "WM_NULL"},
-	sed -e 's/^#define \(WM_[^ ]*\) \(0x[0-9A-Fa-f]*\)$$/	{\2, "\1"},/' -e t -e d /usr/include/w32api/winuser.h > _wm.t
-	echo '	{0x02E0, "WM_DPICHANGED"},' >> _wm.t
+	sed -e 's/^#define \(WM_[^ ]*\) *\(0x[0-9A-Fa-f]*\)$$/  {\2, "\1"},/' -e t -e d /usr/include/w32api/winuser.h | tr 'abcdef' 'ABCDEF' > _wm.t
+	echo '  {0x02E0, "WM_DPICHANGED"},' >> _wm.t
+	# or, with include file copied from Windows SDK:
+	#sed -e 's/^#define \(WM_[^ ]*\) *\(0x[0-9A-Fa-f]*\)$$/  {\2, "\1"},/' -e t -e d etc/WinUser.h | tr 'abcdef' 'ABCDEF' > _wm.t
 
 _vk.t:	# Windows Virtual Key Code names, only for debugging
 #	#define VK_TAB 0x09
