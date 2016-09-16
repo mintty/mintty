@@ -113,6 +113,26 @@ mintty /bin/env CHERE_INVOKING=1 /bin/bash -l
 ```
 
 
+## Input/Output interaction with alien programs ##
+
+When interacting with programs that use a native Windows API for 
+command-line user interaction (“console mode”), a number of undesirable 
+effects are observed; this is the 
+[pty incompatibility problem](https://github.com/mintty/mintty/issues/56) 
+and the 
+[character encoding incompatibility problem](https://github.com/mintty/mintty/issues/376).
+This basically affects all programs not compiled in a cygwin or msys 
+environment (and note that MinGW is not msys in this context).
+
+As a workaround, you can use [winpty](https://github.com/rprichard/winpty) 
+as a wrapper to invoke the Windows program.
+
+_Note:_ There is no point in reporting this for the 15th time as a mintty 
+issue, because it is not a mintty issue (or well, an issue maybe, but not 
+caused by, or fixable by, mintty); it is a generic problem of cygwin/msys 
+and occurs likewise in all other pty-based terminals (e.g. xterm).
+
+
 ## Terminal line settings ##
 
 Terminal line settings can be viewed or changed with the **[stty](http://www.opengroup.org/onlinepubs/9699919799/utilities/stty.html)** utility, which is installed as part of Cygwin's core utilities package. Among other things, it can set the control characters used for generating signals or editing an input line.
