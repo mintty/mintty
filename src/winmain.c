@@ -129,7 +129,7 @@ load_dwm_funcs(void)
   }
 }
 
-#define dont_debug_dpi
+#define debug_dpi
 
 bool per_monitor_dpi_aware = false;
 uint dpi = 96;
@@ -181,21 +181,37 @@ load_dpi_funcs(void)
 void
 set_dpi_auto_scaling(bool on)
 {
+  (void)on;
+#if 0
+ /* this was an attempt to get the Options menu to scale with DPI by
+    disabling DPI awareness while constructing the menu in win_open_config;
+    but then (if DPI zooming > 100% in Windows 10)
+    any font change would resize the terminal by the zoom factor;
+    also in a later Window 10 update, it works without this
+ */
+#warning failed DPI tweak
   if (pSetThreadDpiAwarenessContext) {
     if (on)
       pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_UNAWARE);
     else
       pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
   }
+#endif
 }
 
 static bool
 set_per_monitor_dpi_aware()
 {
+#if 0
+ /* this was added under the assumption it might be needed 
+    for EnableNonClientDpiScaling to work (as described) 
+    but it's not needed, so we'll leave it
+ */
   if (pSetThreadDpiAwarenessContext) {
     if (pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE))
       return true;
   }
+#endif
   if (pSetProcessDpiAwareness && pGetProcessDpiAwareness) {
     HRESULT hr = pSetProcessDpiAwareness(Process_Per_Monitor_DPI_Aware);
     // E_ACCESSDENIED:
@@ -840,17 +856,28 @@ win_adjust_borders(int t_width, int t_height)
     else
       window_style &= ~(WS_CAPTION | WS_BORDER);
   }
+
+#if 0
+ /* this had been changed under the vague assumption 
+    it might be appropriate if EnableNonClientDpiScaling is used;
+    but it makes no difference
+ */
   if (pGetDpiForMonitor && pAdjustWindowRectExForDpi) {
     HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
     uint x, dpi;
     pGetDpiForMonitor(mon, 0, &x, &dpi);  // MDT_EFFECTIVE_DPI
-#ifdef debug_dpi
-    printf("adjust borders dpi %d\n", dpi);
-#endif
     pAdjustWindowRectExForDpi(&wr, window_style, false, 0, dpi);
+#ifdef debug_dpi
+    RECT wr0 = cr;
+    AdjustWindowRect(&wr0, window_style, false);
+    printf("adjust borders dpi %3d: %ld %ld\n", dpi, wr.right - wr.left, wr.bottom - wr.top);
+    printf("                      : %ld %ld\n", wr0.right - wr0.left, wr0.bottom - wr0.top);
+#endif
   }
   else
+#endif
     AdjustWindowRect(&wr, window_style, false);
+
   width = wr.right - wr.left;
   height = wr.bottom - wr.top;
 
@@ -1161,7 +1188,7 @@ confirm_exit(void)
   return !ret || ret == IDOK;
 }
 
-#define dont_debug_messages
+#define debug_messages
 #define dont_debug_only_sizepos_messages
 #define dont_debug_mouse_messages
 
