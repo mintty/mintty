@@ -56,7 +56,9 @@ in the manual page.
 
 ## Using mintty for Bash on Ubuntu on Windows (UoW) / Windows Subsystem for Linux (WSL) ##
 
-For users of cygwin or msys2:
+Install [wsltty](https://github.com/mintty/wsltty).
+
+Or, to help reproduce the installation manually, for users of cygwin or msys2:
 * From https://github.com/rprichard/wslbridge/releases, download the `wslbridge` archive corresponding to your system (cygwin/msys2 32/64 bit)
 * Install `wslbridge.exe` and `wslbridge-backend` into your cygwin or msys2 `/bin` directory
 * Make a desktop shortcut (Desktop right-click – New ▸ Shortcut) with 
