@@ -1285,7 +1285,13 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
         }
       }
       when CUR_UNDERSCORE:
-        y += min(descent, cell_height - 2);
+        y = yt + min(descent, cell_height - 2);
+        y += row_spacing * 3 / 8;
+        if (lattr >= LATTR_TOP) {
+          y += row_spacing / 2;
+          if (lattr == LATTR_BOT)
+            y += cell_height;
+        }
         if (attr.attr & TATTR_ACTCURS)
           Rectangle(dc, x, y, x + char_width, y + 2);
         else if (attr.attr & TATTR_PASCURS) {
