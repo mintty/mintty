@@ -868,7 +868,7 @@ select_font(winctrl *c)
   * win_init_fonts, but that's wrong.
   */
   lf.lfHeight = -MulDiv(fs.size, GetDeviceCaps(dc, LOGPIXELSY), 72);
-  trace_fontsel(("Choose size (%d) %d -> lfHeight %d\n", cfg.font.size, fs.size, lf.lfHeight));
+  trace_fontsel(("Choose size (%d) %d -> lfHeight %ld\n", cfg.font.size, fs.size, (long int)lf.lfHeight));
   ReleaseDC(0, dc);
   lf.lfWidth = lf.lfEscapement = lf.lfOrientation = 0;
   lf.lfItalic = lf.lfUnderline = lf.lfStrikeOut = 0;
@@ -893,7 +893,7 @@ select_font(winctrl *c)
       wstrset(&fsp->name, lfapply.lfFaceName);
       HDC dc = GetDC(0);
       fsp->size = -MulDiv(lfapply.lfHeight, 72, GetDeviceCaps(dc, LOGPIXELSY));
-      trace_fontsel(("Apply lfHeight %d -> size %d <%ls>\n", lfapply.lfHeight, fsp->size, lfapply.lfFaceName));
+      trace_fontsel(("Apply lfHeight %ld -> size %d <%ls>\n", (long int)lfapply.lfHeight, fsp->size, lfapply.lfFaceName));
       ReleaseDC(0, dc);
       fsp->weight = lfapply.lfWeight;
       fsp->isbold = (lfapply.lfWeight >= FW_BOLD);

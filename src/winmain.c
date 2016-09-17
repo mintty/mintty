@@ -129,7 +129,7 @@ load_dwm_funcs(void)
   }
 }
 
-#define debug_dpi
+#define dont_debug_dpi
 
 bool per_monitor_dpi_aware = false;
 uint dpi = 96;
@@ -1188,7 +1188,7 @@ confirm_exit(void)
   return !ret || ret == IDOK;
 }
 
-#define debug_messages
+#define dont_debug_messages
 #define dont_debug_only_sizepos_messages
 #define dont_debug_mouse_messages
 
