@@ -348,18 +348,28 @@ int sixel_parser_parse(sixel_state_t *st, unsigned char *p, int len)
       case '-':
         /* DECGNL Graphics Next Line */
         st->pos_x = 0;
-        st->pos_y += 6;
+        if (st->pos_y < DECSIXEL_HEIGHT_MAX - 5 - 6)
+          st->pos_y += 6;
+        else
+          st->pos_y = DECSIXEL_HEIGHT_MAX + 1;
         p++;
         break;
       default:
         if (*p >= '?' && *p <= '~') {  /* sixel characters */
-          if (image->width < (st->pos_x + st->repeat_count) || image->height < (st->pos_y + 6)) {
+          if ((image->width < (st->pos_x + st->repeat_count) || image->height < (st->pos_y + 6))
+              && image->width < DECSIXEL_WIDTH_MAX && image->height < DECSIXEL_HEIGHT_MAX) {
             sx = image->width * 2;
             sy = image->height * 2;
             while (sx < (st->pos_x + st->repeat_count) || sy < (st->pos_y + 6)) {
               sx *= 2;
               sy *= 2;
             }
+
+            if (sx > DECSIXEL_WIDTH_MAX)
+              sx = DECSIXEL_WIDTH_MAX;
+            if (sy > DECSIXEL_HEIGHT_MAX)
+              sy = DECSIXEL_HEIGHT_MAX;
+
             status = image_buffer_resize(image, sx, sy);
             if (status < 0) {
               goto end;
@@ -370,57 +380,60 @@ int sixel_parser_parse(sixel_state_t *st, unsigned char *p, int len)
             image->ncolors = st->color_index;
           }
 
-          bits = *p - '?';
+          if (st->pos_x + st->repeat_count > image->width) {
+            st->repeat_count = image->width - st->pos_x;
+          }
 
-          if (bits == 0) {
-            st->pos_x += st->repeat_count;
-          } else {
-            sixel_vertical_mask = 0x01;
-            if (st->repeat_count <= 1) {
-              for (i = 0; i < 6; i++) {
-                if ((bits & sixel_vertical_mask) != 0) {
-                  pos = image->width * (st->pos_y + i) + st->pos_x;
-                  image->data[pos] = st->color_index;
-                  if (st->max_x < st->pos_x) {
-                    st->max_x = st->pos_x;
-                  }
-                  if (st->max_y < (st->pos_y + i)) {
-                    st->max_y = st->pos_y + i;
-                  }
-                }
-                sixel_vertical_mask <<= 1;
-              }
-              st->pos_x += 1;
-            } else {
-              /* st->repeat_count > 1 */
-              for (i = 0; i < 6; i++) {
-                if ((bits & sixel_vertical_mask) != 0) {
-                  c = sixel_vertical_mask << 1;
-                  for (n = 1; (i + n) < 6; n++) {
-                    if ((bits & c) == 0) {
-                      break;
+          if (st->repeat_count > 0 && st->pos_y - 5 < image->height) {
+            bits = *p - '?';
+            if (bits != 0) {
+              sixel_vertical_mask = 0x01;
+              if (st->repeat_count <= 1) {
+                for (i = 0; i < 6; i++) {
+                  if ((bits & sixel_vertical_mask) != 0) {
+                    pos = image->width * (st->pos_y + i) + st->pos_x;
+                    image->data[pos] = st->color_index;
+                    if (st->max_x < st->pos_x) {
+                      st->max_x = st->pos_x;
                     }
-                    c <<= 1;
+                    if (st->max_y < (st->pos_y + i)) {
+                      st->max_y = st->pos_y + i;
+                    }
                   }
-                  for (y = st->pos_y + i; y < st->pos_y + i + n; ++y) {
-                    memset(image->data + image->width * y + st->pos_x,
-                           st->color_index,
-                           (size_t)st->repeat_count);
-                  }
-                  if (st->max_x < (st->pos_x + st->repeat_count - 1)) {
-                    st->max_x = st->pos_x + st->repeat_count - 1;
-                  }
-                  if (st->max_y < (st->pos_y + i + n - 1)) {
-                    st->max_y = st->pos_y + i + n - 1;
-                  }
-                  i += (n - 1);
-                  sixel_vertical_mask <<= (n - 1);
+                  sixel_vertical_mask <<= 1;
                 }
-                sixel_vertical_mask <<= 1;
+              } else {
+                /* st->repeat_count > 1 */
+                for (i = 0; i < 6; i++) {
+                  if ((bits & sixel_vertical_mask) != 0) {
+                    c = sixel_vertical_mask << 1;
+                    for (n = 1; (i + n) < 6; n++) {
+                      if ((bits & c) == 0) {
+                        break;
+                      }
+                      c <<= 1;
+                    }
+                    for (y = st->pos_y + i; y < st->pos_y + i + n; ++y) {
+                      memset(image->data + image->width * y + st->pos_x,
+                             st->color_index,
+                             (size_t)st->repeat_count);
+                    }
+                    if (st->max_x < (st->pos_x + st->repeat_count - 1)) {
+                      st->max_x = st->pos_x + st->repeat_count - 1;
+                    }
+                    if (st->max_y < (st->pos_y + i + n - 1)) {
+                      st->max_y = st->pos_y + i + n - 1;
+                    }
+                    i += (n - 1);
+                    sixel_vertical_mask <<= (n - 1);
+                  }
+                  sixel_vertical_mask <<= 1;
+                }
               }
-              st->pos_x += st->repeat_count;
             }
           }
+          if (st->repeat_count > 0)
+            st->pos_x += st->repeat_count;
           st->repeat_count = 1;
         }
         p++;
@@ -446,6 +459,8 @@ int sixel_parser_parse(sixel_state_t *st, unsigned char *p, int len)
       case '8':
       case '9':
         st->param = st->param * 10 + *p - '0';
+        if (st->param > DECSIXEL_PARAMVALUE_MAX)
+          st->param = DECSIXEL_PARAMVALUE_MAX;
         p++;
         break;
       case ';':
@@ -493,6 +508,12 @@ int sixel_parser_parse(sixel_state_t *st, unsigned char *p, int len)
 
           sx = (sx + st->grid_width - 1) / st->grid_width * st->grid_width;
           sy = (sy + st->grid_height - 1) / st->grid_height * st->grid_height;
+
+          if (sx > DECSIXEL_WIDTH_MAX)
+            sx = DECSIXEL_WIDTH_MAX;
+          if (sy > DECSIXEL_HEIGHT_MAX)
+            sy = DECSIXEL_HEIGHT_MAX;
+
           status = image_buffer_resize(image, sx, sy);
           if (status < 0) {
             goto end;
@@ -522,6 +543,8 @@ int sixel_parser_parse(sixel_state_t *st, unsigned char *p, int len)
       case '8':
       case '9':
         st->param = st->param * 10 + *p - '0';
+        if (st->param > DECSIXEL_PARAMVALUE_MAX)
+          st->param = DECSIXEL_PARAMVALUE_MAX;
         p++;
         break;
       default:
@@ -554,6 +577,8 @@ int sixel_parser_parse(sixel_state_t *st, unsigned char *p, int len)
       case '8':
       case '9':
         st->param = st->param * 10 + *p - '0';
+        if (st->param > DECSIXEL_PARAMVALUE_MAX)
+          st->param = DECSIXEL_PARAMVALUE_MAX;
         p++;
         break;
       case ';':

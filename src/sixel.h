@@ -5,6 +5,9 @@
 
 #define DECSIXEL_PARAMS_MAX 16
 #define DECSIXEL_PALETTE_MAX 1024
+#define DECSIXEL_PARAMVALUE_MAX 65535
+#define DECSIXEL_WIDTH_MAX 4096
+#define DECSIXEL_HEIGHT_MAX 4096
 
 typedef struct sixel_image_buffer {
   unsigned char *data;
