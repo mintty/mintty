@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Thu Sep  8 00:49:44 2016 -->
+<!-- CreationDate: Sun Sep 18 20:29:01 2016 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -654,6 +654,19 @@ can be enabled on the Keys pane of the options dialog. <br>
 despite Shift) <br>
 &ndash; <b>Ctrl+Shift+S</b>: Flip screen</p>
 
+<p style="margin-left:11%; margin-top: 1em"><b>Embedding
+graphics in terminal output</b> <br>
+The new support of the SIXEL feature facilitates a range of
+applications that integrate graphic images in the terminal,
+animated graphics, and even video and interactive gaming
+applications.</p>
+
+<p style="margin-left:11%; margin-top: 1em">An example of
+the benefit of this feature is the output of
+&lsquo;gnuplot&lsquo; with the command <br>
+GNUTERM=sixel gnuplot -e &quot;splot [x=-3:3] [y=-3:3]
+sin(x) * cos(y)&quot;</p>
+
 <h2>CONFIGURATION
 <a name="CONFIGURATION"></a>
 </h2>
@@ -1254,6 +1267,14 @@ which is why plain <b>xterm</b> is the default.</p>
 <p style="margin-left:22%;">The answerback string is sent
 in response to the <b>^E</b> (ENQ) character. By default,
 this is empty.</p>
+
+<p style="margin-left:11%;"><b>Allow control sequence to
+set selection</b> (AllowSetSelection=false)</p>
+
+<p style="margin-left:22%;">If enabled, the terminal
+control sequence OSC 52 is allowed to set the clipboard
+selection for pasting (using base64-encoded contents, like
+xterm).</p>
 
 <table width="100%" border="0" rules="none" frame="void"
        cellspacing="0" cellpadding="0">

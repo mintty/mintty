@@ -1,9 +1,13 @@
+### 2.6.1 (18 Sep 2016) ###
+
   * Tweaked DPI scaling to avoid terminal resizing on font selection (~#492).
-  * Retaining config file comments (#574).
   * Enabling auto-scaling of window decoration (#547, #517, thanks to Jason Mansour #588).
+
   * Option AllowSetSelection to enable OSC 52 control sequence to set clipboard for pasting (#258, thanks to kangjianbin).
   * Tweaks for Sixel graphics feature.
   * Tweaked underscore cursor position, considering row spacing (#589).
+
+  * Retaining config file comments (#574).
 
 ### 2.6.0 (8 Sep 2016) ###
 

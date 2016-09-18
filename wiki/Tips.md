@@ -479,6 +479,19 @@ Note also the generic Windows hotkeys to move the current window to
 the left or right neighbour monitor: Win+Shift+cursor-left/right.
 
 
+## Embedding graphics in terminal output ##
+
+The new support of the SIXEL feature facilitates a range of applications 
+that integrate graphic images in the terminal, animated graphics, and even 
+video and interactive gaming applications.
+
+An example of the benefit of this feature is the output of `gnuplot` 
+with the command
+```
+GNUTERM=sixel gnuplot -e "splot [x=-3:3] [y=-3:3] sin(x) * cos(y)"
+```
+
+
 ## Running mintty stand-alone ##
 
 To install mintty outside a cygwin environment, follow a few rules:
