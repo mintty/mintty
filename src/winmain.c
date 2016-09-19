@@ -2383,6 +2383,9 @@ main(int argc, char *argv[])
                         window_style | (cfg.scrollbar ? WS_VSCROLL : 0),
                         x, y, width, height,
                         null, null, inst, null);
+  // Workaround for failing title parameter:
+  if (pEnableNonClientDpiScaling)
+    SetWindowTextW(wnd, wtitle);
 
   // Adapt window position (and maybe size) to special parameters
   // also select monitor if requested
