@@ -857,11 +857,6 @@ win_adjust_borders(int t_width, int t_height)
       window_style &= ~(WS_CAPTION | WS_BORDER);
   }
 
-#if 0
- /* this had been changed under the vague assumption 
-    it might be appropriate if EnableNonClientDpiScaling is used;
-    but it makes no difference
- */
   if (pGetDpiForMonitor && pAdjustWindowRectExForDpi) {
     HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
     uint x, dpi;
@@ -875,7 +870,6 @@ win_adjust_borders(int t_width, int t_height)
 #endif
   }
   else
-#endif
     AdjustWindowRect(&wr, window_style, false);
 
   width = wr.right - wr.left;
