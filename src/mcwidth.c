@@ -213,3 +213,13 @@ extrawide(xchar c)
 {
   return bisearch(c, extra, lengthof(extra));
 }
+
+static const interval combdouble[] =
+#include "combdouble.t"
+
+bool
+combiningdouble(xchar c)
+{
+  return bisearch(c, combdouble, lengthof(combdouble));
+}
+

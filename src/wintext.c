@@ -5,7 +5,7 @@
 
 #include "winpriv.h"
 #include "winsearch.h"
-#include "charset.h"  // wcscpy
+#include "charset.h"  // wcscpy, combiningdouble
 
 #include "minibidi.h"
 #include "winimg.h"
@@ -1039,11 +1039,19 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
   }
 
   bool combining = attr.attr & TATTR_COMBINING;
+  bool combining_double = attr.attr & TATTR_COMBDOUBL;
+  if (combining_double)
+    combining = false;
+
   int width = char_width * (combining ? 1 : len);
   RECT box = {
     .top = y, .bottom = y + cell_height,
     .left = x, .right = min(x + width, cell_width * term.cols + PADDING)
   };
+  RECT box2 = box;
+  if (combining_double) {
+    box2.left -= char_width;
+  }
 
  /* Array with offsets between neighbouring characters */
   int dxs[len];
@@ -1071,7 +1079,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
       text[i] = ' ';
   }
 
- /* Determine Shadow/Overstrike bold width */
+ /* Determine shadow/overstrike bold or double-width/height width */
   int xwidth = 1;
   if (apply_shadow && bold_mode == BOLD_SHADOW && (attr.attr & ATTR_BOLD)) {
     // This could be scaled with font size, but at risk of clipping
@@ -1094,7 +1102,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
   if (let_windows_combine)
     combining = false;  // disable separate combining characters display
   for (int xoff = 0; xoff < xwidth; xoff++)
-    if (combining) {
+    if (combining || combining_double) {
       // Workaround for mangled display of combining characters;
       // Arabic shaping should not be affected as the transformed 
       // presentation forms are not combining characters anymore at this point.
@@ -1107,8 +1115,12 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
         overwropt = 0;
       }
       // combining characters
-      for (int i = 1; i < len; i++)
-        ExtTextOutW(dc, xt + xoff, yt, eto_options, &box, &text[i], 1, dxs);
+      for (int i = 1; i < len; i++) {
+        int xx = xt + xoff;
+        if (combining_double && combiningdouble(text[i]))
+          xx -= char_width / 2;
+        ExtTextOutW(dc, xx, yt, eto_options, &box2, &text[i], 1, dxs);
+      }
     }
     else {
       ExtTextOutW(dc, xt + xoff, yt, eto_options | overwropt, &box, text, len, dxs);

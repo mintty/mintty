@@ -111,6 +111,7 @@ enum {
   TATTR_PASCURS   = 0x020000000000u, /* passive cursor (box) */
   TATTR_ACTCURS   = 0x040000000000u, /* active cursor (block) */
   TATTR_COMBINING = 0x080000000000u, /* combining characters */
+  TATTR_COMBDOUBL = 0x800000000000u, /* combining double characters */
 
   TATTR_RESULT    = 0x100000000000u, /* search result */
   TATTR_CURRESULT = 0x200000000000u, /* current search result */
