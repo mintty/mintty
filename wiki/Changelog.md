@@ -1,5 +1,5 @@
   * Changed non-graphic display substitute for SIXEL image to space to reduce flickering (~#587).
-  * Support "combining double" characters that cover two base characters (~#553).
+  * Support for "combining double" characters that cover two base characters (~#553).
 
 ### 2.6.1 (18 Sep 2016) ###
 
