@@ -1167,11 +1167,22 @@ term_paint(void)
         !termchars_equal_override(&dispchars[j], d, tchar, tattr);
       dirty_run |= do_copy;
 
-      if (tchar == SIXELCH)
+      if (tchar == SIXELCH) {
+        // displaying region of a SIXEL image before actual graphics display;
+        // this includes selection over a SIXEL image but also moments 
+        // before display of a new image or refreshed image when scrolling 
+        // or otherwise refreshing the screen.
+        // options:
         // indicate visually that the image will not be copied
-        text[textlen++] = 0xFFFD;
+        // (would flicker in other cases)
+        //text[textlen] = 0xFFFD;
+        // or:
+        // blank region of SIXEL image
+        text[textlen] = ' ';
+      }
       else
-        text[textlen++] = tchar;
+        text[textlen] = tchar;
+      textlen++;
 
       if (!has_rtl)
         has_rtl = is_rtl_class(tbc);
