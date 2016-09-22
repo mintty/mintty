@@ -187,7 +187,7 @@ set_dpi_auto_scaling(bool on)
     disabling DPI awareness while constructing the menu in win_open_config;
     but then (if DPI zooming > 100% in Windows 10)
     any font change would resize the terminal by the zoom factor;
-    also in a later Window 10 update, it works without this
+    also in a later Windows 10 update, it works without this
  */
 #warning failed DPI tweak
   if (pSetThreadDpiAwarenessContext) {
@@ -1603,57 +1603,6 @@ static struct {
   return DefWindowProcW(wnd, message, wp, lp);
 }
 
-static const char help[] =
-  "Usage: " APPNAME " [OPTION]... [ PROGRAM [ARG]... | - ]\n"
-  "\n"
-  "Start a new terminal session running the specified program or the user's shell.\n"
-  "If a dash is given instead of a program, invoke the shell as a login shell.\n"
-  "\n"
-  "Options:\n"
-  "  -c, --config FILE     Load specified config file\n"
-  "  -e, --exec            Treat remaining arguments as the command to execute\n"
-  "  -h, --hold never|start|error|always  Keep window open after command finishes\n"
-  "  -i, --icon FILE[,IX]  Load window icon from file, optionally with index\n"
-  "  -l, --log FILE|-      Log output to file or stdout\n"
-  "  -o, --option OPT=VAL  Override config file option with given value\n"
-  "  -p, --position X,Y    Open window at specified coordinates\n"
-  "  -s, --size COLS,ROWS  Set screen size in characters\n"
-  "  -t, --title TITLE     Set window title (default: the invoked command)\n"
-  "  -u, --utmp            Create a utmp entry\n"
-  "  -w, --window normal|min|max|full|hide  Set initial window state\n"
-  "      --class CLASS     Set window class name (default: " APPNAME ")\n"
-  "  -H, --help            Display help and exit\n"
-  "  -V, --version         Print version information and exit\n"
-;
-
-static const char short_opts[] = "+:c:C:eh:i:l:o:p:s:t:T:B:R:uw:HVdD";
-
-static const struct option
-opts[] = {
-  {"config",     required_argument, 0, 'c'},
-  {"loadconfig", required_argument, 0, 'C'},
-  {"exec",       no_argument,       0, 'e'},
-  {"hold",       required_argument, 0, 'h'},
-  {"icon",       required_argument, 0, 'i'},
-  {"log",        required_argument, 0, 'l'},
-  {"utmp",       no_argument,       0, 'u'},
-  {"option",     required_argument, 0, 'o'},
-  {"position",   required_argument, 0, 'p'},
-  {"size",       required_argument, 0, 's'},
-  {"title",      required_argument, 0, 't'},
-  {"Title",      required_argument, 0, 'T'},
-  {"Border",     required_argument, 0, 'B'},
-  {"Reportpos",  required_argument, 0, 'R'},
-  {"window",     required_argument, 0, 'w'},
-  {"class",      required_argument, 0, ''},  // short option not enabled
-  {"help",       no_argument,       0, 'H'},
-  {"version",    no_argument,       0, 'V'},
-  {"nodaemon",   no_argument,       0, 'd'},
-  {"daemon",     no_argument,       0, 'D'},
-  {"nopin",      no_argument,       0, ''},  // short option not enabled
-  {"store-taskbar-properties", no_argument, 0, ''},  // no short option
-  {0, 0, 0, 0}
-};
 
 static void
 show_msg(FILE *stream, string msg)
@@ -1990,6 +1939,59 @@ DEFINE_PROPERTYKEY(PKEY_AppUserModel_StartPinOption, 0x9f4c2855,0x9f79,0x4B39,0x
 #endif
 }
 
+static const char help[] =
+  "Usage: " APPNAME " [OPTION]... [ PROGRAM [ARG]... | - ]\n"
+  "\n"
+  "Start a new terminal session running the specified program or the user's shell.\n"
+  "If a dash is given instead of a program, invoke the shell as a login shell.\n"
+  "\n"
+  "Options:\n"
+  "  -c, --config FILE     Load specified config file\n"
+  "  -e, --exec            Treat remaining arguments as the command to execute\n"
+  "  -h, --hold never|start|error|always  Keep window open after command finishes\n"
+  "  -i, --icon FILE[,IX]  Load window icon from file, optionally with index\n"
+  "  -l, --log FILE|-      Log output to file or stdout\n"
+  "  -o, --option OPT=VAL  Override config file option with given value\n"
+  "  -p, --position X,Y    Open window at specified coordinates\n"
+  "  -s, --size COLS,ROWS  Set screen size in characters\n"
+  "  -t, --title TITLE     Set window title (default: the invoked command)\n"
+  "  -u, --utmp            Create a utmp entry\n"
+  "  -w, --window normal|min|max|full|hide  Set initial window state\n"
+  "      --class CLASS     Set window class name (default: " APPNAME ")\n"
+  "  -H, --help            Display help and exit\n"
+  "  -V, --version         Print version information and exit\n"
+;
+
+static const char short_opts[] = "+:c:C:eh:i:l:o:p:s:t:T:B:R:uw:HVdD";
+
+static const struct option
+opts[] = {
+  {"config",     required_argument, 0, 'c'},
+  {"loadconfig", required_argument, 0, 'C'},
+  {"exec",       no_argument,       0, 'e'},
+  {"hold",       required_argument, 0, 'h'},
+  {"icon",       required_argument, 0, 'i'},
+  {"log",        required_argument, 0, 'l'},
+  {"utmp",       no_argument,       0, 'u'},
+  {"option",     required_argument, 0, 'o'},
+  {"position",   required_argument, 0, 'p'},
+  {"size",       required_argument, 0, 's'},
+  {"title",      required_argument, 0, 't'},
+  {"Title",      required_argument, 0, 'T'},
+  {"Border",     required_argument, 0, 'B'},
+  {"Reportpos",  required_argument, 0, 'R'},
+  {"window",     required_argument, 0, 'w'},
+  {"class",      required_argument, 0, ''},  // short option not enabled
+  {"dir",        required_argument, 0, ''},  // short option not enabled
+  {"help",       no_argument,       0, 'H'},
+  {"version",    no_argument,       0, 'V'},
+  {"nodaemon",   no_argument,       0, 'd'},
+  {"daemon",     no_argument,       0, 'D'},
+  {"nopin",      no_argument,       0, ''},  // short option not enabled
+  {"store-taskbar-properties", no_argument, 0, ''},  // no short option
+  {0, 0, 0, 0}
+};
+
 int
 main(int argc, char *argv[])
 {
@@ -2129,6 +2131,18 @@ main(int argc, char *argv[])
       when '': store_taskbar_properties = true;
       when 'w': set_arg_option("Window", optarg);
       when '': set_arg_option("Class", optarg);
+      when '':
+        if (chdir(optarg) < 0) {
+          if (*optarg == '"' || *optarg == '\'')
+            if (optarg[strlen(optarg) - 1] == optarg[0]) {
+              // strip off embedding quotes as provided when started 
+              // from Windows context menu by registry entry
+              char * dir = strdup(&optarg[1]);
+              dir[strlen(dir) - 1] = '\0';
+              chdir(dir);
+              free(dir);
+            }
+        }
       when 'd':
         cfg.daemonize = false;
       when 'D':

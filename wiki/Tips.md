@@ -82,6 +82,18 @@ start mintty -
 The console window for the batch file will still show up briefly, however. This can be avoided by invoking mintty from a shortcut instead, as described above.
 
 
+## Starting in a particular directory ##
+
+The working directory for a mintty session can be set in the _Start In_ field of a shortcut, 
+or by changing directory in an invoking script, or with option `--dir`.
+Note, however, that Cygwin's _/etc/profile_ script for login shells automatically changes to the user's home directory.
+The profile script can be told not to do this by setting a variable called _CHERE\_INVOKING_, like this:
+
+```
+mintty /bin/env CHERE_INVOKING=1 /bin/bash -l
+```
+
+
 ## Creating a folder context menu entry for mintty ##
 
 Cygwin's **chere** package can be used to create folder context menu entries in Explorer, which allow a shell to be opened with the working directory set to the selected folder.
@@ -90,6 +102,14 @@ The following command will create an entry called _Bash Prompt Here_ for the cur
 
 ```
 chere -i -c -t mintty
+```
+
+Note, however, that context menu entries created by **chere** fail on non-ASCII directory names.
+Mintty option `--dir` comes to help, like in either of these registry entries 
+for registry keys like `/HKCU/Software/Classes/Directory/Shell/mintty-here/command/`:
+```
+C:\cygwin64\bin\mintty.exe --dir "%1" /bin/bash
+C:\cygwin64\bin\mintty.exe --dir "%1" /bin/env CHERE_INVOKING=1 /bin/bash -l
 ```
 
 
@@ -103,15 +123,6 @@ The **[env](http://www.opengroup.org/onlinepubs/9699919799/utilities/env.html)**
 
 ```
 mintty /bin/env DISPLAY=:0 /bin/ssh -X server
-```
-
-
-## Starting in a particular directory ##
-
-The working directory for a mintty session can be set in the _Start In_ field of a shortcut, or by changing directory in an invoking script. Note, however, that Cygwin's _/etc/profile_ script for login shells automatically changes to the user's home directory. The profile script can be told not to do this by setting a variable called _CHERE\_INVOKING_, like this:
-
-```
-mintty /bin/env CHERE_INVOKING=1 /bin/bash -l
 ```
 
 
@@ -458,7 +469,8 @@ PROMPT_COMMAND='echo -ne "\e]7;$PWD\a" ; '"$PROMPT_COMMAND"
 ```
 
 The sequence could also be output by shell aliases or functions changing the directory.
-It cannot be embedded in the prompt itself with ```\w``` as that is using some shortcuts.
+It cannot be embedded in the prompt itself with ```\w``` as that is using some shortcuts, 
+but ```$PWD``` could be used if ```shopt promptvars``` is not unset.
 
 Note that after remote login, the directory path may be meaningless 
 unless the remote and local paths match.
@@ -488,8 +500,12 @@ video and interactive gaming applications.
 An example of the benefit of this feature is the output of `gnuplot` 
 with the command
 ```
-GNUTERM=sixel gnuplot -e "splot [x=-3:3] [y=-3:3] sin(x) * cos(y)"
+export GNUTERM=sixel
+gnuplot -e "splot [x=-3:3] [y=-3:3] sin(x) * cos(y)"
 ```
+
+Note that gnuplot uses black text on default background for captions 
+and coordinates so better not run it in a terminal with dark background.
 
 
 ## Running mintty stand-alone ##

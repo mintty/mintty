@@ -1,5 +1,6 @@
   * Changed non-graphic display substitute for SIXEL image to space to reduce flickering (~#587).
   * Support for "combining double" characters that cover two base characters (~#553).
+  * New command line option --dir to change the initial working directory (#558, #58).
 
 ### 2.6.1 (18 Sep 2016) ###
 
