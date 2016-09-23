@@ -3,8 +3,12 @@
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include <errno.h>
-#include <stdint.h>
 #include "base64.h"
+#if CYGWIN_VERSION_API_MINOR >= 74
+#include <stdint.h>
+#else
+#define uint32_t uint
+#endif
 
 static const char base64_table[] = {
   'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',

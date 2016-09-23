@@ -219,7 +219,7 @@ winimg_lazyinit(imglist *img)
   bmpinfo.bmiHeader.biBitCount = 32;
   bmpinfo.bmiHeader.biCompression = BI_RGB;
   img->hdc = CreateCompatibleDC(dc);
-  img->hbmp = CreateDIBSection(dc, &bmpinfo, DIB_RGB_COLORS, (void**)&pixels, NULL, 0);
+  img->hbmp = CreateDIBSection(dc, &bmpinfo, DIB_RGB_COLORS, (void*)&pixels, NULL, 0);
   SelectObject(img->hdc, img->hbmp);
   if (img->pixels) {
     CopyMemory(pixels, img->pixels, size);
