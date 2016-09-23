@@ -1522,12 +1522,17 @@ term_write(const char *buf, uint len)
           continue;
         }
 
+        unsigned long long asav = term.curs.attr.attr;
+
         // Everything else
         int width;
         if (cfg.wide_indic && wc >= 0x0900 && indicwide(wc))
           width = 2;
-        else if (cfg.wide_extra && wc >= 0x2000 && extrawide(wc))
+        else if (cfg.wide_extra && wc >= 0x2000 && extrawide(wc)) {
           width = 2;
+          if (win_char_width(wc) < 2)
+            term.curs.attr.attr |= ATTR_EXPAND;
+        }
         else
 #if HAS_LOCALES
           width = wcwidth(wc);
@@ -1535,7 +1540,6 @@ term_write(const char *buf, uint len)
           width = xcwidth(wc);
 #endif
 
-        unsigned long long asav = term.curs.attr.attr;
         switch (term.curs.csets[term.curs.g1]) {
           when CSET_LINEDRW:  // VT100 line drawing characters
             if (0x60 <= wc && wc <= 0x7E) {

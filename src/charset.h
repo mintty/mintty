@@ -68,6 +68,7 @@ extern int xcwidth(xchar c);
 extern bool indicwide(xchar c);
 extern bool extrawide(xchar c);
 extern bool combiningdouble(xchar c);
+extern bool widerange(xchar c);
 
 #endif
 

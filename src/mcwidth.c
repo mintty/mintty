@@ -32,6 +32,25 @@ bisearch(xchar c, const interval table[], int len)
 }
 
 
+/* sorted list of non-overlapping intervals of East Asian wide characters */
+static const interval wide[] = {
+  { 0x1100, 0x115F }, /* Hangul Jamo init. consonants */
+  { 0x2329, 0x232A }, /* angle brackets */
+  { 0x2E80, 0x303E }, /* CJK symbols and punctuation */
+  { 0x3040, 0xA4CF }, /* CJK ... Yi */
+  { 0xA960, 0xA97F }, /* Hangul Jamo Extended-A */
+  { 0xAC00, 0xD7A3 }, /* Hangul Syllables */
+  { 0xF900, 0xFAFF }, /* CJK Compatibility Ideographs */
+  { 0xFE10, 0xFE19 }, /* Vertical forms */
+  { 0xFE30, 0xFE6F }, /* CJK Compatibility Forms */
+  { 0xFF00, 0xFF60 }, /* Fullwidth Forms */
+  { 0xFFE0, 0xFFE6 }, /* fullwidth symbols */
+  { 0x1B000, 0x1B0FF }, /* Kana Supplement */
+  { 0x1F200, 0x1F2FF }, /* Enclosed Ideographic Supplement */
+  { 0x20000, 0x2FFFD }, /* CJK Extensions and Supplement */
+  { 0x30000, 0x3FFFD }
+};
+
 #if !HAS_LOCALES
 
 /*
@@ -142,25 +161,6 @@ static const interval combining[] =
 static const interval ambiguous[] =
 #include "ambiguous.t"
 
-/* sorted list of non-overlapping intervals of East Asian wide characters */
-static const interval wide[] = {
-  { 0x1100, 0x115F }, /* Hangul Jamo init. consonants */
-  { 0x2329, 0x232A }, /* angle brackets */
-  { 0x2E80, 0x303E }, /* CJK symbols and punctuation */
-  { 0x3040, 0xA4CF }, /* CJK ... Yi */
-  { 0xA960, 0xA97F }, /* Hangul Jamo Extended-A */
-  { 0xAC00, 0xD7A3 }, /* Hangul Syllables */
-  { 0xF900, 0xFAFF }, /* CJK Compatibility Ideographs */
-  { 0xFE10, 0xFE19 }, /* Vertical forms */
-  { 0xFE30, 0xFE6F }, /* CJK Compatibility Forms */
-  { 0xFF00, 0xFF60 }, /* Fullwidth Forms */
-  { 0xFFE0, 0xFFE6 }, /* fullwidth symbols */
-  { 0x1B000, 0x1B0FF }, /* Kana Supplement */
-  { 0x1F200, 0x1F2FF }, /* Enclosed Ideographic Supplement */
-  { 0x20000, 0x2FFFD }, /* CJK Extensions and Supplement */
-  { 0x30000, 0x3FFFD }
-};
-
 int
 xcwidth(xchar c)
 {
@@ -193,6 +193,12 @@ xcwidth(xchar c)
 }
 
 #endif
+
+bool
+widerange(xchar c)
+{
+  return bisearch(c, wide, lengthof(wide));
+}
 
 static const interval indic[] = {
 #include "indicwide.t"

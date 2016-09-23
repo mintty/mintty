@@ -1002,11 +1002,15 @@ term_paint(void)
           tattr.attr != (dispchars[j].attr.attr & ~(ATTR_NARROW | DATTR_MASK))) {
         if ((tattr.attr & ATTR_WIDE) == 0 && win_char_width(tchar) == 2)
           tattr.attr |= ATTR_NARROW;
-#ifdef fix_123_spoil_CJK_570
-#warning Windows may report width 1 for double-width characters↯
-        else if (tattr.attr & ATTR_WIDE && win_char_width(tchar) == 1)
+        else if (tattr.attr & ATTR_WIDE
+                 // guard character expanding properly to avoid 
+                 // false hits as reported for CJK in #570,
+                 // considering that Windows may report width 1 
+                 // for double-width characters 
+                 // (if double-width by font substitution)
+                 && cs_ambig_wide && !font_ambig_wide
+                 && win_char_width(tchar) == 1 && !widerange(tchar))
           tattr.attr |= ATTR_EXPAND;
-#endif
       }
       else if (dispchars[j].attr.attr & ATTR_NARROW)
         tattr.attr |= ATTR_NARROW;
