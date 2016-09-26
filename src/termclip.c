@@ -55,6 +55,7 @@ get_selection(clip_workbuf *buf)
     bool nl = false;
     termline *line = fetch_line(start.y);
     pos nlpos;
+    wchar * sixel_clipp = (wchar *)cfg.sixel_clip_char;
 
    /*
     * nlpos will point at the maximum position on this line we
@@ -107,11 +108,14 @@ get_selection(clip_workbuf *buf)
       while (1) {
         wchar c = line->chars[x].chr;
         attr = line->chars[x].attr.attr;
-#ifdef substitute_SIXEL_image
-        if (c == SIXELCH) {
-          c = 0xFFFD;  // representation of choice (configurable?)
+        if (c == SIXELCH && *cfg.sixel_clip_char) {
+          // copy replacement into clipboard
+          if (!*sixel_clipp)
+            sixel_clipp = (wchar *)cfg.sixel_clip_char;
+          c = *sixel_clipp++;
         }
-#endif
+        else
+          sixel_clipp = (wchar *)cfg.sixel_clip_char;
         cbuf[0] = c;
         cbuf[1] = 0;
 

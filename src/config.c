@@ -138,7 +138,8 @@ const config default_cfg = {
     [BOLD_MAGENTA_I] = 0xFF40FF,
     [BOLD_CYAN_I]    = 0xFFFF40,
     [BOLD_WHITE_I]   = 0xFFFFFF,
-  }
+  },
+  .sixel_clip_char = W(" ")
 };
 
 config cfg, new_cfg, file_cfg;
@@ -278,6 +279,7 @@ options[] = {
   {"WordChars", OPT_STRING, offcfg(word_chars)},
   {"WordCharsExcl", OPT_STRING, offcfg(word_chars_excl)},
   {"IMECursorColour", OPT_COLOUR, offcfg(ime_cursor_colour)},
+  {"SixelClipChars", OPT_WSTRING, offcfg(sixel_clip_char)},
 
   // ANSI colours
   {"Black", OPT_COLOUR, offcfg(ansi_colours[BLACK_I])},

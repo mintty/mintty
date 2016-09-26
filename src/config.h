@@ -136,6 +136,7 @@ typedef struct {
   string word_chars_excl;
   colour ime_cursor_colour;
   colour ansi_colours[16];
+  wstring sixel_clip_char;
   // Legacy
   bool use_system_colours;
 } config;
