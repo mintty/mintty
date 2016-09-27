@@ -11,6 +11,7 @@
 #include "winpriv.h"
 #include "termpriv.h"
 #include "winimg.h"
+#include "sixel.h"
 
 // tempfile_t manipulation
 
@@ -283,6 +284,11 @@ void
 winimgs_clear(void)
 {
   imglist *img, *prev;
+
+  // clear parser state
+  sixel_parser_deinit(term.imgs.parser_state);
+  free(term.imgs.parser_state);
+  term.imgs.parser_state = NULL;
 
   // clear images in current screen
   for (img = term.imgs.first; img; ) {

@@ -12,6 +12,7 @@
 
 #include "winpriv.h"
 #include "winsearch.h"
+#include "winimg.h"
 
 #include "term.h"
 #include "appinfo.h"
@@ -1270,7 +1271,7 @@ static struct {
         when IDM_COPY: term_copy();
         when IDM_PASTE: win_paste();
         when IDM_SELALL: term_select_all(); win_update();
-        when IDM_RESET: term_reset(); win_update();
+        when IDM_RESET: winimgs_clear(); term_reset(); win_update();
         when IDM_DEFSIZE:
           default_size();
         when IDM_DEFSIZE_ZOOM:
