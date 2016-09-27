@@ -22,6 +22,7 @@ extern int font_size;  // logical font size, as configured (< 0: pixel size)
 extern int cell_width, cell_height;  // includes spacing
 extern int PADDING;
 
+extern bool disable_bidi;
 
 extern bool win_is_fullscreen;
 extern uint dpi;

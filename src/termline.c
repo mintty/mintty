@@ -4,6 +4,7 @@
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "termpriv.h"
+#include "winpriv.h"  // disable_bidi
 
 termline *
 newline(int cols, int bce)
@@ -877,6 +878,9 @@ void trace_bidi(char * tag, bidi_char * wc)
 termchar *
 term_bidi_line(termline *line, int scr_y)
 {
+  if (disable_bidi)
+    return null;
+
   termchar *lchars;
   int it;
 
