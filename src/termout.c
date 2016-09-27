@@ -1007,40 +1007,40 @@ do_dcs(void)
     when DCS_PASSTHROUGH:
       if (!st)
         return;
-      if (!st->image.data)
-        return;
       status = sixel_parser_parse(st, (unsigned char *)s, term.cmd_len);
       if (status < 0) {
-         sixel_parser_deinit(st);
-         free(term.imgs.parser_state);
-         term.imgs.parser_state = NULL;
-         term.state = DCS_IGNORE;
-         return;
+        sixel_parser_deinit(st);
+        free(term.imgs.parser_state);
+        term.imgs.parser_state = NULL;
+        term.state = DCS_IGNORE;
+        return;
       }
 
     when DCS_ESCAPE:
       if (!st)
         return;
-      if (!st->image.data)
-        return;
       status = sixel_parser_parse(st, (unsigned char *)s, term.cmd_len);
       if (status < 0) {
-         sixel_parser_deinit(st);
-         free(term.imgs.parser_state);
-         term.imgs.parser_state = NULL;
-         return;
+        sixel_parser_deinit(st);
+        free(term.imgs.parser_state);
+        term.imgs.parser_state = NULL;
+        return;
       }
 
-      status = sixel_parser_finalize(st);
+      pixels = (unsigned char *)malloc(st->image.width * st->image.height * 4);
+      if (!pixels)
+        return;
+
+      status = sixel_parser_finalize(st, pixels);
       if (status < 0) {
-         sixel_parser_deinit(st);
-         free(term.imgs.parser_state);
-         term.imgs.parser_state = NULL;
-         return;
+        sixel_parser_deinit(st);
+        free(term.imgs.parser_state);
+        term.imgs.parser_state = NULL;
+        return;
       }
 
-      pixels = sixel_parser_get_buffer(st);
-      st->image.data = NULL;
+      sixel_parser_deinit(st);
+
       left = term.curs.x;
       top = term.virtuallines + (term.sixel_display ? 0: term.curs.y);
       width = st->image.width / st->grid_width;
@@ -1127,10 +1127,7 @@ do_dcs(void)
         st = term.imgs.parser_state = calloc(1, sizeof(sixel_state_t));
         sixel_parser_set_default_color(st);
       }
-      status = sixel_parser_init(st,
-                                 (fg & 0xff) << 16 | (fg & 0xff00) | (fg & 0xff0000) >> 16,
-                                 (bg & 0xff) << 16 | (bg & 0xff00) | (bg & 0xff0000) >> 16,
-                                 term.private_color_registers);
+      status = sixel_parser_init(st, fg, bg, term.private_color_registers);
       if (status < 0)
         return;
     }

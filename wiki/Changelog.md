@@ -1,5 +1,6 @@
   * Changed non-graphic display substitute for SIXEL image to space to reduce flickering (~#587).
   * Changed non-graphic clipboard substitute for SIXEL image to configurable string, default space (#587).
+  * Fixed SIXEL colour registers handling (#593), thanks to Hayaki Saito.
 
   * Support for "combining double" characters that cover two base characters (~#553).
   * Expanding characters as appropriate for wide display (#123, /#570).
