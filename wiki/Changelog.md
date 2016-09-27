@@ -3,6 +3,7 @@
 
   * Support for "combining double" characters that cover two base characters (~#553).
   * Expanding characters as appropriate for wide display (#123, /#570).
+  * Option --nobidi / --nortl to disable bidi mode (right-to-left support) (#592).
 
   * New command line option --dir to change the initial working directory (#558, #58).
 
