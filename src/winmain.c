@@ -151,6 +151,7 @@ DECLARE_HANDLE(DPI_AWARENESS_CONTEXT);
 static DPI_AWARENESS_CONTEXT (WINAPI * pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT dpic) = 0;
 static HRESULT (WINAPI * pEnableNonClientDpiScaling)(HWND win) = 0;
 static BOOL (WINAPI * pAdjustWindowRectExForDpi)(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, UINT dpi) = 0;
+static INT (WINAPI * pGetSystemMetricsForDpi)(INT index, UINT dpi) = 0;
 
 static void
 load_dpi_funcs(void)
@@ -175,9 +176,11 @@ load_dpi_funcs(void)
       (void *)GetProcAddress(user, "EnableNonClientDpiScaling");
     pAdjustWindowRectExForDpi =
       (void *)GetProcAddress(user, "AdjustWindowRectExForDpi");
+    pGetSystemMetricsForDpi =
+      (void *)GetProcAddress(user, "GetSystemMetricsForDpi");
   }
 #ifdef debug_dpi
-  printf("SetProcessDpiAwareness %d GetProcessDpiAwareness %d GetDpiForMonitor %d SetThreadDpiAwarenessContext %d EnableNonClientDpiScaling %d AdjustWindowRectExForDpi %d\n", !!pSetProcessDpiAwareness, !!pGetProcessDpiAwareness, !!pGetDpiForMonitor, !!pSetThreadDpiAwarenessContext, !!pEnableNonClientDpiScaling, !!pAdjustWindowRectExForDpi);
+  printf("SetProcessDpiAwareness %d GetProcessDpiAwareness %d GetDpiForMonitor %d SetThreadDpiAwarenessContext %d EnableNonClientDpiScaling %d AdjustWindowRectExForDpi %d GetSystemMetricsForDpi %d\n", !!pSetProcessDpiAwareness, !!pGetProcessDpiAwareness, !!pGetDpiForMonitor, !!pSetThreadDpiAwarenessContext, !!pEnableNonClientDpiScaling, !!pAdjustWindowRectExForDpi, !!pGetSystemMetricsForDpi);
 #endif
 }
 
@@ -845,6 +848,36 @@ win_invalidate_all(void)
   InvalidateRect(wnd, null, true);
 }
 
+
+#ifdef debug_dpi
+static void
+print_system_metrics(int dpi, string tag)
+{
+# ifndef SM_CXPADDEDBORDER
+# define SM_CXPADDEDBORDER 92
+# endif
+  printf("metrics /%d [%s]\n"
+         "        border %d/%d %d/%d edge %d/%d %d/%d\n"
+         "        frame  %d/%d %d/%d size %d/%d %d/%d\n"
+         "        padded %d/%d\n"
+         "        caption %d/%d\n"
+         "        scrollbar %d/%d\n",
+         dpi, tag,
+         GetSystemMetrics(SM_CXBORDER), pGetSystemMetricsForDpi(SM_CXBORDER, dpi),
+         GetSystemMetrics(SM_CYBORDER), pGetSystemMetricsForDpi(SM_CYBORDER, dpi),
+         GetSystemMetrics(SM_CXEDGE), pGetSystemMetricsForDpi(SM_CXEDGE, dpi),
+         GetSystemMetrics(SM_CYEDGE), pGetSystemMetricsForDpi(SM_CYEDGE, dpi),
+         GetSystemMetrics(SM_CXFIXEDFRAME), pGetSystemMetricsForDpi(SM_CXFIXEDFRAME, dpi),
+         GetSystemMetrics(SM_CYFIXEDFRAME), pGetSystemMetricsForDpi(SM_CYFIXEDFRAME, dpi),
+         GetSystemMetrics(SM_CXSIZEFRAME), pGetSystemMetricsForDpi(SM_CXSIZEFRAME, dpi),
+         GetSystemMetrics(SM_CYSIZEFRAME), pGetSystemMetricsForDpi(SM_CYSIZEFRAME, dpi),
+         GetSystemMetrics(SM_CXPADDEDBORDER), pGetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi),
+         GetSystemMetrics(SM_CYCAPTION), pGetSystemMetricsForDpi(SM_CYCAPTION, dpi),
+         GetSystemMetrics(SM_CXVSCROLL), pGetSystemMetricsForDpi(SM_CXVSCROLL, dpi)
+         );
+}
+#endif
+
 static void
 win_adjust_borders(int t_width, int t_height)
 {
@@ -868,8 +901,9 @@ win_adjust_borders(int t_width, int t_height)
 #ifdef debug_dpi
     RECT wr0 = cr;
     AdjustWindowRect(&wr0, window_style, false);
-    printf("adjust borders dpi %3d: %ld %ld\n", dpi, wr.right - wr.left, wr.bottom - wr.top);
-    printf("                      : %ld %ld\n", wr0.right - wr0.left, wr0.bottom - wr0.top);
+    printf("adjust borders dpi %3d: %ld %ld\n", dpi, (long)wr.right - wr.left, (long)wr.bottom - wr.top);
+    printf("                      : %ld %ld\n", (long)wr0.right - wr0.left, (long)wr0.bottom - wr0.top);
+    print_system_metrics(dpi, "win_adjust_borders");
 #endif
   }
   else
@@ -2380,6 +2414,13 @@ main(int argc, char *argv[])
   cs_reconfig();
 
   // Determine window sizes.
+#if 0
+  if (per_monitor_dpi_aware && pGetDpiForMonitor) {
+    HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+    uint x;
+    pGetDpiForMonitor(mon, 0, &x, &dpi);  // MDT_EFFECTIVE_DPI
+  }
+#endif
   win_adjust_borders(cell_width * term_cols, cell_height * term_rows);
 
   // Having x == CW_USEDEFAULT but not y still triggers default positioning,
@@ -2500,6 +2541,7 @@ main(int argc, char *argv[])
       pGetDpiForMonitor(mon, 1, &x, &ang);  // MDT_ANGULAR_DPI
       pGetDpiForMonitor(mon, 2, &x, &raw);  // MDT_RAW_DPI
       printf("initial dpi eff %d ang %d raw %d\n", dpi, ang, raw);
+      print_system_metrics(dpi, "initial");
 #endif
       // recalculate effective font size and adjust window
       if (dpi != 96) {
