@@ -2400,6 +2400,7 @@ main(int argc, char *argv[])
 #endif
 
   // Create initial window.
+  term.show_scrollbar = cfg.scrollbar;  // hotfix #597
   wnd = CreateWindowExW(cfg.scrollbar < 0 ? WS_EX_LEFTSCROLLBAR : 0,
                         wclass, wtitle,
                         window_style | (cfg.scrollbar ? WS_VSCROLL : 0),
