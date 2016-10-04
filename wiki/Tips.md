@@ -101,7 +101,7 @@ Cygwin's **chere** package can be used to create folder context menu entries in 
 The following command will create an entry called _Bash Prompt Here_ for the current user that will invoke bash running in mintty. See the chere manual (_man chere_) for all the options.
 
 ```
-chere -i -c -t mintty
+chere -1 -i -c -t mintty
 ```
 
 Note, however, that context menu entries created by **chere** fail on non-ASCII directory names.
