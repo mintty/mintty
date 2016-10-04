@@ -1219,7 +1219,7 @@ static struct {
 #endif
   switch (message) {
     when WM_NCCREATE:
-      if (pEnableNonClientDpiScaling) {
+      if (cfg.handle_dpichanged && pEnableNonClientDpiScaling) {
         //CREATESTRUCT * csp = (CREATESTRUCT *)lp;
         resizing = true;
         BOOL res = pEnableNonClientDpiScaling(wnd);
