@@ -222,11 +222,11 @@ init_charset_menu(void)
 
   string oem_cs = cs_name(GetOEMCP());
   if (*oem_cs == 'C')
-    *p++ = asform("%s %s", oem_cs, "(OEM codepage)");
+    *p++ = asform("%s %s", oem_cs, __("(OEM codepage)"));
 
   string ansi_cs = cs_name(GetACP());
   if (*ansi_cs == 'C')
-    *p++ = asform("%s %s", ansi_cs, "(ANSI codepage)");
+    *p++ = asform("%s %s", ansi_cs, __("(ANSI codepage)"));
 }
 
 static void

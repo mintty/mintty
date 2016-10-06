@@ -924,7 +924,7 @@ win_adjust_borders(int t_width, int t_height)
 void
 win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
 {
-  trace_resize(("--- win_adapt_term_size full %d Zoomed %d\n", win_is_fullscreen, IsZoomed(wnd)));
+  trace_resize(("--- win_adapt_term_size sync_size %d scale_font %d (full %d Zoomed %d)\n", sync_size_with_font, scale_font_with_size, win_is_fullscreen, IsZoomed(wnd)));
   if (IsIconic(wnd))
     return;
 

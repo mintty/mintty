@@ -265,7 +265,7 @@ write_char(wchar c, int width)
       term_check_boundary(curs->x, curs->y);
       term_check_boundary(curs->x + 1, curs->y);
       put_char(c);
-    when 2:  // Double-width character.
+    when 2 or 3:  // Double-width char (Triple-width was an experimental option).
      /*
       * If we're about to display a double-width
       * character starting in the rightmost
@@ -286,7 +286,7 @@ write_char(wchar c, int width)
       * column. xterm concurs.)
       */
       term_check_boundary(curs->x, curs->y);
-      term_check_boundary(curs->x + 2, curs->y);
+      term_check_boundary(curs->x + width, curs->y);
       if (curs->x == term.cols - 1) {
         line->chars[curs->x] = term.erase_char;
         line->attr |= LATTR_WRAPPED | LATTR_WRAPPED2;
@@ -298,10 +298,14 @@ write_char(wchar c, int width)
         line = term.lines[curs->y];
        /* Now we must term_check_boundary again, of course. */
         term_check_boundary(curs->x, curs->y);
-        term_check_boundary(curs->x + 2, curs->y);
+        term_check_boundary(curs->x + width, curs->y);
       }
       put_char(c);
       curs->x++;
+#ifdef support_triple_width
+      if (width > 2)
+        curs->x += width - 2;
+#endif
       put_char(UCSWIDE);
     when 0:  // Combining character.
       if (curs->x > 0) {
