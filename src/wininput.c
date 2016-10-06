@@ -13,11 +13,13 @@
 #include <winnls.h>
 #include <termios.h>
 
-static HMENU menu, sysmenu;
+static HMENU ctxmenu = NULL;
+static HMENU sysmenu;
 static bool alt_F2_pending = false;
 static bool alt_F2_shifted = false;
 static bool alt_F2_home = false;
 static int alt_F2_monix = 0, alt_F2_moniy = 0;
+
 
 void
 win_update_menus(void)
@@ -37,9 +39,9 @@ win_update_menus(void)
   );
 
   uint sel_enabled = term.selected ? MF_ENABLED : MF_GRAYED;
-  EnableMenuItem(menu, IDM_OPEN, sel_enabled);
+  EnableMenuItem(ctxmenu, IDM_OPEN, sel_enabled);
   ModifyMenu(
-    menu, IDM_COPY, sel_enabled, IDM_COPY,
+    ctxmenu, IDM_COPY, sel_enabled, IDM_COPY,
     clip ? "&Copy\tCtrl+Ins" : ct_sh ? "&Copy\tCtrl+Shift+C" : "&Copy"
   );
 
@@ -49,17 +51,17 @@ win_update_menus(void)
     IsClipboardFormatAvailable(CF_HDROP)
     ? MF_ENABLED : MF_GRAYED;
   ModifyMenu(
-    menu, IDM_PASTE, paste_enabled, IDM_PASTE,
+    ctxmenu, IDM_PASTE, paste_enabled, IDM_PASTE,
     clip ? "&Paste\tShift+Ins" : ct_sh ? "&Paste\tCtrl+Shift+V" : "&Paste"
   );
 
   ModifyMenu(
-    menu, IDM_SEARCH, 0, IDM_SEARCH,
+    ctxmenu, IDM_SEARCH, 0, IDM_SEARCH,
     alt_fn ? "S&earch\tAlt+F3" : ct_sh ? "S&earch\tCtrl+Shift+H" : "S&earch"
   );
 
   ModifyMenu(
-    menu, IDM_RESET, 0, IDM_RESET,
+    ctxmenu, IDM_RESET, 0, IDM_RESET,
     alt_fn ? "&Reset\tAlt+F8" : ct_sh ? "&Reset\tCtrl+Shift+R" : "&Reset"
   );
 
@@ -67,48 +69,54 @@ win_update_menus(void)
     IsZoomed(wnd) || term.cols != cfg.cols || term.rows != cfg.rows
     ? MF_ENABLED : MF_GRAYED;
   ModifyMenu(
-    menu, IDM_DEFSIZE_ZOOM, defsize_enabled, IDM_DEFSIZE_ZOOM,
+    ctxmenu, IDM_DEFSIZE_ZOOM, defsize_enabled, IDM_DEFSIZE_ZOOM,
     alt_fn ? "&Default size\tAlt+F10" :
     ct_sh ? "&Default size\tCtrl+Shift+D" : "&Default size"
   );
 
   uint fullscreen_checked = win_is_fullscreen ? MF_CHECKED : MF_UNCHECKED;
   ModifyMenu(
-    menu, IDM_FULLSCREEN_ZOOM, fullscreen_checked, IDM_FULLSCREEN_ZOOM,
+    ctxmenu, IDM_FULLSCREEN_ZOOM, fullscreen_checked, IDM_FULLSCREEN_ZOOM,
     alt_fn ? "&Full Screen\tAlt+F11" :
     ct_sh ? "&Full Screen\tCtrl+Shift+F" : "&Full Screen"
   );
 
   uint otherscreen_checked = term.show_other_screen ? MF_CHECKED : MF_UNCHECKED;
   ModifyMenu(
-    menu, IDM_FLIPSCREEN, otherscreen_checked, IDM_FLIPSCREEN,
+    ctxmenu, IDM_FLIPSCREEN, otherscreen_checked, IDM_FLIPSCREEN,
     alt_fn ? "Flip &Screen\tAlt+F12" :
     ct_sh ? "Flip &Screen\tCtrl+Shift+S" : "Flip &Screen"
   );
 
   uint options_enabled = config_wnd ? MF_GRAYED : MF_ENABLED;
-  EnableMenuItem(menu, IDM_OPTIONS, options_enabled);
+  EnableMenuItem(ctxmenu, IDM_OPTIONS, options_enabled);
   EnableMenuItem(sysmenu, IDM_OPTIONS, options_enabled);
+}
+
+static void
+win_init_ctxmenu(void)
+{
+  ctxmenu = CreatePopupMenu();
+  AppendMenu(ctxmenu, MF_ENABLED, IDM_OPEN, "Ope&n");
+  AppendMenu(ctxmenu, MF_SEPARATOR, 0, 0);
+  AppendMenu(ctxmenu, MF_ENABLED, IDM_COPY, 0);
+  AppendMenu(ctxmenu, MF_ENABLED, IDM_PASTE, 0);
+  AppendMenu(ctxmenu, MF_ENABLED, IDM_SELALL, "Select &All");
+  AppendMenu(ctxmenu, MF_SEPARATOR, 0, 0);
+  AppendMenu(ctxmenu, MF_ENABLED, IDM_SEARCH, 0);
+  AppendMenu(ctxmenu, MF_ENABLED, IDM_RESET, 0);
+  AppendMenu(ctxmenu, MF_SEPARATOR, 0, 0);
+  AppendMenu(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_DEFSIZE_ZOOM, 0);
+  AppendMenu(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN_ZOOM, 0);
+  AppendMenu(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_FLIPSCREEN, 0);
+  AppendMenu(ctxmenu, MF_SEPARATOR, 0, 0);
+  AppendMenu(ctxmenu, MF_ENABLED, IDM_OPTIONS, "&Options...");
 }
 
 void
 win_init_menus(void)
 {
-  menu = CreatePopupMenu();
-  AppendMenu(menu, MF_ENABLED, IDM_OPEN, "Ope&n");
-  AppendMenu(menu, MF_SEPARATOR, 0, 0);
-  AppendMenu(menu, MF_ENABLED, IDM_COPY, 0);
-  AppendMenu(menu, MF_ENABLED, IDM_PASTE, 0);
-  AppendMenu(menu, MF_ENABLED, IDM_SELALL, "Select &All");
-  AppendMenu(menu, MF_SEPARATOR, 0, 0);
-  AppendMenu(menu, MF_ENABLED, IDM_SEARCH, 0);
-  AppendMenu(menu, MF_ENABLED, IDM_RESET, 0);
-  AppendMenu(menu, MF_SEPARATOR, 0, 0);
-  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_DEFSIZE_ZOOM, 0);
-  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN_ZOOM, 0);
-  AppendMenu(menu, MF_ENABLED | MF_UNCHECKED, IDM_FLIPSCREEN, 0);
-  AppendMenu(menu, MF_SEPARATOR, 0, 0);
-  AppendMenu(menu, MF_ENABLED, IDM_OPTIONS, "&Options...");
+  win_init_ctxmenu();
 
   sysmenu = GetSystemMenu(wnd, false);
   InsertMenu(sysmenu, SC_CLOSE, MF_ENABLED, IDM_COPYTITLE, "Copy &Title");
@@ -117,15 +125,30 @@ win_init_menus(void)
   InsertMenu(sysmenu, SC_CLOSE, MF_SEPARATOR, 0, 0);
 }
 
+static void
+open_popup_menu(POINT * p)
+{
+  /* Create a new context menu structure every time the menu is opened.
+     This is a fruitless attempt to achieve its proper DPI scaling.
+   */
+  if (ctxmenu)
+    DestroyMenu(ctxmenu);
+
+  win_init_ctxmenu();
+  win_update_menus();
+
+  TrackPopupMenu(
+    ctxmenu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
+    p->x, p->y, 0, wnd, null
+  );
+}
+
 void
 win_popup_menu(void)
 {
   POINT p;
   GetCursorPos(&p);
-  TrackPopupMenu(
-    menu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
-    p.x, p.y, 0, wnd, null
-  );
+  open_popup_menu(&p);
 }
 
 typedef enum {
@@ -400,10 +423,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       POINT p;
       GetCaretPos(&p);
       ClientToScreen(wnd, &p);
-      TrackPopupMenu(
-        menu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
-        p.x, p.y, 0, wnd, null
-      );
+      open_popup_menu(&p);
     }
     return 1;
   }
