@@ -262,6 +262,9 @@ win_toggle_search(bool show, bool focus)
 
     default_edit_proc = (WNDPROC)SetWindowLongPtrW(search_edit_wnd, GWLP_WNDPROC, (long)edit_proc);
 
+    if (term.results.query)
+      SetWindowTextW(search_edit_wnd, term.results.query);
+
     search_initialised = true;
     prev_height = height;
   }
