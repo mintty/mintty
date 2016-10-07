@@ -1,14 +1,32 @@
+### 2.6.2 (9 Oct 2016) ###
+
+Terminal geometry:
   * Enabling initial scrollbar (as configured) on Windows 10 (#597).
+  * Adapting search bar height to font height (zooming, DPI scaling) (#85, #233).
+  * Fixed zoom anomaly (e.g. Shift+Ctrl+mouse) with search bar (#85, #233).
+  * Considering search bar (#85) for pixel size setting/reporting.
 
-  * Changed non-graphic display substitute for SIXEL image to space to reduce flickering (~#587).
-  * Changed non-graphic clipboard substitute for SIXEL image to configurable string, default space (#587).
-  * Fixed SIXEL colour registers handling (#593), thanks to Hayaki Saito.
+DPI scaling:
+  * Tweaked DPI scaling of window decoration, considering option HandleDPI.
+  * Tuning window size according to DPI again.
+  * Workaround for Windows non-client DPI scaling ignoring window name for title bar.
 
+Character display:
   * Support for "combining double" characters that cover two base characters (~#553).
   * Expanding characters as appropriate for wide display (#123, /#570).
   * Option --nobidi / --nortl to disable bidi mode (right-to-left support) (#592).
 
+Sixel image display:
+  * Changed non-graphic display substitute for Sixel image to space to reduce flickering (~#587).
+  * Changed non-graphic clipboard substitute for Sixel image to configurable string, default space (#587).
+  * Fixed Sixel colour registers handling (#593), thanks to Hayaki Saito.
+  * Stuffed Sixel buffer leak (#595).
+  * Fixed slow scrolling with Sixel images (Windows resource leak, #594).
+
+Configuration:
   * New command line option --dir to change the initial working directory (#558, #58).
+  * Option --nobidi / --nortl to disable bidi mode (right-to-left support) (#592).
+  * Revised help text (-H).
 
 ### 2.6.1 (18 Sep 2016) ###
 
