@@ -569,7 +569,8 @@ win_get_pixels(int *height_p, int *width_p)
   RECT r;
   GetWindowRect(wnd, &r);
   // report inner pixel size, without padding, like xterm:
-  *height_p = r.bottom - r.top - extra_height - 2 * PADDING;
+  int sy = win_search_visible() ? SEARCHBAR_HEIGHT : 0;
+  *height_p = r.bottom - r.top - extra_height - 2 * PADDING - sy;
   *width_p = r.right - r.left - extra_width - 2 * PADDING;
 }
 
@@ -587,9 +588,10 @@ void
 win_set_pixels(int height, int width)
 {
   trace_resize(("--- win_set_pixels %d %d\n", height, width));
+  int sy = win_search_visible() ? SEARCHBAR_HEIGHT : 0;
   SetWindowPos(wnd, null, 0, 0,
                width + extra_width + 2 * PADDING,
-               height + extra_height + 2 * PADDING,
+               height + extra_height + 2 * PADDING + sy,
                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
 }
 
@@ -1445,7 +1447,7 @@ static struct {
       win_key_reset();
 
     when WM_SETFOCUS:
-      trace_resize(("# WM_SETFOCUS VK_SHIFT %02X\n", GetKeyState(VK_SHIFT)));
+      trace_resize(("# WM_SETFOCUS VK_SHIFT %02X\n", (uchar)GetKeyState(VK_SHIFT)));
       term_set_focus(true, false);
       CreateCaret(wnd, caretbm, 0, 0);
       //flash_taskbar(false);  /* stop; not needed when leaving search bar */
@@ -1464,15 +1466,15 @@ static struct {
       return 0;
 
     when WM_MOVING:
-      trace_resize(("# WM_MOVING VK_SHIFT %02X\n", GetKeyState(VK_SHIFT)));
+      trace_resize(("# WM_MOVING VK_SHIFT %02X\n", (uchar)GetKeyState(VK_SHIFT)));
       zoom_token = -4;
 
     when WM_ENTERSIZEMOVE:
-      trace_resize(("# WM_ENTERSIZEMOVE VK_SHIFT %02X\n", GetKeyState(VK_SHIFT)));
+      trace_resize(("# WM_ENTERSIZEMOVE VK_SHIFT %02X\n", (uchar)GetKeyState(VK_SHIFT)));
       resizing = true;
 
     when WM_SIZING: {  // mouse-drag window resizing
-      trace_resize(("# WM_SIZING (resizing %d) VK_SHIFT %02X\n", resizing, GetKeyState(VK_SHIFT)));
+      trace_resize(("# WM_SIZING (resizing %d) VK_SHIFT %02X\n", resizing, (uchar)GetKeyState(VK_SHIFT)));
       zoom_token = 2;
      /*
       * This does two jobs:
@@ -1508,7 +1510,7 @@ static struct {
     }
 
     when WM_SIZE: {
-      trace_resize(("# WM_SIZE (resizing %d) VK_SHIFT %02X\n", resizing, GetKeyState(VK_SHIFT)));
+      trace_resize(("# WM_SIZE (resizing %d) VK_SHIFT %02X\n", resizing, (uchar)GetKeyState(VK_SHIFT)));
       if (wp == SIZE_RESTORED && win_is_fullscreen)
         clear_fullscreen();
       else if (wp == SIZE_MAXIMIZED && go_fullscr_on_max) {
@@ -1544,7 +1546,7 @@ static struct {
     }
 
     when WM_EXITSIZEMOVE or WM_CAPTURECHANGED: { // after mouse-drag resizing
-      trace_resize(("# WM_EXITSIZEMOVE (resizing %d) VK_SHIFT %02X\n", resizing, GetKeyState(VK_SHIFT)));
+      trace_resize(("# WM_EXITSIZEMOVE (resizing %d) VK_SHIFT %02X\n", resizing, (uchar)GetKeyState(VK_SHIFT)));
       bool shift = GetKeyState(VK_SHIFT) & 0x80;
 
       if (resizing) {
