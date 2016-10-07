@@ -4,8 +4,28 @@
 
 #include "winsearch.h"
 
-void
-scroll_to_result()
+
+static bool search_initialised = false;
+static bool searched = false;
+static int prev_height = 0;
+
+static HWND search_wnd;
+static HWND search_close_wnd;
+static HWND search_prev_wnd;
+static HWND search_next_wnd;
+static HWND search_edit_wnd;
+static WNDPROC default_edit_proc;
+static HFONT search_font;
+
+static void win_hide_search(void);
+
+#define SEARCHBARCLASS "SearchBar"
+
+int SEARCHBAR_HEIGHT = 26;
+
+
+static void
+scroll_to_result(void)
 {
   if (term.results.length == 0) {
     return;
@@ -27,7 +47,7 @@ scroll_to_result()
   }
 }
 
-void
+static void
 next_result(void)
 {
   if (term.results.length == 0) {
@@ -42,7 +62,7 @@ next_result(void)
   scroll_to_result();
 }
 
-void
+static void
 prev_result(void)
 {
   if (term.results.length == 0) {
@@ -159,18 +179,24 @@ place_field(int * curpoi, int width, int * pospoi)
   }
 }
 
-void
+static void
 win_toggle_search(bool show, bool focus)
 {
   RECT cr;
   GetClientRect(wnd, &cr);
-
   int width = cr.right - cr.left;
-  int height = SEARCHBAR_HEIGHT;
-  int margin = 2;
-  int button_width = 20;
+
+  int margin = cell_width / 6 + 1;
+  int height = cell_height + margin * 2;
+  int button_width = cell_width * 2;
+  SEARCHBAR_HEIGHT = height;
+
   int edit_width = width - button_width * 3 - margin * 2;
   int ctrl_height = height - margin * 2;
+  int sf_height = ctrl_height - 4;
+#ifdef debug_searchbar
+  printf("ctrl/but %d/%d cell %d/%d font h %d s %d\n", ctrl_height, button_width, cell_height, cell_width, font_height, font_size);
+#endif
 
   const char * search_bar = cfg.search_bar;
   int pos_close = -1;
@@ -195,19 +221,23 @@ win_toggle_search(bool show, bool focus)
   place_field(& barpos, edit_width, & pos_edit);
 
   // Set up our global variables.
-  if (!search_initialised) {
-    RegisterClass(&(WNDCLASS){
-      .style = 0,
-      .lpfnWndProc = search_proc,
-      .cbClsExtra = 0,
-      .cbWndExtra = 0,
-      .hInstance = inst,
-      .hIcon = NULL,
-      .hCursor = NULL,
-      .hbrBackground = (HBRUSH)(COLOR_3DFACE + 1),
-      .lpszMenuName = NULL,
-      .lpszClassName = SEARCHBARCLASS
-    });
+  if (!search_initialised || height != prev_height) {
+    if (!search_initialised)
+      RegisterClass(&(WNDCLASS){
+        .style = 0,
+        .lpfnWndProc = search_proc,
+        .cbClsExtra = 0,
+        .cbWndExtra = 0,
+        .hInstance = inst,
+        .hIcon = NULL,
+        .hCursor = NULL,
+        .hbrBackground = (HBRUSH)(COLOR_3DFACE + 1),
+        .lpszMenuName = NULL,
+        .lpszClassName = SEARCHBARCLASS
+      });
+    else {
+      DestroyWindow(search_wnd);
+    }
 
     search_wnd = CreateWindowEx(0, SEARCHBARCLASS, "", WS_CHILD, 0, 0, 0, 0, wnd, 0, inst, NULL);
 
@@ -224,7 +254,7 @@ win_toggle_search(bool show, bool focus)
                                      0, 0, 0, 0,
                                      search_wnd, NULL, inst, NULL);
 
-    search_font = CreateFontW(ctrl_height - 4, 0, 0, 0, FW_DONTCARE, false, false, false,
+    search_font = CreateFontW(sf_height, 0, 0, 0, FW_DONTCARE, false, false, false,
                              DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                              DEFAULT_QUALITY, FIXED_PITCH | FF_DONTCARE,
                              cfg.font.name);
@@ -233,6 +263,7 @@ win_toggle_search(bool show, bool focus)
     default_edit_proc = (WNDPROC)SetWindowLongPtrW(search_edit_wnd, GWLP_WNDPROC, (long)edit_proc);
 
     search_initialised = true;
+    prev_height = height;
   }
 
   if (show) {
@@ -257,13 +288,13 @@ win_toggle_search(bool show, bool focus)
 }
 
 void
-win_open_search()
+win_open_search(void)
 {
   win_toggle_search(true, true);
   win_adapt_term_size(false, false);
 }
 
-void
+static void
 win_hide_search(void)
 {
   win_toggle_search(false, false);
@@ -271,11 +302,12 @@ win_hide_search(void)
   searched = false;
 }
 
-void win_update_search(void)
+void
+win_update_search(void)
 {
-    if (win_search_visible()) {
-        win_toggle_search(true, false);
-    }
+  if (win_search_visible()) {
+    win_toggle_search(true, false);
+  }
 }
 
 void
@@ -296,7 +328,8 @@ win_paint_exclude_search(HDC dc)
   ExcludeClipRect(dc, cr.left, cr.top, cr.right, cr.bottom);
 }
 
-bool win_search_visible()
+bool
+win_search_visible(void)
 {
   return IsWindowVisible(search_wnd);
 }
