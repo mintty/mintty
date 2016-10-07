@@ -414,7 +414,7 @@ static uint file_opts_num = 0;
 static uint arg_opts_num;
 
 static void
-clear_opts()
+clear_opts(void)
 {
   for (uint n = 0; n < file_opts_num; n++)
     if (file_opts[n].comment)
@@ -654,7 +654,7 @@ static char * * config_dirs = 0;
 static int last_config_dir = -1;
 
 static void
-init_config_dirs()
+init_config_dirs(void)
 {
   if (config_dirs)
     return;

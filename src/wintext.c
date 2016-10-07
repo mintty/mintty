@@ -228,7 +228,7 @@ show_msg(wstring msg, wstring title)
 #endif
 
 static UINT
-get_default_charset()
+get_default_charset(void)
 {
   CHARSETINFO csi;
 
@@ -241,7 +241,7 @@ get_default_charset()
 }
 
 static void
-adjust_font_weights()
+adjust_font_weights(void)
 {
   LOGFONTW lf;
 #if CYGWIN_VERSION_API_MINOR >= 201

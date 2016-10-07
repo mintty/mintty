@@ -361,7 +361,7 @@ circbuf_get(circbuf * cb, int i)
 }
 
 void
-term_update_search()
+term_update_search(void)
 {
   int update_type = term.results.update_type;
   if (term.results.update_type == NO_UPDATE)
@@ -457,13 +457,13 @@ term_update_search()
 }
 
 void
-term_schedule_search_update()
+term_schedule_search_update(void)
 {
   term.results.update_type = FULL_UPDATE;
 }
 
 void
-term_schedule_search_partial_update()
+term_schedule_search_partial_update(void)
 {
   if (term.results.update_type == NO_UPDATE) {
     term.results.update_type = PARTIAL_UPDATE;
@@ -1306,7 +1306,7 @@ term_set_focus(bool has_focus, bool may_report)
 }
 
 void
-term_update_cs()
+term_update_cs(void)
 {
   term_cursor *curs = &term.curs;
   cs_set_mode(

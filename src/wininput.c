@@ -199,7 +199,7 @@ win_capture_mouse(void)
 static bool mouse_showing = true;
 
 void
-win_show_mouse()
+win_show_mouse(void)
 {
   if (!mouse_showing) {
     ShowCursor(true);
@@ -208,7 +208,7 @@ win_show_mouse()
 }
 
 static void
-hide_mouse()
+hide_mouse(void)
 {
   POINT p;
   if (cfg.hide_mouse && mouse_showing && GetCursorPos(&p) && WindowFromPoint(p) == wnd) {
@@ -339,7 +339,7 @@ vk_name(uint key)
 #endif
 
 void
-win_key_reset()
+win_key_reset(void)
 {
   alt_state = ALT_NONE;
 }

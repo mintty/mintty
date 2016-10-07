@@ -206,7 +206,7 @@ set_dpi_auto_scaling(bool on)
 }
 
 static bool
-set_per_monitor_dpi_aware()
+set_per_monitor_dpi_aware(void)
 {
 #if 0
  /* this was added under the assumption it might be needed 
@@ -1696,7 +1696,7 @@ warnw(wstring msg, wstring file, wstring err)
 }
 
 void
-report_pos()
+report_pos(void)
 {
   if (report_geom) {
     int x, y;
@@ -1728,7 +1728,7 @@ report_pos()
 }
 
 void
-exit_mintty()
+exit_mintty(void)
 {
   report_pos();
   exit(0);
@@ -1830,7 +1830,7 @@ get_shortcut_icon_location(wchar * iconfile)
 #endif
 
 static void
-configure_taskbar()
+configure_taskbar(void)
 {
 #define no_patch_jumplist
 #ifdef patch_jumplist
