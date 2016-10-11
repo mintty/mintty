@@ -468,7 +468,12 @@ paste_hdrop(HDROP drop)
       buf_add('\'');
     else if (*fn == '~')
       buf_add('\\');
-    for (char *p = fn; *p; p++) {
+    char *p = fn;
+    if (support_wsl && strncmp(p, "/cygdrive/", 10) == 0) {
+      p += 5;
+      strncpy(p, "/mnt", 4);
+    }
+    for (; *p; p++) {
       uchar c = *p;
       if (iscntrl(c)) {
         buf_add('\\');
