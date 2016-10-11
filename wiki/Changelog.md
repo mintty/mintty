@@ -1,3 +1,5 @@
+  * New option value -Rm to report system's monitor configuration (/#599).
+
 ### 2.6.2 (9 Oct 2016) ###
 
 Terminal geometry:
