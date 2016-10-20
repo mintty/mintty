@@ -768,8 +768,6 @@ another_font(int fontno)
   printf("font [%02X]: %d (size %d) %d w%4d i%d u%d s%d\n", fontno, font_height * (1 + !!(fontno & FONT_HIGH)), font_size, x, w, i, u, s);
 #endif
   fonts[fontno] =
-    // workaround: remove effect of row_spacing from font creation;
-    // to be checked: usages of cell_height elsewhere
     CreateFontW(font_height * (1 + !!(fontno & FONT_HIGH)), x, 0, 0, w, i, u, s,
                 DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                 get_font_quality(), FIXED_PITCH | FF_DONTCARE, cfg.font.name);
@@ -908,7 +906,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
     nfont |= FONT_UNDERLINE;
   if (attr.attr & ATTR_ITALIC)
     nfont |= FONT_ITALIC;
-  if (attr.attr & ATTR_STRIKEOUT)
+  if (attr.attr & ATTR_STRIKEOUT && cfg.underl_colour == (colour)-1)
     nfont |= FONT_STRIKEOUT;
   another_font(nfont);
 
@@ -1272,6 +1270,18 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
         MoveToEx(dc, x, y + uloff - l, null);
         LineTo(dc, x + len * char_width, y + uloff - l);
       }
+    }
+    oldpen = SelectObject(dc, oldpen);
+    DeleteObject(oldpen);
+  }
+
+ /* Strikeout */
+  if (attr.attr & ATTR_STRIKEOUT && cfg.underl_colour != (colour)-1) {
+    int soff = (descent + (row_spacing / 2)) * 2 / 3;
+    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, ul));
+    for (int l = 0; l < line_width; l++) {
+      MoveToEx(dc, x, y + soff + l, null);
+      LineTo(dc, x + len * char_width, y + soff + l);
     }
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
