@@ -383,6 +383,8 @@ win_init_fonts(int size)
 
   bold_mode = cfg.bold_as_font ? BOLD_FONT : BOLD_SHADOW;
   und_mode = UND_FONT;
+  if (cfg.underl_colour != (colour)-1)
+    und_mode = UND_LINE;
 
   if (cfg.font.weight) {
     fw_norm = cfg.font.weight;
@@ -515,7 +517,7 @@ win_init_fonts(int size)
   * go all the way across the character cell, we only search
   * down a single column of the bitmap, half way across.)
   */
-  {
+  if (und_mode == UND_FONT) {
     HDC und_dc;
     HBITMAP und_bm, und_oldbm;
 
@@ -1240,9 +1242,11 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
   if (uloff >= cell_height)
     uloff = cell_height - 1;
 
-#define dont_debug_underline
+  if (cfg.underl_colour != (colour)-1)
+    ul = cfg.underl_colour;
 #ifdef debug_underline
-  ul = 0x802020E0;
+  if (cfg.underl_colour == (colour)-1)
+    ul = 0x802020E0;
   if (lattr == LATTR_TOP)
     ul = 0x80E0E020;
   if (lattr == LATTR_BOT)

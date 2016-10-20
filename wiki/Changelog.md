@@ -1,4 +1,5 @@
   * Check for misplaced underline by looking for underline only in descender section to decide whether to draw it ourselves (#604).
+  * New option UnderlineColour to set colour for all lining modes and enforce manual underlining (~#604).
 
   * New option value -Rm to report system's monitor configuration (/#599).
   * New option --wsl to enable WSL feature adaptations (mintty/wsltty/#8).
