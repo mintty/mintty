@@ -518,8 +518,6 @@ win_init_fonts(int size)
   {
     HDC und_dc;
     HBITMAP und_bm, und_oldbm;
-    int i, gotit;
-    COLORREF c;
 
     und_dc = CreateCompatibleDC(dc);
     und_bm = CreateCompatibleBitmap(dc, cell_width, cell_height);
@@ -530,9 +528,15 @@ win_init_fonts(int size)
     SetBkColor(und_dc, RGB(0, 0, 0));
     SetBkMode(und_dc, OPAQUE);
     ExtTextOut(und_dc, 0, 0, ETO_OPAQUE, null, " ", 1, null);
-    gotit = false;
-    for (i = 0; i < cell_height; i++) {
-      c = GetPixel(und_dc, cell_width / 2, i);
+
+    bool gotit = false;
+    // look for font-generated underline in character cell
+    //int i = 0;
+    // look for font-generated underline in descender section only
+    int i = tm.tmAscent;
+    //int i = tm.tmAscent + 1;
+    for (; i < cell_height; i++) {
+      COLORREF c = GetPixel(und_dc, cell_width / 2, i);
       if (c != RGB(0, 0, 0))
         gotit = true;
     }
@@ -1236,6 +1240,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
   if (uloff >= cell_height)
     uloff = cell_height - 1;
 
+#define dont_debug_underline
 #ifdef debug_underline
   ul = 0x802020E0;
   if (lattr == LATTR_TOP)

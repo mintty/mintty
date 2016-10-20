@@ -1,5 +1,8 @@
+  * Check for misplaced underline by looking for underline only in descender section to decide whether to draw it ourselves (#604).
+
   * New option value -Rm to report system's monitor configuration (/#599).
   * New option --wsl to enable WSL feature adaptations (mintty/wsltty/#8).
+  * Manual: fix description of copy/paste shortcuts and refer to option CtrlExchangeShift (#602, #524).
 
 ### 2.6.2 (9 Oct 2016) ###
 
