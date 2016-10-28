@@ -202,10 +202,8 @@ static struct base64_test test_sets[] = {
 
 #define ARRAY_SIZE(a)		(sizeof(a) / sizeof(a[0]))
 
-#define error(fmt, ...)	do {                    \
-    fprintf(stderr, fmt, ##__VA_ARGS__);	\
-    exit(1);                                    \
-  } while (0)
+#warning compiling test code
+#define error(fmt, ...)	fprintf(stderr, fmt, ##__VA_ARGS__); exit(1)
 
 static void encode_string(const char *s, char *out, int len)
 {
@@ -216,8 +214,7 @@ static void encode_string(const char *s, char *out, int len)
     error("Encode %s with len %d return %d\n", s, len, out_len);
   }
   if (out_len > len - 1) {
-    error("Encode %s with len %d return invalid len %d\n",
-          s, len, out_len);
+    error("Encode %s with len %d return invalid len %d\n", s, len, out_len);
   }
   out[out_len] = '\0';
 }
@@ -231,8 +228,7 @@ static void decode_string(const char *s, char *out, int len)
     error("Encode %s with len %d return %d\n", s, len, out_len);
   }
   if (out_len > len - 1) {
-    error("Encode %s with len %d return invalid len %d\n",
-          s, len, out_len);
+    error("Encode %s with len %d return invalid len %d\n", s, len, out_len);
   }
   out[out_len] = '\0';
 }
