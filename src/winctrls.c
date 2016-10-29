@@ -14,6 +14,7 @@
 #define _OLE2_H
 #include <commdlg.h>
 
+
 /*
  * winctrls.c: routines to self-manage the controls in a dialog box.
  */
@@ -87,6 +88,12 @@ doctl(control * ctrl,
     ctl =
       CreateWindowEx(exstyle, wclass, wtext, wstyle, r.left, r.top, r.right,
                      r.bottom, cp->wnd, (HMENU)(INT_PTR)wid, inst, null);
+    if (nonascii(wtext)) {
+      // transform label for proper Windows display
+      wchar * us = cs__utftowcs(wtext);
+      SendMessageW(ctl, WM_SETTEXT, 0, (LPARAM)us);
+      free(us);
+    }
 #ifdef debug_widgets
     printf("%8p %s %d '%s'\n", ctl, wclass, exstyle, wtext);
 #endif
@@ -346,17 +353,13 @@ button(control * ctrl, ctrlpos * cp, char *btext, int bid, int defbtn)
   if (defbtn && cp->wnd)
     SendMessage(cp->wnd, DM_SETDEFID, bid, 0);
 
-  HWND but = 
-    doctl(ctrl, cp, r, "BUTTON",
+  //HWND but = // if we'd want to send it a message right away
+  doctl(ctrl, cp, r, "BUTTON",
           BS_NOTIFY | WS_CHILD | WS_VISIBLE | WS_TABSTOP |
           (defbtn ? BS_DEFPUSHBUTTON : 0) | BS_PUSHBUTTON, 0, btext, bid);
-  // this is a special hack until a generic solution is crafted 
-  // for Unicode labels and maybe other fancy stuff
-  if (!strcmp(btext, "&Play")) {
-    SendMessageW(but, WM_SETTEXT, 0, (LPARAM)_W("► &Play"));
-  }
 #ifdef need_to_disable_widgets_here
-  // another hack to disable a widget initially
+  // disabled prototype hack to disable a widget initially;
+  // now achieved by enable_widget() in config.c
   if (!strcmp(btext, "Store")) {
     EnableWindow(but, FALSE);
   }
@@ -599,8 +602,11 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
 
   base_id = *id;
 
+#ifdef debug_layout
+  printf("winctrl_layout cols %d nctl %d titl %s path %s\n", s->ncolumns, s->ncontrols, s->boxtitle, s->pathname);
+#endif
   if (!s->ncolumns) {
-   /* Draw a title. */
+   /* Draw a title of an Options dialog panel. */
     winctrl *c = new_winctrl(base_id, strdup(s->boxtitle));
     winctrl_add(wc, c);
     paneltitle(cp, base_id);
@@ -1004,9 +1010,18 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
 
     GetTextExtentPoint32(dc, (char *) c->data, strlen((char *) c->data), &s);
     DrawEdge(dc, &r, EDGE_ETCHED, BF_ADJUST | BF_RECT);
-    TextOut(dc, r.left + (r.right - r.left - s.cx) / 2,
-            r.top + (r.bottom - r.top - s.cy) / 2, (char *) c->data,
-            strlen((char *) c->data));
+    string text = (string) c->data;
+    if (nonascii(text)) {
+      // assuming that the panel title is stored in UTF-8,
+      // transform it for proper Windows display
+      wchar * us = cs__utftowcs(text);
+      TextOutW(dc, r.left + (r.right - r.left - s.cx) / 2,
+               r.top + (r.bottom - r.top - s.cy) / 2, us, wcslen(us));
+      free(us);
+    }
+    else
+      TextOut(dc, r.left + (r.right - r.left - s.cx) / 2,
+              r.top + (r.bottom - r.top - s.cy) / 2, text, strlen(text));
 
     return true;
   }
@@ -1291,6 +1306,14 @@ dlg_listbox_clear(control *ctrl)
 void
 dlg_listbox_add(control *ctrl, string text)
 {
+  if (nonascii(text)) {
+    // transform item for proper Windows display
+    wchar * us = cs__utftowcs(text);
+    dlg_listbox_add_w(ctrl, us);
+    free(us);
+    return;
+  }
+
   winctrl *c = ctrl->plat_ctrl;
   int msg;
   assert(c &&

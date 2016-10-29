@@ -11,7 +11,12 @@
 #include "res.h"
 #include "appinfo.h"
 
+#define Unicode_TreeView_does_not_work
+
+#include "charset.h"  // nonascii, cs__utftowcs
+
 #include <commctrl.h>
+
 
 void setup_config_box(controlbox *);
 
@@ -51,21 +56,44 @@ typedef struct {
 static HTREEITEM
 treeview_insert(treeview_faff * faff, int level, char *text, char *path)
 {
-  TVINSERTSTRUCT ins;
-  int i;
+// text will be the label of an Options dialog treeview item;
+// it is passed in here as the basename of path
+
   HTREEITEM newitem;
-  ins.hParent = (level > 0 ? faff->lastat[level - 1] : TVI_ROOT);
-  ins.hInsertAfter = faff->lastat[level];
-  ins.item.mask = TVIF_TEXT | TVIF_PARAM;
-  ins.item.pszText = text;
-  ins.item.cchTextMax = strlen(text) + 1;
-  ins.item.lParam = (LPARAM) path;
-  newitem = TreeView_InsertItem(faff->treeview, &ins);
+
+  if (nonascii(path)) {
+#ifdef Unicode_TreeView
+    // Using this variant for Unicode TreeView entries should enable 
+    // their proper display in the treeview, but it does not work,
+    // the label is handled as ANSI string anyway
+#endif
+    wchar * utext = cs__utftowcs(text);
+    TVINSERTSTRUCTW ins;
+    ins.hParent = (level > 0 ? faff->lastat[level - 1] : TVI_ROOT);
+    ins.hInsertAfter = faff->lastat[level];
+    ins.item.mask = TVIF_TEXT | TVIF_PARAM;
+    ins.item.pszText = utext;
+    ins.item.cchTextMax = wcslen(utext) + 1;  // ignored when setting
+    ins.item.lParam = (LPARAM) path;
+    newitem = (HTREEITEM)SendMessageW(faff->treeview, TVM_INSERTITEM, 0, (LPARAM)&ins);
+    free(utext);
+  }
+  else {
+    TVINSERTSTRUCT ins;
+    ins.hParent = (level > 0 ? faff->lastat[level - 1] : TVI_ROOT);
+    ins.hInsertAfter = faff->lastat[level];
+    ins.item.mask = TVIF_TEXT | TVIF_PARAM;
+    ins.item.pszText = text;
+    ins.item.cchTextMax = strlen(text) + 1;  // ignored when setting
+    ins.item.lParam = (LPARAM) path;
+    newitem = TreeView_InsertItem(faff->treeview, &ins);
+  }
+
   if (level > 0)
     TreeView_Expand(faff->treeview, faff->lastat[level - 1],
                     (level > 1 ? TVE_COLLAPSE : TVE_EXPAND));
   faff->lastat[level] = newitem;
-  for (i = level + 1; i < 4; i++)
+  for (int i = level + 1; i < 4; i++)
     faff->lastat[i] = null;
   return newitem;
 }
@@ -91,14 +119,16 @@ create_controls(HWND wnd, char *path)
   }
   else {
    /*
-    * Otherwise, we're creating the controls for a particular
-    * panel.
+    * Otherwise, we're creating the controls for a particular panel.
     */
     ctrlposinit(&cp, wnd, 69, 3, 3);
     wc = &ctrls_panel;
     base_id = IDCX_PANELBASE;
   }
 
+#ifdef debug_layout
+  printf("create_controls (%s)\n", path);
+#endif
   for (index = -1; (index = ctrl_find_path(ctrlbox, path, index)) >= 0;) {
     controlset *s = ctrlbox->ctrlsets[index];
     winctrl_layout(wc, &cp, s, &base_id);
@@ -123,6 +153,8 @@ determine_geometry(HWND wnd)
   dialog_height = 100 * (r.bottom - r.top) / normr.bottom;
 }
 
+#define dont_debug_messages
+
 /*
  * This function is the configuration box.
  * (Being a dialog procedure, in general it returns 0 if the default
@@ -131,6 +163,21 @@ determine_geometry(HWND wnd)
 static INT_PTR CALLBACK
 config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+#ifdef debug_messages
+static struct {
+  uint wm_;
+  char * wm_name;
+} wm_names[] = {
+#include "_wm.t"
+};
+  char * wm_name = "WM_?";
+  for (uint i = 0; i < lengthof(wm_names); i++)
+    if (msg == wm_names[i].wm_) {
+      wm_name = wm_names[i].wm_name;
+      break;
+    }
+  printf("[%d] dialog_proc %04X %s (%04X %08X)\n", (int)time(0), msg, wm_name, (unsigned)wParam, (unsigned)lParam);
+#endif
   switch (msg) {
     when WM_INITDIALOG: {
       ctrlbox = ctrl_new_box();
@@ -170,6 +217,12 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
                        | TVS_SHOWSELALWAYS, r.left, r.top, r.right - r.left,
                        r.bottom - r.top, wnd, (HMENU) IDCX_TREEVIEW, inst,
                        null);
+#ifdef Unicode_TreeView
+      // the impact of this property is hardly described;
+      // it does not fix the treeview Unicode display failure
+      // but it prevents the panels from being selected
+      //TreeView_SetUnicodeFormat(treeview, TRUE);
+#endif
       WPARAM font = SendMessage(wnd, WM_GETFONT, 0, 0);
       SendMessage(treeview, WM_SETFONT, font, MAKELPARAM(true, 0));
       treeview_faff tvfaff;
@@ -195,14 +248,12 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
           continue;   /* same path, nothing to add to tree */
 
        /*
-        * We expect never to find an implicit path
-        * component. For example, we expect never to see
-        * A/B/C followed by A/D/E, because that would
-        * _implicitly_ create A/D. All our path prefixes
-        * are expected to contain actual controls and be
-        * selectable in the treeview; so we would expect
-        * to see A/D _explicitly_ before encountering
-        * A/D/E.
+        * We expect never to find an implicit path component. 
+          For example, we expect never to see A/B/C followed by A/D/E, 
+          because that would _implicitly_ create A/D. 
+          All our path prefixes are expected to contain actual controls 
+          and be selectable in the treeview; so we would expect 
+          to see A/D _explicitly_ before encountering A/D/E.
         */
 
         c = strrchr(s->pathname, '/');
@@ -219,11 +270,16 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
        /*
         * Put the treeview selection on to the Session panel.
-        * This should also cause creation of the relevant
-        * controls.
+        * This should also cause creation of the relevant controls.
         */
         TreeView_SelectItem(treeview, hfirst);
       }
+
+#ifdef Unicode_TreeView
+      // with TreeView_SetUnicodeFormat(treeview, TRUE):
+      // the loop below is empty
+      // WM_NOTIFY is not triggered
+#endif
 
      /*
       * Set focus into the first available control.
@@ -246,9 +302,9 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
       if (LOWORD(wParam) == IDCX_TREEVIEW &&
           ((LPNMHDR) lParam)->code == TVN_SELCHANGED) {
         HTREEITEM i = TreeView_GetSelection(((LPNMHDR) lParam)->hwndFrom);
+
         TVITEM item;
         char buffer[64];
-
         item.hItem = i;
         item.pszText = buffer;
         item.cchTextMax = sizeof (buffer);
@@ -351,6 +407,9 @@ win_open_config(void)
   // How insane is that resource concept! Shouldn't I know my own geometry?
   determine_geometry(config_wnd);  // dummy call
 
+  // Set title of Options dialog explicitly to facilitate I18N
+  SendMessageW(config_wnd, WM_SETTEXT, 0, (LPARAM)_W("Options"));
+
   ShowWindow(config_wnd, SW_SHOW);
 
   set_dpi_auto_scaling(false);
@@ -370,14 +429,26 @@ win_show_about(void)
   });
 }
 
-void
-win_show_error(wchar *wmsg)
+static void
+win_show_msg(char * msg, UINT type)
 {
-  MessageBoxW(0, wmsg, 0, MB_ICONERROR);
+  if (nonascii(msg)) {
+    wchar * wmsg = cs__utftowcs(msg);
+    MessageBoxW(0, wmsg, 0, type);
+    free(wmsg);
+  }
+  else
+    MessageBox(0, msg, 0, type);
 }
 
 void
-win_show_warning(wchar *wmsg)
+win_show_error(char * msg)
 {
-  MessageBoxW(0, wmsg, 0, MB_ICONWARNING);
+  win_show_msg(msg, MB_ICONERROR);
+}
+
+void
+win_show_warning(char * msg)
+{
+  win_show_msg(msg, MB_ICONWARNING);
 }

@@ -15,6 +15,7 @@
 #include <winbase.h>
 #include <winnls.h>
 
+
 static cs_mode mode = CSM_DEFAULT;
 
 static string default_locale;  // Used unless UTF-8 or ACP mode is on.
@@ -200,7 +201,7 @@ init_locale_menu(void)
     locale_menu[count++] = strdup(locale);
   }
 
-  locale_menu[count++] = __("(Default)");
+  locale_menu[count++] = _("(Default)");
   add_lcid(GetUserDefaultUILanguage());
   add_lcid(LOCALE_USER_DEFAULT);
   add_lcid(LOCALE_SYSTEM_DEFAULT);
@@ -211,7 +212,7 @@ init_locale_menu(void)
 static void
 init_charset_menu(void)
 {
-  charset_menu[0] = __("(Default)");
+  charset_menu[0] = _("(Default)");
 
   string *p = charset_menu + 1;
   for (uint i = 0; i < lengthof(cs_descs); i++) {
@@ -222,11 +223,11 @@ init_charset_menu(void)
 
   string oem_cs = cs_name(GetOEMCP());
   if (*oem_cs == 'C')
-    *p++ = asform("%s %s", oem_cs, __("(OEM codepage)"));
+    *p++ = asform("%s %s", oem_cs, _("(OEM codepage)"));
 
   string ansi_cs = cs_name(GetACP());
   if (*ansi_cs == 'C')
-    *p++ = asform("%s %s", ansi_cs, __("(ANSI codepage)"));
+    *p++ = asform("%s %s", ansi_cs, _("(ANSI codepage)"));
 }
 
 static void
@@ -418,6 +419,18 @@ cs_mbstowcs(wchar *ws, const char *s, size_t wlen)
     return mbstowcs(ws, s, wlen);
 #endif
   return MultiByteToWideChar(codepage, 0, s, -1, ws, wlen) - 1;
+}
+
+bool
+nonascii(string s)
+{
+  if (!s)
+    return false;
+  while (*s) {
+    if (*s++ & 0x80)
+      return true;
+  }
+  return false;
 }
 
 char *

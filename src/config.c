@@ -3,6 +3,12 @@
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
+// Internationalization approach:
+// instead of refactoring a lot of framework functions (here, *ctrls.c)
+// to use Unicode strings, the API is simply redefined to use UTF-8;
+// non-ASCII strings are converted before being passed to the platform 
+// (using UTF-16 on Windows)
+
 #include "term.h"
 #include "ctrls.h"
 #include "print.h"
@@ -402,7 +408,8 @@ find_option(string name)
     if (!strcasecmp(name, options[i].name))
       return i;
   }
-  fprintf(stderr, "Ignoring unknown option '%s'.\n", name);
+  fprintf(stderr, _("Ignoring unknown option '%s'"), name);
+  fprintf(stderr, ".\n");
   return -1;
 }
 
@@ -447,7 +454,8 @@ remember_file_option(char * tag, uint i)
   (void)tag;
   trace_theme(("[%s] remember_file_option (file %d arg %d) %d %s\n", tag, seen_file_option(i), seen_arg_option(i), i, options[i].name));
   if (file_opts_num >= lengthof(file_opts)) {
-    fprintf(stderr, "Internal error: too many options.\n");
+    fprintf(stderr, _("Internal error: too many options"));
+    fprintf(stderr, ".\n");
     exit(1);
   }
 
@@ -463,7 +471,8 @@ remember_file_comment(char * comment)
 {
   trace_theme(("[] remember_file_comment <%s>\n", comment));
   if (file_opts_num >= lengthof(file_opts)) {
-    fprintf(stderr, "Internal error: too many options/comments.\n");
+    fprintf(stderr, _("Internal error: too many options/comments"));
+    fprintf(stderr, ".\n");
     exit(1);
   }
 
@@ -476,7 +485,8 @@ remember_arg_option(char * tag, uint i)
   (void)tag;
   trace_theme(("[%s] remember_arg_option (file %d arg %d) %d %s\n", tag, seen_file_option(i), seen_arg_option(i), i, options[i].name));
   if (arg_opts_num >= lengthof(arg_opts)) {
-    fprintf(stderr, "Internal error: too many options.\n");
+    fprintf(stderr, _("Internal error: too many options"));
+    fprintf(stderr, ".\n");
     exit(1);
   }
 
@@ -598,8 +608,8 @@ set_option(string name, string val_str, bool from_file)
       }
     }
   }
-  fprintf(stderr, "Ignoring invalid value '%s' for option '%s'.\n",
-                  val_str, name);
+  fprintf(stderr, _("Ignoring invalid value '%s' for option '%s'"), val_str, name);
+  fprintf(stderr, ".\n");
   return -1;
 }
 
@@ -608,7 +618,8 @@ parse_option(string option, bool from_file)
 {
   const char *eq = strchr(option, '=');
   if (!eq) {
-    fprintf(stderr, "Ignoring malformed option '%s'.\n", option);
+    fprintf(stderr, _("Ignoring malformed option '%s'"), option);
+    fprintf(stderr, ".\n");
     return -1;
   }
 
@@ -882,12 +893,10 @@ save_config(void)
 
   if (!file) {
     char *msg;
-    int len = asprintf(&msg, "Could not save options to '%s':\n%s.",
+    int len = asprintf(&msg, _("Could not save options to '%s':\n%s."),
                        filename, strerror(errno));
     if (len > 0) {
-      wchar wmsg[len + 1];
-      if (cs_mbstowcs(wmsg, msg, lengthof(wmsg)) >= 0)
-        win_show_error(wmsg);
+      win_show_error(msg);
       delete(msg);
     }
   }
@@ -1432,7 +1441,7 @@ theme_handler(control *ctrl, int event)
       }
       else {
         win_bell(&new_cfg);  // Could not load web theme
-        win_show_warning(_W("Could not load web theme"));
+        win_show_warning(_("Could not load web theme"));
       }
       free(url);
     }
@@ -1481,12 +1490,12 @@ scheme_saver(control *ctrl, int event)
           }
           else {
             win_bell(&new_cfg);  // Cannot write theme file
-            win_show_warning(_W("Cannot write theme file"));
+            win_show_warning(_("Cannot write theme file"));
           }
         }
         else {
           win_bell(&new_cfg);  // Cannot store theme file
-          win_show_warning(_W("Cannot store theme file"));
+          win_show_warning(_("Cannot store theme file"));
         }
       }
   }
@@ -1521,309 +1530,309 @@ setup_config_box(controlbox * b)
   * The standard panel that appears at the bottom of all panels:
   * Open, Cancel, Apply etc.
   */
-  s = ctrl_new_set(b, "", "");
+  s = ctrl_new_set(b, "", "", "");
   ctrl_columns(s, 5, 20, 20, 20, 20, 20);
-  c = ctrl_pushbutton(s, "About...", about_handler, 0);
+  c = ctrl_pushbutton(s, _("About..."), about_handler, 0);
   c->column = 0;
-  c = ctrl_pushbutton(s, "Save", ok_handler, 0);
+  c = ctrl_pushbutton(s, _("Save"), ok_handler, 0);
   c->button.isdefault = true;
   c->column = 2;
-  c = ctrl_pushbutton(s, "Cancel", cancel_handler, 0);
+  c = ctrl_pushbutton(s, _("Cancel"), cancel_handler, 0);
   c->button.iscancel = true;
   c->column = 3;
-  c = ctrl_pushbutton(s, "Apply", apply_handler, 0);
+  c = ctrl_pushbutton(s, _("Apply"), apply_handler, 0);
   c->column = 4;
 
  /*
   * The Looks panel.
   */
-  s = ctrl_new_set(b, "Looks", "Colours");
+  s = ctrl_new_set(b, "Looks", _("Looks in Terminal"), _("Colours"));
   ctrl_columns(s, 3, 33, 33, 33);
   ctrl_pushbutton(
-    s, "&Foreground...", dlg_stdcolour_handler, &new_cfg.fg_colour
+    s, _("&Foreground..."), dlg_stdcolour_handler, &new_cfg.fg_colour
   )->column = 0;
   ctrl_pushbutton(
-    s, "&Background...", dlg_stdcolour_handler, &new_cfg.bg_colour
+    s, _("&Background..."), dlg_stdcolour_handler, &new_cfg.bg_colour
   )->column = 1;
   ctrl_pushbutton(
-    s, "&Cursor...", dlg_stdcolour_handler, &new_cfg.cursor_colour
+    s, _("&Cursor..."), dlg_stdcolour_handler, &new_cfg.cursor_colour
   )->column = 2;
   theme = ctrl_combobox(
-    s, "&Theme", 80, theme_handler, &new_cfg.theme_file
+    s, _("&Theme"), 80, theme_handler, &new_cfg.theme_file
   );
   ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
   ctrl_columns(s, 2, 80, 20);
-  ctrl_pushbutton(s, "Color Scheme Designer", url_opener, W("http://ciembor.github.io/4bit/"))
+  ctrl_pushbutton(s, _("Color Scheme Designer"), url_opener, W("http://ciembor.github.io/4bit/"))
     ->column = 0;
-  (store_button = ctrl_pushbutton(s, "Store", scheme_saver, 0))
+  (store_button = ctrl_pushbutton(s, _("Store"), scheme_saver, 0))
     ->column = 1;
 
-  s = ctrl_new_set(b, "Looks", "Transparency");
+  s = ctrl_new_set(b, "Looks", null, _("Transparency"));
   bool with_glass = win_is_glass_available();
   ctrl_radiobuttons(
     s, null, 4 + with_glass,
     dlg_stdradiobutton_handler, &new_cfg.transparency,
-    "&Off", TR_OFF,
-    "&Low", TR_LOW,
-    with_glass ? "&Med." : "&Medium", TR_MEDIUM,
-    "&High", TR_HIGH,
-    with_glass ? "Gla&ss" : null, TR_GLASS,
+    _("&Off"), TR_OFF,
+    _("&Low"), TR_LOW,
+    with_glass ? _("&Med.") : _("&Medium"), TR_MEDIUM,
+    _("&High"), TR_HIGH,
+    with_glass ? _("Gla&ss") : null, TR_GLASS,
     null
   );
 #ifdef support_blurred
   ctrl_columns(s, 2, with_glass ? 80 : 75, with_glass ? 20 : 25);
   ctrl_checkbox(
-    s, "Opa&que when focused",
+    s, _("Opa&que when focused"),
     dlg_stdcheckbox_handler, &new_cfg.opaque_when_focused
   )->column = 0;
   ctrl_checkbox(
-    s, "&Blur",
+    s, _("&Blur"),
     dlg_stdcheckbox_handler, &new_cfg.blurred
   )->column = 1;
 #else
   ctrl_checkbox(
-    s, "Opa&que when focused",
+    s, _("Opa&que when focused"),
     dlg_stdcheckbox_handler, &new_cfg.opaque_when_focused
   );
 #endif
 
-  s = ctrl_new_set(b, "Looks", "Cursor");
+  s = ctrl_new_set(b, "Looks", null, _("Cursor"));
   ctrl_radiobuttons(
     s, null, 4 + with_glass,
     dlg_stdradiobutton_handler, &new_cfg.cursor_type,
-    "Li&ne", CUR_LINE,
-    "Bloc&k", CUR_BLOCK,
-    "&Underscore", CUR_UNDERSCORE,
+    _("Li&ne"), CUR_LINE,
+    _("Bloc&k"), CUR_BLOCK,
+    _("&Underscore"), CUR_UNDERSCORE,
     null
   );
   ctrl_checkbox(
-    s, "Blinkin&g", dlg_stdcheckbox_handler, &new_cfg.cursor_blinks
+    s, _("Blinkin&g"), dlg_stdcheckbox_handler, &new_cfg.cursor_blinks
   );
 
  /*
   * The Text panel.
   */
-  s = ctrl_new_set(b, "Text", "Font");
+  s = ctrl_new_set(b, "Text", _("Text and Font properties"), _("Font"));
   ctrl_fontsel(
     s, null, dlg_stdfontsel_handler, &new_cfg.font
   );
 
-  s = ctrl_new_set(b, "Text", null);
+  s = ctrl_new_set(b, "Text", null, null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_radiobuttons(
-    s, "Font smoothing", 2,
+    s, _("Font smoothing"), 2,
     dlg_stdradiobutton_handler, &new_cfg.font_smoothing,
-    "&Default", FS_DEFAULT,
-    "&None", FS_NONE,
-    "&Partial", FS_PARTIAL,
-    "&Full", FS_FULL,
+    _("&Default"), FS_DEFAULT,
+    _("&None"), FS_NONE,
+    _("&Partial"), FS_PARTIAL,
+    _("&Full"), FS_FULL,
     null
   )->column = 1;
 
   ctrl_checkbox(
-    s, "Sho&w bold as font",
+    s, _("Sho&w bold as font"),
     dlg_stdcheckbox_handler, &new_cfg.bold_as_font
   )->column = 0;
   ctrl_checkbox(
-    s, "Show &bold as colour",
+    s, _("Show &bold as colour"),
     dlg_stdcheckbox_handler, &new_cfg.bold_as_colour
   )->column = 0;
   ctrl_checkbox(
-    s, "&Allow blinking",
+    s, _("&Allow blinking"),
     dlg_stdcheckbox_handler, &new_cfg.allow_blinking
   )->column = 0;
 
-  s = ctrl_new_set(b, "Text", null);
+  s = ctrl_new_set(b, "Text", null, null);
   ctrl_columns(s, 2, 29, 71);
   (locale_box = ctrl_combobox(
-    s, "&Locale", 100, locale_handler, 0
+    s, _("&Locale"), 100, locale_handler, 0
   ))->column = 0;
   (charset_box = ctrl_combobox(
-    s, "&Character set", 100, charset_handler, 0
+    s, _("&Character set"), 100, charset_handler, 0
   ))->column = 1;
 
  /*
   * The Keys panel.
   */
-  s = ctrl_new_set(b, "Keys", null);
+  s = ctrl_new_set(b, "Keys", _("Keyboard features"), null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
-    s, "&Backarrow sends ^H",
+    s, _("&Backarrow sends ^H"),
     dlg_stdcheckbox_handler, &new_cfg.backspace_sends_bs
   )->column = 0;
   ctrl_checkbox(
-    s, "&Delete sends DEL",
+    s, _("&Delete sends DEL"),
     dlg_stdcheckbox_handler, &new_cfg.delete_sends_del
   )->column = 1;
   ctrl_checkbox(
-    s, "Ctrl+LeftAlt is Alt&Gr",
+    s, _("Ctrl+LeftAlt is Alt&Gr"),
     dlg_stdcheckbox_handler, &new_cfg.ctrl_alt_is_altgr
   );
 
-  s = ctrl_new_set(b, "Keys", "Shortcuts");
+  s = ctrl_new_set(b, "Keys", null, _("Shortcuts"));
   ctrl_checkbox(
-    s, "Cop&y and Paste (Ctrl/Shift+Ins)",
+    s, _("Cop&y and Paste (Ctrl/Shift+Ins)"),
     dlg_stdcheckbox_handler, &new_cfg.clip_shortcuts
   );
   ctrl_checkbox(
-    s, "&Menu and Full Screen (Alt+Space/Enter)",
+    s, _("&Menu and Full Screen (Alt+Space/Enter)"),
     dlg_stdcheckbox_handler, &new_cfg.window_shortcuts
   );
   ctrl_checkbox(
-    s, "&Switch window (Ctrl+[Shift+]Tab)",
+    s, _("&Switch window (Ctrl+[Shift+]Tab)"),
     dlg_stdcheckbox_handler, &new_cfg.switch_shortcuts
   );
   ctrl_checkbox(
-    s, "&Zoom (Ctrl+plus/minus/zero)",
+    s, _("&Zoom (Ctrl+plus/minus/zero)"),
     dlg_stdcheckbox_handler, &new_cfg.zoom_shortcuts
   );
   ctrl_checkbox(
-    s, "&Alt+Fn shortcuts",
+    s, _("&Alt+Fn shortcuts"),
     dlg_stdcheckbox_handler, &new_cfg.alt_fn_shortcuts
   );
   ctrl_checkbox(
-    s, "&Ctrl+Shift+letter shortcuts",
+    s, _("&Ctrl+Shift+letter shortcuts"),
     dlg_stdcheckbox_handler, &new_cfg.ctrl_shift_shortcuts
   );
 
  /*
   * The Mouse panel.
   */
-  s = ctrl_new_set(b, "Mouse", null);
+  s = ctrl_new_set(b, "Mouse", _("Mouse functions"), null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
-    s, "Cop&y on select",
+    s, _("Cop&y on select"),
     dlg_stdcheckbox_handler, &new_cfg.copy_on_select
   )->column = 0;
   ctrl_checkbox(
-    s, "Copy as &rich text",
+    s, _("Copy as &rich text"),
     dlg_stdcheckbox_handler, &new_cfg.copy_as_rtf
   )->column = 1;
   ctrl_checkbox(
-    s, "Clic&ks place command line cursor",
+    s, _("Clic&ks place command line cursor"),
     dlg_stdcheckbox_handler, &new_cfg.clicks_place_cursor
   );
 
-  s = ctrl_new_set(b, "Mouse", "Click actions");
+  s = ctrl_new_set(b, "Mouse", null, _("Click actions"));
   ctrl_radiobuttons(
-    s, "Right mouse button", 4,
+    s, _("Right mouse button"), 4,
     dlg_stdradiobutton_handler, &new_cfg.right_click_action,
-    "&Paste", RC_PASTE,
-    "E&xtend", RC_EXTEND,
-    "&Menu", RC_MENU,
-    "Ente&r", RC_ENTER,
+    _("&Paste"), RC_PASTE,
+    _("E&xtend"), RC_EXTEND,
+    _("&Menu"), RC_MENU,
+    _("Ente&r"), RC_ENTER,
     null
   );
   ctrl_radiobuttons(
-    s, "Middle mouse button", 4,
+    s, _("Middle mouse button"), 4,
     dlg_stdradiobutton_handler, &new_cfg.middle_click_action,
-    "&Paste", MC_PASTE,
-    "E&xtend", MC_EXTEND,
-    "&Nothing", MC_VOID,
-    "Ente&r", MC_ENTER,
+    _("&Paste"), MC_PASTE,
+    _("E&xtend"), MC_EXTEND,
+    _("&Nothing"), MC_VOID,
+    _("Ente&r"), MC_ENTER,
     null
   );
 
-  s = ctrl_new_set(b, "Mouse", "Application mouse mode");
+  s = ctrl_new_set(b, "Mouse", null, _("Application mouse mode"));
   ctrl_radiobuttons(
-    s, "Default click target", 4,
+    s, _("Default click target"), 4,
     dlg_stdradiobutton_handler, &new_cfg.clicks_target_app,
-    "&Window", false,
-    "Applicatio&n", true,
+    _("&Window"), false,
+    _("Applicatio&n"), true,
     null
   );
   ctrl_radiobuttons(
-    s, "Modifier for overriding default", 4,
+    s, _("Modifier for overriding default"), 4,
     dlg_stdradiobutton_handler, &new_cfg.click_target_mod,
-    "&Shift", MDK_SHIFT,
-    "&Ctrl", MDK_CTRL,
-    "&Alt", MDK_ALT,
-    "&Off", 0,
+    _("&Shift"), MDK_SHIFT,
+    _("&Ctrl"), MDK_CTRL,
+    _("&Alt"), MDK_ALT,
+    _("&Off"), 0,
     null
   );
 
  /*
   * The Window panel.
   */
-  s = ctrl_new_set(b, "Window", "Default size");
+  s = ctrl_new_set(b, "Window", _("Window properties"), _("Default size"));
   ctrl_columns(s, 5, 35, 3, 28, 4, 30);
   (cols_box = ctrl_editbox(
-    s, "Colu&mns", 44, dlg_stdintbox_handler, &new_cfg.cols
+    s, _("Colu&mns"), 44, dlg_stdintbox_handler, &new_cfg.cols
   ))->column = 0;
   (rows_box = ctrl_editbox(
-    s, "Ro&ws", 55, dlg_stdintbox_handler, &new_cfg.rows
+    s, _("Ro&ws"), 55, dlg_stdintbox_handler, &new_cfg.rows
   ))->column = 2;
   ctrl_pushbutton(
-    s, "C&urrent size", current_size_handler, 0
+    s, _("C&urrent size"), current_size_handler, 0
   )->column = 4;
 
-  s = ctrl_new_set(b, "Window", null);
+  s = ctrl_new_set(b, "Window", null, null);
   ctrl_columns(s, 2, 66, 34);
   ctrl_editbox(
-    s, "Scroll&back lines", 50,
+    s, _("Scroll&back lines"), 50,
     dlg_stdintbox_handler, &new_cfg.scrollback_lines
   )->column = 0;
   ctrl_radiobuttons(
-    s, "Scrollbar", 4,
+    s, _("Scrollbar"), 4,
     dlg_stdradiobutton_handler, &new_cfg.scrollbar,
-    "&Left", -1,
-    "&None", 0,
-    "&Right", 1,
+    _("&Left"), -1,
+    _("&None"), 0,
+    _("&Right"), 1,
     null
   );
   ctrl_radiobuttons(
-    s, "Modifier for scrolling", 4,
+    s, _("Modifier for scrolling"), 4,
     dlg_stdradiobutton_handler, &new_cfg.scroll_mod,
-    "&Shift", MDK_SHIFT,
-    "&Ctrl", MDK_CTRL,
-    "&Alt", MDK_ALT,
-    "&Off", 0,
+    _("&Shift"), MDK_SHIFT,
+    _("&Ctrl"), MDK_CTRL,
+    _("&Alt"), MDK_ALT,
+    _("&Off"), 0,
     null
   );
   ctrl_checkbox(
-    s, "&PgUp and PgDn scroll without modifier",
+    s, _("&PgUp and PgDn scroll without modifier"),
     dlg_stdcheckbox_handler, &new_cfg.pgupdn_scroll
   );
 
  /*
   * The Terminal panel.
   */
-  s = ctrl_new_set(b, "Terminal", null);
+  s = ctrl_new_set(b, "Terminal", _("Terminal features"), null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_combobox(
-    s, "&Type", 100, term_handler, 0
+    s, _("&Type"), 100, term_handler, 0
   )->column = 0;
   ctrl_editbox(
-    s, "&Answerback", 100, dlg_stdstringbox_handler, &new_cfg.answerback
+    s, _("&Answerback"), 100, dlg_stdstringbox_handler, &new_cfg.answerback
   )->column = 1;
 
-  s = ctrl_new_set(b, "Terminal", "Bell (sound overridden by Wave/BellFile or BellFreq)");
+  s = ctrl_new_set(b, "Terminal", null, _("Bell (sound overridden by Wave/BellFile or BellFreq)"));
   ctrl_columns(s, 3, 36, 19, 45);
   ctrl_combobox(
     s, null, 100, bell_handler, 0
   )->column = 0;
   ctrl_checkbox(
-    s, "&Flash", dlg_stdcheckbox_handler, &new_cfg.bell_flash
+    s, _("&Flash"), dlg_stdcheckbox_handler, &new_cfg.bell_flash
   )->column = 1;
   ctrl_checkbox(
-    s, "&Highlight in taskbar", dlg_stdcheckbox_handler, &new_cfg.bell_taskbar
+    s, _("&Highlight in taskbar"), dlg_stdcheckbox_handler, &new_cfg.bell_taskbar
   )->column = 2;
   ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
   ctrl_columns(s, 2, 82, 18);
 #ifdef use_belleditbox
   ctrl_editbox(
-    s, "&Wave", 83, dlg_stdstringbox_handler, &new_cfg.bell_file
+    s, _("&Wave"), 83, dlg_stdstringbox_handler, &new_cfg.bell_file
   )->column = 0;
 #else
   ctrl_combobox(
-    s, "&Wave", 83, bellfile_handler, &new_cfg.bell_file
+    s, _("&Wave"), 83, bellfile_handler, &new_cfg.bell_file
   )->column = 0;
 #endif
   ctrl_pushbutton(
-    s, "&Play", bell_tester, 0
+    s, _("► &Play"), bell_tester, 0
   )->column = 1;
 
-  s = ctrl_new_set(b, "Terminal", "Printer");
+  s = ctrl_new_set(b, "Terminal", null, _("Printer"));
 #ifdef use_multi_listbox_for_printers
   ctrl_listbox(
     s, null, 4, 100, printer_handler, 0
@@ -1834,9 +1843,9 @@ setup_config_box(controlbox * b)
   );
 #endif
 
-  s = ctrl_new_set(b, "Terminal", null);
+  s = ctrl_new_set(b, "Terminal", null, null);
   ctrl_checkbox(
-    s, "&Prompt about running processes on close",
+    s, _("&Prompt about running processes on close"),
     dlg_stdcheckbox_handler, &new_cfg.confirm_exit
   );
 }

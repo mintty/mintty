@@ -69,8 +69,8 @@ extern void win_paste(void);
 extern void win_set_timer(void_fn cb, uint ticks);
 
 extern void win_show_about(void);
-extern void win_show_error(wchar *);
-extern void win_show_warning(wchar *);
+extern void win_show_error(char * msg);
+extern void win_show_warning(char * msg);
 
 extern bool win_is_glass_available(void);
 

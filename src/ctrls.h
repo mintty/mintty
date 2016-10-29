@@ -280,7 +280,7 @@ void ctrl_free_box(controlbox *);
  */
 
 /* Create a controlset. */
-controlset * ctrl_new_set(controlbox *, char * path, char * title);
+controlset * ctrl_new_set(controlbox *, char * path, char * panel, char * title);
 void ctrl_free_set(controlset *);
 
 void ctrl_free(control *);

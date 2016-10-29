@@ -88,8 +88,6 @@ typedef const wchar *wstring;
 // to be enhanced to use gettext:
 #define _W(s) __W(s)
 #define _(s) s
-// to be enhanced to be wide and use gettext:
-#define __(s) s
 
 #define lengthof(array) (sizeof(array) / sizeof(*(array)))
 #define endof(array) (&(array)[lengthof(array)])

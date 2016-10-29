@@ -65,18 +65,21 @@ ctrl_free_set(controlset *s)
 }
 
 /*
- * Find the index of first controlset in a controlbox for a given
- * path. If that path doesn't exist, return the index where it
- * should be inserted.
+ * Find the index of first controlset in a controlbox for a given path.
+ * If that path doesn't exist, return the index where it should be inserted.
  */
 static int
 ctrl_find_set(controlbox * b, char *path)
 {
-  int i, last, thisone;
-
-  last = 0;
-  for (i = 0; i < b->nctrlsets; i++) {
-    thisone = ctrl_path_compare(path, b->ctrlsets[i]->pathname);
+#ifdef debug_layout
+  printf("ctrl_find_set %d\n", b->nctrlsets);
+#endif
+  int last = 0;
+  for (int i = 0; i < b->nctrlsets; i++) {
+#ifdef debug_layout
+    printf("  <%s> <%s>\n", path, b->ctrlsets[i]->pathname);
+#endif
+    int thisone = ctrl_path_compare(path, b->ctrlsets[i]->pathname);
    /*
     * If `start' is true and there exists a controlset with
     * exactly the path we've been given, we should return the
@@ -92,9 +95,9 @@ ctrl_find_set(controlbox * b, char *path)
 }
 
 /*
- * Find the index of next controlset in a controlbox for a given
- * path, or -1 if no such controlset exists. If -1 is passed as
- * input, finds the first.
+ * Find the index of next controlset in a controlbox for a given path,
+ * or -1 if no such controlset exists.
+ * If -1 is passed as input, find the first.
  */
 int
 ctrl_find_path(controlbox * b, char *path, int index)
@@ -126,15 +129,18 @@ insert_controlset(controlbox *b, int index, controlset *s)
 
 /* Create a controlset. */
 controlset *
-ctrl_new_set(controlbox *b, char *path, char *title)
+ctrl_new_set(controlbox *b, char *path, char *panel, char *title)
 {
   // See whether this path exists already
   int index = ctrl_find_set(b, path);
 
   // If not, and it's not an empty path, set up a title.
   if (index == b->nctrlsets && *path) {
-    char *title = strrchr(path, '/');
-    title = title ? title + 1 : path;
+    char *title = panel;
+    if (!title) {
+      title = strrchr(path, '/');
+      title = title ? title + 1 : path;
+    }
     controlset *s = new(controlset);
     s->pathname = strdup(path);
     s->boxtitle = strdup(title);
@@ -259,8 +265,8 @@ ctrl_listbox(controlset *s, char *label, int lines, int percentage,
 }
 
 /*
- * `ncolumns' is followed by (alternately) radio button labels and
- * values, until a null in place of a title string is seen.
+ * `ncolumns' is followed by (alternately) radio button labels and values,
+ * until a null in place of a title string is seen.
  */
 control *
 ctrl_radiobuttons(controlset *s, char *label, int ncolumns,
@@ -272,8 +278,7 @@ ctrl_radiobuttons(controlset *s, char *label, int ncolumns,
   c->label = label ? strdup(label) : null;
   c->radio.ncolumns = ncolumns;
  /*
-  * Initial pass along variable argument list to count the
-  * buttons.
+  * Initial pass along variable argument list to count the buttons.
   */
   va_start(ap, context);
   i = 0;
@@ -286,7 +291,7 @@ ctrl_radiobuttons(controlset *s, char *label, int ncolumns,
   c->radio.labels = newn(string, c->radio.nbuttons);
   c->radio.vals = newn(int, c->radio.nbuttons);
  /*
-  *second pass along variable argument list to actually fill in
+  * second pass along variable argument list to actually fill in
   * the structure.
   */
   va_start(ap, context);
