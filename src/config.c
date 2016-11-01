@@ -539,7 +539,7 @@ parse_colour(string s, colour *cp)
   else {
     int coli = -1;
     for (uint i = 0; i < lengthof(xcolours); i++)
-      if (!strcmp(s, xcolours[i].name)) {
+      if (!strcasecmp(s, xcolours[i].name)) {
         r = xcolours[i].r;
         g = xcolours[i].g;
         b = xcolours[i].b;
