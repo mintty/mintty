@@ -55,10 +55,11 @@ static bool term_push_cmd(char c)
 }
 
 /*
- * Move the cursor to a given position, clipping at boundaries. We
- * may or may not want to clip at the scroll margin: marg_clip is 0
- * not to, 1 to disallow _passing_ the margins, and 2 to disallow
- * even _being_ outside the margins.
+ * Move the cursor to a given position, clipping at boundaries.
+ * We may or may not want to clip at the scroll margin: marg_clip is
+ * 0 not to,
+ * 1 to disallow _passing_ the margins, and
+ * 2 to disallow even _being_ outside the margins.
  */
 static void
 move(int x, int y, int marg_clip)
@@ -110,8 +111,8 @@ restore_cursor(void)
     curs->y = term.rows - 1;
 
  /*
-  * wrapnext might reset to False if the x position is no
-  * longer at the rightmost edge.
+  * wrapnext might reset to False 
+  * if the x position is no longer at the rightmost edge.
   */
   if (curs->wrapnext && curs->x < term.cols - 1)
     curs->wrapnext = false;
@@ -120,8 +121,8 @@ restore_cursor(void)
 }
 
 /*
- * Insert or delete characters within the current line. n is +ve if
- * insertion is desired, and -ve for deletion.
+ * Insert or delete characters within the current line.
+ * n is +ve if insertion is desired, and -ve for deletion.
  */
 static void
 insert_char(int n)
@@ -267,23 +268,17 @@ write_char(wchar c, int width)
       put_char(c);
     when 2 or 3:  // Double-width char (Triple-width was an experimental option).
      /*
-      * If we're about to display a double-width
-      * character starting in the rightmost
-      * column, then we do something special
-      * instead. We must print a space in the
-      * last column of the screen, then wrap;
-      * and we also set LATTR_WRAPPED2 which
-      * instructs subsequent cut-and-pasting not
-      * only to splice this line to the one
-      * after it, but to ignore the space in the
-      * last character position as well.
-      * (Because what was actually output to the
-      * terminal was presumably just a sequence
-      * of CJK characters, and we don't want a
-      * space to be pasted in the middle of
-      * those just because they had the
-      * misfortune to start in the wrong parity
-      * column. xterm concurs.)
+      * If we're about to display a double-width character 
+      * starting in the rightmost column, 
+      * then we do something special instead.
+      * We must print a space in the last column of the screen, then wrap;
+      * and we also set LATTR_WRAPPED2 which instructs subsequent 
+      * cut-and-pasting not only to splice this line to the one after it, 
+      * but to ignore the space in the last character position as well.
+      * (Because what was actually output to the terminal was presumably 
+      * just a sequence of CJK characters, and we don't want a space to be
+      * pasted in the middle of those just because they had the misfortune 
+      * to start in the wrong parity column. xterm concurs.)
       */
       term_check_boundary(curs->x, curs->y);
       term_check_boundary(curs->x + width, curs->y);
@@ -313,8 +308,7 @@ write_char(wchar c, int width)
         * to combine with is _here_, not to our left. */
         int x = curs->x - !curs->wrapnext;
        /*
-        * If the previous character is
-        * UCSWIDE, back up another one.
+        * If the previous character is UCSWIDE, back up another one.
         */
         if (line->chars[x].chr == UCSWIDE) {
           assert(x > 0);
@@ -673,8 +667,9 @@ set_modes(bool state)
           term.app_escape_key = state;
         when 7728:       /* Escape sends FS (instead of ESC) */
           term.escape_sends_fs = state;
-        when 7730:       /* on: sixel scrolling moves cursor to beginning of the line
-                            off(default): sixel scrolling moves cursor to left of graphics */
+        when 7730:
+          /* on: sixel scrolling moves cursor to beginning of the line
+             off(default): sixel scrolling moves cursor to left of graphics */
           term.sixel_scrolls_left = state;
         when 7766:       /* 'B': Show/hide scrollbar (if enabled in config) */
           if (state != term.show_scrollbar) {
@@ -690,8 +685,9 @@ set_modes(bool state)
           term.wheel_reporting = state;
         when 7787:       /* 'W': Application mousewheel mode */
           term.app_wheel = state;
-        when 8452:       /* on: sixel scrolling leaves cursor to right of graphic
-                            off(default): the position after sixel depends on sixel_scrolls_left */
+        when 8452:
+          /* on: sixel scrolling leaves cursor to right of graphic
+             off(default): position after sixel depends on sixel_scrolls_left */
           term.sixel_scrolls_right = state;
         /* Application control key modes */
         when 77000 ... 77031: {
@@ -903,8 +899,8 @@ do_csi(uchar c)
      /*
       * VT340/VT420 sequence DECSLPP, for setting the height of the window.
       * DEC only allowed values 24/25/36/48/72/144, so dtterm and xterm
-      * claimed values below 24 for various window operations, and also
-      * allowed any number of rows from 24 and above to be set.
+      * claimed values below 24 for various window operations, 
+      * and also allowed any number of rows from 24 and above to be set.
       */
       if (arg0 >= 24) {
         win_set_chars(arg0, term.cols);
@@ -1398,8 +1394,7 @@ term_write(const char *buf, uint len)
 {
  /*
   * During drag-selects, we do not process terminal input,
-  * because the user will want the screen to hold still to
-  * be selected.
+  * because the user will want the screen to hold still to be selected.
   */
   if (term_selecting()) {
     if (term.inbuf_pos + len > term.inbuf_size) {
@@ -1420,8 +1415,7 @@ term_write(const char *buf, uint len)
     uchar c = buf[pos++];
 
    /*
-    * If we're printing, add the character to the printer
-    * buffer.
+    * If we're printing, add the character to the printer buffer.
     */
     if (term.printing) {
       if (term.printbuf_pos >= term.printbuf_size) {
@@ -1431,9 +1425,8 @@ term_write(const char *buf, uint len)
       term.printbuf[term.printbuf_pos++] = c;
 
      /*
-      * If we're in print-only mode, we use a much simpler
-      * state machine designed only to recognise the ESC[4i
-      * termination sequence.
+      * If we're in print-only mode, we use a much simpler state machine 
+      * designed only to recognise the ESC[4i termination sequence.
       */
       if (term.only_printing) {
         if (c == '\e')
