@@ -250,7 +250,7 @@ adjust_font_weights(void)
   if (wcslen(cfg.font.name) < lengthof(lf.lfFaceName))
     wcscpy(lf.lfFaceName, cfg.font.name);
   else
-    wcscpy(lf.lfFaceName, W("Lucida Console"));
+    wcscpy(lf.lfFaceName, W(""));
 #endif
   lf.lfPitchAndFamily = 0;
   //lf.lfCharSet = ANSI_CHARSET;   // report only ANSI character range
@@ -428,6 +428,17 @@ win_init_fonts(int size)
 
   SelectObject(dc, fonts[FONT_NORMAL]);
   GetTextMetrics(dc, &tm);
+
+  if (!tm.tmHeight) {
+    // corrupt font installation (e.g. deleted font file)
+    show_msg(_W("Font installation corrupt, using system substitute"), cfg.font.name);
+    wstrset(&cfg.font.name, W(""));
+    fonts[FONT_NORMAL] = create_font(fw_norm, false);
+    GetObject(fonts[FONT_NORMAL], sizeof (LOGFONT), &lfont);
+    SelectObject(dc, fonts[FONT_NORMAL]);
+    GetTextMetrics(dc, &tm);
+  }
+
   row_spacing = row_padding(tm.tmInternalLeading, tm.tmExternalLeading);
   trace_font(("h %ld asc %ld dsc %ld ild %ld eld %ld %ls\n", (long int)tm.tmHeight, (long int)tm.tmAscent, (long int)tm.tmDescent, (long int)tm.tmInternalLeading, (long int)tm.tmExternalLeading, cfg.font.name));
   row_spacing += cfg.row_spacing;
