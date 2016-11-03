@@ -798,8 +798,12 @@ do_csi(uchar c)
       move(curs->x, curs->y + arg0_def1, 1);
     when 'B':        /* CUD: Cursor down */
       move(curs->x, curs->y + arg0_def1, 1);
-    when CPAIR('>', 'c'):     /* DA: report version */
-      child_printf("\e[>77;%u;0c", DECIMAL_VERSION);
+    when 'c':        /* Primary DA: report device/terminal type */
+      if (!arg0)
+        write_primary_da();
+    when CPAIR('>', 'c'):     /* Secondary DA: report device version */
+      if (!arg0)
+        child_printf("\e[>77;%u;0c", DECIMAL_VERSION);
     when 'a':        /* HPR: move right N cols */
       move(curs->x + arg0_def1, curs->y, 1);
     when 'C':        /* CUF: Cursor right */
@@ -810,7 +814,7 @@ do_csi(uchar c)
       move(0, curs->y + arg0_def1, 1);
     when 'F':        /* CPL: move up N lines and CR */
       move(0, curs->y - arg0_def1, 1);
-    when 'G' or '`':  /* CHA or HPA: set horizontal position */
+    when 'G' or '`': /* CHA or HPA: set horizontal position */
       move(arg0_def1 - 1, curs->y, 0);
     when 'd':        /* VPA: set vertical position */
       move(curs->x,
@@ -846,8 +850,6 @@ do_csi(uchar c)
       insert_char(arg0_def1);
     when 'P':        /* DCH: delete chars */
       insert_char(-arg0_def1);
-    when 'c':        /* DA: terminal type query */
-      write_primary_da();
     when 'n':        /* DSR: cursor position query */
       if (arg0 == 6)
         child_printf("\e[%d;%dR", curs->y + 1, curs->x + 1);
