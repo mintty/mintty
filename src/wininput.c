@@ -1097,6 +1097,9 @@ static int compose_buflen = 0;
       }
       else if (key != ' ' && alt_code_key(key - 'A' + 0xA))
         trace_key("alt");
+      else if (term.modify_other_keys > 1 && mods == MDK_SHIFT)
+        // catch Shift+space (not losing Alt+ combinations if handled here)
+        modify_other_key();
       else if (char_key())
         trace_key("char");
       else if (term.modify_other_keys > 1)
