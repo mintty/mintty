@@ -85,6 +85,8 @@ typedef const wchar *wstring;
 #define __W(s) L##s
 #endif
 #define W(s) __W(s)
+// dummy marker for xgettext:
+#define __(s) s
 // to be enhanced to use gettext:
 #define _W(s) __W(s)
 #define _(s) s

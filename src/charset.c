@@ -510,6 +510,28 @@ cs__utforansitowcs(const char * s)
   }
 }
 
+char *
+cs__utftombs(char * s)
+{
+//#if CYGWIN_VERSION_API_MINOR >= 66
+#if HAS_LOCALES
+  bool utf8out = strcmp(nl_langinfo(CODESET), "UTF-8") == 0;
+#else
+  char * loc = (char *)cs_get_locale();
+  if (!loc)
+    loc = "";
+  bool utf8out = strstr(loc, ".65001");
+#endif
+  if (utf8out)
+    return strdup(s);
+  else {
+    wchar * w = cs__utftowcs(s);
+    char * mbs = cs__wcstombs(w);
+    delete(w);
+    return mbs;
+  }
+}
+
 int
 cs_mb1towc(wchar *pwc, char c)
 {

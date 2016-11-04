@@ -51,6 +51,7 @@ extern char * cs__wcstoutf(const wchar * ws);
 extern wchar * cs__mbstowcs(const char * s);
 extern wchar * cs__utftowcs(const char * s);
 extern wchar * cs__utforansitowcs(const char * s);
+extern char * cs__utftombs(char * s);
 
 extern string locale_menu[];
 extern string charset_menu[];
