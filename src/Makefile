@@ -88,8 +88,6 @@ endif
 
 LDFLAGS := -L$(shell $(CC) -print-file-name=w32api) -static-libgcc
 LDLIBS := -mwindows -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -luuid
-#override LDFLAGS += -L$(shell $(CC) -print-file-name=w32api) -static-libgcc
-#override LDLIBS += -mwindows -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -luuid
 
 ifdef DEBUG
   CFLAGS += -g
@@ -184,18 +182,6 @@ unicode:	UnicodeData.txt Blocks.txt EastAsianWidth.txt
 
 %.txt:
 	$(WGET) http://unicode.org/Public/UNIDATA/$@
-
-#compose_list=/usr/share/X11/locale/en_US.UTF-8/Compose
-#keysymdefs=/usr/include/X11/keysymdef.h
-
-composed.t:	# $(compose_list) $(keysymdefs)
-	sh ./mkcomposedt > composed.t
-
-XGETTEXT_OPTS=	# --no-location --no-wrap ?
-
-_:	localization
-localization:
-	xgettext --from-code=UTF-8 -k_ -k_W -k__ -c_ $(XGETTEXT_OPTS) *.c
 
 #############################################################################
 # release targets
