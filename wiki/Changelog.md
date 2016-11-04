@@ -1,9 +1,17 @@
+Character display:
   * Check for misplaced underline by looking for underline only in descender section to decide whether to draw it ourselves (#604).
   * New option UnderlineColour to set colour for all lining modes and enforce manual underlining (~#604).
 
+Terminal:
+  * Avoiding multiple device attribute reports (#606).
+  * Workaround to enable Shift+space in modifyOtherKeys mode.
+
+Configuration:
   * New option value -Rm to report system's monitor configuration (/#599).
   * New option --wsl to enable WSL feature adaptations (mintty/wsltty/#8).
-  * Manual: fix description of copy/paste shortcuts and refer to option CtrlExchangeShift (#602, #524).
+  * Manual: fixed description of copy/paste shortcuts and refer to option CtrlExchangeShift (#602, #524).
+  * Case-insensitive lookup for X11 color names (#600).
+  * Detection and graceful handling of corrupt font installation.
 
 ### 2.6.2 (9 Oct 2016) ###
 
