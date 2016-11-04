@@ -272,18 +272,19 @@ typedef struct {
   void * * frees;               /* array of aux data areas to free */
 } controlbox;
 
-controlbox * ctrl_new_box(void);
-void ctrl_free_box(controlbox *);
+extern controlbox * ctrl_new_box(void);
+extern void ctrl_free_box(controlbox *);
 
 /*
  * Standard functions used for populating a controlbox structure.
  */
 
 /* Create a controlset. */
-controlset * ctrl_new_set(controlbox *, char * path, char * panel, char * title);
-void ctrl_free_set(controlset *);
+extern controlset * ctrl_new_set(controlbox *, char * path, 
+                                 char * panel, char * title);
+extern void ctrl_free_set(controlset *);
 
-void ctrl_free(control *);
+extern void ctrl_free(control *);
 
 /*
  * This function works like `malloc', but the memory it returns
@@ -293,7 +294,7 @@ void ctrl_free(control *);
  * to hold modifiable per-instance things. It's mostly here for
  * allocating structures to be passed as control handler params.
  */
-void * ctrl_alloc(controlbox *, size_t size);
+extern void * ctrl_alloc(controlbox *, size_t size);
 
 /*
  * Individual routines to create `control' structures in a controlset.
@@ -305,67 +306,68 @@ void * ctrl_alloc(controlbox *, size_t size);
  */
 
 /* `ncolumns' is followed by that many percentages, as integers. */
-control * ctrl_columns(controlset *, int ncolumns, ...);
-control * ctrl_editbox(controlset *, char * label, int percentage,
-                       handler_fn handler, void * context);
-control * ctrl_combobox(controlset *, char * label, int percentage,
-                        handler_fn handler, void * context);
-control * ctrl_listbox(controlset *, char * label, int lines, int percentage,
-                       handler_fn handler, void * context);
+extern control * ctrl_columns(controlset *, int ncolumns, ...);
+extern control * ctrl_editbox(controlset *, char * label, int percentage,
+                              handler_fn handler, void * context);
+extern control * ctrl_combobox(controlset *, char * label, int percentage,
+                               handler_fn handler, void * context);
+extern control * ctrl_listbox(controlset *, char * label, int lines, int percentage,
+                              handler_fn handler, void * context);
 /*
  * `ncolumns' is followed by (alternately) radio button titles and
  * integers, until a null in place of a title string is seen.
  */
-control * ctrl_radiobuttons(controlset *, char * label, int ncolumns,
-                            handler_fn handler, void * context, ...);
-control * ctrl_pushbutton(controlset *, char * label,
-                          handler_fn handler, void * context);
-control * ctrl_droplist(controlset *, char * label, int percentage,
-                        handler_fn handler, void * context);
-control * ctrl_fontsel(controlset *, char * label,
-                       handler_fn handler, void * context);
-control * ctrl_checkbox(controlset *, char * label,
-                        handler_fn handler, void * context);
+extern control * ctrl_radiobuttons(controlset *, char * label, int ncolumns,
+                                   handler_fn handler, void * context, ...);
+extern control * ctrl_pushbutton(controlset *, char * label,
+                                 handler_fn handler, void * context);
+extern control * ctrl_droplist(controlset *, char * label, int percentage,
+                               handler_fn handler, void * context);
+extern control * ctrl_fontsel(controlset *, char * label,
+                              handler_fn handler, void * context);
+extern control * ctrl_checkbox(controlset *, char * label,
+                               handler_fn handler, void * context);
 
 /*
  * Standard handler routines to cover most of the common cases in
  * the config box.
  */
 
-void dlg_stdcheckbox_handler(control *, int event);
-void dlg_stdstringbox_handler(control *, int event);
-void dlg_stdintbox_handler(control *, int event);
-void dlg_stdradiobutton_handler(control *, int event);
-void dlg_stdfontsel_handler(control *, int event);
-void dlg_stdcolour_handler(control *, int event);
+extern void dlg_stdcheckbox_handler(control *, int event);
+extern void dlg_stdstringbox_handler(control *, int event);
+extern void dlg_stdintbox_handler(control *, int event);
+extern void dlg_stdradiobutton_handler(control *, int event);
+extern void dlg_stdfontsel_handler(control *, int event);
+extern void dlg_stdcolour_handler(control *, int event);
 
 /*
  * Routines the platform-independent dialog code can call to read
  * and write the values of controls.
  */
-void dlg_radiobutton_set(control *, int whichbutton);
-int dlg_radiobutton_get(control *);
-void dlg_checkbox_set(control *, bool);
-bool dlg_checkbox_get(control *);
-void dlg_editbox_set(control *, string);
-void dlg_editbox_set_w(control *, wstring);
-void dlg_editbox_get(control *, string *);
-void dlg_editbox_get_w(control *, wstring *);
+extern void dlg_radiobutton_set(control *, int whichbutton);
+extern int dlg_radiobutton_get(control *);
+extern void dlg_checkbox_set(control *, bool);
+extern bool dlg_checkbox_get(control *);
+extern void dlg_editbox_set(control *, string);
+extern void dlg_editbox_set_w(control *, wstring);
+extern void dlg_editbox_get(control *, string *);
+extern void dlg_editbox_get_w(control *, wstring *);
 /* The `listbox' functions also apply to combo boxes. */
-void dlg_listbox_clear(control *);
-void dlg_listbox_add(control *, string);
-void dlg_listbox_add_w(control *, wstring);
-void dlg_fontsel_set(control *, font_spec *);
-void dlg_fontsel_get(control *, font_spec *);
+extern void dlg_listbox_clear(control *);
+extern void dlg_listbox_add(control *, string);
+extern void dlg_listbox_add_w(control *, wstring);
+extern int dlg_listbox_getcur(control *);
+extern void dlg_fontsel_set(control *, font_spec *);
+extern void dlg_fontsel_get(control *, font_spec *);
 /*
  * Set input focus into a particular control.
  */
-void dlg_set_focus(control *);
+extern void dlg_set_focus(control *);
 /*
  * This function signals to the front end that the dialog's
  * processing is completed.
  */
-void dlg_end(void);
+extern void dlg_end(void);
 
 /*
  * Routines to manage a (per-platform) colour selector.
@@ -380,8 +382,8 @@ void dlg_end(void);
  * dlg_coloursel_start() accepts an RGB triple which is used to
  * initialise the colour selector to its starting value.
  */
-void dlg_coloursel_start(colour);
-int dlg_coloursel_results(colour *);
+extern void dlg_coloursel_start(colour);
+extern int dlg_coloursel_results(colour *);
 
 /*
  * This routine is used by the platform-independent code to
@@ -392,7 +394,7 @@ int dlg_coloursel_results(colour *);
  * If `ctrl' is null, _all_ controls in the dialog get refreshed
  * (for loading or saving entire sets of settings).
  */
-void dlg_refresh(control *);
+extern void dlg_refresh(control *);
 
 /*
  * Standard helper functions for reading a controlbox structure.
@@ -407,10 +409,10 @@ void dlg_refresh(control *);
  *          ... process this controlset ...
  *      }
  */
-int ctrl_find_path(controlbox *, char * path, int index);
+extern int ctrl_find_path(controlbox *, char * path, int index);
 
 /* Return the number of matching path elements at the starts of p1 and p2,
  * or INT_MAX if the paths are identical. */
-int ctrl_path_compare(char * p1, char * p2);
+extern int ctrl_path_compare(char * p1, char * p2);
 
 #endif

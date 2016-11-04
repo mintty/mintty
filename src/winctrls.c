@@ -1206,6 +1206,14 @@ dlg_checkbox_get(control *ctrl)
 void
 dlg_editbox_set(control *ctrl, string text)
 {
+  if (nonascii(text)) {
+    // transform item for proper Windows display
+    wchar * us = cs__utftowcs(text);
+    dlg_editbox_set_w(ctrl, us);
+    free(us);
+    return;
+  }
+
   winctrl *c = ctrl->plat_ctrl;
   assert(c && c->ctrl->type == CTRL_EDITBOX);
   SetDlgItemText(dlg.wnd, c->base_id + 1, text);
@@ -1337,6 +1345,24 @@ dlg_listbox_add_w(control *ctrl, wstring text)
   msg = (c->ctrl->type == CTRL_LISTBOX &&
          c->ctrl->listbox.height != 0 ? LB_ADDSTRING : CB_ADDSTRING);
   SendDlgItemMessageW(dlg.wnd, c->base_id + 1, msg, 0, (LPARAM) text);
+}
+
+int
+dlg_listbox_getcur(control *ctrl)
+{
+  winctrl *c = ctrl->plat_ctrl;
+  assert(c &&
+         (c->ctrl->type == CTRL_LISTBOX ||
+          (c->ctrl->type == CTRL_EDITBOX &&
+           c->ctrl->editbox.has_list)));
+  int idx;
+  if (c->ctrl->type == CTRL_LISTBOX)
+    idx = SendDlgItemMessage(dlg.wnd, c->base_id + 1, LB_GETCURSEL, 0, 0);
+  else
+    idx = SendDlgItemMessage(dlg.wnd, c->base_id + 1, CB_GETCURSEL, 0, 0);
+  //HWND wnd = GetDlgItem(dlg.wnd, c->base_id + 1);
+  //idx = SendMessage(wnd, LB_/CB_GETCURSEL, 0, (LPARAM)0);
+  return idx;
 }
 
 void
