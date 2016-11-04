@@ -1,0 +1,22 @@
+#! /bin/sh
+
+list=/usr/share/X11/locale/en_US.UTF-8/Compose
+
+keysymdefs=/usr/include/X11/keysymdef.h
+#keysyms_url=http://www.cl.cam.ac.uk/~mgk25/ucs/keysyms.txt
+
+# #define XK_space                         0x0020  /* U+0020 SPACE */
+# ->
+# s/<XK_space>/0x0020/g
+sed -e "s,^#define  *XK_\([^ ]*\) .*U+\([0-9A-Fa-f]*\).*,s/<\1>/0x\2/g," \
+    -e t -e d "$keysymdefs" > keysyms.sed
+
+# <Multi_key> <plus> <plus>        	: "#"   numbersign # NUMBER SIGN
+# ->
+#   {{0x002B, 0x002B}, "#"},
+grep -v "<dead" "$list" |
+sed -e "s,<KP_\([0-9]\)>,<\1>,g" |
+sed -e 's,[ 	]*:,:,' |
+sed -e 's/^<Multi_key> \([^:]*\): *"\(.*\)".*/{\1},"\2"/' -e t -e d |
+sed -e 's/ /, /g' -e 's,^,  {,' -e 's/},/}, /' -e 's/$/},/' |
+sed -f keysyms.sed -e '/</ d' -e 's,<U\([0-9A-Fa-f]*\)>,0x\1,g' | sort | uniq
