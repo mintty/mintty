@@ -143,6 +143,15 @@ either `^[[1W` or `^[[2W` is sent as described above;
 so if both reporting modes are enabled, only one report is sent.
 
 
+## Font glyph coverage enquiry ##
+
+Fonts vary widely in their Unicode coverage, i.e. they usually miss glyphs for many characters. The following sequence can be used to enquire about support for a specified list of characters.
+
+> `^[]7771;?;`_char0_`;`_char1_...`^G`
+
+Characters shall be specified with their decimal Unicode codepoint. Any number of characters can be given. Mintty replies with the same sequence, except that the question mark is replaced with an exclamation mark and that codes for characters that the current font does not have a glyph for are omitted.
+
+
 ## Font size ##
 
 The following _OSC_ ("operating system command") sequences can be used to change and query font size:
@@ -174,15 +183,6 @@ The following _OSC_ ("operating system command") sequences can be used to change
 The window size is adapted to zoom with the font size, so the terminal character geometry is kept if possible.
 As usual, OSC sequences can also be terminated with `^[\` (_ST_, the string terminator) instead of `^G`.
 When the font size is queried, a sequence that would restore the current size is sent, terminated with _ST_: `^[]7777;`_num_`^[\`.
-
-
-## Font coverage ##
-
-Fonts vary widely in their Unicode coverage, i.e. they usually miss glyphs for many characters. The following sequence can be used to enquire about support for a specified list of characters.
-
-> `^[]7771;?;`_char0_`;`_char1_...`^G`
-
-Characters shall be specified with their decimal Unicode codepoint. Any number of characters can be given. Mintty replies with the same sequence, except that the question mark is replaced with an exclamation mark and that codes for characters that the current font does not have a glyph for are omitted.
 
 
 ## Locale ##
