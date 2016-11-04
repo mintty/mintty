@@ -31,20 +31,23 @@ win_update_menus(void)
   bool alt_fn = shorts && cfg.alt_fn_shortcuts;
   bool ct_sh = shorts && cfg.ctrl_shift_shortcuts;
 
-  ModifyMenu(
+  ModifyMenuW(
     sysmenu, IDM_NEW, 0, IDM_NEW,
-    alt_fn ? "Ne&w\tAlt+F2" : ct_sh ? "Ne&w\tCtrl+Shift+N" : "Ne&w"
+    alt_fn ? _W("Ne&w\tAlt+F2") :
+    ct_sh ? _W("Ne&w\tCtrl+Shift+N") : _W("Ne&w")
   );
-  ModifyMenu(
+  ModifyMenuW(
     sysmenu, SC_CLOSE, 0, SC_CLOSE,
-    alt_fn ? "&Close\tAlt+F4" : ct_sh ? "&Close\tCtrl+Shift+W" : "&Close"
+    alt_fn ? _W("&Close\tAlt+F4") :
+    ct_sh ? _W("&Close\tCtrl+Shift+W") : _W("&Close")
   );
 
   uint sel_enabled = term.selected ? MF_ENABLED : MF_GRAYED;
   EnableMenuItem(ctxmenu, IDM_OPEN, sel_enabled);
-  ModifyMenu(
+  ModifyMenuW(
     ctxmenu, IDM_COPY, sel_enabled, IDM_COPY,
-    clip ? "&Copy\tCtrl+Ins" : ct_sh ? "&Copy\tCtrl+Shift+C" : "&Copy"
+    clip ? _W("&Copy\tCtrl+Ins") :
+    ct_sh ? _W("&Copy\tCtrl+Shift+C") : _W("&Copy")
   );
 
   uint paste_enabled =
@@ -52,42 +55,45 @@ win_update_menus(void)
     IsClipboardFormatAvailable(CF_UNICODETEXT) ||
     IsClipboardFormatAvailable(CF_HDROP)
     ? MF_ENABLED : MF_GRAYED;
-  ModifyMenu(
+  ModifyMenuW(
     ctxmenu, IDM_PASTE, paste_enabled, IDM_PASTE,
-    clip ? "&Paste\tShift+Ins" : ct_sh ? "&Paste\tCtrl+Shift+V" : "&Paste"
+    clip ? _W("&Paste\tShift+Ins") :
+    ct_sh ? _W("&Paste\tCtrl+Shift+V") : _W("&Paste")
   );
 
-  ModifyMenu(
+  ModifyMenuW(
     ctxmenu, IDM_SEARCH, 0, IDM_SEARCH,
-    alt_fn ? "S&earch\tAlt+F3" : ct_sh ? "S&earch\tCtrl+Shift+H" : "S&earch"
+    alt_fn ? _W("S&earch\tAlt+F3") :
+    ct_sh ? _W("S&earch\tCtrl+Shift+H") : _W("S&earch")
   );
 
-  ModifyMenu(
+  ModifyMenuW(
     ctxmenu, IDM_RESET, 0, IDM_RESET,
-    alt_fn ? "&Reset\tAlt+F8" : ct_sh ? "&Reset\tCtrl+Shift+R" : "&Reset"
+    alt_fn ? _W("&Reset\tAlt+F8") :
+    ct_sh ? _W("&Reset\tCtrl+Shift+R") : _W("&Reset")
   );
 
   uint defsize_enabled =
     IsZoomed(wnd) || term.cols != cfg.cols || term.rows != cfg.rows
     ? MF_ENABLED : MF_GRAYED;
-  ModifyMenu(
+  ModifyMenuW(
     ctxmenu, IDM_DEFSIZE_ZOOM, defsize_enabled, IDM_DEFSIZE_ZOOM,
-    alt_fn ? "&Default size\tAlt+F10" :
-    ct_sh ? "&Default size\tCtrl+Shift+D" : "&Default size"
+    alt_fn ? _W("&Default size\tAlt+F10") :
+    ct_sh ? _W("&Default size\tCtrl+Shift+D") : _W("&Default size")
   );
 
   uint fullscreen_checked = win_is_fullscreen ? MF_CHECKED : MF_UNCHECKED;
-  ModifyMenu(
+  ModifyMenuW(
     ctxmenu, IDM_FULLSCREEN_ZOOM, fullscreen_checked, IDM_FULLSCREEN_ZOOM,
-    alt_fn ? "&Full Screen\tAlt+F11" :
-    ct_sh ? "&Full Screen\tCtrl+Shift+F" : "&Full Screen"
+    alt_fn ? _W("&Full Screen\tAlt+F11") :
+    ct_sh ? _W("&Full Screen\tCtrl+Shift+F") : _W("&Full Screen")
   );
 
   uint otherscreen_checked = term.show_other_screen ? MF_CHECKED : MF_UNCHECKED;
-  ModifyMenu(
+  ModifyMenuW(
     ctxmenu, IDM_FLIPSCREEN, otherscreen_checked, IDM_FLIPSCREEN,
-    alt_fn ? "Flip &Screen\tAlt+F12" :
-    ct_sh ? "Flip &Screen\tCtrl+Shift+S" : "Flip &Screen"
+    alt_fn ? _W("Flip &Screen\tAlt+F12") :
+    ct_sh ? _W("Flip &Screen\tCtrl+Shift+S") : _W("Flip &Screen")
   );
 
   uint options_enabled = config_wnd ? MF_GRAYED : MF_ENABLED;
@@ -99,20 +105,20 @@ static void
 win_init_ctxmenu(void)
 {
   ctxmenu = CreatePopupMenu();
-  AppendMenu(ctxmenu, MF_ENABLED, IDM_OPEN, "Ope&n");
-  AppendMenu(ctxmenu, MF_SEPARATOR, 0, 0);
-  AppendMenu(ctxmenu, MF_ENABLED, IDM_COPY, 0);
-  AppendMenu(ctxmenu, MF_ENABLED, IDM_PASTE, 0);
-  AppendMenu(ctxmenu, MF_ENABLED, IDM_SELALL, "Select &All");
-  AppendMenu(ctxmenu, MF_SEPARATOR, 0, 0);
-  AppendMenu(ctxmenu, MF_ENABLED, IDM_SEARCH, 0);
-  AppendMenu(ctxmenu, MF_ENABLED, IDM_RESET, 0);
-  AppendMenu(ctxmenu, MF_SEPARATOR, 0, 0);
-  AppendMenu(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_DEFSIZE_ZOOM, 0);
-  AppendMenu(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN_ZOOM, 0);
-  AppendMenu(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_FLIPSCREEN, 0);
-  AppendMenu(ctxmenu, MF_SEPARATOR, 0, 0);
-  AppendMenu(ctxmenu, MF_ENABLED, IDM_OPTIONS, "&Options...");
+  AppendMenuW(ctxmenu, MF_ENABLED, IDM_OPEN, _W("Ope&n"));
+  AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
+  AppendMenuW(ctxmenu, MF_ENABLED, IDM_COPY, 0);
+  AppendMenuW(ctxmenu, MF_ENABLED, IDM_PASTE, 0);
+  AppendMenuW(ctxmenu, MF_ENABLED, IDM_SELALL, _W("Select &All"));
+  AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
+  AppendMenuW(ctxmenu, MF_ENABLED, IDM_SEARCH, 0);
+  AppendMenuW(ctxmenu, MF_ENABLED, IDM_RESET, 0);
+  AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
+  AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_DEFSIZE_ZOOM, 0);
+  AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN_ZOOM, 0);
+  AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_FLIPSCREEN, 0);
+  AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
+  AppendMenuW(ctxmenu, MF_ENABLED, IDM_OPTIONS, _W("&Options..."));
 }
 
 void
@@ -121,10 +127,10 @@ win_init_menus(void)
   win_init_ctxmenu();
 
   sysmenu = GetSystemMenu(wnd, false);
-  InsertMenu(sysmenu, SC_CLOSE, MF_ENABLED, IDM_COPYTITLE, "Copy &Title");
-  InsertMenu(sysmenu, SC_CLOSE, MF_ENABLED, IDM_OPTIONS, "&Options...");
-  InsertMenu(sysmenu, SC_CLOSE, MF_ENABLED, IDM_NEW, 0);
-  InsertMenu(sysmenu, SC_CLOSE, MF_SEPARATOR, 0, 0);
+  InsertMenuW(sysmenu, SC_CLOSE, MF_ENABLED, IDM_COPYTITLE, _W("Copy &Title"));
+  InsertMenuW(sysmenu, SC_CLOSE, MF_ENABLED, IDM_OPTIONS, _W("&Options..."));
+  InsertMenuW(sysmenu, SC_CLOSE, MF_ENABLED, IDM_NEW, 0);
+  InsertMenuW(sysmenu, SC_CLOSE, MF_SEPARATOR, 0, 0);
 }
 
 static void
