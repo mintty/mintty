@@ -41,17 +41,48 @@ static pid_t pid;
 static bool killed;
 static int pty_fd = -1, log_fd = -1, win_fd;
 
+#if CYGWIN_VERSION_API_MINOR >= 66
+#include <langinfo.h>
+#endif
+
 static void
-childerror(char * action, bool from_fork, int code)
+childerror(char * action, bool from_fork, int errno_code, int code)
 {
-  char * msg;
-  char * err = strerror(errno);
-  if (from_fork && errno == ENOENT)
-    err = _("There are no available terminals");
-  int len = asprintf(&msg, "\033[30;%dm\033[K%s: %s: %s (%d).\033[0m\r\n", from_fork ? 41 : 43, _("Error"), action, err, code);
-  if (len > 0) {
-    term_write(msg, len);
-    free(msg);
+#if CYGWIN_VERSION_API_MINOR >= 66
+  bool utf8 = strcmp(nl_langinfo(CODESET), "UTF-8") == 0;
+  char * oldloc;
+#else
+  char * oldloc = (char *)cs_get_locale();
+  bool utf8 = strstr(oldloc, ".65001");
+#endif
+  if (utf8)
+    oldloc = null;
+  else {
+    oldloc = strdup(cs_get_locale());
+    cs_set_locale("C.UTF-8");
+  }
+
+  char s[33];
+  bool colour_code = code && !errno_code;
+  sprintf(s, "\033[30;%dm\033[K", from_fork ? 41 : colour_code ? code : 43);
+  term_write(s, strlen(s));
+  term_write(action, strlen(action));
+  if (errno_code) {
+    char * err = strerror(errno_code);
+    if (from_fork && errno_code == ENOENT)
+      err = _("There are no available terminals");
+    term_write(": ", 2);
+    term_write(err, strlen(err));
+  }
+  if (code && !colour_code) {
+    sprintf(s, " (%d)", code);
+    term_write(s, strlen(s));
+  }
+  term_write(".\033[0m\r\n", 7);
+
+  if (oldloc) {
+    cs_set_locale(oldloc);
+    free(oldloc);
   }
 }
 
@@ -85,13 +116,9 @@ child_create(char *argv[], struct winsize *winp)
     //EAGAIN  Cannot allocate sufficient memory to allocate a task structure.
     //EAGAIN  Not possible to create a new process; RLIMIT_NPROC limit.
     //ENOMEM  Memory is tight.
-    childerror(_("could not fork child process"), true, pid);
-    if (rebase_prompt) {
-      term_write("\033[30;43m\033[K", 11);
-      string msg = _("DLL rebasing may be required. See 'rebaseall / rebase --help'.");
-      term_write(msg, strlen(msg));
-      term_write("\033[0m\r\n", 6);
-    }
+    childerror(_("Error: Could not fork child process"), true, errno, pid);
+    if (rebase_prompt)
+      childerror(_("DLL rebasing may be required; see 'rebaseall / rebase --help'"), false, 0, 0);
 
     pid = 0;
 
@@ -159,7 +186,12 @@ child_create(char *argv[], struct winsize *winp)
     execvp(cmd, argv);
 
     // If we get here, exec failed.
-    fprintf(stderr, "\033[30;41m\033[KFailed to run %s: %s\r\n", cmd, strerror(errno));
+    fprintf(stderr, "\033]701;C.UTF-8\007");
+    fprintf(stderr, "\033[30;41m\033[K");
+    //_ %1$s: client command (e.g. shell) to be run; %2$s: error message
+    fprintf(stderr, _("Failed to run '%s': %s"), cmd, strerror(errno));
+    fprintf(stderr, "\r\n");
+    fflush(stderr);
 
 #if CYGWIN_VERSION_DLL_MAJOR < 1005
     // Before Cygwin 1.5, the message above doesn't appear if we exit
@@ -209,6 +241,9 @@ child_create(char *argv[], struct winsize *winp)
       log_fd = fileno(stdout);
     else {
       char * log = path_win_w_to_posix(cfg.log);
+#ifdef debug_logfilename
+      printf("<%ls> -> <%s>\n", cfg.log, log);
+#endif
       char * format = strchr(log, '%');
       if (format && * ++ format == 'd' && !strchr(format, '%')) {
         char * logf = newn(char, strlen(log) + 20);
@@ -228,8 +263,15 @@ child_create(char *argv[], struct winsize *winp)
       log_fd = open(log, O_WRONLY | O_CREAT | O_EXCL, 0600);
       if (log_fd < 0) {
         // report message and filename:
-        childerror(_("could not open log file"), false, 0);
-        childerror(log, false, 0);
+        childerror(_("Error: Could not open log file"), false, errno, 0);
+        wchar * wp = path_posix_to_win_w(log);
+        char * up = cs__wcstoutf(wp);
+#ifdef debug_logfilename
+        printf(" -> <%ls> -> <%s>\n", wp, up);
+#endif
+        childerror(up, false, 0, 0);
+        free(up);
+        free(wp);
       }
 
       free(log);
@@ -287,7 +329,6 @@ child_proc(void)
           }
         }
 
-        int l = 0;
         char *s = 0;
         bool err = true;
         if (WIFEXITED(status)) {
@@ -295,22 +336,18 @@ child_proc(void)
           if (code == 0)
             err = false;
           if ((code || cfg.exit_write) && cfg.hold != HOLD_START)
-            l = asprintf(&s, "%s: Exit %i", cmd, code);
+            //_ %1$s: client command (e.g. shell) terminated, %2$i: exit code
+            asprintf(&s, _("%s: Exit %i"), cmd, code);
         }
         else if (WIFSIGNALED(status))
-          l = asprintf(&s, "%s: %s", cmd, strsignal(WTERMSIG(status)));
+          asprintf(&s, "%s: %s", cmd, strsignal(WTERMSIG(status)));
 
         if (!s && cfg.exit_write) {
+          //_ default inline notification if ExitWrite=yes
           s = _("TERMINATED");
-          l = strlen(s);
         }
         if (s) {
-          if (err)
-            term_write("\033[30;41m\033[K", 11);
-          else
-            term_write("\033[30;42m\033[K", 11);
-          term_write(s, l);
-          term_write("\r\n", 2);
+          childerror(s, false, 0, err ? 41 : 42);
         }
 
         if (cfg.exit_title && *cfg.exit_title)
@@ -551,7 +588,7 @@ child_fork(int argc, char *argv[], int moni)
 
   if (cfg.daemonize) {
     if (clone < 0) {
-      childerror(_("could not fork child daemon"), true, 0);
+      childerror(_("Error: Could not fork child daemon"), true, errno, 0);
       return;  // assume next fork will fail too
     }
     if (clone > 0) {  // parent waits for intermediate child

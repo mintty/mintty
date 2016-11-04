@@ -1672,16 +1672,68 @@ show_msg_w(FILE *stream, wstring msg)
     MessageBoxW(0, msg, W(APPNAME), MB_OK);
 }
 
-static no_return __attribute__((format(printf, 1, 2)))
-error(char *format, ...)
+static char *
+opterror_msg(string msg, bool utf8params, string p1, string p2)
 {
-  char *msg;
-  va_list va;
-  va_start(va, format);
-  vasprintf(&msg, format, va);
-  va_end(va);
-  msg = asform("%s: %s\nTry '--help' for more information.\n",
-               main_argv[0], msg);
+  // Note: msg is in UTF-8,
+  // parameters are in current encoding unless utf8params is true
+  if (!utf8params) {
+    if (p1) {
+      wchar * w = cs__mbstowcs(p1);
+      p1 = cs__wcstoutf(w);
+      free(w);
+    }
+    if (p2) {
+      wchar * w = cs__mbstowcs(p2);
+      p2 = cs__wcstoutf(w);
+      free(w);
+    }
+  }
+
+  char * fullmsg;
+  int len = asprintf(&fullmsg, msg, p1, p2);
+  if (!utf8params) {
+    if (p1)
+      free((char *)p1);
+    if (p2)
+      free((char *)p2);
+  }
+
+  if (len > 0)
+    return fullmsg;
+  else
+    return null;
+}
+
+bool
+print_opterror(FILE * stream, string msg, bool utf8params, string p1, string p2)
+{
+  char * fullmsg = opterror_msg(msg, utf8params, p1, p2);
+  bool ok = false;
+  if (fullmsg) {
+    char * outmsg = cs__utftombs(fullmsg);
+    delete(fullmsg);
+    ok = fprintf(stream, "%s.\n", outmsg);
+    if (ok)
+      ok = fflush(stream);
+    delete(outmsg);
+  }
+  return ok;
+}
+
+static void
+print_error(string msg)
+{
+  print_opterror(stderr, msg, true, "", "");
+}
+
+static void
+option_error(char * msg, char * option)
+{
+  ///TODO: Note: msg is in UTF-8, option is in current encoding
+  char * format = asform("%s: %s\nTry '--help' for more information.\n",
+                         main_argv[0], msg);
+  msg = asform(format, option);
   show_msg(stderr, msg);
   exit(1);
 }
@@ -2170,7 +2222,7 @@ main(int argc, char *argv[])
         else if (sscanf(optarg, "%i,%i%1s", &cfg.x, &cfg.y, (char[2]){}) == 2)
           ;
         else
-          error("syntax error in position argument '%s'", optarg);
+          option_error(_("Syntax error in position argument '%s'"), optarg);
       when 's':
         if (strcmp(optarg, "maxwidth") == 0)
           maxwidth = true;
@@ -2181,7 +2233,7 @@ main(int argc, char *argv[])
         else if (sscanf(optarg, "%ux%u%1s", &cfg.cols, &cfg.rows, (char[2]){}) == 2)
           ;
         else
-          error("syntax error in size argument '%s'", optarg);
+          option_error(_("Syntax error in size argument '%s'"), optarg);
       when 't': set_arg_option("Title", optarg);
       when 'T':
         set_arg_option("Title", optarg);
@@ -2227,10 +2279,10 @@ main(int argc, char *argv[])
         show_msg(stdout, VERSION_TEXT);
         return 0;
       when '?':
-        error("unknown option '%s'", optopt ? shortopt : longopt);
+        option_error(_("Unknown option '%s'"), optopt ? shortopt : longopt);
       when ':':
-        error("option '%s' requires an argument",
-              longopt[1] == '-' ? longopt : shortopt);
+        option_error(_("Option '%s' requires an argument"),
+                     longopt[1] == '-' ? longopt : shortopt);
     }
   }
   copy_config("main after -o", &file_cfg, &cfg);
@@ -2275,7 +2327,7 @@ main(int argc, char *argv[])
   if (daemonize) {  // detach from parent process and terminal
     pid_t pid = fork();
     if (pid < 0)
-      fprintf(stderr, "Mintty could not detach from caller, starting anyway.\n");
+      print_error(_("Mintty could not detach from caller, starting anyway"));
     if (pid > 0)
       exit(0);  // exit parent process
 
@@ -2368,10 +2420,10 @@ main(int argc, char *argv[])
           FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK,
           0, err, 0, winmsg, wmlen, 0
         );
-        warnw(_W("could not load icon file"), cfg.icon, winmsg);
+        warnw(_W("Could not load icon file"), cfg.icon, winmsg);
       }
       else
-        warnw(_W("could not load icon file"), cfg.icon, W(""));
+        warnw(_W("Could not load icon file"), cfg.icon, W(""));
     }
     delete(icon_file);
   }
@@ -2408,7 +2460,7 @@ main(int argc, char *argv[])
       wtitle = buf;
     }
     else {
-      fputs("Using default title due to invalid characters in program name.\n", stderr);
+      print_error(_("Using default title due to invalid characters in program name"));
       wtitle = W(APPNAME);
     }
   }
