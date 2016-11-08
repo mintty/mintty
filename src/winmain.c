@@ -1172,21 +1172,24 @@ confirm_exit(void)
   if (!child_is_parent())
     return true;
 
-  /* retrieve list of child processes */
-  char * pscmd = "/bin/procps -o pid,ruser=USER -o comm -t %s 2> /dev/null || /bin/ps -ef";
+  /* command to retrieve list of child processes */
+  //procps is ASCII-limited
+  //char * pscmd = "LC_ALL=C.UTF-8 /bin/procps -o pid,ruser=USER -o comm -t %s 2> /dev/null || LC_ALL=C.UTF-8 /bin/ps -ef";
+  //char * pscmd = "LC_ALL=C.UTF-8 /bin/ps -ef";
+  char * pscmd = "LC_ALL=C.UTF-8 /bin/ps -es | sed -e 's,  *,	&,g' | cut -f 2,3,5-99 | tr -d '	'";
   char * tty = child_tty();
   if (strrchr(tty, '/'))
     tty = strrchr(tty, '/') + 1;
   char cmd[strlen(pscmd) + strlen(tty) + 1];
   sprintf(cmd, pscmd, tty, tty);
   FILE * procps = popen(cmd, "r");
-  char * msg_pre = "Processes are running in session:\n";
-  char * msg_post = "Close anyway?";
-  char * msg = malloc(strlen(msg_pre) + 1);
-  strcpy(msg, msg_pre);
+
+  int cmdpos = 0;
+  char * msg = newn(char, 1);
+  strcpy(msg, "");
   if (procps) {
     int ll = 999;  // use very long input despite narrow msg box
-                   // to avoid high risk of clipping within UTF-8 
+                   // to avoid high risk of clipping within multi-byte char
                    // and failing the wide character transformation
     char line[ll]; // heap-allocated to prevent #530
     bool first = true;
@@ -1199,38 +1202,56 @@ confirm_exit(void)
           if (strstr(line, "TTY")) {
             filter_tty = true;
           }
+          char * cmd = strstr(line, " COMMAND");
+          if (!cmd)
+            cmd = strstr(line, " CMD");
+          if (cmd)
+            cmdpos = cmd + 1 - line;
           first = false;
         }
-        msg = realloc(msg, strlen(msg) + strlen(line) + 2);
+        msg = renewn(msg, strlen(msg) + strlen(line) + 4);
+        strcat(msg, "|");  // cmdpos += strlen(prefix) outside loop!
         strcat(msg, line);
         strcat(msg, "\n");
       }
     }
     pclose(procps);
   }
-  msg = realloc(msg, strlen(msg) + strlen(msg_post) + 1);
-  strcat(msg, msg_post);
+  cmdpos += 1;
+  wchar * proclist = cs__utftowcs(msg);
+  int cpos = 0;
+  for (uint i = 0; i < wcslen(proclist); i++) {
+    if (cpos == 0) {
+      if (proclist[i] == '|') {
+        proclist[i] = 0x254E;  // │┃┆┇┊┋┠╎╏║╟
+        cpos = 1;
+      }
+      else
+        cpos = -1;
+    }
+    if (cpos > 0 && (!cmdpos || cpos <= cmdpos) && proclist[i] == ' ')
+      proclist[i] = 0x2007;
+    if (proclist[i] == '\n')
+      cpos = 0;
+    else
+      cpos ++;
+  }
 
-  size_t size = cs_mbstowcs(0, msg, 0) + 1;
-  int ret;
-  if (size) {
-    wchar msgw[size];
-    cs_mbstowcs(msgw, msg, size);
-    wchar appn[strlen(APPNAME) + 1];
-    cs_mbstowcs(appn, APPNAME, lengthof(appn));
-    ret =
-      MessageBoxW(
-        wnd, msgw,
-        appn, MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON2
-      );
-  }
-  else {
-    ret =
-      MessageBox(
-        wnd, msg,
-        APPNAME, MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON2
-      );
-  }
+  wchar * msg_pre = _W("Processes are running in session:");
+  wchar * msg_post = _W("Close anyway?");
+
+  wchar * wmsg = newn(wchar, wcslen(msg_pre) + wcslen(proclist) + wcslen(msg_post) + 2);
+  wcscpy(wmsg, msg_pre);
+  wcscat(wmsg, W("\n"));
+  wcscat(wmsg, proclist);
+  wcscat(wmsg, msg_post);
+  free(proclist);
+
+  int ret = MessageBoxW(
+              wnd, wmsg,
+              W(APPNAME), MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON2
+            );
+  free(wmsg);
 
   // Treat failure to show the dialog as confirmation.
   return !ret || ret == IDOK;
@@ -1658,18 +1679,23 @@ static struct {
 }
 
 
-static void
-show_msg(FILE *stream, string msg)
+void
+show_message(char * msg, UINT type)
 {
-  if (fputs(msg, stream) < 0 || fputs("\n", stream) < 0 || fflush(stream) < 0)
-    MessageBox(0, msg, APPNAME, MB_OK);
+  FILE * out = (type & (MB_ICONWARNING | MB_ICONSTOP)) ? stderr : stdout;
+  char * outmsg = cs__utftombs(msg);
+  if (fputs(outmsg, out) < 0 || fputs("\n", out) < 0 || fflush(out) < 0) {
+    wchar * wmsg = cs__utftowcs(msg);
+    MessageBoxW(0, wmsg, W(APPNAME), type);
+    delete(wmsg);
+  }
+  delete(outmsg);
 }
 
 static void
-show_msg_w(FILE *stream, wstring msg)
+show_info(char * msg)
 {
-  if (fprintf(stream, "%ls", msg) < 0 || fputs("\n", stream) < 0 || fflush(stream) < 0)
-    MessageBoxW(0, msg, W(APPNAME), MB_OK);
+  show_message(msg, MB_OK);
 }
 
 static char *
@@ -1730,36 +1756,35 @@ print_error(string msg)
 static void
 option_error(char * msg, char * option)
 {
-  ///TODO: Note: msg is in UTF-8, option is in current encoding
-  char * format = asform("%s: %s\nTry '--help' for more information.\n",
-                         main_argv[0], msg);
-  msg = asform(format, option);
-  show_msg(stderr, msg);
+  // msg is in UTF-8, option is in current encoding
+  char * optmsg = opterror_msg(msg, false, option, null);
+  char * fullmsg = asform("%s\n%s", optmsg, _("Try '--help' for more information"));
+  show_message(fullmsg, MB_ICONWARNING);
   exit(1);
 }
 
 static void
-warnw(wstring msg, wstring file, wstring err)
+show_iconwarn(wchar * winmsg)
 {
-#if CYGWIN_VERSION_API_MINOR >= 201
-  wstring format = (err && *err) ? W("%s: %ls '%ls':\n%ls") : W("%s: %ls '%ls'");
-  wchar mess[wcslen(format) + strlen(main_argv[0]) + wcslen(msg) + wcslen(file) + (err ? wcslen(err) : 0)];
-  swprintf(mess, lengthof(mess), format, main_argv[0], msg, file, err);
-  show_msg_w(stderr, mess);
-#else
-  //MinGW
-  (void)show_msg_w;
-  string format = (err && *err) ? "%s: %s '%s':\n%s" : "%s: %s '%s'";
-  char * _msg = cs__wcstombs(msg);
-  char * _file = cs__wcstombs(file);
-  char * _err = cs__wcstombs(err);
-  char mess[strlen(format) + strlen(main_argv[0]) + strlen(_msg) + strlen(_file) + (err ? strlen(_err) : 0)];
-  sprintf(mess, format, main_argv[0], _msg, _file, _err);
-  free(_msg);
-  free(_file);
-  free(_err);
-  show_msg(stderr, mess);
-#endif
+  char * msg = _("Could not load icon");
+  char * in = cs__wcstoutf(cfg.icon);
+
+  char * fullmsg;
+  int len;
+  if (winmsg) {
+    char * wmsg = cs__wcstoutf(winmsg);
+    len = asprintf(&fullmsg, "%s '%s':\n%s", msg, in, wmsg);
+    free(wmsg);
+  }
+  else
+    len = asprintf(&fullmsg, "%s '%s'", msg, in);
+  free(in);
+  if (len > 0) {
+    show_message(fullmsg, MB_ICONWARNING);
+    free(fullmsg);
+  }
+  else
+    show_message(msg, MB_ICONWARNING);
 }
 
 void
@@ -2045,10 +2070,11 @@ DEFINE_PROPERTYKEY(PKEY_AppUserModel_StartPinOption, 0x9f4c2855,0x9f79,0x4B39,0x
 #endif
 }
 
-static const char help[] =
-  "Usage: " APPNAME " [OPTION]... [ PROGRAM [ARG]... | - ]\n"
-  "\n"
-  "Start a new terminal session running the specified program or the user's shell.\n"
+#define usage __("Usage:")
+#define synopsis __("[OPTION]... [ PROGRAM [ARG]... | - ]")
+static char help[] =
+  //_ help text (output of -H / --help), after initial line ("synopsis")
+  _("Start a new terminal session running the specified program or the user's shell.\n"
   "If a dash is given instead of a program, invoke the shell as a login shell.\n"
   "\n"
   "Options:\n"
@@ -2074,7 +2100,7 @@ static const char help[] =
   "  -H, --help            Display help and exit\n"
   "  -V, --version         Print version information and exit\n"
   "See manual page for further command line options and configuration.\n"
-;
+);
 
 static const char short_opts[] = "+:c:C:eh:i:l:o:p:s:t:T:B:R:uw:HVdD";
 
@@ -2272,12 +2298,20 @@ main(int argc, char *argv[])
         cfg.daemonize = false;
       when 'D':
         cfg.daemonize_always = true;
-      when 'H':
-        show_msg(stdout, help);
+      when 'H': {
+        char * helptext = asform("%s %s %s\n\n%s", _(usage), APPNAME, _(synopsis), _(help));
+        show_info(helptext);
+        free(helptext);
         return 0;
-      when 'V':
-        show_msg(stdout, VERSION_TEXT);
+      }
+      when 'V': {
+        char * vertext =
+          asform("%s\n%s\n%s\n%s\n", 
+                 VERSION_TEXT, COPYRIGHT, LICENSE_TEXT, _(WARRANTY_TEXT));
+        show_info(vertext);
+        free(vertext);
         return 0;
+      }
       when '?':
         option_error(_("Unknown option '%s'"), optopt ? shortopt : longopt);
       when ':':
@@ -2420,10 +2454,10 @@ main(int argc, char *argv[])
           FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK,
           0, err, 0, winmsg, wmlen, 0
         );
-        warnw(_W("Could not load icon file"), cfg.icon, winmsg);
+        show_iconwarn(winmsg);
       }
       else
-        warnw(_W("Could not load icon file"), cfg.icon, W(""));
+        show_iconwarn(null);
     }
     delete(icon_file);
   }

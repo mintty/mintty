@@ -28,12 +28,12 @@ shell_exec_thread(void *data)
   if ((INT_PTR)ShellExecuteW(wnd, 0, wpath, 0, 0, SW_SHOWNORMAL) <= 32) {
     uint error = GetLastError();
     if (error != ERROR_CANCELLED) {
-      char msg[1024];
-      FormatMessage(
+      wchar msg[1024];
+      FormatMessageW(
         FORMAT_MESSAGE_FROM_SYSTEM | 64,
-        0, error, 0, msg, sizeof msg, 0
+        0, error, 0, msg, lengthof(msg), 0
       );
-      MessageBox(0, msg, 0, MB_ICONERROR);
+      MessageBoxW(0, msg, 0, MB_ICONERROR);
     }
   }
   free(wpath);

@@ -195,7 +195,7 @@ XGETTEXT_OPTS=	# --no-location --no-wrap ?
 
 _:	localization
 localization:
-	xgettext --from-code=UTF-8 -k_ -k_W -k__ -c_ $(XGETTEXT_OPTS) *.c
+	xgettext --from-code=UTF-8 -k_ -k_W -k__ -c_ $(XGETTEXT_OPTS) *.c appinfo.h
 
 #############################################################################
 # release targets

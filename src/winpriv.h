@@ -61,4 +61,6 @@ extern int search_monitors(int * minx, int * miny, HMONITOR lookup_mon, bool get
 
 extern void win_set_ime_open(bool);
 
+extern void show_message(char * msg, UINT type);
+
 #endif

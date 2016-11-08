@@ -15,7 +15,7 @@ Thanks to everyone who has contributed to mintty in some way, in particular:
   * Yaakov Selkowitz, for creating mintty's initial Cygwin [setup.exe](http://cygwin.com/setup.exe) package and the cygport tool that is used to build it.
   * Lee D. Rothstein, for his help in writing a man page for mintty.
   * Thomas Wolff, author of the [mined](http://towo.net/mined) Unicode editor, for lots of much-needed help in improving mintty's terminal emulation and locale support and making it more xterm-compatible.
-  * Chris Sutcliffe, for packaging mintty for [MSYS](http://www.mingw.org/wiki/MSYS), and always testing the latest broken svn versions.
+  * Chris Sutcliffe, for packaging mintty for [MSYS](http://www.mingw.org/wiki/MSYS), and lots of testing and advice.
   * Iwamuro Motonori, for valuable advice regarding support for East Asian languages.
   * The many users who have helped to improve mintty by reporting bugs and suggesting enhancements.
 

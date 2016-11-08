@@ -418,15 +418,23 @@ win_open_config(void)
 void
 win_show_about(void)
 {
-  MessageBoxIndirect(&(MSGBOXPARAMS){
-    .cbSize = sizeof(MSGBOXPARAMS),
+  char * aboutfmt =
+    asform("%s\n%s\n%s\n%s\n\n%s", 
+           VERSION_TEXT, COPYRIGHT, LICENSE_TEXT, _(WARRANTY_TEXT), _(ABOUT_TEXT));
+  char * abouttext = asform(aboutfmt, WEBSITE);
+  free(aboutfmt);
+  wchar * wmsg = cs__utftowcs(abouttext);
+  free(abouttext);
+  MessageBoxIndirectW(&(MSGBOXPARAMSW){
+    .cbSize = sizeof(MSGBOXPARAMSW),
     .hwndOwner = config_wnd,
     .hInstance = inst,
-    .lpszCaption = APPNAME,
+    .lpszCaption = W(APPNAME),
     .dwStyle = MB_USERICON | MB_OK,
-    .lpszIcon = MAKEINTRESOURCE(IDI_MAINICON),
-    .lpszText = VERSION_TEXT "\n" ABOUT_TEXT
+    .lpszIcon = MAKEINTRESOURCEW(IDI_MAINICON),
+    .lpszText = wmsg
   });
+  free(wmsg);
 }
 
 static void

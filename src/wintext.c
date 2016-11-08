@@ -214,12 +214,18 @@ row_padding(int i, int e)
 }
 
 static void
-show_msg(wstring msg, wstring title)
+show_font_warning(char * msg)
 {
-  if (fprintf(stderr, "%ls", title) < 0 || fputs("\n", stderr) < 0 ||
-      fprintf(stderr, "%ls", msg) < 0 || fputs("\n", stderr) < 0 ||
-      fflush(stderr) < 0)
-    MessageBoxW(0, msg, title, MB_ICONWARNING);
+  char * fn = cs__wcstoutf(cfg.font.name);
+  char * fullmsg;
+  int len = asprintf(&fullmsg, "%s:\n%s", msg, fn);
+  free(fn);
+  if (len > 0) {
+    show_message(fullmsg, MB_ICONWARNING);
+    free(fullmsg);
+  }
+  else
+    show_message(msg, MB_ICONWARNING);
 }
 
 #ifndef TCI_SRCLOCALE
@@ -303,14 +309,14 @@ adjust_font_weights(void)
 
   // check if no font found
   if (!font_found) {
-    show_msg(_W("Font not found, using system substitute"), cfg.font.name);
+    show_font_warning(_("Font not found, using system substitute"));
     fw_norm = 400;
     fw_bold = 700;
     trace_font(("//\n"));
     return;
   }
   if (!ansi_found && !cs_found) {
-    show_msg(_W("Font has limited support for character ranges"), cfg.font.name);
+    show_font_warning(_("Font has limited support for character ranges"));
   }
 
   // find available widths closest to selected widths
@@ -431,7 +437,7 @@ win_init_fonts(int size)
 
   if (!tm.tmHeight) {
     // corrupt font installation (e.g. deleted font file)
-    show_msg(_W("Font installation corrupt, using system substitute"), cfg.font.name);
+    show_font_warning(_("Font installation corrupt, using system substitute"));
     wstrset(&cfg.font.name, W(""));
     fonts[FONT_NORMAL] = create_font(fw_norm, false);
     GetObject(fonts[FONT_NORMAL], sizeof (LOGFONT), &lfont);
@@ -451,7 +457,7 @@ win_init_fonts(int size)
 #ifdef check_charset_only_for_returned_font
   int default_charset = get_default_charset();
   if (tm.tmCharSet != default_charset && default_charset != DEFAULT_CHARSET) {
-    show_msg(_W("Font does not support system locale"), cfg.font.name);
+    show_font_warning(_("Font does not support system locale"));
   }
 #endif
 

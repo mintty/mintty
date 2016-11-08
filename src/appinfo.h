@@ -39,7 +39,7 @@
   STRINGIFY(MAJOR_VERSION.MINOR_VERSION.PATCH_NUMBER.BUILD_NUMBER)
 #define COMMA_VERSION \
   MAJOR_VERSION,MINOR_VERSION,PATCH_NUMBER,BUILD_NUMBER
-#define COPYRIGHT "(C) " YEAR " " AUTHOR
+#define COPYRIGHT "© (C) " YEAR " " AUTHOR
 
 // needed for secondary device attributes report
 #define DECIMAL_VERSION \
@@ -47,20 +47,20 @@
 
 // needed for mintty -V and Options... - About...
 #define VERSION_TEXT \
-  APPNAME " " VERSION " (" STRINGIFY(TARGET) ")\n" \
-  COPYRIGHT "\n" \
-  "License GPLv3+: GNU GPL version 3 or later\n" \
-  "There is no warranty, to the extent permitted by law.\n"
+  APPNAME " " VERSION " (" STRINGIFY(TARGET) ")"
+
+#define LICENSE_TEXT \
+  "License GPLv3+: GNU GPL version 3 or later"
+
+#define WARRANTY_TEXT \
+  __("There is no warranty, to the extent permitted by law.")
 
 // needed for Options... - About...
+//_ %s: WEBSITE (URL)
 #define ABOUT_TEXT \
-  "Thanks to Simon Tatham and the other contributors for their\n"\
-  "great work on PuTTY, which mintty is largely based on. Thanks\n" \
-  "also to Thomas Wolff and Chris Sutcliffe for lots of testing and\n" \
-  "advice, and to KDE's Oxygen team for the program icon.\n" \
-  "\n" \
-  "Please report bugs or request enhancements through the\n" \
-  "issue tracker on the mintty project page located at\n" \
-  WEBSITE ".\n"
+  __("Please report bugs or request enhancements through the " \
+  "issue tracker on the mintty project page located at" \
+  "\n%s.\n" \
+  "See also the Wiki there for further hints, thanks and credits.")
 
 #endif
