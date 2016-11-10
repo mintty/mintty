@@ -2074,7 +2074,7 @@ DEFINE_PROPERTYKEY(PKEY_AppUserModel_StartPinOption, 0x9f4c2855,0x9f79,0x4B39,0x
 #define synopsis __("[OPTION]... [ PROGRAM [ARG]... | - ]")
 static char help[] =
   //_ help text (output of -H / --help), after initial line ("synopsis")
-  _("Start a new terminal session running the specified program or the user's shell.\n"
+  __("Start a new terminal session running the specified program or the user's shell.\n"
   "If a dash is given instead of a program, invoke the shell as a login shell.\n"
   "\n"
   "Options:\n"

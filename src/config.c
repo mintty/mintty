@@ -727,16 +727,179 @@ get_resource_file(wstring sub, wstring res, bool towrite)
 }
 
 
-static inline
-void
-load_i18n(wstring locale)
+#define debug_messages
+
+static struct {
+  char * msg;
+  char * locmsg;
+  wchar * wmsg;
+} * messages = 0;
+int nmessages = 0;
+int maxmessages = 0;
+
+static void
+clear_messages()
+{
+  for (int i = 0; i < nmessages; i++) {
+    free(messages[i].msg);
+    free(messages[i].locmsg);
+    if (messages[i].wmsg)
+      free(messages[i].wmsg);
+  }
+  nmessages = 0;
+}
+
+static void
+add_message(char * msg, char * locmsg)
+{
+  if (nmessages >= maxmessages) {
+    if (maxmessages)
+      maxmessages += 20;
+    else
+      maxmessages = 180;
+    messages = renewn(messages, maxmessages);
+  }
+#ifdef debug_messages
+  printf("add %d <%s> <%s>\n", nmessages, msg, locmsg);
+#endif
+  messages[nmessages].msg = msg;
+  messages[nmessages].locmsg = locmsg;
+  messages[nmessages].wmsg = null;
+  nmessages ++;
+}
+
+char * loctext(string msg)
+{
+  for (int i = 0; i < nmessages; i++) {
+    if (strcmp(msg, messages[i].msg) == 0)
+      return messages[i].locmsg;
+  }
+  return (char *) msg;
+}
+
+wchar * wloctext(string msg)
+{
+  for (int i = 0; i < nmessages; i++) {
+    if (strcmp(msg, messages[i].msg) == 0) {
+      if (messages[i].wmsg == null)
+        messages[i].wmsg = cs__utftowcs(messages[i].locmsg);
+      return messages[i].wmsg;
+    }
+  }
+  add_message(strdup(msg), strdup(msg));
+  return wloctext(msg);
+}
+
+static char *
+readtext(char * buf, int len, FILE * file)
+{
+  char * unescape(char * s)
+  {
+    char * t = s;
+    while (*s) {
+      if (*s == '\\') {
+        s++;
+        switch (*s) {
+          when 't': *t = '\t';
+          when 'n': *t = '\n';
+          otherwise: *t = *s;
+        }
+      }
+      else
+        *t = *s;
+      if (*s == '"')
+        break;
+      t++;
+      s++;
+    }
+    return s;
+  }
+
+  char * p = buf;
+  while (*p != ' ')
+    p++;
+  while (*p == ' ')
+    p++;
+  if (strncmp(p, "\"\"", 2) == 0) {
+    // scan multi-line text
+    char * str = newn(char, 1);
+    *str = '\0';
+    while (fgets(buf, len, file) && *buf == '"') {
+      p = buf + 1;
+      char * f = unescape(p);
+      if (*f == '"') {
+        *f = '\0';
+        str = renewn(str, strlen(str) + strlen(p) + 1);
+        strcat(str, p);
+      }
+      else {
+        free(str);
+        return null;
+      }
+    }
+    return str;
+  }
+  else {
+    // scan single-line text
+    p++;
+    char * f = unescape(p);
+    if (*f == '"') {
+      *f = '\0';
+      char * str = strdup(p);
+      fgets(buf, len, file);
+      return str;
+    }
+  }
+  return null;
+}
+
+static void
+load_messages_file(char * textdbf)
+{
+  FILE * file = fopen(textdbf, "r");
+  if (file) {
+#ifdef debug_messages
+    printf("loading messages from <%s>\n", textdbf);
+#endif
+    clear_messages();
+
+    while (fgets(linebuf, sizeof linebuf, file)) {
+      linebuf[strcspn(linebuf, "\r\n")] = 0;  /* trim newline */
+      if (strncmp(linebuf, "msgid ", 6) == 0) {
+        char * msg = readtext(linebuf, sizeof linebuf, file);
+        if (strncmp(linebuf, "msgstr ", 7) == 0) {
+          char * locmsg = readtext(linebuf, sizeof linebuf, file);
+          if (msg && *msg && locmsg && *locmsg)
+            add_message(msg, locmsg);
+        }
+      }
+      else {
+      }
+    }
+    fclose(file);
+  }
+#ifdef debug_messages
+  printf("read %d messages\n", nmessages);
+  printf("msg blö -> <%s> <%ls>\n", loctext("blö"), wloctext("blö"));
+  printf("msg blö -> <%s> <%ls>\n", loctext("blö"), wloctext("blö"));
+  printf("msg blü -> <%s> <%ls>\n", loctext("blü"), wloctext("blü"));
+  printf("msg blü -> <%s> <%ls>\n", loctext("blü"), wloctext("blü"));
+#endif
+}
+
+static void
+load_messages(string locale)
 {
   if (*locale) {
-      char * textdb = get_resource_file(W("lang"), locale, false);
-      if (textdb) {
-        //load_text(textdb, false);
-        free(textdb);
-      }
+    char * lf = asform("%s.po", locale);
+    wchar * wl = cs__utftowcs(lf);
+    free(lf);
+    char * textdbf = get_resource_file(W("lang"), wl, false);
+    free(wl);
+    if (textdbf) {
+      load_messages_file(textdbf);
+      free(textdbf);
+    }
   }
 }
 
@@ -879,6 +1042,9 @@ init_config(void)
 void
 finish_config(void)
 {
+#ifdef debug_messages
+  load_messages("messages");
+#endif
 #ifdef debug_opterror
   opterror("Täst L %s %s", false, "b�h", "b�h�");
   opterror("Täst U %s %s", true, "böh", "büh€");
@@ -1003,6 +1169,10 @@ apply_config(bool save)
   }
 
   copy_config("apply", &file_cfg, &new_cfg);
+#ifdef debug_messages
+  //if (new_cfg.l17n != cfg.l17n)
+  load_messages("messages");
+#endif
   win_reconfig();  // copy_config(&cfg, &new_cfg);
   if (save)
     save_config();

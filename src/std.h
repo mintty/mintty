@@ -79,17 +79,21 @@ typedef const wchar *wstring;
 
 #define null ((void *) 0)
 
+// UTF-16 literals:
 #if __GNUC__ >= 5
 #define __W(s) u##s
 #else
 #define __W(s) L##s
 #endif
 #define W(s) __W(s)
+
+// localized string/wstring lookup:
+extern char * loctext(string msg);
+extern wchar * wloctext(string msg);
+#define _(s) loctext(s)
+#define _W(s) wloctext(s)
 // dummy marker for xgettext:
 #define __(s) s
-// to be enhanced to use gettext:
-#define _W(s) __W(s)
-#define _(s) s
 
 #define lengthof(array) (sizeof(array) / sizeof(*(array)))
 #define endof(array) (&(array)[lengthof(array)])
