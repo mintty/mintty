@@ -1163,13 +1163,13 @@ win_key_up(WPARAM wp, LPARAM unused(lp))
 
   win_update_mouse();
 
-static uint compose_key = 0;  // disable α feature
-  if (key == last_key && (
-      (compose_key == MDK_CTRL && key == VK_CONTROL) ||
-      (compose_key == MDK_SHIFT && key == VK_SHIFT) ||
-      (compose_key == MDK_ALT && key == VK_MENU)
-     )) {
-    comp_state = COMP_ACTIVE;
+  if (key == last_key) {
+    if (
+        (cfg.compose_key == MDK_CTRL && key == VK_CONTROL) ||
+        (cfg.compose_key == MDK_SHIFT && key == VK_SHIFT) ||
+        (cfg.compose_key == MDK_ALT && key == VK_MENU)
+       )
+      comp_state = COMP_ACTIVE;
   }
 
   if (alt_F2_pending) {
