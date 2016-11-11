@@ -353,18 +353,35 @@ vk_name(uint key)
 #endif
 
 typedef enum {
+  COMP_CLEAR = -1,
   COMP_NONE = 0,
   COMP_PENDING = 1, COMP_ACTIVE = 2
 } comp_state_t;
 static comp_state_t comp_state = COMP_NONE;
 static uint last_key = 0;
 
+static struct {
+  wchar kc[4];
+  char * s;
+} composed[] = {
+#include "composed.t"
+};
+static wchar compose_buf[lengthof(composed->kc) + 4];
+static int compose_buflen = 0;
+
+static void
+compose_clear()
+{
+  comp_state = COMP_CLEAR;
+  compose_buflen = 0;
+  last_key = 0;
+}
+
 void
 win_key_reset(void)
 {
   alt_state = ALT_NONE;
-  comp_state = COMP_NONE;
-  last_key = 0;
+  compose_clear();
 }
 
 #define dont_debug_compose
@@ -388,6 +405,8 @@ win_key_down(WPARAM wp, LPARAM lp)
 
   if (comp_state == COMP_ACTIVE)
     comp_state = COMP_PENDING;
+  else if (comp_state == COMP_CLEAR)
+    comp_state = COMP_NONE;
 
 #ifdef debug_virtual_key_codes
   printf("win_key_down %04X %s\n", key, vk_name(key));
@@ -731,15 +750,6 @@ static struct {
 } comb_subst[] = {
 #include "combined.t"
 };
-
-static struct {
-  wchar kc[4];
-  char * s;
-} composed[] = {
-#include "composed.t"
-};
-static wchar compose_buf[lengthof(composed->kc) + 4];
-static int compose_buflen = 0;
 
   // Keyboard layout
   bool layout(void) {
@@ -1145,7 +1155,7 @@ static int compose_buflen = 0;
   if (len) {
     while (count--)
       child_send(buf, len);
-    comp_state = COMP_NONE;
+    compose_clear();
   }
   else if (comp_state == COMP_PENDING)
     comp_state = COMP_ACTIVE;
@@ -1225,6 +1235,7 @@ win_key_up(WPARAM wp, LPARAM unused(lp))
         buf[--pos] = alt_code;
       while (alt_code >>= 8);
       child_send(buf + pos, sizeof buf - pos);
+      compose_clear();
     }
     else if (alt_code < 0x10000) {
       wchar wc = alt_code;
@@ -1232,10 +1243,12 @@ win_key_up(WPARAM wp, LPARAM unused(lp))
         MultiByteToWideChar(CP_OEMCP, MB_USEGLYPHCHARS,
                             (char[]){wc}, 1, &wc, 1);
       child_sendw(&wc, 1);
+      compose_clear();
     }
     else {
       xchar xc = alt_code;
       child_sendw((wchar[]){high_surrogate(xc), low_surrogate(xc)}, 2);
+      compose_clear();
     }
   }
 
