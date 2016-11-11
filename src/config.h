@@ -74,6 +74,7 @@ typedef struct {
   bool alt_fn_shortcuts;
   bool ctrl_shift_shortcuts;
   bool ctrl_exchange_shift;
+  char compose_key;
   string key_prtscreen;	// VK_SNAPSHOT
   string key_pause;	// VK_PAUSE
   string key_break;	// VK_CANCEL
@@ -96,6 +97,7 @@ typedef struct {
   char scrollbar;
   char scroll_mod;
   bool pgupdn_scroll;
+  string lang;
   string search_bar;
   // Terminal
   string term;

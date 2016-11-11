@@ -66,6 +66,7 @@ const config default_cfg = {
   .alt_fn_shortcuts = true,
   .ctrl_shift_shortcuts = false,
   .ctrl_exchange_shift = false,
+  .compose_key = 0,
   .key_prtscreen = "",	// VK_SNAPSHOT
   .key_pause = "",	// VK_PAUSE
   .key_break = "",	// VK_CANCEL
@@ -89,6 +90,7 @@ const config default_cfg = {
   .scrollback_lines = 10000,
   .scroll_mod = MDK_SHIFT,
   .pgupdn_scroll = false,
+  .lang = "",
   .search_bar = "",
   // Terminal
   .term = "xterm",
@@ -216,6 +218,7 @@ options[] = {
   {"AltFnShortcuts", OPT_BOOL, offcfg(alt_fn_shortcuts)},
   {"CtrlShiftShortcuts", OPT_BOOL, offcfg(ctrl_shift_shortcuts)},
   {"CtrlExchangeShift", OPT_BOOL, offcfg(ctrl_exchange_shift)},
+  {"ComposeKey", OPT_MOD, offcfg(compose_key)},
   {"Key_PrintScreen", OPT_STRING, offcfg(key_prtscreen)},
   {"Key_Pause", OPT_STRING, offcfg(key_pause)},
   {"Key_Break", OPT_STRING, offcfg(key_break)},
@@ -243,6 +246,7 @@ options[] = {
   {"Scrollbar", OPT_SCROLLBAR, offcfg(scrollbar)},
   {"ScrollMod", OPT_MOD, offcfg(scroll_mod)},
   {"PgUpDnScroll", OPT_BOOL, offcfg(pgupdn_scroll)},
+  {"Language", OPT_STRING, offcfg(lang)},
   {"SearchBar", OPT_STRING, offcfg(search_bar)},
 
   // Terminal
@@ -727,7 +731,7 @@ get_resource_file(wstring sub, wstring res, bool towrite)
 }
 
 
-#define debug_messages
+#define dont_debug_messages 1
 
 static struct {
   char * msg;
@@ -759,7 +763,7 @@ add_message(char * msg, char * locmsg)
       maxmessages = 180;
     messages = renewn(messages, maxmessages);
   }
-#ifdef debug_messages
+#if defined(debug_messages) && debug_messages > 1
   printf("add %d <%s> <%s>\n", nmessages, msg, locmsg);
 #endif
   messages[nmessages].msg = msg;
@@ -858,9 +862,6 @@ load_messages_file(char * textdbf)
 {
   FILE * file = fopen(textdbf, "r");
   if (file) {
-#ifdef debug_messages
-    printf("loading messages from <%s>\n", textdbf);
-#endif
     clear_messages();
 
     while (fgets(linebuf, sizeof linebuf, file)) {
@@ -880,25 +881,68 @@ load_messages_file(char * textdbf)
   }
 #ifdef debug_messages
   printf("read %d messages\n", nmessages);
+#if debug_messages > 1
   printf("msg blö -> <%s> <%ls>\n", loctext("blö"), wloctext("blö"));
   printf("msg blö -> <%s> <%ls>\n", loctext("blö"), wloctext("blö"));
-  printf("msg blü -> <%s> <%ls>\n", loctext("blü"), wloctext("blü"));
-  printf("msg blü -> <%s> <%ls>\n", loctext("blü"), wloctext("blü"));
+#endif
 #endif
 }
 
-static void
-load_messages(string locale)
+static bool
+load_messages_lang(string lang)
 {
-  if (*locale) {
-    char * lf = asform("%s.po", locale);
+  if (lang) {
+    char * lf = asform("%s.po", lang);
     wchar * wl = cs__utftowcs(lf);
     free(lf);
     char * textdbf = get_resource_file(W("lang"), wl, false);
     free(wl);
+#ifdef debug_messages
+    printf("Trying to load messages from <%s>: <%s>\n", lang, textdbf);
+#endif
     if (textdbf) {
       load_messages_file(textdbf);
       free(textdbf);
+      return true;
+    }
+  }
+  return false;
+}
+
+static void
+load_messages(void)
+{
+  if (*cfg.lang) {
+    if (strcmp(cfg.lang, "=") == 0)
+      (void)load_messages_lang(cfg.locale);
+    else if (strcmp(cfg.lang, "*") != 0)
+      (void)load_messages_lang(cfg.lang);
+    else {
+      // determine UI language from environment
+      char * lang = getenv("LANGUAGE");
+      if (lang) {
+        lang = strdup(lang);
+        while (lang && *lang) {
+          char * sep = strchr(lang, ':');
+          if (sep)
+            *sep = '\0';
+          if (load_messages_lang(lang))
+            return;
+          lang = sep;
+          if (lang)
+            lang++;
+        }
+        free(lang);
+      }
+      lang = (char *)getlocenvcat("LC_MESSAGES");
+      if (lang && *lang) {
+        lang = strdup(lang);
+        char * dot = strchr(lang, '.');
+        if (dot)
+          *dot = '\0';
+        (void)load_messages_lang(lang);
+        free(lang);
+      }
     }
   }
 }
@@ -1042,8 +1086,11 @@ init_config(void)
 void
 finish_config(void)
 {
+  if (*cfg.lang && (strcmp(cfg.lang, "=") != 0 || *cfg.locale))
+    load_messages();
 #ifdef debug_messages
-  load_messages("messages");
+  else
+    (void)load_messages_lang("messages");
 #endif
 #ifdef debug_opterror
   opterror("Täst L %s %s", false, "b�h", "b�h�");
@@ -1169,11 +1216,11 @@ apply_config(bool save)
   }
 
   copy_config("apply", &file_cfg, &new_cfg);
-#ifdef debug_messages
-  //if (new_cfg.l17n != cfg.l17n)
-  load_messages("messages");
-#endif
   win_reconfig();  // copy_config(&cfg, &new_cfg);
+  if (new_cfg.lang != cfg.lang
+      || (strcmp(new_cfg.lang, "=") == 0 && new_cfg.locale != cfg.locale)
+     )
+    load_messages();
   if (save)
     save_config();
   bool had_theme = !!*cfg.theme_file;
@@ -1219,6 +1266,54 @@ about_handler(control *unused(ctrl), int event)
   if (event == EVENT_ACTION)
     win_show_about();
 }
+
+
+static void
+add_file_resources(control *ctrl, wstring pattern)
+{
+  wstring suf = wcsrchr(pattern, L'.');
+  int sufl = suf ? wcslen(suf) : 0;
+
+  init_config_dirs();
+  WIN32_FIND_DATAW ffd;
+  HANDLE hFind = NULL;
+  int ok = false;
+  for (int i = last_config_dir; i >= 0; i--) {
+    wchar * rcpat = path_posix_to_win_w(config_dirs[i]);
+    int len = wcslen(rcpat);
+    rcpat = renewn(rcpat, len + wcslen(pattern) + 2);
+    rcpat[len++] = L'/';
+    wcscpy(&rcpat[len], pattern);
+
+    hFind = FindFirstFileW(rcpat, &ffd);
+    ok = hFind != INVALID_HANDLE_VALUE;
+    free(rcpat);
+    if (ok)
+      break;
+    if (GetLastError() == ERROR_FILE_NOT_FOUND)  // empty valid dir
+      break;
+  }
+
+  while (ok) {
+    if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+      // skip
+    }
+    else {
+      //LARGE_INTEGER filesize = {.LowPart = ffd.nFileSizeLow, .HighPart = ffd.nFileSizeHigh};
+      //long s = filesize.QuadPart;
+
+      // strip suffix
+      int len = wcslen(ffd.cFileName);
+      if (ffd.cFileName[0] != '.' && ffd.cFileName[len - 1] != '~') {
+        ffd.cFileName[len - sufl] = 0;
+        dlg_listbox_add_w(ctrl, ffd.cFileName);
+      }
+    }
+    ok = FindNextFileW(hFind, &ffd);
+  }
+  FindClose(hFind);
+}
+
 
 static void
 current_size_handler(control *unused(ctrl), int event)
@@ -1342,6 +1437,41 @@ charset_handler(control *ctrl, int event)
 }
 
 static void
+lang_handler(control *ctrl, int event)
+{
+  const wstring NONE = _W("◇ None ◇");
+  const wstring LOCALE = _W("◆ conf. Locale ◆");
+  const wstring LOCENV = _W("◆ locale env. ◆");
+  switch (event) {
+    when EVENT_REFRESH:
+      dlg_listbox_clear(ctrl);
+      dlg_listbox_add_w(ctrl, NONE);
+      dlg_listbox_add_w(ctrl, LOCALE);
+      dlg_listbox_add_w(ctrl, LOCENV);
+      add_file_resources(ctrl, W("lang/*.po"));
+      if (strcmp(new_cfg.lang, "") == 0)
+        dlg_editbox_set_w(ctrl, NONE);
+      else if (strcmp(new_cfg.lang, "=") == 0)
+        dlg_editbox_set_w(ctrl, LOCALE);
+      else if (strcmp(new_cfg.lang, "*") == 0)
+        dlg_editbox_set_w(ctrl, LOCENV);
+      else
+        dlg_editbox_set(ctrl, new_cfg.lang);
+    when EVENT_VALCHANGE or EVENT_SELCHANGE: {
+      int n = dlg_listbox_getcur(ctrl);
+      if (n == 0)
+        strset(&new_cfg.lang, "");
+      else if (n == 1)
+        strset(&new_cfg.lang, "=");
+      else if (n == 2)
+        strset(&new_cfg.lang, "*");
+      else
+        dlg_editbox_get(ctrl, &new_cfg.lang);
+    }
+  }
+}
+
+static void
 term_handler(control *ctrl, int event)
 {
   switch (event) {
@@ -1395,52 +1525,6 @@ bell_handler(control *ctrl, int event)
       win_bell(&new_cfg);
     }
   }
-}
-
-static void
-add_file_resources(control *ctrl, wstring pattern)
-{
-  wstring suf = wcsrchr(pattern, L'.');
-  int sufl = suf ? wcslen(suf) : 0;
-
-  init_config_dirs();
-  WIN32_FIND_DATAW ffd;
-  HANDLE hFind = NULL;
-  int ok = false;
-  for (int i = last_config_dir; i >= 0; i--) {
-    wchar * rcpat = path_posix_to_win_w(config_dirs[i]);
-    int len = wcslen(rcpat);
-    rcpat = renewn(rcpat, len + wcslen(pattern) + 2);
-    rcpat[len++] = L'/';
-    wcscpy(&rcpat[len], pattern);
-
-    hFind = FindFirstFileW(rcpat, &ffd);
-    ok = hFind != INVALID_HANDLE_VALUE;
-    free(rcpat);
-    if (ok)
-      break;
-    if (GetLastError() == ERROR_FILE_NOT_FOUND)  // empty valid dir
-      break;
-  }
-
-  while (ok) {
-    if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-      // skip
-    }
-    else {
-      //LARGE_INTEGER filesize = {.LowPart = ffd.nFileSizeLow, .HighPart = ffd.nFileSizeHigh};
-      //long s = filesize.QuadPart;
-
-      // strip suffix
-      int len = wcslen(ffd.cFileName);
-      if (ffd.cFileName[0] != '.' && ffd.cFileName[len - 1] != '~') {
-        ffd.cFileName[len - sufl] = 0;
-        dlg_listbox_add_w(ctrl, ffd.cFileName);
-      }
-    }
-    ok = FindNextFileW(hFind, &ffd);
-  }
-  FindClose(hFind);
 }
 
 static void
@@ -1891,6 +1975,17 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, &new_cfg.ctrl_shift_shortcuts
   );
 
+  s = ctrl_new_set(b, "Keys", null, _("Compose key"));
+  ctrl_radiobuttons(
+    s, null, 4,
+    dlg_stdradiobutton_handler, &new_cfg.compose_key,
+    _("&Shift"), MDK_SHIFT,
+    _("&Ctrl"), MDK_CTRL,
+    _("&Alt"), MDK_ALT,
+    _("&Off"), 0,
+    null
+  );
+
  /*
   * The Mouse panel.
   */
@@ -1989,6 +2084,12 @@ setup_config_box(controlbox * b)
     s, _("&PgUp and PgDn scroll without modifier"),
     dlg_stdcheckbox_handler, &new_cfg.pgupdn_scroll
   );
+
+  s = ctrl_new_set(b, "Window", null, _("UI language"));
+  ctrl_columns(s, 2, 50, 50);
+  ctrl_combobox(
+    s, null, 100, lang_handler, 0
+  )->column = 0;
 
  /*
   * The Terminal panel.
