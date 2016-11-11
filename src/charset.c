@@ -358,6 +358,12 @@ getlocenv(string name)
   return val && *val ? val : 0;
 }
 
+string
+getlocenvcat(string category)
+{
+  return getlocenv("LC_ALL") ?: getlocenv(category) ?: getlocenv("LANG");
+}
+
 void
 cs_init(void)
 {
@@ -368,7 +374,7 @@ cs_init(void)
 #if HAS_LOCALES
     setlocale(LC_CTYPE, "") ?:
 #endif
-    getlocenv("LC_ALL") ?: getlocenv("LC_CTYPE") ?: getlocenv("LANG");
+    getlocenvcat("LC_CTYPE");
 
   env_locale = env_locale ? strdup(env_locale) : "C";
 
