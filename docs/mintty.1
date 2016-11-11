@@ -609,9 +609,10 @@ Unicode-enabled settings: BellFile, ThemeFile, Title, ExitTitle, Icon, Log,
 Font, Printer, Answerback, Class, AppID, AppName, AppLaunchCmd, SixelClipChars.
 
 Be careful when running multiple instances of mintty. If options are saved 
-from different instances, obviously they can overwrite each other; if 
-different mintty versions are run (e.g. from cygwin and msys sharing the same 
-home directory), options may even get dropped from the configuration file.
+from different instances, or the config file is edited manually, 
+options can obviously be overwritten; if older mintty versions are run 
+(e.g. from cygwin and msys sharing the same home directory), options 
+may even get dropped from the configuration file.
 
 Additional resource files are used for colour schemes (option ThemeFile, 
 subdirectory \fIthemes\fP) and wave files (option BellFile, subdirectory \fIsounds\fP) 
@@ -887,6 +888,22 @@ See the shortcuts section above for the list of shortcuts controlled by this
 option.  When it is disabled, Ctrl+Shift+letter combinations are sent to
 applications as C1 control characters instead.
 
+.TP
+\fBCompose key selection\fP (ComposeKey=off)
+The modifier key selected here will have the function of a \fICompose key\fP.
+Pressing and releasing the key, following by a sequence of composing keys, 
+will enter a composition of them, according to X11 compose key data.
+.br
+The \fBOff\fP setting disables the Compose key.
+.br
+\(en \fBShift\fP
+.br
+\(en \fBCtrl\fP
+.br
+\(en \fBAlt\fP
+.br
+\(en \fBOff\fP
+
 .SS Mouse
 Settings controlling mouse support.
 
@@ -955,7 +972,7 @@ The modifier key selected here can be used to override the click target in
 application mouse mode.
 With the default settings, clicks are sent to the application and Shift needs
 to be held to trigger window actions instead.
-
+.br
 The \fBOff\fP setting disables overriding.
 .br
 \(en \fBShift\fP
@@ -1025,6 +1042,7 @@ By default, it is shown on the right-hand side.
 \fBModifier for scrolling\fP (ScrollMod=shift)
 The modifier key that needs to be pressed together with the arrow up/down,
 PgUp/PgDn, or Home/End keys to access the scrollback buffer.
+.br
 The default is \fBShift\fP.
 The \fBOff\fP setting disables scrolling with keyboard shortcuts.
 .br
@@ -1043,6 +1061,23 @@ PgUp or PgDn, without the 'modifier for scrolling' selected above.
 If the modifier is pressed anyway, plain PgUp/PgDn keycodes are sent to the
 application.
 This option does not affect the arrow keys or Home/End keys.
+
+.TP
+\fBUI localization language\fP (Language=)
+This selects the language or language/region code to use for 
+localization of the mintty user interface, the Options dialog, 
+menus, message boxes, and terminal in-line error messages.
+.br
+\(en \fI(empty)\fP an empty entry disables localization
+.br
+\(en \fB=\fP use the same language as the \fBLocale\fP setting (section Text)
+.br
+\(en \fB*\fP use environment settings (variables \fILANGUAGE\fP, \fILC_ALL\fP, \fILC_MESSAGES\fP, \fILANG\fP)
+.br
+\(en \fI(language[_region])\fP use the given language or language/region code
+
+See the Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips\fP 
+about how to configure localization.
 
 .SS Terminal
 Terminal emulation settings.

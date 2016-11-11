@@ -3,10 +3,12 @@ Character display:
   * New option UnderlineColour to set colour for all lining modes and enforce manual underlining (~#604).
 
 Terminal:
-  * Avoiding multiple device attribute reports (#606).
+  * Compose key.
   * Workaround to enable Shift+space in modifyOtherKeys mode.
+  * Avoiding multiple device attribute reports (#606).
 
 Configuration:
+  * User interface localization (#537, #1).
   * New option value -Rm to report system's monitor configuration (/#599).
   * New option --wsl to enable WSL feature adaptations (mintty/wsltty/#8).
   * Manual: fixed description of copy/paste shortcuts and refer to option CtrlExchangeShift (#602, #524).

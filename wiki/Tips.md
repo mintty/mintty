@@ -8,9 +8,10 @@ configuration and resources.
 For its configuration file, it reads ```/etc/minttyrc```, ```$APPDATA/mintty/config```, 
 ```~/.config/mintty/config```, ```~/.minttyrc```, in this order.
 
-For resource files to configure a colour scheme or wave file for the bell character,
-it looks for subfolders ```themes``` or ```sounds```, respectively, in one 
-of the directories ```~/.mintty```, ```~/.config/mintty```, 
+For resource files to configure a colour scheme, 
+wave file for the bell character, or localization files, it looks for 
+subfolders ```themes```, ```sounds```, or ```lang```, respectively, 
+in one of the directories ```~/.mintty```, ```~/.config/mintty```, 
 ```$APPDATA/mintty```, ```/usr/share/mintty```, whichever is found first.
 
 The ```~/.config/mintty``` folder is the XDG default base directory.
@@ -281,9 +282,13 @@ Mintty uses the Windows keyboard layout system with its “dead key” mechanism
 for entering accented characters, enhanced by self-composed characters 
 for dead-key combinations that Windows does not support (e.g. ẃ).
 
-X11, on the other hand, has the Compose key mechanism for this purpose.
+Mintty also provides a Compose key, configurable to Control, Shift or Alt,
+using X11 compose data. For example, if the compose key is configured 
+to be Control, pressing and release the Control key, followed by letters 
+```a``` and ```e```, will enter ```æ```.
 
-The most seamless and stable **Compose Key for Windows** is 
+For a separate compose key solution, the most seamless and stable 
+**Compose Key for Windows** is 
 **[WinCompose](https://github.com/SamHocevar/wincompose)**.
 
 
@@ -506,6 +511,25 @@ gnuplot -e "splot [x=-3:3] [y=-3:3] sin(x) * cos(y)"
 
 Note that gnuplot uses black text on default background for captions 
 and coordinates so better not run it in a terminal with dark background.
+
+
+## Localization ##
+
+Mintty facilitates localization of its user interface, the Options dialog, 
+menus, message boxes, and terminal in-line error messages.
+The localization language can be selected with the option `Language`, 
+see manual page for details.
+
+Example:
+`Language=*`, environment variables `LANGUAGE=de_CH:fr:de` and 
+`LC_MESSAGES=en_GB.UTF-8`:
+mintty tries to find localization files for `de_CH`, `fr`, `de`, 
+`en_GB`, each in all resource configuration folders (subfolder `lang`).
+
+Localization files for various language or language/region codes 
+are looked up in the resource configuration folders, subfolder `lang`.
+Mintty uses a simplified `gettext` file format but not the `gettext` library;
+all messages must be encoded in UTF-8, the Content-Type charset is ignored.
 
 
 ## Running mintty stand-alone ##
