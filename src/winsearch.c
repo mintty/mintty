@@ -241,15 +241,15 @@ win_toggle_search(bool show, bool focus)
 
     search_wnd = CreateWindowEx(0, SEARCHBARCLASS, "", WS_CHILD, 0, 0, 0, 0, wnd, 0, inst, NULL);
 
-    //_ label of search bar close button; not actually "localization"
+    //__ label of search bar close button; not actually "localization"
     search_close_wnd = CreateWindowExW(0, W("BUTTON"), _W("X"), WS_CHILD | WS_VISIBLE,
                                      pos_close, margin, button_width, ctrl_height,
                                      search_wnd, NULL, inst, NULL);
-    //_ label of search bar prev button; not actually "localization"
+    //__ label of search bar prev button; not actually "localization"
     search_prev_wnd = CreateWindowExW(0, W("BUTTON"), _W("◀"), WS_CHILD | WS_VISIBLE,
                                      pos_prev, margin, button_width, ctrl_height,
                                      search_wnd, NULL, inst, NULL);
-    //_ label of search bar next button; not actually "localization"
+    //__ label of search bar next button; not actually "localization"
     search_next_wnd = CreateWindowExW(0, W("BUTTON"), _W("▶"), WS_CHILD | WS_VISIBLE,
                                      pos_next, margin, button_width, ctrl_height,
                                      search_wnd, NULL, inst, NULL);

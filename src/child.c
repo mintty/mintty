@@ -188,7 +188,7 @@ child_create(char *argv[], struct winsize *winp)
     // If we get here, exec failed.
     fprintf(stderr, "\033]701;C.UTF-8\007");
     fprintf(stderr, "\033[30;41m\033[K");
-    //_ %1$s: client command (e.g. shell) to be run; %2$s: error message
+    //__ %1$s: client command (e.g. shell) to be run; %2$s: error message
     fprintf(stderr, _("Failed to run '%s': %s"), cmd, strerror(errno));
     fprintf(stderr, "\r\n");
     fflush(stderr);
@@ -336,14 +336,14 @@ child_proc(void)
           if (code == 0)
             err = false;
           if ((code || cfg.exit_write) && cfg.hold != HOLD_START)
-            //_ %1$s: client command (e.g. shell) terminated, %2$i: exit code
+            //__ %1$s: client command (e.g. shell) terminated, %2$i: exit code
             asprintf(&s, _("%s: Exit %i"), cmd, code);
         }
         else if (WIFSIGNALED(status))
           asprintf(&s, "%s: %s", cmd, strsignal(WTERMSIG(status)));
 
         if (!s && cfg.exit_write) {
-          //_ default inline notification if ExitWrite=yes
+          //__ default inline notification if ExitWrite=yes
           s = _("TERMINATED");
         }
         if (s) {

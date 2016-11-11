@@ -191,11 +191,12 @@ unicode:	UnicodeData.txt Blocks.txt EastAsianWidth.txt
 composed.t:	# $(compose_list) $(keysymdefs)
 	sh ./mkcomposedt > composed.t
 
-XGETTEXT_OPTS=	# --no-location --no-wrap ?
+XGETTEXT_OPTS=--package-name=mintty #--package-version=$(version)
+#XGETTEXT_OPTS+=--msgid-bugs-address=mintty@...
 
 _:	localization
 localization:
-	xgettext --from-code=UTF-8 -k_ -k_W -k__ -c_ $(XGETTEXT_OPTS) *.c appinfo.h
+	xgettext --from-code=UTF-8 -k_ -k_W -k__ -c__ $(XGETTEXT_OPTS) *.c appinfo.h -o- | grep -v "^#, c-format" > messages.pot
 
 #############################################################################
 # release targets

@@ -56,7 +56,7 @@
   __("There is no warranty, to the extent permitted by law.")
 
 // needed for Options... - About...
-//_ %s: WEBSITE (URL)
+//__ %s: WEBSITE (URL)
 #define ABOUT_TEXT \
   __("Please report bugs or request enhancements through the " \
   "issue tracker on the mintty project page located at" \
