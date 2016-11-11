@@ -793,6 +793,7 @@ static struct {
       for (int i = 0; i < wlen; i++)
         compose_buf[compose_buflen++] = wbuf[i];
       uint comp_len = min((uint)compose_buflen, lengthof(composed->kc));
+      bool found = false;
       for (uint k = 0; k < lengthof(composed); k++)
         if (0 == wcsncmp(compose_buf, composed[k].kc, comp_len)) {
           if (comp_len < lengthof(composed->kc) && composed[k].kc[comp_len]) {
@@ -802,17 +803,32 @@ static struct {
           }
           else {
             // match
+            ///can there be an uncomposed rest in wbuf? should we consider it?
+#ifdef utf8_only
             ///alpha, UTF-8 only, unchecked...
             strcpy(buf + len, composed[k].s);
             len += strlen(composed[k].s);
-            ///we should strip the composed part and leave the rest...
             compose_buflen = 0;
             return true;
+#else
+            wchar * wc = cs__utftowcs(composed[k].s);
+            wlen = 0;
+            while (wc[wlen] && wlen < (int)lengthof(wbuf)) {
+              wbuf[wlen] = wc[wlen];
+              wlen++;
+            }
+            free(wc);
+            found = true;  // fall through, but skip error handling
+#endif
           }
         }
-      // unknown compose sequence, continue without composition
-      ///we should deliver compose_buf[] first...
+      ///should we deliver compose_buf[] first...?
       compose_buflen = 0;
+      if (!found) {
+        // unknown compose sequence
+        win_bell(&cfg);
+        // continue without composition
+      }
     }
     else
       compose_buflen = 0;
