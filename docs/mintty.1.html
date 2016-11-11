@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Fri Oct  7 16:05:25 2016 -->
+<!-- CreationDate: Fri Nov 11 16:57:43 2016 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -297,16 +297,26 @@ mintty. Without daemonizing, the shortcut key will focus an
 already running instance of mintty, with daemonizing it
 always starts a new instance.</p>
 
-<p style="margin-left:11%;"><b>-R</b>, <b>--Reportpos</b>
-<i>mode</i></p>
+<p style="margin-left:11%;"><b>-R</b>, <b>--Report</b>
+<i>info/mode</i></p>
 
-<p style="margin-left:22%;">Report position and size of
-window before mintty exits. This can be used to manage last
-window positions and reopen mintty windows accordingly. Mode
-is &quot;s&quot; or &quot;o&quot; to choose short or long
-option syntax. The restored (i.e. neither maximised nor
-minimised) geometry is reported and min/max/fullscreen
-information is added.</p>
+<p style="margin-left:22%;">Report requested
+information.</p>
+
+<p style="margin-left:22%; margin-top: 1em">With values
+&quot;s&quot; or &quot;o&quot;, mintty reports the position
+and size of the window when it exits. This can be used to
+manage last window positions and reopen mintty windows
+accordingly. Reporting mode is &quot;s&quot; or
+&quot;o&quot; to choose short or long option syntax for the
+restored (i.e. neither maximised nor minimised) geometry;
+min/max/fullscreen information is added.</p>
+
+<p style="margin-left:22%; margin-top: 1em">With value
+&quot;m&quot;, mintty reports the system&rsquo;s monitor
+configuration (listing all connected monitors and their
+geometry and position in Windows&rsquo; virtual monitor
+coordinate system), and exits.</p>
 
 
 <p style="margin-left:11%;"><b>--store-taskbar-properties</b></p>
@@ -319,6 +329,24 @@ AppLaunchCmd.</p>
 
 <p style="margin-left:22%;">Prevent pinning of the mintty
 window to the Windows taskbar.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="7%">
+
+
+<p><b>--wsl</b></p></td>
+<td width="4%"></td>
+<td width="78%">
+
+
+<p>Adjust to WSL (the Windows Subsystem for Linux, or
+Bash/Ubuntu on Windows); when dragging a Windows file or
+folder into mintty, it will be pasted using the Linux path
+name.</p> </td></tr>
+</table>
 
 <p style="margin-left:11%;"><b>-H</b>, <b>--help</b></p>
 
@@ -375,7 +403,8 @@ selected text is automatically copied to the clipboard. This
 can be disabled on the <b>Mouse</b> page of the options
 dialog. Selected text can also be copied manually using
 either the <b>Copy</b> menu command, the <b>Ctrl+Ins</b> or
-<b>Ctrl+C</b> keyboard shortcuts, or the middle mouse button
+<b>Ctrl+Shift+C</b> keyboard shortcuts (<b>Ctrl+C</b> with
+option CtrlExchangeShift=yes), or the middle mouse button
 combined with <b>Shift</b>.</p>
 
 <p style="margin-left:11%; margin-top: 1em">The selected
@@ -391,11 +420,13 @@ the window menu.</p>
 
 <p style="margin-left:11%; margin-top: 1em">The clipboard
 contents can be pasted using either the <b>Paste</b> menu
-command, the <b>Shift+Ins</b> or <b>Ctrl+V</b> keyboard
-shortcuts, or the middle mouse button. Not only text but
-also files and directories can be pasted, whereby the latter
-are inserted as Cygwin file names. Shell quoting is added to
-file names that contain spaces or special characters.</p>
+command, the <b>Shift+Ins</b> or <b>Ctrl+Shift+V</b>
+keyboard shortcuts (<b>Ctrl+V</b> with option
+CtrlExchangeShift=yes), or the middle mouse button. Not only
+text but also files and directories can be pasted, whereby
+the latter are inserted as Cygwin file names. Shell quoting
+is added to file names that contain spaces or special
+characters.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Drag &amp;
 drop</b> <br>
@@ -733,10 +764,11 @@ AppID, AppName, AppLaunchCmd, SixelClipChars.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Be careful when
 running multiple instances of mintty. If options are saved
-from different instances, obviously they can overwrite each
-other; if different mintty versions are run (e.g. from
-cygwin and msys sharing the same home directory), options
-may even get dropped from the configuration file.</p>
+from different instances, or the config file is edited
+manually, options can obviously be overwritten; if older
+mintty versions are run (e.g. from cygwin and msys sharing
+the same home directory), options may even get dropped from
+the configuration file.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Additional
 resource files are used for colour schemes (option
@@ -773,7 +805,9 @@ X11 color names are supported. <br>
 &ndash; <b>Foreground</b> (ForegroundColour=191,191,191)
 <br>
 &ndash; <b>Background</b> (BackgroundColour=0,0,0) <br>
-&ndash; <b>Cursor</b> (CursorColour=191,191,191)</p>
+&ndash; <b>Cursor</b> (CursorColour=191,191,191) <br>
+&ndash; <b>Underline, Strikeout, Overline</b>
+(UnderlineColour=-1)</p>
 
 <p style="margin-left:22%; margin-top: 1em">&ndash;
 <b>Theme</b> (ThemeFile=): The popup offers theme files as
@@ -1072,6 +1106,20 @@ by this option. When it is disabled, Ctrl+Shift+letter
 combinations are sent to applications as C1 control
 characters instead.</p>
 
+<p style="margin-left:11%;"><b>Compose key selection</b>
+(ComposeKey=off)</p>
+
+<p style="margin-left:22%;">The modifier key selected here
+will have the function of a <i>Compose key</i>. Pressing and
+releasing the key, following by a sequence of composing
+keys, will enter a composition of them, according to X11
+compose key data. <br>
+The <b>Off</b> setting disables the Compose key. <br>
+&ndash; <b>Shift</b> <br>
+&ndash; <b>Ctrl</b> <br>
+&ndash; <b>Alt</b> <br>
+&ndash; <b>Off</b></p>
+
 <p style="margin-left:11%; margin-top: 1em"><b>Mouse</b>
 <br>
 Settings controlling mouse support. <b><br>
@@ -1145,10 +1193,8 @@ default</b> (ClickTargetMod=shift)</p>
 can be used to override the click target in application
 mouse mode. With the default settings, clicks are sent to
 the application and Shift needs to be held to trigger window
-actions instead.</p>
-
-<p style="margin-left:22%; margin-top: 1em">The <b>Off</b>
-setting disables overriding. <br>
+actions instead. <br>
+The <b>Off</b> setting disables overriding. <br>
 &ndash; <b>Shift</b> <br>
 &ndash; <b>Ctrl</b> <br>
 &ndash; <b>Alt</b> <br>
@@ -1224,9 +1270,9 @@ shown on the right-hand side. <br>
 
 <p style="margin-left:22%;">The modifier key that needs to
 be pressed together with the arrow up/down, PgUp/PgDn, or
-Home/End keys to access the scrollback buffer. The default
-is <b>Shift</b>. The <b>Off</b> setting disables scrolling
-with keyboard shortcuts. <br>
+Home/End keys to access the scrollback buffer. <br>
+The default is <b>Shift</b>. The <b>Off</b> setting disables
+scrolling with keyboard shortcuts. <br>
 &ndash; <b>Shift</b> <br>
 &ndash; <b>Ctrl</b> <br>
 &ndash; <b>Alt</b> <br>
@@ -1241,6 +1287,27 @@ PgDn, without the &rsquo;modifier for scrolling&rsquo;
 selected above. If the modifier is pressed anyway, plain
 PgUp/PgDn keycodes are sent to the application. This option
 does not affect the arrow keys or Home/End keys.</p>
+
+<p style="margin-left:11%;"><b>UI localization language</b>
+(Language=)</p>
+
+<p style="margin-left:22%;">This selects the language or
+language/region code to use for localization of the mintty
+user interface, the Options dialog, menus, message boxes,
+and terminal in-line error messages. <br>
+&ndash; <i>(empty)</i> an empty entry disables localization
+<br>
+&ndash; <b>=</b> use the same language as the <b>Locale</b>
+setting (section Text) <br>
+&ndash; <b>*</b> use environment settings (variables
+<i>LANGUAGE</i>, <i>LC_ALL</i>, <i>LC_MESSAGES</i>,
+<i>LANG</i>) <br>
+&ndash; <i>(language[_region])</i> use the given language or
+language/region code</p>
+
+<p style="margin-left:22%; margin-top: 1em">See the Tips
+wiki page <i>https://github.com/mintty/mintty/wiki/Tips</i>
+about how to configure localization.</p>
 
 
 <p style="margin-left:11%; margin-top: 1em"><b>Terminal</b>
@@ -1750,45 +1817,6 @@ the window is moved to another monitor that has a different
 DPI value (&quot;scaling factor&quot;) configured, this is
 considered to compensate by appropriate scaling. This option
 can be set to false to suppress DPI adjustments.</p>
-
-<p style="margin-left:11%;"><b>Wide display of Indic
-characters</b> (WideIndic=false)</p>
-
-<p style="margin-left:22%;">Setting this option, Indic
-characters with glyphs wider than a single character cell
-will be displayed in double-width (like CJK characters).</p>
-
-<p style="margin-left:22%; margin-top: 1em">Notes: This is
-an experimental feature as there is no authoritative source
-of information about which Indic characters should be
-considered wide. Most screen applications will not cooperate
-with this feature as their assumption of character widths is
-mostly based on the system locale (with the notable
-exception of the Unicode editor MinEd which supports Indic
-wide display with version 2016.26). This feature may be
-removed from a future version of mintty if it turns out to
-be useless.</p>
-
-<p style="margin-left:11%;"><b>Wide display of long Unicode
-characters</b> (WideExtra=false)</p>
-
-<p style="margin-left:22%;">Setting this option, a number
-of Unicode characters that are supposed to be
-&quot;wide&quot; or &quot;long&quot; will be displayed in
-double-width (like CJK characters).</p>
-
-<p style="margin-left:22%; margin-top: 1em">Notes: This is
-an experimental feature. Most screen applications will not
-cooperate with this feature as their assumption of character
-widths is mostly based on the system locale (with the
-notable exception of the Unicode editor MinEd which supports
-Extra wide display with version 2016.26). This feature may
-be removed from a future version of mintty if it turns out
-to be useless. The list of extra Unicode characters
-considered &quot;wide&quot; is U+2001, U+2003, U+2014,
-U+27DD..U+27DE, U+27F5..U+27FF, U+2910, U+296A..U+296D,
-U+2B33, U+2E0E..U+2E11, U+2E3A..U+2E3B; this list is subject
-to change in future versions.</p>
 
 <p style="margin-left:11%;"><b>Sixel image clipboard
 substitution</b> (SixelClipChars=<i>space</i>)</p>

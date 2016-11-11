@@ -161,6 +161,7 @@ extern int wcscmp(const wchar * s1, const wchar * s2);
 // needed for MinGW MSYS
 
 #define wcscpy(tgt, src) memcpy(tgt, src, (wcslen(src) + 1) * sizeof(wchar))
+#define wcscat(tgt, src) wcscpy(&tgt[wcslen(tgt)], src)
 extern wchar * wcschr(const wchar * s, wchar c);
 extern wchar * wcsrchr(const wchar * s, wchar c);
 extern int wcsncmp(const wchar * s1, const wchar * s2, int len);
