@@ -763,7 +763,7 @@ add_message(char * msg, char * locmsg)
       maxmessages = 180;
     messages = renewn(messages, maxmessages);
   }
-#if defined(debug_messages) && debug_messages > 1
+#if defined(debug_messages) && debug_messages > 3
   printf("add %d <%s> <%s>\n", nmessages, msg, locmsg);
 #endif
   messages[nmessages].msg = msg;
@@ -775,8 +775,15 @@ add_message(char * msg, char * locmsg)
 char * loctext(string msg)
 {
   for (int i = 0; i < nmessages; i++) {
-    if (strcmp(msg, messages[i].msg) == 0)
+#if defined(debug_messages) && debug_messages > 5
+    printf("?<%s> %d <%s> -> <%s>\n", msg, i, messages[i].msg, messages[i].locmsg);
+#endif
+    if (strcmp(msg, messages[i].msg) == 0) {
+#if defined(debug_messages) && debug_messages > 4
+      printf("!<%s> %d <%s> -> <%s>\n", msg, i, messages[i].msg, messages[i].locmsg);
+#endif
       return messages[i].locmsg;
+    }
   }
   return (char *) msg;
 }
@@ -784,7 +791,13 @@ char * loctext(string msg)
 wchar * wloctext(string msg)
 {
   for (int i = 0; i < nmessages; i++) {
+#if defined(debug_messages) && debug_messages > 5
+    printf("?<%s> %d <%s> -> <%s> <%ls>\n", msg, i, messages[i].msg, messages[i].locmsg, messages[i].wmsg);
+#endif
     if (strcmp(msg, messages[i].msg) == 0) {
+#if defined(debug_messages) && debug_messages > 4
+      printf("!<%s> %d <%s> -> <%s> <%ls>\n", msg, i, messages[i].msg, messages[i].locmsg, messages[i].wmsg);
+#endif
       if (messages[i].wmsg == null)
         messages[i].wmsg = cs__utftowcs(messages[i].locmsg);
       return messages[i].wmsg;
@@ -800,7 +813,7 @@ readtext(char * buf, int len, FILE * file)
   char * unescape(char * s)
   {
     char * t = s;
-    while (*s) {
+    while (*s && *s != '"') {
       if (*s == '\\') {
         s++;
         switch (*s) {
@@ -811,12 +824,11 @@ readtext(char * buf, int len, FILE * file)
       }
       else
         *t = *s;
-      if (*s == '"')
-        break;
       t++;
       s++;
     }
-    return s;
+    *t = '\0';
+    return t;
   }
 
   char * p = buf;
@@ -831,8 +843,7 @@ readtext(char * buf, int len, FILE * file)
     while (fgets(buf, len, file) && *buf == '"') {
       p = buf + 1;
       char * f = unescape(p);
-      if (*f == '"') {
-        *f = '\0';
+      if (!*f) {
         str = renewn(str, strlen(str) + strlen(p) + 1);
         strcat(str, p);
       }
@@ -847,8 +858,7 @@ readtext(char * buf, int len, FILE * file)
     // scan single-line text
     p++;
     char * f = unescape(p);
-    if (*f == '"') {
-      *f = '\0';
+    if (!*f) {
       char * str = strdup(p);
       fgets(buf, len, file);
       return str;
@@ -881,7 +891,7 @@ load_messages_file(char * textdbf)
   }
 #ifdef debug_messages
   printf("read %d messages\n", nmessages);
-#if debug_messages > 1
+#if debug_messages > 2
   printf("msg blö -> <%s> <%ls>\n", loctext("blö"), wloctext("blö"));
   printf("msg blö -> <%s> <%ls>\n", loctext("blö"), wloctext("blö"));
 #endif
@@ -910,13 +920,14 @@ load_messages_lang(string lang)
 }
 
 static void
-load_messages(void)
+load_messages(config * cfg_p)
 {
-  if (*cfg.lang) {
-    if (strcmp(cfg.lang, "=") == 0)
-      (void)load_messages_lang(cfg.locale);
-    else if (strcmp(cfg.lang, "*") != 0)
-      (void)load_messages_lang(cfg.lang);
+  if (cfg_p->lang) {
+    clear_messages();
+    if (strcmp(cfg_p->lang, "=") == 0)
+      (void)load_messages_lang(cfg_p->locale);
+    else if (strcmp(cfg_p->lang, "*") != 0)
+      (void)load_messages_lang(cfg_p->lang);
     else {
       // determine UI language from environment
       char * lang = getenv("LANGUAGE");
@@ -1087,8 +1098,8 @@ void
 finish_config(void)
 {
   if (*cfg.lang && (strcmp(cfg.lang, "=") != 0 || *cfg.locale))
-    load_messages();
-#ifdef debug_messages
+    load_messages(&cfg);
+#if defined(debug_messages) && debug_messages > 1
   else
     (void)load_messages_lang("messages");
 #endif
@@ -1216,11 +1227,11 @@ apply_config(bool save)
   }
 
   copy_config("apply", &file_cfg, &new_cfg);
-  win_reconfig();  // copy_config(&cfg, &new_cfg);
-  if (new_cfg.lang != cfg.lang
+  if (strcmp(new_cfg.lang, cfg.lang) != 0
       || (strcmp(new_cfg.lang, "=") == 0 && new_cfg.locale != cfg.locale)
      )
-    load_messages();
+    load_messages(&new_cfg);
+  win_reconfig();  // copy_config(&cfg, &new_cfg);
   if (save)
     save_config();
   bool had_theme = !!*cfg.theme_file;
