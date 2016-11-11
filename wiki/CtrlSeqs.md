@@ -152,6 +152,36 @@ Fonts vary widely in their Unicode coverage, i.e. they usually miss glyphs for m
 Characters shall be specified with their decimal Unicode codepoint. Any number of characters can be given. Mintty replies with the same sequence, except that the question mark is replaced with an exclamation mark and that codes for characters that the current font does not have a glyph for are omitted.
 
 
+## Wide characters ##
+
+The following _OSC_ ("operating system command") sequences can be used to 
+change wide display modes for Indic and a range of long Unicode characters:
+
+| **sequence**           | **wide characters** |
+|:-----------------------|:--------------------|
+| `^[]77119;1^G`         | Indic               |
+| `^[]77119;2^G`         | Long Unicode chars  |
+| `^[]77119;0^G`         | none                |
+
+Setting wide Indic mode, Indic characters with glyphs wider than a 
+single character cell will be displayed in double-width (like CJK characters).
+Note: This is a switchable option only as there is no authoritative 
+source of information about which Indic characters should be considered wide;
+most screen applications will not cooperate with this feature as their 
+assumption of character widths is mostly based on the system locale 
+(with the notable exception of the Unicode editor MinEd which supports 
+Indic wide display in its forthcoming release).
+
+Setting wide long Unicode characters mode, a number of Unicode characters 
+that are supposed to be "wide" or "long" will be displayed 
+in double-width (like CJK characters).
+See comment above about cooperating applications.
+The list of long Unicode characters considered "wide" is 
+U+2001, U+2003, U+2014, U+27DD..U+27DE, U+27F5..U+27FF, 
+U+2910, U+296A..U+296D, U+2B33, U+2E0E..U+2E11, U+2E3A..U+2E3B;
+this list is subject to change in future versions.
+
+
 ## Font size ##
 
 The following _OSC_ ("operating system command") sequences can be used to change and query font size:

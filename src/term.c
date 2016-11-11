@@ -153,6 +153,8 @@ term_reset(void)
   term.report_ambig_width = 0;
   term.bracketed_paste = false;
   term.show_scrollbar = true;
+  term.wide_indic = false;
+  term.wide_extra = false;
 
   term.virtuallines = 0;
   term.altvirtuallines = 0;

@@ -1363,6 +1363,15 @@ do_cmd(void)
       *s = 0;
       child_printf("\e]7771;!%s\e\\", term.cmd_buf);
     }
+    when 77119: {
+      int what = atoi(s);
+      term.wide_indic = false;
+      term.wide_extra = false;
+      if (what & 1)
+        term.wide_indic = true;
+      if (what & 2)
+        term.wide_extra = true;
+    }
     when 52: do_clipboard();
   }
 }
@@ -1522,9 +1531,9 @@ term_write(const char *buf, uint len)
 
         // Everything else
         int width;
-        if (cfg.wide_indic && wc >= 0x0900 && indicwide(wc))
+        if (term.wide_indic && wc >= 0x0900 && indicwide(wc))
           width = 2;
-        else if (cfg.wide_extra && wc >= 0x2000 && extrawide(wc)) {
+        else if (term.wide_extra && wc >= 0x2000 && extrawide(wc)) {
           width = 2;
           if (win_char_width(wc) < 2)
             term.curs.attr.attr |= ATTR_EXPAND;
