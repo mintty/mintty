@@ -8,6 +8,7 @@ typedef enum { MDK_SHIFT = 1, MDK_ALT = 2, MDK_CTRL = 4 } mod_keys;
 enum { HOLD_NEVER, HOLD_START, HOLD_ERROR, HOLD_ALWAYS };
 enum { CUR_BLOCK, CUR_UNDERSCORE, CUR_LINE };
 enum { FS_DEFAULT, FS_PARTIAL, FS_NONE, FS_FULL };
+enum { FR_TEXTOUT, FR_UNISCRIBE };
 enum { MC_VOID, MC_PASTE, MC_EXTEND, MC_ENTER };
 enum { RC_MENU, RC_PASTE, RC_EXTEND, RC_ENTER };
 enum { TR_OFF = 0, TR_LOW = 16, TR_MEDIUM = 32, TR_HIGH = 48, TR_GLASS = -1 };
@@ -44,6 +45,7 @@ typedef struct {
 typedef struct {
   // Looks
   colour fg_colour, bold_colour, bg_colour, cursor_colour, underl_colour;
+  bool underl_manual;
   colour search_fg_colour, search_bg_colour, search_current_colour;
   wstring theme_file;
   string colour_scheme;
@@ -56,6 +58,7 @@ typedef struct {
   font_spec font;
   bool show_hidden_fonts;
   char font_smoothing;
+  char font_render;
   char bold_as_font;    // 0 = false, 1 = true, -1 = undefined
   bool bold_as_colour;
   bool allow_blinking;

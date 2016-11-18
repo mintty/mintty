@@ -1,3 +1,9 @@
+Character display:
+  * Uniscribe support for left-to-right text (#573, #605, /#430).
+  * New option FontRender=uniscribe to enable Uniscribe support (#605, #573).
+  * New option UnderlineManual to enforce manual lining with default colour (#604).
+  * Support for distinct colour attributes for combining characters.
+
 ### 2.7.0 (13 Nov 2016) ###
 
 Character display:

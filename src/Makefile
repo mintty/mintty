@@ -86,10 +86,11 @@ ifeq ($(shell VER=`$(CC) -dumpversion`; expr $${VER%.*} '>=' 4.5), 1)
   CFLAGS += -mtune=atom
 endif
 
+scriptlib=-lusp10
 LDFLAGS := -L$(shell $(CC) -print-file-name=w32api) -static-libgcc
-LDLIBS := -mwindows -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -luuid
+LDLIBS := -mwindows $(scriptlib) -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -luuid
 #override LDFLAGS += -L$(shell $(CC) -print-file-name=w32api) -static-libgcc
-#override LDLIBS += -mwindows -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -luuid
+#override LDLIBS += -mwindows $(scriptlib) -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -luuid
 
 ifdef DEBUG
   CFLAGS += -g

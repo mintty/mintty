@@ -11,6 +11,7 @@
 #include "winimg.h"
 
 #include <winnls.h>
+#include <usp10.h>  // Uniscribe
 
 
 enum {
@@ -389,7 +390,7 @@ win_init_fonts(int size)
 
   bold_mode = cfg.bold_as_font ? BOLD_FONT : BOLD_SHADOW;
   und_mode = UND_FONT;
-  if (cfg.underl_colour != (colour)-1)
+  if (cfg.underl_manual || cfg.underl_colour != (colour)-1)
     und_mode = UND_LINE;
 
   if (cfg.font.weight) {
@@ -934,7 +935,8 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
     nfont |= FONT_UNDERLINE;
   if (attr.attr & ATTR_ITALIC)
     nfont |= FONT_ITALIC;
-  if (attr.attr & ATTR_STRIKEOUT && cfg.underl_colour == (colour)-1)
+  if (attr.attr & ATTR_STRIKEOUT
+      && !cfg.underl_manual && cfg.underl_colour == (colour)-1)
     nfont |= FONT_STRIKEOUT;
   another_font(nfont);
 
@@ -1089,26 +1091,11 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
     eto_options |= ETO_GLYPH_INDEX;
   }
 
+
   bool combining = attr.attr & TATTR_COMBINING;
   bool combining_double = attr.attr & TATTR_COMBDOUBL;
   if (combining_double)
     combining = false;
-
-  int width = char_width * (combining ? 1 : len);
-  RECT box = {
-    .top = y, .bottom = y + cell_height,
-    .left = x, .right = min(x + width, cell_width * term.cols + PADDING)
-  };
-  RECT box2 = box;
-  if (combining_double) {
-    box2.left -= char_width;
-  }
-
- /* Array with offsets between neighbouring characters */
-  int dxs[len];
-  int dx = combining ? 0 : char_width;
-  for (int i = 0; i < len; i++)
-    dxs[i] = dx;
 
   bool let_windows_combine = false;
   if (combining) {
@@ -1125,14 +1112,76 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
     }
   }
 
-  int yt = y + (row_spacing / 2) - (lattr == LATTR_BOT ? cell_height : 0);
-  int xt = x + (cfg.col_spacing / 2);
-
   int graph = (attr.attr >> ATTR_GRAPH_SHIFT) & 0xFF;
   if (graph) {
     for (int i = 0; i < len; i++)
       text[i] = ' ';
   }
+
+ /* Array with offsets between neighbouring characters */
+  int dxs[len];
+  int dx = combining ? 0 : char_width;
+  for (int i = 0; i < len; i++)
+    dxs[i] = dx;
+
+  int width = char_width * (combining ? 1 : len);
+  RECT box = {
+    .top = y, .bottom = y + cell_height,
+    .left = x, .right = min(x + width, cell_width * term.cols + PADDING)
+  };
+  RECT box2 = box;
+  if (combining_double) {
+    box2.left -= char_width;
+  }
+
+
+ /* Uniscribe handling */
+  bool use_uniscribe = cfg.font_render == FR_UNISCRIBE && !has_rtl;
+  SCRIPT_STRING_ANALYSIS ssa;
+
+  void
+  text_out_start(HDC hdc, LPCWSTR psz, int cch, int *dxs)
+  {
+    if (cch == 0)
+      use_uniscribe = false;
+    if (!use_uniscribe)
+      return;
+
+    HRESULT hr = ScriptStringAnalyse (hdc, psz, cch, 0, -1, 
+      // could | SSA_FIT and use `width` (from win_text) instead of MAXLONG
+      // to justify to monospace cell widths;
+      // SSA_LINK is needed for Hangul and default-size CJK
+      SSA_GLYPHS | SSA_FALLBACK | SSA_LINK, MAXLONG, 
+      NULL, NULL, dxs, NULL, NULL, &ssa);
+    if (!SUCCEEDED(hr) && hr != USP_E_SCRIPT_NOT_IN_FONT)
+      use_uniscribe = false;
+  }
+
+  void
+  text_out(HDC hdc, int x, int y, UINT fuOptions, RECT *prc, LPCWSTR psz, int cch, int *dxs)
+  {
+    if (cch == 0)
+      return;
+
+    if (use_uniscribe)
+      ScriptStringOut(ssa, x, y, fuOptions, prc, 0, 0, FALSE);
+    else
+      ExtTextOutW(hdc, x, y, fuOptions, prc, psz, cch, dxs);
+  }
+
+  void
+  text_out_end()
+  {
+    if (use_uniscribe)
+      ScriptStringFree(&ssa);
+  }
+
+
+ /* Begin text output */
+  text_out_start(dc, text, len, dxs);
+
+  int yt = y + (row_spacing / 2) - (lattr == LATTR_BOT ? cell_height : 0);
+  int xt = x + (cfg.col_spacing / 2);
 
  /* Determine shadow/overstrike bold or double-width/height width */
   int xwidth = 1;
@@ -1168,7 +1217,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
         SetTextColor(dc, fg);
 
       // base character
-      ExtTextOutW(dc, xt + xoff, yt, eto_options | overwropt, &box, text, 1, dxs);
+      text_out(dc, xt + xoff, yt, eto_options | overwropt, &box, text, 1, dxs);
       if (overwropt) {
         SetBkMode(dc, TRANSPARENT);
         overwropt = 0;
@@ -1206,16 +1255,17 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
 
           SetTextColor(dc, fg);
         }
-        ExtTextOutW(dc, xx, yt, eto_options, &box2, &text[i], 1, dxs);
+        text_out(dc, xx, yt, eto_options, &box2, &text[i], 1, dxs);
       }
     }
     else {
-      ExtTextOutW(dc, xt + xoff, yt, eto_options | overwropt, &box, text, len, dxs);
+      text_out(dc, xt + xoff, yt, eto_options | overwropt, &box, text, len, dxs);
       if (overwropt) {
         SetBkMode(dc, TRANSPARENT);
         overwropt = 0;
       }
     }
+  text_out_end();
 
   int line_width = (3
                     + (attr.attr & ATTR_BOLD ? 2 : 0)
@@ -1349,7 +1399,8 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
   }
 
  /* Strikeout */
-  if (attr.attr & ATTR_STRIKEOUT && cfg.underl_colour != (colour)-1) {
+  if (attr.attr & ATTR_STRIKEOUT
+      && (cfg.underl_manual || cfg.underl_colour != (colour)-1)) {
     int soff = (descent + (row_spacing / 2)) * 2 / 3;
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, ul));
     for (int l = 0; l < line_width; l++) {
