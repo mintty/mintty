@@ -875,6 +875,17 @@ combsubst(wchar comb)
   return comb;
 }
 
+int
+termattrs_equal_fg(cattr * a, cattr * b)
+{
+  if (a->truefg != b->truefg)
+    return false;
+#define ATTR_COLOUR_MASK (ATTR_FGMASK | ATTR_BOLD | ATTR_DIM)
+  if ((a->attr & ATTR_COLOUR_MASK) != (b->attr & ATTR_COLOUR_MASK))
+    return false;
+  return true;
+}
+
 /*
  * Draw a line of text in the window, at given character
  * coordinates, in given attributes.
@@ -882,7 +893,7 @@ combsubst(wchar comb)
  * We are allowed to fiddle with the contents of `text'.
  */
 void
-win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl)
+win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int lattr, bool has_rtl)
 {
   trace_line("win_text:", text, len);
   lattr &= LATTR_MODE;
@@ -1036,6 +1047,15 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
   SetTextColor(dc, fg);
   SetBkColor(dc, bg);
 
+#define dont_debug_missing_glyphs
+#ifdef debug_missing_glyphs
+  ushort glyph[len];
+  GetGlyphIndicesW(dc, text, len, glyph, true);
+  for (int i = 0; i < len; i++)
+    if (glyph[i] == 0xFFFF)
+      printf(" %04X -> no glyph\n", text[i]);
+#endif
+
  /* Check whether the text has any right-to-left characters */
 #ifdef check_rtl_here
 #warning now passed as a parameter to avoid redundant checking
@@ -1096,9 +1116,13 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
     for (int i = 0; i < len; i++)
       text[i] = combsubst(text[i]);
    /* Determine characters that should be combined by Windows */
-    if (len == 2)
+    if (len == 2) {
       if (text[0] == 'i' && (text[1] == 0x030F || text[1] == 0x0311))
         let_windows_combine = true;
+     /* Enforce separate combining characters display if colours differ */
+      if (!termattrs_equal_fg(&textattr[1], &attr))
+        let_windows_combine = false;
+    }
   }
 
   int yt = y + (row_spacing / 2) - (lattr == LATTR_BOT ? cell_height : 0);
@@ -1139,6 +1163,10 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
       // presentation forms are not combining characters anymore at this point.
       // Repeat the workaround for bold/wide below.
 
+      if (xoff)
+        // restore base character colour in case of distinct combining colours
+        SetTextColor(dc, fg);
+
       // base character
       ExtTextOutW(dc, xt + xoff, yt, eto_options | overwropt, &box, text, 1, dxs);
       if (overwropt) {
@@ -1146,10 +1174,38 @@ win_text(int x, int y, wchar *text, int len, cattr attr, int lattr, bool has_rtl
         overwropt = 0;
       }
       // combining characters
+      textattr[0] = attr;
       for (int i = 1; i < len; i++) {
         int xx = xt + xoff;
         if (combining_double && combiningdouble(text[i]))
           xx -= char_width / 2;
+        if (!termattrs_equal_fg(&textattr[i], &textattr[i - 1])) {
+          // determine colour to be used for combining characters;
+          // simplified version of the algorithm above
+          colour_i fgi = (textattr[i].attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
+          if (term.rvideo) {
+            if (fgi >= 256)
+              fgi ^= 2;     // (BOLD_)?FG_COLOUR_I <-> (BOLD_)?BG_COLOUR_I
+          }
+          if (textattr[i].attr & ATTR_BOLD && cfg.bold_as_colour) {
+            if (fgi < 8) {
+              fgi |= 8;     // (BLACK|...|WHITE)_I -> BOLD_(BLACK|...|WHITE)_I
+            }
+            else if (fgi >= 256 && fgi != TRUE_COLOUR && !cfg.bold_as_font) {
+              fgi |= 1;     // (FG|BG)_COLOUR_I -> BOLD_(FG|BG)_COLOUR_I
+            }
+          }
+          colour fg = fgi >= TRUE_COLOUR ? textattr[i].truefg : colours[fgi];
+          if (textattr[i].attr & ATTR_DIM) {
+            fg = (fg & 0xFEFEFEFE) >> 1; // Halve the brightness.
+            if (!cfg.bold_as_colour || fgi >= 256)
+              fg += (bg & 0xFEFEFEFE) >> 1; // Blend with background.
+          }
+          if (textattr[i].attr & ATTR_INVISIBLE)
+            fg = bg;
+
+          SetTextColor(dc, fg);
+        }
         ExtTextOutW(dc, xx, yt, eto_options, &box2, &text[i], 1, dxs);
       }
     }

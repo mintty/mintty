@@ -203,11 +203,12 @@ extern void release_line(termline *);
 
 extern int termchars_equal(termchar *a, termchar *b);
 extern int termchars_equal_override(termchar *a, termchar *b, uint bchr, cattr battr);
+extern int termattrs_equal_fg(cattr * a, cattr * b);
 
 extern void copy_termchar(termline *destline, int x, termchar *src);
 extern void move_termchar(termline *line, termchar *dest, termchar *src);
 
-extern void add_cc(termline *, int col, wchar chr);
+extern void add_cc(termline *, int col, wchar chr, cattr attr);
 extern void clear_cc(termline *, int col);
 
 extern uchar *compressline(termline *);

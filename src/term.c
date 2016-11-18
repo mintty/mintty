@@ -1084,7 +1084,9 @@ term_paint(void)
    /*
     * Finally, loop once more and actually do the drawing.
     */
-    wchar text[max(term.cols, 16)];
+    int maxtextlen = max(term.cols, 16);
+    wchar text[maxtextlen];
+    cattr textattr[maxtextlen];
     int textlen = 0;
     bool has_rtl = false;
     uchar bc = 0;
@@ -1158,7 +1160,7 @@ term_paint(void)
 
       if (break_run) {
         if (dirty_run && textlen)
-          win_text(start, i, text, textlen, attr, line->attr, has_rtl);
+          win_text(start, i, text, textlen, attr, textattr, line->attr, has_rtl);
         start = j;
         textlen = 0;
         has_rtl = false;
@@ -1196,9 +1198,10 @@ term_paint(void)
         // We could append them after any "normal" combinings (below) 
         // to enable win_text to render those unseparated ...
         termchar *dp = &d[-1];
-        while (dp->cc_next && textlen < 16) {
+        while (dp->cc_next && textlen < maxtextlen) {
           dp += dp->cc_next;
           if (combiningdouble(dp->chr)) {
+            textattr[textlen] = dp->attr;
             text[textlen++] = dp->chr;
             attr.attr |= TATTR_COMBDOUBL;
           }
@@ -1208,7 +1211,7 @@ term_paint(void)
       }
       if (d->cc_next) {
         termchar *dd = d;
-        while (dd->cc_next && textlen < 16) {
+        while (dd->cc_next && textlen < maxtextlen) {
           dd += dd->cc_next;
           if (combiningdouble(dd->chr)) {
             // Postpone combining double characters of this position
@@ -1216,6 +1219,7 @@ term_paint(void)
             combdouble_pending = true;
           }
           else {
+            textattr[textlen] = dd->attr;
             text[textlen++] = dd->chr;
             attr.attr |= TATTR_COMBINING;
           }
@@ -1245,7 +1249,7 @@ term_paint(void)
       }
     }
     if (dirty_run && textlen)
-      win_text(start, i, text, textlen, attr, line->attr, has_rtl);
+      win_text(start, i, text, textlen, attr, textattr, line->attr, has_rtl);
     release_line(line);
   }
 
