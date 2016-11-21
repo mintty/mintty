@@ -1178,8 +1178,6 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
 
 
  /* Begin text output */
-  text_out_start(dc, text, len, dxs);
-
   int yt = y + (row_spacing / 2) - (lattr == LATTR_BOT ? cell_height : 0);
   int xt = x + (cfg.col_spacing / 2);
 
@@ -1205,6 +1203,11 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
   // Yet disabling it for some (heuristically determined) cases:
   if (let_windows_combine)
     combining = false;  // disable separate combining characters display
+
+  if (combining || combining_double)
+    *dxs = char_width;  // convince Windows to apply font underlining
+  text_out_start(dc, text, len, dxs);
+
   for (int xoff = 0; xoff < xwidth; xoff++)
     if (combining || combining_double) {
       // Workaround for mangled display of combining characters;
@@ -1255,7 +1258,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
 
           SetTextColor(dc, fg);
         }
-        text_out(dc, xx, yt, eto_options, &box2, &text[i], 1, dxs);
+        text_out(dc, xx, yt, eto_options, &box2, &text[i], 1, &dxs[i]);
       }
     }
     else {
