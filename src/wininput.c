@@ -31,15 +31,42 @@ win_update_menus(void)
   bool alt_fn = shorts && cfg.alt_fn_shortcuts;
   bool ct_sh = shorts && cfg.ctrl_shift_shortcuts;
 
+  void
+  modify_menu(HMENU menu, UINT item, wchar * label)
+  {
+    MENUITEMINFOW mi;
+    mi.cbSize = sizeof(MENUITEMINFOW);
+#define dont_debug_menuitem
+#ifdef debug_menuitem
+    mi.fMask = MIIM_BITMAP | MIIM_STATE | MIIM_STRING;
+    mi.dwTypeData = 0;
+    GetMenuItemInfoW(menu, item, 0, &mi);
+    mi.cch++;
+    mi.dwTypeData = newn(wchar, mi.cch);
+    int ok = GetMenuItemInfoW(menu, item, 0, &mi);
+    printf("%d %X %d<%ls>\n", ok, mi.fState, mi.cch, mi.dwTypeData);
+    mi.fState &= ~MFS_DEFAULT;  // does not work if used 
+                                // in SetMenuItemInfoW with MIIM_STATE
+#endif
+    mi.fMask = MIIM_STRING;
+    mi.dwTypeData = label;
+    SetMenuItemInfoW(menu, item, 0, &mi);
+  }
+
+  modify_menu(sysmenu, SC_RESTORE, _W("&Restore"));
+  modify_menu(sysmenu, SC_MOVE, _W("&Move"));
+  modify_menu(sysmenu, SC_SIZE, _W("Re&size"));
+  modify_menu(sysmenu, SC_MINIMIZE, _W("Mi&nimize"));
+  modify_menu(sysmenu, SC_MAXIMIZE, _W("Ma&ximize"));
+  modify_menu(sysmenu, SC_CLOSE,
+    alt_fn ? _W("&Close\tAlt+F4") :
+    ct_sh ? _W("&Close\tCtrl+Shift+W") : _W("&Close")
+  );
+
   ModifyMenuW(
     sysmenu, IDM_NEW, 0, IDM_NEW,
     alt_fn ? _W("Ne&w\tAlt+F2") :
     ct_sh ? _W("Ne&w\tCtrl+Shift+N") : _W("Ne&w")
-  );
-  ModifyMenuW(
-    sysmenu, SC_CLOSE, 0, SC_CLOSE,
-    alt_fn ? _W("&Close\tAlt+F4") :
-    ct_sh ? _W("&Close\tCtrl+Shift+W") : _W("&Close")
   );
 
   uint sel_enabled = term.selected ? MF_ENABLED : MF_GRAYED;
