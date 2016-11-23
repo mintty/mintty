@@ -1228,6 +1228,10 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
       // combining characters
       textattr[0] = attr;
       for (int i = 1; i < len; i++) {
+        // separate stacking of combining characters 
+        // does not work with Uniscribe
+        use_uniscribe = false;
+
         int xx = xt + xoff;
         if (combining_double && combiningdouble(text[i]))
           xx -= char_width / 2;
