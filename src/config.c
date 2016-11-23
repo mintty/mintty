@@ -178,7 +178,7 @@ options[] = {
   {"BoldColour", OPT_COLOUR, offcfg(bold_colour)},
   {"CursorColour", OPT_COLOUR, offcfg(cursor_colour)},
   {"UnderlineColour", OPT_COLOUR, offcfg(underl_colour)},
-  {"UnderlineManual", OPT_COLOUR, offcfg(underl_manual)},
+  {"UnderlineManual", OPT_BOOL, offcfg(underl_manual)},
   {"SearchForegroundColour", OPT_COLOUR, offcfg(search_fg_colour)},
   {"SearchBackgroundColour", OPT_COLOUR, offcfg(search_bg_colour)},
   {"SearchCurrentColour", OPT_COLOUR, offcfg(search_current_colour)},
