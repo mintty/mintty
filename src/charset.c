@@ -186,8 +186,17 @@ init_locale_menu(void)
 {
   uint count = 0;
 
+  void add_lc(char * locale) {
+    for (uint i = 1; i < count; i++)
+      if (!strcmp(locale, locale_menu[i]))
+        return;
+    locale_menu[count++] = strdup(locale);
+  }
+
   void add_lcid(LCID lcid) {
-    char locale[8];
+    char locale[18];  // max 9 (incl NUL) per GetLocaleInfo + '_'
+      // https://msdn.microsoft.com/en-us/library/windows/desktop/dd373848%28v=vs.85%29.aspx
+
     int lang_len = GetLocaleInfo(lcid, LOCALE_SISO639LANGNAME,
                                  locale, sizeof locale);
     if (!lang_len)
@@ -195,10 +204,8 @@ init_locale_menu(void)
     if (GetLocaleInfo(lcid, LOCALE_SISO3166CTRYNAME,
                       locale + lang_len, sizeof locale - lang_len))
       locale[lang_len - 1] = '_';
-    for (uint i = 1; i < count; i++)
-      if (!strcmp(locale, locale_menu[i]))
-        return;
-    locale_menu[count++] = strdup(locale);
+
+    add_lc(locale);
   }
 
   locale_menu[count++] = _("(Default)");
