@@ -285,7 +285,10 @@ for dead-key combinations that Windows does not support (e.g. ẃ).
 Mintty also provides a Compose key, configurable to Control, Shift or Alt,
 using X11 compose data. For example, if the compose key is configured 
 to be Control, pressing and release the Control key, followed by letters 
-```a``` and ```e```, will enter ```æ```.
+`a` and `e`, will enter `æ`; Control-`-`-`,` will enter `¬`, 
+Control-`C`-`o` will enter `©`, Control-`<`-`<` will enter `«`, 
+Control-`c`-`,` will enter `ç`, Control-`s`-`s` will enter `ß`, 
+Control-`!`-`!` will enter `¡`, Control-`!`-`?` will enter `‽`, etc.
 
 For a separate compose key solution, the most seamless and stable 
 **Compose Key for Windows** is 
@@ -438,6 +441,46 @@ not need to be CJK), e.g.:
 ```
 LC_CTYPE=zh_SG.utf8 mintty &
 ```
+
+
+## Text and font rendering ##
+
+Mintty can make use of advanced Windows font fallback as provided by 
+Uniscribe, achieving improved font fallback.
+Use option `-o FontRender=uniscribe`.
+Note that Uniscribe is not applied to right-to-left text as it would 
+interfere with mintty’s own bidi transformation.
+
+Mintty supports a maximum of usual and unusual text attributes:
+
+| **start `^[[...m`**    | **end `^[[...m`** | **attribute**                 |
+|:-----------------------|:------------------|:------------------------------|
+| 1                      | 22                | bold                          |
+| 2                      | 22                | dim                           |
+| 3                      | 23                | italic                        |
+| 4                      | 24                | underline                     |
+| 5                      | 25                | blinking                      |
+| 7                      | 27                | inverse                       |
+| 8                      | 28                | invisible                     |
+| 9                      | 29                | strikeout                     |
+| 21                     | 24                | doubly underline              |
+| 53                     | 55                | overline                      |
+| 30...37                | 39                | foreground ANSI colour        |
+| 90...97                | 39                | foreground bright ANSI colour |
+| 40...47                | 49                | background ANSI colour        |
+| 100...107              | 49                | background bright ANSI colour |
+| 38;5;P                 | 39                | foreground palette colour     |
+| 48;5;P                 | 49                | background palette colour     |
+| 38;2;R;G;B             | 39                | foreground true colour        |
+| 48;2;R;G;B             | 49                | background true colour        |
+
+As a fancy add-on feature for text attributes, mintty supports distinct 
+colour attributes for combining characters, so a combined character 
+can be displayed in multiple colours. Attributes considered for this 
+purpose are default and ANSI foreground colours, palette and true-colour 
+foreground colours, dim mode and manual bold mode (BoldAsFont=false); 
+background colours and inverse mode are ignored.
+<img src=https://github.com/mintty/mintty/wiki/mintty-coloured-combinings.png>
 
 
 ## Passing arguments from an environment with different character set ##

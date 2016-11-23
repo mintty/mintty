@@ -661,6 +661,13 @@ See the Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips\fP
 about this mechanism.
 
 .TP
+\fBText lines\fP (UnderlineManual=false)
+By setting this true, text attributes underline, doubly underline, strikeout and overline 
+are enforced to be drawn manually. 
+The default is to use Windows font variants for strikeout and for underline, 
+unless mintty detects that the underlined font would not display properly.
+
+.TP
 \fBTransparency\fP (Transparency=off)
 Window transparency level, with the following choices:
 .br
@@ -781,6 +788,15 @@ Select the amount of font smoothing from the following choices:
 \(en \fBPartial\fP: Greyscale anti-aliasing.
 .br
 \(en \fBFull\fP: Subpixel anti-aliasing ("ClearType").
+
+.TP
+\fBFont rendering\fP (FontRender=textout)
+Select the rendering system used for text display:
+.br
+\(en \fBtextout\fP: Use the Windows ExtTextOut API.
+.br
+\(en \fBuniscribe\fP: Use the Windows Uniscribe API.
+This may become the default in a future version.
 
 .TP
 \fBLocale\fP (Locale=)
