@@ -419,10 +419,11 @@ void
 win_show_about(void)
 {
 #if CYGWIN_VERSION_API_MINOR < 74
-  char * aboutfmt = newn(char, 999);
+  char * aboutfmt = newn(char, 
+    strlen(VERSION_TEXT) + strlen(COPYRIGHT) + strlen(LICENSE_TEXT) + strlen(_(WARRANTY_TEXT)) + strlen(_(ABOUT_TEXT)) + 11);
   sprintf(aboutfmt, "%s\n%s\n%s\n%s\n\n%s", 
            VERSION_TEXT, COPYRIGHT, LICENSE_TEXT, _(WARRANTY_TEXT), _(ABOUT_TEXT));
-  char * abouttext = newn(char, 999);
+  char * abouttext = newn(char, strlen(aboutfmt) + strlen(WEBSITE));
   sprintf(abouttext, aboutfmt, WEBSITE);
 #else
   char * aboutfmt =
