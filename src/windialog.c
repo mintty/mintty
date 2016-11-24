@@ -418,10 +418,18 @@ win_open_config(void)
 void
 win_show_about(void)
 {
+#if CYGWIN_VERSION_API_MINOR < 74
+  char * aboutfmt = newn(char, 999);
+  sprintf(aboutfmt, "%s\n%s\n%s\n%s\n\n%s", 
+           VERSION_TEXT, COPYRIGHT, LICENSE_TEXT, _(WARRANTY_TEXT), _(ABOUT_TEXT));
+  char * abouttext = newn(char, 999);
+  sprintf(abouttext, aboutfmt, WEBSITE);
+#else
   char * aboutfmt =
     asform("%s\n%s\n%s\n%s\n\n%s", 
            VERSION_TEXT, COPYRIGHT, LICENSE_TEXT, _(WARRANTY_TEXT), _(ABOUT_TEXT));
   char * abouttext = asform(aboutfmt, WEBSITE);
+#endif
   free(aboutfmt);
   wchar * wmsg = cs__utftowcs(abouttext);
   free(abouttext);
