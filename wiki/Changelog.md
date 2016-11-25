@@ -7,7 +7,9 @@ Character display:
   * Ensuring font underlining of separately drawn combined characters.
 
 Configuration
-  * Facilitating localization of system menu standard items.
+  * Simplified menu item localization (#537).
+  * Facilitating localization of system menu standard items (#537).
+  * Added Options menu labels to prepare for localization (#537) even if they don't work.
 
 ### 2.7.0 (13 Nov 2016) ###
 

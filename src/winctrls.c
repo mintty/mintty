@@ -413,8 +413,7 @@ staticpassedit(ctrlpos * cp, char *stext, int sid, int eid, int percentedit)
 }
 
 /*
- * A drop-down list box on the right hand side, with a static to
- * its left.
+ * A drop-down list box on the right hand side, with a static to its left.
  */
 static void
 staticddl(ctrlpos * cp, char *stext, int sid, int lid, int percentlist)

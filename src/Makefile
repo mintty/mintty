@@ -198,6 +198,7 @@ XGETTEXT_OPTS=--package-name=mintty #--package-version=$(version)
 _:	localization
 localization:
 	xgettext --from-code=UTF-8 -k_ -k_W -k__ -c__ $(XGETTEXT_OPTS) *.c appinfo.h -o- | grep -v "^#, c-format" > messages.pot
+	for po in ../lang/*.po; do msgmerge -U $$po messages.pot; done
 
 #############################################################################
 # release targets
