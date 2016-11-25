@@ -23,6 +23,8 @@ static int alt_F2_monix = 0, alt_F2_moniy = 0;
 
 /* Menu handling */
 
+#define dont_debug_modify_menu
+
 void
 win_update_menus(void)
 {
@@ -31,50 +33,138 @@ win_update_menus(void)
   bool alt_fn = shorts && cfg.alt_fn_shortcuts;
   bool ct_sh = shorts && cfg.ctrl_shift_shortcuts;
 
+#ifdef debug_modify_menu
+  printf("win_update_menus\n");
+#endif
+
   void
-  modify_menu(HMENU menu, UINT item, wchar * label)
+  modify_menu(HMENU menu, UINT item, UINT state, wchar * label, wchar * key)
+  // item is sysentry: ignore state
+  // state: MF_ENABLED, MF_GRAYED, MF_CHECKED, MF_UNCHECKED
+  // label: if null, use current label
+  // key: shortcut description; localize "Ctrl+Alt+Shift+"
   {
+    bool sysentry = item & 0xF000;
+#ifdef debug_modify_menu
+    if (sysentry)
+      printf("mm %04X <%ls> <%ls>\n", item, label, key);
+#endif
+
     MENUITEMINFOW mi;
     mi.cbSize = sizeof(MENUITEMINFOW);
 #define dont_debug_menuitem
 #ifdef debug_menuitem
-    mi.fMask = MIIM_BITMAP | MIIM_STATE | MIIM_STRING;
-    mi.dwTypeData = 0;
+    mi.fMask = MIIM_BITMAP | MIIM_STATE | MIIM_STRING | MIIM_DATA;
+    mi.dwTypeData = NULL;
     GetMenuItemInfoW(menu, item, 0, &mi);
     mi.cch++;
     mi.dwTypeData = newn(wchar, mi.cch);
     int ok = GetMenuItemInfoW(menu, item, 0, &mi);
-    printf("%d %X %d<%ls>\n", ok, mi.fState, mi.cch, mi.dwTypeData);
+    printf("%d %X %d<%ls> <%ls>\n", ok, mi.fState, mi.cch, mi.dwTypeData, (wstring)mi.dwItemData);
     mi.fState &= ~MFS_DEFAULT;  // does not work if used 
                                 // in SetMenuItemInfoW with MIIM_STATE
 #endif
     mi.fMask = MIIM_STRING;
-    mi.dwTypeData = label;
+    if (!label || sysentry) {
+      mi.dwTypeData = NULL;
+      GetMenuItemInfoW(menu, item, 0, &mi);
+      mi.cch++;
+      mi.dwTypeData = newn(wchar, mi.cch);
+      if (sysentry)
+        mi.fMask |= MIIM_DATA;
+      GetMenuItemInfoW(menu, item, 0, &mi);
+    }
+
+    // prepare info to write
+    mi.fMask = MIIM_STRING;
+    if (sysentry) {
+      if (label) {
+        // backup system (localized) label to application data
+        if (!mi.dwItemData) {
+          mi.dwItemData = (ULONG_PTR)wcsdup(mi.dwTypeData);
+          mi.fMask |= MIIM_DATA;  // make sure it's stored
+        }
+      }
+      else if (mi.dwItemData) {
+        // restore system (localized) label from backup
+        mi.dwTypeData = wcsdup((wstring)mi.dwItemData);
+      }
+    }
+    if (label)
+      mi.dwTypeData = wcsdup(label);
+    if (!sysentry) {
+      mi.fMask |= MIIM_STATE | MIIM_FTYPE;
+      mi.fState = state;
+      mi.fType = MFT_STRING;
+    }
+    wchar * tab = wcschr(mi.dwTypeData, '\t');
+    if (tab)
+      *tab = '\0';
+    if (key) {
+      // append TAB and shortcut to label; localize "Ctrl+Alt+Shift+"
+      mod_keys mod = 0;
+      if (0 == wcsncmp(key, W("Ctrl+"), 5)) {
+        mod |= MDK_CTRL;
+        key += 5;
+      }
+      if (0 == wcsncmp(key, W("Alt+"), 4)) {
+        mod |= MDK_ALT;
+        key += 4;
+      }
+      if (0 == wcsncmp(key, W("Shift+"), 6)) {
+        mod |= MDK_SHIFT;
+        key += 6;
+      }
+      int len1 = wcslen(mi.dwTypeData) + 1
+                 + (mod & MDK_CTRL ? wcslen(_W("Ctrl+")) : 0)
+                 + (mod & MDK_ALT ? wcslen(_W("Alt+")) : 0)
+                 + (mod & MDK_SHIFT ? wcslen(_W("Shift+")) : 0)
+                 + wcslen(key) + 1;
+      mi.dwTypeData = renewn(mi.dwTypeData, len1);
+      wcscat(mi.dwTypeData, W("\t"));
+      if (mod & MDK_CTRL) wcscat(mi.dwTypeData, _W("Ctrl+"));
+      if (mod & MDK_ALT) wcscat(mi.dwTypeData, _W("Alt+"));
+      if (mod & MDK_SHIFT) wcscat(mi.dwTypeData, _W("Shift+"));
+      wcscat(mi.dwTypeData, key);
+    }
+#ifdef debug_modify_menu
+    if (sysentry)
+      printf("-> %04X [%04X] %04X <%ls>\n", item, mi.fMask, mi.fState, mi.dwTypeData);
+#endif
+
     SetMenuItemInfoW(menu, item, 0, &mi);
+
+    free(mi.dwTypeData);
   }
 
-  modify_menu(sysmenu, SC_RESTORE, _W("&Restore"));
-  modify_menu(sysmenu, SC_MOVE, _W("&Move"));
-  modify_menu(sysmenu, SC_SIZE, _W("Re&size"));
-  modify_menu(sysmenu, SC_MINIMIZE, _W("Mi&nimize"));
-  modify_menu(sysmenu, SC_MAXIMIZE, _W("Ma&ximize"));
-  modify_menu(sysmenu, SC_CLOSE,
-    alt_fn ? _W("&Close\tAlt+F4") :
-    ct_sh ? _W("&Close\tCtrl+Shift+W") : _W("&Close")
+  wchar *
+  itemlabel(char * label)
+  {
+    char * loc = _(label);
+    if (loc == label)
+      // no localization entry
+      return null;  // indicate to use system localization
+    else
+      return _W(label);  // use our localization
+  }
+
+  modify_menu(sysmenu, SC_RESTORE, 0, itemlabel(__("&Restore")), null);
+  modify_menu(sysmenu, SC_MOVE, 0, itemlabel(__("&Move")), null);
+  modify_menu(sysmenu, SC_SIZE, 0, itemlabel(__("&Size")), null);
+  modify_menu(sysmenu, SC_MINIMIZE, 0, itemlabel(__("Mi&nimize")), null);
+  modify_menu(sysmenu, SC_MAXIMIZE, 0, itemlabel(__("Ma&ximize")), null);
+  modify_menu(sysmenu, SC_CLOSE, 0, itemlabel(__("&Close")),
+    alt_fn ? W("Alt+F4") : ct_sh ? W("Ctrl+Shift+W") : null
   );
 
-  ModifyMenuW(
-    sysmenu, IDM_NEW, 0, IDM_NEW,
-    alt_fn ? _W("Ne&w\tAlt+F2") :
-    ct_sh ? _W("Ne&w\tCtrl+Shift+N") : _W("Ne&w")
+  modify_menu(sysmenu, IDM_NEW, 0, _W("Ne&w"),
+    alt_fn ? W("Alt+F2") : ct_sh ? W("Ctrl+Shift+N") : null
   );
 
   uint sel_enabled = term.selected ? MF_ENABLED : MF_GRAYED;
   EnableMenuItem(ctxmenu, IDM_OPEN, sel_enabled);
-  ModifyMenuW(
-    ctxmenu, IDM_COPY, sel_enabled, IDM_COPY,
-    clip ? _W("&Copy\tCtrl+Ins") :
-    ct_sh ? _W("&Copy\tCtrl+Shift+C") : _W("&Copy")
+  modify_menu(ctxmenu, IDM_COPY, sel_enabled, _W("&Copy"),
+    clip ? W("Ctrl+Ins") : ct_sh ? W("Ctrl+Shift+C") : null
   );
 
   uint paste_enabled =
@@ -82,55 +172,50 @@ win_update_menus(void)
     IsClipboardFormatAvailable(CF_UNICODETEXT) ||
     IsClipboardFormatAvailable(CF_HDROP)
     ? MF_ENABLED : MF_GRAYED;
-  ModifyMenuW(
-    ctxmenu, IDM_PASTE, paste_enabled, IDM_PASTE,
-    clip ? _W("&Paste\tShift+Ins") :
-    ct_sh ? _W("&Paste\tCtrl+Shift+V") : _W("&Paste")
+  modify_menu(ctxmenu, IDM_PASTE, paste_enabled, _W("&Paste"),
+    clip ? W("Shift+Ins") : ct_sh ? W("Ctrl+Shift+V") : null
   );
 
-  ModifyMenuW(
-    ctxmenu, IDM_SEARCH, 0, IDM_SEARCH,
-    alt_fn ? _W("S&earch\tAlt+F3") :
-    ct_sh ? _W("S&earch\tCtrl+Shift+H") : _W("S&earch")
+  modify_menu(ctxmenu, IDM_SEARCH, 0, _W("S&earch"),
+    alt_fn ? W("Alt+F3") : ct_sh ? W("Ctrl+Shift+H") : null
   );
 
-  ModifyMenuW(
-    ctxmenu, IDM_RESET, 0, IDM_RESET,
-    alt_fn ? _W("&Reset\tAlt+F8") :
-    ct_sh ? _W("&Reset\tCtrl+Shift+R") : _W("&Reset")
+  modify_menu(ctxmenu, IDM_RESET, 0, _W("&Reset"),
+    alt_fn ? W("Alt+F8") : ct_sh ? W("Ctrl+Shift+R") : null
   );
 
   uint defsize_enabled =
     IsZoomed(wnd) || term.cols != cfg.cols || term.rows != cfg.rows
     ? MF_ENABLED : MF_GRAYED;
-  ModifyMenuW(
-    ctxmenu, IDM_DEFSIZE_ZOOM, defsize_enabled, IDM_DEFSIZE_ZOOM,
-    alt_fn ? _W("&Default size\tAlt+F10") :
-    ct_sh ? _W("&Default size\tCtrl+Shift+D") : _W("&Default size")
+  modify_menu(ctxmenu, IDM_DEFSIZE_ZOOM, defsize_enabled, _W("&Default Size"),
+    alt_fn ? W("Alt+F10") : ct_sh ? W("Ctrl+Shift+D") : null
   );
 
   uint fullscreen_checked = win_is_fullscreen ? MF_CHECKED : MF_UNCHECKED;
-  ModifyMenuW(
-    ctxmenu, IDM_FULLSCREEN_ZOOM, fullscreen_checked, IDM_FULLSCREEN_ZOOM,
-    alt_fn ? _W("&Full Screen\tAlt+F11") :
-    ct_sh ? _W("&Full Screen\tCtrl+Shift+F") : _W("&Full Screen")
+  modify_menu(ctxmenu, IDM_FULLSCREEN_ZOOM, fullscreen_checked, _W("&Full Screen"),
+    alt_fn ? W("Alt+F11") : ct_sh ? W("Ctrl+Shift+F") : null
   );
 
   uint otherscreen_checked = term.show_other_screen ? MF_CHECKED : MF_UNCHECKED;
-  ModifyMenuW(
-    ctxmenu, IDM_FLIPSCREEN, otherscreen_checked, IDM_FLIPSCREEN,
-    alt_fn ? _W("Flip &Screen\tAlt+F12") :
-    ct_sh ? _W("Flip &Screen\tCtrl+Shift+S") : _W("Flip &Screen")
+  modify_menu(ctxmenu, IDM_FLIPSCREEN, otherscreen_checked, _W("Flip &Screen"),
+    alt_fn ? W("Alt+F12") : ct_sh ? W("Ctrl+Shift+S") : null
   );
 
   uint options_enabled = config_wnd ? MF_GRAYED : MF_ENABLED;
   EnableMenuItem(ctxmenu, IDM_OPTIONS, options_enabled);
   EnableMenuItem(sysmenu, IDM_OPTIONS, options_enabled);
+
+  // refresh remaining labels to facilitate (changed) localization
+  modify_menu(sysmenu, IDM_COPYTITLE, 0, _W("Copy &Title"), null);
+  modify_menu(sysmenu, IDM_OPTIONS, 0, _W("&Options..."), null);
 }
 
 static void
 win_init_ctxmenu(void)
 {
+#ifdef debug_modify_menu
+  printf("win_init_ctxmenu\n");
+#endif
   ctxmenu = CreatePopupMenu();
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_OPEN, _W("Ope&n"));
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
@@ -151,6 +236,9 @@ win_init_ctxmenu(void)
 void
 win_init_menus(void)
 {
+#ifdef debug_modify_menu
+  printf("win_init_menus\n");
+#endif
   win_init_ctxmenu();
 
   sysmenu = GetSystemMenu(wnd, false);
