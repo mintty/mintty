@@ -6,6 +6,7 @@
 #include "winpriv.h"
 #include "charset.h"
 #include "child.h"
+#include "res.h"  // DIALOG_CLASS
 
 #include <winnls.h>
 #include <richedit.h>
@@ -655,13 +656,13 @@ dt_drop(IDropTarget *this, IDataObject *obj,
     char cn[10];
     HWND widget = null;
     // find the SendMessage target window
-    while (h && (GetClassName(h, cn, sizeof cn), strcmp(cn, "ConfigBox") != 0)) {
+    while (h && (GetClassName(h, cn, sizeof cn), strcmp(cn, DIALOG_CLASS) != 0)) {
 #ifdef debug_dragndrop
       printf("%8p (%s) ", h, cn);
 #endif
       // pick up the actual drag-and-drop target widget
       if (strcmp(cn, "ComboBox") == 0 || strcmp(cn, "Button") == 0)
-        widget = h;  // or unconditionally use the last before ConfigBox?
+        widget = h;  // or unconditionally use the last before DIALOG_CLASS?
       h = GetParent(h);
     }
 #ifdef debug_dragndrop
@@ -682,7 +683,7 @@ dt_drop(IDropTarget *this, IDataObject *obj,
 
     wchar * drop = paste_dialog(data, dt_format.cfFormat);
     if (drop) {
-      // this will only work with the "ConfigBox" target
+      // this will only work with the DIALOG_CLASS target
       SendMessage(h, WM_USER, (WPARAM)widget, (LPARAM)drop);
       free(drop);
     }

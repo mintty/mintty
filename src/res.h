@@ -12,6 +12,7 @@
 #define DIALOG_HEIGHT 182
 
 #define DIALOG_TITLE "Options"
+#define DIALOG_CLASS "ConfigBox"
 
 #define DIALOG_FONT "MS Shell Dlg"
 //#define DIALOG_FONT "Tahoma"
