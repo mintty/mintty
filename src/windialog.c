@@ -11,14 +11,11 @@
 #include "res.h"
 #include "appinfo.h"
 
-#define Unicode_TreeView_does_not_work
-
 #include "charset.h"  // nonascii, cs__utftowcs
+extern void setup_config_box(controlbox *);
 
 #include <commctrl.h>
 
-
-void setup_config_box(controlbox *);
 
 /*
  * windlg.c - Dialogs, including the configuration dialog.
@@ -62,11 +59,6 @@ treeview_insert(treeview_faff * faff, int level, char *text, char *path)
   HTREEITEM newitem;
 
   if (nonascii(path)) {
-#ifdef Unicode_TreeView
-    // Using this variant for Unicode TreeView entries should enable 
-    // their proper display in the treeview, but it does not work,
-    // the label is handled as ANSI string anyway
-#endif
     wchar * utext = cs__utftowcs(text);
     TVINSERTSTRUCTW ins;
     ins.hParent = (level > 0 ? faff->lastat[level - 1] : TVI_ROOT);
@@ -75,7 +67,8 @@ treeview_insert(treeview_faff * faff, int level, char *text, char *path)
     ins.item.pszText = utext;
     //ins.item.cchTextMax = wcslen(utext) + 1;  // ignored when setting
     ins.item.lParam = (LPARAM) path;
-    newitem = (HTREEITEM)SendMessageW(faff->treeview, TVM_INSERTITEM, 0, (LPARAM)&ins);
+    // It is essential to also use TVM_INSERTITEMW here!
+    newitem = (HTREEITEM)SendMessageW(faff->treeview, TVM_INSERTITEMW, 0, (LPARAM)&ins);
     //TreeView_SetUnicodeFormat((HWND)newitem, TRUE);  // does not work
     free(utext);
   }
@@ -213,21 +206,11 @@ static struct {
       MapDialogRect(wnd, &r);
       HWND treeview =
         CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, "",
-#ifdef Unicode_TreeView
-                       // this doesn't have any effect
-                       SS_OWNERDRAW |
-#endif
                        WS_CHILD | WS_VISIBLE | WS_TABSTOP | TVS_HASLINES |
                        TVS_DISABLEDRAGDROP | TVS_HASBUTTONS | TVS_LINESATROOT
                        | TVS_SHOWSELALWAYS, r.left, r.top, r.right - r.left,
                        r.bottom - r.top, wnd, (HMENU) IDCX_TREEVIEW, inst,
                        null);
-#ifdef Unicode_TreeView
-      // the impact of this property is hardly described;
-      // it does not fix the treeview Unicode display failure
-      // but it prevents the panels from being selected
-      //TreeView_SetUnicodeFormat(treeview, TRUE);
-#endif
       WPARAM font = SendMessage(wnd, WM_GETFONT, 0, 0);
       SendMessage(treeview, WM_SETFONT, font, MAKELPARAM(true, 0));
       treeview_faff tvfaff;
@@ -279,12 +262,6 @@ static struct {
         */
         TreeView_SelectItem(treeview, hfirst);
       }
-
-#ifdef Unicode_TreeView
-      // with TreeView_SetUnicodeFormat(treeview, TRUE):
-      // the loop below is empty
-      // WM_NOTIFY is not triggered
-#endif
 
      /*
       * Set focus into the first available control.
@@ -398,7 +375,7 @@ win_open_config(void)
       .hCursor = LoadCursor(null, IDC_ARROW),
       .hbrBackground = (HBRUSH)(COLOR_BACKGROUND + 1),
       .lpszMenuName = null,
-      .lpszClassName = "ConfigBox"
+      .lpszClassName = DIALOG_CLASS
     });
     initialised = true;
   }

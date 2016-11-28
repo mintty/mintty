@@ -8,8 +8,8 @@ Character display:
 
 Configuration
   * Simplified menu item localization (#537).
-  * Facilitating localization of system menu standard items (#537).
-  * Added Options menu labels to prepare for localization (#537) even if they don't work.
+  * Enabled localization of Options tree menu labels (#537).
+  * Enabled localization of system menu standard items (#537).
 
 ### 2.7.0 (13 Nov 2016) ###
 
