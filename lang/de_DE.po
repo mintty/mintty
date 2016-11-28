@@ -580,19 +580,19 @@ msgstr "&Wiederherstellen"
 
 #: wininput.c:152
 msgid "&Move"
-msgstr "&Bewegen"
+msgstr "&Verschieben"
 
 #: wininput.c:153
 msgid "&Size"
-msgstr "&Größe"
+msgstr "&Größe ändern"
 
 #: wininput.c:154
 msgid "Mi&nimize"
-msgstr "Ver&kleinern"
+msgstr "Mi&nimieren"
 
 #: wininput.c:155
 msgid "Ma&ximize"
-msgstr "Vergr&ößern"
+msgstr "Ma&ximieren"
 
 #: wininput.c:156
 msgid "&Close"
