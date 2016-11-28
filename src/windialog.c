@@ -149,6 +149,22 @@ determine_geometry(HWND wnd)
 
 #define dont_debug_messages
 
+static char * debug = "none";
+
+static void
+sigsegv(int sig)
+{
+  printf("catch %d: %s\n", sig, debug);
+  signal(sig, SIG_DFL);
+}
+
+static void
+crashtest()
+{
+  char * x0 = 0;
+  *x0 = 'x';
+}
+
 /*
  * This function is the configuration box.
  * (Being a dialog procedure, in general it returns 0 if the default
@@ -164,13 +180,19 @@ static struct {
 } wm_names[] = {
 #include "_wm.t"
 };
-  char * wm_name = "WM_?";
-  for (uint i = 0; i < lengthof(wm_names); i++)
-    if (msg == wm_names[i].wm_) {
-      wm_name = wm_names[i].wm_name;
-      break;
-    }
-  printf("[%d] dialog_proc %04X %s (%04X %08X)\n", (int)time(0), msg, wm_name, (unsigned)wParam, (unsigned)lParam);
+  if (msg != WM_SETCURSOR && msg != WM_NCHITTEST && msg != WM_MOUSEFIRST
+      && msg != WM_ERASEBKGND && msg != WM_CTLCOLORDLG && msg != WM_PRINTCLIENT && msg != WM_CTLCOLORBTN
+
+      && (msg != WM_NOTIFY || (LOWORD(wParam) == IDCX_TREEVIEW && ((LPNMHDR) lParam)->code == TVN_SELCHANGED))
+     ) {
+    char * wm_name = "WM_?";
+    for (uint i = 0; i < lengthof(wm_names); i++)
+      if (msg == wm_names[i].wm_) {
+        wm_name = wm_names[i].wm_name;
+        break;
+      }
+    printf("[%d] dialog_proc %04X %s (%04X %08X)\n", (int)time(0), msg, wm_name, (unsigned)wParam, (unsigned)lParam);
+  }
 #endif
   switch (msg) {
     when WM_INITDIALOG: {
@@ -280,16 +302,23 @@ static struct {
       ctrl_free_box(ctrlbox);
       config_wnd = 0;
 
+      signal(SIGSEGV, SIG_DFL);
+
+    when WM_CLOSE:
+      DestroyWindow(wnd);
+
     when WM_NOTIFY: {
       if (LOWORD(wParam) == IDCX_TREEVIEW &&
           ((LPNMHDR) lParam)->code == TVN_SELCHANGED) {
+debug = "WM_NOTIFY";
         HTREEITEM i = TreeView_GetSelection(((LPNMHDR) lParam)->hwndFrom);
+debug = "WM_NOTIFY: GetSelection";
 
         TVITEM item;
         char buffer[64];
         item.hItem = i;
         item.pszText = buffer;
-        item.cchTextMax = sizeof (buffer);
+        item.cchTextMax = lengthof(buffer);
         item.mask = TVIF_TEXT | TVIF_PARAM;
         TreeView_GetItem(((LPNMHDR) lParam)->hwndFrom, &item);
 
@@ -301,25 +330,30 @@ static struct {
               DestroyWindow(item);
           }
         }
+debug = "WM_NOTIFY: Destroy";
         winctrl_cleanup(&ctrls_panel);
+debug = "WM_NOTIFY: cleanup";
 
         // here we need the correct DIALOG_HEIGHT already
         create_controls(wnd, (char *) item.lParam);
+debug = "WM_NOTIFY: create";
         dlg_refresh(null); /* set up control values */
+debug = "WM_NOTIFY: refresh";
       }
     }
 
-    when WM_CLOSE:
-      DestroyWindow(wnd);
-
     when WM_COMMAND or WM_DRAWITEM: {
+debug = "WM_COMMAND";
       int ret = winctrl_handle_command(msg, wParam, lParam);
+debug = "WM_COMMAND: handle";
       if (dlg.ended)
         DestroyWindow(wnd);
+debug = "WM_COMMAND: Destroy";
       return ret;
     }
 
     when WM_USER: {
+debug = "WM_USER";
       HWND target = (HWND)wParam;
       // could delegate this to winctrls.c, like winctrl_handle_command;
       // but then we'd have to fiddle with the location of dragndrop
@@ -341,11 +375,13 @@ static struct {
             }
         }
       }
+debug = "WM_USER: lookup";
       if (ctrl) {
         //dlg_editbox_set_w(ctrl, L"Test");  // may hit unrelated items...
         // drop the drag-and-drop contents here
         dragndrop = (wstring)lParam;
         ctrl->handler(ctrl, EVENT_DROP);
+debug = "WM_USER: handler";
       }
     }
   }
@@ -359,6 +395,8 @@ win_open_config(void)
 {
   if (config_wnd)
     return;
+
+  signal(SIGSEGV, sigsegv);
 
   set_dpi_auto_scaling(true);
 
