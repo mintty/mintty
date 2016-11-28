@@ -574,6 +574,11 @@ are looked up in the resource configuration folders, subfolder `lang`.
 Mintty uses a simplified `gettext` file format but not the `gettext` library;
 all messages must be encoded in UTF-8, the Content-Type charset is ignored.
 
+Note that Windows may already have localized the default entries of the 
+system menu, which makes the system menu language inconsistent because 
+mintty adds a few items here. Choose `Language=en` to 
+“reverse-localize” this.
+
 
 ## Running mintty stand-alone ##
 

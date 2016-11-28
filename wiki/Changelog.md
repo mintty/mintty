@@ -10,6 +10,7 @@ Configuration
   * Simplified menu item localization (#537).
   * Enabled localization of Options tree menu labels (#537).
   * Enabled localization of system menu standard items (#537).
+  * Support reverse-localization of Windows-localized menu entries with Language=en.
 
 ### 2.7.0 (13 Nov 2016) ###
 

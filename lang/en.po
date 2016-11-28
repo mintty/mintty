@@ -1,0 +1,24 @@
+#: wininput.c:151
+msgid "&Restore"
+msgstr "&Restore"
+
+#: wininput.c:152
+msgid "&Move"
+msgstr "&Move"
+
+#: wininput.c:153
+msgid "&Size"
+msgstr "&Size"
+
+#: wininput.c:154
+msgid "Mi&nimize"
+msgstr "Mi&nimize"
+
+#: wininput.c:155
+msgid "Ma&ximize"
+msgstr "Ma&ximize"
+
+#: wininput.c:156
+msgid "&Close"
+msgstr "&Close"
+
