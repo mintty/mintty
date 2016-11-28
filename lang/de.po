@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-11-25 17:08+0100\n"
+"POT-Creation-Date: 2016-11-28 14:09+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -558,7 +558,7 @@ msgstr "Vor &Schließen nach laufenden Prozessen fragen"
 msgid "[Printing...] "
 msgstr "[Druckt...] "
 
-#: windialog.c:416
+#: windialog.c:393
 msgid "Options"
 msgstr "Optionen"
 
