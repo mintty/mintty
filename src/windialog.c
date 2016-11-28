@@ -158,7 +158,7 @@ sigsegv(int sig)
   signal(sig, SIG_DFL);
 }
 
-static void
+inline static void
 crashtest()
 {
   char * x0 = 0;
