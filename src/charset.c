@@ -197,12 +197,12 @@ init_locale_menu(void)
     char locale[18];  // max 9 (incl NUL) per GetLocaleInfo + '_'
       // https://msdn.microsoft.com/en-us/library/windows/desktop/dd373848%28v=vs.85%29.aspx
 
-    int lang_len = GetLocaleInfo(lcid, LOCALE_SISO639LANGNAME,
-                                 locale, sizeof locale);
+    int lang_len = GetLocaleInfoA(lcid, LOCALE_SISO639LANGNAME,
+                                  locale, sizeof locale);
     if (!lang_len)
       return;
-    if (GetLocaleInfo(lcid, LOCALE_SISO3166CTRYNAME,
-                      locale + lang_len, sizeof locale - lang_len))
+    if (GetLocaleInfoA(lcid, LOCALE_SISO3166CTRYNAME,
+                       locale + lang_len, sizeof locale - lang_len))
       locale[lang_len - 1] = '_';
 
     add_lc(locale);

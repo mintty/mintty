@@ -547,7 +547,7 @@ win_init_fonts(int size)
     SetTextColor(und_dc, RGB(255, 255, 255));
     SetBkColor(und_dc, RGB(0, 0, 0));
     SetBkMode(und_dc, OPAQUE);
-    ExtTextOut(und_dc, 0, 0, ETO_OPAQUE, null, " ", 1, null);
+    ExtTextOutA(und_dc, 0, 0, ETO_OPAQUE, null, " ", 1, null);
 
     bool gotit = false;
     // look for font-generated underline in character cell

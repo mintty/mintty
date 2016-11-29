@@ -16,9 +16,29 @@ extern void setup_config_box(controlbox *);
 
 #include <commctrl.h>
 
+#define debug_dialog_crash
+
+#ifdef debug_dialog_crash
+#include <signal.h>
+#endif
+
 
 /*
  * windlg.c - Dialogs, including the configuration dialog.
+
+   To make the TreeView widget work with Unicode support, 
+   it is particularly essential to use message TVM_INSERTITEMW 
+   to insert a TVINSERTSTRUCTW.
+
+   To document a minimum set of Unicode-enabled API usage as could be 
+   identified, some calls below are explicitly maintained in "ANSI" mode:
+     RegisterClassA	would work for the TreeView
+     RegisterClassW	needed if UNICODE defined for proper window title
+     CreateDialogW	must be "W" if UNICODE is defined
+     CreateWindowExA	works
+   The TreeView_ macros are implicitly mapped to either "A" or "W", 
+   so to use TreeView_InsertItem in either mode, it needs to be expanded 
+   to SendMessageA/SendMessageW.
  */
 
 /*
@@ -73,14 +93,15 @@ treeview_insert(treeview_faff * faff, int level, char *text, char *path)
     free(utext);
   }
   else {
-    TVINSERTSTRUCT ins;
+    TVINSERTSTRUCTA ins;
     ins.hParent = (level > 0 ? faff->lastat[level - 1] : TVI_ROOT);
     ins.hInsertAfter = faff->lastat[level];
     ins.item.mask = TVIF_TEXT | TVIF_PARAM;
     ins.item.pszText = text;
     //ins.item.cchTextMax = strlen(text) + 1;  // ignored when setting
     ins.item.lParam = (LPARAM) path;
-    newitem = TreeView_InsertItem(faff->treeview, &ins);
+    //newitem = TreeView_InsertItem(faff->treeview, &ins);
+    newitem = (HTREEITEM)SendMessageA(faff->treeview, TVM_INSERTITEMA, 0, (LPARAM)&ins);
   }
 
   if (level > 0)
@@ -149,12 +170,14 @@ determine_geometry(HWND wnd)
 
 #define dont_debug_messages
 
-static char * debug = "none";
+#ifdef debug_dialog_crash
+
+static char * debugtag = "none";
 
 static void
 sigsegv(int sig)
 {
-  printf("catch %d: %s\n", sig, debug);
+  printf("catch %d: %s\n", sig, debugtag);
   signal(sig, SIG_DFL);
 }
 
@@ -164,6 +187,12 @@ crashtest()
   char * x0 = 0;
   *x0 = 'x';
 }
+
+# define debug(tag)	debugtag = tag
+
+#else
+# define debug(tag)	
+#endif
 
 /*
  * This function is the configuration box.
@@ -227,7 +256,7 @@ static struct {
       r.bottom = r.top + DIALOG_HEIGHT - 26;
       MapDialogRect(wnd, &r);
       HWND treeview =
-        CreateWindowEx(WS_EX_CLIENTEDGE, WC_TREEVIEW, "",
+        CreateWindowExA(WS_EX_CLIENTEDGE, WC_TREEVIEWA, "",
                        WS_CHILD | WS_VISIBLE | WS_TABSTOP | TVS_HASLINES |
                        TVS_DISABLEDRAGDROP | TVS_HASBUTTONS | TVS_LINESATROOT
                        | TVS_SHOWSELALWAYS, r.left, r.top, r.right - r.left,
@@ -302,7 +331,9 @@ static struct {
       ctrl_free_box(ctrlbox);
       config_wnd = 0;
 
+#ifdef debug_dialog_crash
       signal(SIGSEGV, SIG_DFL);
+#endif
 
     when WM_CLOSE:
       DestroyWindow(wnd);
@@ -310,12 +341,12 @@ static struct {
     when WM_NOTIFY: {
       if (LOWORD(wParam) == IDCX_TREEVIEW &&
           ((LPNMHDR) lParam)->code == TVN_SELCHANGED) {
-debug = "WM_NOTIFY";
+        debug("WM_NOTIFY");
         HTREEITEM i = TreeView_GetSelection(((LPNMHDR) lParam)->hwndFrom);
-debug = "WM_NOTIFY: GetSelection";
+        debug("WM_NOTIFY: GetSelection");
 
         TVITEM item;
-        char buffer[64];
+        TCHAR buffer[64];
         item.hItem = i;
         item.pszText = buffer;
         item.cchTextMax = lengthof(buffer);
@@ -330,30 +361,31 @@ debug = "WM_NOTIFY: GetSelection";
               DestroyWindow(item);
           }
         }
-debug = "WM_NOTIFY: Destroy";
+        debug("WM_NOTIFY: Destroy");
         winctrl_cleanup(&ctrls_panel);
-debug = "WM_NOTIFY: cleanup";
+        debug("WM_NOTIFY: cleanup");
 
         // here we need the correct DIALOG_HEIGHT already
         create_controls(wnd, (char *) item.lParam);
-debug = "WM_NOTIFY: create";
+        debug("WM_NOTIFY: create");
         dlg_refresh(null); /* set up control values */
-debug = "WM_NOTIFY: refresh";
+        debug("WM_NOTIFY: refresh");
       }
     }
 
     when WM_COMMAND or WM_DRAWITEM: {
-debug = "WM_COMMAND";
+      debug("WM_COMMAND");
       int ret = winctrl_handle_command(msg, wParam, lParam);
-debug = "WM_COMMAND: handle";
-      if (dlg.ended)
+      debug("WM_COMMAND: handle");
+      if (dlg.ended) {
         DestroyWindow(wnd);
-debug = "WM_COMMAND: Destroy";
+        debug("WM_COMMAND: Destroy");
+      }
       return ret;
     }
 
     when WM_USER: {
-debug = "WM_USER";
+      debug("WM_USER");
       HWND target = (HWND)wParam;
       // could delegate this to winctrls.c, like winctrl_handle_command;
       // but then we'd have to fiddle with the location of dragndrop
@@ -375,13 +407,13 @@ debug = "WM_USER";
             }
         }
       }
-debug = "WM_USER: lookup";
+      debug("WM_USER: lookup");
       if (ctrl) {
         //dlg_editbox_set_w(ctrl, L"Test");  // may hit unrelated items...
         // drop the drag-and-drop contents here
         dragndrop = (wstring)lParam;
         ctrl->handler(ctrl, EVENT_DROP);
-debug = "WM_USER: handler";
+        debug("WM_USER: handler");
       }
     }
   }
@@ -396,7 +428,9 @@ win_open_config(void)
   if (config_wnd)
     return;
 
+#ifdef debug_dialog_crash
   signal(SIGSEGV, sigsegv);
+#endif
 
   set_dpi_auto_scaling(true);
 
@@ -413,7 +447,7 @@ win_open_config(void)
       .hCursor = LoadCursor(null, IDC_ARROW),
       .hbrBackground = (HBRUSH)(COLOR_BACKGROUND + 1),
       .lpszMenuName = null,
-      .lpszClassName = DIALOG_CLASS
+      .lpszClassName = S(DIALOG_CLASS)
     });
     initialised = true;
   }
@@ -475,7 +509,7 @@ win_show_msg(char * msg, UINT type)
     free(wmsg);
   }
   else
-    MessageBox(0, msg, 0, type);
+    MessageBoxA(0, msg, 0, type);
 }
 
 void

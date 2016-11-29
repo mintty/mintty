@@ -11,6 +11,8 @@ static COLORREF tip_bg;
 static COLORREF tip_text;
 static HWND tip_wnd;
 
+static char sizetip[32] = "";
+
 static LRESULT CALLBACK
 tip_proc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -21,11 +23,12 @@ tip_proc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
     when WM_ERASEBKGND: return true;
     when WM_NCHITTEST:  return HTTRANSPARENT;
     when WM_SETTEXT: {
-      LPCTSTR str = (LPCTSTR) lParam;
+      //LPCTSTR str = (LPCTSTR) lParam;
+      string str = (string) lParam;
       HDC dc = CreateCompatibleDC(null);
       SelectObject(dc, tip_font);
       SIZE sz;
-      GetTextExtentPoint32(dc, str, strlen(str), &sz);
+      GetTextExtentPoint32A(dc, str, strlen(str), &sz);
       SetWindowPos(hWnd, null, 0, 0, sz.cx + 6, sz.cy + 6,
                    SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
       InvalidateRect(hWnd, null, false);
@@ -45,14 +48,20 @@ tip_proc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
       GetClientRect(hWnd, &cr);
       Rectangle(dc, cr.left, cr.top, cr.right, cr.bottom);
 
-      int wtlen = GetWindowTextLength(hWnd);
-      TCHAR wt[wtlen + 1];
-      GetWindowText(hWnd, wt, wtlen + 1);
-
       SetTextColor(dc, tip_text);
       SetBkColor(dc, tip_bg);
 
-      TextOut(dc, cr.left + 3, cr.top + 3, wt, wtlen);
+#ifdef strange_detour
+#ifdef UNICODE
+#warning second number (rows) will sometimes be stripped for unknown reason
+#endif
+      int wtlen = GetWindowTextLength(hWnd);
+      char wt[wtlen + 1];
+      GetWindowTextA(hWnd, wt, wtlen + 1);
+      TextOutA(dc, cr.left + 3, cr.top + 3, wt, wtlen);
+#else
+      TextOutA(dc, cr.left + 3, cr.top + 3, sizetip, strlen(sizetip));
+#endif
 
       SelectObject(dc, holdbr);
       DeleteObject(hbr);
@@ -72,7 +81,7 @@ win_show_tip(int x, int y, int cols, int rows)
 
    /* First make sure the window class is registered */
     if (!tip_class) {
-      WNDCLASS wc;
+      WNDCLASSA wc;
       wc.style = CS_HREDRAW | CS_VREDRAW;
       wc.lpfnWndProc = tip_proc;
       wc.cbClsExtra = 0;
@@ -83,7 +92,7 @@ win_show_tip(int x, int y, int cols, int rows)
       wc.hbrBackground = null;
       wc.lpszMenuName = null;
       wc.lpszClassName = "SizeTipClass";
-      tip_class = RegisterClass(&wc);
+      tip_class = RegisterClassA(&wc);
     }
 
    /* Prepare other GDI objects and drawing info */
@@ -95,9 +104,9 @@ win_show_tip(int x, int y, int cols, int rows)
                          &nci, 0);
     tip_font = CreateFontIndirect(&nci.lfStatusFont);
     tip_wnd =
-      CreateWindowEx(WS_EX_TOOLWINDOW | WS_EX_TOPMOST,
-                     MAKEINTRESOURCE(tip_class), null, WS_POPUP, x, y, 1, 1,
-                     null, null, inst, null);
+      CreateWindowExA(WS_EX_TOOLWINDOW | WS_EX_TOPMOST,
+                      MAKEINTRESOURCEA(tip_class), null, WS_POPUP, x, y, 1, 1,
+                      null, null, inst, null);
     ShowWindow(tip_wnd, SW_SHOWNOACTIVATE);
   }
   else {
@@ -105,9 +114,10 @@ win_show_tip(int x, int y, int cols, int rows)
                    SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
   }
 
-  char str[32];
-  sprintf(str, "%dx%d", cols, rows);
-  SetWindowText(tip_wnd, str);
+  sprintf(sizetip, "%dx%d", cols, rows);
+  // even if this text is not used anymore, 
+  // apparently the call is needed to trigger WM_PAINT:
+  SetWindowTextA(tip_wnd, sizetip);
 }
 
 void

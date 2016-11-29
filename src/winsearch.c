@@ -223,7 +223,7 @@ win_toggle_search(bool show, bool focus)
   // Set up our global variables.
   if (!search_initialised || height != prev_height) {
     if (!search_initialised)
-      RegisterClass(&(WNDCLASS){
+      RegisterClassA(&(WNDCLASSA){
         .style = 0,
         .lpfnWndProc = search_proc,
         .cbClsExtra = 0,
@@ -239,7 +239,7 @@ win_toggle_search(bool show, bool focus)
       DestroyWindow(search_wnd);
     }
 
-    search_wnd = CreateWindowEx(0, SEARCHBARCLASS, "", WS_CHILD, 0, 0, 0, 0, wnd, 0, inst, NULL);
+    search_wnd = CreateWindowExA(0, SEARCHBARCLASS, "", WS_CHILD, 0, 0, 0, 0, wnd, 0, inst, NULL);
 
     //__ label of search bar close button; not actually "localization"
     search_close_wnd = CreateWindowExW(0, W("BUTTON"), _W("X"), WS_CHILD | WS_VISIBLE,
@@ -253,7 +253,7 @@ win_toggle_search(bool show, bool focus)
     search_next_wnd = CreateWindowExW(0, W("BUTTON"), _W("▶"), WS_CHILD | WS_VISIBLE,
                                      pos_next, margin, button_width, ctrl_height,
                                      search_wnd, NULL, inst, NULL);
-    search_edit_wnd = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
+    search_edit_wnd = CreateWindowExA(WS_EX_CLIENTEDGE, "EDIT", "", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
                                      0, 0, 0, 0,
                                      search_wnd, NULL, inst, NULL);
 

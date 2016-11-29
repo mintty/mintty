@@ -64,7 +64,7 @@ win_open(wstring wpath)
     if (conv_wpath)
       shell_exec(conv_wpath);
     else
-      MessageBox(0, strerror(errno), 0, MB_ICONERROR);
+      MessageBoxA(0, strerror(errno), 0, MB_ICONERROR);
   }
 }
 
@@ -656,7 +656,7 @@ dt_drop(IDropTarget *this, IDataObject *obj,
     char cn[10];
     HWND widget = null;
     // find the SendMessage target window
-    while (h && (GetClassName(h, cn, sizeof cn), strcmp(cn, DIALOG_CLASS) != 0)) {
+    while (h && (GetClassNameA(h, cn, sizeof cn), strcmp(cn, DIALOG_CLASS) != 0)) {
 #ifdef debug_dragndrop
       printf("%8p (%s) ", h, cn);
 #endif

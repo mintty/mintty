@@ -110,11 +110,11 @@ static HMODULE
 load_sys_library(string name)
 {
   char path[MAX_PATH];
-  uint len = GetSystemDirectory(path, MAX_PATH);
+  uint len = GetSystemDirectoryA(path, MAX_PATH);
   if (len && len + strlen(name) + 1 < MAX_PATH) {
     path[len] = '\\';
     strcpy(&path[len + 1], name);
-    return LoadLibrary(path);
+    return LoadLibraryA(path);
   }
   else
     return 0;

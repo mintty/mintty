@@ -86,8 +86,8 @@ doctl(control * ctrl,
   */
   if (cp->wnd) {
     ctl =
-      CreateWindowEx(exstyle, wclass, wtext, wstyle, r.left, r.top, r.right,
-                     r.bottom, cp->wnd, (HMENU)(INT_PTR)wid, inst, null);
+      CreateWindowExA(exstyle, wclass, wtext, wstyle, r.left, r.top, r.right,
+                      r.bottom, cp->wnd, (HMENU)(INT_PTR)wid, inst, null);
     if (nonascii(wtext)) {
       // transform label for proper Windows display
       wchar * us = cs__utftowcs(wtext);
@@ -1007,7 +1007,7 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
 
     SetMapMode(dc, MM_TEXT);   /* ensure logical units == pixels */
 
-    GetTextExtentPoint32(dc, (char *) c->data, strlen((char *) c->data), &s);
+    GetTextExtentPoint32A(dc, (char *) c->data, strlen((char *) c->data), &s);
     DrawEdge(dc, &r, EDGE_ETCHED, BF_ADJUST | BF_RECT);
     string text = (string) c->data;
     if (nonascii(text)) {
@@ -1019,8 +1019,8 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
       free(us);
     }
     else
-      TextOut(dc, r.left + (r.right - r.left - s.cx) / 2,
-              r.top + (r.bottom - r.top - s.cy) / 2, text, strlen(text));
+      TextOutA(dc, r.left + (r.right - r.left - s.cx) / 2,
+               r.top + (r.bottom - r.top - s.cy) / 2, text, strlen(text));
 
     return true;
   }
@@ -1215,7 +1215,7 @@ dlg_editbox_set(control *ctrl, string text)
 
   winctrl *c = ctrl->plat_ctrl;
   assert(c && c->ctrl->type == CTRL_EDITBOX);
-  SetDlgItemText(dlg.wnd, c->base_id + 1, text);
+  SetDlgItemTextA(dlg.wnd, c->base_id + 1, text);
 }
 
 void
@@ -1260,7 +1260,7 @@ dlg_editbox_get(control *ctrl, string *text_p)
   int size = GetWindowTextLength(wnd) + 1;
   char *text = (char *)*text_p;
   text = renewn(text, size);
-  GetWindowText(wnd, text, size);
+  GetWindowTextA(wnd, text, size);
   *text_p = text;
 }
 
@@ -1410,7 +1410,7 @@ dlg_fontsel_set(control *ctrl, font_spec *fs)
              fs->size < 0 ? "px" : "pt")
     : asform("%s, %sdefault size", fn, boldstr);
   free(fn);
-  SetDlgItemText(dlg.wnd, c->base_id + 1, buf);
+  SetDlgItemTextA(dlg.wnd, c->base_id + 1, buf);
   free(buf);
 #endif
 }
