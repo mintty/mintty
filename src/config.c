@@ -92,7 +92,7 @@ const config default_cfg = {
   .scrollback_lines = 10000,
   .scroll_mod = MDK_SHIFT,
   .pgupdn_scroll = false,
-  .lang = "",
+  .lang = W(""),
   .search_bar = "",
   // Terminal
   .term = "xterm",
@@ -248,7 +248,7 @@ options[] = {
   {"Scrollbar", OPT_SCROLLBAR, offcfg(scrollbar)},
   {"ScrollMod", OPT_MOD, offcfg(scroll_mod)},
   {"PgUpDnScroll", OPT_BOOL, offcfg(pgupdn_scroll)},
-  {"Language", OPT_STRING, offcfg(lang)},
+  {"Language", OPT_WSTRING, offcfg(lang)},
   {"SearchBar", OPT_STRING, offcfg(search_bar)},
 
   // Terminal
@@ -904,16 +904,16 @@ load_messages_file(char * textdbf)
 }
 
 static bool
-load_messages_lang(string lang)
+load_messages_lang_w(wstring lang)
 {
   if (lang) {
-    char * lf = asform("%s.po", lang);
-    wchar * wl = cs__utftowcs(lf);
-    free(lf);
+    wchar * wl = newn(wchar, wcslen(lang) + 4);
+    wcscpy(wl, lang);
+    wcscat(wl, W(".po"));
     char * textdbf = get_resource_file(W("lang"), wl, false);
     free(wl);
 #ifdef debug_messages
-    printf("Trying to load messages from <%s>: <%s>\n", lang, textdbf);
+    printf("Trying to load messages from <%ls>: <%s>\n", lang, textdbf);
 #endif
     if (textdbf) {
       load_messages_file(textdbf);
@@ -924,15 +924,24 @@ load_messages_lang(string lang)
   return false;
 }
 
+static bool
+load_messages_lang(string lang)
+{
+  wchar * wlang = cs__utftowcs(lang);
+  bool res = load_messages_lang_w((wstring)wlang);
+  free(wlang);
+  return res;
+}
+
 static void
 load_messages(config * cfg_p)
 {
   if (cfg_p->lang) {
     clear_messages();
-    if (strcmp(cfg_p->lang, "=") == 0)
+    if (wcscmp(cfg_p->lang, W("=")) == 0)
       (void)load_messages_lang(cfg_p->locale);
-    else if (strcmp(cfg_p->lang, "*") != 0)
-      (void)load_messages_lang(cfg_p->lang);
+    else if (wcscmp(cfg_p->lang, W("*")) != 0)
+      (void)load_messages_lang_w(cfg_p->lang);
     else {
       // determine UI language from environment
       char * lang = getenv("LANGUAGE");
@@ -1102,7 +1111,7 @@ init_config(void)
 void
 finish_config(void)
 {
-  if (*cfg.lang && (strcmp(cfg.lang, "=") != 0 || *cfg.locale))
+  if (*cfg.lang && (wcscmp(cfg.lang, W("=")) != 0 || *cfg.locale))
     load_messages(&cfg);
 #if defined(debug_messages) && debug_messages > 1
   else
@@ -1232,8 +1241,8 @@ apply_config(bool save)
   }
 
   copy_config("apply", &file_cfg, &new_cfg);
-  if (strcmp(new_cfg.lang, cfg.lang) != 0
-      || (strcmp(new_cfg.lang, "=") == 0 && new_cfg.locale != cfg.locale)
+  if (wcscmp(new_cfg.lang, cfg.lang) != 0
+      || (wcscmp(new_cfg.lang, W("=")) == 0 && new_cfg.locale != cfg.locale)
      )
     load_messages(&new_cfg);
   win_reconfig();  // copy_config(&cfg, &new_cfg);
@@ -1455,9 +1464,10 @@ charset_handler(control *ctrl, int event)
 static void
 lang_handler(control *ctrl, int event)
 {
-  const wstring NONE = _W("◇ None ◇");
-  const wstring LOCALE = _W("◆ conf. Locale ◆");
-  const wstring LOCENV = _W("◆ locale env. ◆");
+  //__ UI language
+  const wstring NONE = _W("– None –");
+  const wstring LOCALE = _W("= conf'd Locale =");
+  const wstring LOCENV = _W("* locale envir. *");
   switch (event) {
     when EVENT_REFRESH:
       dlg_listbox_clear(ctrl);
@@ -1465,24 +1475,24 @@ lang_handler(control *ctrl, int event)
       dlg_listbox_add_w(ctrl, LOCALE);
       dlg_listbox_add_w(ctrl, LOCENV);
       add_file_resources(ctrl, W("lang/*.po"));
-      if (strcmp(new_cfg.lang, "") == 0)
+      if (wcscmp(new_cfg.lang, W("")) == 0)
         dlg_editbox_set_w(ctrl, NONE);
-      else if (strcmp(new_cfg.lang, "=") == 0)
+      else if (wcscmp(new_cfg.lang, W("=")) == 0)
         dlg_editbox_set_w(ctrl, LOCALE);
-      else if (strcmp(new_cfg.lang, "*") == 0)
+      else if (wcscmp(new_cfg.lang, W("*")) == 0)
         dlg_editbox_set_w(ctrl, LOCENV);
       else
-        dlg_editbox_set(ctrl, new_cfg.lang);
+        dlg_editbox_set_w(ctrl, new_cfg.lang);
     when EVENT_VALCHANGE or EVENT_SELCHANGE: {
       int n = dlg_listbox_getcur(ctrl);
       if (n == 0)
-        strset(&new_cfg.lang, "");
+        wstrset(&new_cfg.lang, W(""));
       else if (n == 1)
-        strset(&new_cfg.lang, "=");
+        wstrset(&new_cfg.lang, W("="));
       else if (n == 2)
-        strset(&new_cfg.lang, "*");
+        wstrset(&new_cfg.lang, W("*"));
       else
-        dlg_editbox_get(ctrl, &new_cfg.lang);
+        dlg_editbox_get_w(ctrl, &new_cfg.lang);
     }
   }
 }
@@ -1649,6 +1659,7 @@ download_scheme(char * url)
 static void
 theme_handler(control *ctrl, int event)
 {
+  //__ terminal theme / colour scheme
   const wstring NONE = _W("◇ None ◇");  // ♢◇
   const wstring CFG_NONE = W("");
   wstring theme_name = new_cfg.theme_file;

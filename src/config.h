@@ -100,7 +100,7 @@ typedef struct {
   char scrollbar;
   char scroll_mod;
   bool pgupdn_scroll;
-  string lang;
+  wstring lang;
   string search_bar;
   // Terminal
   string term;
