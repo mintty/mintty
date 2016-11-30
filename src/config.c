@@ -920,6 +920,13 @@ load_messages_lang_w(wstring lang)
       free(textdbf);
       return true;
     }
+    else {
+      wl = wcschr(lang, '_');
+      if (wl) {
+        *wl = '\0';
+        return load_messages_lang_w(lang);
+      }
+    }
   }
   return false;
 }

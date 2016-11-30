@@ -6,7 +6,8 @@ Character display:
   * Support for distinct colour attributes for combining characters.
   * Ensuring font underlining of separately drawn combined characters.
 
-Configuration
+Localization:
+  * Fallback from region-specific to generic translation ("fr_FR" -> "fr") (#537).
   * Simplified menu item localization (#537).
   * Enabled localization of Options tree menu labels (#537).
   * Enabled localization of system menu standard items (#537).
