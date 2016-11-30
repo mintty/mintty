@@ -89,7 +89,7 @@ printer_finish_job(void)
 
     // retrieve current value of `chcp`
     // which is not necessarily the same as GetOEMCP() !
-    FILE * chcpcom = popen ("chcp.com | sed -e 's,.*:,,' -e 's, ,,'", "r");
+    FILE * chcpcom = popen("chcp.com | sed -e 's,.*:,,' -e 's, ,,'", "r");
     char line[99];
     fgets(line, sizeof line, chcpcom);
     pclose(chcpcom);

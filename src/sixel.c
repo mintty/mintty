@@ -66,7 +66,7 @@ set_default_color(sixel_image_t *image)
     image->palette[n] = make_colour(255, 255, 255);
   }
 
-  return (0);
+  return 0;
 }
 
 static int

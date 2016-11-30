@@ -634,7 +634,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     // Window menu and fullscreen
     if (cfg.window_shortcuts && alt && !ctrl) {
       if (key == VK_RETURN) {
-        trace_resize (("--- Alt-Enter (shift %d)", shift));
+        trace_resize(("--- Alt-Enter (shift %d)", shift));
         send_syscommand(IDM_FULLSCREEN_ZOOM);
         return true;
       }
@@ -1134,7 +1134,7 @@ static struct {
   switch (key) {
     when VK_RETURN:
       if (!term.shortcut_override && cfg.window_shortcuts && alt && !ctrl) {
-        trace_resize (("--- Alt-Enter (shift %d)", shift));
+        trace_resize(("--- Alt-Enter (shift %d)", shift));
         send_syscommand(IDM_FULLSCREEN_ZOOM);
         return true;
       }

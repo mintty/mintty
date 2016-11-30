@@ -843,8 +843,8 @@ term_bidi_cache_store(int line, termchar *lbefore, termchar *lafter,
 
   memcpy(term.pre_bidi_cache[line].chars, lbefore, size * sizeof(termchar));
   memcpy(term.post_bidi_cache[line].chars, lafter, size * sizeof(termchar));
-  memset(term.post_bidi_cache[line].forward, 0, width * sizeof (int));
-  memset(term.post_bidi_cache[line].backward, 0, width * sizeof (int));
+  memset(term.post_bidi_cache[line].forward, 0, width * sizeof(int));
+  memset(term.post_bidi_cache[line].backward, 0, width * sizeof(int));
 
   for (i = 0; i < width; i++) {
     int p = wcTo[i].index;

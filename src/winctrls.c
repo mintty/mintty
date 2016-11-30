@@ -936,7 +936,7 @@ select_font(winctrl *c)
   }
 
   CHOOSEFONTW cf;
-  cf.lStructSize = sizeof (cf);
+  cf.lStructSize = sizeof(cf);
   cf.hwndOwner = dlg.wnd;
   cf.lpLogFont = &lf;
   cf.lpfnHook = fonthook;
@@ -1144,7 +1144,7 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
   if (dlg.coloursel_wanted) {
     static CHOOSECOLOR cc;
     static DWORD custom[16] = { 0 };    /* zero initialisers */
-    cc.lStructSize = sizeof (cc);
+    cc.lStructSize = sizeof(cc);
     cc.hwndOwner = dlg.wnd;
     cc.hInstance = (HWND) inst;
     cc.lpCustColors = custom;

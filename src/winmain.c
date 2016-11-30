@@ -378,7 +378,7 @@ get_monitor_info(int moni, MONITORINFO *mip)
   mip->cbSize = sizeof(MONITORINFO);
 
   BOOL CALLBACK
-  monitor_enum (HMONITOR hMonitor, HDC hdcMonitor, LPRECT monp, LPARAM dwData)
+  monitor_enum(HMONITOR hMonitor, HDC hdcMonitor, LPRECT monp, LPARAM dwData)
   {
     (void)hdcMonitor, (void)monp, (void)dwData;
 
@@ -2146,7 +2146,7 @@ main(int argc, char *argv[])
   {
     char timbuf [22];
     struct timeval now;
-    gettimeofday (& now, 0);
+    gettimeofday(& now, 0);
     strftime(timbuf, sizeof (timbuf), "%Y-%m-%d %H:%M:%S", localtime(& now.tv_sec));
     fprintf(mtlog, "[%s.%03d] %s\n", timbuf, (int)now.tv_usec / 1000, argv[0]);
     fflush(mtlog);

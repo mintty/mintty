@@ -116,7 +116,7 @@ brighten(colour c, colour against)
   // if we are closer to black than the contrast reference, rather darken
   bool darken = colour_dist(c, 0) < colour_dist(against, 0);
 #ifdef debug_brighten
-  printf ("%s %06X against %06X\n", darken ? "darkening" : "brighting", c, against);
+  printf("%s %06X against %06X\n", darken ? "darkening" : "brighting", c, against);
 #endif
 
   uint _brighter() {
@@ -136,24 +136,24 @@ brighten(colour c, colour against)
   if (darken) {
     bright = _darker();
 #ifdef debug_brighten
-    printf ("darker %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
+    printf("darker %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
 #endif
     if (colour_dist(bright, c) < thrsh || colour_dist(bright, against) < thrsh) {
       bright = _brighter();
 #ifdef debug_brighten
-      printf ("   fix %06X -> %06X dist %d/%d\n", c, bright, colour_dist(bright, c), colour_dist(bright, against));
+      printf("   fix %06X -> %06X dist %d/%d\n", c, bright, colour_dist(bright, c), colour_dist(bright, against));
 #endif
     }
   }
   else {
     bright = _brighter();
 #ifdef debug_brighten
-    printf ("lightr %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
+    printf("lightr %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
 #endif
     if (colour_dist(bright, c) < thrsh || colour_dist(bright, against) < thrsh) {
       bright = _darker();
 #ifdef debug_brighten
-      printf ("   fix %06X -> %06X dist %d/%d\n", c, bright, colour_dist(bright, c), colour_dist(bright, against));
+      printf("   fix %06X -> %06X dist %d/%d\n", c, bright, colour_dist(bright, c), colour_dist(bright, against));
 #endif
     }
   }
@@ -430,7 +430,7 @@ win_init_fonts(int size)
 
   fonts[FONT_NORMAL] = create_font(fw_norm, false);
 
-  GetObject(fonts[FONT_NORMAL], sizeof (LOGFONT), &lfont);
+  GetObject(fonts[FONT_NORMAL], sizeof(LOGFONT), &lfont);
   trace_font(("created font %s %ld it %d cs %d\n", lfont.lfFaceName, (long int)lfont.lfWeight, lfont.lfItalic, lfont.lfCharSet));
 
   SelectObject(dc, fonts[FONT_NORMAL]);
@@ -441,7 +441,7 @@ win_init_fonts(int size)
     show_font_warning(_("Font installation corrupt, using system substitute"));
     wstrset(&cfg.font.name, W(""));
     fonts[FONT_NORMAL] = create_font(fw_norm, false);
-    GetObject(fonts[FONT_NORMAL], sizeof (LOGFONT), &lfont);
+    GetObject(fonts[FONT_NORMAL], sizeof(LOGFONT), &lfont);
     SelectObject(dc, fonts[FONT_NORMAL]);
     GetTextMetrics(dc, &tm);
   }
@@ -1147,7 +1147,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
     if (!use_uniscribe)
       return;
 
-    HRESULT hr = ScriptStringAnalyse (hdc, psz, cch, 0, -1, 
+    HRESULT hr = ScriptStringAnalyse(hdc, psz, cch, 0, -1, 
       // could | SSA_FIT and use `width` (from win_text) instead of MAXLONG
       // to justify to monospace cell widths;
       // SSA_LINK is needed for Hangul and default-size CJK
@@ -1607,7 +1607,7 @@ win_set_colour(colour_i i, colour c)
   }
   colours[i] = c;
 #ifdef debug_brighten
-  printf ("colours[%d] = %06X\n", i, c);
+  printf("colours[%d] = %06X\n", i, c);
 #endif
   switch (i) {
     when FG_COLOUR_I:
@@ -1670,9 +1670,9 @@ win_reset_colours(void)
   for (uint r = 0; r < 6; r++)
     for (uint g = 0; g < 6; g++)
       for (uint b = 0; b < 6; b++)
-        colours[i++] = RGB (r ? r * 40 + 55 : 0,
-                            g ? g * 40 + 55 : 0,
-                            b ? b * 40 + 55 : 0);
+        colours[i++] = RGB(r ? r * 40 + 55 : 0,
+                           g ? g * 40 + 55 : 0,
+                           b ? b * 40 + 55 : 0);
 
   // Grayscale
   for (uint s = 0; s < 24; s++) {

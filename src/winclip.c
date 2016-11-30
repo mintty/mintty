@@ -23,7 +23,7 @@ shell_exec_thread(void *data)
 
 #ifdef __CYGWIN__
   /* Need to sync the Windows environment */
-  cygwin_internal (CW_SYNC_WINENV);
+  cygwin_internal(CW_SYNC_WINENV);
 #endif
 
   if ((INT_PTR)ShellExecuteW(wnd, 0, wpath, 0, 0, SW_SHOWNORMAL) <= 32) {
@@ -78,7 +78,7 @@ win_copy(const wchar *data, uint *attrs, int len)
 
   len2 = WideCharToMultiByte(CP_ACP, 0, data, len, 0, 0, null, null);
 
-  clipdata = GlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE, len * sizeof (wchar));
+  clipdata = GlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE, len * sizeof(wchar));
   clipdata2 = GlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE, len2);
 
   if (!clipdata || !clipdata2) {
@@ -93,7 +93,7 @@ win_copy(const wchar *data, uint *attrs, int len)
   if (!(lock2 = GlobalLock(clipdata2)))
     return;
 
-  memcpy(lock, data, len * sizeof (wchar));
+  memcpy(lock, data, len * sizeof(wchar));
   WideCharToMultiByte(CP_ACP, 0, data, len, lock2, len2, null, null);
 
   if (attrs && cfg.copy_as_rtf) {
@@ -143,7 +143,7 @@ win_copy(const wchar *data, uint *attrs, int len)
     * First - Determine all colours in use
     *    o  Foreground and background colours share the same palette
     */
-    memset(palette, 0, sizeof (palette));
+    memset(palette, 0, sizeof(palette));
     for (int i = 0; i < (len - 1); i++) {
       uint attr = attrs[i];
       fgcolour = (attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
@@ -656,7 +656,7 @@ dt_drop(IDropTarget *this, IDataObject *obj,
     char cn[10];
     HWND widget = null;
     // find the SendMessage target window
-    while (h && (GetClassNameA(h, cn, sizeof cn), strcmp(cn, DIALOG_CLASS) != 0)) {
+    while (h && (GetClassNameA(h, cn, sizeof(cn)), strcmp(cn, DIALOG_CLASS) != 0)) {
 #ifdef debug_dragndrop
       printf("%8p (%s) ", h, cn);
 #endif

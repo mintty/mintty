@@ -253,9 +253,9 @@ child_create(char *argv[], struct winsize *winp)
       }
       else if (format) {
         struct timeval now;
-        gettimeofday (& now, 0);
+        gettimeofday(& now, 0);
         char * logf = newn(char, MAX_PATH + 1);
-        strftime (logf, MAX_PATH, log, localtime (& now.tv_sec));
+        strftime(logf, MAX_PATH, log, localtime (& now.tv_sec));
         free(log);
         log = logf;
       }
@@ -351,7 +351,7 @@ child_proc(void)
         }
 
         if (cfg.exit_title && *cfg.exit_title)
-          win_prefix_title (cfg.exit_title);
+          win_prefix_title(cfg.exit_title);
       }
 #ifdef patch_319
       if (pid != 0 && pty_fd < 0) // Pty gone, but process still there: keep checking

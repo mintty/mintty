@@ -68,7 +68,7 @@ int iswspace(wint_t wc) { return wc < 0x100 && isspace(wc); }
 
 #if CYGWIN_VERSION_API_MINOR < 91
 
-/* Copyright (C) 2002 by  Red Hat, Incorporated. All rights reserved.
+/* Copyright (C) 2002 by Red Hat, Incorporated. All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software
  * is freely granted, provided that this notice is preserved.
@@ -167,22 +167,22 @@ login_tty(int fd)
 
   if (setsid () == -1)
     return -1;
-  if ((fdname = ttyname (fd)))
+  if ((fdname = ttyname(fd)))
     {
       if (fd != STDIN_FILENO)
-        close (STDIN_FILENO);
+        close(STDIN_FILENO);
       if (fd != STDOUT_FILENO)
-        close (STDOUT_FILENO);
+        close(STDOUT_FILENO);
       if (fd != STDERR_FILENO)
-        close (STDERR_FILENO);
-      newfd = open (fdname, O_RDWR);
-      close (newfd);
+        close(STDERR_FILENO);
+      newfd = open(fdname, O_RDWR);
+      close(newfd);
     }
   dup2 (fd, STDIN_FILENO);
   dup2 (fd, STDOUT_FILENO);
   dup2 (fd, STDERR_FILENO);
   if (fd > 2)
-    close (fd);
+    close(fd);
   return 0;
 }
 
@@ -194,26 +194,26 @@ openpty(int *amaster, int *aslave, char *name,
   char pts[TTY_NAME_MAX];
   int errret = -2;
 
-  if ((master = open ("/dev/ptmx", O_RDWR | O_NOCTTY)) >= 0)
+  if ((master = open("/dev/ptmx", O_RDWR | O_NOCTTY)) >= 0)
     {
-      grantpt (master);
-      unlockpt (master);
-      strcpy (pts, ptsname (master));
-      if ((slave = open (pts, O_RDWR | O_NOCTTY)) >= 0)
+      grantpt(master);
+      unlockpt(master);
+      strcpy(pts, ptsname(master));
+      if ((slave = open(pts, O_RDWR | O_NOCTTY)) >= 0)
         {
           if (amaster)
             *amaster = master;
           if (aslave)
             *aslave = slave;
           if (name)
-            strcpy (name, pts);
+            strcpy(name, pts);
           if (termp)
-            tcsetattr (slave, TCSAFLUSH, termp);
+            tcsetattr(slave, TCSAFLUSH, termp);
           if (winp)
-            ioctl (master, TIOCSWINSZ, (struct winsize *)winp);
+            ioctl(master, TIOCSWINSZ, (struct winsize *)winp);
           return 0;
         }
-      close (master);
+      close(master);
       errret = -3;
     }
   errno = ENOENT;
@@ -226,22 +226,22 @@ forkpty(int *amaster, char *name,
 {
   int master, slave, pid;
 
-  int ret = openpty (&master, &slave, name, termp, winp);
+  int ret = openpty(&master, &slave, name, termp, winp);
   if (ret < 0)
     return ret;
 
-  switch (pid = fork ())
+  switch (pid = fork())
     {
       case -1:
         return -1;
       case 0:
-        close (master);
-        login_tty (slave);
+        close(master);
+        login_tty(slave);
         return 0;
     }
   if (amaster)
     *amaster = master;
-  close (slave);
+  close(slave);
   return pid;
 }
 

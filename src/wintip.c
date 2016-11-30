@@ -98,9 +98,9 @@ win_show_tip(int x, int y, int cols, int rows)
    /* Prepare other GDI objects and drawing info */
     tip_bg = GetSysColor(COLOR_INFOBK);
     tip_text = GetSysColor(COLOR_INFOTEXT);
-    memset(&nci, 0, sizeof (NONCLIENTMETRICS));
-    nci.cbSize = sizeof (NONCLIENTMETRICS);
-    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof (NONCLIENTMETRICS),
+    memset(&nci, 0, sizeof(NONCLIENTMETRICS));
+    nci.cbSize = sizeof(NONCLIENTMETRICS);
+    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS),
                          &nci, 0);
     tip_font = CreateFontIndirect(&nci.lfStatusFont);
     tip_wnd =
