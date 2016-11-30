@@ -904,11 +904,20 @@ load_messages_file(char * textdbf)
 }
 
 static bool
-load_messages_lang_w(wstring lang)
+load_messages_lang_w(wstring lang, bool fallback)
 {
   if (lang) {
     wchar * wl = newn(wchar, wcslen(lang) + 4);
     wcscpy(wl, lang);
+    if (fallback) {
+      wchar * _ = wcschr(wl, '_');
+      if (_) {
+        *_ = '\0';
+        // continue below
+      }
+      else
+        return false;
+    }
     wcscat(wl, W(".po"));
     char * textdbf = get_resource_file(W("lang"), wl, false);
     free(wl);
@@ -920,22 +929,15 @@ load_messages_lang_w(wstring lang)
       free(textdbf);
       return true;
     }
-    else {
-      wl = wcschr(lang, '_');
-      if (wl) {
-        *wl = '\0';
-        return load_messages_lang_w(lang);
-      }
-    }
   }
   return false;
 }
 
 static bool
-load_messages_lang(string lang)
+load_messages_lang(string lang, bool fallback)
 {
   wchar * wlang = cs__utftowcs(lang);
-  bool res = load_messages_lang_w((wstring)wlang);
+  bool res = load_messages_lang_w((wstring)wlang, fallback);
   free(wlang);
   return res;
 }
@@ -943,12 +945,12 @@ load_messages_lang(string lang)
 static void
 load_messages(config * cfg_p)
 {
-  if (cfg_p->lang) {
+  if (cfg_p->lang) for (bool fallback = false; fallback <= true; fallback++) {
     clear_messages();
     if (wcscmp(cfg_p->lang, W("=")) == 0)
-      (void)load_messages_lang(cfg_p->locale);
+      (void)load_messages_lang(cfg_p->locale, fallback);
     else if (wcscmp(cfg_p->lang, W("*")) != 0)
-      (void)load_messages_lang_w(cfg_p->lang);
+      (void)load_messages_lang_w(cfg_p->lang, fallback);
     else {
       // determine UI language from environment
       char * lang = getenv("LANGUAGE");
@@ -958,7 +960,7 @@ load_messages(config * cfg_p)
           char * sep = strchr(lang, ':');
           if (sep)
             *sep = '\0';
-          if (load_messages_lang(lang))
+          if (load_messages_lang(lang, fallback))
             return;
           lang = sep;
           if (lang)
@@ -972,7 +974,7 @@ load_messages(config * cfg_p)
         char * dot = strchr(lang, '.');
         if (dot)
           *dot = '\0';
-        (void)load_messages_lang(lang);
+        (void)load_messages_lang(lang, fallback);
         free(lang);
       }
     }

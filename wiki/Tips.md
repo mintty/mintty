@@ -564,10 +564,12 @@ The localization language can be selected with the option `Language`,
 see manual page for details.
 
 Example:
-`Language=*`, environment variables `LANGUAGE=de_CH:fr:de` and 
-`LC_MESSAGES=en_GB.UTF-8`:
-mintty tries to find localization files for `de_CH`, `fr`, `de`, 
-`en_GB`, each in all resource configuration folders (subfolder `lang`).
+`Language=*`, environment variables `LANGUAGE=de_CH:français:de:fr_FR` and 
+`LC_MESSAGES=en_GB.UTF-8`, `LC_ALL` not set:
+mintty tries to find localization files (in this order) for 
+`de_CH`, `français`, `de`, `fr_FR`, `en_GB`, 
+then (as generic fallback) `fr` and `en`, 
+each in all resource configuration folders (subfolder `lang`).
 
 Localization files for various language or language/region codes 
 are looked up in the resource configuration folders, subfolder `lang`.
