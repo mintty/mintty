@@ -177,8 +177,9 @@ static char * debugtag = "none";
 static void
 sigsegv(int sig)
 {
-  printf("catch %d: %s\n", sig, debugtag);
   signal(sig, SIG_DFL);
+  printf("catch %d: %s\n", sig, debugtag);
+  MessageBoxA(0, debugtag, "Critical Error", MB_ICONSTOP);
 }
 
 inline static void
@@ -266,7 +267,7 @@ static struct {
       SendMessage(treeview, WM_SETFONT, font, MAKELPARAM(true, 0));
       treeview_faff tvfaff;
       tvfaff.treeview = treeview;
-      memset(tvfaff.lastat, 0, sizeof (tvfaff.lastat));
+      memset(tvfaff.lastat, 0, sizeof(tvfaff.lastat));
 
      /*
       * Set up the tree view contents.
@@ -441,7 +442,7 @@ win_open_config(void)
       .style = CS_DBLCLKS,
       .lpfnWndProc = DefDlgProc,
       .cbClsExtra = 0,
-      .cbWndExtra = DLGWINDOWEXTRA + 2 * sizeof (LONG_PTR),
+      .cbWndExtra = DLGWINDOWEXTRA + 2 * sizeof(LONG_PTR),
       .hInstance = inst,
       .hIcon = null,
       .hCursor = LoadCursor(null, IDC_ARROW),
