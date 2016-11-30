@@ -945,7 +945,7 @@ load_messages_lang(string lang, bool fallback)
 static void
 load_messages(config * cfg_p)
 {
-  if (cfg_p->lang) for (bool fallback = false; fallback <= true; fallback++) {
+  if (cfg_p->lang) for (int fallback = false; fallback <= true; fallback++) {
     clear_messages();
     if (wcscmp(cfg_p->lang, W("=")) == 0)
       (void)load_messages_lang(cfg_p->locale, fallback);
