@@ -947,10 +947,14 @@ load_messages(config * cfg_p)
 {
   if (cfg_p->lang) for (int fallback = false; fallback <= true; fallback++) {
     clear_messages();
-    if (wcscmp(cfg_p->lang, W("=")) == 0)
-      (void)load_messages_lang(cfg_p->locale, fallback);
-    else if (wcscmp(cfg_p->lang, W("*")) != 0)
-      (void)load_messages_lang_w(cfg_p->lang, fallback);
+    if (wcscmp(cfg_p->lang, W("=")) == 0) {
+      if (load_messages_lang(cfg_p->locale, fallback))
+        return;
+    }
+    else if (wcscmp(cfg_p->lang, W("*")) != 0) {
+      if (load_messages_lang_w(cfg_p->lang, fallback))
+        return;
+    }
     else {
       // determine UI language from environment
       char * lang = getenv("LANGUAGE");
@@ -974,7 +978,8 @@ load_messages(config * cfg_p)
         char * dot = strchr(lang, '.');
         if (dot)
           *dot = '\0';
-        (void)load_messages_lang(lang, fallback);
+        if (load_messages_lang(lang, fallback))
+          return;
         free(lang);
       }
     }
