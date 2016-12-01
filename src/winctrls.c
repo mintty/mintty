@@ -863,6 +863,57 @@ winctrl_set_focus(control *ctrl, int has_focus)
 #define trace_fontsel(params)	
 #endif
 
+static winctrl * font_ctrl;
+
+UINT_PTR CALLBACK fonthook(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
+{
+  (void)lParam;
+  //winctrl * c = (winctrl *)lParam;  // does not work
+  winctrl * c = font_ctrl;
+  if (uiMsg == WM_COMMAND && wParam == 1026) {  // Apply
+    LOGFONTW lfapply;
+    SendMessageW(hdlg, WM_CHOOSEFONT_GETLOGFONT, 0, (LPARAM)&lfapply);
+    font_spec * fsp = &new_cfg.font;
+    wstrset(&fsp->name, lfapply.lfFaceName);
+    HDC dc = GetDC(0);
+    fsp->size = -MulDiv(lfapply.lfHeight, 72, GetDeviceCaps(dc, LOGPIXELSY));
+    trace_fontsel(("Apply lfHeight %ld -> size %d <%ls>\n", (long int)lfapply.lfHeight, fsp->size, lfapply.lfFaceName));
+    ReleaseDC(0, dc);
+    fsp->weight = lfapply.lfWeight;
+    fsp->isbold = (lfapply.lfWeight >= FW_BOLD);
+    // apply font
+    apply_config(false);
+    // update font spec label
+    c->ctrl->handler(c->ctrl, EVENT_REFRESH);  // -> dlg_stdfontsel_handler
+    //or dlg_fontsel_set(c->ctrl, fsp);
+  }
+  else if (uiMsg == WM_COMMAND && wParam == 1) {  // OK
+#ifdef failed_workaround_for_no_font_issue
+    /*
+      Trying to work-around issue #507
+      "There is no font with that name."
+      "Choose a font from the list of fonts."
+      as it occurs with Meslo LG L DZ for Powerline
+    */
+    LOGFONTW lfapply;
+    SendMessageW(hdlg, WM_CHOOSEFONT_GETLOGFONT, 0, (LPARAM)&lfapply);
+    // lfapply.lfFaceName is "Meslo LG L DZ for Powerline"
+    HWND wnd = GetDlgItem(hdlg, c->base_id +99);
+    int size = GetWindowTextLengthW(wnd) + 1;
+    wchar * fn = newn(wchar, size);
+    GetWindowTextW(wnd, fn, size);
+    // fn is "Meslo LG L DZ for Powerline RegularForPowerline"
+    // trying to fix the inconsistency with
+    SetWindowTextW(wnd, lfapply.lfFaceName);
+    // does not help...
+    // what a crap!
+#endif
+  }
+  else if (uiMsg == WM_COMMAND && wParam == 2) {  // Cancel
+  }
+  return 0;  // default processing
+}
+
 static void
 select_font(winctrl *c)
 {
@@ -888,58 +939,13 @@ select_font(winctrl *c)
   else
     lf.lfFaceName[0] = 0;
 
-  UINT_PTR CALLBACK fonthook(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
-  {
-    (void)lParam;
-    if (uiMsg == WM_COMMAND && wParam == 1026) {  // Apply
-      LOGFONTW lfapply;
-      SendMessageW(hdlg, WM_CHOOSEFONT_GETLOGFONT, 0, (LPARAM)&lfapply);
-      font_spec * fsp = &new_cfg.font;
-      wstrset(&fsp->name, lfapply.lfFaceName);
-      HDC dc = GetDC(0);
-      fsp->size = -MulDiv(lfapply.lfHeight, 72, GetDeviceCaps(dc, LOGPIXELSY));
-      trace_fontsel(("Apply lfHeight %ld -> size %d <%ls>\n", (long int)lfapply.lfHeight, fsp->size, lfapply.lfFaceName));
-      ReleaseDC(0, dc);
-      fsp->weight = lfapply.lfWeight;
-      fsp->isbold = (lfapply.lfWeight >= FW_BOLD);
-      // apply font
-      apply_config(false);
-      // update font spec label
-      c->ctrl->handler(c->ctrl, EVENT_REFRESH);  // -> dlg_stdfontsel_handler
-      //or dlg_fontsel_set(c->ctrl, fsp);
-    }
-    else if (uiMsg == WM_COMMAND && wParam == 1) {  // OK
-#ifdef failed_workaround_for_no_font_issue
-      /*
-        Trying to work-around issue #507
-        "There is no font with that name."
-        "Choose a font from the list of fonts."
-        as it occurs with Meslo LG L DZ for Powerline
-      */
-      LOGFONTW lfapply;
-      SendMessageW(hdlg, WM_CHOOSEFONT_GETLOGFONT, 0, (LPARAM)&lfapply);
-      // lfapply.lfFaceName is "Meslo LG L DZ for Powerline"
-      HWND wnd = GetDlgItem(hdlg, c->base_id +99);
-      int size = GetWindowTextLengthW(wnd) + 1;
-      wchar * fn = newn(wchar, size);
-      GetWindowTextW(wnd, fn, size);
-      // fn is "Meslo LG L DZ for Powerline RegularForPowerline"
-      // trying to fix the inconsistency with
-      SetWindowTextW(wnd, lfapply.lfFaceName);
-      // does not help...
-      // what a crap!
-#endif
-    }
-    else if (uiMsg == WM_COMMAND && wParam == 2) {  // Cancel
-    }
-    return 0;  // default processing
-  }
-
   CHOOSEFONTW cf;
   cf.lStructSize = sizeof(cf);
   cf.hwndOwner = dlg.wnd;
   cf.lpLogFont = &lf;
   cf.lpfnHook = fonthook;
+  cf.lCustData = (LPARAM)c;  // does not work
+  font_ctrl = c;
   cf.Flags =
     CF_INITTOLOGFONTSTRUCT | CF_FORCEFONTEXIST
     | CF_FIXEDPITCHONLY | CF_NOVERTFONTS
