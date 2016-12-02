@@ -195,11 +195,13 @@ composed.t:	# $(compose_list) $(keysymdefs)
 XGETTEXT_OPTS=--package-name=mintty #--package-version=$(version)
 #XGETTEXT_OPTS+=--msgid-bugs-address=mintty@...
 
-_:	localization
+_:	localization checkloc
 localization:
 	mkdir -p ../lang
 	xgettext --from-code=UTF-8 -k_ -k_W -k__ -c__ $(XGETTEXT_OPTS) *.c appinfo.h -o- | grep -v "^#, c-format" > ../lang/messages.pot
 	cd ../lang; for po in *.po; do [ "$$po" = en.po ] || msgmerge -U "$$po" messages.pot; done
+checkloc:
+	cd ../lang; ! grep "^#, fuzzy" *.po
 
 #############################################################################
 # release targets
@@ -241,7 +243,7 @@ clean:
 	#rm -rf *.d *.o $(NAME)*
 	rm -rf $(BINDIR)/*.d $(BINDIR)/*.o $(BINDIR)/$(NAME)*
 
-check:	checksrc checkresource
+check:	checksrc checkresource checkloc
 
 # check whether supportedOS Id list is up-to-date
 stripsupp=sed -e "/supportedOS/ s,>.*,>," -e t -e d

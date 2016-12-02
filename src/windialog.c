@@ -518,26 +518,87 @@ win_show_about(void)
   free(wmsg);
 }
 
-static void
-win_show_msg(char * msg, UINT type)
+/*
+   adapted from messageboxmanager.zip
+   @ https://www.codeproject.com/articles/18399/localizing-system-messagebox
+ */
+int
+message_box(HWND parwnd, char *text, char *caption, int type, wstring ok)
 {
-  if (nonascii(msg)) {
-    wchar * wmsg = cs__utftowcs(msg);
-    MessageBoxW(0, wmsg, 0, type);
-    free(wmsg);
+  LRESULT set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
+    (void)lParam;
+
+    void setlabel(int id, wstring label) {
+      HWND button = GetDlgItem((HWND)wParam, id);
+#ifdef debug_message_box
+      if (button) {
+        wchar buf [99];
+        GetWindowTextW(button, buf, 99);
+        printf("%d <%ls> -> <%ls>\n", id, buf, label);
+      }
+#endif
+      if (button)
+        SetWindowTextW(button, label);
+    }
+
+    if (nCode == HCBT_ACTIVATE) {
+      if ((type & MB_TYPEMASK) == MB_OK)
+        //__ take notice
+        setlabel(IDOK, _W("I see"));
+      else
+        //__ confirm action
+        setlabel(IDOK, _W("OK"));
+      setlabel(IDCANCEL, _W("Cancel"));
+#ifdef we_would_use_these_in_any_message_box
+#warning W -> _W to add the labels to the localization repository
+      setlabel(IDABORT, W("&Abort"));
+      setlabel(IDRETRY, W("&Retry"));
+      setlabel(IDIGNORE, W("&Ignore"));
+      setlabel(IDYES, W("&Yes"));
+      setlabel(IDNO, W("&No"));
+      //IDCLOSE has no label
+      setlabel(IDHELP, W("Help"));
+      setlabel(IDTRYAGAIN, W("&Try Again"));
+      setlabel(IDCONTINUE, W("&Continue"));
+#endif
+
+      if (ok) {
+        SetWindowTextW(GetDlgItem((HWND) wParam, IDOK), ok);
+        SetWindowTextW(GetDlgItem((HWND) wParam, IDYES), ok);
+      }
+    }
+    return 0;
+  }
+
+//  HINSTANCE hinst = GetModuleHandle(NULL);
+//  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, hinst, thrid);
+  DWORD thrid = GetCurrentThreadId();
+  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, 0, thrid);
+  int ret;
+  if (nonascii(text) || nonascii(caption)) {
+    wchar * wtext = text ? cs__utftowcs(text) : 0;
+    wchar * wcapt = caption ? cs__utftowcs(caption) : 0;
+    ret = MessageBoxW(parwnd, wtext, wcapt, type);
+    if (wtext)
+      free(wtext);
+    if (wcapt)
+      free(wcapt);
   }
   else
-    MessageBoxA(0, msg, 0, type);
+    ret = MessageBox(parwnd, text, caption, type);
+  UnhookWindowsHookEx(hook);
+  return ret;
 }
 
 void
 win_show_error(char * msg)
 {
-  win_show_msg(msg, MB_ICONERROR);
+  message_box(0, msg, 0, MB_ICONERROR, 0);
 }
 
 void
 win_show_warning(char * msg)
 {
-  win_show_msg(msg, MB_ICONWARNING);
+  message_box(0, msg, 0, MB_ICONWARNING, 0);
 }
+
