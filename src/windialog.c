@@ -16,7 +16,7 @@ extern void setup_config_box(controlbox *);
 
 #include <commctrl.h>
 
-#define debug_dialog_crash
+# define debug_dialog_crash
 
 #ifdef debug_dialog_crash
 #include <signal.h>
@@ -172,6 +172,7 @@ determine_geometry(HWND wnd)
 
 #ifdef debug_dialog_crash
 
+static char * debugopt = 0;
 static char * debugtag = "none";
 
 static void
@@ -179,6 +180,7 @@ sigsegv(int sig)
 {
   signal(sig, SIG_DFL);
   printf("catch %d: %s\n", sig, debugtag);
+  fflush(stdout);
   MessageBoxA(0, debugtag, "Critical Error", MB_ICONSTOP);
 }
 
@@ -189,7 +191,20 @@ crashtest()
   *x0 = 'x';
 }
 
-# define debug(tag)	debugtag = tag
+static void
+debug(char *tag)
+{
+  if (!debugopt) {
+    debugopt = getenv("MINTTY_DEBUG");
+    if (!debugopt)
+      debugopt = "";
+  }
+
+  debugtag = tag;
+
+  if (debugopt && *debugopt)
+    printf("%s\n", tag);
+}
 
 #else
 # define debug(tag)	
@@ -326,6 +341,9 @@ static struct {
       }
     }
 
+    when WM_CLOSE:
+      DestroyWindow(wnd);
+
     when WM_DESTROY:
       winctrl_cleanup(&ctrls_base);
       winctrl_cleanup(&ctrls_panel);
@@ -336,8 +354,39 @@ static struct {
       signal(SIGSEGV, SIG_DFL);
 #endif
 
-    when WM_CLOSE:
-      DestroyWindow(wnd);
+    when WM_USER: {
+      debug("WM_USER");
+      HWND target = (HWND)wParam;
+      // could delegate this to winctrls.c, like winctrl_handle_command;
+      // but then we'd have to fiddle with the location of dragndrop
+     /*
+      * Look up the window handle in our data; find the control.
+        (Hmm, apparently it works without looking for the widget entry 
+        that was particularly introduced for this purpose...)
+      */
+      control * ctrl = null;
+      for (winctrl *c = ctrls_panel.first; c && !ctrl; c = c->next) {
+        if (c->ctrl)
+          for (int k = 0; k < c->num_ids; k++) {
+#ifdef debug_dragndrop
+            printf(" [->%8p] %8p\n", target, GetDlgItem(wnd, c->base_id + k));
+#endif
+            if (target == GetDlgItem(wnd, c->base_id + k)) {
+              ctrl = c->ctrl;
+              break;
+            }
+        }
+      }
+      debug("WM_USER: lookup");
+      if (ctrl) {
+        //dlg_editbox_set_w(ctrl, L"Test");  // may hit unrelated items...
+        // drop the drag-and-drop contents here
+        dragndrop = (wstring)lParam;
+        ctrl->handler(ctrl, EVENT_DROP);
+        debug("WM_USER: handler");
+      }
+      debug("WM_USER: end");
+    }
 
     when WM_NOTIFY: {
       if (LOWORD(wParam) == IDCX_TREEVIEW &&
@@ -382,40 +431,8 @@ static struct {
         DestroyWindow(wnd);
         debug("WM_COMMAND: Destroy");
       }
+      debug("WM_COMMAND: end");
       return ret;
-    }
-
-    when WM_USER: {
-      debug("WM_USER");
-      HWND target = (HWND)wParam;
-      // could delegate this to winctrls.c, like winctrl_handle_command;
-      // but then we'd have to fiddle with the location of dragndrop
-     /*
-      * Look up the window handle in our data; find the control.
-        (Hmm, apparently it works without looking for the widget entry 
-        that was particularly introduced for this purpose...)
-      */
-      control * ctrl = null;
-      for (winctrl *c = ctrls_panel.first; c && !ctrl; c = c->next) {
-        if (c->ctrl)
-          for (int k = 0; k < c->num_ids; k++) {
-#ifdef debug_dragndrop
-            printf(" [->%8p] %8p\n", target, GetDlgItem(wnd, c->base_id + k));
-#endif
-            if (target == GetDlgItem(wnd, c->base_id + k)) {
-              ctrl = c->ctrl;
-              break;
-            }
-        }
-      }
-      debug("WM_USER: lookup");
-      if (ctrl) {
-        //dlg_editbox_set_w(ctrl, L"Test");  // may hit unrelated items...
-        // drop the drag-and-drop contents here
-        dragndrop = (wstring)lParam;
-        ctrl->handler(ctrl, EVENT_DROP);
-        debug("WM_USER: handler");
-      }
     }
   }
   return 0;
