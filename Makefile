@@ -8,6 +8,7 @@
 # - clean: Delete generated files.
 # - upload: Upload cygwin packages for publishing.
 # - ann: Create cygwin announcement mail.
+# - _: Create language translation template, update translation files.
 
 # Variables intended for setting on the make command line.
 # - RELEASE: release number for packaging
@@ -47,6 +48,7 @@ TARUSER := --owner=root --group=root --owner=mintty --group=cygwin
 arch_files := Makefile COPYING LICENSE* INSTALL VERSION
 arch_files += src/Makefile src/*.c src/*.h src/*.rc src/*.mft
 arch_files += src/[!_]*.t src/mk*
+arch_files += lang/*.pot lang/*.po
 arch_files += cygwin/*.cygport cygwin/README* cygwin/setup.hint
 arch_files += docs/*.1 docs/*.html icon/*
 arch_files += wiki/*
@@ -74,7 +76,7 @@ REL := 0
 arch := $(shell uname -m)
 
 cygport := $(name_ver)-$(REL).cygport
-pkg: $(DIST) ver tar check _ binpkg srcpkg
+pkg: $(DIST) ver tar check _ srcpkg binpkg
 $(DIST):
 	mkdir $(DIST)
 

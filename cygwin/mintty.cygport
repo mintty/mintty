@@ -33,6 +33,9 @@ src_install() {
   dodoc COPYING LICENSE.Oxygen LICENSE.PuTTY
   dodoc cygwin/README cygwin/setup.hint
 
+  insinto /usr/share/mintty/lang
+  doins lang/*.pot lang/*.po
+
   for i in 16 24 32 48 64 256
   do
     insinto /usr/share/icons/hicolor/${i}x${i}/apps
