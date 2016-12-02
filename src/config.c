@@ -946,16 +946,20 @@ static void
 load_messages(config * cfg_p)
 {
   if (cfg_p->lang) for (int fallback = false; fallback <= true; fallback++) {
+#ifdef debug_messages
+    printf("Loading localization <%ls> (fallback %d)\n", cfg_p->lang, fallback);
+#endif
     clear_messages();
     if (wcscmp(cfg_p->lang, W("=")) == 0) {
       if (load_messages_lang(cfg_p->locale, fallback))
         return;
     }
-    else if (wcscmp(cfg_p->lang, W("*")) != 0) {
-      if (load_messages_lang_w(cfg_p->lang, fallback))
+    else if (wcscmp(cfg_p->lang, W("@")) == 0) {
+      // locale_menu[1] is transformed from GetUserDefaultUILanguage()
+      if (load_messages_lang(locale_menu[1], fallback))
         return;
     }
-    else {
+    else if (wcscmp(cfg_p->lang, W("*")) == 0) {
       // determine UI language from environment
       char * lang = getenv("LANGUAGE");
       if (lang) {
@@ -982,6 +986,10 @@ load_messages(config * cfg_p)
           return;
         free(lang);
       }
+    }
+    else {
+      if (load_messages_lang_w(cfg_p->lang, fallback))
+        return;
     }
   }
 }
@@ -1480,21 +1488,25 @@ lang_handler(control *ctrl, int event)
 {
   //__ UI language
   const wstring NONE = _W("– None –");
-  const wstring LOCALE = _W("= conf'd Locale =");
-  const wstring LOCENV = _W("* locale envir. *");
+  const wstring WINLOC = _W("@ Windows language @");
+  const wstring LOCENV = _W("* Locale environm. *");
+  const wstring LOCALE = _W("= cfg. Text Locale =");
   switch (event) {
     when EVENT_REFRESH:
       dlg_listbox_clear(ctrl);
       dlg_listbox_add_w(ctrl, NONE);
-      dlg_listbox_add_w(ctrl, LOCALE);
+      dlg_listbox_add_w(ctrl, WINLOC);
       dlg_listbox_add_w(ctrl, LOCENV);
+      dlg_listbox_add_w(ctrl, LOCALE);
       add_file_resources(ctrl, W("lang/*.po"));
       if (wcscmp(new_cfg.lang, W("")) == 0)
         dlg_editbox_set_w(ctrl, NONE);
-      else if (wcscmp(new_cfg.lang, W("=")) == 0)
-        dlg_editbox_set_w(ctrl, LOCALE);
+      else if (wcscmp(new_cfg.lang, W("@")) == 0)
+        dlg_editbox_set_w(ctrl, WINLOC);
       else if (wcscmp(new_cfg.lang, W("*")) == 0)
         dlg_editbox_set_w(ctrl, LOCENV);
+      else if (wcscmp(new_cfg.lang, W("=")) == 0)
+        dlg_editbox_set_w(ctrl, LOCALE);
       else
         dlg_editbox_set_w(ctrl, new_cfg.lang);
     when EVENT_VALCHANGE or EVENT_SELCHANGE: {
@@ -1502,9 +1514,11 @@ lang_handler(control *ctrl, int event)
       if (n == 0)
         wstrset(&new_cfg.lang, W(""));
       else if (n == 1)
-        wstrset(&new_cfg.lang, W("="));
+        wstrset(&new_cfg.lang, W("@"));
       else if (n == 2)
         wstrset(&new_cfg.lang, W("*"));
+      else if (n == 3)
+        wstrset(&new_cfg.lang, W("="));
       else
         dlg_editbox_get_w(ctrl, &new_cfg.lang);
     }
@@ -2127,7 +2141,7 @@ setup_config_box(controlbox * b)
   );
 
   s = ctrl_new_set(b, _("Window"), null, _("UI language"));
-  ctrl_columns(s, 2, 50, 50);
+  ctrl_columns(s, 2, 60, 40);
   ctrl_combobox(
     s, null, 100, lang_handler, 0
   )->column = 0;

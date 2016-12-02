@@ -12,6 +12,11 @@ Localization:
   * Enabled localization of Options tree menu labels (#537).
   * Enabled localization of system menu standard items (#537).
   * Support reverse-localization of Windows-localized menu entries with Language=en.
+  * Windows user language as an additional option for language selection (#537).
+  * Preserving system menu icons.
+
+Keyboard:
+  * Enablee Compose key with Shift in modifyOtherKeys mode.
 
 ### 2.7.0 (13 Nov 2016) ###
 
