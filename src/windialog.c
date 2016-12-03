@@ -525,7 +525,7 @@ win_show_about(void)
 int
 message_box(HWND parwnd, char *text, char *caption, int type, wstring ok)
 {
-  LRESULT set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
+  LRESULT CALLBACK set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
     (void)lParam;
 
     void setlabel(int id, wstring label) {
