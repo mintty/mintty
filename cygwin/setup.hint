@@ -1,7 +1,4 @@
 sdesc: "Terminal emulator with native Windows look and feel"
-test: 2.6.0-0
-curr: 2.5.1-0
-prev: 2.4.3-0
 category: Shells Base
 requires:
 ldesc: "Mintty is a terminal emulator for Cygwin. It is based on code 
