@@ -217,6 +217,17 @@ row_padding(int i, int e)
 static void
 show_font_warning(char * msg)
 {
+  // suppress multiple font error messages
+  static wchar * msgfont = null;
+  if (msgfont && 0 == wcscmp(msgfont, cfg.font.name)) {
+    return;
+  }
+  else {
+    if (msgfont)
+      free(msgfont);
+    msgfont = wcsdup(cfg.font.name);
+  }
+
   char * fn = cs__wcstoutf(cfg.font.name);
   char * fullmsg;
   int len = asprintf(&fullmsg, "%s:\n%s", msg, fn);
