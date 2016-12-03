@@ -52,13 +52,19 @@ win_open(wstring wpath)
 {
   wstring p = wpath;
   while (iswalpha(*p)) p++;
-
   if (*wpath == '\\' || *p == ':' || wcsncmp(W("www."), wpath, 4) == 0) {
     // Looks like it's a Windows path or URI
     shell_exec(wpath);
   }
   else {
     // Need to convert POSIX path to Windows first
+    if (support_wsl && wcsncmp(wpath, W("/mnt/"), 5) == 0) {
+      wchar * unwsl = newn(wchar, wcslen(wpath) + 6);
+      wcscpy(unwsl, W("/cygdrive"));
+      wcscat(unwsl, wpath + 4);
+      delete(wpath);
+      wpath = unwsl;
+    }
     wstring conv_wpath = child_conv_path(wpath);
     delete(wpath);
     if (conv_wpath)
