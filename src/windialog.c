@@ -487,6 +487,99 @@ win_open_config(void)
   set_dpi_auto_scaling(false);
 }
 
+/*
+   adapted from messageboxmanager.zip
+   @ https://www.codeproject.com/articles/18399/localizing-system-messagebox
+ */
+static wstring oklabel = null;
+static int oktype = MB_OK;
+
+static LRESULT CALLBACK
+set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
+  (void)lParam;
+
+  void setlabel(int id, wstring label) {
+    HWND button = GetDlgItem((HWND)wParam, id);
+#ifdef debug_message_box
+    if (button) {
+      wchar buf [99];
+      GetWindowTextW(button, buf, 99);
+      printf("%d <%ls> -> <%ls>\n", id, buf, label);
+    }
+#endif
+    if (button)
+      SetWindowTextW(button, label);
+  }
+
+  if (nCode == HCBT_ACTIVATE) {
+    if ((oktype & MB_TYPEMASK) == MB_OK)
+      //__ take notice
+      setlabel(IDOK, _W("I see"));
+    else
+      //__ confirm action
+      setlabel(IDOK, _W("OK"));
+    setlabel(IDCANCEL, _W("Cancel"));
+#ifdef we_would_use_these_in_any_message_box
+#warning W -> _W to add the labels to the localization repository
+    setlabel(IDABORT, W("&Abort"));
+    setlabel(IDRETRY, W("&Retry"));
+    setlabel(IDIGNORE, W("&Ignore"));
+    setlabel(IDYES, W("&Yes"));
+    setlabel(IDNO, W("&No"));
+    //IDCLOSE has no label
+    setlabel(IDHELP, W("Help"));
+    setlabel(IDTRYAGAIN, W("&Try Again"));
+    setlabel(IDCONTINUE, W("&Continue"));
+#endif
+
+    if (oklabel) {
+      SetWindowTextW(GetDlgItem((HWND) wParam, IDOK), oklabel);
+      SetWindowTextW(GetDlgItem((HWND) wParam, IDYES), oklabel);
+    }
+  }
+  return 0;
+}
+
+int
+message_box(HWND parwnd, char * text, char * caption, int type, wstring ok)
+{
+  oklabel = ok;
+  oktype = type;
+//  HINSTANCE hinst = GetModuleHandle(NULL);
+//  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, hinst, thrid);
+  DWORD thrid = GetCurrentThreadId();
+  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, 0, thrid);
+  int ret;
+  if (nonascii(text) || nonascii(caption)) {
+    wchar * wtext = text ? cs__utftowcs(text) : 0;
+    wchar * wcapt = caption ? cs__utftowcs(caption) : 0;
+    ret = MessageBoxW(parwnd, wtext, wcapt, type);
+    if (wtext)
+      free(wtext);
+    if (wcapt)
+      free(wcapt);
+  }
+  else
+    ret = MessageBox(parwnd, text, caption, type);
+  UnhookWindowsHookEx(hook);
+  return ret;
+}
+
+int
+message_box_w(HWND parwnd, wchar * wtext, wchar * wcaption, int type, wstring ok)
+{
+  oklabel = ok;
+  oktype = type;
+//  HINSTANCE hinst = GetModuleHandle(NULL);
+//  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, hinst, thrid);
+  DWORD thrid = GetCurrentThreadId();
+  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, 0, thrid);
+  int ret;
+  ret = MessageBoxW(parwnd, wtext, wcaption, type);
+  UnhookWindowsHookEx(hook);
+  return ret;
+}
+
 void
 win_show_about(void)
 {
@@ -506,6 +599,9 @@ win_show_about(void)
   free(aboutfmt);
   wchar * wmsg = cs__utftowcs(abouttext);
   free(abouttext);
+  oklabel = null;
+  oktype = MB_OK;
+  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, 0, GetCurrentThreadId());
   MessageBoxIndirectW(&(MSGBOXPARAMSW){
     .cbSize = sizeof(MSGBOXPARAMSW),
     .hwndOwner = config_wnd,
@@ -515,79 +611,8 @@ win_show_about(void)
     .lpszIcon = MAKEINTRESOURCEW(IDI_MAINICON),
     .lpszText = wmsg
   });
-  free(wmsg);
-}
-
-/*
-   adapted from messageboxmanager.zip
-   @ https://www.codeproject.com/articles/18399/localizing-system-messagebox
- */
-int
-message_box(HWND parwnd, char *text, char *caption, int type, wstring ok)
-{
-  LRESULT CALLBACK set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
-    (void)lParam;
-
-    void setlabel(int id, wstring label) {
-      HWND button = GetDlgItem((HWND)wParam, id);
-#ifdef debug_message_box
-      if (button) {
-        wchar buf [99];
-        GetWindowTextW(button, buf, 99);
-        printf("%d <%ls> -> <%ls>\n", id, buf, label);
-      }
-#endif
-      if (button)
-        SetWindowTextW(button, label);
-    }
-
-    if (nCode == HCBT_ACTIVATE) {
-      if ((type & MB_TYPEMASK) == MB_OK)
-        //__ take notice
-        setlabel(IDOK, _W("I see"));
-      else
-        //__ confirm action
-        setlabel(IDOK, _W("OK"));
-      setlabel(IDCANCEL, _W("Cancel"));
-#ifdef we_would_use_these_in_any_message_box
-#warning W -> _W to add the labels to the localization repository
-      setlabel(IDABORT, W("&Abort"));
-      setlabel(IDRETRY, W("&Retry"));
-      setlabel(IDIGNORE, W("&Ignore"));
-      setlabel(IDYES, W("&Yes"));
-      setlabel(IDNO, W("&No"));
-      //IDCLOSE has no label
-      setlabel(IDHELP, W("Help"));
-      setlabel(IDTRYAGAIN, W("&Try Again"));
-      setlabel(IDCONTINUE, W("&Continue"));
-#endif
-
-      if (ok) {
-        SetWindowTextW(GetDlgItem((HWND) wParam, IDOK), ok);
-        SetWindowTextW(GetDlgItem((HWND) wParam, IDYES), ok);
-      }
-    }
-    return 0;
-  }
-
-//  HINSTANCE hinst = GetModuleHandle(NULL);
-//  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, hinst, thrid);
-  DWORD thrid = GetCurrentThreadId();
-  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, 0, thrid);
-  int ret;
-  if (nonascii(text) || nonascii(caption)) {
-    wchar * wtext = text ? cs__utftowcs(text) : 0;
-    wchar * wcapt = caption ? cs__utftowcs(caption) : 0;
-    ret = MessageBoxW(parwnd, wtext, wcapt, type);
-    if (wtext)
-      free(wtext);
-    if (wcapt)
-      free(wcapt);
-  }
-  else
-    ret = MessageBox(parwnd, text, caption, type);
   UnhookWindowsHookEx(hook);
-  return ret;
+  free(wmsg);
 }
 
 void

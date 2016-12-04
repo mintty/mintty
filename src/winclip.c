@@ -34,7 +34,7 @@ shell_exec_thread(void *data)
         FORMAT_MESSAGE_FROM_SYSTEM | 64,
         0, error, 0, msg, lengthof(msg), 0
       );
-      MessageBoxW(0, msg, 0, MB_ICONERROR);
+      message_box_w(0, msg, 0, MB_ICONERROR, null);
     }
   }
   free(wpath);
@@ -70,7 +70,7 @@ win_open(wstring wpath)
     if (conv_wpath)
       shell_exec(conv_wpath);
     else
-      MessageBoxA(0, strerror(errno), 0, MB_ICONERROR);
+      message_box(0, strerror(errno), 0, MB_ICONERROR, null);
   }
 }
 

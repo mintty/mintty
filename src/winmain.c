@@ -1247,9 +1247,10 @@ confirm_exit(void)
   wcscat(wmsg, msg_post);
   free(proclist);
 
-  int ret = MessageBoxW(
+  int ret = message_box_w(
               wnd, wmsg,
-              W(APPNAME), MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON2
+              W(APPNAME), MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON2,
+              null
             );
   free(wmsg);
 
@@ -1686,7 +1687,7 @@ show_message(char * msg, UINT type)
   char * outmsg = cs__utftombs(msg);
   if (fputs(outmsg, out) < 0 || fputs("\n", out) < 0 || fflush(out) < 0) {
     wchar * wmsg = cs__utftowcs(msg);
-    MessageBoxW(0, wmsg, W(APPNAME), type);
+    message_box_w(0, wmsg, W(APPNAME), type, null);
     delete(wmsg);
   }
   delete(outmsg);

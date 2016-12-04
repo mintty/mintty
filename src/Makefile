@@ -259,6 +259,7 @@ checksrc:
 	if egrep -a -e "^(f*printf|#define debug)" *.[hc]; then false; fi
 	if egrep -e "^(if|do|for|while) *[({]" *.c; then false; fi
 	if egrep -e "\((false|0) *&" *.c; then false; fi
+	if egrep -e "\((true|1) *\|" *.c; then false; fi
 	if egrep -e "& 0($|[^bx])" *.c; then false; fi
 
 #############################################################################

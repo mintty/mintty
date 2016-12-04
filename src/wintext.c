@@ -219,7 +219,7 @@ show_font_warning(char * msg)
 {
   // suppress multiple font error messages
   static wchar * msgfont = null;
-  if (msgfont && 0 == wcscmp(msgfont, cfg.font.name)) {
+  if (msgfont && wcscmp(msgfont, cfg.font.name) == 0) {
     return;
   }
   else {
