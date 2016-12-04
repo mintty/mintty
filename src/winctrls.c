@@ -47,7 +47,7 @@
 
 void
 ctrlposinit(ctrlpos * cp, HWND wnd, int leftborder, int rightborder,
-           int topborder)
+            int topborder)
 {
   RECT r, r2;
   cp->wnd = wnd;
@@ -67,8 +67,8 @@ ctrlposinit(ctrlpos * cp, HWND wnd, int leftborder, int rightborder,
 static HWND
 doctl(control * ctrl, 
       ctrlpos * cp, RECT r, 
-      char * wclass, int wstyle, int exstyle, 
-      string wtext, int wid)
+      char * class, int wstyle, int exstyle, 
+      string text, int wid)
 {
   HWND ctl;
  /*
@@ -85,17 +85,27 @@ doctl(control * ctrl,
   * without creating any actual controls.
   */
   if (cp->wnd) {
-    ctl =
-      CreateWindowExA(exstyle, wclass, wtext, wstyle, r.left, r.top, r.right,
-                      r.bottom, cp->wnd, (HMENU)(INT_PTR)wid, inst, null);
-    if (nonascii(wtext)) {
+    // avoid changing text with SendMessageW(ctl, WM_SETTEXT, ...) 
+    // as this produces large text artefacts
+    if (nonascii(text)) {
       // transform label for proper Windows display
-      wchar * us = cs__utftowcs(wtext);
-      SendMessageW(ctl, WM_SETTEXT, 0, (LPARAM)us);
-      free(us);
+      wchar * wtext = text ? cs__utftowcs(text) : 0;
+      wchar * wclass = class ? cs__utftowcs(class) : 0;
+      ctl =
+        CreateWindowExW(exstyle, wclass, wtext, wstyle, r.left, r.top, r.right,
+                        r.bottom, cp->wnd, (HMENU)(INT_PTR)wid, inst, null);
+      if (wtext)
+        free(wtext);
+      if (wclass)
+        free(wclass);
+    }
+    else {
+      ctl =
+        CreateWindowExA(exstyle, class, text, wstyle, r.left, r.top, r.right,
+                        r.bottom, cp->wnd, (HMENU)(INT_PTR)wid, inst, null);
     }
 #ifdef debug_widgets
-    printf("%8p %s %d '%s'\n", ctl, wclass, exstyle, wtext);
+    printf("%8p %s %d '%s'\n", ctl, class, exstyle, text);
 #endif
     SendMessage(ctl, WM_SETFONT, cp->font, MAKELPARAM(true, 0));
     if (ctrl) {
@@ -116,7 +126,7 @@ doctl(control * ctrl,
     EnumChildWindows(ctl, enumwin, 0);
 #endif
 
-    if (!strcmp(wclass, "LISTBOX")) {
+    if (!strcmp(class, "LISTBOX")) {
      /*
       * Bizarre Windows bug: the list box calculates its
       * number of lines based on the font it has at creation
