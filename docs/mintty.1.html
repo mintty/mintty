@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Fri Nov 11 16:57:43 2016 -->
+<!-- CreationDate: Sun Dec  4 22:32:51 2016 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -759,8 +759,8 @@ configuration value is not valid UTF-8, it is interpreted in
 the system ANSI encoding. (This does not apply to the same
 configuration settings when given on the command-line.) <br>
 Unicode-enabled settings: BellFile, ThemeFile, Title,
-ExitTitle, Icon, Log, Font, Printer, Answerback, Class,
-AppID, AppName, AppLaunchCmd, SixelClipChars.</p>
+ExitTitle, Icon, Log, Language, Font, Printer, Answerback,
+SixelClipChars, Class, AppID, AppName, AppLaunchCmd.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Be careful when
 running multiple instances of mintty. If options are saved
@@ -822,6 +822,16 @@ files from the web (note that the program <b>curl</b> needs
 to be installed for the latter option). See the Tips wiki
 page <i>https://github.com/mintty/mintty/wiki/Tips</i> about
 this mechanism.</p>
+
+<p style="margin-left:11%;"><b>Text lines</b>
+(UnderlineManual=false)</p>
+
+<p style="margin-left:22%;">By setting this true, text
+attributes underline, doubly underline, strikeout and
+overline are enforced to be drawn manually. The default is
+to use Windows font variants for strikeout and for
+underline, unless mintty detects that the underlined font
+would not display properly.</p>
 
 <p style="margin-left:11%;"><b>Transparency</b>
 (Transparency=off)</p>
@@ -963,6 +973,15 @@ smoothing from the following choices: <br>
 &ndash; <b>Partial</b>: Greyscale anti-aliasing. <br>
 &ndash; <b>Full</b>: Subpixel anti-aliasing
 (&quot;ClearType&quot;).</p>
+
+<p style="margin-left:11%;"><b>Font rendering</b>
+(FontRender=textout)</p>
+
+<p style="margin-left:22%;">Select the rendering system
+used for text display: <br>
+&ndash; <b>textout</b>: Use the Windows ExtTextOut API. <br>
+&ndash; <b>uniscribe</b>: Use the Windows Uniscribe API.
+This may become the default in a future version.</p>
 
 <p style="margin-left:11%;"><b>Locale</b> (Locale=)</p>
 
@@ -1297,17 +1316,24 @@ user interface, the Options dialog, menus, message boxes,
 and terminal in-line error messages. <br>
 &ndash; <i>(empty)</i> an empty entry disables localization
 <br>
-&ndash; <b>=</b> use the same language as the <b>Locale</b>
-setting (section Text) <br>
+&ndash; <b>@</b> use the Windows user language setting <br>
 &ndash; <b>*</b> use environment settings (variables
 <i>LANGUAGE</i>, <i>LC_ALL</i>, <i>LC_MESSAGES</i>,
 <i>LANG</i>) <br>
+&ndash; <b>=</b> use the same language as the <b>Locale</b>
+setting (section Text) <br>
 &ndash; <i>(language[_region])</i> use the given language or
 language/region code</p>
 
 <p style="margin-left:22%; margin-top: 1em">See the Tips
 wiki page <i>https://github.com/mintty/mintty/wiki/Tips</i>
 about how to configure localization.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note that
+Windows may already have localized the default entries of
+the system menu, which makes the system menu language
+inconsistent because mintty adds a few items here. Select
+<i>Language=en</i> to &quot;reverse-localize&quot; this.</p>
 
 
 <p style="margin-left:11%; margin-top: 1em"><b>Terminal</b>

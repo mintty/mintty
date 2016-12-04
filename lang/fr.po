@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-02 19:05+0100\n"
+"POT-Creation-Date: 2016-12-04 22:32+0100\n"
 "PO-Revision-Date: 2016-11-29 13:32-0000\n"
 "Last-Translator: Eric Lassauge <lassauge@gmail.com>\n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -182,7 +182,7 @@ msgstr "À propos ..."
 msgid "Save"
 msgstr "Enregistrer"
 
-#: config.c:1873 windialog.c:563
+#: config.c:1873 windialog.c:521
 msgid "Cancel"
 msgstr "Annuler"
 
@@ -576,12 +576,12 @@ msgid "Options"
 msgstr "Options"
 
 #. __ take notice
-#: windialog.c:559
+#: windialog.c:517
 msgid "I see"
 msgstr "Ah bon"
 
 #. __ confirm action
-#: windialog.c:562
+#: windialog.c:520
 msgid "OK"
 msgstr ""
 
@@ -673,24 +673,24 @@ msgstr "Processus en cours dans la session :"
 msgid "Close anyway?"
 msgstr "Forcer la fermeture ?"
 
-#: winmain.c:1761
+#: winmain.c:1762
 msgid "Try '--help' for more information"
 msgstr "Essayez « --help » pour plus d’information"
 
-#: winmain.c:1769
+#: winmain.c:1770
 msgid "Could not load icon"
 msgstr "Impossible de charger l’icône"
 
-#: winmain.c:2073
+#: winmain.c:2074
 msgid "Usage:"
 msgstr "Utilisation :"
 
-#: winmain.c:2074
+#: winmain.c:2075
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr "[OPTION]... [ PROGRAMME [ARG]... | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:2077
+#: winmain.c:2078
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -765,27 +765,27 @@ msgstr ""
 "Voir la page de manuel pour les autres options de la ligne de commande et la "
 "configuration.\n"
 
-#: winmain.c:2251
+#: winmain.c:2252
 msgid "Syntax error in position argument '%s'"
 msgstr "Erreur de syntace pour l’argument « %s »"
 
-#: winmain.c:2262
+#: winmain.c:2263
 msgid "Syntax error in size argument '%s'"
 msgstr "Erreur de syntace pour l’argument de taille « %s »"
 
-#: winmain.c:2316
+#: winmain.c:2317
 msgid "Unknown option '%s'"
 msgstr "Option inconnue « %s »"
 
-#: winmain.c:2318
+#: winmain.c:2319
 msgid "Option '%s' requires an argument"
 msgstr "L’option « %s » requiert un argument"
 
-#: winmain.c:2364
+#: winmain.c:2365
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr "Mintty ne peut se détacher de l’appellant, on démarre quand même"
 
-#: winmain.c:2497
+#: winmain.c:2498
 msgid "Using default title due to invalid characters in program name"
 msgstr ""
 "Utilisation du titre par défaut à cause d’un caractère invalide dans le nom "
@@ -806,19 +806,19 @@ msgstr "◀"
 msgid "▶"
 msgstr "▶"
 
-#: wintext.c:313
+#: wintext.c:324
 msgid "Font not found, using system substitute"
 msgstr "Police non trouvée, utilisation de la police système"
 
-#: wintext.c:320
+#: wintext.c:331
 msgid "Font has limited support for character ranges"
 msgstr "La police a un jeu de caractères limité"
 
-#: wintext.c:441
+#: wintext.c:452
 msgid "Font installation corrupt, using system substitute"
 msgstr "Police corrompue, utilisation de la police système"
 
-#: wintext.c:461
+#: wintext.c:472
 msgid "Font does not support system locale"
 msgstr "Police non supporté pour la langue système"
 
@@ -837,5 +837,5 @@ msgstr ""
 "Traductions © 2016 Éric Lassauge\n"
 "Reportez les bugs ou les demandes d’amélioration via le gestionnaire de "
 "problèmes de la page du projet mintty\n"
-"à l’adresse « %s » \n"
+"à l’adresse « %s ».\n"
 "Voir également le wiki pour d’autres astuces, remerciements et crédits."

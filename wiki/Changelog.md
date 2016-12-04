@@ -1,3 +1,5 @@
+### 2.7.1 (4 Dec 2016) ###
+
 Character display:
   * Uniscribe support for left-to-right text (~#573, ~#605, /#430), achieving:
   * Improved font fallback.
@@ -8,15 +10,21 @@ Character display:
 
 Localization:
   * Fallback from region-specific to generic translation ("fr_FR" -> "fr") (#537).
-  * Simplified menu item localization (#537).
+  * Windows user language as an additional option for language selection (#537).
   * Enabled localization of Options tree menu labels (#537).
   * Enabled localization of system menu standard items (#537).
   * Support reverse-localization of Windows-localized menu entries with Language=en.
-  * Windows user language as an additional option for language selection (#537).
+  * Simplified menu item localization (#537).
+  * Localization of message boxes (#537).
   * Preserving system menu icons.
+  * Avoiding artefacts with non-ASCII labels of Options dialog elements.
 
 Keyboard:
-  * Enablee Compose key with Shift in modifyOtherKeys mode.
+  * Enabled Compose key with Shift in modifyOtherKeys mode.
+
+Other:
+  * Suppressing repeated font error messages.
+  * Enabled link-click in wsltty (#164).
 
 ### 2.7.0 (13 Nov 2016) ###
 
@@ -95,26 +103,26 @@ Configuration:
 
 ### 2.5.0 (23 Aug 2016) ###
 
-  * Revise DPI handling (#470; #492, #487); always consider individual monitor DPI.
+  * Revised DPI handling (#470; #492, #487); always consider individual monitor DPI.
 
 ### 2.4.3 (23 Aug 2016) ###
 
-  * Fix trails when moving other window over mintty under certain conditions (#576).
-  * Fix format of double child creation error message.
+  * Fixed trails when moving other window over mintty under certain conditions (#576).
+  * Fixed format of double child creation error message.
 
 ### 2.4.2 (27 Jul 2016) ###
 
-  * Revert change (#123) that spoiled wide character display (#570).
+  * Reverted change (#123) that spoiled wide character display (#570).
   * Changed bell to make sound by default (like xterm) (#568).
 
 ### 2.4.1 (23 Jul 2016) ###
 
 Window handling:
-  * Tweak and guard DPI change handling (#566, #470).
+  * Tweaked and guarding DPI change handling (#566, #470).
 
 Text display:
   * Combined enhancement for rendering of combined characters (#565).
-  * Enforce font selection at uniform size, to ensure using bold font.
+  * Enforcing font selection at uniform size, to ensure using bold font.
   * Restored self-drawn, overstriking bold mode (#567).
   * Stretching narrow characters that are expected wide (#123).
   * Option WideExtra for double-width display of extra wide/long Unicode characters (experimental).

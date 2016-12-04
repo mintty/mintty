@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-02 19:05+0100\n"
+"POT-Creation-Date: 2016-12-04 22:32+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -178,7 +178,7 @@ msgstr "Über..."
 msgid "Save"
 msgstr "Sichern"
 
-#: config.c:1873 windialog.c:563
+#: config.c:1873 windialog.c:521
 msgid "Cancel"
 msgstr "Abbruch"
 
@@ -572,12 +572,12 @@ msgid "Options"
 msgstr "Optionen"
 
 #. __ take notice
-#: windialog.c:559
+#: windialog.c:517
 msgid "I see"
 msgstr "Aha"
 
 #. __ confirm action
-#: windialog.c:562
+#: windialog.c:520
 msgid "OK"
 msgstr ""
 
@@ -669,24 +669,24 @@ msgstr "Laufende Prozesse:"
 msgid "Close anyway?"
 msgstr "Trotzdem schließen?"
 
-#: winmain.c:1761
+#: winmain.c:1762
 msgid "Try '--help' for more information"
 msgstr "Versuche '--help' für mehr Information"
 
-#: winmain.c:1769
+#: winmain.c:1770
 msgid "Could not load icon"
 msgstr "Konnte Symbol nicht laden"
 
-#: winmain.c:2073
+#: winmain.c:2074
 msgid "Usage:"
 msgstr "Aufruf:"
 
-#: winmain.c:2074
+#: winmain.c:2075
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr ""
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:2077
+#: winmain.c:2078
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -753,27 +753,27 @@ msgstr ""
 "  -V, --version         Zeige nur Versions-Information\n"
 "Siehe die Manual-Seite für weitere Optionen und Konfiguration.\n"
 
-#: winmain.c:2251
+#: winmain.c:2252
 msgid "Syntax error in position argument '%s'"
 msgstr "Formatfehler in Positionsparameter '%s'"
 
-#: winmain.c:2262
+#: winmain.c:2263
 msgid "Syntax error in size argument '%s'"
 msgstr "Formatfehler in Größenparameter '%s'"
 
-#: winmain.c:2316
+#: winmain.c:2317
 msgid "Unknown option '%s'"
 msgstr "Unbekannte Option '%s'"
 
-#: winmain.c:2318
+#: winmain.c:2319
 msgid "Option '%s' requires an argument"
 msgstr "Option '%s' benötigt einen Parameter"
 
-#: winmain.c:2364
+#: winmain.c:2365
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr "Mintty konnte nicht vom Aufrufer abkoppeln, startet trotzdem"
 
-#: winmain.c:2497
+#: winmain.c:2498
 msgid "Using default title due to invalid characters in program name"
 msgstr "Nehme Default-Titel wegen ungültiger Zeichen im Programmnamen"
 
@@ -792,19 +792,19 @@ msgstr ""
 msgid "▶"
 msgstr ""
 
-#: wintext.c:313
+#: wintext.c:324
 msgid "Font not found, using system substitute"
 msgstr "Schrift nicht gefunden, nehme System-Ersatz"
 
-#: wintext.c:320
+#: wintext.c:331
 msgid "Font has limited support for character ranges"
 msgstr "Schrift hat beschränkte Unterstützung für Zeichensätze"
 
-#: wintext.c:441
+#: wintext.c:452
 msgid "Font installation corrupt, using system substitute"
 msgstr "Schriftinstallation defekt, nehme System-Ersatz"
 
-#: wintext.c:461
+#: wintext.c:472
 msgid "Font does not support system locale"
 msgstr "Schrift unterstützt System-Zeichensatz nicht"
 
@@ -822,6 +822,6 @@ msgid ""
 msgstr ""
 "Fehler oder Verbesserungswünsche bitte über das Verfolgungssystem auf der "
 "Projektseite\n"
-"%s.\n"
+"%s\n"
 "berichten. Siehe auch die Wiki-Seite dort für weitere Hinweise und "
 "Danksagungen."

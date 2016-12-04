@@ -96,6 +96,7 @@ binpkg:
 srcpkg: $(DIST)/$(name_ver)-$(REL)-src.tar.xz
 
 $(DIST)/$(name_ver)-$(REL)-src.tar.xz: $(DIST)/$(name_ver)-src.tar.bz2
+	cp cygwin/mintty.cygport $(DIST)/$(cygport)
 	cd $(DIST); tar cJf $(name_ver)-$(REL)-src.tar.xz $(TARUSER) $(name_ver)-src.tar.bz2 $(name_ver)-$(REL).cygport
 
 upload:
