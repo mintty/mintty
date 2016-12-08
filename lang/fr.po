@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-08 16:24+0100\n"
+"POT-Creation-Date: 2016-12-08 17:49+0100\n"
 "PO-Revision-Date: 2016-11-29 13:32-0000\n"
 "Last-Translator: Eric Lassauge <lassauge@gmail.com>\n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -181,13 +181,13 @@ msgstr "Impossible d’enregistrer le fichier de thème"
 
 #: config.c:1874
 msgid "About..."
-msgstr "À propos…"
+msgstr "À propos …"
 
 #: config.c:1876
 msgid "Save"
 msgstr "Enregistrer"
 
-#: config.c:1879 winctrls.c:918 windialog.c:521
+#: config.c:1879 winctrls.c:906 windialog.c:521
 msgid "Cancel"
 msgstr "Annuler"
 
@@ -197,11 +197,11 @@ msgstr "Appliquer"
 
 #: config.c:1888 config.c:1909 config.c:1940
 msgid "Looks"
-msgstr "Apparences"
+msgstr "Apparence"
 
 #: config.c:1888
 msgid "Looks in Terminal"
-msgstr "Apparences"
+msgstr "Apparence"
 
 #: config.c:1888
 msgid "Colours"
@@ -290,15 +290,15 @@ msgstr "Cli&gnotant"
 
 #: config.c:1956 config.c:1961 config.c:1986
 msgid "Text"
-msgstr "Caractères"
+msgstr "Texte"
 
 #: config.c:1956
 msgid "Text and Font properties"
 msgstr "Taille et propriétés de la police de caractères"
 
-#: config.c:1956
+#: config.c:1956 winctrls.c:909
 msgid "Font"
-msgstr "Police de caractères"
+msgstr "Police de caractères"
 
 #: config.c:1964
 msgid "Font smoothing"
@@ -462,7 +462,7 @@ msgstr "Souris en mode appli."
 
 #: config.c:2090
 msgid "Default click target"
-msgstr "&Cible du clic"
+msgstr "&Cible du clic"
 
 #: config.c:2092
 msgid "&Window"
@@ -580,93 +580,88 @@ msgstr "[Impression…]"
 msgid "&Select..."
 msgstr "&Sélect.…"
 
-#: winctrls.c:912
-msgid "&Custom colors:"
-msgstr ""
-
-#: winctrls.c:913
-msgid "&Basic colors:"
-msgstr ""
-
-#. __ confirm action
-#: winctrls.c:917 windialog.c:520
-msgid "OK"
-msgstr ""
-
-#: winctrls.c:920
+#: winctrls.c:910
 msgid "&Apply"
 msgstr "&Appliquer"
 
-#: winctrls.c:921
+#: winctrls.c:911
 msgid "&Font:"
-msgstr ""
+msgstr "&Police :"
 
-#: winctrls.c:922
+#: winctrls.c:912
 msgid "Font st&yle:"
-msgstr ""
+msgstr "&Style de police :"
 
-#: winctrls.c:923
+#: winctrls.c:913
 msgid "&Size:"
-msgstr "&Taille:"
+msgstr "&Taille :"
 
-#: winctrls.c:924
+#: winctrls.c:914
 msgid "Sample"
-msgstr "Exemple"
+msgstr "Échantillon"
 
 #. __ font chooser text sample ("AaBbYyZz" by default)
-#: winctrls.c:926
+#: winctrls.c:916
 msgid "Ferqœm’4€"
 msgstr ""
 
 #. __ this field is only shown with OldFontMenu=true
-#: winctrls.c:943
+#: winctrls.c:933
 msgid "Sc&ript:"
-msgstr ""
+msgstr "Sc&ript :"
 
 #. __ this field is only shown with OldFontMenu=true
-#: winctrls.c:945
+#: winctrls.c:935
 msgid "<A>Show more fonts</A>"
-msgstr ""
+msgstr "<A>Autres polices</A>"
 
-#: winctrls.c:948
-msgid "&Define Custom Colors >>"
-msgstr ""
-
-#: winctrls.c:949
+#: winctrls.c:939 winctrls.c:952
 msgid "Color"
 msgstr "Couleur"
 
-#: winctrls.c:950
-msgid "|S&olid"
-msgstr "|B&ase"
+#: winctrls.c:947
+msgid "&Basic colors:"
+msgstr "Couleurs de &base :"
+
+#: winctrls.c:949
+msgid "&Custom colors:"
+msgstr "Couleurs &personnalisées :"
 
 #: winctrls.c:951
-msgid "Hu&e:"
-msgstr "&Teinte:"
-
-#: winctrls.c:952
-msgid "&Sat:"
-msgstr "&Sat:"
+msgid "&Define Custom Colors >>"
+msgstr "&Définir les couleurs personnalisées >>"
 
 #: winctrls.c:953
-msgid "&Lum:"
-msgstr "&Lum:"
+msgid "|S&olid"
+msgstr "|&Unie"
 
 #: winctrls.c:954
-msgid "&Red:"
-msgstr "&Rouge:"
+msgid "Hu&e:"
+msgstr "&Teinte :"
 
 #: winctrls.c:955
-msgid "&Green:"
-msgstr "&Vert:"
+msgid "&Sat:"
+msgstr "&Satur. :"
 
 #: winctrls.c:956
-msgid "Bl&ue:"
-msgstr "&Bleu:"
+msgid "&Lum:"
+msgstr "&Lum. :"
 
 #: winctrls.c:957
+msgid "&Red:"
+msgstr "&Rouge :"
+
+#: winctrls.c:958
+msgid "&Green:"
+msgstr "&Vert :"
+
+#: winctrls.c:959
+msgid "Bl&ue:"
+msgstr "&Bleu :"
+
+#: winctrls.c:960
 msgid "&Add to Custom Colors"
-msgstr ""
+msgstr "&Ajouter aux couleurs personnalisées"
 
 #: windialog.c:483
 msgid "Options"
@@ -676,6 +671,11 @@ msgstr "Options"
 #: windialog.c:517
 msgid "I see"
 msgstr "Ah bon"
+
+#. __ confirm action
+#: windialog.c:520
+msgid "OK"
+msgstr "Ok"
 
 #: wininput.c:119 wininput.c:125
 msgid "Ctrl+"
@@ -723,7 +723,7 @@ msgstr "&Copier"
 
 #: wininput.c:179
 msgid "S&earch"
-msgstr "Ch&ercher\tAlt+F3"
+msgstr "Ch&ercher"
 
 #: wininput.c:183
 msgid "&Reset"
@@ -859,15 +859,15 @@ msgstr ""
 
 #: winmain.c:2252
 msgid "Syntax error in position argument '%s'"
-msgstr "Erreur de syntace pour l’argument « %s »"
+msgstr "Erreur de syntaxe pour l’argument « %s »"
 
 #: winmain.c:2263
 msgid "Syntax error in size argument '%s'"
-msgstr "Erreur de syntace pour l’argument de taille « %s »"
+msgstr "Erreur de syntaxe pour l’argument de taille « %s »"
 
 #: winmain.c:2317
 msgid "Unknown option '%s'"
-msgstr "Option inconnue « %s »"
+msgstr "Option inconnue « %s »"
 
 #: winmain.c:2319
 msgid "Option '%s' requires an argument"
@@ -875,7 +875,7 @@ msgstr "L’option « %s » requiert un argument"
 
 #: winmain.c:2365
 msgid "Mintty could not detach from caller, starting anyway"
-msgstr "Mintty ne peut se détacher de l’appellant, on démarre quand même"
+msgstr "Mintty ne peut se détacher de l’appelant, on démarre quand même"
 
 #: winmain.c:2498
 msgid "Using default title due to invalid characters in program name"

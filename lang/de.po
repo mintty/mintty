@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-08 16:24+0100\n"
+"POT-Creation-Date: 2016-12-08 17:49+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -183,7 +183,7 @@ msgstr "Über..."
 msgid "Save"
 msgstr "Sichern"
 
-#: config.c:1879 winctrls.c:918 windialog.c:521
+#: config.c:1879 winctrls.c:906 windialog.c:521
 msgid "Cancel"
 msgstr "Abbruch"
 
@@ -292,7 +292,7 @@ msgstr "Schrift"
 msgid "Text and Font properties"
 msgstr "Text und Schrift – Eigenschaften"
 
-#: config.c:1956
+#: config.c:1956 winctrls.c:909
 msgid "Font"
 msgstr "Schrift"
 
@@ -576,91 +576,86 @@ msgstr "[Druckt...] "
 msgid "&Select..."
 msgstr "&Wählen..."
 
-#: winctrls.c:912
-msgid "&Custom colors:"
-msgstr "&Benutzerdefinierte Farben:"
-
-#: winctrls.c:913
-msgid "&Basic colors:"
-msgstr "&Grundfarben:"
-
-#. __ confirm action
-#: winctrls.c:917 windialog.c:520
-msgid "OK"
-msgstr ""
-
-#: winctrls.c:920
+#: winctrls.c:910
 msgid "&Apply"
 msgstr "&Übernehmen"
 
-#: winctrls.c:921
+#: winctrls.c:911
 msgid "&Font:"
 msgstr "&Schriftart:"
 
-#: winctrls.c:922
+#: winctrls.c:912
 msgid "Font st&yle:"
 msgstr "Schriftsch&nitt:"
 
-#: winctrls.c:923
+#: winctrls.c:913
 msgid "&Size:"
 msgstr "Schr.&grad:"
 
-#: winctrls.c:924
+#: winctrls.c:914
 msgid "Sample"
 msgstr "Beispiel"
 
 #. __ font chooser text sample ("AaBbYyZz" by default)
-#: winctrls.c:926
+#: winctrls.c:916
 msgid "Ferqœm’4€"
 msgstr ""
 
 #. __ this field is only shown with OldFontMenu=true
-#: winctrls.c:943
+#: winctrls.c:933
 msgid "Sc&ript:"
 msgstr "S&kript:"
 
 #. __ this field is only shown with OldFontMenu=true
-#: winctrls.c:945
+#: winctrls.c:935
 msgid "<A>Show more fonts</A>"
 msgstr "<A>Weitere Schriftarten anzeigen</A>"
 
-#: winctrls.c:948
-msgid "&Define Custom Colors >>"
-msgstr "Farben &definieren >>"
-
-#: winctrls.c:949
+#: winctrls.c:939 winctrls.c:952
 msgid "Color"
 msgstr "Farbe"
 
-#: winctrls.c:950
+#: winctrls.c:947
+msgid "&Basic colors:"
+msgstr "&Grundfarben:"
+
+#: winctrls.c:949
+msgid "&Custom colors:"
+msgstr "&Benutzerdefinierte Farben:"
+
+#: winctrls.c:951
+msgid "&Define Custom Colors >>"
+msgstr "Farben &definieren >>"
+
+#: winctrls.c:953
 msgid "|S&olid"
 msgstr "|B&asis"
 
-#: winctrls.c:951
+#: winctrls.c:954
 msgid "Hu&e:"
 msgstr "Farb&t.:"
 
-#: winctrls.c:952
+#: winctrls.c:955
 msgid "&Sat:"
 msgstr "S&ätt.:"
 
-#: winctrls.c:953
+#: winctrls.c:956
 msgid "&Lum:"
 msgstr "&Hell.:"
 
-#: winctrls.c:954
+#: winctrls.c:957
 msgid "&Red:"
 msgstr "&Rot:"
 
-#: winctrls.c:955
+#: winctrls.c:958
 msgid "&Green:"
 msgstr "&Grün:"
 
-#: winctrls.c:956
+#: winctrls.c:959
 msgid "Bl&ue:"
 msgstr "&Blau:"
 
-#: winctrls.c:957
+#: winctrls.c:960
 msgid "&Add to Custom Colors"
 msgstr "Farben hinzu&fügen"
 
@@ -672,6 +667,11 @@ msgstr "Optionen"
 #: windialog.c:517
 msgid "I see"
 msgstr "Aha"
+
+#. __ confirm action
+#: windialog.c:520
+msgid "OK"
+msgstr ""
 
 #: wininput.c:119 wininput.c:125
 msgid "Ctrl+"
