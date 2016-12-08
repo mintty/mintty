@@ -1690,6 +1690,11 @@ theme_handler(control *ctrl, int event)
   //__ terminal theme / colour scheme
   const wstring NONE = _W("◇ None ◇");  // ♢◇
   const wstring CFG_NONE = W("");
+  //__ indicator of unsaved downloaded colour scheme
+  const wstring DOWNLOADED = _W("downloaded / give me a name!");
+  // downloaded theme indicator must contain a slash
+  // to steer enabled state of Store button properly
+  const wstring CFG_DOWNLOADED = W("@/@");
   wstring theme_name = new_cfg.theme_file;
   if (event == EVENT_REFRESH) {
     dlg_listbox_clear(ctrl);
@@ -1702,7 +1707,7 @@ theme_handler(control *ctrl, int event)
       dlg_editbox_set_w(ctrl, W(""));
     else
 #endif
-    dlg_editbox_set_w(ctrl, *theme_name ? theme_name : NONE);
+    dlg_editbox_set_w(ctrl, !wcscmp(theme_name, CFG_DOWNLOADED) ? DOWNLOADED : *theme_name ? theme_name : NONE);
   }
   else if (event == EVENT_SELCHANGE) {  // pull-down selection
     if (dlg_listbox_getcur(ctrl) == 0)
@@ -1718,15 +1723,16 @@ theme_handler(control *ctrl, int event)
   else if (event == EVENT_VALCHANGE) {  // pasted or typed-in
     dlg_editbox_get_w(ctrl, &theme_name);
     new_cfg.theme_file = theme_name;
-    enable_widget(store_button, 
+    enable_widget(store_button,
                   *new_cfg.colour_scheme && *theme_name
                   && !wcschr(theme_name, L'/') && !wcschr(theme_name, L'\\')
                  );
   }
   else if (event == EVENT_DROP) {
     if (wcsncmp(W("data:text/plain,"), dragndrop, 16) == 0) {
-      dlg_editbox_set_w(ctrl, W(""));
-      wstrset(&new_cfg.theme_file, W(""));
+      // indicate availability of downloaded scheme to be stored
+      dlg_editbox_set_w(ctrl, DOWNLOADED);
+      wstrset(&new_cfg.theme_file, CFG_DOWNLOADED);
       // un-URL-escape scheme description
       char * scheme = cs__wcstoutf(&dragndrop[16]);
       char * url = scheme;
@@ -1793,7 +1799,7 @@ scheme_saver(control *ctrl, int event)
 {
   wstring theme_name = new_cfg.theme_file;
   if (event == EVENT_REFRESH) {
-    enable_widget(ctrl, 
+    enable_widget(ctrl,
                   *new_cfg.colour_scheme && *theme_name
                   && !wcschr(theme_name, L'/') && !wcschr(theme_name, L'\\')
                  );

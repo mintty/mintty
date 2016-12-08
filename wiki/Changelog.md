@@ -1,5 +1,6 @@
 Localization:
   * Completion of localization support, covering font chooser and colour chooser (#537).
+  * Hint in Theme field as feedback after dragging downloaded colour scheme.
 
 ### 2.7.1 (4 Dec 2016) ###
 
