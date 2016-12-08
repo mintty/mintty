@@ -902,21 +902,11 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
   // because SetWindowPos would cause HCBT_ACTIVATE to be invoked 
   // when the dialog is not yet populated with the other dialog items
   if (nCode == HCBT_ACTIVATE) {
-    // tricky way to adjust "Basic colors:" and "Custom colors:" labels 
-    // which insanely have the same dialog item ID, see
-    // http://www.xtremevbtalk.com/api/181863-changing-custom-color-label-choosecolor-dialog-comdlg32-dll.html
-    HWND custom_colors = GetDlgItem((HWND)wParam, 65535);
-    if (custom_colors) {
-      LRESULT fnt = SendMessage(custom_colors, WM_GETFONT, 0, 0);
-      DestroyWindow(custom_colors);
-      setlabel(65535, _W("&Custom colors:"));
-      custom_colors = CreateWindowExW(4, W("Static"), _W("&Basic colors:"), 0x50020000, 6, 7, 210, 15, (HWND)wParam, 0, inst, 0);
-      SendMessage(custom_colors, WM_SETFONT, fnt, MAKELPARAM(true, 0));
-    }
-
-    setlabel(IDOK, _W("OK"));
+    setlabel(IDOK, wloctext("OK"));
     setlabel(IDCANCEL, _W("Cancel"));
 
+    if (GetDlgItem((HWND)wParam, 1088))
+      SetWindowTextW((HWND)wParam, _W("Font"));
     setlabel(1026, _W("&Apply"));
     setlabel(1088, _W("&Font:"));
     setlabel(1089, _W("Font st&yle:"));
@@ -945,6 +935,19 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
       setlabel(1592, _W("<A>Show more fonts</A>"));
     }
 
+    if (GetDlgItem((HWND)wParam, 730))
+      SetWindowTextW((HWND)wParam, _W("Color"));
+    // tricky way to adjust "Basic colors:" and "Custom colors:" labels 
+    // which insanely have the same dialog item ID, see
+    // http://www.xtremevbtalk.com/api/181863-changing-custom-color-label-choosecolor-dialog-comdlg32-dll.html
+    HWND custom_colors = GetDlgItem((HWND)wParam, 65535);
+    if (custom_colors) {
+      LRESULT fnt = SendMessage(custom_colors, WM_GETFONT, 0, 0);
+      DestroyWindow(custom_colors);
+      custom_colors = CreateWindowExW(4, W("Static"), _W("&Basic colors:"), 0x50020000, 6, 7, 210, 15, (HWND)wParam, 0, inst, 0);
+      SendMessage(custom_colors, WM_SETFONT, fnt, MAKELPARAM(true, 0));
+      setlabel(65535, _W("&Custom colors:"));
+    }
     setlabel(719, _W("&Define Custom Colors >>"));
     setlabel(730, _W("Color"));
     setlabel(731, _W("|S&olid"));
