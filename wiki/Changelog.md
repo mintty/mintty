@@ -1,3 +1,6 @@
+Localization:
+  * Completion of localization support, covering font chooser and colour chooser (#537).
+
 ### 2.7.1 (4 Dec 2016) ###
 
 Character display:

@@ -370,7 +370,7 @@ button(control * ctrl, ctrlpos * cp, char *btext, int bid, int defbtn)
 #ifdef need_to_disable_widgets_here
   // disabled prototype hack to disable a widget initially;
   // now achieved by enable_widget() in config.c
-  if (!strcmp(btext, "Store")) {
+  if (!strcmp(btext, _("Store"))) {
     EnableWindow(but, FALSE);
   }
 #endif
@@ -800,7 +800,7 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
       }
       when CTRL_FONTSELECT: {
         num_ids = 3;
-        staticbtn(&pos, "", base_id + 1, "&Select...", base_id + 2);
+        staticbtn(&pos, "", base_id + 1, _("&Select..."), base_id + 2);
         data = new(font_spec);
       }
       otherwise:
@@ -857,6 +857,172 @@ winctrl_set_focus(control *ctrl, int has_focus)
     dlg.focused = null;
 }
 
+/*
+   adapted from messageboxmanager.zip
+   @ https://www.codeproject.com/articles/18399/localizing-system-messagebox
+ */
+static LRESULT CALLBACK
+set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
+
+#define dont_debug_dialog_hook
+
+  void setlabel(int id, wstring label) {
+    HWND button = GetDlgItem((HWND)wParam, id);
+    if (button) {
+#ifdef debug_dialog_hook
+      wchar buf [99];
+      GetWindowTextW(button, buf, 99);
+      printf("%d <%ls> -> <%ls>\n", id, buf, label);
+#endif
+      SetWindowTextW(button, label);
+    }
+  }
+
+#ifdef debug_dialog_hook
+  char * hcbt[] = {
+    "HCBT_MOVESIZE",
+    "HCBT_MINMAX",
+    "HCBT_QS",
+    "HCBT_CREATEWND",
+    "HCBT_DESTROYWND",
+    "HCBT_ACTIVATE",
+    "HCBT_CLICKSKIPPED",
+    "HCBT_KEYSKIPPED",
+    "HCBT_SYSCOMMAND",
+    "HCBT_SETFOCUS",
+  };
+  char * sCode = "?";
+  if (nCode >= 0 && nCode < (int)lengthof(hcbt))
+    sCode = hcbt[nCode];
+  printf("hook %lld: %d %s\n", wParam, nCode, sCode);
+#endif
+
+  // we could adjust window size if (nCode == HCBT_CREATEWND)
+  // but then the translations below would not work anymore, 
+  // because SetWindowPos would cause HCBT_ACTIVATE to be invoked 
+  // when the dialog is not yet populated with the other dialog items
+  if (nCode == HCBT_ACTIVATE) {
+    // tricky way to adjust "Basic colors:" and "Custom colors:" labels 
+    // which insanely have the same dialog item ID, see
+    // http://www.xtremevbtalk.com/api/181863-changing-custom-color-label-choosecolor-dialog-comdlg32-dll.html
+    HWND custom_colors = GetDlgItem((HWND)wParam, 65535);
+    if (custom_colors) {
+      LRESULT fnt = SendMessage(custom_colors, WM_GETFONT, 0, 0);
+      DestroyWindow(custom_colors);
+      setlabel(65535, _W("&Custom colors:"));
+      custom_colors = CreateWindowExW(4, W("Static"), _W("&Basic colors:"), 0x50020000, 6, 7, 210, 15, (HWND)wParam, 0, inst, 0);
+      SendMessage(custom_colors, WM_SETFONT, fnt, MAKELPARAM(true, 0));
+    }
+
+    setlabel(IDOK, _W("OK"));
+    setlabel(IDCANCEL, _W("Cancel"));
+
+    setlabel(1026, _W("&Apply"));
+    setlabel(1088, _W("&Font:"));
+    setlabel(1089, _W("Font st&yle:"));
+    setlabel(1090, _W("&Size:"));
+    setlabel(1073, _W("Sample"));
+    //__ font chooser text sample ("AaBbYyZz" by default)
+    setlabel(1092, _W("Ferqœm’4€"));
+    // if we manage to get the field longer, 
+    // sample text could be picked from http://clagnut.com/blog/2380/,
+    // e.g. "Cwm fjord bank glyphs vext quiz"
+
+    HWND weg = 0;
+    if (!new_cfg.old_fontmenu) {
+      // remove "Script:" junk:
+      weg = GetDlgItem((HWND)wParam, 1094);
+      if (weg)
+        DestroyWindow(weg);
+      weg = GetDlgItem((HWND)wParam, 1140);
+      if (weg)
+        DestroyWindow(weg);
+    }
+    else {
+      //__ this field is only shown with OldFontMenu=true
+      setlabel(1094, _W("Sc&ript:"));
+      //__ this field is only shown with OldFontMenu=true
+      setlabel(1592, _W("<A>Show more fonts</A>"));
+    }
+
+    setlabel(719, _W("&Define Custom Colors >>"));
+    setlabel(730, _W("Color"));
+    setlabel(731, _W("|S&olid"));
+    setlabel(723, _W("Hu&e:"));
+    setlabel(724, _W("&Sat:"));
+    setlabel(725, _W("&Lum:"));
+    setlabel(726, _W("&Red:"));
+    setlabel(727, _W("&Green:"));
+    setlabel(728, _W("Bl&ue:"));
+    setlabel(712, _W("&Add to Custom Colors"));
+
+#ifdef debug_dialog_hook
+    for (int id = 12; id < 65536; id++) {
+      HWND dlg = GetDlgItem((HWND)wParam, id);
+      if (dlg) {
+        wchar buf [99];
+        RECT r;
+        GetWindowRect(dlg, &r);
+        printf("dlgitem %d: %4d %4d %4d %4d / ", id, r.left, r.top, r.right, r.bottom);
+        GetClientRect(dlg, &r);
+        printf("%d %d %3d %3d ", r.left, r.top, r.right, r.bottom);
+        GetWindowTextW(dlg, buf, 99);
+        printf("<%ls>\n", buf);
+      }
+    }
+#endif
+
+#define dont_adjust_text_sample
+
+#ifdef adjust_text_sample
+    // resize frame around sample, try to resize text sample (failed)
+    HWND sample = GetDlgItem((HWND)wParam, 1073);
+    if (!new_cfg.old_fontmenu && weg && sample) {
+#define delta 154
+      // adjust label "Sample" and frame
+      RECT wr;
+      GetWindowRect(sample, &wr);
+      RECT cr;
+      GetClientRect(sample, &cr);
+#ifdef debug_dialog_hook
+      printf(" Sample: %4d %4d %4d %4d / %d %d %3d %3d\n", wr.left, wr.top, wr.right, wr.bottom, cr.left, cr.top, cr.right, cr.bottom);
+#endif
+      SetWindowPos(sample, null, 168 - delta, 158, 171 + delta, 70,
+                   SWP_NOACTIVATE | SWP_NOZORDER);
+
+      // try to adjust sample text;
+      // we can move/resize the labelled frame,
+      // so why can't we adjust the sample text?
+      sample = GetDlgItem((HWND)wParam, 1092);
+
+      GetWindowRect(sample, &wr);
+      GetClientRect(sample, &cr);
+#ifdef debug_dialog_hook
+      printf(" sample: %4d %4d %4d %4d / %d %d %3d %3d\n", wr.left, wr.top, wr.right, wr.bottom, cr.left, cr.top, cr.right, cr.bottom);
+#endif
+      SetWindowPos(sample, null, 12, 185, 171 + delta, 37,
+                   SWP_NOACTIVATE | SWP_NOZORDER);
+    }
+#endif
+
+    // crop dialog size after removing useless stuff
+    if (!new_cfg.old_fontmenu && weg && GetDlgItem((HWND)wParam, 1092)) {
+      RECT wr;
+      GetWindowRect((HWND)wParam, &wr);
+#ifdef debug_dialog_hook
+      RECT cr;
+      GetClientRect((HWND)wParam, &cr);
+      printf("Chooser: %4d %4d %4d %4d / %d %d %3d %3d\n", wr.left, wr.top, wr.right, wr.bottom, cr.left, cr.top, cr.right, cr.bottom);
+#endif
+      SetWindowPos((HWND)wParam, null, 0, 0,
+                   wr.right - wr.left, wr.bottom - wr.top - 74,
+                   SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
+    }
+  }
+
+  return CallNextHookEx(0, nCode, wParam, lParam);
+}
+
 #ifndef CF_INACTIVEFONTS
 # ifdef __MSABI_LONG
 #define CF_INACTIVEFONTS __MSABI_LONG (0x02000000)
@@ -875,7 +1041,8 @@ winctrl_set_focus(control *ctrl, int has_focus)
 
 static winctrl * font_ctrl;
 
-UINT_PTR CALLBACK fonthook(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
+static UINT_PTR CALLBACK
+fonthook(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
 {
   (void)lParam;
   //winctrl * c = (winctrl *)lParam;  // does not work
@@ -974,7 +1141,10 @@ select_font(winctrl *c)
       CF_SCREENFONTS | CF_NOSCRIPTSEL;
 
   // open font selection menu
-  if (ChooseFontW(&cf)) {
+  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, 0, GetCurrentThreadId());
+  bool ok = ChooseFontW(&cf);
+  UnhookWindowsHookEx(hook);
+  if (ok) {
     // font selection menu closed with OK
     wstrset(&fs.name, lf.lfFaceName);
     // here we could enumerate font widths and adjust...
@@ -1166,7 +1336,9 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
     cc.lpCustColors = custom;
     cc.rgbResult = dlg.coloursel_result;
     cc.Flags = CC_FULLOPEN | CC_RGBINIT;
+    HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, 0, GetCurrentThreadId());
     dlg.coloursel_ok = ChooseColor(&cc);
+    UnhookWindowsHookEx(hook);
     dlg.coloursel_result = cc.rgbResult;
     ctrl->handler(ctrl, EVENT_CALLBACK);
   }
@@ -1453,9 +1625,8 @@ dlg_set_focus(control *ctrl)
       while (id > 1 && IsDlgButtonChecked(dlg.wnd, id))
         --id;
      /*
-      * In the theoretically-unlikely case that no button was
-      * selected, id should come out of this as 1, which is a
-      * reasonable enough choice.
+      * In the theoretically-unlikely case that no button was selected, 
+      * id should come out of this as 1, which is a reasonable enough choice.
       */
     otherwise: id = c->base_id;
   }
@@ -1463,9 +1634,8 @@ dlg_set_focus(control *ctrl)
 }
 
 /*
- * This function signals to the front end that the dialog's
- * processing is completed, and passes an integer value (typically
- * a success status).
+ * This function signals to the front end that the dialog's processing is 
+ * completed, and passes an integer value (typically a success status).
  */
 void
 dlg_end(void)
