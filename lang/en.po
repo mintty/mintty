@@ -1,3 +1,6 @@
+# re-localize system-localized items (system menu, chooser dialogs)
+# to English; use built-in defaults for msgs not listed here
+
 #: wininput.c:151
 msgid "&Restore"
 msgstr "&Restore"
@@ -21,4 +24,105 @@ msgstr "Ma&ximize"
 #: wininput.c:156
 msgid "&Close"
 msgstr "&Close"
+
+#. __ take notice
+#: windialog.c:517
+msgid "I see"
+msgstr "I see"
+
+#. __ confirm action
+#: windialog.c:520
+msgid "OK"
+msgstr "OK"
+
+#: winctrls.c:910
+msgid "&Apply"
+msgstr "&Apply"
+
+#: config.c:1879 winctrls.c:906 windialog.c:521
+msgid "Cancel"
+msgstr "Cancel"
+
+#: config.c:1956 winctrls.c:909
+msgid "Font"
+msgstr "Font"
+
+#: winctrls.c:911
+msgid "&Font:"
+msgstr "&Font:"
+
+#: winctrls.c:912
+msgid "Font st&yle:"
+msgstr "Font st&yle:"
+
+#: winctrls.c:913
+msgid "&Size:"
+msgstr "&Size:"
+
+#: winctrls.c:914
+msgid "Sample"
+msgstr "Sample"
+
+#. __ font chooser text sample ("AaBbYyZz" by default)
+#: winctrls.c:916
+msgid "Ferqœm’4€"
+msgstr "Ferqœm’4€"
+
+#. __ this field is only shown with OldFontMenu=true
+#: winctrls.c:933
+msgid "Sc&ript:"
+msgstr "Sc&ript:"
+
+#. __ this field is only shown with OldFontMenu=true
+#: winctrls.c:935
+msgid "<A>Show more fonts</A>"
+msgstr "<A>Show more fonts</A>"
+
+#: winctrls.c:939 winctrls.c:952
+msgid "Color"
+msgstr "Color"
+
+#: winctrls.c:947
+msgid "&Basic colors:"
+msgstr "&Basic colors:"
+
+#: winctrls.c:949
+msgid "&Custom colors:"
+msgstr "&Custom colors:"
+
+#: winctrls.c:951
+msgid "&Define Custom Colors >>"
+msgstr "&Define Custom Colors >>"
+
+#: winctrls.c:953
+msgid "|S&olid"
+msgstr "|S&olid"
+
+#: winctrls.c:954
+msgid "Hu&e:"
+msgstr "Hu&e:"
+
+#: winctrls.c:955
+msgid "&Sat:"
+msgstr "&Sat:"
+
+#: winctrls.c:956
+msgid "&Lum:"
+msgstr "&Lum:"
+
+#: winctrls.c:957
+msgid "&Red:"
+msgstr "&Red:"
+
+#: winctrls.c:958
+msgid "&Green:"
+msgstr "&Green:"
+
+#: winctrls.c:959
+msgid "Bl&ue:"
+msgstr "Bl&ue:"
+
+#: winctrls.c:960
+msgid "&Add to Custom Colors"
+msgstr "&Add to Custom Colors"
 
