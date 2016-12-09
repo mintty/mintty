@@ -2,6 +2,9 @@ Localization:
   * Completion of localization support, covering font chooser and colour chooser (#537).
   * Hint in Theme field as feedback after dragging downloaded colour scheme.
 
+Other:
+  * Fix config dialog crash when trying to load resources from network drive (#610).
+
 ### 2.7.1 (4 Dec 2016) ###
 
 Character display:

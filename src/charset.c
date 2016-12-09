@@ -688,3 +688,120 @@ wcsdup(const wchar * s)
 
 #endif
 
+
+/*
+   path conversions
+*/
+
+#ifdef __CYGWIN__
+#include <sys/cygwin.h>
+# if CYGWIN_VERSION_API_MINOR >= 181
+
+char *
+path_win_w_to_posix(const wchar * wp)
+{
+#ifdef let_cygwin_malloc
+#warning may return null with errno == ENOSPC
+  return cygwin_create_path(CCP_WIN_W_TO_POSIX, wp);
+#else
+  int size = cygwin_conv_path(CCP_WIN_W_TO_POSIX, wp, 0, 0);
+  char * res;
+  if (size >= 0) {
+    res = malloc(size);
+    size = cygwin_conv_path(CCP_WIN_W_TO_POSIX, wp, res, size);
+    if (size >= 0)
+      return res;
+    free(res);
+  }
+  res = newn(char, 1);
+  *res = '\0';
+  return res;
+#endif
+}
+
+wchar *
+path_posix_to_win_w(const char * p)
+{
+#ifdef let_cygwin_malloc
+#warning may return null with errno == ENOSPC
+  return cygwin_create_path(CCP_POSIX_TO_WIN_W, p);
+#else
+  int size = cygwin_conv_path(CCP_POSIX_TO_WIN_W, p, 0, 0);
+  wchar * res;
+  if (size >= 0) {
+    res = malloc(size);
+    size = cygwin_conv_path(CCP_POSIX_TO_WIN_W, p, res, size);
+    if (size >= 0)
+      return res;
+    free(res);
+  }
+  res = newn(wchar, 1);
+  *res = '\0';
+  return res;
+#endif
+}
+
+char *
+path_posix_to_win_a(const char * p)
+{
+#ifdef let_cygwin_malloc
+#warning may return null with errno == ENOSPC
+  return cygwin_create_path(CCP_POSIX_TO_WIN_A, p);
+#else
+  int size = cygwin_conv_path(CCP_POSIX_TO_WIN_A, p, 0, 0);
+  char * res;
+  if (size >= 0) {
+    res = malloc(size);
+    size = cygwin_conv_path(CCP_POSIX_TO_WIN_A, p, res, size);
+    if (size >= 0)
+      return res;
+    free(res);
+  }
+  res = newn(char, 1);
+  *res = '\0';
+  return res;
+#endif
+}
+
+# else
+#include <winbase.h>
+#include <winnls.h>
+
+char *
+path_win_w_to_posix(const wchar * wp)
+{
+  char * mp = cs__wcstombs(wp);
+  char * p = newn(char, MAX_PATH);
+  cygwin_conv_to_full_posix_path(mp, p);
+  free(mp);
+  p = renewn(p, strlen(p) + 1);
+  return p;
+}
+
+wchar *
+path_posix_to_win_w(const char * p)
+{
+  char ap[MAX_PATH];
+  cygwin_conv_to_win32_path(p, ap);
+  wchar * wp = newn(wchar, MAX_PATH);
+  MultiByteToWideChar(0, 0, ap, -1, wp, MAX_PATH);
+  wp = renewn(wp, wcslen(wp) + 1);
+  return wp;
+}
+
+char *
+path_posix_to_win_a(const char * p)
+{
+  char * ap = newn(char, MAX_PATH);
+  cygwin_conv_to_win32_path(p, ap);
+  ap = renewn(ap, strlen(ap) + 1);
+  return ap;
+}
+
+# endif
+#else
+
+#warning port to midipix...
+
+#endif
+
