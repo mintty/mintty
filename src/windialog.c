@@ -219,18 +219,17 @@ static INT_PTR CALLBACK
 config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 #ifdef debug_messages
-static struct {
+  static struct {
   uint wm_;
   char * wm_name;
-} wm_names[] = {
-#include "_wm.t"
-};
-  if (msg != WM_SETCURSOR && msg != WM_NCHITTEST && msg != WM_MOUSEFIRST
-      && msg != WM_ERASEBKGND && msg != WM_CTLCOLORDLG && msg != WM_PRINTCLIENT && msg != WM_CTLCOLORBTN
-
-      && (msg != WM_NOTIFY || (LOWORD(wParam) == IDCX_TREEVIEW && ((LPNMHDR) lParam)->code == TVN_SELCHANGED))
-     ) {
-    char * wm_name = "WM_?";
+  } wm_names[] = {
+#  include "_wm.t"
+  };
+  char * wm_name = "WM_?";
+  if ((msg != WM_SETCURSOR && msg != WM_NCHITTEST && msg != WM_MOUSEFIRST
+       && msg != WM_ERASEBKGND && msg != WM_CTLCOLORDLG && msg != WM_PRINTCLIENT && msg != WM_CTLCOLORBTN
+       && (msg != WM_NOTIFY || (LOWORD(wParam) == IDCX_TREEVIEW && ((LPNMHDR) lParam)->code == TVN_SELCHANGED))
+     )) {
     for (uint i = 0; i < lengthof(wm_names); i++)
       if (msg == wm_names[i].wm_) {
         wm_name = wm_names[i].wm_name;
@@ -432,9 +431,15 @@ static struct {
         debug("WM_COMMAND: Destroy");
       }
       debug("WM_COMMAND: end");
+#ifdef debug_messages
+      printf(" end dialog_proc %04X %s (%04X %08X)\n", msg, wm_name, (unsigned)wParam, (unsigned)lParam);
+#endif
       return ret;
     }
   }
+#ifdef debug_messages
+  printf(" end dialog_proc %04X %s (%04X %08X)\n", msg, wm_name, (unsigned)wParam, (unsigned)lParam);
+#endif
   return 0;
 }
 
