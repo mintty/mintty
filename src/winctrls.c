@@ -863,12 +863,13 @@ winctrl_set_focus(control *ctrl, int has_focus)
  */
 static LRESULT CALLBACK
 set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
+  bool localize = *cfg.lang;
 
 #define dont_debug_dialog_hook
 
   void setlabel(int id, wstring label) {
     HWND button = GetDlgItem((HWND)wParam, id);
-    if (button) {
+    if (localize && button) {
 #ifdef debug_dialog_hook
       wchar buf [99];
       GetWindowTextW(button, buf, 99);
@@ -905,7 +906,7 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
     setlabel(IDOK, wloctext("OK"));
     setlabel(IDCANCEL, _W("Cancel"));
 
-    if (GetDlgItem((HWND)wParam, 1088))
+    if (localize && GetDlgItem((HWND)wParam, 1088))
       SetWindowTextW((HWND)wParam, _W("Font"));
     setlabel(1026, _W("&Apply"));
     setlabel(1088, _W("&Font:"));
@@ -935,7 +936,7 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
       setlabel(1592, _W("<A>Show more fonts</A>"));
     }
 
-    if (GetDlgItem((HWND)wParam, 730))
+    if (localize && GetDlgItem((HWND)wParam, 730))
       SetWindowTextW((HWND)wParam, _W("Color"));
     // tricky way to adjust "Basic colors:" and "Custom colors:" labels 
     // which insanely have the same dialog item ID, see
