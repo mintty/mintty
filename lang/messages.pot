@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-08 17:49+0100\n"
+"POT-Creation-Date: 2016-12-10 02:58+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -181,7 +181,7 @@ msgstr ""
 msgid "Save"
 msgstr ""
 
-#: config.c:1879 winctrls.c:906 windialog.c:521
+#: config.c:1879 winctrls.c:907 windialog.c:526
 msgid "Cancel"
 msgstr ""
 
@@ -290,7 +290,7 @@ msgstr ""
 msgid "Text and Font properties"
 msgstr ""
 
-#: config.c:1956 winctrls.c:909
+#: config.c:1956 winctrls.c:910
 msgid "Font"
 msgstr ""
 
@@ -574,100 +574,100 @@ msgstr ""
 msgid "&Select..."
 msgstr ""
 
-#: winctrls.c:910
+#: winctrls.c:911
 msgid "&Apply"
 msgstr ""
 
-#: winctrls.c:911
+#: winctrls.c:912
 msgid "&Font:"
 msgstr ""
 
-#: winctrls.c:912
+#: winctrls.c:913
 msgid "Font st&yle:"
 msgstr ""
 
-#: winctrls.c:913
+#: winctrls.c:914
 msgid "&Size:"
 msgstr ""
 
-#: winctrls.c:914
+#: winctrls.c:915
 msgid "Sample"
 msgstr ""
 
 #. __ font chooser text sample ("AaBbYyZz" by default)
-#: winctrls.c:916
+#: winctrls.c:917
 msgid "Ferqœm’4€"
 msgstr ""
 
 #. __ this field is only shown with OldFontMenu=true
-#: winctrls.c:933
+#: winctrls.c:934
 msgid "Sc&ript:"
 msgstr ""
 
 #. __ this field is only shown with OldFontMenu=true
-#: winctrls.c:935
+#: winctrls.c:936
 msgid "<A>Show more fonts</A>"
 msgstr ""
 
-#: winctrls.c:939 winctrls.c:952
+#: winctrls.c:940 winctrls.c:953
 msgid "Color"
 msgstr ""
 
-#: winctrls.c:947
+#: winctrls.c:948
 msgid "&Basic colors:"
 msgstr ""
 
-#: winctrls.c:949
+#: winctrls.c:950
 msgid "&Custom colors:"
 msgstr ""
 
-#: winctrls.c:951
+#: winctrls.c:952
 msgid "&Define Custom Colors >>"
 msgstr ""
 
-#: winctrls.c:953
+#: winctrls.c:954
 msgid "|S&olid"
 msgstr ""
 
-#: winctrls.c:954
+#: winctrls.c:955
 msgid "Hu&e:"
 msgstr ""
 
-#: winctrls.c:955
+#: winctrls.c:956
 msgid "&Sat:"
 msgstr ""
 
-#: winctrls.c:956
+#: winctrls.c:957
 msgid "&Lum:"
 msgstr ""
 
-#: winctrls.c:957
+#: winctrls.c:958
 msgid "&Red:"
 msgstr ""
 
-#: winctrls.c:958
+#: winctrls.c:959
 msgid "&Green:"
 msgstr ""
 
-#: winctrls.c:959
+#: winctrls.c:960
 msgid "Bl&ue:"
 msgstr ""
 
-#: winctrls.c:960
+#: winctrls.c:961
 msgid "&Add to Custom Colors"
 msgstr ""
 
-#: windialog.c:483
+#: windialog.c:488
 msgid "Options"
 msgstr ""
 
 #. __ take notice
-#: windialog.c:517
+#: windialog.c:522
 msgid "I see"
 msgstr ""
 
 #. __ confirm action
-#: windialog.c:520
+#: windialog.c:525
 msgid "OK"
 msgstr ""
 
