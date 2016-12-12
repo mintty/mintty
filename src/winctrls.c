@@ -857,6 +857,8 @@ winctrl_set_focus(control *ctrl, int has_focus)
     dlg.focused = null;
 }
 
+static HWND font_sample = 0;
+
 /*
    adapted from messageboxmanager.zip
    @ https://www.codeproject.com/articles/18399/localizing-system-messagebox
@@ -915,6 +917,7 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
     setlabel(1073, _W("Sample"));
     //__ font chooser text sample ("AaBbYyZz" by default)
     setlabel(1092, _W("Ferqœm’4€"));
+    font_sample = GetDlgItem((HWND)wParam, 1092);
     // if we manage to get the field longer, 
     // sample text could be picked from http://clagnut.com/blog/2380/,
     // e.g. "Cwm fjord bank glyphs vext quiz"
@@ -1045,13 +1048,52 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
 
 static winctrl * font_ctrl;
 
+#define dont_debug_messages
+
 static UINT_PTR CALLBACK
-fonthook(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
+fonthook(HWND hdlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   (void)lParam;
+#ifdef debug_messages
+#include <time.h>
+  static struct {
+  uint wm_;
+  char * wm_name;
+  } wm_names[] = {
+#  include "_wm.t"
+  };
+  char * wm_name = "WM_?";
+  if ((msg != WM_SETCURSOR && msg != WM_NCHITTEST && msg != WM_MOUSEFIRST
+       && msg != WM_ERASEBKGND && msg != WM_CTLCOLORDLG && msg != WM_PRINTCLIENT && msg != WM_CTLCOLORBTN
+       && msg != WM_ENTERIDLE
+       && (msg != WM_NOTIFY)
+     )) {
+    for (uint i = 0; i < lengthof(wm_names); i++)
+      if (msg == wm_names[i].wm_) {
+        wm_name = wm_names[i].wm_name;
+        break;
+      }
+    printf("[%d] fonthook %04X %s (%04X %08X)\n", (int)time(0), msg, wm_name, (unsigned)wParam, (unsigned)lParam);
+  }
+#endif
+
+  if (msg == WM_DRAWITEM) {
+    // restore our own font sample text
+#define disp ((DRAWITEMSTRUCT*)lParam)
+#ifdef debug_messages
+    printf("                           %04X %d %2d %04X %04X %p\n",
+           disp->CtlType, disp->CtlID, disp->itemID, disp->itemAction, disp->itemState, 
+           disp->hwndItem);
+#endif
+    if (disp->CtlID == 1137 && (disp->itemAction == ODA_SELECT))
+      // or any of CtlID=1137 (font style)/itemID=0...
+      // or CtlID=1138 (font size)/itemID=2... will do
+      SetWindowTextW(font_sample, _W("Ferqœm’4€"));
+  }
+
   //winctrl * c = (winctrl *)lParam;  // does not work
   winctrl * c = font_ctrl;
-  if (uiMsg == WM_COMMAND && wParam == 1026) {  // Apply
+  if (msg == WM_COMMAND && wParam == 1026) {  // Apply
     LOGFONTW lfapply;
     SendMessageW(hdlg, WM_CHOOSEFONT_GETLOGFONT, 0, (LPARAM)&lfapply);
     font_spec * fsp = &new_cfg.font;
@@ -1068,7 +1110,7 @@ fonthook(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
     c->ctrl->handler(c->ctrl, EVENT_REFRESH);  // -> dlg_stdfontsel_handler
     //or dlg_fontsel_set(c->ctrl, fsp);
   }
-  else if (uiMsg == WM_COMMAND && wParam == 1) {  // OK
+  else if (msg == WM_COMMAND && wParam == 1) {  // OK
 #ifdef failed_workaround_for_no_font_issue
     /*
       Trying to work-around issue #507
@@ -1090,7 +1132,7 @@ fonthook(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
     // what a crap!
 #endif
   }
-  else if (uiMsg == WM_COMMAND && wParam == 2) {  // Cancel
+  else if (msg == WM_COMMAND && wParam == 2) {  // Cancel
   }
   return 0;  // default processing
 }

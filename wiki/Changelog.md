@@ -1,3 +1,6 @@
+Localization:
+  * Persist adaptation of font sample text.
+
 ### 2.7.2 (10 Dec 2016) ###
 
 Localization:
