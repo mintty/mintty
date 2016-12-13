@@ -485,6 +485,7 @@ win_open_config(void)
   determine_geometry(config_wnd);  // dummy call
 
   // Set title of Options dialog explicitly to facilitate I18N
+  //__ Options: dialog title
   SendMessageW(config_wnd, WM_SETTEXT, 0, (LPARAM)_W("Options"));
 
   ShowWindow(config_wnd, SW_SHOW);
@@ -518,14 +519,13 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
 
   if (nCode == HCBT_ACTIVATE) {
     if ((oktype & MB_TYPEMASK) == MB_OK)
-      //__ take notice
       setlabel(IDOK, _W("I see"));
     else
-      //__ confirm action
       setlabel(IDOK, _W("OK"));
     setlabel(IDCANCEL, _W("Cancel"));
 #ifdef we_would_use_these_in_any_message_box
 #warning W -> _W to add the labels to the localization repository
+#warning predefine button labels in config.c
     setlabel(IDABORT, W("&Abort"));
     setlabel(IDRETRY, W("&Retry"));
     setlabel(IDIGNORE, W("&Ignore"));

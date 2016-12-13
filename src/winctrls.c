@@ -800,6 +800,7 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
       }
       when CTRL_FONTSELECT: {
         num_ids = 3;
+        //__ Options - Text: font chooser activation button
         staticbtn(&pos, "", base_id + 1, _("&Select..."), base_id + 2);
         data = new(font_spec);
       }
@@ -905,17 +906,18 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
   // because SetWindowPos would cause HCBT_ACTIVATE to be invoked 
   // when the dialog is not yet populated with the other dialog items
   if (nCode == HCBT_ACTIVATE) {
-    setlabel(IDOK, wloctext("OK"));
+    setlabel(IDOK, _W("OK"));
     setlabel(IDCANCEL, _W("Cancel"));
 
     if (localize && GetDlgItem((HWND)wParam, 1088))
+      //__ Font chooser: title bar label
       SetWindowTextW((HWND)wParam, _W("Font "));
     setlabel(1026, _W("&Apply"));
     setlabel(1088, _W("&Font:"));
     setlabel(1089, _W("Font st&yle:"));
     setlabel(1090, _W("&Size:"));
     setlabel(1073, _W("Sample"));
-    //__ font chooser text sample ("AaBbYyZz" by default)
+    //__ Font chooser: text sample ("AaBbYyZz" by default)
     setlabel(1092, _W("Ferqœm’4€"));
     font_sample = GetDlgItem((HWND)wParam, 1092);
     // if we manage to get the field longer, 
@@ -940,6 +942,7 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
     }
 
     if (localize && GetDlgItem((HWND)wParam, 730))
+      //__ Colour chooser: title bar label
       SetWindowTextW((HWND)wParam, _W("Colour "));
     // tricky way to adjust "Basic colors:" and "Custom colors:" labels 
     // which insanely have the same dialog item ID, see

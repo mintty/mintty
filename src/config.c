@@ -1871,21 +1871,36 @@ setup_config_box(controlbox * b)
   */
   s = ctrl_new_set(b, "", "", "");
   ctrl_columns(s, 5, 20, 20, 20, 20, 20);
+  //__ Dialog button: show About text
   c = ctrl_pushbutton(s, _("About..."), about_handler, 0);
   c->column = 0;
+  //__ Dialog button: save changes
   c = ctrl_pushbutton(s, _("Save"), ok_handler, 0);
   c->button.isdefault = true;
   c->column = 2;
+  //__ Dialog button: cancel
   c = ctrl_pushbutton(s, _("Cancel"), cancel_handler, 0);
   c->button.iscancel = true;
   c->column = 3;
+  //__ Dialog button: apply changes
   c = ctrl_pushbutton(s, _("Apply"), apply_handler, 0);
   c->column = 4;
+#ifdef __gettext
+  //__ Dialog button: take notice
+  __("I see")
+  //__ Dialog button: confirm action
+  __("OK")
+#endif
 
  /*
   * The Looks panel.
   */
-  s = ctrl_new_set(b, _("Looks"), _("Looks in Terminal"), _("Colours"));
+  //__ Options - Looks: treeview label
+  s = ctrl_new_set(b, _("Looks"), 
+  //__ Options - Looks: panel title
+                      _("Looks in Terminal"), 
+  //__ Options - Looks: section title
+                      _("Colours"));
   ctrl_columns(s, 3, 33, 33, 33);
   ctrl_pushbutton(
     s, _("&Foreground..."), dlg_stdcolour_handler, &new_cfg.fg_colour
@@ -1906,7 +1921,9 @@ setup_config_box(controlbox * b)
   (store_button = ctrl_pushbutton(s, _("Store"), scheme_saver, 0))
     ->column = 1;
 
-  s = ctrl_new_set(b, _("Looks"), null, _("Transparency"));
+  s = ctrl_new_set(b, _("Looks"), null, 
+  //__ Options - Looks: section title
+                      _("Transparency"));
   bool with_glass = win_is_glass_available();
   ctrl_radiobuttons(
     s, null, 4 + with_glass,
@@ -1937,7 +1954,9 @@ setup_config_box(controlbox * b)
   );
 #endif
 
-  s = ctrl_new_set(b, _("Looks"), null, _("Cursor"));
+  s = ctrl_new_set(b, _("Looks"), null, 
+  //__ Options - Looks: section title
+                      _("Cursor"));
   ctrl_radiobuttons(
     s, null, 4 + with_glass,
     dlg_stdradiobutton_handler, &new_cfg.cursor_type,
@@ -1953,7 +1972,12 @@ setup_config_box(controlbox * b)
  /*
   * The Text panel.
   */
-  s = ctrl_new_set(b, _("Text"), _("Text and Font properties"), _("Font"));
+  //__ Options - Text: treeview label
+  s = ctrl_new_set(b, _("Text"), 
+  //__ Options - Text: panel title
+                      _("Text and Font properties"), 
+  //__ Options - Text: section title
+                      _("Font"));
   ctrl_fontsel(
     s, null, dlg_stdfontsel_handler, &new_cfg.font
   );
@@ -1995,7 +2019,10 @@ setup_config_box(controlbox * b)
  /*
   * The Keys panel.
   */
-  s = ctrl_new_set(b, _("Keys"), _("Keyboard features"), null);
+  //__ Options - Keys: treeview label
+  s = ctrl_new_set(b, _("Keys"), 
+  //__ Options - Keys: panel title
+                      _("Keyboard features"), null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
     s, _("&Backarrow sends ^H"),
@@ -2010,7 +2037,9 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, &new_cfg.ctrl_alt_is_altgr
   );
 
-  s = ctrl_new_set(b, _("Keys"), null, _("Shortcuts"));
+  s = ctrl_new_set(b, _("Keys"), null, 
+  //__ Options - Keys: section title
+                      _("Shortcuts"));
   ctrl_checkbox(
     s, _("Cop&y and Paste (Ctrl/Shift+Ins)"),
     dlg_stdcheckbox_handler, &new_cfg.clip_shortcuts
@@ -2036,7 +2065,9 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, &new_cfg.ctrl_shift_shortcuts
   );
 
-  s = ctrl_new_set(b, _("Keys"), null, _("Compose key"));
+  s = ctrl_new_set(b, _("Keys"), null, 
+  //__ Options - Keys: section title
+                      _("Compose key"));
   ctrl_radiobuttons(
     s, null, 4,
     dlg_stdradiobutton_handler, &new_cfg.compose_key,
@@ -2050,7 +2081,10 @@ setup_config_box(controlbox * b)
  /*
   * The Mouse panel.
   */
-  s = ctrl_new_set(b, _("Mouse"), _("Mouse functions"), null);
+  //__ Options - Mouse: treeview label
+  s = ctrl_new_set(b, _("Mouse"), 
+  //__ Options - Mouse: panel title
+                      _("Mouse functions"), null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
     s, _("Cop&y on select"),
@@ -2065,7 +2099,9 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, &new_cfg.clicks_place_cursor
   );
 
-  s = ctrl_new_set(b, _("Mouse"), null, _("Click actions"));
+  s = ctrl_new_set(b, _("Mouse"), null, 
+  //__ Options - Mouse: section title
+                      _("Click actions"));
   ctrl_radiobuttons(
     s, _("Right mouse button"), 4,
     dlg_stdradiobutton_handler, &new_cfg.right_click_action,
@@ -2085,7 +2121,9 @@ setup_config_box(controlbox * b)
     null
   );
 
-  s = ctrl_new_set(b, _("Mouse"), null, _("Application mouse mode"));
+  s = ctrl_new_set(b, _("Mouse"), null, 
+  //__ Options - Mouse: section title
+                      _("Application mouse mode"));
   ctrl_radiobuttons(
     s, _("Default click target"), 4,
     dlg_stdradiobutton_handler, &new_cfg.clicks_target_app,
@@ -2106,7 +2144,12 @@ setup_config_box(controlbox * b)
  /*
   * The Window panel.
   */
-  s = ctrl_new_set(b, _("Window"), _("Window properties"), _("Default size"));
+  //__ Options - Window: treeview label
+  s = ctrl_new_set(b, _("Window"), 
+  //__ Options - Window: panel title
+                      _("Window properties"), 
+  //__ Options - Window: section title
+                      _("Default size"));
   ctrl_columns(s, 5, 35, 3, 28, 4, 30);
   (cols_box = ctrl_editbox(
     s, _("Colu&mns"), 44, dlg_stdintbox_handler, &new_cfg.cols
@@ -2146,7 +2189,9 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, &new_cfg.pgupdn_scroll
   );
 
-  s = ctrl_new_set(b, _("Window"), null, _("UI language"));
+  s = ctrl_new_set(b, _("Window"), null, 
+  //__ Options - Window: section title
+                      _("UI language"));
   ctrl_columns(s, 2, 60, 40);
   ctrl_combobox(
     s, null, 100, lang_handler, 0
@@ -2155,7 +2200,10 @@ setup_config_box(controlbox * b)
  /*
   * The Terminal panel.
   */
-  s = ctrl_new_set(b, _("Terminal"), _("Terminal features"), null);
+  //__ Options - Terminal: treeview label
+  s = ctrl_new_set(b, _("Terminal"), 
+  //__ Options - Terminal: panel title
+                      _("Terminal features"), null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_combobox(
     s, _("&Type"), 100, term_handler, 0
@@ -2164,7 +2212,9 @@ setup_config_box(controlbox * b)
     s, _("&Answerback"), 100, dlg_stdstringbox_handler, &new_cfg.answerback
   )->column = 1;
 
-  s = ctrl_new_set(b, _("Terminal"), null, _("Bell (sound overridden by Wave/BellFile or BellFreq)"));
+  s = ctrl_new_set(b, _("Terminal"), null, 
+  //__ Options - Terminal: section title
+                      _("Bell (sound overridden by Wave/BellFile or BellFreq)"));
   ctrl_columns(s, 3, 36, 19, 45);
   ctrl_combobox(
     s, null, 100, bell_handler, 0
@@ -2190,7 +2240,9 @@ setup_config_box(controlbox * b)
     s, _("► &Play"), bell_tester, 0
   )->column = 1;
 
-  s = ctrl_new_set(b, _("Terminal"), null, _("Printer"));
+  s = ctrl_new_set(b, _("Terminal"), null, 
+  //__ Options - Terminal: section title
+                      _("Printer"));
 #ifdef use_multi_listbox_for_printers
   ctrl_listbox(
     s, null, 4, 100, printer_handler, 0
