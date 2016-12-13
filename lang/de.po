@@ -292,8 +292,12 @@ msgstr "Schrift"
 msgid "Text and Font properties"
 msgstr "Text und Schrift – Eigenschaften"
 
-#: config.c:1956 winctrls.c:910
+#: config.c:1956
 msgid "Font"
+msgstr "Schrift"
+
+#: winctrls.c:910
+msgid "Font "
 msgstr "Schrift"
 
 #: config.c:1964
@@ -428,8 +432,12 @@ msgstr "Klick-Aktionen"
 msgid "Right mouse button"
 msgstr "Rechte Maustaste"
 
-#: config.c:2072 config.c:2081 wininput.c:175
+#: config.c:2072 config.c:2081
 msgid "&Paste"
+msgstr "&Einfügen"
+
+#: wininput.c:175
+msgid "&Paste "
 msgstr "&Einfügen"
 
 #: config.c:2073 config.c:2082
@@ -611,20 +619,24 @@ msgstr "S&kript:"
 msgid "<A>Show more fonts</A>"
 msgstr "<A>Weitere Schriftarten anzeigen</A>"
 
-#: winctrls.c:940 winctrls.c:953
-msgid "Color"
+#: winctrls.c:940
+msgid "Colour "
+msgstr "Farbe"
+
+#: winctrls.c:953
+msgid "Colour"
 msgstr "Farbe"
 
 #: winctrls.c:948
-msgid "&Basic colors:"
+msgid "&Basic colours:"
 msgstr "&Grundfarben:"
 
 #: winctrls.c:950
-msgid "&Custom colors:"
+msgid "&Custom colours:"
 msgstr "&Benutzerdefinierte Farben:"
 
 #: winctrls.c:952
-msgid "&Define Custom Colors >>"
+msgid "&Define Custom Colours >>"
 msgstr "Farben &definieren >>"
 
 #: winctrls.c:954
@@ -656,7 +668,7 @@ msgid "Bl&ue:"
 msgstr "&Blau:"
 
 #: winctrls.c:961
-msgid "&Add to Custom Colors"
+msgid "&Add to Custom Colours"
 msgstr "Farben hinzu&fügen"
 
 #: windialog.c:488

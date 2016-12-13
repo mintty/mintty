@@ -80,23 +80,23 @@ msgstr "<A>Show more fonts</A>"
 
 #: winctrls.c:939
 msgid "Colour "
-msgstr "Colour"
+msgstr "Color"
 
 #: winctrls.c:952
 msgid "Colour"
-msgstr "Colour"
+msgstr "Color"
 
 #: winctrls.c:947
 msgid "&Basic colours:"
-msgstr "&Basic colours:"
+msgstr "&Basic colors:"
 
 #: winctrls.c:949
 msgid "&Custom colours:"
-msgstr "&Custom colours:"
+msgstr "&Custom colors:"
 
 #: winctrls.c:951
 msgid "&Define Custom Colours >>"
-msgstr "&Define Custom Colours >>"
+msgstr "&Define Custom Colors >>"
 
 #: winctrls.c:953
 msgid "|S&olid"
@@ -128,5 +128,13 @@ msgstr "Bl&ue:"
 
 #: winctrls.c:960
 msgid "&Add to Custom Colours"
-msgstr "&Add to Custom Colours"
+msgstr "&Add to Custom Colors"
+
+#: config.c:1888
+msgid "Colours"
+msgstr "Colors"
+
+#: config.c:1978
+msgid "Show &bold as colour"
+msgstr "Show &bold as color"
 

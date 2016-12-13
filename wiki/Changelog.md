@@ -1,5 +1,7 @@
 Localization:
-  * Persist adaptation of font sample text.
+  * Persisting adaptation of font sample text.
+  * Disambiguated translations in different context for "Paste", "Font", "Colour".
+  * Sorted out en_GB vs. en_US.
 
 ### 2.7.2 (10 Dec 2016) ###
 

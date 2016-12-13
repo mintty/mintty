@@ -909,7 +909,7 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
     setlabel(IDCANCEL, _W("Cancel"));
 
     if (localize && GetDlgItem((HWND)wParam, 1088))
-      SetWindowTextW((HWND)wParam, _W("Font"));
+      SetWindowTextW((HWND)wParam, _W("Font "));
     setlabel(1026, _W("&Apply"));
     setlabel(1088, _W("&Font:"));
     setlabel(1089, _W("Font st&yle:"));
@@ -940,7 +940,7 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
     }
 
     if (localize && GetDlgItem((HWND)wParam, 730))
-      SetWindowTextW((HWND)wParam, _W("Color"));
+      SetWindowTextW((HWND)wParam, _W("Colour "));
     // tricky way to adjust "Basic colors:" and "Custom colors:" labels 
     // which insanely have the same dialog item ID, see
     // http://www.xtremevbtalk.com/api/181863-changing-custom-color-label-choosecolor-dialog-comdlg32-dll.html
@@ -948,12 +948,12 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
     if (custom_colors) {
       LRESULT fnt = SendMessage(custom_colors, WM_GETFONT, 0, 0);
       DestroyWindow(custom_colors);
-      custom_colors = CreateWindowExW(4, W("Static"), _W("&Basic colors:"), 0x50020000, 6, 7, 210, 15, (HWND)wParam, 0, inst, 0);
+      custom_colors = CreateWindowExW(4, W("Static"), _W("&Basic colours:"), 0x50020000, 6, 7, 210, 15, (HWND)wParam, 0, inst, 0);
       SendMessage(custom_colors, WM_SETFONT, fnt, MAKELPARAM(true, 0));
-      setlabel(65535, _W("&Custom colors:"));
+      setlabel(65535, _W("&Custom colours:"));
     }
-    setlabel(719, _W("&Define Custom Colors >>"));
-    setlabel(730, _W("Color"));
+    setlabel(719, _W("&Define Custom Colours >>"));
+    setlabel(730, _W("Colour"));
     setlabel(731, _W("|S&olid"));
     setlabel(723, _W("Hu&e:"));
     setlabel(724, _W("&Sat:"));
@@ -961,7 +961,7 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
     setlabel(726, _W("&Red:"));
     setlabel(727, _W("&Green:"));
     setlabel(728, _W("Bl&ue:"));
-    setlabel(712, _W("&Add to Custom Colors"));
+    setlabel(712, _W("&Add to Custom Colours"));
 
 #ifdef debug_dialog_hook
     for (int id = 12; id < 65536; id++) {

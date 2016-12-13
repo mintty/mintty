@@ -172,7 +172,7 @@ win_update_menus(void)
     IsClipboardFormatAvailable(CF_UNICODETEXT) ||
     IsClipboardFormatAvailable(CF_HDROP)
     ? MF_ENABLED : MF_GRAYED;
-  modify_menu(ctxmenu, IDM_PASTE, paste_enabled, _W("&Paste"),
+  modify_menu(ctxmenu, IDM_PASTE, paste_enabled, _W("&Paste "),
     clip ? W("Shift+Ins") : ct_sh ? W("Ctrl+Shift+V") : null
   );
 
