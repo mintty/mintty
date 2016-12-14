@@ -618,7 +618,7 @@ msgstr "&Wählen..."
 #. __ Font chooser: title bar label
 #: winctrls.c:914
 msgid "Font "
-msgstr "Schrift"
+msgstr "Schriftart"
 
 #: winctrls.c:915
 msgid "&Apply"
