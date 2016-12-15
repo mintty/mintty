@@ -1871,24 +1871,24 @@ setup_config_box(controlbox * b)
   */
   s = ctrl_new_set(b, "", "", "");
   ctrl_columns(s, 5, 20, 20, 20, 20, 20);
-  //__ Dialog button: show About text
+  //__ Dialog button - show About text
   c = ctrl_pushbutton(s, _("About..."), about_handler, 0);
   c->column = 0;
-  //__ Dialog button: save changes
+  //__ Dialog button - save changes
   c = ctrl_pushbutton(s, _("Save"), ok_handler, 0);
   c->button.isdefault = true;
   c->column = 2;
-  //__ Dialog button: cancel
+  //__ Dialog button - cancel
   c = ctrl_pushbutton(s, _("Cancel"), cancel_handler, 0);
   c->button.iscancel = true;
   c->column = 3;
-  //__ Dialog button: apply changes
+  //__ Dialog button - apply changes
   c = ctrl_pushbutton(s, _("Apply"), apply_handler, 0);
   c->column = 4;
 #ifdef __gettext
-  //__ Dialog button: take notice
+  //__ Dialog button - take notice
   __("I see")
-  //__ Dialog button: confirm action
+  //__ Dialog button - confirm action
   __("OK")
 #endif
 
@@ -1903,21 +1903,27 @@ setup_config_box(controlbox * b)
                       _("Colours"));
   ctrl_columns(s, 3, 33, 33, 33);
   ctrl_pushbutton(
+    //__ Options - Looks:
     s, _("&Foreground..."), dlg_stdcolour_handler, &new_cfg.fg_colour
   )->column = 0;
   ctrl_pushbutton(
+    //__ Options - Looks:
     s, _("&Background..."), dlg_stdcolour_handler, &new_cfg.bg_colour
   )->column = 1;
   ctrl_pushbutton(
+    //__ Options - Looks:
     s, _("&Cursor..."), dlg_stdcolour_handler, &new_cfg.cursor_colour
   )->column = 2;
   theme = ctrl_combobox(
+    //__ Options - Looks:
     s, _("&Theme"), 80, theme_handler, &new_cfg.theme_file
   );
   ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
   ctrl_columns(s, 2, 80, 20);
+  //__ Options - Looks: name of web service
   ctrl_pushbutton(s, _("Color Scheme Designer"), url_opener, W("http://ciembor.github.io/4bit/"))
     ->column = 0;
+  //__ Options - Looks: store colour scheme
   (store_button = ctrl_pushbutton(s, _("Store"), scheme_saver, 0))
     ->column = 1;
 
@@ -1928,27 +1934,35 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, null, 4 + with_glass,
     dlg_stdradiobutton_handler, &new_cfg.transparency,
+    //__ Options - Looks: transparency
     _("&Off"), TR_OFF,
+    //__ Options - Looks: transparency
     _("&Low"), TR_LOW,
-    //__ short form of radio button label "Medium"
+    //__ Options - Looks: transparency, short form of radio button label "Medium"
     with_glass ? _("&Med.")
+    //__ Options - Looks: transparency
                : _("&Medium"), TR_MEDIUM,
+    //__ Options - Looks: transparency
     _("&High"), TR_HIGH,
+    //__ Options - Looks: transparency
     with_glass ? _("Gla&ss") : null, TR_GLASS,
     null
   );
 #ifdef support_blurred
   ctrl_columns(s, 2, with_glass ? 80 : 75, with_glass ? 20 : 25);
   ctrl_checkbox(
+    //__ Options - Looks: transparency
     s, _("Opa&que when focused"),
     dlg_stdcheckbox_handler, &new_cfg.opaque_when_focused
   )->column = 0;
   ctrl_checkbox(
-    s, _("&Blur"),
+    //__ Options - Looks: transparency
+    s, _("Blu&r"),
     dlg_stdcheckbox_handler, &new_cfg.blurred
   )->column = 1;
 #else
   ctrl_checkbox(
+    //__ Options - Looks: transparency
     s, _("Opa&que when focused"),
     dlg_stdcheckbox_handler, &new_cfg.opaque_when_focused
   );
@@ -1960,12 +1974,16 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, null, 4 + with_glass,
     dlg_stdradiobutton_handler, &new_cfg.cursor_type,
+    //__ Options - Looks: cursor type
     _("Li&ne"), CUR_LINE,
+    //__ Options - Looks: cursor type
     _("Bloc&k"), CUR_BLOCK,
+    //__ Options - Looks: cursor type
     _("&Underscore"), CUR_UNDERSCORE,
     null
   );
   ctrl_checkbox(
+    //__ Options - Looks: cursor feature
     s, _("Blinkin&g"), dlg_stdcheckbox_handler, &new_cfg.cursor_blinks
   );
 
@@ -1985,24 +2003,32 @@ setup_config_box(controlbox * b)
   s = ctrl_new_set(b, _("Text"), null, null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_radiobuttons(
+    //__ Options - Text:
     s, _("Font smoothing"), 2,
     dlg_stdradiobutton_handler, &new_cfg.font_smoothing,
+    //__ Options - Text:
     _("&Default"), FS_DEFAULT,
+    //__ Options - Text:
     _("&None"), FS_NONE,
+    //__ Options - Text:
     _("&Partial"), FS_PARTIAL,
+    //__ Options - Text:
     _("&Full"), FS_FULL,
     null
   )->column = 1;
 
   ctrl_checkbox(
+    //__ Options - Text:
     s, _("Sho&w bold as font"),
     dlg_stdcheckbox_handler, &new_cfg.bold_as_font
   )->column = 0;
   ctrl_checkbox(
+    //__ Options - Text:
     s, _("Show &bold as colour"),
     dlg_stdcheckbox_handler, &new_cfg.bold_as_colour
   )->column = 0;
   ctrl_checkbox(
+    //__ Options - Text:
     s, _("&Allow blinking"),
     dlg_stdcheckbox_handler, &new_cfg.allow_blinking
   )->column = 0;
@@ -2025,14 +2051,17 @@ setup_config_box(controlbox * b)
                       _("Keyboard features"), null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
+    //__ Options - Keys:
     s, _("&Backarrow sends ^H"),
     dlg_stdcheckbox_handler, &new_cfg.backspace_sends_bs
   )->column = 0;
   ctrl_checkbox(
+    //__ Options - Keys:
     s, _("&Delete sends DEL"),
     dlg_stdcheckbox_handler, &new_cfg.delete_sends_del
   )->column = 1;
   ctrl_checkbox(
+    //__ Options - Keys:
     s, _("Ctrl+LeftAlt is Alt&Gr"),
     dlg_stdcheckbox_handler, &new_cfg.ctrl_alt_is_altgr
   );
@@ -2041,26 +2070,32 @@ setup_config_box(controlbox * b)
   //__ Options - Keys: section title
                       _("Shortcuts"));
   ctrl_checkbox(
+    //__ Options - Keys:
     s, _("Cop&y and Paste (Ctrl/Shift+Ins)"),
     dlg_stdcheckbox_handler, &new_cfg.clip_shortcuts
   );
   ctrl_checkbox(
+    //__ Options - Keys:
     s, _("&Menu and Full Screen (Alt+Space/Enter)"),
     dlg_stdcheckbox_handler, &new_cfg.window_shortcuts
   );
   ctrl_checkbox(
+    //__ Options - Keys:
     s, _("&Switch window (Ctrl+[Shift+]Tab)"),
     dlg_stdcheckbox_handler, &new_cfg.switch_shortcuts
   );
   ctrl_checkbox(
+    //__ Options - Keys:
     s, _("&Zoom (Ctrl+plus/minus/zero)"),
     dlg_stdcheckbox_handler, &new_cfg.zoom_shortcuts
   );
   ctrl_checkbox(
+    //__ Options - Keys:
     s, _("&Alt+Fn shortcuts"),
     dlg_stdcheckbox_handler, &new_cfg.alt_fn_shortcuts
   );
   ctrl_checkbox(
+    //__ Options - Keys:
     s, _("&Ctrl+Shift+letter shortcuts"),
     dlg_stdcheckbox_handler, &new_cfg.ctrl_shift_shortcuts
   );
@@ -2071,9 +2106,13 @@ setup_config_box(controlbox * b)
   ctrl_radiobuttons(
     s, null, 4,
     dlg_stdradiobutton_handler, &new_cfg.compose_key,
+    //__ Options - Keys:
     _("&Shift"), MDK_SHIFT,
+    //__ Options - Keys:
     _("&Ctrl"), MDK_CTRL,
+    //__ Options - Keys:
     _("&Alt"), MDK_ALT,
+    //__ Options - Keys:
     _("&Off"), 0,
     null
   );
@@ -2087,14 +2126,17 @@ setup_config_box(controlbox * b)
                       _("Mouse functions"), null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_checkbox(
+    //__ Options - Mouse:
     s, _("Cop&y on select"),
     dlg_stdcheckbox_handler, &new_cfg.copy_on_select
   )->column = 0;
   ctrl_checkbox(
+    //__ Options - Mouse:
     s, _("Copy as &rich text"),
     dlg_stdcheckbox_handler, &new_cfg.copy_as_rtf
   )->column = 1;
   ctrl_checkbox(
+    //__ Options - Mouse:
     s, _("Clic&ks place command line cursor"),
     dlg_stdcheckbox_handler, &new_cfg.clicks_place_cursor
   );
@@ -2103,20 +2145,30 @@ setup_config_box(controlbox * b)
   //__ Options - Mouse: section title
                       _("Click actions"));
   ctrl_radiobuttons(
+    //__ Options - Mouse:
     s, _("Right mouse button"), 4,
     dlg_stdradiobutton_handler, &new_cfg.right_click_action,
+    //__ Options - Mouse:
     _("&Paste"), RC_PASTE,
+    //__ Options - Mouse:
     _("E&xtend"), RC_EXTEND,
+    //__ Options - Mouse:
     _("&Menu"), RC_MENU,
+    //__ Options - Mouse:
     _("Ente&r"), RC_ENTER,
     null
   );
   ctrl_radiobuttons(
+    //__ Options - Mouse:
     s, _("Middle mouse button"), 4,
     dlg_stdradiobutton_handler, &new_cfg.middle_click_action,
+    //__ Options - Mouse:
     _("&Paste"), MC_PASTE,
+    //__ Options - Mouse:
     _("E&xtend"), MC_EXTEND,
+    //__ Options - Mouse:
     _("&Nothing"), MC_VOID,
+    //__ Options - Mouse:
     _("Ente&r"), MC_ENTER,
     null
   );
@@ -2125,18 +2177,26 @@ setup_config_box(controlbox * b)
   //__ Options - Mouse: section title
                       _("Application mouse mode"));
   ctrl_radiobuttons(
+    //__ Options - Mouse:
     s, _("Default click target"), 4,
     dlg_stdradiobutton_handler, &new_cfg.clicks_target_app,
+    //__ Options - Mouse: application mouse mode click target
     _("&Window"), false,
-    _("Applicatio&n"), true,
+    //__ Options - Mouse: application mouse mode click target
+    _("&Application"), true,
     null
   );
   ctrl_radiobuttons(
+    //__ Options - Mouse:
     s, _("Modifier for overriding default"), 4,
     dlg_stdradiobutton_handler, &new_cfg.click_target_mod,
+    //__ Options - Mouse:
     _("&Shift"), MDK_SHIFT,
+    //__ Options - Mouse:
     _("&Ctrl"), MDK_CTRL,
+    //__ Options - Mouse:
     _("&Alt"), MDK_ALT,
+    //__ Options - Mouse:
     _("&Off"), 0,
     null
   );
@@ -2152,39 +2212,53 @@ setup_config_box(controlbox * b)
                       _("Default size"));
   ctrl_columns(s, 5, 35, 3, 28, 4, 30);
   (cols_box = ctrl_editbox(
+    //__ Options - Window:
     s, _("Colu&mns"), 44, dlg_stdintbox_handler, &new_cfg.cols
   ))->column = 0;
   (rows_box = ctrl_editbox(
+    //__ Options - Window:
     s, _("Ro&ws"), 55, dlg_stdintbox_handler, &new_cfg.rows
   ))->column = 2;
   ctrl_pushbutton(
+    //__ Options - Window:
     s, _("C&urrent size"), current_size_handler, 0
   )->column = 4;
 
   s = ctrl_new_set(b, _("Window"), null, null);
   ctrl_columns(s, 2, 66, 34);
   ctrl_editbox(
+    //__ Options - Window:
     s, _("Scroll&back lines"), 50,
     dlg_stdintbox_handler, &new_cfg.scrollback_lines
   )->column = 0;
   ctrl_radiobuttons(
+    //__ Options - Window:
     s, _("Scrollbar"), 4,
     dlg_stdradiobutton_handler, &new_cfg.scrollbar,
+    //__ Options - Window: scrollbar
     _("&Left"), -1,
+    //__ Options - Window: scrollbar
     _("&None"), 0,
+    //__ Options - Window: scrollbar
     _("&Right"), 1,
     null
   );
   ctrl_radiobuttons(
+    //__ Options - Window:
     s, _("Modifier for scrolling"), 4,
     dlg_stdradiobutton_handler, &new_cfg.scroll_mod,
+    //__ Options - Window:
     _("&Shift"), MDK_SHIFT,
+    //__ Options - Window:
     _("&Ctrl"), MDK_CTRL,
+    //__ Options - Window:
     _("&Alt"), MDK_ALT,
+    //__ Options - Window:
     _("&Off"), 0,
     null
   );
   ctrl_checkbox(
+    //__ Options - Window:
     s, _("&PgUp and PgDn scroll without modifier"),
     dlg_stdcheckbox_handler, &new_cfg.pgupdn_scroll
   );
@@ -2206,9 +2280,11 @@ setup_config_box(controlbox * b)
                       _("Terminal features"), null);
   ctrl_columns(s, 2, 50, 50);
   ctrl_combobox(
+    //__ Options - Terminal:
     s, _("&Type"), 100, term_handler, 0
   )->column = 0;
   ctrl_editbox(
+    //__ Options - Terminal:
     s, _("&Answerback"), 100, dlg_stdstringbox_handler, &new_cfg.answerback
   )->column = 1;
 
@@ -2220,9 +2296,11 @@ setup_config_box(controlbox * b)
     s, null, 100, bell_handler, 0
   )->column = 0;
   ctrl_checkbox(
+    //__ Options - Terminal: bell
     s, _("&Flash"), dlg_stdcheckbox_handler, &new_cfg.bell_flash
   )->column = 1;
   ctrl_checkbox(
+    //__ Options - Terminal: bell
     s, _("&Highlight in taskbar"), dlg_stdcheckbox_handler, &new_cfg.bell_taskbar
   )->column = 2;
   ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
@@ -2233,10 +2311,12 @@ setup_config_box(controlbox * b)
   )->column = 0;
 #else
   ctrl_combobox(
+    //__ Options - Terminal: bell
     s, _("&Wave"), 83, bellfile_handler, &new_cfg.bell_file
   )->column = 0;
 #endif
   ctrl_pushbutton(
+    //__ Options - Terminal: bell
     s, _("► &Play"), bell_tester, 0
   )->column = 1;
 
@@ -2255,7 +2335,8 @@ setup_config_box(controlbox * b)
 
   s = ctrl_new_set(b, _("Terminal"), null, null);
   ctrl_checkbox(
-    s, _("&Prompt about running processes on close"),
+    //__ Options - Terminal:
+    s, _("Prompt about running processes on &close"),
     dlg_stdcheckbox_handler, &new_cfg.confirm_exit
   );
 }

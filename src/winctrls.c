@@ -912,10 +912,15 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
     if (localize && GetDlgItem((HWND)wParam, 1088))
       //__ Font chooser: title bar label
       SetWindowTextW((HWND)wParam, _W("Font "));
+    //__ Font chooser: button
     setlabel(1026, _W("&Apply"));
+    //__ Font chooser:
     setlabel(1088, _W("&Font:"));
+    //__ Font chooser:
     setlabel(1089, _W("Font st&yle:"));
+    //__ Font chooser:
     setlabel(1090, _W("&Size:"));
+    //__ Font chooser:
     setlabel(1073, _W("Sample"));
     //__ Font chooser: text sample ("AaBbYyZz" by default)
     setlabel(1092, _W("Ferqœm’4€"));
@@ -935,9 +940,9 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
         DestroyWindow(weg);
     }
     else {
-      //__ this field is only shown with OldFontMenu=true
+      //__ Font chooser: this field is only shown with OldFontMenu=true
       setlabel(1094, _W("Sc&ript:"));
-      //__ this field is only shown with OldFontMenu=true
+      //__ Font chooser: this field is only shown with OldFontMenu=true
       setlabel(1592, _W("<A>Show more fonts</A>"));
     }
 
@@ -951,19 +956,31 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
     if (custom_colors) {
       LRESULT fnt = SendMessage(custom_colors, WM_GETFONT, 0, 0);
       DestroyWindow(custom_colors);
+      //__ Colour chooser:
       custom_colors = CreateWindowExW(4, W("Static"), _W("&Basic colours:"), 0x50020000, 6, 7, 210, 15, (HWND)wParam, 0, inst, 0);
       SendMessage(custom_colors, WM_SETFONT, fnt, MAKELPARAM(true, 0));
+      //__ Colour chooser:
       setlabel(65535, _W("&Custom colours:"));
     }
+    //__ Colour chooser:
     setlabel(719, _W("&Define Custom Colours >>"));
+    //__ Colour chooser:
     setlabel(730, _W("Colour"));
+    //__ Colour chooser:
     setlabel(731, _W("|S&olid"));
+    //__ Colour chooser:
     setlabel(723, _W("Hu&e:"));
+    //__ Colour chooser:
     setlabel(724, _W("&Sat:"));
+    //__ Colour chooser:
     setlabel(725, _W("&Lum:"));
+    //__ Colour chooser:
     setlabel(726, _W("&Red:"));
+    //__ Colour chooser:
     setlabel(727, _W("&Green:"));
+    //__ Colour chooser:
     setlabel(728, _W("Bl&ue:"));
+    //__ Colour chooser:
     setlabel(712, _W("&Add to Custom Colours"));
 
 #ifdef debug_dialog_hook

@@ -148,21 +148,29 @@ win_update_menus(void)
       return _W(label);  // use our localization
   }
 
+  //__ System menu:
   modify_menu(sysmenu, SC_RESTORE, 0, itemlabel(__("&Restore")), null);
+  //__ System menu:
   modify_menu(sysmenu, SC_MOVE, 0, itemlabel(__("&Move")), null);
+  //__ System menu:
   modify_menu(sysmenu, SC_SIZE, 0, itemlabel(__("&Size")), null);
+  //__ System menu:
   modify_menu(sysmenu, SC_MINIMIZE, 0, itemlabel(__("Mi&nimize")), null);
+  //__ System menu:
   modify_menu(sysmenu, SC_MAXIMIZE, 0, itemlabel(__("Ma&ximize")), null);
+  //__ System menu:
   modify_menu(sysmenu, SC_CLOSE, 0, itemlabel(__("&Close")),
     alt_fn ? W("Alt+F4") : ct_sh ? W("Ctrl+Shift+W") : null
   );
 
+  //__ System menu:
   modify_menu(sysmenu, IDM_NEW, 0, _W("Ne&w"),
     alt_fn ? W("Alt+F2") : ct_sh ? W("Ctrl+Shift+N") : null
   );
 
   uint sel_enabled = term.selected ? MF_ENABLED : MF_GRAYED;
   EnableMenuItem(ctxmenu, IDM_OPEN, sel_enabled);
+  //__ Context menu:
   modify_menu(ctxmenu, IDM_COPY, sel_enabled, _W("&Copy"),
     clip ? W("Ctrl+Ins") : ct_sh ? W("Ctrl+Shift+C") : null
   );
@@ -172,14 +180,17 @@ win_update_menus(void)
     IsClipboardFormatAvailable(CF_UNICODETEXT) ||
     IsClipboardFormatAvailable(CF_HDROP)
     ? MF_ENABLED : MF_GRAYED;
+  //__ Context menu:
   modify_menu(ctxmenu, IDM_PASTE, paste_enabled, _W("&Paste "),
     clip ? W("Shift+Ins") : ct_sh ? W("Ctrl+Shift+V") : null
   );
 
+  //__ Context menu:
   modify_menu(ctxmenu, IDM_SEARCH, 0, _W("S&earch"),
     alt_fn ? W("Alt+F3") : ct_sh ? W("Ctrl+Shift+H") : null
   );
 
+  //__ Context menu:
   modify_menu(ctxmenu, IDM_RESET, 0, _W("&Reset"),
     alt_fn ? W("Alt+F8") : ct_sh ? W("Ctrl+Shift+R") : null
   );
@@ -187,16 +198,19 @@ win_update_menus(void)
   uint defsize_enabled =
     IsZoomed(wnd) || term.cols != cfg.cols || term.rows != cfg.rows
     ? MF_ENABLED : MF_GRAYED;
+  //__ Context menu:
   modify_menu(ctxmenu, IDM_DEFSIZE_ZOOM, defsize_enabled, _W("&Default Size"),
     alt_fn ? W("Alt+F10") : ct_sh ? W("Ctrl+Shift+D") : null
   );
 
   uint fullscreen_checked = win_is_fullscreen ? MF_CHECKED : MF_UNCHECKED;
+  //__ Context menu:
   modify_menu(ctxmenu, IDM_FULLSCREEN_ZOOM, fullscreen_checked, _W("&Full Screen"),
     alt_fn ? W("Alt+F11") : ct_sh ? W("Ctrl+Shift+F") : null
   );
 
   uint otherscreen_checked = term.show_other_screen ? MF_CHECKED : MF_UNCHECKED;
+  //__ Context menu:
   modify_menu(ctxmenu, IDM_FLIPSCREEN, otherscreen_checked, _W("Flip &Screen"),
     alt_fn ? W("Alt+F12") : ct_sh ? W("Ctrl+Shift+S") : null
   );
@@ -206,7 +220,9 @@ win_update_menus(void)
   EnableMenuItem(sysmenu, IDM_OPTIONS, options_enabled);
 
   // refresh remaining labels to facilitate (changed) localization
+  //__ System menu:
   modify_menu(sysmenu, IDM_COPYTITLE, 0, _W("Copy &Title"), null);
+  //__ System menu:
   modify_menu(sysmenu, IDM_OPTIONS, 0, _W("&Options..."), null);
 }
 
@@ -217,10 +233,12 @@ win_init_ctxmenu(void)
   printf("win_init_ctxmenu\n");
 #endif
   ctxmenu = CreatePopupMenu();
+  //__ Context menu:
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_OPEN, _W("Ope&n"));
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_COPY, 0);
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_PASTE, 0);
+  //__ Context menu:
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_SELALL, _W("Select &All"));
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_SEARCH, 0);
@@ -230,6 +248,7 @@ win_init_ctxmenu(void)
   AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN_ZOOM, 0);
   AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_FLIPSCREEN, 0);
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
+  //__ Context menu:
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_OPTIONS, _W("&Options..."));
 }
 
@@ -242,7 +261,9 @@ win_init_menus(void)
   win_init_ctxmenu();
 
   sysmenu = GetSystemMenu(wnd, false);
+  //__ System menu:
   InsertMenuW(sysmenu, SC_CLOSE, MF_ENABLED, IDM_COPYTITLE, _W("Copy &Title"));
+  //__ System menu:
   InsertMenuW(sysmenu, SC_CLOSE, MF_ENABLED, IDM_OPTIONS, _W("&Options..."));
   InsertMenuW(sysmenu, SC_CLOSE, MF_ENABLED, IDM_NEW, 0);
   InsertMenuW(sysmenu, SC_CLOSE, MF_SEPARATOR, 0, 0);
@@ -445,28 +466,6 @@ send_syscommand(WPARAM cmd)
   SendMessage(wnd, WM_SYSCOMMAND, cmd, ' ');
 }
 
-#define dont_debug_virtual_key_codes
-
-#ifdef debug_virtual_key_codes
-static struct {
-  uint vk_;
-  char * vk_name;
-} vk_names[] = {
-#include "_vk.t"
-};
-
-static string
-vk_name(uint key)
-{
-  for (uint i = 0; i < lengthof(vk_names); i++)
-    if (key == vk_names[i].vk_)
-      return vk_names[i].vk_name;
-  static char vk_name[3];
-  sprintf(vk_name, "%02X", key & 0xFF);
-  return vk_name;
-}
-#endif
-
 typedef enum {
   COMP_CLEAR = -1,
   COMP_NONE = 0,
@@ -499,6 +498,28 @@ win_key_reset(void)
   compose_clear();
 }
 
+#define dont_debug_virtual_key_codes
+
+#ifdef debug_virtual_key_codes
+static struct {
+  uint vk_;
+  char * vk_name;
+} vk_names[] = {
+#include "_vk.t"
+};
+
+static string
+vk_name(uint key)
+{
+  for (uint i = 0; i < lengthof(vk_names); i++)
+    if (key == vk_names[i].vk_)
+      return vk_names[i].vk_name;
+  static char vk_name[3];
+  sprintf(vk_name, "%02X", key & 0xFF);
+  return vk_name;
+}
+#endif
+
 #define dont_debug_key
 #define dont_debug_compose
 
@@ -523,8 +544,13 @@ win_key_down(WPARAM wp, LPARAM lp)
   else if (comp_state == COMP_CLEAR)
     comp_state = COMP_NONE;
 
+  uint scancode = HIWORD(lp) & (KF_EXTENDED | 0xFF);
+  bool extended = HIWORD(lp) & KF_EXTENDED;
+  bool repeat = HIWORD(lp) & KF_REPEAT;
+  uint count = LOWORD(lp);
+
 #ifdef debug_virtual_key_codes
-  printf("win_key_down %04X %s\n", key, vk_name(key));
+  printf("win_key_down %04X %s scan %d\n", key, vk_name(key), scancode);
 #endif
 
   if (key == VK_PROCESSKEY) {
@@ -533,11 +559,6 @@ win_key_down(WPARAM wp, LPARAM lp)
     );
     return true;
   }
-
-  uint scancode = HIWORD(lp) & (KF_EXTENDED | 0xFF);
-  bool extended = HIWORD(lp) & KF_EXTENDED;
-  bool repeat = HIWORD(lp) & KF_REPEAT;
-  uint count = LOWORD(lp);
 
   uchar kbd[256];
   GetKeyboardState(kbd);
