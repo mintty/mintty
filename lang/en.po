@@ -87,24 +87,24 @@ msgid "Colour"
 msgstr "Colour"
 
 #: winctrls.c:947
-msgid "&Basic colours:"
-msgstr "&Basic colours:"
+msgid "B&asic colours:"
+msgstr "B&asic colours:"
 
 #: winctrls.c:949
 msgid "&Custom colours:"
 msgstr "&Custom colours:"
 
 #: winctrls.c:951
-msgid "&Define Custom Colours >>"
-msgstr "&Define Custom Colours >>"
+msgid "De&fine Custom Colours >>"
+msgstr "De&fine Custom Colours >>"
 
 #: winctrls.c:953
 msgid "|S&olid"
 msgstr "|S&olid"
 
 #: winctrls.c:954
-msgid "Hu&e:"
-msgstr "Hu&e:"
+msgid "&Hue:"
+msgstr "&Hue:"
 
 #: winctrls.c:955
 msgid "&Sat:"
@@ -123,10 +123,10 @@ msgid "&Green:"
 msgstr "&Green:"
 
 #: winctrls.c:959
-msgid "Bl&ue:"
-msgstr "Bl&ue:"
+msgid "&Blue:"
+msgstr "&Blue:"
 
 #: winctrls.c:960
-msgid "&Add to Custom Colours"
-msgstr "&Add to Custom Colours"
+msgid "A&dd to Custom Colours"
+msgstr "A&dd to Custom Colours"
 

@@ -3,13 +3,14 @@
 menulabelfiles="../src/config.c ../src/winctrls.c ../src/wininput.c"
 
 function getdialoggroups() {
-sed -e "s, *//\(__[^%]*:\).*,\1," -e t -e d | sort | uniq
+	sed -e "s, *//\(__[^%]*:\).*,\1," -e t -e d | sort | uniq
 }
 
 LC_ALL=en_US.UTF-8
 export LC_ALL
-PATH="$HOME/tmp/coreutils-8.26/src:$PATH"
-type uniq
+
+# use patched version of `uniq` for case-insensitive comparison:
+PATH="$HOME/opt/coreutils/src:$PATH"
 
 for po in ${*-../lang/*.pot ../lang/*.po}
 do	case "$po" in
@@ -22,7 +23,7 @@ do	case "$po" in
 	do	echo "[30;42;1m" $po "[22m-" $group "[0m"
 		sed -e "/$group/,/^$/ b" -e d $po |
 		grep ^$msg |
-		sed -e "s,^$msg *\(.*\)\(&.\)\(.*\),\2  \1\2\3," -e t -e d |
-		sort | uniq | uniq -Diw4
+		sed -e "s,^$msg *\(.*\)\(&.\)\(.*\),\2   \1\2\3," -e t -e d |
+		sort | uniq | uniq -Diw5
 	done
 done

@@ -575,15 +575,30 @@ mintty tries to find localization files (in this order) for
 then (as generic fallback) `fr` and `en`, 
 each in all resource configuration folders (subfolder `lang`).
 
+Note that Windows may already have localized the default entries of the 
+system menu, which makes the system menu language inconsistent because 
+mintty adds a few items here. Choose `Language=en` to 
+“reverse-localize” this, as well as the font and colour chooser dialogs.
+
+Choose `Language=en_US` to change `Colour` to `Color` in the menus.
+
+### Adding translations to localization ###
+
 Localization files for various language or language/region codes 
 are looked up in the resource configuration folders, subfolder `lang`.
 Mintty uses a simplified `gettext` file format but not the `gettext` library;
 all messages must be encoded in UTF-8, the Content-Type charset is ignored.
 
-Note that Windows may already have localized the default entries of the 
-system menu, which makes the system menu language inconsistent because 
-mintty adds a few items here. Choose `Language=en` to 
-“reverse-localize” this, as well as the font and colour chooser dialogs.
+To add a new language, copy `messages.pot` to the desired `.po` file 
+(including a region suffix if appropriate, like `fr_CH`) and add the 
+`msgstr` entries which are empty in the template. The tool `poedit` may 
+be used but remember to use UTF-8 encoding.
+
+Note that `&` marks in menu item labels define keyboard shortcuts to be 
+handled by Windows. The script `keycheck` with your `.po` file as parameter 
+checks for ambiguous shortcut entries; these are not errors but you may 
+consider to reduce ambiguities. Note that a future (or currently patched) 
+version of the `uniq` tool is needed to cover non-ASCII keyboard shortcuts.
 
 
 ## Running mintty stand-alone ##

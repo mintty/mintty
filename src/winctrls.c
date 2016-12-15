@@ -870,13 +870,22 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
 
 #define dont_debug_dialog_hook
 
+#ifdef debug_dialog_hook
+  void
+  trace_label(int id, HWND button, wstring label)
+  {
+    if (!button) button = GetDlgItem((HWND)wParam, id);
+    wchar buf [99];
+    GetWindowTextW(button, buf, 99);
+    printf("%d <%ls> -> <%ls>\n", id, buf, label);
+  }
+#endif
+
   void setlabel(int id, wstring label) {
     HWND button = GetDlgItem((HWND)wParam, id);
     if (localize && button) {
 #ifdef debug_dialog_hook
-      wchar buf [99];
-      GetWindowTextW(button, buf, 99);
-      printf("%d <%ls> -> <%ls>\n", id, buf, label);
+      trace_label(id, button, label);
 #endif
       SetWindowTextW(button, label);
     }
@@ -954,22 +963,28 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
     // http://www.xtremevbtalk.com/api/181863-changing-custom-color-label-choosecolor-dialog-comdlg32-dll.html
     HWND custom_colors = GetDlgItem((HWND)wParam, 65535);
     if (custom_colors) {
+#ifdef debug_dialog_hook
+      trace_label(65535, custom_colors, _W("B&asic colours:"));
+#endif
       LRESULT fnt = SendMessage(custom_colors, WM_GETFONT, 0, 0);
       DestroyWindow(custom_colors);
       //__ Colour chooser:
-      custom_colors = CreateWindowExW(4, W("Static"), _W("&Basic colours:"), 0x50020000, 6, 7, 210, 15, (HWND)wParam, 0, inst, 0);
+      custom_colors = CreateWindowExW(4, W("Static"), _W("B&asic colours:"), 0x50020000, 6, 7, 210, 15, (HWND)wParam, 0, inst, 0);
+                      //shortkey disambiguated from original "&Basic colors:"
       SendMessage(custom_colors, WM_SETFONT, fnt, MAKELPARAM(true, 0));
       //__ Colour chooser:
       setlabel(65535, _W("&Custom colours:"));
     }
     //__ Colour chooser:
-    setlabel(719, _W("&Define Custom Colours >>"));
+    setlabel(719, _W("De&fine Custom Colours >>"));
+          //shortkey disambiguated from original "&Define Custom Colours >>"
     //__ Colour chooser:
     setlabel(730, _W("Colour"));
     //__ Colour chooser:
     setlabel(731, _W("|S&olid"));
     //__ Colour chooser:
-    setlabel(723, _W("Hu&e:"));
+    setlabel(723, _W("&Hue:"));
+            //shortkey disambiguated from original "Hu&e:"
     //__ Colour chooser:
     setlabel(724, _W("&Sat:"));
     //__ Colour chooser:
@@ -979,9 +994,11 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
     //__ Colour chooser:
     setlabel(727, _W("&Green:"));
     //__ Colour chooser:
-    setlabel(728, _W("Bl&ue:"));
+    setlabel(728, _W("&Blue:"));
+            //shortkey disambiguated from original "Bl&ue:"
     //__ Colour chooser:
-    setlabel(712, _W("&Add to Custom Colours"));
+    setlabel(712, _W("A&dd to Custom Colours"));
+            //shortkey disambiguated from original "&Add to Custom Colours"
 
 #ifdef debug_dialog_hook
     for (int id = 12; id < 65536; id++) {
