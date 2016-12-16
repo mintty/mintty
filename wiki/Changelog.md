@@ -1,3 +1,6 @@
+Character display:
+  * Tweaked surrogate handling to stabilise non-BMP display (#616).
+
 Localization:
   * Persisting adaptation of font sample text.
   * Disambiguated translations in different context for "Paste", "Font", "Colour".

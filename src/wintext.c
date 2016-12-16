@@ -817,10 +817,8 @@ win_set_ime_open(bool open)
 
 #define dont_debug_win_text
 
-#ifdef debug_win_text
-
-void
-trace_line(char * tag, wchar * text, int len)
+static void
+_trace_line(char * tag, wchar * text, int len)
 {
   bool show = false;
   for (int i = 0; i < len; i++)
@@ -832,7 +830,13 @@ trace_line(char * tag, wchar * text, int len)
   }
 }
 
-#else
+inline static void
+trace_line(char * tag, wchar * text, int len)
+{
+  _trace_line(tag, text, len);
+}
+
+#ifndef debug_win_text
 #define trace_line(tag, text, len)	
 #endif
 
@@ -1202,6 +1206,15 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
     }
   }
 
+  int
+  char1ulen(wchar * text)
+  {
+    if ((text[0] & 0xFC00) == 0xD800 && (text[1] & 0xFC00) == 0xDC00)
+      return 2;
+    else
+      return 1;
+  }
+
  /* Finally, draw the text */
   SetBkMode(dc, OPAQUE);
   uint overwropt = ETO_OPAQUE;
@@ -1231,14 +1244,16 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
         SetTextColor(dc, fg);
 
       // base character
-      text_out(dc, xt + xoff, yt, eto_options | overwropt, &box, text, 1, dxs);
+      int ulen = char1ulen(text);
+      text_out(dc, xt + xoff, yt, eto_options | overwropt, &box, text, ulen, dxs);
+
       if (overwropt) {
         SetBkMode(dc, TRANSPARENT);
         overwropt = 0;
       }
       // combining characters
       textattr[0] = attr;
-      for (int i = 1; i < len; i++) {
+      for (int i = ulen; i < len; i += ulen) {
         // separate stacking of combining characters 
         // does not work with Uniscribe
         use_uniscribe = false;
@@ -1273,7 +1288,8 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
 
           SetTextColor(dc, fg);
         }
-        text_out(dc, xx, yt, eto_options, &box2, &text[i], 1, &dxs[i]);
+        ulen = char1ulen(&text[i]);
+        text_out(dc, xx, yt, eto_options, &box2, &text[i], ulen, &dxs[i]);
       }
     }
     else {
