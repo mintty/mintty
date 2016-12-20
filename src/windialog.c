@@ -32,10 +32,11 @@ extern void setup_config_box(controlbox *);
 
    To document a minimum set of Unicode-enabled API usage as could be 
    identified, some calls below are explicitly maintained in "ANSI" mode:
-     RegisterClassA	would work for the TreeView
-     RegisterClassW	needed if UNICODE defined for proper window title
-     CreateDialogW	must be "W" if UNICODE is defined
-     CreateWindowExA	works
+     RegisterClassA			would work for the TreeView
+     RegisterClassW			needs "W" for title if UNICODE
+     RegisterClassW with DefDlgProcW	needed for proper window title
+     CreateDialogW			must be "W" if UNICODE is defined
+     CreateWindowExA			works
    The TreeView_ macros are implicitly mapped to either "A" or "W", 
    so to use TreeView_InsertItem in either mode, it needs to be expanded 
    to SendMessageA/SendMessageW.
@@ -460,17 +461,17 @@ win_open_config(void)
   static bool initialised = false;
   if (!initialised) {
     InitCommonControls();
-    RegisterClass(&(WNDCLASS){
+    RegisterClassW(&(WNDCLASSW){
+      .lpszClassName = W(DIALOG_CLASS),
+      .lpfnWndProc = DefDlgProcW,
       .style = CS_DBLCLKS,
-      .lpfnWndProc = DefDlgProc,
       .cbClsExtra = 0,
       .cbWndExtra = DLGWINDOWEXTRA + 2 * sizeof(LONG_PTR),
       .hInstance = inst,
       .hIcon = null,
       .hCursor = LoadCursor(null, IDC_ARROW),
       .hbrBackground = (HBRUSH)(COLOR_BACKGROUND + 1),
-      .lpszMenuName = null,
-      .lpszClassName = S(DIALOG_CLASS)
+      .lpszMenuName = null
     });
     initialised = true;
   }
@@ -565,7 +566,7 @@ message_box(HWND parwnd, char * text, char * caption, int type, wstring ok)
       free(wcapt);
   }
   else
-    ret = MessageBox(parwnd, text, caption, type);
+    ret = MessageBoxA(parwnd, text, caption, type);
   UnhookWindowsHookEx(hook);
   return ret;
 }

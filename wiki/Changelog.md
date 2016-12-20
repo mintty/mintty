@@ -5,6 +5,7 @@ Localization:
   * Persisting adaptation of font sample text.
   * Disambiguated translations in different context for "Paste", "Font", "Colour".
   * Sorted out en_GB vs. en_US.
+  * Fixed localization of Options dialog window title.
 
 ### 2.7.2 (10 Dec 2016) ###
 

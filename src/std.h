@@ -86,12 +86,6 @@ typedef const wchar *wstring;
 #define __W(s) L##s
 #endif
 #define W(s) __W(s)
-// dual-mode literals (to optionally compile with -DUNICODE):
-#ifdef UNICODE
-#define S(s) W(s)
-#else
-#define S(s) s
-#endif
 
 // localized string/wstring lookup:
 extern char * loctext(string msg);
