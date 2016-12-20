@@ -303,7 +303,10 @@ write_char(wchar c, int width)
         curs->x += width - 2;
 #endif
       put_char(UCSWIDE);
-    when 0:  // Combining character.
+    when 0 or -1:  // Combining character or Low surrogate.
+#ifdef debug_surrogates
+      printf("write_char %04X %2d %08llX\n", c, width, curs->attr.attr);
+#endif
       if (curs->x > 0) {
        /* If we're in wrapnext state, the character
         * to combine with is _here_, not to our left. */
@@ -1507,7 +1510,7 @@ term_write(const char *buf, uint len)
             int width = xcwidth(combine_surrogates(hwc, wc));
 #endif
             write_char(hwc, width);
-            write_char(wc, 0);
+            write_char(wc, -1);  // -1 indicates low surrogate
           }
           else
             write_error();

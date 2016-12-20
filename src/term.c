@@ -1192,6 +1192,8 @@ term_paint(void)
       if (!has_rtl)
         has_rtl = is_rtl_class(tbc);
 
+#define dont_debug_surrogates
+
       if (combdouble_pending) {
         // Rearrange combining double characters of previous position 
         // to be displayed at this position.
@@ -1212,6 +1214,9 @@ term_paint(void)
       if (d->cc_next) {
         termchar *dd = d;
         while (dd->cc_next && textlen < maxtextlen) {
+#ifdef debug_surrogates
+          wchar prev = dd->chr;
+#endif
           dd += dd->cc_next;
           if (combiningdouble(dd->chr)) {
             // Postpone combining double characters of this position
@@ -1221,7 +1226,15 @@ term_paint(void)
           else {
             textattr[textlen] = dd->attr;
             text[textlen++] = dd->chr;
-            attr.attr |= TATTR_COMBINING;
+            if ((dd->chr & 0xFC00) != 0xDC00)
+              attr.attr |= TATTR_COMBINING;
+#ifdef debug_surrogates
+            ucschar comb = 0xFFFFF;
+            if ((prev & 0xFC00) == 0xD800 && (dd->chr & 0xFC00) == 0xDC00)
+              comb = ((ucschar) (prev - 0xD7C0) << 10) | (dd->chr & 0x03FF);
+            printf("comb (%04X) %04X %04X (%05X) %11llX\n", 
+                   d->chr, prev, dd->chr, comb, attr.attr);
+#endif
           }
         }
       }

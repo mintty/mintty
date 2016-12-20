@@ -1,5 +1,5 @@
 Character display:
-  * Tweaked surrogate handling to stabilise non-BMP display (#616).
+  * Tweaked surrogate handling to facilitate non-BMP display (#616).
 
 Localization:
   * Persisting adaptation of font sample text.

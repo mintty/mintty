@@ -694,6 +694,9 @@ win_paint(void)
 static void
 do_update(void)
 {
+#ifdef debug_cursor
+  printf("do_update cursor_on %d @%d,%d\n", term.cursor_on, term.curs.y, term.curs.x);
+#endif
   if (update_state == UPDATE_BLOCKED) {
     update_state = UPDATE_IDLE;
     return;
@@ -1457,6 +1460,9 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
   }
 
   if (has_cursor) {
+#ifdef debug_cursor
+    printf("painting cursor cursor_on %d\n", term.cursor_on);
+#endif
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, cursor_colour));
     switch (term_cursor_type()) {
       when CUR_BLOCK:
