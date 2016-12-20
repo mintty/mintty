@@ -246,19 +246,19 @@ typedef struct {
 } circbuf;
 
 typedef struct {
-    int x;
-    int y;
-    int len;
+  int x;
+  int y;
+  int len;
 } result;
 
 typedef struct {
-    result * results;
-    wchar * query;
-    int query_length;
-    int capacity;
-    int current;
-    int length;
-    int update_type;
+  result * results;
+  wchar * query;
+  int query_length;
+  int capacity;
+  int current;
+  int length;
+  int update_type;
 } termresults;
 
 typedef struct {
@@ -328,22 +328,22 @@ struct term {
 
   termchar erase_char;
 
-  char *inbuf;      /* terminal input buffer */
+  char *inbuf;            /* terminal input buffer */
   uint inbuf_size, inbuf_pos;
 
-  bool rvideo;   /* global reverse video flag */
-  bool cursor_on;        /* cursor enabled flag */
-  bool deccolm_allowed;  /* DECCOLM sequence for 80/132 cols allowed? */
-  bool reset_132;        /* Flag ESC c resets to 80 cols */
-  bool cblinker; /* When blinking is the cursor on ? */
-  bool tblinker; /* When the blinking text is on */
-  bool blink_is_real;    /* Actually blink blinking text */
-  bool echoing;  /* Does terminal want local echo? */
-  bool insert;   /* Insert mode */
-  int marg_top, marg_bot;  /* scroll margins */
+  bool rvideo;            /* global reverse video flag */
+  bool cursor_on;         /* cursor enabled flag */
+  bool deccolm_allowed;   /* DECCOLM sequence for 80/132 cols allowed? */
+  bool reset_132;         /* Flag ESC c resets to 80 cols */
+  bool cblinker;          /* When blinking is the cursor on ? */
+  bool tblinker;          /* When the blinking text is on */
+  bool blink_is_real;     /* Actually blink blinking text */
+  bool echoing;           /* Does terminal want local echo? */
+  bool insert;            /* Insert mode */
+  int marg_top, marg_bot; /* scroll margins */
   bool printing, only_printing;  /* Are we doing ANSI printing? */
-  int  print_state;      /* state of print-end-sequence scan */
-  char *printbuf;        /* buffered data for printer */
+  int  print_state;       /* state of print-end-sequence scan */
+  char *printbuf;         /* buffered data for printer */
   uint printbuf_size, printbuf_pos;
 
   int  rows, cols;
@@ -372,7 +372,7 @@ struct term {
   bool wide_indic;
   bool wide_extra;
 
-  bool sixel_display;  // true if sixel scrolling mode is off
+  bool sixel_display;        // true if sixel scrolling mode is off
   bool sixel_scrolls_right;  // on: sixel scrolling leaves cursor to right of graphic
                              // off(default): the position after sixel depends on sixel_scrolls_left
   bool sixel_scrolls_left;   // on: sixel scrolling moves cursor to beginning of the line
