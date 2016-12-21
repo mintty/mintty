@@ -1073,7 +1073,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
         fg = bg;
       bg = cursor_colour;
 #ifdef debug_cursor
-      printf("set cursor colour %06X @%dpx\n", bg, x);
+      printf("set cursor (colour %06X) @(row %d col %d) cursor_on %d\n", bg, (y - PADDING) / cell_height, (x - PADDING) / char_width, term.cursor_on);
 #endif
     }
   }
@@ -1472,7 +1472,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
   }
 
   if (has_cursor) {
-#ifdef debug_cursor
+#if defined(debug_cursor) && debug_cursor > 1
     printf("painting cursor_type '%c' cursor_on %d\n", "?b_l"[term_cursor_type()+1], term.cursor_on);
 #endif
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, cursor_colour));
