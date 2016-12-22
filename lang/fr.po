@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-15 16:19+0100\n"
+"POT-Creation-Date: 2016-12-22 14:38+0100\n"
 "PO-Revision-Date: 2016-11-29 13:32-0000\n"
 "Last-Translator: Eric Lassauge <lassauge@gmail.com>\n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -190,7 +190,7 @@ msgid "Save"
 msgstr "Enregistrer"
 
 #. __ Dialog button - cancel
-#: config.c:1882 winctrls.c:919 windialog.c:525
+#: config.c:1882 winctrls.c:919 windialog.c:526
 msgid "Cancel"
 msgstr "Annuler"
 
@@ -200,12 +200,12 @@ msgid "Apply"
 msgstr "Appliquer"
 
 #. __ Dialog button - take notice
-#: config.c:1890 windialog.c:522
+#: config.c:1890 windialog.c:523
 msgid "I see"
 msgstr "Ah bon"
 
 #. __ Dialog button - confirm action
-#: config.c:1892 winctrls.c:918 windialog.c:524
+#: config.c:1892 winctrls.c:918 windialog.c:525
 msgid "OK"
 msgstr "Ok"
 
@@ -807,7 +807,7 @@ msgid "A&dd to Custom Colours"
 msgstr "A&jouter aux couleurs personnalisées"
 
 #. __ Options: dialog title
-#: windialog.c:489
+#: windialog.c:490
 msgid "Options"
 msgstr "Options"
 

@@ -1,3 +1,5 @@
+### 2.7.3 (23 Dec 2016) ###
+
 Character display:
   * Tweaked surrogate handling to facilitate non-BMP display (#616).
 

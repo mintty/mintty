@@ -3,12 +3,11 @@
 # This file is distributed under the same license as the mintty package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-15 16:19+0100\n"
+"POT-Creation-Date: 2016-12-22 14:38+0100\n"
 "PO-Revision-Date: 2016-12-19 04:18+0500\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -39,7 +38,8 @@ msgstr "Ошибка: не удалось запустить дочерний п
 
 #: child.c:121
 msgid "DLL rebasing may be required; see 'rebaseall / rebase --help'"
-msgstr "Может потребоватся перебазировка библиотек, см. 'rebaseall / rebase --help'"
+msgstr ""
+"Может потребоватся перебазировка библиотек, см. 'rebaseall / rebase --help'"
 
 #. __ %1$s: client command (e.g. shell) to be run; %2$s: error message
 #: child.c:192
@@ -89,9 +89,11 @@ msgstr "Игнорирование параметра '%s' отсутствуе�
 
 #. __ %1$s: config file name, %2$s: error message
 #: config.c:1179
-msgid "Could not save options to '%s':\n"
+msgid ""
+"Could not save options to '%s':\n"
 "%s."
-msgstr "Не удалось сохранить параметр '%s':\n"
+msgstr ""
+"Не удалось сохранить параметр '%s':\n"
 "%s."
 
 #: config.c:1379
@@ -184,7 +186,7 @@ msgid "Save"
 msgstr "Сохранить"
 
 #. __ Dialog button - cancel
-#: config.c:1882 winctrls.c:919 windialog.c:525
+#: config.c:1882 winctrls.c:919 windialog.c:526
 msgid "Cancel"
 msgstr "Отмена"
 
@@ -194,12 +196,12 @@ msgid "Apply"
 msgstr "Применить"
 
 #. __ Dialog button - take notice
-#: config.c:1890 windialog.c:522
+#: config.c:1890 windialog.c:523
 msgid "I see"
 msgstr "Хорошо"
 
 #. __ Dialog button - confirm action
-#: config.c:1892 winctrls.c:918 windialog.c:524
+#: config.c:1892 winctrls.c:918 windialog.c:525
 msgid "OK"
 msgstr ""
 
@@ -801,7 +803,7 @@ msgid "A&dd to Custom Colours"
 msgstr "Добавить в набор"
 
 #. __ Options: dialog title
-#: windialog.c:489
+#: windialog.c:490
 msgid "Options"
 msgstr "Настройки"
 
@@ -1018,11 +1020,14 @@ msgstr "Параметр '%s' требует аргумент"
 
 #: winmain.c:2365
 msgid "Mintty could not detach from caller, starting anyway"
-msgstr "Mintty не может отключится от вызывающего метода, запуск в любом случае"
+msgstr ""
+"Mintty не может отключится от вызывающего метода, запуск в любом случае"
 
 #: winmain.c:2498
 msgid "Using default title due to invalid characters in program name"
-msgstr "Использование заголовка по умолчанию из-за недопустимых символов в имени программы"
+msgstr ""
+"Использование заголовка по умолчанию из-за недопустимых символов в имени "
+"программы"
 
 #. __ label of search bar close button; not actually "localization"
 #: winsearch.c:245
