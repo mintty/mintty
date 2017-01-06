@@ -15,6 +15,8 @@
 #include "charset.h"
 #include "win.h"
 
+#include <windows.h>  // registry handling
+
 #include <termios.h>
 #include <sys/cygwin.h>
 
@@ -1284,6 +1286,108 @@ apply_config(bool save)
     win_reset_colours();
 }
 
+
+// Registry handling (for retrieving localized sound lables)
+
+static HKEY
+regopen(HKEY key, char * subkey)
+{
+  HKEY hk = 0;
+  RegOpenKeyA(key, subkey, &hk);
+  return hk;
+}
+
+static HKEY
+getmuicache()
+{
+  HKEY hk = regopen(HKEY_CURRENT_USER, "Software\\Classes\\Local Settings\\MuiCache");
+  if (!hk)
+    return 0;
+
+  char sk[256];
+  if (RegEnumKeyA(hk, 0, sk, 256) != ERROR_SUCCESS)
+    return 0;
+
+  HKEY hk1 = regopen(hk, sk);
+  RegCloseKey(hk);
+  if (!hk1)
+    return 0;
+
+  if (RegEnumKeyA(hk1, 0, sk, 256) != ERROR_SUCCESS)
+    return 0;
+
+  hk = regopen(hk1, sk);
+  RegCloseKey(hk1);
+  if (!hk)
+    return 0;
+
+  return hk;
+}
+
+static HKEY muicache = 0;
+static HKEY evlabels = 0;
+
+static void
+retrievemuicache()
+{
+  muicache = getmuicache();
+  if (muicache) {
+    evlabels = regopen(HKEY_CURRENT_USER, "AppEvents\\EventLabels");
+    if (!evlabels) {
+      RegCloseKey(muicache);
+      muicache = 0;
+    }
+  }
+}
+
+static void
+closemuicache()
+{
+  if (muicache) {
+    RegCloseKey(evlabels);
+    RegCloseKey(muicache);
+  }
+}
+
+static wchar *
+getreg(HKEY key, wchar * subkey, wchar * attribute) {
+#if CYGWIN_VERSION_API_MINOR < 74
+  (void)key;
+  (void)subkey;
+  (void)attribute;
+  return 0;
+#else
+  DWORD blen;
+  int res = RegGetValueW(key, subkey, attribute, RRF_RT_ANY, 0, 0, &blen);
+  if (res)
+    return 0;
+  wchar * val = malloc(blen);
+  res = RegGetValueW(key, subkey, attribute, RRF_RT_ANY, 0, val, &blen);
+  if (res) {
+    free(val);
+    return 0;
+  }
+  return val;
+#endif
+}
+
+static wchar *
+muieventlabel(wchar * event) {
+  // HKEY_CURRENT_USER\AppEvents\EventLabels\SystemAsterisk
+  // DispFileName -> "@mmres.dll,-5843"
+  wchar * rsr = getreg(evlabels, event, W("DispFileName"));
+  if (!rsr)
+    return 0;
+  // HKEY_CURRENT_USER\Software\Classes\Local Settings\MuiCache\N\M
+  // "@mmres.dll,-5843" -> "Sternchen"
+  wchar * lbl = getreg(muicache, 0, rsr);
+  free(rsr);
+  return lbl;
+}
+
+
+// Options dialog handlers
+
 static void
 ok_handler(control *unused(ctrl), int event)
 {
@@ -1549,14 +1653,17 @@ term_handler(control *ctrl, int event)
 //  4 -> 0x00000030 MB_ICONEXCLAMATION Exclamation
 //  5 -> 0x00000040 MB_ICONASTERISK    Asterisk
 // -1 -> 0xFFFFFFFF                    Simple Beep
-static string beeps[] = {
-  __("simple beep"),
-  __("no beep"),
-  __("Default Beep"),
-  __("Critical Stop"),
-  __("Question"),
-  __("Exclamation"),
-  __("Asterisk"),
+static struct {
+  string name;
+  wchar * event;
+} beeps[] = {
+  {__("simple beep"), null},
+  {__("no beep"), null},
+  {__("Default Beep"),	W(".Default")},
+  {__("Critical Stop"),	W("SystemHand")},
+  {__("Question"),	W("SystemQuestion")},
+  {__("Exclamation"),	W("SystemExclamation")},
+  {__("Asterisk"),	W("SystemAsterisk")},
 };
 
 static void
@@ -1565,14 +1672,29 @@ bell_handler(control *ctrl, int event)
   switch (event) {
     when EVENT_REFRESH:
       dlg_listbox_clear(ctrl);
-      int sel = -1;
+      retrievemuicache();
       for (uint i = 0; i < lengthof(beeps); i++) {
-        dlg_listbox_add(ctrl, _(beeps[i]));
-        if ((int)i == new_cfg.bell_type + 1)
-          sel = i;
+        char * beepname = _(beeps[i].name);
+        if (beepname == beeps[i].name) {
+          // no localization entry, try to retrieve system localization
+          if (muicache && beeps[i].event) {
+            wchar * lbl = muieventlabel(beeps[i].event);
+            if (lbl) {
+              dlg_listbox_add_w(ctrl, lbl);
+              if ((int)i == new_cfg.bell_type + 1)
+                dlg_editbox_set_w(ctrl, lbl);
+              beepname = null;
+              free(lbl);
+            }
+          }
+        }
+        if (beepname) {
+          dlg_listbox_add(ctrl, beepname);
+          if ((int)i == new_cfg.bell_type + 1)
+            dlg_editbox_set(ctrl, beepname);
+        }
       }
-      if (sel >= 0)
-        dlg_editbox_set(ctrl, beeps[sel]);
+      closemuicache();
     when EVENT_VALCHANGE or EVENT_SELCHANGE: {
       new_cfg.bell_type = dlg_listbox_getcur(ctrl) - 1;
 
