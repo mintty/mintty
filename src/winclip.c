@@ -58,12 +58,27 @@ win_open(wstring wpath)
   }
   else {
     // Need to convert POSIX path to Windows first
-    if (support_wsl && wcsncmp(wpath, W("/mnt/"), 5) == 0) {
-      wchar * unwsl = newn(wchar, wcslen(wpath) + 6);
-      wcscpy(unwsl, W("/cygdrive"));
-      wcscat(unwsl, wpath + 4);
-      delete(wpath);
-      wpath = unwsl;
+    if (support_wsl) {
+      if (wcsncmp(wpath, W("/mnt/"), 5) == 0) {
+        wchar * unwsl = newn(wchar, wcslen(wpath) + 6);
+        wcscpy(unwsl, W("/cygdrive"));
+        wcscat(unwsl, wpath + 4);
+        delete(wpath);
+        wpath = unwsl;
+      }
+      else if (*wpath == '/') {  // prepend %LOCALAPPDATA%\lxss
+        char * appd = getenv("LOCALAPPDATA");
+        if (appd) {
+          wchar * wappd = cs__mbstowcs(appd);
+          free(appd);
+          wchar * unwsl = newn(wchar, wcslen(wappd) + wcslen(wpath) + 6);
+          wcscpy(unwsl, wappd);
+          wcscat(unwsl, W("/lxss"));
+          wcscat(unwsl, wpath);
+          delete(wpath);
+          wpath = unwsl;
+        }
+      }
     }
     wstring conv_wpath = child_conv_path(wpath);
     delete(wpath);
@@ -476,9 +491,24 @@ paste_hdrop(HDROP drop)
     else if (*fn == '~')
       buf_add('\\');
     char *p = fn;
-    if (support_wsl && strncmp(p, "/cygdrive/", 10) == 0) {
-      p += 5;
-      strncpy(p, "/mnt", 4);
+    if (support_wsl) {
+      if (strncmp(p, "/cygdrive/", 10) == 0) {
+        p += 5;
+        strncpy(p, "/mnt", 4);
+      }
+      else {  // strip prefix %LOCALAPPDATA%\lxss
+        char * appd = getenv("LOCALAPPDATA");
+        if (appd) {
+          wchar * wappd = cs__mbstowcs(appd);
+          free(appd);
+          appd = path_win_w_to_posix(wappd);
+          free(wappd);
+          appd = renewn(appd, strlen(appd) + 7);
+          strcat(appd, "/lxss/");
+          if (strncmp(p, appd, strlen(appd)) == 0)
+            p += strlen(appd) - 1;
+        }
+      }
     }
     for (; *p; p++) {
       uchar c = *p;
