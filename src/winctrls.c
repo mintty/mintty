@@ -931,9 +931,10 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
     setlabel(1090, _W("&Size:"));
     //__ Font chooser:
     setlabel(1073, _W("Sample"));
-    //__ Font chooser: text sample ("AaBbYyZz" by default)
-    setlabel(1092, _W("Ferqœm’4€"));
+
     font_sample = GetDlgItem((HWND)wParam, 1092);
+    //__ Font chooser: text sample ("AaBbYyZz" by default)
+    SetWindowTextW(font_sample, _W("Ferqœm’4€"));
     // if we manage to get the field longer, 
     // sample text could be picked from http://clagnut.com/blog/2380/,
     // e.g. "Cwm fjord bank glyphs vext quiz"
@@ -966,12 +967,18 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
 #ifdef debug_dialog_hook
       trace_label(65535, custom_colors, _W("B&asic colours:"));
 #endif
+      wchar * lbl = null;
+      int size = GetWindowTextLengthW(custom_colors) + 1;
+      lbl = newn(wchar, size);
+      GetWindowTextW(custom_colors, lbl, size);
+
       LRESULT fnt = SendMessage(custom_colors, WM_GETFONT, 0, 0);
       DestroyWindow(custom_colors);
       //__ Colour chooser:
-      custom_colors = CreateWindowExW(4, W("Static"), _W("B&asic colours:"), 0x50020000, 6, 7, 210, 15, (HWND)wParam, 0, inst, 0);
+      custom_colors = CreateWindowExW(4, W("Static"), lbl ?: _W("B&asic colours:"), 0x50020000, 6, 7, 210, 15, (HWND)wParam, 0, inst, 0);
                       //shortkey disambiguated from original "&Basic colors:"
       SendMessage(custom_colors, WM_SETFONT, fnt, MAKELPARAM(true, 0));
+      free(lbl);
       //__ Colour chooser:
       setlabel(65535, _W("&Custom colours:"));
     }
