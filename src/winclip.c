@@ -47,6 +47,8 @@ shell_exec(wstring wpath)
   CreateThread(0, 0, shell_exec_thread, (void *)wpath, 0, 0);
 }
 
+#define dont_debug_wsl
+
 void
 win_open(wstring wpath)
 {
@@ -59,6 +61,9 @@ win_open(wstring wpath)
   else {
     // Need to convert POSIX path to Windows first
     if (support_wsl) {
+#ifdef debug_wsl
+      printf("open <%ls>\n", wpath);
+#endif
       if (wcsncmp(wpath, W("/mnt/"), 5) == 0) {
         wchar * unwsl = newn(wchar, wcslen(wpath) + 6);
         wcscpy(unwsl, W("/cygdrive"));
@@ -70,9 +75,14 @@ win_open(wstring wpath)
         char * appd = getenv("LOCALAPPDATA");
         if (appd) {
           wchar * wappd = cs__mbstowcs(appd);
+          appd = path_win_w_to_posix(wappd);
+          free(wappd);
+          wappd = cs__mbstowcs(appd);
           free(appd);
+
           wchar * unwsl = newn(wchar, wcslen(wappd) + wcslen(wpath) + 6);
           wcscpy(unwsl, wappd);
+          free(wappd);
           wcscat(unwsl, W("/lxss"));
           wcscat(unwsl, wpath);
           delete(wpath);
@@ -81,6 +91,9 @@ win_open(wstring wpath)
       }
     }
     wstring conv_wpath = child_conv_path(wpath);
+#ifdef debug_wsl
+    printf("open <%ls> <%ls>\n", wpath, conv_wpath);
+#endif
     delete(wpath);
     if (conv_wpath)
       shell_exec(conv_wpath);
@@ -492,22 +505,24 @@ paste_hdrop(HDROP drop)
       buf_add('\\');
     char *p = fn;
     if (support_wsl) {
-      if (strncmp(p, "/cygdrive/", 10) == 0) {
+#ifdef debug_wsl
+      printf("paste <%s>\n", p);
+#endif
+      // check for prefix %LOCALAPPDATA%\lxss
+      char * appd = getenv("LOCALAPPDATA");
+      if (appd) {
+        wchar * wappd = cs__mbstowcs(appd);
+        appd = path_win_w_to_posix(wappd);
+        free(wappd);
+        appd = renewn(appd, strlen(appd) + 7);
+        strcat(appd, "/lxss/");
+      }
+      if (appd && strncmp(p, appd, strlen(appd)) == 0) {
+        p += strlen(appd) - 1;
+      }
+      else if (strncmp(p, "/cygdrive/", 10) == 0) {
         p += 5;
         strncpy(p, "/mnt", 4);
-      }
-      else {  // strip prefix %LOCALAPPDATA%\lxss
-        char * appd = getenv("LOCALAPPDATA");
-        if (appd) {
-          wchar * wappd = cs__mbstowcs(appd);
-          free(appd);
-          appd = path_win_w_to_posix(wappd);
-          free(wappd);
-          appd = renewn(appd, strlen(appd) + 7);
-          strcat(appd, "/lxss/");
-          if (strncmp(p, appd, strlen(appd)) == 0)
-            p += strlen(appd) - 1;
-        }
       }
     }
     for (; *p; p++) {
