@@ -934,7 +934,7 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
 
     font_sample = GetDlgItem((HWND)wParam, 1092);
     //__ Font chooser: text sample ("AaBbYyZz" by default)
-    SetWindowTextW(font_sample, _W("Ferqœm’4€"));
+    SetWindowTextW(font_sample, *new_cfg.font_sample ? new_cfg.font_sample : _W("Ferqœm’4€"));
     // if we manage to get the field longer, 
     // sample text could be picked from http://clagnut.com/blog/2380/,
     // e.g. "Cwm fjord bank glyphs vext quiz"
@@ -978,7 +978,8 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
       custom_colors = CreateWindowExW(4, W("Static"), lbl ?: _W("B&asic colours:"), 0x50020000, 6, 7, 210, 15, (HWND)wParam, 0, inst, 0);
                       //shortkey disambiguated from original "&Basic colors:"
       SendMessage(custom_colors, WM_SETFONT, fnt, MAKELPARAM(true, 0));
-      free(lbl);
+      if (lbl)
+        free(lbl);
       //__ Colour chooser:
       setlabel(65535, _W("&Custom colours:"));
     }
@@ -1132,7 +1133,7 @@ fonthook(HWND hdlg, UINT msg, WPARAM wParam, LPARAM lParam)
     if (disp->CtlID == 1137 && (disp->itemAction == ODA_SELECT))
       // or any of CtlID=1137 (font style)/itemID=0...
       // or CtlID=1138 (font size)/itemID=2... will do
-      SetWindowTextW(font_sample, _W("Ferqœm’4€"));
+      SetWindowTextW(font_sample, *new_cfg.font_sample ? new_cfg.font_sample : _W("Ferqœm’4€"));
   }
 
   //winctrl * c = (winctrl *)lParam;  // does not work

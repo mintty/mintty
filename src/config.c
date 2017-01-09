@@ -49,6 +49,7 @@ const config default_cfg = {
   .cursor_blinks = true,
   // Text
   .font = {.name = W("Lucida Console"), .size = 9, .weight = 400, .isbold = false},
+  .font_sample = W(""),
   .show_hidden_fonts = false,
   .font_smoothing = FS_DEFAULT,
   .font_render = FR_TEXTOUT,
@@ -196,6 +197,7 @@ options[] = {
 
   // Text
   {"Font", OPT_WSTRING, offcfg(font.name)},
+  {"FontSample", OPT_WSTRING, offcfg(font_sample)},
   {"FontSize", OPT_INT | OPT_LEGACY, offcfg(font.size)},
   {"FontHeight", OPT_INT, offcfg(font.size)},
   {"FontWeight", OPT_INT, offcfg(font.weight)},

@@ -1,3 +1,14 @@
+Localization:
+  * Fixed localized Bell field contents.
+  * Adapting Bell list contents from system localization.
+  * Fixed unlocalized Colour chooser label "Basic colours:" and Font chooser initial font sample.
+
+Configuration:
+  * New option FontSample.
+
+Other:
+  * Extend WSL link conversion (for link-click and link pasting) to non-/mnt paths (~#164, mintty/wsltty#19).
+
 ### 2.7.3 (23 Dec 2016) ###
 
 Character display:
