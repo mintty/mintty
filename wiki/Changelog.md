@@ -2,8 +2,12 @@ Localization:
   * Fixed localized Bell field contents.
   * Adapting Bell list contents from system localization.
   * Fixed unlocalized Colour chooser label "Basic colours:" and Font chooser initial font sample.
+  * Added localization of "Error" popup title.
 
-Configuration:
+Configuration and Terminal settings:
+  * BellTaskbar setting is switchable by an escape sequence (xterm).
+  * New BellPopup setting (switchable by an escape sequence, xterm).
+  * Revised Bell section in Options menu.
   * New option FontSample.
 
 Other:

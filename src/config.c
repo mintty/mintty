@@ -2416,40 +2416,41 @@ setup_config_box(controlbox * b)
 
   s = ctrl_new_set(b, _("Terminal"), null, 
   //__ Options - Terminal: section title
-                      _("Bell (sound overridden by Wave/BellFile or BellFreq)"));
-  ctrl_columns(s, 3, 36, 19, 45);
+                      _("Bell"));
+  ctrl_columns(s, 2, 73, 27);
   ctrl_combobox(
     s, null, 100, bell_handler, 0
   )->column = 0;
-  ctrl_checkbox(
-    //__ Options - Terminal: bell
-    s, _("&Flash"), dlg_stdcheckbox_handler, &new_cfg.bell_flash
-  )->column = 1;
-  ctrl_checkbox(
-    //__ Options - Terminal: bell
-    s, _("&Highlight in taskbar"), dlg_stdcheckbox_handler, &new_cfg.bell_taskbar
-  )->column = 2;
-  ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
-  ctrl_columns(s, 2, 82, 18);
-#ifdef use_belleditbox
-  ctrl_editbox(
-    s, _("&Wave"), 83, dlg_stdstringbox_handler, &new_cfg.bell_file
-  )->column = 0;
-#else
-  ctrl_combobox(
-    //__ Options - Terminal: bell
-    s, _("&Wave"), 83, bellfile_handler, &new_cfg.bell_file
-  )->column = 0;
-#endif
   ctrl_pushbutton(
     //__ Options - Terminal: bell
     s, _("► &Play"), bell_tester, 0
   )->column = 1;
+  ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
+  ctrl_columns(s, 2, 100, 0);
+  ctrl_combobox(
+    //__ Options - Terminal: bell
+    s, _("&Wave"), 83, bellfile_handler, &new_cfg.bell_file
+  )->column = 0;
+  ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
+  ctrl_columns(s, 3, 25, 50, 25);
+  ctrl_checkbox(
+    //__ Options - Terminal: bell
+    s, _("&Flash"), dlg_stdcheckbox_handler, &new_cfg.bell_flash
+  )->column = 0;
+  ctrl_checkbox(
+    //__ Options - Terminal: bell
+    s, _("&Highlight in taskbar"), dlg_stdcheckbox_handler, &new_cfg.bell_taskbar
+  )->column = 1;
+  ctrl_checkbox(
+    //__ Options - Terminal: bell
+    s, _("&Popup"), dlg_stdcheckbox_handler, &new_cfg.bell_popup
+  )->column = 2;
 
   s = ctrl_new_set(b, _("Terminal"), null, 
   //__ Options - Terminal: section title
                       _("Printer"));
 #ifdef use_multi_listbox_for_printers
+#warning left in here just to demonstrate the usage of ctrl_listbox
   ctrl_listbox(
     s, null, 4, 100, printer_handler, 0
   );
