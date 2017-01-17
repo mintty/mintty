@@ -843,13 +843,13 @@ Settings controlling keyboard behaviour.
 By default, mintty sends \fB^?\fP (ASCII DEL) as the keycode for the backspace key.
 If this option is enabled, \fB^H\fP is sent instead.
 This also changes the \fBCtrl+Backspace\fP code from \fB^_\fP to \fB^?\fP.
-(Corresponds to the xterm BackarrowKey resource.)
+(Corresponds to the xterm resource \fBbackarrowKey\fP.)
 
 .TP
 \fB\fP(DeleteSendsDEL=no)
 By default, mintty sends VT100 Remove as the keycode for the keypad Del key.
 If this option is enabled, \fB^?\fP (ASCII DEL) is sent instead.
-(Corresponds to the xterm DeleteIsDEL resource.)
+(Corresponds to the xterm resource \fBdeleteIsDEL\fP.)
 
 .TP
 \fBCtrl+LeftAlt is AltGr\fP (CtrlAltIsAltGr=no)
@@ -1173,10 +1173,16 @@ This setting overrides the Bell system sound except No Beep.
 The sound is also played when it is changed.
 .br
 \(en \fBFlash\fP (BellFlash=no): Briefly invert the foreground and background
-colours.
+colours. (Corresponds to the xterm resource \fBvisualBell\fP.)
 .br
 \(en \fBHighlight in taskbar\fP (BellTaskbar=yes): Change the colour of mintty's
 taskbar entry if the mintty window is not active.
+(Corresponds to the xterm resource \fBbellIsUrgent\fP, 
+switchable by an escape sequence.)
+.br
+\(en \fBPopup on bell\fP (BellPopup=no): Popup mintty to desktop foreground.
+(Corresponds to the xterm resource \fBpopOnBell\fP, 
+switchable by an escape sequence.)
 
 A simple \fBfrequency beep\fP can be configured in the configuration file 
 or on the command line:

@@ -646,6 +646,10 @@ set_modes(bool state)
           term.mouse_enc = state ? ME_URXVT_CSI : 0;
         when 1037:
           term.delete_sends_del = state;
+        when 1042:
+          term.bell_taskbar = state;
+        when 1043:
+          term.bell_popup = state;
         when 1047:       /* alternate screen */
           term.selected = false;
           term_switch_screen(state, true);

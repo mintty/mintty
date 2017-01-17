@@ -111,8 +111,9 @@ typedef struct {
   wstring bell_file;
   int bell_freq;
   int bell_len;
-  bool bell_flash;
-  bool bell_taskbar;
+  bool bell_flash;   // xterm: visualBell
+  bool bell_taskbar; // xterm: bellIsUrgent
+  bool bell_popup;   // xterm: popOnBell
   wstring printer;
   bool confirm_exit;
   bool allow_set_selection;

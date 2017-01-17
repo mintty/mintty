@@ -144,6 +144,8 @@ term_reset(void)
   term.app_control = 0;
   term.vt220_keys = vt220(cfg.term);
   term.app_keypad = term.app_cursor_keys = term.app_wheel = false;
+  term.bell_taskbar = cfg.bell_taskbar;
+  term.bell_popup = cfg.bell_popup;
   term.mouse_mode = MM_NONE;
   term.mouse_enc = ME_X10;
   term.wheel_reporting = true;
@@ -240,6 +242,10 @@ term_reconfig(void)
     term.backspace_sends_bs = new_cfg.backspace_sends_bs;
   if (new_cfg.delete_sends_del != cfg.delete_sends_del)
     term.delete_sends_del = new_cfg.delete_sends_del;
+  if (new_cfg.bell_taskbar != cfg.bell_taskbar)
+    term.bell_taskbar = new_cfg.bell_taskbar;
+  if (new_cfg.bell_popup != cfg.bell_popup)
+    term.bell_popup = new_cfg.bell_popup;
   if (strcmp(new_cfg.term, cfg.term))
     term.vt220_keys = vt220(new_cfg.term);
 }
