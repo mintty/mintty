@@ -907,7 +907,7 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
   char * sCode = "?";
   if (nCode >= 0 && nCode < (int)lengthof(hcbt))
     sCode = hcbt[nCode];
-  printf("hook %lld: %d %s\n", wParam, nCode, sCode);
+  printf("hook %d %s (%d %d)\n", nCode, sCode, (unsigned)wParam, (unsigned)lParam);
 #endif
 
   // we could adjust window size if (nCode == HCBT_CREATEWND)
@@ -962,24 +962,29 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
     // tricky way to adjust "Basic colors:" and "Custom colors:" labels 
     // which insanely have the same dialog item ID, see
     // http://www.xtremevbtalk.com/api/181863-changing-custom-color-label-choosecolor-dialog-comdlg32-dll.html
-    HWND custom_colors = GetDlgItem((HWND)wParam, 65535);
-    if (custom_colors) {
+    HWND basic_colors = GetDlgItem((HWND)wParam, 65535);
+    static HWND custom_colors = 0;  // previously seen "Custom colors:" item
+    if (basic_colors && basic_colors != custom_colors) {
 #ifdef debug_dialog_hook
-      trace_label(65535, custom_colors, _W("B&asic colours:"));
+      printf("fixing colour lists (%d %8p %8p)\n", nCode, basic_colors, custom_colors);
+      trace_label(65535, basic_colors, _W("B&asic colours:"));
 #endif
       wchar * lbl = null;
-      int size = GetWindowTextLengthW(custom_colors) + 1;
-      lbl = newn(wchar, size);
-      GetWindowTextW(custom_colors, lbl, size);
+      if (!localize) {
+        int size = GetWindowTextLengthW(basic_colors) + 1;
+        lbl = newn(wchar, size);
+        GetWindowTextW(basic_colors, lbl, size);
+      }
 
-      LRESULT fnt = SendMessage(custom_colors, WM_GETFONT, 0, 0);
-      DestroyWindow(custom_colors);
+      LRESULT fnt = SendMessage(basic_colors, WM_GETFONT, 0, 0);
+      DestroyWindow(basic_colors);
       //__ Colour chooser:
-      custom_colors = CreateWindowExW(4, W("Static"), lbl ?: _W("B&asic colours:"), 0x50020000, 6, 7, 210, 15, (HWND)wParam, 0, inst, 0);
-                      //shortkey disambiguated from original "&Basic colors:"
-      SendMessage(custom_colors, WM_SETFONT, fnt, MAKELPARAM(true, 0));
+      basic_colors = CreateWindowExW(4, W("Static"), lbl ?: _W("B&asic colours:"), 0x50020000, 6, 7, 210, 15, (HWND)wParam, 0, inst, 0);
+                         //shortkey disambiguated from original "&Basic colors:"
+      SendMessage(basic_colors, WM_SETFONT, fnt, MAKELPARAM(true, 0));
       if (lbl)
         free(lbl);
+      custom_colors = GetDlgItem((HWND)wParam, 65535);
       //__ Colour chooser:
       setlabel(65535, _W("&Custom colours:"));
     }
@@ -1015,9 +1020,9 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
         wchar buf [99];
         RECT r;
         GetWindowRect(dlg, &r);
-        printf("dlgitem %d: %4d %4d %4d %4d / ", id, r.left, r.top, r.right, r.bottom);
+        printf("dlgitem %d: %4d %4d %4d %4d / ", id, (int)r.left, (int)r.top, (int)r.right, (int)r.bottom);
         GetClientRect(dlg, &r);
-        printf("%d %d %3d %3d ", r.left, r.top, r.right, r.bottom);
+        printf("%d %d %3d %3d ", (int)r.left, (int)r.top, (int)r.right, (int)r.bottom);
         GetWindowTextW(dlg, buf, 99);
         printf("<%ls>\n", buf);
       }
@@ -1064,7 +1069,7 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
 #ifdef debug_dialog_hook
       RECT cr;
       GetClientRect((HWND)wParam, &cr);
-      printf("Chooser: %4d %4d %4d %4d / %d %d %3d %3d\n", wr.left, wr.top, wr.right, wr.bottom, cr.left, cr.top, cr.right, cr.bottom);
+      printf("Chooser: %4d %4d %4d %4d / %d %d %3d %3d\n", (int)wr.left, (int)wr.top, (int)wr.right, (int)wr.bottom, (int)cr.left, (int)cr.top, (int)cr.right, (int)cr.bottom);
 #endif
       SetWindowPos((HWND)wParam, null, 0, 0,
                    wr.right - wr.left, wr.bottom - wr.top - 74,
