@@ -494,6 +494,7 @@ win_open_config(void)
   set_dpi_auto_scaling(false);
 }
 
+
 /*
    adapted from messageboxmanager.zip
    @ https://www.codeproject.com/articles/18399/localizing-system-messagebox
@@ -505,6 +506,8 @@ static LRESULT CALLBACK
 set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
   (void)lParam;
 
+#define dont_debug_message_box
+
   void setlabel(int id, wstring label) {
     HWND button = GetDlgItem((HWND)wParam, id);
 #ifdef debug_message_box
@@ -513,12 +516,17 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
       GetWindowTextW(button, buf, 99);
       printf("%d <%ls> -> <%ls>\n", id, buf, label);
     }
+    else
+      printf("%d %% (<%ls>)\n", id, label);
 #endif
     if (button)
       SetWindowTextW(button, label);
   }
 
   if (nCode == HCBT_ACTIVATE) {
+#ifdef debug_message_box
+    printf("HCBT_ACTIVATE OK %d ok <%ls>\n", (oktype & MB_TYPEMASK) == MB_OK, oklabel);
+#endif
     if ((oktype & MB_TYPEMASK) == MB_OK)
       setlabel(IDOK, _W("I see"));
     else
@@ -549,21 +557,21 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
 int
 message_box(HWND parwnd, char * text, char * caption, int type, wstring ok)
 {
+  if (!text)
+    return 0;
+  if (!caption)
+    caption = _("Error");
+
   oklabel = ok;
   oktype = type;
-//  HINSTANCE hinst = GetModuleHandle(NULL);
-//  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, hinst, thrid);
-  DWORD thrid = GetCurrentThreadId();
-  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, 0, thrid);
+  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, 0, GetCurrentThreadId());
   int ret;
   if (nonascii(text) || nonascii(caption)) {
-    wchar * wtext = text ? cs__utftowcs(text) : 0;
-    wchar * wcapt = caption ? cs__utftowcs(caption) : 0;
+    wchar * wtext = cs__utftowcs(text);
+    wchar * wcapt = cs__utftowcs(caption);
     ret = MessageBoxW(parwnd, wtext, wcapt, type);
-    if (wtext)
-      free(wtext);
-    if (wcapt)
-      free(wcapt);
+    free(wtext);
+    free(wcapt);
   }
   else
     ret = MessageBoxA(parwnd, text, caption, type);
@@ -574,12 +582,14 @@ message_box(HWND parwnd, char * text, char * caption, int type, wstring ok)
 int
 message_box_w(HWND parwnd, wchar * wtext, wchar * wcaption, int type, wstring ok)
 {
+  if (!wtext)
+    return 0;
+  if (!wcaption)
+    wcaption = _W("Error");
+
   oklabel = ok;
   oktype = type;
-//  HINSTANCE hinst = GetModuleHandle(NULL);
-//  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, hinst, thrid);
-  DWORD thrid = GetCurrentThreadId();
-  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, 0, thrid);
+  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, 0, GetCurrentThreadId());
   int ret;
   ret = MessageBoxW(parwnd, wtext, wcaption, type);
   UnhookWindowsHookEx(hook);
@@ -624,12 +634,12 @@ win_show_about(void)
 void
 win_show_error(char * msg)
 {
-  message_box(0, msg, 0, MB_ICONERROR, 0);
+  message_box(0, msg, null, MB_ICONERROR, 0);
 }
 
 void
 win_show_warning(char * msg)
 {
-  message_box(0, msg, 0, MB_ICONWARNING, 0);
+  message_box(0, msg, null, MB_ICONWARNING, 0);
 }
 
