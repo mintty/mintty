@@ -29,12 +29,17 @@ shell_exec_thread(void *data)
   if ((INT_PTR)ShellExecuteW(wnd, 0, wpath, 0, 0, SW_SHOWNORMAL) <= 32) {
     uint error = GetLastError();
     if (error != ERROR_CANCELLED) {
-      wchar msg[1024];
+      int msglen = 1024;
+      wchar * msg = newn(wchar, msglen);
       FormatMessageW(
         FORMAT_MESSAGE_FROM_SYSTEM | 64,
-        0, error, 0, msg, lengthof(msg), 0
+        0, error, 0, msg, msglen, 0
       );
-      message_box_w(0, msg, wpath, MB_ICONERROR, null);
+      wchar sep[] = W("\n");
+      msg = renewn(msg, wcslen(msg) + wcslen(sep) + wcslen(wpath) + 1);
+      wcscat(msg, sep);
+      wcscat(msg, wpath);
+      message_box_w(0, msg, null, MB_ICONERROR, null);
     }
   }
   free(wpath);
@@ -151,7 +156,7 @@ win_open(wstring wpath)
     if (conv_wpath)
       shell_exec(conv_wpath);
     else
-      message_box(0, strerror(errno), 0, MB_ICONERROR, null);
+      message_box(0, strerror(errno), null, MB_ICONERROR, null);
   }
 }
 
