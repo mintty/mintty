@@ -499,11 +499,28 @@ win_open_config(void)
    adapted from messageboxmanager.zip
    @ https://www.codeproject.com/articles/18399/localizing-system-messagebox
  */
+static HHOOK windows_hook = 0;
+static bool hooked_window_activated = false;
+
+static void
+hook_windows(HOOKPROC hookproc)
+{
+  windows_hook = SetWindowsHookExW(WH_CBT, hookproc, 0, GetCurrentThreadId());
+}
+
+static void
+unhook_windows()
+{
+  UnhookWindowsHookEx(windows_hook);
+  hooked_window_activated = false;
+}
+
 static wstring oklabel = null;
 static int oktype = MB_OK;
 
 static LRESULT CALLBACK
-set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
+set_labels(int nCode, WPARAM wParam, LPARAM lParam)
+{
   (void)lParam;
 
 #define dont_debug_message_box
@@ -514,7 +531,7 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
     if (button) {
       wchar buf [99];
       GetWindowTextW(button, buf, 99);
-      printf("%d <%ls> -> <%ls>\n", id, buf, label);
+      printf("%d [%8p] <%ls> -> <%ls>\n", id, button, buf, label);
     }
     else
       printf("%d %% (<%ls>)\n", id, label);
@@ -525,34 +542,43 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
 
   if (nCode == HCBT_ACTIVATE) {
 #ifdef debug_message_box
-    printf("HCBT_ACTIVATE OK %d ok <%ls>\n", (oktype & MB_TYPEMASK) == MB_OK, oklabel);
+    bool from_mouse = ((CBTACTIVATESTRUCT *)lParam)->fMouse;
+    printf("HCBT_ACTIVATE (mou %d) OK %d ok <%ls>\n", from_mouse, (oktype & MB_TYPEMASK) == MB_OK, oklabel);
 #endif
-    if ((oktype & MB_TYPEMASK) == MB_OK)
-      setlabel(IDOK, _W("I see"));
-    else
-      setlabel(IDOK, _W("OK"));
-    setlabel(IDCANCEL, _W("Cancel"));
+    if (!hooked_window_activated) {
+      // we need to distinguish re-focussing from initial activation
+      // in order to avoid repeated setting of dialog item labels
+      // because the IDOK item is renumbered after initial setting
+      // (so we would overwrite the wrong label) - what a crap!
+      // alternative check:
+      // if (!((CBTACTIVATESTRUCT *)lParam)->fMouse)
+      //   but that fails if re-focussing is done without mouse (e.g. Alt+TAB)
+      if ((oktype & MB_TYPEMASK) == MB_OK)
+        setlabel(IDOK, oklabel ?: _W("I see"));
+      else
+        setlabel(IDOK, oklabel ?: _W("OK"));
+      setlabel(IDCANCEL, _W("Cancel"));
 #ifdef we_would_use_these_in_any_message_box
 #warning W -> _W to add the labels to the localization repository
 #warning predefine button labels in config.c
-    setlabel(IDABORT, W("&Abort"));
-    setlabel(IDRETRY, W("&Retry"));
-    setlabel(IDIGNORE, W("&Ignore"));
-    setlabel(IDYES, W("&Yes"));
-    setlabel(IDNO, W("&No"));
-    //IDCLOSE has no label
-    setlabel(IDHELP, W("Help"));
-    setlabel(IDTRYAGAIN, W("&Try Again"));
-    setlabel(IDCONTINUE, W("&Continue"));
+      setlabel(IDABORT, W("&Abort"));
+      setlabel(IDRETRY, W("&Retry"));
+      setlabel(IDIGNORE, W("&Ignore"));
+      setlabel(IDYES, oklabel ?: W("&Yes"));
+      setlabel(IDNO, W("&No"));
+      //IDCLOSE has no label
+      setlabel(IDHELP, W("Help"));
+      setlabel(IDTRYAGAIN, W("&Try Again"));
+      setlabel(IDCONTINUE, W("&Continue"));
 #endif
-
-    if (oklabel) {
-      SetWindowTextW(GetDlgItem((HWND) wParam, IDOK), oklabel);
-      SetWindowTextW(GetDlgItem((HWND) wParam, IDYES), oklabel);
     }
+
+    hooked_window_activated = true;
   }
-  return 0;
+
+  return CallNextHookEx(0, nCode, wParam, lParam);
 }
+
 
 int
 message_box(HWND parwnd, char * text, char * caption, int type, wstring ok)
@@ -564,7 +590,7 @@ message_box(HWND parwnd, char * text, char * caption, int type, wstring ok)
 
   oklabel = ok;
   oktype = type;
-  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, 0, GetCurrentThreadId());
+  hook_windows(set_labels);
   int ret;
   if (nonascii(text) || nonascii(caption)) {
     wchar * wtext = cs__utftowcs(text);
@@ -575,7 +601,7 @@ message_box(HWND parwnd, char * text, char * caption, int type, wstring ok)
   }
   else
     ret = MessageBoxA(parwnd, text, caption, type);
-  UnhookWindowsHookEx(hook);
+  unhook_windows();
   return ret;
 }
 
@@ -589,10 +615,10 @@ message_box_w(HWND parwnd, wchar * wtext, wchar * wcaption, int type, wstring ok
 
   oklabel = ok;
   oktype = type;
-  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, 0, GetCurrentThreadId());
+  hook_windows(set_labels);
   int ret;
   ret = MessageBoxW(parwnd, wtext, wcaption, type);
-  UnhookWindowsHookEx(hook);
+  unhook_windows();
   return ret;
 }
 
@@ -617,7 +643,7 @@ win_show_about(void)
   free(abouttext);
   oklabel = null;
   oktype = MB_OK;
-  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, 0, GetCurrentThreadId());
+  hook_windows(set_labels);
   MessageBoxIndirectW(&(MSGBOXPARAMSW){
     .cbSize = sizeof(MSGBOXPARAMSW),
     .hwndOwner = config_wnd,
@@ -627,7 +653,7 @@ win_show_about(void)
     .lpszIcon = MAKEINTRESOURCEW(IDI_MAINICON),
     .lpszText = wmsg
   });
-  UnhookWindowsHookEx(hook);
+  unhook_windows();
   free(wmsg);
 }
 
