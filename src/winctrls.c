@@ -858,14 +858,32 @@ winctrl_set_focus(control *ctrl, int has_focus)
     dlg.focused = null;
 }
 
-static HWND font_sample = 0;
 
 /*
    adapted from messageboxmanager.zip
    @ https://www.codeproject.com/articles/18399/localizing-system-messagebox
  */
+static HHOOK windows_hook = 0;
+static bool hooked_window_activated = false;
+
+static void
+hook_windows(HOOKPROC hookproc)
+{
+  windows_hook = SetWindowsHookExW(WH_CBT, hookproc, 0, GetCurrentThreadId());
+}
+
+static void
+unhook_windows()
+{
+  UnhookWindowsHookEx(windows_hook);
+  hooked_window_activated = false;
+}
+
+static HWND font_sample = 0;
+
 static LRESULT CALLBACK
-set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
+set_labels(int nCode, WPARAM wParam, LPARAM lParam)
+{
   bool localize = *cfg.lang;
 
 #define dont_debug_dialog_hook
@@ -877,7 +895,7 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
     if (!button) button = GetDlgItem((HWND)wParam, id);
     wchar buf [99];
     GetWindowTextW(button, buf, 99);
-    printf("%d <%ls> -> <%ls>\n", id, buf, label);
+    printf("%d [%8p] <%ls> -> <%ls>\n", id, button, buf, label);
   }
 #endif
 
@@ -907,14 +925,37 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
   char * sCode = "?";
   if (nCode >= 0 && nCode < (int)lengthof(hcbt))
     sCode = hcbt[nCode];
-  printf("hook %d %s (%d %d)\n", nCode, sCode, (unsigned)wParam, (unsigned)lParam);
+  bool from_mouse = false;
+  if (nCode == HCBT_ACTIVATE)
+    from_mouse = ((CBTACTIVATESTRUCT *)lParam)->fMouse;
+  printf("hook %d %s (%d %d mou %d)\n", nCode, sCode, (unsigned)wParam, (unsigned)lParam, from_mouse);
 #endif
 
-  // we could adjust window size if (nCode == HCBT_CREATEWND)
-  // but then the translations below would not work anymore, 
-  // because SetWindowPos would cause HCBT_ACTIVATE to be invoked 
-  // when the dialog is not yet populated with the other dialog items
-  if (nCode == HCBT_ACTIVATE) {
+  if (nCode == HCBT_CREATEWND) {
+    // we could adjust window size if (nCode == HCBT_CREATEWND)
+    // but then the localization transformations below would not work anymore, 
+    // because SetWindowPos would cause HCBT_ACTIVATE to be invoked 
+    // when the dialog is not yet populated with the other dialog items
+    CREATESTRUCTW * cs = ((CBT_CREATEWNDW *)lParam)->lpcs;
+#ifdef debug_dialog_hook
+    printf("  CBT_CREATEWND x %3d y %3d w %3d h %3d (%08X %07X) <%ls>\n", cs->x, cs->y, cs->cx, cs->cy, cs->style, cs->dwExStyle, cs->lpszName);
+#endif
+    if (!(cs->style & WS_VISIBLE) && (cs->style & WS_CHILD) /*&& cs->cy == 37*/) {
+      // font sample text (default "AaBbYyZz")
+      cs->x = 11 + 12;
+      cs->cx = 404 - 12;
+    }
+    else if (cs->x == 165 && cs->y == 158) {
+      // font sample label ("Sample")
+      cs->x = 11;
+      cs->cx = 404;
+    }
+  }
+  else if (nCode == HCBT_ACTIVATE) {
+#ifdef debug_dialog_hook
+    bool from_mouse = ((CBTACTIVATESTRUCT *)lParam)->fMouse;
+    printf("  CBT_ACTIVATE (mou %d)\n", from_mouse);
+#endif
     setlabel(IDOK, _W("OK"));
     setlabel(IDCANCEL, _W("Cancel"));
 
@@ -963,10 +1004,14 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
     // which insanely have the same dialog item ID, see
     // http://www.xtremevbtalk.com/api/181863-changing-custom-color-label-choosecolor-dialog-comdlg32-dll.html
     HWND basic_colors = GetDlgItem((HWND)wParam, 65535);
-    static HWND custom_colors = 0;  // previously seen "Custom colors:" item
-    if (basic_colors && basic_colors != custom_colors) {
+    //static HWND custom_colors = 0;  // previously seen "Custom colors:" item
+    if (basic_colors && !hooked_window_activated) {
+      // alternatives to distinguish re-focussing from initial activation:
+      // if (basic_colors && basic_colors != custom_colors)
+      //   but that could fail in rare cases
+      // if (!((CBTACTIVATESTRUCT *)lParam)->fMouse)
+      //   but that fails if re-focussing is done without mouse (e.g. Alt+TAB)
 #ifdef debug_dialog_hook
-      printf("fixing colour lists (%d %8p %8p)\n", nCode, basic_colors, custom_colors);
       trace_label(65535, basic_colors, _W("B&asic colours:"));
 #endif
       wchar * lbl = null;
@@ -984,7 +1029,7 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
       SendMessage(basic_colors, WM_SETFONT, fnt, MAKELPARAM(true, 0));
       if (lbl)
         free(lbl);
-      custom_colors = GetDlgItem((HWND)wParam, 65535);
+      //custom_colors = GetDlgItem((HWND)wParam, 65535);
       //__ Colour chooser:
       setlabel(65535, _W("&Custom colours:"));
     }
@@ -1029,9 +1074,10 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
     }
 #endif
 
-#define dont_adjust_text_sample
+#define dont_post_adjust_text_sample
 
-#ifdef adjust_text_sample
+#ifdef post_adjust_text_sample
+#warning better pre-adjust as now done above:  if (nCode == HCBT_CREATEWND) ...
     // resize frame around sample, try to resize text sample (failed)
     HWND sample = GetDlgItem((HWND)wParam, 1073);
     if (!new_cfg.old_fontmenu && weg && sample) {
@@ -1075,10 +1121,13 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam) {
                    wr.right - wr.left, wr.bottom - wr.top - 74,
                    SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
     }
+
+    hooked_window_activated = true;
   }
 
   return CallNextHookEx(0, nCode, wParam, lParam);
 }
+
 
 #ifndef CF_INACTIVEFONTS
 # ifdef __MSABI_LONG
@@ -1237,9 +1286,9 @@ select_font(winctrl *c)
       CF_SCREENFONTS | CF_NOSCRIPTSEL;
 
   // open font selection menu
-  HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, 0, GetCurrentThreadId());
+  hook_windows(set_labels);
   bool ok = ChooseFontW(&cf);
-  UnhookWindowsHookEx(hook);
+  unhook_windows();
   if (ok) {
     // font selection menu closed with OK
     wstrset(&fs.name, lf.lfFaceName);
@@ -1432,9 +1481,9 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
     cc.lpCustColors = custom;
     cc.rgbResult = dlg.coloursel_result;
     cc.Flags = CC_FULLOPEN | CC_RGBINIT;
-    HHOOK hook = SetWindowsHookEx(WH_CBT, set_labels, 0, GetCurrentThreadId());
+    hook_windows(set_labels);
     dlg.coloursel_ok = ChooseColor(&cc);
-    UnhookWindowsHookEx(hook);
+    unhook_windows();
     dlg.coloursel_result = cc.rgbResult;
     ctrl->handler(ctrl, EVENT_CALLBACK);
   }
