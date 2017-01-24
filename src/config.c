@@ -1291,7 +1291,7 @@ apply_config(bool save)
 }
 
 
-// Registry handling (for retrieving localized sound lables)
+// Registry handling (for retrieving localized sound labels)
 
 static HKEY
 regopen(HKEY key, char * subkey)
@@ -2432,7 +2432,36 @@ setup_config_box(controlbox * b)
     s, _("&Wave"), 83, bellfile_handler, &new_cfg.bell_file
   )->column = 0;
   ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
-  ctrl_columns(s, 3, 25, 50, 25);
+  // balance column widths of the following 3 fields 
+  // to accomodate different length of localized labels
+  int strwidth(string s0) {
+    int len = 0;
+    unsigned char * sp = (unsigned char *)s0;
+    while (*sp) {
+      if ((*sp >= 0xE3 && *sp <= 0xED) || 
+          (*sp == 0xF0 && *(sp + 1) >= 0xA0 && *(sp + 1) <= 0xBF))
+        // approx. CJK range
+        len += 4;
+      else if (strchr(" il.,'()!:;[]|", *sp))
+        len ++;
+      else if (*sp != '&' && (*sp & 0xC0) != 0x80)
+        len += 2;
+      sp++;
+    }
+    return len;
+  }
+  //__ Options - Terminal: bell
+  string lbl_flash = _("&Flash");
+  //__ Options - Terminal: bell
+  string lbl_highl = _("&Highlight in taskbar");
+  //__ Options - Terminal: bell
+  string lbl_popup = _("&Popup");
+  int len = strwidth(lbl_flash) + strwidth(lbl_highl) + strwidth(lbl_popup);
+# define cbw 14
+  int l00_flash = (100 - 3 * cbw) * strwidth(lbl_flash) / len + cbw;
+  int l00_highl = (100 - 3 * cbw) * strwidth(lbl_highl) / len + cbw;
+  int l00_popup = (100 - 3 * cbw) * strwidth(lbl_popup) / len + cbw;
+  ctrl_columns(s, 3, l00_flash, l00_highl, l00_popup);
   ctrl_checkbox(
     //__ Options - Terminal: bell
     s, _("&Flash"), dlg_stdcheckbox_handler, &new_cfg.bell_flash
