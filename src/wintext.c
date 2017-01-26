@@ -200,17 +200,23 @@ create_font(int weight, bool underline)
 static int
 row_padding(int i, int e)
 {
+  // may look nicer; used to break box characters
+  static bool allow_add_font_padding = true;
+
   if (i == 0 && e == 0)
-    return 0;  // 2 sometimes looks nicer but may break box characters
+    if (allow_add_font_padding)
+      return 2;
+    else
+      return 0;
   else {
     int exc = 0;
     if (i > 3)
       exc = i - 3;
     int adj = e - exc;
-    if (adj <= 0)
+    if (allow_add_font_padding || adj <= 0)
       return adj;
     else
-      return 0;  // return adj may look nicer but break box characters
+      return 0;
   }
 }
 
