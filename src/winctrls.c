@@ -19,16 +19,6 @@
  * winctrls.c: routines to self-manage the controls in a dialog box.
  */
 
-/*
- * Possible TODO in new cross-platform config box stuff:
- *
- *  - When lining up two controls alongside each other, I wonder if
- *    we could conveniently arrange to centre them vertically?
- *    Particularly ugly in the current setup is the `Add new
- *    forwarded port:' static next to the rather taller `Remove'
- *    button.
- */
-
 #define GAPBETWEEN 3
 #define GAPWITHIN 1
 #define GAPXBOX 7
@@ -931,24 +921,97 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam)
   printf("hook %d %s (%d %d mou %d)\n", nCode, sCode, (unsigned)wParam, (unsigned)lParam, from_mouse);
 #endif
 
-  if (nCode == HCBT_CREATEWND) {
-    // we could adjust window size if (nCode == HCBT_CREATEWND)
-    // but then the localization transformations below would not work anymore, 
-    // because SetWindowPos would cause HCBT_ACTIVATE to be invoked 
+  static int adjust_sample = 0;  /* pre-adjust (here) vs post-adjust (below)
+                                    0b01: post-adjust "Sample" frame
+                                    0b02: post-adjust sample text
+                                 */
+  static bool adjust_sample_plus = false;
+  static int fc_item_grp = 0;
+  static int fc_item_idx = 0;
+  static int fc_item_left = 12;
+  static int fc_item_right = 400;
+  static int fc_item_gap = 10;
+  static int fc_button_width = 60;
+  static int fc_sample_gap = 16;
+  static int fc_sample_bottom = 240;
+
+  if (nCode == HCBT_CREATEWND && !new_cfg.old_fontmenu) {
+    // calculations to adjust size of the font sample dialog item
+    static int fc_width = 425;
+    static int fc_item1_right = 160;
+    static int fc_item2_left = 220;
+    static int fc_sample_left = 220;
+
+    // we could also adjust the font chooser dialog window size here
+    // but then the localization transformations below would not work anymore,
+    // because SetWindowPos would cause HCBT_ACTIVATE to be invoked
     // when the dialog is not yet populated with the other dialog items
+
     CREATESTRUCTW * cs = ((CBT_CREATEWNDW *)lParam)->lpcs;
 #ifdef debug_dialog_hook
     printf("  CBT_CREATEWND x %3d y %3d w %3d h %3d (%08X %07X) <%ls>\n", cs->x, cs->y, cs->cx, cs->cy, cs->style, cs->dwExStyle, cs->lpszName);
 #endif
-    if (!(cs->style & WS_VISIBLE) && (cs->style & WS_CHILD) /*&& cs->cy == 37*/) {
-      // font sample text (default "AaBbYyZz")
-      cs->x = 11 + 12;
-      cs->cx = 404 - 12;
+    // check for style property combinations to identify sets of dialog items;
+    // count within group to identify actual font chooser dialog item;
+    // note: we cannot identify by geometry which may differ between systems
+    // 0x80000000L WS_POPUP
+    // 0x40000000L WS_CHILD
+    // 0x10000000L WS_VISIBLE
+    // 0x00020000L WS_GROUP
+    // 0x00010000L WS_TABSTOP
+    if (!(cs->style & WS_CHILD)) {
+      // font chooser popup dialog
+      fc_width = cs->cx;
+      fc_item_left = 12;
+      fc_item_right = fc_width - 2 * fc_item_left;
+      fc_item_grp = 0;
     }
-    else if (cs->x == 165 && cs->y == 158) {
-      // font sample label ("Sample")
-      cs->x = 11;
-      cs->cx = 404;
+    else if ((cs->style & WS_CHILD) && !(cs->style & WS_VISIBLE)) {
+      // font sample text (default "AaBbYyZz")
+      fc_sample_gap = cs->x - fc_sample_left;
+      if (!(adjust_sample & 2)) {
+        cs->x = fc_item_left + fc_sample_gap;
+        cs->cx = fc_item_right - fc_item_left - 2 * fc_sample_gap;
+        if (adjust_sample_plus)
+          cs->cx += fc_item_gap + fc_button_width;  // not yet known
+      }
+    }
+    else if ((cs->style & WS_CHILD) && (cs->style & WS_GROUP) && (cs->style & WS_TABSTOP)) {
+      // buttons (OK, Cancel, Apply)
+      fc_button_width = cs->cx;
+      fc_item_right = cs->x + cs->cx;  // only useful for post-adjustment
+    }
+    else if ((cs->style & WS_CHILD) && (cs->style & WS_GROUP)) {
+      fc_item_grp ++;
+      fc_item_idx = 0;
+      if (fc_item_grp == 1) { // "Font:"
+        fc_item_left = cs->x;
+      } else if (fc_item_grp == 2) { // "Font style:"
+        fc_item2_left = cs->x;  // to identify "Sample" frame
+        fc_item_gap = cs->x - fc_item1_right;
+      } else if (fc_item_grp == 3) { // "Size:"
+        fc_item_right = cs->x + cs->cx;
+      } else if (fc_item_grp == 6 || (fc_item_grp < 6 && cs->x == fc_item2_left)) {
+        // "Sample" frame
+        fc_sample_left = cs->x;
+        fc_sample_bottom = cs->y + cs->cy;
+        if (!(adjust_sample & 1)) {
+          cs->x = fc_item_left;
+          cs->cx = fc_item_right - fc_item_left;
+          if (adjust_sample_plus)
+            cs->cx += fc_item_gap + fc_button_width;  // not yet known
+        }
+      }
+    }
+    else if ((cs->style & WS_CHILD) && !(cs->style & WS_GROUP)) {
+      fc_item_idx ++;
+      if (fc_item_grp == 1 && fc_item_idx == 1) { // font list
+        fc_item_left = cs->x;
+        fc_item1_right = cs->x + cs->cx;
+      }
+      else if (fc_item_grp == 3 && fc_item_idx == 1) { // size list
+        fc_item_right = cs->x + cs->cx;
+      }
     }
   }
   else if (nCode == HCBT_ACTIVATE) {
@@ -980,15 +1043,15 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam)
     // sample text could be picked from http://clagnut.com/blog/2380/,
     // e.g. "Cwm fjord bank glyphs vext quiz"
 
-    HWND weg = 0;
+    HWND away = 0;
     if (!new_cfg.old_fontmenu) {
-      // remove "Script:" junk:
-      weg = GetDlgItem((HWND)wParam, 1094);
-      if (weg)
-        DestroyWindow(weg);
-      weg = GetDlgItem((HWND)wParam, 1140);
-      if (weg)
-        DestroyWindow(weg);
+      // Font chooser: remove "Script:" junk:
+      away = GetDlgItem((HWND)wParam, 1094);
+      if (away)
+        DestroyWindow(away);
+      away = GetDlgItem((HWND)wParam, 1140);
+      if (away)
+        DestroyWindow(away);
     }
     else {
       //__ Font chooser: this field is only shown with OldFontMenu=true
@@ -1032,6 +1095,10 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam)
       //custom_colors = GetDlgItem((HWND)wParam, 65535);
       //__ Colour chooser:
       setlabel(65535, _W("&Custom colours:"));
+      // drop disabled "Define Custom Colours >>"
+      away = GetDlgItem((HWND)wParam, 719);
+      if (away)
+        DestroyWindow(away);
     }
     //__ Colour chooser:
     setlabel(719, _W("De&fine Custom Colours >>"));
@@ -1074,51 +1141,59 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam)
     }
 #endif
 
-#define dont_post_adjust_text_sample
-
-#ifdef post_adjust_text_sample
-#warning better pre-adjust as now done above:  if (nCode == HCBT_CREATEWND) ...
+#ifdef post_adjust_sample
     // resize frame around sample, try to resize text sample (failed)
-    HWND sample = GetDlgItem((HWND)wParam, 1073);
-    if (!new_cfg.old_fontmenu && weg && sample) {
-#define delta 154
-      // adjust label "Sample" and frame
-      RECT wr;
-      GetWindowRect(sample, &wr);
-      RECT cr;
-      GetClientRect(sample, &cr);
+    if (adjust_sample && !new_cfg.old_fontmenu) {
+      HWND sample = GetDlgItem((HWND)wParam, 1073);  // "Sample" frame
+      if ((adjust_sample & 1) && sample) {
+        // adjust frame and label "Sample"
+        RECT wr;
+        GetWindowRect(sample, &wr);
+        POINT wp;
+        wp.x = wr.left;
+        wp.y = wr.top;
+        ScreenToClient((HWND)wParam, &wp);
 #ifdef debug_dialog_hook
-      printf(" Sample: %4d %4d %4d %4d / %d %d %3d %3d\n", wr.left, wr.top, wr.right, wr.bottom, cr.left, cr.top, cr.right, cr.bottom);
+        printf(" Sample: %4d/%3d %4d/%3d %4d %4d\n", wr.left, wp.x, wr.top, wp.y, wr.right, wr.bottom);
 #endif
-      SetWindowPos(sample, null, 168 - delta, 158, 171 + delta, 70,
-                   SWP_NOACTIVATE | SWP_NOZORDER);
+        SetWindowPos(sample, null, fc_item_left, wp.y,
+                     fc_item_right - fc_item_left, wr.bottom - wr.top,
+                     SWP_NOACTIVATE | SWP_NOZORDER);
+      }
 
-      // try to adjust sample text;
-      // we can move/resize the labelled frame,
-      // so why can't we adjust the sample text?
-      sample = GetDlgItem((HWND)wParam, 1092);
-
-      GetWindowRect(sample, &wr);
-      GetClientRect(sample, &cr);
+      sample = GetDlgItem((HWND)wParam, 1092);  // sample text
+      if ((adjust_sample & 2) && sample) {
+        // try to adjust sample text;
+        // we can move/resize the labelled frame,
+        // so why can't we adjust the sample text?
+        RECT wr;
+        GetWindowRect(sample, &wr);
+        POINT wp;
+        wp.x = wr.left;
+        wp.y = wr.top;
+        ScreenToClient((HWND)wParam, &wp);
 #ifdef debug_dialog_hook
-      printf(" sample: %4d %4d %4d %4d / %d %d %3d %3d\n", wr.left, wr.top, wr.right, wr.bottom, cr.left, cr.top, cr.right, cr.bottom);
+        printf(" sample: %4d/%3d %4d/%3d %4d %4d\n", wr.left, wp.x, wr.top, wp.y, wr.right, wr.bottom);
 #endif
-      SetWindowPos(sample, null, 12, 185, 171 + delta, 37,
-                   SWP_NOACTIVATE | SWP_NOZORDER);
+        SetWindowPos(sample, null, fc_item_left, wr.top,
+                     fc_item_right - fc_item_left - 2 * fc_sample_gap, wr.bottom - wr.top,
+                     SWP_NOACTIVATE | SWP_NOZORDER);
+      }
     }
 #endif
 
     // crop dialog size after removing useless stuff
-    if (!new_cfg.old_fontmenu && weg && GetDlgItem((HWND)wParam, 1092)) {
+    if (!new_cfg.old_fontmenu && away && GetDlgItem((HWND)wParam, 1092)) {
       RECT wr;
       GetWindowRect((HWND)wParam, &wr);
-#ifdef debug_dialog_hook
       RECT cr;
       GetClientRect((HWND)wParam, &cr);
+      int vborder = (wr.bottom - wr.top) - (cr.bottom - cr.top);
+#ifdef debug_dialog_hook
       printf("Chooser: %4d %4d %4d %4d / %d %d %3d %3d\n", (int)wr.left, (int)wr.top, (int)wr.right, (int)wr.bottom, (int)cr.left, (int)cr.top, (int)cr.right, (int)cr.bottom);
 #endif
       SetWindowPos((HWND)wParam, null, 0, 0,
-                   wr.right - wr.left, wr.bottom - wr.top - 74,
+                   wr.right - wr.left, fc_sample_bottom + fc_sample_gap + vborder,
                    SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
     }
 
