@@ -15,6 +15,7 @@ Please report bugs or suggest enhancements via the [issue tracker](https://githu
 Bugs that were reported to the previous repository at Google code before June, 2015, have been migrated here.
 
   * Mind! Before reporting an issue about character interaction with an application, please check the issue also with at least one other terminal (xterm, urxvt), and maybe the Cygwin Console. 
+    It may also be useful to get a proper understanding of the rôle of a terminal as explained e.g. in [difference between a 'terminal', a 'shell', a 'tty' and a 'console'](http://unix.stackexchange.com/questions/4126/what-is-the-exact-difference-between-a-terminal-a-shell-a-tty-and-a-con).
 
 #### Contribution ####
 

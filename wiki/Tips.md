@@ -427,6 +427,11 @@ Fonts not listed in the menu can be configured with the Font setting.
 
 The old font selection and menu format can be chosen with setting OldFontMenu.
 
+If you are missing certain characters, e.g. as used for the popular “Powerline” plugin,
+the reason may be that specifically designed characters are being addressed 
+that are provided in the Unicode Private Use range of dedicated fonts;
+a collection of such fonts can be found at [Nerd Fonts](http://nerdfonts.com/).
+
 
 ## Ambiguous width setting ##
 

@@ -1,17 +1,25 @@
-Localization:
+### 2.7.4 (29 Jan 2017) ###
+
+Localization details:
   * Fixed localized Bell field contents.
   * Adapting Bell list contents from system localization.
   * Fixed unlocalized Colour chooser label "Basic colours:" and Font chooser initial font sample.
+  * Fixed localized Colour chooser label "Basic colours:".
+  * Fixed Colour chooser label "Custom colours:" (disappeared on refocussing).
   * Added localization of "Error" popup title.
+  * Keeping button labels in reactivated message box.
 
 Configuration and Terminal settings:
-  * BellTaskbar setting is switchable by an escape sequence (xterm).
-  * New BellPopup setting (switchable by an escape sequence, xterm).
+  * BellTaskbar setting is switchable by escape sequence CSI ?1042h (xterm).
+  * New BellPopup setting, switchable by escape sequence CSI ?1043h (xterm).
   * Revised Bell section in Options menu.
   * New option FontSample.
+  * Tweaking Font chooser dialog to widen font sample area.
 
 Other:
   * Extend WSL link conversion (for link-click and link pasting) to non-/mnt paths (~#164, mintty/wsltty#19).
+  * Fixed window popup (on escape sequence CSI 5t).
+  * Allowed automatic font metrics adjustment to increase row padding.
 
 ### 2.7.3 (23 Dec 2016) ###
 

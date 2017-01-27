@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Sun Dec  4 22:32:51 2016 -->
+<!-- CreationDate: Fri Jan 27 14:33:19 2017 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -343,10 +343,15 @@ window to the Windows taskbar.</p>
 
 
 <p>Adjust to WSL (the Windows Subsystem for Linux, or
-Bash/Ubuntu on Windows); when dragging a Windows file or
-folder into mintty, it will be pasted using the Linux path
-name.</p> </td></tr>
+Bash/Ubuntu on Windows):</p></td></tr>
 </table>
+
+<p style="margin-left:22%;">&ndash; When dragging a Windows
+file or folder into mintty, it will be pasted using the
+Linux path name. <br>
+&ndash; When Ctrl+clicking a file name, it will be
+interpreted in the Linux namespace and converted before
+opening in Windows.</p>
 
 <p style="margin-left:11%;"><b>-H</b>, <b>--help</b></p>
 
@@ -768,15 +773,17 @@ from different instances, or the config file is edited
 manually, options can obviously be overwritten; if older
 mintty versions are run (e.g. from cygwin and msys sharing
 the same home directory), options may even get dropped from
-the configuration file.</p>
+the configuration file; mintty versions since 261 preserve
+unknown options and comment lines.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Additional
 resource files are used for colour schemes (option
-ThemeFile, subdirectory <i>themes</i>) and wave files
-(option BellFile, subdirectory <i>sounds</i>) within the
-mintty resource directories <i>~/.mintty</i>,
-<i>~/.config/mintty</i>, <i>$APPDATA/mintty</i>,
-<i>/usr/share/mintty</i>.</p>
+ThemeFile, subdirectory <i>themes</i>), wave files (option
+BellFile, subdirectory <i>sounds</i>), and localization
+translation files (option Language, subdirectory
+<i>lang</i>) within the mintty resource directories
+<i>~/.mintty</i>, <i>~/.config/mintty</i>,
+<i>$APPDATA/mintty</i>, <i>/usr/share/mintty</i>.</p>
 
 <p style="margin-left:11%; margin-top: 1em">The following
 sections explain the settings on each pane of the options
@@ -820,18 +827,9 @@ also be used as a drag-and-drop target for colour schemes
 downloaded from the Color Scheme Configurator, or for theme
 files from the web (note that the program <b>curl</b> needs
 to be installed for the latter option). See the Tips wiki
-page <i>https://github.com/mintty/mintty/wiki/Tips</i> about
-this mechanism.</p>
-
-<p style="margin-left:11%;"><b>Text lines</b>
-(UnderlineManual=false)</p>
-
-<p style="margin-left:22%;">By setting this true, text
-attributes underline, doubly underline, strikeout and
-overline are enforced to be drawn manually. The default is
-to use Windows font variants for strikeout and for
-underline, unless mintty detects that the underlined font
-would not display properly.</p>
+page
+<i>https://github.com/mintty/mintty/wiki/Tips#using-colour-schemes-themes</i>
+about this mechanism.</p>
 
 <p style="margin-left:11%;"><b>Transparency</b>
 (Transparency=off)</p>
@@ -919,11 +917,24 @@ a font family has no bold weight but boldness was requested,
 mintty does not adhere to this scheme but enforces bold font
 selection; however, in this case the bold attribute may not
 be effective. <br>
+&ndash; <b>Font sample text</b> (FontSample=): This setting
+overrides the text for the &quot;Sample&quot; box in the
+Font chooser dialog. <br>
 &ndash; <b>Show &quot;hidden&quot; fonts</b>
 (ShowHiddenFonts=no): This hidden setting enables display of
 monospace fonts in the font selection menu even if they are
 marked to Hide in the Windows Font settings (from the
 Control Panel &mdash; Fonts folder).</p>
+
+<p style="margin-left:11%;"><b>Text lines</b>
+(UnderlineManual=false)</p>
+
+<p style="margin-left:22%;">By setting this true, text
+attributes underline, doubly underline, strikeout and
+overline are enforced to be drawn manually. The default is
+to use Windows font variants for strikeout and for
+underline, unless mintty detects that the underlined font
+would not display properly.</p>
 
 <p style="margin-left:11%;"><b>Show bold as font</b>
 (BoldAsFont=no)</p>
@@ -1028,21 +1039,22 @@ change to take full effect.</p>
 <p style="margin-left:11%; margin-top: 1em"><b>Keys</b>
 <br>
 Settings controlling keyboard behaviour. <b><br>
-Backspace sends ^H</b> (BackspaceSendsBS=no)</p>
+Backarrow sends ^H</b> (BackspaceSendsBS=no)</p>
 
 <p style="margin-left:22%;">By default, mintty sends
 <b>^?</b> (ASCII DEL) as the keycode for the backspace key.
 If this option is enabled, <b>^H</b> is sent instead. This
 also changes the <b>Ctrl+Backspace</b> code from <b>^_</b>
-to <b>^?</b>. (Corresponds to the xterm BackarrowKey
-resource.)</p>
+to <b>^?</b>. (Corresponds to the xterm resource
+<b>backarrowKey</b>.)</p>
 
-<p style="margin-left:11%;">(DeleteSendsDEL=no)</p>
+<p style="margin-left:11%;"><b>Delete sends
+DEL</b>(DeleteSendsDEL=no)</p>
 
 <p style="margin-left:22%;">By default, mintty sends VT100
 Remove as the keycode for the keypad Del key. If this option
 is enabled, <b>^?</b> (ASCII DEL) is sent instead.
-(Corresponds to the xterm DeleteIsDEL resource.)</p>
+(Corresponds to the xterm resource <b>deleteIsDEL</b>.)</p>
 
 <p style="margin-left:11%;"><b>Ctrl+LeftAlt is AltGr</b>
 (CtrlAltIsAltGr=no)</p>
@@ -1166,17 +1178,7 @@ cursor can be placed by pressing the left mouse button. This
 works by sending the number of cursor keycodes needed to get
 to the destination.</p>
 
-<p style="margin-left:11%;">(MiddleClickAction=paste)</p>
-
-<p style="margin-left:22%;">Action to take when the middle
-mouse button is pressed. <br>
-&ndash; <b>Paste</b>: Paste the clipboard contents. <br>
-&ndash; <b>Extend</b>: Extend the selected region. <br>
-&ndash; <b>Enter</b>: Simulate <b>Enter</b>/<b>Return</b>
-key. <br>
-&ndash; <b>Void</b>: Do nothing.</p>
-
-<p style="margin-left:11%;"><b>Right click action</b>
+<p style="margin-left:11%;"><b>Right mouse button</b>
 (RightClickAction=menu)</p>
 
 <p style="margin-left:22%;">Action to take when the right
@@ -1192,6 +1194,17 @@ to <b>Paste</b>, the middle button extends the selected
 region instead of pasting the clipboard. If it is set to
 <b>Extend</b>, a left click with <b>Shift</b> pressed pastes
 the clipboard instead of extending the selection.</p>
+
+<p style="margin-left:11%;"><b>Middle mouse
+button</b>(MiddleClickAction=paste)</p>
+
+<p style="margin-left:22%;">Action to take when the middle
+mouse button is pressed. <br>
+&ndash; <b>Paste</b>: Paste the clipboard contents. <br>
+&ndash; <b>Extend</b>: Extend the selected region. <br>
+&ndash; <b>Enter</b>: Simulate <b>Enter</b>/<b>Return</b>
+key. <br>
+&ndash; <b>Void</b>: Do nothing.</p>
 
 <p style="margin-left:11%;"><b>Default click target</b>
 (ClicksTargetApp=yes)</p>
@@ -1239,6 +1252,12 @@ character cells.</p>
 <p style="margin-left:22%;">Default height of the window,
 in character cells.</p>
 
+<p style="margin-left:11%;"><b>Current size</b></p>
+
+<p style="margin-left:22%;">Pressing this button sets the
+default width and height to the window&rsquo;s current
+size.</p>
+
 <p style="margin-left:11%;">(RowSpacing=0)</p>
 
 <p style="margin-left:22%;">Additional row padding.</p>
@@ -1246,8 +1265,8 @@ in character cells.</p>
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 Mintty adjusts row spacing according to the font metrics, to
 compensate for tight or tall spacing of some fonts (e.g.
-Consolas, FreeMono, Monaco). The RowSpacing value is added
-to that.</p>
+Courier, Consolas, FreeMono, Monaco). The RowSpacing value
+is added to that.</p>
 
 <p style="margin-left:11%;">(ColSpacing=0)</p>
 
@@ -1261,12 +1280,6 @@ text and window border. The effective value is limited by
 the character cell width (scaling with font zooming). A
 negative value indicates that always the character cell
 width shall be used, without fixed limit.</p>
-
-<p style="margin-left:11%;"><b>Current size</b></p>
-
-<p style="margin-left:22%;">Pressing this button sets the
-default width and height to the window&rsquo;s current
-size.</p>
 
 <p style="margin-left:11%;"><b>Scrollback lines</b>
 (ScrollbackLines=10000)</p>
@@ -1326,7 +1339,8 @@ setting (section Text) <br>
 language/region code</p>
 
 <p style="margin-left:22%; margin-top: 1em">See the Tips
-wiki page <i>https://github.com/mintty/mintty/wiki/Tips</i>
+wiki page
+<i>https://github.com/mintty/mintty/wiki/Tips#localization</i>
 about how to configure localization.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Note that
@@ -1421,10 +1435,16 @@ system sound except No Beep. <br>
 &ndash; <b>Play</b>: The button plays the selected sound for
 testing. The sound is also played when it is changed. <br>
 &ndash; <b>Flash</b> (BellFlash=no): Briefly invert the
-foreground and background colours. <br>
+foreground and background colours. (Corresponds to the xterm
+resource <b>visualBell</b>.) <br>
 &ndash; <b>Highlight in taskbar</b> (BellTaskbar=yes):
 Change the colour of mintty&rsquo;s taskbar entry if the
-mintty window is not active.</p>
+mintty window is not active. (Corresponds to the xterm
+resource <b>bellIsUrgent</b>, switchable by an escape
+sequence.) <br>
+&ndash; <b>Popup on bell</b> (BellPopup=no): Popup mintty to
+desktop foreground. (Corresponds to the xterm resource
+<b>popOnBell</b>, switchable by an escape sequence.)</p>
 
 <p style="margin-left:22%; margin-top: 1em">A simple
 <b>frequency beep</b> can be configured in the configuration
@@ -1751,7 +1771,8 @@ After the colour scheme is stored to a colour scheme file,
 this setting is not used anymore.</p>
 
 <p style="margin-left:22%; margin-top: 1em">See the Tips
-wiki page <i>https://github.com/mintty/mintty/wiki/Tips</i>
+wiki page
+<i>https://github.com/mintty/mintty/wiki/Tips#using-colour-schemes-themes</i>
 about this mechanism.</p>
 
 <p style="margin-left:11%;"><b>Bold substitution colour</b>

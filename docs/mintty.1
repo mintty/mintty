@@ -225,9 +225,13 @@ Prevent pinning of the mintty window to the Windows taskbar.
 
 .TP
 \fB--wsl\fP
-Adjust to WSL (the Windows Subsystem for Linux, or Bash/Ubuntu on Windows);
-when dragging a Windows file or folder into mintty, it will be pasted 
+Adjust to WSL (the Windows Subsystem for Linux, or Bash/Ubuntu on Windows):
+.br
+\(en When dragging a Windows file or folder into mintty, it will be pasted 
 using the Linux path name.
+.br
+\(en When Ctrl+clicking a file name, it will be interpreted in the Linux 
+namespace and converted before opening in Windows.
 
 .TP
 \fB-H\fP, \fB--help\fP
@@ -613,10 +617,12 @@ Be careful when running multiple instances of mintty. If options are saved
 from different instances, or the config file is edited manually, 
 options can obviously be overwritten; if older mintty versions are run 
 (e.g. from cygwin and msys sharing the same home directory), options 
-may even get dropped from the configuration file.
+may even get dropped from the configuration file; mintty versions since 
+261 preserve unknown options and comment lines.
 
 Additional resource files are used for colour schemes (option ThemeFile, 
-subdirectory \fIthemes\fP) and wave files (option BellFile, subdirectory \fIsounds\fP) 
+subdirectory \fIthemes\fP), wave files (option BellFile, subdirectory \fIsounds\fP), 
+and localization translation files (option Language, subdirectory \fIlang\fP) 
 within the mintty resource directories \fI~/.mintty\fP, \fI~/.config/mintty\fP, 
 \fI$APPDATA/mintty\fP, \fI/usr/share/mintty\fP.
 
@@ -658,15 +664,8 @@ The option can also be set to a filename (like D:/.../solarized-light.minttyrc).
 The field can also be used as a drag-and-drop target for colour schemes 
 downloaded from the Color Scheme Configurator, or for theme files from the web 
 (note that the program \fBcurl\fP needs to be installed for the latter option).
-See the Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips\fP 
+See the Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips#using-colour-schemes-themes\fP 
 about this mechanism.
-
-.TP
-\fBText lines\fP (UnderlineManual=false)
-By setting this true, text attributes underline, doubly underline, strikeout and overline 
-are enforced to be drawn manually. 
-The default is to use Windows font variants for strikeout and for underline, 
-unless mintty detects that the underlined font would not display properly.
 
 .TP
 \fBTransparency\fP (Transparency=off)
@@ -755,6 +754,13 @@ menu even if they are marked to Hide in the Windows Font settings (from the
 Control Panel \(em Fonts folder).
 
 .TP
+\fBText lines\fP (UnderlineManual=false)
+By setting this true, text attributes underline, doubly underline, strikeout and overline 
+are enforced to be drawn manually. 
+The default is to use Windows font variants for strikeout and for underline, 
+unless mintty detects that the underlined font would not display properly.
+
+.TP
 \fBShow bold as font\fP (BoldAsFont=no)
 When this option is enabled, the ANSI bold (or 'intense') text attribute is
 shown as a bold-style font.  Where a bold variant of the selected font that
@@ -839,14 +845,14 @@ effect.
 Settings controlling keyboard behaviour.
 
 .TP
-\fBBackspace sends ^H\fP (BackspaceSendsBS=no)
+\fBBackarrow sends ^H\fP (BackspaceSendsBS=no)
 By default, mintty sends \fB^?\fP (ASCII DEL) as the keycode for the backspace key.
 If this option is enabled, \fB^H\fP is sent instead.
 This also changes the \fBCtrl+Backspace\fP code from \fB^_\fP to \fB^?\fP.
 (Corresponds to the xterm resource \fBbackarrowKey\fP.)
 
 .TP
-\fB\fP(DeleteSendsDEL=no)
+\fBDelete sends DEL\fP(DeleteSendsDEL=no)
 By default, mintty sends VT100 Remove as the keycode for the keypad Del key.
 If this option is enabled, \fB^?\fP (ASCII DEL) is sent instead.
 (Corresponds to the xterm resource \fBdeleteIsDEL\fP.)
@@ -947,19 +953,7 @@ This works by sending the number of cursor keycodes needed to get to the
 destination.
 
 .TP
-\fB\fP(MiddleClickAction=paste)
-Action to take when the middle mouse button is pressed.
-.br
-\(en \fBPaste\fP: Paste the clipboard contents.
-.br
-\(en \fBExtend\fP: Extend the selected region.
-.br
-\(en \fBEnter\fP: Simulate \fBEnter\fP/\fBReturn\fP key.
-.br
-\(en \fBVoid\fP: Do nothing.
-
-.TP
-\fBRight click action\fP (RightClickAction=menu)
+\fBRight mouse button\fP (RightClickAction=menu)
 Action to take when the right mouse button is pressed.
 .br
 \(en \fBPaste\fP: Paste the clipboard contents.
@@ -974,6 +968,18 @@ If this is set to \fBPaste\fP, the middle button extends the selected region
 instead of pasting the clipboard. If it is set to \fBExtend\fP, a left click
 with \fBShift\fP pressed pastes the clipboard instead of extending the
 selection.
+
+.TP
+\fBMiddle mouse button\fP(MiddleClickAction=paste)
+Action to take when the middle mouse button is pressed.
+.br
+\(en \fBPaste\fP: Paste the clipboard contents.
+.br
+\(en \fBExtend\fP: Extend the selected region.
+.br
+\(en \fBEnter\fP: Simulate \fBEnter\fP/\fBReturn\fP key.
+.br
+\(en \fBVoid\fP: Do nothing.
 
 .TP
 \fBDefault click target\fP (ClicksTargetApp=yes)
@@ -1020,11 +1026,16 @@ Default width of the window, in character cells.
 Default height of the window, in character cells.
 
 .TP
+\fBCurrent size\fP
+Pressing this button sets the default width and height to the window's
+current size.
+
+.TP
 \fB\fP(RowSpacing=0)
 Additional row padding.
 
 \fINote:\fP Mintty adjusts row spacing according to the font metrics, to 
-compensate for tight or tall spacing of some fonts (e.g. Consolas, FreeMono, Monaco).
+compensate for tight or tall spacing of some fonts (e.g. Courier, Consolas, FreeMono, Monaco).
 The RowSpacing value is added to that.
 
 .TP
@@ -1037,11 +1048,6 @@ Window padding; margin between text and window border. The effective value
 is limited by the character cell width (scaling with font zooming).
 A negative value indicates that always the character cell width shall be used,
 without fixed limit.
-
-.TP
-\fBCurrent size\fP
-Pressing this button sets the default width and height to the window's
-current size.
 
 .TP
 \fBScrollback lines\fP (ScrollbackLines=10000)
@@ -1098,7 +1104,7 @@ menus, message boxes, and terminal in-line error messages.
 .br
 \(en \fI(language[_region])\fP use the given language or language/region code
 
-See the Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips\fP 
+See the Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips#localization\fP 
 about how to configure localization.
 
 Note that Windows may already have localized the default entries of the 
@@ -1468,7 +1474,7 @@ a theme file on the web via drag-and-drop to the Options menu.
 After the colour scheme is stored to a colour scheme file, this setting 
 is not used anymore.
 
-See the Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips\fP 
+See the Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips#using-colour-schemes-themes\fP 
 about this mechanism.
 
 .TP

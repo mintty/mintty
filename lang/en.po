@@ -66,7 +66,7 @@ msgstr "Sample"
 #. __ font chooser text sample ("AaBbYyZz" by default)
 #: winctrls.c:916
 msgid "Ferqœm’4€"
-msgstr "Ferqœm’4€"
+msgstr "Cwm fjord bank glyphs vext quiz œ’4€"
 
 #. __ this field is only shown with OldFontMenu=true
 #: winctrls.c:933
