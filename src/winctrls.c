@@ -928,19 +928,19 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam)
   static bool adjust_sample_plus = false;
   static int fc_item_grp = 0;
   static int fc_item_idx = 0;
-  static int fc_item_left = 12;
-  static int fc_item_right = 400;
-  static int fc_item_gap = 10;
-  static int fc_button_width = 60;
-  static int fc_sample_gap = 16;
-  static int fc_sample_bottom = 240;
+  static int fc_item_left = 11;
+  static int fc_item_right = 415;
+  static int fc_item_gap = 7;
+  static int fc_button_width = 68;
+  static int fc_sample_gap = 12;
+  static int fc_sample_bottom = 228;
 
   if (nCode == HCBT_CREATEWND && !new_cfg.old_fontmenu) {
     // calculations to adjust size of the font sample dialog item
-    static int fc_width = 425;
-    static int fc_item1_right = 160;
-    static int fc_item2_left = 220;
-    static int fc_sample_left = 220;
+    static int fc_width = 437;
+    static int fc_item1_right = 158;
+    static int fc_item2_left = 165;
+    static int fc_sample_left = 165;
 
     // we could also adjust the font chooser dialog window size here
     // but then the localization transformations below would not work anymore,
