@@ -961,17 +961,19 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam)
     // 0x00010000L WS_TABSTOP
     if (!(cs->style & WS_CHILD)) {
       // font chooser popup dialog
-      fc_width = cs->cx;
-      fc_item_left = 12;
-      fc_item_right = fc_width - 2 * fc_item_left;
       fc_item_grp = 0;
+      WINDOWINFO winfo;
+      winfo.cbSize = sizeof(WINDOWINFO);
+      GetWindowInfo((HWND)wParam, &winfo);
+      fc_width = cs->cx - 2 * winfo.cxWindowBorders;
     }
     else if ((cs->style & WS_CHILD) && !(cs->style & WS_VISIBLE)) {
       // font sample text (default "AaBbYyZz")
       fc_sample_gap = cs->x - fc_sample_left;
       if (!(adjust_sample & 2)) {
         cs->x = fc_item_left + fc_sample_gap;
-        cs->cx = fc_item_right - fc_item_left - 2 * fc_sample_gap;
+        //cs->cx = fc_item_right - fc_item_left - 2 * fc_sample_gap; // | Size
+        cs->cx = fc_width - 2 * (fc_item_left + fc_sample_gap);
         if (adjust_sample_plus)
           cs->cx += fc_item_gap + fc_button_width;  // not yet known
       }
@@ -980,6 +982,7 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam)
       // buttons (OK, Cancel, Apply)
       fc_button_width = cs->cx;
       fc_item_right = cs->x + cs->cx;  // only useful for post-adjustment
+      (void)fc_item_right;
     }
     else if ((cs->style & WS_CHILD) && (cs->style & WS_GROUP)) {
       fc_item_grp ++;
@@ -997,7 +1000,8 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam)
         fc_sample_bottom = cs->y + cs->cy;
         if (!(adjust_sample & 1)) {
           cs->x = fc_item_left;
-          cs->cx = fc_item_right - fc_item_left;
+          //cs->cx = fc_item_right - fc_item_left;  // align with "Size:"
+          cs->cx = fc_width - 2 * fc_item_left;
           if (adjust_sample_plus)
             cs->cx += fc_item_gap + fc_button_width;  // not yet known
         }
