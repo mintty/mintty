@@ -489,6 +489,12 @@ child_resize(struct winsize *winp)
     ioctl(pty_fd, TIOCSWINSZ, winp);
 }
 
+int
+foreground_pid()
+{
+  return (pty_fd >= 0) ? tcgetpgrp(pty_fd) : 0;
+}
+
 wstring
 child_conv_path(wstring wpath)
 {

@@ -435,11 +435,11 @@ If the first key is a zero, the code is interpreted as octal.
 If the first key is any other digit from 1 to 9, the code is interpreted as
 decimal.
 
-For UTF-8 and other Unicode encodings such as GB18030, the entered code is
+For UTF-8 and other Unicode encodings such as GB18030, the entered code is 
 interpreted as a Unicode codepoint and encoded accordingly before it is sent.
-For other encodings, the entered code is sent as is. If it doesn't fit into one
-byte, it is sent as multiple bytes, with the the most significant non-zero byte
-first.
+For other encodings, the entered code is sent as is. 
+If it doesn't fit into one byte, it is sent as multiple bytes, with 
+the the most significant non-zero byte first.
 
 .SS Shortcuts
 
@@ -611,7 +611,7 @@ command-line.)
 .br
 Unicode-enabled settings: BellFile, ThemeFile, Title, ExitTitle, Icon, Log, 
 Language, Font, Printer, Answerback, SixelClipChars, 
-Class, AppID, AppName, AppLaunchCmd.
+Class, AppID, AppName, AppLaunchCmd, DropCommands.
 
 Be careful when running multiple instances of mintty. If options are saved 
 from different instances, or the config file is edited manually, 
@@ -1551,6 +1551,34 @@ This option can be set to false to suppress DPI adjustments.
 Characters to copy to clipboard as a substitute for Sixel image graphics,
 to indicate their positions. With an empty value, U+FFFC will be used.
 Double-width characters should not be used here.
+
+.TP
+\fBDrag-and-drop application-targetted commands\fP (DropCommands=)
+With this setting, a set of string patterns can be configured for 
+paste insertion, in dependence of the program running in the terminal 
+foreground. The value is a series of semicolon-separated, colon-combined 
+pairs of program name and drop pattern; the pattern is pasted with the 
+actual clipboard contents replaced for a "%s".
+
+\fINote:\fP This is an experimental feature, with an experimental configuration format.
+
+\fINote:\fP This feature potentially makes mintty vulnerable against command injection.
+Be careful what commands you configure! It is advisable to embed the "%s" 
+parameter placeholder in single quotation marks explicitly, 
+both to avoid trouble with special characters, and to reduce the risk of 
+injecting commands via tricky filenames.
+
+Example:
+.br
+\(en \fBDropCommands=bash:cd '%s'^M;mined:^[fo^M%s^M;vim:^[:e %s^M\fP
+
+\fINote:\fP An "Enter" key has to be specified with the CR character code, 
+control characters need to be embedded verbatim 
+(indicated above as "^M" or "^["); there is no escape notation.
+
+\fINote:\fP If different actions for directories/folders or even different 
+command invocations depending on file name pattern are desired, this should 
+be handled by a suitable cooperating shell function.
 
 .SH LIMITATIONS
 

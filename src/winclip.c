@@ -634,6 +634,62 @@ paste_hdrop(HDROP drop)
     free(fn);
   }
   buf_pos--;  // Drop trailing space
+
+  // try to determine foreground program
+  int fg_pid = foreground_pid();
+  if (fg_pid > 0 && *cfg.drop_commands) {
+    char * drops = cs__wcstombs(cfg.drop_commands);
+    char exename[32];
+    sprintf(exename, "/proc/%u/exename", fg_pid);
+    FILE * enf = fopen(exename, "r");
+    if (enf) {
+      char exepath[MAX_PATH + 1];
+      fgets(exepath, sizeof exepath, enf);
+      fclose(enf);
+      // get basename of program path
+      char * exebase = strrchr(exepath, '/');
+      if (exebase)
+        exebase++;
+      else
+        exebase = exepath;
+
+      // match program base name
+      char * matchconf(char * conf, char * item) {
+        char * m = strstr(conf, item);
+        if (m && (m == conf || *(m - 1) == ';')) {
+          m += strlen(item);
+          if (*m == ':')
+            return m + 1;
+          else {
+            m = strchr(m, ':');
+            if (m)
+              return matchconf(m, item);
+            else
+              return null;
+          }
+        }
+        else
+          return null;
+      }
+
+      char * paste = matchconf(drops, exebase);
+      if (paste) {
+        char * sep = strchr(paste, ';');
+        if (sep)
+          *sep = 0;
+        buf[buf_pos] = 0;
+        char * pastebuf = newn(char, strlen(paste) + strlen(buf) + 1);
+        sprintf(pastebuf, paste, buf);
+        child_send(pastebuf, strlen(pastebuf));
+        free(pastebuf);
+        free(drops);
+        free(buf);
+        return;
+      }
+    }
+    free(drops);
+  }
+
   if (term.bracketed_paste)
     child_write("\e[200~", 6);
   child_send(buf, buf_pos);

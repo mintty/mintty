@@ -134,6 +134,7 @@ typedef struct {
   wstring app_id;
   wstring app_name;
   wstring app_launch_cmd;
+  wstring drop_commands;
   int col_spacing, row_spacing;
   int padding;
   bool handle_dpichanged;
