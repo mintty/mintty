@@ -342,7 +342,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     term.mouse_state = 0;
     if (b == MBT_RIGHT && (rca == RC_MENU || shift_or_ctrl)) {
       if (!alt)
-        win_popup_menu();
+        win_popup_menu(mods);
     }
     else if (b == MBT_MIDDLE && (mods & ~MDK_SHIFT) == MDK_CTRL) {
       if (cfg.zoom_mouse)

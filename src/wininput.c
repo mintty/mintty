@@ -186,6 +186,11 @@ win_update_menus(void)
   );
 
   //__ Context menu:
+  modify_menu(ctxmenu, IDM_COPASTE, sel_enabled, _W("Copy → Paste"),
+    clip ? W("Ctrl+Shift+Ins") : null
+  );
+
+  //__ Context menu:
   modify_menu(ctxmenu, IDM_SEARCH, 0, _W("S&earch"),
     alt_fn ? W("Alt+F3") : ct_sh ? W("Ctrl+Shift+H") : null
   );
@@ -227,7 +232,7 @@ win_update_menus(void)
 }
 
 static void
-win_init_ctxmenu(void)
+win_init_ctxmenu(bool extended)
 {
 #ifdef debug_modify_menu
   printf("win_init_ctxmenu\n");
@@ -238,6 +243,8 @@ win_init_ctxmenu(void)
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_COPY, 0);
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_PASTE, 0);
+  if (extended)
+    AppendMenuW(ctxmenu, MF_ENABLED, IDM_COPASTE, 0);
   //__ Context menu:
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_SELALL, _W("Select &All"));
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
@@ -258,7 +265,7 @@ win_init_menus(void)
 #ifdef debug_modify_menu
   printf("win_init_menus\n");
 #endif
-  win_init_ctxmenu();
+  //win_init_ctxmenu();  // rather do this every time when opened
 
   sysmenu = GetSystemMenu(wnd, false);
   //__ System menu:
@@ -270,15 +277,17 @@ win_init_menus(void)
 }
 
 static void
-open_popup_menu(POINT * p)
+open_popup_menu(POINT * p, mod_keys mods)
 {
   /* Create a new context menu structure every time the menu is opened.
-     This is a fruitless attempt to achieve its proper DPI scaling.
+     This was a fruitless attempt to achieve its proper DPI scaling.
+     It also supports opening different menus (Ctrl+ for extended menu).
+     if (mods & MDK_CTRL) open extended menu...
    */
   if (ctxmenu)
     DestroyMenu(ctxmenu);
 
-  win_init_ctxmenu();
+  win_init_ctxmenu(mods & MDK_CTRL);
   win_update_menus();
 
   TrackPopupMenu(
@@ -288,11 +297,11 @@ open_popup_menu(POINT * p)
 }
 
 void
-win_popup_menu(void)
+win_popup_menu(mod_keys mods)
 {
   POINT p;
   GetCursorPos(&p);
-  open_popup_menu(&p);
+  open_popup_menu(&p, mods);
 }
 
 
@@ -610,7 +619,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       POINT p;
       GetCaretPos(&p);
       ClientToScreen(wnd, &p);
-      open_popup_menu(&p);
+      open_popup_menu(&p, mods);
     }
     return true;
   }

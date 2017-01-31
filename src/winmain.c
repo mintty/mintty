@@ -336,7 +336,8 @@ win_restore_title(void)
 static HWND first_wnd, last_wnd;
 
 static BOOL CALLBACK
-wnd_enum_proc(HWND curr_wnd, LPARAM unused(lp)) {
+wnd_enum_proc(HWND curr_wnd, LPARAM unused(lp))
+{
   if (curr_wnd != wnd && !IsIconic(curr_wnd)) {
     WINDOWINFO curr_wnd_info;
     curr_wnd_info.cbSize = sizeof(WINDOWINFO);
@@ -1348,6 +1349,7 @@ static struct {
       switch (wp & ~0xF) {  /* low 4 bits reserved to Windows */
         when IDM_OPEN: term_open();
         when IDM_COPY: term_copy();
+        when IDM_COPASTE: term_copy(); win_paste();
         when IDM_PASTE: win_paste();
         when IDM_SELALL: term_select_all(); win_update();
         when IDM_RESET: winimgs_clear(); term_reset(); win_update();
@@ -1505,7 +1507,7 @@ static struct {
       win_update();
 
     when WM_INITMENU:
-      win_update_menus();
+      //win_update_menus();  // done before calling TrackPopupMenu
       return 0;
 
     when WM_MOVING:
