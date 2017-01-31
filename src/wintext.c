@@ -162,7 +162,8 @@ brighten(colour c, colour against)
 }
 
 static uint
-get_font_quality(void) {
+get_font_quality(void)
+{
   return
     (uchar[]){
       [FS_DEFAULT] = DEFAULT_QUALITY,
