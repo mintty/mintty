@@ -49,6 +49,7 @@ extern void win_set_geom(int y, int x, int height, int width);
 extern void win_maximise(int max);
 extern void win_set_zorder(bool top);
 extern void win_set_iconic(bool);
+extern void update_transparency(void);
 extern void win_update_scrollbar(void);
 extern bool win_is_iconic(void);
 extern void win_get_pos(int *xp, int *yp);

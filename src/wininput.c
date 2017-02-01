@@ -19,6 +19,7 @@ static bool alt_F2_pending = false;
 static bool alt_F2_shifted = false;
 static bool alt_F2_home = false;
 static int alt_F2_monix = 0, alt_F2_moniy = 0;
+static int transparency_pending = 0;
 
 
 /* Menu handling */
@@ -243,13 +244,18 @@ win_init_ctxmenu(bool extended)
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_COPY, 0);
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_PASTE, 0);
-  if (extended)
+  if (extended) {
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_COPASTE, 0);
+  }
   //__ Context menu:
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_SELALL, _W("Select &All"));
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_SEARCH, 0);
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_RESET, 0);
+  if (extended) {
+    //__ Context menu:
+    AppendMenuW(ctxmenu, MF_ENABLED, IDM_CLRSCRLBCK, _W("&Clear Scrollback"));
+  }
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_DEFSIZE_ZOOM, 0);
   AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN_ZOOM, 0);
@@ -461,6 +467,47 @@ win_mouse_wheel(WPARAM wp, LPARAM lp)
 }
 
 
+/* Support functions */
+
+static void
+toggle_scrollbar(void)
+{
+  cfg.scrollbar = !cfg.scrollbar;
+  term.show_scrollbar = cfg.scrollbar;
+  win_update_scrollbar();
+}
+
+static int previous_transparency;
+
+static void
+cycle_transparency(void)
+{
+  previous_transparency = cfg.transparency;
+  cfg.transparency = ((cfg.transparency + 16) / 16 * 16) % 128;
+  update_transparency();
+}
+
+static void
+set_transparency(int t)
+{
+  if (t >= 128)
+    t = 127;
+  else if (t < 0)
+    t = 0;
+  cfg.transparency = t;
+  update_transparency();
+}
+
+static void
+cycle_pointer_style()
+{
+  cfg.cursor_type = (cfg.cursor_type + 1) % 3;
+  term.cursor_invalid = true;
+  term_schedule_cblink();
+  win_update();
+}
+
+
 /* Keyboard handling */
 
 static void
@@ -629,6 +676,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   if ((key == VK_RETURN || key == VK_ESCAPE) && !mods && !child_is_alive())
     exit_mintty();
 
+  // Handling special shifted key functions
   if (alt_F2_pending) {
     if (!extended) {  // only accept numeric keypad
       switch (key) {
@@ -646,6 +694,26 @@ win_key_down(WPARAM wp, LPARAM lp)
       }
     }
     return true;
+  }
+  if (transparency_pending) {
+    transparency_pending = 2;
+    switch (key) {
+      when VK_HOME  : set_transparency(previous_transparency);
+      when VK_CLEAR : cfg.transparency = TR_GLASS;
+                      update_transparency();
+      when VK_DELETE: set_transparency(0);
+      when VK_INSERT: set_transparency(127);
+      when VK_END   : set_transparency(TR_HIGH);
+      when VK_UP    : set_transparency(cfg.transparency + 1);
+      when VK_PRIOR : set_transparency(cfg.transparency + 16);
+      when VK_LEFT  : set_transparency(cfg.transparency - 1);
+      when VK_RIGHT : set_transparency(cfg.transparency + 1);
+      when VK_DOWN  : set_transparency(cfg.transparency - 1);
+      when VK_NEXT  : set_transparency(cfg.transparency - 16);
+      otherwise: transparency_pending = 0;
+    }
+    if (transparency_pending)
+      return true;
   }
 
   if (!term.shortcut_override) {
@@ -714,6 +782,11 @@ win_key_down(WPARAM wp, LPARAM lp)
         when 'F': send_syscommand(IDM_FULLSCREEN);
         when 'S': send_syscommand(IDM_FLIPSCREEN);
         when 'H': send_syscommand(IDM_SEARCH);
+        when 'T': if (!transparency_pending)
+                    cycle_transparency();
+                  transparency_pending = 1;
+        when 'P': cycle_pointer_style();
+        when 'O': toggle_scrollbar();
       }
       return true;
     }
@@ -1384,6 +1457,8 @@ win_key_up(WPARAM wp, LPARAM unused(lp))
       send_syscommand2(IDM_NEW_MONI, ' ' + moni);
     }
   }
+  if (transparency_pending)
+    transparency_pending--;
 
   if (wp != VK_MENU)
     return false;

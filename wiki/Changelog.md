@@ -1,3 +1,11 @@
+Configuration
+  * Changing default FontRender=uniscribe (#605, #573).
+  * Extending font sample area to both sides, allowing longer font samples.
+  * New drag-and-drop paste configuration DropCommands (#440).
+  * Optional extended context menu (with Ctrl).
+  * Extended context menu functions Copy & Paste entry (#539), Clear Scrollback (#421).
+  * Ctrl+Shift hotkeys and functions to toggle/cycle transparency (t) (#625), cursor style (p), scrollbar (o).
+
 ### 2.7.4 (29 Jan 2017) ###
 
 Localization details:
@@ -17,7 +25,7 @@ Configuration and Terminal settings:
   * Tweaking Font chooser dialog to widen font sample area.
 
 Other:
-  * Extend WSL link conversion (for link-click and link pasting) to non-/mnt paths (~#164, mintty/wsltty#19).
+  * Extended WSL link conversion (for link-click and link pasting) to non-/mnt paths (~#164, mintty/wsltty#19).
   * Fixed window popup (on escape sequence CSI 5t).
   * Allowed automatic font metrics adjustment to increase row padding.
 

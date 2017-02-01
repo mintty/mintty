@@ -253,6 +253,8 @@ see the \fBCONFIGURATION\fP section on how it can be customised.
 The context menu can be opened by right-clicking the mouse (with Shift 
 in case right-click has been redefined or redirected to the application) or by
 pressing the \fBMenu\fP key that is normally located next to the right Ctrl key.
+If invoked while the Ctrl key is held down, an extended context menu will 
+be opened, with some additional entries.
 
 Mintty also adds a couple of items to the window menu, which can be accessed 
 by clicking on the program icon or pressing \fBAlt+Space\fP.
@@ -560,6 +562,20 @@ Keys pane of the options dialog.
 \(en \fBCtrl+Shift+F\fP: Full screen (not zooming font despite Shift)
 .br
 \(en \fBCtrl+Shift+S\fP: Flip screen
+.br
+\(en \fBCtrl+Shift+O\fP: Toggle scrollbar
+.br
+\(en \fBCtrl+Shift+P\fP: Cycle pointer styles
+.br
+\(en \fBCtrl+Shift+T\fP: Cycle transparency levels
+
+Ctrl+Shift+T cycles through transparency levels in steps. 
+While Ctrl+Shift+T is held down, the navigation keys on the numeric keypad 
+can be used for further fine-tuning: Up/Dn to increase/decrease, 
+PgUp/PgDn for steps, Del/Ins for no/max transparency, End for highest 
+preconfigured transparency, Home for previous value, Clear ("5") for glass.
+Note that immediate feedback of these transparency changes is only 
+visible of setting OpaqueWhenFocused is disabled.
 
 .SS Embedding graphics in terminal output
 
@@ -731,7 +747,7 @@ In the config file, this corresponds to the following entries:
 .br
 The font selection dialog also offers an \fBApply\fP button for 
 convenient testing how the selected font looks. Its function is the same 
-as the \fBApply\fP button of the Options dialog.
+as the \fBApply\fP button of the options dialog.
 
 Further settings can be given in the config file:
 .br
@@ -1091,7 +1107,7 @@ This option does not affect the arrow keys or Home/End keys.
 .TP
 \fBUI localization language\fP (Language=)
 This selects the language or language/region code to use for 
-localization of the mintty user interface, the Options dialog, 
+localization of the mintty user interface, the options dialog, 
 menus, message boxes, and terminal in-line error messages.
 .br
 \(en \fI(empty)\fP an empty entry disables localization
