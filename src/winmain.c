@@ -1084,7 +1084,7 @@ default_size(void)
   win_set_chars(cfg.rows, cfg.cols);
 }
 
-static void
+void
 update_transparency(void)
 {
   int trans = cfg.transparency;
@@ -1350,6 +1350,7 @@ static struct {
         when IDM_OPEN: term_open();
         when IDM_COPY: term_copy();
         when IDM_COPASTE: term_copy(); win_paste();
+        when IDM_CLRSCRLBCK: term_clear_scrollback(); term.disptop = 0;
         when IDM_PASTE: win_paste();
         when IDM_SELALL: term_select_all(); win_update();
         when IDM_RESET: winimgs_clear(); term_reset(); win_update();
@@ -1507,7 +1508,11 @@ static struct {
       win_update();
 
     when WM_INITMENU:
-      //win_update_menus();  // done before calling TrackPopupMenu
+      // win_update_menus is already called before calling TrackPopupMenu
+      // which is supposed to initiate this message;
+      // however, if we skip the call here, the "New" item will 
+      // not be initialised !?!
+      win_update_menus();
       return 0;
 
     when WM_MOVING:
