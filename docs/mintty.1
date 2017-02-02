@@ -106,6 +106,14 @@ given instead of a file name.
 If FILE contains \fB%d\fP it will be substituted with the process ID.
 See description of equivalent option "Log file" (Log=) below 
 for further formatting options and hints.
+Note that logging can be toggled from the extended context menu.
+
+.TP
+\fB--logfile\fP \fIFILE\fP|\fB-\fP
+Like \fB--log\fP but with logging initially disabled, so just 
+specifying a potential log file name in case logging is enabled from 
+the extended context menu.
+(Equivalent to combining \fB--log\fP with \fB-o Logging=no\fP.)
 
 .TP
 \fB-o\fP, \fB--option\fP \fINAME\fP=\fIVALUE\fP
@@ -1282,8 +1290,15 @@ pattern; note that this is likely to fail if a placeholder expands with
 Note: If the requested log file exists already, mintty does not overwrite it 
 but reports an error. To configure logging in the config file, use some 
 \fB%\fP placeholders to create distinct log files.
+Note that logging can be toggled from the extended context menu.
 
 See also the \fIscript\fP(1) utility for a more flexible logging solution.
+
+.TP
+\fBLogging initially enabled\fP (Logging=yes)
+Disabling this setting disables logging initially.
+If a log file name is specified with \fBLog=...\fP and \fBLogging=no\fP,
+logging can be enabled (and toggled) from the extended context menu.
 
 .TP
 \fBWindow title\fP (Title=)

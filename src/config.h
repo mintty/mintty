@@ -124,6 +124,7 @@ typedef struct {
   wstring exit_title;
   wstring icon;
   wstring log;
+  bool logging;
   wstring title;
   bool create_utmp;
   char window;

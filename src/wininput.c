@@ -196,6 +196,13 @@ win_update_menus(void)
     alt_fn ? W("Alt+F3") : ct_sh ? W("Ctrl+Shift+H") : null
   );
 
+  uint logging_enabled = (logging || *cfg.log) ? MF_ENABLED : MF_GRAYED;
+  uint logging_checked = logging ? MF_CHECKED : MF_UNCHECKED;
+  //__ Context menu:
+  modify_menu(ctxmenu, IDM_TOGLOG, logging_enabled | logging_checked, _W("&Log to file"),
+    null
+  );
+
   //__ Context menu:
   modify_menu(ctxmenu, IDM_RESET, 0, _W("&Reset"),
     alt_fn ? W("Alt+F8") : ct_sh ? W("Ctrl+Shift+R") : null
@@ -251,6 +258,9 @@ win_init_ctxmenu(bool extended)
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_SELALL, _W("Select &All"));
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_SEARCH, 0);
+  if (extended) {
+    AppendMenuW(ctxmenu, MF_ENABLED, IDM_TOGLOG, 0);
+  }
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_RESET, 0);
   if (extended) {
     //__ Context menu:

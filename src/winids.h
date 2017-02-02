@@ -26,5 +26,6 @@
 #define IDM_NEW_MONI        0x00D0
 #define IDM_COPYTITLE       0x00E0
 #define IDM_SEARCH          0x00F0
+#define IDM_TOGLOG          0x01F0
 
 #endif

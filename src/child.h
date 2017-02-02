@@ -6,6 +6,8 @@
 extern bool clone_size_token;
 
 extern void child_create(char * argv[], struct winsize * winp);
+extern void toggle_logging(void);
+extern bool logging;
 extern void child_proc(void);
 extern void child_kill(bool point_blank);
 extern void child_write(const char *, uint len);

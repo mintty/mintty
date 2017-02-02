@@ -5,6 +5,8 @@ Configuration
   * Optional extended context menu (with Ctrl).
   * Extended context menu functions Copy & Paste entry (#539), Clear Scrollback (#421).
   * Ctrl+Shift hotkeys and functions to toggle/cycle transparency (t) (#625), cursor style (p), scrollbar (o).
+  * Feature to toggle logging from extended context menu.
+  * Option to specify logfile but disable initial logging (Logging=no).
 
 ### 2.7.4 (29 Jan 2017) ###
 

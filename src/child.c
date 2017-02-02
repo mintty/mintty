@@ -39,7 +39,10 @@ string child_dir = null;
 
 static pid_t pid;
 static bool killed;
-static int pty_fd = -1, log_fd = -1, win_fd;
+static int win_fd;
+static int pty_fd = -1;
+static int log_fd = -1;
+bool logging = false;
 
 #if CYGWIN_VERSION_API_MINOR >= 66
 #include <langinfo.h>
@@ -94,6 +97,81 @@ sigexit(int sig)
   signal(sig, SIG_DFL);
   report_pos();
   kill(getpid(), sig);
+}
+
+static void
+open_logfile(bool toggling)
+{
+  // Open log file if any
+  if (*cfg.log) {
+    // use cygwin conversion function to escape unencoded characters 
+    // and thus avoid the locale trick (2.2.3)
+
+    if (0 == wcscmp(cfg.log, W("-"))) {
+      log_fd = fileno(stdout);
+      logging = true;
+    }
+    else {
+      char * log = path_win_w_to_posix(cfg.log);
+#ifdef debug_logfilename
+      printf("<%ls> -> <%s>\n", cfg.log, log);
+#endif
+      char * format = strchr(log, '%');
+      if (format && * ++ format == 'd' && !strchr(format, '%')) {
+        char * logf = newn(char, strlen(log) + 20);
+        sprintf(logf, log, getpid());
+        free(log);
+        log = logf;
+      }
+      else if (format) {
+        struct timeval now;
+        gettimeofday(& now, 0);
+        char * logf = newn(char, MAX_PATH + 1);
+        strftime(logf, MAX_PATH, log, localtime (& now.tv_sec));
+        free(log);
+        log = logf;
+      }
+
+      log_fd = open(log, O_WRONLY | O_CREAT | O_EXCL, 0600);
+      if (log_fd < 0) {
+        // report message and filename:
+        wchar * wpath = path_posix_to_win_w(log);
+        char * upath = cs__wcstoutf(wpath);
+#ifdef debug_logfilename
+        printf(" -> <%ls> -> <%s>\n", wpath, upath);
+#endif
+        char * msg = _("Error: Could not open log file");
+        if (toggling) {
+          char * err = strerror(errno);
+          char * errmsg = newn(char, strlen(msg) + strlen(err) + strlen(upath) + 4);
+          sprintf(errmsg, "%s: %s\n%s", msg, err, upath);
+          win_show_warning(errmsg);
+          free(errmsg);
+        }
+        else {
+          childerror(msg, false, errno, 0);
+          childerror(upath, false, 0, 0);
+        }
+        free(upath);
+        free(wpath);
+      }
+      else
+        logging = true;
+
+      free(log);
+    }
+  }
+}
+
+void
+toggle_logging()
+{
+  if (logging)
+    logging = false;
+  else if (log_fd >= 0)
+    logging = true;
+  else
+    open_logfile(true);
 }
 
 void
@@ -232,50 +310,9 @@ child_create(char *argv[], struct winsize *winp)
 
   win_fd = open("/dev/windows", O_RDONLY);
 
-  // Open log file if any
-  if (*cfg.log) {
-    // use cygwin conversion function to escape unencoded characters 
-    // and thus avoid the locale trick (2.2.3)
-
-    if (!wcscmp(cfg.log, W("-")))
-      log_fd = fileno(stdout);
-    else {
-      char * log = path_win_w_to_posix(cfg.log);
-#ifdef debug_logfilename
-      printf("<%ls> -> <%s>\n", cfg.log, log);
-#endif
-      char * format = strchr(log, '%');
-      if (format && * ++ format == 'd' && !strchr(format, '%')) {
-        char * logf = newn(char, strlen(log) + 20);
-        sprintf(logf, log, getpid());
-        free(log);
-        log = logf;
-      }
-      else if (format) {
-        struct timeval now;
-        gettimeofday(& now, 0);
-        char * logf = newn(char, MAX_PATH + 1);
-        strftime(logf, MAX_PATH, log, localtime (& now.tv_sec));
-        free(log);
-        log = logf;
-      }
-
-      log_fd = open(log, O_WRONLY | O_CREAT | O_EXCL, 0600);
-      if (log_fd < 0) {
-        // report message and filename:
-        childerror(_("Error: Could not open log file"), false, errno, 0);
-        wchar * wp = path_posix_to_win_w(log);
-        char * up = cs__wcstoutf(wp);
-#ifdef debug_logfilename
-        printf(" -> <%ls> -> <%s>\n", wp, up);
-#endif
-        childerror(up, false, 0, 0);
-        free(up);
-        free(wp);
-      }
-
-      free(log);
-    }
+  if (cfg.logging) {
+    // option Logging=yes => initially open log file if configured
+    open_logfile(false);
   }
 }
 
@@ -381,7 +418,7 @@ child_proc(void)
 #endif
         if (len > 0) {
           term_write(buf, len);
-          if (log_fd >= 0)
+          if (log_fd >= 0 && logging)
             write(log_fd, buf, len);
         }
         else {
