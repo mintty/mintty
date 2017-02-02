@@ -871,8 +871,8 @@ unhook_windows()
 
 static HWND font_sample = 0;
 
-static LRESULT CALLBACK
-set_labels(int nCode, WPARAM wParam, LPARAM lParam)
+static LRESULT
+set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
 {
   bool localize = *cfg.lang;
 
@@ -935,7 +935,7 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam)
   static int fc_sample_gap = 12;
   static int fc_sample_bottom = 228;
 
-  if (nCode == HCBT_CREATEWND && !new_cfg.old_fontmenu) {
+  if (font_chooser && nCode == HCBT_CREATEWND && !new_cfg.old_fontmenu) {
     // calculations to adjust size of the font sample dialog item
     static int fc_width = 437;
     static int fc_item1_right = 158;
@@ -1147,7 +1147,7 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam)
 
 #ifdef post_adjust_sample
     // resize frame around sample, try to resize text sample (failed)
-    if (adjust_sample && !new_cfg.old_fontmenu) {
+    if (font_chooser && adjust_sample && !new_cfg.old_fontmenu) {
       HWND sample = GetDlgItem((HWND)wParam, 1073);  // "Sample" frame
       if ((adjust_sample & 1) && sample) {
         // adjust frame and label "Sample"
@@ -1187,7 +1187,8 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam)
 #endif
 
     // crop dialog size after removing useless stuff
-    if (!new_cfg.old_fontmenu && away && GetDlgItem((HWND)wParam, 1092)) {
+    if (font_chooser && !new_cfg.old_fontmenu && away) {
+      // used to be if (... && GetDlgItem((HWND)wParam, 1092))
       RECT wr;
       GetWindowRect((HWND)wParam, &wr);
       RECT cr;
@@ -1205,6 +1206,18 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam)
   }
 
   return CallNextHookEx(0, nCode, wParam, lParam);
+}
+
+static LRESULT CALLBACK
+set_labels_fc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+  return set_labels(true, nCode, wParam, lParam);
+}
+
+static LRESULT CALLBACK
+set_labels_cc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+  return set_labels(false, nCode, wParam, lParam);
 }
 
 
@@ -1365,7 +1378,7 @@ select_font(winctrl *c)
       CF_SCREENFONTS | CF_NOSCRIPTSEL;
 
   // open font selection menu
-  hook_windows(set_labels);
+  hook_windows(set_labels_fc);
   bool ok = ChooseFontW(&cf);
   unhook_windows();
   if (ok) {
@@ -1560,7 +1573,7 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
     cc.lpCustColors = custom;
     cc.rgbResult = dlg.coloursel_result;
     cc.Flags = CC_FULLOPEN | CC_RGBINIT;
-    hook_windows(set_labels);
+    hook_windows(set_labels_cc);
     dlg.coloursel_ok = ChooseColor(&cc);
     unhook_windows();
     dlg.coloursel_result = cc.rgbResult;
