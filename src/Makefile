@@ -255,12 +255,14 @@ checkresource:
 	rm -f .osdef .osmin
 
 # check whether sources are free of remaining debugging code
+SRCDEBUG:= -e "^(f*printf|\#define debug)" # \# make-escape to #
+SRCDEBUG+= -e "^(if|do|for|while) *[({]"
+SRCDEBUG+= -e "\((false|0) *&"
+SRCDEBUG+= -e "\((true|1) *\|"
+SRCDEBUG+= -e "& 0($|[^bx])"
+SRCDEBUG+= -e "^///"
 checksrc:
-	if egrep -a -e "^(f*printf|#define debug)" *.[hc]; then false; fi
-	if egrep -e "^(if|do|for|while) *[({]" *.c; then false; fi
-	if egrep -e "\((false|0) *&" *.c; then false; fi
-	if egrep -e "\((true|1) *\|" *.c; then false; fi
-	if egrep -e "& 0($|[^bx])" *.c; then false; fi
+	if egrep -a $(SRCDEBUG) *.[hc]; then false; fi
 
 #############################################################################
 # development and debug targets

@@ -7,6 +7,7 @@ Configuration
   * Ctrl+Shift hotkeys and functions to toggle/cycle transparency (t) (#625), cursor style (p), scrollbar (o).
   * Feature to toggle logging from extended context menu.
   * Option to specify logfile but disable initial logging (Logging=no).
+  * Fixed mangled position of colour chooser item (#626).
 
 ### 2.7.4 (29 Jan 2017) ###
 
