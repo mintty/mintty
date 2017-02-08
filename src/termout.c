@@ -169,9 +169,10 @@ static void
 write_backspace(void)
 {
   term_cursor *curs = &term.curs;
-  if (curs->x == 0 && (curs->y == 0 || !curs->autowrap))
+  int term_top = curs->origin ? term.marg_top : 0;
+  if (curs->x == 0 && (curs->y == term_top || !curs->autowrap))
    /* do nothing */ ;
-  else if (curs->x == 0 && curs->y > 0)
+  else if (curs->x == 0 && curs->y > term_top)
     curs->x = term.cols - 1, curs->y--;
   else if (curs->wrapnext)
     curs->wrapnext = false;
