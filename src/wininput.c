@@ -199,7 +199,13 @@ win_update_menus(void)
   uint logging_enabled = (logging || *cfg.log) ? MF_ENABLED : MF_GRAYED;
   uint logging_checked = logging ? MF_CHECKED : MF_UNCHECKED;
   //__ Context menu:
-  modify_menu(ctxmenu, IDM_TOGLOG, logging_enabled | logging_checked, _W("&Log to file"),
+  modify_menu(ctxmenu, IDM_TOGLOG, logging_enabled | logging_checked, _W("&Log to File"),
+    null
+  );
+
+  uint charinfo = show_charinfo ? MF_CHECKED : MF_UNCHECKED;
+  //__ Context menu:
+  modify_menu(ctxmenu, IDM_TOGCHARINFO, charinfo, _W("Character &Info"),
     null
   );
 
@@ -260,11 +266,12 @@ win_init_ctxmenu(bool extended)
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_SEARCH, 0);
   if (extended) {
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_TOGLOG, 0);
+    AppendMenuW(ctxmenu, MF_ENABLED, IDM_TOGCHARINFO, 0);
   }
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_RESET, 0);
   if (extended) {
     //__ Context menu:
-    AppendMenuW(ctxmenu, MF_ENABLED, IDM_CLRSCRLBCK, _W("&Clear Scrollback"));
+    AppendMenuW(ctxmenu, MF_ENABLED, IDM_CLRSCRLBCK, _W("Clear Scrollback"));
   }
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_DEFSIZE_ZOOM, 0);

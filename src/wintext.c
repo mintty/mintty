@@ -97,6 +97,10 @@ bool font_ambig_wide;
 COLORREF colours[COLOUR_NUM];
 static bool bold_colour_selected = false;
 
+// Diagnostic information
+bool show_charinfo = false;
+
+
 static uint
 colour_dist(colour a, colour b)
 {
@@ -700,12 +704,206 @@ win_paint(void)
 
 #define dont_debug_cursor 1
 
+static struct charnameentry {
+  xchar uc;
+  string un;
+} * charnametable = null;
+static int charnametable_len = 0;
+static int charnametable_alloced = 0;
+
+static void
+init_charnametable()
+{
+  if (charnametable)
+    return;
+
+  void add_charname(uint cc, char * cn) {
+    if (charnametable_len >= charnametable_alloced) {
+      charnametable_alloced += 999;
+      if (!charnametable)
+        charnametable = newn(struct charnameentry, charnametable_alloced);
+      else
+        charnametable = renewn(charnametable, charnametable_alloced);
+    }
+
+    charnametable[charnametable_len].uc = cc;
+    charnametable[charnametable_len].un = strdup(cn);
+    charnametable_len++;
+  }
+
+  char * cnfn = get_resource_file(W("info"), W("charnames.txt"), false);
+  FILE * cnf = fopen(cnfn, "r");
+  if (cnf) {
+    uint cc;
+    char cn[100];
+    while (fscanf(cnf, "%X %[- A-Z0-9]", &cc, cn) == 2) {
+      add_charname(cc, cn);
+    }
+    fclose(cnf);
+  }
+  else {
+    cnf = fopen("/usr/share/unicode/ucd/UnicodeData.txt", "r");
+    if (!cnf)
+      return;
+    FILE * crf = fopen("/usr/share/unicode/ucd/NameAliases.txt", "r");
+    uint ccorr = 0;
+    char buf[100];
+    char nbuf[100];
+    while (fgets(buf, sizeof(buf), cnf)) {
+      uint cc;
+      char cn[99];
+      if (sscanf(buf, "%X;%[- A-Z0-9];", &cc, cn) == 2) {
+        //0020;SPACE;Zs;0;WS;;;;;N;;;;;
+        if (crf) {
+          while (ccorr < cc && fgets(nbuf, sizeof(nbuf), crf)) {
+            sscanf(nbuf, "%X;", &ccorr);
+          }
+          if (ccorr == cc && strstr(nbuf, ";correction")) {
+            //2118;WEIERSTRASS ELLIPTIC FUNCTION;correction
+            sscanf(nbuf, "%X;%[- A-Z0-9];", &ccorr, cn);
+          }
+        }
+        add_charname(cc, cn);
+      }
+    }
+    fclose(cnf);
+    if (crf)
+      fclose(crf);
+  }
+}
+
+static char *
+charname(xchar ucs)
+{
+  // binary search in table
+  int min = 0;
+  int max = charnametable_len - 1;
+  int mid;
+  while (max >= min) {
+    unsigned long midu;
+    unsigned char * mide;
+    mid = (min + max) / 2;
+    mide = (unsigned char *) charnametable[mid].un;
+    midu = charnametable[mid].uc;
+    if (midu < ucs) {
+      min = mid + 1;
+    } else if (midu > ucs) {
+      max = mid - 1;
+    } else {
+      return (char *) mide;
+    }
+  }
+  return "";
+}
+
+void
+toggle_charinfo()
+{
+  show_charinfo = !show_charinfo;
+}
+
+static void
+show_curchar_info(char tag)
+{
+  if (!show_charinfo)
+    return;
+  init_charnametable();
+  (void)tag;
+  static termchar * pp = 0;
+  static termchar prev; // = (termchar) {.cc_next = 0, .chr = 0, .attr = CATTR_DEFAULT};
+
+  void show_char_msg(char * cs) {
+    static char * prev = null;
+    if (!prev || 0 != strcmp(cs, prev)) {
+      //printf("[%c]%s\n", tag, cs);
+      SetWindowTextA(wnd, cs);
+    }
+    if (prev)
+      free(prev);
+    prev = cs;
+  }
+
+  void show_char_info(termchar * cpoi) {
+    // return if base character same as previous and no combining chars
+    if (cpoi == pp && cpoi && cpoi->chr == prev.chr && !cpoi->cc_next)
+      return;
+
+    char * cs = strdup("");
+
+    pp = cpoi;
+    if (cpoi) {
+      prev = *cpoi;
+
+      char * cn = strdup("");
+
+      xchar chbase = 0;
+#ifdef show_only_1_charname
+      bool combined = false;
+#endif
+      // show char codes
+      while (cpoi) {
+        cs = renewn(cs, strlen(cs) + 8 + 1);
+        char * cp = &cs[strlen(cs)];
+        xchar ci;
+        if (is_high_surrogate(cpoi->chr) && cpoi->cc_next && is_low_surrogate((cpoi + cpoi->cc_next)->chr)) {
+          ci = combine_surrogates(cpoi->chr, (cpoi + cpoi->cc_next)->chr);
+          sprintf(cp, "U+%05X ", ci);
+          cpoi += cpoi->cc_next;
+        }
+        else {
+          ci = cpoi->chr;
+          sprintf(cp, "U+%04X ", ci);
+        }
+        if (!chbase)
+          chbase = ci;
+        char * cni = charname(ci);
+        if (cni && *cni) {
+          cn = renewn(cn, strlen(cn) + strlen(cni) + 4);
+          sprintf(&cn[strlen(cn)], "| %s ", cni);
+        }
+
+        if (cpoi->cc_next) {
+#ifdef show_only_1_charname
+          combined = true;
+#endif
+          cpoi += cpoi->cc_next;
+        }
+        else
+          cpoi = null;
+      }
+#ifdef show_only_1_charname
+      char * cn = charname(chbase);
+      char * extra = combined ? " combined..." : "";
+      cs = renewn(cs, strlen(cs) + strlen(cn) + strlen(extra) + 1);
+      sprintf(&cs[strlen(cs)], "%s%s", cn, extra);
+#else
+      cs = renewn(cs, strlen(cs) + strlen(cn) + 1);
+      sprintf(&cs[strlen(cs)], "%s", cn);
+      free(cn);
+#endif
+    }
+
+    show_char_msg(cs);  // does free(cs);
+  }
+
+  int line = term.curs.y - term.disptop;
+  if (line < 0 || line >= term.rows) {
+    show_char_info(null);
+  }
+  else {
+    termline * displine = term.displines[line];
+    termchar * dispchar = &displine->chars[term.curs.x];
+    show_char_info(dispchar);
+  }
+}
+
 static void
 do_update(void)
 {
 #if defined(debug_cursor) && debug_cursor > 1
   printf("do_update cursor_on %d @%d,%d\n", term.cursor_on, term.curs.y, term.curs.x);
 #endif
+  show_curchar_info('u');
   if (update_state == UPDATE_BLOCKED) {
     update_state = UPDATE_IDLE;
     return;
@@ -1478,6 +1676,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
     DeleteObject(oldpen);
   }
 
+  show_curchar_info('w');
   if (has_cursor) {
 #if defined(debug_cursor) && debug_cursor > 1
     printf("painting cursor_type '%c' cursor_on %d\n", "?b_l"[term_cursor_type()+1], term.cursor_on);

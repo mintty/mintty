@@ -1,0 +1,40 @@
+#! /bin/sh -f
+
+test -f UnicodeData.txt || make UnicodeData.txt
+test -f NameAliases.txt || make NameAliases.txt
+
+
+LC_ALL=C
+export LC_ALL
+
+scanunames() {
+# modify UnicodeData.txt according to NameAliases.txt
+sed	-e "/;abbreviation/ d" \
+	-e "s,^\([0-9A-F]*\);\([^;]*\).*,/^\1;/ s/.*/\1;\2;;;;;;;;;;;;;/," \
+	-e t -e d NameAliases.txt > mknames.sed
+
+# scan UnicodeData.txt:
+#	0153;LATIN SMALL LIGATURE OE;...
+#	0000;<control>;Cc;0;BN;;;;;N;NULL;...
+# generate lines:
+#	{0x0153, "LATIN SMALL LIGATURE OE"},
+#	{0x0000, "NULL"},
+# and give precedence to NameAliases.txt:
+sed	-f mknames.sed UnicodeData.txt |
+sed	-e 's/^\([^;]*\);<control>;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;\([^;]*\);.*/\1;\2;/' \
+	-e t \
+	-e '/^[^;]*;</ d'
+}
+
+if false
+then	scanunames |
+	sed	-e 's/^\([^;][^;][^;][^;];\)/00\1/' \
+		-e 's/^\([^;][^;][^;][^;][^;];\)/0\1/' \
+		-e 's/^\([^;][^;]\)\([^;][^;]\)\([^;][^;]\);\([^;]*\);.*/  "\\x\1\\x\2\\x\3 \4",/' \
+	> charnames.t
+else	scanunames |
+	sed	-e 's/^\([^;]*\);\([^;]*\);.*/\1 \2/' \
+	> charnames.txt
+fi
+
+rm -f mknames.sed

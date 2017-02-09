@@ -21,6 +21,8 @@ extern LOGFONT lfont;
 extern int font_size;  // logical font size, as configured (< 0: pixel size)
 extern int cell_width, cell_height;  // includes spacing
 extern int PADDING;
+extern bool show_charinfo;
+extern void toggle_charinfo(void);
 
 extern bool disable_bidi;
 extern bool support_wsl;
