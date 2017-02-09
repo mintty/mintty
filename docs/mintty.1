@@ -1189,6 +1189,16 @@ The answerback string is sent in response to the \fB^E\fP (ENQ) character.
 By default, this is empty.
 
 .TP
+\fBApply old wraparound behaviour\fP (OldWrapModes=false)
+Setting this compatibility option disables some tweaks and fixes of 
+mintty 2.7.5:
+.RS
+\(en Backspace after pending Wraparound goes to previous column
+.br
+\(en Reverse Wraparound mode initially disabled (but switchable), complying with xterm default and terminfo
+.RE
+
+.TP
 \fBAllow control sequence to set selection\fP (AllowSetSelection=false)
 If enabled, the terminal control sequence OSC 52 is allowed to set the 
 clipboard selection for pasting (using base64-encoded contents, like xterm).

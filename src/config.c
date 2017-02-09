@@ -100,6 +100,7 @@ const config default_cfg = {
   // Terminal
   .term = "xterm",
   .answerback = W(""),
+  .old_wrapmodes = false,
   .bell_sound = true,
   .bell_type = 1,
   .bell_file = W(""),
@@ -261,6 +262,7 @@ options[] = {
   // Terminal
   {"Term", OPT_STRING, offcfg(term)},
   {"Answerback", OPT_WSTRING, offcfg(answerback)},
+  {"OldWrapModes", OPT_BOOL, offcfg(old_wrapmodes)},
   {"BellSound", OPT_BOOL, offcfg(bell_sound)},
   {"BellType", OPT_INT, offcfg(bell_type)},
   {"BellFile", OPT_WSTRING, offcfg(bell_file)},

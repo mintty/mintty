@@ -170,12 +170,16 @@ write_backspace(void)
 {
   term_cursor *curs = &term.curs;
   int term_top = curs->origin ? term.marg_top : 0;
-  if (curs->x == 0 && (curs->y == term_top || !curs->autowrap))
+  if (curs->x == 0 && (curs->y == term_top || !curs->autowrap
+                       || (!cfg.old_wrapmodes && !curs->rev_wrap)))
    /* do nothing */ ;
   else if (curs->x == 0 && curs->y > term_top)
     curs->x = term.cols - 1, curs->y--;
-  else if (curs->wrapnext)
+  else if (curs->wrapnext) {
     curs->wrapnext = false;
+    if (!curs->rev_wrap && !cfg.old_wrapmodes)
+      curs->x--;
+  }
   else
     curs->x--;
 }
@@ -244,6 +248,7 @@ write_char(wchar c, int width)
 
   term_cursor *curs = &term.curs;
   termline *line = term.lines[curs->y];
+
   void put_char(wchar c)
   {
     clear_cc(line, curs->x);
@@ -261,8 +266,10 @@ write_char(wchar c, int width)
     curs->wrapnext = false;
     line = term.lines[curs->y];
   }
+
   if (term.insert && width > 0)
     insert_char(width);
+
   switch (width) {
     when 1:  // Normal character.
       term_check_boundary(curs->x, curs->y);
@@ -334,10 +341,12 @@ write_char(wchar c, int width)
     otherwise:  // Anything else. Probably shouldn't get here.
       return;
   }
+
   curs->x++;
   if (curs->x == term.cols) {
     curs->x--;
-    curs->wrapnext = true;
+    if (curs->autowrap || cfg.old_wrapmodes)
+      curs->wrapnext = true;
   }
 }
 
@@ -611,6 +620,10 @@ set_modes(bool state)
           term.curs.origin = state;
         when 7:  /* DECAWM: auto wrap */
           term.curs.autowrap = state;
+          term.curs.wrapnext = false;
+        when 45:  /* xterm: reverse (auto) wraparound */
+          term.curs.rev_wrap = state;
+          term.curs.wrapnext = false;
         when 8:  /* DECARM: auto key repeat */
           // ignore
         when 9:  /* X10_MOUSE */

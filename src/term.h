@@ -265,8 +265,9 @@ typedef struct {
   short x, y;
   cattr attr;
   bool origin;
-  bool autowrap;
+  bool autowrap;  // switchable (xterm Wraparound Mode (DECAWM Auto Wrap))
   bool wrapnext;
+  bool rev_wrap;  // switchable (xterm Reverse-wraparound Mode)
   bool utf;
   bool g1;
   term_cset csets[2];

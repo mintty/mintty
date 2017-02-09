@@ -106,6 +106,7 @@ typedef struct {
   // Terminal
   string term;
   wstring answerback;
+  bool old_wrapmodes;
   bool bell_sound;
   int bell_type;
   wstring bell_file;

@@ -113,6 +113,7 @@ term_cursor_reset(term_cursor *curs)
   curs->attr = CATTR_DEFAULT;
   curs->csets[0] = curs->csets[1] = CSET_ASCII;
   curs->autowrap = true;
+  curs->rev_wrap = cfg.old_wrapmodes;
 }
 
 void
