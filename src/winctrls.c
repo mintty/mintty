@@ -876,30 +876,17 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
 {
   bool localize = *cfg.lang;
 
-#define dont_debug_dialog_hook
+#define dont_debug_dialog_hook 1
 
 #ifdef debug_dialog_hook
-  void
-  trace_label(int id, HWND button, wstring label)
+  void trace_label(int id, HWND button, wstring label)
   {
     if (!button) button = GetDlgItem((HWND)wParam, id);
     wchar buf [99];
     GetWindowTextW(button, buf, 99);
     printf("%d [%8p] <%ls> -> <%ls>\n", id, button, buf, label);
   }
-#endif
 
-  void setlabel(int id, wstring label) {
-    HWND button = GetDlgItem((HWND)wParam, id);
-    if (localize && button) {
-#ifdef debug_dialog_hook
-      trace_label(id, button, label);
-#endif
-      SetWindowTextW(button, label);
-    }
-  }
-
-#ifdef debug_dialog_hook
   char * hcbt[] = {
     "HCBT_MOVESIZE",
     "HCBT_MINMAX",
@@ -915,11 +902,30 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
   char * sCode = "?";
   if (nCode >= 0 && nCode < (int)lengthof(hcbt))
     sCode = hcbt[nCode];
-  bool from_mouse = false;
-  if (nCode == HCBT_ACTIVATE)
-    from_mouse = ((CBTACTIVATESTRUCT *)lParam)->fMouse;
-  printf("hook %d %s (%d %d mou %d)\n", nCode, sCode, (unsigned)wParam, (unsigned)lParam, from_mouse);
+  printf("hook %d %s", nCode, sCode);
+  if (nCode == HCBT_CREATEWND) {
+    CREATESTRUCTW * cs = ((CBT_CREATEWNDW *)lParam)->lpcs;
+    printf(" x %3d y %3d w %3d h %3d (%08X %07X) <%ls>\n", cs->x, cs->y, cs->cx, cs->cy, cs->style, cs->dwExStyle, cs->lpszName);
+    //(long)cs->lpCreateParams == 0
+  }
+  else if (nCode == HCBT_ACTIVATE) {
+    bool from_mouse = ((CBTACTIVATESTRUCT *)lParam)->fMouse;
+    printf(" mou %d\n", from_mouse);
+  }
+  else
+    printf("\n");
 #endif
+
+  void setlabel(int id, wstring label)
+  {
+    HWND button = GetDlgItem((HWND)wParam, id);
+    if (localize && button) {
+#ifdef debug_dialog_hook
+      trace_label(id, button, label);
+#endif
+      SetWindowTextW(button, label);
+    }
+  }
 
   static int adjust_sample = 0;  /* pre-adjust (here) vs post-adjust (below)
                                     0b01: post-adjust "Sample" frame
@@ -935,94 +941,108 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
   static int fc_sample_gap = 12;
   static int fc_sample_bottom = 228;
 
-  if (font_chooser && nCode == HCBT_CREATEWND && !new_cfg.old_fontmenu) {
-    // calculations to adjust size of the font sample dialog item
-    static int fc_width = 437;
-    static int fc_item1_right = 158;
-    static int fc_item2_left = 165;
-    static int fc_sample_left = 165;
-
-    // we could also adjust the font chooser dialog window size here
-    // but then the localization transformations below would not work anymore,
-    // because SetWindowPos would cause HCBT_ACTIVATE to be invoked
-    // when the dialog is not yet populated with the other dialog items
-
+  if (nCode == HCBT_CREATEWND) {
+    // dialog item geometry calculations and adjustments
     CREATESTRUCTW * cs = ((CBT_CREATEWNDW *)lParam)->lpcs;
-#ifdef debug_dialog_hook
-    printf("  CBT_CREATEWND x %3d y %3d w %3d h %3d (%08X %07X) <%ls>\n", cs->x, cs->y, cs->cx, cs->cy, cs->style, cs->dwExStyle, cs->lpszName);
-#endif
-    // check for style property combinations to identify sets of dialog items;
-    // count within group to identify actual font chooser dialog item;
-    // note: we cannot identify by geometry which may differ between systems
-    // 0x80000000L WS_POPUP
-    // 0x40000000L WS_CHILD
-    // 0x10000000L WS_VISIBLE
-    // 0x00020000L WS_GROUP
-    // 0x00010000L WS_TABSTOP
-    if (!(cs->style & WS_CHILD)) {
-      // font chooser popup dialog
-      fc_item_grp = 0;
-      WINDOWINFO winfo;
-      winfo.cbSize = sizeof(WINDOWINFO);
-      GetWindowInfo((HWND)wParam, &winfo);
-      fc_width = cs->cx - 2 * winfo.cxWindowBorders;
-    }
-    else if ((cs->style & WS_CHILD) && !(cs->style & WS_VISIBLE)) {
-      // font sample text (default "AaBbYyZz")
-      fc_sample_gap = cs->x - fc_sample_left;
-      if (!(adjust_sample & 2)) {
-        cs->x = fc_item_left + fc_sample_gap;
-        //cs->cx = fc_item_right - fc_item_left - 2 * fc_sample_gap; // | Size
-        cs->cx = fc_width - 2 * (fc_item_left + fc_sample_gap);
-        if (adjust_sample_plus)
-          cs->cx += fc_item_gap + fc_button_width;  // not yet known
+
+    if (font_chooser && !new_cfg.old_fontmenu) {
+      static int fc_width = 437;
+      static int fc_item1_right = 158;
+      static int fc_item2_left = 165;
+      static int fc_sample_left = 165;
+
+      // we could also adjust the font chooser dialog window size here
+      // but then the localization transformations below would not work anymore,
+      // because SetWindowPos would cause HCBT_ACTIVATE to be invoked
+      // when the dialog is not yet populated with the other dialog items
+
+      // check for style property combinations to identify sets of dialog items;
+      // count within group to identify actual font chooser dialog item;
+      // note: we cannot identify by geometry which may differ between systems
+      // 0x80000000L WS_POPUP
+      // 0x40000000L WS_CHILD
+      // 0x10000000L WS_VISIBLE
+      // 0x00020000L WS_GROUP
+      // 0x00010000L WS_TABSTOP
+      if (!(cs->style & WS_CHILD)) {
+        // font chooser popup dialog
+        fc_item_grp = 0;
+        WINDOWINFO winfo;
+        winfo.cbSize = sizeof(WINDOWINFO);
+        GetWindowInfo((HWND)wParam, &winfo);
+        fc_width = cs->cx - 2 * winfo.cxWindowBorders;
       }
-    }
-    else if ((cs->style & WS_CHILD) && (cs->style & WS_GROUP) && (cs->style & WS_TABSTOP)) {
-      // buttons (OK, Cancel, Apply)
-      fc_button_width = cs->cx;
-      fc_item_right = cs->x + cs->cx;  // only useful for post-adjustment
-      (void)fc_item_right;
-    }
-    else if ((cs->style & WS_CHILD) && (cs->style & WS_GROUP)) {
-      fc_item_grp ++;
-      fc_item_idx = 0;
-      if (fc_item_grp == 1) { // "Font:"
-        fc_item_left = cs->x;
-      } else if (fc_item_grp == 2) { // "Font style:"
-        fc_item2_left = cs->x;  // to identify "Sample" frame
-        fc_item_gap = cs->x - fc_item1_right;
-      } else if (fc_item_grp == 3) { // "Size:"
-        fc_item_right = cs->x + cs->cx;
-      } else if (fc_item_grp == 6 || (fc_item_grp < 6 && cs->x == fc_item2_left)) {
-        // "Sample" frame
-        fc_sample_left = cs->x;
-        fc_sample_bottom = cs->y + cs->cy;
-        if (!(adjust_sample & 1)) {
-          cs->x = fc_item_left;
-          //cs->cx = fc_item_right - fc_item_left;  // align with "Size:"
-          cs->cx = fc_width - 2 * fc_item_left;
+      else if ((cs->style & WS_CHILD) && !(cs->style & WS_VISIBLE)) {
+        // font sample text (default "AaBbYyZz")
+        fc_sample_gap = cs->x - fc_sample_left;
+        if (!(adjust_sample & 2)) {
+          cs->x = fc_item_left + fc_sample_gap;
+          //cs->cx = fc_item_right - fc_item_left - 2 * fc_sample_gap; // | Size
+          cs->cx = fc_width - 2 * (fc_item_left + fc_sample_gap);
           if (adjust_sample_plus)
             cs->cx += fc_item_gap + fc_button_width;  // not yet known
         }
       }
-    }
-    else if ((cs->style & WS_CHILD) && !(cs->style & WS_GROUP)) {
-      fc_item_idx ++;
-      if (fc_item_grp == 1 && fc_item_idx == 1) { // font list
-        fc_item_left = cs->x;
-        fc_item1_right = cs->x + cs->cx;
+      else if ((cs->style & WS_CHILD) && (cs->style & WS_GROUP) && (cs->style & WS_TABSTOP)) {
+        // buttons (OK, Cancel, Apply)
+        fc_button_width = cs->cx;
+        fc_item_right = cs->x + cs->cx;  // only useful for post-adjustment
+        (void)fc_item_right;
       }
-      else if (fc_item_grp == 3 && fc_item_idx == 1) { // size list
-        fc_item_right = cs->x + cs->cx;
+      else if ((cs->style & WS_CHILD) && (cs->style & WS_GROUP)) {
+        fc_item_grp ++;
+        fc_item_idx = 0;
+        if (fc_item_grp == 1) { // "Font:"
+          fc_item_left = cs->x;
+        } else if (fc_item_grp == 2) { // "Font style:"
+          fc_item2_left = cs->x;  // to identify "Sample" frame
+          fc_item_gap = cs->x - fc_item1_right;
+        } else if (fc_item_grp == 3) { // "Size:"
+          fc_item_right = cs->x + cs->cx;
+        } else if (fc_item_grp == 6 || (fc_item_grp < 6 && cs->x == fc_item2_left)) {
+          // "Sample" frame
+          fc_sample_left = cs->x;
+          fc_sample_bottom = cs->y + cs->cy;
+          if (!(adjust_sample & 1)) {
+            cs->x = fc_item_left;
+            //cs->cx = fc_item_right - fc_item_left;  // align with "Size:"
+            cs->cx = fc_width - 2 * fc_item_left;
+            if (adjust_sample_plus)
+              cs->cx += fc_item_gap + fc_button_width;  // not yet known
+          }
+        }
+      }
+      else if ((cs->style & WS_CHILD) && !(cs->style & WS_GROUP)) {
+        fc_item_idx ++;
+        if (fc_item_grp == 1 && fc_item_idx == 1) { // font list
+          fc_item_left = cs->x;
+          fc_item1_right = cs->x + cs->cx;
+        }
+        else if (fc_item_grp == 3 && fc_item_idx == 1) { // size list
+          fc_item_right = cs->x + cs->cx;
+        }
+      }
+    }
+    else if (!font_chooser) {
+      float zoom = 1.25;
+      static int cc_height = 326;
+      static int cc_width = 453;
+      static int cc_vert = 453 / 2;
+
+      if (!(cs->style & WS_CHILD)) {
+        // colour chooser popup dialog
+        cc_height = cs->cy;
+        cc_width = cs->cx;
+        cc_vert = cc_width / 2;
+        cs->cx = cc_vert + (cs->cx - cc_vert) * zoom;
+      }
+      else if (cs->x > cc_vert && cs->y > cc_height / 2) {
+        cs->x = cc_vert + (cs->x - cc_vert) * zoom;
+        cs->cx *= zoom;
       }
     }
   }
   else if (nCode == HCBT_ACTIVATE) {
-#ifdef debug_dialog_hook
-    bool from_mouse = ((CBTACTIVATESTRUCT *)lParam)->fMouse;
-    printf("  CBT_ACTIVATE (mou %d)\n", from_mouse);
-#endif
     setlabel(IDOK, _W("OK"));
     setlabel(IDCANCEL, _W("Cancel"));
 
@@ -1129,14 +1149,14 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
     setlabel(712, _W("A&dd to Custom Colours"));
             //shortkey disambiguated from original "&Add to Custom Colours"
 
-#ifdef debug_dialog_hook
+#if defined(debug_dialog_hook) && debug_dialog_hook > 1
     for (int id = 12; id < 65536; id++) {
       HWND dlg = GetDlgItem((HWND)wParam, id);
       if (dlg) {
         wchar buf [99];
         RECT r;
         GetWindowRect(dlg, &r);
-        printf("dlgitem %d: %4d %4d %4d %4d / ", id, (int)r.left, (int)r.top, (int)r.right, (int)r.bottom);
+        printf("dlgitem %5d: %4d %4d %4d %4d / ", id, (int)r.left, (int)r.top, (int)r.right, (int)r.bottom);
         GetClientRect(dlg, &r);
         printf("%d %d %3d %3d ", (int)r.left, (int)r.top, (int)r.right, (int)r.bottom);
         GetWindowTextW(dlg, buf, 99);
