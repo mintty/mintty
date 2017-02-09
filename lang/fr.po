@@ -1,15 +1,15 @@
 # French translations for mintty package
 # Traductions françaises du paquet mintty.
-# Copyright (C) 2016 THE mintty'S COPYRIGHT HOLDER
+# Copyright (C) 2017 THE mintty'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the mintty package.
-# U-FR\lassauge <lassauge@gmail.com>, 2016.
+# Eric lassauge <lassauge@gmail.com>, 2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-02-03 14:13+0100\n"
-"PO-Revision-Date: 2016-11-29 13:32-0000\n"
+"POT-Creation-Date: 2017-02-08 13:41+0100\n"
+"PO-Revision-Date: 2017-02-07 13:23+0000\n"
 "Last-Translator: Eric Lassauge <lassauge@gmail.com>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "Language: fr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 1.7.1\n"
+"X-Generator: Poedit 1.8.11\n"
 
 #: charset.c:211 charset.c:222
 msgid "(Default)"
@@ -190,7 +190,7 @@ msgid "Save"
 msgstr "Enregistrer"
 
 #. __ Dialog button - cancel
-#: config.c:2018 winctrls.c:1027 windialog.c:560
+#: config.c:2018 winctrls.c:1029 windialog.c:560
 msgid "Cancel"
 msgstr "Annuler"
 
@@ -205,7 +205,7 @@ msgid "I see"
 msgstr "Ah bon"
 
 #. __ Dialog button - confirm action
-#: config.c:2028 winctrls.c:1026 windialog.c:559
+#: config.c:2028 winctrls.c:1028 windialog.c:559
 msgid "OK"
 msgstr "Ok"
 
@@ -490,12 +490,12 @@ msgstr "Souris"
 #. __ Options - Mouse:
 #: config.c:2266
 msgid "Cop&y on select"
-msgstr "Copie sur &sélection"
+msgstr "Copier sur &sélection"
 
 #. __ Options - Mouse:
 #: config.c:2271
 msgid "Copy as &rich text"
-msgstr "Copie en &Rich Text"
+msgstr "Copier en &Rich Text"
 
 #. __ Options - Mouse:
 #: config.c:2276
@@ -702,112 +702,112 @@ msgid "&Select..."
 msgstr "&Sélect.…"
 
 #. __ Font chooser: title bar label
-#: winctrls.c:1031
+#: winctrls.c:1033
 msgid "Font "
 msgstr "Police de caractères"
 
 #. __ Font chooser: button
-#: winctrls.c:1033
+#: winctrls.c:1035
 msgid "&Apply"
 msgstr "&Appliquer"
 
 #. __ Font chooser:
-#: winctrls.c:1035
+#: winctrls.c:1037
 msgid "&Font:"
 msgstr "&Police :"
 
 #. __ Font chooser:
-#: winctrls.c:1037
+#: winctrls.c:1039
 msgid "Font st&yle:"
 msgstr "&Style de police :"
 
 #. __ Font chooser:
-#: winctrls.c:1039
+#: winctrls.c:1041
 msgid "&Size:"
 msgstr "&Taille :"
 
 #. __ Font chooser:
-#: winctrls.c:1041
+#: winctrls.c:1043
 msgid "Sample"
 msgstr "Échantillon"
 
 #. __ Font chooser: text sample ("AaBbYyZz" by default)
-#: winctrls.c:1045 winctrls.c:1282
+#: winctrls.c:1047 winctrls.c:1284
 msgid "Ferqœm’4€"
-msgstr "AaBbŒœYyZz"
+msgstr "AàBbCçÉéYz"
 
 #. __ Font chooser: this field is only shown with OldFontMenu=true
-#: winctrls.c:1062
+#: winctrls.c:1064
 msgid "Sc&ript:"
 msgstr "Sc&ript :"
 
 #. __ Font chooser: this field is only shown with OldFontMenu=true
-#: winctrls.c:1064
+#: winctrls.c:1066
 msgid "<A>Show more fonts</A>"
 msgstr "<A>Autres polices</A>"
 
 #. __ Colour chooser: title bar label
-#: winctrls.c:1069
+#: winctrls.c:1071
 msgid "Colour "
 msgstr "Couleur"
 
 #. __ Colour chooser:
-#: winctrls.c:1082 winctrls.c:1094
+#: winctrls.c:1084 winctrls.c:1096
 msgid "B&asic colours:"
 msgstr "Couleurs de b&ase :"
 
 #. __ Colour chooser:
-#: winctrls.c:1101
+#: winctrls.c:1103
 msgid "&Custom colours:"
 msgstr "Couleurs &personnalisées :"
 
 #. __ Colour chooser:
-#: winctrls.c:1108
+#: winctrls.c:1110
 msgid "De&fine Custom Colours >>"
 msgstr "&Définir les couleurs personnalisées >>"
 
 #. __ Colour chooser:
-#: winctrls.c:1111
+#: winctrls.c:1113
 msgid "Colour"
 msgstr "Couleur"
 
 #. __ Colour chooser:
-#: winctrls.c:1113
+#: winctrls.c:1115
 msgid "|S&olid"
 msgstr "|&Unie"
 
 #. __ Colour chooser:
-#: winctrls.c:1115
+#: winctrls.c:1117
 msgid "&Hue:"
 msgstr "&Teinte :"
 
 #. __ Colour chooser:
-#: winctrls.c:1118
+#: winctrls.c:1120
 msgid "&Sat:"
 msgstr "&Satur. :"
 
 #. __ Colour chooser:
-#: winctrls.c:1120
+#: winctrls.c:1122
 msgid "&Lum:"
 msgstr "&Lum. :"
 
 #. __ Colour chooser:
-#: winctrls.c:1122
+#: winctrls.c:1124
 msgid "&Red:"
 msgstr "&Rouge :"
 
 #. __ Colour chooser:
-#: winctrls.c:1124
+#: winctrls.c:1126
 msgid "&Green:"
 msgstr "&Vert :"
 
 #. __ Colour chooser:
-#: winctrls.c:1126
+#: winctrls.c:1128
 msgid "&Blue:"
 msgstr "&Bleu :"
 
 #. __ Colour chooser:
-#: winctrls.c:1129
+#: winctrls.c:1131
 msgid "A&dd to Custom Colours"
 msgstr "A&jouter aux couleurs personnalisées"
 
@@ -889,56 +889,62 @@ msgstr "Ch&ercher"
 
 #. __ Context menu:
 #: wininput.c:202
-msgid "&Log to file"
-msgstr "Enregistrer dans fichier"
+msgid "&Log to File"
+msgstr "Enregistrer fichier"
 
 #. __ Context menu:
-#: wininput.c:207
+#: wininput.c:208
+msgid "Character &Info"
+msgstr "&Info de caractères"
+
+#. __ Context menu:
+#: wininput.c:213
 msgid "&Reset"
 msgstr "&Reset"
 
 #. __ Context menu:
-#: wininput.c:215
+#: wininput.c:221
 msgid "&Default Size"
 msgstr "Taille &défaut"
 
 #. __ Context menu:
-#: wininput.c:221
+#: wininput.c:227
 msgid "&Full Screen"
 msgstr "&Plein écran"
 
 #. __ Context menu:
-#: wininput.c:227
+#: wininput.c:233
 msgid "Flip &Screen"
 msgstr "Échanger &écran"
 
 #. __ System menu:
-#: wininput.c:237 wininput.c:288
+#: wininput.c:243 wininput.c:295
 msgid "Copy &Title"
 msgstr "&Copier le titre"
 
 #. __ System menu:
 #. __ Context menu:
 #. __ System menu:
-#: wininput.c:239 wininput.c:275 wininput.c:290
+#: wininput.c:245 wininput.c:282 wininput.c:297
 msgid "&Options..."
 msgstr "&Options…"
 
 #. __ Context menu:
-#: wininput.c:250
+#: wininput.c:256
 msgid "Ope&n"
 msgstr "Ouvr&ir"
 
 #. __ Context menu:
-#: wininput.c:258
+#: wininput.c:264
 msgid "Select &All"
 msgstr "Tout &Sélectionner"
 
 #. __ Context menu:
-#: wininput.c:267
-msgid "&Clear Scrollback"
+#: wininput.c:274
+msgid "Clear Scrollback"
 msgstr "Éteindre défilement"
 
+# msgstr "Arrêter le défilement"
 #: winmain.c:1247
 msgid "Processes are running in session:"
 msgstr "Processus en cours dans la session :"
@@ -947,24 +953,24 @@ msgstr "Processus en cours dans la session :"
 msgid "Close anyway?"
 msgstr "Forcer la fermeture ?"
 
-#: winmain.c:1776
+#: winmain.c:1777
 msgid "Try '--help' for more information"
 msgstr "Essayez « --help » pour plus d’information"
 
-#: winmain.c:1784
+#: winmain.c:1785
 msgid "Could not load icon"
 msgstr "Impossible de charger l’icône"
 
-#: winmain.c:2088
+#: winmain.c:2089
 msgid "Usage:"
 msgstr "Utilisation :"
 
-#: winmain.c:2089
+#: winmain.c:2090
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr "[OPTION]... [ PROGRAMME [ARG]... | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:2092
+#: winmain.c:2093
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -1039,27 +1045,27 @@ msgstr ""
 "Voir la page de manuel pour les autres options de la ligne de commande et la "
 "configuration.\n"
 
-#: winmain.c:2268
+#: winmain.c:2269
 msgid "Syntax error in position argument '%s'"
 msgstr "Erreur de syntaxe pour l’argument « %s »"
 
-#: winmain.c:2279
+#: winmain.c:2280
 msgid "Syntax error in size argument '%s'"
 msgstr "Erreur de syntaxe pour l’argument de taille « %s »"
 
-#: winmain.c:2333
+#: winmain.c:2334
 msgid "Unknown option '%s'"
 msgstr "Option inconnue « %s »"
 
-#: winmain.c:2335
+#: winmain.c:2336
 msgid "Option '%s' requires an argument"
 msgstr "L’option « %s » requiert un argument"
 
-#: winmain.c:2381
+#: winmain.c:2382
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr "Mintty ne peut se détacher de l’appelant, on démarre quand même"
 
-#: winmain.c:2514
+#: winmain.c:2515
 msgid "Using default title due to invalid characters in program name"
 msgstr ""
 "Utilisation du titre par défaut à cause d’un caractère invalide dans le nom "
@@ -1080,19 +1086,19 @@ msgstr "◀"
 msgid "▶"
 msgstr "▶"
 
-#: wintext.c:331
+#: wintext.c:335
 msgid "Font not found, using system substitute"
 msgstr "Police non trouvée, utilisation de la police système"
 
-#: wintext.c:338
+#: wintext.c:342
 msgid "Font has limited support for character ranges"
 msgstr "La police a un jeu de caractères limité"
 
-#: wintext.c:459
+#: wintext.c:463
 msgid "Font installation corrupt, using system substitute"
 msgstr "Police corrompue, utilisation de la police système"
 
-#: wintext.c:479
+#: wintext.c:483
 msgid "Font does not support system locale"
 msgstr "Police non supporté pour la langue système"
 

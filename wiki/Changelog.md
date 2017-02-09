@@ -1,13 +1,29 @@
-Configuration
+Font handling
   * Changing default FontRender=uniscribe (#605, #573).
-  * Extending font sample area to both sides, allowing longer font samples.
-  * New drag-and-drop paste configuration DropCommands (#440).
+
+Terminal
+  * Fixed Backspace upper limit in Origin mode.
+  * Added switching feature for Reverse Wraparound mode.
+  * Reverse Wraparound default if false (rather than fixed true before), to comply with xterm and terminfo.
+  * Tweaked Wraparound and Backspace behaviour to comply with xterm.
+  * Option OldWrapModes=true would restore previous wraparound behaviour.
+  * Drag-and-drop pasting applies configurable pattern (#440).
+
+Configuration
   * Optional extended context menu (with Ctrl).
   * Extended context menu functions Copy & Paste entry (#539), Clear Scrollback (#421).
+  * Option to specify logfile but disable initial logging (Logging=no).
+  * New drag-and-drop paste configuration DropCommands (#440).
+  * New option OldWrapModes to restore previous wraparound behaviour.
+
+Options dialog
+  * Extending font sample area to both sides, allowing longer font samples.
+  * Fixed mangled position of colour chooser item (#626).
+
+Other:
   * Ctrl+Shift hotkeys and functions to toggle/cycle transparency (t) (#625), cursor style (p), scrollbar (o).
   * Feature to toggle logging from extended context menu.
-  * Option to specify logfile but disable initial logging (Logging=no).
-  * Fixed mangled position of colour chooser item (#626).
+  * Character information mode, switchable from extended context menu.
 
 ### 2.7.4 (29 Jan 2017) ###
 

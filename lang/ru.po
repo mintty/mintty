@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-02-03 14:13+0100\n"
+"POT-Creation-Date: 2017-02-08 13:41+0100\n"
 "PO-Revision-Date: 2016-12-19 04:18+0500\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -186,7 +186,7 @@ msgid "Save"
 msgstr "Сохранить"
 
 #. __ Dialog button - cancel
-#: config.c:2018 winctrls.c:1027 windialog.c:560
+#: config.c:2018 winctrls.c:1029 windialog.c:560
 msgid "Cancel"
 msgstr "Отмена"
 
@@ -201,7 +201,7 @@ msgid "I see"
 msgstr "Хорошо"
 
 #. __ Dialog button - confirm action
-#: config.c:2028 winctrls.c:1026 windialog.c:559
+#: config.c:2028 winctrls.c:1028 windialog.c:559
 msgid "OK"
 msgstr ""
 
@@ -700,112 +700,112 @@ msgid "&Select..."
 msgstr "Выбрать"
 
 #. __ Font chooser: title bar label
-#: winctrls.c:1031
+#: winctrls.c:1033
 msgid "Font "
 msgstr "Шрифт"
 
 #. __ Font chooser: button
-#: winctrls.c:1033
+#: winctrls.c:1035
 msgid "&Apply"
 msgstr "Применить"
 
 #. __ Font chooser:
-#: winctrls.c:1035
+#: winctrls.c:1037
 msgid "&Font:"
 msgstr "Шрифт:"
 
 #. __ Font chooser:
-#: winctrls.c:1037
+#: winctrls.c:1039
 msgid "Font st&yle:"
 msgstr "Начертание:"
 
 #. __ Font chooser:
-#: winctrls.c:1039
+#: winctrls.c:1041
 msgid "&Size:"
 msgstr "Размер:"
 
 #. __ Font chooser:
-#: winctrls.c:1041
+#: winctrls.c:1043
 msgid "Sample"
 msgstr "Образец"
 
 #. __ Font chooser: text sample ("AaBbYyZz" by default)
-#: winctrls.c:1045 winctrls.c:1282
+#: winctrls.c:1047 winctrls.c:1284
 msgid "Ferqœm’4€"
 msgstr "АаБбВвГг"
 
 #. __ Font chooser: this field is only shown with OldFontMenu=true
-#: winctrls.c:1062
+#: winctrls.c:1064
 msgid "Sc&ript:"
 msgstr "Набор символов:"
 
 #. __ Font chooser: this field is only shown with OldFontMenu=true
-#: winctrls.c:1064
+#: winctrls.c:1066
 msgid "<A>Show more fonts</A>"
 msgstr "<A>Показать дополнительные шрифты</A>"
 
 #. __ Colour chooser: title bar label
-#: winctrls.c:1069
+#: winctrls.c:1071
 msgid "Colour "
 msgstr "Цвет"
 
 #. __ Colour chooser:
-#: winctrls.c:1082 winctrls.c:1094
+#: winctrls.c:1084 winctrls.c:1096
 msgid "B&asic colours:"
 msgstr "Основные цвета:"
 
 #. __ Colour chooser:
-#: winctrls.c:1101
+#: winctrls.c:1103
 msgid "&Custom colours:"
 msgstr "Дополнительные цвета:"
 
 #. __ Colour chooser:
-#: winctrls.c:1108
+#: winctrls.c:1110
 msgid "De&fine Custom Colours >>"
 msgstr "Определить цвет >>"
 
 #. __ Colour chooser:
-#: winctrls.c:1111
+#: winctrls.c:1113
 msgid "Colour"
 msgstr "Цвет"
 
 #. __ Colour chooser:
-#: winctrls.c:1113
+#: winctrls.c:1115
 msgid "|S&olid"
 msgstr "|Заливка"
 
 #. __ Colour chooser:
-#: winctrls.c:1115
+#: winctrls.c:1117
 msgid "&Hue:"
 msgstr "Оттенок:"
 
 #. __ Colour chooser:
-#: winctrls.c:1118
+#: winctrls.c:1120
 msgid "&Sat:"
 msgstr "Контраст:"
 
 #. __ Colour chooser:
-#: winctrls.c:1120
+#: winctrls.c:1122
 msgid "&Lum:"
 msgstr "Яркость:"
 
 #. __ Colour chooser:
-#: winctrls.c:1122
+#: winctrls.c:1124
 msgid "&Red:"
 msgstr "Красный:"
 
 #. __ Colour chooser:
-#: winctrls.c:1124
+#: winctrls.c:1126
 msgid "&Green:"
 msgstr "Зеленый:"
 
 #. __ Colour chooser:
-#: winctrls.c:1126
+#: winctrls.c:1128
 msgid "&Blue:"
 msgstr "Синий:"
 
 #. __ Colour chooser:
-#: winctrls.c:1129
+#: winctrls.c:1131
 msgid "A&dd to Custom Colours"
 msgstr "Добавить в набор"
 
@@ -887,55 +887,60 @@ msgstr "Поиск"
 
 #. __ Context menu:
 #: wininput.c:202
-msgid "&Log to file"
-msgstr ""
+msgid "&Log to File"
+msgstr "Лог в файл"
 
 #. __ Context menu:
-#: wininput.c:207
+#: wininput.c:208
+msgid "Character &Info"
+msgstr "Информацию символов"
+
+#. __ Context menu:
+#: wininput.c:213
 msgid "&Reset"
 msgstr "Сброс"
 
 #. __ Context menu:
-#: wininput.c:215
+#: wininput.c:221
 msgid "&Default Size"
 msgstr "Стандартный размер"
 
 #. __ Context menu:
-#: wininput.c:221
+#: wininput.c:227
 msgid "&Full Screen"
 msgstr "На весь экран"
 
 #. __ Context menu:
-#: wininput.c:227
+#: wininput.c:233
 msgid "Flip &Screen"
 msgstr "Альтернативный экран"
 
 #. __ System menu:
-#: wininput.c:237 wininput.c:288
+#: wininput.c:243 wininput.c:295
 msgid "Copy &Title"
 msgstr "Копировать заголовок"
 
 #. __ System menu:
 #. __ Context menu:
 #. __ System menu:
-#: wininput.c:239 wininput.c:275 wininput.c:290
+#: wininput.c:245 wininput.c:282 wininput.c:297
 msgid "&Options..."
 msgstr "Настройки ..."
 
 #. __ Context menu:
-#: wininput.c:250
+#: wininput.c:256
 msgid "Ope&n"
 msgstr "Открыть"
 
 #. __ Context menu:
-#: wininput.c:258
+#: wininput.c:264
 msgid "Select &All"
 msgstr "Выбрать все"
 
 #. __ Context menu:
-#: wininput.c:267
-msgid "&Clear Scrollback"
-msgstr ""
+#: wininput.c:274
+msgid "Clear Scrollback"
+msgstr "Очистить скроллинг"
 
 #: winmain.c:1247
 msgid "Processes are running in session:"
@@ -945,24 +950,24 @@ msgstr "Имеются запущенные процессы:"
 msgid "Close anyway?"
 msgstr "Закрыть все равно?"
 
-#: winmain.c:1776
+#: winmain.c:1777
 msgid "Try '--help' for more information"
 msgstr "Используйте '--help' для получения дополнительной информации"
 
-#: winmain.c:1784
+#: winmain.c:1785
 msgid "Could not load icon"
 msgstr "Не удалось загрузить иконку"
 
-#: winmain.c:2088
+#: winmain.c:2089
 msgid "Usage:"
 msgstr "Применение:"
 
-#: winmain.c:2089
+#: winmain.c:2090
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr "[ОПЦИЙ]... [ ПРОГРАММА [АРГУМЕНТЫ]... | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:2092
+#: winmain.c:2093
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -1028,28 +1033,28 @@ msgstr ""
 "Смотрите страницу руководства для параметров командной строки и "
 "конфигурации.\n"
 
-#: winmain.c:2268
+#: winmain.c:2269
 msgid "Syntax error in position argument '%s'"
 msgstr "Ошибка синтаксиса в позиции аргумента '%s'"
 
-#: winmain.c:2279
+#: winmain.c:2280
 msgid "Syntax error in size argument '%s'"
 msgstr "Ошибка синтаксиса в размере аргумента '%s'"
 
-#: winmain.c:2333
+#: winmain.c:2334
 msgid "Unknown option '%s'"
 msgstr "Неизвестный параметр '%s'"
 
-#: winmain.c:2335
+#: winmain.c:2336
 msgid "Option '%s' requires an argument"
 msgstr "Параметр '%s' требует аргумент"
 
-#: winmain.c:2381
+#: winmain.c:2382
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr ""
 "Mintty не может отключится от вызывающего метода, запуск в любом случае"
 
-#: winmain.c:2514
+#: winmain.c:2515
 msgid "Using default title due to invalid characters in program name"
 msgstr ""
 "Использование заголовка по умолчанию из-за недопустимых символов в имени "
@@ -1070,19 +1075,19 @@ msgstr ""
 msgid "▶"
 msgstr ""
 
-#: wintext.c:331
+#: wintext.c:335
 msgid "Font not found, using system substitute"
 msgstr "Шрифт не найден, используя систему замены"
 
-#: wintext.c:338
+#: wintext.c:342
 msgid "Font has limited support for character ranges"
 msgstr "Шрифт имеет ограниченную поддержку диапазонов символов"
 
-#: wintext.c:459
+#: wintext.c:463
 msgid "Font installation corrupt, using system substitute"
 msgstr "Установка шрифта прервана, используя систему замены"
 
-#: wintext.c:479
+#: wintext.c:483
 msgid "Font does not support system locale"
 msgstr "Шрифт не поддерживает язык системы"
 
