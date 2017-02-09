@@ -19,6 +19,7 @@ Configuration
 Options dialog
   * Extending font sample area to both sides, allowing longer font samples.
   * Fixed mangled position of colour chooser item (#626).
+  * Unsqueezing colour chooser dialog to make more space for localized labels (#614, #611).
 
 Other:
   * Ctrl+Shift hotkeys and functions to toggle/cycle transparency (t) (#625), cursor style (p), scrollbar (o).
