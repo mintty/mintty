@@ -905,7 +905,7 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
   printf("hook %d %s", nCode, sCode);
   if (nCode == HCBT_CREATEWND) {
     CREATESTRUCTW * cs = ((CBT_CREATEWNDW *)lParam)->lpcs;
-    printf(" x %3d y %3d w %3d h %3d (%08X %07X) <%ls>\n", cs->x, cs->y, cs->cx, cs->cy, cs->style, cs->dwExStyle, cs->lpszName);
+    printf(" x %3d y %3d w %3d h %3d (%08X %07X) <%ls>\n", cs->x, cs->y, cs->cx, cs->cy, (uint)cs->style, (uint)cs->dwExStyle, cs->lpszName);
     //(long)cs->lpCreateParams == 0
   }
   else if (nCode == HCBT_ACTIVATE) {
@@ -932,12 +932,8 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
                                     0b02: post-adjust sample text
                                  */
   static bool adjust_sample_plus = false;
-  static int fc_item_grp = 0;
-  static int fc_item_idx = 0;
   static int fc_item_left = 11;
   static int fc_item_right = 415;
-  static int fc_item_gap = 7;
-  static int fc_button_width = 68;
   static int fc_sample_gap = 12;
   static int fc_sample_bottom = 228;
 
@@ -946,6 +942,10 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
     CREATESTRUCTW * cs = ((CBT_CREATEWNDW *)lParam)->lpcs;
 
     if (font_chooser && !new_cfg.old_fontmenu) {
+      static int fc_item_grp = 0;
+      static int fc_item_idx = 0;
+      static int fc_item_gap = 7;
+      static int fc_button_width = 68;
       static int fc_width = 437;
       static int fc_item1_right = 158;
       static int fc_item2_left = 165;
@@ -1025,9 +1025,18 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
     }
     else if (!font_chooser) {
       float zoom = 1.25;
+      static int cc_item_grp = 0;
+      static int cc_item_left = 6;
       static int cc_height = 326;
       static int cc_width = 453;
       static int cc_vert = 453 / 2;
+      static int cc_hue_shift = 6;
+
+      if ((cs->style & WS_CHILD) && (cs->style & WS_GROUP)) {
+        cc_item_grp ++;
+      }
+      if (cc_item_grp == 1)
+        cc_item_left = cs->x;
 
       if (!(cs->style & WS_CHILD)) {
         // colour chooser popup dialog
@@ -1036,9 +1045,27 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
         cc_vert = cc_width / 2;
         cs->cx = cc_vert + (cs->cx - cc_vert) * zoom;
       }
-      else if (cs->x > cc_vert && cs->y > cc_height / 2) {
-        cs->x = cc_vert + (cs->x - cc_vert) * zoom;
-        cs->cx *= zoom;
+      else if (cs->x >= cc_vert && cs->y > cc_height / 2) {
+        if (cc_item_grp >= 12 && cc_item_grp <= 23) {
+          // Hue etc
+          if (!(cs->style & WS_TABSTOP)) {
+            // labels
+            int cc_hue_right = cs->x + cs->cx;
+            cs->x = cc_vert + (cs->x - cc_vert) * zoom;
+            cs->cx *= zoom;
+            cs->cx += 2 * cc_item_left;
+            cc_hue_shift = cs->x + cs->cx - cc_hue_right;
+          }
+          else {
+            // value fields
+            cs->x += cc_hue_shift;
+          }
+        }
+        else if (!(cs->style & WS_TABSTOP)) {
+          // Colour|Solid box and labels
+          cs->x = cc_vert + (cs->x - cc_vert) * zoom;
+          cs->cx *= zoom;
+        }
       }
     }
   }
