@@ -1006,6 +1006,20 @@ term_paint(void)
         tattr.attr &= ~ATTR_BLINK;
       }
 
+     /* Mark box drawing, block and some other characters 
+      * that should connect to their neighbour cells and thus 
+      * be zoomed to the actual cell size including spacing (padding)
+      */
+      if (tchar >= 0x2320 &&
+          ((tchar >= 0x2500 && tchar <= 0x259F)
+           || wcschr(W("〳〴〵⌠⌡⎲⎳⏜⏝⏞⏟⏠⏡⯊⯋⎸⎹⎺⎻⎼⎽"), tchar)
+          )
+         )
+      {
+        tattr.attr |= TATTR_ZOOMFULL;
+        tattr.attr &= ~ATTR_ITALIC;
+      }
+
      /*
       * Check the font we'll _probably_ be using to see if
       * the character is wide when we don't want it to be.

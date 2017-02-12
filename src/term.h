@@ -112,6 +112,7 @@ enum {
   TATTR_ACTCURS   = 0x040000000000u, /* active cursor (block) */
   TATTR_COMBINING = 0x080000000000u, /* combining characters */
   TATTR_COMBDOUBL = 0x800000000000u, /* combining double characters */
+  TATTR_ZOOMFULL  = 0x400000000000u, /* to be zoomed to full cell size */
 
   TATTR_RESULT    = 0x100000000000u, /* search result */
   TATTR_CURRESULT = 0x200000000000u, /* current search result */

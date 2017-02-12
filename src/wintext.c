@@ -22,8 +22,9 @@ enum {
   FONT_ITALIC    = 0x04,
   FONT_STRIKEOUT = 0x08,
   FONT_HIGH      = 0x10,
-  FONT_WIDE      = 0x20,
-  FONT_NARROW    = 0x40,
+  FONT_ZOOMFULL  = 0x20,
+  FONT_WIDE      = 0x40,
+  FONT_NARROW    = 0x80,
   FONT_MAXNO     = FONT_WIDE + FONT_NARROW
 };
 
@@ -473,7 +474,7 @@ win_init_fonts(int size)
   row_spacing += cfg.row_spacing;
   if (row_spacing < -tm.tmDescent)
     row_spacing = -tm.tmDescent;
-    trace_font(("row spacing int %ld ext %ld -> %+d; add %+d -> %+d; desc %ld -> %+d %ls\n", 
+  trace_font(("row spacing int %ld ext %ld -> %+d; add %+d -> %+d; desc %ld -> %+d %ls\n", 
       (long int)tm.tmInternalLeading, (long int)tm.tmExternalLeading, row_padding(tm.tmInternalLeading, tm.tmExternalLeading),
       cfg.row_spacing, row_padding(tm.tmInternalLeading, tm.tmExternalLeading) + cfg.row_spacing,
       (long int)tm.tmDescent, row_spacing, cfg.font.name));
@@ -1002,12 +1003,17 @@ another_font(int fontno)
     s = true;
   if (fontno & FONT_UNDERLINE)
     u = true;
+  int y = font_height * (1 + !!(fontno & FONT_HIGH));
+  if (fontno & FONT_ZOOMFULL) {
+    y = cell_height;
+    x = cell_width;
+  }
 
 #ifdef debug_create_font
   printf("font [%02X]: %d (size %d) %d w%4d i%d u%d s%d\n", fontno, font_height * (1 + !!(fontno & FONT_HIGH)), font_size, x, w, i, u, s);
 #endif
   fonts[fontno] =
-    CreateFontW(font_height * (1 + !!(fontno & FONT_HIGH)), x, 0, 0, w, i, u, s,
+    CreateFontW(y, x, 0, 0, w, i, u, s,
                 DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                 get_font_quality(), FIXED_PITCH | FF_DONTCARE, cfg.font.name);
 
@@ -1132,6 +1138,7 @@ void
 win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int lattr, bool has_rtl)
 {
   trace_line("win_text:", text, len);
+
   lattr &= LATTR_MODE;
   int char_width = cell_width * (1 + (lattr != LATTR_NORM));
 
@@ -1173,6 +1180,8 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
   if (attr.attr & ATTR_STRIKEOUT
       && !cfg.underl_manual && cfg.underl_colour == (colour)-1)
     nfont |= FONT_STRIKEOUT;
+  if (attr.attr & TATTR_ZOOMFULL)
+    nfont |= FONT_ZOOMFULL;
   another_font(nfont);
 
   bool force_manual_underline = false;
@@ -1424,6 +1433,10 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
  /* Begin text output */
   int yt = y + (row_spacing / 2) - (lattr == LATTR_BOT ? cell_height : 0);
   int xt = x + (cfg.col_spacing / 2);
+  if (attr.attr & TATTR_ZOOMFULL) {
+    yt -= row_spacing / 2;
+    xt = x;
+  }
 
  /* Determine shadow/overstrike bold or double-width/height width */
   int xwidth = 1;
