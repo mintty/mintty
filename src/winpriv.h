@@ -39,6 +39,7 @@ extern void win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_s
 
 extern void win_open_config(void);
 extern void set_dpi_auto_scaling(bool on);
+extern void win_update_transparency(bool opaque);
 
 extern void win_show_tip(int x, int y, int cols, int rows);
 extern void win_destroy_tip(void);

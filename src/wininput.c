@@ -495,13 +495,15 @@ toggle_scrollbar(void)
 }
 
 static int previous_transparency;
+static bool transparency_tuned;
+
+#define dont_debug_transparency
 
 static void
 cycle_transparency(void)
 {
-  previous_transparency = cfg.transparency;
   cfg.transparency = ((cfg.transparency + 16) / 16 * 16) % 128;
-  update_transparency();
+  win_update_transparency(false);
 }
 
 static void
@@ -512,7 +514,7 @@ set_transparency(int t)
   else if (t < 0)
     t = 0;
   cfg.transparency = t;
-  update_transparency();
+  win_update_transparency(false);
 }
 
 static void
@@ -717,7 +719,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     switch (key) {
       when VK_HOME  : set_transparency(previous_transparency);
       when VK_CLEAR : cfg.transparency = TR_GLASS;
-                      update_transparency();
+                      win_update_transparency(false);
       when VK_DELETE: set_transparency(0);
       when VK_INSERT: set_transparency(127);
       when VK_END   : set_transparency(TR_HIGH);
@@ -729,8 +731,13 @@ win_key_down(WPARAM wp, LPARAM lp)
       when VK_NEXT  : set_transparency(cfg.transparency - 16);
       otherwise: transparency_pending = 0;
     }
-    if (transparency_pending)
+#ifdef debug_transparency
+    printf("==%d\n", transparency_pending);
+#endif
+    if (transparency_pending) {
+      transparency_tuned = true;
       return true;
+    }
   }
 
   if (!term.shortcut_override) {
@@ -799,9 +806,16 @@ win_key_down(WPARAM wp, LPARAM lp)
         when 'F': send_syscommand(IDM_FULLSCREEN);
         when 'S': send_syscommand(IDM_FLIPSCREEN);
         when 'H': send_syscommand(IDM_SEARCH);
-        when 'T': if (!transparency_pending)
-                    cycle_transparency();
-                  transparency_pending = 1;
+        when 'T': if (!transparency_pending) {
+                    previous_transparency = cfg.transparency;
+                    transparency_pending = 1;
+                    transparency_tuned = false;
+                  }
+                  if (cfg.opaque_when_focused)
+                    win_update_transparency(false);
+#ifdef debug_transparency
+                  printf("++%d\n", transparency_pending);
+#endif
         when 'P': cycle_pointer_style();
         when 'O': toggle_scrollbar();
       }
@@ -1474,8 +1488,16 @@ win_key_up(WPARAM wp, LPARAM unused(lp))
       send_syscommand2(IDM_NEW_MONI, ' ' + moni);
     }
   }
-  if (transparency_pending)
+  if (transparency_pending) {
     transparency_pending--;
+#ifdef debug_transparency
+    printf("--%d\n", transparency_pending);
+#endif
+    if (!transparency_tuned)
+      cycle_transparency();
+    if (!transparency_pending && cfg.opaque_when_focused)
+      win_update_transparency(true);
+  }
 
   if (wp != VK_MENU)
     return false;

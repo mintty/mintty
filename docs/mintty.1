@@ -575,15 +575,18 @@ Keys pane of the options dialog.
 .br
 \(en \fBCtrl+Shift+P\fP: Cycle pointer styles
 .br
-\(en \fBCtrl+Shift+T\fP: Cycle transparency levels
+\(en \fBCtrl+Shift+T\fP: Cycle or tune transparency levels
 
-Ctrl+Shift+T cycles through transparency levels in steps. 
-While Ctrl+Shift+T is held down, the navigation keys on the numeric keypad 
-can be used for further fine-tuning: Up/Dn to increase/decrease, 
-PgUp/PgDn for steps, Del/Ins for no/max transparency, End for highest 
-preconfigured transparency, Home for previous value, Clear ("5") for glass.
-Note that immediate feedback of these transparency changes is only 
-visible if setting OpaqueWhenFocused is disabled.
+Ctrl+Shift+T cycles through transparency levels in steps, whenever 
+Ctrl+Shift+T is released. Alternatively, while Ctrl+Shift+T is held down, 
+the navigation keys on the numeric keypad can be used for further fine-tuning:
+.br
+Up/Dn to increase/decrease, PgUp/PgDn for steps, Del/Ins for no/max transparency, 
+End for highest preconfigured transparency, Home for previous value, 
+Clear ("5") for glass.
+.br
+If OpaqueWhenFocused is set, opaqueness is temporarily disabled to 
+provide visible feedback for the changes.
 
 .SS Embedding graphics in terminal output
 

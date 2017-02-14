@@ -1,5 +1,6 @@
 Font handling
   * Changing default FontRender=uniscribe (#605, #573).
+  * Zoom box drawing and some other characters to complete cell size so they can connect to each other (#628).
 
 Terminal
   * Fixed Backspace upper limit in Origin mode.
@@ -22,8 +23,11 @@ Options dialog
   * Unsqueezing colour chooser dialog to make more space for localized labels (#614, #611).
 
 Other:
-  * Ctrl+Shift hotkeys and functions to toggle/cycle transparency (t) (#625), cursor style (p), scrollbar (o).
-  * Feature to toggle logging from extended context menu.
+  * Ctrl+Shift+t hotkey cycles transparency (#625).
+  * Ctrl+Shift+t+cursor-block hotkeys tune transparency (#625).
+  * Ctrl+Shift+p hotkey cycles cursor style.
+  * Ctrl+Shift+o hotkey toggles scrollbar.
+  * Logging can be toggled from extended context menu.
   * Character information mode, switchable from extended context menu.
 
 ### 2.7.4 (29 Jan 2017) ###
