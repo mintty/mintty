@@ -942,7 +942,7 @@ msgstr "Tout &Sélectionner"
 #. __ Context menu:
 #: wininput.c:274
 msgid "Clear Scrollback"
-msgstr "Éteindre défilement"
+msgstr "Effacer défilement"
 
 # msgstr "Arrêter le défilement"
 #: winmain.c:1247

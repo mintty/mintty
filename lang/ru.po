@@ -893,7 +893,7 @@ msgstr "Лог в файл"
 #. __ Context menu:
 #: wininput.c:208
 msgid "Character &Info"
-msgstr "Информацию символов"
+msgstr "Информация символов"
 
 #. __ Context menu:
 #: wininput.c:213
