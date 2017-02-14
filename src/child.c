@@ -257,6 +257,13 @@ child_create(char *argv[], struct winsize *winp)
     tcgetattr(0, &attr);
     attr.c_cc[VERASE] = cfg.backspace_sends_bs ? CTRL('H') : CDEL;
     attr.c_iflag |= IXANY | IMAXBEL;
+#ifdef IUTF8
+    bool utf8 = strcmp(nl_langinfo(CODESET), "UTF-8") == 0;
+    if (utf8)
+      attr.c_iflag |= IUTF8;
+    else
+      attr.c_iflag &= ~IUTF8;
+#endif
     attr.c_lflag |= ECHOE | ECHOK | ECHOCTL | ECHOKE;
     tcsetattr(0, TCSANOW, &attr);
 
