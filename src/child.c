@@ -182,7 +182,6 @@ child_update_charset(void)
     struct termios attr;
     tcgetattr(pty_fd, &attr);
     bool utf8 = strcmp(nl_langinfo(CODESET), "UTF-8") == 0;
-printf("child_update_charset utf %d %s\n", utf8, nl_langinfo(CODESET));
     if (utf8)
       attr.c_iflag |= IUTF8;
     else

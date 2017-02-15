@@ -5,15 +5,27 @@ Font handling
 Terminal
   * Fixed Backspace upper limit in Origin mode.
   * Added switching feature for Reverse Wraparound mode.
-  * Reverse Wraparound default if false (rather than fixed true before), to comply with xterm and terminfo.
-  * Tweaked Wraparound and Backspace behaviour to comply with xterm.
+  * Reverse Wraparound is false by default (rather than fixed true before), to comply with xterm and terminfo.
+  * Tweaked Wraparound and Backspace behaviour to comply with xterm and pass vttest 1.
   * Option OldWrapModes=true would restore previous wraparound behaviour.
-  * Drag-and-drop pasting applies configurable pattern (#440).
+
+Tty and character set
   * Keeping termios flag IUTF8 in sync with locale/charset to support proper backspace behaviour of programs not using readline.
 
-Configuration
+Drag and drop
+  * Drag-and-drop pasting applies configurable pattern (#440).
+
+Menu and hotkey functions
   * Optional extended context menu (with Ctrl).
-  * Extended context menu functions Copy & Paste entry (#539), Clear Scrollback (#421).
+  * Extended context menu functions Copy & Paste (#539), Clear Scrollback (#421).
+  * Logging can be toggled from extended context menu.
+  * Character information mode, switchable from extended context menu.
+  * Ctrl+Shift+t hotkey cycles transparency (#625).
+  * Ctrl+Shift+t+cursor-block hotkeys tune transparency (#625).
+  * Ctrl+Shift+p hotkey cycles cursor style.
+  * Ctrl+Shift+o hotkey toggles scrollbar.
+
+Configuration
   * Option to specify logfile but disable initial logging (Logging=no).
   * New drag-and-drop paste configuration DropCommands (#440).
   * New option OldWrapModes to restore previous wraparound behaviour.
@@ -22,14 +34,6 @@ Options dialog
   * Extending font sample area to both sides, allowing longer font samples.
   * Fixed mangled position of colour chooser item (#626).
   * Unsqueezing colour chooser dialog to make more space for localized labels (#614, #611).
-
-Other:
-  * Ctrl+Shift+t hotkey cycles transparency (#625).
-  * Ctrl+Shift+t+cursor-block hotkeys tune transparency (#625).
-  * Ctrl+Shift+p hotkey cycles cursor style.
-  * Ctrl+Shift+o hotkey toggles scrollbar.
-  * Logging can be toggled from extended context menu.
-  * Character information mode, switchable from extended context menu.
 
 ### 2.7.4 (29 Jan 2017) ###
 
