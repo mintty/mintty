@@ -9,6 +9,7 @@ Terminal
   * Tweaked Wraparound and Backspace behaviour to comply with xterm.
   * Option OldWrapModes=true would restore previous wraparound behaviour.
   * Drag-and-drop pasting applies configurable pattern (#440).
+  * Keeping termios flag IUTF8 in sync with locale/charset to support proper backspace behaviour of programs not using readline.
 
 Configuration
   * Optional extended context menu (with Ctrl).
@@ -51,7 +52,7 @@ Configuration and Terminal settings:
 Other:
   * Extended WSL link conversion (for link-click and link pasting) to non-/mnt paths (~#164, mintty/wsltty#19).
   * Fixed window popup (on escape sequence CSI 5t).
-  * Allowed automatic font metrics adjustment to increase row padding.
+  * Allowed automatic font metrics adjustment to increase row spacing.
 
 ### 2.7.3 (23 Dec 2016) ###
 

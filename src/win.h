@@ -30,8 +30,6 @@ extern void win_bell(config *);
 extern void win_set_title(char *);
 extern void win_save_title(void);
 extern void win_restore_title(void);
-extern void win_prefix_title(const wstring);
-extern void win_unprefix_title(const wstring);
 extern void win_copy_title(void);
 extern void win_copy_text(const char *s);
 

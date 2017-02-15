@@ -883,12 +883,20 @@ to avoid confusion.
 The character set to be used for encoding input and decoding output.
 If no locale is set, this setting is ignored.
 
+\fINote:\fP
 While changing the character set takes effect immediately for text input and
 ouput, it does not affect the processes already running in mintty.
 This is because the environment variables of a running process cannot be
 changed from outside that process.
 Therefore mintty should be restarted for a character set change to take full
-effect.
+effect, or the locale environment of the shell should be changed accordingly.
+
+\fINote:\fP
+The locale and character set can also be changed with an escape sequence, 
+see the Control Sequences wiki page \fIhttps://github.com/mintty/mintty/wiki/CtrlSeqs#locale\fP.
+That setting takes precedence; changes from the Options menu will silently 
+have no effect unless an escape sequence with empty locale is sent 
+to the terminal to restore to "default".
 
 .SS Keys
 Settings controlling keyboard behaviour.

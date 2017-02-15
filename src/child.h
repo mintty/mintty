@@ -5,6 +5,7 @@
 
 extern bool clone_size_token;
 
+extern void child_update_charset(void);
 extern void child_create(char * argv[], struct winsize * winp);
 extern void toggle_logging(void);
 extern bool logging;

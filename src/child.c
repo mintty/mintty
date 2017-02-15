@@ -1,5 +1,5 @@
 // child.c (part of mintty)
-// Copyright 2008-11 Andy Koppe
+// Copyright 2008-11 Andy Koppe, 2015-2017 Thomas Wolff
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "child.h"
@@ -7,7 +7,7 @@
 #include "term.h"
 #include "charset.h"
 
-#include "win.h"  /* win_prefix_title */
+#include "winpriv.h"  /* win_prefix_title */
 
 #include <pwd.h>
 #include <fcntl.h>
@@ -175,6 +175,23 @@ toggle_logging()
 }
 
 void
+child_update_charset(void)
+{
+#ifdef IUTF8
+    // Terminal line settings
+    struct termios attr;
+    tcgetattr(pty_fd, &attr);
+    bool utf8 = strcmp(nl_langinfo(CODESET), "UTF-8") == 0;
+printf("child_update_charset utf %d %s\n", utf8, nl_langinfo(CODESET));
+    if (utf8)
+      attr.c_iflag |= IUTF8;
+    else
+      attr.c_iflag &= ~IUTF8;
+    tcsetattr(pty_fd, TCSANOW, &attr);
+#endif
+}
+
+void
 child_create(char *argv[], struct winsize *winp)
 {
   string lang = cs_lang();
@@ -288,6 +305,8 @@ child_create(char *argv[], struct winsize *winp)
   }
   else { // Parent process.
     fcntl(pty_fd, F_SETFL, O_NONBLOCK);
+
+    //child_update_charset();  // could do it here or as above
 
     if (cfg.create_utmp) {
       char *dev = ptsname(pty_fd);

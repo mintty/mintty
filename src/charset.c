@@ -6,6 +6,7 @@
 #include "charset.h"
 
 #include "config.h"
+#include "child.h"  // child_update_charset
 
 #if HAS_LOCALES
 #include <locale.h>
@@ -316,6 +317,8 @@ update_locale(void)
     cs_ambig_wide = font_ambig_wide;
   }
 #endif
+
+  child_update_charset();
 
   update_mode();
 }
