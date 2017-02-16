@@ -20,6 +20,7 @@ Menu and hotkey functions
   * Extended context menu functions Copy & Paste (#539), Clear Scrollback (#421).
   * Logging can be toggled from extended context menu.
   * Character information mode, switchable from extended context menu.
+  * User-defined commands in extended context menu (#100, #475).
   * Ctrl+Shift+t hotkey cycles transparency (#625).
   * Ctrl+Shift+t+cursor-block hotkeys tune transparency (#625).
   * Ctrl+Shift+p hotkey cycles cursor style.
@@ -28,6 +29,7 @@ Menu and hotkey functions
 Configuration
   * Option to specify logfile but disable initial logging (Logging=no).
   * New drag-and-drop paste configuration DropCommands (#440).
+  * New user commands configuration UserCommands (#100, #475).
   * New option OldWrapModes to restore previous wraparound behaviour.
 
 Options dialog

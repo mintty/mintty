@@ -487,6 +487,7 @@ extern void term_copy(void);
 extern void term_paste(wchar *, uint len);
 extern void term_send_paste(void);
 extern void term_cancel_paste(void);
+extern void term_cmd(char * cmdpat, bool all);
 extern void term_reconfig(void);
 extern void term_flip_screen(void);
 extern void term_reset_screen(void);

@@ -40,7 +40,7 @@ win_update_menus(void)
 
   void
   modify_menu(HMENU menu, UINT item, UINT state, wchar * label, wchar * key)
-  // item is sysentry: ignore state
+  // if item is sysentry: ignore state
   // state: MF_ENABLED, MF_GRAYED, MF_CHECKED, MF_UNCHECKED
   // label: if null, use current label
   // key: shortcut description; localize "Ctrl+Alt+Shift+"
@@ -91,6 +91,7 @@ win_update_menus(void)
         mi.dwTypeData = wcsdup((wstring)mi.dwItemData);
       }
     }
+    //don't mi.fMask |= MIIM_ID; mi.wID = ...; would override item ID
     if (label)
       mi.dwTypeData = wcsdup(label);
     if (!sysentry) {
@@ -246,7 +247,7 @@ win_update_menus(void)
 }
 
 static void
-win_init_ctxmenu(bool extended)
+win_init_ctxmenu(bool extended_menu)
 {
 #ifdef debug_modify_menu
   printf("win_init_ctxmenu\n");
@@ -257,19 +258,19 @@ win_init_ctxmenu(bool extended)
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_COPY, 0);
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_PASTE, 0);
-  if (extended) {
+  if (extended_menu) {
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_COPASTE, 0);
   }
   //__ Context menu:
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_SELALL, _W("Select &All"));
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_SEARCH, 0);
-  if (extended) {
+  if (extended_menu) {
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_TOGLOG, 0);
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_TOGCHARINFO, 0);
   }
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_RESET, 0);
-  if (extended) {
+  if (extended_menu) {
     //__ Context menu:
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_CLRSCRLBCK, _W("Clear Scrollback"));
   }
@@ -278,6 +279,31 @@ win_init_ctxmenu(bool extended)
   AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN_ZOOM, 0);
   AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_FLIPSCREEN, 0);
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
+
+  if (extended_menu && *cfg.user_commands) {
+    char * cmds = cs__wcstoutf(cfg.user_commands);
+    char * cmdp = cmds;
+    int n = 0;
+    char sepch = ';';
+    if ((uchar)*cmdp <= (uchar)' ')
+      sepch = *cmdp++;
+
+    char * endp;
+    while ((endp = strchr(cmdp, ':'))) {
+      *endp = '\0';
+      AppendMenuW(ctxmenu, MF_ENABLED, IDM_USERCOMMAND + n, _W(cmdp));
+      n++;
+      cmdp = strchr(endp + 1, sepch);
+      if (cmdp)
+        cmdp++;
+      else
+        break;
+    }
+    free(cmds);
+
+    AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
+  }
+
   //__ Context menu:
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_OPTIONS, _W("&Options..."));
 }

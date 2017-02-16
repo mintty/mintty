@@ -1346,6 +1346,9 @@ static struct {
         }
       printf("                           %04X %s\n", (int)wp, idm_name);
 # endif
+      if ((wp & ~0xF) >= IDM_USERCOMMAND)
+        user_command(wp - IDM_USERCOMMAND);
+      else
       switch (wp & ~0xF) {  /* low 4 bits reserved to Windows */
         when IDM_OPEN: term_open();
         when IDM_COPY: term_copy();

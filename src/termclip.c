@@ -230,3 +230,53 @@ term_select_all(void)
   if (cfg.copy_on_select)
     term_copy();
 }
+
+static wchar *
+term_get_sel_or_all(bool all)
+{
+  if (!term.selected) {
+    if (all) {
+      term.sel_start = (pos){-sblines(), 0};
+      term.sel_end = (pos){term_last_nonempty_line(), term.cols};
+    }
+    else
+      return wcsdup(W(""));
+  }
+
+  clip_workbuf buf;
+  get_selection(&buf);
+  wchar * tbuf = buf.textbuf;
+  free(buf.attrbuf);
+  return tbuf;
+}
+
+void
+term_cmd(char * cmdpat, bool all)
+{
+  char * sel = 0;
+  if (strstr(cmdpat, "%s") || strstr(cmdpat, "%1$s")) {
+    wchar * wsel = term_get_sel_or_all(all);
+    sel = cs__wcstombs(wsel);
+    free(wsel);
+  }
+
+  int len = strlen(cmdpat) + (sel ? strlen(sel) : 0) + 1;
+  char * cmd = newn(char, len);
+  sprintf(cmd, cmdpat, sel ?: "");
+  if (sel)
+    free(sel);
+
+  FILE * cmdf = popen(cmd, "r");
+  if (cmdf) {
+    if (term.bracketed_paste)
+      child_write("\e[200~", 6);
+    char line[222];
+    while (fgets(line, sizeof line, cmdf)) {
+      child_send(line, strlen(line));
+    }
+    pclose(cmdf);
+    if (term.bracketed_paste)
+      child_write("\e[201~", 6);
+  }
+}
+

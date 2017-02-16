@@ -551,10 +551,64 @@ child_resize(struct winsize *winp)
     ioctl(pty_fd, TIOCSWINSZ, winp);
 }
 
-int
+static int
 foreground_pid()
 {
   return (pty_fd >= 0) ? tcgetpgrp(pty_fd) : 0;
+}
+
+char *
+foreground_prog()
+{
+  int fg_pid = foreground_pid();
+  if (fg_pid > 0) {
+    char exename[32];
+    sprintf(exename, "/proc/%u/exename", fg_pid);
+    FILE * enf = fopen(exename, "r");
+    if (enf) {
+      char exepath[MAX_PATH + 1];
+      fgets(exepath, sizeof exepath, enf);
+      fclose(enf);
+      // get basename of program path
+      char * exebase = strrchr(exepath, '/');
+      if (exebase)
+        exebase++;
+      else
+        exebase = exepath;
+      return strdup(exebase);
+    }
+  }
+  return 0;
+}
+
+void
+user_command(int n)
+{
+  if (*cfg.user_commands) {
+    char * cmds = cs__wcstombs(cfg.user_commands);
+    char * cmdp = cmds;
+    char sepch = ';';
+    if ((uchar)*cmdp <= (uchar)' ')
+      sepch = *cmdp++;
+
+    char * progp;
+    while (n >= 0 && (progp = strchr(cmdp, ':'))) {
+      progp++;
+      char * sepp = strchr(progp, sepch);
+      if (sepp)
+        *sepp = '\0';
+
+      if (n == 0)
+        return term_cmd(progp, true);
+      n--;
+
+      if (sepp)
+        cmdp = sepp + 1;
+      else
+        break;
+    }
+    free(cmds);
+  }
 }
 
 wstring

@@ -635,35 +635,23 @@ paste_hdrop(HDROP drop)
   }
   buf_pos--;  // Drop trailing space
 
-  // try to determine foreground program
-  int fg_pid = foreground_pid();
-  if (fg_pid > 0 && *cfg.drop_commands) {
-    char * drops = cs__wcstombs(cfg.drop_commands);
-    char exename[32];
-    sprintf(exename, "/proc/%u/exename", fg_pid);
-    FILE * enf = fopen(exename, "r");
-    if (enf) {
-      char exepath[MAX_PATH + 1];
-      fgets(exepath, sizeof exepath, enf);
-      fclose(enf);
-      // get basename of program path
-      char * exebase = strrchr(exepath, '/');
-      if (exebase)
-        exebase++;
-      else
-        exebase = exepath;
-
+  if (*cfg.drop_commands) {
+    // try to determine foreground program
+    char * fg_prog = foreground_prog();
+    if (fg_prog) {
       // match program base name
-      char * matchconf(char * conf, char * item) {
+      char * matchconf(char * conf, char * item, char sepch) {
+        if (*conf == sepch)
+          conf++;
         char * m = strstr(conf, item);
-        if (m && (m == conf || *(m - 1) == ';')) {
+        if (m && (m == conf || *(m - 1) == sepch)) {
           m += strlen(item);
           if (*m == ':')
             return m + 1;
           else {
             m = strchr(m, ':');
             if (m)
-              return matchconf(m, item);
+              return matchconf(m, item, sepch);
             else
               return null;
           }
@@ -672,9 +660,13 @@ paste_hdrop(HDROP drop)
           return null;
       }
 
-      char * paste = matchconf(drops, exebase);
+      char * drops = cs__wcstombs(cfg.drop_commands);
+      char sepch = ';';
+      if (((uchar)*drops) < (uchar)' ')
+        sepch = *drops;
+      char * paste = matchconf(drops, fg_prog, sepch);
       if (paste) {
-        char * sep = strchr(paste, ';');
+        char * sep = strchr(paste, sepch);
         if (sep)
           *sep = 0;
         buf[buf_pos] = 0;
@@ -683,11 +675,13 @@ paste_hdrop(HDROP drop)
         child_send(pastebuf, strlen(pastebuf));
         free(pastebuf);
         free(drops);
+        free(fg_prog);
         free(buf);
         return;
       }
+      free(drops);
+      free(fg_prog);
     }
-    free(drops);
   }
 
   if (term.bracketed_paste)
