@@ -228,6 +228,14 @@ these _OSC_ sequences introduced by **[rxvt-unicode](http://software.schmorp.de/
 
 The locale string used here should take the same format as in the locale environment variables such as _LANG_. When the locale is queried, a sequence that would set the current locale is sent, e.g. `^[]701;C.UTF-8^G`. An empty _loc_ string selects the locale configured in the options or the environment.
 
+Note: While the terminal character set defines how the terminal interprets 
+and handles keys and characters, application handling of characters is 
+usually determined by the locale environment, and they cannot automatically 
+be tied to each other. If they do not match, character handling will be chaotic.
+Consistent changing could be achieved with a shell like 
+**[changecs](change-charset.sh)**, 
+to be declared in your shell profile (e.g. `$HOME/.bashrc`).
+
 
 ## Window title ##
 
