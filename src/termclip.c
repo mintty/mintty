@@ -232,9 +232,13 @@ term_select_all(void)
 }
 
 static wchar *
-term_get_sel_or_all(bool all)
+term_get_sel_or_all(bool all, bool screen)
 {
-  if (!term.selected) {
+  if (screen) {
+    term.sel_start = (pos){term.disptop, 0};
+    term.sel_end = (pos){term_last_nonempty_line(), term.cols};
+  }
+  else if (!term.selected) {
     if (all) {
       term.sel_start = (pos){-sblines(), 0};
       term.sel_end = (pos){term_last_nonempty_line(), term.cols};
@@ -253,7 +257,25 @@ term_get_sel_or_all(bool all)
 void
 term_cmd(char * cmdpat, bool all)
 {
-  char * sel = 0;
+  // provide scrollback buffer
+  wchar * wsel = term_get_sel_or_all(all, false);
+  char * sel = cs__wcstombs(wsel);
+  free(wsel);
+  setenv("MINTTY_SELECTION", sel, true);
+  free(sel);
+  // provide current screen
+  wsel = term_get_sel_or_all(false, true);
+  sel = cs__wcstombs(wsel);
+  free(wsel);
+  setenv("MINTTY_SCREEN", sel, true);
+  free(sel);
+  // provide window title
+  char * ttl = win_get_title();
+  setenv("MINTTY_TITLE", ttl, true);
+  free(ttl);
+
+#ifdef use_placeholders
+  sel = 0;
   if (strstr(cmdpat, "%s") || strstr(cmdpat, "%1$s")) {
     wchar * wsel = term_get_sel_or_all(all);
     sel = cs__wcstombs(wsel);
@@ -265,6 +287,9 @@ term_cmd(char * cmdpat, bool all)
   sprintf(cmd, cmdpat, sel ?: "");
   if (sel)
     free(sel);
+#else
+  char * cmd = cmdpat;
+#endif
 
   FILE * cmdf = popen(cmd, "r");
   if (cmdf) {

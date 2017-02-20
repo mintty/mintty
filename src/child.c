@@ -178,6 +178,7 @@ void
 child_update_charset(void)
 {
 #ifdef IUTF8
+  if (pty_fd >= 0) {
     // Terminal line settings
     struct termios attr;
     tcgetattr(pty_fd, &attr);
@@ -187,6 +188,7 @@ child_update_charset(void)
     else
       attr.c_iflag &= ~IUTF8;
     tcsetattr(pty_fd, TCSANOW, &attr);
+  }
 #endif
 }
 
@@ -557,6 +559,18 @@ foreground_pid()
   return (pty_fd >= 0) ? tcgetpgrp(pty_fd) : 0;
 }
 
+static char *
+foreground_cwd()
+{
+  int fg_pid = foreground_pid();
+  if (fg_pid > 0) {
+    char proc_cwd[32];
+    sprintf(proc_cwd, "/proc/%u/cwd", fg_pid);
+    return realpath(proc_cwd, 0);
+  }
+  return 0;
+}
+
 char *
 foreground_prog()
 {
@@ -598,8 +612,19 @@ user_command(int n)
       if (sepp)
         *sepp = '\0';
 
-      if (n == 0)
+      if (n == 0) {
+        char * fgp = foreground_prog();
+        if (fgp) {
+          setenv("MINTTY_PROG", fgp, true);
+          free(fgp);
+        }
+        char * fgd = foreground_cwd();
+        if (fgd) {
+          setenv("MINTTY_CWD", fgd, true);
+          free(fgd);
+        }
         return term_cmd(progp, true);
+      }
       n--;
 
       if (sepp)
@@ -654,15 +679,10 @@ child_conv_path(wstring wpath)
     if (fg_pid <= 0)
       fg_pid = pid;
 
-    char *cwd = 0;
-    if (fg_pid > 0) {
-      char proc_cwd[32];
-      sprintf(proc_cwd, "/proc/%u/cwd", fg_pid);
-      cwd = realpath(proc_cwd, 0);
-    }
-
+    char *cwd = foreground_cwd();
     exp_path = asform("%s/%s", cwd ?: home, path);
-    free(cwd);
+    if (cwd)
+      free(cwd);
 #else
     // If we're lucky, the path is relative to the home directory.
     exp_path = asform("%s/%s", home, path);

@@ -258,7 +258,17 @@ win_copy_title(void)
   win_copy(title, 0, len + 1);
 }
 
-void win_copy_text(const char *s)
+char *
+win_get_title(void)
+{
+  int len = GetWindowTextLengthW(wnd);
+  wchar title[len + 1];
+  GetWindowTextW(wnd, title, len + 1);
+  return cs__wcstombs(title);
+}
+
+void
+win_copy_text(const char *s)
 {
   unsigned int size;
   wchar *text = cs__mbstowcs(s);
