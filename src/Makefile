@@ -87,10 +87,12 @@ ifeq ($(shell VER=`$(CC) -dumpversion`; expr $${VER%.*} '>=' 4.5), 1)
 endif
 
 scriptlib=-lusp10
+downldlib=-lurlmon
+extralibs=$(scriptlib) $(downldlib)
 LDFLAGS := -L$(shell $(CC) -print-file-name=w32api) -static-libgcc
-LDLIBS := -mwindows $(scriptlib) -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -luuid
+LDLIBS := -mwindows $(extralibs) -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -luuid
 #override LDFLAGS += -L$(shell $(CC) -print-file-name=w32api) -static-libgcc
-#override LDLIBS += -mwindows $(scriptlib) -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -luuid
+#override LDLIBS += -mwindows $(extralibs) -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -luuid
 
 ifdef DEBUG
   CFLAGS += -g

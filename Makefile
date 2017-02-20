@@ -41,6 +41,7 @@ changelogversion := $(shell sed -e '1 s,^\#* *\([0-9.]*\).*,\1,' -e t -e d wiki/
 ver:
 	echo checking same version in changelog and source
 	test "$(version)" = "$(changelogversion)"
+	echo $(version) > VERSION
 
 DIST := release
 TARUSER := --owner=root --group=root --owner=mintty --group=cygwin

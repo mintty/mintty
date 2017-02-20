@@ -38,6 +38,7 @@ extern void win_init_fonts(int size);
 extern void win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size);
 
 extern void win_open_config(void);
+extern void update_available_version(void);
 extern void set_dpi_auto_scaling(bool on);
 extern void win_update_transparency(bool opaque);
 extern void win_prefix_title(const wstring);

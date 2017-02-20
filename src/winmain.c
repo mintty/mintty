@@ -1403,6 +1403,9 @@ static struct {
       }
     }
 
+    when WM_APP:
+      update_available_version();
+
     when WM_VSCROLL:
       switch (LOWORD(wp)) {
         when SB_BOTTOM:   term_scroll(-1, 0);

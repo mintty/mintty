@@ -209,6 +209,116 @@ debug(char *tag)
 # define debug(tag)	
 #endif
 
+#define dont_debug_version_check 1
+
+static char * version_available = 0;
+static bool version_retrieving = false;
+
+static void
+display_update(char * new)
+{
+  if (!config_wnd)
+    return;
+
+  //__ Options: dialog title
+  char * opt = _("Options");
+  //__ Options: dialog title
+  char * avl = _("available");
+  char * pat = "%s            ▶ %s %s %s ◀";
+  int len = strlen(opt) + strlen(APPNAME) + strlen(new) + strlen(avl) + strlen(pat) - 7;
+  char * msg = newn(char, len);
+  sprintf(msg, pat, opt, APPNAME, new, avl);
+#ifdef debug_version_check
+  printf("new version <%s> -> '%s'\n", new, msg);
+#endif
+  wchar * wmsg = cs__utftowcs(msg);
+  free(msg);
+  SendMessageW(config_wnd, WM_SETTEXT, 0, (LPARAM)wmsg);
+  free(wmsg);
+}
+
+static char * vfn = "/tmp/.mintty-version";
+
+void
+update_available_version()
+{
+  char vers[99];
+  char * new = 0;
+  FILE * vfd = fopen(vfn, "r");
+  if (vfd) {
+    if (fgets(vers, sizeof vers, vfd)) {
+      vers[strcspn(vers, "\n")] = 0;
+      new = vers;
+#ifdef debug_version_check
+      printf("update_available_version read <%s>\n", vers);
+#endif
+    }
+    fclose(vfd);
+  }
+#if defined(debug_version_check) && debug_version_check > 1
+  new = "9.9.9";  // test value
+#endif
+#ifdef debug_version_check
+  printf("update_available_version: <%s>\n", new);
+#endif
+
+  /* V av new
+     x  0  x    =
+     x  0  y  ! =
+     x  x  x
+     x  x  y  ! =
+     x  y  y  %
+     x  y  z  ! =
+  */
+  if (new && strcmp(new, VERSION))
+    display_update(new);
+  if (new && (!version_available || strcmp(new, version_available))) {
+    if (version_available)
+      free(version_available);
+    version_available = strdup(new);
+  }
+#ifdef debug_version_check
+  printf("update_available_version -> available <%s>\n", version_available);
+#endif
+  version_retrieving = false;
+}
+
+static void
+deliver_available_version()
+{
+  if (version_retrieving)
+    return;
+  version_retrieving = true;
+
+  if (fork())
+    return;  // do nothing in parent (or on failure)
+  //setsid();  // failed attempt to avoid busy hourglass
+  // proceed asynchronously, in child process
+
+  // determine available version
+  char * mtv = "https://raw.githubusercontent.com/mintty/mintty/master/VERSION";
+  char * wfn = path_posix_to_win_a(vfn);
+#ifdef debug_version_check
+  printf("deliver_available_version downloading to <%s>...\n", wfn);
+#endif
+#ifdef use_powershell
+#warning on Windows 7, this hangs the mintty parent process!!!
+  char * cmdpat = "powershell.exe -command '(new-object System.Net.WebClient).DownloadFile(\"%s\", \"%s\")'";
+  char * cmd = newn(char, strlen(cmdpat) + strlen(mtv) + strlen(wfn) - 3);
+  sprintf(cmd, cmdpat, mtv, wfn);
+  system(cmd);
+  free(cmd);
+#else
+#include <urlmon.h>
+  URLDownloadToFile(NULL, mtv, wfn, 0, NULL);
+#endif
+  free(wfn);
+
+  // notify terminal window to display the new available version
+  SendMessageA(wnd, WM_APP, 0, 0);  // notify parent
+  exit(0);
+}
+
 #define dont_debug_messages
 
 /*
@@ -488,6 +598,9 @@ win_open_config(void)
   // Set title of Options dialog explicitly to facilitate I18N
   //__ Options: dialog title
   SendMessageW(config_wnd, WM_SETTEXT, 0, (LPARAM)_W("Options"));
+  if (version_available && strcmp(VERSION, version_available))
+    display_update(version_available);
+  deliver_available_version();
 
   ShowWindow(config_wnd, SW_SHOW);
 
