@@ -448,13 +448,28 @@ LC_CTYPE=zh_SG.utf8 mintty &
 ```
 
 
-## Text and font rendering ##
+## Font rendering and geometry ##
 
-Mintty can make use of advanced Windows font fallback as provided by 
-Uniscribe, achieving improved font fallback.
-Use option `-o FontRender=uniscribe`.
+Mintty can make use of advanced Windows font fallback as provided via the Uniscribe API, 
+achieving improved character/glyph substitution for characters not provided in the selected font.
+Option `-o FontRender=uniscribe` is now the default, `-o FontRender=textout` disables it.
 Note that Uniscribe is not applied to right-to-left text as it would 
 interfere with mintty’s own bidi transformation.
+
+### Window geometry, rows and columns ###
+
+The actual window size is influenced by several parameters:
+* Font size / character height is the main parameter to determine the row height.
+* Row height is additionally affected by the “leading” information from the font.
+* Row height and column width can furthermore be tuned with setting `RowSpacing` and `ColSpacing`.
+* A gap between text and window border can be specified with setting `Padding` (default 1).
+
+Note: The term “leading” (pronounced like “ledding”) comes from the 
+times of metal typesetting when strips of lead (the metal) were used 
+to adjust line spacing.
+
+
+## Text attributes and rendering ##
 
 Mintty supports a maximum of usual and unusual text attributes:
 
