@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Mon Feb 20 17:40:59 2017 -->
+<!-- CreationDate: Fri Feb 24 18:25:45 2017 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -546,7 +546,8 @@ string. Matches are highlighted in the scrollback buffer.
 Enter/Shift+Enter find the next/previous position of the
 match and scrolls the scrollback buffer accordingly. The
 appearance of the search bar and the matching highlight
-colours can be customized.</p>
+colours can be customized. <br>
+Matching ignores combining characters.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Flip
 screen</b> <br>
@@ -1019,7 +1020,8 @@ here.</p>
 <b>BoldAsFont</b> is enabled, only bold text in one of the
 eight ANSI colours has its colour changed, i.e. bold text
 without an explicitly specified colour is shown with a bold
-font only. This matches <b>xterm</b> behaviour.</p>
+font only. This matches <b>xterm</b> behaviour. Note also
+setting <b>BoldColour</b>.</p>
 
 <p style="margin-left:22%; margin-top: 1em">This option
 also controls how the &rsquo;half-bright&rsquo; (or
@@ -2018,9 +2020,10 @@ commands for the extended context menu. The value is a
 series of semicolon-separated, colon-combined pairs of menu
 item label and command pattern; after substituting
 placeholders in the command pattern, the command is invoked
-and its standard output is pasted into the terminal. If a
-semicolon shall be embedded into any of the command
-patterns, a non-whitespace control character (i.e. none of
+and its standard output is pasted into the terminal,
+applying bracketed-paste mode if enabled. If a semicolon
+shall be embedded into any of the command patterns, a
+non-whitespace control character (i.e. none of
 <b>^I^J^K^L^M</b>) can be specified as an alternative
 separator by starting the whole setting with it.</p>
 

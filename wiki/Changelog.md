@@ -16,15 +16,16 @@ Drag and drop
   * Drag-and-drop pasting applies configurable pattern (#440).
 
 Menu and hotkey functions
+  * Scroll markers (#569).
   * Optional extended context menu (with Ctrl).
   * Extended context menu functions Copy & Paste (#539), Clear Scrollback (#421).
   * Logging can be toggled from extended context menu.
   * Character information mode, switchable from extended context menu.
   * User-defined commands in extended context menu (#100, #475).
-  * Ctrl+Shift+t hotkey cycles transparency (#625).
-  * Ctrl+Shift+t+cursor-block hotkeys tune transparency (#625).
-  * Ctrl+Shift+p hotkey cycles cursor style.
-  * Ctrl+Shift+o hotkey toggles scrollbar.
+  * Ctrl+Shift+T hotkey cycles transparency (#625).
+  * Ctrl+Shift+T+cursor-block hotkeys tune transparency (#625).
+  * Ctrl+Shift+P hotkey cycles cursor style.
+  * Ctrl+Shift+O hotkey toggles scrollbar.
 
 Configuration
   * Option to specify logfile but disable initial logging (Logging=no).

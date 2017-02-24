@@ -394,6 +394,8 @@ highlighted in the scrollback buffer. Enter/Shift+Enter find the next/previous
 position of the match and scrolls the scrollback buffer accordingly.
 The appearance of the search bar and the matching highlight colours can be 
 customized.
+.br
+Matching ignores combining characters.
 
 .SS Flip screen
 
@@ -825,6 +827,7 @@ here.
 Note that when \fBBoldAsFont\fP is enabled, only bold text in one of the eight
 ANSI colours has its colour changed, i.e. bold text without an explicitly
 specified colour is shown with a bold font only.  This matches \fBxterm\fP behaviour.
+Note also setting \fBBoldColour\fP.
 
 This option also controls how the 'half-bright' (or 'dim') text
 attribute is displayed: if it is on, half-bright text is
@@ -1665,7 +1668,8 @@ This setting lists user-defined commands for the extended context menu.
 The value is a series of semicolon-separated, colon-combined 
 pairs of menu item label and command pattern; after substituting 
 placeholders in the command pattern, the command is invoked and its 
-standard output is pasted into the terminal.
+standard output is pasted into the terminal, applying bracketed-paste mode 
+if enabled.
 If a semicolon shall be embedded into any of the command patterns, 
 a non-whitespace control character (i.e. none of \fB^I^J^K^L^M\fP) can be 
 specified as an alternative separator by starting the whole setting with it.
