@@ -222,7 +222,7 @@ display_update(char * new)
 
   //__ Options: dialog title
   char * opt = _("Options");
-  //__ Options: dialog title
+  //__ Options: dialog title: "mintty <release> available (for download)"
   char * avl = _("available");
   char * pat = "%s            ▶ %s %s %s ◀";
   int len = strlen(opt) + strlen(APPNAME) + strlen(new) + strlen(avl) + strlen(pat) - 7;
