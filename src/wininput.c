@@ -863,6 +863,8 @@ win_key_down(WPARAM wp, LPARAM lp)
           when VK_NEXT:  scroll = SB_PAGEDOWN;
           when VK_UP:    scroll = SB_LINEUP;
           when VK_DOWN:  scroll = SB_LINEDOWN;
+          when VK_LEFT:  scroll = SB_PRIOR;
+          when VK_RIGHT: scroll = SB_NEXT;
           otherwise: goto not_scroll;
         }
         SendMessage(wnd, WM_VSCROLL, scroll, 0);

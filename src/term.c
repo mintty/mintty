@@ -12,6 +12,9 @@
 
 struct term term;
 
+static int markpos = 0;
+static bool markpos_valid = false;
+
 const cattr CATTR_DEFAULT =
             {.attr = ATTR_DEFAULT, .truefg = 0, .truebg = 0};
 
@@ -790,6 +793,7 @@ term_check_boundary(int x, int y)
 void
 term_do_scroll(int topline, int botline, int lines, bool sb)
 {
+  markpos_valid = false;
   assert(botline >= topline && lines != 0);
 
   bool down = lines < 0; // Scrolling downwards?
@@ -997,6 +1001,13 @@ term_paint(void)
         }
       } else {
         tattr.attr &= ~TATTR_RESULT;
+      }
+      if (markpos_valid && (displine->attr & LATTR_MARKED)) {
+        tattr.attr |= TATTR_MARKED;
+        if (scrpos.y == markpos)
+          tattr.attr |= TATTR_CURMARKED;
+      } else {
+        tattr.attr &= ~TATTR_MARKED;
       }
 
      /* 'Real' blinking ? */
@@ -1321,17 +1332,42 @@ term_invalidate(int left, int top, int right, int bottom)
  * this position is relative to the beginning of the scrollback, -1
  * to denote it is relative to the end, and 0 to denote that it is
  * relative to the current position.
+ * The first parameter may also be SB_PRIOR or SB_NEXT, to scroll to 
+ * the prior or next distinguished/marked position (to be searched).
  */
 void
 term_scroll(int rel, int where)
 {
   int sbtop = -sblines();
-  term.disptop = (rel < 0 ? 0 : rel > 0 ? sbtop : term.disptop) + where;
+  int sbbot = term_last_nonempty_line();
+  bool do_schedule_update = false;
+
+  if (rel == SB_PRIOR || rel == SB_NEXT) {
+    if (!markpos_valid) {
+      markpos = sbbot;
+      markpos_valid = true;
+    }
+    int y = markpos;
+    while ((rel == SB_PRIOR) ? y-- > sbtop : y++ < sbbot) {
+      termline * line = fetch_line(y);
+      if (line->attr & LATTR_MARKED) {
+        markpos = y;
+        term.disptop = y;
+        break;
+      }
+    }
+    do_schedule_update = true;
+  }
+  else
+    term.disptop = (rel < 0 ? 0 : rel > 0 ? sbtop : term.disptop) + where;
+
   if (term.disptop < sbtop)
     term.disptop = sbtop;
   if (term.disptop > 0)
     term.disptop = 0;
   win_update();
+  if (do_schedule_update)
+    win_schedule_update();
 }
 
 void

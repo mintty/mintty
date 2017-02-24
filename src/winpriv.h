@@ -8,6 +8,8 @@
 #include <wingdi.h>
 #include <winuser.h>
 #include <imm.h>
+#define SB_PRIOR 100
+#define SB_NEXT 101
 
 extern HINSTANCE inst;  // The all-important instance handle
 extern HWND wnd;        // the main terminal window

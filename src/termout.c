@@ -689,11 +689,13 @@ set_modes(bool state)
         /* Mintty private modes */
         when 7700:       /* CJK ambigous width reporting */
           term.report_ambig_width = state;
+        when 7711:       /* Scroll marker in current line */
+          term.lines[term.curs.y]->attr |= LATTR_MARKED;
         when 7727:       /* Application escape key mode */
           term.app_escape_key = state;
         when 7728:       /* Escape sends FS (instead of ESC) */
           term.escape_sends_fs = state;
-        when 7730:
+        when 7730:       /* Sixel scrolling end position */
           /* on: sixel scrolling moves cursor to beginning of the line
              off(default): sixel scrolling moves cursor to left of graphics */
           term.sixel_scrolls_left = state;
@@ -711,12 +713,11 @@ set_modes(bool state)
           term.wheel_reporting = state;
         when 7787:       /* 'W': Application mousewheel mode */
           term.app_wheel = state;
-        when 8452:
+        when 8452:       /* Sixel scrolling end position right */
           /* on: sixel scrolling leaves cursor to right of graphic
              off(default): position after sixel depends on sixel_scrolls_left */
           term.sixel_scrolls_right = state;
-        /* Application control key modes */
-        when 77000 ... 77031: {
+        when 77000 ... 77031: { /* Application control key modes */
           int ctrl = arg - 77000;
           term.app_control = (term.app_control & ~(1 << ctrl)) | (state << ctrl);
         }
@@ -1389,7 +1390,7 @@ do_cmd(void)
       *s = 0;
       child_printf("\e]7771;!%s\e\\", term.cmd_buf);
     }
-    when 77119: {
+    when 77119: {  // Indic and Extra characters wide handling
       int what = atoi(s);
       term.wide_indic = false;
       term.wide_extra = false;

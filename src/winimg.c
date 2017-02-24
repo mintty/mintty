@@ -366,7 +366,7 @@ winimg_paint(void)
             update_flag = false;
             if (dchar->chr != SIXELCH)
               update_flag = true;
-            if (dchar->attr.attr & (TATTR_RESULT| TATTR_CURRESULT))
+            if (dchar->attr.attr & (TATTR_RESULT | TATTR_CURRESULT | TATTR_MARKED | TATTR_CURMARKED))
               update_flag = true;
             if (term.selected && !update_flag) {
               pos scrpos = {y + term.disptop, x};

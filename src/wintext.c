@@ -206,7 +206,8 @@ create_font(int weight, bool underline)
 static int
 row_padding(int i, int e)
 {
-  // may look nicer; used to break box characters
+  // may look nicer; used to break box characters; for background discussion,
+  // see https://github.com/mintty/mintty/issues/631#issuecomment-279690468
   static bool allow_add_font_padding = true;
 
   if (i == 0 && e == 0)
@@ -898,6 +899,7 @@ show_curchar_info(char tag)
   }
 }
 
+
 static void
 do_update(void)
 {
@@ -971,6 +973,7 @@ win_schedule_update(void)
     win_set_timer(do_update, 16);
   update_state = UPDATE_PENDING;
 }
+
 
 static void
 another_font(int fontno)
@@ -1253,11 +1256,11 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
   bool has_cursor = attr.attr & (TATTR_ACTCURS | TATTR_PASCURS);
   colour cursor_colour = 0;
 
-  if (attr.attr & TATTR_CURRESULT) {
+  if (attr.attr & (TATTR_CURRESULT | TATTR_CURMARKED)) {
     bg = cfg.search_current_colour;
     fg = cfg.search_fg_colour;
   }
-  else if (attr.attr & TATTR_RESULT) {
+  else if (attr.attr & (TATTR_RESULT | TATTR_MARKED)) {
     bg = cfg.search_bg_colour;
     fg = cfg.search_fg_colour;
   }
