@@ -232,9 +232,42 @@ term_select_all(void)
 }
 
 static wchar *
-term_get_sel_or_all(bool all, bool screen)
+term_get_sel_or_all(bool all, bool screen, bool command)
 {
-  if (screen) {
+  if (command) {
+    int sbtop = -sblines();
+    int y = term_last_nonempty_line();
+
+    termline * line = fetch_line(y);
+    if (line->attr & LATTR_MARKED) {
+      if (y > sbtop) {
+        y--;
+        term.sel_end = (pos){y, term.cols};
+        termline * line = fetch_line(y);
+        if (line->attr & LATTR_MARKED)
+          y++;
+      }
+      else {
+        term.sel_end = (pos){y, 0};
+      }
+    }
+    else
+      term.sel_end = (pos){y, term.cols};
+
+    int yok = y;
+    while (y-- > sbtop) {
+      termline * line = fetch_line(y);
+      if (line->attr & LATTR_MARKED) {
+        break;
+      }
+      yok = y;
+    }
+    term.sel_start = (pos){yok, 0};
+#ifdef debug_user_cmd_clip
+    printf("%d:%d...%d:%d\n", term.sel_start.y, term.sel_start.x, term.sel_end.y, term.sel_end.x);
+#endif
+  }
+  else if (screen) {
     term.sel_start = (pos){term.disptop, 0};
     term.sel_end = (pos){term_last_nonempty_line(), term.cols};
   }
@@ -258,16 +291,22 @@ void
 term_cmd(char * cmdpat, bool all)
 {
   // provide scrollback buffer
-  wchar * wsel = term_get_sel_or_all(all, false);
+  wchar * wsel = term_get_sel_or_all(all, false, false);
   char * sel = cs__wcstombs(wsel);
   free(wsel);
   setenv("MINTTY_SELECTION", sel, true);
   free(sel);
   // provide current screen
-  wsel = term_get_sel_or_all(false, true);
+  wsel = term_get_sel_or_all(false, true, false);
   sel = cs__wcstombs(wsel);
   free(wsel);
   setenv("MINTTY_SCREEN", sel, true);
+  free(sel);
+  // provide last command output
+  wsel = term_get_sel_or_all(false, false, true);
+  sel = cs__wcstombs(wsel);
+  free(wsel);
+  setenv("MINTTY_COMMAND", sel, true);
   free(sel);
   // provide window title
   char * ttl = win_get_title();
@@ -277,7 +316,7 @@ term_cmd(char * cmdpat, bool all)
 #ifdef use_placeholders
   sel = 0;
   if (strstr(cmdpat, "%s") || strstr(cmdpat, "%1$s")) {
-    wchar * wsel = term_get_sel_or_all(all);
+    wchar * wsel = term_get_sel_or_all(all, false, false);
     sel = cs__wcstombs(wsel);
     free(wsel);
   }
@@ -292,6 +331,12 @@ term_cmd(char * cmdpat, bool all)
 #endif
 
   FILE * cmdf = popen(cmd, "r");
+  unsetenv("MINTTY_TITLE");
+  unsetenv("MINTTY_COMMAND");
+  unsetenv("MINTTY_SCREEN");
+  unsetenv("MINTTY_SELECTION");
+  unsetenv("MINTTY_CWD");
+  unsetenv("MINTTY_PROG");
   if (cmdf) {
     if (term.bracketed_paste)
       child_write("\e[200~", 6);
