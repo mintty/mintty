@@ -135,6 +135,7 @@ enum {
                                   * wrapped to next line, so last
                                   * single-width cell is empty */
   LATTR_MARKED    = 0x00000100u, /* scroll marker */
+  LATTR_UNMARKED  = 0x00000200u, /* secondary scroll marker */
 };
 
 enum {
@@ -488,7 +489,7 @@ extern void term_copy(void);
 extern void term_paste(wchar *, uint len);
 extern void term_send_paste(void);
 extern void term_cancel_paste(void);
-extern void term_cmd(char * cmdpat, bool all);
+extern void term_cmd(char * cmdpat);
 extern void term_reconfig(void);
 extern void term_flip_screen(void);
 extern void term_reset_screen(void);

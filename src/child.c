@@ -623,7 +623,8 @@ user_command(int n)
           setenv("MINTTY_CWD", fgd, true);
           free(fgd);
         }
-        return term_cmd(progp, true);
+        term_cmd(progp);
+        break;
       }
       n--;
 

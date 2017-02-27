@@ -690,7 +690,10 @@ set_modes(bool state)
         when 7700:       /* CJK ambigous width reporting */
           term.report_ambig_width = state;
         when 7711:       /* Scroll marker in current line */
-          term.lines[term.curs.y]->attr |= LATTR_MARKED;
+          if (state)
+            term.lines[term.curs.y]->attr |= LATTR_MARKED;
+          else
+            term.lines[term.curs.y]->attr |= LATTR_UNMARKED;
         when 7727:       /* Application escape key mode */
           term.app_escape_key = state;
         when 7728:       /* Escape sends FS (instead of ESC) */

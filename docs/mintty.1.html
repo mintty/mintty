@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Fri Feb 24 18:25:45 2017 -->
+<!-- CreationDate: Mon Feb 27 18:38:58 2017 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -549,6 +549,16 @@ appearance of the search bar and the matching highlight
 colours can be customized. <br>
 Matching ignores combining characters.</p>
 
+
+<p style="margin-left:11%; margin-top: 1em">Shift+cursor-left/right
+offers another scrolling feature. If prompt lines are marked
+with scroll markers they navigate to the previous/next
+prompt, to provide a better orientation among the output of
+previously invoked commands. See the Control Sequences wiki
+page
+<i>https://github.com/mintty/mintty/wiki/CtrlSeqs#scroll-markers</i>
+for details.</p>
+
 <p style="margin-left:11%; margin-top: 1em"><b>Flip
 screen</b> <br>
 Applications such as editors and file viewers normally use a
@@ -629,7 +639,11 @@ up <br>
 &ndash; <b>Shift+PgDn</b>: Page down <br>
 &ndash; <b>Shift+Home</b>: Top <br>
 &ndash; <b>Shift+End</b>: Bottom <br>
-&ndash; <b>Alt+F3</b>: Search</p>
+&ndash; <b>Alt+F3</b>: Search <br>
+&ndash; <b>Shift+cursor-left</b>: Go to previous scroll
+marker (e.g. in prompt) <br>
+&ndash; <b>Shift+cursor-right</b>: Go to next scroll marker
+(e.g. in prompt)</p>
 
 <p style="margin-left:11%;"><b>Copy and paste</b></p>
 
@@ -2029,10 +2043,13 @@ separator by starting the whole setting with it.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Mintty provides
 useful information in environment variables: <br>
-MINTTY_SELECTION for the current selection, or if nothing is
-selected, the complete scrollback buffer <br>
+MINTTY_SELECT for the current selection <br>
+MINTTY_BUFFER for the complete terminal contents including
+scrollback buffer <br>
 MINTTY_SCREEN for the current screen; if scrolled back,
 starting at the current scroll position <br>
+MINTTY_OUTPUT for the output of the previous command, if
+prompt lines are marked <br>
 MINTTY_TITLE for the window title text <br>
 MINTTY_PROG for the program name of the terminal foreground
 process <br>
@@ -2044,6 +2061,12 @@ Menu item labels are subject to localization if they are
 added to the localization file of the selected UI
 localization language (in subdirectory <i>lang</i> of a
 mintty resource directory).</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+The previous command can be detected if prompt lines are
+marked with the escape sequence ^[[?7711h. See the Control
+Sequences wiki page
+<i>https://github.com/mintty/mintty/wiki/CtrlSeqs#scroll-markers</i>.</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 This is an experimental feature, with an experimental

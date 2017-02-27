@@ -261,6 +261,17 @@ The _file-URL_ liberally follows a `file:` URL scheme; examples are
   * _(empty)_ to restore the default behaviour
 
 
+## Scroll markers ##
+
+The following sequence can be used to mark prompt lines in support of 
+two features:
+  * Shift+cursor-left/right navigates to the previous/next prompt line and scrolls in the scrollback buffer accordingly
+  * user-defined commands can refer to environment variable MINED_OUTPUT which contains terminal output as limited by previous marker
+
+| `^[[?7711h`   | mark prompt line (last line in case of multi-line prompt) |
+| `^[[?7711l`   | mark secondary prompt line (upper lines) |
+
+
 ## Sixel graphics end position ##
 
 After output of a sixel image in sixel scrolling mode, 

@@ -1002,7 +1002,7 @@ term_paint(void)
       } else {
         tattr.attr &= ~TATTR_RESULT;
       }
-      if (markpos_valid && (displine->attr & LATTR_MARKED)) {
+      if (markpos_valid && (displine->attr & (LATTR_MARKED | LATTR_UNMARKED))) {
         tattr.attr |= TATTR_MARKED;
         if (scrpos.y == markpos)
           tattr.attr |= TATTR_CURMARKED;
