@@ -1023,7 +1023,9 @@ term_paint(void)
       */
       if (tchar >= 0x2320 &&
           ((tchar >= 0x2500 && tchar <= 0x259F)
-           || wcschr(W("〳〴〵⌠⌡⎲⎳⏜⏝⏞⏟⏠⏡⯊⯋⎸⎹⎺⎻⎼⎽"), tchar)
+           || (tchar >= 0x239B && tchar <= 0x23B3)
+           || (tchar >= 0x23B7 && tchar <= 0x23BD)
+           || wcschr(W("〳〴〵⌠⌡⏐"), tchar)
           )
          )
       {
