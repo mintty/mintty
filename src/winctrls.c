@@ -871,20 +871,54 @@ unhook_windows()
 
 static HWND font_sample = 0;
 
+#define dont_debug_dialog_hook 1
+
+static bool do_next_hook = true;
+
+#ifdef debug_dialog_hook
+static FILE * dout = 0;
+
+static bool
+init_debug()
+{
+  if (!dout) {
+    char * debugopt = getenv("MINTTY_DEBUG");
+    if (debugopt && strchr(debugopt, 'x'))
+      return false;
+    if (debugopt && strchr(debugopt, 'h')) {
+      chdir(getenv("TEMP"));
+      dout = fopen("mintty.debug", "w");
+      if (strchr(debugopt, 'n'))
+        do_next_hook = false;
+    }
+  }
+  if (!dout) {
+    dout = stdout;
+  }
+  return true;
+}
+
+#define trace_hook(...)	fprintf(dout, __VA_ARGS__); fflush(dout)
+
+#else
+#define trace_hook(...)	
+#endif
+
 static LRESULT
 set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
 {
   bool localize = *cfg.lang;
 
-#define dont_debug_dialog_hook 1
-
 #ifdef debug_dialog_hook
+  if (!init_debug())
+    return 0;
+
   void trace_label(int id, HWND button, wstring label)
   {
     if (!button) button = GetDlgItem((HWND)wParam, id);
     wchar buf [99];
     GetWindowTextW(button, buf, 99);
-    printf("%d [%8p] <%ls> -> <%ls>\n", id, button, buf, label);
+    trace_hook("%d [%8p] <%ls> -> <%ls>\n", id, button, buf, label);
   }
 
   char * hcbt[] = {
@@ -902,18 +936,18 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
   char * sCode = "?";
   if (nCode >= 0 && nCode < (int)lengthof(hcbt))
     sCode = hcbt[nCode];
-  printf("hook %d %s", nCode, sCode);
+  trace_hook("hook %d %s", nCode, sCode);
   if (nCode == HCBT_CREATEWND) {
     CREATESTRUCTW * cs = ((CBT_CREATEWNDW *)lParam)->lpcs;
-    printf(" x %3d y %3d w %3d h %3d (%08X %07X) <%ls>\n", cs->x, cs->y, cs->cx, cs->cy, (uint)cs->style, (uint)cs->dwExStyle, cs->lpszName);
+    trace_hook(" x %3d y %3d w %3d h %3d (%08X %07X) <%ls>\n", cs->x, cs->y, cs->cx, cs->cy, (uint)cs->style, (uint)cs->dwExStyle, cs->lpszName);
     //(long)cs->lpCreateParams == 0
   }
   else if (nCode == HCBT_ACTIVATE) {
     bool from_mouse = ((CBTACTIVATESTRUCT *)lParam)->fMouse;
-    printf(" mou %d\n", from_mouse);
+    trace_hook(" mou %d\n", from_mouse);
   }
   else
-    printf("\n");
+    trace_hook("\n");
 #endif
 
   void setlabel(int id, wstring label)
@@ -1183,11 +1217,11 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
         wchar buf [99];
         RECT r;
         GetWindowRect(dlg, &r);
-        printf("dlgitem %5d: %4d %4d %4d %4d / ", id, (int)r.left, (int)r.top, (int)r.right, (int)r.bottom);
+        trace_hook("dlgitem %5d: %4d %4d %4d %4d / ", id, (int)r.left, (int)r.top, (int)r.right, (int)r.bottom);
         GetClientRect(dlg, &r);
-        printf("%d %d %3d %3d ", (int)r.left, (int)r.top, (int)r.right, (int)r.bottom);
+        trace_hook("%d %d %3d %3d ", (int)r.left, (int)r.top, (int)r.right, (int)r.bottom);
         GetWindowTextW(dlg, buf, 99);
-        printf("<%ls>\n", buf);
+        trace_hook("<%ls>\n", buf);
       }
     }
 #endif
@@ -1204,9 +1238,7 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
         wp.x = wr.left;
         wp.y = wr.top;
         ScreenToClient((HWND)wParam, &wp);
-#ifdef debug_dialog_hook
-        printf(" Sample: %4d/%3d %4d/%3d %4d %4d\n", wr.left, wp.x, wr.top, wp.y, wr.right, wr.bottom);
-#endif
+        trace_hook(" Sample: %4d/%3d %4d/%3d %4d %4d\n", wr.left, wp.x, wr.top, wp.y, wr.right, wr.bottom);
         SetWindowPos(sample, null, fc_item_left, wp.y,
                      fc_item_right - fc_item_left, wr.bottom - wr.top,
                      SWP_NOACTIVATE | SWP_NOZORDER);
@@ -1223,9 +1255,7 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
         wp.x = wr.left;
         wp.y = wr.top;
         ScreenToClient((HWND)wParam, &wp);
-#ifdef debug_dialog_hook
-        printf(" sample: %4d/%3d %4d/%3d %4d %4d\n", wr.left, wp.x, wr.top, wp.y, wr.right, wr.bottom);
-#endif
+        trace_hook(" sample: %4d/%3d %4d/%3d %4d %4d\n", wr.left, wp.x, wr.top, wp.y, wr.right, wr.bottom);
         SetWindowPos(sample, null, fc_item_left, wr.top,
                      fc_item_right - fc_item_left - 2 * fc_sample_gap, wr.bottom - wr.top,
                      SWP_NOACTIVATE | SWP_NOZORDER);
@@ -1241,9 +1271,7 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
       RECT cr;
       GetClientRect((HWND)wParam, &cr);
       int vborder = (wr.bottom - wr.top) - (cr.bottom - cr.top);
-#ifdef debug_dialog_hook
-      printf("Chooser: %4d %4d %4d %4d / %d %d %3d %3d\n", (int)wr.left, (int)wr.top, (int)wr.right, (int)wr.bottom, (int)cr.left, (int)cr.top, (int)cr.right, (int)cr.bottom);
-#endif
+      trace_hook("Chooser: %4d %4d %4d %4d / %d %d %3d %3d\n", (int)wr.left, (int)wr.top, (int)wr.right, (int)wr.bottom, (int)cr.left, (int)cr.top, (int)cr.right, (int)cr.bottom);
       SetWindowPos((HWND)wParam, null, 0, 0,
                    wr.right - wr.left, fc_sample_bottom + fc_sample_gap + vborder,
                    SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
@@ -1252,7 +1280,14 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
     hooked_window_activated = true;
   }
 
-  return CallNextHookEx(0, nCode, wParam, lParam);
+  if (do_next_hook) {
+    trace_hook(" -> NextHook\n");
+    LRESULT ret = CallNextHookEx(0, nCode, wParam, lParam);
+    trace_hook(" <- NextHook %ld\n", (long)ret);
+    return ret;
+  }
+  else
+    return 0;  // 0: let default dialog box procedure process the message
 }
 
 static LRESULT CALLBACK
@@ -1425,9 +1460,11 @@ select_font(winctrl *c)
       CF_SCREENFONTS | CF_NOSCRIPTSEL;
 
   // open font selection menu
-  hook_windows(set_labels_fc);
+  if (!new_cfg.old_fontmenu)
+    hook_windows(set_labels_fc);
   bool ok = ChooseFontW(&cf);
-  unhook_windows();
+  if (!new_cfg.old_fontmenu)
+    unhook_windows();
   if (ok) {
     // font selection menu closed with OK
     wstrset(&fs.name, lf.lfFaceName);
