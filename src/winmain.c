@@ -134,6 +134,16 @@ load_dwm_funcs(void)
   }
 }
 
+void *
+load_library_func(string lib, string func)
+{
+  HMODULE hm = load_sys_library(lib);
+  if (hm)
+    return GetProcAddress(hm, func);
+  return 0;
+}
+
+
 #define dont_debug_dpi
 
 bool per_monitor_dpi_aware = false;
@@ -1404,7 +1414,7 @@ static struct {
     }
 
     when WM_APP:
-      update_available_version();
+      update_available_version(wp);
 
     when WM_VSCROLL:
       switch (LOWORD(wp)) {
@@ -1790,8 +1800,9 @@ print_error(string msg)
 static void
 option_error(char * msg, char * option)
 {
+  finish_config();  // ensure localized message
   // msg is in UTF-8, option is in current encoding
-  char * optmsg = opterror_msg(msg, false, option, null);
+  char * optmsg = opterror_msg(_(msg), false, option, null);
   char * fullmsg = asform("%s\n%s", optmsg, _("Try '--help' for more information"));
   show_message(fullmsg, MB_ICONWARNING);
   exit(1);
@@ -2128,7 +2139,7 @@ static char help[] =
   "      --nobidi|--nortl  Disable bidi (right-to-left support)\n"
   "  -o, --option OPT=VAL  Set/Override config file option with given value\n"
   "  -B, --Border frame|void  Use thin/no window border\n"
-  "  -R, --Reportpos s|o   Report window position (short/long) after exit\n"
+  "  -R, --Report s|o      Report window position (short/long) after exit\n"
   "      --nopin           Make this instance not pinnable to taskbar\n"
   "  -D, --daemon          Start new instance with Windows shortcut key\n"
   "  -H, --help            Display help and exit\n"
@@ -2284,7 +2295,7 @@ main(int argc, char *argv[])
         else if (sscanf(optarg, "%i,%i%1s", &cfg.x, &cfg.y, (char[2]){}) == 2)
           ;
         else
-          option_error(_("Syntax error in position argument '%s'"), optarg);
+          option_error(__("Syntax error in position argument '%s'"), optarg);
       when 's':
         if (strcmp(optarg, "maxwidth") == 0)
           maxwidth = true;
@@ -2295,7 +2306,7 @@ main(int argc, char *argv[])
         else if (sscanf(optarg, "%ux%u%1s", &cfg.cols, &cfg.rows, (char[2]){}) == 2)
           ;
         else
-          option_error(_("Syntax error in size argument '%s'"), optarg);
+          option_error(__("Syntax error in size argument '%s'"), optarg);
       when 't': set_arg_option("Title", optarg);
       when 'T':
         set_arg_option("Title", optarg);
@@ -2335,12 +2346,14 @@ main(int argc, char *argv[])
       when 'D':
         cfg.daemonize_always = true;
       when 'H': {
+        finish_config();  // ensure localized message
         char * helptext = asform("%s %s %s\n\n%s", _(usage), APPNAME, _(synopsis), _(help));
         show_info(helptext);
         free(helptext);
         return 0;
       }
       when 'V': {
+        finish_config();  // ensure localized message
         char * vertext =
           asform("%s\n%s\n%s\n%s\n", 
                  VERSION_TEXT, COPYRIGHT, LICENSE_TEXT, _(WARRANTY_TEXT));
@@ -2349,9 +2362,9 @@ main(int argc, char *argv[])
         return 0;
       }
       when '?':
-        option_error(_("Unknown option '%s'"), optopt ? shortopt : longopt);
+        option_error(__("Unknown option '%s'"), optopt ? shortopt : longopt);
       when ':':
-        option_error(_("Option '%s' requires an argument"),
+        option_error(__("Option '%s' requires an argument"),
                      longopt[1] == '-' ? longopt : shortopt);
     }
   }
