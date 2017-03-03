@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-02-24 18:22+0100\n"
+"POT-Creation-Date: 2017-03-03 18:25+0100\n"
 "PO-Revision-Date: 2017-02-27 18:11+0900\n"
 "Last-Translator: Ken Takata <kentkt@csc.jp>\n"
 "Language-Team: \n"
@@ -59,7 +59,7 @@ msgstr "%s: 終了コード %i"
 msgid "TERMINATED"
 msgstr "終了しました"
 
-#: child.c:733
+#: child.c:734
 msgid "Error: Could not fork child daemon"
 msgstr "エラー: 子デーモンをforkできません"
 
@@ -185,7 +185,7 @@ msgid "Save"
 msgstr "保存"
 
 #. __ Dialog button - cancel
-#: config.c:2037 winctrls.c:1074 windialog.c:673
+#: config.c:2037 winctrls.c:1108 windialog.c:696
 msgid "Cancel"
 msgstr "キャンセル"
 
@@ -195,12 +195,12 @@ msgid "Apply"
 msgstr "適用"
 
 #. __ Dialog button - take notice
-#: config.c:2045 windialog.c:670
+#: config.c:2045 windialog.c:693
 msgid "I see"
 msgstr "了解"
 
 #. __ Dialog button - confirm action
-#: config.c:2047 winctrls.c:1073 windialog.c:672
+#: config.c:2047 winctrls.c:1107 windialog.c:695
 msgid "OK"
 msgstr "OK"
 
@@ -697,126 +697,126 @@ msgid "&Select..."
 msgstr "選択(&S)..."
 
 #. __ Font chooser: title bar label
-#: winctrls.c:1078
+#: winctrls.c:1112
 msgid "Font "
 msgstr "フォント "
 
 #. __ Font chooser: button
-#: winctrls.c:1080
+#: winctrls.c:1114
 msgid "&Apply"
 msgstr "適用(&A)"
 
 #. __ Font chooser:
-#: winctrls.c:1082
+#: winctrls.c:1116
 msgid "&Font:"
 msgstr "フォント(&F):"
 
 #. __ Font chooser:
-#: winctrls.c:1084
+#: winctrls.c:1118
 msgid "Font st&yle:"
 msgstr "フォントスタイル(&Y):"
 
 #. __ Font chooser:
-#: winctrls.c:1086
+#: winctrls.c:1120
 msgid "&Size:"
 msgstr "サイズ(&S):"
 
 #. __ Font chooser:
-#: winctrls.c:1088
+#: winctrls.c:1122
 msgid "Sample"
 msgstr "サンプル"
 
 #. __ Font chooser: text sample ("AaBbYyZz" by default)
-#: winctrls.c:1092 winctrls.c:1329
+#: winctrls.c:1126 winctrls.c:1364
 msgid "Ferqœm’4€"
 msgstr "Aaあぁアァ亜宇"
 
 #. __ Font chooser: this field is only shown with OldFontMenu=true
-#: winctrls.c:1109
+#: winctrls.c:1143
 msgid "Sc&ript:"
 msgstr "文字セット(&R):"
 
 #. __ Font chooser: this field is only shown with OldFontMenu=true
-#: winctrls.c:1111
+#: winctrls.c:1145
 msgid "<A>Show more fonts</A>"
 msgstr "<A>他のフォントを表示</A>"
 
 #. __ Colour chooser: title bar label
-#: winctrls.c:1116
+#: winctrls.c:1150
 msgid "Colour "
 msgstr "色"
 
 #. __ Colour chooser:
-#: winctrls.c:1129 winctrls.c:1141
+#: winctrls.c:1163 winctrls.c:1175
 msgid "B&asic colours:"
 msgstr "基本色(&A):"
 
 #. __ Colour chooser:
-#: winctrls.c:1148
+#: winctrls.c:1182
 msgid "&Custom colours:"
 msgstr "作成した色(&C):"
 
 #. __ Colour chooser:
-#: winctrls.c:1155
+#: winctrls.c:1189
 msgid "De&fine Custom Colours >>"
 msgstr "色の作成(&F) >>"
 
 #. __ Colour chooser:
-#: winctrls.c:1158
+#: winctrls.c:1192
 msgid "Colour"
 msgstr "色"
 
 #. __ Colour chooser:
-#: winctrls.c:1160
+#: winctrls.c:1194
 msgid "|S&olid"
 msgstr "| 純色(&O)"
 
 #. __ Colour chooser:
-#: winctrls.c:1162
+#: winctrls.c:1196
 msgid "&Hue:"
 msgstr "色合い(&H):"
 
 #. __ Colour chooser:
-#: winctrls.c:1165
+#: winctrls.c:1199
 msgid "&Sat:"
 msgstr "鮮やかさ(&S):"
 
 #. __ Colour chooser:
-#: winctrls.c:1167
+#: winctrls.c:1201
 msgid "&Lum:"
 msgstr "明るさ(&L):"
 
 #. __ Colour chooser:
-#: winctrls.c:1169
+#: winctrls.c:1203
 msgid "&Red:"
 msgstr "赤(&R):"
 
 #. __ Colour chooser:
-#: winctrls.c:1171
+#: winctrls.c:1205
 msgid "&Green:"
 msgstr "緑(&G):"
 
 #. __ Colour chooser:
-#: winctrls.c:1173
+#: winctrls.c:1207
 msgid "&Blue:"
 msgstr "青(&B):"
 
 #. __ Colour chooser:
-#: winctrls.c:1176
+#: winctrls.c:1210
 msgid "A&dd to Custom Colours"
 msgstr "色の追加(&A)"
 
 #. __ Options: dialog title
-#: windialog.c:224 windialog.c:600
+#: windialog.c:229 windialog.c:623
 msgid "Options"
 msgstr "オプション"
 
 #. __ Options: dialog title: "mintty <release> available (for download)"
-#: windialog.c:226
+#: windialog.c:231
 msgid "available"
 msgstr "が利用可能"
 
-#: windialog.c:702 windialog.c:727
+#: windialog.c:724 windialog.c:749
 msgid "Error"
 msgstr "エラー"
 
@@ -944,32 +944,32 @@ msgstr "すべてを選択(&A)"
 msgid "Clear Scrollback"
 msgstr "スクロールバックをクリア"
 
-#: winmain.c:1257
+#: winmain.c:1267
 msgid "Processes are running in session:"
 msgstr "セッションでプロセスが動作中です:"
 
-#: winmain.c:1258
+#: winmain.c:1268
 msgid "Close anyway?"
 msgstr "構わず閉じますか？"
 
-#: winmain.c:1795
+#: winmain.c:1806
 msgid "Try '--help' for more information"
 msgstr "さらなる情報には '--help' を試してください"
 
-#: winmain.c:1803
+#: winmain.c:1814
 msgid "Could not load icon"
 msgstr "アイコンをロードできません"
 
-#: winmain.c:2107
+#: winmain.c:2118
 msgid "Usage:"
 msgstr "使用法:"
 
-#: winmain.c:2108
+#: winmain.c:2119
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr "[オプション]... [ プログラム [引数]... | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:2111
+#: winmain.c:2122
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -994,17 +994,17 @@ msgid ""
 "      --nobidi|--nortl  Disable bidi (right-to-left support)\n"
 "  -o, --option OPT=VAL  Set/Override config file option with given value\n"
 "  -B, --Border frame|void  Use thin/no window border\n"
-"  -R, --Reportpos s|o   Report window position (short/long) after exit\n"
+"  -R, --Report s|o      Report window position (short/long) after exit\n"
 "      --nopin           Make this instance not pinnable to taskbar\n"
 "  -D, --daemon          Start new instance with Windows shortcut key\n"
 "  -H, --help            Display help and exit\n"
 "  -V, --version         Print version information and exit\n"
 "See manual page for further command line options and configuration.\n"
 msgstr ""
-"指定されたプログラムまたはユーザーのシェルを実行する新しい端末セッションを"
-"開始します。\n"
-"プログラムの代わりに - が指定された場合は、シェルをログインシェルとして起動"
-"します。\n"
+"指定されたプログラムまたはユーザーのシェルを実行する新しい端末セッションを開"
+"始します。\n"
+"プログラムの代わりに - が指定された場合は、シェルをログインシェルとして起動し"
+"ます。\n"
 "\n"
 "オプション:\n"
 "  -c, --config FILE     指定された設定ファイルをロードする\n"
@@ -1025,40 +1025,40 @@ msgstr ""
 "                        (インデックスはオプション)\n"
 "  -l, --log FILE|-      ログをファイルまたは標準出力に出力する\n"
 "      --nobidi|--nortl  bidi(右から左の対応)を無効化する\n"
-"  -o, --option OPT=VAL  設定ファイルのオプションを指定された値に設定/上書き"
-"する\n"
+"  -o, --option OPT=VAL  設定ファイルのオプションを指定された値に設定/上書きす"
+"る\n"
 "  -B, --Border frame|void  ウィンドウの枠を細く/無しにする\n"
-"  -R, --Reportpos s|o   終了後にウィンドウ位置 (短/長) を報告する\n"
+"  -R, --Report s|o      終了後にウィンドウ位置 (短/長) を報告する\n"
 "      --nopin           このインスタンスをタスクバーにピン止めできないように"
 "する\n"
-"  -D, --daemon          Windowsショートカットキーで新しいインスタンスを開始"
-"する\n"
+"  -D, --daemon          Windowsショートカットキーで新しいインスタンスを開始す"
+"る\n"
 "  -H, --help            ヘルプを表示して終了する\n"
 "  -V, --version         バージョン情報を表示して終了する\n"
 "さらなるコマンドラインオプションと設定についてはマニュアルページを参照してく"
 "ださい。\n"
 
-#: winmain.c:2287
+#: winmain.c:2298
 msgid "Syntax error in position argument '%s'"
 msgstr "位置引数に文法エラーがあります '%s'"
 
-#: winmain.c:2298
+#: winmain.c:2309
 msgid "Syntax error in size argument '%s'"
 msgstr "サイズ引数に文法エラーがあります '%s'"
 
-#: winmain.c:2352
+#: winmain.c:2365
 msgid "Unknown option '%s'"
 msgstr "未知のオプションです '%s'"
 
-#: winmain.c:2354
+#: winmain.c:2367
 msgid "Option '%s' requires an argument"
 msgstr "オプション '%s' は引数が必要です"
 
-#: winmain.c:2400
+#: winmain.c:2413
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr "minttyは呼び出し元からデタッチできません、とにかく起動します"
 
-#: winmain.c:2533
+#: winmain.c:2546
 msgid "Using default title due to invalid characters in program name"
 msgstr "プログラム名に不正な文字があるため既定のタイトルを使用します"
 
@@ -1105,7 +1105,7 @@ msgid ""
 "%s.\n"
 "See also the Wiki there for further hints, thanks and credits."
 msgstr ""
-"バグの報告や改良の要求は、以下のminttyプロジェクトページのissueトラッカーか"
-"らお願いします。\n"
+"バグの報告や改良の要求は、以下のminttyプロジェクトページのissueトラッカーから"
+"お願いします。\n"
 "%s\n"
 "さらなるヒント、謝辞やクレジットについては、サイトのWikiも参照してください。"

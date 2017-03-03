@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-02-24 18:22+0100\n"
+"POT-Creation-Date: 2017-03-03 18:25+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -60,7 +60,7 @@ msgstr "%s: Beendigung %i"
 msgid "TERMINATED"
 msgstr "BEENDET"
 
-#: child.c:733
+#: child.c:734
 msgid "Error: Could not fork child daemon"
 msgstr "Fehler: Konnte Daemon-Prozess nicht starten"
 
@@ -186,7 +186,7 @@ msgid "Save"
 msgstr "Sichern"
 
 #. __ Dialog button - cancel
-#: config.c:2037 winctrls.c:1074 windialog.c:673
+#: config.c:2037 winctrls.c:1108 windialog.c:696
 msgid "Cancel"
 msgstr "Abbruch"
 
@@ -196,12 +196,12 @@ msgid "Apply"
 msgstr "Anwenden"
 
 #. __ Dialog button - take notice
-#: config.c:2045 windialog.c:670
+#: config.c:2045 windialog.c:693
 msgid "I see"
 msgstr "Aha"
 
 #. __ Dialog button - confirm action
-#: config.c:2047 winctrls.c:1073 windialog.c:672
+#: config.c:2047 winctrls.c:1107 windialog.c:695
 msgid "OK"
 msgstr ""
 
@@ -698,126 +698,126 @@ msgid "&Select..."
 msgstr "&Wählen..."
 
 #. __ Font chooser: title bar label
-#: winctrls.c:1078
+#: winctrls.c:1112
 msgid "Font "
 msgstr "Schriftart"
 
 #. __ Font chooser: button
-#: winctrls.c:1080
+#: winctrls.c:1114
 msgid "&Apply"
 msgstr "&Übernehmen"
 
 #. __ Font chooser:
-#: winctrls.c:1082
+#: winctrls.c:1116
 msgid "&Font:"
 msgstr "&Schriftart:"
 
 #. __ Font chooser:
-#: winctrls.c:1084
+#: winctrls.c:1118
 msgid "Font st&yle:"
 msgstr "Schriftsch&nitt:"
 
 #. __ Font chooser:
-#: winctrls.c:1086
+#: winctrls.c:1120
 msgid "&Size:"
 msgstr "Schr.&grad:"
 
 #. __ Font chooser:
-#: winctrls.c:1088
+#: winctrls.c:1122
 msgid "Sample"
 msgstr "Beispiel"
 
 #. __ Font chooser: text sample ("AaBbYyZz" by default)
-#: winctrls.c:1092 winctrls.c:1329
+#: winctrls.c:1126 winctrls.c:1364
 msgid "Ferqœm’4€"
 msgstr ""
 
 #. __ Font chooser: this field is only shown with OldFontMenu=true
-#: winctrls.c:1109
+#: winctrls.c:1143
 msgid "Sc&ript:"
 msgstr "S&kript:"
 
 #. __ Font chooser: this field is only shown with OldFontMenu=true
-#: winctrls.c:1111
+#: winctrls.c:1145
 msgid "<A>Show more fonts</A>"
 msgstr "<A>Weitere Schriftarten anzeigen</A>"
 
 #. __ Colour chooser: title bar label
-#: winctrls.c:1116
+#: winctrls.c:1150
 msgid "Colour "
 msgstr "Farbe"
 
 #. __ Colour chooser:
-#: winctrls.c:1129 winctrls.c:1141
+#: winctrls.c:1163 winctrls.c:1175
 msgid "B&asic colours:"
 msgstr "Gru&ndfarben:"
 
 #. __ Colour chooser:
-#: winctrls.c:1148
+#: winctrls.c:1182
 msgid "&Custom colours:"
 msgstr "Ben&utzerdefinierte Farben:"
 
 #. __ Colour chooser:
-#: winctrls.c:1155
+#: winctrls.c:1189
 msgid "De&fine Custom Colours >>"
 msgstr "Farben &definieren >>"
 
 #. __ Colour chooser:
-#: winctrls.c:1158
+#: winctrls.c:1192
 msgid "Colour"
 msgstr "Farbe"
 
 #. __ Colour chooser:
-#: winctrls.c:1160
+#: winctrls.c:1194
 msgid "|S&olid"
 msgstr "|B&asis"
 
 #. __ Colour chooser:
-#: winctrls.c:1162
+#: winctrls.c:1196
 msgid "&Hue:"
 msgstr "Farb&t.:"
 
 #. __ Colour chooser:
-#: winctrls.c:1165
+#: winctrls.c:1199
 msgid "&Sat:"
 msgstr "S&ätt.:"
 
 #. __ Colour chooser:
-#: winctrls.c:1167
+#: winctrls.c:1201
 msgid "&Lum:"
 msgstr "&Hell.:"
 
 #. __ Colour chooser:
-#: winctrls.c:1169
+#: winctrls.c:1203
 msgid "&Red:"
 msgstr "&Rot:"
 
 #. __ Colour chooser:
-#: winctrls.c:1171
+#: winctrls.c:1205
 msgid "&Green:"
 msgstr "&Grün:"
 
 #. __ Colour chooser:
-#: winctrls.c:1173
+#: winctrls.c:1207
 msgid "&Blue:"
 msgstr "&Blau:"
 
 #. __ Colour chooser:
-#: winctrls.c:1176
+#: winctrls.c:1210
 msgid "A&dd to Custom Colours"
 msgstr "Farben hin&zufügen"
 
 #. __ Options: dialog title
-#: windialog.c:224 windialog.c:600
+#: windialog.c:229 windialog.c:623
 msgid "Options"
 msgstr "Optionen"
 
 #. __ Options: dialog title: "mintty <release> available (for download)"
-#: windialog.c:226
+#: windialog.c:231
 msgid "available"
 msgstr "verfügbar"
 
-#: windialog.c:702 windialog.c:727
+#: windialog.c:724 windialog.c:749
 msgid "Error"
 msgstr "Fehler"
 
@@ -945,32 +945,32 @@ msgstr "Alles &auswählen"
 msgid "Clear Scrollback"
 msgstr "Lösche Scrollback"
 
-#: winmain.c:1257
+#: winmain.c:1267
 msgid "Processes are running in session:"
 msgstr "Laufende Prozesse:"
 
-#: winmain.c:1258
+#: winmain.c:1268
 msgid "Close anyway?"
 msgstr "Trotzdem schließen?"
 
-#: winmain.c:1795
+#: winmain.c:1806
 msgid "Try '--help' for more information"
 msgstr "Versuche '--help' für mehr Information"
 
-#: winmain.c:1803
+#: winmain.c:1814
 msgid "Could not load icon"
 msgstr "Konnte Symbol nicht laden"
 
-#: winmain.c:2107
+#: winmain.c:2118
 msgid "Usage:"
 msgstr "Aufruf:"
 
-#: winmain.c:2108
+#: winmain.c:2119
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr ""
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:2111
+#: winmain.c:2122
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -995,7 +995,7 @@ msgid ""
 "      --nobidi|--nortl  Disable bidi (right-to-left support)\n"
 "  -o, --option OPT=VAL  Set/Override config file option with given value\n"
 "  -B, --Border frame|void  Use thin/no window border\n"
-"  -R, --Reportpos s|o   Report window position (short/long) after exit\n"
+"  -R, --Report s|o      Report window position (short/long) after exit\n"
 "      --nopin           Make this instance not pinnable to taskbar\n"
 "  -D, --daemon          Start new instance with Windows shortcut key\n"
 "  -H, --help            Display help and exit\n"
@@ -1029,7 +1029,7 @@ msgstr ""
 "links)\n"
 "  -o, --option OPT=VAL  Setze Konfigurationsoption mit gegebenem Wert\n"
 "  -B, --Border frame|void  Lege dünnen bzw. keinen Fensterrand fest\n"
-"  -R, --Reportpos s|o   Berichte Fensterposition (kurz/lang) nach Ende\n"
+"  -R, --Report s|o      Berichte Fensterposition (kurz/lang) nach Ende\n"
 "      --nopin           Dieses Fenster kann nicht an Taskleiste geheftet "
 "werden\n"
 "  -D, --daemon          Starte neues Fenster mit Windows Kurztaste\n"
@@ -1037,27 +1037,27 @@ msgstr ""
 "  -V, --version         Zeige nur Versions-Information\n"
 "Siehe die Manual-Seite für weitere Optionen und Konfiguration.\n"
 
-#: winmain.c:2287
+#: winmain.c:2298
 msgid "Syntax error in position argument '%s'"
 msgstr "Formatfehler in Positionsparameter '%s'"
 
-#: winmain.c:2298
+#: winmain.c:2309
 msgid "Syntax error in size argument '%s'"
 msgstr "Formatfehler in Größenparameter '%s'"
 
-#: winmain.c:2352
+#: winmain.c:2365
 msgid "Unknown option '%s'"
 msgstr "Unbekannte Option '%s'"
 
-#: winmain.c:2354
+#: winmain.c:2367
 msgid "Option '%s' requires an argument"
 msgstr "Option '%s' benötigt einen Parameter"
 
-#: winmain.c:2400
+#: winmain.c:2413
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr "Mintty konnte nicht vom Aufrufer abkoppeln, startet trotzdem"
 
-#: winmain.c:2533
+#: winmain.c:2546
 msgid "Using default title due to invalid characters in program name"
 msgstr "Nehme Default-Titel wegen ungültiger Zeichen im Programmnamen"
 

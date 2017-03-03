@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-02-24 18:22+0100\n"
+"POT-Creation-Date: 2017-03-03 18:25+0100\n"
 "PO-Revision-Date: 2016-12-19 04:18+0500\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -60,7 +60,7 @@ msgstr "%s остановлено: %i"
 msgid "TERMINATED"
 msgstr "ЗАВЕРШЕНИЕ"
 
-#: child.c:733
+#: child.c:734
 msgid "Error: Could not fork child daemon"
 msgstr "Ошибка: не удалось запустить фоновый дочерний процесс"
 
@@ -186,7 +186,7 @@ msgid "Save"
 msgstr "Сохранить"
 
 #. __ Dialog button - cancel
-#: config.c:2037 winctrls.c:1074 windialog.c:673
+#: config.c:2037 winctrls.c:1108 windialog.c:696
 msgid "Cancel"
 msgstr "Отмена"
 
@@ -196,12 +196,12 @@ msgid "Apply"
 msgstr "Применить"
 
 #. __ Dialog button - take notice
-#: config.c:2045 windialog.c:670
+#: config.c:2045 windialog.c:693
 msgid "I see"
 msgstr "Хорошо"
 
 #. __ Dialog button - confirm action
-#: config.c:2047 winctrls.c:1073 windialog.c:672
+#: config.c:2047 winctrls.c:1107 windialog.c:695
 msgid "OK"
 msgstr ""
 
@@ -700,126 +700,126 @@ msgid "&Select..."
 msgstr "Выбрать"
 
 #. __ Font chooser: title bar label
-#: winctrls.c:1078
+#: winctrls.c:1112
 msgid "Font "
 msgstr "Шрифт"
 
 #. __ Font chooser: button
-#: winctrls.c:1080
+#: winctrls.c:1114
 msgid "&Apply"
 msgstr "Применить"
 
 #. __ Font chooser:
-#: winctrls.c:1082
+#: winctrls.c:1116
 msgid "&Font:"
 msgstr "Шрифт:"
 
 #. __ Font chooser:
-#: winctrls.c:1084
+#: winctrls.c:1118
 msgid "Font st&yle:"
 msgstr "Начертание:"
 
 #. __ Font chooser:
-#: winctrls.c:1086
+#: winctrls.c:1120
 msgid "&Size:"
 msgstr "Размер:"
 
 #. __ Font chooser:
-#: winctrls.c:1088
+#: winctrls.c:1122
 msgid "Sample"
 msgstr "Образец"
 
 #. __ Font chooser: text sample ("AaBbYyZz" by default)
-#: winctrls.c:1092 winctrls.c:1329
+#: winctrls.c:1126 winctrls.c:1364
 msgid "Ferqœm’4€"
 msgstr "АаБбВвГг"
 
 #. __ Font chooser: this field is only shown with OldFontMenu=true
-#: winctrls.c:1109
+#: winctrls.c:1143
 msgid "Sc&ript:"
 msgstr "Набор символов:"
 
 #. __ Font chooser: this field is only shown with OldFontMenu=true
-#: winctrls.c:1111
+#: winctrls.c:1145
 msgid "<A>Show more fonts</A>"
 msgstr "<A>Показать дополнительные шрифты</A>"
 
 #. __ Colour chooser: title bar label
-#: winctrls.c:1116
+#: winctrls.c:1150
 msgid "Colour "
 msgstr "Цвет"
 
 #. __ Colour chooser:
-#: winctrls.c:1129 winctrls.c:1141
+#: winctrls.c:1163 winctrls.c:1175
 msgid "B&asic colours:"
 msgstr "Основные цвета:"
 
 #. __ Colour chooser:
-#: winctrls.c:1148
+#: winctrls.c:1182
 msgid "&Custom colours:"
 msgstr "Дополнительные цвета:"
 
 #. __ Colour chooser:
-#: winctrls.c:1155
+#: winctrls.c:1189
 msgid "De&fine Custom Colours >>"
 msgstr "Определить цвет >>"
 
 #. __ Colour chooser:
-#: winctrls.c:1158
+#: winctrls.c:1192
 msgid "Colour"
 msgstr "Цвет"
 
 #. __ Colour chooser:
-#: winctrls.c:1160
+#: winctrls.c:1194
 msgid "|S&olid"
 msgstr "|Заливка"
 
 #. __ Colour chooser:
-#: winctrls.c:1162
+#: winctrls.c:1196
 msgid "&Hue:"
 msgstr "Оттенок:"
 
 #. __ Colour chooser:
-#: winctrls.c:1165
+#: winctrls.c:1199
 msgid "&Sat:"
 msgstr "Контраст:"
 
 #. __ Colour chooser:
-#: winctrls.c:1167
+#: winctrls.c:1201
 msgid "&Lum:"
 msgstr "Яркость:"
 
 #. __ Colour chooser:
-#: winctrls.c:1169
+#: winctrls.c:1203
 msgid "&Red:"
 msgstr "Красный:"
 
 #. __ Colour chooser:
-#: winctrls.c:1171
+#: winctrls.c:1205
 msgid "&Green:"
 msgstr "Зеленый:"
 
 #. __ Colour chooser:
-#: winctrls.c:1173
+#: winctrls.c:1207
 msgid "&Blue:"
 msgstr "Синий:"
 
 #. __ Colour chooser:
-#: winctrls.c:1176
+#: winctrls.c:1210
 msgid "A&dd to Custom Colours"
 msgstr "Добавить в набор"
 
 #. __ Options: dialog title
-#: windialog.c:224 windialog.c:600
+#: windialog.c:229 windialog.c:623
 msgid "Options"
 msgstr "Настройки"
 
 #. __ Options: dialog title: "mintty <release> available (for download)"
-#: windialog.c:226
+#: windialog.c:231
 msgid "available"
 msgstr "доступный"
 
-#: windialog.c:702 windialog.c:727
+#: windialog.c:724 windialog.c:749
 msgid "Error"
 msgstr "Ошибка"
 
@@ -947,32 +947,32 @@ msgstr "Выбрать все"
 msgid "Clear Scrollback"
 msgstr "Очистить скроллинг"
 
-#: winmain.c:1257
+#: winmain.c:1267
 msgid "Processes are running in session:"
 msgstr "Имеются запущенные процессы:"
 
-#: winmain.c:1258
+#: winmain.c:1268
 msgid "Close anyway?"
 msgstr "Закрыть все равно?"
 
-#: winmain.c:1795
+#: winmain.c:1806
 msgid "Try '--help' for more information"
 msgstr "Используйте '--help' для получения дополнительной информации"
 
-#: winmain.c:1803
+#: winmain.c:1814
 msgid "Could not load icon"
 msgstr "Не удалось загрузить иконку"
 
-#: winmain.c:2107
+#: winmain.c:2118
 msgid "Usage:"
 msgstr "Применение:"
 
-#: winmain.c:2108
+#: winmain.c:2119
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr "[ОПЦИЙ]... [ ПРОГРАММА [АРГУМЕНТЫ]... | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:2111
+#: winmain.c:2122
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -997,7 +997,7 @@ msgid ""
 "      --nobidi|--nortl  Disable bidi (right-to-left support)\n"
 "  -o, --option OPT=VAL  Set/Override config file option with given value\n"
 "  -B, --Border frame|void  Use thin/no window border\n"
-"  -R, --Reportpos s|o   Report window position (short/long) after exit\n"
+"  -R, --Report s|o      Report window position (short/long) after exit\n"
 "      --nopin           Make this instance not pinnable to taskbar\n"
 "  -D, --daemon          Start new instance with Windows shortcut key\n"
 "  -H, --help            Display help and exit\n"
@@ -1029,7 +1029,7 @@ msgstr ""
 "  -o, --option OPT=VAL  Конфигурационный файл с заданными вариантами "
 "переменных/переопределении\n"
 "  -B, --Border frame|void  Использовать границы окна\n"
-"  -R, --Reportpos s|o   Отчет позиций окна (короткий/длинный) после выхода\n"
+"  -R, --Report s|o      Отчет позиций окна (короткий/длинный) после выхода\n"
 "      --nopin           Сделать этот экземпляр не видимым на панель задач\n"
 "  -D, --daemon          Запустить новый экземпляр с клавишами быстрого "
 "доступа Windows\n"
@@ -1038,28 +1038,28 @@ msgstr ""
 "Смотрите страницу руководства для параметров командной строки и "
 "конфигурации.\n"
 
-#: winmain.c:2287
+#: winmain.c:2298
 msgid "Syntax error in position argument '%s'"
 msgstr "Ошибка синтаксиса в позиции аргумента '%s'"
 
-#: winmain.c:2298
+#: winmain.c:2309
 msgid "Syntax error in size argument '%s'"
 msgstr "Ошибка синтаксиса в размере аргумента '%s'"
 
-#: winmain.c:2352
+#: winmain.c:2365
 msgid "Unknown option '%s'"
 msgstr "Неизвестный параметр '%s'"
 
-#: winmain.c:2354
+#: winmain.c:2367
 msgid "Option '%s' requires an argument"
 msgstr "Параметр '%s' требует аргумент"
 
-#: winmain.c:2400
+#: winmain.c:2413
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr ""
 "Mintty не может отключится от вызывающего метода, запуск в любом случае"
 
-#: winmain.c:2533
+#: winmain.c:2546
 msgid "Using default title due to invalid characters in program name"
 msgstr ""
 "Использование заголовка по умолчанию из-за недопустимых символов в имени "
