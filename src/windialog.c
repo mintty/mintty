@@ -22,6 +22,8 @@ extern void setup_config_box(controlbox *);
 #include <signal.h>
 #endif
 
+#include <sys/cygwin.h>  // cygwin_internal
+
 
 /*
  * windlg.c - Dialogs, including the configuration dialog.
@@ -165,6 +167,9 @@ determine_geometry(HWND wnd)
   normr.right = 100;
   normr.bottom = 100;
   MapDialogRect(config_wnd, &normr);
+#ifdef debug_geometry
+  printf("dialog %ldx%ld scale %ldx%ld\n", r.right - r.left, r.bottom - r.top, normr.right, normr.bottom);
+#endif
 
   dialog_height = 100 * (r.bottom - r.top) / normr.bottom;
 }
@@ -201,7 +206,7 @@ debug(char *tag)
 
   debugtag = tag;
 
-  if (debugopt && *debugopt)
+  if (debugopt && strchr(debugopt, 'o'))
     printf("%s\n", tag);
 }
 
@@ -240,8 +245,12 @@ display_update(char * new)
 static char * vfn = "/tmp/.mintty-version";
 
 void
-update_available_version()
+update_available_version(bool ok)
 {
+  version_retrieving = false;
+  if (!ok)
+    return;
+
   char vers[99];
   char * new = 0;
   FILE * vfd = fopen(vfn, "r");
@@ -280,8 +289,9 @@ update_available_version()
 #ifdef debug_version_check
   printf("update_available_version -> available <%s>\n", version_available);
 #endif
-  version_retrieving = false;
 }
+
+char * mtv = "https://raw.githubusercontent.com/mintty/mintty/master/VERSION";
 
 static void
 deliver_available_version()
@@ -296,8 +306,8 @@ deliver_available_version()
   // proceed asynchronously, in child process
 
   // determine available version
-  char * mtv = "https://raw.githubusercontent.com/mintty/mintty/master/VERSION";
   char * wfn = path_posix_to_win_a(vfn);
+  bool ok = true;
 #ifdef debug_version_check
   printf("deliver_available_version downloading to <%s>...\n", wfn);
 #endif
@@ -309,13 +319,26 @@ deliver_available_version()
   system(cmd);
   free(cmd);
 #else
-#include <urlmon.h>
-  URLDownloadToFile(NULL, mtv, wfn, 0, NULL);
+  HRESULT (WINAPI * pURLDownloadToFile)(void *, LPCSTR, LPCSTR, DWORD, void *) = 0;
+  pURLDownloadToFile = load_library_func("urlmon.dll", "URLDownloadToFileA");
+  if (pURLDownloadToFile) {
+#ifdef __CYGWIN__
+      /* Need to sync the Windows environment */
+      cygwin_internal(CW_SYNC_WINENV);
+#endif
+    if (S_OK != pURLDownloadToFile(NULL, mtv, wfn, 0, NULL))
+      ok = false;
+  }
+  else
+    ok = false;
 #endif
   free(wfn);
 
   // notify terminal window to display the new available version
-  SendMessageA(wnd, WM_APP, 0, 0);  // notify parent
+  SendMessageA(wnd, WM_APP, ok, 0);  // -> parent -> update_available_version
+#ifdef debug_version_check
+  printf("deliver_available_version notified %d\n", ok);
+#endif
   exit(0);
 }
 
@@ -692,7 +715,6 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam)
   return CallNextHookEx(0, nCode, wParam, lParam);
 }
 
-
 int
 message_box(HWND parwnd, char * text, char * caption, int type, wstring ok)
 {
@@ -735,6 +757,15 @@ message_box_w(HWND parwnd, wchar * wtext, wchar * wcaption, int type, wstring ok
   return ret;
 }
 
+#ifdef about_version_check
+static void CALLBACK
+hhook(LPHELPINFO lpHelpInfo)
+{
+  // test
+  SetWindowTextW(lpHelpInfo->hItemHandle, W("mintty %s available"));
+}
+#endif
+
 void
 win_show_about(void)
 {
@@ -762,7 +793,12 @@ win_show_about(void)
     .hwndOwner = config_wnd,
     .hInstance = inst,
     .lpszCaption = W(APPNAME),
+#ifdef about_version_check
+    .dwStyle = MB_USERICON | MB_OK | MB_HELP,
+    .lpfnMsgBoxCallback = hhook,
+#else
     .dwStyle = MB_USERICON | MB_OK,
+#endif
     .lpszIcon = MAKEINTRESOURCEW(IDI_MAINICON),
     .lpszText = wmsg
   });

@@ -87,7 +87,9 @@ ifeq ($(shell VER=`$(CC) -dumpversion`; expr $${VER%.*} '>=' 4.5), 1)
 endif
 
 scriptlib=-lusp10
-downldlib=-lurlmon
+#downldlib=-lurlmon
+#downldlib="${SYSTEMROOT}/System32/urlmon.dll"
+downldlib=
 extralibs=$(scriptlib) $(downldlib)
 LDFLAGS := -L$(shell $(CC) -print-file-name=w32api) -static-libgcc
 LDLIBS := -mwindows $(extralibs) -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -luuid
