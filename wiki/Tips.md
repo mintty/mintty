@@ -628,6 +628,13 @@ To add a new language, copy `messages.pot` to the desired `.po` file
 `msgstr` entries which are empty in the template. The tool `poedit` may 
 be used but remember to use UTF-8 encoding.
 
+_Note:_ There is one special pseudo-string in the localization template which 
+facilitates scaling of the Options dialog width. It is labelled 
+“__ Options: dialog width scale factor (80...200)” and its template value 
+is “100”. If you provide a pseudo-translated value between 80 and 200 
+for it, the Options dialog width will be scaled by that percentage.
+(The navigation panel remains unscaled.)
+
 Note that `&` marks in menu item labels define keyboard shortcuts to be 
 handled by Windows. The script `keycheck` with your `.po` file as parameter 
 checks for ambiguous shortcut entries; these are not errors but you may 

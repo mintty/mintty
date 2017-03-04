@@ -214,6 +214,7 @@ debug(char *tag)
 # define debug(tag)	
 #endif
 
+
 #define dont_debug_version_check 1
 
 static char * version_available = 0;
@@ -341,6 +342,28 @@ deliver_available_version()
 #endif
   exit(0);
 }
+
+
+/*
+   adapted from messageboxmanager.zip
+   @ https://www.codeproject.com/articles/18399/localizing-system-messagebox
+ */
+static HHOOK windows_hook = 0;
+static bool hooked_window_activated = false;
+
+static void
+hook_windows(HOOKPROC hookproc)
+{
+  windows_hook = SetWindowsHookExW(WH_CBT, hookproc, 0, GetCurrentThreadId());
+}
+
+static void
+unhook_windows()
+{
+  UnhookWindowsHookEx(windows_hook);
+  hooked_window_activated = false;
+}
+
 
 #define dont_debug_messages
 
@@ -579,6 +602,57 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 HWND config_wnd;
 
+static LRESULT CALLBACK
+check_options(int nCode, WPARAM wParam, LPARAM lParam)
+{
+  (void)wParam;
+
+#define dont_debug_check_options
+
+#ifdef debug_check_options
+  char * hcbt[] = {
+    "HCBT_MOVESIZE",
+    "HCBT_MINMAX",
+    "HCBT_QS",
+    "HCBT_CREATEWND",
+    "HCBT_DESTROYWND",
+    "HCBT_ACTIVATE",
+    "HCBT_CLICKSKIPPED",
+    "HCBT_KEYSKIPPED",
+    "HCBT_SYSCOMMAND",
+    "HCBT_SETFOCUS",
+  };
+  char * sCode = "?";
+  if (nCode >= 0 && nCode < (int)lengthof(hcbt))
+    sCode = hcbt[nCode];
+  printf("hook %d %s", nCode, sCode);
+  if (nCode == HCBT_CREATEWND) {
+    CREATESTRUCTW * cs = ((CBT_CREATEWNDW *)lParam)->lpcs;
+    printf(" x %3d y %3d w %3d h %3d (%08X %07X) <%ls>\n", cs->x, cs->y, cs->cx, cs->cy, (uint)cs->style, (uint)cs->dwExStyle, cs->lpszName);
+  }
+  else if (nCode == HCBT_ACTIVATE) {
+    bool from_mouse = ((CBTACTIVATESTRUCT *)lParam)->fMouse;
+    printf(" mou %d\n", from_mouse);
+  }
+  else
+    printf("\n");
+#endif
+
+  if (nCode == HCBT_CREATEWND) {
+    // dialog item geometry calculations and adjustments
+    CREATESTRUCTW * cs = ((CBT_CREATEWNDW *)lParam)->lpcs;
+    if (!(cs->style & WS_CHILD)) {
+      //__ Options: dialog width scale factor (80...200)
+      int scale_options_width = atoi(_("100"));
+      if (scale_options_width >= 80 && scale_options_width <= 200)
+        cs->cx = cs->cx * scale_options_width / 100;
+    }
+  }
+
+  //return CallNextHookEx(0, nCode, wParam, lParam);
+  return 0;
+}
+
 void
 win_open_config(void)
 {
@@ -609,8 +683,10 @@ win_open_config(void)
     initialised = true;
   }
 
+  hook_windows(check_options);
   config_wnd = CreateDialog(inst, MAKEINTRESOURCE(IDD_MAINBOX),
                             wnd, config_dialog_proc);
+  unhook_windows();
   // At this point, we could actually calculate the size of the 
   // dialog box used for the Options menu; however, the resulting 
   // value(s) (here DIALOG_HEIGHT) is already needed before this point, 
@@ -630,26 +706,6 @@ win_open_config(void)
   set_dpi_auto_scaling(false);
 }
 
-
-/*
-   adapted from messageboxmanager.zip
-   @ https://www.codeproject.com/articles/18399/localizing-system-messagebox
- */
-static HHOOK windows_hook = 0;
-static bool hooked_window_activated = false;
-
-static void
-hook_windows(HOOKPROC hookproc)
-{
-  windows_hook = SetWindowsHookExW(WH_CBT, hookproc, 0, GetCurrentThreadId());
-}
-
-static void
-unhook_windows()
-{
-  UnhookWindowsHookEx(windows_hook);
-  hooked_window_activated = false;
-}
 
 static wstring oklabel = null;
 static int oktype = MB_OK;

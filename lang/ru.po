@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-03-03 18:25+0100\n"
+"POT-Creation-Date: 2017-03-04 13:22+0100\n"
 "PO-Revision-Date: 2016-12-19 04:18+0500\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -186,7 +186,7 @@ msgid "Save"
 msgstr "Сохранить"
 
 #. __ Dialog button - cancel
-#: config.c:2037 winctrls.c:1108 windialog.c:696
+#: config.c:2037 winctrls.c:1108 windialog.c:752
 msgid "Cancel"
 msgstr "Отмена"
 
@@ -196,12 +196,12 @@ msgid "Apply"
 msgstr "Применить"
 
 #. __ Dialog button - take notice
-#: config.c:2045 windialog.c:693
+#: config.c:2045 windialog.c:749
 msgid "I see"
 msgstr "Хорошо"
 
 #. __ Dialog button - confirm action
-#: config.c:2047 winctrls.c:1107 windialog.c:695
+#: config.c:2047 winctrls.c:1107 windialog.c:751
 msgid "OK"
 msgstr ""
 
@@ -810,16 +810,21 @@ msgid "A&dd to Custom Colours"
 msgstr "Добавить в набор"
 
 #. __ Options: dialog title
-#: windialog.c:229 windialog.c:623
+#: windialog.c:230 windialog.c:699
 msgid "Options"
 msgstr "Настройки"
 
 #. __ Options: dialog title: "mintty <release> available (for download)"
-#: windialog.c:231
+#: windialog.c:232
 msgid "available"
 msgstr "доступный"
 
-#: windialog.c:724 windialog.c:749
+#. __ Options: dialog width scale factor (80...200)
+#: windialog.c:646
+msgid "100"
+msgstr ""
+
+#: windialog.c:780 windialog.c:805
 msgid "Error"
 msgstr "Ошибка"
 

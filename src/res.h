@@ -10,6 +10,8 @@
 // value is already needed before it would be available that way - totally insane!
 // Therefore, its setting is taken out to this common include file.
 #define DIALOG_HEIGHT 182
+#define DIALOG_WIDTH 256
+//#define DIALOG_WIDTH 310  // for CJK localisation
 
 #define DIALOG_TITLE "Options"
 #define DIALOG_CLASS "ConfigBox"
