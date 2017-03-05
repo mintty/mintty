@@ -324,8 +324,24 @@ term_set_search(wchar * needle)
   free(term.results.query);
   term.results.query = needle;
 
+  // transform UTF-16 to UCS for matching
+  int wlen = wcslen(needle);
+  xchar * xquery = malloc(sizeof(xchar) * (wlen + 1));
+  wchar prev = 0;
+  int xlen = -1;
+  for (int i = 0; i < wlen; i++) {
+    if ((prev & 0xFC00) == 0xD800 && (needle[i] & 0xFC00) == 0xDC00)
+      xquery[xlen] = ((xchar) (prev - 0xD7C0) << 10) | (needle[i] & 0x03FF);
+    else
+      xquery[++xlen] = needle[i];
+    prev = needle[i];
+  }
+  xquery[++xlen] = 0;
+
+  free(term.results.xquery);
+  term.results.xquery = xquery;
+  term.results.xquery_length = xlen;
   term.results.update_type = FULL_UPDATE;
-  term.results.query_length = wcslen(needle);
 }
 
 static void
@@ -375,15 +391,76 @@ circbuf_get(circbuf * cb, int i)
   return cb->buf[(cb->start + i) % cb->capacity];
 }
 
+static struct {
+  uint code, fold;
+} * case_folding;
+static int case_foldn = 0;
+
+static void
+init_case_folding()
+{
+  static bool init = false;
+  if (init)
+    return;
+  init = true;
+
+  FILE * cf = fopen("/usr/share/unicode/ucd/CaseFolding.txt", "r");
+  if (cf) {
+    uint last = 0;
+    case_folding = newn(typeof(* case_folding), 1);
+    char buf[100];
+    while (fgets(buf, sizeof(buf), cf)) {
+      uint code, fold;
+      char status;
+      if (sscanf(buf, "%X; %c; %X;", &code, &status, &fold) == 3) {
+        //1E9B; C; 1E61; # LATIN SMALL LETTER LONG S WITH DOT ABOVE
+        //1E9E; F; 0073 0073; # LATIN CAPITAL LETTER SHARP S
+        //1E9E; S; 00DF; # LATIN CAPITAL LETTER SHARP S
+        //0130; T; 0069; # LATIN CAPITAL LETTER I WITH DOT ABOVE
+        if (status == 'C' || status == 'S' || (status == 'T' && code != last)) {
+          last = code;
+          case_folding = renewn(case_folding, case_foldn + 1);
+          case_folding[case_foldn].code = code;
+          case_folding[case_foldn].fold = fold;
+          case_foldn++;
+        }
+      }
+    }
+    fclose(cf);
+  }
+}
+
+static uint
+case_fold(uint ch)
+{
+  // binary search in table
+  int min = 0;
+  int max = case_foldn - 1;
+  int mid;
+  while (max >= min) {
+    mid = (min + max) / 2;
+    if (case_folding[mid].code < ch) {
+      min = mid + 1;
+    } else if (case_folding[mid].code > ch) {
+      max = mid - 1;
+    } else {
+      return case_folding[mid].fold;
+    }
+  }
+  return ch;
+}
+
 void
 term_update_search(void)
 {
+  init_case_folding();
+
   int update_type = term.results.update_type;
   if (term.results.update_type == NO_UPDATE)
     return;
   term.results.update_type = NO_UPDATE;
 
-  if (term.results.query_length == 0)
+  if (term.results.xquery_length == 0)
     return;
 
   circbuf cb;
@@ -392,14 +469,14 @@ term_update_search(void)
   if (update_type == PARTIAL_UPDATE) {
     // How much of the backscroll we need to update on a partial update?
     // Do a ceil: (x + y - 1) / y
-    // On query_length - 1
-    int pstart = -((term.results.query_length + term.cols - 2) / term.cols) + term.sblines;
+    // On xquery_length - 1
+    int pstart = -((term.results.xquery_length + term.cols - 2) / term.cols) + term.sblines;
     lcurr = lcurr > pstart ? lcurr:pstart;
     results_partial_clear(lcurr);
   } else {
     term_clear_results();
   }
-  int llen = term.results.query_length / term.cols + 1;
+  int llen = term.results.xquery_length / term.cols + 1;
   if (llen < 2)
     llen = 2;
 
@@ -431,12 +508,21 @@ term_update_search(void)
     termline * lll = circbuf_get(&cb, y - lcurr);
     termchar * chr = lll->chars + x;
 
-    if (npos == 0 && cpos + term.results.query_length >= end)
+    if (npos == 0 && cpos + term.results.xquery_length >= end)
       break;
 
-    if (chr->chr != term.results.query[npos]) {
+    xchar ch = chr->chr;
+    if ((ch & 0xFC00) == 0xD800 && chr->cc_next) {
+      termchar * cc = chr + chr->cc_next;
+      if ((cc->chr & 0xFC00) == 0xDC00) {
+        ch = ((xchar) (ch - 0xD7C0) << 10) | (cc->chr & 0x03FF);
+      }
+    }
+    xchar pat = term.results.xquery[npos];
+    bool match = case_fold(ch) == case_fold(pat);
+    if (!match) {
       // Skip the second cell of any wide characters
-      if (chr->chr == UCSWIDE) {
+      if (ch == UCSWIDE) {
         ++anpos;
         ++cpos;
         continue;
@@ -450,7 +536,7 @@ term_update_search(void)
     ++anpos;
     ++npos;
 
-    if (term.results.query_length == npos) {
+    if (npos >= term.results.xquery_length) {
       int start = cpos - anpos + 1;
       result run = {
         .x = start % term.cols,
@@ -500,8 +586,10 @@ term_clear_search(void)
   term_clear_results();
   term.results.update_type = NO_UPDATE;
   free(term.results.query);
+  free(term.results.xquery);
   term.results.query = NULL;
-  term.results.query_length = 0;
+  term.results.xquery = NULL;
+  term.results.xquery_length = 0;
 }
 
 static void

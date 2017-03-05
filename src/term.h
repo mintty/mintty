@@ -257,7 +257,8 @@ typedef struct {
 typedef struct {
   result * results;
   wchar * query;
-  int query_length;
+  xchar * xquery;
+  int xquery_length;
   int capacity;
   int current;
   int length;
