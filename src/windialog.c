@@ -23,6 +23,7 @@ extern void setup_config_box(controlbox *);
 #endif
 
 #include <sys/cygwin.h>  // cygwin_internal
+#include <sys/stat.h>  // chmod
 
 
 /*
@@ -297,7 +298,7 @@ char * mtv = "https://raw.githubusercontent.com/mintty/mintty/master/VERSION";
 static void
 deliver_available_version()
 {
-  if (version_retrieving)
+  if (version_retrieving || !cfg.check_version_update)
     return;
   version_retrieving = true;
 
@@ -324,11 +325,12 @@ deliver_available_version()
   pURLDownloadToFile = load_library_func("urlmon.dll", "URLDownloadToFileA");
   if (pURLDownloadToFile) {
 #ifdef __CYGWIN__
-      /* Need to sync the Windows environment */
-      cygwin_internal(CW_SYNC_WINENV);
+    /* Need to sync the Windows environment */
+    cygwin_internal(CW_SYNC_WINENV);
 #endif
     if (S_OK != pURLDownloadToFile(NULL, mtv, wfn, 0, NULL))
       ok = false;
+    chmod(vfn, 0666);
   }
   else
     ok = false;
