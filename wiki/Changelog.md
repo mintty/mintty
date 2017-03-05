@@ -9,6 +9,10 @@ Terminal
   * Tweaked Wraparound and Backspace behaviour to comply with xterm and pass vttest 1.
   * Option OldWrapModes=true would restore previous wraparound behaviour.
 
+Search
+  * Enabled matching of non-BMP characters (#85).
+  * Enabled case-insensitive matching (#636), together with unicode-ucd package.
+
 Tty and character set
   * Keeping termios flag IUTF8 in sync with locale/charset to support proper backspace behaviour of programs not using readline.
 
@@ -16,7 +20,7 @@ Drag and drop
   * Drag-and-drop pasting applies configurable pattern (#440).
 
 Menu and hotkey functions
-  * Scroll markers (#569).
+  * Scroll markers (#569), facilitating quick scroll to previous/next command prompt.
   * Optional extended context menu (with Ctrl).
   * Extended context menu functions Copy & Paste (#539), Clear Scrollback (#421).
   * Logging can be toggled from extended context menu.
@@ -32,6 +36,9 @@ Configuration
   * New drag-and-drop paste configuration DropCommands (#440).
   * New user commands configuration UserCommands (#100, #475).
   * New option OldWrapModes to restore previous wraparound behaviour.
+  * Checking availability of mintty version update in Options dialog; disable with CheckVersionUpdate=0 (mintty/wsltty#20).
+  * Options dialog can be scaled via special pseudo-localization text (#637).
+  * Fixed localization of command-line messages (#637).
 
 Options dialog
   * Extending font sample area to both sides, allowing longer font samples.
