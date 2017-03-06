@@ -1870,6 +1870,13 @@ win_set_colour(colour_i i, colour c)
       else
         colours[BOLD_FG_COLOUR_I] = brighten(colours[FG_COLOUR_I], colours[BG_COLOUR_I]);
     }
+    else if (i == FG_COLOUR_I)
+      colours[i] = cfg.fg_colour;
+    else if (i == BG_COLOUR_I)
+      colours[i] = cfg.bg_colour;
+    else if (i == CURSOR_COLOUR_I)
+      colours[i] = cfg.cursor_colour;
+
     return;
   }
   colours[i] = c;

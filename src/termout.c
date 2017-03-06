@@ -1330,6 +1330,9 @@ do_cmd(void)
     when 10:  do_colour_osc(false, FG_COLOUR_I, false);
     when 11:  do_colour_osc(false, BG_COLOUR_I, false);
     when 12:  do_colour_osc(false, CURSOR_COLOUR_I, false);
+    when 110: do_colour_osc(false, FG_COLOUR_I, true);
+    when 111: do_colour_osc(false, BG_COLOUR_I, true);
+    when 112: do_colour_osc(false, CURSOR_COLOUR_I, true);
     when 7:  // Set working directory (from Mac Terminal) for Alt+F2
       // extract dirname from file://host/path scheme
       if (!strncmp(s, "file:", 5))
@@ -1672,10 +1675,13 @@ term_write(const char *buf, uint len)
               term.cmd_num = -99;  // prevent wrong valid param
           when ';':
             term.state = CMD_STRING;
-          when '\a' or '\n' or '\r':
+          when '\a':
+            do_cmd();
             term.state = NORMAL;
           when '\e':
-            term.state = ESCAPE;
+            term.state = CMD_ESCAPE;
+          when '\n' or '\r':
+            term.state = NORMAL;
           otherwise:
             term.state = IGNORE_STRING;
         }

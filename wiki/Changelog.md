@@ -8,6 +8,7 @@ Terminal
   * Reverse Wraparound is false by default (rather than fixed true before), to comply with xterm and terminfo.
   * Tweaked Wraparound and Backspace behaviour to comply with xterm and pass vttest 1.
   * Option OldWrapModes=true would restore previous wraparound behaviour.
+  * Supporting OSC sequences 110/111/112 to reset foreground/background/cursor colour.
 
 Search
   * Enabled matching of non-BMP characters (#85).
