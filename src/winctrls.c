@@ -304,6 +304,24 @@ paneltitle(ctrlpos * cp, int id)
 }
 
 /*
+ * A plain text.
+ */
+static void
+statictext(ctrlpos * cp, char * stext, int sid)
+{
+  RECT r;
+
+  cp->ypos -= GAPBETWEEN;
+
+  r.left = GAPBETWEEN;
+  r.top = cp->ypos;
+  r.right = cp->width;
+  r.bottom = STATICHEIGHT;
+  cp->ypos += r.bottom + GAPBETWEEN;
+  doctl(null, cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, stext, sid);
+}
+
+/*
  * A button on the right hand side, with a static to its left.
  */
 static void
@@ -793,6 +811,18 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
         //__ Options - Text: font chooser activation button
         staticbtn(&pos, "", base_id + 1, _("&Select..."), base_id + 2);
         data = new(font_spec);
+
+        num_ids++;
+        char * fontinfopat = "Leading: %d, Bold: %s, Underline: %s";
+        char * fontinfo_font = "font";
+        char * fontinfo_manual = "manual";
+        int taglen = max(strlen(fontinfo_font), strlen(fontinfo_manual));
+        char * fontinfo = newn(char, strlen(fontinfopat) + 23 + 2 * taglen);
+        sprintf(fontinfo, fontinfopat, row_spacing, 
+                bold_mode ? fontinfo_font : fontinfo_manual,
+                und_mode ? fontinfo_font : fontinfo_manual);
+        statictext(&pos, fontinfo, base_id + 3);
+        free(fontinfo);
       }
       otherwise:
         assert(!"Can't happen");

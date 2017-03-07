@@ -25,6 +25,12 @@ extern int cell_width, cell_height;  // includes spacing
 extern int PADDING;
 extern bool show_charinfo;
 extern void toggle_charinfo(void);
+// for display in Options – Font:
+extern int row_spacing;
+typedef enum {BOLD_SHADOW, BOLD_FONT} BOLD_MODE;
+extern BOLD_MODE bold_mode;
+typedef enum {UND_LINE, UND_FONT} UND_MODE;
+extern UND_MODE und_mode;
 
 extern bool disable_bidi;
 extern bool support_wsl;
