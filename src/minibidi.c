@@ -238,7 +238,7 @@ is_rtl_class(uchar bc)
 bool
 is_sep_class(uchar bc)
 {
-  const int mask = (1 << B) | (1 << S) | (1 << BN) | (1 << WS);
+  const int mask = (1 << B) | (1 << S) | (1 << BN) | (1 << WS) | (1 << ON);
 
   return mask & (1 << (bc));
 }
@@ -246,7 +246,7 @@ is_sep_class(uchar bc)
 bool
 is_punct_class(uchar bc)
 {
-  const int mask = (1 << BN) | (1 << CS) | (1 << EN) | (1 << ES) | (1 << ET) | (1 << ON);
+  const int mask = (1 << BN) | (1 << CS) | (1 << EN) | (1 << ES) | (1 << ET);
 
   return mask & (1 << (bc));
 }
