@@ -1107,7 +1107,8 @@ term_paint(void)
 
      /* Mark box drawing, block and some other characters 
       * that should connect to their neighbour cells and thus 
-      * be zoomed to the actual cell size including spacing (padding)
+      * be zoomed to the actual cell size including spacing (padding);
+      * also, for those, an italic attribute shall be ignored
       */
       if (tchar >= 0x2320 &&
           ((tchar >= 0x2500 && tchar <= 0x259F)
@@ -1125,9 +1126,18 @@ term_paint(void)
       * Check the font we'll _probably_ be using to see if
       * the character is wide when we don't want it to be.
       */
-      if (tchar != dispchars[j].chr ||
-          tattr.attr != (dispchars[j].attr.attr & ~(ATTR_NARROW | DATTR_MASK))) {
-        if ((tattr.attr & ATTR_WIDE) == 0 && win_char_width(tchar) == 2)
+      if (tchar >= 0xE000 && tchar < 0xF900) {
+        // don't tamper with width of Private Use characters
+      }
+      else if (tchar != dispchars[j].chr ||
+          tattr.attr != (dispchars[j].attr.attr & ~(ATTR_NARROW | DATTR_MASK))
+              )
+      {
+        if ((tattr.attr & ATTR_WIDE) == 0 && win_char_width(tchar) == 2
+            // and restrict narrowing to ambiguous width chars
+            //&& ambigwide(tchar)
+            // but then they will be clipped...
+           )
           tattr.attr |= ATTR_NARROW;
         else if (tattr.attr & ATTR_WIDE
                  // guard character expanding properly to avoid 
@@ -1136,11 +1146,20 @@ term_paint(void)
                  // for double-width characters 
                  // (if double-width by font substitution)
                  && cs_ambig_wide && !font_ambig_wide
-                 && win_char_width(tchar) == 1 && !widerange(tchar))
+                 && win_char_width(tchar) == 1 // && !widerange(tchar)
+                 // and reassure to apply this only to ambiguous width chars
+                 && ambigwide(tchar)
+                )
           tattr.attr |= ATTR_EXPAND;
       }
       else if (dispchars[j].attr.attr & ATTR_NARROW)
         tattr.attr |= ATTR_NARROW;
+
+#define dont_debug_width_scaling
+#ifdef debug_width_scaling
+      if (tattr.attr & (ATTR_EXPAND | ATTR_NARROW | ATTR_WIDE))
+        printf("%04X w %d enw %02X\n", tchar, win_char_width(tchar), (uint)(((tattr.attr & (ATTR_EXPAND | ATTR_NARROW | ATTR_WIDE)) >> 24)));
+#endif
 
      /* FULL-TERMCHAR */
       newchars[j].attr = tattr;
