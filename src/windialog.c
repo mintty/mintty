@@ -605,13 +605,13 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 HWND config_wnd;
 
 static LRESULT CALLBACK
-check_options(int nCode, WPARAM wParam, LPARAM lParam)
+scale_options(int nCode, WPARAM wParam, LPARAM lParam)
 {
   (void)wParam;
 
-#define dont_debug_check_options
+#define dont_debug_scale_options
 
-#ifdef debug_check_options
+#ifdef debug_scale_options
   char * hcbt[] = {
     "HCBT_MOVESIZE",
     "HCBT_MINMAX",
@@ -652,7 +652,7 @@ check_options(int nCode, WPARAM wParam, LPARAM lParam)
   }
 
   //return CallNextHookEx(0, nCode, wParam, lParam);
-  return 0;
+  return 0;  // 0: let default dialog box procedure process the message
 }
 
 void
@@ -685,7 +685,7 @@ win_open_config(void)
     initialised = true;
   }
 
-  hook_windows(check_options);
+  hook_windows(scale_options);
   config_wnd = CreateDialog(inst, MAKEINTRESOURCE(IDD_MAINBOX),
                             wnd, config_dialog_proc);
   unhook_windows();
@@ -770,7 +770,8 @@ set_labels(int nCode, WPARAM wParam, LPARAM lParam)
     hooked_window_activated = true;
   }
 
-  return CallNextHookEx(0, nCode, wParam, lParam);
+  //return CallNextHookEx(0, nCode, wParam, lParam);
+  return 0;  // 0: let default dialog box procedure process the message
 }
 
 int

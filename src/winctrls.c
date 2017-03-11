@@ -903,7 +903,8 @@ static HWND font_sample = 0;
 
 #define dont_debug_dialog_hook 1
 
-static bool do_next_hook = true;
+//static bool do_next_hook = true;
+static bool do_next_hook = false;  // ignore other hooks
 
 #ifdef debug_dialog_hook
 static FILE * dout = 0;
