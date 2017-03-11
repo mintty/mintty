@@ -391,6 +391,7 @@ circbuf_get(circbuf * cb, int i)
   return cb->buf[(cb->start + i) % cb->capacity];
 }
 
+#ifdef dynamic_casefolding
 static struct {
   uint code, fold;
 } * case_folding;
@@ -423,12 +424,24 @@ init_case_folding()
           case_folding[case_foldn].code = code;
           case_folding[case_foldn].fold = fold;
           case_foldn++;
+#ifdef debug_case_folding
+          printf("  {0x%04X, 0x%04X},\n", code, fold);
+#endif
         }
       }
     }
     fclose(cf);
   }
 }
+#else
+static struct {
+  uint code, fold;
+} case_folding[] = {
+#include "casefold.t"
+};
+#define case_foldn lengthof(case_folding)
+#define init_case_folding()
+#endif
 
 static uint
 case_fold(uint ch)

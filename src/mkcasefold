@@ -1,0 +1,21 @@
+#! /bin/sh -f
+
+if make CaseFolding.txt
+then	true
+else	echo Could not acquire Unicode data file UnicodeData.txt
+	exit 1
+fi
+
+LC_ALL=C
+export LC_ALL
+
+#1E9B; C; 1E61; # LATIN SMALL LETTER LONG S WITH DOT ABOVE
+#1E9E; F; 0073 0073; # LATIN CAPITAL LETTER SHARP S
+#1E9E; S; 00DF; # LATIN CAPITAL LETTER SHARP S
+#0130; T; 0069; # LATIN CAPITAL LETTER I WITH DOT ABOVE
+
+tr -d '\015' < CaseFolding.txt |
+sed \
+-e "s/^\([^;]*\); [CS]; *\([^;]*\);.*/  {0x\1, 0x\2},/" -e t \
+-e "s/^\([^;]*\); T; *\([^;]*\);.* WITH .*/  {0x\1, 0x\2},/" -e t \
+-e d > casefold.t
