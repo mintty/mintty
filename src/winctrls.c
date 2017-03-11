@@ -1114,15 +1114,23 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
           // Hue etc
           if (!(cs->style & WS_TABSTOP)) {
             // labels
+            float zoomx = (cc_item_grp < 18) ? zoom * 1.05 : zoom;
             int cc_hue_right = cs->x + cs->cx;
-            cs->x = cc_vert + (cs->x - cc_vert) * zoom;
+            cs->x = cc_vert + (cs->x - cc_vert) * zoomx;
+#if defined(debug_dialog_hook) && debug_dialog_hook > 1
+            printf("%d %f %f x %d->%d |%d\n", cc_item_grp, zoom, zoomx, cc_hue_right - cs->cx, cs->x, cc_hue_right);
+#endif
             cs->cx *= zoom;
             cs->cx += 2 * cc_item_left;
-            cc_hue_shift = cs->x + cs->cx - cc_hue_right;
+            if (cc_item_grp % 6 == 0)
+              cc_hue_shift = cs->x + cs->cx - cc_hue_right;
           }
           else {
             // value fields
             cs->x += cc_hue_shift;
+#if defined(debug_dialog_hook) && debug_dialog_hook > 1
+            printf("%d x %d->%d\n", cc_item_grp, cs->x - cc_hue_shift, cs->x);
+#endif
           }
         }
         else if (!(cs->style & WS_TABSTOP)) {
