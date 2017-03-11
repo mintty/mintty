@@ -6,13 +6,13 @@
 
 #define MAJOR_VERSION  2
 #define MINOR_VERSION  7
-#define PATCH_NUMBER   4
+#define PATCH_NUMBER   5
 #define BUILD_NUMBER   0
 
 // needed for res.rc
 #define APPDESC "Terminal"
 #define AUTHOR  "Andy Koppe / Thomas Wolff"
-#define YEAR    "2013/2016"
+#define YEAR    "2013/2017"
 
 
 #define CONCAT_(a,b) a##b
@@ -39,7 +39,7 @@
   STRINGIFY(MAJOR_VERSION.MINOR_VERSION.PATCH_NUMBER.BUILD_NUMBER)
 #define COMMA_VERSION \
   MAJOR_VERSION,MINOR_VERSION,PATCH_NUMBER,BUILD_NUMBER
-#define COPYRIGHT "© (C) " YEAR " " AUTHOR
+#define COPYRIGHT "© " YEAR " " AUTHOR
 
 // needed for secondary device attributes report
 #define DECIMAL_VERSION \

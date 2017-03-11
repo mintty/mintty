@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-03-11 19:27+0100\n"
+"POT-Creation-Date: 2017-03-11 20:49+0100\n"
 "PO-Revision-Date: 2017-02-27 18:11+0900\n"
 "Last-Translator: Ken Takata <kentkt@csc.jp>\n"
 "Language-Team: \n"
@@ -185,7 +185,7 @@ msgid "Save"
 msgstr "保存"
 
 #. __ Dialog button - cancel
-#: config.c:2039 winctrls.c:1147 windialog.c:754
+#: config.c:2039 winctrls.c:1147 windialog.c:762
 msgid "Cancel"
 msgstr "キャンセル"
 
@@ -195,12 +195,12 @@ msgid "Apply"
 msgstr "適用"
 
 #. __ Dialog button - take notice
-#: config.c:2047 windialog.c:751
+#: config.c:2047 windialog.c:759
 msgid "I see"
 msgstr "了解"
 
 #. __ Dialog button - confirm action
-#: config.c:2049 winctrls.c:1146 windialog.c:753
+#: config.c:2049 winctrls.c:1146 windialog.c:761
 msgid "OK"
 msgstr "OK"
 
@@ -807,7 +807,7 @@ msgid "A&dd to Custom Colours"
 msgstr "色の追加"
 
 #. __ Options: dialog title
-#: windialog.c:231 windialog.c:701
+#: windialog.c:231 windialog.c:709
 msgid "Options"
 msgstr "オプション"
 
@@ -817,11 +817,11 @@ msgid "available"
 msgstr "が利用可能"
 
 #. __ Options: dialog width scale factor (80...200)
-#: windialog.c:648
+#: windialog.c:656
 msgid "100"
 msgstr "121"
 
-#: windialog.c:783 windialog.c:808
+#: windialog.c:791 windialog.c:816
 msgid "Error"
 msgstr "エラー"
 

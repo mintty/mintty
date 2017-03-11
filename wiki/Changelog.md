@@ -1,6 +1,10 @@
-Font handling
+### 2.7.5 (11 Mar 2017) ###
+
+Font handling / Text rendering
   * Changing default FontRender=uniscribe (#605, #573).
   * Zoom box drawing and some other characters to complete cell size so they can connect to each other (#628).
+  * Restricted glyph width scaling to support overhanging wide icons (#638).
+  * Tweaked italic overhang clipping (#638).
 
 Terminal
   * Fixed Backspace upper limit in Origin mode.
@@ -12,7 +16,7 @@ Terminal
 
 Search
   * Enabled matching of non-BMP characters (#85).
-  * Enabled case-insensitive matching (#636), together with unicode-ucd package.
+  * Case-insensitive matching (#636).
 
 Tty and character set
   * Keeping termios flag IUTF8 in sync with locale/charset to support proper backspace behaviour of programs not using readline.
@@ -24,7 +28,7 @@ Menu and hotkey functions
   * Scroll markers (#569), facilitating quick scroll to previous/next command prompt.
   * Optional extended context menu (with Ctrl).
   * Extended context menu functions Copy & Paste (#539), Clear Scrollback (#421).
-  * Logging can be toggled from extended context menu.
+  * Logging can be toggled from extended context menu (#342, ~#546, ~#279).
   * Character information mode, switchable from extended context menu.
   * User-defined commands in extended context menu (#100, #475).
   * Ctrl+Shift+T hotkey cycles transparency (#625).
@@ -37,7 +41,7 @@ Configuration
   * New drag-and-drop paste configuration DropCommands (#440).
   * New user commands configuration UserCommands (#100, #475).
   * New option OldWrapModes to restore previous wraparound behaviour.
-  * Checking availability of mintty version update in Options dialog; disable with CheckVersionUpdate=0 (mintty/wsltty#20).
+  * Checking availability of mintty version update in Options dialog; adjust or disable with option CheckVersionUpdate (mintty/wsltty#20).
   * Options dialog can be scaled via special pseudo-localization text (#637).
   * Fixed localization of command-line messages (#637).
 
