@@ -300,6 +300,14 @@ deliver_available_version()
 {
   if (version_retrieving || !cfg.check_version_update)
     return;
+
+  static time_t version_retrieved = 0;
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  if (version_retrieved && ts.tv_sec - version_retrieved < cfg.check_version_update)
+    return;
+  version_retrieved = ts.tv_sec;
+
   version_retrieving = true;
 
   if (fork())

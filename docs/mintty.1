@@ -1634,9 +1634,10 @@ considered to compensate by appropriate scaling.
 This option can be set to false to suppress DPI adjustments.
 
 .TP
-\fBCheck availability of mintty version update\fP (CheckVersionUpdate=1)
+\fBCheck availability of mintty version update\fP (CheckVersionUpdate=900)
 If non-zero, mintty checks whether there is a version update available 
-whenever the Options dialog is opened.
+whenever the Options dialog is opened and this was not checked within 
+the last given number of seconds.
 
 .TP
 \fBSixel image clipboard substitution\fP (SixelClipChars=\fIspace\fP)
