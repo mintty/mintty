@@ -1105,6 +1105,7 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
 
       if (!(cs->style & WS_CHILD)) {
         // colour chooser popup dialog
+        cc_item_grp = 0;
         cc_height = cs->cy;
         cc_width = cs->cx;
         cc_vert = cc_width / 2;
