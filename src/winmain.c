@@ -779,11 +779,14 @@ win_fix_position(void)
   MONITORINFO mi;
   get_my_monitor_info(&mi);
   RECT ar = mi.rcWork;
+  WINDOWINFO winfo;
+  winfo.cbSize = sizeof(WINDOWINFO);
+  GetWindowInfo(wnd, &winfo);
 
   // Correct edges. Top and left win if the window is too big.
   wr.left -= max(0, wr.right - ar.right);
   wr.top -= max(0, wr.bottom - ar.bottom);
-  wr.left = max(wr.left, ar.left);
+  wr.left = max(wr.left, (int)(ar.left - winfo.cxWindowBorders));
   wr.top = max(wr.top, ar.top);
 
   SetWindowPos(wnd, 0, wr.left, wr.top, 0, 0,
