@@ -1720,12 +1720,12 @@ have terminated. Be careful not to configure commands that can stall or block!
 
 \fINote:\fP This feature potentially makes mintty vulnerable against command injection.
 Be careful what commands you configure! Especially do not embed 
-environment variable parameters unquoted (like \fBecho $MINTTY_SELECTION\fP), 
+environment variable parameters unquoted (like \fBecho $MINTTY_SELECT\fP), 
 in order to avoid the risk of injecting commands via tricky selected text.
 
 Examples:
 .br
-\(en \fBUserCommands=Paste capital:echo -n "$MINTTY_SELECTION" | tr 'a-z' 'A-Z';Paste small:echo -n "$MINTTY_SELECTION" | tr 'A-Z' 'a-z'\fP
+\(en \fBUserCommands=Paste capital:echo -n "$MINTTY_SELECT" | tr 'a-z' 'A-Z';Paste small:echo -n "$MINTTY_SELECT" | tr 'A-Z' 'a-z'\fP
 
 \fINote:\fP Control characters need to be embedded verbatim; there is no escape notation.
 
@@ -1733,8 +1733,8 @@ Examples:
 
 .SS Console issue
 
-Mintty is not a full replacement for the Windows console window that Cygwin
-uses by default.
+Mintty is not a full replacement for Cygwin Console (i.e. cygwin running 
+in a Windows console window).
 Like xterm and rxvt, mintty communicates with the child process through a
 pseudo terminal device, which Cygwin emulates using Windows pipes.
 This means that native Windows command line programs started in mintty see
