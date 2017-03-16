@@ -134,6 +134,7 @@ enum {
   LATTR_WRAPPED2  = 0x00000020u, /* with WRAPPED: CJK wide character
                                   * wrapped to next line, so last
                                   * single-width cell is empty */
+  LATTR_CLEARPAD  = 0x00000040u, /* flag to clear padding from overhang */
   LATTR_MARKED    = 0x00000100u, /* scroll marker */
   LATTR_UNMARKED  = 0x00000200u, /* secondary scroll marker */
 };
