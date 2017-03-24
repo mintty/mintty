@@ -1409,8 +1409,19 @@ fonthook(HWND hdlg, UINT msg, WPARAM wParam, LPARAM lParam)
   if (msg == WM_COMMAND && wParam == 1026) {  // Apply
     LOGFONTW lfapply;
     SendMessageW(hdlg, WM_CHOOSEFONT_GETLOGFONT, 0, (LPARAM)&lfapply);
+
     font_spec * fsp = &new_cfg.font;
-    wstrset(&fsp->name, lfapply.lfFaceName);
+    // we must not realloc a copied string pointer,
+    // -- wstrset(&fsp->name, lfapply.lfFaceName); --
+    // let's rather dup the string;
+    // if we just try to resync the copies 
+    // -- ((font_spec *) c->data)->name = fsp->name; --
+    // that would heal the case "Apply", then "Cancel", 
+    // but not the case "Apply", then "OK",
+    // so let's rather accept a negligable memory leak here
+    // (few bytes per "Apply" click)
+    fsp->name = wcsdup(lfapply.lfFaceName);
+
     HDC dc = GetDC(0);
     fsp->size = -MulDiv(lfapply.lfHeight, 72, GetDeviceCaps(dc, LOGPIXELSY));
     trace_fontsel(("Apply lfHeight %ld -> size %d <%ls>\n", (long int)lfapply.lfHeight, fsp->size, lfapply.lfFaceName));
@@ -1505,6 +1516,10 @@ select_font(winctrl *c)
   bool ok = ChooseFontW(&cf);
   if (!new_cfg.old_fontmenu)
     unhook_windows();
+#ifdef debug_fonthook
+  font_spec * fsp = (font_spec *) c->data;
+  printf("ok %d c->data %p <%ls> copy %p <%ls> -> <%ls>\n", ok, fsp->name, fsp->name, fs.name, fs.name, lf.lfFaceName);
+#endif
   if (ok) {
     // font selection menu closed with OK
     wstrset(&fs.name, lf.lfFaceName);
@@ -1922,7 +1937,6 @@ dlg_fontsel_set(control *ctrl, font_spec *fs)
   trace_fontsel(("fontsel_set <%ls>\n", fs->name));
   *(font_spec *) c->data = *fs;   /* structure copy */
 
-  int boldness = (fs->weight - 1) / 111;
   static char * boldnesses[] = {
     "Thin, ",
     "Extralight, ",
@@ -1934,10 +1948,14 @@ dlg_fontsel_set(control *ctrl, font_spec *fs)
     "Extrabold, ",
     "Heavy, "
   };
+
+  //int boldness = (fs->weight - 1) / 111;
+  int boldness = (fs->weight - 50) / 100;
   if (boldness < 0)
     boldness = 0;
   else if (boldness >= (int)lengthof(boldnesses))
     boldness = lengthof(boldnesses) - 1;
+
   //char * boldstr = fs->isbold ? "bold, " : "";
   char * boldstr = boldnesses[boldness];
 #if CYGWIN_VERSION_API_MINOR >= 201
