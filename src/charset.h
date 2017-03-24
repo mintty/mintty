@@ -93,6 +93,7 @@ extern char * path_posix_to_win_a(const char * p);
 #define wcschr _wcschr
 #define wcsrchr _wcsrchr
 #define wcsncmp _wcsncmp
+#define wcsncpy _wcsncpy
 //CYGWIN_VERSION_API_MINOR < 207
 #define wcsdup _wcsdup
 #endif
@@ -112,6 +113,7 @@ extern int wcscmp(const wchar * s1, const wchar * s2);
 extern wchar * wcschr(const wchar * s, wchar c);
 extern wchar * wcsrchr(const wchar * s, wchar c);
 extern int wcsncmp(const wchar * s1, const wchar * s2, int len);
+extern wchar * wcsncpy(wchar * s1, const wchar * s2, int len);
 
 #endif
 

@@ -677,6 +677,15 @@ wcsncmp(const wchar * s1, const wchar * s2, int len)
   return 0;
 }
 
+wchar *
+wcsncpy(wchar * s1, const wchar * s2, int len)
+{
+  wchar cp = (wchar)-1;
+  for (int i = 0; i < len; i++)
+    s1[i] = cp = cp ? s2[i] : 0;
+  return s1;
+}
+
 #endif
 
 #if CYGWIN_VERSION_API_MINOR < 207 || defined(__midipix__) || defined(debug_wcs)
