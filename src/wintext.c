@@ -1549,7 +1549,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int la
   text_out_end();
 
   int line_width = (3
-                    + (attr.attr & ATTR_BOLD ? 2 : 0)
+                    + (attr.attr & ATTR_BOLD ? 1 : 0)
                     + (lattr >= LATTR_WIDE ? 2 : 0)
                     + (lattr >= LATTR_TOP ? 2 : 0)
                    ) * cell_height / 40;
