@@ -1789,12 +1789,34 @@ download_scheme(char * url)
   if (strchr(url, '\''))
     return null;  // Insecure link
 
+#ifdef use_curl
   static string cmdpat = "curl '%s' -o - 2> /dev/null";
   char * cmd = newn(char, strlen(cmdpat) -1 + strlen(url));
   sprintf(cmd, cmdpat, url);
   FILE * sf = popen(cmd, "r");
   if (!sf)
     return null;
+#else
+  HRESULT (WINAPI * pURLDownloadToFile)(void *, LPCSTR, LPCSTR, DWORD, void *) = 0;
+  pURLDownloadToFile = load_library_func("urlmon.dll", "URLDownloadToFileA");
+  bool ok = false;
+  char sfn[44];
+  sprintf(sfn, "/tmp/.mintty-scheme.%d", getpid());
+  if (pURLDownloadToFile) {
+#ifdef __CYGWIN__
+    /* Need to sync the Windows environment */
+    cygwin_internal(CW_SYNC_WINENV);
+#endif
+    char * wfn = path_posix_to_win_a(sfn);
+    ok = S_OK == pURLDownloadToFile(NULL, url, wfn, 0, NULL);
+    free(wfn);
+  }
+  if (!ok)
+    return null;
+  FILE * sf = fopen(sfn, "r");
+  if (!sf)
+    return null;
+#endif
 
   char * sch = null;
   while (fgets(linebuf, sizeof(linebuf) - 1, sf)) {
@@ -1838,7 +1860,12 @@ download_scheme(char * url)
       }
     }
   }
+#ifdef use_curl
   pclose(sf);
+#else
+  fclose(sf);
+  remove(sfn);
+#endif
 
   return sch;
 }
