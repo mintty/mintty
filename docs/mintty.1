@@ -819,6 +819,7 @@ By setting this true, text attributes underline, doubly underline, strikeout and
 are enforced to be drawn manually. 
 The default is to use Windows font variants for strikeout and for underline, 
 unless mintty detects that the underlined font would not display properly.
+Note that font smoothing may be affected by Windows-generated underline modes.
 
 .TP
 \fBShow bold as font\fP (BoldAsFont=no)
@@ -850,7 +851,7 @@ displayed as a bold background colour instead.
 
 .TP
 \fBFont smoothing\fP (FontSmoothing=default)
-Select the amount of font smoothing from the following choices:
+Select the amount of font smoothing in font rendering from the following choices:
 .br
 \(en \fBDefault\fP: Use Windows setting.
 .br
@@ -859,6 +860,9 @@ Select the amount of font smoothing from the following choices:
 \(en \fBPartial\fP: Greyscale anti-aliasing.
 .br
 \(en \fBFull\fP: Subpixel anti-aliasing ("ClearType").
+
+Note that font smoothing may be affected by some Windows-generated 
+font attributes; see UnderlineManual.
 
 .TP
 \fBFont rendering\fP (FontRender=textout)
