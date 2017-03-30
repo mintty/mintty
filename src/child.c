@@ -727,16 +727,23 @@ child_set_fork_dir(char * dir)
 void
 child_fork(int argc, char *argv[], int moni)
 {
+  void reset_fork_mode()
+  {
+    clone_size_token = true;
+  }
+
   pid_t clone = fork();
 
   if (cfg.daemonize) {
     if (clone < 0) {
       childerror(_("Error: Could not fork child daemon"), true, errno, 0);
+      reset_fork_mode();
       return;  // assume next fork will fail too
     }
     if (clone > 0) {  // parent waits for intermediate child
       int status;
       waitpid(clone, &status, 0);
+      reset_fork_mode();
       return;
     }
 
@@ -800,14 +807,14 @@ child_fork(int argc, char *argv[], int moni)
       setenvi("MINTTY_ROWS", term.rows);
       setenvi("MINTTY_COLS", term.cols);
     }
-    else
-      clone_size_token = true;
     // provide environment to select monitor
     if (moni > 0)
       setenvi("MINTTY_MONITOR", moni);
     // propagate shortcut-inherited icon
     if (icon_is_from_shortcut)
       setenv("MINTTY_ICON", cs__wcstoutf(cfg.icon), true);
+
+    //setenv("MINTTY_CHILD", "1", true);
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
     execv("/proc/self/exe", argv);
@@ -824,4 +831,5 @@ child_fork(int argc, char *argv[], int moni)
 #endif
     exit(255);
   }
+  reset_fork_mode();
 }

@@ -1480,7 +1480,7 @@ win_key_up(WPARAM wp, LPARAM unused(lp))
       inline bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
       if (is_key_down(VK_SHIFT))
         alt_F2_shifted = true;
-      if (alt_F2_shifted)
+      if (alt_F2_shifted || win_is_fullscreen)
         clone_size_token = false;
 
       alt_F2_pending = false;
