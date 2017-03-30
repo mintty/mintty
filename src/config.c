@@ -58,7 +58,7 @@ const config default_cfg = {
   .allow_blinking = false,
   .locale = "",
   .charset = "",
-  .old_fontmenu = false,
+  .fontmenu = -1,
   // Keys
   .backspace_sends_bs = CERASE == '\b',
   .delete_sends_del = false,
@@ -216,7 +216,8 @@ options[] = {
   {"Locale", OPT_STRING, offcfg(locale)},
   {"Charset", OPT_STRING, offcfg(charset)},
   {"FontRender", OPT_FONTRENDER, offcfg(font_render)},
-  {"OldFontMenu", OPT_BOOL, offcfg(old_fontmenu)},
+  {"FontMenu", OPT_INT, offcfg(fontmenu)},
+  {"OldFontMenu", OPT_INT | OPT_LEGACY, offcfg(fontmenu)},
 
   // Keys
   {"BackspaceSendsBS", OPT_BOOL, offcfg(backspace_sends_bs)},
@@ -1270,6 +1271,7 @@ save_config(void)
 
 
 static control *cols_box, *rows_box, *locale_box, *charset_box;
+static control *font_sample, *font_list, *font_weights;
 
 void
 apply_config(bool save)
@@ -2016,6 +2018,328 @@ url_opener(control *ctrl, int event)
   }
 }
 
+struct fontlist {
+  wstring fn;
+  struct weight {
+    int weight;
+    wstring style;
+  } * weights;
+  uint weightsn;
+};
+static struct fontlist * fontlist = 0;
+static uint fontlistn = 0;
+
+static void
+clearfontlist()
+{
+  for (uint fi = 0; fi < fontlistn; fi++) {
+    delete(fontlist[fi].fn);
+    for (uint wi = 0; wi < fontlist[fi].weightsn; wi++) {
+      delete(fontlist[fi].weights[wi].style);
+    }
+    delete(fontlist[fi].weights);
+  }
+  fontlistn = 0;
+  delete(fontlist);
+  fontlist = 0;
+}
+
+/* Windows LOGFONT values
+	100	FW_THIN
+	200	FW_EXTRALIGHT
+	200	FW_ULTRALIGHT
+	300	FW_LIGHT
+	400	FW_NORMAL
+	400	FW_REGULAR
+	500	FW_MEDIUM
+	600	FW_SEMIBOLD
+	600	FW_DEMIBOLD
+	700	FW_BOLD
+	800	FW_EXTRABOLD
+	800	FW_ULTRABOLD
+	900	FW_HEAVY
+	900	FW_BLACK
+   Other weight names (http://www.webtype.com/info/articles/fonts-weights/)
+    100    Extra Light or Ultra Light
+    200    Light or Thin
+    300    Book or Demi
+    400    Normal or Regular
+    500    Medium
+    600    Semibold, Demibold
+    700    Bold
+    800    Black, Extra Bold or Heavy
+    900    Extra Black, Fat, Poster or Ultra Black
+ */
+static wstring weights[] = {
+  // the first 9 weight names are used for display and name filtering
+  W("Thin"),    	// 100, 200
+  W("Extralight"),	// 200, 100
+  W("Light"),   	// 300, 200
+  W("Regular"), 	// 400
+  W("Medium"),  	// 500
+  W("Semibold"),	// 600
+  W("Bold"),    	// 700
+  W("Extrabold"),	// 800
+  W("Heavy"),   	// 900, 800
+  // the remaining weight names are only used for name filtering
+  W("Ultralight"),	// 200, 100
+  W("Normal"),  	// 400
+  W("Demibold"),	// 600
+  W("Ultrabold"),	// 800
+  W("Black"),   	// 900, 800
+  W("Book"),    	// 300, 400
+  W("Demi"),    	// 300
+  W("Extrablack"),	// 900
+  W("Fat"),     	// 900
+  W("Poster"),  	// 900
+  W("Ultrablack"),	// 900
+};
+
+static string sizes[] = {
+  "8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "28",
+  "32", "36", "40", "44", "48", "56", "64", "72"
+};
+
+static void
+enterfontlist(wchar * fn, int weight, wchar * style)
+{
+  if (*fn == '@') {
+    free(fn);
+    // ignore vertical font
+    return;
+  }
+
+  bool found = false;
+  uint fi = 0;
+  while (fi < fontlistn) {
+    int cmp = wcscmp(fn, fontlist[fi].fn);
+    if (cmp <= 0) {
+      if (cmp == 0)
+        found = true;
+      break;
+    }
+    fi++;
+  }
+
+  if (found) {
+    free(fn);
+
+    bool found = false;
+    uint wi = 0;
+    while (wi < fontlist[fi].weightsn) {
+      int cmp = weight - fontlist[fi].weights[wi].weight;
+      if (cmp <= 0) {
+        if (cmp == 0)
+          found = true;
+        break;
+      }
+      wi++;
+    }
+    if (found)
+      free(style);
+    else {
+      fontlist[fi].weightsn++;
+      fontlist[fi].weights = renewn(fontlist[fi].weights, fontlist[fi].weightsn);
+      for (uint j = fontlist[fi].weightsn - 1; j > wi; j--)
+        fontlist[fi].weights[j] = fontlist[fi].weights[j - 1];
+      fontlist[fi].weights[wi].weight = weight;
+      fontlist[fi].weights[wi].style = style;
+    }
+  }
+  else {
+    if (fontlist) {
+      fontlistn++;
+      fontlist = renewn(fontlist, fontlistn);
+      for (uint j = fontlistn - 1; j > fi; j--)
+        fontlist[j] = fontlist[j - 1];
+    }
+    else
+      fontlist = newn(struct fontlist, 1);
+
+    fontlist[fi].fn = fn;
+
+    fontlist[fi].weightsn = 1;
+    fontlist[fi].weights = newn(struct weight, 1);
+    fontlist[fi].weights[0].weight = weight;
+    fontlist[fi].weights[0].style = style;
+  }
+}
+
+static void
+display_font_sample()
+{
+  dlg_text_paint(font_sample);
+}
+
+static void
+font_weight_handler(control *ctrl, int event)
+{
+  uint fi = dlg_listbox_getcur(font_list);
+  if (event == EVENT_REFRESH) {
+    dlg_listbox_clear(ctrl);
+    if (fi < fontlistn) {
+      for (uint w = 0; w < fontlist[fi].weightsn; w++)
+        dlg_listbox_add_w(ctrl, fontlist[fi].weights[w].style);
+    }
+  }
+  else if (event == EVENT_VALCHANGE || event == EVENT_SELCHANGE) {
+    wstring wname = newn(wchar, 1);
+    dlg_editbox_get_w(ctrl, &wname);
+    int weight = FW_NORMAL;
+    for (uint wi = 0; wi < fontlist[fi].weightsn; wi++)
+      if (0 == wcscmp(wname, fontlist[fi].weights[wi].style)) {
+        weight = fontlist[fi].weights[wi].weight;
+        break;
+      }
+    delete(wname);
+    new_cfg.font.weight = weight;
+    new_cfg.font.isbold = weight >= FW_BOLD;
+    display_font_sample();
+  }
+}
+
+static void
+font_size_handler(control *ctrl, int event)
+{
+  if (event == EVENT_REFRESH) {
+    dlg_listbox_clear(ctrl);
+    for (uint i = 0; i < lengthof(sizes); i++)
+      dlg_listbox_add(ctrl, sizes[i]);
+    char size[12];
+    sprintf(size, "%d", new_cfg.font.size);
+    dlg_editbox_set(ctrl, size);
+  }
+  else if (event == EVENT_VALCHANGE || event == EVENT_SELCHANGE) {
+    string size = newn(char, 3);
+    dlg_editbox_get(ctrl, &size);
+    new_cfg.font.size = atoi(size);
+    delete(size);
+    display_font_sample();
+  }
+}
+
+void
+list_fonts(bool report)
+{
+  HDC dc = GetDC(0);
+
+  int CALLBACK fontenum(const ENUMLOGFONTW *lpelf, const NEWTEXTMETRICW *lpntm, DWORD fontType, LPARAM lParam)
+  {
+    const LOGFONTW * lfp = &lpelf->elfLogFont;
+    (void)lpntm, (void)fontType;
+
+    if (lParam) {
+      if ((lfp->lfPitchAndFamily & 3) == FIXED_PITCH && !lfp->lfCharSet)
+        EnumFontFamiliesW(dc, lfp->lfFaceName, (FONTENUMPROCW)fontenum, 0);
+    }
+    else if (!lfp->lfItalic && !lfp->lfCharSet) {
+      if (lfp->lfFaceName[0] == '@')
+        // skip vertical font families
+        return 1;
+
+      wchar * tagsplit(wchar * fn, wstring style)
+      {
+#if CYGWIN_VERSION_API_MINOR >= 74
+        wchar * tag = wcsstr(fn, style);
+        if (tag) {
+          int n = wcslen(style);
+          if (tag[n] <= ' ' && tag != fn && tag[-1] == ' ') {
+            tag[-1] = 0;
+            tag[n] = 0;
+            return tag;
+          }
+        }
+#else
+        (void)fn; (void)style;
+#endif
+        return 0;
+      }
+
+      /**
+	Courier|
+	FreeMono|Medium
+	Inconsolata|Medium
+	Source Code Pro ExtraLight|ExtraLight
+	@BatangChe|Regular
+	Iosevka Term Slab Medium Obliqu|Regular
+	Lucida Sans Typewriter|Bold
+	TIFAX|Alpha
+	HanaMinA|Regular
+	DejaVu Sans Mono|Book
+       */
+      wchar * fn = wcsdup(lfp->lfFaceName);
+      wchar * st = tagsplit(fn, W("Oblique"));
+      if ((st = tagsplit(fn, lpelf->elfStyle))) {
+        //   Source Code Pro ExtraLight|ExtraLight
+        //-> Source Code Pro|ExtraLight
+      }
+      else {
+        wchar * fnst = fn;
+#if CYGWIN_VERSION_API_MINOR >= 74
+        int digsi = wcscspn(fn, W("0123456789"));
+        int nodigsi = wcsspn(&fn[digsi], W("0123456789"));
+        if (nodigsi)
+          fnst = &fn[digsi + nodigsi];
+#endif
+        for (uint i = 0; i < lengthof(weights); i++)
+          if ((st = tagsplit(fnst, weights[i]))) {
+            //   Iosevka Term Slab Medium Obliqu|Regular
+            //-> Iosevka Term Slab|Medium
+            break;
+          }
+      }
+      if (!st || !*st)
+        st = (wchar *)lpelf->elfStyle;
+      if (!*st)
+        st = W("Regular");
+      st = wcsdup(st);
+      fn = renewn(fn, wcslen(fn) + 1);
+
+      if (report)
+        printf("%03ld %ls|%ls [2m[%ls|%ls][0m\n", (long int)lfp->lfWeight, fn, st, lfp->lfFaceName, lpelf->elfStyle);
+      else
+        enterfontlist(fn, lfp->lfWeight, st);
+    }
+
+    return 1;
+  }
+
+  EnumFontFamiliesW(dc, 0, (FONTENUMPROCW)fontenum, 1);
+  ReleaseDC(0, dc);
+}
+
+static void
+font_handler(control *ctrl, int event)
+{
+  if (event == EVENT_REFRESH) {
+    dlg_listbox_clear(ctrl);
+    clearfontlist();
+
+    list_fonts(false);
+    int weighti = (new_cfg.font.weight - 50) / 100;
+    if (weighti > 8)
+      weighti = 8;
+    else if (weighti < 0)
+      weighti = 0;
+    wchar * weight = wcsdup(weights[weighti]);
+    enterfontlist(wcsdup(new_cfg.font.name), new_cfg.font.weight, weight);
+    //sortfontlist();  // already insert-sorted above
+
+    for (uint i = 0; i < fontlistn; i++)
+      dlg_listbox_add_w(ctrl, fontlist[i].fn);
+
+    dlg_editbox_set_w(ctrl, new_cfg.font.name);
+    display_font_sample();
+  }
+  else if (event == EVENT_VALCHANGE || event == EVENT_SELCHANGE) {
+    //int n = dlg_listbox_getcur(ctrl);
+    dlg_editbox_get_w(ctrl, &new_cfg.font.name);
+    font_weight_handler(font_weights, EVENT_REFRESH);
+    display_font_sample();
+  }
+}
+
+
 void
 setup_config_box(controlbox * b)
 {
@@ -2153,42 +2477,74 @@ setup_config_box(controlbox * b)
                       _("Text and Font properties"), 
   //__ Options - Text: section title
                       _("Font"));
-  ctrl_fontsel(
-    s, null, dlg_stdfontsel_handler, &new_cfg.font
-  );
+  if (cfg.fontmenu == 0) {  // use built-in inline font menu
+    ctrl_columns(s, 2, 70, 30);
+    (font_list = ctrl_listbox(
+      s, null, 5, 100, font_handler, 0
+    ))->column = 0;
+    (font_weights = ctrl_listbox(
+      //__ Options - Text:
+      s, _("Font st&yle:"), 3, 100, font_weight_handler, 0
+    ))->column = 1;
+    ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
+    ctrl_columns(s, 2, 70, 30);
+    ctrl_combobox(
+      s, _("&Size:"), 50, font_size_handler, 0
+    )->column = 1;
+    (font_sample = ctrl_pushbutton(s, null, apply_handler, 0
+    ))->column = 0;
 
-  s = ctrl_new_set(b, _("Text"), null, null);
-  ctrl_columns(s, 2, 50, 50);
-  ctrl_radiobuttons(
-    //__ Options - Text:
-    s, _("Font smoothing"), 2,
-    dlg_stdradiobutton_handler, &new_cfg.font_smoothing,
-    //__ Options - Text:
-    _("&Default"), FS_DEFAULT,
-    //__ Options - Text:
-    _("&None"), FS_NONE,
-    //__ Options - Text:
-    _("&Partial"), FS_PARTIAL,
-    //__ Options - Text:
-    _("&Full"), FS_FULL,
-    null
-  )->column = 1;
+    s = ctrl_new_set(b, _("Text"), null, null);
+    ctrl_columns(s, 2, 50, 50);
+    ctrl_checkbox(
+      //__ Options - Text:
+      s, _("Sho&w bold as font"),
+      dlg_stdcheckbox_handler, &new_cfg.bold_as_font
+    )->column = 0;
+    ctrl_checkbox(
+      //__ Options - Text:
+      s, _("Show &bold as colour"),
+      dlg_stdcheckbox_handler, &new_cfg.bold_as_colour
+    )->column = 1;
+  }
+  else {
+    ctrl_fontsel(
+      s, null, dlg_stdfontsel_handler, &new_cfg.font
+    );
 
-  ctrl_checkbox(
-    //__ Options - Text:
-    s, _("Sho&w bold as font"),
-    dlg_stdcheckbox_handler, &new_cfg.bold_as_font
-  )->column = 0;
-  ctrl_checkbox(
-    //__ Options - Text:
-    s, _("Show &bold as colour"),
-    dlg_stdcheckbox_handler, &new_cfg.bold_as_colour
-  )->column = 0;
-  ctrl_checkbox(
-    //__ Options - Text:
-    s, _("&Allow blinking"),
-    dlg_stdcheckbox_handler, &new_cfg.allow_blinking
-  )->column = 0;
+    s = ctrl_new_set(b, _("Text"), null, null);
+    ctrl_columns(s, 2, 50, 50);
+    ctrl_radiobuttons(
+      //__ Options - Text:
+      s, _("Font smoothing"), 2,
+      dlg_stdradiobutton_handler, &new_cfg.font_smoothing,
+      //__ Options - Text:
+      _("&Default"), FS_DEFAULT,
+      //__ Options - Text:
+      _("&None"), FS_NONE,
+      //__ Options - Text:
+      _("&Partial"), FS_PARTIAL,
+      //__ Options - Text:
+      _("&Full"), FS_FULL,
+      null
+    )->column = 1;
+
+    ctrl_checkbox(
+      //__ Options - Text:
+      s, _("Sho&w bold as font"),
+      dlg_stdcheckbox_handler, &new_cfg.bold_as_font
+    )->column = 0;
+    ctrl_checkbox(
+      //__ Options - Text:
+      s, _("Show &bold as colour"),
+      dlg_stdcheckbox_handler, &new_cfg.bold_as_colour
+    )->column = 0;
+    ctrl_checkbox(
+      //__ Options - Text:
+      s, _("&Allow blinking"),
+      dlg_stdcheckbox_handler, &new_cfg.allow_blinking
+    )->column = 0;
+  }
 
   s = ctrl_new_set(b, _("Text"), null, null);
   ctrl_columns(s, 2, 29, 71);

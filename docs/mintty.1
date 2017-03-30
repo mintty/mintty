@@ -222,6 +222,9 @@ With value "m", mintty reports the system's monitor configuration
 (listing all connected monitors and their geometry and position in 
 Windows' virtual monitor coordinate system), and exits.
 
+With value "f", mintty reports the monospace fonts installed on the system 
+as determined by mintty, and exits.
+
 .TP
 \fB--store-taskbar-properties\fP
 Enable persistent storage of Windows taskbar properties together with 
@@ -812,6 +815,16 @@ This setting overrides the text for the "Sample" box in the Font chooser dialog.
 This hidden setting enables display of monospace fonts in the font selection 
 menu even if they are marked to Hide in the Windows Font settings (from the 
 Control Panel \(em Fonts folder).
+.br
+\(en \fBConfigure font chooser\fP (FontMenu=-1):
+This hidden setting selects and tunes the font chooser dialog element.
+Value 1 selects the Windows system font chooser unmodified;
+value 2 enables font chooser localization,
+adding value 4 (to 6 or 14) enables horizontal item scaling 
+(making space for localized labels),
+adding value 8 (to 10 or 14) enables item and size adjustments,
+value -1 enables all tuning;
+value 0 selects a built-in inline font chooser.
 
 .TP
 \fBText lines\fP (UnderlineManual=false)

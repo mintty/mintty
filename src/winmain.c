@@ -5,8 +5,10 @@
 
 #define dont_debuglog
 #ifdef debuglog
-  FILE * mtlog = 0;
+FILE * mtlog = 0;
 #endif
+
+char * mintty_debug;
 
 #define dont_debug_resize
 
@@ -2190,6 +2192,7 @@ main(int argc, char *argv[])
 {
   main_argv = argv;
   main_argc = argc;
+  mintty_debug = getenv("MINTTY_DEBUG") ?: "";
 #ifdef debuglog
   mtlog = fopen("/tmp/mtlog", "a");
   {
@@ -2318,10 +2321,13 @@ main(int argc, char *argv[])
         border_style = strdup(optarg);
       when 'R':
         switch (*optarg) {
-          when 'm':
-            report_moni = true;
           when 's' or 'o':
             report_geom = strdup(optarg);
+          when 'm':
+            report_moni = true;
+          when 'f':
+            list_fonts(true);
+            exit(0);
         }
       when 'u': cfg.create_utmp = true;
       when '':

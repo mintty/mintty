@@ -359,6 +359,8 @@ extern void dlg_listbox_add_w(control *, wstring);
 extern int dlg_listbox_getcur(control *);
 extern void dlg_fontsel_set(control *, font_spec *);
 extern void dlg_fontsel_get(control *, font_spec *);
+/* Special for font sample */
+extern void dlg_text_paint(control *ctrl);
 /*
  * Set input focus into a particular control.
  */

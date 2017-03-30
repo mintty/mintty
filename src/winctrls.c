@@ -1006,7 +1006,7 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
     // dialog item geometry calculations and adjustments
     CREATESTRUCTW * cs = ((CBT_CREATEWNDW *)lParam)->lpcs;
 
-    if (font_chooser && !new_cfg.old_fontmenu) {
+    if (font_chooser && (new_cfg.fontmenu & 4)) {
       static int fc_item_grp = 0;
       static int fc_item_idx = 0;
       static int fc_item_gap = 7;
@@ -1169,7 +1169,7 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
     // e.g. "Cwm fjord bank glyphs vext quiz"
 
     HWND away = 0;
-    if (!new_cfg.old_fontmenu) {
+    if (new_cfg.fontmenu & 8) {
       // Font chooser: remove "Script:" junk:
       away = GetDlgItem((HWND)wParam, 1094);
       if (away)
@@ -1179,9 +1179,9 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
         DestroyWindow(away);
     }
     else {
-      //__ Font chooser: this field is only shown with OldFontMenu=true
+      //__ Font chooser: this field is only shown with FontMenu=1
       setlabel(1094, _W("Sc&ript:"));
-      //__ Font chooser: this field is only shown with OldFontMenu=true
+      //__ Font chooser: this field is only shown with FontMenu=1
       setlabel(1592, _W("<A>Show more fonts</A>"));
     }
 
@@ -1268,7 +1268,7 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
 
 #ifdef post_adjust_sample
     // resize frame around sample, try to resize text sample (failed)
-    if (font_chooser && adjust_sample && !new_cfg.old_fontmenu) {
+    if (font_chooser && adjust_sample && (new_cfg.fontmenu & 8)) {
       HWND sample = GetDlgItem((HWND)wParam, 1073);  // "Sample" frame
       if ((adjust_sample & 1) && sample) {
         // adjust frame and label "Sample"
@@ -1304,7 +1304,7 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
 #endif
 
     // crop dialog size after removing useless stuff
-    if (font_chooser && !new_cfg.old_fontmenu && away) {
+    if (font_chooser && (new_cfg.fontmenu & 8) && away) {
       // used to be if (... && GetDlgItem((HWND)wParam, 1092))
       RECT wr;
       GetWindowRect((HWND)wParam, &wr);
@@ -1505,16 +1505,16 @@ select_font(winctrl *c)
     cf.Flags |= CF_INACTIVEFONTS;
   else
     cf.Flags |= CF_SCRIPTSONLY; // exclude fonts with OEM or SYMBOL charset
-  if (new_cfg.old_fontmenu)
+  if (new_cfg.fontmenu == 1)  // previously OldFontMenu
     cf.Flags =
       CF_FIXEDPITCHONLY | CF_FORCEFONTEXIST | CF_INITTOLOGFONTSTRUCT |
       CF_SCREENFONTS | CF_NOSCRIPTSEL;
 
   // open font selection menu
-  if (!new_cfg.old_fontmenu)
+  if (new_cfg.fontmenu & 2)
     hook_windows(set_labels_fc);
   bool ok = ChooseFontW(&cf);
-  if (!new_cfg.old_fontmenu)
+  if (new_cfg.fontmenu & 2)
     unhook_windows();
 #ifdef debug_fonthook
   font_spec * fsp = (font_spec *) c->data;
@@ -1532,6 +1532,41 @@ select_font(winctrl *c)
     dlg_fontsel_set(c->ctrl, &fs);
     //call dlg_stdfontsel_handler
     c->ctrl->handler(c->ctrl, EVENT_VALCHANGE);
+  }
+}
+
+void
+dlg_text_paint(control *ctrl)
+{
+  winctrl *c = ctrl->plat_ctrl;
+
+  static HFONT fnt = 0;
+  if (fnt)
+    DeleteObject(fnt);
+
+  int font_height;
+  int size = new_cfg.font.size;
+  // dup'ed from win_init_fonts()
+  HDC dc = GetDC(wnd);
+  if (cfg.handle_dpichanged && per_monitor_dpi_aware)
+    font_height =
+      size > 0 ? -MulDiv(size, dpi, 72) : -size;
+      // dpi is determined initially and via WM_WINDOWPOSCHANGED;
+      // if WM_DPICHANGED were used, this would need to be modified
+  else
+    font_height =
+      size > 0 ? -MulDiv(size, GetDeviceCaps(dc, LOGPIXELSY), 72) : -size;
+  ReleaseDC(wnd, dc);
+
+  fnt = CreateFontW(font_height, 0, 0, 0, new_cfg.font.weight, 
+                    false, false, false,
+                    DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+                    DEFAULT_QUALITY, FIXED_PITCH | FF_DONTCARE,
+                    new_cfg.font.name);
+  if (ctrl->type == CTRL_BUTTON) {
+    HWND wnd = GetDlgItem(dlg.wnd, c->base_id);
+    SendMessage(wnd, WM_SETFONT, (WPARAM)fnt, MAKELPARAM(false, 0));
+    SetWindowTextW(wnd, *new_cfg.font_sample ? new_cfg.font_sample : _W("Ferqœm’4€"));
   }
 }
 
@@ -1637,6 +1672,8 @@ winctrl_handle_command(UINT msg, WPARAM wParam, LPARAM lParam)
             winctrl_set_focus(ctrl, note == BN_SETFOCUS);
           when BN_CLICKED or BN_DOUBLECLICKED:
             ctrl->handler(ctrl, EVENT_ACTION);
+          when BN_PAINT:  // unused
+            dlg_text_paint(ctrl);
         }
       when CTRL_FONTSELECT:
         if (id == 2) {
