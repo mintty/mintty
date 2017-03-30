@@ -1,3 +1,13 @@
+  * Supporting cell overhang of italics (#418, #152, #638).
+  * Fixed occasional hangup on Apply in font chooser (~#533, ?mintty/wsltty#27).
+  * Workaround for broken Windows 10 window position reference (#629).
+  * Fixed re-initialisation of colour chooser adjustment (#642).
+  * Manual underline adds less thickness in bold mode (#641).
+  * Fixed Alt+F2 size cloning inconsistencies (#633).
+  * Optional built-in inline font chooser, option FontMenu for font chooser configuration (?#533, ?mintty/wsltty#27).
+  * Command line option -Rf to list installed fonts as used by mintty.
+  * Colour scheme download drops dependency on `curl` tool (#193).
+
 ### 2.7.5 (11 Mar 2017) ###
 
 Font handling / Text rendering
