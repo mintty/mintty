@@ -7,6 +7,7 @@
   * Optional built-in inline font chooser, option FontMenu for font chooser configuration (?#533, ?mintty/wsltty#27).
   * Command line option -Rf to list installed fonts as used by mintty.
   * Colour scheme download drops dependency on `curl` tool (#193).
+  * Stick new window to current monitor with Ctrl+Shift+N and sysmenu-New (#649).
 
 ### 2.7.5 (11 Mar 2017) ###
 

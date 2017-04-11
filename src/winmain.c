@@ -1412,7 +1412,12 @@ static struct {
         when IDM_SEARCH: win_open_search();
         when IDM_FLIPSCREEN: term_flip_screen();
         when IDM_OPTIONS: win_open_config();
-        when IDM_NEW: child_fork(main_argc, main_argv, 0);
+        when IDM_NEW: {
+          HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+          int x, y;
+          int moni = search_monitors(&x, &y, mon, true, 0);
+          child_fork(main_argc, main_argv, moni);
+        }
         when IDM_NEW_MONI: child_fork(main_argc, main_argv, (int)lp - ' ');
         when IDM_COPYTITLE: win_copy_title();
       }
