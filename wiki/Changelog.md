@@ -9,6 +9,11 @@
   * Colour scheme download drops dependency on `curl` tool (#193).
   * Stick new window to current monitor with Ctrl+Shift+N and sysmenu-New (#649).
 
+Bidirectional rendering
+  * Support for bidi implicit and override marks (validated) (#392, ~#605).
+  * Support for bidi embedding marks (#392, ~#605).
+  * Partial support for bidi isolate marks (#392, ~#605).
+
 ### 2.7.5 (11 Mar 2017) ###
 
 Font handling / Text rendering

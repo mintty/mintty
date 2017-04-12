@@ -1460,7 +1460,12 @@ term_paint(void)
           }
           else {
             textattr[textlen] = dd->attr;
-            text[textlen++] = dd->chr;
+            // hide bidi isolate mark glyphs (if handled zero-width)
+            if (dd->chr >= 0x2066 && dd->chr <= 0x2069)
+              text[textlen++] = 0x200B;  // zero width space
+            else
+              text[textlen++] = dd->chr;
+            // mark combining unless pseudo-combining surrogates
             if ((dd->chr & 0xFC00) != 0xDC00)
               attr.attr |= TATTR_COMBINING;
 #ifdef debug_surrogates

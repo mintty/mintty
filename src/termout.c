@@ -1276,7 +1276,6 @@ do_colour_osc(bool has_index_arg, uint i, bool reset)
  */
 static void do_clipboard(void)
 {
-
   char *s = term.cmd_buf;
   char *output;
   int len;
@@ -1527,7 +1526,7 @@ term_write(const char *buf, uint len)
           if (hwc) {
 #if HAS_LOCALES
 # ifdef __midipix__
-            int width = mcwidth(combine_surrogates(hwc, wc));
+            int width = wcwidth(combine_surrogates(hwc, wc));
 # else
             int width = wcswidth((wchar[]){hwc, wc}, 2);
 # endif
@@ -1574,6 +1573,12 @@ term_write(const char *buf, uint len)
         else
 #if HAS_LOCALES
           width = wcwidth(wc);
+#ifdef hide_isolate_marks
+          // force bidi isolate marks to be zero-width;
+          // however, this is inconsistent with locale width
+          if (wc >= 0x2066 && wc <= 0x2069)
+            width = 0;  // bidi isolate marks
+#endif
 #else
           width = xcwidth(wc);
 #endif

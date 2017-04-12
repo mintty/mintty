@@ -7,7 +7,6 @@
 #include "winsearch.h"
 #include "charset.h"  // wcscpy, combiningdouble
 
-#include "minibidi.h"
 #include "winimg.h"
 
 #include <winnls.h>

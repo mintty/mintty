@@ -5,7 +5,7 @@ typedef unsigned int ucschar;
 
 typedef struct {
   ucschar origwc, wc;
-  ushort index;
+  short index;
 } bidi_char;
 
 int do_bidi(bidi_char * line, int count);

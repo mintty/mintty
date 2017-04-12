@@ -251,46 +251,6 @@ is_punct_class(uchar bc)
   return mask & (1 << (bc));
 }
 
-/*
- * The most significant 2 bits of each level are used to store
- * Override status of each character
- * This function sets the override bits of level according
- * to the value in override, and reurns the new byte.
- */
-static uchar
-setOverrideBits(uchar level, uchar override)
-{
-  if (override == ON)
-    return level;
-  else if (override == R)
-    return level | OISR;
-  else if (override == L)
-    return level | OISL;
-  return level;
-}
-
-/*
- * Find the most recent run of the same value in `level', and
- * return the value _before_ it. Used to process U+202C POP
- * DIRECTIONAL FORMATTING.
- */
-static int
-getPreviousLevel(uchar * level, int from)
-{
-  if (from > 0) {
-    uchar current = level[--from];
-
-    while (from >= 0 && level[from] == current)
-      from--;
-
-    if (from >= 0)
-      return level[from];
-
-    return -1;
-  }
-  else
-    return -1;
-}
 
 /* The Main shaping function, and the only one to be used
  * by the outside world.
@@ -472,6 +432,47 @@ mirror(ucschar c)
 }
 
 /*
+ * The most significant 2 bits of each level are used to store
+ * Override status of each character
+ * This function sets the override bits of level according
+ * to the value in override, and reurns the new byte.
+ */
+static uchar
+setOverrideBits(uchar level, uchar override)
+{
+  if (override == ON)
+    return level;
+  else if (override == R)
+    return level | OISR;
+  else if (override == L)
+    return level | OISL;
+  return level;
+}
+
+/*
+ * Find the most recent run of the same value in `level', and
+ * return the value _before_ it.
+ * Used to be used to process U+202C POP DIRECTIONAL FORMATTING.
+ */
+static int
+getPreviousLevel(uchar * level, int from)
+{
+  if (from > 0) {
+    uchar current = level[--from];
+
+    while (from >= 0 && level[from] == current)
+      from--;
+
+    if (from >= 0)
+      return level[from];
+
+    return -1;
+  }
+  else
+    return -1;
+}
+
+/*
  * The Main Bidi Function, and the only function that should
  * be used by the outside world.
  *
@@ -494,7 +495,10 @@ do_bidi(bidi_char * line, int count)
   yes = 0;
   for (i = 0; i < count; i++) {
     int type = bidi_class_of(i);
-    if (type == R || type == AL) {
+    if (type == R || type == AL
+        || type == RLE || type == LRE || type == RLO || type == LRO || type == PDF
+        || type == LRI || type == RLI || type == FSI || type == PDI
+       ) {
       yes = 1;
       break;
     }
@@ -518,14 +522,21 @@ do_bidi(bidi_char * line, int count)
   * the paragraph embedding level to one; otherwise, set it to zero.
   */
   paragraphLevel = 0;
+  int isolateLevel = 0;
   for (i = 0; i < count; i++) {
     int type = bidi_class_of(i);
-    if (type == R || type == AL) {
-      paragraphLevel = 1;
-      break;
+    if (type == LRI || type == RLI || type == FSI)
+      isolateLevel++;
+    else if (type == PDI)
+      isolateLevel--;
+    else if (isolateLevel == 0) {
+      if (type == R || type == AL) {
+        paragraphLevel = 1;
+        break;
+      }
+      else if (type == L)
+        break;
     }
-    else if (type == L)
-      break;
   }
 
  /* Rule (X1)
@@ -534,6 +545,60 @@ do_bidi(bidi_char * line, int count)
   */
   currentEmbedding = paragraphLevel;
   currentOverride = ON;
+  bool currentIsolate = false;
+
+  uchar dss_emb[count + 1];
+  uchar dss_ovr[count + 1];
+  bool dss_isol[count + 1];
+  int dss_top = -1;
+
+  int countdss() { return dss_top + 1; }
+
+  void pushdss() {
+    dss_top++;
+    dss_emb[dss_top] = currentEmbedding;
+    dss_ovr[dss_top] = currentOverride;
+    dss_isol[dss_top] = currentIsolate;
+  }
+
+  void popdss() {
+    // remove top
+    dss_top--;
+    // then set current values to new top
+    currentEmbedding = dss_emb[dss_top];
+    currentOverride = dss_ovr[dss_top];
+    currentIsolate = dss_isol[dss_top];
+  }
+
+  pushdss();
+  //int ovfIsolate = 0;
+  //int ovfEmbedding = 0;
+  isolateLevel = 0;
+
+#define dont_debug_bidi
+
+#ifdef debug_bidi
+  void trace_bidi(char * tag) {
+    if ((*line).wc == 'x') {
+      printf("%s ", tag);
+      for (int i = 0; i < count; i++) {
+        if (line[i].wc == ' ')
+          printf(" ");
+        else if (line[i].wc < 0x80)
+          printf("%d:%c/%d ", levels[i], line[i].wc, types[i]);
+        else
+          printf("%d:%X/%d ", levels[i], line[i].wc, types[i]);
+      }
+      printf("\n");
+    }
+  }
+  void trace_mark(char * tag) {
+    (void)tag;
+  }
+#else
+#define trace_bidi(tag)	
+#define trace_mark(tag)	
+#endif
 
  /* Rule (X2), (X3), (X4), (X5), (X6), (X7), (X8)
   * X2. With each RLE, compute the least greater odd embedding level.
@@ -543,9 +608,9 @@ do_bidi(bidi_char * line, int count)
   * X6. For all types besides RLE, LRE, RLO, LRO, and PDF:
   *          a. Set the level of the current character to the current
   *              embedding level.
-  *          b.  Whenever the directional override status is not neutral,
-  *               reset the current character type to the directional
-  *               override status.
+  *          b. Whenever the directional override status is not neutral,
+  *              reset the current character type to the directional
+  *              override status.
   * X7. With each PDF, determine the matching embedding or override code.
   * If there was a valid matching code, restore (pop) the last
   * remembered (pushed) embedding level and directional override.
@@ -556,24 +621,89 @@ do_bidi(bidi_char * line, int count)
   bover = 0;
   for (i = 0; i < count; i++) {
     tempType = bidi_class_of(i);
+    if (tempType == FSI) {
+      int lvl = 0;
+      tempType = LRI;
+      for (int k = i + 1; k < count; k++) {
+        uchar kType = bidi_class_of(k);
+        if (kType == FSI || kType == RLI || kType == LRI)
+          lvl++;
+        else if (kType == PDI) {
+          if (lvl)
+            lvl--;
+          else
+            break;
+        }
+        else if (kType == R || kType == AL) {
+          tempType = RLI;
+          break;
+        }
+        else if (kType == L)
+          break;
+      }
+    }
     switch (tempType) {
       when RLE:
-        currentEmbedding = levels[i] = leastGreaterOdd(currentEmbedding);
+        levels[i] = currentEmbedding;
+        currentEmbedding = leastGreaterOdd(currentEmbedding);
+        //levels[i] = currentEmbedding;
         levels[i] = setOverrideBits(levels[i], currentOverride);
         currentOverride = ON;
+        currentIsolate = false;
+        pushdss();
+        trace_mark("RLE");
       when LRE:
-        currentEmbedding = levels[i] = leastGreaterEven(currentEmbedding);
+        levels[i] = currentEmbedding;
+        currentEmbedding = leastGreaterEven(currentEmbedding);
+        //levels[i] = currentEmbedding;
         levels[i] = setOverrideBits(levels[i], currentOverride);
         currentOverride = ON;
+        currentIsolate = false;
+        pushdss();
+        trace_mark("LRE");
       when RLO:
-        currentEmbedding = levels[i] = leastGreaterOdd(currentEmbedding);
+        levels[i] = currentEmbedding;
+        currentEmbedding = leastGreaterOdd(currentEmbedding);
+        //levels[i] = currentEmbedding;
         tempType = currentOverride = R;
+        currentIsolate = false;
+        pushdss();
         bover = 1;
+        trace_mark("RLO");
       when LRO:
-        currentEmbedding = levels[i] = leastGreaterEven(currentEmbedding);
+        levels[i] = currentEmbedding;
+        currentEmbedding = leastGreaterEven(currentEmbedding);
+        //levels[i] = currentEmbedding;
         tempType = currentOverride = L;
+        currentIsolate = false;
+        pushdss();
         bover = 1;
+        trace_mark("LRO");
+      when RLI:
+        if (currentOverride != ON)
+          tempType = currentOverride;
+        levels[i] = currentEmbedding;
+        currentEmbedding = leastGreaterOdd(currentEmbedding);
+        //levels[i] = currentEmbedding;
+        isolateLevel++;
+        currentOverride = ON;
+        currentIsolate = true;
+        pushdss();
+        trace_mark("RLI");
+      when LRI:
+        if (currentOverride != ON)
+          tempType = currentOverride;
+        levels[i] = currentEmbedding;
+        currentEmbedding = leastGreaterEven(currentEmbedding);
+        //levels[i] = currentEmbedding;
+        isolateLevel++;
+        currentOverride = ON;
+        currentIsolate = true;
+        pushdss();
+        trace_mark("LRI");
       when PDF:
+#ifdef old_PDF_handling
+#warning old PDF handling does not work correctly for override
         if (getPreviousLevel(levels, i) == -1) {
           currentEmbedding = paragraphLevel;
           currentOverride = ON;
@@ -583,8 +713,25 @@ do_bidi(bidi_char * line, int count)
           currentEmbedding = currentEmbedding & ~OMASK;
         }
         levels[i] = currentEmbedding;
-       /* Whitespace is treated as neutral for now */
-      when WS or S:
+#else
+        (void)getPreviousLevel;
+        if (countdss() > 1 && !currentIsolate)
+          popdss();
+        levels[i] = currentEmbedding;
+#endif
+        trace_mark("PDF");
+      when PDI:
+        if (isolateLevel) {
+          while (!currentIsolate)
+            popdss();
+          popdss();
+          isolateLevel--;
+        }
+        if (currentOverride != ON)
+          tempType = currentOverride;
+        levels[i] = currentEmbedding;
+        trace_mark("PDI");
+      when WS or S: /* Whitespace is treated as neutral for now */
         levels[i] = currentEmbedding;
         tempType = ON;
         if (currentOverride != ON)
@@ -601,6 +748,7 @@ do_bidi(bidi_char * line, int count)
   if (bover)
     for (i = 0; i < count; i++)
       levels[i] = levels[i] & LMASK;
+  trace_bidi("<X9");
 
  /* Rule (X9)
   * X9. Remove all RLE, LRE, RLO, LRO, PDF, and BN codes.
@@ -798,6 +946,7 @@ do_bidi(bidi_char * line, int count)
     }
   }
 
+  trace_bidi("<I1");
  /* Rule (I1)
   * I1. For all characters with an even (left-to-right) embedding
   * direction, those of type R go up one level and those of type AN or
@@ -822,6 +971,7 @@ do_bidi(bidi_char * line, int count)
         levels[i] += 1;
     }
   }
+  trace_bidi(">I2");
 
  /* Rule (L1)
   * L1. On each line, reset the embedding level of the following characters
@@ -860,7 +1010,7 @@ do_bidi(bidi_char * line, int count)
     }
   }
 
- /* Rule (L4) NOT IMPLEMENTED
+ /* Rule (L4)
   * L4. A character that possesses the mirrored property as specified by
   * Section 4.7, Mirrored, must be depicted by a mirrored glyph if the
   * resolved directionality of that character is R.
@@ -898,5 +1048,8 @@ do_bidi(bidi_char * line, int count)
   * process, then the ordering of the marks and the base character must
   * be reversed.
   */
+  // This is not relevant for mintty as the combining characters are kept 
+  // hidden from this algorithm and are maintained transparently to it.
+
   return R;
 }
