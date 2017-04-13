@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Sat Mar 11 20:49:32 2017 -->
+<!-- CreationDate: Fri Apr 14 00:30:36 2017 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -244,7 +244,7 @@ lines.</p>
 <b>--nortl</b></p>
 
 <p style="margin-left:22%;">Disable bidi display
-(right-to-left support).</p>
+(right-to-left support). Same as <b>-o Bidi=0</b>.</p>
 
 <p style="margin-left:11%;"><b>-t</b>, <b>--title</b>
 <i>TITLE</i></p>
@@ -328,6 +328,10 @@ configuration (listing all connected monitors and their
 geometry and position in Windows&rsquo; virtual monitor
 coordinate system), and exits.</p>
 
+<p style="margin-left:22%; margin-top: 1em">With value
+&quot;f&quot;, mintty reports the monospace fonts installed
+on the system as determined by mintty, and exits.</p>
+
 
 <p style="margin-left:11%;"><b>--store-taskbar-properties</b></p>
 
@@ -384,6 +388,14 @@ they conflict, an option is usually provided. This section
 primarily describes the default configuration; see the
 <b>CONFIGURATION</b> section on how it can be
 customised.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Font
+rendering</b> <br>
+Mintty uses Windows Uniscribe font rendering to display a
+wider range of characters. This is slightly slower than the
+TextOut API (see option FontRender for adjustment) but
+should not be noticeable on modern hardware even at large
+screen size.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Menus</b>
 <br>
@@ -1002,7 +1014,16 @@ Font chooser dialog. <br>
 (ShowHiddenFonts=no): This hidden setting enables display of
 monospace fonts in the font selection menu even if they are
 marked to Hide in the Windows Font settings (from the
-Control Panel &mdash; Fonts folder).</p>
+Control Panel &mdash; Fonts folder). <br>
+&ndash; <b>Configure font chooser</b> (FontMenu=-1): This
+hidden setting selects and tunes the font chooser dialog
+element. Value 1 selects the Windows system font chooser
+unmodified; value 2 enables font chooser localization,
+adding value 4 (to 6 or 14) enables horizontal item scaling
+(making space for localized labels), adding value 8 (to 10
+or 14) enables item and size adjustments, value -1 enables
+all tuning; value 0 selects a built-in inline font
+chooser.</p>
 
 <p style="margin-left:11%;"><b>Text lines</b>
 (UnderlineManual=false)</p>
@@ -1012,7 +1033,8 @@ attributes underline, doubly underline, strikeout and
 overline are enforced to be drawn manually. The default is
 to use Windows font variants for strikeout and for
 underline, unless mintty detects that the underlined font
-would not display properly.</p>
+would not display properly. Note that font smoothing may be
+affected by Windows-generated underline modes.</p>
 
 <p style="margin-left:11%;"><b>Show bold as font</b>
 (BoldAsFont=no)</p>
@@ -1057,21 +1079,24 @@ bold background colour instead.</p>
 (FontSmoothing=default)</p>
 
 <p style="margin-left:22%;">Select the amount of font
-smoothing from the following choices: <br>
+smoothing in font rendering from the following choices: <br>
 &ndash; <b>Default</b>: Use Windows setting. <br>
 &ndash; <b>None</b>: With all the jaggies. <br>
 &ndash; <b>Partial</b>: Greyscale anti-aliasing. <br>
 &ndash; <b>Full</b>: Subpixel anti-aliasing
 (&quot;ClearType&quot;).</p>
 
+<p style="margin-left:22%; margin-top: 1em">Note that font
+smoothing may be affected by some Windows-generated font
+attributes; see UnderlineManual.</p>
+
 <p style="margin-left:11%;"><b>Font rendering</b>
-(FontRender=textout)</p>
+(FontRender=uniscribe)</p>
 
 <p style="margin-left:22%;">Select the rendering system
 used for text display: <br>
 &ndash; <b>textout</b>: Use the Windows ExtTextOut API. <br>
-&ndash; <b>uniscribe</b>: Use the Windows Uniscribe API.
-This may become the default in a future version.</p>
+&ndash; <b>uniscribe</b>: Use the Windows Uniscribe API.</p>
 
 <p style="margin-left:11%;"><b>Locale</b> (Locale=)</p>
 
@@ -1391,8 +1416,9 @@ shown on the right-hand side. <br>
 (ScrollMod=shift)</p>
 
 <p style="margin-left:22%;">The modifier key that needs to
-be pressed together with the arrow up/down, PgUp/PgDn, or
-Home/End keys to access the scrollback buffer. <br>
+be pressed together with the arrow-up/down, PgUp/PgDn,
+Home/End, or arrow-left/right keys to access the scrollback
+buffer. <br>
 The default is <b>Shift</b>. The <b>Off</b> setting disables
 scrolling with keyboard shortcuts. <br>
 &ndash; <b>Shift</b> <br>
@@ -1696,7 +1722,20 @@ The following settings appear neither in the options dialog
 nor as command line options, which means they can only be
 set in config files or using the <b>--option</b> or
 <b>-o</b> command line option. <b><br>
-Application ID</b> (AppID=)</p>
+Bidirectional rendering</b> (Bidi=2)</p>
+
+<p style="margin-left:22%;">With this option, bidi
+rendering support can be disabled conditionally or
+completely. Note that this can also be changed by an escape
+sequence. Also there is another escape sequence to disable
+bidi per screen line. <br>
+&ndash; <b>0</b> Disable bidi completely. <br>
+&ndash; <b>1</b> Disable bidi on alternate screen, support
+it on normal screen. <br>
+&ndash; <b>2</b> Enable bidi (default).</p>
+
+<p style="margin-left:11%;"><b>Application ID</b>
+(AppID=)</p>
 
 <p style="margin-left:22%;">Windows 7 and above use the
 application ID for grouping taskbar items. By default this
@@ -1762,7 +1801,7 @@ AppLaunchCmd should be consistent with that one,
 respectively).</p>
 
 <p style="margin-left:22%; margin-top: 1em">Example: mintty
--o AppID=Mintty.Pintest.1 -o AppName=Mintty.Pintest -o
+-o AppID=Mintty.PinTest.1 -o AppName=Mintty.PinTest -o
 AppLaunchCmd=&quot;C:\cygwin\bin\mintty -i
 /cygdrive/c/Windows/System32/calc.exe -&quot; -i
 C:\Windows\System32\calc.exe,0 --store-taskbar-properties
@@ -2042,14 +2081,13 @@ shell function.</p>
 <p style="margin-left:22%;">This setting lists user-defined
 commands for the extended context menu. The value is a
 series of semicolon-separated, colon-combined pairs of menu
-item label and command pattern; after substituting
-placeholders in the command pattern, the command is invoked
-and its standard output is pasted into the terminal,
-applying bracketed-paste mode if enabled. If a semicolon
-shall be embedded into any of the command patterns, a
-non-whitespace control character (i.e. none of
-<b>^I^J^K^L^M</b>) can be specified as an alternative
-separator by starting the whole setting with it.</p>
+item label and command pattern; the command is invoked and
+its standard output is pasted into the terminal, applying
+bracketed-paste mode if enabled. If a semicolon shall be
+embedded into any of the command patterns, a non-whitespace
+control character (i.e. none of <b>^I^J^K^L^M</b>) can be
+specified as an alternative separator by starting the whole
+setting with it.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Mintty provides
 useful information in environment variables: <br>
@@ -2091,15 +2129,15 @@ commands that can stall or block!</p>
 This feature potentially makes mintty vulnerable against
 command injection. Be careful what commands you configure!
 Especially do not embed environment variable parameters
-unquoted (like <b>echo $MINTTY_SELECTION</b>), in order to
+unquoted (like <b>echo $MINTTY_SELECT</b>), in order to
 avoid the risk of injecting commands via tricky selected
 text.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Examples: <br>
 &ndash; <b>UserCommands=Paste capital:echo -n
-&quot;$MINTTY_SELECTION&quot; | tr &rsquo;a-z&rsquo;
+&quot;$MINTTY_SELECT&quot; | tr &rsquo;a-z&rsquo;
 &rsquo;A-Z&rsquo;;Paste small:echo -n
-&quot;$MINTTY_SELECTION&quot; | tr &rsquo;A-Z&rsquo;
+&quot;$MINTTY_SELECT&quot; | tr &rsquo;A-Z&rsquo;
 &rsquo;a-z&rsquo;</b></p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
@@ -2113,16 +2151,16 @@ escape notation.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Console
 issue</b> <br>
-Mintty is not a full replacement for the Windows console
-window that Cygwin uses by default. Like xterm and rxvt,
-mintty communicates with the child process through a pseudo
-terminal device, which Cygwin emulates using Windows pipes.
-This means that native Windows command line programs started
-in mintty see a pipe rather than a console device. As a
-consequence, such programs often disable interactive input.
-Also, direct calls to low-level Win32 console functions will
-fail. Programs that access the console as a file should be
-fine though.</p>
+Mintty is not a full replacement for Cygwin Console (i.e.
+cygwin running in a Windows console window). Like xterm and
+rxvt, mintty communicates with the child process through a
+pseudo terminal device, which Cygwin emulates using Windows
+pipes. This means that native Windows command line programs
+started in mintty see a pipe rather than a console device.
+As a consequence, such programs often disable interactive
+input. Also, direct calls to low-level Win32 console
+functions will fail. Programs that access the console as a
+file should be fine though.</p>
 
 
 <p style="margin-left:11%; margin-top: 1em"><b>Termcap/terminfo</b>

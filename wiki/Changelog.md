@@ -1,3 +1,5 @@
+### 2.7.6 (14 Apr 2017) ###
+
 Font rendering and Screen handling
   * Supporting cell overhang of italics (#418, #152, #638).
   * Manual underline adds less thickness in bold mode (#641).
