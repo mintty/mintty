@@ -357,7 +357,7 @@ winimg_paint(void)
         // create DC handle if it is not initialized, or resume from hibernate
         winimg_lazyinit(img);
         for (y = max(0, top); y < min(top + img->height, term.rows); ++y) {
-          int wide_factor = (term.displines[y]->attr & LATTR_MODE) == LATTR_NORM ? 1: 2;
+          int wide_factor = (term.displines[y]->lattr & LATTR_MODE) == LATTR_NORM ? 1: 2;
           for (x = left; x < min(left + img->width, term.cols); ++x) {
             dchar = &term.displines[y]->chars[x];
 

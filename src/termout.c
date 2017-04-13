@@ -193,7 +193,7 @@ write_tab(void)
     curs->x++;
   while (curs->x < term.cols - 1 && !term.tabs[curs->x]);
 
-  if ((term.lines[curs->y]->attr & LATTR_MODE) != LATTR_NORM) {
+  if ((term.lines[curs->y]->lattr & LATTR_MODE) != LATTR_NORM) {
     if (curs->x >= term.cols / 2)
       curs->x = term.cols / 2 - 1;
   }
@@ -257,7 +257,7 @@ write_char(wchar c, int width)
   }
 
   if (curs->wrapnext && curs->autowrap && width > 0) {
-    line->attr |= LATTR_WRAPPED;
+    line->lattr |= LATTR_WRAPPED;
     if (curs->y == term.marg_bot)
       term_do_scroll(term.marg_top, term.marg_bot, 1, true);
     else if (curs->y < term.rows - 1)
@@ -293,7 +293,7 @@ write_char(wchar c, int width)
       term_check_boundary(curs->x + width, curs->y);
       if (curs->x == term.cols - 1) {
         line->chars[curs->x] = term.erase_char;
-        line->attr |= LATTR_WRAPPED | LATTR_WRAPPED2;
+        line->lattr |= LATTR_WRAPPED | LATTR_WRAPPED2;
         if (curs->y == term.marg_bot)
           term_do_scroll(term.marg_top, term.marg_bot, 1, true);
         else if (curs->y < term.rows - 1)
@@ -455,17 +455,17 @@ do_esc(uchar c)
           line->chars[j] =
             (termchar) {.cc_next = 0, .chr = 'E', .attr = CATTR_DEFAULT};
         }
-        line->attr = LATTR_NORM;
+        line->lattr = LATTR_NORM;
       }
       term.disptop = 0;
     when CPAIR('#', '3'):  /* DECDHL: 2*height, top */
-      term.lines[curs->y]->attr = LATTR_TOP;
+      term.lines[curs->y]->lattr = LATTR_TOP;
     when CPAIR('#', '4'):  /* DECDHL: 2*height, bottom */
-      term.lines[curs->y]->attr = LATTR_BOT;
+      term.lines[curs->y]->lattr = LATTR_BOT;
     when CPAIR('#', '5'):  /* DECSWL: normal */
-      term.lines[curs->y]->attr = LATTR_NORM;
+      term.lines[curs->y]->lattr = LATTR_NORM;
     when CPAIR('#', '6'):  /* DECDWL: 2*width */
-      term.lines[curs->y]->attr = LATTR_WIDE;
+      term.lines[curs->y]->lattr = LATTR_WIDE;
     when CPAIR('(', 'A') or CPAIR('(', 'B') or CPAIR('(', '0'):
      /* GZD4: G0 designate 94-set */
       curs->csets[0] = c;
@@ -691,9 +691,9 @@ set_modes(bool state)
           term.report_ambig_width = state;
         when 7711:       /* Scroll marker in current line */
           if (state)
-            term.lines[term.curs.y]->attr |= LATTR_MARKED;
+            term.lines[term.curs.y]->lattr |= LATTR_MARKED;
           else
-            term.lines[term.curs.y]->attr |= LATTR_UNMARKED;
+            term.lines[term.curs.y]->lattr |= LATTR_UNMARKED;
         when 7727:       /* Application escape key mode */
           term.app_escape_key = state;
         when 7728:       /* Escape sends FS (instead of ESC) */
@@ -716,6 +716,13 @@ set_modes(bool state)
           term.wheel_reporting = state;
         when 7787:       /* 'W': Application mousewheel mode */
           term.app_wheel = state;
+        when 7796:       /* Bidi disable in current line */
+          if (state)
+            term.lines[term.curs.y]->lattr |= LATTR_NOBIDI;
+          else
+            term.lines[term.curs.y]->lattr &= ~LATTR_NOBIDI;
+        when 77096:      /* Bidi disable */
+          term.disable_bidi = state;
         when 8452:       /* Sixel scrolling end position right */
           /* on: sixel scrolling leaves cursor to right of graphic
              off(default): position after sixel depends on sixel_scrolls_left */

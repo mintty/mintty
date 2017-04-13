@@ -133,6 +133,7 @@ typedef struct {
   bool daemonize;
   bool daemonize_always;
   // "Hidden"
+  int bidi;
   wstring app_id;
   wstring app_name;
   wstring app_launch_cmd;

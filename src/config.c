@@ -125,6 +125,7 @@ const config default_cfg = {
   .daemonize = true,
   .daemonize_always = false,
   // "Hidden"
+  .bidi = 2,
   .app_id = W(""),
   .app_name = W(""),
   .app_launch_cmd = W(""),
@@ -295,6 +296,7 @@ options[] = {
   {"Y", OPT_INT, offcfg(y)},
 
   // "Hidden"
+  {"Bidi", OPT_INT, offcfg(bidi)},
   {"AppID", OPT_WSTRING, offcfg(app_id)},
   {"AppName", OPT_WSTRING, offcfg(app_name)},
   {"AppLaunchCmd", OPT_WSTRING, offcfg(app_launch_cmd)},

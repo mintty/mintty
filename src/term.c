@@ -161,6 +161,7 @@ term_reset(void)
   term.show_scrollbar = true;
   term.wide_indic = false;
   term.wide_extra = false;
+  term.disable_bidi = false;
 
   term.virtuallines = 0;
   term.altvirtuallines = 0;
@@ -877,7 +878,7 @@ term_check_boundary(int x, int y)
 
   termline *line = term.lines[y];
   if (x == term.cols)
-    line->attr &= ~LATTR_WRAPPED2;
+    line->lattr &= ~LATTR_WRAPPED2;
   else if (line->chars[x].chr == UCSWIDE) {
     clear_cc(line, x - 1);
     clear_cc(line, x);
@@ -1030,9 +1031,9 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
       int cols = min(line->cols, line->size);
       if (start.x == cols) {
         if (line_only)
-          line->attr &= ~(LATTR_WRAPPED | LATTR_WRAPPED2);
+          line->lattr &= ~(LATTR_WRAPPED | LATTR_WRAPPED2);
         else
-          line->attr = LATTR_NORM;
+          line->lattr = LATTR_NORM;
       }
       else if (!selective || !(line->chars[start.x].attr.attr & ATTR_PROTECTED))
         line->chars[start.x] = term.erase_char;
@@ -1103,7 +1104,7 @@ term_paint(void)
       } else {
         tattr.attr &= ~TATTR_RESULT;
       }
-      if (markpos_valid && (displine->attr & (LATTR_MARKED | LATTR_UNMARKED))) {
+      if (markpos_valid && (displine->lattr & (LATTR_MARKED | LATTR_UNMARKED))) {
         tattr.attr |= TATTR_MARKED;
         if (scrpos.y == markpos)
           tattr.attr |= TATTR_CURMARKED;
@@ -1261,7 +1262,7 @@ term_paint(void)
     }
     if (prevdirtyitalic) {
       // clear italic overhang into right padding border
-      win_text(term.cols, i, W(" "), 1, CATTR_DEFAULT, (cattr*)&CATTR_DEFAULT, line->attr | LATTR_CLEARPAD, false);
+      win_text(term.cols, i, W(" "), 1, CATTR_DEFAULT, (cattr*)&CATTR_DEFAULT, line->lattr | LATTR_CLEARPAD, false);
     }
 
    /*
@@ -1275,12 +1276,12 @@ term_paint(void)
     uchar bc = 0;
     bool combdouble_pending = false;
     bool was_combdouble_pending = false;
-    bool dirty_run = (line->attr != displine->attr);
+    bool dirty_run = (line->lattr != displine->lattr);
     bool dirty_line = dirty_run;
     cattr attr = CATTR_DEFAULT;
     int start = 0;
 
-    displine->attr = line->attr;
+    displine->lattr = line->lattr;
 
     static struct italic_chunk {
       int x;
@@ -1394,7 +1395,7 @@ term_paint(void)
           if (attr.attr & ATTR_ITALIC)
             push_text(start, text, textlen, attr, textattr, has_rtl);
           else
-            win_text(start, i, text, textlen, attr, textattr, line->attr, has_rtl);
+            win_text(start, i, text, textlen, attr, textattr, line->lattr, has_rtl);
         }
         start = j;
         textlen = 0;
@@ -1502,7 +1503,7 @@ term_paint(void)
       }
     }
     if (dirty_run && textlen)
-      win_text(start, i, text, textlen, attr, textattr, line->attr, has_rtl);
+      win_text(start, i, text, textlen, attr, textattr, line->lattr, has_rtl);
 
     for (int j = italic_chunks - 1; j >= 0; j--) {
       struct italic_chunk * icp = &italic_stack[j];
@@ -1527,9 +1528,9 @@ term_paint(void)
         bgspaces = icp->len;
       }
       // background: non-italic
-      win_text(icp->x, i, bgspace, icp->len, attr, icp->textattr, line->attr, icp->has_rtl);
+      win_text(icp->x, i, bgspace, icp->len, attr, icp->textattr, line->lattr, icp->has_rtl);
       // foreground: transparent and with extended clipping box
-      win_text(icp->x, i, icp->text, icp->len, icp->attr, icp->textattr, line->attr, icp->has_rtl);
+      win_text(icp->x, i, icp->text, icp->len, icp->attr, icp->textattr, line->lattr, icp->has_rtl);
       free(icp->text);
       free(icp->textattr);
     }
@@ -1554,7 +1555,7 @@ term_invalidate(int left, int top, int right, int bottom)
     bottom = term.rows - 1;
 
   for (int i = top; i <= bottom && i < term.rows; i++) {
-    if ((term.displines[i]->attr & LATTR_MODE) == LATTR_NORM)
+    if ((term.displines[i]->lattr & LATTR_MODE) == LATTR_NORM)
       for (int j = left; j <= right && j < term.cols; j++)
         term.displines[i]->chars[j].attr.attr |= ATTR_INVALID;
     else
@@ -1587,7 +1588,7 @@ term_scroll(int rel, int where)
     int y = markpos;
     while ((rel == SB_PRIOR) ? y-- > sbtop : y++ < sbbot) {
       termline * line = fetch_line(y);
-      if (line->attr & LATTR_MARKED) {
+      if (line->lattr & LATTR_MARKED) {
         markpos = y;
         term.disptop = y;
         break;

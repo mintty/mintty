@@ -81,7 +81,6 @@ static bool maxwidth = false;
 static bool maxheight = false;
 static bool store_taskbar_properties = false;
 static bool prevent_pinning = false;
-bool disable_bidi = false;
 bool support_wsl = false;
 
 
@@ -2341,7 +2340,7 @@ main(int argc, char *argv[])
       when '': store_taskbar_properties = true;
       when 'w': set_arg_option("Window", optarg);
       when '': set_arg_option("Class", optarg);
-      when '': disable_bidi = true;
+      when '': cfg.bidi = 0;
       when '': support_wsl = true;
       when '':
         if (chdir(optarg) < 0) {

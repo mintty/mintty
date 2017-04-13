@@ -1,18 +1,27 @@
+Font rendering and Screen handling
   * Supporting cell overhang of italics (#418, #152, #638).
-  * Fixed occasional hangup on Apply in font chooser (~#533, ?mintty/wsltty#27).
-  * Workaround for broken Windows 10 window position reference (#629).
-  * Fixed re-initialisation of colour chooser adjustment (#642).
   * Manual underline adds less thickness in bold mode (#641).
-  * Fixed Alt+F2 size cloning inconsistencies (#633).
-  * Optional built-in inline font chooser, option FontMenu for font chooser configuration (?#533, ?mintty/wsltty#27).
-  * Command line option -Rf to list installed fonts as used by mintty.
-  * Colour scheme download drops dependency on `curl` tool (#193).
-  * Stick new window to current monitor with Ctrl+Shift+N and sysmenu-New (#649).
+  * Consistent search highlighting while scrolling (#85).
 
 Bidirectional rendering
   * Support for bidi implicit and override marks (validated) (#392, ~#605).
   * Support for bidi embedding marks (#392, ~#605).
   * Partial support for bidi isolate marks (#392, ~#605).
+  * Option Bidi to disable bidi completely (=0) or only on alternate screen (=1) (#592, #392, ~#605).
+  * Bidi can be disabled with CSI ?77096h (#592, #392, ~#605).
+  * Bidi can be disabled per screen line with CSI ?7796h (#592, #392, ~#605).
+
+Window handling
+  * Fixed occasional hangup on Apply in font chooser (~#533, ?mintty/wsltty#27).
+  * Workaround for broken Windows 10 window position reference (#629).
+  * Fixed re-initialisation of colour chooser adjustment (#642).
+  * Fixed Alt+F2 size cloning inconsistencies (#633).
+  * Stick new window to current monitor with Ctrl+Shift+N and sysmenu-New (#649).
+
+Configuration
+  * Optional built-in inline font chooser, option FontMenu for font chooser configuration (?#533, ?mintty/wsltty#27).
+  * Command line option -Rf to list installed fonts as used by mintty.
+  * Colour scheme download drops dependency on `curl` tool (#193).
 
 ### 2.7.5 (11 Mar 2017) ###
 

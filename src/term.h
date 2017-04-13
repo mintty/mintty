@@ -125,18 +125,19 @@ enum {
 /* Line attributes.
  */
 enum {
-  LATTR_NORM      = 0x00000000u,
-  LATTR_WIDE      = 0x00000001u,
-  LATTR_TOP       = 0x00000002u,
-  LATTR_BOT       = 0x00000003u,
-  LATTR_MODE      = 0x00000003u,
-  LATTR_WRAPPED   = 0x00000010u, /* this line wraps to next */
-  LATTR_WRAPPED2  = 0x00000020u, /* with WRAPPED: CJK wide character
+  LATTR_NORM      = 0x0000u,
+  LATTR_WIDE      = 0x0001u,
+  LATTR_TOP       = 0x0002u,
+  LATTR_BOT       = 0x0003u,
+  LATTR_MODE      = 0x0003u,
+  LATTR_WRAPPED   = 0x0010u, /* this line wraps to next */
+  LATTR_WRAPPED2  = 0x0020u, /* with WRAPPED: CJK wide character
                                   * wrapped to next line, so last
                                   * single-width cell is empty */
-  LATTR_CLEARPAD  = 0x00000040u, /* flag to clear padding from overhang */
-  LATTR_MARKED    = 0x00000100u, /* scroll marker */
-  LATTR_UNMARKED  = 0x00000200u, /* secondary scroll marker */
+  LATTR_CLEARPAD  = 0x0040u, /* flag to clear padding from overhang */
+  LATTR_MARKED    = 0x0100u, /* scroll marker */
+  LATTR_UNMARKED  = 0x0200u, /* secondary scroll marker */
+  LATTR_NOBIDI    = 0x1000u, /* disable bidi on this line */
 };
 
 enum {
@@ -179,7 +180,7 @@ typedef struct {
 /*const*/ termchar basic_erase_char;
 
 typedef struct {
-  ushort attr;
+  ushort lattr;
   ushort cols;    /* number of real columns on the line */
   ushort size;    /* number of allocated termchars
                      (cc-lists may make this > cols) */
@@ -379,6 +380,7 @@ struct term {
   bool show_scrollbar;
   bool wide_indic;
   bool wide_extra;
+  bool disable_bidi;
 
   bool sixel_display;        // true if sixel scrolling mode is off
   bool sixel_scrolls_right;  // on: sixel scrolling leaves cursor to right of graphic

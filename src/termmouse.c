@@ -51,8 +51,8 @@ sel_spread_word(pos p, bool forward)
 
     if (forward) {
       p.x++;
-      if (p.x >= term.cols - ((line->attr & LATTR_WRAPPED2) != 0)) {
-        if (!(line->attr & LATTR_WRAPPED))
+      if (p.x >= term.cols - ((line->lattr & LATTR_WRAPPED2) != 0)) {
+        if (!(line->lattr & LATTR_WRAPPED))
           break;
         p.x = 0;
         release_line(line);
@@ -65,9 +65,9 @@ sel_spread_word(pos p, bool forward)
           break;
         release_line(line);
         line = fetch_line(--p.y);
-        if (!(line->attr & LATTR_WRAPPED))
+        if (!(line->lattr & LATTR_WRAPPED))
           break;
-        p.x = term.cols - ((line->attr & LATTR_WRAPPED2) != 0);
+        p.x = term.cols - ((line->lattr & LATTR_WRAPPED2) != 0);
       }
       p.x--;
     }
@@ -90,7 +90,7 @@ sel_spread_half(pos p, bool forward)
       * for runs of spaces at the end of a non-wrapping line.
       */
       termline *line = fetch_line(p.y);
-      if (!(line->attr & LATTR_WRAPPED)) {
+      if (!(line->lattr & LATTR_WRAPPED)) {
         termchar *q = line->chars + term.cols;
         while (q > line->chars && q[-1].chr == ' ' && !q[-1].cc_next)
           q--;
@@ -106,7 +106,7 @@ sel_spread_half(pos p, bool forward)
     when MS_SEL_LINE:
       if (forward) {
         termline *line = fetch_line(p.y);
-        while (line->attr & LATTR_WRAPPED) {
+        while (line->lattr & LATTR_WRAPPED) {
           release_line(line);
           line = fetch_line(++p.y);
           p.x = 0;
@@ -123,7 +123,7 @@ sel_spread_half(pos p, bool forward)
         p.x = 0;
         while (p.y > -sblines()) {
           termline *line = fetch_line(p.y - 1);
-          bool wrapped = line->attr & LATTR_WRAPPED;
+          bool wrapped = line->lattr & LATTR_WRAPPED;
           release_line(line);
           if (!wrapped)
             break;
@@ -285,7 +285,7 @@ get_selpoint(const pos p)
 {
   pos sp = { .y = p.y + term.disptop, .x = p.x };
   termline *line = fetch_line(sp.y);
-  if ((line->attr & LATTR_MODE) != LATTR_NORM)
+  if ((line->lattr & LATTR_MODE) != LATTR_NORM)
     sp.x /= 2;
 
  /*
@@ -441,12 +441,12 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
       uint count = 0;
       while (p.y != end.y) {
         termline *line = fetch_line(p.y);
-        if (!(line->attr & LATTR_WRAPPED)) {
+        if (!(line->lattr & LATTR_WRAPPED)) {
           release_line(line);
           moved_previously = false;
           return;
         }
-        int cols = term.cols - ((line->attr & LATTR_WRAPPED2) != 0);
+        int cols = term.cols - ((line->lattr & LATTR_WRAPPED2) != 0);
         for (int x = p.x; x < cols; x++) {
           if (line->chars[x].chr != UCSWIDE)
             count++;

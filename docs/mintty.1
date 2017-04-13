@@ -157,7 +157,7 @@ at full screen width, positioned at the top of the screen, with 10 lines.
 
 .TP
 \fB--nobidi\fP, \fB--nortl\fP
-Disable bidi display (right-to-left support).
+Disable bidi display (right-to-left support). Same as \fB-o Bidi=0\fP.
 
 .TP
 \fB-t\fP, \fB--title\fP \fITITLE\fP
@@ -1422,6 +1422,18 @@ options, which means they can only be set in config files or using the
 \fB--option\fP or \fB-o\fP command line option.
 
 .TP
+\fBBidirectional rendering\fP (Bidi=2)
+With this option, bidi rendering support can be disabled conditionally 
+or completely. Note that this can also be changed by an escape sequence.
+Also there is another escape sequence to disable bidi per screen line.
+.br
+\(en \fB0\fP Disable bidi completely.
+.br
+\(en \fB1\fP Disable bidi on alternate screen, support it on normal screen.
+.br
+\(en \fB2\fP Enable bidi (default).
+
+.TP
 \fBApplication ID\fP (AppID=)
 Windows 7 and above use the application ID for grouping taskbar items.
 By default this setting is empty, in which case Windows groups taskbar
@@ -1468,7 +1480,7 @@ started from a desktop shortcut, the icon in the AppLaunchCmd should
 be consistent with that one, respectively).
 
 Example:
-mintty -o AppID=Mintty.Pintest.1 -o AppName=Mintty.Pintest -o AppLaunchCmd="C:\\cygwin\\bin\\mintty -i /cygdrive/c/Windows/System32/calc.exe -" -i C:\\Windows\\System32\\calc.exe,0 --store-taskbar-properties -
+mintty -o AppID=Mintty.PinTest.1 -o AppName=Mintty.PinTest -o AppLaunchCmd="C:\\cygwin\\bin\\mintty -i /cygdrive/c/Windows/System32/calc.exe -" -i C:\\Windows\\System32\\calc.exe,0 --store-taskbar-properties -
 
 \fBWarning:\fP Once made persistent, the stored properties associated with 
 a specific AppID cannot be removed or even modified again with normal means.
@@ -1704,8 +1716,7 @@ be handled by a suitable cooperating shell function.
 \fBUser commands\fP (UserCommands=)
 This setting lists user-defined commands for the extended context menu.
 The value is a series of semicolon-separated, colon-combined 
-pairs of menu item label and command pattern; after substituting 
-placeholders in the command pattern, the command is invoked and its 
+pairs of menu item label and command pattern; the command is invoked and its 
 standard output is pasted into the terminal, applying bracketed-paste mode 
 if enabled.
 If a semicolon shall be embedded into any of the command patterns, 

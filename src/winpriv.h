@@ -32,7 +32,6 @@ extern BOLD_MODE bold_mode;
 typedef enum {UND_LINE, UND_FONT} UND_MODE;
 extern UND_MODE und_mode;
 
-extern bool disable_bidi;
 extern bool support_wsl;
 
 extern bool win_is_fullscreen;

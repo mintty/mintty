@@ -87,6 +87,22 @@ When shortcut override mode is on, all shortcut key combinations are sent to the
 | `^[[?7783h`   | on           |
 
 
+## Bidirectional rendering ##
+
+Mintty supports bidi rendering by default. However, some applications 
+may prefer to control bidi appearance themselves. There is one option (Bidi) 
+and two control sequences to adjust the behaviour.
+
+| **option**  | **sequence**  | **bidi**     |
+|:------------|:--------------|:-------------|
+| `Bidi=0`    |               | disabled     |
+| `Bidi=1`    |               | disabled on alternate screen |
+|             | `^[[?77096h`  | disabled     |
+|             | `^[[?77096l`  | not disabled |
+|             | `^[[?7796h`   | disabled on current line |
+|             | `^[[?7796l`   | not disabled on current line |
+
+
 ## Mousewheel reporting ##
 
 Mintty includes support for sending mousewheel events to an application without having to enable full [xterm mouse tracking](http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#Mouse%20Tracking), which takes over all mouse events and isn't supported by every application.

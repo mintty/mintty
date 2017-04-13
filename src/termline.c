@@ -4,7 +4,7 @@
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "termpriv.h"
-#include "winpriv.h"  // disable_bidi
+#include "win.h"  // cfg.bidi
 
 
 termline *
@@ -15,7 +15,7 @@ newline(int cols, int bce)
   for (int j = 0; j < cols; j++)
     line->chars[j] = (bce ? term.erase_char : basic_erase_char);
   line->cols = line->size = cols;
-  line->attr = LATTR_NORM;
+  line->lattr = LATTR_NORM;
   line->temporary = false;
   line->cc_free = 0;
   return line;
@@ -541,7 +541,7 @@ compressline(termline *line)
   * Next store the line attributes; same principle.
   */
   {
-    int n = line->attr;
+    int n = line->lattr;
     while (n >= 128) {
       add(b, (uchar) ((n & 0x7F) | 0x80));
       n >>= 7;
@@ -651,10 +651,10 @@ decompressline(uchar *data, int *bytes_used)
  /*
   * Now read in the line attributes.
   */
-  line->attr = shift = 0;
+  line->lattr = shift = 0;
   do {
     byte = get(b);
-    line->attr |= (byte & 0x7F) << shift;
+    line->lattr |= (byte & 0x7F) << shift;
     shift += 7;
   } while (byte & 0x80);
 
@@ -678,7 +678,7 @@ decompressline(uchar *data, int *bytes_used)
 void
 clearline(termline *line)
 {
-  line->attr = LATTR_NORM;
+  line->lattr = LATTR_NORM;
   for (int j = 0; j < line->cols; j++)
     line->chars[j] = term.erase_char;
   if (line->size > line->cols) {
@@ -888,7 +888,9 @@ void trace_bidi(char * tag, bidi_char * wc)
 termchar *
 term_bidi_line(termline *line, int scr_y)
 {
-  if (disable_bidi)
+  if ((line->lattr & LATTR_NOBIDI) || term.disable_bidi
+      || !cfg.bidi || (cfg.bidi == 1 && term.on_alt_screen)
+     )
     return null;
 
   termchar *lchars;

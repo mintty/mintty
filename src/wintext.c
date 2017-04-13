@@ -1137,7 +1137,7 @@ char1ulen(wchar * text)
  * We are allowed to fiddle with the contents of `text'.
  */
 void
-win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, int lattr, bool has_rtl)
+win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl)
 {
   bool clearpad = lattr & LATTR_CLEARPAD;
   trace_line("win_text:", text, len);
