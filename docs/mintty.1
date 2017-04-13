@@ -259,6 +259,13 @@ Where they conflict, an option is usually provided.
 This section primarily describes the default configuration;
 see the \fBCONFIGURATION\fP section on how it can be customised.
 
+.SS Font rendering
+
+Mintty uses Windows Uniscribe font rendering to display a wider range 
+of characters. This is slightly slower than the TextOut API 
+(see option FontRender for adjustment) but should not be noticeable on 
+modern hardware even at large screen size.
+
 .SS Menus
 
 The context menu can be opened by right-clicking the mouse (with Shift 
@@ -878,13 +885,12 @@ Note that font smoothing may be affected by some Windows-generated
 font attributes; see UnderlineManual.
 
 .TP
-\fBFont rendering\fP (FontRender=textout)
+\fBFont rendering\fP (FontRender=uniscribe)
 Select the rendering system used for text display:
 .br
 \(en \fBtextout\fP: Use the Windows ExtTextOut API.
 .br
 \(en \fBuniscribe\fP: Use the Windows Uniscribe API.
-This may become the default in a future version.
 
 .TP
 \fBLocale\fP (Locale=)
