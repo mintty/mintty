@@ -1828,8 +1828,15 @@ term_write(const char *buf, uint len)
         }
     }
   }
-  term_schedule_search_partial_update();
+
+  // Update search match highlighting
+  //term_schedule_search_partial_update();
+  term_schedule_search_update();
+
+  // Update screen
   win_schedule_update();
+
+  // Print
   if (term.printing) {
     printer_write(term.printbuf, term.printbuf_pos);
     term.printbuf_pos = 0;
