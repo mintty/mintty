@@ -1399,6 +1399,14 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
 
  /* Uniscribe handling */
   bool use_uniscribe = cfg.font_render == FR_UNISCRIBE && !has_rtl;
+  if (use_uniscribe) {
+    use_uniscribe = false;
+    for (int i = 0; i < len; i++)
+      if (text[i] >= 0x80) {
+        use_uniscribe = true;
+        break;
+      }
+  }
   SCRIPT_STRING_ANALYSIS ssa;
 
   void

@@ -1,3 +1,6 @@
+Font rendering
+  * Automatically disabling Uniscribe for ASCII-only chunks (mintty/wsltty#36).
+
 ### 2.7.6 (14 Apr 2017) ###
 
 Font rendering and Screen handling
