@@ -899,7 +899,7 @@ show_curchar_info(char tag)
 }
 
 
-static void
+void
 do_update(void)
 {
 #if defined(debug_cursor) && debug_cursor > 1

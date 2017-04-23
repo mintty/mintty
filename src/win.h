@@ -21,6 +21,7 @@ extern void win_reconfig(void);
 
 extern void win_update(void);
 extern void win_schedule_update(void);
+extern void do_update(void);
 
 extern void win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl);
 extern void win_update_mouse(void);

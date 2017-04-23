@@ -1604,8 +1604,11 @@ term_scroll(int rel, int where)
   if (term.disptop > 0)
     term.disptop = 0;
   win_update();
-  if (do_schedule_update)
+
+  if (do_schedule_update) {
     win_schedule_update();
+    do_update();
+  }
 }
 
 void

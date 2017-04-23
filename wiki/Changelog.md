@@ -1,5 +1,6 @@
-Font rendering
+Font rendering and display handling
   * Automatically disabling Uniscribe for ASCII-only chunks (mintty/wsltty#36).
+  * Fixed delayed scroll marker highlighting (#569).
 
 ### 2.7.6 (14 Apr 2017) ###
 
