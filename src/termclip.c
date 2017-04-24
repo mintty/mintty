@@ -366,9 +366,10 @@ term_cmd(char * cmdpat)
 
   FILE * cmdf = popen(cmd, "r");
   unsetenv("MINTTY_TITLE");
-  unsetenv("MINTTY_COMMAND");
+  unsetenv("MINTTY_OUTPUT");
   unsetenv("MINTTY_SCREEN");
-  unsetenv("MINTTY_SELECTION");
+  unsetenv("MINTTY_SELECT");
+  unsetenv("MINTTY_BUFFER");
   unsetenv("MINTTY_CWD");
   unsetenv("MINTTY_PROG");
   if (cmdf) {
