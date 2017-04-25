@@ -889,7 +889,8 @@ termchar *
 term_bidi_line(termline *line, int scr_y)
 {
   if ((line->lattr & LATTR_NOBIDI) || term.disable_bidi
-      || !cfg.bidi || (cfg.bidi == 1 && term.on_alt_screen)
+      || cfg.bidi == 0
+      || (cfg.bidi == 1 && (term.on_alt_screen ^ term.show_other_screen))
      )
     return null;
 
