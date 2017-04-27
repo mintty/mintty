@@ -3,6 +3,7 @@ Font rendering and display handling
   * Fixed delayed scroll marker highlighting (#569).
   * Fixed cleanup of environment variables after user command (#654).
   * Fixed bidi display while showing other screen with Bidi=1 (#592, ~#392, ~#605).
+  * Avoid being pushed behind other windows on Ctrl+TAB (#652).
 
 ### 2.7.6 (14 Apr 2017) ###
 
