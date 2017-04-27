@@ -849,8 +849,8 @@ bolding is simulated by rendering the text twice with a one-pixel offset.
 .TP
 \fBShow bold as colour\fP (BoldAsColour=yes)
 By default, text with the ANSI bold attribute set is displayed with a
-different colour, usually with increased brightness.  This can be disabled
-here.
+different colour, usually with increased brightness (mapping ANSI colours 
+0..7 to their bright variants 8..15). This can be disabled here.
 
 Note that when \fBBoldAsFont\fP is enabled, only bold text in one of the eight
 ANSI colours has its colour changed, i.e. bold text without an explicitly
@@ -1231,6 +1231,10 @@ is the default.
 \fBAnswerback\fP (Answerback=)
 The answerback string is sent in response to the \fB^E\fP (ENQ) character.
 By default, this is empty.
+
+.TP
+\fBAlternate screen\fP (NoAltScreen=false)
+With this setting, the alternate screen can be disabled.
 
 .TP
 \fBApply old wraparound behaviour\fP (OldWrapModes=false)

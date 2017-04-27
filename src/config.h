@@ -134,6 +134,7 @@ typedef struct {
   bool daemonize_always;
   // "Hidden"
   int bidi;
+  bool disable_alternate_screen;
   wstring app_id;
   wstring app_name;
   wstring app_launch_cmd;

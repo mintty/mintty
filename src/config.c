@@ -126,6 +126,7 @@ const config default_cfg = {
   .daemonize_always = false,
   // "Hidden"
   .bidi = 2,
+  .disable_alternate_screen = false,
   .app_id = W(""),
   .app_name = W(""),
   .app_launch_cmd = W(""),
@@ -297,6 +298,7 @@ options[] = {
 
   // "Hidden"
   {"Bidi", OPT_INT, offcfg(bidi)},
+  {"NoAltScreen", OPT_BOOL, offcfg(disable_alternate_screen)},
   {"AppID", OPT_WSTRING, offcfg(app_id)},
   {"AppName", OPT_WSTRING, offcfg(app_name)},
   {"AppLaunchCmd", OPT_WSTRING, offcfg(app_launch_cmd)},
