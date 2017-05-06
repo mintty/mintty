@@ -2203,6 +2203,7 @@ static const struct option
 opts[] = {
   {"config",     required_argument, 0, 'c'},
   {"loadconfig", required_argument, 0, 'C'},
+  {"configdir",  required_argument, 0, ''},
   {"exec",       no_argument,       0, 'e'},
   {"hold",       required_argument, 0, 'h'},
   {"icon",       required_argument, 0, 'i'},
@@ -2325,6 +2326,15 @@ main(int argc, char *argv[])
     switch (opt) {
       when 'c': load_config(optarg, true);
       when 'C': load_config(optarg, false);
+      when '':
+        if (config_dir)
+          option_error(__("Duplicate option 'configdir'"), "");
+        else {
+          config_dir = strdup(optarg);
+          string rc_file = asform("%s/config", config_dir);
+          load_config(rc_file, true);
+          delete(rc_file);
+        }
       when 'h': set_arg_option("Hold", optarg);
       when 'i': set_arg_option("Icon", optarg);
       when 'l': set_arg_option("Log", optarg);

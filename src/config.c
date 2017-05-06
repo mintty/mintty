@@ -24,6 +24,7 @@
 #define dont_support_blurred
 
 
+string config_dir = 0;
 static wstring rc_filename = 0;
 static char linebuf[444];
 
@@ -695,7 +696,7 @@ parse_arg_option(string option)
 
 #include "winpriv.h"  // home
 
-static char * * config_dirs = 0;
+static string * config_dirs = 0;
 static int last_config_dir = -1;
 
 static void
@@ -704,25 +705,30 @@ init_config_dirs(void)
   if (config_dirs)
     return;
 
+  int ncd = 3;
   char * appdata = getenv("APPDATA");
-  if (appdata) {
-    config_dirs = newn(char *, 4);
-    appdata = newn(char, strlen(appdata) + 8);
-    sprintf(appdata, "%s/mintty", getenv("APPDATA"));
-  }
-  else
-    config_dirs = newn(char *, 3);
+  if (appdata)
+    ncd++;
+  if (config_dir)
+    ncd++;
+  config_dirs = newn(string, ncd);
 
   // /usr/share/mintty , $APPDATA/mintty , ~/.config/mintty , ~/.mintty
   config_dirs[++last_config_dir] = "/usr/share/mintty";
-  if (appdata)
+  if (appdata) {
+    appdata = newn(char, strlen(appdata) + 8);
+    sprintf(appdata, "%s/mintty", getenv("APPDATA"));
     config_dirs[++last_config_dir] = appdata;
+  }
   char * xdgconf = newn(char, strlen(home) + 16);
   sprintf(xdgconf, "%s/.config/mintty", home);
   config_dirs[++last_config_dir] = xdgconf;
   char * homeconf = newn(char, strlen(home) + 9);
   sprintf(homeconf, "%s/.mintty", home);
   config_dirs[++last_config_dir] = homeconf;
+  if (config_dir) {
+    config_dirs[++last_config_dir] = config_dir;
+  }
 }
 
 #include <fcntl.h>

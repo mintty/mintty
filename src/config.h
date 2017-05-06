@@ -153,6 +153,7 @@ typedef struct {
   bool use_system_colours;
 } config;
 
+extern string config_dir;
 extern config cfg, new_cfg, file_cfg;
 
 extern void init_config(void);
