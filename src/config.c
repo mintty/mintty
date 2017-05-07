@@ -1071,7 +1071,7 @@ load_scheme(string cs)
 }
 
 void
-load_config(string filename, bool to_save)
+load_config(string filename, int to_save)
 {
   trace_theme(("load_config <%s> %d\n", filename, to_save));
   if (!to_save) {
@@ -1085,7 +1085,7 @@ load_config(string filename, bool to_save)
   FILE * file = fopen(filename, "r");
 
   if (to_save) {
-    if (file || (!rc_filename && strstr(filename, "/.minttyrc"))) {
+    if (file || (!rc_filename && (int)to_save == 2) || (int)to_save == 3) {
       clear_opts();
 
       delete(rc_filename);

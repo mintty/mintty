@@ -45,8 +45,7 @@ introducing short options and double dashes introducing long options.
 \fB-c\fP, \fB--config\fP \fIFILENAME\fP
 Read settings from the specified configuration file, in addition to
 the default config files.
-Configuration changes are saved to the last file thus specified and not 
-read-only at the time of loading.
+Configuration changes are saved to the last file thus specified.
 
 .TP
 \fB-C\fP, \fB--loadconfig\fP \fIFILENAME\fP
@@ -55,6 +54,13 @@ the default config files.
 The file is not taken into account for saving configuration changes.
 This is useful to mix-in partial configuration variants, particularly 
 colour schemes. However, \fB-o ThemeFile=\fIFILENAME\fP may be preferable.
+
+.TP
+\fB--configdir\fP \fIDIRNAME\fP
+Use the given directory to check for resource subdirectories 
+(\fIthemes\fP, \fIsounds\fP, \fIlang\fP);
+also read settings from the configuration file \fIDIRNAME/config\fP, 
+in addition to the default config files, and save configuration changes here.
 
 .TP
 \fB--dir\fP \fIdirectory\fP
@@ -663,8 +669,9 @@ Additional configuration files can be specified using the
 These are read in order after the default config files, 
 with settings in later files overriding those in earlier ones.
 Configuration changes are saved to the last writable file 
-read by default or specified with \fB-c\fP/\fB--config\fP, 
-or \fI~/.minttyrc\fP if none is given.
+read by default or \fI~/.minttyrc\fP if none is given, 
+or (with precedence) to a configuration file specified with 
+\fB-c\fP/\fB--config\fP or \fB--configdir\fP.
 Individual settings can also be specified on the command line using the 
 \fB-o\fP/\fB--option\fP.
 

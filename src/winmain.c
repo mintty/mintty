@@ -2295,7 +2295,7 @@ main(int argc, char *argv[])
   delete(rc_file);
   // try home config file
   rc_file = asform("%s/.minttyrc", home);
-  load_config(rc_file, true);
+  load_config(rc_file, 2);
   delete(rc_file);
 
   if (getenv("MINTTY_ICON")) {
@@ -2324,7 +2324,7 @@ main(int argc, char *argv[])
       break;
     char *longopt = argv[optind - 1], *shortopt = (char[]){'-', optopt, 0};
     switch (opt) {
-      when 'c': load_config(optarg, true);
+      when 'c': load_config(optarg, 3);
       when 'C': load_config(optarg, false);
       when '':
         if (config_dir)
@@ -2332,7 +2332,7 @@ main(int argc, char *argv[])
         else {
           config_dir = strdup(optarg);
           string rc_file = asform("%s/config", config_dir);
-          load_config(rc_file, true);
+          load_config(rc_file, 3);
           delete(rc_file);
         }
       when 'h': set_arg_option("Hold", optarg);
