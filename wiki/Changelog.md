@@ -1,12 +1,26 @@
+### 2.7.7 (7 Jun 2017) ###
+
 Font rendering and display handling
   * Automatically disabling Uniscribe for ASCII-only chunks (mintty/wsltty#36).
-  * Fixed delayed scroll marker highlighting (#569).
-  * Fixed cleanup of environment variables after user command (#654).
   * Fixed bidi display while showing other screen with Bidi=1 (#592, ~#392, ~#605).
+
+Window handling
   * Avoid being pushed behind other windows on Ctrl+TAB (#652).
-  * Option NoAltScreen disables the alternate screen (~#652).
-  * Manual: link to Wiki about console issues / winpty wrapper (#650).
   * Tweaks to stabilize initial window geometry (#629, #649).
+  * Fixed broken size parameters maxwidth/maxheight.
+
+Terminal handling
+  * Option NoAltScreen disables the alternate screen (~#652).
+  * Fixed delayed scroll marker highlighting (#569).
+  * Manual: link to Wiki about console issues / winpty wrapper (#650).
+
+Configuration
+  * New option --configdir for config file and resource folders (mintty/winpty#30, mintty/winpty#40, mintty/winpty#38).
+  * Always save to config file specified with -c/--config or --configdir (mintty/winpty#30, ~mintty/winpty#40).
+
+Other
+  * Fixed cleanup of environment variables after user command (#654).
+  * Wiki: removed link to buggy themes (#647).
 
 ### 2.7.6 (14 Apr 2017) ###
 

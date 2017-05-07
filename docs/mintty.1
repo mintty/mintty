@@ -59,7 +59,7 @@ colour schemes. However, \fB-o ThemeFile=\fIFILENAME\fP may be preferable.
 \fB--configdir\fP \fIDIRNAME\fP
 Use the given directory to check for resource subdirectories 
 (\fIthemes\fP, \fIsounds\fP, \fIlang\fP);
-also read settings from the configuration file \fIDIRNAME/config\fP, 
+also read settings from the configuration file \fIDIRNAME\fP/\fBconfig\fP, 
 in addition to the default config files, and save configuration changes here.
 
 .TP
@@ -698,8 +698,9 @@ may even get dropped from the configuration file; mintty versions since
 Additional resource files are used for colour schemes (option ThemeFile, 
 subdirectory \fIthemes\fP), wave files (option BellFile, subdirectory \fIsounds\fP), 
 and localization translation files (option Language, subdirectory \fIlang\fP) 
-within the mintty resource directories \fI~/.mintty\fP, \fI~/.config/mintty\fP, 
-\fI$APPDATA/mintty\fP, \fI/usr/share/mintty\fP.
+within the mintty resource directories \fI/usr/share/mintty\fP, 
+\fI$APPDATA/mintty\fP, \fI~/.config/mintty\fP, \fI~/.mintty\fP, 
+or as specified with command line option \fB--configdir\fP.
 
 The following sections explain the settings on each pane of the options
 dialog, followed by settings that do not appear in the dialog.

@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Fri Apr 14 00:30:36 2017 -->
+<!-- CreationDate: Sun May  7 12:10:19 2017 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -92,8 +92,7 @@ options. <b><br>
 <p style="margin-left:22%;">Read settings from the
 specified configuration file, in addition to the default
 config files. Configuration changes are saved to the last
-file thus specified and not read-only at the time of
-loading.</p>
+file thus specified.</p>
 
 <p style="margin-left:11%;"><b>-C</b>, <b>--loadconfig</b>
 <i>FILENAME</i></p>
@@ -105,6 +104,16 @@ configuration changes. This is useful to mix-in partial
 configuration variants, particularly colour schemes.
 However, <b>-o ThemeFile=</b><i>FILENAME</i> <b>may be
 preferable.</b></p>
+
+<p style="margin-left:11%;"><b>--configdir</b>
+<i>DIRNAME</i></p>
+
+<p style="margin-left:22%;">Use the given directory to
+check for resource subdirectories (<i>themes</i>,
+<i>sounds</i>, <i>lang</i>); also read settings from the
+configuration file <i>DIRNAME</i>/<b>config</b>, in addition
+to the default config files, and save configuration changes
+here.</p>
 
 <p style="margin-left:11%;"><b>--dir</b>
 <i>directory</i></p>
@@ -392,10 +401,8 @@ customised.</p>
 <p style="margin-left:11%; margin-top: 1em"><b>Font
 rendering</b> <br>
 Mintty uses Windows Uniscribe font rendering to display a
-wider range of characters. This is slightly slower than the
-TextOut API (see option FontRender for adjustment) but
-should not be noticeable on modern hardware even at large
-screen size.</p>
+wider range of characters; the TextOut API is automatically
+used instead if suitable.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Menus</b>
 <br>
@@ -837,9 +844,10 @@ the <b>-c</b>/<b>--config</b> or
 are read in order after the default config files, with
 settings in later files overriding those in earlier ones.
 Configuration changes are saved to the last writable file
-read by default or specified with <b>-c</b>/<b>--config</b>,
-or <i>~/.minttyrc</i> if none is given. Individual settings
-can also be specified on the command line using the
+read by default or <i>~/.minttyrc</i> if none is given, or
+(with precedence) to a configuration file specified with
+<b>-c</b>/<b>--config</b> or <b>--configdir</b>. Individual
+settings can also be specified on the command line using the
 <b>-o</b>/<b>--option</b>.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><i>Note:</i>
@@ -871,8 +879,9 @@ ThemeFile, subdirectory <i>themes</i>), wave files (option
 BellFile, subdirectory <i>sounds</i>), and localization
 translation files (option Language, subdirectory
 <i>lang</i>) within the mintty resource directories
-<i>~/.mintty</i>, <i>~/.config/mintty</i>,
-<i>$APPDATA/mintty</i>, <i>/usr/share/mintty</i>.</p>
+<i>/usr/share/mintty</i>, <i>$APPDATA/mintty</i>,
+<i>~/.config/mintty</i>, <i>~/.mintty</i>, or as specified
+with command line option <b>--configdir</b>.</p>
 
 <p style="margin-left:11%; margin-top: 1em">The following
 sections explain the settings on each pane of the options
@@ -1051,7 +1060,8 @@ by rendering the text twice with a one-pixel offset.</p>
 
 <p style="margin-left:22%;">By default, text with the ANSI
 bold attribute set is displayed with a different colour,
-usually with increased brightness. This can be disabled
+usually with increased brightness (mapping ANSI colours 0..7
+to their bright variants 8..15). This can be disabled
 here.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Note that when
@@ -1504,6 +1514,12 @@ which is why plain <b>xterm</b> is the default.</p>
 <p style="margin-left:22%;">The answerback string is sent
 in response to the <b>^E</b> (ENQ) character. By default,
 this is empty.</p>
+
+<p style="margin-left:11%;"><b>Alternate screen</b>
+(NoAltScreen=false)</p>
+
+<p style="margin-left:22%;">With this setting, the
+alternate screen can be disabled.</p>
 
 <p style="margin-left:11%;"><b>Apply old wraparound
 behaviour</b> (OldWrapModes=false)</p>
@@ -2161,6 +2177,11 @@ As a consequence, such programs often disable interactive
 input. Also, direct calls to low-level Win32 console
 functions will fail. Programs that access the console as a
 file should be fine though.</p>
+
+<p style="margin-left:11%; margin-top: 1em">See
+<i>https://github.com/mintty/mintty/wiki/Tips#inputoutput-interaction-with-alien-programs</i>
+for further hints, especially on the <i>winpty</i>
+wrapper.</p>
 
 
 <p style="margin-left:11%; margin-top: 1em"><b>Termcap/terminfo</b>
