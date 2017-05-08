@@ -474,8 +474,10 @@ term_update_search(void)
     return;
   term.results.update_type = NO_UPDATE;
 
-  if (term.results.xquery_length == 0)
+  if (term.results.xquery_length == 0) {
+    term_clear_search();
     return;
+  }
 
   circbuf cb;
   // Allocate room for the circular buffer of termlines.

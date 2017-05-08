@@ -6,7 +6,6 @@
 
 
 static bool search_initialised = false;
-static bool searched = false;
 static int prev_height = 0;
 
 static HWND search_wnd;
@@ -24,14 +23,13 @@ static void win_hide_search(void);
 int SEARCHBAR_HEIGHT = 26;
 
 
-static void
-scroll_to_result(void)
+static int
+current_delta(void)
 {
   if (term.results.length == 0) {
-    return;
+    return 0;
   }
 
-  // If visible, don't do anything.
   result * res = term.results.results + term.results.current;
   int y = res->y - term.sblines;
   int delta = 0;
@@ -41,6 +39,18 @@ scroll_to_result(void)
   if (y >= term.disptop + term.rows) {
     delta = y - (term.disptop + term.rows - 1);
   }
+  return delta;
+}
+
+static void
+scroll_to_result(void)
+{
+  if (term.results.length == 0) {
+    return;
+  }
+
+  int delta = current_delta();
+
   // Scroll if we must!
   if (delta != 0) {
     term_scroll(0, delta);
@@ -53,12 +63,8 @@ next_result(void)
   if (term.results.length == 0) {
     return;
   }
-  if (searched) {
+  if (current_delta() == 0)
     term.results.current = (term.results.current + 1) % term.results.length;
-  }
-  else {
-    searched = true;
-  }
   scroll_to_result();
 }
 
@@ -68,17 +74,8 @@ prev_result(void)
   if (term.results.length == 0) {
     return;
   }
-  if (searched) {
-    term.results.current = (term.results.current - 1) % term.results.length;
-    // Handle wrap arounds correctly.
-    if (term.results.current < 0) {
-      term.results.current += term.results.length;
-    }
-  }
-  else {
-    term.results.current = term.results.length - 1;
-    searched = true;
-  }
+  if (current_delta() == 0)
+    term.results.current = (term.results.current + term.results.length - 1) % term.results.length;
   scroll_to_result();
 }
 
@@ -162,7 +159,6 @@ search_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     GetWindowTextW(search_edit_wnd, buf, len);
     term_set_search(buf);
     term_update_search();
-    searched = false;
     win_schedule_update();
     return 0;
   }
@@ -305,7 +301,6 @@ win_hide_search(void)
 {
   win_toggle_search(false, false);
   win_adapt_term_size(false, false);
-  searched = false;
 }
 
 void
