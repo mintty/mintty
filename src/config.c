@@ -1085,7 +1085,7 @@ load_config(string filename, int to_save)
   FILE * file = fopen(filename, "r");
 
   if (to_save) {
-    if (file || (!rc_filename && (int)to_save == 2) || (int)to_save == 3) {
+    if (file || (!rc_filename && to_save == 2) || to_save == 3) {
       clear_opts();
 
       delete(rc_filename);
@@ -1486,30 +1486,33 @@ add_file_resources(control *ctrl, wstring pattern)
     hFind = FindFirstFileW(rcpat, &ffd);
     ok = hFind != INVALID_HANDLE_VALUE;
     free(rcpat);
-    if (ok)
-      break;
-    if (GetLastError() == ERROR_FILE_NOT_FOUND)  // empty valid dir
-      break;
-  }
+    if (ok) {
+      while (ok) {
+        if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+          // skip
+        }
+        else {
+          //LARGE_INTEGER filesize = {.LowPart = ffd.nFileSizeLow, .HighPart = ffd.nFileSizeHigh};
+          //long s = filesize.QuadPart;
 
-  while (ok) {
-    if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-      // skip
-    }
-    else {
-      //LARGE_INTEGER filesize = {.LowPart = ffd.nFileSizeLow, .HighPart = ffd.nFileSizeHigh};
-      //long s = filesize.QuadPart;
-
-      // strip suffix
-      int len = wcslen(ffd.cFileName);
-      if (ffd.cFileName[0] != '.' && ffd.cFileName[len - 1] != '~') {
-        ffd.cFileName[len - sufl] = 0;
-        dlg_listbox_add_w(ctrl, ffd.cFileName);
+          // strip suffix
+          int len = wcslen(ffd.cFileName);
+          if (ffd.cFileName[0] != '.' && ffd.cFileName[len - 1] != '~') {
+            ffd.cFileName[len - sufl] = 0;
+            dlg_listbox_add_w(ctrl, ffd.cFileName);
+          }
+        }
+        ok = FindNextFileW(hFind, &ffd);
       }
+      FindClose(hFind);
+
+      //break;
     }
-    ok = FindNextFileW(hFind, &ffd);
+    if (GetLastError() == ERROR_FILE_NOT_FOUND) {
+      // empty valid dir
+      //break;
+    }
   }
-  FindClose(hFind);
 }
 
 
