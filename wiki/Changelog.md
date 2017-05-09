@@ -18,6 +18,7 @@ Configuration
   * New option --configdir for config file and resource folders (mintty/winpty#30, mintty/winpty#40, mintty/winpty#38).
   * Always save to config file specified with -c/--config or --configdir (mintty/winpty#30, ~mintty/winpty#40).
   * Options: offer resources from subdirectories of all config directories (#639, #30, ~#38).
+  * Configuration resource subdirectories are created as needed (#30, #38, ~#639).
 
 Other
   * Fixed cleanup of environment variables after user command (#654).

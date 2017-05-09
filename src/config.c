@@ -751,6 +751,20 @@ get_resource_file(wstring sub, wstring res, bool towrite)
     char * resfn = path_win_w_to_posix(rf);
     free(rf);
     fd = open(resfn, towrite ? O_CREAT | O_EXCL | O_WRONLY | O_BINARY : O_RDONLY | O_BINARY, 0644);
+#if CYGWIN_VERSION_API_MINOR >= 74
+    if (towrite && fd < 0 && errno == ENOENT) {
+      // try to create resource subdirectories
+      int dd = open(config_dirs[i], O_RDONLY | O_DIRECTORY);
+      if (dd) {
+        mkdirat(dd, "themes", 0755);
+        mkdirat(dd, "sounds", 0755);
+        mkdirat(dd, "lang", 0755);
+        close(dd);
+      }
+      // retry
+      fd = open(resfn, O_CREAT | O_EXCL | O_WRONLY | O_BINARY, 0644);
+    }
+#endif
     if (fd >= 0) {
       close(fd);
       return resfn;
