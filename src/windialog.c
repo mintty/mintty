@@ -244,7 +244,13 @@ display_update(char * new)
   free(wmsg);
 }
 
-static char * vfn = "/tmp/.mintty-version";
+static char * vfn = 0;
+static void
+getvfn()
+{
+  if (!vfn)
+    vfn = asform("%s/.mintty-version", tmpdir());
+}
 
 void
 update_available_version(bool ok)
@@ -252,6 +258,7 @@ update_available_version(bool ok)
   version_retrieving = false;
   if (!ok)
     return;
+  getvfn();
 
   char vers[99];
   char * new = 0;
@@ -300,6 +307,7 @@ deliver_available_version()
 {
   if (version_retrieving || !cfg.check_version_update)
     return;
+  getvfn();
 
 #if CYGWIN_VERSION_API_MINOR >= 74
   static time_t version_retrieved = 0;
