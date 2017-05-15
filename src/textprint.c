@@ -14,17 +14,7 @@ static int np = 0;
 void
 printer_start_job(wstring printer_name)
 {
-  char * dirsuf = "";
-  char * tmpdir = getenv("TMP");
-  if (!tmpdir)
-    tmpdir = getenv("TEMP");
-  if (!tmpdir) {
-    tmpdir = getenv("$LOCALAPPDATA");
-    if (tmpdir)
-      dirsuf = "/Temp";
-  }
-  if (!tmpdir)
-    tmpdir = "/usr/tmp";
+  char * tempdir = tmpdir();
 
   char * user = getenv("USER");
   if (!user)
@@ -38,10 +28,10 @@ printer_start_job(wstring printer_name)
   char n[11];
   sprintf(n, "%d", ++np);
 
-  // compose $tmpdir/$dirsuf/mintty.print.$USER.$$
+  // compose $tempdir/mintty.print.$USER.$$
   char * pref = "mintty-print.";
-  pf = malloc(strlen(tmpdir) + strlen(dirsuf) + strlen(pref) + strlen(user) + strlen(pid) + strlen(n) + 7);
-  sprintf(pf, "%s%s/%s%s.%s-%s.prn", tmpdir, dirsuf, pref, user, pid, n);
+  pf = malloc(strlen(tempdir) + strlen(pref) + strlen(user) + strlen(pid) + strlen(n) + 7);
+  sprintf(pf, "%s/%s%s.%s-%s.prn", tempdir, pref, user, pid, n);
 
   pd = open(pf, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0600);
   if (pd >= 0) {

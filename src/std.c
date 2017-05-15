@@ -16,6 +16,26 @@ wstrset(wstring *sp, wstring s)
   *sp = memcpy(renewn((wchar *)*sp, size), s, size * sizeof(wchar));
 }
 
+
+char *
+tmpdir()
+{
+  static char * tmpdir = 0;
+  if (!tmpdir || access(tmpdir, W_OK) < 0)
+    tmpdir = getenv("TMP");
+  if (!tmpdir || access(tmpdir, W_OK) < 0)
+    tmpdir = getenv("TEMP");
+  if (!tmpdir || access(tmpdir, W_OK) < 0) {
+    tmpdir = getenv("LOCALAPPDATA");
+    if (tmpdir)
+      tmpdir = asform("%s/Temp", tmpdir);
+  }
+  if (!tmpdir || access(tmpdir, W_OK) < 0)
+    tmpdir = "/usr/tmp";
+  return tmpdir;
+}
+
+
 #if CYGWIN_VERSION_API_MINOR < 70
 
 int
@@ -121,6 +141,7 @@ argz_stringify(char *argz, size_t argz_len, int sep)
       }
 }
 #endif
+
 
 #if CYGWIN_VERSION_API_MINOR < 93
 

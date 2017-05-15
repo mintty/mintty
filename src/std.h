@@ -23,31 +23,39 @@
 #include <wchar.h>
 #include <errno.h>
 
+
+extern char * tmpdir(void);
+
+
 #if CYGWIN_VERSION_API_MINOR >= 91
 #include <argz.h>
 #else
-int argz_create (char *const argv[], char **argz, size_t *argz_len);
-void argz_stringify (char *argz, size_t argz_len, int sep);
+extern int argz_create (char *const argv[], char **argz, size_t *argz_len);
+extern void argz_stringify (char *argz, size_t argz_len, int sep);
 #endif
+
 
 #if CYGWIN_VERSION_API_MINOR >= 74
 #include <wctype.h>
 #else
-int iswalnum(wint_t);
-int iswalpha(wint_t);
-int iswspace(wint_t);
+extern int iswalnum(wint_t);
+extern int iswalpha(wint_t);
+extern int iswspace(wint_t);
 #endif
+
 
 #if CYGWIN_VERSION_API_MINOR < 53
 #define strlcpy(dst, src, len) snprintf(dst, len, "%s", src)
 #endif
 
+
 #if CYGWIN_VERSION_API_MINOR < 70
-int asprintf(char **, const char *, ...);
-int vasprintf(char **, const char *, va_list);
+extern int asprintf(char **, const char *, ...);
+extern int vasprintf(char **, const char *, va_list);
 #endif
 
-char *asform(const char *fmt, ...);
+extern char *asform(const char *fmt, ...);
+
 
 #define WINVER 0x500  // Windows 2000
 //#define WINVER 0x601  // Windows 7
@@ -79,6 +87,7 @@ typedef const wchar *wstring;
 
 #define null ((void *) 0)
 
+
 // UTF-16 literals:
 #if __GNUC__ >= 5
 #define __W(s) u##s
@@ -95,8 +104,10 @@ extern wchar * wloctext(string msg);
 // dummy marker for xgettext:
 #define __(s) s
 
+
 #define lengthof(array) (sizeof(array) / sizeof(*(array)))
 #define endof(array) (&(array)[lengthof(array)])
+
 
 static inline void *
 _realloc(void *aptr, size_t nbytes)
@@ -112,8 +123,10 @@ _realloc(void *aptr, size_t nbytes)
 #define renewn(p, n) ((typeof(p)) _realloc((p), sizeof(*p) * (n)))
 static inline void delete(const void *p) { free((void *)p); }
 
-void strset(string *sp, string s);
-void wstrset(wstring *sp, wstring s);
+
+extern void strset(string *sp, string s);
+extern void wstrset(wstring *sp, wstring s);
+
 
 #define when break; case
 #define or : case
@@ -127,6 +140,7 @@ void wstrset(wstring *sp, wstring s);
 #else
 #define trace(f, xs...) {}
 #endif
+
 
 #define sgn(x) ({ typeof(x) x_ = (x); (x_ > 0) - (x_ < 0); })
 #define sqr(x) ({ typeof(x) x_ = (x); x_ * x_; })
