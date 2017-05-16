@@ -114,13 +114,14 @@ trace_winsize(char * tag)
   printf("winsize[%s] @%d/%d %d %d cl %d %d + %d/%d\n", tag, (int)wr.left, (int)wr.top, (int)(wr.right - wr.left), (int)(wr.bottom - wr.top), (int)(cr.right - cr.left), (int)(cr.bottom - cr.top), extra_width, norm_extra_width);
 }
 #else
-#define trace_winsize(tag)	
+#define trace_winsize(tag)
 #endif
 
 
 static HRESULT (WINAPI * pDwmIsCompositionEnabled)(BOOL *) = 0;
 static HRESULT (WINAPI * pDwmExtendFrameIntoClientArea)(HWND, const MARGINS *) = 0;
 static HRESULT (WINAPI * pDwmEnableBlurBehindWindow)(HWND, void *) = 0;
+static HRESULT (WINAPI * pSetWindowCompositionAttribute)(HWND, void *) = 0;
 
 // Helper for loading a system library. Using LoadLibrary() directly is insecure
 // because Windows might be searching the current working directory first.
@@ -142,6 +143,7 @@ static void
 load_dwm_funcs(void)
 {
   HMODULE dwm = load_sys_library("dwmapi.dll");
+  HMODULE user32 = load_sys_library("user32.dll");
   if (dwm) {
     pDwmIsCompositionEnabled =
       (void *)GetProcAddress(dwm, "DwmIsCompositionEnabled");
@@ -149,6 +151,10 @@ load_dwm_funcs(void)
       (void *)GetProcAddress(dwm, "DwmExtendFrameIntoClientArea");
     pDwmEnableBlurBehindWindow =
       (void *)GetProcAddress(dwm, "DwmEnableBlurBehindWindow");
+  }
+  if (user32) {
+    pSetWindowCompositionAttribute =
+      (void *)GetProcAddress(user32, "SetWindowCompositionAttribute");
   }
 }
 
@@ -239,8 +245,8 @@ static bool
 set_per_monitor_dpi_aware(void)
 {
 #if 0
- /* this was added under the assumption it might be needed 
-    for EnableNonClientDpiScaling to work (as described) 
+ /* this was added under the assumption it might be needed
+    for EnableNonClientDpiScaling to work (as described)
     but it's not needed, so we'll leave it
  */
   if (pSetThreadDpiAwarenessContext) {
@@ -546,7 +552,7 @@ search_monitors(int * minx, int * miny, HMONITOR lookup_mon, bool get_primary, M
       *miny = fr.bottom - fr.top;
 
     if (print_monitors) {
-      printf("Monitor %d %s %s width,height %4d,%4d (%4d,%4d...%4d,%4d)\n", 
+      printf("Monitor %d %s %s width,height %4d,%4d (%4d,%4d...%4d,%4d)\n",
              moni,
              hMonitor == curmon ? "current" : "       ",
              mi.dwFlags & MONITORINFOF_PRIMARY ? "primary" : "       ",
@@ -704,11 +710,53 @@ win_update_blur(bool opaque)
 static void
 win_update_glass(bool opaque)
 {
+  bool enabled =
+    cfg.transparency == TR_GLASS && !win_is_fullscreen &&
+    !(opaque && term.has_focus);
+
   if (pDwmExtendFrameIntoClientArea) {
-    bool enabled =
-      cfg.transparency == TR_GLASS && !win_is_fullscreen &&
-      !(opaque && term.has_focus);
     pDwmExtendFrameIntoClientArea(wnd, &(MARGINS){enabled ? -1 : 0, 0, 0, 0});
+  }
+
+  if (pSetWindowCompositionAttribute) {
+    enum AccentState
+    {
+        ACCENT_DISABLED = 0,
+        ACCENT_ENABLE_GRADIENT = 1,
+        ACCENT_ENABLE_TRANSPARENTGRADIENT = 2,
+        ACCENT_ENABLE_BLURBEHIND = 3,
+        ACCENT_INVALID_STATE = 4
+    };
+    enum WindowCompositionAttribute
+    {
+        WCA_ACCENT_POLICY = 19
+    };
+    struct ACCENTPOLICY
+    {
+      enum AccentState nAccentState;
+      int nFlags;
+      int nColor;
+      int nAnimationId;
+    };
+    struct WINCOMPATTRDATA
+    {
+      enum WindowCompositionAttribute nAttribute;
+      PVOID pData;
+      ULONG ulDataSize;
+    };
+    struct ACCENTPOLICY policy = {
+      enabled ? ACCENT_ENABLE_BLURBEHIND : ACCENT_DISABLED,
+      0,
+      0,
+      0
+    };
+    struct WINCOMPATTRDATA data = {
+      WCA_ACCENT_POLICY,
+      (PVOID)&policy,
+      sizeof(policy)
+    };
+
+    pSetWindowCompositionAttribute(wnd, &data);
   }
 }
 
@@ -1012,7 +1060,7 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
 #ifdef debug_dpi
   HDC dc = GetDC(wnd);
   printf("monitor size %dmm*%dmm res %d*%d dpi/dev %d",
-         GetDeviceCaps(dc, HORZSIZE), GetDeviceCaps(dc, VERTSIZE), 
+         GetDeviceCaps(dc, HORZSIZE), GetDeviceCaps(dc, VERTSIZE),
          GetDeviceCaps(dc, HORZRES), GetDeviceCaps(dc, VERTRES),
          GetDeviceCaps(dc, LOGPIXELSY));
   //googled this:
@@ -1026,7 +1074,7 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
     uint x, y;
     pGetDpiForMonitor(mon, 0, &x, &y);  // MDT_EFFECTIVE_DPI
     // we might think about scaling the font size by this factor,
-    // but this is handled elsewhere; (used to be via WM_DPICHANGED, 
+    // but this is handled elsewhere; (used to be via WM_DPICHANGED,
     // now via WM_WINDOWPOSCHANGED and initially)
     printf(" eff %d", y);
   }
@@ -1537,7 +1585,7 @@ static struct {
       // and in both case a couple of WM_WININICHANGE
 
       win_adjust_borders(cell_width * cfg.cols, cell_height * cfg.rows);
-      RedrawWindow(wnd, null, null, 
+      RedrawWindow(wnd, null, null,
                    RDW_FRAME | RDW_INVALIDATE |
                    RDW_UPDATENOW | RDW_ALLCHILDREN);
       win_update_search();
@@ -1585,7 +1633,7 @@ static struct {
     when WM_INITMENU:
       // win_update_menus is already called before calling TrackPopupMenu
       // which is supposed to initiate this message;
-      // however, if we skip the call here, the "New" item will 
+      // however, if we skip the call here, the "New" item will
       // not be initialised !?!
       win_update_menus();
       return 0;
@@ -1739,9 +1787,9 @@ static struct {
         // this RECT is adjusted with respect to the monitor dpi already,
         // so we don't need to consider GetDpiForMonitor
         LPRECT r = (LPRECT) lp;
-        // try to stabilize font size roundtrip; 
-        // heuristic tweak of window size to compensate for 
-        // font scaling rounding errors that would continuously 
+        // try to stabilize font size roundtrip;
+        // heuristic tweak of window size to compensate for
+        // font scaling rounding errors that would continuously
         // decrease the window size if moving between monitors repeatedly
         long width = (r->right - r->left) * 20 / 19;
         long height = (r->bottom - r->top) * 20 / 19;
@@ -2024,10 +2072,10 @@ configure_taskbar(void)
 #include "jumplist.h"
   // test data
   wchar * jump_list_title[] = {
-    W("title1"), W(""), W(""), W("mä€"), W(""), W(""), W(""), W(""), W(""), W(""), 
+    W("title1"), W(""), W(""), W("mä€"), W(""), W(""), W(""), W(""), W(""), W(""),
   };
   wchar * jump_list_cmd[] = {
-    W("-o Rows=15"), W("-o Rows=20"), W(""), W("-t mö€"), W(""), W(""), W(""), W(""), W(""), W(""), 
+    W("-o Rows=15"), W("-o Rows=20"), W(""), W("-t mö€"), W(""), W(""), W(""), W(""), W(""), W(""),
   };
   // the patch offered in issue #290 does not seem to work
   setup_jumplist(jump_list_title, jump_list_cmd);
@@ -2044,10 +2092,10 @@ configure_taskbar(void)
 
 #ifdef two_witty_ideas_with_bad_side_effects
 #warning automatic derivation of an AppId is likely not a good idea
-  // If an icon is configured but no app_id, we can derive one from the 
+  // If an icon is configured but no app_id, we can derive one from the
   // icon in order to enable proper taskbar grouping by common icon.
-  // However, this has an undesirable side-effect if a shortcut is 
-  // pinned (presumably getting some implicit AppID from Windows) and 
+  // However, this has an undesirable side-effect if a shortcut is
+  // pinned (presumably getting some implicit AppID from Windows) and
   // instances are started from there (with a different AppID...).
   // Disabled.
   if (relaunch_icon && *relaunch_icon && (!app_id || !*app_id)) {
@@ -2066,9 +2114,9 @@ configure_taskbar(void)
     strcat(derived_app_id, iconbasename);
     app_id = derived_app_id;
   }
-  // If app_name is configured but no app_launch_cmd, we need an app_id 
+  // If app_name is configured but no app_launch_cmd, we need an app_id
   // to make app_name effective as taskbar title, so invent one.
-  if (relaunch_display_name && *relaunch_display_name && 
+  if (relaunch_display_name && *relaunch_display_name &&
       (!app_id || !*app_id)) {
     app_id = "Mintty.AppID";
   }
@@ -2397,7 +2445,7 @@ main(int argc, char *argv[])
         if (chdir(optarg) < 0) {
           if (*optarg == '"' || *optarg == '\'')
             if (optarg[strlen(optarg) - 1] == optarg[0]) {
-              // strip off embedding quotes as provided when started 
+              // strip off embedding quotes as provided when started
               // from Windows context menu by registry entry
               char * dir = strdup(&optarg[1]);
               dir[strlen(dir) - 1] = '\0';
@@ -2419,7 +2467,7 @@ main(int argc, char *argv[])
       when 'V': {
         finish_config();  // ensure localized message
         char * vertext =
-          asform("%s\n%s\n%s\n%s\n", 
+          asform("%s\n%s\n%s\n%s\n",
                  VERSION_TEXT, COPYRIGHT, LICENSE_TEXT, _(WARRANTY_TEXT));
         show_info(vertext);
         free(vertext);
@@ -2774,9 +2822,9 @@ main(int argc, char *argv[])
       print_system_metrics(dpi, "initial");
 #endif
       // recalculate effective font size and adjust window
-      /* Note: it would avoid some problems to consider the DPI 
+      /* Note: it would avoid some problems to consider the DPI
          earlier and create the window at its proper size right away
-         but there are some cyclic dependencies among CreateWindow, 
+         but there are some cyclic dependencies among CreateWindow,
          monitor selection and the respective DPI to be considered,
          so we have to adjust here.
       */
@@ -2784,7 +2832,7 @@ main(int argc, char *argv[])
         font_cs_reconfig(true);
         trace_winsize("dpi > font_cs_reconfig");
         if (maxwidth || maxheight) {
-          // changed terminal size not yet recorded, 
+          // changed terminal size not yet recorded,
           // but window size hopefully adjusted already
         }
         else {
