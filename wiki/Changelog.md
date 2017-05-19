@@ -1,4 +1,4 @@
-### 2.7.7 (7 Jun 2017) ###
+### 2.7.7 (20 May 2017) ###
 
 Font rendering and display handling
   * Automatically disabling Uniscribe for ASCII-only chunks (mintty/wsltty#36).
@@ -22,6 +22,7 @@ Configuration
 
 Other
   * Fixed cleanup of environment variables after user command (#654).
+  * Fixed usage of /tmp or (if read-only) alternatives (mintty/wsltty#30).
   * Wiki: removed link to buggy themes (#647).
 
 ### 2.7.6 (14 Apr 2017) ###
@@ -55,7 +56,7 @@ Configuration
 
 Font handling / Text rendering
   * Changing default FontRender=uniscribe (#605, #573).
-  * Zoom box drawing and some other characters to complete cell size so they can connect to each other (#628).
+  * Zoom box drawing and some other characters to full cell size so they can connect to each other (#628).
   * Restricted glyph width scaling to support overhanging wide icons (#638).
   * Tweaked italic overhang clipping (#638).
 
