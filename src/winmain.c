@@ -121,6 +121,7 @@ trace_winsize(char * tag)
 static HRESULT (WINAPI * pDwmIsCompositionEnabled)(BOOL *) = 0;
 static HRESULT (WINAPI * pDwmExtendFrameIntoClientArea)(HWND, const MARGINS *) = 0;
 static HRESULT (WINAPI * pDwmEnableBlurBehindWindow)(HWND, void *) = 0;
+static HRESULT (WINAPI * pSetWindowCompositionAttribute)(HWND, void *) = 0;
 
 // Helper for loading a system library. Using LoadLibrary() directly is insecure
 // because Windows might be searching the current working directory first.
@@ -142,6 +143,7 @@ static void
 load_dwm_funcs(void)
 {
   HMODULE dwm = load_sys_library("dwmapi.dll");
+  HMODULE user32 = load_sys_library("user32.dll");
   if (dwm) {
     pDwmIsCompositionEnabled =
       (void *)GetProcAddress(dwm, "DwmIsCompositionEnabled");
@@ -149,6 +151,10 @@ load_dwm_funcs(void)
       (void *)GetProcAddress(dwm, "DwmExtendFrameIntoClientArea");
     pDwmEnableBlurBehindWindow =
       (void *)GetProcAddress(dwm, "DwmEnableBlurBehindWindow");
+  }
+  if (user32) {
+    pSetWindowCompositionAttribute =
+      (void *)GetProcAddress(user32, "SetWindowCompositionAttribute");
   }
 }
 
@@ -704,11 +710,53 @@ win_update_blur(bool opaque)
 static void
 win_update_glass(bool opaque)
 {
+  bool enabled =
+    cfg.transparency == TR_GLASS && !win_is_fullscreen &&
+    !(opaque && term.has_focus);
+
   if (pDwmExtendFrameIntoClientArea) {
-    bool enabled =
-      cfg.transparency == TR_GLASS && !win_is_fullscreen &&
-      !(opaque && term.has_focus);
     pDwmExtendFrameIntoClientArea(wnd, &(MARGINS){enabled ? -1 : 0, 0, 0, 0});
+  }
+
+  if (pSetWindowCompositionAttribute) {
+    enum AccentState
+    {
+        ACCENT_DISABLED = 0,
+        ACCENT_ENABLE_GRADIENT = 1,
+        ACCENT_ENABLE_TRANSPARENTGRADIENT = 2,
+        ACCENT_ENABLE_BLURBEHIND = 3,
+        ACCENT_INVALID_STATE = 4
+    };
+    enum WindowCompositionAttribute
+    {
+        WCA_ACCENT_POLICY = 19
+    };
+    struct ACCENTPOLICY
+    {
+      enum AccentState nAccentState;
+      int nFlags;
+      int nColor;
+      int nAnimationId;
+    };
+    struct WINCOMPATTRDATA
+    {
+      enum WindowCompositionAttribute nAttribute;
+      PVOID pData;
+      ULONG ulDataSize;
+    };
+    struct ACCENTPOLICY policy = {
+      enabled ? ACCENT_ENABLE_BLURBEHIND : ACCENT_DISABLED,
+      0,
+      0,
+      0
+    };
+    struct WINCOMPATTRDATA data = {
+      WCA_ACCENT_POLICY,
+      (PVOID)&policy,
+      sizeof(policy)
+    };
+
+    pSetWindowCompositionAttribute(wnd, &data);
   }
 }
 
@@ -2332,7 +2380,7 @@ main(int argc, char *argv[])
         else {
           config_dir = strdup(optarg);
           string rc_file = asform("%s/config", config_dir);
-          load_config(rc_file, 3);
+          load_config(rc_file, 2);
           delete(rc_file);
         }
       when 'h': set_arg_option("Hold", optarg);

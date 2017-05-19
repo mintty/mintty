@@ -1084,6 +1084,11 @@ load_scheme(string cs)
   free(scheme);
 }
 
+// to_save:
+// 0 read config from filename
+// 1 use filename for saving if file exists and is writable
+// 2 use filename for saving if none was previously determined
+// 3 use filename for saving (override)
 void
 load_config(string filename, int to_save)
 {
