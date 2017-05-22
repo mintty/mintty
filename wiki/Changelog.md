@@ -1,3 +1,5 @@
+  * Suppress Windows-caused side effects of "resizing" to current size (#629).
+
 ### 2.7.7 (20 May 2017) ###
 
 Font rendering and display handling

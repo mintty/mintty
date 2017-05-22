@@ -874,9 +874,10 @@ win_set_chars(int rows, int cols)
   trace_resize(("--- win_set_chars %d×%d\n", rows, cols));
   // prevent resizing to same logical size
   // which would remove bottom padding and spoil some Windows magic (#629)
-  if (rows != term.rows || cols != term.cols)
+  if (rows != term.rows || cols != term.cols) {
     win_set_pixels(rows * cell_height, cols * cell_width);
-  win_fix_position();
+    win_fix_position();
+  }
   trace_winsize("win_set_chars > win_fix_position");
 }
 
