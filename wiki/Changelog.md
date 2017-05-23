@@ -1,4 +1,8 @@
-  * Suppress Windows-caused side effects of "resizing" to current size (#629).
+Terminal handling
+  * Fixed Cursor Position Report (CPR) in Origin Mode (DECOM) (vttest 6-3).
+
+Window handling
+  * Suppressing Windows-caused side effects of "resizing" to current size (#629).
 
 ### 2.7.7 (20 May 2017) ###
 

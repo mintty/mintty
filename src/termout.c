@@ -897,7 +897,7 @@ do_csi(uchar c)
       insert_char(-arg0_def1);
     when 'n':        /* DSR: cursor position query */
       if (arg0 == 6)
-        child_printf("\e[%d;%dR", curs->y + 1, curs->x + 1);
+        child_printf("\e[%d;%dR", curs->y + 1 - (curs->origin ? term.marg_top : 0), curs->x + 1);
       else if (arg0 == 5)
         child_write("\e[0n", 4);
     when 'h' or CPAIR('?', 'h'):  /* SM: toggle modes to high */
