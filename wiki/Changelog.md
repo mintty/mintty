@@ -1,5 +1,6 @@
-Terminal handling
+Terminal features
   * Fixed Cursor Position Report (CPR) in Origin Mode (DECOM) (vttest 6-3).
+  * DEC Technical character set support (except Sigma segments).
 
 Window handling
   * Suppressing Windows-caused side effects of "resizing" to current size (#629).
