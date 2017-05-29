@@ -15,9 +15,10 @@ Should the available keyboard layouts lack required features, Microsoft's
 **[Keyboard Layout Creator](http://www.microsoft.com/Globaldev/tools/msklc.mspx)** 
 can be used to create custom keyboard layouts.
 
-Mintty does not implement an 
-X11-style [compose key](http://en.wikipedia.org/wiki/Compose_key); 
-a seamless and stable tool to emulate a **Compose Key for Windows** is 
+Mintty also provides a [Compose key](http://en.wikipedia.org/wiki/Compose_key), 
+configurable to Control, Shift or Alt, using X11 compose data.
+For a separate compose key solution, the most seamless and stable 
+**Compose Key for Windows** is 
 **[WinCompose](https://github.com/SamHocevar/wincompose)**.
 
 For other keys and key combinations, mintty sends 
@@ -48,6 +49,8 @@ If the keyboard layout does not yield a character from the table below, the key'
 If Shift is held in addition to a control character combination, the corresponding character from the so-called [C1 control](http://en.wikipedia.org/wiki/C1_controls) character set is sent (unless the resulting combination corresponds to a different control character in the first place). If the control character combination already contained a Shift, the second Shift key needs to be pressed to achieve this.
 
 The C1 control characters are shown as Unicode codepoints in the table below. How exactly C1 control characters are sent depends on the selected character encoding. In [ISO-8859](http://en.wikipedia.org/wiki/ISO/IEC_8859) encodings, they are encoded as single bytes, e.g. `\x81` for _U+0081_. With [UTF-8](http://en.wikipedia.org/wiki/UTF-8), they are encoded as two-byte sequences, which effectively means that the character code is prefixed with a `\xC2` byte, so for example _U+0081_ becomes `\xC2\x81`. C1 codepoints that are not supported by the selected character encoding are sent by prefixing the corresponding ASCII control character with an _ESC_ character, so _U+0081_ would be sent as `^[^A`.
+
+The Ctrl+Shift combinations are overridden by the CtrlShiftShortcuts setting (Ctrl+Shift+letter shortcuts in Options menu, Keys section).
 
 | **Char** | **Ctrl** | **Ctrl+Shift** |
 |:---------|:---------|:---------------|
