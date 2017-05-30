@@ -114,7 +114,9 @@ static void
 term_cursor_reset(term_cursor *curs)
 {
   curs->attr = CATTR_DEFAULT;
-  curs->csets[0] = curs->csets[1] = CSET_ASCII;
+  for (uint i = 0; i < lengthof(curs->csets); i++)
+    curs->csets[i] = CSET_ASCII;
+  curs->cset_single = CSET_ASCII;
   curs->autowrap = true;
   curs->rev_wrap = cfg.old_wrapmodes;
 }
@@ -1634,7 +1636,7 @@ term_update_cs(void)
   cs_set_mode(
     curs->oem_acs ? CSM_OEM :
     curs->utf ? CSM_UTF8 :
-    curs->csets[curs->g1] == CSET_OEM ? CSM_OEM : CSM_DEFAULT
+    curs->csets[curs->g0123] == CSET_OEM ? CSM_OEM : CSM_DEFAULT
   );
 }
 

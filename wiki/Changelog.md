@@ -1,6 +1,8 @@
 Terminal features
   * Fixed Cursor Position Report (CPR) in Origin Mode (DECOM) (vttest 6-3).
-  * DEC Technical character set support (except Sigma segments).
+  * DEC Technical character set support (except Sigma segments not in Unicode).
+  * G2/G3 character set designations and GL mapping (vttest 3-10 GL cases).
+  * G2/G3 character set single shift selection (vttest 3-11).
 
 Window handling
   * Suppressing Windows-caused side effects of "resizing" to current size (#629).

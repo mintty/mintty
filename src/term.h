@@ -276,8 +276,9 @@ typedef struct {
   bool wrapnext;
   bool rev_wrap;  // switchable (xterm Reverse-wraparound Mode)
   bool utf;
-  bool g1;
-  term_cset csets[2];
+  short g0123;
+  term_cset csets[4];
+  term_cset cset_single;
   uchar oem_acs;
 } term_cursor;
 

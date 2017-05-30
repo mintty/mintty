@@ -389,10 +389,10 @@ do_ctrl(char c)
       free(ab);
     }
     when CTRL('N'):   /* LS1: Locking-shift one */
-      term.curs.g1 = true;
+      term.curs.g0123 = 1;
       term_update_cs();
     when CTRL('O'):   /* LS0: Locking-shift zero */
-      term.curs.g1 = false;
+      term.curs.g0123 = 0;
       term_update_cs();
     otherwise:
       return false;
@@ -473,12 +473,23 @@ do_esc(uchar c)
     when CPAIR('(', 'U'):  /* G0: OEM character set */
       curs->csets[0] = CSET_OEM;
       term_update_cs();
-    when CPAIR(')', 'A') or CPAIR(')', 'B') or CPAIR(')', '0') or CPAIR(')', '>'):
+    when CPAIR(')', 'A') or CPAIR(')', 'B') or CPAIR(')', '0') or CPAIR(')', '>')
+      or CPAIR('-', 'A') or CPAIR('-', 'B') or CPAIR('-', '0') or CPAIR('-', '>'):
      /* G1D4: G1-designate 94-set */
       curs->csets[1] = c;
       term_update_cs();
     when CPAIR(')', 'U'): /* G1: OEM character set */
       curs->csets[1] = CSET_OEM;
+      term_update_cs();
+    when CPAIR('*', 'A') or CPAIR('*', 'B') or CPAIR('*', '0') or CPAIR('*', '>')
+      or CPAIR('.', 'A') or CPAIR('.', 'B') or CPAIR('.', '0') or CPAIR('.', '>'):
+     /* Designate G2 character set */
+      curs->csets[2] = c;
+      term_update_cs();
+    when CPAIR('+', 'A') or CPAIR('+', 'B') or CPAIR('+', '0') or CPAIR('+', '>')
+      or CPAIR('/', 'A') or CPAIR('/', 'B') or CPAIR('/', '0') or CPAIR('/', '>'):
+     /* Designate G3 character set */
+      curs->csets[3] = c;
       term_update_cs();
     when CPAIR('%', '8') or CPAIR('%', 'G'):
       curs->utf = true;
@@ -486,6 +497,16 @@ do_esc(uchar c)
     when CPAIR('%', '@'):
       curs->utf = false;
       term_update_cs();
+    when 'n':  /* LS2: Invoke G2 character set as GL */
+      term.curs.g0123 = 2;
+      term_update_cs();
+    when 'o':  /* LS3: Invoke G3 character set as GL */
+      term.curs.g0123 = 3;
+      term_update_cs();
+    when 'N':  /* SS2: Single Shift G2 character set */
+      term.curs.cset_single = curs->csets[2];
+    when 'O':  /* SS3: Single Shift G3 character set */
+      term.curs.cset_single = curs->csets[3];
   }
 }
 
@@ -599,8 +620,15 @@ set_modes(bool state)
       switch (arg) {
         when 1:  /* DECCKM: application cursor keys */
           term.app_cursor_keys = state;
-        when 2:  /* DECANM: VT52 mode */
-          // IGNORE
+        when 2:  /* DECANM: VT100/VT52 mode */
+          if (state) {
+            // Designate USASCII for character sets G0-G3
+            for (uint i = 0; i < lengthof(term.curs.csets); i++)
+              term.curs.csets[i] = CSET_ASCII;
+            term.curs.cset_single = CSET_ASCII;
+            term_update_cs();
+          }
+          // IGNORE VT52
         when 3:  /* DECCOLM: 80/132 columns */
           if (term.deccolm_allowed) {
             term.selected = false;
@@ -1598,7 +1626,12 @@ term_write(const char *buf, uint len)
           width = xcwidth(wc);
 #endif
 
-        switch (term.curs.csets[term.curs.g1]) {
+        short cset = term.curs.csets[term.curs.g0123];
+        if (term.curs.cset_single != CSET_ASCII) {
+          cset = term.curs.cset_single;
+          term.curs.cset_single = CSET_ASCII;
+        }
+        switch (cset) {
           when CSET_LINEDRW:  // VT100 line drawing characters
             if (0x60 <= wc && wc <= 0x7E) {
               wchar dispwc = win_linedraw_chars[wc - 0x60];
