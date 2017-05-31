@@ -114,6 +114,7 @@ static void
 term_cursor_reset(term_cursor *curs)
 {
   curs->attr = CATTR_DEFAULT;
+  curs->g0123 = 0;
   for (uint i = 0; i < lengthof(curs->csets); i++)
     curs->csets[i] = CSET_ASCII;
   curs->cset_single = CSET_ASCII;
