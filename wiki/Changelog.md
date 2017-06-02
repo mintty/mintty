@@ -4,6 +4,7 @@ Terminal features
   * G2/G3 character set designations and GL mapping (vttest 3-10 GL cases).
   * G2/G3 character set single shift selection (vttest 3-11).
   * Resetting invoked character set to G0 on terminal reset.
+  * CHT (move right n tab positions) (vttest 11-5-4).
 
 Window handling
   * Suppressing Windows-caused side effects of "resizing" to current size (#629).
