@@ -135,19 +135,19 @@ msgstr ""
 
 #: config.c:1736
 msgid "Critical Stop"
-msgstr ""
+msgstr "Критическая остановка"
 
 #: config.c:1737
 msgid "Question"
-msgstr ""
+msgstr "Вопрос"
 
 #: config.c:1738
 msgid "Exclamation"
-msgstr ""
+msgstr "Восклицание"
 
 #: config.c:1739
 msgid "Asterisk"
-msgstr ""
+msgstr "Звездочка (*)"
 
 #: config.c:1782
 msgid "◇ None (system sound) ◇"
@@ -1048,7 +1048,7 @@ msgstr ""
 
 #: winmain.c:2380
 msgid "Duplicate option '%s'"
-msgstr ""
+msgstr "Дублированный вариант '%s'"
 
 #: winmain.c:2408
 msgid "Syntax error in position argument '%s'"
