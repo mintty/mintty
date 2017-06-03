@@ -2377,7 +2377,7 @@ main(int argc, char *argv[])
       when 'C': load_config(optarg, false);
       when '':
         if (config_dir)
-          option_error(__("Duplicate option 'configdir'"), "");
+          option_error(__("Duplicate option '%s'"), "configdir");
         else {
           config_dir = strdup(optarg);
           string rc_file = asform("%s/config", config_dir);

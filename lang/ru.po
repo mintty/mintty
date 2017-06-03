@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-05-19 22:06+0200\n"
+"POT-Creation-Date: 2017-06-03 12:14+0200\n"
 "PO-Revision-Date: 2016-12-19 04:18+0500\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -953,32 +953,32 @@ msgstr "Выбрать все"
 msgid "Clear Scrollback"
 msgstr "Очистить скроллинг"
 
-#: winmain.c:1355
+#: winmain.c:1356
 msgid "Processes are running in session:"
 msgstr "Имеются запущенные процессы:"
 
-#: winmain.c:1356
+#: winmain.c:1357
 msgid "Close anyway?"
 msgstr "Закрыть все равно?"
 
-#: winmain.c:1904
+#: winmain.c:1905
 msgid "Try '--help' for more information"
 msgstr "Используйте '--help' для получения дополнительной информации"
 
-#: winmain.c:1912
+#: winmain.c:1913
 msgid "Could not load icon"
 msgstr "Не удалось загрузить иконку"
 
-#: winmain.c:2216
+#: winmain.c:2217
 msgid "Usage:"
 msgstr "Применение:"
 
-#: winmain.c:2217
+#: winmain.c:2218
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr "[ОПЦИЙ]... [ ПРОГРАММА [АРГУМЕНТЫ]... | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:2220
+#: winmain.c:2221
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -1010,15 +1010,17 @@ msgid ""
 "  -V, --version         Print version information and exit\n"
 "See manual page for further command line options and configuration.\n"
 msgstr ""
-"Запуск нового сеанса терминала, на котором запущена указанная программа или оболочка "
-"пользователя.\n"
-"Если вместо программы указывается тире, вызовите оболочку в качестве оболочки входа.\n"
+"Запуск нового сеанса терминала, на котором запущена указанная программа или "
+"оболочка пользователя.\n"
+"Если вместо программы указывается тире, вызовите оболочку в качестве "
+"оболочки входа.\n"
 "\n"
 "Параметры:\n"
 "  -c, --config FILE     Загрузить указанный файл конфигурации (также -C или -"
 "o ThemeFile)\n"
 "  -e, --exec ...        Аргументы в качестве команды для выполнения\n"
-"  -h, --hold never|start|error|always  Оставить окно открытым после выполнения комманды\n"
+"  -h, --hold never|start|error|always  Оставить окно открытым после "
+"выполнения комманды\n"
 "  -p, --position X,Y    Открыть окно в заданных координатах\n"
 "  -p, --position center|left|right|top|bottom  Открыть окно в особом "
 "положении\n"
@@ -1032,8 +1034,8 @@ msgstr ""
 "индексом\n"
 "  -l, --log FILE|-      Журнал вывод в файл или стандартный вывод\n"
 "      --nobidi|--nortl  Отключить двунаправленный текст(справа-налево)\n"
-"  -o, --option OPT=VAL  Установить/переопределить файл конфигураций с заданными вариантами "
-"переменных/переопределении\n"
+"  -o, --option OPT=VAL  Установить/переопределить файл конфигураций с "
+"заданными вариантами переменных/переопределении\n"
 "  -B, --Border frame|void  Использовать границы окна\n"
 "  -R, --Report s|o      Отчет позиций окна (короткий/длинный) после выхода\n"
 "      --nopin           Сделать этот экземпляр невидимым на панели задач\n"
@@ -1044,32 +1046,32 @@ msgstr ""
 "Смотрите страницу руководства для параметров командной строки и "
 "конфигурации.\n"
 
-#: winmain.c:2379
-msgid "Duplicate option 'configdir'"
+#: winmain.c:2380
+msgid "Duplicate option '%s'"
 msgstr ""
 
-#: winmain.c:2407
+#: winmain.c:2408
 msgid "Syntax error in position argument '%s'"
 msgstr "Ошибка синтаксиса в позиции аргумента '%s'"
 
-#: winmain.c:2418
+#: winmain.c:2419
 msgid "Syntax error in size argument '%s'"
 msgstr "Ошибка синтаксиса в размере аргумента '%s'"
 
-#: winmain.c:2477
+#: winmain.c:2478
 msgid "Unknown option '%s'"
 msgstr "Неизвестный параметр '%s'"
 
-#: winmain.c:2479
+#: winmain.c:2480
 msgid "Option '%s' requires an argument"
 msgstr "Параметр '%s' требует аргумент"
 
-#: winmain.c:2525
+#: winmain.c:2526
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr ""
 "Mintty не может отключится от вызывающего метода, запуск в любом случае"
 
-#: winmain.c:2658
+#: winmain.c:2659
 msgid "Using default title due to invalid characters in program name"
 msgstr ""
 "Использование заголовка по умолчанию из-за недопустимых символов в имени "

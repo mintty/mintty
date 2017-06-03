@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-05-19 22:06+0200\n"
+"POT-Creation-Date: 2017-06-03 12:14+0200\n"
 "PO-Revision-Date: 2017-02-07 13:23+0000\n"
 "Last-Translator: Eric Lassauge <lassauge@gmail.com>\n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -956,32 +956,32 @@ msgid "Clear Scrollback"
 msgstr "Effacer défilement"
 
 # msgstr "Arrêter le défilement"
-#: winmain.c:1355
+#: winmain.c:1356
 msgid "Processes are running in session:"
 msgstr "Processus en cours dans la session :"
 
-#: winmain.c:1356
+#: winmain.c:1357
 msgid "Close anyway?"
 msgstr "Forcer la fermeture ?"
 
-#: winmain.c:1904
+#: winmain.c:1905
 msgid "Try '--help' for more information"
 msgstr "Essayez « --help » pour plus d’information"
 
-#: winmain.c:1912
+#: winmain.c:1913
 msgid "Could not load icon"
 msgstr "Impossible de charger l’icône"
 
-#: winmain.c:2216
+#: winmain.c:2217
 msgid "Usage:"
 msgstr "Utilisation :"
 
-#: winmain.c:2217
+#: winmain.c:2218
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr "[OPTION]... [ PROGRAMME [ARG]... | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:2220
+#: winmain.c:2221
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -1056,31 +1056,31 @@ msgstr ""
 "Voir la page de manuel pour les autres options de la ligne de commande et la "
 "configuration.\n"
 
-#: winmain.c:2379
-msgid "Duplicate option 'configdir'"
+#: winmain.c:2380
+msgid "Duplicate option '%s'"
 msgstr ""
 
-#: winmain.c:2407
+#: winmain.c:2408
 msgid "Syntax error in position argument '%s'"
 msgstr "Erreur de syntaxe pour l’argument « %s »"
 
-#: winmain.c:2418
+#: winmain.c:2419
 msgid "Syntax error in size argument '%s'"
 msgstr "Erreur de syntaxe pour l’argument de taille « %s »"
 
-#: winmain.c:2477
+#: winmain.c:2478
 msgid "Unknown option '%s'"
 msgstr "Option inconnue « %s »"
 
-#: winmain.c:2479
+#: winmain.c:2480
 msgid "Option '%s' requires an argument"
 msgstr "L’option « %s » requiert un argument"
 
-#: winmain.c:2525
+#: winmain.c:2526
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr "Mintty ne peut se détacher de l’appelant, on démarre quand même"
 
-#: winmain.c:2658
+#: winmain.c:2659
 msgid "Using default title due to invalid characters in program name"
 msgstr ""
 "Utilisation du titre par défaut à cause d’un caractère invalide dans le nom "
