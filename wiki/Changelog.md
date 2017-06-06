@@ -9,6 +9,9 @@ Terminal features
 Window handling
   * Suppressing Windows-caused side effects of "resizing" to current size (#629).
 
+Configuration
+  * Reverted to stripping CR from most configuration strings (mintty/wsltty#46).
+
 ### 2.7.7 (20 May 2017) ###
 
 Font rendering and display handling

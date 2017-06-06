@@ -169,7 +169,9 @@ typedef enum {
   OPT_BOOL, OPT_MOD, OPT_TRANS, OPT_CURSOR, OPT_FONTSMOOTH, OPT_FONTRENDER,
   OPT_MIDDLECLICK, OPT_RIGHTCLICK, OPT_SCROLLBAR, OPT_WINDOW, OPT_HOLD,
   OPT_INT, OPT_COLOUR, OPT_STRING, OPT_WSTRING,
-  OPT_LEGACY = 16
+  OPT_TYPE_MASK = 0x1F,
+  OPT_LEGACY = 0x20,
+  OPT_KEEPCR = 0x40
 } opt_type;
 
 #define offcfg(option) offsetof(config, option)
@@ -303,8 +305,8 @@ options[] = {
   {"AppID", OPT_WSTRING, offcfg(app_id)},
   {"AppName", OPT_WSTRING, offcfg(app_name)},
   {"AppLaunchCmd", OPT_WSTRING, offcfg(app_launch_cmd)},
-  {"DropCommands", OPT_WSTRING, offcfg(drop_commands)},
-  {"UserCommands", OPT_WSTRING, offcfg(user_commands)},
+  {"DropCommands", OPT_WSTRING | OPT_KEEPCR, offcfg(drop_commands)},
+  {"UserCommands", OPT_WSTRING | OPT_KEEPCR, offcfg(user_commands)},
   {"ColSpacing", OPT_INT, offcfg(col_spacing)},
   {"RowSpacing", OPT_INT, offcfg(row_spacing)},
   {"Padding", OPT_INT, offcfg(padding)},
@@ -593,7 +595,9 @@ set_option(string name, string val_str, bool from_file)
     return i;
 
   void *val_p = (void *)&cfg + options[i].offset;
-  uint type = options[i].type & ~OPT_LEGACY;
+  if (!(options[i].type & OPT_KEEPCR))
+    ((char *)val_str)[strcspn(val_str, "\r")] = 0;
+  uint type = options[i].type & OPT_TYPE_MASK;
 
   switch (type) {
     when OPT_STRING:
@@ -1175,7 +1179,7 @@ copy_config(char * tag, config * dst_p, const config * src_p)
       uint offset = options[i].offset;
       void *dst_val_p = (void *)dst_p + offset;
       void *src_val_p = (void *)src_p + offset;
-      switch (type) {
+      switch (type & OPT_TYPE_MASK) {
         when OPT_STRING:
           strset(dst_val_p, *(string *)src_val_p);
         when OPT_WSTRING:
@@ -1266,7 +1270,7 @@ save_config(void)
         //?void *cfg_p = seen_arg_option(i) ? &file_cfg : &cfg;
         void *cfg_p = &file_cfg;
         void *val_p = cfg_p + options[i].offset;
-        switch (type) {
+        switch (type & OPT_TYPE_MASK) {
           when OPT_STRING:
             fprintf(file, "%s", *(string *)val_p);
           when OPT_WSTRING: {
@@ -1316,19 +1320,20 @@ apply_config(bool save)
     //void *val_p = (void *)&cfg + offset;
     void *val_p = (void *)&file_cfg + offset;
     void *new_val_p = (void *)&new_cfg + offset;
-    bool changed;
-    switch (type) {
-      when OPT_STRING:
-        changed = strcmp(*(string *)val_p, *(string *)new_val_p);
-      when OPT_WSTRING:
-        changed = wcscmp(*(wstring *)val_p, *(wstring *)new_val_p);
-      when OPT_INT or OPT_COLOUR:
-        changed = (*(int *)val_p != *(int *)new_val_p);
-      otherwise:
-        changed = (*(char *)val_p != *(char *)new_val_p);
-    }
-    if (changed) {
-      remember_file_option("apply", i);
+    if (!(type & OPT_LEGACY)) {
+      bool changed;
+      switch (type & OPT_TYPE_MASK) {
+        when OPT_STRING:
+          changed = strcmp(*(string *)val_p, *(string *)new_val_p);
+        when OPT_WSTRING:
+          changed = wcscmp(*(wstring *)val_p, *(wstring *)new_val_p);
+        when OPT_INT or OPT_COLOUR:
+          changed = (*(int *)val_p != *(int *)new_val_p);
+        otherwise:
+          changed = (*(char *)val_p != *(char *)new_val_p);
+      }
+      if (changed)
+        remember_file_option("apply", i);
     }
   }
 
