@@ -80,7 +80,7 @@ rc_srcs := $(wildcard *.rc)
 objs := $(c_srcs:.c=.o) $(rc_srcs:.rc=.o)
 bins := $(patsubst %.o,$(BINDIR)/%.o,$(objs))
 
-CFLAGS := -std=gnu99 -include std.h -Wall -Wextra -Wundef -Werror
+CFLAGS := -D_XOPEN_SOURCE -D_GNU_SOURCE -std=gnu99 -include std.h -Wall -Wextra -Wundef -Werror
 
 ifeq ($(shell VER=`$(CC) -dumpversion`; expr $${VER%.*} '>=' 4.5), 1)
   CFLAGS += -mtune=atom

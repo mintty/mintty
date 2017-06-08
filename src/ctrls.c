@@ -6,6 +6,8 @@
 
 #include "ctrls.h"
 
+#include <string.h>
+
 /*
  * ctrls.c - a reasonably platform-independent mechanism for
  * describing window controls.
