@@ -864,6 +864,8 @@ do_csi(uchar c)
   if (arg1 < 0)
     arg1 = 0;
   int arg0_def1 = arg0 ?: 1;  // first arg with default 1
+  if (arg0_def1 < 0)
+    arg0_def1 = INT_MAX;
   switch (CPAIR(term.esc_mod, c)) {
     when 'A':        /* CUU: move up N lines */
       move(curs->x, curs->y - arg0_def1, 1);
