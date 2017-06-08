@@ -1,0 +1,14 @@
+build:
+  image: teaci/$$platform
+  pull: true
+  shell: $$platform
+  commands:
+    - make
+    - bin/mintty.exe --log mintty.log --exec echo hello mintty
+    - grep hello mintty.log
+    - bin/mintty.exe --log - --exec echo hello stdout | grep hello
+
+matrix:
+  platform:
+    - msys64
+    - msys32
