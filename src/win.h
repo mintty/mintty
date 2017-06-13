@@ -85,6 +85,6 @@ extern int cursor_blink_ticks(void);
 extern int win_char_width(xchar);
 extern wchar win_combine_chars(wchar bc, wchar cc);
 
-extern wchar win_linedraw_chars[31];
+extern wchar win_linedraw_char(int i);
 
 #endif

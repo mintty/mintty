@@ -812,17 +812,12 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
         staticbtn(&pos, "", base_id + 1, _("&Select..."), base_id + 2);
         data = new(font_spec);
 
-        num_ids++;
-        char * fontinfopat = "Leading: %d, Bold: %s, Underline: %s";
-        char * fontinfo_font = "font";
-        char * fontinfo_manual = "manual";
-        int taglen = max(strlen(fontinfo_font), strlen(fontinfo_manual));
-        char * fontinfo = newn(char, strlen(fontinfopat) + 23 + 2 * taglen);
-        sprintf(fontinfo, fontinfopat, row_spacing, 
-                bold_mode ? fontinfo_font : fontinfo_manual,
-                und_mode ? fontinfo_font : fontinfo_manual);
-        statictext(&pos, fontinfo, base_id + 3);
-        free(fontinfo);
+        char * fontinfo = fontpropinfo();
+        if (fontinfo) {
+          num_ids++;
+          statictext(&pos, fontinfo, base_id + 3);
+          free(fontinfo);
+        }
       }
       otherwise:
         assert(!"Can't happen");

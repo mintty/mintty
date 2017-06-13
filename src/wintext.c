@@ -6,8 +6,8 @@
 #include "winpriv.h"
 #include "winsearch.h"
 #include "charset.h"  // wcscpy, combiningdouble
-
-#include "winimg.h"
+#include "config.h"
+#include "winimg.h"  // winimg_paint
 
 #include <winnls.h>
 #include <usp10.h>  // Uniscribe
@@ -27,17 +27,7 @@ enum {
   FONT_MAXNO     = FONT_WIDE + FONT_NARROW
 };
 
-LOGFONT lfont;
-static HFONT fonts[FONT_MAXNO];
-static bool fontflag[FONT_MAXNO];
-static int fw_norm = FW_NORMAL;
-static int fw_bold = FW_BOLD;
-int row_spacing;
-
 enum {LDRAW_CHAR_NUM = 31, LDRAW_CHAR_TRIES = 4};
-
-// VT100 linedraw character mappings for current font.
-wchar win_linedraw_chars[LDRAW_CHAR_NUM];
 
 // Possible linedraw character mappings, in order of decreasing suitability.
 // The first choice is the same as used by xterm in most cases,
@@ -79,27 +69,72 @@ static const wchar linedraw_chars[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES] = {
   {0x00B7, '.'},                   // 0x7E '~' Centered dot
 };
 
-BOLD_MODE bold_mode;
-UND_MODE und_mode;
-static int descent;
 
-// Current font size (with any zooming)
-int font_size;  // logical font size, as configured (< 0: pixel size)
-
-// Font screen dimensions
-int cell_width, cell_height;  // includes spacing
-static int font_height;  // pure font height, without spacing
-int PADDING = 1;
-static bool font_dualwidth;
-
-bool font_ambig_wide;
-
+// colour values
 COLORREF colours[COLOUR_NUM];
-static bool bold_colour_selected = false;
 
-// Diagnostic information
+// diagnostic information flag
 bool show_charinfo = false;
 
+
+// master font family properties
+LOGFONT lfont;
+// logical font size, as configured (< 0: pixel size)
+int font_size;
+// scaled font size; pure font height, without spacing
+static int font_height;
+// character cell size, including spacing:
+int cell_width, cell_height;
+// border padding:
+int PADDING = 1;
+// width mode
+bool font_ambig_wide;
+
+
+typedef enum {BOLD_SHADOW, BOLD_FONT} BOLD_MODE;
+typedef enum {UND_LINE, UND_FONT} UND_MODE;
+
+// font family properties
+struct fontfam {
+  wstring name;
+  int weight;
+  bool isbold;
+  HFONT fonts[FONT_MAXNO];
+  bool fontflag[FONT_MAXNO];
+  bool font_dualwidth;
+  int fw_norm;
+  int fw_bold;
+  BOLD_MODE bold_mode;
+  UND_MODE und_mode;
+  int row_spacing, col_spacing;
+  int descent;
+  // VT100 linedraw character mappings for current font:
+  wchar win_linedraw_chars[LDRAW_CHAR_NUM];
+} fontfamilies[10];
+
+wchar
+win_linedraw_char(int i)
+{
+  int findex = (term.curs.attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+  struct fontfam * ff = &fontfamilies[findex];
+  return ff->win_linedraw_chars[i];
+}
+
+
+char *
+fontpropinfo()
+{
+  //__ Options - Text: font properties information ("leading" ("ledding"): add. row spacing)
+  char * fontinfopat = _("Leading: %d, Bold: %s, Underline: %s");
+  char * fontinfo_font = "font";
+  char * fontinfo_manual = "manual";
+  int taglen = max(strlen(fontinfo_font), strlen(fontinfo_manual));
+  char * fontinfo = newn(char, strlen(fontinfopat) + 23 + 2 * taglen);
+  sprintf(fontinfo, fontinfopat, fontfamilies->row_spacing, 
+          fontfamilies->bold_mode ? fontinfo_font : fontinfo_manual,
+          fontfamilies->und_mode ? fontinfo_font : fontinfo_manual);
+  return fontinfo;
+}
 
 static uint
 colour_dist(colour a, colour b)
@@ -188,7 +223,7 @@ get_font_quality(void)
 #endif
 
 static HFONT
-create_font(int weight, bool underline)
+create_font(wstring name, int weight, bool underline)
 {
 #ifdef debug_create_font
   printf("font [??]: %d (size %d) 0 w%4d i0 u%d s0\n", font_height, font_size, weight, underline);
@@ -198,7 +233,7 @@ create_font(int weight, bool underline)
       font_height, 0, 0, 0, weight, false, underline, false,
       DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
       get_font_quality(), FIXED_PITCH | FF_DONTCARE,
-      cfg.font.name
+      name
     );
 }
 
@@ -227,20 +262,20 @@ row_padding(int i, int e)
 }
 
 static void
-show_font_warning(char * msg)
+show_font_warning(wstring name, char * msg)
 {
   // suppress multiple font error messages
   static wchar * msgfont = null;
-  if (msgfont && wcscmp(msgfont, cfg.font.name) == 0) {
+  if (msgfont && wcscmp(msgfont, name) == 0) {
     return;
   }
   else {
     if (msgfont)
       free(msgfont);
-    msgfont = wcsdup(cfg.font.name);
+    msgfont = wcsdup(name);
   }
 
-  char * fn = cs__wcstoutf(cfg.font.name);
+  char * fn = cs__wcstoutf(name);
   char * fullmsg;
   int len = asprintf(&fullmsg, "%s:\n%s", msg, fn);
   free(fn);
@@ -271,14 +306,14 @@ get_default_charset(void)
 }
 
 static void
-adjust_font_weights(void)
+adjust_font_weights(struct fontfam * ff)
 {
   LOGFONTW lf;
 #if CYGWIN_VERSION_API_MINOR >= 201
-  swprintf(lf.lfFaceName, lengthof(lf.lfFaceName), W("%ls"), cfg.font.name);
+  swprintf(lf.lfFaceName, lengthof(lf.lfFaceName), W("%ls"), ff->name);
 #else
-  if (wcslen(cfg.font.name) < lengthof(lf.lfFaceName))
-    wcscpy(lf.lfFaceName, cfg.font.name);
+  if (wcslen(ff->name) < lengthof(lf.lfFaceName))
+    wcscpy(lf.lfFaceName, ff->name);
   else
     wcscpy(lf.lfFaceName, W(""));
 #endif
@@ -288,8 +323,8 @@ adjust_font_weights(void)
   lf.lfCharSet = DEFAULT_CHARSET;  // report all supported char ranges
 
   // find the closest available widths such that
-  // fw_norm_0 <= fw_norm <= fw_norm_1
-  // fw_bold_0 <= fw_bold <= fw_bold_1
+  // fw_norm_0 <= ff->fw_norm <= fw_norm_1
+  // fw_bold_0 <= ff->fw_bold <= fw_bold_1
   int fw_norm_0 = 0;
   int fw_bold_0 = 0;
   int fw_norm_1 = 1000;
@@ -314,13 +349,13 @@ adjust_font_weights(void)
     if (lfp->lfCharSet == default_charset || lfp->lfCharSet == DEFAULT_CHARSET)
       cs_found = true;
 
-    if (lfp->lfWeight > fw_norm_0 && lfp->lfWeight <= fw_norm)
+    if (lfp->lfWeight > fw_norm_0 && lfp->lfWeight <= ff->fw_norm)
       fw_norm_0 = lfp->lfWeight;
-    if (lfp->lfWeight > fw_bold_0 && lfp->lfWeight <= fw_bold)
+    if (lfp->lfWeight > fw_bold_0 && lfp->lfWeight <= ff->fw_bold)
       fw_bold_0 = lfp->lfWeight;
-    if (lfp->lfWeight < fw_norm_1 && lfp->lfWeight >= fw_norm)
+    if (lfp->lfWeight < fw_norm_1 && lfp->lfWeight >= ff->fw_norm)
       fw_norm_1 = lfp->lfWeight;
-    if (lfp->lfWeight < fw_bold_1 && lfp->lfWeight >= fw_bold)
+    if (lfp->lfWeight < fw_bold_1 && lfp->lfWeight >= ff->fw_bold)
       fw_bold_1 = lfp->lfWeight;
 
     return 1;  // continue
@@ -328,185 +363,174 @@ adjust_font_weights(void)
 
   HDC dc = GetDC(0);
   EnumFontFamiliesExW(dc, &lf, enum_fonts, 0, 0);
-  trace_font(("font width (%d)%d(%d)/(%d)%d(%d)", fw_norm_0, fw_norm, fw_norm_1, fw_bold_0, fw_bold, fw_bold_1));
+  trace_font(("font width (%d)%d(%d)/(%d)%d(%d)", fw_norm_0, ff->fw_norm, fw_norm_1, fw_bold_0, ff->fw_bold, fw_bold_1));
   ReleaseDC(0, dc);
 
   // check if no font found
   if (!font_found) {
-    show_font_warning(_("Font not found, using system substitute"));
-    fw_norm = 400;
-    fw_bold = 700;
+    show_font_warning(ff->name, _("Font not found, using system substitute"));
+    ff->fw_norm = 400;
+    ff->fw_bold = 700;
     trace_font(("//\n"));
     return;
   }
   if (!ansi_found && !cs_found) {
-    show_font_warning(_("Font has limited support for character ranges"));
+    show_font_warning(ff->name, _("Font has limited support for character ranges"));
   }
 
   // find available widths closest to selected widths
-  if (abs(fw_norm - fw_norm_0) <= abs(fw_norm - fw_norm_1) && fw_norm_0 > 0)
-    fw_norm = fw_norm_0;
+  if (abs(ff->fw_norm - fw_norm_0) <= abs(ff->fw_norm - fw_norm_1) && fw_norm_0 > 0)
+    ff->fw_norm = fw_norm_0;
   else if (fw_norm_1 < 1000)
-    fw_norm = fw_norm_1;
-  if (abs(fw_bold - fw_bold_0) < abs(fw_bold - fw_bold_1) || fw_bold_1 > 1000)
-    fw_bold = fw_bold_0;
+    ff->fw_norm = fw_norm_1;
+  if (abs(ff->fw_bold - fw_bold_0) < abs(ff->fw_bold - fw_bold_1) || fw_bold_1 > 1000)
+    ff->fw_bold = fw_bold_0;
   else if (fw_bold_1 < 1001)
-    fw_bold = fw_bold_1;
+    ff->fw_bold = fw_bold_1;
   // ensure bold is bolder than normal
-  if (fw_bold <= fw_norm) {
-    trace_font((" -> %d/%d", fw_norm, fw_bold));
-    if (fw_norm_0 < fw_norm && fw_norm_0 > 0)
-      fw_norm = fw_norm_0;
-    if (fw_bold - fw_norm < 300) {
-      if (fw_bold_1 > fw_bold && fw_bold_1 < 1001)
-        fw_bold = fw_bold_1;
+  if (ff->fw_bold <= ff->fw_norm) {
+    trace_font((" -> %d/%d", ff->fw_norm, ff->fw_bold));
+    if (fw_norm_0 < ff->fw_norm && fw_norm_0 > 0)
+      ff->fw_norm = fw_norm_0;
+    if (ff->fw_bold - ff->fw_norm < 300) {
+      if (fw_bold_1 > ff->fw_bold && fw_bold_1 < 1001)
+        ff->fw_bold = fw_bold_1;
       else
-        fw_bold = min(fw_norm + 300, 1000);
+        ff->fw_bold = min(ff->fw_norm + 300, 1000);
     }
   }
   // enforce preselected boldness
-  int selweight = cfg.font.weight;
-  if (selweight < 700 && cfg.font.isbold)
+  int selweight = ff->weight;
+  if (selweight < 700 && ff->isbold)
     selweight = 700;
-  if (selweight - fw_norm >= 300) {
-    trace_font((" -> %d(%d)/%d", fw_norm, selweight, fw_bold));
-    fw_norm = selweight;
-    fw_bold = min(fw_norm + 300, 1000);
+  if (selweight - ff->fw_norm >= 300) {
+    trace_font((" -> %d(%d)/%d", ff->fw_norm, selweight, ff->fw_bold));
+    ff->fw_norm = selweight;
+    ff->fw_bold = min(ff->fw_norm + 300, 1000);
   }
-  trace_font((" -> %d/%d\n", fw_norm, fw_bold));
+  trace_font((" -> %d/%d\n", ff->fw_norm, ff->fw_bold));
 }
 
 /*
- * Initialise all the fonts we will need initially. There may be as many as
- * three or as few as one. The other (potentially) twentyone fonts are done
- * if/when they are needed.
- *
- * We also:
- *
- * - check the font width and height, correcting our guesses if
- *   necessary.
- *
- * - verify that the bold font is the same width as the ordinary
- *   one, and engage shadow bolding if not.
- *
- * - verify that the underlined font is the same width as the
- *   ordinary one (manual underlining by means of line drawing can
- *   be done in a pinch).
+ * Initialise all the fonts of a font family we will need initially:
+   Normal (the ordinary font), and optionally bold and underline;
+   Other font variations are done if/when they are needed (another_font).
+
+   We also:
+   - check the font width and height, correcting our guesses if necessary.
+   - verify that the bold font is the same width as the ordinary one, 
+     and engage shadow bolding if not.
+   - verify that the underlined font is the same width as the ordinary one, 
+     and engage manual underlining if not.
  */
-void
-win_init_fonts(int size)
+static void
+win_init_fontfamily(HDC dc, int findex)
 {
-  trace_resize(("--- init_fonts %d\n", size));
+  struct fontfam * ff = &fontfamilies[findex];
+
+  trace_resize(("--- init_fontfamily\n"));
   TEXTMETRIC tm;
   int fontsize[3];
   int i;
 
-  font_size = size;
-
   for (i = 0; i < FONT_MAXNO; i++) {
-    if (fonts[i]) {
-      DeleteObject(fonts[i]);
-      fonts[i] = 0;
+    if (ff->fonts[i]) {
+      DeleteObject(ff->fonts[i]);
+      ff->fonts[i] = 0;
     }
-    fontflag[i] = 0;
+    ff->fontflag[i] = 0;
   }
 
-  bold_mode = cfg.bold_as_font ? BOLD_FONT : BOLD_SHADOW;
-  und_mode = UND_FONT;
+  ff->bold_mode = cfg.bold_as_font ? BOLD_FONT : BOLD_SHADOW;
+  ff->und_mode = UND_FONT;
   if (cfg.underl_manual || cfg.underl_colour != (colour)-1)
-    und_mode = UND_LINE;
+    ff->und_mode = UND_LINE;
 
-  if (cfg.font.weight) {
-    fw_norm = cfg.font.weight;
-    fw_bold = min(fw_norm + 300, 1000);
+  if (ff->weight) {
+    ff->fw_norm = ff->weight;
+    ff->fw_bold = min(ff->fw_norm + 300, 1000);
     // adjust selected font weights to available font weights
-    trace_font(("-> Weight %d/%d\n", fw_norm, fw_bold));
-    adjust_font_weights();
-    trace_font(("->     -> %d/%d\n", fw_norm, fw_bold));
+    trace_font(("-> Weight %d/%d\n", ff->fw_norm, ff->fw_bold));
+    adjust_font_weights(ff);
+    trace_font(("->     -> %d/%d\n", ff->fw_norm, ff->fw_bold));
   }
-  else if (cfg.font.isbold) {
-    fw_norm = FW_BOLD;
-    fw_bold = FW_HEAVY;
-    trace_font(("-> IsBold %d/%d\n", fw_norm, fw_bold));
+  else if (ff->isbold) {
+    ff->fw_norm = FW_BOLD;
+    ff->fw_bold = FW_HEAVY;
+    trace_font(("-> IsBold %d/%d\n", ff->fw_norm, ff->fw_bold));
   }
   else {
-    fw_norm = FW_DONTCARE;
-    fw_bold = FW_BOLD;
-    trace_font(("-> normal %d/%d\n", fw_norm, fw_bold));
+    ff->fw_norm = FW_DONTCARE;
+    ff->fw_bold = FW_BOLD;
+    trace_font(("-> normal %d/%d\n", ff->fw_norm, ff->fw_bold));
   }
 
-  HDC dc = GetDC(wnd);
+  ff->fonts[FONT_NORMAL] = create_font(ff->name, ff->fw_norm, false);
 
-#ifdef debug_dpi
-  printf("dpi %d dev %d\n", dpi, GetDeviceCaps(dc, LOGPIXELSY));
-#endif
-  if (cfg.handle_dpichanged && per_monitor_dpi_aware)
-    font_height =
-      size > 0 ? -MulDiv(size, dpi, 72) : -size;
-      // dpi is determined initially and via WM_WINDOWPOSCHANGED;
-      // if WM_DPICHANGED were used, this would need to be modified
-  else
-    font_height =
-      size > 0 ? -MulDiv(size, GetDeviceCaps(dc, LOGPIXELSY), 72) : -size;
-
-  cell_width = 0;
-
-  fonts[FONT_NORMAL] = create_font(fw_norm, false);
-
-  GetObject(fonts[FONT_NORMAL], sizeof(LOGFONT), &lfont);
-  trace_font(("created font %s %ld it %d cs %d\n", lfont.lfFaceName, (long int)lfont.lfWeight, lfont.lfItalic, lfont.lfCharSet));
-
-  SelectObject(dc, fonts[FONT_NORMAL]);
+  LOGFONT logfont;
+  GetObject(ff->fonts[FONT_NORMAL], sizeof(LOGFONT), &logfont);
+  trace_font(("created font %s %ld it %d cs %d\n", logfont.lfFaceName, (long int)logfont.lfWeight, logfont.lfItalic, logfont.lfCharSet));
+  SelectObject(dc, ff->fonts[FONT_NORMAL]);
   GetTextMetrics(dc, &tm);
-
   if (!tm.tmHeight) {
     // corrupt font installation (e.g. deleted font file)
-    show_font_warning(_("Font installation corrupt, using system substitute"));
-    wstrset(&cfg.font.name, W(""));
-    fonts[FONT_NORMAL] = create_font(fw_norm, false);
-    GetObject(fonts[FONT_NORMAL], sizeof(LOGFONT), &lfont);
-    SelectObject(dc, fonts[FONT_NORMAL]);
+    show_font_warning(ff->name, _("Font installation corrupt, using system substitute"));
+    wstrset(&ff->name, W(""));
+    ff->fonts[FONT_NORMAL] = create_font(ff->name, ff->fw_norm, false);
+    GetObject(ff->fonts[FONT_NORMAL], sizeof(LOGFONT), &logfont);
+    SelectObject(dc, ff->fonts[FONT_NORMAL]);
     GetTextMetrics(dc, &tm);
   }
+  if (!findex)
+    lfont = logfont;
 
-  row_spacing = row_padding(tm.tmInternalLeading, tm.tmExternalLeading);
-  trace_font(("h %ld asc %ld dsc %ld ild %ld eld %ld %ls\n", (long int)tm.tmHeight, (long int)tm.tmAscent, (long int)tm.tmDescent, (long int)tm.tmInternalLeading, (long int)tm.tmExternalLeading, cfg.font.name));
-  row_spacing += cfg.row_spacing;
-  if (row_spacing < -tm.tmDescent)
-    row_spacing = -tm.tmDescent;
-  trace_font(("row spacing int %ld ext %ld -> %+d; add %+d -> %+d; desc %ld -> %+d %ls\n", 
-      (long int)tm.tmInternalLeading, (long int)tm.tmExternalLeading, row_padding(tm.tmInternalLeading, tm.tmExternalLeading),
-      cfg.row_spacing, row_padding(tm.tmInternalLeading, tm.tmExternalLeading) + cfg.row_spacing,
-      (long int)tm.tmDescent, row_spacing, cfg.font.name));
 #ifdef check_charset_only_for_returned_font
   int default_charset = get_default_charset();
   if (tm.tmCharSet != default_charset && default_charset != DEFAULT_CHARSET) {
-    show_font_warning(_("Font does not support system locale"));
+    show_font_warning(ff->name, _("Font does not support system locale"));
   }
 #endif
 
-  // to be checked: whether usages of cell_height should include row_spacing
-  // (and likewise for cell_width);
-  // for font creation, as a workaround, row_spacing is removed again
-  cell_height = tm.tmHeight + row_spacing;
-  cell_width = tm.tmAveCharWidth + cfg.col_spacing;
-  font_dualwidth = (tm.tmMaxCharWidth >= tm.tmAveCharWidth * 3 / 2);
-  PADDING = tm.tmAveCharWidth;
-  if (cfg.padding >= 0 && cfg.padding < PADDING)
-    PADDING = cfg.padding;
+  if (!findex) {
+    ff->row_spacing = row_padding(tm.tmInternalLeading, tm.tmExternalLeading);
+    trace_font(("h %ld asc %ld dsc %ld ild %ld eld %ld %ls\n", (long int)tm.tmHeight, (long int)tm.tmAscent, (long int)tm.tmDescent, (long int)tm.tmInternalLeading, (long int)tm.tmExternalLeading, ff->name));
+    ff->row_spacing += cfg.row_spacing;
+    if (ff->row_spacing < -tm.tmDescent)
+      ff->row_spacing = -tm.tmDescent;
+    trace_font(("row spacing int %ld ext %ld -> %+d; add %+d -> %+d; desc %ld -> %+d %ls\n", 
+        (long int)tm.tmInternalLeading, (long int)tm.tmExternalLeading, row_padding(tm.tmInternalLeading, tm.tmExternalLeading),
+        cfg.row_spacing, row_padding(tm.tmInternalLeading, tm.tmExternalLeading) + cfg.row_spacing,
+        (long int)tm.tmDescent, ff->row_spacing, ff->name));
+    ff->col_spacing = cfg.col_spacing;
+
+    cell_height = tm.tmHeight + ff->row_spacing;
+    cell_width = tm.tmAveCharWidth + ff->col_spacing;
+
+    PADDING = tm.tmAveCharWidth;
+    if (cfg.padding >= 0 && cfg.padding < PADDING)
+      PADDING = cfg.padding;
+  }
+  else {
+    ff->row_spacing = cell_height - tm.tmHeight;
+    ff->col_spacing = cell_width - tm.tmAveCharWidth;
+  }
+
 #ifdef debug_create_font
-  printf("size %d -> height %d -> height %d\n", size, font_height, cell_height);
+  printf("size %d -> height %d -> height %d\n", font_size, font_height, cell_height);
 #endif
+
+  ff->font_dualwidth = (tm.tmMaxCharWidth >= tm.tmAveCharWidth * 3 / 2);
 
   // Determine whether ambiguous-width characters are wide in this font */
   float latin_char_width, greek_char_width, line_char_width;
   GetCharWidthFloatW(dc, 0x0041, 0x0041, &latin_char_width);
   GetCharWidthFloatW(dc, 0x03B1, 0x03B1, &greek_char_width);
   GetCharWidthFloatW(dc, 0x2500, 0x2500, &line_char_width);
+  if (!findex)
+    font_ambig_wide =
+      greek_char_width >= latin_char_width * 1.5 ||
+      line_char_width  >= latin_char_width * 1.5;
 
-  font_ambig_wide =
-    greek_char_width >= latin_char_width * 1.5 ||
-    line_char_width  >= latin_char_width * 1.5;
 #ifdef debug_win_char_width
   int w_latin = win_char_width(0x0041);
   int w_greek = win_char_width(0x03B1);
@@ -515,7 +539,7 @@ win_init_fonts(int size)
   printf("%04X %5.2f %d\n", 0x03B1, greek_char_width, w_greek);
   printf("%04X %5.2f %d\n", 0x2500, line_char_width, w_lines);
   bool faw = w_greek > w_latin || w_lines > w_latin;
-  printf("font ambig %d/%d (dual %d)\n", font_ambig_wide, faw, font_dualwidth);
+  printf("font faw %d (dual %d [ambig %d])\n", faw, ff->font_dualwidth, font_ambig_wide);
 #endif
 
   // Initialise VT100 linedraw character mappings.
@@ -531,15 +555,15 @@ win_init_fonts(int size)
     while (linedraw_chars[i][j] >= 0x80 &&
            (glyphs[i][j] == 0xFFFF || glyphs[i][j] == 0x1F))
       j++;
-    win_linedraw_chars[i] = linedraw_chars[i][j];
+    ff->win_linedraw_chars[i] = linedraw_chars[i][j];
 #define draw_vt100_line_drawing_chars
 #ifdef draw_vt100_line_drawing_chars
     if ('j' - '`' <= i && i <= 'x' - '`')
-      win_linedraw_chars[i] = linedraw_chars[i][0];
+      ff->win_linedraw_chars[i] = linedraw_chars[i][0];
 #endif
   }
 
-  fonts[FONT_UNDERLINE] = create_font(fw_norm, true);
+  ff->fonts[FONT_UNDERLINE] = create_font(ff->name, ff->fw_norm, true);
 
  /*
   * Some fonts, e.g. 9-pt Courier, draw their underlines
@@ -558,14 +582,14 @@ win_init_fonts(int size)
   * go all the way across the character cell, we only search
   * down a single column of the bitmap, half way across.)
   */
-  if (und_mode == UND_FONT) {
+  if (ff->und_mode == UND_FONT) {
     HDC und_dc;
     HBITMAP und_bm, und_oldbm;
 
     und_dc = CreateCompatibleDC(dc);
     und_bm = CreateCompatibleBitmap(dc, cell_width, cell_height);
     und_oldbm = SelectObject(und_dc, und_bm);
-    SelectObject(und_dc, fonts[FONT_UNDERLINE]);
+    SelectObject(und_dc, ff->fonts[FONT_UNDERLINE]);
     SetTextAlign(und_dc, TA_TOP | TA_LEFT | TA_NOUPDATECP);
     SetTextColor(und_dc, RGB(255, 255, 255));
     SetBkColor(und_dc, RGB(0, 0, 0));
@@ -587,23 +611,23 @@ win_init_fonts(int size)
     DeleteObject(und_bm);
     DeleteDC(und_dc);
     if (!gotit) {
-      trace_font(("ul outbox %ls\n", cfg.font.name));
-      und_mode = UND_LINE;
-      DeleteObject(fonts[FONT_UNDERLINE]);
-      fonts[FONT_UNDERLINE] = 0;
+      trace_font(("ul outbox %ls\n", ff->name));
+      ff->und_mode = UND_LINE;
+      DeleteObject(ff->fonts[FONT_UNDERLINE]);
+      ff->fonts[FONT_UNDERLINE] = 0;
     }
   }
 
-  if (bold_mode == BOLD_FONT)
-    fonts[FONT_BOLD] = create_font(fw_bold, false);
+  if (ff->bold_mode == BOLD_FONT)
+    ff->fonts[FONT_BOLD] = create_font(ff->name, ff->fw_bold, false);
 
-  descent = tm.tmAscent + 1;
-  if (descent >= cell_height)
-    descent = cell_height - 1;
+  ff->descent = tm.tmAscent + 1;
+  if (ff->descent >= cell_height)
+    ff->descent = cell_height - 1;
 
   for (i = 0; i < 3; i++) {
-    if (fonts[i]) {
-      if (SelectObject(dc, fonts[i]) && GetTextMetrics(dc, &tm))
+    if (ff->fonts[i]) {
+      if (SelectObject(dc, ff->fonts[i]) && GetTextMetrics(dc, &tm))
         fontsize[i] = tm.tmAveCharWidth + 256 * tm.tmHeight;
       else
         fontsize[i] = -i;
@@ -612,23 +636,61 @@ win_init_fonts(int size)
       fontsize[i] = -i;
   }
 
-  ReleaseDC(wnd, dc);
-
   if (fontsize[FONT_UNDERLINE] != fontsize[FONT_NORMAL]) {
-    trace_font(("ul size!= %ls\n", cfg.font.name));
-    und_mode = UND_LINE;
-    DeleteObject(fonts[FONT_UNDERLINE]);
-    fonts[FONT_UNDERLINE] = 0;
+    trace_font(("ul size!= %ls\n", ff->name));
+    ff->und_mode = UND_LINE;
+    DeleteObject(ff->fonts[FONT_UNDERLINE]);
+    ff->fonts[FONT_UNDERLINE] = 0;
   }
 
-  if (bold_mode == BOLD_FONT && fontsize[FONT_BOLD] != fontsize[FONT_NORMAL]) {
-    trace_font(("bold_mode %d\n", bold_mode));
-    bold_mode = BOLD_SHADOW;
-    DeleteObject(fonts[FONT_BOLD]);
-    fonts[FONT_BOLD] = 0;
+  if (ff->bold_mode == BOLD_FONT && fontsize[FONT_BOLD] != fontsize[FONT_NORMAL]) {
+    trace_font(("bold_mode %d\n", ff->bold_mode));
+    ff->bold_mode = BOLD_SHADOW;
+    DeleteObject(ff->fonts[FONT_BOLD]);
+    ff->fonts[FONT_BOLD] = 0;
   }
-  trace_font(("bold_mode %d\n", bold_mode));
-  fontflag[0] = fontflag[1] = fontflag[2] = 1;
+  trace_font(("bold_mode %d\n", ff->bold_mode));
+  ff->fontflag[0] = ff->fontflag[1] = ff->fontflag[2] = 1;
+}
+
+/*
+ * Initialize fonts for all configured font families.
+ */
+void
+win_init_fonts(int size)
+{
+  trace_resize(("--- init_fonts %d\n", size));
+
+  HDC dc = GetDC(wnd);
+
+  font_size = size;
+#ifdef debug_dpi
+  printf("dpi %d dev %d\n", dpi, GetDeviceCaps(dc, LOGPIXELSY));
+#endif
+  if (cfg.handle_dpichanged && per_monitor_dpi_aware)
+    font_height =
+      font_size > 0 ? -MulDiv(font_size, dpi, 72) : -font_size;
+      // dpi is determined initially and via WM_WINDOWPOSCHANGED;
+      // if WM_DPICHANGED were used, this would need to be modified
+  else
+    font_height =
+      font_size > 0 ? -MulDiv(font_size, GetDeviceCaps(dc, LOGPIXELSY), 72) : -font_size;
+
+  for (uint fi = 0; fi < lengthof(fontfamilies); fi++) {
+    if (!fi) {
+      fontfamilies[fi].name = cfg.font.name;
+      fontfamilies[fi].weight = cfg.font.weight;
+      fontfamilies[fi].isbold = cfg.font.isbold;
+    }
+    else {
+      fontfamilies[fi].name = cfg.fontfams[fi].name;
+      fontfamilies[fi].weight = cfg.fontfams[fi].weight;
+      fontfamilies[fi].isbold = false;
+    }
+    win_init_fontfamily(dc, fi);
+  }
+
+  ReleaseDC(wnd, dc);
 }
 
 uint
@@ -975,19 +1037,19 @@ win_schedule_update(void)
 
 
 static void
-another_font(int fontno)
+another_font(struct fontfam * ff, int fontno)
 {
   int basefont;
   int u, w, i, s, x;
 
-  if (fontno < 0 || fontno >= FONT_MAXNO || fontflag[fontno])
+  if (fontno < 0 || fontno >= FONT_MAXNO || ff->fontflag[fontno])
     return;
 
   basefont = (fontno & ~(FONT_BOLDUND));
-  if (basefont != fontno && !fontflag[basefont])
-    another_font(basefont);
+  if (basefont != fontno && !ff->fontflag[basefont])
+    another_font(ff, basefont);
 
-  w = fw_norm;
+  w = ff->fw_norm;
   i = false;
   s = false;
   u = false;
@@ -998,7 +1060,7 @@ another_font(int fontno)
   if (fontno & FONT_NARROW)
     x = (x + 1) / 2;
   if (fontno & FONT_BOLD)
-    w = fw_bold;
+    w = ff->fw_bold;
   if (fontno & FONT_ITALIC)
     i = true;
   if (fontno & FONT_STRIKEOUT)
@@ -1014,12 +1076,12 @@ another_font(int fontno)
 #ifdef debug_create_font
   printf("font [%02X]: %d (size %d) %d w%4d i%d u%d s%d\n", fontno, font_height * (1 + !!(fontno & FONT_HIGH)), font_size, x, w, i, u, s);
 #endif
-  fonts[fontno] =
+  ff->fonts[fontno] =
     CreateFontW(y, x, 0, 0, w, i, u, s,
                 DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-                get_font_quality(), FIXED_PITCH | FF_DONTCARE, cfg.font.name);
+                get_font_quality(), FIXED_PITCH | FF_DONTCARE, ff->name);
 
-  fontflag[fontno] = 1;
+  ff->fontflag[fontno] = 1;
 }
 
 void
@@ -1139,6 +1201,9 @@ char1ulen(wchar * text)
 void
 win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl)
 {
+  int findex = (attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+  struct fontfam * ff = &fontfamilies[findex];
+
   bool clearpad = lattr & LATTR_CLEARPAD;
   trace_line("win_text:", text, len);
 
@@ -1172,11 +1237,11 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
 
 #ifdef debug_bold
   wchar t[len + 1]; wcsncpy(t, text, len); t[len] = 0;
-  printf("bold_mode %d attr_bold %d <%ls>\n", bold_mode, !!(attr.attr & ATTR_BOLD), t);
+  printf("bold_mode %d attr_bold %d <%ls>\n", ff->bold_mode, !!(attr.attr & ATTR_BOLD), t);
 #endif
-  if (bold_mode == BOLD_FONT && (attr.attr & ATTR_BOLD))
+  if (ff->bold_mode == BOLD_FONT && (attr.attr & ATTR_BOLD))
     nfont |= FONT_BOLD;
-  if (und_mode == UND_FONT && (attr.attr & ATTR_UNDER))
+  if (ff->und_mode == UND_FONT && (attr.attr & ATTR_UNDER))
     nfont |= FONT_UNDERLINE;
   if (attr.attr & ATTR_ITALIC)
     nfont |= FONT_ITALIC;
@@ -1185,10 +1250,10 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     nfont |= FONT_STRIKEOUT;
   if (attr.attr & TATTR_ZOOMFULL)
     nfont |= FONT_ZOOMFULL;
-  another_font(nfont);
+  another_font(ff, nfont);
 
   bool force_manual_underline = false;
-  if (!fonts[nfont]) {
+  if (!ff->fonts[nfont]) {
     if (nfont & FONT_UNDERLINE)
       force_manual_underline = true;
     // Don't force manual bold, it could be bad news.
@@ -1196,8 +1261,8 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   }
   if ((nfont & (FONT_WIDE | FONT_NARROW)) == (FONT_WIDE | FONT_NARROW))
     nfont &= ~(FONT_WIDE | FONT_NARROW);
-  another_font(nfont);
-  if (!fonts[nfont])
+  another_font(ff, nfont);
+  if (!ff->fonts[nfont])
     nfont = FONT_NORMAL;
 
   colour_i fgi = (attr.attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
@@ -1295,7 +1360,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     }
   }
 
-  SelectObject(dc, fonts[nfont]);
+  SelectObject(dc, ff->fonts[nfont]);
   SetTextColor(dc, fg);
   SetBkColor(dc, bg);
 
@@ -1448,16 +1513,16 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
 
 
  /* Begin text output */
-  int yt = y + (row_spacing / 2) - (lattr == LATTR_BOT ? cell_height : 0);
-  int xt = x + (cfg.col_spacing / 2);
+  int yt = y + (ff->row_spacing / 2) - (lattr == LATTR_BOT ? cell_height : 0);
+  int xt = x + (ff->col_spacing / 2);
   if (attr.attr & TATTR_ZOOMFULL) {
-    yt -= row_spacing / 2;
+    yt -= ff->row_spacing / 2;
     xt = x;
   }
 
  /* Determine shadow/overstrike bold or double-width/height width */
   int xwidth = 1;
-  if (apply_shadow && bold_mode == BOLD_SHADOW && (attr.attr & ATTR_BOLD)) {
+  if (apply_shadow && ff->bold_mode == BOLD_SHADOW && (attr.attr & ATTR_BOLD)) {
     // This could be scaled with font size, but at risk of clipping
     xwidth = 2;
     if (lattr != LATTR_NORM) {
@@ -1644,9 +1709,9 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
 
  /* Manual underline */
   colour ul = fg;
-  int uloff = descent + (cell_height - descent + 1) / 2;
+  int uloff = ff->descent + (cell_height - ff->descent + 1) / 2;
   if (lattr == LATTR_BOT)
-    uloff = descent + (cell_height - descent + 1) / 2;
+    uloff = ff->descent + (cell_height - ff->descent + 1) / 2;
   uloff += line_width / 2;
   if (uloff >= cell_height)
     uloff = cell_height - 1;
@@ -1665,7 +1730,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
  /* Underline */
   if (lattr != LATTR_TOP &&
       (force_manual_underline ||
-       (und_mode == UND_LINE && (attr.attr & ATTR_UNDER)) ||
+       (ff->und_mode == UND_LINE && (attr.attr & ATTR_UNDER)) ||
        (attr.attr & ATTR_DOUBLYUND))) {
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, ul));
     int gapfrom = 0, gapdone = 0;
@@ -1689,7 +1754,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
  /* Strikeout */
   if (attr.attr & ATTR_STRIKEOUT
       && (cfg.underl_manual || cfg.underl_colour != (colour)-1)) {
-    int soff = (descent + (row_spacing / 2)) * 2 / 3;
+    int soff = (ff->descent + (ff->row_spacing / 2)) * 2 / 3;
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, ul));
     for (int l = 0; l < line_width; l++) {
       MoveToEx(dc, x, y + soff + l, null);
@@ -1742,10 +1807,10 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
         }
       }
       when CUR_UNDERSCORE:
-        y = yt + min(descent, cell_height - 2);
-        y += row_spacing * 3 / 8;
+        y = yt + min(ff->descent, cell_height - 2);
+        y += ff->row_spacing * 3 / 8;
         if (lattr >= LATTR_TOP) {
-          y += row_spacing / 2;
+          y += ff->row_spacing / 2;
           if (lattr == LATTR_BOT)
             y += cell_height;
         }
@@ -1768,10 +1833,13 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
 void
 win_check_glyphs(wchar *wcs, uint num)
 {
+  int findex = (term.curs.attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+  struct fontfam * ff = &fontfamilies[findex];
+
   HDC dc = GetDC(wnd);
-  bool bold = (bold_mode == BOLD_FONT) && (term.curs.attr.attr & ATTR_BOLD);
+  bool bold = (ff->bold_mode == BOLD_FONT) && (term.curs.attr.attr & ATTR_BOLD);
   bool italic = term.curs.attr.attr & ATTR_ITALIC;
-  SelectObject(dc, fonts[(bold ? FONT_BOLD : FONT_NORMAL) | italic ? FONT_ITALIC : 0]);
+  SelectObject(dc, ff->fonts[(bold ? FONT_BOLD : FONT_NORMAL) | italic ? FONT_ITALIC : 0]);
   ushort glyphs[num];
   GetGlyphIndicesW(dc, wcs, num, glyphs, true);
   for (size_t i = 0; i < num; i++) {
@@ -1793,11 +1861,14 @@ win_check_glyphs(wchar *wcs, uint num)
 int
 win_char_width(xchar c)
 {
+  int findex = (term.curs.attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+  struct fontfam * ff = &fontfamilies[findex];
+
  /* If the font max width is the same as the font average width
   * then this function is a no-op.
   */
 #ifndef debug_win_char_width
-  if (!font_dualwidth)
+  if (!ff->font_dualwidth)
     return 1;
 #endif
 
@@ -1812,7 +1883,7 @@ win_char_width(xchar c)
 #ifdef debug_win_char_width
   bool ok0 = !!
 #endif
-  SelectObject(dc, fonts[FONT_NORMAL]);
+  SelectObject(dc, ff->fonts[FONT_NORMAL]);
 #ifdef debug_win_char_width
   if (c == 0x2001)
     win_char_width(0x5555);
@@ -1879,6 +1950,9 @@ win_set_colour(colour_i i, colour c)
 {
   if (i >= COLOUR_NUM)
     return;
+
+static bool bold_colour_selected = false;
+
   if (c == (colour)-1) {
     // ... reset to default ...
     if (i == BOLD_FG_COLOUR_I) {

@@ -106,6 +106,9 @@ enum {
   GRAPH_MASK      = 0x00FF00000000u,
   ATTR_GRAPH_SHIFT = 32,
 
+  FONTFAM_MASK    = 0xF0000000000000u,
+  ATTR_FONTFAM_SHIFT = 52,
+
   TATTR_RIGHTCURS = 0x010000000000u, /* cursor-on-RHS */
   TATTR_PASCURS   = 0x020000000000u, /* passive cursor (box) */
   TATTR_ACTCURS   = 0x040000000000u, /* active cursor (block) */
@@ -275,11 +278,11 @@ typedef struct {
   bool autowrap;  // switchable (xterm Wraparound Mode (DECAWM Auto Wrap))
   bool wrapnext;
   bool rev_wrap;  // switchable (xterm Reverse-wraparound Mode)
-  bool utf;
   short g0123;
   term_cset csets[4];
   term_cset cset_single;
   uchar oem_acs;
+  bool utf;
 } term_cursor;
 
 typedef struct {

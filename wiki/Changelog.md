@@ -1,3 +1,6 @@
+Font rendering
+  * Support for alternative fonts as selected via ECMA-48 SGR codes.
+
 Terminal features
   * Fixed Cursor Position Report (CPR) in Origin Mode (DECOM) (vttest 6-3).
   * DEC Technical character set support (except Sigma segments not in Unicode).

@@ -821,6 +821,14 @@ If a font family has no bold weight but boldness was requested, mintty
 does not adhere to this scheme but enforces bold font selection; however, 
 in this case the bold attribute may not be effective.
 .br
+\(en \fBAlternative fonts\fP (Font1= ... Font9= , Font1Weight= ... Font9Weight=):
+With these settings, up to 9 alternative fonts (and optionally weights) 
+can be configured which would then be selectable via ECMA-48 SGR character attributes 
+(see Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips#text-attributes-and-rendering\fP).
+\fINote:\fP The control sequence for alternative font 1 overrides the identical 
+control sequence to select the VGA character set, which would thus be disabled. 
+Configuring alternative font 1 is therefore discouraged.
+.br
 \(en \fBFont sample text\fP (FontSample=):
 This setting overrides the text for the "Sample" box in the Font chooser dialog.
 .br

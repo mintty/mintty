@@ -530,14 +530,29 @@ do_sgr(void)
       when 7: attr.attr |= ATTR_REVERSE;
       when 8: attr.attr |= ATTR_INVISIBLE;
       when 9: attr.attr |= ATTR_STRIKEOUT;
-      when 10 ... 11:  // ... 12 disabled
+      when 10 ... 11: {  // ... 12 disabled
         // mode 10 is the configured Character set
         // mode 11 is the VGA character set (CP437 + control range graphics)
         // mode 12 is a weird feature from the Linux console,
         // cloning the VGA character set (CP437) into the ASCII range;
-        // should we disable it? (not supported by cygwin console)
-        term.curs.oem_acs = term.csi_argv[i] - 10;
-        term_update_cs();
+        // disabled (not supported by cygwin console);
+        // modes 11 (and 12) are overridden by alternate font setting
+        // if configured
+          uchar arg_10 = term.csi_argv[i] - 10;
+          if (arg_10 && *cfg.fontfams[arg_10].name) {
+            attr.attr &= ~FONTFAM_MASK;
+            attr.attr |= (unsigned long long)arg_10 << ATTR_FONTFAM_SHIFT;
+          }
+          else {
+            if (!arg_10)
+              attr.attr &= ~FONTFAM_MASK;
+            term.curs.oem_acs = arg_10;
+            term_update_cs();
+          }
+        }
+      when 12 ... 19:
+        attr.attr &= ~FONTFAM_MASK;
+        attr.attr |= (unsigned long long)(term.csi_argv[i] - 10) << ATTR_FONTFAM_SHIFT;
       //when 21: attr.attr &= ~ATTR_BOLD;
       when 21: attr.attr |= ATTR_DOUBLYUND;
       when 22: attr.attr &= ~(ATTR_BOLD | ATTR_DIM);
@@ -1637,7 +1652,7 @@ term_write(const char *buf, uint len)
         switch (cset) {
           when CSET_LINEDRW:  // VT100 line drawing characters
             if (0x60 <= wc && wc <= 0x7E) {
-              wchar dispwc = win_linedraw_chars[wc - 0x60];
+              wchar dispwc = win_linedraw_char(wc - 0x60);
 #define draw_vt100_line_drawing_chars
 #ifdef draw_vt100_line_drawing_chars
               if ('j' <= wc && wc <= 'x') {
