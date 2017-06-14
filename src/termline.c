@@ -244,8 +244,8 @@ makeliteral_attr(struct buf *b, termchar *c)
   */
   uint colourbits;
   uint attr = c->attr.attr;
-  uchar graph = c->attr.attr >> ATTR_GRAPH_SHIFT;
-  uchar ff = c->attr.attr >> ATTR_FONTFAM_SHIFT;
+  uchar graph = (c->attr.attr & GRAPH_MASK) >> ATTR_GRAPH_SHIFT;
+  uchar ff = (c->attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
   uint truefg = c->attr.truefg;
   uint truebg = c->attr.truebg;
 
