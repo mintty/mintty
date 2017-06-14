@@ -398,16 +398,20 @@ void
 win_switch(bool back, bool alternate)
 {
   // avoid being pushed behind other windows (#652)
-  SetWindowPos(wnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+  // but do it below, not here (wsltty#47)
+  //SetWindowPos(wnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
   first_wnd = 0, last_wnd = 0;
   EnumWindows(wnd_enum_proc, 0);
   if (first_wnd) {
     if (back)
       first_wnd = last_wnd;
-    else
+    else {
+      // avoid being pushed behind other windows (#652)
+      SetWindowPos(wnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
       SetWindowPos(wnd, last_wnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE
                        | (alternate ? SWP_NOZORDER : SWP_NOREPOSITION));
+    }
     BringWindowToTop(first_wnd);
   }
 }

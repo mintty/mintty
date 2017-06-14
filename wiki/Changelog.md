@@ -11,6 +11,7 @@ Terminal features
 
 Window handling
   * Suppressing Windows-caused side effects of "resizing" to current size (#629).
+  * Tweaked window-raising to top (previous #652) to not stick on top (mintty/wsltty#47).
 
 Configuration
   * Reverted to stripping CR from most configuration strings (mintty/wsltty#46).
