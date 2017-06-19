@@ -1428,7 +1428,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   }
 
   int graph = (attr.attr >> ATTR_GRAPH_SHIFT) & 0xFF;
-  if (graph) {
+  if (graph && !(graph & 0x80)) {
     for (int i = 0; i < len; i++)
       text[i] = ' ';
   }
@@ -1649,7 +1649,9 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
 #define DRAW_DOWN  0x4
 #endif
 
-  if (graph >> 4) {  // VT100 horizontal lines ⎺⎻(─)⎼⎽
+  if (graph & 0x80) {  // DEC Technical characters to be fixed
+  }
+  else if (graph >> 4) {  // VT100 horizontal lines ⎺⎻(─)⎼⎽
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
     int yoff = (cell_height - line_width) * (graph >> 4) / 5;
     if (lattr >= LATTR_TOP)
