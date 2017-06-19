@@ -79,6 +79,7 @@ typedef struct {
   bool alt_fn_shortcuts;
   bool ctrl_shift_shortcuts;
   bool ctrl_exchange_shift;
+  bool ctrl_controls;
   char compose_key;
   string key_prtscreen;	// VK_SNAPSHOT
   string key_pause;	// VK_PAUSE

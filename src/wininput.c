@@ -1423,13 +1423,15 @@ static struct {
       if (key <= '9' && alt_code_key(key - '0'))
         ;
       else if (char_key())
-        ;
+        trace_key("0... char_key");
       else if (term.modify_other_keys <= 1 && ctrl_key())
-        ;
+        trace_key("0... ctrl_key");
       else if (term.modify_other_keys)
         modify_other_key();
       else if (zoom_hotkey())
         ;
+      else if (!cfg.ctrl_controls && (mods & MDK_CTRL))
+        return false;
       else if (key <= '9')
         app_pad_code(key);
       else if (VK_OEM_PLUS <= key && key <= VK_OEM_PERIOD)
