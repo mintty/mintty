@@ -99,6 +99,7 @@ enum {
   ATTR_OVERL      = 0x10000000u,
   ATTR_PROTECTED  = 0x02000000u,
   ATTR_WIDE       = 0x04000000u,
+  ATTR_BLINK2     = 0x100000000000000,
 
   ATTR_NARROW     = 0x08000000u,
   ATTR_EXPAND     = 0x80000000u,
@@ -122,7 +123,8 @@ enum {
   TATTR_CURMARKED = 0x02000000000000u, /* current scroll marker */
 
   DATTR_STARTRUN  = 0x080000000000u, /* start of redraw run */
-  DATTR_MASK      = 0x0F0000000000u,
+  DATTR_MASK      = TATTR_RIGHTCURS | TATTR_PASCURS | TATTR_ACTCURS
+                    | TATTR_COMBINING | DATTR_STARTRUN
 };
 
 /* Line attributes.
@@ -349,6 +351,7 @@ struct term {
   bool reset_132;         /* Flag ESC c resets to 80 cols */
   bool cblinker;          /* When blinking is the cursor on ? */
   bool tblinker;          /* When the blinking text is on */
+  bool tblinker2;         /* When fast blinking is on */
   bool blink_is_real;     /* Actually blink blinking text */
   bool echoing;           /* Does terminal want local echo? */
   bool insert;            /* Insert mode */

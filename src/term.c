@@ -39,6 +39,9 @@ vt220(string term)
  * Call when the terminal's blinking-text settings change, or when
  * a text blink has just occurred.
  */
+static void term_schedule_tblink(void);
+static void term_schedule_tblink2(void);
+
 static void
 tblink_cb(void)
 {
@@ -47,13 +50,30 @@ tblink_cb(void)
   win_update();
 }
 
-void
+static void
 term_schedule_tblink(void)
 {
   if (term.blink_is_real)
     win_set_timer(tblink_cb, 500);
   else
     term.tblinker = 1;  /* reset when not in use */
+}
+
+static void
+tblink2_cb(void)
+{
+  term.tblinker2 = !term.tblinker2;
+  term_schedule_tblink2();
+  win_update();
+}
+
+static void
+term_schedule_tblink2(void)
+{
+  if (term.blink_is_real)
+    win_set_timer(tblink2_cb, 300);
+  else
+    term.tblinker2 = 1;  /* reset when not in use */
 }
 
 /*
@@ -203,6 +223,7 @@ term_reset(void)
   }
   term.selected = false;
   term_schedule_tblink();
+  term_schedule_tblink2();
   term_schedule_cblink();
   term_clear_scrollback();
 
@@ -249,6 +270,7 @@ term_reconfig(void)
     term.blink_is_real = new_cfg.allow_blinking;
   cfg.cursor_blinks = new_cfg.cursor_blinks;
   term_schedule_tblink();
+  term_schedule_tblink2();
   term_schedule_cblink();
   if (new_cfg.backspace_sends_bs != cfg.backspace_sends_bs)
     term.backspace_sends_bs = new_cfg.backspace_sends_bs;
@@ -1126,6 +1148,11 @@ term_paint(void)
         if (term.has_focus && term.tblinker)
           tchar = ' ';
         tattr.attr &= ~ATTR_BLINK;
+      }
+      if (term.blink_is_real && (tattr.attr & ATTR_BLINK2)) {
+        if (term.has_focus && term.tblinker2)
+          tchar = ' ';
+        tattr.attr &= ~ATTR_BLINK2;
       }
 
      /* Mark box drawing, block and some other characters 

@@ -21,7 +21,6 @@
 
 void term_print_finish(void);
 
-void term_schedule_tblink(void);
 void term_schedule_cblink(void);
 void term_schedule_vbell(int already_started, int startpoint);
 

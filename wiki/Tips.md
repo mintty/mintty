@@ -493,6 +493,7 @@ Mintty supports a maximum of usual and unusual text attributes:
 | 3                      | 23                | italic                        |
 | 4                      | 24                | underline                     |
 | 5                      | 25                | blinking                      |
+| 6                      | 25                | rapidly blinking              |
 | 7                      | 27                | inverse                       |
 | 8                      | 28                | invisible                     |
 | 9                      | 29                | strikeout                     |

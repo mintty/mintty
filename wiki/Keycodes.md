@@ -87,6 +87,7 @@ The keys here send the usual control characters, but there are a few mintty-spec
 
 See the [previous section](#Ctrl.md) for how Unicode codepoints such as _U+009B_ are encoded.
 
+
 ## Modifier key encodings ##
 
 Where the modifier keys Shift, Alt and Ctrl are not handled as described in the sections above, they are encoded as a one-digit number that becomes part of the keycode. To obtain that number, add the numbers for each pressed modifier to 1:
