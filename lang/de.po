@@ -378,7 +378,7 @@ msgstr "&Keine"
 #. __ Options - Text:
 #: config.c:2589
 msgid "&Partial"
-msgstr "&Teilweise"
+msgstr "&Teils"
 
 #. __ Options - Text:
 #: config.c:2591
@@ -388,7 +388,7 @@ msgstr "&Voll"
 #. __ Options - Text:
 #: config.c:2607
 msgid "&Allow blinking"
-msgstr "&Bliken zulassen"
+msgstr "&Blinken zulassen"
 
 #: config.c:2615
 msgid "&Locale"
