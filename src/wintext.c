@@ -1871,6 +1871,8 @@ win_char_width(xchar c)
   */
 #ifndef debug_win_char_width
   if (!ff->font_dualwidth)
+    // this optimization ignores font fallback and should be dropped 
+    // if ever a more particular width checking is implemented (#615)
     return 1;
 #endif
 
@@ -1878,7 +1880,7 @@ win_char_width(xchar c)
 #ifdef debug_win_char_width
   if (c != 'A')
 #endif
-  if (c >= ' ' && c < '~')  // exclude 0x7E (overline in Shift_JIS X 0213)
+  if (c >= ' ' && c < '~' && c != '\\')  // exclude CJK overline/Yen/Won
     return 1;
 
   HDC dc = GetDC(wnd);
@@ -1900,7 +1902,7 @@ win_char_width(xchar c)
     BOOL ok3 = GetCharABCWidthsW(dc, c, c, &abc);  // only on TrueType
     ABCFLOAT abcf; memset(&abcf, 0, sizeof abcf);
     BOOL ok4 = GetCharABCWidthsFloatW(dc, c, c, &abcf);
-    printf("w %04X [%d] (32 %d) %d (32a %d) %d (flt %d) %.3f (abc %d) %2d %2d %2d (abcf %d) %4.1f %4.1f %4.1f\n", 
+    printf("w %04X [cell %d] - 32 %d %d - flt %d %.3f - abc %d %d %d %d - abc flt %d %4.1f %4.1f %4.1f\n", 
            c, cell_width, ok1, cw, ok2, cwf, 
            ok3, abc.abcA, abc.abcB, abc.abcC, 
            ok4, abcf.abcfA, abcf.abcfB, abcf.abcfC);
@@ -1913,10 +1915,10 @@ win_char_width(xchar c)
   if (!ok)
     return 0;
 
-  // report char as wide if its width is more than 1½ cells
+  // report char as wide if its width is more than 1½ cells;
+  // this is unreliable if font fallback is involved (#615)
   ibuf += cell_width / 2 - 1;
   ibuf /= cell_width;
-
   return ibuf;
 }
 
