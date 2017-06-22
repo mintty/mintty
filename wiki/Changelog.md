@@ -1,5 +1,6 @@
 Font rendering
   * Support for alternative fonts as selected via ECMA-48 SGR codes 11...19.
+  * Tweaked ambiguous width checking to not expand glyphs excessively (#615).
 
 Terminal features
   * SGR 6 attribute "rapidly blinking" (ECMA-48).
@@ -13,7 +14,7 @@ Terminal features
 
 Window handling
   * Suppressing Windows-caused side effects of "resizing" to current size (#629).
-  * Tweaked window-raising to top (previous #652) to not stick on top (mintty/wsltty#47).
+  * Tweaked window-raising to top (previous #652) to not stick on top (mintty/wsltty#47, #667).
   * Reverted capturing of Shift+Ctrl+0 (~#233) to enable language switching (#663).
   * Capture key after leaving system menu with ESC; insert it and prevent beep.
 
