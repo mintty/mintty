@@ -1,3 +1,5 @@
+### 2.7.8 (25 June 2017) ###
+
 Font rendering
   * Support for alternative fonts as selected via ECMA-48 SGR codes 11...19.
   * Tweaked ambiguous width checking to not expand glyphs excessively (#615).

@@ -431,6 +431,13 @@ the reason may be that specifically designed characters are being addressed
 that are provided in the Unicode Private Use range of dedicated fonts;
 a collection of such fonts can be found at [Nerd Fonts](http://nerdfonts.com/).
 
+### Alternative fonts ###
+
+Mintty supports up to 9 alternative fonts that can be selected as 
+character attributes (see Text attributes below). They are configured 
+in the config file (see manual page).
+<img align=top src=https://github.com/mintty/mintty/wiki/mintty-alternative-fonts.png>
+
 
 ## Ambiguous width setting ##
 

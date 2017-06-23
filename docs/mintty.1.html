@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Sun May  7 12:10:19 2017 -->
+<!-- CreationDate: Sat Jun 24 01:04:33 2017 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -1016,6 +1016,16 @@ a font family has no bold weight but boldness was requested,
 mintty does not adhere to this scheme but enforces bold font
 selection; however, in this case the bold attribute may not
 be effective. <br>
+&ndash; <b>Alternative fonts</b> (Font1= ... Font9= ,
+Font1Weight= ... Font9Weight=): With these settings, up to 9
+alternative fonts (and optionally weights) can be configured
+which would then be selectable via ECMA-48 SGR character
+attributes (see Tips wiki page
+<i>https://github.com/mintty/mintty/wiki/Tips#text-attributes-and-rendering</i>).
+<i>Note:</i> The control sequence for alternative font 1
+overrides the identical control sequence to select the VGA
+character set, which would thus be disabled. Configuring
+alternative font 1 is therefore discouraged. <br>
 &ndash; <b>Font sample text</b> (FontSample=): This setting
 overrides the text for the &quot;Sample&quot; box in the
 Font chooser dialog. <br>
