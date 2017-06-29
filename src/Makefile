@@ -167,7 +167,8 @@ rgb:	# /usr/share/X11/rgb.txt # X11 color names
 #		{255, 250, 250, "snow"},
 	sed -e 's,	, ,g' -e 's/ *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([^ ].*[^ ]\) */	{\1, \2, \3, "\4"},/' /usr/share/X11/rgb.txt > rgb.t
 
-unidata:	combining.t ambiguous.t combdouble.t combined.t bidiclasses.t
+combdata:	combining.t combdouble.t combined.t
+unidata:	$(combdata) ambiguous.t casefold.t bidiclasses.t
 
 combining.t:	# UnicodeData.txt Blocks.txt
 	uniset +cat=Me +cat=Mn +cat=Cf -00AD +1160-11FF +200B +D7B0-D7C6 +D7CB-D7FB c > combining.t
@@ -182,6 +183,9 @@ combdouble.t:	# UnicodeData.txt Blocks.txt
 
 WIDTH-A:	# UnicodeData.txt Blocks.txt EastAsianWidth.txt
 	sh ./mkwidthA
+
+casefold.t:	# CaseFolding.txt
+	sh ./mkcasefold > casefold.t
 
 combined.t:	# UnicodeData.txt
 	sh ./mkcombinedt > combined.t

@@ -1,3 +1,4 @@
+  * Unicode 10.0 updates.
   * Build option VERSION_SUFFIX to add package version indication (mintty/wsltty#35, mintty/wsltty#50).
 
 ### 2.7.8 (25 June 2017) ###
