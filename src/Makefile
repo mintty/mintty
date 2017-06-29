@@ -9,6 +9,7 @@
 #############################################################################
 # Variables intended for setting on the make command line.
 # - RELEASE: release number for packaging
+# - VERSION_SUFFIX: suffix for version information
 # - TARGET: target triple for cross compiling
 #	values: i686-pc-cygwin, x86_64-pc-cygwin, i686-pc-msys, x86_64-pc-msys
 # - DEBUG: define to enable debug build
@@ -59,6 +60,9 @@ else
 endif
 
 CPPFLAGS := -DTARGET=$(TARGET)
+ifdef VERSION_SUFFIX
+CPPFLAGS += -DVERSION_SUFFIX="$(VERSION_SUFFIX)"
+endif
 
 ifndef RELEASE
   svn_rev := $(shell svn info 2>/dev/null | grep ^Revision: | sed 's/Revision: //')
