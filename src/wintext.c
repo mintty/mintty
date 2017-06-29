@@ -97,6 +97,7 @@ typedef enum {UND_LINE, UND_FONT} UND_MODE;
 // font family properties
 struct fontfam {
   wstring name;
+  wstring name_reported;
   int weight;
   bool isbold;
   HFONT fonts[FONT_MAXNO];
@@ -262,20 +263,19 @@ row_padding(int i, int e)
 }
 
 static void
-show_font_warning(wstring name, char * msg)
+show_font_warning(struct fontfam * ff, char * msg)
 {
   // suppress multiple font error messages
-  static wchar * msgfont = null;
-  if (msgfont && wcscmp(msgfont, name) == 0) {
+  if (ff->name_reported && wcscmp(ff->name_reported, ff->name) == 0) {
     return;
   }
   else {
-    if (msgfont)
-      free(msgfont);
-    msgfont = wcsdup(name);
+    if (ff->name_reported)
+      delete(ff->name_reported);
+    ff->name_reported = wcsdup(ff->name);
   }
 
-  char * fn = cs__wcstoutf(name);
+  char * fn = cs__wcstoutf(ff->name);
   char * fullmsg;
   int len = asprintf(&fullmsg, "%s:\n%s", msg, fn);
   free(fn);
@@ -368,14 +368,14 @@ adjust_font_weights(struct fontfam * ff)
 
   // check if no font found
   if (!font_found) {
-    show_font_warning(ff->name, _("Font not found, using system substitute"));
+    show_font_warning(ff, _("Font not found, using system substitute"));
     ff->fw_norm = 400;
     ff->fw_bold = 700;
     trace_font(("//\n"));
     return;
   }
   if (!ansi_found && !cs_found) {
-    show_font_warning(ff->name, _("Font has limited support for character ranges"));
+    show_font_warning(ff, _("Font has limited support for character ranges"));
   }
 
   // find available widths closest to selected widths
@@ -474,7 +474,7 @@ win_init_fontfamily(HDC dc, int findex)
   GetTextMetrics(dc, &tm);
   if (!tm.tmHeight) {
     // corrupt font installation (e.g. deleted font file)
-    show_font_warning(ff->name, _("Font installation corrupt, using system substitute"));
+    show_font_warning(ff, _("Font installation corrupt, using system substitute"));
     wstrset(&ff->name, W(""));
     ff->fonts[FONT_NORMAL] = create_font(ff->name, ff->fw_norm, false);
     GetObject(ff->fonts[FONT_NORMAL], sizeof(LOGFONT), &logfont);
@@ -487,7 +487,7 @@ win_init_fontfamily(HDC dc, int findex)
 #ifdef check_charset_only_for_returned_font
   int default_charset = get_default_charset();
   if (tm.tmCharSet != default_charset && default_charset != DEFAULT_CHARSET) {
-    show_font_warning(ff->name, _("Font does not support system locale"));
+    show_font_warning(ff, _("Font does not support system locale"));
   }
 #endif
 
@@ -673,6 +673,7 @@ win_init_fonts(int size)
     font_height =
       font_size > 0 ? -MulDiv(font_size, GetDeviceCaps(dc, LOGPIXELSY), 72) : -font_size;
 
+  static bool initinit = true;
   for (uint fi = 0; fi < lengthof(fontfamilies); fi++) {
     if (!fi) {
       fontfamilies[fi].name = cfg.font.name;
@@ -684,8 +685,12 @@ win_init_fonts(int size)
       fontfamilies[fi].weight = cfg.fontfams[fi].weight;
       fontfamilies[fi].isbold = false;
     }
+    if (initinit)
+      fontfamilies[fi].name_reported = null;
+
     win_init_fontfamily(dc, fi);
   }
+  initinit = false;
 
   ReleaseDC(wnd, dc);
 }
