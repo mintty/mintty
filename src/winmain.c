@@ -1296,7 +1296,7 @@ confirm_exit(void)
   //procps is ASCII-limited
   //char * pscmd = "LC_ALL=C.UTF-8 /bin/procps -o pid,ruser=USER -o comm -t %s 2> /dev/null || LC_ALL=C.UTF-8 /bin/ps -ef";
   //char * pscmd = "LC_ALL=C.UTF-8 /bin/ps -ef";
-  char * pscmd = "LC_ALL=C.UTF-8 /bin/ps -es | sed -e 's,  *,	&,g' | cut -f 2,3,5-99 | tr -d '	'";
+  char * pscmd = "LC_ALL=C.UTF-8 /bin/ps -es | /bin/sed -e 's,  *,	&,g' | /bin/cut -f 2,3,5-99 | /bin/tr -d '	'";
   char * tty = child_tty();
   if (strrchr(tty, '/'))
     tty = strrchr(tty, '/') + 1;

@@ -1,6 +1,7 @@
   * Unicode 10.0 updates.
   * Build option VERSION_SUFFIX to add package version indication (mintty/wsltty#35, mintty/wsltty#50).
   * Avoid multiple reporting of font problems.
+  * Fixed process list in Close prompt (if started from desktop).
 
 ### 2.7.8 (25 June 2017) ###
 
