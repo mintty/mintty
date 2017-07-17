@@ -242,47 +242,32 @@ makeliteral_attr(struct buf *b, termchar *c)
   * ensures that attribute values remain 16-bit _unless_ the
   * user uses extended colour.
   */
-  uint colourbits;
-  uint attr = c->attr.attr;
-  uchar graph = (c->attr.attr & GRAPH_MASK) >> ATTR_GRAPH_SHIFT;
-  uchar ff = (c->attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+  unsigned long long attr = c->attr.attr & ~DATTR_MASK;
   uint truefg = c->attr.truefg;
   uint truebg = c->attr.truebg;
 
-  assert(ATTR_BGSHIFT > ATTR_FGSHIFT);
-
-  colourbits = (attr >> (ATTR_BGSHIFT + 4)) & 0xF;
-  colourbits <<= 4;
-  colourbits |= (attr >> (ATTR_FGSHIFT + 4)) & 0xF;
-
-  attr =
-    (((attr >> (ATTR_BGSHIFT + 8)) << (ATTR_BGSHIFT + 4)) |
-     (attr & ((1 << (ATTR_BGSHIFT + 4)) - 1)));
-  attr =
-    (((attr >> (ATTR_FGSHIFT + 8)) << (ATTR_FGSHIFT + 4)) |
-     (attr & ((1 << (ATTR_FGSHIFT + 4)) - 1)));
-
-  attr |= (colourbits << (32 - 9));
-
-  if (attr < 0x8000 && !ff && !graph) {
+  if (attr < 0x800000 && !truefg && !truebg) {
+    add(b, (uchar) ((attr >> 16) & 0xFF));
     add(b, (uchar) ((attr >> 8) & 0xFF));
     add(b, (uchar) (attr & 0xFF));
   }
   else {
-    add(b, (uchar) (((attr >> 24) & 0x7F) | 0x80));
+    add(b, (uchar) ((attr >> 56) & 0xFF) | 0x80);
+    add(b, (uchar) ((attr >> 48) & 0xFF));
+    add(b, (uchar) ((attr >> 40) & 0xFF));
+    add(b, (uchar) ((attr >> 32) & 0xFF));
+    add(b, (uchar) ((attr >> 24) & 0xFF));
     add(b, (uchar) ((attr >> 16) & 0xFF));
     add(b, (uchar) ((attr >> 8) & 0xFF));
     add(b, (uchar) (attr & 0xFF));
-    add(b, ff);
-    add(b, graph);
-  }
 
-  add(b, (uchar) ((truefg >> 16) & 0xFF));
-  add(b, (uchar) ((truefg >> 8) & 0xFF));
-  add(b, (uchar) (truefg & 0xFF));
-  add(b, (uchar) ((truebg >> 16) & 0xFF));
-  add(b, (uchar) ((truebg >> 8) & 0xFF));
-  add(b, (uchar) (truebg & 0xFF));
+    add(b, (uchar) ((truefg >> 16) & 0xFF));
+    add(b, (uchar) ((truefg >> 8) & 0xFF));
+    add(b, (uchar) (truefg & 0xFF));
+    add(b, (uchar) ((truebg >> 16) & 0xFF));
+    add(b, (uchar) ((truebg >> 8) & 0xFF));
+    add(b, (uchar) (truebg & 0xFF));
+  }
 }
 
 static void
@@ -300,6 +285,7 @@ makeliteral_cc(struct buf *b, termchar *c)
     c += c->cc_next;
     assert(c->chr != 0);
     makeliteral_chr(b, c);
+    makeliteral_attr(b, c);
   }
 
   z.chr = 0;
@@ -328,45 +314,33 @@ readliteral_chr(struct buf *buf, termchar *c, termline *unused(line))
 static void
 readliteral_attr(struct buf *b, termchar *c, termline *unused(line))
 {
-  unsigned long long val, attr;
-  uint colourbits;
-  uint fg, bg;
-  uchar ff = 0;
-  uchar graph = 0;
+  unsigned long long attr;
+  uint fg = 0;
+  uint bg = 0;
 
-  val = get(b) << 8;
-  val |= get(b);
-  if (val >= 0x8000) {
-    val &= ~0x8000;
-    val <<= 16;
-    val |= get(b) << 8;
-    val |= get(b);
-    ff = get(b);
-    graph = get(b);
+  attr = get(b) << 16;
+  attr |= get(b) << 8;
+  attr |= get(b);
+  if (attr >= 0x800000) {
+    attr &= ~0x800000;
+    attr <<= 8;
+    attr |= get(b);
+    attr <<= 8;
+    attr |= get(b);
+    attr <<= 8;
+    attr |= get(b);
+    attr <<= 8;
+    attr |= get(b);
+    attr <<= 8;
+    attr |= get(b);
+
+    fg = get(b) << 16;
+    fg |= get(b) << 8;
+    fg |= get(b);
+    bg = get(b) << 16;
+    bg |= get(b) << 8;
+    bg |= get(b);
   }
-
-  colourbits = (val >> (32 - 9)) & 0xFF;
-  attr = (val & ((1 << (32 - 9)) - 1));
-
-  attr =
-    (((attr >> (ATTR_FGSHIFT + 4)) << (ATTR_FGSHIFT + 8)) |
-     (attr & ((1 << (ATTR_FGSHIFT + 4)) - 1)));
-  attr =
-    (((attr >> (ATTR_BGSHIFT + 4)) << (ATTR_BGSHIFT + 8)) |
-     (attr & ((1 << (ATTR_BGSHIFT + 4)) - 1)));
-
-  attr |= (colourbits >> 4) << (ATTR_BGSHIFT + 4);
-  attr |= (colourbits & 0xF) << (ATTR_FGSHIFT + 4);
-
-  fg = get(b) << 16;
-  fg |= get(b) << 8;
-  fg |= get(b);
-  bg = get(b) << 16;
-  bg |= get(b) << 8;
-  bg |= get(b);
-
-  attr |= (unsigned long long)graph << ATTR_GRAPH_SHIFT;
-  attr |= (unsigned long long)ff << ATTR_FONTFAM_SHIFT;
 
   c->attr.attr = attr;
   c->attr.truefg = fg;
@@ -385,6 +359,7 @@ readliteral_cc(struct buf *b, termchar *c, termline *line)
     readliteral_chr(b, &n, line);
     if (!n.chr)
       break;
+    readliteral_attr(b, &n, line);
     add_cc(line, x, n.chr, n.attr);
   }
 }
@@ -575,6 +550,9 @@ compressline(termline *line)
  /*
   * Trim the allocated memory so we don't waste any, and return.
   */
+#ifdef debug_compressline
+  printf("compress %d chars -> %d bytes\n", line->size, b->len);
+#endif
   return renewn(b->data, b->len);
 }
 

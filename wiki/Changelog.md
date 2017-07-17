@@ -2,6 +2,8 @@
   * Build option VERSION_SUFFIX to add package version indication (mintty/wsltty#35, mintty/wsltty#50).
   * Avoid multiple reporting of font problems.
   * Fixed process list in Close prompt (if started from desktop).
+  * Fixed character attribute handling in scrollback buffer.
+  * Fixed rendering of some combining characters by heuristic tweaking.
 
 ### 2.7.8 (25 June 2017) ###
 
