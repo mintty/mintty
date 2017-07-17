@@ -158,8 +158,9 @@ $(bin): $(bins)
 #############################################################################
 # generate
 
-#WGET=curl -R -O --connect-timeout 55
-WGET=wget -N -t 1 --timeout=55
+#WGET=wget -N -t 1 --timeout=55
+WGET=curl -R -O --connect-timeout 55
+WGET+=-z $@
 
 rgb:	# /usr/share/X11/rgb.txt # X11 color names
 #	255 250 250		snow

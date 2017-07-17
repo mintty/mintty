@@ -386,9 +386,9 @@ child_proc(void)
           }
           else {
             const int error_sigs =
-              1<<SIGILL | 1<<SIGTRAP | 1<<SIGABRT | 1<<SIGFPE |
-              1<<SIGBUS | 1<<SIGSEGV | 1<<SIGPIPE | 1<<SIGSYS;
-            if (!(error_sigs & 1<<WTERMSIG(status)))
+              1 << SIGILL | 1 << SIGTRAP | 1 << SIGABRT | 1 << SIGFPE |
+              1 << SIGBUS | 1 << SIGSEGV | 1 << SIGPIPE | 1 << SIGSYS;
+            if (!(error_sigs & 1 << WTERMSIG(status)))
               exit_mintty();
           }
         }

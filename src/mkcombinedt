@@ -43,3 +43,5 @@ sed -e 's/^/s,0x/' -e 's/	/},0x/' -e 's/$/},g/' > .spacing.sed
 sed	-e 's/^\([^;]*\);[^;]*;[^;]*;[^;]*;[^;]*;\([0-9A-F][0-9A-F]*\) \([0-9A-F][0-9A-F]*\);.*/	{0x\1, 0x\2, 0x\3},/' \
 	-e 't goon' -e d -e ': goon' -f .spacing.sed "$unidata"
 
+rm -f .spacing .spacing.sed .combining .combining-names
+
