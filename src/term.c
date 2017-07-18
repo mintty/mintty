@@ -1428,7 +1428,12 @@ term_paint(void)
         }
 #endif
         if (dirty_run && textlen) {
+#ifdef rearrange_combining_double
+#warning this method causes artefacts when moving cursor over
           if (attr.attr & ATTR_ITALIC)
+#else
+          if (attr.attr & (ATTR_ITALIC | TATTR_COMBDOUBL))
+#endif
             push_text(start, text, textlen, attr, textattr, has_rtl);
           else
             win_text(start, i, text, textlen, attr, textattr, line->lattr, has_rtl);
@@ -1459,6 +1464,7 @@ term_paint(void)
       }
       else
         text[textlen] = tchar;
+      ///textattr[textlen] = tattr;
       textlen++;
 
       if (!has_rtl)
@@ -1490,12 +1496,19 @@ term_paint(void)
           wchar prev = dd->chr;
 #endif
           dd += dd->cc_next;
+#ifndef rearrange_combining_double
+          if (combiningdouble(dd->chr))
+            attr.attr |= TATTR_COMBDOUBL;
+#endif
+#ifdef rearrange_combining_double
           if (combiningdouble(dd->chr)) {
             // Postpone combining double characters of this position
             // to be displayed with next position (second character).
             combdouble_pending = true;
           }
-          else {
+          else
+#endif
+          {
             textattr[textlen] = dd->attr;
             // hide bidi isolate mark glyphs (if handled zero-width)
             if (dd->chr >= 0x2066 && dd->chr <= 0x2069)

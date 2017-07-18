@@ -4,6 +4,7 @@
   * Fixed process list in Close prompt (if started from desktop).
   * Fixed character attribute handling in scrollback buffer.
   * Fixed rendering of some combining characters by heuristic tweaking.
+  * Avoid misplaced artefacts of combining doubles while moving cursor over them.
 
 ### 2.7.8 (25 June 2017) ###
 
