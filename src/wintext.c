@@ -1992,7 +1992,15 @@ win_char_width(xchar c)
     return wid;
   }
 
-  if (ambigwide(c)) {
+  if (ambigwide(c) &&
+      (c == 0x20AC  // €
+      || (c >= 0x2100 && c <= 0x23FF)   // Letterlike, Number Forms, Arrows, Math Operators, Misc Technical
+      || (c >= 0x2460 && c <= 0x24FF)   // Enclosed Alphanumerics
+      || (c >= 0x2600 && c <= 0x27BF)   // Miscellaneous Symbols, Dingbats
+      || (c >= 0x2B00 && c <= 0x2BFF)   // Miscellaneous Symbols and Arrows
+      || (c >= 0x1F100 && c <= 0x1F1FF) // Enclosed Alphanumeric Supplement
+      )
+     ) {
     int mbuf = act_char_width(c);
 # ifdef debug_win_char_width
     if (c > '~' || c == 'A') {
