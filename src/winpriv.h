@@ -28,6 +28,7 @@ extern void toggle_charinfo(void);
 extern char * fontpropinfo(void);
 
 extern bool support_wsl;
+extern wchar * wsl_basepath;
 
 extern bool win_is_fullscreen;
 extern uint dpi;

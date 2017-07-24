@@ -83,6 +83,7 @@ static bool maxheight = false;
 static bool store_taskbar_properties = false;
 static bool prevent_pinning = false;
 bool support_wsl = false;
+wchar * wsl_basepath = 0;
 
 
 static HBITMAP caretbm;
@@ -2291,6 +2292,7 @@ opts[] = {
   {"nobidi",     no_argument,       0, ''},  // short option not enabled
   {"nortl",      no_argument,       0, ''},  // short option not enabled
   {"wsl",        no_argument,       0, ''},  // short option not enabled
+  {"rootfs",     required_argument, 0, ''},  // short option not enabled
   {"help",       no_argument,       0, 'H'},
   {"version",    no_argument,       0, 'V'},
   {"nodaemon",   no_argument,       0, 'd'},
@@ -2460,6 +2462,7 @@ main(int argc, char *argv[])
       when '': set_arg_option("Class", optarg);
       when '': cfg.bidi = 0;
       when '': support_wsl = true;
+      when '': wsl_basepath = path_posix_to_win_w(optarg);
       when '':
         if (chdir(optarg) < 0) {
           if (*optarg == '"' || *optarg == '\'')

@@ -119,6 +119,22 @@ win_open(wstring wpath)
         delete(wpath);
         wpath = unwsl;
       }
+      else if (*wpath == '/' && *wsl_basepath) {
+        static wchar * wbase = 0;
+        if (!wbase) {
+          char * pbase = path_win_w_to_posix(wsl_basepath);
+          wbase = cs__mbstowcs(pbase);
+          free(pbase);
+        }
+
+        // prepend wsl_basepath "\\rootfs"
+        wchar * unwsl = newn(wchar, wcslen(wbase) + wcslen(wpath) + 8);
+        wcscpy(unwsl, wbase);
+        wcscat(unwsl, W("\\rootfs"));
+        wcscat(unwsl, wpath);
+        delete(wpath);
+        wpath = unwsl;
+      }
       else if (*wpath == '/') {  // prepend %LOCALAPPDATA%\lxss[\rootfs]
         char * appd = getenv("LOCALAPPDATA");
         if (appd) {
@@ -566,52 +582,75 @@ paste_hdrop(HDROP drop)
 #ifdef debug_wsl
       printf("paste <%s>\n", p);
 #endif
-      // check for prefix %LOCALAPPDATA%\lxss
-      char * appd = getenv("LOCALAPPDATA");
-      if (appd) {
-        wchar * wappd = cs__mbstowcs(appd);
-        appd = path_win_w_to_posix(wappd);
-        free(wappd);
-      }
-
-      char * mount_point(char * path, char * appd) {
-        if (!appd)
-          return null;
-        int lapp = strlen(appd);
-        if (strncmp(path, appd, lapp) != 0)
-          return null;
-        // "$USERPROFILE/AppData/Local/xxx/yyy"
-        path += strlen(appd);
-        // "/xxx/yyy/zzz"
-        if (!ispathprefix("lxss", path))
-          return null;
-        // "/lxss/yyy/zzz"
-        path += 5;
-        // "/yyy/zzz"
-        for (uint i = 0; i < lengthof(lxss_mounts); i++) {
-          if (ispathprefix(lxss_mounts[i].p, path)) {
-            // "/home/zzz"
-            return path;
+      if (*wsl_basepath) {
+        static char * wsl_root = 0;
+        if (!wsl_root) {
+          wsl_root = path_win_w_to_posix(wsl_basepath);
+        }
+        // strip wsl_root "/rootfs"
+        int len = strlen(wsl_root);
+        if (strncmp(wsl_root, p, len) == 0
+            && strncmp(p + len, "/rootfs", 7) == 0
+           ) {
+          p += len + 7;
+          if (!*p) {
+            p--;
+            *p = '/';
           }
         }
-        if (ispathprefix("rootfs", path)) {
-          // "/rootfs/zzz"
-          path += 7;
-          // "/zzz"
-          if (*path)
-            return path;
-          else
-            return "/";
+        else if (strncmp(p, "/cygdrive/", 10) == 0) {
+          p += 5;
+          strncpy(p, "/mnt", 4);
         }
-        return null;
       }
+      else {
+        // check for prefix %LOCALAPPDATA%\lxss
+        char * appd = getenv("LOCALAPPDATA");
+        if (appd) {
+          wchar * wappd = cs__mbstowcs(appd);
+          appd = path_win_w_to_posix(wappd);
+          free(wappd);
+        }
 
-      char * mp = mount_point(p, appd);
-      if (mp)
-        p = mp;
-      else if (strncmp(p, "/cygdrive/", 10) == 0) {
-        p += 5;
-        strncpy(p, "/mnt", 4);
+        char * mount_point(char * path, char * appd) {
+          if (!appd)
+            return null;
+          int lapp = strlen(appd);
+          if (strncmp(path, appd, lapp) != 0)
+            return null;
+          // "$USERPROFILE/AppData/Local/xxx/yyy"
+          path += strlen(appd);
+          // "/xxx/yyy/zzz"
+          if (!ispathprefix("lxss", path))
+            return null;
+          // "/lxss/yyy/zzz"
+          path += 5;
+          // "/yyy/zzz"
+          for (uint i = 0; i < lengthof(lxss_mounts); i++) {
+            if (ispathprefix(lxss_mounts[i].p, path)) {
+              // "/home/zzz"
+              return path;
+            }
+          }
+          if (ispathprefix("rootfs", path)) {
+            // "/rootfs/zzz"
+            path += 7;
+            // "/zzz"
+            if (*path)
+              return path;
+            else
+              return "/";
+          }
+          return null;
+        }
+
+        char * mp = mount_point(p, appd);
+        if (mp)
+          p = mp;
+        else if (strncmp(p, "/cygdrive/", 10) == 0) {
+          p += 5;
+          strncpy(p, "/mnt", 4);
+        }
       }
     }
     for (; *p; p++) {
