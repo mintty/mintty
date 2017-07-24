@@ -5,6 +5,8 @@
   * Fixed character attribute handling in scrollback buffer.
   * Fixed rendering of some combining characters by heuristic tweaking.
   * Avoid misplaced artefacts of combining doubles while moving cursor over them.
+  * Limiting glyph width checking to symbol ranges to avoid performance penalty (~#615).
+  * WSL path conversion supports Store distribution packages (mintty/wsltty#52).
 
 ### 2.7.8 (25 June 2017) ###
 
