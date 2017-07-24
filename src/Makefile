@@ -174,7 +174,7 @@ unidata:	$(combdata) ambiguous.t casefold.t bidiclasses.t
 combining.t:	# UnicodeData.txt Blocks.txt
 	uniset +cat=Me +cat=Mn +cat=Cf -00AD +1160-11FF +200B +D7B0-D7C6 +D7CB-D7FB c > combining.t
 
-ambiguous.t:	# UnicodeData.txt Blocks.txt WIDTH-A
+ambiguous.t:	WIDTH-A # UnicodeData.txt Blocks.txt
 	uniset +WIDTH-A -cat=Me -cat=Mn -cat=Cf c > ambiguous.t
 
 combdouble=$(shell sed -e "s,^\([^;]*\);.*Mn;23[34];.*, +\1," -e t -e d UnicodeData.txt )
@@ -184,6 +184,9 @@ combdouble.t:	# UnicodeData.txt Blocks.txt
 
 WIDTH-A:	# UnicodeData.txt Blocks.txt EastAsianWidth.txt
 	sh ./mkwidthA
+
+wide.t:	# UnicodeData.txt Blocks.txt EastAsianWidth.txt
+	sh ./mkwide
 
 casefold.t:	# CaseFolding.txt
 	sh ./mkcasefold > casefold.t
