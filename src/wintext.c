@@ -1424,11 +1424,6 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
 
   bool combining = attr.attr & TATTR_COMBINING;
   bool combining_double = attr.attr & TATTR_COMBDOUBL;
-#ifdef rearrange_combining_double
-#warning this method causes artefacts when moving cursor over
-  if (combining_double)
-    combining = false;
-#endif
 
   bool let_windows_combine = false;
   if (combining) {
@@ -1476,19 +1471,13 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     box.right += PADDING;
   RECT box2 = box;
   if (combining_double)
-#ifdef rearrange_combining_double
-    box2.left -= char_width;
-#else
     box2.right += char_width;
-#endif
 
 
  /* Uniscribe handling */
   bool use_uniscribe = cfg.font_render == FR_UNISCRIBE && !has_rtl;
-#ifndef rearrange_combining_double
   if (combining_double)
     use_uniscribe = false;
-#endif
   if (use_uniscribe) {
     use_uniscribe = false;
     for (int i = 0; i < len; i++)
@@ -1612,11 +1601,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
 
         int xx = xt + xoff;
         if (combining_double && combiningdouble(text[i]))
-#ifdef rearrange_combining_double
-          xx -= char_width / 2;
-#else
           xx += char_width / 2;
-#endif
         if (!termattrs_equal_fg(&textattr[i], &textattr[i - 1])) {
           // determine colour to be used for combining characters;
           // simplified version of the algorithm above

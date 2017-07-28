@@ -1310,8 +1310,6 @@ term_paint(void)
     int textlen = 0;
     bool has_rtl = false;
     uchar bc = 0;
-    bool combdouble_pending = false;
-    bool was_combdouble_pending = false;
     bool dirty_run = (line->lattr != displine->lattr);
     bool dirty_line = dirty_run;
     cattr attr = CATTR_DEFAULT;
@@ -1385,10 +1383,6 @@ term_paint(void)
       */
       if (d->cc_next || (j > 0 && d[-1].cc_next))
         trace_run("cc"), break_run = true;
-      if (was_combdouble_pending) {
-        trace_run("cd"), break_run = true;
-        was_combdouble_pending = false;
-      }
 
       if (!dirty_line) {
         if (dispchars[j].chr == tchar &&
@@ -1428,12 +1422,7 @@ term_paint(void)
         }
 #endif
         if (dirty_run && textlen) {
-#ifdef rearrange_combining_double
-#warning this method causes artefacts when moving cursor over
-          if (attr.attr & ATTR_ITALIC)
-#else
           if (attr.attr & (ATTR_ITALIC | TATTR_COMBDOUBL))
-#endif
             push_text(start, text, textlen, attr, textattr, has_rtl);
           else
             win_text(start, i, text, textlen, attr, textattr, line->lattr, has_rtl);
@@ -1472,23 +1461,6 @@ term_paint(void)
 
 #define dont_debug_surrogates
 
-      if (combdouble_pending) {
-        // Rearrange combining double characters of previous position 
-        // to be displayed at this position.
-        // We could append them after any "normal" combinings (below) 
-        // to enable win_text to render those unseparated ...
-        termchar *dp = &d[-1];
-        while (dp->cc_next && textlen < maxtextlen) {
-          dp += dp->cc_next;
-          if (combiningdouble(dp->chr)) {
-            textattr[textlen] = dp->attr;
-            text[textlen++] = dp->chr;
-            attr.attr |= TATTR_COMBDOUBL;
-          }
-        }
-        was_combdouble_pending = true;  // break_run after this position
-        combdouble_pending = false;
-      }
       if (d->cc_next) {
         termchar *dd = d;
         while (dd->cc_next && textlen < maxtextlen) {
@@ -1496,36 +1468,24 @@ term_paint(void)
           wchar prev = dd->chr;
 #endif
           dd += dd->cc_next;
-#ifndef rearrange_combining_double
           if (combiningdouble(dd->chr))
             attr.attr |= TATTR_COMBDOUBL;
-#endif
-#ifdef rearrange_combining_double
-          if (combiningdouble(dd->chr)) {
-            // Postpone combining double characters of this position
-            // to be displayed with next position (second character).
-            combdouble_pending = true;
-          }
+          textattr[textlen] = dd->attr;
+          // hide bidi isolate mark glyphs (if handled zero-width)
+          if (dd->chr >= 0x2066 && dd->chr <= 0x2069)
+            text[textlen++] = 0x200B;  // zero width space
           else
-#endif
-          {
-            textattr[textlen] = dd->attr;
-            // hide bidi isolate mark glyphs (if handled zero-width)
-            if (dd->chr >= 0x2066 && dd->chr <= 0x2069)
-              text[textlen++] = 0x200B;  // zero width space
-            else
-              text[textlen++] = dd->chr;
-            // mark combining unless pseudo-combining surrogates
-            if ((dd->chr & 0xFC00) != 0xDC00)
-              attr.attr |= TATTR_COMBINING;
+            text[textlen++] = dd->chr;
+          // mark combining unless pseudo-combining surrogates
+          if ((dd->chr & 0xFC00) != 0xDC00)
+            attr.attr |= TATTR_COMBINING;
 #ifdef debug_surrogates
-            ucschar comb = 0xFFFFF;
-            if ((prev & 0xFC00) == 0xD800 && (dd->chr & 0xFC00) == 0xDC00)
-              comb = ((ucschar) (prev - 0xD7C0) << 10) | (dd->chr & 0x03FF);
-            printf("comb (%04X) %04X %04X (%05X) %11llX\n", 
-                   d->chr, prev, dd->chr, comb, attr.attr);
+          ucschar comb = 0xFFFFF;
+          if ((prev & 0xFC00) == 0xD800 && (dd->chr & 0xFC00) == 0xDC00)
+            comb = ((ucschar) (prev - 0xD7C0) << 10) | (dd->chr & 0x03FF);
+          printf("comb (%04X) %04X %04X (%05X) %11llX\n", 
+                 d->chr, prev, dd->chr, comb, attr.attr);
 #endif
-          }
         }
       }
 
