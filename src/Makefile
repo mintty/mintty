@@ -169,7 +169,10 @@ rgb:	# /usr/share/X11/rgb.txt # X11 color names
 	sed -e 's,	, ,g' -e 's/ *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([^ ].*[^ ]\) */	{\1, \2, \3, "\4"},/' /usr/share/X11/rgb.txt > rgb.t
 
 combdata:	combining.t combdouble.t combined.t
-unidata:	$(combdata) ambiguous.t casefold.t bidiclasses.t
+unidata:	$(combdata) ambiguous.t casefold.t bidiclasses.t wide.t
+
+clean-unicode:
+	rm -f $(unidata)
 
 combining.t:	# UnicodeData.txt Blocks.txt
 	uniset +cat=Me +cat=Mn +cat=Cf -00AD +1160-11FF +200B +D7B0-D7C6 +D7CB-D7FB c > combining.t

@@ -1,12 +1,19 @@
-  * Unicode 10.0 updates.
-  * Build option VERSION_SUFFIX to add package version indication (mintty/wsltty#35, mintty/wsltty#50).
-  * Avoid multiple reporting of font problems.
-  * Fixed process list in Close prompt (if started from desktop).
+### 2.7.9 (30 July 2017) ###
+
+Character display
   * Fixed character attribute handling in scrollback buffer.
   * Fixed rendering of some combining characters by heuristic tweaking.
   * Avoid misplaced artefacts of combining doubles while moving cursor over them.
   * Limiting glyph width checking to symbol ranges to avoid performance penalty (~#615).
+
+WSL support
+  * Build option VERSION_SUFFIX to add package version indication (mintty/wsltty#35, mintty/wsltty#50).
   * WSL path conversion supports Store distribution packages (mintty/wsltty#52).
+
+Other
+  * Unicode 10.0 updates.
+  * Avoid multiple reporting of font problems.
+  * Fixed process list in Close prompt (if started from desktop).
 
 ### 2.7.8 (25 June 2017) ###
 

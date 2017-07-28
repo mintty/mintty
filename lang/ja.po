@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-06-24 01:04+0200\n"
+"POT-Creation-Date: 2017-07-28 16:07+0200\n"
 "PO-Revision-Date: 2017-02-27 18:11+0900\n"
 "Last-Translator: Ken Takata <kentkt@csc.jp>\n"
 "Language-Team: \n"
@@ -950,32 +950,32 @@ msgstr "すべてを選択(&A)"
 msgid "Clear Scrollback"
 msgstr "スクロールバックをクリア"
 
-#: winmain.c:1360
+#: winmain.c:1361
 msgid "Processes are running in session:"
 msgstr "セッションでプロセスが動作中です:"
 
-#: winmain.c:1361
+#: winmain.c:1362
 msgid "Close anyway?"
 msgstr "構わず閉じますか？"
 
-#: winmain.c:1923
+#: winmain.c:1924
 msgid "Try '--help' for more information"
 msgstr "さらなる情報には '--help' を試してください"
 
-#: winmain.c:1931
+#: winmain.c:1932
 msgid "Could not load icon"
 msgstr "アイコンをロードできません"
 
-#: winmain.c:2235
+#: winmain.c:2236
 msgid "Usage:"
 msgstr "使用法:"
 
-#: winmain.c:2236
+#: winmain.c:2237
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr "[オプション]... [ プログラム [引数]... | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:2239
+#: winmain.c:2240
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -1044,31 +1044,31 @@ msgstr ""
 "さらなるコマンドラインオプションと設定についてはマニュアルページを参照してく"
 "ださい。\n"
 
-#: winmain.c:2398
+#: winmain.c:2400
 msgid "Duplicate option '%s'"
 msgstr ""
 
-#: winmain.c:2426
+#: winmain.c:2428
 msgid "Syntax error in position argument '%s'"
 msgstr "位置引数に文法エラーがあります '%s'"
 
-#: winmain.c:2437
+#: winmain.c:2439
 msgid "Syntax error in size argument '%s'"
 msgstr "サイズ引数に文法エラーがあります '%s'"
 
-#: winmain.c:2496
+#: winmain.c:2499
 msgid "Unknown option '%s'"
 msgstr "未知のオプションです '%s'"
 
-#: winmain.c:2498
+#: winmain.c:2501
 msgid "Option '%s' requires an argument"
 msgstr "オプション '%s' は引数が必要です"
 
-#: winmain.c:2544
+#: winmain.c:2547
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr "minttyは呼び出し元からデタッチできません、とにかく起動します"
 
-#: winmain.c:2677
+#: winmain.c:2680
 msgid "Using default title due to invalid characters in program name"
 msgstr "プログラム名に不正な文字があるため既定のタイトルを使用します"
 
@@ -1088,7 +1088,7 @@ msgid "▶"
 msgstr "▶"
 
 #. __ Options - Text: font properties information ("leading" ("ledding"): add. row spacing)
-#: wintext.c:128
+#: wintext.c:129
 msgid "Leading: %d, Bold: %s, Underline: %s"
 msgstr ""
 
@@ -1108,12 +1108,12 @@ msgstr "フォントのインストールが壊れています、システムの
 msgid "Font does not support system locale"
 msgstr "フォントはシステムロケールに対応していません"
 
-#: appinfo.h:56
+#: appinfo.h:61
 msgid "There is no warranty, to the extent permitted by law."
 msgstr "法で許可されている範囲において、いかなる保証もありません。"
 
 #. __ %s: WEBSITE (URL)
-#: appinfo.h:61
+#: appinfo.h:66
 msgid ""
 "Please report bugs or request enhancements through the issue tracker on the "
 "mintty project page located at\n"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-06-24 01:04+0200\n"
+"POT-Creation-Date: 2017-07-28 16:07+0200\n"
 "PO-Revision-Date: 2016-12-19 04:18+0500\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -953,32 +953,32 @@ msgstr "Выбрать все"
 msgid "Clear Scrollback"
 msgstr "Очистить скроллинг"
 
-#: winmain.c:1360
+#: winmain.c:1361
 msgid "Processes are running in session:"
 msgstr "Имеются запущенные процессы:"
 
-#: winmain.c:1361
+#: winmain.c:1362
 msgid "Close anyway?"
 msgstr "Закрыть все равно?"
 
-#: winmain.c:1923
+#: winmain.c:1924
 msgid "Try '--help' for more information"
 msgstr "Используйте '--help' для получения дополнительной информации"
 
-#: winmain.c:1931
+#: winmain.c:1932
 msgid "Could not load icon"
 msgstr "Не удалось загрузить иконку"
 
-#: winmain.c:2235
+#: winmain.c:2236
 msgid "Usage:"
 msgstr "Применение:"
 
-#: winmain.c:2236
+#: winmain.c:2237
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr "[ОПЦИЙ]... [ ПРОГРАММА [АРГУМЕНТЫ]... | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:2239
+#: winmain.c:2240
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -1046,32 +1046,32 @@ msgstr ""
 "Смотрите страницу руководства для параметров командной строки и "
 "конфигурации.\n"
 
-#: winmain.c:2398
+#: winmain.c:2400
 msgid "Duplicate option '%s'"
 msgstr "Дублированный вариант '%s'"
 
-#: winmain.c:2426
+#: winmain.c:2428
 msgid "Syntax error in position argument '%s'"
 msgstr "Ошибка синтаксиса в позиции аргумента '%s'"
 
-#: winmain.c:2437
+#: winmain.c:2439
 msgid "Syntax error in size argument '%s'"
 msgstr "Ошибка синтаксиса в размере аргумента '%s'"
 
-#: winmain.c:2496
+#: winmain.c:2499
 msgid "Unknown option '%s'"
 msgstr "Неизвестный параметр '%s'"
 
-#: winmain.c:2498
+#: winmain.c:2501
 msgid "Option '%s' requires an argument"
 msgstr "Параметр '%s' требует аргумент"
 
-#: winmain.c:2544
+#: winmain.c:2547
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr ""
 "Mintty не может отключится от вызывающего метода, запуск в любом случае"
 
-#: winmain.c:2677
+#: winmain.c:2680
 msgid "Using default title due to invalid characters in program name"
 msgstr ""
 "Использование заголовка по умолчанию из-за недопустимых символов в имени "
@@ -1093,7 +1093,7 @@ msgid "▶"
 msgstr ""
 
 #. __ Options - Text: font properties information ("leading" ("ledding"): add. row spacing)
-#: wintext.c:128
+#: wintext.c:129
 msgid "Leading: %d, Bold: %s, Underline: %s"
 msgstr ""
 
@@ -1113,12 +1113,12 @@ msgstr "Установка шрифта прервана, используя с�
 msgid "Font does not support system locale"
 msgstr "Шрифт не поддерживает язык системы"
 
-#: appinfo.h:56
+#: appinfo.h:61
 msgid "There is no warranty, to the extent permitted by law."
 msgstr "Нет никаких гарантий, в пределах допускаемых законом."
 
 #. __ %s: WEBSITE (URL)
-#: appinfo.h:61
+#: appinfo.h:66
 msgid ""
 "Please report bugs or request enhancements through the issue tracker on the "
 "mintty project page located at\n"
