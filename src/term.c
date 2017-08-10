@@ -1123,7 +1123,13 @@ term_paint(void)
           ? posPle(term.sel_start, scrpos) && posPlt(scrpos, term.sel_end)
           : posle(term.sel_start, scrpos) && poslt(scrpos, term.sel_end)
         );
-      if (term.in_vbell || selected)
+
+      bool flashchar = term.in_vbell && (
+                         !cfg.bell_flash_is_edge ||
+                         !i || !j || (i == term.rows - 1) || (j == term.cols - 1)
+                       );
+
+      if (selected || flashchar)
         tattr.attr ^= ATTR_REVERSE;
 
       int match = in_results(scrpos);

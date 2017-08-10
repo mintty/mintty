@@ -118,6 +118,7 @@ const config default_cfg = {
   .bell_freq = 0,
   .bell_len = 400,
   .bell_flash = false,  // xterm: visualBell
+  .bell_flash_is_edge = false, // how .bell_flash is rendered when enabled
   .bell_taskbar = true, // xterm: bellIsUrgent
   .bell_popup = false,  // xterm: popOnBell
   .printer = W(""),
@@ -308,6 +309,7 @@ options[] = {
   {"BellFreq", OPT_INT, offcfg(bell_freq)},
   {"BellLen", OPT_INT, offcfg(bell_len)},
   {"BellFlash", OPT_BOOL, offcfg(bell_flash)},
+  {"BellFlashIsEdge", OPT_BOOL, offcfg(bell_flash_is_edge)},
   {"BellTaskbar", OPT_BOOL, offcfg(bell_taskbar)},
   {"BellPopup", OPT_BOOL, offcfg(bell_popup)},
   {"Printer", OPT_WSTRING, offcfg(printer)},
