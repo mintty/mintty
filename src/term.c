@@ -1124,12 +1124,15 @@ term_paint(void)
           : posle(term.sel_start, scrpos) && poslt(scrpos, term.sel_end)
         );
 
+      if (selected)
+        tattr.attr ^= ATTR_REVERSE;
+
       bool flashchar = term.in_vbell && (
                          !(cfg.bell_flash_style & 1) ||
                          !i || !j || (i == term.rows - 1) || (j == term.cols - 1)
                        );
 
-      if (selected || flashchar)
+      if (flashchar)
         tattr.attr ^= ATTR_REVERSE;
 
       int match = in_results(scrpos);
