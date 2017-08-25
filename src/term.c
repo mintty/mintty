@@ -1125,7 +1125,7 @@ term_paint(void)
         );
 
       bool flashchar = term.in_vbell && (
-                         !cfg.bell_flash_is_edge ||
+                         !(cfg.bell_flash_style & 1) ||
                          !i || !j || (i == term.rows - 1) || (j == term.cols - 1)
                        );
 
