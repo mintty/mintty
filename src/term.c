@@ -1123,8 +1123,88 @@ term_paint(void)
           ? posPle(term.sel_start, scrpos) && posPlt(scrpos, term.sel_end)
           : posle(term.sel_start, scrpos) && poslt(scrpos, term.sel_end)
         );
-      if (term.in_vbell || selected)
+
+      if (selected)
         tattr.attr ^= ATTR_REVERSE;
+
+      bool flashchar = term.in_vbell && (
+                         !(cfg.bell_flash_style & 1) ||  // 1: edges only
+                         !i || !j || (i == term.rows - 1) || (j == term.cols - 1)
+                       );
+
+      if (flashchar) {
+        int style_alt_bg = cfg.bell_flash_style & (2 | 4);  // else inverse
+
+        if (!style_alt_bg)
+          tattr.attr ^= ATTR_REVERSE;
+
+        // The goal below: modify the background color a little ("nudge it",
+        //   typically towards lower contrast against the fg), such that it's
+        //   noticably different - but not as jarring as inverse.
+        //
+        // Preferably we would only touch attributes at tattr.attr, however,
+        // none of them (ATTR_BOLD etc) affect only the background.
+        //
+        // Alternatively, we'll only touch attributes inside ATTR_BGMASK,
+        // however, for the most part it's not bit based but rather indexed
+        // (sort of exceptions are 0-15 and [BOLD_]{FG,BG}_COLOUR_I).
+        //
+        // So we'd have to handle it differently according to the index, e.g.
+        // if <16 then ^8, else if <232 then +/- 43, else if <256 then +/- ~2,
+        // else if !TRUE_COLOR then <do whatever with the default FG/BG/etc>,
+        // else (TRUE_COLOR) nudge the true color up/down.
+        //
+        // Instead of that huge madness, we can do one of two lesser ones:
+        // - Find a way to "massage" the values without having to interpret
+        //   them such that after rendering we get slightly different bg.
+        //   Currently swap bg/fg + inverse + dim seems to do the trick.
+        //   - However, it could change: it's win_text implementation details.
+        // or
+        // - Explicitly turn everything to true color and modify it ourselves.
+        //   That's a similar approach to what wintext.c:brighten(..) does.
+        //   - However, the bg might not necessarily change since win_text can
+        //     shift the color as well, i.e. maybe back to our original value.
+        //     Also, it's not term_paint() mandate to modify explicit colors.
+        //
+        // Both approaches are still too complex, sensitive and hacky, and
+        // neither works well on a fully selected/reversed screen.
+        // Interestingly, together (6, or 7 for edges) seems better. and hackier
+
+        if (style_alt_bg & 2) {
+          // swap the fg/bg (i and true), toggle reverse and dim -> nudges bg.
+          uint bg_i = (tattr.attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
+          uint fg_i = (tattr.attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
+          tattr.attr = (tattr.attr & ~ATTR_BGMASK) | (fg_i << ATTR_BGSHIFT);
+          tattr.attr = (tattr.attr & ~ATTR_FGMASK) | (bg_i << ATTR_FGSHIFT);
+
+          uint tmp = tattr.truebg;
+          tattr.truebg = tattr.truefg;
+          tattr.truefg = tmp;
+
+          tattr.attr ^= ATTR_REVERSE;
+          tattr.attr ^= ATTR_DIM;
+        }
+
+        if (style_alt_bg & 4) {
+          // [convert to true bg,] nudge truebg (typically less contrast).
+          int bg_i = (tattr.attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
+          uint bg = (bg_i >= TRUE_COLOUR) ? tattr.truebg : colours[bg_i];
+          tattr.attr |= TRUE_COLOUR << ATTR_BGSHIFT;  // force truebg
+          if (red(bg) + green(bg) + blue(bg) < 127 * 3) {  // good enough
+            tattr.truebg = make_colour(  // brighten
+              min(255, 20 + red(bg)),
+              min(255, 20 + green(bg)),
+              min(255, 20 + blue(bg))
+            );
+          } else {
+            tattr.truebg = make_colour(  // darken
+              max(0, -30 + red(bg)),
+              max(0, -30 + green(bg)),
+              max(0, -30 + blue(bg))
+            );
+          }
+        }
+      }  // flashchar
 
       int match = in_results(scrpos);
       if (match > 0) {

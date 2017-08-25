@@ -115,6 +115,7 @@ typedef struct {
   int bell_freq;
   int bell_len;
   bool bell_flash;   // xterm: visualBell
+  int bell_flash_style;  // bitwise style for rendering bell_flash
   bool bell_taskbar; // xterm: bellIsUrgent
   bool bell_popup;   // xterm: popOnBell
   wstring printer;
