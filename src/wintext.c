@@ -148,7 +148,7 @@ colour_dist(colour a, colour b)
 
 #define dont_debug_brighten
 
-static colour
+colour
 brighten(colour c, colour against)
 {
   uint r = red(c), g = green(c), b = blue(c);

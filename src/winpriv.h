@@ -17,6 +17,7 @@ extern HIMC imc;        // the input method context
 extern HWND config_wnd; // the options window
 
 extern COLORREF colours[COLOUR_NUM];
+extern colour brighten(colour c, colour against);
 
 extern LOGFONT lfont;
 
