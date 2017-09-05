@@ -1303,9 +1303,23 @@ This setting overrides the Bell system sound except No Beep.
 \(en \fBPlay\fP: The button plays the selected sound for testing.
 The sound is also played when it is changed.
 .br
-\(en \fBFlash\fP (BellFlash=no): Briefly invert the foreground and background
-colours. (Corresponds to the xterm resource \fBvisualBell\fP.)
+\(en \fBFlash\fP (BellFlash=no): Briefly flash the terminal or window.
+(Corresponds to the xterm resource \fBvisualBell\fP.)
 .br
+\(en \fBFlash style\fP (BellFlashStyle=4): Tune the style to flash the 
+terminal or window; this is a bitmask composed of the following values:
+.RS
+\fB1\fP : Flash the window frame (using Windows)
+.br
+\fB2\fP : Flash the outer character cells
+.br
+\fB4\fP : Flash the whole terminal pane (all character cells)
+.br
+\fB8\fP : briefly invert the foreground and background colours;
+  default is to moderately brighten the background colour
+.br
+\fB12\fP : (combining 4 and 8) classic bright full flash
+.RE
 \(en \fBHighlight in taskbar\fP (BellTaskbar=yes): Change the colour of mintty's
 taskbar entry if the mintty window is not active.
 (Corresponds to the xterm resource \fBbellIsUrgent\fP, 
