@@ -1,3 +1,5 @@
+  * New option BellFlashStyle (#676).
+
 ### 2.7.9 (30 July 2017) ###
 
 Character display

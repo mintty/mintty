@@ -743,8 +743,7 @@ The popup offers theme files as stored in a resource subdirectory
 The option can also be set to a filename (like D:/.../solarized-light.minttyrc).
 
 The field can also be used as a drag-and-drop target for colour schemes 
-downloaded from the Color Scheme Configurator, or for theme files from the web 
-(note that the program \fBcurl\fP needs to be installed for the latter option).
+downloaded from the Color Scheme Configurator, or for theme files from the web.
 See the Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips#using-colour-schemes-themes\fP 
 about this mechanism.
 
@@ -1297,7 +1296,8 @@ Mintty can also play wave sounds or frequency beeps.
 \(en \fBWave\fP (BellFile=): 
 The popup offers wave files as stored in a resource subdirectory 
 \fIsounds\fP for selection. The option can also be set 
-to a filename (like D:/.../soundfile.wav).
+to a filename (like D:/.../soundfile.wav); this can be achieved also 
+by drag-and-drop from a local file.
 This setting overrides the Bell system sound except No Beep.
 .br
 \(en \fBPlay\fP: The button plays the selected sound for testing.
@@ -1311,11 +1311,12 @@ terminal or window; this is a bitmask composed of the following values:
 .RS
 \fB1\fP : Flash the window frame (using Windows)
 .br
-\fB2\fP : Flash the outer character cells
+\fB2\fP : Flash the outer character cells; not recommended;
+  will look ragged with double-width characters
 .br
 \fB4\fP : Flash the whole terminal pane (all character cells)
 .br
-\fB8\fP : briefly invert the foreground and background colours;
+\fB8\fP : cell flash briefly inverts foreground and background;
   default is to moderately brighten the background colour
 .br
 \fB12\fP : (combining 4 and 8) classic bright full flash

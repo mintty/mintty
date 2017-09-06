@@ -107,7 +107,7 @@ void
 term_schedule_vbell(int already_started, int startpoint)
 {
   int ticks_gone = already_started ? get_tick_count() - startpoint : 0;
-  int ticks = 100 - ticks_gone;
+  int ticks = 141 - ticks_gone;
   if ((term.in_vbell = ticks > 0))
     win_set_timer(vbell_cb, ticks);
 }
