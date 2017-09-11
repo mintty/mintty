@@ -1207,6 +1207,54 @@ char1ulen(wchar * text)
     return 1;
 }
 
+static SCRIPT_STRING_ANALYSIS ssa;
+static bool use_uniscribe;
+
+void
+text_out_start(HDC hdc, LPCWSTR psz, int cch, int *dxs)
+{
+  if (cch == 0)
+    use_uniscribe = false;
+  if (!use_uniscribe)
+    return;
+
+  HRESULT hr = ScriptStringAnalyse(hdc, psz, cch, 0, -1, 
+    // could | SSA_FIT and use `width` (from win_text) instead of MAXLONG
+    // to justify to monospace cell widths;
+    // SSA_LINK is needed for Hangul and default-size CJK
+    SSA_GLYPHS | SSA_FALLBACK | SSA_LINK, MAXLONG, 
+    NULL, NULL, dxs, NULL, NULL, &ssa);
+  if (!SUCCEEDED(hr) && hr != USP_E_SCRIPT_NOT_IN_FONT)
+    use_uniscribe = false;
+}
+
+void
+text_out(HDC hdc, int x, int y, UINT fuOptions, RECT *prc, LPCWSTR psz, int cch, int *dxs)
+{
+  if (cch == 0)
+    return;
+#ifdef debug_text_out
+  if (*psz >= 0x80) {
+    printf("@%3d (%3d):", x, y);
+    for (int i = 0; i < cch; i++)
+      printf(" %04X", psz[i]);
+    printf("\n");
+  }
+#endif
+
+  if (use_uniscribe)
+    ScriptStringOut(ssa, x, y, fuOptions, prc, 0, 0, FALSE);
+  else
+    ExtTextOutW(hdc, x, y, fuOptions, prc, psz, cch, dxs);
+}
+
+void
+text_out_end()
+{
+  if (use_uniscribe)
+    ScriptStringFree(&ssa);
+}
+
 /*
  * Draw a line of text in the window, at given character
  * coordinates, in given attributes.
@@ -1475,7 +1523,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
 
 
  /* Uniscribe handling */
-  bool use_uniscribe = cfg.font_render == FR_UNISCRIBE && !has_rtl;
+  use_uniscribe = cfg.font_render == FR_UNISCRIBE && !has_rtl;
   if (combining_double)
     use_uniscribe = false;
   if (use_uniscribe) {
@@ -1486,53 +1534,6 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
         break;
       }
   }
-  SCRIPT_STRING_ANALYSIS ssa;
-
-  void
-  text_out_start(HDC hdc, LPCWSTR psz, int cch, int *dxs)
-  {
-    if (cch == 0)
-      use_uniscribe = false;
-    if (!use_uniscribe)
-      return;
-
-    HRESULT hr = ScriptStringAnalyse(hdc, psz, cch, 0, -1, 
-      // could | SSA_FIT and use `width` (from win_text) instead of MAXLONG
-      // to justify to monospace cell widths;
-      // SSA_LINK is needed for Hangul and default-size CJK
-      SSA_GLYPHS | SSA_FALLBACK | SSA_LINK, MAXLONG, 
-      NULL, NULL, dxs, NULL, NULL, &ssa);
-    if (!SUCCEEDED(hr) && hr != USP_E_SCRIPT_NOT_IN_FONT)
-      use_uniscribe = false;
-  }
-
-  void
-  text_out(HDC hdc, int x, int y, UINT fuOptions, RECT *prc, LPCWSTR psz, int cch, int *dxs)
-  {
-    if (cch == 0)
-      return;
-#ifdef debug_text_out
-    if (*psz >= 0x80) {
-      printf("@%3d (%3d):", x, y);
-      for (int i = 0; i < cch; i++)
-        printf(" %04X", psz[i]);
-      printf("\n");
-    }
-#endif
-
-    if (use_uniscribe)
-      ScriptStringOut(ssa, x, y, fuOptions, prc, 0, 0, FALSE);
-    else
-      ExtTextOutW(hdc, x, y, fuOptions, prc, psz, cch, dxs);
-  }
-
-  void
-  text_out_end()
-  {
-    if (use_uniscribe)
-      ScriptStringFree(&ssa);
-  }
-
 
  /* Begin text output */
   int yt = y + (ff->row_spacing / 2) - (lattr == LATTR_BOT ? cell_height : 0);
@@ -1873,8 +1874,6 @@ win_check_glyphs(wchar *wcs, uint num)
   ReleaseDC(wnd, dc);
 }
 
-#define dont_debug_win_char_width
-
 /* This function gets the actual width of a character in the normal font.
    Usage:
    * determine whether to trim an ambiguous wide character 
@@ -1887,6 +1886,8 @@ win_char_width(xchar c)
 {
   int findex = (term.curs.attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
   struct fontfam * ff = &fontfamilies[findex];
+
+#define win_char_width
 
 #define measure_width
 
@@ -1945,6 +1946,9 @@ win_char_width(xchar c)
   ibuf += cell_width / 2 - 1;
   ibuf /= cell_width;
   if (ibuf > 1) {
+#ifdef debug_win_char_width
+    printf("enquired %04X %dpx cell %dpx\n", c, ibuf, cell_width);
+#endif
     ReleaseDC(wnd, dc);
     return ibuf;
   }
@@ -1960,7 +1964,21 @@ win_char_width(xchar c)
     SetTextColor(wid_dc, RGB(255, 255, 255));
     SetBkColor(wid_dc, RGB(0, 0, 0));
     SetBkMode(wid_dc, OPAQUE);
-    ExtTextOutW(wid_dc, 0, 0, ETO_OPAQUE, null, &wc, 1, null);
+    int dx = 0;
+    use_uniscribe = cfg.font_render == FR_UNISCRIBE;
+    text_out_start(wid_dc, &wc, 1, &dx);
+    text_out(wid_dc, 0, 0, ETO_OPAQUE, null, &wc, 1, &dx);
+    text_out_end();
+# ifdef debug_win_char_width
+    for (int y = 0; y < cell_height; y++) {
+      printf("%2d|", y);
+      for (int x = 0; x < cell_width * 2; x++) {
+        COLORREF c = GetPixel(wid_dc, x, y);
+        printf("%c", c != RGB(0, 0, 0) ? '*' : ' ');
+      }
+      printf("|\n");
+    }
+# endif
 
     int wid = 0;
     for (int x = cell_width * 2 - 1; !wid && x >= 0; x--)
@@ -1977,26 +1995,55 @@ win_char_width(xchar c)
     return wid;
   }
 
+  if (c >= 0x2160 && c <= 0x2179) {  // Roman Numerals
+    ReleaseDC(wnd, dc);
+    return 2;
+  }
+  if (c >= 0x2500 && c <= 0x257F) {  // Box Drawing
+    ReleaseDC(wnd, dc);
+    return 2;  // do not stretch; vertical lines might get pushed out of cell
+  }
+  if ((c >= 0x2580 && c <= 0x2588) || (c >= 0x2592 && c <= 0x2594)) {
+    // Block Elements
+    ReleaseDC(wnd, dc);
+    return 1;  // should be stretched to fill whole cell
+               // does not have the desired effect, 
+               // although FONT_WIDE is actually activated
+  }
+
   if (ambigwide(c) &&
+      (bidi_class(c) != L               // indicates not a letter
+      || (c >= 0x249C && c <= 0x24E9)   // parenthesized/circled letters
+      || (c >= 0x3248 && c <= 0x324F)   // Enclosed CJK Letters and Months
+      || (c >= 0x1F110 && c <= 0x1F12A) // Enclosed Alphanumeric Supplement
+      )
+      &&
+      !(  (c >= 0x2500 && c <= 0x2588)  // Box Drawing, Block Elements
+       || (c >= 0x2592 && c <= 0x2594)  // Block Elements
+       || (c >= 0x2160 && c <= 0x2179)  // Roman Numerals
+       )
+#ifdef check_ambig_non_letters
+#warning instead we now checkk all non-letters with some exclusions (above)
       (c == 0x20AC  // €
       || (c >= 0x2100 && c <= 0x23FF)   // Letterlike, Number Forms, Arrows, Math Operators, Misc Technical
       || (c >= 0x2460 && c <= 0x24FF)   // Enclosed Alphanumerics
+      || (c >= 0x25A0 && c <= 0x25FF)   // Geometric Shapes
       || (c >= 0x2600 && c <= 0x27BF)   // Miscellaneous Symbols, Dingbats
       || (c >= 0x2B00 && c <= 0x2BFF)   // Miscellaneous Symbols and Arrows
       || (c >= 0x1F100 && c <= 0x1F1FF) // Enclosed Alphanumeric Supplement
       )
+#endif
      ) {
     int mbuf = act_char_width(c);
+    // report char as wide if its measured width is more than 1½ cells
+    int width = mbuf > cell_width ? 2 : 1;
+    ReleaseDC(wnd, dc);
 # ifdef debug_win_char_width
     if (c > '~' || c == 'A') {
-      printf("measured %04X %d /cell %d\n", mbuf, cell_width);
+      printf("measured %04X %dpx cell %dpx width %d\n", c, mbuf, cell_width, width);
     }
 # endif
-    // report char as wide if its measured width is more than 1½ cells
-    mbuf += cell_width / 2 - 1;
-    mbuf /= cell_width;
-    ReleaseDC(wnd, dc);
-    return mbuf;
+    return width;
   }
 #endif
 

@@ -1,3 +1,4 @@
+  * Tweaked width expansion of ambiguous-width characters (#680, ~#638, ~#615).
   * New option BellFlashStyle (#676).
 
 ### 2.7.9 (30 July 2017) ###
