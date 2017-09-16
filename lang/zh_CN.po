@@ -120,11 +120,11 @@ msgstr "* Locale 环境变量 *"
 
 #: config.c:1706
 msgid "= cfg. Text Locale ="
-msgstr "= cfg. Text Locale ="
+msgstr "= 已配置的 Locale ="
 
 #: config.c:1769
 msgid "simple beep"
-msgstr "简单的嘟嘟声"
+msgstr "简单的嘟声"
 
 #: config.c:1770
 msgid "no beep"
@@ -132,11 +132,11 @@ msgstr "无提示音"
 
 #: config.c:1771
 msgid "Default Beep"
-msgstr "默认的嘟嘟声"
+msgstr "默认的嘟声"
 
 #: config.c:1772
 msgid "Critical Stop"
-msgstr "严重错误提示音"
+msgstr "错误提示音"
 
 #: config.c:1773
 msgid "Question"
@@ -204,7 +204,7 @@ msgstr "我了解了"
 #. __ Dialog button - confirm action
 #: config.c:2472 winctrls.c:1142 windialog.c:771
 msgid "OK"
-msgstr "好的"
+msgstr "确定"
 
 #. __ Options - Looks: treeview label
 #: config.c:2479 config.c:2510 config.c:2551
@@ -277,7 +277,7 @@ msgstr "中(&M)"
 #. __ Options - Looks: transparency
 #: config.c:2524
 msgid "&Medium"
-msgstr "中等(&M)"
+msgstr "中间(&M)"
 
 #. __ Options - Looks: transparency
 #: config.c:2526
@@ -292,12 +292,12 @@ msgstr "玻璃"
 #. __ Options - Looks: transparency
 #: config.c:2535 config.c:2546
 msgid "Opa&que when focused"
-msgstr "获得焦点后变为不透明(&q)"
+msgstr "获得焦点后变为不透明(&Q)"
 
 #. __ Options - Looks: transparency
 #: config.c:2540
 msgid "Blu&r"
-msgstr "模糊(&r)"
+msgstr "模糊(&R)"
 
 #. __ Options - Looks: section title
 #: config.c:2553
@@ -322,7 +322,7 @@ msgstr "下划线"
 #. __ Options - Looks: cursor feature
 #: config.c:2567
 msgid "Blinkin&g"
-msgstr "闪烁(&g)"
+msgstr "闪烁(&G)"
 
 #. __ Options - Text: treeview label
 #: config.c:2574 config.c:2596 config.c:2614 config.c:2648
@@ -343,22 +343,22 @@ msgstr "字体"
 #. __ Font chooser:
 #: config.c:2586 winctrls.c:1153
 msgid "Font st&yle:"
-msgstr "字体样式(&y)"
+msgstr "字体样式(&Y)"
 
 #. __ Font chooser:
 #: config.c:2591 winctrls.c:1155
 msgid "&Size:"
-msgstr "大小(&s)"
+msgstr "大小(&S)"
 
 #. __ Options - Text:
 #: config.c:2600 config.c:2633
 msgid "Sho&w bold as font"
-msgstr "显示粗字体字形(&w)"
+msgstr "显示粗字体字形(&W)"
 
 #. __ Options - Text:
 #: config.c:2605 config.c:2638
 msgid "Show &bold as colour"
-msgstr "显示粗字体颜色(&b)"
+msgstr "显示粗字体颜色(&B)"
 
 #. __ Options - Text:
 #: config.c:2618
@@ -393,7 +393,7 @@ msgstr "允许闪烁(&A)"
 
 #: config.c:2651
 msgid "&Locale"
-msgstr "本地语言(&L)"
+msgstr "本地 &Locale"
 
 #: config.c:2654
 msgid "&Character set"
@@ -422,7 +422,7 @@ msgstr "删除键发送 DEL (&D)"
 #. __ Options - Keys:
 #: config.c:2677
 msgid "Ctrl+LeftAlt is Alt&Gr"
-msgstr "将 Ctrl+左 Alt 设置为 Alt&Gr"
+msgstr "将 Ctrl+左Alt 设置为 Alt&Gr"
 
 #. __ Options - Keys: section title
 #: config.c:2683
@@ -432,7 +432,7 @@ msgstr "快捷键"
 #. __ Options - Keys:
 #: config.c:2686
 msgid "Cop&y and Paste (Ctrl/Shift+Ins)"
-msgstr "复制和粘贴(&y) (Ctrl/Shift+Ins)"
+msgstr "复制和粘贴(&Y) (Ctrl/Shift+Ins)"
 
 #. __ Options - Keys:
 #: config.c:2691
@@ -442,7 +442,7 @@ msgstr "显示菜单和全屏(&M) (Alt+Space/Enter)"
 #. __ Options - Keys:
 #: config.c:2696
 msgid "&Switch window (Ctrl+[Shift+]Tab)"
-msgstr "切换窗口(&s) (Ctrl+[Shift+]Tab)"
+msgstr "切换窗口(&S) (Ctrl+[Shift+]Tab)"
 
 #. __ Options - Keys:
 #: config.c:2701
@@ -498,17 +498,17 @@ msgstr "鼠标功能"
 #. __ Options - Mouse:
 #: config.c:2742
 msgid "Cop&y on select"
-msgstr "选择时复制(&y)"
+msgstr "选择时复制(&Y)"
 
 #. __ Options - Mouse:
 #: config.c:2747
 msgid "Copy as &rich text"
-msgstr "以富文本复制(&r)"
+msgstr "以富文本复制(&R)"
 
 #. __ Options - Mouse:
 #: config.c:2752
 msgid "Clic&ks place command line cursor"
-msgstr "用鼠标点击来定位光标(&k)"
+msgstr "用鼠标点击来定位光标(&K)"
 
 #. __ Options - Mouse: section title
 #: config.c:2758
@@ -603,7 +603,7 @@ msgstr "行数"
 #. __ Options - Window:
 #: config.c:2836
 msgid "C&urrent size"
-msgstr "当前大小(&u)"
+msgstr "当前大小(&U)"
 
 #. __ Options - Window:
 #: config.c:2843
@@ -698,7 +698,7 @@ msgstr "打印机"
 #. __ Options - Terminal:
 #: config.c:2981
 msgid "Prompt about running processes on &close"
-msgstr "退出时提示还在运行的进程(&c)"
+msgstr "退出时提示还在运行的进程(&C)"
 
 #: textprint.c:38 textprint.c:102
 msgid "[Printing...] "
@@ -707,7 +707,7 @@ msgstr "[打印中...] "
 #. __ Options - Text: font chooser activation button
 #: winctrls.c:812
 msgid "&Select..."
-msgstr "选择(&s)..."
+msgstr "选择(&S)..."
 
 #. __ Font chooser: title bar label
 #: winctrls.c:1147
@@ -732,7 +732,7 @@ msgstr "实例"
 #. __ Font chooser: text sample ("AaBbYyZz" by default)
 #: winctrls.c:1161 winctrls.c:1399 winctrls.c:1564
 msgid "Ferqœm’4€"
-msgstr "ABC abc 字体实例"
+msgstr "ABC abc 文字实例"
 
 #. __ Font chooser: this field is only shown with FontMenu=1
 #: winctrls.c:1178
@@ -762,7 +762,7 @@ msgstr "自定义颜色(&C)："
 #. __ Colour chooser:
 #: winctrls.c:1224
 msgid "De&fine Custom Colours >>"
-msgstr "定义当前颜色(&f)>>"
+msgstr "定义当前颜色(&F)>>"
 
 #. __ Colour chooser:
 #: winctrls.c:1227
@@ -772,22 +772,22 @@ msgstr "颜色"
 #. __ Colour chooser:
 #: winctrls.c:1229
 msgid "|S&olid"
-msgstr "|纯色(&o)"
+msgstr "|纯色(&O)"
 
 #. __ Colour chooser:
 #: winctrls.c:1231
 msgid "&Hue:"
-msgstr "色相(&H)"
+msgstr "色调(&H)"
 
 #. __ Colour chooser:
 #: winctrls.c:1234
 msgid "&Sat:"
-msgstr "色调(&S)"
+msgstr "饱和度(&S)"
 
 #. __ Colour chooser:
 #: winctrls.c:1236
 msgid "&Lum:"
-msgstr "饱和度(&L)"
+msgstr "亮度(&L)"
 
 #. __ Colour chooser:
 #: winctrls.c:1238
@@ -807,7 +807,7 @@ msgstr "蓝色(&B)："
 #. __ Colour chooser:
 #: winctrls.c:1245
 msgid "A&dd to Custom Colours"
-msgstr "添加到自定义颜色(&d)"
+msgstr "添加到自定义颜色(&D)"
 
 #. __ Options: dialog title
 #: windialog.c:231 windialog.c:719
@@ -858,12 +858,12 @@ msgstr "大小(&S)"
 #. __ System menu:
 #: wininput.c:160
 msgid "Mi&nimize"
-msgstr "最小化(&n)"
+msgstr "最小化(&N)"
 
 #. __ System menu:
 #: wininput.c:162
 msgid "Ma&ximize"
-msgstr "最大化(&x)"
+msgstr "最大化(&X)"
 
 #. __ System menu:
 #: wininput.c:164
@@ -873,7 +873,7 @@ msgstr "关闭(&C)"
 #. __ System menu:
 #: wininput.c:169
 msgid "Ne&w"
-msgstr "新建(&w)"
+msgstr "新建(&W)"
 
 #. __ Context menu:
 #: wininput.c:176
@@ -893,7 +893,7 @@ msgstr "复制 → 粘贴"
 #. __ Context menu:
 #: wininput.c:196
 msgid "S&earch"
-msgstr "搜索(&e)"
+msgstr "搜索(&E)"
 
 #. __ Context menu:
 #: wininput.c:203
