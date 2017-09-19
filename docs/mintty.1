@@ -931,6 +931,12 @@ selected locale and character set.
 unrelated to the terminal character set (e.g. LC_MESSAGES) are cleared 
 to avoid confusion.
 
+\fINote:\fP If the locale option is set, mintty further checks whether 
+the locale is a "wide" locale (i.e. ambiguous-width characters are wide 
+in the locale) but the selected font is actually "ambiguous-narrow" 
+(i.e. ambiguous-width characters are narrow in the font) in which case it 
+appends the "@cjknarrow" locale modifier.
+
 .TP
 \fBCharacter set\fP (Charset=)
 The character set to be used for encoding input and decoding output.
@@ -1628,8 +1634,8 @@ Also X11 color names are supported.
 .TP
 \fBDownloaded colour scheme\fP (ColourScheme=)
 This setting is not intended for manual configuration. It can store a 
-colour scheme as downloaded from the Color Scheme Configurator or from 
-a theme file on the web via drag-and-drop to the Options menu.
+colour scheme as downloaded from the Color Scheme Configurator or from a 
+theme file on the web via drag-and-drop to the Theme of the Options menu.
 After the colour scheme is stored to a colour scheme file, this setting 
 is not used anymore.
 

@@ -355,14 +355,12 @@ are not saved to this file, or with the new setting _ThemeFile_.
 
 In the Options menu, section _Looks_, the _Theme_ popup offers theme files 
 as stored in a resource directory for selection.
-This dialog field can be used in different ways:
+This dialog field (or the “Color Scheme Designer” button for drag-and-drop) 
+can be used in different ways:
 * Popup the selection to choose a theme configured in your resource directory
 * Insert a file name (e.g. by pasting or drag-and-drop from Windows Explorer)
 * Drag-and-drop a theme file from the Internet (may be embedded in HTML page)
 * Drag-and-drop a colour scheme directly from the Color Scheme Designer (see below)
-
-Note that the drag-and-drop theme file option needs the program ```curl```
-to be installed (and properly configured for a proxy if needed).
 
 After drag-and-drop of a colour scheme, you may Apply it for testing;
 to keep the scheme in your popup selection, assign a name to it by typing it 
@@ -451,6 +449,15 @@ not need to be CJK), e.g.:
 
 ```
 LC_CTYPE=zh_SG.utf8 mintty &
+```
+
+If the locale is select via the Locale setting, however, it is necessary 
+to choose an ambiguous-wide font in addition (CJK font), or mintty will 
+enforce the ambiguous-narrow mode of rendering by appending the 
+“@cjknarrow” locale modifier:
+
+```
+mintty -o Locale=zh_CN -o Font=FangSong &
 ```
 
 
