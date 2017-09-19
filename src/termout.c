@@ -1687,16 +1687,22 @@ term_write(const char *buf, uint len)
 #endif
               wc = dispwc;
             }
-          when CSET_TECH:
+          when CSET_TECH:  // DEC Technical character set
             if (c > ' ' && c < 0x7F) {
               // = W("⎷┌─⌠⌡│⎡⎣⎤⎦⎛⎝⎞⎠⎨⎬␦␦╲╱␦␦␦␦␦␦␦≤≠≥∫∴∝∞÷Δ∇ΦΓ∼≃Θ×Λ⇔⇒≡ΠΨ␦Σ␦␦√ΩΞΥ⊂⊃∩∪∧∨¬αβχδεφγηιθκλ␦ν∂πψρστ␦ƒωξυζ←↑→↓")
-              wc = W("⎷┌─⌠⌡│⎡⎣⎤⎦⎛⎝⎞⎠⎨⎬╶╶╲╱╴╴╳␦␦␦␦≤≠≥∫∴∝∞÷Δ∇ΦΓ∼≃Θ×Λ⇔⇒≡ΠΨ␦Σ␦␦√ΩΞΥ⊂⊃∩∪∧∨¬αβχδεφγηιθκλ␦ν∂πψρστ␦ƒωξυζ←↑→↓")
+              // = W("⎷┌─⌠⌡│⎡⎣⎤⎦⎛⎝⎞⎠⎨⎬╶╶╲╱╴╴╳␦␦␦␦≤≠≥∫∴∝∞÷Δ∇ΦΓ∼≃Θ×Λ⇔⇒≡ΠΨ␦Σ␦␦√ΩΞΥ⊂⊃∩∪∧∨¬αβχδεφγηιθκλ␦ν∂πψρστ␦ƒωξυζ←↑→↓")
+              wc = W("⎷┌─⌠⌡│⎡⎣⎤⎦⎧⎩⎫⎭⎨⎬╶╶╲╱╴╴╳␦␦␦␦≤≠≥∫∴∝∞÷Δ∇ΦΓ∼≃Θ×Λ⇔⇒≡ΠΨ␦Σ␦␦√ΩΞΥ⊂⊃∩∪∧∨¬αβχδεφγηιθκλ␦ν∂πψρστ␦ƒωξυζ←↑→↓")
                    [c - ' ' - 1];
-              if (c >= 0x31 && c <= 0x37) {
-                static uchar techdraw_code[7] = {
-                  0x81, 0x82, 0, 0, 0x85, 0x86, 0x87
+              if (c <= 0x37) {
+                static uchar techdraw_code[23] = {
+                  0x80,                    // square root base
+                  0, 0, 0, 0, 0,
+                  0x88, 0x89, 0x8A, 0x8B,  // square bracket corners
+                  0, 0, 0, 0,              // curly bracket hooks
+                  0, 0,                    // curly bracket middle pieces
+                  0x81, 0x82, 0, 0, 0x85, 0x86, 0x87  // sum segments
                 };
-                uchar dispcode = techdraw_code[c - 0x31];
+                uchar dispcode = techdraw_code[c - 0x21];
                 term.curs.attr.attr |= ((unsigned long long)dispcode) << ATTR_GRAPH_SHIFT;
               }
             }

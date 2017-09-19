@@ -1071,12 +1071,18 @@ another_font(struct fontfam * ff, int fontno)
     u = true;
   int y = font_height * (1 + !!(fontno & FONT_HIGH));
   if (fontno & FONT_ZOOMFULL) {
-    y = cell_height;
-    x = cell_width;
+    y = cell_height * (1 + !!(fontno & FONT_HIGH));
+    x = cell_width * (1 + !!(fontno & FONT_WIDE));
   }
 
 #ifdef debug_create_font
-  printf("font [%02X]: %d (size %d) %d w%4d i%d u%d s%d\n", fontno, font_height * (1 + !!(fontno & FONT_HIGH)), font_size, x, w, i, u, s);
+  printf("font [%02X]: %d (size %d%s%s%s%s) %d w%4d i%d u%d s%d\n", 
+	fontno, font_height * (1 + !!(fontno & FONT_HIGH)), font_size, 
+	fontno & FONT_HIGH     ? " hi" : "",
+	fontno & FONT_WIDE     ? " wd" : "",
+	fontno & FONT_NARROW   ? " nr" : "",
+	fontno & FONT_ZOOMFULL ? " zf" : "",
+	x, w, i, u, s);
 #endif
   ff->fonts[fontno] =
     CreateFontW(y, x, 0, 0, w, i, u, s,
@@ -1264,6 +1270,7 @@ text_out_end()
 void
 win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl)
 {
+  int graph = (attr.attr >> ATTR_GRAPH_SHIFT) & 0xFF;
   int findex = (attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
   struct fontfam * ff = &fontfamilies[findex];
 
@@ -1488,7 +1495,6 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     }
   }
 
-  int graph = (attr.attr >> ATTR_GRAPH_SHIFT) & 0xFF;
   if (graph && !(graph & 0x80)) {
     for (int i = 0; i < len; i++)
       text[i] = ' ';
@@ -1541,6 +1547,28 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   if (attr.attr & TATTR_ZOOMFULL) {
     yt -= ff->row_spacing / 2;
     xt = x;
+  }
+
+  int line_width = (3
+                    + (attr.attr & ATTR_BOLD ? 1 : 0)
+                    + (lattr >= LATTR_WIDE ? 2 : 0)
+                    + (lattr >= LATTR_TOP ? 2 : 0)
+                   ) * cell_height / 40;
+  if (line_width < 1)
+    line_width = 1;
+
+ /* DEC Tech adjustments */
+  if (graph & 0x80) {  // DEC Technical rendering to be fixed
+    if ((graph & ~1) == 0x88)  // left square bracket corners
+      xt += line_width + 1;
+    else if ((graph & ~1) == 0x8A)  // right square bracket corners
+      xt -= line_width + 1;
+    else if (graph == 0x87)  // middle angle: don't display ╳, draw (below)
+      for (int i = 0; i < len; i++)
+        text[i] = ' ';
+    else if (graph == 0x80)  // square root base: rather draw (partially)
+      for (int i = 0; i < len; i++)
+        text[i] = 0x2502;
   }
 
  /* Determine shadow/overstrike bold or double-width/height width */
@@ -1643,13 +1671,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     }
   text_out_end();
 
-  int line_width = (3
-                    + (attr.attr & ATTR_BOLD ? 1 : 0)
-                    + (lattr >= LATTR_WIDE ? 2 : 0)
-                    + (lattr >= LATTR_TOP ? 2 : 0)
-                   ) * cell_height / 40;
-  if (line_width < 1)
-    line_width = 1;
+  // line_width already set above for DEC Tech adjustments
 
 #define dont_debug_vt100_line_drawing_chars
 #ifdef debug_vt100_line_drawing_chars
@@ -1673,6 +1695,89 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
 #endif
 
   if (graph & 0x80) {  // DEC Technical characters to be fixed
+    if (graph & 0x08) {
+      // square bracket corners already repositioned above
+    }
+    else {  // Sum segments to be (partially) drawn, square root base
+      int sum_width = line_width;
+      int y0 = (lattr == LATTR_BOT) ? y - cell_height : y;
+      int yoff = (cell_height - line_width) * 3 / 5;
+      if (lattr >= LATTR_TOP)
+        yoff *= 2;
+      int xoff = (char_width - line_width) / 2;
+      // 0x80 square root base
+      // sum segments:
+      // 0x81 upper left: add diagonal to bottom
+      // 0x82 lower left: add diagonal to top
+      // 0x85 upper right: add hook down
+      // 0x86 lower right: add hook up
+      // 0x87 middle right angle
+      int yt, yb;
+      int ycellb = y0 + (lattr >= LATTR_TOP ? 2 : 1) * cell_height;
+      if (graph & 1) {  // upper segment: downwards
+        yt = y0 + yoff;
+        yb = ycellb;
+      }
+      else {  // lower segment: upwards
+        yt = y0;
+        yb = y0 + yoff;
+      }
+      int xl = x + xoff;
+      int xr = xl;
+      if (graph <= 0x82) {  // diagonals
+        sum_width ++;
+        xl += line_width - 1;
+        xr = x + char_width - 1;
+        if (graph == 0x82) {
+          int xb = xl;
+          xl = xr;
+          xr = xb;
+        }
+      }
+      // adjustments with scaling pen:
+      xl ++; xr ++;
+      int x0 = x;
+      if (graph & 1) {  // upper segment: downwards
+        yt --;
+        yb --;
+      } else {  // lower segment: upwards
+        yt -= 1;
+        yb -= 1;
+      }
+      // special adjustments:
+      if (graph == 0x80) {  // square root base
+        xl --;
+      }
+      else if (graph == 0x87) {  // sum middle right angle
+      }
+      // draw:
+      //HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, sum_width, fg));
+      HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, line_width, fg));
+      sum_width = 1;  // now handled by pen width
+      for (int i = 0; i < len; i++) {
+        for (int l = 0; l < sum_width; l++) {
+          if (graph == 0x80) {  // square root base
+            MoveToEx(dc, xl + l, ycellb, null);
+            LineTo(dc, xl - (xl - x0) / 2 + l, yb + l);
+            LineTo(dc, x0, yb + l);
+          }
+          else if (graph == 0x87) {  // sum middle right angle
+            MoveToEx(dc, x0 + l, y0, null);
+            LineTo(dc, xl + l, yt);
+            LineTo(dc, x0 + l, yb);
+          }
+          else {
+            MoveToEx(dc, xl + l, yt, null);
+            LineTo(dc, xr + l, yb);
+          }
+        }
+        x0 += char_width;
+        xl += char_width;
+        xr += char_width;
+      }
+      oldpen = SelectObject(dc, oldpen);
+      DeleteObject(oldpen);
+    }
   }
   else if (graph >> 4) {  // VT100 horizontal lines ⎺⎻(─)⎼⎽
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));

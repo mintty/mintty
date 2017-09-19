@@ -1231,11 +1231,14 @@ term_paint(void)
               )
       {
         if ((tattr.attr & ATTR_WIDE) == 0 && win_char_width(tchar) == 2
+            // do not tamper with graphics
+            && !line->lattr
             // and restrict narrowing to ambiguous width chars
             //&& ambigwide(tchar)
             // but then they will be clipped...
-           )
+           ) {
           tattr.attr |= ATTR_NARROW;
+        }
         else if (tattr.attr & ATTR_WIDE
                  // guard character expanding properly to avoid 
                  // false hits as reported for CJK in #570,
@@ -1246,8 +1249,9 @@ term_paint(void)
                  && win_char_width(tchar) == 1 // && !widerange(tchar)
                  // and reassure to apply this only to ambiguous width chars
                  && ambigwide(tchar)
-                )
+                ) {
           tattr.attr |= ATTR_EXPAND;
+        }
       }
       else if (dispchars[j].attr.attr & ATTR_NARROW)
         tattr.attr |= ATTR_NARROW;
