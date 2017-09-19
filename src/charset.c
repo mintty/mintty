@@ -6,7 +6,8 @@
 #include "charset.h"
 
 #include "config.h"
-#include "child.h"  // child_update_charset
+#include "child.h"    // child_update_charset
+#include "winpriv.h"  // support_wsl
 
 #if HAS_LOCALES
 #include <locale.h>
@@ -346,6 +347,7 @@ cs_reconfig(void)
       asform("%s%s%s", cfg.locale, *cfg.charset ? "." : "", cfg.charset);
 #if HAS_LOCALES
     if (setlocale(LC_CTYPE, config_locale) &&
+        !support_wsl &&  // setlocale anyway, but do not modify for WSL
         wcwidth(0x3B1) == 2 && !font_ambig_wide) {
       // Attach "@cjknarrow" to locale if using an ambig-narrow font
       // with an ambig-wide locale setting
