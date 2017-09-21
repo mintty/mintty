@@ -234,7 +234,22 @@ typedef enum {
   CSET_GBCHR = 'A',   /* UK variant */
   CSET_LINEDRW = '0', /* Line drawing charset */
   CSET_TECH = '>',    /* DEC Technical */
-  CSET_OEM = 'U'      /* OEM Codepage 437 */
+  CSET_OEM = 'U',     /* OEM Codepage 437 */
+  // definitions for DEC Supplemental support:
+  CSET_DECSUPP = '<', // <      DEC Supplementary (VT200)
+  CSET_DECSPGR = '%', // % 5    DEC Supplementary Graphics (VT300)
+  // definitions for NRC support:
+  CSET_NL = '4', // 4           Dutch
+  CSET_FI = '5', // C or 5      Finnish
+  CSET_FR = 'R', // R or f      French
+  CSET_CA = 'Q', // Q or 9      French Canadian (VT200, VT300)
+  CSET_DE = 'K', // K           German
+  CSET_IT = 'Y', // Y           Italian
+  CSET_NO = '`', // ` or E or 6 Norwegian/Danish
+  CSET_PT = '6', // % 6         Portuguese (VT300)
+  CSET_ES = 'Z', // Z           Spanish
+  CSET_SE = '7', // H or 7      Swedish
+  CSET_CH = '=', // =           Swiss
 } term_cset;
 
 typedef struct {
@@ -282,11 +297,12 @@ typedef struct {
   bool autowrap;  // switchable (xterm Wraparound Mode (DECAWM Auto Wrap))
   bool wrapnext;
   bool rev_wrap;  // switchable (xterm Reverse-wraparound Mode)
-  short g0123;
+  short gl, gr;
   term_cset csets[4];
   term_cset cset_single;
   uchar oem_acs;
   bool utf;
+  bool decnrc_enabled;    /* DECNRCM sequence to enable NRC? */
 } term_cursor;
 
 typedef struct {
