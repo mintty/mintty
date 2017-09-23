@@ -1652,8 +1652,10 @@ term_write(const char *buf, uint len)
           continue;
         }
 
+        // handle NRC single shift and NRC GR invocation;
+        // maybe we should handle control characters first?
         short cset = term.curs.csets[term.curs.gl];
-        if (term.curs.cset_single != CSET_ASCII) {
+        if (term.curs.cset_single != CSET_ASCII && c > 0x20 && c < 0xFF) {
           cset = term.curs.cset_single;
           term.curs.cset_single = CSET_ASCII;
         }
