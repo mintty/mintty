@@ -37,6 +37,7 @@ term_push_cmd(char c)
   /* Need 1 more for null byte */
   if (term.cmd_len + 1 < term.cmd_buf_cap) {
     term.cmd_buf[term.cmd_len++] = c;
+    term.cmd_buf[term.cmd_len] = 0;
     return true;
   }
 
@@ -52,6 +53,7 @@ term_push_cmd(char c)
   term.cmd_buf = renewn(term.cmd_buf, new_size);
   term.cmd_buf_cap = new_size;
   term.cmd_buf[term.cmd_len++] = c;
+  term.cmd_buf[term.cmd_len] = 0;
   return true;
 }
 
@@ -1346,7 +1348,10 @@ do_dcs(void)
 
         uint fg = (attr.attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
         if (fg != FG_COLOUR_I) {
-          if (fg < 16)
+          if (fg >= TRUE_COLOUR)
+            p += sprintf(p, ";38;2;%u;%u;%u", attr.truefg & 0xFF, 
+                         (attr.truefg >> 8) & 0xFF, (attr.truefg >> 16) & 0xFF);
+          else if (fg < 16)
             p += sprintf(p, ";%u", (fg < 8 ? 30 : 90) + (fg & 7));
           else
             p += sprintf(p, ";38;5;%u", fg);
@@ -1354,7 +1359,10 @@ do_dcs(void)
 
         uint bg = (attr.attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
         if (bg != BG_COLOUR_I) {
-          if (bg < 16)
+          if (bg >= TRUE_COLOUR)
+            p += sprintf(p, ";48;2;%u;%u;%u", attr.truebg & 0xFF, 
+                         (attr.truebg >> 8) & 0xFF, (attr.truebg >> 16) & 0xFF);
+          else if (bg < 16)
             p += sprintf(p, ";%u", (bg < 8 ? 40 : 100) + (bg & 7));
           else
             p += sprintf(p, ";48;5;%u", bg);
@@ -1366,11 +1374,17 @@ do_dcs(void)
       } else if (!strcmp(s, "r")) {  // DECSTBM (scroll margins)
         child_printf("\eP1$r%u;%ur\e\\", term.marg_top + 1, term.marg_bot + 1);
       } else if (!strcmp(s, "\"p")) {  // DECSCL (conformance level)
-        child_write("\eP1$r61\"p\e\\", 11);  // report as VT100
+        child_printf("\eP1$r%u;%u\"p\e\\", 63, 1);  // report as VT300
       } else if (!strcmp(s, "\"q")) {  // DECSCA (protection attribute)
         child_printf("\eP1$r%u\"q\e\\", (attr.attr & ATTR_PROTECTED) != 0);
+      } else if (!strcmp(s, "s")) {  // DECSLRM (left and right margins)
+        child_printf("\eP1$r%u;%us\e\\", 1, term.cols);
+      } else if (!strcmp(s, " q")) {  // DECSCUSR (cursor style)
+        child_printf("\eP1$r%u q\e\\", 
+                     (term.cursor_type >= 0 ? term.cursor_type * 2 : 0) + 1
+                     + !(term.cursor_blinks & 1));
       } else {
-        child_write((char[]){CTRL('X')}, 1);
+        child_printf("\eP0$r%s\e\\", s);
       }
     otherwise:
       return;
