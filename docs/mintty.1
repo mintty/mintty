@@ -109,9 +109,12 @@ also resolving a leading Windows environment variable (like %SystemRoot%).
 \fB-l\fP, \fB--log\fP \fIFILE\fP|\fB-\fP
 Copy all output into the specified log file, or standard output if a dash is
 given instead of a file name.
+(Implies \fB-o Logging=yes\fP.)
+
 If FILE contains \fB%d\fP it will be substituted with the process ID.
 See description of equivalent option "Log file" (Log=) below 
 for further formatting options and hints.
+
 Note that logging can be toggled from the extended context menu.
 
 .TP

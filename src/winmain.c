@@ -2421,8 +2421,12 @@ main(int argc, char *argv[])
         }
       when 'h': set_arg_option("Hold", optarg);
       when 'i': set_arg_option("Icon", optarg);
-      when 'l': set_arg_option("Log", optarg);
-      when '': set_arg_option("Log", optarg); set_arg_option("Logging", "0");
+      when 'l': // -l , --log
+        set_arg_option("Log", optarg);
+        set_arg_option("Logging", strdup("1"));
+      when '': // --logfile
+        set_arg_option("Log", optarg);
+        set_arg_option("Logging", strdup("0"));
       when 'o': parse_arg_option(optarg);
       when 'p':
         if (strcmp(optarg, "center") == 0 || strcmp(optarg, "centre") == 0)
@@ -2961,6 +2965,7 @@ main(int argc, char *argv[])
       if (msg.message == WM_QUIT)
         return msg.wParam;
       if (!IsDialogMessage(config_wnd, &msg))
+        // msg has not been processed by IsDialogMessage
         DispatchMessage(&msg);
     }
     child_proc();
