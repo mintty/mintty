@@ -402,6 +402,7 @@ do_ctrl(char c)
   return true;
 }
 
+// compatible state machine expansion for NCR and DECRQM
 static uchar esc_mod0 = 0;
 static uchar esc_mod1 = 0;
 
@@ -712,7 +713,7 @@ set_modes(bool state)
 {
   for (uint i = 0; i < term.csi_argc; i++) {
     int arg = term.csi_argv[i];
-    if (term.esc_mod) {
+    if (term.esc_mod) { /* DECSET/DECRST: DEC private mode set/reset */
       switch (arg) {
         when 1:  /* DECCKM: application cursor keys */
           term.app_cursor_keys = state;
@@ -867,7 +868,7 @@ set_modes(bool state)
         }
       }
     }
-    else {
+    else { /* SM/RM: set/reset mode */
       switch (arg) {
         when 4:  /* IRM: set insert mode */
           term.insert = state;
@@ -876,6 +877,133 @@ set_modes(bool state)
         when 20: /* LNM: Return sends ... */
           term.newline_mode = state;
       }
+    }
+  }
+}
+
+/*
+ * Get terminal mode.
+            0 - not recognized
+            1 - set
+            2 - reset
+            3 - permanently set
+            4 - permanently reset
+ */
+static int
+get_mode(bool privatemode, int arg)
+{
+  if (privatemode) { /* DECRQM for DECSET/DECRST: DEC private mode */
+    switch (arg) {
+      when 1:  /* DECCKM: application cursor keys */
+        return 2 - term.app_cursor_keys;
+      when 2:  /* DECANM: VT100/VT52 mode */
+        // Check USASCII for character sets G0-G3
+        for (uint i = 0; i < lengthof(term.curs.csets); i++)
+          if (term.curs.csets[i] != CSET_ASCII)
+            return 2;
+        return 1;
+      when 3:  /* DECCOLM: 80/132 columns */
+        return 2 - term.reset_132;
+      when 5:  /* DECSCNM: reverse video */
+        return 2 - term.rvideo;
+      when 6:  /* DECOM: DEC origin mode */
+        return 2 - term.curs.origin;
+      when 7:  /* DECAWM: auto wrap */
+        return 2 - term.curs.autowrap;
+      when 45:  /* xterm: reverse (auto) wraparound */
+        return 2 - term.curs.rev_wrap;
+      when 8:  /* DECARM: auto key repeat */
+        return 3; // ignored
+      when 9:  /* X10_MOUSE */
+        return 2 - (term.mouse_mode == MM_X10);
+      when 25: /* DECTCEM: enable/disable cursor */
+        return 2 - term.cursor_on;
+      when 40: /* Allow/disallow DECCOLM (xterm c132 resource) */
+        return 2 - term.deccolm_allowed;
+      when 42: /* DECNRCM: national replacement character sets */
+        return 2 - term.curs.decnrc_enabled;
+      when 67: /* DECBKM: backarrow key mode */
+        return 2 - term.backspace_sends_bs;
+      when 80: /* DECSDM: SIXEL display mode */
+        return 2 - term.sixel_display;
+      when 1000: /* VT200_MOUSE */
+        return 2 - (term.mouse_mode == MM_VT200);
+      when 1002: /* BTN_EVENT_MOUSE */
+        return 2 - (term.mouse_mode == MM_BTN_EVENT);
+      when 1003: /* ANY_EVENT_MOUSE */
+        return 2 - (term.mouse_mode == MM_ANY_EVENT);
+      when 1004: /* FOCUS_EVENT_MOUSE */
+        return 2 - term.report_focus;
+      when 1005: /* Xterm's UTF8 encoding for mouse positions */
+        return 2 - (term.mouse_enc == ME_UTF8);
+      when 1006: /* Xterm's CSI-style mouse encoding */
+        return 2 - (term.mouse_enc == ME_XTERM_CSI);
+      when 1015: /* Urxvt's CSI-style mouse encoding */
+        return 2 - (term.mouse_enc == ME_URXVT_CSI);
+      when 1037:
+        return 2 - term.delete_sends_del;
+      when 1042:
+        return 2 - term.bell_taskbar;
+      when 1043:
+        return 2 - term.bell_popup;
+      when 47: /* alternate screen */
+        return 2 - term.on_alt_screen;
+      when 1047:       /* alternate screen */
+        return 2 - term.on_alt_screen;
+      when 1048:       /* save/restore cursor */
+        return 4;
+      when 1049:       /* cursor & alternate screen */
+        return 2 - term.on_alt_screen;
+      when 1061:       /* VT220 keyboard emulation */
+        return 2 - term.vt220_keys;
+      when 2004:       /* xterm bracketed paste mode */
+        return 2 - term.bracketed_paste;
+
+      /* Mintty private modes */
+      when 7700:       /* CJK ambigous width reporting */
+        return 2 - term.report_ambig_width;
+      when 7711:       /* Scroll marker in current line */
+        return 2 - !!(term.lines[term.curs.y]->lattr & LATTR_MARKED);
+      when 7727:       /* Application escape key mode */
+        return 2 - term.app_escape_key;
+      when 7728:       /* Escape sends FS (instead of ESC) */
+        return 2 - term.escape_sends_fs;
+      when 7730:       /* Sixel scrolling end position */
+        return 2 - term.sixel_scrolls_left;
+      when 7766:       /* 'B': Show/hide scrollbar (if enabled in config) */
+        return 2 - term.show_scrollbar;
+      when 7767:       /* 'C': Changed font reporting */
+        return 2 - term.report_font_changed;
+      when 7783:       /* 'S': Shortcut override */
+        return 2 - term.shortcut_override;
+      when 7786:       /* 'V': Mousewheel reporting */
+        return 2 - term.wheel_reporting;
+      when 7787:       /* 'W': Application mousewheel mode */
+        return 2 - term.app_wheel;
+      when 7796:       /* Bidi disable in current line */
+        return 2 - !!(term.lines[term.curs.y]->lattr & LATTR_NOBIDI);
+      when 77096:      /* Bidi disable */
+        return 2 - term.disable_bidi;
+      when 8452:       /* Sixel scrolling end position right */
+        return 2 - term.sixel_scrolls_right;
+      when 77000 ... 77031: { /* Application control key modes */
+        int ctrl = arg - 77000;
+        return 2 - !!(term.app_control & (1 << ctrl));
+      }
+      otherwise:
+        return 0;
+    }
+  }
+  else { /* DECRQM for SM/RM: mode */
+    switch (arg) {
+      when 4:  /* IRM: insert mode */
+        return 2 - term.insert;
+      when 12: /* SRM: echo mode */
+        return 2 - term.echoing;
+      when 20: /* LNM: Return sends ... */
+        return 2 - term.newline_mode;
+      otherwise:
+        return 0;
     }
   }
 }
@@ -962,6 +1090,11 @@ do_csi(uchar c)
   if (arg1 < 0)
     arg1 = 0;
   int arg0_def1 = arg0 ?: 1;  // first arg with default 1
+
+  // DECRQM quirk
+  if (term.esc_mod == 0xFF && esc_mod0 == '?' && esc_mod1 == '$' && c == 'p')
+    term.esc_mod = '$';
+
   switch (CPAIR(term.esc_mod, c)) {
     when 'A':        /* CUU: move up N lines */
       move(curs->x, curs->y - arg0_def1, 1);
@@ -1029,10 +1162,17 @@ do_csi(uchar c)
         child_printf("\e[%d;%dR", curs->y + 1 - (curs->origin ? term.marg_top : 0), curs->x + 1);
       else if (arg0 == 5)
         child_write("\e[0n", 4);
-    when 'h' or CPAIR('?', 'h'):  /* SM: toggle modes to high */
+    when 'h' or CPAIR('?', 'h'):  /* SM/DECSET: set (private) modes */
       set_modes(true);
-    when 'l' or CPAIR('?', 'l'):  /* RM: toggle modes to low */
+    when 'l' or CPAIR('?', 'l'):  /* RM/DECRST: reset (private) modes */
       set_modes(false);
+    when CPAIR('$', 'p'): { /* DECRQM: request (private) mode */
+      int arg = term.csi_argv[0];
+      child_printf("\e[%s%u;%u$y",
+                   esc_mod0 ? "?" : "",
+                   arg,
+                   get_mode(esc_mod0, arg));
+    }
     when 'i' or CPAIR('?', 'i'):  /* MC: Media copy */
       if (arg0 == 5 && *cfg.printer) {
         term.printing = true;
@@ -1851,9 +1991,8 @@ term_write(const char *buf, uint len)
           when CSET_CH:
             wc = NRC(W("ùàéçêîèôäöüû"));  // Swiss
           when CSET_DECSPGR   // DEC Supplemental Graphic
-            or CSET_DECSUPP:  // DEC Supplemental
+            or CSET_DECSUPP:  // DEC Supplemental (user-preferred in VT*)
             if (c > ' ' && c < 0x7F) {
-              // = W("¡¢£␦¥␦§¨©ª«␦␦␦␦°±²³␦µ¶·␦¹º»¼½␦¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏ␦ÑÒÓÔÕÖŒØÙÚÛÜÝ␦ßàáâãäåæçèéêëìíîï␦ñòóôõöœøùúûüÿ␦")
               wc = W("¡¢£␦¥␦§¤©ª«␦␦␦␦°±²³␦µ¶·␦¹º»¼½␦¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏ␦ÑÒÓÔÕÖŒØÙÚÛÜŸ␦ßàáâãäåæçèéêëìíîï␦ñòóôõöœøùúûüÿ␦")
                    [c - ' ' - 1];
             }
@@ -1861,11 +2000,13 @@ term_write(const char *buf, uint len)
         }
         write_char(wc, width);
         term.curs.attr.attr = asav;
-      }
+      } // end term_write switch (term.state) when NORMAL
+
       when ESCAPE or CMD_ESCAPE:
         if (c < 0x20)
           do_ctrl(c);
         else if (c < 0x30) {
+          //term.esc_mod = term.esc_mod ? 0xFF : c;
           if (term.esc_mod) {
             esc_mod0 = term.esc_mod;
             esc_mod1 = c;
@@ -1882,8 +2023,11 @@ term_write(const char *buf, uint len)
           do_cmd();
           term.state = NORMAL;
         }
-        else
+        else {
           do_esc(c);
+          // term.state: NORMAL/CSI_ARGS/OSC_START/DCS_START/IGNORE_STRING
+        }
+
       when CSI_ARGS:
         if (c < 0x20)
           do_ctrl(c);
@@ -1900,12 +2044,24 @@ term_write(const char *buf, uint len)
             term.csi_argv_defined[i] = 1;
           }
         }
-        else if (c < 0x40)
-          term.esc_mod = term.esc_mod ? 0xFF : c;
+        else if (c < 0x40) {
+          //term.esc_mod = term.esc_mod ? 0xFF : c;
+          if (term.esc_mod) {
+            esc_mod0 = term.esc_mod;
+            esc_mod1 = c;
+            term.esc_mod = 0xFF;
+          }
+          else {
+            esc_mod0 = 0;
+            esc_mod1 = 0;
+            term.esc_mod = c;
+          }
+        }
         else {
           do_csi(c);
           term.state = NORMAL;
         }
+
       when OSC_START:
         term.cmd_len = 0;
         switch (c) {
@@ -1927,6 +2083,7 @@ term_write(const char *buf, uint len)
           otherwise:
             term.state = IGNORE_STRING;
         }
+
       when OSC_NUM:
         switch (c) {
           when '0' ... '9':  /* OSC command number */
@@ -1945,6 +2102,7 @@ term_write(const char *buf, uint len)
           otherwise:
             term.state = IGNORE_STRING;
         }
+
       when OSC_PALETTE:
         if (isxdigit(c)) {
           // The dodgy Linux palette sequence: keep going until we have
@@ -1966,6 +2124,7 @@ term_write(const char *buf, uint len)
             continue;
           }
         }
+
       when CMD_STRING:
         switch (c) {
           when '\n' or '\r':
@@ -1978,6 +2137,7 @@ term_write(const char *buf, uint len)
           otherwise:
             term_push_cmd(c);
         }
+
       when IGNORE_STRING:
         switch (c) {
           when '\n' or '\r' or '\a':
@@ -1985,6 +2145,7 @@ term_write(const char *buf, uint len)
           when '\e':
             term.state = ESCAPE;
         }
+
       when DCS_START:
         term.cmd_num = -1;
         term.cmd_len = 0;
@@ -2011,6 +2172,7 @@ term_write(const char *buf, uint len)
           otherwise:
             term.state = DCS_IGNORE;
         }
+
       when DCS_PARAM:
         switch (c) {
           when '@' ... '~':  /* DCS cmd final byte */
@@ -2031,6 +2193,7 @@ term_write(const char *buf, uint len)
           otherwise:
             term.state = DCS_IGNORE;
         }
+
       when DCS_INTERMEDIATE:
         switch (c) {
           when '@' ... '~':  /* DCS cmd final byte */
@@ -2047,6 +2210,7 @@ term_write(const char *buf, uint len)
           otherwise:
             term.state = DCS_IGNORE;
         }
+
       when DCS_PASSTHROUGH:
         switch (c) {
           when '\e':
@@ -2059,12 +2223,14 @@ term_write(const char *buf, uint len)
               term.cmd_len = 1;
             }
         }
+
       when DCS_IGNORE:
         switch (c) {
           when '\e':
             term.state = ESCAPE;
             term.esc_mod = 0;
         }
+
       when DCS_ESCAPE:
         if (c < 0x20) {
           do_ctrl(c);
