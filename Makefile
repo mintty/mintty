@@ -14,6 +14,10 @@
 # - RELEASE: release number for packaging
 # - TARGET: target triple for cross compiling
 
+# To add a file to the distribution:
+# src: add to make variable below: arch_files += ...
+# bin: add to cygwin/mintty.cygport
+
 NAME := mintty
 
 exe:
@@ -49,6 +53,7 @@ TARUSER := --owner=root --group=root --owner=mintty --group=cygwin
 arch_files := Makefile COPYING LICENSE* INSTALL VERSION
 arch_files += src/Makefile src/*.c src/*.h src/*.rc src/*.mft
 arch_files += src/[!_]*.t src/mk*
+arch_files += tools/mintheme
 arch_files += lang/*.pot lang/*.po
 arch_files += cygwin/*.cygport cygwin/README* cygwin/setup.hint
 arch_files += docs/*.1 docs/*.html icon/*

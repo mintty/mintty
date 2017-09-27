@@ -32,6 +32,7 @@ src_install() {
   doman docs/mintty.1
   dodoc COPYING LICENSE.Oxygen LICENSE.PuTTY
   dodoc cygwin/README cygwin/setup.hint
+  dobin tools/mintheme
 
   insinto /usr/share/mintty/lang
   doins lang/*.pot lang/*.po

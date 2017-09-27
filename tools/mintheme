@@ -1,0 +1,81 @@
+#! /bin/sh
+
+#############################################################################
+# mintty theme switcher
+# features:
+#	list themes from config directories
+#	set a theme from config directories
+# possible future features:
+#	set a theme from a file
+#	set a theme from a URL
+#	load theme from a URL into config directory
+#	store current theme into config directory
+
+case "$1" in
+-h|--help|'')
+	echo "Usage: `basename $0` [-h|-l] [theme]"
+	echo "Set mintty theme in current mintty window, or list available themes."
+	echo "A theme is a colour scheme to configure the 8 ANSI colours, their "
+	echo "bright versions, and optionally the foreground/background/cursor colours."
+	echo
+	echo "Arguments:"
+	echo "  -l, --list    list available themes"
+	echo "  -h, --help    show this"
+	echo
+	echo "The following directories are considered for locating theme files:"
+	echo '  ~/.mintty'
+	echo '  ~/.config/mintty'
+	echo '  $APPDATA/mintty'
+	echo '  /usr/share/mintty'
+	echo "Note that the command-line option --configdir cannot be considered."
+	;;
+-l)	for confdir in ~/.mintty ~/.config/mintty "$APPDATA"/mintty /usr/share/mintty
+	do	if [ -d "$confdir/themes" -a -x "$confdir/themes"  -a -r "$confdir/themes" ]
+		then	echo "themes in '$confdir':"
+			(cd "$confdir/themes"; ls *[!~])
+		fi
+	done;;
+-*)	echo Unknown argument;;
+*)	for confdir in ~/.mintty ~/.config/mintty "$APPDATA"/mintty /usr/share/mintty
+	do	if [ -r "$confdir/themes/$1" ]
+		then	sed \
+			    -e 's/^\(ForegroundColour\)[ 	]*=/10;/' \
+			    -e 's/^\(BackgroundColour\)[ 	]*=/11;/' \
+			    -e 's/^\(CursorColour\)[ 	]*=/12;/' \
+			    -e 's/^\(Black\)[ 	]*=/4;0;/' \
+			    -e 's/^\(Red\)[ 	]*=/4;1;/' \
+			    -e 's/^\(Green\)[ 	]*=/4;2;/' \
+			    -e 's/^\(Yellow\)[ 	]*=/4;3;/' \
+			    -e 's/^\(Blue\)[ 	]*=/4;4;/' \
+			    -e 's/^\(Magenta\)[ 	]*=/4;5;/' \
+			    -e 's/^\(Cyan\)[ 	]*=/4;6;/' \
+			    -e 's/^\(White\)[ 	]*=/4;7;/' \
+			    -e 's/^\(BoldBlack\)[ 	]*=/4;8;/' \
+			    -e 's/^\(BoldRed\)[ 	]*=/4;9;/' \
+			    -e 's/^\(BoldGreen\)[ 	]*=/4;10;/' \
+			    -e 's/^\(BoldYellow\)[ 	]*=/4;11;/' \
+			    -e 's/^\(BoldBlue\)[ 	]*=/4;12;/' \
+			    -e 's/^\(BoldMagenta\)[ 	]*=/4;13;/' \
+			    -e 's/^\(BoldCyan\)[ 	]*=/4;14;/' \
+			    -e 's/^\(BoldWhite\)[ 	]*=/4;15;/' \
+			    -e 't ok' -e d -e ': ok' -e 's/[ 	]//g' \
+			    -e "s/^/]/" -e "s/$//" "$confdir/themes/$1" |
+			tr -d '\012'
+			#]4;A;colour	set ANSI colour A=0..15
+			#]10;colour	set foreground colour
+			#]11;colour	set background colour
+			#]12;colour	set cursor colour
+			# unused:
+			#]104;A	reset ANSI colour A=0..15
+			#]104		reset colour palette
+			#]110		reset foreground colour
+			#]111		reset background colour
+			#]112		reset cursor colour
+			exit
+		fi
+	done
+	echo theme not found;;
+esac
+
+#############################################################################
+# end

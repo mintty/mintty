@@ -385,6 +385,10 @@ A number of colour schemes have been published for mintty, e.g.
 * https://github.com/mavnn/mintty-colors-solarized
 * https://github.com/PhilipDaniels/mintty/tree/master/themes
 
+Mintty also provides the command-line script ```mintheme``` which can 
+display the themes available in the mintty configuration directories or 
+activate one of them in the current mintty window.
+
 
 ## Providing and selecting fonts ##
 
@@ -451,7 +455,7 @@ not need to be CJK), e.g.:
 LC_CTYPE=zh_SG.utf8 mintty &
 ```
 
-If the locale is select via the Locale setting, however, it is necessary 
+If the locale is selected via the Locale setting, however, it is necessary 
 to choose an ambiguous-wide font in addition (CJK font), or mintty will 
 enforce the ambiguous-narrow mode of rendering by appending the 
 “@cjknarrow” locale modifier:
