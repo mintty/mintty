@@ -194,6 +194,8 @@ term_reset(bool full)
     term.bell_popup = cfg.bell_popup;  // not reset by xterm
     term.mouse_mode = MM_NONE;
     term.mouse_enc = ME_X10;
+    term.locator_by_pixels = false;
+    term.locator_1_enabled = false;
     term.report_focus = 0;  // xterm only with RIS
     term.report_font_changed = 0;
     term.report_ambig_width = 0;

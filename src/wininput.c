@@ -436,6 +436,7 @@ translate_pos(int x, int y)
 
 static LPARAM last_lp = -1;
 static pos last_pos = {-1, -1};
+static int button_state = 0;
 
 static pos
 get_mouse_pos(LPARAM lp)
@@ -469,6 +470,14 @@ win_mouse_click(mouse_button b, LPARAM lp)
   last_button = b;
   if (alt_state > ALT_NONE)
     alt_state = ALT_CANCELLED;
+  switch (b) {
+    when MBT_RIGHT:
+      button_state |= 1;
+    when MBT_MIDDLE:
+      button_state |= 2;
+    when MBT_LEFT:
+      button_state |= 4;
+  }
 }
 
 void
@@ -476,6 +485,14 @@ win_mouse_release(mouse_button b, LPARAM lp)
 {
   term_mouse_release(b, get_mods(), get_mouse_pos(lp));
   ReleaseCapture();
+  switch (b) {
+    when MBT_RIGHT:
+      button_state &= ~1;
+    when MBT_MIDDLE:
+      button_state &= ~2;
+    when MBT_LEFT:
+      button_state &= ~4;
+  }
 }
 
 void
@@ -507,6 +524,26 @@ win_mouse_wheel(WPARAM wp, LPARAM lp)
   SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &lines_per_notch, 0);
 
   term_mouse_wheel(delta, lines_per_notch, get_mods(), tpos);
+}
+
+void
+win_get_locator_info(int *x, int *y, int *button, bool by_pixels)
+{
+  POINT p = {-1, -1};
+
+  if (GetCursorPos(&p)) {
+    if (ScreenToClient(wnd, &p)) {
+      if (by_pixels) {
+        *x = p.x - PADDING;
+        *y = p.y - PADDING;
+      } else {
+        *x = floorf((p.x - PADDING) / (float)cell_width);
+        *y = floorf((p.y - PADDING) / (float)cell_height);
+      }
+    }
+  }
+
+  *button = button_state;
 }
 
 

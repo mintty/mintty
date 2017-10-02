@@ -1197,16 +1197,6 @@ do_csi(uchar c)
       insert_char(arg0_def1);
     when 'P':        /* DCH: delete chars */
       insert_char(-arg0_def1);
-    when 'n':        /* DSR: cursor position query */
-      if (arg0 == 6)
-        child_printf("\e[%d;%dR", curs->y + 1 - (curs->origin ? term.marg_top : 0), curs->x + 1);
-      else if (arg0 == 5)
-        child_write("\e[0n", 4);
-    when CPAIR('?', 'n'):  /* DSR, DEC */
-      if (arg0 == 6)
-        child_printf("\e[?%d;%dR", curs->y + 1 - (curs->origin ? term.marg_top : 0), curs->x + 1);
-      else if (arg0 == 15)
-        child_printf("\e[?%un", 11 - !!*cfg.printer);
     when 'h' or CPAIR('?', 'h'):  /* SM/DECSET: set (private) modes */
       set_modes(true);
     when 'l' or CPAIR('?', 'l'):  /* RM/DECRST: reset (private) modes */
@@ -1350,6 +1340,51 @@ do_csi(uchar c)
         when 0 or 2: term.curs.attr.attr &= ~ATTR_PROTECTED;
         when 1: term.curs.attr.attr |= ATTR_PROTECTED;
       }
+    when 'n':        /* DSR: device status report */
+      if (arg0 == 6)
+        child_printf("\e[%d;%dR", curs->y + 1 - (curs->origin ? term.marg_top : 0), curs->x + 1);
+      else if (arg0 == 5)
+        child_write("\e[0n", 4);
+    when CPAIR('?', 'n'):  /* DSR, DEC specific */
+      switch (arg0) {
+        when 6:
+          child_printf("\e[?%d;%dR", curs->y + 1 - (curs->origin ? term.marg_top : 0), curs->x + 1);
+        when 15:
+          child_printf("\e[?%un", 11 - !!*cfg.printer);
+        // DEC Locator
+        when 53 or 55:
+          child_printf("\e[?50n");  // change to 53 when fully implemented
+        when 56:
+          child_printf("\e[?57;1n");
+      }
+    // DEC Locator
+    when CPAIR('\'', 'z'): {  /* DECELR: enable locator reporting */
+      switch (arg0) {
+        when 0:
+          term.mouse_mode = 0;
+          win_update_mouse();
+        when 1:
+          term.mouse_mode = MM_LOCATOR;
+          win_update_mouse();
+        when 2:
+          term.locator_1_enabled = true;
+          win_update_mouse();
+      }
+      switch (arg1) {
+        when 0 or 2:
+          term.locator_by_pixels = false;
+        when 1:
+          term.locator_by_pixels = true;
+      }
+    }
+    when CPAIR('\'', '|'): {  /* DECRQLP: request locator position */
+      if (term.locator_1_enabled) {
+        int x, y, button;
+        win_get_locator_info(&x, &y, &button, term.locator_by_pixels);
+        child_printf("\e[1;%d;%d;%d;0&w", button, y, x);
+        term.locator_1_enabled = false;
+      }
+    }
   }
 }
 
