@@ -505,7 +505,7 @@ extern struct term term;
 
 extern void term_resize(int, int);
 extern void term_scroll(int, int);
-extern void term_reset(void);
+extern void term_reset(bool full);
 extern void term_clear_scrollback(void);
 extern void term_mouse_click(mouse_button, mod_keys, pos, int count);
 extern void term_mouse_release(mouse_button, mod_keys, pos);

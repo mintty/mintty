@@ -1487,7 +1487,7 @@ static struct {
         when IDM_TOGCHARINFO: toggle_charinfo();
         when IDM_PASTE: win_paste();
         when IDM_SELALL: term_select_all(); win_update();
-        when IDM_RESET: winimgs_clear(); term_reset(); win_update();
+        when IDM_RESET: winimgs_clear(); term_reset(true); win_update();
         when IDM_DEFSIZE:
           default_size();
         when IDM_DEFSIZE_ZOOM:
@@ -2912,7 +2912,7 @@ main(int argc, char *argv[])
   }
 
   // Initialise the terminal.
-  term_reset();
+  term_reset(true);
   term_resize(term_rows, term_cols);
 
   // Initialise the scroll bar.

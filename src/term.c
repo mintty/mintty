@@ -145,10 +145,12 @@ term_cursor_reset(term_cursor *curs)
 
   curs->autowrap = true;
   curs->rev_wrap = cfg.old_wrapmodes;
+
+  curs->origin = false;
 }
 
 void
-term_reset(void)
+term_reset(bool full)
 {
   if (term.cmd_buf == NULL) {
     term.cmd_buf = newn(char, 128);
@@ -157,40 +159,53 @@ term_reset(void)
 
   term.state = NORMAL;
 
+  // DECSTR attributes and cursor states to be reset
   term_cursor_reset(&term.curs);
   term_cursor_reset(&term.saved_cursors[0]);
   term_cursor_reset(&term.saved_cursors[1]);
   term_update_cs();
+  term.erase_char = basic_erase_char;
 
-  term.backspace_sends_bs = cfg.backspace_sends_bs;
-  term.delete_sends_del = cfg.delete_sends_del;
-  if (term.tabs) {
+  // DECSTR states to be reset (in addition to cursor states)
+  // https://www.vt100.net/docs/vt220-rm/table4-10.html
+  term.cursor_on = true;
+  term.insert = false;
+  term.marg_top = 0;
+  term.marg_bot = term.rows - 1;
+  term.app_cursor_keys = false;
+
+  if (full) {
+    term.vt220_keys = vt220(cfg.term);  // not reset by xterm
+    term.app_keypad = false;  // xterm only with RIS
+    term.app_wheel = false;
+    term.app_control = 0;
+  }
+  term.modify_other_keys = 0;  // xterm resets this
+
+  term.backspace_sends_bs = cfg.backspace_sends_bs;  // xterm only with RIS
+  term.delete_sends_del = cfg.delete_sends_del;  // not reset by xterm
+  if (full && term.tabs) {
     for (int i = 0; i < term.cols; i++)
       term.tabs[i] = (i % 8 == 0);
   }
-  term.rvideo = 0;
-  term.in_vbell = false;
-  term.cursor_on = true;
-  term.echoing = false;
-  term.insert = false;
-  term.shortcut_override = term.escape_sends_fs = term.app_escape_key = false;
-  term.app_control = 0;
-  term.vt220_keys = vt220(cfg.term);
-  term.app_keypad = term.app_cursor_keys = term.app_wheel = false;
-  term.bell_taskbar = cfg.bell_taskbar;
-  term.bell_popup = cfg.bell_popup;
-  term.mouse_mode = MM_NONE;
-  term.mouse_enc = ME_X10;
-  term.wheel_reporting = true;
-  term.modify_other_keys = 0;
-  term.report_focus = 0;
-  term.report_font_changed = 0;
-  term.report_ambig_width = 0;
-  term.bracketed_paste = false;
-  term.show_scrollbar = true;
-  term.wide_indic = false;
-  term.wide_extra = false;
-  term.disable_bidi = false;
+  if (full) {
+    term.rvideo = 0;  // not reset by xterm
+    term.bell_taskbar = cfg.bell_taskbar;  // not reset by xterm
+    term.bell_popup = cfg.bell_popup;  // not reset by xterm
+    term.mouse_mode = MM_NONE;
+    term.mouse_enc = ME_X10;
+    term.report_focus = 0;  // xterm only with RIS
+    term.report_font_changed = 0;
+    term.report_ambig_width = 0;
+    term.shortcut_override = term.escape_sends_fs = term.app_escape_key = false;
+    term.wheel_reporting = true;
+    term.echoing = false;
+    term.bracketed_paste = false;
+    term.show_scrollbar = true;  // enable_scrollbar not reset by xterm
+    term.wide_indic = false;
+    term.wide_extra = false;
+    term.disable_bidi = false;
+  }
 
   term.virtuallines = 0;
   term.altvirtuallines = 0;
@@ -203,27 +218,30 @@ term_reset(void)
   term.sixel_scrolls_right = 0;
   term.sixel_scrolls_left = 0;
 
-  term.marg_top = 0;
-  term.marg_bot = term.rows - 1;
-
   term.cursor_type = -1;
-  term.cursor_blinks = -1;
-  term.blink_is_real = cfg.allow_blinking;
-  term.erase_char = basic_erase_char;
-  term.on_alt_screen = false;
-  term_print_finish();
-  if (term.lines) {
-    term_switch_screen(1, false);
-    term_erase(false, false, true, true);
-    term_switch_screen(0, false);
-    term_erase(false, false, true, true);
-    term.curs.y = term_last_nonempty_line() + 1;
-    if (term.curs.y == term.rows) {
-      term.curs.y--;
-      term_do_scroll(0, term.rows - 1, 1, true);
+  if (full) {
+    term.cursor_blinks = -1;  // not reset by xterm
+    term.blink_is_real = cfg.allow_blinking;
+  }
+
+  if (full) {
+    term.selected = false;
+    term.on_alt_screen = false;
+    term_print_finish();
+    if (term.lines) {
+      term_switch_screen(1, false);
+      term_erase(false, false, true, true);
+      term_switch_screen(0, false);
+      term_erase(false, false, true, true);
+      term.curs.y = term_last_nonempty_line() + 1;
+      if (term.curs.y == term.rows) {
+        term.curs.y--;
+        term_do_scroll(0, term.rows - 1, 1, true);
+      }
     }
   }
-  term.selected = false;
+
+  term.in_vbell = false;
   term_schedule_tblink();
   term_schedule_tblink2();
   term_schedule_cblink();

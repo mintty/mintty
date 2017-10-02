@@ -513,7 +513,7 @@ do_esc(uchar c)
       write_primary_da();
     when 'c':  /* RIS: restore power-on settings */
       winimgs_clear();
-      term_reset();
+      term_reset(true);
       if (term.reset_132) {
         win_set_chars(term.rows, 80);
         term.reset_132 = 0;
@@ -1099,6 +1099,8 @@ do_csi(uchar c)
     term.esc_mod = '$';
 
   switch (CPAIR(term.esc_mod, c)) {
+    when CPAIR('!', 'p'):     /* DECSTR: soft terminal reset */
+      term_reset(false);
     when 'A':        /* CUU: move up N lines */
       move(curs->x, curs->y - arg0_def1, 1);
     when 'e':        /* VPR: move down N lines */
@@ -1165,6 +1167,11 @@ do_csi(uchar c)
         child_printf("\e[%d;%dR", curs->y + 1 - (curs->origin ? term.marg_top : 0), curs->x + 1);
       else if (arg0 == 5)
         child_write("\e[0n", 4);
+    when CPAIR('?', 'n'):  /* DSR, DEC */
+      if (arg0 == 6)
+        child_printf("\e[?%d;%dR", curs->y + 1 - (curs->origin ? term.marg_top : 0), curs->x + 1);
+      else if (arg0 == 15)
+        child_printf("\e[?%un", 11 - !!*cfg.printer);
     when 'h' or CPAIR('?', 'h'):  /* SM/DECSET: set (private) modes */
       set_modes(true);
     when 'l' or CPAIR('?', 'l'):  /* RM/DECRST: reset (private) modes */
