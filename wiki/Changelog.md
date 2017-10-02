@@ -1,5 +1,29 @@
+Configuration
+  * New option BellFlashStyle (#676) and more moderate default flash style.
+  * Option -l / --log implies Logging=yes.
+  * `mintheme` command-line theme switcher (#685).
+  * Preventing @cjknarrow locale modifier for WSL (#686).
+  * Fixed Alt+F2 in same dir (with OSC 701) not to expand symbolic links.
+
+Terminal control
+  * Fixed status string DECRQSS (#689, #690, mintty/wsltty#55).
+  * Implemented DECRQM to reach VT300 conformance level.
+  * Implemented DSR DEC variant for cursor and printer status.
+  * Implemented DECSTR soft terminal reset.
+  * Implemented DSR DEC variant (cursor/printer status).
+  * Implemented Save/Restore DEC Private Mode (DECSET) values (#267).
+  * DEC Locator single reports (saitoha/libsixel#50).
+
+Character display
   * Tweaked width expansion of ambiguous-width characters (#680, ~#638, ~#615).
-  * New option BellFlashStyle (#676).
+  * Fixed notes on ambiguous-width handling with Locale parameter (~#686).
+  * Legacy character set support: NRC, DEC Supplemental, GR invocation.
+  * Fixed NRC single shift with attributes.
+  * DEC Tech: tweaked √/Σ segments (hand-drawn), fixed double-size characters.
+  * Fraktur font support (ANSI character attribute 20).
+
+Localization meanwhile available for (in alphabetical order of locale ids):
+  * German, English (UK/US), Spanish, French, Japanese, Russian, Chinese.
 
 ### 2.7.9 (30 July 2017) ###
 

@@ -248,7 +248,7 @@ Note: While the terminal character set defines how the terminal interprets
 and handles keys and characters, application handling of characters is 
 usually determined by the locale environment, and they cannot automatically 
 be tied to each other. If they do not match, character handling will be chaotic.
-Consistent changing could be achieved with a shell like 
+Consistent changing could be achieved with a shell script like 
 **[changecs](change-charset.sh)**, 
 to be declared in your shell profile (e.g. `$HOME/.bashrc`).
 
