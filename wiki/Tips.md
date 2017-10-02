@@ -382,7 +382,6 @@ click the “Store” button to store the colour scheme.
 
 A number of colour schemes have been published for mintty, e.g.
 * https://github.com/oumu/mintty-color-schemes
-* https://github.com/mavnn/mintty-colors-solarized
 * https://github.com/PhilipDaniels/mintty/tree/master/themes
 
 Mintty also provides the command-line script ```mintheme``` which can 
@@ -536,6 +535,7 @@ Mintty supports a maximum of usual and unusual text attributes:
 
 Note: The control sequences for Fraktur (“Gothic”) font are described 
 in EMCA-48, see also [wiki:ANSI code](https://en.wikipedia.org/wiki/ANSI_escape_code).
+To use this feature, it is suggested to install `F25 Blackletter Typewriter`.
 
 Note: The control sequence for alternative font 1 overrides the identical 
 control sequence to select the VGA character set. Configuring alternative 
