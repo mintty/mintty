@@ -59,6 +59,7 @@ const config default_cfg = {
   .fontfams[7] = {.name = W(""), .weight = 400, .isbold = false},
   .fontfams[8] = {.name = W(""), .weight = 400, .isbold = false},
   .fontfams[9] = {.name = W(""), .weight = 400, .isbold = false},
+  .fontfams[10] = {.name = W(""), .weight = 400, .isbold = false},
   .font_sample = W(""),
   .show_hidden_fonts = false,
   .font_smoothing = FS_DEFAULT,
@@ -252,6 +253,8 @@ options[] = {
   {"Font8Weight", OPT_INT, offcfg(fontfams[8].weight)},
   {"Font9", OPT_WSTRING, offcfg(fontfams[9].name)},
   {"Font9Weight", OPT_INT, offcfg(fontfams[9].weight)},
+  {"Font10", OPT_WSTRING, offcfg(fontfams[10].name)},
+  {"Font10Weight", OPT_INT, offcfg(fontfams[10].weight)},
 
   // Keys
   {"BackspaceSendsBS", OPT_BOOL, offcfg(backspace_sends_bs)},

@@ -57,7 +57,7 @@ typedef struct {
   bool cursor_blinks;
   // Text
   font_spec font;
-  font_spec fontfams[10];
+  font_spec fontfams[11];
   wstring font_sample;
   bool show_hidden_fonts;
   char font_smoothing;

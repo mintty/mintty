@@ -832,10 +832,13 @@ If a font family has no bold weight but boldness was requested, mintty
 does not adhere to this scheme but enforces bold font selection; however, 
 in this case the bold attribute may not be effective.
 .br
-\(en \fBAlternative fonts\fP (Font1= ... Font9= , Font1Weight= ... Font9Weight=):
-With these settings, up to 9 alternative fonts (and optionally weights) 
+\(en \fBAlternative fonts\fP (Font1= ... Font10= , Font1Weight= ... Font10Weight=):
+With these settings, up to 10 alternative fonts (and optionally weights) 
 can be configured which would then be selectable via ECMA-48 SGR character attributes 
 (see Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips#text-attributes-and-rendering\fP).
+\fINote:\fP Font10 has a special preference property; if it is not configured, 
+mintty will try to activate it anyway, looking for an installed 
+Fraktur or Blackletter font (ECMA-48 "Gothic").
 \fINote:\fP The control sequence for alternative font 1 overrides the identical 
 control sequence to select the VGA character set, which would thus be disabled. 
 Configuring alternative font 1 is therefore discouraged.

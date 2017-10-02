@@ -435,9 +435,11 @@ a collection of such fonts can be found at [Nerd Fonts](http://nerdfonts.com/).
 
 ### Alternative fonts ###
 
-Mintty supports up to 9 alternative fonts that can be selected as 
+Mintty supports up to 10 alternative fonts that can be selected as 
 character attributes (see Text attributes below). They are configured 
-in the config file (see manual page).
+in the config file (see manual page), except for font 10 which has a 
+default preference; mintty will try to find a Fraktur or Blackletter font 
+for it on your system.
 <img align=top src=https://github.com/mintty/mintty/wiki/mintty-alternative-fonts.png>
 
 
@@ -519,6 +521,7 @@ Mintty supports a maximum of usual and unusual text attributes:
 | 12                     | 10                | alternative font 2            |
 | ...                    | 10                | alternative fonts 3...8       |
 | 19                     | 10                | alternative font 9            |
+| 20                     | 23, 10            | Fraktur/Blackletter font      |
 | 21                     | 24                | doubly underline              |
 | 53                     | 55                | overline                      |
 | 30...37                | 39                | foreground ANSI colour        |
@@ -530,6 +533,9 @@ Mintty supports a maximum of usual and unusual text attributes:
 | 38;2;R;G;B             | 39                | foreground true colour        |
 | 48;2;R;G;B             | 49                | background true colour        |
 | _any_                  | 0                 |                               |
+
+Note: The control sequences for Fraktur (“Gothic”) font are described 
+in EMCA-48, see also [wiki:ANSI code](https://en.wikipedia.org/wiki/ANSI_escape_code).
 
 Note: The control sequence for alternative font 1 overrides the identical 
 control sequence to select the VGA character set. Configuring alternative 

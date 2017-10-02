@@ -414,7 +414,7 @@ do_esc(uchar c)
 
   // NRC tweaks
   uchar nrc_designate = 0;
-  uchar nrc_select;
+  uchar nrc_select = 0;
   // first check for two-character character set designations (%5, %6)
   if (term.esc_mod == 0xFF && esc_mod1 == '%'
       && strchr("()-*.+/", esc_mod0)) {
@@ -632,13 +632,16 @@ do_sgr(void)
             term_update_cs();
           }
         }
-      when 12 ... 19:
+      when 12 ... 20:
         attr.attr &= ~FONTFAM_MASK;
         attr.attr |= (unsigned long long)(term.csi_argv[i] - 10) << ATTR_FONTFAM_SHIFT;
       //when 21: attr.attr &= ~ATTR_BOLD;
       when 21: attr.attr |= ATTR_DOUBLYUND;
       when 22: attr.attr &= ~(ATTR_BOLD | ATTR_DIM);
-      when 23: attr.attr &= ~ATTR_ITALIC;
+      when 23:
+        attr.attr &= ~ATTR_ITALIC;
+        if (((attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT) + 10 == 20)
+          attr.attr &= ~FONTFAM_MASK;
       when 24: attr.attr &= ~(ATTR_UNDER | ATTR_DOUBLYUND);
       when 25: attr.attr &= ~(ATTR_BLINK | ATTR_BLINK2);
       when 27: attr.attr &= ~ATTR_REVERSE;
@@ -1236,17 +1239,15 @@ do_csi(uchar c)
     when CPAIR('*', '|'):     /* DECSNLS */
      /*
       * Set number of lines on screen
-      * VT420 uses VGA like hardware and can
-      * support any size in reasonable range
-      * (24..49 AIUI) with no default specified.
+      * VT420 uses VGA like hardware and can support any size 
+      * in reasonable range (24..49 AIUI) with no default specified.
       */
       win_set_chars(arg0 ?: cfg.rows, term.cols);
       term.selected = false;
     when CPAIR('$', '|'):     /* DECSCPP */
      /*
       * Set number of columns per page
-      * Docs imply range is only 80 or 132, but
-      * I'll allow any.
+      * Docs imply range is only 80 or 132, but I'll allow any.
       */
       win_set_chars(term.rows, arg0 ?: cfg.cols);
       term.selected = false;
@@ -1263,7 +1264,7 @@ do_csi(uchar c)
       }
     }
     when 'x':        /* DECREQTPARM: report terminal characteristics */
-      child_printf("\e[%c;1;1;112;112;1;0x", '2' + arg0);
+      child_printf("\e[%u;1;1;120;120;1;0x", arg0 + 1);
     when 'Z': {      /* CBT (Cursor Backward Tabulation) */
       int n = arg0_def1;
       while (--n >= 0 && curs->x > 0) {

@@ -111,7 +111,7 @@ struct fontfam {
   int descent;
   // VT100 linedraw character mappings for current font:
   wchar win_linedraw_chars[LDRAW_CHAR_NUM];
-} fontfamilies[10];
+} fontfamilies[11];
 
 wchar
 win_linedraw_char(int i)
@@ -650,6 +650,58 @@ win_init_fontfamily(HDC dc, int findex)
   ff->fontflag[0] = ff->fontflag[1] = ff->fontflag[2] = 1;
 }
 
+static wstring
+wcscasestr(wstring in, wstring find)
+{
+  int l = wcslen(find);
+  wstring look = in;
+  for (int i = 0; i <= (int)wcslen(in) - l; i++, look++) { // uint fails!
+    if (0 == wcsncasecmp(look, find, l)) {
+      return look;
+    }
+  }
+  return 0;
+}
+
+static void
+findFraktur(wstring * fnp)
+{
+  LOGFONTW lf;
+  wcscpy(lf.lfFaceName, W(""));
+  lf.lfPitchAndFamily = 0;
+  lf.lfCharSet = ANSI_CHARSET;   // report only ANSI character range
+
+  int CALLBACK enum_fonts(const LOGFONTW * lfp, const TEXTMETRICW * tmp, DWORD fontType, LPARAM lParam)
+  {
+    (void)tmp;
+    (void)fontType;
+    (void)lParam;
+
+    //trace_font(("%ls %ldx%ld (%ldx%ld) %ld it %d cs %d %s\n", lfp->lfFaceName, (long int)lfp->lfWidth, (long int)lfp->lfHeight, (long int)tmp->tmAveCharWidth, (long int)tmp->tmHeight, (long int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
+    trace_font(("%ls %ldx%ld %ld it %d cs %d %s\n", lfp->lfFaceName, (long int)lfp->lfWidth, (long int)lfp->lfHeight, (long int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
+    if ((lfp->lfPitchAndFamily & 3) == FIXED_PITCH
+     && !lfp->lfCharSet
+     && lfp->lfFaceName[0] != '@'
+       )
+    {
+      if (wcscasestr(lfp->lfFaceName, W("Fraktur"))) {
+        *fnp = wcsdup(lfp->lfFaceName);
+        return 0;  // done
+      }
+      else if (wcscasestr(lfp->lfFaceName, W("Blackletter"))) {
+        *fnp = wcsdup(lfp->lfFaceName);
+        // continue to look for "Fraktur"
+      }
+    }
+    return 1;  // continue
+  }
+
+  HDC dc = GetDC(0);
+  EnumFontFamiliesExW(dc, 0, enum_fonts, 0, 0);
+  trace_font(("font width (%d)%d(%d)/(%d)%d(%d)", fw_norm_0, ff->fw_norm, fw_norm_1, fw_bold_0, ff->fw_bold, fw_bold_1));
+  ReleaseDC(0, dc);
+}
+
 /*
  * Initialize fonts for all configured font families.
  */
@@ -685,6 +737,8 @@ win_init_fonts(int size)
       fontfamilies[fi].weight = cfg.fontfams[fi].weight;
       fontfamilies[fi].isbold = false;
     }
+    if (fi == 20 - 10 && !*(fontfamilies[fi].name))
+      findFraktur(&fontfamilies[fi].name);
     if (initinit)
       fontfamilies[fi].name_reported = null;
 
