@@ -1011,6 +1011,41 @@ get_mode(bool privatemode, int arg)
   }
 }
 
+struct mode_entry {
+  int mode, val;
+};
+static struct mode_entry * mode_stack = 0;
+static int mode_stack_len = 0;
+
+static void
+push_mode(int mode, int val)
+{
+  struct mode_entry * new_stack = renewn(mode_stack, mode_stack_len + 1);
+  if (new_stack) {
+    mode_stack = new_stack;
+    mode_stack[mode_stack_len].mode = mode;
+    mode_stack[mode_stack_len].val = val;
+    mode_stack_len++;
+  }
+}
+
+static int
+pop_mode(int mode)
+{
+  for (int i = mode_stack_len - 1; i >= 0; i--)
+    if (mode_stack[i].mode == mode) {
+      int val = mode_stack[i].val;
+      mode_stack_len--;
+      for (int j = i; j < mode_stack_len; j++)
+        mode_stack[j] = mode_stack[j + 1];
+      struct mode_entry * new_stack = renewn(mode_stack, mode_stack_len);
+      if (new_stack)
+        mode_stack = new_stack;
+      return val;
+    }
+  return -1;
+}
+
 /*
  * dtterm window operations and xterm extensions.
    CSI Ps ; Ps ; Ps t
@@ -1176,6 +1211,20 @@ do_csi(uchar c)
       set_modes(true);
     when 'l' or CPAIR('?', 'l'):  /* RM/DECRST: reset (private) modes */
       set_modes(false);
+    when CPAIR('?', 's'): { /* Save DEC Private Mode (DECSET) values */
+      int arg = term.csi_argv[0];
+      int val = get_mode(true, arg);
+      if (val)
+        push_mode(arg, val);
+    }
+    when CPAIR('?', 'r'): { /* Restore DEC Private Mode (DECSET) values */
+      int arg = term.csi_argv[0];
+      int val = pop_mode(arg);
+      if (val >= 0) {
+        term.csi_argc = 1;
+        set_modes(val & 1);
+      }
+    }
     when CPAIR('$', 'p'): { /* DECRQM: request (private) mode */
       int arg = term.csi_argv[0];
       child_printf("\e[%s%u;%u$y",
@@ -1271,7 +1320,8 @@ do_csi(uchar c)
       }
     }
     when 'x':        /* DECREQTPARM: report terminal characteristics */
-      child_printf("\e[%u;1;1;120;120;1;0x", arg0 + 1);
+      if (arg0 <= 1)
+        child_printf("\e[%u;1;1;120;120;1;0x", arg0 + 2);
     when 'Z': {      /* CBT (Cursor Backward Tabulation) */
       int n = arg0_def1;
       while (--n >= 0 && curs->x > 0) {
