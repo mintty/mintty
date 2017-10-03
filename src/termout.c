@@ -25,8 +25,8 @@
 #define CPAIR(x, y) ((x) << 8 | (y))
 
 static string primary_da1 = "\e[?1;2c";
-static string primary_da2 = "\e[?62;1;2;4;6;9;15;22c";
-static string primary_da3 = "\e[?63;1;2;4;6;9;15;22c";
+static string primary_da2 = "\e[?62;1;2;4;6;9;15;22;29c";
+static string primary_da3 = "\e[?63;1;2;4;6;9;15;22;29c";
 
 
 static bool
@@ -1353,7 +1353,7 @@ do_csi(uchar c)
           child_printf("\e[?%un", 11 - !!*cfg.printer);
         // DEC Locator
         when 53 or 55:
-          child_printf("\e[?50n");  // change to 53 when fully implemented
+          child_printf("\e[?53n");
         when 56:
           child_printf("\e[?57;1n");
       }
@@ -1361,8 +1361,11 @@ do_csi(uchar c)
     when CPAIR('\'', 'z'): {  /* DECELR: enable locator reporting */
       switch (arg0) {
         when 0:
-          term.mouse_mode = 0;
-          win_update_mouse();
+          if (term.mouse_mode == MM_LOCATOR) {
+            term.mouse_mode = 0;
+            win_update_mouse();
+          }
+          term.locator_1_enabled = false;
         when 1:
           term.mouse_mode = MM_LOCATOR;
           win_update_mouse();
@@ -1376,14 +1379,38 @@ do_csi(uchar c)
         when 1:
           term.locator_by_pixels = true;
       }
+      term.locator_rectangle = false;
+    }
+    when CPAIR('\'', '{'): {  /* DECSLE: select locator events */
+      for (uint i = 0; i < term.csi_argc; i++)
+        switch (term.csi_argv[i]) {
+          when 0: term.locator_report_up = term.locator_report_dn = false;
+          when 1: term.locator_report_dn = true;
+          when 2: term.locator_report_dn = false;
+          when 3: term.locator_report_up = true;
+          when 4: term.locator_report_up = false;
+        }
     }
     when CPAIR('\'', '|'): {  /* DECRQLP: request locator position */
-      if (term.locator_1_enabled) {
-        int x, y, button;
-        win_get_locator_info(&x, &y, &button, term.locator_by_pixels);
-        child_printf("\e[1;%d;%d;%d;0&w", button, y, x);
+      if (term.mouse_mode == MM_LOCATOR || term.locator_1_enabled) {
+        int x, y, buttons;
+        win_get_locator_info(&x, &y, &buttons, term.locator_by_pixels);
+        child_printf("\e[1;%d;%d;%d;0&w", buttons, y, x);
         term.locator_1_enabled = false;
       }
+      else {
+        //child_printf("\e[0&w");  // xterm reports this if loc. compiled in
+      }
+    }
+    when CPAIR('\'', 'w'): {  /* DECEFR: enable filter rectangle */
+      int arg2 = term.csi_argv[2], arg3 = term.csi_argv[3];
+      int x, y, buttons;
+      win_get_locator_info(&x, &y, &buttons, term.locator_by_pixels);
+      term.locator_top = arg0 ?: y;
+      term.locator_left = arg1 ?: x;
+      term.locator_bottom = arg2 ?: y;
+      term.locator_right = arg3 ?: x;
+      term.locator_rectangle = true;
     }
   }
 }

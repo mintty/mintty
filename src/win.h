@@ -27,7 +27,7 @@ extern void win_text(int x, int y, wchar *text, int len, cattr attr, cattr *text
 
 extern void win_update_mouse(void);
 extern void win_capture_mouse(void);
-extern void win_get_locator_info(int *x, int *y, int *button, bool by_pixels);
+extern void win_get_locator_info(int *x, int *y, int *buttons, bool by_pixels);
 
 extern void win_bell(config *);
 

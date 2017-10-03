@@ -527,7 +527,7 @@ win_mouse_wheel(WPARAM wp, LPARAM lp)
 }
 
 void
-win_get_locator_info(int *x, int *y, int *button, bool by_pixels)
+win_get_locator_info(int *x, int *y, int *buttons, bool by_pixels)
 {
   POINT p = {-1, -1};
 
@@ -543,7 +543,7 @@ win_get_locator_info(int *x, int *y, int *button, bool by_pixels)
     }
   }
 
-  *button = button_state;
+  *buttons = button_state;
 }
 
 

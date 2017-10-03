@@ -196,6 +196,9 @@ term_reset(bool full)
     term.mouse_enc = ME_X10;
     term.locator_by_pixels = false;
     term.locator_1_enabled = false;
+    term.locator_report_up = false;
+    term.locator_report_dn = false;
+    term.locator_rectangle = false;
     term.report_focus = 0;  // xterm only with RIS
     term.report_font_changed = 0;
     term.report_ambig_width = 0;

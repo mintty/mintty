@@ -221,12 +221,45 @@ typedef enum {
   MA_MOVE = 1,
   MA_WHEEL = 2,
   MA_RELEASE = 3
-} mouse_action;
+} mouse_action;  // values are significant, used for calculation!
 
 static void
 send_mouse_event(mouse_action a, mouse_button b, mod_keys mods, pos p)
 {
   if (term.mouse_mode == MM_LOCATOR) {
+    // handle DECSLE: select locator events
+    if ((a == MA_CLICK && term.locator_report_up)
+     || (a == MA_RELEASE && term.locator_report_dn)) {
+      int pe = 0;
+      switch (b) {
+        when MBT_LEFT:
+          pe = a == MA_CLICK ? 2 : 3;
+        when MBT_MIDDLE:
+          pe = a == MA_CLICK ? 4 : 5;
+        when MBT_RIGHT:
+          pe = a == MA_CLICK ? 6 : 7;
+      }
+      if (pe) {
+        int x, y, buttons;
+        win_get_locator_info(&x, &y, &buttons, term.locator_by_pixels);
+        child_printf("\e[%d;%d;%d;%d;0&w", pe, buttons, y, x);
+        term.locator_rectangle = false;
+      }
+    }
+    // handle DECEFR: enable filter rectangle
+    else if (a == MA_MOVE && term.locator_rectangle) {
+      /* Anytime the locator is detected outside of the filter
+         rectangle, an outside rectangle event is generated and the
+         rectangle is disabled.
+      */
+      int x, y, buttons;
+      win_get_locator_info(&x, &y, &buttons, term.locator_by_pixels);
+      if (x < term.locator_left || x > term.locator_right
+          || y < term.locator_top || y > term.locator_bottom) {
+        child_printf("\e[10;%d;%d;%d;0&w", buttons, y, x);
+        term.locator_rectangle = false;
+      }
+    }
     return;
   }
 

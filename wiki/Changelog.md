@@ -12,7 +12,7 @@ Terminal control
   * Implemented DECSTR soft terminal reset.
   * Implemented DSR DEC variant (cursor/printer status).
   * Implemented Save/Restore DEC Private Mode (DECSET) values (#267).
-  * DEC Locator single reports (saitoha/libsixel#50).
+  * DEC Locator.
 
 Character display
   * Tweaked width expansion of ambiguous-width characters (#680, ~#638, ~#615).

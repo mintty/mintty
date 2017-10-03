@@ -472,6 +472,10 @@ struct term {
 
   bool locator_1_enabled;
   bool locator_by_pixels;
+  bool locator_report_up;
+  bool locator_report_dn;
+  bool locator_rectangle;
+  int locator_top, locator_left, locator_bottom, locator_right;
 
   bool sel_rect, selected;
   pos sel_start, sel_end, sel_anchor;
