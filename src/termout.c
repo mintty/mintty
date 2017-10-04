@@ -243,11 +243,17 @@ write_primary_da(void)
   child_write(primary_da, strlen(primary_da));
 }
 
+static wchar last_char = 0;
+static int last_width = 0;
+
 static void
 write_char(wchar c, int width)
 {
   if (!c)
     return;
+
+  last_char = c;
+  last_width = width;
 
   term_cursor *curs = &term.curs;
   termline *line = term.lines[curs->y];
@@ -1137,6 +1143,9 @@ do_csi(uchar c)
   switch (CPAIR(term.esc_mod, c)) {
     when CPAIR('!', 'p'):     /* DECSTR: soft terminal reset */
       term_reset(false);
+    when 'b':        /* REP: repeat preceding character */
+      for (int i = 0; i < arg0_def1; i++)
+        write_char(last_char, last_width);
     when 'A':        /* CUU: move up N lines */
       move(curs->x, curs->y - arg0_def1, 1);
     when 'e':        /* VPR: move down N lines */
