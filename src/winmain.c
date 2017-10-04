@@ -1248,6 +1248,20 @@ win_update_scrollbar(void)
                SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 }
 
+void
+win_font_cs_reconfig(bool font_changed)
+{
+  bool old_ambig_wide = cs_ambig_wide;
+  cs_reconfig();
+  if (term.report_font_changed && font_changed)
+    if (term.report_ambig_width)
+      child_write(cs_ambig_wide ? "\e[2W" : "\e[1W", 4);
+    else
+      child_write("\e[0W", 4);
+  else if (term.report_ambig_width && old_ambig_wide != cs_ambig_wide)
+    child_write(cs_ambig_wide ? "\e[2W" : "\e[1W", 4);
+}
+
 static void
 font_cs_reconfig(bool font_changed)
 {
@@ -1260,15 +1274,7 @@ font_cs_reconfig(bool font_changed)
   win_update_transparency(cfg.opaque_when_focused);
   win_update_mouse();
 
-  bool old_ambig_wide = cs_ambig_wide;
-  cs_reconfig();
-  if (term.report_font_changed && font_changed)
-    if (term.report_ambig_width)
-      child_write(cs_ambig_wide ? "\e[2W" : "\e[1W", 4);
-    else
-      child_write("\e[0W", 4);
-  else if (term.report_ambig_width && old_ambig_wide != cs_ambig_wide)
-    child_write(cs_ambig_wide ? "\e[2W" : "\e[1W", 4);
+  win_font_cs_reconfig(font_changed);
 }
 
 void

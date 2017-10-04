@@ -38,6 +38,9 @@ extern bool per_monitor_dpi_aware;
 extern void win_paint(void);
 
 extern void win_init_fonts(int size);
+extern wstring win_get_font(uint findex);
+extern void win_change_font(uint findex, wstring fn);
+extern void win_font_cs_reconfig(bool font_changed);
 
 extern void win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size);
 

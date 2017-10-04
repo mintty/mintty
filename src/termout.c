@@ -4,6 +4,7 @@
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "termpriv.h"
+#include "winpriv.h"  // win_get_font, win_change_font
 
 #include "win.h"
 #include "appinfo.h"
@@ -1832,6 +1833,20 @@ do_cmd(void)
         term.wide_extra = true;
     }
     when 52: do_clipboard();
+    when 50: {
+      uint ff = (term.curs.attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+      if (!strcmp(s, "?")) {
+        char * fn = cs__wcstombs(win_get_font(ff) ?: W(""));
+        child_printf("\e]50;%s\e\\", fn);
+        free(fn);
+      }
+      else {
+        if (ff < lengthof(cfg.fontfams) - 1) {
+          wstring wfont = cs__mbstowcs(s);  // let this leak...
+          win_change_font(ff, wfont);
+        }
+      }
+    }
   }
 }
 

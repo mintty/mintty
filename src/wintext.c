@@ -749,6 +749,29 @@ win_init_fonts(int size)
   ReleaseDC(wnd, dc);
 }
 
+wstring
+win_get_font(uint fi)
+{
+  if (fi < lengthof(fontfamilies))
+    return fontfamilies[fi].name;
+  else
+    return null;
+}
+
+void
+win_change_font(uint fi, wstring fn)
+{
+  if (fi < lengthof(fontfamilies)) {
+    fontfamilies[fi].name = fn;
+    fontfamilies[fi].name_reported = null;
+    HDC dc = GetDC(wnd);
+    win_init_fontfamily(dc, fi);
+    ReleaseDC(wnd, dc);
+    win_adapt_term_size(true, false);
+    win_font_cs_reconfig(true);
+  }
+}
+
 uint
 win_get_font_size(void)
 {
