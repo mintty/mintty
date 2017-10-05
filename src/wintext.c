@@ -137,7 +137,7 @@ fontpropinfo()
   return fontinfo;
 }
 
-static uint
+uint
 colour_dist(colour a, colour b)
 {
   return
@@ -1339,6 +1339,39 @@ text_out_end()
 }
 
 /*
+ * Extract colour value from attribute;
+ * simplified version of the algorithm below.
+ */
+colour
+truecolour(cattr * pattr, colour bg)
+{
+  colour_i fgi = (pattr->attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
+  if (term.rvideo) {
+    if (fgi >= 256)
+      fgi ^= 2;     // (BOLD_)?FG_COLOUR_I <-> (BOLD_)?BG_COLOUR_I
+  }
+  if (pattr->attr & ATTR_BOLD && cfg.bold_as_colour) {
+    if (fgi < 8) {
+      fgi |= 8;     // (BLACK|...|WHITE)_I -> BOLD_(BLACK|...|WHITE)_I
+    }
+    else if (fgi >= 256 && fgi != TRUE_COLOUR && !cfg.bold_as_font) {
+      fgi |= 1;     // (FG|BG)_COLOUR_I -> BOLD_(FG|BG)_COLOUR_I
+    }
+  }
+
+  colour fg = fgi >= TRUE_COLOUR ? pattr->truefg : colours[fgi];
+  if (pattr->attr & ATTR_DIM) {
+    fg = (fg & 0xFEFEFEFE) >> 1; // Halve the brightness.
+    if (!cfg.bold_as_colour || fgi >= 256)
+      fg += (bg & 0xFEFEFEFE) >> 1; // Blend with background.
+  }
+  if (pattr->attr & ATTR_INVISIBLE)
+    fg = bg;
+
+  return fg;
+}
+
+/*
  * Draw a line of text in the window, at given character
  * coordinates, in given attributes.
  *
@@ -1480,9 +1513,9 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   if (has_cursor) {
     cursor_colour = colours[ime_open ? IME_CURSOR_COLOUR_I : CURSOR_COLOUR_I];
 
-    //uint mindist = 32768;
-    uint mindist = 22222;
-    //uint mindist = 8000;
+    //static uint mindist = 32768;
+    static uint mindist = 22222;
+    //static uint mindist = 8000;
     bool too_close = colour_dist(cursor_colour, bg) < mindist;
 
     if (too_close) {
@@ -1709,30 +1742,8 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
         if (combining_double && combiningdouble(text[i]))
           xx += char_width / 2;
         if (!termattrs_equal_fg(&textattr[i], &textattr[i - 1])) {
-          // determine colour to be used for combining characters;
-          // simplified version of the algorithm above
-          colour_i fgi = (textattr[i].attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
-          if (term.rvideo) {
-            if (fgi >= 256)
-              fgi ^= 2;     // (BOLD_)?FG_COLOUR_I <-> (BOLD_)?BG_COLOUR_I
-          }
-          if (textattr[i].attr & ATTR_BOLD && cfg.bold_as_colour) {
-            if (fgi < 8) {
-              fgi |= 8;     // (BLACK|...|WHITE)_I -> BOLD_(BLACK|...|WHITE)_I
-            }
-            else if (fgi >= 256 && fgi != TRUE_COLOUR && !cfg.bold_as_font) {
-              fgi |= 1;     // (FG|BG)_COLOUR_I -> BOLD_(FG|BG)_COLOUR_I
-            }
-          }
-          colour fg = fgi >= TRUE_COLOUR ? textattr[i].truefg : colours[fgi];
-          if (textattr[i].attr & ATTR_DIM) {
-            fg = (fg & 0xFEFEFEFE) >> 1; // Halve the brightness.
-            if (!cfg.bold_as_colour || fgi >= 256)
-              fg += (bg & 0xFEFEFEFE) >> 1; // Blend with background.
-          }
-          if (textattr[i].attr & ATTR_INVISIBLE)
-            fg = bg;
-
+          // determine colour to be used for combining characters
+          colour fg = truecolour(&textattr[i], bg);
           SetTextColor(dc, fg);
         }
         ulen = char1ulen(&text[i]);
@@ -2260,6 +2271,9 @@ win_combine_chars(wchar c, wchar cc)
     return 0;
 }
 
+
+// Colour settings
+
 void
 win_set_colour(colour_i i, colour c)
 {
@@ -2283,6 +2297,10 @@ static bool bold_colour_selected = false;
       colours[i] = cfg.bg_colour;
     else if (i == CURSOR_COLOUR_I)
       colours[i] = cfg.cursor_colour;
+    else if (i == SEL_COLOUR_I)
+      colours[i] = cfg.sel_bg_colour;
+    else if (i == SEL_TEXT_COLOUR_I)
+      colours[i] = cfg.sel_fg_colour;
 
     return;
   }
@@ -2367,4 +2385,6 @@ win_reset_colours(void)
   win_set_colour(CURSOR_COLOUR_I, cfg.cursor_colour);
   if (cfg.ime_cursor_colour != DEFAULT_COLOUR)
     win_set_colour(IME_CURSOR_COLOUR_I, cfg.ime_cursor_colour);
+  win_set_colour(SEL_COLOUR_I, cfg.sel_bg_colour);
+  win_set_colour(SEL_TEXT_COLOUR_I, cfg.sel_fg_colour);
 }

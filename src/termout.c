@@ -1692,6 +1692,7 @@ do_colour_osc(bool has_index_arg, uint i, bool reset)
         return;
     }
   }
+
   colour c;
   if (reset)
     win_set_colour(i, (colour)-1);
@@ -1766,9 +1767,13 @@ do_cmd(void)
     when 10:  do_colour_osc(false, FG_COLOUR_I, false);
     when 11:  do_colour_osc(false, BG_COLOUR_I, false);
     when 12:  do_colour_osc(false, CURSOR_COLOUR_I, false);
+    when 17:  do_colour_osc(false, SEL_COLOUR_I, false);
+    when 19:  do_colour_osc(false, SEL_TEXT_COLOUR_I, false);
     when 110: do_colour_osc(false, FG_COLOUR_I, true);
     when 111: do_colour_osc(false, BG_COLOUR_I, true);
     when 112: do_colour_osc(false, CURSOR_COLOUR_I, true);
+    when 117: do_colour_osc(false, SEL_COLOUR_I, true);
+    when 119: do_colour_osc(false, SEL_TEXT_COLOUR_I, true);
     when 7:  // Set working directory (from Mac Terminal) for Alt+F2
       // extract dirname from file://host/path scheme
       if (!strncmp(s, "file:", 5))

@@ -47,8 +47,12 @@ typedef enum {
   CURSOR_COLOUR_I      = 261,
   IME_CURSOR_COLOUR_I  = 262,
 
+  // Selection highlight colours
+  SEL_COLOUR_I         = 263,
+  SEL_TEXT_COLOUR_I    = 264,
+
   // Number of colours
-  COLOUR_NUM = 263,
+  COLOUR_NUM = 265,
 
   // True Colour indicator
   // assert (TRUE_COLOUR % 4) == 0 so that checking x >= TRUE_COLOUR

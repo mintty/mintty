@@ -42,6 +42,8 @@ extern colour win_get_colour(colour_i);
 extern void win_set_colour(colour_i, colour);
 extern void win_reset_colours(void);
 extern colour win_get_sys_colour(bool fg);
+extern uint colour_dist(colour a, colour b);
+extern colour truecolour(cattr *, colour bg);
 
 extern void win_invalidate_all(void);
 

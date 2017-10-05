@@ -1149,8 +1149,25 @@ term_paint(void)
           : posle(term.sel_start, scrpos) && poslt(scrpos, term.sel_end)
         );
 
-      if (selected)
-        tattr.attr ^= ATTR_REVERSE;
+      if (selected) {
+        colour bg = win_get_colour(SEL_COLOUR_I);
+        if (bg != (colour)-1) {
+          tattr.truebg = bg;
+          tattr.attr = (tattr.attr & ~ATTR_BGMASK) | (TRUE_COLOUR << ATTR_BGSHIFT);
+
+          colour fg = win_get_colour(SEL_TEXT_COLOUR_I);
+          if (fg == (colour)-1)
+            fg = truecolour(&tattr, tattr.truebg);
+          static uint mindist = 22222;
+          bool too_close = colour_dist(fg, tattr.truebg) < mindist;
+          if (too_close)
+            fg = brighten(fg, tattr.truebg);
+          tattr.truefg = fg;
+          tattr.attr = (tattr.attr & ~ATTR_FGMASK) | (TRUE_COLOUR << ATTR_FGSHIFT);
+        }
+        else
+          tattr.attr ^= ATTR_REVERSE;
+      }
 
       bool flashchar = term.in_vbell &&
                        ((cfg.bell_flash_style & FLASH_FULL)
