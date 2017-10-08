@@ -702,6 +702,23 @@ win_key_down(WPARAM wp, LPARAM lp)
   GetKeyboardState(kbd);
   inline bool is_key_down(uchar vk) { return kbd[vk] & 0x80; }
 
+  // Fix AltGr detection;
+  // workaround for broken Windows on-screen keyboard (#692)
+  if (!cfg.old_altgr_detection) {
+    static bool lmenu_tweak = false;
+    if (key == VK_MENU && !scancode) {
+      extended = true;
+      scancode = 312;
+      kbd[VK_RMENU] = 0x80;
+      kbd[VK_LMENU] = 0;
+      lmenu_tweak = true;
+    }
+    else if (lmenu_tweak) {
+      kbd[VK_LMENU] = 0;
+      lmenu_tweak = false;
+    }
+  }
+
   // Distinguish real LCONTROL keypresses from fake messages sent for AltGr.
   // It's a fake if the next message is an RMENU with the same timestamp.
   if (key == VK_CONTROL && !extended) {

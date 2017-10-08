@@ -73,6 +73,7 @@ typedef struct {
   bool backspace_sends_bs;
   bool delete_sends_del;
   bool ctrl_alt_is_altgr;
+  bool old_altgr_detection;
   bool clip_shortcuts;
   bool window_shortcuts;
   bool switch_shortcuts;
