@@ -653,6 +653,9 @@ win_init_fontfamily(HDC dc, int findex)
 static wstring
 wcscasestr(wstring in, wstring find)
 {
+#if CYGWIN_VERSION_API_MINOR < 206
+#define wcsncasecmp wcsncmp
+#endif
   int l = wcslen(find);
   wstring look = in;
   for (int i = 0; i <= (int)wcslen(in) - l; i++, look++) { // uint fails!

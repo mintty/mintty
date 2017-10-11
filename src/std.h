@@ -24,6 +24,21 @@
 #include <errno.h>
 
 
+static inline void *
+_realloc(void *aptr, size_t nbytes)
+{
+  if (aptr)
+    return realloc(aptr, nbytes);
+  else
+    return malloc(nbytes);
+}
+
+#define new(type) ((type *) malloc(sizeof(type)))
+#define newn(type, n) ((type *) calloc((n), sizeof(type)))
+#define renewn(p, n) ((typeof(p)) _realloc((p), sizeof(*p) * (n)))
+static inline void delete(const void *p) { free((void *)p); }
+
+
 extern char * tmpdir(void);
 
 
@@ -88,6 +103,26 @@ typedef const wchar *wstring;
 #define null ((void *) 0)
 
 
+#define strappend(s0, s1) s0 = _strappend(s0, s1)
+#define wcsappend(s0, s1) s0 = _wcsappend(s0, s1)
+
+static inline char *
+_strappend(char * s0, char * s1)
+{
+  s0 = renewn(s0, strlen(s0) + strlen(s1) + 1);
+  strcat(s0, s1);
+  return s0;
+}
+
+static inline wchar *
+_wcsappend(wchar * s0, wchar * s1)
+{
+  s0 = renewn(s0, wcslen(s0) + wcslen(s1) + 1);
+  wcscat(s0, s1);
+  return s0;
+}
+
+
 // UTF-16 literals:
 #if __GNUC__ >= 5
 #define __W(s) u##s
@@ -107,21 +142,6 @@ extern wchar * wloctext(string msg);
 
 #define lengthof(array) (sizeof(array) / sizeof(*(array)))
 #define endof(array) (&(array)[lengthof(array)])
-
-
-static inline void *
-_realloc(void *aptr, size_t nbytes)
-{
-  if (aptr)
-    return realloc(aptr, nbytes);
-  else
-    return malloc(nbytes);
-}
-
-#define new(type) ((type *) malloc(sizeof(type)))
-#define newn(type, n) ((type *) calloc((n), sizeof(type)))
-#define renewn(p, n) ((typeof(p)) _realloc((p), sizeof(*p) * (n)))
-static inline void delete(const void *p) { free((void *)p); }
 
 
 extern void strset(string *sp, string s);
