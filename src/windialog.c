@@ -218,6 +218,16 @@ debug(char *tag)
 
 #define dont_debug_version_check 1
 
+#ifdef WSLTTY_VERSION
+char * mtv = "https://raw.githubusercontent.com/mintty/wsltty/master/VERSION";
+#define CHECK_APP "wsltty"
+#define CHECK_VERSION STRINGIFY(WSLTTY_VERSION)
+#else
+char * mtv = "https://raw.githubusercontent.com/mintty/mintty/master/VERSION";
+#define CHECK_APP APPNAME
+#define CHECK_VERSION VERSION
+#endif
+
 static char * version_available = 0;
 static bool version_retrieving = false;
 
@@ -232,9 +242,9 @@ display_update(char * new)
   //__ Options: dialog title: "mintty <release> available (for download)"
   char * avl = _("available");
   char * pat = "%s            ▶ %s %s %s ◀";
-  int len = strlen(opt) + strlen(APPNAME) + strlen(new) + strlen(avl) + strlen(pat) - 7;
+  int len = strlen(opt) + strlen(CHECK_APP) + strlen(new) + strlen(avl) + strlen(pat) - 7;
   char * msg = newn(char, len);
-  sprintf(msg, pat, opt, APPNAME, new, avl);
+  sprintf(msg, pat, opt, CHECK_APP, new, avl);
 #ifdef debug_version_check
   printf("new version <%s> -> '%s'\n", new, msg);
 #endif
@@ -288,7 +298,7 @@ update_available_version(bool ok)
      x  y  y  %
      x  y  z  ! =
   */
-  if (new && strcmp(new, VERSION))
+  if (new && strcmp(new, CHECK_VERSION))
     display_update(new);
   if (new && (!version_available || strcmp(new, version_available))) {
     if (version_available)
@@ -299,8 +309,6 @@ update_available_version(bool ok)
   printf("update_available_version -> available <%s>\n", version_available);
 #endif
 }
-
-char * mtv = "https://raw.githubusercontent.com/mintty/mintty/master/VERSION";
 
 static void
 deliver_available_version()
@@ -348,6 +356,9 @@ deliver_available_version()
 #endif
     if (S_OK != pURLDownloadToFile(NULL, mtv, wfn, 0, NULL))
       ok = false;
+#ifdef debug_version_check
+      printf("downloading %s -> %d to compare with <%s>\n", mtv, ok, CHECK_VERSION);
+#endif
     chmod(vfn, 0666);
   }
   else
@@ -717,7 +728,7 @@ win_open_config(void)
   // Set title of Options dialog explicitly to facilitate I18N
   //__ Options: dialog title
   SendMessageW(config_wnd, WM_SETTEXT, 0, (LPARAM)_W("Options"));
-  if (version_available && strcmp(VERSION, version_available))
+  if (version_available && strcmp(CHECK_VERSION, version_available))
     display_update(version_available);
   deliver_available_version();
 
