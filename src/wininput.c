@@ -709,12 +709,13 @@ win_key_down(WPARAM wp, LPARAM lp)
     if (key == VK_MENU && !scancode) {
       extended = true;
       scancode = 312;
+      kbd[VK_LMENU] = 0x00;
       kbd[VK_RMENU] = 0x80;
-      kbd[VK_LMENU] = 0;
       lmenu_tweak = true;
     }
     else if (lmenu_tweak) {
-      kbd[VK_LMENU] = 0;
+      kbd[VK_LMENU] = 0x00;
+      kbd[VK_RMENU] = 0x80;
       lmenu_tweak = false;
     }
   }
