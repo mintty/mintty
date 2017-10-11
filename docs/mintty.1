@@ -254,9 +254,23 @@ using the Linux path name.
 namespace and converted before opening in Windows.
 
 .TP
+\fB--WSL\fP \fIWSL DISTRIBUTION NAME\fP
+Run a WSL session, setting other parameters as appropriate and involving 
+the \fIwslbridge\fP gateway implicitly.
+If the distribution name is empty (\fB--WSL=\fP), the default WSL 
+installation is run; otherwise, it refers to the installed WSL packages 
+as listed by the Windows tool \fBwslconfig /l\fP.
+Implies \fB--wsl -o Locale=C -o Charset=UTF-8\fP, \fB--rootfs=\fP..., 
+and \fB--icon=\fP... if a respective icon file exists for the distribution.
+
+.TP
 \fB--rootfs\fP \fIROOTFOLDER\fP
 Provide the root filesystem folder to adjust path conversion properly 
 for the respective WSL installation.
+
+.TP
+\fB-~\fP
+Start in the user's home directory. Affects also WSL sessions.
 
 .TP
 \fB-H\fP, \fB--help\fP
@@ -478,7 +492,7 @@ For UTF-8 and other Unicode encodings such as GB18030, the entered code is
 interpreted as a Unicode codepoint and encoded accordingly before it is sent.
 For other encodings, the entered code is sent as is. 
 If it doesn't fit into one byte, it is sent as multiple bytes, with 
-the the most significant non-zero byte first.
+the most significant non-zero byte first.
 
 .SS Shortcuts
 
@@ -693,7 +707,7 @@ the system ANSI encoding.
 command-line.)
 .br
 Unicode-enabled settings: BellFile, ThemeFile, Title, ExitTitle, Icon, Log, 
-Language, Font, Printer, Answerback, SixelClipChars, 
+Language, Font, Font1..., FontSample, Printer, Answerback, SixelClipChars, 
 Class, AppID, AppName, AppLaunchCmd, DropCommands, UserCommands.
 
 Be careful when running multiple instances of mintty. If options are saved 

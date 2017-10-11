@@ -43,10 +43,10 @@ bool icon_is_from_shortcut = false;
 HINSTANCE inst;
 HWND wnd;
 HIMC imc;
+ATOM class_atom;
 
 static char **main_argv;
 static int main_argc;
-static ATOM class_atom;
 static bool invoked_from_shortcut = false;
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
 static bool invoked_with_appid = false;
@@ -83,7 +83,9 @@ static bool maxheight = false;
 static bool store_taskbar_properties = false;
 static bool prevent_pinning = false;
 bool support_wsl = false;
-wchar * wsl_basepath = 0;
+wstring wsl_basepath = 0;
+static char * wsl_guid = 0;
+static bool start_home = false;
 
 
 static HBITMAP caretbm;
@@ -417,6 +419,7 @@ win_switch(bool back, bool alternate)
   }
 }
 
+
 static void
 get_my_monitor_info(MONITORINFO *mip)
 {
@@ -583,6 +586,7 @@ search_monitors(int * minx, int * miny, HMONITOR lookup_mon, bool get_primary, M
   else
     return moni;  // number of monitors printed
 }
+
 
 /*
  * Minimise or restore the window in response to a server-side request.
@@ -1942,7 +1946,10 @@ option_error(char * msg, char * option)
   finish_config();  // ensure localized message
   // msg is in UTF-8, option is in current encoding
   char * optmsg = opterror_msg(_(msg), false, option, null);
-  char * fullmsg = asform("%s\n%s", optmsg, _("Try '--help' for more information"));
+  //char * fullmsg = asform("%s\n%s", optmsg, _("Try '--help' for more information"));
+  char * fullmsg = strdup(optmsg);
+  strappend(fullmsg, "\n");
+  strappend(fullmsg, _("Try '--help' for more information"));
   show_message(fullmsg, MB_ICONWARNING);
   exit(1);
 }
@@ -2254,6 +2261,186 @@ DEFINE_PROPERTYKEY(PKEY_AppUserModel_StartPinOption, 0x9f4c2855,0x9f79,0x4B39,0x
 #endif
 }
 
+
+#if CYGWIN_VERSION_API_MINOR >= 74
+
+static HKEY
+regopen(HKEY key, wstring subkey)
+{
+  HKEY hk = 0;
+  RegOpenKeyW(key, subkey, &hk);
+  return hk;
+}
+
+static void
+regclose(HKEY key)
+{
+  if (key)
+    RegCloseKey(key);
+}
+
+static wchar *
+getreg(HKEY key, wstring subkey, wstring attribute)
+{
+  DWORD blen;
+  int res = RegGetValueW(key, subkey, attribute, RRF_RT_ANY, 0, 0, &blen);
+  if (res)
+    return 0;
+  wchar * val = malloc(blen);
+  res = RegGetValueW(key, subkey, attribute, RRF_RT_ANY, 0, val, &blen);
+  if (res) {
+    free(val);
+    return 0;
+  }
+  return val;
+}
+
+#define dont_debug_reg_lxss
+
+static bool
+getlxssinfo(wstring wslname,
+            char ** wsl_guid, wstring * wsl_rootfs, wstring * wsl_icon)
+{
+  static wstring lxsskeyname = W("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Lxss");
+  HKEY lxss = regopen(HKEY_CURRENT_USER, lxsskeyname);
+  if (!lxss)
+    return false;
+
+  bool getlxssdistinfo(HKEY lxss, wchar * guid)
+  {
+    wchar * rootfs;
+    wchar * icon = 0;
+
+    wchar * bp = getreg(lxss, guid, W("BasePath"));
+    if (!bp)
+      return false;
+
+    wchar * pn = getreg(lxss, guid, W("PackageFamilyName"));
+    if (pn) {  // look for installation directory and icon file
+      rootfs = newn(wchar, wcslen(bp) + 8);
+      wcscpy(rootfs, bp);
+      wcscat(rootfs, W("\\rootfs"));
+      HKEY appdata = regopen(HKEY_CURRENT_USER, W("Software\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppModel\\SystemAppData"));
+      HKEY package = regopen(appdata, pn);
+      wchar * pfn = getreg(package, W("Schemas"), W("PackageFullName"));
+      regclose(package);
+      regclose(appdata);
+      // "%ProgramW6432%/WindowsApps/<PackageFullName>/images/icon.ico"
+      char * prf = getenv("ProgramW6432");
+      if (prf && pfn) {
+        icon = cs__mbstowcs(prf);
+        icon = renewn(icon, wcslen(icon) + wcslen(pfn) + 30);
+        wcscat(icon, W("\\WindowsApps\\"));
+        wcscat(icon, pfn);
+        wcscat(icon, W("\\images\\icon.ico"));
+      }
+    }
+    else {  // legacy
+      rootfs = wcsdup(bp);
+      // "%LOCALAPPDATA%/lxss/bash.ico"
+      char * icf = getenv("LOCALAPPDATA");
+      if (icf) {
+        icon = cs__mbstowcs(icf);
+        icon = renewn(icon, wcslen(icon) + 15);
+        wcscat(icon, W("\\lxss\\bash.ico"));
+      }
+    }
+#ifdef debug_reg_lxss
+    printf("WSL distribution name %ls\n", getreg(lxss, guid, W("DistributionName")));
+    printf("-- guid %ls\n", guid);
+    printf("-- root %ls\n", rootfs);
+    printf("-- pack %ls\n", pn);
+    printf("-- icon %ls\n", icon);
+#endif
+    *wsl_guid = cs__wcstoutf(guid);
+    *wsl_rootfs = rootfs;
+    *wsl_icon = icon;
+    return true;
+  }
+
+  if (!wslname || !*wslname) {
+    wchar * dd = getreg(HKEY_CURRENT_USER, lxsskeyname, W("DefaultDistribution"));
+    int ok = getlxssdistinfo(lxss, dd);
+    regclose(lxss);
+    return ok;
+  }
+  else {
+    DWORD nsubkeys = 0;
+    DWORD maxlensubkey;
+    DWORD ret;
+    // prepare enumeration of distributions
+    ret = RegQueryInfoKeyW(lxss,
+                           NULL, NULL, // class
+                           NULL,
+                           &nsubkeys, &maxlensubkey, // subkeys
+                           NULL,
+                           NULL, NULL, NULL, // values
+                           NULL, NULL);
+    // enumerate the distribution subkeys
+    for (uint i = 0; i < nsubkeys; i++) {
+      DWORD keylen = maxlensubkey + 2;
+      wchar subkey[keylen];
+      ret = RegEnumKeyW(lxss, i, subkey, keylen);
+      if (ret == ERROR_SUCCESS) {
+          wchar * dn = getreg(lxss, subkey, W("DistributionName"));
+          if (0 == wcscmp(dn, wslname)) {
+            int ok = getlxssdistinfo(lxss, subkey);
+            regclose(lxss);
+            return ok;
+          }
+      }
+    }
+    regclose(lxss);
+    return false;
+  }
+}
+
+bool
+wexists(wstring fn)
+{
+  WIN32_FIND_DATAW ffd;
+  HANDLE hFind = FindFirstFileW(fn, &ffd);
+  bool ok = hFind != INVALID_HANDLE_VALUE;
+  FindClose(hFind);
+  return ok;
+}
+
+bool
+waccess(wstring fn, int amode)
+{
+  string f = path_win_w_to_posix(fn);
+  bool ok = access(f, amode) == 0;
+  delete(f);
+  return ok;
+}
+
+static bool
+select_WSL(char * wsl)
+{
+  wchar * wslname = cs__mbstowcs(wsl);
+  wstring wsl_icon;
+  // set --rootfs implicitly
+  bool ok = getlxssinfo(wslname, &wsl_guid, &wsl_basepath, &wsl_icon);
+  free(wslname);
+  if (ok) {
+    // set --icon if WSL specific icon exists
+    if (wsl_icon) {
+      if (waccess(wsl_icon, R_OK))
+        cfg.icon = wsl_icon;
+      else
+        delete(wsl_icon);
+    }
+    // set implicit options --wsl -o Locale=C -o Charset=UTF-8
+    support_wsl = true;
+    set_arg_option("Locale", strdup("C"));
+    set_arg_option("Charset", strdup("UTF-8"));
+  }
+  return ok;
+}
+
+#endif
+
+
 #define usage __("Usage:")
 #define synopsis __("[OPTION]... [ PROGRAM [ARG]... | - ]")
 static char help[] =
@@ -2286,7 +2473,7 @@ static char help[] =
   "See manual page for further command line options and configuration.\n"
 );
 
-static const char short_opts[] = "+:c:C:eh:i:l:o:p:s:t:T:B:R:uw:HVdD";
+static const char short_opts[] = "+:c:C:eh:i:l:o:p:s:t:T:B:R:uw:HVdD~";
 
 static const struct option
 opts[] = {
@@ -2313,7 +2500,11 @@ opts[] = {
   {"nobidi",     no_argument,       0, ''},  // short option not enabled
   {"nortl",      no_argument,       0, ''},  // short option not enabled
   {"wsl",        no_argument,       0, ''},  // short option not enabled
+#if CYGWIN_VERSION_API_MINOR >= 74
+  {"WSL",        required_argument, 0, ''},  // short option not enabled
+#endif
   {"rootfs",     required_argument, 0, ''},  // short option not enabled
+  {"dir~",       no_argument,       0, '~'},
   {"help",       no_argument,       0, 'H'},
   {"version",    no_argument,       0, 'V'},
   {"nodaemon",   no_argument,       0, 'd'},
@@ -2412,7 +2603,8 @@ main(int argc, char *argv[])
     int opt = getopt_long(argc, argv, short_opts, opts, 0);
     if (opt == -1 || opt == 'e')
       break;
-    char *longopt = argv[optind - 1], *shortopt = (char[]){'-', optopt, 0};
+    char * longopt = argv[optind - 1];
+    char * shortopt = (char[]){'-', optopt, 0};
     switch (opt) {
       when 'c': load_config(optarg, 3);
       when 'C': load_config(optarg, false);
@@ -2488,6 +2680,14 @@ main(int argc, char *argv[])
       when '': cfg.bidi = 0;
       when '': support_wsl = true;
       when '': wsl_basepath = path_posix_to_win_w(optarg);
+#if CYGWIN_VERSION_API_MINOR >= 74
+      when '':
+        if (!select_WSL(optarg))
+          option_error(__("WSL distribution '%s' not found"), optarg);
+#endif
+      when '~':
+        start_home = true;
+        chdir(home);
       when '':
         if (chdir(optarg) < 0) {
           if (*optarg == '"' || *optarg == '\'')
@@ -2506,16 +2706,31 @@ main(int argc, char *argv[])
         cfg.daemonize_always = true;
       when 'H': {
         finish_config();  // ensure localized message
-        char * helptext = asform("%s %s %s\n\n%s", _(usage), APPNAME, _(synopsis), _(help));
+        //char * helptext = asform("%s %s %s\n\n%s", _(usage), APPNAME, _(synopsis), _(help));
+        char * helptext = strdup(_(usage));
+        strappend(helptext, " ");
+        strappend(helptext, APPNAME);
+        strappend(helptext, " ");
+        strappend(helptext, _(synopsis));
+        strappend(helptext, "\n\n");
+        strappend(helptext, _(help));
         show_info(helptext);
         free(helptext);
         return 0;
       }
       when 'V': {
         finish_config();  // ensure localized message
-        char * vertext =
-          asform("%s\n%s\n%s\n%s\n", 
-                 VERSION_TEXT, COPYRIGHT, LICENSE_TEXT, _(WARRANTY_TEXT));
+        //char * vertext =
+        //  asform("%s\n%s\n%s\n%s\n", 
+        //         VERSION_TEXT, COPYRIGHT, LICENSE_TEXT, _(WARRANTY_TEXT));
+        char * vertext = strdup(VERSION_TEXT);
+        strappend(vertext, "\n");
+        strappend(vertext, COPYRIGHT);
+        strappend(vertext, "\n");
+        strappend(vertext, LICENSE_TEXT);
+        strappend(vertext, "\n");
+        strappend(vertext, _(WARRANTY_TEXT));
+        strappend(vertext, "\n");
         show_info(vertext);
         free(vertext);
         return 0;
@@ -2586,9 +2801,25 @@ main(int argc, char *argv[])
 
   // Work out what to execute.
   argv += optind;
-  if (*argv && (argv[1] || strcmp(*argv, "-")))
+  if (wsl_guid) {
+    cmd = "/bin/wslbridge";
+    argc -= optind;
+    char ** new_argv = newn(char *, argc + 2 + 4 + start_home);
+    char ** pargv = new_argv;
+    *pargv++ = "-wslbridge";
+    *pargv++ = "--distro-guid";
+    *pargv++ = wsl_guid;
+    *pargv++ = "-t";
+    if (start_home)
+      *pargv++ = "-C~";
+    while (*argv)
+      *pargv++ = *argv++;
+    *pargv = 0;
+    argv = new_argv;
+  }
+  else if (*argv && (argv[1] || strcmp(*argv, "-")))
     cmd = *argv;
-  else {
+  else {  // argv is only "-"
     // Look up the user's shell.
     cmd = getenv("SHELL");
     cmd = cmd ? strdup(cmd) :
@@ -2607,8 +2838,16 @@ main(int argc, char *argv[])
 
     // Create new argument array.
     argv = newn(char *, 2);
-    *argv = arg0;
+    argv[0] = arg0;
+    argv[1] = 0;
   }
+#ifdef debug_reg_lxss
+  printf("exec <%s> argv", cmd);
+  char ** a = argv;
+  while (*a)
+    printf(" <%s>", *a++);
+  printf("\n");
+#endif
 
   // Load icon if specified.
   HICON large_icon = 0, small_icon = 0;
