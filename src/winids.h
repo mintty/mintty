@@ -7,7 +7,7 @@
 /* From MSDN: In the WM_SYSCOMMAND message, the four low-order bits of
  * wParam are used by Windows, and should be masked off, so we shouldn't
  * attempt to store information in them. Hence all these identifiers have
- * the low 4 bits clear. Also, identifiers should < 0xF000. */
+ * the low 4 bits clear. Also, identifiers should be < 0xF000. */
 
 #define IDM_OPEN            0x0010
 #define IDM_COPY            0x0020
@@ -29,5 +29,6 @@
 #define IDM_TOGLOG          0x01F0
 #define IDM_TOGCHARINFO     0x02F0
 #define IDM_USERCOMMAND     0x0300
+#define IDM_GOTAB           0x8000
 
 #endif

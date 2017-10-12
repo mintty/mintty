@@ -419,6 +419,46 @@ win_switch(bool back, bool alternate)
   }
 }
 
+static uint tabn = 0;
+static HWND * tabs = 0;
+
+void
+clear_tabs()
+{
+  if (tabn)
+    delete(tabs);
+  tabn = 0;
+  tabs = 0;
+}
+
+void
+add_tab(uint tabi, HWND wndi)
+{
+  if (tabi == tabn) {
+    tabn++;
+    tabs = renewn(tabs, tabn);
+    tabs[tabi] = wndi;
+  }
+}
+
+static HWND
+get_tab(uint tabi)
+{
+  if (tabi < tabn)
+    return tabs[tabi];
+  else
+    return 0;
+}
+
+static void
+win_gotab(uint n)
+{
+  HWND tab = get_tab(n);
+  ShowWindow(tab, SW_RESTORE);
+  // apparently, we don't have to fiddle with SetWindowPos as in win_switch
+  BringWindowToTop(tab);
+}
+
 
 static void
 get_my_monitor_info(MONITORINFO *mip)
@@ -1485,7 +1525,9 @@ static struct {
         }
       printf("                           %04X %s\n", (int)wp, idm_name);
 # endif
-      if ((wp & ~0xF) >= IDM_USERCOMMAND)
+      if ((wp & ~0xF) >= IDM_GOTAB)
+        win_gotab(wp - IDM_GOTAB);
+      else if ((wp & ~0xF) >= IDM_USERCOMMAND)
         user_command(wp - IDM_USERCOMMAND);
       else
       switch (wp & ~0xF) {  /* low 4 bits reserved to Windows */

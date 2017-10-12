@@ -24,6 +24,88 @@ static int transparency_pending = 0;
 
 /* Menu handling */
 
+static int tabi;
+
+static BOOL CALLBACK
+wnd_enum_tabs(HWND curr_wnd, LPARAM menu)
+{
+  WINDOWINFO curr_wnd_info;
+  curr_wnd_info.cbSize = sizeof(WINDOWINFO);
+  GetWindowInfo(curr_wnd, &curr_wnd_info);
+  if (class_atom == curr_wnd_info.atomWindowType) {
+    int len = GetWindowTextLengthW(curr_wnd);
+    wchar title[len + 1];
+    len = GetWindowTextW(curr_wnd, title, len + 1);
+
+    AppendMenuW((HMENU)menu, MF_ENABLED, IDM_GOTAB + tabi, title);
+    MENUITEMINFOW mi;
+    mi.cbSize = sizeof(MENUITEMINFOW);
+    mi.fMask = MIIM_DATA | MIIM_STATE;
+    mi.dwItemData = (ULONG_PTR)curr_wnd;
+    mi.fState = // (IsIconic(curr_wnd) ? MFS_DISABLED : 0) |
+                (curr_wnd == wnd ? MFS_DEFAULT : 0);
+#define iconic_icon
+#ifdef iconic_icon
+    mi.fMask |= MIIM_BITMAP;
+    if (IsIconic(curr_wnd))
+      mi.hbmpItem = HBMMENU_POPUP_MINIMIZE;
+    else
+      mi.hbmpItem = HBMMENU_POPUP_MAXIMIZE;
+#endif
+#ifdef show_icon_from_window
+#warning does not work, ICON needs to be converted to BITMAP
+    //HICON icon = (HICON)SendMessage(curr_wnd, WM_GETICON, ICON_SMALL2, 96);
+    //HICON icon = (HICON)GetClassLongPtr(curr_wnd, GCLP_HICONSM);
+    if (icon) {
+      mi.fMask |= MIIM_BITMAP;
+      mi.hbmpItem = (HBITMAP)icon;
+    }
+#endif
+#ifdef show_checkmarks
+#warning does not work
+    mi.fMask |= MIIM_CHECKMARKS;
+    mi.hbmpChecked = HBMMENU_POPUP_MAXIMIZE;
+    mi.hbmpUnchecked = HBMMENU_POPUP_MINIMIZE;
+    if (IsIconic(curr_wnd))
+      mi.fState |= MFS_CHECKED;
+#endif
+
+    SetMenuItemInfoW((HMENU)menu, IDM_GOTAB + tabi, 0, &mi);
+    add_tab(tabi, curr_wnd);
+
+    tabi++;
+  }
+  return true;
+}
+
+static void
+add_tabs(bool separate)
+{
+  uint bar = separate ? 0 : MF_MENUBARBREAK;
+  AppendMenuW(ctxmenu, MF_DISABLED | bar, 0, W("Tabs"));
+  AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
+  tabi = 0;
+  clear_tabs();
+  EnumWindows(wnd_enum_tabs, (LPARAM)ctxmenu);
+}
+
+static void
+go_tab()
+{
+  if (ctxmenu)
+    DestroyMenu(ctxmenu);
+  ctxmenu = CreatePopupMenu();
+
+  add_tabs(true);
+
+  POINT p;
+  GetCursorPos(&p);
+  TrackPopupMenu(
+    ctxmenu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
+    p.x, p.y, 0, wnd, null
+  );
+}
+
 #define dont_debug_modify_menu
 
 void
@@ -306,6 +388,8 @@ win_init_ctxmenu(bool extended_menu)
 
   //__ Context menu:
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_OPTIONS, _W("&Options..."));
+
+  add_tabs(false);
 }
 
 void
@@ -880,6 +964,7 @@ win_key_down(WPARAM wp, LPARAM lp)
         when 'A': term_select_all();
         when 'C': term_copy();
         when 'V': win_paste();
+        when 'I': go_tab();
         when 'N': send_syscommand(IDM_NEW);
         when 'W': send_syscommand(SC_CLOSE);
         when 'R': send_syscommand(IDM_RESET);
