@@ -127,15 +127,14 @@ win_open(wstring wpath)
           free(pbase);
         }
 
-        // prepend wsl_basepath "\\rootfs"
-        wchar * unwsl = newn(wchar, wcslen(wbase) + wcslen(wpath) + 8);
+        wchar * unwsl = newn(wchar, wcslen(wbase) + wcslen(wpath) + 1);
         wcscpy(unwsl, wbase);
-        wcscat(unwsl, W("\\rootfs"));
         wcscat(unwsl, wpath);
         delete(wpath);
         wpath = unwsl;
       }
       else if (*wpath == '/') {  // prepend %LOCALAPPDATA%\lxss[\rootfs]
+        // deprecated case; for WSL, wsl_basepath should be set
         char * appd = getenv("LOCALAPPDATA");
         if (appd) {
           wchar * wappd = cs__mbstowcs(appd);
@@ -587,24 +586,24 @@ paste_hdrop(HDROP drop)
         if (!wsl_root) {
           wsl_root = path_win_w_to_posix(wsl_basepath);
         }
-        // strip wsl_root "/rootfs"
+        // strip wsl_root
         int len = strlen(wsl_root);
-        if (strncmp(wsl_root, p, len) == 0
-            && strncmp(p + len, "/rootfs", 7) == 0
-           ) {
-          p += len + 7;
+        if (strncmp(wsl_root, p, len) == 0) {
+          p += len;
           if (!*p) {
             p--;
             *p = '/';
           }
         }
         else if (strncmp(p, "/cygdrive/", 10) == 0) {
+          // convert /cygdrive/X/path referring to mounted drive
           p += 5;
           strncpy(p, "/mnt", 4);
         }
       }
       else {
         // check for prefix %LOCALAPPDATA%\lxss
+        // deprecated case; for WSL, wsl_basepath should be set
         char * appd = getenv("LOCALAPPDATA");
         if (appd) {
           wchar * wappd = cs__mbstowcs(appd);
