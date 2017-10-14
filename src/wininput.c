@@ -561,6 +561,9 @@ win_mouse_click(mouse_button b, LPARAM lp)
       button_state |= 2;
     when MBT_LEFT:
       button_state |= 4;
+    when MBT_4:
+      button_state |= 8;
+    otherwise:;
   }
 }
 
@@ -576,6 +579,9 @@ win_mouse_release(mouse_button b, LPARAM lp)
       button_state &= ~2;
     when MBT_LEFT:
       button_state &= ~4;
+    when MBT_4:
+      button_state &= ~8;
+    otherwise:;
   }
 }
 

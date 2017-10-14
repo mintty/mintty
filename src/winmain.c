@@ -1607,9 +1607,19 @@ static struct {
     when WM_LBUTTONDOWN: win_mouse_click(MBT_LEFT, lp);
     when WM_RBUTTONDOWN: win_mouse_click(MBT_RIGHT, lp);
     when WM_MBUTTONDOWN: win_mouse_click(MBT_MIDDLE, lp);
+    when WM_XBUTTONDOWN:
+      switch (HIWORD(wp)) {
+        when XBUTTON1: win_mouse_click(MBT_4, lp);
+        when XBUTTON2: win_mouse_click(MBT_5, lp);
+      }
     when WM_LBUTTONUP: win_mouse_release(MBT_LEFT, lp);
     when WM_RBUTTONUP: win_mouse_release(MBT_RIGHT, lp);
     when WM_MBUTTONUP: win_mouse_release(MBT_MIDDLE, lp);
+    when WM_XBUTTONUP:
+      switch (HIWORD(wp)) {
+        when XBUTTON1: win_mouse_release(MBT_4, lp);
+        when XBUTTON2: win_mouse_release(MBT_5, lp);
+      }
 
     when WM_KEYDOWN or WM_SYSKEYDOWN:
       if (win_key_down(wp, lp))

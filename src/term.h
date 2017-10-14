@@ -261,7 +261,7 @@ typedef struct {
 } pos;
 
 typedef enum {
-  MBT_LEFT = 1, MBT_MIDDLE = 2, MBT_RIGHT = 3
+  MBT_LEFT = 1, MBT_MIDDLE = 2, MBT_RIGHT = 3, MBT_4 = 4, MBT_5 = 5
 } mouse_button;
 
 enum {

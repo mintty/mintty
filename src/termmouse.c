@@ -238,6 +238,9 @@ send_mouse_event(mouse_action a, mouse_button b, mod_keys mods, pos p)
           pe = a == MA_CLICK ? 4 : 5;
         when MBT_RIGHT:
           pe = a == MA_CLICK ? 6 : 7;
+        when MBT_4:
+          pe = a == MA_CLICK ? 8 : 9;
+        otherwise:;
       }
       if (pe) {
         int x, y, buttons;
@@ -264,6 +267,14 @@ send_mouse_event(mouse_action a, mouse_button b, mod_keys mods, pos p)
   }
 
   uint x = p.x + 1, y = p.y + 1;
+
+  switch (b) {
+    when MBT_4:
+      b = MBT_LEFT; mods |= MDK_ALT;
+    when MBT_5:
+      b = MBT_RIGHT; mods |= MDK_ALT;
+    otherwise:;
+  }
 
   uint code = b ? b - 1 : 0x3;
 
@@ -374,6 +385,16 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     term.mouse_state = b;
   }
   else {
+    // generic transformation M4/M5 -> Alt+left/right;
+    // if any specific handling is designed for M4/M5, this needs to be tweaked
+    switch (b) {
+      when MBT_4:
+        b = MBT_LEFT; mods |= MDK_ALT;
+      when MBT_5:
+        b = MBT_RIGHT; mods |= MDK_ALT;
+      otherwise:;
+    }
+
     bool alt = mods & MDK_ALT;
     bool shift_or_ctrl = mods & (MDK_SHIFT | MDK_CTRL);
     int mca = cfg.middle_click_action;
