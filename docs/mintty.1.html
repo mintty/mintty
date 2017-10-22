@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Fri Jul 28 16:07:34 2017 -->
+<!-- CreationDate: Sun Oct 22 20:19:33 2017 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -179,11 +179,16 @@ leading Windows environment variable (like
 
 <p style="margin-left:22%;">Copy all output into the
 specified log file, or standard output if a dash is given
-instead of a file name. If FILE contains <b>%d</b> it will
-be substituted with the process ID. See description of
-equivalent option &quot;Log file&quot; (Log=) below for
-further formatting options and hints. Note that logging can
-be toggled from the extended context menu.</p>
+instead of a file name. (Implies <b>-o Logging=yes</b>.)</p>
+
+<p style="margin-left:22%; margin-top: 1em">If FILE
+contains <b>%d</b> it will be substituted with the process
+ID. See description of equivalent option &quot;Log
+file&quot; (Log=) below for further formatting options and
+hints.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note that
+logging can be toggled from the extended context menu.</p>
 
 <p style="margin-left:11%;"><b>--logfile</b>
 <i>FILE</i>|<b>-</b></p>
@@ -376,12 +381,41 @@ Linux path name. <br>
 interpreted in the Linux namespace and converted before
 opening in Windows.</p>
 
+<p style="margin-left:11%;"><b>--WSL</b> <i>WSL
+DISTRIBUTION NAME</i></p>
+
+<p style="margin-left:22%;">Run a WSL session, setting
+other parameters as appropriate and involving the
+<i>wslbridge</i> gateway implicitly. If the distribution
+name is empty (<b>--WSL=</b>), the default WSL installation
+is run; otherwise, it refers to the installed WSL packages
+as listed by the Windows tool <b>wslconfig /l</b>. Implies
+<b>--wsl -o Locale=C -o Charset=UTF-8</b>,
+<b>--rootfs=</b>..., and <b>--icon=</b>... if a respective
+icon file exists for the distribution.</p>
+
 <p style="margin-left:11%;"><b>--rootfs</b>
 <i>ROOTFOLDER</i></p>
 
 <p style="margin-left:22%;">Provide the root filesystem
 folder to adjust path conversion properly for the respective
 WSL installation.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="3%">
+
+
+<p><b>-~</b></p></td>
+<td width="8%"></td>
+<td width="78%">
+
+
+<p>Start in the user&rsquo;s home directory. Affects also
+WSL sessions.</p></td></tr>
+</table>
 
 <p style="margin-left:11%;"><b>-H</b>, <b>--help</b></p>
 
@@ -606,6 +640,20 @@ The <b>Ctrl+Tab</b> and <b>Ctrl+Shift+Tab</b> shortcuts can
 be used to switch between mintty windows. Minimised windows
 are skipped.</p>
 
+<p style="margin-left:11%; margin-top: 1em"><b>Virtual
+Tabs</b> <br>
+The Virtual Tabs feature provides a list of all running
+mintty sessions as well as configurable launch parameters
+for new sessions. By default, the list is shown in the
+extended context menu (Ctrl+right-click), the mouse button 5
+menu, and the menus opened with the Ctrl+Menu key and the
+Ctrl+Shift+I shortcut (if enabled). (Menu contents for the
+various context menu invocations is configurable.) For
+configuration, see settings <b>SessionCommands</b>,
+<b>Menu*</b>, and <b>SessionGeomSync</b>. Distinct sets of
+sessions can be set up with the setting <b>-o
+Class=...</b>.</p>
+
 <p style="margin-left:11%; margin-top: 1em"><b>Closing a
 session</b> <br>
 Clicking the window&rsquo;s close button, pressing
@@ -629,6 +677,10 @@ changing from an <b>I</b> shape to an arrow. Holding down
 events to the window instead, so that e.g. text can be
 selected and the context menu can be accessed.</p>
 
+<p style="margin-left:11%; margin-top: 1em">Mintty supports
+5-button mice, handling mouse buttons 4 / 5 like
+Alt+click-left / right in most mouse modes.</p>
+
 <p style="margin-left:11%; margin-top: 1em"><b>Alt
 codes</b> <br>
 The Windows Alt+Numpad method for entering character codes
@@ -650,8 +702,8 @@ other Unicode encodings such as GB18030, the entered code is
 interpreted as a Unicode codepoint and encoded accordingly
 before it is sent. For other encodings, the entered code is
 sent as is. If it doesn&rsquo;t fit into one byte, it is
-sent as multiple bytes, with the the most significant
-non-zero byte first.</p>
+sent as multiple bytes, with the most significant non-zero
+byte first.</p>
 
 
 <p style="margin-left:11%; margin-top: 1em"><b>Shortcuts</b>
@@ -867,9 +919,10 @@ configuration value is not valid UTF-8, it is interpreted in
 the system ANSI encoding. (This does not apply to the same
 configuration settings when given on the command-line.) <br>
 Unicode-enabled settings: BellFile, ThemeFile, Title,
-ExitTitle, Icon, Log, Language, Font, Printer, Answerback,
-SixelClipChars, Class, AppID, AppName, AppLaunchCmd,
-DropCommands, UserCommands.</p>
+ExitTitle, Icon, Log, Language, Font, Font1..., FontSample,
+Printer, Answerback, SixelClipChars, Class, AppID, AppName,
+AppLaunchCmd, DropCommands, UserCommands,
+SessionCommands.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Be careful when
 running multiple instances of mintty. If options are saved
@@ -930,11 +983,15 @@ a filename (like D:/.../solarized-light.minttyrc).</p>
 <p style="margin-left:22%; margin-top: 1em">The field can
 also be used as a drag-and-drop target for colour schemes
 downloaded from the Color Scheme Configurator, or for theme
-files from the web (note that the program <b>curl</b> needs
-to be installed for the latter option). See the Tips wiki
-page
+files from the web. See the Tips wiki page
 <i>https://github.com/mintty/mintty/wiki/Tips#using-colour-schemes-themes</i>
 about this mechanism.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note: Mintty
+also provides the command-line script <b>mintheme</b> which
+can display the themes available in the mintty configuration
+directories or activate one of them in the current mintty
+window.</p>
 
 <p style="margin-left:11%;"><b>Transparency</b>
 (Transparency=off)</p>
@@ -1023,16 +1080,20 @@ a font family has no bold weight but boldness was requested,
 mintty does not adhere to this scheme but enforces bold font
 selection; however, in this case the bold attribute may not
 be effective. <br>
-&ndash; <b>Alternative fonts</b> (Font1= ... Font9= ,
-Font1Weight= ... Font9Weight=): With these settings, up to 9
-alternative fonts (and optionally weights) can be configured
-which would then be selectable via ECMA-48 SGR character
-attributes (see Tips wiki page
+&ndash; <b>Alternative fonts</b> (Font1= ... Font10= ,
+Font1Weight= ... Font10Weight=): With these settings, up to
+10 alternative fonts (and optionally weights) can be
+configured which would then be selectable via ECMA-48 SGR
+character attributes (see Tips wiki page
 <i>https://github.com/mintty/mintty/wiki/Tips#text-attributes-and-rendering</i>).
-<i>Note:</i> The control sequence for alternative font 1
-overrides the identical control sequence to select the VGA
-character set, which would thus be disabled. Configuring
-alternative font 1 is therefore discouraged. <br>
+<i>Note:</i> Font10 has a special preference property; if it
+is not configured, mintty will try to activate it anyway,
+looking for an installed Fraktur or Blackletter font
+(ECMA-48 &quot;Gothic&quot;). <i>Note:</i> The control
+sequence for alternative font 1 overrides the identical
+control sequence to select the VGA character set, which
+would thus be disabled. Configuring alternative font 1 is
+therefore discouraged. <br>
 &ndash; <b>Font sample text</b> (FontSample=): This setting
 overrides the text for the &quot;Sample&quot; box in the
 Font chooser dialog. <br>
@@ -1152,6 +1213,14 @@ This means, while not strictly necessary, that also locale
 variables unrelated to the terminal character set (e.g.
 LC_MESSAGES) are cleared to avoid confusion.</p>
 
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i> If
+the locale option is set, mintty further checks whether the
+locale is a &quot;wide&quot; locale (i.e. ambiguous-width
+characters are wide in the locale) but the selected font is
+actually &quot;ambiguous-narrow&quot; (i.e. ambiguous-width
+characters are narrow in the font) in which case it appends
+the &quot;@cjknarrow&quot; locale modifier.</p>
+
 <p style="margin-left:11%;"><b>Character set</b>
 (Charset=)</p>
 
@@ -1222,6 +1291,14 @@ ticking the checkbox here.</p>
 <p style="margin-left:22%; margin-top: 1em">The setting
 makes no difference for keys without AltGr key bindings
 (e.g. any key on the standard US layout).</p>
+
+<p style="margin-left:11%;"><b>Old method of AltGr
+detection</b> (OldAltGrDetection=no)</p>
+
+<p style="margin-left:22%;">Setting this hidden option
+would disable a workaround for an incompatibility in the
+Windows on-screen keyboard, just in case is has any side
+effects.</p>
 
 <p style="margin-left:11%;"><b>Copy and Paste shortcuts</b>
 (ClipShortcuts=yes)</p>
@@ -1589,18 +1666,36 @@ sound</b> (BellType=1): Preferred system sound, values:</p>
 (BellFile=): The popup offers wave files as stored in a
 resource subdirectory <i>sounds</i> for selection. The
 option can also be set to a filename (like
-D:/.../soundfile.wav). This setting overrides the Bell
-system sound except No Beep. <br>
+D:/.../soundfile.wav); this can be achieved also by
+drag-and-drop from a local file. This setting overrides the
+Bell system sound except No Beep. <br>
 &ndash; <b>Play</b>: The button plays the selected sound for
 testing. The sound is also played when it is changed. <br>
-&ndash; <b>Flash</b> (BellFlash=no): Briefly invert the
-foreground and background colours. (Corresponds to the xterm
-resource <b>visualBell</b>.) <br>
-&ndash; <b>Highlight in taskbar</b> (BellTaskbar=yes):
-Change the colour of mintty&rsquo;s taskbar entry if the
-mintty window is not active. (Corresponds to the xterm
-resource <b>bellIsUrgent</b>, switchable by an escape
-sequence.) <br>
+&ndash; <b>Flash</b> (BellFlash=no): Briefly flash the
+terminal or window. (Corresponds to the xterm resource
+<b>visualBell</b>.) <br>
+&ndash; <b>Flash style</b> (BellFlashStyle=4): Tune the
+style to flash the terminal or window; this is a bitmask
+composed of the following values:</p>
+
+<p style="margin-left:32%;"><b>1</b> : Flash the window
+frame (using Windows) <b><br>
+2</b> : Flash the outer character cells; not recommended;
+<br>
+will look ragged with double-width characters <b><br>
+4</b> : Flash the whole terminal pane (all character cells)
+<b><br>
+8</b> : cell flash briefly inverts foreground and
+background; <br>
+default is to moderately brighten the background colour
+<b><br>
+12</b> : (combining 4 and 8) classic bright full flash</p>
+
+<p style="margin-left:22%;">&ndash; <b>Highlight in
+taskbar</b> (BellTaskbar=yes): Change the colour of
+mintty&rsquo;s taskbar entry if the mintty window is not
+active. (Corresponds to the xterm resource
+<b>bellIsUrgent</b>, switchable by an escape sequence.) <br>
 &ndash; <b>Popup on bell</b> (BellPopup=no): Popup mintty to
 desktop foreground. (Corresponds to the xterm resource
 <b>popOnBell</b>, switchable by an escape sequence.)</p>
@@ -1947,9 +2042,9 @@ are supported. <br>
 <p style="margin-left:22%;">This setting is not intended
 for manual configuration. It can store a colour scheme as
 downloaded from the Color Scheme Configurator or from a
-theme file on the web via drag-and-drop to the Options menu.
-After the colour scheme is stored to a colour scheme file,
-this setting is not used anymore.</p>
+theme file on the web via drag-and-drop to the Theme of the
+Options menu. After the colour scheme is stored to a colour
+scheme file, this setting is not used anymore.</p>
 
 <p style="margin-left:22%; margin-top: 1em">See the Tips
 wiki page
@@ -1967,6 +2062,19 @@ false and option BoldAsColour is true. The default is
 the effective foreground colour is used. The bold
 substitution colour can also be set and reset with the
 respective xterm OSC control sequences.</p>
+
+<p style="margin-left:11%;"><b>Selection highlight
+colours</b></p>
+
+<p style="margin-left:22%;">The highlighting colours of
+selected text can be configured. <br>
+&ndash; <b>HighlightBackgroundColour</b>= selected text
+background (corresponds to the xterm resource
+<b>highlightColor</b>) <br>
+&ndash; <b>HighlightForegroundColour</b>= selected text
+colour (corresponds to the xterm resource
+<b>highlightTextColor</b> with <b>highlightColorMode</b>);
+only effective if both are configured</p>
 
 <p style="margin-left:11%;"><b>Scrollback search
 colours</b></p>
@@ -2177,6 +2285,82 @@ text.</p>
 Control characters need to be embedded verbatim; there is no
 escape notation.</p>
 
+<p style="margin-left:11%;"><b>Session launcher
+commands</b> (SessionCommands=)</p>
+
+<p style="margin-left:22%;">This setting lists mintty
+invocation parameters for the session launcher. The value is
+a series of semicolon-separated, colon-combined pairs of
+session launch names (used as menu item labels) and
+configuration parameter lists; when selecting one of the
+launch names, mintty is invoked with the respective
+parameters. (If a semicolon shall be embedded into any of
+the command patterns, a non-whitespace control character
+(i.e. none of <b>^I^J^K^L^M</b>) can be specified as an
+alternative separator by starting the whole setting with
+it.)</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+Session launch names are subject to localization if they are
+added to the localization file of the selected UI
+localization language (in subdirectory <i>lang</i> of a
+mintty resource directory).</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+This is an experimental feature, with an experimental
+configuration format.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Examples: <br>
+&ndash; <b>SessionCommands=big:-w
+max;Ubuntu:--WSL=Ubuntu;mybox:ssh mybox</b></p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+Control characters need to be embedded verbatim; there is no
+escape notation.</p>
+
+<p style="margin-left:11%;"><b>Menu contents</b></p>
+
+<p style="margin-left:22%;">These settings allow to
+customize the context menu as opened in various ways. <br>
+&ndash; <b>Mouse</b> (MenuMouse=b); the normal mouse-click
+context menu <br>
+&ndash; <b>Ctrl+Mouse</b> (MenuCtrlMouse=e|ls); the
+Ctrl+mouse-click menu <br>
+&ndash; <b>Mouse button 5</b> (MenuMouse5=ls); the mouse
+button 5 menu <br>
+&ndash; <b>Menu key</b> (MenuMenu=bs); the Menu key (unless
+redefined) <br>
+&ndash; <b>Ctrl+Menu key</b> (MenuCtrlMenu=e|ls); the
+Ctrl+Menu-key</p>
+
+<p style="margin-left:22%; margin-top: 1em">Menu contents
+can be configured by a sequence of characters with the
+following meaning: <br>
+&ndash; <b>b</b>: basic context menu <br>
+&ndash; <b>e</b>: extended context menu <br>
+&ndash; <b>|</b>: vertical separator, adding a new column
+<br>
+&ndash; <b>l</b>: session launcher <br>
+&ndash; <b>s</b>: session switcher (Virtual Tabs) <br>
+&ndash; <b>T</b>: the menu is opened at the text cursor
+position <br>
+&ndash; <b>P</b>: the menu is opened at the mouse pointer
+position</p>
+
+<p style="margin-left:11%;"><b>Session geometry
+synchronization / Virtual tabs</b> (SessionGeomSync=0)</p>
+
+<p style="margin-left:22%;">This setting defines the level
+of approximation of &quot;tabbed&quot; window operation
+within the Virtual Tabs feature: <br>
+&ndash; <b>0</b>: no geometry handling; terminal session
+windows are separate <br>
+&ndash; <b>1</b>: sync. position/size when
+switching/launching a session <br>
+&ndash; <b>2</b>: (not implemented) also when window is
+moved or resized <br>
+&ndash; <b>3</b>: (not implemented) always</p>
+
 <h2>LIMITATIONS
 <a name="LIMITATIONS"></a>
 </h2>
@@ -2212,9 +2396,8 @@ xterm features</b> <br>
 Mintty is nowhere near as configurable as xterm. Of
 xterm&rsquo;s keyboard modes, only the default PC-style and
 VT220-style are available. 8-bit control characters are not
-supported, nor are ISO2022 character sets. There is no
-Tektronix 4014 emulation. Mouse highlighting mode is not
-implemented.</p>
+supported. There is no Tektronix 4014 emulation. Mouse
+highlighting mode is not implemented.</p>
 
 <p style="margin-left:11%; margin-top: 1em">The majority of
 xterm&rsquo;s many control sequences is implemented, but

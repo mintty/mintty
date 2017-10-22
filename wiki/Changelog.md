@@ -1,3 +1,5 @@
+### 2.8.0 (22 Oct 2017) ###
+
 Window and session control
   * Virtual Tabs (#8, #600).
   * Options SessionCommands, SessionGeomSync, Menu*.

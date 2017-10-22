@@ -36,6 +36,10 @@ char * mintty_debug;
 #include <propkey.h>
 #endif
 
+#ifndef INT16
+#define INT16 short
+#endif
+
 
 char * home;
 char * cmd;

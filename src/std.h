@@ -104,21 +104,12 @@ typedef const wchar *wstring;
 
 
 #define strappend(s0, s1) s0 = _strappend(s0, s1)
-#define wcsappend(s0, s1) s0 = _wcsappend(s0, s1)
 
 static inline char *
 _strappend(char * s0, char * s1)
 {
   s0 = renewn(s0, strlen(s0) + strlen(s1) + 1);
   strcat(s0, s1);
-  return s0;
-}
-
-static inline wchar *
-_wcsappend(wchar * s0, wchar * s1)
-{
-  s0 = renewn(s0, wcslen(s0) + wcslen(s1) + 1);
-  wcscat(s0, s1);
   return s0;
 }
 
