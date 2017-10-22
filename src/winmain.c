@@ -1,3 +1,4 @@
+static void show_info(char * msg);
 // winmain.c (part of mintty)
 // Copyright 2008-13 Andy Koppe, 2015-2017 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
@@ -450,13 +451,63 @@ get_tab(uint tabi)
     return 0;
 }
 
+#define dont_debug_tabs
+
 static void
 win_gotab(uint n)
 {
   HWND tab = get_tab(n);
-  ShowWindow(tab, SW_RESTORE);
+
   // apparently, we don't have to fiddle with SetWindowPos as in win_switch
   BringWindowToTop(tab);
+  ShowWindow(tab, SW_RESTORE);
+
+  // reposition / resize
+#ifdef geom_sync_from_launching
+  if (cfg.geom_sync) {
+    // Actually, we should not do this here, but only in the target tab
+    // (after notifying it with the size), in order to respect a
+    // possibly different SessionGeomSync config there.
+    RECT r;
+    GetWindowRect(wnd, &r);
+    SetWindowPos(tab, null, r.left, r.top, r.right - r.left, r.bottom - r.top,
+                 SWP_NOZORDER);
+  }
+#else
+  RECT r;
+  GetWindowRect(wnd, &r);
+#ifdef debug_tabs
+  printf("switcher %d,%d %d,%d\n", (int)r.left, (int)r.top, (int)(r.right - r.left), (int)(r.bottom - r.top));
+#endif
+  SendMessageW(tab, WM_USER,
+               MAKEWPARAM(r.right - r.left, r.bottom - r.top),
+               MAKELPARAM(r.left, r.top));
+#endif
+
+  if (tab == wnd)
+    // avoid hiding when switching to myself
+    return;
+
+#ifdef hide_myself
+#warning needs to implement: unhide other when closing
+  // hide myself
+# ifdef short_hide
+  ShowWindow(wnd, SW_HIDE);
+# else
+  SetWindowPos(wnd, null, 0, 0, 0, 0,
+               SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER |
+               SWP_HIDEWINDOW | SWP_NOACTIVATE | SWP_NOCOPYBITS);
+# endif
+#endif
+}
+
+static void
+win_launch(int n)
+{
+  HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+  int x, y;
+  int moni = search_monitors(&x, &y, mon, true, 0);
+  child_launch(n, main_argc, main_argv, moni);
 }
 
 
@@ -1016,9 +1067,9 @@ win_bell(config * conf)
       //  3 -> 0x00000020 MB_ICONQUESTION    Question
       //  4 -> 0x00000030 MB_ICONEXCLAMATION Exclamation
       //  5 -> 0x00000040 MB_ICONASTERISK    Asterisk
-      // -1 -> 0xFFFFFFFF                    Simple Beep
       MessageBeep((conf->bell_type - 1) * 16);
     } else if (conf->bell_type < 0)
+      // -1 -> 0xFFFFFFFF                    Simple Beep
       MessageBeep(0xFFFFFFFF);
 
     if (free_bell_name)
@@ -1509,6 +1560,72 @@ static struct {
         child_kill((GetKeyState(VK_SHIFT) & 0x80) != 0);
       return 0;
 
+#ifdef show_icon_via_callback
+    when WM_MEASUREITEM: {
+      MEASUREITEMSTRUCT* lpmis = (MEASUREITEMSTRUCT*)lp;
+      if (lpmis) {
+        lpmis->itemWidth += 2;
+        if (lpmis->itemHeight < 16)
+          lpmis->itemHeight = 16;
+      }
+    }
+
+//https://www.nanoant.com/programming/themed-menus-icons-a-complete-vista-xp-solution
+    when WM_DRAWITEM: {
+# ifdef debug_drawicon
+      printf("WM_DRAWITEM\n");
+# endif
+      DRAWITEMSTRUCT* lpdis = (DRAWITEMSTRUCT*)lp;
+      //HICON icon = (HICON)SendMessage(wnd, WM_GETICON, ICON_SMALL, 96);
+      HICON icon = (HICON)GetClassLongPtr(wnd, GCLP_HICONSM);
+      if (!lpdis || lpdis->CtlType != ODT_MENU)
+        break; // not for a menu
+      if (!icon)
+        break;
+# ifdef drawiconex
+      DrawIconEx(lpdis->hDC,
+                 lpdis->rcItem.left - 16,
+                 lpdis->rcItem.top
+                        + (lpdis->rcItem.bottom - lpdis->rcItem.top - 16) / 2,
+                 icon, 16, 16,
+                 0, NULL, DI_NORMAL);
+# else
+      DrawIcon(lpdis->hDC,
+               lpdis->rcItem.left - 16,
+               lpdis->rcItem.top
+                      + (lpdis->rcItem.bottom - lpdis->rcItem.top - 16) / 2,
+               icon);
+# endif
+// -> Invalid cursor handle.
+# ifdef debug_drawicon
+      uint err = GetLastError();
+      if (err) {
+        int wmlen = 1024;
+        wchar winmsg[wmlen];
+        FormatMessageW(
+          FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK,
+          0, err, 0, winmsg, wmlen, 0
+        );
+        printf("%ls\n", winmsg);
+      }
+# endif
+      DestroyIcon(icon);
+    }
+#endif
+
+    when WM_USER:  // reposition and resize
+      if (cfg.geom_sync) {
+#ifdef debug_tabs
+        printf("switched %d,%d %d,%d\n", (INT16)LOWORD(lp), (INT16)HIWORD(lp), LOWORD(wp), HIWORD(wp));
+#endif
+        // (INT16) to handle multi-monitor negative coordinates properly
+        SetWindowPos(wnd, null,
+                     //GET_X_LPARAM(lp), GET_Y_LPARAM(lp),
+                     (INT16)LOWORD(lp), (INT16)HIWORD(lp),
+                     LOWORD(wp), HIWORD(wp),
+                     SWP_NOZORDER);
+      }
+
     when WM_COMMAND or WM_SYSCOMMAND: {
 # ifdef debug_messages
       static struct {
@@ -1525,8 +1642,12 @@ static struct {
         }
       printf("                           %04X %s\n", (int)wp, idm_name);
 # endif
-      if ((wp & ~0xF) >= IDM_GOTAB)
+      if ((wp & ~0xF) >= 0xF000)
+        ; // skip WM_SYSCOMMAND from Windows here (but process own ones)
+      else if ((wp & ~0xF) >= IDM_GOTAB)
         win_gotab(wp - IDM_GOTAB);
+      else if ((wp & ~0xF) >= IDM_SESSIONCOMMAND)
+        win_launch(wp - IDM_SESSIONCOMMAND);
       else if ((wp & ~0xF) >= IDM_USERCOMMAND)
         user_command(wp - IDM_USERCOMMAND);
       else
@@ -3194,6 +3315,39 @@ main(int argc, char *argv[])
     SetWindowPos(wnd, null, 0, 0, 0, 0,
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
     trace_winsize("border_style");
+  }
+
+  {
+    // INT16 to handle multi-monitor negative coordinates properly
+    INT16 sx = 0, sy = 0, sdx = 0, sdy = 0;
+    short si = 0;
+    if (getenv("MINTTY_X")) {
+      sx = atoi(getenv("MINTTY_X"));
+      unsetenv("MINTTY_X");
+      si++;
+    }
+    if (getenv("MINTTY_Y")) {
+      sy = atoi(getenv("MINTTY_Y"));
+      unsetenv("MINTTY_Y");
+      si++;
+    }
+    if (getenv("MINTTY_DX")) {
+      sdx = atoi(getenv("MINTTY_DX"));
+      unsetenv("MINTTY_DX");
+      si++;
+    }
+    if (getenv("MINTTY_DY")) {
+      sdy = atoi(getenv("MINTTY_DY"));
+      unsetenv("MINTTY_DY");
+      si++;
+    }
+    if (si == 4 && cfg.geom_sync) {
+#ifdef debug_tabs
+      printf("launched %d,%d %d,%d\n", sx, sy, sdx, sdy);
+#endif
+      SetWindowPos(wnd, null, sx, sy, sdx, sdy, SWP_NOZORDER);
+      trace_winsize("launch");
+    }
   }
 
   configure_taskbar();

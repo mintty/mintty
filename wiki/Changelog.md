@@ -1,18 +1,31 @@
+Window and session control
+  * Virtual Tabs (#8, #600).
+  * Options SessionCommands, SessionGeomSync, Menu*.
+
 Configuration
   * New option BellFlashStyle (#676) and more moderate default flash style.
   * Option -l / --log implies Logging=yes.
   * `mintheme` command-line theme switcher (#685).
   * Preventing @cjknarrow locale modifier for WSL (#686).
   * Fixed Alt+F2 in same dir (with OSC 701) not to expand symbolic links.
+  * Options HighlightBackgroundColour and HighlightForegroundColour.
 
-Terminal control
-  * Fixed status string DECRQSS (#689, #690, mintty/wsltty#55).
-  * Implemented DECRQM to reach VT300 conformance level.
-  * Implemented DSR DEC variant for cursor and printer status.
-  * Implemented DECSTR soft terminal reset.
-  * Implemented DSR DEC variant (cursor/printer status).
-  * Implemented Save/Restore DEC Private Mode (DECSET) values (#267).
-  * DEC Locator.
+WSL support
+  * Option --WSL= to run WSL session (mintty/wsltty#52, mintty/wsltty#59, ~mintty/wsltty#60).
+  * Option -~ to start in user's home directory (~mintty/wsltty#3).
+  * Update availability check for wsltty build refers to wsltty version (mintty/wsltty#20).
+  * Fixed rootfs handling in pathname conversion (mintty/wsltty#19).
+
+Terminal control sequences
+  * Fixed status string DECRQSS (#689, #690, mintty/wsltty#55, vim/vim#2003).
+  * DEC Locator mouse mode (facilitating pixel-based position).
+  * DECRQM request mode (to reach VT300 conformance level).
+  * Save/Restore DEC Private Mode (DECSET) values (#267).
+  * DECSTR soft terminal reset.
+  * DSR DEC variant (cursor/printer status).
+  * REP: repeat preceding character.
+  * OSC 50: set/query font.
+  * OSC 17/19/117/119: set/reset selection highlight colours.
 
 Character display
   * Tweaked width expansion of ambiguous-width characters (#680, ~#638, ~#615).
@@ -21,6 +34,9 @@ Character display
   * Fixed NRC single shift with attributes.
   * DEC Tech: tweaked √/Σ segments (hand-drawn), fixed double-size characters.
   * Fraktur font support (ANSI character attribute 20).
+
+Keyboard
+  * Workaround for broken AltGr of Windows on-screen keyboard (#692).
 
 Localization meanwhile available for (in alphabetical order of locale ids):
   * German, English (UK/US), Spanish, French, Japanese, Russian, Chinese.

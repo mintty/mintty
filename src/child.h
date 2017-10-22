@@ -24,5 +24,6 @@ extern void user_command(int n);
 extern wstring child_conv_path(wstring);
 extern void child_fork(int argc, char * argv[], int moni);
 extern void child_set_fork_dir(char *);
+extern void child_launch(int n, int argc, char * argv[], int moni);
 
 #endif

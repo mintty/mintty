@@ -595,6 +595,19 @@ a login shell), Alt+F2 starts again a login terminal, whose login shell
 is likely to reset the working directory to the home directory.
 
 
+## Virtual Tabs ##
+
+The Virtual Tabs feature provides a list of all running mintty sessions 
+as well as configurable launch parameters for new sessions.
+By default, the list is shown in the extended context menu (Ctrl+right-click), 
+the mouse button 5 menu, and the menus opened with the Ctrl+Menu key 
+and the Ctrl+Shift+I shortcut (if enabled).
+(Menu contents for the various context menu invocations is configurable.)
+For configuration, see settings `SessionCommands`, `Menu*`, 
+and `SessionGeomSync`.
+Distinct sets of sessions can be set up with the setting `-o Class=...`.
+
+
 ## Multi-monitor support ##
 
 Mintty supports multiple monitors with two features:

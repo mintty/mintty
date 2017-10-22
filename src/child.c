@@ -731,6 +731,14 @@ child_set_fork_dir(char * dir)
 }
 
 void
+setenvi(char * env, int val)
+{
+  static char valbuf[22];  // static to prevent #530
+  sprintf(valbuf, "%d", val);
+  setenv(env, valbuf, true);
+}
+
+void
 child_fork(int argc, char *argv[], int moni)
 {
   void reset_fork_mode()
@@ -804,12 +812,6 @@ child_fork(int argc, char *argv[], int moni)
     (void) argc;
 #endif
 
-    void setenvi(char * env, int val) {
-      static char valbuf[22];  // static to prevent #530
-      sprintf(valbuf, "%d", val);
-      setenv(env, valbuf, true);
-    }
-
     // provide environment to clone size
     if (clone_size_token) {
       setenvi("MINTTY_ROWS", term.rows);
@@ -841,3 +843,61 @@ child_fork(int argc, char *argv[], int moni)
   }
   reset_fork_mode();
 }
+
+void
+child_launch(int n, int argc, char * argv[], int moni)
+{
+  if (*cfg.session_commands) {
+    char * cmds = cs__wcstombs(cfg.session_commands);
+    char * cmdp = cmds;
+    char sepch = ';';
+    if ((uchar)*cmdp <= (uchar)' ')
+      sepch = *cmdp++;
+
+    char * paramp;
+    while (n >= 0 && (paramp = strchr(cmdp, ':'))) {
+      paramp++;
+      char * sepp = strchr(paramp, sepch);
+      if (sepp)
+        *sepp = '\0';
+
+      if (n == 0) {
+        RECT r;
+        GetWindowRect(wnd, &r);
+        setenvi("MINTTY_X", r.left);
+        setenvi("MINTTY_Y", r.top);
+        setenvi("MINTTY_DX", r.right - r.left);
+        setenvi("MINTTY_DY", r.bottom - r.top);
+        argc = 1;
+        char ** new_argv = newn(char *, argc + 1);
+        new_argv[0] = argv[0];
+        // prepare launch parameters from config string
+        while (*paramp) {
+          while (*paramp == ' ')
+            paramp++;
+          if (*paramp) {
+            new_argv = renewn(new_argv, argc + 2);
+            new_argv[argc] = paramp;
+            argc++;
+            while (*paramp && *paramp != ' ')
+              paramp++;
+            if (*paramp == ' ')
+              *paramp++ = '\0';
+          }
+        }
+        new_argv[argc] = 0;
+        child_fork(argc, new_argv, moni);
+        free(new_argv);
+        break;
+      }
+      n--;
+
+      if (sepp)
+        cmdp = sepp + 1;
+      else
+        break;
+    }
+    free(cmds);
+  }
+}
+

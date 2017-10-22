@@ -454,6 +454,18 @@ For example, this allows to refer to past commands while editing a file.
 The \fBCtrl+Tab\fP and \fBCtrl+Shift+Tab\fP shortcuts can be used to switch
 between mintty windows.  Minimised windows are skipped.
 
+.SS Virtual Tabs
+
+The Virtual Tabs feature provides a list of all running mintty sessions 
+as well as configurable launch parameters for new sessions.
+By default, the list is shown in the extended context menu (Ctrl+right-click), 
+the mouse button 5 menu, and the menus opened with the Ctrl+Menu key 
+and the Ctrl+Shift+I shortcut (if enabled).
+(Menu contents for the various context menu invocations is configurable.)
+For configuration, see settings \fBSessionCommands\fP, \fBMenu*\fP, 
+and \fBSessionGeomSync\fP.
+Distinct sets of sessions can be set up with the setting \fB-o Class=...\fP.
+
 .SS Closing a session
 
 Clicking the window's close button, pressing \fBAlt+F4\fP, or choosing
@@ -711,7 +723,7 @@ command-line.)
 .br
 Unicode-enabled settings: BellFile, ThemeFile, Title, ExitTitle, Icon, Log, 
 Language, Font, Font1..., FontSample, Printer, Answerback, SixelClipChars, 
-Class, AppID, AppName, AppLaunchCmd, DropCommands, UserCommands.
+Class, AppID, AppName, AppLaunchCmd, DropCommands, UserCommands, SessionCommands.
 
 Be careful when running multiple instances of mintty. If options are saved 
 from different instances, or the config file is edited manually, 
@@ -1850,6 +1862,72 @@ Examples:
 \(en \fBUserCommands=Paste capital:echo -n "$MINTTY_SELECT" | tr 'a-z' 'A-Z';Paste small:echo -n "$MINTTY_SELECT" | tr 'A-Z' 'a-z'\fP
 
 \fINote:\fP Control characters need to be embedded verbatim; there is no escape notation.
+
+.TP
+\fBSession launcher commands\fP (SessionCommands=)
+This setting lists mintty invocation parameters for the session launcher.
+The value is a series of semicolon-separated, colon-combined 
+pairs of session launch names (used as menu item labels) and 
+configuration parameter lists; when selecting one of the launch names, 
+mintty is invoked with the respective parameters.
+(If a semicolon shall be embedded into any of the command patterns, 
+a non-whitespace control character (i.e. none of \fB^I^J^K^L^M\fP) can be 
+specified as an alternative separator by starting the whole setting with it.)
+
+\fINote:\fP Session launch names are subject to localization if they are 
+added to the localization file of the selected UI localization language 
+(in subdirectory \fIlang\fP of a mintty resource directory).
+
+\fINote:\fP This is an experimental feature, with an experimental configuration format.
+
+Examples:
+.br
+\(en \fBSessionCommands=big:-w max;Ubuntu:--WSL=Ubuntu;mybox:ssh mybox\fP
+
+\fINote:\fP Control characters need to be embedded verbatim; there is no escape notation.
+
+.TP
+\fBMenu contents\fP
+These settings allow to customize the context menu as opened in various ways.
+.br
+\(en \fBMouse\fP (MenuMouse=b); the normal mouse-click context menu
+.br
+\(en \fBCtrl+Mouse\fP (MenuCtrlMouse=e|ls); the Ctrl+mouse-click menu
+.br
+\(en \fBMouse button 5\fP (MenuMouse5=ls); the mouse button 5 menu
+.br
+\(en \fBMenu key\fP (MenuMenu=bs); the Menu key (unless redefined)
+.br
+\(en \fBCtrl+Menu key\fP (MenuCtrlMenu=e|ls); the Ctrl+Menu-key
+
+Menu contents can be configured by a sequence of characters with the following meaning:
+.br
+\(en \fBb\fP: basic context menu
+.br
+\(en \fBe\fP: extended context menu
+.br
+\(en \fB|\fP: vertical separator, adding a new column
+.br
+\(en \fBl\fP: session launcher
+.br
+\(en \fBs\fP: session switcher (Virtual Tabs)
+.br
+\(en \fBT\fP: the menu is opened at the text cursor position
+.br
+\(en \fBP\fP: the menu is opened at the mouse pointer position
+
+.TP
+\fBSession geometry synchronization / Virtual tabs\fP (SessionGeomSync=0)
+This setting defines the level of approximation of "tabbed" window 
+operation within the Virtual Tabs feature:
+.br
+\(en \fB0\fP: no geometry handling; terminal session windows are separate
+.br
+\(en \fB1\fP: sync. position/size when switching/launching a session
+.br
+\(en \fB2\fP: (not implemented) also when window is moved or resized
+.br
+\(en \fB3\fP: (not implemented) always
 
 .SH LIMITATIONS
 
