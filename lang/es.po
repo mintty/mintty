@@ -18,15 +18,15 @@ msgstr ""
 
 #: charset.c:213 charset.c:224
 msgid "(Default)"
-msgstr ""
+msgstr "(Defecto)"
 
 #: charset.c:235
 msgid "(OEM codepage)"
-msgstr ""
+msgstr "(Codificación OEM)"
 
 #: charset.c:239
 msgid "(ANSI codepage)"
-msgstr ""
+msgstr "(Codificación ANSI)"
 
 #: child.c:76
 msgid "There are no available terminals"
@@ -829,11 +829,11 @@ msgstr "Error"
 
 #: wininput.c:126
 msgid "Session switcher"
-msgstr ""
+msgstr "Cambiar sesión"
 
 #: wininput.c:141
 msgid "Session launcher"
-msgstr ""
+msgstr "Lanzar sesión"
 
 #: wininput.c:244 wininput.c:250
 msgid "Ctrl+"
@@ -981,7 +981,7 @@ msgstr "Uso:"
 
 #: winmain.c:2622
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
-msgstr ""
+msgstr "[OPCION]... [ PROGRAMA [ARG]... | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
 #: winmain.c:2625
@@ -1016,6 +1016,36 @@ msgid ""
 "  -V, --version         Print version information and exit\n"
 "See manual page for further command line options and configuration.\n"
 msgstr ""
+"Inicia una nueva sesión de terminal ejecutando el programa especificado o "
+"la línea de comandos del usuario.\n"
+"Si se introduce un guión en vez de un programa, se lanza como línea de comando "
+"de login.\n"
+"\n"
+"Opciones:\n"
+"  -c, --config FICHERO  Carga el fichero de configuración (ver: -C, -o ThemeFile)\n"
+"  -e, --exec ...        Trata el resto de argumentos como el comando a ejecutar\n"
+"  -h, --hold never|start|error|always  Mantiene la ventana abierta al "
+"finalizar el comando\n"
+"  -p, --position X,Y    Abre la ventana en la posición dada\n"
+"  -p, --position center|left|right|top|bottom  Abre la ventana en una "
+"posición específica\n"
+"  -p, --position @N     Abre la ventana en el monitor N\n"
+"  -s, --size COLS,ROWS  Tamaño de la pantalla en caracteres (también COLSxROWS)\n"
+"  -s, --size maxwidth|maxheight  Maximiza la pantalla en la dimensión especificada\n"
+"  -t, --title TITLE     Cambia el título de la ventala (por defecto: el comando ejecutado)"
+" (ver: -T)\n"
+"  -w, --window normal|min|max|full|hide  Establece el estado inicial de la ventana\n"
+"  -i, --icon FILE[,IX]  Carga el icono de la ventana desde el fichero, se puede usar índice\n"
+"  -l, --log FILE|-      Manda la salida de log a fichero o a salida estándar\n"
+"      --nobidi|--nortl  Desactiva bidi (soporte izquierda-derecha)\n"
+"  -o, --option OPT=VAL  Establece/cambia opciones del fichero de configuración\n"
+"  -B, --Border frame|void  Usar borde fino, o desactivarlo\n"
+"  -R, --Report s|o      Imprime la posición de la ventana (formato corto/lago) al salir\n"
+"      --nopin           Hace que esta instancia no se pueda anclar a la barra de tareas\n"
+"  -D, --daemon          Inicia una nueva instancia con la tecla Windows\n"
+"  -H, --help            Muestra la ayuda y sale\n"
+"  -V, --version         Muestra la versión y sale\n"
+"Consultar el manual para más opciones de línea de comandos y configuraciones.\n"
 
 #: winmain.c:2790
 msgid "Duplicate option '%s'"
@@ -1031,7 +1061,7 @@ msgstr "Error de sintaxis en arg. tamaño '%s'"
 
 #: winmain.c:2863
 msgid "WSL distribution '%s' not found"
-msgstr ""
+msgstr "No se ha encontrado la distribución WSL '%s'"
 
 #: winmain.c:2916
 msgid "Unknown option '%s'"
@@ -1089,7 +1119,7 @@ msgstr "Tipo de letra no soporta idioma del sistema"
 
 #: appinfo.h:61
 msgid "There is no warranty, to the extent permitted by law."
-msgstr ""
+msgstr "No hay garantías, dentro de lo permitido por la ley."
 
 #. __ %s: WEBSITE (URL)
 #: appinfo.h:66
@@ -1099,3 +1129,7 @@ msgid ""
 "%s.\n"
 "See also the Wiki there for further hints, thanks and credits."
 msgstr ""
+"Por favor informe de los fallos o peticiones de mejora a través del sistema de informe de errores "
+"en la página del proyecto mintty localizada en\n"
+"%s.\n"
+"Consultar también la Wiki para más ayuda, agradecimientos y créditos."
