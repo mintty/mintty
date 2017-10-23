@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-22 23:40+0200\n"
+"POT-Creation-Date: 2017-10-23 17:13+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1067,19 +1067,29 @@ msgstr ""
 msgid "Leading: %d, Bold: %s, Underline: %s"
 msgstr ""
 
-#: wintext.c:371
+#. __ Options - Text: font properties: value taken from font
+#: wintext.c:131
+msgid "font"
+msgstr ""
+
+#. __ Options - Text: font properties: value affected by option
+#: wintext.c:133
+msgid "manual"
+msgstr ""
+
+#: wintext.c:373
 msgid "Font not found, using system substitute"
 msgstr ""
 
-#: wintext.c:378
+#: wintext.c:380
 msgid "Font has limited support for character ranges"
 msgstr ""
 
-#: wintext.c:477
+#: wintext.c:479
 msgid "Font installation corrupt, using system substitute"
 msgstr ""
 
-#: wintext.c:490
+#: wintext.c:492
 msgid "Font does not support system locale"
 msgstr ""
 

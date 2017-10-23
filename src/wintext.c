@@ -127,8 +127,10 @@ fontpropinfo()
 {
   //__ Options - Text: font properties information ("leading" ("ledding"): add. row spacing)
   char * fontinfopat = _("Leading: %d, Bold: %s, Underline: %s");
-  char * fontinfo_font = "font";
-  char * fontinfo_manual = "manual";
+  //__ Options - Text: font properties: value taken from font
+  char * fontinfo_font = _("font");
+  //__ Options - Text: font properties: value affected by option
+  char * fontinfo_manual = _("manual");
   int taglen = max(strlen(fontinfo_font), strlen(fontinfo_manual));
   char * fontinfo = newn(char, strlen(fontinfopat) + 23 + 2 * taglen);
   sprintf(fontinfo, fontinfopat, fontfamilies->row_spacing, 
