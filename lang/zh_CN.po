@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-10-22 20:19+0200\n"
-"PO-Revision-Date: 2017-09-16 13:59+0800\n"
+"PO-Revision-Date: 2017-10-23 17:09+0800\n"
 "Last-Translator: Gore Liu <goreliu@126.com>\n"
 "Language-Team: \n"
 "Language: zh_CN\n"
@@ -94,7 +94,7 @@ msgid ""
 "Could not save options to '%s':\n"
 "%s."
 msgstr ""
-"不能将选项 '%s' 保存到：\n"
+"不能将选项保存到 '%s'：\n"
 "%s。"
 
 #: config.c:1617
@@ -830,11 +830,11 @@ msgstr "错误"
 
 #: wininput.c:126
 msgid "Session switcher"
-msgstr ""
+msgstr "会话切换器"
 
 #: wininput.c:141
 msgid "Session launcher"
-msgstr ""
+msgstr "会话启动器"
 
 #: wininput.c:244 wininput.c:250
 msgid "Ctrl+"
@@ -1053,11 +1053,11 @@ msgstr "position 选项的参数有语法错误 '%s'"
 
 #: winmain.c:2833
 msgid "Syntax error in size argument '%s'"
-msgstr "size 选项的参数有语法错误  '%s'"
+msgstr "size 选项的参数有语法错误 '%s'"
 
 #: winmain.c:2863
 msgid "WSL distribution '%s' not found"
-msgstr ""
+msgstr "找不到 '%s' WSL 发行版"
 
 #: winmain.c:2916
 msgid "Unknown option '%s'"
@@ -1105,7 +1105,7 @@ msgstr "字体对字符范围支持有限"
 
 #: wintext.c:477
 msgid "Font installation corrupt, using system substitute"
-msgstr "字体安装错误，使用字体字体替代"
+msgstr "字体安装错误，使用系统字体替代"
 
 #: wintext.c:490
 msgid "Font does not support system locale"
