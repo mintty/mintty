@@ -862,12 +862,14 @@ child_launch(int n, int argc, char * argv[], int moni)
         *sepp = '\0';
 
       if (n == 0) {
-        RECT r;
-        GetWindowRect(wnd, &r);
-        setenvi("MINTTY_X", r.left);
-        setenvi("MINTTY_Y", r.top);
-        setenvi("MINTTY_DX", r.right - r.left);
-        setenvi("MINTTY_DY", r.bottom - r.top);
+        if (cfg.geom_sync) {
+          RECT r;
+          GetWindowRect(wnd, &r);
+          setenvi("MINTTY_X", r.left);
+          setenvi("MINTTY_Y", r.top);
+          setenvi("MINTTY_DX", r.right - r.left);
+          setenvi("MINTTY_DY", r.bottom - r.top);
+        }
         argc = 1;
         char ** new_argv = newn(char *, argc + 1);
         new_argv[0] = argv[0];

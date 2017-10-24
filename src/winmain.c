@@ -506,6 +506,37 @@ win_gotab(uint n)
 }
 
 static void
+win_synctabs(int level)
+{
+  BOOL CALLBACK wnd_enum_tabs(HWND curr_wnd, LPARAM lp)
+  {
+    (void)lp;
+    WINDOWINFO curr_wnd_info;
+    curr_wnd_info.cbSize = sizeof(WINDOWINFO);
+    GetWindowInfo(curr_wnd, &curr_wnd_info);
+    if (class_atom == curr_wnd_info.atomWindowType) {
+      if (curr_wnd != wnd) {
+        if (level == 3) // minimize
+          SendMessageW(curr_wnd, WM_USER, 0, 0);
+        else {
+          RECT r;
+          GetWindowRect(wnd, &r);
+#ifdef debug_tabs
+          printf("sync all %d,%d %d,%d\n", (int)r.left, (int)r.top, (int)(r.right - r.left), (int)(r.bottom - r.top));
+#endif
+          SendMessageW(curr_wnd, WM_USER,
+                       MAKEWPARAM(r.right - r.left, r.bottom - r.top),
+                       MAKELPARAM(r.left, r.top));
+        }
+      }
+    }
+    return true;
+  }
+  if (cfg.geom_sync >= level)
+    EnumWindows(wnd_enum_tabs, 0);
+}
+
+static void
 win_launch(int n)
 {
   HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
@@ -1529,7 +1560,7 @@ static struct {
 #ifdef debug_only_sizepos_messages
     if (strstr(wm_name, "POSCH") || strstr(wm_name, "SIZ"))
 #endif
-    printf("[%d] win_proc %04X %s (%04X %08X)\n", (int)time(0), message, wm_name, (unsigned)wp, (unsigned)lp);
+    printf("[%d]->%8p %04X %s (%04X %08X)\n", (int)time(0), wnd, message, wm_name, (unsigned)wp, (unsigned)lp);
 #endif
   switch (message) {
     when WM_NCCREATE:
@@ -1622,12 +1653,15 @@ static struct {
 #ifdef debug_tabs
         printf("switched %d,%d %d,%d\n", (INT16)LOWORD(lp), (INT16)HIWORD(lp), LOWORD(wp), HIWORD(wp));
 #endif
-        // (INT16) to handle multi-monitor negative coordinates properly
-        SetWindowPos(wnd, null,
-                     //GET_X_LPARAM(lp), GET_Y_LPARAM(lp),
-                     (INT16)LOWORD(lp), (INT16)HIWORD(lp),
-                     LOWORD(wp), HIWORD(wp),
-                     SWP_NOZORDER);
+        if (!wp && cfg.geom_sync >= 3)
+          ShowWindow(wnd, SW_MINIMIZE);
+        else
+          // (INT16) to handle multi-monitor negative coordinates properly
+          SetWindowPos(wnd, null,
+                       //GET_X_LPARAM(lp), GET_Y_LPARAM(lp),
+                       (INT16)LOWORD(lp), (INT16)HIWORD(lp),
+                       LOWORD(wp), HIWORD(wp),
+                       SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
       }
 
     when WM_COMMAND or WM_SYSCOMMAND: {
@@ -1912,6 +1946,9 @@ static struct {
         go_fullscr_on_max = false;
         make_fullscreen();
       }
+      else if (wp == SIZE_MINIMIZED) {
+        win_synctabs(3);
+      }
 
       if (!resizing) {
         trace_resize((" (win_proc (WM_SIZE) -> win_adapt_term_size)\n"));
@@ -1950,6 +1987,8 @@ static struct {
         trace_resize((" (win_proc (WM_EXITSIZEMOVE) -> win_adapt_term_size)\n"));
         win_adapt_term_size(shift, false);
       }
+
+      win_synctabs(2);
     }
 
     when WM_WINDOWPOSCHANGED: {
@@ -3412,6 +3451,8 @@ main(int argc, char *argv[])
   go_fullscr_on_max = (cfg.window == -1);
   ShowWindow(wnd, go_fullscr_on_max ? SW_SHOWMAXIMIZED : cfg.window);
   SetFocus(wnd);
+
+  win_synctabs(4);
 
   // Message loop.
   for (;;) {
