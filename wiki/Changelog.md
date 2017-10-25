@@ -1,4 +1,5 @@
   * Virtual Tabs: additional SessionGeomSync levels (#699).
+  * Window icons can optionally be shown in session switcher (#699).
 
 ### 2.8.0 (22 Oct 2017) ###
 

@@ -1611,39 +1611,18 @@ static struct {
       printf("WM_DRAWITEM\n");
 # endif
       DRAWITEMSTRUCT* lpdis = (DRAWITEMSTRUCT*)lp;
-      //HICON icon = (HICON)SendMessage(wnd, WM_GETICON, ICON_SMALL, 96);
+      /// this is the wrong wnd anyway...
       HICON icon = (HICON)GetClassLongPtr(wnd, GCLP_HICONSM);
       if (!lpdis || lpdis->CtlType != ODT_MENU)
         break; // not for a menu
       if (!icon)
         break;
-# ifdef drawiconex
-      DrawIconEx(lpdis->hDC,
-                 lpdis->rcItem.left - 16,
-                 lpdis->rcItem.top
-                        + (lpdis->rcItem.bottom - lpdis->rcItem.top - 16) / 2,
-                 icon, 16, 16,
-                 0, NULL, DI_NORMAL);
-# else
       DrawIcon(lpdis->hDC,
                lpdis->rcItem.left - 16,
                lpdis->rcItem.top
                       + (lpdis->rcItem.bottom - lpdis->rcItem.top - 16) / 2,
                icon);
-# endif
 // -> Invalid cursor handle.
-# ifdef debug_drawicon
-      uint err = GetLastError();
-      if (err) {
-        int wmlen = 1024;
-        wchar winmsg[wmlen];
-        FormatMessageW(
-          FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK,
-          0, err, 0, winmsg, wmlen, 0
-        );
-        printf("%ls\n", winmsg);
-      }
-# endif
       DestroyIcon(icon);
     }
 #endif
