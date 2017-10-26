@@ -958,7 +958,7 @@ msgstr "全选(&A)"
 #. __ Context menu:
 #: wininput.c:397
 msgid "Clear Scrollback"
-msgstr "清楚滚动历史"
+msgstr "清除滚动历史"
 
 #: winmain.c:1481
 msgid "Processes are running in session:"
