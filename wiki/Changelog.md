@@ -1,3 +1,6 @@
+  * Virtual Tabs: additional SessionGeomSync levels (#699).
+  * Window icons can optionally be shown in session switcher (#699).
+
 ### 2.8.0 (22 Oct 2017) ###
 
 Window and session control
@@ -37,8 +40,9 @@ Character display
   * DEC Tech: tweaked √/Σ segments (hand-drawn), fixed double-size characters.
   * Fraktur font support (ANSI character attribute 20).
 
-Keyboard
+Keyboard and Mouse
   * Workaround for broken AltGr of Windows on-screen keyboard (#692).
+  * 5-button mouse support.
 
 Localization meanwhile available for (in alphabetical order of locale ids):
   * German, English (UK/US), Spanish, French, Japanese, Russian, Chinese.

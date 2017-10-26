@@ -48,76 +48,8 @@ append_commands(HMENU menu, wstring commands, UINT_PTR idm_cmd)
   free(cmds);
 }
 
-static int tabi;
-
-static BOOL CALLBACK
-wnd_enum_tabs(HWND curr_wnd, LPARAM menu)
-{
-  WINDOWINFO curr_wnd_info;
-  curr_wnd_info.cbSize = sizeof(WINDOWINFO);
-  GetWindowInfo(curr_wnd, &curr_wnd_info);
-  if (class_atom == curr_wnd_info.atomWindowType) {
-    int len = GetWindowTextLengthW(curr_wnd);
-    wchar title[len + 1];
-    len = GetWindowTextW(curr_wnd, title, len + 1);
-
-    AppendMenuW((HMENU)menu, MF_ENABLED, IDM_GOTAB + tabi, title);
-    MENUITEMINFOW mi;
-    mi.cbSize = sizeof(MENUITEMINFOW);
-    mi.fMask = MIIM_STATE;
-    mi.fState = // (IsIconic(curr_wnd) ? MFS_DISABLED : 0) |
-                (curr_wnd == wnd ? MFS_DEFAULT : 0);
-
-#define iconic_icon
-#ifdef iconic_icon
-    mi.fMask |= MIIM_BITMAP;
-    if (IsIconic(curr_wnd))
-      mi.hbmpItem = HBMMENU_POPUP_MINIMIZE;
-    else
-      mi.hbmpItem = HBMMENU_POPUP_MAXIMIZE;
-#endif
-
-#ifdef show_icon_from_window
-#warning does not work, ICON needs to be converted to BITMAP
-    //HICON icon = (HICON)SendMessage(curr_wnd, WM_GETICON, ICON_SMALL2, 96);
-    HICON icon = (HICON)GetClassLongPtr(curr_wnd, GCLP_HICONSM);
-    HBITMAP bitmap = (HBITMAP)icon;
-    if (icon) {
-      mi.fMask |= MIIM_BITMAP;
-      mi.hbmpItem = bitmap;
-# ifdef show_icon_via_itemdata
-      mi.fMask |= MIIM_DATA;
-      mi.hbmpItem = HBMMENU_SYSTEM;
-      mi.dwItemData = (ULONG_PTR)bitmap;
-# endif
-    }
-#endif
-
-#ifdef show_icon_via_callback
-#warning does not work
-    mi.fMask |= MIIM_BITMAP;
-    mi.hbmpItem = HBMMENU_CALLBACK;
-#endif
-
-#ifdef show_checkmarks
-#warning does not work
-    mi.fMask |= MIIM_CHECKMARKS;
-    mi.hbmpChecked = HBMMENU_POPUP_MAXIMIZE;
-    mi.hbmpUnchecked = HBMMENU_POPUP_MINIMIZE;
-    if (!IsIconic(curr_wnd))
-      mi.fState |= MFS_CHECKED;
-#endif
-
-    SetMenuItemInfoW((HMENU)menu, IDM_GOTAB + tabi, 0, &mi);
-    add_tab(tabi, curr_wnd);
-
-    tabi++;
-  }
-  return true;
-}
-
 static void
-add_switcher(HMENU menu, bool vsep, bool hsep)
+add_switcher(HMENU menu, bool vsep, bool hsep, bool use_win_icons)
 {
   uint bar = vsep ? MF_MENUBARBREAK : 0;
   //__ Context menu, session switcher ("virtual tabs")
@@ -125,8 +57,89 @@ add_switcher(HMENU menu, bool vsep, bool hsep)
     AppendMenuW(menu, MF_SEPARATOR, 0, 0);
   AppendMenuW(menu, MF_DISABLED | bar, 0, _W("Session switcher"));
   AppendMenuW(menu, MF_SEPARATOR, 0, 0);
-  tabi = 0;
+  int tabi = 0;
   clear_tabs();
+
+  BOOL CALLBACK wnd_enum_tabs(HWND curr_wnd, LPARAM menu)
+  {
+    WINDOWINFO curr_wnd_info;
+    curr_wnd_info.cbSize = sizeof(WINDOWINFO);
+    GetWindowInfo(curr_wnd, &curr_wnd_info);
+    if (class_atom == curr_wnd_info.atomWindowType) {
+      int len = GetWindowTextLengthW(curr_wnd);
+      wchar title[len + 1];
+      len = GetWindowTextW(curr_wnd, title, len + 1);
+
+      AppendMenuW((HMENU)menu, MF_ENABLED, IDM_GOTAB + tabi, title);
+      MENUITEMINFOW mi;
+      mi.cbSize = sizeof(MENUITEMINFOW);
+      mi.fMask = MIIM_STATE;
+      mi.fState = // (IsIconic(curr_wnd) ? MFS_DISABLED : 0) |
+                  (curr_wnd == wnd ? MFS_DEFAULT : 0);
+        /*
+           MFS_DEFAULT: "A menu can contain only one default menu item, 
+                        which is displayed in bold."
+                        but multiple bold entries seem to work
+           MFS_HILITE: highlight is volatile
+           MFS_CHECKED: conflict with other MIIM_BITMAP usage
+        */
+      //if (has_flashed(curr_wnd))
+      //  mi.fState |= MFS_HILITE;
+
+      mi.fMask |= MIIM_BITMAP;
+      //if (has_flashed(curr_wnd))
+      //  mi.hbmpItem = HBMMENU_POPUP_RESTORE;
+      //else
+      if (IsIconic(curr_wnd))
+        mi.hbmpItem = HBMMENU_POPUP_MINIMIZE;
+      else
+        mi.hbmpItem = HBMMENU_POPUP_MAXIMIZE;
+
+      if (use_win_icons && !IsIconic(curr_wnd)) {
+# ifdef show_icon_via_itemdata
+# warning does not work
+        mi.fMask |= MIIM_DATA;
+        mi.hbmpItem = HBMMENU_SYSTEM;
+        mi.dwItemData = (ULONG_PTR)curr_wnd;
+# endif
+        HICON icon = (HICON)GetClassLongPtr(curr_wnd, GCLP_HICONSM);
+        if (icon) {
+          // convert icon to bitmap
+          //https://stackoverflow.com/questions/7375003/how-to-convert-hicon-to-hbitmap-in-vc/16787105#16787105
+          ICONINFO ii;
+          GetIconInfo(icon, &ii);
+          HBITMAP bitmap = ii.hbmColor;
+
+          mi.fMask |= MIIM_BITMAP;
+          mi.hbmpItem = bitmap;
+        }
+      }
+
+#ifdef show_icon_via_callback
+#warning does not work
+      mi.fMask |= MIIM_BITMAP;
+      mi.hbmpItem = HBMMENU_CALLBACK;
+#endif
+
+#ifdef show_checkmarks
+      // this works only if both hbmpChecked and hbmpUnchecked are populated,
+      // not using HBMMENU_ predefines
+      mi.fMask |= MIIM_CHECKMARKS;
+      mi.fMask &= ~MIIM_BITMAP;
+      mi.hbmpChecked = mi.hbmpItem;  // test value (from use_win_icons)
+      mi.hbmpUnchecked = NULL;
+      if (!IsIconic(curr_wnd))
+        mi.fState |= MFS_CHECKED;
+#endif
+
+      SetMenuItemInfoW((HMENU)menu, IDM_GOTAB + tabi, 0, &mi);
+      add_tab(tabi, curr_wnd);
+
+      tabi++;
+    }
+    return true;
+  }
+
   EnumWindows(wnd_enum_tabs, (LPARAM)menu);
 }
 
@@ -451,6 +464,7 @@ open_popup_menu(bool use_text_cursor, string menucfg, mod_keys mods)
 
   bool vsep = false;
   bool hsep = false;
+  bool wicons = strchr(menucfg, 'W');
   while (*menucfg) {
     if (*menucfg == '|')
       vsep = true;
@@ -461,7 +475,8 @@ open_popup_menu(bool use_text_cursor, string menucfg, mod_keys mods)
         when 'b': if (!strchr(menucfg, 'e'))
                     win_init_ctxmenu(false);
         when 'e': win_init_ctxmenu(true);
-        when 's': add_switcher(ctxmenu, vsep, hsep & !vsep);
+        when 'W': wicons = true;
+        when 's': add_switcher(ctxmenu, vsep, hsep & !vsep, wicons);
         when 'l': ok = add_launcher(ctxmenu, vsep, hsep & !vsep);
         when 'T': use_text_cursor = true;
         when 'P': use_text_cursor = false;

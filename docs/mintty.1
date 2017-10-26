@@ -256,7 +256,8 @@ namespace and converted before opening in Windows.
 .TP
 \fB--WSL\fP \fIWSL DISTRIBUTION NAME\fP
 Run a WSL session, setting other parameters as appropriate and involving 
-the \fIwslbridge\fP gateway implicitly.
+the \fIwslbridge\fP gateway implicitly 
+(which should be installed in /bin for this purpose).
 If the distribution name is empty (\fB--WSL=\fP), the default WSL 
 installation is run; otherwise, it refers to the installed WSL packages 
 as listed by the Windows tool \fBwslconfig /l\fP.
@@ -456,8 +457,8 @@ between mintty windows.  Minimised windows are skipped.
 
 .SS Virtual Tabs
 
-The Virtual Tabs feature provides a list of all running mintty sessions 
-as well as configurable launch parameters for new sessions.
+The Virtual Tabs feature provides a list of all running mintty sessions (session switcher) 
+as well as configurable launch parameters for new sessions (session launcher).
 By default, the list is shown in the extended context menu (Ctrl+right-click), 
 the mouse button 5 menu, and the menus opened with the Ctrl+Menu key 
 and the Ctrl+Shift+I shortcut (if enabled).
@@ -770,7 +771,7 @@ Also X11 color names are supported.
 \(en \fBUnderline, Strikeout, Overline\fP (UnderlineColour=-1)
 
 \(en \fBTheme\fP (ThemeFile=): 
-The popup offers theme files as stored in a resource subdirectory 
+The popup menu offers theme files as stored in a resource subdirectory 
 \fIthemes\fP for selection as a colour scheme.
 The option can also be set to a filename (like D:/.../solarized-light.minttyrc).
 
@@ -1345,7 +1346,7 @@ Mintty can also play wave sounds or frequency beeps.
 \fB5\fP : Asterisk
 .RE
 \(en \fBWave\fP (BellFile=): 
-The popup offers wave files as stored in a resource subdirectory 
+The popup menu offers wave files as stored in a resource subdirectory 
 \fIsounds\fP for selection. The option can also be set 
 to a filename (like D:/.../soundfile.wav); this can be achieved also 
 by drag-and-drop from a local file.
@@ -1915,6 +1916,8 @@ Menu contents can be configured by a sequence of characters with the following m
 \(en \fBT\fP: the menu is opened at the text cursor position
 .br
 \(en \fBP\fP: the menu is opened at the mouse pointer position
+.br
+\(en \fBW\fP: show window icon for uniconized windows in session switcher
 
 .TP
 \fBSession geometry synchronization / Virtual tabs\fP (SessionGeomSync=0)
@@ -1925,9 +1928,11 @@ operation within the Virtual Tabs feature:
 .br
 \(en \fB1\fP: sync. position/size when switching/launching a session
 .br
-\(en \fB2\fP: (not implemented) also when window is moved or resized
+\(en \fB2\fP: sync. also when window is moved or resized
 .br
-\(en \fB3\fP: (not implemented) always
+\(en \fB3\fP: sync. also when window is minimized
+.br
+\(en \fB4\fP: sync. also when window is started
 
 .SH LIMITATIONS
 
@@ -1959,8 +1964,10 @@ only the default PC-style and VT220-style are available.
 There is no Tektronix 4014 emulation.
 Mouse highlighting mode is not implemented.
 
-The majority of xterm's many control sequences is implemented, but quite a few
-are missing.  Significant omissions should be reported to the issue tracker.
+The majority of xterm's many control sequences is implemented, 
+up to the VT300 series level; 
+VT400 rectangular area operations are not implemented.
+Significant omissions should be reported to the issue tracker.
 
 .SH SEE ALSO
 
