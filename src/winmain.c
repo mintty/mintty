@@ -1,4 +1,3 @@
-static void show_info(char * msg);
 // winmain.c (part of mintty)
 // Copyright 2008-13 Andy Koppe, 2015-2017 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
@@ -88,7 +87,7 @@ static bool maxheight = false;
 static bool store_taskbar_properties = false;
 static bool prevent_pinning = false;
 bool support_wsl = false;
-wstring wsl_basepath = 0;
+wstring wsl_basepath = W("");
 static char * wsl_guid = 0;
 static bool start_home = false;
 
@@ -2501,6 +2500,19 @@ getlxssinfo(wstring wslname,
   if (!lxss)
     return false;
 
+  wchar * legacy_icon()
+  {
+    // "%LOCALAPPDATA%/lxss/bash.ico"
+    char * icf = getenv("LOCALAPPDATA");
+    if (icf) {
+      wchar * icon = cs__mbstowcs(icf);
+      icon = renewn(icon, wcslen(icon) + 15);
+      wcscat(icon, W("\\lxss\\bash.ico"));
+      return icon;
+    }
+    return 0;
+  }
+
   bool getlxssdistinfo(HKEY lxss, wchar * guid)
   {
     wchar * rootfs;
@@ -2532,13 +2544,7 @@ getlxssinfo(wstring wslname,
     }
     else {  // legacy
       rootfs = wcsdup(bp);
-      // "%LOCALAPPDATA%/lxss/bash.ico"
-      char * icf = getenv("LOCALAPPDATA");
-      if (icf) {
-        icon = cs__mbstowcs(icf);
-        icon = renewn(icon, wcslen(icon) + 15);
-        wcscat(icon, W("\\lxss\\bash.ico"));
-      }
+      icon = legacy_icon();
     }
 #ifdef debug_reg_lxss
     printf("WSL distribution name %ls\n", getreg(lxss, guid, W("DistributionName")));
@@ -2555,7 +2561,33 @@ getlxssinfo(wstring wslname,
 
   if (!wslname || !*wslname) {
     wchar * dd = getreg(HKEY_CURRENT_USER, lxsskeyname, W("DefaultDistribution"));
-    int ok = getlxssdistinfo(lxss, dd);
+    int ok;
+    if (dd) {
+      ok = getlxssdistinfo(lxss, dd);
+      free(dd);
+    }
+    else {  // Legacy "Bash on Windows" installed only, no registry info
+#ifdef set_basepath_here
+      // "%LOCALAPPDATA%\\lxss"
+      char * icf = getenv("LOCALAPPDATA");
+      if (icf) {
+        wchar * rootfs = cs__mbstowcs(icf);
+        rootfs = renewn(rootfs, wcslen(rootfs) + 6);
+        wcscat(rootfs, W("\\lxss"));
+        *wsl_rootfs = rootfs;
+        *wsl_guid = "";
+        *wsl_icon = legacy_icon();
+        ok = true;
+      }
+      else
+        ok = false;
+#else
+      *wsl_guid = "";
+      *wsl_rootfs = W("");  // activate legacy tricks in winclip.c
+      *wsl_icon = legacy_icon();
+      ok = true;
+#endif
+    }
     regclose(lxss);
     return ok;
   }
@@ -2612,7 +2644,7 @@ waccess(wstring fn, int amode)
 static bool
 select_WSL(char * wsl)
 {
-  wchar * wslname = cs__mbstowcs(wsl);
+  wchar * wslname = cs__mbstowcs(wsl ?: "");
   wstring wsl_icon;
   // set --rootfs implicitly
   bool ok = getlxssinfo(wslname, &wsl_guid, &wsl_basepath, &wsl_icon);
@@ -2696,7 +2728,7 @@ opts[] = {
   {"nortl",      no_argument,       0, ''},  // short option not enabled
   {"wsl",        no_argument,       0, ''},  // short option not enabled
 #if CYGWIN_VERSION_API_MINOR >= 74
-  {"WSL",        required_argument, 0, ''},  // short option not enabled
+  {"WSL",        optional_argument, 0, ''},  // short option not enabled
 #endif
   {"rootfs",     required_argument, 0, ''},  // short option not enabled
   {"dir~",       no_argument,       0, '~'},
@@ -2878,7 +2910,7 @@ main(int argc, char *argv[])
 #if CYGWIN_VERSION_API_MINOR >= 74
       when '':
         if (!select_WSL(optarg))
-          option_error(__("WSL distribution '%s' not found"), optarg);
+          option_error(__("WSL distribution '%s' not found"), optarg ?: "(default)");
 #endif
       when '~':
         start_home = true;
@@ -3002,8 +3034,10 @@ main(int argc, char *argv[])
     char ** new_argv = newn(char *, argc + 2 + 4 + start_home);
     char ** pargv = new_argv;
     *pargv++ = "-wslbridge";
-    *pargv++ = "--distro-guid";
-    *pargv++ = wsl_guid;
+    if (*wsl_guid) {
+      *pargv++ = "--distro-guid";
+      *pargv++ = wsl_guid;
+    }
     *pargv++ = "-t";
     if (start_home)
       *pargv++ = "-C~";
