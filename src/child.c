@@ -568,6 +568,19 @@ foreground_pid()
 static char *
 foreground_cwd()
 {
+  // if working dir is communicated interactively, use it
+  if (child_dir && *child_dir)
+    return strdup(child_dir);
+
+  // for WSL, do not check foreground process; hope start dir is good
+  if (support_wsl) {
+    char cwd[MAX_PATH];
+    if (getcwd(cwd, sizeof(cwd)))
+      return strdup(cwd);
+    else
+      return 0;
+  }
+
   int fg_pid = foreground_pid();
   if (fg_pid > 0) {
     char proc_cwd[32];
@@ -643,6 +656,9 @@ user_command(int n)
   }
 }
 
+/*
+   used by win_open
+*/
 wstring
 child_conv_path(wstring wpath)
 {
