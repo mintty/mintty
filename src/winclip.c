@@ -1,5 +1,5 @@
 // winclip.c (part of mintty)
-// Copyright 2008-12 Andy Koppe
+// Copyright 2008-12 Andy Koppe, 2017 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -48,8 +48,10 @@ shell_exec_thread(void *data)
 
 static void
 shell_exec(wstring wpath)
+// frees wpath
 {
   CreateThread(0, 0, shell_exec_thread, (void *)wpath, 0, 0);
+  // this frees wpath via shell_exec_thread
 }
 
 #define dont_debug_wsl
@@ -99,12 +101,34 @@ ispathprefixw(wstring pref, wstring path)
 
 void
 win_open(wstring wpath)
+// frees wpath
 {
+  // unescape
+  int wl = wcslen(wpath);
+  if ((*wpath == '"' || *wpath == '\'') && wpath[wl - 1] == *wpath) {
+    // don't wpath++ (later delete!)
+    wchar * p0 = (wchar *)wpath;
+    for (int i = 0; i < wl - 2; i++)
+      p0[i] = p0[i + 1];
+    p0[wl - 2] = 0;
+  }
+  else {
+    wchar * p0 = (wchar *)wpath;
+    wchar * p1 = p0;
+    while (*p0) {
+      if (*p0 == '\\')
+        p0++;
+      if (*p0)
+        *p1++ = *p0++;
+    }
+    *p1 = 0;
+  }
+
   wstring p = wpath;
   while (iswalpha(*p)) p++;
   if (*wpath == '\\' || *p == ':' || wcsncmp(W("www."), wpath, 4) == 0) {
     // Looks like it's a Windows path or URI
-    shell_exec(wpath);
+    shell_exec(wpath); // frees wpath
   }
   else {
     // Need to convert POSIX path to Windows first
@@ -169,7 +193,7 @@ win_open(wstring wpath)
 #endif
     delete(wpath);
     if (conv_wpath)
-      shell_exec(conv_wpath);
+      shell_exec(conv_wpath); // frees conv_wpath
     else
       message_box(0, strerror(errno), null, MB_ICONERROR, null);
   }
@@ -673,7 +697,7 @@ paste_hdrop(HDROP drop)
   }
   buf_pos--;  // Drop trailing space
 
-  if (*cfg.drop_commands) {
+  if (!support_wsl && *cfg.drop_commands) {
     // try to determine foreground program
     char * fg_prog = foreground_prog();
     if (fg_prog) {

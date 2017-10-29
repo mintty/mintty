@@ -1,5 +1,5 @@
 // termclip.c (part of mintty)
-// Copyright 2008-10 Andy Koppe
+// Copyright 2008-10 Andy Koppe, 2017 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -169,7 +169,7 @@ term_open(void)
   while (iswspace(*p))
     p++;
   if (*p)
-    win_open(buf.textbuf);  // textbuf is freed by win_open if possible
+    win_open(buf.textbuf);  // textbuf is freed by win_open
   else
     free(buf.textbuf);
 }

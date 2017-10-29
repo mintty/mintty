@@ -1,5 +1,5 @@
 // termmouse.c (part of mintty)
-// Copyright 2008-12 Andy Koppe
+// Copyright 2008-12 Andy Koppe, 2017 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -46,6 +46,8 @@ sel_spread_word(pos p, bool forward)
       if (!forward)
         ret_p = p;
     }
+    else if (c == ' ' && p.x > 0 && get_char(line, p.x - 1) == '\\')
+      ret_p = p;
     else if (!(strchr("&,;?!", c) || c == (forward ? '=' : ':')))
       break;
 
