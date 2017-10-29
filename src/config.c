@@ -143,6 +143,7 @@ const config default_cfg = {
   // "Hidden"
   .bidi = 2,
   .disable_alternate_screen = false,
+  .charwidth = 0,
   .app_id = W(""),
   .app_name = W(""),
   .app_launch_cmd = W(""),
@@ -191,6 +192,7 @@ typedef enum {
   OPT_BOOL, OPT_MOD, OPT_TRANS, OPT_CURSOR, OPT_FONTSMOOTH, OPT_FONTRENDER,
   OPT_MIDDLECLICK, OPT_RIGHTCLICK, OPT_SCROLLBAR, OPT_WINDOW, OPT_HOLD,
   OPT_INT, OPT_COLOUR, OPT_STRING, OPT_WSTRING,
+  OPT_CHARWIDTH,
   OPT_TYPE_MASK = 0x1F,
   OPT_LEGACY = 0x20,
   OPT_KEEPCR = 0x40
@@ -351,6 +353,7 @@ options[] = {
   // "Hidden"
   {"Bidi", OPT_INT, offcfg(bidi)},
   {"NoAltScreen", OPT_BOOL, offcfg(disable_alternate_screen)},
+  {"Charwidth", OPT_CHARWIDTH, offcfg(charwidth)},
   {"AppID", OPT_WSTRING, offcfg(app_id)},
   {"AppName", OPT_WSTRING, offcfg(app_name)},
   {"AppLaunchCmd", OPT_WSTRING, offcfg(app_launch_cmd)},
@@ -410,6 +413,12 @@ static opt_val
     {"true", true},
     {"off", false},
     {"on", true},
+    {0, 0}
+  },
+  [OPT_CHARWIDTH] = (opt_val[]) {
+    {"locale", 0},
+    {"unicode", 1},
+    {"ambig-wide", 2},
     {0, 0}
   },
   [OPT_MOD] = (opt_val[]) {

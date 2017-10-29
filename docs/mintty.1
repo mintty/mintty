@@ -252,15 +252,22 @@ using the Linux path name.
 .br
 \(en When Ctrl+clicking a file name, it will be interpreted in the Linux 
 namespace and converted before opening in Windows.
+.br
+\(en Options DropCommands and setting MINTTY_PROG for UserCommands are disabled.
+.br
+\(en The working directory of the current foreground process 
+(for click-opening pathnames) cannot be detected.
+.br
+\(en Locale modification (@cjk...) is disabled.
 
 .TP
 \fB--WSL\fP \fIWSL DISTRIBUTION NAME\fP
 Run a WSL session, setting other parameters as appropriate and involving 
 the \fIwslbridge\fP gateway implicitly 
 (which should be installed in /bin for this purpose).
-If the distribution name is empty (\fB--WSL=\fP), the default WSL 
-installation is run; otherwise, it refers to the installed WSL packages 
-as listed by the Windows tool \fBwslconfig /l\fP.
+If the distribution name is empty, the default WSL installation is run; 
+otherwise, it refers to the installed WSL packages as listed by the 
+Windows tool \fBwslconfig /l\fP.
 Implies \fB--wsl -o Locale=C -o Charset=UTF-8\fP, \fB--rootfs=\fP..., 
 and \fB--icon=\fP... if a respective icon file exists for the distribution.
 
@@ -350,9 +357,13 @@ Files, directories, URLs and web addresses beginning with "www." can be
 opened either by holding \fBCtrl\fP while left-clicking on them (or 
 double-clicking, if and as enabled by option OpeningClicks), or by 
 selecting them and choosing the \fBOpen\fP command from the context menu.
-Please note that a relative file or directory path is interpreted as relative 
-to the current working directory of the terminal foreground process if that 
-can be determined.
+Embedded spaces are considered if escaped with a backslash; for 
+selected pathnames, also embedding quote marks are considered.
+
+A relative pathname is interpreted as relative to the current working 
+directory of the terminal foreground process if that can be determined, 
+overridden by the working directory interactively communicated by the 
+respective control sequence.
 
 .SS Font zoom
 
@@ -977,6 +988,11 @@ in the locale) but the selected font is actually "ambiguous-narrow"
 (i.e. ambiguous-width characters are narrow in the font) in which case it 
 appends the "@cjknarrow" locale modifier.
 
+By default, the selected locale also determines the character width 
+assumptions used for screen rendering. For exceptions, see the 
+setting \fBCharwidth\fP and the control sequences for special wide character handling 
+(\fIhttps://github.com/mintty/mintty/wiki/CtrlSeqs#wide-characters\fP).
+
 .TP
 \fBCharacter set\fP (Charset=)
 The character set to be used for encoding input and decoding output.
@@ -1510,6 +1526,20 @@ distinguish different mintty windows.  The name defaults to "mintty".
 The following settings appear neither in the options dialog nor as command line
 options, which means they can only be set in config files or using the
 \fB--option\fP or \fB-o\fP command line option.
+
+.TP
+\fBCharacter width handling\fP (Charwidth=locale)
+With this option, locale-determined character width properties can be overridden:
+.br
+\(en \fBlocale\fP Use locale width properties.
+.br
+\(en \fBunicode\fP Use built-in width properties, 
+likely based on a more up-to-date Unicode version.
+(corresponds to the xterm resource \fBmkWidth\fP)
+.br
+\(en \fBambig-wide\fP Use built-in width properties, 
+with ambiguous-width characters assumed to be wide.
+(corresponds to the xterm resource \fBcjkWidth\fP)
 
 .TP
 \fBBidirectional rendering\fP (Bidi=2)

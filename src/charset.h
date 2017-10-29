@@ -66,8 +66,8 @@ extern bool font_ambig_wide;
 extern bool cs_ambig_wide;
 #else
 #define cs_ambig_wide font_ambig_wide
-extern int xcwidth(xchar c);
 #endif
+extern int xcwidth(xchar c);
 
 extern bool indicwide(xchar c);
 extern bool extrawide(xchar c);

@@ -1,5 +1,11 @@
   * Virtual Tabs: additional SessionGeomSync levels (#699).
   * Window icons can optionally be shown in session switcher (#699).
+  * Relative pathname opening considers interactive working directory (~mintty/wsltty#19).
+  * Relative pathname opening from WSL ignores improper directories (mintty/wsltty#19).
+  * Pathname opening accepts escaped space or embedding quotes (~mintty/wsltty#19).
+  * Made WSL parameter optional: --WSL.
+  * Option --WSL supports legacy-only installation "Bash on Windows" (mintty/wsltty#64).
+  * Option Charwidth for built-in Unicode width or ambiguous wide mode (#88, #671).
 
 ### 2.8.0 (22 Oct 2017) ###
 

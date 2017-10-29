@@ -1,5 +1,5 @@
 // xcwidth.c (part of mintty)
-// Copyright 2009-10 Andy Koppe
+// Copyright 2009-10 Andy Koppe, 2017 Thomas Wolff
 // Adapted from code by Markus Kuhn.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -43,12 +43,9 @@ static const interval wide[] =
 static const interval ambiguous[] =
 #include "ambiguous.t"
 
-#if !HAS_LOCALES
-
 /*
  * This is an implementation of wcwidth() (defined in IEEE Std 1002.1-2001)
- * for Unicode.
- *
+ * for Unicode:
  * http://www.opengroup.org/onlinepubs/007904975/functions/wcwidth.html
  *
  * In fixed-width output devices, Latin characters all occupy a single
@@ -104,7 +101,6 @@ static const interval ambiguous[] =
  *
  * Latest version: http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c
  */
-
 
 /* The following function defines the column width of an ISO 10646
  * character as follows:
@@ -167,7 +163,7 @@ xcwidth(xchar c)
 
   /* CJK ambiguous characters */
   if (bisearch(c, ambiguous, lengthof(ambiguous)))
-    return font_ambig_wide + 1;
+    return cs_ambig_wide + 1;
 
   /* wide characters */
   if (bisearch(c, wide, lengthof(wide)))
@@ -176,8 +172,6 @@ xcwidth(xchar c)
   /* anything else */
   return 1;
 }
-
-#endif
 
 bool
 ambigwide(xchar c)

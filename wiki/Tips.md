@@ -383,6 +383,7 @@ click the “Store” button to store the colour scheme.
 A number of colour schemes have been published for mintty, e.g.
 * https://github.com/oumu/mintty-color-schemes
 * https://github.com/PhilipDaniels/mintty/tree/master/themes
+* https://github.com/goreliu/wsl-terminal/tree/master/src/etc/themes
 
 Mintty also provides the command-line script ```mintheme``` which can 
 display the themes available in the mintty configuration directories or 
@@ -442,7 +443,18 @@ for it on your system.
 <img align=top src=https://github.com/mintty/mintty/wiki/mintty-alternative-fonts.png>
 
 
-## Ambiguous width setting ##
+## Character width ##
+
+By default, mintty adjusts character width to the width assumption of the 
+locale mechanism (function `wcwidth`).
+If it is desired to use more up-to-date Unicode width properties, this can 
+be chosen with option `Charwidth=unicode`. Note that actual width 
+properties as rendered on the screen and width assumptions of the 
+`wcwidth` function will be inconsistent then for the impacted characters, 
+which may confuse screen applications (such as editors) that rely on 
+`wcwidth` information.
+
+### Ambiguous width setting ###
 
 A number of Unicode characters have an “ambiguous width” property due to 
 legacy issues with dedicated CJK fonts, meaning they can be narrow 
@@ -465,6 +477,26 @@ enforce the ambiguous-narrow mode of rendering by appending the
 mintty -o Locale=zh_CN -o Font=FangSong &
 ```
 
+If it is not desired to set a specific base locale in order to enable 
+ambiguous-wide mode, option `Charwidth=ambig-wide` can be used.
+It implies `Charwidth=unicode` behaviour, with the same caveats as above.
+Mintty indicates this mode by appending the `@cjkwide` modifier to the 
+`LC_CTYPE` locale variable (not yet supported by cygwin).
+
+### Selective double character width ###
+
+While mintty fully supports double-width characters (esp. CJK) as well 
+as ambiguous-width characters, there are also characters of fuzzy 
+width property, because their rendered glyph is wider than one 
+terminal character cell in most fonts, but yet they are defined as 
+single-width by Unicode. Such characters often appear to be clipped 
+on the screen. Mintty has an experimental feature to display semi-wide 
+Indic and some other characters at double-cell width
+(see [Control Sequences – Wide characters](https://github.com/mintty/mintty/wiki/CtrlSeqs#wide-characters)),
+but not all such characters are handled, and there is no perfect solution 
+that would also comply with the locale mechanism unless the terminal would 
+support proportional fonts.
+
 
 ## Font rendering and geometry ##
 
@@ -485,20 +517,6 @@ The actual window size is influenced by several parameters:
 Note: The term “leading” (pronounced like “ledding”) comes from the 
 times of metal typesetting when strips of lead (the metal) were used 
 to adjust line spacing.
-
-### Character width ###
-
-While mintty fully supports double-width characters (esp. CJK) as well 
-as ambiguous-width characters, there are also characters of fuzzy 
-width property, because their rendered glyph is wider than one 
-terminal character cell in most fonts, but yet they are defined as 
-single-width by Unicode. Such characters often appear to be clipped 
-on the screen. Mintty has an experimental feature to display semi-wide 
-Indic and some other characters at double-cell width
-(see [Control Sequences – Wide characters](https://github.com/mintty/mintty/wiki/CtrlSeqs#wide-characters)),
-but not all such characters are handled, and there is no perfect solution 
-that would also comply with the locale mechanism unless the terminal would 
-support proportional fonts.
 
 
 ## Text attributes and rendering ##

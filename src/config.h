@@ -141,6 +141,7 @@ typedef struct {
   // "Hidden"
   int bidi;
   bool disable_alternate_screen;
+  char charwidth;
   wstring app_id;
   wstring app_name;
   wstring app_launch_cmd;
