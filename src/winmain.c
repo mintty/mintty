@@ -482,9 +482,12 @@ win_gotab(uint n)
 #ifdef debug_tabs
   printf("switcher %d,%d %d,%d\n", (int)r.left, (int)r.top, (int)(r.right - r.left), (int)(r.bottom - r.top));
 #endif
-  SendMessageW(tab, WM_USER,
-               MAKEWPARAM(r.right - r.left, r.bottom - r.top),
-               MAKELPARAM(r.left, r.top));
+  if (win_is_fullscreen)
+    SendMessageW(tab, WM_USER, 0, -1);
+  else
+    SendMessageW(tab, WM_USER,
+                 MAKEWPARAM(r.right - r.left, r.bottom - r.top),
+                 MAKELPARAM(r.left, r.top));
 #endif
 
   if (tab == wnd)
@@ -515,7 +518,9 @@ win_synctabs(int level)
     GetWindowInfo(curr_wnd, &curr_wnd_info);
     if (class_atom == curr_wnd_info.atomWindowType) {
       if (curr_wnd != wnd) {
-        if (level == 3) // minimize
+        if (win_is_fullscreen)
+          SendMessageW(curr_wnd, WM_USER, 0, -1);
+        else if (level == 3) // minimize
           SendMessageW(curr_wnd, WM_USER, 0, 0);
         else {
           RECT r;
@@ -1631,8 +1636,12 @@ static struct {
 #ifdef debug_tabs
         printf("switched %d,%d %d,%d\n", (INT16)LOWORD(lp), (INT16)HIWORD(lp), LOWORD(wp), HIWORD(wp));
 #endif
-        if (!wp && cfg.geom_sync >= 3)
-          ShowWindow(wnd, SW_MINIMIZE);
+        if (!wp) {
+          if (!lp && cfg.geom_sync >= 3)
+            ShowWindow(wnd, SW_MINIMIZE);
+          else if (lp == -1)
+            win_maximise(2);
+        }
         else
           // (INT16) to handle multi-monitor negative coordinates properly
           SetWindowPos(wnd, null,
@@ -2910,7 +2919,7 @@ main(int argc, char *argv[])
 #if CYGWIN_VERSION_API_MINOR >= 74
       when '':
         if (!select_WSL(optarg))
-          option_error(__("WSL distribution '%s' not found"), optarg ?: "(default)");
+          option_error(__("WSL distribution '%s' not found"), optarg ?: _("(Default)"));
 #endif
       when '~':
         start_home = true;
@@ -3375,7 +3384,7 @@ main(int argc, char *argv[])
 
   {
     // INT16 to handle multi-monitor negative coordinates properly
-    INT16 sx = 0, sy = 0, sdx = 0, sdy = 0;
+    INT16 sx = 0, sy = 0, sdx = 1, sdy = 1;
     short si = 0;
     if (getenv("MINTTY_X")) {
       sx = atoi(getenv("MINTTY_X"));
@@ -3397,11 +3406,16 @@ main(int argc, char *argv[])
       unsetenv("MINTTY_DY");
       si++;
     }
-    if (si == 4 && cfg.geom_sync) {
+    if (cfg.geom_sync) {
 #ifdef debug_tabs
       printf("launched %d,%d %d,%d\n", sx, sy, sdx, sdy);
 #endif
-      SetWindowPos(wnd, null, sx, sy, sdx, sdy, SWP_NOZORDER);
+      if (si >= 2 && !sdx && !sdy) {
+        win_maximise(2);
+      }
+      else if (si == 4) {
+        SetWindowPos(wnd, null, sx, sy, sdx, sdy, SWP_NOZORDER);
+      }
       trace_winsize("launch");
     }
   }

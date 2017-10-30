@@ -879,12 +879,18 @@ child_launch(int n, int argc, char * argv[], int moni)
 
       if (n == 0) {
         if (cfg.geom_sync) {
-          RECT r;
-          GetWindowRect(wnd, &r);
-          setenvi("MINTTY_X", r.left);
-          setenvi("MINTTY_Y", r.top);
-          setenvi("MINTTY_DX", r.right - r.left);
-          setenvi("MINTTY_DY", r.bottom - r.top);
+          if (win_is_fullscreen) {
+            setenvi("MINTTY_DX", 0);
+            setenvi("MINTTY_DY", 0);
+          }
+          else {
+            RECT r;
+            GetWindowRect(wnd, &r);
+            setenvi("MINTTY_X", r.left);
+            setenvi("MINTTY_Y", r.top);
+            setenvi("MINTTY_DX", r.right - r.left);
+            setenvi("MINTTY_DY", r.bottom - r.top);
+          }
         }
         argc = 1;
         char ** new_argv = newn(char *, argc + 1);
