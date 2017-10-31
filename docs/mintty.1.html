@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Sun Oct 22 20:19:33 2017 -->
+<!-- CreationDate: Tue Oct 31 01:49:51 2017 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -379,20 +379,27 @@ file or folder into mintty, it will be pasted using the
 Linux path name. <br>
 &ndash; When Ctrl+clicking a file name, it will be
 interpreted in the Linux namespace and converted before
-opening in Windows.</p>
+opening in Windows. <br>
+&ndash; Options DropCommands and setting MINTTY_PROG for
+UserCommands are disabled. <br>
+&ndash; The working directory of the current foreground
+process (for click-opening pathnames) cannot be detected.
+<br>
+&ndash; Locale modification (@cjk...) is disabled.</p>
 
 <p style="margin-left:11%;"><b>--WSL</b> <i>WSL
 DISTRIBUTION NAME</i></p>
 
 <p style="margin-left:22%;">Run a WSL session, setting
 other parameters as appropriate and involving the
-<i>wslbridge</i> gateway implicitly. If the distribution
-name is empty (<b>--WSL=</b>), the default WSL installation
-is run; otherwise, it refers to the installed WSL packages
-as listed by the Windows tool <b>wslconfig /l</b>. Implies
-<b>--wsl -o Locale=C -o Charset=UTF-8</b>,
-<b>--rootfs=</b>..., and <b>--icon=</b>... if a respective
-icon file exists for the distribution.</p>
+<i>wslbridge</i> gateway implicitly (which should be
+installed in /bin for this purpose). If the distribution
+name is empty, the default WSL installation is run;
+otherwise, it refers to the installed WSL packages as listed
+by the Windows tool <b>wslconfig /l</b>. Implies <b>--wsl -o
+Locale=C -o Charset=UTF-8</b>, <b>--rootfs=</b>..., and
+<b>--icon=</b>... if a respective icon file exists for the
+distribution.</p>
 
 <p style="margin-left:11%;"><b>--rootfs</b>
 <i>ROOTFOLDER</i></p>
@@ -518,10 +525,16 @@ Files, directories, URLs and web addresses beginning with
 while left-clicking on them (or double-clicking, if and as
 enabled by option OpeningClicks), or by selecting them and
 choosing the <b>Open</b> command from the context menu.
-Please note that a relative file or directory path is
-interpreted as relative to the current working directory of
-the terminal foreground process if that can be
-determined.</p>
+Embedded spaces are considered if escaped with a backslash;
+for selected pathnames, also embedding quote marks are
+considered.</p>
+
+<p style="margin-left:11%; margin-top: 1em">A relative
+pathname is interpreted as relative to the current working
+directory of the terminal foreground process if that can be
+determined, overridden by the working directory
+interactively communicated by the respective control
+sequence.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Font
 zoom</b> <br>
@@ -643,16 +656,16 @@ are skipped.</p>
 <p style="margin-left:11%; margin-top: 1em"><b>Virtual
 Tabs</b> <br>
 The Virtual Tabs feature provides a list of all running
-mintty sessions as well as configurable launch parameters
-for new sessions. By default, the list is shown in the
-extended context menu (Ctrl+right-click), the mouse button 5
-menu, and the menus opened with the Ctrl+Menu key and the
-Ctrl+Shift+I shortcut (if enabled). (Menu contents for the
-various context menu invocations is configurable.) For
-configuration, see settings <b>SessionCommands</b>,
-<b>Menu*</b>, and <b>SessionGeomSync</b>. Distinct sets of
-sessions can be set up with the setting <b>-o
-Class=...</b>.</p>
+mintty sessions (session switcher) as well as configurable
+launch parameters for new sessions (session launcher). By
+default, the list is shown in the extended context menu
+(Ctrl+right-click), the mouse button 5 menu, and the menus
+opened with the Ctrl+Menu key and the Ctrl+Shift+I shortcut
+(if enabled). (Menu contents for the various context menu
+invocations is configurable.) For configuration, see
+settings <b>SessionCommands</b>, <b>Menu*</b>, and
+<b>SessionGeomSync</b>. Distinct sets of sessions can be set
+up with the setting <b>-o Class=...</b>.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Closing a
 session</b> <br>
@@ -975,8 +988,8 @@ X11 color names are supported. <br>
 (UnderlineColour=-1)</p>
 
 <p style="margin-left:22%; margin-top: 1em">&ndash;
-<b>Theme</b> (ThemeFile=): The popup offers theme files as
-stored in a resource subdirectory <i>themes</i> for
+<b>Theme</b> (ThemeFile=): The popup menu offers theme files
+as stored in a resource subdirectory <i>themes</i> for
 selection as a colour scheme. The option can also be set to
 a filename (like D:/.../solarized-light.minttyrc).</p>
 
@@ -1220,6 +1233,13 @@ characters are wide in the locale) but the selected font is
 actually &quot;ambiguous-narrow&quot; (i.e. ambiguous-width
 characters are narrow in the font) in which case it appends
 the &quot;@cjknarrow&quot; locale modifier.</p>
+
+<p style="margin-left:22%; margin-top: 1em">By default, the
+selected locale also determines the character width
+assumptions used for screen rendering. For exceptions, see
+the setting <b>Charwidth</b> and the control sequences for
+special wide character handling
+(<i>https://github.com/mintty/mintty/wiki/CtrlSeqs#wide-characters</i>).</p>
 
 <p style="margin-left:11%;"><b>Character set</b>
 (Charset=)</p>
@@ -1663,7 +1683,7 @@ sound</b> (BellType=1): Preferred system sound, values:</p>
 5</b> : Asterisk</p>
 
 <p style="margin-left:22%;">&ndash; <b>Wave</b>
-(BellFile=): The popup offers wave files as stored in a
+(BellFile=): The popup menu offers wave files as stored in a
 resource subdirectory <i>sounds</i> for selection. The
 option can also be set to a filename (like
 D:/.../soundfile.wav); this can be achieved also by
@@ -1850,7 +1870,21 @@ The following settings appear neither in the options dialog
 nor as command line options, which means they can only be
 set in config files or using the <b>--option</b> or
 <b>-o</b> command line option. <b><br>
-Bidirectional rendering</b> (Bidi=2)</p>
+Character width handling</b> (Charwidth=locale)</p>
+
+<p style="margin-left:22%;">With this option,
+locale-determined character width properties can be
+overridden: <br>
+&ndash; <b>locale</b> Use locale width properties. <br>
+&ndash; <b>unicode</b> Use built-in width properties, likely
+based on a more up-to-date Unicode version. (corresponds to
+the xterm resource <b>mkWidth</b>) <br>
+&ndash; <b>ambig-wide</b> Use built-in width properties,
+with ambiguous-width characters assumed to be wide.
+(corresponds to the xterm resource <b>cjkWidth</b>)</p>
+
+<p style="margin-left:11%;"><b>Bidirectional rendering</b>
+(Bidi=2)</p>
 
 <p style="margin-left:22%;">With this option, bidi
 rendering support can be disabled conditionally or
@@ -2345,7 +2379,9 @@ following meaning: <br>
 &ndash; <b>T</b>: the menu is opened at the text cursor
 position <br>
 &ndash; <b>P</b>: the menu is opened at the mouse pointer
-position</p>
+position <br>
+&ndash; <b>W</b>: show window icon for uniconized windows in
+session switcher</p>
 
 <p style="margin-left:11%;"><b>Session geometry
 synchronization / Virtual tabs</b> (SessionGeomSync=0)</p>
@@ -2357,9 +2393,10 @@ within the Virtual Tabs feature: <br>
 windows are separate <br>
 &ndash; <b>1</b>: sync. position/size when
 switching/launching a session <br>
-&ndash; <b>2</b>: (not implemented) also when window is
-moved or resized <br>
-&ndash; <b>3</b>: (not implemented) always</p>
+&ndash; <b>2</b>: sync. also when window is moved or resized
+<br>
+&ndash; <b>3</b>: sync. also when window is minimized <br>
+&ndash; <b>4</b>: sync. also when window is started</p>
 
 <h2>LIMITATIONS
 <a name="LIMITATIONS"></a>
@@ -2400,8 +2437,9 @@ supported. There is no Tektronix 4014 emulation. Mouse
 highlighting mode is not implemented.</p>
 
 <p style="margin-left:11%; margin-top: 1em">The majority of
-xterm&rsquo;s many control sequences is implemented, but
-quite a few are missing. Significant omissions should be
+xterm&rsquo;s many control sequences is implemented, up to
+the VT300 series level; VT400 rectangular area operations
+are not implemented. Significant omissions should be
 reported to the issue tracker.</p>
 
 <h2>SEE ALSO
