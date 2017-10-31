@@ -1011,6 +1011,10 @@ void
 win_set_chars(int rows, int cols)
 {
   trace_resize(("--- win_set_chars %d×%d\n", rows, cols));
+
+  if (win_is_fullscreen)
+    clear_fullscreen();
+
   // prevent resizing to same logical size
   // which would remove bottom padding and spoil some Windows magic (#629)
   if (rows != term.rows || cols != term.cols) {
@@ -1636,6 +1640,9 @@ static struct {
 #ifdef debug_tabs
         printf("switched %d,%d %d,%d\n", (INT16)LOWORD(lp), (INT16)HIWORD(lp), LOWORD(wp), HIWORD(wp));
 #endif
+        if (win_is_fullscreen)
+          clear_fullscreen();
+
         if (!wp) {
           if (!lp && cfg.geom_sync >= 3)
             ShowWindow(wnd, SW_MINIMIZE);
