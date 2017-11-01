@@ -16,7 +16,9 @@
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
-#include <sys/cygwin.h>
+#ifdef __CYGWIN__
+#include <sys/cygwin.h>  // cygwin_internal
+#endif
 
 #if CYGWIN_VERSION_API_MINOR >= 93
 #include <pty.h>

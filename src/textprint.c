@@ -1,7 +1,6 @@
 #include "print.h"
 #include "charset.h"
 #include "winpriv.h"  // win_prefix_title, win_unprefix_title
-#include <sys/cygwin.h>
 #include <fcntl.h>
 
 

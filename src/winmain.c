@@ -28,7 +28,9 @@ char * mintty_debug;
 #include <mmsystem.h>  // PlaySound for MSys
 #include <shellapi.h>
 
-#include <sys/cygwin.h>
+#ifdef __CYGWIN__
+#include <sys/cygwin.h>  // cygwin_internal
+#endif
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1007
 #include <propsys.h>
@@ -3116,8 +3118,10 @@ main(int argc, char *argv[])
     if (valid_locale) {
       valid_locale = strdup(valid_locale);
       setlocale(LC_CTYPE, "C.UTF-8");
-# if CYGWIN_VERSION_API_MINOR >= 222
+# ifdef __CYGWIN__
+#  if CYGWIN_VERSION_API_MINOR >= 222
       cygwin_internal(CW_INT_SETLOCALE);  // fix internal locale
+#  endif
 # endif
     }
 #endif
@@ -3125,8 +3129,10 @@ main(int argc, char *argv[])
 #if HAS_LOCALES
     if (valid_locale) {
       setlocale(LC_CTYPE, valid_locale);
-# if CYGWIN_VERSION_API_MINOR >= 222
+# ifdef __CYGWIN__
+#  if CYGWIN_VERSION_API_MINOR >= 222
       cygwin_internal(CW_INT_SETLOCALE);  // fix internal locale
+#  endif
 # endif
       free(valid_locale);
     }

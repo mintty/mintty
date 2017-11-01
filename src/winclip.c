@@ -14,7 +14,9 @@
 #include <wtypes.h>
 #include <objidl.h>
 #include <oleidl.h>
-#include <sys/cygwin.h>
+#ifdef __CYGWIN__
+#include <sys/cygwin.h>  // cygwin_internal
+#endif
 
 static DWORD WINAPI
 shell_exec_thread(void *data)

@@ -22,7 +22,9 @@ extern void setup_config_box(controlbox *);
 #include <signal.h>
 #endif
 
+#ifdef __CYGWIN__
 #include <sys/cygwin.h>  // cygwin_internal
+#endif
 #include <sys/stat.h>  // chmod
 
 

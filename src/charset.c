@@ -734,7 +734,7 @@ wcsdup(const wchar * s)
 */
 
 #ifdef __CYGWIN__
-#include <sys/cygwin.h>
+#include <sys/cygwin.h>  // cygwin_conv_path
 # if CYGWIN_VERSION_API_MINOR >= 181
 
 char *

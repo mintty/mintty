@@ -18,7 +18,9 @@
 #include <windows.h>  // registry handling
 
 #include <termios.h>
-#include <sys/cygwin.h>
+#ifdef __CYGWIN__
+#include <sys/cygwin.h>  // cygwin_internal
+#endif
 
 
 #define dont_support_blurred
