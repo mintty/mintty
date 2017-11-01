@@ -8,6 +8,10 @@
 #define CYGWIN_VERSION_API_MINOR 201
 #endif
 
+#ifndef ARGZ_INTERNAL_IMPL
+#define ARGZ_INTERNAL_IMPL 0
+#endif
+
 //unhide some definitions
 #define _GNU_SOURCE
 
@@ -42,7 +46,7 @@ static inline void delete(const void *p) { free((void *)p); }
 extern char * tmpdir(void);
 
 
-#if CYGWIN_VERSION_API_MINOR >= 91
+#if (CYGWIN_VERSION_API_MINOR >= 91) && (!ARGZ_INTERNAL_IMPL)
 #include <argz.h>
 #else
 extern int argz_create (char *const argv[], char **argz, size_t *argz_len);
