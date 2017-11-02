@@ -1111,7 +1111,7 @@ msgstr ""
 #. __ Options - Text: font properties: value affected by option
 #: wintext.c:133
 msgid "manual"
-msgstr ""
+msgstr "manuell"
 
 #: wintext.c:373
 msgid "Font not found, using system substitute"
