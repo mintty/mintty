@@ -85,8 +85,7 @@ extern char * path_posix_to_win_a(const char * p);
 
 #define dont_debug_wcs
 
-#if defined(__midipix__) || defined(debug_wcs)
-//__midipix__
+#if defined(debug_wcs)
 #define wcslen _wcslen
 #define wcscmp _wcscmp
 //CYGWIN_VERSION_API_MINOR < 74
@@ -98,14 +97,14 @@ extern char * path_posix_to_win_a(const char * p);
 #define wcsdup _wcsdup
 #endif
 
-#if defined(__midipix__) || defined(debug_wcs)
+#if defined(debug_wcs)
 
 extern unsigned int wcslen(const wchar * s);
 extern int wcscmp(const wchar * s1, const wchar * s2);
 
 #endif
 
-#if CYGWIN_VERSION_API_MINOR < 74 || defined(__midipix__) || defined(debug_wcs)
+#if CYGWIN_VERSION_API_MINOR < 74 || defined(debug_wcs)
 // needed for MinGW MSYS
 
 #define wcscpy(tgt, src) memcpy(tgt, src, (wcslen(src) + 1) * sizeof(wchar))
@@ -117,7 +116,7 @@ extern wchar * wcsncpy(wchar * s1, const wchar * s2, int len);
 
 #endif
 
-#if CYGWIN_VERSION_API_MINOR < 207 || defined(__midipix__) || defined(debug_wcs)
+#if CYGWIN_VERSION_API_MINOR < 207 || defined(debug_wcs)
 
 extern wchar * wcsdup(const wchar * s);
 
