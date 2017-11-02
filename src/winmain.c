@@ -2697,7 +2697,7 @@ select_WSL(char * wsl)
   if (ok) {
     // set --icon if WSL specific icon exists
     if (wsl_icon) {
-      if (waccess(wsl_icon, R_OK))
+      if (!icon_is_from_shortcut && waccess(wsl_icon, R_OK))
         cfg.icon = wsl_icon;
       else
         delete(wsl_icon);
