@@ -1,3 +1,6 @@
+  * Avoid blocking when switching to other window which is blocked/suspended.
+  * --WSL-determined icon shall not override icon taken from shortcut.
+
 ### 2.8.1 (31 Oct 2017) ###
 
 Character display
@@ -7,6 +10,7 @@ Window and session control
   * Virtual Tabs: additional SessionGeomSync levels (#699).
   * Window icons can optionally be shown in session switcher (#699).
   * Restore window frame when leaving fullscreen mode via escape sequence.
+  * Tweaked full-screen handling in session switcher and launcher (#600).
 
 Pathname handling
   * Relative pathname opening considers interactive working directory (~mintty/wsltty#19).

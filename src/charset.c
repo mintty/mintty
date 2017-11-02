@@ -335,10 +335,10 @@ update_locale(void)
       string l = default_locale;
       default_locale = asform("%s@cjkwide", l);
       delete(l);
-# if CYGWIN_VERSION_API_MINOR >= 999999
+//# if CYGWIN_VERSION_API_MINOR >= 999999
       // indicate @cjkwide to locale lib
       setlocale(LC_CTYPE, default_locale);
-# endif
+//# endif
       // in case it's not accepted, yet indicate @cjkwide to shell
       setenv("LC_CTYPE", default_locale, true);
     }
