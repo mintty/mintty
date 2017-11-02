@@ -73,6 +73,13 @@ static bool disable_poschange = true;
 static int zoom_token = 0;  // for heuristic handling of Shift zoom (#467, #476)
 static bool default_size_token = false;
 
+// Inter-window actions
+enum {
+  WIN_MINIMIZE = 0,
+  WIN_MAXIMIZE = -1,
+  WIN_TOP = 1,
+};
+
 // Options
 static bool title_settable = true;
 static string border_style = 0;
@@ -386,6 +393,22 @@ win_restore_title(void)
  *  Switch to next or previous application window in z-order
  */
 
+static void
+win_to_top(HWND top_wnd)
+{
+  // this would block if target window is blocked:
+  // BringWindowToTop(top_wnd);
+
+  // this does not work properly (see comments at when WM_USER:)
+  // PostMessage(top_wnd, WM_USER, 0, WIN_TOP);
+
+  // one of these works:
+  SetForegroundWindow(top_wnd);
+  // SetActiveWindow(top_wnd);
+
+  ShowWindow(wnd, SW_RESTORE);
+}
+
 static HWND first_wnd, last_wnd;
 
 static BOOL CALLBACK
@@ -421,7 +444,7 @@ win_switch(bool back, bool alternate)
       SetWindowPos(wnd, last_wnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE
                        | (alternate ? SWP_NOZORDER : SWP_NOREPOSITION));
     }
-    BringWindowToTop(first_wnd);
+    win_to_top(first_wnd);
   }
 }
 
@@ -464,33 +487,24 @@ win_gotab(uint n)
   HWND tab = get_tab(n);
 
   // apparently, we don't have to fiddle with SetWindowPos as in win_switch
-  BringWindowToTop(tab);
-  ShowWindow(tab, SW_RESTORE);
+
+  win_to_top(tab);
 
   // reposition / resize
-#ifdef geom_sync_from_launching
   if (cfg.geom_sync) {
-    // Actually, we should not do this here, but only in the target tab
-    // (after notifying it with the size), in order to respect a
-    // possibly different SessionGeomSync config there.
-    RECT r;
-    GetWindowRect(wnd, &r);
-    SetWindowPos(tab, null, r.left, r.top, r.right - r.left, r.bottom - r.top,
-                 SWP_NOZORDER);
-  }
-#else
-  RECT r;
-  GetWindowRect(wnd, &r);
+    if (win_is_fullscreen)
+      PostMessage(tab, WM_USER, 0, WIN_MAXIMIZE);
+    else {
+      RECT r;
+      GetWindowRect(wnd, &r);
 #ifdef debug_tabs
-  printf("switcher %d,%d %d,%d\n", (int)r.left, (int)r.top, (int)(r.right - r.left), (int)(r.bottom - r.top));
+      printf("switcher %d,%d %d,%d\n", (int)r.left, (int)r.top, (int)(r.right - r.left), (int)(r.bottom - r.top));
 #endif
-  if (win_is_fullscreen)
-    SendMessageW(tab, WM_USER, 0, -1);
-  else
-    SendMessageW(tab, WM_USER,
-                 MAKEWPARAM(r.right - r.left, r.bottom - r.top),
-                 MAKELPARAM(r.left, r.top));
-#endif
+      PostMessage(tab, WM_USER,
+                  MAKEWPARAM(r.right - r.left, r.bottom - r.top),
+                  MAKELPARAM(r.left, r.top));
+    }
+  }
 
   if (tab == wnd)
     // avoid hiding when switching to myself
@@ -521,18 +535,18 @@ win_synctabs(int level)
     if (class_atom == curr_wnd_info.atomWindowType) {
       if (curr_wnd != wnd) {
         if (win_is_fullscreen)
-          SendMessageW(curr_wnd, WM_USER, 0, -1);
+          PostMessage(curr_wnd, WM_USER, 0, WIN_MAXIMIZE);
         else if (level == 3) // minimize
-          SendMessageW(curr_wnd, WM_USER, 0, 0);
+          PostMessage(curr_wnd, WM_USER, 0, WIN_MINIMIZE);
         else {
           RECT r;
           GetWindowRect(wnd, &r);
 #ifdef debug_tabs
           printf("sync all %d,%d %d,%d\n", (int)r.left, (int)r.top, (int)(r.right - r.left), (int)(r.bottom - r.top));
 #endif
-          SendMessageW(curr_wnd, WM_USER,
-                       MAKEWPARAM(r.right - r.left, r.bottom - r.top),
-                       MAKELPARAM(r.left, r.top));
+          PostMessage(curr_wnd, WM_USER,
+                      MAKEWPARAM(r.right - r.left, r.bottom - r.top),
+                      MAKELPARAM(r.left, r.top));
         }
       }
     }
@@ -1638,26 +1652,39 @@ static struct {
 #endif
 
     when WM_USER:  // reposition and resize
-      if (cfg.geom_sync) {
+      if (!wp && lp == WIN_TOP) { // Ctrl+Alt or session switcher
+        // these do not work:
+        // BringWindowToTop(wnd);
+        // SetForegroundWindow(wnd);
+        // SetActiveWindow(wnd);
+
+        // this would work, kind of, 
+        // but blocks previous window from raising on next click:
+        SetWindowPos(wnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+        SetWindowPos(wnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+
+        ShowWindow(wnd, SW_RESTORE);
+      }
+      else if (cfg.geom_sync) {
 #ifdef debug_tabs
         printf("switched %d,%d %d,%d\n", (INT16)LOWORD(lp), (INT16)HIWORD(lp), LOWORD(wp), HIWORD(wp));
 #endif
-        if (win_is_fullscreen)
-          clear_fullscreen();
-
         if (!wp) {
-          if (!lp && cfg.geom_sync >= 3)
+          if (lp == WIN_MINIMIZE && cfg.geom_sync >= 3)
             ShowWindow(wnd, SW_MINIMIZE);
-          else if (lp == -1)
+          else if (lp == WIN_MAXIMIZE && cfg.geom_sync)
             win_maximise(2);
         }
-        else
+        else if (cfg.geom_sync) {
+          if (win_is_fullscreen)
+            clear_fullscreen();
           // (INT16) to handle multi-monitor negative coordinates properly
           SetWindowPos(wnd, null,
                        //GET_X_LPARAM(lp), GET_Y_LPARAM(lp),
                        (INT16)LOWORD(lp), (INT16)HIWORD(lp),
                        LOWORD(wp), HIWORD(wp),
                        SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
+        }
       }
 
     when WM_COMMAND or WM_SYSCOMMAND: {
