@@ -3074,11 +3074,26 @@ main(int argc, char *argv[])
   // Work out what to execute.
   argv += optind;
   if (wsl_guid) {
+#define dont_debug_wsl
     cmd = "/bin/wslbridge";
     argc -= optind;
+    bool login_dash = false;
+    if (*argv && !strcmp(*argv, "-") && !argv[1]) {
+      login_dash = true;
+      argv++;
+      //argc--;
+      //argc++; // for "-l"
+    }
     char ** new_argv = newn(char *, argc + 2 + 4 + start_home);
     char ** pargv = new_argv;
-    *pargv++ = "-wslbridge";
+    if (login_dash) {
+      *pargv++ = "-wslbridge";
+#ifdef wslbridge_supports_l
+      *pargv++ = "-l";
+#endif
+    }
+    else
+      *pargv++ = cmd;
     if (*wsl_guid) {
       *pargv++ = "--distro-guid";
       *pargv++ = wsl_guid;
@@ -3090,6 +3105,10 @@ main(int argc, char *argv[])
       *pargv++ = *argv++;
     *pargv = 0;
     argv = new_argv;
+#ifdef debug_wsl
+    while (*new_argv)
+      printf("<%s>\n", *new_argv++);
+#endif
   }
   else if (*argv && (argv[1] || strcmp(*argv, "-")))
     cmd = *argv;
