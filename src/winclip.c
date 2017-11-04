@@ -207,9 +207,9 @@ apply_attr_colour_rtf(cattrflags a, attr_colour_mode mode, int * pfgi, int * pbg
   cattr ca = apply_attr_colour((cattr){ .attr = a }, mode);
   *pfgi = (ca.attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
   *pbgi = (ca.attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
-  // In ACM_RTF_GEN mode, COLOUR_NUM communicates "no-colour" (-1)
-  if (*pfgi == COLOUR_NUM && mode == ACM_RTF_GEN) *pfgi = -1;
-  if (*pbgi == COLOUR_NUM && mode == ACM_RTF_GEN) *pbgi = -1;
+  // true colour breaks both, and ACM_RTF_GEN needs COLOUR_NUM as -1 (no colour)
+  if (*pfgi >= COLOUR_NUM) *pfgi = (mode == ACM_RTF_GEN) ? -1 : FG_COLOUR_I;
+  if (*pbgi >= COLOUR_NUM) *pbgi = (mode == ACM_RTF_GEN) ? -1 : BG_COLOUR_I;
   return ca.attr;
 }
 
