@@ -157,8 +157,10 @@ enum {
   ATTR_DEFAULT = ATTR_DEFFG | ATTR_DEFBG,
 };
 
+typedef unsigned long long cattrflags;
+
 typedef struct {
-  unsigned long long attr;
+  cattrflags attr;
   uint truefg;
   uint truebg;
 } cattr;

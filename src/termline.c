@@ -242,7 +242,7 @@ makeliteral_attr(struct buf *b, termchar *c)
   * ensures that attribute values remain 16-bit _unless_ the
   * user uses extended colour.
   */
-  unsigned long long attr = c->attr.attr & ~DATTR_MASK;
+  cattrflags attr = c->attr.attr & ~DATTR_MASK;
   uint truefg = c->attr.truefg;
   uint truebg = c->attr.truebg;
 
@@ -314,7 +314,7 @@ readliteral_chr(struct buf *buf, termchar *c, termline *unused(line))
 static void
 readliteral_attr(struct buf *b, termchar *c, termline *unused(line))
 {
-  unsigned long long attr;
+  cattrflags attr;
   uint fg = 0;
   uint bg = 0;
 
