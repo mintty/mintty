@@ -201,6 +201,17 @@ win_open(wstring wpath)
   }
 }
 
+static cattrflags
+apply_attr_colour_rtf(cattrflags a, attr_colour_mode mode, int * pfgi, int * pbgi)
+{
+  cattr ca = apply_attr_colour((cattr){ .attr = a }, mode);
+  *pfgi = (ca.attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
+  *pbgi = (ca.attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
+  // In ACM_RTF_GEN mode, COLOUR_NUM communicates "no-colour" (-1)
+  if (*pfgi == COLOUR_NUM && mode == ACM_RTF_GEN) *pfgi = -1;
+  if (*pbgi == COLOUR_NUM && mode == ACM_RTF_GEN) *pbgi = -1;
+  return ca.attr;
+}
 
 void
 win_copy(const wchar *data, uint *attrs, int len)
@@ -278,33 +289,7 @@ win_copy(const wchar *data, uint *attrs, int len)
     */
     memset(palette, 0, sizeof(palette));
     for (int i = 0; i < (len - 1); i++) {
-      uint attr = attrs[i];
-      fgcolour = (attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
-      bgcolour = (attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
-
-      if (attr & ATTR_REVERSE) {
-        int tmpcolour = fgcolour;     /* Swap foreground and background */
-        fgcolour = bgcolour;
-        bgcolour = tmpcolour;
-      }
-
-      if ((attr & ATTR_BOLD) && cfg.bold_as_colour) {
-        if (fgcolour < 8)     /* ANSI colours */
-          fgcolour += 8;
-        else if (fgcolour >= 256 && !cfg.bold_as_font)  /* Default colours */
-          fgcolour |= 1;
-      }
-
-      if (attr & ATTR_BLINK) {
-        if (bgcolour < 8)     /* ANSI colours */
-          bgcolour += 8;
-        else if (bgcolour >= 256)     /* Default colours */
-          bgcolour |= 1;
-      }
-
-      if (attr & ATTR_INVISIBLE)
-        fgcolour = bgcolour;
-
+      apply_attr_colour_rtf(attrs[i], ACM_RTF_PALETTE, &fgcolour, &bgcolour);
       palette[fgcolour]++;
       palette[bgcolour]++;
     }
@@ -376,56 +361,12 @@ win_copy(const wchar *data, uint *attrs, int len)
        /*
         * Determine foreground and background colours
         */
-        fgcolour = (attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
-        bgcolour = (attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
-
-        if (attr & ATTR_REVERSE) {
-          int tmpcolour = fgcolour;     /* Swap foreground and background */
-          fgcolour = bgcolour;
-          bgcolour = tmpcolour;
-        }
-
-        if ((attr & ATTR_BOLD) && cfg.bold_as_colour) {
-          if (fgcolour < 8)     /* ANSI colours */
-            fgcolour += 8;
-          else if (fgcolour >= 256 && !cfg.bold_as_font)  /* Default colours */
-            fgcolour |= 1;
-        }
-
-        if (attr & ATTR_BLINK) {
-          if (bgcolour < 8)     /* ANSI colours */
-            bgcolour += 8;
-          else if (bgcolour >= 256)     /* Default colours */
-            bgcolour |= 1;
-        }
-
-        attrBold = cfg.bold_as_font ? (attr & ATTR_BOLD) : 0;
+        attr = apply_attr_colour_rtf(attr, ACM_RTF_GEN, &fgcolour, &bgcolour);
+        attrBold = attr & ATTR_BOLD;
         attrUnder = attr & ATTR_UNDER;
         attrItalic = attr & ATTR_ITALIC;
         attrStrikeout = attr & ATTR_STRIKEOUT;
         attrHidden = attr & ATTR_INVISIBLE;
-
-       /*
-        * Reverse video
-        *   o  If video isn't reversed, ignore colour attributes for default
-        *      foregound or background.
-        *   o  Special case where bolded text is displayed using the default
-        *      foregound and background colours - force to bolded RTF.
-        */
-        if (!(attr & ATTR_REVERSE)) {
-          if (bgcolour >= 256)  /* Default color */
-            bgcolour = -1;      /* No coloring */
-
-          if (fgcolour >= 256) {        /* Default colour */
-            if (cfg.bold_as_colour && (fgcolour & 1) && bgcolour == -1)
-              attrBold = ATTR_BOLD;     /* Emphasize text with bold attribute */
-
-            fgcolour = -1;      /* No coloring */
-          }
-        }
-
-        if (attr & ATTR_INVISIBLE)
-          fgcolour = bgcolour;
 
        /*
         * Write RTF text attributes
