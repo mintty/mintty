@@ -1756,7 +1756,7 @@ static struct {
           int moni = search_monitors(&x, &y, mon, true, 0);
           child_fork(main_argc, main_argv, moni);
         }
-        when IDM_NEW_MONI: child_fork(main_argc, main_argv, (int)lp - ' ');
+        when IDM_NEW_MONI: child_fork(main_argc, main_argv, (int)lp);
         when IDM_COPYTITLE: win_copy_title();
       }
     }
@@ -3535,6 +3535,7 @@ main(int argc, char *argv[])
 
   // Finally show the window!
   go_fullscr_on_max = (cfg.window == -1);
+  default_size_token = true;  // prevent font zooming (#708)
   ShowWindow(wnd, go_fullscr_on_max ? SW_SHOWMAXIMIZED : cfg.window);
   SetFocus(wnd);
 

@@ -1732,7 +1732,7 @@ win_key_up(WPARAM wp, LPARAM unused(lp))
 #ifdef debug_multi_monitors
       printf("NEW @ %d,%d @ monitor %d\n", pt.x, pt.y, moni);
 #endif
-      send_syscommand2(IDM_NEW_MONI, ' ' + moni);
+      send_syscommand2(IDM_NEW_MONI, moni);
     }
   }
   if (transparency_pending) {
