@@ -1169,6 +1169,12 @@ load_config(string filename, int to_save)
     copy_config("load", &cfg, &file_cfg);
   }
 
+  bool free_filename = false;
+  if (*filename == '~' && filename[1] == '/') {
+    filename = asform("%s%s", home, filename + 1);
+    free_filename = true;
+  }
+
   if (access(filename, R_OK) == 0 && access(filename, W_OK) < 0)
     to_save = false;
 
@@ -1182,6 +1188,9 @@ load_config(string filename, int to_save)
       rc_filename = path_posix_to_win_w(filename);
     }
   }
+
+  if (free_filename)
+    delete(filename);
 
   if (file) {
     while (fgets(linebuf, sizeof linebuf, file)) {
