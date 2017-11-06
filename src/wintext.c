@@ -443,7 +443,8 @@ win_init_fontfamily(HDC dc, int findex)
     ff->fontflag[i] = 0;
   }
 
-  ff->bold_mode = cfg.bold_as_font ? BOLD_FONT : BOLD_SHADOW;
+  // if initialized as BOLD_SHADOW then real bold is never attempted
+  ff->bold_mode = BOLD_FONT;
   ff->und_mode = UND_FONT;
   if (cfg.underl_manual || cfg.underl_colour != (colour)-1)
     ff->und_mode = UND_LINE;
@@ -1510,49 +1511,6 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   if (attr.attr & ATTR_WIDE)
     char_width *= 2;
 
-  uint nfont;
-  switch (lattr) {
-    when LATTR_NORM: nfont = 0;
-    when LATTR_WIDE: nfont = FONT_WIDE;
-    otherwise:       nfont = FONT_WIDE + FONT_HIGH;
-  }
-
-  if (attr.attr & ATTR_EXPAND)
-    nfont |= FONT_WIDE;
-  else
-  if (attr.attr & ATTR_NARROW)
-    nfont |= FONT_NARROW;
-
-#ifdef debug_bold
-  wchar t[len + 1]; wcsncpy(t, text, len); t[len] = 0;
-  printf("bold_mode %d attr_bold %d <%ls>\n", ff->bold_mode, !!(attr.attr & ATTR_BOLD), t);
-#endif
-  if (ff->bold_mode == BOLD_FONT && (attr.attr & ATTR_BOLD))
-    nfont |= FONT_BOLD;
-  if (ff->und_mode == UND_FONT && (attr.attr & ATTR_UNDER))
-    nfont |= FONT_UNDERLINE;
-  if (attr.attr & ATTR_ITALIC)
-    nfont |= FONT_ITALIC;
-  if (attr.attr & ATTR_STRIKEOUT
-      && !cfg.underl_manual && cfg.underl_colour == (colour)-1)
-    nfont |= FONT_STRIKEOUT;
-  if (attr.attr & TATTR_ZOOMFULL)
-    nfont |= FONT_ZOOMFULL;
-  another_font(ff, nfont);
-
-  bool force_manual_underline = false;
-  if (!ff->fonts[nfont]) {
-    if (nfont & FONT_UNDERLINE)
-      force_manual_underline = true;
-    // Don't force manual bold, it could be bad news.
-    nfont &= ~(FONT_BOLD | FONT_UNDERLINE);
-  }
-  if ((nfont & (FONT_WIDE | FONT_NARROW)) == (FONT_WIDE | FONT_NARROW))
-    nfont &= ~(FONT_WIDE | FONT_NARROW);
-  another_font(ff, nfont);
-  if (!ff->fonts[nfont])
-    nfont = FONT_NORMAL;
-
   attr = apply_attr_colour(attr, ACM_TERM);
   colour fg = attr.truefg;
   colour bg = attr.truebg;
@@ -1599,6 +1557,49 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
 #endif
     }
   }
+
+  uint nfont;
+  switch (lattr) {
+    when LATTR_NORM: nfont = 0;
+    when LATTR_WIDE: nfont = FONT_WIDE;
+    otherwise:       nfont = FONT_WIDE + FONT_HIGH;
+  }
+
+  if (attr.attr & ATTR_EXPAND)
+    nfont |= FONT_WIDE;
+  else
+  if (attr.attr & ATTR_NARROW)
+    nfont |= FONT_NARROW;
+
+#ifdef debug_bold
+  wchar t[len + 1]; wcsncpy(t, text, len); t[len] = 0;
+  printf("bold_mode %d attr_bold %d <%ls>\n", ff->bold_mode, !!(attr.attr & ATTR_BOLD), t);
+#endif
+  if (ff->bold_mode == BOLD_FONT && (attr.attr & ATTR_BOLD))
+    nfont |= FONT_BOLD;
+  if (ff->und_mode == UND_FONT && (attr.attr & ATTR_UNDER))
+    nfont |= FONT_UNDERLINE;
+  if (attr.attr & ATTR_ITALIC)
+    nfont |= FONT_ITALIC;
+  if (attr.attr & ATTR_STRIKEOUT
+      && !cfg.underl_manual && cfg.underl_colour == (colour)-1)
+    nfont |= FONT_STRIKEOUT;
+  if (attr.attr & TATTR_ZOOMFULL)
+    nfont |= FONT_ZOOMFULL;
+  another_font(ff, nfont);
+
+  bool force_manual_underline = false;
+  if (!ff->fonts[nfont]) {
+    if (nfont & FONT_UNDERLINE)
+      force_manual_underline = true;
+    // Don't force manual bold, it could be bad news.
+    nfont &= ~(FONT_BOLD | FONT_UNDERLINE);
+  }
+  if ((nfont & (FONT_WIDE | FONT_NARROW)) == (FONT_WIDE | FONT_NARROW))
+    nfont &= ~(FONT_WIDE | FONT_NARROW);
+  another_font(ff, nfont);
+  if (!ff->fonts[nfont])
+    nfont = FONT_NORMAL;
 
   SelectObject(dc, ff->fonts[nfont]);
   SetTextColor(dc, fg);
