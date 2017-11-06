@@ -1480,19 +1480,6 @@ apply_attr_colour(cattr a, attr_colour_mode mode)
 }
 
 /*
- * Extract colour value from attribute;
- * simplified version of the algorithm below.
- */
-colour
-truecolour(cattr * pattr, colour bg)
-{
-  return apply_attr_colour(
-    (cattr){ .attr = pattr->attr, .truefg = pattr->truefg, .truebg = bg },
-    ACM_SIMPLE
-  ).truefg;
-}
-
-/*
  * Draw a line of text in the window, at given character
  * coordinates, in given attributes.
  *
@@ -1816,7 +1803,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
           xx += char_width / 2;
         if (!termattrs_equal_fg(&textattr[i], &textattr[i - 1])) {
           // determine colour to be used for combining characters
-          colour fg = truecolour(&textattr[i], bg);
+          colour fg = apply_attr_colour(textattr[i], ACM_SIMPLE).truefg;
           SetTextColor(dc, fg);
         }
         ulen = char1ulen(&text[i]);
