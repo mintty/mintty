@@ -640,7 +640,7 @@ cs_btowc_glyph(char c)
   return wc;
 }
 
-#if defined(__midipix__) || defined(debug_wcs)
+#if defined(debug_wcs)
 
 unsigned int
 wcslen(const wchar * s)
@@ -666,7 +666,7 @@ wcscmp(const wchar * s1, const wchar * s2)
 
 #endif
 
-#if CYGWIN_VERSION_API_MINOR < 74 || defined(__midipix__) || defined(debug_wcs)
+#if CYGWIN_VERSION_API_MINOR < 74 || defined(debug_wcs)
 // needed for MinGW MSYS
 
 wchar *
@@ -716,7 +716,7 @@ wcsncpy(wchar * s1, const wchar * s2, int len)
 
 #endif
 
-#if CYGWIN_VERSION_API_MINOR < 207 || defined(__midipix__) || defined(debug_wcs)
+#if CYGWIN_VERSION_API_MINOR < 207 || defined(debug_wcs)
 
 wchar *
 wcsdup(const wchar * s)
@@ -839,9 +839,5 @@ path_posix_to_win_a(const char * p)
 }
 
 # endif
-#else
-
-#warning port to midipix...
 
 #endif
-
