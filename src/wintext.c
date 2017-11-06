@@ -1353,21 +1353,26 @@ apply_bold_colour(colour_i *pfgi)
   // colours: ANSI (0-7), default, and other (8-256, true). We also reserve one
   // combination for xterm's default (thicken everything, ANSI is also coloured).
   // - "other" is always thickened and never gets colouring.
-  // - when bold_as_colour=no: ANSI+defaut are only thickened.
-  // - when bold_as_colour=yes:
-  //   .. and bold_as_font=no:  ANSI+default are only coloured
-  //   .. and bold_as_font=yes: ANSI+default are thickened, ANSI also coloured (xterm)
-  if (cfg.bold_as_colour) {
-    if (CCL_ANSI8(*pfgi)) {
-      *pfgi |= 8;     // (BLACK|...|WHITE)_I -> BOLD_(BLACK|...|WHITE)_I
-      return cfg.bold_as_font;
-    }
-    if (CCL_DEFAULT(*pfgi) && !cfg.bold_as_font) {
-      *pfgi |= 1;     // (FG|BG)_COLOUR_I -> BOLD_(FG|BG)_COLOUR_I
-      return false;
-    }
+  // - bold_as_font:  thicken ANSI/default colours.
+  // - bold_as_colour: colour ANSI/default colours.
+  // Exception if both false: thicken ANSI/default, colour ANSI (xterm's default).
+  bool ansi = CCL_ANSI8(*pfgi);
+  if (!ansi && !CCL_DEFAULT(*pfgi))
+    return true;  // neither ANSI nor default -> always thicken, no colouring
+
+  if (!cfg.bold_as_colour && !cfg.bold_as_font) {  // the exception: xterm-like
+    if (ansi)  // coloured
+      *pfgi |= 8;  // (BLACK|...|WHITE)_I -> BOLD_(BLACK|...|WHITE)_I
+    return true;  // both thickened
   }
-  return true;
+  // normal independent controls
+  if (cfg.bold_as_colour) {
+    if (ansi)
+      *pfgi |= 8;
+    else  // default
+      *pfgi |= 1;  // (FG|BG)_COLOUR_I -> BOLD_(FG|BG)_COLOUR_I
+  }
+  return cfg.bold_as_font;
 }
 
 // removes default colours if not reversed, returns true if still needs thickening
@@ -1376,10 +1381,10 @@ rtf_bold_decolour(cattrflags attr, colour_i * pfgi, colour_i * pbgi)
 {
   bool bold_thickens = cfg.bold_as_font;  // all colours
   // if not reverse:
-  // - if only bold_as_colour, ATTR_BOLD still thickens default fg on default bg
+  // - ATTR_BOLD always thickens default fg on default bg
   // - don't colour default fg/bg (caller interprets COLOUR_NUM as "no colour").
   if (!(attr & ATTR_REVERSE)) {
-    if (cfg.bold_as_colour && CCL_DEFAULT(*pfgi) && CCL_DEFAULT(*pbgi))
+    if (CCL_DEFAULT(*pfgi) && CCL_DEFAULT(*pbgi))
       bold_thickens = true;  // even if bold_as_font=no
     if (CCL_DEFAULT(*pfgi))
       *pfgi = COLOUR_NUM;  // no colouring
