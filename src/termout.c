@@ -1567,8 +1567,8 @@ do_dcs(void)
 
     otherwise:
       /* parser status initialization */
-      fg = win_get_colour(term.rvideo ? BG_COLOUR_I: FG_COLOUR_I);
-      bg = win_get_colour(term.rvideo ? FG_COLOUR_I: BG_COLOUR_I);
+      fg = win_get_colour(FG_COLOUR_I);
+      bg = win_get_colour(BG_COLOUR_I);
       if (!st) {
         st = term.imgs.parser_state = calloc(1, sizeof(sixel_state_t));
         sixel_parser_set_default_color(st);
@@ -1700,7 +1700,7 @@ do_colour_osc(bool has_index_arg, uint i, bool reset)
     child_printf("\e]%u;", term.cmd_num);
     if (has_index_arg)
       child_printf("%u;", i);
-    c = win_get_colour(i);
+    c = i < COLOUR_NUM ? colours[i] : 0;  // should not be affected by rvideo
     child_printf("rgb:%04x/%04x/%04x\e\\",
                  red(c) * 0x101, green(c) * 0x101, blue(c) * 0x101);
   }

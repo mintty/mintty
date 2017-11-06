@@ -1401,7 +1401,6 @@ cattr
 apply_attr_colour(cattr a, attr_colour_mode mode)
 {
   // indexed modifications
-  bool do_rvideo_i = mode & (ACM_TERM | ACM_SIMPLE | ACM_VBELL_BG);
   bool do_reverse_i = mode & (ACM_RTF_PALETTE | ACM_RTF_GEN);
   bool do_bold_i = mode & (ACM_TERM | ACM_RTF_PALETTE | ACM_RTF_GEN | ACM_SIMPLE | ACM_VBELL_BG);
   bool do_blink_i = mode & (ACM_TERM | ACM_RTF_PALETTE | ACM_RTF_GEN);
@@ -1411,13 +1410,6 @@ apply_attr_colour(cattr a, attr_colour_mode mode)
   colour_i fgi = (a.attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
   colour_i bgi = (a.attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
   a.attr &= ~(ATTR_FGMASK | ATTR_BGMASK);  // we'll refill it later
-
-  if (do_rvideo_i && term.rvideo) {
-    if (CCL_DEFAULT(fgi))
-      fgi ^= 2;     // (BOLD_)?FG_COLOUR_I <-> (BOLD_)?BG_COLOUR_I
-    if (CCL_DEFAULT(bgi))
-      bgi ^= 2;     // (BOLD_)?FG_COLOUR_I <-> (BOLD_)?BG_COLOUR_I
-  }
 
   if (do_reverse_i && (a.attr & ATTR_REVERSE)) {
     colour_i t = fgi; fgi = bgi; bgi = t;
@@ -2428,6 +2420,8 @@ static bool bold_colour_selected = false;
 
 colour win_get_colour(colour_i i)
 {
+  if (term.rvideo && CCL_DEFAULT(i))
+    return colours[i ^ 2];  // [BOLD]_FG_COLOUR_I  <-->  [BOLD]_BG_COLOUR_I
   return i < COLOUR_NUM ? colours[i] : 0;
 }
 
