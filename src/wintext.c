@@ -1455,9 +1455,10 @@ apply_attr_colour(cattr a, attr_colour_mode mode)
   colour bg = bgi >= TRUE_COLOUR ? a.truebg : win_get_colour(bgi);
 
   if (do_dim && (a.attr & ATTR_DIM)) {
-    fg = (fg & 0xFEFEFEFE) >> 1; // Halve the brightness.
-    if (!cfg.bold_as_colour || fgi >= 256)
-      fg += (bg & 0xFEFEFEFE) >> 1; // Blend with background.
+    // we dim by blending fg 50-50 with the default terminal bg
+    // (x & 0xFEFEFEFE) >> 1  halves each of the RGB components of x .
+    // win_get_colour(..) takes term.rvideo into account.
+    fg = ((fg & 0xFEFEFEFE) >> 1) + ((win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1);
   }
 
   if (do_reverse && (a.attr & ATTR_REVERSE)) {
