@@ -1157,7 +1157,7 @@ term_paint(void)
 
           colour fg = win_get_colour(SEL_TEXT_COLOUR_I);
           if (fg == (colour)-1)
-            fg = truecolour(&tattr, tattr.truebg);
+            fg = apply_attr_colour(tattr, ACM_SIMPLE).truefg;
           static uint mindist = 22222;
           bool too_close = colour_dist(fg, tattr.truebg) < mindist;
           if (too_close)
