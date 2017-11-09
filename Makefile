@@ -55,6 +55,7 @@ arch_files += src/Makefile src/*.c src/*.h src/*.rc src/*.mft
 arch_files += src/[!_]*.t src/mk*
 arch_files += tools/mintheme
 arch_files += lang/*.pot lang/*.po
+arch_files += themes/*[!~]
 arch_files += cygwin/*.cygport cygwin/README* cygwin/setup.hint
 arch_files += docs/*.1 docs/*.html icon/*
 arch_files += wiki/*
