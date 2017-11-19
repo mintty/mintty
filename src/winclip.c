@@ -214,7 +214,7 @@ apply_attr_colour_rtf(cattrflags a, attr_colour_mode mode, int * pfgi, int * pbg
 }
 
 void
-win_copy(const wchar *data, uint *attrs, int len)
+win_copy(const wchar *data, cattr *cattrs, int len)
 {
   HGLOBAL clipdata, clipdata2, clipdata3 = 0;
   int len2;
@@ -240,7 +240,7 @@ win_copy(const wchar *data, uint *attrs, int len)
   memcpy(lock, data, len * sizeof(wchar));
   WideCharToMultiByte(CP_ACP, 0, data, len, lock2, len2, null, null);
 
-  if (attrs && cfg.copy_as_rtf) {
+  if (cattrs && cfg.copy_as_rtf) {
     wchar unitab[256];
     char *rtf = null;
     uchar *tdata = (uchar *) lock2;
@@ -289,7 +289,7 @@ win_copy(const wchar *data, uint *attrs, int len)
     */
     memset(palette, 0, sizeof(palette));
     for (int i = 0; i < (len - 1); i++) {
-      apply_attr_colour_rtf(attrs[i], ACM_RTF_PALETTE, &fgcolour, &bgcolour);
+      apply_attr_colour_rtf(cattrs[i].attr, ACM_RTF_PALETTE, &fgcolour, &bgcolour);
       palette[fgcolour]++;
       palette[bgcolour]++;
     }
@@ -351,7 +351,7 @@ win_copy(const wchar *data, uint *attrs, int len)
       */
       if (tdata[tindex] != '\n') {
 
-        uint attr = attrs[uindex];
+        uint attr = cattrs[uindex].attr;
 
         if (rtfsize < rtflen + 64) {
           rtfsize = rtflen + 512;
