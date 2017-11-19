@@ -1413,6 +1413,7 @@ apply_attr_colour(cattr a, attr_colour_mode mode)
 
   if (do_reverse_i && (a.attr & ATTR_REVERSE)) {
     colour_i t = fgi; fgi = bgi; bgi = t;
+    colour tmp = a.truefg; a.truefg = a.truebg; a.truebg = tmp;
   }
 
   bool reset_bold = false;

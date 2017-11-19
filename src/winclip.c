@@ -201,20 +201,56 @@ win_open(wstring wpath)
   }
 }
 
-static cattrflags
-apply_attr_colour_rtf(cattrflags a, attr_colour_mode mode, int * pfgi, int * pbgi)
+// Convert RGB24 to xterm-256 8-bit value (always >= 16)
+// For simplicity, assume RGB space is perceptually uniform.
+// There are 5 places where one of two outputs needs to be chosen when the
+// input is the exact middle:
+// - The r/g/b channels and the gray value: the higher value output is chosen.
+// - If the gray and color have same distance from the input - color is chosen.
+static uint8_t
+rgb_to_x256(uint8_t r, uint8_t g, uint8_t b)
 {
-  cattr ca = apply_attr_colour((cattr){ .attr = a }, mode);
+    // Calculate the nearest 0-based color index at 16 .. 231
+#   define v2ci(v) (v < 48 ? 0 : v < 115 ? 1 : (v - 35) / 40)
+    int ir = v2ci(r), ig = v2ci(g), ib = v2ci(b);   // 0..5 each
+#   define color_index() (36 * ir + 6 * ig + ib)  /* 0..215, lazy evaluation */
+
+    // Calculate the nearest 0-based gray index at 232 .. 255
+    int average = (r + g + b) / 3;
+    int gray_index = average > 238 ? 23 : (average - 3) / 10;  // 0..23
+
+    // Calculate the represented colors back from the index
+    static const int i2cv[6] = {0, 0x5f, 0x87, 0xaf, 0xd7, 0xff};
+    int cr = i2cv[ir], cg = i2cv[ig], cb = i2cv[ib];  // r/g/b, 0..255 each
+    int gv = 8 + 10 * gray_index;  // same value for r/g/b, 0..255
+
+    // Return the one which is nearer to the original input rgb value
+#   define dist_square(A,B,C, a,b,c) ((A-a)*(A-a) + (B-b)*(B-b) + (C-c)*(C-c))
+    int color_err = dist_square(cr, cg, cb, r, g, b);
+    int gray_err  = dist_square(gv, gv, gv, r, g, b);
+    return color_err <= gray_err ? 16 + color_index() : 232 + gray_index;
+}
+
+static cattrflags
+apply_attr_colour_rtf(cattr ca, attr_colour_mode mode, int * pfgi, int * pbgi)
+{
+  ca = apply_attr_colour(ca, mode);
   *pfgi = (ca.attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
   *pbgi = (ca.attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
-  // true colour breaks both, and ACM_RTF_GEN needs COLOUR_NUM as -1 (no colour)
-  if (*pfgi >= COLOUR_NUM) *pfgi = (mode == ACM_RTF_GEN) ? -1 : FG_COLOUR_I;
-  if (*pbgi >= COLOUR_NUM) *pbgi = (mode == ACM_RTF_GEN) ? -1 : BG_COLOUR_I;
+  // For ACM_RTF_GEN: COLOUR_NUM means "no colour" (-1)
+  if (*pfgi == COLOUR_NUM && mode == ACM_RTF_GEN) *pfgi = -1;
+  if (*pbgi == COLOUR_NUM && mode == ACM_RTF_GEN) *pbgi = -1;
+
+  if (CCL_TRUEC(*pfgi))
+    *pfgi = rgb_to_x256(red(ca.truefg), green(ca.truefg), blue(ca.truefg));
+  if (CCL_TRUEC(*pbgi))
+    *pbgi = rgb_to_x256(red(ca.truebg), green(ca.truebg), blue(ca.truebg));
+
   return ca.attr;
 }
 
 void
-win_copy(const wchar *data, uint *attrs, int len)
+win_copy(const wchar *data, cattr *cattrs, int len)
 {
   HGLOBAL clipdata, clipdata2, clipdata3 = 0;
   int len2;
@@ -240,7 +276,7 @@ win_copy(const wchar *data, uint *attrs, int len)
   memcpy(lock, data, len * sizeof(wchar));
   WideCharToMultiByte(CP_ACP, 0, data, len, lock2, len2, null, null);
 
-  if (attrs && cfg.copy_as_rtf) {
+  if (cattrs && cfg.copy_as_rtf) {
     wchar unitab[256];
     char *rtf = null;
     uchar *tdata = (uchar *) lock2;
@@ -289,7 +325,7 @@ win_copy(const wchar *data, uint *attrs, int len)
     */
     memset(palette, 0, sizeof(palette));
     for (int i = 0; i < (len - 1); i++) {
-      apply_attr_colour_rtf(attrs[i], ACM_RTF_PALETTE, &fgcolour, &bgcolour);
+      apply_attr_colour_rtf(cattrs[i], ACM_RTF_PALETTE, &fgcolour, &bgcolour);
       palette[fgcolour]++;
       palette[bgcolour]++;
     }
@@ -351,7 +387,7 @@ win_copy(const wchar *data, uint *attrs, int len)
       */
       if (tdata[tindex] != '\n') {
 
-        uint attr = attrs[uindex];
+        uint attr = cattrs[uindex].attr;
 
         if (rtfsize < rtflen + 64) {
           rtfsize = rtflen + 512;
@@ -361,7 +397,7 @@ win_copy(const wchar *data, uint *attrs, int len)
        /*
         * Determine foreground and background colours
         */
-        attr = apply_attr_colour_rtf(attr, ACM_RTF_GEN, &fgcolour, &bgcolour);
+        attr = apply_attr_colour_rtf(cattrs[uindex], ACM_RTF_GEN, &fgcolour, &bgcolour);
         attrBold = attr & ATTR_BOLD;
         attrUnder = attr & ATTR_UNDER;
         attrItalic = attr & ATTR_ITALIC;
