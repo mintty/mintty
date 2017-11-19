@@ -630,7 +630,7 @@ do_sgr(void)
           uchar arg_10 = term.csi_argv[i] - 10;
           if (arg_10 && *cfg.fontfams[arg_10].name) {
             attr.attr &= ~FONTFAM_MASK;
-            attr.attr |= (unsigned long long)arg_10 << ATTR_FONTFAM_SHIFT;
+            attr.attr |= (cattrflags)arg_10 << ATTR_FONTFAM_SHIFT;
           }
           else {
             if (!arg_10)
@@ -641,7 +641,7 @@ do_sgr(void)
         }
       when 12 ... 20:
         attr.attr &= ~FONTFAM_MASK;
-        attr.attr |= (unsigned long long)(term.csi_argv[i] - 10) << ATTR_FONTFAM_SHIFT;
+        attr.attr |= (cattrflags)(term.csi_argv[i] - 10) << ATTR_FONTFAM_SHIFT;
       //when 21: attr.attr &= ~ATTR_BOLD;
       when 21: attr.attr |= ATTR_DOUBLYUND;
       when 22: attr.attr &= ~(ATTR_BOLD | ATTR_DIM);
@@ -1567,8 +1567,8 @@ do_dcs(void)
 
     otherwise:
       /* parser status initialization */
-      fg = win_get_colour(term.rvideo ? BG_COLOUR_I: FG_COLOUR_I);
-      bg = win_get_colour(term.rvideo ? FG_COLOUR_I: BG_COLOUR_I);
+      fg = win_get_colour(FG_COLOUR_I);
+      bg = win_get_colour(BG_COLOUR_I);
       if (!st) {
         st = term.imgs.parser_state = calloc(1, sizeof(sixel_state_t));
         sixel_parser_set_default_color(st);
@@ -1700,7 +1700,7 @@ do_colour_osc(bool has_index_arg, uint i, bool reset)
     child_printf("\e]%u;", term.cmd_num);
     if (has_index_arg)
       child_printf("%u;", i);
-    c = win_get_colour(i);
+    c = i < COLOUR_NUM ? colours[i] : 0;  // should not be affected by rvideo
     child_printf("rgb:%04x/%04x/%04x\e\\",
                  red(c) * 0x101, green(c) * 0x101, blue(c) * 0x101);
   }
@@ -2037,7 +2037,7 @@ term_write(const char *buf, uint len)
           continue;
         }
 
-        unsigned long long asav = term.curs.attr.attr;
+        cattrflags asav = term.curs.attr.attr;
 
         // Everything else
         int width;
@@ -2094,7 +2094,7 @@ term_write(const char *buf, uint len)
                   0, 0, 0, 0, 0, 0
                 };
                 uchar dispcode = linedraw_code[wc - 0x60];
-                term.curs.attr.attr |= ((unsigned long long)dispcode) << ATTR_GRAPH_SHIFT;
+                term.curs.attr.attr |= ((cattrflags)dispcode) << ATTR_GRAPH_SHIFT;
               }
 #endif
               wc = dispwc;
@@ -2115,7 +2115,7 @@ term_write(const char *buf, uint len)
                   0x81, 0x82, 0, 0, 0x85, 0x86, 0x87  // sum segments
                 };
                 uchar dispcode = techdraw_code[c - 0x21];
-                term.curs.attr.attr |= ((unsigned long long)dispcode) << ATTR_GRAPH_SHIFT;
+                term.curs.attr.attr |= ((cattrflags)dispcode) << ATTR_GRAPH_SHIFT;
               }
             }
           when CSET_GBCHR:  // NRC United Kingdom

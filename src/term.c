@@ -1183,34 +1183,7 @@ term_paint(void)
         if (cfg.bell_flash_style & FLASH_REVERSE)
           tattr.attr ^= ATTR_REVERSE;
         else {
-          colour_i bgi = (tattr.attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
-          if (term.rvideo) {
-            if (bgi >= 256)
-              bgi ^= 2;
-          }
-          colour bg = bgi >= TRUE_COLOUR ? tattr.truebg : colours[bgi];
-
-          colour_i fgi = (tattr.attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
-          if (term.rvideo) {
-            if (fgi >= 256)
-              fgi ^= 2;
-          }
-          if (tattr.attr & ATTR_BOLD && cfg.bold_as_colour) {
-            if (fgi < 8) {
-              fgi |= 8;
-            }
-            else if (fgi >= 256 && fgi != TRUE_COLOUR && !cfg.bold_as_font) {
-              fgi |= 1;
-            }
-          }
-          colour fg = fgi >= TRUE_COLOUR ? tattr.truefg : colours[fgi];
-          if (tattr.attr & ATTR_DIM) {
-            fg = (fg & 0xFEFEFEFE) >> 1;
-            if (!cfg.bold_as_colour || fgi >= 256)
-              fg += (bg & 0xFEFEFEFE) >> 1;
-          }
-
-          tattr.truebg = brighten(bg, fg);
+          tattr.truebg = apply_attr_colour(tattr, ACM_VBELL_BG).truebg;
           tattr.attr = (tattr.attr & ~ATTR_BGMASK) | (TRUE_COLOUR << ATTR_BGSHIFT);
         }
       }
