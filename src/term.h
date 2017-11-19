@@ -63,6 +63,7 @@ typedef enum {
 // colour classes
 #define CCL_ANSI8(i) ((i) < 8)
 #define CCL_DEFAULT(i) ((i) >= FG_COLOUR_I && (i) <= BOLD_BG_COLOUR_I)
+#define CCL_TRUEC(i) ((i) >= TRUE_COLOUR)
 
 /* Special Characters:
  * UCSWIDE is a special value used in the terminal data to signify
