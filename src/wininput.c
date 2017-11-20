@@ -48,6 +48,60 @@ append_commands(HMENU menu, wstring commands, UINT_PTR idm_cmd)
   free(cmds);
 }
 
+// https://www.nanoant.com/programming/themed-menus-icons-a-complete-vista-xp-solution
+// last attempt among lots of googled solution proposals, 
+// and the only one that actually works, except that it uses white background
+static HBITMAP
+icon_bitmap(HICON hIcon)
+{
+  RECT rect;
+  rect.left = rect.top = 0;
+  // retrieve needed size of menu icons; but what about per-monitor DPI?
+  rect.right = GetSystemMetrics(SM_CXMENUCHECK);
+  rect.bottom = GetSystemMetrics(SM_CYMENUCHECK);
+
+  //HWND desktop = GetDesktopWindow();
+  //HWND desktop = 0;
+  HWND desktop = wnd;
+
+  HDC screen_dev = GetDC(desktop);
+  if (screen_dev == NULL)
+    return NULL;
+
+  // Create a compatible DC
+  HDC dst_hdc = CreateCompatibleDC(screen_dev);
+  if (dst_hdc == NULL) {
+    ReleaseDC(desktop, screen_dev);
+    return NULL;
+  }
+
+  // Create a new bitmap of icon size
+  HBITMAP bmp = CreateCompatibleBitmap(screen_dev, rect.right, rect.bottom);
+  if (bmp == NULL) {
+    DeleteDC(dst_hdc);
+    ReleaseDC(desktop, screen_dev);
+    return NULL;
+  }
+
+  // Select it into the compatible DC
+  HBITMAP old_dst_bmp = (HBITMAP)SelectObject(dst_hdc, bmp);
+  if (old_dst_bmp == NULL)
+    return NULL;
+
+  // Fill the background of the compatible DC with the given colour
+  SetBkColor(dst_hdc, GetSysColor(COLOR_MENU));
+  ExtTextOut(dst_hdc, 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
+
+  // Draw the icon into the compatible DC
+  DrawIconEx(dst_hdc, 0, 0, hIcon, rect.right, rect.bottom, 0, NULL, DI_NORMAL);
+
+  // Restore settings
+  SelectObject(dst_hdc, old_dst_bmp);
+  DeleteDC(dst_hdc);
+  ReleaseDC(desktop, screen_dev);
+  return bmp;
+}
+
 static void
 add_switcher(HMENU menu, bool vsep, bool hsep, bool use_win_icons)
 {
@@ -106,9 +160,14 @@ add_switcher(HMENU menu, bool vsep, bool hsep, bool use_win_icons)
         if (icon) {
           // convert icon to bitmap
           //https://stackoverflow.com/questions/7375003/how-to-convert-hicon-to-hbitmap-in-vc/16787105#16787105
+# ifdef it_could_be_simple_Microsoft
+          // simple solution, loses transparency (black border)
           ICONINFO ii;
           GetIconInfo(icon, &ii);
           HBITMAP bitmap = ii.hbmColor;
+# else
+          HBITMAP bitmap = icon_bitmap(icon);
+# endif
 
           mi.fMask |= MIIM_BITMAP;
           mi.hbmpItem = bitmap;
