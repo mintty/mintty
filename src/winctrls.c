@@ -1417,7 +1417,7 @@ fonthook(HWND hdlg, UINT msg, WPARAM wParam, LPARAM lParam)
     // (few bytes per "Apply" click)
     fsp->name = wcsdup(lfapply.lfFaceName);
 
-    HDC dc = GetDC(0);
+    HDC dc = GetDC(wnd);
     fsp->size = -MulDiv(lfapply.lfHeight, 72, GetDeviceCaps(dc, LOGPIXELSY));
     trace_fontsel(("Apply lfHeight %ld -> size %d <%ls>\n", (long int)lfapply.lfHeight, fsp->size, lfapply.lfFaceName));
     ReleaseDC(0, dc);
@@ -1461,7 +1461,7 @@ select_font(winctrl *c)
 {
   font_spec fs = *(font_spec *) c->data;
   LOGFONTW lf;
-  HDC dc = GetDC(0);
+  HDC dc = GetDC(wnd);
  /* We could have the idea to consider `dpi` here, like for MulDiv in 
   * win_init_fonts, but that's wrong.
   */
