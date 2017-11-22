@@ -10,8 +10,8 @@
 #include "charset.h"
 
 typedef struct {
-  size_t size;   // number of items allocated for text/cattrs
-  size_t len;    // number of actual items at text/cattrs
+  size_t capacity;  // number of items allocated for text/cattrs
+  size_t len;    // number of actual items at text/cattrs (inc. null terminator)
   wchar *text;   // text to copy (eventually null terminated)
   cattr *cattrs; // matching cattr for each wchar of text
 } clip_workbuf;
@@ -19,7 +19,7 @@ typedef struct {
 static void
 destroy_clip_workbuf(clip_workbuf * b)
 {
-  assert(b && b->size); // we're only called after get_selection, which always allocates
+  assert(b && b->capacity); // we're only called after get_selection, which always allocates
   free(b->text);
   free(b->cattrs);
   free(b);
@@ -29,10 +29,10 @@ destroy_clip_workbuf(clip_workbuf * b)
 static void
 clip_addchar(clip_workbuf * b, wchar chr, cattr * ca)
 {
-  if (b->len >= b->size) {
-    b->size = b->len ? b->len * 2 : 1024;  // x2 strategy, 1K chars initially
-    b->text = renewn(b->text, b->size);
-    b->cattrs = renewn(b->cattrs, b->size);
+  if (b->len >= b->capacity) {
+    b->capacity = b->len ? b->len * 2 : 1024;  // x2 strategy, 1K chars initially
+    b->text = renewn(b->text, b->capacity);
+    b->cattrs = renewn(b->cattrs, b->capacity);
   }
 
   b->text[b->len] = chr;
