@@ -1434,11 +1434,12 @@ apply_attr_colour(cattr a, attr_colour_mode mode)
         a.attr &= ~ATTR_BOLD;
     }
 
-    if (a.attr & ATTR_INVISIBLE)
-      fgi = bgi;
+    if (a.attr & ATTR_INVISIBLE) {
+      fgi = bgi; a.truefg = a.truebg;
+    }
 
     a.attr |= fgi << ATTR_FGSHIFT | bgi << ATTR_BGSHIFT;
-    return a;  // rtf colouring ignores true colours
+    return a;  // rtf colouring prefers indexed where possible
   }
 
   if (reset_bold)
