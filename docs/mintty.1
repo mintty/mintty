@@ -912,21 +912,46 @@ Note that font smoothing may be affected by Windows-generated underline modes.
 
 .TP
 \fBShow bold as font\fP (BoldAsFont=no)
-When this option is enabled, the ANSI bold (or 'intense') text attribute is
-shown as a bold-style font.  Where a bold variant of the selected font that
-has the same width as the base font is available, that is used; otherwise, the
-bolding is simulated by rendering the text twice with a one-pixel offset.
+Display the ANSI bold (or 'intense') text attribute as a bold-style font. Where
+a bold variant of the selected font that has the same width as the base font is
+available, that is used; otherwise, the bolding is simulated by rendering the
+text twice with a one-pixel offset.
+
+This option is not fully independent. See \fBBold Behaviour\fP below.
 
 .TP
 \fBShow bold as colour\fP (BoldAsColour=yes)
-By default, text with the ANSI bold attribute set is displayed with a
-different colour, usually with increased brightness (mapping ANSI colours 
-0..7 to their bright variants 8..15). This can be disabled here.
+Display the bold text attribute with a different colour, usually with increased
+brightness - mapping ANSI colours 0..7 to their bright variants 8..15, and the
+default colour to the value of option \fBBoldColour\fP (or to an automatic
+bright colour if BoldColour is not set, or to the bold colour set by an OSC
+escape sequence).
 
-Note that when \fBBoldAsFont\fP is enabled, only bold text in one of the eight
-ANSI colours has its colour changed, i.e. bold text without an explicitly
-specified colour is shown with a bold font only.  This matches \fBxterm\fP behaviour.
-Note also setting \fBBoldColour\fP.
+This option is not fully independent. See \fBBold Behaviour\fP below.
+
+.TP
+\fBNote: Bold Behaviour\fP
+When the the bold text attribute is set, mintty displays it while
+distinguishing between three classes of colours:
+.br
+\(en \fBANSI8\fP: The ANSI colours 0..7 (used for SGR 30..37).
+.br
+\(en \fBDefault\fP: The default terminal foreground colour (not part of ANSI8).
+.br
+\(en \fBExtended\fP: True colours and the rest of the 256 colours palette.
+.br
+
+The colour classes are affected by the bold text attribute as follows:
+.br
+\(en Extended colours are always shown with a bold font only.
+.br
+\(en When both BoldAsFont and BoldAsColour are disabled, mintty engages a mode
+similar to the xterm default behaviour: ANSI8 is displayed with a bold font and
+a different colour, Default colour only uses a bold font.
+.br
+\(en Otherwise, the ANSI8 colours and the default colour are considered one unit,
+where BoldAsFont and BoldAsColour have independent effect on this unit - such
+that it's possible to choose only bold font, or only different colour, or both.
 
 .TP
 \fBAllow blinking\fP (AllowBlinking=no)
