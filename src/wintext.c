@@ -445,6 +445,7 @@ win_init_fontfamily(HDC dc, int findex)
 
   // if initialized as BOLD_SHADOW then real bold is never attempted
   ff->bold_mode = BOLD_FONT;
+
   ff->und_mode = UND_FONT;
   if (cfg.underl_manual || cfg.underl_colour != (colour)-1)
     ff->und_mode = UND_LINE;
@@ -1563,6 +1564,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     }
   }
 
+ /* Now that attributes are sorted out, select proper font */
   uint nfont;
   switch (lattr) {
     when LATTR_NORM: nfont = 0;
@@ -1606,6 +1608,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   if (!ff->fonts[nfont])
     nfont = FONT_NORMAL;
 
+ /* With selected font, begin preparing the rendering */
   SelectObject(dc, ff->fonts[nfont]);
   SetTextColor(dc, fg);
   SetBkColor(dc, bg);
@@ -2009,6 +2012,16 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     ul = 0x80E0E020;
   if (lattr == LATTR_BOT)
     ul = 0x80E02020;
+#endif
+#ifdef debug_bold
+  if (xwidth > 1) {
+    force_manual_underline = true;
+    ul = 0x80E02020;
+  }
+  else if (nfont & FONT_BOLD) {
+    force_manual_underline = true;
+    ul = 0x8020E020;
+  }
 #endif
 
  /* Underline */

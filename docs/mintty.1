@@ -912,46 +912,61 @@ Note that font smoothing may be affected by Windows-generated underline modes.
 
 .TP
 \fBShow bold as font\fP (BoldAsFont=no)
-Display the ANSI bold (or 'intense') text attribute as a bold-style font. Where
-a bold variant of the selected font that has the same width as the base font is
-available, that is used; otherwise, the bolding is simulated by rendering the
-text twice with a one-pixel offset.
+This option sets the preferred rendering of the ANSI bold (or 'intense') 
+text attribute to use a bold-style font; where a suitable bold variant of the 
+selected font (that has the same width as the base font) is available, 
+that is used; otherwise, the bolding is simulated by rendering the text 
+twice with a one-pixel offset ('overstrike').
 
-This option is not fully independent. See \fBBold Behaviour\fP below.
+This option is not fully independent. 
+If both BoldAsFont and BoldAsColour are true, both display methods are combined where applicable.
+If both are false, xterm default behaviour is applied.
+See \fBBold Behaviour\fP for an overview.
 
 .TP
 \fBShow bold as colour\fP (BoldAsColour=yes)
-Display the bold text attribute with a different colour, usually with increased
-brightness - mapping ANSI colours 0..7 to their bright variants 8..15, and the
-default colour to the value of option \fBBoldColour\fP (or to an automatic
-bright colour if BoldColour is not set, or to the bold colour set by an OSC
-escape sequence).
+This option sets the preferred rendering of the ANSI bold (or 'intense') 
+text attribute to use a different colour, usually with increased brightness;
+it maps ANSI colours 0..7 to their bright variants 8..15, and the 
+default colour to a brightened variant. Rendering of other colours is not affected.
 
-This option is not fully independent. See \fBBold Behaviour\fP below.
+This option is not fully independent. 
+If both BoldAsColour and BoldAsFont are true, both display methods are combined where applicable.
+If both are false, xterm default behaviour is applied.
+See \fBBold Behaviour\fP for an overview.
+
+.TP
+\fBBold substitution colour\fP (BoldColour=)
+This option sets a colour to be used to render the bold attribute of 
+text that would otherwise have the default foreground colour, overriding 
+other bold rendering; it is only applied if option BoldAsColour is true.
+The bold substitution colour can also be set, modified, enabled or disabled 
+with the respective xterm OSC control sequences.
 
 .TP
 \fBNote: Bold Behaviour\fP
-When the the bold text attribute is set, mintty displays it while
-distinguishing between three classes of colours:
+When the bold text attribute is set, mintty distinguishes three classes of colours:
 .br
-\(en \fBANSI8\fP: The ANSI colours 0..7 (used for SGR 30..37).
+\(en \fBDefault\fP: The default terminal foreground colour.
 .br
-\(en \fBDefault\fP: The default terminal foreground colour (not part of ANSI8).
+\(en \fBANSI-8\fP: The ANSI colours 0..7 (used for SGR 30..37).
 .br
 \(en \fBExtended\fP: True colours and the rest of the 256 colours palette.
 .br
 
 The colour classes are affected by the bold text attribute as follows:
 .br
-\(en Extended colours are always shown with a bold font only.
+\(en Extended colours are always shown with a boldened font only.
 .br
 \(en When both BoldAsFont and BoldAsColour are disabled, mintty engages a mode
-similar to the xterm default behaviour: ANSI8 is displayed with a bold font and
+similar to the xterm default behaviour: ANSI-8 is displayed with a bold font and
 a different colour, Default colour only uses a bold font.
 .br
-\(en Otherwise, the ANSI8 colours and the default colour are considered one unit,
-where BoldAsFont and BoldAsColour have independent effect on this unit - such
-that it's possible to choose only bold font, or only different colour, or both.
+\(en Otherwise, Default and ANSI-8 colours are affected by 
+BoldAsFont and BoldAsColour independently, such that it is possible to 
+choose only bold font, or only different colour, or both.
+.br
+\(en Note that Default bold display can be overridden by the BoldColour mode.
 
 .TP
 \fBAllow blinking\fP (AllowBlinking=no)
@@ -1737,16 +1752,6 @@ is not used anymore.
 
 See the Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips#using-colour-schemes-themes\fP 
 about this mechanism.
-
-.TP
-\fBBold substitution colour\fP (BoldColour=)
-The colour to be used instead of the bold attribute can be configured.
-The bold substitution colour is only applied if option BoldAsFont is false 
-and option BoldAsColour is true.
-The default is \fInone\fP, meaning that a brightened colour derived from 
-the effective foreground colour is used.
-The bold substitution colour can also be set and reset with the respective xterm OSC 
-control sequences.
 
 .TP
 \fBSelection highlight colours\fP
