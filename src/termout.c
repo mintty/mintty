@@ -1691,6 +1691,8 @@ do_colour_osc(bool has_index_arg, uint i, bool reset)
       else
         return;
     }
+    else if (i >= 256)
+      return;
   }
 
   colour c;
