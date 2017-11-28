@@ -2536,4 +2536,6 @@ win_reset_colours(void)
     win_set_colour(IME_CURSOR_COLOUR_I, cfg.ime_cursor_colour);
   win_set_colour(SEL_COLOUR_I, cfg.sel_bg_colour);
   win_set_colour(SEL_TEXT_COLOUR_I, cfg.sel_fg_colour);
+  // Bold colour
+  win_set_colour(BOLD_FG_COLOUR_I, (colour)-1);
 }
