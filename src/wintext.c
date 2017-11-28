@@ -2284,18 +2284,8 @@ win_char_width(xchar c)
   }
 
   if (ambigwide(c) &&
-      (bidi_class(c) != L               // indicates not a letter
-      || (c >= 0x249C && c <= 0x24E9)   // parenthesized/circled letters
-      || (c >= 0x3248 && c <= 0x324F)   // Enclosed CJK Letters and Months
-      || (c >= 0x1F110 && c <= 0x1F12A) // Enclosed Alphanumeric Supplement
-      )
-      &&
-      !(  (c >= 0x2500 && c <= 0x2588)  // Box Drawing, Block Elements
-       || (c >= 0x2592 && c <= 0x2594)  // Block Elements
-       || (c >= 0x2160 && c <= 0x2179)  // Roman Numerals
-       )
 #ifdef check_ambig_non_letters
-#warning instead we now checkk all non-letters with some exclusions (above)
+#warning instead we now check all non-letters with some exclusions
       (c == 0x20AC  // €
       || (c >= 0x2100 && c <= 0x23FF)   // Letterlike, Number Forms, Arrows, Math Operators, Misc Technical
       || (c >= 0x2460 && c <= 0x24FF)   // Enclosed Alphanumerics
@@ -2304,6 +2294,20 @@ win_char_width(xchar c)
       || (c >= 0x2B00 && c <= 0x2BFF)   // Miscellaneous Symbols and Arrows
       || (c >= 0x1F100 && c <= 0x1F1FF) // Enclosed Alphanumeric Supplement
       )
+#else
+      // check all non-letters
+      (bidi_class(c) != L               // indicates not a letter
+      || (c >= 0x249C && c <= 0x24E9)   // parenthesized/circled letters
+      || (c >= 0x3248 && c <= 0x324F)   // Enclosed CJK Letters and Months
+      || (c >= 0x1F110 && c <= 0x1F12A) // Enclosed Alphanumeric Supplement
+      )
+      &&
+      // with some exceptions
+      !(  (c >= 0x2500 && c <= 0x2588)  // Box Drawing, Block Elements
+       || (c >= 0x2592 && c <= 0x2594)  // Block Elements
+       || (c >= 0x2160 && c <= 0x2179)  // Roman Numerals
+       || wcschr (W("‐‑‘’‚‛“”„‟‹›"), c) // #712 workaround
+       )
 #endif
      ) {
     int mbuf = act_char_width(c);
