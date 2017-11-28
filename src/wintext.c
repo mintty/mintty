@@ -16,9 +16,10 @@
 enum {
   FONT_NORMAL    = 0x00,
   FONT_BOLD      = 0x01,
-  FONT_UNDERLINE = 0x02,
+  FONT_ITALIC    = 0x02,
+  FONT_BOLDITAL  = FONT_BOLD | FONT_ITALIC,
+  FONT_UNDERLINE = 0x04,
   FONT_BOLDUND   = FONT_BOLD | FONT_UNDERLINE,
-  FONT_ITALIC    = 0x04,
   FONT_STRIKEOUT = 0x08,
   FONT_HIGH      = 0x10,
   FONT_ZOOMFULL  = 0x20,
@@ -94,6 +95,11 @@ bool font_ambig_wide;
 typedef enum {BOLD_SHADOW, BOLD_FONT} BOLD_MODE;
 typedef enum {UND_LINE, UND_FONT} UND_MODE;
 
+struct charpropcache {
+  uint width: 2;
+  xchar ch: 21;
+} __attribute__((packed));
+
 // font family properties
 struct fontfam {
   wstring name;
@@ -103,6 +109,8 @@ struct fontfam {
   HFONT fonts[FONT_MAXNO];
   bool fontflag[FONT_MAXNO];
   bool font_dualwidth;
+  struct charpropcache * cpcache[FONT_BOLDITAL + 1];
+  uint cpcachelen[FONT_BOLDITAL + 1];
   int fw_norm;
   int fw_bold;
   BOLD_MODE bold_mode;
@@ -138,6 +146,7 @@ fontpropinfo()
           fontfamilies->und_mode ? fontinfo_font : fontinfo_manual);
   return fontinfo;
 }
+
 
 uint
 colour_dist(colour a, colour b)
@@ -432,10 +441,15 @@ win_init_fontfamily(HDC dc, int findex)
 
   trace_resize(("--- init_fontfamily\n"));
   TEXTMETRIC tm;
-  int fontsize[3];
-  int i;
+  int fontsize[FONT_UNDERLINE + 1];
 
-  for (i = 0; i < FONT_MAXNO; i++) {
+  for (uint i = 0; i < FONT_BOLDITAL; i++) {
+    if (ff->fonts[i])
+      delete(ff->cpcache[i]);
+    ff->cpcache[i] = 0;
+    ff->cpcachelen[i] = 0;
+  }
+  for (uint i = 0; i < FONT_MAXNO; i++) {
     if (ff->fonts[i]) {
       DeleteObject(ff->fonts[i]);
       ff->fonts[i] = 0;
@@ -626,7 +640,7 @@ win_init_fontfamily(HDC dc, int findex)
   if (ff->descent >= cell_height)
     ff->descent = cell_height - 1;
 
-  for (i = 0; i < 3; i++) {
+  for (uint i = 0; i < lengthof(fontsize); i++) { // could skip FONT_ITALIC here
     if (ff->fonts[i]) {
       if (SelectObject(dc, ff->fonts[i]) && GetTextMetrics(dc, &tm))
         fontsize[i] = tm.tmAveCharWidth + 256 * tm.tmHeight;
@@ -2133,10 +2147,14 @@ win_check_glyphs(wchar *wcs, uint num)
   int findex = (term.curs.attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
   struct fontfam * ff = &fontfamilies[findex];
 
-  HDC dc = GetDC(wnd);
   bool bold = (ff->bold_mode == BOLD_FONT) && (term.curs.attr.attr & ATTR_BOLD);
   bool italic = term.curs.attr.attr & ATTR_ITALIC;
-  SelectObject(dc, ff->fonts[(bold ? FONT_BOLD : FONT_NORMAL) | italic ? FONT_ITALIC : 0]);
+  HFONT f = ff->fonts[(bold ? FONT_BOLD : FONT_NORMAL) | italic ? FONT_ITALIC : 0];
+  if (!f)  // may not have been initialized
+    f = ff->fonts[FONT_NORMAL];
+
+  HDC dc = GetDC(wnd);
+  SelectObject(dc, f);
   ushort glyphs[num];
   GetGlyphIndicesW(dc, wcs, num, glyphs, true);
   for (size_t i = 0; i < num; i++) {
@@ -2180,11 +2198,20 @@ win_char_width(xchar c)
   if (c >= ' ' && c <= '~')  // don't width-check ASCII
     return 1;
 
+  bool bold = (ff->bold_mode == BOLD_FONT) && (term.curs.attr.attr & ATTR_BOLD);
+  bool italic = term.curs.attr.attr & ATTR_ITALIC;
+  int font4index = (bold ? FONT_BOLD : FONT_NORMAL) | italic ? FONT_ITALIC : 0;
+  HFONT f = ff->fonts[font4index];
+  if (!f) {  // may not have been initialized
+    f = ff->fonts[FONT_NORMAL];
+    font4index = FONT_NORMAL;
+  }
+
   HDC dc = GetDC(wnd);
 #ifdef debug_win_char_width
   bool ok0 = !!
 #endif
-  SelectObject(dc, ff->fonts[FONT_NORMAL]);
+  SelectObject(dc, f);
 #ifdef debug_win_char_width
   if (c == 0x2001)
     win_char_width(0x5555);
@@ -2306,10 +2333,24 @@ win_char_width(xchar c)
       !(  (c >= 0x2500 && c <= 0x2588)  // Box Drawing, Block Elements
        || (c >= 0x2592 && c <= 0x2594)  // Block Elements
        || (c >= 0x2160 && c <= 0x2179)  // Roman Numerals
-       || wcschr (W("‐‑‘’‚‛“”„‟‹›"), c) // #712 workaround
+       //|| wcschr (W("‐‑‘’‚‛“”„‟‹›"), c) // #712 workaround; now caching
        )
 #endif
      ) {
+    // look up c in charpropcache
+    struct charpropcache * cpfound = 0;
+    for (uint i = 0; i < ff->cpcachelen[font4index]; i++)
+      if (ff->cpcache[font4index][i].ch == c) {
+        if (ff->cpcache[font4index][i].width) {
+          ReleaseDC(wnd, dc);
+          return ff->cpcache[font4index][i].width;
+        }
+        else {
+          // cached (e.g. by win_check_glyphs) but not measured
+          cpfound = &ff->cpcache[font4index][i];
+        }
+      }
+
     int mbuf = act_char_width(c);
     // report char as wide if its measured width is more than 1½ cells
     int width = mbuf > cell_width ? 2 : 1;
@@ -2319,6 +2360,20 @@ win_char_width(xchar c)
       printf("measured %04X %dpx cell %dpx width %d\n", c, mbuf, cell_width, width);
     }
 # endif
+    // cache width
+    if (cpfound)
+      cpfound->width = width;
+    else {
+      // max size per cache 138739 as of Unicode 10.0;
+      // we should perhaps limit this...
+      struct charpropcache * newcpcache = renewn(ff->cpcache[font4index], ff->cpcachelen[font4index] + 1);
+      if (newcpcache) {
+        ff->cpcache[font4index] = newcpcache;
+        ff->cpcache[font4index][ff->cpcachelen[font4index]].ch = c;
+        ff->cpcache[font4index][ff->cpcachelen[font4index]].width = width;
+        ff->cpcachelen[font4index]++;
+      }
+    }
     return width;
   }
 #endif
