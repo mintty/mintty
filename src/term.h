@@ -17,7 +17,7 @@ typedef enum {
   CYAN_I    = 6,
   WHITE_I   = 7,
 
-  // Bold ANSI colours
+  // Bright/Bold ANSI colours
   BOLD_BLACK_I   = 8,
   BOLD_RED_I     = 9,
   BOLD_GREEN_I   = 10,
@@ -34,25 +34,32 @@ typedef enum {
   // gray shades running between black and white but not including either
   // on grounds of redundancy.
 
+  // Colour numbers 256 through 271 are copies of ANSI colours 0 through 15
+  // supporting distinct handling of ANSI colours SGR 30..37/40../90../100.. 
+  // and palette colours SGR 38/48;5;0..15
+  // For distinct bold handling alone, they could also be mapped to 0..15
+  // but duplicating them would also facilitate distinct colour values if desired
+  ANSI0            = 256,
+
   // Default foreground
-  FG_COLOUR_I      = 256,
-  BOLD_FG_COLOUR_I = 257,
+  FG_COLOUR_I      = 272,
+  BOLD_FG_COLOUR_I = 273,
 
   // Default background
-  BG_COLOUR_I      = 258,
-  BOLD_BG_COLOUR_I = 259,
+  BG_COLOUR_I      = 274,
+  BOLD_BG_COLOUR_I = 275,
 
   // Cursor colours
-  CURSOR_TEXT_COLOUR_I = 260,
-  CURSOR_COLOUR_I      = 261,
-  IME_CURSOR_COLOUR_I  = 262,
+  CURSOR_TEXT_COLOUR_I = 276,
+  CURSOR_COLOUR_I      = 277,
+  IME_CURSOR_COLOUR_I  = 278,
 
   // Selection highlight colours
-  SEL_COLOUR_I         = 263,
-  SEL_TEXT_COLOUR_I    = 264,
+  SEL_COLOUR_I         = 279,
+  SEL_TEXT_COLOUR_I    = 280,
 
   // Number of colours
-  COLOUR_NUM = 265,
+  COLOUR_NUM = 281,
 
   // True Colour indicator
   // assert (TRUE_COLOUR % 4) == 0 so that checking x >= TRUE_COLOUR
@@ -61,7 +68,7 @@ typedef enum {
 } colour_i;
 
 // colour classes
-#define CCL_ANSI8(i) ((i) < 8)
+#define CCL_ANSI8(i) ((i) >= ANSI0 && (i) < ANSI0 + 8)
 #define CCL_DEFAULT(i) ((i) >= FG_COLOUR_I && (i) <= BOLD_BG_COLOUR_I)
 #define CCL_TRUEC(i) ((i) >= TRUE_COLOUR)
 
@@ -135,6 +142,15 @@ enum {
   DATTR_STARTRUN  = 0x8000000000000000u, /* start of redraw run */
   DATTR_MASK      = TATTR_RIGHTCURS | TATTR_PASCURS | TATTR_ACTCURS
                     | DATTR_STARTRUN
+  // unassigned bits:
+  //                0x0000000800000000u
+  //                0x0010000000000000u
+  //                0x0020000000000000u
+  //                0x0040000000000000u
+  //                0x0080000000000000u
+  //                0x1000000000000000u
+  //                0x2000000000000000u
+  //                0x4000000000000000u
 };
 
 /* Line attributes.

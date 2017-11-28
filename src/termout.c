@@ -656,12 +656,12 @@ do_sgr(void)
       when 29: attr.attr &= ~ATTR_STRIKEOUT;
       when 30 ... 37: /* foreground */
         attr.attr &= ~ATTR_FGMASK;
-        attr.attr |= (term.csi_argv[i] - 30) << ATTR_FGSHIFT;
+        attr.attr |= (term.csi_argv[i] - 30 + ANSI0) << ATTR_FGSHIFT;
       when 53: attr.attr |= ATTR_OVERL;
       when 55: attr.attr &= ~ATTR_OVERL;
       when 90 ... 97: /* bright foreground */
         attr.attr &= ~ATTR_FGMASK;
-        attr.attr |= ((term.csi_argv[i] - 90 + 8) << ATTR_FGSHIFT);
+        attr.attr |= ((term.csi_argv[i] - 90 + 8 + ANSI0) << ATTR_FGSHIFT);
       when 38: /* 256-colour foreground */
         if (i + 2 < argc && term.csi_argv[i + 1] == 5) {
           // set foreground to palette colour
@@ -684,10 +684,10 @@ do_sgr(void)
         attr.attr |= ATTR_DEFFG;
       when 40 ... 47: /* background */
         attr.attr &= ~ATTR_BGMASK;
-        attr.attr |= (term.csi_argv[i] - 40) << ATTR_BGSHIFT;
+        attr.attr |= (term.csi_argv[i] - 40 + ANSI0) << ATTR_BGSHIFT;
       when 100 ... 107: /* bright background */
         attr.attr &= ~ATTR_BGMASK;
-        attr.attr |= ((term.csi_argv[i] - 100 + 8) << ATTR_BGSHIFT);
+        attr.attr |= ((term.csi_argv[i] - 100 + 8 + ANSI0) << ATTR_BGSHIFT);
       when 48: /* 256-colour background */
         if (i + 2 < argc && term.csi_argv[i + 1] == 5) {
           // set background to palette colour

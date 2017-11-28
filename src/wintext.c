@@ -2418,7 +2418,7 @@ win_set_colour(colour_i i, colour c)
   if (i >= COLOUR_NUM)
     return;
 
-static bool bold_colour_selected = false;
+  static bool bold_colour_selected = false;
 
   if (c == (colour)-1) {
     // ... reset to default ...
@@ -2442,10 +2442,15 @@ static bool bold_colour_selected = false;
 
     return;
   }
+
   colours[i] = c;
+  if (i < 16)
+    colours[i + ANSI0] = c;
+
 #ifdef debug_brighten
   printf("colours[%d] = %06X\n", i, c);
 #endif
+
   switch (i) {
     when FG_COLOUR_I:
       // should we make this conditional, 
@@ -2486,7 +2491,8 @@ static bool bold_colour_selected = false;
   win_invalidate_all();
 }
 
-colour win_get_colour(colour_i i)
+colour
+win_get_colour(colour_i i)
 {
   if (term.rvideo && CCL_DEFAULT(i))
     return colours[i ^ 2];  // [BOLD]_FG_COLOUR_I  <-->  [BOLD]_BG_COLOUR_I
@@ -2503,6 +2509,9 @@ void
 win_reset_colours(void)
 {
   memcpy(colours, cfg.ansi_colours, sizeof cfg.ansi_colours);
+  // duplicate 16 ANSI colours to facilitate distinct handling (implemented)
+  // and also distinct colour values if desired
+  memcpy(&colours[ANSI0], cfg.ansi_colours, sizeof cfg.ansi_colours);
 
   // Colour cube
   colour_i i = 16;
