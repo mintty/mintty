@@ -552,7 +552,7 @@ Mintty supports a maximum of usual and unusual text attributes:
 | _any_                  | 0                 |                               |
 
 Note: The control sequences for Fraktur (“Gothic”) font are described 
-in EMCA-48, see also [wiki:ANSI code](https://en.wikipedia.org/wiki/ANSI_escape_code).
+in ECMA-48, see also [wiki:ANSI code](https://en.wikipedia.org/wiki/ANSI_escape_code).
 To use this feature, it is suggested to install `F25 Blackletter Typewriter`.
 
 Note: The control sequence for alternative font 1 overrides the identical 
@@ -723,6 +723,17 @@ Mintty supports two extension features:
 * User-defined commands and filter functions (option `UserCommands`)
 
 See the manual page for details.
+
+### Terminating the foreground program ###
+
+As an example for a user-defined command, that is not used for filtering 
+text in this case, assume the user wants a menu option to terminate the 
+terminal foreground process (in case it is stalled). This can be done by 
+including a user command:
+
+```
+UserCommands=Kill foreground process:kill -9 $MINTTY_PID
+```
 
 
 ## Running mintty stand-alone ##

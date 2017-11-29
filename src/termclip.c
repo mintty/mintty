@@ -362,6 +362,7 @@ term_cmd(char * cmdpat)
   unsetenv("MINTTY_SELECT");
   unsetenv("MINTTY_BUFFER");
   unsetenv("MINTTY_CWD");
+  unsetenv("MINTTY_PID");
   unsetenv("MINTTY_PROG");
   if (cmdf) {
     if (term.bracketed_paste)

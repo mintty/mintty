@@ -640,6 +640,15 @@ user_command(int n)
         *sepp = '\0';
 
       if (n == 0) {
+        int fgpid = foreground_pid();
+        if (fgpid) {
+          char * _fgpid = 0;
+          asprintf(&_fgpid, "%d", fgpid);
+          if (_fgpid) {
+            setenv("MINTTY_PID", _fgpid, true);
+            free(_fgpid);
+          }
+        }
         char * fgp = foreground_prog();
         if (fgp) {
           setenv("MINTTY_PROG", fgp, true);

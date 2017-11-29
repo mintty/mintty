@@ -917,6 +917,7 @@ text attribute to use a bold-style font; where a suitable bold variant of the
 selected font (that has the same width as the base font) is available, 
 that is used; otherwise, the bolding is simulated by rendering the text 
 twice with a one-pixel offset ('overstrike').
+(Corresponds roughly to the xterm resource \fBallowBoldFonts\fP.)
 
 This option is not fully independent. 
 If both BoldAsFont and BoldAsColour are true, both display methods are combined where applicable.
@@ -927,8 +928,10 @@ See \fBBold Behaviour\fP for an overview.
 \fBShow bold as colour\fP (BoldAsColour=yes)
 This option sets the preferred rendering of the ANSI bold (or 'intense') 
 text attribute to use a different colour, usually with increased brightness;
-it maps ANSI colours 0..7 to their bright variants 8..15, and the 
-default colour to a brightened variant. Rendering of other colours is not affected.
+it maps ANSI colours 0..7 (unless selected with the palette colour escape sequences) 
+to their bright variants 8..15, and the default colour to a brightened variant. 
+Rendering of other colours is not affected.
+(Corresponds largely to the xterm resource \fBboldColors\fP.)
 
 This option is not fully independent. 
 If both BoldAsColour and BoldAsFont are true, both display methods are combined where applicable.
@@ -942,6 +945,7 @@ text that would otherwise have the default foreground colour, overriding
 other bold rendering; it is only applied if option BoldAsColour is true.
 The bold substitution colour can also be set, modified, enabled or disabled 
 with the respective xterm OSC control sequences.
+(Corresponds to the xterm resources \fBcolorBD\fP and \fBcolorBDMode\fP.)
 
 .TP
 \fBNote: Bold Behaviour\fP
@@ -1890,6 +1894,8 @@ MINTTY_SCREEN for the current screen; if scrolled back, starting at the current 
 MINTTY_OUTPUT for the output of the previous command, if prompt lines are marked
 .br
 MINTTY_TITLE for the window title text
+.br
+MINTTY_PID for the program ID of the terminal foreground process
 .br
 MINTTY_PROG for the program name of the terminal foreground process
 .br
