@@ -93,11 +93,11 @@ extern wchar win_combine_chars(wchar bc, wchar cc);
 extern wchar win_linedraw_char(int i);
 
 typedef enum {
-    ACM_TERM = 1,        /* actual terminal rendering */
-    ACM_RTF_PALETTE = 2, /* winclip - rtf palette setup stage */
-    ACM_RTF_GEN = 4,     /* winclip - rtf generation stage */
-    ACM_SIMPLE = 8,      /* simplified (bold, [rvideo,] dim, invisible) */
-    ACM_VBELL_BG = 16,   /* visual-bell background highlight */
+  ACM_TERM = 1,        /* actual terminal rendering */
+  ACM_RTF_PALETTE = 2, /* winclip - rtf palette setup stage */
+  ACM_RTF_GEN = 4,     /* winclip - rtf generation stage */
+  ACM_SIMPLE = 8,      /* simplified (bold, [rvideo,] dim, invisible) */
+  ACM_VBELL_BG = 16,   /* visual-bell background highlight */
 } attr_colour_mode;
 
 extern cattr apply_attr_colour(cattr a, attr_colour_mode mode);

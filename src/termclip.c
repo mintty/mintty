@@ -36,7 +36,7 @@ clip_addchar(clip_workbuf * b, wchar chr, cattr * ca)
   }
 
   b->text[b->len] = chr;
-  b->cattrs[b->len] = ca ? *ca : (cattr){0};
+  b->cattrs[b->len] = ca ? *ca : (cattr){0, 0, 0};
   b->len++;
 }
 
@@ -46,7 +46,7 @@ get_selection(pos start, pos end, bool rect)
 {
   int old_top_x = start.x;    /* needed for rect==1 */
   clip_workbuf *buf = newn(clip_workbuf, 1);
-  *buf = (clip_workbuf){0};  // all members to 0 initially
+  *buf = (clip_workbuf){0, 0, 0, 0};  // all members to 0 initially
 
   while (poslt(start, end)) {
     bool nl = false;

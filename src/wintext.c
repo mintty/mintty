@@ -5,7 +5,7 @@
 
 #include "winpriv.h"
 #include "winsearch.h"
-#include "charset.h"  // wcscpy, combiningdouble
+#include "charset.h"  // wcscpy, wcsncat, combiningdouble
 #include "config.h"
 #include "winimg.h"  // winimg_paint
 
@@ -71,7 +71,7 @@ static const wchar linedraw_chars[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES] = {
 };
 
 
-// colour values
+// colour values; this should perhaps be part of struct term
 COLORREF colours[COLOUR_NUM];
 
 // diagnostic information flag
@@ -320,14 +320,8 @@ static void
 adjust_font_weights(struct fontfam * ff)
 {
   LOGFONTW lf;
-#if CYGWIN_VERSION_API_MINOR >= 201
-  swprintf(lf.lfFaceName, lengthof(lf.lfFaceName), W("%ls"), ff->name);
-#else
-  if (wcslen(ff->name) < lengthof(lf.lfFaceName))
-    wcscpy(lf.lfFaceName, ff->name);
-  else
-    wcscpy(lf.lfFaceName, W(""));
-#endif
+  wcscpy(lf.lfFaceName, W(""));
+  wcsncat(lf.lfFaceName, ff->name, lengthof(lf.lfFaceName) - 1);
   lf.lfPitchAndFamily = 0;
   //lf.lfCharSet = ANSI_CHARSET;   // report only ANSI character range
   // use this to avoid double error popup (e.g. Font=David):

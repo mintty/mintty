@@ -116,8 +116,10 @@ open_logfile(bool toggling)
     else {
       char * log;
       if (*cfg.log == '~' && cfg.log[1] == '/') {
-        /// substitute '~' -> home
-        log = asform("%s/%s", home, cs__wcstombs(&cfg.log[2]));
+        // substitute '~' -> home
+        char * path = cs__wcstombs(&cfg.log[2]);
+        log = asform("%s/%s", home, path);
+        free(path);
       }
       else
         log = path_win_w_to_posix(cfg.log);
@@ -313,6 +315,14 @@ child_create(char *argv[], struct winsize *winp)
     exit(255);
   }
   else { // Parent process.
+#ifdef __midipix__
+    // This corrupts CR in cygwin
+    struct termios attr;
+    tcgetattr(pty_fd, &attr);
+    cfmakeraw(&attr);
+    tcsetattr(pty_fd, TCSANOW, &attr);
+#endif
+
     fcntl(pty_fd, F_SETFL, O_NONBLOCK);
 
     //child_update_charset();  // could do it here or as above

@@ -714,6 +714,17 @@ wcsncpy(wchar * s1, const wchar * s2, int len)
   return s1;
 }
 
+wchar *
+wcsncat(wchar * s1, const wchar * s2, int len)
+{
+  while (*s1)
+    s1++;
+  while (*s2 && len--)
+    *s1++ = *s2++;
+  *s1 = 0;
+  return s1;
+}
+
 #endif
 
 #if CYGWIN_VERSION_API_MINOR < 207 || defined(__midipix__) || defined(debug_wcs)

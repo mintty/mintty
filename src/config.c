@@ -1981,8 +1981,8 @@ download_scheme(char * url)
 #else
   fclose(sf);
   remove(sfn);
-#endif
   free(sfn);
+#endif
 
   return sch;
 }

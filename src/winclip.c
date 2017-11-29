@@ -207,8 +207,8 @@ win_open(wstring wpath)
 // input is the exact middle:
 // - The r/g/b channels and the gray value: the higher value output is chosen.
 // - If the gray and color have same distance from the input - color is chosen.
-static uint8_t
-rgb_to_x256(uint8_t r, uint8_t g, uint8_t b)
+static uchar
+rgb_to_x256(uchar r, uchar g, uchar b)
 {
     // Calculate the nearest 0-based color index at 16 .. 231
 #   define v2ci(v) (v < 48 ? 0 : v < 115 ? 1 : (v - 35) / 40)
@@ -562,6 +562,9 @@ paste_hdrop(HDROP drop)
     uint wfn_len = DragQueryFileW(drop, i, 0, 0);
     wchar wfn[wfn_len + 1];
     DragQueryFileW(drop, i, wfn, wfn_len + 1);
+#ifdef debug_dragndrop
+    printf("dropped file <%ls>\n", wfn);
+#endif
     char *fn = path_win_w_to_posix(wfn);
 
     bool has_tick = false, needs_quotes = false, needs_dollar = false;

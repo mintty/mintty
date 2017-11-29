@@ -111,8 +111,8 @@ treeview_insert(treeview_faff * faff, int level, char *text, char *path)
   }
 
   if (level > 0)
-    TreeView_Expand(faff->treeview, faff->lastat[level - 1],
-                    (level > 1 ? TVE_COLLAPSE : TVE_EXPAND));
+    (void)TreeView_Expand(faff->treeview, faff->lastat[level - 1],
+                          (level > 1 ? TVE_COLLAPSE : TVE_EXPAND));
   faff->lastat[level] = newitem;
   for (int i = level + 1; i < 4; i++)
     faff->lastat[i] = null;
@@ -518,7 +518,7 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
         * Put the treeview selection on to the Session panel.
         * This should also cause creation of the relevant controls.
         */
-        TreeView_SelectItem(treeview, hfirst);
+        (void)TreeView_SelectItem(treeview, hfirst);
       }
 
      /*
@@ -587,12 +587,9 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
         debug("WM_NOTIFY: GetSelection");
 
         TVITEM item;
-        TCHAR buffer[64];
         item.hItem = i;
-        item.pszText = buffer;
-        item.cchTextMax = lengthof(buffer);
-        item.mask = TVIF_TEXT | TVIF_PARAM;
-        TreeView_GetItem(((LPNMHDR) lParam)->hwndFrom, &item);
+        item.mask = TVIF_PARAM;
+        (void)TreeView_GetItem(((LPNMHDR) lParam)->hwndFrom, &item);
 
        /* Destroy all controls in the currently visible panel. */
         for (winctrl *c = ctrls_panel.first; c; c = c->next) {
