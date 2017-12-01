@@ -78,7 +78,10 @@ enum {
   WIN_MINIMIZE = 0,
   WIN_MAXIMIZE = -1,
   WIN_TOP = 1,
+  WIN_TITLE = 7,
 };
+
+static void update_tab_titles(void);
 
 // Options
 static bool title_settable = true;
@@ -294,8 +297,10 @@ win_set_title(char *title)
 {
   if (title_settable) {
     wchar wtitle[strlen(title) + 1];
-    if (cs_mbstowcs(wtitle, title, lengthof(wtitle)) >= 0)
+    if (cs_mbstowcs(wtitle, title, lengthof(wtitle)) >= 0) {
       SetWindowTextW(wnd, wtitle);
+      update_tab_titles();
+    }
   }
 }
 
@@ -343,6 +348,8 @@ win_prefix_title(const wstring prefix)
   wchar * title = & ptitle[plen];
   len = GetWindowTextW(wnd, title, len + 1);
   SetWindowTextW(wnd, ptitle);
+  // "[Printing...] " or "TERMINATED"
+  update_tab_titles();
 }
 
 void
@@ -355,6 +362,8 @@ win_unprefix_title(const wstring prefix)
   if (!wcsncmp(ptitle, prefix, plen)) {
     wchar * title = & ptitle[plen];
     SetWindowTextW(wnd, title);
+    // "[Printing...] "
+    update_tab_titles();
   }
 }
 
@@ -384,6 +393,7 @@ win_restore_title(void)
   wstring title = titles[--titles_i];
   if (title) {
     SetWindowTextW(wnd, title);
+    update_tab_titles();
     delete(title);
     titles[titles_i] = 0;
   }
@@ -448,8 +458,20 @@ win_switch(bool back, bool alternate)
   }
 }
 
+
+/*
+ *  Virtual Tabs
+ */
+
+#define dont_debug_tabs
+#define dont_debug_tabbar
+
 static uint tabn = 0;
 static HWND * tabs = 0;
+
+#ifndef GWL_USERDATA
+#define GWL_USERDATA -21
+#endif
 
 void
 clear_tabs()
@@ -479,7 +501,63 @@ get_tab(uint tabi)
     return 0;
 }
 
-#define dont_debug_tabs
+static void
+refresh_tab_titles()
+{
+  BOOL CALLBACK wnd_enum_tabs(HWND curr_wnd, LPARAM lp)
+  {
+    (void)lp;
+    WINDOWINFO curr_wnd_info;
+    curr_wnd_info.cbSize = sizeof(WINDOWINFO);
+    GetWindowInfo(curr_wnd, &curr_wnd_info);
+    if (class_atom == curr_wnd_info.atomWindowType) {
+      int len = GetWindowTextLengthW(curr_wnd);
+      if (!len) {
+        // check whether already terminating
+        LONG fini = GetWindowLong(curr_wnd, GWL_USERDATA);
+        if (fini) {
+#ifdef debug_tabbar
+          printf("[%8p] get tab %8p: fini\n", wnd, curr_wnd);
+#endif
+          return true;
+        }
+      }
+      wchar title[len + 1];
+      GetWindowTextW(curr_wnd, title, len + 1);
+#ifdef debug_tabbar
+      printf("[%8p] get tab %8p: <%ls>\n", wnd, curr_wnd, title);
+#endif
+    }
+    return true;
+  }
+  if (cfg.geom_sync)
+    EnumWindows(wnd_enum_tabs, 0);
+}
+
+static void
+update_tab_titles()
+{
+  BOOL CALLBACK wnd_enum_tabs(HWND curr_wnd, LPARAM lp)
+  {
+    (void)lp;
+    WINDOWINFO curr_wnd_info;
+    curr_wnd_info.cbSize = sizeof(WINDOWINFO);
+    GetWindowInfo(curr_wnd, &curr_wnd_info);
+    if (class_atom == curr_wnd_info.atomWindowType) {
+      if (curr_wnd != wnd) {
+        PostMessage(curr_wnd, WM_USER, 0, WIN_TITLE);
+#ifdef debug_tabbar
+        printf("notified %8p to update tabbar\n", curr_wnd);
+#endif
+      }
+    }
+    return true;
+  }
+  if (cfg.geom_sync) {
+    refresh_tab_titles();
+    EnumWindows(wnd_enum_tabs, 0);
+  }
+}
 
 static void
 win_gotab(uint n)
@@ -555,6 +633,11 @@ win_synctabs(int level)
   if (cfg.geom_sync >= level)
     EnumWindows(wnd_enum_tabs, 0);
 }
+
+
+/*
+ *  Monitor-related window functions
+ */
 
 static void
 win_launch(int n)
@@ -1665,6 +1748,10 @@ static struct {
 
         ShowWindow(wnd, SW_RESTORE);
       }
+      else if (!wp && lp == WIN_TITLE) {
+        if (cfg.geom_sync)
+          refresh_tab_titles();
+      }
       else if (cfg.geom_sync) {
 #ifdef debug_tabs
         printf("switched %d,%d %d,%d\n", (INT16)LOWORD(lp), (INT16)HIWORD(lp), LOWORD(wp), HIWORD(wp));
@@ -2257,6 +2344,18 @@ void
 exit_mintty(void)
 {
   report_pos();
+
+  // could there be a lag until the window is actually destroyed?
+  // so we'd have to add a safeguard here...
+  SetWindowTextA(wnd, "");
+  // indicate "terminating"
+  SetWindowLong(wnd, GWL_USERDATA, -1);
+  // flush properties cache
+  SetWindowPos(wnd, null, 0, 0, 0, 0,
+               SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER
+               | SWP_NOREPOSITION | SWP_NOACTIVATE | SWP_NOCOPYBITS);
+  update_tab_titles();
+
   exit(0);
 }
 
@@ -3544,6 +3643,7 @@ main(int argc, char *argv[])
   SetFocus(wnd);
 
   win_synctabs(4);
+  update_tab_titles();
 
   // Message loop.
   for (;;) {
