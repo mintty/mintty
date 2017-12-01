@@ -37,7 +37,7 @@ int forkpty(int *, char *, struct termios *, struct winsize *);
 
 bool clone_size_token = true;
 
-string child_dir = null;
+static string child_dir = null;
 
 static pid_t pid;
 static bool killed;
@@ -821,8 +821,25 @@ child_fork(int argc, char *argv[], int moni)
     close(win_fd);
 
     if (child_dir && *child_dir) {
-      chdir(child_dir);
-      setenv("PWD", child_dir, true);
+      string set_dir = child_dir;
+      if (support_wsl) {
+        wchar * wcd = cs__utftowcs(child_dir);
+#ifdef debug_wsl
+        printf("fork wsl <%ls>\n", wcd);
+#endif
+        wcd = dewsl(wcd);
+#ifdef debug_wsl
+        printf("fork wsl <%ls>\n", wcd);
+#endif
+        set_dir = (string)cs__wcstombs(wcd);
+        delete(wcd);
+      }
+
+      chdir(set_dir);
+      setenv("PWD", set_dir, true);
+
+      if (support_wsl)
+        delete(set_dir);
     }
 
 #ifdef add_child_parameters

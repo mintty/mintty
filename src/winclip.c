@@ -101,6 +101,65 @@ ispathprefixw(wstring pref, wstring path)
   return false;
 }
 
+wchar *
+dewsl(wchar * wpath)
+{
+#ifdef debug_wsl
+  printf("open <%ls>\n", wpath);
+#endif
+  if (wcsncmp(wpath, W("/mnt/"), 5) == 0) {
+    wchar * unwsl = newn(wchar, wcslen(wpath) + 6);
+    wcscpy(unwsl, W("/cygdrive"));
+    wcscat(unwsl, wpath + 4);
+    delete(wpath);
+    wpath = unwsl;
+  }
+  else if (*wpath == '/' && *wsl_basepath) {
+    static wchar * wbase = 0;
+    if (!wbase) {
+      char * pbase = path_win_w_to_posix(wsl_basepath);
+      wbase = cs__mbstowcs(pbase);
+      free(pbase);
+    }
+
+    wchar * unwsl = newn(wchar, wcslen(wbase) + wcslen(wpath) + 1);
+    wcscpy(unwsl, wbase);
+    wcscat(unwsl, wpath);
+    delete(wpath);
+    wpath = unwsl;
+  }
+  else if (*wpath == '/') {  // prepend %LOCALAPPDATA%\lxss[\rootfs]
+    // deprecated case; for WSL, wsl_basepath should be set
+    char * appd = getenv("LOCALAPPDATA");
+    if (appd) {
+      wchar * wappd = cs__mbstowcs(appd);
+      appd = path_win_w_to_posix(wappd);
+      free(wappd);
+      wappd = cs__mbstowcs(appd);
+      free(appd);
+
+      bool rootfs_mount = true;
+      for (uint i = 0; i < lengthof(lxss_mounts); i++) {
+        if (ispathprefixw(lxss_mounts[i].w, wpath)) {
+          rootfs_mount = false;
+          break;
+        }
+      }
+
+      wchar * unwsl = newn(wchar, wcslen(wappd) + wcslen(wpath) + 13);
+      wcscpy(unwsl, wappd);
+      free(wappd);
+      wcscat(unwsl, W("/lxss"));
+      if (rootfs_mount)
+        wcscat(unwsl, W("/rootfs"));
+      wcscat(unwsl, wpath);
+      delete(wpath);
+      wpath = unwsl;
+    }
+  }
+  return wpath;
+}
+
 void
 win_open(wstring wpath)
 // frees wpath
@@ -135,59 +194,7 @@ win_open(wstring wpath)
   else {
     // Need to convert POSIX path to Windows first
     if (support_wsl) {
-#ifdef debug_wsl
-      printf("open <%ls>\n", wpath);
-#endif
-      if (wcsncmp(wpath, W("/mnt/"), 5) == 0) {
-        wchar * unwsl = newn(wchar, wcslen(wpath) + 6);
-        wcscpy(unwsl, W("/cygdrive"));
-        wcscat(unwsl, wpath + 4);
-        delete(wpath);
-        wpath = unwsl;
-      }
-      else if (*wpath == '/' && *wsl_basepath) {
-        static wchar * wbase = 0;
-        if (!wbase) {
-          char * pbase = path_win_w_to_posix(wsl_basepath);
-          wbase = cs__mbstowcs(pbase);
-          free(pbase);
-        }
-
-        wchar * unwsl = newn(wchar, wcslen(wbase) + wcslen(wpath) + 1);
-        wcscpy(unwsl, wbase);
-        wcscat(unwsl, wpath);
-        delete(wpath);
-        wpath = unwsl;
-      }
-      else if (*wpath == '/') {  // prepend %LOCALAPPDATA%\lxss[\rootfs]
-        // deprecated case; for WSL, wsl_basepath should be set
-        char * appd = getenv("LOCALAPPDATA");
-        if (appd) {
-          wchar * wappd = cs__mbstowcs(appd);
-          appd = path_win_w_to_posix(wappd);
-          free(wappd);
-          wappd = cs__mbstowcs(appd);
-          free(appd);
-
-          bool rootfs_mount = true;
-          for (uint i = 0; i < lengthof(lxss_mounts); i++) {
-            if (ispathprefixw(lxss_mounts[i].w, wpath)) {
-              rootfs_mount = false;
-              break;
-            }
-          }
-
-          wchar * unwsl = newn(wchar, wcslen(wappd) + wcslen(wpath) + 13);
-          wcscpy(unwsl, wappd);
-          free(wappd);
-          wcscat(unwsl, W("/lxss"));
-          if (rootfs_mount)
-            wcscat(unwsl, W("/rootfs"));
-          wcscat(unwsl, wpath);
-          delete(wpath);
-          wpath = unwsl;
-        }
-      }
+      wpath = dewsl((wchar *)wpath);
     }
     wstring conv_wpath = child_conv_path(wpath);
 #ifdef debug_wsl
