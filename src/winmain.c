@@ -2621,22 +2621,6 @@ regclose(HKEY key)
     RegCloseKey(key);
 }
 
-static wchar *
-getreg(HKEY key, wstring subkey, wstring attribute)
-{
-  DWORD blen;
-  int res = RegGetValueW(key, subkey, attribute, RRF_RT_ANY, 0, 0, &blen);
-  if (res)
-    return 0;
-  wchar * val = malloc(blen);
-  res = RegGetValueW(key, subkey, attribute, RRF_RT_ANY, 0, val, &blen);
-  if (res) {
-    free(val);
-    return 0;
-  }
-  return val;
-}
-
 #define dont_debug_reg_lxss
 
 static bool
@@ -2666,18 +2650,18 @@ getlxssinfo(wstring wslname,
     wchar * rootfs;
     wchar * icon = 0;
 
-    wchar * bp = getreg(lxss, guid, W("BasePath"));
+    wchar * bp = getregstr(lxss, guid, W("BasePath"));
     if (!bp)
       return false;
 
-    wchar * pn = getreg(lxss, guid, W("PackageFamilyName"));
+    wchar * pn = getregstr(lxss, guid, W("PackageFamilyName"));
     if (pn) {  // look for installation directory and icon file
       rootfs = newn(wchar, wcslen(bp) + 8);
       wcscpy(rootfs, bp);
       wcscat(rootfs, W("\\rootfs"));
       HKEY appdata = regopen(HKEY_CURRENT_USER, W("Software\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppModel\\SystemAppData"));
       HKEY package = regopen(appdata, pn);
-      wchar * pfn = getreg(package, W("Schemas"), W("PackageFullName"));
+      wchar * pfn = getregstr(package, W("Schemas"), W("PackageFullName"));
       regclose(package);
       regclose(appdata);
       // "%ProgramW6432%/WindowsApps/<PackageFullName>/images/icon.ico"
@@ -2695,7 +2679,7 @@ getlxssinfo(wstring wslname,
       icon = legacy_icon();
     }
 #ifdef debug_reg_lxss
-    printf("WSL distribution name %ls\n", getreg(lxss, guid, W("DistributionName")));
+    printf("WSL distribution name %ls\n", getregstr(lxss, guid, W("DistributionName")));
     printf("-- guid %ls\n", guid);
     printf("-- root %ls\n", rootfs);
     printf("-- pack %ls\n", pn);
@@ -2708,7 +2692,7 @@ getlxssinfo(wstring wslname,
   }
 
   if (!wslname || !*wslname) {
-    wchar * dd = getreg(HKEY_CURRENT_USER, lxsskeyname, W("DefaultDistribution"));
+    wchar * dd = getregstr(HKEY_CURRENT_USER, lxsskeyname, W("DefaultDistribution"));
     int ok;
     if (dd) {
       ok = getlxssdistinfo(lxss, dd);
@@ -2757,7 +2741,7 @@ getlxssinfo(wstring wslname,
       wchar subkey[keylen];
       ret = RegEnumKeyW(lxss, i, subkey, keylen);
       if (ret == ERROR_SUCCESS) {
-          wchar * dn = getreg(lxss, subkey, W("DistributionName"));
+          wchar * dn = getregstr(lxss, subkey, W("DistributionName"));
           if (0 == wcscmp(dn, wslname)) {
             int ok = getlxssdistinfo(lxss, subkey);
             regclose(lxss);
