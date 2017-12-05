@@ -1374,14 +1374,20 @@ apply_bold_colour(colour_i *pfgi)
       *pfgi |= 8;  // (BLACK|...|WHITE)_I -> BOLD_(BLACK|...|WHITE)_I
     return true;  // both thickened
   }
-  // normal independent controls
+  // switchable bold_colour
+  if (term.enable_bold_colour && CCL_DEFAULT(*pfgi)
+      && colours[BOLD_COLOUR_I] != (colour)-1) {
+    *pfgi = BOLD_COLOUR_I;
+  }
+  else
+  // normal independent as_font/as_colour controls
   if (cfg.bold_as_colour) {
     if (ansi)
       *pfgi |= 8;
     else  // default
       *pfgi |= 1;  // (FG|BG)_COLOUR_I -> BOLD_(FG|BG)_COLOUR_I
   }
-  return cfg.bold_as_font;
+  return cfg.bold_as_font;  // thicken if bold_as_font
 }
 
 // removes default colours if not reversed, returns true if still needs thickening
@@ -2416,6 +2422,10 @@ win_set_colour(colour_i i, colour c)
 
   if (c == (colour)-1) {
     // ... reset to default ...
+    if (i == BOLD_COLOUR_I) {
+      colours[BOLD_COLOUR_I] = cfg.bold_colour;
+    }
+    else
     if (i == BOLD_FG_COLOUR_I) {
       bold_colour_selected = false;
       if (cfg.bold_colour != (colour)-1)
@@ -2531,5 +2541,5 @@ win_reset_colours(void)
   win_set_colour(SEL_COLOUR_I, cfg.sel_bg_colour);
   win_set_colour(SEL_TEXT_COLOUR_I, cfg.sel_fg_colour);
   // Bold colour
-  win_set_colour(BOLD_FG_COLOUR_I, (colour)-1);
+  win_set_colour(BOLD_COLOUR_I, (colour)-1);
 }

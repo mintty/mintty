@@ -58,8 +58,11 @@ typedef enum {
   SEL_COLOUR_I         = 279,
   SEL_TEXT_COLOUR_I    = 280,
 
+  // configured Bold colour
+  BOLD_COLOUR_I = 281,
+
   // Number of colours
-  COLOUR_NUM = 281,
+  COLOUR_NUM = 282,
 
   // True Colour indicator
   // assert (TRUE_COLOUR % 4) == 0 so that checking x >= TRUE_COLOUR
@@ -433,6 +436,7 @@ struct term {
   bool wide_indic;
   bool wide_extra;
   bool disable_bidi;
+  bool enable_bold_colour;
 
   bool sixel_display;        // true if sixel scrolling mode is off
   bool sixel_scrolls_right;  // on: sixel scrolling leaves cursor to right of graphic

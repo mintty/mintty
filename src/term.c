@@ -210,6 +210,7 @@ term_reset(bool full)
     term.wide_indic = false;
     term.wide_extra = false;
     term.disable_bidi = false;
+    term.enable_bold_colour = cfg.bold_as_colour;
   }
 
   term.virtuallines = 0;
