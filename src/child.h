@@ -12,6 +12,7 @@ extern bool logging;
 extern void child_proc(void);
 extern void child_kill(bool point_blank);
 extern void child_write(const char *, uint len);
+extern void child_break(void);
 extern void child_printf(const char * fmt, ...) __attribute__((format(printf, 1, 2)));
 extern void child_send(const char *, uint len);
 extern void child_sendw(const wchar *, uint len);

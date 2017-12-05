@@ -1800,6 +1800,7 @@ static struct {
         user_command(wp - IDM_USERCOMMAND);
       else
       switch (wp & ~0xF) {  /* low 4 bits reserved to Windows */
+        when IDM_BREAK: child_break();
         when IDM_OPEN: term_open();
         when IDM_COPY: term_copy();
         when IDM_COPASTE: term_copy(); win_paste();

@@ -537,6 +537,22 @@ child_write(const char *buf, uint len)
     write(pty_fd, buf, len);
 }
 
+/*
+  Simulate a BREAK event.
+ */
+void
+child_break()
+{
+  int gid = tcgetpgrp(pty_fd);
+  if (gid > 1) {
+    struct termios attr;
+    tcgetattr(pty_fd, &attr);
+    if ((attr.c_iflag & (IGNBRK | BRKINT)) == BRKINT) {
+      kill(gid, SIGINT);
+    }
+  }
+}
+
 void
 child_printf(const char *fmt, ...)
 {
