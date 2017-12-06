@@ -1,7 +1,7 @@
 #ifndef CHILD_H
 #define CHILD_H
 
-#include <sys/termios.h>
+#include <termios.h>
 
 extern bool clone_size_token;
 

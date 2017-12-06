@@ -15,7 +15,7 @@
 #include "winimg.h"
 #include "base64.h"
 
-#include <sys/termios.h>
+#include <termios.h>
 
 #define TERM_CMD_BUF_INC_STEP 128
 #define TERM_CMD_BUF_MAX_SIZE (1024 * 1024)

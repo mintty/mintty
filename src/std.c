@@ -175,7 +175,7 @@ argz_stringify(char *argz, size_t argz_len, int sep)
  */
 
 #include <fcntl.h>
-#include <sys/termios.h>
+#include <termios.h>
 #include <sys/ioctl.h>
 
 #define TTY_NAME_MAX 32
