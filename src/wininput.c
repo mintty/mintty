@@ -1626,6 +1626,10 @@ static struct {
       if (!vk_special(ctrl & !extended ? cfg.key_break : cfg.key_pause))
         return false;
     when VK_CANCEL:
+      if (!strcmp(cfg.key_break, "_BRK_")) {
+        child_break();
+        return false;
+      }
       if (!vk_special(cfg.key_break))
         return false;
     when VK_SNAPSHOT:

@@ -489,6 +489,20 @@ forced to terminate by sending a \fISIGKILL\fP signal instead.
 This can be done by holding down \fBShift\fP when using the close button,
 shortcut or menu item.
 
+.SS Terminal Break
+
+A traditional BRK event on a serial terminal connection can be simulated.
+The Break is available in the extended context menu and it can be mapped 
+to the Break key by configuration.
+Note, however, that a BRK can be ignored by configuration of the terminal 
+device (pty) or can be ignored by an application by catching the SIGINT signal.
+For more forceful interruption of the terminal client application, see the 
+Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips#terminating-the-foreground-program\fP.
+
+Note that Ctrl+C is often configured to raise a SIGINT signal. However, 
+this is not a terminal feature and can also be reconfigured (stty), so 
+in fact BRK and Ctrl+C are inherently different functions.
+
 .SS Mouse tracking
 
 When an application activates mouse tracking, mouse events are sent to the
@@ -1672,6 +1686,8 @@ Alt or Shift modification is applied.
 For \fBPause\fP and \fBBreak\fP, control characters are the default values, 
 they can be cleared with an empty assignment. For empty values, the default 
 layout of the keyboard is applied.
+The \fBBreak\fP key can also be assigned the traditional terminal line 
+Break function.
 .br
 \(en \fBKey_Pause\fP=^] \fI(Ctrl+])\fP
 .br
@@ -1685,9 +1701,11 @@ layout of the keyboard is applied.
 
 Examples:
 .br
+Key_Menu=29 would make the Menu key send the same escape sequence as in xterm
+.br
 Key_Break=2 would turn the Break key into an Insert key
 .br
-Key_Menu=29 would make the Menu key send the same escape sequence as in xterm
+Key_Break=_BRK_ would assign the simulated terminal line Break function
 
 .TP
 \fBUse system colours\fP (UseSystemColours=no)
