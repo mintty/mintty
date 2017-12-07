@@ -2272,7 +2272,7 @@ print_error(string msg)
 }
 
 static void
-option_error(char * msg, char * option)
+option_error(char * msg, char * option, int err)
 {
   finish_config();  // ensure localized message
   // msg is in UTF-8, option is in current encoding
@@ -2280,6 +2280,9 @@ option_error(char * msg, char * option)
   //char * fullmsg = asform("%s\n%s", optmsg, _("Try '--help' for more information"));
   char * fullmsg = strdup(optmsg);
   strappend(fullmsg, "\n");
+  if (err) {
+    strappend(fullmsg, asform("[Error info %d]\n", err));
+  }
   strappend(fullmsg, _("Try '--help' for more information"));
   show_message(fullmsg, MB_ICONWARNING);
   exit(1);
@@ -2624,14 +2627,14 @@ regclose(HKEY key)
 
 #define dont_debug_reg_lxss
 
-static bool
+static int
 getlxssinfo(wstring wslname,
             char ** wsl_guid, wstring * wsl_rootfs, wstring * wsl_icon)
 {
   static wstring lxsskeyname = W("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Lxss");
   HKEY lxss = regopen(HKEY_CURRENT_USER, lxsskeyname);
   if (!lxss)
-    return false;
+    return 1;
 
   wchar * legacy_icon()
   {
@@ -2646,14 +2649,14 @@ getlxssinfo(wstring wslname,
     return 0;
   }
 
-  bool getlxssdistinfo(HKEY lxss, wchar * guid)
+  int getlxssdistinfo(HKEY lxss, wchar * guid)
   {
     wchar * rootfs;
     wchar * icon = 0;
 
     wchar * bp = getregstr(lxss, guid, W("BasePath"));
     if (!bp)
-      return false;
+      return 3;
 
     wchar * pn = getregstr(lxss, guid, W("PackageFamilyName"));
     if (pn) {  // look for installation directory and icon file
@@ -2689,14 +2692,14 @@ getlxssinfo(wstring wslname,
     *wsl_guid = cs__wcstoutf(guid);
     *wsl_rootfs = rootfs;
     *wsl_icon = icon;
-    return true;
+    return 0;
   }
 
   if (!wslname || !*wslname) {
     wchar * dd = getregstr(HKEY_CURRENT_USER, lxsskeyname, W("DefaultDistribution"));
-    int ok;
+    int err;
     if (dd) {
-      ok = getlxssdistinfo(lxss, dd);
+      err = getlxssdistinfo(lxss, dd);
       free(dd);
     }
     else {  // Legacy "Bash on Windows" installed only, no registry info
@@ -2710,19 +2713,19 @@ getlxssinfo(wstring wslname,
         *wsl_rootfs = rootfs;
         *wsl_guid = "";
         *wsl_icon = legacy_icon();
-        ok = true;
+        err = 0;
       }
       else
-        ok = false;
+        err = 7;
 #else
       *wsl_guid = "";
       *wsl_rootfs = W("");  // activate legacy tricks in winclip.c
       *wsl_icon = legacy_icon();
-      ok = true;
+      err = 0;
 #endif
     }
     regclose(lxss);
-    return ok;
+    return err;
   }
   else {
     DWORD nsubkeys = 0;
@@ -2744,14 +2747,14 @@ getlxssinfo(wstring wslname,
       if (ret == ERROR_SUCCESS) {
           wchar * dn = getregstr(lxss, subkey, W("DistributionName"));
           if (0 == wcscmp(dn, wslname)) {
-            int ok = getlxssdistinfo(lxss, subkey);
+            int err = getlxssdistinfo(lxss, subkey);
             regclose(lxss);
-            return ok;
+            return err;
           }
       }
     }
     regclose(lxss);
-    return false;
+    return 9;
   }
 }
 
@@ -2774,15 +2777,15 @@ waccess(wstring fn, int amode)
   return ok;
 }
 
-static bool
+static int
 select_WSL(char * wsl)
 {
   wchar * wslname = cs__mbstowcs(wsl ?: "");
   wstring wsl_icon;
   // set --rootfs implicitly
-  bool ok = getlxssinfo(wslname, &wsl_guid, &wsl_basepath, &wsl_icon);
+  int err = getlxssinfo(wslname, &wsl_guid, &wsl_basepath, &wsl_icon);
   free(wslname);
-  if (ok) {
+  if (!err) {
     // set --icon if WSL specific icon exists
     if (wsl_icon) {
       if (!icon_is_from_shortcut && waccess(wsl_icon, R_OK))
@@ -2795,7 +2798,7 @@ select_WSL(char * wsl)
     set_arg_option("Locale", strdup("C"));
     set_arg_option("Charset", strdup("UTF-8"));
   }
-  return ok;
+  return err;
 }
 
 #endif
@@ -2970,7 +2973,7 @@ main(int argc, char *argv[])
       when 'C': load_config(optarg, false);
       when '':
         if (config_dir)
-          option_error(__("Duplicate option '%s'"), "configdir");
+          option_error(__("Duplicate option '%s'"), "configdir", 0);
         else {
           config_dir = strdup(optarg);
           string rc_file = asform("%s/config", config_dir);
@@ -3002,7 +3005,7 @@ main(int argc, char *argv[])
         else if (sscanf(optarg, "%i,%i%1s", &cfg.x, &cfg.y, (char[2]){}) == 2)
           ;
         else
-          option_error(__("Syntax error in position argument '%s'"), optarg);
+          option_error(__("Syntax error in position argument '%s'"), optarg, 0);
       when 's':
         if (strcmp(optarg, "maxwidth") == 0)
           maxwidth = true;
@@ -3013,7 +3016,7 @@ main(int argc, char *argv[])
         else if (sscanf(optarg, "%ux%u%1s", &cfg.cols, &cfg.rows, (char[2]){}) == 2)
           ;
         else
-          option_error(__("Syntax error in size argument '%s'"), optarg);
+          option_error(__("Syntax error in size argument '%s'"), optarg, 0);
       when 't': set_arg_option("Title", optarg);
       when 'T':
         set_arg_option("Title", optarg);
@@ -3041,9 +3044,11 @@ main(int argc, char *argv[])
       when '': support_wsl = true;
       when '': wsl_basepath = path_posix_to_win_w(optarg);
 #if CYGWIN_VERSION_API_MINOR >= 74
-      when '':
-        if (!select_WSL(optarg))
-          option_error(__("WSL distribution '%s' not found"), optarg ?: _("(Default)"));
+      when '': {
+        int err = select_WSL(optarg);
+        if (err)
+          option_error(__("WSL distribution '%s' not found"), optarg ?: _("(Default)"), err);
+      }
 #endif
       when '~':
         start_home = true;
@@ -3096,10 +3101,10 @@ main(int argc, char *argv[])
         return 0;
       }
       when '?':
-        option_error(__("Unknown option '%s'"), optopt ? shortopt : longopt);
+        option_error(__("Unknown option '%s'"), optopt ? shortopt : longopt, 0);
       when ':':
         option_error(__("Option '%s' requires an argument"),
-                     longopt[1] == '-' ? longopt : shortopt);
+                     longopt[1] == '-' ? longopt : shortopt, 0);
     }
   }
   copy_config("main after -o", &file_cfg, &cfg);
