@@ -165,6 +165,7 @@ typedef struct {
   wstring sixel_clip_char;
   // Legacy
   bool use_system_colours;
+  bool old_bold;
 } config;
 
 extern string config_dir;
