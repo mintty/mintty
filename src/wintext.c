@@ -13,6 +13,8 @@
 #include <usp10.h>  // Uniscribe
 
 
+#define dont_debug_bold
+
 enum {
   FONT_NORMAL    = 0x00,
   FONT_BOLD      = 0x01,
@@ -652,11 +654,20 @@ win_init_fontfamily(HDC dc, int findex)
     ff->fonts[FONT_UNDERLINE] = 0;
   }
 
-  if (ff->bold_mode == BOLD_FONT && fontsize[FONT_BOLD] != fontsize[FONT_NORMAL]) {
-    trace_font(("bold_mode %d\n", ff->bold_mode));
-    ff->bold_mode = BOLD_SHADOW;
-    DeleteObject(ff->fonts[FONT_BOLD]);
-    ff->fonts[FONT_BOLD] = 0;
+  if (ff->bold_mode == BOLD_FONT) {
+#ifdef debug_bold
+    printf("bold_font %d size %d bold %d %s %ls\n",
+           ff->bold_mode, fontsize[FONT_NORMAL], fontsize[FONT_BOLD],
+           fontsize[FONT_BOLD] != fontsize[FONT_NORMAL] ? "///" : "===",
+           ff->name);
+#endif
+    int diffsize = abs(fontsize[FONT_BOLD] - fontsize[FONT_NORMAL]);
+    if (diffsize * 99 > fontsize[FONT_NORMAL]) {
+      trace_font(("bold_mode %d\n", ff->bold_mode));
+      ff->bold_mode = BOLD_SHADOW;
+      DeleteObject(ff->fonts[FONT_BOLD]);
+      ff->fonts[FONT_BOLD] = 0;
+    }
   }
   trace_font(("bold_mode %d\n", ff->bold_mode));
   ff->fontflag[0] = ff->fontflag[1] = ff->fontflag[2] = 1;
@@ -2168,7 +2179,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
 #ifdef debug_bold
   if (xwidth > 1) {
     force_manual_underline = true;
-    ul = 0x80E02020;
+    ul = 0x802020E0;
   }
   else if (nfont & FONT_BOLD) {
     force_manual_underline = true;
