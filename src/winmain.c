@@ -23,6 +23,9 @@ char * mintty_debug;
 
 #include <locale.h>
 #include <getopt.h>
+#if CYGWIN_VERSION_API_MINOR < 74
+#define getopt_long_only getopt_long
+#endif
 #include <pwd.h>
 
 #include <mmsystem.h>  // PlaySound for MSys
@@ -2839,6 +2842,20 @@ static char help[] =
 
 static const char short_opts[] = "+:c:C:eh:i:l:o:p:s:t:T:B:R:uw:HVdD~";
 
+enum {
+  OPT_FG       = 0x80,
+  OPT_BG       = 0x81,
+  OPT_CR       = 0x82,
+  OPT_SELFG    = 0x83,
+  OPT_SELBG    = 0x84,
+  OPT_FONT     = 0x85,
+  OPT_FS       = 0x86,
+  OPT_GEOMETRY = 0x87,
+  OPT_EN       = 0x88,
+  OPT_LF       = 0x89,
+  OPT_SL       = 0x8A,
+};
+
 static const struct option
 opts[] = {
   {"config",     required_argument, 0, 'c'},
@@ -2875,6 +2892,19 @@ opts[] = {
   {"daemon",     no_argument,       0, 'D'},
   {"nopin",      no_argument,       0, ''},  // short option not enabled
   {"store-taskbar-properties", no_argument, 0, ''},  // no short option
+  // further xterm-style convenience options, all without short option:
+  {"fg",         required_argument, 0, OPT_FG},
+  {"bg",         required_argument, 0, OPT_BG},
+  {"cr",         required_argument, 0, OPT_CR},
+  {"selfg",      required_argument, 0, OPT_SELFG},
+  {"selbg",      required_argument, 0, OPT_SELBG},
+  {"fn",         required_argument, 0, OPT_FONT},
+  {"font",       required_argument, 0, OPT_FONT},
+  {"fs",         required_argument, 0, OPT_FS},
+  {"geometry",   required_argument, 0, OPT_GEOMETRY},
+  {"en",         required_argument, 0, OPT_EN},
+  {"lf",         required_argument, 0, OPT_LF},
+  {"sl",         required_argument, 0, OPT_SL},
   {0, 0, 0, 0}
 };
 
@@ -2964,7 +2994,9 @@ main(int argc, char *argv[])
 #endif
 
   for (;;) {
-    int opt = getopt_long(argc, argv, short_opts, opts, 0);
+    int opt = cfg.short_long_opts
+      ? getopt_long_only(argc, argv, short_opts, opts, 0)
+      : getopt_long(argc, argv, short_opts, opts, 0);
     if (opt == -1 || opt == 'e')
       break;
     char * longopt = argv[optind - 1];
@@ -2972,6 +3004,30 @@ main(int argc, char *argv[])
     switch (opt) {
       when 'c': load_config(optarg, 3);
       when 'C': load_config(optarg, false);
+      when '': support_wsl = true;
+      when '': wsl_basepath = path_posix_to_win_w(optarg);
+#if CYGWIN_VERSION_API_MINOR >= 74
+      when '': {
+        int err = select_WSL(optarg);
+        if (err)
+          option_error(__("WSL distribution '%s' not found"), optarg ?: _("(Default)"), err);
+      }
+#endif
+      when '~':
+        start_home = true;
+        chdir(home);
+      when '':
+        if (chdir(optarg) < 0) {
+          if (*optarg == '"' || *optarg == '\'')
+            if (optarg[strlen(optarg) - 1] == optarg[0]) {
+              // strip off embedding quotes as provided when started 
+              // from Windows context menu by registry entry
+              char * dir = strdup(&optarg[1]);
+              dir[strlen(dir) - 1] = '\0';
+              chdir(dir);
+              free(dir);
+            }
+        }
       when '':
         if (config_dir)
           option_error(__("Duplicate option '%s'"), "configdir", 0);
@@ -2981,6 +3037,11 @@ main(int argc, char *argv[])
           load_config(rc_file, 2);
           delete(rc_file);
         }
+      when '?':
+        option_error(__("Unknown option '%s'"), optopt ? shortopt : longopt, 0);
+      when ':':
+        option_error(__("Option '%s' requires an argument"),
+                     longopt[1] == '-' ? longopt : shortopt, 0);
       when 'h': set_arg_option("Hold", optarg);
       when 'i': set_arg_option("Icon", optarg);
       when 'l': // -l , --log
@@ -3042,30 +3103,6 @@ main(int argc, char *argv[])
       when 'w': set_arg_option("Window", optarg);
       when '': set_arg_option("Class", optarg);
       when '': cfg.bidi = 0;
-      when '': support_wsl = true;
-      when '': wsl_basepath = path_posix_to_win_w(optarg);
-#if CYGWIN_VERSION_API_MINOR >= 74
-      when '': {
-        int err = select_WSL(optarg);
-        if (err)
-          option_error(__("WSL distribution '%s' not found"), optarg ?: _("(Default)"), err);
-      }
-#endif
-      when '~':
-        start_home = true;
-        chdir(home);
-      when '':
-        if (chdir(optarg) < 0) {
-          if (*optarg == '"' || *optarg == '\'')
-            if (optarg[strlen(optarg) - 1] == optarg[0]) {
-              // strip off embedding quotes as provided when started 
-              // from Windows context menu by registry entry
-              char * dir = strdup(&optarg[1]);
-              dir[strlen(dir) - 1] = '\0';
-              chdir(dir);
-              free(dir);
-            }
-        }
       when 'd':
         cfg.daemonize = false;
       when 'D':
@@ -3101,11 +3138,66 @@ main(int argc, char *argv[])
         free(vertext);
         return 0;
       }
-      when '?':
-        option_error(__("Unknown option '%s'"), optopt ? shortopt : longopt, 0);
-      when ':':
-        option_error(__("Option '%s' requires an argument"),
-                     longopt[1] == '-' ? longopt : shortopt, 0);
+      when OPT_FG:
+        set_arg_option("ForegroundColour", optarg);
+      when OPT_BG:
+        set_arg_option("BackgroundColour", optarg);
+      when OPT_CR:
+        set_arg_option("CursorColour", optarg);
+      when OPT_FONT:
+        set_arg_option("Font", optarg);
+      when OPT_FS:
+        set_arg_option("FontSize", optarg);
+      when OPT_LF:
+        set_arg_option("Log", optarg);
+      when OPT_SELFG:
+        set_arg_option("HighlightForegroundColour", optarg);
+      when OPT_SELBG:
+        set_arg_option("HighlightBackgroundColour", optarg);
+      when OPT_SL:
+        set_arg_option("ScrollbackLines", optarg);
+      when OPT_EN: {
+#if HAS_LOCALES
+        char * loc = setlocale(LC_CTYPE, 0);
+        if (loc) {
+          loc = strdup(loc);
+          char * dot = strchr(loc, '.');
+          if (dot)
+            *dot = 0;
+          set_arg_option("Locale", loc);
+          free(loc);
+        }
+        else
+          set_arg_option("Locale", "C");
+#else
+        set_arg_option("Locale", "C");
+#endif
+        set_arg_option("Charset", optarg);
+      }
+      when OPT_GEOMETRY: {  // geometry
+        int n;
+        int ok = false;
+        if (sscanf(optarg, "%ux%u%n", &cfg.cols, &cfg.rows, &n) == 2) {
+          char * oa = optarg + n;
+          char pmx[2];
+          char pmy[2];
+          char dum[22];
+          if (sscanf(oa, "%1[-+]%21[0-9]%1[-+]%21[0-9]%n", pmx, dum, pmy, dum, &n) == 4)
+            if (sscanf(oa, "%1[-+]%u%1[-+]%u%n", pmx, &cfg.x, pmy, &cfg.y, &n) == 4) {
+              if (*pmx == '-')
+                cfg.x = - cfg.x;
+              if (*pmy == '-')
+                cfg.y = - cfg.y;
+              oa += n;
+            }
+          if (sscanf(oa, "@%i%n", &monitor, &n) == 1)
+            oa += n;
+          if (!*oa)
+            ok = true;
+        }
+        if (!ok)
+          option_error(__("Syntax error in geometry argument '%s'"), optarg, 0);
+      }
     }
   }
   copy_config("main after -o", &file_cfg, &cfg);

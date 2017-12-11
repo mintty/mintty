@@ -40,6 +40,8 @@ as a login shell.
 
 The standard GNU option formats are accepted, with single dashes
 introducing short options and double dashes introducing long options.
+.br
+Note that setting \fBShortLongOpts\fP enables single-dash long options.
 
 .TP
 \fB-c\fP, \fB--config\fP \fIFILENAME\fP
@@ -92,7 +94,7 @@ or to stay open only if the child process terminates with an error, i.e. with
 a non-zero exit status or due to a signal indicating a runtime error.
 
 .TP
-\fB-i\fP, \fB--icon\fP \fIFILE\fP[\fB,\fIINDEX\fR]
+\fB-i\fP, \fB--icon\fP \fIFILE\fP[\fB,\fIINDEX\fP]
 Load the window icon from an executable, DLL, or icon file.  The optional
 comma-separated index can be used to select a particular icon in a file with
 multiple icons.
@@ -130,7 +132,7 @@ Override the named config file option with the given value, e.g.
 \fC-o ScrollbackLines=1000\fP.
 
 .TP
-\fB-p\fP, \fB--position\fP \fIX\fB,\fIY\fR
+\fB-p\fP, \fB--position\fP \fIX\fB,\fIY\fP
 Open the window with its top left corner at the specified coordinates.
 Instead of coordinates, "centre" or "center" can be specified to place 
 the window in the screen centre, and "right" or "bottom" can be specified 
@@ -154,9 +156,9 @@ address space as provided by Windows.
 see the description of Alt+F2.
 
 .TP
-\fB-s\fP, \fB--size\fP \fICOLS\fB,\fIROWS\fR
+\fB-s\fP, \fB--size\fP \fICOLS\fB,\fIROWS\fP
 Set the default size of the window in character columns and rows.
-(The xterm-like syntax \fICOLS\fBx\fIROWS\fR is accepted too.)
+(The xterm-like syntax \fICOLS\fBx\fIROWS\fP is accepted too.)
 Instead of coordinates, "maxwidth" or "maxheight" can be specified;
 this can be combined with another parameter \fB-s\fP for the other dimension.
 The dimension for which "max" is applied is ignored in further \fB-s\fP or 
@@ -287,6 +289,54 @@ Display a brief help message and exit.
 .TP
 \fB-V\fP, \fB--version\fP
 Print version information and exit.
+
+.TP
+A number of xterm-style convenience options are also available:
+
+.TP
+\fB--fg\fP
+Sets ForegroundColour.
+
+.TP
+\fB--bg\fP
+Sets BackgroundColour.
+
+.TP
+\fB--cr\fP
+Sets CursorColour.
+
+.TP
+\fB--selfg\fP
+Sets HighlightForegroundColour.
+
+.TP
+\fB--selbg\fP
+Sets HighlightBackgroundColour.
+
+.TP
+\fB--fn\fP, \fB--font\fP
+Sets Font.
+
+.TP
+\fB--fs\fP
+Sets FontSize.
+
+.TP
+\fB--geometry\fP \fICOLS\fBx\fIROWS\fP[[-+]\fIX\fB[-+]\fIY\fB][\fI@\fBMONITOR]
+Sets size and position, extending xterm syntax by an optional monitor number.
+
+.TP
+\fB--en\fP
+Sets Charset within the current locale.
+
+.TP
+\fB--lf\fP
+Sets Log, the log file name.
+Use \fB-l\fP to both set the log file name and enable loggin.
+
+.TP
+\fB--sl\fP
+Sets ScrollbackLines.
 
 .SH USAGE
 
@@ -1502,7 +1552,7 @@ status or it was terminated by a signal indicating a runtime error.
 
 .TP
 \fBWindow icon\fP (Icon=)
-The \fBIcon\fP setting with format \fIFILE\fP[\fB,\fIINDEX\fR] allows to load
+The \fBIcon\fP setting with format \fIFILE\fP[\fB,\fIINDEX\fP] allows to load
 the window icon from an executable, DLL, or icon file.
 The optional comma-separated index can be used to select a particular icon in
 a file with multiple icons.
@@ -1579,6 +1629,11 @@ distinguish different mintty windows.  The name defaults to "mintty".
 The following settings appear neither in the options dialog nor as command line
 options, which means they can only be set in config files or using the
 \fB--option\fP or \fB-o\fP command line option.
+
+.TP
+\fBSingle-dash long options\fP (ShortLongOpts=false)
+This settings enables names options ("long options") on the command line 
+to be given with only one dash rather than a double dash.
 
 .TP
 \fBCharacter width handling\fP (Charwidth=locale)

@@ -163,6 +163,7 @@ typedef struct {
   colour ime_cursor_colour;
   colour ansi_colours[16];
   wstring sixel_clip_char;
+  bool short_long_opts;
   // Legacy
   bool use_system_colours;
   bool old_bold;
