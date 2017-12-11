@@ -13,7 +13,7 @@
 #include <usp10.h>  // Uniscribe
 
 
-#define dont_debug_bold
+#define dont_debug_bold 1
 
 enum {
   FONT_NORMAL    = 0x00,
@@ -228,9 +228,9 @@ get_font_quality(void)
 
 #define dont_debug_create_font
 
-#define dont_debug_fonts
+#define dont_debug_fonts 1
 
-#ifdef debug_fonts
+#if defined(debug_fonts) && debug_fonts > 0
 #define trace_font(params)	printf params
 #else
 #define trace_font(params)	
@@ -347,8 +347,9 @@ adjust_font_weights(struct fontfam * ff)
     (void)fontType;
     (void)lParam;
 
-    //trace_font(("%ls %ldx%ld (%ldx%ld) %ld it %d cs %d %s\n", lfp->lfFaceName, (long int)lfp->lfWidth, (long int)lfp->lfHeight, (long int)tmp->tmAveCharWidth, (long int)tmp->tmHeight, (long int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
-    trace_font(("%ls %ldx%ld %ld it %d cs %d %s\n", lfp->lfFaceName, (long int)lfp->lfWidth, (long int)lfp->lfHeight, (long int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
+#if defined(debug_fonts) && debug_fonts > 1
+    trace_font(("%ls %dx%d %d it %d cs %d %s\n", lfp->lfFaceName, (int)lfp->lfWidth, (int)lfp->lfHeight, (int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
+#endif
 
     font_found = true;
     if (lfp->lfCharSet == ANSI_CHARSET)
@@ -483,7 +484,7 @@ win_init_fontfamily(HDC dc, int findex)
 
   LOGFONT logfont;
   GetObject(ff->fonts[FONT_NORMAL], sizeof(LOGFONT), &logfont);
-  trace_font(("created font %s %ld it %d cs %d\n", logfont.lfFaceName, (long int)logfont.lfWeight, logfont.lfItalic, logfont.lfCharSet));
+  trace_font(("created font %s %d it %d cs %d\n", logfont.lfFaceName, (int)logfont.lfWeight, logfont.lfItalic, logfont.lfCharSet));
   SelectObject(dc, ff->fonts[FONT_NORMAL]);
   GetTextMetrics(dc, &tm);
   if (!tm.tmHeight) {
@@ -507,14 +508,17 @@ win_init_fontfamily(HDC dc, int findex)
 
   if (!findex) {
     ff->row_spacing = row_padding(tm.tmInternalLeading, tm.tmExternalLeading);
-    trace_font(("h %ld asc %ld dsc %ld ild %ld eld %ld %ls\n", (long int)tm.tmHeight, (long int)tm.tmAscent, (long int)tm.tmDescent, (long int)tm.tmInternalLeading, (long int)tm.tmExternalLeading, ff->name));
+    trace_font(("00 height %d avwidth %d asc %d dsc %d intlead %d extlead %d %ls\n", 
+               (int)tm.tmHeight, (int)tm.tmAveCharWidth, (int)tm.tmAscent, (int)tm.tmDescent, 
+               (int)tm.tmInternalLeading, (int)tm.tmExternalLeading, 
+               ff->name));
     ff->row_spacing += cfg.row_spacing;
     if (ff->row_spacing < -tm.tmDescent)
       ff->row_spacing = -tm.tmDescent;
-    trace_font(("row spacing int %ld ext %ld -> %+d; add %+d -> %+d; desc %ld -> %+d %ls\n", 
-        (long int)tm.tmInternalLeading, (long int)tm.tmExternalLeading, row_padding(tm.tmInternalLeading, tm.tmExternalLeading),
+    trace_font(("row spacing int %d ext %d -> %+d; add %+d -> %+d; desc %d -> %+d %ls\n", 
+        (int)tm.tmInternalLeading, (int)tm.tmExternalLeading, row_padding(tm.tmInternalLeading, tm.tmExternalLeading),
         cfg.row_spacing, row_padding(tm.tmInternalLeading, tm.tmExternalLeading) + cfg.row_spacing,
-        (long int)tm.tmDescent, ff->row_spacing, ff->name));
+        (int)tm.tmDescent, ff->row_spacing, ff->name));
     ff->col_spacing = cfg.col_spacing;
 
     cell_height = tm.tmHeight + ff->row_spacing;
@@ -636,10 +640,25 @@ win_init_fontfamily(HDC dc, int findex)
   if (ff->descent >= cell_height)
     ff->descent = cell_height - 1;
 
+#ifdef handle_baseline_leap
+  int base_ascent = tm.tmAscent;
+#endif
   for (uint i = 0; i < lengthof(fontsize); i++) { // could skip FONT_ITALIC here
     if (ff->fonts[i]) {
-      if (SelectObject(dc, ff->fonts[i]) && GetTextMetrics(dc, &tm))
+      if (SelectObject(dc, ff->fonts[i]) && GetTextMetrics(dc, &tm)) {
         fontsize[i] = tm.tmAveCharWidth + 256 * tm.tmHeight;
+        trace_font(("%02X height %d avwidth %d asc %d dsc %d intlead %d extlead %d %ls\n", 
+               i, (int)tm.tmHeight, (int)tm.tmAveCharWidth, (int)tm.tmAscent, (int)tm.tmDescent, 
+               (int)tm.tmInternalLeading, (int)tm.tmExternalLeading, 
+               ff->name));
+#ifdef handle_baseline_leap
+        if (i == FONT_BOLD && tm.tmAscent < base_ascent) {
+          // for Courier New, this correlates with a significant visual leap 
+          // of the bold font from the baseline of the normal font,
+          // but not for other fonts; so let's do nothing
+        }
+#endif
+      }
       else
         fontsize[i] = -i;
     }
@@ -655,14 +674,16 @@ win_init_fontfamily(HDC dc, int findex)
   }
 
   if (ff->bold_mode == BOLD_FONT) {
-#ifdef debug_bold
-    printf("bold_font %d size %d bold %d %s %ls\n",
-           ff->bold_mode, fontsize[FONT_NORMAL], fontsize[FONT_BOLD],
-           fontsize[FONT_BOLD] != fontsize[FONT_NORMAL] ? "///" : "===",
-           ff->name);
-#endif
     int diffsize = abs(fontsize[FONT_BOLD] - fontsize[FONT_NORMAL]);
-    if (diffsize * 99 > fontsize[FONT_NORMAL]) {
+#if defined(debug_create_font) || defined(debug_bold)
+    if (*ff->name)
+      printf("bold_mode %d font_size %d size %d bold %d diff %d %s %ls\n",
+             ff->bold_mode, font_size,
+             fontsize[FONT_NORMAL], fontsize[FONT_BOLD], diffsize,
+             fontsize[FONT_BOLD] != fontsize[FONT_NORMAL] ? "///" : "===",
+             ff->name);
+#endif
+    if (diffsize * 16 > fontsize[FONT_NORMAL]) {
       trace_font(("bold_mode %d\n", ff->bold_mode));
       ff->bold_mode = BOLD_SHADOW;
       DeleteObject(ff->fonts[FONT_BOLD]);
@@ -703,8 +724,9 @@ findFraktur(wstring * fnp)
     (void)fontType;
     (void)lParam;
 
-    //trace_font(("%ls %ldx%ld (%ldx%ld) %ld it %d cs %d %s\n", lfp->lfFaceName, (long int)lfp->lfWidth, (long int)lfp->lfHeight, (long int)tmp->tmAveCharWidth, (long int)tmp->tmHeight, (long int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
-    trace_font(("%ls %ldx%ld %ld it %d cs %d %s\n", lfp->lfFaceName, (long int)lfp->lfWidth, (long int)lfp->lfHeight, (long int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
+#if defined(debug_fonts) && debug_fonts > 1
+    trace_font(("%ls %dx%d %d it %d cs %d %s\n", lfp->lfFaceName, (int)lfp->lfWidth, (int)lfp->lfHeight, (int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
+#endif
     if ((lfp->lfPitchAndFamily & 3) == FIXED_PITCH
      && !lfp->lfCharSet
      && lfp->lfFaceName[0] != '@'
@@ -724,7 +746,6 @@ findFraktur(wstring * fnp)
 
   HDC dc = GetDC(0);
   EnumFontFamiliesExW(dc, 0, enum_fonts, 0, 0);
-  trace_font(("font width (%d)%d(%d)/(%d)%d(%d)", fw_norm_0, ff->fw_norm, fw_norm_1, fw_bold_0, ff->fw_bold, fw_bold_1));
   ReleaseDC(0, dc);
 }
 
@@ -1741,10 +1762,6 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   if (attr.attr & ATTR_NARROW)
     nfont |= FONT_NARROW;
 
-#ifdef debug_bold
-  wchar t[len + 1]; wcsncpy(t, text, len); t[len] = 0;
-  printf("bold_mode %d attr_bold %d <%ls>\n", ff->bold_mode, !!(attr.attr & ATTR_BOLD), t);
-#endif
   if (ff->bold_mode == BOLD_FONT && (attr.attr & ATTR_BOLD))
     nfont |= FONT_BOLD;
   if (ff->und_mode == UND_FONT && (attr.attr & ATTR_UNDER))
@@ -1770,6 +1787,11 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   another_font(ff, nfont);
   if (!ff->fonts[nfont])
     nfont = FONT_NORMAL;
+
+#if defined(debug_bold) && debug_bold > 1
+  wchar t[len + 1]; wcsncpy(t, text, len); t[len] = 0;
+  printf("font %02X@%d/%d bold_mode %d attr_bold %d fg %06X <%ls>\n", nfont, font_size, font_height, ff->bold_mode, !!(attr.attr & ATTR_BOLD), fg, t);
+#endif
 
  /* With selected font, begin preparing the rendering */
   SelectObject(dc, ff->fonts[nfont]);
