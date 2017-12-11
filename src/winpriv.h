@@ -21,7 +21,7 @@ extern void clear_tabs(void);
 extern void add_tab(uint tabi, HWND wndi);
 
 extern COLORREF colours[COLOUR_NUM];
-extern colour brighten(colour c, colour against);
+extern colour brighten(colour c, colour against, bool monotone);
 
 extern LOGFONT lfont;
 

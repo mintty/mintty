@@ -1162,7 +1162,7 @@ term_paint(void)
           static uint mindist = 22222;
           bool too_close = colour_dist(fg, tattr.truebg) < mindist;
           if (too_close)
-            fg = brighten(fg, tattr.truebg);
+            fg = brighten(fg, tattr.truebg, false);
           tattr.truefg = fg;
           tattr.attr = (tattr.attr & ~ATTR_FGMASK) | (TRUE_COLOUR << ATTR_FGSHIFT);
         }

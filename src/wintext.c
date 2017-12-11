@@ -162,7 +162,7 @@ colour_dist(colour a, colour b)
 #define dont_debug_brighten
 
 colour
-brighten(colour c, colour against)
+brighten(colour c, colour against, bool monotone)
 {
   uint r = red(c), g = green(c), b = blue(c);
   // "brighten" away from the background:
@@ -192,6 +192,10 @@ brighten(colour c, colour against)
     printf("darker %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
 #endif
     if (colour_dist(bright, c) < thrsh || colour_dist(bright, against) < thrsh) {
+      if (monotone) {
+        uint r = red(bright), g = green(bright), b = blue(bright);
+        return make_colour(r - (r >> 2), g - (g >> 2), b - (b >> 2));
+      }
       bright = _brighter();
 #ifdef debug_brighten
       printf("   fix %06X -> %06X dist %d/%d\n", c, bright, colour_dist(bright, c), colour_dist(bright, against));
@@ -204,6 +208,10 @@ brighten(colour c, colour against)
     printf("lightr %06X -> %06X dist %d\n", c, bright, colour_dist(c, bright));
 #endif
     if (colour_dist(bright, c) < thrsh || colour_dist(bright, against) < thrsh) {
+      if (monotone) {
+        uint r = red(bright), g = green(bright), b = blue(bright);
+        return make_colour(r + ((256 - r) >> 2), g + ((256 - g) >> 2), b + ((256 - b) >> 2));
+      }
       bright = _darker();
 #ifdef debug_brighten
       printf("   fix %06X -> %06X dist %d/%d\n", c, bright, colour_dist(bright, c), colour_dist(bright, against));
@@ -1511,7 +1519,7 @@ old_apply_attr_colour(cattr a, attr_colour_mode mode)
     fg = bg;
 
   if (do_vbell_bg)  // FIXME: we should have TATTR_VBELL. selection should too
-    bg = brighten(bg, fg);
+    bg = brighten(bg, fg, false);
 
   // ACM_TERM does also search and cursor colours. for now we don't handle those
 
@@ -1660,7 +1668,7 @@ apply_attr_colour(cattr a, attr_colour_mode mode)
     fg = bg;
 
   if (do_vbell_bg)  // FIXME: we should have TATTR_VBELL. selection should too
-    bg = brighten(bg, fg);
+    bg = brighten(bg, fg, false);
 
   // ACM_TERM does also search and cursor colours. for now we don't handle those
 
@@ -1728,8 +1736,8 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
 
     if (too_close) {
       //cursor_colour = fg;
-      colour ccfg = brighten(cursor_colour, fg);
-      colour ccbg = brighten(cursor_colour, bg);
+      colour ccfg = brighten(cursor_colour, fg, false);
+      colour ccbg = brighten(cursor_colour, bg, false);
       if (colour_dist(ccfg, bg) < mindist
           && colour_dist(ccfg, bg) < colour_dist(ccbg, bg))
         cursor_colour = ccbg;
@@ -2602,7 +2610,7 @@ win_set_colour(colour_i i, colour c)
       if (cfg.bold_colour != (colour)-1)
         colours[BOLD_FG_COLOUR_I] = cfg.bold_colour;
       else
-        colours[BOLD_FG_COLOUR_I] = brighten(colours[FG_COLOUR_I], colours[BG_COLOUR_I]);
+        colours[BOLD_FG_COLOUR_I] = brighten(colours[FG_COLOUR_I], colours[BG_COLOUR_I], true);
     }
     else if (i == FG_COLOUR_I)
       colours[i] = cfg.fg_colour;
@@ -2634,9 +2642,9 @@ win_set_colour(colour_i i, colour c)
         if (cfg.bold_colour != (colour)-1)
           colours[BOLD_FG_COLOUR_I] = cfg.bold_colour;
         else {
-          colours[BOLD_FG_COLOUR_I] = brighten(c, colours[BG_COLOUR_I]);
+          colours[BOLD_FG_COLOUR_I] = brighten(c, colours[BG_COLOUR_I], true);
           // renew this too as brighten() may refer to contrast colour:
-          colours[BOLD_BG_COLOUR_I] = brighten(colours[BG_COLOUR_I], colours[FG_COLOUR_I]);
+          colours[BOLD_BG_COLOUR_I] = brighten(colours[BG_COLOUR_I], colours[FG_COLOUR_I], true);
         }
       }
     when BOLD_FG_COLOUR_I:
@@ -2646,9 +2654,9 @@ win_set_colour(colour_i i, colour c)
         if (cfg.bold_colour != (colour)-1)
           colours[BOLD_FG_COLOUR_I] = cfg.bold_colour;
         else {
-          colours[BOLD_BG_COLOUR_I] = brighten(c, colours[FG_COLOUR_I]);
+          colours[BOLD_BG_COLOUR_I] = brighten(c, colours[FG_COLOUR_I], true);
           // renew this too as brighten() may refer to contrast colour:
-          colours[BOLD_FG_COLOUR_I] = brighten(colours[FG_COLOUR_I], colours[BG_COLOUR_I]);
+          colours[BOLD_FG_COLOUR_I] = brighten(colours[FG_COLOUR_I], colours[BG_COLOUR_I], true);
         }
       }
     when CURSOR_COLOUR_I: {
@@ -2713,4 +2721,12 @@ win_reset_colours(void)
   win_set_colour(SEL_TEXT_COLOUR_I, cfg.sel_fg_colour);
   // Bold colour
   win_set_colour(BOLD_COLOUR_I, (colour)-1);
+#if defined(debug_bold) || defined(debug_brighten)
+  string ci[] = {"FG_COLOUR_I", "BOLD_FG_COLOUR_I", "BG_COLOUR_I", "BOLD_BG_COLOUR_I", "CURSOR_TEXT_COLOUR_I", "CURSOR_COLOUR_I", "IME_CURSOR_COLOUR_I", "SEL_COLOUR_I", "SEL_TEXT_COLOUR_I", "BOLD_COLOUR_I"};
+  for (int i = FG_COLOUR_I; i < COLOUR_NUM; i++)
+    if (colours[i] == (colour)-1)
+      printf("colour %d ------ [%s]\n", i, ci[i - FG_COLOUR_I]);
+    else
+      printf("colour %d %06X [%s]\n", i, (int)colours[i], ci[i - FG_COLOUR_I]);
+#endif
 }
