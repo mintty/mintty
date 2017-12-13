@@ -3295,6 +3295,9 @@ main(int argc, char *argv[])
     while (*new_argv)
       printf("<%s>\n", *new_argv++);
 #endif
+    // prevent HOME from being propagated back to Windows applications 
+    // if called from WSL (mintty/wsltty#76)
+    unsetenv("HOME");
   }
   else if (*argv && (argv[1] || strcmp(*argv, "-")))
     cmd = *argv;
