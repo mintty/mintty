@@ -459,7 +459,7 @@ win_init_fontfamily(HDC dc, int findex)
       DeleteObject(ff->fonts[i]);
       ff->fonts[i] = 0;
     }
-    ff->fontflag[i] = 0;
+    ff->fontflag[i] = false;
   }
 
   // if initialized as BOLD_SHADOW then real bold is never attempted
@@ -699,7 +699,9 @@ win_init_fontfamily(HDC dc, int findex)
     }
   }
   trace_font(("bold_mode %d\n", ff->bold_mode));
-  ff->fontflag[0] = ff->fontflag[1] = ff->fontflag[2] = 1;
+  ff->fontflag[FONT_NORMAL] = true;
+  ff->fontflag[FONT_BOLD] = true;
+  ff->fontflag[FONT_UNDERLINE] = true;
 }
 
 static wstring
@@ -1221,7 +1223,7 @@ another_font(struct fontfam * ff, int fontno)
                 DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                 get_font_quality(), FIXED_PITCH | FF_DONTCARE, ff->name);
 
-  ff->fontflag[fontno] = 1;
+  ff->fontflag[fontno] = true;
 }
 
 void
@@ -1798,7 +1800,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
 
 #if defined(debug_bold) && debug_bold > 1
   wchar t[len + 1]; wcsncpy(t, text, len); t[len] = 0;
-  printf("font %02X@%d/%d bold_mode %d attr_bold %d fg %06X <%ls>\n", nfont, font_size, font_height, ff->bold_mode, !!(attr.attr & ATTR_BOLD), fg, t);
+  printf("font %02X (%dpt) bold_mode %d attr_bold %d fg %06X <%ls>\n", nfont, font_size, ff->bold_mode, !!(attr.attr & ATTR_BOLD), fg, t);
 #endif
 
  /* With selected font, begin preparing the rendering */
