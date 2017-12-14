@@ -3175,27 +3175,33 @@ main(int argc, char *argv[])
         set_arg_option("Charset", optarg);
       }
       when OPT_GEOMETRY: {  // geometry
+        char * oa = optarg;
         int n;
-        int ok = false;
-        if (sscanf(optarg, "%ux%u%n", &cfg.cols, &cfg.rows, &n) == 2) {
-          char * oa = optarg + n;
-          char pmx[2];
-          char pmy[2];
-          char dum[22];
-          if (sscanf(oa, "%1[-+]%21[0-9]%1[-+]%21[0-9]%n", pmx, dum, pmy, dum, &n) == 4)
-            if (sscanf(oa, "%1[-+]%u%1[-+]%u%n", pmx, &cfg.x, pmy, &cfg.y, &n) == 4) {
-              if (*pmx == '-')
-                cfg.x = - cfg.x;
-              if (*pmy == '-')
-                cfg.y = - cfg.y;
-              oa += n;
-            }
-          if (sscanf(oa, "@%i%n", &monitor, &n) == 1)
+
+        if (sscanf(oa, "%ux%u", &n, &n) == 2)
+          if (sscanf(oa, "%ux%u%n", &cfg.cols, &cfg.rows, &n) == 2)
             oa += n;
-          if (!*oa)
-            ok = true;
-        }
-        if (!ok)
+
+        char pmx[2];
+        char pmy[2];
+        char dum[22];
+        if (sscanf(oa, "%1[-+]%21[0-9]%1[-+]%21[0-9]", pmx, dum, pmy, dum) == 4)
+          if (sscanf(oa, "%1[-+]%u%1[-+]%u%n", pmx, &cfg.x, pmy, &cfg.y, &n) == 4) {
+            if (*pmx == '-') {
+              cfg.x = - cfg.x;
+              right = true;
+            }
+            if (*pmy == '-') {
+              cfg.y = - cfg.y;
+              bottom = true;
+            }
+            oa += n;
+          }
+
+        if (sscanf(oa, "@%i%n", &monitor, &n) == 1)
+          oa += n;
+
+        if (*oa)
           option_error(__("Syntax error in geometry argument '%s'"), optarg, 0);
       }
     }
