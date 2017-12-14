@@ -1696,7 +1696,9 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   bool clearpad = lattr & LATTR_CLEARPAD;
   trace_line("win_text:", text, len);
 
+  bool ldisp2 = !!(lattr & LATTR_DISP2);
   lattr &= LATTR_MODE;
+
   int char_width = cell_width * (1 + (lattr != LATTR_NORM));
 
  /* Only want the left half of double width lines */
@@ -1931,6 +1933,95 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   if (line_width < 1)
     line_width = 1;
 
+ /* Determine shadow/overstrike bold or double-width/height width */
+  int xwidth = 1;
+  if (ff->bold_mode == BOLD_SHADOW && (attr.attr & ATTR_BOLD)) {
+    // This could be scaled with font size, but at risk of clipping
+    xwidth = 2;
+    if (lattr != LATTR_NORM) {
+      xwidth = 3; // 4?
+    }
+  }
+
+ /* Manual underline */
+  colour ul = fg;
+  int uloff = ff->descent + (cell_height - ff->descent + 1) / 2;
+  if (lattr == LATTR_BOT)
+    uloff = ff->descent + (cell_height - ff->descent + 1) / 2;
+  uloff += line_width / 2;
+  if (uloff >= cell_height)
+    uloff = cell_height - 1;
+
+  if (cfg.underl_colour != (colour)-1)
+    ul = cfg.underl_colour;
+#ifdef debug_underline
+  if (cfg.underl_colour == (colour)-1)
+    ul = 0x802020E0;
+  if (lattr == LATTR_TOP)
+    ul = 0x80E0E020;
+  if (lattr == LATTR_BOT)
+    ul = 0x80E02020;
+#endif
+#ifdef debug_bold
+  if (xwidth > 1) {
+    force_manual_underline = true;
+    ul = 0x802020E0;
+  }
+  else if (nfont & FONT_BOLD) {
+    force_manual_underline = true;
+    ul = 0x8020E020;
+  }
+#endif
+
+  bool underlaid = false;
+  void clear_run() {
+    if (!underlaid) {
+      ExtTextOutW(dc, xt, yt, eto_options | ETO_OPAQUE, &box, W(" "), 1, dxs);
+      SetTextColor(dc, fg);
+
+      underlaid = true;
+    }
+  }
+
+ /* Underline */
+  if (!ldisp2 && lattr != LATTR_TOP &&
+      (force_manual_underline ||
+       (ff->und_mode == UND_LINE && (attr.attr & ATTR_UNDER)) ||
+       (attr.attr & ATTR_DOUBLYUND))) {
+    clear_run();
+
+    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, ul));
+    int gapfrom = 0, gapdone = 0;
+    if (attr.attr & ATTR_DOUBLYUND) {
+      if (line_width < 3)
+        line_width = 3;
+      int gap = line_width / 3;
+      gapfrom = (line_width - gap) / 2;
+      gapdone = line_width - gapfrom;
+    }
+    for (int l = 0; l < line_width; l++) {
+      if (l >= gapdone || l < gapfrom) {
+        MoveToEx(dc, x, y + uloff - l, null);
+        LineTo(dc, x + len * char_width, y + uloff - l);
+      }
+    }
+    oldpen = SelectObject(dc, oldpen);
+    DeleteObject(oldpen);
+  }
+
+ /* Overline */
+  if (!ldisp2 && lattr != LATTR_BOT && attr.attr & ATTR_OVERL) {
+    clear_run();
+
+    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, ul));
+    for (int l = 0; l < line_width; l++) {
+      MoveToEx(dc, x, y + l, null);
+      LineTo(dc, x + len * char_width, y + l);
+    }
+    oldpen = SelectObject(dc, oldpen);
+    DeleteObject(oldpen);
+  }
+
  /* DEC Tech adjustments */
   if (graph & 0x80) {  // DEC Technical rendering to be fixed
     if ((graph & ~1) == 0x88)  // left square bracket corners
@@ -1945,22 +2036,15 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
         text[i] = 0x2502;
   }
 
- /* Determine shadow/overstrike bold or double-width/height width */
-  int xwidth = 1;
-  if (ff->bold_mode == BOLD_SHADOW && (attr.attr & ATTR_BOLD)) {
-    // This could be scaled with font size, but at risk of clipping
-    xwidth = 2;
-    if (lattr != LATTR_NORM) {
-      xwidth = 3; // 4?
-    }
-  }
-
  /* Finally, draw the text */
-  SetBkMode(dc, OPAQUE);
-  uint overwropt = ETO_OPAQUE;
-  if (attr.attr & ATTR_ITALIC) {
+  uint overwropt;
+  if (ldisp2 || underlaid) {
     SetBkMode(dc, TRANSPARENT);
     overwropt = 0;
+  }
+  else {
+    SetBkMode(dc, OPAQUE);
+    overwropt = ETO_OPAQUE;
   }
   trace_line(" TextOut:", text, len);
   // The combining characters separate rendering trick *alone* 
@@ -2023,8 +2107,8 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     }
   text_out_end();
 
+ /* Manual drawing of certain graphics */
   // line_width already set above for DEC Tech adjustments
-
 #define dont_debug_vt100_line_drawing_chars
 #ifdef debug_vt100_line_drawing_chars
   fg = 0x00FF0000;
@@ -2189,60 +2273,6 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     DeleteObject(oldpen);
   }
 
- /* Manual underline */
-  colour ul = fg;
-  int uloff = ff->descent + (cell_height - ff->descent + 1) / 2;
-  if (lattr == LATTR_BOT)
-    uloff = ff->descent + (cell_height - ff->descent + 1) / 2;
-  uloff += line_width / 2;
-  if (uloff >= cell_height)
-    uloff = cell_height - 1;
-
-  if (cfg.underl_colour != (colour)-1)
-    ul = cfg.underl_colour;
-#ifdef debug_underline
-  if (cfg.underl_colour == (colour)-1)
-    ul = 0x802020E0;
-  if (lattr == LATTR_TOP)
-    ul = 0x80E0E020;
-  if (lattr == LATTR_BOT)
-    ul = 0x80E02020;
-#endif
-#ifdef debug_bold
-  if (xwidth > 1) {
-    force_manual_underline = true;
-    ul = 0x802020E0;
-  }
-  else if (nfont & FONT_BOLD) {
-    force_manual_underline = true;
-    ul = 0x8020E020;
-  }
-#endif
-
- /* Underline */
-  if (lattr != LATTR_TOP &&
-      (force_manual_underline ||
-       (ff->und_mode == UND_LINE && (attr.attr & ATTR_UNDER)) ||
-       (attr.attr & ATTR_DOUBLYUND))) {
-    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, ul));
-    int gapfrom = 0, gapdone = 0;
-    if (attr.attr & ATTR_DOUBLYUND) {
-      if (line_width < 3)
-        line_width = 3;
-      int gap = line_width / 3;
-      gapfrom = (line_width - gap) / 2;
-      gapdone = line_width - gapfrom;
-    }
-    for (int l = 0; l < line_width; l++) {
-      if (l >= gapdone || l < gapfrom) {
-        MoveToEx(dc, x, y + uloff - l, null);
-        LineTo(dc, x + len * char_width, y + uloff - l);
-      }
-    }
-    oldpen = SelectObject(dc, oldpen);
-    DeleteObject(oldpen);
-  }
-
  /* Strikeout */
   if (attr.attr & ATTR_STRIKEOUT
       && (cfg.underl_manual || cfg.underl_colour != (colour)-1)) {
@@ -2251,17 +2281,6 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     for (int l = 0; l < line_width; l++) {
       MoveToEx(dc, x, y + soff + l, null);
       LineTo(dc, x + len * char_width, y + soff + l);
-    }
-    oldpen = SelectObject(dc, oldpen);
-    DeleteObject(oldpen);
-  }
-
- /* Overline */
-  if (lattr != LATTR_BOT && attr.attr & ATTR_OVERL) {
-    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, ul));
-    for (int l = 0; l < line_width; l++) {
-      MoveToEx(dc, x, y + l, null);
-      LineTo(dc, x + len * char_width, y + l);
     }
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
@@ -2318,6 +2337,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     DeleteObject(SelectObject(dc, oldpen));
   }
 }
+
 
 /* Check availability of characters in the current font.
  * Zeroes each of the characters in the input array that isn't available.

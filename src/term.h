@@ -171,7 +171,10 @@ enum {
   LATTR_CLEARPAD  = 0x0040u, /* flag to clear padding from overhang */
   LATTR_MARKED    = 0x0100u, /* scroll marker */
   LATTR_UNMARKED  = 0x0200u, /* secondary scroll marker */
-  LATTR_NOBIDI    = 0x1000u, /* disable bidi on this line */
+  LATTR_NOBIDI    = 0x4000u, /* disable bidi on this line */
+  // overlay line display (italic right-to-left overhang handling):
+  LATTR_DISP1     = 0x1000u,
+  LATTR_DISP2     = 0x2000u,
 };
 
 enum {

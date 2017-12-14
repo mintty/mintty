@@ -1604,9 +1604,9 @@ term_paint(void)
         bgspaces = icp->len;
       }
       // background: non-italic
-      win_text(icp->x, i, bgspace, icp->len, attr, icp->textattr, line->lattr, icp->has_rtl);
+      win_text(icp->x, i, bgspace, icp->len, attr, icp->textattr, line->lattr | LATTR_DISP1, icp->has_rtl);
       // foreground: transparent and with extended clipping box
-      win_text(icp->x, i, icp->text, icp->len, icp->attr, icp->textattr, line->lattr, icp->has_rtl);
+      win_text(icp->x, i, icp->text, icp->len, icp->attr, icp->textattr, line->lattr | LATTR_DISP2, icp->has_rtl);
       free(icp->text);
       free(icp->textattr);
     }
