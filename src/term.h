@@ -159,11 +159,11 @@ enum {
 /* Line attributes.
  */
 enum {
-  LATTR_NORM      = 0x0000u,
-  LATTR_WIDE      = 0x0001u,
-  LATTR_TOP       = 0x0002u,
-  LATTR_BOT       = 0x0003u,
-  LATTR_MODE      = 0x0003u,
+  LATTR_NORM      = 0x0000u, /* DEC single-width line (DECSWL) */
+  LATTR_WIDE      = 0x0001u, /* DEC double-width line (DECDWL) */
+  LATTR_TOP       = 0x0002u, /* DEC double-height line (DECDHL), top half */
+  LATTR_BOT       = 0x0003u, /* DEC double-height line (DECDHL), bottom half */
+  LATTR_MODE      = 0x0003u, /* mask for double-width/height attributes */
   LATTR_WRAPPED   = 0x0010u, /* this line wraps to next */
   LATTR_WRAPPED2  = 0x0020u, /* with WRAPPED: CJK wide character
                                   * wrapped to next line, so last

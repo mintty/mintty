@@ -1239,27 +1239,22 @@ win_set_ime_open(bool open)
 
 #define dont_debug_win_text
 
+#ifdef debug_win_text
 static void
-_trace_line(char * tag, wchar * text, int len)
+_trace_line(char * tag, cattr attr, ushort lattr, wchar * text, int len)
 {
   bool show = false;
   for (int i = 0; i < len; i++)
     if (text[i] != ' ') show = true;
   if (show) {
-    printf("%s", tag);
+    printf("%s %04X %08llX", tag, lattr, attr.attr);
     for (int i = 0; i < len; i++) printf(" %04X", text[i]);
     printf("\n");
   }
 }
-
-inline static void
-trace_line(char * tag, wchar * text, int len)
-{
-  _trace_line(tag, text, len);
-}
-
-#ifndef debug_win_text
-#define trace_line(tag, text, len)	
+#define trace_line(tag) _trace_line(tag, attr, lattr, text, len)
+#else
+#define trace_line(tag)
 #endif
 
 static wchar
@@ -1694,7 +1689,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   struct fontfam * ff = &fontfamilies[findex];
 
   bool clearpad = lattr & LATTR_CLEARPAD;
-  trace_line("win_text:", text, len);
+  trace_line("win_text:");
 
   bool ldisp2 = !!(lattr & LATTR_DISP2);
   lattr &= LATTR_MODE;
@@ -1844,11 +1839,11 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
       .nGlyphs = len
     };
 
-    trace_line(" <ChrPlc:", text, len);
+    trace_line(" <ChrPlc:");
     GetCharacterPlacementW(dc, text, len, 0, &gcpr,
                            FLI_MASK | GCP_CLASSIN | GCP_DIACRITIC);
     len = gcpr.nGlyphs;
-    trace_line(" >ChrPlc:", text, len);
+    trace_line(" >ChrPlc:");
     eto_options |= ETO_GLYPH_INDEX;
   }
 
@@ -2002,7 +1997,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     for (int l = 0; l < line_width; l++) {
       if (l >= gapdone || l < gapfrom) {
         MoveToEx(dc, x, y + uloff - l, null);
-        LineTo(dc, x + len * char_width, y + uloff - l);
+        LineTo(dc, x + ulen * char_width, y + uloff - l);
       }
     }
     oldpen = SelectObject(dc, oldpen);
@@ -2016,7 +2011,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, ul));
     for (int l = 0; l < line_width; l++) {
       MoveToEx(dc, x, y + l, null);
-      LineTo(dc, x + len * char_width, y + l);
+      LineTo(dc, x + ulen * char_width, y + l);
     }
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
@@ -2046,7 +2041,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     SetBkMode(dc, OPAQUE);
     overwropt = ETO_OPAQUE;
   }
-  trace_line(" TextOut:", text, len);
+  trace_line(" TextOut:");
   // The combining characters separate rendering trick *alone* 
   // makes some combining characters better (~#553, #295), 
   // others worse (#565); however, together with the 
@@ -2280,7 +2275,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, ul));
     for (int l = 0; l < line_width; l++) {
       MoveToEx(dc, x, y + soff + l, null);
-      LineTo(dc, x + len * char_width, y + soff + l);
+      LineTo(dc, x + ulen * char_width, y + soff + l);
     }
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);

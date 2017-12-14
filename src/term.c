@@ -1591,20 +1591,25 @@ term_paint(void)
 #endif
       cattr attr = icp->attr;
       attr.attr &= ~ATTR_ITALIC;
+      int bglen = icp->len;
+      if (is_high_surrogate(icp->text[0])) {
+        // heuristic distinction: for non-BMP runs:
+        bglen = 1;
+      }
       static wchar * bgspace = 0;
       static int bgspaces = 0;
       // provide a sufficient number of spaces for the background
-      if (icp->len > bgspaces) {
+      if (bglen > bgspaces) {
         if (bgspace)
-          bgspace = renewn(bgspace, icp->len);
+          bgspace = renewn(bgspace, bglen);
         else
-          bgspace = newn(wchar, icp->len);
-        for (int k = bgspaces; k < icp->len; k++)
+          bgspace = newn(wchar, bglen);
+        for (int k = bgspaces; k < bglen; k++)
           bgspace[k] = ' ';
-        bgspaces = icp->len;
+        bgspaces = bglen;
       }
       // background: non-italic
-      win_text(icp->x, i, bgspace, icp->len, attr, icp->textattr, line->lattr | LATTR_DISP1, icp->has_rtl);
+      win_text(icp->x, i, bgspace, bglen, attr, icp->textattr, line->lattr | LATTR_DISP1, icp->has_rtl);
       // foreground: transparent and with extended clipping box
       win_text(icp->x, i, icp->text, icp->len, icp->attr, icp->textattr, line->lattr | LATTR_DISP2, icp->has_rtl);
       free(icp->text);
