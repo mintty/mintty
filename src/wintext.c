@@ -1769,6 +1769,11 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   if (attr.attr & ATTR_NARROW)
     nfont |= FONT_NARROW;
 
+  bool do_special_underlay = false;
+  if (cfg.bold_as_special && (attr.attr & ATTR_BOLD)) {
+    do_special_underlay = true;
+    attr.attr &= ~ATTR_BOLD;
+  }
   if (ff->bold_mode == BOLD_FONT && (attr.attr & ATTR_BOLD))
     nfont |= FONT_BOLD;
   if (ff->und_mode == UND_FONT && (attr.attr & ATTR_UNDER))
@@ -1972,10 +1977,51 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   void clear_run() {
     if (!underlaid) {
       ExtTextOutW(dc, xt, yt, eto_options | ETO_OPAQUE, &box, W(" "), 1, dxs);
-      SetTextColor(dc, fg);
 
       underlaid = true;
     }
+  }
+
+ /* Special underlay */
+  if (do_special_underlay && !ldisp2) {
+    xchar uc = 0x2312;
+    int ulaylen = uc > 0xFFFF ? ulen * 2 : ulen;
+    wchar ulay[ulaylen];
+    for (int i = 0; i < ulaylen; i++)
+      if (uc > 0xFFFF)
+        if (i & 1)
+          ulay[i] = low_surrogate(uc);
+        else
+          ulay[i] = high_surrogate(uc);
+      else
+        ulay[i] = uc;
+
+    colour rainbow[] = { // https://en.wikipedia.org/wiki/Rainbow
+      RGB(0xFF, 0x00, 0x00), // red
+      RGB(0xFF, 0x66, 0x00), // orange
+      RGB(0xFF, 0xEE, 0x00), // yellow
+      RGB(0x00, 0xFF, 0x00), // green
+      RGB(0x00, 0x99, 0xFF), // blue
+      RGB(0x44, 0x00, 0xFF), // indigo
+      RGB(0x99, 0x00, 0xFF), // violet
+      };
+
+    int dist = cell_height / 20 + 1;
+    int leap = cell_height <= 20 ? 3 : cell_height <= 30 ? 2 : 1;
+    int y = yt - cell_height / 2 + 4 * dist;
+    for (uint c = 0; c < lengthof(rainbow); c += leap) {
+      SetTextColor(dc, rainbow[c]);
+      uint eto = eto_options;
+      if (!underlaid && !c)
+        eto |= ETO_OPAQUE;
+      ExtTextOutW(dc, xt, y, eto, &box, ulay, ulaylen, dxs);
+      y += dist;
+    }
+    SetTextColor(dc, bg);
+    ExtTextOutW(dc, xt, y, eto_options, &box, ulay, ulaylen, dxs);
+    SetTextColor(dc, fg);
+
+    underlaid = true;
   }
 
  /* Underline */

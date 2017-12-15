@@ -164,6 +164,7 @@ typedef struct {
   colour ansi_colours[16];
   wstring sixel_clip_char;
   bool short_long_opts;
+  bool bold_as_special;
   // Legacy
   bool use_system_colours;
   bool old_bold;
