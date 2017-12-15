@@ -1,5 +1,40 @@
+### 2.8.2 (17 Dec 2017) ###
+
+Window and session control
+  * Transparent session switcher icons (#699).
   * Avoid blocking when switching to other window which is blocked/suspended.
-  * --WSL-determined icon shall not override icon taken from shortcut.
+  * Prevent initial bogus font zooming (#708).
+  * Prevent accidental text selection on mouse-click window activation (#717).
+  * Terminal Break available in extended context menu (#716).
+  * Terminal Break assignable to Break key (option Key_Break) (#716).
+
+Configuration
+  * Support ~/ prefix for config files in SessionCommands configuration for session launcher.
+  * Support ~/ prefix for logfiles, especially for usage in config files.
+  * With --WSL, let option "-" request login shell.
+  * Icon determined via --WSL shall not override icon taken from shortcut.
+  * Option ShortLongOpts enables single-dash named options on command line (#600, requested by Brian Inglis).
+  * Convenience xterm-style command line options: -fn, -fs, -geometry, -fg, -bg, ...
+
+Character rendering and text attribute handling
+  * Caching ambiguous character width for speed-up (#712).
+  * Revised weight attribute handling, esp. bold display (thanks to avih, #714, #710).
+  * Distinguishing ANSI colours 0..15 from palette colours 0..15 like xterm (~#714).
+  * OSC 6 can enable/disable bold foreground colour (xterm).
+  * Tweaked brightened bold to never decrease the text colour contrast.
+  * Terminal Reset also resets dynamic bold foreground colour.
+  * Fixed non-BMP italic display.
+  * Proper support of true colour attribute for Copy as rich text (thanks to avih, #710).
+  * Colour setting sequence OSC 4 limited to the defined palette range (~#710).
+  * Allowing minor font size deviation of bold font.
+  * Underlay manual underline and overline behind text.
+
+Other
+  * Bundling selected theme files with the package (#711).
+  * Support Alt+F2 in same directory (after OSC 7) for WSL.
+  * MINTTY_PID in UserCommands: support to terminate foreground process (#716).
+  * Fixed bug when copying true-colour text as rich text (thanks to avih).
+  * Prevent HOME from being propagated back to Windows applications if called from WSL (mintty/wsltty#76).
 
 ### 2.8.1 (31 Oct 2017) ###
 

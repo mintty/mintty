@@ -55,21 +55,61 @@ shortcut, or follow the advice about avoiding trouble with taskbar grouping
 in the manual page.
 
 
-## Using mintty for Bash on Ubuntu on Windows (UoW) / Windows Subsystem for Linux (WSL) ##
+## Supporting Linux/Posix subsystems ##
 
-Install [wsltty](https://github.com/mintty/wsltty).
+If you have any Linux distribution for the Windows Subsystem for Linux (WSL) 
+installed, mintty can be called from cygwin to run a WSL terminal session:
+* `mintty --WSL=Ubuntu`
+* `mintty --WSL` (for the Default distribution as set with `wslconfig /s`)
 
-Or, to help reproduce the installation manually, for users of cygwin or msys2:
+Note, the `wslbridge` tool needs to be installed in `/bin` for this purpose 
+(see below for details).
+
+A WSL terminal session can be configured for the mintty session launcher 
+in the config file, like:
+* `SessionCommands=Ubuntu:--WSL=Ubuntu`
+
+
+### WSLtty, the standalone WSL mintty terminal ###
+
+For a standalone mintty deployment as a WSL terminal, also providing 
+desktop and start menu shortcuts, command line launch scripts, and 
+optional Windows Explorer integration, install 
+[wsltty](https://github.com/mintty/wsltty).
+
+### Manual setup of WSL terminal ###
+
+To help reproduce the installation manually, for users of cygwin or msys2:
 * From https://github.com/rprichard/wslbridge/releases, download the `wslbridge` archive corresponding to your system (cygwin/msys2 32/64 bit)
 * Install `wslbridge.exe` and `wslbridge-backend` into your cygwin or msys2 `/bin` directory
 * Make a desktop shortcut (Desktop right-click – New ▸ Shortcut) with
-  * Target: `X:\cygwin64\bin\mintty.exe /bin/wslbridge.exe -t /bin/bash -l`
-  * Icon location (Change Icon…): `%LOCALAPPDATA%\lxss\bash.ico`
+  * Target: `X:\cygwin64\bin\mintty.exe --WSL=Linux_Distribution -`
+  * Icon location (Change Icon…) for Legacy “Ubuntu on Windows”: `%LOCALAPPDATA%\lxss\bash.ico`
 
-Replace ```X:\cygwin64``` with your cygwin or msys2 root directory path.
-The “Start in:” directory does not normally matter if you include the bash “login” option 
-```-l``` as shown above and have a typical Linux profile configuration.
-You may replace ```/bin/bash``` above with your favourite shell if desired.
+Replace `X:\cygwin64` with your cygwin or msys2 root directory path 
+and `Linux_Distribution` with your preferred distribution. The suitable 
+icon location for each respective distribution is not easily found; the 
+standalone package would find that for you.
+Instead of `-`, you may add an explicit invocation target like 
+`/bin/wslbridge -t -C~ /bin/bash -l` to select your favourite shell, 
+ask for a login shell (`-l`) or set a start directory (`-C`) if desired.
+If no start directory is otherwise selected, the “Start in:” directory 
+of the shortcut may be set to `%USERPROFILE%`.
+
+### Interix ###
+
+On Windows 7, mintty may also be used as a terminal for the 
+Subsystem for UNIX-based applications (SUA), also known as Interix.
+For the mintty session launcher, this can be configured for the 
+available shells as follows (concatened with ‘;’ separator for multiple targets):
+* `SessionCommands=Interix Korn Shell:winpty 'C:\Windows\posix.exe' /u /c /bin/ksh -l`
+* `SessionCommands=Interix SVR-5 Korn Shell:winpty 'C:\Windows\posix.exe' /u /p /svr-5/bin/ksh /c -ksh`
+* `SessionCommands=Interix C Shell:winpty 'C:\Windows\posix.exe' /u /c /bin/csh -l`
+
+For a desktop or start menu shortcut, the respective target command would 
+look like `X:\cygwin\bin\mintty.exe winpty` …
+(and may use the icon location 
+%SystemRoot%\Installer\{DB88A98A-792B-4441-8E60-05A6D3E2B2C0}\sh.exe).
 
 
 ## Starting mintty from a batch file ##

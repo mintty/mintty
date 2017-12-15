@@ -31,6 +31,7 @@ And, continuing from release 2.0.1, more thanks particularly to:
   * Johannes Schindelin, for advice about the obscure area of Windows taskbar properties configuration.
   * Kai (twitter:@sixhundredns), for the new Search feature and his cooperation to improve and integrate it.
   * Hayaki Saito (saitoha.github.io), for the new Sixel graphics feature and his cooperation to improve and integrate it.
+  * Avi Halachmi (:avih), for refactoring, tweaks and fixes around attribute handling, especially bold display.
 
 Cheers,<br>
 Thomas

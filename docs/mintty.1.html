@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Tue Oct 31 01:49:51 2017 -->
+<!-- CreationDate: Fri Dec 15 20:35:19 2017 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -86,7 +86,9 @@ shell.</p>
 <p style="margin-left:11%; margin-top: 1em">The standard
 GNU option formats are accepted, with single dashes
 introducing short options and double dashes introducing long
-options. <b><br>
+options. <br>
+Note that setting <b>ShortLongOpts</b> enables single-dash
+long options. <b><br>
 -c</b>, <b>--config</b> <i>FILENAME</i></p>
 
 <p style="margin-left:22%;">Read settings from the
@@ -156,7 +158,7 @@ with an error, i.e. with a non-zero exit status or due to a
 signal indicating a runtime error.</p>
 
 <p style="margin-left:11%;"><b>-i</b>, <b>--icon</b>
-<i>FILE</i>[<b>,</b><i>INDEX</i>]</p>
+<i>FILE</i>[<b>,</b><i>INDEX</i><b>]</b></p>
 
 <p style="margin-left:22%;">Load the window icon from an
 executable, DLL, or icon file. The optional comma-separated
@@ -244,18 +246,16 @@ window, see the description of Alt+F2.</p>
 
 <p style="margin-left:22%;">Set the default size of the
 window in character columns and rows. (The xterm-like syntax
-<i>COLS</i><b>x</b><i>ROWS</i> is accepted too.) Instead of
-coordinates, &quot;maxwidth&quot; or &quot;maxheight&quot;
-can be specified; this can be combined with another
-parameter <b>-s</b> for the other dimension. The dimension
-for which &quot;max&quot; is applied is ignored in further
-<b>-s</b> or <b>-p</b> parameters. For example, <b>mintty -s
-maxwidth -p 0,0 -s 0,10</b> will start a window at full
-screen width, positioned at the top of the screen, with 10
-lines.</p>
+<i>COLS</i><b>x</b><i>ROWS</i> <b>is accepted too.) Instead
+of coordinates, &quot;maxwidth&quot; or
+&quot;maxheight&quot; can be specified; this can be combined
+with another parameter -s for the other dimension. The
+dimension for which &quot;max&quot; is applied is ignored in
+further -s or -p parameters. For example, mintty -s maxwidth
+-p 0,0 -s 0,10 will start a window at full screen width,
+positioned at the top of the screen, with 10 lines.</b></p>
 
-<p style="margin-left:11%;"><b>--nobidi</b>,
-<b>--nortl</b></p>
+<p style="margin-left:11%;"><b>--nobidi, --nortl</b></p>
 
 <p style="margin-left:22%;">Disable bidi display
 (right-to-left support). Same as <b>-o Bidi=0</b>.</p>
@@ -433,6 +433,127 @@ and exit.</p>
 
 <p style="margin-left:22%;">Print version information and
 exit.</p>
+
+<p style="margin-left:11%;">A number of xterm-style
+convenience options are also available:</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="6%">
+
+
+<p><b>--fg</b></p></td>
+<td width="5%"></td>
+<td width="33%">
+
+
+<p>Sets ForegroundColour.</p></td>
+<td width="45%">
+</td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="6%">
+
+
+<p><b>--bg</b></p></td>
+<td width="5%"></td>
+<td width="33%">
+
+
+<p>Sets BackgroundColour.</p></td>
+<td width="45%">
+</td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="6%">
+
+
+<p><b>--cr</b></p></td>
+<td width="5%"></td>
+<td width="33%">
+
+
+<p>Sets CursorColour.</p></td>
+<td width="45%">
+</td></tr>
+</table>
+
+<p style="margin-left:11%;"><b>--selfg</b></p>
+
+<p style="margin-left:22%;">Sets
+HighlightForegroundColour.</p>
+
+<p style="margin-left:11%;"><b>--selbg</b></p>
+
+<p style="margin-left:22%;">Sets
+HighlightBackgroundColour.</p>
+
+<p style="margin-left:11%;"><b>--fn</b>, <b>--font</b></p>
+
+<p style="margin-left:22%;">Sets Font.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="6%">
+
+
+<p><b>--fs</b></p></td>
+<td width="5%"></td>
+<td width="21%">
+
+
+<p>Sets FontSize.</p></td>
+<td width="57%">
+</td></tr>
+</table>
+
+<p style="margin-left:11%;"><b>--geometry</b>
+<i>COLS</i><b>x</b><i>ROWS</i><b>[[-+]</b><i>X</i><b>[-+]</b><i>Y</i><b>][</b><i>@</i><b>MONITOR]</b></p>
+
+<p style="margin-left:22%;">Sets size and position,
+extending xterm syntax by an optional monitor number.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="6%">
+
+
+<p><b>--en</b></p></td>
+<td width="5%"></td>
+<td width="78%">
+
+
+<p>Sets Charset within the current locale.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="6%">
+
+
+<p><b>--lf</b></p></td>
+<td width="5%"></td>
+<td width="78%">
+
+
+<p>Sets Log, the log file name. Use <b>-l</b> to both set
+the log file name and enable loggin.</p></td></tr>
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="6%">
+
+
+<p><b>--sl</b></p></td>
+<td width="5%"></td>
+<td width="78%">
+
+
+<p>Sets ScrollbackLines.</p></td></tr>
+</table>
 
 <h2>USAGE
 <a name="USAGE"></a>
@@ -679,6 +800,24 @@ be ignored, though, in which case the program might have to
 be forced to terminate by sending a <i>SIGKILL</i> signal
 instead. This can be done by holding down <b>Shift</b> when
 using the close button, shortcut or menu item.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Terminal
+Break</b> <br>
+A traditional BRK event on a serial terminal connection can
+be simulated. The Break is available in the extended context
+menu and it can be mapped to the Break key by configuration.
+Note, however, that a BRK can be ignored by configuration of
+the terminal device (pty) or can be ignored by an
+application by catching the SIGINT signal. For more forceful
+interruption of the terminal client application, see the
+Tips wiki page
+<i>https://github.com/mintty/mintty/wiki/Tips#terminating-the-foreground-program</i>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Note that
+Ctrl+C is often configured to raise a SIGINT signal.
+However, this is not a terminal feature and can also be
+reconfigured (stty), so in fact BRK and Ctrl+C are
+inherently different functions.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Mouse
 tracking</b> <br>
@@ -1139,35 +1278,80 @@ affected by Windows-generated underline modes.</p>
 <p style="margin-left:11%;"><b>Show bold as font</b>
 (BoldAsFont=no)</p>
 
-<p style="margin-left:22%;">When this option is enabled,
-the ANSI bold (or &rsquo;intense&rsquo;) text attribute is
-shown as a bold-style font. Where a bold variant of the
-selected font that has the same width as the base font is
-available, that is used; otherwise, the bolding is simulated
-by rendering the text twice with a one-pixel offset.</p>
+<p style="margin-left:22%;">This option sets the preferred
+rendering of the ANSI bold (or &rsquo;intense&rsquo;) text
+attribute to use a bold-style font; where a suitable bold
+variant of the selected font (that has the same width as the
+base font) is available, that is used; otherwise, the
+bolding is simulated by rendering the text twice with a
+one-pixel offset (&rsquo;overstrike&rsquo;). <br>
+(Corresponds roughly to the xterm resource
+<b>allowBoldFonts</b>.)</p>
+
+<p style="margin-left:22%; margin-top: 1em">This option is
+not fully independent. If both BoldAsFont and BoldAsColour
+are true, both display methods are combined where
+applicable. If both are false, xterm default behaviour is
+applied. See <b>Bold Behaviour</b> for an overview.</p>
 
 <p style="margin-left:11%;"><b>Show bold as colour</b>
 (BoldAsColour=yes)</p>
 
-<p style="margin-left:22%;">By default, text with the ANSI
-bold attribute set is displayed with a different colour,
-usually with increased brightness (mapping ANSI colours 0..7
-to their bright variants 8..15). This can be disabled
-here.</p>
+<p style="margin-left:22%;">This option sets the preferred
+rendering of the ANSI bold (or &rsquo;intense&rsquo;) text
+attribute to use a different colour, usually with increased
+brightness; it maps ANSI colours 0..7 (unless selected with
+the palette colour escape sequences) to their bright
+variants 8..15, and the default colour to a brightened
+variant. Rendering of other colours is not affected. <br>
+(Corresponds largely to the xterm resource
+<b>boldColors</b>.)</p>
 
-<p style="margin-left:22%; margin-top: 1em">Note that when
-<b>BoldAsFont</b> is enabled, only bold text in one of the
-eight ANSI colours has its colour changed, i.e. bold text
-without an explicitly specified colour is shown with a bold
-font only. This matches <b>xterm</b> behaviour. Note also
-setting <b>BoldColour</b>.</p>
+<p style="margin-left:22%; margin-top: 1em">This option is
+not fully independent. If both BoldAsColour and BoldAsFont
+are true, both display methods are combined where
+applicable. If both are false, xterm default behaviour is
+applied. See <b>Bold Behaviour</b> for an overview.</p>
 
-<p style="margin-left:22%; margin-top: 1em">This option
-also controls how the &rsquo;half-bright&rsquo; (or
-&rsquo;dim&rsquo;) text attribute is displayed: if it is on,
-half-bright text is shown with halved foreground colour
-brightness; otherwise, it is shown by blending the
-foreground colour with the background colour.</p>
+<p style="margin-left:11%;"><b>Bold substitution colour</b>
+(BoldColour=)</p>
+
+<p style="margin-left:22%;">This option sets a colour to be
+used to render the bold attribute of text that would
+otherwise have the default foreground colour, overriding
+other bold rendering; it is only applied if option
+BoldAsColour is true. The bold substitution colour can also
+be set, modified, enabled or disabled with the respective
+xterm OSC control sequences. <br>
+(Corresponds to the xterm resources <b>colorBD</b> and
+<b>colorBDMode</b>.)</p>
+
+<p style="margin-left:11%;"><b>Note: Bold Behaviour</b></p>
+
+<p style="margin-left:22%;">When the bold text attribute is
+set, mintty distinguishes three classes of colours: <br>
+&ndash; <b>Default</b>: The default terminal foreground
+colour. <br>
+&ndash; <b>ANSI-8</b>: The ANSI colours 0..7 (used for SGR
+30..37). <br>
+&ndash; <b>Extended</b>: True colours and the rest of the
+256 colours palette.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The colour
+classes are affected by the bold text attribute as follows:
+<br>
+&ndash; Extended colours are always shown with a boldened
+font only. <br>
+&ndash; When both BoldAsFont and BoldAsColour are disabled,
+mintty engages a mode similar to the xterm default
+behaviour: ANSI-8 is displayed with a bold font and a
+different colour, Default colour only uses a bold font. <br>
+&ndash; Otherwise, Default and ANSI-8 colours are affected
+by BoldAsFont and BoldAsColour independently, such that it
+is possible to choose only bold font, or only different
+colour, or both. <br>
+&ndash; Note that Default bold display can be overridden by
+the BoldColour mode.</p>
 
 <p style="margin-left:11%;"><b>Allow blinking</b>
 (AllowBlinking=no)</p>
@@ -1276,15 +1460,15 @@ Backarrow sends ^H</b> (BackspaceSendsBS=no)</p>
 <b>^?</b> (ASCII DEL) as the keycode for the backspace key.
 If this option is enabled, <b>^H</b> is sent instead. This
 also changes the <b>Ctrl+Backspace</b> code from <b>^_</b>
-to <b>^?</b>. (Corresponds to the xterm resource
-<b>backarrowKey</b>.)</p>
+to <b>^?</b>. <br>
+(Corresponds to the xterm resource <b>backarrowKey</b>.)</p>
 
 <p style="margin-left:11%;"><b>Delete sends
 DEL</b>(DeleteSendsDEL=no)</p>
 
 <p style="margin-left:22%;">By default, mintty sends VT100
 Remove as the keycode for the keypad Del key. If this option
-is enabled, <b>^?</b> (ASCII DEL) is sent instead.
+is enabled, <b>^?</b> (ASCII DEL) is sent instead. <br>
 (Corresponds to the xterm resource <b>deleteIsDEL</b>.)</p>
 
 <p style="margin-left:11%;"><b>Ctrl+LeftAlt is AltGr</b>
@@ -1516,8 +1700,10 @@ ColSpacing=1 can avoid boldened glyphs being clipped.</p>
 
 <p style="margin-left:22%;">Window padding; margin between
 text and window border. The effective value is limited by
-the character cell width (scaling with font zooming). A
-negative value indicates that always the character cell
+the character cell width (scaling with font zooming). <br>
+(Corresponds to the xterm resource <b>internalBorder</b>.)
+<br>
+A negative value indicates that always the character cell
 width shall be used, without fixed limit.</p>
 
 <p style="margin-left:11%;"><b>Scrollback lines</b>
@@ -1774,21 +1960,22 @@ signal indicating a runtime error. <br>
 <p style="margin-left:11%;"><b>Window icon</b> (Icon=)</p>
 
 <p style="margin-left:22%;">The <b>Icon</b> setting with
-format <i>FILE</i>[<b>,</b><i>INDEX</i>] allows to load the
-window icon from an executable, DLL, or icon file. The
+format <i>FILE</i>[<b>,</b><i>INDEX</i><b>] allows to load
+the window icon from an executable, DLL, or icon file. The
 optional comma-separated index can be used to select a
-particular icon in a file with multiple icons.</p>
+particular icon in a file with multiple icons.</b></p>
 
-<p style="margin-left:22%; margin-top: 1em">If the setting
-is empty, as it is by default, mintty&rsquo;s program icon
-is used, unless mintty was invoked from a desktop shortcut
-in which case it uses the shortcut icon.</p>
+<p style="margin-left:22%; margin-top: 1em"><b>If the
+setting is empty, as it is by default, mintty&rsquo;s
+program icon is used, unless mintty was invoked from a
+desktop shortcut in which case it uses the shortcut
+icon.</b></p>
 
-<p style="margin-left:22%; margin-top: 1em">For interaction
-problems of icon, shortcut, and the Windows taskbar, see the
-note for the -i option above.</p>
+<p style="margin-left:22%; margin-top: 1em"><b>For
+interaction problems of icon, shortcut, and the Windows
+taskbar, see the note for the -i option above.</b></p>
 
-<p style="margin-left:11%;"><b>Log file</b> (Log=)</p>
+<p style="margin-left:11%;"><b>Log file (Log=)</b></p>
 
 <p style="margin-left:22%;">The <b>Log</b> setting can be
 used to specify a log file that all output is copied into.
@@ -1870,18 +2057,25 @@ The following settings appear neither in the options dialog
 nor as command line options, which means they can only be
 set in config files or using the <b>--option</b> or
 <b>-o</b> command line option. <b><br>
-Character width handling</b> (Charwidth=locale)</p>
+Single-dash long options</b> (ShortLongOpts=false)</p>
+
+<p style="margin-left:22%;">This settings enables names
+options (&quot;long options&quot;) on the command line to be
+given with only one dash rather than a double dash.</p>
+
+<p style="margin-left:11%;"><b>Character width handling</b>
+(Charwidth=locale)</p>
 
 <p style="margin-left:22%;">With this option,
 locale-determined character width properties can be
 overridden: <br>
 &ndash; <b>locale</b> Use locale width properties. <br>
 &ndash; <b>unicode</b> Use built-in width properties, likely
-based on a more up-to-date Unicode version. (corresponds to
-the xterm resource <b>mkWidth</b>) <br>
+based on a more up-to-date Unicode version. (Corresponds to
+the xterm resource <b>mkWidth</b>.) <br>
 &ndash; <b>ambig-wide</b> Use built-in width properties,
 with ambiguous-width characters assumed to be wide.
-(corresponds to the xterm resource <b>cjkWidth</b>)</p>
+(Corresponds to the xterm resource <b>cjkWidth</b>.)</p>
 
 <p style="margin-left:11%;"><b>Bidirectional rendering</b>
 (Bidi=2)</p>
@@ -2010,7 +2204,8 @@ some generic Alt or Shift modification is applied. For
 <b>Pause</b> and <b>Break</b>, control characters are the
 default values, they can be cleared with an empty
 assignment. For empty values, the default layout of the
-keyboard is applied. <br>
+keyboard is applied. The <b>Break</b> key can also be
+assigned the traditional terminal line Break function. <br>
 &ndash; <b>Key_Pause</b>=^] <i>(Ctrl+])</i> <br>
 &ndash; <b>Key_Break</b>=^\ <i>(Ctrl+\)</i> <br>
 &ndash; <b>Key_Menu</b>= <br>
@@ -2018,9 +2213,11 @@ keyboard is applied. <br>
 &ndash; <b>Key_PrintScreen</b>=</p>
 
 <p style="margin-left:22%; margin-top: 1em">Examples: <br>
-Key_Break=2 would turn the Break key into an Insert key <br>
 Key_Menu=29 would make the Menu key send the same escape
-sequence as in xterm</p>
+sequence as in xterm <br>
+Key_Break=2 would turn the Break key into an Insert key <br>
+Key_Break=_BRK_ would assign the simulated terminal line
+Break function</p>
 
 <p style="margin-left:11%;"><b>Use system colours</b>
 (UseSystemColours=no)</p>
@@ -2084,18 +2281,6 @@ scheme file, this setting is not used anymore.</p>
 wiki page
 <i>https://github.com/mintty/mintty/wiki/Tips#using-colour-schemes-themes</i>
 about this mechanism.</p>
-
-<p style="margin-left:11%;"><b>Bold substitution colour</b>
-(BoldColour=)</p>
-
-<p style="margin-left:22%;">The colour to be used instead
-of the bold attribute can be configured. The bold
-substitution colour is only applied if option BoldAsFont is
-false and option BoldAsColour is true. The default is
-<i>none</i>, meaning that a brightened colour derived from
-the effective foreground colour is used. The bold
-substitution colour can also be set and reset with the
-respective xterm OSC control sequences.</p>
 
 <p style="margin-left:11%;"><b>Selection highlight
 colours</b></p>
@@ -2274,6 +2459,8 @@ starting at the current scroll position <br>
 MINTTY_OUTPUT for the output of the previous command, if
 prompt lines are marked <br>
 MINTTY_TITLE for the window title text <br>
+MINTTY_PID for the program ID of the terminal foreground
+process <br>
 MINTTY_PROG for the program name of the terminal foreground
 process <br>
 MINTTY_CWD for the current working directory of the
@@ -2346,7 +2533,9 @@ configuration format.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Examples: <br>
 &ndash; <b>SessionCommands=big:-w
-max;Ubuntu:--WSL=Ubuntu;mybox:ssh mybox</b></p>
+max;Ubuntu:--WSL=Ubuntu;mybox:ssh mybox</b> <br>
+&ndash; <b>SessionCommands=mycolours:-C
+~/.minttyrc.mycolours</b></p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 Control characters need to be embedded verbatim; there is no

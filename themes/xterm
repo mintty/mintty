@@ -1,4 +1,4 @@
-# XTerm-col.ad, /usr/share/X11/rgb.txt
+# xterm: XTerm-col.ad, charproc.c; /usr/share/X11/rgb.txt
 
 #*VT100*color0: black
 Black         = 0,0,0
