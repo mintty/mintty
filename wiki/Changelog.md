@@ -28,6 +28,7 @@ Character rendering and text attribute handling
   * Colour setting sequence OSC 4 limited to the defined palette range (~#710).
   * Allowing minor font size deviation of bold font.
   * Underlay manual underline and overline behind text.
+  * Option BoldAsRainbowSparkles.
 
 Other
   * Bundling selected theme files with the package (#711).

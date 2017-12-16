@@ -1006,13 +1006,18 @@ See \fBBold Behaviour\fP for an overview.
 
 .TP
 \fBBold substitution colour\fP (BoldColour=)
-This option sets a colour to be used to render the bold attribute of 
+This hidden option sets a colour to be used to render the bold attribute of 
 text that would otherwise have the default foreground colour, overriding 
 other bold rendering; it is only applied if option BoldAsColour is true.
 The bold substitution colour can also be set, modified, enabled or disabled 
 with the respective xterm OSC control sequences.
 .br
 (Corresponds to the xterm resources \fBcolorBD\fP and \fBcolorBDMode\fP.)
+
+.TP
+\fBBold as special background\fP (BoldAsRainbowSparkles=false)
+This hidden option displays the bold attribute by underlaying special 
+background. Overrides BoldAsFont. This is a fun option, use at your own risk.
 
 .TP
 \fBNote: Bold Behaviour\fP

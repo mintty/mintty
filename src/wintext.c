@@ -1996,7 +1996,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
       else
         ulay[i] = uc;
 
-    colour rainbow[] = { // https://en.wikipedia.org/wiki/Rainbow
+    static colour rainbow[] = { // https://en.wikipedia.org/wiki/Rainbow
       RGB(0xFF, 0x00, 0x00), // red
       RGB(0xFF, 0x66, 0x00), // orange
       RGB(0xFF, 0xEE, 0x00), // yellow
