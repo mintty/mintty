@@ -1066,15 +1066,15 @@ msgstr "' %s' 选项需要一个参数"
 
 #: winmain.c:3070
 msgid "Syntax error in position argument '%s'"
-msgstr "position 选项的参数有语法错误 '%s'"
+msgstr "position 选项的参数 '%s' 有语法错误"
 
 #: winmain.c:3081
 msgid "Syntax error in size argument '%s'"
-msgstr "size 选项的参数有语法错误 '%s'"
+msgstr "size 选项的参数 '%s' 有语法错误"
 
 #: winmain.c:3205
 msgid "Syntax error in geometry argument '%s'"
-msgstr "geometry 选项的参数有语法错误 '%s'"
+msgstr "geometry 选项的参数 '%s' 有语法错误"
 
 #: winmain.c:3251
 msgid "Mintty could not detach from caller, starting anyway"
