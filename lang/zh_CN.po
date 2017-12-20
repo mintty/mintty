@@ -963,7 +963,7 @@ msgstr "清除滚动历史"
 #. __ Context menu:
 #: wininput.c:478
 msgid "Send Break"
-msgstr ""
+msgstr "发送 Break"
 
 #: winmain.c:1622
 msgid "Processes are running in session:"
