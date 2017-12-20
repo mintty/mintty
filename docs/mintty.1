@@ -332,7 +332,7 @@ Sets Charset within the current locale.
 .TP
 \fB--lf\fP
 Sets Log, the log file name.
-Use \fB-l\fP to both set the log file name and enable loggin.
+Use \fB-l\fP to both set the log file name and enable logging.
 
 .TP
 \fB--sl\fP
@@ -1586,6 +1586,12 @@ If it contains \fB%\fP placeholders other than a single \fB%d\fP,
 the log file name will be constructed by calling strftime(3) on the 
 pattern; note that this is likely to fail if a placeholder expands with 
 "/" (%D).
+
+If the log file name is a relative path name, it is relative from the 
+working directory mintty was started in. If mintty was started from a 
+Windows shortcut (desktop/start menu) with no working directory 
+("Start in:") specified, mintty changes to the user's home directory 
+first, except in WSL support mode where %LOCALAPPDATA%/Temp is used.
 
 Note: If the requested log file exists already, mintty does not overwrite it 
 but reports an error. To configure logging in the config file, use some 
