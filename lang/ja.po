@@ -961,7 +961,7 @@ msgstr "スクロールバックをクリア"
 #. __ Context menu:
 #: wininput.c:478
 msgid "Send Break"
-msgstr ""
+msgstr "Breakを送信"
 
 #: winmain.c:1622
 msgid "Processes are running in session:"
@@ -1075,15 +1075,15 @@ msgstr "オプション '%s' は引数が必要です"
 
 #: winmain.c:3070
 msgid "Syntax error in position argument '%s'"
-msgstr "位置引数に文法エラーがあります '%s'"
+msgstr "position引数に文法エラーがあります '%s'"
 
 #: winmain.c:3081
 msgid "Syntax error in size argument '%s'"
-msgstr "サイズ引数に文法エラーがあります '%s'"
+msgstr "size引数に文法エラーがあります '%s'"
 
 #: winmain.c:3205
 msgid "Syntax error in geometry argument '%s'"
-msgstr "サイズ引数に文法エラーがあります '%s'"
+msgstr "geometry引数に文法エラーがあります '%s'"
 
 #: winmain.c:3251
 msgid "Mintty could not detach from caller, starting anyway"
