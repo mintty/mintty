@@ -40,6 +40,9 @@ char * mintty_debug;
 #include <propkey.h>
 #endif
 
+#include <sys/stat.h>
+#include <fcntl.h>  // open flags
+
 #ifndef INT16
 #define INT16 short
 #endif
@@ -1978,7 +1981,8 @@ static struct {
     when WM_MOUSEACTIVATE:
       // prevent accidental selection on activation (#717)
       if (LOWORD(lp) == HTCLIENT && HIWORD(lp) == WM_LBUTTONDOWN)
-        return MA_ACTIVATEANDEAT;
+        if (!getenv("ConEmuPID"))
+          return MA_ACTIVATEANDEAT;
 
     when WM_ACTIVATE:
       if ((wp & 0xF) != WA_INACTIVE) {
@@ -2898,6 +2902,7 @@ opts[] = {
   {"daemon",     no_argument,       0, 'D'},
   {"nopin",      no_argument,       0, ''},  // short option not enabled
   {"store-taskbar-properties", no_argument, 0, ''},  // no short option
+  {"trace",      required_argument, 0, ''},  // short option not enabled
   // further xterm-style convenience options, all without short option:
   {"fg",         required_argument, 0, OPT_FG},
   {"bg",         required_argument, 0, OPT_BG},
@@ -3210,6 +3215,12 @@ main(int argc, char *argv[])
 
         if (*oa)
           option_error(__("Syntax error in geometry argument '%s'"), optarg, 0);
+      }
+      when '': {
+        int tfd = open(optarg, O_WRONLY | O_CREAT | O_APPEND | O_NOCTTY, 0600);
+        close(1);
+        dup(tfd);
+        close(tfd);
       }
     }
   }
