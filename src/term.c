@@ -1578,8 +1578,12 @@ term_paint(void)
         copy_termchar(displine, j, d);
       }
     }
-    if (dirty_run && textlen)
-      win_text(start, i, text, textlen, attr, textattr, line->lattr, has_rtl);
+    if (dirty_run && textlen) {
+      if (attr.attr & (ATTR_ITALIC | TATTR_COMBDOUBL))
+        push_text(start, text, textlen, attr, textattr, has_rtl);
+      else
+        win_text(start, i, text, textlen, attr, textattr, line->lattr, has_rtl);
+    }
 
     for (int j = italic_chunks - 1; j >= 0; j--) {
       struct italic_chunk * icp = &italic_stack[j];
