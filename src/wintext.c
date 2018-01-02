@@ -1908,6 +1908,12 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   use_uniscribe = cfg.font_render == FR_UNISCRIBE && !has_rtl;
   if (combining_double)
     use_uniscribe = false;
+#ifdef no_Uniscribe_for_ASCII_only_chunks
+  // this "optimization" was intended to avoid a performance penalty 
+  // for Uniscribe when there is no need for Uniscribe;
+  // however, even for ASCII-only chunks, 
+  // Uniscribe effectively applies ligatures (Fira Code, #601), 
+  // and testing again, there is hardly a penalty observable anymore
   if (use_uniscribe) {
     use_uniscribe = false;
     for (int i = 0; i < len; i++)
@@ -1916,6 +1922,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
         break;
       }
   }
+#endif
 
  /* Begin text output */
   int yt = y + (ff->row_spacing / 2) - (lattr == LATTR_BOT ? cell_height : 0);
