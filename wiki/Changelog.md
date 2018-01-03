@@ -4,6 +4,7 @@
   * Handling empty working directory (if started from Windows shortcut) for log file.
   * Workaround for ConEmu focus incompatibility (#724).
   * Fixed DEC REP for (self-drawn) VT100 graphics and non-BMP (~#634).
+  * Session switcher restores window only if it was iconic (mintty/wsltty#80).
 
 ### 2.8.2 (17 Dec 2017) ###
 
