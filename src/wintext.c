@@ -1247,9 +1247,15 @@ _trace_line(char * tag, cattr attr, ushort lattr, wchar * text, int len)
   for (int i = 0; i < len; i++)
     if (text[i] != ' ') show = true;
   if (show) {
-    printf("%s %04X %08llX", tag, lattr, attr.attr);
-    for (int i = 0; i < len; i++) printf(" %04X", text[i]);
-    printf("\n");
+    if (*tag != ' ') {
+      wchar t[len + 1]; wcsncpy(t, text, len); t[len] = 0;
+      printf("%s %04X %08llX <%ls>\n", tag, lattr, attr.attr, t);
+    }
+    else {
+      printf("%s %04X %08llX", tag, lattr, attr.attr);
+      for (int i = 0; i < len; i++) printf(" %04X", text[i]);
+      printf("\n");
+    }
   }
 }
 #define trace_line(tag) _trace_line(tag, attr, lattr, text, len)
