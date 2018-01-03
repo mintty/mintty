@@ -1331,6 +1331,7 @@ term_paint(void)
     int laststart = 0;
     int firstitalicstart = -1;
     bool prevdirtyitalic = false;
+    bool firstdirtyitalic = false;
     bool dirtyrect = false;
     for (int j = 0; j < term.cols; j++) {
       if (dispchars[j].attr.attr & DATTR_STARTRUN) {
@@ -1359,13 +1360,19 @@ term_paint(void)
         prevdirtyitalic = true;
       else if (dispchars[j].attr.attr & DATTR_STARTRUN)
         prevdirtyitalic = false;
+      if (j == 0)
+        firstdirtyitalic = prevdirtyitalic;
 
       if (dirtyrect)
         dispchars[j].attr.attr |= ATTR_INVALID;
     }
     if (prevdirtyitalic) {
-      // clear italic overhang into right padding border
+      // clear overhang into right padding border
       win_text(term.cols, i, W(" "), 1, CATTR_DEFAULT, (cattr*)&CATTR_DEFAULT, line->lattr | LATTR_CLEARPAD, false);
+    }
+    if (firstdirtyitalic) {
+      // clear overhang into left padding border
+      win_text(-1, i, W(" "), 1, CATTR_DEFAULT, (cattr*)&CATTR_DEFAULT, line->lattr | LATTR_CLEARPAD, false);
     }
 
    /*

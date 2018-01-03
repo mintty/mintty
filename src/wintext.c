@@ -1894,9 +1894,10 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     .top = y, .bottom = y + cell_height,
     .left = x, .right = min(x + width, cell_width * term.cols + PADDING)
   };
-  if (attr.attr & ATTR_ITALIC) {
+  RECT box0 = box;
+  if (ldisp2) {  // e.g. attr.attr & ATTR_ITALIC
     box.right += cell_width;
-    //box.left -= cell_width;
+    box.left -= cell_width;
   }
   if (clearpad)
     box.right += PADDING;
@@ -1984,7 +1985,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   bool underlaid = false;
   void clear_run() {
     if (!underlaid) {
-      ExtTextOutW(dc, xt, yt, eto_options | ETO_OPAQUE, &box, W(" "), 1, dxs);
+      ExtTextOutW(dc, xt, yt, eto_options | ETO_OPAQUE, &box0, W(" "), 1, dxs);
 
       underlaid = true;
     }
