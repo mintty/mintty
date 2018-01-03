@@ -1691,6 +1691,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   bool clearpad = lattr & LATTR_CLEARPAD;
   trace_line("win_text:");
 
+  bool ldisp1 = !!(lattr & LATTR_DISP1);
   bool ldisp2 = !!(lattr & LATTR_DISP2);
   lattr &= LATTR_MODE;
 
@@ -2068,6 +2069,13 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     }
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
+  }
+
+ /* Background for overhang overlay */
+  if (ldisp1) {
+    if (!underlaid)
+      clear_run();
+    return;
   }
 
  /* DEC Tech adjustments */
