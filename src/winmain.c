@@ -422,7 +422,8 @@ win_to_top(HWND top_wnd)
   SetForegroundWindow(top_wnd);
   // SetActiveWindow(top_wnd);
 
-  ShowWindow(top_wnd, SW_RESTORE);
+  if (IsIconic(top_wnd))
+    ShowWindow(top_wnd, SW_RESTORE);
 }
 
 static HWND first_wnd, last_wnd;
