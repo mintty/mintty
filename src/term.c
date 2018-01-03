@@ -1458,6 +1458,13 @@ term_paint(void)
 
     void out_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl)
     {
+#ifdef debug_out_text
+      wchar t[len + 1]; wcsncpy(t, text, len); t[len] = 0;
+      for (int i = len - 1; i >= 0 && t[i] == ' '; i--)
+        t[i] = 0;
+      if (*t)
+        printf("out <%ls>\n", t);
+#endif
       if (attr.attr & (ATTR_ITALIC | TATTR_COMBDOUBL)) {
 #ifdef use_italic_chunk_stack
         push_text(x, text, len, attr, textattr, has_rtl);
@@ -1490,7 +1497,7 @@ term_paint(void)
 #define dont_debug_run
 
 #ifdef debug_run
-#define trace_run(tag)	({if (tchar & 0xFF00) printf("break (%s) %04X\n", tag, tchar);})
+#define trace_run(tag)	({/*if (tchar & 0xFF00)*/ if (tchar != ' ') printf("break (%s) %04X\n", tag, tchar);})
 #else
 #define trace_run(tag)	(void)0
 #endif
@@ -1527,7 +1534,8 @@ term_paint(void)
         if (!is_sep_class(tbc) && !is_sep_class(bc))
           // break at RTL and other changes to avoid glyph confusion (#285)
           trace_run("bcs"), break_run = true;
-        else if (is_punct_class(tbc) || is_punct_class(bc))
+        //else if (is_punct_class(tbc) || is_punct_class(bc))
+        else if ((tbc == EN) ^ (bc == EN))
           // break at digit to avoid adaptation to script style
           trace_run("bcp"), break_run = true;
       }
