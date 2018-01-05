@@ -1886,15 +1886,24 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
  /* Array with offsets between neighbouring characters */
   int dxs[len];
   int dx = combining ? 0 : char_width;
-  for (int i = 0; i < len; i++)
-    dxs[i] = dx;
+  for (int i = 0; i < len; i++) {
+    if (is_low_surrogate(text[i]))
+      // This does not have the expected effect so we keep splitting up 
+      // non-BMP characters into single character chunks for now (term.c)
+      dxs[i] = 0;
+    else
+      dxs[i] = dx;
+  }
 
+ /* Character cells length */
   int ulen = 0;
   for (int i = 0; i < len; i++) {
     ulen++;
     if (char1ulen(&text[i]) == 2)
       i++;  // skip low surrogate;
   }
+
+ /* Painting box */
   int width = char_width * (combining ? 1 : ulen);
   RECT box = {
     .top = y, .bottom = y + cell_height,

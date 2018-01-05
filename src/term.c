@@ -1456,6 +1456,14 @@ term_paint(void)
     }
 #endif
 
+#define dont_debug_run
+
+#define dont_debug_out_text
+
+#ifdef debug_run
+# define debug_out_text
+#endif
+
     void out_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl)
     {
 #ifdef debug_out_text
@@ -1494,10 +1502,9 @@ term_paint(void)
       if ((dispchars[j].attr.attr ^ tattr.attr) & ATTR_WIDE)
         dirty_line = true;
 
-#define dont_debug_run
-
 #ifdef debug_run
-#define trace_run(tag)	({/*if (tchar & 0xFF00)*/ if (tchar != ' ') printf("break (%s) %04X\n", tag, tchar);})
+#define trace_run(tag)	({/*if (tchar & 0xFF00)*/ if (tchar != ' ') printf("break (%s) (%04X)%04X\n", tag, j > 0 ? newchars[j - 1].chr : 0, tchar);})
+
 #else
 #define trace_run(tag)	(void)0
 #endif
@@ -1506,11 +1513,35 @@ term_paint(void)
                        || (tattr.truefg != attr.truefg)
                        || (tattr.truebg != attr.truebg);
 
+      inline bool has_comb(termchar * tc)
+      {
+        if (!tc->cc_next)
+          return false;
+        if (!is_high_surrogate(tc->chr))
+          return true;
+        tc += tc->cc_next;
+        return tc->cc_next;
+      }
+
      /*
       * Break on both sides of any combined-character cell.
       */
-      if (d->cc_next || (j > 0 && d[-1].cc_next))
+      if (has_comb(d) || (j > 0 && has_comb(&d[-1])))
         trace_run("cc"), break_run = true;
+
+#ifdef keep_non_BMP_characters_together_in_one_chunk
+     /*
+      * Break when switching BMP/non-BMP.
+      */
+      if (j > 0 && is_high_surrogate(d->chr) ^ is_high_surrogate(d[-1].chr))
+        trace_run("bmp"), break_run = true;
+#else
+     /*
+      * Break on both sides of non-BMP character.
+      */
+      if (j > 0 && (is_high_surrogate(d->chr) || is_high_surrogate(d[-1].chr)))
+        trace_run("bmp"), break_run = true;
+#endif
 
       if (!dirty_line) {
         if (dispchars[j].chr == tchar &&
