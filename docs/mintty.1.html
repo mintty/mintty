@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Sat Dec 16 19:45:36 2017 -->
+<!-- CreationDate: Mon Jan  8 22:09:23 2018 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -541,7 +541,7 @@ extending xterm syntax by an optional monitor number.</p>
 
 
 <p>Sets Log, the log file name. Use <b>-l</b> to both set
-the log file name and enable loggin.</p></td></tr>
+the log file name and enable logging.</p></td></tr>
 <tr valign="top" align="left">
 <td width="11%"></td>
 <td width="6%">
@@ -1993,6 +1993,14 @@ a single <b>%d</b>, the log file name will be constructed by
 calling strftime(3) on the pattern; note that this is likely
 to fail if a placeholder expands with &quot;/&quot;
 (%D).</p>
+
+<p style="margin-left:22%; margin-top: 1em">If the log file
+name is a relative path name, it is relative from the
+working directory mintty was started in. If mintty was
+started from a Windows shortcut (desktop/start menu) with no
+working directory (&quot;Start in:&quot;) specified, mintty
+changes to the user&rsquo;s home directory first, except in
+WSL support mode where %LOCALAPPDATA%/Temp is used.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Note: If the
 requested log file exists already, mintty does not overwrite

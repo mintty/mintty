@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-12-16 20:02+0100\n"
+"POT-Creation-Date: 2018-01-08 22:10+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: charset.c:213 charset.c:224 winmain.c:3013
+#: charset.c:213 charset.c:224 winmain.c:3026
 msgid "(Default)"
 msgstr ""
 
@@ -962,32 +962,32 @@ msgstr ""
 msgid "Send Break"
 msgstr ""
 
-#: winmain.c:1622
+#: winmain.c:1626
 msgid "Processes are running in session:"
 msgstr ""
 
-#: winmain.c:1623
+#: winmain.c:1627
 msgid "Close anyway?"
 msgstr ""
 
-#: winmain.c:2290
+#: winmain.c:2295
 msgid "Try '--help' for more information"
 msgstr ""
 
-#: winmain.c:2298
+#: winmain.c:2303
 msgid "Could not load icon"
 msgstr ""
 
-#: winmain.c:2811
+#: winmain.c:2822
 msgid "Usage:"
 msgstr ""
 
-#: winmain.c:2812
+#: winmain.c:2823
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr ""
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:2815
+#: winmain.c:2826
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -1020,39 +1020,39 @@ msgid ""
 "See manual page for further command line options and configuration.\n"
 msgstr ""
 
-#: winmain.c:3013
+#: winmain.c:3026
 msgid "WSL distribution '%s' not found"
 msgstr ""
 
-#: winmain.c:3033
+#: winmain.c:3046
 msgid "Duplicate option '%s'"
 msgstr ""
 
-#: winmain.c:3041
+#: winmain.c:3054
 msgid "Unknown option '%s'"
 msgstr ""
 
-#: winmain.c:3043
+#: winmain.c:3056
 msgid "Option '%s' requires an argument"
 msgstr ""
 
-#: winmain.c:3070
+#: winmain.c:3083
 msgid "Syntax error in position argument '%s'"
 msgstr ""
 
-#: winmain.c:3081
+#: winmain.c:3094
 msgid "Syntax error in size argument '%s'"
 msgstr ""
 
-#: winmain.c:3205
+#: winmain.c:3218
 msgid "Syntax error in geometry argument '%s'"
 msgstr ""
 
-#: winmain.c:3251
+#: winmain.c:3281
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr ""
 
-#: winmain.c:3436
+#: winmain.c:3466
 msgid "Using default title due to invalid characters in program name"
 msgstr ""
 
