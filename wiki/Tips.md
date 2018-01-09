@@ -102,9 +102,9 @@ On Windows 7, mintty may also be used as a terminal for the
 Subsystem for UNIX-based applications (SUA), also known as Interix.
 For the mintty session launcher, this can be configured for the 
 available shells as follows (concatened with ‘;’ separator for multiple targets):
-* `SessionCommands=Interix Korn Shell:winpty 'C:\Windows\posix.exe' /u /c /bin/ksh -l`
-* `SessionCommands=Interix SVR-5 Korn Shell:winpty 'C:\Windows\posix.exe' /u /p /svr-5/bin/ksh /c -ksh`
-* `SessionCommands=Interix C Shell:winpty 'C:\Windows\posix.exe' /u /c /bin/csh -l`
+* `SessionCommands=Interix Korn Shell:/bin/winpty C:\Windows\posix.exe /u /c /bin/ksh -l`
+* `SessionCommands=Interix SVR-5 Korn Shell:/bin/winpty posix /u /p /svr-5/bin/ksh /c -ksh`
+* `SessionCommands=Interix C Shell:/bin/winpty posix /u /c /bin/csh -l`
 
 For a desktop or start menu shortcut, the respective target command would 
 look like `X:\cygwin\bin\mintty.exe winpty` …
