@@ -2206,6 +2206,7 @@ static struct {
       else
         return result;
     }
+  }
 
  /*
   * Any messages we don't process completely above are passed through to
