@@ -2196,7 +2196,16 @@ static struct {
       break;
 #endif
     }
-  }
+
+    when WM_NCHITTEST: {
+      LRESULT result = DefWindowProcW(wnd, message, wp, lp);
+
+      if (result == HTCLIENT &&
+          (GetKeyState(VK_MENU) & 0x80) && (GetKeyState(VK_CONTROL) & 0x80))
+        return HTCAPTION;
+      else
+        return result;
+    }
 
  /*
   * Any messages we don't process completely above are passed through to
