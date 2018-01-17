@@ -2200,8 +2200,10 @@ static struct {
     when WM_NCHITTEST: {
       LRESULT result = DefWindowProcW(wnd, message, wp, lp);
 
+      // implement Ctrl+Alt+click to move window
       if (result == HTCLIENT &&
           (GetKeyState(VK_MENU) & 0x80) && (GetKeyState(VK_CONTROL) & 0x80))
+        // redirect click target from client area to caption
         return HTCAPTION;
       else
         return result;
