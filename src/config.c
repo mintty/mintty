@@ -146,6 +146,8 @@ const config default_cfg = {
   .bidi = 2,
   .disable_alternate_screen = false,
   .charwidth = 0,
+  .emojis = 0,
+  .emoji_placement = 0,
   .app_id = W(""),
   .app_name = W(""),
   .app_launch_cmd = W(""),
@@ -197,7 +199,7 @@ typedef enum {
   OPT_BOOL, OPT_MOD, OPT_TRANS, OPT_CURSOR, OPT_FONTSMOOTH, OPT_FONTRENDER,
   OPT_MIDDLECLICK, OPT_RIGHTCLICK, OPT_SCROLLBAR, OPT_WINDOW, OPT_HOLD,
   OPT_INT, OPT_COLOUR, OPT_STRING, OPT_WSTRING,
-  OPT_CHARWIDTH,
+  OPT_CHARWIDTH, OPT_EMOJIS, OPT_EMOJI_PLACEMENT,
   OPT_TYPE_MASK = 0x1F,
   OPT_LEGACY = 0x20,
   OPT_KEEPCR = 0x40
@@ -359,6 +361,8 @@ options[] = {
   {"Bidi", OPT_INT, offcfg(bidi)},
   {"NoAltScreen", OPT_BOOL, offcfg(disable_alternate_screen)},
   {"Charwidth", OPT_CHARWIDTH, offcfg(charwidth)},
+  {"Emojis", OPT_EMOJIS, offcfg(emojis)},
+  {"EmojiPlacement", OPT_EMOJI_PLACEMENT, offcfg(emoji_placement)},
   {"AppID", OPT_WSTRING, offcfg(app_id)},
   {"AppName", OPT_WSTRING, offcfg(app_name)},
   {"AppLaunchCmd", OPT_WSTRING, offcfg(app_launch_cmd)},
@@ -427,6 +431,24 @@ static opt_val
     {"locale", 0},
     {"unicode", 1},
     {"ambig-wide", 2},
+    {0, 0}
+  },
+  [OPT_EMOJIS] = (opt_val[]) {
+    {"none", EMOJIS_NONE},
+    {"noto", EMOJIS_NOTO},
+    {"emojione", EMOJIS_ONE},
+    {"apple", EMOJIS_APPLE},
+    {"google", EMOJIS_GOOGLE},
+    {"twitter", EMOJIS_TWITTER},
+    {"facebook", EMOJIS_FB},
+    {"samsung", EMOJIS_SAMSUNG},
+    {"windows", EMOJIS_WINDOWS},
+    {0, 0}
+  },
+  [OPT_EMOJI_PLACEMENT] = (opt_val[]) {
+    {"stretch", EMPL_STRETCH},
+    {"align", EMPL_ALIGN},
+    {"middle", EMPL_MIDDLE},
     {0, 0}
   },
   [OPT_MOD] = (opt_val[]) {

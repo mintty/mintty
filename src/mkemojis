@@ -1,0 +1,48 @@
+#! /bin/bash
+
+case "$1" in
+
+base)
+
+# filter the extracted lists by replacing the first ";" with "#" to 
+# enable proper range recognition by uniset
+grep "; *Emoji_Presentation *#" emoji-data.txt |
+	sed -e "s/;/#/" > .emoji.pres
+grep "; *Extended_Pictographic *#" emoji-data.txt |
+	sed -e "s/;/#/" > .emoji.pict
+
+sed -e "s/ FE0E *;/;/" -e t -e d emoji-variation-sequences.txt |
+	sed -e "s/;/#/" > .emoji.text
+sed -e "s/ FE0F *;/;/" -e t -e d emoji-variation-sequences.txt |
+	sed -e "s/;/#/" > .emoji.emoj
+
+sed -e "s/[ ;].*//" emoji-sequences.txt emoji-zwj-sequences.txt |
+	sed -e "s/;/#/" > .emoji.base
+
+echo tagging emojis >&2
+for tag in pres pict text emoj base
+do	uniset +.emoji.$tag table |
+	sed -e "/^.... / s/^/0/" -e "s/#.*//" -e "s/ *$/ $tag/" > .emoji_$tag
+done
+
+join="join -a 1 -a 2"
+
+echo joining emojis >&2
+$join <( $join <( $join <( $join .emoji_base .emoji_text) .emoji_emoj) .emoji_pres) .emoji_pict |
+sed -e "s/ / | EM_/g" -e "s/\([^ ]*\)\(.*\)/  {0, 0\2, 0x\1},/"
+
+;;
+
+seqs)
+
+sed -e "s/;.*//" -e "s/ *$//" -e "/^#/ d" -e "/^$/ d" emoji-sequences.txt emoji-zwj-sequences.txt |
+sed -e "/^.... / s/^/0/" -e "s/ /, 0x/g" -e "s/^/  {0, {0x/" -e "s/$/}},/" |
+sed -e "s/\(0x[0-9A-F]*\)/ee(\1)/g" |
+sort | uniq
+# Note that by sorting order of ',' and '}', 
+# shorter sequences are sorted behind longer sequences, 
+# which is an important property for proper matching.
+
+;;
+
+esac

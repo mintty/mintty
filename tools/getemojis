@@ -1,0 +1,81 @@
+#! /bin/sh
+
+# This scripts extracts Emojis graphics (.png format) from a copy of
+# http://www.unicode.org/emoji/charts-11.0/full-emoji-list.html
+# into the following categories:
+#	1 apple
+#	2 google
+#	3 twitter
+#	4 emojione
+#	5 facebook
+#	6 samsung
+#	7 windows
+#	0 common
+
+echo "Warning: this may take a few hours on Cygwin" >&2
+
+LC_ALL=C
+export LC_ALL
+
+fullemojis="${@-full-emoji-list.html}"
+
+total=`grep -e "name='\([^']*\)'.*U+" "$fullemojis" | wc -l`
+export total
+
+(
+echo "Extracting $total emojis from $fullemojis" >&2
+
+cat <<\/EOS
+n=0
+
+name () {
+  ename=$1
+  style=0
+  n=$(( $n + 1 ))
+  p=$(( ${n}00 / $total ))
+  echo "emoji $ename (${p}%)" >&2
+}
+
+img0 () {
+  echo " common 0/$ename.png" >&2
+  echo "$1" | base64 -d > 0/$ename.png
+}
+
+img () {
+  style=$(( $style + 1 ))
+  if [ $style -le 7 ]
+  then echo "$1" | base64 -d > $style/$ename.png
+  fi
+}
+
+imgskip () {
+  style=$(( $style + 1 ))
+  if [ $style -le 7 ]
+  then echo " skip $style/$ename.png" >&2
+  fi
+}
+
+/EOS
+
+mkdir -p 0 1 2 3 4 5 6 7
+link () {
+  [ -e "$2" ] || ln -s "$1" "$2"
+}
+link 1 apple
+link 2 google
+link 3 twitter
+link 4 emojione
+link 5 facebook
+link 6 samsung
+link 7 windows
+link 0 common
+
+cat "$fullemojis" |
+sed -e "s/^.*name='\([^']*\)'.*U+.*/name \1/" -e "t name" \
+    -e "s/.*—.*/imgskip/" -e t \
+    -e "s@^.*….*src='data:image/png;base64,\([^']*\)'.*@img0 \1@" -e t \
+    -e "s@^.*src='data:image/png;base64,\([^']*\)'.*@img \1@" -e t \
+    -e d \
+    -e ": name" \
+    -e "s,_,-,g"
+) | sh

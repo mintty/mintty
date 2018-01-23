@@ -732,7 +732,7 @@ provide visible feedback for the changes.
 
 .SS Embedding graphics in terminal output
 
-The new support of the SIXEL feature facilitates a range of applications 
+The SIXEL graphics support feature facilitates a range of applications 
 that integrate graphic images in the terminal, animated graphics, and even 
 video and interactive gaming applications.
 
@@ -740,6 +740,15 @@ An example of the benefit of this feature is the output of `gnuplot`
 with the command
 .br
 GNUTERM=sixel gnuplot -e "splot [x=-3:3] [y=-3:3] sin(x) * cos(y)"
+
+.SS Emoji display support
+
+Mintty supports display of presentation and pictographic emojis, 
+style variation selectors and emoji sequences, as defined by Unicode.
+The option \fBEmojis\fP can choose among sets of emoji graphics if 
+deployed in a mintty configuration directory.
+See the Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips#emojis\fP 
+about deployment of emoji graphics for mintty.
 
 .SS Diagnostic support
 
@@ -1671,6 +1680,50 @@ likely based on a more up-to-date Unicode version.
 \(en \fBambig-wide\fP Use built-in width properties, 
 with ambiguous-width characters assumed to be wide.
 (Corresponds to the xterm resource \fBcjkWidth\fP.)
+
+.TP
+\fBEmoji support\fP (Emojis=none)
+With this option, mintty emoji support is enabled and the emojis style 
+is chosen. Mintty will match output for valid emoji sequences, 
+emoji style selectors and pictographic or presentation forms.
+(Note that it may be useful to set \fBCharwidth=unicode\fP in addition.)
+
+Supported styles are:
+.br
+\(en \fBnone\fP Emoji support disabled; symbols are taken from the font.
+.br
+\(en \fBemojione\fP Use EmojiOne graphics.
+.br
+\(en \fBnoto\fP Use graphics from the Noto Emoji font.
+.br
+\(en \fBapple\fP Use Apple emoji graphics.
+.br
+\(en \fBgoogle\fP Use Google emoji graphics.
+.br
+\(en \fBtwitter\fP Use Twitter emoji graphics.
+.br
+\(en \fBfacebook\fP Use Facebook emoji graphics.
+.br
+\(en \fBsamsung\fP Use Samsung emoji graphics.
+.br
+\(en \fBwindows\fP Use Windows emoji graphics.
+
+Note that all style options only work if the respective emoji graphics 
+repository is deployed in a mintty resource directory.
+See the Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips#emojis\fP 
+for details.
+
+.TP
+\fBEmoji placement\fP (EmojiPlacement=stretch)
+Emojis are displayed in the rectangular character cell group determined 
+by the cumulated width of the emoji sequence characters. The following 
+options are provided to tune their display:
+.br
+\(en \fBstretch\fP Emojis are scaled to fit in their display area.
+.br
+\(en \fBalign\fP Emojis are aligned in their display area.
+.br
+\(en \fBmiddle\fP Emojis are centered in their display area.
 
 .TP
 \fBBidirectional rendering\fP (Bidi=2)

@@ -1,3 +1,4 @@
+  * Emoji support (wsltty#82, #600, ~#671, ~#430).
   * Ctrl+Alt+mouse-click/drag moves the window (#729).
 
 ### 2.8.3 (8 Jan 2018) ###

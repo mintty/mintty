@@ -13,7 +13,10 @@ enum { MC_VOID, MC_PASTE, MC_EXTEND, MC_ENTER };
 enum { RC_MENU, RC_PASTE, RC_EXTEND, RC_ENTER };
 enum { TR_OFF = 0, TR_LOW = 16, TR_MEDIUM = 32, TR_HIGH = 48, TR_GLASS = -1 };
 enum { FLASH_FRAME = 1, FLASH_BORDER = 2, FLASH_FULL = 4, FLASH_REVERSE = 8 };
-
+enum { EMOJIS_NONE = 0, EMOJIS_ONE = 1, EMOJIS_NOTO = 2, EMOJIS_APPLE = 3, 
+       EMOJIS_GOOGLE = 4, EMOJIS_TWITTER = 5, EMOJIS_FB = 6, 
+       EMOJIS_SAMSUNG = 7, EMOJIS_WINDOWS = 8 };
+enum { EMPL_STRETCH = 0, EMPL_ALIGN = 1, EMPL_MIDDLE = 2 };
 
 // Colour values.
 
@@ -142,6 +145,8 @@ typedef struct {
   int bidi;
   bool disable_alternate_screen;
   char charwidth;
+  char emojis;
+  char emoji_placement;
   wstring app_id;
   wstring app_name;
   wstring app_launch_cmd;

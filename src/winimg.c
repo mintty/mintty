@@ -392,3 +392,142 @@ winimg_paint(void)
   }
   ReleaseDC(wnd, dc);
 }
+
+
+#if CYGWIN_VERSION_API_MINOR >= 74
+
+#include <w32api/wtypes.h>
+#include <w32api/gdiplus/gdiplus.h>
+#include <w32api/gdiplus/gdiplusflat.h>
+
+#define dont_debug_gdiplus
+
+#ifdef debug_gdiplus
+static void
+gpcheck(char * tag, GpStatus s)
+{
+  static char * gps[] = {
+    "Ok",
+    "GenericError",
+    "InvalidParameter",
+    "OutOfMemory",
+    "ObjectBusy",
+    "InsufficientBuffer",
+    "NotImplemented",
+    "Win32Error",
+    "WrongState",
+    "Aborted",
+    "FileNotFound",
+    "ValueOverflow",
+    "AccessDenied",
+    "UnknownImageFormat",
+    "FontFamilyNotFound",
+    "FontStyleNotFound",
+    "NotTrueTypeFont",
+    "UnsupportedGdiplusVersion",
+    "GdiplusNotInitialized",
+    "PropertyNotFound",
+    "PropertyNotSupported",
+    "ProfileNotFound",
+  };
+  if (s)
+    printf("[%s] %d %s\n", tag, s, s >= 0 && s < lengthof(gps) ? gps[s] : "?");
+}
+#else
+#define gpcheck(tag, s)	(void)s
+#endif
+
+void
+win_emoji_show(int x, int y, wchar * efn, int elen, ushort lattr)
+{
+  GpStatus s;
+
+  static GdiplusStartupInput gi = (GdiplusStartupInput){1, NULL, FALSE, FALSE};
+  static ULONG_PTR gis = 0;
+  if (!gis) {
+    s = GdiplusStartup(&gis, &gi, NULL);
+    gpcheck("startup", s);
+  }
+
+  bool use_stream = true;
+  IStream * fs = 0;
+  if (use_stream) {
+    s = GdipCreateStreamOnFile(efn, 0 /* FileMode.Open */, &fs);
+    gpcheck("stream", s);
+  }
+  else
+    s = NotImplemented;
+
+  GpImage * img = 0;
+  if (s == Ok) {
+    s = GdipLoadImageFromStream(fs, &img);
+    gpcheck("load stream", s);
+  }
+  else {
+    // This is reported to generate a memory leak, so rather use the stream.
+    s = GdipLoadImageFromFile(efn, &img);
+    gpcheck("load file", s);
+  }
+
+  int col = PADDING + x * cell_width;
+  int row = PADDING + y * cell_height;
+  if ((lattr & LATTR_MODE) >= LATTR_BOT)
+    row -= cell_height;
+  int w = elen * cell_width;
+  if ((lattr & LATTR_MODE) != LATTR_NORM)
+    w *= 2;
+  int h = cell_height;
+  if ((lattr & LATTR_MODE) >= LATTR_TOP)
+    h *= 2;
+
+  if (cfg.emoji_placement) {
+    uint iw, ih;
+    s = GdipGetImageWidth(img, &iw);
+    gpcheck("width", s);
+    s = GdipGetImageHeight(img, &ih);
+    gpcheck("height", s);
+    // if ih/iw > h/w, make w smaller; if iw/ih > w/h, make h smaller;
+    // so that ih/iw == h/w
+    if (ih * w > h * iw) {
+      int w0 = w;
+      w = h * iw / ih;
+      if (cfg.emoji_placement == EMPL_MIDDLE) {
+        // horizontally center
+        col += (w0 - w) / 2;
+      }
+    }
+    else if (iw * h > w * ih) {
+      int h0 = h;
+      h = w * ih / iw;
+      // vertically center
+      row += (h0 - h) / 2;
+    }
+  }
+
+  GpGraphics * gr;
+  s = GdipCreateFromHDC(GetDC(wnd), &gr);
+  gpcheck("hdc", s);
+  s = GdipDrawImageRect(gr, img, col, row, w, h);
+  gpcheck("draw", s);
+  s = GdipFlush(gr, FlushIntentionFlush);
+  gpcheck("flush", s);
+
+  s = GdipDeleteGraphics(gr);
+  gpcheck("delete gr", s);
+  s = GdipDisposeImage(img);
+  gpcheck("dispose img", s);
+  if (fs) {
+    // Release stream resources, close file.
+    fs->lpVtbl->Release(fs);
+  }
+}
+
+#else
+
+void win_emoji_show(int x, int y, wchar * efn, int elen, ushort lattr)
+{
+  (void)x; (void)y; (void)efn; (void)elen; (void)lattr;
+}
+
+#endif
+

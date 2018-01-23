@@ -466,7 +466,7 @@ selected using the new Apply button in the font selection menu.
 
 Fonts not listed in the menu can be configured with the Font setting.
 
-The old font selection and menu format can be chosen with setting OldFontMenu.
+The old font selection and menu format can be chosen with setting `FontMenu=1`.
 
 If you are missing certain characters, e.g. as used for the popular “Powerline” plugin,
 the reason may be that specifically designed characters are being addressed 
@@ -607,6 +607,52 @@ purpose are default and ANSI foreground colours, palette and true-colour
 foreground colours, dim mode and manual bold mode (BoldAsFont=false); 
 background colours and inverse mode are ignored.
 <img align=top src=https://github.com/mintty/mintty/wiki/mintty-coloured-combinings.png>
+
+
+## Emojis ##
+
+Mintty supports display of presentation and pictographic emojis, 
+style variation selectors and emoji sequences, as defined by Unicode.
+
+The option `Emojis` can choose among sets of emoji graphics if 
+deployed in a mintty configuration directory.
+With this option, mintty emoji support is enabled and the emojis style is chosen. 
+Mintty will match output for valid emoji sequences, 
+emoji style selectors and pictographic or presentation forms.
+
+Note that it may be useful to set `Charwidth=unicode` in addition.
+
+Emojis are displayed in the rectangular character cell group determined 
+by the cumulated width of the emoji sequence characters. The option 
+`EmojiPlacement` can adjust the location of emoji graphis within that area.
+
+### Installing emoji resources ###
+
+Mintty does not bundle actual emoji graphics with its package.
+You will have to download and deploy them yourself.
+
+Emoji data can be found at the following sources:
+* [EmojiOne](https://www.emojione.com/)
+  * Free Download for your own use, PNG Files, download e.g. 128x128px zip
+  * Deploy the preferred subdirectory (e.g. 128) as `emojione`
+* [Noto Emoji font](https://github.com/googlei18n/noto-emoji), subdirectory `png/128`
+  * “Clone or download” the repository or download a release archive
+  * Deploy subdirectory noto-emoji/png/128 as `noto`
+* [Unicode.org](http://www.unicode.org/emoji/charts-11.0/) Full Emoji List (~50MB)
+  * Download the [Full Emoji List](http://www.unicode.org/emoji/charts-11.0/full-emoji-list.html) (with all emoji data embedded)
+  * Use the [extraction script `getemojis`](getemojis) to extract emoji data
+  * Deploy the desired subdirectories (e.g. `apple`)
+* [Emoji data and images](https://github.com/iamcal/emoji-data)
+  * “Clone or download” the repository or download a release archive
+  * Deploy subdirectories `img-*` as appropriate (e.g. img-apple-64 as `apple`)
+
+“Deploy” above means move, link, copy or hard-link the respective subdirectory 
+into mintty configuration resource subdirectory `emojis`, e.g.
+* mv noto-emoji/png/128 ~/.config/mintty/emojis/noto
+* ln -s "$PWD"/noto-emoji/png/128 ~/.config/mintty/emojis/noto
+* cp -rl noto-emoji/png/128 ~/.config/mintty/emojis/noto
+Use your preferred configuration directory, e.g.
+* cp -rl noto-emoji/png/128 "$APPDATA"/mintty/emojis/noto
 
 
 ## Passing arguments from an environment with different character set ##

@@ -5,6 +5,7 @@
 # - clean: Delete generated files.
 
 # make parameter CCOPT, e.g. for make CCOPT=-Wno-unused
+# make parameter LDOPT, e.g. for make LDOPT=-lnew-library
 
 #############################################################################
 # Variables intended for setting on the make command line.
@@ -98,7 +99,10 @@ scriptlib=-lusp10
 #downldlib=-lurlmon
 #downldlib="${SYSTEMROOT}/System32/urlmon.dll"
 downldlib=
-extralibs=$(scriptlib) $(downldlib)
+ifneq ($(platform), msys)
+  emojilib=-lgdiplus
+endif
+extralibs=$(scriptlib) $(downldlib) $(emojilib)
 LDFLAGS := -L$(shell $(CC) -print-file-name=w32api) -static-libgcc
 LDLIBS := -mwindows $(extralibs) -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -luuid
 #override LDFLAGS += -L$(shell $(CC) -print-file-name=w32api) -static-libgcc
@@ -141,7 +145,7 @@ $(BINDIR)/%.o: %.rc %.h %.mft
 exe := $(NAME).exe
 exe: $(exe)
 $(exe): $(objs)
-	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
+	$(CC) $(LDFLAGS) $^ $(LDLIBS) $(LDOPT) -o $@
 	#-du -b $@
 
 bin := $(BINDIR)/$(NAME).exe
@@ -149,7 +153,7 @@ bin: $(BINDIR) $(bin)
 $(BINDIR):
 	mkdir -p $(BINDIR)
 $(bin): $(bins)
-	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
+	$(CC) $(LDFLAGS) $^ $(LDLIBS) $(LDOPT) -o $@
 	cp -f $@ $(BINFOLDER)/		# for 'dobin' install in .cygport
 	# support simpler debugging:
 	-test -f `basename $@` && cp -fp $@ ./ || true
@@ -206,8 +210,20 @@ bidiclasses.t:	# UnicodeData.txt
 
 unicode:	UnicodeData.txt Blocks.txt EastAsianWidth.txt
 
+full-emoji-list.html:
+	$(WGET) http://www.unicode.org/emoji/charts-11.0/$@
+
+emoji-%.txt:
+	$(WGET) http://unicode.org/Public/emoji/11.0/$@
+
 %.txt:
 	$(WGET) http://unicode.org/Public/UNIDATA/$@
+
+emojibase.t:	emoji-data.txt emoji-variation-sequences.txt emoji-sequences.txt emoji-zwj-sequences.txt
+	bash ./mkemojis base > $@
+
+emojiseqs.t:	emoji-sequences.txt emoji-zwj-sequences.txt
+	bash ./mkemojis seqs > $@
 
 #compose_list=/usr/share/X11/locale/en_US.UTF-8/Compose
 #keysymdefs=/usr/include/X11/keysymdef.h
