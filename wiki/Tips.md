@@ -89,10 +89,15 @@ To help reproduce the installation manually, for users of cygwin or msys2:
 Replace `X:\cygwin64` with your cygwin or msys2 root directory path 
 and `Linux_Distribution` with your preferred distribution. The suitable 
 icon location for each respective distribution is not easily found; the 
-standalone package would find that for you.
-Instead of `-`, you may add an explicit invocation target like 
-`/bin/wslbridge -t -C~ /bin/bash -l` to select your favourite shell, 
-ask for a login shell (`-l`) or set a start directory (`-C`) if desired.
+standalone package would set that up for you in the shortcuts. For other 
+invocation (cygwin or Windows command line), mintty finds the suitable 
+WSL icon itself.
+
+At the end of the `mintty --WSL` invocation line, you may add an explicit 
+WSL shell invocation like `/bin/bash -l` to select your favourite shell or 
+ask for a login shell (`-l`), or set a start directory (`-C`, before any 
+shell command) if desired.
+
 If no start directory is otherwise selected, the “Start in:” directory 
 of the shortcut may be set to `%USERPROFILE%`.
 
@@ -642,9 +647,12 @@ Emoji data can be found at the following sources:
   * Download the [Full Emoji List](http://www.unicode.org/emoji/charts-11.0/full-emoji-list.html) (with all emoji data embedded)
   * Use the [extraction script `getemojis`](getemojis) to extract emoji data
   * Deploy the desired subdirectories (e.g. `apple`)
+  * Includes apple, emojione, facebook, google, twitter, samsung, windows emojis (and some limited low-resolution sets that we shall ignore)
 * [Emoji data and images](https://github.com/iamcal/emoji-data)
-  * “Clone or download” the repository or download a release archive
+  * “Clone or download” the repository or download a release archive, or:
+  * on Linux, `npm install emoji-datasource-apple` etc as shown on the project page
   * Deploy subdirectories `img-*` as appropriate (e.g. img-apple-64 as `apple`)
+  * Includes apple, emojione-2D, facebook, facebook messenger (discontinued), google, twitter emojis
 
 “Deploy” above means move, link, copy or hard-link the respective subdirectory 
 into mintty configuration resource subdirectory `emojis`, e.g.
@@ -653,6 +661,7 @@ into mintty configuration resource subdirectory `emojis`, e.g.
 * cp -rl noto-emoji/png/128 ~/.config/mintty/emojis/noto
 Use your preferred configuration directory, e.g.
 * cp -rl noto-emoji/png/128 "$APPDATA"/mintty/emojis/noto
+<img align=top src=https://github.com/mintty/mintty/wiki/mintty-emojis.png>
 
 
 ## Passing arguments from an environment with different character set ##
