@@ -1,4 +1,5 @@
 #include "minibidi.h"
+#include "term.h"  // UCSWIDE
 
 /************************************************************************
  * $Id: minibidi.c 6910 2006-11-18 15:10:48Z simon $
@@ -489,7 +490,11 @@ do_bidi(bidi_char * line, int count)
   uchar tempType;
   int i, j, yes, bover;
 
-  uchar bidi_class_of(int i) { return bidi_class(line[i].wc); }
+  uchar bidi_class_of(int i) {
+    if (i && line[i].wc == UCSWIDE)
+      i--;
+    return bidi_class(line[i].wc);
+  }
 
  /* Check the presence of R or AL types as optimization */
   yes = 0;
