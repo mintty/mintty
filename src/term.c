@@ -1597,6 +1597,9 @@ term_paint(void)
         tattr.attr &= ~ATTR_BLINK2;
       }
 
+#ifdef handle_emojis_in_loop_1
+      ... active code below
+#endif
      /* Match emoji sequences
       * and replace by emoji indicators
       */
@@ -1761,6 +1764,12 @@ term_paint(void)
     bool firstdirtyitalic = false;
     bool dirtyrect = false;
     for (int j = 0; j < term.cols; j++) {
+#ifdef handle_emojis_in_loop_2
+      termchar *d = chars + j;
+      cattr tattr = newchars[j].attr;
+      ... code from above
+#endif
+
       if (dispchars[j].attr.attr & DATTR_STARTRUN) {
         laststart = j;
         dirtyrect = false;
@@ -1819,49 +1828,6 @@ term_paint(void)
 
     displine->lattr = line->lattr;
 
-#define dont_use_italic_chunk_stack
-
-#ifdef use_italic_chunk_stack
-    static struct italic_chunk {
-      int x;
-      wchar * text;
-      int len;
-      cattr attr;
-      cattr * textattr;
-      bool has_rtl;
-    } * italic_stack = 0;
-    static int italic_chunks = 0;
-    static int italic_chunkmax = 0;
-
-#define dont_debug_italic_chunks
-
-    void push_text(int x, wchar * text, int len, cattr attr, cattr * textattr, bool has_rtl)
-    {
-#ifdef debug_italic_chunks
-      printf("%2d:%d++ <", i, italic_chunks);
-      for (int k = 0; k < len; k++)
-        printf("%lc", text[k]);
-      printf(">\n");
-#endif
-      if (italic_chunks >= italic_chunkmax) {
-        italic_chunkmax += 5;
-        if (italic_stack)
-          italic_stack = renewn(italic_stack, italic_chunkmax);
-        else
-          italic_stack = newn(struct italic_chunk, italic_chunkmax);
-      }
-      struct italic_chunk * icp = &italic_stack[italic_chunks++];
-      icp->x = x;
-      icp->text = newn(wchar, len);
-      wcsncpy(icp->text, text, len);
-      icp->len = len;
-      icp->attr = attr;
-      icp->textattr = newn(cattr, len);
-      for (int k = 0; k < len; k++)
-        icp->textattr[k] = textattr[k];
-      icp->has_rtl = has_rtl;
-    }
-#else
     // buffer for pending overlay output; for support of character overhang
     // (italics and wide glyphs), such chunks are output in two steps;
     // the first output paints the background (and possibly manual underline)
@@ -1881,7 +1847,6 @@ term_paint(void)
         ovl_len = 0;
       }
     }
-#endif
 
 #define dont_debug_run
 
@@ -1928,9 +1893,6 @@ term_paint(void)
 #endif
       }
       else if (attr.attr & (ATTR_ITALIC | TATTR_COMBDOUBL)) {
-#ifdef use_italic_chunk_stack
-        push_text(x, text, len, attr, textattr, has_rtl);
-#else
         win_text(x, y, text, len, attr, textattr, lattr | LATTR_DISP1, has_rtl);
         flush_text();
         ovl_x = x;
@@ -1941,7 +1903,6 @@ term_paint(void)
         memcpy(ovl_textattr, textattr, len * sizeof(cattr));
         ovl_lattr = lattr;
         ovl_has_rtl = has_rtl;
-#endif
       }
       else
         win_text(x, y, text, len, attr, textattr, lattr, has_rtl);
@@ -1952,6 +1913,10 @@ term_paint(void)
       cattr tattr = newchars[j].attr;
       wchar tchar = newchars[j].chr;
       //wchar tchar2 = j + 1 < term.cols ? d[1].chr : 0;
+
+#ifdef handle_emojis_in_loop_3
+      ... code from above
+#endif
 
       if ((dispchars[j].attr.attr ^ tattr.attr) & ATTR_WIDE)
         dirty_line = true;
@@ -2027,14 +1992,6 @@ term_paint(void)
       bc = tbc;
 
       if (break_run) {
-#ifdef debug_italic_chunks
-        if (*text > ' ' && textlen > 1) {
-          printf("%2d: ?? <", i);
-          for (int k = 0; k < textlen; k++)
-            printf("%lc", text[k]);
-          printf(">\n");
-        }
-#endif
         if (dirty_run && textlen)
           out_text(start, i, text, textlen, attr, textattr, line->lattr, has_rtl);
         start = j;
@@ -2123,46 +2080,7 @@ term_paint(void)
     }
     if (dirty_run && textlen)
       out_text(start, i, text, textlen, attr, textattr, line->lattr, has_rtl);
-#ifndef use_italic_chunk_stack
     flush_text();
-#else
-
-    for (int j = italic_chunks - 1; j >= 0; j--) {
-      struct italic_chunk * icp = &italic_stack[j];
-#ifdef debug_italic_chunks
-      printf("%2d:%d-- <", i, j);
-      for (int k = 0; k < icp->len; k++)
-        printf("%lc", icp->text[k]);
-      printf(">\n");
-#endif
-      cattr attr = icp->attr;
-      attr.attr &= ~ATTR_ITALIC;
-      int bglen = icp->len;
-      if (is_high_surrogate(icp->text[0])) {
-        // heuristic distinction: for non-BMP runs:
-        bglen = 1;
-      }
-      static wchar * bgspace = 0;
-      static int bgspaces = 0;
-      // provide a sufficient number of spaces for the background
-      if (bglen > bgspaces) {
-        if (bgspace)
-          bgspace = renewn(bgspace, bglen);
-        else
-          bgspace = newn(wchar, bglen);
-        for (int k = bgspaces; k < bglen; k++)
-          bgspace[k] = ' ';
-        bgspaces = bglen;
-      }
-      // background: non-italic
-      win_text(icp->x, i, bgspace, bglen, attr, icp->textattr, line->lattr | LATTR_DISP1, icp->has_rtl);
-      // foreground: transparent and with extended clipping box
-      win_text(icp->x, i, icp->text, icp->len, icp->attr, icp->textattr, line->lattr | LATTR_DISP2, icp->has_rtl);
-      free(icp->text);
-      free(icp->textattr);
-    }
-    italic_chunks = 0;
-#endif
 
     release_line(line);
   }
