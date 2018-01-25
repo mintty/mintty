@@ -3676,18 +3676,6 @@ main(int argc, char *argv[])
     SetWindowPos(wnd, null, 0, 0, 0, 0,
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
     trace_winsize("border_style");
-    if (cfg.window == SW_SHOWMAXIMIZED) {
-      // workaround for Windows failing to consider the taskbar properly 
-      // when maximizing without WS_CAPTION in style (#732)
-      RECT cr, wr;
-      GetClientRect(wnd, &cr);
-      GetWindowRect(wnd, &wr);
-      if (cr.top != wr.top || cr.bottom != wr.bottom || cr.left != wr.left || cr.right != wr.right) {
-        SetWindowPos(wnd, null, 
-                     cr.left, cr.top, cr.right - cr.left, cr.bottom - cr.top, 
-                     SWP_NOZORDER);
-      }
-    }
   }
 
   {
@@ -3785,7 +3773,23 @@ main(int argc, char *argv[])
   // Finally show the window!
   go_fullscr_on_max = (cfg.window == -1);
   default_size_token = true;  // prevent font zooming (#708)
-  ShowWindow(wnd, go_fullscr_on_max ? SW_SHOWMAXIMIZED : cfg.window);
+  int cmd = go_fullscr_on_max ? SW_SHOWMAXIMIZED : cfg.window;
+  if (border_style && cmd == SW_SHOWMAXIMIZED) {
+    // workaround for Windows failing to consider the taskbar properly 
+    // when maximizing without WS_CAPTION in style (#732)
+    MONITORINFO mi;
+    get_my_monitor_info(&mi);
+    RECT ar = mi.rcWork;
+    RECT mr = mi.rcMonitor;
+    if (mr.top != ar.top || mr.bottom != ar.bottom || mr.left != ar.left || mr.right != ar.right) {
+      cmd = SW_RESTORE;
+      SetWindowPos(wnd, null, 
+                   ar.left, ar.top, ar.right - ar.left, ar.bottom - ar.top, 
+                   SWP_NOZORDER);
+      win_adapt_term_size(false, false);
+    }
+  }
+  ShowWindow(wnd, cmd);
   SetFocus(wnd);
 
   win_synctabs(4);
