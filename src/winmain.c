@@ -3676,6 +3676,18 @@ main(int argc, char *argv[])
     SetWindowPos(wnd, null, 0, 0, 0, 0,
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
     trace_winsize("border_style");
+    if (cfg.window == SW_SHOWMAXIMIZED) {
+      // workaround for Windows failing to consider the taskbar properly 
+      // when maximizing without WS_CAPTION in style (#732)
+      RECT cr, wr;
+      GetClientRect(wnd, &cr);
+      GetWindowRect(wnd, &wr);
+      if (cr.top != wr.top || cr.bottom != wr.bottom || cr.left != wr.left || cr.right != wr.right) {
+        SetWindowPos(wnd, null, 
+                     cr.left, cr.top, cr.right - cr.left, cr.bottom - cr.top, 
+                     SWP_NOZORDER);
+      }
+    }
   }
 
   {
