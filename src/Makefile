@@ -178,9 +178,10 @@ rgb:	# /usr/share/X11/rgb.txt # X11 color names
 
 combdata=combining.t combdouble.t combined.t
 unidata=$(combdata) ambiguous.t casefold.t bidiclasses.t wide.t
+emojidata=emojibase.t emojiseqs.t
 
 clean-unicode:
-	rm -f $(unidata)
+	rm -f $(unidata) $(emojidata)
 
 combining.t:	# UnicodeData.txt Blocks.txt
 	uniset +cat=Me +cat=Mn +cat=Cf -00AD +1160-11FF +200B +D7B0-D7C6 +D7CB-D7FB c > combining.t
@@ -219,10 +220,10 @@ emoji-%.txt:
 %.txt:
 	$(WGET) http://unicode.org/Public/UNIDATA/$@
 
-emojibase.t:	emoji-data.txt emoji-variation-sequences.txt emoji-sequences.txt emoji-zwj-sequences.txt
+emojibase.t:	# emoji-data.txt emoji-variation-sequences.txt emoji-sequences.txt emoji-zwj-sequences.txt
 	bash ./mkemojis base > $@
 
-emojiseqs.t:	emoji-sequences.txt emoji-zwj-sequences.txt
+emojiseqs.t:	# emoji-sequences.txt emoji-zwj-sequences.txt
 	bash ./mkemojis seqs > $@
 
 #compose_list=/usr/share/X11/locale/en_US.UTF-8/Compose

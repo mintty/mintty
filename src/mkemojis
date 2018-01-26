@@ -1,5 +1,8 @@
 #! /bin/bash
 
+unidata="emoji-data.txt emoji-variation-sequences.txt emoji-sequences.txt emoji-zwj-sequences.txt"
+make $unidata >&2
+
 case "$1" in
 
 base)
