@@ -1,5 +1,10 @@
+Character handling and rendering
   * Emoji support (wsltty#82, #600, ~#671, ~#430).
+  * Fixed double-width handling within right-to-left text.
+
+Window handling
   * Ctrl+Alt+mouse-click/drag moves the window (#729).
+  * Workaround for Windows failing to consider the taskbar properly when maximizing with no or frame-only border (#732).
 
 ### 2.8.3 (8 Jan 2018) ###
 

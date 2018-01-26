@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Mon Jan  8 22:09:23 2018 -->
+<!-- CreationDate: Fri Jan 26 15:59:31 2018 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -280,7 +280,9 @@ frame</b>|<b>void</b></p>
 
 <p style="margin-left:22%;">Suppress window title, display
 only a frame or no border. This feature is only available on
-the command line.</p>
+the command line. Note that frame border operations are also
+disabled. However, a window move can also be done with
+Ctrl+Alt+click-drag.</p>
 
 <p style="margin-left:11%;"><b>-u</b>, <b>--utmp</b></p>
 
@@ -905,7 +907,8 @@ operation) <br>
 &ndash; <b>Alt+F12</b>: Flip screen <br>
 &ndash; <b>Alt+Space</b>: Window menu <br>
 &ndash; <b>Ctrl+Tab</b>: Next window <br>
-&ndash; <b>Ctrl+Shift+Tab</b>: Previous window</p>
+&ndash; <b>Ctrl+Shift+Tab</b>: Previous window <br>
+&ndash; <b>Ctrl+Alt+mouse-click/drag</b>: Move window</p>
 
 <p style="margin-left:22%; margin-top: 1em">Multi-monitor
 selection support: Alt+F2 will only spawn a new window after
@@ -980,7 +983,7 @@ disabled to provide visible feedback for the changes.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Embedding
 graphics in terminal output</b> <br>
-The new support of the SIXEL feature facilitates a range of
+The SIXEL graphics support feature facilitates a range of
 applications that integrate graphic images in the terminal,
 animated graphics, and even video and interactive gaming
 applications.</p>
@@ -990,6 +993,16 @@ the benefit of this feature is the output of
 &lsquo;gnuplot&lsquo; with the command <br>
 GNUTERM=sixel gnuplot -e &quot;splot [x=-3:3] [y=-3:3]
 sin(x) * cos(y)&quot;</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Emoji
+display support</b> <br>
+Mintty supports display of presentation and pictographic
+emojis, style variation selectors and emoji sequences, as
+defined by Unicode. The option <b>Emojis</b> can choose
+among sets of emoji graphics if deployed in a mintty
+configuration directory. See the Tips wiki page
+<i>https://github.com/mintty/mintty/wiki/Tips#emojis</i>
+about deployment of emoji graphics for mintty.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Diagnostic
 support <br>
@@ -2091,6 +2104,51 @@ the xterm resource <b>mkWidth</b>.) <br>
 &ndash; <b>ambig-wide</b> Use built-in width properties,
 with ambiguous-width characters assumed to be wide.
 (Corresponds to the xterm resource <b>cjkWidth</b>.)</p>
+
+<p style="margin-left:11%;"><b>Emoji support</b>
+(Emojis=none)</p>
+
+<p style="margin-left:22%;">With this option, mintty emoji
+support is enabled and the emojis style is chosen. Mintty
+will match output for valid emoji sequences, emoji style
+selectors and pictographic or presentation forms. (Note that
+it may be useful to set <b>Charwidth=unicode</b> in
+addition.)</p>
+
+<p style="margin-left:22%; margin-top: 1em">Supported
+styles are: <br>
+&ndash; <b>none</b> Emoji support disabled; symbols are
+taken from the font. <br>
+&ndash; <b>emojione</b> Use EmojiOne graphics. <br>
+&ndash; <b>noto</b> Use graphics from the Noto Emoji font.
+<br>
+&ndash; <b>apple</b> Use Apple emoji graphics. <br>
+&ndash; <b>google</b> Use Google emoji graphics. <br>
+&ndash; <b>twitter</b> Use Twitter emoji graphics. <br>
+&ndash; <b>facebook</b> Use Facebook emoji graphics. <br>
+&ndash; <b>samsung</b> Use Samsung emoji graphics. <br>
+&ndash; <b>windows</b> Use Windows emoji graphics.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note that all
+style options only work if the respective emoji graphics
+repository is deployed in a mintty resource directory. See
+the Tips wiki page
+<i>https://github.com/mintty/mintty/wiki/Tips#emojis</i> for
+details.</p>
+
+<p style="margin-left:11%;"><b>Emoji placement</b>
+(EmojiPlacement=stretch)</p>
+
+<p style="margin-left:22%;">Emojis are displayed in the
+rectangular character cell group determined by the cumulated
+width of the emoji sequence characters. The following
+options are provided to tune their display: <br>
+&ndash; <b>stretch</b> Emojis are scaled to fit in their
+display area. <br>
+&ndash; <b>align</b> Emojis are aligned in their display
+area. <br>
+&ndash; <b>middle</b> Emojis are centered in their display
+area.</p>
 
 <p style="margin-left:11%;"><b>Bidirectional rendering</b>
 (Bidi=2)</p>
