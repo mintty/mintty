@@ -1424,6 +1424,28 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
   win_schedule_update();
 }
 
+static int
+fix_taskbar_max(int show_cmd)
+{
+  if (border_style && show_cmd == SW_SHOWMAXIMIZED) {
+    // (SW_SHOWMAXIMIZED == SW_MAXIMIZE)
+    // workaround for Windows failing to consider the taskbar properly 
+    // when maximizing without WS_CAPTION in style (#732)
+    MONITORINFO mi;
+    get_my_monitor_info(&mi);
+    RECT ar = mi.rcWork;
+    RECT mr = mi.rcMonitor;
+    if (mr.top != ar.top || mr.bottom != ar.bottom || mr.left != ar.left || mr.right != ar.right) {
+      show_cmd = SW_RESTORE;
+      SetWindowPos(wnd, null, 
+                   ar.left, ar.top, ar.right - ar.left, ar.bottom - ar.top, 
+                   SWP_NOZORDER);
+      win_adapt_term_size(false, false);
+    }
+  }
+  return show_cmd;
+}
+
 /*
  * Maximise or restore the window in response to a server-side request.
  * Argument value of 2 means go fullscreen.
@@ -1431,6 +1453,7 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
 void
 win_maximise(int max)
 {
+//printf("win_max %d is_full %d IsZoomed %d\n", max, win_is_fullscreen, IsZoomed(wnd));
   if (max == -2) // toggle full screen
     max = win_is_fullscreen ? 0 : 2;
   if (IsZoomed(wnd)) {
@@ -1440,9 +1463,19 @@ win_maximise(int max)
       make_fullscreen();
   }
   else if (max) {
-    if (max == 2)
+    if (max == 2) {  // full screen
       go_fullscr_on_max = true;
-    ShowWindow(wnd, SW_MAXIMIZE);
+      ShowWindow(wnd, SW_MAXIMIZE);
+    }
+    else if (max == 1) {  // maximize
+      // this would apply the workaround to consider the taskbar
+      // but it would make maximizing irreversible, so let's not do it here
+      //ShowWindow(wnd, fix_taskbar_max(SW_MAXIMIZE));
+      // rather let Windows maximize as it prefers, including the bug
+      ShowWindow(wnd, SW_MAXIMIZE);
+    }
+    else
+      ShowWindow(wnd, SW_MAXIMIZE);
   }
 }
 
@@ -3765,31 +3798,19 @@ main(int argc, char *argv[])
 #endif
   }
 
+  // Determine how to show the window.
+  go_fullscr_on_max = (cfg.window == -1);
+  default_size_token = true;  // prevent font zooming (#708)
+  int show_cmd = go_fullscr_on_max ? SW_SHOWMAXIMIZED : cfg.window;
+  show_cmd = fix_taskbar_max(show_cmd);
+
   // Create child process.
   child_create(
     argv, &(struct winsize){term_rows, term_cols, term_width, term_height}
   );
 
-  // Finally show the window!
-  go_fullscr_on_max = (cfg.window == -1);
-  default_size_token = true;  // prevent font zooming (#708)
-  int cmd = go_fullscr_on_max ? SW_SHOWMAXIMIZED : cfg.window;
-  if (border_style && cmd == SW_SHOWMAXIMIZED) {
-    // workaround for Windows failing to consider the taskbar properly 
-    // when maximizing without WS_CAPTION in style (#732)
-    MONITORINFO mi;
-    get_my_monitor_info(&mi);
-    RECT ar = mi.rcWork;
-    RECT mr = mi.rcMonitor;
-    if (mr.top != ar.top || mr.bottom != ar.bottom || mr.left != ar.left || mr.right != ar.right) {
-      cmd = SW_RESTORE;
-      SetWindowPos(wnd, null, 
-                   ar.left, ar.top, ar.right - ar.left, ar.bottom - ar.top, 
-                   SWP_NOZORDER);
-      win_adapt_term_size(false, false);
-    }
-  }
-  ShowWindow(wnd, cmd);
+  // Finally show the window.
+  ShowWindow(wnd, show_cmd);
   SetFocus(wnd);
 
   win_synctabs(4);
