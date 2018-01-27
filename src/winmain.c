@@ -1425,7 +1425,7 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
 }
 
 static int
-fix_taskbar_max(int show_cmd)
+win_fix_taskbar_max(int show_cmd)
 {
   if (border_style && show_cmd == SW_SHOWMAXIMIZED) {
     // (SW_SHOWMAXIMIZED == SW_MAXIMIZE)
@@ -1470,7 +1470,7 @@ win_maximise(int max)
     else if (max == 1) {  // maximize
       // this would apply the workaround to consider the taskbar
       // but it would make maximizing irreversible, so let's not do it here
-      //ShowWindow(wnd, fix_taskbar_max(SW_MAXIMIZE));
+      //ShowWindow(wnd, win_fix_taskbar_max(SW_MAXIMIZE));
       // rather let Windows maximize as it prefers, including the bug
       ShowWindow(wnd, SW_MAXIMIZE);
     }
@@ -3687,6 +3687,11 @@ main(int argc, char *argv[])
         if (maxwidth || maxheight) {
           // changed terminal size not yet recorded, 
           // but window size hopefully adjusted already
+          if (border_style) {
+            // workaround for caption-less window exceeding borders (#733)
+            win_adjust_borders(cell_width * cfg.cols, cell_height * cfg.rows);
+            win_adapt_term_size(true, false);
+          }
         }
         else {
           win_set_chars(cfg.rows, cfg.cols);
@@ -3802,7 +3807,7 @@ main(int argc, char *argv[])
   go_fullscr_on_max = (cfg.window == -1);
   default_size_token = true;  // prevent font zooming (#708)
   int show_cmd = go_fullscr_on_max ? SW_SHOWMAXIMIZED : cfg.window;
-  show_cmd = fix_taskbar_max(show_cmd);
+  show_cmd = win_fix_taskbar_max(show_cmd);
 
   // Create child process.
   child_create(
