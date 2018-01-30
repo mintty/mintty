@@ -649,10 +649,15 @@ Emoji data can be found at the following sources:
   * Deploy the desired subdirectories (e.g. `apple`)
   * Includes apple, emojione, facebook, google, twitter, samsung, windows emojis (and some limited low-resolution sets that we shall ignore)
 * [Emoji data and images](https://github.com/iamcal/emoji-data)
-  * “Clone or download” the repository or download a release archive, or:
-  * on Linux, `npm install emoji-datasource-apple` etc as shown on the project page
+  * “Clone or download” the repository or download a release archive
   * Deploy subdirectories `img-*` as appropriate (e.g. img-apple-64 as `apple`)
   * Includes apple, emojione-2D, facebook, facebook messenger (discontinued), google, twitter emojis
+
+To “Clone” with limited download volume, use the command `git clone --depth 1`.
+To download only the desired subdirectory from `github.com`, use `subversion`, 
+for example:
+  * `svn export https://github.com/googlei18n/noto-emoji/trunk/png/128 noto`
+  * `svn export https://github.com/iamcal/emoji-data/trunk/img-apple-160 apple`
 
 “Deploy” above means move, link, copy or hard-link the respective subdirectory 
 into mintty configuration resource subdirectory `emojis`, e.g.
