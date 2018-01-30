@@ -4,7 +4,12 @@ Character handling and rendering
 
 Window handling
   * Ctrl+Alt+mouse-click/drag moves the window (#729).
+  * Apply Virtual Tab position catching also on Alt+F2 (#699).
   * Workaround for Windows failing to consider the taskbar properly when maximizing with no or frame-only border (#732).
+  * Workaround for caption-less window exceeding borders (#733) on Windows 10.
+
+Configuration
+  * Option TaskCommands to configure a taskbar icon task list ("jump list") (#290).
 
 ### 2.8.3 (8 Jan 2018) ###
 

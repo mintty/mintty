@@ -153,6 +153,7 @@ typedef struct {
   wstring drop_commands;
   wstring user_commands;
   wstring session_commands;
+  wstring task_commands;
   string menu_mouse;
   string menu_ctrlmouse;
   string menu_altmouse;

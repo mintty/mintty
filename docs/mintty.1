@@ -812,7 +812,7 @@ command-line.)
 .br
 Unicode-enabled settings: BellFile, ThemeFile, Title, ExitTitle, Icon, Log, 
 Language, Font, Font1..., FontSample, Printer, Answerback, SixelClipChars, 
-Class, AppID, AppName, AppLaunchCmd, DropCommands, UserCommands, SessionCommands.
+Class, AppID, AppName, AppLaunchCmd, DropCommands, UserCommands, SessionCommands, TaskCommands.
 
 Be careful when running multiple instances of mintty. If options are saved 
 from different instances, or the config file is edited manually, 
@@ -2079,7 +2079,7 @@ Examples:
 This setting lists mintty invocation parameters for the session launcher.
 The value is a series of semicolon-separated, colon-combined 
 pairs of session launch names (used as menu item labels) and 
-configuration parameter lists; when selecting one of the launch names, 
+invocation parameter lists; when selecting one of the launch names, 
 mintty is invoked with the respective parameters.
 (If a semicolon shall be embedded into any of the command patterns, 
 a non-whitespace control character (i.e. none of \fB^I^J^K^L^M\fP) can be 
@@ -2096,6 +2096,36 @@ Examples:
 \(en \fBSessionCommands=big:-w max;Ubuntu:--WSL=Ubuntu;mybox:ssh mybox\fP
 .br
 \(en \fBSessionCommands=mycolours:-C ~/.minttyrc.mycolours\fP
+
+\fINote:\fP Control characters need to be embedded verbatim; there is no escape notation.
+
+.TP
+\fBTaskbar commands\fP (TaskCommands=)
+This setting lists mintty invocation parameters for the "Tasks" list in the 
+taskbar icon, also known as "jump list".
+The value is a series of semicolon-separated, colon-combined 
+pairs of task names and invocation parameter lists; 
+when selecting one of the tasks from the taskbar icon, 
+mintty is invoked with the respective parameters.
+(If a semicolon shall be embedded into any of the command patterns, 
+a non-whitespace control character (i.e. none of \fB^I^J^K^L^M\fP) can be 
+specified as an alternative separator by starting the whole setting with it.)
+
+\fINote:\fP This feature only works in combination with a parameter 
+\fB-o AppID=...\fP. If the taskbar icon is "pinned" to the taskbar, 
+the task list is retained with it.
+
+\fINote:\fP Task names are subject to localization if they are 
+added to the localization file of the selected UI localization language 
+(in subdirectory \fIlang\fP of a mintty resource directory).
+
+\fINote:\fP This is an experimental feature, with an experimental configuration format.
+
+Examples:
+.br
+\(en \fBTaskCommands=big:-w max;Ubuntu:--WSL=Ubuntu;mybox:ssh mybox\fP
+.br
+\(en \fBTaskCommands=mycolours:-C ~/.minttyrc.mycolours\fP
 
 \fINote:\fP Control characters need to be embedded verbatim; there is no escape notation.
 

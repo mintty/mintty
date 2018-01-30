@@ -2518,22 +2518,65 @@ get_shortcut_icon_location(wchar * iconfile, bool * wdpresent)
 
 #endif
 
+typedef void (* CMDENUMPROC)(wstring label, wstring cmd, wstring icon, int icon_index);
+
+static wstring * jumplist_title = 0;
+static wstring * jumplist_cmd = 0;
+static wstring * jumplist_icon = 0;
+static int * jumplist_ii = 0;
+static int jumplist_len = 0;
+
+static void
+cmd_enum(wstring label, wstring cmd, wstring icon, int icon_index)
+{
+  jumplist_title = renewn(jumplist_title, jumplist_len + 1);
+  jumplist_cmd = renewn(jumplist_cmd, jumplist_len + 1);
+  jumplist_icon = renewn(jumplist_icon, jumplist_len + 1);
+  jumplist_ii = renewn(jumplist_ii, jumplist_len + 1);
+
+  jumplist_title[jumplist_len] = label;
+  jumplist_cmd[jumplist_len] = cmd;
+  jumplist_icon[jumplist_len] = icon;
+  jumplist_ii[jumplist_len] = icon_index;
+  jumplist_len++;
+}
+
+static void
+enum_commands(wstring commands, CMDENUMPROC cmdenum)
+{
+  char * cmds = cs__wcstoutf(commands);
+  char * cmdp = cmds;
+  char sepch = ';';
+  if ((uchar)*cmdp <= (uchar)' ')
+    sepch = *cmdp++;
+
+  char * paramp;
+  while ((paramp = strchr(cmdp, ':'))) {
+    *paramp = '\0';
+    paramp++;
+    char * sepp = strchr(paramp, sepch);
+    if (sepp)
+      *sepp = '\0';
+
+    cmdenum(_W(cmdp), cs__utftowcs(paramp), 0, 0);  // no icon
+
+    if (sepp)
+      cmdp = sepp + 1;
+    else
+      break;
+  }
+  free(cmds);
+}
+
+#include "jumplist.h"
+
 static void
 configure_taskbar(void)
 {
-#define no_patch_jumplist
-#ifdef patch_jumplist
-#include "jumplist.h"
-  // test data
-  wchar * jump_list_title[] = {
-    W("title1"), W(""), W(""), W("mä€"), W(""), W(""), W(""), W(""), W(""), W(""), 
-  };
-  wchar * jump_list_cmd[] = {
-    W("-o Rows=15"), W("-o Rows=20"), W(""), W("-t mö€"), W(""), W(""), W(""), W(""), W(""), W(""), 
-  };
-  // the patch offered in issue #290 does not seem to work
-  setup_jumplist(jump_list_title, jump_list_cmd);
-#endif
+  if (*cfg.task_commands) {
+    enum_commands(cfg.task_commands, cmd_enum);
+    setup_jumplist(cfg.app_id, jumplist_len, jumplist_title, jumplist_cmd, jumplist_icon, jumplist_ii);
+  }
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1007
   // initial patch (issue #471) contributed by Johannes Schindelin
