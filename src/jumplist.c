@@ -239,7 +239,7 @@ setup_jumplist(wstring appid, int n, wstring titles[], wstring cmds[], wstring i
 HRESULT
 setup_jumplist(wstring appid, int n, wstring titles[], wstring cmds[], wstring icons[], int ii[])
 {
-  (void)n; (void)titles; (void)cmds; (void)icons; (void)ii;
+  (void)appid; (void)n; (void)titles; (void)cmds; (void)icons; (void)ii;
   return S_OK;
 }
 
