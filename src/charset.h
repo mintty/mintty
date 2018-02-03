@@ -25,7 +25,8 @@ is_low_surrogate(wchar wc)
 
 static inline xchar
 combine_surrogates(wchar hwc, wchar lwc)
-{ return 0x10000 + ((hwc & 0x3FF) << 10) + (lwc & 0x3FF); }
+//{ return 0x10000 + ((hwc & 0x3FF) << 10) + (lwc & 0x3FF); }
+{ return ((xchar) (hwc - 0xD7C0) << 10) | (lwc & 0x03FF); }
 
 extern string getlocenvcat(string category);
 
