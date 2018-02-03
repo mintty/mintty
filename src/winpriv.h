@@ -39,6 +39,8 @@ extern bool win_is_fullscreen;
 extern uint dpi;
 extern bool per_monitor_dpi_aware;
 
+extern bool click_focus_token;
+
 extern void win_paint(void);
 
 extern void win_init_fonts(int size);

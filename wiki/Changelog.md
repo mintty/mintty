@@ -8,6 +8,10 @@ Window handling
   * Workaround for Windows failing to consider the taskbar properly when maximizing with no or frame-only border (#732).
   * Workaround for caption-less window exceeding borders (#733) on Windows 10.
 
+Mouse handling
+  * More selective suppression of mouse action on focus-click (wsltty#88, #717).
+  * Fixed mouse function in search bar (#85), broken since 2.8.2 (#717).
+
 Configuration
   * Option TaskCommands to configure a taskbar icon task list ("jump list") (#290).
 

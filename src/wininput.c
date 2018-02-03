@@ -658,6 +658,8 @@ static LPARAM last_lp = -1;
 static pos last_pos = {-1, -1};
 static int button_state = 0;
 
+bool click_focus_token = false;
+
 static pos
 get_mouse_pos(LPARAM lp)
 {
@@ -668,9 +670,13 @@ get_mouse_pos(LPARAM lp)
 void
 win_mouse_click(mouse_button b, LPARAM lp)
 {
+  bool click_focus = click_focus_token;
+  click_focus_token = false;
+
   static mouse_button last_button;
   static uint last_time, count;
   static pos last_click_pos;
+  static bool last_skipped = false;
 
   win_show_mouse();
   mod_keys mods = get_mods();
@@ -681,13 +687,28 @@ win_mouse_click(mouse_button b, LPARAM lp)
       p.x != last_click_pos.x || p.y != last_click_pos.y ||
       t - last_time > GetDoubleClickTime() || ++count > 3)
     count = 1;
+  //printf("mouse %d (focus %d skipped %d) ×%d\n", b, click_focus, last_skipped, count);
 
   SetFocus(wnd);  // in case focus was in search bar
-  term_mouse_click(b, mods, p, count);
+
+  if (click_focus && b == MBT_LEFT && count == 1)
+    last_skipped = true;
+  else {
+    if (last_skipped && b == last_button
+        && p.x == last_click_pos.x && p.y == last_click_pos.y
+       )
+    {
+      // recognize double click also in application mouse modes
+      term_mouse_click(b, mods, p, 1);
+    }
+    term_mouse_click(b, mods, p, count);
+    last_skipped = false;
+  }
   last_pos = (pos){INT_MIN, INT_MIN};
   last_click_pos = p;
   last_time = t;
   last_button = b;
+
   if (alt_state > ALT_NONE)
     alt_state = ALT_CANCELLED;
   switch (b) {
