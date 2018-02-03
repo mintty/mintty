@@ -77,6 +77,8 @@ extern bool win_key_up(WPARAM, LPARAM);
 extern wchar * dewsl(wchar * wpath);
 extern void win_init_drop_target(void);
 
+extern wstring wslicon(wchar * params);
+
 extern void win_switch(bool back, bool alternate);
 extern int search_monitors(int * minx, int * miny, HMONITOR lookup_mon, bool get_primary, MONITORINFO *mip);
 

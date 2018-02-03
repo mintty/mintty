@@ -2745,6 +2745,61 @@ cmd_enum(wstring label, wstring cmd, wstring icon, int icon_index)
   jumplist_len++;
 }
 
+wstring 
+wslicon(wchar * params)
+{
+  wstring icon = 0;  // default: no icon
+#if CYGWIN_VERSION_API_MINOR >= 74
+  wchar * wsl = wcsstr(params, W("--WSL"));
+  if (wsl) {
+    wsl += 5;
+    if (*wsl == '=')
+      wsl++;
+    else if (*wsl <= ' ')
+      ; // SP or NUL: no WSL distro specified
+    else
+      wsl = 0;
+  }
+  if (wsl) {
+    wchar * sp = wcsstr(wsl, W(" "));
+    int len;
+    if (sp)
+      len = sp - wsl;
+    else
+      len = wcslen(wsl);
+    if (len) {
+      wchar * wslname = newn(wchar, len + 1);
+      wcsncpy(wslname, wsl, len);
+      wslname[len] = 0;
+      char * guid;
+      wstring basepath;
+      int err = getlxssinfo(wslname, &guid, &basepath, &icon);
+      free(wslname);
+      if (!err) {
+        delete(basepath);
+        free(guid);
+      }
+    }
+    if (!icon) {  // no WSL distro specified or failed to find icon
+      char * wslico = get_resource_file(W("icon"), W("wsl.ico"), false);
+      if (wslico) {
+        icon = path_posix_to_win_w(wslico);
+        free(wslico);
+      }
+      else {
+        char * lappdata = getenv("LOCALAPPDATA");
+        if (lappdata && *lappdata) {
+          wslico = asform("%s/wsltty/wsl.ico", lappdata);
+          icon = cs__mbstowcs(wslico);
+          free(wslico);
+        }
+      }
+    }
+  }
+#endif
+  return icon;
+}
+
 static void
 enum_commands(wstring commands, CMDENUMPROC cmdenum)
 {
@@ -2762,7 +2817,10 @@ enum_commands(wstring commands, CMDENUMPROC cmdenum)
     if (sepp)
       *sepp = '\0';
 
-    cmdenum(_W(cmdp), cs__utftowcs(paramp), 0, 0);  // no icon
+    wchar * params = cs__utftowcs(paramp);
+    wstring icon = wslicon(params);  // default: 0 (no icon)
+    //printf("	task <%s> args <%ls> icon <%ls>\n", cmdp, params, icon);
+    cmdenum(_W(cmdp), params, icon, 0);
 
     if (sepp)
       cmdp = sepp + 1;
