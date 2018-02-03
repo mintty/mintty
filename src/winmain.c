@@ -2525,198 +2525,6 @@ get_shortcut_icon_location(wchar * iconfile, bool * wdpresent)
 
 #endif
 
-typedef void (* CMDENUMPROC)(wstring label, wstring cmd, wstring icon, int icon_index);
-
-static wstring * jumplist_title = 0;
-static wstring * jumplist_cmd = 0;
-static wstring * jumplist_icon = 0;
-static int * jumplist_ii = 0;
-static int jumplist_len = 0;
-
-static void
-cmd_enum(wstring label, wstring cmd, wstring icon, int icon_index)
-{
-  jumplist_title = renewn(jumplist_title, jumplist_len + 1);
-  jumplist_cmd = renewn(jumplist_cmd, jumplist_len + 1);
-  jumplist_icon = renewn(jumplist_icon, jumplist_len + 1);
-  jumplist_ii = renewn(jumplist_ii, jumplist_len + 1);
-
-  jumplist_title[jumplist_len] = label;
-  jumplist_cmd[jumplist_len] = cmd;
-  jumplist_icon[jumplist_len] = icon;
-  jumplist_ii[jumplist_len] = icon_index;
-  jumplist_len++;
-}
-
-static void
-enum_commands(wstring commands, CMDENUMPROC cmdenum)
-{
-  char * cmds = cs__wcstoutf(commands);
-  char * cmdp = cmds;
-  char sepch = ';';
-  if ((uchar)*cmdp <= (uchar)' ')
-    sepch = *cmdp++;
-
-  char * paramp;
-  while ((paramp = strchr(cmdp, ':'))) {
-    *paramp = '\0';
-    paramp++;
-    char * sepp = strchr(paramp, sepch);
-    if (sepp)
-      *sepp = '\0';
-
-    cmdenum(_W(cmdp), cs__utftowcs(paramp), 0, 0);  // no icon
-
-    if (sepp)
-      cmdp = sepp + 1;
-    else
-      break;
-  }
-  free(cmds);
-}
-
-#include "jumplist.h"
-
-static void
-configure_taskbar(void)
-{
-  if (*cfg.task_commands) {
-    enum_commands(cfg.task_commands, cmd_enum);
-    setup_jumplist(cfg.app_id, jumplist_len, jumplist_title, jumplist_cmd, jumplist_icon, jumplist_ii);
-  }
-
-#if CYGWIN_VERSION_DLL_MAJOR >= 1007
-  // initial patch (issue #471) contributed by Johannes Schindelin
-  wchar * app_id = (wchar *) cfg.app_id;
-  wchar * relaunch_icon = (wchar *) cfg.icon;
-  wchar * relaunch_display_name = (wchar *) cfg.app_name;
-  wchar * relaunch_command = (wchar *) cfg.app_launch_cmd;
-
-#define dont_debug_properties
-
-#ifdef two_witty_ideas_with_bad_side_effects
-#warning automatic derivation of an AppId is likely not a good idea
-  // If an icon is configured but no app_id, we can derive one from the 
-  // icon in order to enable proper taskbar grouping by common icon.
-  // However, this has an undesirable side-effect if a shortcut is 
-  // pinned (presumably getting some implicit AppID from Windows) and 
-  // instances are started from there (with a different AppID...).
-  // Disabled.
-  if (relaunch_icon && *relaunch_icon && (!app_id || !*app_id)) {
-    const char * iconbasename = strrchr(cfg.icon, '/');
-    if (iconbasename)
-      iconbasename ++;
-    else {
-      iconbasename = strrchr(cfg.icon, '\\');
-      if (iconbasename)
-        iconbasename ++;
-      else
-        iconbasename = cfg.icon;
-    }
-    char * derived_app_id = malloc(strlen(iconbasename) + 7 + 1);
-    strcpy(derived_app_id, "Mintty.");
-    strcat(derived_app_id, iconbasename);
-    app_id = derived_app_id;
-  }
-  // If app_name is configured but no app_launch_cmd, we need an app_id 
-  // to make app_name effective as taskbar title, so invent one.
-  if (relaunch_display_name && *relaunch_display_name && 
-      (!app_id || !*app_id)) {
-    app_id = "Mintty.AppID";
-  }
-#endif
-
-  // Set the app ID explicitly, as well as the relaunch command and display name
-  if (prevent_pinning || (app_id && *app_id)) {
-    HMODULE shell = load_sys_library("shell32.dll");
-    HRESULT (WINAPI *pGetPropertyStore)(HWND hwnd, REFIID riid, void **ppv) =
-      (void *)GetProcAddress(shell, "SHGetPropertyStoreForWindow");
-#ifdef debug_properties
-      printf("SHGetPropertyStoreForWindow linked %d\n", !!pGetPropertyStore);
-#endif
-    if (pGetPropertyStore) {
-      IPropertyStore *pps;
-      HRESULT hr;
-      PROPVARIANT var;
-
-      hr = pGetPropertyStore(wnd, &IID_IPropertyStore, (void **) &pps);
-#ifdef debug_properties
-      printf("IPropertyStore found %d\n", SUCCEEDED(hr));
-#endif
-      if (SUCCEEDED(hr)) {
-        // doc: https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459%28v=vs.85%29.aspx
-        // def: typedef struct tagPROPVARIANT PROPVARIANT: propidl.h
-        // def: enum VARENUM (VT_*): wtypes.h
-        // def: PKEY_*: propkey.h
-        if (relaunch_command && *relaunch_command && store_taskbar_properties) {
-#ifdef debug_properties
-          printf("AppUserModel_RelaunchCommand=%ls\n", relaunch_command);
-#endif
-          var.pwszVal = relaunch_command;
-          var.vt = VT_LPWSTR;
-          pps->lpVtbl->SetValue(pps,
-              &PKEY_AppUserModel_RelaunchCommand, &var);
-        }
-        if (relaunch_display_name && *relaunch_display_name) {
-#ifdef debug_properties
-          printf("AppUserModel_RelaunchDisplayNameResource=%ls\n", relaunch_display_name);
-#endif
-          var.pwszVal = relaunch_display_name;
-          var.vt = VT_LPWSTR;
-          pps->lpVtbl->SetValue(pps,
-              &PKEY_AppUserModel_RelaunchDisplayNameResource, &var);
-        }
-        if (relaunch_icon && *relaunch_icon) {
-#ifdef debug_properties
-          printf("AppUserModel_RelaunchIconResource=%ls\n", relaunch_icon);
-#endif
-          var.pwszVal = relaunch_icon;
-          var.vt = VT_LPWSTR;
-          pps->lpVtbl->SetValue(pps,
-              &PKEY_AppUserModel_RelaunchIconResource, &var);
-        }
-        if (prevent_pinning) {
-          var.boolVal = VARIANT_TRUE;
-#ifdef debug_properties
-          printf("AppUserModel_PreventPinning=%d\n", var.boolVal);
-#endif
-          var.vt = VT_BOOL;
-          // PreventPinning must be set before setting ID
-          pps->lpVtbl->SetValue(pps,
-              &PKEY_AppUserModel_PreventPinning, &var);
-        }
-#ifdef set_userpinned
-DEFINE_PROPERTYKEY(PKEY_AppUserModel_StartPinOption, 0x9f4c2855,0x9f79,0x4B39,0xa8,0xd0,0xe1,0xd4,0x2d,0xe1,0xd5,0xf3,12);
-#define APPUSERMODEL_STARTPINOPTION_USERPINNED 2
-#warning needs Windows 8/10 to build...
-        {
-          var.uintVal = APPUSERMODEL_STARTPINOPTION_USERPINNED;
-#ifdef debug_properties
-          printf("AppUserModel_StartPinOption=%d\n", var.uintVal);
-#endif
-          var.vt = VT_UINT;
-          pps->lpVtbl->SetValue(pps,
-              &PKEY_AppUserModel_StartPinOption, &var);
-        }
-#endif
-        if (app_id && *app_id) {
-#ifdef debug_properties
-          printf("AppUserModel_ID=%ls\n", app_id);
-#endif
-          var.pwszVal = app_id;
-          var.vt = VT_LPWSTR;  // VT_EMPTY should remove but has no effect
-          pps->lpVtbl->SetValue(pps,
-              &PKEY_AppUserModel_ID, &var);
-        }
-
-        pps->lpVtbl->Commit(pps);
-        pps->lpVtbl->Release(pps);
-      }
-    }
-  }
-#endif
-}
-
 
 #if CYGWIN_VERSION_API_MINOR >= 74
 
@@ -2912,6 +2720,199 @@ select_WSL(char * wsl)
 }
 
 #endif
+
+
+typedef void (* CMDENUMPROC)(wstring label, wstring cmd, wstring icon, int icon_index);
+
+static wstring * jumplist_title = 0;
+static wstring * jumplist_cmd = 0;
+static wstring * jumplist_icon = 0;
+static int * jumplist_ii = 0;
+static int jumplist_len = 0;
+
+static void
+cmd_enum(wstring label, wstring cmd, wstring icon, int icon_index)
+{
+  jumplist_title = renewn(jumplist_title, jumplist_len + 1);
+  jumplist_cmd = renewn(jumplist_cmd, jumplist_len + 1);
+  jumplist_icon = renewn(jumplist_icon, jumplist_len + 1);
+  jumplist_ii = renewn(jumplist_ii, jumplist_len + 1);
+
+  jumplist_title[jumplist_len] = label;
+  jumplist_cmd[jumplist_len] = cmd;
+  jumplist_icon[jumplist_len] = icon;
+  jumplist_ii[jumplist_len] = icon_index;
+  jumplist_len++;
+}
+
+static void
+enum_commands(wstring commands, CMDENUMPROC cmdenum)
+{
+  char * cmds = cs__wcstoutf(commands);
+  char * cmdp = cmds;
+  char sepch = ';';
+  if ((uchar)*cmdp <= (uchar)' ')
+    sepch = *cmdp++;
+
+  char * paramp;
+  while ((paramp = strchr(cmdp, ':'))) {
+    *paramp = '\0';
+    paramp++;
+    char * sepp = strchr(paramp, sepch);
+    if (sepp)
+      *sepp = '\0';
+
+    cmdenum(_W(cmdp), cs__utftowcs(paramp), 0, 0);  // no icon
+
+    if (sepp)
+      cmdp = sepp + 1;
+    else
+      break;
+  }
+  free(cmds);
+}
+
+#include "jumplist.h"
+
+static void
+configure_taskbar(void)
+{
+  if (*cfg.task_commands) {
+    enum_commands(cfg.task_commands, cmd_enum);
+    setup_jumplist(cfg.app_id, jumplist_len, jumplist_title, jumplist_cmd, jumplist_icon, jumplist_ii);
+  }
+
+#if CYGWIN_VERSION_DLL_MAJOR >= 1007
+  // initial patch (issue #471) contributed by Johannes Schindelin
+  wchar * app_id = (wchar *) cfg.app_id;
+  wchar * relaunch_icon = (wchar *) cfg.icon;
+  wchar * relaunch_display_name = (wchar *) cfg.app_name;
+  wchar * relaunch_command = (wchar *) cfg.app_launch_cmd;
+
+#define dont_debug_properties
+
+#ifdef two_witty_ideas_with_bad_side_effects
+#warning automatic derivation of an AppId is likely not a good idea
+  // If an icon is configured but no app_id, we can derive one from the 
+  // icon in order to enable proper taskbar grouping by common icon.
+  // However, this has an undesirable side-effect if a shortcut is 
+  // pinned (presumably getting some implicit AppID from Windows) and 
+  // instances are started from there (with a different AppID...).
+  // Disabled.
+  if (relaunch_icon && *relaunch_icon && (!app_id || !*app_id)) {
+    const char * iconbasename = strrchr(cfg.icon, '/');
+    if (iconbasename)
+      iconbasename ++;
+    else {
+      iconbasename = strrchr(cfg.icon, '\\');
+      if (iconbasename)
+        iconbasename ++;
+      else
+        iconbasename = cfg.icon;
+    }
+    char * derived_app_id = malloc(strlen(iconbasename) + 7 + 1);
+    strcpy(derived_app_id, "Mintty.");
+    strcat(derived_app_id, iconbasename);
+    app_id = derived_app_id;
+  }
+  // If app_name is configured but no app_launch_cmd, we need an app_id 
+  // to make app_name effective as taskbar title, so invent one.
+  if (relaunch_display_name && *relaunch_display_name && 
+      (!app_id || !*app_id)) {
+    app_id = "Mintty.AppID";
+  }
+#endif
+
+  // Set the app ID explicitly, as well as the relaunch command and display name
+  if (prevent_pinning || (app_id && *app_id)) {
+    HMODULE shell = load_sys_library("shell32.dll");
+    HRESULT (WINAPI *pGetPropertyStore)(HWND hwnd, REFIID riid, void **ppv) =
+      (void *)GetProcAddress(shell, "SHGetPropertyStoreForWindow");
+#ifdef debug_properties
+      printf("SHGetPropertyStoreForWindow linked %d\n", !!pGetPropertyStore);
+#endif
+    if (pGetPropertyStore) {
+      IPropertyStore *pps;
+      HRESULT hr;
+      PROPVARIANT var;
+
+      hr = pGetPropertyStore(wnd, &IID_IPropertyStore, (void **) &pps);
+#ifdef debug_properties
+      printf("IPropertyStore found %d\n", SUCCEEDED(hr));
+#endif
+      if (SUCCEEDED(hr)) {
+        // doc: https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459%28v=vs.85%29.aspx
+        // def: typedef struct tagPROPVARIANT PROPVARIANT: propidl.h
+        // def: enum VARENUM (VT_*): wtypes.h
+        // def: PKEY_*: propkey.h
+        if (relaunch_command && *relaunch_command && store_taskbar_properties) {
+#ifdef debug_properties
+          printf("AppUserModel_RelaunchCommand=%ls\n", relaunch_command);
+#endif
+          var.pwszVal = relaunch_command;
+          var.vt = VT_LPWSTR;
+          pps->lpVtbl->SetValue(pps,
+              &PKEY_AppUserModel_RelaunchCommand, &var);
+        }
+        if (relaunch_display_name && *relaunch_display_name) {
+#ifdef debug_properties
+          printf("AppUserModel_RelaunchDisplayNameResource=%ls\n", relaunch_display_name);
+#endif
+          var.pwszVal = relaunch_display_name;
+          var.vt = VT_LPWSTR;
+          pps->lpVtbl->SetValue(pps,
+              &PKEY_AppUserModel_RelaunchDisplayNameResource, &var);
+        }
+        if (relaunch_icon && *relaunch_icon) {
+#ifdef debug_properties
+          printf("AppUserModel_RelaunchIconResource=%ls\n", relaunch_icon);
+#endif
+          var.pwszVal = relaunch_icon;
+          var.vt = VT_LPWSTR;
+          pps->lpVtbl->SetValue(pps,
+              &PKEY_AppUserModel_RelaunchIconResource, &var);
+        }
+        if (prevent_pinning) {
+          var.boolVal = VARIANT_TRUE;
+#ifdef debug_properties
+          printf("AppUserModel_PreventPinning=%d\n", var.boolVal);
+#endif
+          var.vt = VT_BOOL;
+          // PreventPinning must be set before setting ID
+          pps->lpVtbl->SetValue(pps,
+              &PKEY_AppUserModel_PreventPinning, &var);
+        }
+#ifdef set_userpinned
+DEFINE_PROPERTYKEY(PKEY_AppUserModel_StartPinOption, 0x9f4c2855,0x9f79,0x4B39,0xa8,0xd0,0xe1,0xd4,0x2d,0xe1,0xd5,0xf3,12);
+#define APPUSERMODEL_STARTPINOPTION_USERPINNED 2
+#warning needs Windows 8/10 to build...
+        {
+          var.uintVal = APPUSERMODEL_STARTPINOPTION_USERPINNED;
+#ifdef debug_properties
+          printf("AppUserModel_StartPinOption=%d\n", var.uintVal);
+#endif
+          var.vt = VT_UINT;
+          pps->lpVtbl->SetValue(pps,
+              &PKEY_AppUserModel_StartPinOption, &var);
+        }
+#endif
+        if (app_id && *app_id) {
+#ifdef debug_properties
+          printf("AppUserModel_ID=%ls\n", app_id);
+#endif
+          var.pwszVal = app_id;
+          var.vt = VT_LPWSTR;  // VT_EMPTY should remove but has no effect
+          pps->lpVtbl->SetValue(pps,
+              &PKEY_AppUserModel_ID, &var);
+        }
+
+        pps->lpVtbl->Commit(pps);
+        pps->lpVtbl->Release(pps);
+      }
+    }
+  }
+#endif
+}
 
 
 #define usage __("Usage:")
