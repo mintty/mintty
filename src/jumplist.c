@@ -109,11 +109,12 @@ register_task(IObjectCollection *pobjs, wstring title, wstring cmd, wstring icon
         break;
 
       // set icon path and index
-      if (icon) {
+      if (icon)
         hr = pShellLink->lpVtbl->SetIconLocation((void *)pShellLink, icon, ii);
-        if (FAILED(hr))
-          break;
-      }
+      else
+        hr = pShellLink->lpVtbl->SetIconLocation((void *)pShellLink, exe_path, 0);
+      if (FAILED(hr))
+        break;
 
       // set full path of mintty.exe
       hr = pShellLink->lpVtbl->SetPath((void *)pShellLink, exe_path);
