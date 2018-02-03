@@ -3739,8 +3739,19 @@ main(int argc, char *argv[])
           // but window size hopefully adjusted already
           if (border_style) {
             // workaround for caption-less window exceeding borders (#733)
-            win_adjust_borders(cell_width * cfg.cols, cell_height * cfg.rows);
-            win_adapt_term_size(true, false);
+            RECT wr;
+            GetWindowRect(wnd, &wr);
+            int w = wr.right - wr.left;
+            int h = wr.bottom - wr.top;
+            MONITORINFO mi;
+            get_my_monitor_info(&mi);
+            RECT ar = mi.rcWork;
+            if (maxwidth && ar.right - ar.left < w)
+              w = ar.right - ar.left;
+            if (maxheight && ar.bottom - ar.top < h)
+              h = ar.bottom - ar.top;
+            SetWindowPos(wnd, null, 0, 0, w, h,
+                         SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
           }
         }
         else {
