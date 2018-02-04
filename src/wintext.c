@@ -1887,7 +1887,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   int dxs[len];
   int dx = combining ? 0 : char_width;
   for (int i = 0; i < len; i++) {
-    if (is_low_surrogate(text[i]))
+    if (is_high_surrogate(text[i]))
       // This does not have the expected effect so we keep splitting up 
       // non-BMP characters into single character chunks for now (term.c)
       dxs[i] = 0;
