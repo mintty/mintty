@@ -1910,6 +1910,12 @@ term_paint(void)
       termchar *d = chars + j;
       cattr tattr = newchars[j].attr;
       wchar tchar = newchars[j].chr;
+      xchar xtchar = tchar;
+      if (is_high_surrogate(tchar) && newchars[j].cc_next) {
+        termchar *t1 = &newchars[j + newchars[j].cc_next];
+        if (is_low_surrogate(t1->chr))
+          xtchar = combine_surrogates(tchar, t1->chr);
+      }
 
       if ((dispchars[j].attr.attr ^ tattr.attr) & ATTR_WIDE)
         dirty_line = true;
@@ -1942,6 +1948,16 @@ term_paint(void)
         trace_run("cc"), break_run = true;
 
 #ifdef keep_non_BMP_characters_together_in_one_chunk
+      // this was expected to speed up non-BMP display 
+      // but the effect is not significant, if any
+      // also, this spoils two other issues about non-BMP display:
+#warning non-BMP RTL will be in wrong order
+#warning some non-BMP ranges (e.g. Egyptian Hieroglyphs) are not cell-adjusted
+     /*
+      * Break when exceeding output buffer length.
+      */
+      if (is_high_surrogate(d->chr) && textlen + 2 >= maxtextlen)
+        trace_run("max"), break_run = true;
      /*
       * Break when switching BMP/non-BMP.
       */
@@ -1963,15 +1979,7 @@ term_paint(void)
           trace_run("len"), break_run = true;
       }
 
-      uchar tbc = bidi_class(tchar);
-#ifdef dont_break_at_non_BMP
-#warning would need buffer overflow handling!
-#warning has no effect this way, and does not seem to be needed...
-      if ((tchar & 0xFC00) == 0xD800 && (tchar2 & 0xFC00) == 0xDC00)
-        tbc = bidi_class(((ucschar) (tchar - 0xD7C0) << 10) | (tchar2 & 0x03FF));
-      else
-        tbc = bidi_class(tchar);
-#endif
+      uchar tbc = bidi_class(xtchar);
 
       if (textlen && tbc != bc) {
         if (!is_sep_class(tbc) && !is_sep_class(bc))
