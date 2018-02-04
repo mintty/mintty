@@ -1597,9 +1597,6 @@ term_paint(void)
         tattr.attr &= ~ATTR_BLINK2;
       }
 
-#ifdef handle_emojis_in_loop_1
-      ... active code below
-#endif
      /* Match emoji sequences
       * and replace by emoji indicators
       */
@@ -1635,10 +1632,14 @@ term_paint(void)
           if (ok && equalattrs) {
             d->attr.attr &= ~ ATTR_FGMASK;
             d->attr.attr |= TATTR_EMOJI | e.len;
+
             //d->attr.truefg = (uint)e;
             struct emoji * ee = &e;
             uint em = *(uint *)ee;
             d->attr.truefg = em;
+
+            // refresh cashed copy
+            tattr = d->attr;
             for (int i = 1; i < e.len; i++) {
               d[i].attr.attr &= ~ ATTR_FGMASK;
               d[i].attr.attr |= TATTR_EMOJI;
@@ -1764,12 +1765,6 @@ term_paint(void)
     bool firstdirtyitalic = false;
     bool dirtyrect = false;
     for (int j = 0; j < term.cols; j++) {
-#ifdef handle_emojis_in_loop_2
-      termchar *d = chars + j;
-      cattr tattr = newchars[j].attr;
-      ... code from above
-#endif
-
       if (dispchars[j].attr.attr & DATTR_STARTRUN) {
         laststart = j;
         dirtyrect = false;
@@ -1908,15 +1903,13 @@ term_paint(void)
         win_text(x, y, text, len, attr, textattr, lattr, has_rtl);
     }
 
+   /*
+    * Third loop, for actual drawing.
+    */
     for (int j = 0; j < term.cols; j++) {
       termchar *d = chars + j;
       cattr tattr = newchars[j].attr;
       wchar tchar = newchars[j].chr;
-      //wchar tchar2 = j + 1 < term.cols ? d[1].chr : 0;
-
-#ifdef handle_emojis_in_loop_3
-      ... code from above
-#endif
 
       if ((dispchars[j].attr.attr ^ tattr.attr) & ATTR_WIDE)
         dirty_line = true;
