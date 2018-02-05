@@ -1,7 +1,7 @@
 ### 2.8.4 (10 Feb 2018) ###
 
 Character handling and rendering
-  * Emoji support (wsltty#82, #600, ~#671, ~#430).
+  * Emoji support (mintty/wsltty#82, #600, ~#671, ~#430).
   * Fixed double-width handling within right-to-left text.
 
 Window handling
@@ -11,7 +11,7 @@ Window handling
   * Workaround for caption-less window exceeding borders (#733) on Windows 10.
 
 Mouse handling
-  * More selective suppression of mouse action on focus-click (wsltty#88, #717).
+  * More selective suppression of mouse action on focus-click (mintty/wsltty#88, #717).
   * Fixed mouse function in search bar (#85), broken since 2.8.2 (#717).
 
 Desktop integration
