@@ -60,7 +60,7 @@ colour schemes. However, \fB-o ThemeFile=\fIFILENAME\fP may be preferable.
 .TP
 \fB--configdir\fP \fIDIRNAME\fP
 Use the given directory to check for resource subdirectories 
-(\fIthemes\fP, \fIsounds\fP, \fIlang\fP);
+(\fIthemes\fP, \fIsounds\fP, \fIlang\fP, \fIemojis\fP, \fIicon\fP);
 also read settings from the configuration file \fIDIRNAME\fP/\fBconfig\fP, 
 in addition to the default config files, and save configuration changes here.
 
@@ -1708,8 +1708,8 @@ Supported styles are:
 .br
 \(en \fBwindows\fP Use Windows emoji graphics.
 
-Note that all style options only work if the respective emoji graphics 
-repository is deployed in a mintty resource directory.
+Note that all style options only work if the respective emoji graphics repository 
+is deployed in a mintty resource directory, subdirectory \fIemojis\fP.
 See the Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips#emojis\fP 
 for details.
 
@@ -2118,6 +2118,11 @@ the task list is retained with it.
 \fINote:\fP Task names are subject to localization if they are 
 added to the localization file of the selected UI localization language 
 (in subdirectory \fIlang\fP of a mintty resource directory).
+
+\fINote:\fP If the parameter list contains "--WSL", mintty will try to 
+determine a suitable WSL distribution icon for the jump list, or use the 
+WSLtty default icon from the mintty resource subdirectory \fIicon\fP, 
+or from the WSLtty package if installed.
 
 \fINote:\fP This is an experimental feature, with an experimental configuration format.
 
