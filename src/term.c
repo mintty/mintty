@@ -1809,6 +1809,13 @@ term_paint(void)
    /*
     * Finally, loop once more and actually do the drawing.
     */
+    // control line overlay; as opposed to character overlay implemented 
+    // by the "pending overlay" buffer below, this works by repeating 
+    // the last line loop and only drawing the overlay characters this time
+    bool overlaying = false;
+    overlay:;
+    bool do_overlay = false;
+
     int maxtextlen = max(term.cols, 16);
     wchar text[maxtextlen];
     cattr textattr[maxtextlen];
@@ -1866,17 +1873,23 @@ term_paint(void)
         eattr.attr &= ~(ATTR_WIDE | TATTR_COMBINING);
         wchar esp[] = W("        ");
         if (elen) {
-          win_text(x, y, esp, elen, eattr, textattr, lattr | LATTR_DISP1, has_rtl);
+          if (!overlaying) {
+            win_text(x, y, esp, elen, eattr, textattr, lattr | LATTR_DISP1, has_rtl);
+            flush_text();
+          }
 #ifdef debug_emojis
           eattr.attr &= ~(ATTR_BGMASK | ATTR_FGMASK);
           eattr.attr |= 6 << ATTR_BGSHIFT | 4;
           esp[0] = '0' + elen;
           win_text(x, y, esp, elen, eattr, textattr, lattr | LATTR_DISP2, has_rtl);
 #endif
-
-          //struct emoji e = (struct emoji) eattr.truefg;
-          struct emoji * ee = (void *)&eattr.truefg;
-          emoji_show(x, y, *ee, elen, eattr, lattr);
+          if (cfg.emoji_placement == EMPL_FULL && !overlaying)
+            do_overlay = true;  // display in overlaying loop
+          else {
+            //struct emoji e = (struct emoji) eattr.truefg;
+            struct emoji * ee = (void *)&eattr.truefg;
+            emoji_show(x, y, *ee, elen, eattr, lattr);
+          }
         }
 #ifdef debug_emojis
         else {
@@ -1886,6 +1899,9 @@ term_paint(void)
           win_text(x, y, esp, 1, eattr, textattr, lattr | LATTR_DISP2, has_rtl);
         }
 #endif
+      }
+      else if (overlaying) {
+        return;
       }
       else if (attr.attr & (ATTR_ITALIC | TATTR_COMBDOUBL)) {
         win_text(x, y, text, len, attr, textattr, lattr | LATTR_DISP1, has_rtl);
@@ -1899,8 +1915,10 @@ term_paint(void)
         ovl_lattr = lattr;
         ovl_has_rtl = has_rtl;
       }
-      else
+      else {
         win_text(x, y, text, len, attr, textattr, lattr, has_rtl);
+        flush_text();
+      }
     }
 
    /*
@@ -1993,7 +2011,7 @@ term_paint(void)
       bc = tbc;
 
       if (break_run) {
-        if (dirty_run && textlen)
+        if ((dirty_run && textlen) || overlaying)
           out_text(start, i, text, textlen, attr, textattr, line->lattr, has_rtl);
         start = j;
         textlen = 0;
@@ -2081,8 +2099,20 @@ term_paint(void)
     }
     if (dirty_run && textlen)
       out_text(start, i, text, textlen, attr, textattr, line->lattr, has_rtl);
-    flush_text();
+    if (!overlaying)
+      flush_text();
 
+   /*
+    * Draw any pending overlay characters in one more loop.
+    */
+    if (do_overlay && !overlaying) {
+      overlaying = true;
+      goto overlay;
+    }
+
+   /*
+    * Release the line data fetched from the screen or scrollback buffer.
+    */
     release_line(line);
   }
 
