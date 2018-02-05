@@ -670,6 +670,7 @@ into mintty configuration resource subdirectory `emojis`, e.g.
 * cp -rl noto-emoji/png/128 ~/.config/mintty/emojis/noto
 Use your preferred configuration directory, e.g.
 * cp -rl noto-emoji/png/128 "$APPDATA"/mintty/emojis/noto
+* cp -rl noto-emoji/png/128 /usr/share/mintty/emojis/noto
 <img align=top src=https://github.com/mintty/mintty/wiki/mintty-emojis.png>
 
 

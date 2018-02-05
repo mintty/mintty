@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Fri Jan 26 15:59:31 2018 -->
+<!-- CreationDate: Mon Feb  5 18:09:36 2018 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -112,10 +112,10 @@ preferable.</b></p>
 
 <p style="margin-left:22%;">Use the given directory to
 check for resource subdirectories (<i>themes</i>,
-<i>sounds</i>, <i>lang</i>); also read settings from the
-configuration file <i>DIRNAME</i>/<b>config</b>, in addition
-to the default config files, and save configuration changes
-here.</p>
+<i>sounds</i>, <i>lang</i>, <i>emojis</i>, <i>icon</i>);
+also read settings from the configuration file
+<i>DIRNAME</i>/<b>config</b>, in addition to the default
+config files, and save configuration changes here.</p>
 
 <p style="margin-left:11%;"><b>--dir</b>
 <i>directory</i></p>
@@ -1086,8 +1086,8 @@ configuration settings when given on the command-line.) <br>
 Unicode-enabled settings: BellFile, ThemeFile, Title,
 ExitTitle, Icon, Log, Language, Font, Font1..., FontSample,
 Printer, Answerback, SixelClipChars, Class, AppID, AppName,
-AppLaunchCmd, DropCommands, UserCommands,
-SessionCommands.</p>
+AppLaunchCmd, DropCommands, UserCommands, SessionCommands,
+TaskCommands.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Be careful when
 running multiple instances of mintty. If options are saved
@@ -2009,11 +2009,15 @@ to fail if a placeholder expands with &quot;/&quot;
 
 <p style="margin-left:22%; margin-top: 1em">If the log file
 name is a relative path name, it is relative from the
-working directory mintty was started in. If mintty was
-started from a Windows shortcut (desktop/start menu) with no
-working directory (&quot;Start in:&quot;) specified, mintty
-changes to the user&rsquo;s home directory first, except in
-WSL support mode where %LOCALAPPDATA%/Temp is used.</p>
+working directory mintty was started in. To avoid failure to
+create a log file (especially when starting from the Start
+menu), the following tweak is applied: If mintty was started
+from a Windows shortcut with no working directory
+(&quot;Start in:&quot;) specified and the effective start
+directory is within the Windows system directory hierarchy,
+mintty changes to the user&rsquo;s home directory first,
+except in WSL support mode where %LOCALAPPDATA%/Temp is
+used.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Note: If the
 requested log file exists already, mintty does not overwrite
@@ -2131,8 +2135,8 @@ taken from the font. <br>
 
 <p style="margin-left:22%; margin-top: 1em">Note that all
 style options only work if the respective emoji graphics
-repository is deployed in a mintty resource directory. See
-the Tips wiki page
+repository is deployed in a mintty resource directory,
+subdirectory <i>emojis</i>. See the Tips wiki page
 <i>https://github.com/mintty/mintty/wiki/Tips#emojis</i> for
 details.</p>
 
@@ -2148,7 +2152,10 @@ display area. <br>
 &ndash; <b>align</b> Emojis are aligned in their display
 area. <br>
 &ndash; <b>middle</b> Emojis are centered in their display
-area.</p>
+area. <br>
+&ndash; <b>full</b> Emojis are full-size with original
+aspect ratio; note that they may overlap into the next
+character(s).</p>
 
 <p style="margin-left:11%;"><b>Bidirectional rendering</b>
 (Bidi=2)</p>
@@ -2586,13 +2593,12 @@ commands</b> (SessionCommands=)</p>
 invocation parameters for the session launcher. The value is
 a series of semicolon-separated, colon-combined pairs of
 session launch names (used as menu item labels) and
-configuration parameter lists; when selecting one of the
-launch names, mintty is invoked with the respective
-parameters. (If a semicolon shall be embedded into any of
-the command patterns, a non-whitespace control character
-(i.e. none of <b>^I^J^K^L^M</b>) can be specified as an
-alternative separator by starting the whole setting with
-it.)</p>
+invocation parameter lists; when selecting one of the launch
+names, mintty is invoked with the respective parameters. (If
+a semicolon shall be embedded into any of the command
+patterns, a non-whitespace control character (i.e. none of
+<b>^I^J^K^L^M</b>) can be specified as an alternative
+separator by starting the whole setting with it.)</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 Session launch names are subject to localization if they are
@@ -2608,6 +2614,54 @@ configuration format.</p>
 &ndash; <b>SessionCommands=big:-w
 max;Ubuntu:--WSL=Ubuntu;mybox:ssh mybox</b> <br>
 &ndash; <b>SessionCommands=mycolours:-C
+~/.minttyrc.mycolours</b></p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+Control characters need to be embedded verbatim; there is no
+escape notation.</p>
+
+<p style="margin-left:11%;"><b>Taskbar commands</b>
+(TaskCommands=)</p>
+
+<p style="margin-left:22%;">This setting lists mintty
+invocation parameters for the &quot;Tasks&quot; list in the
+taskbar icon, also known as &quot;jump list&quot;. The value
+is a series of semicolon-separated, colon-combined pairs of
+task names and invocation parameter lists; when selecting
+one of the tasks from the taskbar icon, mintty is invoked
+with the respective parameters. (If a semicolon shall be
+embedded into any of the command patterns, a non-whitespace
+control character (i.e. none of <b>^I^J^K^L^M</b>) can be
+specified as an alternative separator by starting the whole
+setting with it.)</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+This feature only works in combination with a parameter
+<b>-o AppID=...</b>. If the taskbar icon is
+&quot;pinned&quot; to the taskbar, the task list is retained
+with it.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+Task names are subject to localization if they are added to
+the localization file of the selected UI localization
+language (in subdirectory <i>lang</i> of a mintty resource
+directory).</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i> If
+the parameter list contains &quot;--WSL&quot;, mintty will
+try to determine a suitable WSL distribution icon for the
+jump list, or use the WSLtty default icon from the mintty
+resource subdirectory <i>icon</i>, or from the WSLtty
+package if installed.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+This is an experimental feature, with an experimental
+configuration format.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Examples: <br>
+&ndash; <b>TaskCommands=big:-w
+max;Ubuntu:--WSL=Ubuntu;mybox:ssh mybox</b> <br>
+&ndash; <b>TaskCommands=mycolours:-C
 ~/.minttyrc.mycolours</b></p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>

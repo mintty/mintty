@@ -1,3 +1,5 @@
+### 2.8.4 (10 Feb 2018) ###
+
 Character handling and rendering
   * Emoji support (wsltty#82, #600, ~#671, ~#430).
   * Fixed double-width handling within right-to-left text.
@@ -12,10 +14,14 @@ Mouse handling
   * More selective suppression of mouse action on focus-click (wsltty#88, #717).
   * Fixed mouse function in search bar (#85), broken since 2.8.2 (#717).
 
-Configuration
-  * Option TaskCommands to configure a taskbar icon task list ("jump list") (#290).
-  * Limit tweaking of empty shortcut start dir to Start menu case (#737).
+Desktop integration
+  * Support for taskbar "Tasks" list ("jump list") (#290).
   * Session launcher icons (#699).
+
+Configuration
+  * Options Emojis, EmojiPlacement to configure emojis style and display
+  * Option TaskCommands to configure a taskbar icon task list ("jump list").
+  * Limit tweaking of empty shortcut start dir to Start menu case (#737).
 
 ### 2.8.3 (8 Jan 2018) ###
 
