@@ -451,6 +451,7 @@ static opt_val
     {"stretch", EMPL_STRETCH},
     {"align", EMPL_ALIGN},
     {"middle", EMPL_MIDDLE},
+    {"full", EMPL_FULL},
     {0, 0}
   },
   [OPT_MOD] = (opt_val[]) {
