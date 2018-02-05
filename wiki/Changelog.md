@@ -14,6 +14,7 @@ Mouse handling
 
 Configuration
   * Option TaskCommands to configure a taskbar icon task list ("jump list") (#290).
+  * Limit tweaking of empty shortcut start dir to Start menu case (#737).
 
 ### 2.8.3 (8 Jan 2018) ###
 

@@ -1601,10 +1601,13 @@ pattern; note that this is likely to fail if a placeholder expands with
 "/" (%D).
 
 If the log file name is a relative path name, it is relative from the 
-working directory mintty was started in. If mintty was started from a 
-Windows shortcut (desktop/start menu) with no working directory 
-("Start in:") specified, mintty changes to the user's home directory 
-first, except in WSL support mode where %LOCALAPPDATA%/Temp is used.
+working directory mintty was started in. To avoid failure to create a 
+log file (especially when starting from the Start menu), the following 
+tweak is applied: If mintty was started from a Windows shortcut with 
+no working directory ("Start in:") specified and the effective start 
+directory is within the Windows system directory hierarchy, 
+mintty changes to the user's home directory first, 
+except in WSL support mode where %LOCALAPPDATA%/Temp is used.
 
 Note: If the requested log file exists already, mintty does not overwrite it 
 but reports an error. To configure logging in the config file, use some 

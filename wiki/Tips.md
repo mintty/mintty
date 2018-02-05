@@ -1,5 +1,4 @@
 
-
 ## Configuring mintty ##
 
 Mintty supports a number of common places to look for and save its 
@@ -23,13 +22,13 @@ for various installations of mintty (e.g. cygwin 32/64 Bit, MSYS, Git Bash).
 
 The Cygwin [setup.exe](http://cygwin.com/setup.exe) package for mintty 
 installs a shortcut in the Windows start menu under _All Programs/Cygwin_.
-It starts mintty with a '-' (i.e. a single dash) as its only argument, 
-which tells it to invoke the user's default shell as a login shell.
+It starts mintty with a ‘-’ (i.e. a single dash) as its only argument, 
+which tells it to invoke the user’s default shell as a login shell.
 
 Shortcuts are also a convenient way to start mintty with additional options and different commands. 
 For example, shortcuts for access to remote machines can be created by 
 invoking **[ssh](http://www.openssh.com)**. The command simply needs 
-to be appended to the target field of the shortcut's properties:
+to be appended to the target field of the shortcut’s properties:
 
 > Target: `C:\Cygwin\bin\mintty.exe /bin/ssh server`
 
@@ -119,7 +118,7 @@ look like `X:\cygwin\bin\mintty.exe winpty` …
 
 ## Starting mintty from a batch file ##
 
-In order to start mintty from a batch file it needs to be invoked through the **[start](http://technet.microsoft.com/en-us/library/cc770297.aspx)** command. This avoids the batch file's console window staying open while mintty is running. For example:
+In order to start mintty from a batch file it needs to be invoked through the **[start](http://technet.microsoft.com/en-us/library/cc770297.aspx)** command. This avoids the batch file’s console window staying open while mintty is running. For example:
 
 ```
 start mintty -
@@ -130,19 +129,24 @@ The console window for the batch file will still show up briefly, however. This 
 
 ## Starting in a particular directory ##
 
-The working directory for a mintty session can be set in the _Start In_ field of a shortcut, 
+The working directory for a mintty session can be set in the 
+_Start In_ field of a shortcut, 
 or by changing directory in an invoking script, or with option `--dir`.
-Note, however, that Cygwin's _/etc/profile_ script for login shells automatically changes to the user's home directory.
+Note, however, that Cygwin’s _/etc/profile_ script for login shells automatically changes to the user’s home directory.
 The profile script can be told not to do this by setting a variable called _CHERE\_INVOKING_, like this:
 
 ```
 mintty /bin/env CHERE_INVOKING=1 /bin/bash -l
 ```
 
+Note: If mintty is run from a shortcut with empty _Start In_ field and the 
+effective start directory is within the Windows system folder, mintty changes 
+it in order to avoid failure when creating a log file.
+
 
 ## Creating a folder context menu entry for mintty ##
 
-Cygwin's **chere** package can be used to create folder context menu entries in Explorer, which allow a shell to be opened with the working directory set to the selected folder.
+Cygwin’s **chere** package can be used to create folder context menu entries in Explorer, which allow a shell to be opened with the working directory set to the selected folder.
 
 The following command will create an entry called _Bash Prompt Here_ for the current user that will invoke bash running in mintty. See the chere manual (_man chere_) for all the options.
 
@@ -194,7 +198,7 @@ and occurs likewise in all other pty-based terminals (e.g. xterm).
 
 ## Terminal line settings ##
 
-Terminal line settings can be viewed or changed with the **[stty](http://www.opengroup.org/onlinepubs/9699919799/utilities/stty.html)** utility, which is installed as part of Cygwin's core utilities package. Among other things, it can set the control characters used for generating signals or editing an input line.
+Terminal line settings can be viewed or changed with the **[stty](http://www.opengroup.org/onlinepubs/9699919799/utilities/stty.html)** utility, which is installed as part of Cygwin’s core utilities package. Among other things, it can set the control characters used for generating signals or editing an input line.
 
 See the stty manual for all the details, but here are a few examples. The commands can be included in shell startup files to make them permanent.
 
@@ -281,11 +285,11 @@ let &t_te.="\e[0 q"
 
 ## Avoiding escape timeout issues in vim ##
 
-It's a historical flaw of Unix terminals that the keycode of the escape key, i.e. the escape character, also appears at the start of many other keycodes. This means that on seeing an escape character, an application cannot be sure whether to treat it as an escape key press or whether to expect more characters to complete a longer keycode.
+It’s a historical flaw of Unix terminals that the keycode of the escape key, i.e. the escape character, also appears at the start of many other keycodes. This means that on seeing an escape character, an application cannot be sure whether to treat it as an escape key press or whether to expect more characters to complete a longer keycode.
 
 Therefore they tend to employ a timeout to decide. The delay on the escape key can be annoying though, particularly with the mode-dependent cursor above enabled.  The timeout approach can also fail on slow connections or a heavily loaded machine.
 
-Mintty's “application escape key mode” can be used to avoid this by switching the escape key to an unambiguous keycode. Add the following to _~/.vimrc_ to employ it in vim:
+Mintty’s “application escape key mode” can be used to avoid this by switching the escape key to an unambiguous keycode. Add the following to _~/.vimrc_ to employ it in vim:
 
 ```
 let &t_ti.="\e[?7727h"
@@ -841,5 +845,5 @@ UserCommands=Kill foreground process:kill -9 $MINTTY_PID
 To install mintty outside a cygwin environment, follow a few rules:
 * Find out which libraries (dlls from the cygwin /bin directory) mintty needs in addition to cygwin1.dll and install them all, or:
 * Compile mintty statically.
-* Call the directory in which to install mintty and libraries 'bin'.
+* Call the directory in which to install mintty and libraries ‘bin’.
 

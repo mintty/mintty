@@ -2796,6 +2796,8 @@ wslicon(wchar * params)
       }
     }
   }
+#else
+  (void)params;
 #endif
   return icon;
 }
@@ -3386,13 +3388,23 @@ main(int argc, char *argv[])
     load_theme(cfg.theme_file);
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
-  if (!wdpresent) {
-    if (support_wsl) {
-      chdir(getenv("LOCALAPPDATA"));
-      chdir("Temp");
+  if (!wdpresent) {  // shortcut start directory is empty
+    WCHAR cd[MAX_PATH + 1];
+    WCHAR wd[MAX_PATH + 1];
+    GetCurrentDirectoryW(MAX_PATH, cd);		// C:\WINDOWS\System32 ?
+    GetSystemDirectoryW(wd, MAX_PATH);		// C:\WINDOWS\system32
+    //GetSystemWindowsDirectoryW(wd, MAX_PATH);	// C:\WINDOWS
+    int l = wcslen(wd);
+    if (0 == wcsncasecmp(cd, wd, l)) {
+      // current directory is within Windows system directory
+      // and shortcut start directory is empty
+      if (support_wsl) {
+        chdir(getenv("LOCALAPPDATA"));
+        chdir("Temp");
+      }
+      else
+        chdir(home);
     }
-    else
-      chdir(home);
   }
 #endif
 
