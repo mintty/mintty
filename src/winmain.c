@@ -2015,14 +2015,14 @@ static struct {
     when WM_MOUSEACTIVATE:
       // prevent accidental selection on activation (#717)
       if (LOWORD(lp) == HTCLIENT && HIWORD(lp) == WM_LBUTTONDOWN)
+        if (!getenv("ConEmuPID"))
 #ifdef suppress_click_on_focus_at_message_level
 #warning this would also obstruct mouse function in the search bar
-        // ignore focus click
-        if (!getenv("ConEmuPID"))
+          // ignore focus click
           return MA_ACTIVATEANDEAT;
 #else
-        // support selective mouse click suppression
-        click_focus_token = true;
+          // support selective mouse click suppression
+          click_focus_token = true;
 #endif
 
     when WM_ACTIVATE:
