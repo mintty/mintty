@@ -2693,79 +2693,87 @@ win_set_colour(colour_i i, colour c)
 
   static bool bold_colour_selected = false;
 
+  bool changed_something = false;
+  void cc(colour_i i, colour c)
+  {
+    if (c != colours[i]) {
+      colours[i] = c;
+      changed_something = true;
+    }
+  }
+
   if (c == (colour)-1) {
     // ... reset to default ...
     if (i == BOLD_COLOUR_I) {
-      colours[BOLD_COLOUR_I] = cfg.bold_colour;
+      cc(BOLD_COLOUR_I, cfg.bold_colour);
     }
     else
     if (i == BOLD_FG_COLOUR_I) {
       bold_colour_selected = false;
       if (cfg.bold_colour != (colour)-1)
-        colours[BOLD_FG_COLOUR_I] = cfg.bold_colour;
+        cc(BOLD_FG_COLOUR_I, cfg.bold_colour);
       else
-        colours[BOLD_FG_COLOUR_I] = brighten(colours[FG_COLOUR_I], colours[BG_COLOUR_I], true);
+        cc(BOLD_FG_COLOUR_I, brighten(colours[FG_COLOUR_I], colours[BG_COLOUR_I], true));
     }
     else if (i == FG_COLOUR_I)
-      colours[i] = cfg.fg_colour;
+      cc(i, cfg.fg_colour);
     else if (i == BG_COLOUR_I)
-      colours[i] = cfg.bg_colour;
+      cc(i, cfg.bg_colour);
     else if (i == CURSOR_COLOUR_I)
-      colours[i] = cfg.cursor_colour;
+      cc(i, cfg.cursor_colour);
     else if (i == SEL_COLOUR_I)
-      colours[i] = cfg.sel_bg_colour;
+      cc(i, cfg.sel_bg_colour);
     else if (i == SEL_TEXT_COLOUR_I)
-      colours[i] = cfg.sel_fg_colour;
-
-    return;
+      cc(i, cfg.sel_fg_colour);
   }
-
-  colours[i] = c;
-  if (i < 16)
-    colours[i + ANSI0] = c;
-
+  else {
+    cc(i, c);
+    if (i < 16)
+      cc(i + ANSI0, c);
 #ifdef debug_brighten
-  printf("colours[%d] = %06X\n", i, c);
+    printf("colours[%d] = %06X\n", i, c);
 #endif
 
-  switch (i) {
-    when FG_COLOUR_I:
-      // should we make this conditional, 
-      // unless bold colour has been set explicitly?
-      if (!bold_colour_selected) {
-        if (cfg.bold_colour != (colour)-1)
-          colours[BOLD_FG_COLOUR_I] = cfg.bold_colour;
-        else {
-          colours[BOLD_FG_COLOUR_I] = brighten(c, colours[BG_COLOUR_I], true);
-          // renew this too as brighten() may refer to contrast colour:
-          colours[BOLD_BG_COLOUR_I] = brighten(colours[BG_COLOUR_I], colours[FG_COLOUR_I], true);
+    switch (i) {
+      when FG_COLOUR_I:
+        // should we make this conditional, 
+        // unless bold colour has been set explicitly?
+        if (!bold_colour_selected) {
+          if (cfg.bold_colour != (colour)-1)
+            cc(BOLD_FG_COLOUR_I, cfg.bold_colour);
+          else {
+            cc(BOLD_FG_COLOUR_I, brighten(c, colours[BG_COLOUR_I], true));
+            // renew this too as brighten() may refer to contrast colour:
+            cc(BOLD_BG_COLOUR_I, brighten(colours[BG_COLOUR_I], colours[FG_COLOUR_I], true));
+          }
         }
-      }
-    when BOLD_FG_COLOUR_I:
-      bold_colour_selected = true;
-    when BG_COLOUR_I:
-      if (!bold_colour_selected) {
-        if (cfg.bold_colour != (colour)-1)
-          colours[BOLD_FG_COLOUR_I] = cfg.bold_colour;
-        else {
-          colours[BOLD_BG_COLOUR_I] = brighten(c, colours[FG_COLOUR_I], true);
-          // renew this too as brighten() may refer to contrast colour:
-          colours[BOLD_FG_COLOUR_I] = brighten(colours[FG_COLOUR_I], colours[BG_COLOUR_I], true);
+      when BOLD_FG_COLOUR_I:
+        bold_colour_selected = true;
+      when BG_COLOUR_I:
+        if (!bold_colour_selected) {
+          if (cfg.bold_colour != (colour)-1)
+            cc(BOLD_FG_COLOUR_I, cfg.bold_colour);
+          else {
+            cc(BOLD_BG_COLOUR_I, brighten(c, colours[FG_COLOUR_I], true));
+            // renew this too as brighten() may refer to contrast colour:
+            cc(BOLD_FG_COLOUR_I, brighten(colours[FG_COLOUR_I], colours[BG_COLOUR_I], true));
+          }
         }
+      when CURSOR_COLOUR_I: {
+        // Set the colour of text under the cursor to whichever of foreground
+        // and background colour is further away from the cursor colour.
+        colour fg = colours[FG_COLOUR_I], bg = colours[BG_COLOUR_I];
+        cc(CURSOR_TEXT_COLOUR_I, colour_dist(c, fg) > colour_dist(c, bg) ? fg : bg);
+        cc(IME_CURSOR_COLOUR_I, c);
       }
-    when CURSOR_COLOUR_I: {
-      // Set the colour of text under the cursor to whichever of foreground
-      // and background colour is further away from the cursor colour.
-      colour fg = colours[FG_COLOUR_I], bg = colours[BG_COLOUR_I];
-      colours[CURSOR_TEXT_COLOUR_I] =
-        colour_dist(c, fg) > colour_dist(c, bg) ? fg : bg;
-      colours[IME_CURSOR_COLOUR_I] = c;
+      otherwise:
+        break;
     }
-    otherwise:
-      break;
   }
+
   // Redraw everything.
-  win_invalidate_all();
+  if (changed_something)
+    win_invalidate_all();
 }
 
 colour
