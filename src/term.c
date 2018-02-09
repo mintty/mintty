@@ -1484,7 +1484,19 @@ term_paint(void)
     term.cursor_on && !term.show_other_screen
     ? term.curs.y - term.disptop : -1;
 
-  for (int i = 0; i < term.rows; i++) {
+  // adaptive display order:
+  // rather than boring for (int i = 0; i < term.rows; i++)
+  // start in cursor row (if defined)
+  // then display alternatingly towards top and bottom
+  int i = curs_y >= term.rows ? term.rows / 2 :
+          curs_y >= 0 ? curs_y : 0;
+  int delti = 0;
+  for (int ii = 0; ii < 2 * term.rows; ii++) {
+    i += ((delti & 1) ? -1 : 1) * delti;
+    delti++;
+    if (i < 0 || i >= term.rows)
+      continue;
+
     pos scrpos;
     scrpos.y = i + term.disptop;
 
