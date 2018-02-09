@@ -428,9 +428,25 @@ win_to_top(HWND top_wnd)
 
 static HWND first_wnd, last_wnd;
 
+#define debug_sessions 1
+
 static BOOL CALLBACK
 wnd_enum_proc(HWND curr_wnd, LPARAM unused(lp))
 {
+#ifdef debug_sessions
+  WINDOWINFO curr_wnd_info;
+  curr_wnd_info.cbSize = sizeof(WINDOWINFO);
+  GetWindowInfo(curr_wnd, &curr_wnd_info);
+  if (class_atom == curr_wnd_info.atomWindowType) {
+    int len = GetWindowTextLengthW(curr_wnd);
+    wchar title[len + 1];
+    GetWindowTextW(curr_wnd, title, len + 1);
+    printf("[%8p.%d]%1s %2s %8p %ls\n", wnd, (int)unused_lp,
+           curr_wnd == wnd ? "=" : IsIconic(curr_wnd) ? "i" : "",
+           !first_wnd && curr_wnd != wnd && !IsIconic(curr_wnd) ? "->" : "",
+           curr_wnd, title);
+  }
+#endif
   if (curr_wnd != wnd && !IsIconic(curr_wnd)) {
     WINDOWINFO curr_wnd_info;
     curr_wnd_info.cbSize = sizeof(WINDOWINFO);
@@ -449,6 +465,13 @@ win_switch(bool back, bool alternate)
   // avoid being pushed behind other windows (#652)
   // but do it below, not here (wsltty#47)
   //SetWindowPos(wnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+
+#if defined(debug_sessions) && debug_sessions > 1
+  first_wnd = 0, last_wnd = 0;
+  EnumChildWindows(0, wnd_enum_proc, 1);
+  first_wnd = 0, last_wnd = 0;
+  EnumDesktopWindows(0, wnd_enum_proc, 8);
+#endif
 
   first_wnd = 0, last_wnd = 0;
   EnumWindows(wnd_enum_proc, 0);
