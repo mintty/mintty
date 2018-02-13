@@ -1430,22 +1430,35 @@ match_emoji(termchar * d, int maxlen)
 	1	X [Extended_Pictographic]	if not in variation seq
        */
       if ((tags & EM_text) && combchr == 0xFE0E) {
-        // strip VARIATION SELECTOR-15, display text style
-        d->cc_next = 0;
+        // VARIATION SELECTOR-15: display text style
         emoji.len = 0;
       }
       else if ((tags & EM_emoj) && combchr == 0xFE0F) {
-        // strip VARIATION SELECTOR-16, display emoji style
-        d->cc_next = 0;
+        // VARIATION SELECTOR-16: display emoji style
       }
-      else if ((tags & EM_pres) && !combchr) {
+      else if (combchr) {
+        emoji.len = 0;  // suppress emoji style with combining
+      }
+      else if (tags & EM_pres) {
         // display presentation
       }
-      else if ((tags & EM_pict) && !(tags & (EM_text | EM_emoj)) && !combchr) {
-        // display pictographic
-      }
-      else
+#ifdef support_only_pictographics
+      else if ((tags & EM_pict) && !(tags & (EM_text | EM_emoj))) {
+        // we could support this group to display pictographic,
+        // however, there are no emoji graphics for them anyway, so:
         emoji.len = 0;
+      }
+#endif
+#ifdef support_other_pictographics
+      else if ((tags & EM_pict) && (tags & (EM_text | EM_emoj))) {
+        // we could support this group to display pictographic,
+        // however, Unicode specifies them for explicit variations,
+        // so let's default to text style
+        emoji.len = 0;
+      }
+#endif
+      else
+        emoji.len = 0;  // display text style
     }
     if (!emoji.len) {
       // not found another match; if we had a "longest match" before, 
@@ -1618,7 +1631,7 @@ term_paint(void)
           // check whether all emoji components have the same attributes
           bool equalattrs = true;
           for (int i = 1; i < e.len && equalattrs; i++) {
-#           define IGNATTR (ATTR_WIDE | ATTR_FGMASK | TATTR_COMBINING)
+# define IGNATTR (ATTR_WIDE | ATTR_FGMASK | TATTR_COMBINING)
             if ((d[i].attr.attr & ~IGNATTR) != (d->attr.attr & ~IGNATTR)
                || d[i].attr.truebg != d->attr.truebg
                )
@@ -1630,7 +1643,7 @@ term_paint(void)
 
           // modify character data to trigger later emoji display
           if (ok && equalattrs) {
-            d->attr.attr &= ~ ATTR_FGMASK;
+            d->attr.attr &= ~ATTR_FGMASK;
             d->attr.attr |= TATTR_EMOJI | e.len;
 
             //d->attr.truefg = (uint)e;
@@ -1640,8 +1653,9 @@ term_paint(void)
 
             // refresh cashed copy
             tattr = d->attr;
+            // inhibit subsequent emoji sequence components
             for (int i = 1; i < e.len; i++) {
-              d[i].attr.attr &= ~ ATTR_FGMASK;
+              d[i].attr.attr &= ~ATTR_FGMASK;
               d[i].attr.attr |= TATTR_EMOJI;
               d[i].attr.truefg = em;
             }
@@ -2055,17 +2069,24 @@ term_paint(void)
           wchar prev = dd->chr;
 #endif
           dd += dd->cc_next;
+
+          // mark combining unless pseudo-combining surrogates
+          if (!is_low_surrogate(dd->chr)) {
+            if (tattr.attr & TATTR_EMOJI)
+              break;
+            attr.attr |= TATTR_COMBINING;
+          }
           if (combiningdouble(dd->chr))
             attr.attr |= TATTR_COMBDOUBL;
+
           textattr[textlen] = dd->attr;
-          // hide bidi isolate mark glyphs (if handled zero-width)
-          if (dd->chr >= 0x2066 && dd->chr <= 0x2069)
+          if (cfg.emojis && dd->chr == 0xFE0E)
+            ; // skip text style variation selector
+          else if (dd->chr >= 0x2066 && dd->chr <= 0x2069)
+            // hide bidi isolate mark glyphs (if handled zero-width)
             text[textlen++] = 0x200B;  // zero width space
           else
             text[textlen++] = dd->chr;
-          // mark combining unless pseudo-combining surrogates
-          if ((dd->chr & 0xFC00) != 0xDC00)
-            attr.attr |= TATTR_COMBINING;
 #ifdef debug_surrogates
           ucschar comb = 0xFFFFF;
           if ((prev & 0xFC00) == 0xD800 && (dd->chr & 0xFC00) == 0xDC00)
