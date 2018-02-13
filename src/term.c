@@ -1427,7 +1427,7 @@ match_emoji(termchar * d, int maxlen)
 	1	X FE0E		variation seq: strip; normal display
 	1	X FE0F		variation seq: emoji display
 	1	X [Emoji_Presentation]	emoji display
-	1	X [Extended_Pictographic]	if not in variation seq
+	1	X [Extended_Pictographic]	if not a variation (none)
        */
       if ((tags & EM_text) && combchr == 0xFE0E) {
         // VARIATION SELECTOR-15: display text style
@@ -1441,6 +1441,9 @@ match_emoji(termchar * d, int maxlen)
       }
       else if (tags & EM_pres) {
         // display presentation
+      }
+      else if ((tags & (EM_emoj | EM_pres | EM_pict)) && (d->attr.attr & ATTR_FRAMED)) {
+        // with explicit attribute, display pictographic
       }
 #ifdef support_only_pictographics
       else if ((tags & EM_pict) && !(tags & (EM_text | EM_emoj))) {

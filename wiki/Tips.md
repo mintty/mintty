@@ -598,6 +598,7 @@ Mintty supports a maximum of usual and unusual text attributes:
 | 48;5;P                 | 49                | background palette colour     |
 | 38;2;R;G;B             | 39                | foreground true colour        |
 | 48;2;R;G;B             | 49                | background true colour        |
+| 51, 52                 | 54                | emoji style                   |
 | _any_                  | 0                 |                               |
 
 Note: The control sequences for Fraktur (“Gothic”) font are described 
@@ -620,14 +621,17 @@ background colours and inverse mode are ignored.
 
 ## Emojis ##
 
-Mintty supports display of presentation and pictographic emojis, 
-style variation selectors and emoji sequences, as defined by Unicode.
+Mintty supports display of emojis as defined by Unicode using 
+emoji presentation, emoji style variation and emoji sequences.
 
 The option `Emojis` can choose among sets of emoji graphics if 
 deployed in a mintty configuration directory.
-With this option, mintty emoji support is enabled and the emojis style is chosen. 
+With this option, mintty emoji support is enabled and the emoji graphics style is chosen. 
 Mintty will match output for valid emoji sequences, 
-emoji style selectors and pictographic or presentation forms.
+emoji style selectors and emoji presentation forms.
+
+For characters with default text style but optional emoji graphics,
+emoji style can be selected with the “framed” or “encircled” text attribute.
 
 Note that it may be useful to set `Charwidth=unicode` in addition.
 
@@ -641,6 +645,7 @@ Mintty does not bundle actual emoji graphics with its package.
 You will have to download and deploy them yourself.
 
 Emoji data can be found at the following sources:
+<img align=right src=https://github.com/mintty/mintty/wiki/mintty-emojis.png>
 * [EmojiOne](https://www.emojione.com/)
   * Free Download for your own use, PNG Files, download e.g. 128x128px zip
   * Deploy the preferred subdirectory (e.g. 128) as `emojione`
@@ -665,13 +670,12 @@ for example:
 
 “Deploy” above means move, link, copy or hard-link the respective subdirectory 
 into mintty configuration resource subdirectory `emojis`, e.g.
-* mv noto-emoji/png/128 ~/.config/mintty/emojis/noto
-* ln -s "$PWD"/noto-emoji/png/128 ~/.config/mintty/emojis/noto
-* cp -rl noto-emoji/png/128 ~/.config/mintty/emojis/noto
+* `mv noto-emoji/png/128 ~/.config/mintty/emojis/noto`
+* `ln -s "$PWD"/noto-emoji/png/128 ~/.config/mintty/emojis/noto`
+* `cp -rl noto-emoji/png/128 ~/.config/mintty/emojis/noto`
 Use your preferred configuration directory, e.g.
-* cp -rl noto-emoji/png/128 "$APPDATA"/mintty/emojis/noto
-* cp -rl noto-emoji/png/128 /usr/share/mintty/emojis/noto
-<img align=top src=https://github.com/mintty/mintty/wiki/mintty-emojis.png>
+* `cp -rl noto-emoji/png/128 "$APPDATA"/mintty/emojis/noto`
+* `cp -rl noto-emoji/png/128 /usr/share/mintty/emojis/noto`
 
 
 ## Passing arguments from an environment with different character set ##

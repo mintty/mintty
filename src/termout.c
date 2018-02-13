@@ -670,6 +670,10 @@ do_sgr(void)
       when 30 ... 37: /* foreground */
         attr.attr &= ~ATTR_FGMASK;
         attr.attr |= (term.csi_argv[i] - 30 + ANSI0) << ATTR_FGSHIFT;
+      when 51 or 52: /* "framed" or "encircled" */
+        attr.attr |= ATTR_FRAMED;
+      when 54: /* not framed, not encircled */
+        attr.attr &= ~ATTR_FRAMED;
       when 53: attr.attr |= ATTR_OVERL;
       when 55: attr.attr &= ~ATTR_OVERL;
       when 90 ... 97: /* bright foreground */
@@ -779,6 +783,7 @@ set_modes(bool state)
           win_update_mouse();
         when 25: /* DECTCEM: enable/disable cursor */
           term.cursor_on = state;
+          // Should we set term.cursor_invalid or call term_invalidate ?
         when 40: /* Allow/disallow DECCOLM (xterm c132 resource) */
           term.deccolm_allowed = state;
         when 42: /* DECNRCM: national replacement character sets */
@@ -1606,7 +1611,7 @@ do_dcs(void)
     switch (term.state) {
     when DCS_ESCAPE:
       if (!strcmp(s, "m")) { // SGR
-        char buf[64], *p = buf;
+        char buf[72], *p = buf;
         p += sprintf(p, "\eP1$r0");
 
         if (attr.attr & ATTR_BOLD)
@@ -1629,6 +1634,8 @@ do_dcs(void)
           p += sprintf(p, ";9");
         if (attr.attr & ATTR_DOUBLYUND)
           p += sprintf(p, ";21");
+        if (attr.attr & ATTR_FRAMED)
+          p += sprintf(p, ";51;52");
         if (attr.attr & ATTR_OVERL)
           p += sprintf(p, ";53");
 

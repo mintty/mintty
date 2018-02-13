@@ -1,3 +1,7 @@
+  * Workaround for ConEmu WM_MOUSEACTIVATE bug (#724).
+  * Skip refresh after colour setting if nothing changed (e.g. by prompt).
+  * Support of emoji style text attribute, reusing "framed" or "encircled".
+
 ### 2.8.4 (10 Feb 2018) ###
 
 Character handling and rendering
@@ -19,7 +23,7 @@ Desktop integration
   * Session launcher icons (#699).
 
 Configuration
-  * Options Emojis, EmojiPlacement to configure emojis style and display
+  * Options Emojis, EmojiPlacement to configure emojis style and display.
   * Option TaskCommands to configure a taskbar icon task list ("jump list").
   * Limit tweaking of empty shortcut start dir to Start menu case (#737).
 
