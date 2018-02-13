@@ -1928,9 +1928,10 @@ term_paint(void)
       termchar *d = chars + j;
       cattr tattr = newchars[j].attr;
       wchar tchar = newchars[j].chr;
+      // Note: newchars[j].cc_next is always 0; use chars[]
       xchar xtchar = tchar;
-      if (is_high_surrogate(tchar) && newchars[j].cc_next) {
-        termchar *t1 = &newchars[j + newchars[j].cc_next];
+      if (is_high_surrogate(tchar) && chars[j].cc_next) {
+        termchar *t1 = &chars[j + chars[j].cc_next];
         if (is_low_surrogate(t1->chr))
           xtchar = combine_surrogates(tchar, t1->chr);
       }
