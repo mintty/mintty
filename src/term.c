@@ -1947,11 +1947,16 @@ term_paint(void)
       wchar tchar = newchars[j].chr;
       // Note: newchars[j].cc_next is always 0; use chars[]
       xchar xtchar = tchar;
+#ifdef proper_non_BMP_classification
+      // this is the correct way to later check for the bidi_class
+      // but for unclear reason it spoils non-BMP right-to-left display
+      // so let's not touch non-BMP here for now
       if (is_high_surrogate(tchar) && chars[j].cc_next) {
         termchar *t1 = &chars[j + chars[j].cc_next];
         if (is_low_surrogate(t1->chr))
           xtchar = combine_surrogates(tchar, t1->chr);
       }
+#endif
 
       if ((dispchars[j].attr.attr ^ tattr.attr) & ATTR_WIDE)
         dirty_line = true;
