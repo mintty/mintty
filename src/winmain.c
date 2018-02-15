@@ -306,13 +306,61 @@ win_set_timer(void (*cb)(void), uint ticks)
   Session management: maintain list of window titles.
  */
 
+#define dont_debug_tabbar
+
+static struct tabinfo {
+  unsigned long tag;
+  wchar * title;
+} * tabinfo = 0;
+int ntabinfo = 0;
+
+static void
+clear_tabinfo()
+{
+  for (int i = 0; i < ntabinfo; i++) {
+    free(tabinfo[i].title);
+  }
+  if (tabinfo) {
+    free(tabinfo);
+    tabinfo = 0;
+    ntabinfo = 0;
+  }
+}
+
+static void
+add_tabinfo(unsigned long tag, wchar * title)
+{
+  struct tabinfo * newtabinfo = renewn(tabinfo, ntabinfo + 1);
+  if (newtabinfo) {
+    tabinfo = newtabinfo;
+    tabinfo[ntabinfo].tag = tag;
+    tabinfo[ntabinfo].title = wcsdup(title);
+    ntabinfo++;
+  }
+}
+
+static void
+sort_tabinfo()
+{
+  int comp_tabinfo(const void * t1, const void * t2)
+  {
+    if (((struct tabinfo *)t1)->tag < ((struct tabinfo *)t2)->tag)
+      return -1;
+    if (((struct tabinfo *)t1)->tag > ((struct tabinfo *)t2)->tag)
+      return 1;
+    else
+      return 0;
+  }
+  qsort(tabinfo, ntabinfo, sizeof(struct tabinfo), comp_tabinfo);
+}
+
 /*
   Enumerate all windows of the mintty class.
   ///TODO: Maintain a local list of them.
   To be used for tab bar display.
  */
 static void
-refresh_tab_titles()
+refresh_tab_titles(bool trace)
 {
   BOOL CALLBACK wnd_enum_tabs(HWND curr_wnd, LPARAM lp)
   {
@@ -337,11 +385,41 @@ refresh_tab_titles()
 #ifdef debug_tabbar
       printf("[%8p] get tab %8p: <%ls>\n", wnd, curr_wnd, title);
 #endif
+
+      static bool sort_tabs_by_time = true;
+
+      if (sort_tabs_by_time) {
+        DWORD pid;
+        GetWindowThreadProcessId(curr_wnd, &pid);
+        HANDLE ph = OpenProcess(PROCESS_QUERY_INFORMATION, 0, pid);
+        // PROCESS_QUERY_LIMITED_INFORMATION ?
+        FILETIME cr_time, dummy;
+        if (GetProcessTimes(ph, &cr_time, &dummy, &dummy, &dummy)) {
+          unsigned long long crtime = ((unsigned long long)cr_time.dwHighDateTime << 32) | cr_time.dwLowDateTime;
+          add_tabinfo(crtime, title);
+          if (trace) {
+#ifdef debug_tabbar
+            SYSTEMTIME start_time;
+            if (FileTimeToSystemTime(&cr_time, &start_time))
+              printf("  %04d-%02d-%02d_%02d:%02d:%02d.%03d\n",
+                     start_time.wYear, start_time.wMonth, start_time.wDay,
+                     start_time.wHour, start_time.wMinute, 
+                     start_time.wSecond, start_time.wMilliseconds);
+#endif
+          }
+        }
+        CloseHandle(ph);
+      }
+      else
+        add_tabinfo((unsigned long)curr_wnd, title);
+
     }
     return true;
   }
-  if (cfg.geom_sync)
-    EnumWindows(wnd_enum_tabs, 0);
+
+  clear_tabinfo();
+  EnumWindows(wnd_enum_tabs, 0);
+  sort_tabinfo();
 }
 
 /*
@@ -368,7 +446,7 @@ update_tab_titles()
   }
   if (cfg.geom_sync) {
     // update my own list
-    refresh_tab_titles();
+    refresh_tab_titles(true);
     // tell the others to update their's
     EnumWindows(wnd_enum_tabs, 0);
   }
@@ -505,7 +583,7 @@ win_to_top(HWND top_wnd)
 
 static HWND first_wnd, last_wnd;
 
-#define debug_sessions 1
+#define dont_debug_sessions 1
 
 static BOOL CALLBACK
 wnd_enum_proc(HWND curr_wnd, LPARAM unused(lp))
@@ -571,7 +649,6 @@ win_switch(bool back, bool alternate)
  */
 
 #define dont_debug_tabs
-#define dont_debug_tabbar
 
 static uint tabn = 0;
 static HWND * tabs = 0;
@@ -1829,7 +1906,7 @@ static struct {
       }
       else if (!wp && lp == WIN_TITLE) {
         if (cfg.geom_sync)
-          refresh_tab_titles();
+          refresh_tab_titles(false);
       }
       else if (cfg.geom_sync) {
 #ifdef debug_tabs
