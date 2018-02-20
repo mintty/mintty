@@ -1852,6 +1852,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     };
 
     trace_line(" <ChrPlc:");
+    // This does not work for non-BMP:
     GetCharacterPlacementW(dc, text, len, 0, &gcpr,
                            FLI_MASK | GCP_CLASSIN | GCP_DIACRITIC);
     len = gcpr.nGlyphs;

@@ -945,6 +945,75 @@ term_check_boundary(int x, int y)
   }
 }
 
+
+#ifdef use_display_scrolling
+
+/*
+   Scroll the actual display (window contents and its cache).
+ */
+static int dispscroll_top, dispscroll_bot, dispscroll_lines = 0;
+
+static void
+disp_scroll(int topscroll, int botscroll, int scrolllines)
+{
+  if (dispscroll_lines) {
+    dispscroll_lines += scrolllines;
+    dispscroll_top = (dispscroll_top + topscroll) / 2;
+    dispscroll_bot = (dispscroll_bot + botscroll) / 2;
+  }
+  else {
+    dispscroll_top = topscroll;
+    dispscroll_bot = botscroll;
+    dispscroll_lines = scrolllines;
+  }
+}
+
+/*
+   Perform actual display scrolling.
+   Invoke window scrolling and if successful, adjust display cache.
+ */
+static void
+disp_do_scroll(int topscroll, int botscroll, int scrolllines)
+{
+  if (!win_do_scroll(topscroll, botscroll, scrolllines))
+    return;
+
+  // update display cache
+  bool down = scrolllines < 0;
+  int lines = abs(scrolllines);
+  termline * recycled[lines];
+  if (down) {
+    for (int l = 0; l < lines; l++) {
+      recycled[l] = term.displines[botscroll - 1 - l];
+      clearline(recycled[l]);
+      for (int j = 0; j < term.cols; j++)
+        recycled[l]->chars[j].attr.attr |= ATTR_INVALID;
+    }
+    for (int l = botscroll - 1; l >= topscroll + lines; l--) {
+      term.displines[l] = term.displines[l - lines];
+    }
+    for (int l = 0; l < lines; l++) {
+      term.displines[topscroll + l] = recycled[l];
+    }
+  }
+  else {
+    for (int l = 0; l < lines; l++) {
+      recycled[l] = term.displines[topscroll + l];
+      clearline(recycled[l]);
+      for (int j = 0; j < term.cols; j++)
+        recycled[l]->chars[j].attr.attr |= ATTR_INVALID;
+    }
+    for (int l = topscroll; l < botscroll - lines; l++) {
+      term.displines[l] = term.displines[l + lines];
+    }
+    for (int l = 0; l < lines; l++) {
+      term.displines[botscroll - 1 - l] = recycled[l];
+    }
+  }
+}
+
+#endif
+
 /*
  * Scroll the screen. (`lines' is +ve for scrolling forward, -ve
  * for backward.) `sb' is true if the scrolling is permitted to
@@ -953,6 +1022,10 @@ term_check_boundary(int x, int y)
 void
 term_do_scroll(int topline, int botline, int lines, bool sb)
 {
+#ifdef use_display_scrolling
+  int scrolllines = lines;
+#endif
+
   markpos_valid = false;
   assert(botline >= topline && lines != 0);
 
@@ -972,6 +1045,18 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
   // Useful pointers to the top and (one below the) bottom lines.
   termline **top = term.lines + topline;
   termline **bot = term.lines + botline;
+
+#ifdef use_display_scrolling
+  // Screen scrolling
+  int topscroll = topline - term.disptop;
+  if (topscroll < term.rows) {
+    int botscroll = min(botline - term.disptop, term.rows);
+    if (!down && term.disptop && !topline)
+      ; // ignore bottom forward scroll if scrolled back
+    else
+      disp_scroll(topscroll, botscroll, scrolllines);
+  }
+#endif
 
   // Reuse lines that are being scrolled out of the scroll region,
   // clearing their content.
@@ -1495,6 +1580,13 @@ emoji_show(int x, int y, struct emoji e, int elen, cattr eattr, ushort lattr)
 void
 term_paint(void)
 {
+#ifdef use_display_scrolling
+  if (dispscroll_lines) {
+    disp_do_scroll(dispscroll_top, dispscroll_bot, dispscroll_lines);
+    dispscroll_lines = 0;
+  }
+#endif
+
  /* The display line that the cursor is on, or -1 if the cursor is invisible. */
   int curs_y =
     term.cursor_on && !term.show_other_screen
@@ -1654,7 +1746,7 @@ term_paint(void)
             uint em = *(uint *)ee;
             d->attr.truefg = em;
 
-            // refresh cashed copy
+            // refresh cached copy
             tattr = d->attr;
             // inhibit subsequent emoji sequence components
             for (int i = 1; i < e.len; i++) {
@@ -1881,8 +1973,12 @@ term_paint(void)
       wchar t[len + 1]; wcsncpy(t, text, len); t[len] = 0;
       for (int i = len - 1; i >= 0 && t[i] == ' '; i--)
         t[i] = 0;
-      if (*t)
+      if (*t) {
         printf("out <%ls>\n", t);
+        for (int i = 0; i < len; i++)
+          printf(" %04X", t[i]);
+        printf("\n");
+      }
 #endif
       if (attr.attr & TATTR_EMOJI) {
         int elen = attr.attr & ATTR_FGMASK;
@@ -1948,9 +2044,10 @@ term_paint(void)
       // Note: newchars[j].cc_next is always 0; use chars[]
       xchar xtchar = tchar;
 #ifdef proper_non_BMP_classification
-      // this is the correct way to later check for the bidi_class
-      // but for unclear reason it spoils non-BMP right-to-left display
-      // so let's not touch non-BMP here for now
+      // this is the correct way to later check for the bidi_class,
+      // but let's not touch non-BMP here for now because:
+      // - some non-BMP ranges do not align to cell width (e.g. Hieroglyphs)
+      // - right-to-left non-BMP does not work (GetCharacterPlacementW fails)
       if (is_high_surrogate(tchar) && chars[j].cc_next) {
         termchar *t1 = &chars[j + chars[j].cc_next];
         if (is_low_surrogate(t1->chr))
