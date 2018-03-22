@@ -1015,7 +1015,13 @@ show_curchar_info(char tag)
     static char * prev = null;
     if (!prev || 0 != strcmp(cs, prev)) {
       //printf("[%c]%s\n", tag, cs);
-      SetWindowTextA(wnd, cs);
+      if (nonascii(cs)) {
+        wchar * wcs = cs__utftowcs(cs);
+        SetWindowTextW(wnd, wcs);
+        free(wcs);
+      }
+      else
+        SetWindowTextA(wnd, cs);
     }
     if (prev)
       free(prev);
@@ -1023,15 +1029,29 @@ show_curchar_info(char tag)
   }
 
   void show_char_info(termchar * cpoi) {
+    char * cs = 0;
+
     // return if base character same as previous and no combining chars
     if (cpoi == pp && cpoi && cpoi->chr == prev.chr && !cpoi->cc_next)
       return;
 
-    char * cs = strdup("");
+#define debug_emojis
+
+    if (cfg.emojis && (cpoi->attr.attr & TATTR_EMOJI)) {
+      if (cpoi == pp)
+        return;
+      cs = get_emoji_description(cpoi);
+#ifdef debug_emojis
+      printf("Emoji sequence: %s\n", cs);
+#endif
+    }
 
     pp = cpoi;
-    if (cpoi) {
+
+    if (!cs && cpoi) {
       prev = *cpoi;
+
+      cs = strdup("");
 
       char * cn = strdup("");
 

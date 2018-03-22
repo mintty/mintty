@@ -1245,8 +1245,9 @@ emoji_tags(int i)
 #endif
 
 struct emoji_seq {
-  void * res;  // filename (char*/wchar*) or cached image
-  echar chs[8];
+  void * res;   // filename (char*/wchar*) or cached image
+  echar chs[8]; // code points
+  char * name;  // short name in emoji-sequences.txt, emoji-zwj-sequences.txt
 };
 
 struct emoji_seq emoji_seqs[] = {
@@ -1261,6 +1262,32 @@ struct emoji {
 } __attribute__((packed));
 
 #define dont_debug_emojis 1
+
+/*
+   Get emoji sequence "short name".
+ */
+char *
+get_emoji_description(termchar * cpoi)
+{
+  //struct emoji e = (struct emoji) cpoi->attr.truefg;
+  struct emoji * ee = (void *)&cpoi->attr.truefg;
+
+  if (ee->seq) {
+    char * en = strdup("");
+    for (uint i = 0; i < lengthof(emoji_seqs->chs) && ed(emoji_seqs[ee->idx].chs[i]); i++) {
+      xchar xc = ed(emoji_seqs[ee->idx].chs[i]);
+      char ec[8];
+      sprintf(ec, "U+%04X", xc);
+      strappend(en, ec);
+      strappend(en, " ");
+    }
+    strappend(en, "| Emoji sequence: ");
+    strappend(en, emoji_seqs[ee->idx].name);
+    return en;
+  }
+  else
+    return 0;
+}
 
 /*
    Derive file name and path name from emoji sequence; store it.

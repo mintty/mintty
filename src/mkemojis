@@ -36,12 +36,28 @@ sed -e "s/ / | EM_/g" -e "s/\([^ ]*\)\(.*\)/  {0, 0\2, 0x\1},/"
 
 ;;
 
-seqs)
+seqs0)
 
 sed -e "s/;.*//" -e "s/ *$//" -e "/^#/ d" -e "/^$/ d" emoji-sequences.txt emoji-zwj-sequences.txt |
 sed -e "/^.... / s/^/0/" -e "s/ /, 0x/g" -e "s/^/  {0, {0x/" -e "s/$/}},/" |
 sed -e "s/\(0x[0-9A-F]*\)/ee(\1)/g" |
 sort | uniq
+# Note that by sorting order of ',' and '}', 
+# shorter sequences are sorted behind longer sequences, 
+# which is an important property for proper matching.
+
+;;
+
+seqs)
+
+sed -e '/^#/ d' -e 's/#.*//' -e 's/\\x{23}/#/' -e '/^$/ d' -e 's/ *;.*; */	"/' -e 's/ *$/"/' emoji-sequences.txt emoji-zwj-sequences.txt |
+sed -e ': x' -e 's/ \(.*	\)/,0x\1/' -e 't x' -e 's/,0x/, 0x/g' -e 's/\(	.* \)0x/\1/g' |
+sed -e 's/^/  {0, {0x/' -e 's/	/}, /' -e 's/$/},/' |
+sed -e 's/\(0x[0-9A-F]*\)/ee(\1)/g' |
+sed -e 's/"Pirate Flag"/"pirate flag"/' |
+sed -e 's/0x\([0-9A-F][0-9A-F][0-9A-F][0-9A-F][^0-9A-F]\)/0x0\1/g' |
+sort | uniq |
+sed -e 's/0x0/0x/g'
 # Note that by sorting order of ',' and '}', 
 # shorter sequences are sorted behind longer sequences, 
 # which is an important property for proper matching.
