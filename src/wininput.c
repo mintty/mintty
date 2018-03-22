@@ -147,9 +147,9 @@ static void
 add_switcher(HMENU menu, bool vsep, bool hsep, bool use_win_icons)
 {
   uint bar = vsep ? MF_MENUBARBREAK : 0;
-  //__ Context menu, session switcher ("virtual tabs")
   if (hsep)
     AppendMenuW(menu, MF_SEPARATOR, 0, 0);
+  //__ Context menu, session switcher ("virtual tabs")
   AppendMenuW(menu, MF_DISABLED | bar, 0, _W("Session switcher"));
   AppendMenuW(menu, MF_SEPARATOR, 0, 0);
   int tabi = 0;
@@ -248,9 +248,9 @@ add_launcher(HMENU menu, bool vsep, bool hsep)
 {
   if (*cfg.session_commands) {
     uint bar = vsep ? MF_MENUBARBREAK : 0;
-    //__ Context menu, session launcher ("virtual tabs")
     if (hsep)
       AppendMenuW(menu, MF_SEPARATOR, 0, 0);
+    //__ Context menu, session launcher ("virtual tabs")
     AppendMenuW(menu, MF_DISABLED | bar, 0, _W("Session launcher"));
     AppendMenuW(menu, MF_SEPARATOR, 0, 0);
     append_commands(menu, cfg.session_commands, IDM_SESSIONCOMMAND, true);
@@ -482,8 +482,26 @@ win_update_menus(void)
   modify_menu(sysmenu, IDM_OPTIONS, 0, _W("&Options..."), null);
 }
 
+static bool
+add_user_commands(HMENU menu, bool vsep, bool hsep)
+{
+  if (*cfg.user_commands) {
+    uint bar = vsep ? MF_MENUBARBREAK : 0;
+    if (hsep)
+      AppendMenuW(menu, MF_SEPARATOR, 0, 0);
+    //__ Context menu, user commands
+    AppendMenuW(menu, MF_DISABLED | bar, 0, _W("User commands"));
+    AppendMenuW(menu, MF_SEPARATOR, 0, 0);
+
+    append_commands(menu, cfg.user_commands, IDM_USERCOMMAND, false);
+    return true;
+  }
+  else
+    return false;
+}
+
 static void
-win_init_ctxmenu(bool extended_menu)
+win_init_ctxmenu(bool extended_menu, bool user_commands)
 {
 #ifdef debug_modify_menu
   printf("win_init_ctxmenu\n");
@@ -520,7 +538,7 @@ win_init_ctxmenu(bool extended_menu)
     AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   }
 
-  if (extended_menu && *cfg.user_commands) {
+  if (user_commands && *cfg.user_commands) {
     append_commands(ctxmenu, cfg.user_commands, IDM_USERCOMMAND, false);
     AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   }
@@ -569,6 +587,7 @@ open_popup_menu(bool use_text_cursor, string menucfg, mod_keys mods)
 
   bool vsep = false;
   bool hsep = false;
+  bool init = false;
   bool wicons = strchr(menucfg, 'W');
   while (*menucfg) {
     if (*menucfg == '|')
@@ -577,9 +596,19 @@ open_popup_menu(bool use_text_cursor, string menucfg, mod_keys mods)
       // suppress duplicates except separators
       bool ok = true;
       switch (*menucfg) {
-        when 'b': if (!strchr(menucfg, 'e'))
-                    win_init_ctxmenu(false);
-        when 'e': win_init_ctxmenu(true);
+        when 'b': if (!init) {
+                    win_init_ctxmenu(false, false);
+                    init = true;
+                  }
+        when 'x': if (!init) {
+                    win_init_ctxmenu(true, false);
+                    init = true;
+                  }
+        when 'e': if (!init) {
+                    win_init_ctxmenu(true, true);
+                    init = true;
+                  }
+        when 'u': ok = add_user_commands(ctxmenu, vsep, hsep & !vsep);
         when 'W': wicons = true;
         when 's': add_switcher(ctxmenu, vsep, hsep & !vsep, wicons);
         when 'l': ok = add_launcher(ctxmenu, vsep, hsep & !vsep);
