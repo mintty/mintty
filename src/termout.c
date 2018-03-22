@@ -461,8 +461,8 @@ do_esc(uchar c)
         when 'E':  nrc_select = CSET_NO;
         when '6':  nrc_select = CSET_NO;
         when 'H':  nrc_select = CSET_SE;
-        when 'f':  nrc_select = CSET_FR;  // not documented for DEC VT510
-        when '9':  nrc_select = CSET_CA;  // not documented for DEC VT320
+        when 'f':  nrc_select = CSET_FR;  // xterm, Kermit; not DEC
+        when '9':  nrc_select = CSET_CA;  // xterm, DEC VT510; not VT320
         otherwise: nrc_select = c;
       }
     }
@@ -1471,17 +1471,31 @@ do_dcs(void)
   int x0, y0;
   int attr0;
   int left, top, width, height, pixelwidth, pixelheight;
-  sixel_state_t *st;
+  sixel_state_t *st = 0;
 
   switch (term.dcs_cmd) {
   when 'q':
 
     st = (sixel_state_t *)term.imgs.parser_state;
 
+// Revert https://github.com/mintty/mintty/commit/fe48cdc
+// "fixed SIXEL colour registers handling"
+// which led to Sixel display silently failing 
+// or even stalling mintty window (#740)
+#define fixsix
+
+#ifndef fixsix
+#warning Sixel display bug #740 reenabled
+#endif
+
     switch (term.state) {
     when DCS_PASSTHROUGH:
       if (!st)
         return;
+#ifdef fixsix
+      if (!st->image.data)
+        return;
+#endif
       status = sixel_parser_parse(st, (unsigned char *)s, term.cmd_len);
       if (status < 0) {
         sixel_parser_deinit(st);
@@ -1494,6 +1508,10 @@ do_dcs(void)
     when DCS_ESCAPE:
       if (!st)
         return;
+#ifdef fixsix
+      if (!st->image.data)
+        return;
+#endif
       status = sixel_parser_parse(st, (unsigned char *)s, term.cmd_len);
       if (status < 0) {
         sixel_parser_deinit(st);
@@ -1502,11 +1520,15 @@ do_dcs(void)
         return;
       }
 
+#ifdef fixsix
+      status = sixel_parser_finalize(st);
+#else
       pixels = (unsigned char *)malloc(st->image.width * st->image.height * 4);
       if (!pixels)
         return;
 
       status = sixel_parser_finalize(st, pixels);
+#endif
       if (status < 0) {
         sixel_parser_deinit(st);
         free(term.imgs.parser_state);
@@ -1514,7 +1536,12 @@ do_dcs(void)
         return;
       }
 
+#ifdef fixsix
+      pixels = (unsigned char *)st->image.data;
+      st->image.data = NULL;
+#else
       sixel_parser_deinit(st);
+#endif
 
       left = term.curs.x;
       top = term.virtuallines + (term.sixel_display ? 0: term.curs.y);
@@ -1602,7 +1629,14 @@ do_dcs(void)
         st = term.imgs.parser_state = calloc(1, sizeof(sixel_state_t));
         sixel_parser_set_default_color(st);
       }
+#ifdef fixsix
+      status = sixel_parser_init(st,
+                                 (fg & 0xff) << 16 | (fg & 0xff00) | (fg & 0xff0000) >> 16,
+                                 (bg & 0xff) << 16 | (bg & 0xff00) | (bg & 0xff0000) >> 16,
+                                 term.private_color_registers);
+#else
       status = sixel_parser_init(st, fg, bg, term.private_color_registers);
+#endif
       if (status < 0)
         return;
     }

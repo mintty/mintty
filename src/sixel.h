@@ -9,14 +9,12 @@
 #define DECSIXEL_WIDTH_MAX 4096
 #define DECSIXEL_HEIGHT_MAX 4096
 
-typedef ushort sixel_color_no_t;
-
 typedef struct sixel_image_buffer {
-  sixel_color_no_t *data;
+  unsigned char *data;
   int width;
   int height;
-  colour palette[DECSIXEL_PALETTE_MAX];
-  sixel_color_no_t ncolors;
+  int palette[DECSIXEL_PALETTE_MAX];
+  int ncolors;
   int palette_modified;
   int use_private_register;
 } sixel_image_t;
@@ -50,10 +48,11 @@ typedef struct parser_context {
   sixel_image_t image;
 } sixel_state_t;
 
-int sixel_parser_init(sixel_state_t *st, colour fgcolor, colour bgcolor, uchar use_private_register);
-int sixel_parser_parse(sixel_state_t *st, uchar *p, size_t len);
+int sixel_parser_init(sixel_state_t *st, int fgcolor, int bgcolor, int use_private_register);
+int sixel_parser_parse(sixel_state_t *st, unsigned char *p, int len);
 int sixel_parser_set_default_color(sixel_state_t *st);
-int sixel_parser_finalize(sixel_state_t *st, uchar *pixels);
+int sixel_parser_finalize(sixel_state_t *st);
 void sixel_parser_deinit(sixel_state_t *st);
+unsigned char * sixel_parser_get_buffer(sixel_state_t *st);
 
 #endif
