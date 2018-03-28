@@ -29,7 +29,7 @@ case "$1" in
 	echo '  /usr/share/mintty'
 	echo "Note that the command-line option --configdir cannot be considered."
 	;;
--l)	for confdir in ~/.mintty ~/.config/mintty "$APPDATA"/mintty /usr/share/mintty
+-l|--list)	for confdir in ~/.mintty ~/.config/mintty "$APPDATA"/mintty /usr/share/mintty
 	do	if [ -d "$confdir/themes" -a -x "$confdir/themes"  -a -r "$confdir/themes" ]
 		then	echo "themes in '$confdir':"
 			(cd "$confdir/themes"; ls *[!~])
