@@ -315,13 +315,32 @@ the application expects other key sequences than mintty sends.
 that case, the current behaviour is compatible with xterm.)
 
 
-## Using Ctrl+Tab to switch session in GNU Screen ##
+## Using Ctrl+Tab to switch window pane in terminal multiplexers ##
 
-The _Ctrl+Tab_ and _Ctrl+Shift+Tab_ key combinations can be used to switch session in **[GNU Screen](http://www.gnu.org/software/screen)**. In order to do do, their use as shortcuts for switching mintty windows needs to be disabled on the _Keys_ page of the options, and their keycodes need to be mapped in _~/.screenrc_:
+The _Ctrl+Tab_ and _Ctrl+Shift+Tab_ key combinations can be used to 
+switch windows/panes/tabs in terminal multiplexers.
+In order to do so, their use as shortcuts for switching mintty windows 
+needs to be disabled on the _Keys_ page of the options, 
+and their keycodes need to be mapped as shown below.
+
+### Switch window in GNU Screen ###
+
+For **[GNU Screen](http://www.gnu.org/software/screen)**, in _~/.screenrc_:
 
 ```
 bindkey "^[[1;5I" next
 bindkey "^[[1;6I" prev
+```
+
+### Switch pane in tmux ###
+
+For **[tmux](https://tmux.github.io/)**, in _~/.tmux.conf_:
+
+```
+set -s user-keys[0] "\e[1;5I"
+set -s user-keys[1] "\e[1;6I"
+bind-key -n User0 next-window
+bind-key -n User1 previous-window
 ```
 
 
@@ -587,7 +606,7 @@ Mintty supports a maximum of usual and unusual text attributes:
 | 12                     | 10                | alternative font 2            |
 | ...                    | 10                | alternative fonts 3...8       |
 | 19                     | 10                | alternative font 9            |
-| 20                     | 23, 10            | Fraktur/Blackletter font      |
+| 20                     | 23 _or_ 10        | Fraktur/Blackletter font      |
 | 21                     | 24                | doubly underline              |
 | 53                     | 55                | overline                      |
 | 30...37                | 39                | foreground ANSI colour        |
@@ -673,6 +692,7 @@ into mintty configuration resource subdirectory `emojis`, e.g.
 * `mv noto-emoji/png/128 ~/.config/mintty/emojis/noto`
 * `ln -s "$PWD"/noto-emoji/png/128 ~/.config/mintty/emojis/noto`
 * `cp -rl noto-emoji/png/128 ~/.config/mintty/emojis/noto`
+
 Use your preferred configuration directory, e.g.
 * `cp -rl noto-emoji/png/128 "$APPDATA"/mintty/emojis/noto`
 * `cp -rl noto-emoji/png/128 /usr/share/mintty/emojis/noto`
