@@ -291,9 +291,7 @@ options[] = {
   {"AltFnShortcuts", OPT_BOOL, offcfg(alt_fn_shortcuts)},
   {"CtrlShiftShortcuts", OPT_BOOL, offcfg(ctrl_shift_shortcuts)},
   {"CtrlExchangeShift", OPT_BOOL, offcfg(ctrl_exchange_shift)},
-#ifdef support_disable_ctrl_controls_663
-  {"CtrlControls", OPT_BOOL | OPT_LEGACY, offcfg(ctrl_controls)},
-#endif
+  {"CtrlControls", OPT_BOOL, offcfg(ctrl_controls)},
   {"ComposeKey", OPT_MOD, offcfg(compose_key)},
   {"Key_PrintScreen", OPT_STRING, offcfg(key_prtscreen)},
   {"Key_Pause", OPT_STRING, offcfg(key_pause)},
