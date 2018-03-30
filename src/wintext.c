@@ -1035,7 +1035,7 @@ show_curchar_info(char tag)
     if (cpoi == pp && cpoi && cpoi->chr == prev.chr && !cpoi->cc_next)
       return;
 
-#define debug_emojis
+#define dont_debug_emojis
 
     if (cfg.emojis && (cpoi->attr.attr & TATTR_EMOJI)) {
       if (cpoi == pp)
@@ -2458,6 +2458,21 @@ win_check_glyphs(wchar *wcs, uint num)
   ReleaseDC(wnd, dc);
 }
 
+#define dont_debug_win_char_width
+
+#ifdef debug_win_char_width
+int
+win_char_width(xchar c)
+{
+#define win_char_width xwin_char_width
+int win_char_width(xchar);
+  int w = win_char_width(c);
+  if (c >= 0x80)
+    printf("win_char_width(%04X) -> %d\n", c, w);
+  return w;
+}
+#endif
+
 /* This function gets the actual width of a character in the normal font.
    Usage:
    * determine whether to trim an ambiguous wide character 
@@ -2470,8 +2485,6 @@ win_char_width(xchar c)
 {
   int findex = (term.curs.attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
   struct fontfam * ff = &fontfamilies[findex];
-
-#define win_char_width
 
 #define measure_width
 
@@ -2604,7 +2617,8 @@ win_char_width(xchar c)
                // although FONT_WIDE is actually activated
   }
 
-  if (ambigwide(c) &&
+  if ((c >= 0x3000 && c <= 0x303F)
+     || (ambigwide(c) &&
 #ifdef check_ambig_non_letters
 #warning instead we now check all non-letters with some exclusions
       (c == 0x20AC  // €
@@ -2630,7 +2644,7 @@ win_char_width(xchar c)
        //|| wcschr (W("‐‑‘’‚‛“”„‟‹›"), c) // #712 workaround; now caching
        )
 #endif
-     ) {
+     )) {
     // look up c in charpropcache
     struct charpropcache * cpfound = 0;
     for (uint i = 0; i < ff->cpcachelen[font4index]; i++)

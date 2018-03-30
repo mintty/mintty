@@ -2135,6 +2135,14 @@ term_write(const char *buf, uint len)
           width = xcwidth(wc);
 #endif
 
+        if (width == 2
+            // && wcschr(W("〈〉《》「」『』【】〒〓〔〕〖〗〘〙〚〛"), wc)
+            && wc >= 0x3008 && wc <= 0x301B && (wc | 1) != 0x3013
+            && win_char_width(wc) < 2
+            // ensure symmetric handling of matching brackets
+            && win_char_width(wc ^ 1) < 2)
+            term.curs.attr.attr |= ATTR_EXPAND;
+
         wchar NRC(wchar * map) {
           static char * rpl = "#@[\\]^_`{|}~";
           char * match = strchr(rpl, c);
