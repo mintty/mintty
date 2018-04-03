@@ -1,6 +1,31 @@
+
+Character handling and rendering
+  * CJK brackets are expanded if needed to ensure their symmetry (#756).
+  * Support of emoji style text attribute SGR 51/52 (mintty/wsltty#82, #600).
+  * Fixed emoji display variation selector handling.
+  * Character Info displays emoji sequence short names (mintty/wsltty#82, #600).
+  * Reverted Sixel colour registers patch that could fail Sixel display or even stall mintty window (#740, mintty/wsltty#90).
+
+Input
+  * Reenabled Ctrl+key escape sequences (#743).
+
+Desktop integration
   * Workaround for ConEmu WM_MOUSEACTIVATE bug (#724).
+
+Configuration
+  * Alt+F2 and mintty --dir=... stay in selected dir even in login mode (#500,#744).
+  * Fixed option --dir=...
+  * Context menu configuration (MenuMenu etc): new flags 'x' and 'u' (#755).
+  * More layout-tolerant colour value syntax (#758).
+  * Invocation as wsl*[-distro].exe implies a --WSL[=distro] parameter (mintty/wsltty#63).
+  * Added missing option `mintheme --list`.
+
+Window handling
   * Skip refresh after colour setting if nothing changed (e.g. by prompt).
-  * Support of emoji style text attribute, reusing "framed" or "encircled".
+
+Documentation
+  * Terminal multiplexer configuration: added tmux (#757).
+  * Search bar: activated also from context menu (#753).
 
 ### 2.8.4 (10 Feb 2018) ###
 

@@ -212,13 +212,14 @@ bidiclasses.t:	# UnicodeData.txt
 unicode:	UnicodeData.txt Blocks.txt EastAsianWidth.txt
 
 full-emoji-list.html:
-	$(WGET) http://www.unicode.org/emoji/charts-11.0/$@
+	#$(WGET) http://www.unicode.org/emoji/charts-11.0/$@
+	$(WGET) http://www.unicode.org/emoji/charts/$@
 
 emoji-%.txt:
-	$(WGET) http://unicode.org/Public/emoji/11.0/$@
+	$(WGET) http://www.unicode.org/Public/emoji/11.0/$@
 
 %.txt:
-	$(WGET) http://unicode.org/Public/UNIDATA/$@
+	$(WGET) http://www.unicode.org/Public/UNIDATA/$@
 
 emojibase.t:	# emoji-data.txt emoji-variation-sequences.txt emoji-sequences.txt emoji-zwj-sequences.txt
 	bash ./mkemojis base > $@
