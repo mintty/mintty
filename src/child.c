@@ -816,8 +816,11 @@ setup_sync()
   }
 }
 
+/*
+  Called from Alt+F2 (or session launcher via child_launch).
+ */
 void
-child_fork(int argc, char *argv[], int moni)
+do_child_fork(int argc, char *argv[], int moni, bool launch)
 {
   setup_sync();
 
@@ -873,7 +876,9 @@ child_fork(int argc, char *argv[], int moni)
       }
 
       chdir(set_dir);
-      setenv("PWD", set_dir, true);
+      setenv("PWD", set_dir, true);  // avoid softlink resolution
+      if (!launch)
+        setenv("CHERE_INVOKING", "mintty", true);
 
       if (support_wsl)
         delete(set_dir);
@@ -941,6 +946,18 @@ child_fork(int argc, char *argv[], int moni)
   reset_fork_mode();
 }
 
+/*
+  Called from Alt+F2.
+ */
+void
+child_fork(int argc, char *argv[], int moni)
+{
+  do_child_fork(argc, argv, moni, false);
+}
+
+/*
+  Called from session launcher.
+ */
 void
 child_launch(int n, int argc, char * argv[], int moni)
 {
@@ -978,7 +995,7 @@ child_launch(int n, int argc, char * argv[], int moni)
           }
         }
         new_argv[argc] = 0;
-        child_fork(argc, new_argv, moni);
+        do_child_fork(argc, new_argv, moni, true);
         free(new_argv);
         break;
       }

@@ -3335,18 +3335,26 @@ main(int argc, char *argv[])
       when '~':
         start_home = true;
         chdir(home);
-      when '':
-        if (chdir(optarg) < 0) {
+      when '': {
+        int res = chdir(optarg);
+        if (res == 0)
+          setenv("PWD", optarg, true);  // avoid softlink resolution
+        else {
           if (*optarg == '"' || *optarg == '\'')
             if (optarg[strlen(optarg) - 1] == optarg[0]) {
               // strip off embedding quotes as provided when started 
               // from Windows context menu by registry entry
               char * dir = strdup(&optarg[1]);
               dir[strlen(dir) - 1] = '\0';
-              chdir(dir);
+              res = chdir(dir);
+              if (res == 0)
+                setenv("PWD", optarg, true);  // avoid softlink resolution
               free(dir);
             }
         }
+        if (res == 0)
+          setenv("CHERE_INVOKING", "mintty", true);
+      }
       when '':
         if (config_dir)
           option_error(__("Duplicate option '%s'"), "configdir", 0);
