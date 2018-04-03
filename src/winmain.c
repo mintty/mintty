@@ -2066,13 +2066,19 @@ static struct {
       child_sendw(&(wchar){wp}, 1);
       return MNC_CLOSE << 16;
 
-    when WM_DESTROYCLIPBOARD or WM_CLIPBOARDUPDATE:
+#ifdef handle_clipboard_notifications
+#if CYGWIN_VERSION_API_MINOR >= 74
+    // Try to clear selection when clipboard content is updated (#742)
+#warning this is broken, subsequent double-click selection fails
+    when WM_CLIPBOARDUPDATE or WM_DESTROYCLIPBOARD:
       if (clipboard_token)
         clipboard_token = false;
       else {
         term.selected = false;
         win_update();
       }
+#endif
+#endif
 
 #ifdef catch_lang_change
     // this is rubbish; only the initial change would be captured anyway;
