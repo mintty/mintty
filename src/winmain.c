@@ -83,6 +83,7 @@ static bool resizing;
 static bool disable_poschange = true;
 static int zoom_token = 0;  // for heuristic handling of Shift zoom (#467, #476)
 static bool default_size_token = false;
+bool clipboard_token = false;
 
 // Inter-window actions
 enum {
@@ -2064,6 +2065,14 @@ static struct {
       // and typing a key; insert the key and prevent the beep
       child_sendw(&(wchar){wp}, 1);
       return MNC_CLOSE << 16;
+
+    when WM_DESTROYCLIPBOARD or WM_CLIPBOARDUPDATE:
+      if (clipboard_token)
+        clipboard_token = false;
+      else {
+        term.selected = false;
+        win_update();
+      }
 
 #ifdef catch_lang_change
     // this is rubbish; only the initial change would be captured anyway;
@@ -4085,6 +4094,13 @@ main(int argc, char *argv[])
   // Finally show the window.
   ShowWindow(wnd, show_cmd);
   SetFocus(wnd);
+
+  // Set up clipboard notifications.
+  HRESULT (WINAPI * pAddClipboardFormatListener)(HWND) =
+    load_library_func("user32.dll", "AddClipboardFormatListener");
+  if (pAddClipboardFormatListener) {
+    pAddClipboardFormatListener(wnd);
+  }
 
   win_synctabs(4);
   update_tab_titles();

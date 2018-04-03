@@ -36,6 +36,7 @@ extern bool support_wsl;
 extern wstring wsl_basepath;
 
 extern bool win_is_fullscreen;
+extern bool clipboard_token;
 extern uint dpi;
 extern bool per_monitor_dpi_aware;
 

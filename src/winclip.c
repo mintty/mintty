@@ -535,6 +535,7 @@ win_copy(const wchar *data, cattr *cattrs, int len)
   GlobalUnlock(clipdata2);
 
   if (OpenClipboard(wnd)) {
+    clipboard_token = true;
     EmptyClipboard();
     SetClipboardData(CF_UNICODETEXT, clipdata);
     SetClipboardData(CF_TEXT, clipdata2);
