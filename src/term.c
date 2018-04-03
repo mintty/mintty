@@ -1871,6 +1871,10 @@ term_paint(void)
 
       if (term.cursor_invalid)
         dispchars[curs_x].attr.attr |= ATTR_INVALID;
+
+      // try to fix #612 "cursor isn’t hidden right away"
+      if (newchars[curs_x].attr.attr != dispchars[curs_x].attr.attr)
+        dispchars[curs_x].attr.attr |= ATTR_INVALID;
     }
 
    /*
