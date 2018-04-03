@@ -3237,6 +3237,24 @@ main(int argc, char *argv[])
 # endif
 #endif
 
+  // Options triggered via wsl*.exe
+#if CYGWIN_VERSION_API_MINOR >= 74
+  char * exename = *argv;
+  const char * exebasename = strrchr(exename, '/');
+  if (exebasename)
+    exebasename ++;
+  else
+    exebasename = exename;
+  if (0 == strncmp(exebasename, "wsl", 3)) {
+    char * exearg = strchr(exebasename, '-');
+    if (exearg)
+      exearg ++;
+    int err = select_WSL(exearg);
+    if (err)
+      option_error(__("WSL distribution '%s' not found"), exearg ?: _("(Default)"), err);
+  }
+#endif
+
   // Load config files
   // try global config file
   load_config("/etc/minttyrc", true);
@@ -3247,14 +3265,16 @@ main(int argc, char *argv[])
     load_config(rc_file, true);
     delete(rc_file);
   }
-  // try XDG config base directory default location (#525)
-  string rc_file = asform("%s/.config/mintty/config", home);
-  load_config(rc_file, true);
-  delete(rc_file);
-  // try home config file
-  rc_file = asform("%s/.minttyrc", home);
-  load_config(rc_file, 2);
-  delete(rc_file);
+  if (!support_wsl) {
+    // try XDG config base directory default location (#525)
+    string rc_file = asform("%s/.config/mintty/config", home);
+    load_config(rc_file, true);
+    delete(rc_file);
+    // try home config file
+    rc_file = asform("%s/.minttyrc", home);
+    load_config(rc_file, 2);
+    delete(rc_file);
+  }
 
   if (getenv("MINTTY_ICON")) {
     //cfg.icon = strdup(getenv("MINTTY_ICON"));
@@ -3495,21 +3515,6 @@ main(int argc, char *argv[])
         close(tfd);
       }
     }
-  }
-
-  char * exename = *argv;
-  const char * exebasename = strrchr(exename, '/');
-  if (exebasename)
-    exebasename ++;
-  else
-    exebasename = exename;
-  if (0 == strncmp(exebasename, "wsl", 3)) {
-    char * exearg = strchr(exebasename, '-');
-    if (exearg)
-      exearg ++;
-    int err = select_WSL(exearg);
-    if (err)
-      option_error(__("WSL distribution '%s' not found"), exearg ?: _("(Default)"), err);
   }
 
   copy_config("main after -o", &file_cfg, &cfg);
