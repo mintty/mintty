@@ -202,7 +202,9 @@ load_library_func(string lib, string func)
 bool per_monitor_dpi_aware = false;
 uint dpi = 96;
 
+#ifndef WM_DPICHANGED
 #define WM_DPICHANGED 0x02E0
+#endif
 const int Process_System_DPI_Aware = 1;
 const int Process_Per_Monitor_DPI_Aware = 2;
 static HRESULT (WINAPI * pGetProcessDpiAwareness)(HANDLE hprocess, int * value) = 0;
@@ -2066,19 +2068,18 @@ static struct {
       child_sendw(&(wchar){wp}, 1);
       return MNC_CLOSE << 16;
 
-#ifdef handle_clipboard_notifications
-#if CYGWIN_VERSION_API_MINOR >= 74
+#ifndef WM_CLIPBOARDUPDATE
+#define WM_CLIPBOARDUPDATE 0x031D
+#endif
     // Try to clear selection when clipboard content is updated (#742)
-#warning this is broken, subsequent double-click selection fails
-    when WM_CLIPBOARDUPDATE or WM_DESTROYCLIPBOARD:
+    when WM_CLIPBOARDUPDATE:
       if (clipboard_token)
         clipboard_token = false;
       else {
         term.selected = false;
         win_update();
       }
-#endif
-#endif
+      return 0;
 
 #ifdef catch_lang_change
     // this is rubbish; only the initial change would be captured anyway;

@@ -9,9 +9,6 @@ Character handling and rendering
 Input
   * Reenabled Ctrl+key escape sequences (#743).
 
-Desktop integration
-  * Workaround for ConEmu WM_MOUSEACTIVATE bug (#724).
-
 Configuration
   * Alt+F2 and mintty --dir=... stay in selected dir even in login mode (#500,#744).
   * Fixed option --dir=...
@@ -21,7 +18,11 @@ Configuration
   * Added missing option `mintheme --list`.
 
 Window handling
+  * Clear selection when clipboard content updated (#742).
   * Skip refresh after colour setting if nothing changed (e.g. by prompt).
+
+Desktop integration
+  * Workaround for ConEmu WM_MOUSEACTIVATE bug (#724).
 
 Documentation
   * Terminal multiplexer configuration: added tmux (#757).
