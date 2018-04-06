@@ -16,6 +16,7 @@ Configuration
   * More layout-tolerant colour value syntax (#758).
   * Invocation as wsl*[-distro].exe implies a --WSL[=distro] parameter (mintty/wsltty#63).
   * Added missing option `mintheme --list`.
+  * New mintheme options --file (#762) and --query.
 
 Window handling
   * Clear selection when clipboard content updated (#742).
