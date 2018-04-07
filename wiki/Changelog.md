@@ -23,6 +23,7 @@ Window handling
   * Skip refresh after colour setting if nothing changed (e.g. by prompt).
 
 Desktop integration
+  * WSL mount point configuration (/etc/wsl.conf or fstab) is considered in path conversion for open/paste (mintty/wsltty#91).
   * Workaround for ConEmu WM_MOUSEACTIVATE bug (#724).
 
 Documentation

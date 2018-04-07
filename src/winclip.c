@@ -101,13 +101,154 @@ ispathprefixw(wstring pref, wstring path)
   return false;
 }
 
+static char * wsl_conf_mnt = 0;
+static struct {
+  char * dev_fs;
+  char * mount_point;
+} * wsl_fstab = 0;
+static int wsl_fstab_len = 0;
+
+static char *
+skip(char * s)
+{
+  while (isspace(*s))
+    s++;
+  return s;
+}
+
+static bool
+wslmntmapped(void)
+{
+  static bool wslmnt_init = false;
+  if (!wslmnt_init && *wsl_basepath) {
+    char linebuf[222];
+    char * rootfs = path_win_w_to_posix(wsl_basepath);
+    char * wsl$conf = asform("%s/etc/wsl.conf", rootfs);
+    char * fstab = asform("%s/etc/fstab", rootfs);
+
+    FILE * conf = fopen(wsl$conf, "r");
+    if (conf) {
+      bool automount = false;
+      while (fgets(linebuf, sizeof linebuf, conf)) {
+        char * p = skip(linebuf);
+        if (*p == '[') {
+          automount = false;
+          if (0 == strncasecmp(p, "[automount]", 11)) {
+            p = skip(p + 11);
+            if (!*p)
+              automount = true;
+          }
+        }
+        else if (automount && 0 == strncasecmp(p, "root", 4)) {
+          p = skip(p + 4);
+          if (*p == '=') {
+            p = skip(p + 1);
+            char * x = strchr(p, '\n');
+            if (x) {
+              *x = 0;
+              if (x-- > p && *x == '/')
+                *x = 0;
+            }
+            wsl_conf_mnt = strdup(p);
+          }
+        }
+      }
+      fclose(conf);
+    }
+
+    FILE * mtab = fopen(fstab, "r");
+    if (mtab) {
+      while (fgets(linebuf, sizeof linebuf, mtab)) {
+        char * p1 = skip(linebuf);
+        if (*p1 != '#') {
+          char * x = p1;
+          while (!isspace(*x))
+            x++;
+          *x++ = 0;
+          char * p2 = skip(x);
+          x = p2;
+          while (!isspace(*x))
+            x++;
+          *x = 0;
+          if (x-- > p2 && *x == '/')
+            *x = 0;
+          if (*p1 && *p2) {
+            wsl_fstab = renewn(wsl_fstab, wsl_fstab_len + 1);
+            wsl_fstab[wsl_fstab_len].dev_fs = strdup(p1);
+            wsl_fstab[wsl_fstab_len].mount_point = strdup(p2);
+            wsl_fstab_len++;
+          }
+        }
+      }
+      fclose(mtab);
+    }
+
+    free(fstab);
+    free(wsl$conf);
+    free(rootfs);
+    wslmnt_init = true;
+  }
+  return wsl_conf_mnt || wsl_fstab;
+}
+
+static char *
+unwslpath(wchar * wpath)
+{
+  char * res = null;
+  if (wslmntmapped()) {
+    char * wslpath = cs__wcstoutf(wpath);
+    if (wsl_conf_mnt && ispathprefix(wsl_conf_mnt, wslpath))
+      res = asform("/cygdrive%s", &wslpath[strlen(wsl_conf_mnt)]);
+    else
+      for (int i = 0; i < wsl_fstab_len; i++)
+        if (ispathprefix(wsl_fstab[i].mount_point, wslpath))
+          if (wsl_fstab[i].dev_fs[1] == ':') {
+            res = asform("/cygdrive/%c%s", 
+                         tolower(wsl_fstab[i].dev_fs[0]), 
+                         &wslpath[strlen(wsl_fstab[i].mount_point)]);
+            break;
+          }
+    free(wslpath);
+  }
+  return res;
+}
+
+static char *
+wslpath(char * path)
+{
+  char * res = null;
+  if (ispathprefix("/cygdrive", path) && wslmntmapped()) {
+    path += 10;  // point to drive letter
+    if (wsl_conf_mnt)
+      res = asform("%s/%s", wsl_conf_mnt, path);
+    else if (path[1] == '/')
+      for (int i = 0; i < wsl_fstab_len; i++)
+        if (tolower(*path) == tolower(wsl_fstab[i].dev_fs[0])
+         && wsl_fstab[i].dev_fs[1] == ':'
+         && wsl_fstab[i].dev_fs[2] == 0) {
+            path ++;
+            res = asform("%s%s", wsl_fstab[i].mount_point, path);
+            break;
+          }
+  }
+  // cygwin-internal paths not supported
+  return res;
+}
+
 wchar *
 dewsl(wchar * wpath)
 {
 #ifdef debug_wsl
   printf("open <%ls>\n", wpath);
 #endif
-  if (wcsncmp(wpath, W("/mnt/"), 5) == 0) {
+  char * unwslp = unwslpath(wpath);
+  if (unwslp) {
+    wchar * unwsl = cs__utftowcs(unwslp);
+    free(unwslp);
+    delete(wpath);
+    wpath = unwsl;
+  }
+  else if (wcsncmp(wpath, W("/mnt/"), 5) == 0) {
     wchar * unwsl = newn(wchar, wcslen(wpath) + 6);
     wcscpy(unwsl, W("/cygdrive"));
     wcscat(unwsl, wpath + 4);
@@ -595,7 +736,13 @@ paste_hdrop(HDROP drop)
 #ifdef debug_wsl
       printf("paste <%s>\n", p);
 #endif
-      if (*wsl_basepath) {
+      char * wslp = wslpath(p);
+      if (wslp) {
+        free(fn);
+        fn = wslp;
+        p = fn;
+      }
+      else if (*wsl_basepath) {
         static char * wsl_root = 0;
         if (!wsl_root) {
           wsl_root = path_win_w_to_posix(wsl_basepath);
