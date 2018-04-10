@@ -8,6 +8,7 @@ Character handling and rendering
 
 Input
   * Reenabled Ctrl+key escape sequences (#743).
+  * Reenabled drag-and-drop text selection on focussing at a threshhold (~#717).
 
 Configuration
   * Alt+F2 and mintty --dir=... stay in selected dir even in login mode (#500,#744).

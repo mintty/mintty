@@ -729,6 +729,11 @@ static pos last_pos = {-1, -1};
 static int button_state = 0;
 
 bool click_focus_token = false;
+static mouse_button last_button = -1;
+static mod_keys last_mods;
+static pos last_click_pos;
+static bool last_skipped = false;
+static bool mouse_state = false;
 
 static pos
 get_mouse_pos(LPARAM lp)
@@ -740,13 +745,11 @@ get_mouse_pos(LPARAM lp)
 void
 win_mouse_click(mouse_button b, LPARAM lp)
 {
+  mouse_state = true;
   bool click_focus = click_focus_token;
   click_focus_token = false;
 
-  static mouse_button last_button;
   static uint last_time, count;
-  static pos last_click_pos;
-  static bool last_skipped = false;
 
   win_show_mouse();
   mod_keys mods = get_mods();
@@ -778,6 +781,7 @@ win_mouse_click(mouse_button b, LPARAM lp)
   last_click_pos = p;
   last_time = t;
   last_button = b;
+  last_mods = mods;
 
   if (alt_state > ALT_NONE)
     alt_state = ALT_CANCELLED;
@@ -797,6 +801,7 @@ win_mouse_click(mouse_button b, LPARAM lp)
 void
 win_mouse_release(mouse_button b, LPARAM lp)
 {
+  mouse_state = false;
   term_mouse_release(b, get_mods(), get_mouse_pos(lp));
   ReleaseCapture();
   switch (b) {
@@ -823,6 +828,13 @@ win_mouse_move(bool nc, LPARAM lp)
   pos p = get_mouse_pos(lp);
   if (nc || (p.x == last_pos.x && p.y == last_pos.y))
     return;
+  if (last_skipped && last_button == MBT_LEFT && mouse_state
+      && abs(p.x - last_click_pos.x) + abs(p.y - last_click_pos.y) > 1
+     )
+  {
+    // allow focus-selection if sufficient distance spanned
+    term_mouse_click(last_button, last_mods, last_click_pos, 1);
+  }
 
   last_pos = p;
   term_mouse_move(get_mods(), p);
