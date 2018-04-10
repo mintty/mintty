@@ -175,7 +175,7 @@ write_backspace(void)
   int term_top = curs->origin ? term.marg_top : 0;
   if (curs->x == 0 && (curs->y == term_top || !curs->autowrap
                        || (!cfg.old_wrapmodes && !curs->rev_wrap)))
-   /* do nothing */ ;
+    /* skip */;
   else if (curs->x == 0 && curs->y > term_top)
     curs->x = term.cols - 1, curs->y--;
   else if (curs->wrapnext) {
@@ -1595,25 +1595,28 @@ do_dcs(void)
       } else {
         for (cur = term.imgs.first; cur; cur = cur->next) {
           if (cur->pixelwidth == cur->width * st->grid_width &&
-              cur->pixelheight == cur->height * st->grid_height) {
+              cur->pixelheight == cur->height * st->grid_height)
+          {
             if (img->top == cur->top && img->left == cur->left &&
                 img->width == cur->width &&
-                img->height == cur->height) {
-                memcpy(cur->pixels, img->pixels, img->pixelwidth * img->pixelheight * 4);
-                winimg_destroy(img);
-                return;
+                img->height == cur->height)
+            {
+              memcpy(cur->pixels, img->pixels, img->pixelwidth * img->pixelheight * 4);
+              winimg_destroy(img);
+              return;
             }
             if (img->top >= cur->top && img->left >= cur->left &&
                 img->left + img->width <= cur->left + cur->width &&
-                img->top + img->height <= cur->top + cur->height) {
-                for (y = 0; y < img->pixelheight; ++y)
-                  memcpy(cur->pixels +
-                           ((img->top - cur->top) * st->grid_height + y) * cur->pixelwidth * 4 +
-                           (img->left - cur->left) * st->grid_width * 4,
-                         img->pixels + y * img->pixelwidth * 4,
-                         img->pixelwidth * 4);
-                winimg_destroy(img);
-                return;
+                img->top + img->height <= cur->top + cur->height)
+            {
+              for (y = 0; y < img->pixelheight; ++y)
+                memcpy(cur->pixels +
+                         ((img->top - cur->top) * st->grid_height + y) * cur->pixelwidth * 4 +
+                         (img->left - cur->left) * st->grid_width * 4,
+                       img->pixels + y * img->pixelwidth * 4,
+                       img->pixelwidth * 4);
+              winimg_destroy(img);
+              return;
             }
           }
         }
@@ -2141,9 +2144,12 @@ term_write(const char *buf, uint len)
             && win_char_width(wc) < 2
             // ensure symmetric handling of matching brackets
             && win_char_width(wc ^ 1) < 2)
-            term.curs.attr.attr |= ATTR_EXPAND;
+        {
+          term.curs.attr.attr |= ATTR_EXPAND;
+        }
 
-        wchar NRC(wchar * map) {
+        wchar NRC(wchar * map)
+        {
           static char * rpl = "#@[\\]^_`{|}~";
           char * match = strchr(rpl, c);
           if (match)

@@ -13,13 +13,10 @@ uint
 printer_start_enum(void)
 {
   DWORD size = 0, num = 0;
-  while (
-    !EnumPrintersW(PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS,
-                  0, 4, (LPBYTE)printer_info, size, &size, &num) &&
-    GetLastError() == ERROR_INSUFFICIENT_BUFFER
-  ) {
+  while (!EnumPrintersW(PRINTER_ENUM_LOCAL | PRINTER_ENUM_CONNECTIONS,
+                        0, 4, (LPBYTE)printer_info, size, &size, &num)
+         && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
     printer_info = _realloc(printer_info, size);
-  }
 
   return num;
 }
