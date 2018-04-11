@@ -18,6 +18,7 @@ Configuration
   * Invocation as wsl*[-distro].exe implies a --WSL[=distro] parameter (mintty/wsltty#63).
   * Added missing option `mintheme --list`.
   * New mintheme options --file (#762) and --query.
+  * New option ClearSelectionOnInput=false disables selection highlight clearing on input (#222).
 
 Window handling
   * Clear selection when clipboard content updated (#742).

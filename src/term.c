@@ -258,11 +258,12 @@ term_reset(bool full)
 }
 
 static void
-show_screen(bool other_screen)
+show_screen(bool other_screen, bool flip)
 {
   term.show_other_screen = other_screen;
   term.disptop = 0;
-  term.selected = false;
+  if (flip || cfg.input_clears_selection)
+    term.selected = false;
 
   // Reset cursor blinking.
   if (!other_screen) {
@@ -277,14 +278,14 @@ show_screen(bool other_screen)
 void
 term_reset_screen(void)
 {
-  show_screen(false);
+  show_screen(false, false);
 }
 
 /* Switch display to other screen and reset scrollback */
 void
 term_flip_screen(void)
 {
-  show_screen(!term.show_other_screen);
+  show_screen(!term.show_other_screen, true);
 }
 
 /* Apply changed settings */

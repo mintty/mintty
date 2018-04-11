@@ -384,7 +384,7 @@ By default, selected text is automatically copied to the clipboard.
 This can be disabled on the \fBMouse\fP page of the options dialog.
 Selected text can also be copied manually using either the \fBCopy\fP menu
 command, the \fBCtrl+Ins\fP or \fBCtrl+Shift+C\fP keyboard shortcuts 
-(\fBCtrl+C\fP with option CtrlExchangeShift=yes), 
+(\fBCtrl+C\fP with option \fBCtrlExchangeShift=yes\fP), 
 or the middle mouse button combined with \fBShift\fP.
 
 The selected region is copied as "rich text" as well as normal text,
@@ -396,11 +396,14 @@ menu.
 
 The clipboard contents can be pasted using either the \fBPaste\fP menu command,
 the \fBShift+Ins\fP or \fBCtrl+Shift+V\fP keyboard shortcuts 
-(\fBCtrl+V\fP with option CtrlExchangeShift=yes), 
+(\fBCtrl+V\fP with option \fBCtrlExchangeShift=yes\fP), 
 or the middle mouse button.
 Not only text but also files and directories can be pasted,
 whereby the latter are inserted as Cygwin file names.
 Shell quoting is added to file names that contain spaces or special characters.
+
+Selection highlighting is cleared on input by default. This can be disabled
+(as compatible with xterm) with option \fBClearSelectionOnInput=false\fP.
 
 .SS Drag & drop
 
@@ -411,7 +414,7 @@ They are inserted in the same way as if they were pasted from the clipboard.
 
 Files, directories, URLs and web addresses beginning with "www." can be 
 opened either by holding \fBCtrl\fP while left-clicking on them (or 
-double-clicking, if and as enabled by option OpeningClicks), or by 
+double-clicking, if and as enabled by option \fBOpeningClicks\fP), or by 
 selecting them and choosing the \fBOpen\fP command from the context menu.
 Embedded spaces are considered if escaped with a backslash; for 
 selected pathnames, also embedding quote marks are considered.
@@ -828,9 +831,9 @@ options can obviously be overwritten; if older mintty versions are run
 may even get dropped from the configuration file; mintty versions since 
 261 preserve unknown options and comment lines.
 
-Additional resource files are used for colour schemes (option ThemeFile, 
-subdirectory \fIthemes\fP), wave files (option BellFile, subdirectory \fIsounds\fP), 
-and localization translation files (option Language, subdirectory \fIlang\fP) 
+Additional resource files are used for colour schemes (option \fBThemeFile\fP, 
+subdirectory \fIthemes\fP), wave files (option \fBBellFile\fP, subdirectory \fIsounds\fP), 
+and localization translation files (option \fBLanguage\fP, subdirectory \fIlang\fP) 
 within the mintty resource directories \fI/usr/share/mintty\fP, 
 \fI$APPDATA/mintty\fP, \fI~/.config/mintty\fP, \fI~/.mintty\fP, 
 or as specified with command line option \fB--configdir\fP.
@@ -1028,7 +1031,7 @@ See \fBBold Behaviour\fP for an overview.
 \fBBold substitution colour\fP (BoldColour=)
 This hidden option sets a colour to be used to render the bold attribute of 
 text that would otherwise have the default foreground colour, overriding 
-other bold rendering; it is only applied if option BoldAsColour is true.
+other bold rendering; it is only applied if option \fBBoldAsColour\fP is true.
 The bold substitution colour can also be set, modified, enabled or disabled 
 with the respective xterm OSC control sequences.
 .br
@@ -1676,6 +1679,11 @@ distinguish different mintty windows.  The name defaults to "mintty".
 The following settings appear neither in the options dialog nor as command line
 options, which means they can only be set in config files or using the
 \fB--option\fP or \fB-o\fP command line option.
+
+.TP
+\fBClear selection highlighting on input\fP (ClearSelectionOnInput=true)
+When this is disabled, keyboard input or pasting does not clear 
+selection highlighting as compatible with xterm.
 
 .TP
 \fBSingle-dash long options\fP (ShortLongOpts=false)

@@ -917,7 +917,8 @@ win_paste(void)
   if (!OpenClipboard(null))
     return;
   HGLOBAL data;
-  term.selected = false;
+  if (cfg.input_clears_selection)
+    term.selected = false;
   if ((data = GetClipboardData(CF_HDROP)))
     paste_hdrop(data);
   else if ((data = GetClipboardData(CF_UNICODETEXT)))

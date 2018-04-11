@@ -144,6 +144,7 @@ typedef struct {
   // "Hidden"
   int bidi;
   bool disable_alternate_screen;
+  bool input_clears_selection;
   char charwidth;
   char emojis;
   char emoji_placement;
