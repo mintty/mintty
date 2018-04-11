@@ -8,10 +8,13 @@ Character handling and rendering
 
 Input
   * Reenabled Ctrl+key escape sequences (#743).
+  * Input optionally keeps selection highlighting (ClearSelectionOnInput=false) (#222).
+
+Mouse handling
   * Reenabled drag-and-drop text selection on focussing at a threshhold (~#717).
 
 Configuration
-  * Alt+F2 and mintty --dir=... stay in selected dir even in login mode (#500,#744).
+  * Alt+F2 and mintty --dir=... stay in selected dir even in login mode (#500, #744).
   * Fixed option --dir=...
   * Context menu configuration (MenuMenu etc): new flags 'x' and 'u' (#755).
   * More layout-tolerant colour value syntax (#758).

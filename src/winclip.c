@@ -139,7 +139,7 @@ wslmntmapped(void)
               automount = true;
           }
         }
-        else if (automount && 0 == strncasecmp(p, "root", 4)) {
+        else if (automount && !strncasecmp(p, "root", 4)) {
           p = skip(p + 4);
           if (*p == '=') {
             p = skip(p + 1);
