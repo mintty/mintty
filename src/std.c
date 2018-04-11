@@ -86,7 +86,7 @@ int iswspace(wint_t wc) { return wc < 0x100 && isspace(wc); }
 #endif
 
 
-#if CYGWIN_VERSION_API_MINOR < 91
+#if (CYGWIN_VERSION_API_MINOR < 91) || (ARGZ_INTERNAL_IMPL)
 
 /* Copyright (C) 2002 by Red Hat, Incorporated. All rights reserved.
  *
