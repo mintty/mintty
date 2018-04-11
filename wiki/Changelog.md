@@ -1,3 +1,4 @@
+### 2.8.5 (14 Apr 2018) ###
 
 Character handling and rendering
   * CJK brackets are expanded if needed to ensure their symmetry (#756).
