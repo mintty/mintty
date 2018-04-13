@@ -22,7 +22,7 @@ help() {
 	echo
 	echo "Arguments:"
 	echo "  -f, --file    set theme from given themefile"
-	echo "  -q, --query   query current colour configuration as theme
+	echo "  -q, --query   query current colour configuration as theme"
 	echo "  -l, --list    list available themes"
 	echo "  -h, --help    show this"
 	echo
@@ -87,7 +87,7 @@ case "$1" in
 -l|--list)
 	for confdir in ~/.mintty ~/.config/mintty "$APPDATA"/mintty /usr/share/mintty
 	do	if [ -d "$confdir/themes" -a -x "$confdir/themes"  -a -r "$confdir/themes" ]
-		then	echo "themes in '$confdir':"
+		then	echo "[4;53;7mthemes in '$confdir':[m"
 			(cd "$confdir/themes"; ls *[!~])
 		fi
 	done;;
