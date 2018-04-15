@@ -547,7 +547,7 @@ win_copy(const wchar *data, cattr *cattrs, int len)
         */
         attr = apply_attr_colour_rtf(cattrs[uindex], ACM_RTF_GEN, &fgcolour, &bgcolour);
         attrBold = attr & ATTR_BOLD;
-        attrUnder = attr & ATTR_UNDER;
+        attrUnder = attr & UNDER_MASK;
         attrItalic = attr & ATTR_ITALIC;
         attrStrikeout = attr & ATTR_STRIKEOUT;
         attrHidden = attr & ATTR_INVISIBLE;

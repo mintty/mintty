@@ -1803,7 +1803,7 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   }
   if (ff->bold_mode == BOLD_FONT && (attr.attr & ATTR_BOLD))
     nfont |= FONT_BOLD;
-  if (ff->und_mode == UND_FONT && (attr.attr & ATTR_UNDER))
+  if (ff->und_mode == UND_FONT && (attr.attr & UNDER_MASK) == ATTR_UNDER)
     nfont |= FONT_UNDERLINE;
   if (attr.attr & ATTR_ITALIC)
     nfont |= FONT_ITALIC;
@@ -2069,16 +2069,50 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
     underlaid = true;
   }
 
+ /* Special underline */
+  if (!ldisp2 && lattr != LATTR_TOP &&
+      (attr.attr & UNDER_MASK) == ATTR_CURLYUND) {
+    clear_run();
+
+    int step = 4;  // horizontal step width
+    int delta = 3; // vertical phase height
+    int offset = 1; // offset up from uloff
+    int rep = (ulen * char_width - 1) / step + 1;
+    POINT bezier[1 + rep * 3];
+    for (int i = 0; i <= rep * 3; i++) {
+      bezier[i].x = x + i * step;
+      int wave = (i % 3 == 2) ? delta : (i % 3 == 1) ? -delta : 0;
+      bezier[i].y = y + uloff - offset + wave;
+    }
+    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, ul));
+    for (int l = 0; l < line_width; l++) {
+      if (l)
+        for (int i = 0; i <= rep * 3; i++)
+          bezier[i].y--;
+      PolyBezier(dc, (const POINT *)bezier, 1 + rep * 3);
+    }
+    oldpen = SelectObject(dc, oldpen);
+    DeleteObject(oldpen);
+  }
+  else
+
  /* Underline */
   if (!ldisp2 && lattr != LATTR_TOP &&
       (force_manual_underline ||
-       (ff->und_mode == UND_LINE && (attr.attr & ATTR_UNDER)) ||
-       (attr.attr & ATTR_DOUBLYUND))) {
+       (attr.attr & (ATTR_DOUBLYUND | ATTR_BROKENUND)) ||
+       (ff->und_mode == UND_LINE && (attr.attr & UNDER_MASK) == ATTR_UNDER)
+      )
+     ) {
     clear_run();
 
-    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, ul));
+    int penstyle = (attr.attr & ATTR_BROKENUND)
+                   ? (attr.attr & ATTR_DOUBLYUND)
+                     ? PS_DASH
+                     : PS_DOT
+                   : PS_SOLID;
+    HPEN oldpen = SelectObject(dc, CreatePen(penstyle, 0, ul));
     int gapfrom = 0, gapdone = 0;
-    if (attr.attr & ATTR_DOUBLYUND) {
+    if ((attr.attr & UNDER_MASK) == ATTR_DOUBLYUND) {
       if (line_width < 3)
         line_width = 3;
       int gap = line_width / 3;

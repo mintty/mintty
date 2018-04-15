@@ -640,7 +640,30 @@ do_sgr(void)
       when 1: attr.attr |= ATTR_BOLD;
       when 2: attr.attr |= ATTR_DIM;
       when 3: attr.attr |= ATTR_ITALIC;
-      when 4: attr.attr |= ATTR_UNDER;
+      when 4:
+        attr.attr &= ~UNDER_MASK;
+        attr.attr |= ATTR_UNDER;
+      when 4 | SUB_PARS:
+        if (i + 1 < argc)
+          switch (term.csi_argv[i + 1]) {
+            when 0:
+              attr.attr &= ~UNDER_MASK;
+            when 1:
+              attr.attr &= ~UNDER_MASK;
+              attr.attr |= ATTR_UNDER;
+            when 2:
+              attr.attr &= ~UNDER_MASK;
+              attr.attr |= ATTR_DOUBLYUND;
+            when 3:
+              attr.attr &= ~UNDER_MASK;
+              attr.attr |= ATTR_CURLYUND;
+            when 4:
+              attr.attr &= ~UNDER_MASK;
+              attr.attr |= ATTR_BROKENUND;
+            when 5:
+              attr.attr &= ~UNDER_MASK;
+              attr.attr |= ATTR_BROKENUND | ATTR_DOUBLYUND;
+          }
       when 5: attr.attr |= ATTR_BLINK;
       when 6: attr.attr |= ATTR_BLINK2;
       when 7: attr.attr |= ATTR_REVERSE;
@@ -670,13 +693,15 @@ do_sgr(void)
         attr.attr &= ~FONTFAM_MASK;
         attr.attr |= (cattrflags)(term.csi_argv[i] - 10) << ATTR_FONTFAM_SHIFT;
       //when 21: attr.attr &= ~ATTR_BOLD;
-      when 21: attr.attr |= ATTR_DOUBLYUND;
+      when 21:
+        attr.attr &= ~UNDER_MASK;
+        attr.attr |= ATTR_DOUBLYUND;
       when 22: attr.attr &= ~(ATTR_BOLD | ATTR_DIM);
       when 23:
         attr.attr &= ~ATTR_ITALIC;
         if (((attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT) + 10 == 20)
           attr.attr &= ~FONTFAM_MASK;
-      when 24: attr.attr &= ~(ATTR_UNDER | ATTR_DOUBLYUND);
+      when 24: attr.attr &= ~UNDER_MASK;
       when 25: attr.attr &= ~(ATTR_BLINK | ATTR_BLINK2);
       when 27: attr.attr &= ~ATTR_REVERSE;
       when 28: attr.attr &= ~ATTR_INVISIBLE;
@@ -1729,7 +1754,7 @@ do_dcs(void)
     switch (term.state) {
     when DCS_ESCAPE:
       if (!strcmp(s, "m")) { // SGR
-        char buf[74], *p = buf;
+        char buf[76], *p = buf;
         p += sprintf(p, "\eP1$r0");
 
         if (attr.attr & ATTR_BOLD)
@@ -1738,8 +1763,17 @@ do_dcs(void)
           p += sprintf(p, ";2");
         if (attr.attr & ATTR_ITALIC)
           p += sprintf(p, ";3");
-        if (attr.attr & ATTR_UNDER)
+
+        if (attr.attr & ATTR_BROKENUND)
+          if (attr.attr & ATTR_DOUBLYUND)
+            p += sprintf(p, ";4:5");
+          else
+            p += sprintf(p, ";4:4");
+        else if ((attr.attr & UNDER_MASK) == ATTR_CURLYUND)
+          p += sprintf(p, ";4:3");
+        else if (attr.attr & ATTR_UNDER)
           p += sprintf(p, ";4");
+
         if (attr.attr & ATTR_BLINK)
           p += sprintf(p, ";5");
         if (attr.attr & ATTR_BLINK2)
@@ -1750,7 +1784,7 @@ do_dcs(void)
           p += sprintf(p, ";8");
         if (attr.attr & ATTR_STRIKEOUT)
           p += sprintf(p, ";9");
-        if (attr.attr & ATTR_DOUBLYUND)
+        if ((attr.attr & UNDER_MASK) == ATTR_DOUBLYUND)
           p += sprintf(p, ";21");
         if (attr.attr & ATTR_FRAMED)
           p += sprintf(p, ";51;52");
