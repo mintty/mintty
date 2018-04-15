@@ -726,6 +726,23 @@ do_sgr(void)
           uint b = term.csi_argv[i + pi + 4];
           attr.truefg = make_colour(r, g, b);
         }
+        else if ((sub_pars >= 5 && term.csi_argv[i + 1] == 3) ||
+                 (sub_pars >= 6 && term.csi_argv[i + 1] == 4)) {
+          // set foreground to CMY(K)
+          ulong f = term.csi_argv[i + 2];
+          ulong c = term.csi_argv[i + 3];
+          ulong m = term.csi_argv[i + 4];
+          ulong y = term.csi_argv[i + 5];
+          ulong k = term.csi_argv[i + 1] == 4 ? term.csi_argv[i + 6] : 0;
+          if (c <= f && m <= f && y <= f && k <= f) {
+            uint r = (f - c) * (f - k) / f * 255 / f;
+            uint g = (f - m) * (f - k) / f * 255 / f;
+            uint b = (f - y) * (f - k) / f * 255 / f;
+            attr.attr &= ~ATTR_FGMASK;
+            attr.attr |= TRUE_COLOUR << ATTR_FGSHIFT;
+            attr.truefg = make_colour(r, g, b);
+          }
+        }
       when 39: /* default foreground */
         attr.attr &= ~ATTR_FGMASK;
         attr.attr |= ATTR_DEFFG;
@@ -767,6 +784,23 @@ do_sgr(void)
           uint g = term.csi_argv[i + pi + 3];
           uint b = term.csi_argv[i + pi + 4];
           attr.truebg = make_colour(r, g, b);
+        }
+        else if ((sub_pars >= 5 && term.csi_argv[i + 1] == 3) ||
+                 (sub_pars >= 6 && term.csi_argv[i + 1] == 4)) {
+          // set background to CMY(K)
+          ulong f = term.csi_argv[i + 2];
+          ulong c = term.csi_argv[i + 3];
+          ulong m = term.csi_argv[i + 4];
+          ulong y = term.csi_argv[i + 5];
+          ulong k = term.csi_argv[i + 1] == 4 ? term.csi_argv[i + 6] : 0;
+          if (c <= f && m <= f && y <= f && k <= f) {
+            uint r = (f - c) * (f - k) / f * 255 / f;
+            uint g = (f - m) * (f - k) / f * 255 / f;
+            uint b = (f - y) * (f - k) / f * 255 / f;
+            attr.attr &= ~ATTR_BGMASK;
+            attr.attr |= TRUE_COLOUR << ATTR_BGSHIFT;
+            attr.truebg = make_colour(r, g, b);
+          }
         }
       when 49: /* default background */
         attr.attr &= ~ATTR_BGMASK;

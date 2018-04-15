@@ -659,6 +659,7 @@ bool
 parse_colour(string s, colour *cp)
 {
   uint r, g, b;
+  float c, m, y, k = 0;
   if (sscanf(s, "%u,%u,%u", &r, &g, &b) == 3)
     ;
   else if (sscanf(s, "#%2x%2x%2x", &r, &g, &b) == 3)
@@ -666,7 +667,17 @@ parse_colour(string s, colour *cp)
   else if (sscanf(s, "rgb:%2x/%2x/%2x", &r, &g, &b) == 3)
     ;
   else if (sscanf(s, "rgb:%4x/%4x/%4x", &r, &g, &b) == 3)
-    r >>=8, g >>= 8, b >>= 8;
+    r >>= 8, g >>= 8, b >>= 8;
+  else if (sscanf(s, "cmy:%f/%f/%f", &c, &m, &y) == 3
+        || sscanf(s, "cmyk:%f/%f/%f/%f", &c, &m, &y, &k) == 4
+          )
+    if (c >= 0 && c <= 1 && m >= 0 && m <= 1 && y >= 0 && y <= 1 && k >= 0 && k <= 1) {
+      r = (1 - c) * (1 - k) * 255;
+      g = (1 - m) * (1 - k) * 255;
+      b = (1 - y) * (1 - k) * 255;
+    }
+    else
+      return false;
   else {
     int coli = -1;
     int len = strlen(s);
