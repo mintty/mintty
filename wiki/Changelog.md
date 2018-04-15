@@ -1,3 +1,11 @@
+Character attributes and rendering
+  * Support for colon-separated SGR sub-parameters (ISO/IEC 8613-6) for colour and underline attributes.
+  * Support ISO/IEC 8613-6 RGB, CMY, CMYK, and indexed colour specifications.
+  * Support for underline styles single, double, curly, dotted, dashed.
+
+Other
+  * Fixed syntax error in `mintheme` tool (#764).
+
 ### 2.8.5 (14 Apr 2018) ###
 
 Character handling and rendering

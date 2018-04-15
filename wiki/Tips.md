@@ -411,6 +411,8 @@ Different notations are accepted for colour specifications:
 * ```rrr,ggg,bbb``` (256 decimal values)
 * ```rgb:RR/GG/BB``` (256 hex values)
 * ```rgb:RRRR/GGGG/BBBB``` (65536 hex values)
+* ```cmy:C.C/M.M/Y.Y``` (float values between 0 and 1)
+* ```cmyk:C.C/M.M/Y.Y/K.K``` (float values between 0 and 1)
 * _color-name_ (using X11 color names, e.g. ```echo -ne '\e]10;bisque2\a'```)
 
 
@@ -589,14 +591,20 @@ to adjust line spacing.
 
 ## Text attributes and rendering ##
 
-Mintty supports a maximum of usual and unusual text attributes:
+Mintty supports a maximum of usual and unusual text attributes.
+For underline styles and colour values, colon-separated 
+ISO/IEC 8613-6 sub-parameters are supported.
 
 | **start `^[[...m`**    | **end `^[[...m`** | **attribute**                 |
 |:-----------------------|:------------------|:------------------------------|
 | 1                      | 22                | bold                          |
 | 2                      | 22                | dim                           |
 | 3                      | 23                | italic                        |
-| 4                      | 24                | underline                     |
+| 4 _or_ 4:1             | 24 _or_ 4:0       | solid underline               |
+| 4:2                    | 24 _or_ 4:0       | double underline              |
+| 4:3                    | 24 _or_ 4:0       | wavy underline                |
+| 4:4                    | 24 _or_ 4:0       | dotted underline              |
+| 4:5                    | 24 _or_ 4:0       | dashed underline              |
 | 5                      | 25                | blinking                      |
 | 6                      | 25                | rapidly blinking              |
 | 7                      | 27                | inverse                       |
@@ -607,17 +615,23 @@ Mintty supports a maximum of usual and unusual text attributes:
 | ...                    | 10                | alternative fonts 3...8       |
 | 19                     | 10                | alternative font 9            |
 | 20                     | 23 _or_ 10        | Fraktur/Blackletter font      |
-| 21                     | 24                | doubly underline              |
+| 21 _or_ 4:2            | 24 _or_ 4:0       | double underline              |
 | 53                     | 55                | overline                      |
 | 30...37                | 39                | foreground ANSI colour        |
 | 90...97                | 39                | foreground bright ANSI colour |
 | 40...47                | 49                | background ANSI colour        |
 | 100...107              | 49                | background bright ANSI colour |
-| 38;5;P                 | 39                | foreground palette colour     |
-| 48;5;P                 | 49                | background palette colour     |
+| 38;5;P _or_ 38:5:P     | 39                | foreground palette colour     |
+| 48;5;P _or_ 48:5:P     | 49                | background palette colour     |
 | 38;2;R;G;B             | 39                | foreground true colour        |
 | 48;2;R;G;B             | 49                | background true colour        |
-| 51, 52                 | 54                | emoji style                   |
+| 38:2::R:G:B            | 39                | foreground RGB true colour    |
+| 48:2::R:G:B            | 49                | background RGB true colour    |
+| 38:3:F:C:M:Y           | 39                | foreground CMY colour (*)     |
+| 48:3:F:C:M:Y           | 49                | background CMY colour (*)     |
+| 38:4:F:C:M:Y:K         | 39                | foreground CMYK colour (*)    |
+| 48:4:F:C:M:Y:K         | 49                | background CMYK colour (*)    |
+| 51 _or_ 52             | 54                | emoji style (*)               |
 | _any_                  | 0                 |                               |
 
 Note: The control sequences for Fraktur (“Gothic”) font are described 
@@ -628,6 +642,13 @@ Note: The control sequence for alternative font 1 overrides the identical
 control sequence to select the VGA character set. Configuring alternative 
 font 1 is therefore discouraged. See the mintty manual page about how 
 to configure alternative fonts.
+
+Note: RGB colour values are scaled to a maximum of 255 (=100%).
+CMY(K) colour values are scaled to a maximum of the given parameter F (=100%).
+
+Note: The emoji style attribute sets the display preference for a number 
+of characters that have emojis but would be displayed with text style 
+by default (e.g. decimal digits).
 
 As a fancy add-on feature for text attributes, mintty supports distinct 
 colour attributes for combining characters, so a combined character 
