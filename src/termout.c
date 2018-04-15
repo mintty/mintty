@@ -20,6 +20,8 @@
 #define TERM_CMD_BUF_INC_STEP 128
 #define TERM_CMD_BUF_MAX_SIZE (1024 * 1024)
 
+#define SUB_PARS (1 << (sizeof(*term.csi_argv) * 8 - 1))
+
 /* This combines two characters into one value, for the purpose of pairing
  * any modifier byte and the final byte in escape sequences.
  */
@@ -619,6 +621,18 @@ do_sgr(void)
   cattr attr = term.curs.attr;
   uint prot = attr.attr & ATTR_PROTECTED;
   for (uint i = 0; i < argc; i++) {
+    int sub_pars = 0;
+    // count sub parameters and clear their SUB_PARS flag 
+    // (the last one does not have it)
+    // but not the SUB_PARS flag of the main parameter
+    if (term.csi_argv[i] & SUB_PARS)
+      for (uint j = i + 1; j < argc; j++) {
+        sub_pars++;
+        if (term.csi_argv[j] & SUB_PARS)
+          term.csi_argv[j] &= ~SUB_PARS;
+        else
+          break;
+      }
     switch (term.csi_argv[i]) {
       when 0:
         attr = CATTR_DEFAULT;
@@ -726,6 +740,7 @@ do_sgr(void)
         attr.attr &= ~ATTR_BGMASK;
         attr.attr |= ATTR_DEFBG;
     }
+    i += sub_pars;
   }
   term.curs.attr = attr;
   term.erase_char.attr = attr;
@@ -2270,6 +2285,12 @@ term_write(const char *buf, uint len)
         if (c < 0x20)
           do_ctrl(c);
         else if (c == ';') {
+          if (term.csi_argc < lengthof(term.csi_argv))
+            term.csi_argc++;
+        }
+        else if (c == ':') {
+          uint i = term.csi_argc - 1;
+          term.csi_argv[i] |= SUB_PARS;
           if (term.csi_argc < lengthof(term.csi_argv))
             term.csi_argc++;
         }
