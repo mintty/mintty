@@ -693,7 +693,7 @@ do_sgr(void)
       when 90 ... 97: /* bright foreground */
         attr.attr &= ~ATTR_FGMASK;
         attr.attr |= ((term.csi_argv[i] - 90 + 8 + ANSI0) << ATTR_FGSHIFT);
-      when 38: /* 256-colour foreground */
+      when 38: /* palette/true-colour foreground */
         if (i + 2 < argc && term.csi_argv[i + 1] == 5) {
           // set foreground to palette colour
           attr.attr &= ~ATTR_FGMASK;
@@ -710,6 +710,22 @@ do_sgr(void)
           attr.truefg = make_colour(r, g, b);
           i += 4;
         }
+      when 38 | SUB_PARS: /* ISO/IEC 8613-6 foreground colour */
+        if (sub_pars >= 2 && term.csi_argv[i + 1] == 5) {
+          // set foreground to palette colour
+          attr.attr &= ~ATTR_FGMASK;
+          attr.attr |= ((term.csi_argv[i + 2] & 0xFF) << ATTR_FGSHIFT);
+        }
+        else if (sub_pars >= 4 && term.csi_argv[i + 1] == 2) {
+          // set foreground to RGB
+          uint pi = sub_pars >= 5;
+          attr.attr &= ~ATTR_FGMASK;
+          attr.attr |= TRUE_COLOUR << ATTR_FGSHIFT;
+          uint r = term.csi_argv[i + pi + 2];
+          uint g = term.csi_argv[i + pi + 3];
+          uint b = term.csi_argv[i + pi + 4];
+          attr.truefg = make_colour(r, g, b);
+        }
       when 39: /* default foreground */
         attr.attr &= ~ATTR_FGMASK;
         attr.attr |= ATTR_DEFFG;
@@ -719,7 +735,7 @@ do_sgr(void)
       when 100 ... 107: /* bright background */
         attr.attr &= ~ATTR_BGMASK;
         attr.attr |= ((term.csi_argv[i] - 100 + 8 + ANSI0) << ATTR_BGSHIFT);
-      when 48: /* 256-colour background */
+      when 48: /* palette/true-colour background */
         if (i + 2 < argc && term.csi_argv[i + 1] == 5) {
           // set background to palette colour
           attr.attr &= ~ATTR_BGMASK;
@@ -735,6 +751,22 @@ do_sgr(void)
           uint b = term.csi_argv[i + 4];
           attr.truebg = make_colour(r, g, b);
           i += 4;
+        }
+      when 48 | SUB_PARS: /* ISO/IEC 8613-6 background colour */
+        if (sub_pars >= 2 && term.csi_argv[i + 1] == 5) {
+          // set background to palette colour
+          attr.attr &= ~ATTR_BGMASK;
+          attr.attr |= ((term.csi_argv[i + 2] & 0xFF) << ATTR_BGSHIFT);
+        }
+        else if (sub_pars >= 4 && term.csi_argv[i + 1] == 2) {
+          // set background to RGB
+          uint pi = sub_pars >= 5;
+          attr.attr &= ~ATTR_BGMASK;
+          attr.attr |= TRUE_COLOUR << ATTR_BGSHIFT;
+          uint r = term.csi_argv[i + pi + 2];
+          uint g = term.csi_argv[i + pi + 3];
+          uint b = term.csi_argv[i + pi + 4];
+          attr.truebg = make_colour(r, g, b);
         }
       when 49: /* default background */
         attr.attr &= ~ATTR_BGMASK;
@@ -1663,7 +1695,7 @@ do_dcs(void)
     switch (term.state) {
     when DCS_ESCAPE:
       if (!strcmp(s, "m")) { // SGR
-        char buf[72], *p = buf;
+        char buf[74], *p = buf;
         p += sprintf(p, "\eP1$r0");
 
         if (attr.attr & ATTR_BOLD)
@@ -1702,23 +1734,29 @@ do_dcs(void)
         uint fg = (attr.attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
         if (fg != FG_COLOUR_I) {
           if (fg >= TRUE_COLOUR)
-            p += sprintf(p, ";38;2;%u;%u;%u", attr.truefg & 0xFF, 
+            //p += sprintf(p, ";38;2;%u;%u;%u", attr.truefg & 0xFF, 
+            //             (attr.truefg >> 8) & 0xFF, (attr.truefg >> 16) & 0xFF);
+            p += sprintf(p, ";38:2::%u:%u:%u", attr.truefg & 0xFF, 
                          (attr.truefg >> 8) & 0xFF, (attr.truefg >> 16) & 0xFF);
           else if (fg < 16)
             p += sprintf(p, ";%u", (fg < 8 ? 30 : 90) + (fg & 7));
           else
-            p += sprintf(p, ";38;5;%u", fg);
+            //p += sprintf(p, ";38;5;%u", fg);
+            p += sprintf(p, ";38:5:%u", fg);
         }
 
         uint bg = (attr.attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
         if (bg != BG_COLOUR_I) {
           if (bg >= TRUE_COLOUR)
-            p += sprintf(p, ";48;2;%u;%u;%u", attr.truebg & 0xFF, 
+            //p += sprintf(p, ";48;2;%u;%u;%u", attr.truebg & 0xFF, 
+            //             (attr.truebg >> 8) & 0xFF, (attr.truebg >> 16) & 0xFF);
+            p += sprintf(p, ";48:2::%u:%u:%u", attr.truebg & 0xFF, 
                          (attr.truebg >> 8) & 0xFF, (attr.truebg >> 16) & 0xFF);
           else if (bg < 16)
             p += sprintf(p, ";%u", (bg < 8 ? 40 : 100) + (bg & 7));
           else
-            p += sprintf(p, ";48;5;%u", bg);
+            //p += sprintf(p, ";48;5;%u", bg);
+            p += sprintf(p, ";48:5:%u", bg);
         }
 
         p += sprintf(p, "m\e\\");  // m for SGR, followed by ST
