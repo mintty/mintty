@@ -14,7 +14,7 @@
 
 help() {
 	echo "Usage:"
-	echo "  `basename $0` [-h|-f|-l|-q] [theme|themefile]"
+	echo "  `basename $0` [-d] [-h|-f|-l|-q] [theme|themefile]"
 	echo "  `basename $0` -q > themefile"
 	echo "List/set/query mintty themes in current mintty window."
 	echo "A theme is a colour scheme to configure the 8 ANSI colours, their "
@@ -23,6 +23,7 @@ help() {
 	echo "Arguments:"
 	echo "  -f, --file    set theme from given themefile"
 	echo "  -q, --query   query current colour configuration as theme"
+	echo "  -d, --decimal query output"
 	echo "  -l, --list    list available themes"
 	echo "  -h, --help    show this"
 	echo
@@ -76,9 +77,25 @@ query() {
 	read -s -n$len -t 2 esc < /dev/tty # read ESC ] prefix and colour index
 	read -s -n18 colour < /dev/tty	 # read rgb:colour spec
 	read -s -n1 -t 2 esc < /dev/tty # read ^G suffix
-	#eval $3=$colour
-	echo $3=$colour
+
+	if $decimal
+	then
+		eval $( echo $colour | sed -e "s@rgb:\(..\)../\(..\)../\(..\)..@printf '$3=%d,%d,%d' 0x\1 0x\2 0x\3@" -e t -e "s,^,printf $3=," )
+		echo
+	else
+		# 4-digit hex
+		echo $3=$colour
+		# 2-digit hex
+		#echo $3=$colour | sed -e "s,rgb:\(..\)../\(..\)../\(..\)..,rgb:\1/\2/\3,"
+	fi
 }
+
+decimal=false
+case "$1" in
+-d|--decimal)
+	decimal=true
+	shift;;
+esac
 
 case "$1" in
 -h|--help|'')
