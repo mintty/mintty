@@ -129,9 +129,8 @@ clear_cc(termline *line, int col)
 }
 
 /*
- * Compare two character cells for equality. Special case required
- * in do_paint() where we override what we expect the chr and attr
- * fields to be.
+ * Compare two character cells for equality. Special case required in
+ * do_paint() where we override what we expect the chr and attr fields to be.
  */
 int
 termchars_equal_override(termchar *a, termchar *b, uint bchr, cattr battr)
@@ -144,6 +143,8 @@ termchars_equal_override(termchar *a, termchar *b, uint bchr, cattr battr)
   if (a->attr.truefg != battr.truefg)
     return false;
   if (a->attr.truebg != battr.truebg)
+    return false;
+  if (a->attr.ulcolr != battr.ulcolr)
     return false;
   while (a->cc_next || b->cc_next) {
     if (!a->cc_next || !b->cc_next)
@@ -163,8 +164,8 @@ termchars_equal(termchar *a, termchar *b)
 }
 
 /*
- * Copy a character cell. (Requires a pointer to the destination
- * termline, so as to access its free list.)
+ * Copy a character cell. (Requires a pointer to the destination termline,
+ * so as to access its free list.)
  */
 void
 copy_termchar(termline *destline, int x, termchar *src)
@@ -245,8 +246,9 @@ makeliteral_attr(struct buf *b, termchar *c)
   cattrflags attr = c->attr.attr & ~DATTR_MASK;
   uint truefg = c->attr.truefg;
   uint truebg = c->attr.truebg;
+  colour ulcolr = c->attr.ulcolr;
 
-  if (attr < 0x800000 && !truefg && !truebg) {
+  if (attr < 0x800000 && !truefg && !truebg && ulcolr != (colour)-1) {
     add(b, (uchar) ((attr >> 16) & 0xFF));
     add(b, (uchar) ((attr >> 8) & 0xFF));
     add(b, (uchar) (attr & 0xFF));
@@ -267,6 +269,9 @@ makeliteral_attr(struct buf *b, termchar *c)
     add(b, (uchar) ((truebg >> 16) & 0xFF));
     add(b, (uchar) ((truebg >> 8) & 0xFF));
     add(b, (uchar) (truebg & 0xFF));
+    add(b, (uchar) ((ulcolr >> 16) & 0xFF));
+    add(b, (uchar) ((ulcolr >> 8) & 0xFF));
+    add(b, (uchar) (ulcolr & 0xFF));
   }
 }
 
@@ -317,6 +322,7 @@ readliteral_attr(struct buf *b, termchar *c, termline *unused(line))
   cattrflags attr;
   uint fg = 0;
   uint bg = 0;
+  colour ul = (colour)-1;
 
   attr = get(b) << 16;
   attr |= get(b) << 8;
@@ -340,11 +346,15 @@ readliteral_attr(struct buf *b, termchar *c, termline *unused(line))
     bg = get(b) << 16;
     bg |= get(b) << 8;
     bg |= get(b);
+    ul = get(b) << 16;
+    ul |= get(b) << 8;
+    ul |= get(b);
   }
 
   c->attr.attr = attr;
   c->attr.truefg = fg;
   c->attr.truebg = bg;
+  c->attr.ulcolr = ul;
 }
 
 static void

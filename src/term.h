@@ -118,6 +118,7 @@ enum {
   ATTR_DOUBLYUND  = 0x08000000u,
   ATTR_OVERL      = 0x10000000u,
   ATTR_BROKENUND  = 0x0000000800000000u,
+  ATTR_ULCOLOUR   = 0x0020000000000000u,
 
   ATTR_PROTECTED  = 0x20000000u,
   ATTR_WIDE       = 0x40000000u,
@@ -153,7 +154,6 @@ enum {
   DATTR_MASK      = TATTR_RIGHTCURS | TATTR_PASCURS | TATTR_ACTCURS
                     | DATTR_STARTRUN
   // unassigned bits:
-  //                0x0020000000000000u
   //                0x0040000000000000u
   //                0x0080000000000000u
   //                0x2000000000000000u
@@ -193,6 +193,7 @@ typedef struct {
   cattrflags attr;
   uint truefg;
   uint truebg;
+  colour ulcolr;
 } cattr;
 
 extern const cattr CATTR_DEFAULT;

@@ -17,12 +17,15 @@ static int markpos = 0;
 static bool markpos_valid = false;
 
 const cattr CATTR_DEFAULT =
-            {.attr = ATTR_DEFAULT, .truefg = 0, .truebg = 0};
+            {.attr = ATTR_DEFAULT,
+             .truefg = 0, .truebg = 0, .ulcolr = (colour)-1};
 
-termchar basic_erase_char = {.cc_next = 0, .chr = ' ',
-                    /* CATTR_DEFAULT */
-                    .attr = {.attr = ATTR_DEFAULT, .truefg = 0, .truebg = 0}
-                    };
+termchar basic_erase_char =
+   {.cc_next = 0, .chr = ' ',
+            /* CATTR_DEFAULT */
+    .attr = {.attr = ATTR_DEFAULT,
+             .truefg = 0, .truebg = 0, .ulcolr = (colour)-1}
+   };
 
 static bool
 vt220(string term)
@@ -1917,6 +1920,7 @@ term_paint(void)
           && (dispchars[j].chr != newchars[j].chr
               || (dispchars[j].attr.truefg != newchars[j].attr.truefg)
               || (dispchars[j].attr.truebg != newchars[j].attr.truebg)
+              || (dispchars[j].attr.ulcolr != newchars[j].attr.ulcolr)
               || (dispchars[j].attr.attr & ~DATTR_STARTRUN) != newchars[j].attr.attr
               || (prevdirtyitalic && (dispchars[j].attr.attr & DATTR_STARTRUN))
              ))
@@ -2098,8 +2102,9 @@ term_paint(void)
 #endif
 
       bool break_run = (tattr.attr != attr.attr)
-                       || (tattr.truefg != attr.truefg)
-                       || (tattr.truebg != attr.truebg);
+                    || (tattr.truefg != attr.truefg)
+                    || (tattr.truebg != attr.truebg)
+                    || (tattr.ulcolr != attr.ulcolr);
 
       inline bool has_comb(termchar * tc)
       {

@@ -248,7 +248,8 @@ write_primary_da(void)
 static wchar last_high = 0;
 static wchar last_char = 0;
 static int last_width = 0;
-cattr last_attr = {.attr = ATTR_DEFAULT, .truefg = 0, .truebg = 0};
+cattr last_attr = {.attr = ATTR_DEFAULT,
+                   .truefg = 0, .truebg = 0, .ulcolr = (colour)-1};
 
 static void
 write_char(wchar c, int width)
@@ -828,6 +829,40 @@ do_sgr(void)
       when 49: /* default background */
         attr.attr &= ~ATTR_BGMASK;
         attr.attr |= ATTR_DEFBG;
+      when 58 | SUB_PARS: /* ISO/IEC 8613-6 format underline colour */
+        if (sub_pars >= 2 && term.csi_argv[i + 1] == 5) {
+          // set foreground to palette colour
+          attr.attr |= ATTR_ULCOLOUR;
+          attr.ulcolr = colours[term.csi_argv[i + 2] & 0xFF];
+        }
+        else if (sub_pars >= 4 && term.csi_argv[i + 1] == 2) {
+          // set foreground to RGB
+          uint pi = sub_pars >= 5;
+          uint r = term.csi_argv[i + pi + 2];
+          uint g = term.csi_argv[i + pi + 3];
+          uint b = term.csi_argv[i + pi + 4];
+          attr.attr |= ATTR_ULCOLOUR;
+          attr.ulcolr = make_colour(r, g, b);
+        }
+        else if ((sub_pars >= 5 && term.csi_argv[i + 1] == 3) ||
+                 (sub_pars >= 6 && term.csi_argv[i + 1] == 4)) {
+          // set foreground to CMY(K)
+          ulong f = term.csi_argv[i + 2];
+          ulong c = term.csi_argv[i + 3];
+          ulong m = term.csi_argv[i + 4];
+          ulong y = term.csi_argv[i + 5];
+          ulong k = term.csi_argv[i + 1] == 4 ? term.csi_argv[i + 6] : 0;
+          if (c <= f && m <= f && y <= f && k <= f) {
+            uint r = (f - c) * (f - k) / f * 255 / f;
+            uint g = (f - m) * (f - k) / f * 255 / f;
+            uint b = (f - y) * (f - k) / f * 255 / f;
+            attr.attr |= ATTR_ULCOLOUR;
+            attr.ulcolr = make_colour(r, g, b);
+          }
+        }
+      when 59: /* default underline colour */
+        attr.attr &= ~ATTR_ULCOLOUR;
+        attr.ulcolr = (colour)-1;
     }
     i += sub_pars;
   }
@@ -1845,6 +1880,11 @@ do_dcs(void)
           else
             //p += sprintf(p, ";48;5;%u", bg);
             p += sprintf(p, ";48:5:%u", bg);
+        }
+
+        if (attr.attr & ATTR_ULCOLOUR) {
+          p += sprintf(p, ";58:2::%u:%u:%u", attr.ulcolr & 0xFF, 
+                       (attr.ulcolr >> 8) & 0xFF, (attr.ulcolr >> 16) & 0xFF);
         }
 
         p += sprintf(p, "m\e\\");  // m for SGR, followed by ST

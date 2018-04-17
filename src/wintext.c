@@ -1997,7 +1997,9 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   if (uloff >= cell_height)
     uloff = cell_height - 1;
 
-  if (cfg.underl_colour != (colour)-1)
+  if (attr.attr & ATTR_ULCOLOUR)
+    ul = attr.ulcolr;
+  else if (cfg.underl_colour != (colour)-1)
     ul = cfg.underl_colour;
 #ifdef debug_underline
   if (cfg.underl_colour == (colour)-1)

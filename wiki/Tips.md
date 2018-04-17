@@ -632,6 +632,10 @@ ISO/IEC 8613-6 sub-parameters are supported.
 | 38:4:F:C:M:Y:K         | 39                | foreground CMYK colour (*)    |
 | 48:4:F:C:M:Y:K         | 49                | background CMYK colour (*)    |
 | 51 _or_ 52             | 54                | emoji style (*)               |
+| 58:5:P                 | 59                | underline palette colour      |
+| 58:2::R:G:B            | 59                | underline RGB colour          |
+| 58:3:F:C:M:Y           | 59                | underline CMY colour (*)      |
+| 58:4:F:C:M:Y:K         | 59                | underline CMYK colour (*)     |
 | _any_                  | 0                 |                               |
 
 Note: The control sequences for Fraktur (“Gothic”) font are described 
