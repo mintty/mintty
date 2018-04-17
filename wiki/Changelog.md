@@ -2,9 +2,11 @@ Character attributes and rendering
   * Support for colon-separated SGR sub-parameters (ISO/IEC 8613-6) for colour and underline attributes.
   * Support ISO/IEC 8613-6 RGB, CMY, CMYK, and indexed colour specifications.
   * Support for underline styles single, double, curly, dotted, dashed.
+  * Cursor style modes DECSET 12 (AT&T 610) and SM 33/34 (Wyse).
 
 Other
   * Fixed syntax error in `mintheme` tool (#764).
+  * Option `mintheme -d -q` for decimal colour format (#718).
 
 ### 2.8.5 (14 Apr 2018) ###
 

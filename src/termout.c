@@ -670,13 +670,11 @@ do_sgr(void)
       when 8: attr.attr |= ATTR_INVISIBLE;
       when 9: attr.attr |= ATTR_STRIKEOUT;
       when 10 ... 11: {  // ... 12 disabled
-        // mode 10 is the configured Character set
+        // mode 10 is the configured character set
         // mode 11 is the VGA character set (CP437 + control range graphics)
-        // mode 12 is a weird feature from the Linux console,
-        // cloning the VGA character set (CP437) into the ASCII range;
-        // disabled (not supported by cygwin console);
-        // modes 11 (and 12) are overridden by alternate font setting
-        // if configured
+        // mode 12 (VT520, Linux console, not cygwin console) 
+        // clones VGA characters into the ASCII range; disabled;
+        // modes 11 (and 12) are overridden by alternative font if configured
           uchar arg_10 = term.csi_argv[i] - 10;
           if (arg_10 && *cfg.fontfams[arg_10].name) {
             attr.attr &= ~FONTFAM_MASK;
@@ -887,6 +885,10 @@ set_modes(bool state)
         when 9:  /* X10_MOUSE */
           term.mouse_mode = state ? MM_X10 : 0;
           win_update_mouse();
+        when 12: /* AT&T 610 blinking cursor */
+          term.cursor_blinks = state;
+          term.cursor_invalid = true;
+          term_schedule_cblink();
         when 25: /* DECTCEM: enable/disable cursor */
           term.cursor_on = state;
           // Should we set term.cursor_invalid or call term_invalidate ?
@@ -1010,6 +1012,15 @@ set_modes(bool state)
           term.echoing = !state;
         when 20: /* LNM: Return sends ... */
           term.newline_mode = state;
+        when 33: /* WYSTCURM: steady Wyse cursor */
+          term.cursor_blinks = !state;
+          term.cursor_invalid = true;
+          term_schedule_cblink();
+        when 34: /* WYULCURM: Wyse underline cursor */
+          term.cursor_type = state;
+          term.cursor_blinks = false;
+          term.cursor_invalid = true;
+          term_schedule_cblink();
       }
     }
   }
@@ -1050,6 +1061,8 @@ get_mode(bool privatemode, int arg)
         return 3; // ignored
       when 9:  /* X10_MOUSE */
         return 2 - (term.mouse_mode == MM_X10);
+      when 12: /* AT&T 610 blinking cursor */
+        return 2 - term.cursor_blinks;
       when 25: /* DECTCEM: enable/disable cursor */
         return 2 - term.cursor_on;
       when 40: /* Allow/disallow DECCOLM (xterm c132 resource) */
@@ -1136,6 +1149,13 @@ get_mode(bool privatemode, int arg)
         return 2 - term.echoing;
       when 20: /* LNM: Return sends ... */
         return 2 - term.newline_mode;
+      when 33: /* WYSTCURM: steady Wyse cursor */
+        return 2 - (!term.cursor_blinks);
+      when 34: /* WYULCURM: Wyse underline cursor */
+        if (term.cursor_type <= 1)
+          return 2 - (term.cursor_type == 1);
+        else
+          return 0;
       otherwise:
         return 0;
     }
