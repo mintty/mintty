@@ -132,7 +132,7 @@ sel_spread_half(pos p, bool forward)
           p.y--;
         }
       }
-    default:
+    otherwise:
      /* Shouldn't happen. */
       break;
   }
@@ -537,7 +537,7 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
       moved_previously = true;
       last_dest = dest;
     }
-    default:
+    otherwise:
       if (is_app_mouse(&mods)) {
         if (term.mouse_mode >= MM_VT200)
           send_mouse_event(MA_RELEASE, b, mods, box_pos(p));

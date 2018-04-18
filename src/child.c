@@ -504,17 +504,17 @@ child_is_parent(void)
 {
   if (!pid)
     return false;
-  DIR *d = opendir("/proc");
+  DIR * d = opendir("/proc");
   if (!d)
     return false;
   bool res = false;
-  struct dirent *e;
-  char fn[18] = "/proc/";
+  struct dirent * e;
   while ((e = readdir(d))) {
-    char *pn = e->d_name;
+    char * pn = e->d_name;
     if (isdigit((uchar)*pn) && strlen(pn) <= 6) {
-      snprintf(fn + 6, 12, "%s/ppid", pn);
-      FILE *f = fopen(fn, "r");
+      char * fn = asform("/proc/%s/ppid", pn);
+      FILE * f = fopen(fn, "r");
+      free(fn);
       if (!f)
         continue;
       pid_t ppid = 0;

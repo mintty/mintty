@@ -1353,7 +1353,7 @@ fallback:;
       return false;
   }
   char * en = strdup(pre);
-  char ec[6];
+  char ec[7];
   if (e.seq) {
     for (uint i = 0; i < lengthof(emoji_seqs->chs) && ed(emoji_seqs[e.idx].chs[i]); i++) {
       xchar xc = ed(emoji_seqs[e.idx].chs[i]);
@@ -1366,7 +1366,7 @@ fallback:;
     }
   }
   else {
-    sprintf(ec, "%04x", emoji_bases[e.idx].ch);
+    snprintf(ec, 7, "%04x", emoji_bases[e.idx].ch);
     strappend(en, ec);
   }
   strappend(en, suf);
