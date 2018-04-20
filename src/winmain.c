@@ -1642,6 +1642,7 @@ win_update_scrollbar(void)
   SetWindowPos(wnd, null, 0, 0, 0, 0,
                SWP_NOACTIVATE | SWP_NOMOVE |
                SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+  default_size_token = true;  // prevent font zooming after Ctrl+Shift+O
 }
 
 void

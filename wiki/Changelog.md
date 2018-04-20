@@ -6,7 +6,8 @@ Character attributes and rendering
   * Cursor style modes DECSET 12 (AT&T 610) and SM 33/34 (Wyse).
 
 Window handling
-  * Fix scrollbar toggle (Ctrl+Shift+O) from forcing scrollbar to the right.
+  * Fixed scrollbar toggle (Ctrl+Shift+O) from forcing scrollbar to the right.
+  * Preventing font zooming after scrollbar toggle (Ctrl+Shift+O).
 
 Configuration
   * CMY(K) colour specifications in OSC sequences and config file.
