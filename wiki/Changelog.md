@@ -5,6 +5,9 @@ Character attributes and rendering
   * SGR attributes for underline colour.
   * Cursor style modes DECSET 12 (AT&T 610) and SM 33/34 (Wyse).
 
+Window handling
+  * Fix scrollbar toggle (Ctrl+Shift+O) from forcing scrollbar to the right.
+
 Configuration
   * CMY(K) colour specifications in OSC sequences and config file.
 

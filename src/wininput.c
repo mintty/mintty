@@ -881,9 +881,9 @@ win_get_locator_info(int *x, int *y, int *buttons, bool by_pixels)
 static void
 toggle_scrollbar(void)
 {
-  cfg.scrollbar = !cfg.scrollbar;
-  term.show_scrollbar = cfg.scrollbar;
-  win_update_scrollbar();
+  term.show_scrollbar = !term.show_scrollbar;
+  if (cfg.scrollbar)
+    win_update_scrollbar();
 }
 
 static int previous_transparency;
