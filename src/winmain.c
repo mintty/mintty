@@ -2004,6 +2004,9 @@ static struct {
           else {
             default_size();
           }
+        when IDM_SCROLLBAR:
+          term.show_scrollbar = !term.show_scrollbar;
+          win_update_scrollbar(false);
         when IDM_FULLSCREEN or IDM_FULLSCREEN_ZOOM:
           if ((wp & ~0xF) == IDM_FULLSCREEN_ZOOM)
             zoom_token = 4;  // override cfg.zoom_font_with_window == 0

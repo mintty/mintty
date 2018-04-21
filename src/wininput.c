@@ -459,6 +459,12 @@ win_update_menus(void)
     alt_fn ? W("Alt+F10") : ct_sh ? W("Ctrl+Shift+D") : null
   );
 
+  uint scrollbar_checked = term.show_scrollbar ? MF_CHECKED : MF_UNCHECKED;
+  //__ Context menu:
+  modify_menu(ctxmenu, IDM_SCROLLBAR, scrollbar_checked, _W("Scroll&bar"),
+    null
+  );
+
   uint fullscreen_checked = win_is_fullscreen ? MF_CHECKED : MF_UNCHECKED;
   //__ Context menu:
   modify_menu(ctxmenu, IDM_FULLSCREEN_ZOOM, fullscreen_checked, _W("&Full Screen"),
@@ -529,6 +535,7 @@ win_init_ctxmenu(bool extended_menu, bool user_commands)
   }
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_DEFSIZE_ZOOM, 0);
+  AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_SCROLLBAR, 0);
   AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN_ZOOM, 0);
   AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_FLIPSCREEN, 0);
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
