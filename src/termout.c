@@ -927,6 +927,11 @@ set_modes(bool state)
         when 25: /* DECTCEM: enable/disable cursor */
           term.cursor_on = state;
           // Should we set term.cursor_invalid or call term_invalidate ?
+        when 30: /* Show/hide scrollbar */
+          if (state != term.show_scrollbar) {
+            term.show_scrollbar = state;
+            win_update_scrollbar();
+          }
         when 40: /* Allow/disallow DECCOLM (xterm c132 resource) */
           term.deccolm_allowed = state;
         when 42: /* DECNRCM: national replacement character sets */
@@ -1009,10 +1014,9 @@ set_modes(bool state)
              off(default): sixel scrolling moves cursor to left of graphics */
           term.sixel_scrolls_left = state;
         when 7766:       /* 'B': Show/hide scrollbar (if enabled in config) */
-          if (state != term.show_scrollbar) {
+          if (cfg.scrollbar && state != term.show_scrollbar) {
             term.show_scrollbar = state;
-            if (cfg.scrollbar)
-              win_update_scrollbar();
+            win_update_scrollbar();
           }
         when 7767:       /* 'C': Changed font reporting */
           term.report_font_changed = state;
@@ -1100,6 +1104,8 @@ get_mode(bool privatemode, int arg)
         return 2 - term.cursor_blinks;
       when 25: /* DECTCEM: enable/disable cursor */
         return 2 - term.cursor_on;
+      when 30: /* Show/hide scrollbar */
+        return 2 - term.show_scrollbar;
       when 40: /* Allow/disallow DECCOLM (xterm c132 resource) */
         return 2 - term.deccolm_allowed;
       when 42: /* DECNRCM: national replacement character sets */
