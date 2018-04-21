@@ -1629,7 +1629,7 @@ win_update_transparency(bool opaque)
 }
 
 void
-win_update_scrollbar(void)
+win_update_scrollbar(bool inner)
 {
   int scrollbar = term.show_scrollbar ? cfg.scrollbar : 0;
 
@@ -1644,7 +1644,7 @@ win_update_scrollbar(void)
                               : exstyle & ~WS_EX_LEFTSCROLLBAR);
 
   default_size_token = true;  // prevent font zooming after Ctrl+Shift+O
-  if (IsZoomed(wnd))
+  if (inner || IsZoomed(wnd))
     SetWindowPos(wnd, null, 0, 0, 0, 0,
                  SWP_NOACTIVATE | SWP_NOMOVE |
                  SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
@@ -1685,7 +1685,7 @@ font_cs_reconfig(bool font_changed)
     trace_resize((" (font_cs_reconfig -> win_adapt_term_size)\n"));
     win_adapt_term_size(true, false);
   }
-  win_update_scrollbar();
+  win_update_scrollbar(true); // assume "inner", shouldn't change anyway
   win_update_transparency(cfg.opaque_when_focused);
   win_update_mouse();
 

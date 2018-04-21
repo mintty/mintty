@@ -883,7 +883,7 @@ toggle_scrollbar(void)
 {
   if (cfg.scrollbar) {
     term.show_scrollbar = !term.show_scrollbar;
-    win_update_scrollbar();
+    win_update_scrollbar(true);
   }
 }
 

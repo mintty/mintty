@@ -930,7 +930,7 @@ set_modes(bool state)
         when 30: /* Show/hide scrollbar */
           if (state != term.show_scrollbar) {
             term.show_scrollbar = state;
-            win_update_scrollbar();
+            win_update_scrollbar(false);
           }
         when 40: /* Allow/disallow DECCOLM (xterm c132 resource) */
           term.deccolm_allowed = state;
@@ -1016,7 +1016,7 @@ set_modes(bool state)
         when 7766:       /* 'B': Show/hide scrollbar (if enabled in config) */
           if (cfg.scrollbar && state != term.show_scrollbar) {
             term.show_scrollbar = state;
-            win_update_scrollbar();
+            win_update_scrollbar(true);
           }
         when 7767:       /* 'C': Changed font reporting */
           term.report_font_changed = state;
