@@ -13,6 +13,19 @@
 
 struct term term;
 
+typedef struct {
+  termline ** buf;
+  int start;
+  int length;
+  int capacity;
+} circbuf;
+
+enum {
+  NO_UPDATE = 0,
+  PARTIAL_UPDATE = 1,
+  FULL_UPDATE = 2
+};
+
 static int markpos = 0;
 static bool markpos_valid = false;
 
@@ -26,6 +39,7 @@ termchar basic_erase_char =
     .attr = {.attr = ATTR_DEFAULT,
              .truefg = 0, .truebg = 0, .ulcolr = (colour)-1}
    };
+
 
 static bool
 vt220(string term)

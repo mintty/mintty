@@ -233,15 +233,9 @@ typedef struct {
   termchar *chars;
 } termline;
 
-typedef termline *termlines;
+typedef termline * termlines;
 
-typedef struct {
-  int width;
-  termchar *chars;
-  int *forward, *backward;      /* the permutations of line positions */
-} bidi_cache_entry;
-
-extern termline *newline(int cols, int bce);
+extern termline * newline(int cols, int bce);
 extern void freeline(termline *);
 extern void clearline(termline *);
 extern void resizeline(termline *, int);
@@ -250,20 +244,11 @@ extern int sblines(void);
 extern termline *fetch_line(int y);
 extern void release_line(termline *);
 
-extern int termchars_equal(termchar *a, termchar *b);
-extern int termchars_equal_override(termchar *a, termchar *b, uint bchr, cattr battr);
-extern int termattrs_equal_fg(cattr * a, cattr * b);
-
-extern void copy_termchar(termline *destline, int x, termchar *src);
-extern void move_termchar(termline *line, termchar *dest, termchar *src);
-
-extern void add_cc(termline *, int col, wchar chr, cattr attr);
-extern void clear_cc(termline *, int col);
-
-extern uchar *compressline(termline *);
-extern termline *decompressline(uchar *, int *bytes_used);
-
-extern termchar *term_bidi_line(termline *, int scr_y);
+typedef struct {
+  int width;
+  termchar *chars;
+  int *forward, *backward;      /* the permutations of line positions */
+} bidi_cache_entry;
 
 /* Traditional terminal character sets */
 typedef enum {
@@ -297,18 +282,6 @@ typedef enum {
   MBT_LEFT = 1, MBT_MIDDLE = 2, MBT_RIGHT = 3, MBT_4 = 4, MBT_5 = 5
 } mouse_button;
 
-enum {
-  NO_UPDATE = 0,
-  PARTIAL_UPDATE = 1,
-  FULL_UPDATE = 2
-};
-
-typedef struct {
-  termline ** buf;
-  int start;
-  int length;
-  int capacity;
-} circbuf;
 
 typedef struct {
   int x;
@@ -327,20 +300,6 @@ typedef struct {
   int update_type;
 } termresults;
 
-typedef struct {
-  short x, y;
-  cattr attr;
-  bool origin;
-  bool autowrap;  // switchable (xterm Wraparound Mode (DECAWM Auto Wrap))
-  bool wrapnext;
-  bool rev_wrap;  // switchable (xterm Reverse-wraparound Mode)
-  short gl, gr;
-  term_cset csets[4];
-  term_cset cset_single;
-  uchar oem_acs;
-  bool utf;
-  bool decnrc_enabled;    /* DECNRCM sequence to enable NRC? */
-} term_cursor;
 
 typedef struct {
   void *fp;
@@ -374,6 +333,22 @@ typedef struct {
   imglist *altfirst;
   imglist *altlast;
 } termimgs;
+
+
+typedef struct {
+  short x, y;
+  cattr attr;
+  bool origin;
+  bool autowrap;  // switchable (xterm Wraparound Mode (DECAWM Auto Wrap))
+  bool wrapnext;
+  bool rev_wrap;  // switchable (xterm Reverse-wraparound Mode)
+  short gl, gr;
+  term_cset csets[4];
+  term_cset cset_single;
+  uchar oem_acs;
+  bool utf;
+  bool decnrc_enabled;    /* DECNRCM sequence to enable NRC? */
+} term_cursor;
 
 struct term {
   bool on_alt_screen;     /* On alternate screen? */
