@@ -490,8 +490,10 @@ struct term {
   bool locator_rectangle;
   int locator_top, locator_left, locator_bottom, locator_right;
 
-  bool sel_rect, selected;
+  bool selected, sel_rect;
   pos sel_start, sel_end, sel_anchor;
+  bool hovering;
+  pos hover_start, hover_end;
 
  /* Scroll steps during selection when cursor out of window. */
   int sel_scroll;

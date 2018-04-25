@@ -147,6 +147,16 @@ sel_spread(void)
   incpos(term.sel_end);
 }
 
+static bool
+hover_spread(void)
+{
+  term.hover_start = sel_spread_word(term.hover_start, false);
+  term.hover_end = sel_spread_word(term.hover_end, true);
+  bool eq = term.hover_start.y == term.hover_end.y && term.hover_start.x == term.hover_end.x;
+  incpos(term.hover_end);
+  return eq;
+}
+
 static void
 sel_drag(pos selpoint)
 {
@@ -475,6 +485,7 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
     when MS_OPENING:
       term_open();
       term.selected = false;
+      term.hovering = false;
       win_update();
     when MS_SEL_CHAR or MS_SEL_WORD or MS_SEL_LINE: {
       // Finish selection.
@@ -587,6 +598,17 @@ term_mouse_move(mod_keys mods, pos p)
   else {
     if (term.mouse_mode == MM_ANY_EVENT)
       send_mouse_event(MA_MOVE, 0, mods, bp);
+  }
+
+  if (mods == MDK_CTRL) {
+    p = get_selpoint(box_pos(p));
+    term.hover_start = term.hover_end = p;
+    if (!hover_spread()) {
+      term.hovering = true;
+      win_update();
+    }
+    else
+      term.hovering = false;
   }
 }
 

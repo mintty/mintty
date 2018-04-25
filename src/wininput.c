@@ -1925,6 +1925,11 @@ win_key_up(WPARAM wp, LPARAM unused(lp))
       win_update_transparency(true);
   }
 
+  if (key == VK_CONTROL && term.hovering) {
+    term.hovering = false;
+    win_update();
+  }
+
   if (wp != VK_MENU)
     return false;
 

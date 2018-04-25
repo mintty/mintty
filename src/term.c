@@ -250,6 +250,7 @@ term_reset(bool full)
 
   if (full) {
     term.selected = false;
+    term.hovering = false;
     term.on_alt_screen = false;
     term_print_finish();
     if (term.lines) {
@@ -1700,6 +1701,16 @@ term_paint(void)
         }
         else
           tattr.attr ^= ATTR_REVERSE;
+      }
+
+      if (term.hovering &&
+          posle(term.hover_start, scrpos) && poslt(scrpos, term.hover_end)) {
+        tattr.attr &= ~UNDER_MASK;
+        tattr.attr |= ATTR_UNDER;
+        if (cfg.hover_colour != (colour)-1) {
+          tattr.attr |= ATTR_ULCOLOUR;
+          tattr.ulcolr = cfg.hover_colour;
+        }
       }
 
       bool flashchar = term.in_vbell &&

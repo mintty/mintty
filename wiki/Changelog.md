@@ -9,6 +9,7 @@ Window handling
   * Fixed scrollbar toggle (Ctrl+Shift+O) from forcing scrollbar to the right.
   * Preventing font zooming after scrollbar toggle (Ctrl+Shift+O).
   * DECSET 30 to enable/disable outer scrollbar (like xterm) (#159, ~#262).
+  * Ctrl+mouse-move hovering underlines URLs and filenames (#173).
 
 Configuration
   * CMY(K) colour specifications in OSC sequences and config file.
