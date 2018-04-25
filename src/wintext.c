@@ -1803,12 +1803,14 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   }
   if (ff->bold_mode == BOLD_FONT && (attr.attr & ATTR_BOLD))
     nfont |= FONT_BOLD;
-  if (ff->und_mode == UND_FONT && (attr.attr & UNDER_MASK) == ATTR_UNDER)
+  if (ff->und_mode == UND_FONT && (attr.attr & UNDER_MASK) == ATTR_UNDER
+      && !(attr.attr & ATTR_ULCOLOUR))
     nfont |= FONT_UNDERLINE;
   if (attr.attr & ATTR_ITALIC)
     nfont |= FONT_ITALIC;
   if (attr.attr & ATTR_STRIKEOUT
-      && !cfg.underl_manual && cfg.underl_colour == (colour)-1)
+      && !cfg.underl_manual && cfg.underl_colour == (colour)-1
+      && !(attr.attr & ATTR_ULCOLOUR))
     nfont |= FONT_STRIKEOUT;
   if (attr.attr & TATTR_ZOOMFULL)
     nfont |= FONT_ZOOMFULL;
@@ -2102,7 +2104,8 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   if (!ldisp2 && lattr != LATTR_TOP &&
       (force_manual_underline ||
        (attr.attr & (ATTR_DOUBLYUND | ATTR_BROKENUND)) ||
-       (ff->und_mode == UND_LINE && (attr.attr & UNDER_MASK) == ATTR_UNDER)
+       ((attr.attr & UNDER_MASK) == ATTR_UNDER &&
+        (ff->und_mode == UND_LINE || (attr.attr & ATTR_ULCOLOUR)))
       )
      ) {
     clear_run();
@@ -2403,8 +2406,10 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   }
 
  /* Strikeout */
-  if (attr.attr & ATTR_STRIKEOUT
-      && (cfg.underl_manual || cfg.underl_colour != (colour)-1)) {
+  if ((attr.attr & ATTR_STRIKEOUT)
+      && (cfg.underl_manual || cfg.underl_colour != (colour)-1
+          || (attr.attr & ATTR_ULCOLOUR)
+         )) {
     int soff = (ff->descent + (ff->row_spacing / 2)) * 2 / 3;
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, ul));
     for (int l = 0; l < line_width; l++) {
