@@ -1,13 +1,15 @@
 Character attributes and rendering
-  * Support for colon-separated SGR sub-parameters (ISO/IEC 8613-6) for colour and underline attributes.
-  * SGR attributes support ISO/IEC 8613-6 RGB, CMY, CMYK, and indexed colour specifications.
-  * SGR attributes support underline styles single, double, curly, dotted, dashed.
-  * SGR attributes for underline colour.
-  * Cursor style modes DECSET 12 (AT&T 610) and SM 33/34 (Wyse).
+  * Support for colon-separated SGR sub-parameters (ISO/IEC 8613-6) (xterm 282):
+  * SGR escapes for ISO/IEC 8613-6 RGB, CMY, CMYK, and indexed colour formats.
+  * DECRQSS uses SGR sub-parameters for colour specifications (xterm 331).
+  * SGR 4:1...4:5 for underline styles solid, double, wavy, dotted, dashed.
+  * SGR 58/59 for underline colour (kitty, iTerm2).
 
 Window handling
   * Fixed scrollbar toggle (Ctrl+Shift+O) from forcing scrollbar to the right.
   * Preventing font zooming after scrollbar toggle (Ctrl+Shift+O).
+  * DECSET 1046 enables/disables alternate screen switching (xterm 331).
+  * Cursor style modes DECSET 12 (AT&T 610) (xterm 331) and SM 33/34 (Wyse).
   * DECSET 30 to enable/disable outer scrollbar (like xterm) (#159, ~#262).
   * Ctrl+mouse-move hovering underlines URLs and filenames (#173).
 

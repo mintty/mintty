@@ -622,6 +622,8 @@ do_sgr(void)
   cattr attr = term.curs.attr;
   uint prot = attr.attr & ATTR_PROTECTED;
   for (uint i = 0; i < argc; i++) {
+    // support colon-separated sub parameters as specified in
+    // ISO/IEC 8613-6 (ITU Recommendation T.416)
     int sub_pars = 0;
     // count sub parameters and clear their SUB_PARS flag 
     // (the last one does not have it)
@@ -864,6 +866,7 @@ do_sgr(void)
         attr.attr &= ~ATTR_ULCOLOUR;
         attr.ulcolr = (colour)-1;
     }
+    // skip sub parameters
     i += sub_pars;
   }
   term.curs.attr = attr;
@@ -975,6 +978,10 @@ set_modes(bool state)
             term_switch_screen(state, true);
             term.disptop = 0;
           }
+        when 1046:       /* enable/disable alternate screen switching */
+          if (term.on_alt_screen && !state)
+            term_switch_screen(false, false);
+          cfg.disable_alternate_screen = !state;
         when 1048:       /* save/restore cursor */
           if (!cfg.disable_alternate_screen) {
             if (state)
@@ -2461,6 +2468,8 @@ term_write(const char *buf, uint len)
             term.csi_argc++;
         }
         else if (c == ':') {
+          // support colon-separated sub parameters as specified in
+          // ISO/IEC 8613-6 (ITU Recommendation T.416)
           uint i = term.csi_argc - 1;
           term.csi_argv[i] |= SUB_PARS;
           if (term.csi_argc < lengthof(term.csi_argv))
