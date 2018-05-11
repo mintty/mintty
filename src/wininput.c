@@ -740,6 +740,7 @@ static mouse_button last_button = -1;
 static mod_keys last_mods;
 static pos last_click_pos;
 static bool last_skipped = false;
+static uint last_skipped_time;
 static bool mouse_state = false;
 
 static pos
@@ -771,8 +772,11 @@ win_mouse_click(mouse_button b, LPARAM lp)
 
   SetFocus(wnd);  // in case focus was in search bar
 
-  if (click_focus && b == MBT_LEFT && count == 1)
+  if (click_focus && b == MBT_LEFT && count == 1) {
     last_skipped = true;
+    last_skipped_time = t;
+    //printf("last_skipped_time = %d\n", t);
+  }
   else {
     if (last_skipped && b == last_button
         && p.x == last_click_pos.x && p.y == last_click_pos.y
@@ -835,12 +839,14 @@ win_mouse_move(bool nc, LPARAM lp)
   pos p = get_mouse_pos(lp);
   if (nc || (p.x == last_pos.x && p.y == last_pos.y))
     return;
-  if (last_skipped && last_button == MBT_LEFT && mouse_state
-      && abs(p.x - last_click_pos.x) + abs(p.y - last_click_pos.y) > 1
-     )
-  {
-    // allow focus-selection if sufficient distance spanned
-    term_mouse_click(last_button, last_mods, last_click_pos, 1);
+  if (last_skipped && last_button == MBT_LEFT && mouse_state) {
+    // allow focus-selection if distance spanned 
+    // is large enough or with sufficient delay
+    uint dist = sqrt(sqr(p.x - last_click_pos.x) + sqr(p.y - last_click_pos.y));
+    uint diff = GetMessageTime() - last_skipped_time;
+    //printf("focus move %d %d\n", dist, diff);
+    if (dist * diff > 999)
+      term_mouse_click(last_button, last_mods, last_click_pos, 1);
   }
 
   last_pos = p;
