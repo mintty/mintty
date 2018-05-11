@@ -80,6 +80,7 @@ static int extra_width, extra_height, norm_extra_width, norm_extra_height;
 bool win_is_fullscreen;
 static bool go_fullscr_on_max;
 static bool resizing;
+static bool moving = false;
 static bool disable_poschange = true;
 static int zoom_token = 0;  // for heuristic handling of Shift zoom (#467, #476)
 static bool default_size_token = false;
@@ -2215,6 +2216,7 @@ static struct {
     when WM_MOVING:
       trace_resize(("# WM_MOVING VK_SHIFT %02X\n", (uchar)GetKeyState(VK_SHIFT)));
       zoom_token = -4;
+      moving = true;
 
     when WM_ENTERSIZEMOVE:
       trace_resize(("# WM_ENTERSIZEMOVE VK_SHIFT %02X\n", (uchar)GetKeyState(VK_SHIFT)));
@@ -2308,6 +2310,11 @@ static struct {
 
       win_synctabs(2);
     }
+
+    when WM_MOVE:
+      if (!moving)
+        win_synctabs(2);
+      moving = false;
 
     when WM_WINDOWPOSCHANGED: {
       if (disable_poschange)
