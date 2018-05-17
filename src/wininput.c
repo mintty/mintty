@@ -772,7 +772,14 @@ win_mouse_click(mouse_button b, LPARAM lp)
 
   SetFocus(wnd);  // in case focus was in search bar
 
-  if (click_focus && b == MBT_LEFT && count == 1) {
+  if (click_focus && b == MBT_LEFT && count == 1
+      && // not in application mouse mode
+         !(term.mouse_mode && term.report_focus &&
+           cfg.clicks_target_app ^ ((mods & cfg.click_target_mod) != 0)
+          )
+     ) {
+    //printf("suppressing focus-click selection\n");
+    // prevent accidental selection when focus-clicking into the window (#717)
     last_skipped = true;
     last_skipped_time = t;
     //printf("last_skipped_time = %d\n", t);
@@ -841,7 +848,7 @@ win_mouse_move(bool nc, LPARAM lp)
     return;
   if (last_skipped && last_button == MBT_LEFT && mouse_state) {
     // allow focus-selection if distance spanned 
-    // is large enough or with sufficient delay
+    // is large enough or with sufficient delay (#717)
     uint dist = sqrt(sqr(p.x - last_click_pos.x) + sqr(p.y - last_click_pos.y));
     uint diff = GetMessageTime() - last_skipped_time;
     //printf("focus move %d %d\n", dist, diff);
