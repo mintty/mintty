@@ -2312,6 +2312,9 @@ static struct {
     }
 
     when WM_MOVE:
+      // enable coupled moving of window tabs on Win+Shift moving;
+      // (#600#issuecomment-366643426, if SessionGeomSync ≥ 2);
+      // avoid mutual repositioning (endless flickering)
       if (!moving)
         win_synctabs(2);
       moving = false;
@@ -3661,7 +3664,11 @@ main(int argc, char *argv[])
       //argc--;
       //argc++; // for "-l"
     }
-    char ** new_argv = newn(char *, argc + 2 + 4 + start_home);
+#ifdef WSLTTY_APPX
+    char ** new_argv = newn(char *, argc + 8 + start_home);
+#else
+    char ** new_argv = newn(char *, argc + 6 + start_home);
+#endif
     char ** pargv = new_argv;
     if (login_dash) {
       *pargv++ = "-wslbridge";
@@ -3678,6 +3685,36 @@ main(int argc, char *argv[])
     *pargv++ = "-t";
     if (start_home)
       *pargv++ = "-C~";
+
+#ifdef WSLTTY_APPX
+    // provide wslbridge-backend in a reachable place for invocation
+    int copyfile(char * fn, char * tn)
+    {
+      int f = open(fn, O_BINARY | O_RDONLY);
+      if (!f)
+        return false;
+      int t = open(tn, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0755);
+      if (!t)
+        return false;
+
+      char buf[1024];
+      int len;
+      while ((len = read(t, buf, sizeof buf)) >= 0)
+        if (write(t, buf, len) < 0)
+          return false;
+      return true;
+    }
+    char * lappdata = getenv("LOCALAPPDATA");
+    if (lappdata && *lappdata) {
+      char * wslbridge_backend = asform("%s/wslbridge-backend", lappdata);
+      copyfile("/bin/wslbridge-backend", wslbridge_backend);
+
+      *pargv++ = "--backend";
+      *pargv++ = wslbridge_backend;
+      // don't free(wslbridge_backend);
+    }
+#endif
+
     while (*argv)
       *pargv++ = *argv++;
     *pargv = 0;
@@ -3686,6 +3723,7 @@ main(int argc, char *argv[])
     while (*new_argv)
       printf("<%s>\n", *new_argv++);
 #endif
+
     // prevent HOME from being propagated back to Windows applications 
     // if called from WSL (mintty/wsltty#76)
     unsetenv("HOME");
