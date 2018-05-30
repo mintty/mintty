@@ -3688,26 +3688,45 @@ main(int argc, char *argv[])
 
 #ifdef WSLTTY_APPX
     // provide wslbridge-backend in a reachable place for invocation
-    int copyfile(char * fn, char * tn)
+    bool copyfile(char * fn, char * tn, bool overwrite)
     {
+#ifdef copyfile_posix
       int f = open(fn, O_BINARY | O_RDONLY);
       if (!f)
         return false;
-      int t = open(tn, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0755);
-      if (!t)
+      int t = open(tn, O_CREAT | O_WRONLY | O_BINARY |
+                   (overwrite ? O_TRUNC : O_EXCL), 0755);
+      if (!t) {
+        close(f);
         return false;
+      }
 
       char buf[1024];
       int len;
+      bool res = true;
       while ((len = read(t, buf, sizeof buf)) >= 0)
-        if (write(t, buf, len) < 0)
-          return false;
-      return true;
+        if (write(t, buf, len) < 0) {
+          res = false;
+          break;
+        }
+      close(f);
+      close(t);
+      return res;
+#else
+      wchar * src = path_posix_to_win_w(fn);
+      wchar * dst = path_posix_to_win_w(tn);
+      bool ok = CopyFileW(src, dst, !overwrite);
+      free(dst);
+      free(src);
+      return ok;
+#endif
     }
     char * lappdata = getenv("LOCALAPPDATA");
     if (lappdata && *lappdata) {
       char * wslbridge_backend = asform("%s/wslbridge-backend", lappdata);
-      copyfile("/bin/wslbridge-backend", wslbridge_backend);
+
+      bool ok = copyfile("/bin/wslbridge-backend", wslbridge_backend, true);
+      (void)ok;
 
       *pargv++ = "--backend";
       *pargv++ = wslbridge_backend;
