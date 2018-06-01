@@ -1,5 +1,5 @@
 // winmain.c (part of mintty)
-// Copyright 2008-13 Andy Koppe, 2015-2017 Thomas Wolff
+// Copyright 2008-13 Andy Koppe, 2015-2018 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -3306,6 +3306,33 @@ main(int argc, char *argv[])
   // Load config files
   // try global config file
   load_config("/etc/minttyrc", true);
+#ifdef WSLTTY_APPX
+  char * getlocalappdata(void)
+  {
+    // get appx-redirected system dir, as investigated by Biswapriyo Nath
+#ifndef KF_FLAG_FORCE_APP_DATA_REDIRECTION
+#define KF_FLAG_FORCE_APP_DATA_REDIRECTION 0x00080000
+#endif
+    HMODULE shell = load_sys_library("shell32.dll");
+    HRESULT (WINAPI *pSHGetKnownFolderPath)(GUID, DWORD, HANDLE, wchar**) =
+      (void *)GetProcAddress(shell, "SHGetKnownFolderPath");
+    if (!pSHGetKnownFolderPath)
+      return 0;
+    wchar * lappdata;
+    long hres = pSHGetKnownFolderPath(FOLDERID_LocalAppData, KF_FLAG_FORCE_APP_DATA_REDIRECTION, 0, &lappdata);
+    if (hres)
+      return 0;
+    else
+      return path_win_w_to_posix(lappdata);
+  }
+  // try Windows APPX local config location (wsltty.appx#3)
+  char * lappdata = getlocalappdata();
+  if (lappdata && *lappdata) {
+    string rc_file = asform("%s/.minttyrc", lappdata);
+    load_config(rc_file, 2);
+    delete(rc_file);
+  }
+#endif
   // try Windows config location (#201)
   char * appdata = getenv("APPDATA");
   if (appdata && *appdata) {
@@ -3721,7 +3748,6 @@ main(int argc, char *argv[])
       return ok;
 #endif
     }
-    char * lappdata = getenv("LOCALAPPDATA");
     if (lappdata && *lappdata) {
       char * wslbridge_backend = asform("%s/wslbridge-backend", lappdata);
 
