@@ -8,17 +8,23 @@ Character attributes and rendering
 Window handling
   * Fixed scrollbar toggle (Ctrl+Shift+O) from forcing scrollbar to the right.
   * Preventing font zooming after scrollbar toggle (Ctrl+Shift+O).
-  * DECSET 1046 enables/disables alternate screen switching (xterm 331).
-  * Cursor style modes DECSET 12 (AT&T 610) (xterm 331) and SM 33/34 (Wyse).
   * DECSET 30 to enable/disable outer scrollbar (like xterm) (#159, ~#262).
   * Ctrl+mouse-move hovering underlines URLs and filenames (#173).
+  * DECSET 1046 enables/disables alternate screen switching (xterm 331).
+  * Cursor style modes DECSET 12 (AT&T 610) (xterm 331) and SM 33/34 (Wyse).
+  * Enable Win+Shift move coupling of tab sets if SessionGeomSync ≥ 2 (#600).
+  * Drag-and-drop selection after focus click enabled by combined cell and time distance (#717).
+  * Only suppress focus-click selection if focus reporting disabled or mouse reporting not effective (#717).
+  * Background image or texture support (#18, #666).
 
 Configuration
   * CMY(K) colour specifications in OSC sequences and config file.
+  * Option Background to set background image or texture (#18, #666).
 
 Other
   * Fixed syntax error in `mintheme` tool (#764).
   * Option `mintheme -d -q` for decimal colour format (#718).
+  * Updated Emoji data according to Unicode.org.
 
 ### 2.8.5 (14 Apr 2018) ###
 
@@ -34,7 +40,7 @@ Input
   * Input optionally keeps selection highlighting (ClearSelectionOnInput=false) (#222).
 
 Mouse handling
-  * Reenabled drag-and-drop text selection on focussing at a threshhold (~#717).
+  * Reenabled drag-and-drop text selection on focussing at a threshold (~#717).
 
 Configuration
   * Alt+F2 and mintty --dir=... stay in selected dir even in login mode (#500, #744).

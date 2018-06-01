@@ -512,7 +512,7 @@ win_emoji_show(int x, int y, wchar * efn, int elen, ushort lattr)
   GpGraphics * gr;
   s = GdipCreateFromHDC(GetDC(wnd), &gr);
   gpcheck("hdc", s);
-  s = GdipDrawImageRect(gr, img, col, row, w, h);
+  s = GdipDrawImageRectI(gr, img, col, row, w, h);
   gpcheck("draw", s);
   s = GdipFlush(gr, FlushIntentionFlush);
   gpcheck("flush", s);
