@@ -926,7 +926,7 @@ msgstr "既定のサイズ(&D)"
 #. __ Context menu:
 #: wininput.c:464
 msgid "Scroll&bar"
-msgstr "スクロールバー"
+msgstr "スクロールバー(&B)"
 
 #. __ Context menu:
 #: wininput.c:470
