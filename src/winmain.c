@@ -1354,9 +1354,10 @@ win_bell(config * conf)
 }
 
 void
-win_invalidate_all(void)
+win_invalidate_all(bool clearbg)
 {
   InvalidateRect(wnd, null, true);
+  win_flush_background(clearbg);
 }
 
 
@@ -1472,7 +1473,7 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
     win_fix_position();
     trace_winsize("win_adapt_term_size > win_fix_position");
 
-    win_invalidate_all();
+    win_invalidate_all(false);
     return;
   }
 
@@ -1537,7 +1538,7 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
     struct winsize ws = {rows, cols, cols * cell_width, rows * cell_height};
     child_resize(&ws);
   }
-  win_invalidate_all();
+  win_invalidate_all(false);
 
   win_update_search();
   term_schedule_search_update();

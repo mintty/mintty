@@ -908,7 +908,7 @@ set_modes(bool state)
         when 5:  /* DECSCNM: reverse video */
           if (state != term.rvideo) {
             term.rvideo = state;
-            win_invalidate_all();
+            win_invalidate_all(false);
           }
         when 6:  /* DECOM: DEC origin mode */
           term.curs.origin = state;
@@ -1260,7 +1260,7 @@ do_winop(void)
     when 4: win_set_pixels(arg1, arg2);
     when 5: win_set_zorder(true);  // top
     when 6: win_set_zorder(false); // bottom
-    when 7: win_invalidate_all();  // refresh
+    when 7: win_invalidate_all(false);  // refresh
     when 8: {
       int def1 = term.csi_argv_defined[1], def2 = term.csi_argv_defined[2];
       int rows, cols;
@@ -2033,7 +2033,20 @@ do_cmd(void)
     when 104: do_colour_osc(true, 4, true);
     when 105: do_colour_osc(true, 5, true);
     when 10:  do_colour_osc(false, FG_COLOUR_I, false);
-    when 11:  do_colour_osc(false, BG_COLOUR_I, false);
+    when 11:  if (*term.cmd_buf == '*') {
+                wchar * bn = cs__mbstowcs(term.cmd_buf);
+                wstrset(&cfg.background, bn);
+                free(bn);
+                win_invalidate_all(true);
+              }
+              else if (*term.cmd_buf == '_') {
+                wchar * bn = cs__mbstowcs(term.cmd_buf + 1);
+                wstrset(&cfg.background, bn);
+                free(bn);
+                win_invalidate_all(true);
+              }
+              else
+                do_colour_osc(false, BG_COLOUR_I, false);
     when 12:  do_colour_osc(false, CURSOR_COLOUR_I, false);
     when 17:  do_colour_osc(false, SEL_COLOUR_I, false);
     when 19:  do_colour_osc(false, SEL_TEXT_COLOUR_I, false);

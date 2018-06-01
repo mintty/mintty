@@ -104,11 +104,9 @@ comma-separated index can be used to select a particular icon in a file with
 multiple icons.
 
 \fINote:\fP About interaction problems of icon, shortcut, and the Windows taskbar:
-In a Windows desktop shortcut, to achieve consistent icon behaviour, 
-the same icon should be specified in the shortcut properties (Change Icon...) 
-and the mintty command line (Target:),
-or (beginning 2.2.3) no icon should be specified on the command line as 
-mintty will then take the icon from the invoking shortcut, 
+In a Windows desktop shortcut, it is suggested not to use this option in the 
+Target command line, as mintty will detect and use the icon 
+from the invoking shortcut (Change Icon...), 
 also resolving a leading Windows environment variable (like %SystemRoot%).
 
 .TP
@@ -1969,6 +1967,17 @@ The highlighting colours of search matches can be configured.
 \(en \fBSearchBackgroundColour\fP=\fIlight yellow\fP
 .br
 \(en \fBSearchCurrentColour\fP=\fIbright yellow\fP
+
+.TP
+\fBBackground image or texture\fP (Background=)
+With this option, an image can be chosen as background.
+With an image file name, absolute (with an optional \fB~\fP prefix) 
+or relative to the current terminal foreground process, 
+the option either uses the image as a background picture, scaled to 
+the terminal size (optional prefix \fB_\fP to the filename), 
+or as a tiled background texture (prefix \fB*\fP to the filename).
+The background can be changed with an OSC 11 escape sequence, using 
+a filename prefixed with either \fB_\fP or \fB*\fP instead of a colour.
 
 .TP
 \fBScrollback search bar\fP (SearchBar=)

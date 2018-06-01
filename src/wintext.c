@@ -1,5 +1,5 @@
 // wintext.c (part of mintty)
-// Copyright 2008-13 Andy Koppe
+// Copyright 2008-13 Andy Koppe, 2015-2018 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -854,52 +854,10 @@ win_zoom_font(int zoom, bool sync_size_with_font)
   win_set_font_size(zoom ? max(1, abs(font_size) + zoom) : 0, sync_size_with_font);
 }
 
+
 static HDC dc;
 static enum { UPDATE_IDLE, UPDATE_BLOCKED, UPDATE_PENDING } update_state;
 static bool ime_open;
-
-void
-win_paint(void)
-{
-  PAINTSTRUCT p;
-  dc = BeginPaint(wnd, &p);
-
-  term_invalidate(
-    (p.rcPaint.left - PADDING) / cell_width,
-    (p.rcPaint.top - PADDING) / cell_height,
-    (p.rcPaint.right - PADDING - 1) / cell_width,
-    (p.rcPaint.bottom - PADDING - 1) / cell_height
-  );
-
-  if (update_state != UPDATE_PENDING) {
-    term_paint();
-    winimg_paint();
-  }
-
-  if (p.fErase || p.rcPaint.left < PADDING ||
-      p.rcPaint.top < PADDING ||
-      p.rcPaint.right >= PADDING + cell_width * term.cols ||
-      p.rcPaint.bottom >= PADDING + cell_height * term.rows) {
-    colour bg_colour = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
-    HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(bg_colour));
-    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, bg_colour));
-
-    IntersectClipRect(dc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
-                      p.rcPaint.bottom);
-
-    ExcludeClipRect(dc, PADDING, PADDING,
-                    PADDING + cell_width * term.cols,
-                    PADDING + cell_height * term.rows);
-
-    Rectangle(dc, p.rcPaint.left, p.rcPaint.top,
-                  p.rcPaint.right, p.rcPaint.bottom);
-
-    DeleteObject(SelectObject(dc, oldbrush));
-    DeleteObject(SelectObject(dc, oldpen));
-  }
-
-  EndPaint(wnd, &p);
-}
 
 #define dont_debug_cursor 1
 
@@ -1256,6 +1214,386 @@ win_set_ime_open(bool open)
   }
 }
 
+
+/*
+   Background texture/image.
+ */
+
+static bool tiled = false;
+static LONG w = 0, h = 0;
+static HBRUSH bgbrush_bmp = 0;
+
+#if CYGWIN_VERSION_API_MINOR >= 74
+
+#include <w32api/wtypes.h>
+#include <w32api/gdiplus/gdiplus.h>
+#include <w32api/gdiplus/gdiplusflat.h>
+
+static GpBrush * bgbrush_img = 0;
+static GpGraphics * bg_graphics = 0;
+
+#define debug_gdiplus
+
+#ifdef debug_gdiplus
+static void
+gpcheck(char * tag, GpStatus s)
+{
+  static char * gps[] = {
+    "Ok",
+    "GenericError",
+    "InvalidParameter",
+    "OutOfMemory",
+    "ObjectBusy",
+    "InsufficientBuffer",
+    "NotImplemented",
+    "Win32Error",
+    "WrongState",
+    "Aborted",
+    "FileNotFound",
+    "ValueOverflow",
+    "AccessDenied",
+    "UnknownImageFormat",
+    "FontFamilyNotFound",
+    "FontStyleNotFound",
+    "NotTrueTypeFont",
+    "UnsupportedGdiplusVersion",
+    "GdiplusNotInitialized",
+    "PropertyNotFound",
+    "PropertyNotSupported",
+    "ProfileNotFound",
+  };
+  if (s)
+    printf("[%s] %d %s\n", tag, s, s >= 0 && s < lengthof(gps) ? gps[s] : "?");
+}
+#else
+#define gpcheck(tag, s)	(void)s
+#endif
+
+static void
+drop_background_image_brush(void)
+{
+  if (bgbrush_img) {
+    GpStatus s = GdipDeleteBrush(bgbrush_img);
+    gpcheck("delete brush", s);
+    bgbrush_img = 0;
+  }
+}
+
+static void
+load_background_image_brush(HDC dc, wstring fn)
+{
+  GpStatus s;
+
+  drop_background_image_brush();
+
+  static GdiplusStartupInput gi = (GdiplusStartupInput){1, NULL, FALSE, FALSE};
+  static ULONG_PTR gis = 0;
+  if (!gis) {
+    s = GdiplusStartup(&gis, &gi, NULL);
+    gpcheck("startup", s);
+  }
+
+  // try to provide a GDI brush from a GDI+ image
+  // (because a GDI brush is much more efficient than a GDI+ brush)
+  GpBitmap * gbm = 0;
+  s = GdipCreateBitmapFromFile(fn, &gbm);
+  gpcheck("bitmap from file", s);
+
+  if (s == Ok && gbm) {
+    if (!tiled) {
+#ifdef gdip_bitmap_zoom
+      // this zooming method does not work, especially when scaling up, 
+      // GdipCloneBitmapArea[I] fails with OutOfMemory
+      GpGraphics * gr;
+      s = GdipCreateFromHDC(dc, &gr);
+      gpcheck("create gr", s);
+      GpBitmap * gbmfull;
+      s = GdipCreateBitmapFromGraphics(w, h, gr, &gbmfull);
+      gpcheck("create bitmap", s);
+      s = GdipDeleteGraphics(gr);
+      gpcheck("delete graphics", s);
+      s = GdipCloneBitmapAreaI(0, 0, w, h, 0, gbm, &gbmfull);
+      gpcheck("clone bitmap", s);
+      gbm = 0;
+      if (s == Ok && gbmfull)
+        gbm = gbmfull;
+#else
+// https://www.experts-exchange.com/questions/28594399/Whats-the-best-way-to-scale-a-windows-bitmap.html
+      HBITMAP hbm = 0;
+      s = GdipCreateHBITMAPFromBitmap(gbm, &hbm, 0);
+      gpcheck("convert bitmap", s);
+      s = GdipDisposeImage(gbm);
+      gpcheck("dispose bitmap", s);
+      gbm = 0;
+
+      BITMAP bm0;
+      if (!GetObject(hbm, sizeof(BITMAP), &bm0))
+        return;
+
+      // prepare source memory DC and select the source bitmap into it
+      HDC dc0 = CreateCompatibleDC(dc);
+      HBITMAP oldhbm0 = SelectObject(dc0, hbm);
+
+      // prepare destination memory DC, 
+      // create and select the destination bitmap into it
+      HDC dc1 = CreateCompatibleDC(dc);
+      HBITMAP hbm1 = CreateCompatibleBitmap(dc0, w, h);
+      HBITMAP oldhbm1 = SelectObject(dc1, hbm1);
+
+      // set half-tone stretch-blit mode for better scaling quality
+      SetStretchBltMode(dc1, HALFTONE);
+
+      // draw the bitmap scaled into the destination memory DC
+      StretchBlt(dc1, 0, 0, w, h, dc0, 0, 0, bm0.bmWidth, bm0.bmHeight, SRCCOPY);
+
+      // release everything
+      SelectObject(dc0, oldhbm0);
+      SelectObject(dc1, oldhbm1);
+      DeleteDC(dc0);
+      DeleteDC(dc1);
+
+      // now we have the scaled bitmap in 'hbm1'
+      if (hbm1) {
+        bgbrush_bmp = CreatePatternBrush(hbm1);
+        DeleteObject(hbm1);
+        if (bgbrush_bmp) {
+          RECT cr;
+          GetClientRect(wnd, &cr);
+          FillRect(dc, &cr, bgbrush_bmp);
+          drop_background_image_brush();
+          return;
+        }
+      }
+#endif
+    }
+    else {  // tiled
+      HBITMAP hbm1 = 0;
+      s = GdipCreateHBITMAPFromBitmap(gbm, &hbm1, 0);
+      gpcheck("convert bitmap", s);
+      s = GdipDisposeImage(gbm);
+      gpcheck("dispose bitmap", s);
+      gbm = 0;
+
+      if (hbm1) {
+        bgbrush_bmp = CreatePatternBrush(hbm1);
+        DeleteObject(hbm1);
+        if (bgbrush_bmp) {
+          RECT cr;
+          GetClientRect(wnd, &cr);
+          FillRect(dc, &cr, bgbrush_bmp);
+          drop_background_image_brush();
+          return;
+        }
+      }
+    }
+  }
+
+  DWORD win_version = GetVersion();
+  win_version = ((win_version & 0xff) << 8) | ((win_version >> 8) & 0xff);
+  if (win_version > 0x0601)  // not Windows 7 or XP
+    return;
+
+  // creating a GDI brush failed,
+  // try to provide a GDI+ brush (does not work on Windows 10)
+  GpImage * img = 0;
+  s = GdipLoadImageFromFile(fn, &img);
+  gpcheck("load image", s);
+
+  GpTexture * gt = 0;
+  s = GdipCreateTexture(img, WrapModeTile, &gt);
+  gpcheck("texture", s);
+  if (!tiled) {
+    uint iw, ih;
+    s = GdipGetImageWidth(img, &iw);
+    gpcheck("width", s);
+    s = GdipGetImageHeight(img, &ih);
+    gpcheck("height", s);
+    s = GdipScaleTextureTransform(gt, (float)w / iw, (float)h / ih, 0);
+    gpcheck("scale", s);
+  }
+  s = GdipDisposeImage(img);
+  gpcheck("dispose img", s);
+
+  bgbrush_img = gt;
+}
+
+static bool
+fill_rect(HDC dc, RECT * boxp, GpBrush * br)
+{
+  GpStatus s, sbrush = -1;
+#ifdef debug_gdiplus
+  static int nfills = 0;
+  nfills ++;
+#endif
+
+  void fill(void)
+  {
+    sbrush = GdipFillRectangleI(bg_graphics, br, boxp->left, boxp->top, boxp->right - boxp->left, boxp->bottom - boxp->top);
+    gpcheck("fill", sbrush);
+  }
+
+  if (bg_graphics) {
+    fill();
+  }
+  if (sbrush != Ok) {
+    if (bg_graphics) {
+      s = GdipDeleteGraphics(bg_graphics);
+      gpcheck("delete graphics", s);
+      bg_graphics = 0;
+    }
+#ifdef debug_gdiplus
+    printf("creating graphics, failure rate 1/%d\n", nfills);
+    nfills = 0;
+#endif
+    s = GdipCreateFromHDC(dc, &bg_graphics);
+    gpcheck("create graphics", s);
+    fill();
+  }
+
+  return sbrush == Ok;
+}
+
+#endif
+
+void
+win_flush_background(bool clearbg)
+{
+#ifdef debug_gdiplus
+  printf("flush background bmp %d img %d gr %d (tiled %d)\n", !!bgbrush_bmp, !!bgbrush_img, !!bg_graphics, tiled);
+#endif
+  w = 0; h = 0;
+  tiled = false;
+  if (clearbg) {
+    // TODO: save redundant image reloading (and brush creation)
+  }
+
+  if (bgbrush_bmp) {
+    DeleteObject(bgbrush_bmp);
+    bgbrush_bmp = 0;
+  }
+#if CYGWIN_VERSION_API_MINOR >= 74
+  drop_background_image_brush();
+  GpStatus s;
+  if (bg_graphics) {
+    s = GdipDeleteGraphics(bg_graphics);
+    bg_graphics = 0;
+    gpcheck("delete graphics", s);
+  }
+#endif
+}
+
+static void
+load_background_brush(HDC dc)
+{
+  // we could try to hook into win_adapt_term_size to update the full 
+  // screen background and reload the background on demand, 
+  // but let's rather handle this autonomously here
+  RECT cr;
+  GetClientRect(wnd, &cr);
+#ifdef debug_gdiplus
+  //printf("loading brush <%ls> %d %d %d %d (tiled %d)\n", cfg.background, cr.left, cr.top, cr.right - cr.left, cr.bottom - cr.top, tiled);
+#endif
+  if (cr.right - cr.left == w && cr.bottom - cr.top == h)
+    return;  // keep brush
+
+  if (tiled)
+    return;  // do not scale tiled brush
+
+  // remember terminal screen size
+  w = cr.right - cr.left;
+  h = cr.bottom - cr.top;
+
+  // adjust paint screen size
+  if (win_search_visible())
+    cr.bottom -= SEARCHBAR_HEIGHT;
+
+  wchar * bgfn = (wchar *)cfg.background;
+  if (*bgfn == '*') {
+    tiled = true;
+    bgfn++;
+  }
+  else if (*bgfn == '_') {
+    bgfn++;
+  }
+  char * bf = cs__wcstombs(bgfn);
+  if (!strncmp("~/", bf, 2)) {
+    char * bfexp = asform("%s/%s", home, bf + 2);
+    free(bf);
+    bf = bfexp;
+  }
+  else if (*bf != '/') {
+    char * bfexp = asform("%s/%s", foreground_cwd(), bf);
+    free(bf);
+    bf = bfexp;
+  }
+  bgfn = path_posix_to_win_w(bf);
+  free(bf);
+
+  HBITMAP
+  load_background_bitmap(wstring fn)
+  {
+    HBITMAP bm = 0;
+    wstring bmpsuf = wcscasestr(fn, W(".bmp"));
+    if (bmpsuf && wcslen(bmpsuf) == 4) {
+      if (tiled)
+        bm = (HBITMAP) LoadImageW(0, fn,
+                                  IMAGE_BITMAP, 0, 0,
+                                  LR_DEFAULTSIZE |
+                                  LR_LOADFROMFILE);
+      else
+        bm = (HBITMAP) LoadImageW(0, fn,
+                                  IMAGE_BITMAP, w, h,
+                                  LR_LOADFROMFILE);
+    }
+    return bm;
+  }
+
+  if (!bgbrush_bmp) {
+    HBITMAP bm = load_background_bitmap(bgfn);
+    if (bm) {
+      bgbrush_bmp = CreatePatternBrush(bm);
+      DeleteObject(bm);
+      if (bgbrush_bmp)
+        FillRect(dc, &cr, bgbrush_bmp);
+    }
+  }
+
+  if (!bgbrush_bmp) {
+#if CYGWIN_VERSION_API_MINOR >= 74
+    load_background_image_brush(dc, bgfn);
+    // can have set bgbrush_img or bgbrush_bmp
+    if (bgbrush_img)
+      fill_rect(dc, &cr, bgbrush_img);
+    // flag failure to load background?
+    // this is now detected in win_paint by checking the brushes
+    //else if (!bgbrush_bmp)
+#endif
+    //  // trigger proper win_paint behaviour
+    //  wstrset(&cfg.background, W(""));  // not the right approach (zooming)
+  }
+#ifdef debug_gdiplus
+  printf("loaded brush <%ls>: GDI %d GDI+ %d (tiled %d)\n", bgfn, !!bgbrush_bmp, !!bgbrush_img, tiled);
+#endif
+
+  free(bgfn);
+}
+
+static bool
+fill_background(HDC dc, RECT * boxp)
+{
+  load_background_brush(dc);
+  return
+    (bgbrush_bmp && FillRect(dc, boxp, bgbrush_bmp))
+#if CYGWIN_VERSION_API_MINOR >= 74
+    || (bgbrush_img && fill_rect(dc, boxp, bgbrush_img))
+#endif
+    ;
+}
+
+
+/*
+   Text output.
+ */
 
 #define dont_debug_win_text
 
@@ -1708,7 +2046,7 @@ apply_attr_colour(cattr a, attr_colour_mode mode)
  * We are allowed to fiddle with the contents of `text'.
  */
 void
-win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl)
+win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl)
 {
   int graph = (attr.attr >> ATTR_GRAPH_SHIFT) & 0xFF;
   int findex = (attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
@@ -1725,16 +2063,19 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
 
  /* Only want the left half of double width lines */
   // check this before scaling up x to pixels!
-  if (lattr != LATTR_NORM && x * 2 >= term.cols)
+  if (lattr != LATTR_NORM && tx * 2 >= term.cols)
     return;
 
  /* Convert to window coordinates */
-  x = x * char_width + PADDING;
-  y = y * cell_height + PADDING;
+  int x = tx * char_width + PADDING;
+  int y = ty * cell_height + PADDING;
 
   if (attr.attr & ATTR_WIDE)
     char_width *= 2;
 
+  bool default_bg = (attr.attr & ATTR_BGMASK) >> ATTR_BGSHIFT == BG_COLOUR_I;
+  if (attr.attr & ATTR_REVERSE)
+    default_bg = false;
   attr = apply_attr_colour(attr, ACM_TERM);
   colour fg = attr.truefg;
   colour bg = attr.truebg;
@@ -1743,16 +2084,28 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
   bool has_cursor = attr.attr & (TATTR_ACTCURS | TATTR_PASCURS);
   colour cursor_colour = 0;
 
+#ifdef keep_sel_colour_here
+  if ((attr.attr & ATTR_BGMASK) >> ATTR_BGSHIFT == SEL_COLOUR_I)
+#else
+  if (attr.attr & TATTR_SELECTED)
+#endif
+    default_bg = false;
+
   if (attr.attr & (TATTR_CURRESULT | TATTR_CURMARKED)) {
     bg = cfg.search_current_colour;
     fg = cfg.search_fg_colour;
+    default_bg = false;
   }
   else if (attr.attr & (TATTR_RESULT | TATTR_MARKED)) {
     bg = cfg.search_bg_colour;
     fg = cfg.search_fg_colour;
+    default_bg = false;
   }
 
   if (has_cursor) {
+    if (term_cursor_type() == CUR_BLOCK && (attr.attr & TATTR_ACTCURS))
+      default_bg = false;
+
     cursor_colour = colours[ime_open ? IME_CURSOR_COLOUR_I : CURSOR_COLOUR_I];
 
     //static uint mindist = 32768;
@@ -2029,6 +2382,27 @@ win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort
 
       underlaid = true;
     }
+  }
+
+ /* Graphic background: picture or texture */
+  if (*cfg.background && default_bg) {
+    RECT bgbox = box0;
+    if (!tx)
+      bgbox.left = 0;
+    if (bgbox.right >= PADDING + cell_width * term.cols)
+      bgbox.right += PADDING;
+    if (!ty)
+      bgbox.top = 0;
+    if (ty == term.rows - 1) {
+      RECT cr;
+      GetClientRect(wnd, &cr);
+      if (win_search_visible())
+        cr.bottom -= SEARCHBAR_HEIGHT;
+      bgbox.bottom = cr.bottom;
+    }
+
+    if (fill_background(dc, &bgbox))
+      underlaid = true;
   }
 
  /* Special underlay */
@@ -2849,7 +3223,7 @@ win_set_colour(colour_i i, colour c)
 
   // Redraw everything.
   if (changed_something)
-    win_invalidate_all();
+    win_invalidate_all(false);
 }
 
 colour
@@ -2908,3 +3282,66 @@ win_reset_colours(void)
       printf("colour %d %06X [%s]\n", i, (int)colours[i], ci[i - FG_COLOUR_I]);
 #endif
 }
+
+
+void
+win_paint(void)
+{
+  PAINTSTRUCT p;
+  dc = BeginPaint(wnd, &p);
+
+  term_invalidate(
+    (p.rcPaint.left - PADDING) / cell_width,
+    (p.rcPaint.top - PADDING) / cell_height,
+    (p.rcPaint.right - PADDING - 1) / cell_width,
+    (p.rcPaint.bottom - PADDING - 1) / cell_height
+  );
+
+  if (update_state != UPDATE_PENDING) {
+    term_paint();
+    winimg_paint();
+  }
+
+  if (//!*cfg.background &&
+      !bgbrush_bmp &&
+#if CYGWIN_VERSION_API_MINOR >= 74
+      !bgbrush_img &&
+#endif
+      (p.fErase
+       || p.rcPaint.left < PADDING
+       || p.rcPaint.top < PADDING
+       || p.rcPaint.right >= PADDING + cell_width * term.cols
+       || p.rcPaint.bottom >= PADDING + cell_height * term.rows
+      )
+     ) {
+    /* Notes:
+       * Do we actually need this stuff? We paint the background with
+         each win_text chunk anyway, except for the padding border,
+         which could however be touched e.g. by Sixel images?
+       * With a texture/image background, we could try to paint that here 
+         (invoked on WM_PAINT) or on WM_ERASEBKGND, but these messages are 
+         not received sufficiently often, e.g. not when scrolling.
+       * So let's let's keep finer control and paint background in chunks 
+         but not modify the established behaviour if there is no background.
+     */
+    colour bg_colour = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
+    HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(bg_colour));
+    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, bg_colour));
+
+    IntersectClipRect(dc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
+                      p.rcPaint.bottom);
+
+    ExcludeClipRect(dc, PADDING, PADDING,
+                    PADDING + cell_width * term.cols,
+                    PADDING + cell_height * term.rows);
+
+    Rectangle(dc, p.rcPaint.left, p.rcPaint.top,
+                  p.rcPaint.right, p.rcPaint.bottom);
+
+    DeleteObject(SelectObject(dc, oldbrush));
+    DeleteObject(SelectObject(dc, oldpen));
+  }
+
+  EndPaint(wnd, &p);
+}
+

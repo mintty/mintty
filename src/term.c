@@ -1684,6 +1684,8 @@ term_paint(void)
         );
 
       if (selected) {
+        tattr.attr |= TATTR_SELECTED;
+
         colour bg = win_get_colour(SEL_COLOUR_I);
         if (bg != (colour)-1) {
           tattr.truebg = bg;

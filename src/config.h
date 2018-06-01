@@ -54,6 +54,7 @@ typedef struct {
   colour sel_fg_colour, sel_bg_colour;
   colour search_fg_colour, search_bg_colour, search_current_colour;
   wstring theme_file;
+  wstring background;
   string colour_scheme;
   char transparency;
   bool blurred;

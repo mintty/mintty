@@ -45,7 +45,7 @@ extern colour win_get_sys_colour(bool fg);
 extern uint colour_dist(colour a, colour b);
 extern colour truecolour(cattr *, colour bg);
 
-extern void win_invalidate_all(void);
+extern void win_invalidate_all(bool clearbg);
 
 extern void win_set_pos(int x, int y);
 extern void win_set_chars(int rows, int cols);
