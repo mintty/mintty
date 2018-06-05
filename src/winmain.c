@@ -198,11 +198,19 @@ load_library_func(string lib, string func)
 
 #define dont_debug_dpi
 
-bool per_monitor_dpi_aware = false;
+#define DPI_UNAWARE 0
+#define DPI_AWAREV1 1
+#define DPI_AWAREV2 2
+int per_monitor_dpi_aware = DPI_UNAWARE;  // dpi_awareness
 uint dpi = 96;
+// DPI handling V2
+static bool is_in_dpi_change = false;
 
 #ifndef WM_DPICHANGED
 #define WM_DPICHANGED 0x02E0
+#endif
+#ifndef WM_GETDPISCALEDSIZE
+#define WM_GETDPISCALEDSIZE 0x02E4
 #endif
 const int Process_System_DPI_Aware = 1;
 const int Process_Per_Monitor_DPI_Aware = 2;
@@ -214,6 +222,7 @@ DECLARE_HANDLE(DPI_AWARENESS_CONTEXT);
 #define DPI_AWARENESS_CONTEXT_UNAWARE           ((DPI_AWARENESS_CONTEXT)-1)
 #define DPI_AWARENESS_CONTEXT_SYSTEM_AWARE      ((DPI_AWARENESS_CONTEXT)-2)
 #define DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE ((DPI_AWARENESS_CONTEXT)-3)
+#define DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 ((DPI_AWARENESS_CONTEXT)-4)
 static DPI_AWARENESS_CONTEXT (WINAPI * pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT dpic) = 0;
 static HRESULT (WINAPI * pEnableNonClientDpiScaling)(HWND win) = 0;
 static BOOL (WINAPI * pAdjustWindowRectExForDpi)(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, UINT dpi) = 0;
@@ -271,20 +280,15 @@ set_dpi_auto_scaling(bool on)
 #endif
 }
 
-static bool
+static int
 set_per_monitor_dpi_aware(void)
 {
-#if 0
- /* this was added under the assumption it might be needed 
-    for EnableNonClientDpiScaling to work (as described) 
-    but it's not needed, so we'll leave it
- */
-  if (pSetThreadDpiAwarenessContext) {
-    if (pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE))
-      return true;
-  }
-#endif
-  if (pSetProcessDpiAwareness && pGetProcessDpiAwareness) {
+  // DPI handling V2: make EnableNonClientDpiScaling work, at last
+  if (pSetThreadDpiAwarenessContext &&
+      pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2))
+    return DPI_AWAREV2;
+  else if (cfg.handle_dpichanged == 1 &&
+           pSetProcessDpiAwareness && pGetProcessDpiAwareness) {
     HRESULT hr = pSetProcessDpiAwareness(Process_Per_Monitor_DPI_Aware);
     // E_ACCESSDENIED:
     // The DPI awareness is already set, either by calling this API previously
@@ -293,10 +297,11 @@ set_per_monitor_dpi_aware(void)
       pSetProcessDpiAwareness(Process_System_DPI_Aware);
 
     int awareness = 0;
-    return SUCCEEDED(pGetProcessDpiAwareness(NULL, &awareness)) &&
-      awareness == Process_Per_Monitor_DPI_Aware;
+    if (SUCCEEDED(pGetProcessDpiAwareness(NULL, &awareness)) &&
+        awareness == Process_Per_Monitor_DPI_Aware)
+      return DPI_AWAREV1;
   }
-  return false;
+  return DPI_UNAWARE;
 }
 
 void
@@ -1281,22 +1286,30 @@ win_set_geom(int y, int x, int height, int width)
 static void
 win_fix_position(void)
 {
+  // DPI handling V2
+  if (is_in_dpi_change)
+    // window position needs no correction during DPI change, 
+    // avoid position flickering (#695)
+    return;
+
   RECT wr;
   GetWindowRect(wnd, &wr);
   MONITORINFO mi;
   get_my_monitor_info(&mi);
   RECT ar = mi.rcWork;
-  WINDOWINFO winfo;
-  winfo.cbSize = sizeof(WINDOWINFO);
-  GetWindowInfo(wnd, &winfo);
 
   // Correct edges. Top and left win if the window is too big.
   wr.top -= max(0, wr.bottom - ar.bottom);
   wr.top = max(wr.top, ar.top);
   wr.left -= max(0, wr.right - ar.right);
   wr.left = max(wr.left, ar.left);
+#ifdef workaround_629
   // attempt to workaround left gap (#629); does not seem to work anymore
-  //wr.left = max(wr.left, (int)(ar.left - winfo.cxWindowBorders));
+  WINDOWINFO winfo;
+  winfo.cbSize = sizeof(WINDOWINFO);
+  GetWindowInfo(wnd, &winfo);
+  wr.left = max(wr.left, (int)(ar.left - winfo.cxWindowBorders));
+#endif
 
   SetWindowPos(wnd, 0, wr.left, wr.top, 0, 0,
                SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
@@ -2396,79 +2409,113 @@ static struct {
 
 #     define WP ((WINDOWPOS *) lp)
       trace_resize(("# WM_WINDOWPOSCHANGED (resizing %d) %d %d @ %d %d\n", resizing, WP->cy, WP->cx, WP->y, WP->x));
-      bool dpi_changed = true;
-      if (per_monitor_dpi_aware && cfg.handle_dpichanged && pGetDpiForMonitor) {
-        HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
-        uint x, y;
-        pGetDpiForMonitor(mon, 0, &x, &y);  // MDT_EFFECTIVE_DPI
+      if (per_monitor_dpi_aware == DPI_AWAREV1) {
+        // not necessary for DPI handling V2
+        bool dpi_changed = true;
+        if (cfg.handle_dpichanged && pGetDpiForMonitor) {
+          HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+          uint x, y;
+          pGetDpiForMonitor(mon, 0, &x, &y);  // MDT_EFFECTIVE_DPI
 #ifdef debug_dpi
-        printf("WM_WINDOWPOSCHANGED %d -> %d (aware %d handle %d)\n", dpi, y, per_monitor_dpi_aware, cfg.handle_dpichanged);
+          printf("WM_WINDOWPOSCHANGED %d -> %d (aware %d handle %d)\n", dpi, y, per_monitor_dpi_aware, cfg.handle_dpichanged);
 #endif
-        if (y != dpi) {
-          dpi = y;
+          if (y != dpi) {
+            dpi = y;
+          }
+          else
+            dpi_changed = false;
         }
-        else
-          dpi_changed = false;
-      }
 
-      if (dpi_changed && per_monitor_dpi_aware && cfg.handle_dpichanged) {
-        // remaining glitch:
-        // start mintty -p @1; move it to other monitor;
-        // columns will be less
-        //win_init_fonts(cfg.font.size);
-        font_cs_reconfig(true);
-        win_adapt_term_size(true, false);
+        if (dpi_changed && cfg.handle_dpichanged) {
+          // remaining glitch:
+          // start mintty -p @1; move it to other monitor;
+          // columns will be less
+          //win_init_fonts(cfg.font.size);
+          font_cs_reconfig(true);
+          win_adapt_term_size(true, false);
+        }
       }
     }
 
+    when WM_GETDPISCALEDSIZE:
+      // here we could adjust the RECT passed to WM_DPICHANGED ...
+
     when WM_DPICHANGED: {
-#ifdef handle_dpi_on_dpichanged
-      bool dpi_changed = true;
-      if (per_monitor_dpi_aware && cfg.handle_dpichanged && pGetDpiForMonitor) {
-        HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
-        uint x, y;
-        pGetDpiForMonitor(mon, 0, &x, &y);  // MDT_EFFECTIVE_DPI
+      if (!cfg.handle_dpichanged) {
 #ifdef debug_dpi
-        printf("WM_DPICHANGED %d -> %d (aware %d handle %d)\n", dpi, y, per_monitor_dpi_aware, cfg.handle_dpichanged);
+        printf("WM_DPICHANGED (unhandled) %d (aware %d handle %d)\n", dpi, per_monitor_dpi_aware, cfg.handle_dpichanged);
 #endif
-        if (y != dpi) {
-          dpi = y;
-        }
-        else
-          dpi_changed = false;
+        break;
       }
+
+      if (per_monitor_dpi_aware == DPI_AWAREV2) {
+        is_in_dpi_change = true;
+
+        UINT new_dpi = LOWORD(wp);
+        LPRECT r = (LPRECT) lp;
+
 #ifdef debug_dpi
-      else
-        printf("WM_DPICHANGED (aware %d handle %d)\n", per_monitor_dpi_aware, cfg.handle_dpichanged);
+        printf("WM_DPICHANGED %d -> %d (handled) (aware %d handle %d)\n", dpi, new_dpi, per_monitor_dpi_aware, cfg.handle_dpichanged);
+#endif
+        dpi = new_dpi;
+
+        SetWindowPos(wnd, 0, r->left, r->top, r->right - r->left, r->bottom - r->top,
+                     SWP_NOZORDER | SWP_NOACTIVATE);
+
+        font_cs_reconfig(true);
+
+        is_in_dpi_change = false;
+        return 0;
+      } else if (per_monitor_dpi_aware == DPI_AWAREV1) {
+#ifdef handle_dpi_on_dpichanged
+        bool dpi_changed = true;
+        if (pGetDpiForMonitor) {
+          HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+          uint x, y;
+          pGetDpiForMonitor(mon, 0, &x, &y);  // MDT_EFFECTIVE_DPI
+#ifdef debug_dpi
+          printf("WM_DPICHANGED handled: %d -> %d DPI (aware %d)\n", dpi, y, per_monitor_dpi_aware);
+#endif
+          if (y != dpi) {
+            dpi = y;
+          }
+          else
+            dpi_changed = false;
+        }
+#ifdef debug_dpi
+        else
+          printf("WM_DPICHANGED (unavailable)\n");
 #endif
 
-      if (dpi_changed && per_monitor_dpi_aware && cfg.handle_dpichanged) {
-        // this RECT is adjusted with respect to the monitor dpi already,
-        // so we don't need to consider GetDpiForMonitor
-        LPRECT r = (LPRECT) lp;
-        // try to stabilize font size roundtrip; 
-        // heuristic tweak of window size to compensate for 
-        // font scaling rounding errors that would continuously 
-        // decrease the window size if moving between monitors repeatedly
-        long width = (r->right - r->left) * 20 / 19;
-        long height = (r->bottom - r->top) * 20 / 19;
-        SetWindowPos(wnd, 0, r->left, r->top, width, height,
-                     SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
-        int y = term.rows, x = term.cols;
-        win_adapt_term_size(false, true);
-        //?win_init_fonts(cfg.font.size);
-        // try to stabilize terminal size roundtrip
-        if (term.rows != y || term.cols != x) {
-          // win_fix_position also clips the window to desktop size
-          win_set_chars(y, x);
-        }
+        if (dpi_changed) {
+          // this RECT is adjusted with respect to the monitor dpi already,
+          // so we don't need to consider GetDpiForMonitor
+          LPRECT r = (LPRECT) lp;
+          // try to stabilize font size roundtrip; 
+          // heuristic tweak of window size to compensate for 
+          // font scaling rounding errors that would continuously 
+          // decrease the window size if moving between monitors repeatedly
+          long width = (r->right - r->left) * 20 / 19;
+          long height = (r->bottom - r->top) * 20 / 19;
+          SetWindowPos(wnd, 0, r->left, r->top, width, height,
+                       SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
+          int y = term.rows, x = term.cols;
+          win_adapt_term_size(false, true);
+          //?win_init_fonts(cfg.font.size);
+          // try to stabilize terminal size roundtrip
+          if (term.rows != y || term.cols != x) {
+            // win_fix_position also clips the window to desktop size
+            win_set_chars(y, x);
+          }
 #ifdef debug_dpi
-        printf("SM_CXVSCROLL %d\n", GetSystemMetrics(SM_CXVSCROLL));
+          printf("SM_CXVSCROLL %d\n", GetSystemMetrics(SM_CXVSCROLL));
 #endif
-        return 0;
+          return 0;
+        }
+        break;
+#endif // handle_dpi_on_dpichanged
       }
       break;
-#endif
     }
 
     when WM_NCHITTEST: {
