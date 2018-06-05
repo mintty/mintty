@@ -97,6 +97,14 @@ case "$1" in
 	shift;;
 esac
 
+case `uname` in
+Linux)	if [ -n "$APPDATA" ]
+	then	APPDATA=`wslpath "$APPDATA"`
+	else	echo APPDATA not set >&2
+		exit
+	fi;;
+esac
+
 case "$1" in
 -h|--help|'')
 	help

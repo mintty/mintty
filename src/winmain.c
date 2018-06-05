@@ -3693,14 +3693,15 @@ main(int argc, char *argv[])
       //argc++; // for "-l"
     }
 #ifdef WSLTTY_APPX
-    char ** new_argv = newn(char *, argc + 8 + start_home);
+    char ** new_argv = newn(char *, argc + 10 + start_home);
 #else
-    char ** new_argv = newn(char *, argc + 6 + start_home);
+    char ** new_argv = newn(char *, argc + 8 + start_home);
 #endif
     char ** pargv = new_argv;
     if (login_dash) {
       *pargv++ = "-wslbridge";
 #ifdef wslbridge_supports_l
+#warning redundant option wslbridge -l not needed
       *pargv++ = "-l";
 #endif
     }
@@ -3711,6 +3712,8 @@ main(int argc, char *argv[])
       *pargv++ = wsl_guid;
     }
     *pargv++ = "-t";
+    *pargv++ = "-e";
+    *pargv++ = "APPDATA";
     if (start_home)
       *pargv++ = "-C~";
 
