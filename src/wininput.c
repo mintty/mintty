@@ -1,5 +1,5 @@
 // wininput.c (part of mintty)
-// Copyright 2008-12 Andy Koppe
+// Copyright 2008-12 Andy Koppe, 2015-2018 Thomas Wolff
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "winpriv.h"
@@ -1723,6 +1723,7 @@ static struct {
       else
         ctrl_ch(term.backspace_sends_bs ? CDEL : CTRL('_'));
     when VK_TAB:
+#ifdef handle_alt_tab
       if (alt) {
         if (cfg.switch_shortcuts) {
           // does not work as Alt+TAB is not passed here anyway;
@@ -1734,10 +1735,11 @@ static struct {
         else
           return false;
       }
+#endif
       if (!ctrl)
         shift ? csi('Z') : ch('\t');
       else if (cfg.switch_shortcuts) {
-        win_switch(shift, false);
+        win_switch(shift, lctrl & rctrl);
         return true;
       }
       else
