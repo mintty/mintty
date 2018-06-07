@@ -65,9 +65,7 @@ ATOM class_atom;
 static char **main_argv;
 static int main_argc;
 static bool invoked_from_shortcut = false;
-#if CYGWIN_VERSION_DLL_MAJOR >= 1005
 static bool invoked_with_appid = false;
-#endif
 
 
 //filled by win_adjust_borders:
@@ -2662,6 +2660,12 @@ exit_mintty(void)
 
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
+typedef void * * voidrefref;
+#else
+typedef void * voidrefref;
+#define STARTF_TITLEISLINKNAME 0x00000800
+#define STARTF_TITLEISAPPID 0x00001000
+#endif
 
 #include <shlobj.h>
 
@@ -2675,12 +2679,12 @@ get_shortcut_icon_location(wchar * iconfile, bool * wdpresent)
     return 0;
 
   hres = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_IShellLinkW, (void **) &shell_link);
+                          &IID_IShellLinkW, (voidrefref) &shell_link);
   if (!SUCCEEDED(hres))
     return 0;
 
   hres = shell_link->lpVtbl->QueryInterface(shell_link, &IID_IPersistFile,
-                                            (void **) &persist_file);
+                                            (voidrefref) &persist_file);
   if (!SUCCEEDED(hres)) {
     shell_link->lpVtbl->Release(shell_link);
     return 0;
@@ -2747,6 +2751,25 @@ get_shortcut_icon_location(wchar * iconfile, bool * wdpresent)
       hres = shell_link->lpVtbl->GetWorkingDirectory(shell_link, wil, MAX_PATH);
       *wdpresent = SUCCEEDED(hres) && *wil;
     }
+#ifdef use_shortcut_description
+    // also retrieve shortcut description:
+    static wchar * shortcut = 0;
+    uint sdlen = 55;
+    wchar * sd = newn(wchar, sdlen + 1);
+    do {
+      // Note: this is the "Comment:" field, not the shortcut name
+      hres = shell_link->lpVtbl->GetDescription(shell_link, sd, sdlen);
+      if (hres != S_OK)
+        break;
+      if (wcslen(sd) < sdlen - 1) {
+        shortcut = wcsdup(sd);
+        break;
+      }
+      sdlen += 55;
+      sd = renewn(sd, sdlen + 1);
+    } while (true);
+    delete(sd);
+#endif
   }
   iconex:
 
@@ -2758,8 +2781,6 @@ get_shortcut_icon_location(wchar * iconfile, bool * wdpresent)
 
   return result;
 }
-
-#endif
 
 
 #if CYGWIN_VERSION_API_MINOR >= 74
@@ -3348,14 +3369,12 @@ main(int argc, char *argv[])
   GetStartupInfoW(&sui);
   cfg.window = sui.dwFlags & STARTF_USESHOWWINDOW ? sui.wShowWindow : SW_SHOW;
   cfg.x = cfg.y = CW_USEDEFAULT;
-#if CYGWIN_VERSION_DLL_MAJOR >= 1005
   invoked_from_shortcut = sui.dwFlags & STARTF_TITLEISLINKNAME;
   invoked_with_appid = sui.dwFlags & STARTF_TITLEISAPPID;
   // shortcut or AppId would be found in sui.lpTitle
 # ifdef debuglog
   fprintf(mtlog, "shortcut %d %ls\n", invoked_from_shortcut, sui.lpTitle);
 # endif
-#endif
 
   // Options triggered via wsl*.exe
 #if CYGWIN_VERSION_API_MINOR >= 74
@@ -3430,7 +3449,6 @@ main(int argc, char *argv[])
     unsetenv("MINTTY_ICON");
   }
 
-#if CYGWIN_VERSION_DLL_MAJOR >= 1005
   bool wdpresent = true;
   if (invoked_from_shortcut) {
     wchar * icon = get_shortcut_icon_location(sui.lpTitle, &wdpresent);
@@ -3442,7 +3460,6 @@ main(int argc, char *argv[])
       icon_is_from_shortcut = true;
     }
   }
-#endif
 
   for (;;) {
     int opt = cfg.short_long_opts
@@ -3678,7 +3695,6 @@ main(int argc, char *argv[])
   else if (*cfg.theme_file)
     load_theme(cfg.theme_file);
 
-#if CYGWIN_VERSION_DLL_MAJOR >= 1005
   if (!wdpresent) {  // shortcut start directory is empty
     WCHAR cd[MAX_PATH + 1];
     WCHAR wd[MAX_PATH + 1];
@@ -3686,6 +3702,9 @@ main(int argc, char *argv[])
     GetSystemDirectoryW(wd, MAX_PATH);		// C:\WINDOWS\system32
     //GetSystemWindowsDirectoryW(wd, MAX_PATH);	// C:\WINDOWS
     int l = wcslen(wd);
+#if CYGWIN_VERSION_API_MINOR < 206
+#define wcsncasecmp wcsncmp
+#endif
     if (0 == wcsncasecmp(cd, wd, l)) {
       // current directory is within Windows system directory
       // and shortcut start directory is empty
@@ -3697,7 +3716,6 @@ main(int argc, char *argv[])
         chdir(home);
     }
   }
-#endif
 
   finish_config();
 
