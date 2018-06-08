@@ -417,7 +417,7 @@ child_proc(void)
           int code = WEXITSTATUS(status);
           if (code == 0)
             err = false;
-          if ((code || cfg.exit_write) && cfg.hold != HOLD_START)
+          if ((code || cfg.exit_write) /*&& cfg.hold != HOLD_START*/)
             //__ %1$s: client command (e.g. shell) terminated, %2$i: exit code
             asprintf(&s, _("%s: Exit %i"), cmd, code);
         }
