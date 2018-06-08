@@ -2618,6 +2618,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
       AlphaBlend(dc,
 	bgbox.left, bgbox.top, bgbox.right - bgbox.left, bgbox.bottom - bgbox.top,
 	bg_dc, bgbox.left, bgbox.top, bgbox.right - bgbox.left, bgbox.bottom - bgbox.top, blend_ftn);
+      ReleaseDC(wnd, bg_dc);
     }
   }
 }
