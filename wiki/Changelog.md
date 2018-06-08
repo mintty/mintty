@@ -15,7 +15,7 @@ Window handling
   * Enable Win+Shift move coupling of tab sets if SessionGeomSync ≥ 2 (#600).
   * Drag-and-drop selection after focus click enabled by combined cell and time distance (#717).
   * Only suppress focus-click selection if focus reporting disabled or mouse reporting not effective (#717).
-  * Background image or texture support (#18, #666).
+  * Background bitmap and bitmap opacity support (#18, #666).
 
 Configuration
   * CMY(K) colour specifications in OSC sequences and config file.

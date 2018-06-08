@@ -1,5 +1,5 @@
 // config.c (part of mintty)
-// Copyright 2008-13 Andy Koppe, 2015-2017 Thomas Wolff
+// Copyright 2008-13 Andy Koppe, 2015-2017 Thomas Wolff, 2018 Lucio Andrés Illanes Albornoz
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -48,6 +48,7 @@ const config default_cfg = {
   .search_current_colour = 0x0099DD,
   .theme_file = W(""),
   .background = W(""),
+  .background_opacity = 25,
   .colour_scheme = "",
   .transparency = 0,
   .blurred = false,
@@ -236,6 +237,7 @@ options[] = {
   {"SearchCurrentColour", OPT_COLOUR, offcfg(search_current_colour)},
   {"ThemeFile", OPT_WSTRING, offcfg(theme_file)},
   {"Background", OPT_WSTRING, offcfg(background)},
+  {"BackgroundOpacity", OPT_INT, offcfg(background_opacity)},
   {"ColourScheme", OPT_STRING, offcfg(colour_scheme)},
   {"Transparency", OPT_TRANS, offcfg(transparency)},
 #ifdef support_blurred

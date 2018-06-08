@@ -599,7 +599,7 @@ foreground_pid()
   return (pty_fd >= 0) ? tcgetpgrp(pty_fd) : 0;
 }
 
-char *
+static char *
 foreground_cwd()
 {
   // if working dir is communicated interactively, use it
