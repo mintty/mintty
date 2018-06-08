@@ -335,6 +335,24 @@ win_open(wstring wpath)
   else {
     // Need to convert POSIX path to Windows first
     if (support_wsl) {
+      // First, we need to replicate some of the handling of relative paths 
+      // as implemented in child_conv_path,
+      // because the dewsl functionality would actually go in between 
+      // the workflow of child_conv_path.
+      // We cannot determine the WSL foreground process and its 
+      // current directory, so we can only consider the working directory 
+      // explicitly communicated via the OSC 7 escape sequence here.
+      if (*wpath != '/' && 0 != wcsncmp(wpath, W("~/"), 2)) {
+        if (child_dir && *child_dir) {
+          wchar * cd = cs__mbstowcs(child_dir);
+          cd = renewn(cd, wcslen(cd) + wcslen(wpath) + 2);
+          cd[wcslen(cd)] = '/';
+          wcscpy(&cd[wcslen(cd) + 1], wpath);
+          delete(wpath);
+          wpath = cd;
+        }
+      }
+
       wpath = dewsl((wchar *)wpath);
     }
     wstring conv_wpath = child_conv_path(wpath);

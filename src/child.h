@@ -4,6 +4,7 @@
 #include <termios.h>
 
 extern bool clone_size_token;
+extern string child_dir;
 
 extern void child_update_charset(void);
 extern void child_create(char * argv[], struct winsize * winp);

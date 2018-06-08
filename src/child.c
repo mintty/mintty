@@ -37,7 +37,7 @@ int forkpty(int *, char *, struct termios *, struct winsize *);
 
 bool clone_size_token = true;
 
-static string child_dir = null;
+string child_dir = null;
 
 static pid_t pid;
 static bool killed;
