@@ -420,13 +420,17 @@ selected pathnames, also embedding quote marks are considered.
 A relative pathname is interpreted as relative to the current working 
 directory of the terminal foreground process if that can be determined, 
 overridden by the working directory interactively communicated by the 
-respective control sequence.
+respective control sequence (OSC 7).
+
+\fINote:\fP While application mouse modes are enabled (as used by many 
+screen oriented applications), \fBCtrl+Shift+click\fP can be used to 
+override it.
 
 .TP
 \fBHovering files, directories and URLs\fP
 The file names and links subject to opening are indicated by underlining 
-when mouse-hovering over them (i.e. when moving the mouse while the 
-Control key is pressed). The colour used for hovering underlines 
+when mouse-hovering over them (i.e. when moving the mouse) while the 
+Control key is pressed. The colour used for hovering underlines 
 can be configured with \fBHoverColour\fP.
 
 .SS Font zoom
@@ -2195,9 +2199,9 @@ Examples:
 \fBMenu contents\fP
 These settings allow to customize the context menu as opened in various ways.
 .br
-\(en \fBMouse\fP (MenuMouse=b); the normal mouse-click context menu
+\(en \fBMouse\fP (MenuMouse=b); the normal mouse-right-click context menu
 .br
-\(en \fBCtrl+Mouse\fP (MenuCtrlMouse=e|ls); the Ctrl+mouse-click menu
+\(en \fBCtrl+Mouse\fP (MenuCtrlMouse=e|ls); the Ctrl+right-click menu
 .br
 \(en \fBMouse button 5\fP (MenuMouse5=ls); the mouse button 5 menu
 .br
