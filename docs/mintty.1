@@ -875,15 +875,15 @@ as #RRGGBB, rgb:RR/GG/BB or rgb:RRRR/GGGG/BBBB,
 cmy:C.C/M.M/Y.Y or cmyk:C.C/M.M/Y.Y/K.K can be used as well.
 Also X11 color names are supported.
 .br
-\(en \fBForeground\fP (ForegroundColour=191,191,191)
+\(en \fBForeground text colour\fP (ForegroundColour=191,191,191)
 .br
-\(en \fBBackground\fP (BackgroundColour=0,0,0)
+\(en \fBBackground colour\fP (BackgroundColour=0,0,0)
 .br
-\(en \fBCursor\fP (CursorColour=191,191,191)
+\(en \fBCursor colour\fP (CursorColour=191,191,191)
 .br
-\(en \fBUnderline, Strikeout, Overline\fP (UnderlineColour=-1)
+\(en \fBUnderline, Strikeout, Overline colour\fP (UnderlineColour=-1)
 .br
-\(en \fBCtrl+mouse-move hovering\fP (HoverColour=-1)
+\(en \fBCtrl+mouse-move hovering colour\fP (HoverColour=-1)
 
 \(en \fBTheme\fP (ThemeFile=): 
 The popup menu offers theme files as stored in a resource subdirectory 
@@ -1987,6 +1987,10 @@ the terminal size (optional prefix \fB_\fP to the filename),
 or as a tiled background texture (prefix \fB*\fP to the filename).
 The background can be changed with an OSC 11 escape sequence, using 
 a filename prefixed with either \fB_\fP or \fB*\fP instead of a colour.
+
+If the background filename is followed by a comma and a number between 1 and 254, 
+the background image will be dimmed towards the background colour;
+with a value of 255, the alpha transparency values of the image will be used.
 
 .TP
 \fBScrollback search bar\fP (SearchBar=)
