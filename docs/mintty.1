@@ -403,6 +403,9 @@ Shell quoting is added to file names that contain spaces or special characters.
 Selection highlighting is cleared on input by default. This can be disabled
 with option \fBClearSelectionOnInput=false\fP.
 
+The current selection size can optionally been indicated with a popup, 
+enabled with option \fBSelectionShowSize\fP.
+
 .SS Drag & drop
 
 Text, files and directories can be dropped into the mintty window.
@@ -1702,6 +1705,11 @@ options, which means they can only be set in config files or using the
 .TP
 \fBClear selection highlighting on input\fP (ClearSelectionOnInput=true)
 When this is disabled, keyboard input or pasting does not clear selection highlighting.
+
+.TP
+\fBSelection size indication\fP (SelectionShowSize=0)
+The current selection size can optionally been indicated with a popup, 
+with a value between 1 and 12, setting the popup position by clock hour.
 
 .TP
 \fBSingle-dash long options\fP (ShortLongOpts=false)

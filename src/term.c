@@ -65,7 +65,7 @@ tblink_cb(void)
 {
   term.tblinker = !term.tblinker;
   term_schedule_tblink();
-  win_update();
+  win_update(false);
 }
 
 static void
@@ -82,7 +82,7 @@ tblink2_cb(void)
 {
   term.tblinker2 = !term.tblinker2;
   term_schedule_tblink2();
-  win_update();
+  win_update(false);
 }
 
 static void
@@ -102,7 +102,7 @@ cblink_cb(void)
 {
   term.cblinker = !term.cblinker;
   term_schedule_cblink();
-  win_update();
+  win_update(false);
 }
 
 void
@@ -118,7 +118,7 @@ static void
 vbell_cb(void)
 {
   term.in_vbell = false;
-  win_update();
+  win_update(false);
 }
 
 void
@@ -289,7 +289,7 @@ show_screen(bool other_screen, bool flip)
     term_schedule_cblink();
   }
 
-  win_update();
+  win_update(false);
 }
 
 /* Return to active screen and reset scrollback */
@@ -2371,7 +2371,7 @@ term_scroll(int rel, int where)
     term.disptop = sbtop;
   if (term.disptop > 0)
     term.disptop = 0;
-  win_update();
+  win_update(false);
 
   if (do_schedule_update) {
     win_schedule_update();
@@ -2421,6 +2421,6 @@ term_hide_cursor(void)
 {
   if (term.cursor_on) {
     term.cursor_on = false;
-    win_update();
+    win_update(false);
   }
 }

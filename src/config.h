@@ -174,6 +174,7 @@ typedef struct {
   wstring sixel_clip_char;
   bool short_long_opts;
   bool bold_as_special;
+  int selection_show_size;
   // Legacy
   bool use_system_colours;
   bool old_bold;

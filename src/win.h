@@ -19,7 +19,7 @@ extern void exit_mintty(void);
 extern void report_pos(void);
 extern void win_reconfig(void);
 
-extern void win_update(void);
+extern void win_update(bool update_sel_tip);
 extern void win_schedule_update(void);
 extern void do_update(void);
 

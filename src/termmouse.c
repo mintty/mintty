@@ -445,7 +445,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
         term.sel_rect = false;
         term.sel_start = term.sel_end = term.sel_anchor = p;
         sel_spread();
-        win_update();
+        win_update(true);
       }
     }
     else if (b == MBT_MIDDLE && mca == MC_VOID) {
@@ -469,7 +469,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
         sel_spread();
       }
       win_capture_mouse();
-      win_update();
+      win_update(true);
     }
   }
 }
@@ -486,7 +486,7 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
       term_open();
       term.selected = false;
       term.hovering = false;
-      win_update();
+      win_update(true);
     when MS_SEL_CHAR or MS_SEL_WORD or MS_SEL_LINE: {
       // Finish selection.
       if (term.selected && cfg.copy_on_select)
@@ -562,7 +562,7 @@ sel_scroll_cb(void)
   if (term_selecting() && term.sel_scroll) {
     term_scroll(0, term.sel_scroll);
     sel_drag(get_selpoint(term.sel_pos));
-    win_update();
+    win_update(true);
     win_set_timer(sel_scroll_cb, 125);
   }
 }
@@ -584,12 +584,12 @@ term_mouse_move(mod_keys mods, pos p)
         bp = (pos){.y = p.y - 1, .x = term.cols - 1};
     }
     sel_drag(get_selpoint(bp));
-    win_update();
+    win_update(true);
   }
   else if (term.mouse_state == MS_OPENING) {
     term.mouse_state = 0;
     term.selected = false;
-    win_update();
+    win_update(true);
   }
   else if (term.mouse_state > 0) {
     if (term.mouse_mode >= MM_BTN_EVENT)
@@ -605,7 +605,7 @@ term_mouse_move(mod_keys mods, pos p)
     term.hover_start = term.hover_end = p;
     if (!hover_spread()) {
       term.hovering = true;
-      win_update();
+      win_update(true);
     }
     else
       term.hovering = false;

@@ -174,6 +174,7 @@ const config default_cfg = {
   .use_system_colours = false,
   .short_long_opts = false,
   .bold_as_special = false,
+  .selection_show_size = false,
   .old_bold = false,
   .ime_cursor_colour = DEFAULT_COLOUR,
   .ansi_colours = {
@@ -393,6 +394,7 @@ options[] = {
   {"OldBold", OPT_BOOL, offcfg(old_bold)},
   {"ShortLongOpts", OPT_BOOL, offcfg(short_long_opts)},
   {"BoldAsRainbowSparkles", OPT_BOOL, offcfg(bold_as_special)},
+  {"SelectionShowSize", OPT_INT, offcfg(selection_show_size)},
 
   // ANSI colours
   {"Black", OPT_COLOUR, offcfg(ansi_colours[BLACK_I])},

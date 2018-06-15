@@ -1131,14 +1131,82 @@ do_update(void)
   win_set_timer(do_update, 16);
 }
 
+static void
+sel_update(bool update_sel_tip)
+{
+  static bool selection_tip_active = false;
+  //printf("sel_update tok %d sel %d act %d\n", tip_token, term.selected, selection_tip_active);
+  if (term.selected && update_sel_tip) {
+    int cols, rows;
+    if (term.sel_rect) {
+      rows = abs(term.sel_end.y - term.sel_start.y) + 1;
+      cols = abs(term.sel_end.x - term.sel_start.x);
+    }
+    else {
+      rows = term.sel_end.y - term.sel_start.y + 1;
+      if (rows == 1)
+        cols = term.sel_end.x - term.sel_start.x;
+      else
+        cols = term.cols;
+    }
+    RECT wr;
+    GetWindowRect(wnd, &wr);
+    int x = wr.left
+          + PADDING + last_pos.x * cell_width;
+    int y = wr.top + GetSystemMetrics(SM_CYCAPTION)
+          + PADDING + last_pos.y * cell_height;
+#ifdef debug_selection_show_size 
+    cfg.selection_show_size = cfg.selection_show_size % 12 + 1;
+#endif
+    int w = 15, h = 18;
+    int dx = 0, dy = 0;
+    switch (cfg.selection_show_size) {
+      when  1: dx += cell_width + w / 4;
+               dy -= h * 2 / 3;
+      when  2: dx += cell_width + w / 3;
+               dy += cell_height / 3 - h / 2;
+      when  3: dx += cell_width + w / 2;
+               dy += cell_height / 2 - h / 3;
+      when  4: dx += cell_width + w / 3;
+               dy += cell_height * 2 / 3;
+      when  5: dx += cell_width + w / 4;
+               dy += cell_height;
+      when  6: dx += cell_width / 2 - w / 2;
+               dy += cell_height + h / 3;
+      when  7: dx -= w + w / 4;
+               dy += cell_height;
+      when  8: dx -= w + w / 3;
+               dy += cell_height * 2 / 3;
+      when  9: dx -= w + w / 2;
+               dy += cell_height / 2 - h / 3;
+      when 10: dx -= w + w / 3;
+               dy += cell_height / 3 - h / 2;
+      when 11: dx -= w + w / 4;
+               dy -= h * 2 / 3;
+      when 12: dx += cell_width / 2 - w / 2;
+               dy -= h;
+      otherwise: return;
+    }
+    win_show_tip(x + dx, y + dy, cols, rows);
+    selection_tip_active = true;
+    //printf("selection_show_size %d -> %d %d\n", cfg.selection_show_size, dx, dy);
+  }
+  else if (!term.selected && selection_tip_active) {
+    win_destroy_tip();
+    selection_tip_active = false;
+  }
+}
+
 void
-win_update(void)
+win_update(bool update_sel_tip)
 {
   trace_resize(("----- win_update\n"));
   if (update_state == UPDATE_IDLE)
     do_update();
   else
     update_state = UPDATE_PENDING;
+
+  sel_update(update_sel_tip);
 }
 
 void
@@ -1210,7 +1278,7 @@ win_set_ime_open(bool open)
   if (open != ime_open) {
     ime_open = open;
     term.cursor_invalid = true;
-    win_update();
+    win_update(false);
   }
 }
 

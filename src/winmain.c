@@ -2070,8 +2070,8 @@ static struct {
         when IDM_TOGLOG: toggle_logging();
         when IDM_TOGCHARINFO: toggle_charinfo();
         when IDM_PASTE: win_paste();
-        when IDM_SELALL: term_select_all(); win_update();
-        when IDM_RESET: winimgs_clear(); term_reset(true); win_update();
+        when IDM_SELALL: term_select_all(); win_update(false);
+        when IDM_RESET: winimgs_clear(); term_reset(true); win_update(false);
         when IDM_DEFSIZE:
           default_size();
         when IDM_DEFSIZE_ZOOM:
@@ -2183,7 +2183,7 @@ static struct {
         clipboard_token = false;
       else {
         term.selected = false;
-        win_update();
+        win_update(false);
       }
       return 0;
 
@@ -2278,7 +2278,7 @@ static struct {
       term_set_focus(true, false);
       CreateCaret(wnd, caretbm, 0, 0);
       //flash_taskbar(false);  /* stop; not needed when leaving search bar */
-      win_update();
+      win_update(false);
       ShowCaret(wnd);
       zoom_token = -4;
 
@@ -2286,7 +2286,7 @@ static struct {
       win_show_mouse();
       term_set_focus(false, false);
       DestroyCaret();
-      win_update();
+      win_update(false);
 
     when WM_INITMENU:
       // win_update_menus is already called before calling TrackPopupMenu

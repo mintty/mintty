@@ -731,8 +731,8 @@ translate_pos(int x, int y)
   };
 }
 
+pos last_pos = {-1, -1};
 static LPARAM last_lp = -1;
-static pos last_pos = {-1, -1};
 static int button_state = 0;
 
 bool click_focus_token = false;
@@ -936,7 +936,7 @@ cycle_pointer_style()
   cfg.cursor_type = (cfg.cursor_type + 1) % 3;
   term.cursor_invalid = true;
   term_schedule_cblink();
-  win_update();
+  win_update(false);
 }
 
 
@@ -1942,7 +1942,7 @@ win_key_up(WPARAM wp, LPARAM unused(lp))
 
   if (key == VK_CONTROL && term.hovering) {
     term.hovering = false;
-    win_update();
+    win_update(false);
   }
 
   if (wp != VK_MENU)
