@@ -317,6 +317,9 @@ _wm.t:	# Windows Message names, only for debugging
 #		{0x0000, "WM_NULL"},
 	sed -e 's/^#define \(WM_[^ ]*\) *\(0x[0-9A-Fa-f]*\)$$/  {\2, "\1"},/' -e t -e d /usr/include/w32api/winuser.h | tr 'abcdef' 'ABCDEF' > _wm.t
 	echo '  {0x02E0, "WM_DPICHANGED"},' >> _wm.t
+	echo '  {0x02E2, "WM_DPICHANGED_BEFOREPARENT"},' >> _wm.t
+	echo '  {0x02E3, "WM_DPICHANGED_AFTERPARENT"},' >> _wm.t
+	echo '  {0x02E4, "WM_GETDPISCALEDSIZE"},' >> _wm.t
 	# or, with include file copied from Windows SDK:
 	#sed -e 's/^#define \(WM_[^ ]*\) *\(0x[0-9A-Fa-f]*\)$$/  {\2, "\1"},/' -e t -e d etc/WinUser.h | tr 'abcdef' 'ABCDEF' > _wm.t
 
