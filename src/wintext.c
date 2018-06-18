@@ -867,12 +867,14 @@ static struct charnameentry {
 } * charnametable = null;
 static int charnametable_len = 0;
 static int charnametable_alloced = 0;
+static bool charnametable_init = false;
 
 static void
 init_charnametable()
 {
-  if (charnametable)
+  if (charnametable_init)
     return;
+  charnametable_init = true;
 
   void add_charname(uint cc, char * cn) {
     if (charnametable_len >= charnametable_alloced) {
