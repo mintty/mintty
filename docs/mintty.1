@@ -278,6 +278,11 @@ Implies \fB--wsl -o Locale=C -o Charset=UTF-8\fP, \fB--rootfs=\fP...,
 and \fB--icon=\fP... if a respective icon file exists for the distribution.
 
 .TP
+\fB--WSLmode\fP \fIWSL DISTRIBUTION NAME\fP
+Setup a WSL session like \fB--WSL\fP but do not actually launch wsl 
+which must be achieved with explicit setup of a suitable gateway.
+
+.TP
 \fB--rootfs\fP \fIROOTFOLDER\fP
 Provide the root filesystem folder to adjust path conversion properly 
 for the respective WSL installation.

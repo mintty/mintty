@@ -110,6 +110,7 @@ static bool prevent_pinning = false;
 bool support_wsl = false;
 wstring wsl_basepath = W("");
 static char * wsl_guid = 0;
+static bool wsl_launch = false;
 static bool start_home = false;
 
 
@@ -3353,6 +3354,7 @@ opts[] = {
   {"wsl",        no_argument,       0, ''},  // short option not enabled
 #if CYGWIN_VERSION_API_MINOR >= 74
   {"WSL",        optional_argument, 0, ''},  // short option not enabled
+  {"WSLmode",    optional_argument, 0, ''},  // short option not enabled
 #endif
   {"rootfs",     required_argument, 0, ''},  // short option not enabled
   {"dir~",       no_argument,       0, '~'},
@@ -3438,6 +3440,8 @@ main(int argc, char *argv[])
     int err = select_WSL(exearg);
     if (err)
       option_error(__("WSL distribution '%s' not found"), exearg ?: _("(Default)"), err);
+    else
+      wsl_launch = true;
   }
 #endif
 
@@ -3523,6 +3527,13 @@ main(int argc, char *argv[])
       when '': wsl_basepath = path_posix_to_win_w(optarg);
 #if CYGWIN_VERSION_API_MINOR >= 74
       when '': {
+        int err = select_WSL(optarg);
+        if (err)
+          option_error(__("WSL distribution '%s' not found"), optarg ?: _("(Default)"), err);
+        else
+          wsl_launch = true;
+      }
+      when '': {
         int err = select_WSL(optarg);
         if (err)
           option_error(__("WSL distribution '%s' not found"), optarg ?: _("(Default)"), err);
@@ -3817,7 +3828,7 @@ main(int argc, char *argv[])
 
   // Work out what to execute.
   argv += optind;
-  if (wsl_guid) {
+  if (wsl_guid && wsl_launch) {
 #define dont_debug_wsl
     cmd = "/bin/wslbridge";
     argc -= optind;
