@@ -1804,9 +1804,15 @@ term_paint(void)
             uint em = *(uint *)ee;
             d->attr.truefg = em;
 
-            // refresh cached copy
-            tattr = d->attr;
-            // inhibit subsequent emoji sequence components
+            // refresh cached copy to avoid display delay
+            if (tattr.attr & TATTR_SELECTED) {
+              tattr = d->attr;
+              // need to propagate this to enable emoji highlighting
+              tattr.attr |= TATTR_SELECTED;
+            }
+            else
+              tattr = d->attr;
+            // inhibit rendering of subsequent emoji sequence components
             for (int i = 1; i < e.len; i++) {
               d[i].attr.attr &= ~ATTR_FGMASK;
               d[i].attr.attr |= TATTR_EMOJI;
@@ -2050,6 +2056,28 @@ term_paint(void)
         wchar esp[] = W("        ");
         if (elen) {
           if (!overlaying) {
+            if (newchars[x].attr.attr & TATTR_SELECTED) {
+              // here we handle background colour once more because
+              // somehow the selection highlighting information from above
+              // got lost in the chaos of chars[], newchars[], attr, tattr...
+              // some substantial revision might be good here, in theory...
+
+              // the main problem here is the reuse of truefg as an 
+              // emoji indicator; we have to make sure truefg isn't 
+              // used anymore for an emoji...
+              eattr.attr |= TATTR_SELECTED;
+              colour bg = eattr.attr & ATTR_REVERSE
+                          ? win_get_colour(SEL_TEXT_COLOUR_I)
+                          : win_get_colour(SEL_COLOUR_I);
+              if (bg == (colour)-1)
+                bg = eattr.attr & ATTR_REVERSE
+                          ? win_get_colour(BG_COLOUR_I)
+                          : win_get_colour(FG_COLOUR_I);
+              eattr.truebg = bg;
+              eattr.attr = (eattr.attr & ~ATTR_BGMASK) | (TRUE_COLOUR << ATTR_BGSHIFT);
+              eattr.attr &= ~ATTR_REVERSE;
+            }
+
             win_text(x, y, esp, elen, eattr, textattr, lattr | LATTR_DISP1, has_rtl);
             flush_text();
           }
