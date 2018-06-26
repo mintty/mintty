@@ -170,7 +170,7 @@ $(bin): $(bins)
 WGET=curl -R -O --connect-timeout 55
 WGET+=-z $@
 
-rgb:	# /usr/share/X11/rgb.txt # X11 color names
+rgb.t:	# /usr/share/X11/rgb.txt # X11 color names
 #	255 250 250		snow
 #	->
 #		{255, 250, 250, "snow"},

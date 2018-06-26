@@ -14,6 +14,8 @@ Character attributes and rendering
   * DECRQSS uses SGR sub-parameters for colour specifications (xterm 331).
   * SGR 4:1...4:5 for underline styles solid, double, wavy, dotted, dashed.
   * SGR 58/59 for underline colour (kitty, iTerm2).
+  * Fixed (almost) selection highlighting of emojis.
+  * Drawing Unicode Block Elements which are broken in many fonts (#264).
 
 Window control
   * DECSET 30 to enable/disable outer scrollbar (like xterm) (#159, ~#262).
@@ -51,13 +53,15 @@ Themes management
   * Option `mintheme -d -q` for decimal colour format (#718).
   * Enable `mintheme` tool on WSL.
   * Options `mintheme -p` and `mintheme -t` to set background picture or texture.
+  * Options `mintheme -s` and `mintheme -S` for theme visualization and comparison.
 
 Other
-  * Updated Emoji data according to Unicode.org.
+  * Updated Emoji data and built-in width data to Unicode 11.0.
   * Enabled OSC 7 current directory injection for Ctrl+click in WSL (mintty/wsltty#104).
   * Reporting start error (exit status 255) (#745).
   * Changed start error exit code from 255 to 126 (#745).
   * Fixed slowdown of Character Info mode if Unicode data are not deployed.
+  * Option --WSLmode to tune behaviour for WSL distro but not launch (mintty/wsltty#99).
 
 ### 2.8.5 (14 Apr 2018) ###
 

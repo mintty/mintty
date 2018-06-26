@@ -342,7 +342,7 @@ win_open(wstring wpath)
       // We cannot determine the WSL foreground process and its 
       // current directory, so we can only consider the working directory 
       // explicitly communicated via the OSC 7 escape sequence here.
-      if (*wpath != '/' && 0 != wcsncmp(wpath, W("~/"), 2)) {
+      if (*wpath != '/' && wcsncmp(wpath, W("~/"), 2) != 0) {
         if (child_dir && *child_dir) {
           wchar * cd = cs__mbstowcs(child_dir);
           cd = renewn(cd, wcslen(cd) + wcslen(wpath) + 2);
