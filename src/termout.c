@@ -2399,12 +2399,12 @@ term_write(const char *buf, uint len)
                    [c - ' ' - 1];
               if (c <= 0x37) {
                 static uchar techdraw_code[23] = {
-                  0x80,                    // square root base
+                  0xE0,                    // square root base
                   0, 0, 0, 0, 0,
-                  0x88, 0x89, 0x8A, 0x8B,  // square bracket corners
+                  0xE8, 0xE9, 0xEA, 0xEB,  // square bracket corners
                   0, 0, 0, 0,              // curly bracket hooks
                   0, 0,                    // curly bracket middle pieces
-                  0x81, 0x82, 0, 0, 0x85, 0x86, 0x87  // sum segments
+                  0xE1, 0xE2, 0, 0, 0xE5, 0xE6, 0xE7  // sum segments
                 };
                 uchar dispcode = techdraw_code[c - 0x21];
                 term.curs.attr.attr |= ((cattrflags)dispcode) << ATTR_GRAPH_SHIFT;
@@ -2443,6 +2443,13 @@ term_write(const char *buf, uint len)
             }
           otherwise: ;
         }
+
+        if (wc >= 0x2580 && wc <= 0x259F) {
+          // Block Elements (U+2580-U+259F)
+          // ▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟
+          term.curs.attr.attr |= ((cattrflags)(wc & 0xFF)) << ATTR_GRAPH_SHIFT;
+        }
+
         write_char(wc, width);
         term.curs.attr.attr = asav;
       } // end term_write switch (term.state) when NORMAL

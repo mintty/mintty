@@ -1477,9 +1477,16 @@ load_background_image_brush(HDC dc, wstring fn)
         hbm = hbm1;
       }
       else {
+#ifdef fill_bg_with_rectangle
+#warning missing border HPEN
         HBRUSH oldbrush = SelectObject(dc1, CreateSolidBrush(win_get_colour(BG_COLOUR_I)));
         Rectangle(dc1, 0, 0, w, h);
         DeleteObject(SelectObject(dc1, oldbrush));
+#else
+        HBRUSH br = CreateSolidBrush(win_get_colour(BG_COLOUR_I));
+        FillRect(dc1, &(RECT){0, 0, w, h}, br);
+        DeleteObject(br);
+#endif
 
         BYTE alphafmt = alpha == 255 ? AC_SRC_ALPHA : 0;
         BLENDFUNCTION bf = (BLENDFUNCTION) {AC_SRC_OVER, 0, alpha, alphafmt};
@@ -2423,7 +2430,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     }
   }
 
-  if (graph && !(graph & 0x80)) {
+  if (graph && graph < 0xE0) {
     for (int i = 0; i < len; i++)
       text[i] = ' ';
   }
@@ -2698,15 +2705,15 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   }
 
  /* DEC Tech adjustments */
-  if (graph & 0x80) {  // DEC Technical rendering to be fixed
-    if ((graph & ~1) == 0x88)  // left square bracket corners
+  if (graph >= 0xE0) {  // DEC Technical rendering to be fixed
+    if ((graph & ~1) == 0xE8)  // left square bracket corners
       xt += line_width + 1;
-    else if ((graph & ~1) == 0x8A)  // right square bracket corners
+    else if ((graph & ~1) == 0xEA)  // right square bracket corners
       xt -= line_width + 1;
-    else if (graph == 0x87)  // middle angle: don't display ╳, draw (below)
+    else if (graph == 0xE7)  // middle angle: don't display ╳, draw (below)
       for (int i = 0; i < len; i++)
         text[i] = ' ';
-    else if (graph == 0x80)  // square root base: rather draw (partially)
+    else if (graph == 0xE0)  // square root base: rather draw (partially)
       for (int i = 0; i < len; i++)
         text[i] = 0x2502;
   }
@@ -2805,7 +2812,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
 #define DRAW_DOWN  0x4
 #endif
 
-  if (graph & 0x80) {  // DEC Technical characters to be fixed
+  if (graph >= 0xE0) {  // DEC Technical characters to be fixed
     if (graph & 0x08) {
       // square bracket corners already repositioned above
     }
@@ -2835,11 +2842,11 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
       }
       int xl = x + xoff;
       int xr = xl;
-      if (graph <= 0x82) {  // diagonals
+      if (graph <= 0xE2) {  // diagonals
         sum_width ++;
         xl += line_width - 1;
         xr = x + char_width - 1;
-        if (graph == 0x82) {
+        if (graph == 0xE2) {
           int xb = xl;
           xl = xr;
           xr = xb;
@@ -2856,10 +2863,10 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
         yb -= 1;
       }
       // special adjustments:
-      if (graph == 0x80) {  // square root base
+      if (graph == 0xE0) {  // square root base
         xl --;
       }
-      else if (graph == 0x87) {  // sum middle right angle
+      else if (graph == 0xE7) {  // sum middle right angle
       }
       // draw:
       //HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, sum_width, fg));
@@ -2867,12 +2874,12 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
       sum_width = 1;  // now handled by pen width
       for (int i = 0; i < len; i++) {
         for (int l = 0; l < sum_width; l++) {
-          if (graph == 0x80) {  // square root base
+          if (graph == 0xE0) {  // square root base
             MoveToEx(dc, xl + l, ycellb, null);
             LineTo(dc, xl - (xl - x0) / 2 + l, yb + l);
             LineTo(dc, x0, yb + l);
           }
-          else if (graph == 0x87) {  // sum middle right angle
+          else if (graph == 0xE7) {  // sum middle right angle
             MoveToEx(dc, x0 + l, y0, null);
             LineTo(dc, xl + l, yt);
             LineTo(dc, x0 + l, yb);
@@ -2888,6 +2895,142 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
       }
       oldpen = SelectObject(dc, oldpen);
       DeleteObject(oldpen);
+    }
+  }
+  else if (graph >= 0x80) {  // Unicode Block Elements
+    // Block Elements (U+2580-U+259F)
+    // ▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟
+    int char_height = cell_height;
+    if (lattr >= LATTR_TOP)
+      char_height *= 2;
+    int y0 = y;
+    if (lattr == LATTR_BOT)
+      y0 -= cell_height;
+    int xi = x;
+    //printf("x %d y %d w %d h %d cw %d \n", x, y, cell_width, cell_height, char_width);
+
+    /*
+       Mix fg at mix/8 with bg.
+     */
+    colour colmix(char mix)
+    {
+      uint r = (red(fg) * mix + red(bg) * (8 - mix)) / 8;
+      uint g = (green(fg) * mix + green(bg) * (8 - mix)) / 8;
+      uint b = (blue(fg) * mix + blue(bg) * (8 - mix)) / 8;
+      return RGB(r, g, b);
+    }
+    void linedraw(char l, char t, char r, char b, colour c)
+    {
+      HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, c));
+      //printf("line %d %d %d %d\n", xi + l, y0 + t, xi + r, y0 + b);
+      MoveToEx(dc, xi + l, y0 + t, null);
+      LineTo(dc, xi + r, y0 + b);
+      DeleteObject(SelectObject(dc, oldpen));
+    }
+    void rectdraw(char l, char t, char r, char b, char sol, colour c)
+    {
+      // solid 0b1111 top right bottom left
+      int cl = char_width * l;
+      int ct = char_height * t;
+      int cr = char_width * r;
+      int cb = char_height * b;
+      int dl = cl % 8;
+      int dt = ct % 8;
+      int dr = cr % 8;
+      int db = cb % 8;
+      cl /= 8;
+      ct /= 8;
+      cr /= 8;
+      cb /= 8;
+      //printf("25%02X <%d%%%d %d%%%d %d%%%d %d%%%d\n", graph, cl, dl, ct, dt, cr, dr, cb, db);
+      int cl_ = cl;
+      int ct_ = ct;
+      int cr_ = cr;
+      int cb_ = cb;
+      if (dl) {
+        if (sol & 0x1)
+          dl = 0;
+        else
+          cl_++;
+      }
+      if (dt) {
+        if (sol & 0x8)
+          dt = 0;
+        else
+          ct_++;
+      }
+      if (dr) {
+        if (sol & 0x4) {
+          dr = 0;
+          cr_++;
+        }
+      }
+      if (db) {
+        if (sol & 0x2) {
+          db = 0;
+          cb_++;
+        }
+      }
+      //printf("25%02X >%d%%%d %d%%%d %d%%%d %d%%%d\n", graph, cl, dl, ct, dt, cr, dr, cb, db);
+      //printf("Rect %d %d %d %d\n", xi + cl_, y0 + ct_, xi + cr_, y0 + cb_);
+      HBRUSH br = CreateSolidBrush(c);
+      FillRect(dc, &(RECT){xi + cl_, y0 + ct_, xi + cr_, y0 + cb_}, br);
+      DeleteObject(br);
+      if (dl)
+        linedraw(cl, ct, cl, cb, colmix(8 - dl));
+      if (dt)
+        linedraw(cl, ct, cr, ct, colmix(8 - dt));
+      if (dr)
+        linedraw(cr, ct, cr, cb, colmix(dr));
+      if (db)
+        linedraw(cl, cb, cr, cb, colmix(db));
+    }
+    inline void rect(char l, char t, char r, char b)
+    {
+      rectdraw(l, t, r, b, 0, fg);
+    }
+    inline void rectsolcol(char l, char t, char r, char b, char mix)
+    {
+      rectdraw(l, t, r, b, 0xF, colmix(mix));
+    }
+    inline void rectsolid(char l, char t, char r, char b, char sol)
+    {
+      rectdraw(l, t, r, b, sol, fg);
+    }
+
+    for (int i = 0; i < ulen; i++) {
+      switch (graph) {
+        when 0x80: rect(0, 0, 8, 4); // UPPER HALF BLOCK
+        when 0x81 ... 0x88: rect(0, 0x88 - graph, 8, 8); // LOWER EIGHTHS
+        when 0x89 ... 0x8F: rect(0, 0, 0x90 - graph, 8); // LEFT EIGHTHS
+        when 0x90: rect(4, 0, 8, 8); // RIGHT HALF BLOCK
+        when 0x91: rectsolcol(0, 0, 8, 8, 2);
+        when 0x92: rectsolcol(0, 0, 8, 8, 3);
+        when 0x93: rectsolcol(0, 0, 8, 8, 5);
+        when 0x94: rect(0, 0, 8, 1); // UPPER ONE EIGHTH BLOCK
+        when 0x95: rect(7, 0, 8, 8); // RIGHT ONE EIGHTH BLOCK
+        when 0x96: rect(0, 4, 4, 8);
+        when 0x97: rect(4, 4, 8, 8);
+        when 0x98: rect(0, 0, 4, 4);
+        // solid 0b1111 top right bottom left
+        when 0x99: rectsolid(0, 4, 4, 8, 0xF);
+                   rectsolid(0, 0, 4, 4, 0xB);
+                   rectsolid(4, 4, 8, 8, 0x7);
+        when 0x9A: rect(0, 0, 4, 4); rect(4, 4, 8, 8);
+        when 0x9B: rectsolid(0, 0, 4, 4, 0xF);
+                   rectsolid(4, 0, 8, 4, 0xD);
+                   rectsolid(0, 4, 4, 8, 0xB);
+        when 0x9C: rectsolid(4, 0, 8, 4, 0xF);
+                   rectsolid(0, 0, 4, 4, 0xD);
+                   rectsolid(4, 4, 8, 8, 0xE);
+        when 0x9D: rect(4, 0, 8, 4);
+        when 0x9E: rect(4, 0, 8, 4); rect(0, 4, 4, 8);
+        when 0x9F: rectsolid(4, 4, 8, 8, 0xF);
+                   rectsolid(4, 0, 8, 4, 0xE);
+                   rectsolid(0, 4, 4, 8, 0x7);
+      }
+
+      xi += char_width;
     }
   }
   else if (graph >> 4) {  // VT100 horizontal lines ⎺⎻(─)⎼⎽
