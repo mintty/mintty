@@ -3007,7 +3007,6 @@ select_WSL(char * wsl)
   wstring wsl_icon;
   // set --rootfs implicitly
   int err = getlxssinfo(wslname, &wsl_guid, &wsl_basepath, &wsl_icon);
-  free(wslname);
   if (!err) {
     // set --icon if WSL specific icon exists
     if (wsl_icon) {
@@ -3020,7 +3019,10 @@ select_WSL(char * wsl)
     support_wsl = true;
     set_arg_option("Locale", strdup("C"));
     set_arg_option("Charset", strdup("UTF-8"));
+    if (!*cfg.app_id)
+      set_arg_option("AppID", asform("%s.%s", APPNAME, wsl ?: "WSL"));
   }
+  free(wslname);
   return err;
 }
 
