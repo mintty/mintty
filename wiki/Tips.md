@@ -678,7 +678,7 @@ emoji style selectors and emoji presentation forms.
 For characters with default text style but optional emoji graphics,
 emoji style can be selected with the “framed” or “encircled” text attribute.
 
-Note that it may be useful to set `Charwidth=unicode` in addition.
+Note that up to cygwin 2.10.0, it may be useful to set `Charwidth=unicode` in addition.
 
 Emojis are displayed in the rectangular character cell group determined 
 by the cumulated width of the emoji sequence characters. The option 
