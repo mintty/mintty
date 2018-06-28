@@ -74,7 +74,8 @@ in the config file, like:
 For a standalone mintty deployment as a WSL terminal, also providing 
 desktop and start menu shortcuts, command line launch scripts, and 
 optional Windows Explorer integration, install 
-[wsltty](https://github.com/mintty/wsltty).
+[wsltty](https://github.com/mintty/wsltty),
+using either the wsltty installer, a Chocolatey package, or a Windows Appx package.
 
 ### Manual setup of WSL terminal ###
 
