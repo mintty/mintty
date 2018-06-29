@@ -460,6 +460,8 @@ win_update_menus(void)
   );
 
   uint scrollbar_checked = term.show_scrollbar ? MF_CHECKED : MF_UNCHECKED;
+  if (!cfg.scrollbar)
+    scrollbar_checked |= MF_GRAYED;
   //__ Context menu:
   modify_menu(ctxmenu, IDM_SCROLLBAR, scrollbar_checked, _W("Scroll&bar"),
     null
