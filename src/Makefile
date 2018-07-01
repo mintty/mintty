@@ -186,7 +186,8 @@ clean-unicode:
 combining.t:	# UnicodeData.txt Blocks.txt
 	uniset +cat=Me +cat=Mn +cat=Cf -00AD +1160-11FF +200B +D7B0-D7C6 +D7CB-D7FB c > combining.t
 
-ambiguous.t:	WIDTH-A # UnicodeData.txt Blocks.txt
+ambiguous.t:	# WIDTH-A # UnicodeData.txt Blocks.txt
+	sh ./mkwidthA
 	uniset +WIDTH-A -cat=Me -cat=Mn -cat=Cf c > ambiguous.t
 
 combdouble=$(shell sed -e "s,^\([^;]*\);.*Mn;23[34];.*, +\1," -e t -e d UnicodeData.txt )
