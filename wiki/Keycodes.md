@@ -85,7 +85,7 @@ The keys here send the usual control characters, but there are a few mintty-spec
 
 [Pause and Break](http://en.wikipedia.org/wiki/Pause_key) usually share a key, whereby Ctrl has to be pressed to get the Break function.
 
-See the [previous section](#Ctrl.md) for how Unicode codepoints such as _U+009B_ are encoded.
+See the [previous section](Keycodes#ctrl) for how Unicode codepoints such as _U+009B_ are encoded.
 
 
 ## Modifier key encodings ##
@@ -126,7 +126,7 @@ Number and symbol key combinations that are not handled either by the Windows ke
 
 Cursor keycodes without modifier keys depend on whether "application cursor key mode" (controlled by the [DECCKM](http://vt100.net/docs/vt510-rm/DECCKM) sequence) is enabled. Application cursor mode is ignored if any modifier keys are down, and the modifier code is inserted into the keycode as shown.
 
-By default, the [Home](http://en.wikipedia.org/wiki/Home_key) and [End](http://en.wikipedia.org/wiki/End_key) keys are considered cursor keys. If VT220 keyboard mode is enabled, they are treated as [editing keys](Keycodes#Editing_keys.md) instead. See the next section for their keycodes in that case.
+By default, the [Home](http://en.wikipedia.org/wiki/Home_key) and [End](http://en.wikipedia.org/wiki/End_key) keys are considered cursor keys. If VT220 keyboard mode is enabled, they are treated as [editing keys](Keycodes#editing-keys) instead. See the next section for their keycodes in that case.
 
 | **Key**   | **plain** | **app**  | **modified**    |
 |:----------|:----------|:---------|:----------------|
@@ -151,7 +151,7 @@ There is no special application mode for the keys in the block that's usually ab
 | **Home**  | `^[[1~`   | `^[[1;`_m_`~`   |
 | **End**   | `^[[4~`   | `^[[4;`_m_`~`   |
 
-As mentioned in the [cursor keys](Keycodes#Cursor_keys.md) section, the Home and End keycodes shown here are only used if VT220 keyboard mode is enabled.
+As mentioned in the [cursor keys](Keycodes#cursor-keys) section, the Home and End keycodes shown here are only used if VT220 keyboard mode is enabled.
 
 
 ## Function keys ##
@@ -186,6 +186,6 @@ The numbers in the keycodes really are that irregular. Only twelve function keys
 
 ## Mousewheel ##
 
-In xterm [mouse tracking](http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#Mouse%20Tracking) modes, the mousewheel is treated is a pair of mouse buttons. However, the mousewheel can also be used for scrolling in applications such as **[less](http://www.greenwoodsoftware.com/less)** that do not support xterm mouse reporting but that do use the alternate screen. Under those circumstances, mousewheel events are encoded as cursor up/down and page up/down keys. See the sections on the [cursor keys](Keycodes#Cursor_keys.md) and [editing keys](Keycodes#Editing_keys.md) for details.
+In xterm [mouse tracking](http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#Mouse%20Tracking) modes, the mousewheel is treated is a pair of mouse buttons. However, the mousewheel can also be used for scrolling in applications such as **[less](http://www.greenwoodsoftware.com/less)** that do not support xterm mouse reporting but that do use the alternate screen. Under those circumstances, mousewheel events are encoded as cursor up/down and page up/down keys. See the sections on the [cursor keys](Keycodes#cursor-keys) and [editing keys](Keycodes#editing-keys) for details.
 
 The number of line up/down events sent per mousewheel notch depends on the relevant Windows setting on the _Wheel_ tab of the _Mouse_ control panel. Page up/down codes can be sent by holding down _Shift_ while scrolling. The Windows wheel setting can also be set to always scroll by a whole screen at a time.
