@@ -1,3 +1,5 @@
+### 2.9.0 (1 July 2018) ###
+
 Highlights (details see below)
   * Background image and texture support.
   * Enhanced multi-monitor DPI handling.
@@ -16,6 +18,7 @@ Character attributes and rendering
   * SGR 58/59 for underline colour (kitty, iTerm2).
   * Fixed (almost) selection highlighting of emojis.
   * Drawing Unicode Block Elements which are broken in many fonts (#264).
+  * Fixed initial bold as font suppression glitch (mintty/wsltty#103).
 
 Window control
   * DECSET 30 to enable/disable outer scrollbar (like xterm) (#159, ~#262).
@@ -30,7 +33,7 @@ Window layout
   * Background image or texture support (#18, #666).
 
 Multi-monitor support
-  * Integrate Windows DPI handling V2, avoiding fluttering (#774, #470, #492, ~#566, ~#547).
+  * Using Windows DPI handling V2, avoiding fluttering (#774, #470, #492, ~#566, ~#547).
 
 Text selection
   * Drag-and-drop selection after focus click enabled by combined cell and time distance (#717).
@@ -41,7 +44,7 @@ Text selection
 Window handling
   * Revised Ctrl+(Shift+)Tab window switching (#773).
   * Ctrl+Ctrl+(Shift+)Tab for window switching including iconized windows (#735).
-  * Enable Win+Shift move coupling of tab sets if SessionGeomSync ≥ 2 (#600).
+  * Win+Shift move coupling of tab sets if SessionGeomSync ≥ 2 (#600, #699).
 
 Configuration
   * CMY(K) colour specifications in OSC sequences and config file.
@@ -51,7 +54,7 @@ Configuration
 Themes management
   * Fixed syntax error in `mintheme` tool (#764).
   * Option `mintheme -d -q` for decimal colour format (#718).
-  * Enable `mintheme` tool on WSL.
+  * Supporting `mintheme` tool on WSL.
   * Options `mintheme -p` and `mintheme -t` to set background picture or texture.
   * Options `mintheme -s` and `mintheme -S` for theme visualization and comparison.
 
@@ -62,6 +65,7 @@ Other
   * Changed start error exit code from 255 to 126 (#745).
   * Fixed slowdown of Character Info mode if Unicode data are not deployed.
   * Option --WSLmode to tune behaviour for WSL distro but not launch (mintty/wsltty#99).
+  * Clarified additional configuration requirements for option TaskCommands in the manual.
 
 ### 2.8.5 (14 Apr 2018) ###
 
