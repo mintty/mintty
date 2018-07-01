@@ -76,6 +76,11 @@ These sequences can be used to hide or show the scrollbar, whereby the window si
 | `^[[?7766l`   | hide          |
 | `^[[?7766h`   | show          |
 
+Note: Mintty also supports the xterm-compatible sequences to hide or show 
+the scrollbar, which handle the scrollbar as "outer" to the terminal, 
+adding to the window width but keeping the terminal width unchanged 
+(except in full-screen mode).
+
 
 ## Shortcut override mode ##
 
