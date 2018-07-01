@@ -272,7 +272,26 @@ Finally, a couple of bindings for convenient searching of the command history. J
 ```
 
 
-## Mode-dependent cursor in vim ##
+## Keyboard not working as expected in certain applications (e.g. vim) ##
+
+If for example the PgUp and PgDn keys do not work in your editor, the reason 
+may be that in the mintty Options, the Terminal Type was set to "vt100" 
+and based on the resulting setting of the environment variable TERM, 
+the application expects other key sequences than mintty sends.
+(While mintty could be changed to send VT100 application keypad codes in 
+that case, the current behaviour is compatible with xterm.)
+
+### Shift+up/down for text selection in emacs ###
+
+The escape sequences for Shift+up/down are mapped to scroll-backward/forward 
+virtual keys by the xterm terminfo entry.
+Follow the advice in 
+[How to fix emacs shift-up key...](https://stackoverflow.com/questions/18689655/how-to-fix-emacs-shift-up-key-for-text-selection-in-mintty-on-cygwin/#18689656)
+to create a fixed terminfo entry that removes this mapping,
+or use a suitable alternative setting for the environment variable TERM, 
+for example `TERM=xterm-color`.
+
+### Mode-dependent cursor in vim ###
 
 Mintty supports control sequences for changing cursor style. These can be used to configure **[vim](http://www.vim.org/)** such that the cursor changes depending on mode. For example, with the following lines in _~/.vimrc_, vim will show a block cursor in normal mode and a line cursor in insert mode:
 
@@ -283,8 +302,7 @@ let &t_EI.="\e[1 q"
 let &t_te.="\e[0 q"
 ```
 
-
-## Avoiding escape timeout issues in vim ##
+### Avoiding escape timeout issues in vim ###
 
 It’s a historical flaw of Unix terminals that the keycode of the escape key, i.e. the escape character, also appears at the start of many other keycodes. This means that on seeing an escape character, an application cannot be sure whether to treat it as an escape key press or whether to expect more characters to complete a longer keycode.
 
@@ -304,16 +322,6 @@ Note that the last line causes vi-compatible behaviour to be used when pressing 
 ```
 noremap! <Esc>O[ <C-c>
 ```
-
-
-## Keyboard not working as expected in certain applications (e.g. vim) ##
-
-If for example the PgUp and PgDn keys do not work in your editor, the reason 
-may be that in the mintty Options, the Terminal Type was set to "vt100" 
-and based on the resulting setting of the environment variable TERM, 
-the application expects other key sequences than mintty sends.
-(While mintty could be changed to send VT100 application keypad codes in 
-that case, the current behaviour is compatible with xterm.)
 
 
 ## Using Ctrl+Tab to switch window pane in terminal multiplexers ##
