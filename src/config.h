@@ -68,7 +68,7 @@ typedef struct {
   bool show_hidden_fonts;
   char font_smoothing;
   char font_render;
-  char bold_as_font;    // 0 = false, 1 = true, -1 = undefined
+  bool bold_as_font;
   bool bold_as_colour;
   bool allow_blinking;
   string locale;
