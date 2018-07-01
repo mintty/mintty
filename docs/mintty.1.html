@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Wed Apr 11 18:08:27 2018 -->
+<!-- CreationDate: Sun Jul  1 16:34:19 2018 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -173,14 +173,11 @@ multiple icons.</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 About interaction problems of icon, shortcut, and the
-Windows taskbar: In a Windows desktop shortcut, to achieve
-consistent icon behaviour, the same icon should be specified
-in the shortcut properties (Change Icon...) and the mintty
-command line (Target:), or (beginning 2.2.3) no icon should
-be specified on the command line as mintty will then take
-the icon from the invoking shortcut, also resolving a
-leading Windows environment variable (like
-%SystemRoot%).</p>
+Windows taskbar: In a Windows desktop shortcut, it is
+suggested not to use this option in the Target command line,
+as mintty will detect and use the icon from the invoking
+shortcut (Change Icon...), also resolving a leading Windows
+environment variable (like %SystemRoot%).</p>
 
 <p style="margin-left:11%;"><b>-l</b>, <b>--log</b>
 <i>FILE</i>|<b>-</b></p>
@@ -298,7 +295,7 @@ Ctrl+Alt+click-drag.</p>
 normal</b>|<b>min</b>|<b>max</b>|<b>full</b>|<b>hide</b></p>
 
 <p style="margin-left:22%;">Set the initial window state:
-normal, minimised, maximised, full screen, or hidden.</p>
+normal, minimized, maximized, full screen, or hidden.</p>
 
 <p style="margin-left:11%;"><b>--class</b> <i>CLASS</i></p>
 
@@ -341,7 +338,7 @@ and size of the window when it exits. This can be used to
 manage last window positions and reopen mintty windows
 accordingly. Reporting mode is &quot;s&quot; or
 &quot;o&quot; to choose short or long option syntax for the
-restored (i.e. neither maximised nor minimised) geometry;
+restored (i.e. neither maximized nor minimized) geometry;
 min/max/fullscreen information is added.</p>
 
 <p style="margin-left:22%; margin-top: 1em">With value
@@ -408,6 +405,13 @@ by the Windows tool <b>wslconfig /l</b>. Implies <b>--wsl -o
 Locale=C -o Charset=UTF-8</b>, <b>--rootfs=</b>..., and
 <b>--icon=</b>... if a respective icon file exists for the
 distribution.</p>
+
+<p style="margin-left:11%;"><b>--WSLmode</b> <i>WSL
+DISTRIBUTION NAME</i></p>
+
+<p style="margin-left:22%;">Setup a WSL session like
+<b>--WSL</b> but do not actually launch wsl which must be
+achieved with explicit setup of a suitable gateway.</p>
 
 <p style="margin-left:11%;"><b>--rootfs</b>
 <i>ROOTFOLDER</i></p>
@@ -645,6 +649,10 @@ special characters.</p>
 highlighting is cleared on input by default. This can be
 disabled with option <b>ClearSelectionOnInput=false</b>.</p>
 
+<p style="margin-left:11%; margin-top: 1em">The current
+selection size can optionally been indicated with a popup,
+enabled with option <b>SelectionShowSize</b>.</p>
+
 <p style="margin-left:11%; margin-top: 1em"><b>Drag &amp;
 drop</b> <br>
 Text, files and directories can be dropped into the mintty
@@ -667,7 +675,19 @@ pathname is interpreted as relative to the current working
 directory of the terminal foreground process if that can be
 determined, overridden by the working directory
 interactively communicated by the respective control
-sequence.</p>
+sequence (OSC 7).</p>
+
+<p style="margin-left:11%; margin-top: 1em"><i>Note:</i>
+While application mouse modes are enabled (as used by many
+screen oriented applications), <b>Ctrl+Shift+click</b> can
+be used to override it. <b><br>
+Hovering files, directories and URLs</b></p>
+
+<p style="margin-left:22%;">The file names and links
+subject to opening are indicated by underlining when
+mouse-hovering over them (i.e. when moving the mouse) while
+the Control key is pressed. The colour used for hovering
+underlines can be configured with <b>HoverColour</b>.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Font
 zoom</b> <br>
@@ -784,8 +804,8 @@ past commands while editing a file.</p>
 <p style="margin-left:11%; margin-top: 1em"><b>Switching
 session</b> <br>
 The <b>Ctrl+Tab</b> and <b>Ctrl+Shift+Tab</b> shortcuts can
-be used to switch between mintty windows. Minimised windows
-are skipped.</p>
+be used to cycle through mintty windows. Minimized windows
+are skipped unless both <b>Ctrl</b> keys are used.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Virtual
 Tabs</b> <br>
@@ -917,8 +937,14 @@ different height/width factors, this is not a precise
 operation) <br>
 &ndash; <b>Alt+F12</b>: Flip screen <br>
 &ndash; <b>Alt+Space</b>: Window menu <br>
-&ndash; <b>Ctrl+Tab</b>: Next window <br>
-&ndash; <b>Ctrl+Shift+Tab</b>: Previous window <br>
+&ndash; <b>Ctrl+Tab</b>: Next visible window (as sorted by
+creation time) <br>
+&ndash; <b>Ctrl+Shift+Tab</b>: Previous visible window (as
+sorted by creation time) <br>
+&ndash; <b>Ctrl+Ctrl+Tab</b>: Next window (as sorted by
+creation time) <br>
+&ndash; <b>Ctrl+Ctrl+Shift+Tab</b>: Previous window (as
+sorted by creation time) <br>
 &ndash; <b>Ctrl+Alt+mouse-click/drag</b>: Move window</p>
 
 <p style="margin-left:22%; margin-top: 1em">Multi-monitor
@@ -1144,14 +1170,18 @@ In the settings (config file or command-line options),
 colours are represented as comma-separated RGB triples with
 decimal 8-bit values ranging from 0 to 255. X-style
 hexadecimal colour specifications such as #RRGGBB,
-rgb:RR/GG/BB or rgb:RRRR/GGGG/BBBB can be used as well. Also
-X11 color names are supported. <br>
-&ndash; <b>Foreground</b> (ForegroundColour=191,191,191)
+rgb:RR/GG/BB or rgb:RRRR/GGGG/BBBB, cmy:C.C/M.M/Y.Y or
+cmyk:C.C/M.M/Y.Y/K.K can be used as well. Also X11 color
+names are supported. <br>
+&ndash; <b>Foreground text colour</b>
+(ForegroundColour=191,191,191) <br>
+&ndash; <b>Background colour</b> (BackgroundColour=0,0,0)
 <br>
-&ndash; <b>Background</b> (BackgroundColour=0,0,0) <br>
-&ndash; <b>Cursor</b> (CursorColour=191,191,191) <br>
-&ndash; <b>Underline, Strikeout, Overline</b>
-(UnderlineColour=-1)</p>
+&ndash; <b>Cursor colour</b> (CursorColour=191,191,191) <br>
+&ndash; <b>Underline, Strikeout, Overline colour</b>
+(UnderlineColour=-1) <br>
+&ndash; <b>Ctrl+mouse-move hovering colour</b>
+(HoverColour=-1)</p>
 
 <p style="margin-left:22%; margin-top: 1em">&ndash;
 <b>Theme</b> (ThemeFile=): The popup menu offers theme files
@@ -1556,8 +1586,8 @@ the window menu and toggling full screen mode.</p>
 (SwitchShortcuts=yes)</p>
 
 <p style="margin-left:22%;">Checkbox for enabling the
-<b>Ctrl+Tab</b> and <b>Ctrl+Shift+Tab</b> shortcuts for
-switching between mintty windows.</p>
+<b>Ctrl+Tab</b> shortcuts for switching between mintty
+windows cyclically.</p>
 
 <p style="margin-left:11%;"><b>Zoom shortcuts</b>
 (ZoomShortcuts=yes)</p>
@@ -1860,7 +1890,9 @@ this is empty.</p>
 (NoAltScreen=false)</p>
 
 <p style="margin-left:22%;">With this setting, the
-alternate screen can be disabled.</p>
+alternate screen can be disabled. (Corresponds to the xterm
+resource <b>titeInhibit</b>, switchable by an escape
+sequence.)</p>
 
 <p style="margin-left:11%;"><b>Apply old wraparound
 behaviour</b> (OldWrapModes=false)</p>
@@ -2081,8 +2113,8 @@ example in the output of the <i>who</i>(1) utility.</p>
 <p style="margin-left:22%;">This setting determines how the
 terminal window should be shown at startup: <br>
 &ndash; <b>normal</b> (default) <br>
-&ndash; <b>min</b> (minimised) <br>
-&ndash; <b>max</b> (maximised) <br>
+&ndash; <b>min</b> (minimized) <br>
+&ndash; <b>max</b> (maximized) <br>
 &ndash; <b>full</b> (full screen) <br>
 &ndash; <b>hide</b> (invisible)</p>
 
@@ -2115,6 +2147,13 @@ Clear selection highlighting on input</b>
 
 <p style="margin-left:22%;">When this is disabled, keyboard
 input or pasting does not clear selection highlighting.</p>
+
+<p style="margin-left:11%;"><b>Selection size
+indication</b> (SelectionShowSize=0)</p>
+
+<p style="margin-left:22%;">The current selection size can
+optionally been indicated with a popup, with a value between
+1 and 12, setting the popup position by clock hour.</p>
 
 <p style="margin-left:11%;"><b>Single-dash long options</b>
 (ShortLongOpts=false)</p>
@@ -2363,8 +2402,9 @@ settings along with their default values. Colours are
 represented as comma-separated RGB triples with decimal
 8-bit values ranging from 0 to 255. X-style hexadecimal
 colour specifications such as #RRGGBB, rgb:RR/GG/BB or
-rgb:RRRR/GGGG/BBBB can be used as well. Also X11 color names
-are supported. <br>
+rgb:RRRR/GGGG/BBBB, cmy:C.C/M.M/Y.Y or cmyk:C.C/M.M/Y.Y/K.K
+can be used as well. Also X11 color names are supported.
+<br>
 &ndash; <b>Black</b>=0,0,0 <br>
 &ndash; <b>Red</b>=191,0,0 <br>
 &ndash; <b>Green</b>=0,191,0 <br>
@@ -2419,6 +2459,26 @@ search matches can be configured. <br>
 &ndash; <b>SearchBackgroundColour</b>=<i>light yellow</i>
 <br>
 &ndash; <b>SearchCurrentColour</b>=<i>bright yellow</i></p>
+
+<p style="margin-left:11%;"><b>Background image or
+texture</b> (Background=)</p>
+
+<p style="margin-left:22%;">With this option, an image can
+be chosen as background. With an image file name, absolute
+(with an optional <b>~</b> prefix) or relative to the
+current terminal foreground process, the option either uses
+the image as a background picture, scaled to the terminal
+size (optional prefix <b>_</b> to the filename), or as a
+tiled background texture (prefix <b>*</b> to the filename).
+The background can be changed with an OSC 11 escape
+sequence, using a filename prefixed with either <b>_</b> or
+<b>*</b> instead of a colour.</p>
+
+<p style="margin-left:22%; margin-top: 1em">If the
+background filename is followed by a comma and a number
+between 1 and 254, the background image will be dimmed
+towards the background colour; with a value of 255, the
+alpha transparency values of the image will be used.</p>
 
 <p style="margin-left:11%;"><b>Scrollback search bar</b>
 (SearchBar=)</p>
@@ -2480,13 +2540,16 @@ functions Shift+Alt+Enter/F11 and the Shift+menu
 function.</p>
 
 <p style="margin-left:11%;"><b>Handling of DPI changes</b>
-(HandleDPI=true)</p>
+(HandleDPI=1)</p>
 
 <p style="margin-left:22%;">By default, in Windows 10, when
 the window is moved to another monitor that has a different
 DPI value (&quot;scaling factor&quot;) configured, this is
 considered to compensate by appropriate scaling. This option
-can be set to false to suppress DPI adjustments.</p>
+can be set to 0/false to suppress DPI adjustments, or to 2
+to require DPI handling mode 2 and only enable DPI handling
+if this recently fixed Windows DPI handling mode is
+available.</p>
 
 <p style="margin-left:11%;"><b>Check availability of mintty
 version update</b> (CheckVersionUpdate=900)</p>
@@ -2674,7 +2737,17 @@ setting with it.)</p>
 This feature only works in combination with a parameter
 <b>-o AppID=...</b>. If the taskbar icon is
 &quot;pinned&quot; to the taskbar, the task list is retained
-with it.</p>
+with it, initially...</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i> To
+make the jump list persistent, it is necessary to carefully
+apply additional tricks to satisfy the insane taskbar
+configuration paradigm of Windows. First, also configure a
+default taskbar icon command using options AppName and
+AppLaunchCmd. Second, choose a unique value for AppID and
+also add it to the (default) launch command and all
+(jumplist) task commands. Third, invoke mintty with the
+chosen AppID and option --store-taskbar-properties.</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 Task names are subject to localization if they are added to
@@ -2707,10 +2780,10 @@ escape notation.</p>
 
 <p style="margin-left:22%;">These settings allow to
 customize the context menu as opened in various ways. <br>
-&ndash; <b>Mouse</b> (MenuMouse=b); the normal mouse-click
-context menu <br>
+&ndash; <b>Mouse</b> (MenuMouse=b); the normal
+mouse-right-click context menu <br>
 &ndash; <b>Ctrl+Mouse</b> (MenuCtrlMouse=e|ls); the
-Ctrl+mouse-click menu <br>
+Ctrl+right-click menu <br>
 &ndash; <b>Mouse button 5</b> (MenuMouse5=ls); the mouse
 button 5 menu <br>
 &ndash; <b>Menu key</b> (MenuMenu=bs); the Menu key (unless
@@ -2813,7 +2886,7 @@ page <i>https://github.com/mintty/mintty/wiki</i>.</p>
 
 
 <p style="margin-left:11%; margin-top: 1em">Copyright (C)
-2013 Andy Koppe (C) 2016 Thomas Wolff</p>
+2013 Andy Koppe (C) 2018 Thomas Wolff</p>
 
 <p style="margin-left:11%; margin-top: 1em">Mintty is
 released under the terms of the the <i>GNU General Public

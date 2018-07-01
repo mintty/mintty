@@ -5,8 +5,8 @@
 #define WEBSITE "http://mintty.github.io/"
 
 #define MAJOR_VERSION  2
-#define MINOR_VERSION  8
-#define PATCH_NUMBER   5
+#define MINOR_VERSION  9
+#define PATCH_NUMBER   0
 #define BUILD_NUMBER   0
 
 // needed for res.rc

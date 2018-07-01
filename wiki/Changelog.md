@@ -60,11 +60,12 @@ Themes management
 
 Other
   * Updated Emoji data and built-in width data to Unicode 11.0.
-  * Enabled OSC 7 current directory injection for Ctrl+click in WSL (mintty/wsltty#104).
+  * Enabled OSC 7 current directory injection for Ctrl+click in WSL (mintty/wsltty#104, mintty/wsltty#19).
   * Reporting start error (exit status 255) (#745).
   * Changed start error exit code from 255 to 126 (#745).
   * Fixed slowdown of Character Info mode if Unicode data are not deployed.
   * Option --WSLmode to tune behaviour for WSL distro but not launch (mintty/wsltty#99).
+  * WSLtty appx mode triggered statically or dynamically (mintty/wsltty.appx#3).
   * Clarified additional configuration requirements for option TaskCommands in the manual.
 
 ### 2.8.5 (14 Apr 2018) ###
@@ -467,7 +468,7 @@ Keyboard:
 
 Other:
   * Suppressing repeated font error messages.
-  * Enabled link-click in wsltty (#164).
+  * Enabled link-click in wsltty (~#164).
 
 ### 2.7.0 (13 Nov 2016) ###
 
