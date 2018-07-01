@@ -2193,7 +2193,15 @@ specified as an alternative separator by starting the whole setting with it.)
 
 \fINote:\fP This feature only works in combination with a parameter 
 \fB-o AppID=...\fP. If the taskbar icon is "pinned" to the taskbar, 
-the task list is retained with it.
+the task list is retained with it, initially...
+
+\fINote:\fP To make the jump list persistent, it is necessary to carefully 
+apply additional tricks to satisfy the insane taskbar configuration paradigm of Windows.
+First, also configure a default taskbar icon command using options 
+AppName and AppLaunchCmd.
+Second, choose a unique value for AppID and also add it to 
+the (default) launch command and all (jumplist) task commands.
+Third, invoke mintty with the chosen AppID and option --store-taskbar-properties.
 
 \fINote:\fP Task names are subject to localization if they are 
 added to the localization file of the selected UI localization language 
