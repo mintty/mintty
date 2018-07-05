@@ -1149,8 +1149,22 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
 void
 term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
 {
-  term_cursor *curs = &term.curs;
+  term_cursor * curs = &term.curs;
   pos start, end;
+
+  // avoid clearing a "pending wrap" position, where the cursor is 
+  // held back on the previous character if it's the last of the line
+  if (curs->wrapnext) {
+#if 0
+    if (!from_begin && to_end)
+      return;  // simple approach
+#else
+    static term_cursor c;
+    c = term.curs;
+    incpos(c);
+    curs = &c;
+#endif
+  }
 
   if (from_begin)
     start = (pos){.y = line_only ? curs->y : 0, .x = 0};
@@ -1204,6 +1218,7 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
     }
   }
 }
+
 
 #define EM_pres 1
 #define EM_pict 2
