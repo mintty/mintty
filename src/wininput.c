@@ -742,6 +742,7 @@ static mouse_button last_button = -1;
 static mod_keys last_mods;
 static pos last_click_pos;
 static bool last_skipped = false;
+static mouse_button skip_release_token = -1;
 static uint last_skipped_time;
 static bool mouse_state = false;
 
@@ -766,9 +767,10 @@ win_mouse_click(mouse_button b, LPARAM lp)
   pos p = get_mouse_pos(lp);
 
   uint t = GetMessageTime();
-  if (b != last_button ||
-      p.x != last_click_pos.x || p.y != last_click_pos.y ||
-      t - last_time > GetDoubleClickTime() || ++count > 3)
+  bool dblclick = b == last_button
+                  && p.x == last_click_pos.x && p.y == last_click_pos.y
+                  && t - last_time <= GetDoubleClickTime();
+  if (!dblclick || ++count > 3)
     count = 1;
   //printf("mouse %d (focus %d skipped %d) ×%d\n", b, click_focus, last_skipped, count);
 
@@ -780,17 +782,14 @@ win_mouse_click(mouse_button b, LPARAM lp)
            cfg.clicks_target_app ^ ((mods & cfg.click_target_mod) != 0)
           )
      ) {
-    //printf("suppressing focus-click selection\n");
+    //printf("suppressing focus-click selection, t %d\n", t);
     // prevent accidental selection when focus-clicking into the window (#717)
     last_skipped = true;
     last_skipped_time = t;
-    //printf("last_skipped_time = %d\n", t);
+    skip_release_token = b;
   }
   else {
-    if (last_skipped && b == last_button
-        && p.x == last_click_pos.x && p.y == last_click_pos.y
-       )
-    {
+    if (last_skipped && dblclick) {
       // recognize double click also in application mouse modes
       term_mouse_click(b, mods, p, 1);
     }
@@ -822,6 +821,12 @@ void
 win_mouse_release(mouse_button b, LPARAM lp)
 {
   mouse_state = false;
+
+  if (b == skip_release_token) {
+    skip_release_token = -1;
+    return;
+  }
+
   term_mouse_release(b, get_mods(), get_mouse_pos(lp));
   ReleaseCapture();
   switch (b) {
