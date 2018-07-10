@@ -2853,10 +2853,8 @@ regclose(HKEY key)
     RegCloseKey(key);
 }
 
-#define dont_debug_reg_lxss
-
 static int
-getlxssinfo(wstring wslname,
+getlxssinfo(bool list, wstring wslname,
             char ** wsl_guid, wstring * wsl_rootfs, wstring * wsl_icon)
 {
   static wstring lxsskeyname = W("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Lxss");
@@ -2877,7 +2875,7 @@ getlxssinfo(wstring wslname,
     return 0;
   }
 
-  int getlxssdistinfo(HKEY lxss, wchar * guid)
+  int getlxssdistinfo(bool list, HKEY lxss, wchar * guid)
   {
     wchar * rootfs;
     wchar * icon = 0;
@@ -2910,24 +2908,24 @@ getlxssinfo(wstring wslname,
       rootfs = wcsdup(bp);
       icon = legacy_icon();
     }
-#ifdef debug_reg_lxss
-    printf("WSL distribution name %ls\n", getregstr(lxss, guid, W("DistributionName")));
-    printf("-- guid %ls\n", guid);
-    printf("-- root %ls\n", rootfs);
-    printf("-- pack %ls\n", pn);
-    printf("-- icon %ls\n", icon);
-#endif
+    if (list) {
+      printf("WSL distribution name %ls\n", getregstr(lxss, guid, W("DistributionName")));
+      printf("-- guid %ls\n", guid);
+      printf("-- root %ls\n", rootfs);
+      printf("-- pack %ls\n", pn);
+      printf("-- icon %ls\n", icon);
+    }
     *wsl_guid = cs__wcstoutf(guid);
     *wsl_rootfs = rootfs;
     *wsl_icon = icon;
     return 0;
   }
 
-  if (!wslname || !*wslname) {
+  if (!list && (!wslname || !*wslname)) {
     wchar * dd = getregstr(HKEY_CURRENT_USER, lxsskeyname, W("DefaultDistribution"));
     int err;
     if (dd) {
-      err = getlxssdistinfo(lxss, dd);
+      err = getlxssdistinfo(false, lxss, dd);
       free(dd);
     }
     else {  // Legacy "Bash on Windows" installed only, no registry info
@@ -2974,8 +2972,11 @@ getlxssinfo(wstring wslname,
       ret = RegEnumKeyW(lxss, i, subkey, keylen);
       if (ret == ERROR_SUCCESS) {
           wchar * dn = getregstr(lxss, subkey, W("DistributionName"));
-          if (0 == wcscmp(dn, wslname)) {
-            int err = getlxssdistinfo(lxss, subkey);
+          if (list) {
+            getlxssdistinfo(true, lxss, subkey);
+          }
+          else if (0 == wcscmp(dn, wslname)) {
+            int err = getlxssdistinfo(false, lxss, subkey);
             regclose(lxss);
             return err;
           }
@@ -3011,7 +3012,7 @@ select_WSL(char * wsl)
   wchar * wslname = cs__mbstowcs(wsl ?: "");
   wstring wsl_icon;
   // set --rootfs implicitly
-  int err = getlxssinfo(wslname, &wsl_guid, &wsl_basepath, &wsl_icon);
+  int err = getlxssinfo(false, wslname, &wsl_guid, &wsl_basepath, &wsl_icon);
   if (!err) {
     // set --icon if WSL specific icon exists
     if (wsl_icon) {
@@ -3085,7 +3086,7 @@ wslicon(wchar * params)
       wslname[len] = 0;
       char * guid;
       wstring basepath;
-      int err = getlxssinfo(wslname, &guid, &basepath, &icon);
+      int err = getlxssinfo(false, wslname, &guid, &basepath, &icon);
       free(wslname);
       if (!err) {
         delete(basepath);
@@ -3641,6 +3642,11 @@ main(int argc, char *argv[])
           when 'f':
             list_fonts(true);
             exit(0);
+          when 'W': {
+            wstring wsl_icon;
+            getlxssinfo(true, 0, &wsl_guid, &wsl_basepath, &wsl_icon);
+            exit(0);
+          }
         }
       when 'u': cfg.create_utmp = true;
       when '':
@@ -3958,13 +3964,6 @@ main(int argc, char *argv[])
     argv[0] = arg0;
     argv[1] = 0;
   }
-#ifdef debug_reg_lxss
-  printf("exec <%s> argv", cmd);
-  char ** a = argv;
-  while (*a)
-    printf(" <%s>", *a++);
-  printf("\n");
-#endif
 
   // Load icon if specified.
   HICON large_icon = 0, small_icon = 0;
