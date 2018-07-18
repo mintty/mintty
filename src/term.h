@@ -277,6 +277,7 @@ typedef enum {
 
 typedef struct {
   int y, x;
+  bool r;
 } pos;
 
 typedef enum {

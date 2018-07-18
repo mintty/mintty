@@ -376,7 +376,7 @@ by clicking on the program icon or pressing \fBAlt+Space\fP.
 Both menus have an entry that leads to the options dialog for changing mintty's
 configuration.
 
-.SS Copy & paste
+.SS Text selection, copy & paste
 
 Screen contents can be selected by holding down the left mouse button and
 dragging the mouse.  If Alt is held down before the left mouse button, a 
@@ -413,6 +413,14 @@ with option \fBClearSelectionOnInput=false\fP.
 
 The current selection size can optionally been indicated with a popup, 
 enabled with option \fBSelectionShowSize\fP.
+
+.TP
+\fBElastic text selection\fP
+The traditional selection behaviour of cell-based terminals is that a 
+character touched with the mouse is included in the selection.
+With option \fBElasticMouse\fP, text selection can be changed to include 
+the first and last characters only if they are spanned at least halfway 
+by the mouse dragging, like many GUI application do.
 
 .SS Drag & drop
 
@@ -1352,9 +1360,15 @@ The \fBOff\fP setting disables overriding.
 \(en \fBOff\fP
 
 .TP
-\fB\fP(HideMouse=on)
+\fBMouse auto-hiding\fP(HideMouse=on)
 By default, mintty automatically hides the cross-hair mouse cursor when 
 keyboard input is being entered. Setting this option =false keeps the cursor.
+
+.TP
+\fBElastic text selection\fP(ElasticMouse=off)
+With this option set, text selection with mouse dragging only includes 
+first and last characters if they are spanned at least halfway, so just 
+slightly touching a character leaves it out.
 
 .SS Window
 Window properties.

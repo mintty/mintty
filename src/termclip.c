@@ -61,6 +61,7 @@ get_selection(pos start, pos end, bool rect)
     */
     nlpos.y = start.y;
     nlpos.x = term.cols;
+    nlpos.r = false;
 
    /*
     * ... move it backwards if there's unused space at the end
@@ -215,8 +216,8 @@ term_send_paste(void)
 void
 term_select_all(void)
 {
-  term.sel_start = (pos){-sblines(), 0};
-  term.sel_end = (pos){term_last_nonempty_line(), term.cols};
+  term.sel_start = (pos){-sblines(), 0, false};
+  term.sel_end = (pos){term_last_nonempty_line(), term.cols, true};
   term.selected = true;
   if (cfg.copy_on_select)
     term_copy();
@@ -238,29 +239,29 @@ term_get_text(bool all, bool screen, bool command)
 
     if (y < sbtop) {
       y = sbtop;
-      end = (pos){y, 0};
+      end = (pos){y, 0, false};
     }
     else {
       termline * line = fetch_line(y);
       if (line->lattr & LATTR_MARKED) {
         if (y > sbtop) {
           y--;
-          end = (pos){y, term.cols};
+          end = (pos){y, term.cols, false};
           termline * line = fetch_line(y);
           if (line->lattr & LATTR_MARKED)
             y++;
         }
         else {
-          end = (pos){y, 0};
+          end = (pos){y, 0, false};
         }
       }
       else {
         skipprompt = line->lattr & LATTR_UNMARKED;
-        end = (pos){y, term.cols};
+        end = (pos){y, term.cols, false};
       }
 
       if (fetch_line(y)->lattr & LATTR_UNMARKED)
-        end = (pos){y, 0};
+        end = (pos){y, 0, false};
     }
 
     int yok = y;
@@ -270,7 +271,7 @@ term_get_text(bool all, bool screen, bool command)
       printf("y %d skip %d marked %X\n", y, skipprompt, line->lattr & (LATTR_UNMARKED | LATTR_MARKED));
 #endif
       if (skipprompt && (line->lattr & LATTR_UNMARKED))
-        end = (pos){y, 0};
+        end = (pos){y, 0, false};
       else
         skipprompt = false;
       if (line->lattr & LATTR_MARKED) {
@@ -278,18 +279,18 @@ term_get_text(bool all, bool screen, bool command)
       }
       yok = y;
     }
-    start = (pos){yok, 0};
+    start = (pos){yok, 0, false};
 #ifdef debug_user_cmd_clip
     printf("%d:%d...%d:%d\n", start.y, start.x, end.y, end.x);
 #endif
   }
   else if (screen) {
-    start = (pos){term.disptop, 0};
-    end = (pos){term_last_nonempty_line(), term.cols};
+    start = (pos){term.disptop, 0, false};
+    end = (pos){term_last_nonempty_line(), term.cols, false};
   }
   else if (all) {
-    start = (pos){-sblines(), 0};
-    end = (pos){term_last_nonempty_line(), term.cols};
+    start = (pos){-sblines(), 0, false};
+    end = (pos){term_last_nonempty_line(), term.cols, false};
   }
   else if (!term.selected) {
     return wcsdup(W(""));

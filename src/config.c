@@ -107,6 +107,7 @@ const config default_cfg = {
   .clicks_target_app = true,
   .click_target_mod = MDK_SHIFT,
   .hide_mouse = true,
+  .elastic_mouse = false,
   // Window
   .cols = 80,
   .rows = 24,
@@ -318,6 +319,7 @@ options[] = {
   {"ClicksTargetApp", OPT_BOOL, offcfg(clicks_target_app)},
   {"ClickTargetMod", OPT_MOD, offcfg(click_target_mod)},
   {"HideMouse", OPT_BOOL, offcfg(hide_mouse)},
+  {"ElasticMouse", OPT_BOOL, offcfg(elastic_mouse)},
 
   // Window
   {"Columns", OPT_INT, offcfg(cols)},

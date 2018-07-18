@@ -105,6 +105,7 @@ typedef struct {
   bool clicks_target_app;
   char click_target_mod;
   bool hide_mouse;
+  bool elastic_mouse;
   // Window
   int cols, rows;
   int scrollback_lines;

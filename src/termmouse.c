@@ -160,6 +160,7 @@ hover_spread(void)
 static void
 sel_drag(pos selpoint)
 {
+  //printf("sel_drag %d+%d/2 (anchor %d+%d/2)\n", selpoint.x, selpoint.r, term.sel_anchor.x, term.sel_anchor.r);
   term.selected = true;
   if (!term.sel_rect) {
    /*
@@ -169,10 +170,26 @@ sel_drag(pos selpoint)
     if (poslt(selpoint, term.sel_anchor)) {
       term.sel_start = selpoint;
       term.sel_end = term.sel_anchor;
+      if (cfg.elastic_mouse && !term.mouse_mode) {
+        if (selpoint.r) {
+          incpos(term.sel_start);
+        }
+        if (!term.sel_anchor.r) {
+          decpos(term.sel_end);
+        }
+      }
     }
     else {
       term.sel_start = term.sel_anchor;
       term.sel_end = selpoint;
+      if (cfg.elastic_mouse && !term.mouse_mode) {
+        if (term.sel_anchor.r) {
+          incpos(term.sel_start);
+        }
+        if (!selpoint.r) {
+          decpos(term.sel_end);
+        }
+      }
     }
     sel_spread();
   }
@@ -192,6 +209,7 @@ sel_drag(pos selpoint)
 static void
 sel_extend(pos selpoint)
 {
+  //printf("sel_extend %d+%d/2 (anchor %d+%d/2)\n", selpoint.x, selpoint.r, term.sel_anchor.x, term.sel_anchor.r);
   if (term.selected) {
     if (!term.sel_rect) {
      /*
@@ -343,7 +361,7 @@ box_pos(pos p)
 static pos
 get_selpoint(const pos p)
 {
-  pos sp = { .y = p.y + term.disptop, .x = p.x };
+  pos sp = { .y = p.y + term.disptop, .x = p.x, .r = p.r };
   termline *line = fetch_line(sp.y);
   if ((line->lattr & LATTR_MODE) != LATTR_NORM)
     sp.x /= 2;
@@ -570,7 +588,9 @@ sel_scroll_cb(void)
 void
 term_mouse_move(mod_keys mods, pos p)
 {
+  //printf("mouse_move %d+%d/2\n", p.x, p.r);
   pos bp = box_pos(p);
+
   if (term_selecting()) {
     if (p.y < 0 || p.y >= term.rows) {
       if (!term.sel_scroll)
@@ -581,9 +601,11 @@ term_mouse_move(mod_keys mods, pos p)
     else {
       term.sel_scroll = 0;
       if (p.x < 0 && p.y + term.disptop > term.sel_anchor.y)
-        bp = (pos){.y = p.y - 1, .x = term.cols - 1};
+        bp = (pos){.y = p.y - 1, .x = term.cols - 1, .r = p.r};
     }
+
     sel_drag(get_selpoint(bp));
+
     win_update(true);
   }
   else if (term.mouse_state == MS_OPENING) {

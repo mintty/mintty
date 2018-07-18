@@ -369,7 +369,7 @@ winimg_paint(void)
             if (dchar->attr.attr & (TATTR_RESULT | TATTR_CURRESULT | TATTR_MARKED | TATTR_CURMARKED))
               update_flag = true;
             if (term.selected && !update_flag) {
-              pos scrpos = {y + term.disptop, x};
+              pos scrpos = {y + term.disptop, x, false};
               update_flag = term.sel_rect
                   ? posPle(term.sel_start, scrpos) && posPlt(scrpos, term.sel_end)
                   : posle(term.sel_start, scrpos) && poslt(scrpos, term.sel_end);
