@@ -791,6 +791,18 @@ deployed in a mintty configuration directory.
 See the Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips#emojis\fP 
 about deployment of emoji graphics for mintty.
 
+.SS HTML Screen dump
+
+Mintty can create an HTML representation of the screen, from the extended 
+context menu or using the respective xterm Media Copy escape sequence.
+The HTML page is created in the start directory of mintty and uses a 
+filename pattern of \fBmintty.date_time.html\fP. Screen layout and 
+character attributes are reproduced as closely as possible.
+If there is a current selection, the selected text will be included in the 
+HTML dump, otherwise the current screen view is used. In the latter case, 
+also a background image or pattern is reproduced, if its filename was 
+configured as a relative path name using POSIX syntax (forward slashes).
+
 .SS Diagnostic support
 
 .TP

@@ -31,6 +31,8 @@
 #define IDM_SEARCH          0x00F0
 #define IDM_TOGLOG          0x01F0
 #define IDM_TOGCHARINFO     0x02F0
+#define IDM_HTML            0x0300
+
 #define IDM_USERCOMMAND     0x1000
 #define IDM_SESSIONCOMMAND  0x5000
 #define IDM_GOTAB           0x9000

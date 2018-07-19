@@ -1450,6 +1450,9 @@ do_csi(uchar c)
         while (term.printbuf[--term.printbuf_pos] != '\e');
         term_print_finish();
       }
+      else if (arg0 == 10 && !term.esc_mod) {
+        term_export_html();
+      }
     when 'g':        /* TBC: clear tabs */
       if (!arg0)
         term.tabs[curs->x] = false;

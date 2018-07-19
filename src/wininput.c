@@ -527,6 +527,8 @@ win_init_ctxmenu(bool extended_menu, bool user_commands)
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_SEARCH, 0);
   if (extended_menu) {
+    //__ Context menu:
+    AppendMenuW(ctxmenu, MF_ENABLED, IDM_HTML, _W("HTML Screen Dump"));
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_TOGLOG, 0);
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_TOGCHARINFO, 0);
   }

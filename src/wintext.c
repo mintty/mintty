@@ -123,6 +123,8 @@ struct fontfam {
   wchar win_linedraw_chars[LDRAW_CHAR_NUM];
 } fontfamilies[11];
 
+int line_scale;
+
 wchar
 win_linedraw_char(int i)
 {
@@ -531,6 +533,8 @@ win_init_fontfamily(HDC dc, int findex)
 
     cell_height = tm.tmHeight + ff->row_spacing;
     cell_width = tm.tmAveCharWidth + ff->col_spacing;
+
+    line_scale = cell_height * 100 / abs(font_height);
 
     PADDING = tm.tmAveCharWidth;
     if (cfg.padding >= 0 && cfg.padding < PADDING)
