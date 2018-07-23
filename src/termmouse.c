@@ -408,6 +408,11 @@ is_app_mouse(mod_keys *mods_p)
 void
 term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
 {
+  if (term.hovering) {
+    term.hovering = false;
+    win_update(true);
+  }
+
   if (is_app_mouse(&mods)) {
     if (term.mouse_mode == MM_X10)
       mods = 0;
@@ -629,14 +634,21 @@ term_mouse_move(mod_keys mods, pos p)
       term.hovering = true;
       win_update(true);
     }
-    else
+    else if (term.hovering) {
       term.hovering = false;
+      win_update(true);
+    }
   }
 }
 
 void
 term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
 {
+  if (term.hovering) {
+    term.hovering = false;
+    win_update(true);
+  }
+
   enum { NOTCH_DELTA = 120 };
 
   static int accu;

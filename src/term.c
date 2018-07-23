@@ -1041,6 +1041,11 @@ disp_do_scroll(int topscroll, int botscroll, int scrolllines)
 void
 term_do_scroll(int topline, int botline, int lines, bool sb)
 {
+  if (term.hovering) {
+    term.hovering = false;
+    win_update(true);
+  }
+
 #ifdef use_display_scrolling
   int scrolllines = lines;
 #endif
@@ -2387,6 +2392,11 @@ term_invalidate(int left, int top, int right, int bottom)
 void
 term_scroll(int rel, int where)
 {
+  if (term.hovering) {
+    term.hovering = false;
+    win_update(true);
+  }
+
   int sbtop = -sblines();
   int sbbot = term_last_nonempty_line();
   bool do_schedule_update = false;
@@ -2425,10 +2435,14 @@ term_scroll(int rel, int where)
 void
 term_set_focus(bool has_focus, bool may_report)
 {
+  if (!has_focus)
+    term.hovering = false;
+
   if (has_focus != term.has_focus) {
     term.has_focus = has_focus;
     term_schedule_cblink();
   }
+
   if (has_focus != term.focus_reported && may_report) {
     term.focus_reported = has_focus;
     if (term.report_focus)
