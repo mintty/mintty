@@ -1280,7 +1280,7 @@ do_winop(void)
         // maximize window horizontally
         win_set_geom(-1, 0, -1, 0);
       }
-      else
+      else if (arg1 == 1 || arg1 == 0)
         win_maximise(arg1);
     }
     when 10:
@@ -1289,7 +1289,7 @@ do_winop(void)
       // Ps = 1 0 ; 2  -> Toggle full-screen.
       if (arg1 == 2)
         win_maximise(-2);
-      else
+      else if (arg1 == 1 || arg1 == 0)
         win_maximise(arg1 ? 2 : 0);
     when 11: child_write(win_is_iconic() ? "\e[1t" : "\e[2t", 4);
     when 13: {
