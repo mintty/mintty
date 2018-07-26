@@ -1258,8 +1258,14 @@ do_winop(void)
     when 2: win_set_iconic(true);
     when 3: win_set_pos(arg1, arg2);
     when 4: win_set_pixels(arg1, arg2);
-    when 5: win_set_zorder(true);  // top
-    when 6: win_set_zorder(false); // bottom
+    when 5:
+      if (term.csi_argc != 1)
+        return;
+      win_set_zorder(true);  // top
+    when 6:
+      if (term.csi_argc != 1)
+        return;
+      win_set_zorder(false); // bottom
     when 7: win_invalidate_all(false);  // refresh
     when 8: {
       int def1 = term.csi_argv_defined[1], def2 = term.csi_argv_defined[2];
@@ -1268,6 +1274,8 @@ do_winop(void)
       win_set_chars(arg1 ?: def1 ? rows : term.rows, arg2 ?: def2 ? cols : term.cols);
     }
     when 9: {
+      if (term.csi_argc != 2)
+        return;
       // Ps = 9 ; 0  -> Restore maximized window.
       // Ps = 9 ; 1  -> Maximize window (i.e., resize to screen size).
       // Ps = 9 ; 2  -> Maximize window vertically.
@@ -1284,6 +1292,8 @@ do_winop(void)
         win_maximise(arg1);
     }
     when 10:
+      if (term.csi_argc != 2)
+        return;
       // Ps = 1 0 ; 0  -> Undo full-screen mode.
       // Ps = 1 0 ; 1  -> Change to full-screen.
       // Ps = 1 0 ; 2  -> Toggle full-screen.
