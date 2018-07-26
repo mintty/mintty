@@ -1644,12 +1644,12 @@ load_background_brush(HDC dc)
     bgfn++;
   }
   char * bf = cs__wcstombs(bgfn);
-  if (!strncmp("~/", bf, 2)) {
+  if (0 == strncmp("~/", bf, 2)) {
     char * bfexp = asform("%s/%s", home, bf + 2);
     free(bf);
     bf = bfexp;
   }
-  else if (*bf != '/') {
+  else if (*bf != '/' && !(*bf && bf[1] == ':')) {
     char * fgd = foreground_cwd();
     if (fgd) {
       char * bfexp = asform("%s/%s", fgd, bf);
@@ -1658,7 +1658,7 @@ load_background_brush(HDC dc)
     }
   }
   // try to extract an alpha value from file spec
-  char * salpha = strchr(bf, ',');
+  char * salpha = strrchr(bf, ',');
   if (salpha) {
     *salpha = 0;
     salpha++;
