@@ -15,7 +15,7 @@ in one of the directories ```~/.mintty```, ```~/.config/mintty```,
 
 The ```~/.config/mintty``` folder is the XDG default base directory.
 The ```$APPDATA/mintty``` folder is especially useful to share common configuration 
-for various installations of mintty (e.g. cygwin 32/64 Bit, MSYS, Git Bash).
+for various installations of mintty (e.g. Cygwin 32/64 Bit, MSYS, Git Bash, WSL).
 
 
 ## Using desktop shortcuts to start mintty ##
