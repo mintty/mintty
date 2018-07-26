@@ -1304,19 +1304,32 @@ do_winop(void)
     when 11: child_write(win_is_iconic() ? "\e[1t" : "\e[2t", 4);
     when 13: {
       int x, y;
-      win_get_pos(&x, &y);
+      win_get_scrpos(&x, &y, arg1 == 2);
       child_printf("\e[3;%d;%dt", x, y);
     }
     when 14: {
       int height, width;
-      win_get_pixels(&height, &width);
+      win_get_pixels(&height, &width, arg1 == 2);
       child_printf("\e[4;%d;%dt", height, width);
     }
+    when 15: {
+      int w, h;
+      search_monitors(&w, &h, 0, false, 0);
+      child_printf("\e[5;%d;%dt", h, w);
+    }
+    when 16: child_printf("\e[6;%d;%dt", cell_height, cell_width);
     when 18: child_printf("\e[8;%d;%dt", term.rows, term.cols);
     when 19: {
+#ifdef size_of_monitor_only
+#warning not what xterm reports
       int rows, cols;
       win_get_screen_chars(&rows, &cols);
       child_printf("\e[9;%d;%dt", rows, cols);
+#else
+      int w, h;
+      search_monitors(&w, &h, 0, false, 0);
+      child_printf("\e[9;%d;%dt", h / cell_height, w / cell_width);
+#endif
     }
     when 22:
       if (arg1 == 0 || arg1 == 2)

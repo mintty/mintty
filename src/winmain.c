@@ -914,11 +914,18 @@ static long current_monitor = 1 - 1;  // assumption for MonitorFromWindow
        stores info of primary monitor
    search_monitors(&x, &y, mon, false/true, 0)
      returns index of given monitor (0/primary if not found)
-   search_monitors(&x, &y, 0, false/true, 0)
+   search_monitors(&x, &y, 0, false, 0)
+     returns number of monitors;
+       stores virtual screen size
+   search_monitors(&x, &y, 0, 2, &moninfo)
+     returns number of monitors;
+       stores virtual screen top left corner
+       stores virtual screen size
+   search_monitors(&x, &y, 0, true, 0)
      prints information about all monitors
  */
 int
-search_monitors(int * minx, int * miny, HMONITOR lookup_mon, bool get_primary, MONITORINFO *mip)
+search_monitors(int * minx, int * miny, HMONITOR lookup_mon, int get_primary, MONITORINFO *mip)
 {
 #ifdef debug_display_monitors_mockup
   BOOL
@@ -960,9 +967,10 @@ search_monitors(int * minx, int * miny, HMONITOR lookup_mon, bool get_primary, M
   int moni_found = 0;
   * minx = 0;
   * miny = 0;
+  RECT vscr = (RECT){0, 0, 0, 0};
   HMONITOR refmon = 0;
   HMONITOR curmon = lookup_mon ? 0 : MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
-  bool print_monitors = !lookup_mon && !mip;
+  bool print_monitors = !lookup_mon && !mip && get_primary;
 #ifdef debug_display_monitors
   print_monitors = !lookup_mon;
 #endif
@@ -994,6 +1002,10 @@ search_monitors(int * minx, int * miny, HMONITOR lookup_mon, bool get_primary, M
       *minx = fr.right - fr.left;
     if (*miny == 0 || *miny > fr.bottom - fr.top)
       *miny = fr.bottom - fr.top;
+    vscr.top = min(vscr.top, fr.top);
+    vscr.left = min(vscr.left, fr.left);
+    vscr.right = max(vscr.right, fr.right);
+    vscr.bottom = max(vscr.bottom, fr.bottom);
 
     if (print_monitors) {
       printf("Monitor %d %s %s width,height %4d,%4d (%4d,%4d...%4d,%4d)\n", 
@@ -1008,7 +1020,13 @@ search_monitors(int * minx, int * miny, HMONITOR lookup_mon, bool get_primary, M
   }
 
   EnumDisplayMonitors(0, 0, monitor_enum, 0);
-  if (lookup_mon) {
+
+  if (!lookup_mon && !mip && !get_primary) {
+    *minx = vscr.right - vscr.left;
+    *miny = vscr.bottom - vscr.top;
+    return moni;
+  }
+  else if (lookup_mon) {
     return moni_found;
   }
   else if (mip) {
@@ -1017,6 +1035,10 @@ search_monitors(int * minx, int * miny, HMONITOR lookup_mon, bool get_primary, M
       refmon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
     mip->cbSize = sizeof(MONITORINFO);
     GetMonitorInfo(refmon, mip);
+    if (get_primary == 2) {
+      *minx = vscr.left;
+      *miny = vscr.top;
+    }
     return moni;  // number of monitors
   }
   else
@@ -1066,7 +1088,7 @@ win_is_iconic(void)
   return IsIconic(wnd);
 }
 
-void
+static void
 win_get_pos(int *xp, int *yp)
 {
   RECT r;
@@ -1076,14 +1098,39 @@ win_get_pos(int *xp, int *yp)
 }
 
 void
-win_get_pixels(int *height_p, int *width_p)
+win_get_scrpos(int *xp, int *yp, bool with_borders)
 {
   RECT r;
   GetWindowRect(wnd, &r);
-  // report inner pixel size, without padding, like xterm:
-  int sy = win_search_visible() ? SEARCHBAR_HEIGHT : 0;
-  *height_p = r.bottom - r.top - extra_height - 2 * PADDING - sy;
-  *width_p = r.right - r.left - extra_width - 2 * PADDING;
+  *xp = r.left;
+  *yp = r.top;
+  MONITORINFO mi;
+  int vx, vy;
+  search_monitors(&vx, &vy, 0, 2, &mi);
+  RECT fr = mi.rcMonitor;
+  *xp += fr.left - vx;
+  *yp += fr.top - vy;
+  if (with_borders) {
+    *xp += GetSystemMetrics(SM_CXSIZEFRAME) + PADDING;
+    *yp += GetSystemMetrics(SM_CYSIZEFRAME) + GetSystemMetrics(SM_CYCAPTION) + PADDING;
+  }
+}
+
+void
+win_get_pixels(int *height_p, int *width_p, bool with_borders)
+{
+  RECT r;
+  GetWindowRect(wnd, &r);
+  if (with_borders) {
+    *height_p = r.bottom - r.top;
+    *width_p = r.right - r.left
+             + (cfg.scrollbar ? GetSystemMetrics(SM_CXVSCROLL) : 0);
+  }
+  else {
+    int sy = win_search_visible() ? SEARCHBAR_HEIGHT : 0;
+    *height_p = r.bottom - r.top - extra_height - 2 * PADDING - sy;
+    *width_p = r.right - r.left - extra_width - 2 * PADDING;
+  }
 }
 
 void
@@ -1268,7 +1315,7 @@ win_set_geom(int y, int x, int height, int width)
   int scr_height = ar.bottom - ar.top, scr_width = ar.right - ar.left;
   int term_height, term_width;
   int term_x, term_y;
-  win_get_pixels(&term_height, &term_width);
+  win_get_pixels(&term_height, &term_width, false);
   win_get_pos(&term_x, &term_y);
 
   if (x >= 0)
@@ -4361,7 +4408,7 @@ main(int argc, char *argv[])
 #endif
   if (report_moni) {
     int x, y;
-    int n = search_monitors(&x, &y, 0, false, 0);
+    int n = search_monitors(&x, &y, 0, true, 0);
     printf("%d monitors,      smallest width,height %4d,%4d\n", n, x, y);
 #ifndef debug_display_monitors_mockup
     exit(0);

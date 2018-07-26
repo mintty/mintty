@@ -55,8 +55,8 @@ extern void win_maximise(int max);
 extern void win_set_zorder(bool top);
 extern void win_set_iconic(bool);
 extern bool win_is_iconic(void);
-extern void win_get_pos(int *xp, int *yp);
-extern void win_get_pixels(int *height_p, int *width_p);
+extern void win_get_scrpos(int *xp, int *yp, bool with_borders);
+extern void win_get_pixels(int *height_p, int *width_p, bool with_borders);
 extern void win_get_screen_chars(int *rows_p, int *cols_p);
 extern void win_popup_menu(mod_keys mods);
 
