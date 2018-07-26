@@ -1137,6 +1137,8 @@ do_update(void)
   win_set_timer(do_update, 16);
 }
 
+#include <math.h>
+
 static void
 sel_update(bool update_sel_tip)
 {
@@ -1158,44 +1160,23 @@ sel_update(bool update_sel_tip)
     RECT wr;
     GetWindowRect(wnd, &wr);
     int x = wr.left
+          + GetSystemMetrics(SM_CXSIZEFRAME)
           + PADDING + last_pos.x * cell_width;
-    int y = wr.top + GetSystemMetrics(SM_CYCAPTION)
+    int y = wr.top
+          + GetSystemMetrics(SM_CYSIZEFRAME) + GetSystemMetrics(SM_CYCAPTION)
           + PADDING + last_pos.y * cell_height;
 #ifdef debug_selection_show_size 
     cfg.selection_show_size = cfg.selection_show_size % 12 + 1;
 #endif
-    int w = 15, h = 18;
-    int dx = 0, dy = 0;
-    switch (cfg.selection_show_size) {
-      when  1: dx += cell_width + w / 4;
-               dy -= h * 2 / 3;
-      when  2: dx += cell_width + w / 3;
-               dy += cell_height / 3 - h / 2;
-      when  3: dx += cell_width + w / 2;
-               dy += cell_height / 2 - h / 3;
-      when  4: dx += cell_width + w / 3;
-               dy += cell_height * 2 / 3;
-      when  5: dx += cell_width + w / 4;
-               dy += cell_height;
-      when  6: dx += cell_width / 2 - w / 2;
-               dy += cell_height + h / 3;
-      when  7: dx -= w + w / 4;
-               dy += cell_height;
-      when  8: dx -= w + w / 3;
-               dy += cell_height * 2 / 3;
-      when  9: dx -= w + w / 2;
-               dy += cell_height / 2 - h / 3;
-      when 10: dx -= w + w / 3;
-               dy += cell_height / 3 - h / 2;
-      when 11: dx -= w + w / 4;
-               dy -= h * 2 / 3;
-      when 12: dx += cell_width / 2 - w / 2;
-               dy -= h;
-      otherwise: return;
-    }
+    int w = 30, h = 18;  // assumed size of tip window
+    float phi = 2 * 3.1415 / 12 * (cfg.selection_show_size + 9);
+    float rx = cell_width * 1.5;
+    float ry = cell_height * 1.5;
+    int dx = cell_width / 2 + rx * cos(phi) - w / 2;
+    int dy = cell_height / 2 + ry * sin(phi) - h / 2;
+    //printf("selection_show_size [%d]: %.2f %.2f %.2f\n", cfg.selection_show_size, phi, cos(phi), sin(phi));
     win_show_tip(x + dx, y + dy, cols, rows);
     selection_tip_active = true;
-    //printf("selection_show_size %d -> %d %d\n", cfg.selection_show_size, dx, dy);
   }
   else if (!term.selected && selection_tip_active) {
     win_destroy_tip();
