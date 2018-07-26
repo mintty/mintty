@@ -3690,11 +3690,13 @@ main(int argc, char *argv[])
           when 'f':
             list_fonts(true);
             exit(0);
+#if CYGWIN_VERSION_API_MINOR >= 74
           when 'W': {
             wstring wsl_icon;
             getlxssinfo(true, 0, &wsl_guid, &wsl_basepath, &wsl_icon);
             exit(0);
           }
+#endif
         }
       when 'u': cfg.create_utmp = true;
       when '':

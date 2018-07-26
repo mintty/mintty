@@ -110,8 +110,8 @@ win_show_tip(int x, int y, int cols, int rows)
     ShowWindow(tip_wnd, SW_SHOWNOACTIVATE);
   }
   else {
-      SetWindowPos(tip_wnd, null, x, y, 0, 0,
-                   SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+    SetWindowPos(tip_wnd, null, x, y, 0, 0,
+                 SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
   }
 
   sprintf(sizetip, "%dx%d", cols, rows);
