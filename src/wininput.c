@@ -1063,6 +1063,13 @@ win_key_down(WPARAM wp, LPARAM lp)
   uchar kbd[256];
   GetKeyboardState(kbd);
   inline bool is_key_down(uchar vk) { return kbd[vk] & 0x80; }
+#ifdef debug_virtual_key_codes
+  printf(" [%d %c%d] Shift %d:%d/%d Ctrl %d:%d/%d Alt %d:%d/%d\n",
+         (int)GetMessageTime(), lctrl_time ? '+' : '=', (int)GetMessageTime() - lctrl_time,
+         is_key_down(VK_SHIFT), is_key_down(VK_LSHIFT), is_key_down(VK_RSHIFT),
+         is_key_down(VK_CONTROL), is_key_down(VK_LCONTROL), is_key_down(VK_RCONTROL),
+         is_key_down(VK_MENU), is_key_down(VK_LMENU), is_key_down(VK_RMENU));
+#endif
 
   // Fix AltGr detection;
   // workaround for broken Windows on-screen keyboard (#692)
@@ -1089,11 +1096,13 @@ win_key_down(WPARAM wp, LPARAM lp)
     lctrl_time = GetMessageTime();
   }
   else if (lctrl_time) {
-    lctrl = !(key == VK_MENU && extended && lctrl_time == GetMessageTime());
+    lctrl = !(key == VK_MENU && extended 
+              && GetMessageTime() - lctrl_time <= cfg.ctrl_alt_delay_altgr);
     lctrl_time = 0;
   }
-  else
+  else {
     lctrl = is_key_down(VK_LCONTROL) && (lctrl || !is_key_down(VK_RMENU));
+  }
 
   bool numlock = kbd[VK_NUMLOCK] & 1;
   bool shift = is_key_down(VK_SHIFT);

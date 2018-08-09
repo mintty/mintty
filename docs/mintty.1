@@ -1232,6 +1232,14 @@ The setting makes no difference for keys without AltGr key bindings
 (e.g. any key on the standard US layout).
 
 .TP
+\fBAllow delay for AltGr detection\fP (CtrlAltDelayAltGr=0)
+Some software managing and providing keyboard input does not handle 
+AltGr properly; particularly TeamViewer is known for buggy behaviour 
+as it does not provide Ctrl and Menu virtual key codes like Windows does.
+With this option, some delay in milliseconds (suggested 16 or 20) can be 
+allowed to detect a Ctrl+Menu sequence as AltGr.
+
+.TP
 \fBOld method of AltGr detection\fP (OldAltGrDetection=no)
 Setting this hidden option would disable a workaround for an 
 incompatibility in the Windows on-screen keyboard, 

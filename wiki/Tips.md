@@ -324,6 +324,17 @@ noremap! <Esc>O[ <C-c>
 ```
 
 
+## Keyboard issues in specific environments ##
+
+### Detecting AltGr in TeamViewer ###
+
+Windows provides AltGr using two virtual key codes (Ctrl and Menu) 
+sharing the same timestamp. TeamViewer is buggy with respect to the 
+timestamp. As a workaround, mintty can detect AltGr also from the 
+two key codes arriving with some delay. Setting 
+`CtrlAltDelayAltGr=16` or `CtrlAltDelayAltGr=20` is suggested.
+
+
 ## Using Ctrl+Tab to switch window pane in terminal multiplexers ##
 
 The _Ctrl+Tab_ and _Ctrl+Shift+Tab_ key combinations can be used to 
