@@ -364,6 +364,13 @@ bind-key -n User1 previous-window
 ```
 
 
+## Keyboard customization ##
+
+A number of options are available to customize the keyboard behaviour, 
+including user-defined function keys and Ctrl+Shift+key shortcuts.
+See the manual page for options and details.
+
+
 ## Compose key ##
 
 Mintty uses the Windows keyboard layout system with its “dead key” mechanism 

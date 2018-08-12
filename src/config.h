@@ -95,6 +95,7 @@ typedef struct {
   string key_break;	// VK_CANCEL
   string key_menu;	// VK_APPS
   string key_scrlock;	// VK_SCROLL
+  wstring key_commands;
   // Mouse
   bool copy_on_select;
   bool copy_as_rtf;

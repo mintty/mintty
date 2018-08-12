@@ -771,6 +771,12 @@ Clear ("5") for glass.
 If OpaqueWhenFocused is set, opaqueness is temporarily disabled to 
 provide visible feedback for the changes.
 
+.TP
+\fBUser-defined shortcuts\fP
+Function keys, modified function keys, and Ctrl+Shift+key combinations 
+can be redefined to generate user-defined input or invoke functions.
+See option \fBKeyFunctions\fP for details.
+
 .SS Embedding graphics in terminal output
 
 The SIXEL graphics support feature facilitates a range of applications 
@@ -867,7 +873,8 @@ command-line.)
 .br
 Unicode-enabled settings: BellFile, ThemeFile, Background, Title, ExitTitle, Icon, Log, 
 Language, Font, Font1..., FontSample, Printer, Answerback, SixelClipChars, 
-Class, AppID, AppName, AppLaunchCmd, DropCommands, UserCommands, SessionCommands, TaskCommands.
+Class, AppID, AppName, AppLaunchCmd, 
+DropCommands, UserCommands, SessionCommands, TaskCommands, KeyFunctions.
 
 Be careful when running multiple instances of mintty. If options are saved 
 from different instances, or the config file is edited manually, 
@@ -1936,6 +1943,107 @@ Key_Menu=29 would make the Menu key send the same escape sequence as in xterm
 Key_Break=2 would turn the Break key into an Insert key
 .br
 Key_Break=_BRK_ would assign the simulated terminal line Break function
+
+.TP
+\fBUser-defined shortcuts (KeyFunctions=)\fP
+With this setting, function keys, modified function keys, and 
+Ctrl+Shift+key combinations can be mapped to invoke specific functions 
+or generate user-defined input.
+The value is a series of semicolon-separated, colon-combined 
+pairs of key and action descriptors
+(if a semicolon shall be embedded into any of the action descriptors, 
+a non-whitespace control character (i.e. none of \fB^I^J^K^L^M\fP) can be 
+specified as an alternative separator by starting the whole setting with it).
+
+Supported keys are described as follows:
+.br
+\(en function keys F1...F24
+.br
+\(en modified function keys, preceded with a combination of C, A, S, in this order,
+indicating Ctrl, Alt, Shift as combined with the function key, 
+attached with a "+" separator, e.g. \fBCS+F9\fP
+.br
+\(en any character reachable on the keyboard without Shift; 
+AltGr-generated characters are supported
+
+\fINote:\fP The definition is ignored if the Ctrl+Shift+key combination would 
+generate a valid input character already. This is particularly the case 
+if a valid control character is mapped to the key in the keyboard layout.
+E.g. if you add a definition for Ctrl+Shift+minus and Shift+minus is "_" 
+(underline) on the keyboard, the user-defined key function will be ignored, 
+in order to prevent that input of Ctrl+_ would be inhibited.
+
+Supported actions are described as follows:
+.br
+\(en \fB"string"\fP or \fB'string'\fP: enters the literal string
+.br
+\(en \fB`command`\fP: enters the output of the command
+.br
+\(en \fBnew\fP: opens a new terminal window when key is released
+.br
+\(en \fBoptions\fP: opens the Options dialog
+.br
+\(en \fBmenu-text (*)\fP: opens the context menu at the cursor position
+.br
+\(en \fBmenu-pointer (*)\fP: opens the context menu at the mouse position
+.br
+\(en \fBsearch\fP: opens the search bar
+.br
+\(en \fBfullscreen (*)\fP: switches to fullscreen mode
+.br
+\(en \fBdefault-size (*)\fP: switches to default window size
+.br
+\(en \fBscrollbar-outer\fP: toggles the scrollbar (xterm compatible)
+.br
+\(en \fBscrollbar-inner\fP: toggles the scrollbar (mintty legacy)
+.br
+\(en \fBcycle-pointer-style\fP: cycles the pointer style
+.br
+\(en \fBcycle-transparency-level\fP: cycles the transparency level
+.br
+\(en \fBcopy\fP: copies the selection to the clipboard
+.br
+\(en \fBpaste\fP: pastes from the clipboard
+.br
+\(en \fBcopy-paste\fP: copies and pastes
+.br
+\(en \fBselect-all\fP: selects all text including scrollback
+.br
+\(en \fBclear-scrollback\fP: clears the scrollback
+.br
+\(en \fBcopy-title\fP: copies the window title to the clipboard
+.br
+\(en \fBreset\fP: resets the terminal
+.br
+\(en \fBbreak\fP: sends a break condition to the application
+.br
+\(en \fBflipscreen\fP: switches the alternate screen
+.br
+\(en \fBopen\fP: opens the selection, e.g. a URL or filename
+.br
+\(en \fBtoggle-logging\fP: toggles logfile logging
+.br
+\(en \fBtoggle-char-info\fP: toggles character info display
+.br
+\(en \fBexport-html\fP: exports the screen as an HTML file
+
+\fINote (*):\fP The exact behaviour of some actions depends on the 
+Shift state as being mapped from.
+
+\fINote:\fP To just disable the built-in shortcut (and not override it 
+with a user-defined one), leave the action empty, but include the colon.
+
+Examples:
+.br
+\(en \fBKeyFunctions=d:`echo -n `date``;A+F4:;CA+F12:break;-:"minus"\fP
+will input the current date on Ctrl+Shift+d, disable window closing with Alt+F4,
+send a BRK on Ctrl+Alt+F12, but likely not input "minus" on Ctrl+Shift+minus 
+because Shift+minus is an underline on many keyboard layouts which has a 
+Ctrl+_ assignment already
+.br
+\(en \fBKeyFunctions=c:copy;v:paste\fP in combination with setting 
+\fB-o CtrlExchangeShift=true\fP will assign copy/paste to ^C and ^V 
+for Windows addicts
 
 .TP
 \fBUse system colours\fP (UseSystemColours=no)

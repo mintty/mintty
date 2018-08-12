@@ -97,6 +97,7 @@ const config default_cfg = {
   .key_break = "",	// VK_CANCEL
   .key_menu = "",	// VK_APPS
   .key_scrlock = "",	// VK_SCROLL
+  .key_commands = W(""),
   // Mouse
   .copy_on_select = true,
   .copy_as_rtf = true,
@@ -309,6 +310,7 @@ options[] = {
   {"Key_ScrollLock", OPT_STRING, offcfg(key_scrlock)},
   {"Break", OPT_STRING | OPT_LEGACY, offcfg(key_break)},
   {"Pause", OPT_STRING | OPT_LEGACY, offcfg(key_pause)},
+  {"KeyFunctions", OPT_WSTRING, offcfg(key_commands)},
 
   // Mouse
   {"CopyOnSelect", OPT_BOOL, offcfg(copy_on_select)},

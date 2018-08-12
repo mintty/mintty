@@ -27,6 +27,10 @@ with a few minor changes and some additions.
 Below, [Caret notation](http://en.wikipedia.org/wiki/Caret_notation) 
 is used to show control characters.
 
+A number of options are available to customize the keyboard behaviour, 
+including user-defined function keys and Ctrl+Shift+key shortcuts.
+See the manual page for options and details.
+
 
 ## Alt and Meta ##
 
