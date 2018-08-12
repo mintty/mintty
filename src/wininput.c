@@ -15,10 +15,10 @@
 
 static HMENU ctxmenu = NULL;
 static HMENU sysmenu;
-static bool alt_F2_pending = false;
-static bool alt_F2_shifted = false;
-static bool alt_F2_home = false;
-static int alt_F2_monix = 0, alt_F2_moniy = 0;
+static bool newwin_pending = false;
+static bool newwin_shifted = false;
+static bool newwin_home = false;
+static int newwin_monix = 0, newwin_moniy = 0;
 static int transparency_pending = 0;
 
 
@@ -1147,20 +1147,20 @@ win_key_down(WPARAM wp, LPARAM lp)
     exit_mintty();
 
   // Handling special shifted key functions
-  if (alt_F2_pending) {
+  if (newwin_pending) {
     if (!extended) {  // only accept numeric keypad
       switch (key) {
-        when VK_HOME : alt_F2_monix--; alt_F2_moniy--;
-        when VK_UP   : alt_F2_moniy--;
-        when VK_PRIOR: alt_F2_monix++; alt_F2_moniy--;
-        when VK_LEFT : alt_F2_monix--;
-        when VK_CLEAR: alt_F2_monix = 0; alt_F2_moniy = 0; alt_F2_home = true;
-        when VK_RIGHT: alt_F2_monix++;
-        when VK_END  : alt_F2_monix--; alt_F2_moniy++;
-        when VK_DOWN : alt_F2_moniy++;
-        when VK_NEXT : alt_F2_monix++; alt_F2_moniy++;
+        when VK_HOME : newwin_monix--; newwin_moniy--;
+        when VK_UP   : newwin_moniy--;
+        when VK_PRIOR: newwin_monix++; newwin_moniy--;
+        when VK_LEFT : newwin_monix--;
+        when VK_CLEAR: newwin_monix = 0; newwin_moniy = 0; newwin_home = true;
+        when VK_RIGHT: newwin_monix++;
+        when VK_END  : newwin_monix--; newwin_moniy++;
+        when VK_DOWN : newwin_moniy++;
+        when VK_NEXT : newwin_monix++; newwin_moniy++;
         when VK_INSERT or VK_DELETE:
-                       alt_F2_monix = 0; alt_F2_moniy = 0; alt_F2_home = false;
+                       newwin_monix = 0; newwin_moniy = 0; newwin_home = false;
       }
     }
     return true;
@@ -1225,12 +1225,12 @@ win_key_down(WPARAM wp, LPARAM lp)
           when VK_F2:
             // defer send_syscommand(IDM_NEW) until key released
             // monitor cursor keys to collect parameters meanwhile
-            alt_F2_pending = true;
-            alt_F2_home = false; alt_F2_monix = 0; alt_F2_moniy = 0;
+            newwin_pending = true;
+            newwin_home = false; newwin_monix = 0; newwin_moniy = 0;
             if (mods & MDK_SHIFT)
-              alt_F2_shifted = true;
+              newwin_shifted = true;
             else
-              alt_F2_shifted = false;
+              newwin_shifted = false;
           when VK_F3:  send_syscommand(IDM_SEARCH);
           when VK_F4:  send_syscommand(SC_CLOSE);
           when VK_F8:  send_syscommand(IDM_RESET);
@@ -1909,37 +1909,37 @@ win_key_up(WPARAM wp, LPARAM unused(lp))
       comp_state = COMP_ACTIVE;
   }
 
-  if (alt_F2_pending) {
+  if (newwin_pending) {
     if ((uint)wp == VK_F2) {
       inline bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
       if (is_key_down(VK_SHIFT))
-        alt_F2_shifted = true;
-      if (alt_F2_shifted || win_is_fullscreen)
+        newwin_shifted = true;
+      if (newwin_shifted || win_is_fullscreen)
         clone_size_token = false;
 
-      alt_F2_pending = false;
+      newwin_pending = false;
 
       // Calculate heuristic approximation of selected monitor position
       int x, y;
       MONITORINFO mi;
-      search_monitors(&x, &y, 0, alt_F2_home, &mi);
+      search_monitors(&x, &y, 0, newwin_home, &mi);
       RECT r = mi.rcMonitor;
       int refx, refy;
-      if (alt_F2_monix < 0)
+      if (newwin_monix < 0)
         refx = r.left + 10;
-      else if (alt_F2_monix > 0)
+      else if (newwin_monix > 0)
         refx = r.right - 10;
       else
         refx = (r.left + r.right) / 2;
-      if (alt_F2_moniy < 0)
+      if (newwin_moniy < 0)
         refy = r.top + 10;
-      else if (alt_F2_monix > 0)
+      else if (newwin_monix > 0)
         refy = r.bottom - 10;
       else
         refy = (r.top + r.bottom) / 2;
       POINT pt;
-      pt.x = refx + alt_F2_monix * x;
-      pt.y = refy + alt_F2_moniy * y;
+      pt.x = refx + newwin_monix * x;
+      pt.y = refy + newwin_moniy * y;
       // Find monitor over or nearest to point
       HMONITOR mon = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
       int moni = search_monitors(&x, &y, mon, true, 0);
