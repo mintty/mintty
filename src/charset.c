@@ -14,6 +14,8 @@
 #include <langinfo.h>
 #endif
 
+#include <sys/utsname.h>
+
 #include <winbase.h>
 #include <winnls.h>
 
@@ -116,6 +118,22 @@ cs_descs[] = {
 
 string locale_menu[8];
 string charset_menu[lengthof(cs_descs) + 4];
+
+#if HAS_LOCALES
+static bool
+ge_release(uint v1, uint v2)
+{
+  static uint _v1 = 0, _v2 = 0;
+
+  if (!_v1) {
+    struct utsname name;
+    if (uname(&name) >= 0)
+      sscanf(name.release, "%d.%d.", &_v1, &_v2);
+  }
+
+  return _v1 > v1 || (_v1 == v1 && _v2 >= v2);
+}
+#endif
 
 static void
 strtoupper(char *dst, string src)
@@ -261,16 +279,15 @@ update_mode(void)
 #if HAS_LOCALES
   bool use_default_locale = mode == CSM_DEFAULT && valid_default_locale;
   setlocale(LC_CTYPE,
-    mode == CSM_OEM ?
+            mode == CSM_OEM ?
               "C.CP437"
             : use_default_locale ?
               default_locale
             : cs_ambig_wide ?
-# if CYGWIN_VERSION_API_MINOR >= 999999
-              "C.UTF-8@cjkwide"  // better solution once provided by cygwin
-# else
-              "ja_JP.UTF-8"
-# endif
+              (ge_release(2, 11)
+               ? "C.UTF-8@cjkwide"
+               : "ja_JP.UTF-8"
+              )
             :
               "C.UTF-8"
   );
@@ -335,10 +352,8 @@ update_locale(void)
       string l = default_locale;
       default_locale = asform("%s@cjkwide", l);
       delete(l);
-//# if CYGWIN_VERSION_API_MINOR >= 999999
       // indicate @cjkwide to locale lib
       setlocale(LC_CTYPE, default_locale);
-//# endif
       // in case it's not accepted, yet indicate @cjkwide to shell
       setenv("LC_CTYPE", default_locale, true);
     }
