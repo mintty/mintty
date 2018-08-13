@@ -3073,7 +3073,9 @@ select_WSL(char * wsl)
     support_wsl = true;
     set_arg_option("Locale", strdup("C"));
     set_arg_option("Charset", strdup("UTF-8"));
-    if (!*cfg.app_id)
+    if (0 == wcscmp(cfg.app_id, W("@")))
+      // setting an implicit AppID fixes mintty/wsltty#96 but causes #784
+      // so an explicit config value derives AppID from wsl distro name
       set_arg_option("AppID", asform("%s.%s", APPNAME, wsl ?: "WSL"));
   }
   free(wslname);
@@ -4080,7 +4082,7 @@ main(int argc, char *argv[])
   }
 
   // Set the AppID if specified and the required function is available.
-  if (*cfg.app_id) {
+  if (*cfg.app_id && 0 != wcscmp(cfg.app_id, W("@"))) {
     HMODULE shell = load_sys_library("shell32.dll");
     HRESULT (WINAPI *pSetAppID)(PCWSTR) =
       (void *)GetProcAddress(shell, "SetCurrentProcessExplicitAppUserModelID");
