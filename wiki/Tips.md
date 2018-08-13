@@ -934,7 +934,7 @@ UserCommands=Kill foreground process:kill -9 $MINTTY_PID
 ## Running mintty stand-alone ##
 
 To install mintty outside a cygwin environment, follow a few rules:
-* Find out which libraries (dlls from the cygwin /bin directory) mintty needs in addition to cygwin1.dll and install them all, or:
 * Compile mintty statically.
+* Install mintty.exe together with cygwin1.dll and cygwin-console-helper.exe.
 * Call the directory in which to install mintty and libraries ‘bin’.
 
