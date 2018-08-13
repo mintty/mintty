@@ -1058,6 +1058,7 @@ set_modes(bool state)
           term.echoing = !state;
         when 20: /* LNM: Return sends ... */
           term.newline_mode = state;
+#ifdef support_Wyse_cursor_modes
         when 33: /* WYSTCURM: steady Wyse cursor */
           term.cursor_blinks = !state;
           term.cursor_invalid = true;
@@ -1067,6 +1068,7 @@ set_modes(bool state)
           term.cursor_blinks = false;
           term.cursor_invalid = true;
           term_schedule_cblink();
+#endif
       }
     }
   }
@@ -1197,6 +1199,7 @@ get_mode(bool privatemode, int arg)
         return 2 - term.echoing;
       when 20: /* LNM: Return sends ... */
         return 2 - term.newline_mode;
+#ifdef support_Wyse_cursor_modes
       when 33: /* WYSTCURM: steady Wyse cursor */
         return 2 - (!term.cursor_blinks);
       when 34: /* WYULCURM: Wyse underline cursor */
@@ -1204,6 +1207,7 @@ get_mode(bool privatemode, int arg)
           return 2 - (term.cursor_type == 1);
         else
           return 0;
+#endif
       otherwise:
         return 0;
     }
