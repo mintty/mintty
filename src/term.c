@@ -887,6 +887,8 @@ term_resize(int newrows, int newcols)
 
   term.rows = newrows;
   term.cols = newcols;
+  term.rows0 = newrows;
+  term.cols0 = newcols;
 
   term_switch_screen(on_alt_screen, false);
 }

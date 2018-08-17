@@ -394,6 +394,7 @@ struct term {
   uint printbuf_size, printbuf_pos;
 
   int  rows, cols;
+  int  rows0, cols0;
   bool has_focus;
   bool focus_reported;
   bool in_vbell;
