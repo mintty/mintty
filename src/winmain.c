@@ -1311,11 +1311,13 @@ win_set_geom(int y, int x, int height, int width)
   MONITORINFO mi;
   get_my_monitor_info(&mi);
   RECT ar = mi.rcWork;
-
   int scr_height = ar.bottom - ar.top, scr_width = ar.right - ar.left;
-  int term_height, term_width;
+
+  RECT r;
+  GetWindowRect(wnd, &r);
+  int term_height = r.bottom - r.top, term_width = r.right - r.left;
+
   int term_x, term_y;
-  win_get_pixels(&term_height, &term_width, false);
   win_get_pos(&term_x, &term_y);
 
   if (x >= 0)
@@ -1332,7 +1334,7 @@ win_set_geom(int y, int x, int height, int width)
     term_height = height;
 
   SetWindowPos(wnd, null, term_x, term_y,
-               term_width + 2 * PADDING, term_height + 2 * PADDING,
+               term_width, term_height,
                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOZORDER);
 }
 
