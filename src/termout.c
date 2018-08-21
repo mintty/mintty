@@ -1953,6 +1953,10 @@ do_dcs(void)
         child_printf("\eP1$r%u q\e\\", 
                      (term.cursor_type >= 0 ? term.cursor_type * 2 : 0) + 1
                      + !(term.cursor_blinks & 1));
+      } else if (!strcmp(s, "t") && term.rows >= 24) {  // DECSLPP (lines)
+        child_printf("\eP1$r%ut\e\\", term.rows);
+      } else if (!strcmp(s, "$|")) {  // DECSCPP (columns)
+        child_printf("\eP1$r%u$|\e\\", term.cols);
       } else {
         child_printf("\eP0$r%s\e\\", s);
       }
