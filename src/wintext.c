@@ -1139,6 +1139,13 @@ do_update(void)
 
 #include <math.h>
 
+/*
+   Indicate size of selection with a popup tip (option SelectionShowSize).
+   Future enhancements may be automatic position flipping depending 
+   on selection direction or if the tip reaches outside the screen.
+   Also the actual tip window should better be decoupled from the 
+   window size tip which is now abused for this feature.
+ */
 static void
 sel_update(bool update_sel_tip)
 {
