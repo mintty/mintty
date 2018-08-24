@@ -1159,11 +1159,13 @@ sel_update(bool update_sel_tip)
     }
     RECT wr;
     GetWindowRect(wnd, &wr);
+    LONG style = GetWindowLong(wnd, GWL_STYLE);
     int x = wr.left
-          + GetSystemMetrics(SM_CXSIZEFRAME)
+          + ((style & WS_THICKFRAME) ? GetSystemMetrics(SM_CXSIZEFRAME) : 0)
           + PADDING + last_pos.x * cell_width;
     int y = wr.top
-          + GetSystemMetrics(SM_CYSIZEFRAME) + GetSystemMetrics(SM_CYCAPTION)
+          + ((style & WS_THICKFRAME) ? GetSystemMetrics(SM_CYSIZEFRAME) : 0)
+          + ((style & WS_CAPTION) ? GetSystemMetrics(SM_CYCAPTION) : 0)
           + PADDING + last_pos.y * cell_height;
 #ifdef debug_selection_show_size 
     cfg.selection_show_size = cfg.selection_show_size % 12 + 1;
