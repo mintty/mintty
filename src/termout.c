@@ -1249,6 +1249,39 @@ pop_mode(int mode)
   return -1;
 }
 
+struct cattr_entry {
+  cattr ca;
+  cattrflags mask;
+};
+static struct cattr_entry cattr_stack[10];
+static int cattr_stack_len = 0;
+
+static void
+push_attrs(cattr ca, cattrflags caflagsmask)
+{
+  if (cattr_stack_len == lengthof(cattr_stack)) {
+    for (int i = 1; i < cattr_stack_len; i++)
+      cattr_stack[i - 1] = cattr_stack[i];
+    cattr_stack_len--;
+  }
+  //printf("push_attrs[%d] %llX\n", cattr_stack_len, caflagsmask);
+  cattr_stack[cattr_stack_len].ca = ca;
+  cattr_stack[cattr_stack_len].mask = caflagsmask;
+  cattr_stack_len++;
+}
+
+static bool
+pop_attrs(cattr * _ca, cattrflags * _caflagsmask)
+{
+  if (!cattr_stack_len)
+    return false;
+  cattr_stack_len--;
+  //printf("pop_attrs[%d] %llX\n", cattr_stack_len, cattr_stack[cattr_stack_len].mask);
+  *_ca = cattr_stack[cattr_stack_len].ca;
+  *_caflagsmask = cattr_stack[cattr_stack_len].mask;
+  return true;
+}
+
 /*
  * dtterm window operations and xterm extensions.
    CSI Ps ; Ps ; Ps t
@@ -1461,6 +1494,64 @@ do_csi(uchar c)
       if (val >= 0) {
         term.csi_argc = 1;
         set_modes(val & 1);
+      }
+    }
+    when CPAIR('#', '{'): { /* Push video attributes onto stack (XTPUSHSGR) */
+      cattr ca = term.curs.attr;
+      cattrflags caflagsmask = 0;
+
+      void set_push(int attr) {
+        switch (attr) {
+          when 1: caflagsmask |= ATTR_BOLD;
+          when 2: caflagsmask |= ATTR_DIM;
+          when 3: caflagsmask |= ATTR_ITALIC;
+          when 4 or 21: caflagsmask |= UNDER_MASK;
+          when 5 or 6: caflagsmask |= ATTR_BLINK | ATTR_BLINK2;
+          when 7: caflagsmask |= ATTR_REVERSE;
+          when 8: caflagsmask |= ATTR_INVISIBLE;
+          when 9: caflagsmask |= ATTR_STRIKEOUT;
+          when 20: caflagsmask |= FONTFAM_MASK;
+          when 53: caflagsmask |= ATTR_OVERL;
+          when 58: caflagsmask |= ATTR_ULCOLOUR;
+          when 10: caflagsmask |= ATTR_FGMASK;
+          when 11: caflagsmask |= ATTR_BGMASK;
+        }
+      }
+
+      if (!term.csi_argv_defined[0])
+        for (int a = 1; a < 90; a++)
+          set_push(a);
+      else
+        for (uint i = 0; i < term.csi_argc; i++) {
+          //printf("XTPUSHSGR[%d] %d\n", i, term.csi_argv[i]);
+          set_push(term.csi_argv[i]);
+        }
+      if ((ca.attr & caflagsmask & ATTR_FGMASK) != TRUE_COLOUR)
+        ca.truefg = 0;
+      if ((ca.attr & caflagsmask & ATTR_BGMASK) != TRUE_COLOUR)
+        ca.truebg = 0;
+      if (!(caflagsmask & ATTR_ULCOLOUR))
+        ca.ulcolr = (colour)-1;
+      // push
+      //printf("XTPUSHSGR &%llX %llX %06X %06X %06X\n", caflagsmask, ca.attr, ca.truefg, ca.truebg, ca.ulcolr);
+      push_attrs(ca, caflagsmask);
+    }
+    when CPAIR('#', '}'): { /* Pop video attributes from stack (XTPOPSGR) */
+      //printf("XTPOPSGR\n");
+      // pop
+      cattr ca;
+      cattrflags caflagsmask;
+      if (pop_attrs(&ca, &caflagsmask)) {
+        //printf("XTPOPSGR &%llX %llX %06X %06X %06X\n", caflagsmask, ca.attr, ca.truefg, ca.truebg, ca.ulcolr);
+        // merge
+        term.curs.attr.attr = (term.curs.attr.attr & ~caflagsmask)
+                              | (ca.attr & caflagsmask);
+        if ((ca.attr & caflagsmask & ATTR_FGMASK) == TRUE_COLOUR)
+          term.curs.attr.truefg = ca.truefg;
+        if ((ca.attr & caflagsmask & ATTR_BGMASK) == TRUE_COLOUR)
+          term.curs.attr.truebg = ca.truebg;
+        if (caflagsmask & ATTR_ULCOLOUR)
+          term.curs.attr.ulcolr = ca.ulcolr;
       }
     }
     when CPAIR('$', 'p'): { /* DECRQM: request (private) mode */
