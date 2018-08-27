@@ -1307,7 +1307,7 @@ win_key_down(WPARAM wp, LPARAM lp)
 #ifdef check_alt_ret_space_first
     // Moved to switch() below so we can override it with layout().
     // Window menu and fullscreen
-    if (cfg.window_shortcuts && alt && !ctrl) {
+    if (cfg.window_shortcuts && alt && !altgr && !ctrl) {
       if (key == VK_RETURN) {
         trace_resize(("--- Alt-Enter (shift %d)", shift));
         send_syscommand(IDM_FULLSCREEN_ZOOM);
@@ -1447,7 +1447,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
 
     // Alt+Fn shortcuts
-    if (cfg.alt_fn_shortcuts && alt && VK_F1 <= key && key <= VK_F24) {
+    if (cfg.alt_fn_shortcuts && alt && !altgr && VK_F1 <= key && key <= VK_F24) {
       if (!ctrl) {
         switch (key) {
           when VK_F2:
@@ -1950,7 +1950,10 @@ static struct {
 
   switch (key) {
     when VK_RETURN:
-      if (!term.shortcut_override && cfg.window_shortcuts && alt && !ctrl) {
+      if (!term.shortcut_override && cfg.window_shortcuts
+          && alt && !altgr && !ctrl
+         )
+      {
         trace_resize(("--- Alt-Enter (shift %d)", shift));
         send_syscommand(IDM_FULLSCREEN_ZOOM);
         return true;
@@ -2055,7 +2058,7 @@ static struct {
         app_pad_code(key - VK_NUMPAD0 + '0');
     when 'A' ... 'Z' or ' ': {
       bool check_menu = key == VK_SPACE && !term.shortcut_override
-                        && cfg.window_shortcuts && alt && !ctrl;
+                        && cfg.window_shortcuts && alt && !altgr && !ctrl;
 #ifdef debug_key
       printf("mods %d (modf %d comp %d)\n", mods, term.modify_other_keys, comp_state);
 #endif
