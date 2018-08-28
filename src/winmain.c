@@ -2123,7 +2123,7 @@ static struct {
         when IDM_COPASTE: term_copy(); win_paste();
         when IDM_CLRSCRLBCK: term_clear_scrollback(); term.disptop = 0;
         when IDM_TOGLOG: toggle_logging();
-        when IDM_HTML: term_export_html();
+        when IDM_HTML: term_export_html(GetKeyState(VK_SHIFT) & 0x80);
         when IDM_TOGCHARINFO: toggle_charinfo();
         when IDM_PASTE: win_paste();
         when IDM_SELALL: term_select_all(); win_update(false);

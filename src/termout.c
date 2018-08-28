@@ -1577,7 +1577,7 @@ do_csi(uchar c)
         term_print_finish();
       }
       else if (arg0 == 10 && !term.esc_mod) {
-        term_export_html();
+        term_export_html(false);
       }
     when 'g':        /* TBC: clear tabs */
       if (!arg0)

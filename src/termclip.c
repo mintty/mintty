@@ -387,7 +387,7 @@ term_cmd(char * cmdpat)
 #include "winpriv.h"  // PADDING
 
 void
-term_export_html(void)
+term_export_html(bool do_open)
 {
   struct timeval now;
   gettimeofday(& now, 0);
@@ -417,6 +417,7 @@ term_export_html(void)
   char * font_name = cs__wcstoutf(cfg.font.name);
   colour fg_colour = win_get_colour(FG_COLOUR_I);
   colour bg_colour = win_get_colour(BG_COLOUR_I);
+  colour bold_colour = win_get_colour(BOLD_COLOUR_I);
   fprintf(hf,
     "<head>\n"
     "  <meta name='generator' content='mintty'/>\n"
@@ -489,6 +490,9 @@ term_export_html(void)
   fprintf(hf, "  .ul { text-decoration-line: underline }\n");
   fprintf(hf, "  .st { text-decoration-line: line-through }\n");
   fprintf(hf, "  .lu { text-decoration-line: line-through underline }\n");
+  if (bold_colour != (colour)-1)
+    fprintf(hf, "  .bold-color { color: #%02X%02X%02X }\n",
+            red(bold_colour), green(bold_colour), blue(bold_colour));
   for (int i = 0; i < 16; i++) {
     colour ansii = win_get_colour(ANSI0 + i);
     uchar r = red(ansii), g = green(ansii), b = blue(ansii);
@@ -496,6 +500,12 @@ term_export_html(void)
                 " .bg-color%d { background-color: #%02X%02X%02X }\n",
                 i, r, g, b, i, r, g, b);
   }
+#ifdef support_cursor
+  colour cursor_colour = win_get_colour(CURSOR_COLOUR_I);
+  fprintf(hf, "  .cursor { background-color: #%02X%02X%02X }\n",
+          red(cursor_colour), green(cursor_colour), blue(cursor_colour));
+#endif
+
   for (int i = 1; i <= 10; i++)
     if (*cfg.fontfams[i].name) {
       char * fn = cs__wcstoutf(cfg.fontfams[i].name);
@@ -556,19 +566,35 @@ term_export_html(void)
       int bgi = (ca->attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
       bool dim = ca->attr & ATTR_DIM;
       bool rev = ca->attr & ATTR_REVERSE;
+
+      // colour setup preparations;
+      // we could perhaps reuse apply_attr_colour here, but again 
+      // the situation is specific: some terminal handling (manual bolding) 
+      // is not applicable in HTML export, and we do not want to simply 
+      // always retrieve a plain colour value because we want to specify 
+      // colour style or class only if the respective default is overridden
       colour fg = fgi >= TRUE_COLOUR ? ca->truefg : win_get_colour(fgi);
       colour bg = bgi >= TRUE_COLOUR ? ca->truebg : win_get_colour(bgi);
-      if (dim)
-        fg = ((fg & 0xFEFEFEFE) >> 1)
-             + ((win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1);
-      if (rev) {
-        fgi ^= bgi; fg ^= bg;
-        bgi ^= fgi; bg ^= fg;
-        fgi ^= bgi; fg ^= bg;
-      }
-      // separate configurable ANSI values
+      // separate ANSI values subject to BoldAsColour
       int fga = fgi >= ANSI0 ? fgi & 0xFF : 999;
       int bga = bgi >= ANSI0 ? bgi & 0xFF : 999;
+      if ((ca->attr & ATTR_BOLD) && fga < 8 && term.enable_bold_colour && !rev) {
+        if (bold_colour != (colour)-1)
+          fg = bold_colour;
+      }
+      if (dim) {
+        fg = ((fg & 0xFEFEFEFE) >> 1)
+             // dim against terminal bg (as in apply_attr_colour)
+             + ((win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1);
+      }
+      if (rev) {
+        fgi ^= bgi; fga ^= bga; fg ^= bg;
+        bgi ^= fgi; bga ^= fga; bg ^= fg;
+        fgi ^= bgi; fga ^= bga; fg ^= bg;
+      }
+      cattr ac = apply_attr_colour(*ca, ACM_TERM);
+      fg = ac.truefg;
+      bg = ac.truebg;
 
       // add classes
       if (ca->attr & ATTR_BOLD)
@@ -586,10 +612,41 @@ term_export_html(void)
         fprintf(hf, " font%d", findex);
       if (ca->attr & ATTR_FRAMED)
         fprintf(hf, " emoji");  // mark emoji style
-      if (fga < 16 && (!dim || rev))
+
+      // catch and verify predefined colours and apply their colour classes
+      if (fgi == FG_COLOUR_I) {
+        if ((ca->attr & ATTR_BOLD) && term.enable_bold_colour) {
+          if (fg == bold_colour) {
+            fprintf(hf, " bold-color");
+            fg = (colour)-1;
+          }
+        }
+        else if (fg == fg_colour)
+          fg = (colour)-1;
+      }
+      else if (fga < 8 && cfg.bold_as_colour && (ca->attr & ATTR_BOLD)
+               && fg == win_get_colour(ANSI0 + fga + 8)
+              )
+      {
+        fprintf(hf, " fg-color%d", fga + 8);
+        fg = (colour)-1;
+      }
+      else if (fga < 16 && fg == win_get_colour(ANSI0 + fga)) {
         fprintf(hf, " fg-color%d", fga);
-      if (bga < 16 && (!rev || !dim))
+        fg = (colour)-1;
+      }
+      if (bgi == BG_COLOUR_I && bg == bg_colour)
+        bg = (colour)-1;
+      else if (bga < 16 && bg == win_get_colour(ANSI0 + bga)) {
         fprintf(hf, " bg-color%d", bga);
+        bg = (colour)-1;
+      }
+
+#ifdef support_cursor
+#warning this does not work because the TATTRs are not set in the buffer
+      if (ca->attr & (TATTR_ACTCURS | TATTR_PASCURS))
+        fprintf(hf, " cursor");
+#endif
 
       // add styles
       bool with_style = false;
@@ -601,12 +658,14 @@ term_export_html(void)
         else
           fprintf(hf, " %s", s);
       }
-      if ((fgi != FG_COLOUR_I && fga >= 16) || dim || (rev && fga >= 16)) {
+
+      // add individual colours, or fix unmatched colours
+      if (fg != (colour)-1) {
         uchar r = red(fg), g = green(fg), b = blue(fg);
         add_style("");
         fprintf(hf, "color: #%02X%02X%02X;", r, g, b);
       }
-      if ((bgi != BG_COLOUR_I && bga >= 16) || (rev && (bga >= 16 || dim))) {
+      if (bg != (colour)-1) {
         uchar r = red(bg), g = green(bg), b = blue(bg);
         add_style("");
         fprintf(hf, "background-color: #%02X%02X%02X;", r, g, b);
@@ -629,8 +688,10 @@ term_export_html(void)
         add_style("text-decoration-style: wavy;");
       else if ((ca->attr & UNDER_MASK) == ATTR_DOUBLYUND)
         add_style("text-decoration-style: double;");
-      if (ca->attr & ATTR_ULCOLOUR) {
-        uchar r = red(ca->ulcolr), g = green(ca->ulcolr), b = blue(ca->ulcolr);
+
+      colour ul = (ca->attr & ATTR_ULCOLOUR) ? ca->ulcolr : cfg.underl_colour;
+      if (ul != (colour)-1 && (ca->attr & (UNDER_MASK | ATTR_STRIKEOUT | ATTR_OVERL))) {
+        uchar r = red(ul), g = green(ul), b = blue(ul);
         add_style("");
         fprintf(hf, "text-decoration-color: #%02X%02X%02X;", r, g, b);
       }
@@ -673,5 +734,12 @@ term_export_html(void)
   fprintf(hf, "</body>\n");
 
   fclose(hf);  // implies close(hfd);
+
+  if (do_open) {
+    wchar * browse = cs__mbstowcs(htmlf);
+    win_open(browse);
+    free(browse);
+  }
+  free(htmlf);
 }
 
