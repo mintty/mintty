@@ -1248,6 +1248,14 @@ win_key_down(WPARAM wp, LPARAM lp)
   if ((key == VK_RETURN || key == VK_ESCAPE) && !mods && !child_is_alive())
     exit_mintty();
 
+  if ((key == VK_RETURN || key == VK_ESCAPE) && !mods) {
+    HIMC hImc = ImmGetContext(wnd);
+    if (ImmGetOpenStatus(hImc)) {
+      ImmSetConversionStatus(hImc, IME_CMODE_ALPHANUMERIC, IME_SMODE_NONE);
+      ImmReleaseContext(wnd, hImc);
+    };
+  };
+
   // Handling special shifted key functions
   if (newwin_pending) {
     if (!extended) {  // only accept numeric keypad
