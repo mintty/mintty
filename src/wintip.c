@@ -115,7 +115,7 @@ win_show_tip(int x, int y, int cols, int rows)
   }
 
   sprintf(sizetip, "%dx%d", cols, rows);
-  // even if this text is not used anymore, 
+  // even if this text is not used anymore,
   // apparently the call is needed to trigger WM_PAINT:
   SetWindowTextA(tip_wnd, sizetip);
 }

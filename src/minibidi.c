@@ -206,14 +206,14 @@ bidi_class(ucschar ch)
  * text display function can't conveniently be prevented from doing
  * its own bidi and so special treatment is required for characters
  * that would cause the bidi algorithm to activate).
- * 
+ *
  * This function is passed a single Unicode code point, and returns
  * nonzero if the presence of this code point can possibly cause
  * the bidi algorithm to do any reordering. Thus, any string
  * composed entirely of characters for which is_rtl() returns zero
  * should be safe to pass to a bidi-active platform display
  * function without fear.
- * 
+ *
  * (is_rtl() must therefore also return true for any character
  * which would be affected by Arabic shaping, but this isn't
  * important because all such characters are right-to-left so it
@@ -983,7 +983,7 @@ do_bidi(bidi_char * line, int count)
   * to the paragraph embedding level:
   *   (1) segment separators,
   *   (2) paragraph separators,
-  *   (3) any sequence of whitespace characters preceding a 
+  *   (3) any sequence of whitespace characters preceding a
   *       segment separator or paragraph separator,
   *   (4) and any sequence of white space characters at the end of the line.
   * The types of characters used here are the original types, not those
@@ -1053,7 +1053,7 @@ do_bidi(bidi_char * line, int count)
   * process, then the ordering of the marks and the base character must
   * be reversed.
   */
-  // This is not relevant for mintty as the combining characters are kept 
+  // This is not relevant for mintty as the combining characters are kept
   // hidden from this algorithm and are maintained transparently to it.
 
   return R;

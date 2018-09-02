@@ -130,7 +130,7 @@ static const interval ambiguous[] =
  *      ISO 8859-1 and WGL4 characters, Unicode control characters,
  *      etc.) have a column width of 1.
  *
- * This implementation assumes that xchar (rather than wchar_t) characters 
+ * This implementation assumes that xchar (rather than wchar_t) characters
  * are encoded in ISO 10646.
  */
 

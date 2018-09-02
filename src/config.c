@@ -6,7 +6,7 @@
 // Internationalization approach:
 // instead of refactoring a lot of framework functions (here, *ctrls.c)
 // to use Unicode strings, the API is simply redefined to use UTF-8;
-// non-ASCII strings are converted before being passed to the platform 
+// non-ASCII strings are converted before being passed to the platform
 // (using UTF-16 on Windows)
 
 #include "term.h"
@@ -768,7 +768,7 @@ set_option(string name, string val_str, bool from_file)
     }
   }
   //__ %2$s: option name, %1$s: invalid value
-  opterror(_("Ignoring invalid value '%s' for option '%s'"), 
+  opterror(_("Ignoring invalid value '%s' for option '%s'"),
            from_file, val_str, name);
   return -1;
 }
@@ -779,7 +779,7 @@ parse_option(string option, bool from_file)
   const char *eq = strchr(option, '=');
   if (!eq) {
     //__ %s: option name
-    opterror(_("Ignoring option '%s' with missing value"), 
+    opterror(_("Ignoring option '%s' with missing value"),
              from_file, option, 0);
     return -1;
   }
@@ -1387,7 +1387,7 @@ save_config(void)
   if (!file) {
     // Should we report the failed Windows or POSIX path? (see mintty/wsltty#42)
     // In either case, we must transform to Unicode.
-    // For WSL, it's probably not a good idea to report a POSIX path 
+    // For WSL, it's probably not a good idea to report a POSIX path
     // because it would be mistaken for a WSL path.
     char *msg;
     char * up = cs__wcstoutf(rc_filename);
@@ -2597,9 +2597,9 @@ setup_config_box(controlbox * b)
   * The Looks panel.
   */
   //__ Options - Looks: treeview label
-  s = ctrl_new_set(b, _("Looks"), 
+  s = ctrl_new_set(b, _("Looks"),
   //__ Options - Looks: panel title
-                      _("Looks in Terminal"), 
+                      _("Looks in Terminal"),
   //__ Options - Looks: section title
                       _("Colours"));
   ctrl_columns(s, 3, 33, 33, 33);
@@ -2628,7 +2628,7 @@ setup_config_box(controlbox * b)
   (store_button = ctrl_pushbutton(s, _("Store"), scheme_saver, 0))
     ->column = 1;
 
-  s = ctrl_new_set(b, _("Looks"), null, 
+  s = ctrl_new_set(b, _("Looks"), null,
   //__ Options - Looks: section title
                       _("Transparency"));
   bool with_glass = win_is_glass_available();
@@ -2669,7 +2669,7 @@ setup_config_box(controlbox * b)
   );
 #endif
 
-  s = ctrl_new_set(b, _("Looks"), null, 
+  s = ctrl_new_set(b, _("Looks"), null,
   //__ Options - Looks: section title
                       _("Cursor"));
   ctrl_radiobuttons(
@@ -2692,9 +2692,9 @@ setup_config_box(controlbox * b)
   * The Text panel.
   */
   //__ Options - Text: treeview label
-  s = ctrl_new_set(b, _("Text"), 
+  s = ctrl_new_set(b, _("Text"),
   //__ Options - Text: panel title
-                      _("Text and Font properties"), 
+                      _("Text and Font properties"),
   //__ Options - Text: section title
                       _("Font"));
   if (cfg.fontmenu == 0) {  // use built-in inline font menu
@@ -2779,7 +2779,7 @@ setup_config_box(controlbox * b)
   * The Keys panel.
   */
   //__ Options - Keys: treeview label
-  s = ctrl_new_set(b, _("Keys"), 
+  s = ctrl_new_set(b, _("Keys"),
   //__ Options - Keys: panel title
                       _("Keyboard features"), null);
   ctrl_columns(s, 2, 50, 50);
@@ -2799,7 +2799,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, &new_cfg.ctrl_alt_is_altgr
   );
 
-  s = ctrl_new_set(b, _("Keys"), null, 
+  s = ctrl_new_set(b, _("Keys"), null,
   //__ Options - Keys: section title
                       _("Shortcuts"));
   ctrl_checkbox(
@@ -2833,7 +2833,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, &new_cfg.ctrl_shift_shortcuts
   );
 
-  s = ctrl_new_set(b, _("Keys"), null, 
+  s = ctrl_new_set(b, _("Keys"), null,
   //__ Options - Keys: section title
                       _("Compose key"));
   ctrl_radiobuttons(
@@ -2854,7 +2854,7 @@ setup_config_box(controlbox * b)
   * The Mouse panel.
   */
   //__ Options - Mouse: treeview label
-  s = ctrl_new_set(b, _("Mouse"), 
+  s = ctrl_new_set(b, _("Mouse"),
   //__ Options - Mouse: panel title
                       _("Mouse functions"), null);
   ctrl_columns(s, 2, 50, 50);
@@ -2874,7 +2874,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, &new_cfg.clicks_place_cursor
   );
 
-  s = ctrl_new_set(b, _("Mouse"), null, 
+  s = ctrl_new_set(b, _("Mouse"), null,
   //__ Options - Mouse: section title
                       _("Click actions"));
   ctrl_radiobuttons(
@@ -2906,7 +2906,7 @@ setup_config_box(controlbox * b)
     null
   );
 
-  s = ctrl_new_set(b, _("Mouse"), null, 
+  s = ctrl_new_set(b, _("Mouse"), null,
   //__ Options - Mouse: section title
                       _("Application mouse mode"));
   ctrl_radiobuttons(
@@ -2938,9 +2938,9 @@ setup_config_box(controlbox * b)
   * The Window panel.
   */
   //__ Options - Window: treeview label
-  s = ctrl_new_set(b, _("Window"), 
+  s = ctrl_new_set(b, _("Window"),
   //__ Options - Window: panel title
-                      _("Window properties"), 
+                      _("Window properties"),
   //__ Options - Window: section title
                       _("Default size"));
   ctrl_columns(s, 5, 35, 3, 28, 4, 30);
@@ -2996,7 +2996,7 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, &new_cfg.pgupdn_scroll
   );
 
-  s = ctrl_new_set(b, _("Window"), null, 
+  s = ctrl_new_set(b, _("Window"), null,
   //__ Options - Window: section title
                       _("UI language"));
   ctrl_columns(s, 2, 60, 40);
@@ -3008,7 +3008,7 @@ setup_config_box(controlbox * b)
   * The Terminal panel.
   */
   //__ Options - Terminal: treeview label
-  s = ctrl_new_set(b, _("Terminal"), 
+  s = ctrl_new_set(b, _("Terminal"),
   //__ Options - Terminal: panel title
                       _("Terminal features"), null);
   ctrl_columns(s, 2, 50, 50);
@@ -3021,7 +3021,7 @@ setup_config_box(controlbox * b)
     s, _("&Answerback"), 100, dlg_stdstringbox_handler, &new_cfg.answerback
   )->column = 1;
 
-  s = ctrl_new_set(b, _("Terminal"), null, 
+  s = ctrl_new_set(b, _("Terminal"), null,
   //__ Options - Terminal: section title
                       _("Bell"));
   ctrl_columns(s, 2, 73, 27);
@@ -3039,13 +3039,13 @@ setup_config_box(controlbox * b)
     s, _("&Wave"), 83, bellfile_handler, &new_cfg.bell_file
   )->column = 0;
   ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
-  // balance column widths of the following 3 fields 
+  // balance column widths of the following 3 fields
   // to accomodate different length of localized labels
   int strwidth(string s0) {
     int len = 0;
     unsigned char * sp = (unsigned char *)s0;
     while (*sp) {
-      if ((*sp >= 0xE3 && *sp <= 0xED) || 
+      if ((*sp >= 0xE3 && *sp <= 0xED) ||
           (*sp == 0xF0 && *(sp + 1) >= 0xA0 && *(sp + 1) <= 0xBF))
         // approx. CJK range
         len += 4;
@@ -3082,7 +3082,7 @@ setup_config_box(controlbox * b)
     s, _("&Popup"), dlg_stdcheckbox_handler, &new_cfg.bell_popup
   )->column = 2;
 
-  s = ctrl_new_set(b, _("Terminal"), null, 
+  s = ctrl_new_set(b, _("Terminal"), null,
   //__ Options - Terminal: section title
                       _("Printer"));
 #ifdef use_multi_listbox_for_printers

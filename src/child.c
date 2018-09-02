@@ -110,7 +110,7 @@ open_logfile(bool toggling)
 {
   // Open log file if any
   if (*cfg.log) {
-    // use cygwin conversion function to escape unencoded characters 
+    // use cygwin conversion function to escape unencoded characters
     // and thus avoid the locale trick (2.2.3)
 
     if (0 == wcscmp(cfg.log, W("-"))) {

@@ -117,7 +117,7 @@ restore_cursor(void)
     curs->y = term.rows - 1;
 
  /*
-  * wrapnext might reset to False 
+  * wrapnext might reset to False
   * if the x position is no longer at the rightmost edge.
   */
   if (curs->wrapnext && curs->x < term.cols - 1)
@@ -302,16 +302,16 @@ write_char(wchar c, int width)
       put_char(c);
     when 2 or 3:  // Double-width char (Triple-width was an experimental option).
      /*
-      * If we're about to display a double-width character 
-      * starting in the rightmost column, 
+      * If we're about to display a double-width character
+      * starting in the rightmost column,
       * then we do something special instead.
       * We must print a space in the last column of the screen, then wrap;
-      * and we also set LATTR_WRAPPED2 which instructs subsequent 
-      * cut-and-pasting not only to splice this line to the one after it, 
+      * and we also set LATTR_WRAPPED2 which instructs subsequent
+      * cut-and-pasting not only to splice this line to the one after it,
       * but to ignore the space in the last character position as well.
-      * (Because what was actually output to the terminal was presumably 
+      * (Because what was actually output to the terminal was presumably
       * just a sequence of CJK characters, and we don't want a space to be
-      * pasted in the middle of those just because they had the misfortune 
+      * pasted in the middle of those just because they had the misfortune
       * to start in the wrong parity column. xterm concurs.)
       */
       term_check_boundary(curs->x, curs->y);
@@ -625,7 +625,7 @@ do_sgr(void)
     // support colon-separated sub parameters as specified in
     // ISO/IEC 8613-6 (ITU Recommendation T.416)
     int sub_pars = 0;
-    // count sub parameters and clear their SUB_PARS flag 
+    // count sub parameters and clear their SUB_PARS flag
     // (the last one does not have it)
     // but not the SUB_PARS flag of the main parameter
     if (term.csi_argv[i] & SUB_PARS)
@@ -675,7 +675,7 @@ do_sgr(void)
       when 10 ... 11: {  // ... 12 disabled
         // mode 10 is the configured character set
         // mode 11 is the VGA character set (CP437 + control range graphics)
-        // mode 12 (VT520, Linux console, not cygwin console) 
+        // mode 12 (VT520, Linux console, not cygwin console)
         // clones VGA characters into the ASCII range; disabled;
         // modes 11 (and 12) are overridden by alternative font if configured
           uchar arg_10 = term.csi_argv[i] - 10;
@@ -1606,7 +1606,7 @@ do_csi(uchar c)
      /*
       * VT340/VT420 sequence DECSLPP, for setting the height of the window.
       * DEC only allowed values 24/25/36/48/72/144, so dtterm and xterm
-      * claimed values below 24 for various window operations, 
+      * claimed values below 24 for various window operations,
       * and also allowed any number of rows from 24 and above to be set.
       */
       if (arg0 >= 24) {
@@ -1627,7 +1627,7 @@ do_csi(uchar c)
     when CPAIR('*', '|'):     /* DECSNLS */
      /*
       * Set number of lines on screen
-      * VT420 uses VGA like hardware and can support any size 
+      * VT420 uses VGA like hardware and can support any size
       * in reasonable range (24..49 AIUI) with no default specified.
       */
       win_set_chars(arg0 ?: cfg.rows, term.cols);
@@ -1783,7 +1783,7 @@ do_dcs(void)
 
 // Revert https://github.com/mintty/mintty/commit/fe48cdc
 // "fixed SIXEL colour registers handling"
-// which led to Sixel display silently failing 
+// which led to Sixel display silently failing
 // or even stalling mintty window (#740)
 #define fixsix
 
@@ -1999,9 +1999,9 @@ do_dcs(void)
         uint fg = (attr.attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
         if (fg != FG_COLOUR_I) {
           if (fg >= TRUE_COLOUR)
-            //p += sprintf(p, ";38;2;%u;%u;%u", attr.truefg & 0xFF, 
+            //p += sprintf(p, ";38;2;%u;%u;%u", attr.truefg & 0xFF,
             //             (attr.truefg >> 8) & 0xFF, (attr.truefg >> 16) & 0xFF);
-            p += sprintf(p, ";38:2::%u:%u:%u", attr.truefg & 0xFF, 
+            p += sprintf(p, ";38:2::%u:%u:%u", attr.truefg & 0xFF,
                          (attr.truefg >> 8) & 0xFF, (attr.truefg >> 16) & 0xFF);
           else if (fg < 16)
             p += sprintf(p, ";%u", (fg < 8 ? 30 : 90) + (fg & 7));
@@ -2013,9 +2013,9 @@ do_dcs(void)
         uint bg = (attr.attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
         if (bg != BG_COLOUR_I) {
           if (bg >= TRUE_COLOUR)
-            //p += sprintf(p, ";48;2;%u;%u;%u", attr.truebg & 0xFF, 
+            //p += sprintf(p, ";48;2;%u;%u;%u", attr.truebg & 0xFF,
             //             (attr.truebg >> 8) & 0xFF, (attr.truebg >> 16) & 0xFF);
-            p += sprintf(p, ";48:2::%u:%u:%u", attr.truebg & 0xFF, 
+            p += sprintf(p, ";48:2::%u:%u:%u", attr.truebg & 0xFF,
                          (attr.truebg >> 8) & 0xFF, (attr.truebg >> 16) & 0xFF);
           else if (bg < 16)
             p += sprintf(p, ";%u", (bg < 8 ? 40 : 100) + (bg & 7));
@@ -2025,7 +2025,7 @@ do_dcs(void)
         }
 
         if (attr.attr & ATTR_ULCOLOUR) {
-          p += sprintf(p, ";58:2::%u:%u:%u", attr.ulcolr & 0xFF, 
+          p += sprintf(p, ";58:2::%u:%u:%u", attr.ulcolr & 0xFF,
                        (attr.ulcolr >> 8) & 0xFF, (attr.ulcolr >> 16) & 0xFF);
         }
 
@@ -2041,7 +2041,7 @@ do_dcs(void)
       } else if (!strcmp(s, "s")) {  // DECSLRM (left and right margins)
         child_printf("\eP1$r%u;%us\e\\", 1, term.cols);
       } else if (!strcmp(s, " q")) {  // DECSCUSR (cursor style)
-        child_printf("\eP1$r%u q\e\\", 
+        child_printf("\eP1$r%u q\e\\",
                      (term.cursor_type >= 0 ? term.cursor_type * 2 : 0) + 1
                      + !(term.cursor_blinks & 1));
       } else if (!strcmp(s, "t") && term.rows >= 24) {  // DECSLPP (lines)
@@ -2338,7 +2338,7 @@ term_write(const char *buf, uint len)
       term.printbuf[term.printbuf_pos++] = c;
 
      /*
-      * If we're in print-only mode, we use a much simpler state machine 
+      * If we're in print-only mode, we use a much simpler state machine
       * designed only to recognise the ESC[4i termination sequence.
       */
       if (term.only_printing) {

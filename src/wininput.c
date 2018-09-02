@@ -41,7 +41,7 @@ show_last_error()
 /* Icon conversion */
 
 // https://www.nanoant.com/programming/themed-menus-icons-a-complete-vista-xp-solution
-// last attempt among lots of googled solution proposals, 
+// last attempt among lots of googled solution proposals,
 // and the only one that actually works, except that it uses white background
 static HBITMAP
 icon_bitmap(HICON hIcon)
@@ -173,7 +173,7 @@ add_switcher(HMENU menu, bool vsep, bool hsep, bool use_win_icons)
       mi.fState = // (IsIconic(curr_wnd) ? MFS_DISABLED : 0) |
                   (curr_wnd == wnd ? MFS_DEFAULT : 0);
         /*
-           MFS_DEFAULT: "A menu can contain only one default menu item, 
+           MFS_DEFAULT: "A menu can contain only one default menu item,
                         which is displayed in bold."
                         but multiple bold entries seem to work
            MFS_HILITE: highlight is volatile
@@ -299,7 +299,7 @@ win_update_menus(void)
     mi.dwTypeData = newn(wchar, mi.cch);
     int ok = GetMenuItemInfoW(menu, item, 0, &mi);
     printf("%d %X %d<%ls> <%ls>\n", ok, mi.fState, mi.cch, mi.dwTypeData, (wstring)mi.dwItemData);
-    mi.fState &= ~MFS_DEFAULT;  // does not work if used 
+    mi.fState &= ~MFS_DEFAULT;  // does not work if used
                                 // in SetMenuItemInfoW with MIIM_STATE
 #endif
     mi.fMask = MIIM_STRING;
@@ -860,7 +860,7 @@ win_mouse_move(bool nc, LPARAM lp)
   if (nc || (p.x == last_pos.x && p.y == last_pos.y && p.r == last_pos.r))
     return;
   if (last_skipped && last_button == MBT_LEFT && mouse_state) {
-    // allow focus-selection if distance spanned 
+    // allow focus-selection if distance spanned
     // is large enough or with sufficient delay (#717)
     uint dist = sqrt(sqr(p.x - last_click_pos.x) + sqr(p.y - last_click_pos.y));
     uint diff = GetMessageTime() - last_skipped_time;
@@ -1198,7 +1198,7 @@ win_key_down(WPARAM wp, LPARAM lp)
     lctrl_time = GetMessageTime();
   }
   else if (lctrl_time) {
-    lctrl = !(key == VK_MENU && extended 
+    lctrl = !(key == VK_MENU && extended
               && GetMessageTime() - lctrl_time <= cfg.ctrl_alt_delay_altgr);
     lctrl_time = 0;
   }
@@ -1236,8 +1236,8 @@ win_key_down(WPARAM wp, LPARAM lp)
       send_syscommand(SC_KEYMENU);
     else {
       win_show_mouse();
-      open_popup_menu(false, 
-                      mods & MDK_CTRL ? cfg.menu_ctrlmenu : cfg.menu_menu, 
+      open_popup_menu(false,
+                      mods & MDK_CTRL ? cfg.menu_ctrlmenu : cfg.menu_menu,
                       mods);
     }
     return true;
