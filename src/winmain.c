@@ -1954,6 +1954,13 @@ confirm_exit(void)
   return !ret || ret == IDOK;
 }
 
+void
+win_close(void)
+{
+  if (!cfg.confirm_exit || confirm_exit())
+    child_kill((GetKeyState(VK_SHIFT) & 0x80) != 0);
+}
+
 #define dont_debug_messages
 #define dont_debug_only_sizepos_messages
 #define dont_debug_mouse_messages
@@ -2015,8 +2022,7 @@ static struct {
     }
 
     when WM_CLOSE:
-      if (!cfg.confirm_exit || confirm_exit())
-        child_kill((GetKeyState(VK_SHIFT) & 0x80) != 0);
+      win_close();
       return 0;
 
 #ifdef show_icon_via_callback

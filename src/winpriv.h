@@ -93,4 +93,6 @@ extern void win_set_ime_open(bool);
 
 extern void show_message(char * msg, UINT type);
 
+extern void win_close(void);
+
 #endif
