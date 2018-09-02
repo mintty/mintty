@@ -917,9 +917,9 @@ term_bidi_line(termline *line, int scr_y)
 
       if (it) {
         termchar * bp = &line->chars[it - 1];
-        // Unfold directional formatting characters which are handled 
-        // like combining characters in the mintty structures 
-        // (and would thus stay hidden from minibidi), and need to be 
+        // Unfold directional formatting characters which are handled
+        // like combining characters in the mintty structures
+        // (and would thus stay hidden from minibidi), and need to be
         // exposed as separate characters for the minibidi algorithm
         while (bp->cc_next) {
           bp += bp->cc_next;

@@ -1159,7 +1159,7 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
   term_cursor * curs = &term.curs;
   pos start, end;
 
-  // avoid clearing a "pending wrap" position, where the cursor is 
+  // avoid clearing a "pending wrap" position, where the cursor is
   // held back on the previous character if it's the last of the line
   if (curs->wrapnext) {
 #if 0
@@ -1545,8 +1545,8 @@ match_emoji(termchar * d, int maxlen)
           emoji.idx = i;
           emoji.len = len;
           // match_full_seq: found a match => use it
-          // ¬match_full_seq: if there is no graphics, continue 
-          // matching for partial prefixes; note this does not work for 
+          // ¬match_full_seq: if there is no graphics, continue
+          // matching for partial prefixes; note this does not work for
           // ZWJ sequences as the combining ZWJ will prevent a shorter match
           bool match_full_seq = false;
           if (match_full_seq || check_emoji(emoji))
@@ -1617,7 +1617,7 @@ match_emoji(termchar * d, int maxlen)
         emoji.len = 0;  // display text style
     }
     if (!emoji.len) {
-      // not found another match; if we had a "longest match" before, 
+      // not found another match; if we had a "longest match" before,
       // but continued to search because it had no graphics, let's use it
       if (foundseq)
         return longest;
@@ -1844,8 +1844,8 @@ term_paint(void)
         }
       }
 
-     /* Mark box drawing, block and some other characters 
-      * that should connect to their neighbour cells and thus 
+     /* Mark box drawing, block and some other characters
+      * that should connect to their neighbour cells and thus
       * be zoomed to the actual cell size including spacing (padding);
       * also, for those, an italic attribute shall be ignored
       */
@@ -1882,10 +1882,10 @@ term_paint(void)
           tattr.attr |= ATTR_NARROW;
         }
         else if (tattr.attr & ATTR_WIDE
-                 // guard character expanding properly to avoid 
+                 // guard character expanding properly to avoid
                  // false hits as reported for CJK in #570,
-                 // considering that Windows may report width 1 
-                 // for double-width characters 
+                 // considering that Windows may report width 1
+                 // for double-width characters
                  // (if double-width by font substitution)
                  && cs_ambig_wide && !font_ambig_wide
                  && win_char_width(tchar) == 1 // && !widerange(tchar)
@@ -1949,13 +1949,13 @@ term_paint(void)
     * bounding rectangle, should solve any possible problems
     * with fonts that overflow their character cells.
     *
-    * For the new italic overhang feature, this had to be extended 
+    * For the new italic overhang feature, this had to be extended
     * (firstitalicstart) as italic chunks are painted in reverse order.
-    * Also, to clear overhang artefacts after scrolling, a run to the 
+    * Also, to clear overhang artefacts after scrolling, a run to the
     * right of an italic run needs to be repainted (prevdirtyitalic).
-    * Also, after the loop, overhang into the right padding border 
+    * Also, after the loop, overhang into the right padding border
     * must be detected and propagated.
-    * And this in a way that does not cause continuous repainting 
+    * And this in a way that does not cause continuous repainting
     * of further unchanged cells...
     */
     int laststart = 0;
@@ -2009,8 +2009,8 @@ term_paint(void)
    /*
     * Finally, loop once more and actually do the drawing.
     */
-    // control line overlay; as opposed to character overlay implemented 
-    // by the "pending overlay" buffer below, this works by repeating 
+    // control line overlay; as opposed to character overlay implemented
+    // by the "pending overlay" buffer below, this works by repeating
     // the last line loop and only drawing the overlay characters this time
     bool overlaying = false;
     overlay:;
@@ -2084,8 +2084,8 @@ term_paint(void)
               // got lost in the chaos of chars[], newchars[], attr, tattr...
               // some substantial revision might be good here, in theory...
 
-              // the main problem here is the reuse of truefg as an 
-              // emoji indicator; we have to make sure truefg isn't 
+              // the main problem here is the reuse of truefg as an
+              // emoji indicator; we have to make sure truefg isn't
               // used anymore for an emoji...
               eattr.attr |= TATTR_SELECTED;
               colour bg = eattr.attr & ATTR_REVERSE
@@ -2200,7 +2200,7 @@ term_paint(void)
         trace_run("cc"), break_run = true;
 
 #ifdef keep_non_BMP_characters_together_in_one_chunk
-      // this was expected to speed up non-BMP display 
+      // this was expected to speed up non-BMP display
       // but the effect is not significant, if any
       // also, this spoils two other issues about non-BMP display:
 #warning non-BMP RTL will be in wrong order
@@ -2260,8 +2260,8 @@ term_paint(void)
 
       if (tchar == SIXELCH) {
         // displaying region of a SIXEL image before actual graphics display;
-        // this includes selection over a SIXEL image but also moments 
-        // before display of a new image or refreshed image when scrolling 
+        // this includes selection over a SIXEL image but also moments
+        // before display of a new image or refreshed image when scrolling
         // or otherwise refreshing the screen.
         // options:
         // indicate visually that the image will not be copied
@@ -2310,7 +2310,7 @@ term_paint(void)
           ucschar comb = 0xFFFFF;
           if ((prev & 0xFC00) == 0xD800 && (dd->chr & 0xFC00) == 0xDC00)
             comb = ((ucschar) (prev - 0xD7C0) << 10) | (dd->chr & 0x03FF);
-          printf("comb (%04X) %04X %04X (%05X) %11llX\n", 
+          printf("comb (%04X) %04X %04X (%05X) %11llX\n",
                  d->chr, prev, dd->chr, comb, attr.attr);
 #endif
         }
@@ -2388,7 +2388,7 @@ term_invalidate(int left, int top, int right, int bottom)
  * this position is relative to the beginning of the scrollback, -1
  * to denote it is relative to the end, and 0 to denote that it is
  * relative to the current position.
- * The first parameter may also be SB_PRIOR or SB_NEXT, to scroll to 
+ * The first parameter may also be SB_PRIOR or SB_NEXT, to scroll to
  * the prior or next distinguished/marked position (to be searched).
  */
 void

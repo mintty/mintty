@@ -55,9 +55,9 @@ ctrlposinit(ctrlpos * cp, HWND wnd, int leftborder, int rightborder,
 }
 
 static HWND
-doctl(control * ctrl, 
-      ctrlpos * cp, RECT r, 
-      char * class, int wstyle, int exstyle, 
+doctl(control * ctrl,
+      ctrlpos * cp, RECT r,
+      char * class, int wstyle, int exstyle,
       string text, int wid)
 {
   HWND ctl;
@@ -75,7 +75,7 @@ doctl(control * ctrl,
   * without creating any actual controls.
   */
   if (cp->wnd) {
-    // avoid changing text with SendMessageW(ctl, WM_SETTEXT, ...) 
+    // avoid changing text with SendMessageW(ctl, WM_SETTEXT, ...)
     // as this produces large text artefacts
     if (nonascii(text)) {
       // transform label for proper Windows display
@@ -175,7 +175,7 @@ endbox(ctrlpos * cp)
  * A static line, followed by a full-width edit box.
  */
 static void
-editbox(control * ctrl, ctrlpos * cp, int password, char * text, 
+editbox(control * ctrl, ctrlpos * cp, int password, char * text,
         int staticid, int editid)
 {
   RECT r;
@@ -737,7 +737,7 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
           if (ctrl->editbox.has_list)
             combobox(ctrl, &pos, ctrl->label, base_id, base_id + 1);
           else
-            editbox(ctrl, &pos, ctrl->editbox.password, ctrl->label, 
+            editbox(ctrl, &pos, ctrl->editbox.password, ctrl->label,
                     base_id, base_id + 1);
         }
         else {
@@ -1159,7 +1159,7 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
     font_sample = GetDlgItem((HWND)wParam, 1092);
     //__ Font chooser: text sample ("AaBbYyZz" by default)
     SetWindowTextW(font_sample, *new_cfg.font_sample ? new_cfg.font_sample : _W("Ferqœm’4€"));
-    // if we manage to get the field longer, 
+    // if we manage to get the field longer,
     // sample text could be picked from http://clagnut.com/blog/2380/,
     // e.g. "Cwm fjord bank glyphs vext quiz"
 
@@ -1183,7 +1183,7 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
     if (localize && GetDlgItem((HWND)wParam, 730))
       //__ Colour chooser: title bar label
       SetWindowTextW((HWND)wParam, _W("Colour "));
-    // tricky way to adjust "Basic colors:" and "Custom colors:" labels 
+    // tricky way to adjust "Basic colors:" and "Custom colors:" labels
     // which insanely have the same dialog item ID, see
     // http://www.xtremevbtalk.com/api/181863-changing-custom-color-label-choosecolor-dialog-comdlg32-dll.html
     HWND basic_colors = GetDlgItem((HWND)wParam, 65535);
@@ -1390,7 +1390,7 @@ fonthook(HWND hdlg, UINT msg, WPARAM wParam, LPARAM lParam)
 #define disp ((DRAWITEMSTRUCT*)lParam)
 #ifdef debug_messages
     printf("                           %04X %d %2d %04X %04X %p\n",
-           disp->CtlType, disp->CtlID, disp->itemID, disp->itemAction, disp->itemState, 
+           disp->CtlType, disp->CtlID, disp->itemID, disp->itemAction, disp->itemState,
            disp->hwndItem);
 #endif
     if (disp->CtlID == 1137 && (disp->itemAction == ODA_SELECT))
@@ -1409,9 +1409,9 @@ fonthook(HWND hdlg, UINT msg, WPARAM wParam, LPARAM lParam)
     // we must not realloc a copied string pointer,
     // -- wstrset(&fsp->name, lfapply.lfFaceName); --
     // let's rather dup the string;
-    // if we just try to resync the copies 
+    // if we just try to resync the copies
     // -- ((font_spec *) c->data)->name = fsp->name; --
-    // that would heal the case "Apply", then "Cancel", 
+    // that would heal the case "Apply", then "Cancel",
     // but not the case "Apply", then "OK",
     // so let's rather accept a negligable memory leak here
     // (few bytes per "Apply" click)
@@ -1462,7 +1462,7 @@ select_font(winctrl *c)
   font_spec fs = *(font_spec *) c->data;
   LOGFONTW lf;
   HDC dc = GetDC(wnd);
- /* We could have the idea to consider `dpi` here, like for MulDiv in 
+ /* We could have the idea to consider `dpi` here, like for MulDiv in
   * win_init_fonts, but that's wrong.
   */
   lf.lfHeight = -MulDiv(fs.size, GetDeviceCaps(dc, LOGPIXELSY), 72);
@@ -1553,7 +1553,7 @@ dlg_text_paint(control *ctrl)
       size > 0 ? -MulDiv(size, GetDeviceCaps(dc, LOGPIXELSY), 72) : -size;
   ReleaseDC(wnd, dc);
 
-  fnt = CreateFontW(font_height, 0, 0, 0, new_cfg.font.weight, 
+  fnt = CreateFontW(font_height, 0, 0, 0, new_cfg.font.weight,
                     false, false, false,
                     DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                     DEFAULT_QUALITY, FIXED_PITCH | FF_DONTCARE,
@@ -1873,10 +1873,10 @@ dlg_editbox_get_w(control *ctrl, wstring *text_p)
     // handle single-line editbox (with optional popup list)
     int size = GetWindowTextLengthW(wnd) + 1;
     text = renewn(text, size);
-    // In the popup editbox (combobox), 
-    // Windows goofs up non-ANSI characters here unless the 
-    // WM_COMMAND dialog callback function winctrl_handle_command above 
-    // (case CBN_SELCHANGE) also uses the Unicode function versions 
+    // In the popup editbox (combobox),
+    // Windows goofs up non-ANSI characters here unless the
+    // WM_COMMAND dialog callback function winctrl_handle_command above
+    // (case CBN_SELCHANGE) also uses the Unicode function versions
     // SendDlgItemMessageW and SetDlgItemTextW
     GetWindowTextW(wnd, text, size);
     //GetDlgItemTextW(dlg.wnd, c->base_id + 1, text, size);  // same
@@ -2026,7 +2026,7 @@ dlg_set_focus(control *ctrl)
       while (id > 1 && IsDlgButtonChecked(dlg.wnd, id))
         --id;
      /*
-      * In the theoretically-unlikely case that no button was selected, 
+      * In the theoretically-unlikely case that no button was selected,
       * id should come out of this as 1, which is a reasonable enough choice.
       */
     otherwise: id = c->base_id;
@@ -2035,7 +2035,7 @@ dlg_set_focus(control *ctrl)
 }
 
 /*
- * This function signals to the front end that the dialog's processing is 
+ * This function signals to the front end that the dialog's processing is
  * completed, and passes an integer value (typically a success status).
  */
 void

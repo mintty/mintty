@@ -140,8 +140,8 @@ void *
 init_jumplist()
 {
   IObjectCollection * pobjs;
-  HRESULT hr = CoCreateInstance(&CLSID_EnumerableObjectCollection, 
-                                NULL, CLSCTX_INPROC_SERVER, 
+  HRESULT hr = CoCreateInstance(&CLSID_EnumerableObjectCollection,
+                                NULL, CLSCTX_INPROC_SERVER,
                                 &IID_IObjectCollection, (void **)&pobjs);
   //printf("create_jumplist CoCreateInstance %ld\n", (long)hr);
   if (SUCCEEDED(hr))

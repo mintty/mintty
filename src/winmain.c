@@ -447,7 +447,7 @@ refresh_tab_titles(bool trace)
             if (FileTimeToSystemTime(&cr_time, &start_time))
               printf("  %04d-%02d-%02d_%02d:%02d:%02d.%03d\n",
                      start_time.wYear, start_time.wMonth, start_time.wDay,
-                     start_time.wHour, start_time.wMinute, 
+                     start_time.wHour, start_time.wMinute,
                      start_time.wSecond, start_time.wMilliseconds);
 #endif
           }
@@ -1008,7 +1008,7 @@ search_monitors(int * minx, int * miny, HMONITOR lookup_mon, int get_primary, MO
     vscr.bottom = max(vscr.bottom, fr.bottom);
 
     if (print_monitors) {
-      printf("Monitor %d %s %s width,height %4d,%4d (%4d,%4d...%4d,%4d)\n", 
+      printf("Monitor %d %s %s width,height %4d,%4d (%4d,%4d...%4d,%4d)\n",
              moni,
              hMonitor == curmon ? "current" : "       ",
              mi.dwFlags & MONITORINFOF_PRIMARY ? "primary" : "       ",
@@ -1343,7 +1343,7 @@ win_fix_position(void)
 {
   // DPI handling V2
   if (is_in_dpi_change)
-    // window position needs no correction during DPI change, 
+    // window position needs no correction during DPI change,
     // avoid position flickering (#695)
     return;
 
@@ -1583,7 +1583,7 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
 #ifdef debug_dpi
   HDC dc = GetDC(wnd);
   printf("monitor size %dmm*%dmm res %d*%d dpi/dev %d",
-         GetDeviceCaps(dc, HORZSIZE), GetDeviceCaps(dc, VERTSIZE), 
+         GetDeviceCaps(dc, HORZSIZE), GetDeviceCaps(dc, VERTSIZE),
          GetDeviceCaps(dc, HORZRES), GetDeviceCaps(dc, VERTRES),
          GetDeviceCaps(dc, LOGPIXELSY));
   //googled this:
@@ -1597,7 +1597,7 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
     uint x, y;
     pGetDpiForMonitor(mon, 0, &x, &y);  // MDT_EFFECTIVE_DPI
     // we might think about scaling the font size by this factor,
-    // but this is handled elsewhere; (used to be via WM_DPICHANGED, 
+    // but this is handled elsewhere; (used to be via WM_DPICHANGED,
     // now via WM_WINDOWPOSCHANGED and initially)
     printf(" eff %d", y);
   }
@@ -1687,7 +1687,7 @@ win_fix_taskbar_max(int show_cmd)
 {
   if (border_style && show_cmd == SW_SHOWMAXIMIZED) {
     // (SW_SHOWMAXIMIZED == SW_MAXIMIZE)
-    // workaround for Windows failing to consider the taskbar properly 
+    // workaround for Windows failing to consider the taskbar properly
     // when maximizing without WS_CAPTION in style (#732)
     MONITORINFO mi;
     get_my_monitor_info(&mi);
@@ -1695,8 +1695,8 @@ win_fix_taskbar_max(int show_cmd)
     RECT mr = mi.rcMonitor;
     if (mr.top != ar.top || mr.bottom != ar.bottom || mr.left != ar.left || mr.right != ar.right) {
       show_cmd = SW_RESTORE;
-      SetWindowPos(wnd, null, 
-                   ar.left, ar.top, ar.right - ar.left, ar.bottom - ar.top, 
+      SetWindowPos(wnd, null,
+                   ar.left, ar.top, ar.right - ar.left, ar.bottom - ar.top,
                    SWP_NOZORDER);
       win_adapt_term_size(false, false);
     }
@@ -2058,7 +2058,7 @@ static struct {
         // SetForegroundWindow(wnd);
         // SetActiveWindow(wnd);
 
-        // this would work, kind of, 
+        // this would work, kind of,
         // but blocks previous window from raising on next click:
         SetWindowPos(wnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
         SetWindowPos(wnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
@@ -2225,7 +2225,7 @@ static struct {
       return 0;
 
     when WM_MENUCHAR:
-      // this is sent after leaving the system menu with ESC 
+      // this is sent after leaving the system menu with ESC
       // and typing a key; insert the key and prevent the beep
       child_sendw(&(wchar){wp}, 1);
       return MNC_CLOSE << 16;
@@ -2245,8 +2245,8 @@ static struct {
 
 #ifdef catch_lang_change
     // this is rubbish; only the initial change would be captured anyway;
-    // if (Shift-)Control-digit is mapped as a keyboard switch shortcut 
-    // on Windows level, it is intentionally overridden and does not 
+    // if (Shift-)Control-digit is mapped as a keyboard switch shortcut
+    // on Windows level, it is intentionally overridden and does not
     // need to be re-tweaked here
     when WM_INPUTLANGCHANGEREQUEST:  // catch Shift-Control-0 (#233)
       // guard win_key_down with key state in order to avoid key '0' floods
@@ -2286,7 +2286,7 @@ static struct {
       // and in both case a couple of WM_WININICHANGE
 
       win_adjust_borders(cell_width * cfg.cols, cell_height * cfg.rows);
-      RedrawWindow(wnd, null, null, 
+      RedrawWindow(wnd, null, null,
                    RDW_FRAME | RDW_INVALIDATE |
                    RDW_UPDATENOW | RDW_ALLCHILDREN);
       win_update_search();
@@ -2347,7 +2347,7 @@ static struct {
     when WM_INITMENU:
       // win_update_menus is already called before calling TrackPopupMenu
       // which is supposed to initiate this message;
-      // however, if we skip the call here, the "New" item will 
+      // however, if we skip the call here, the "New" item will
       // not be initialised !?!
       win_update_menus();
       return 0;
@@ -2547,9 +2547,9 @@ static struct {
           // this RECT is adjusted with respect to the monitor dpi already,
           // so we don't need to consider GetDpiForMonitor
           LPRECT r = (LPRECT) lp;
-          // try to stabilize font size roundtrip; 
-          // heuristic tweak of window size to compensate for 
-          // font scaling rounding errors that would continuously 
+          // try to stabilize font size roundtrip;
+          // heuristic tweak of window size to compensate for
+          // font scaling rounding errors that would continuously
           // decrease the window size if moving between monitors repeatedly
           long width = (r->right - r->left) * 20 / 19;
           long height = (r->bottom - r->top) * 20 / 19;
@@ -3110,7 +3110,7 @@ cmd_enum(wstring label, wstring cmd, wstring icon, int icon_index)
   jumplist_len++;
 }
 
-wstring 
+wstring
 wslicon(wchar * params)
 {
   wstring icon = 0;  // default: no icon
@@ -3217,10 +3217,10 @@ configure_taskbar(void)
 
 #ifdef two_witty_ideas_with_bad_side_effects
 #warning automatic derivation of an AppId is likely not a good idea
-  // If an icon is configured but no app_id, we can derive one from the 
+  // If an icon is configured but no app_id, we can derive one from the
   // icon in order to enable proper taskbar grouping by common icon.
-  // However, this has an undesirable side-effect if a shortcut is 
-  // pinned (presumably getting some implicit AppID from Windows) and 
+  // However, this has an undesirable side-effect if a shortcut is
+  // pinned (presumably getting some implicit AppID from Windows) and
   // instances are started from there (with a different AppID...).
   // Disabled.
   if (relaunch_icon && *relaunch_icon && (!app_id || !*app_id)) {
@@ -3239,9 +3239,9 @@ configure_taskbar(void)
     strcat(derived_app_id, iconbasename);
     app_id = derived_app_id;
   }
-  // If app_name is configured but no app_launch_cmd, we need an app_id 
+  // If app_name is configured but no app_launch_cmd, we need an app_id
   // to make app_name effective as taskbar title, so invent one.
-  if (relaunch_display_name && *relaunch_display_name && 
+  if (relaunch_display_name && *relaunch_display_name &&
       (!app_id || !*app_id)) {
     app_id = "Mintty.AppID";
   }
@@ -3615,7 +3615,7 @@ main(int argc, char *argv[])
         else {
           if (*optarg == '"' || *optarg == '\'')
             if (optarg[strlen(optarg) - 1] == optarg[0]) {
-              // strip off embedding quotes as provided when started 
+              // strip off embedding quotes as provided when started
               // from Windows context menu by registry entry
               char * dir = strdup(&optarg[1]);
               dir[strlen(dir) - 1] = '\0';
@@ -3731,7 +3731,7 @@ main(int argc, char *argv[])
       when 'V': {
         finish_config();  // ensure localized message
         //char * vertext =
-        //  asform("%s\n%s\n%s\n%s\n", 
+        //  asform("%s\n%s\n%s\n%s\n",
         //         VERSION_TEXT, COPYRIGHT, LICENSE_TEXT, _(WARRANTY_TEXT));
         char * vertext = strdup(VERSION_TEXT);
         strappend(vertext, "\n");
@@ -3990,7 +3990,7 @@ main(int argc, char *argv[])
       printf("<%s>\n", *new_argv++);
 #endif
 
-    // prevent HOME from being propagated back to Windows applications 
+    // prevent HOME from being propagated back to Windows applications
     // if called from WSL (mintty/wsltty#76)
     unsetenv("HOME");
   }
@@ -4282,9 +4282,9 @@ main(int argc, char *argv[])
       print_system_metrics(dpi, "initial");
 #endif
       // recalculate effective font size and adjust window
-      /* Note: it would avoid some problems to consider the DPI 
+      /* Note: it would avoid some problems to consider the DPI
          earlier and create the window at its proper size right away
-         but there are some cyclic dependencies among CreateWindow, 
+         but there are some cyclic dependencies among CreateWindow,
          monitor selection and the respective DPI to be considered,
          so we have to adjust here.
       */
@@ -4292,7 +4292,7 @@ main(int argc, char *argv[])
         font_cs_reconfig(true);
         trace_winsize("dpi > font_cs_reconfig");
         if (maxwidth || maxheight) {
-          // changed terminal size not yet recorded, 
+          // changed terminal size not yet recorded,
           // but window size hopefully adjusted already
           if (border_style) {
             // workaround for caption-less window exceeding borders (#733)

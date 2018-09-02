@@ -31,19 +31,19 @@ extern void setup_config_box(controlbox *);
 /*
  * windlg.c - Dialogs, including the configuration dialog.
 
-   To make the TreeView widget work with Unicode support, 
-   it is particularly essential to use message TVM_INSERTITEMW 
+   To make the TreeView widget work with Unicode support,
+   it is particularly essential to use message TVM_INSERTITEMW
    to insert a TVINSERTSTRUCTW.
 
-   To document a minimum set of Unicode-enabled API usage as could be 
+   To document a minimum set of Unicode-enabled API usage as could be
    identified, some calls below are explicitly maintained in "ANSI" mode:
      RegisterClassA			would work for the TreeView
      RegisterClassW			needs "W" for title if UNICODE
      RegisterClassW with DefDlgProcW	needed for proper window title
      CreateDialogW			must be "W" if UNICODE is defined
      CreateWindowExA			works
-   The TreeView_ macros are implicitly mapped to either "A" or "W", 
-   so to use TreeView_InsertItem in either mode, it needs to be expanded 
+   The TreeView_ macros are implicitly mapped to either "A" or "W",
+   so to use TreeView_InsertItem in either mode, it needs to be expanded
    to SendMessageA/SendMessageW.
  */
 
@@ -494,11 +494,11 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
           continue;   /* same path, nothing to add to tree */
 
        /*
-        * We expect never to find an implicit path component. 
-          For example, we expect never to see A/B/C followed by A/D/E, 
-          because that would _implicitly_ create A/D. 
-          All our path prefixes are expected to contain actual controls 
-          and be selectable in the treeview; so we would expect 
+        * We expect never to find an implicit path component.
+          For example, we expect never to see A/B/C followed by A/D/E,
+          because that would _implicitly_ create A/D.
+          All our path prefixes are expected to contain actual controls
+          and be selectable in the treeview; so we would expect
           to see A/D _explicitly_ before encountering A/D/E.
         */
 
@@ -552,7 +552,7 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
       // but then we'd have to fiddle with the location of dragndrop
      /*
       * Look up the window handle in our data; find the control.
-        (Hmm, apparently it works without looking for the widget entry 
+        (Hmm, apparently it works without looking for the widget entry
         that was particularly introduced for this purpose...)
       */
       control * ctrl = null;
@@ -717,9 +717,9 @@ win_open_config(void)
   config_wnd = CreateDialog(inst, MAKEINTRESOURCE(IDD_MAINBOX),
                             wnd, config_dialog_proc);
   unhook_windows();
-  // At this point, we could actually calculate the size of the 
-  // dialog box used for the Options menu; however, the resulting 
-  // value(s) (here DIALOG_HEIGHT) is already needed before this point, 
+  // At this point, we could actually calculate the size of the
+  // dialog box used for the Options menu; however, the resulting
+  // value(s) (here DIALOG_HEIGHT) is already needed before this point,
   // as the callback config_dialog_proc sets up dialog box controls.
   // How insane is that resource concept! Shouldn't I know my own geometry?
   determine_geometry(config_wnd);  // dummy call
@@ -857,15 +857,15 @@ void
 win_show_about(void)
 {
 #if CYGWIN_VERSION_API_MINOR < 74
-  char * aboutfmt = newn(char, 
+  char * aboutfmt = newn(char,
     strlen(VERSION_TEXT) + strlen(COPYRIGHT) + strlen(LICENSE_TEXT) + strlen(_(WARRANTY_TEXT)) + strlen(_(ABOUT_TEXT)) + 11);
-  sprintf(aboutfmt, "%s\n%s\n%s\n%s\n\n%s", 
+  sprintf(aboutfmt, "%s\n%s\n%s\n%s\n\n%s",
            VERSION_TEXT, COPYRIGHT, LICENSE_TEXT, _(WARRANTY_TEXT), _(ABOUT_TEXT));
   char * abouttext = newn(char, strlen(aboutfmt) + strlen(WEBSITE));
   sprintf(abouttext, aboutfmt, WEBSITE);
 #else
   char * aboutfmt =
-    asform("%s\n%s\n%s\n%s\n\n%s", 
+    asform("%s\n%s\n%s\n%s\n\n%s",
            VERSION_TEXT, COPYRIGHT, LICENSE_TEXT, _(WARRANTY_TEXT), _(ABOUT_TEXT));
   char * abouttext = asform(aboutfmt, WEBSITE);
 #endif

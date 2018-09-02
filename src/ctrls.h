@@ -6,7 +6,7 @@
 /*
  * This is the big union which defines a single control, of any
  * type.
- * 
+ *
  * General principles:
  *  - _All_ pointers in this structure are expected to point to
  *    dynamically allocated things, unless otherwise indicated.
@@ -30,7 +30,7 @@ enum {
  * Each control has an `int' field specifying which columns it
  * occupies in a multi-column part of the dialog box. These macros
  * pack and unpack that field.
- * 
+ *
  * If a control belongs in exactly one column, just specifying the
  * column number is perfectly adequate.
  */
@@ -83,11 +83,11 @@ struct control {
   * everywhere else, we avoid having to have an irritating
   * switch statement when we go through and deallocate all
   * the memory in a config-box structure.
-  * 
+  *
   * Yes, this does mean that any non-null value in this
   * field is expected to be dynamically allocated and
   * freeable.
-  * 
+  *
   * For CTRL_COLUMNS, this field MUST be null.
   */
   char * label;
@@ -101,21 +101,21 @@ struct control {
   * Most controls need to provide a function which gets
   * called when that control's setting is changed, or when
   * the control's setting needs initialising.
-  * 
+  *
   * The `data' parameter points to the writable data being
   * modified as a result of the configuration activity; for
   * example, the PuTTY `Config' structure, although not
   * necessarily.
-  * 
+  *
   * The `dlg' parameter is passed back to the platform-
   * specific routines to read and write the actual control
   * state.
   */
   handler_fn handler;
  /*
-  * Identify a drag-and-drop target control by its widget ("Window") 
-  * as due to the obscure wisdom of Windows design, drag-and-drop events 
-  * are handled completely different from other events and particularly 
+  * Identify a drag-and-drop target control by its widget ("Window")
+  * as due to the obscure wisdom of Windows design, drag-and-drop events
+  * are handled completely different from other events and particularly
   * do not provide a "Control identifier".
   */
   void * widget;
@@ -146,7 +146,7 @@ struct control {
      /*
       * There are separate fields for `ncolumns' and `nbuttons'
       * for several reasons.
-      * 
+      *
       * Firstly, we sometimes want the last of a set of buttons
       * to have a longer label than the rest; we achieve this by
       * setting `ncolumns' higher than `nbuttons', and the
@@ -159,7 +159,7 @@ struct control {
       * but actually it's reasonably common for the sort of
       * three-way control you get a lot of in PuTTY: `yes'
       * versus `no' versus `some more complex way to decide'.
-      * 
+      *
       * Secondly, setting `nbuttons' higher than `ncolumns' lets
       * us have more than one line of radio buttons for a single
       * setting. A very important special case of this is
@@ -232,7 +232,7 @@ struct control {
       * trouble than it was worth. If you must lay things out
       * like that, define eight unevenly sized columns and use
       * column-spanning a lot. But better still, just don't.
-      * 
+      *
       * `percentages' may be null if ncols==1, to save space.
       */
     } columns;
@@ -280,7 +280,7 @@ extern void ctrl_free_box(controlbox *);
  */
 
 /* Create a controlset. */
-extern controlset * ctrl_new_set(controlbox *, char * path, 
+extern controlset * ctrl_new_set(controlbox *, char * path,
                                  char * panel, char * title);
 extern void ctrl_free_set(controlset *);
 
@@ -298,7 +298,7 @@ extern void * ctrl_alloc(controlbox *, size_t size);
 
 /*
  * Individual routines to create `control' structures in a controlset.
- * 
+ *
  * Most of these routines allow the most common fields to be set
  * directly, and put default values in the rest. Each one returns a
  * pointer to the `control' it created, so that final tweaks
@@ -380,7 +380,7 @@ extern void dlg_end(void);
  * dlg_coloursel_results() fetches the results, as integers from 0
  * to 255; it returns nonzero on success, or zero if the colour
  * selector was dismissed by hitting Cancel or similar.
- * 
+ *
  * dlg_coloursel_start() accepts an RGB triple which is used to
  * initialise the colour selector to its starting value.
  */
@@ -392,7 +392,7 @@ extern int dlg_coloursel_results(colour *);
  * indicate that the value of a particular control is likely to
  * have changed. It triggers a call of the handler for that control
  * with `event' set to EVENT_REFRESH.
- * 
+ *
  * If `ctrl' is null, _all_ controls in the dialog get refreshed
  * (for loading or saving entire sets of settings).
  */
@@ -406,7 +406,7 @@ extern void dlg_refresh(control *);
  * Find the index of next controlset in a controlbox for a given
  * path, or -1 if no such controlset exists. If -1 is passed as
  * input, finds the first. Intended usage is something like
- * 
+ *
  *      for (index=-1; (index=ctrl_find_path(ctrlbox, index, path)) >= 0 ;) {
  *          ... process this controlset ...
  *      }

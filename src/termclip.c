@@ -568,10 +568,10 @@ term_export_html(bool do_open)
       bool rev = ca->attr & ATTR_REVERSE;
 
       // colour setup preparations;
-      // we could perhaps reuse apply_attr_colour here, but again 
-      // the situation is specific: some terminal handling (manual bolding) 
-      // is not applicable in HTML export, and we do not want to simply 
-      // always retrieve a plain colour value because we want to specify 
+      // we could perhaps reuse apply_attr_colour here, but again
+      // the situation is specific: some terminal handling (manual bolding)
+      // is not applicable in HTML export, and we do not want to simply
+      // always retrieve a plain colour value because we want to specify
       // colour style or class only if the respective default is overridden
       colour fg = fgi >= TRUE_COLOUR ? ca->truefg : win_get_colour(fgi);
       colour bg = bgi >= TRUE_COLOUR ? ca->truebg : win_get_colour(bgi);

@@ -35,7 +35,7 @@ typedef enum {
   // on grounds of redundancy.
 
   // Colour numbers 256 through 271 are copies of ANSI colours 0 through 15
-  // supporting distinct handling of ANSI colours SGR 30..37/40../90../100.. 
+  // supporting distinct handling of ANSI colours SGR 30..37/40../90../100..
   // and palette colours SGR 38/48;5;0..15
   // For distinct bold handling alone, they could also be mapped to 0..15
   // but duplicating them would also facilitate distinct colour values if desired

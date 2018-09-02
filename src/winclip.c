@@ -203,8 +203,8 @@ unwslpath(wchar * wpath)
       for (int i = 0; i < wsl_fstab_len; i++)
         if (ispathprefix(wsl_fstab[i].mount_point, wslpath))
           if (wsl_fstab[i].dev_fs[1] == ':') {
-            res = asform("/cygdrive/%c%s", 
-                         tolower(wsl_fstab[i].dev_fs[0]), 
+            res = asform("/cygdrive/%c%s",
+                         tolower(wsl_fstab[i].dev_fs[0]),
                          &wslpath[strlen(wsl_fstab[i].mount_point)]);
             break;
           }
@@ -335,12 +335,12 @@ win_open(wstring wpath)
   else {
     // Need to convert POSIX path to Windows first
     if (support_wsl) {
-      // First, we need to replicate some of the handling of relative paths 
+      // First, we need to replicate some of the handling of relative paths
       // as implemented in child_conv_path,
-      // because the dewsl functionality would actually go in between 
+      // because the dewsl functionality would actually go in between
       // the workflow of child_conv_path.
-      // We cannot determine the WSL foreground process and its 
-      // current directory, so we can only consider the working directory 
+      // We cannot determine the WSL foreground process and its
+      // current directory, so we can only consider the working directory
       // explicitly communicated via the OSC 7 escape sequence here.
       if (*wpath != '/' && wcsncmp(wpath, W("~/"), 2) != 0) {
         if (child_dir && *child_dir) {
@@ -533,7 +533,7 @@ win_copy(const wchar *data, cattr *cattrs, int len)
     * looked up in `unitab', we just copy straight over from
     * tdata. For each one that doesn't, we must WCToMB it
     * individually and produce a \u escape sequence.
-    * 
+    *
     * It would probably be more robust to just bite the bullet
     * and WCToMB each individual Unicode character one by one,
     * then MBToWC each one back to see if it was an accurate

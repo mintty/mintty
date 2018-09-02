@@ -145,7 +145,7 @@ fontpropinfo()
   char * fontinfo_manual = _("manual");
   int taglen = max(strlen(fontinfo_font), strlen(fontinfo_manual));
   char * fontinfo = newn(char, strlen(fontinfopat) + 23 + 2 * taglen);
-  sprintf(fontinfo, fontinfopat, fontfamilies->row_spacing, 
+  sprintf(fontinfo, fontinfopat, fontfamilies->row_spacing,
           fontfamilies->bold_mode ? fontinfo_font : fontinfo_manual,
           fontfamilies->und_mode ? fontinfo_font : fontinfo_manual);
   return fontinfo;
@@ -436,9 +436,9 @@ adjust_font_weights(struct fontfam * ff)
 
    We also:
    - check the font width and height, correcting our guesses if necessary.
-   - verify that the bold font is the same width as the ordinary one, 
+   - verify that the bold font is the same width as the ordinary one,
      and engage shadow bolding if not.
-   - verify that the underlined font is the same width as the ordinary one, 
+   - verify that the underlined font is the same width as the ordinary one,
      and engage manual underlining if not.
  */
 static void
@@ -518,14 +518,14 @@ win_init_fontfamily(HDC dc, int findex)
 
   if (!findex) {
     ff->row_spacing = row_padding(tm.tmInternalLeading, tm.tmExternalLeading);
-    trace_font(("00 height %d avwidth %d asc %d dsc %d intlead %d extlead %d %ls\n", 
-               (int)tm.tmHeight, (int)tm.tmAveCharWidth, (int)tm.tmAscent, (int)tm.tmDescent, 
-               (int)tm.tmInternalLeading, (int)tm.tmExternalLeading, 
+    trace_font(("00 height %d avwidth %d asc %d dsc %d intlead %d extlead %d %ls\n",
+               (int)tm.tmHeight, (int)tm.tmAveCharWidth, (int)tm.tmAscent, (int)tm.tmDescent,
+               (int)tm.tmInternalLeading, (int)tm.tmExternalLeading,
                ff->name));
     ff->row_spacing += cfg.row_spacing;
     if (ff->row_spacing < -tm.tmDescent)
       ff->row_spacing = -tm.tmDescent;
-    trace_font(("row spacing int %d ext %d -> %+d; add %+d -> %+d; desc %d -> %+d %ls\n", 
+    trace_font(("row spacing int %d ext %d -> %+d; add %+d -> %+d; desc %d -> %+d %ls\n",
         (int)tm.tmInternalLeading, (int)tm.tmExternalLeading, row_padding(tm.tmInternalLeading, tm.tmExternalLeading),
         cfg.row_spacing, row_padding(tm.tmInternalLeading, tm.tmExternalLeading) + cfg.row_spacing,
         (int)tm.tmDescent, ff->row_spacing, ff->name));
@@ -659,13 +659,13 @@ win_init_fontfamily(HDC dc, int findex)
     if (ff->fonts[i]) {
       if (SelectObject(dc, ff->fonts[i]) && GetTextMetrics(dc, &tm)) {
         fontsize[i] = tm.tmAveCharWidth + 256 * tm.tmHeight;
-        trace_font(("%02X height %d avwidth %d asc %d dsc %d intlead %d extlead %d %ls\n", 
-               i, (int)tm.tmHeight, (int)tm.tmAveCharWidth, (int)tm.tmAscent, (int)tm.tmDescent, 
-               (int)tm.tmInternalLeading, (int)tm.tmExternalLeading, 
+        trace_font(("%02X height %d avwidth %d asc %d dsc %d intlead %d extlead %d %ls\n",
+               i, (int)tm.tmHeight, (int)tm.tmAveCharWidth, (int)tm.tmAscent, (int)tm.tmDescent,
+               (int)tm.tmInternalLeading, (int)tm.tmExternalLeading,
                ff->name));
 #ifdef handle_baseline_leap
         if (i == FONT_BOLD && tm.tmAscent < base_ascent) {
-          // for Courier New, this correlates with a significant visual leap 
+          // for Courier New, this correlates with a significant visual leap
           // of the bold font from the baseline of the normal font,
           // but not for other fonts; so let's do nothing
         }
@@ -1141,9 +1141,9 @@ do_update(void)
 
 /*
    Indicate size of selection with a popup tip (option SelectionShowSize).
-   Future enhancements may be automatic position flipping depending 
+   Future enhancements may be automatic position flipping depending
    on selection direction or if the tip reaches outside the screen.
-   Also the actual tip window should better be decoupled from the 
+   Also the actual tip window should better be decoupled from the
    window size tip which is now abused for this feature.
  */
 static void
@@ -1174,7 +1174,10 @@ sel_update(bool update_sel_tip)
           + ((style & WS_THICKFRAME) ? GetSystemMetrics(SM_CYSIZEFRAME) : 0)
           + ((style & WS_CAPTION) ? GetSystemMetrics(SM_CYCAPTION) : 0)
           + PADDING + last_pos.y * cell_height;
-#ifdef debug_selection_show_size 
+    if (cfg.selection_show_size == 0) {
+      return;
+    }
+#ifdef debug_selection_show_size
     cfg.selection_show_size = cfg.selection_show_size % 12 + 1;
 #endif
     int w = 30, h = 18;  // assumed size of tip window
@@ -1252,8 +1255,8 @@ another_font(struct fontfam * ff, int fontno)
   }
 
 #ifdef debug_create_font
-  printf("font [%02X]: %d (size %d%s%s%s%s) %d w%4d i%d u%d s%d\n", 
-	fontno, font_height * (1 + !!(fontno & FONT_HIGH)), font_size, 
+  printf("font [%02X]: %d (size %d%s%s%s%s) %d w%4d i%d u%d s%d\n",
+	fontno, font_height * (1 + !!(fontno & FONT_HIGH)), font_size,
 	fontno & FONT_HIGH     ? " hi" : "",
 	fontno & FONT_WIDE     ? " wd" : "",
 	fontno & FONT_NARROW   ? " nr" : "",
@@ -1313,7 +1316,7 @@ alpha_blend_bg(int alpha, HDC dc, HBITMAP hbm, int bw, int bh, colour bg)
   HDC dc0 = CreateCompatibleDC(dc);
   HBITMAP oldhbm0 = SelectObject(dc0, hbm);
 
-  // prepare destination memory DC, 
+  // prepare destination memory DC,
   // create and select the destination bitmap into it
   HDC dc1 = CreateCompatibleDC(dc);
   HBITMAP hbm1 = CreateCompatibleBitmap(dc0, bw, bh);
@@ -1423,7 +1426,7 @@ load_background_image_brush(HDC dc, wstring fn)
     gpcheck("convert bitmap", s);
 
     if (!tiled) {
-      // scale the bitmap; 
+      // scale the bitmap;
       // wtf is this a complex task @ braindamaged Windows API
       // https://www.experts-exchange.com/questions/28594399/Whats-the-best-way-to-scale-a-windows-bitmap.html
 
@@ -1451,7 +1454,7 @@ load_background_image_brush(HDC dc, wstring fn)
       HDC dc0 = CreateCompatibleDC(dc);
       HBITMAP oldhbm0 = SelectObject(dc0, hbm);
 
-      // prepare destination memory DC, 
+      // prepare destination memory DC,
       // create and select the destination bitmap into it
       HDC dc1 = CreateCompatibleDC(dc);
       HBITMAP hbm1 = CreateCompatibleBitmap(dc0, w, h);
@@ -1625,8 +1628,8 @@ win_flush_background(bool clearbg)
 static void
 load_background_brush(HDC dc)
 {
-  // we could try to hook into win_adapt_term_size to update the full 
-  // screen background and reload the background on demand, 
+  // we could try to hook into win_adapt_term_size to update the full
+  // screen background and reload the background on demand,
   // but let's rather handle this autonomously here
   RECT cr;
   GetClientRect(wnd, &cr);
@@ -1887,11 +1890,11 @@ text_out_start(HDC hdc, LPCWSTR psz, int cch, int *dxs)
   if (!use_uniscribe)
     return;
 
-  HRESULT hr = ScriptStringAnalyse(hdc, psz, cch, 0, -1, 
+  HRESULT hr = ScriptStringAnalyse(hdc, psz, cch, 0, -1,
     // could | SSA_FIT and use `width` (from win_text) instead of MAXLONG
     // to justify to monospace cell widths;
     // SSA_LINK is needed for Hangul and default-size CJK
-    SSA_GLYPHS | SSA_FALLBACK | SSA_LINK, MAXLONG, 
+    SSA_GLYPHS | SSA_FALLBACK | SSA_LINK, MAXLONG,
     NULL, NULL, dxs, NULL, NULL, &ssa);
   if (!SUCCEEDED(hr) && hr != USP_E_SCRIPT_NOT_IN_FONT)
     use_uniscribe = false;
@@ -2434,7 +2437,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   int dx = combining ? 0 : char_width;
   for (int i = 0; i < len; i++) {
     if (is_high_surrogate(text[i]))
-      // This does not have the expected effect so we keep splitting up 
+      // This does not have the expected effect so we keep splitting up
       // non-BMP characters into single character chunks for now (term.c)
       dxs[i] = 0;
     else
@@ -2472,10 +2475,10 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   if (combining_double)
     use_uniscribe = false;
 #ifdef no_Uniscribe_for_ASCII_only_chunks
-  // this "optimization" was intended to avoid a performance penalty 
+  // this "optimization" was intended to avoid a performance penalty
   // for Uniscribe when there is no need for Uniscribe;
-  // however, even for ASCII-only chunks, 
-  // Uniscribe effectively applies ligatures (Fira Code, #601), 
+  // however, even for ASCII-only chunks,
+  // Uniscribe effectively applies ligatures (Fira Code, #601),
   // and testing again, there is hardly a penalty observable anymore
   if (use_uniscribe) {
     use_uniscribe = false;
@@ -2723,10 +2726,10 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     overwropt = ETO_OPAQUE;
   }
   trace_line(" TextOut:");
-  // The combining characters separate rendering trick *alone* 
-  // makes some combining characters better (~#553, #295), 
-  // others worse (#565); however, together with the 
-  // substitute combining characters trick it seems to be the best 
+  // The combining characters separate rendering trick *alone*
+  // makes some combining characters better (~#553, #295),
+  // others worse (#565); however, together with the
+  // substitute combining characters trick it seems to be the best
   // workaround for combining characters rendering issues.
   // Yet disabling it for some (heuristically determined) cases:
   if (let_windows_combine)
@@ -2739,7 +2742,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   for (int xoff = 0; xoff < xwidth; xoff++)
     if (combining || combining_double) {
       // Workaround for mangled display of combining characters;
-      // Arabic shaping should not be affected as the transformed 
+      // Arabic shaping should not be affected as the transformed
       // presentation forms are not combining characters anymore at this point.
       // Repeat the workaround for bold/wide below.
 
@@ -2758,7 +2761,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
       // combining characters
       textattr[0] = attr;
       for (int i = ulen; i < len; i += ulen) {
-        // separate stacking of combining characters 
+        // separate stacking of combining characters
         // does not work with Uniscribe
         use_uniscribe = false;
 
@@ -3196,8 +3199,8 @@ int win_char_width(xchar);
 
 /* This function gets the actual width of a character in the normal font.
    Usage:
-   * determine whether to trim an ambiguous wide character 
-     (of a CJK ambiguous-wide font such as BatangChe) to normal width 
+   * determine whether to trim an ambiguous wide character
+     (of a CJK ambiguous-wide font such as BatangChe) to normal width
      if desired.
    * also whether to expand a normal width character if expected wide
  */
@@ -3214,7 +3217,7 @@ win_char_width(xchar c)
   * then this function is a no-op.
   */
   if (!ff->font_dualwidth)
-    // this optimization ignores font fallback and should be dropped 
+    // this optimization ignores font fallback and should be dropped
     // if ever a more particular width checking is implemented (#615)
     return 1;
 #endif
@@ -3254,9 +3257,9 @@ win_char_width(xchar c)
     BOOL ok3 = GetCharABCWidthsW(dc, c, c, &abc);  // only on TrueType
     ABCFLOAT abcf; memset(&abcf, 0, sizeof abcf);
     BOOL ok4 = GetCharABCWidthsFloatW(dc, c, c, &abcf);
-    printf("w %04X [cell %d] - 32 %d %d - flt %d %.3f - abc %d %d %d %d - abc flt %d %4.1f %4.1f %4.1f\n", 
-           c, cell_width, ok1, cw, ok2, cwf, 
-           ok3, abc.abcA, abc.abcB, abc.abcC, 
+    printf("w %04X [cell %d] - 32 %d %d - flt %d %.3f - abc %d %d %d %d - abc flt %d %4.1f %4.1f %4.1f\n",
+           c, cell_width, ok1, cw, ok2, cwf,
+           ok3, abc.abcA, abc.abcB, abc.abcC,
            ok4, abcf.abcfA, abcf.abcfB, abcf.abcfC);
   }
 #endif
@@ -3334,7 +3337,7 @@ win_char_width(xchar c)
     // Block Elements
     ReleaseDC(wnd, dc);
     return 1;  // should be stretched to fill whole cell
-               // does not have the desired effect, 
+               // does not have the desired effect,
                // although FONT_WIDE is actually activated
   }
 
@@ -3492,7 +3495,7 @@ win_set_colour(colour_i i, colour c)
 
     switch (i) {
       when FG_COLOUR_I:
-        // should we make this conditional, 
+        // should we make this conditional,
         // unless bold colour has been set explicitly?
         if (!bold_colour_selected) {
           if (cfg.bold_colour != (colour)-1)
@@ -3626,10 +3629,10 @@ win_paint(void)
        * Do we actually need this stuff? We paint the background with
          each win_text chunk anyway, except for the padding border,
          which could however be touched e.g. by Sixel images?
-       * With a texture/image background, we could try to paint that here 
-         (invoked on WM_PAINT) or on WM_ERASEBKGND, but these messages are 
+       * With a texture/image background, we could try to paint that here
+         (invoked on WM_PAINT) or on WM_ERASEBKGND, but these messages are
          not received sufficiently often, e.g. not when scrolling.
-       * So let's let's keep finer control and paint background in chunks 
+       * So let's let's keep finer control and paint background in chunks
          but not modify the established behaviour if there is no background.
      */
     colour bg_colour = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
