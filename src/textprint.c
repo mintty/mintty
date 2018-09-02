@@ -42,6 +42,20 @@ printer_start_job(wstring printer_name)
 }
 
 void
+printer_wwrite(wchar * wdata, uint len)
+{
+  if (printer) {
+    void * wbuf = wdata;
+    uint wlen = len * sizeof(wchar);
+    uint n;
+    while ((n = write(pd, wbuf, wlen)) > 0) {
+      wbuf += n;
+      wlen -= n;
+    }
+  }
+}
+
+void
 printer_write(char * data, uint len)
 {
   if (printer) {

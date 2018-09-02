@@ -1579,6 +1579,9 @@ do_csi(uchar c)
       else if (arg0 == 10 && !term.esc_mod) {
         term_export_html(false);
       }
+      else if (arg0 == 0 && !term.esc_mod) {
+        print_screen();
+      }
     when 'g':        /* TBC: clear tabs */
       if (!arg0)
         term.tabs[curs->x] = false;
