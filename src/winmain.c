@@ -1977,7 +1977,7 @@ static struct {
 };
   char * wm_name = "WM_?";
   for (uint i = 0; i < lengthof(wm_names); i++)
-    if (message == wm_names[i].wm_) {
+    if (message == wm_names[i].wm_ && !strstr(wm_names[i].wm_name, "FIRST")) {
       wm_name = wm_names[i].wm_name;
       break;
     }
