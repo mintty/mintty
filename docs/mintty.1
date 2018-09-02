@@ -1954,6 +1954,7 @@ pairs of key and action descriptors
 (if a semicolon shall be embedded into any of the action descriptors, 
 a non-whitespace control character (i.e. none of \fB^I^J^K^L^M\fP) can be 
 specified as an alternative separator by starting the whole setting with it).
+(corresponds roughly to the xterm resource \fBtranslations\fP)
 
 Supported keys are described as follows:
 .br
@@ -1963,10 +1964,46 @@ Supported keys are described as follows:
 indicating Ctrl, Alt, Shift as combined with the function key, 
 attached with a "+" separator, e.g. \fBCS+F9\fP
 .br
-\(en any character reachable on the keyboard without Shift; 
-AltGr-generated characters are supported
+\(en special keys (some of which do not occur on typical keyboards); 
+Space, Enter, Esc and Tab are only considered with at least one modifier
+  Tab
+  Esc
+  Enter
+  Space
+  Back
+  Pause
+  Break
+  ScrollLock
+  PrintScreen
+  NumLock
+  LWin
+  RWin
+  Menu
+  Select
+  Print
+  Exec
+  Help
+  Sleep
+  Attn
+  CrSel
+  ExSel
+  ErEof
+  Play
+  Zoom
+.br
+\(en any character reachable on the keyboard without Shift, considered if 
+pressed while Ctrl and Shift are also held; AltGr-generated characters are supported
 
-\fINote:\fP The definition is ignored if the Ctrl+Shift+key combination would 
+\fINote:\fP A key that needs a modifier already to be sent (e.g. Break 
+which is often Ctrl+Pause) also needs that modifier in the key definition 
+to be matched.
+
+\fINote:\fP Like in xterm, a key redefinition takes precedence over 
+modifyOtherKeys mode (ESC sequence). Shortcut override mode however 
+disables key redefinitions.
+
+\fINote:\fP For the "any character, with Ctrl and Shift" option, 
+the definition is ignored if the Ctrl+Shift+key combination would 
 generate a valid input character already. This is particularly the case 
 if a valid control character is mapped to the key in the keyboard layout.
 E.g. if you add a definition for Ctrl+Shift+minus and Shift+minus is "_" 
@@ -1979,6 +2016,18 @@ Supported actions are described as follows:
 .br
 \(en \fB`command`\fP: enters the output of the command
 .br
+\(en \fBfullscreen (*)\fP: switches to fullscreen mode
+.br
+\(en \fBtoggle-fullscreen (*)\fP: toggles fullscreen mode
+.br
+\(en \fBwin-max: resizes to window size
+.br
+\(en \fBwin-restore: resizes to normal size
+.br
+\(en \fBwin-icon: turns window into icon
+.br
+\(en \fBclose: closes terminal window
+.br
 \(en \fBnew\fP: opens a new terminal window when key is released
 .br
 \(en \fBoptions\fP: opens the Options dialog
@@ -1988,8 +2037,6 @@ Supported actions are described as follows:
 \(en \fBmenu-pointer (*)\fP: opens the context menu at the mouse position
 .br
 \(en \fBsearch\fP: opens the search bar
-.br
-\(en \fBfullscreen (*)\fP: switches to fullscreen mode
 .br
 \(en \fBdefault-size (*)\fP: switches to default window size
 .br
@@ -2025,7 +2072,7 @@ Supported actions are described as follows:
 .br
 \(en \fBtoggle-char-info\fP: toggles character info display
 .br
-\(en \fBexport-html\fP: exports the screen as an HTML file
+\(en \fBexport-html (*)\fP: exports the screen as an HTML file
 
 \fINote (*):\fP The exact behaviour of some actions depends on the 
 Shift state as being mapped from.

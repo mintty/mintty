@@ -1034,6 +1034,10 @@ vk_name(uint key)
 #define trace_key(tag)	
 #endif
 
+/*
+   Some auxiliary functions for user-defined key assignments.
+ */
+
 static void
 menu_text()
 {
@@ -1066,6 +1070,30 @@ newwin_begin()
   newwin_home = false; newwin_monix = 0; newwin_moniy = 0;
 }
 
+static void
+window_full()
+{
+  win_maximise(2);
+}
+
+static void
+window_max()
+{
+  win_maximise(1);
+}
+
+static void
+window_restore()
+{
+  win_maximise(0);
+}
+
+static void
+window_min()
+{
+  win_set_iconic(true);
+}
+
 /*
    Simplified variant of term_cmd().
  */
@@ -1081,6 +1109,38 @@ key_cmd(char * cmd)
     pclose(cmdf);
   }
 }
+
+static struct {
+  uchar vkey;
+  bool unmod;
+  string nam;
+} vktab[] = {
+  {VK_CANCEL, false, "Break"},
+  {VK_BACK, true, "Back"},
+  {VK_TAB, false, "Tab"},
+  {VK_RETURN, false, "Enter"},
+  {VK_PAUSE, true, "Pause"},
+  {VK_ESCAPE, false, "Esc"},
+  {VK_SPACE, false, "Space"},
+  {VK_SNAPSHOT, true, "PrintScreen"},
+  {VK_LWIN, true, "LWin"},
+  {VK_RWIN, true, "RWin"},
+  {VK_APPS, true, "Menu"},
+  {VK_NUMLOCK, true, "NumLock"},
+  {VK_SCROLL, true, "ScrollLock"},
+  // exotic keys:
+  {VK_SELECT, true, "Select"},
+  {VK_PRINT, true, "Print"},
+  {VK_EXECUTE, true, "Exec"},
+  {VK_HELP, true, "Help"},
+  {VK_SLEEP, true, "Sleep"},
+  {VK_ATTN, true, "Attn"},
+  {VK_CRSEL, true, "CrSel"},
+  {VK_EXSEL, true, "ExSel"},
+  {VK_EREOF, true, "ErEof"},
+  {VK_PLAY, true, "Play"},
+  {VK_ZOOM, true, "Zoom"},
+};
 
 static struct {
   string name;
@@ -1107,13 +1167,19 @@ static struct {
   {"default-size-zoom", {IDM_DEFSIZE_ZOOM}},
 #endif
 
+  {"fullscreen", {.fct = window_full}},
+  {"win-max", {.fct = window_max}},
+  {"win-restore", {.fct = window_restore}},
+  {"win-icon", {.fct = window_min}},
+  {"close", {.fct = win_close}},
+
   {"new", {.fct = newwin_begin}},
   {"options", {IDM_OPTIONS}},
   {"menu-text", {.fct = menu_text}},
   {"menu-pointer", {.fct = menu_pointer}},
 
   {"search", {IDM_SEARCH}},
-  {"fullscreen", {IDM_FULLSCREEN}},
+  {"toggle-fullscreen", {IDM_FULLSCREEN}},
   {"default-size", {IDM_DEFSIZE}},
   {"scrollbar-outer", {IDM_SCROLLBAR}},
   {"scrollbar-inner", {.fct = toggle_scrollbar}},
@@ -1133,6 +1199,7 @@ static struct {
   {"toggle-logging", {IDM_TOGLOG}},
   {"toggle-char-info", {IDM_TOGCHARINFO}},
   {"export-html", {IDM_HTML}},
+  {"print-screen", {.fct = print_screen}},
 };
 
 bool
@@ -1392,16 +1459,44 @@ win_key_down(WPARAM wp, LPARAM lp)
         return false;
       }
 
+      /* Look up a function tag for either of
+         * (modified) special key (like Tab, Pause, ...)
+         * (modified) function key
+         * Ctrl+Shift-modified character (letter or other layout key)
+         Arguably, Ctrl+Shift-character assignments could be 
+         overridden by modify_other_keys mode, but we stay consistent 
+         with xterm here, where the Translations resource takes 
+         priority over modifyOtherKeys mode.
+       */
       char * tag = 0;
-      if (VK_F1 <= key && key <= VK_F24) {
+      int vki = -1;
+      for (uint i = 0; i < lengthof(vktab); i++)
+        if (key == vktab[i].vkey) {
+          vki = i;
+          break;
+        }
+      if (vki >= 0 && !altgr && (mods || vktab[vki].unmod)) {
+        tag = asform("%s%s%s%s%s",
+                     ctrl ? "C" : "",
+                     alt ? "A" : "",
+                     shift ? "S" : "",
+                     mods ? "+" : "",
+                     vktab[vki].nam);
+      }
+      else if (VK_F1 <= key && key <= VK_F24) {
         tag = asform("%s%s%s%sF%d",
                      ctrl ? "C" : "",
                      alt ? "A" : "",
                      shift ? "S" : "",
                      mods ? "+" : "",
                      key - VK_F1 + 1);
-      }
-      else if ((mods & ~MDK_ALT) == (cfg.ctrl_exchange_shift ? MDK_CTRL : (MDK_CTRL | MDK_SHIFT))) {
+      } else if (
+                 // !term.modify_other_keys &&
+                 (mods & ~MDK_ALT) == (cfg.ctrl_exchange_shift
+                                       ? MDK_CTRL
+                                       : (MDK_CTRL | MDK_SHIFT))
+                )
+      {
         uchar kbd0[256];
         GetKeyboardState(kbd0);
         wchar wbuf[4];
