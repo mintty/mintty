@@ -1151,7 +1151,7 @@ sel_update(bool update_sel_tip)
 {
   static bool selection_tip_active = false;
   //printf("sel_update tok %d sel %d act %d\n", tip_token, term.selected, selection_tip_active);
-  if (term.selected && update_sel_tip) {
+  if (term.selected && cfg.selection_show_size && update_sel_tip) {
     int cols, rows;
     if (term.sel_rect) {
       rows = abs(term.sel_end.y - term.sel_start.y) + 1;
