@@ -378,9 +378,13 @@ write_char(wchar c, int width)
 static void
 write_error(void)
 {
-  // Write 'Medium Shade' character from vt100 linedraw set,
-  // which looks appropriately erroneous.
-  write_char(0x2592, 1);
+  // Write one of REPLACEMENT CHARACTER or, if that does not exist,
+  // MEDIUM SHADE which looks appropriately erroneous.
+  wchar errch = 0xFFFD;
+  win_check_glyphs(&errch, 1);
+  if (!errch)
+    errch = 0x2592;
+  write_char(errch, 1);
 }
 
 /* Process control character, returning whether it has been recognised. */
