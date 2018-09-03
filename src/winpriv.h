@@ -36,6 +36,7 @@ extern char * fontpropinfo(void);
 extern bool support_wsl;
 extern wstring wsl_basepath;
 
+extern int ini_width, ini_height;
 extern bool win_is_fullscreen;
 extern bool clipboard_token;
 extern uint dpi;
@@ -54,6 +55,7 @@ extern void win_font_cs_reconfig(bool font_changed);
 
 extern void win_update_scrollbar(bool inner);
 extern void win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size);
+extern void scale_to_image_ratio(void);
 
 extern void win_open_config(void);
 extern void * load_library_func(string lib, string func);

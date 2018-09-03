@@ -2169,16 +2169,12 @@ do_cmd(void)
     when 104: do_colour_osc(true, 4, true);
     when 105: do_colour_osc(true, 5, true);
     when 10:  do_colour_osc(false, FG_COLOUR_I, false);
-    when 11:  if (*term.cmd_buf == '*') {
+    when 11:  if (strchr("*_%", *term.cmd_buf)) {
                 wchar * bn = cs__mbstowcs(term.cmd_buf);
                 wstrset(&cfg.background, bn);
                 free(bn);
-                win_invalidate_all(true);
-              }
-              else if (*term.cmd_buf == '_') {
-                wchar * bn = cs__mbstowcs(term.cmd_buf + 1);
-                wstrset(&cfg.background, bn);
-                free(bn);
+                if (*term.cmd_buf == '%')
+                  scale_to_image_ratio();
                 win_invalidate_all(true);
               }
               else
@@ -2859,3 +2855,4 @@ term_write(const char *buf, uint len)
     term.printbuf_pos = 0;
   }
 }
+

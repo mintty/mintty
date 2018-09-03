@@ -2189,9 +2189,11 @@ With an image file name, absolute (with an optional \fB~\fP prefix)
 or relative to the current terminal foreground process, 
 the option either uses the image as a background picture, scaled to 
 the terminal size (optional prefix \fB_\fP to the filename), 
+or initially scaling the terminal to the aspect ratio of the image 
+(prefix \fB%\fP to the filename), 
 or as a tiled background texture (prefix \fB*\fP to the filename).
-The background can be changed with an OSC 11 escape sequence, using 
-a filename prefixed with either \fB_\fP or \fB*\fP instead of a colour.
+The background can be changed with an OSC 11 escape sequence, using a filename 
+prefixed with either \fB_\fP, \fB%\fP, or \fB*\fP instead of a colour.
 
 If the background filename is followed by a comma and a number between 1 and 254, 
 the background image will be dimmed towards the background colour;

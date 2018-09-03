@@ -74,6 +74,8 @@ static int term_width, term_height;
 static int width, height;
 static int extra_width, extra_height, norm_extra_width, norm_extra_height;
 
+int ini_width, ini_height;
+
 // State
 bool win_is_fullscreen;
 static bool go_fullscr_on_max;
@@ -4090,7 +4092,7 @@ main(int argc, char *argv[])
   }
 
   // Set the AppID if specified and the required function is available.
-  if (*cfg.app_id && 0 != wcscmp(cfg.app_id, W("@"))) {
+  if (*cfg.app_id && wcscmp(cfg.app_id, W("@")) != 0) {
     HMODULE shell = load_sys_library("shell32.dll");
     HRESULT (WINAPI *pSetAppID)(PCWSTR) =
       (void *)GetProcAddress(shell, "SetCurrentProcessExplicitAppUserModelID");
@@ -4432,6 +4434,11 @@ main(int argc, char *argv[])
   default_size_token = true;  // prevent font zooming (#708)
   int show_cmd = go_fullscr_on_max ? SW_SHOWMAXIMIZED : cfg.window;
   show_cmd = win_fix_taskbar_max(show_cmd);
+
+  // Scale to background image aspect ratio if requested
+  win_get_pixels(&ini_height, &ini_width, false);
+  if (*cfg.background == '%')
+    scale_to_image_ratio();
 
   // Create child process.
   child_create(

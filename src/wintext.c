@@ -1284,6 +1284,7 @@ win_set_ime_open(bool open)
  */
 
 static bool tiled = false;
+static bool ratio = false;
 static int alpha = -1;
 static LONG w = 0, h = 0;
 static HBRUSH bgbrush_bmp = 0;
@@ -1398,18 +1399,62 @@ drop_background_image_brush(void)
 }
 
 static void
+init_gdiplus(void)
+{
+  static GdiplusStartupInput gi = (GdiplusStartupInput){1, NULL, FALSE, FALSE};
+  static ULONG_PTR gis = 0;
+  if (!gis) {
+    GpStatus s = GdiplusStartup(&gis, &gi, NULL);
+    gpcheck("startup", s);
+  }
+}
+
+static bool
+get_image_size(wstring fn, uint * _bw, uint * _bh)
+{
+  GpStatus s;
+
+  init_gdiplus();
+
+  GpBitmap * gbm = 0;
+  s = GdipCreateBitmapFromFile(fn, &gbm);
+  gpcheck("bitmap from file", s);
+  if (s != Ok || !gbm)
+    return false;
+
+  GpStatus stsz = GdipGetImageWidth(gbm, _bw);
+  gpcheck("get size", stsz);
+  if (stsz == Ok) {
+    stsz = GdipGetImageHeight(gbm, _bh);
+    gpcheck("get size", stsz);
+  }
+
+  s = GdipDisposeImage(gbm);
+  gpcheck("dispose bitmap", s);
+
+  if (stsz != Ok) {
+    HBITMAP hbm = 0;
+    s = GdipCreateHBITMAPFromBitmap(gbm, &hbm, 0);
+    gpcheck("convert bitmap", s);
+
+    BITMAP bm0;
+    if (!GetObject(hbm, sizeof(BITMAP), &bm0))
+      return false;
+    *_bw = bm0.bmWidth;
+    *_bh = bm0.bmHeight;
+    DeleteObject(hbm);
+  }
+  return true;
+}
+
+static void
 load_background_image_brush(HDC dc, wstring fn)
 {
   GpStatus s;
 
-  drop_background_image_brush();
+  init_gdiplus();
 
-  static GdiplusStartupInput gi = (GdiplusStartupInput){1, NULL, FALSE, FALSE};
-  static ULONG_PTR gis = 0;
-  if (!gis) {
-    s = GdiplusStartup(&gis, &gi, NULL);
-    gpcheck("startup", s);
-  }
+  drop_background_image_brush();
 
   // try to provide a GDI brush from a GDI+ image
   // (because a GDI brush is much more efficient than a GDI+ brush)
@@ -1429,10 +1474,10 @@ load_background_image_brush(HDC dc, wstring fn)
 
       uint bw, bh;
       GpStatus stsz = GdipGetImageWidth(gbm, &bw);
-      gpcheck("get size", s);
+      gpcheck("get size", stsz);
       if (stsz == Ok) {
         stsz = GdipGetImageHeight(gbm, &bh);
-        gpcheck("get size", s);
+        gpcheck("get size", stsz);
       }
 
       s = GdipDisposeImage(gbm);
@@ -1446,6 +1491,41 @@ load_background_image_brush(HDC dc, wstring fn)
         bw = bm0.bmWidth;
         bh = bm0.bmHeight;
       }
+
+#ifdef scale_to_aspect_ratio_asynchronously
+      // keep aspect ratio of background image if requested
+      static wchar * prevbg = 0;
+      bool isnewbg = !prevbg || wcscmp(cfg.background, prevbg);
+      printf("isnewbg %d <%ls> <%ls>\n", isnewbg, cfg.background, prevbg);
+      if (ratio && isnewbg && abs(bw * h - bh * w) > 5) {
+        if (prevbg)
+          free(prevbg);
+        prevbg = wcsdup(cfg.background);
+
+        int xh, xw;
+        if (bw * h < bh * w) {
+          xh = h;
+          xw = bw * xh / bh;
+        } else {
+          xw = w;
+          xh = bh * xw / bw;
+        }
+        int sy = win_search_visible() ? SEARCHBAR_HEIGHT : 0;
+        printf("%dx%d (%dx%d) -> %dx%d\n", (int)h, (int)w, bh, bw, xh, xw);
+        // rescale window to aspect ratio of background image
+        win_set_pixels(xh - 2 * PADDING - sy, xw - 2 * PADDING);
+        // WARNING: rescaling asynchronously at this point makes 
+        // terminal geometry (term.rows, term.cols) inconsistent with 
+        // running operations and may crash mintty; 
+        // postponing the resizing with SendMessage does not help;
+        // therefore try to update mintty data now; 
+        // this seems to help a bit, but not completely;
+        // that's why this embedded approach is disabled
+        do_update();
+        w = xw;
+        h = xh;
+      }
+#endif
 
       // prepare source memory DC and select the source bitmap into it
       HDC dc0 = CreateCompatibleDC(dc);
@@ -1622,31 +1702,19 @@ win_flush_background(bool clearbg)
 #endif
 }
 
-static void
-load_background_brush(HDC dc)
+static wchar *
+get_bg_filename(void)
 {
-  // we could try to hook into win_adapt_term_size to update the full 
-  // screen background and reload the background on demand, 
-  // but let's rather handle this autonomously here
-  RECT cr;
-  GetClientRect(wnd, &cr);
-  if (cr.right - cr.left == w && cr.bottom - cr.top == h)
-    return;  // keep brush
-
-  if (tiled)
-    return;  // do not scale tiled brush
-
-  // remember terminal screen size
-  w = cr.right - cr.left;
-  h = cr.bottom - cr.top;
-
-  // adjust paint screen size
-  if (win_search_visible())
-    cr.bottom -= SEARCHBAR_HEIGHT;
+  tiled = false;
+  ratio = false;
 
   wchar * bgfn = (wchar *)cfg.background;
   if (*bgfn == '*') {
     tiled = true;
+    bgfn++;
+  }
+  else if (*bgfn == '%') {
+    ratio = true;
     bgfn++;
   }
   else if (*bgfn == '_') {
@@ -1689,6 +1757,32 @@ load_background_brush(HDC dc)
   printf("loading brush <%ls> <%s> <%ls>\n", cfg.background, bf, bgfn);
 #endif
   free(bf);
+  return bgfn;
+}
+
+static void
+load_background_brush(HDC dc)
+{
+  // we could try to hook into win_adapt_term_size to update the full 
+  // screen background and reload the background on demand, 
+  // but let's rather handle this autonomously here
+  RECT cr;
+  GetClientRect(wnd, &cr);
+  if (cr.right - cr.left == w && cr.bottom - cr.top == h)
+    return;  // keep brush
+
+  if (tiled)
+    return;  // do not scale tiled brush
+
+  // remember terminal screen size
+  w = cr.right - cr.left;
+  h = cr.bottom - cr.top;
+
+  // adjust paint screen size
+  if (win_search_visible())
+    cr.bottom -= SEARCHBAR_HEIGHT;
+
+  wchar * bgfn = get_bg_filename();  // also set tiled and alpha
 
   HBITMAP
   load_background_bitmap(wstring fn)
@@ -1758,6 +1852,62 @@ fill_background(HDC dc, RECT * boxp)
     || (bgbrush_img && fill_rect(dc, boxp, bgbrush_img))
 #endif
     ;
+}
+
+#define dont_debug_aspect_ratio
+
+void
+scale_to_image_ratio()
+{
+#if CYGWIN_VERSION_API_MINOR >= 74
+  if (*cfg.background != '%')
+    return;
+  wchar * bgfn = get_bg_filename();
+#ifdef debug_aspect_ratio
+  printf("scale_to_image_ratio <%ls> ratio %d\n", bgfn, ratio);
+#endif
+  if (!ratio)
+    return;
+
+  uint bw, bh;
+  int res = get_image_size(bgfn, &bw, &bh);
+  free(bgfn);
+  if (!res || !bw || !bh)
+    return;
+
+  RECT cr;
+  GetClientRect(wnd, &cr);
+  // remember terminal screen size
+  int w = cr.right - cr.left;
+  int h = cr.bottom - cr.top;
+#ifdef debug_aspect_ratio
+  printf("  cur w %d h %d img bw %d bh %d\n", (int)w, (int)h, bw, bh);
+#endif
+
+  if (abs(bw * h - bh * w) < w + h)
+    return;
+
+  w = max(w, ini_width);
+  h = max(h, ini_height);
+#ifdef debug_aspect_ratio
+  printf("  max w %d h %d\n", (int)w, (int)h);
+#endif
+
+  int xh, xw;
+  if (bw * h < bh * w) {
+    xh = h;
+    xw = bw * xh / bh;
+  } else {
+    xw = w;
+    xh = bh * xw / bw;
+  }
+  int sy = win_search_visible() ? SEARCHBAR_HEIGHT : 0;
+#ifdef debug_aspect_ratio
+  printf("  %dx%d (%dx%d) -> %dx%d\n", (int)w, (int)h, bw, bh, xw, xh);
+#endif
+  // rescale window to aspect ratio of background image
+  win_set_pixels(xh - 2 * PADDING - sy, xw - 2 * PADDING);
+#endif
 }
 
 
