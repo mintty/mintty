@@ -809,6 +809,8 @@ HTML dump, otherwise the current screen view is used. In the latter case,
 also a background image or pattern is reproduced, if its filename was 
 configured as a relative path name using POSIX syntax (forward slashes).
 
+If Shift is held, the function also opens the HTML page.
+
 .SS Diagnostic support
 
 .TP
@@ -1789,7 +1791,7 @@ screen applications (such as editors) that rely on \fBwcwidth\fP information.
 With this option, mintty emoji support is enabled and the emojis style 
 is chosen. Mintty will match output for valid emoji sequences, 
 presentation forms and emoji style selectors.
-(Note that it may be useful to set \fBCharwidth=unicode\fP in addition.)
+(Note that up to cygwin 2.10 it may be useful to set \fBCharwidth=unicode\fP in addition.)
 
 Supported styles are:
 .br
@@ -1850,6 +1852,11 @@ By default this setting is empty, in which case Windows groups taskbar
 items automatically based on their icon and command line.  This can be
 overridden by setting the AppID to a custom string, in which case windows
 with the same AppID are grouped together.
+
+The special value \fBAppID=@\fP causes mintty to derive an implicit AppID 
+from the WSL system name, in order to achieve WSL distribution-specific 
+taskbar grouping. This resolves taskbar grouping problems in some cases 
+(wsltty issue #96) but causes similar problems in other cases (issue #784).
 
 \fIWarning:\fP Using this option in a Windows desktop shortcut may 
 cause trouble with taskbar grouping behaviour. If you need to do that, 

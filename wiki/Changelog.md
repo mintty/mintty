@@ -1,3 +1,45 @@
+Terminal features
+  * Avoid overwriting last column by clear-to-end-of-line/screen in pending auto-wrap state (#781).
+  * Fix maximize vertically/horizontally (preserve width/height) and restore properly.
+  * Fixed CSI 5/6/9/10 t default handling, preventing accidental window modification.
+  * Fixed CSI 13/19 t to report multi-monitor virtual screen size without padding (like xterm).
+  * New CSI 13;2/14;2/15/16 t (xterm 332/333).
+  * New CSI # {/} XTPUSHSGR and XTPOPSGR push/pop character attributes (xterm 334, extended).
+  * New CSI 0 i print screen.
+  * Terminal soft reset resets cursor blinking (xterm 334).
+  * Added DECSCPP and DECSLPP to DECRQSS (xterm 334).
+
+Keyboard handling
+  * User-defined key shortcuts and function keys (#705, #602, #645, #399, #252, ~#726, ~#524, ~#451, ~#523).
+  * Workaround for buggy TeamViewer (#783).
+  * Guarding Alt handling from AltGr detection (#790).
+
+Window handling
+  * When suppressing focus-in mouse click event, also suppress the mouse release event (#782, #717).
+  * After suppressing focus-in mouse click event, avoid subsequent false double-click report (#717).
+  * Elastic mouse text selection includes only characters dragged more than halfway (#308).
+  * Clearing hover highlighting as appropriate.
+  * Tweaked selection size hint positioning (#660).
+  * Optionally scale window to aspect ratio of background image (#18, #666).
+
+Desktop / taskbar integration
+  * Partially withdrawn 2.9.0 patch to keep WSL windows together in Windows task bar (mintty/wsltty#96).
+  * AppID (to group taskbar icons) is derived from WSL distro only with setting AppID=@ (#784, ~mintty/wsltty#96).
+
+Configuration
+  * Option ElasticMouse=true to not select characters only slightly touched (#308).
+  * Option KeyFunctions for user-defined shortcuts and function keys (#705, #602, #645, #399, #252, ~#726, ~#524, ~#451, ~#523).
+  * Special option setting AppID=@ to derive taskbar grouping implicitly from WSL distro name (#784, ~mintty/wsltty#96).
+  * Support for Windows pathnames in background filenames (#18, #666).
+  * Option to scale window to aspect ratio of background image (#18, #666).
+  * New option value -RW to list installed WSL distributions and properties.
+  * Option CtrlAltDelayAltGr for relaxed AltGr detection (#783).
+
+Other
+  * HTML Screen Dump function (extended context menu or escape sequence).
+  * Detect cygwin version for handling of @cjkwide locale modifier.
+  * Withdrawn Wyse cursor style modes SM 33/34 (#787).
+
 ### 2.9.0 (1 July 2018) ###
 
 Highlights (details see below)
@@ -45,6 +87,7 @@ Window handling
   * Revised Ctrl+(Shift+)Tab window switching (#773).
   * Ctrl+Ctrl+(Shift+)Tab for window switching including iconized windows (#735).
   * Win+Shift move coupling of tab sets if SessionGeomSync ≥ 2 (#600, #699).
+  * Keeping WSL windows together in Windows task bar (mintty/wsltty#96).
 
 Configuration
   * CMY(K) colour specifications in OSC sequences and config file.
