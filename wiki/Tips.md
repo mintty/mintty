@@ -54,6 +54,19 @@ shortcut, or follow the advice about avoiding trouble with taskbar grouping
 in the manual page.
 
 
+## Start errors ##
+
+### Error: could not fork child process ###
+
+If you are frequently facing this problem, it is not really a mintty issue, 
+but it may reportedly help if you turn off the Windows ASLR feature 
+for cygwin-based programs; turn off Mandatory ASLR and Bottom-up ASLR 
+for mintty, cygwin-console-helper, your shell and other programs 
+as described in [issue #493](https://github.com/mintty/mintty/issues/493#issuecomment-361281995)
+or using Powershell commands as described in
+[wsltty issue #6](https://github.com/mintty/wsltty/issues/6#issuecomment-415961012).
+
+
 ## Supporting Linux/Posix subsystems ##
 
 If you have any Linux distribution for the Windows Subsystem for Linux (WSL) 
