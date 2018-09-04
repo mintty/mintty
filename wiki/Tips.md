@@ -938,3 +938,18 @@ To install mintty outside a cygwin environment, follow a few rules:
 * Install mintty.exe together with cygwin1.dll and cygwin-console-helper.exe.
 * Call the directory in which to install mintty and libraries ‘bin’.
 
+### Bundling mintty with dedicated software ###
+
+To bundle an application which is not natively compiled on cygwin with mintty,
+some way of bridging the terminal interworking incompatiblity problems 
+([pty incompatibility problem](https://github.com/mintty/mintty/issues/56) and
+[character encoding incompatibility problem](https://github.com/mintty/mintty/issues/376))
+needs to be integrated. A generic solution is [winpty](https://github.com/rprichard/winpty)
+or its WSL-specific variant ʻwslbridge’.
+For software that is aware of Posix terminal conventions, it may be a feasible 
+solution if the software detects a terminal and its character encoding by 
+checking environment variable `TERM` and the locale variables and invokes 
+`stty raw -echo` to enable direct character-based I/O and disable 
+non-compatible signal handling. For this purpose, stty and its library 
+dependencies need to be bundled with the installation as well.
+
