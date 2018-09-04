@@ -737,8 +737,7 @@ term_export_html(bool do_open)
 
   if (do_open) {
     wchar * browse = cs__mbstowcs(htmlf);
-    win_open(browse);
-    free(browse);
+    win_open(browse);  // frees browse
   }
   free(htmlf);
 }
