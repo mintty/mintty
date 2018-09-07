@@ -387,6 +387,25 @@ write_error(void)
   write_char(errch, 1);
 }
 
+
+static bool
+contains(string s, int i)
+{
+  while (*s) {
+    while (*s == ',')
+      s++;
+    int si = -1;
+    int len;
+    sscanf(s, "%d%n", &si, &len);
+    if (len <= 0)
+      return false;
+    s += len;
+    if (si == i && (!*s || *s == ','))
+      return true;
+  }
+  return false;
+}
+
 /* Process control character, returning whether it has been recognised. */
 static bool
 do_ctrl(char c)
@@ -640,6 +659,20 @@ do_sgr(void)
         else
           break;
       }
+    if (*cfg.suppress_sgr
+        && contains(cfg.suppress_sgr, term.csi_argv[i] & ~SUB_PARS))
+    {
+      // skip suppressed attribute (but keep processing sub_pars)
+      // but turn some sequences into virtual sub-parameters
+      // in order to get properly adjusted
+      if (term.csi_argv[i] == 38 || term.csi_argv[i] == 48) {
+        if (i + 2 < argc && term.csi_argv[i + 1] == 5)
+          sub_pars = 2;
+        else if (i + 4 < argc && term.csi_argv[i + 1] == 2)
+          sub_pars = 4;
+      }
+    }
+    else
     switch (term.csi_argv[i]) {
       when 0:
         attr = CATTR_DEFAULT;
@@ -885,8 +918,11 @@ static void
 set_modes(bool state)
 {
   for (uint i = 0; i < term.csi_argc; i++) {
-    int arg = term.csi_argv[i];
+    uint arg = term.csi_argv[i];
     if (term.esc_mod) { /* DECSET/DECRST: DEC private mode set/reset */
+      if (*cfg.suppress_dec && contains(cfg.suppress_dec, arg))
+        ; // skip suppressed DECSET/DECRST operation
+      else
       switch (arg) {
         when 1:  /* DECCKM: application cursor keys */
           term.app_cursor_keys = state;
@@ -1294,6 +1330,9 @@ static void
 do_winop(void)
 {
   int arg1 = term.csi_argv[1], arg2 = term.csi_argv[2];
+  if (*cfg.suppress_win && contains(cfg.suppress_win, term.csi_argv[0]))
+    // skip suppressed window operation
+    return;
   switch (term.csi_argv[0]) {
     when 1: win_set_iconic(false);
     when 2: win_set_iconic(true);
@@ -1617,8 +1656,12 @@ do_csi(uchar c)
       * and also allowed any number of rows from 24 and above to be set.
       */
       if (arg0 >= 24) {
-        win_set_chars(arg0, term.cols);
-        term.selected = false;
+        if (*cfg.suppress_win && contains(cfg.suppress_win, 24))
+          ; // skip suppressed window operation
+        else {
+          win_set_chars(arg0, term.cols);
+          term.selected = false;
+        }
       }
       else
         do_winop();
@@ -2159,6 +2202,10 @@ do_cmd(void)
 {
   char *s = term.cmd_buf;
   s[term.cmd_len] = 0;
+
+  if (*cfg.suppress_osc && contains(cfg.suppress_osc, term.cmd_num))
+    // skip suppressed OSC command
+    return;
 
   switch (term.cmd_num) {
     when 0 or 2: win_set_title(s);  // ignore icon title

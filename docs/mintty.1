@@ -1643,6 +1643,22 @@ This is intended to help avoid closing programs accidentally.
 If possible, mintty also displays a list of running child processes, 
 using the procps command if installed, or the ps command.
 
+.TP
+\fBSuppress properties and features controlled by escape sequences\fP
+Using these options, the listed feature numbers are suppressed.
+Each option may contain a comma-separated list of respective numbers.
+Usage of these options is discouraged; users are not entitled to 
+complain about side effects.
+.RS
+\(en (SuppressSGR=) Character attributes (CSI ... m).
+.br
+\(en (SuppressDEC=) DECSET private modes (CSI ? ... h/l).
+.br
+\(en (SuppressWIN=) Window operations (CSI ... t); 24 means >= 24.
+.br
+\(en (SuppressOSC=) Window configuration commands (OSC ... ST).
+.RE
+
 .SS Command line
 The settings here are config file versions of command line options
 described in the OPTIONS section.  They do not appear in the options dialog.

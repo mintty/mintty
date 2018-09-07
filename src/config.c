@@ -150,6 +150,11 @@ const config default_cfg = {
   // "Hidden"
   .bidi = 2,
   .disable_alternate_screen = false,
+  .suppress_sgr = "",
+  .suppress_dec = "",
+  .suppress_win = "",
+  .suppress_osc = "",
+  .suppress_nrc = "",  // unused
   .input_clears_selection = true,
   .charwidth = 0,
   .emojis = 0,
@@ -371,6 +376,11 @@ options[] = {
   // "Hidden"
   {"Bidi", OPT_INT, offcfg(bidi)},
   {"NoAltScreen", OPT_BOOL, offcfg(disable_alternate_screen)},
+  {"SuppressSGR", OPT_STRING, offcfg(suppress_sgr)},
+  {"SuppressDEC", OPT_STRING, offcfg(suppress_dec)},
+  {"SuppressWIN", OPT_STRING, offcfg(suppress_win)},
+  {"SuppressOSC", OPT_STRING, offcfg(suppress_osc)},
+  {"SuppressNRC", OPT_STRING, offcfg(suppress_nrc)},  // unused
   {"ClearSelectionOnInput", OPT_BOOL, offcfg(input_clears_selection)},
   {"Charwidth", OPT_CHARWIDTH, offcfg(charwidth)},
   {"Emojis", OPT_EMOJIS, offcfg(emojis)},

@@ -149,6 +149,11 @@ typedef struct {
   // "Hidden"
   int bidi;
   bool disable_alternate_screen;
+  string suppress_sgr;
+  string suppress_dec;
+  string suppress_win;
+  string suppress_osc;
+  string suppress_nrc;
   bool input_clears_selection;
   char charwidth;
   char emojis;
