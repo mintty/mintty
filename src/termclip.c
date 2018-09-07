@@ -51,6 +51,11 @@ get_selection(pos start, pos end, bool rect, bool allinline)
   while (poslt(start, end)) {
     bool nl = false;
     termline *line = fetch_line(start.y);
+
+    if (start.y == term.curs.y) {
+      line->chars[term.curs.x].attr.attr |= TATTR_ACTCURS;
+    }
+
     pos nlpos;
     wchar * sixel_clipp = (wchar *)cfg.sixel_clip_char;
 
@@ -500,11 +505,9 @@ term_export_html(bool do_open)
                 " .bg-color%d { background-color: #%02X%02X%02X }\n",
                 i, r, g, b, i, r, g, b);
   }
-#ifdef support_cursor
   colour cursor_colour = win_get_colour(CURSOR_COLOUR_I);
   fprintf(hf, "  .cursor { background-color: #%02X%02X%02X }\n",
           red(cursor_colour), green(cursor_colour), blue(cursor_colour));
-#endif
 
   for (int i = 1; i <= 10; i++)
     if (*cfg.fontfams[i].name) {
@@ -545,7 +548,7 @@ term_export_html(bool do_open)
         // buf->cattrs[i] ~!= buf->cattrs[i0] ?
         // we need to check more than termattrs_equal_fg
         // but less than termchars_equal_override
-# define IGNATTR (DATTR_MASK | ATTR_WIDE | TATTR_COMBINING)
+# define IGNATTR (ATTR_WIDE | TATTR_COMBINING)
         || (buf->cattrs[i].attr & ~IGNATTR) != (buf->cattrs[i0].attr & ~IGNATTR)
         || buf->cattrs[i].truefg != buf->cattrs[i0].truefg
         || buf->cattrs[i].truebg != buf->cattrs[i0].truebg
@@ -641,12 +644,11 @@ term_export_html(bool do_open)
         fprintf(hf, " bg-color%d", bga);
         bg = (colour)-1;
       }
-
-#ifdef support_cursor
-#warning this does not work because the TATTRs are not set in the buffer
-      if (ca->attr & (TATTR_ACTCURS | TATTR_PASCURS))
+      if (ca->attr & (TATTR_ACTCURS | TATTR_PASCURS)) {
         fprintf(hf, " cursor");
-#endif
+        fg = win_get_colour(CURSOR_TEXT_COLOUR_I);
+        // more precise cursor colour adjustments could be made...
+      }
 
       // add styles
       bool with_style = false;
