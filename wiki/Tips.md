@@ -60,11 +60,11 @@ in the manual page.
 
 If you are frequently facing this problem, it is not really a mintty issue, 
 but it may reportedly help if you turn off the Windows ASLR feature 
-for cygwin-based programs; turn off Mandatory ASLR and Bottom-up ASLR 
-for mintty, cygwin-console-helper, your shell and other programs 
-as described in [issue #493](https://github.com/mintty/mintty/issues/493#issuecomment-361281995)
+for cygwin-based programs; turn off Mandatory ASLR for mintty, 
+cygwin-console-helper, your shell and other programs as described in 
+[issue #493](https://github.com/mintty/mintty/issues/493#issuecomment-361281995)
 or using Powershell commands as described in
-[wsltty issue #6](https://github.com/mintty/wsltty/issues/6#issuecomment-415961012).
+[wsltty issue #6](https://github.com/mintty/wsltty/issues/6#issuecomment-419589599).
 
 
 ## Supporting Linux/Posix subsystems ##
@@ -678,14 +678,17 @@ ISO/IEC 8613-6 sub-parameters are supported.
 | 58:4:F:C:M:Y:K         | 59                | underline CMYK colour (*)     |
 | _any_                  | 0                 |                               |
 
-Note: The control sequences for Fraktur (“Gothic”) font are described 
-in ECMA-48, see also [wiki:ANSI code](https://en.wikipedia.org/wiki/ANSI_escape_code).
-To use this feature, it is suggested to install `F25 Blackletter Typewriter`.
+Note: Alternative fonts are configured with options Font1 ... Font10.
+They can also be dynamically changed with OSC sequence 50 which refers 
+to the respectively selected font attribute.
 
 Note: The control sequence for alternative font 1 overrides the identical 
 control sequence to select the VGA character set. Configuring alternative 
-font 1 is therefore discouraged. See the mintty manual page about how 
-to configure alternative fonts.
+font 1 is therefore discouraged.
+
+Note: The control sequences for Fraktur (“Gothic”) font are described 
+in ECMA-48, see also [wiki:ANSI code](https://en.wikipedia.org/wiki/ANSI_escape_code).
+To use this feature, it is suggested to install `F25 Blackletter Typewriter`.
 
 Note: RGB colour values are scaled to a maximum of 255 (=100%).
 CMY(K) colour values are scaled to a maximum of the given parameter F (=100%).
@@ -693,6 +696,8 @@ CMY(K) colour values are scaled to a maximum of the given parameter F (=100%).
 Note: The emoji style attribute sets the display preference for a number 
 of characters that have emojis but would be displayed with text style 
 by default (e.g. decimal digits).
+
+Note: Text attributes can be disabled with option SuppressSGR (see manual).
 
 As a fancy add-on feature for text attributes, mintty supports distinct 
 colour attributes for combining characters, so a combined character 
