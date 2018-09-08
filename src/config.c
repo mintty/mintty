@@ -155,6 +155,7 @@ const config default_cfg = {
   .suppress_win = "",
   .suppress_osc = "",
   .suppress_nrc = "",  // unused
+  .filter_paste = "",
   .input_clears_selection = true,
   .charwidth = 0,
   .emojis = 0,
@@ -381,6 +382,7 @@ options[] = {
   {"SuppressWIN", OPT_STRING, offcfg(suppress_win)},
   {"SuppressOSC", OPT_STRING, offcfg(suppress_osc)},
   {"SuppressNRC", OPT_STRING, offcfg(suppress_nrc)},  // unused
+  {"FilterPasteControls", OPT_STRING, offcfg(filter_paste)},
   {"ClearSelectionOnInput", OPT_BOOL, offcfg(input_clears_selection)},
   {"Charwidth", OPT_CHARWIDTH, offcfg(charwidth)},
   {"Emojis", OPT_EMOJIS, offcfg(emojis)},

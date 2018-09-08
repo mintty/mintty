@@ -1942,6 +1942,29 @@ programming languages.
 This string can list characters that are to be excluded from word selection.
 
 .TP
+\fBFiltering pasted text\fP (FilterPasteControls=)
+With this setting, pasted text can be filtered for selected control 
+characters which are then replaced by space. Filtering is not applied 
+when Control is held while pasting. The option is a comma-separated list 
+of character tags:
+.br
+\(en \fBBS\fP Backspace
+.br
+\(en \fBHT\fP TAB
+.br
+\(en \fBNL\fP Line feed (new line)
+.br
+\(en \fBCR\fP Carriage return (enter)
+.br
+\(en \fBDEL\fP DEL
+.br
+\(en \fBC0\fP other control characters < ' '
+.br
+\(en \fBC1\fP control characters 0x80...0x9F
+.br
+(Corresponds to the xterm resource \fBdisallowedPasteControls\fP.)
+
+.TP
 \fBSpecial key remapping\fP
 These options can attach a specific string to some special keys.
 If the string is a number, a corresponding Escape sequence will be generated, 
@@ -1983,7 +2006,8 @@ pairs of key and action descriptors
 (if a semicolon shall be embedded into any of the action descriptors, 
 a non-whitespace control character (i.e. none of \fB^I^J^K^L^M\fP) can be 
 specified as an alternative separator by starting the whole setting with it).
-(corresponds roughly to the xterm resource \fBtranslations\fP)
+.br
+(Corresponds roughly to the xterm resource \fBtranslations\fP.)
 
 Supported keys are described as follows:
 .br

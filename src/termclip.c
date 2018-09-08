@@ -175,8 +175,30 @@ term_open(void)
   destroy_clip_workbuf(buf);
 }
 
+static bool
+contains(string s, wchar c)
+{
+  string tag;
+  switch (c) {
+    when '\b': tag = "BS";
+    when '\t': tag = "HT";
+    when '\n': tag = "NL";
+    when '\r': tag = "CR";
+    when '\177': tag = "DEL";
+    otherwise:
+      if (c < ' ')
+        tag = "C0";
+      else if (c >= 0x80 && c < 0xA0)
+        tag = "C1";
+      else
+        return false;
+  }
+  return strstr(s, tag);
+  // a bit simplistic, we should probably properly parse...
+}
+
 void
-term_paste(wchar *data, uint len)
+term_paste(wchar *data, uint len, bool all)
 {
   term_cancel_paste();
 
@@ -187,7 +209,10 @@ term_paste(wchar *data, uint len)
   // Unix-style \n line endings to \r, because that's what the Enter key sends.
   for (uint i = 0; i < len; i++) {
     wchar wc = data[i];
-    if (wc != '\n')
+    if (!all && *cfg.filter_paste && contains(cfg.filter_paste, wc))
+      // skip filtered control
+      term.paste_buffer[term.paste_len++] = ' ';
+    else if (wc != '\n')
       term.paste_buffer[term.paste_len++] = wc;
     else if (i == 0 || data[i - 1] != '\r')
       term.paste_buffer[term.paste_len++] = '\r';
