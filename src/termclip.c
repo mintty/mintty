@@ -209,13 +209,15 @@ term_paste(wchar *data, uint len, bool all)
   // Unix-style \n line endings to \r, because that's what the Enter key sends.
   for (uint i = 0; i < len; i++) {
     wchar wc = data[i];
+    if (wc == '\n')
+      wc = '\r';
     if (!all && *cfg.filter_paste && contains(cfg.filter_paste, wc))
-      // skip filtered control
-      term.paste_buffer[term.paste_len++] = ' ';
-    else if (wc != '\n')
+      wc = ' ';
+
+    if (data[i] != '\n')
       term.paste_buffer[term.paste_len++] = wc;
     else if (i == 0 || data[i - 1] != '\r')
-      term.paste_buffer[term.paste_len++] = '\r';
+      term.paste_buffer[term.paste_len++] = wc;
   }
 
   if (term.bracketed_paste)
