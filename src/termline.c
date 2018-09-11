@@ -535,6 +535,18 @@ compressline(termline *line)
   }
 
  /*
+  * Store the wrap position if used.
+  */
+  if (line->lattr & LATTR_WRAPPED) {
+    int n = line->wrappos;
+    while (n >= 128) {
+      add(b, (uchar) ((n & 0x7F) | 0x80));
+      n >>= 7;
+    }
+    add(b, (uchar) (n));
+  }
+
+ /*
   * Now we store a sequence of separate run-length encoded
   * fragments, each containing exactly as many symbols as there
   * are columns in the line.
@@ -644,6 +656,19 @@ decompressline(uchar *data, int *bytes_used)
     line->lattr |= (byte & 0x7F) << shift;
     shift += 7;
   } while (byte & 0x80);
+
+ /*
+  * Read the wrap position if used.
+  */
+  if (line->lattr & LATTR_WRAPPED) {
+    ncols = shift = 0;
+    do {
+      byte = get(b);
+      ncols |= (byte & 0x7F) << shift;
+      shift += 7;
+    } while (byte & 0x80);
+    line->wrappos = ncols;
+  }
 
  /*
   * Now we read in each of the RLE streams in turn.

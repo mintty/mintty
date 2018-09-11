@@ -226,6 +226,7 @@ typedef struct {
 
 typedef struct {
   ushort lattr;
+  ushort wrappos;
   ushort cols;    /* number of real columns on the line */
   ushort size;    /* number of allocated termchars
                      (cc-lists may make this > cols) */
