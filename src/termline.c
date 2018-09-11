@@ -1,5 +1,5 @@
 // termline.c (part of mintty)
-// Copyright 2008-12 Andy Koppe
+// Copyright 2008-12 Andy Koppe, -2018 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -89,8 +89,8 @@ add_cc(termline *line, int col, wchar chr, cattr attr)
     col += line->chars[col].cc_next;
 
  /*
-  * `col' now points at the last cc currently in this cell; so
-  * we simply add another one.
+  * `col' now points at the last cc currently in this cell; 
+  * so we simply add another one.
   */
   int newcc = line->cc_free;
   if (line->chars[newcc].cc_next)
@@ -281,8 +281,7 @@ makeliteral_cc(struct buf *b, termchar *c)
  /*
   * For combining characters, I just encode a bunch of ordinary
   * chars using makeliteral_chr, and terminate with a \0
-  * character (which I know won't come up as a combining char
-  * itself).
+  * character (which I know won't come up as a combining char itself).
   */
   termchar z;
 
@@ -399,12 +398,11 @@ makerle(struct buf *b, termline *line,
       * This literal precisely matches the previous one.
       * Turn it into a run if it's worthwhile.
       *
-      * With one-byte literals, it costs us two bytes to
-      * encode a run, plus another byte to write the header
-      * to resume normal output; so a three-element run is
-      * neutral, and anything beyond that is unconditionally
-      * worthwhile. With two-byte literals or more, even a
-      * 2-run is a win.
+      * With one-byte literals, it costs us two bytes to encode a run, 
+      * plus another byte to write the header to resume normal output; 
+      * so a three-element run is neutral, and anything beyond that 
+      * is unconditionally worthwhile. 
+      * With two-byte literals or more, even a 2-run is a win.
       */
       if (thislen > 1 || prev2) {
         int runpos, runlen;
@@ -432,8 +430,7 @@ makerle(struct buf *b, termline *line,
           runpos = prevpos;
           b->len = prevpos + prevlen + 1;
          /*
-          * Terminate the previous run of ordinary
-          * literals.
+          * Terminate the previous run of ordinary literals.
           */
           assert(hdrsize >= 1 && hdrsize <= 128);
           b->data[hdrpos] = hdrsize - 1;
@@ -468,9 +465,8 @@ makerle(struct buf *b, termline *line,
       }
       else {
        /*
-        * Just flag that the previous two literals were
-        * identical, in case we find a third identical one
-        * we want to turn into a run.
+        * Just flag that the previous two literals were identical,
+        * in case we find a third identical one we want to turn into a run.
         */
         prev2 = true;
         prevlen = thislen;
@@ -484,8 +480,7 @@ makerle(struct buf *b, termline *line,
     }
 
    /*
-    * This character isn't (yet) part of a run. Add it to
-    * hdrsize.
+    * This character isn't (yet) part of a run. Add it to hdrsize.
     */
     hdrsize++;
     if (hdrsize == 128) {
@@ -515,9 +510,8 @@ compressline(termline *line)
   struct buf buffer = { null, 0, 0 }, *b = &buffer;
 
  /*
-  * First, store the column count, 7 bits at a time, least
-  * significant `digit' first, with the high bit set on all but
-  * the last.
+  * First, store the column count, 7 bits at a time, least significant
+  * `digit' first, with the high bit set on all but the last.
   */
   {
     int n = line->cols;
@@ -631,10 +625,9 @@ decompressline(uchar *data, int *bytes_used)
   line->cc_free = 0;
 
  /*
-  * We must set all the cc pointers in line->chars to 0 right
-  * now, so that cc diagnostics that verify the integrity of the
-  * whole line will make sense while we're in the middle of
-  * building it up.
+  * We must set all the cc pointers in line->chars to 0 right now, 
+  * so that cc diagnostics that verify the integrity of the whole line 
+  * will make sense while we're in the middle of building it up.
   */
   {
     int i;
@@ -738,8 +731,7 @@ sblines(void)
 
 /*
  * Retrieve a line of the screen or of the scrollback, according to
- * whether the y coordinate is non-negative or negative
- * (respectively).
+ * whether the y coordinate is non-negative or negative (respectively).
  */
 termline *
 fetch_line(int y)
