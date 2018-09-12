@@ -865,8 +865,11 @@ win_mouse_move(bool nc, LPARAM lp)
     uint dist = sqrt(sqr(p.x - last_click_pos.x) + sqr(p.y - last_click_pos.y));
     uint diff = GetMessageTime() - last_skipped_time;
     //printf("focus move %d %d\n", dist, diff);
-    if (dist * diff > 999)
+    if (dist * diff > 999) {
       term_mouse_click(last_button, last_mods, last_click_pos, 1);
+      last_skipped = false;
+      skip_release_token = -1;
+    }
   }
 
   last_pos = p;
@@ -1219,7 +1222,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   uint count = LOWORD(lp);
 
 #ifdef debug_virtual_key_codes
-  printf("win_key_down %04X %s scan %d\n", key, vk_name(key), scancode);
+  printf("win_key_down %04X %s scan %d ext %d\n", key, vk_name(key), scancode, extended);
 #endif
 
   if (key == VK_PROCESSKEY) {
