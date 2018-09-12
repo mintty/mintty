@@ -4394,6 +4394,7 @@ main(int argc, char *argv[])
 
   // Initialise the terminal.
   term_reset(true);
+  term.show_scrollbar = !!cfg.scrollbar;
   term_resize(term_rows, term_cols);
 
   // Initialise the scroll bar.
