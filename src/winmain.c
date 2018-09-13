@@ -1772,7 +1772,11 @@ win_update_transparency(bool opaque)
 void
 win_update_scrollbar(bool inner)
 {
-  int scrollbar = term.show_scrollbar ? cfg.scrollbar : 0;
+  // enforce outer scrollbar if switched on
+  int scrollbar = term.show_scrollbar ? (cfg.scrollbar || !inner) : 0;
+  // keep config consistent with enforced scrollbar
+  if (scrollbar && !cfg.scrollbar)
+    cfg.scrollbar = 1;
 
   LONG style = GetWindowLong(wnd, GWL_STYLE);
   SetWindowLong(wnd, GWL_STYLE,
