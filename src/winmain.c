@@ -2137,6 +2137,7 @@ static struct {
         when IDM_TOGLOG: toggle_logging();
         when IDM_HTML: term_export_html(GetKeyState(VK_SHIFT) & 0x80);
         when IDM_TOGCHARINFO: toggle_charinfo();
+        when IDM_TOGVT220KB: toggle_vt220();
         when IDM_PASTE: win_paste();
         when IDM_SELALL: term_select_all(); win_update(false);
         when IDM_RESET: winimgs_clear(); term_reset(true); win_update(false);

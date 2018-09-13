@@ -31,6 +31,7 @@ extern int line_scale;
 extern int PADDING;
 extern bool show_charinfo;
 extern void toggle_charinfo(void);
+extern void toggle_vt220(void);
 extern char * fontpropinfo(void);
 
 extern bool support_wsl;
