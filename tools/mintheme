@@ -14,16 +14,21 @@
 
 help() {
 	echo "Usage:"
-	echo "  `basename $0` [-h|-f|-l|-p|-t|-s|-S] [theme|themefile|image|patterns]"
-	echo "  `basename $0` [-d] -q > themefile"
+	echo "  `basename $0` [-h|-l]"
+	echo "  `basename $0` [-f|--save] THEME"
+	echo "  `basename $0` [-t|-p|-%] IMAGE"
+	echo "  `basename $0` [-s|-S] [PATTERNS]"
+	echo "  `basename $0` [-d] -q > THEMEFILE"
 	echo "List/set/query mintty themes in current mintty window."
 	echo "A theme is a colour scheme to configure the 8 ANSI colours, their "
 	echo "bright versions, and optionally the foreground/background/cursor colours."
 	echo
 	echo "Arguments:"
 	echo "  -f, --file FILE           set theme from given themefile"
-	echo "  -p, --picture FILE[,DIM]  set background picture (dim 1..255)"
+	echo "      --save FILE           save theme also in config file"
 	echo "  -t, --texture FILE[,DIM]  set background texture (dim 1..255)"
+	echo "  -p, --picture FILE[,DIM]  set background picture (dim 1..255)"
+	echo "  -%, --picscale FILE[,DIM] like -p and scale window"
 	echo "  -q, --query               query current colour configuration as theme"
 	echo "  -d, --decimal             decimal query output"
 	echo "  -l, --list                list available themes"
@@ -240,12 +245,37 @@ query() {
 	fi
 }
 
+conftheme() {
+	themefile=`cygpath -wa "$1"`
+	for conffile in ~/.minttyrc ~/.config/mintty/config "$APPDATA/mintty/config" /etc/minttyrc
+	do	if [ -w "$conffile" ]
+		then
+			newconf=/tmp/minttyrc.$$
+			# create new config file with modified entry
+			sed -n -e "/^ThemeFile[	 ]*=/ q" -e p "$conffile" > "$newconf"
+			echo "ThemeFile=$themefile" >> "$newconf"
+			sed -e "1,/^ThemeFile[	 ]*=/ d" "$conffile" >> "$newconf"
+			# copy new config file back
+			/bin/cp "$newconf" "$conffile"
+			/bin/rm "$newconf"
+			# feedback
+			echo "saved theme '$themefile'"
+			echo "in config file '$conffile'"
+			return
+		fi
+	done
+}
+
 decimal=false
+saveconf=false
 show2=false
 case "$1" in
 -d|--decimal)
 	decimal=true
 	shift;;
+--save)
+	saveconf=true
+	;;
 esac
 
 case `uname` in
@@ -275,11 +305,15 @@ case "$1" in
 	show2=true
 	export show2
 	showthemes "$@";;
--f|--file)
+-f|--file|--save)
 	if [ -z "$2" ]
 	then	help
 	elif [ -r "$2" ]
-	then	settheme "$2"
+	then
+		settheme "$2"
+		if $saveconf
+		then	conftheme "$2"
+		fi
 	else	echo cannot read theme file
 	fi;;
 -p|--picture)
@@ -287,6 +321,13 @@ case "$1" in
 	then	help
 	elif [ -r "${2/,*/}" ]
 	then	echo "]11;_$2"
+	else	echo cannot read picture file
+	fi;;
+-%|--picscale)
+	if [ -z "$2" ]
+	then	help
+	elif [ -r "${2/,*/}" ]
+	then	echo "]11;%$2"
 	else	echo cannot read picture file
 	fi;;
 -t|--texture)
