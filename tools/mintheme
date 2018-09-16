@@ -15,7 +15,9 @@
 help() {
 	echo "Usage:"
 	echo "  `basename $0` [-h|-l]"
-	echo "  `basename $0` [-f|--save] THEME"
+	echo "  `basename $0` THEME"
+	echo "  `basename $0` -f THEMEFILE"
+	echo "  `basename $0` --save [THEME|THEMEFILE]"
 	echo "  `basename $0` [-t|-p|-%] IMAGE"
 	echo "  `basename $0` [-s|-S] [PATTERNS]"
 	echo "  `basename $0` [-d] -q > THEMEFILE"
@@ -24,8 +26,9 @@ help() {
 	echo "bright versions, and optionally the foreground/background/cursor colours."
 	echo
 	echo "Arguments:"
-	echo "  -f, --file FILE           set theme from given themefile"
-	echo "      --save FILE           save theme also in config file"
+	echo "  THEME                     set theme from config resources"
+	echo "  -f, --file THEMEFILE      set theme from themefile"
+	echo "  --save [THEME|THEMEFILE]  save theme also in config file"
 	echo "  -t, --texture FILE[,DIM]  set background texture (dim 1..255)"
 	echo "  -p, --picture FILE[,DIM]  set background picture (dim 1..255)"
 	echo "  -%, --picscale FILE[,DIM] like -p and scale window"
@@ -267,15 +270,11 @@ conftheme() {
 }
 
 decimal=false
-saveconf=false
 show2=false
 case "$1" in
 -d|--decimal)
 	decimal=true
 	shift;;
---save)
-	saveconf=true
-	;;
 esac
 
 case `uname` in
@@ -305,16 +304,31 @@ case "$1" in
 	show2=true
 	export show2
 	showthemes "$@";;
--f|--file|--save)
+-f|--file)
+	if [ -z "$2" ]
+	then	help
+	elif [ -r "$2" ]
+	then	settheme "$2"
+	else	echo cannot read theme file
+	fi;;
+--save)
 	if [ -z "$2" ]
 	then	help
 	elif [ -r "$2" ]
 	then
 		settheme "$2"
-		if $saveconf
-		then	conftheme "$2"
-		fi
-	else	echo cannot read theme file
+		conftheme "$2"
+	else
+		for confdir in ~/.mintty ~/.config/mintty "$APPDATA"/mintty /usr/share/mintty
+		do	if [ -r "$confdir/themes/$1" ]
+			then
+				echo setting theme from config dir "$confdir"
+				settheme "$confdir/themes/$1"
+				conftheme "$confdir/themes/$1"
+				exit
+			fi
+		done
+		echo theme not found
 	fi;;
 -p|--picture)
 	if [ -z "$2" ]
