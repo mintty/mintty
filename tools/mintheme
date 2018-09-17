@@ -320,11 +320,11 @@ case "$1" in
 		conftheme "$2"
 	else
 		for confdir in ~/.mintty ~/.config/mintty "$APPDATA"/mintty /usr/share/mintty
-		do	if [ -r "$confdir/themes/$1" ]
+		do	if [ -r "$confdir/themes/$2" ]
 			then
 				echo setting theme from config dir "$confdir"
-				settheme "$confdir/themes/$1"
-				conftheme "$confdir/themes/$1"
+				settheme "$confdir/themes/$2"
+				conftheme "$confdir/themes/$2"
 				exit
 			fi
 		done
