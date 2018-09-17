@@ -928,6 +928,8 @@ set_modes(bool state)
       switch (arg) {
         when 1:  /* DECCKM: application cursor keys */
           term.app_cursor_keys = state;
+        when 66:  /* DECNKM: application keypad */
+          term.app_keypad = state;
         when 2:  /* DECANM: VT100/VT52 mode */
           if (state) {
             // Designate USASCII for character sets G0-G3
@@ -1131,6 +1133,8 @@ get_mode(bool privatemode, int arg)
     switch (arg) {
       when 1:  /* DECCKM: application cursor keys */
         return 2 - term.app_cursor_keys;
+      when 66:  /* DECNKM: application keypad */
+        return 2 - term.app_keypad;
       when 2:  /* DECANM: VT100/VT52 mode */
         // Check USASCII for character sets G0-G3
         for (uint i = 0; i < lengthof(term.curs.csets); i++)
