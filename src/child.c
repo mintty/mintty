@@ -455,13 +455,11 @@ child_proc(void)
 
     if (select(win_fd + 1, &fds, 0, 0, timeout_p) > 0) {
       if (pty_fd >= 0 && FD_ISSET(pty_fd, &fds)) {
-#if CYGWIN_VERSION_DLL_MAJOR >= 1005
-        static char buf[4096];
-        int len = read(pty_fd, buf, sizeof buf);
-#else
-        // Pty devices on old Cygwin version deliver only 4 bytes at a time,
+        // Pty devices on old Cygwin versions (pre 1005) deliver only 4 bytes
+        // at a time, and newer ones or MSYS2 deliver up to 256 at a time.
         // so call read() repeatedly until we have a worthwhile haul.
-        static char buf[512];
+        // this avoids most partial updates, results in less flickering/tearing.
+        static char buf[4096];
         uint len = 0;
         do {
           int ret = read(pty_fd, buf + len, sizeof buf - len);
@@ -470,7 +468,6 @@ child_proc(void)
           else
             break;
         } while (len < sizeof buf);
-#endif
         if (len > 0) {
           term_write(buf, len);
           if (log_fd >= 0 && logging)
