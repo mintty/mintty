@@ -1112,6 +1112,11 @@ toggle_vt220()
   term.vt220_keys = !term.vt220_keys;
 }
 
+static void
+nop()
+{
+}
+
 /*
    Simplified variant of term_cmd().
  */
@@ -1130,34 +1135,50 @@ key_cmd(char * cmd)
 
 static struct {
   uchar vkey;
-  bool unmod;
+  char unmod;
   string nam;
 } vktab[] = {
-  {VK_CANCEL, false, "Break"},
-  {VK_BACK, true, "Back"},
-  {VK_TAB, false, "Tab"},
-  {VK_RETURN, false, "Enter"},
-  {VK_PAUSE, true, "Pause"},
-  {VK_ESCAPE, false, "Esc"},
-  {VK_SPACE, false, "Space"},
-  {VK_SNAPSHOT, true, "PrintScreen"},
-  {VK_LWIN, true, "LWin"},
-  {VK_RWIN, true, "RWin"},
-  {VK_APPS, true, "Menu"},
-  {VK_NUMLOCK, true, "NumLock"},
-  {VK_SCROLL, true, "ScrollLock"},
+  {VK_CANCEL, 0, "Break"},
+  {VK_BACK, 1, "Back"},
+  {VK_TAB, 0, "Tab"},
+  {VK_RETURN, 0, "Enter"},
+  {VK_PAUSE, 1, "Pause"},
+  {VK_ESCAPE, 0, "Esc"},
+  {VK_SPACE, 0, "Space"},
+  {VK_SNAPSHOT, 1, "PrintScreen"},
+  {VK_LWIN, 1, "LWin"},
+  {VK_RWIN, 1, "RWin"},
+  {VK_APPS, 1, "Menu"},
+  {VK_NUMLOCK, 1, "NumLock"},
+  {VK_SCROLL, 1, "ScrollLock"},
   // exotic keys:
-  {VK_SELECT, true, "Select"},
-  {VK_PRINT, true, "Print"},
-  {VK_EXECUTE, true, "Exec"},
-  {VK_HELP, true, "Help"},
-  {VK_SLEEP, true, "Sleep"},
-  {VK_ATTN, true, "Attn"},
-  {VK_CRSEL, true, "CrSel"},
-  {VK_EXSEL, true, "ExSel"},
-  {VK_EREOF, true, "ErEof"},
-  {VK_PLAY, true, "Play"},
-  {VK_ZOOM, true, "Zoom"},
+  {VK_SELECT, 1, "Select"},
+  {VK_PRINT, 1, "Print"},
+  {VK_EXECUTE, 1, "Exec"},
+  {VK_HELP, 1, "Help"},
+  {VK_SLEEP, 1, "Sleep"},
+  {VK_ATTN, 1, "Attn"},
+  {VK_CRSEL, 1, "CrSel"},
+  {VK_EXSEL, 1, "ExSel"},
+  {VK_EREOF, 1, "ErEof"},
+  {VK_PLAY, 1, "Play"},
+  {VK_ZOOM, 1, "Zoom"},
+  // cursor keys, editing keypad, and numeric keypad application keys
+  {VK_INSERT, 2, "Insert"},
+  {VK_DELETE, 2, "Delete"},
+  {VK_HOME, 2, "Home"},
+  {VK_END, 2, "End"},
+  {VK_PRIOR, 2, "Prior"},
+  {VK_NEXT, 2, "Next"},
+  {VK_LEFT, 2, "Left"},
+  {VK_RIGHT, 2, "Right"},
+  {VK_UP, 2, "Up"},
+  {VK_DOWN, 2, "Down"},
+  {VK_CLEAR, 2, "Begin"},
+  {VK_DIVIDE, 3, "Divide"},
+  {VK_MULTIPLY, 3, "Multiply"},
+  {VK_SUBTRACT, 3, "Subtract"},
+  {VK_ADD, 3, "Add"},
 };
 
 static struct {
@@ -1219,6 +1240,8 @@ static struct {
   {"export-html", {IDM_HTML}},
   {"print-screen", {.fct = print_screen}},
   {"toggle-vt220", {.fct = toggle_vt220}},
+
+  {"void", {.fct = nop}}
 };
 
 bool
@@ -1379,32 +1402,9 @@ win_key_down(WPARAM wp, LPARAM lp)
     }
   }
 
+  bool allow_shortcut = true;
+
   if (!term.shortcut_override) {
-
-    // Copy&paste
-    if (cfg.clip_shortcuts && key == VK_INSERT && mods && !alt) {
-      if (ctrl)
-        term_copy();
-      if (shift)
-        win_paste();
-      return true;
-    }
-
-#ifdef check_alt_ret_space_first
-    // Moved to switch() below so we can override it with layout().
-    // Window menu and fullscreen
-    if (cfg.window_shortcuts && alt && !altgr && !ctrl) {
-      if (key == VK_RETURN) {
-        trace_resize(("--- Alt-Enter (shift %d)", shift));
-        send_syscommand(IDM_FULLSCREEN_ZOOM);
-        return true;
-      }
-      else if (key == VK_SPACE) {
-        send_syscommand(SC_KEYMENU);
-        return true;
-      }
-    }
-#endif
 
 #define dont_debug_def_keys 1
 
@@ -1434,6 +1434,7 @@ win_key_down(WPARAM wp, LPARAM lp)
 #if defined(debug_def_keys) && debug_def_keys == 1
             printf("tag <%s>: cmd <%s> fct <%s>\n", tag, cmdp, paramp);
 #endif
+            bool ret = true;
             wchar * fct = cs__utftowcs(paramp);
             if ((*fct == '"' && fct[wcslen(fct) - 1] == '"') ||
                 (*fct == '\'' && fct[wcslen(fct) - 1] == '\'')) {
@@ -1445,8 +1446,16 @@ win_key_down(WPARAM wp, LPARAM lp)
               key_cmd(cmd);
               free(cmd);
             }
+            else if (!*paramp) {
+              // empty definition (e.g. "A+Enter:;"), shall disable 
+              // further shortcut handling for the input key but 
+              // trigger fall-back to "normal" key handling (with mods)
+              allow_shortcut = false;
+              ret = false;
+            }
             else {
-              for (uint i = 0; i < lengthof(cmd_defs); i++)
+              ret = false;
+              for (uint i = 0; i < lengthof(cmd_defs); i++) {
                 if (!strcmp(paramp, cmd_defs[i].name)) {
                   if (cmd_defs[i].cmd < 0xF000)
                     send_syscommand(cmd_defs[i].cmd);
@@ -1460,13 +1469,21 @@ win_key_down(WPARAM wp, LPARAM lp)
                   }
                   else
                     cmd_defs[i].fct();
+                  ret = true;
                   break;
                 }
+              }
+              if (!ret) {
+                // invalid definition (e.g. "A+Enter:foo;"), shall 
+                // not cause any action (return true) but provide a feedback
+                win_bell(&cfg);
+                ret = true;
+              }
             }
 
             free(fct);
             free(ukey_commands);
-            return true;
+            return ret;
           }
 
           if (sepp)
@@ -1494,12 +1511,24 @@ win_key_down(WPARAM wp, LPARAM lp)
           vki = i;
           break;
         }
-      if (vki >= 0 && !altgr && (mods || vktab[vki].unmod)) {
-        tag = asform("%s%s%s%s%s",
+      bool keypad = vktab[vki].vkey == VK_RETURN
+                    ? extended
+                    : vktab[vki].unmod == 2
+                      ? !extended
+                      : vktab[vki].unmod == 3;
+      bool editpad = !keypad && vktab[vki].unmod >= 2;
+      if (vki >= 0 && !altgr
+          && (mods || vktab[vki].unmod || extended)
+          && (!editpad || !term.app_cursor_keys)
+          && (!keypad || !term.app_keypad)
+         )
+      {
+        tag = asform("%s%s%s%s%s%s",
                      ctrl ? "C" : "",
                      alt ? "A" : "",
                      shift ? "S" : "",
                      mods ? "+" : "",
+                     keypad ? "KP_" : "",
                      vktab[vki].nam);
       }
       else if (VK_F1 <= key && key <= VK_F24) {
@@ -1509,12 +1538,13 @@ win_key_down(WPARAM wp, LPARAM lp)
                      shift ? "S" : "",
                      mods ? "+" : "",
                      key - VK_F1 + 1);
-      } else if (
-                 // !term.modify_other_keys &&
-                 (mods & ~MDK_ALT) == (cfg.ctrl_exchange_shift
-                                       ? MDK_CTRL
-                                       : (MDK_CTRL | MDK_SHIFT))
-                )
+      }
+      else if (
+               // !term.modify_other_keys &&
+               (mods & ~MDK_ALT) == (cfg.ctrl_exchange_shift
+                                     ? MDK_CTRL
+                                     : (MDK_CTRL | MDK_SHIFT))
+              )
       {
         uchar kbd0[256];
         GetKeyboardState(kbd0);
@@ -1559,6 +1589,41 @@ win_key_down(WPARAM wp, LPARAM lp)
       printf("check key <%s>\n", tag);
 #endif
     }
+
+    // If a user-defined key definition overrides a built-in shortcut 
+    // but does not assign its own, the key shall be handled as a key, 
+    // (with mods); for subsequent blocks of shortcut handling, we 
+    // achieve this by simply jumping over them (infamous goto), 
+    // but there are a few cases handled beyond, embedded in general 
+    // key handling, which are then guarded by further usage of the 
+    // allow_shortcut flag (Alt+Enter, Ctrl+Tab, Alt+Space).
+    if (!allow_shortcut)
+      goto skip_shortcuts;
+
+    // Copy&paste
+    if (cfg.clip_shortcuts && key == VK_INSERT && mods && !alt) {
+      if (ctrl)
+        term_copy();
+      if (shift)
+        win_paste();
+      return true;
+    }
+
+#ifdef check_alt_ret_space_first
+    // Moved to switch() below so we can override it with layout().
+    // Window menu and fullscreen
+    if (cfg.window_shortcuts && alt && !altgr && !ctrl) {
+      if (key == VK_RETURN) {
+        trace_resize(("--- Alt-Enter (shift %d)", shift));
+        send_syscommand(IDM_FULLSCREEN_ZOOM);
+        return true;
+      }
+      else if (key == VK_SPACE) {
+        send_syscommand(SC_KEYMENU);
+        return true;
+      }
+    }
+#endif
 
     // Alt+Fn shortcuts
     if (cfg.alt_fn_shortcuts && alt && !altgr && VK_F1 <= key && key <= VK_F24) {
@@ -1665,6 +1730,8 @@ win_key_down(WPARAM wp, LPARAM lp)
       not_zoom:;
     }
   }
+
+  skip_shortcuts:;
 
   bool zoom_hotkey(void) {
     if (!term.shortcut_override && cfg.zoom_shortcuts
@@ -2064,7 +2131,7 @@ static struct {
 
   switch (key) {
     when VK_RETURN:
-      if (!term.shortcut_override && cfg.window_shortcuts
+      if (allow_shortcut && !term.shortcut_override && cfg.window_shortcuts
           && alt && !altgr && !ctrl
          )
       {
@@ -2105,7 +2172,7 @@ static struct {
 #endif
       if (!ctrl)
         shift ? csi('Z') : ch('\t');
-      else if (cfg.switch_shortcuts) {
+      else if (allow_shortcut && cfg.switch_shortcuts) {
         win_switch(shift, lctrl & rctrl);
         return true;
       }
@@ -2178,7 +2245,7 @@ static struct {
 #endif
       if (altgr_key())
         trace_key("altgr");
-      else if (check_menu) {
+      else if (allow_shortcut && check_menu) {
         send_syscommand(SC_KEYMENU);
         return true;
       }

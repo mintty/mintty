@@ -2017,32 +2017,31 @@ Supported keys are described as follows:
 indicating Ctrl, Alt, Shift as combined with the function key, 
 attached with a "+" separator, e.g. \fBCS+F9\fP
 .br
-\(en special keys (some of which do not occur on typical keyboards); 
+\(en special keys (some of which do not occur on typical keyboards) 
+and keypad keys; 
 Space, Enter, Esc and Tab are only considered with at least one modifier
-  Tab
-  Esc
-  Enter
-  Space
-  Back
-  Pause
-  Break
-  ScrollLock
-  PrintScreen
-  NumLock
-  LWin
-  RWin
+  Esc, Tab
+  Enter, KP_Enter
+  Space, Back
+  Pause, Break
+  ScrollLock, PrintScreen, NumLock
+  LWin, RWin
   Menu
-  Select
-  Print
-  Exec
-  Help
-  Sleep
-  Attn
-  CrSel
-  ExSel
-  ErEof
-  Play
-  Zoom
+  Insert, KP_Insert
+  Delete, KP_Delete
+  Home, KP_Home
+  End, KP_End
+  Prior, KP_Prior
+  Next, KP_Next
+  Left, KP_Left
+  Right, KP_Right
+  Up, KP_Up
+  Down, KP_Down
+  KP_Begin (the middle "5" key)
+  KP_Divide, KP_Multiply, KP_Subtract, KP_Add
+  Select, Print, Exec, Help, Sleep, Attn
+  CrSel, ExSel, ErEof
+  Play, Zoom
 .br
 \(en any character reachable on the keyboard without Shift, considered if 
 pressed while Ctrl and Shift are also held; AltGr-generated characters are supported
@@ -2130,12 +2129,20 @@ Supported actions are described as follows:
 \(en \fBexport-html (*)\fP: exports the screen as an HTML file
 .br
 \(en \fBprint-screen\fP: print screen contents
+.br
+\(en \fBvoid\fP: do nothing
 
 \fINote (*):\fP The exact behaviour of some actions depends on the 
 Shift state as being mapped from.
 
 \fINote:\fP To just disable the built-in shortcut (and not override it 
-with a user-defined one), leave the action empty, but include the colon.
+with a user-defined one), but further process the key as normal input, 
+leave the action empty, but include the colon.
+
+\fINote:\fP To disable the built-in shortcut and not process the key either, 
+use the "\fBvoid\fP" dummy action.
+
+\fINote:\fP An invalid action (like "foo") will make mintty beep on the key.
 
 Examples:
 .br
@@ -2148,6 +2155,10 @@ Ctrl+_ assignment already
 \(en \fBKeyFunctions=c:copy;v:paste\fP in combination with setting 
 \fB-o CtrlExchangeShift=true\fP will assign copy/paste to ^C and ^V 
 for Windows addicts
+.br
+\(en \fBKeyFunctions=A+Enter:void;A+KP_Enter:\fP will disable zooming 
+on Alt+Enter and also disable it on Alt+keypad-Enter but enter ESC Return 
+in the latter case
 
 .TP
 \fBUse system colours\fP (UseSystemColours=no)
