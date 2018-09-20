@@ -973,7 +973,7 @@ msgstr "すべてを選択(&A)"
 #. __ Context menu:
 #: wininput.c:540
 msgid "HTML Screen Dump"
-msgstr ""
+msgstr "HTML画面ダンプ"
 
 #. __ Context menu:
 #: wininput.c:548
