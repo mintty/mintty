@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Sun Jul  1 16:34:19 2018 -->
+<!-- CreationDate: Thu Sep 20 09:05:25 2018 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -351,6 +351,10 @@ coordinate system), and exits.</p>
 &quot;f&quot;, mintty reports the monospace fonts installed
 on the system as determined by mintty, and exits.</p>
 
+<p style="margin-left:22%; margin-top: 1em">With value
+&quot;W&quot;, mintty lists installed WSL distributions and
+properties, and exits.</p>
+
 
 <p style="margin-left:11%;"><b>--store-taskbar-properties</b></p>
 
@@ -604,8 +608,8 @@ accessed by clicking on the program icon or pressing
 an entry that leads to the options dialog for changing
 mintty&rsquo;s configuration.</p>
 
-<p style="margin-left:11%; margin-top: 1em"><b>Copy &amp;
-paste</b> <br>
+<p style="margin-left:11%; margin-top: 1em"><b>Text
+selection, copy &amp; paste</b> <br>
 Screen contents can be selected by holding down the left
 mouse button and dragging the mouse. If Alt is held down
 before the left mouse button, a rectangular block instead of
@@ -651,7 +655,16 @@ disabled with option <b>ClearSelectionOnInput=false</b>.</p>
 
 <p style="margin-left:11%; margin-top: 1em">The current
 selection size can optionally been indicated with a popup,
-enabled with option <b>SelectionShowSize</b>.</p>
+enabled with option <b>SelectionShowSize</b>. <b><br>
+Elastic text selection</b></p>
+
+<p style="margin-left:22%;">The traditional selection
+behaviour of cell-based terminals is that a character
+touched with the mouse is included in the selection. With
+option <b>ElasticMouse</b>, text selection can be changed to
+include the first and last characters only if they are
+spanned at least halfway by the mouse dragging, like many
+GUI application do.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Drag &amp;
 drop</b> <br>
@@ -1018,6 +1031,14 @@ for glass. <br>
 If OpaqueWhenFocused is set, opaqueness is temporarily
 disabled to provide visible feedback for the changes.</p>
 
+<p style="margin-left:11%;"><b>User-defined
+shortcuts</b></p>
+
+<p style="margin-left:22%;">Function keys, modified
+function keys, and Ctrl+Shift+key combinations can be
+redefined to generate user-defined input or invoke
+functions. See option <b>KeyFunctions</b> for details.</p>
+
 <p style="margin-left:11%; margin-top: 1em"><b>Embedding
 graphics in terminal output</b> <br>
 The SIXEL graphics support feature facilitates a range of
@@ -1040,6 +1061,23 @@ emoji graphics if deployed in a mintty configuration
 directory. See the Tips wiki page
 <i>https://github.com/mintty/mintty/wiki/Tips#emojis</i>
 about deployment of emoji graphics for mintty.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>HTML Screen
+dump</b> <br>
+Mintty can create an HTML representation of the screen, from
+the extended context menu or using the respective xterm
+Media Copy escape sequence. The HTML page is created in the
+start directory of mintty and uses a filename pattern of
+<b>mintty.date_time.html</b>. Screen layout and character
+attributes are reproduced as closely as possible. If there
+is a current selection, the selected text will be included
+in the HTML dump, otherwise the current screen view is used.
+In the latter case, also a background image or pattern is
+reproduced, if its filename was configured as a relative
+path name using POSIX syntax (forward slashes).</p>
+
+<p style="margin-left:11%; margin-top: 1em">If Shift is
+held, the function also opens the HTML page.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Diagnostic
 support <br>
@@ -1122,11 +1160,11 @@ encoding the terminal runs in; as a fallback, if the
 configuration value is not valid UTF-8, it is interpreted in
 the system ANSI encoding. (This does not apply to the same
 configuration settings when given on the command-line.) <br>
-Unicode-enabled settings: BellFile, ThemeFile, Title,
-ExitTitle, Icon, Log, Language, Font, Font1..., FontSample,
-Printer, Answerback, SixelClipChars, Class, AppID, AppName,
-AppLaunchCmd, DropCommands, UserCommands, SessionCommands,
-TaskCommands.</p>
+Unicode-enabled settings: BellFile, ThemeFile, Background,
+Title, ExitTitle, Icon, Log, Language, Font, Font1...,
+FontSample, Printer, Answerback, SixelClipChars, Class,
+AppID, AppName, AppLaunchCmd, DropCommands, UserCommands,
+SessionCommands, TaskCommands, KeyFunctions.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Be careful when
 running multiple instances of mintty. If options are saved
@@ -1560,6 +1598,17 @@ ticking the checkbox here.</p>
 makes no difference for keys without AltGr key bindings
 (e.g. any key on the standard US layout).</p>
 
+<p style="margin-left:11%;"><b>Allow delay for AltGr
+detection</b> (CtrlAltDelayAltGr=0)</p>
+
+<p style="margin-left:22%;">Some software managing and
+providing keyboard input does not handle AltGr properly;
+particularly TeamViewer is known for buggy behaviour as it
+does not provide Ctrl and Menu virtual key codes like
+Windows does. With this option, some delay in milliseconds
+(suggested 16 or 20) can be allowed to detect a Ctrl+Menu
+sequence as AltGr.</p>
+
 <p style="margin-left:11%;"><b>Old method of AltGr
 detection</b> (OldAltGrDetection=no)</p>
 
@@ -1719,12 +1768,21 @@ The <b>Off</b> setting disables overriding. <br>
 &ndash; <b>Alt</b> <br>
 &ndash; <b>Off</b></p>
 
-<p style="margin-left:11%;">(HideMouse=on)</p>
+<p style="margin-left:11%;"><b>Mouse
+auto-hiding</b>(HideMouse=on)</p>
 
 <p style="margin-left:22%;">By default, mintty
 automatically hides the cross-hair mouse cursor when
 keyboard input is being entered. Setting this option =false
 keeps the cursor.</p>
+
+<p style="margin-left:11%;"><b>Elastic text
+selection</b>(ElasticMouse=off)</p>
+
+<p style="margin-left:22%;">With this option set, text
+selection with mouse dragging only includes first and last
+characters if they are spanned at least halfway, so just
+slightly touching a character leaves it out.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Window</b>
 <br>
@@ -2010,6 +2068,30 @@ accidentally. If possible, mintty also displays a list of
 running child processes, using the procps command if
 installed, or the ps command.</p>
 
+<p style="margin-left:11%;"><b>Suppress properties and
+features controlled by escape sequences</b></p>
+
+<p style="margin-left:22%;">Using these options, the listed
+feature numbers are suppressed. Each option may contain a
+comma-separated list of respective numbers. Usage of these
+options is discouraged; users are not entitled to complain
+about side effects. <br>
+&ndash; (SuppressSGR=) Character attributes (CSI ... m).
+<br>
+&ndash; (SuppressDEC=) DECSET private modes (CSI ? ... h/l).
+<br>
+&ndash; (SuppressWIN=) Window operations (CSI ... t); 24
+means &gt;= 24. <br>
+&ndash; (SuppressOSC=) Window configuration commands (OSC
+... ST).</p>
+
+<p style="margin-left:22%; margin-top: 1em">See
+<i>https://github.com/mintty/mintty/wiki/Tips#text-attributes-and-rendering</i>
+for an overview of SGR attributes. <br>
+See
+<i>http://invisible-island.net/xterm/ctlseqs/ctlseqs.txt</i>
+for a full listing of escape control sequences.</p>
+
 <p style="margin-left:11%; margin-top: 1em"><b>Command
 line</b> <br>
 The settings here are config file versions of command line
@@ -2190,8 +2272,9 @@ confuse screen applications (such as editors) that rely on
 <p style="margin-left:22%;">With this option, mintty emoji
 support is enabled and the emojis style is chosen. Mintty
 will match output for valid emoji sequences, presentation
-forms and emoji style selectors. (Note that it may be useful
-to set <b>Charwidth=unicode</b> in addition.)</p>
+forms and emoji style selectors. (Note that up to cygwin
+2.10 it may be useful to set <b>Charwidth=unicode</b> in
+addition.)</p>
 
 <p style="margin-left:22%; margin-top: 1em">Supported
 styles are: <br>
@@ -2254,6 +2337,13 @@ automatically based on their icon and command line. This can
 be overridden by setting the AppID to a custom string, in
 which case windows with the same AppID are grouped
 together.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The special
+value <b>AppID=@</b> causes mintty to derive an implicit
+AppID from the WSL system name, in order to achieve WSL
+distribution-specific taskbar grouping. This resolves
+taskbar grouping problems in some cases (wsltty issue #96)
+but causes similar problems in other cases (issue #784).</p>
 
 
 <p style="margin-left:22%; margin-top: 1em"><i>Warning:</i>
@@ -2345,6 +2435,25 @@ characters</b> (WordCharsExcl=)</p>
 <p style="margin-left:22%;">This string can list characters
 that are to be excluded from word selection.</p>
 
+<p style="margin-left:11%;"><b>Filtering pasted text</b>
+(FilterPasteControls=)</p>
+
+<p style="margin-left:22%;">With this setting, pasted text
+can be filtered for selected control characters which are
+then replaced by space. Filtering is not applied when
+Control is held while pasting. The option is a
+comma-separated list of character tags: <br>
+&ndash; <b>BS</b> Backspace <br>
+&ndash; <b>HT</b> TAB <br>
+&ndash; <b>NL</b> Line feed (new line) <br>
+&ndash; <b>CR</b> Carriage return (enter) <br>
+&ndash; <b>DEL</b> DEL <br>
+&ndash; <b>C0</b> other control characters &lt; &rsquo;
+&rsquo; <br>
+&ndash; <b>C1</b> control characters 0x80...0x9F <br>
+(Corresponds to the xterm resource
+<b>disallowedPasteControls</b>.)</p>
+
 <p style="margin-left:11%;"><b>Special key
 remapping</b></p>
 
@@ -2372,6 +2481,169 @@ sequence as in xterm <br>
 Key_Break=2 would turn the Break key into an Insert key <br>
 Key_Break=_BRK_ would assign the simulated terminal line
 Break function</p>
+
+<p style="margin-left:11%;"><b>User-defined shortcuts
+(KeyFunctions=)</b></p>
+
+<p style="margin-left:22%;">With this setting, function
+keys, modified function keys, and Ctrl+Shift+key
+combinations can be mapped to invoke specific functions or
+generate user-defined input. The value is a series of
+semicolon-separated, colon-combined pairs of key and action
+descriptors (if a semicolon shall be embedded into any of
+the action descriptors, a non-whitespace control character
+(i.e. none of <b>^I^J^K^L^M</b>) can be specified as an
+alternative separator by starting the whole setting with
+it). <br>
+(Corresponds roughly to the xterm resource
+<b>translations</b>.)</p>
+
+<p style="margin-left:22%; margin-top: 1em">Supported keys
+are described as follows: <br>
+&ndash; function keys F1...F24 <br>
+&ndash; modified function keys, preceded with a combination
+of C, A, S, in this order, indicating Ctrl, Alt, Shift as
+combined with the function key, attached with a
+&quot;+&quot; separator, e.g. <b>CS+F9</b> <br>
+&ndash; special keys (some of which do not occur on typical
+keyboards) and keypad keys; Space, Enter, Esc and Tab are
+only considered with at least one modifier <br>
+Esc, Tab <br>
+Enter, KP_Enter <br>
+Space, Back <br>
+Pause, Break <br>
+ScrollLock, PrintScreen, NumLock <br>
+LWin, RWin <br>
+Menu <br>
+Insert, KP_Insert <br>
+Delete, KP_Delete <br>
+Home, KP_Home <br>
+End, KP_End <br>
+Prior, KP_Prior <br>
+Next, KP_Next <br>
+Left, KP_Left <br>
+Right, KP_Right <br>
+Up, KP_Up <br>
+Down, KP_Down <br>
+KP_Begin (the middle &quot;5&quot; key) <br>
+KP_Divide, KP_Multiply, KP_Subtract, KP_Add <br>
+Select, Print, Exec, Help, Sleep, Attn <br>
+CrSel, ExSel, ErEof <br>
+Play, Zoom <br>
+&ndash; any character reachable on the keyboard without
+Shift, considered if pressed while Ctrl and Shift are also
+held; AltGr-generated characters are supported</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i> A
+key that needs a modifier already to be sent (e.g. Break
+which is often Ctrl+Pause) also needs that modifier in the
+key definition to be matched.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+Like in xterm, a key redefinition takes precedence over
+modifyOtherKeys mode (ESC sequence). Shortcut override mode
+however disables key redefinitions.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+For the &quot;any character, with Ctrl and Shift&quot;
+option, the definition is ignored if the Ctrl+Shift+key
+combination would generate a valid input character already.
+This is particularly the case if a valid control character
+is mapped to the key in the keyboard layout. E.g. if you add
+a definition for Ctrl+Shift+minus and Shift+minus is
+&quot;_&quot; (underline) on the keyboard, the user-defined
+key function will be ignored, in order to prevent that input
+of Ctrl+_ would be inhibited.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Supported
+actions are described as follows: <br>
+&ndash; <b>&quot;string&quot;</b> or
+<b>&rsquo;string&rsquo;</b>: enters the literal string <br>
+&ndash; <b>&lsquo;command&lsquo;</b>: enters the output of
+the command <br>
+&ndash; <b>fullscreen (*)</b>: switches to fullscreen mode
+<br>
+&ndash; <b>toggle-fullscreen (*)</b>: toggles fullscreen
+mode <br>
+&ndash; <b>win-max</b>: resizes to window size <br>
+&ndash; <b>win-restore</b>: resizes to normal size <br>
+&ndash; <b>win-icon</b>: turns window into icon <br>
+&ndash; <b>close</b>: closes terminal window <br>
+&ndash; <b>new</b>: opens a new terminal window when key is
+released <br>
+&ndash; <b>options</b>: opens the Options dialog <br>
+&ndash; <b>menu-text (*)</b>: opens the context menu at the
+cursor position <br>
+&ndash; <b>menu-pointer (*)</b>: opens the context menu at
+the mouse position <br>
+&ndash; <b>search</b>: opens the search bar <br>
+&ndash; <b>default-size (*)</b>: switches to default window
+size <br>
+&ndash; <b>scrollbar-outer</b>: toggles the scrollbar (xterm
+compatible) <br>
+&ndash; <b>scrollbar-inner</b>: toggles the scrollbar
+(mintty legacy) <br>
+&ndash; <b>cycle-pointer-style</b>: cycles the pointer style
+<br>
+&ndash; <b>cycle-transparency-level</b>: cycles the
+transparency level <br>
+&ndash; <b>copy</b>: copies the selection to the clipboard
+<br>
+&ndash; <b>paste</b>: pastes from the clipboard <br>
+&ndash; <b>copy-paste</b>: copies and pastes <br>
+&ndash; <b>select-all</b>: selects all text including
+scrollback <br>
+&ndash; <b>clear-scrollback</b>: clears the scrollback <br>
+&ndash; <b>toggle-vt220</b>: toggles VT220 keyboard mode
+<br>
+&ndash; <b>copy-title</b>: copies the window title to the
+clipboard <br>
+&ndash; <b>reset</b>: resets the terminal <br>
+&ndash; <b>break</b>: sends a break condition to the
+application <br>
+&ndash; <b>flipscreen</b>: switches the alternate screen
+<br>
+&ndash; <b>open</b>: opens the selection, e.g. a URL or
+filename <br>
+&ndash; <b>toggle-logging</b>: toggles logfile logging <br>
+&ndash; <b>toggle-char-info</b>: toggles character info
+display <br>
+&ndash; <b>export-html (*)</b>: exports the screen as an
+HTML file <br>
+&ndash; <b>print-screen</b>: print screen contents <br>
+&ndash; <b>void</b>: do nothing</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note
+(*):</i> The exact behaviour of some actions depends on the
+Shift state as being mapped from.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i> To
+just disable the built-in shortcut (and not override it with
+a user-defined one), but further process the key as normal
+input, leave the action empty, but include the colon.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i> To
+disable the built-in shortcut and not process the key
+either, use the &quot;<b>void</b>&quot; dummy action.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i> An
+invalid action (like &quot;foo&quot;) will make mintty beep
+on the key.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Examples: <br>
+&ndash; <b>KeyFunctions=d:&lsquo;echo -n
+&lsquo;date&lsquo;&lsquo;;A+F4:;CA+F12:break;-:&quot;minus&quot;</b>
+will input the current date on Ctrl+Shift+d, disable window
+closing with Alt+F4, send a BRK on Ctrl+Alt+F12, but likely
+not input &quot;minus&quot; on Ctrl+Shift+minus because
+Shift+minus is an underline on many keyboard layouts which
+has a Ctrl+_ assignment already <br>
+&ndash; <b>KeyFunctions=c:copy;v:paste</b> in combination
+with setting <b>-o CtrlExchangeShift=true</b> will assign
+copy/paste to ^C and ^V for Windows addicts <br>
+&ndash; <b>KeyFunctions=A+Enter:void;A+KP_Enter:</b> will
+disable zooming on Alt+Enter and also disable it on
+Alt+keypad-Enter but enter ESC Return in the latter case</p>
 
 <p style="margin-left:11%;"><b>Use system colours</b>
 (UseSystemColours=no)</p>
@@ -2468,10 +2740,12 @@ be chosen as background. With an image file name, absolute
 (with an optional <b>~</b> prefix) or relative to the
 current terminal foreground process, the option either uses
 the image as a background picture, scaled to the terminal
-size (optional prefix <b>_</b> to the filename), or as a
-tiled background texture (prefix <b>*</b> to the filename).
-The background can be changed with an OSC 11 escape
-sequence, using a filename prefixed with either <b>_</b> or
+size (optional prefix <b>_</b> to the filename), or
+initially scaling the terminal to the aspect ratio of the
+image (prefix <b>%</b> to the filename), or as a tiled
+background texture (prefix <b>*</b> to the filename). The
+background can be changed with an OSC 11 escape sequence,
+using a filename prefixed with either <b>_</b>, <b>%</b>, or
 <b>*</b> instead of a colour.</p>
 
 <p style="margin-left:22%; margin-top: 1em">If the
