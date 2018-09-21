@@ -89,7 +89,8 @@ get_selection(pos start, pos end, bool rect, bool allinline)
     else {
      /* Strip added space in wrapped line after window resizing */
       //printf("wr x %d w %d\n", nlpos.x, line->wrappos);
-      while (nlpos.x > line->wrappos && line->chars[nlpos.x - 1].chr == ' ' &&
+      while (nlpos.x > line->wrappos + 1 &&
+             line->chars[nlpos.x - 1].chr == ' ' &&
              !line->chars[nlpos.x - 1].cc_next && poslt(start, nlpos))
         decpos(nlpos);
       //printf("-> x %d w %d\n", nlpos.x, line->wrappos);
