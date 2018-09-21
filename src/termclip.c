@@ -89,18 +89,11 @@ get_selection(pos start, pos end, bool rect, bool allinline)
     else {
      /* Strip added space in wrapped line after window resizing */
       //printf("wr x %d w %d\n", nlpos.x, line->wrappos);
-      while (nlpos.x > line->wrappos + 1 &&
+      while (nlpos.x > line->wrappos + !(line->lattr & LATTR_WRAPPED2) &&
              line->chars[nlpos.x - 1].chr == ' ' &&
              !line->chars[nlpos.x - 1].cc_next && poslt(start, nlpos))
         decpos(nlpos);
       //printf("-> x %d w %d\n", nlpos.x, line->wrappos);
-#ifdef not_needed_anymore
-      if (line->lattr & LATTR_WRAPPED2) {
-        //printf("wr2 x %d-- w %d\n", nlpos.x, line->wrappos);
-       /* Ignore the last char on the line in a WRAPPED2 line. */
-        decpos(nlpos);
-      }
-#endif
     }
 
    /*
