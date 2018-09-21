@@ -976,7 +976,7 @@ msgstr "Se&lecionar tudo"
 #. __ Context menu:
 #: wininput.c:540
 msgid "HTML Screen Dump"
-msgstr ""
+msgstr "Salvar tela como HTML"
 
 #. __ Context menu:
 #: wininput.c:548
