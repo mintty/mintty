@@ -2347,34 +2347,9 @@ term_print_finish(void)
   }
 }
 
-/* Empty the input buffer */
-void
-term_flush(void)
+static void
+term_do_write(const char *buf, uint len)
 {
-  term_write(term.inbuf, term.inbuf_pos);
-  free(term.inbuf);
-  term.inbuf = 0;
-  term.inbuf_pos = 0;
-  term.inbuf_size = 0;
-}
-
-void
-term_write(const char *buf, uint len)
-{
- /*
-  * During drag-selects, we do not process terminal input,
-  * because the user will want the screen to hold still to be selected.
-  */
-  if (term_selecting()) {
-    if (term.inbuf_pos + len > term.inbuf_size) {
-      term.inbuf_size = max(term.inbuf_pos, term.inbuf_size * 4 + 4096);
-      term.inbuf = renewn(term.inbuf, term.inbuf_size);
-    }
-    memcpy(term.inbuf + term.inbuf_pos, buf, len);
-    term.inbuf_pos += len;
-    return;
-  }
-
   // Reset cursor blinking.
   term.cblinker = 1;
   term_schedule_cblink();
@@ -2911,5 +2886,69 @@ term_write(const char *buf, uint len)
     printer_write(term.printbuf, term.printbuf_pos);
     term.printbuf_pos = 0;
   }
+}
+
+/* Empty the input buffer */
+void
+term_flush(void)
+{
+  term_do_write(term.inbuf, term.inbuf_pos);
+  free(term.inbuf);
+  term.inbuf = 0;
+  term.inbuf_pos = 0;
+  term.inbuf_size = 0;
+}
+
+void
+term_write(const char *buf, uint len)
+{
+ /*
+    During drag-selects, we do not wish to process terminal output,
+    because the user will want the screen to hold still to be selected.
+    Therefore, we maintain a suspend-output-on-selection buffer which 
+    can grow up to a moderate size.
+  */
+  if (term_selecting()) {
+#ifdef buffer_problems
+# ifdef patch_799
+    uint min_size = term.inbuf_pos + len;
+    if (min_size < term.inbuf_pos)
+      return;
+    /* min_size verified to not wrap-around, but term.inbuf_size*2 might */
+    if (min_size > term.inbuf_size) {
+      term.inbuf_size = max(term.inbuf_size * 2, max(4096, min_size));
+      term.inbuf = renewn(term.inbuf, term.inbuf_size);
+    }
+# else
+    if (term.inbuf_pos + len > term.inbuf_size) {
+      term.inbuf_size = max(term.inbuf_pos, term.inbuf_size * 4 + 4096);
+      term.inbuf = renewn(term.inbuf, term.inbuf_size);
+    }
+# endif
+    memcpy(term.inbuf + term.inbuf_pos, buf, len);
+    term.inbuf_pos += len;
+    return;
+#else
+    if (term.inbuf_pos + len > term.inbuf_size) {
+      term.inbuf_size = term.inbuf_size + 10 * len;
+      term.inbuf = renewn(term.inbuf, term.inbuf_size);
+    }
+    memcpy(term.inbuf + term.inbuf_pos, buf, len);
+    term.inbuf_pos += len;
+    if (term.inbuf_pos < 33) {
+      // hold back output in buffer and skip actual output for now
+printf("suspend buf len %d\n", term.inbuf_pos);
+      return;
+    }
+    else {
+      // flush output buffer
+printf("suspend buf len %d, flushing\n", term.inbuf_pos);
+      term_flush();
+      return;
+    }
+#endif
+  }
+
+  term_do_write(buf, len);
 }
 
