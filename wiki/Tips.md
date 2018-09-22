@@ -42,16 +42,40 @@ instance would be focussed again with the associated hotkey. To have a
 new instance started with every usage of the hotkey, use the command-line 
 option ```-D``` for mintty in the shortcut target.
 
-_Note:_ About interaction problems of icon, shortcut, and the Windows taskbar:
-In a Windows desktop shortcut, to achieve consistent icon behaviour, 
-the same icon should be specified in the shortcut properties (Change Icon...) 
-and the mintty command line (Target:),
-or (beginning 2.2.3) no icon should be specified on the command line as 
-mintty will then take the icon from the invoking shortcut.
+### Taskbar icons ###
 
-_Note:_ It is suggested to _not_ use the option AppID in a Windows desktop 
-shortcut, or follow the advice about avoiding trouble with taskbar grouping 
-in the manual page.
+In a Windows desktop shortcut, (since mintty 2.2.3) it is suggested 
+to _not_ specify an icon in the command line, as mintty detects and uses 
+the icon from the invoking shortcut.
+If for any reason, an icon is to be specified, it should be the same 
+in the mintty command line (shortcut properties Target:) as in the 
+shortcut itself (Change Icon...).
+
+### Taskbar icon grouping ###
+
+Windows 7 and above use the application ID for grouping taskbar items.
+By default this setting is empty, in which case Windows groups taskbar
+items automatically based on their icon and command line.  This can be
+overridden by setting the AppID to a custom string, in which case windows
+with the same AppID are grouped together.
+
+The special value `AppID=@` causes mintty to derive an implicit AppID 
+from the WSL system name, in order to achieve WSL distribution-specific 
+taskbar grouping. This resolves taskbar grouping problems in some cases 
+(wsltty issue #96) but causes similar problems in other cases (issue #784).
+
+_Warning:_ Using this option in a Windows desktop shortcut may 
+cause trouble with taskbar grouping behaviour. If you need to do that, 
+the shortcut itself should also get attached with the same AppId.
+
+_Explanation:_ Note that Windows shortcut files have their own AppID.
+Hence, if an AppID is specified in the mintty settings, but not on a 
+taskbar-pinned shortcut for invoking mintty, clicking the pinned 
+shortcut will result in a separate taskbar item for the new mintty window, 
+rather than being grouped with the shortcut.
+To avoid this, the shortcut's AppID has to be set to the same string, 
+which can be done using the `Win7AppId` utility available cloned in 
+the mintty [utils repository](https://github.com/mintty/utils).
 
 
 ## Start errors ##
