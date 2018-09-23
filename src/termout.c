@@ -2894,11 +2894,13 @@ term_do_write(const char *buf, uint len)
 void
 term_flush(void)
 {
-  term_do_write(term.inbuf, term.inbuf_pos);
-  free(term.inbuf);
-  term.inbuf = 0;
-  term.inbuf_pos = 0;
-  term.inbuf_size = 0;
+  if (term.suspbuf) {
+    term_do_write(term.suspbuf, term.suspbuf_pos);
+    free(term.suspbuf);
+    term.suspbuf = 0;
+    term.suspbuf_pos = 0;
+    term.suspbuf_size = 0;
+  }
 }
 
 void
@@ -2911,44 +2913,24 @@ term_write(const char *buf, uint len)
     can grow up to a moderate size.
   */
   if (term_selecting()) {
-#ifdef buffer_problems
-# ifdef patch_799
-    uint min_size = term.inbuf_pos + len;
-    if (min_size < term.inbuf_pos)
-      return;
-    /* min_size verified to not wrap-around, but term.inbuf_size*2 might */
-    if (min_size > term.inbuf_size) {
-      term.inbuf_size = max(term.inbuf_size * 2, max(4096, min_size));
-      term.inbuf = renewn(term.inbuf, term.inbuf_size);
-    }
-# else
-    if (term.inbuf_pos + len > term.inbuf_size) {
-      term.inbuf_size = max(term.inbuf_pos, term.inbuf_size * 4 + 4096);
-      term.inbuf = renewn(term.inbuf, term.inbuf_size);
-    }
-# endif
-    memcpy(term.inbuf + term.inbuf_pos, buf, len);
-    term.inbuf_pos += len;
-    return;
-#else
-    if (term.inbuf_pos + len > term.inbuf_size) {
-      term.inbuf_size = term.inbuf_size + 10 * len;
-      term.inbuf = renewn(term.inbuf, term.inbuf_size);
-    }
-    memcpy(term.inbuf + term.inbuf_pos, buf, len);
-    term.inbuf_pos += len;
-    if (term.inbuf_pos < 33) {
-      // hold back output in buffer and skip actual output for now
-printf("suspend buf len %d\n", term.inbuf_pos);
-      return;
-    }
-    else {
-      // flush output buffer
-printf("suspend buf len %d, flushing\n", term.inbuf_pos);
+#define suspmax 88800
+#define suspdelta 888
+    // if buffer size would be exceeded, flush; prevent uint overflow
+    if (len > suspmax - term.suspbuf_pos)
       term_flush();
+    // if buffer length does not exceed max size, append output
+    if (len <= suspmax - term.suspbuf_pos) {
+      // make sure buffer is large enough
+      if (term.suspbuf_pos + len > term.suspbuf_size) {
+        term.suspbuf_size += suspdelta;
+        term.suspbuf = renewn(term.suspbuf, term.suspbuf_size);
+      }
+      memcpy(term.suspbuf + term.suspbuf_pos, buf, len);
+      term.suspbuf_pos += len;
       return;
     }
-#endif
+    // if we cannot buffer, output directly;
+    // in this case, we've either flushed already or didn't need to
   }
 
   term_do_write(buf, len);

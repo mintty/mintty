@@ -375,8 +375,8 @@ struct term {
 
   termchar erase_char;
 
-  char *inbuf;            /* terminal input buffer */
-  uint inbuf_size, inbuf_pos;
+  char * suspbuf;         /* suspend output during selection buffer */
+  uint suspbuf_size, suspbuf_pos;
 
   bool rvideo;            /* global reverse video flag */
   bool cursor_on;         /* cursor enabled flag */
