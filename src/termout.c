@@ -279,6 +279,8 @@ write_char(wchar c, int width)
     clear_cc(line, curs->x);
     line->chars[curs->x].chr = c;
     line->chars[curs->x].attr = curs->attr;
+    if (cfg.ligatures_support)
+      term_invalidate(0, curs->y, curs->x, curs->y);
   }
 
   if (curs->wrapnext && curs->autowrap && width > 0) {

@@ -1426,6 +1426,13 @@ The RowSpacing value is added to that.
 (Corresponds roughly to the xterm resource \fBscaleHeight\fP.)
 
 .TP
+\fBLigatures support\fP (LigaturesSupport=0)
+By default, ligatures, as supported by the selected font, are rendered 
+if they are output to the terminal in one chunk. When this option is 
+set =1, mintty redisplays the left part of the line whenever a character 
+is output, so ligatures are also supported while being input.
+
+.TP
 \fB\fP(ColSpacing=0)
 Additional column padding; ColSpacing=1 can avoid boldened glyphs being clipped.
 
