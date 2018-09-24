@@ -78,6 +78,16 @@ which can be done using the `Win7AppId` utility available cloned in
 the mintty [utils repository](https://github.com/mintty/utils).
 
 
+## Window icons ##
+
+The icons (taskbar icon and title bar icon) can be changed dynamically 
+with an OSC I escape sequence. Example:
+
+```
+echo -e "\e]I;`printenv 'ProgramFiles(x86)'`/Mozilla Firefox/firefox.exe,4\a"
+```
+
+
 ## Start errors ##
 
 ### Error: could not fork child process ###
