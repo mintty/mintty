@@ -2210,6 +2210,7 @@ do_cmd(void)
 {
   char *s = term.cmd_buf;
   s[term.cmd_len] = 0;
+  //printf("OSC %d <%s>\n", term.cmd_num, s);
 
   if (*cfg.suppress_osc && contains(cfg.suppress_osc, term.cmd_num))
     // skip suppressed OSC command
@@ -2263,6 +2264,19 @@ do_cmd(void)
         cs_set_locale(s);
     when 7721:  // Copy window title to clipboard.
         win_copy_title();
+    when 7773: {  // Change icon.
+      uint icon_index = 0;
+      char *comma = strrchr(s, ',');
+      if (comma) {
+        char *start = comma + 1, *end;
+        icon_index = strtoul(start, &end, 0);
+        if (start != end && !*end)
+          *comma = 0;
+        else
+          icon_index = 0;
+      }
+      win_set_icon(s, icon_index);
+    }
     when 7770:  // Change font size.
       if (!strcmp(s, "?"))
         child_printf("\e]7770;%u\e\\", win_get_font_size());
@@ -2696,6 +2710,15 @@ term_do_write(const char *buf, uint len)
           when 'R':  /* Linux palette reset */
             win_reset_colours();
             term.state = NORMAL;
+          when 'I':  /* OSC set icon file (dtterm, shelltool) */
+            term.cmd_num = 7773;
+            term.state = OSC_NUM;
+          when 'L':  /* OSC set icon label (dtterm, shelltool) */
+            term.cmd_num = 1;
+            term.state = OSC_NUM;
+          when 'l':  /* OSC set window title (dtterm, shelltool) */
+            term.cmd_num = 2;
+            term.state = OSC_NUM;
           when '0' ... '9':  /* OSC command number */
             term.cmd_num = c - '0';
             term.state = OSC_NUM;

@@ -504,6 +504,20 @@ update_tab_titles()
 
 
 void
+win_set_icon(char * s, int icon_index)
+{
+  HICON large_icon = 0, small_icon = 0;
+  wstring icon_file = path_posix_to_win_w(s);
+  //printf("win_set_icon <%ls>,%d\n", icon_file, icon_index);
+  ExtractIconExW(icon_file, icon_index, &large_icon, &small_icon, 1);
+  delete(icon_file);
+  SetClassLongPtr(wnd, GCLP_HICONSM, (LONG_PTR)small_icon);
+  SetClassLongPtr(wnd, GCLP_HICON, (LONG_PTR)large_icon);
+  //SendMessage(wnd, WM_SETICON, ICON_SMALL, (LPARAM)small_icon);
+  //SendMessage(wnd, WM_SETICON, ICON_BIG, (LPARAM)large_icon);
+}
+
+void
 win_set_title(char *title)
 {
   if (title_settable) {
