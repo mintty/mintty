@@ -1,3 +1,15 @@
+
+Window handling
+  * Fixed space consideration for wrap/resize/copy handling (#800, ~#82).
+  * Reduced occasional flickering by buffering terminal input (#799).
+  * Sanitized output buffering during selection (~#799).
+  * Ligatures display support while being input (mintty/wsltty#123, #601).
+  * OSC I to set icon from file (shelltool, dtterm, xterm 333).
+  * OSC l to set window title (shelltool, dtterm, xterm 333).
+
+Configuration
+  * Option LigaturesSupport (mintty/wsltty#123, #601).
+
 ### 2.9.1 (20 September 2018) ###
 
 Highlights (details see below)
