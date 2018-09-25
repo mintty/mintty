@@ -317,7 +317,7 @@ options[] = {
   {"Key_ScrollLock", OPT_STRING, offcfg(key_scrlock)},
   {"Break", OPT_STRING | OPT_LEGACY, offcfg(key_break)},
   {"Pause", OPT_STRING | OPT_LEGACY, offcfg(key_pause)},
-  {"KeyFunctions", OPT_WSTRING, offcfg(key_commands)},
+  {"KeyFunctions", OPT_WSTRING | OPT_KEEPCR, offcfg(key_commands)},
 
   // Mouse
   {"CopyOnSelect", OPT_BOOL, offcfg(copy_on_select)},
