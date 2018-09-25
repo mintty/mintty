@@ -1409,7 +1409,7 @@ win_key_down(WPARAM wp, LPARAM lp)
 #define dont_debug_def_keys 1
 
     // user-defined shortcuts
-    //wstring key_commands = W("-:'blabla';A+F3:;A+F5:flipscreen;A+F9:\"f9\";C+F10:\"f10\";p:paste;d:`date`;o:\"oo\";ö:\"öö\";€:\"euro\";~:'tilde';]:']]';[:'[[';}:'}}';{:'{{';\\:'\\\\';µ:'µµ';²:'²²'");
+    //test: W("-:'foo';A+F3:;A+F5:flipscreen;A+F9:\"f9\";C+F10:\"f10\";p:paste;d:`date`;o:\"oo\";ö:\"öö\";€:\"euro\";~:'tilde';[:'[[';µ:'µµ'")
     if (*cfg.key_commands) {
       bool pick_key_function(char * tag)
       {
@@ -1486,8 +1486,14 @@ win_key_down(WPARAM wp, LPARAM lp)
             return ret;
           }
 
-          if (sepp)
+          if (sepp) {
             cmdp = sepp + 1;
+            if (*cmdp == '\\' && cmdp[1] == '\n') {
+              cmdp += 2;
+              while (isspace(*cmdp))
+                cmdp++;
+            }
+          }
           else
             break;
         }
