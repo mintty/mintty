@@ -1266,28 +1266,36 @@ load_config(string filename, int to_save)
   if (file) {
     while (fgets(linebuf, sizeof linebuf, file)) {
       char * lbuf = linebuf;
-      while (!strchr(lbuf, '\n')) {
+      int len;
+      while (len = strlen(lbuf),
+             (len && lbuf[len - 1] != '\n') ||
+             (len > 1 && lbuf[len - 1] == '\n' && lbuf[len - 2] == '\\')
+            )
+      {
         if (lbuf == linebuf) {
           // make lbuf dynamic
           lbuf = strdup(lbuf);
         }
         // append to lbuf
-        int len = strlen(lbuf);
+        len = strlen(lbuf);
         lbuf = renewn(lbuf, len + sizeof linebuf);
         if (!fgets(&lbuf[len], sizeof linebuf, file))
           break;
       }
 
-      //lbuf[strcspn(lbuf, "\r\n")] = 0;  /* trim newline */
-      // trim newline but allow embedded CR (esp. for DropCommands)
-      lbuf[strcspn(lbuf, "\n")] = 0;
-      // preserve comment lines and empty lines
+      if (lbuf[len - 1] == '\n')
+        lbuf[len - 1] = 0;
+      //printf("option <%s>\n", lbuf);
+
       if (lbuf[0] == '#' || lbuf[0] == '\0') {
+        // preserve comment lines and empty lines
         if (to_save)
           remember_file_comment(lbuf);
       }
       else {
+        // apply config options
         int i = parse_option(lbuf, true);
+        // remember config options for saving
         if (to_save) {
           if (i >= 0)
             remember_file_option("load", i);
