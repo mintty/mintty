@@ -274,6 +274,17 @@ typedef enum {
   CSET_ES = 'Z', // Z           Spanish
   CSET_SE = '7', // H or 7      Swedish
   CSET_CH = '=', // =           Swiss
+  // 96-character sets (xterm 336)
+  CSET_ISO_Latin_Cyrillic	= 'L',
+  CSET_ISO_Greek_Supp		= 'F',
+  CSET_ISO_Hebrew		= 'H',
+  CSET_ISO_Latin_5		= 'M',
+  CSET_DEC_Greek_Supp		= '?' + 0x80,
+  CSET_DEC_Hebrew_Supp		= '4' + 0x80,
+  CSET_DEC_Turkish_Supp		= '0' + 0x80,
+  CSET_NRCS_Greek		= '>' + 0x80,
+  CSET_NRCS_Hebrew		= '=' + 0x80,
+  CSET_NRCS_Turkish		= '2' + 0x80,
 } term_cset;
 
 typedef struct {
