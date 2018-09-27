@@ -708,6 +708,40 @@ win_copy(const wchar *data, cattr *cattrs, int len)
   }
 }
 
+static char *
+matchconf(char * conf, char * item)
+{
+  char * cmdp = conf;
+  char sepch = ';';
+  if ((uchar)*cmdp <= (uchar)' ')
+    sepch = *cmdp++;
+
+  char * paramp;
+  while ((paramp = strchr(cmdp, ':'))) {
+    *paramp = '\0';
+    paramp++;
+    char * sepp = strchr(paramp, sepch);
+    if (sepp)
+      *sepp = '\0';
+
+    if (!strcmp(cmdp, item))
+      return paramp;
+
+    if (sepp) {
+      cmdp = sepp + 1;
+      // check for multi-line separation
+      if (*cmdp == '\\' && cmdp[1] == '\n') {
+        cmdp += 2;
+        while (isspace(*cmdp))
+          cmdp++;
+      }
+    }
+    else
+      break;
+  }
+  return 0;
+}
+
 static void
 paste_hdrop(HDROP drop)
 {
@@ -857,35 +891,9 @@ paste_hdrop(HDROP drop)
     char * fg_prog = foreground_prog();
     if (fg_prog) {
       // match program base name
-      char * matchconf(char * conf, char * item, char sepch) {
-        if (*conf == sepch)
-          conf++;
-        char * m = strstr(conf, item);
-        if (m && (m == conf || *(m - 1) == sepch)) {
-          m += strlen(item);
-          if (*m == ':')
-            return m + 1;
-          else {
-            m = strchr(m, ':');
-            if (m)
-              return matchconf(m, item, sepch);
-            else
-              return null;
-          }
-        }
-        else
-          return null;
-      }
-
       char * drops = cs__wcstombs(cfg.drop_commands);
-      char sepch = ';';
-      if (((uchar)*drops) < (uchar)' ')
-        sepch = *drops;
-      char * paste = matchconf(drops, fg_prog, sepch);
+      char * paste = matchconf(drops, fg_prog);
       if (paste) {
-        char * sep = strchr(paste, sepch);
-        if (sep)
-          *sep = 0;
         buf[buf_pos] = 0;
         char * pastebuf = newn(char, strlen(paste) + strlen(buf) + 1);
         sprintf(pastebuf, paste, buf);

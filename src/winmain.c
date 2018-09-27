@@ -3216,8 +3216,15 @@ enum_commands(wstring commands, CMDENUMPROC cmdenum)
     //printf("	task <%s> args <%ls> icon <%ls>\n", cmdp, params, icon);
     cmdenum(_W(cmdp), params, icon, 0);
 
-    if (sepp)
+    if (sepp) {
       cmdp = sepp + 1;
+      // check for multi-line separation
+      if (*cmdp == '\\' && cmdp[1] == '\n') {
+        cmdp += 2;
+        while (isspace(*cmdp))
+          cmdp++;
+      }
+    }
     else
       break;
   }

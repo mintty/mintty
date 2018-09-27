@@ -140,6 +140,12 @@ append_commands(HMENU menu, wstring commands, UINT_PTR idm_cmd, bool add_icons)
     n++;
     if (!cmdp)
       break;
+    // check for multi-line separation
+    if (*cmdp == '\\' && cmdp[1] == '\n') {
+      cmdp += 2;
+      while (isspace(*cmdp))
+        cmdp++;
+    }
   }
   free(cmds);
 }
@@ -1488,6 +1494,7 @@ win_key_down(WPARAM wp, LPARAM lp)
 
           if (sepp) {
             cmdp = sepp + 1;
+            // check for multi-line separation
             if (*cmdp == '\\' && cmdp[1] == '\n') {
               cmdp += 2;
               while (isspace(*cmdp))
