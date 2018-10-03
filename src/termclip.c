@@ -80,6 +80,8 @@ get_selection(pos start, pos end, bool rect, bool allinline)
     else if (!(line->lattr & LATTR_WRAPPED)) {
       //printf("pos %d\n", nlpos.x);
       while (nlpos.x && line->chars[nlpos.x - 1].chr == ' ' &&
+             (cfg.trim_selection ||
+              (line->chars[nlpos.x - 1].attr.attr & TATTR_CLEAR)) &&
              !line->chars[nlpos.x - 1].cc_next && poslt(start, nlpos))
         decpos(nlpos);
       if (poslt(nlpos, end))
@@ -91,6 +93,8 @@ get_selection(pos start, pos end, bool rect, bool allinline)
       //printf("wr x %d w %d\n", nlpos.x, line->wrappos);
       while (nlpos.x > line->wrappos + !(line->lattr & LATTR_WRAPPED2) &&
              line->chars[nlpos.x - 1].chr == ' ' &&
+             (cfg.trim_selection ||
+              (line->chars[nlpos.x - 1].attr.attr & TATTR_CLEAR)) &&
              !line->chars[nlpos.x - 1].cc_next && poslt(start, nlpos))
         decpos(nlpos);
       //printf("-> x %d w %d\n", nlpos.x, line->wrappos);

@@ -151,6 +151,7 @@ enum {
   TATTR_CURMARKED = 0x0800000000000000u, /* current scroll marker */
 
   TATTR_SELECTED  = 0x2000000000000000u, /* highlighted */
+  TATTR_CLEAR     = 0x4000000000000000u, /* erased / unwritten */
 
   DATTR_STARTRUN  = 0x8000000000000000u, /* start of redraw run */
   DATTR_MASK      = TATTR_RIGHTCURS | TATTR_PASCURS | TATTR_ACTCURS
@@ -158,7 +159,6 @@ enum {
   // unassigned bits:
   //                0x0040000000000000u
   //                0x0080000000000000u
-  //                0x4000000000000000u
 };
 
 /* Line attributes.
