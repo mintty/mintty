@@ -456,7 +456,7 @@ can be configured with \fBHoverColour\fP.
 
 The font size can be increased or decreased using the keyboard shortcuts
 \fBCtrl+(keypad-)plus\fP and \fBCtrl+(keypad-)minus\fP, 
-or by holding \fBCtrl\fP while rolling the mousewheel.
+or by holding \fBCtrl\fP while rolling the mouse wheel.
 \fBCtrl+zero\fP or \fBCtrl+middle-mouse click\fP returns the font size 
 to the default.
 .br
@@ -1670,6 +1670,20 @@ for an overview of SGR attributes.
 .br
 See \fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.txt\fP
 for a full listing of escape control sequences.
+.RE
+
+.TP
+\fBSuppress mouse wheel\fP (SuppressMouseWheel=)
+With this setting, certain effects of mouse wheel rolling can be disabled.
+The option is a list of action tags:
+.RS
+\(en \fBscrollwin\fP do not mouse-scroll the scrollback buffer (scrollbar not affected)
+.br
+\(en \fBscrollapp\fP do not simulate scrolling in applications by sending cursor escape sequences
+.br
+\(en \fBzoom\fP do not mouse-zoom font size (same as ZoomMouse=no)
+.br
+\(en \fBreport\fP do not report mouse wheel events in application mouse modes
 .RE
 
 .SS Command line

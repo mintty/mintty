@@ -655,6 +655,8 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
   accu += delta;
 
   if (is_app_mouse(&mods)) {
+    if (strstr(cfg.suppress_wheel, "report"))
+      return;
     // Send as mouse events, with one event per notch.
     int notches = accu / NOTCH_DELTA;
     if (notches) {
@@ -665,6 +667,8 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
     }
   }
   else if ((mods & ~MDK_SHIFT) == MDK_CTRL) {
+    if (strstr(cfg.suppress_wheel, "zoom"))
+      return;
     if (cfg.zoom_mouse) {
       int zoom = accu / NOTCH_DELTA;
       if (zoom) {
@@ -682,9 +686,14 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
     int lines = lines_per_notch * accu / NOTCH_DELTA;
     if (lines) {
       accu -= lines * NOTCH_DELTA / lines_per_notch;
-      if (!term.on_alt_screen || term.show_other_screen)
+      if (!term.on_alt_screen || term.show_other_screen) {
+        if (strstr(cfg.suppress_wheel, "scrollwin"))
+          return;
         term_scroll(0, -lines);
+      }
       else if (term.wheel_reporting) {
+        if (strstr(cfg.suppress_wheel, "scrollapp"))
+          return;
         // Send scroll distance as CSI a/b events
         bool up = lines > 0;
         lines = abs(lines);
