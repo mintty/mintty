@@ -154,8 +154,10 @@ typedef struct {
   string suppress_win;
   string suppress_osc;
   string suppress_nrc;
+  string suppress_wheel;
   string filter_paste;
   bool input_clears_selection;
+  bool trim_selection;
   char charwidth;
   char emojis;
   char emoji_placement;
