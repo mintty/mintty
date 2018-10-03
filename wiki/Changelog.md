@@ -1,14 +1,26 @@
+### 2.9.2 (3 October 2018) ###
 
-Window handling
+Terminal interaction
   * Fixed space consideration for wrap/resize/copy handling (#800, ~#82).
+  * Optionally include trailing space in selection (~#768, ~#800).
   * Reduced occasional flickering by buffering terminal input (#799).
   * Sanitized output buffering during selection (~#799).
   * Ligatures display support while being input (mintty/wsltty#123, #601).
+  * Optionally suppress mouse wheel effects (#170).
+
+Terminal features
+  * Additional 96-character NRCS (xterm 336).
+  * Fixed "Latin-1/UK" NRCS.
+
+Window handling
   * OSC I to set icon from file (shelltool, dtterm, xterm 333).
   * OSC l to set window title (shelltool, dtterm, xterm 333).
 
 Configuration
   * Option LigaturesSupport (mintty/wsltty#123, #601).
+  * Option SuppressMouseWheel (#170).
+  * Option TrimSelection (~#768, ~#800).
+  * Support multi-line splitting for all key:value list options.
 
 ### 2.9.1 (20 September 2018) ###
 

@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Thu Sep 20 09:05:25 2018 -->
+<!-- CreationDate: Wed Oct  3 19:07:42 2018 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -707,7 +707,7 @@ zoom</b> <br>
 The font size can be increased or decreased using the
 keyboard shortcuts <b>Ctrl+(keypad-)plus</b> and
 <b>Ctrl+(keypad-)minus</b>, or by holding <b>Ctrl</b> while
-rolling the mousewheel. <b>Ctrl+zero</b> or
+rolling the mouse wheel. <b>Ctrl+zero</b> or
 <b>Ctrl+middle-mouse click</b> returns the font size to the
 default. <i><br>
 Shift-coupled window-with-font zooming:</i> If Shift is also
@@ -1815,6 +1815,16 @@ is added to that. <br>
 (Corresponds roughly to the xterm resource
 <b>scaleHeight</b>.)</p>
 
+<p style="margin-left:11%;"><b>Ligatures support</b>
+(LigaturesSupport=0)</p>
+
+<p style="margin-left:22%;">By default, ligatures, as
+supported by the selected font, are rendered if they are
+output to the terminal in one chunk. When this option is set
+=1, mintty redisplays the left part of the line whenever a
+character is output, so ligatures are also supported while
+being input.</p>
+
 <p style="margin-left:11%;">(ColSpacing=0)</p>
 
 <p style="margin-left:22%;">Additional column padding;
@@ -2092,6 +2102,21 @@ See
 <i>http://invisible-island.net/xterm/ctlseqs/ctlseqs.txt</i>
 for a full listing of escape control sequences.</p>
 
+<p style="margin-left:11%;"><b>Suppress mouse wheel</b>
+(SuppressMouseWheel=)</p>
+
+<p style="margin-left:22%;">With this setting, certain
+effects of mouse wheel rolling can be disabled. The option
+is a list of action tags: <br>
+&ndash; <b>scrollwin</b> do not mouse-scroll the scrollback
+buffer (scrollbar not affected) <br>
+&ndash; <b>scrollapp</b> do not simulate scrolling in
+applications by sending cursor escape sequences <br>
+&ndash; <b>zoom</b> do not mouse-zoom font size (same as
+ZoomMouse=no) <br>
+&ndash; <b>report</b> do not report mouse wheel events in
+application mouse modes</p>
+
 <p style="margin-left:11%; margin-top: 1em"><b>Command
 line</b> <br>
 The settings here are config file versions of command line
@@ -2229,6 +2254,14 @@ Clear selection highlighting on input</b>
 
 <p style="margin-left:22%;">When this is disabled, keyboard
 input or pasting does not clear selection highlighting.</p>
+
+<p style="margin-left:11%;"><b>Trim trailing space from
+selection on copy</b> (TrimSelection=true)</p>
+
+<p style="margin-left:22%;">When this is disabled, trailing
+space that was written to the terminal in a line is included
+in the selection buffer. (Corresponds to the xterm resource
+<b>trimSelection</b>.)</p>
 
 <p style="margin-left:11%;"><b>Selection size
 indication</b> (SelectionShowSize=0)</p>
@@ -2494,7 +2527,9 @@ descriptors (if a semicolon shall be embedded into any of
 the action descriptors, a non-whitespace control character
 (i.e. none of <b>^I^J^K^L^M</b>) can be specified as an
 alternative separator by starting the whole setting with
-it). <br>
+it). The definition list can be split over multiple lines if
+a separator is followed by a backslash, newline, and
+optional whitespace indentation. <br>
 (Corresponds roughly to the xterm resource
 <b>translations</b>.)</p>
 
@@ -2854,7 +2889,9 @@ replaced for a &quot;%s&quot;. If a semicolon shall be
 embedded into any of the drop patterns, a non-whitespace
 control character (i.e. none of <b>^I^J^K^L^M</b>) can be
 specified as an alternative separator by starting the whole
-setting with it.</p>
+setting with it. The definition list can be split over
+multiple lines if a separator is followed by a backslash,
+newline, and optional whitespace indentation.</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 This is an experimental feature, with an experimental
@@ -2899,7 +2936,9 @@ bracketed-paste mode if enabled. If a semicolon shall be
 embedded into any of the command patterns, a non-whitespace
 control character (i.e. none of <b>^I^J^K^L^M</b>) can be
 specified as an alternative separator by starting the whole
-setting with it.</p>
+setting with it. The definition list can be split over
+multiple lines if a separator is followed by a backslash,
+newline, and optional whitespace indentation.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Mintty provides
 useful information in environment variables: <br>
@@ -2970,7 +3009,10 @@ names, mintty is invoked with the respective parameters. (If
 a semicolon shall be embedded into any of the command
 patterns, a non-whitespace control character (i.e. none of
 <b>^I^J^K^L^M</b>) can be specified as an alternative
-separator by starting the whole setting with it.)</p>
+separator by starting the whole setting with it.) The
+definition list can be split over multiple lines if a
+separator is followed by a backslash, newline, and optional
+whitespace indentation.</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 Session launch names are subject to localization if they are
@@ -3005,7 +3047,9 @@ with the respective parameters. (If a semicolon shall be
 embedded into any of the command patterns, a non-whitespace
 control character (i.e. none of <b>^I^J^K^L^M</b>) can be
 specified as an alternative separator by starting the whole
-setting with it.)</p>
+setting with it.) The definition list can be split over
+multiple lines if a separator is followed by a backslash,
+newline, and optional whitespace indentation.</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 This feature only works in combination with a parameter
