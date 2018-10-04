@@ -609,6 +609,8 @@ term_mouse_move(mod_keys mods, pos p)
         bp = (pos){.y = p.y - 1, .x = term.cols - 1, .r = p.r};
     }
 
+    bool alt = mods & MDK_ALT;
+    term.sel_rect = alt;
     sel_drag(get_selpoint(bp));
 
     win_update(true);
