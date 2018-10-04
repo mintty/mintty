@@ -193,6 +193,7 @@ term_reset(bool full)
   term.app_cursor_keys = false;
 
   if (full) {
+    term.deccolm_allowed = cfg.enable_deccolm_init;  // not reset by xterm
     term.vt220_keys = vt220(cfg.term);  // not reset by xterm
     term.app_keypad = false;  // xterm only with RIS
     term.app_wheel = false;

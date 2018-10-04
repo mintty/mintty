@@ -1549,6 +1549,12 @@ With this setting, the alternate screen can be disabled.
 switchable by an escape sequence.)
 
 .TP
+\fBEnable 132-column mode switching\fP (Enable132ColumnSwitching=false)
+With this setting, DECSET 3 escape sequences to switch 80/132 column modes 
+are enabled initially. This can be changed later dynamically (DECSET 40).
+(Corresponds to the xterm resource \fBc132\fP, switchable by an escape sequence.)
+
+.TP
 \fBApply old wraparound behaviour\fP (OldWrapModes=false)
 Setting this compatibility option disables some tweaks and fixes of 
 mintty 2.7.5:
