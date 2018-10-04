@@ -1490,7 +1490,7 @@ do_csi(uchar c)
            curs->origin ? 2 : 0);
     when 'I':  /* CHT: move right N TABs */
       for (int i = 0; i < arg0_def1; i++)
-       write_tab();
+        write_tab();
     when 'J' or CPAIR('?', 'J'): { /* ED/DECSED: (selective) erase in display */
       if (arg0 == 3 && !term.esc_mod) { /* Erase Saved Lines (xterm) */
         term_clear_scrollback();
@@ -2358,6 +2358,8 @@ term_do_write(const char *buf, uint len)
   term.cblinker = 1;
   term_schedule_cblink();
 
+  short oldy = term.curs.y;
+
   uint pos = 0;
   while (pos < len) {
     uchar c = buf[pos++];
@@ -2944,6 +2946,11 @@ term_do_write(const char *buf, uint len)
           do_esc(c);
         }
     }
+  }
+
+  if (cfg.ligatures_support > 1) {
+    // refresh ligature rendering in old cursor line
+    term_invalidate(0, oldy, term.cols - 1, oldy);
   }
 
   // Update search match highlighting
