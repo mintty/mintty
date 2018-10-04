@@ -469,19 +469,20 @@ do_esc(uchar c)
   // ESC)%5	FF 29 25 35
   // 94-character set designation as G0...G3: ()*+
   // 96-character set designation as G1...G3:  -./
-  if (term.esc_mod == 0xFF)
-    term.esc_mod = esc_mod0;
+  uchar designator = term.esc_mod == 0xFF ? esc_mod0 : term.esc_mod;
   uchar csmask = 0;
   int gi;
-  void check_designa(char * designa, uchar cstype) {
-    char * csdesigna = strchr(designa, term.esc_mod);
-    if (csdesigna) {
-      csmask = cstype;
-      gi = csdesigna - designa + cstype - 1;
+  if (designator) {
+    void check_designa(char * designa, uchar cstype) {
+      char * csdesigna = strchr(designa, designator);
+      if (csdesigna) {
+        csmask = cstype;
+        gi = csdesigna - designa + cstype - 1;
+      }
     }
+    check_designa("()*+", 1);  // 94-character set designation?
+    check_designa("-./", 2);  // 96-character set designation?
   }
-  check_designa("()*+", 1);  // 94-character set designation?
-  check_designa("-./", 2);  // 96-character set designation?
   if (csmask) {
     static struct {
       ushort design;
