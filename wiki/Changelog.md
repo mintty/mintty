@@ -1,3 +1,16 @@
+### 2.9.3 (4 October 2018) ###
+
+Terminal features
+  * Fixed failing recognition of single-char ESC sequences.
+
+Terminal interaction
+  * Enhanced ligature support redisplays previous cursor line (#601, mintty/wsltty#123).
+  * Support switching rectangular mode while mouse-dragging selection.
+
+Configuration
+  * Option Enable132ColumnSwitching to enable 132/80-column switching initially (#196).
+  * Option value LigaturesSupport=2 (#601, mintty/wsltty#123).
+
 ### 2.9.2 (3 October 2018) ###
 
 Terminal interaction

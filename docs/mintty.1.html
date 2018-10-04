@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Wed Oct  3 19:07:42 2018 -->
+<!-- CreationDate: Thu Oct  4 18:08:32 2018 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -1823,7 +1823,8 @@ supported by the selected font, are rendered if they are
 output to the terminal in one chunk. When this option is set
 =1, mintty redisplays the left part of the line whenever a
 character is output, so ligatures are also supported while
-being input.</p>
+being input. With LigaturesSupport=2, mintty also redisplays
+the previous cursor line after the cursor is moved.</p>
 
 <p style="margin-left:11%;">(ColSpacing=0)</p>
 
@@ -1961,6 +1962,15 @@ this is empty.</p>
 alternate screen can be disabled. (Corresponds to the xterm
 resource <b>titeInhibit</b>, switchable by an escape
 sequence.)</p>
+
+<p style="margin-left:11%;"><b>Enable 132-column mode
+switching</b> (Enable132ColumnSwitching=false)</p>
+
+<p style="margin-left:22%;">With this setting, DECSET 3
+escape sequences to switch 80/132 column modes are enabled
+initially. This can be changed later dynamically (DECSET
+40). (Corresponds to the xterm resource <b>c132</b>,
+switchable by an escape sequence.)</p>
 
 <p style="margin-left:11%;"><b>Apply old wraparound
 behaviour</b> (OldWrapModes=false)</p>
