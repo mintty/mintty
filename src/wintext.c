@@ -448,7 +448,6 @@ win_init_fontfamily(HDC dc, int findex)
 
   trace_resize(("--- init_fontfamily\n"));
   TEXTMETRIC tm;
-  int fontsize[FONT_UNDERLINE + 1];
 
   for (uint i = 0; i < FONT_BOLDITAL; i++) {
     if (ff->fonts[i])
@@ -516,6 +515,12 @@ win_init_fontfamily(HDC dc, int findex)
   }
 #endif
 
+  float latin_char_width, greek_char_width, line_char_width, cjk_char_width;
+  GetCharWidthFloatW(dc, 0x0041, 0x0041, &latin_char_width);
+  GetCharWidthFloatW(dc, 0x03B1, 0x03B1, &greek_char_width);
+  GetCharWidthFloatW(dc, 0x2500, 0x2500, &line_char_width);
+  GetCharWidthFloatW(dc, 0x4E00, 0x4E00, &cjk_char_width);
+
   if (!findex) {
     ff->row_spacing = row_padding(tm.tmInternalLeading, tm.tmExternalLeading);
     trace_font(("00 height %d avwidth %d asc %d dsc %d intlead %d extlead %d %ls\n", 
@@ -532,7 +537,8 @@ win_init_fontfamily(HDC dc, int findex)
     ff->col_spacing = cfg.col_spacing;
 
     cell_height = tm.tmHeight + ff->row_spacing;
-    cell_width = tm.tmAveCharWidth + ff->col_spacing;
+    //cell_width = tm.tmAveCharWidth + ff->col_spacing;
+    cell_width = (int)(latin_char_width * 16) + ff->col_spacing;
 
     line_scale = cell_height * 100 / abs(font_height);
 
@@ -542,20 +548,18 @@ win_init_fontfamily(HDC dc, int findex)
   }
   else {
     ff->row_spacing = cell_height - tm.tmHeight;
-    ff->col_spacing = cell_width - tm.tmAveCharWidth;
+    //ff->col_spacing = cell_width - tm.tmAveCharWidth;
+    ff->col_spacing = cell_width - (int)(latin_char_width * 16);
   }
 
 #ifdef debug_create_font
   printf("size %d -> height %d -> height %d\n", font_size, font_height, cell_height);
 #endif
 
-  ff->font_dualwidth = (tm.tmMaxCharWidth >= tm.tmAveCharWidth * 3 / 2);
+  //ff->font_dualwidth = (tm.tmMaxCharWidth >= tm.tmAveCharWidth * 3 / 2);
+  ff->font_dualwidth = (cjk_char_width >= latin_char_width * 3 / 2);
 
   // Determine whether ambiguous-width characters are wide in this font */
-  float latin_char_width, greek_char_width, line_char_width;
-  GetCharWidthFloatW(dc, 0x0041, 0x0041, &latin_char_width);
-  GetCharWidthFloatW(dc, 0x03B1, 0x03B1, &greek_char_width);
-  GetCharWidthFloatW(dc, 0x2500, 0x2500, &line_char_width);
   if (!findex)
     font_ambig_wide =
       greek_char_width >= latin_char_width * 1.5 ||
@@ -652,6 +656,7 @@ win_init_fontfamily(HDC dc, int findex)
   if (ff->descent >= cell_height)
     ff->descent = cell_height - 1;
 
+  int fontsize[FONT_UNDERLINE + 1];
 #ifdef handle_baseline_leap
   int base_ascent = tm.tmAscent;
 #endif
@@ -660,9 +665,10 @@ win_init_fontfamily(HDC dc, int findex)
       if (SelectObject(dc, ff->fonts[i]) && GetTextMetrics(dc, &tm)) {
         fontsize[i] = tm.tmAveCharWidth + 256 * tm.tmHeight;
         trace_font(("%02X height %d avwidth %d asc %d dsc %d intlead %d extlead %d %ls\n", 
-               i, (int)tm.tmHeight, (int)tm.tmAveCharWidth, (int)tm.tmAscent, (int)tm.tmDescent, 
-               (int)tm.tmInternalLeading, (int)tm.tmExternalLeading, 
-               ff->name));
+                    i, (int)tm.tmHeight, (int)tm.tmAveCharWidth, 
+                    (int)tm.tmAscent, (int)tm.tmDescent, 
+                    (int)tm.tmInternalLeading, (int)tm.tmExternalLeading, 
+                    ff->name));
 #ifdef handle_baseline_leap
         if (i == FONT_BOLD && tm.tmAscent < base_ascent) {
           // for Courier New, this correlates with a significant visual leap 
@@ -702,6 +708,7 @@ win_init_fontfamily(HDC dc, int findex)
       ff->fonts[FONT_BOLD] = 0;
     }
   }
+
   trace_font(("bold_mode %d\n", ff->bold_mode));
   ff->fontflag[FONT_NORMAL] = true;
   ff->fontflag[FONT_BOLD] = true;
@@ -3779,7 +3786,7 @@ win_paint(void)
        * With a texture/image background, we could try to paint that here 
          (invoked on WM_PAINT) or on WM_ERASEBKGND, but these messages are 
          not received sufficiently often, e.g. not when scrolling.
-       * So let's let's keep finer control and paint background in chunks 
+       * So let's keep finer control and paint background with text chunks 
          but not modify the established behaviour if there is no background.
      */
     colour bg_colour = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
