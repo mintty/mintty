@@ -1885,6 +1885,7 @@ win_reconfig(void)
 static bool
 confirm_exit(void)
 {
+#ifdef use_ps
   if (!child_is_parent())
     return true;
 
@@ -1952,6 +1953,11 @@ confirm_exit(void)
     else
       cpos ++;
   }
+#else
+  wchar * proclist = grandchild_process_list();
+  if (!proclist)
+    return true;
+#endif
 
   wchar * msg_pre = _W("Processes are running in session:");
   wchar * msg_post = _W("Close anyway?");
