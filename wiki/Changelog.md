@@ -1,3 +1,6 @@
+  * Consider glyph width for font width determination (#808).
+  * Do not start process to construct exit confirmation.
+
 ### 2.9.3 (4 October 2018) ###
 
 Terminal features
