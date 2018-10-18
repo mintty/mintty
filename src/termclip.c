@@ -251,10 +251,26 @@ void
 term_send_paste(void)
 {
   int i = term.paste_pos;
-  while (i < term.paste_len && term.paste_buffer[i++] != '\r');
+#define PASTEMAX 2222
+  while (i < term.paste_len && i - term.paste_pos < PASTEMAX
+         && term.paste_buffer[i++] != '\r'
+        )
+    ;
+  if (i < term.paste_len && is_high_surrogate(term.paste_buffer[i]))
+    i++;
+  //printf("term_send_paste pos %d @ %d (len %d)\n", term.paste_pos, i, term.paste_len);
   child_sendw(term.paste_buffer + term.paste_pos, i - term.paste_pos);
-  if (i < term.paste_len)
+  if (i < term.paste_len) {
     term.paste_pos = i;
+    // if only part of the paste buffer has been written to the child,
+    // the current strategy is to leave the rest pending for on-demand 
+    // invocation of term_send_paste from child_proc within the main loop,
+    // however, that causes partial loss of large paste contents;
+    // worse, without the PASTEMAX limitation, if long contents without 
+    // lineends is pasted, the terminal stalls (#810);
+    // attempts to replace the pending strategy with looping here (to 
+    // paste the whole contents) were not successful to solve the stalling
+  }
   else
     term_cancel_paste();
 }
