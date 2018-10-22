@@ -1,5 +1,5 @@
 // termclip.c (part of mintty)
-// Copyright 2008-10 Andy Koppe, 2017 Thomas Wolff
+// Copyright 2008-10 Andy Koppe, 2018 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -41,7 +41,7 @@ clip_addchar(clip_workbuf * b, wchar chr, cattr * ca)
 }
 
 // except OOM, guaranteed at least emtpy null terminated wstring and one cattr
-static clip_workbuf*
+static clip_workbuf *
 get_selection(pos start, pos end, bool rect, bool allinline)
 {
   int old_top_x = start.x;    /* needed for rect==1 */
@@ -445,23 +445,25 @@ term_cmd(char * cmdpat)
 #include <fcntl.h>
 #include "winpriv.h"  // PADDING
 
-void
-term_export_html(bool do_open)
+static char *
+term_create_html(FILE * hf)
 {
-  struct timeval now;
-  gettimeofday(& now, 0);
-  char * htmlf = newn(char, MAX_PATH + 1);
-  strftime(htmlf, MAX_PATH, "mintty.%F_%T.html", localtime (& now.tv_sec));
-
-  int hfd = open(htmlf, O_WRONLY | O_CREAT | O_EXCL, 0600);
-  if (hfd < 0) {
-    win_bell(&cfg);
-    return;
-  }
-  FILE * hf = fdopen(hfd, "w");
-  if (!hf) {
-    win_bell(&cfg);
-    return;
+  char * hbuf = hf ? 0 : strdup("");
+  void
+  hprintf(FILE * hf, const char * fmt, ...)
+  {
+    char * buf;
+    va_list va;
+    va_start(va, fmt);
+    int len = vasprintf(&buf, fmt, va);
+    va_end(va);
+    if (hf)
+      fprintf(hf, "%s", buf);
+    else {
+      hbuf = renewn(hbuf, strlen(hbuf) + len + 1);
+      strcat(hbuf, buf);
+    }
+    free(buf);
   }
 
   pos start = term.sel_start;
@@ -477,7 +479,7 @@ term_export_html(bool do_open)
   colour fg_colour = win_get_colour(FG_COLOUR_I);
   colour bg_colour = win_get_colour(BG_COLOUR_I);
   colour bold_colour = win_get_colour(BOLD_COLOUR_I);
-  fprintf(hf,
+  hprintf(hf,
     "<head>\n"
     "  <meta name='generator' content='mintty'/>\n"
     "  <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'/>\n"
@@ -490,9 +492,9 @@ term_export_html(bool do_open)
     "  pre { font-family: inherit; }\n"
     );
   if (cfg.underl_colour != (colour)-1)
-    fprintf(hf, "  span { text-decoration-color: #%02X%02X%02X; }\n",
+    hprintf(hf, "  span { text-decoration-color: #%02X%02X%02X; }\n",
             red(cfg.underl_colour), green(cfg.underl_colour), blue(cfg.underl_colour));
-  fprintf(hf,
+  hprintf(hf,
     "  #vt100 {\n"
     "    float: left;\n"
     "    border: 0px solid;\n"
@@ -521,80 +523,80 @@ term_export_html(bool do_open)
     }
 
     if (alpha >= 0) {
-      fprintf(hf, "    }\n");
-      fprintf(hf, "    #vt100 pre {\n");
-      fprintf(hf, "      background-color: rgba(%d, %d, %d, %.3f);\n",
+      hprintf(hf, "    }\n");
+      hprintf(hf, "    #vt100 pre {\n");
+      hprintf(hf, "      background-color: rgba(%d, %d, %d, %.3f);\n",
               red(bg_colour), green(bg_colour), blue(bg_colour),
               (255.0 - alpha) / 255);
-      fprintf(hf, "    }\n");
-      fprintf(hf, "    td {\n");
+      hprintf(hf, "    }\n");
+      hprintf(hf, "    td {\n");
     }
 
-    fprintf(hf, "    background-image: url('%s');\n", bg);
+    hprintf(hf, "    background-image: url('%s');\n", bg);
     if (!tiled) {
-      fprintf(hf, "    background-attachment: no-repeat;\n");
-      fprintf(hf, "    background-size: 100%% 100%%;\n");
+      hprintf(hf, "    background-attachment: no-repeat;\n");
+      hprintf(hf, "    background-size: 100%% 100%%;\n");
     }
 
     free(bg);
   }
   else
   {
-    fprintf(hf, "    background-color: #%02X%02X%02X;\n",
+    hprintf(hf, "    background-color: #%02X%02X%02X;\n",
             red(bg_colour), green(bg_colour), blue(bg_colour));
   }
-  fprintf(hf, "    }\n");
-  fprintf(hf, "  .bd { font-weight: bold }\n");
-  fprintf(hf, "  .it { font-style: italic }\n");
-  fprintf(hf, "  .ul { text-decoration-line: underline }\n");
-  fprintf(hf, "  .st { text-decoration-line: line-through }\n");
-  fprintf(hf, "  .lu { text-decoration-line: line-through underline }\n");
+  hprintf(hf, "    }\n");
+  hprintf(hf, "  .bd { font-weight: bold }\n");
+  hprintf(hf, "  .it { font-style: italic }\n");
+  hprintf(hf, "  .ul { text-decoration-line: underline }\n");
+  hprintf(hf, "  .st { text-decoration-line: line-through }\n");
+  hprintf(hf, "  .lu { text-decoration-line: line-through underline }\n");
   if (bold_colour != (colour)-1)
-    fprintf(hf, "  .bold-color { color: #%02X%02X%02X }\n",
+    hprintf(hf, "  .bold-color { color: #%02X%02X%02X }\n",
             red(bold_colour), green(bold_colour), blue(bold_colour));
   for (int i = 0; i < 16; i++) {
     colour ansii = win_get_colour(ANSI0 + i);
     uchar r = red(ansii), g = green(ansii), b = blue(ansii);
-    fprintf(hf, "  .fg-color%d { color: #%02X%02X%02X }"
+    hprintf(hf, "  .fg-color%d { color: #%02X%02X%02X }"
                 " .bg-color%d { background-color: #%02X%02X%02X }\n",
                 i, r, g, b, i, r, g, b);
   }
   colour cursor_colour = win_get_colour(CURSOR_COLOUR_I);
-  fprintf(hf, "  .cursor { background-color: #%02X%02X%02X }\n",
+  hprintf(hf, "  .cursor { background-color: #%02X%02X%02X }\n",
           red(cursor_colour), green(cursor_colour), blue(cursor_colour));
 
   for (int i = 1; i <= 10; i++)
     if (*cfg.fontfams[i].name) {
       char * fn = cs__wcstoutf(cfg.fontfams[i].name);
-      fprintf(hf, "  .font%d { font-family: '%s' }\n", i, fn);
+      hprintf(hf, "  .font%d { font-family: '%s' }\n", i, fn);
       free(fn);
     }
   if (!*cfg.fontfams[10].name)
-    fprintf(hf, "  .font10 { font-family: 'F25 Blackletter Typewriter' }\n");
-  fprintf(hf, "  </style>\n");
-  fprintf(hf, "  <script>\n");
-  fprintf(hf, "  var b1 = 500; var b2 = 300;\n");
-  fprintf(hf, "  function visib (tag, state, timeout) {\n");
-  fprintf(hf, "    var bl = document.getElementsByName(tag);\n");
-  fprintf(hf, "    var vv; if (state) vv = 'visible'; else vv = 'hidden';\n");
-  fprintf(hf, "    var i;\n");
-  fprintf(hf, "    for (i = 0; i < bl.length; i++) {\n");
-  fprintf(hf, "      bl[i].style.visibility = vv;\n");
-  fprintf(hf, "    }\n");
-  fprintf(hf, "    window.setTimeout ('visib (\"' + tag + '\", ' + !state + ', ' + timeout + ')', timeout);\n");
-  fprintf(hf, "  }\n");
-  fprintf(hf, "  function setup () {\n");
-  fprintf(hf, "    window.setTimeout ('visib (\"blink\", 0, b1)', b1);\n");
-  fprintf(hf, "    window.setTimeout ('visib (\"rapid\", 0, b2)', b2);\n");
-  fprintf(hf, "  }\n");
-  fprintf(hf, "  </script>\n");
-  fprintf(hf, "</head>\n\n");
-  fprintf(hf, "<body onload='setup();'>\n");
-  fprintf(hf, "  <table border=0 cellpadding=0 cellspacing=0><tr><td xbackground=>\n");
-  fprintf(hf, "  <div id='vt100'>\n");
-  fprintf(hf, "   <pre>");
+    hprintf(hf, "  .font10 { font-family: 'F25 Blackletter Typewriter' }\n");
+  hprintf(hf, "  </style>\n");
+  hprintf(hf, "  <script>\n");
+  hprintf(hf, "  var b1 = 500; var b2 = 300;\n");
+  hprintf(hf, "  function visib (tag, state, timeout) {\n");
+  hprintf(hf, "    var bl = document.getElementsByName(tag);\n");
+  hprintf(hf, "    var vv; if (state) vv = 'visible'; else vv = 'hidden';\n");
+  hprintf(hf, "    var i;\n");
+  hprintf(hf, "    for (i = 0; i < bl.length; i++) {\n");
+  hprintf(hf, "      bl[i].style.visibility = vv;\n");
+  hprintf(hf, "    }\n");
+  hprintf(hf, "    window.setTimeout ('visib (\"' + tag + '\", ' + !state + ', ' + timeout + ')', timeout);\n");
+  hprintf(hf, "  }\n");
+  hprintf(hf, "  function setup () {\n");
+  hprintf(hf, "    window.setTimeout ('visib (\"blink\", 0, b1)', b1);\n");
+  hprintf(hf, "    window.setTimeout ('visib (\"rapid\", 0, b2)', b2);\n");
+  hprintf(hf, "  }\n");
+  hprintf(hf, "  </script>\n");
+  hprintf(hf, "</head>\n\n");
+  hprintf(hf, "<body onload='setup();'>\n");
+  hprintf(hf, "  <table border=0 cellpadding=0 cellspacing=0><tr><td xbackground=>\n");
+  hprintf(hf, "  <div id='vt100'>\n");
+  hprintf(hf, "   <pre>");
 
-  clip_workbuf *buf = get_selection(start, end, rect, true);
+  clip_workbuf * buf = get_selection(start, end, rect, true);
   int i0 = 0;
   bool odd = true;
   for (uint i = 0; i < buf->len; i++) {
@@ -610,7 +612,7 @@ term_export_html(bool do_open)
        )
     {
       // flush chunk with equal attributes
-      fprintf(hf, "<span class='%s", odd ? "od" : "ev");
+      hprintf(hf, "<span class='%s", odd ? "od" : "ev");
 
       // retrieve chunk
       wchar save = buf->text[i];
@@ -655,26 +657,26 @@ term_export_html(bool do_open)
 
       // add classes
       if (ca->attr & ATTR_BOLD)
-        fprintf(hf, " bd");
+        hprintf(hf, " bd");
       if (ca->attr & ATTR_ITALIC)
-        fprintf(hf, " it");
+        hprintf(hf, " it");
       if ((ca->attr & (ATTR_UNDER | ATTR_STRIKEOUT)) == (ATTR_UNDER | ATTR_STRIKEOUT))
-        fprintf(hf, " lu");
+        hprintf(hf, " lu");
       else if (ca->attr & ATTR_STRIKEOUT)
-        fprintf(hf, " st");
+        hprintf(hf, " st");
       else if (ca->attr & UNDER_MASK)
-        fprintf(hf, " ul");
+        hprintf(hf, " ul");
       int findex = (ca->attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
       if (findex)
-        fprintf(hf, " font%d", findex);
+        hprintf(hf, " font%d", findex);
       if (ca->attr & ATTR_FRAMED)
-        fprintf(hf, " emoji");  // mark emoji style
+        hprintf(hf, " emoji");  // mark emoji style
 
       // catch and verify predefined colours and apply their colour classes
       if (fgi == FG_COLOUR_I) {
         if ((ca->attr & ATTR_BOLD) && term.enable_bold_colour) {
           if (fg == bold_colour) {
-            fprintf(hf, " bold-color");
+            hprintf(hf, " bold-color");
             fg = (colour)-1;
           }
         }
@@ -685,21 +687,21 @@ term_export_html(bool do_open)
                && fg == win_get_colour(ANSI0 + fga + 8)
               )
       {
-        fprintf(hf, " fg-color%d", fga + 8);
+        hprintf(hf, " fg-color%d", fga + 8);
         fg = (colour)-1;
       }
       else if (fga < 16 && fg == win_get_colour(ANSI0 + fga)) {
-        fprintf(hf, " fg-color%d", fga);
+        hprintf(hf, " fg-color%d", fga);
         fg = (colour)-1;
       }
       if (bgi == BG_COLOUR_I && bg == bg_colour)
         bg = (colour)-1;
       else if (bga < 16 && bg == win_get_colour(ANSI0 + bga)) {
-        fprintf(hf, " bg-color%d", bga);
+        hprintf(hf, " bg-color%d", bga);
         bg = (colour)-1;
       }
       if (ca->attr & (TATTR_ACTCURS | TATTR_PASCURS)) {
-        fprintf(hf, " cursor");
+        hprintf(hf, " cursor");
         fg = win_get_colour(CURSOR_TEXT_COLOUR_I);
         // more precise cursor colour adjustments could be made...
       }
@@ -708,32 +710,32 @@ term_export_html(bool do_open)
       bool with_style = false;
       void add_style(char * s) {
         if (!with_style) {
-          fprintf(hf, "' style='%s", s);
+          hprintf(hf, "' style='%s", s);
           with_style = true;
         }
         else
-          fprintf(hf, " %s", s);
+          hprintf(hf, " %s", s);
       }
 
       // add individual colours, or fix unmatched colours
       if (fg != (colour)-1) {
         uchar r = red(fg), g = green(fg), b = blue(fg);
         add_style("");
-        fprintf(hf, "color: #%02X%02X%02X;", r, g, b);
+        hprintf(hf, "color: #%02X%02X%02X;", r, g, b);
       }
       if (bg != (colour)-1) {
         uchar r = red(bg), g = green(bg), b = blue(bg);
         add_style("");
-        fprintf(hf, "background-color: #%02X%02X%02X;", r, g, b);
+        hprintf(hf, "background-color: #%02X%02X%02X;", r, g, b);
       }
 
       if (ca->attr & ATTR_OVERL) {
         add_style("text-decoration-line: overline");
         if (ca->attr & ATTR_STRIKEOUT)
-          fprintf(hf, " line-through");
+          hprintf(hf, " line-through");
         if (ca->attr & ATTR_UNDER)
-          fprintf(hf, " underline");
-        fprintf(hf, ";");
+          hprintf(hf, " underline");
+        hprintf(hf, ";");
       }
       if (ca->attr & ATTR_BROKENUND)
         if (ca->attr & ATTR_DOUBLYUND)
@@ -749,7 +751,7 @@ term_export_html(bool do_open)
       if (ul != (colour)-1 && (ca->attr & (UNDER_MASK | ATTR_STRIKEOUT | ATTR_OVERL))) {
         uchar r = red(ul), g = green(ul), b = blue(ul);
         add_style("");
-        fprintf(hf, "text-decoration-color: #%02X%02X%02X;", r, g, b);
+        hprintf(hf, "text-decoration-color: #%02X%02X%02X;", r, g, b);
       }
 
       if (ca->attr & ATTR_INVISIBLE)
@@ -757,13 +759,13 @@ term_export_html(bool do_open)
       else {
         // add JavaScript triggers
         if (ca->attr & ATTR_BLINK2)
-          fprintf(hf, "' name='rapid");
+          hprintf(hf, "' name='rapid");
         else if (ca->attr & ATTR_BLINK)
-          fprintf(hf, "' name='blink");
+          hprintf(hf, "' name='blink");
       }
 
       // write chunk
-      fprintf(hf, "'>%s</span>", s);
+      hprintf(hf, "'>%s</span>", s);
       free(s);
 
       // forward chunk pointer
@@ -778,16 +780,46 @@ term_export_html(bool do_open)
     if (buf->text[i] == '\n') {
       i++;
       i0 = i;
-      fprintf(hf, "\n");
+      hprintf(hf, "\n");
       odd = !odd;
     }
   }
   destroy_clip_workbuf(buf);
 
-  fprintf(hf, "</pre>\n");
-  fprintf(hf, "  </div>\n");
-  fprintf(hf, "  </td></tr></table>\n");
-  fprintf(hf, "</body>\n");
+  hprintf(hf, "</pre>\n");
+  hprintf(hf, "  </div>\n");
+  hprintf(hf, "  </td></tr></table>\n");
+  hprintf(hf, "</body>\n");
+
+  return hbuf;
+}
+
+char *
+term_get_html(void)
+{
+  return term_create_html(0);
+}
+
+void
+term_export_html(bool do_open)
+{
+  struct timeval now;
+  gettimeofday(& now, 0);
+  char * htmlf = newn(char, MAX_PATH + 1);
+  strftime(htmlf, MAX_PATH, "mintty.%F_%T.html", localtime (& now.tv_sec));
+
+  int hfd = open(htmlf, O_WRONLY | O_CREAT | O_EXCL, 0600);
+  if (hfd < 0) {
+    win_bell(&cfg);
+    return;
+  }
+  FILE * hf = fdopen(hfd, "w");
+  if (!hf) {
+    win_bell(&cfg);
+    return;
+  }
+
+  term_create_html(hf);
 
   fclose(hf);  // implies close(hfd);
 
