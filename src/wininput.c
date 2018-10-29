@@ -2423,3 +2423,45 @@ win_key_up(WPARAM wp, LPARAM unused(lp))
   alt_state = ALT_NONE;
   return true;
 }
+
+static int
+win_key_fake(uchar vk)
+{
+  INPUT ki[2];
+  ki[0].type = INPUT_KEYBOARD;
+  ki[1].type = INPUT_KEYBOARD;
+  ki[0].ki.dwFlags = 0;
+  ki[1].ki.dwFlags = KEYEVENTF_KEYUP;
+  ki[0].ki.wVk = vk;
+  ki[1].ki.wVk = vk;
+  ki[0].ki.time = 0;
+  ki[1].ki.time = 0;
+  ki[0].ki.dwExtraInfo = 0;
+  ki[1].ki.dwExtraInfo = 0;
+  return SendInput(2, ki, sizeof(INPUT));
+}
+
+static void
+win_vk(int vk, bool on)
+{
+  if ((GetKeyState(vk) & 1) != on)
+    win_key_fake(vk);
+  /* It is possible to switch the LED only and revert the actual 
+     virtual input state of the current thread as it was by using 
+     SetKeyboardState in win_key_down, but this "fix" would only 
+     apply to the current window while the effective state remains 
+     switched for other windows which makes no sense.
+   */
+}
+
+void
+win_led(int led, bool set)
+{
+  int led_keys[] = {VK_NUMLOCK, VK_CAPITAL, VK_SCROLL};
+  if (led <= 0)
+    for (uint i = 0; i < lengthof(led_keys); i++)
+      win_vk(led_keys[i], set);
+  else if (led <= (int)lengthof(led_keys))
+    win_vk(led_keys[led - 1], set);
+}
+

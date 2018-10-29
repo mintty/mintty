@@ -83,6 +83,8 @@ extern void win_key_reset(void);
 extern bool win_key_down(WPARAM, LPARAM);
 extern bool win_key_up(WPARAM, LPARAM);
 
+extern void win_led(int led, bool set);
+
 extern wchar * dewsl(wchar * wpath);
 extern void win_init_drop_target(void);
 
