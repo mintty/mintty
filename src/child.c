@@ -569,6 +569,14 @@ procresi(int pid, char * res)
   return i;
 }
 
+#ifndef HAS_LOCALES
+#define wcwidth xcwidth
+#else
+#if CYGWIN_VERSION_API_MINOR < 74
+#define wcwidth xcwidth
+#endif
+#endif
+
 wchar *
 grandchild_process_list(void)
 {
@@ -614,9 +622,6 @@ grandchild_process_list(void)
         procw[i] = 0x2007;  // FIGURE SPACE
     int wid = min(wcslen(procw), 40);
     for (int i = 13; i < wid; i++)
-#ifndef HAS_LOCALES
-#define wcwidth xcwidth
-#endif
       if ((cfg.charwidth ? xcwidth(procw[i]) : wcwidth(procw[i])) == 2)
         wid--;
     procw[wid] = 0;
