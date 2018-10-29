@@ -251,6 +251,10 @@ void
 term_send_paste(void)
 {
   int i = term.paste_pos;
+  /* We must not feed more than MAXPASTEMAX bytes into the pty in one chunk 
+     or it will block on the receiving side (write() does not return).
+   */
+#define MAXPASTEMAX 7819
 #define PASTEMAX 2222
   while (i < term.paste_len && i - term.paste_pos < PASTEMAX
          && term.paste_buffer[i++] != '\r'
