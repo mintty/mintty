@@ -1292,6 +1292,9 @@ win_set_ime_open(bool open)
 
 static bool tiled = false;
 static bool ratio = false;
+#ifdef support_wallpaper_offset
+static bool desktop_bg = true;
+#endif
 static int alpha = -1;
 static LONG w = 0, h = 0;
 static HBRUSH bgbrush_bmp = 0;
@@ -1605,6 +1608,23 @@ load_background_image_brush(HDC dc, wstring fn)
       if (bgbrush_bmp) {
         RECT cr;
         GetClientRect(wnd, &cr);
+#ifdef support_wallpaper_offset
+        /* By applying this tweak here and (!) in fill_background below,
+           we could apply an offset to the origin of a tiled background, 
+           in order to simulate a floating window;
+           however, it does not work; retrieved offset is not properly adjusted 
+           and in multi-monitor mode, the reference is totally unclear:
+           registry entry \HKEY_CURRENT_USER\Control Panel\Desktop\Wallpaper
+           should point to the effective background image, but if you have 
+           a second monitor placed left of the primary monitor, it's reversed!
+         */
+        if (desktop_bg) {
+          int x, y;
+          win_get_scrpos(&x, &y, true);
+          x -= 2; y -= 11;  // adjust...
+          SetBrushOrgEx(dc, -x, -y, 0);
+        }
+#endif
         FillRect(dc, &cr, bgbrush_bmp);
         drop_background_image_brush();
         return;
@@ -1853,6 +1873,14 @@ static bool
 fill_background(HDC dc, RECT * boxp)
 {
   load_background_brush(dc);
+#ifdef support_wallpaper_offset
+  if (desktop_bg) {
+    int x, y;
+    win_get_scrpos(&x, &y, true);
+    x -= 2; y -= 11;  // adjust...
+    SetBrushOrgEx(dc, -x, -y, 0);
+  }
+#endif
   return
     (bgbrush_bmp && FillRect(dc, boxp, bgbrush_bmp))
 #if CYGWIN_VERSION_API_MINOR >= 74
