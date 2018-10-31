@@ -318,7 +318,7 @@ Finally, a couple of bindings for convenient searching of the command history. J
 ```
 
 
-## Keyboard not working as expected in certain applications (e.g. vim) ##
+## Unexpected behaviour with certain applications (e.g. vim) ##
 
 If for example the PgUp and PgDn keys do not work in your editor, the reason 
 may be that in the mintty Options, the Terminal Type was set to "vt100" 
@@ -347,6 +347,14 @@ let &t_SI.="\e[5 q"
 let &t_EI.="\e[1 q"
 let &t_te.="\e[0 q"
 ```
+
+### Blinking cursor reset ###
+
+Some applications may reset cursor style, especially cursor blinking, 
+after terminating, caused by the 
+[terminfo database](http://invisible-island.net/ncurses/man/terminfo.5.html) 
+including the corresponding reset sequence in the “normal cursor” setting.
+This is avoided with mintty option `SuppressDEC=12`.
 
 ### Avoiding escape timeout issues in vim ###
 
@@ -754,7 +762,10 @@ font 1 is therefore discouraged.
 
 Note: The control sequences for Fraktur (“Gothic”) font are described 
 in ECMA-48, see also [wiki:ANSI code](https://en.wikipedia.org/wiki/ANSI_escape_code).
-To use this feature, it is suggested to install `F25 Blackletter Typewriter`.
+To use this feature, it is suggested to install `F25 Blackletter Typewriter`,
+e.g. from:
+* https://www.dafont.com/f25-blacklettertypewriter.font
+* https://fontmeme.com/fonts/f25-blackletter-typewriter-font/
 
 Note: RGB colour values are scaled to a maximum of 255 (=100%).
 CMY(K) colour values are scaled to a maximum of the given parameter F (=100%).
