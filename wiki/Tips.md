@@ -115,7 +115,6 @@ A WSL terminal session can be configured for the mintty session launcher
 in the config file, like:
 * `SessionCommands=Ubuntu:--WSL=Ubuntu`
 
-
 ### WSLtty, the standalone WSL mintty terminal ###
 
 For a standalone mintty deployment as a WSL terminal, also providing 
@@ -437,7 +436,9 @@ For a separate compose key solution, the most seamless and stable
 **[WinCompose](https://github.com/SamHocevar/wincompose)**.
 
 
-## Changing colours ##
+## Appearance ##
+
+### Changing colours ###
 
 The default foreground, background and cursor colours can be changed in the options dialog, or by specifying the _ForegroundColour_, _BackgroundColour_ and _CursorColour_ settings in the configuration file or on the command line.
 
@@ -489,8 +490,7 @@ Different notations are accepted for colour specifications:
 * ```cmyk:C.C/M.M/Y.Y/K.K``` (float values between 0 and 1)
 * _color-name_ (using X11 color names, e.g. ```echo -ne '\e]10;bisque2\a'```)
 
-
-## Using colour schemes (“Themes”) ##
+### Using colour schemes (“Themes”) ###
 
 Colour schemes (that redefine ANSI colours and possibly foreground/background 
 colours) can be loaded with the option ```-C``` (capital C) or ```--loadconfig``` 
@@ -533,6 +533,38 @@ Mintty also provides the command-line script ```mintheme``` which can
 display the themes available in the mintty configuration directories or 
 activate one of them in the current mintty window.
 
+### Background image ###
+
+As an alternative to a background colour, mintty also supports graphic 
+background. This can be configured with the option `Background` or 
+set dynamically using special syntax of the colour background OSC sequence.
+The respective parameter addresses an image file, preceded by a mode 
+prefix and optionally followed by a transparancy value.
+Prefixes are:
+* `*` use image file as tiled background
+* `_` (optional with option Background) use image as picture background, scaled to window
+* `%` use image as picture background and scale window to its aspect ratio
+* `=` use desktop background (if tiled), for a virtual floating window
+
+If the background filename is followed by a comma and a number between 1 and 254, 
+the background image will be dimmed towards the background colour;
+with a value of 255, the alpha transparency values of the image will be used.
+
+Examples:
+```
+Background=C:\cygwin\usr\share\backgrounds\tiles\rough_paper.png
+-o Background='C:\cygwin\usr\share\backgrounds\tiles\rough_paper.png'
+echo -ne '\e]11;*/usr/share/backgrounds/tiles/rough_paper.png\a'
+echo -ne '\e]11;_pontneuf.png,99\a'
+echo -ne '\e]11;=,99\a'
+```
+
+Note that relative pathnames depend on proper detection of the current directory 
+of the foreground process.
+Note that absolute pathnames within the cygwin file system are likely 
+not to work among different cygwin installations. 
+To configure a background in `$APPDATA/mintty/config` (or 
+`%APPDATA%/wsltty/config`), Windows pathname syntax should be used.
 
 ## Providing and selecting fonts ##
 

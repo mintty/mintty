@@ -1292,9 +1292,8 @@ win_set_ime_open(bool open)
 
 static bool tiled = false;
 static bool ratio = false;
-#ifdef support_wallpaper_offset
-static bool desktop_bg = true;
-#endif
+static bool wallp = false;
+static int wallp_style;
 static int alpha = -1;
 static LONG w = 0, h = 0;
 static HBRUSH bgbrush_bmp = 0;
@@ -1350,6 +1349,19 @@ alpha_blend_bg(int alpha, HDC dc, HBITMAP hbm, int bw, int bh, colour bg)
   }
   else
     return hbm;
+}
+
+static void
+offset_bg(HDC dc)
+{
+  RECT wr;
+  GetWindowRect(wnd, &wr);
+  int wx = wr.left + GetSystemMetrics(SM_CXSIZEFRAME);
+  int wy = wr.top + GetSystemMetrics(SM_CYSIZEFRAME) + GetSystemMetrics(SM_CYCAPTION);
+
+  // adjust wallpaper origin
+
+  SetBrushOrgEx(dc, -wx, -wy, 0);
 }
 
 #if CYGWIN_VERSION_API_MINOR >= 74
@@ -1608,23 +1620,15 @@ load_background_image_brush(HDC dc, wstring fn)
       if (bgbrush_bmp) {
         RECT cr;
         GetClientRect(wnd, &cr);
-#ifdef support_wallpaper_offset
+
         /* By applying this tweak here and (!) in fill_background below,
-           we could apply an offset to the origin of a tiled background, 
-           in order to simulate a floating window;
-           however, it does not work; retrieved offset is not properly adjusted 
-           and in multi-monitor mode, the reference is totally unclear:
-           registry entry \HKEY_CURRENT_USER\Control Panel\Desktop\Wallpaper
-           should point to the effective background image, but if you have 
-           a second monitor placed left of the primary monitor, it's reversed!
+           we can apply an offset to the origin of a wallpaper background, 
+           in order to simulate a floating window.
          */
-        if (desktop_bg) {
-          int x, y;
-          win_get_scrpos(&x, &y, true);
-          x -= 2; y -= 11;  // adjust...
-          SetBrushOrgEx(dc, -x, -y, 0);
+        if (wallp) {
+          offset_bg(dc);
         }
-#endif
+
         FillRect(dc, &cr, bgbrush_bmp);
         drop_background_image_brush();
         return;
@@ -1729,11 +1733,16 @@ win_flush_background(bool clearbg)
 #endif
 }
 
+/*
+   Return background image filename in malloced string.
+ */
 static wchar *
 get_bg_filename(void)
 {
   tiled = false;
   ratio = false;
+  wallp = false;
+  static wchar * wallpfn = 0;
 
   wchar * bgfn = (wchar *)cfg.background;
   if (*bgfn == '*') {
@@ -1747,20 +1756,52 @@ get_bg_filename(void)
   else if (*bgfn == '_') {
     bgfn++;
   }
-  char * bf = cs__wcstombs(bgfn);
-  if (0 == strncmp("~/", bf, 2)) {
-    char * bfexp = asform("%s/%s", home, bf + 2);
-    free(bf);
-    bf = bfexp;
-  }
-  else if (*bf != '/' && !(*bf && bf[1] == ':')) {
-    char * fgd = foreground_cwd();
-    if (fgd) {
-      char * bfexp = asform("%s/%s", fgd, bf);
-      free(bf);
-      bf = bfexp;
+#if CYGWIN_VERSION_API_MINOR >= 74
+  else if (*bgfn == '=') {
+    wallp = true;
+
+    if (!wallpfn)
+      wallpfn = newn(wchar, MAX_PATH + 1);
+
+    void readregstr(HKEY key, wstring attribute, wchar * val, DWORD len) {
+      DWORD type;
+      int err = RegQueryValueExW(key, attribute, 0, &type, (void *)val, &len);
+      if (err ||
+          !(type == REG_SZ || type == REG_EXPAND_SZ || type == REG_MULTI_SZ))
+        *val = 0;
+    }
+
+    HKEY wpk = 0;
+    RegOpenKeyA(HKEY_CURRENT_USER, "Control Panel\\Desktop", &wpk);
+    if (wpk) {
+      readregstr(wpk, W("Wallpaper"), wallpfn, MAX_PATH);
+      wchar regval[22];
+      readregstr(wpk, W("TileWallpaper"), regval, lengthof(regval));
+      tiled = 0 == wcscmp(regval, W("1"));
+      readregstr(wpk, W("WallpaperStyle"), regval, lengthof(regval));
+      wallp_style = wcstol(regval, 0, 0);
+      //printf("wallpaper <%ls> tiled %d style %d\n", wallpfn, tiled, wallp_style);
+
+      if (tiled) {
+        // impact of wallp_style? unclear
+      }
+      else {
+        // need to scale wallpaper later, when loading
+        /// not implemented, invalidate
+        *wallpfn = 0;
+        // possibly, according to docs, but apparently ignored, 
+        // determine origin according to
+        // readregstr(wpk, W("WallpaperOriginX"), ...)
+        // readregstr(wpk, W("WallpaperOriginY"), ...)
+      }
+      RegCloseKey(wpk);
     }
   }
+#else
+  (void)wallp_style;
+#endif
+
+  char * bf = cs__wcstombs(bgfn);
   // try to extract an alpha value from file spec
   char * salpha = strrchr(bf, ',');
   if (salpha) {
@@ -1770,16 +1811,36 @@ get_bg_filename(void)
       alpha = -1;
   }
 
-  if (support_wsl) {
-    wchar * wbf = cs__utftowcs(bf);
-    wchar * wdewbf = dewsl(wbf);  // free(wbf)
-    char * dewbf = cs__wcstoutf(wdewbf);
-    free(wdewbf);
-    free(bf);
-    bf = dewbf;
+  if (wallp)
+    bgfn = wcsdup(wallpfn);
+  else {
+    // path transformations
+    if (0 == strncmp("~/", bf, 2)) {
+      char * bfexp = asform("%s/%s", home, bf + 2);
+      free(bf);
+      bf = bfexp;
+    }
+    else if (*bf != '/' && !(*bf && bf[1] == ':')) {
+      char * fgd = foreground_cwd();
+      if (fgd) {
+        char * bfexp = asform("%s/%s", fgd, bf);
+        free(bf);
+        bf = bfexp;
+      }
+    }
+
+    if (support_wsl && !wallp) {
+      wchar * wbf = cs__utftowcs(bf);
+      wchar * wdewbf = dewsl(wbf);  // free(wbf)
+      char * dewbf = cs__wcstoutf(wdewbf);
+      free(wdewbf);
+      free(bf);
+      bf = dewbf;
+    }
+
+    bgfn = path_posix_to_win_w(bf);
   }
 
-  bgfn = path_posix_to_win_w(bf);
 #ifdef debug_gdiplus
   printf("loading brush <%ls> <%s> <%ls>\n", cfg.background, bf, bgfn);
 #endif
@@ -1873,14 +1934,10 @@ static bool
 fill_background(HDC dc, RECT * boxp)
 {
   load_background_brush(dc);
-#ifdef support_wallpaper_offset
-  if (desktop_bg) {
-    int x, y;
-    win_get_scrpos(&x, &y, true);
-    x -= 2; y -= 11;  // adjust...
-    SetBrushOrgEx(dc, -x, -y, 0);
+  if (wallp) {
+    offset_bg(dc);
   }
-#endif
+
   return
     (bgbrush_bmp && FillRect(dc, boxp, bgbrush_bmp))
 #if CYGWIN_VERSION_API_MINOR >= 74
