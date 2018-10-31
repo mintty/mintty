@@ -1,5 +1,14 @@
+Terminal features
+  * Copy as HTML (#811).
+  * Mitigate stalling on very long paste buffer lines (#810).
+  * Support DECLL (VT100, xterm) to switch keyboard LEDs (and their associated modifier function).
+
+Appearance
+  * Option Background== for floating window effect (using desktop wallpaper as background) (#18, ~#666, ~~#501).
+
+Window handling
   * Consider glyph width for font width determination (#808).
-  * Do not start process to construct exit confirmation.
+  * Do not start process to construct process list for exit confirmation (~#448).
 
 ### 2.9.3 (4 October 2018) ###
 
