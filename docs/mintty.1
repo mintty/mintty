@@ -694,8 +694,9 @@ An overview of all the keyboard shortcuts.
 .br
 \(en \fBCtrl+Alt+mouse-click/drag\fP: Move window
 
-Multi-monitor selection support: Alt+F2 will only spawn a new window 
-after F2 has been released. While F2 is being held, the target monitor 
+Multi-monitor selection support: Alt+F2 (or user-defined "new" key 
+as defined with option \fBKeyFunctions\fP) will only spawn a new window 
+after F2 has been released. While the key is being held, the target monitor 
 can be selected with a sequence of numeric keypad keys:
 .br
 \(en cursor-up/down/left/right (8/2/4/6) navigate the target focus to the 
@@ -713,6 +714,7 @@ Note that a heuristic algorithm is used, based on the size of the smallest
 monitor attached to the system, so the target may not always be selected 
 as expected if multiple monitors of different size are available or 
 monitors are not arranged in a regular grid.
+Note also that this feature is overridden by option \fBSessionGeomSync\fP.
 
 .TP
 \fBFont zoom\fP
