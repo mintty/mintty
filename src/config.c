@@ -1617,6 +1617,7 @@ getregstr(HKEY key, wstring subkey, wstring attribute)
     return 0;
   wchar * val = malloc (len);
   res = RegQueryValueExW(sk, attribute, 0, &type, (void *)val, &len);
+  RegCloseKey(sk);
   if (res) {
     free(val);
     return 0;
