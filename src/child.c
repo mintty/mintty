@@ -1053,7 +1053,10 @@ do_child_fork(int argc, char *argv[], int moni, bool launch)
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
     if (shortcut) {
+      //show_info(asform("Starting <%s>", cs__wcstoutf(shortcut)));
       shell_exec(shortcut);
+      //show_info("Started");
+      sleep(5);  // let starting settle, or it will fail; 1s normally enough
       exit(0);
     }
 
