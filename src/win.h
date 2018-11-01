@@ -14,6 +14,7 @@
 extern char * home;
 extern char * cmd;
 extern bool icon_is_from_shortcut;
+extern wstring shortcut;
 
 extern void exit_mintty(void);
 extern void report_pos(void);

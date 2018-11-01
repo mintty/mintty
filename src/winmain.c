@@ -65,6 +65,7 @@ ATOM class_atom;
 static char **main_argv;
 static int main_argc;
 static bool invoked_from_shortcut = false;
+wstring shortcut = 0;
 static bool invoked_with_appid = false;
 
 
@@ -2117,7 +2118,7 @@ show_iconwarn(wchar * winmsg)
 
 
 /*
-  Message handling.
+   Message handling.
  */
 
 #define dont_debug_messages
@@ -2331,7 +2332,10 @@ static struct {
           int moni = search_monitors(&x, &y, mon, true, 0);
           child_fork(main_argc, main_argv, moni);
         }
-        when IDM_NEW_MONI: child_fork(main_argc, main_argv, (int)lp);
+        when IDM_NEW_MONI: {
+          int moni = lp;
+          child_fork(main_argc, main_argv, moni);
+        }
         when IDM_COPYTITLE: win_copy_title();
       }
     }
@@ -3626,6 +3630,7 @@ main(int argc, char *argv[])
 
   bool wdpresent = true;
   if (invoked_from_shortcut) {
+    shortcut = wcsdup(sui.lpTitle);
     wchar * icon = get_shortcut_icon_location(sui.lpTitle, &wdpresent);
 # ifdef debuglog
     fprintf(mtlog, "icon <%ls>\n", icon); fflush(mtlog);

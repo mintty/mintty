@@ -1052,6 +1052,11 @@ do_child_fork(int argc, char *argv[], int moni, bool launch)
     //setenv("MINTTY_CHILD", "1", true);
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
+    if (shortcut) {
+      shell_exec(shortcut);
+      exit(0);
+    }
+
     execv("/proc/self/exe", argv);
 #else
     // /proc/self/exe isn't available before Cygwin 1.5, so use argv[0] instead.

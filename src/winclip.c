@@ -49,7 +49,7 @@ shell_exec_thread(void *data)
   return 0;
 }
 
-static void
+void
 shell_exec(wstring wpath)
 // frees wpath
 {

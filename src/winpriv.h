@@ -86,6 +86,7 @@ extern bool win_key_up(WPARAM, LPARAM);
 extern void win_led(int led, bool set);
 
 extern wchar * dewsl(wchar * wpath);
+extern void shell_exec(wstring wpath);
 extern void win_init_drop_target(void);
 
 extern wstring wslicon(wchar * params);
