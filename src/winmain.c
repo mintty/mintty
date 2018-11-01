@@ -2014,7 +2014,7 @@ show_message(char * msg, UINT type)
   delete(outmsg);
 }
 
-static void
+void
 show_info(char * msg)
 {
   show_message(msg, MB_OK);
@@ -3631,6 +3631,7 @@ main(int argc, char *argv[])
   bool wdpresent = true;
   if (invoked_from_shortcut) {
     shortcut = wcsdup(sui.lpTitle);
+    setenv("MINTTY_SHORTCUT", path_win_w_to_posix(shortcut), true);
     wchar * icon = get_shortcut_icon_location(sui.lpTitle, &wdpresent);
 # ifdef debuglog
     fprintf(mtlog, "icon <%ls>\n", icon); fflush(mtlog);
@@ -3639,6 +3640,12 @@ main(int argc, char *argv[])
       cfg.icon = icon;
       icon_is_from_shortcut = true;
     }
+  }
+  else {
+    // We should check whether we've inherited a MINTTY_SHORTCUT setting
+    // from a previous invocation, and if so we should check whether the
+    // referred shortcut actually runs the same binary as we're running.
+    // If that's not the case, we should unset MINTTY_SHORTCUT here.
   }
 
   for (;;) {

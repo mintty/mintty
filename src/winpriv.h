@@ -99,6 +99,7 @@ extern int search_monitors(int * minx, int * miny, HMONITOR lookup_mon, int get_
 extern void win_set_ime_open(bool);
 
 extern void show_message(char * msg, UINT type);
+extern void show_info(char * msg);
 
 extern void win_close(void);
 

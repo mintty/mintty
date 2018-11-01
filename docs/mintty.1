@@ -40,6 +40,10 @@ as a login shell.
 Invocation by a name of \fBwsl*\fP\fI[-distro]\fP 
 implies a \fB--WSL\fP\fI[=distro]\fP parameter.
 
+Mintty supports being started from a Windows desktop shortcut; it honours
+window and icon settings of the shortcut, disables daemonizing, and 
+sets environment variable MINTTY_SHORTCUT to its pathname.
+
 .SH OPTIONS
 
 The standard GNU option formats are accepted, with single dashes
@@ -624,7 +628,7 @@ For other encodings, the entered code is sent as is.
 If it doesn't fit into one byte, it is sent as multiple bytes, with 
 the most significant non-zero byte first.
 
-.SS Shortcuts
+.SS Keyboard shortcuts
 
 An overview of all the keyboard shortcuts.
 
