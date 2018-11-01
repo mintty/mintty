@@ -9,6 +9,9 @@ Appearance
 Window handling
   * Consider glyph width for font width determination (#808).
   * Do not start process to construct process list for exit confirmation (~#448).
+  * Enhanced taskbar icon grouping behaviour (#784, mintty/wsltty#96, ?#495, ?#420, ??#801).
+  * Setting MINTTY_SHORTCUT when started from a desktop shortcut.
+  * Maintain proper terminal size after DPI change in DPI awareness mode V2 (#774).
 
 ### 2.9.3 (4 October 2018) ###
 
