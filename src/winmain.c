@@ -2667,8 +2667,14 @@ static struct {
       }
     }
 
-    when WM_GETDPISCALEDSIZE:
+    when WM_GETDPISCALEDSIZE: {
       // here we could adjust the RECT passed to WM_DPICHANGED ...
+#ifdef debug_dpi
+      SIZE * sz = (SIZE *)lp;
+      printf("WM_GETDPISCALEDSIZE dpi %d w/h %d/%d\n", (int)wp, (int)sz->cx, (int)sz->cy);
+#endif
+      return 0;
+    }
 
     when WM_DPICHANGED: {
       if (!cfg.handle_dpichanged) {
@@ -2685,14 +2691,26 @@ static struct {
         LPRECT r = (LPRECT) lp;
 
 #ifdef debug_dpi
-        printf("WM_DPICHANGED %d -> %d (handled) (aware %d handle %d)\n", dpi, new_dpi, per_monitor_dpi_aware, cfg.handle_dpichanged);
+        printf("WM_DPICHANGED %d -> %d (handled) (aware %d handle %d) w/h %d/%d\n",
+               dpi, new_dpi, per_monitor_dpi_aware, cfg.handle_dpichanged,
+               (int)(r->right - r->left), (int)(r->bottom - r->top));
 #endif
         dpi = new_dpi;
 
+        int y = term.rows, x = term.cols;
         SetWindowPos(wnd, 0, r->left, r->top, r->right - r->left, r->bottom - r->top,
                      SWP_NOZORDER | SWP_NOACTIVATE);
 
         font_cs_reconfig(true);
+
+        // reestablish terminal size
+        if (term.rows != y || term.cols != x) {
+#ifdef debug_dpi
+          printf("term w/h %d/%d -> %d/%d, fixing\n", x, y, term.cols, term.rows);
+#endif
+          // win_fix_position also clips the window to desktop size
+          win_set_chars(y, x);
+        }
 
         is_in_dpi_change = false;
         return 0;
