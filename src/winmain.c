@@ -292,10 +292,11 @@ set_dpi_auto_scaling(bool on)
 static int
 set_per_monitor_dpi_aware(void)
 {
+  int res = DPI_UNAWARE;
   // DPI handling V2: make EnableNonClientDpiScaling work, at last
-  if (pSetThreadDpiAwarenessContext &&
+  if (pSetThreadDpiAwarenessContext && cfg.handle_dpichanged == 2 &&
       pSetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2))
-    return DPI_AWAREV2;
+    res = DPI_AWAREV2;
   else if (cfg.handle_dpichanged == 1 &&
            pSetProcessDpiAwareness && pGetProcessDpiAwareness) {
     HRESULT hr = pSetProcessDpiAwareness(Process_Per_Monitor_DPI_Aware);
@@ -308,9 +309,12 @@ set_per_monitor_dpi_aware(void)
     int awareness = 0;
     if (SUCCEEDED(pGetProcessDpiAwareness(NULL, &awareness)) &&
         awareness == Process_Per_Monitor_DPI_Aware)
-      return DPI_AWAREV1;
+      res = DPI_AWAREV1;
   }
-  return DPI_UNAWARE;
+#ifdef debug_dpi
+  printf("dpi_awareness %d\n", res);
+#endif
+  return res;
 }
 
 void
