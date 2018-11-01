@@ -503,6 +503,10 @@ update_tab_titles()
 }
 
 
+/*
+   Window title functions.
+ */
+
 void
 win_set_icon(char * s, int icon_index)
 {
@@ -1061,6 +1065,10 @@ search_monitors(int * minx, int * miny, HMONITOR lookup_mon, int get_primary, MO
     return moni;  // number of monitors printed
 }
 
+
+/*
+   Window manipulation functions.
+ */
 
 /*
  * Minimise or restore the window in response to a server-side request.
@@ -1987,6 +1995,131 @@ win_close(void)
     child_kill((GetKeyState(VK_SHIFT) & 0x80) != 0);
 }
 
+
+/*
+   Diagnostic functions.
+ */
+
+void
+show_message(char * msg, UINT type)
+{
+  FILE * out = (type & (MB_ICONWARNING | MB_ICONSTOP)) ? stderr : stdout;
+  char * outmsg = cs__utftombs(msg);
+  if (fputs(outmsg, out) < 0 || fputs("\n", out) < 0 || fflush(out) < 0) {
+    wchar * wmsg = cs__utftowcs(msg);
+    message_box_w(0, wmsg, W(APPNAME), type, null);
+    delete(wmsg);
+  }
+  delete(outmsg);
+}
+
+static void
+show_info(char * msg)
+{
+  show_message(msg, MB_OK);
+}
+
+static char *
+opterror_msg(string msg, bool utf8params, string p1, string p2)
+{
+  // Note: msg is in UTF-8,
+  // parameters are in current encoding unless utf8params is true
+  if (!utf8params) {
+    if (p1) {
+      wchar * w = cs__mbstowcs(p1);
+      p1 = cs__wcstoutf(w);
+      free(w);
+    }
+    if (p2) {
+      wchar * w = cs__mbstowcs(p2);
+      p2 = cs__wcstoutf(w);
+      free(w);
+    }
+  }
+
+  char * fullmsg;
+  int len = asprintf(&fullmsg, msg, p1, p2);
+  if (!utf8params) {
+    if (p1)
+      free((char *)p1);
+    if (p2)
+      free((char *)p2);
+  }
+
+  if (len > 0)
+    return fullmsg;
+  else
+    return null;
+}
+
+bool
+print_opterror(FILE * stream, string msg, bool utf8params, string p1, string p2)
+{
+  char * fullmsg = opterror_msg(msg, utf8params, p1, p2);
+  bool ok = false;
+  if (fullmsg) {
+    char * outmsg = cs__utftombs(fullmsg);
+    delete(fullmsg);
+    ok = fprintf(stream, "%s.\n", outmsg);
+    if (ok)
+      ok = fflush(stream);
+    delete(outmsg);
+  }
+  return ok;
+}
+
+static void
+print_error(string msg)
+{
+  print_opterror(stderr, msg, true, "", "");
+}
+
+static void
+option_error(char * msg, char * option, int err)
+{
+  finish_config();  // ensure localized message
+  // msg is in UTF-8, option is in current encoding
+  char * optmsg = opterror_msg(_(msg), false, option, null);
+  //char * fullmsg = asform("%s\n%s", optmsg, _("Try '--help' for more information"));
+  char * fullmsg = strdup(optmsg);
+  strappend(fullmsg, "\n");
+  if (err) {
+    strappend(fullmsg, asform("[Error info %d]\n", err));
+  }
+  strappend(fullmsg, _("Try '--help' for more information"));
+  show_message(fullmsg, MB_ICONWARNING);
+  exit(1);
+}
+
+static void
+show_iconwarn(wchar * winmsg)
+{
+  char * msg = _("Could not load icon");
+  char * in = cs__wcstoutf(cfg.icon);
+
+  char * fullmsg;
+  int len;
+  if (winmsg) {
+    char * wmsg = cs__wcstoutf(winmsg);
+    len = asprintf(&fullmsg, "%s '%s':\n%s", msg, in, wmsg);
+    free(wmsg);
+  }
+  else
+    len = asprintf(&fullmsg, "%s '%s'", msg, in);
+  free(in);
+  if (len > 0) {
+    show_message(fullmsg, MB_ICONWARNING);
+    free(fullmsg);
+  }
+  else
+    show_message(msg, MB_ICONWARNING);
+}
+
+
+/*
+  Message handling.
+ */
+
 #define dont_debug_messages
 #define dont_debug_only_sizepos_messages
 #define dont_debug_mouse_messages
@@ -2627,121 +2760,6 @@ static struct {
   return DefWindowProcW(wnd, message, wp, lp);
 }
 
-
-void
-show_message(char * msg, UINT type)
-{
-  FILE * out = (type & (MB_ICONWARNING | MB_ICONSTOP)) ? stderr : stdout;
-  char * outmsg = cs__utftombs(msg);
-  if (fputs(outmsg, out) < 0 || fputs("\n", out) < 0 || fflush(out) < 0) {
-    wchar * wmsg = cs__utftowcs(msg);
-    message_box_w(0, wmsg, W(APPNAME), type, null);
-    delete(wmsg);
-  }
-  delete(outmsg);
-}
-
-static void
-show_info(char * msg)
-{
-  show_message(msg, MB_OK);
-}
-
-static char *
-opterror_msg(string msg, bool utf8params, string p1, string p2)
-{
-  // Note: msg is in UTF-8,
-  // parameters are in current encoding unless utf8params is true
-  if (!utf8params) {
-    if (p1) {
-      wchar * w = cs__mbstowcs(p1);
-      p1 = cs__wcstoutf(w);
-      free(w);
-    }
-    if (p2) {
-      wchar * w = cs__mbstowcs(p2);
-      p2 = cs__wcstoutf(w);
-      free(w);
-    }
-  }
-
-  char * fullmsg;
-  int len = asprintf(&fullmsg, msg, p1, p2);
-  if (!utf8params) {
-    if (p1)
-      free((char *)p1);
-    if (p2)
-      free((char *)p2);
-  }
-
-  if (len > 0)
-    return fullmsg;
-  else
-    return null;
-}
-
-bool
-print_opterror(FILE * stream, string msg, bool utf8params, string p1, string p2)
-{
-  char * fullmsg = opterror_msg(msg, utf8params, p1, p2);
-  bool ok = false;
-  if (fullmsg) {
-    char * outmsg = cs__utftombs(fullmsg);
-    delete(fullmsg);
-    ok = fprintf(stream, "%s.\n", outmsg);
-    if (ok)
-      ok = fflush(stream);
-    delete(outmsg);
-  }
-  return ok;
-}
-
-static void
-print_error(string msg)
-{
-  print_opterror(stderr, msg, true, "", "");
-}
-
-static void
-option_error(char * msg, char * option, int err)
-{
-  finish_config();  // ensure localized message
-  // msg is in UTF-8, option is in current encoding
-  char * optmsg = opterror_msg(_(msg), false, option, null);
-  //char * fullmsg = asform("%s\n%s", optmsg, _("Try '--help' for more information"));
-  char * fullmsg = strdup(optmsg);
-  strappend(fullmsg, "\n");
-  if (err) {
-    strappend(fullmsg, asform("[Error info %d]\n", err));
-  }
-  strappend(fullmsg, _("Try '--help' for more information"));
-  show_message(fullmsg, MB_ICONWARNING);
-  exit(1);
-}
-
-static void
-show_iconwarn(wchar * winmsg)
-{
-  char * msg = _("Could not load icon");
-  char * in = cs__wcstoutf(cfg.icon);
-
-  char * fullmsg;
-  int len;
-  if (winmsg) {
-    char * wmsg = cs__wcstoutf(winmsg);
-    len = asprintf(&fullmsg, "%s '%s':\n%s", msg, in, wmsg);
-    free(wmsg);
-  }
-  else
-    len = asprintf(&fullmsg, "%s '%s'", msg, in);
-  free(in);
-  if (len > 0) {
-    show_message(fullmsg, MB_ICONWARNING);
-    free(fullmsg);
-  }
-  else
-    show_message(msg, MB_ICONWARNING);
-}
 
 void
 report_pos(void)
