@@ -552,7 +552,7 @@ Prefixes are:
 * `*` use image file as tiled background
 * `_` (optional with option Background) use image as picture background, scaled to window
 * `%` use image as picture background and scale window to its aspect ratio
-* `=` use desktop background (if tiled), for a virtual floating window
+* `=` use desktop background (if tiled and unscaled), for a virtual floating window
 
 If the background filename is followed by a comma and a number between 1 and 254, 
 the background image will be dimmed towards the background colour;

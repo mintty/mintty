@@ -1782,15 +1782,15 @@ get_bg_filename(void)
       wallp_style = wcstol(regval, 0, 0);
       //printf("wallpaper <%ls> tiled %d style %d\n", wallpfn, tiled, wallp_style);
 
-      if (tiled) {
-        // impact of wallp_style? unclear
+      if (tiled && !wallp_style) {
+        // can be used as brush directly
       }
       else {
-        // need to scale wallpaper later, when loading
+        // need to scale wallpaper later, when loading;
         /// not implemented, invalidate
         *wallpfn = 0;
         // possibly, according to docs, but apparently ignored, 
-        // determine origin according to
+        // also determine origin according to
         // readregstr(wpk, W("WallpaperOriginX"), ...)
         // readregstr(wpk, W("WallpaperOriginY"), ...)
       }
