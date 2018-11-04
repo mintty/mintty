@@ -445,6 +445,7 @@ struct term {
   int  cursor_type;
   int  cursor_blinks;
   bool cursor_invalid;
+  bool hide_mouse;
 
   uchar esc_mod;  // Modifier character in escape sequences
 

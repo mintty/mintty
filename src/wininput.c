@@ -736,7 +736,7 @@ static void
 hide_mouse(void)
 {
   POINT p;
-  if (cfg.hide_mouse && mouse_showing && GetCursorPos(&p) && WindowFromPoint(p) == wnd) {
+  if (term.hide_mouse && mouse_showing && GetCursorPos(&p) && WindowFromPoint(p) == wnd) {
     ShowCursor(false);
     mouse_showing = false;
   }

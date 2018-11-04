@@ -1714,6 +1714,11 @@ do_csi(uchar c)
         term.modify_other_keys = 0;
       else if (arg0 == 4)
         term.modify_other_keys = arg1;
+    when CPAIR('>', 'p'):     /* xterm: pointerMode */
+      if (arg0 == 0)
+        term.hide_mouse = false;
+      else if (arg0 == 2)
+        term.hide_mouse = true;
     when CPAIR('>', 'n'):     /* xterm: modifier key setting */
       /* only the modifyOtherKeys setting is implemented */
       if (arg0 == 4)

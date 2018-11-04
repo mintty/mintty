@@ -2,6 +2,7 @@ Terminal features
   * Copy as HTML (#811).
   * Mitigate stalling on very long paste buffer lines (#810).
   * Support DECLL (VT100, xterm) to switch keyboard LEDs (and their associated modifier function).
+  * New CSI > 0/2 p to switch option HideMouse (xterm pointerMode).
 
 Appearance
   * Option Background== for floating window effect (using desktop wallpaper as background) (#18, ~#666, ~~#501).

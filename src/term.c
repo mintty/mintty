@@ -246,6 +246,7 @@ term_reset(bool full)
   term.cursor_blinks = -1;
   if (full) {
     term.blink_is_real = cfg.allow_blinking;
+    term.hide_mouse = cfg.hide_mouse;
   }
 
   if (full) {
