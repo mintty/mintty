@@ -1918,6 +1918,20 @@ items automatically based on their icon and command line.  This can be
 overridden by setting the AppID to a custom string, in which case windows
 with the same AppID are grouped together.
 
+The AppID option supports up to 5 \fB%s\fP placeholder parameters for 
+a flexible grouping configuration, also supporting positional parameters 
+\fB%N$s\fP (N = 1..5), to be replaced with these values:
+.br
+\(en \fB%1$s\fP: system name (e.g. \fBCYGWIN\fP)
+.br
+\(en \fB%2$s\fP: system release
+.br
+\(en \fB%3$s\fP: machine type (\fBi686\fP/\fBx86_64\fP)
+.br
+\(en \fB%4$s\fP: icon name if started from shortcut
+.br
+\(en \fB%5$s\fP: WSL distribution name if selected
+
 The special value \fBAppID=@\fP causes mintty to derive an implicit AppID 
 from the WSL system name, in order to achieve WSL distribution-specific 
 taskbar grouping. This resolves taskbar grouping problems in some cases 

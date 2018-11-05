@@ -1,7 +1,7 @@
 Terminal features
   * Copy as HTML (#811).
   * Mitigate stalling on very long paste buffer lines (#810).
-  * Support DECLL (VT100, xterm) to switch keyboard LEDs (and their associated modifier function).
+  * New CSI DECLL (VT100, xterm) to switch keyboard LEDs (and their associated modifier function).
   * New CSI > 0/2 p to switch option HideMouse (xterm pointerMode).
 
 Appearance
@@ -13,6 +13,9 @@ Window handling
   * Enhanced taskbar icon grouping behaviour (#784, mintty/wsltty#96, ?#495, ?#420, ??#801).
   * Setting MINTTY_SHORTCUT when started from a desktop shortcut.
   * Maintain proper terminal size after DPI change in DPI awareness mode V2 (#774).
+
+Configuration
+  * AppID supports placeholders for flexible customization of taskbar icon grouping behaviour (#784, mintty/wsltty#96, ?#495, ?#420, ??#801).
 
 ### 2.9.3 (4 October 2018) ###
 

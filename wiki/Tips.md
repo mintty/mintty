@@ -59,6 +59,8 @@ items automatically based on their icon and command line.  This can be
 overridden by setting the AppID to a custom string, in which case windows
 with the same AppID are grouped together.
 
+The AppID supports placeholder parameters for a flexible grouping 
+configuration (see manual).
 The special value `AppID=@` causes mintty to derive an implicit AppID 
 from the WSL system name, in order to achieve WSL distribution-specific 
 taskbar grouping. This resolves taskbar grouping problems in some cases 

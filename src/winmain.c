@@ -43,6 +43,7 @@ char * mintty_debug;
 
 #include <sys/stat.h>
 #include <fcntl.h>  // open flags
+#include <sys/utsname.h>
 
 #ifndef INT16
 #define INT16 short
@@ -111,6 +112,7 @@ static bool maxheight = false;
 static bool store_taskbar_properties = false;
 static bool prevent_pinning = false;
 bool support_wsl = false;
+wchar * wslname = 0;
 wstring wsl_basepath = W("");
 static char * wsl_guid = 0;
 static bool wsl_launch = false;
@@ -3136,7 +3138,7 @@ waccess(wstring fn, int amode)
 static int
 select_WSL(char * wsl)
 {
-  wchar * wslname = cs__mbstowcs(wsl ?: "");
+  wslname = cs__mbstowcs(wsl ?: "");
   wstring wsl_icon;
   // set --rootfs implicitly
   int err = getlxssinfo(false, wslname, &wsl_guid, &wsl_basepath, &wsl_icon);
@@ -3157,7 +3159,10 @@ select_WSL(char * wsl)
       // so an explicit config value derives AppID from wsl distro name
       set_arg_option("AppID", asform("%s.%s", APPNAME, wsl ?: "WSL"));
   }
-  free(wslname);
+  else {
+    free(wslname);
+    wslname = 0;
+  }
   return err;
 }
 
@@ -3283,53 +3288,20 @@ enum_commands(wstring commands, CMDENUMPROC cmdenum)
 
 
 static void
-configure_taskbar(void)
+configure_taskbar(wchar * app_id)
 {
   if (*cfg.task_commands) {
     enum_commands(cfg.task_commands, cmd_enum);
-    setup_jumplist(cfg.app_id, jumplist_len, jumplist_title, jumplist_cmd, jumplist_icon, jumplist_ii);
+    setup_jumplist(app_id, jumplist_len, jumplist_title, jumplist_cmd, jumplist_icon, jumplist_ii);
   }
 
 #if CYGWIN_VERSION_DLL_MAJOR >= 1007
   // initial patch (issue #471) contributed by Johannes Schindelin
-  wchar * app_id = (wchar *) cfg.app_id;
   wchar * relaunch_icon = (wchar *) cfg.icon;
   wchar * relaunch_display_name = (wchar *) cfg.app_name;
   wchar * relaunch_command = (wchar *) cfg.app_launch_cmd;
 
 #define dont_debug_properties
-
-#ifdef two_witty_ideas_with_bad_side_effects
-#warning automatic derivation of an AppId is likely not a good idea
-  // If an icon is configured but no app_id, we can derive one from the 
-  // icon in order to enable proper taskbar grouping by common icon.
-  // However, this has an undesirable side-effect if a shortcut is 
-  // pinned (presumably getting some implicit AppID from Windows) and 
-  // instances are started from there (with a different AppID...).
-  // Disabled.
-  if (relaunch_icon && *relaunch_icon && (!app_id || !*app_id)) {
-    const char * iconbasename = strrchr(cfg.icon, '/');
-    if (iconbasename)
-      iconbasename ++;
-    else {
-      iconbasename = strrchr(cfg.icon, '\\');
-      if (iconbasename)
-        iconbasename ++;
-      else
-        iconbasename = cfg.icon;
-    }
-    char * derived_app_id = malloc(strlen(iconbasename) + 7 + 1);
-    strcpy(derived_app_id, "Mintty.");
-    strcat(derived_app_id, iconbasename);
-    app_id = derived_app_id;
-  }
-  // If app_name is configured but no app_launch_cmd, we need an app_id 
-  // to make app_name effective as taskbar title, so invent one.
-  if (relaunch_display_name && *relaunch_display_name && 
-      (!app_id || !*app_id)) {
-    app_id = "Mintty.AppID";
-  }
-#endif
 
   // Set the app ID explicitly, as well as the relaunch command and display name
   if (prevent_pinning || (app_id && *app_id)) {
@@ -4175,14 +4147,44 @@ main(int argc, char *argv[])
     delete(icon_file);
   }
 
+  // Expand AppID placeholders
+  wchar * app_id = (wchar *)cfg.app_id;
+  if (wcschr(app_id, '%')) {
+    wchar * pc = app_id;
+    int pcn = 0;
+    while (*pc)
+      if (*pc++ == '%')
+        pcn++;
+    struct utsname name;
+    if (pcn <= 5 && uname(&name) >= 0) {
+      char * _ = strchr(name.sysname, '_');
+      if (_)
+        *_ = 0;
+      char * fmt = cs__wcstoutf(app_id);
+      char * icon = cs__wcstoutf(icon_is_from_shortcut ? cfg.icon : W(""));
+      char * wsln = cs__wcstoutf(wslname ?: W(""));
+      char * ai = asform(fmt,
+                         name.sysname,
+                         name.release,
+                         name.machine,
+                         icon,
+                         wsln);
+      app_id = cs__utftowcs(ai);
+      free(ai);
+      free(wsln);
+      free(icon);
+      free(fmt);
+    }
+  }
+
   // Set the AppID if specified and the required function is available.
-  if (*cfg.app_id && wcscmp(cfg.app_id, W("@")) != 0) {
+  if (*app_id && wcscmp(app_id, W("@")) != 0) {
     HMODULE shell = load_sys_library("shell32.dll");
     HRESULT (WINAPI *pSetAppID)(PCWSTR) =
       (void *)GetProcAddress(shell, "SetCurrentProcessExplicitAppUserModelID");
 
     if (pSetAppID)
-      pSetAppID(cfg.app_id);
+      pSetAppID(app_id);
   }
 
   inst = GetModuleHandle(NULL);
@@ -4464,7 +4466,7 @@ main(int argc, char *argv[])
     }
   }
 
-  configure_taskbar();
+  configure_taskbar(app_id);
 
   // The input method context.
   imc = ImmGetContext(wnd);
