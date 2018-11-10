@@ -1817,6 +1817,13 @@ options, which means they can only be set in config files or using the
 When this is disabled, keyboard input or pasting does not clear selection highlighting.
 
 .TP
+\fBSuspend output while selecting\fP (SuspendWhileSelecting=8080)
+During drag-selects, the user may want the screen to hold still 
+to be selected from. Mintty can suspend processing of terminal output 
+for a while; if the buffer exceeds the size configured with this parameter 
+(in bytes), output is flushed. Setting it to 0 disables the feature.
+
+.TP
 \fBTrim trailing space from selection on copy\fP (TrimSelection=true)
 When this is disabled, trailing space that was written to the terminal 
 in a line is included in the selection buffer.

@@ -158,6 +158,7 @@ typedef struct {
   string suppress_wheel;
   string filter_paste;
   bool input_clears_selection;
+  int suspbuf_max;
   bool trim_selection;
   char charwidth;
   char emojis;

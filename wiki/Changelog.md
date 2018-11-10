@@ -8,6 +8,7 @@ Appearance
   * Option Background== for floating window effect (using desktop wallpaper as background) (#18, ~#666, ~~#501).
 
 Window handling
+  * Fixed suspend-output-while-selecting buffer, size is configurable (#816, ~#799).
   * Consider glyph width for font width determination (#808).
   * Do not start process to construct process list for exit confirmation (~#448).
   * Enhanced taskbar icon grouping behaviour (#784, mintty/wsltty#96, ?#495, ?#420, ??#801).
@@ -16,6 +17,7 @@ Window handling
 
 Configuration
   * AppID supports placeholders for flexible customization of taskbar icon grouping behaviour (#784, mintty/wsltty#96, ?#495, ?#420, ??#801).
+  * Option SuspendWhileSelecting to set the max size of the suspend-output-while-selecting buffer (#816, ~#799).
 
 ### 2.9.3 (4 October 2018) ###
 
