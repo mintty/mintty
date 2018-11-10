@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Thu Oct  4 18:08:32 2018 -->
+<!-- CreationDate: Sat Nov 10 19:05:43 2018 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -83,6 +83,12 @@ invoked as a login shell.</p>
 <p style="margin-left:11%; margin-top: 1em">Invocation by a
 name of <b>wsl*</b><i>[-distro]</i> implies a
 <b>--WSL</b><i>[=distro]</i> parameter.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Mintty supports
+being started from a Windows desktop shortcut; it honours
+window and icon settings of the shortcut, disables
+daemonizing, and sets environment variable MINTTY_SHORTCUT
+to its pathname.</p>
 
 <h2>OPTIONS
 <a name="OPTIONS"></a>
@@ -903,9 +909,8 @@ sent as is. If it doesn&rsquo;t fit into one byte, it is
 sent as multiple bytes, with the most significant non-zero
 byte first.</p>
 
-
-<p style="margin-left:11%; margin-top: 1em"><b>Shortcuts</b>
-<br>
+<p style="margin-left:11%; margin-top: 1em"><b>Keyboard
+shortcuts</b> <br>
 An overview of all the keyboard shortcuts. <b><br>
 Scrollback</b></p>
 
@@ -961,10 +966,11 @@ sorted by creation time) <br>
 &ndash; <b>Ctrl+Alt+mouse-click/drag</b>: Move window</p>
 
 <p style="margin-left:22%; margin-top: 1em">Multi-monitor
-selection support: Alt+F2 will only spawn a new window after
-F2 has been released. While F2 is being held, the target
-monitor can be selected with a sequence of numeric keypad
-keys: <br>
+selection support: Alt+F2 (or user-defined &quot;new&quot;
+key as defined with option <b>KeyFunctions</b>) will only
+spawn a new window after F2 has been released. While the key
+is being held, the target monitor can be selected with a
+sequence of numeric keypad keys: <br>
 &ndash; cursor-up/down/left/right (8/2/4/6) navigate the
 target focus to the respective neighbour in the monitor
 grid; <br>
@@ -982,7 +988,8 @@ heuristic algorithm is used, based on the size of the
 smallest monitor attached to the system, so the target may
 not always be selected as expected if multiple monitors of
 different size are available or monitors are not arranged in
-a regular grid.</p>
+a regular grid. Note also that this feature is overridden by
+option <b>SessionGeomSync</b>.</p>
 
 <p style="margin-left:11%;"><b>Font zoom</b></p>
 
@@ -1774,7 +1781,9 @@ auto-hiding</b>(HideMouse=on)</p>
 <p style="margin-left:22%;">By default, mintty
 automatically hides the cross-hair mouse cursor when
 keyboard input is being entered. Setting this option =false
-keeps the cursor.</p>
+keeps the cursor. <br>
+(Corresponds to the xterm resource value
+<b>pointerMode:2</b>.)</p>
 
 <p style="margin-left:11%;"><b>Elastic text
 selection</b>(ElasticMouse=off)</p>
@@ -2265,6 +2274,16 @@ Clear selection highlighting on input</b>
 <p style="margin-left:22%;">When this is disabled, keyboard
 input or pasting does not clear selection highlighting.</p>
 
+<p style="margin-left:11%;"><b>Suspend output while
+selecting</b> (SuspendWhileSelecting=8080)</p>
+
+<p style="margin-left:22%;">During drag-selects, the user
+may want the screen to hold still to be selected from.
+Mintty can suspend processing of terminal output for a
+while; if the buffer exceeds the size configured with this
+parameter (in bytes), output is flushed. Setting it to 0
+disables the feature.</p>
+
 <p style="margin-left:11%;"><b>Trim trailing space from
 selection on copy</b> (TrimSelection=true)</p>
 
@@ -2380,6 +2399,18 @@ automatically based on their icon and command line. This can
 be overridden by setting the AppID to a custom string, in
 which case windows with the same AppID are grouped
 together.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The AppID
+option supports up to 5 <b>%s</b> placeholder parameters for
+a flexible grouping configuration, also supporting
+positional parameters <b>%N$s</b> (N = 1..5), to be replaced
+with these values: <br>
+&ndash; <b>%1$s</b>: system name (e.g. <b>CYGWIN</b>) <br>
+&ndash; <b>%2$s</b>: system release <br>
+&ndash; <b>%3$s</b>: machine type
+(<b>i686</b>/<b>x86_64</b>) <br>
+&ndash; <b>%4$s</b>: icon name if started from shortcut <br>
+&ndash; <b>%5$s</b>: WSL distribution name if selected</p>
 
 <p style="margin-left:22%; margin-top: 1em">The special
 value <b>AppID=@</b> causes mintty to derive an implicit
@@ -2788,10 +2819,16 @@ the image as a background picture, scaled to the terminal
 size (optional prefix <b>_</b> to the filename), or
 initially scaling the terminal to the aspect ratio of the
 image (prefix <b>%</b> to the filename), or as a tiled
-background texture (prefix <b>*</b> to the filename). The
-background can be changed with an OSC 11 escape sequence,
-using a filename prefixed with either <b>_</b>, <b>%</b>, or
-<b>*</b> instead of a colour.</p>
+background texture (prefix <b>*</b> to the filename), or it
+uses the current desktop background, achieving a virtual
+floating window effect (<b>=</b> without filename, currently
+only applicable if desktop wallpaper is set as being
+&quot;tiled&quot; and unscaled).</p>
+
+<p style="margin-left:22%; margin-top: 1em">The background
+can be changed with an OSC 11 escape sequence, instead of a
+colour using a background specification prefixed with either
+of <b>_</b>, <b>%</b>, <b>*</b>, <b>=</b>.</p>
 
 <p style="margin-left:22%; margin-top: 1em">If the
 background filename is followed by a comma and a number

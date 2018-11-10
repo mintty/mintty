@@ -1,3 +1,5 @@
+### 2.9.4 (10 November 2018) ###
+
 Terminal features
   * Copy as HTML (#811).
   * Mitigate stalling on very long paste buffer lines (#810).
