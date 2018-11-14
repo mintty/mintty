@@ -527,13 +527,13 @@ term_create_html(FILE * hf)
     }
 
     if (alpha >= 0) {
-      hprintf(hf, "    }\n");
-      hprintf(hf, "    #vt100 pre {\n");
-      hprintf(hf, "      background-color: rgba(%d, %d, %d, %.3f);\n",
+      hprintf(hf, "  }\n");
+      hprintf(hf, "  #vt100 pre {\n");
+      hprintf(hf, "    background-color: rgba(%d, %d, %d, %.3f);\n",
               red(bg_colour), green(bg_colour), blue(bg_colour),
               (255.0 - alpha) / 255);
-      hprintf(hf, "    }\n");
-      hprintf(hf, "    td {\n");
+      hprintf(hf, "  }\n");
+      hprintf(hf, "  .background {\n");
     }
 
     hprintf(hf, "    background-image: url('%s');\n", bg);
@@ -549,7 +549,7 @@ term_create_html(FILE * hf)
     hprintf(hf, "    background-color: #%02X%02X%02X;\n",
             red(bg_colour), green(bg_colour), blue(bg_colour));
   }
-  hprintf(hf, "    }\n");
+  hprintf(hf, "  }\n");
   hprintf(hf, "  .bd { font-weight: bold }\n");
   hprintf(hf, "  .it { font-style: italic }\n");
   hprintf(hf, "  .ul { text-decoration-line: underline }\n");
@@ -596,8 +596,8 @@ term_create_html(FILE * hf)
   hprintf(hf, "  </script>\n");
   hprintf(hf, "</head>\n\n");
   hprintf(hf, "<body onload='setup();'>\n");
-  hprintf(hf, "  <table border=0 cellpadding=0 cellspacing=0><tr><td xbackground=>\n");
-  hprintf(hf, "  <div id='vt100'>\n");
+  //hprintf(hf, "  <table border=0 cellpadding=0 cellspacing=0><tr><td>\n");
+  hprintf(hf, "  <div class=background id='vt100'>\n");
   hprintf(hf, "   <pre>");
 
   clip_workbuf * buf = get_selection(start, end, rect, true);
@@ -792,7 +792,7 @@ term_create_html(FILE * hf)
 
   hprintf(hf, "</pre>\n");
   hprintf(hf, "  </div>\n");
-  hprintf(hf, "  </td></tr></table>\n");
+  //hprintf(hf, "  </td></tr></table>\n");
   hprintf(hf, "</body>\n");
 
   return hbuf;
