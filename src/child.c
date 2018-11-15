@@ -826,7 +826,7 @@ user_command(int n)
    used by win_open
 */
 wstring
-child_conv_path(wstring wpath)
+child_conv_path(wstring wpath, bool adjust_dir)
 {
   int wlen = wcslen(wpath);
   int len = wlen * cs_cur_max;
@@ -834,22 +834,22 @@ child_conv_path(wstring wpath)
   len = cs_wcntombn(path, wpath, len, wlen);
   path[len] = 0;
 
-  char *exp_path;  // expanded path
+  char * exp_path;  // expanded path
   if (*path == '~') {
     // Tilde expansion
-    char *name = path + 1;
-    char *rest = strchr(path, '/');
+    char * name = path + 1;
+    char * rest = strchr(path, '/');
     if (rest)
       *rest++ = 0;
     else
       rest = "";
-    char *base;
+    char * base;
     if (!*name)
       base = home;
     else {
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
       // Find named user's home directory
-      struct passwd *pw = getpwnam(name);
+      struct passwd * pw = getpwnam(name);
       base = (pw ? pw->pw_dir : 0) ?: "";
 #else
       // Pre-1.5 Cygwin simply copies HOME into pw_dir, which is no use here.
@@ -858,7 +858,7 @@ child_conv_path(wstring wpath)
     }
     exp_path = asform("%s/%s", base, rest);
   }
-  else if (*path != '/') {
+  else if (*path != '/' && adjust_dir) {
 #if CYGWIN_VERSION_DLL_MAJOR >= 1005
     // Handle relative paths. Finding the foreground process working directory
     // requires the /proc filesystem, which isn't available before Cygwin 1.5.
@@ -868,7 +868,7 @@ child_conv_path(wstring wpath)
     if (fg_pid <= 0)
       fg_pid = pid;
 
-    char *cwd = foreground_cwd();
+    char * cwd = foreground_cwd();
     exp_path = asform("%s/%s", cwd ?: home, path);
     if (cwd)
       free(cwd);

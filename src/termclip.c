@@ -181,7 +181,7 @@ term_open(void)
   while (iswspace(*p))
     p++;
   if (*p)
-    win_open(wcsdup(buf->text));  // win_open frees its argument
+    win_open(wcsdup(buf->text), true);  // win_open frees its argument
 
   destroy_clip_workbuf(buf);
 }
@@ -859,7 +859,7 @@ term_export_html(bool do_open)
 
   if (do_open) {
     wchar * browse = cs__mbstowcs(htmlf);
-    win_open(browse);  // frees browse
+    win_open(browse, false);  // win_open frees its argument
   }
   free(htmlf);
 }

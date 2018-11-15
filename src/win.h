@@ -67,7 +67,7 @@ extern uint win_get_font_size(void);
 
 extern void win_check_glyphs(wchar *wcs, uint num);
 
-extern void win_open(wstring path);
+extern void win_open(wstring path, bool adjust_dir);
 extern void win_copy(const wchar *data, cattr *cattrs, int len);
 extern void win_paste(void);
 

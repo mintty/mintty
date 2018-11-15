@@ -303,7 +303,7 @@ dewsl(wchar * wpath)
 }
 
 void
-win_open(wstring wpath)
+win_open(wstring wpath, bool adjust_dir)
 // frees wpath
 {
   // unescape
@@ -356,7 +356,7 @@ win_open(wstring wpath)
 
       wpath = dewsl((wchar *)wpath);
     }
-    wstring conv_wpath = child_conv_path(wpath);
+    wstring conv_wpath = child_conv_path(wpath, adjust_dir);
 #ifdef debug_wsl
     printf("open <%ls> <%ls>\n", wpath, conv_wpath);
 #endif
@@ -706,7 +706,6 @@ win_copy(const wchar *data, cattr *cattrs, int len)
     // copy clipboard HTML format
     UINT CF_HTML = RegisterClipboardFormatA("HTML Format");
     if (CF_HTML) {
-      //char * html = "<p>täst <b>böld</b> <i>schräg</i></p>";
       char * html = term_get_html();
       char * htmlpre = "<html><!--StartFragment-->";
       char * htmlpost = "<!--EndFragment--></html>";

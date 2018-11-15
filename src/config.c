@@ -2262,7 +2262,7 @@ url_opener(control *ctrl, int event)
 {
   if (event == EVENT_ACTION) {
     wstring url = ctrl->context;
-    win_open(wcsdup(url));
+    win_open(wcsdup(url), true);  // win_open frees its argument
   }
   else if (event == EVENT_DROP) {
     theme_handler(theme, EVENT_DROP);
