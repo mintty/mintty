@@ -505,7 +505,7 @@ term_create_html(FILE * hf)
     "    padding: %dpx;\n"
     "    line-height: %d%%;\n"
     "    font-size: %dpt;\n"
-    "    font-family: '%s', 'Lucida Console ', 'Consolas';\n"
+    "    font-family: '%s', 'Lucida Console ', 'Consolas', monospace;\n"
                             // ? 'Lucida Sans Typewriter', 'Courier New', 'Courier'
     "    color: #%02X%02X%02X;\n",
     PADDING, line_scale, font_size, font_name,
@@ -617,12 +617,6 @@ term_create_html(FILE * hf)
     {
       // flush chunk with equal attributes
       hprintf(hf, "<span class='%s", odd ? "od" : "ev");
-
-      // retrieve chunk
-      wchar save = buf->text[i];
-      buf->text[i] = 0;
-      char * s = cs__wcstoutf(&buf->text[i0]);
-      buf->text[i] = save;
 
       cattr * ca = &buf->cattrs[i0];
       int fgi = (ca->attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
@@ -768,8 +762,44 @@ term_create_html(FILE * hf)
           hprintf(hf, "' name='blink");
       }
 
-      // write chunk
-      hprintf(hf, "'>%s</span>", s);
+      // retrieve chunk of text from buffer
+      wchar save = buf->text[i];
+      buf->text[i] = 0;
+      char * s = cs__wcstoutf(&buf->text[i0]);
+      buf->text[i] = save;
+
+      // write chunk, apply HTML escapes
+      char * s1 = strpbrk(s, "<&");
+      if (s1) {
+        hprintf(hf, "'>");
+        char * s0 = s;
+        do {
+          if (*s0 == '<') {
+            hprintf(hf, "&lt;");
+            s0 ++;
+          }
+          else if (*s0 == '&') {
+            hprintf(hf, "&amp;");
+            s0 ++;
+          }
+          else {
+            char c = s1 ? *s1 : 0;
+            if (s1)
+              *s1 = 0;
+            hprintf(hf, "%s", s0);
+            if (s1) {
+              *s1 = c;
+              s0 = s1;
+            }
+            else
+              s0 += strlen(s0);
+          }
+          s1 = strpbrk(s0, "<&");
+        } while (*s0);
+        hprintf(hf, "</span>");
+      }
+      else
+        hprintf(hf, "'>%s</span>", s);
       free(s);
 
       // forward chunk pointer
