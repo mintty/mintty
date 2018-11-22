@@ -3621,6 +3621,13 @@ main(int argc, char *argv[])
     icon_is_from_shortcut = true;
     unsetenv("MINTTY_ICON");
   }
+  if (getenv("MINTTY_PWD")) {
+    // if cloned and then launched from Windows shortcut 
+    // (by sanitizing taskbar icon grouping, #784, mintty/wsltty#96) 
+    // set proper directory
+    chdir(getenv("MINTTY_PWD"));
+    unsetenv("MINTTY_PWD");
+  }
 
   bool wdpresent = true;
   if (invoked_from_shortcut) {

@@ -942,7 +942,7 @@ setup_sync()
 /*
   Called from Alt+F2 (or session launcher via child_launch).
  */
-void
+static void
 do_child_fork(int argc, char *argv[], int moni, bool launch)
 {
   setup_sync();
@@ -1000,8 +1000,16 @@ do_child_fork(int argc, char *argv[], int moni, bool launch)
 
       chdir(set_dir);
       setenv("PWD", set_dir, true);  // avoid softlink resolution
-      if (!launch)
+      // prevent shell startup from setting current directory to $HOME
+      // unless cloned/Alt+F2 (!launch)
+      if (!launch) {
         setenv("CHERE_INVOKING", "mintty", true);
+        // if cloned and then launched from Windows shortcut (!shortcut) 
+        // (by sanitizing taskbar icon grouping, #784, mintty/wsltty#96) 
+        // indicate to set proper directory
+        if (shortcut)
+          setenv("MINTTY_PWD", set_dir, true);
+      }
 
       if (support_wsl)
         delete(set_dir);
