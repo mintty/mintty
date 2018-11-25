@@ -2487,9 +2487,9 @@ in order to avoid the risk of injecting commands via tricky selected text.
 
 Examples:
 .br
-\(en \fBUserCommands=Paste capital:echo -n "$MINTTY_SELECT" | /bin/tr 'a-z' 'A-Z';Paste small:echo -n "$MINTTY_SELECT" | /bin/tr 'A-Z' 'a-z'\fP
+\(en \fBUserCommands=Paste capital:echo -n "$MINTTY_SELECT" | tr 'a-z' 'A-Z';Paste small:echo -n "$MINTTY_SELECT" | tr 'A-Z' 'a-z'\fP
 .br
-\(en \fBUserCommands=google:/bin/cygstart https://www.google.de/search?q="$MINTTY_SELECT"\fP
+\(en \fBUserCommands=google:cygstart https://www.google.de/search?q="$MINTTY_SELECT"\fP
 
 \fINote:\fP Control characters need to be embedded verbatim; there is no escape notation.
 

@@ -422,6 +422,10 @@ term_cmd(char * cmdpat)
   char * cmd = cmdpat;
 #endif
 
+  char * path0 = getenv("PATH");
+  char * path1 = strdup("/bin:");
+  path1 = renewn(path1, strlen(path1) + strlen(path0) + 1);
+  strcat(path1, path0);
   FILE * cmdf = popen(cmd, "r");
   unsetenv("MINTTY_TITLE");
   unsetenv("MINTTY_OUTPUT");
@@ -442,6 +446,7 @@ term_cmd(char * cmdpat)
     if (term.bracketed_paste)
       child_write("\e[201~", 6);
   }
+  free(path1);
 }
 
 #include <time.h>
