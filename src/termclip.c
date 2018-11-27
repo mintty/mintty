@@ -426,6 +426,7 @@ term_cmd(char * cmdpat)
   char * path1 = strdup("/bin:");
   path1 = renewn(path1, strlen(path1) + strlen(path0) + 1);
   strcat(path1, path0);
+  setenv("PATH", path1, true);
   FILE * cmdf = popen(cmd, "r");
   unsetenv("MINTTY_TITLE");
   unsetenv("MINTTY_OUTPUT");
