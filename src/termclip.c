@@ -485,6 +485,8 @@ term_create_html(FILE * hf)
     rect = false;
   }
 
+  bool enhtml = true;  // compatibility enhanced HTML
+
   char * font_name = cs__wcstoutf(cfg.font.name);
   colour fg_colour = win_get_colour(FG_COLOUR_I);
   colour bg_colour = win_get_colour(BG_COLOUR_I);
@@ -502,20 +504,23 @@ term_create_html(FILE * hf)
     "  pre { font-family: inherit; }\n"
     );
   if (cfg.underl_colour != (colour)-1)
-    hprintf(hf, "  span { text-decoration-color: #%02X%02X%02X; }\n",
-            red(cfg.underl_colour), green(cfg.underl_colour), blue(cfg.underl_colour));
+    hprintf(hf,
+      "  span {\n"
+      // font needed here for some tools (e.g. Powerpoint)
+      "    font-family: '%s', 'Lucida Console ', 'Consolas', monospace;\n"
+                       // ? 'Lucida Sans Typewriter', 'Courier New', 'Courier'
+      "    text-decoration-color: #%02X%02X%02X;\n"
+      "  }\n"
+      , font_name,
+      red(cfg.underl_colour), green(cfg.underl_colour), blue(cfg.underl_colour)
+    );
   hprintf(hf,
     "  #vt100 {\n"
-    "    float: left;\n"
     "    border: 0px solid;\n"
     "    padding: %dpx;\n"
     "    line-height: %d%%;\n"
     "    font-size: %dpt;\n"
-    "    font-family: '%s', 'Lucida Console ', 'Consolas', monospace;\n"
-                            // ? 'Lucida Sans Typewriter', 'Courier New', 'Courier'
-    "    color: #%02X%02X%02X;\n",
-    PADDING, line_scale, font_size, font_name,
-    red(fg_colour), green(fg_colour), blue(fg_colour));
+    , PADDING, line_scale, font_size);
   free(font_name);
 
   if (*cfg.background && !term.selected) {
@@ -549,13 +554,27 @@ term_create_html(FILE * hf)
     }
 
     free(bg);
+
+    if (alpha < 0) {
+      hprintf(hf, "  }\n");
+      hprintf(hf, "  #vt100 pre {\n");
+    }
   }
   else
   {
+    hprintf(hf, "  }\n");
+    hprintf(hf, "  #vt100 pre {\n");
     hprintf(hf, "    background-color: #%02X%02X%02X;\n",
             red(bg_colour), green(bg_colour), blue(bg_colour));
   }
+  // add style for <pre>
+  // default color needed here for some tools (e.g. Powerpoint)
+  hprintf(hf, "    color: #%02X%02X%02X;\n",
+          red(fg_colour), green(fg_colour), blue(fg_colour));
+  // float needed here to avoid placement left of previous text (Thunderbird)
+  hprintf(hf, "    float: left;\n");
   hprintf(hf, "  }\n");
+  // add xterm-compatible style classes for some text attributes
   hprintf(hf, "  .bd { font-weight: bold }\n");
   hprintf(hf, "  .it { font-style: italic }\n");
   hprintf(hf, "  .ul { text-decoration-line: underline }\n");
@@ -572,7 +591,7 @@ term_create_html(FILE * hf)
                 i, r, g, b, i, r, g, b);
   }
   colour cursor_colour = win_get_colour(CURSOR_COLOUR_I);
-  hprintf(hf, "  .cursor { background-color: #%02X%02X%02X }\n",
+  hprintf(hf, "  #cursor { background-color: #%02X%02X%02X }\n",
           red(cursor_colour), green(cursor_colour), blue(cursor_colour));
 
   for (int i = 1; i <= 10; i++)
@@ -659,28 +678,79 @@ term_create_html(FILE * hf)
       fg = ac.truefg;
       bg = ac.truebg;
 
-      // add classes
-      if (ca->attr & ATTR_BOLD)
-        hprintf(hf, " bd");
-      if (ca->attr & ATTR_ITALIC)
-        hprintf(hf, " it");
-      if ((ca->attr & (ATTR_UNDER | ATTR_STRIKEOUT)) == (ATTR_UNDER | ATTR_STRIKEOUT))
-        hprintf(hf, " lu");
-      else if (ca->attr & ATTR_STRIKEOUT)
-        hprintf(hf, " st");
-      else if (ca->attr & UNDER_MASK)
-        hprintf(hf, " ul");
-      int findex = (ca->attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
-      if (findex)
-        hprintf(hf, " font%d", findex);
+      // add marker classes
       if (ca->attr & ATTR_FRAMED)
         hprintf(hf, " emoji");  // mark emoji style
+
+      // style adding function
+      bool with_style = false;
+      void add_style(char * s) {
+        if (!with_style) {
+          hprintf(hf, "' style='%s", s);
+          with_style = true;
+        }
+        else
+          hprintf(hf, " %s", s);
+      }
+      void add_color(char * pre, int col) {
+        colour ansii = win_get_colour(ANSI0 + col);
+        uchar r = red(ansii), g = green(ansii), b = blue(ansii);
+        hprintf(hf, "%scolor: #%02X%02X%02X;", pre, r, g, b);
+      }
+
+      // add style classes or resolved styles;
+      // explicit style= attributes instead of xterm-compatible classes
+      // are used for the sake of tools that do not take styles by class
+      // (Powerpoint; Word would take id= but not class=)
+      if (ca->attr & ATTR_BOLD) {
+        if (enhtml)
+          add_style("font-weight: bold;");
+        else
+          hprintf(hf, " bd");
+      }
+      if (ca->attr & ATTR_ITALIC) {
+        if (enhtml)
+          add_style("font-style: italic;");
+        else
+          hprintf(hf, " it");
+      }
+      if (!enhtml) {
+        if ((ca->attr & (ATTR_UNDER | ATTR_STRIKEOUT)) == (ATTR_UNDER | ATTR_STRIKEOUT))
+          hprintf(hf, " lu");
+        else if (ca->attr & ATTR_STRIKEOUT)
+          hprintf(hf, " st");
+        else if (ca->attr & UNDER_MASK)
+          hprintf(hf, " ul");
+      }
+      int findex = (ca->attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+      if (findex) {
+        if (enhtml) {
+          if (*cfg.fontfams[findex].name || findex == 10) {
+            add_style("font-family: ");
+            if (*cfg.fontfams[findex].name) {
+              char * fn = cs__wcstoutf(cfg.fontfams[findex].name);
+              hprintf(hf, "\"%s\";", fn);
+              free(fn);
+            }
+            else
+              hprintf(hf, "\"F25 Blackletter Typewriter\";");
+          }
+        }
+        else
+          hprintf(hf, " font%d", findex);
+      }
 
       // catch and verify predefined colours and apply their colour classes
       if (fgi == FG_COLOUR_I) {
         if ((ca->attr & ATTR_BOLD) && term.enable_bold_colour) {
           if (fg == bold_colour) {
-            hprintf(hf, " bold-color");
+            if (enhtml) {
+              add_style("color: ");
+              hprintf(hf, "#%02X%02X%02X;",
+                      red(bold_colour), green(bold_colour), blue(bold_colour));
+            }
+            else
+              hprintf(hf, " bold-color");
             fg = (colour)-1;
           }
         }
@@ -691,35 +761,30 @@ term_create_html(FILE * hf)
                && fg == win_get_colour(ANSI0 + fga + 8)
               )
       {
-        hprintf(hf, " fg-color%d", fga + 8);
+        if (enhtml)
+          add_color("", fga + 8);
+        else
+          hprintf(hf, " fg-color%d", fga + 8);
         fg = (colour)-1;
       }
       else if (fga < 16 && fg == win_get_colour(ANSI0 + fga)) {
-        hprintf(hf, " fg-color%d", fga);
+        if (enhtml)
+          add_color("", fga);
+        else
+          hprintf(hf, " fg-color%d", fga);
         fg = (colour)-1;
       }
       if (bgi == BG_COLOUR_I && bg == bg_colour)
         bg = (colour)-1;
       else if (bga < 16 && bg == win_get_colour(ANSI0 + bga)) {
-        hprintf(hf, " bg-color%d", bga);
+        if (enhtml)
+          add_color("background-", bga);
+        else
+          hprintf(hf, " bg-color%d", bga);
         bg = (colour)-1;
       }
-      if (ca->attr & (TATTR_ACTCURS | TATTR_PASCURS)) {
-        hprintf(hf, " cursor");
-        fg = win_get_colour(CURSOR_TEXT_COLOUR_I);
-        // more precise cursor colour adjustments could be made...
-      }
 
-      // add styles
-      bool with_style = false;
-      void add_style(char * s) {
-        if (!with_style) {
-          hprintf(hf, "' style='%s", s);
-          with_style = true;
-        }
-        else
-          hprintf(hf, " %s", s);
-      }
+      // add individual styles
 
       // add individual colours, or fix unmatched colours
       if (fg != (colour)-1) {
@@ -733,7 +798,19 @@ term_create_html(FILE * hf)
         hprintf(hf, "background-color: #%02X%02X%02X;", r, g, b);
       }
 
-      if (ca->attr & ATTR_OVERL) {
+      if (enhtml && (ca->attr & (UNDER_MASK | ATTR_STRIKEOUT | ATTR_OVERL))) {
+        // add explicit style= lining attributes for the sake of tools 
+        // that do not take styles by class (Powerpoint)
+        add_style("text-decoration:");
+        if (ca->attr & UNDER_MASK)
+          hprintf(hf, " underline");
+        if (ca->attr & ATTR_STRIKEOUT)
+          hprintf(hf, " line-through");
+        if (ca->attr & ATTR_OVERL)
+          hprintf(hf, " overline");
+        hprintf(hf, ";");
+      }
+      else if (ca->attr & ATTR_OVERL) {
         add_style("text-decoration-line: overline");
         if (ca->attr & ATTR_STRIKEOUT)
           hprintf(hf, " line-through");
@@ -766,6 +843,13 @@ term_create_html(FILE * hf)
           hprintf(hf, "' name='rapid");
         else if (ca->attr & ATTR_BLINK)
           hprintf(hf, "' name='blink");
+      }
+
+      // mark cursor position
+      if (ca->attr & (TATTR_ACTCURS | TATTR_PASCURS)) {
+        hprintf(hf, "' id='cursor");
+        fg = win_get_colour(CURSOR_TEXT_COLOUR_I);
+        // more precise cursor colour adjustments could be made...
       }
 
       // retrieve chunk of text from buffer
@@ -820,7 +904,11 @@ term_create_html(FILE * hf)
     if (buf->text[i] == '\n') {
       i++;
       i0 = i;
-      hprintf(hf, "\n");
+      if (enhtml)
+        // <br> needed for Powerpoint
+        hprintf(hf, "<br\n>");
+      else
+        hprintf(hf, "\n");
       odd = !odd;
     }
   }
