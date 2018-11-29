@@ -11,6 +11,11 @@
 
 #define IDM_OPEN            0x0010
 #define IDM_COPY            0x0020
+#define IDM_COPY_TEXT       0x0120
+#define IDM_COPY_RTF        0x0220
+#define IDM_COPY_HTXT       0x0320
+#define IDM_COPY_HFMT       0x0420
+#define IDM_COPY_HTML       0x0520
 #define IDM_PASTE           0x0030
 #define IDM_UNUSED          0x0040
 #define IDM_COPASTE         0x0140

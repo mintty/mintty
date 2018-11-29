@@ -101,6 +101,7 @@ const config default_cfg = {
   // Mouse
   .copy_on_select = true,
   .copy_as_rtf = true,
+  .copy_as_html = 0,
   .clicks_place_cursor = false,
   .middle_click_action = MC_PASTE,
   .right_click_action = RC_MENU,
@@ -326,6 +327,7 @@ options[] = {
   // Mouse
   {"CopyOnSelect", OPT_BOOL, offcfg(copy_on_select)},
   {"CopyAsRTF", OPT_BOOL, offcfg(copy_as_rtf)},
+  {"CopyAsHTML", OPT_INT, offcfg(copy_as_html)},
   {"ClicksPlaceCursor", OPT_BOOL, offcfg(clicks_place_cursor)},
   {"MiddleClickAction", OPT_MIDDLECLICK, offcfg(middle_click_action)},
   {"RightClickAction", OPT_RIGHTCLICK, offcfg(right_click_action)},
@@ -2889,6 +2891,7 @@ setup_config_box(controlbox * b)
   //__ Options - Mouse: panel title
                       _("Mouse functions"), null);
   ctrl_columns(s, 2, 50, 50);
+#ifdef copy_as_html_checkbox
   ctrl_checkbox(
     //__ Options - Mouse:
     s, _("Cop&y on select"),
@@ -2899,6 +2902,59 @@ setup_config_box(controlbox * b)
     s, _("Copy as &rich text"),
     dlg_stdcheckbox_handler, &new_cfg.copy_as_rtf
   )->column = 1;
+  ctrl_columns(s, 2, 50, 50);
+  ctrl_checkbox(
+    //__ Options - Mouse:
+    s, _("Copy as &HTML"),
+    dlg_stdcheckbox_handler, &new_cfg.copy_as_html
+  )->column = 1;
+#else
+#ifdef copy_as_html_right
+  ctrl_radiobuttons(
+    //__ Options - Mouse:
+    s, _("Copy as &HTML"), 2,
+    dlg_stdradiobutton_handler, &new_cfg.copy_as_html,
+    _("&None"), 0,
+    _("&Partial"), 1,
+    _("&Default"), 2,
+    _("&Full"), 3,
+    null
+  )->column = 1;
+  ctrl_checkbox(
+    //__ Options - Mouse:
+    s, _("Cop&y on select"),
+    dlg_stdcheckbox_handler, &new_cfg.copy_on_select
+  )->column = 0;
+  ctrl_checkbox(
+    //__ Options - Mouse:
+    s, _("Copy as &rich text"),
+    dlg_stdcheckbox_handler, &new_cfg.copy_as_rtf
+  )->column = 0;
+#else
+  ctrl_checkbox(
+    //__ Options - Mouse:
+    s, _("Cop&y on select"),
+    dlg_stdcheckbox_handler, &new_cfg.copy_on_select
+  )->column = 0;
+  ctrl_checkbox(
+    //__ Options - Mouse:
+    s, _("Copy as &rich text"),
+    dlg_stdcheckbox_handler, &new_cfg.copy_as_rtf
+  )->column = 1;
+  ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
+  ctrl_columns(s, 2, 100, 0);
+  ctrl_radiobuttons(
+    //__ Options - Mouse:
+    s, _("Copy as &HTML"), 4,
+    dlg_stdradiobutton_handler, &new_cfg.copy_as_html,
+    _("&None"), 0,
+    _("&Partial"), 1,
+    _("&Default"), 2,
+    _("&Full"), 3,
+    null
+  );
+#endif
+#endif
   ctrl_checkbox(
     //__ Options - Mouse:
     s, _("Clic&ks place command line cursor"),

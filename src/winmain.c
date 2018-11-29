@@ -2292,6 +2292,11 @@ static struct {
         when IDM_BREAK: child_break();
         when IDM_OPEN: term_open();
         when IDM_COPY: term_copy();
+        when IDM_COPY_TEXT: term_copy_as('t');
+        when IDM_COPY_RTF: term_copy_as('r');
+        when IDM_COPY_HTXT: term_copy_as('h');
+        when IDM_COPY_HFMT: term_copy_as('f');
+        when IDM_COPY_HTML: term_copy_as('H');
         when IDM_COPASTE: term_copy(); win_paste();
         when IDM_CLRSCRLBCK: term_clear_scrollback(); term.disptop = 0;
         when IDM_TOGLOG: toggle_logging();

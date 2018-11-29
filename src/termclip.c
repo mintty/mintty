@@ -159,14 +159,20 @@ get_selection(pos start, pos end, bool rect, bool allinline)
 }
 
 void
-term_copy(void)
+term_copy_as(char what)
 {
   if (!term.selected)
     return;
 
   clip_workbuf *buf = get_selection(term.sel_start, term.sel_end, term.sel_rect, false);
-  win_copy(buf->text, buf->cattrs, buf->len);
+  win_copy_as(buf->text, buf->cattrs, buf->len, what);
   destroy_clip_workbuf(buf);
+}
+
+void
+term_copy(void)
+{
+  term_copy_as(0);
 }
 
 void
@@ -456,7 +462,7 @@ term_cmd(char * cmdpat)
 #include "winpriv.h"  // PADDING
 
 static char *
-term_create_html(FILE * hf)
+term_create_html(FILE * hf, int level)
 {
   char * hbuf = hf ? 0 : strdup("");
   void
@@ -503,74 +509,83 @@ term_create_html(FILE * hf)
     "  body, pre { margin: 0; padding: 0; }\n"
     "  pre { font-family: inherit; }\n"
     );
-  if (cfg.underl_colour != (colour)-1)
+  hprintf(hf, "  span {\n");
+  if (level >= 2) {
+    // font needed in <span> for some tools (e.g. Powerpoint)
     hprintf(hf,
-      "  span {\n"
-      // font needed here for some tools (e.g. Powerpoint)
       "    font-family: '%s', 'Lucida Console ', 'Consolas', monospace;\n"
                        // ? 'Lucida Sans Typewriter', 'Courier New', 'Courier'
-      "    text-decoration-color: #%02X%02X%02X;\n"
-      "  }\n"
-      , font_name,
-      red(cfg.underl_colour), green(cfg.underl_colour), blue(cfg.underl_colour)
-    );
+      , font_name);
+    if (cfg.underl_colour != (colour)-1)
+      hprintf(hf, "    text-decoration-color: #%02X%02X%02X;\n",
+              red(cfg.underl_colour), green(cfg.underl_colour), blue(cfg.underl_colour));
+  }
+  free(font_name);
+  hprintf(hf, "  }\n");
+
   hprintf(hf,
     "  #vt100 {\n"
     "    border: 0px solid;\n"
     "    padding: %dpx;\n"
-    "    line-height: %d%%;\n"
-    "    font-size: %dpt;\n"
-    , PADDING, line_scale, font_size);
-  free(font_name);
+    , PADDING);
+  if (level >= 2) {
+    hprintf(hf,
+      "    line-height: %d%%;\n"
+      "    font-size: %dpt;\n"
+      , line_scale, font_size);
+  }
 
-  if (*cfg.background && !term.selected) {
-    wstring wbg = cfg.background;
-    bool tiled = *wbg == '*';
-    if (*wbg == '*' || *wbg == '_')
-      wbg++;
-    char * bg = cs__wcstoutf(wbg);
-    int alpha = -1;
-    char * salpha = strrchr(bg, ',');
-    if (salpha) {
-      *salpha = 0;
-      salpha++;
-      sscanf(salpha, "%u%c", &alpha, &(char){0});
+  if (level >= 3) {
+    if (*cfg.background && !term.selected) {
+      wstring wbg = cfg.background;
+      bool tiled = *wbg == '*';
+      if (*wbg == '*' || *wbg == '_')
+        wbg++;
+      char * bg = cs__wcstoutf(wbg);
+      int alpha = -1;
+      char * salpha = strrchr(bg, ',');
+      if (salpha) {
+        *salpha = 0;
+        salpha++;
+        sscanf(salpha, "%u%c", &alpha, &(char){0});
+      }
+  
+      if (alpha >= 0) {
+        hprintf(hf, "  }\n");
+        hprintf(hf, "  #vt100 pre {\n");
+        hprintf(hf, "    background-color: rgba(%d, %d, %d, %.3f);\n",
+                red(bg_colour), green(bg_colour), blue(bg_colour),
+                (255.0 - alpha) / 255);
+        hprintf(hf, "  }\n");
+        hprintf(hf, "  .background {\n");
+      }
+  
+      hprintf(hf, "    background-image: url('%s');\n", bg);
+      if (!tiled) {
+        hprintf(hf, "    background-attachment: no-repeat;\n");
+        hprintf(hf, "    background-size: 100%% 100%%;\n");
+      }
+  
+      free(bg);
+  
+      if (alpha < 0) {
+        hprintf(hf, "  }\n");
+        hprintf(hf, "  #vt100 pre {\n");
+      }
     }
-
-    if (alpha >= 0) {
+    else
+    {
       hprintf(hf, "  }\n");
       hprintf(hf, "  #vt100 pre {\n");
-      hprintf(hf, "    background-color: rgba(%d, %d, %d, %.3f);\n",
-              red(bg_colour), green(bg_colour), blue(bg_colour),
-              (255.0 - alpha) / 255);
-      hprintf(hf, "  }\n");
-      hprintf(hf, "  .background {\n");
+      hprintf(hf, "    background-color: #%02X%02X%02X;\n",
+              red(bg_colour), green(bg_colour), blue(bg_colour));
     }
-
-    hprintf(hf, "    background-image: url('%s');\n", bg);
-    if (!tiled) {
-      hprintf(hf, "    background-attachment: no-repeat;\n");
-      hprintf(hf, "    background-size: 100%% 100%%;\n");
-    }
-
-    free(bg);
-
-    if (alpha < 0) {
-      hprintf(hf, "  }\n");
-      hprintf(hf, "  #vt100 pre {\n");
-    }
+    // add style for <pre>
+    // default color needed here for some tools (e.g. Powerpoint)
+    hprintf(hf, "    color: #%02X%02X%02X;\n",
+            red(fg_colour), green(fg_colour), blue(fg_colour));
   }
-  else
-  {
-    hprintf(hf, "  }\n");
-    hprintf(hf, "  #vt100 pre {\n");
-    hprintf(hf, "    background-color: #%02X%02X%02X;\n",
-            red(bg_colour), green(bg_colour), blue(bg_colour));
-  }
-  // add style for <pre>
-  // default color needed here for some tools (e.g. Powerpoint)
-  hprintf(hf, "    color: #%02X%02X%02X;\n",
-          red(fg_colour), green(fg_colour), blue(fg_colour));
+
   // float needed here to avoid placement left of previous text (Thunderbird)
   hprintf(hf, "    float: left;\n");
   hprintf(hf, "  }\n");
@@ -594,14 +609,17 @@ term_create_html(FILE * hf)
   hprintf(hf, "  #cursor { background-color: #%02X%02X%02X }\n",
           red(cursor_colour), green(cursor_colour), blue(cursor_colour));
 
-  for (int i = 1; i <= 10; i++)
-    if (*cfg.fontfams[i].name) {
-      char * fn = cs__wcstoutf(cfg.fontfams[i].name);
-      hprintf(hf, "  .font%d { font-family: '%s' }\n", i, fn);
-      free(fn);
-    }
-  if (!*cfg.fontfams[10].name)
-    hprintf(hf, "  .font10 { font-family: 'F25 Blackletter Typewriter' }\n");
+  if (level >= 2) {
+    for (int i = 1; i <= 10; i++)
+      if (*cfg.fontfams[i].name) {
+        char * fn = cs__wcstoutf(cfg.fontfams[i].name);
+        hprintf(hf, "  .font%d { font-family: '%s' }\n", i, fn);
+        free(fn);
+      }
+    if (!*cfg.fontfams[10].name)
+      hprintf(hf, "  .font10 { font-family: 'F25 Blackletter Typewriter' }\n");
+  }
+
   hprintf(hf, "  </style>\n");
   hprintf(hf, "  <script>\n");
   hprintf(hf, "  var b1 = 500; var b2 = 300;\n");
@@ -923,9 +941,9 @@ term_create_html(FILE * hf)
 }
 
 char *
-term_get_html(void)
+term_get_html(int level)
 {
-  return term_create_html(0);
+  return term_create_html(0, level);
 }
 
 void
@@ -947,7 +965,7 @@ term_export_html(bool do_open)
     return;
   }
 
-  term_create_html(hf);
+  term_create_html(hf, 3);
 
   fclose(hf);  // implies close(hfd);
 

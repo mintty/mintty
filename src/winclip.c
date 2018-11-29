@@ -419,6 +419,12 @@ apply_attr_colour_rtf(cattr ca, attr_colour_mode mode, int * pfgi, int * pbgi)
 void
 win_copy(const wchar *data, cattr *cattrs, int len)
 {
+  win_copy_as(data, cattrs, len, 0);
+}
+
+void
+win_copy_as(const wchar *data, cattr *cattrs, int len, char what)
+{
   HGLOBAL clipdata, clipdata2, clipdata3 = 0;
   int len2;
   void *lock, *lock2, *lock3;
@@ -443,7 +449,7 @@ win_copy(const wchar *data, cattr *cattrs, int len)
   memcpy(lock, data, len * sizeof(wchar));
   WideCharToMultiByte(CP_ACP, 0, data, len, lock2, len2, null, null);
 
-  if (cattrs && cfg.copy_as_rtf) {
+  if (cattrs && ((cfg.copy_as_rtf && !what) || what == 'r')) {
     wchar unitab[256];
     char *rtf = null;
     uchar *tdata = (uchar *) lock2;
@@ -703,10 +709,20 @@ win_copy(const wchar *data, cattr *cattrs, int len)
     // copy clipboard RTF format
     if (clipdata3)
       SetClipboardData(RegisterClipboardFormat(CF_RTF), clipdata3);
+    // determine HTML format level requested
+    int level = 0;
+    if (cfg.copy_as_html && !what)
+      level = cfg.copy_as_rtf ? 2 : 3;
+    else if (what == 'h')
+      level = 1;
+    else if (what == 'f')
+      level = 2;
+    else if (what == 'H')
+      level = 3;
     // copy clipboard HTML format
-    UINT CF_HTML = RegisterClipboardFormatA("HTML Format");
+    UINT CF_HTML = level ? RegisterClipboardFormatA("HTML Format") : 0;
     if (CF_HTML) {
-      char * html = term_get_html();
+      char * html = term_get_html(level);
       char * htmlpre = "<html><!--StartFragment-->";
       char * htmlpost = "<!--EndFragment--></html>";
       int htmldescrlen = 92;

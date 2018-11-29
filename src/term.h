@@ -555,6 +555,7 @@ extern void term_paint(void);
 extern void term_invalidate(int left, int top, int right, int bottom);
 extern void term_open(void);
 extern void term_copy(void);
+extern void term_copy_as(char what);
 extern void term_paste(wchar *, uint len, bool all);
 extern void term_send_paste(void);
 extern void term_cancel_paste(void);

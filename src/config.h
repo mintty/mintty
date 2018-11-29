@@ -99,6 +99,7 @@ typedef struct {
   // Mouse
   bool copy_on_select;
   bool copy_as_rtf;
+  char copy_as_html;
   bool clicks_place_cursor;
   char middle_click_action;
   char right_click_action;

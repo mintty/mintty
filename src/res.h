@@ -9,7 +9,7 @@
 // during initialisation as tentatively demonstrated in windialog.c but the 
 // value is already needed before it would be available that way - totally insane!
 // Therefore, its setting is taken out to this common include file.
-#define DIALOG_HEIGHT 182
+#define DIALOG_HEIGHT 192  // +11 per ctrl_columns row
 #define DIALOG_WIDTH 256
 //#define DIALOG_WIDTH 310  // for CJK localisation
 

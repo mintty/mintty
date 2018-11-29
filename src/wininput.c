@@ -419,6 +419,11 @@ win_update_menus(void)
   modify_menu(ctxmenu, IDM_COPY, sel_enabled, _W("&Copy"),
     clip ? W("Ctrl+Ins") : ct_sh ? W("Ctrl+Shift+C") : null
   );
+  EnableMenuItem(ctxmenu, IDM_COPY_TEXT, sel_enabled);
+  EnableMenuItem(ctxmenu, IDM_COPY_RTF, sel_enabled);
+  EnableMenuItem(ctxmenu, IDM_COPY_HTXT, sel_enabled);
+  EnableMenuItem(ctxmenu, IDM_COPY_HFMT, sel_enabled);
+  EnableMenuItem(ctxmenu, IDM_COPY_HTML, sel_enabled);
 
   uint paste_enabled =
     IsClipboardFormatAvailable(CF_TEXT) ||
@@ -533,6 +538,18 @@ win_init_ctxmenu(bool extended_menu, bool user_commands)
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_OPEN, _W("Ope&n"));
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_COPY, 0);
+  if (extended_menu) {
+    //__ Context menu:
+    AppendMenuW(ctxmenu, MF_ENABLED, IDM_COPY_TEXT, _W("Copy as text"));
+    //__ Context menu:
+    AppendMenuW(ctxmenu, MF_ENABLED, IDM_COPY_RTF, _W("Copy as RTF"));
+    //__ Context menu:
+    AppendMenuW(ctxmenu, MF_ENABLED, IDM_COPY_HTXT, _W("Copy as HTML text"));
+    //__ Context menu:
+    AppendMenuW(ctxmenu, MF_ENABLED, IDM_COPY_HFMT, _W("Copy as HTML"));
+    //__ Context menu:
+    AppendMenuW(ctxmenu, MF_ENABLED, IDM_COPY_HTML, _W("Copy as HTML full"));
+  }
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_PASTE, 0);
   if (extended_menu) {
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_COPASTE, 0);
@@ -1232,6 +1249,11 @@ static struct {
   {"cycle-transparency-level", {.fct = transparency_level}},
 
   {"copy", {IDM_COPY}},
+  {"copy-text", {IDM_COPY_TEXT}},
+  {"copy-rtf", {IDM_COPY_RTF}},
+  {"copy-html-text", {IDM_COPY_HTXT}},
+  {"copy-html-format", {IDM_COPY_HFMT}},
+  {"copy-html-full", {IDM_COPY_HTML}},
   {"paste", {IDM_PASTE}},
   {"copy-paste", {IDM_COPASTE}},
   {"select-all", {IDM_SELALL}},

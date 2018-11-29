@@ -1,3 +1,21 @@
+Window handling
+  * Fix startup directory after cloning new window after starting from desktop shortcut (#784, mintty/wsltty#96).
+
+Tweaks to HTML clipboard/export feature
+  * Flexible HTML formatting levels.
+  * Configurable, also in Options dialog.
+  * No more table cell container.
+  * HTML escaping.
+  * Apply styles individually and other tweaks for increased compatibility.
+  * Font fallback 'monospace'.
+  * Find relative HTML file name on Shift+"HTML Screen Dump".
+
+Configuration
+  * CopyAsHTML (#825, #811).
+
+Other
+  * Ensuring /bin in PATH for user commands.
+
 ### 2.9.4 (10 November 2018) ###
 
 Terminal features
