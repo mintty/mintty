@@ -2471,44 +2471,47 @@ font_size_handler(control *ctrl, int event)
   }
 }
 
-void
-list_fonts(bool report)
+struct data_fontenum {
+  HDC dc;
+  bool report, initial;
+};
+
+static int CALLBACK
+fontenum(const ENUMLOGFONTW *lpelf, const NEWTEXTMETRICW *lpntm, DWORD fontType, LPARAM lParam)
 {
-  HDC dc = GetDC(0);
+  const LOGFONTW * lfp = &lpelf->elfLogFont;
+  struct data_fontenum *data = (struct data_fontenum *)lParam;
+  (void)lpntm, (void)fontType;
 
-  int CALLBACK fontenum(const ENUMLOGFONTW *lpelf, const NEWTEXTMETRICW *lpntm, DWORD fontType, LPARAM lParam)
-  {
-    const LOGFONTW * lfp = &lpelf->elfLogFont;
-    (void)lpntm, (void)fontType;
+  if (data->initial) {
+    data->initial = 0;
+    if ((lfp->lfPitchAndFamily & 3) == FIXED_PITCH && !lfp->lfCharSet)
+      EnumFontFamiliesW(data->dc, lfp->lfFaceName, (FONTENUMPROCW)fontenum, (LPARAM)data);
+  }
+  else if (!lfp->lfItalic && !lfp->lfCharSet) {
+    if (lfp->lfFaceName[0] == '@')
+      // skip vertical font families
+      return 1;
 
-    if (lParam) {
-      if ((lfp->lfPitchAndFamily & 3) == FIXED_PITCH && !lfp->lfCharSet)
-        EnumFontFamiliesW(dc, lfp->lfFaceName, (FONTENUMPROCW)fontenum, 0);
-    }
-    else if (!lfp->lfItalic && !lfp->lfCharSet) {
-      if (lfp->lfFaceName[0] == '@')
-        // skip vertical font families
-        return 1;
-
-      wchar * tagsplit(wchar * fn, wstring style)
-      {
+    wchar * tagsplit(wchar * fn, wstring style)
+    {
 #if CYGWIN_VERSION_API_MINOR >= 74
-        wchar * tag = wcsstr(fn, style);
-        if (tag) {
-          int n = wcslen(style);
-          if (tag[n] <= ' ' && tag != fn && tag[-1] == ' ') {
-            tag[-1] = 0;
-            tag[n] = 0;
-            return tag;
-          }
+      wchar * tag = wcsstr(fn, style);
+      if (tag) {
+        int n = wcslen(style);
+        if (tag[n] <= ' ' && tag != fn && tag[-1] == ' ') {
+          tag[-1] = 0;
+          tag[n] = 0;
+          return tag;
         }
-#else
-        (void)fn; (void)style;
-#endif
-        return 0;
       }
+#else
+      (void)fn; (void)style;
+#endif
+      return 0;
+    }
 
-      /**
+    /**
 	Courier|
 	FreeMono|Medium
 	Inconsolata|Medium
@@ -2519,46 +2522,55 @@ list_fonts(bool report)
 	TIFAX|Alpha
 	HanaMinA|Regular
 	DejaVu Sans Mono|Book
-       */
-      wchar * fn = wcsdup(lfp->lfFaceName);
-      wchar * st = tagsplit(fn, W("Oblique"));
-      if ((st = tagsplit(fn, lpelf->elfStyle))) {
-        //   Source Code Pro ExtraLight|ExtraLight
-        //-> Source Code Pro|ExtraLight
-      }
-      else {
-        wchar * fnst = fn;
-#if CYGWIN_VERSION_API_MINOR >= 74
-        int digsi = wcscspn(fn, W("0123456789"));
-        int nodigsi = wcsspn(&fn[digsi], W("0123456789"));
-        if (nodigsi)
-          fnst = &fn[digsi + nodigsi];
-#endif
-        for (uint i = 0; i < lengthof(weights); i++)
-          if ((st = tagsplit(fnst, weights[i]))) {
-            //   Iosevka Term Slab Medium Obliqu|Regular
-            //-> Iosevka Term Slab|Medium
-            break;
-          }
-      }
-      if (!st || !*st)
-        st = (wchar *)lpelf->elfStyle;
-      if (!*st)
-        st = W("Regular");
-      st = wcsdup(st);
-      fn = renewn(fn, wcslen(fn) + 1);
-
-      if (report)
-        printf("%03ld %ls|%ls [2m[%ls|%ls][0m\n", (long int)lfp->lfWeight, fn, st, lfp->lfFaceName, lpelf->elfStyle);
-      else
-        enterfontlist(fn, lfp->lfWeight, st);
+     */
+    wchar * fn = wcsdup(lfp->lfFaceName);
+    wchar * st = tagsplit(fn, W("Oblique"));
+    if ((st = tagsplit(fn, lpelf->elfStyle))) {
+      //   Source Code Pro ExtraLight|ExtraLight
+      //-> Source Code Pro|ExtraLight
     }
+    else {
+      wchar * fnst = fn;
+#if CYGWIN_VERSION_API_MINOR >= 74
+      int digsi = wcscspn(fn, W("0123456789"));
+      int nodigsi = wcsspn(&fn[digsi], W("0123456789"));
+      if (nodigsi)
+        fnst = &fn[digsi + nodigsi];
+#endif
+      for (uint i = 0; i < lengthof(weights); i++)
+        if ((st = tagsplit(fnst, weights[i]))) {
+          //   Iosevka Term Slab Medium Obliqu|Regular
+          //-> Iosevka Term Slab|Medium
+          break;
+        }
+    }
+    if (!st || !*st)
+      st = (wchar *)lpelf->elfStyle;
+    if (!*st)
+      st = W("Regular");
+    st = wcsdup(st);
+    fn = renewn(fn, wcslen(fn) + 1);
 
-    return 1;
+    if (data->report)
+      printf("%03ld %ls|%ls [2m[%ls|%ls][0m\n", (long int)lfp->lfWeight, fn, st, lfp->lfFaceName, lpelf->elfStyle);
+    else
+      enterfontlist(fn, lfp->lfWeight, st);
   }
 
-  EnumFontFamiliesW(dc, 0, (FONTENUMPROCW)fontenum, 1);
-  ReleaseDC(0, dc);
+  return 1;
+}
+
+void
+list_fonts(bool report)
+{
+  struct data_fontenum data = {
+    .dc = GetDC(0),
+    .report = report,
+    .initial = true
+  };
+
+  EnumFontFamiliesW(data.dc, 0, (FONTENUMPROCW)fontenum, (LPARAM)&data);
+  ReleaseDC(0, data.dc);
 }
 
 static void

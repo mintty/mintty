@@ -150,6 +150,99 @@ append_commands(HMENU menu, wstring commands, UINT_PTR idm_cmd, bool add_icons)
   free(cmds);
 }
 
+struct data_add_switcher {
+  int tabi, use_win_icons;
+  HMENU menu;
+};
+
+static BOOL CALLBACK
+wnd_enum_tabs(HWND curr_wnd, LPARAM lParam)
+{
+  struct data_add_switcher *data = (struct data_add_switcher *)lParam;
+  HMENU menu = data->menu;
+  WINDOWINFO curr_wnd_info;
+  curr_wnd_info.cbSize = sizeof(WINDOWINFO);
+  GetWindowInfo(curr_wnd, &curr_wnd_info);
+  if (class_atom == curr_wnd_info.atomWindowType) {
+    int len = GetWindowTextLengthW(curr_wnd);
+    wchar title[len + 1];
+    len = GetWindowTextW(curr_wnd, title, len + 1);
+
+    AppendMenuW((HMENU)menu, MF_ENABLED, IDM_GOTAB + data->tabi, title);
+    MENUITEMINFOW mi;
+    mi.cbSize = sizeof(MENUITEMINFOW);
+    mi.fMask = MIIM_STATE;
+    mi.fState = // (IsIconic(curr_wnd) ? MFS_DISABLED : 0) |
+                (curr_wnd == wnd ? MFS_DEFAULT : 0);
+      /*
+         MFS_DEFAULT: "A menu can contain only one default menu item, 
+                      which is displayed in bold."
+                      but multiple bold entries seem to work
+         MFS_HILITE: highlight is volatile
+         MFS_CHECKED: conflict with other MIIM_BITMAP usage
+      */
+    //if (has_flashed(curr_wnd))
+    //  mi.fState |= MFS_HILITE;
+
+    mi.fMask |= MIIM_BITMAP;
+    //if (has_flashed(curr_wnd))
+    //  mi.hbmpItem = HBMMENU_POPUP_RESTORE;
+    //else
+    if (IsIconic(curr_wnd))
+      mi.hbmpItem = HBMMENU_POPUP_MINIMIZE;
+    else
+      mi.hbmpItem = HBMMENU_POPUP_MAXIMIZE;
+
+    if (data->use_win_icons && !IsIconic(curr_wnd)) {
+# ifdef show_icon_via_itemdata
+# warning does not work
+      mi.fMask |= MIIM_DATA;
+      mi.hbmpItem = HBMMENU_SYSTEM;
+      mi.dwItemData = (ULONG_PTR)curr_wnd;
+# endif
+      HICON icon = (HICON)GetClassLongPtr(curr_wnd, GCLP_HICONSM);
+      if (icon) {
+        // convert icon to bitmap
+        //https://stackoverflow.com/questions/7375003/how-to-convert-hicon-to-hbitmap-in-vc/16787105#16787105
+# ifdef it_could_be_simple_Microsoft
+        // simple solution, loses transparency (black border)
+        ICONINFO ii;
+        GetIconInfo(icon, &ii);
+        HBITMAP bitmap = ii.hbmColor;
+# else
+        HBITMAP bitmap = icon_bitmap(icon);
+# endif
+
+        mi.fMask |= MIIM_BITMAP;
+        mi.hbmpItem = bitmap;
+      }
+    }
+
+#ifdef show_icon_via_callback
+#warning does not work
+    mi.fMask |= MIIM_BITMAP;
+    mi.hbmpItem = HBMMENU_CALLBACK;
+#endif
+
+#ifdef show_checkmarks
+    // this works only if both hbmpChecked and hbmpUnchecked are populated,
+    // not using HBMMENU_ predefines
+    mi.fMask |= MIIM_CHECKMARKS;
+    mi.fMask &= ~MIIM_BITMAP;
+    mi.hbmpChecked = mi.hbmpItem;  // test value (from data->use_win_icons)
+    mi.hbmpUnchecked = NULL;
+    if (!IsIconic(curr_wnd))
+      mi.fState |= MFS_CHECKED;
+#endif
+
+    SetMenuItemInfoW((HMENU)menu, IDM_GOTAB + data->tabi, 0, &mi);
+    add_tab(data->tabi, curr_wnd);
+
+    data->tabi++;
+  }
+  return true;
+}
+
 static void
 add_switcher(HMENU menu, bool vsep, bool hsep, bool use_win_icons)
 {
@@ -159,95 +252,14 @@ add_switcher(HMENU menu, bool vsep, bool hsep, bool use_win_icons)
   //__ Context menu, session switcher ("virtual tabs")
   AppendMenuW(menu, MF_DISABLED | bar, 0, _W("Session switcher"));
   AppendMenuW(menu, MF_SEPARATOR, 0, 0);
-  int tabi = 0;
+  struct data_add_switcher data = {
+    .tabi = 0,
+    .use_win_icons = use_win_icons,
+    .menu = menu
+  };
   clear_tabs();
 
-  BOOL CALLBACK wnd_enum_tabs(HWND curr_wnd, LPARAM menu)
-  {
-    WINDOWINFO curr_wnd_info;
-    curr_wnd_info.cbSize = sizeof(WINDOWINFO);
-    GetWindowInfo(curr_wnd, &curr_wnd_info);
-    if (class_atom == curr_wnd_info.atomWindowType) {
-      int len = GetWindowTextLengthW(curr_wnd);
-      wchar title[len + 1];
-      len = GetWindowTextW(curr_wnd, title, len + 1);
-
-      AppendMenuW((HMENU)menu, MF_ENABLED, IDM_GOTAB + tabi, title);
-      MENUITEMINFOW mi;
-      mi.cbSize = sizeof(MENUITEMINFOW);
-      mi.fMask = MIIM_STATE;
-      mi.fState = // (IsIconic(curr_wnd) ? MFS_DISABLED : 0) |
-                  (curr_wnd == wnd ? MFS_DEFAULT : 0);
-        /*
-           MFS_DEFAULT: "A menu can contain only one default menu item, 
-                        which is displayed in bold."
-                        but multiple bold entries seem to work
-           MFS_HILITE: highlight is volatile
-           MFS_CHECKED: conflict with other MIIM_BITMAP usage
-        */
-      //if (has_flashed(curr_wnd))
-      //  mi.fState |= MFS_HILITE;
-
-      mi.fMask |= MIIM_BITMAP;
-      //if (has_flashed(curr_wnd))
-      //  mi.hbmpItem = HBMMENU_POPUP_RESTORE;
-      //else
-      if (IsIconic(curr_wnd))
-        mi.hbmpItem = HBMMENU_POPUP_MINIMIZE;
-      else
-        mi.hbmpItem = HBMMENU_POPUP_MAXIMIZE;
-
-      if (use_win_icons && !IsIconic(curr_wnd)) {
-# ifdef show_icon_via_itemdata
-# warning does not work
-        mi.fMask |= MIIM_DATA;
-        mi.hbmpItem = HBMMENU_SYSTEM;
-        mi.dwItemData = (ULONG_PTR)curr_wnd;
-# endif
-        HICON icon = (HICON)GetClassLongPtr(curr_wnd, GCLP_HICONSM);
-        if (icon) {
-          // convert icon to bitmap
-          //https://stackoverflow.com/questions/7375003/how-to-convert-hicon-to-hbitmap-in-vc/16787105#16787105
-# ifdef it_could_be_simple_Microsoft
-          // simple solution, loses transparency (black border)
-          ICONINFO ii;
-          GetIconInfo(icon, &ii);
-          HBITMAP bitmap = ii.hbmColor;
-# else
-          HBITMAP bitmap = icon_bitmap(icon);
-# endif
-
-          mi.fMask |= MIIM_BITMAP;
-          mi.hbmpItem = bitmap;
-        }
-      }
-
-#ifdef show_icon_via_callback
-#warning does not work
-      mi.fMask |= MIIM_BITMAP;
-      mi.hbmpItem = HBMMENU_CALLBACK;
-#endif
-
-#ifdef show_checkmarks
-      // this works only if both hbmpChecked and hbmpUnchecked are populated,
-      // not using HBMMENU_ predefines
-      mi.fMask |= MIIM_CHECKMARKS;
-      mi.fMask &= ~MIIM_BITMAP;
-      mi.hbmpChecked = mi.hbmpItem;  // test value (from use_win_icons)
-      mi.hbmpUnchecked = NULL;
-      if (!IsIconic(curr_wnd))
-        mi.fState |= MFS_CHECKED;
-#endif
-
-      SetMenuItemInfoW((HMENU)menu, IDM_GOTAB + tabi, 0, &mi);
-      add_tab(tabi, curr_wnd);
-
-      tabi++;
-    }
-    return true;
-  }
-
-  EnumWindows(wnd_enum_tabs, (LPARAM)menu);
+  EnumWindows(wnd_enum_tabs, (LPARAM)&data);
 }
 
 static bool
