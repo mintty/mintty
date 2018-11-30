@@ -392,19 +392,78 @@ add_tabinfo(unsigned long tag, HWND wnd, wchar * title)
   }
 }
 
+static int
+comp_tabinfo(const void * t1, const void * t2)
+{
+  if (((struct tabinfo *)t1)->tag < ((struct tabinfo *)t2)->tag)
+    return -1;
+  if (((struct tabinfo *)t1)->tag > ((struct tabinfo *)t2)->tag)
+    return 1;
+  else
+    return 0;
+}
+
 static void
 sort_tabinfo()
 {
-  int comp_tabinfo(const void * t1, const void * t2)
-  {
-    if (((struct tabinfo *)t1)->tag < ((struct tabinfo *)t2)->tag)
-      return -1;
-    if (((struct tabinfo *)t1)->tag > ((struct tabinfo *)t2)->tag)
-      return 1;
-    else
-      return 0;
-  }
   qsort(tabinfo, ntabinfo, sizeof(struct tabinfo), comp_tabinfo);
+}
+
+static BOOL CALLBACK
+wnd_enum_tabs_refresh_tab_titles(HWND curr_wnd, LPARAM lp)
+{
+  bool trace = (bool)lp;
+
+  WINDOWINFO curr_wnd_info;
+  curr_wnd_info.cbSize = sizeof(WINDOWINFO);
+  GetWindowInfo(curr_wnd, &curr_wnd_info);
+  if (class_atom == curr_wnd_info.atomWindowType) {
+    int len = GetWindowTextLengthW(curr_wnd);
+    if (!len) {
+      // check whether already terminating
+      LONG fini = GetWindowLong(curr_wnd, GWL_USERDATA);
+      if (fini) {
+#ifdef debug_tabbar
+        printf("[%8p] get tab %8p: fini\n", wnd, curr_wnd);
+#endif
+        return true;
+      }
+    }
+    wchar title[len + 1];
+    GetWindowTextW(curr_wnd, title, len + 1);
+#ifdef debug_tabbar
+    printf("[%8p] get tab %8p: <%ls>\n", wnd, curr_wnd, title);
+#endif
+
+    static bool sort_tabs_by_time = true;
+
+    if (sort_tabs_by_time) {
+      DWORD pid;
+      GetWindowThreadProcessId(curr_wnd, &pid);
+      HANDLE ph = OpenProcess(PROCESS_QUERY_INFORMATION, 0, pid);
+      // PROCESS_QUERY_LIMITED_INFORMATION ?
+      FILETIME cr_time, dummy;
+      if (GetProcessTimes(ph, &cr_time, &dummy, &dummy, &dummy)) {
+        unsigned long long crtime = ((unsigned long long)cr_time.dwHighDateTime << 32) | cr_time.dwLowDateTime;
+        add_tabinfo(crtime, curr_wnd, title);
+        if (trace) {
+#ifdef debug_tabbar
+          SYSTEMTIME start_time;
+          if (FileTimeToSystemTime(&cr_time, &start_time))
+            printf("  %04d-%02d-%02d_%02d:%02d:%02d.%03d\n",
+                   start_time.wYear, start_time.wMonth, start_time.wDay,
+                   start_time.wHour, start_time.wMinute, 
+                   start_time.wSecond, start_time.wMilliseconds);
+#endif
+        }
+      }
+      CloseHandle(ph);
+    }
+    else
+      add_tabinfo((unsigned long)curr_wnd, curr_wnd, title);
+
+  }
+  return true;
 }
 
 /*
@@ -415,68 +474,31 @@ sort_tabinfo()
 static void
 refresh_tab_titles(bool trace)
 {
-  BOOL CALLBACK wnd_enum_tabs(HWND curr_wnd, LPARAM lp)
-  {
-    (void)lp;
-    WINDOWINFO curr_wnd_info;
-    curr_wnd_info.cbSize = sizeof(WINDOWINFO);
-    GetWindowInfo(curr_wnd, &curr_wnd_info);
-    if (class_atom == curr_wnd_info.atomWindowType) {
-      int len = GetWindowTextLengthW(curr_wnd);
-      if (!len) {
-        // check whether already terminating
-        LONG fini = GetWindowLong(curr_wnd, GWL_USERDATA);
-        if (fini) {
-#ifdef debug_tabbar
-          printf("[%8p] get tab %8p: fini\n", wnd, curr_wnd);
-#endif
-          return true;
-        }
-      }
-      wchar title[len + 1];
-      GetWindowTextW(curr_wnd, title, len + 1);
-#ifdef debug_tabbar
-      printf("[%8p] get tab %8p: <%ls>\n", wnd, curr_wnd, title);
-#endif
-
-      static bool sort_tabs_by_time = true;
-
-      if (sort_tabs_by_time) {
-        DWORD pid;
-        GetWindowThreadProcessId(curr_wnd, &pid);
-        HANDLE ph = OpenProcess(PROCESS_QUERY_INFORMATION, 0, pid);
-        // PROCESS_QUERY_LIMITED_INFORMATION ?
-        FILETIME cr_time, dummy;
-        if (GetProcessTimes(ph, &cr_time, &dummy, &dummy, &dummy)) {
-          unsigned long long crtime = ((unsigned long long)cr_time.dwHighDateTime << 32) | cr_time.dwLowDateTime;
-          add_tabinfo(crtime, curr_wnd, title);
-          if (trace) {
-#ifdef debug_tabbar
-            SYSTEMTIME start_time;
-            if (FileTimeToSystemTime(&cr_time, &start_time))
-              printf("  %04d-%02d-%02d_%02d:%02d:%02d.%03d\n",
-                     start_time.wYear, start_time.wMonth, start_time.wDay,
-                     start_time.wHour, start_time.wMinute, 
-                     start_time.wSecond, start_time.wMilliseconds);
-#endif
-          }
-        }
-        CloseHandle(ph);
-      }
-      else
-        add_tabinfo((unsigned long)curr_wnd, curr_wnd, title);
-
-    }
-    return true;
-  }
-
   clear_tabinfo();
-  EnumWindows(wnd_enum_tabs, 0);
+  EnumWindows(wnd_enum_tabs_refresh_tab_titles, (LPARAM)trace);
   sort_tabinfo();
 #if defined(debug_tabbar) || defined(debug_win_switch)
   for (int w = 0; w < ntabinfo; w++)
     printf("[%d] %p eq %d iconic %d <%ls>\n", w, tabinfo[w].wnd, tabinfo[w].wnd == wnd, IsIconic(tabinfo[w].wnd), tabinfo[w].title);
 #endif
+}
+
+static BOOL CALLBACK
+wnd_enum_tabs_update_tab_titles(HWND curr_wnd, LPARAM lp)
+{
+  (void)lp;
+  WINDOWINFO curr_wnd_info;
+  curr_wnd_info.cbSize = sizeof(WINDOWINFO);
+  GetWindowInfo(curr_wnd, &curr_wnd_info);
+  if (class_atom == curr_wnd_info.atomWindowType) {
+    if (curr_wnd != wnd) {
+      PostMessage(curr_wnd, WM_USER, 0, WIN_TITLE);
+#ifdef debug_tabbar
+      printf("notified %8p to update tabbar\n", curr_wnd);
+#endif
+    }
+  }
+  return true;
 }
 
 /*
@@ -485,27 +507,11 @@ refresh_tab_titles(bool trace)
 static void
 update_tab_titles()
 {
-  BOOL CALLBACK wnd_enum_tabs(HWND curr_wnd, LPARAM lp)
-  {
-    (void)lp;
-    WINDOWINFO curr_wnd_info;
-    curr_wnd_info.cbSize = sizeof(WINDOWINFO);
-    GetWindowInfo(curr_wnd, &curr_wnd_info);
-    if (class_atom == curr_wnd_info.atomWindowType) {
-      if (curr_wnd != wnd) {
-        PostMessage(curr_wnd, WM_USER, 0, WIN_TITLE);
-#ifdef debug_tabbar
-        printf("notified %8p to update tabbar\n", curr_wnd);
-#endif
-      }
-    }
-    return true;
-  }
   if (cfg.geom_sync) {
     // update my own list
     refresh_tab_titles(true);
     // tell the others to update their's
-    EnumWindows(wnd_enum_tabs, 0);
+    EnumWindows(wnd_enum_tabs_update_tab_titles, 0);
   }
 }
 
@@ -835,37 +841,41 @@ win_gotab(uint n)
 #endif
 }
 
+static BOOL CALLBACK
+wnd_enum_tabs_win_synctabs(HWND curr_wnd, LPARAM lp)
+{
+  int level = (int)lp;
+
+  WINDOWINFO curr_wnd_info;
+  curr_wnd_info.cbSize = sizeof(WINDOWINFO);
+  GetWindowInfo(curr_wnd, &curr_wnd_info);
+  if (class_atom == curr_wnd_info.atomWindowType) {
+    if (curr_wnd != wnd) {
+      if (win_is_fullscreen)
+        PostMessage(curr_wnd, WM_USER, 0, WIN_MAXIMIZE);
+      else if (level == 3) // minimize
+        PostMessage(curr_wnd, WM_USER, 0, WIN_MINIMIZE);
+      else {
+        RECT r;
+        GetWindowRect(wnd, &r);
+#ifdef debug_tabs
+        printf("sync all %d,%d %d,%d\n", (int)r.left, (int)r.top, (int)(r.right - r.left), (int)(r.bottom - r.top));
+#endif
+        PostMessage(curr_wnd, WM_USER,
+                    MAKEWPARAM(r.right - r.left, r.bottom - r.top),
+                    MAKELPARAM(r.left, r.top));
+      }
+    }
+  }
+  return true;
+}
+
 static void
 win_synctabs(int level)
 {
-  BOOL CALLBACK wnd_enum_tabs(HWND curr_wnd, LPARAM lp)
-  {
-    (void)lp;
-    WINDOWINFO curr_wnd_info;
-    curr_wnd_info.cbSize = sizeof(WINDOWINFO);
-    GetWindowInfo(curr_wnd, &curr_wnd_info);
-    if (class_atom == curr_wnd_info.atomWindowType) {
-      if (curr_wnd != wnd) {
-        if (win_is_fullscreen)
-          PostMessage(curr_wnd, WM_USER, 0, WIN_MAXIMIZE);
-        else if (level == 3) // minimize
-          PostMessage(curr_wnd, WM_USER, 0, WIN_MINIMIZE);
-        else {
-          RECT r;
-          GetWindowRect(wnd, &r);
-#ifdef debug_tabs
-          printf("sync all %d,%d %d,%d\n", (int)r.left, (int)r.top, (int)(r.right - r.left), (int)(r.bottom - r.top));
-#endif
-          PostMessage(curr_wnd, WM_USER,
-                      MAKEWPARAM(r.right - r.left, r.bottom - r.top),
-                      MAKELPARAM(r.left, r.top));
-        }
-      }
-    }
-    return true;
+  if (cfg.geom_sync >= level) {
+    EnumWindows(wnd_enum_tabs_win_synctabs, (LPARAM)level);
   }
-  if (cfg.geom_sync >= level)
-    EnumWindows(wnd_enum_tabs, 0);
 }
 
 
@@ -891,22 +901,33 @@ get_my_monitor_info(MONITORINFO *mip)
   GetMonitorInfo(mon, mip);
 }
 
+
+struct data_get_monitor_info {
+  int moni;
+  MONITORINFO *mip;
+};
+
+static BOOL CALLBACK
+monitor_enum_get_monitor_info(HMONITOR hMonitor, HDC hdcMonitor, LPRECT monp, LPARAM lParam)
+{
+  struct data_get_monitor_info *data = (struct data_get_monitor_info *)lParam;
+  (void)hdcMonitor, (void)monp;
+
+  GetMonitorInfo(hMonitor, data->mip);
+
+  return --(data->moni) > 0;
+}
+
 static void
 get_monitor_info(int moni, MONITORINFO *mip)
 {
   mip->cbSize = sizeof(MONITORINFO);
 
-  BOOL CALLBACK
-  monitor_enum(HMONITOR hMonitor, HDC hdcMonitor, LPRECT monp, LPARAM dwData)
-  {
-    (void)hdcMonitor, (void)monp, (void)dwData;
-
-    GetMonitorInfo(hMonitor, mip);
-
-    return --moni > 0;
-  }
-
-  EnumDisplayMonitors(0, 0, monitor_enum, 0);
+  struct data_get_monitor_info data = {
+    .moni = moni,
+    .mip = mip
+  };
+  EnumDisplayMonitors(0, 0, monitor_enum_get_monitor_info, (LPARAM)&data);
 }
 
 #define dont_debug_display_monitors_mockup
@@ -929,6 +950,62 @@ static const RECT monitors[] = {
 static long primary_monitor = 2 - 1;
 static long current_monitor = 1 - 1;  // assumption for MonitorFromWindow
 #endif
+
+struct data_search_monitors {
+  HMONITOR lookup_mon;
+  int moni;
+  int moni_found;
+  int *minx, *miny;
+  RECT vscr;
+  HMONITOR refmon, curmon;
+  int get_primary;
+  bool print_monitors;
+};
+
+static BOOL CALLBACK
+monitor_enum_search_monitors(HMONITOR hMonitor, HDC hdcMonitor, LPRECT monp, LPARAM dwData)
+{
+  struct data_search_monitors *data = (struct data_search_monitors *)dwData;
+  (void)hdcMonitor, (void)monp;
+
+  (data->moni) ++;
+  if (hMonitor == data->lookup_mon) {
+    // looking for index of specific monitor
+    data->moni_found = data->moni;
+    return FALSE;
+  }
+
+  MONITORINFO mi;
+  mi.cbSize = sizeof(MONITORINFO);
+  GetMonitorInfo(hMonitor, &mi);
+
+  if (data->get_primary && (mi.dwFlags & MONITORINFOF_PRIMARY)) {
+    data->moni_found = data->moni;  // fallback to be overridden by monitor found later
+    data->refmon = hMonitor;
+  }
+
+  // determining smallest monitor width and height
+  RECT fr = mi.rcMonitor;
+  if (*(data->minx) == 0 || *(data->minx) > fr.right - fr.left)
+    *(data->minx) = fr.right - fr.left;
+  if (*(data->miny) == 0 || *(data->miny) > fr.bottom - fr.top)
+    *(data->miny) = fr.bottom - fr.top;
+  data->vscr.top = min(data->vscr.top, fr.top);
+  data->vscr.left = min(data->vscr.left, fr.left);
+  data->vscr.right = max(data->vscr.right, fr.right);
+  data->vscr.bottom = max(data->vscr.bottom, fr.bottom);
+
+  if (data->print_monitors) {
+    printf("Monitor %d %s %s width,height %4d,%4d (%4d,%4d...%4d,%4d)\n", 
+           data->moni,
+           hMonitor == data->curmon ? "current" : "       ",
+           mi.dwFlags & MONITORINFOF_PRIMARY ? "primary" : "       ",
+           (int)(fr.right - fr.left), (int)(fr.bottom - fr.top),
+           (int)fr.left, (int)fr.top, (int)fr.right, (int)fr.bottom);
+  }
+
+  return TRUE;
+}
 
 /*
    search_monitors(&x, &y, 0, false, &moninfo)
@@ -990,86 +1067,48 @@ search_monitors(int * minx, int * miny, HMONITOR lookup_mon, int get_primary, MO
   }
 #endif
 
-  int moni = 0;
-  int moni_found = 0;
+  struct data_search_monitors data = {
+    .moni = 0,
+    .moni_found = 0,
+    .minx = minx,
+    .miny = miny,
+    .vscr = (RECT){0, 0, 0, 0},
+    .refmon = 0,
+    .curmon = lookup_mon ? 0 : MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST),
+    .get_primary = get_primary,
+    .print_monitors = !lookup_mon && !mip && get_primary
+  };
+
   * minx = 0;
   * miny = 0;
-  RECT vscr = (RECT){0, 0, 0, 0};
-  HMONITOR refmon = 0;
-  HMONITOR curmon = lookup_mon ? 0 : MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
-  bool print_monitors = !lookup_mon && !mip && get_primary;
 #ifdef debug_display_monitors
-  print_monitors = !lookup_mon;
+  data.print_monitors = !lookup_mon;
 #endif
 
-  BOOL CALLBACK
-  monitor_enum(HMONITOR hMonitor, HDC hdcMonitor, LPRECT monp, LPARAM dwData)
-  {
-    (void)hdcMonitor, (void)monp, (void)dwData;
+  EnumDisplayMonitors(0, 0, monitor_enum_search_monitors, (LPARAM)&data);
 
-    moni ++;
-    if (hMonitor == lookup_mon) {
-      // looking for index of specific monitor
-      moni_found = moni;
-      return FALSE;
-    }
-
-    MONITORINFO mi;
-    mi.cbSize = sizeof(MONITORINFO);
-    GetMonitorInfo(hMonitor, &mi);
-
-    if (get_primary && (mi.dwFlags & MONITORINFOF_PRIMARY)) {
-      moni_found = moni;  // fallback to be overridden by monitor found later
-      refmon = hMonitor;
-    }
-
-    // determining smallest monitor width and height
-    RECT fr = mi.rcMonitor;
-    if (*minx == 0 || *minx > fr.right - fr.left)
-      *minx = fr.right - fr.left;
-    if (*miny == 0 || *miny > fr.bottom - fr.top)
-      *miny = fr.bottom - fr.top;
-    vscr.top = min(vscr.top, fr.top);
-    vscr.left = min(vscr.left, fr.left);
-    vscr.right = max(vscr.right, fr.right);
-    vscr.bottom = max(vscr.bottom, fr.bottom);
-
-    if (print_monitors) {
-      printf("Monitor %d %s %s width,height %4d,%4d (%4d,%4d...%4d,%4d)\n", 
-             moni,
-             hMonitor == curmon ? "current" : "       ",
-             mi.dwFlags & MONITORINFOF_PRIMARY ? "primary" : "       ",
-             (int)(fr.right - fr.left), (int)(fr.bottom - fr.top),
-             (int)fr.left, (int)fr.top, (int)fr.right, (int)fr.bottom);
-    }
-
-    return TRUE;
+  if (!data.lookup_mon && !mip && !data.get_primary) {
+    *minx = data.vscr.right - data.vscr.left;
+    *miny = data.vscr.bottom - data.vscr.top;
+    return data.moni;
   }
-
-  EnumDisplayMonitors(0, 0, monitor_enum, 0);
-
-  if (!lookup_mon && !mip && !get_primary) {
-    *minx = vscr.right - vscr.left;
-    *miny = vscr.bottom - vscr.top;
-    return moni;
-  }
-  else if (lookup_mon) {
-    return moni_found;
+  else if (data.lookup_mon) {
+    return data.moni_found;
   }
   else if (mip) {
-    if (!refmon)  // not detected primary monitor as requested?
+    if (!data.refmon)  // not detected primary monitor as requested?
       // determine current monitor
-      refmon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+      data.refmon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
     mip->cbSize = sizeof(MONITORINFO);
-    GetMonitorInfo(refmon, mip);
-    if (get_primary == 2) {
-      *minx = vscr.left;
-      *miny = vscr.top;
+    GetMonitorInfo(data.refmon, mip);
+    if (data.get_primary == 2) {
+      *minx = data.vscr.left;
+      *miny = data.vscr.top;
     }
-    return moni;  // number of monitors
+    return data.moni;  // number of monitors
   }
   else
-    return moni;  // number of monitors printed
+    return data.moni;  // number of monitors printed
 }
 
 

@@ -328,6 +328,41 @@ get_default_charset(void)
     return DEFAULT_CHARSET;
 }
 
+struct data_adjust_font_weights {
+  struct fontfam *ff;
+  int fw_norm_0, fw_bold_0, fw_norm_1, fw_bold_1, default_charset;
+  bool font_found, ansi_found, cs_found;
+};
+
+static int CALLBACK
+enum_fonts_adjust_font_weights(const LOGFONTW * lfp, const TEXTMETRICW * tmp, DWORD fontType, LPARAM lParam)
+{
+  struct data_adjust_font_weights *data = (struct data_adjust_font_weights *)lParam;
+  (void)tmp;
+  (void)fontType;
+
+#if defined(debug_fonts) && debug_fonts > 1
+  trace_font(("%ls %dx%d %d it %d cs %d %s\n", lfp->lfFaceName, (int)lfp->lfWidth, (int)lfp->lfHeight, (int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
+#endif
+
+  data->font_found = true;
+  if (lfp->lfCharSet == ANSI_CHARSET)
+    data->ansi_found = true;
+  if (lfp->lfCharSet == data->default_charset || lfp->lfCharSet == DEFAULT_CHARSET)
+    data->cs_found = true;
+
+  if (lfp->lfWeight > data->fw_norm_0 && lfp->lfWeight <= data->ff->fw_norm)
+    data->fw_norm_0 = lfp->lfWeight;
+  if (lfp->lfWeight > data->fw_bold_0 && lfp->lfWeight <= data->ff->fw_bold)
+    data->fw_bold_0 = lfp->lfWeight;
+  if (lfp->lfWeight < data->fw_norm_1 && lfp->lfWeight >= data->ff->fw_norm)
+    data->fw_norm_1 = lfp->lfWeight;
+  if (lfp->lfWeight < data->fw_bold_1 && lfp->lfWeight >= data->ff->fw_bold)
+    data->fw_bold_1 = lfp->lfWeight;
+
+  return 1;  // continue
+}
+
 static void
 adjust_font_weights(struct fontfam * ff)
 {
@@ -342,77 +377,53 @@ adjust_font_weights(struct fontfam * ff)
   // find the closest available widths such that
   // fw_norm_0 <= ff->fw_norm <= fw_norm_1
   // fw_bold_0 <= ff->fw_bold <= fw_bold_1
-  int fw_norm_0 = 0;
-  int fw_bold_0 = 0;
-  int fw_norm_1 = 1000;
-  int fw_bold_1 = 1001;
-  bool font_found = false;
-  bool ansi_found = false;
   int default_charset = get_default_charset();
-  bool cs_found = default_charset == DEFAULT_CHARSET;
-
-  int CALLBACK enum_fonts(const LOGFONTW * lfp, const TEXTMETRICW * tmp, DWORD fontType, LPARAM lParam)
-  {
-    (void)tmp;
-    (void)fontType;
-    (void)lParam;
-
-#if defined(debug_fonts) && debug_fonts > 1
-    trace_font(("%ls %dx%d %d it %d cs %d %s\n", lfp->lfFaceName, (int)lfp->lfWidth, (int)lfp->lfHeight, (int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
-#endif
-
-    font_found = true;
-    if (lfp->lfCharSet == ANSI_CHARSET)
-      ansi_found = true;
-    if (lfp->lfCharSet == default_charset || lfp->lfCharSet == DEFAULT_CHARSET)
-      cs_found = true;
-
-    if (lfp->lfWeight > fw_norm_0 && lfp->lfWeight <= ff->fw_norm)
-      fw_norm_0 = lfp->lfWeight;
-    if (lfp->lfWeight > fw_bold_0 && lfp->lfWeight <= ff->fw_bold)
-      fw_bold_0 = lfp->lfWeight;
-    if (lfp->lfWeight < fw_norm_1 && lfp->lfWeight >= ff->fw_norm)
-      fw_norm_1 = lfp->lfWeight;
-    if (lfp->lfWeight < fw_bold_1 && lfp->lfWeight >= ff->fw_bold)
-      fw_bold_1 = lfp->lfWeight;
-
-    return 1;  // continue
-  }
+  struct data_adjust_font_weights data = {
+    .ff = ff,
+    .fw_norm_0 = 0,
+    .fw_bold_0 = 0,
+    .fw_norm_1 = 1000,
+    .fw_bold_1 = 1001,
+    .default_charset = default_charset,
+    .font_found = false,
+    .ansi_found = false,
+    .cs_found = default_charset == DEFAULT_CHARSET
+  };
 
   HDC dc = GetDC(0);
-  EnumFontFamiliesExW(dc, &lf, enum_fonts, 0, 0);
-  trace_font(("font width (%d)%d(%d)/(%d)%d(%d)", fw_norm_0, ff->fw_norm, fw_norm_1, fw_bold_0, ff->fw_bold, fw_bold_1));
+  EnumFontFamiliesExW(dc, &lf, enum_fonts_adjust_font_weights, (LPARAM)&data, 0);
+  trace_font(("font width (%d)%d(%d)/(%d)%d(%d)", data.fw_norm_0, ff->fw_norm, data.fw_norm_1, data.fw_bold_0, ff->fw_bold, data.fw_bold_1));
   ReleaseDC(0, dc);
 
   // check if no font found
-  if (!font_found) {
+  if (!data.font_found) {
     show_font_warning(ff, _("Font not found, using system substitute"));
     ff->fw_norm = 400;
     ff->fw_bold = 700;
     trace_font(("//\n"));
     return;
   }
-  if (!ansi_found && !cs_found) {
+  if (!data.ansi_found && !data.cs_found) {
     show_font_warning(ff, _("Font has limited support for character ranges"));
   }
 
   // find available widths closest to selected widths
-  if (abs(ff->fw_norm - fw_norm_0) <= abs(ff->fw_norm - fw_norm_1) && fw_norm_0 > 0)
-    ff->fw_norm = fw_norm_0;
-  else if (fw_norm_1 < 1000)
-    ff->fw_norm = fw_norm_1;
-  if (abs(ff->fw_bold - fw_bold_0) < abs(ff->fw_bold - fw_bold_1) || fw_bold_1 > 1000)
-    ff->fw_bold = fw_bold_0;
-  else if (fw_bold_1 < 1001)
-    ff->fw_bold = fw_bold_1;
+  if (abs(ff->fw_norm - data.fw_norm_0) <= abs(ff->fw_norm - data.fw_norm_1) && data.fw_norm_0 > 0)
+    ff->fw_norm = data.fw_norm_0;
+  else if (data.fw_norm_1 < 1000)
+    ff->fw_norm = data.fw_norm_1;
+  if (abs(ff->fw_bold - data.fw_bold_0) < abs(ff->fw_bold - data.fw_bold_1) || data.fw_bold_1 > 1000)
+    ff->fw_bold = data.fw_bold_0;
+  else if (data.fw_bold_1 < 1001)
+    ff->fw_bold = data.fw_bold_1;
   // ensure bold is bolder than normal
   if (ff->fw_bold <= ff->fw_norm) {
     trace_font((" -> %d/%d", ff->fw_norm, ff->fw_bold));
-    if (fw_norm_0 < ff->fw_norm && fw_norm_0 > 0)
-      ff->fw_norm = fw_norm_0;
+    if (data.fw_norm_0 < ff->fw_norm && data.fw_norm_0 > 0)
+      ff->fw_norm = data.fw_norm_0;
     if (ff->fw_bold - ff->fw_norm < 300) {
-      if (fw_bold_1 > ff->fw_bold && fw_bold_1 < 1001)
-        ff->fw_bold = fw_bold_1;
+      if (data.fw_bold_1 > ff->fw_bold && data.fw_bold_1 < 1001)
+        ff->fw_bold = data.fw_bold_1;
       else
         ff->fw_bold = min(ff->fw_norm + 300, 1000);
     }
@@ -731,6 +742,33 @@ wcscasestr(wstring in, wstring find)
   return 0;
 }
 
+static int CALLBACK
+enum_fonts_findFraktur(const LOGFONTW * lfp, const TEXTMETRICW * tmp, DWORD fontType, LPARAM lParam)
+{
+  wstring * fnp = (wstring *)lParam;
+  (void)tmp;
+  (void)fontType;
+
+#if defined(debug_fonts) && debug_fonts > 1
+  trace_font(("%ls %dx%d %d it %d cs %d %s\n", lfp->lfFaceName, (int)lfp->lfWidth, (int)lfp->lfHeight, (int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
+#endif
+  if ((lfp->lfPitchAndFamily & 3) == FIXED_PITCH
+   && !lfp->lfCharSet
+   && lfp->lfFaceName[0] != '@'
+     )
+  {
+    if (wcscasestr(lfp->lfFaceName, W("Fraktur"))) {
+      *fnp = wcsdup(lfp->lfFaceName);
+      return 0;  // done
+    }
+    else if (wcscasestr(lfp->lfFaceName, W("Blackletter"))) {
+      *fnp = wcsdup(lfp->lfFaceName);
+      // continue to look for "Fraktur"
+    }
+  }
+  return 1;  // continue
+}
+
 static void
 findFraktur(wstring * fnp)
 {
@@ -739,34 +777,8 @@ findFraktur(wstring * fnp)
   lf.lfPitchAndFamily = 0;
   lf.lfCharSet = ANSI_CHARSET;   // report only ANSI character range
 
-  int CALLBACK enum_fonts(const LOGFONTW * lfp, const TEXTMETRICW * tmp, DWORD fontType, LPARAM lParam)
-  {
-    (void)tmp;
-    (void)fontType;
-    (void)lParam;
-
-#if defined(debug_fonts) && debug_fonts > 1
-    trace_font(("%ls %dx%d %d it %d cs %d %s\n", lfp->lfFaceName, (int)lfp->lfWidth, (int)lfp->lfHeight, (int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
-#endif
-    if ((lfp->lfPitchAndFamily & 3) == FIXED_PITCH
-     && !lfp->lfCharSet
-     && lfp->lfFaceName[0] != '@'
-       )
-    {
-      if (wcscasestr(lfp->lfFaceName, W("Fraktur"))) {
-        *fnp = wcsdup(lfp->lfFaceName);
-        return 0;  // done
-      }
-      else if (wcscasestr(lfp->lfFaceName, W("Blackletter"))) {
-        *fnp = wcsdup(lfp->lfFaceName);
-        // continue to look for "Fraktur"
-      }
-    }
-    return 1;  // continue
-  }
-
   HDC dc = GetDC(0);
-  EnumFontFamiliesExW(dc, 0, enum_fonts, 0, 0);
+  EnumFontFamiliesExW(dc, 0, enum_fonts_findFraktur, (LPARAM)fnp, 0);
   ReleaseDC(0, dc);
 }
 
