@@ -151,24 +151,29 @@ append_commands(HMENU menu, wstring commands, UINT_PTR idm_cmd, bool add_icons)
 }
 
 struct data_add_switcher {
-  int tabi, use_win_icons;
+  int tabi;
+  bool use_win_icons;
   HMENU menu;
 };
 
 static BOOL CALLBACK
 wnd_enum_tabs(HWND curr_wnd, LPARAM lParam)
 {
-  struct data_add_switcher *data = (struct data_add_switcher *)lParam;
-  HMENU menu = data->menu;
   WINDOWINFO curr_wnd_info;
   curr_wnd_info.cbSize = sizeof(WINDOWINFO);
   GetWindowInfo(curr_wnd, &curr_wnd_info);
   if (class_atom == curr_wnd_info.atomWindowType) {
+    struct data_add_switcher * pdata = (struct data_add_switcher *)lParam;
+    HMENU menu = pdata->menu;
+    bool use_win_icons = pdata->use_win_icons;
+    int tabi = pdata->tabi;
+    pdata->tabi++;
+
     int len = GetWindowTextLengthW(curr_wnd);
     wchar title[len + 1];
     len = GetWindowTextW(curr_wnd, title, len + 1);
 
-    AppendMenuW((HMENU)menu, MF_ENABLED, IDM_GOTAB + data->tabi, title);
+    AppendMenuW((HMENU)menu, MF_ENABLED, IDM_GOTAB + tabi, title);
     MENUITEMINFOW mi;
     mi.cbSize = sizeof(MENUITEMINFOW);
     mi.fMask = MIIM_STATE;
@@ -193,7 +198,7 @@ wnd_enum_tabs(HWND curr_wnd, LPARAM lParam)
     else
       mi.hbmpItem = HBMMENU_POPUP_MAXIMIZE;
 
-    if (data->use_win_icons && !IsIconic(curr_wnd)) {
+    if (use_win_icons && !IsIconic(curr_wnd)) {
 # ifdef show_icon_via_itemdata
 # warning does not work
       mi.fMask |= MIIM_DATA;
@@ -229,16 +234,14 @@ wnd_enum_tabs(HWND curr_wnd, LPARAM lParam)
     // not using HBMMENU_ predefines
     mi.fMask |= MIIM_CHECKMARKS;
     mi.fMask &= ~MIIM_BITMAP;
-    mi.hbmpChecked = mi.hbmpItem;  // test value (from data->use_win_icons)
+    mi.hbmpChecked = mi.hbmpItem;  // test value (from use_win_icons)
     mi.hbmpUnchecked = NULL;
     if (!IsIconic(curr_wnd))
       mi.fState |= MFS_CHECKED;
 #endif
 
-    SetMenuItemInfoW((HMENU)menu, IDM_GOTAB + data->tabi, 0, &mi);
-    add_tab(data->tabi, curr_wnd);
-
-    data->tabi++;
+    SetMenuItemInfoW((HMENU)menu, IDM_GOTAB + tabi, 0, &mi);
+    add_tab(tabi, curr_wnd);
   }
   return true;
 }
@@ -258,7 +261,6 @@ add_switcher(HMENU menu, bool vsep, bool hsep, bool use_win_icons)
     .menu = menu
   };
   clear_tabs();
-
   EnumWindows(wnd_enum_tabs, (LPARAM)&data);
 }
 

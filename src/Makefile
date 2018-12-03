@@ -89,7 +89,12 @@ rc_srcs := $(wildcard *.rc)
 objs := $(c_srcs:.c=.o) $(rc_srcs:.rc=.o)
 bins := $(patsubst %.o,$(BINDIR)/%.o,$(objs))
 
-CFLAGS := -std=gnu99 -include std.h -Wall -Wextra -Wundef -Werror
+ifneq ($(platform), msys)
+  # ensure avoidance of trampolines (a gcc mechanism to implement 
+  # some nested functions) as they cause some security software to choke
+  SECUR=-Wtrampolines
+endif
+CFLAGS := -std=gnu99 -include std.h -Wall -Wextra -Wundef -Werror $(SECUR)
 
 ifeq ($(shell VER=`$(CC) -dumpversion`; expr $${VER%.*} '>=' 4.5), 1)
   CFLAGS += -mtune=atom

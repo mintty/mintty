@@ -742,33 +742,6 @@ wcscasestr(wstring in, wstring find)
   return 0;
 }
 
-static int CALLBACK
-enum_fonts_findFraktur(const LOGFONTW * lfp, const TEXTMETRICW * tmp, DWORD fontType, LPARAM lParam)
-{
-  wstring * fnp = (wstring *)lParam;
-  (void)tmp;
-  (void)fontType;
-
-#if defined(debug_fonts) && debug_fonts > 1
-  trace_font(("%ls %dx%d %d it %d cs %d %s\n", lfp->lfFaceName, (int)lfp->lfWidth, (int)lfp->lfHeight, (int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
-#endif
-  if ((lfp->lfPitchAndFamily & 3) == FIXED_PITCH
-   && !lfp->lfCharSet
-   && lfp->lfFaceName[0] != '@'
-     )
-  {
-    if (wcscasestr(lfp->lfFaceName, W("Fraktur"))) {
-      *fnp = wcsdup(lfp->lfFaceName);
-      return 0;  // done
-    }
-    else if (wcscasestr(lfp->lfFaceName, W("Blackletter"))) {
-      *fnp = wcsdup(lfp->lfFaceName);
-      // continue to look for "Fraktur"
-    }
-  }
-  return 1;  // continue
-}
-
 static void
 findFraktur(wstring * fnp)
 {
@@ -777,8 +750,34 @@ findFraktur(wstring * fnp)
   lf.lfPitchAndFamily = 0;
   lf.lfCharSet = ANSI_CHARSET;   // report only ANSI character range
 
+  int CALLBACK enum_fonts(const LOGFONTW * lfp, const TEXTMETRICW * tmp, DWORD fontType, LPARAM lParam)
+  {
+    (void)tmp;
+    (void)fontType;
+    wstring * fnp = (wstring *)lParam;
+
+#if defined(debug_fonts) && debug_fonts > 1
+    trace_font(("%ls %dx%d %d it %d cs %d %s\n", lfp->lfFaceName, (int)lfp->lfWidth, (int)lfp->lfHeight, (int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
+#endif
+    if ((lfp->lfPitchAndFamily & 3) == FIXED_PITCH
+     && !lfp->lfCharSet
+     && lfp->lfFaceName[0] != '@'
+       )
+    {
+      if (wcscasestr(lfp->lfFaceName, W("Fraktur"))) {
+        *fnp = wcsdup(lfp->lfFaceName);
+        return 0;  // done
+      }
+      else if (wcscasestr(lfp->lfFaceName, W("Blackletter"))) {
+        *fnp = wcsdup(lfp->lfFaceName);
+        // continue to look for "Fraktur"
+      }
+    }
+    return 1;  // continue
+  }
+
   HDC dc = GetDC(0);
-  EnumFontFamiliesExW(dc, 0, enum_fonts_findFraktur, (LPARAM)fnp, 0);
+  EnumFontFamiliesExW(dc, 0, enum_fonts, (LPARAM)fnp, 0);
   ReleaseDC(0, dc);
 }
 

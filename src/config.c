@@ -2473,20 +2473,24 @@ font_size_handler(control *ctrl, int event)
 
 struct data_fontenum {
   HDC dc;
-  bool report, initial;
+  bool report;
+  bool outer;
 };
 
 static int CALLBACK
 fontenum(const ENUMLOGFONTW *lpelf, const NEWTEXTMETRICW *lpntm, DWORD fontType, LPARAM lParam)
 {
   const LOGFONTW * lfp = &lpelf->elfLogFont;
-  struct data_fontenum *data = (struct data_fontenum *)lParam;
+  struct data_fontenum * pdata = (struct data_fontenum *)lParam;
   (void)lpntm, (void)fontType;
 
-  if (data->initial) {
-    data->initial = 0;
+  if (pdata->outer) {
+    // here we recurse into the fonts of one font family
+    struct data_fontenum rdata = {
+      .dc = pdata->dc, .report = pdata->report, .outer = false
+    };
     if ((lfp->lfPitchAndFamily & 3) == FIXED_PITCH && !lfp->lfCharSet)
-      EnumFontFamiliesW(data->dc, lfp->lfFaceName, (FONTENUMPROCW)fontenum, (LPARAM)data);
+      EnumFontFamiliesW(pdata->dc, lfp->lfFaceName, (FONTENUMPROCW)fontenum, (LPARAM)&rdata);
   }
   else if (!lfp->lfItalic && !lfp->lfCharSet) {
     if (lfp->lfFaceName[0] == '@')
@@ -2551,7 +2555,7 @@ fontenum(const ENUMLOGFONTW *lpelf, const NEWTEXTMETRICW *lpntm, DWORD fontType,
     st = wcsdup(st);
     fn = renewn(fn, wcslen(fn) + 1);
 
-    if (data->report)
+    if (pdata->report)
       printf("%03ld %ls|%ls [2m[%ls|%ls][0m\n", (long int)lfp->lfWeight, fn, st, lfp->lfFaceName, lpelf->elfStyle);
     else
       enterfontlist(fn, lfp->lfWeight, st);
@@ -2566,7 +2570,7 @@ list_fonts(bool report)
   struct data_fontenum data = {
     .dc = GetDC(0),
     .report = report,
-    .initial = true
+    .outer = true
   };
 
   EnumFontFamiliesW(data.dc, 0, (FONTENUMPROCW)fontenum, (LPARAM)&data);
