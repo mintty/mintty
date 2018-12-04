@@ -1705,6 +1705,16 @@ for an overview of SGR attributes.
 .br
 See \fIhttp://invisible-island.net/xterm/ctlseqs/ctlseqs.txt\fP
 for a full listing of escape control sequences.
+.br
+For some of the option values, more specific configuration parameters exist:
+.br
+\(en AllowBlinking=false \(<> SuppressSGR=5,6
+.br
+\(en Enable132ColumnSwitching=false \(~~ SuppressDEC=3 (permanent)
+.br
+\(en NoAltScreen=true \(~~ SuppressDEC=47,1047,1048,1049 (switchable)
+.br
+\(en AllowSetSelection=false \(<> SuppressOSC=52
 .RE
 
 .TP
