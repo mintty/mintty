@@ -148,7 +148,7 @@ sel_spread(void)
 }
 
 static bool
-hover_spread(void)
+hover_spread_empty(void)
 {
   term.hover_start = sel_spread_word(term.hover_start, false);
   term.hover_end = sel_spread_word(term.hover_end, true);
@@ -629,10 +629,10 @@ term_mouse_move(mod_keys mods, pos p)
       send_mouse_event(MA_MOVE, 0, mods, bp);
   }
 
-  if (mods == MDK_CTRL) {
+  if (mods == MDK_CTRL && term.has_focus) {
     p = get_selpoint(box_pos(p));
     term.hover_start = term.hover_end = p;
-    if (!hover_spread()) {
+    if (!hover_spread_empty()) {
       term.hovering = true;
       win_update(true);
     }
