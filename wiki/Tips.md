@@ -356,6 +356,7 @@ Due to a vim bug, full mouse mode is not automatically enabled in mintty.
 Add this to _~/.vimrc_ for a workaround:
 
 ```
+set mouse=a
 if has("mouse_sgr")
     set ttymouse=sgr
 else

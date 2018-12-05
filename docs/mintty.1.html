@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Sat Nov 10 19:05:43 2018 -->
+<!-- CreationDate: Wed Dec  5 10:56:29 2018 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -1713,6 +1713,26 @@ rich text format (RTF) in addition to plain text format. RTF
 preserves colours and styles when pasting text into
 applications that support it, e.g. word processors.</p>
 
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+Copy as rich text is also available as an explicit item in
+the extended context menu.</p>
+
+<p style="margin-left:11%;"><b>Copy as HTML</b>
+(CopyAsHTML=0)</p>
+
+<p style="margin-left:22%;">With this option, mintty also
+copies text in HTML format, using flexible levels of HTML
+formatting, when applying the normal copy function. <br>
+&ndash; <b>0</b>: do not include HTML <br>
+&ndash; <b>1</b>: copy HTML text only (no font information)
+<br>
+&ndash; <b>2</b>: copy HTML text (no global background) <br>
+&ndash; <b>3</b>: copy HTML (close to screen layout)</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+Copy as HTML levels are also available as explicit items in
+the extended context menu.</p>
+
 <p style="margin-left:11%;"><b>Clicks place command line
 cursor</b> (ClicksPlaceCursor=no)</p>
 
@@ -2119,7 +2139,15 @@ means &gt;= 24. <br>
 for an overview of SGR attributes. <br>
 See
 <i>http://invisible-island.net/xterm/ctlseqs/ctlseqs.txt</i>
-for a full listing of escape control sequences.</p>
+for a full listing of escape control sequences. <br>
+For some of the option values, more specific configuration
+parameters exist: <br>
+&ndash; AllowBlinking=false &harr; SuppressSGR=5,6 <br>
+&ndash; Enable132ColumnSwitching=false &asymp; SuppressDEC=3
+(permanent) <br>
+&ndash; NoAltScreen=true &asymp;
+SuppressDEC=47,1047,1048,1049 (switchable) <br>
+&ndash; AllowSetSelection=false &harr; SuppressOSC=52</p>
 
 <p style="margin-left:11%;"><b>Suppress mouse wheel</b>
 (SuppressMouseWheel=)</p>
@@ -2665,6 +2693,14 @@ compatible) <br>
 transparency level <br>
 &ndash; <b>copy</b>: copies the selection to the clipboard
 <br>
+&ndash; <b>copy-text</b>: copies text only <br>
+&ndash; <b>copy-rtf</b>: copies rich text format <br>
+&ndash; <b>copy-html-text</b>: copies HTML text only (no
+font information) <br>
+&ndash; <b>copy-html-format</b>: copies HTML text (no global
+background) <br>
+&ndash; <b>copy-html-full</b>: copies HTML (close to screen
+layout) <br>
 &ndash; <b>paste</b>: pastes from the clipboard <br>
 &ndash; <b>copy-paste</b>: copies and pastes <br>
 &ndash; <b>select-all</b>: selects all text including
@@ -3038,7 +3074,9 @@ text.</p>
 &quot;$MINTTY_SELECT&quot; | tr &rsquo;a-z&rsquo;
 &rsquo;A-Z&rsquo;;Paste small:echo -n
 &quot;$MINTTY_SELECT&quot; | tr &rsquo;A-Z&rsquo;
-&rsquo;a-z&rsquo;</b></p>
+&rsquo;a-z&rsquo;</b> <br>
+&ndash; <b>UserCommands=google:cygstart
+https://www.google.de/search?q=&quot;$MINTTY_SELECT&quot;</b></p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 Control characters need to be embedded verbatim; there is no

@@ -1,5 +1,9 @@
+### 2.9.5 (5 December 2018) ###
+
 Window handling
-  * Fix startup directory after cloning new window after starting from desktop shortcut (#784, mintty/wsltty#96).
+  * Fixed startup directory after cloning new window after starting from desktop shortcut (#784, mintty/wsltty#96).
+  * Avoiding stale hover indication in unfocussed window.
+  * Changed default handling of resolution change to HandleDPI=2 (#824).
 
 Tweaks to HTML clipboard/export feature
   * Flexible HTML formatting levels.
