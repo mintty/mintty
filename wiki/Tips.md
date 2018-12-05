@@ -350,6 +350,19 @@ let &t_EI.="\e[1 q"
 let &t_te.="\e[0 q"
 ```
 
+### Enabling full mouse functionality in vim ###
+
+Due to a vim bug, full mouse mode is not automatically enabled in mintty.
+Add this to _~/.vimrc_ for a workaround:
+
+```
+if has("mouse_sgr")
+    set ttymouse=sgr
+else
+    set ttymouse=xterm2
+end
+```
+
 ### Blinking cursor reset ###
 
 Some applications may reset cursor style, especially cursor blinking, 
