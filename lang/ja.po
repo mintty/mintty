@@ -506,7 +506,7 @@ msgstr "リッチテキストとしてコピー(&R)"
 #. __ Options - Mouse:
 #: config.c:2924 config.c:2931 config.c:2964
 msgid "Copy as &HTML"
-msgstr "コピー&HTML"
+msgstr "HTMLとしてコピー(&H)"
 
 #. __ Options - Mouse:
 #: config.c:2976
@@ -973,27 +973,27 @@ msgstr "開く(&N)"
 #. __ Context menu:
 #: wininput.c:557
 msgid "Copy as text"
-msgstr "コピーtext"
+msgstr "テキストとしてコピー"
 
 #. __ Context menu:
 #: wininput.c:559
 msgid "Copy as RTF"
-msgstr "コピーRTF"
+msgstr "RTFとしてコピー"
 
 #. __ Context menu:
 #: wininput.c:561
 msgid "Copy as HTML text"
-msgstr "コピーHTML text"
+msgstr "HTMLテキストとしてコピー"
 
 #. __ Context menu:
 #: wininput.c:563
 msgid "Copy as HTML"
-msgstr "コピーHTML"
+msgstr "HTMLとしてコピー"
 
 #. __ Context menu:
 #: wininput.c:565
 msgid "Copy as HTML full"
-msgstr "コピーHTML完全"
+msgstr "完全なHTMLとしてコピー"
 
 #. __ Context menu:
 #: wininput.c:572
