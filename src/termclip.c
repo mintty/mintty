@@ -713,6 +713,7 @@ term_create_html(FILE * hf, int level)
       void add_color(char * pre, int col) {
         colour ansii = win_get_colour(ANSI0 + col);
         uchar r = red(ansii), g = green(ansii), b = blue(ansii);
+        add_style("");
         hprintf(hf, "%scolor: #%02X%02X%02X;", pre, r, g, b);
       }
 
