@@ -352,7 +352,7 @@ let &t_te.="\e[0 q"
 
 ### Enabling full mouse functionality in vim ###
 
-Due to a vim bug, full mouse mode is not automatically enabled in mintty.
+Before vim 8.1.0566, full mouse mode is not automatically enabled in mintty.
 Add this to _~/.vimrc_ for a workaround:
 
 ```
