@@ -882,7 +882,8 @@ command-line.)
 Unicode-enabled settings: BellFile, ThemeFile, Background, Title, ExitTitle, Icon, Log, 
 Language, Font, Font1..., FontSample, Printer, Answerback, SixelClipChars, 
 Class, AppID, AppName, AppLaunchCmd, 
-DropCommands, UserCommands, SessionCommands, TaskCommands, KeyFunctions.
+DropCommands, UserCommands, SessionCommands, TaskCommands, KeyFunctions, 
+UserCommandsPath.
 
 Be careful when running multiple instances of mintty. If options are saved 
 from different instances, or the config file is edited manually, 
@@ -2242,7 +2243,9 @@ Shift state as being mapped from.
 
 \fINote (**):\fP For external commands as key functions, the same 
 additional functionality is provided as for context menu user commands 
-(option \fBUserCommands\fP): environment variables and PATH substitution.
+(option \fBUserCommands\fP): environment variables and PATH substitution;
+the PATH environment for the external command can be set up 
+with option \fBUserCommandsPath\fP.
 
 \fINote:\fP To just disable the built-in shortcut (and not override it 
 with a user-defined one), but further process the key as normal input, 
@@ -2518,6 +2521,9 @@ added to the localization file of the selected UI localization language
 with the escape sequence ^[[?7711h.
 See the Control Sequences wiki page \fIhttps://github.com/mintty/mintty/wiki/CtrlSeqs#scroll-markers\fP.
 
+\fINote:\fP The PATH environment for the external command can be set up 
+with option \fBUserCommandsPath\fP.
+
 \fINote:\fP This is an experimental feature, with an experimental configuration format.
 
 \fINote:\fP Normal terminal interaction continues after the invoked commands 
@@ -2535,6 +2541,14 @@ Examples:
 \(en \fBUserCommands=google:cygstart https://www.google.de/search?q="$MINTTY_SELECT"\fP
 
 \fINote:\fP Control characters need to be embedded verbatim; there is no escape notation.
+
+.TP
+\fBUser commands PATH expansion\fP (UserCommandsPath=/bin:%s)
+This setting defines the PATH environment for user-defined external commands,
+applicable to extended context menu commands (UserCommands=...:...)
+and key-attached external commands (KeyFunctions=...:`...`).
+If the value contains a single \fB%s\fP placeholder, the current 
+environment PATH is substituted for it.
 
 .TP
 \fBSession launcher commands\fP (SessionCommands=)

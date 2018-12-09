@@ -380,7 +380,7 @@ term_get_text(bool all, bool screen, bool command)
 }
 
 void
-term_cmd(char * cmdpat)
+term_cmd(char * cmd)
 {
   // provide scrollback buffer
   wchar * wsel = term_get_text(true, false, false);
@@ -411,28 +411,16 @@ term_cmd(char * cmdpat)
   setenv("MINTTY_TITLE", ttl, true);
   free(ttl);
 
-#ifdef use_placeholders
-  sel = 0;
-  if (strstr(cmdpat, "%s") || strstr(cmdpat, "%1$s")) {
-    wchar * wsel = term_get_text(false, false, false);
-    sel = cs__wcstombs(wsel);
-    free(wsel);
+  char * path = cs__wcstombs(cfg.user_commands_path);
+  if (*path) {
+    char * ph = strstr(path, "%s");
+    if (ph && !strchr(ph + 1, '%')) {
+      char * path1 = asform(path, getenv("PATH"));
+      free(path);
+      path = path1;
+    }
+    setenv("PATH", path, true);
   }
-
-  int len = strlen(cmdpat) + (sel ? strlen(sel) : 0) + 1;
-  char * cmd = newn(char, len);
-  sprintf(cmd, cmdpat, sel ?: "");
-  if (sel)
-    free(sel);
-#else
-  char * cmd = cmdpat;
-#endif
-
-  char * path0 = getenv("PATH");
-  char * path1 = strdup("/bin:");
-  path1 = renewn(path1, strlen(path1) + strlen(path0) + 1);
-  strcat(path1, path0);
-  setenv("PATH", path1, true);
   FILE * cmdf = popen(cmd, "r");
   unsetenv("MINTTY_TITLE");
   unsetenv("MINTTY_OUTPUT");
@@ -453,7 +441,7 @@ term_cmd(char * cmdpat)
     if (term.bracketed_paste)
       child_write("\e[201~", 6);
   }
-  free(path1);
+  free(path);
 }
 
 #include <time.h>
