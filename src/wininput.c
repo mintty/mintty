@@ -1154,22 +1154,6 @@ nop()
 {
 }
 
-/*
-   Simplified variant of term_cmd().
- */
-static void
-key_cmd(char * cmd)
-{
-  FILE * cmdf = popen(cmd, "r");
-  if (cmdf) {
-    char line[222];
-    while (fgets(line, sizeof line, cmdf)) {
-      child_send(line, strlen(line));
-    }
-    pclose(cmdf);
-  }
-}
-
 static struct {
   uchar vkey;
   char unmod;
@@ -1485,7 +1469,7 @@ win_key_down(WPARAM wp, LPARAM lp)
             else if (*fct == '`' && fct[wcslen(fct) - 1] == '`') {
               fct[wcslen(fct) - 1] = 0;
               char * cmd = cs__wcstombs(&fct[1]);
-              key_cmd(cmd);
+              term_cmd(cmd);
               free(cmd);
             }
             else if (!*paramp) {

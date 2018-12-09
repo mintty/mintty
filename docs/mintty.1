@@ -2161,7 +2161,7 @@ Supported actions are described as follows:
 .br
 \(en \fB"string"\fP or \fB'string'\fP: enters the literal string
 .br
-\(en \fB`command`\fP: enters the output of the command
+\(en \fB`command` (**)\fP: enters the output of the command
 .br
 \(en \fBfullscreen (*)\fP: switches to fullscreen mode
 .br
@@ -2239,6 +2239,10 @@ Supported actions are described as follows:
 
 \fINote (*):\fP The exact behaviour of some actions depends on the 
 Shift state as being mapped from.
+
+\fINote (**):\fP For external commands as key functions, the same 
+additional functionality is provided as for context menu user commands 
+(option \fBUserCommands\fP): environment variables and PATH substitution.
 
 \fINote:\fP To just disable the built-in shortcut (and not override it 
 with a user-defined one), but further process the key as normal input, 
