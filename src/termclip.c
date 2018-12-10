@@ -411,15 +411,18 @@ term_cmd(char * cmd)
   setenv("MINTTY_TITLE", ttl, true);
   free(ttl);
 
-  char * path = cs__wcstombs(cfg.user_commands_path);
-  if (*path) {
-    char * ph = strstr(path, "%s");
+  char * path0 = 0;
+  char * path1 = 0;
+  if (*cfg.user_commands_path) {
+    path0 = getenv("PATH");
+    path1 = cs__wcstombs(cfg.user_commands_path);
+    char * ph = strstr(path1, "%s");
     if (ph && !strchr(ph + 1, '%')) {
-      char * path1 = asform(path, getenv("PATH"));
-      free(path);
-      path = path1;
+      char * path2 = asform(path1, path0);
+      free(path1);
+      path1 = path2;
     }
-    setenv("PATH", path, true);
+    setenv("PATH", path1, true);
   }
   FILE * cmdf = popen(cmd, "r");
   unsetenv("MINTTY_TITLE");
@@ -441,7 +444,10 @@ term_cmd(char * cmd)
     if (term.bracketed_paste)
       child_write("\e[201~", 6);
   }
-  free(path);
+  if (path0)
+    setenv("PATH", path0, true);
+  if (path1)
+    free(path1);
 }
 
 #include <time.h>
