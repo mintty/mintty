@@ -929,6 +929,8 @@ and the Ctrl+Shift+I shortcut (if enabled).
 For configuration, see settings `SessionCommands`, `Menu*`, 
 and `SessionGeomSync`.
 Distinct sets of sessions can be set up with the setting `-o Class=...`.
+For flexible window grouping, this setting supports the same placeholders 
+as the `AppID` option.
 
 
 ## Multi-monitor support ##

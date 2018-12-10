@@ -1833,9 +1833,12 @@ window manager is used.
 
 .TP
 \fBWindow class name\fP (Class=mintty)
-The \fBClass\fP setting determines the name of the window class of the terminal
-window.  This can be used to help Windows scripting tools such as AutoHotKey to
-distinguish different mintty windows.  The name defaults to "mintty".
+The \fBClass\fP setting determines the name of the window class of the terminal window.
+It can be used to distinguish or group different mintty windows, e.g. for 
+the mintty session switcher, or for Windows scripting tools such as AutoHotKey.
+
+For a flexible grouping configuration, the Class option supports the 
+same \fB%s\fP placeholder parameters as the AppID option.
 
 .SS "Hidden" settings
 The following settings appear neither in the options dialog nor as command line

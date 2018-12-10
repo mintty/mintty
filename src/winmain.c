@@ -3432,6 +3432,43 @@ DEFINE_PROPERTYKEY(PKEY_AppUserModel_StartPinOption, 0x9f4c2855,0x9f79,0x4B39,0x
 }
 
 
+/*
+   Expand window group id (AppID or Class) by placeholders.
+ */
+static wchar *
+group_id(wstring id)
+{
+  if (wcschr(id, '%')) {
+    wchar * pc = (wchar *)id;
+    int pcn = 0;
+    while (*pc)
+      if (*pc++ == '%')
+        pcn++;
+    struct utsname name;
+    if (pcn <= 5 && uname(&name) >= 0) {
+      char * _ = strchr(name.sysname, '_');
+      if (_)
+        *_ = 0;
+      char * fmt = cs__wcstoutf(id);
+      char * icon = cs__wcstoutf(icon_is_from_shortcut ? cfg.icon : W(""));
+      char * wsln = cs__wcstoutf(wslname ?: W(""));
+      char * ai = asform(fmt,
+                         name.sysname,
+                         name.release,
+                         name.machine,
+                         icon,
+                         wsln);
+      id = cs__utftowcs(ai);
+      free(ai);
+      free(wsln);
+      free(icon);
+      free(fmt);
+    }
+  }
+  return (wchar *)id;
+}
+
+
 #define usage __("Usage:")
 #define synopsis __("[OPTION]... [ PROGRAM [ARG]... | - ]")
 static char help[] =
@@ -4192,34 +4229,7 @@ main(int argc, char *argv[])
   }
 
   // Expand AppID placeholders
-  wchar * app_id = (wchar *)cfg.app_id;
-  if (wcschr(app_id, '%')) {
-    wchar * pc = app_id;
-    int pcn = 0;
-    while (*pc)
-      if (*pc++ == '%')
-        pcn++;
-    struct utsname name;
-    if (pcn <= 5 && uname(&name) >= 0) {
-      char * _ = strchr(name.sysname, '_');
-      if (_)
-        *_ = 0;
-      char * fmt = cs__wcstoutf(app_id);
-      char * icon = cs__wcstoutf(icon_is_from_shortcut ? cfg.icon : W(""));
-      char * wsln = cs__wcstoutf(wslname ?: W(""));
-      char * ai = asform(fmt,
-                         name.sysname,
-                         name.release,
-                         name.machine,
-                         icon,
-                         wsln);
-      app_id = cs__utftowcs(ai);
-      free(ai);
-      free(wsln);
-      free(icon);
-      free(fmt);
-    }
-  }
+  wchar * app_id = group_id(cfg.app_id);
 
   // Set the AppID if specified and the required function is available.
   if (*app_id && wcscmp(app_id, W("@")) != 0) {
@@ -4236,7 +4246,7 @@ main(int argc, char *argv[])
   // Window class name.
   wstring wclass = W(APPNAME);
   if (*cfg.class)
-    wclass = cfg.class;
+    wclass = group_id(cfg.class);
 
   // Put child command line into window title if we haven't got one already.
   wstring wtitle = cfg.title;
