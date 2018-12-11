@@ -1328,6 +1328,7 @@ win_key_down(WPARAM wp, LPARAM lp)
 
   // Distinguish real LCONTROL keypresses from fake messages sent for AltGr.
   // It's a fake if the next message is an RMENU with the same timestamp.
+  // Or, as of buggy TeamViewer, if the RMENU comes soon after (#783).
   if (key == VK_CONTROL && !extended) {
     lctrl = true;
     lctrl_time = GetMessageTime();
@@ -1346,6 +1347,14 @@ win_key_down(WPARAM wp, LPARAM lp)
   bool lalt = is_key_down(VK_LMENU);
   bool ralt = is_key_down(VK_RMENU);
   bool alt = lalt | ralt;
+  bool external_hotkey = false;
+  if (ralt && !scancode && cfg.external_hotkeys) {
+    // Support external hot key injection by overriding disabled Alt+Fn
+    // and fix buggy StrokeIt (#833).
+    ralt = false;
+    if (cfg.external_hotkeys > 1)
+      external_hotkey = true;
+  }
   bool rctrl = is_key_down(VK_RCONTROL);
   bool ctrl = lctrl | rctrl;
   bool ctrl_lalt_altgr = cfg.ctrl_alt_is_altgr & ctrl & lalt & !ralt;
@@ -1659,7 +1668,11 @@ win_key_down(WPARAM wp, LPARAM lp)
 #endif
 
     // Alt+Fn shortcuts
-    if (cfg.alt_fn_shortcuts && alt && !altgr && VK_F1 <= key && key <= VK_F24) {
+    if ((cfg.alt_fn_shortcuts || external_hotkey)
+        && alt && !altgr
+        && VK_F1 <= key && key <= VK_F24
+       )
+    {
       if (!ctrl) {
         switch (key) {
           when VK_F2:
