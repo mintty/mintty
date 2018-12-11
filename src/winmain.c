@@ -3001,6 +3001,54 @@ get_shortcut_icon_location(wchar * iconfile, bool * wdpresent)
   return result;
 }
 
+static wchar *
+get_shortcut_appid(wchar * shortcut)
+{
+  HRESULT hres = OleInitialize(NULL);
+  if (hres != S_FALSE && hres != S_OK)
+    return 0;
+
+  IShellLink * link;
+  hres = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, 
+                          &IID_IShellLink, (voidrefref) &link);
+  if (!SUCCEEDED(hres))
+    return 0;
+
+  wchar * res = 0;
+
+  IPersistFile * file;
+  hres = link->lpVtbl->QueryInterface(link, &IID_IPersistFile, (voidrefref) &file);
+  if (!SUCCEEDED(hres))
+    goto rel1;
+
+  hres = file->lpVtbl->Load(file, (LPCOLESTR)shortcut, STGM_READ | STGM_SHARE_DENY_NONE);
+  if (!SUCCEEDED(hres))
+    goto rel2;
+
+  IPropertyStore * store;
+  hres = link->lpVtbl->QueryInterface(link, &IID_IPropertyStore, (voidrefref) &store);
+  if (!SUCCEEDED(hres))
+    goto rel3;
+
+  PROPVARIANT pv;
+  hres = store->lpVtbl->GetValue(store, &PKEY_AppUserModel_ID, &pv);
+  if (!SUCCEEDED(hres))
+    goto rel3;
+
+  if (pv.vt == VT_LPWSTR)
+    res = wcsdup(pv.pwszVal);
+
+  PropVariantClear(&pv);
+rel3:
+  store->lpVtbl->Release(store);
+rel2:
+  file->lpVtbl->Release(file);
+rel1:
+  link->lpVtbl->Release(link);
+
+  return res;
+}
+
 
 #if CYGWIN_VERSION_API_MINOR >= 74
 
@@ -4229,7 +4277,11 @@ main(int argc, char *argv[])
   }
 
   // Expand AppID placeholders
-  wchar * app_id = group_id(cfg.app_id);
+  wchar * app_id = 0;
+  if (invoked_from_shortcut)
+    app_id = get_shortcut_appid(sui.lpTitle);
+  if (!app_id)
+    app_id = group_id(cfg.app_id);
 
   // Set the AppID if specified and the required function is available.
   if (*app_id && wcscmp(app_id, W("@")) != 0) {
