@@ -616,7 +616,7 @@ win_init_menus(void)
 
   sysmenu = GetSystemMenu(wnd, false);
 
-  if (*cfg.sys_user_commands)
+  if (*cfg.sys_user_commands && false)
     append_commands(sysmenu, cfg.sys_user_commands, IDM_USERCOMMAND, false, true);
   else {
     //__ System menu:
