@@ -98,7 +98,7 @@ icon_bitmap(HICON hIcon)
 /* Menu handling */
 
 static void
-append_commands(HMENU menu, wstring commands, UINT_PTR idm_cmd, bool add_icons)
+append_commands(HMENU menu, wstring commands, UINT_PTR idm_cmd, bool add_icons, bool sysmenu)
 {
   char * cmds = cs__wcstoutf(commands);
   char * cmdp = cmds;
@@ -110,7 +110,10 @@ append_commands(HMENU menu, wstring commands, UINT_PTR idm_cmd, bool add_icons)
   char * paramp;
   while ((paramp = strchr(cmdp, ':'))) {
     *paramp++ = '\0';
-    AppendMenuW(menu, MF_ENABLED, idm_cmd + n, _W(cmdp));
+    if (sysmenu)
+      InsertMenuW(menu, SC_CLOSE, MF_ENABLED, idm_cmd + n, _W(cmdp));
+    else
+      AppendMenuW(menu, MF_ENABLED, idm_cmd + n, _W(cmdp));
     cmdp = strchr(paramp, sepch);
     if (cmdp)
       *cmdp++ = '\0';
@@ -274,7 +277,7 @@ add_launcher(HMENU menu, bool vsep, bool hsep)
     //__ Context menu, session launcher ("virtual tabs")
     AppendMenuW(menu, MF_DISABLED | bar, 0, _W("Session launcher"));
     AppendMenuW(menu, MF_SEPARATOR, 0, 0);
-    append_commands(menu, cfg.session_commands, IDM_SESSIONCOMMAND, true);
+    append_commands(menu, cfg.session_commands, IDM_SESSIONCOMMAND, true, false);
     return true;
   }
   else
@@ -525,17 +528,16 @@ win_update_menus(void)
 }
 
 static bool
-add_user_commands(HMENU menu, bool vsep, bool hsep)
+add_user_commands(HMENU menu, bool vsep, bool hsep, wstring title, wstring commands)
 {
-  if (*cfg.user_commands) {
+  if (*commands) {
     uint bar = vsep ? MF_MENUBARBREAK : 0;
     if (hsep)
       AppendMenuW(menu, MF_SEPARATOR, 0, 0);
-    //__ Context menu, user commands
-    AppendMenuW(menu, MF_DISABLED | bar, 0, _W("User commands"));
+    AppendMenuW(menu, MF_DISABLED | bar, 0, title);
     AppendMenuW(menu, MF_SEPARATOR, 0, 0);
 
-    append_commands(menu, cfg.user_commands, IDM_USERCOMMAND, false);
+    append_commands(menu, commands, IDM_USERCOMMAND, false, false);
     return true;
   }
   else
@@ -597,7 +599,7 @@ win_init_ctxmenu(bool extended_menu, bool user_commands)
   }
 
   if (user_commands && *cfg.user_commands) {
-    append_commands(ctxmenu, cfg.user_commands, IDM_USERCOMMAND, false);
+    append_commands(ctxmenu, cfg.user_commands, IDM_USERCOMMAND, false, false);
     AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   }
 
@@ -613,11 +615,17 @@ win_init_menus(void)
 #endif
 
   sysmenu = GetSystemMenu(wnd, false);
-  //__ System menu:
-  InsertMenuW(sysmenu, SC_CLOSE, MF_ENABLED, IDM_COPYTITLE, _W("Copy &Title"));
-  //__ System menu:
-  InsertMenuW(sysmenu, SC_CLOSE, MF_ENABLED, IDM_OPTIONS, _W("&Options..."));
-  InsertMenuW(sysmenu, SC_CLOSE, MF_ENABLED, IDM_NEW, 0);
+
+  if (*cfg.sys_user_commands)
+    append_commands(sysmenu, cfg.sys_user_commands, IDM_USERCOMMAND, false, true);
+  else {
+    //__ System menu:
+    InsertMenuW(sysmenu, SC_CLOSE, MF_ENABLED, IDM_COPYTITLE, _W("Copy &Title"));
+    //__ System menu:
+    InsertMenuW(sysmenu, SC_CLOSE, MF_ENABLED, IDM_OPTIONS, _W("&Options..."));
+    InsertMenuW(sysmenu, SC_CLOSE, MF_ENABLED, IDM_NEW, 0);
+  }
+
   InsertMenuW(sysmenu, SC_CLOSE, MF_SEPARATOR, 0, 0);
 }
 
@@ -666,7 +674,11 @@ open_popup_menu(bool use_text_cursor, string menucfg, mod_keys mods)
                     win_init_ctxmenu(true, true);
                     init = true;
                   }
-        when 'u': ok = add_user_commands(ctxmenu, vsep, hsep & !vsep);
+        when 'u': ok = add_user_commands(ctxmenu, vsep, hsep & !vsep,
+                                         //__ Context menu, user commands
+                                         _W("User commands"),
+                                         cfg.user_commands
+                                         );
         when 'W': wicons = true;
         when 's': add_switcher(ctxmenu, vsep, hsep & !vsep, wicons);
         when 'l': ok = add_launcher(ctxmenu, vsep, hsep & !vsep);

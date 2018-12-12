@@ -882,8 +882,8 @@ command-line.)
 Unicode-enabled settings: BellFile, ThemeFile, Background, Title, ExitTitle, Icon, Log, 
 Language, Font, Font1..., FontSample, Printer, Answerback, SixelClipChars, 
 Class, AppID, AppName, AppLaunchCmd, 
-DropCommands, UserCommands, SessionCommands, TaskCommands, KeyFunctions, 
-UserCommandsPath.
+DropCommands, UserCommands, SysUserCommands, SessionCommands, TaskCommands, 
+KeyFunctions, UserCommandsPath.
 
 Be careful when running multiple instances of mintty. If options are saved 
 from different instances, or the config file is edited manually, 
@@ -2569,6 +2569,14 @@ applicable to extended context menu commands (UserCommands=...:...)
 and key-attached external commands (KeyFunctions=...:`...`).
 If the value contains a single \fB%s\fP placeholder, the current 
 environment PATH is substituted for it.
+
+.TP
+\fBSystem menu user commands\fP (SysUserCommands=)
+This setting lists user-defined commands for the system menu 
+(right mouse click on title bar or left click on title bar icon).
+If it is configured, the middle items of the menu (including Options... 
+and New) are replaced by the configured commands.
+The configuration is identical to the \fBUserCommands\fP setting.
 
 .TP
 \fBSession launcher commands\fP (SessionCommands=)
