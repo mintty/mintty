@@ -1984,18 +1984,28 @@ from the WSL system name, in order to achieve WSL distribution-specific
 taskbar grouping. This resolves taskbar grouping problems in some cases 
 (wsltty issue #96) but causes similar problems in other cases (issue #784).
 
-\fIWarning:\fP Using this option in a Windows desktop shortcut may 
+\fIWarning:\fP Using this option for a mintty windows started from 
+a Windows shortcut (desktop, taskbar, start menu) may 
 cause trouble with taskbar grouping behaviour. If you need to do that, 
 the shortcut itself should also get attached with the same AppId.
+
+\fINote:\fP Since 2.9.6, if mintty is started via a Windows shortcut 
+which has its own AppID, it is reused for the new mintty window in order 
+to achieve proper taskbar icon grouping. This takes precedence over an 
+explicit setting of the AppID option.
 
 \fIExplanation:\fP Note that Windows shortcut files have their own AppID.
 Hence, if an AppID is specified in the mintty settings, but not on a 
 taskbar-pinned shortcut for invoking mintty, clicking the pinned 
 shortcut will result in a separate taskbar item for the new mintty window, 
 rather than being grouped with the shortcut.
-To avoid this, the shortcut's AppID has to be set to the same string, 
-which can be done using the \fBWin7AppId\fP utility available cloned in 
+
+\fIHint:\fP To avoid AppID inconsistence and thus ungrouped taskbar icons,
+the shortcut's AppID should to be set to the same string as the mintty AppID, 
+which can be done using the \fBwinappid\fP utility available in 
 the mintty utils repository \fIhttps://github.com/mintty/utils\fP.
+As noted above, since mintty 2.9.6, the mintty AppID does not need to be set 
+anymore in this case.
 
 .TP
 \fBApplication Taskbar Shortcut Title\fP (AppName=)
