@@ -152,6 +152,7 @@ typedef struct {
   // "Hidden"
   int bidi;
   bool disable_alternate_screen;
+  int display_speedup;
   string suppress_sgr;
   string suppress_dec;
   string suppress_win;

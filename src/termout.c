@@ -2487,6 +2487,12 @@ term_do_write(const char *buf, uint len)
         if (hwc) // Previous high surrogate not followed by low one
           write_error();
 
+        // ASCII shortcut for some speedup (~5%), earliest applied here
+        if (wc >= ' ' && wc <= 0x7E && cset == CSET_ASCII) {
+          write_char(wc, 1);
+          continue;
+        }
+
         if (is_high_surrogate(wc)) {
           term.high_surrogate = wc;
           continue;

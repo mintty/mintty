@@ -1853,6 +1853,13 @@ options, which means they can only be set in config files or using the
 \fB--option\fP or \fB-o\fP command line option.
 
 .TP
+\fBAccelerate display speed\fP (DisplaySpeedup=6)
+If mintty processes high volume of output, it will skip up to the given 
+number of refresh intervals (of 16ms each) in order to save output that 
+is visually scrolled off right away, so effectively increasing output speed.
+The maximum value is 9.
+
+.TP
 \fBClear selection highlighting on input\fP (ClearSelectionOnInput=true)
 When this is disabled, keyboard input or pasting does not clear selection highlighting.
 

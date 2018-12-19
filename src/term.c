@@ -1059,6 +1059,8 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
   bool down = lines < 0; // Scrolling downwards?
   lines = abs(lines);    // Number of lines to scroll by
 
+  lines_scrolled += lines;
+
   botline++; // One below the scroll region: easier to calculate with
 
   // Don't try to scroll more than the number of lines in the scroll region.
