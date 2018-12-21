@@ -508,7 +508,7 @@ msgstr "以富文本复制(&R)"
 #. __ Options - Mouse:
 #: config.c:2924 config.c:2931 config.c:2964
 msgid "Copy as &HTML"
-msgstr ""
+msgstr "复制HTML"
 
 #. __ Options - Mouse:
 #: config.c:2976
@@ -923,7 +923,7 @@ msgstr "字符详情(&I)"
 #. __ Context menu:
 #: wininput.c:477
 msgid "VT220 Keyboard"
-msgstr "VT220键盘"
+msgstr "VT200 键盘"
 
 #. __ Context menu:
 #: wininput.c:482
@@ -1005,7 +1005,7 @@ msgstr "全选(&A)"
 #. __ Context menu:
 #: wininput.c:577
 msgid "HTML Screen Dump"
-msgstr ""
+msgstr "HTML 屏幕转储"
 
 #. __ Context menu:
 #: wininput.c:585
