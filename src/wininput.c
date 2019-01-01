@@ -1376,6 +1376,13 @@ win_key_down(WPARAM wp, LPARAM lp)
 
   update_mouse(mods);
 
+  // Workaround for Windows clipboard history pasting simply injecting Ctrl+V
+  // (mintty/wsltty#139)
+  if (key == 'V' && mods == MDK_CTRL && !scancode) {
+    win_paste();
+    return true;
+  }
+
   if (key == VK_MENU) {
     if (!repeat && mods == MDK_ALT && alt_state == ALT_NONE)
       alt_state = ALT_ALONE;
