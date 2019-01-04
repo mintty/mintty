@@ -23,7 +23,7 @@ extern bool child_is_parent(void);
 extern wchar * grandchild_process_list(void);
 extern char * child_tty(void);
 extern char * foreground_prog(void);  // to be free()d
-extern void user_command(int n);
+extern void user_command(wstring commands, int n);
 extern wstring child_conv_path(wstring, bool adjust_dir);
 extern void child_fork(int argc, char * argv[], int moni);
 extern void child_set_fork_dir(char *);

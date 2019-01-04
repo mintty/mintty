@@ -2318,7 +2318,7 @@ static struct {
       else if ((wp & ~0xF) >= IDM_SESSIONCOMMAND)
         win_launch(wp - IDM_SESSIONCOMMAND);
       else if ((wp & ~0xF) >= IDM_USERCOMMAND)
-        user_command(wp - IDM_USERCOMMAND);
+        user_command(cfg.user_commands, wp - IDM_USERCOMMAND);
       else
       switch (wp & ~0xF) {  /* low 4 bits reserved to Windows */
         when IDM_BREAK: child_break();
