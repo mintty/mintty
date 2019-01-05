@@ -430,9 +430,6 @@ term_cmd(char * cmd)
   unsetenv("MINTTY_SCREEN");
   unsetenv("MINTTY_SELECT");
   unsetenv("MINTTY_BUFFER");
-  unsetenv("MINTTY_CWD");
-  unsetenv("MINTTY_PID");
-  unsetenv("MINTTY_PROG");
   if (cmdf) {
     if (term.bracketed_paste)
       child_write("\e[200~", 6);

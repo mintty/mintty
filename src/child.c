@@ -815,6 +815,9 @@ user_command(wstring commands, int n)
           free(fgd);
         }
         term_cmd(progp);
+        unsetenv("MINTTY_CWD");
+        unsetenv("MINTTY_PROG");
+        unsetenv("MINTTY_PID");
         break;
       }
       n--;
