@@ -1142,6 +1142,18 @@ mflags_copy()
   return term.selected ? MF_ENABLED : MF_GRAYED;
 }
 
+static void
+lock_title()
+{
+  title_settable = false;
+}
+
+static uint
+mflags_lock_title()
+{
+  return title_settable ? MF_ENABLED : MF_GRAYED;
+}
+
 // user-definable functions
 static struct function_def cmd_defs[] = {
 #ifdef support_sc_defs
@@ -1189,6 +1201,7 @@ static struct function_def cmd_defs[] = {
   {"select-all", {IDM_SELALL}, 0},
   {"clear-scrollback", {IDM_CLRSCRLBCK}, 0},
   {"copy-title", {IDM_COPYTITLE}, 0},
+  {"lock-title", {.fct = lock_title}, mflags_lock_title},
   {"reset", {IDM_RESET}, 0},
   {"break", {IDM_BREAK}, 0},
   {"flipscreen", {IDM_FLIPSCREEN}, 0},

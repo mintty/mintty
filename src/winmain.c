@@ -97,7 +97,7 @@ enum {
 };
 
 // Options
-static bool title_settable = true;
+bool title_settable = true;
 static string border_style = 0;
 static string report_geom = 0;
 static bool report_moni = false;

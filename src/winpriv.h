@@ -34,6 +34,7 @@ extern void toggle_charinfo(void);
 extern void toggle_vt220(void);
 extern char * fontpropinfo(void);
 
+extern bool title_settable;
 extern bool support_wsl;
 extern wstring wsl_basepath;
 
