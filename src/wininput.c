@@ -22,6 +22,17 @@ static bool newwin_home = false;
 static int newwin_monix = 0, newwin_moniy = 0;
 static int transparency_pending = 0;
 
+struct function_def {
+  string name;
+  union {
+    WPARAM cmd;
+    void (*fct)(void);
+  };
+  uint (*fct_status)(void);
+};
+
+static struct function_def * function_def(char * cmd);
+
 
 static inline void
 show_last_error()
@@ -525,6 +536,46 @@ win_update_menus(void)
   modify_menu(sysmenu, IDM_COPYTITLE, 0, _W("Copy &Title"), null);
   //__ System menu:
   modify_menu(sysmenu, IDM_OPTIONS, 0, _W("&Options..."), null);
+
+  // update user-defined menu functions (checked/enabled)
+  void
+  check_commands(HMENU menu, wstring commands, UINT_PTR idm_cmd)
+  {
+    char * cmds = cs__wcstoutf(commands);
+    char * cmdp = cmds;
+    int n = 0;
+    char sepch = ';';
+    if ((uchar)*cmdp <= (uchar)' ')
+      sepch = *cmdp++;
+
+    char * paramp;
+    while ((paramp = strchr(cmdp, ':'))) {
+      *paramp++ = '\0';
+      char * newcmdp = strchr(paramp, sepch);
+      if (newcmdp)
+        *newcmdp++ = '\0';
+
+      struct function_def * fudef = function_def(paramp);
+      if (fudef && fudef->fct_status) {
+        uint status = fudef->fct_status();
+        EnableMenuItem(menu, idm_cmd + n, status);
+      }
+
+      cmdp = newcmdp;
+      n++;
+      if (!cmdp)
+        break;
+      // check for multi-line separation
+      if (*cmdp == '\\' && cmdp[1] == '\n') {
+        cmdp += 2;
+        while (isspace(*cmdp))
+          cmdp++;
+      }
+    }
+    free(cmds);
+  }
+  if (*cfg.sys_user_commands)
+    check_commands(sysmenu, cfg.sys_user_commands, IDM_SYSMENUFUNCTION);
 }
 
 static bool
@@ -616,8 +667,8 @@ win_init_menus(void)
 
   sysmenu = GetSystemMenu(wnd, false);
 
-  if (*cfg.sys_user_commands && false)
-    append_commands(sysmenu, cfg.sys_user_commands, IDM_USERCOMMAND, false, true);
+  if (*cfg.sys_user_commands)
+    append_commands(sysmenu, cfg.sys_user_commands, IDM_SYSMENUFUNCTION, false, true);
   else {
     //__ System menu:
     InsertMenuW(sysmenu, SC_CLOSE, MF_ENABLED, IDM_COPYTITLE, _W("Copy &Title"));
@@ -1014,6 +1065,153 @@ cycle_pointer_style()
 }
 
 
+/*
+   Some auxiliary functions for user-defined key assignments.
+ */
+
+static void
+menu_text()
+{
+  open_popup_menu(true, null, get_mods());
+}
+
+static void
+menu_pointer()
+{
+  //win_popup_menu(get_mods());
+  open_popup_menu(false, null, get_mods());
+}
+
+static void
+transparency_level()
+{
+  if (!transparency_pending) {
+    previous_transparency = cfg.transparency;
+    transparency_pending = 1;
+    transparency_tuned = false;
+  }
+  if (cfg.opaque_when_focused)
+    win_update_transparency(false);
+}
+
+static void
+newwin_begin()
+{
+  newwin_pending = true;
+  newwin_home = false; newwin_monix = 0; newwin_moniy = 0;
+}
+
+static void
+window_full()
+{
+  win_maximise(2);
+}
+
+static void
+window_max()
+{
+  win_maximise(1);
+}
+
+static void
+window_restore()
+{
+  win_maximise(0);
+}
+
+static void
+window_min()
+{
+  win_set_iconic(true);
+}
+
+void
+toggle_vt220()
+{
+  term.vt220_keys = !term.vt220_keys;
+}
+
+static void
+nop()
+{
+}
+
+static uint
+mflags_copy()
+{
+  return term.selected ? MF_ENABLED : MF_GRAYED;
+}
+
+// user-definable functions
+static struct function_def cmd_defs[] = {
+#ifdef support_sc_defs
+#warning these do not work, they crash
+  {"restore", {SC_RESTORE}, 0},
+  {"move", {SC_MOVE}, 0},
+  {"resize", {SC_SIZE}, 0},
+  {"minimize", {SC_MINIMIZE}, 0},
+  {"maximize", {SC_MAXIMIZE}, 0},
+  {"menu", {SC_KEYMENU}, 0},
+  {"close", {SC_CLOSE}, 0},
+#endif
+
+  {"new-window", {IDM_NEW}, 0},
+  //{"new-monitor", {IDM_NEW_MONI}, 0},
+
+  //{"default-size", {IDM_DEFSIZE}, 0},
+  {"default-size", {IDM_DEFSIZE_ZOOM}, 0},
+  {"toggle-fullscreen", {IDM_FULLSCREEN}, 0},
+  {"fullscreen", {.fct = window_full}, 0},
+  {"win-max", {.fct = window_max}, 0},
+  {"win-restore", {.fct = window_restore}, 0},
+  {"win-icon", {.fct = window_min}, 0},
+  {"close", {.fct = win_close}, 0},
+
+  {"new", {.fct = newwin_begin}, 0},
+  {"options", {IDM_OPTIONS}, 0},
+  {"menu-text", {.fct = menu_text}, 0},
+  {"menu-pointer", {.fct = menu_pointer}, 0},
+
+  {"search", {IDM_SEARCH}, 0},
+  {"scrollbar-outer", {IDM_SCROLLBAR}, 0},
+  {"scrollbar-inner", {.fct = toggle_scrollbar}, 0},
+  {"cycle-pointer-style", {.fct = cycle_pointer_style}, 0},
+  {"cycle-transparency-level", {.fct = transparency_level}, 0},
+
+  {"copy", {IDM_COPY}, mflags_copy},
+  {"copy-text", {IDM_COPY_TEXT}, mflags_copy},
+  {"copy-rtf", {IDM_COPY_RTF}, mflags_copy},
+  {"copy-html-text", {IDM_COPY_HTXT}, mflags_copy},
+  {"copy-html-format", {IDM_COPY_HFMT}, mflags_copy},
+  {"copy-html-full", {IDM_COPY_HTML}, mflags_copy},
+  {"paste", {IDM_PASTE}, 0},
+  {"copy-paste", {IDM_COPASTE}, mflags_copy},
+  {"select-all", {IDM_SELALL}, 0},
+  {"clear-scrollback", {IDM_CLRSCRLBCK}, 0},
+  {"copy-title", {IDM_COPYTITLE}, 0},
+  {"reset", {IDM_RESET}, 0},
+  {"break", {IDM_BREAK}, 0},
+  {"flipscreen", {IDM_FLIPSCREEN}, 0},
+  {"open", {IDM_OPEN}, 0},
+  {"toggle-logging", {IDM_TOGLOG}, 0},
+  {"toggle-char-info", {IDM_TOGCHARINFO}, 0},
+  {"export-html", {IDM_HTML}, 0},
+  {"print-screen", {.fct = print_screen}, 0},
+  {"toggle-vt220", {.fct = toggle_vt220}, 0},
+
+  {"void", {.fct = nop}, 0}
+};
+
+static struct function_def *
+function_def(char * cmd)
+{
+  for (uint i = 0; i < lengthof(cmd_defs); i++)
+    if (!strcmp(cmd, cmd_defs[i].name))
+      return &cmd_defs[i];
+  return 0;
+}
+
+
 /* Keyboard handling */
 
 static void
@@ -1095,77 +1293,7 @@ vk_name(uint key)
 #define trace_key(tag)	
 #endif
 
-/*
-   Some auxiliary functions for user-defined key assignments.
- */
-
-static void
-menu_text()
-{
-  open_popup_menu(true, null, get_mods());
-}
-
-static void
-menu_pointer()
-{
-  //win_popup_menu(get_mods());
-  open_popup_menu(false, null, get_mods());
-}
-
-static void
-transparency_level()
-{
-  if (!transparency_pending) {
-    previous_transparency = cfg.transparency;
-    transparency_pending = 1;
-    transparency_tuned = false;
-  }
-  if (cfg.opaque_when_focused)
-    win_update_transparency(false);
-}
-
-static void
-newwin_begin()
-{
-  newwin_pending = true;
-  newwin_home = false; newwin_monix = 0; newwin_moniy = 0;
-}
-
-static void
-window_full()
-{
-  win_maximise(2);
-}
-
-static void
-window_max()
-{
-  win_maximise(1);
-}
-
-static void
-window_restore()
-{
-  win_maximise(0);
-}
-
-static void
-window_min()
-{
-  win_set_iconic(true);
-}
-
-void
-toggle_vt220()
-{
-  term.vt220_keys = !term.vt220_keys;
-}
-
-static void
-nop()
-{
-}
-
+// key names for user-definable functions
 static struct {
   uchar vkey;
   char unmod;
@@ -1214,73 +1342,105 @@ static struct {
   {VK_ADD, 3, "Add"},
 };
 
-static struct {
-  string name;
-  union {
-    WPARAM cmd;
-    void (*fct)(void);
-  };
-} cmd_defs[] = {
-#ifdef support_sc_defs
-#warning these do not work, they crash
-  {"restore", {SC_RESTORE}},
-  {"move", {SC_MOVE}},
-  {"resize", {SC_SIZE}},
-  {"minimize", {SC_MINIMIZE}},
-  {"maximize", {SC_MAXIMIZE}},
-  {"menu", {SC_KEYMENU}},
-  {"close", {SC_CLOSE}},
+static int
+pick_key_function(wstring key_commands, char * tag, int n, uint key, mod_keys mods)
+{
+  char * ukey_commands = cs__wcstoutf(key_commands);
+  char * cmdp = ukey_commands;
+  char sepch = ';';
+  if ((uchar)*cmdp <= (uchar)' ')
+    sepch = *cmdp++;
+
+  char * paramp;
+  while ((tag || n >= 0) && (paramp = strchr(cmdp, ':'))) {
+    *paramp = '\0';
+    paramp++;
+    char * sepp = strchr(paramp, sepch);
+    if (sepp)
+      *sepp = '\0';
+
+#if defined(debug_def_keys) && debug_def_keys > 1
+    printf("tag <%s>: cmd <%s> fct <%s>\n", tag, cmdp, paramp);
 #endif
-#ifdef support_other
-#warning these do not work properly
-  {"new-window", {IDM_NEW}},
-  {"new-monitor", {IDM_NEW_MONI}},
-  {"fullscreen-zoom", {IDM_FULLSCREEN_ZOOM}},
-  {"default-size-zoom", {IDM_DEFSIZE_ZOOM}},
+    if (tag ? !strcmp(cmdp, tag) : n == 0) {
+#if defined(debug_def_keys) && debug_def_keys == 1
+      printf("tag <%s>: cmd <%s> fct <%s>\n", tag, cmdp, paramp);
 #endif
+      int ret = true;
+      wchar * fct = cs__utftowcs(paramp);
+      if ((*fct == '"' && fct[wcslen(fct) - 1] == '"') ||
+          (*fct == '\'' && fct[wcslen(fct) - 1] == '\'')) {
+        child_sendw(&fct[1], wcslen(fct) - 2);
+      }
+      else if (*fct == '`' && fct[wcslen(fct) - 1] == '`') {
+        fct[wcslen(fct) - 1] = 0;
+        char * cmd = cs__wcstombs(&fct[1]);
+        term_cmd(cmd);
+        free(cmd);
+      }
+      else if (!*paramp) {
+        // empty definition (e.g. "A+Enter:;"), shall disable 
+        // further shortcut handling for the input key but 
+        // trigger fall-back to "normal" key handling (with mods)
+        ret = -1;
+      }
+      else {
+        ret = false;
+        for (uint i = 0; i < lengthof(cmd_defs); i++) {
+          if (!strcmp(paramp, cmd_defs[i].name)) {
+            if (cmd_defs[i].cmd < 0xF000)
+              send_syscommand(cmd_defs[i].cmd);
+            else if (cmd_defs[i].fct == newwin_begin) {
+              if (key) {
+                newwin_begin();
+                newwin_key = key;
+                if (mods & MDK_SHIFT)
+                  newwin_shifted = true;
+                else
+                  newwin_shifted = false;
+              }
+            }
+            else
+              cmd_defs[i].fct();
+            ret = true;
+            break;
+          }
+        }
+        if (ret != true) {
+          // invalid definition (e.g. "A+Enter:foo;"), shall 
+          // not cause any action (return true) but provide a feedback
+          win_bell(&cfg);
+          ret = true;
+        }
+      }
 
-  {"fullscreen", {.fct = window_full}},
-  {"win-max", {.fct = window_max}},
-  {"win-restore", {.fct = window_restore}},
-  {"win-icon", {.fct = window_min}},
-  {"close", {.fct = win_close}},
+      free(fct);
+      free(ukey_commands);
+      return ret;
+    }
 
-  {"new", {.fct = newwin_begin}},
-  {"options", {IDM_OPTIONS}},
-  {"menu-text", {.fct = menu_text}},
-  {"menu-pointer", {.fct = menu_pointer}},
+    n--;
+    if (sepp) {
+      cmdp = sepp + 1;
+      // check for multi-line separation
+      if (*cmdp == '\\' && cmdp[1] == '\n') {
+        cmdp += 2;
+        while (isspace(*cmdp))
+          cmdp++;
+      }
+    }
+    else
+      break;
+  }
+  free(ukey_commands);
+  return false;
+}
 
-  {"search", {IDM_SEARCH}},
-  {"toggle-fullscreen", {IDM_FULLSCREEN}},
-  {"default-size", {IDM_DEFSIZE}},
-  {"scrollbar-outer", {IDM_SCROLLBAR}},
-  {"scrollbar-inner", {.fct = toggle_scrollbar}},
-  {"cycle-pointer-style", {.fct = cycle_pointer_style}},
-  {"cycle-transparency-level", {.fct = transparency_level}},
-
-  {"copy", {IDM_COPY}},
-  {"copy-text", {IDM_COPY_TEXT}},
-  {"copy-rtf", {IDM_COPY_RTF}},
-  {"copy-html-text", {IDM_COPY_HTXT}},
-  {"copy-html-format", {IDM_COPY_HFMT}},
-  {"copy-html-full", {IDM_COPY_HTML}},
-  {"paste", {IDM_PASTE}},
-  {"copy-paste", {IDM_COPASTE}},
-  {"select-all", {IDM_SELALL}},
-  {"clear-scrollback", {IDM_CLRSCRLBCK}},
-  {"copy-title", {IDM_COPYTITLE}},
-  {"reset", {IDM_RESET}},
-  {"break", {IDM_BREAK}},
-  {"flipscreen", {IDM_FLIPSCREEN}},
-  {"open", {IDM_OPEN}},
-  {"toggle-logging", {IDM_TOGLOG}},
-  {"toggle-char-info", {IDM_TOGCHARINFO}},
-  {"export-html", {IDM_HTML}},
-  {"print-screen", {.fct = print_screen}},
-  {"toggle-vt220", {.fct = toggle_vt220}},
-
-  {"void", {.fct = nop}}
-};
+void
+user_function(wstring commands, int n)
+{
+  pick_key_function(commands, 0, n, 0, 0);
+}
 
 bool
 win_key_down(WPARAM wp, LPARAM lp)
@@ -1465,97 +1625,6 @@ win_key_down(WPARAM wp, LPARAM lp)
     // user-defined shortcuts
     //test: W("-:'foo';A+F3:;A+F5:flipscreen;A+F9:\"f9\";C+F10:\"f10\";p:paste;d:`date`;o:\"oo\";ö:\"öö\";€:\"euro\";~:'tilde';[:'[[';µ:'µµ'")
     if (*cfg.key_commands) {
-      bool pick_key_function(char * tag)
-      {
-        char * ukey_commands = cs__wcstoutf(cfg.key_commands);
-        char * cmdp = ukey_commands;
-        char sepch = ';';
-        if ((uchar)*cmdp <= (uchar)' ')
-          sepch = *cmdp++;
-
-        char * paramp;
-        while ((paramp = strchr(cmdp, ':'))) {
-          *paramp = '\0';
-          paramp++;
-          char * sepp = strchr(paramp, sepch);
-          if (sepp)
-            *sepp = '\0';
-
-#if defined(debug_def_keys) && debug_def_keys > 1
-          printf("tag <%s>: cmd <%s> fct <%s>\n", tag, cmdp, paramp);
-#endif
-          if (!strcmp(cmdp, tag)) {
-#if defined(debug_def_keys) && debug_def_keys == 1
-            printf("tag <%s>: cmd <%s> fct <%s>\n", tag, cmdp, paramp);
-#endif
-            bool ret = true;
-            wchar * fct = cs__utftowcs(paramp);
-            if ((*fct == '"' && fct[wcslen(fct) - 1] == '"') ||
-                (*fct == '\'' && fct[wcslen(fct) - 1] == '\'')) {
-              child_sendw(&fct[1], wcslen(fct) - 2);
-            }
-            else if (*fct == '`' && fct[wcslen(fct) - 1] == '`') {
-              fct[wcslen(fct) - 1] = 0;
-              char * cmd = cs__wcstombs(&fct[1]);
-              term_cmd(cmd);
-              free(cmd);
-            }
-            else if (!*paramp) {
-              // empty definition (e.g. "A+Enter:;"), shall disable 
-              // further shortcut handling for the input key but 
-              // trigger fall-back to "normal" key handling (with mods)
-              allow_shortcut = false;
-              ret = false;
-            }
-            else {
-              ret = false;
-              for (uint i = 0; i < lengthof(cmd_defs); i++) {
-                if (!strcmp(paramp, cmd_defs[i].name)) {
-                  if (cmd_defs[i].cmd < 0xF000)
-                    send_syscommand(cmd_defs[i].cmd);
-                  else if (cmd_defs[i].fct == newwin_begin) {
-                    newwin_begin();
-                    newwin_key = key;
-                    if (mods & MDK_SHIFT)
-                      newwin_shifted = true;
-                    else
-                      newwin_shifted = false;
-                  }
-                  else
-                    cmd_defs[i].fct();
-                  ret = true;
-                  break;
-                }
-              }
-              if (!ret) {
-                // invalid definition (e.g. "A+Enter:foo;"), shall 
-                // not cause any action (return true) but provide a feedback
-                win_bell(&cfg);
-                ret = true;
-              }
-            }
-
-            free(fct);
-            free(ukey_commands);
-            return ret;
-          }
-
-          if (sepp) {
-            cmdp = sepp + 1;
-            // check for multi-line separation
-            if (*cmdp == '\\' && cmdp[1] == '\n') {
-              cmdp += 2;
-              while (isspace(*cmdp))
-                cmdp++;
-            }
-          }
-          else
-            break;
-        }
-        free(ukey_commands);
-        return false;
-      }
-
       /* Look up a function tag for either of
          * (modified) special key (like Tab, Pause, ...)
          * (modified) function key
@@ -1643,8 +1712,11 @@ win_key_down(WPARAM wp, LPARAM lp)
 #endif
       }
       if (tag) {
-        if (pick_key_function(tag))
+        int ret = pick_key_function(cfg.key_commands, tag, 0, key, mods);
+        if (ret == true)
           return true;
+        if (ret == -1)
+          allow_shortcut = false;
       }
 #ifdef debug_def_keys
       printf("check key <%s>\n", tag);

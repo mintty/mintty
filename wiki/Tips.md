@@ -1044,9 +1044,11 @@ and the character information output simply overwrite each other.
 
 ## User-defined behaviour ##
 
-Mintty supports two extension features:
+Mintty supports a few extension features:
 * Application-specific drag-and-drop transformations (option `DropCommands`)
-* User-defined commands and filter functions (option `UserCommands`)
+* User-defined commands and filters for context menu (option `UserCommands`)
+* User-defined functions for key combinations (option `KeyFunctions`)
+* User-defined function entries for system menu (option `SysMenuFunctions`)
 
 See the manual page for details.
 

@@ -73,6 +73,7 @@ extern void win_destroy_tip(void);
 
 extern void win_init_menus(void);
 extern void win_update_menus(void);
+extern void user_function(wstring commands, int n);
 
 extern void win_show_mouse(void);
 extern void win_mouse_click(mouse_button, LPARAM);

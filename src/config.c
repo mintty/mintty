@@ -409,7 +409,7 @@ options[] = {
   {"AppLaunchCmd", OPT_WSTRING, offcfg(app_launch_cmd)},
   {"DropCommands", OPT_WSTRING | OPT_KEEPCR, offcfg(drop_commands)},
   {"UserCommands", OPT_WSTRING | OPT_KEEPCR, offcfg(user_commands)},
-  {"SysUserCommands", OPT_WSTRING | OPT_KEEPCR, offcfg(sys_user_commands)},
+  {"SysMenuFunctions", OPT_WSTRING | OPT_KEEPCR, offcfg(sys_user_commands)},
   {"UserCommandsPath", OPT_WSTRING, offcfg(user_commands_path)},
   {"SessionCommands", OPT_WSTRING | OPT_KEEPCR, offcfg(session_commands)},
   {"TaskCommands", OPT_WSTRING | OPT_KEEPCR, offcfg(task_commands)},
