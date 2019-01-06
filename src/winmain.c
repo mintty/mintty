@@ -2315,6 +2315,8 @@ static struct {
         ; // skip WM_SYSCOMMAND from Windows here (but process own ones)
       else if ((wp & ~0xF) >= IDM_GOTAB)
         win_gotab(wp - IDM_GOTAB);
+      else if ((wp & ~0xF) >= IDM_CTXMENUFUNCTION)
+        user_function(cfg.sys_user_commands, wp - IDM_CTXMENUFUNCTION);
       else if ((wp & ~0xF) >= IDM_SYSMENUFUNCTION)
         user_function(cfg.sys_user_commands, wp - IDM_SYSMENUFUNCTION);
       else if ((wp & ~0xF) >= IDM_SESSIONCOMMAND)

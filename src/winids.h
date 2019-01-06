@@ -42,6 +42,7 @@
 #define IDM_USERCOMMAND     0x1000
 #define IDM_SESSIONCOMMAND  0x4000
 #define IDM_SYSMENUFUNCTION 0x7000
-#define IDM_GOTAB           0xA000
+#define IDM_CTXMENUFUNCTION 0xA000
+#define IDM_GOTAB           0xD000
 
 #endif

@@ -171,6 +171,7 @@ typedef struct {
   wstring app_launch_cmd;
   wstring drop_commands;
   wstring user_commands;
+  wstring ctx_user_commands;
   wstring sys_user_commands;
   wstring user_commands_path;
   wstring session_commands;

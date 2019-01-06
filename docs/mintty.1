@@ -883,7 +883,7 @@ Unicode-enabled settings: BellFile, ThemeFile, Background, Title, ExitTitle, Ico
 Language, Font, Font1..., FontSample, Printer, Answerback, SixelClipChars, 
 Class, AppID, AppName, AppLaunchCmd, 
 DropCommands, UserCommands, SessionCommands, TaskCommands, UserCommandsPath, 
-KeyFunctions, SysMenuFunctions, UserCommandsPath.
+KeyFunctions, SysMenuFunctions, CtxMenuFunctions, UserCommandsPath.
 
 Be careful when running multiple instances of mintty. If options are saved 
 from different instances, or the config file is edited manually, 
@@ -2514,7 +2514,7 @@ command invocations depending on file name pattern are desired, this should
 be handled by a suitable cooperating shell function.
 
 .TP
-\fBUser commands\fP (UserCommands=)
+\fBUser commands\fP (UserCommands=) [DEPRECATED, see \fBCtxMenuFunctions\fP]
 This setting lists user-defined commands for the extended context menu.
 The value is a series of semicolon-separated, colon-combined 
 pairs of menu item label and command pattern; the command is invoked and its 
@@ -2585,14 +2585,48 @@ If the value contains a single \fB%s\fP placeholder, the current
 environment PATH is substituted for it.
 
 .TP
+\fBSystem menu user commands\fP (CtxMenuFunctions=)
+This setting lists user-defined functions or commands for the context menus 
+(right mouse click in text area).
+If it is configured, it is by default included in the extended context menu 
+(Control+right-click) but can be configured for other context menu 
+invocations as well (see configuration of \fIMenu contents\fP with options 
+\fBMenu*\fP), along with the deprecated configured user commands (\fBUserCommands\fP).
+
+The value is a series of semicolon-separated, colon-combined 
+pairs of key and action descriptors
+(if a semicolon shall be embedded into any of the action descriptors, 
+a non-whitespace control character (i.e. none of \fB^I^J^K^L^M\fP) can be 
+specified as an alternative separator by starting the whole setting with it).
+The definition list can be split over multiple lines if a separator is 
+followed by a backslash, newline, and optional whitespace indentation.
+
+The configuration is similar to the \fBUserCommands\fP setting with respect 
+to menu labels, and to \fBKeyFunctions\fP setting with respect to function 
+designations; respective notes and warnings apply.
+
+.TP
 \fBSystem menu user commands\fP (SysMenuFunctions=)
 This setting lists user-defined functions or commands for the system menu 
 (right mouse click on title bar or left click on title bar icon).
 If it is configured, the middle items of the menu (including Options... 
 and New) are replaced by the configured functions.
+
+The value is a series of semicolon-separated, colon-combined 
+pairs of key and action descriptors
+(if a semicolon shall be embedded into any of the action descriptors, 
+a non-whitespace control character (i.e. none of \fB^I^J^K^L^M\fP) can be 
+specified as an alternative separator by starting the whole setting with it).
+The definition list can be split over multiple lines if a separator is 
+followed by a backslash, newline, and optional whitespace indentation.
+
 The configuration is similar to the \fBUserCommands\fP setting with respect 
 to menu labels, and to \fBKeyFunctions\fP setting with respect to function 
-designations.
+designations; respective notes and warnings apply.
+
+Examples:
+.br
+\(en \fBSysMenuFunctions=&Lock Title:lock-title;Copy &Title:copy-title;&Options...:options;Ne&w:new-window\fP
 
 .TP
 \fBSession launcher commands\fP (SessionCommands=)
@@ -2688,7 +2722,7 @@ Menu contents can be configured by a sequence of characters with the following m
 .br
 \(en \fBe\fP: extended context menu with user commands (if configured)
 .br
-\(en \fBu\fP: user commands
+\(en \fBu\fP: user commands (\fBCtxMenuFunctions\fP, \fBUserCommands\fP)
 .br
 \(en \fBl\fP: session launcher
 .br
