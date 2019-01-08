@@ -558,6 +558,11 @@ win_update_menus(void)
       struct function_def * fudef = function_def(paramp);
       if (fudef && fudef->fct_status) {
         uint status = fudef->fct_status();
+///localize
+        wchar * label = 0;
+/// extract label from commands...
+        modify_menu(menu, idm_cmd + n, status, label, null);
+        // set flag status
         EnableMenuItem(menu, idm_cmd + n, status);
       }
 
@@ -574,21 +579,25 @@ win_update_menus(void)
     }
     free(cmds);
   }
+  if (*cfg.ctx_user_commands)
+    check_commands(ctxmenu, cfg.ctx_user_commands, IDM_CTXMENUFUNCTION);
   if (*cfg.sys_user_commands)
     check_commands(sysmenu, cfg.sys_user_commands, IDM_SYSMENUFUNCTION);
 }
 
 static bool
-add_user_commands(HMENU menu, bool vsep, bool hsep, wstring title, wstring commands)
+add_user_commands(HMENU menu, bool vsep, bool hsep, wstring title, wstring commands, UINT_PTR idm_cmd)
 {
   if (*commands) {
     uint bar = vsep ? MF_MENUBARBREAK : 0;
     if (hsep)
       AppendMenuW(menu, MF_SEPARATOR, 0, 0);
-    AppendMenuW(menu, MF_DISABLED | bar, 0, title);
-    AppendMenuW(menu, MF_SEPARATOR, 0, 0);
+    if (title) {
+      AppendMenuW(menu, MF_DISABLED | bar, 0, title);
+      AppendMenuW(menu, MF_SEPARATOR, 0, 0);
+    }
 
-    append_commands(menu, commands, IDM_USERCOMMAND, false, false);
+    append_commands(menu, commands, idm_cmd, false, false);
     return true;
   }
   else
@@ -596,7 +605,7 @@ add_user_commands(HMENU menu, bool vsep, bool hsep, wstring title, wstring comma
 }
 
 static void
-win_init_ctxmenu(bool extended_menu, bool user_commands)
+win_init_ctxmenu(bool extended_menu, bool with_user_commands)
 {
 #ifdef debug_modify_menu
   printf("win_init_ctxmenu\n");
@@ -649,7 +658,11 @@ win_init_ctxmenu(bool extended_menu, bool user_commands)
     AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   }
 
-  if (user_commands && *cfg.user_commands) {
+  if (with_user_commands && *cfg.ctx_user_commands) {
+    append_commands(ctxmenu, cfg.ctx_user_commands, IDM_CTXMENUFUNCTION, false, false);
+    AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
+  }
+  else if (with_user_commands && *cfg.user_commands) {
     append_commands(ctxmenu, cfg.user_commands, IDM_USERCOMMAND, false, false);
     AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   }
@@ -726,9 +739,14 @@ open_popup_menu(bool use_text_cursor, string menucfg, mod_keys mods)
                     init = true;
                   }
         when 'u': ok = add_user_commands(ctxmenu, vsep, hsep & !vsep,
+                                         null,
+                                         cfg.ctx_user_commands, IDM_CTXMENUFUNCTION
+                                         )
+                       ||
+                       add_user_commands(ctxmenu, vsep, hsep & !vsep,
                                          //__ Context menu, user commands
                                          _W("User commands"),
-                                         cfg.user_commands
+                                         cfg.user_commands, IDM_USERCOMMAND
                                          );
         when 'W': wicons = true;
         when 's': add_switcher(ctxmenu, vsep, hsep & !vsep, wicons);
