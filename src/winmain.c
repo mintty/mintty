@@ -2566,7 +2566,7 @@ static struct {
       // which is supposed to initiate this message;
       // however, if we skip the call here, the "New" item will 
       // not be initialised !?!
-      win_update_menus();
+      win_update_menus(true);
       return 0;
 
     when WM_MOVING:

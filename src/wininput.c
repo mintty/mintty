@@ -298,8 +298,14 @@ add_launcher(HMENU menu, bool vsep, bool hsep)
 #define dont_debug_modify_menu
 
 void
-win_update_menus(void)
+win_update_menus(bool callback)
 {
+  if (callback) {
+    // invoked after WM_INITMENU
+  }
+  else
+    return;
+
   bool shorts = !term.shortcut_override;
   bool clip = shorts && cfg.clip_shortcuts;
   bool alt_fn = shorts && cfg.alt_fn_shortcuts;
@@ -316,7 +322,7 @@ win_update_menus(void)
   // label: if null, use current label
   // key: shortcut description; localize "Ctrl+Alt+Shift+"
   {
-    bool sysentry = item & 0xF000;
+    bool sysentry = item >= 0xF000;
 #ifdef debug_modify_menu
     if (sysentry)
       printf("mm %04X <%ls> <%ls>\n", item, label, key);
@@ -558,12 +564,12 @@ win_update_menus(void)
       struct function_def * fudef = function_def(paramp);
       // localize
       wchar * label = _W(cmdp);
-      modify_menu(menu, idm_cmd + n, 0, label, null);
+      uint status = 0;
       if (fudef && fudef->fct_status) {
-        uint status = fudef->fct_status();
-        // set flag status
-        EnableMenuItem(menu, idm_cmd + n, status);
+        status = fudef->fct_status();
+        //EnableMenuItem(menu, idm_cmd + n, status);  // done by modify_menu
       }
+      modify_menu(menu, idm_cmd + n, status, label, null);
 
       cmdp = newcmdp;
       n++;
@@ -760,7 +766,7 @@ open_popup_menu(bool use_text_cursor, string menucfg, mod_keys mods)
     }
     menucfg++;
   }
-  win_update_menus();
+  win_update_menus(false);  // dispensable; also called via WM_INITMENU
 
   POINT p;
   if (use_text_cursor) {
@@ -769,6 +775,7 @@ open_popup_menu(bool use_text_cursor, string menucfg, mod_keys mods)
   }
   else
     GetCursorPos(&p);
+
   TrackPopupMenu(
     ctxmenu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
     p.x, p.y, 0, wnd, null
@@ -1171,6 +1178,12 @@ mflags_lock_title()
   return title_settable ? MF_ENABLED : MF_GRAYED;
 }
 
+static uint
+mflags_flipscreen()
+{
+  return term.show_other_screen ? MF_CHECKED : MF_UNCHECKED;
+}
+
 // user-definable functions
 static struct function_def cmd_defs[] = {
 #ifdef support_sc_defs
@@ -1221,7 +1234,7 @@ static struct function_def cmd_defs[] = {
   {"lock-title", {.fct = lock_title}, mflags_lock_title},
   {"reset", {IDM_RESET}, 0},
   {"break", {IDM_BREAK}, 0},
-  {"flipscreen", {IDM_FLIPSCREEN}, 0},
+  {"flipscreen", {IDM_FLIPSCREEN}, mflags_flipscreen},
   {"open", {IDM_OPEN}, 0},
   {"toggle-logging", {IDM_TOGLOG}, 0},
   {"toggle-char-info", {IDM_TOGCHARINFO}, 0},

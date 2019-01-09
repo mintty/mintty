@@ -73,7 +73,7 @@ extern void win_show_tip(int x, int y, int cols, int rows);
 extern void win_destroy_tip(void);
 
 extern void win_init_menus(void);
-extern void win_update_menus(void);
+extern void win_update_menus(bool callback);
 extern void user_function(wstring commands, int n);
 
 extern void win_show_mouse(void);
