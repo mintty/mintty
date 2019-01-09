@@ -556,12 +556,11 @@ win_update_menus(void)
         *newcmdp++ = '\0';
 
       struct function_def * fudef = function_def(paramp);
+      // localize
+      wchar * label = _W(cmdp);
+      modify_menu(menu, idm_cmd + n, 0, label, null);
       if (fudef && fudef->fct_status) {
         uint status = fudef->fct_status();
-///localize
-        wchar * label = 0;
-/// extract label from commands...
-        modify_menu(menu, idm_cmd + n, status, label, null);
         // set flag status
         EnableMenuItem(menu, idm_cmd + n, status);
       }
