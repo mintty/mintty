@@ -1209,7 +1209,8 @@ static struct function_def cmd_defs[] = {
   {"win-icon", {.fct = window_min}, 0},
   {"close", {.fct = win_close}, 0},
 
-  {"new", {.fct = newwin_begin}, 0},
+  {"new", {.fct = newwin_begin}, 0},  // deprecated
+  {"new-key", {.fct = newwin_begin}, 0},
   {"options", {IDM_OPTIONS}, 0},
   {"menu-text", {.fct = menu_text}, 0},
   {"menu-pointer", {.fct = menu_pointer}, 0},
