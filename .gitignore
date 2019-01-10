@@ -1,0 +1,19 @@
+## .gitignore file for mintty
+## Ignore temporary files, build results etc.
+## Reference: https://git-scm.com/docs/gitignore
+
+# Build results
+[Bb]in/
+[Oo]bj/
+
+# Compiled files
+*.d
+*.dll
+*.exe
+*.o
+*.obj
+
+# IDE folders
+.atom/
+.vs/
+.vscode/
