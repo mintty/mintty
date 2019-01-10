@@ -1,3 +1,27 @@
+Terminal features
+  * HTML export/copy: Fixed HTML style attributes.
+
+Window handling
+  * Flexible window grouping configuration (#789).
+  * If started from desktop shortcut, clone AppID from it (#784, mintty/wsltty#96).
+  * Display speedup by skipping refresh intervals (#835).
+  * Support for pasting from Windows clipboard history (mintty/wsltty#139).
+  * Option to lock title from being changed (mintty/wsltty#138).
+
+Keyboard handling
+  * Workaround for buggy StrokeIt tool sending right-Alt+Fn key events (#833).
+  * Optional support for external hotkeys (esp. to close window), overriding disabled Alt+Fn shortcuts.
+  * Workaround for Windows clipboard history pasting implementation (mintty/wsltty#139).
+  * Unified environment for external commands attached to keys (KeyFunctions) with those in context menu (UserCommands).
+
+Configuration
+  * New option UserCommandsPath to configure PATH for UserCommands, KeyFunctions, SysMenuFunctions.
+  * Option Class supports the same placeholders as AppID (#789).
+  * New option SupportExternalHotkeys.
+  * New option DisplaySpeedup (#835).
+  * New options CtxMenuFunctions and SysMenuFunctions to customize menus (#820).
+  * New user-definable functions lock-title, new-window, win-toggle-max.
+
 ### 2.9.5 (5 December 2018) ###
 
 Window handling

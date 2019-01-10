@@ -453,6 +453,8 @@ win_update_menus(bool callback)
   modify_menu(ctxmenu, IDM_COPY, sel_enabled, _W("&Copy"),
     clip ? W("Ctrl+Ins") : ct_sh ? W("Ctrl+Shift+C") : null
   );
+  // enable/disable predefined extended context menu entries
+  // (user-definable ones are handled via fct_status())
   EnableMenuItem(ctxmenu, IDM_COPY_TEXT, sel_enabled);
   EnableMenuItem(ctxmenu, IDM_COPY_RTF, sel_enabled);
   EnableMenuItem(ctxmenu, IDM_COPY_HTXT, sel_enabled);
@@ -1138,6 +1140,15 @@ window_max()
 }
 
 static void
+window_toggle_max()
+{
+  if (IsZoomed(wnd))
+    win_maximise(0);
+  else
+    win_maximise(1);
+}
+
+static void
 window_restore()
 {
   win_maximise(0);
@@ -1166,6 +1177,16 @@ mflags_copy()
   return term.selected ? MF_ENABLED : MF_GRAYED;
 }
 
+static uint
+mflags_paste()
+{
+  return
+    IsClipboardFormatAvailable(CF_TEXT) ||
+    IsClipboardFormatAvailable(CF_UNICODETEXT) ||
+    IsClipboardFormatAvailable(CF_HDROP)
+    ? MF_ENABLED : MF_GRAYED;
+}
+
 static void
 lock_title()
 {
@@ -1179,9 +1200,80 @@ mflags_lock_title()
 }
 
 static uint
+mflags_defsize()
+{
+  return
+    IsZoomed(wnd) || term.cols != cfg.cols || term.rows != cfg.rows
+    ? MF_ENABLED : MF_GRAYED;
+}
+
+static uint
+mflags_fullscreen()
+{
+  return win_is_fullscreen ? MF_CHECKED : MF_UNCHECKED;
+}
+
+static uint
+mflags_zoomed()
+{
+  return IsZoomed(wnd) ? MF_CHECKED: MF_UNCHECKED;
+}
+
+static uint
 mflags_flipscreen()
 {
   return term.show_other_screen ? MF_CHECKED : MF_UNCHECKED;
+}
+
+static uint
+mflags_scrollbar_outer()
+{
+  return term.show_scrollbar ? MF_CHECKED : MF_UNCHECKED
+#ifdef allow_disabling_scrollbar
+         | cfg.scrollbar ? 0 : MF_GRAYED
+#endif
+  ;
+}
+
+static uint
+mflags_scrollbar_inner()
+{
+  if (cfg.scrollbar)
+    return term.show_scrollbar ? MF_CHECKED : MF_UNCHECKED;
+  else
+    return MF_GRAYED;
+}
+
+static uint
+mflags_open()
+{
+  return term.selected ? MF_ENABLED : MF_GRAYED;
+}
+
+static uint
+mflags_logging()
+{
+  return ((logging || *cfg.log) ? MF_ENABLED : MF_GRAYED)
+       | (logging ? MF_CHECKED : MF_UNCHECKED)
+  ;
+}
+
+static uint
+mflags_char_info()
+{
+  return show_charinfo ? MF_CHECKED : MF_UNCHECKED;
+}
+
+static uint
+mflags_vt220()
+{
+  return term.vt220_keys ? MF_CHECKED : MF_UNCHECKED;
+}
+
+static uint
+mflags_options()
+{
+  return config_wnd ? MF_GRAYED : MF_ENABLED;
 }
 
 // user-definable functions
@@ -1201,23 +1293,24 @@ static struct function_def cmd_defs[] = {
   //{"new-monitor", {IDM_NEW_MONI}, 0},
 
   //{"default-size", {IDM_DEFSIZE}, 0},
-  {"default-size", {IDM_DEFSIZE_ZOOM}, 0},
-  {"toggle-fullscreen", {IDM_FULLSCREEN}, 0},
-  {"fullscreen", {.fct = window_full}, 0},
-  {"win-max", {.fct = window_max}, 0},
+  {"default-size", {IDM_DEFSIZE_ZOOM}, mflags_defsize},
+  {"toggle-fullscreen", {IDM_FULLSCREEN}, mflags_fullscreen},
+  {"fullscreen", {.fct = window_full}, mflags_fullscreen},
+  {"win-max", {.fct = window_max}, mflags_zoomed},
+  {"win-toggle-max", {.fct = window_toggle_max}, mflags_zoomed},
   {"win-restore", {.fct = window_restore}, 0},
   {"win-icon", {.fct = window_min}, 0},
   {"close", {.fct = win_close}, 0},
 
   {"new", {.fct = newwin_begin}, 0},  // deprecated
   {"new-key", {.fct = newwin_begin}, 0},
-  {"options", {IDM_OPTIONS}, 0},
+  {"options", {IDM_OPTIONS}, mflags_options},
   {"menu-text", {.fct = menu_text}, 0},
   {"menu-pointer", {.fct = menu_pointer}, 0},
 
   {"search", {IDM_SEARCH}, 0},
-  {"scrollbar-outer", {IDM_SCROLLBAR}, 0},
-  {"scrollbar-inner", {.fct = toggle_scrollbar}, 0},
+  {"scrollbar-outer", {IDM_SCROLLBAR}, mflags_scrollbar_outer},
+  {"scrollbar-inner", {.fct = toggle_scrollbar}, mflags_scrollbar_inner},
   {"cycle-pointer-style", {.fct = cycle_pointer_style}, 0},
   {"cycle-transparency-level", {.fct = transparency_level}, 0},
 
@@ -1227,7 +1320,7 @@ static struct function_def cmd_defs[] = {
   {"copy-html-text", {IDM_COPY_HTXT}, mflags_copy},
   {"copy-html-format", {IDM_COPY_HFMT}, mflags_copy},
   {"copy-html-full", {IDM_COPY_HTML}, mflags_copy},
-  {"paste", {IDM_PASTE}, 0},
+  {"paste", {IDM_PASTE}, mflags_paste},
   {"copy-paste", {IDM_COPASTE}, mflags_copy},
   {"select-all", {IDM_SELALL}, 0},
   {"clear-scrollback", {IDM_CLRSCRLBCK}, 0},
@@ -1236,12 +1329,12 @@ static struct function_def cmd_defs[] = {
   {"reset", {IDM_RESET}, 0},
   {"break", {IDM_BREAK}, 0},
   {"flipscreen", {IDM_FLIPSCREEN}, mflags_flipscreen},
-  {"open", {IDM_OPEN}, 0},
-  {"toggle-logging", {IDM_TOGLOG}, 0},
-  {"toggle-char-info", {IDM_TOGCHARINFO}, 0},
+  {"open", {IDM_OPEN}, mflags_open},
+  {"toggle-logging", {IDM_TOGLOG}, mflags_logging},
+  {"toggle-char-info", {IDM_TOGCHARINFO}, mflags_char_info},
   {"export-html", {IDM_HTML}, 0},
   {"print-screen", {.fct = print_screen}, 0},
-  {"toggle-vt220", {.fct = toggle_vt220}, 0},
+  {"toggle-vt220", {.fct = toggle_vt220}, mflags_vt220},
 
   {"void", {.fct = nop}, 0}
 };
