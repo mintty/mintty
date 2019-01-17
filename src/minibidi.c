@@ -111,14 +111,14 @@ static const shape_node shapetypes[] = {
 
 
 /*
- * Finds the index of a run with level equals tlevel
+ * Finds the index of a run with level tlevel or higher (!)
  */
 static int
 findIndexOfRun(uchar * level, int start, int count, int tlevel)
 {
   int i;
   for (i = start; i < count; i++) {
-    if (tlevel == level[i]) {
+    if (tlevel <= level[i]) {
       return i;
     }
   }

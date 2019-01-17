@@ -1,5 +1,6 @@
 Terminal features
   * HTML export/copy: Fixed HTML style attributes.
+  * Fixed bidi embedding and run handling (#837).
 
 Window handling
   * Flexible window grouping configuration (#789).
