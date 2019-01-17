@@ -18,14 +18,17 @@
  * Modified: Thomas Wolff:
  * - extended bidi class detection to consider non-BMP characters
  * - fixed mirroring of '('
+ * - fixed recognition of runs
+ * - sanitized handling of directional markers
  *
  ************************************************************************/
 
 /*
  * TODO:
  * =====
- * - Explicit marks need to be handled (they are not 100% now)
- * - Ligatures
+ * - Explicit markers need to be handled (they are not 100% now),
+     esp. isolate markers
+ * - Ligatures (?)
  */
 
 

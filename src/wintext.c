@@ -2148,7 +2148,7 @@ char1ulen(wchar * text)
 static SCRIPT_STRING_ANALYSIS ssa;
 static bool use_uniscribe;
 
-void
+static void
 text_out_start(HDC hdc, LPCWSTR psz, int cch, int *dxs)
 {
   if (cch == 0)
@@ -2166,7 +2166,7 @@ text_out_start(HDC hdc, LPCWSTR psz, int cch, int *dxs)
     use_uniscribe = false;
 }
 
-void
+static void
 text_out(HDC hdc, int x, int y, UINT fuOptions, RECT *prc, LPCWSTR psz, int cch, int *dxs)
 {
   if (cch == 0)
@@ -2186,7 +2186,7 @@ text_out(HDC hdc, int x, int y, UINT fuOptions, RECT *prc, LPCWSTR psz, int cch,
     ExtTextOutW(hdc, x, y, fuOptions, prc, psz, cch, dxs);
 }
 
-void
+static void
 text_out_end()
 {
   if (use_uniscribe)

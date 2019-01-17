@@ -218,7 +218,6 @@ bidiclasses.t:	# UnicodeData.txt
 unicode:	UnicodeData.txt Blocks.txt EastAsianWidth.txt
 
 full-emoji-list.html:
-	#$(WGET) http://www.unicode.org/emoji/charts-11.0/$@
 	$(WGET) http://www.unicode.org/emoji/charts/$@
 
 emoji-%.txt:

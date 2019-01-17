@@ -568,7 +568,6 @@ click the “Store” button to store the colour scheme.
 
 A number of colour schemes have been published for mintty, e.g.
 * https://github.com/oumu/mintty-color-schemes
-* https://github.com/PhilipDaniels/mintty/tree/master/themes
 * https://github.com/goreliu/wsl-terminal/tree/master/src/etc/themes
 
 Mintty also provides the command-line script ```mintheme``` which can 
@@ -749,7 +748,7 @@ ISO/IEC 8613-6 sub-parameters are supported.
 | 2                      | 22                | dim                           |
 | 3                      | 23                | italic                        |
 | 4 _or_ 4:1             | 24 _or_ 4:0       | solid underline               |
-| 4:2                    | 24 _or_ 4:0       | double underline              |
+| 4:2 _or_ 21            | 24 _or_ 4:0       | double underline              |
 | 4:3                    | 24 _or_ 4:0       | wavy underline                |
 | 4:4                    | 24 _or_ 4:0       | dotted underline              |
 | 4:5                    | 24 _or_ 4:0       | dashed underline              |
@@ -758,7 +757,7 @@ ISO/IEC 8613-6 sub-parameters are supported.
 | 7                      | 27                | inverse                       |
 | 8                      | 28                | invisible                     |
 | 9                      | 29                | strikeout                     |
-| 11                     | 10                | alternative font 1 (*)        |
+| 11 (*)                 | 10                | alternative font 1 (*)        |
 | 12                     | 10                | alternative font 2            |
 | ...                    | 10                | alternative fonts 3...8       |
 | 19                     | 10                | alternative font 9            |
@@ -784,7 +783,7 @@ ISO/IEC 8613-6 sub-parameters are supported.
 | 58:2::R:G:B            | 59                | underline RGB colour          |
 | 58:3:F:C:M:Y           | 59                | underline CMY colour (*)      |
 | 58:4:F:C:M:Y:K         | 59                | underline CMYK colour (*)     |
-| _any_                  | 0                 |                               |
+| _any_                  | 0 _or empty_      |                               |
 
 Note: Alternative fonts are configured with options Font1 ... Font10.
 They can also be dynamically changed with OSC sequence 50 which refers 
@@ -852,8 +851,8 @@ Emoji data can be found at the following sources:
 * [Noto Emoji font](https://github.com/googlei18n/noto-emoji), subdirectory `png/128`
   * “Clone or download” the repository or download a release archive
   * Deploy subdirectory noto-emoji/png/128 as `noto`
-* [Unicode.org](http://www.unicode.org/emoji/charts-11.0/) Full Emoji List (~50MB)
-  * Download the [Full Emoji List](http://www.unicode.org/emoji/charts-11.0/full-emoji-list.html) (with all emoji data embedded)
+* [Unicode.org](http://www.unicode.org/emoji/charts/) Full Emoji List (~50MB)
+  * Download the [Full Emoji List](http://www.unicode.org/emoji/charts/full-emoji-list.html) (with all emoji data embedded)
   * Use the [extraction script `getemojis`](getemojis) to extract emoji data (call it without parameters for instructions)
   * Deploy the desired subdirectories (e.g. `apple`)
   * Includes apple, emojione, facebook, google, twitter, samsung, windows emojis (and some limited low-resolution sets that we shall ignore)
