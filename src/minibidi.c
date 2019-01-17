@@ -29,11 +29,6 @@
  */
 
 
-#define LMASK	0x3F    /* Embedding Level mask */
-#define OMASK	0xC0    /* Override mask */
-#define OISL	0x80    /* Override is L */
-#define OISR	0x40    /* Override is R */
-
 /* Shaping Helpers */
 #define STYPE(xh) ((((xh) >= SHAPE_FIRST) && ((xh) <= SHAPE_LAST)) ? \
 shapetypes[(xh)-SHAPE_FIRST].type : SU) /*)) */
@@ -114,11 +109,10 @@ static const shape_node shapetypes[] = {
  * Finds the index of a run with level tlevel or higher (!)
  */
 static int
-findIndexOfRun(uchar * level, int start, int count, int tlevel)
+find_run(uchar * levels, int start, int count, int tlevel)
 {
-  int i;
-  for (i = start; i < count; i++) {
-    if (tlevel <= level[i]) {
+  for (int i = start; i < count; i++) {
+    if (tlevel <= levels[i]) {
       return i;
     }
   }
@@ -126,32 +120,29 @@ findIndexOfRun(uchar * level, int start, int count, int tlevel)
 }
 
 /*
- * Flips the text buffer, according to max level, and
- * all higher levels
+ * Flips runs in text buffer, of tlevel and all higher levels
  *
  * Input:
  * from: text buffer, on which to apply flipping
- * level: resolved levels buffer
- * max: the maximum level found in this line (should be uchar)
- * count: line size in bidi_char
+ * levels: resolved levels buffer
+ * tlevel: the level from which to flip runs
+ * count: line size in bidi_char and levels
  */
 static void
-flipThisRun(bidi_char * from, uchar * level, int max, int count)
+flip_runs(bidi_char * from, uchar * levels, int tlevel, int count)
 {
-  int i, j, k, tlevel;
-  bidi_char temp;
+  int i, j;
 
   j = i = 0;
   while (i < count && j < count) {
-   /* find the start of the run of level=max */
-    tlevel = max;
-    i = j = findIndexOfRun(level, i, count, max);
+   /* find the start of the next run */
+    i = j = find_run(levels, i, count, tlevel);
    /* find the end of the run */
-    while (i < count && tlevel <= level[i]) {
+    while (i < count && tlevel <= levels[i]) {
       i++;
     }
-    for (k = i - 1; k > j; k--, j++) {
-      temp = from[k];
+    for (int k = i - 1; k > j; k--, j++) {
+      bidi_char temp = from[k];
       from[k] = from[j];
       from[j] = temp;
     }
@@ -231,7 +222,9 @@ is_rtl_class(uchar bc)
   * character in any of those classes will be displayed
   * uniformly left-to-right by the Unicode bidi algorithm.
   */
-  const int mask = (1 << R) | (1 << AL) | (1 << RLE) | (1 << RLO);
+  const int mask = (1 << R) | (1 << AL) | (1 << RLE) | (1 << RLO)
+                 | (1 << RLI) | (1 << FSI)
+                 ;
 
   return mask & (1 << (bc));
 }
@@ -248,6 +241,14 @@ bool
 is_punct_class(uchar bc)
 {
   const int mask = (1 << BN) | (1 << CS) | (1 << EN) | (1 << ES) | (1 << ET);
+
+  return mask & (1 << (bc));
+}
+
+static bool
+is_NI(uchar bc)
+{
+  const int mask = (1 << B) | (1 <<  S) | (1 <<  WS) | (1 <<  ON) | (1 <<  FSI) | (1 <<  LRI) | (1 <<  RLI) | (1 <<  PDI);
 
   return mask & (1 << (bc));
 }
@@ -433,47 +434,6 @@ mirror(ucschar c)
 }
 
 /*
- * The most significant 2 bits of each level are used to store
- * Override status of each character
- * This function sets the override bits of level according
- * to the value in override, and reurns the new byte.
- */
-static uchar
-setOverrideBits(uchar level, uchar override)
-{
-  if (override == ON)
-    return level;
-  else if (override == R)
-    return level | OISR;
-  else if (override == L)
-    return level | OISL;
-  return level;
-}
-
-/*
- * Find the most recent run of the same value in `level', and
- * return the value _before_ it.
- * Used to be used to process U+202C POP DIRECTIONAL FORMATTING.
- */
-static int
-getPreviousLevel(uchar * level, int from)
-{
-  if (from > 0) {
-    uchar current = level[--from];
-
-    while (from >= 0 && level[from] == current)
-      from--;
-
-    if (from >= 0)
-      return level[from];
-
-    return -1;
-  }
-  else
-    return -1;
-}
-
-/*
  * The Main Bidi Function, and the only function that should
  * be used by the outside world.
  *
@@ -488,7 +448,7 @@ do_bidi(bidi_char * line, int count)
   uchar currentEmbedding;
   uchar currentOverride;
   uchar tempType;
-  int i, j, yes, bover;
+  int i, j, yes;
 
   uchar bidi_class_of(int i) {
     if (i && line[i].wc == UCSWIDE)
@@ -522,7 +482,9 @@ do_bidi(bidi_char * line, int count)
   */
 
  /* Rule (P2), (P3)
-  * P2. In each paragraph, find the first character of type L, AL, or R.
+  * P2. In each paragraph, find the first character of type L, AL, or R 
+    while skipping over any characters between an isolate initiator and 
+    its matching PDI or, if it has no matching PDI, the end of the paragraph.
   * P3. If a character is found in P2 and it is of type AL or R, then set
   * the paragraph embedding level to one; otherwise, set it to zero.
   */
@@ -545,13 +507,23 @@ do_bidi(bidi_char * line, int count)
   }
 
  /* Rule (X1)
-  * X1. Begin by setting the current embedding level to the paragraph
-  * embedding level. Set the directional override status to neutral.
+    X1. At the beginning of a paragraph, perform the following steps:
+  • Set the stack to empty.
+  • Push onto the stack an entry consisting of the paragraph embedding level,
+    a neutral directional override status, and a false directional isolate status.
+  • Set the overflow isolate count to zero.
+  • Set the overflow embedding count to zero.
+  • Set the valid isolate count to zero.
+  • Process each character iteratively, applying rules X2 through X8. 
+    Only embedding levels from 0 through max_depth are valid in this phase. 
+    (Note that in the resolution of levels in rules I1 and I2, 
+    the maximum embedding level of max_depth+1 can be reached.)
   */
   currentEmbedding = paragraphLevel;
   currentOverride = ON;
   bool currentIsolate = false;
 
+  // By making the dss as large as the whole line, we avoid overflow handling.
   uchar dss_emb[count + 1];
   uchar dss_ovr[count + 1];
   bool dss_isol[count + 1];
@@ -568,11 +540,14 @@ do_bidi(bidi_char * line, int count)
 
   void popdss() {
     // remove top
-    dss_top--;
+    if (dss_top >= 0)
+      dss_top--;
     // then set current values to new top
-    currentEmbedding = dss_emb[dss_top];
-    currentOverride = dss_ovr[dss_top];
-    currentIsolate = dss_isol[dss_top];
+    if (dss_top >= 0) {
+      currentEmbedding = dss_emb[dss_top];
+      currentOverride = dss_ovr[dss_top];
+      currentIsolate = dss_isol[dss_top];
+    }
   }
 
   pushdss();
@@ -623,9 +598,10 @@ do_bidi(bidi_char * line, int count)
   * terminated at the end of each paragraph. Paragraph separators are not
   * included in the embedding. (Useless here) NOT IMPLEMENTED
   */
-  bover = 0;
   for (i = 0; i < count; i++) {
     tempType = bidi_class_of(i);
+    levels[i] = currentEmbedding;
+
     if (tempType == FSI) {
       int lvl = 0;
       tempType = LRI;
@@ -649,47 +625,33 @@ do_bidi(bidi_char * line, int count)
     }
     switch (tempType) {
       when RLE:
-        levels[i] = currentEmbedding;
         currentEmbedding = leastGreaterOdd(currentEmbedding);
-        //levels[i] = currentEmbedding;
-        levels[i] = setOverrideBits(levels[i], currentOverride);
         currentOverride = ON;
         currentIsolate = false;
         pushdss();
         trace_mark("RLE");
       when LRE:
-        levels[i] = currentEmbedding;
         currentEmbedding = leastGreaterEven(currentEmbedding);
-        //levels[i] = currentEmbedding;
-        levels[i] = setOverrideBits(levels[i], currentOverride);
         currentOverride = ON;
         currentIsolate = false;
         pushdss();
         trace_mark("LRE");
       when RLO:
-        levels[i] = currentEmbedding;
         currentEmbedding = leastGreaterOdd(currentEmbedding);
-        //levels[i] = currentEmbedding;
-        tempType = currentOverride = R;
+        currentOverride = R;
         currentIsolate = false;
         pushdss();
-        bover = 1;
         trace_mark("RLO");
       when LRO:
-        levels[i] = currentEmbedding;
         currentEmbedding = leastGreaterEven(currentEmbedding);
-        //levels[i] = currentEmbedding;
-        tempType = currentOverride = L;
+        currentOverride = L;
         currentIsolate = false;
         pushdss();
-        bover = 1;
         trace_mark("LRO");
       when RLI:
         if (currentOverride != ON)
           tempType = currentOverride;
-        levels[i] = currentEmbedding;
         currentEmbedding = leastGreaterOdd(currentEmbedding);
-        //levels[i] = currentEmbedding;
         isolateLevel++;
         currentOverride = ON;
         currentIsolate = true;
@@ -698,36 +660,20 @@ do_bidi(bidi_char * line, int count)
       when LRI:
         if (currentOverride != ON)
           tempType = currentOverride;
-        levels[i] = currentEmbedding;
         currentEmbedding = leastGreaterEven(currentEmbedding);
-        //levels[i] = currentEmbedding;
         isolateLevel++;
         currentOverride = ON;
         currentIsolate = true;
         pushdss();
         trace_mark("LRI");
       when PDF:
-#ifdef old_PDF_handling
-#warning old PDF handling does not work correctly for override
-        if (getPreviousLevel(levels, i) == -1) {
-          currentEmbedding = paragraphLevel;
-          currentOverride = ON;
-        }
-        else {
-          currentOverride = currentEmbedding & OMASK;
-          currentEmbedding = currentEmbedding & ~OMASK;
-        }
-        levels[i] = currentEmbedding;
-#else
-        (void)getPreviousLevel;
-        if (countdss() > 1 && !currentIsolate)
+        if (!currentIsolate && countdss() >= 2)
           popdss();
         levels[i] = currentEmbedding;
-#endif
         trace_mark("PDF");
       when PDI:
         if (isolateLevel) {
-          while (!currentIsolate)
+          while (!currentIsolate && countdss() > 0)
             popdss();
           popdss();
           isolateLevel--;
@@ -737,24 +683,17 @@ do_bidi(bidi_char * line, int count)
         levels[i] = currentEmbedding;
         trace_mark("PDI");
       when WS or S: /* Whitespace is treated as neutral for now */
-        levels[i] = currentEmbedding;
         tempType = ON;
         if (currentOverride != ON)
           tempType = currentOverride;
       otherwise:
-        levels[i] = currentEmbedding;
         if (currentOverride != ON)
           tempType = currentOverride;
     }
     types[i] = tempType;
   }
- /* this clears out all overrides, so we can use levels safely... */
- /* checks bover first */
-  if (bover)
-    for (i = 0; i < count; i++)
-      levels[i] = levels[i] & LMASK;
-  trace_bidi("<X9");
 
+  trace_bidi("<X9");
  /* Rule (X9)
   * X9. Remove all RLE, LRE, RLO, LRO, PDF, and BN codes.
   * Here, they're converted to BN.
@@ -766,25 +705,40 @@ do_bidi(bidi_char * line, int count)
     }
   }
 
+ /* Rule (X10) NOT IMPLEMENTED
+  * X10. Handle isolating run sequences...
+  */
+
  /* Rule (W1)
   * W1. Examine each non-spacing mark (NSM) in the level run, and change
   * the type of the NSM to the type of the previous character. If the NSM
   * is at the start of the level run, it will get the type of sor.
+  // TODO: check
+    W1. Examine each nonspacing mark (NSM) in the isolating run sequence, 
+    and change the type of the NSM 
+    to Other Neutral if the previous character is an isolate initiator or PDI, 
+    and to the type of the previous character otherwise. 
+    If the NSM is at the start of the isolating run sequence, 
+    it will get the type of sos. 
+    (Note that in an isolating run sequence, an isolate initiator followed by 
+    an NSM or any type other than PDI must be an overflow isolate initiator.)
   */
   if (types[0] == NSM)
     types[0] = paragraphLevel;
 
   for (i = 1; i < count; i++) {
     if (types[i] == NSM)
-      types[i] = types[i - 1];
-   /* Is this a safe assumption?
-    * I assumed the previous, IS a character.
-    */
+      switch (types[i - 1]) {
+        when LRI or RLI or FSI or PDI:
+          types[i] = ON;
+        otherwise:
+          types[i] = types[i - 1];
+      }
   }
 
  /* Rule (W2)
   * W2. Search backwards from each instance of a European number until the
-  * first strong type (R, L, AL, or sor) is found.  If an AL is found,
+  * first strong type (R, L, AL, or sos) is found.  If an AL is found,
   * change the type of the European number to Arabic number.
   */
   for (i = 0; i < count; i++) {
@@ -890,22 +844,30 @@ do_bidi(bidi_char * line, int count)
     }
   }
 
- /* Rule (N1)
-  * N1. A sequence of neutrals takes the direction of the surrounding
-  * strong text if the text on both sides has the same direction. European
-  * and Arabic numbers are treated as though they were R.
+ /* Rule (N0) NOT IMPLEMENTED
+  * N0. Handle bracket pairs in isolating run sequences...
   */
-  if (count >= 2 && types[0] == ON) {
+
+ /* Rule (N1)
+  * N1. A sequence of NIs takes the direction of the surrounding
+  * strong text if the text on both sides has the same direction.
+  * European and Arabic numbers are treated as though they were R.
+  // TODO: check
+    European and Arabic numbers act as if they were R in terms of their 
+    influence on NIs. The start-of-sequence (sos) and end-of-sequence (eos) 
+    types are used at isolating run sequence boundaries.
+  */
+  if (count >= 2 && is_NI(types[0])) {
     if ((types[1] == R) || (types[1] == EN) || (types[1] == AN))
       types[0] = R;
     else if (types[1] == L)
       types[0] = L;
   }
   for (i = 1; i < (count - 1); i++) {
-    if (types[i] == ON) {
+    if (is_NI(types[i])) {
       if (types[i - 1] == L) {
         j = i;
-        while (j < (count - 1) && types[j] == ON) {
+        while (j < (count - 1) && is_NI(types[j])) {
           j++;
         }
         if (types[j] == L) {
@@ -919,7 +881,7 @@ do_bidi(bidi_char * line, int count)
       else if ((types[i - 1] == R) || (types[i - 1] == EN) ||
                (types[i - 1] == AN)) {
         j = i;
-        while (j < (count - 1) && types[j] == ON) {
+        while (j < (count - 1) && is_NI(types[j])) {
           j++;
         }
         if ((types[j] == R) || (types[j] == EN) || (types[j] == AN)) {
@@ -931,7 +893,7 @@ do_bidi(bidi_char * line, int count)
       }
     }
   }
-  if (count >= 2 && types[count - 1] == ON) {
+  if (count >= 2 && is_NI(types[count - 1])) {
     if (types[count - 2] == R || types[count - 2] == EN ||
         types[count - 2] == AN)
       types[count - 1] = R;
@@ -940,10 +902,10 @@ do_bidi(bidi_char * line, int count)
   }
 
  /* Rule (N2)
-  * N2. Any remaining neutrals take the embedding direction.
+  * N2. Any remaining NIs take the embedding direction.
   */
   for (i = 0; i < count; i++) {
-    if (types[i] == ON) {
+    if (is_NI(types[i])) {
       if ((levels[i] % 2) == 0)
         types[i] = L;
       else
@@ -983,11 +945,14 @@ do_bidi(bidi_char * line, int count)
   * to the paragraph embedding level:
   *   (1) segment separators,
   *   (2) paragraph separators,
-  *   (3) any sequence of whitespace characters preceding a 
-  *       segment separator or paragraph separator,
-  *   (4) and any sequence of white space characters at the end of the line.
+  *   (3) any sequence of whitespace characters or isolate markers
+  *       preceding a segment separator or paragraph separator,
+  *   (4) and any sequence of whitespace characters or isolate markers
+  *       at the end of the line.
   * The types of characters used here are the original types, not those
   * modified by the previous phase.
+    N/A: Because a paragraph separator breaks lines, there will be at most 
+    one per line, at the end of that line.
   */
   j = count - 1;
   while (j > 0 && (bidi_class_of(j) == WS)) {
@@ -1040,9 +1005,8 @@ do_bidi(bidi_char * line, int count)
     i++;
   }
  /* maximum level in tempType. */
-  while (tempType > 0) {        /* loop from highest level to the least odd, */
-   /* which i assume is 1 */
-    flipThisRun(line, levels, tempType, count);
+  while (tempType > 0) { /* loop from highest level to the least odd */
+    flip_runs(line, levels, tempType, count);
     tempType--;
   }
 
