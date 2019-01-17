@@ -918,9 +918,14 @@ term_bidi_line(termline *line, int scr_y)
       term.wcTo = renewn(term.wcTo, term.wcFromTo_size);
     }
 
+    // UTF-16 string (including surrogates) for Windows bidi calculation
+    //wchar wcs[2 * term.cols];  /// size handling to be tweaked
+    //int wcsi = 0;
+
     ib = 0;
     for (it = 0; it < term.cols; it++) {
       ucschar c = line->chars[it].chr;
+      //wcs[wcsi++] = c;
 
       if ((c & 0xFC00) == 0xD800) {
         int off = line->chars[it].cc_next;
@@ -928,12 +933,15 @@ term_bidi_line(termline *line, int scr_y)
           ucschar low_surrogate = line->chars[it + off].chr;
           if ((low_surrogate & 0xFC00) == 0xDC00) {
             c = ((c - 0xD7C0) << 10) | (low_surrogate & 0x03FF);
+            //wcs[wcsi++] = low_surrogate;
           }
         }
       }
 
-      if (it) {
-        termchar * bp = &line->chars[it - 1];
+#ifdef handle_initial_bidi_markers
+#warning to be implemented
+      if (line->ini_bidi) {
+        termchar * bp = &line->ini_bidi;
         // Unfold directional formatting characters which are handled 
         // like combining characters in the mintty structures 
         // (and would thus stay hidden from minibidi), and need to be 
@@ -951,14 +959,37 @@ term_bidi_line(termline *line, int scr_y)
             term.wcFrom[ib].origwc = term.wcFrom[ib].wc = bp->chr;
             term.wcFrom[ib].index = -1;
             ib++;
+            //wcs[wcsi++] = bp->chr;
           }
         }
       }
+#endif
 
       term.wcFrom[ib].origwc = term.wcFrom[ib].wc = c;
       term.wcFrom[ib].index = it;
-
       ib++;
+
+      termchar * bp = &line->chars[it];
+      // Unfold directional formatting characters which are handled 
+      // like combining characters in the mintty structures 
+      // (and would thus stay hidden from minibidi), and need to be 
+      // exposed as separate characters for the minibidi algorithm
+      while (bp->cc_next) {
+        bp += bp->cc_next;
+        if (bp->chr == 0x200E || bp->chr == 0x200F
+            || (bp->chr >= 0x202A && bp->chr <= 0x202E)
+            || (bp->chr >= 0x2066 && bp->chr <= 0x2069)
+           )
+        {
+          term.wcFromTo_size++;
+          term.wcFrom = renewn(term.wcFrom, term.wcFromTo_size);
+          term.wcTo = renewn(term.wcTo, term.wcFromTo_size);
+          term.wcFrom[ib].origwc = term.wcFrom[ib].wc = bp->chr;
+          term.wcFrom[ib].index = -1;
+          ib++;
+          //wcs[wcsi++] = bp->chr;
+        }
+      }
     }
 
     trace_bidi("=", term.wcFrom);
