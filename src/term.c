@@ -1227,10 +1227,8 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
       {
         line->chars[start.x] = term.erase_char;
         line->chars[start.x].attr.attr |= TATTR_CLEAR;
-        if (!start.x) {
-          line->chars[-1] = term.erase_char;
-          line->chars[-1].attr.attr |= TATTR_CLEAR;
-        }
+        if (!start.x)
+          clear_cc(line, -1);
       }
       if (inclpos(start, cols) && start.y < term.rows)
         line = term.lines[start.y];

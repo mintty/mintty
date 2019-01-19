@@ -115,7 +115,7 @@ clear_cc(termline *line, int col)
 {
   int oldfree, origcol = col;
 
-  assert(col >= 0 && col < line->cols);
+  assert(col >= -1 && col < line->cols);
 
   if (!line->chars[col].cc_next)
     return;     /* nothing needs doing */
