@@ -366,6 +366,11 @@ write_char(wchar c, int width)
         else
           add_cc(line, x, c, curs->attr);
       }
+      else {
+        // add initial combining characters, 
+        // particularly to include initial bidi directional markers
+        add_cc(line, -1, c, curs->attr);
+      }
       return;
     otherwise:  // Anything else. Probably shouldn't get here.
       return;
