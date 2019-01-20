@@ -1,5 +1,5 @@
 // termline.c (part of mintty)
-// Copyright 2008-12 Andy Koppe, -2018 Thomas Wolff
+// Copyright 2008-12 Andy Koppe, -2019 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -16,6 +16,7 @@ newline(int cols, int bce)
 {
   termline *line = new(termline);
   newn_1(line->chars, termchar, cols);
+  //! Note: line->chars is based @ index -1
   for (int j = -1; j < cols; j++)
     line->chars[j] = (bce ? term.erase_char : basic_erase_char);
   line->cols = line->size = cols;
@@ -29,7 +30,8 @@ void
 freeline(termline *line)
 {
   assert(line);
-  free(line->chars);
+  //! Note: line->chars is based @ index -1
+  free(&line->chars[-1]);
   free(line);
 }
 
@@ -386,7 +388,7 @@ makerle(struct buf *b, termline *line,
   termchar *c = line->chars;
   int n = line->cols;
 
- /* Adjust to -1 base index */
+  //! Note: line->chars is based @ index -1
   c--;
   n++;
 
@@ -584,7 +586,8 @@ static void
 readrle(struct buf *b, termline *line,
         void (*readliteral) (struct buf *b, termchar *c, termline *line))
 {
-  int n = -1;  // include base index -1
+  //! Note: line->chars is based @ index -1
+  int n = -1;
 
   while (n < line->cols) {
     int hdr = get(b);
@@ -649,6 +652,7 @@ decompressline(uchar *data, int *bytes_used)
   * so that cc diagnostics that verify the integrity of the whole line 
   * will make sense while we're in the middle of building it up.
   */
+  //! Note: line->chars is based @ index -1
   for (int i = -1; i < line->cols; i++)
     line->chars[i].cc_next = 0;
 
@@ -696,6 +700,7 @@ void
 clearline(termline *line)
 {
   line->lattr = LATTR_NORM;
+  //! Note: line->chars is based @ index -1
   for (int j = -1; j < line->cols; j++)
     line->chars[j] = term.erase_char;
   if (line->size > line->cols) {
@@ -734,6 +739,7 @@ resizeline(termline *line, int cols)
     * relative offsets within the cc block.) Also do the same
     * to the head of the cc_free list.
     */
+    //! Note: line->chars is based @ index -1
     for (int i = -1; i < oldcols; i++)
       if (line->chars[i].cc_next)
         line->chars[i].cc_next += cols - oldcols;
