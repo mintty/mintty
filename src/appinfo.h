@@ -6,13 +6,13 @@
 
 #define MAJOR_VERSION  2
 #define MINOR_VERSION  9
-#define PATCH_NUMBER   5
+#define PATCH_NUMBER   6
 #define BUILD_NUMBER   0
 
 // needed for res.rc
 #define APPDESC "Terminal"
 #define AUTHOR  "Andy Koppe / Thomas Wolff"
-#define YEAR    "2013/2018"
+#define YEAR    "2013/2019"
 
 
 #define CONCAT_(a,b) a##b

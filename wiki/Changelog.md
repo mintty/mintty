@@ -1,6 +1,9 @@
+### 2.9.6 (20 January 2019) ###
+
 Terminal features
+  * Fixed bidi "run" handling (~#837).
+  * Fixed bidi embedding handling (#837).
   * HTML export/copy: Fixed HTML style attributes.
-  * Fixed bidi embedding and run handling (#837).
 
 Window handling
   * Flexible window grouping configuration (#789).

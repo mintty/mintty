@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Wed Dec  5 10:56:29 2018 -->
+<!-- CreationDate: Sun Jan 20 17:44:34 2019 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -1171,7 +1171,8 @@ Unicode-enabled settings: BellFile, ThemeFile, Background,
 Title, ExitTitle, Icon, Log, Language, Font, Font1...,
 FontSample, Printer, Answerback, SixelClipChars, Class,
 AppID, AppName, AppLaunchCmd, DropCommands, UserCommands,
-SessionCommands, TaskCommands, KeyFunctions.</p>
+SessionCommands, TaskCommands, KeyFunctions,
+SysMenuFunctions, CtxMenuFunctions, UserCommandsPath.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Be careful when
 running multiple instances of mintty. If options are saved
@@ -1623,6 +1624,15 @@ detection</b> (OldAltGrDetection=no)</p>
 would disable a workaround for an incompatibility in the
 Windows on-screen keyboard, just in case is has any side
 effects.</p>
+
+<p style="margin-left:11%;"><b>Support injection of
+external hotkeys</b> (SupportExternalHotkeys=2)</p>
+
+<p style="margin-left:22%;">This setting supports external
+Alt+hotkey combinations, esp. Alt+F4 to close the window,
+independently of general Alt+Fn shortcuts support (if option
+value is 2) and by fixing the buggy hotkey sequence sent by
+StrokeIt.</p>
 
 <p style="margin-left:11%;"><b>Copy and Paste shortcuts</b>
 (ClipShortcuts=yes)</p>
@@ -2286,9 +2296,13 @@ suggested by the window manager is used.</p>
 
 <p style="margin-left:22%;">The <b>Class</b> setting
 determines the name of the window class of the terminal
-window. This can be used to help Windows scripting tools
-such as AutoHotKey to distinguish different mintty windows.
-The name defaults to &quot;mintty&quot;.</p>
+window. It can be used to distinguish or group different
+mintty windows, e.g. for the mintty session switcher, or for
+Windows scripting tools such as AutoHotKey.</p>
+
+<p style="margin-left:22%; margin-top: 1em">For a flexible
+grouping configuration, the Class option supports the same
+<b>%s</b> placeholder parameters as the AppID option.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Hidden
 settings</b> <br>
@@ -2296,8 +2310,16 @@ The following settings appear neither in the options dialog
 nor as command line options, which means they can only be
 set in config files or using the <b>--option</b> or
 <b>-o</b> command line option. <b><br>
-Clear selection highlighting on input</b>
-(ClearSelectionOnInput=true)</p>
+Accelerate display speed</b> (DisplaySpeedup=6)</p>
+
+<p style="margin-left:22%;">If mintty processes high volume
+of output, it will skip up to the given number of refresh
+intervals (of 16ms each) in order to save output that is
+visually scrolled off right away, so effectively increasing
+output speed. The maximum value is 9.</p>
+
+<p style="margin-left:11%;"><b>Clear selection highlighting
+on input</b> (ClearSelectionOnInput=true)</p>
 
 <p style="margin-left:22%;">When this is disabled, keyboard
 input or pasting does not clear selection highlighting.</p>
@@ -2449,10 +2471,18 @@ but causes similar problems in other cases (issue #784).</p>
 
 
 <p style="margin-left:22%; margin-top: 1em"><i>Warning:</i>
-Using this option in a Windows desktop shortcut may cause
-trouble with taskbar grouping behaviour. If you need to do
-that, the shortcut itself should also get attached with the
-same AppId.</p>
+Using this option for a mintty window started from a Windows
+shortcut (desktop, taskbar, start menu) may cause trouble
+with taskbar grouping behaviour. If you need to do that, the
+shortcut itself should also get attached with the same
+AppId.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+Since 2.9.6, if mintty is started via a Windows shortcut
+which has its own AppID, it is reused for the new mintty
+window in order to achieve proper taskbar icon grouping.
+This takes precedence over an explicit setting of the AppID
+option.</p>
 
 
 <p style="margin-left:22%; margin-top: 1em"><i>Explanation:</i>
@@ -2461,11 +2491,16 @@ Hence, if an AppID is specified in the mintty settings, but
 not on a taskbar-pinned shortcut for invoking mintty,
 clicking the pinned shortcut will result in a separate
 taskbar item for the new mintty window, rather than being
-grouped with the shortcut. To avoid this, the
-shortcut&rsquo;s AppID has to be set to the same string,
-which can be done using the <b>Win7AppId</b> utility
-available cloned in the mintty utils repository
-<i>https://github.com/mintty/utils</i>.</p>
+grouped with the shortcut.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Hint:</i> To
+avoid AppID inconsistence and thus ungrouped taskbar icons,
+the shortcut&rsquo;s AppID should to be set to the same
+string as the mintty AppID, which can be done using the
+<b>winappid</b> utility available in the mintty utils
+repository <i>https://github.com/mintty/utils</i>. As noted
+above, since mintty 2.9.6, the mintty AppID does not need to
+be set anymore in this case.</p>
 
 <p style="margin-left:11%;"><b>Application Taskbar Shortcut
 Title</b> (AppName=)</p>
@@ -2663,26 +2698,29 @@ of Ctrl+_ would be inhibited.</p>
 actions are described as follows: <br>
 &ndash; <b>&quot;string&quot;</b> or
 <b>&rsquo;string&rsquo;</b>: enters the literal string <br>
-&ndash; <b>&lsquo;command&lsquo;</b>: enters the output of
-the command <br>
+&ndash; <b>&lsquo;command&lsquo; (**)</b>: enters the output
+of the command <br>
 &ndash; <b>fullscreen (*)</b>: switches to fullscreen mode
 <br>
 &ndash; <b>toggle-fullscreen (*)</b>: toggles fullscreen
 mode <br>
 &ndash; <b>win-max</b>: resizes to window size <br>
 &ndash; <b>win-restore</b>: resizes to normal size <br>
+&ndash; <b>win-toggle-max</b>: toggles maximized / normal
+size <br>
 &ndash; <b>win-icon</b>: turns window into icon <br>
 &ndash; <b>close</b>: closes terminal window <br>
-&ndash; <b>new</b>: opens a new terminal window when key is
-released <br>
+&ndash; <b>new-key</b>: opens a new terminal window when key
+is released <br>
+&ndash; <b>new-window</b>: opens a new terminal window <br>
 &ndash; <b>options</b>: opens the Options dialog <br>
 &ndash; <b>menu-text (*)</b>: opens the context menu at the
 cursor position <br>
 &ndash; <b>menu-pointer (*)</b>: opens the context menu at
 the mouse position <br>
 &ndash; <b>search</b>: opens the search bar <br>
-&ndash; <b>default-size (*)</b>: switches to default window
-size <br>
+&ndash; <b>default-size (*)</b>: switches to default
+terminal size <br>
 &ndash; <b>scrollbar-outer</b>: toggles the scrollbar (xterm
 compatible) <br>
 &ndash; <b>scrollbar-inner</b>: toggles the scrollbar
@@ -2710,6 +2748,8 @@ scrollback <br>
 <br>
 &ndash; <b>copy-title</b>: copies the window title to the
 clipboard <br>
+&ndash; <b>lock-title</b>: locks the window title from being
+changed <br>
 &ndash; <b>reset</b>: resets the terminal <br>
 &ndash; <b>break</b>: sends a break condition to the
 application <br>
@@ -2727,7 +2767,15 @@ HTML file <br>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note
 (*):</i> The exact behaviour of some actions depends on the
-Shift state as being mapped from.</p>
+state of the Shift key.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note
+(**):</i> For external commands as key functions, the same
+additional functionality is provided as for context menu
+user commands (option <b>UserCommands</b>): environment
+variables and PATH substitution; the PATH environment for
+the external command can be set up with option
+<b>UserCommandsPath</b>.</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i> To
 just disable the built-in shortcut (and not override it with
@@ -3008,7 +3056,8 @@ desired, this should be handled by a suitable cooperating
 shell function.</p>
 
 <p style="margin-left:11%;"><b>User commands</b>
-(UserCommands=)</p>
+(UserCommands=) [DEPRECATED, see
+<b>CtxMenuFunctions</b>]</p>
 
 <p style="margin-left:22%;">This setting lists user-defined
 commands for the extended context menu. The value is a
@@ -3047,10 +3096,18 @@ localization language (in subdirectory <i>lang</i> of a
 mintty resource directory).</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+Menu item labels can contain a <b>&amp;</b> sign to indicate
+a key shortcut for menu item selection.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 The previous command can be detected if prompt lines are
 marked with the escape sequence ^[[?7711h. See the Control
 Sequences wiki page
 <i>https://github.com/mintty/mintty/wiki/CtrlSeqs#scroll-markers</i>.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+The PATH environment for the external command can be set up
+with option <b>UserCommandsPath</b>.</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 This is an experimental feature, with an experimental
@@ -3081,6 +3138,80 @@ https://www.google.de/search?q=&quot;$MINTTY_SELECT&quot;</b></p>
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 Control characters need to be embedded verbatim; there is no
 escape notation.</p>
+
+<p style="margin-left:11%;"><b>User commands PATH
+expansion</b> (UserCommandsPath=/bin:%s)</p>
+
+<p style="margin-left:22%;">This setting defines the PATH
+environment for user-defined external commands, applicable
+to extended context menu commands (UserCommands=...:...) and
+key-attached external commands
+(KeyFunctions=...:&lsquo;...&lsquo;). If the value contains
+a single <b>%s</b> placeholder, the current environment PATH
+is substituted for it.</p>
+
+<p style="margin-left:11%;"><b>System menu user
+commands</b> (CtxMenuFunctions=)</p>
+
+<p style="margin-left:22%;">This setting lists user-defined
+functions or commands for the context menus (right mouse
+click in text area). If it is configured, it is by default
+included in the extended context menu (Control+right-click)
+but can be configured for other context menu invocations as
+well (see configuration of <i>Menu contents</i> with options
+<b>Menu*</b>), along with the deprecated configured user
+commands (<b>UserCommands</b>).</p>
+
+<p style="margin-left:22%; margin-top: 1em">The value is a
+series of semicolon-separated, colon-combined pairs of key
+and action descriptors (if a semicolon shall be embedded
+into any of the action descriptors, a non-whitespace control
+character (i.e. none of <b>^I^J^K^L^M</b>) can be specified
+as an alternative separator by starting the whole setting
+with it). The definition list can be split over multiple
+lines if a separator is followed by a backslash, newline,
+and optional whitespace indentation.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The
+configuration is similar to the <b>UserCommands</b> setting
+with respect to menu labels, and to <b>KeyFunctions</b>
+setting with respect to function designations; respective
+notes and warnings apply.</p>
+
+<p style="margin-left:11%;"><b>System menu user
+commands</b> (SysMenuFunctions=)</p>
+
+<p style="margin-left:22%;">This setting lists user-defined
+functions or commands for the system menu (right mouse click
+on title bar or left click on title bar icon). If it is
+configured, the middle items of the menu (including
+Options... and New) are replaced by the configured
+functions.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The value is a
+series of semicolon-separated, colon-combined pairs of key
+and action descriptors (if a semicolon shall be embedded
+into any of the action descriptors, a non-whitespace control
+character (i.e. none of <b>^I^J^K^L^M</b>) can be specified
+as an alternative separator by starting the whole setting
+with it). The definition list can be split over multiple
+lines if a separator is followed by a backslash, newline,
+and optional whitespace indentation.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The
+configuration is similar to the <b>UserCommands</b> setting
+with respect to menu labels, and to <b>KeyFunctions</b>
+setting with respect to function designations; respective
+notes and warnings apply. <i>Note:</i> To include default
+items and keep their language localization enabled, their
+label strings need to be reproduced exactly as registered in
+the localization pattern file <b>messages.pot</b>, including
+the position of a <b>&amp;</b> marker which indicates a key
+shortcut for menu item selection.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Examples: <br>
+&ndash; <b>SysMenuFunctions=&amp;Lock Title:lock-title;Copy
+&amp;Title:copy-title;&amp;Options...:options;Ne&amp;w:new-window</b></p>
 
 <p style="margin-left:11%;"><b>Session launcher
 commands</b> (SessionCommands=)</p>
@@ -3202,7 +3333,8 @@ following meaning: <br>
 commands <br>
 &ndash; <b>e</b>: extended context menu with user commands
 (if configured) <br>
-&ndash; <b>u</b>: user commands <br>
+&ndash; <b>u</b>: user commands (<b>CtxMenuFunctions</b>,
+<b>UserCommands</b>) <br>
 &ndash; <b>l</b>: session launcher <br>
 &ndash; <b>s</b>: session switcher (Virtual Tabs) <br>
 &ndash; <b>|</b>: vertical separator, adding a new column

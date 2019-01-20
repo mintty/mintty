@@ -1,5 +1,5 @@
 // termout.c (part of mintty)
-// Copyright 2008-12 Andy Koppe, 2017 Thomas Wolff
+// Copyright 2008-12 Andy Koppe, 2017-19 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
