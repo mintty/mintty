@@ -10,6 +10,10 @@
 #include "charset.h"
 #include "child.h"
 #include "winsearch.h"
+#if CYGWIN_VERSION_API_MINOR >= 66
+#include <langinfo.h>
+#endif
+
 
 struct term term;
 
@@ -31,14 +35,80 @@ static bool markpos_valid = false;
 
 const cattr CATTR_DEFAULT =
             {.attr = ATTR_DEFAULT,
-             .truefg = 0, .truebg = 0, .ulcolr = (colour)-1};
+             .truefg = 0, .truebg = 0, .ulcolr = (colour)-1,
+             .link = -1
+            };
 
 termchar basic_erase_char =
    {.cc_next = 0, .chr = ' ',
             /* CATTR_DEFAULT */
     .attr = {.attr = ATTR_DEFAULT | TATTR_CLEAR,
-             .truefg = 0, .truebg = 0, .ulcolr = (colour)-1}
+             .truefg = 0, .truebg = 0, .ulcolr = (colour)-1,
+             .link = -1
+            }
    };
+
+
+#define debug_hyperlinks
+
+static char * * links = 0;
+static int nlinks = 0;
+static int linkid = 0;
+
+int
+putlink(char * link)
+{
+#if CYGWIN_VERSION_API_MINOR >= 66
+  bool utf8 = strcmp(nl_langinfo(CODESET), "UTF-8") == 0;
+#else
+  bool utf8 = strstr(cs_get_locale(), ".65001");
+#endif
+  if (!utf8) {
+    wchar * wlink = cs__mbstowcs(link);
+    link = cs__wcstoutf(wlink);
+    free(wlink);
+  }
+
+  if (*link != ';')
+    for (int i = 0; i < nlinks; i++)
+      if (0 == strcmp(link, links[i])) {
+        if (!utf8)
+          free(link);
+        return i;
+      }
+
+  char * link1;
+  if (*link == ';')
+    link1 = asform("=%d%s", ++linkid, link);
+  else
+    link1 = strdup(link);
+#ifdef debug_hyperlinks
+  printf("[%d] link <%s>\n", nlinks, link1);
+#endif
+  if (!utf8)
+    free(link);
+
+  nlinks++;
+  links = renewn(links, nlinks);
+  links[nlinks - 1] = link1;
+  return nlinks - 1;
+}
+
+char *
+geturl(int n)
+{
+  if (n >= 0 && n < nlinks) {
+    char * url = strchr(links[n], ';');
+    if (url) {
+      url++;
+#ifdef debug_hyperlinks
+      printf("[%d] url <%s> link <%s>\n", n, url, links[n]);
+#endif
+      return url;
+    }
+  }
+  return 0;
+}
 
 
 static bool

@@ -2354,6 +2354,15 @@ do_cmd(void)
         }
       }
     }
+    when 8: {  // hyperlink attribute
+      char * link = s;
+      char * url = strchr(s, ';');
+      if (url++ && *url) {
+        term.curs.attr.link = putlink(link);
+      }
+      else
+        term.curs.attr.link = -1;
+    }
   }
 }
 

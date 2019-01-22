@@ -57,4 +57,7 @@ extern void term_export_html(bool do_open);
 extern char * term_get_html(int level);
 extern void print_screen(void);
 
+extern int putlink(char * link);
+extern char * geturl(int n);
+
 #endif

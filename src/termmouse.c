@@ -6,6 +6,7 @@
 #include "termpriv.h"
 #include "win.h"
 #include "child.h"
+#include "charset.h"  // cs__utftowcs
 
 /*
  * Fetch the character at a particular position in a line array.
@@ -505,11 +506,18 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
   switch (state) {
     when MS_COPYING: term_copy();
     when MS_PASTING: win_paste();
-    when MS_OPENING:
-      term_open();
+    when MS_OPENING: {
+      termline *line = fetch_line(p.y);
+      int urli = line->chars[p.x].attr.link;
+      char * url = geturl(urli);
+      if (url)
+        win_open(cs__utftowcs(url), true);  // win_open frees its argument
+      else
+        term_open();
       term.selected = false;
       term.hovering = false;
       win_update(true);
+    }
     when MS_SEL_CHAR or MS_SEL_WORD or MS_SEL_LINE: {
       // Finish selection.
       if (term.selected && cfg.copy_on_select)
