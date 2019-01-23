@@ -509,6 +509,7 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
     when MS_OPENING: {
       termline *line = fetch_line(p.y);
       int urli = line->chars[p.x].attr.link;
+      release_line(line);
       char * url = geturl(urli);
       if (url)
         win_open(cs__utftowcs(url), true);  // win_open frees its argument
@@ -642,6 +643,9 @@ term_mouse_move(mod_keys mods, pos p)
     term.hover_start = term.hover_end = p;
     if (!hover_spread_empty()) {
       term.hovering = true;
+      termline *line = fetch_line(p.y);
+      term.hoverlink = line->chars[p.x].attr.link;
+      release_line(line);
       win_update(true);
     }
     else if (term.hovering) {

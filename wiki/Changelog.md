@@ -1,3 +1,6 @@
+Terminal features
+  * Support for OSC 8 hyperlink attribute.
+
 ### 2.9.6 (20 January 2019) ###
 
 Terminal features

@@ -49,7 +49,7 @@ termchar basic_erase_char =
    };
 
 
-#define debug_hyperlinks
+#define dont_debug_hyperlinks
 
 static char * * links = 0;
 static int nlinks = 0;
@@ -322,6 +322,7 @@ term_reset(bool full)
   if (full) {
     term.selected = false;
     term.hovering = false;
+    term.hoverlink = -1;
     term.on_alt_screen = false;
     term_print_finish();
     if (term.lines) {
@@ -1808,7 +1809,12 @@ term_paint(void)
       }
 
       if (term.hovering &&
-          posle(term.hover_start, scrpos) && poslt(scrpos, term.hover_end)) {
+          (term.hoverlink >= 0
+           ? term.hoverlink == tattr.link
+           : posle(term.hover_start, scrpos) && poslt(scrpos, term.hover_end)
+          )
+         )
+      {
         tattr.attr &= ~UNDER_MASK;
         tattr.attr |= ATTR_UNDER;
         if (cfg.hover_colour != (colour)-1) {

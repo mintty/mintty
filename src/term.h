@@ -510,6 +510,7 @@ struct term {
   bool selected, sel_rect;
   pos sel_start, sel_end, sel_anchor;
   bool hovering;
+  int hoverlink;
   pos hover_start, hover_end;
 
  /* Scroll steps during selection when cursor out of window. */

@@ -298,6 +298,25 @@ The _file-URL_ liberally follows a `file:` URL scheme; examples are
   * _(empty)_ to restore the default behaviour
 
 
+## Hyperlinks ##
+
+The following _OSC_ ("operating system command") sequence can be used to 
+set a hyperlink attribute which is opened on Ctrl-click.
+
+| `^[]8;;`_URL_`^G` | underlay text with the hyperlink |
+| `^[]8;;^G` | clear hyperlink attribute (terminate hyperlink) |
+| `^[]8;id=`ID`;`_URL_`^G` | associate instances of hyperlink |
+
+A typical hyperlinked text would be written like
+> `^[]8;;`_URL_`^G`text`^[]8;;^G`
+
+Using the `id=` option, multiple parts of hyperlinked text can be 
+associated to a single hyperlink, so a partially visible or wrapped 
+hyperlinked text can be produced on the screen.
+See [Hyperlinks (a.k.a. HTML-like anchors) in terminal emulators](https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda#viewers-editors)
+for an example and a discussion.
+
+
 ## Scroll markers ##
 
 The following sequence can be used to mark prompt lines in support of 
