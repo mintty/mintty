@@ -102,8 +102,8 @@ and two control sequences to adjust the behaviour.
 |:------------|:--------------|:-------------|
 | `Bidi=0`    |               | disabled     |
 | `Bidi=1`    |               | disabled on alternate screen |
-|             | `^[[?77096h`  | disabled     |
-|             | `^[[?77096l`  | not disabled |
+|             | `^[[8l` (_or_ `^[[?77096h`)  | disabled     |
+|             | `^[[8h` (_or_ `^[[?77096l`)  | enabled |
 |             | `^[[?7796h`   | disabled on current line |
 |             | `^[[?7796l`   | not disabled on current line |
 

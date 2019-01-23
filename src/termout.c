@@ -1093,6 +1093,8 @@ set_modes(bool state)
       switch (arg) {
         when 4:  /* IRM: set insert mode */
           term.insert = state;
+        when 8: /* BDSM: bidirectional support mode */
+          term.disable_bidi = !state;
         when 12: /* SRM: set echo mode */
           term.echoing = !state;
         when 20: /* LNM: Return sends ... */
@@ -1236,8 +1238,10 @@ get_mode(bool privatemode, int arg)
     switch (arg) {
       when 4:  /* IRM: insert mode */
         return 2 - term.insert;
+      when 8: /* BDSM: bidirectional support mode */
+        return 2 - !term.disable_bidi;
       when 12: /* SRM: echo mode */
-        return 2 - term.echoing;
+        return 2 - !term.echoing;
       when 20: /* LNM: Return sends ... */
         return 2 - term.newline_mode;
 #ifdef support_Wyse_cursor_modes
