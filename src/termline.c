@@ -250,11 +250,13 @@ makeliteral_attr(struct buf *b, termchar *c)
   * user uses extended colour.
   */
   cattrflags attr = c->attr.attr & ~DATTR_MASK;
+  int link = c->attr.link;
   uint truefg = c->attr.truefg;
   uint truebg = c->attr.truebg;
   colour ulcolr = c->attr.ulcolr;
 
-  if (attr < 0x800000 && !truefg && !truebg && ulcolr != (colour)-1) {
+  if (attr < 0x800000 && !truefg && !truebg
+      && link == -1 && ulcolr == (colour)-1) {
     add(b, (uchar) ((attr >> 16) & 0xFF));
     add(b, (uchar) ((attr >> 8) & 0xFF));
     add(b, (uchar) (attr & 0xFF));
@@ -268,6 +270,10 @@ makeliteral_attr(struct buf *b, termchar *c)
     add(b, (uchar) ((attr >> 16) & 0xFF));
     add(b, (uchar) ((attr >> 8) & 0xFF));
     add(b, (uchar) (attr & 0xFF));
+    add(b, (uchar) ((link >> 24) & 0xFF));
+    add(b, (uchar) ((link >> 16) & 0xFF));
+    add(b, (uchar) ((link >> 8) & 0xFF));
+    add(b, (uchar) (link & 0xFF));
 
     add(b, (uchar) ((truefg >> 16) & 0xFF));
     add(b, (uchar) ((truefg >> 8) & 0xFF));
@@ -325,6 +331,7 @@ static void
 readliteral_attr(struct buf *b, termchar *c, termline *unused(line))
 {
   cattrflags attr;
+  int link = -1;
   uint fg = 0;
   uint bg = 0;
   colour ul = (colour)-1;
@@ -344,6 +351,10 @@ readliteral_attr(struct buf *b, termchar *c, termline *unused(line))
     attr |= get(b);
     attr <<= 8;
     attr |= get(b);
+    link = get(b) << 24;
+    link |= get(b) << 16;
+    link |= get(b) << 8;
+    link |= get(b);
 
     fg = get(b) << 16;
     fg |= get(b) << 8;
@@ -357,6 +368,7 @@ readliteral_attr(struct buf *b, termchar *c, termline *unused(line))
   }
 
   c->attr.attr = attr;
+  c->attr.link = link;
   c->attr.truefg = fg;
   c->attr.truebg = bg;
   c->attr.ulcolr = ul;
