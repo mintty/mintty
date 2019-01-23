@@ -1717,6 +1717,17 @@ do_csi(uchar c)
         while (curs->x > 0 && !term.tabs[curs->x]);
       }
     }
+    when CPAIR('$', 'w'):     /* DECTABSR: tab stop report */
+      if (arg0 == 2) {
+        child_printf("\eP2$");
+        char sep = 'u';
+        for (int i = 0; i < term.cols; i++)
+          if (term.tabs[i]) {
+            child_printf("%c%d", sep, i + 1);
+            sep = '/';
+          }
+        child_printf("\e\\");
+      }
     when CPAIR('>', 'm'):     /* xterm: modifier key setting */
       /* only the modifyOtherKeys setting is implemented */
       if (!arg0)

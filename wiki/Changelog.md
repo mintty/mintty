@@ -2,6 +2,7 @@ Terminal features
   * Support for OSC 8 hyperlink attribute.
   * Support BDSM control sequence (SM/RM bidirectional support, CSI 8 h/l).
   * Fixed DECRQM 12 which was inverted.
+  * Providing DECTABSR tab stop report.
 
 ### 2.9.6 (20 January 2019) ###
 
