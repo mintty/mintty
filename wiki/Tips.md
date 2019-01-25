@@ -822,6 +822,7 @@ background colours and inverse mode are ignored.
 
 Mintty supports display of emojis as defined by Unicode using 
 emoji presentation, emoji style variation and emoji sequences.
+(Note that the tty must be in a UTF-8 locale to support emoji codes.)
 
 The option `Emojis` can choose among sets of emoji graphics if 
 deployed in a mintty configuration directory.
@@ -836,7 +837,7 @@ Note that up to cygwin 2.10.0, it may be useful to set `Charwidth=unicode` in ad
 
 Emojis are displayed in the rectangular character cell group determined 
 by the cumulated width of the emoji sequence characters. The option 
-`EmojiPlacement` can adjust the location of emoji graphis within that area.
+`EmojiPlacement` can adjust the location of emoji graphics within that area.
 
 ### Installing emoji resources ###
 
