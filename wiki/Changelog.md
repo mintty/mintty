@@ -3,7 +3,7 @@ Terminal features for ECMA-48 bidi control
   * Support SCP control sequences (LTR/RTL or default "Character Path").
 
 Terminal features
-  * Support for OSC 8 hyperlink attribute.
+  * Support for OSC 8 hyperlink attribute (~#823).
   * Providing DECTABSR tab stop report.
   * Fixed DECRQM 12 which was inverted.
 
