@@ -1014,7 +1014,8 @@ term_bidi_line(termline *line, int scr_y)
     }
 
     trace_bidi("=", term.wcFrom);
-    do_bidi(term.wcFrom, ib);
+    do_bidi(((line->lattr & LATTR_BIDIMASK) >> LATTR_BIDISHIFT) - 1,
+            term.wcFrom, ib);
     trace_bidi(":", term.wcFrom);
     do_shape(term.wcFrom, term.wcTo, ib);
     trace_bidi("~", term.wcTo);

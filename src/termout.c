@@ -279,6 +279,8 @@ write_char(wchar c, int width)
     clear_cc(line, curs->x);
     line->chars[curs->x].chr = c;
     line->chars[curs->x].attr = curs->attr;
+    line->lattr = (line->lattr & ~LATTR_BIDIMASK)
+                  | (curs->bidi << LATTR_BIDISHIFT);
     if (cfg.ligatures_support)
       term_invalidate(0, curs->y, curs->x, curs->y);
   }
@@ -599,13 +601,17 @@ do_esc(uchar c)
       }
       term.disptop = 0;
     when CPAIR('#', '3'):  /* DECDHL: 2*height, top */
-      term.lines[curs->y]->lattr = LATTR_TOP;
+      term.lines[curs->y]->lattr &= LATTR_BIDIMASK;
+      term.lines[curs->y]->lattr |= LATTR_TOP;
     when CPAIR('#', '4'):  /* DECDHL: 2*height, bottom */
-      term.lines[curs->y]->lattr = LATTR_BOT;
+      term.lines[curs->y]->lattr &= LATTR_BIDIMASK;
+      term.lines[curs->y]->lattr |= LATTR_BOT;
     when CPAIR('#', '5'):  /* DECSWL: normal */
-      term.lines[curs->y]->lattr = LATTR_NORM;
+      term.lines[curs->y]->lattr &= LATTR_BIDIMASK;
+      term.lines[curs->y]->lattr |= LATTR_NORM;
     when CPAIR('#', '6'):  /* DECDWL: 2*width */
-      term.lines[curs->y]->lattr = LATTR_WIDE;
+      term.lines[curs->y]->lattr &= LATTR_BIDIMASK;
+      term.lines[curs->y]->lattr |= LATTR_WIDE;
     when CPAIR('%', '8') or CPAIR('%', 'G'):
       curs->utf = true;
       term_update_cs();
@@ -1834,6 +1840,13 @@ do_csi(uchar c)
         win_led(0, false);
       }
     }
+    when CPAIR(' ', 'k'):  /* SCP: ECMA-48 Set Character Path (LTR/RTL) */
+      if (arg0 <= 2) {
+        termline *line = term.lines[curs->y];
+        line->lattr = (line->lattr & ~LATTR_BIDIMASK)
+                    | (arg0 << LATTR_BIDISHIFT);
+        curs->bidi = arg0;
+      }
   }
 }
 

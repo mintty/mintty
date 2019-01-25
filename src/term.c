@@ -233,6 +233,7 @@ term_cursor_reset(term_cursor *curs)
 
   curs->autowrap = true;
   curs->rev_wrap = cfg.old_wrapmodes;
+  curs->bidi = 0;
 
   curs->origin = false;
 }
@@ -1290,7 +1291,7 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
         if (line_only)
           line->lattr &= ~(LATTR_WRAPPED | LATTR_WRAPPED2);
         else
-          line->lattr = LATTR_NORM;
+          line->lattr = LATTR_NORM | (line->lattr & LATTR_BIDIMASK);
       }
       else if (!selective ||
                !(line->chars[start.x].attr.attr & ATTR_PROTECTED)

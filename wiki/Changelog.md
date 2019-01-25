@@ -1,8 +1,14 @@
+Terminal features for ECMA-48 bidi control
+  * Support BDSM control sequence (SM/RM bidirectional support, CSI 8 h/l).
+  * Support SCP control sequences (LTR/RTL or default "Character Path").
+
 Terminal features
   * Support for OSC 8 hyperlink attribute.
-  * Support BDSM control sequence (SM/RM bidirectional support, CSI 8 h/l).
-  * Fixed DECRQM 12 which was inverted.
   * Providing DECTABSR tab stop report.
+  * Fixed DECRQM 12 which was inverted.
+
+Documentation
+  * Wiki Tips: note about UTF-8 requirement for emoji support (#842).
 
 ### 2.9.6 (20 January 2019) ###
 

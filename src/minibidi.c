@@ -445,9 +445,8 @@ mirror(ucschar c)
  */
 
 int
-do_bidi(bidi_char * line, int count)
+do_bidi(int paragraphLevel, bidi_char * line, int count)
 {
-  uchar paragraphLevel;
   uchar currentEmbedding;
   uchar currentOverride;
   uchar tempType;
@@ -491,21 +490,25 @@ do_bidi(bidi_char * line, int count)
   * P3. If a character is found in P2 and it is of type AL or R, then set
   * the paragraph embedding level to one; otherwise, set it to zero.
   */
-  paragraphLevel = 0;
   int isolateLevel = 0;
-  for (i = 0; i < count; i++) {
-    int type = bidi_class_of(i);
-    if (type == LRI || type == RLI || type == FSI)
-      isolateLevel++;
-    else if (type == PDI)
-      isolateLevel--;
-    else if (isolateLevel == 0) {
-      if (type == R || type == AL) {
-        paragraphLevel = 1;
-        break;
+  if (paragraphLevel == -1) {
+    paragraphLevel = 0;
+    for (i = 0; i < count; i++) {
+      int type = bidi_class_of(i);
+      if (type == LRI || type == RLI || type == FSI)
+        isolateLevel++;
+      else if (type == PDI)
+        isolateLevel--;
+      else if (isolateLevel == 0) {
+        if (type == R || type == AL) {
+          paragraphLevel = 1;
+          break;
+        }
+        else if (type == L) {
+          //paragraphLevel = 0;
+          break;
+        }
       }
-      else if (type == L)
-        break;
     }
   }
 
