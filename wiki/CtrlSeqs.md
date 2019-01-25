@@ -98,14 +98,23 @@ Mintty supports bidi rendering by default. However, some applications
 may prefer to control bidi appearance themselves. There is one option (Bidi) 
 and two control sequences to adjust the behaviour.
 
-| **option**  | **sequence**  | **bidi**     |
-|:------------|:--------------|:-------------|
-| `Bidi=0`    |               | disabled     |
-| `Bidi=1`    |               | disabled on alternate screen |
-|             | `^[[8l` (_or_ `^[[?77096h`)  | disabled     |
-|             | `^[[8h` (_or_ `^[[?77096l`)  | enabled |
-|             | `^[[?7796h`   | disabled on current line |
-|             | `^[[?7796l`   | not disabled on current line |
+| **option**  | **bidi**     |
+|:------------|:-------------|
+| `Bidi=0`    | disabled     |
+| `Bidi=1`    | disabled on alternate screen |
+| `Bidi=2`    | (default) enabled |
+
+| **sequence**  | **bidi**     |
+|:--------------|:-------------|
+| `^[[8l`       | disabled     |
+| `^[[8h`       | enabled      |
+| `^[[?7796h`   | disabled on current line |
+| `^[[?7796l`   | not disabled on current line |
+| `^[[1 k`      | SCP (ECMA-48): set lines to LTR paragraph embedding level |
+| `^[[2 k`      | SCP (ECMA-48): set lines to RTL paragraph embedding level |
+| `^[[0 k`      | SCP (ECMA-48): determine paragraph embedding level per line |
+
+Note: Previous private sequences `^[[?77096h` and `^[[?77096l` are deprecated.
 
 
 ## Mousewheel reporting ##
