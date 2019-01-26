@@ -10,6 +10,9 @@ Terminal features
 Documentation
   * Wiki Tips: note about UTF-8 requirement for emoji support (#842).
 
+Window handling
+  * Fixed option --Border=void/frame (#843).
+
 ### 2.9.6 (20 January 2019) ###
 
 Terminal features
