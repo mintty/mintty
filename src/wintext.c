@@ -1227,6 +1227,27 @@ sel_update(bool update_sel_tip)
   }
 }
 
+static void
+show_link(void)
+{
+  static int lasthoverlink = -1;
+
+  int hoverlink = term.hovering ? term.hoverlink : -1;
+  if (hoverlink != lasthoverlink) {
+    lasthoverlink = hoverlink;
+
+    char * url = geturl(hoverlink) ?: "";
+
+    if (nonascii(url)) {
+      wchar * wcs = cs__utftowcs(url);
+      SetWindowTextW(wnd, wcs);
+      free(wcs);
+    }
+    else
+      SetWindowTextA(wnd, url);
+  }
+}
+
 void
 win_update(bool update_sel_tip)
 {
@@ -1237,6 +1258,8 @@ win_update(bool update_sel_tip)
     update_state = UPDATE_PENDING;
 
   sel_update(update_sel_tip);
+  if (cfg.hover_title)
+    show_link();
 }
 
 void

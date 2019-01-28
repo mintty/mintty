@@ -16,6 +16,9 @@ Documentation
 Window handling
   * Fixed option --Border=void/frame (#843).
 
+Configuration
+  * New option HoverTitle.
+
 ### 2.9.6 (20 January 2019) ###
 
 Terminal features

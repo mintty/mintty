@@ -458,7 +458,8 @@ override it.
 The file names and links subject to opening are indicated by underlining 
 when mouse-hovering over them (i.e. when moving the mouse) while the 
 Control key is pressed. The colour used for hovering underlines 
-can be configured with \fBHoverColour\fP.
+can be configured with \fBHoverColour\fP. Explicit hyperlinks are displayed 
+in the window title when hovering them; this can be disabled with \fBHoverTitle\fP.
 
 .SS Font zoom
 
@@ -1884,6 +1885,11 @@ in a line is included in the selection buffer.
 \fBSelection size indication\fP (SelectionShowSize=0)
 The current selection size can optionally been indicated with a popup, 
 with a value between 1 and 12, setting the popup position by clock hour.
+
+.TP
+\fBShow hyperlink in window title when hovering\fP (HoverTitle=true)
+With this setting, display of an explicit hyperlink (OSC 8 attribute) 
+in the window title when hovering can be disabled.
 
 .TP
 \fBSingle-dash long options\fP (ShortLongOpts=false)

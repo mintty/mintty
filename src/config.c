@@ -195,6 +195,7 @@ const config default_cfg = {
   .short_long_opts = false,
   .bold_as_special = false,
   .selection_show_size = false,
+  .hover_title = true,
   .old_bold = false,
   .ime_cursor_colour = DEFAULT_COLOUR,
   .ansi_colours = {
@@ -435,6 +436,7 @@ options[] = {
   {"ShortLongOpts", OPT_BOOL, offcfg(short_long_opts)},
   {"BoldAsRainbowSparkles", OPT_BOOL, offcfg(bold_as_special)},
   {"SelectionShowSize", OPT_INT, offcfg(selection_show_size)},
+  {"HoverTitle", OPT_BOOL, offcfg(hover_title)},
 
   // ANSI colours
   {"Black", OPT_COLOUR, offcfg(ansi_colours[BLACK_I])},
