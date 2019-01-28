@@ -590,7 +590,7 @@ shortcut or menu item.
 
 A traditional BRK event on a serial terminal connection can be simulated.
 The Break is available in the extended context menu and it can be mapped 
-to the Break key by configuration.
+to the Break key (or other user-defined key) by configuration.
 Note, however, that a BRK can be ignored by configuration of the terminal 
 device (pty) or can be ignored by an application by catching the SIGINT signal.
 For more forceful interruption of the terminal client application, see the 
@@ -2140,9 +2140,9 @@ Supported keys are described as follows:
 .br
 \(en function keys F1...F24
 .br
-\(en modified function keys, preceded with a combination of C, A, S, in this order,
-indicating Ctrl, Alt, Shift as combined with the function key, 
-attached with a "+" separator, e.g. \fBCS+F9\fP
+\(en modified function keys, preceded with a combination of C, A, S, W, 
+in this order, indicating Ctrl, Alt, Shift, Win as combined with the 
+function key, attached with a "+" separator, e.g. \fBCS+F9\fP
 .br
 \(en special keys (some of which do not occur on typical keyboards) 
 and keypad keys; 
@@ -2171,7 +2171,9 @@ Space, Enter, Esc and Tab are only considered with at least one modifier
   Play, Zoom
 .br
 \(en any character reachable on the keyboard without Shift, considered if 
-pressed while Ctrl and Shift are also held; AltGr-generated characters are supported
+pressed while Ctrl and Shift are also held; AltGr-generated characters 
+are supported; Alt and Win modifiers are supported, 
+e.g. \fBx\fP for Ctrl+Shift+x, \fBW+x\fP for Ctrl+Win+x, \fBAW+x\fP for Alt+Win+x
 
 \fINote:\fP A key that needs a modifier already to be sent (e.g. Break 
 which is often Ctrl+Pause) also needs that modifier in the key definition 

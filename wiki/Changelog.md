@@ -7,6 +7,9 @@ Terminal features
   * Providing DECTABSR tab stop report.
   * Fixed DECRQM 12 which was inverted.
 
+Keyboard configuration
+  * Support for Win key modifier for user-defined keys (option KeyFunctions).
+
 Documentation
   * Wiki Tips: note about UTF-8 requirement for emoji support (#842).
 
