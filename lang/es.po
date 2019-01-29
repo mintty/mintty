@@ -1,14 +1,14 @@
 # Mintty
-# Copyright (C) 2017
+# Copyright (C) 2019
 # This file is distributed under the same license as the mintty package.
-# JSJ <jsj666@hotmail.com>, 2017.
+# JSJ <jsj666@hotmail.com>, 2019.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-01-20 08:41+0100\n"
-"PO-Revision-Date: 2017-10-23 18:55+0200\n"
+"PO-Revision-Date: 2019-01-29 16:00+0200\n"
 "Last-Translator: JSJ <jsj666@hotmail.com>\n"
 "Language-Team: JSJ\n"
 "Language: Spanish\n"
@@ -161,7 +161,7 @@ msgstr "◇ Ninguno ◇"
 #. __ indicator of unsaved downloaded colour scheme
 #: config.c:2116
 msgid "downloaded / give me a name!"
-msgstr "descargado / ¡renómbra el tema!"
+msgstr "descargado / ¡renombra el tema!"
 
 #: config.c:2205
 msgid "Could not load web theme"
@@ -468,7 +468,7 @@ msgstr "Tecla compos."
 #. __ Options - Window:
 #: config.c:2902 config.c:3040 config.c:3097
 msgid "&Shift"
-msgstr ""
+msgstr "&Shift"
 
 #. __ Options - Keys:
 #. __ Options - Mouse:
@@ -781,7 +781,7 @@ msgstr "|Sólid&o"
 #. __ Colour chooser:
 #: winctrls.c:1231
 msgid "&Hue:"
-msgstr "&Hue:"
+msgstr "&Tint.:"
 
 #. __ Colour chooser:
 #: winctrls.c:1234
