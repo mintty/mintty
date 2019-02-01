@@ -2201,7 +2201,7 @@ Supported actions are described as follows:
 .br
 \(en \fB"string"\fP or \fB'string'\fP: enters the literal string
 .br
-\(en \fB`command` (**)\fP: enters the output of the command
+\(en \fB\`command\` (**)\fP: enters the output of the command
 .br
 \(en \fBfullscreen (*)\fP: switches to fullscreen mode
 .br
@@ -2303,7 +2303,7 @@ use the "\fBvoid\fP" dummy action.
 
 Examples:
 .br
-\(en \fBKeyFunctions=d:`echo -n `date``;A+F4:;CA+F12:break;-:"minus"\fP
+\(en \fBKeyFunctions=d:\`echo -n \`date\`\`;A+F4:;CA+F12:break;-:"minus"\fP
 will input the current date on Ctrl+Shift+d, disable window closing with Alt+F4,
 send a BRK on Ctrl+Alt+F12, but likely not input "minus" on Ctrl+Shift+minus 
 because Shift+minus is an underline on many keyboard layouts which has a 
@@ -2594,7 +2594,7 @@ Examples:
 \fBUser commands PATH expansion\fP (UserCommandsPath=/bin:%s)
 This setting defines the PATH environment for user-defined external commands,
 applicable to extended context menu commands (UserCommands=...:...)
-and key-attached external commands (KeyFunctions=...:`...`).
+and key-attached external commands (KeyFunctions=...:\`...\`).
 If the value contains a single \fB%s\fP placeholder, the current 
 environment PATH is substituted for it.
 
