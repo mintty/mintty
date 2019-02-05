@@ -47,6 +47,10 @@ extern int per_monitor_dpi_aware;
 extern bool click_focus_token;
 extern pos last_pos;
 extern int lines_scrolled;
+extern bool kb_input;
+extern uint kb_trace;
+
+extern void win_update_now(void);
 
 extern void win_flush_background(bool clearbg);
 extern void win_paint(void);
@@ -105,5 +109,7 @@ extern void show_message(char * msg, UINT type);
 extern void show_info(char * msg);
 
 extern void win_close(void);
+
+extern unsigned long mtime(void);
 
 #endif

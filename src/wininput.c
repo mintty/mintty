@@ -21,6 +21,8 @@ static bool newwin_shifted = false;
 static bool newwin_home = false;
 static int newwin_monix = 0, newwin_moniy = 0;
 static int transparency_pending = 0;
+bool kb_input = false;
+uint kb_trace = 0;
 
 struct function_def {
   string name;
@@ -2586,6 +2588,10 @@ static struct {
     while (count--)
       child_send(buf, len);
     compose_clear();
+    // set token to enforce immediate display of keyboard echo;
+    // we cannot win_update_now here; need to wait for the echo (child_proc)
+    kb_input = true;
+    //printf("[%ld] WM_KEY %02X\n", mtime(), key); kb_trace = key;
   }
   else if (comp_state == COMP_PENDING)
     comp_state = COMP_ACTIVE;

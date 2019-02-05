@@ -462,6 +462,8 @@ child_proc(void)
         static char buf[4096];
         uint len = 0;
         do {
+          //if (kb_trace) printf("[%lu] <read\n", mtime());
+
           int ret = read(pty_fd, buf + len, sizeof buf - len);
           if (ret > 0)
             len += ret;
@@ -470,6 +472,13 @@ child_proc(void)
         } while (len < sizeof buf);
         if (len > 0) {
           term_write(buf, len);
+          // accelerate keyboard echo if (unechoed) keyboard input is pending
+          if (kb_input) {
+            kb_input = false;
+            if (cfg.display_speedup)
+              // undocumented safeguard in case something goes wrong here
+              win_update_now();
+          }
           if (log_fd >= 0 && logging)
             write(log_fd, buf, len);
         }

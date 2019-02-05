@@ -1730,6 +1730,8 @@ emoji_show(int x, int y, struct emoji e, int elen, cattr eattr, ushort lattr)
 void
 term_paint(void)
 {
+  //if (kb_trace) printf("[%ld] term_paint\n", mtime());
+
 #ifdef use_display_scrolling
   if (dispscroll_lines) {
     disp_do_scroll(dispscroll_top, dispscroll_bot, dispscroll_lines);

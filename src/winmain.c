@@ -142,6 +142,15 @@ typedef struct {
 #endif
 
 
+unsigned long
+mtime(void)
+{
+  struct timespec tim;
+  clock_gettime(CLOCK_MONOTONIC, &tim);
+  return tim.tv_sec * 1000 + tim.tv_nsec / 1000000;
+}
+
+
 #ifdef debug_resize
 #define SetWindowPos(wnd, after, x, y, cx, cy, flags)	{printf("SWP[%s] %ld %ld\n", __FUNCTION__, (long int)cx, (long int)cy); Set##WindowPos(wnd, after, x, y, cx, cy, flags);}
 static void
@@ -2430,6 +2439,7 @@ static struct {
       }
 
     when WM_KEYDOWN or WM_SYSKEYDOWN:
+      //printf("[%ld] WM_KEY %02X\n", mtime(), (int)wp);
       if (win_key_down(wp, lp))
         return 0;
 

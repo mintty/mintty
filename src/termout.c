@@ -254,6 +254,8 @@ cattr last_attr = {.attr = ATTR_DEFAULT,
 static void
 write_char(wchar c, int width)
 {
+  //if (kb_trace) printf("[%ld] write_char 'q'\n", mtime());
+
   if (!c)
     return;
 
