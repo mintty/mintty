@@ -2585,13 +2585,14 @@ static struct {
   term_cancel_paste();
 
   if (len) {
+    //printf("[%ld] win_key_down %02X\n", mtime(), key); kb_trace = key;
     while (count--)
       child_send(buf, len);
     compose_clear();
     // set token to enforce immediate display of keyboard echo;
     // we cannot win_update_now here; need to wait for the echo (child_proc)
     kb_input = true;
-    //printf("[%ld] WM_KEY %02X\n", mtime(), key); kb_trace = key;
+    //printf("[%ld] win_key sent %02X\n", mtime(), key); kb_trace = key;
   }
   else if (comp_state == COMP_PENDING)
     comp_state = COMP_ACTIVE;
