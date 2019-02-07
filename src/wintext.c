@@ -2938,19 +2938,35 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
      )
   {
     clear_run();
-//printf("curly %d:%d %d:%d <", ty, tx, y, x); for (int i = 0; i < len; i++) printf("%lc", text[i]); printf(">\n");
+    //printf("curly %d:%d %d:%d (w %d ulen %d cw %d)\n", ty, tx, y, x, width, ulen, char_width);
 
     int step = 4;  // horizontal step width
     int delta = 3; // vertical phase height
     int offset = 1; // offset up from uloff
-    int rep = (ulen * char_width - 1) / step + 1;
+    //int x0 = x - PADDING - (x - PADDING) % step + PADDING;
+    //int rep = (ulen * char_width - 1) / step / 3 + 2;
+    // when starting the undercurl at the current text start position,
+    // the transitions between adjacent Bezier waves looks disrupted;
+    // trying to align them by snapping to a previous point (- x... % step)
+    // does not help, maybe Bezier curves should be studied first;
+    // so in order to achieve uniform undercurls, we always start at 
+    // the line beginning position (getting clipped anyway)
+    int x0 = PADDING;
+    int rep = (x - x0 + width + char_width) / step / 3;
+
     POINT bezier[1 + rep * 3];
+    //printf("                      ");
     for (int i = 0; i <= rep * 3; i++) {
-      bezier[i].x = x + i * step;
+      bezier[i].x = x0 + i * step;
       int wave = (i % 3 == 2) ? delta : (i % 3 == 1) ? -delta : 0;
       bezier[i].y = y + uloff - offset + wave;
-//printf("  bezier[%d] %d:%d\n", i, uloff - offset + wave, i * step);
+      //printf("  %04d:%04d%s", uloff - offset + wave, i * step, i % 3 ? "" : "\n");
     }
+
+    HRGN ur = 0;
+    GetClipRgn(dc, ur);
+    IntersectClipRect(dc, box.left, box.top, box.right, box.bottom);
+
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, ul));
     for (int l = 0; l < line_width; l++) {
       if (l)
@@ -2960,6 +2976,8 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     }
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
+
+    SelectClipRgn(dc, ur);
   }
   else
 
