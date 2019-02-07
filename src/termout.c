@@ -281,8 +281,7 @@ write_char(wchar c, int width)
     clear_cc(line, curs->x);
     line->chars[curs->x].chr = c;
     line->chars[curs->x].attr = curs->attr;
-    line->lattr = (line->lattr & ~LATTR_BIDIMASK)
-                  | (curs->bidi << LATTR_BIDISHIFT);
+    line->lattr = (line->lattr & ~LATTR_BIDIMASK) | curs->bidimode;
     if (cfg.ligatures_support)
       term_invalidate(0, curs->y, curs->x, curs->y);
   }
@@ -1095,6 +1094,11 @@ set_modes(bool state)
           int ctrl = arg - 77000;
           term.app_control = (term.app_control & ~(1 << ctrl)) | (state << ctrl);
         }
+        when 2500: /* bidi box graphics mirroring */
+          if (state)
+            term.curs.bidimode |= LATTR_BOXMIRROR;
+          else
+            term.curs.bidimode &= ~LATTR_BOXMIRROR;
       }
     }
     else { /* SM/RM: set/reset mode */
@@ -1102,7 +1106,10 @@ set_modes(bool state)
         when 4:  /* IRM: set insert mode */
           term.insert = state;
         when 8: /* BDSM: bidirectional support mode */
-          term.disable_bidi = !state;
+          if (state)
+            term.curs.bidimode &= ~LATTR_NOBIDI;
+          else
+            term.curs.bidimode |= LATTR_NOBIDI;
         when 12: /* SRM: set echo mode */
           term.echoing = !state;
         when 20: /* LNM: Return sends ... */
@@ -1238,6 +1245,8 @@ get_mode(bool privatemode, int arg)
         int ctrl = arg - 77000;
         return 2 - !!(term.app_control & (1 << ctrl));
       }
+      when 2500: /* bidi box graphics mirroring */
+        return 2 - !!(term.curs.bidimode & LATTR_BOXMIRROR);
       otherwise:
         return 0;
     }
@@ -1247,7 +1256,7 @@ get_mode(bool privatemode, int arg)
       when 4:  /* IRM: insert mode */
         return 2 - term.insert;
       when 8: /* BDSM: bidirectional support mode */
-        return 2 - !term.disable_bidi;
+        return 2 - !(term.curs.bidimode & LATTR_NOBIDI);
       when 12: /* SRM: echo mode */
         return 2 - !term.echoing;
       when 20: /* LNM: Return sends ... */
@@ -1844,10 +1853,11 @@ do_csi(uchar c)
     }
     when CPAIR(' ', 'k'):  /* SCP: ECMA-48 Set Character Path (LTR/RTL) */
       if (arg0 <= 2) {
-        termline *line = term.lines[curs->y];
-        line->lattr = (line->lattr & ~LATTR_BIDIMASK)
-                    | (arg0 << LATTR_BIDISHIFT);
-        curs->bidi = arg0;
+        curs->bidimode &= ~LATTR_BIDIMODE;
+        curs->bidimode |= arg0 << LATTR_BIDISHIFT;
+        // postpone propagation to line until char is written (put_char)
+        //termline *line = term.lines[curs->y];
+        //line->lattr = (line->lattr & ~LATTR_BIDIMASK) | curs->bidimode;
       }
   }
 }

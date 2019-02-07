@@ -338,7 +338,7 @@ do_shape(bidi_char * line, bidi_char * to, int count)
 }
 
 static ucschar
-mirror(ucschar c)
+mirror(ucschar c, bool box_mirror)
 {
   static const struct { wchar from, to; } pairs[] = {
     {0x0028, 0x0029}, {0x0029, 0x0028}, {0x003C, 0x003E}, {0x003E, 0x003C},
@@ -422,6 +422,7 @@ mirror(ucschar c)
     {0xFF5B, 0xFF5D}, {0xFF5D, 0xFF5B}, {0xFF5F, 0xFF60}, {0xFF60, 0xFF5F},
     {0xFF62, 0xFF63}, {0xFF63, 0xFF62}
   };
+
   int i = -1;
   int j = lengthof(pairs);
   while (j - i > 1) {
@@ -433,6 +434,60 @@ mirror(ucschar c)
     else
       i = k;
   }
+
+  /* check Box Drawing (U+2500-U+257F) and Block Elements (U+2580-U+259F)
+  ┌ ┍ ┎ ┏ └ ┕ ┖ ┗ ├ ┝ ┞ ┟ ┠ ┡ ┢ ┣ ┭ ┱ ┵ ┹ ┽ ╃ ╅ ╉
+  ┐ ┑ ┒ ┓ ┘ ┙ ┚ ┛ ┤ ┥ ┦ ┧ ┨ ┩ ┪ ┫ ┮ ┲ ┶ ┺ ┾ ╄ ╆ ╊
+  ╒ ╓ ╔ ╘ ╙ ╚ ╞ ╟ ╠ ╭ ╯ ╱ ╴ ╸ ╼
+  ╕ ╖ ╗ ╛ ╜ ╝ ╡ ╢ ╣ ╮ ╰ ╲ ╶ ╺ ╾
+
+  cannot handle quarter/eighth blocks (would need to be reversed too) ▉▊▋▍▎
+  could handle one eighth blocks ▏▕ but would be inconsistent
+
+  ▌ ▖ ▘ ▙ ▚ ▛
+  ▐ ▗ ▝ ▟ ▞ ▜
+  */
+  static const struct { wchar from, to; } boxpairs[] = {
+    {0x250C, 0x2510}, {0x250D, 0x2511}, {0x250E, 0x2512}, {0x250F, 0x2513},
+    {0x2510, 0x250C}, {0x2511, 0x250D}, {0x2512, 0x250E}, {0x2513, 0x250F},
+    {0x2514, 0x2518}, {0x2515, 0x2519}, {0x2516, 0x251A}, {0x2517, 0x251B},
+    {0x2518, 0x2514}, {0x2519, 0x2515}, {0x251A, 0x2516}, {0x251B, 0x2517},
+    {0x251C, 0x2524}, {0x251D, 0x2525}, {0x251E, 0x2526}, {0x251F, 0x2527},
+    {0x2520, 0x2528}, {0x2521, 0x2529}, {0x2522, 0x252A}, {0x2523, 0x252B},
+    {0x2524, 0x251C}, {0x2525, 0x251D}, {0x2526, 0x251E}, {0x2527, 0x251F},
+    {0x2528, 0x2520}, {0x2529, 0x2521}, {0x252A, 0x2522}, {0x252B, 0x2523},
+    {0x252D, 0x252E}, {0x252E, 0x252D}, {0x2531, 0x2532}, {0x2532, 0x2531},
+    {0x2535, 0x2536}, {0x2536, 0x2535}, {0x2539, 0x253A}, {0x253A, 0x2539},
+    {0x253D, 0x253E}, {0x253E, 0x253D}, {0x2543, 0x2544}, {0x2544, 0x2543},
+    {0x2545, 0x2546}, {0x2546, 0x2545}, {0x2549, 0x254A}, {0x254A, 0x2549},
+    {0x2552, 0x2555}, {0x2553, 0x2556}, {0x2554, 0x2557}, {0x2555, 0x2552},
+    {0x2556, 0x2553}, {0x2557, 0x2554}, {0x2558, 0x255B}, {0x2559, 0x255C},
+    {0x255A, 0x255D}, {0x255B, 0x2558}, {0x255C, 0x2559}, {0x255D, 0x255A},
+    {0x255E, 0x2561}, {0x255F, 0x2562}, {0x2560, 0x2563}, {0x2561, 0x255E},
+    {0x2562, 0x255F}, {0x2563, 0x2560}, {0x256D, 0x256E}, {0x256E, 0x256D},
+    {0x256F, 0x2570}, {0x2570, 0x256F}, {0x2571, 0x2572}, {0x2572, 0x2571},
+    {0x2574, 0x2576}, {0x2576, 0x2574}, {0x2578, 0x257A}, {0x257A, 0x2578},
+    {0x257C, 0x257E}, {0x257E, 0x257C}, {0x258C, 0x2590}, {0x2590, 0x258C},
+    {0x2596, 0x2597}, {0x2597, 0x2596}, {0x2598, 0x259D}, {0x2599, 0x259F},
+    {0x259A, 0x259E}, {0x259B, 0x259C}, {0x259C, 0x259B}, {0x259D, 0x2598},
+    {0x259E, 0x259A}, {0x259F, 0x2599},
+  };
+
+  if (!box_mirror)
+    return c;
+
+  i = -1;
+  j = lengthof(boxpairs);
+  while (j - i > 1) {
+    int k = (i + j) / 2;
+    if (c == boxpairs[k].from)
+      return boxpairs[k].to;
+    if (c < boxpairs[k].from)
+      j = k;
+    else
+      i = k;
+  }
+
   return c;
 }
 
@@ -445,7 +500,8 @@ mirror(ucschar c)
  */
 
 int
-do_bidi(int paragraphLevel, bidi_char * line, int count)
+do_bidi(int paragraphLevel, bool explicitRTL, bool box_mirror, 
+        bidi_char * line, int count)
 {
   uchar currentEmbedding;
   uchar currentOverride;
@@ -453,8 +509,18 @@ do_bidi(int paragraphLevel, bidi_char * line, int count)
   int i, j, yes;
 
   uchar bidi_class_of(int i) {
-    if (i && line[i].wc == UCSWIDE)
-      i--;
+    if (i && line[i].wc == UCSWIDE) {
+      // try to fix double-width within right-to-left
+      if (currentEmbedding & 1)
+        i--;
+      else
+        return BN;
+      // OK for LTR: return BN
+      // OK for RTL U+5555: EN, NSM
+      // not displayed in RTL: U+FF1C (class default -> ON)
+    }
+    if (explicitRTL)
+      return R;
     return bidi_class(line[i].wc);
   }
 
@@ -994,7 +1060,7 @@ do_bidi(int paragraphLevel, bidi_char * line, int count)
  /* Note: this is implemented before L2 for efficiency */
   for (i = 0; i < count; i++)
     if ((levels[i] % 2) == 1)
-      line[i].wc = mirror(line[i].wc);
+      line[i].wc = mirror(line[i].wc, box_mirror);
 
  /* Rule (L2)
   * L2. From the highest level found in the text to the lowest odd level on

@@ -106,15 +106,24 @@ and two control sequences to adjust the behaviour.
 
 | **sequence**  | **bidi**     |
 |:--------------|:-------------|
-| `^[[8l`       | disabled     |
-| `^[[8h`       | enabled      |
+| `^[[?77096h`  | disabled     |
+| `^[[?77096l`  | enabled      |
 | `^[[?7796h`   | disabled on current line |
 | `^[[?7796l`   | not disabled on current line |
+| `^[[8h`       | BDSM (ECMA-48): implicit bidi mode |
+| `^[[8l`       | BDSM (ECMA-48): explicit bidi mode |
 | `^[[1 k`      | SCP (ECMA-48): set lines to LTR paragraph embedding level |
 | `^[[2 k`      | SCP (ECMA-48): set lines to RTL paragraph embedding level |
 | `^[[0 k`      | SCP (ECMA-48): determine paragraph embedding level per line |
+| `^[[?2500h`   | enable box mirroring (*) |
+| `^[[?2500l`   | disable box mirroring (*) |
 
-Note: Previous private sequences `^[[?77096h` and `^[[?77096l` are deprecated.
+Note: ECMA-48 bidi modes are experimental.
+
+Note: Box mirroring means a number of graphic characters are added to the 
+set of bidi-mirrored characters as specified by Unicode.
+These are the unsymmetric characters from ranges Box Drawing (U+2500-U+257F) 
+and Block Elements (U+2580-U+259F). Others may be added in future versions.
 
 
 ## Mousewheel reporting ##

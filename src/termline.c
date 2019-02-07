@@ -922,7 +922,11 @@ void trace_bidi(char * tag, bidi_char * wc)
 termchar *
 term_bidi_line(termline *line, int scr_y)
 {
-  if ((line->lattr & LATTR_NOBIDI) || term.disable_bidi
+  int level = ((line->lattr & LATTR_BIDIMODE) >> LATTR_BIDISHIFT) - 1;
+  bool explicitRTL = (line->lattr & LATTR_NOBIDI) && level == 1;
+
+  if (((line->lattr & LATTR_NOBIDI) && !explicitRTL)
+      || term.disable_bidi
       || cfg.bidi == 0
       || (cfg.bidi == 1 && (term.on_alt_screen ^ term.show_other_screen))
      )
@@ -1014,7 +1018,8 @@ term_bidi_line(termline *line, int scr_y)
     }
 
     trace_bidi("=", term.wcFrom);
-    do_bidi(((line->lattr & LATTR_BIDIMASK) >> LATTR_BIDISHIFT) - 1,
+    do_bidi(level, explicitRTL,
+            line->lattr & LATTR_BOXMIRROR,
             term.wcFrom, ib);
     trace_bidi(":", term.wcFrom);
     do_shape(term.wcFrom, term.wcTo, ib);

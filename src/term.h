@@ -174,11 +174,13 @@ enum {
                                   * wrapped to next line, so last
                                   * single-width cell is empty */
   LATTR_CLEARPAD  = 0x0040u, /* flag to clear padding from overhang */
-  LATTR_MARKED    = 0x0400u, /* scroll marker */
-  LATTR_UNMARKED  = 0x0800u, /* secondary scroll marker */
-  LATTR_NOBIDI    = 0x0080u, /* disable bidi on this line */
-  LATTR_BIDIMASK  = 0x0300u, /* 0: default, 1: LTR, 2: RTL */
+  LATTR_MARKED    = 0x4000u, /* scroll marker */
+  LATTR_UNMARKED  = 0x8000u, /* secondary scroll marker */
+  LATTR_BIDIMODE  = 0x0300u, /* 0: default, 1: LTR, 2: RTL */
+  LATTR_BIDIMASK  = 0x0F00u, /* all bidi attributes */
   LATTR_BIDISHIFT = 8,
+  LATTR_NOBIDI    = 0x0400u, /* disable bidi on this line / in paragraph */
+  LATTR_BOXMIRROR = 0x0800u, /* bidi box graphics mirroring */
   // overlay line display (italic right-to-left overhang handling):
   LATTR_DISP1     = 0x1000u,
   LATTR_DISP2     = 0x2000u,
@@ -359,7 +361,7 @@ typedef struct {
   bool autowrap;  // switchable (xterm Wraparound Mode (DECAWM Auto Wrap))
   bool wrapnext;
   bool rev_wrap;  // switchable (xterm Reverse-wraparound Mode)
-  short bidi;
+  ushort bidimode;
   short gl, gr;
   term_cset csets[4];
   term_cset cset_single;
