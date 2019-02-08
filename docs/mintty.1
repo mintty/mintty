@@ -418,6 +418,9 @@ with option \fBClearSelectionOnInput=false\fP.
 The current selection size can optionally been indicated with a popup, 
 enabled with option \fBSelectionShowSize\fP.
 
+Selection can also be managed using the keyboard. Shift+middle-keypad-key 
+(Shift+"5") enters keyboard selecting mode (modifier configurable).
+
 .TP
 \fBElastic text selection\fP
 The traditional selection behaviour of cell-based terminals is that a 
@@ -638,7 +641,7 @@ the most significant non-zero byte first.
 An overview of all the keyboard shortcuts.
 
 .TP
-\fBScrollback\fP
+\fBScrollback and Selection via keyboard\fP
 .br
 \(en \fBShift+Up\fP: Line up
 .br
@@ -657,6 +660,23 @@ An overview of all the keyboard shortcuts.
 \(en \fBShift+cursor-left\fP: Go to previous scroll marker (e.g. in prompt)
 .br
 \(en \fBShift+cursor-right\fP: Go to next scroll marker (e.g. in prompt)
+.br
+\(en \fBShift+middle-keypad-key\fP: Enter keyboard selecting mode
+
+Note: The modifier can be configured with setting \fBScrollMod\fP.
+
+Keyboard selecting mode: \fBAlt\fP sets rectangular selection.
+Once keyboard selecting mode is entered, the following keys are applied:
+.br
+\(en \fBUp\fP, \fBDown\fP, \fBUp\fP, \fBUp\fP: Modify selection
+.br
+\(en \fBPgUp\fP, \fBPgDn\fP, \fBHome\fP, \fBEnd\fP: Scroll/Modify selection
+.br
+\(en \fB[Alt+]middle-keypad-key\fP: Restart [rectangular] selection
+.br
+\(en \fBInsert\fP or \fBEnter\fP: Copy selection and exit selection mode
+.br
+\(en \fBDelete\fP or \fBESC\fP: Exit selection mode
 
 .TP
 \fBCopy and paste\fP

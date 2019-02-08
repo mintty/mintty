@@ -21,6 +21,7 @@ static bool newwin_shifted = false;
 static bool newwin_home = false;
 static int newwin_monix = 0, newwin_moniy = 0;
 static int transparency_pending = 0;
+static bool selection_pending = false;
 bool kb_input = false;
 uint kb_trace = 0;
 
@@ -1775,6 +1776,112 @@ win_key_down(WPARAM wp, LPARAM lp)
       return true;
     }
   }
+  if (selection_pending) {
+    bool sel_adjust = false;
+    //WPARAM scroll = 0;
+    int sbtop = -sblines();
+    int sbbot = term_last_nonempty_line();
+    int oldisptop = term.disptop;
+    //printf("y %d disptop %d sb %d..%d\n", term.sel_pos.y, term.disptop, sbtop, sbbot);
+    switch (key) {
+      when VK_CLEAR:  // recalibrate
+        term.sel_anchor = term.sel_pos;
+        term.sel_start = term.sel_pos;
+        term.sel_end = term.sel_pos;
+        term.sel_rect = mods & MDK_ALT;
+        sel_adjust = true;
+      when VK_LEFT:
+        if (term.sel_pos.x > 0)
+          term.sel_pos.x--;
+        sel_adjust = true;
+      when VK_RIGHT:
+        if (term.sel_pos.x < term.cols)
+          term.sel_pos.x++;
+        sel_adjust = true;
+      when VK_UP:
+        if (term.sel_pos.y > sbtop) {
+          if (term.sel_pos.y <= term.disptop)
+            term_scroll(0, -1);
+          term.sel_pos.y--;
+          sel_adjust = true;
+        }
+      when VK_DOWN:
+        if (term.sel_pos.y < sbbot) {
+          if (term.sel_pos.y + 1 >= term.disptop + term.rows)
+            term_scroll(0, +1);
+          term.sel_pos.y++;
+          sel_adjust = true;
+        }
+      when VK_PRIOR:
+        //scroll = SB_PAGEUP;
+        term_scroll(0, -max(1, term.rows - 1));
+        term.sel_pos.y += term.disptop - oldisptop;
+        sel_adjust = true;
+      when VK_NEXT:
+        //scroll = SB_PAGEDOWN;
+        term_scroll(0, +max(1, term.rows - 1));
+        term.sel_pos.y += term.disptop - oldisptop;
+        sel_adjust = true;
+      when VK_HOME:
+        //scroll = SB_TOP;
+        term_scroll(+1, 0);
+        term.sel_pos.y += term.disptop - oldisptop;
+        term.sel_pos.y = sbtop;
+        term.sel_pos.x = 0;
+        sel_adjust = true;
+      when VK_END:
+        //scroll = SB_BOTTOM;
+        term_scroll(-1, 0);
+        term.sel_pos.y += term.disptop - oldisptop;
+        term.sel_pos.y = sbbot;
+        if (sbbot < term.rows) {
+          termline *line = term.lines[sbbot];
+          if (line)
+            for (int j = line->cols - 1; j > 0; j--) {
+              term.sel_pos.x = j + 1;
+              if (!termchars_equal(&line->chars[j], &term.erase_char))
+                break;
+            }
+        }
+        sel_adjust = true;
+      when VK_INSERT or VK_RETURN:  // copy
+        term_copy();
+        selection_pending = false;
+      when VK_DELETE or VK_ESCAPE:  // abort
+        selection_pending = false;
+      otherwise:
+        //selection_pending = false;
+        win_bell(&cfg);
+    }
+    //if (scroll) {
+    //  SendMessage(wnd, WM_VSCROLL, scroll, 0);
+    //  sel_adjust = true;
+    //}
+    if (sel_adjust) {
+      if (term.sel_rect) {
+        term.sel_start.y = min(term.sel_anchor.y, term.sel_pos.y);
+        term.sel_start.x = min(term.sel_anchor.x, term.sel_pos.x);
+        term.sel_end.y = max(term.sel_anchor.y, term.sel_pos.y);
+        term.sel_end.x = max(term.sel_anchor.x, term.sel_pos.x);
+      }
+      else if (posle(term.sel_anchor, term.sel_pos)) {
+        term.sel_start = term.sel_anchor;
+        term.sel_end = term.sel_pos;
+      }
+      else {
+        term.sel_start = term.sel_pos;
+        term.sel_end = term.sel_anchor;
+      }
+      //printf("->sel %d:%d .. %d:%d\n", term.sel_start.y, term.sel_start.x, term.sel_end.y, term.sel_end.x);
+      term.selected = true;
+      win_update(true);
+    }
+    if (selection_pending)
+      return true;
+    else
+      term.selected = false;
+    return true;
+  }
 
   bool allow_shortcut = true;
 
@@ -1987,7 +2094,7 @@ win_key_down(WPARAM wp, LPARAM lp)
       return true;
     }
 
-    // Scrollback
+    // Scrollback and Selection via keyboard
     if (!term.on_alt_screen || term.show_other_screen) {
       mod_keys scroll_mod = cfg.scroll_mod ?: 128;
       if (cfg.pgupdn_scroll && (key == VK_PRIOR || key == VK_NEXT) &&
@@ -2004,6 +2111,15 @@ win_key_down(WPARAM wp, LPARAM lp)
           when VK_DOWN:  scroll = SB_LINEDOWN;
           when VK_LEFT:  scroll = SB_PRIOR;
           when VK_RIGHT: scroll = SB_NEXT;
+          when VK_CLEAR:
+            term.sel_pos = (pos){.y = term.curs.y, .x = term.curs.x, .r = 0};
+            term.sel_anchor = term.sel_pos;
+            term.sel_start = term.sel_pos;
+            term.sel_end = term.sel_pos;
+            term.sel_rect = mods & MDK_ALT;
+            selection_pending = true;
+            //printf("selection_pending = true\n");
+            return true;
           otherwise: goto not_scroll;
         }
         SendMessage(wnd, WM_VSCROLL, scroll, 0);
