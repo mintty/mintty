@@ -1170,6 +1170,12 @@ toggle_vt220()
   term.vt220_keys = !term.vt220_keys;
 }
 
+void
+toggle_bidi()
+{
+  term.disable_bidi = !term.disable_bidi;
+}
+
 static void
 nop()
 {
@@ -1275,6 +1281,12 @@ mflags_vt220()
 }
 
 static uint
+mflags_bidi()
+{
+  return term.disable_bidi ? MF_UNCHECKED : MF_CHECKED;
+}
+
+static uint
 mflags_options()
 {
   return config_wnd ? MF_GRAYED : MF_ENABLED;
@@ -1339,6 +1351,7 @@ static struct function_def cmd_defs[] = {
   {"export-html", {IDM_HTML}, 0},
   {"print-screen", {.fct = print_screen}, 0},
   {"toggle-vt220", {.fct = toggle_vt220}, mflags_vt220},
+  {"toggle-bidi", {.fct = toggle_bidi}, mflags_bidi},
 
   {"void", {.fct = nop}, 0}
 };
