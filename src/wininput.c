@@ -1976,7 +1976,7 @@ win_key_down(WPARAM wp, LPARAM lp)
 
     // Scrollback
     if (!term.on_alt_screen || term.show_other_screen) {
-      mod_keys scroll_mod = cfg.scroll_mod ?: 8;
+      mod_keys scroll_mod = cfg.scroll_mod ?: 128;
       if (cfg.pgupdn_scroll && (key == VK_PRIOR || key == VK_NEXT) &&
           !(mods & ~scroll_mod))
         mods ^= scroll_mod;
