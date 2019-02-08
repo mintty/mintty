@@ -145,9 +145,13 @@ typedef struct {
 unsigned long
 mtime(void)
 {
+#if CYGWIN_VERSION_API_MINOR >= 74
   struct timespec tim;
   clock_gettime(CLOCK_MONOTONIC, &tim);
   return tim.tv_sec * 1000 + tim.tv_nsec / 1000000;
+#else
+  return time(0);
+#endif
 }
 
 
