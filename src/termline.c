@@ -984,15 +984,23 @@ term_bidi_line(termline *line, int scr_y)
             term.wcTo = renewn(term.wcTo, term.wcFromTo_size);
             term.wcFrom[ib].origwc = term.wcFrom[ib].wc = bp->chr;
             term.wcFrom[ib].index = -1;
+            term.wcFrom[ib].wide = false;
             ib++;
             //wcs[wcsi++] = bp->chr;
           }
         }
       }
 
-      term.wcFrom[ib].origwc = term.wcFrom[ib].wc = c;
-      term.wcFrom[ib].index = it;
-      ib++;
+      // collapse dummy wide second half placeholders
+      if (c != UCSWIDE) {
+        term.wcFrom[ib].origwc = term.wcFrom[ib].wc = c;
+        term.wcFrom[ib].index = it;
+        term.wcFrom[ib].wide = false;
+        ib++;
+      }
+      else if (ib) {
+        term.wcFrom[ib - 1].wide = true;
+      }
 
       termchar * bp = &line->chars[it];
       // Unfold directional formatting characters which are handled 
@@ -1011,6 +1019,7 @@ term_bidi_line(termline *line, int scr_y)
           term.wcTo = renewn(term.wcTo, term.wcFromTo_size);
           term.wcFrom[ib].origwc = term.wcFrom[ib].wc = bp->chr;
           term.wcFrom[ib].index = -1;
+          term.wcFrom[ib].wide = false;
           ib++;
           //wcs[wcsi++] = bp->chr;
         }
@@ -1030,19 +1039,27 @@ term_bidi_line(termline *line, int scr_y)
       term.ltemp = renewn(term.ltemp, term.ltemp_size);
     }
 
+    // copy line->chars to ltemp initially, esp. to preserve all combinings
     memcpy(term.ltemp, line->chars, line->size * sizeof(termchar));
 
+    // equip ltemp with reorder line->chars as determined in wcTo
     ib = 0;
     for (it = 0; it < term.cols; it++) {
       while (term.wcTo[ib].index == -1)
         ib++;
 
+      // copy character and combining reference from source as reordered
       term.ltemp[it] = line->chars[term.wcTo[ib].index];
       if (term.ltemp[it].cc_next)
         term.ltemp[it].cc_next -= it - term.wcTo[ib].index;
 
+      // update reshaped glyphs
       if (term.wcTo[ib].origwc != term.wcTo[ib].wc)
         term.ltemp[it].chr = term.wcTo[ib].wc;
+
+      // expand wide characters to their double-half representation
+      if (term.wcTo[ib].wide && it + 1 < term.cols && term.wcTo[ib].index + 1 < term.cols)
+        term.ltemp[++it] = line->chars[term.wcTo[ib].index + 1];
 
       ib++;
     }

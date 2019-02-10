@@ -6,6 +6,7 @@ typedef unsigned int ucschar;
 typedef struct {
   ucschar origwc, wc;
   short index;
+  bool wide;
 } bidi_char;
 
 int do_bidi(int paragraph_level, bool explicitRTL, bool box_mirror, bidi_char * line, int count);
