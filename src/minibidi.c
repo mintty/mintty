@@ -464,6 +464,47 @@ do_bidi(int paragraphLevel, bool explicitRTL, bool box_mirror,
   uchar types[count];
   uchar levels[count];
 
+#define dont_debug_bidi
+
+#ifdef debug_bidi
+  void trace_bidi(char * tag)
+  {
+    static int do_trace_bidi = 2;
+    if (do_trace_bidi) {
+      if (!tag) {
+        do_trace_bidi--;
+        return;
+      }
+      printf("%s\n", tag);
+      uint last = count - 1;
+      while (last && line[last].wc == ' ')
+        last--;
+      for (uint i = 0; i <= last; i++)
+        printf(" %04X", line[i].wc);
+      printf("\n");
+      static char * _type[] = {
+        "  L", "LRE", "LRO", "  R", " AL", "RLE", "RLO", "PDF", " EN", " ES", " ET", " AN", " CS", "NSM", " BN", "  B", "  S", " WS", " ON", "LRI", "RLI", "FSI", "PDI"
+      };
+      for (uint i = 0; i <= last; i++)
+        if (types[i] < lengthof(_type))
+          printf("  %s", _type[types[i]]);
+        else
+          printf("    ?");
+      printf("\n");
+      for (uint i = 0; i <= last; i++)
+          printf(" %4d", levels[i]);
+      printf("\n");
+    }
+  }
+  void trace_mark(char * tag) {
+    (void)tag;
+  }
+  trace_bidi(0);
+#else
+#define trace_bidi(tag)	
+#define trace_mark(tag)	
+#endif
+
  /* Rule (P1)  NOT IMPLEMENTED
   * P1. Split the text into separate paragraphs. A paragraph separator is
   * kept with the previous paragraph. Within each paragraph, apply all the
@@ -498,6 +539,7 @@ do_bidi(int paragraphLevel, bool explicitRTL, bool box_mirror,
       }
     }
   }
+  trace_bidi("[P2, P3]");
 
  /* Rule (X1)
     X1. At the beginning of a paragraph, perform the following steps:
@@ -547,31 +589,6 @@ do_bidi(int paragraphLevel, bool explicitRTL, bool box_mirror,
   //int ovfIsolate = 0;
   //int ovfEmbedding = 0;
   isolateLevel = 0;
-
-#define dont_debug_bidi
-
-#ifdef debug_bidi
-  void trace_bidi(char * tag) {
-    if ((*line).wc == 'x') {
-      printf("%s ", tag);
-      for (int i = 0; i < count; i++) {
-        if (line[i].wc == ' ')
-          printf(" ");
-        else if (line[i].wc < 0x80)
-          printf("%d:%c/%d ", levels[i], line[i].wc, types[i]);
-        else
-          printf("%d:%X/%d ", levels[i], line[i].wc, types[i]);
-      }
-      printf("\n");
-    }
-  }
-  void trace_mark(char * tag) {
-    (void)tag;
-  }
-#else
-#define trace_bidi(tag)	
-#define trace_mark(tag)	
-#endif
 
  /* Rule (X2), (X3), (X4), (X5), (X6), (X7), (X8)
   * X2. With each RLE, compute the least greater odd embedding level.
@@ -684,8 +701,8 @@ do_bidi(int paragraphLevel, bool explicitRTL, bool box_mirror,
     }
     types[i] = tempType;
   }
+  trace_bidi("[X1-X8]");
 
-  trace_bidi("<X9");
  /* Rule (X9)
   * X9. Remove all RLE, LRE, RLO, LRO, PDF, and BN codes.
   * Here, they're converted to BN.
@@ -696,6 +713,7 @@ do_bidi(int paragraphLevel, bool explicitRTL, bool box_mirror,
         types[i] = BN;
     }
   }
+  trace_bidi("[X9]");
 
  /* Rule (X10) NOT IMPLEMENTED
   * X10. Handle isolating run sequences...
@@ -759,6 +777,7 @@ do_bidi(int paragraphLevel, bool explicitRTL, bool box_mirror,
     if (types[i] == AL)
       types[i] = R;
   }
+  trace_bidi("[W1] [W2] [W3]");
 
  /* Rule (W4)
   * W4. A single European separator between two European numbers changes
@@ -895,6 +914,7 @@ do_bidi(int paragraphLevel, bool explicitRTL, bool box_mirror,
     else if (!(paragraphLevel & 1) && types[count - 2] == L)
       types[count - 1] = L;
   }
+  trace_bidi("[W4] [W5] [W6] [W7] [N0] [N1]");
 
  /* Rule (N2)
   * N2. Any remaining NIs take the embedding direction.
@@ -907,8 +927,8 @@ do_bidi(int paragraphLevel, bool explicitRTL, bool box_mirror,
         types[i] = R;
     }
   }
+  trace_bidi("[N2]");
 
-  trace_bidi("<I1");
  /* Rule (I1)
   * I1. For all characters with an even (left-to-right) embedding
   * direction, those of type R go up one level and those of type AN or
@@ -933,7 +953,7 @@ do_bidi(int paragraphLevel, bool explicitRTL, bool box_mirror,
         levels[i] += 1;
     }
   }
-  trace_bidi(">I2");
+  trace_bidi("[I1, I2]");
 
  /* Rule (L1)
   * L1. On each line, reset the embedding level of the following characters
@@ -1004,6 +1024,7 @@ do_bidi(int paragraphLevel, bool explicitRTL, bool box_mirror,
     flip_runs(line, levels, tempType, count);
     tempType--;
   }
+  trace_bidi("[L1] [L4] [L2]");
 
  /* Rule (L3) NOT IMPLEMENTED
   * L3. Combining marks applied to a right-to-left base character will at
