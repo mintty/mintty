@@ -1284,7 +1284,10 @@ mflags_vt220()
 static uint
 mflags_bidi()
 {
-  return term.disable_bidi ? MF_UNCHECKED : MF_CHECKED;
+  return (cfg.bidi == 0
+         || (cfg.bidi == 1 && (term.on_alt_screen ^ term.show_other_screen))
+         ) ? MF_GRAYED
+           : term.disable_bidi ? MF_UNCHECKED : MF_CHECKED;
 }
 
 static uint
