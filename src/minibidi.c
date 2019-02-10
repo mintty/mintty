@@ -676,7 +676,6 @@ do_bidi(int paragraphLevel, bool explicitRTL, bool box_mirror,
         levels[i] = currentEmbedding;
         trace_mark("PDI");
       when WS or S: /* Whitespace is treated as neutral for now */
-        tempType = ON;
         if (currentOverride != ON)
           tempType = currentOverride;
       otherwise:
