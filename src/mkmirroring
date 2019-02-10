@@ -1,0 +1,7 @@
+#! /bin/sh
+
+unidata=BidiMirroring.txt
+make $unidata >&2
+
+sed -e "s/^\([0-9A-F]*\); *\([0-9A-F]*\).*/  {0x\1, 0x\2},/" \
+    -e t -e d BidiMirroring.txt > mirroring.t

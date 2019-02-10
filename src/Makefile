@@ -182,7 +182,7 @@ rgb.t:	# /usr/share/X11/rgb.txt # X11 color names
 	sed -e 's,	, ,g' -e 's/ *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([^ ].*[^ ]\) */	{\1, \2, \3, "\4"},/' /usr/share/X11/rgb.txt > rgb.t
 
 combdata=combining.t combdouble.t combined.t
-unidata=$(combdata) ambiguous.t casefold.t bidiclasses.t wide.t
+unidata=$(combdata) ambiguous.t casefold.t bidiclasses.t mirroring.t wide.t
 emojidata=emojibase.t emojiseqs.t
 
 clean-unicode:
@@ -214,6 +214,9 @@ combined.t:	# UnicodeData.txt
 
 bidiclasses.t:	# UnicodeData.txt
 	sh ./mkbidiclasses > bidiclasses.t
+
+mirroring.t:	# BidiMirroring.txt
+	sh ./mkmirroring > mirroring.t
 
 unicode:	UnicodeData.txt Blocks.txt EastAsianWidth.txt
 
