@@ -850,9 +850,11 @@ do_bidi(int paragraphLevel, bool explicitRTL, bool box_mirror,
     types are used at isolating run sequence boundaries.
   */
   if (count >= 2 && is_NI(types[0])) {
-    if ((types[1] == R) || (types[1] == EN) || (types[1] == AN))
+    if ((paragraphLevel & 1) &&
+        ((types[1] == R) || (types[1] == EN) || (types[1] == AN))
+       )
       types[0] = R;
-    else if (types[1] == L)
+    else if (!(paragraphLevel & 1) && types[1] == L)
       types[0] = L;
   }
   for (i = 1; i < (count - 1); i++) {
@@ -886,10 +888,11 @@ do_bidi(int paragraphLevel, bool explicitRTL, bool box_mirror,
     }
   }
   if (count >= 2 && is_NI(types[count - 1])) {
-    if (types[count - 2] == R || types[count - 2] == EN ||
-        types[count - 2] == AN)
+    if ((paragraphLevel & 1) &&
+        (types[count - 2] == R || types[count - 2] == EN || types[count - 2] == AN)
+       )
       types[count - 1] = R;
-    else if (types[count - 2] == L)
+    else if (!(paragraphLevel & 1) && types[count - 2] == L)
       types[count - 1] = L;
   }
 
