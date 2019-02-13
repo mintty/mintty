@@ -624,7 +624,7 @@ whereby the Alt key has to be held while entering the character code.
 Only the first key has to be on the numpad; subsequent digits can be entered
 both on the numpad or the main part of the keyboard.
 
-If the first key is the \fB'+'\fP on the numpad, the code is interpreted as
+If the first key is the \(aq\fB+\fP\(aq on the numpad, the code is interpreted as
 hexadecimal, whereby digits A through F can be entered using the letter keys.
 If the first key is a zero, the code is interpreted as octal.
 If the first key is any other digit from 1 to 9, the code is interpreted as
@@ -2062,7 +2062,7 @@ command-line option --store-taskbar-properties to make it persistent.
 It should also be combined with an explicit and unique AppID.
 
 \fINote:\fP The command must be given in Windows pathname syntax (e.g. 
-AppLaunchCmd='C:\\cygwin\\bin\\mintty -T mytitle -').
+AppLaunchCmd=\(aqC:\\cygwin\\bin\\mintty -T mytitle -\(aq).
 
 \fINote:\fP An explicit icon supplied with the -i option can also be stored 
 with the persistent properties; note, however, that for this purpose, 
@@ -2113,7 +2113,7 @@ of character tags:
 .br
 \(en \fBDEL\fP DEL
 .br
-\(en \fBC0\fP other control characters < ' '
+\(en \fBC0\fP other control characters < \(aq \(aq
 .br
 \(en \fBC1\fP control characters 0x80...0x9F
 .br
@@ -2223,7 +2223,7 @@ in order to prevent that input of Ctrl+_ would be inhibited.
 
 Supported actions are described as follows:
 .br
-\(en \fB"string"\fP or \fB'string'\fP: enters the literal string
+\(en \fB"string"\fP or \fB\(aqstring\(aq\fP: enters the literal string
 .br
 \(en \fB\`command\` (**)\fP: enters the output of the command
 .br
@@ -2541,9 +2541,9 @@ to reduce the risk of injecting commands via tricky filenames.
 
 Examples:
 .br
-\(en \fBDropCommands=bash:cd '%s'^M;mined:^[fo^M%s^M;vim:^[:e %s^M\fP
+\(en \fBDropCommands=bash:cd \(aq%s\(aq^M;mined:^[fo^M%s^M;vim:^[:e %s^M\fP
 .br
-\(en \fBDropCommands=^_bash:cd '%s';echo $PWD^M^_vim:^[:e %s^M^_\fP
+\(en \fBDropCommands=^_bash:cd \(aq%s\(aq;echo $PWD^M^_vim:^[:e %s^M^_\fP
 
 \fINote:\fP An "Enter" key has to be specified with the CR character code, 
 control characters need to be embedded verbatim 
@@ -2610,7 +2610,7 @@ in order to avoid the risk of injecting commands via tricky selected text.
 
 Examples:
 .br
-\(en \fBUserCommands=Paste capital:echo -n "$MINTTY_SELECT" | tr 'a-z' 'A-Z';Paste small:echo -n "$MINTTY_SELECT" | tr 'A-Z' 'a-z'\fP
+\(en \fBUserCommands=Paste capital:echo -n "$MINTTY_SELECT" | tr \(aqa-z\(aq \(aqA-Z\(aq;Paste small:echo -n "$MINTTY_SELECT" | tr \(aqA-Z\(aq \(aqa-z\(aq\fP
 .br
 \(en \fBUserCommands=google:cygstart https://www.google.de/search?q="$MINTTY_SELECT"\fP
 
