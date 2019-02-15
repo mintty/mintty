@@ -1099,6 +1099,11 @@ set_modes(bool state)
             term.curs.bidimode |= LATTR_BOXMIRROR;
           else
             term.curs.bidimode &= ~LATTR_BOXMIRROR;
+        when 2501: /* bidi direction auto-detection */
+          if (state)
+            term.curs.bidimode &= ~LATTR_BIDISEL;
+          else
+            term.curs.bidimode |= LATTR_BIDISEL;
       }
     }
     else { /* SM/RM: set/reset mode */
@@ -1247,6 +1252,8 @@ get_mode(bool privatemode, int arg)
       }
       when 2500: /* bidi box graphics mirroring */
         return 2 - !!(term.curs.bidimode & LATTR_BOXMIRROR);
+      when 2501: /* bidi direction auto-detection */
+        return 2 - !(term.curs.bidimode & LATTR_BIDISEL);
       otherwise:
         return 0;
     }
@@ -1853,11 +1860,17 @@ do_csi(uchar c)
     }
     when CPAIR(' ', 'k'):  /* SCP: ECMA-48 Set Character Path (LTR/RTL) */
       if (arg0 <= 2) {
-        curs->bidimode &= ~LATTR_BIDIMODE;
-        curs->bidimode |= arg0 << LATTR_BIDISHIFT;
+        if (arg0 == 2)
+          curs->bidimode |= LATTR_BIDIRTL;
+        else if (arg0 == 1)
+          curs->bidimode &= ~LATTR_BIDIRTL;
+        else {  // default
+          curs->bidimode &= ~(LATTR_BIDISEL | LATTR_BIDIRTL);
+        }
         // postpone propagation to line until char is written (put_char)
         //termline *line = term.lines[curs->y];
-        //line->lattr = (line->lattr & ~LATTR_BIDIMASK) | curs->bidimode;
+        //line->lattr &= ~(LATTR_BIDISEL | LATTR_BIDIRTL);
+        //line->lattr |= curs->bidimode & ~LATTR_BIDISEL | LATTR_BIDIRTL);
       }
   }
 }

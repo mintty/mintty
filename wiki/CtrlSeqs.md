@@ -110,11 +110,13 @@ and two control sequences to adjust the behaviour.
 | `^[[?77096l`  | enabled      |
 | `^[[?7796h`   | disabled on current line |
 | `^[[?7796l`   | not disabled on current line |
-| `^[[8h`       | BDSM (ECMA-48): implicit bidi mode |
-| `^[[8l`       | BDSM (ECMA-48): explicit bidi mode |
+| `^[[8h`       | BDSM (ECMA-48): implicit bidi mode (bidi-enabled lines) |
+| `^[[8l`       | BDSM (ECMA-48): explicit bidi mode (bidi-disabled lines) |
+| `^[[?2501h`   | enable bidi autodetection (default) |
+| `^[[?2501l`   | disable bidi autodetection |
 | `^[[1 k`      | SCP (ECMA-48): set lines to LTR paragraph embedding level |
 | `^[[2 k`      | SCP (ECMA-48): set lines to RTL paragraph embedding level |
-| `^[[0 k`      | SCP (ECMA-48): determine paragraph embedding level per line |
+| `^[[0 k`      | SCP (ECMA-48): default direction handling: autodetection with LTR fallback |
 | `^[[?2500h`   | enable box mirroring (*) |
 | `^[[?2500l`   | disable box mirroring (*) |
 

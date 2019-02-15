@@ -169,21 +169,22 @@ enum {
   LATTR_TOP       = 0x0002u, /* DEC double-height line (DECDHL), top half */
   LATTR_BOT       = 0x0003u, /* DEC double-height line (DECDHL), bottom half */
   LATTR_MODE      = 0x0003u, /* mask for double-width/height attributes */
-  LATTR_WRAPPED   = 0x0010u, /* this line wraps to next */
-  LATTR_WRAPPED2  = 0x0020u, /* with WRAPPED: CJK wide character
+  LATTR_WRAPPED   = 0x4000u, /* this line wraps to next */
+  LATTR_WRAPPED2  = 0x8000u, /* with WRAPPED: CJK wide character
                                   * wrapped to next line, so last
                                   * single-width cell is empty */
-  LATTR_CLEARPAD  = 0x0040u, /* flag to clear padding from overhang */
-  LATTR_MARKED    = 0x4000u, /* scroll marker */
-  LATTR_UNMARKED  = 0x8000u, /* secondary scroll marker */
-  LATTR_BIDIMODE  = 0x0300u, /* 0: default, 1: LTR, 2: RTL */
-  LATTR_BIDIMASK  = 0x0F00u, /* all bidi attributes */
-  LATTR_BIDISHIFT = 8,
+  LATTR_CLEARPAD  = 0x2000u, /* flag to clear padding from overhang */
+  LATTR_MARKED    = 0x0004u, /* scroll marker */
+  LATTR_UNMARKED  = 0x0008u, /* secondary scroll marker */
+  // overlay line display (italic right-to-left overhang handling):
+  LATTR_DISP1     = 0x0010u,
+  LATTR_DISP2     = 0x0020u,
+  // bidi control
+  LATTR_BIDIMASK  = 0x0FC0u, /* all bidi attributes */
+  LATTR_BIDISEL   = 0x0100u, /* direction pre-selected */
+  LATTR_BIDIRTL   = 0x0200u, /* direction (preset or fallback or explicit) */
   LATTR_NOBIDI    = 0x0400u, /* disable bidi on this line / in paragraph */
   LATTR_BOXMIRROR = 0x0800u, /* bidi box graphics mirroring */
-  // overlay line display (italic right-to-left overhang handling):
-  LATTR_DISP1     = 0x1000u,
-  LATTR_DISP2     = 0x2000u,
 };
 
 enum {

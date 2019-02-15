@@ -421,7 +421,7 @@ mirror(ucschar c, bool box_mirror)
  */
 
 int
-do_bidi(int paragraphLevel, bool explicitRTL, bool box_mirror, 
+do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror, 
         bidi_char * line, int count)
 {
   uchar currentEmbedding;
@@ -458,7 +458,7 @@ do_bidi(int paragraphLevel, bool explicitRTL, bool box_mirror,
     }
   }
   if (yes == 0)
-    return L;
+    return 0;
 
  /* Initialize types, levels */
   uchar types[count];
@@ -519,7 +519,7 @@ do_bidi(int paragraphLevel, bool explicitRTL, bool box_mirror,
   * the paragraph embedding level to one; otherwise, set it to zero.
   */
   int isolateLevel = 0;
-  if (paragraphLevel == -1) {
+  if (autodir) {
     paragraphLevel = 0;
     for (i = 0; i < count; i++) {
       int type = bidi_class_of(i);
@@ -1036,5 +1036,5 @@ do_bidi(int paragraphLevel, bool explicitRTL, bool box_mirror,
   // This is not relevant for mintty as the combining characters are kept 
   // hidden from this algorithm and are maintained transparently to it.
 
-  return R;
+  return paragraphLevel;
 }

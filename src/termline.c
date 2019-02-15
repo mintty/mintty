@@ -922,7 +922,8 @@ void trace_bidi(char * tag, bidi_char * wc)
 termchar *
 term_bidi_line(termline *line, int scr_y)
 {
-  int level = ((line->lattr & LATTR_BIDIMODE) >> LATTR_BIDISHIFT) - 1;
+  bool autodir = !(line->lattr & LATTR_BIDISEL);
+  int level = (line->lattr & LATTR_BIDIRTL) ? 1 : 0;
   bool explicitRTL = (line->lattr & LATTR_NOBIDI) && level == 1;
 
   if (((line->lattr & LATTR_NOBIDI) && !explicitRTL)
@@ -1027,9 +1028,10 @@ term_bidi_line(termline *line, int scr_y)
     }
 
     trace_bidi("=", term.wcFrom);
-    do_bidi(level, explicitRTL,
-            line->lattr & LATTR_BOXMIRROR,
-            term.wcFrom, ib);
+    int rtl = do_bidi(autodir, level, explicitRTL,
+                      line->lattr & LATTR_BOXMIRROR,
+                      term.wcFrom, ib);
+    (void)rtl;  // determined paragraph level may be used for subsequent lines
     trace_bidi(":", term.wcFrom);
     do_shape(term.wcFrom, term.wcTo, ib);
     trace_bidi("~", term.wcTo);
