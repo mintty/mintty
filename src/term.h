@@ -180,6 +180,7 @@ enum {
   LATTR_DISP1     = 0x0010u,
   LATTR_DISP2     = 0x0020u,
   // bidi control
+  LATTR_WRAPCONTD = 0x1000u, /* continued from wrapped line */
   LATTR_BIDIMASK  = 0x0FC0u, /* all bidi attributes */
   LATTR_BIDISEL   = 0x0100u, /* direction pre-selected */
   LATTR_BIDIRTL   = 0x0200u, /* direction (preset or fallback or explicit) */
