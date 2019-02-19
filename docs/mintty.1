@@ -2499,13 +2499,12 @@ window zooming by the Shift key is disabled,
 except for the keyboard zoom functions Shift+Alt+Enter/F11 and the Shift+menu function.
 
 .TP
-\fBHandling of DPI changes\fP (HandleDPI=1)
-By default, in Windows 10, when the window is moved to another monitor 
-that has a different DPI value ("scaling factor") configured, this is 
-considered to compensate by appropriate scaling.
-This option can be set to 0/false to suppress DPI adjustments,
-or to 2 to require DPI handling mode 2 and only enable DPI handling if
-this recently fixed Windows DPI handling mode is available.
+\fBHandling of DPI changes\fP (HandleDPI=2)
+When the window is moved to another monitor that has a different DPI 
+value ("scaling factor") configured, newer Windows 10 versions support 
+semi-automatic compensation by appropriate scaling.
+This option can be set to support either DPI handling modes 1 or 2 
+(if supported, respectively), or set to 0/false to suppress DPI adjustments.
 
 .TP
 \fBCheck availability of mintty version update\fP (CheckVersionUpdate=900)
