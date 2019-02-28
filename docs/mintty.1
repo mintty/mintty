@@ -366,6 +366,18 @@ see the \fBCONFIGURATION\fP section on how it can be customised.
 Mintty uses Windows Uniscribe font rendering to display a wider range 
 of characters; the TextOut API is automatically used instead if suitable.
 
+.SS Bidirectional rendering
+
+In addition to its default implicit bidirectional rendering with automatic 
+direction detection (according to the Unicode Bidi algorithm), 
+mintty supports ECMA-48 bidi modes and private bidi modes to control 
+switchable bidi behaviour per line and partially per paragraph (i.e. within 
+an auto-wrapped line), as listed in 
+\fIhttps://github.com/mintty/mintty/wiki/CtrlSeqs#bidirectional-rendering\fP.
+They follow the current status of the bidi mode model of the 
+«BiDi in Terminal Emulators» recommendation 
+(\fIhttps://terminal-wg.pages.freedesktop.org/bidi/\fP).
+
 .SS Menus
 
 The context menu can be opened by right-clicking the mouse (with Shift 

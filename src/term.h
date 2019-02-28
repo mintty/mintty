@@ -182,10 +182,13 @@ enum {
   // bidi control
   LATTR_WRAPCONTD = 0x1000u, /* continued from wrapped line */
   LATTR_BIDIMASK  = 0x0FC0u, /* all bidi attributes */
+  LATTR_NOBIDI    = 0x0040u, /* disable bidi on this line / in paragraph */
+  LATTR_BOXMIRROR = 0x0080u, /* bidi box graphics mirroring */
   LATTR_BIDISEL   = 0x0100u, /* direction pre-selected */
   LATTR_BIDIRTL   = 0x0200u, /* direction (preset or fallback or explicit) */
-  LATTR_NOBIDI    = 0x0400u, /* disable bidi on this line / in paragraph */
-  LATTR_BOXMIRROR = 0x0800u, /* bidi box graphics mirroring */
+  // temporary bidi flags
+  LATTR_AUTOSEL   = 0x0400u, /* autodetection accomplished */
+  LATTR_AUTORTL   = 0x0800u, /* direction after autodetection */
 };
 
 enum {

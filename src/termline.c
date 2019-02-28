@@ -911,6 +911,55 @@ void trace_bidi(char * tag, bidi_char * wc)
 #define trace_bidi(tag, wc)	
 #endif
 
+wchar *
+wcsline(termline * line)
+{
+  static wchar * wcs = 0;
+  wcs = renewn(wcs, term.cols + 1);
+  for (int i = 0; i < term.cols; i++)
+    wcs[i] = line->chars[i].chr;
+  wcs[term.cols] = 0;
+  return wcs;
+}
+
+ushort
+getparabidi(termline * line)
+{
+  ushort parabidi = line->lattr & LATTR_BIDIMASK;
+  bool det = false;
+  if (!(parabidi & (LATTR_BIDISEL | LATTR_AUTOSEL))) {
+    // autodetection
+    int isolateLevel = 0;
+    int paragraphLevel = !!(parabidi & LATTR_BIDIRTL);
+    for (int i = 0; i < line->cols; i++) {
+      int type = bidi_class(line->chars[i].chr);
+      if (type == LRI || type == RLI || type == FSI)
+        isolateLevel++;
+      else if (type == PDI)
+        isolateLevel--;
+      else if (isolateLevel == 0) {
+        if (type == R || type == AL) {
+          paragraphLevel = 1;
+          det = true;
+          break;
+        }
+        else if (type == L) {
+          paragraphLevel = 0;
+          det = true;
+          break;
+        }
+      }
+    }
+    if (paragraphLevel & 1)
+      parabidi |= LATTR_AUTORTL;
+    else
+      parabidi &= ~LATTR_AUTORTL;
+    if (det)
+      parabidi |= LATTR_AUTOSEL;
+  }
+  return parabidi;
+}
+
 /*
  * Prepare the bidi information for a screen line. Returns the
  * transformed list of termchars, or null if no transformation at
@@ -922,9 +971,26 @@ void trace_bidi(char * tag, bidi_char * wc)
 termchar *
 term_bidi_line(termline *line, int scr_y)
 {
-  bool autodir = !(line->lattr & LATTR_BIDISEL);
+  bool autodir = !(line->lattr & (LATTR_BIDISEL | LATTR_AUTOSEL));
   int level = (line->lattr & LATTR_BIDIRTL) ? 1 : 0;
   bool explicitRTL = (line->lattr & LATTR_NOBIDI) && level == 1;
+  // within a "paragraph" (in a wrapped continuation line), 
+  // consult previous line (if there is one)
+  if (autodir && line->lattr & LATTR_WRAPCONTD && scr_y > -sblines()) {
+    termline *prevline = fetch_line(term.disptop + scr_y - 1);
+    //printf("fetched %04X %.22ls\n", prevline->lattr, wcsline(prevline));
+    if (prevline->lattr & LATTR_WRAPPED)
+      line->lattr = (line->lattr & ~LATTR_BIDIMASK) | getparabidi(prevline);
+    release_line(prevline);
+    /// if not determined, loop back to beginning of paragraph
+
+    autodir = !(line->lattr & (LATTR_BIDISEL | LATTR_AUTOSEL));
+    level = (line->lattr & LATTR_BIDIRTL) ? 1 : 0;
+    //printf("wrapped %04X %.22ls auto %d lvl %d\n", line->lattr, wcsline(line), autodir, level);
+  }
+  // if we autodetect the direction here, determine it
+  if (line->lattr & LATTR_AUTOSEL)
+    level = (line->lattr & LATTR_AUTORTL) ? 1 : 0;
 
   if (((line->lattr & LATTR_NOBIDI) && !explicitRTL)
       || term.disable_bidi
@@ -1031,8 +1097,36 @@ term_bidi_line(termline *line, int scr_y)
     int rtl = do_bidi(autodir, level, explicitRTL,
                       line->lattr & LATTR_BOXMIRROR,
                       term.wcFrom, ib);
-    (void)rtl;  // determined paragraph level may be used for subsequent lines
     trace_bidi(":", term.wcFrom);
+    if (rtl >= 0)
+      line->lattr |= LATTR_AUTOSEL;
+
+#ifdef refresh_parabidi_after_bidi
+    if (line->lattr & LATTR_WRAPPED && scr_y + 1 < term.rows) {
+      //printf("bidi  @%d %04X %.22ls\n", scr_y, line->lattr, wcsline(line));
+      int conty = scr_y + 1;
+      do {
+        termline *contline = term.lines[conty];
+        //printf("+bidi @%d %04X %.22ls\n", conty, contline->lattr, wcsline(contline));
+        if (!(contline->lattr & LATTR_WRAPCONTD))
+          break;
+        if (rtl)
+          contline->lattr |= (LATTR_AUTORTL | LATTR_AUTOSEL);
+        else {
+          contline->lattr &= ~LATTR_AUTORTL;
+          contline->lattr |= LATTR_AUTOSEL;
+        }
+        /// if changed, invalidate display line
+        /// also propagate back to beginning of paragraph
+
+        //printf("+bidi @%d %04X %.22ls\n", conty, contline->lattr, wcsline(contline));
+        if (!(contline->lattr & LATTR_WRAPPED))
+          break;
+        conty++;
+      } while (conty < term.rows);
+    }
+#endif
+
     do_shape(term.wcFrom, term.wcTo, ib);
     trace_bidi("~", term.wcTo);
 

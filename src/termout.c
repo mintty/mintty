@@ -219,6 +219,7 @@ static void
 write_linefeed(void)
 {
   term_cursor *curs = &term.curs;
+  clear_wrapcontd(term.lines[curs->y], curs->y);
   if (curs->y == term.marg_bot)
     term_do_scroll(term.marg_top, term.marg_bot, 1, true);
   else if (curs->y < term.rows - 1)
@@ -276,12 +277,34 @@ write_char(wchar c, int width)
   last_char = c;
   last_attr = curs->attr;
 
-  void setparabidi(ushort parabidi, termline * line, int y)
+  void wrapparabidi(ushort parabidi, termline * line, int y)
   {
     line->lattr = (line->lattr & ~LATTR_BIDIMASK) | parabidi | LATTR_WRAPCONTD;
+
+#ifdef determine_parabidi_during_output
+    if (parabidi & (LATTR_BIDISEL | LATTR_AUTOSEL))
+      return;
+
+    // if direction autodetection pending:
     // from current line, extend backward and forward to adjust 
     // "paragraph" bidi attributes (esp. direction) to wrapped lines
+    termline * paraline = line;
+    int paray = y;
+    while ((paraline->lattr & LATTR_WRAPCONTD) && paray > -sblines()) {
+      paraline = fetch_line(--paray);
+      paraline->lattr = (paraline->lattr & ~LATTR_BIDIMASK) | parabidi;
+      release_line(paraline);
+    }
+    paraline = line;
+    paray = y;
+    while ((paraline->lattr & LATTR_WRAPPED) && paray < term.rows) {
+      paraline = fetch_line(++paray);
+      paraline->lattr = (paraline->lattr & ~LATTR_BIDIMASK) | parabidi;
+      release_line(paraline);
+    }
+#else
     (void)y;
+#endif
   }
 
   void put_char(wchar c)
@@ -298,7 +321,7 @@ write_char(wchar c, int width)
   if (curs->wrapnext && curs->autowrap && width > 0) {
     line->lattr |= LATTR_WRAPPED;
     line->wrappos = curs->x;
-    ushort parabidi = line->lattr & LATTR_BIDIMASK;
+    ushort parabidi = getparabidi(line);
     if (curs->y == term.marg_bot)
       term_do_scroll(term.marg_top, term.marg_bot, 1, true);
     else if (curs->y < term.rows - 1)
@@ -306,7 +329,7 @@ write_char(wchar c, int width)
     curs->x = 0;
     curs->wrapnext = false;
     line = term.lines[curs->y];
-    setparabidi(parabidi, line, curs->y);
+    wrapparabidi(parabidi, line, curs->y);
   }
 
   if (term.insert && width > 0)
@@ -337,14 +360,14 @@ write_char(wchar c, int width)
         line->chars[curs->x] = term.erase_char;
         line->lattr |= LATTR_WRAPPED | LATTR_WRAPPED2;
         line->wrappos = curs->x;
-        ushort parabidi = line->lattr & LATTR_BIDIMASK;
+        ushort parabidi = getparabidi(line);
         if (curs->y == term.marg_bot)
           term_do_scroll(term.marg_top, term.marg_bot, 1, true);
         else if (curs->y < term.rows - 1)
           curs->y++;
         curs->x = 0;
         line = term.lines[curs->y];
-        setparabidi(parabidi, line, curs->y);
+        wrapparabidi(parabidi, line, curs->y);
        /* Now we must term_check_boundary again, of course. */
         term_check_boundary(curs->x, curs->y);
         term_check_boundary(curs->x + width, curs->y);

@@ -20,6 +20,14 @@
  * - generating mirroring data from Unicode
  * - fixed recognition of runs
  * - sanitized handling of directional markers
+ * - support bidi mode model of «BiDi in Terminal Emulators» recommendation
+     (https://terminal-wg.pages.freedesktop.org/bidi/):
+ * -  return resolved paragraph level (or -1 if none)
+ * -  switchable options for:
+ * -   autodetection (rules P2, P3)
+ * -   LTR/RTL fallback for autodetection
+ * -   explicit RTL
+ * -   mirroring of additional characters (Box drawing, quadrant blocks)
  *
  ************************************************************************/
 
@@ -412,6 +420,11 @@ mirror(ucschar c, bool box_mirror)
   return c;
 }
 
+
+#ifdef TEST_BIDI
+uchar bidi_levels[999];
+#endif
+
 /*
  * The Main Bidi Function, and the only function that should
  * be used by the outside world.
@@ -419,7 +432,6 @@ mirror(ucschar c, bool box_mirror)
  * line: a buffer of size count containing text to apply
  * the Bidirectional algorithm to.
  */
-
 int
 do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror, 
         bidi_char * line, int count)
@@ -427,9 +439,11 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
   uchar currentEmbedding;
   uchar currentOverride;
   uchar tempType;
-  int i, j, yes;
+  int i, j;
 
   uchar bidi_class_of(int i) {
+#ifdef try_to_handle_CJK_here
+#warning does not always work in RTL mode, now filtered before calling do_bidi
     if (i && line[i].wc == UCSWIDE) {
       // try to fix double-width within right-to-left
       if (currentEmbedding & 1)
@@ -440,24 +454,25 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
       // OK for RTL U+5555: EN, NSM
       // not displayed in RTL: U+FF1C (class default -> ON)
     }
+#endif
     if (explicitRTL)
       return R;
     return bidi_class(line[i].wc);
   }
 
  /* Check the presence of R or AL types as optimization */
-  yes = 0;
+  bool has_rtl = false;
   for (i = 0; i < count; i++) {
     int type = bidi_class_of(i);
     if (type == R || type == AL
         || type == RLE || type == LRE || type == RLO || type == LRO || type == PDF
         || type == LRI || type == RLI || type == FSI || type == PDI
        ) {
-      yes = 1;
+      has_rtl = true;
       break;
     }
   }
-  if (yes == 0)
+  if (!has_rtl)
     return 0;
 
  /* Initialize types, levels */
@@ -519,8 +534,10 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
   * the paragraph embedding level to one; otherwise, set it to zero.
   */
   int isolateLevel = 0;
+  int resLevel = paragraphLevel;
   if (autodir) {
     paragraphLevel = 0;
+    resLevel = -1;
     for (i = 0; i < count; i++) {
       int type = bidi_class_of(i);
       if (type == LRI || type == RLI || type == FSI)
@@ -530,10 +547,12 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
       else if (isolateLevel == 0) {
         if (type == R || type == AL) {
           paragraphLevel = 1;
+          resLevel = 1;
           break;
         }
         else if (type == L) {
           //paragraphLevel = 0;
+          resLevel = 0;
           break;
         }
       }
@@ -995,6 +1014,10 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
     }
   }
 
+#ifdef TEST_BIDI
+  memcpy(bidi_levels, levels, count);
+#endif
+
  /* Rule (L4)
   * L4. A character that possesses the mirrored property as specified by
   * Section 4.7, Mirrored, must be depicted by a mirrored glyph if the
@@ -1036,5 +1059,5 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
   // This is not relevant for mintty as the combining characters are kept 
   // hidden from this algorithm and are maintained transparently to it.
 
-  return paragraphLevel;
+  return resLevel;
 }

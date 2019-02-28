@@ -120,7 +120,9 @@ and two control sequences to adjust the behaviour.
 | `^[[?2500h`   | enable box mirroring (*) |
 | `^[[?2500l`   | disable box mirroring (*) |
 
-Note: ECMA-48 bidi modes are experimental.
+Note: ECMA-48 bidi modes and private bidi modes are experimental.
+They follow the current status of the bidi mode model of the 
+[«BiDi in Terminal Emulators» recommendation](https://terminal-wg.pages.freedesktop.org/bidi/).
 
 Note: Box mirroring means a number of graphic characters are added to the 
 set of bidi-mirrored characters as specified by Unicode.
