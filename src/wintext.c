@@ -2775,7 +2775,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     box.right += cell_width;
     box.left -= cell_width;
   }
-  if (clearpad)
+  if (clearpad && tx > 0)
     box.right += PADDING;
   RECT box2 = box;
   if (combining_double)
