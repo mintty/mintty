@@ -1417,6 +1417,8 @@ win_key_reset(void)
 }
 
 #define dont_debug_virtual_key_codes
+#define dont_debug_key
+#define dont_debug_compose
 
 #ifdef debug_virtual_key_codes
 static struct {
@@ -1437,9 +1439,6 @@ vk_name(uint key)
   return vk_name;
 }
 #endif
-
-#define dont_debug_key
-#define dont_debug_compose
 
 #ifdef debug_compose
 # define debug_key
@@ -2416,12 +2415,16 @@ static struct {
       }
     }
 #ifdef debug_key
-    printf("modf wc %04X\n", wc);
+    printf("modf wc %04X (ctrl %d key %02X)\n", wc, ctrl, key);
 #endif
     if (wc) {
       if (altgr && !is_key_down(VK_LMENU))
         mods &= ~ MDK_ALT;
-      other_code(wc);
+      if ((mods & MDK_CTRL) && wc > '_' && key <= 'Z')
+        // report control char on non-latin keyboard layout
+        other_code(key);
+      else
+        other_code(wc);
     }
   }
 
@@ -2677,11 +2680,13 @@ static struct {
         trace_key("alt");
       else if (term.modify_other_keys > 1 && mods == MDK_SHIFT && !comp_state)
         // catch Shift+space (not losing Alt+ combinations if handled here)
+        // only in modify-other-keys mode 2
         modify_other_key();
       else if (char_key())
         trace_key("char");
-      else if (term.modify_other_keys > 1)
-        // handled Alt+space after char_key, avoiding undead_ glitch
+      else if (term.modify_other_keys > 0)
+        // handle Alt+space after char_key, avoiding undead_ glitch;
+        // also handle combinations like Ctrl+AltGr+e
         modify_other_key();
       else if (ctrl_key())
         trace_key("ctrl");
