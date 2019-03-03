@@ -123,19 +123,19 @@ msgstr "= Файл конфигурации ="
 
 #: config.c:1933
 msgid "simple beep"
-msgstr ""
+msgstr "Простой сигнал"
 
 #: config.c:1934
 msgid "no beep"
-msgstr ""
+msgstr "Без звука"
 
 #: config.c:1935
 msgid "Default Beep"
-msgstr ""
+msgstr "Стандартный звук"
 
 #: config.c:1936
 msgid "Critical Stop"
-msgstr "Критическая остановка"
+msgstr "Критическая ошибка"
 
 #: config.c:1937
 msgid "Question"
@@ -147,11 +147,11 @@ msgstr "Восклицание"
 
 #: config.c:1939
 msgid "Asterisk"
-msgstr "Звездочка (*)"
+msgstr "Звездочка"
 
 #: config.c:1982
 msgid "◇ None (system sound) ◇"
-msgstr "◇ Стандартный звук ◇"
+msgstr "◇ Нет (системный звук) ◇"
 
 #. __ terminal theme / colour scheme
 #: config.c:2113
@@ -823,7 +823,7 @@ msgstr "Настройки"
 #. __ Options: dialog title: "mintty <release> available (for download)"
 #: windialog.c:245
 msgid "available"
-msgstr "доступный"
+msgstr "доступен"
 
 #. __ Options: dialog width scale factor (80...200)
 #: windialog.c:676
@@ -837,12 +837,12 @@ msgstr "Ошибка"
 #. __ Context menu, session switcher ("virtual tabs")
 #: wininput.c:270
 msgid "Session switcher"
-msgstr ""
+msgstr "Переключить вкладку"
 
 #. __ Context menu, session launcher ("virtual tabs")
 #: wininput.c:289
 msgid "Session launcher"
-msgstr ""
+msgstr "Новыая вкладка"
 
 #: wininput.c:398 wininput.c:404
 msgid "Ctrl+"
@@ -971,27 +971,27 @@ msgstr "Открыть"
 #. __ Context menu:
 #: wininput.c:626
 msgid "Copy as text"
-msgstr "Копир. как текст"
+msgstr "Копировать как текст"
 
 #. __ Context menu:
 #: wininput.c:628
 msgid "Copy as RTF"
-msgstr "Копир. как RTF"
+msgstr "Копировать как RTF"
 
 #. __ Context menu:
 #: wininput.c:630
 msgid "Copy as HTML text"
-msgstr "Копир. как HTML текст"
+msgstr "Копировать текст как HTML"
 
 #. __ Context menu:
 #: wininput.c:632
 msgid "Copy as HTML"
-msgstr "Копир. как HTML"
+msgstr "Копировать как HTML"
 
 #. __ Context menu:
 #: wininput.c:634
 msgid "Copy as HTML full"
-msgstr "Копир. как HTML полное"
+msgstr "Копировать все как HTML"
 
 #. __ Context menu:
 #: wininput.c:641
@@ -1016,7 +1016,7 @@ msgstr ""
 #. __ Context menu, user commands
 #: wininput.c:755
 msgid "User commands"
-msgstr ""
+msgstr "Пользовательские команды"
 
 #: winmain.c:2009
 msgid "Processes are running in session:"
@@ -1113,11 +1113,11 @@ msgstr ""
 
 #: winmain.c:3689 winmain.c:3800 winmain.c:3807
 msgid "WSL distribution '%s' not found"
-msgstr ""
+msgstr "Подсистема WSL '%s' не найдена"
 
 #: winmain.c:3835
 msgid "Duplicate option '%s'"
-msgstr "Дублированный вариант '%s'"
+msgstr "Дублирование параметра '%s'"
 
 #: winmain.c:3843
 msgid "Unknown option '%s'"
@@ -1173,12 +1173,12 @@ msgstr ""
 #. __ Options - Text: font properties: value taken from font
 #: wintext.c:143
 msgid "font"
-msgstr ""
+msgstr "шрифт"
 
 #. __ Options - Text: font properties: value affected by option
 #: wintext.c:145
 msgid "manual"
-msgstr ""
+msgstr "особый"
 
 #: wintext.c:400
 msgid "Font not found, using system substitute"
