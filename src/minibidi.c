@@ -460,19 +460,57 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
     return bidi_class(line[i].wc);
   }
 
- /* Check the presence of R or AL types as optimization */
-  bool has_rtl = false;
+ /* Rule (P1)  NOT IMPLEMENTED
+  * P1. Split the text into separate paragraphs. A paragraph separator is
+  * kept with the previous paragraph. Within each paragraph, apply all the
+  * other rules of this algorithm.
+  */
+
+ /* Rule (P2), (P3)
+  * P2. In each paragraph, find the first character of type L, AL, or R 
+    while skipping over any characters between an isolate initiator and 
+    its matching PDI or, if it has no matching PDI, the end of the paragraph.
+  * P3. If a character is found in P2 and it is of type AL or R, then set
+  * the paragraph embedding level to one; otherwise, set it to zero.
+  */
+  int isolateLevel = 0;
+  int resLevel = -1;
+  bool hasRTL = false;
   for (i = 0; i < count; i++) {
     int type = bidi_class_of(i);
-    if (type == R || type == AL
-        || type == RLE || type == LRE || type == RLO || type == LRO || type == PDF
-        || type == LRI || type == RLI || type == FSI || type == PDI
-       ) {
-      has_rtl = true;
-      break;
+    if (type == LRI || type == RLI || type == FSI) {
+      hasRTL = true;
+      isolateLevel++;
+    }
+    else if (type == PDI) {
+      hasRTL = true;
+      isolateLevel--;
+    }
+    else if (isolateLevel == 0) {
+      if (type == R || type == AL) {
+        hasRTL = true;
+        if (resLevel < 0)
+          resLevel = 1;
+        break;
+      }
+      else if (type == RLE || type == LRE || type == RLO || type == LRO || type == PDF) {
+        hasRTL = true;
+        if (resLevel >= 0)
+          break;
+      }
+      else if (type == L) {
+        if (resLevel < 0)
+          resLevel = 0;
+      }
     }
   }
-  if (!has_rtl)
+  if (autodir) {
+    if (resLevel >= 0)
+      paragraphLevel = resLevel;
+  }
+  else
+    resLevel = paragraphLevel;
+  if (!hasRTL && !paragraphLevel)
     return 0;
 
  /* Initialize types, levels */
@@ -520,44 +558,6 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
 #define trace_mark(tag)	
 #endif
 
- /* Rule (P1)  NOT IMPLEMENTED
-  * P1. Split the text into separate paragraphs. A paragraph separator is
-  * kept with the previous paragraph. Within each paragraph, apply all the
-  * other rules of this algorithm.
-  */
-
- /* Rule (P2), (P3)
-  * P2. In each paragraph, find the first character of type L, AL, or R 
-    while skipping over any characters between an isolate initiator and 
-    its matching PDI or, if it has no matching PDI, the end of the paragraph.
-  * P3. If a character is found in P2 and it is of type AL or R, then set
-  * the paragraph embedding level to one; otherwise, set it to zero.
-  */
-  int isolateLevel = 0;
-  int resLevel = paragraphLevel;
-  if (autodir) {
-    paragraphLevel = 0;
-    resLevel = -1;
-    for (i = 0; i < count; i++) {
-      int type = bidi_class_of(i);
-      if (type == LRI || type == RLI || type == FSI)
-        isolateLevel++;
-      else if (type == PDI)
-        isolateLevel--;
-      else if (isolateLevel == 0) {
-        if (type == R || type == AL) {
-          paragraphLevel = 1;
-          resLevel = 1;
-          break;
-        }
-        else if (type == L) {
-          //paragraphLevel = 0;
-          resLevel = 0;
-          break;
-        }
-      }
-    }
-  }
   trace_bidi("[P2, P3]");
 
  /* Rule (X1)
