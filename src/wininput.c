@@ -269,7 +269,7 @@ add_switcher(HMENU menu, bool vsep, bool hsep, bool use_win_icons)
   uint bar = vsep ? MF_MENUBARBREAK : 0;
   if (hsep)
     AppendMenuW(menu, MF_SEPARATOR, 0, 0);
-  //__ Context menu, session switcher ("virtual tabs")
+  //__ Context menu, session switcher ("virtual tabs") menu label
   AppendMenuW(menu, MF_DISABLED | bar, 0, _W("Session switcher"));
   AppendMenuW(menu, MF_SEPARATOR, 0, 0);
   struct data_add_switcher data = {
@@ -288,7 +288,7 @@ add_launcher(HMENU menu, bool vsep, bool hsep)
     uint bar = vsep ? MF_MENUBARBREAK : 0;
     if (hsep)
       AppendMenuW(menu, MF_SEPARATOR, 0, 0);
-    //__ Context menu, session launcher ("virtual tabs")
+    //__ Context menu, session launcher ("virtual tabs") menu label
     AppendMenuW(menu, MF_DISABLED | bar, 0, _W("Session launcher"));
     AppendMenuW(menu, MF_SEPARATOR, 0, 0);
     append_commands(menu, cfg.session_commands, IDM_SESSIONCOMMAND, true, false);
@@ -645,7 +645,7 @@ win_init_ctxmenu(bool extended_menu, bool with_user_commands)
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_SEARCH, 0);
   if (extended_menu) {
-    //__ Context menu:
+    //__ Context menu: write terminal window contents as HTML file
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_HTML, _W("HTML Screen Dump"));
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_TOGLOG, 0);
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_TOGCHARINFO, 0);
@@ -653,7 +653,7 @@ win_init_ctxmenu(bool extended_menu, bool with_user_commands)
   }
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_RESET, 0);
   if (extended_menu) {
-    //__ Context menu:
+    //__ Context menu: clear scrollback buffer (lines scrolled off the window)
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_CLRSCRLBCK, _W("Clear Scrollback"));
   }
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
@@ -663,7 +663,7 @@ win_init_ctxmenu(bool extended_menu, bool with_user_commands)
   AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_FLIPSCREEN, 0);
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   if (extended_menu) {
-    //__ Context menu:
+    //__ Context menu: generate a TTY BRK condition (tty line interrupt)
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_BREAK, _W("Send Break"));
     AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   }
