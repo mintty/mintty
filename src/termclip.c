@@ -201,6 +201,8 @@ contains(string s, wchar c)
     when '\t': tag = "HT";
     when '\n': tag = "NL";
     when '\r': tag = "CR";
+    when '\f': tag = "FF";
+    when '\e': tag = "ESC";
     when '\177': tag = "DEL";
     otherwise:
       if (c < ' ')
