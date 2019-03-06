@@ -567,6 +567,7 @@ do_esc(uchar c)
       {CPAIR('"', '?'), 1, 1, CSET_DEC_Greek_Supp},
       {CPAIR('"', '4'), 1, 1, CSET_DEC_Hebrew_Supp},
       {CPAIR('%', '0'), 1, 1, CSET_DEC_Turkish_Supp},
+      {CPAIR('&', '4'), 1, 0, CSET_NRCS_Cyrillic},
       {CPAIR('"', '>'), 1, 0, CSET_NRCS_Greek},
       {CPAIR('%', '='), 1, 0, CSET_NRCS_Hebrew},
       {CPAIR('%', '2'), 1, 0, CSET_NRCS_Turkish},
@@ -2776,6 +2777,11 @@ term_do_write(const char *buf, uint len)
           when CSET_DEC_Turkish_Supp:
             if (c >= ' ' && c <= 0x7F) {
               wc = W(" ¡¢£￿¥￿§¨©ª«￿￿İ￿°±²³￿µ¶·￿¹º»¼½ı¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖŒØÙÚÛÜŸŞßàáâãäåæçèéêëìíîïğñòóôõöœøùúûüÿş")
+                   [c - ' '];
+            }
+          when CSET_NRCS_Cyrillic:
+            if (c >= ' ' && c <= 0x7F) {
+              wc = W(" ￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿юабцдефгхийклмнопярстужвьызшэщчъЮАБЦДЕФГХИЙКЛМНОПЯРСТУЖВЬЫЗШЭЩЧЪ")
                    [c - ' '];
             }
           when CSET_NRCS_Greek:
