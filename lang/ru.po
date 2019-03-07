@@ -1168,7 +1168,7 @@ msgstr ""
 #. __ Options - Text: font properties information ("leading" ("ledding"): add. row spacing)
 #: wintext.c:141
 msgid "Leading: %d, Bold: %s, Underline: %s"
-msgstr ""
+msgstr "Интервал:%d жирный:%s андерскор:%s"
 
 #. __ Options - Text: font properties: value taken from font
 #: wintext.c:143
