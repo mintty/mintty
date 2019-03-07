@@ -821,7 +821,7 @@ release_line(termline *line)
  * fed to the algorithm on each line of the display.
  */
 static int
-term_bidi_cache_hit(int line, termchar *lbefore, int width)
+term_bidi_cache_hit(int line, termchar *lbefore, ushort lattr, int width)
 {
   int i;
 
@@ -834,6 +834,9 @@ term_bidi_cache_hit(int line, termchar *lbefore, int width)
   if (!term.pre_bidi_cache[line].chars)
     return false;       /* cache doesn't contain _this_ line */
 
+  if (term.pre_bidi_cache[line].lattr != (lattr & LATTR_BIDIMASK))
+    return false;       /* bidi attributes may be different */
+
   if (term.pre_bidi_cache[line].width != width)
     return false;       /* line is wrong width */
 
@@ -845,8 +848,9 @@ term_bidi_cache_hit(int line, termchar *lbefore, int width)
 }
 
 static void
-term_bidi_cache_store(int line, termchar *lbefore, termchar *lafter,
-                      bidi_char *wcTo, int width, int size, int bidisize)
+term_bidi_cache_store(int line, 
+                      termchar *lbefore, termchar *lafter, bidi_char *wcTo, 
+                      ushort lattr, int width, int size, int bidisize)
 {
   int i;
 
@@ -857,6 +861,7 @@ term_bidi_cache_store(int line, termchar *lbefore, termchar *lafter,
     term.post_bidi_cache = renewn(term.post_bidi_cache, term.bidi_cache_size);
     while (j < term.bidi_cache_size) {
       term.pre_bidi_cache[j].chars = term.post_bidi_cache[j].chars = null;
+      term.pre_bidi_cache[j].lattr = -1;
       term.pre_bidi_cache[j].width = term.post_bidi_cache[j].width = -1;
       term.pre_bidi_cache[j].forward = term.post_bidi_cache[j].forward = null;
       term.pre_bidi_cache[j].backward = term.post_bidi_cache[j].backward = null;
@@ -869,6 +874,7 @@ term_bidi_cache_store(int line, termchar *lbefore, termchar *lafter,
   free(term.post_bidi_cache[line].forward);
   free(term.post_bidi_cache[line].backward);
 
+  term.pre_bidi_cache[line].lattr = lattr & LATTR_BIDIMASK;
   term.pre_bidi_cache[line].width = width;
   term.pre_bidi_cache[line].chars = newn(termchar, size);
   term.post_bidi_cache[line].width = width;
@@ -978,7 +984,6 @@ term_bidi_line(termline *line, int scr_y)
   // consult previous line (if there is one)
   if (autodir && line->lattr & LATTR_WRAPCONTD && scr_y > -sblines()) {
     termline *prevline = fetch_line(term.disptop + scr_y - 1);
-    //printf("fetched %04X %.22ls\n", prevline->lattr, wcsline(prevline));
     if (prevline->lattr & LATTR_WRAPPED)
       line->lattr = (line->lattr & ~LATTR_BIDIMASK) | getparabidi(prevline);
     release_line(prevline);
@@ -986,7 +991,6 @@ term_bidi_line(termline *line, int scr_y)
 
     autodir = !(line->lattr & (LATTR_BIDISEL | LATTR_AUTOSEL));
     level = (line->lattr & LATTR_BIDIRTL) ? 1 : 0;
-    //printf("wrapped %04X %.22ls auto %d lvl %d\n", line->lattr, wcsline(line), autodir, level);
   }
   // if we autodetect the direction here, determine it
   if (line->lattr & LATTR_AUTOSEL)
@@ -1004,7 +1008,7 @@ term_bidi_line(termline *line, int scr_y)
 
  /* Do Arabic shaping and bidi. */
 
-  if (!term_bidi_cache_hit(scr_y, line->chars, term.cols)) {
+  if (!term_bidi_cache_hit(scr_y, line->chars, line->lattr, term.cols)) {
 
     if (term.wcFromTo_size < term.cols) {
       term.wcFromTo_size = term.cols;
@@ -1098,16 +1102,15 @@ term_bidi_line(termline *line, int scr_y)
                       line->lattr & LATTR_BOXMIRROR,
                       term.wcFrom, ib);
     trace_bidi(":", term.wcFrom);
+
     if (rtl >= 0)
       line->lattr |= LATTR_AUTOSEL;
 
 #ifdef refresh_parabidi_after_bidi
     if (line->lattr & LATTR_WRAPPED && scr_y + 1 < term.rows) {
-      //printf("bidi  @%d %04X %.22ls\n", scr_y, line->lattr, wcsline(line));
       int conty = scr_y + 1;
       do {
         termline *contline = term.lines[conty];
-        //printf("+bidi @%d %04X %.22ls\n", conty, contline->lattr, wcsline(contline));
         if (!(contline->lattr & LATTR_WRAPCONTD))
           break;
         if (rtl)
@@ -1119,7 +1122,6 @@ term_bidi_line(termline *line, int scr_y)
         /// if changed, invalidate display line
         /// also propagate back to beginning of paragraph
 
-        //printf("+bidi @%d %04X %.22ls\n", conty, contline->lattr, wcsline(contline));
         if (!(contline->lattr & LATTR_WRAPPED))
           break;
         conty++;
@@ -1160,7 +1162,7 @@ term_bidi_line(termline *line, int scr_y)
       ib++;
     }
     term_bidi_cache_store(scr_y, line->chars, term.ltemp, term.wcTo,
-                          term.cols, line->size, ib);
+                          line->lattr, term.cols, line->size, ib);
 
     lchars = term.ltemp;
   }

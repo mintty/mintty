@@ -258,6 +258,7 @@ extern void release_line(termline *);
 
 typedef struct {
   int width;
+  ushort lattr;
   termchar *chars;
   int *forward, *backward;      /* the permutations of line positions */
 } bidi_cache_entry;
