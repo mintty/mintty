@@ -1,4 +1,9 @@
-Mintty addresses the following PuTTY bugs and wishes from the list at http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist, some of them only partially. Many of the issues on that list regard PuTTY's networking functions, which of course no longer apply to mintty.
+Mintty addresses the following PuTTY bugs and wishes from the list at 
+http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist, some of 
+them only partially. Many of the issues on that list regard PuTTY's 
+networking functions, which of course no longer apply to mintty.
+
+Note: This list is outdated; it applies to mintty 1.2.0 as compared to putty 0.60.
 
 Bugs:
   * [assert-fail-newsavelines](http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/assert-fail-newsavelines.html): Negative scrollback size settings are ignored.

@@ -96,7 +96,7 @@ When shortcut override mode is on, all shortcut key combinations are sent to the
 
 Mintty supports bidi rendering by default. However, some applications 
 may prefer to control bidi appearance themselves. There is one option (Bidi) 
-and two control sequences to adjust the behaviour.
+and some control sequences to adjust the behaviour.
 
 | **option**  | **bidi**     |
 |:------------|:-------------|
