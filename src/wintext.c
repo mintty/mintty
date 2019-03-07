@@ -137,7 +137,7 @@ win_linedraw_char(int i)
 char *
 fontpropinfo()
 {
-  //__ Options - Text: font properties information ("leading" ("ledding"): add. row spacing)
+  //__ Options - Text: font properties information: "Leading": total line padding (see option RowSpacing), Bold/Underline modes (font or manual, see options BoldAsFont/UnderlineManual/UnderlineColour)
   char * fontinfopat = _("Leading: %d, Bold: %s, Underline: %s");
   //__ Options - Text: font properties: value taken from font
   char * fontinfo_font = _("font");
