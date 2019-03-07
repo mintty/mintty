@@ -932,37 +932,39 @@ ushort
 getparabidi(termline * line)
 {
   ushort parabidi = line->lattr & LATTR_BIDIMASK;
+  if (parabidi & (LATTR_BIDISEL | LATTR_AUTOSEL))
+    return parabidi;
+
+  // autodetection of line direction (UBA P2 and P3)
   bool det = false;
-  if (!(parabidi & (LATTR_BIDISEL | LATTR_AUTOSEL))) {
-    // autodetection
-    int isolateLevel = 0;
-    int paragraphLevel = !!(parabidi & LATTR_BIDIRTL);
-    for (int i = 0; i < line->cols; i++) {
-      int type = bidi_class(line->chars[i].chr);
-      if (type == LRI || type == RLI || type == FSI)
-        isolateLevel++;
-      else if (type == PDI)
-        isolateLevel--;
-      else if (isolateLevel == 0) {
-        if (type == R || type == AL) {
-          paragraphLevel = 1;
-          det = true;
-          break;
-        }
-        else if (type == L) {
-          paragraphLevel = 0;
-          det = true;
-          break;
-        }
+  int isolateLevel = 0;
+  int paragraphLevel = !!(parabidi & LATTR_BIDIRTL);
+  for (int i = 0; i < line->cols; i++) {
+    int type = bidi_class(line->chars[i].chr);
+    if (type == LRI || type == RLI || type == FSI)
+      isolateLevel++;
+    else if (type == PDI)
+      isolateLevel--;
+    else if (isolateLevel == 0) {
+      if (type == R || type == AL) {
+        paragraphLevel = 1;
+        det = true;
+        break;
+      }
+      else if (type == L) {
+        paragraphLevel = 0;
+        det = true;
+        break;
       }
     }
-    if (paragraphLevel & 1)
-      parabidi |= LATTR_AUTORTL;
-    else
-      parabidi &= ~LATTR_AUTORTL;
-    if (det)
-      parabidi |= LATTR_AUTOSEL;
   }
+  if (paragraphLevel & 1)
+    parabidi |= LATTR_AUTORTL;
+  else
+    parabidi &= ~LATTR_AUTORTL;
+  if (det)
+    parabidi |= LATTR_AUTOSEL;
+
   return parabidi;
 }
 

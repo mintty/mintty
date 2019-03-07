@@ -2104,13 +2104,18 @@ term_paint(void)
       // clear overhang into left padding border
       win_text(-1, i, W(" "), 1, CATTR_DEFAULT, (cattr*)&CATTR_DEFAULT, line->lattr | LATTR_CLEARPAD, false);
     }
+
+#define dont_debug_bidi_paragraphs
 #ifdef debug_bidi_paragraphs
-static cattr CATTR_WRAPPED = {.attr = ATTR_DEFFG | TRUE_COLOUR << ATTR_BGSHIFT, .link = -1,
-             .truefg = 0, .truebg = RGB(255, 0, 0), .ulcolr = (colour)-1};
-static cattr CATTR_CONTD = {.attr = ATTR_DEFFG | TRUE_COLOUR << ATTR_BGSHIFT, .link = -1,
-             .truefg = 0, .truebg = RGB(0, 0, 255), .ulcolr = (colour)-1};
-static cattr CATTR_CONTWRAPD = {.attr = ATTR_DEFFG | TRUE_COLOUR << ATTR_BGSHIFT, .link = -1,
-             .truefg = 0, .truebg = RGB(255, 0, 255), .ulcolr = (colour)-1};
+    static cattr CATTR_WRAPPED = {.truebg = RGB(255, 0, 0),
+                             .attr = ATTR_DEFFG | TRUE_COLOUR << ATTR_BGSHIFT,
+                             .truefg = 0, .ulcolr = (colour)-1, .link = -1};
+    static cattr CATTR_CONTD = {.truebg = RGB(0, 0, 255),
+                             .attr = ATTR_DEFFG | TRUE_COLOUR << ATTR_BGSHIFT,
+                             .truefg = 0, .ulcolr = (colour)-1, .link = -1};
+    static cattr CATTR_CONTWRAPD = {.truebg = RGB(255, 0, 255),
+                             .attr = ATTR_DEFFG | TRUE_COLOUR << ATTR_BGSHIFT,
+                             .truefg = 0, .ulcolr = (colour)-1, .link = -1};
     wchar diag = ((line->lattr & 0x0F00) >> 8) + '0';
     if (diag > '9')
       diag += 'A' - '0' - 10;
