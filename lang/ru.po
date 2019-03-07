@@ -837,12 +837,12 @@ msgstr "Ошибка"
 #. __ Context menu, session switcher ("virtual tabs")
 #: wininput.c:270
 msgid "Session switcher"
-msgstr "Переключить вкладку"
+msgstr "Параллельные сеансы"
 
 #. __ Context menu, session launcher ("virtual tabs")
 #: wininput.c:289
 msgid "Session launcher"
-msgstr "Новыая вкладка"
+msgstr "Новый сеанс"
 
 #: wininput.c:398 wininput.c:404
 msgid "Ctrl+"
@@ -914,7 +914,7 @@ msgstr "Поиск"
 #. __ Context menu:
 #: wininput.c:487
 msgid "&Log to File"
-msgstr "Лог в файл"
+msgstr "Сохранять логи в файл"
 
 #. __ Context menu:
 #: wininput.c:493
@@ -1001,17 +1001,17 @@ msgstr "Выбрать все"
 #. __ Context menu:
 #: wininput.c:646
 msgid "HTML Screen Dump"
-msgstr ""
+msgstr "Сохранить снимок экрана в HTML"
 
 #. __ Context menu:
 #: wininput.c:654
 msgid "Clear Scrollback"
-msgstr "Очистить скроллинг"
+msgstr "Сброс полосы прокрутки"
 
 #. __ Context menu:
 #: wininput.c:664
 msgid "Send Break"
-msgstr ""
+msgstr "Прервать текущую задачу"
 
 #. __ Context menu, user commands
 #: wininput.c:755
