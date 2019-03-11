@@ -2536,7 +2536,9 @@ term_scroll(int rel, int where)
     int y = markpos;
     while ((rel == SB_PRIOR) ? y-- > sbtop : y++ < sbbot) {
       termline * line = fetch_line(y);
-      if (line->lattr & LATTR_MARKED) {
+      ushort lattr = line->lattr;
+      release_line(line);
+      if (lattr & LATTR_MARKED) {
         markpos = y;
         term.disptop = y;
         break;
