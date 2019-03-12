@@ -3023,6 +3023,11 @@ static wchar *
 get_shortcut_appid(wchar * shortcut)
 {
 #if CYGWIN_VERSION_API_MINOR >= 74
+  DWORD win_version = GetVersion();
+  win_version = ((win_version & 0xff) << 8) | ((win_version >> 8) & 0xff);
+  if (win_version < 0x0601)
+    return 0;  // PropertyStore not supported on Windows XP
+
   HRESULT hres = OleInitialize(NULL);
   if (hres != S_FALSE && hres != S_OK)
     return 0;
