@@ -525,6 +525,45 @@ update_tab_titles()
 
 
 /*
+   Window system colour configuration.
+   Applicable to current window if switched via WM_SETFOCUS/WM_KILLFOCUS.
+   This is not enabled as it causes unpleasant flickering of the taskbar;
+   also there is no visible effect on border or caption colours...
+ */
+static void
+win_sys_style(bool focus)
+{
+#ifdef switch_sys_colours
+  static INT elements[] = {
+    COLOR_ACTIVEBORDER,
+    COLOR_ACTIVECAPTION,
+    COLOR_GRADIENTACTIVECAPTION,
+    COLOR_CAPTIONTEXT  // proof of concept
+  };
+  static COLORREF colours[] = {
+    RGB(0, 255, 0),
+    RGB(0, 255, 0),
+    RGB(0, 255, 0),
+    RGB(255, 0, 0),
+  };
+  static COLORREF * save = 0;
+
+  if (!save) {
+    save = newn(COLORREF, lengthof(elements));
+    for (uint i = 0; i < lengthof(elements); i++)
+      save[i] = GetSysColor(elements[i]);
+  }
+  if (focus)
+    SetSysColors(lengthof(elements), elements, colours);
+  else
+    SetSysColors(lengthof(elements), elements, save);
+#else
+(void)focus;
+#endif
+}
+
+
+/*
    Window title functions.
  */
 
@@ -2173,6 +2212,7 @@ show_iconwarn(wchar * winmsg)
  */
 
 #define dont_debug_messages
+#define dont_debug_only_focus_messages
 #define dont_debug_only_sizepos_messages
 #define dont_debug_mouse_messages
 
@@ -2199,9 +2239,13 @@ static struct {
       && message != WM_MOUSEMOVE && message != WM_NCMOUSEMOVE
 # endif
      )
-#ifdef debug_only_sizepos_messages
+# ifdef debug_only_sizepos_messages
     if (strstr(wm_name, "POSCH") || strstr(wm_name, "SIZ"))
-#endif
+# else
+# ifdef debug_only_focus_messages
+    if (strstr(wm_name, "ACTIVATE") || strstr(wm_name, "FOCUS"))
+# endif
+# endif
     printf("[%d]->%8p %04X %s (%04X %08X)\n", (int)time(0), wnd, message, wm_name, (unsigned)wp, (unsigned)lp);
 #endif
   switch (message) {
@@ -2563,6 +2607,7 @@ static struct {
     when WM_SETFOCUS:
       trace_resize(("# WM_SETFOCUS VK_SHIFT %02X\n", (uchar)GetKeyState(VK_SHIFT)));
       term_set_focus(true, false);
+      win_sys_style(true);
       CreateCaret(wnd, caretbm, 0, 0);
       //flash_taskbar(false);  /* stop; not needed when leaving search bar */
       win_update(false);
@@ -2572,6 +2617,7 @@ static struct {
     when WM_KILLFOCUS:
       win_show_mouse();
       term_set_focus(false, false);
+      win_sys_style(false);
       DestroyCaret();
       win_update(false);
 
