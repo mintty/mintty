@@ -510,6 +510,7 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
   }
   else
     resLevel = paragraphLevel;
+ /* Optimization: skip full algorithm if there is nothing to reorder */
   if (!hasRTL && !paragraphLevel)
     return 0;
 

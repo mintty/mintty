@@ -935,7 +935,9 @@ getparabidi(termline * line)
   if (parabidi & (LATTR_BIDISEL | LATTR_AUTOSEL))
     return parabidi;
 
-  // autodetection of line direction (UBA P2 and P3)
+  // autodetection of line direction (UBA P2 and P3);
+  // this needs in fact to be done both when called from 
+  // write_char (output phase) and term_bidi_line (display phase)
   bool det = false;
   int isolateLevel = 0;
   int paragraphLevel = !!(parabidi & LATTR_BIDIRTL);
@@ -982,22 +984,106 @@ term_bidi_line(termline *line, int scr_y)
   bool autodir = !(line->lattr & (LATTR_BIDISEL | LATTR_AUTOSEL));
   int level = (line->lattr & LATTR_BIDIRTL) ? 1 : 0;
   bool explicitRTL = (line->lattr & LATTR_NOBIDI) && level == 1;
+  //printf("bidilin @%d %04X %.22ls auto %d lvl %d\n", scr_y, line->lattr, wcsline(line), autodir, level);
+
+#define support_multiline_bidi
+  //TODO: this multi-line ("paragraph") bidi direction handling seems to work
+  // but the implementation is a mess, 
+  // also it handles direction autodetection only, not multi-line resolving;
+  // this should eventually be replaced by paragraph handling in term_paint
+
+#ifdef support_multiline_bidi
   // within a "paragraph" (in a wrapped continuation line), 
   // consult previous line (if there is one)
+  bool prevseldir = false;
   if (autodir && line->lattr & LATTR_WRAPCONTD && scr_y > -sblines()) {
-    termline *prevline = fetch_line(term.disptop + scr_y - 1);
-    if (prevline->lattr & LATTR_WRAPPED)
-      line->lattr = (line->lattr & ~LATTR_BIDIMASK) | getparabidi(prevline);
-    release_line(prevline);
-    /// if not determined, loop back to beginning of paragraph
+    // look backward to beginning of paragraph or an already determined line,
+    // in case previous lines are not displayed (scrolled out)
+    int y = scr_y - 1;
+    int paray = scr_y;
+    ushort parabidi = (ushort)-1;
+    bool brk = false;
+    do {
+      termline *prevline = fetch_line(term.disptop + y);
+      //printf("back @%d %04X %.22ls auto %d lvl %d\n", y, prevline->lattr, wcsline(prevline), autodir, level);
+      if (prevline->lattr & LATTR_WRAPPED) {
+        paray = y;
+        if (prevline->lattr & (LATTR_BIDISEL | LATTR_AUTOSEL)) {
+          prevseldir = true;
+          parabidi = prevline->lattr & LATTR_BIDIMASK;
+          brk = true;
+        }
+        else if (!(prevline->lattr & LATTR_WRAPCONTD))
+          brk = true;
+      }
+      else
+        brk = true;
+      release_line(prevline);
+      if (brk)
+        break;
+      y--;
+    } while (y >= -sblines());
 
-    autodir = !(line->lattr & (LATTR_BIDISEL | LATTR_AUTOSEL));
-    level = (line->lattr & LATTR_BIDIRTL) ? 1 : 0;
+    // if a previously determined direction was found, use it for current line
+    if (prevseldir) {
+#ifdef propagate_to_intermediate_apparently_useless
+      // also propagate it to intermediate lines
+      while (paray <= scr_y) {
+        termline *prevline = fetch_line(term.disptop + paray);
+        prevline->lattr = (prevline->lattr & ~LATTR_BIDIMASK) | parabidi;
+        //printf("prop @%d %04X %.22ls auto %d lvl %d\n", paray, prevline->lattr, wcsline(prevline), autodir, level);
+        release_line(prevline);
+        paray++;
+      }
+#else
+      (void)paray;
+#endif
+      line->lattr = (line->lattr & ~LATTR_BIDIMASK) | parabidi;
+      autodir = !(line->lattr & (LATTR_BIDISEL | LATTR_AUTOSEL));
+      level = (line->lattr & LATTR_BIDIRTL) ? 1 : 0;
+    }
+    //printf("line @%d %04X %.22ls auto %d lvl %d\n", scr_y, line->lattr, wcsline(line), autodir, level);
   }
-  // if we autodetect the direction here, determine it
+  //printf("pluq @%d/%d %04X %.22ls auto %d prevsel %d\n", scr_y, term.disptop, line->lattr, wcsline(line), autodir, prevseldir);
+  if (autodir && !prevseldir && (line->lattr & LATTR_WRAPPED) && term.disptop + scr_y < 0) {
+    // if we are yet unsure about the direction, 
+    // and if we are displaying from scrollback buffer, 
+    // we may need to inspect the remainder of the paragraph
+    termline *succline = line;
+    ushort parabidi = getparabidi(line);
+    //printf("plus @%d %04X/%04X %.22ls auto %d lvl %d\n", scr_y, succline->lattr, parabidi, wcsline(succline), autodir, level);
+    autodir = !(parabidi & (LATTR_BIDISEL | LATTR_AUTOSEL));
+    int y = scr_y;
+    while (autodir) {
+      y++;
+      if (y >= term.rows)
+        break;
+
+      succline = fetch_line(term.disptop + y);
+      ushort lattr = succline->lattr;
+      parabidi = getparabidi(succline);
+      //printf("plus @%d %04X/%04X %.22ls auto %d lvl %d\n", y, lattr, parabidi, wcsline(succline), autodir, level);
+      release_line(succline);
+
+      if (!(lattr & LATTR_WRAPCONTD))
+        break;
+      autodir = !(parabidi & (LATTR_BIDISEL | LATTR_AUTOSEL));
+      if (!autodir) {
+        line->lattr = (line->lattr & ~LATTR_BIDIMASK) | parabidi;
+        level = (parabidi & LATTR_BIDIRTL) ? 1 : 0;
+      }
+      if (!(lattr & LATTR_WRAPPED))
+        break;
+    }
+  }
+#endif
+
+  // if we have autodetected the direction for this line already,
+  // determine its paragraph embedding level
   if (line->lattr & LATTR_AUTOSEL)
     level = (line->lattr & LATTR_AUTORTL) ? 1 : 0;
 
+  // if no bidi handling is required for this line, skip the rest
   if (((line->lattr & LATTR_NOBIDI) && !explicitRTL)
       || term.disable_bidi
       || cfg.bidi == 0
@@ -1105,10 +1191,43 @@ term_bidi_line(termline *line, int scr_y)
                       term.wcFrom, ib);
     trace_bidi(":", term.wcFrom);
 
-    if (rtl >= 0)
+#ifdef support_multiline_bidi
+    if (autodir && rtl >= 0) {
       line->lattr |= LATTR_AUTOSEL;
+      if (rtl & 1)
+        line->lattr |= LATTR_AUTORTL;
+      else
+        line->lattr &= ~LATTR_AUTORTL;
+      if (true) {  // limiting to prevseldir does not work
+        ushort parabidi = line->lattr & LATTR_BIDIMASK;
+        //printf("bidi @%d %04X %.22ls rtl %d auto %d lvl %d\n", scr_y, line->lattr, wcsline(line), rtl, autodir, level);
+        termline * paraline = line;
+        int paray = scr_y;
+        while ((paraline->lattr & LATTR_WRAPCONTD) && paray > -sblines()) {
+          paraline = fetch_line(--paray);
+          bool brk = false;
+          if (paraline->lattr & LATTR_WRAPPED) {
+            paraline->lattr = (paraline->lattr & ~LATTR_BIDIMASK) | parabidi;
+            //printf("post @%d %04X %.22ls auto %d lvl %d\n", paray, paraline->lattr, wcsline(paraline), autodir, level);
+#ifdef use_invalidate_useless
+            if (paray >= 0)
+              term_invalidate(0, paray, term.cols, paray);
+#endif
+          }
+          else
+            brk = true;
+          release_line(paraline);
+          if (brk)
+            break;
+        }
+      }
+    }
+#else
+    (void)rtl;
+#endif
 
 #ifdef refresh_parabidi_after_bidi
+//? if at all, this is only useful after modification of wrapped lines
     if (line->lattr & LATTR_WRAPPED && scr_y + 1 < term.rows) {
       int conty = scr_y + 1;
       do {
