@@ -2420,7 +2420,7 @@ static struct {
     if (wc) {
       if (altgr && !is_key_down(VK_LMENU))
         mods &= ~ MDK_ALT;
-      if ((mods & MDK_CTRL) && wc > '_' && key <= 'Z')
+      if (!altgr && (mods == MDK_CTRL) && wc > '_' && key <= 'Z')
         // report control char on non-latin keyboard layout
         other_code(key);
       else
