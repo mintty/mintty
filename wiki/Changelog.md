@@ -1,3 +1,11 @@
+### 2.9.7 (15 March 2019) ###
+
+Highlights (details see below)
+  * Significant improvements in bidirectional handling.
+  * Text can be selected with the keyboard.
+  * Explicit hyperlink attributes.
+  * Avoid keyboard/echo latency.
+
 Bidirectional rendering
   * Fixed handling of double-width chars within RTL.
   * Fixed handling of neutral chars in first or last position (UBA rule N1).
@@ -8,22 +16,30 @@ Terminal features for ECMA-48 and other bidi control
   * Private mode DECSET 2501 for "autodetection of direction" (UBA rules P2/P3).
   * Support SCP control sequences (LTR/RTL "Character Path").
   * Private mode DECSET 2500 for "box mirroring".
-  * Partial support of per-paragraph bidi direction detection.
-
-Keyboard handling
-  * Keyboard selecting mode (#84).
-  * Avoid keyboard/echo/display update latency.
+  * Bidi direction detection on paragraph level (wrapped lines).
 
 Other terminal features
   * Support for OSC 8 hyperlink attribute (~#823).
   * Providing DECTABSR tab stop report.
   * Fixed DECRQM 12 which was inverted.
+  * DEC Cyrillic NRCS (xterm 344).
 
 Character rendering
   * Fixed and tweaked wavy underline / undercurl (#847).
 
+Keyboard handling
+  * Keyboard selecting mode (#84).
+  * Avoid keyboard/echo/display update latency.
+  * modifyOtherKeys mode supports control chars in non-Latin keyboard layout.
+  * Fix modifyOtherKeys mode 1 to support Ctrl+AltGr.
+
+Mouse link hover and click handling
+  * Consistent hover highlighting.
+  * Overriding modifier is also accepted in non-application mouse mode (#694).
+
 Window handling
   * Fixed option --Border=void/frame (#843).
+  * Fixed start from shortcut in Windows XP.
 
 Documentation
   * Wiki Tips: note about UTF-8 requirement for emoji support (#842).
@@ -34,7 +50,8 @@ Configuration
   * Support for Win key modifier for options ScrollMod and ClickTargetMod.
   * New option HoverTitle.
   * New user-definable function toggle-bidi.
-  * Drop CR from missing option error message.
+  * Dropping CR from missing option error message.
+  * Added FF and ESC to FilterPasteControls characters (xterm 344).
 
 ### 2.9.6 (20 January 2019) ###
 

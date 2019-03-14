@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Sun Jan 20 17:44:34 2019 -->
+<!-- CreationDate: Thu Mar 14 23:34:13 2019 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -595,6 +595,21 @@ Mintty uses Windows Uniscribe font rendering to display a
 wider range of characters; the TextOut API is automatically
 used instead if suitable.</p>
 
+
+<p style="margin-left:11%; margin-top: 1em"><b>Bidirectional
+rendering</b> <br>
+In addition to its default implicit bidirectional rendering
+with automatic direction detection (according to the Unicode
+Bidi algorithm), mintty supports ECMA-48 bidi modes and
+private bidi modes to control switchable bidi behaviour per
+line and partially per paragraph (i.e. within an
+auto-wrapped line), as listed in
+<i>https://github.com/mintty/mintty/wiki/CtrlSeqs#bidirectional-rendering</i>.
+They follow the current status of the bidi mode model of the
+&Acirc;&laquo;BiDi in Terminal Emulators&Acirc;&raquo;
+recommendation
+(<i>https://terminal-wg.pages.freedesktop.org/bidi/</i>).</p>
+
 <p style="margin-left:11%; margin-top: 1em"><b>Menus</b>
 <br>
 The context menu can be opened by right-clicking the mouse
@@ -661,7 +676,12 @@ disabled with option <b>ClearSelectionOnInput=false</b>.</p>
 
 <p style="margin-left:11%; margin-top: 1em">The current
 selection size can optionally been indicated with a popup,
-enabled with option <b>SelectionShowSize</b>. <b><br>
+enabled with option <b>SelectionShowSize</b>.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Selection can
+also be managed using the keyboard. Shift+middle-keypad-key
+(Shift+&quot;5&quot;) enters keyboard selecting mode
+(modifier configurable). <b><br>
 Elastic text selection</b></p>
 
 <p style="margin-left:22%;">The traditional selection
@@ -696,6 +716,11 @@ determined, overridden by the working directory
 interactively communicated by the respective control
 sequence (OSC 7).</p>
 
+<p style="margin-left:11%; margin-top: 1em">Mintty also
+supports the OSC 8 control to embed explicit hyperlinks
+(similar to links on web pages), see
+<i>https://github.com/mintty/mintty/wiki/CtrlSeqs#hyperlinks</i>.</p>
+
 <p style="margin-left:11%; margin-top: 1em"><i>Note:</i>
 While application mouse modes are enabled (as used by many
 screen oriented applications), <b>Ctrl+Shift+click</b> can
@@ -706,7 +731,10 @@ Hovering files, directories and URLs</b></p>
 subject to opening are indicated by underlining when
 mouse-hovering over them (i.e. when moving the mouse) while
 the Control key is pressed. The colour used for hovering
-underlines can be configured with <b>HoverColour</b>.</p>
+underlines can be configured with <b>HoverColour</b>.
+Explicit hyperlinks are displayed in the window title when
+hovering them; this can be disabled with
+<b>HoverTitle</b>.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Font
 zoom</b> <br>
@@ -857,12 +885,12 @@ using the close button, shortcut or menu item.</p>
 Break</b> <br>
 A traditional BRK event on a serial terminal connection can
 be simulated. The Break is available in the extended context
-menu and it can be mapped to the Break key by configuration.
-Note, however, that a BRK can be ignored by configuration of
-the terminal device (pty) or can be ignored by an
-application by catching the SIGINT signal. For more forceful
-interruption of the terminal client application, see the
-Tips wiki page
+menu and it can be mapped to the Break key (or other
+user-defined key) by configuration. Note, however, that a
+BRK can be ignored by configuration of the terminal device
+(pty) or can be ignored by an application by catching the
+SIGINT signal. For more forceful interruption of the
+terminal client application, see the Tips wiki page
 <i>https://github.com/mintty/mintty/wiki/Tips#terminating-the-foreground-program</i>.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Note that
@@ -894,12 +922,11 @@ the numpad; subsequent digits can be entered both on the
 numpad or the main part of the keyboard.</p>
 
 <p style="margin-left:11%; margin-top: 1em">If the first
-key is the <b>&rsquo;+&rsquo;</b> on the numpad, the code is
-interpreted as hexadecimal, whereby digits A through F can
-be entered using the letter keys. If the first key is a
-zero, the code is interpreted as octal. If the first key is
-any other digit from 1 to 9, the code is interpreted as
-decimal.</p>
+key is the '<b>+</b>' on the numpad, the code is interpreted
+as hexadecimal, whereby digits A through F can be entered
+using the letter keys. If the first key is a zero, the code
+is interpreted as octal. If the first key is any other digit
+from 1 to 9, the code is interpreted as decimal.</p>
 
 <p style="margin-left:11%; margin-top: 1em">For UTF-8 and
 other Unicode encodings such as GB18030, the entered code is
@@ -911,8 +938,10 @@ byte first.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Keyboard
 shortcuts</b> <br>
-An overview of all the keyboard shortcuts. <b><br>
-Scrollback</b></p>
+This section gives an overview of all the keyboard
+shortcuts. See also the final subsection on user-defined
+shortcuts. <b><br>
+Scrollback and Selection via keyboard</b></p>
 
 <p style="margin-left:22%;">&ndash; <b>Shift+Up</b>: Line
 up <br>
@@ -925,7 +954,27 @@ up <br>
 &ndash; <b>Shift+cursor-left</b>: Go to previous scroll
 marker (e.g. in prompt) <br>
 &ndash; <b>Shift+cursor-right</b>: Go to next scroll marker
-(e.g. in prompt)</p>
+(e.g. in prompt) <br>
+&ndash; <b>Shift+middle-keypad-key</b>: Enter keyboard
+selecting mode</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note: The
+modifier can be configured with setting
+<b>ScrollMod</b>.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Keyboard
+selecting mode: <b>Alt</b> sets rectangular selection. Once
+keyboard selecting mode is entered, the following keys are
+applied: <br>
+&ndash; <b>Up</b>, <b>Down</b>, <b>Up</b>, <b>Up</b>: Modify
+selection <br>
+&ndash; <b>PgUp</b>, <b>PgDn</b>, <b>Home</b>, <b>End</b>:
+Scroll/Modify selection <br>
+&ndash; <b>[Alt+]middle-keypad-key</b>: Restart
+[rectangular] selection <br>
+&ndash; <b>Insert</b> or <b>Enter</b>: Copy selection and
+exit selection mode <br>
+&ndash; <b>Delete</b> or <b>ESC</b>: Exit selection mode</p>
 
 <p style="margin-left:11%;"><b>Copy and paste</b></p>
 
@@ -1041,10 +1090,10 @@ disabled to provide visible feedback for the changes.</p>
 <p style="margin-left:11%;"><b>User-defined
 shortcuts</b></p>
 
-<p style="margin-left:22%;">Function keys, modified
-function keys, and Ctrl+Shift+key combinations can be
-redefined to generate user-defined input or invoke
-functions. See option <b>KeyFunctions</b> for details.</p>
+<p style="margin-left:22%;">Function keys, special keys,
+and Ctrl+Shift+key combinations can be redefined to generate
+user-defined input or invoke functions. See option
+<b>KeyFunctions</b> for details.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Embedding
 graphics in terminal output</b> <br>
@@ -1803,6 +1852,7 @@ The <b>Off</b> setting disables overriding. <br>
 &ndash; <b>Shift</b> <br>
 &ndash; <b>Ctrl</b> <br>
 &ndash; <b>Alt</b> <br>
+&ndash; <b>Win</b> <br>
 &ndash; <b>Off</b></p>
 
 <p style="margin-left:11%;"><b>Mouse
@@ -1908,6 +1958,7 @@ scrolling with keyboard shortcuts. <br>
 &ndash; <b>Shift</b> <br>
 &ndash; <b>Ctrl</b> <br>
 &ndash; <b>Alt</b> <br>
+&ndash; <b>Win</b> <br>
 &ndash; <b>Off</b></p>
 
 <p style="margin-left:11%;"><b>PgUp and PgDn scroll without
@@ -2349,6 +2400,13 @@ indication</b> (SelectionShowSize=0)</p>
 optionally been indicated with a popup, with a value between
 1 and 12, setting the popup position by clock hour.</p>
 
+<p style="margin-left:11%;"><b>Show hyperlink in window
+title when hovering</b> (HoverTitle=true)</p>
+
+<p style="margin-left:22%;">With this setting, display of
+an explicit hyperlink (OSC 8 attribute) in the window title
+when hovering can be disabled.</p>
+
 <p style="margin-left:11%;"><b>Single-dash long options</b>
 (ShortLongOpts=false)</p>
 
@@ -2522,8 +2580,7 @@ unique AppID.</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 The command must be given in Windows pathname syntax (e.g.
-AppLaunchCmd=&rsquo;C:\cygwin\bin\mintty -T mytitle
--&rsquo;).</p>
+AppLaunchCmd='C:\cygwin\bin\mintty -T mytitle -').</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i> An
 explicit icon supplied with the -i option can also be stored
@@ -2584,9 +2641,10 @@ comma-separated list of character tags: <br>
 &ndash; <b>HT</b> TAB <br>
 &ndash; <b>NL</b> Line feed (new line) <br>
 &ndash; <b>CR</b> Carriage return (enter) <br>
+&ndash; <b>FF</b> Form feed <br>
+&ndash; <b>ESC</b> Escape <br>
 &ndash; <b>DEL</b> DEL <br>
-&ndash; <b>C0</b> other control characters &lt; &rsquo;
-&rsquo; <br>
+&ndash; <b>C0</b> other control characters &lt; ' ' <br>
 &ndash; <b>C1</b> control characters 0x80...0x9F <br>
 (Corresponds to the xterm resource
 <b>disallowedPasteControls</b>.)</p>
@@ -2641,8 +2699,8 @@ optional whitespace indentation. <br>
 are described as follows: <br>
 &ndash; function keys F1...F24 <br>
 &ndash; modified function keys, preceded with a combination
-of C, A, S, in this order, indicating Ctrl, Alt, Shift as
-combined with the function key, attached with a
+of C, A, S, W, in this order, indicating Ctrl, Alt, Shift,
+Win as combined with the function key, attached with a
 &quot;+&quot; separator, e.g. <b>CS+F9</b> <br>
 &ndash; special keys (some of which do not occur on typical
 keyboards) and keypad keys; Space, Enter, Esc and Tab are
@@ -2671,7 +2729,9 @@ CrSel, ExSel, ErEof <br>
 Play, Zoom <br>
 &ndash; any character reachable on the keyboard without
 Shift, considered if pressed while Ctrl and Shift are also
-held; AltGr-generated characters are supported</p>
+held; AltGr-generated characters are supported; Alt and Win
+modifiers are supported, e.g. <b>x</b> for Ctrl+Shift+x,
+<b>W+x</b> for Ctrl+Win+x, <b>AW+x</b> for Alt+Win+x</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i> A
 key that needs a modifier already to be sent (e.g. Break
@@ -2696,10 +2756,10 @@ of Ctrl+_ would be inhibited.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Supported
 actions are described as follows: <br>
-&ndash; <b>&quot;string&quot;</b> or
-<b>&rsquo;string&rsquo;</b>: enters the literal string <br>
-&ndash; <b>&lsquo;command&lsquo; (**)</b>: enters the output
-of the command <br>
+&ndash; <b>&quot;string&quot;</b> or <b>'string'</b>: enters
+the literal string <br>
+&ndash; <b>`command` (**)</b>: enters the output of the
+command <br>
 &ndash; <b>fullscreen (*)</b>: switches to fullscreen mode
 <br>
 &ndash; <b>toggle-fullscreen (*)</b>: toggles fullscreen
@@ -2763,6 +2823,8 @@ display <br>
 &ndash; <b>export-html (*)</b>: exports the screen as an
 HTML file <br>
 &ndash; <b>print-screen</b>: print screen contents <br>
+&ndash; <b>toggle-bidi</b>: toggles (global) bidi disabling
+<br>
 &ndash; <b>void</b>: do nothing</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note
@@ -2791,9 +2853,9 @@ invalid action (like &quot;foo&quot;) will make mintty beep
 on the key.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Examples: <br>
-&ndash; <b>KeyFunctions=d:&lsquo;echo -n
-&lsquo;date&lsquo;&lsquo;;A+F4:;CA+F12:break;-:&quot;minus&quot;</b>
-will input the current date on Ctrl+Shift+d, disable window
+&ndash; <b>KeyFunctions=d:`echo -n
+`date``;A+F4:;CA+F12:break;-:&quot;minus&quot;</b> will
+input the current date on Ctrl+Shift+d, disable window
 closing with Alt+F4, send a BRK on Ctrl+Alt+F12, but likely
 not input &quot;minus&quot; on Ctrl+Shift+minus because
 Shift+minus is an underline on many keyboard layouts which
@@ -2980,16 +3042,15 @@ functions Shift+Alt+Enter/F11 and the Shift+menu
 function.</p>
 
 <p style="margin-left:11%;"><b>Handling of DPI changes</b>
-(HandleDPI=1)</p>
+(HandleDPI=2)</p>
 
-<p style="margin-left:22%;">By default, in Windows 10, when
-the window is moved to another monitor that has a different
-DPI value (&quot;scaling factor&quot;) configured, this is
-considered to compensate by appropriate scaling. This option
-can be set to 0/false to suppress DPI adjustments, or to 2
-to require DPI handling mode 2 and only enable DPI handling
-if this recently fixed Windows DPI handling mode is
-available.</p>
+<p style="margin-left:22%;">When the window is moved to
+another monitor that has a different DPI value
+(&quot;scaling factor&quot;) configured, newer Windows 10
+versions support semi-automatic compensation by appropriate
+scaling. This option can be set to support either DPI
+handling modes 1 or 2 (if supported, respectively), or set
+to 0/false to suppress DPI adjustments.</p>
 
 <p style="margin-left:11%;"><b>Check availability of mintty
 version update</b> (CheckVersionUpdate=900)</p>
@@ -3039,9 +3100,9 @@ tricky filenames.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Examples: <br>
 &ndash; <b>DropCommands=bash:cd
-&rsquo;%s&rsquo;^M;mined:^[fo^M%s^M;vim:^[:e %s^M</b> <br>
-&ndash; <b>DropCommands=^_bash:cd &rsquo;%s&rsquo;;echo
-$PWD^M^_vim:^[:e %s^M^_</b></p>
+'%s'^M;mined:^[fo^M%s^M;vim:^[:e %s^M</b> <br>
+&ndash; <b>DropCommands=^_bash:cd '%s';echo $PWD^M^_vim:^[:e
+%s^M^_</b></p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i> An
 &quot;Enter&quot; key has to be specified with the CR
@@ -3128,10 +3189,8 @@ text.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Examples: <br>
 &ndash; <b>UserCommands=Paste capital:echo -n
-&quot;$MINTTY_SELECT&quot; | tr &rsquo;a-z&rsquo;
-&rsquo;A-Z&rsquo;;Paste small:echo -n
-&quot;$MINTTY_SELECT&quot; | tr &rsquo;A-Z&rsquo;
-&rsquo;a-z&rsquo;</b> <br>
+&quot;$MINTTY_SELECT&quot; | tr 'a-z' 'A-Z';Paste small:echo
+-n &quot;$MINTTY_SELECT&quot; | tr 'A-Z' 'a-z'</b> <br>
 &ndash; <b>UserCommands=google:cygstart
 https://www.google.de/search?q=&quot;$MINTTY_SELECT&quot;</b></p>
 
@@ -3145,10 +3204,9 @@ expansion</b> (UserCommandsPath=/bin:%s)</p>
 <p style="margin-left:22%;">This setting defines the PATH
 environment for user-defined external commands, applicable
 to extended context menu commands (UserCommands=...:...) and
-key-attached external commands
-(KeyFunctions=...:&lsquo;...&lsquo;). If the value contains
-a single <b>%s</b> placeholder, the current environment PATH
-is substituted for it.</p>
+key-attached external commands (KeyFunctions=...:`...`). If
+the value contains a single <b>%s</b> placeholder, the
+current environment PATH is substituted for it.</p>
 
 <p style="margin-left:11%;"><b>System menu user
 commands</b> (CtxMenuFunctions=)</p>
