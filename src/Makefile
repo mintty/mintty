@@ -175,7 +175,7 @@ $(bin): $(bins)
 WGET=curl -R -O --connect-timeout 55
 WGET+=-z $@
 
-rgb.t:	# /usr/share/X11/rgb.txt # X11 color names
+rgb.t:	# /usr/share/X11/rgb.txt # X11 color names, from package 'rgb'
 #	255 250 250		snow
 #	->
 #		{255, 250, 250, "snow"},
@@ -185,8 +185,14 @@ combdata=combining.t combdouble.t combined.t
 unidata=$(combdata) ambiguous.t casefold.t bidiclasses.t mirroring.t wide.t
 emojidata=emojibase.t emojiseqs.t
 
+unicodedata=UnicodeData.txt EastAsianWidth.txt Blocks.txt CaseFolding.txt BidiMirroring.txt
+unicodeemoji=emoji-data.txt emoji-sequences.txt emoji-variation-sequences.txt emoji-zwj-sequences.txt
+
 clean-unicode:
 	rm -f $(unidata) $(emojidata)
+
+clean-unicode-data:	clean-unicode
+	rm -f $(unicodedata) $(unicodeemoji)
 
 combining.t:	# UnicodeData.txt Blocks.txt
 	uniset +cat=Me +cat=Mn +cat=Cf -00AD +1160-11FF +200B +D7B0-D7C6 +D7CB-D7FB c > combining.t
@@ -223,8 +229,13 @@ unicode:	UnicodeData.txt Blocks.txt EastAsianWidth.txt
 full-emoji-list.html:
 	$(WGET) http://www.unicode.org/emoji/charts/$@
 
-emoji-%.txt:
-	$(WGET) http://www.unicode.org/Public/emoji/11.0/$@
+univer = `sed -e '/^\# Blocks-/ s,[^0-9]*\([0-9]*\)\.\([0-9]\)\.[0-9][^0-9]*,\1.\2,' -e t -e d Blocks.txt`
+
+univer:	Blocks.txt
+	echo $(univer)
+
+emoji-%.txt:	Blocks.txt
+	$(WGET) http://www.unicode.org/Public/emoji/$(univer)/$@
 
 %.txt:
 	$(WGET) http://www.unicode.org/Public/UNIDATA/$@

@@ -1,7 +1,8 @@
 #! /bin/bash
 
-unidata="emoji-data.txt emoji-variation-sequences.txt emoji-sequences.txt emoji-zwj-sequences.txt"
-make $unidata >&2
+emojidata="emoji-data.txt emoji-variation-sequences.txt emoji-sequences.txt emoji-zwj-sequences.txt"
+make Blocks.txt >&2
+make $emojidata >&2
 
 case "$1" in
 
@@ -50,7 +51,8 @@ sort | uniq
 
 seqs)
 
-sed -e '/^#/ d' -e 's/#.*//' -e 's/\\x{23}/#/' -e '/^$/ d' -e 's/ *;.*; */	"/' -e 's/ *$/"/' emoji-sequences.txt emoji-zwj-sequences.txt |
+cat emoji-sequences.txt emoji-zwj-sequences.txt | grep -v Basic_Emoji |
+sed -e '/^#/ d' -e 's/#.*//' -e 's/\\x{23}/#/' -e '/^$/ d' -e 's/ *;.*; */	"/' -e 's/ *$/"/' |
 sed -e ': x' -e 's/ \(.*	\)/,0x\1/' -e 't x' -e 's/,0x/, 0x/g' -e 's/\(	.* \)0x/\1/g' |
 sed -e 's/^/  {0, {0x/' -e 's/	/}, /' -e 's/$/},/' |
 sed -e 's/\(0x[0-9A-F]*\)/ee(\1)/g' |
