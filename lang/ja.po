@@ -581,7 +581,7 @@ msgstr "既定を上書きするための修飾子"
 #. __ Options - Window:
 #: config.c:3050 config.c:3109
 msgid "&Win"
-msgstr ""
+msgstr "Win(&W)"
 
 #. __ Options - Window: treeview label
 #: config.c:3060 config.c:3079 config.c:3120

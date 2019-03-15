@@ -1,3 +1,11 @@
+### 2.9.8 (15 March 2019) ###
+
+Unicode and Emoji data
+  * Unicode 12.0 update.
+
+Keyboard handling
+  * Fixed control-key reporting in modifyOtherKeys mode to use small letters.
+
 ### 2.9.7 (15 March 2019) ###
 
 Highlights (details see below)
