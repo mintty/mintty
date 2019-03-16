@@ -2685,7 +2685,7 @@ static struct {
         modify_other_key();
       else if (char_key())
         trace_key("char");
-      else if (term.modify_other_keys > 1)
+      else if (term.modify_other_keys > 1 || (term.modify_other_keys && altgr))
         // handle Alt+space after char_key, avoiding undead_ glitch;
         // also handle combinations like Ctrl+AltGr+e
         modify_other_key();

@@ -1,3 +1,8 @@
+### 2.9.9 (16 March 2019) ###
+
+Keyboard handling
+  * Fixed modifyOtherKeys mode 1 to use verbatim control keys.
+
 ### 2.9.8 (15 March 2019) ###
 
 Unicode and Emoji data
