@@ -1277,8 +1277,10 @@ term_bidi_line(termline *line, int scr_y)
         term.ltemp[it].chr = term.wcTo[ib].wc;
 
       // expand wide characters to their double-half representation
-      if (term.wcTo[ib].wide && it + 1 < term.cols && term.wcTo[ib].index + 1 < term.cols)
-        term.ltemp[++it] = line->chars[term.wcTo[ib].index + 1];
+      if (term.wcTo[ib].wide && it + 1 < term.cols && term.wcTo[ib].index + 1 < term.cols) {
+//        term.ltemp[++it] = line->chars[term.wcTo[ib].index + 1];
+//printf("rtl %d it %d %04X %04X\n", rtl, it - 1, term.ltemp[it - 1].chr, term.ltemp[it].chr);
+      }
 
       ib++;
     }
