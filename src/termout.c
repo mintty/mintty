@@ -1003,7 +1003,7 @@ set_modes(bool state)
           term.curs.rev_wrap = state;
           term.curs.wrapnext = false;
         when 8:  /* DECARM: auto key repeat */
-          // ignore
+          term.auto_repeat = state;
         when 9:  /* X10_MOUSE */
           term.mouse_mode = state ? MM_X10 : 0;
           win_update_mouse();
@@ -1207,7 +1207,8 @@ get_mode(bool privatemode, int arg)
       when 45:  /* xterm: reverse (auto) wraparound */
         return 2 - term.curs.rev_wrap;
       when 8:  /* DECARM: auto key repeat */
-        return 3; // ignored
+        return 2 - term.auto_repeat;
+        //return 3; // ignored
       when 9:  /* X10_MOUSE */
         return 2 - (term.mouse_mode == MM_X10);
       when 12: /* AT&T 610 blinking cursor */

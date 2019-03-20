@@ -443,6 +443,7 @@ struct term {
   bool app_cursor_keys;
   bool app_keypad;
   bool app_wheel;
+  bool auto_repeat;
   bool bell_taskbar; // xterm: bellIsUrgent; switchable with CSI ? 1042 h/l
   bool bell_popup;   // xterm: popOnBell;    switchable with CSI ? 1043 h/l
   bool wheel_reporting;

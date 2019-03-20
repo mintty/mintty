@@ -1619,6 +1619,15 @@ win_key_down(WPARAM wp, LPARAM lp)
   printf("win_key_down %04X %s scan %d ext %d rpt %d/%d other %02X\n", key, vk_name(key), scancode, extended, repeat, count, HIWORD(lp) >> 8);
 #endif
 
+  if (repeat && !term.auto_repeat) {
+#ifdef auto_repeat_cursor_keys_option
+    switch (key) {
+      when VK_PRIOR ... VK_DOWN: do not return...;
+    }
+#endif
+    return true;
+  }
+
   if (key == VK_PROCESSKEY) {
     TranslateMessage(
       &(MSG){.hwnd = wnd, .message = WM_KEYDOWN, .wParam = wp, .lParam = lp}

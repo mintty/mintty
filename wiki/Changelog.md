@@ -1,4 +1,11 @@
+Character processing
   * Fixed wide character width and cursor position handling.
+
+Keyboard handling
+  * Switchable auto-repeat; DECSET 8 (DECARM) and option AutoRepeat.
+
+Configuration
+  * Option AutoRepeat.
 
 ### 2.9.9 (16 March 2019) ###
 

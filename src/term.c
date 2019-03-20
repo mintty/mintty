@@ -269,6 +269,7 @@ term_reset(bool full)
     term.app_keypad = false;  // xterm only with RIS
     term.app_wheel = false;
     term.app_control = 0;
+    term.auto_repeat = cfg.auto_repeat;  // not supported by xterm
   }
   term.modify_other_keys = 0;  // xterm resets this
 

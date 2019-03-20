@@ -80,6 +80,7 @@ typedef struct {
   bool ctrl_alt_is_altgr;
   int ctrl_alt_delay_altgr;
   bool old_altgr_detection;
+  bool auto_repeat;
   int external_hotkeys;
   bool clip_shortcuts;
   bool window_shortcuts;
