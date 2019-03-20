@@ -361,6 +361,15 @@ typedef struct {
 } termimgs;
 
 
+enum {
+  MODO_1 = 1,
+  MODO_2 = 2,
+  MODO_ESC = 0x10,  /* Report ESC as CSI u */
+  MODO_MOD = 0x20,  /* Report plain modifiers */
+  MODO_REL = 0x40,  /* Report release */
+  MODO_REP = 0x80,  /* Report repeat */
+};
+
 typedef struct {
   short x, y;
   cattr attr;
