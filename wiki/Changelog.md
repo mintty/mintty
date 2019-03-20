@@ -1,7 +1,9 @@
+  * Fixed wide character width and cursor position handling.
+
 ### 2.9.9 (16 March 2019) ###
 
 Keyboard handling
-  * Fixed modifyOtherKeys mode 1 to use verbatim control keys.
+  * Fixed modifyOtherKeys mode 1 to use verbatim control keys again (#860).
 
 ### 2.9.8 (15 March 2019) ###
 

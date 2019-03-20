@@ -371,8 +371,12 @@ get_selpoint(const pos p)
   * Transform x through the bidi algorithm to find the _logical_
   * click point from the physical one.
   */
-  if (term_bidi_line(line, p.y) != null)
+  if (term_bidi_line(line, p.y) != null) {
+#ifdef debug_bidi_cache
+    printf("mouse @ log %d -> vis %d\n", sp.x, term.post_bidi_cache[p.y].backward[sp.x]);
+#endif
     sp.x = term.post_bidi_cache[p.y].backward[sp.x];
+  }
 
   // Back to previous cell if current one is second half of a wide char
   if (line->chars[sp.x].chr == UCSWIDE)
