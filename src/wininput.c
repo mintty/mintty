@@ -1172,6 +1172,12 @@ toggle_vt220()
 }
 
 void
+toggle_auto_repeat()
+{
+  term.auto_repeat = !term.auto_repeat;
+}
+
+void
 toggle_bidi()
 {
   term.disable_bidi = !term.disable_bidi;
@@ -1282,6 +1288,12 @@ mflags_vt220()
 }
 
 static uint
+mflags_auto_repeat()
+{
+  return term.auto_repeat ? MF_CHECKED : MF_UNCHECKED;
+}
+
+static uint
 mflags_bidi()
 {
   return (cfg.bidi == 0
@@ -1355,6 +1367,7 @@ static struct function_def cmd_defs[] = {
   {"export-html", {IDM_HTML}, 0},
   {"print-screen", {.fct = print_screen}, 0},
   {"toggle-vt220", {.fct = toggle_vt220}, mflags_vt220},
+  {"toggle-auto-repeat", {.fct = toggle_auto_repeat}, mflags_auto_repeat},
   {"toggle-bidi", {.fct = toggle_bidi}, mflags_bidi},
 
   {"void", {.fct = nop}, 0}
