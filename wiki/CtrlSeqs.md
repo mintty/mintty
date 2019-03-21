@@ -369,9 +369,13 @@ control sequence 8452.
 
 ## Cursor style ##
 
-The VT510 _[DECSCUSR](http://vt100.net/docs/vt510-rm/DECSCUSR)_ sequence can be used to control cursor shape and blinking.
+The VT510 _[DECSCUSR](http://vt100.net/docs/vt510-rm/DECSCUSR)_ sequence 
+can be used to control cursor shape and blinking.
+It takes an optional second parameter (proprietary extension) to set the 
+blinking interval in milliseconds.
 
 > `^[ [` _arg_ _SP_ `q`
+> `^[ [` _arg_ `;` _arg_ _SP_ `q`
 
 | **arg** | **shape**    | **blink** |
 |:--------|:-------------|:----------|

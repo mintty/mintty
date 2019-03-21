@@ -4,6 +4,9 @@ Character processing
 Keyboard handling
   * Switchable auto-repeat; DECSET 8 (DECARM), option AutoRepeat, toggle function.
 
+Terminal features
+  * Cursor style control (DECSCUSR) can set the blinking interval with an optional second parameter.
+
 Configuration
   * Option AutoRepeat.
   * New user-definable function toggle-auto-repeat.

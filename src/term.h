@@ -467,6 +467,7 @@ struct term {
   bool private_color_registers;
   int  cursor_type;
   int  cursor_blinks;
+  int  cursor_blink_interval;
   bool cursor_invalid;
   bool hide_mouse;
 
