@@ -4,7 +4,7 @@
 ForegroundColour=248,248,242
 BackgroundColour=40,42,54
 Black=0,0,0
-BoldBlack=40,42,53
+BoldBlack=104,104,104
 Red=255,85,85
 BoldRed=255,110,103
 Green=80,250,123
