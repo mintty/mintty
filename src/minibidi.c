@@ -22,12 +22,17 @@
  * - sanitized handling of directional markers
  * - support bidi mode model of «BiDi in Terminal Emulators» recommendation
      (https://terminal-wg.pages.freedesktop.org/bidi/):
- * -  return resolved paragraph level (or -1 if none)
- * -  switchable options for:
- * -   autodetection (rules P2, P3)
- * -   LTR/RTL fallback for autodetection
- * -   explicit RTL
- * -   mirroring of additional characters (Box drawing, quadrant blocks)
+ *   - return resolved paragraph level (or -1 if none)
+ *   - switchable options for:
+ *     - autodetection (rules P2, P3)
+ *     - LTR/RTL fallback for autodetection
+ *     - explicit RTL
+ *     - mirroring of additional characters (Box drawing, quadrant blocks)
+ * - fixed UBA shortcut which ignored AN
+ * - implemented UBA rule N0 (bracket pair handling)
+ * - fixed X9 to mask formatters with NSM rather than BN
+ * - fixed W7 to fallback to sor
+ * - fixed L1 to skip directional markers
  *
  ************************************************************************/
 
@@ -345,6 +350,64 @@ do_shape(bidi_char * line, bidi_char * to, int count)
   return 1;
 }
 
+enum { BRACKx, BRACKo, BRACKc };
+
+static ucschar
+bracket(ucschar c)
+{
+  static const struct {
+    wchar from, to;
+    uchar bracket;
+  } pairs[] = {
+#include "brackets.t"
+  };
+
+  int i = -1;
+  int j = lengthof(pairs);
+  while (j - i > 1) {
+    int k = (i + j) / 2;
+    if (c == pairs[k].from) {
+      if (pairs[k].bracket == BRACKo)
+        return c;
+      else
+        return pairs[k].to;
+    }
+    if (c < pairs[k].from)
+      j = k;
+    else
+      i = k;
+  }
+
+  return 0;
+}
+
+/*
+  Determine canonical equivalent of a bracket character.
+ */
+static ucschar
+canonical(ucschar c)
+{
+  static const struct {
+    wchar bracket, canonical;
+  } pairs[] = {
+#include "canonical.t"
+  };
+
+  int i = -1;
+  int j = lengthof(pairs);
+  while (j - i > 1) {
+    int k = (i + j) / 2;
+    if (c == pairs[k].bracket)
+      return pairs[k].canonical;
+    if (c < pairs[k].bracket)
+      j = k;
+    else
+      i = k;
+  }
+
+  return c;
+}
+
 static ucschar
 mirror(ucschar c, bool box_mirror)
 {
@@ -423,6 +486,10 @@ mirror(ucschar c, bool box_mirror)
 
 #ifdef TEST_BIDI
 uchar bidi_levels[999];
+# define debug_bidi
+int do_trace_bidi = 0;
+#else
+static int do_trace_bidi = 2;
 #endif
 
 /*
@@ -502,6 +569,8 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
         if (resLevel < 0)
           resLevel = 0;
       }
+      else if (type == AN)
+        hasRTL = true;
     }
   }
   if (autodir) {
@@ -521,18 +590,35 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
 #define dont_debug_bidi
 
 #ifdef debug_bidi
+  uchar prev_types[count];
+  uchar prev_levels[count];
+
   void trace_bidi(char * tag)
   {
-    static int do_trace_bidi = 2;
     if (do_trace_bidi) {
       if (!tag) {
         do_trace_bidi--;
         return;
       }
-      printf("%s\n", tag);
+
       uint last = count - 1;
       while (last && line[last].wc == ' ')
         last--;
+
+      bool vacuous = true;
+      for (uint i = 0; i <= last; i++)
+        if (types[i] != prev_types[i] || levels[i] != prev_levels[i]) {
+          vacuous = false;
+          break;
+        }
+      for (uint i = 0; i <= last; i++) {
+        prev_types[i] = types[i];
+        prev_levels[i] = levels[i];
+      }
+      if (vacuous)
+        return;
+
+      printf("%s\n", tag);
       for (uint i = 0; i <= last; i++)
         printf(" %04X", line[i].wc);
       printf("\n");
@@ -554,6 +640,10 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
     (void)tag;
   }
   trace_bidi(0);
+  for (i = 0; i < count; i++) {
+    types[i] = ON;
+    levels[i] = -1;
+  }
 #else
 #define trace_bidi(tag)	
 #define trace_mark(tag)	
@@ -725,12 +815,17 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
 
  /* Rule (X9)
   * X9. Remove all RLE, LRE, RLO, LRO, PDF, and BN codes.
-  * Here, they're converted to BN.
+  * Here, they're converted to NSM (used to be BN).
   */
+  bool skip[count];
   for (i = 0; i < count; i++) {
     switch (types[i]) {
-      when RLE or LRE or RLO or LRO or PDF:
-        types[i] = BN;
+      when RLE or LRE or RLO or LRO or PDF or BN:
+        //types[i] = BN;
+        types[i] = NSM;  // fixes 4594 test cases + 28 char test cases
+        skip[i] = true;  // remove char from algorithm... (usage incomplete)
+      otherwise:
+        skip[i] = false;
     }
   }
   trace_bidi("[X9]");
@@ -753,11 +848,11 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
     (Note that in an isolating run sequence, an isolate initiator followed by 
     an NSM or any type other than PDI must be an overflow isolate initiator.)
   */
-  if (types[0] == NSM)
-    types[0] = paragraphLevel;
+  if (types[0] == NSM /*&& !skip[0]*/)
+    types[0] = (paragraphLevel & 1) ? R : L;  // sor
 
   for (i = 1; i < count; i++) {
-    if (types[i] == NSM)
+    if (types[i] == NSM /*&& !skip[i]*/)
       switch (types[i - 1]) {
         when LRI or RLI or FSI or PDI:
           types[i] = ON;
@@ -765,6 +860,7 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
           types[i] = types[i - 1];
       }
   }
+  trace_bidi("[W1]");
 
  /* Rule (W2)
   * W2. Search backwards from each instance of a European number until the
@@ -786,6 +882,7 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
       }
     }
   }
+  trace_bidi("[W2]");
 
  /* Rule (W3)
   * W3. Change all ALs to R.
@@ -797,14 +894,14 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
     if (types[i] == AL)
       types[i] = R;
   }
-  trace_bidi("[W1] [W2] [W3]");
+  trace_bidi("[W3]");
 
  /* Rule (W4)
   * W4. A single European separator between two European numbers changes
   * to a European number. A single common separator between two numbers
   * of the same type changes to that type.
   */
-  for (i = 1; i < (count - 1); i++) {
+  for (i = 1; i < count - 1; i++) {
     if (types[i] == ES) {
       if (types[i - 1] == EN && types[i + 1] == EN)
         types[i] = EN;
@@ -853,15 +950,62 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
         types[i] = ON;
     }
   }
+  trace_bidi("[W4] [W5] [W6]");
+
+  int isol_run_level;
+  void clear_isol() { isol_run_level = 0; }
+  bool break_isol(int j)
+  {
+    if (!j)
+      return true;
+#define dont_consider_BD13
+#ifdef consider_BD13
+    // BD13 describes "isolating run sequences" for use according to X10;
+    // however, it defines only isolate marks (particularly PDI) as 
+    // boundaries, inconsistently with some examples in BD13 and X10;
+    // this whole attempt does not seem to make much difference anyway...
+    // (-38 +18 BidiTest cases, all irregular / unsymmetric markers)
+    if (types[j] == PDI) {
+      isol_run_level++;
+      return false;
+    }
+    else if (bidi_class_of(j) == RLI || bidi_class_of(j) == LRI || bidi_class_of(j) == FSI) {
+      if (isol_run_level)
+        isol_run_level--;
+      return false;
+    }
+    else if (isol_run_level)
+      return false;
+# ifdef consider_X10_Example_1
+    // does not make a difference
+    else if (bidi_class_of(j - 1) == PDF && (bidi_class_of(j) == RLE || bidi_class_of(j) == LRE)) {
+      // X10 Example 1
+      return false;
+    }
+# endif
+    else {
+      j--;
+      if (bidi_class_of(j) == RLE || bidi_class_of(j) == LRE)
+        return true;
+# ifdef break_at_PDF
+      if (bidi_class_of(j) == PDF)
+        return true;
+# endif
+    }
+#endif
+    return false;
+  }
 
  /* Rule (W7)
   * W7. Search backwards from each instance of a European number until
   * the first strong type (R, L, or sor) is found. If an L is found,
   * then change the type of the European number to L.
   */
+  int embeddingLevel = paragraphLevel;  //TODO: sor
   for (i = 0; i < count; i++) {
     if (types[i] == EN) {
       j = i;
+      clear_isol();
       while (j >= 0) {
         if (types[j] == L) {
           types[i] = L;
@@ -870,14 +1014,140 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
         else if (types[j] == R || types[j] == AL) {
           break;
         }
+        if (break_isol(j)) {
+          // nothing found, fallback to sor
+          if (!(embeddingLevel & 1))
+            types[i] = L;
+          break;
+        }
         j--;
       }
     }
   }
+  trace_bidi("[W7]");
 
- /* Rule (N0) NOT IMPLEMENTED
-  * N0. Handle bracket pairs in isolating run sequences...
+ /* Rule (N0) Handle bracket pairs in isolating run sequences.
+  * N0. Process bracket pairs in an isolating run sequence 
+    sequentially in the logical order of the text positions of the 
+    opening paired brackets using the logic given below.
+    Within this scope, bidirectional types EN and AN are treated as R.
   */
+#define is_N0_R(type) (type == R || type == EN || type == AN)
+  // refer to embedding level
+  embeddingLevel = paragraphLevel;  //TODO: to become sos when we handle isolating runs
+  // create stack and list of bracket pairs
+  struct {
+    ucschar b;
+    int o;
+  } brackstack[count];
+  int top = 0;
+  struct {
+    int o, c;
+  } brackpairs[count];
+  int bracks = 0;
+  // look for bracket pairs
+  // • Identify the bracket pairs in the current isolating run sequence.
+  for (i = 0; i < count; i++) {
+    ucschar bro = bracket(line[i].wc);
+    if (bro == line[i].wc) {  // opening bracket
+      brackstack[top].b = canonical(bro);
+      brackstack[top].o = i;
+      //printf("N0 > bracket %d ...\n", i);
+      top++;
+    }
+    else if (bro) {  // closing bracket, bro is the opening bracket
+      int sp = top;
+      while (sp) {
+        sp--;
+        // compare canonical equivalents, factoring out 
+        // SUPERSCRIPT/SUBSCRIPT/SMALL/FULLWIDTH/HALFWIDTH
+        if (canonical(bro) == brackstack[sp].b) {
+          // insert bracket pair into sorted list
+          int bracki = bracks;
+          while (bracki && brackpairs[bracki - 1].o > brackstack[sp].o) {
+            brackpairs[bracki] = brackpairs[bracki - 1];
+            bracki--;
+          }
+          brackpairs[bracki].o = brackstack[sp].o;
+          brackpairs[bracki].c = i;
+          //printf("N0 > bracket %d %d\n", brackstack[sp].o, i);
+          bracks++;
+          top = sp;
+          break;
+        }
+      }
+    }
+  }
+#define dont_debug_N0
+  // now handle the determined bracket pairs, assuming they are sorted
+  // • For each bracket-pair element in the list of pairs of text positions
+  for (int k = 0; k < bracks; k++) {
+    int o = brackpairs[k].o;
+    int c = brackpairs[k].c;
+#ifdef debug_N0
+    printf("N0 < bracket %d %d\n", o, c);
+#endif
+    bool otherstrong = false;
+    // a. Inspect the bidirectional types of the characters enclosed within the bracket pair.
+    for (int j = o + 1; j < c; j++) {
+      uchar type = types[j];
+      // b. If any strong type (either L or R) matching the embedding 
+      // direction is found, set the type for both brackets in the pair 
+      // to match the embedding direction.
+      if ((type == L && !(embeddingLevel & 1)) || (is_N0_R(type) && (embeddingLevel & 1))) {
+#ifdef debug_N0
+        printf("N0 strong emb %d\n", embeddingLevel);
+#endif
+        types[o] = types[c] = (embeddingLevel & 1) ? R : L;
+        otherstrong = false;
+        break;
+      }
+      // c. Otherwise, if there is a strong type it must be 
+      // opposite the embedding direction.
+      else if (type == L || is_N0_R(type)) {
+        otherstrong = true;
+      }
+    }
+    if (otherstrong) {
+      // c. Otherwise, ...
+      // Therefore, test for an established context with a preceding 
+      // strong type by checking backwards before the opening paired 
+      // bracket until the first strong type (L, R, or sos) is found.
+      int precedingLevel = embeddingLevel;
+      for (int j = o - 1; j >= 0; j--)
+        if (types[j] == L || is_N0_R(types[j])) {
+          precedingLevel = (embeddingLevel & ~1) + (types[j] != L);
+          //printf("N0 strong other %d preceding @%d\n", embeddingLevel, j);
+          break;
+        }
+#ifdef debug_N0
+      printf("N0 strong other %d preceding %d\n", embeddingLevel, precedingLevel);
+#endif
+      // 1. If the preceding strong type is also opposite the 
+      // embedding direction, context is established, so set the type for 
+      // both brackets in the pair to that direction.
+      if ((precedingLevel & 1) != (embeddingLevel & 1))
+        types[o] = types[c] = (precedingLevel & 1) ? R : L;
+      // 2. Otherwise set the type for both brackets in the pair to 
+      // the embedding direction.
+      else
+        types[o] = types[c] = (embeddingLevel & 1) ? R : L;
+    }
+    // d. Otherwise, there are no strong types within the bracket pair. 
+    // Therefore, do not set the type for that bracket pair.
+    // • Any number of characters that had original bidirectional 
+    // character type NSM prior to the application of W1 that immediately 
+    // follow a paired bracket which changed to L or R under N0 should 
+    // change to match the type of their preceding bracket.
+    if (types[c] == L || is_N0_R(types[c]))
+      for (int j = c + 1; j < count; j++) {
+        if (bidi_class_of(j) == NSM /*&& !skip[j]*/)
+          types[j] = types[c];
+        else
+          break;
+      }
+  }
+  trace_bidi("[N0]");
 
  /* Rule (N1)
   * N1. A sequence of NIs takes the direction of the surrounding
@@ -896,11 +1166,11 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
     else if (!(paragraphLevel & 1) && types[1] == L)
       types[0] = L;
   }
-  for (i = 1; i < (count - 1); i++) {
+  for (i = 1; i < count - 1; i++) {
     if (is_NI(types[i])) {
       if (types[i - 1] == L) {
         j = i;
-        while (j < (count - 1) && is_NI(types[j])) {
+        while (j < count - 1 && is_NI(types[j])) {
           j++;
         }
         if (types[j] == L) {
@@ -914,7 +1184,7 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
       else if ((types[i - 1] == R) || (types[i - 1] == EN) ||
                (types[i - 1] == AN)) {
         j = i;
-        while (j < (count - 1) && is_NI(types[j])) {
+        while (j < count - 1 && is_NI(types[j])) {
           j++;
         }
         if ((types[j] == R) || (types[j] == EN) || (types[j] == AN)) {
@@ -934,7 +1204,7 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
     else if (!(paragraphLevel & 1) && types[count - 2] == L)
       types[count - 1] = L;
   }
-  trace_bidi("[W4] [W5] [W6] [W7] [N0] [N1]");
+  trace_bidi("[N1]");
 
  /* Rule (N2)
   * N2. Any remaining NIs take the embedding direction.
@@ -949,29 +1219,25 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
   }
   trace_bidi("[N2]");
 
- /* Rule (I1)
+ /* Rules (I1) (I2)
   * I1. For all characters with an even (left-to-right) embedding
   * direction, those of type R go up one level and those of type AN or
   * EN go up two levels.
+  * I2. For all characters with an odd (right-to-left) embedding direction,
+  * those of type L, EN or AN go up one level.
   */
   for (i = 0; i < count; i++) {
     if ((levels[i] % 2) == 0) {
+      // (I1)
       if (types[i] == R)
         levels[i] += 1;
       else if (types[i] == AN || types[i] == EN)
         levels[i] += 2;
     }
-  }
-
- /* Rule (I2)
-  * I2. For all characters with an odd (right-to-left) embedding direction,
-  * those of type L, EN or AN go up one level.
-  */
-  for (i = 0; i < count; i++) {
-    if ((levels[i] % 2) == 1) {
+    else
+      // (I2)
       if (types[i] == L || types[i] == EN || types[i] == AN)
         levels[i] += 1;
-    }
   }
   trace_bidi("[I1, I2]");
 
@@ -989,19 +1255,21 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
     N/A: Because a paragraph separator breaks lines, there will be at most 
     one per line, at the end of that line.
   */
+  // (4)
   j = count - 1;
-  while (j > 0 && (bidi_class_of(j) == WS)) {
+  while (j > 0 && (bidi_class_of(j) == WS || skip[j])) {
     j--;
   }
-  if (j < (count - 1)) {
+  if (j < count - 1) {
     for (j++; j < count; j++)
       levels[j] = paragraphLevel;
   }
+  // (3)
   for (i = 0; i < count; i++) {
     tempType = bidi_class_of(i);
     if (tempType == WS) {
       j = i;
-      while (j < count && (bidi_class_of(j) == WS)) {
+      while (j < count && (bidi_class_of(j) == WS || skip[j])) {
         j++;
       }
       if (j == count || bidi_class_of(j) == B || bidi_class_of(j) == S) {

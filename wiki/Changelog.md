@@ -4,6 +4,11 @@ Character processing
 Keyboard handling
   * Switchable auto-repeat; DECSET 8 (DECARM), option AutoRepeat, toggle function.
 
+Bidirectional rendering (Unicode Bidi Algorithm)
+  * Bidi bracket pairs: implemented UBA rule N0.
+  * Minor fixes to UBA rules X9, W7, L1.
+  * Fixed shortcut optimization wrongly not triggering UBA on Arabic numbers.
+
 Terminal features
   * Cursor style control (DECSCUSR) can set the blinking interval with an optional second parameter.
 

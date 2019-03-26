@@ -182,10 +182,10 @@ rgb.t:	# /usr/share/X11/rgb.txt # X11 color names, from package 'rgb'
 	sed -e 's,	, ,g' -e 's/ *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([^ ].*[^ ]\) */	{\1, \2, \3, "\4"},/' /usr/share/X11/rgb.txt > rgb.t
 
 combdata=combining.t combdouble.t combined.t
-unidata=$(combdata) ambiguous.t casefold.t bidiclasses.t mirroring.t wide.t
+unidata=$(combdata) ambiguous.t casefold.t bidiclasses.t mirroring.t brackets.t canonical.t wide.t
 emojidata=emojibase.t emojiseqs.t
 
-unicodedata=UnicodeData.txt EastAsianWidth.txt Blocks.txt CaseFolding.txt BidiMirroring.txt
+unicodedata=UnicodeData.txt EastAsianWidth.txt Blocks.txt CaseFolding.txt BidiMirroring.txt BidiBrackets.txt BidiCharacterTest.txt BidiTest.txt
 unicodeemoji=emoji-data.txt emoji-sequences.txt emoji-variation-sequences.txt emoji-zwj-sequences.txt
 
 clean-unicode:
@@ -223,6 +223,15 @@ bidiclasses.t:	# UnicodeData.txt
 
 mirroring.t:	# BidiMirroring.txt
 	sh ./mkmirroring > mirroring.t
+
+brackets.t:	# BidiBrackets.txt
+	sh ./mkbrackets
+
+canonical.t:	# BidiBrackets.txt UnicodeData.txt
+	sh ./mkbrackets
+
+testbidi.exe:	testbidi.tc minibidi.c # BidiCharacterTest.txt BidiTest.txt
+	$(CC) -x c testbidi.tc -DTEST_BIDI --include std.h minibidi.c -o testbidi.exe
 
 unicode:	UnicodeData.txt Blocks.txt EastAsianWidth.txt
 
