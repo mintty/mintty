@@ -79,7 +79,7 @@ $(src): $(arch_files)
 	tar cjf $@ --exclude="*~" $(TARUSER) $(name_ver)
 	rm -rf $(name_ver)
 
-REL := 0
+REL := 1
 arch := $(shell uname -m)
 
 cygport := $(name_ver)-$(REL).cygport
