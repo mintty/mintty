@@ -118,7 +118,9 @@ ifdef DEBUG
 else
   CPPFLAGS += -DNDEBUG
   CFLAGS += -fomit-frame-pointer -O2
-  LDFLAGS += -s
+# support cygwin debug package:
+  CFLAGS += -g
+#  LDFLAGS += -s
 endif
 
 ifdef DMALLOC
