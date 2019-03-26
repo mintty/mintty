@@ -488,8 +488,6 @@ mirror(ucschar c, bool box_mirror)
 uchar bidi_levels[999];
 # define debug_bidi
 int do_trace_bidi = 0;
-#else
-static int do_trace_bidi = 2;
 #endif
 
 /*
@@ -595,6 +593,9 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
 
   void trace_bidi(char * tag)
   {
+#ifndef TEST_BIDI
+    static int do_trace_bidi = 2;
+#endif
     if (do_trace_bidi) {
       if (!tag) {
         do_trace_bidi--;
@@ -952,13 +953,21 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
   }
   trace_bidi("[W4] [W5] [W6]");
 
+#define dont_consider_BD13
+
+#ifdef consider_BD13
   int isol_run_level;
-  void clear_isol() { isol_run_level = 0; }
+#endif
+  void clear_isol()
+  {
+#ifdef consider_BD13
+    isol_run_level = 0;
+#endif
+  }
   bool break_isol(int j)
   {
     if (!j)
       return true;
-#define dont_consider_BD13
 #ifdef consider_BD13
     // BD13 describes "isolating run sequences" for use according to X10;
     // however, it defines only isolate marks (particularly PDI) as 
