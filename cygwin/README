@@ -97,6 +97,8 @@ Port Notes:
     setup.hint: add cygwin dependency, update description
     README: update description
     README: add mintty-2.* package changes
+    add mintty-debuginfo.hint
+    ../Makefile: generate debug package
 
 ----- mintty-2.9.1
     setup.hint: update description
