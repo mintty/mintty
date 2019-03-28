@@ -4,9 +4,9 @@
 #define APPNAME "mintty"
 #define WEBSITE "http://mintty.github.io/"
 
-#define MAJOR_VERSION  2
-#define MINOR_VERSION  9
-#define PATCH_NUMBER   9
+#define MAJOR_VERSION  3
+#define MINOR_VERSION  0
+#define PATCH_NUMBER   0
 #define BUILD_NUMBER   0
 
 // needed for res.rc

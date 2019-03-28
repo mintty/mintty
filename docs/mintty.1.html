@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Thu Mar 14 23:34:13 2019 -->
+<!-- CreationDate: Wed Mar 27 19:27:33 2019 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -86,9 +86,9 @@ name of <b>wsl*</b><i>[-distro]</i> implies a
 
 <p style="margin-left:11%; margin-top: 1em">Mintty supports
 being started from a Windows desktop shortcut; it honours
-window and icon settings of the shortcut, disables
-daemonizing, and sets environment variable MINTTY_SHORTCUT
-to its pathname.</p>
+window and icon settings of the shortcut, aligns taskbar
+grouping with the shortcut, disables daemonizing, and sets
+environment variable MINTTY_SHORTCUT to its pathname.</p>
 
 <h2>OPTIONS
 <a name="OPTIONS"></a>
@@ -1613,7 +1613,14 @@ empty locale is sent to the terminal to restore to
 <p style="margin-left:11%; margin-top: 1em"><b>Keys</b>
 <br>
 Settings controlling keyboard behaviour. <b><br>
-Backarrow sends ^H</b> (BackspaceSendsBS=no)</p>
+Auto-repeat keys</b> (AutoRepeat=on)</p>
+
+<p style="margin-left:22%;">When setting this off, keyboard
+auto-repeat is ignored. Auto-repeat can also be switched
+dynamically with DECSET 8.</p>
+
+<p style="margin-left:11%;"><b>Backarrow sends ^H</b>
+(BackspaceSendsBS=no)</p>
 
 <p style="margin-left:22%;">By default, mintty sends
 <b>^?</b> (ASCII DEL) as the keycode for the backspace key.
@@ -2806,6 +2813,8 @@ scrollback <br>
 &ndash; <b>clear-scrollback</b>: clears the scrollback <br>
 &ndash; <b>toggle-vt220</b>: toggles VT220 keyboard mode
 <br>
+&ndash; <b>toggle-auto-repeat</b>: toggles auto-repeat keys
+mode <br>
 &ndash; <b>copy-title</b>: copies the window title to the
 clipboard <br>
 &ndash; <b>lock-title</b>: locks the window title from being

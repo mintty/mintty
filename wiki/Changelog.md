@@ -1,3 +1,5 @@
+### 3.0.0 (28 March 2019) ###
+
 Character processing
   * Fixed wide character width and cursor position handling.
 
