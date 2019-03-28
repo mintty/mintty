@@ -2540,6 +2540,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
 
   bool ldisp1 = phase == 1;
   bool ldisp2 = phase == 2;
+  bool lpresrtl = lattr & LATTR_PRESRTL;
   lattr &= LATTR_MODE;
 
   int char_width = cell_width * (1 + (lattr != LATTR_NORM));
@@ -2891,6 +2892,17 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
       underlaid = true;
   }
 
+ /* Coordinate transformation */
+  int coord_transformed = 0;
+  XFORM old_xform;
+  if (lpresrtl) {
+    coord_transformed = SetGraphicsMode(dc, GM_ADVANCED);
+    if (coord_transformed && GetWorldTransform(dc, &old_xform)) {
+      XFORM xform = (XFORM){-1.0, 0.0, 0.0, 1.0, term.cols * cell_width + 2 * PADDING, 0.0};
+      coord_transformed = SetWorldTransform(dc, &xform);
+    }
+  }
+
  /* Special underlay */
   if (do_special_underlay && !ldisp2) {
     xchar uc = 0x2312;
@@ -3034,7 +3046,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   if (ldisp1) {
     if (!underlaid)
       clear_run();
-    return;
+    goto _return;
   }
 
  /* DEC Tech adjustments */
@@ -3491,6 +3503,10 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     }
     DeleteObject(SelectObject(dc, oldpen));
   }
+
+  _return:
+  if (coord_transformed)
+    SetWorldTransform(dc, &old_xform);
 }
 
 

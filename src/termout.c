@@ -1148,7 +1148,7 @@ set_modes(bool state)
       switch (arg) {
         when 4:  /* IRM: set insert mode */
           term.insert = state;
-        when 8: /* BDSM: bidirectional support mode */
+        when 8: /* BDSM: ECMA-48 bidirectional support mode */
           if (state)
             term.curs.bidimode &= ~LATTR_NOBIDI;
           else
@@ -1913,6 +1913,11 @@ do_csi(uchar c)
         //line->lattr &= ~(LATTR_BIDISEL | LATTR_BIDIRTL);
         //line->lattr |= curs->bidimode & ~LATTR_BIDISEL | LATTR_BIDIRTL);
       }
+    when CPAIR(' ', 'S'):  /* SPD: ECMA-48 Select Presentation Direction */
+      if (arg0 == 0)
+          curs->bidimode &= ~LATTR_PRESRTL;
+      else if (arg0 == 3)
+          curs->bidimode |= LATTR_PRESRTL;
   }
 }
 

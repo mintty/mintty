@@ -185,8 +185,9 @@ enum {
   // temporary bidi flags
   LATTR_AUTOSEL   = 0x0400u, /* autodetection accomplished */
   LATTR_AUTORTL   = 0x0800u, /* direction after autodetection */
+  // presentational bidi flag
+  LATTR_PRESRTL   = 0x1000u,
   // unassigned bits:
-  //                0x1000u
   //                0x0010u
   //                0x0020u
 };

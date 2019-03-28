@@ -119,6 +119,8 @@ and some control sequences to adjust the behaviour.
 | `^[[0 k`      | SCP (ECMA-48): default direction handling: autodetection with LTR fallback |
 | `^[[?2500h`   | enable box mirroring (*) |
 | `^[[?2500l`   | disable box mirroring (*) |
+| `^[[0 S`      | SPD (ECMA-48): LTR presentation direction |
+| `^[[3 S`      | SPD (ECMA-48): RTL presentation direction |
 
 Note: ECMA-48 bidi modes and private bidi modes are experimental.
 They follow the current status of the bidi mode model of the 
@@ -128,6 +130,8 @@ Note: Box mirroring means a number of graphic characters are added to the
 set of bidi-mirrored characters as specified by Unicode.
 These are the unsymmetric characters from ranges Box Drawing (U+2500-U+257F) 
 and Block Elements (U+2580-U+259F). Others may be added in future versions.
+
+Note: SPD is a deprecated fun feature.
 
 
 ## Mousewheel reporting ##
