@@ -14,7 +14,10 @@ Features include:
 * Window transparency."
 
 HOMEPAGE="http://mintty.github.io/"
-SRC_URI="https://github.com/${NAME}/release/${NAME}-${VERSION}-src.tar.bz2"
+# proper URL for actual download:
+#SRC_URI="https://github.com/${NAME}/${NAME}/archive/${VERSION}/${NAME}-${VERSION}.tar.gz"
+# dummy URL with proper filename as locally available, for cygport:
+SRC_URI="${NAME}-${VERSION}-src.tar.bz2"
 
 DEPEND="gcc-core make"
 
