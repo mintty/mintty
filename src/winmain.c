@@ -1122,7 +1122,7 @@ search_monitors(int * minx, int * miny, HMONITOR lookup_mon, int get_primary, MO
       uint x, dpi = 0;
       if (pGetDpiForMonitor)
         pGetDpiForMonitor(hMonitor, 0, &x, &dpi);  // MDT_EFFECTIVE_DPI
-      printf("Monitor %d %s %s (%3d dpi) width,height %4d,%4d (%4d,%4d...%4d,%4d)\n", 
+      printf("Monitor %d %s %s (%3d dpi) w,h %4d,%4d (%4d,%4d...%4d,%4d)\n", 
              data->moni,
              hMonitor == data->curmon ? "current" : "       ",
              mi.dwFlags & MONITORINFOF_PRIMARY ? "primary" : "       ",
