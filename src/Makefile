@@ -94,7 +94,8 @@ ifneq ($(platform), msys)
   # some nested functions) as they cause some security software to choke
   SECUR=-Wtrampolines
 endif
-CFLAGS := -std=gnu99 -include std.h -Wall -Wextra -Wundef -Werror $(SECUR)
+# support cygwin debug package (use += to accept injected options)
+CFLAGS += -std=gnu99 -include std.h -Wall -Wextra -Wundef -Werror $(SECUR)
 
 ifeq ($(shell VER=`$(CC) -dumpversion`; expr $${VER%.*} '>=' 4.5), 1)
   CFLAGS += -mtune=atom
@@ -119,8 +120,8 @@ else
   CPPFLAGS += -DNDEBUG
   CFLAGS += -fomit-frame-pointer -O2
 # support cygwin debug package:
-  CFLAGS += -g
-#  LDFLAGS += -s
+#  CFLAGS += -g # not needed; -ggdb and more injected by cygport
+#  do not LDFLAGS += -s
 endif
 
 ifdef DMALLOC
