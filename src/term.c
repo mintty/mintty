@@ -2100,11 +2100,11 @@ term_paint(void)
     }
     if (prevdirtyitalic) {
       // clear overhang into right padding border
-      win_text(term.cols, i, W(" "), 1, CATTR_DEFAULT, (cattr*)&CATTR_DEFAULT, line->lattr | LATTR_CLEARPAD, false);
+      win_text(term.cols, i, W(" "), 1, CATTR_DEFAULT, (cattr*)&CATTR_DEFAULT, line->lattr, false, true, 0);
     }
     if (firstdirtyitalic) {
       // clear overhang into left padding border
-      win_text(-1, i, W(" "), 1, CATTR_DEFAULT, (cattr*)&CATTR_DEFAULT, line->lattr | LATTR_CLEARPAD, false);
+      win_text(-1, i, W(" "), 1, CATTR_DEFAULT, (cattr*)&CATTR_DEFAULT, line->lattr, false, true, 0);
     }
 
 #define dont_debug_bidi_paragraphs
@@ -2123,14 +2123,14 @@ term_paint(void)
       diag += 'A' - '0' - 10;
     if (line->lattr & (LATTR_WRAPPED | LATTR_WRAPCONTD)) {
       if ((line->lattr & (LATTR_WRAPPED | LATTR_WRAPCONTD)) == (LATTR_WRAPPED | LATTR_WRAPCONTD))
-        win_text(-1, i, &diag, 1, CATTR_CONTWRAPD, (cattr*)&CATTR_CONTWRAPD, line->lattr | LATTR_CLEARPAD, false);
+        win_text(-1, i, &diag, 1, CATTR_CONTWRAPD, (cattr*)&CATTR_CONTWRAPD, line->lattr, false, true, 0);
       else if (line->lattr & LATTR_WRAPPED)
-        win_text(-1, i, &diag, 1, CATTR_WRAPPED, (cattr*)&CATTR_WRAPPED, line->lattr | LATTR_CLEARPAD, false);
+        win_text(-1, i, &diag, 1, CATTR_WRAPPED, (cattr*)&CATTR_WRAPPED, line->lattr, false, true, 0);
       else
-        win_text(-1, i, &diag, 1, CATTR_CONTD, (cattr*)&CATTR_CONTD, line->lattr | LATTR_CLEARPAD, false);
+        win_text(-1, i, &diag, 1, CATTR_CONTD, (cattr*)&CATTR_CONTD, line->lattr, false, true, 0);
     }
     else if (displine->lattr & (LATTR_WRAPPED | LATTR_WRAPCONTD))
-      win_text(-1, i, W(" "), 1, CATTR_DEFAULT, (cattr*)&CATTR_DEFAULT, line->lattr | LATTR_CLEARPAD, false);
+      win_text(-1, i, W(" "), 1, CATTR_DEFAULT, (cattr*)&CATTR_DEFAULT, line->lattr, false, true, 0);
 #endif
 
    /*
@@ -2172,7 +2172,7 @@ term_paint(void)
     void flush_text()
     {
       if (ovl_len) {
-        win_text(ovl_x, ovl_y, ovl_text, ovl_len, ovl_attr, ovl_textattr, ovl_lattr | LATTR_DISP2, ovl_has_rtl);
+        win_text(ovl_x, ovl_y, ovl_text, ovl_len, ovl_attr, ovl_textattr, ovl_lattr, ovl_has_rtl, false, 2);
         ovl_len = 0;
       }
     }
@@ -2227,14 +2227,14 @@ term_paint(void)
               eattr.attr &= ~ATTR_REVERSE;
             }
 
-            win_text(x, y, esp, elen, eattr, textattr, lattr | LATTR_DISP1, has_rtl);
+            win_text(x, y, esp, elen, eattr, textattr, lattr, has_rtl, false, 1);
             flush_text();
           }
 #ifdef debug_emojis
           eattr.attr &= ~(ATTR_BGMASK | ATTR_FGMASK);
           eattr.attr |= 6 << ATTR_BGSHIFT | 4;
           esp[0] = '0' + elen;
-          win_text(x, y, esp, elen, eattr, textattr, lattr | LATTR_DISP2, has_rtl);
+          win_text(x, y, esp, elen, eattr, textattr, lattr, has_rtl, false, 2);
 #endif
           if (cfg.emoji_placement == EMPL_FULL && !overlaying)
             do_overlay = true;  // display in overlaying loop
@@ -2249,7 +2249,7 @@ term_paint(void)
           eattr.attr &= ~(ATTR_BGMASK | ATTR_FGMASK);
           eattr.attr |= 4 << ATTR_BGSHIFT | 6;
           esp[0] = '0';
-          win_text(x, y, esp, 1, eattr, textattr, lattr | LATTR_DISP2, has_rtl);
+          win_text(x, y, esp, 1, eattr, textattr, lattr, has_rtl, false, 2);
         }
 #endif
       }
@@ -2257,7 +2257,7 @@ term_paint(void)
         return;
       }
       else if (attr.attr & (ATTR_ITALIC | TATTR_COMBDOUBL)) {
-        win_text(x, y, text, len, attr, textattr, lattr | LATTR_DISP1, has_rtl);
+        win_text(x, y, text, len, attr, textattr, lattr, has_rtl, false, 1);
         flush_text();
         ovl_x = x;
         ovl_y = y;
@@ -2269,7 +2269,7 @@ term_paint(void)
         ovl_has_rtl = has_rtl;
       }
       else {
-        win_text(x, y, text, len, attr, textattr, lattr, has_rtl);
+        win_text(x, y, text, len, attr, textattr, lattr, has_rtl, false, 0);
         flush_text();
       }
     }

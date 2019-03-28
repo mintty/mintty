@@ -2524,9 +2524,11 @@ apply_attr_colour(cattr a, attr_colour_mode mode)
  * coordinates, in given attributes.
  *
  * We are allowed to fiddle with the contents of `text'.
+   clearpad: flag to clear padding from overhang
+   phase: overlay line display (italic right-to-left overhang handling)
  */
 void
-win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl)
+win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl, bool clearpad, uchar phase)
 {
   //if (kb_trace) {printf("[%ld] <win_text\n", mtime()); kb_trace = 0;}
 
@@ -2534,11 +2536,10 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   int findex = (attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
   struct fontfam * ff = &fontfamilies[findex];
 
-  bool clearpad = lattr & LATTR_CLEARPAD;
   trace_line("win_text:");
 
-  bool ldisp1 = !!(lattr & LATTR_DISP1);
-  bool ldisp2 = !!(lattr & LATTR_DISP2);
+  bool ldisp1 = phase == 1;
+  bool ldisp2 = phase == 2;
   lattr &= LATTR_MODE;
 
   int char_width = cell_width * (1 + (lattr != LATTR_NORM));

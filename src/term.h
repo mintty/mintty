@@ -173,15 +173,11 @@ enum {
   LATTR_WRAPPED2  = 0x8000u, /* with WRAPPED: CJK wide character
                                   * wrapped to next line, so last
                                   * single-width cell is empty */
-  LATTR_CLEARPAD  = 0x2000u, /* flag to clear padding from overhang */
   LATTR_MARKED    = 0x0004u, /* scroll marker */
   LATTR_UNMARKED  = 0x0008u, /* secondary scroll marker */
-  // overlay line display (italic right-to-left overhang handling):
-  LATTR_DISP1     = 0x0010u,
-  LATTR_DISP2     = 0x0020u,
   // bidi control
-  LATTR_WRAPCONTD = 0x1000u, /* continued from wrapped line */
-  LATTR_BIDIMASK  = 0x0FC0u, /* all bidi attributes */
+  LATTR_WRAPCONTD = 0x2000u, /* continued from wrapped line */
+  LATTR_BIDIMASK  = 0x1FC0u, /* all bidi attributes */
   LATTR_NOBIDI    = 0x0040u, /* disable bidi on this line / in paragraph */
   LATTR_BOXMIRROR = 0x0080u, /* bidi box graphics mirroring */
   LATTR_BIDISEL   = 0x0100u, /* direction pre-selected */
@@ -189,6 +185,10 @@ enum {
   // temporary bidi flags
   LATTR_AUTOSEL   = 0x0400u, /* autodetection accomplished */
   LATTR_AUTORTL   = 0x0800u, /* direction after autodetection */
+  // unassigned bits:
+  //                0x1000u
+  //                0x0010u
+  //                0x0020u
 };
 
 enum {
