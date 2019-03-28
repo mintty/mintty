@@ -56,7 +56,7 @@ arch_files += src/[!_]*.t src/mk*
 arch_files += tools/mintheme
 arch_files += lang/*.pot lang/*.po
 arch_files += themes/*[!~]
-arch_files += cygwin/*.cygport cygwin/README* cygwin/setup.hint
+arch_files += cygwin/*.cygport cygwin/README cygwin/setup.hint cygwin/mintty-debuginfo.hint
 arch_files += docs/*.1 docs/*.html icon/*
 arch_files += wiki/*
 #arch_files += scripts/*
@@ -97,8 +97,13 @@ binpkg:
 	cp cygwin/mintty.cygport $(DIST)/$(cygport)
 	cd $(DIST); cygport $(cygport) prep
 	cd $(DIST); cygport $(cygport) compile install
+	# cygport packages would reveal user information:
 	#cd $(DIST); cygport $(cygport) package
+	# so let's build the packages ourselves:
+	# binary package:
 	cd $(DIST)/$(name_ver)-$(REL).$(arch)/inst; tar cJf ../$(name_ver)-$(REL).tar.xz $(TARUSER) *
+	# debug package:
+	cd $(DIST)/$(name_ver)-$(REL).$(arch)/inst; tar cJf ../$(NAME)-debuginfo-$(version)-$(REL).tar.xz $(TARUSER) usr/lib/debug usr/src/debug
 
 srcpkg: $(DIST)/$(name_ver)-$(REL)-src.tar.xz
 
