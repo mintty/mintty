@@ -1,4 +1,6 @@
 NAME=mintty
+#VERSION= # derived from filename of copied cygport file
+#RELEASE= # derived from filename of copied cygport file
 CATEGORY="Base Shells"
 SUMMARY="Cygwin Terminal – terminal emulator with native Windows look and feel"
 DESCRIPTION="Mintty is a terminal emulator for Cygwin. It is based on code
@@ -14,22 +16,29 @@ Features include:
 * Window transparency."
 
 HOMEPAGE="http://mintty.github.io/"
-# proper URL for actual download:
-#SRC_URI="https://github.com/${NAME}/${NAME}/archive/${VERSION}/${NAME}-${VERSION}.tar.gz"
-# dummy URL with proper filename as locally available, for cygport:
-SRC_URI="${NAME}-${VERSION}-src.tar.bz2"
+# URL for download, basename used by cygport for local reference:
+SRC_URI="https://github.com/${NAME}/${NAME}/archive/${VERSION}/${NAME}-${VERSION}.tar.gz"
+# deprecated:
+# with non-gz format, a dummy URL with proper filename as locally available 
+# would provide a proper filename reference for cygport to make it work:
+#SRC_URI="${NAME}-${VERSION}-src.tar.bz2"
+# alternatively, this is supposed to work:
+#GIT_URI="https://github.com/mintty/mintty.git"
+#GIT_TAG=${VERSION}
 
 DEPEND="gcc-core make"
 
 RESTRICT=postinst_doc
 
 src_compile() {
+  echo compiling ${NAME} ${VERSION}
   lndirs
   cd ${B}
   cygmake
 }
 
 src_install() {
+  echo build-installing ${NAME} ${VERSION} ${RELEASE}
   cd ${B}
   dobin bin/mintty.exe
   doman docs/mintty.1

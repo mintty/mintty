@@ -59,20 +59,28 @@ Canonical download:
 -------------------------------------------
 
 Build instructions:
-  unpack mintty-${VERSION}-src.tar.bz2
+  unpack source archive mintty-${VERSION}.tar.gz
   go into package directory
   make
 
+This will create:
+  bin/mintty.exe
+
 Packaging instructions:
-  as above
+  unpack source archive mintty-${VERSION}.tar.gz
+  go into package directory
   make pkg
+
+This will create:
+  source archive release/mintty-${VERSION}.tar.gz
+  cygwin source package release/mintty-${VERSION}-${RELEASE}-src.tar.xz
+  cygwin binary package release/mintty-${VERSION}-${RELEASE}.${ARCH}/mintty-${VERSION}-${RELEASE}.tar.xz
+  cygwin debug package release/mintty-${VERSION}-${RELEASE}.${ARCH}/mintty-debuginfo-${VERSION}-${RELEASE}.tar.xz
 
 Cygport build and packaging instructions:
   cygport mintty-${VERSION}-${RELEASE}.cygport all
 
-This will create:
-  /usr/src/mintty-${VERSION}-${RELEASE}-src.tar.bz2
-  /usr/src/mintty-${VERSION}-${RELEASE}.tar.bz2
+This will create archives in the usual cygport dist locations.
 
 -------------------------------------------
 
@@ -91,39 +99,44 @@ Please check the canonical website for a list of changes to mintty.
 
 Port Notes:
 
+  * fix cygwin binary package not to include debug stuff
+  * change source archive format to .gz to be consistent with github 
+    and support cygport magic archive name handling
+  * change cygport SRC_URI to actual download URL
+
 ----- mintty-3.0.0
-    ../Makefile: use REL 1 to appease cygwin packaging
-    mintty.cygport: tweak SRC_URI
-    setup.hint: add cygwin dependency, update description
-    README: update description
-    README: add mintty-2.* package changes
-    add mintty-debuginfo.hint
-    ../Makefile: generate debug package
+  * ../Makefile: use REL 1 to appease cygwin packaging
+  * mintty.cygport: tweak SRC_URI
+  * setup.hint: add cygwin dependency, update description
+  * README: update description
+  * README: add mintty-2.* package changes
+  * add mintty-debuginfo.hint
+  * ../Makefile: generate debug package
 
 ----- mintty-2.9.1
-    setup.hint: update description
+  * setup.hint: update description
 
 ----- mintty-2.8.4
-    mintty.cygport: include WSL icon in package, for jump list (#290)
+  * mintty.cygport: include WSL icon in package, for jump list (#290)
 
 ----- mintty-2.8.2
-    mintty.cygport: bundling selected theme files with the package (#711)
+  * mintty.cygport: bundling selected theme files with the package (#711)
 
 ----- mintty-2.8.0
-    mintty.cygport: mintheme command-line theme switcher (#685)
+  * mintty.cygport: mintheme command-line theme switcher (#685)
 
 ----- mintty-2.7.1
-    mintty.cygport: include localization translations in cygwin package
+  * mintty.cygport: include localization translations in cygwin package
 
 ----- mintty-2.2.1
-    mintty.cygport: tweak target-specific bindir handling
+  * mintty.cygport: tweak target-specific bindir handling
 
 ----- mintty-2.0.3
-    mintty.cygport: hicolor icons for xdg menu entry
-    mintty.cygport: add desktop entry for xdg menu
+  * mintty.cygport: hicolor icons for xdg menu entry
+  * mintty.cygport: add desktop entry for xdg menu
 
 ----- mintty-2.0.1
-    restructure package after migration from Google code
+  * restructure package after migration from Google code
 
 ----- mintty-1.2-beta1-1 -----
 * Initial Cygwin64 package.
@@ -146,8 +159,7 @@ creation and removal now that mintty is becoming the default Cygwin
 terminal with shortcuts created by setup.exe.
 
 ----- mintty-1.0.1-1 -----
-* Dropped chmod on the shortcut, which doesn't actually appear to be 
-necessary.
+* Dropped chmod on the shortcut, which doesn't actually appear to be necessary.
 
 ----- mintty-0.9.9-1 -----
 
