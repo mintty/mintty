@@ -1,16 +1,44 @@
 mintty
 ------------------------------------------
-mintty is a terminal emulator for Cygwin. It is based on code from 
-PuTTY 0.60 by Simon Tatham and team.
+mintty is a terminal emulator for Cygwin.
 
-Features include:
-* Xterm-compatible terminal emulation.
-* Native Windows user interface that tries to keep things simple.
-* Unicode support, not limited to the Basic Multilingual Plane
-* Drag & drop and copy & paste of text, files and folders. 
-* Options are stored in a text file. No registry entries.
+Terminal display features
+* Xterm-compatible terminal emulation, coverage of DEC VT300 series features.
+* 256 colours and True-Colour support, optional CMYK colour specification.
+* Full Unicode and wide character support, comprehensive character encoding support.
+* Bidirectional rendering, flexible bidi controls.
+* Full character attributes support, including italic, underline styles and colours, overline, strikeout, rapid blinking.
+* Alternative fonts: simultaneous display of multiple fonts.
+* SIXEL graphics display and Emoji support.
+
+Terminal input and interaction features
+* Character composition support includes dead keys, Compose key, Windows IME.
+* Keyboard workarounds for certain buggy virtual keyboards.
+* Extensive mouse support, including pixel-grained DEC locator mode.
+* Text selection with mouse or keyboard.
+* Easy copy & paste. Drag & drop of text, files and folders.
+* Ability to open files and URLs with Ctrl+click, explicit hyperlinks.
+* Fast rendering and scrolling.
+* HTML export and clipboard format support.
+
+Window handling features and desktop integration
+* Colour schemes / Theme file support. Background texture and image support.
+* Virtual Tabs / session switcher and launcher.
+* Taskbar tasks (“jump list”) configuration. Task grouping configuration.
+* Flexible fullscreen, fullsize and border options.
+* Screen and scrollback buffer search.
+* Multiple monitor support, changing DPI support.
 * Window transparency.
-* Small executable size.
+
+Configuration features and system support
+* Native Windows user interface with a lean options dialog.
+* User interface language localization support.
+* User-defined key shortcuts and menu functions.
+* Flexible configuration and resource folder options.
+* Switchable terminal logging, switchable character information.
+* Options stored in a text file. No registry entries.
+
+------------------------------------------
 
 Runtime requirements:
   cygwin
@@ -31,31 +59,25 @@ Canonical download:
 -------------------------------------------
 
 Build instructions:
-  unpack mintty-${RELEASE}-src.tar.bz2
-    if you use setup to install this src package, it will be
-    unpacked under /usr/src automatically
-  cd /usr/src
-  cygport mintty-${RELEASE}.cygport all
+  unpack mintty-${VERSION}-src.tar.bz2
+  go into package directory
+  make
+
+Packaging instructions:
+  as above
+  make pkg
+
+Cygport build and packaging instructions:
+  cygport mintty-${VERSION}-${RELEASE}.cygport all
 
 This will create:
-  /usr/src/mintty-${RELEASE}-src.tar.bz2
-  /usr/src/mintty-${RELEASE}.tar.bz2
+  /usr/src/mintty-${VERSION}-${RELEASE}-src.tar.bz2
+  /usr/src/mintty-${VERSION}-${RELEASE}.tar.bz2
 
 -------------------------------------------
 
-Files included in the binary package:
-
-  /usr/bin/mintty.exe
-  /usr/share/doc/Cygwin/mintty.README
-  /usr/share/doc/mintty/COPYING
-  /usr/share/doc/mintty/LICENSE.Oxygen
-  /usr/share/doc/mintty/LICENSE.PuTTY
-  /usr/share/man/man1/mintty.1.gz
-
-------------------
-
 Cygwin port created by: Andy Koppe
-Cygwin port maintained by: Thomas Wolff
+Cygwin package maintained by: Thomas Wolff
 
 Please report bugs or suggest features following the guidelines 
 on the canonical website.
@@ -65,9 +87,41 @@ Please address questions to the Cygwin mailing list at <cygwin@cygwin.com>.
 The port notes below list packaging changes only.
 Please check the canonical website for a list of changes to mintty.
 
--------------------
+-------------------------------------------
 
 Port Notes:
+
+----- mintty-3.0.0
+    ../Makefile: use REL 1 to appease cygwin packaging
+    mintty.cygport: tweak SRC_URI
+    setup.hint: add cygwin dependency, update description
+    README: update description
+    README: add mintty-2.* package changes
+
+----- mintty-2.9.1
+    setup.hint: update description
+
+----- mintty-2.8.4
+    mintty.cygport: include WSL icon in package, for jump list (#290)
+
+----- mintty-2.8.2
+    mintty.cygport: bundling selected theme files with the package (#711)
+
+----- mintty-2.8.0
+    mintty.cygport: mintheme command-line theme switcher (#685)
+
+----- mintty-2.7.1
+    mintty.cygport: include localization translations in cygwin package
+
+----- mintty-2.2.1
+    mintty.cygport: tweak target-specific bindir handling
+
+----- mintty-2.0.3
+    mintty.cygport: hicolor icons for xdg menu entry
+    mintty.cygport: add desktop entry for xdg menu
+
+----- mintty-2.0.1
+    restructure package after migration from Google code
 
 ----- mintty-1.2-beta1-1 -----
 * Initial Cygwin64 package.
@@ -191,3 +245,5 @@ helping with that.
 ----- mintty-0.3.5-1 -----
 * First attempt at Cygwin setup package. Thanks to Yaakov Selkovitz for 
 getting this off the ground by adding MinTTY to Cygports.
+
+-------------------------------------------
