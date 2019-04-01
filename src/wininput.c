@@ -1326,7 +1326,7 @@ static struct function_def cmd_defs[] = {
 
   //{"default-size", {IDM_DEFSIZE}, 0},
   {"default-size", {IDM_DEFSIZE_ZOOM}, mflags_defsize},
-  {"toggle-fullscreen", {IDM_FULLSCREEN}, mflags_fullscreen},
+  {"toggle-fullscreen", {IDM_FULLSCREEN_ZOOM}, mflags_fullscreen},
   {"fullscreen", {.fct = window_full}, mflags_fullscreen},
   {"win-max", {.fct = window_max}, mflags_zoomed},
   {"win-toggle-max", {.fct = window_toggle_max}, mflags_zoomed},
@@ -2041,22 +2041,6 @@ win_key_down(WPARAM wp, LPARAM lp)
       return true;
     }
 
-#ifdef check_alt_ret_space_first
-    // Moved to switch() below so we can override it with layout().
-    // Window menu and fullscreen
-    if (cfg.window_shortcuts && alt && !altgr && !ctrl) {
-      if (key == VK_RETURN) {
-        trace_resize(("--- Alt-Enter (shift %d)", shift));
-        send_syscommand(IDM_FULLSCREEN_ZOOM);
-        return true;
-      }
-      else if (key == VK_SPACE) {
-        send_syscommand(SC_KEYMENU);
-        return true;
-      }
-    }
-#endif
-
     // Alt+Fn shortcuts
     if ((cfg.alt_fn_shortcuts || external_hotkey)
         && alt && !altgr
@@ -2079,7 +2063,7 @@ win_key_down(WPARAM wp, LPARAM lp)
           when VK_F4:  send_syscommand(SC_CLOSE);
           when VK_F8:  send_syscommand(IDM_RESET);
           when VK_F10: send_syscommand(IDM_DEFSIZE_ZOOM);
-          when VK_F11: send_syscommand(IDM_FULLSCREEN_ZOOM);
+          when VK_F11: send_syscommand(IDM_FULLSCREEN);
           when VK_F12: send_syscommand(IDM_FLIPSCREEN);
         }
       }
@@ -2099,7 +2083,7 @@ win_key_down(WPARAM wp, LPARAM lp)
         when 'W': send_syscommand(SC_CLOSE);
         when 'R': send_syscommand(IDM_RESET);
         when 'D': send_syscommand(IDM_DEFSIZE);
-        when 'F': send_syscommand(IDM_FULLSCREEN);
+        when 'F': send_syscommand(cfg.zoom_font_with_window ? IDM_FULLSCREEN_ZOOM : IDM_FULLSCREEN);
         when 'S': send_syscommand(IDM_FLIPSCREEN);
         when 'H': send_syscommand(IDM_SEARCH);
         when 'T': if (!transparency_pending) {
@@ -2582,11 +2566,11 @@ static struct {
   switch (key) {
     when VK_RETURN:
       if (allow_shortcut && !term.shortcut_override && cfg.window_shortcuts
-          && alt && !altgr && !ctrl
+          && alt && !altgr
          )
       {
-        trace_resize(("--- Alt-Enter (shift %d)", shift));
-        send_syscommand(IDM_FULLSCREEN_ZOOM);
+        trace_resize(("--- Alt-Enter (shift %d ctrl %d)", shift, ctrl));
+        send_syscommand((shift && !ctrl) ? IDM_FULLSCREEN_ZOOM : IDM_FULLSCREEN);
         return true;
       }
       else if (extended && !numlock && term.app_keypad)

@@ -2404,6 +2404,7 @@ static struct {
         when IDM_SELALL: term_select_all(); win_update(false);
         when IDM_RESET: winimgs_clear(); term_reset(true); win_update(false);
         when IDM_DEFSIZE:
+          default_size_token = true;
           default_size();
         when IDM_DEFSIZE_ZOOM:
           if (GetKeyState(VK_SHIFT) & 0x80) {
@@ -2419,18 +2420,25 @@ static struct {
           else {
             default_size();
           }
-        when IDM_SCROLLBAR:
-          term.show_scrollbar = !term.show_scrollbar;
-          win_update_scrollbar(false);
-        when IDM_FULLSCREEN or IDM_FULLSCREEN_ZOOM:
-          if ((wp & ~0xF) == IDM_FULLSCREEN_ZOOM)
-            zoom_token = 4;  // override cfg.zoom_font_with_window == 0
-          else
+        when IDM_FULLSCREEN or IDM_FULLSCREEN_ZOOM: {
+          bool ctrl = GetKeyState(VK_CONTROL) & 0x80;
+          bool shift = GetKeyState(VK_SHIFT) & 0x80;
+          if (((wp & ~0xF) == IDM_FULLSCREEN_ZOOM && shift)
+           || (cfg.zoom_font_with_window && shift && !ctrl)
+             )
+            zoom_token = 4;
+          else {
             zoom_token = -4;
+            default_size_token = true;
+          }
           win_maximise(win_is_fullscreen ? 0 : 2);
 
           term_schedule_search_update();
           win_update_search();
+        }
+        when IDM_SCROLLBAR:
+          term.show_scrollbar = !term.show_scrollbar;
+          win_update_scrollbar(false);
         when IDM_SEARCH: win_open_search();
         when IDM_FLIPSCREEN: term_flip_screen();
         when IDM_OPTIONS: win_open_config();
@@ -2708,6 +2716,7 @@ static struct {
         bool scale_font = (cfg.zoom_font_with_window || zoom_token > 2)
                        && (zoom_token > 0) && (GetKeyState(VK_SHIFT) & 0x80)
                        && !default_size_token;
+        //printf("WM_SIZE scale_font %d zoom_token %d\n", scale_font, zoom_token);
         win_adapt_term_size(false, scale_font);
         if (zoom_token > 0)
           zoom_token = zoom_token >> 1;

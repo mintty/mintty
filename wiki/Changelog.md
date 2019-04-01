@@ -1,6 +1,10 @@
 Terminal features
   * Support ECMA-48 SPD control sequence, values 0 and 3 (RTL fun feature).
 
+Window handling
+  * Revised/fixed fullscreen/font zooming behaviour and effect of ZoomFontWithWindow.
+  * Fixed Default Size function in some cases after previous fullscreen zooming.
+
 ### 3.0.0 (28 March 2019) ###
 
 Character processing

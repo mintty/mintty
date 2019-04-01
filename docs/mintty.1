@@ -501,10 +501,10 @@ ZoomShortcuts=no or ZoomMouse=no.
 The usual windows function to drag on the window border resizes the terminal.
 .br
 \fIShift-coupled font-with-window zooming:\fP
-If Shift is also held while resizing, the font will be scaled along with 
-the resizing, unless disabled with ZoomFontWithWindow=false 
-(which would help to avoid interference with certain shifted hotkeys configured 
-to resize the window).
+If Shift is also held while resizing, but Control is not held, the 
+font will be scaled along with the resizing, unless disabled with 
+ZoomFontWithWindow=false (which would help to avoid interference with 
+certain shifted hotkeys configured to resize the window).
 .br
 Note that due to the different height/width factors, coupled font zooming 
 is not a precise operation.
@@ -2519,8 +2519,8 @@ Enabling font zooming with \fBCtrl+mouse-wheel/middle-mouse-click\fP.
 .TP
 \fBDisable Shift-coupled implicit font zooming\fP (ZoomFontWithWindow=yes)
 If this option is set to false, implicit font zooming coupled with 
-window zooming by the Shift key is disabled, 
-except for the keyboard zoom functions Shift+Alt+Enter/F11 and the Shift+menu function.
+window zooming by the Shift key is disabled, except for the 
+keyboard zoom functions Shift+Alt+Enter and the Shift+menu function.
 
 .TP
 \fBHandling of DPI changes\fP (HandleDPI=2)
