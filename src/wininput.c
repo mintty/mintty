@@ -2199,23 +2199,18 @@ win_key_down(WPARAM wp, LPARAM lp)
   inline void esc_if(bool b) { if (b) ch('\e'); }
   void ss3(char c) { ch('\e'); ch('O'); ch(c); }
   void csi(char c) { ch('\e'); ch('['); ch(c); }
-  void mod_csi(char c) { len = sprintf(buf, "\e[1;%c%c", mods + '1', c); }
+  void mod_csi(char c) { len = sprintf(buf, "\e[1;%u%c", mods + 1, c); }
   void mod_ss3(char c) { mods ? mod_csi(c) : ss3(c); }
   void tilde_code(uchar code) {
-    len = sprintf(buf, mods ? "\e[%i;%c~" : "\e[%i~", code, mods + '1');
+    trace_key("tilde");
+    len = sprintf(buf, mods ? "\e[%i;%u~" : "\e[%i~", code, mods + 1);
   }
   void other_code(wchar c) {
-#ifdef support_alt_meta_combinations
-    // not too useful as mintty doesn't support Alt even with F-keys at all
-    if (altgr && is_key_down(VK_LMENU))
-      len = sprintf(buf, "\e[%u;%du", c, mods + 9);
-    else
-#endif
     trace_key("other");
-    len = sprintf(buf, "\e[%u;%cu", c, mods + '1');
+    len = sprintf(buf, "\e[%u;%uu", c, mods + 1);
   }
   void app_pad_code(char c) {
-    void mod_appl_xterm(char c) {len = sprintf(buf, "\eO%c%c", mods + '1', c);}
+    void mod_appl_xterm(char c) {len = sprintf(buf, "\eO%u%c", mods + 1, c);}
     if (mods && term.app_keypad) switch (key) {
       when VK_DIVIDE or VK_MULTIPLY or VK_SUBTRACT or VK_ADD or VK_RETURN:
         mod_appl_xterm(c - '0' + 'p');
