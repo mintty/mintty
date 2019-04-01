@@ -1,3 +1,6 @@
+Terminal features
+  * Support ECMA-48 SPD control sequence, values 0 and 3 (RTL fun feature).
+
 ### 3.0.0 (28 March 2019) ###
 
 Character processing

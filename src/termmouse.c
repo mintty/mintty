@@ -364,6 +364,14 @@ get_selpoint(const pos p)
 {
   pos sp = { .y = p.y + term.disptop, .x = p.x, .r = p.r };
   termline *line = fetch_line(sp.y);
+
+  // Adjust to presentational direction.
+  if (line->lattr & LATTR_PRESRTL) {
+    sp.x = term.cols - 1 - sp.x;
+    sp.r = !sp.r;
+  }
+
+  // Adjust to double-width line display.
   if ((line->lattr & LATTR_MODE) != LATTR_NORM)
     sp.x /= 2;
 
