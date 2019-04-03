@@ -2902,6 +2902,55 @@ static struct {
   return DefWindowProcW(wnd, message, wp, lp);
 }
 
+#ifdef hook_keyboard
+
+static LRESULT CALLBACK
+hookprockbll(int nCode, WPARAM wParam, LPARAM lParam)
+{
+  LPKBDLLHOOKSTRUCT kbdll = (LPKBDLLHOOKSTRUCT)lParam;
+  uint key = kbdll->vkCode;
+#ifdef debug_hook
+  printf("hooked ll %d wm %03lX vk %02X sc %d fl %04X ex %04lX\n", 
+         nCode, (long)wParam, 
+         key, (uint)kbdll->scanCode, (uint)kbdll->flags, (ulong)kbdll->dwExtraInfo);
+#endif
+  bool hook = false;
+#ifdef check_swallow
+  // this should be factored out to wininput.c, if ever to be used
+  bool is_hooked_key(WPARAM wParam, uint key)
+  {
+    return wParam == WM_KEYDOWN &&
+      (key == VK_LWIN || key == VK_RWIN
+       || key == VK_CAPITAL || key == VK_SCROLL || key == VK_NUMLOCK
+      )
+    ;
+  }
+  hook = GetFocus() == wnd && is_hooked_key(wParam, key);
+#endif
+  if (hook) {
+    LPARAM lp = 1;
+    lp |= (LPARAM)kbdll->flags << 24 | (LPARAM)kbdll->scanCode << 16;
+    bool swallow_key = false;
+    // here we have another opportunity to set a flag to swallow the key,
+    // based on dynamic processing (win_key_down, win_key_up)
+    win_proc(wnd, wParam, key, lp);
+    // if we have processed the key (e.g. as modifier or user-defined key)
+    if (swallow_key) {
+      // return non-zero to swallow
+      return 1;
+    }
+  }
+  return CallNextHookEx(0, nCode, wParam, lParam);
+}
+
+void
+hook_windows(int id, HOOKPROC hookproc, bool global)
+{
+  SetWindowsHookExW(id, hookproc, 0, global ? 0 : GetCurrentThreadId());
+}
+
+#endif
+
 
 void
 report_pos(void)
@@ -4738,6 +4787,11 @@ main(int argc, char *argv[])
 
   win_synctabs(4);
   update_tab_titles();
+
+#ifdef hook_keyboard
+  // Install keyboard hook.
+  hook_windows(WH_KEYBOARD_LL, hookprockbll, true);
+#endif
 
   // Message loop.
   for (;;) {
