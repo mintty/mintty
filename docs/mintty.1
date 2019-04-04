@@ -2164,7 +2164,7 @@ Break function.
 .br
 \(en \fBKey_ScrollLock\fP=
 .br
-\(en \fBKey_PrintScreen\fP=
+\(en \fBKey_PrintScreen\fP= \fI(key press event typically not sent)\fP
 
 Examples:
 .br
@@ -2193,18 +2193,22 @@ Supported keys are described as follows:
 .br
 \(en function keys F1...F24
 .br
-\(en modified function keys, preceded with a combination of C, A, S, W, 
-in this order, indicating Ctrl, Alt, Shift, Win as combined with the 
-function key, attached with a "+" separator, e.g. \fBCS+F9\fP
+\(en modified function keys or special keys (see below), preceded with a 
+combination of C, A, S, W, U, Y, in this order, 
+indicating Ctrl, Alt, Shift, Win, Super, Hyper as combined with the key, 
+attached with a "+" separator, e.g. \fBCS+F9\fP;
+or a prefix "*" that applies the definition for all modified variations 
+of the key, e.g. \fB*Menu\fP
 .br
 \(en special keys (some of which do not occur on typical keyboards) 
-and keypad keys; 
+and keypad keys, as well as modified special and keypad keys; 
 Space, Enter, Esc and Tab are only considered with at least one modifier
   Esc, Tab
   Enter, KP_Enter
   Space, Back
   Pause, Break
-  ScrollLock, PrintScreen, NumLock
+  ScrollLock, NumLock, CapsLock
+  (PrintScreen)
   LWin, RWin
   Menu
   Insert, KP_Insert
@@ -2217,7 +2221,7 @@ Space, Enter, Esc and Tab are only considered with at least one modifier
   Right, KP_Right
   Up, KP_Up
   Down, KP_Down
-  KP_Begin (the middle "5" key)
+  KP_Begin \fI(the middle "5" key)\fP
   KP_Divide, KP_Multiply, KP_Subtract, KP_Add
   Select, Print, Exec, Help, Sleep, Attn
   CrSel, ExSel, ErEof
@@ -2333,6 +2337,10 @@ Supported actions are described as follows:
 \(en \fBtoggle-bidi\fP: toggles (global) bidi disabling
 .br
 \(en \fBvoid\fP: do nothing
+.br
+\(en \fBsuper\fP: use this key as Super modifier key
+.br
+\(en \fBhyper\fP: use this key as Hyper modifier key
 
 \fINote (*):\fP The exact behaviour of some actions depends on the 
 state of the Shift key.
@@ -2352,6 +2360,9 @@ use the "\fBvoid\fP" dummy action.
 
 \fINote:\fP An invalid action (like "foo") will make mintty beep on the key.
 
+\fINote:\fP If an assignment to any of the Lock keys 
+is defined, mintty will compensate for its implicit state change effect.
+
 Examples:
 .br
 \(en \fBKeyFunctions=d:\`echo -n \`date\`\`;A+F4:;CA+F12:break;-:"minus"\fP
@@ -2367,6 +2378,9 @@ for Windows addicts
 \(en \fBKeyFunctions=A+Enter:void;A+KP_Enter:\fP will disable zooming 
 on Alt+Enter and also disable it on Alt+keypad-Enter but enter ESC Return 
 in the latter case
+.br
+\(en \fBKeyFunctions=*CapsLock:super\fP assigns the Super modifier to 
+the CapsLock key
 
 .TP
 \fBUse system colours\fP (UseSystemColours=no)

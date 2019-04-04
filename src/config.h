@@ -4,7 +4,8 @@
 
 // Enums for various options.
 
-typedef enum { MDK_SHIFT = 1, MDK_ALT = 2, MDK_CTRL = 4, MDK_WIN = 8 } mod_keys;
+typedef enum { MDK_SHIFT = 1, MDK_ALT = 2, MDK_CTRL = 4, 
+               MDK_WIN = 8, MDK_SUPER = 16, MDK_HYPER = 32 } mod_keys;
 enum { HOLD_NEVER, HOLD_START, HOLD_ERROR, HOLD_ALWAYS };
 enum { CUR_BLOCK, CUR_UNDERSCORE, CUR_LINE };
 enum { FS_DEFAULT, FS_PARTIAL, FS_NONE, FS_FULL };

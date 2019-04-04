@@ -34,9 +34,17 @@ See the manual page for options and details.
 
 ## Alt and Meta ##
 
-As is customary with PC keyboards, the [Alt](http://en.wikipedia.org/wiki/Alt_key) key acts as the so-called [Meta](http://en.wikipedia.org/wiki/Meta_key) modifier. When it is held down while pressing a key or key combination, the keycode is prefixed with an escape character, unless noted otherwise in the keycode tables in the following sections.
+As is customary with PC keyboards, the [Alt](http://en.wikipedia.org/wiki/Alt_key) key acts as the so-called [Meta](http://en.wikipedia.org/wiki/Meta_key) modifier key. 
+When it is held down while pressing a key or key combination, the keycode is prefixed with an escape character, unless noted otherwise in the keycode tables in the following sections.
 
 Encoding the meta modifier by setting the top bit of a character instead of prefixing it with the escape character is not supported, because that does not work for character codes beyond 7-bit [ASCII](http://en.wikipedia.org/wiki/ASCII).
+
+Note that there is some confusion between the Alt and Meta modifier functions 
+as historically Meta was in use first and later implemented by the Alt key 
+of keyboards; however, both are also available separately in X11 and xterm.
+Mintty provides separate Alt and Meta modifier functions, as well as 
+additional ones (Super and Hyper from X11).
+See [section Modifier key encodings](Keycodes#modifier-key-encodings) below.
 
 
 ## AltGr ##
@@ -94,13 +102,29 @@ See the [previous section](Keycodes#ctrl) for how Unicode codepoints such as _U+
 
 ## Modifier key encodings ##
 
-Where the modifier keys Shift, Alt and Ctrl are not handled as described in the sections above, they are encoded as a one-digit number that becomes part of the keycode. To obtain that number, add the numbers for each pressed modifier to 1:
+Mintty supports up to 6 key modifiers.
+Where the modifier keys Shift, Alt and Ctrl are not handled as 
+described in the sections above, they are encoded as a number that 
+becomes part of the keycode (escape sequence).
+The additional Meta modifier is implemented by the Win key and encoded 
+as documented for xterm. Further modifiers Super and Hyper can be 
+configured as user-defined key functions.
+To obtain the actual number encoding a modifier combination, 
+add the numbers for each pressed modifier to 1:
 
-  * **Shift**: 1
-  * **Alt**: 2
-  * **Ctrl**: 4
+| **Modifier**                   | _m_ |
+|:-------------------------------|:----|
+| **Shift**                      |  1  |
+| **Alt**                        |  2  |
+| **Ctrl**                       |  4  |
+| **Meta** _(**Win** key)_       |  8  |
+| **Super** _(configurable key)_ | 16  |
+| **Hyper** _(configurable key)_ | 32  |
 
 For example, Shift+Ctrl would be encoded as the number 6 (1 plus 1 for Shift plus 4 for Ctrl). Modifiers are not double-counted if, for example, both Shift keys are pressed. In the following sections, modifier codes are shown as _m_.
+
+Super and Hyper modifiers can be configured with option _KeyFunctions_, e.g.:
+  * `KeyFunctions=*CapsLock:super`
 
 
 ## Number and symbol keys ##

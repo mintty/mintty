@@ -3,10 +3,18 @@ Terminal features
 
 Keyboard handling
   * Fixed encoding of Win key as Meta modifier.
+  * Support optional Super and Hyper modifiers.
+  * Lock keys do not change the state if they have user-defined assignments.
 
 Window handling
   * Revised/fixed fullscreen/font zooming behaviour and effect of ZoomFontWithWindow.
   * Fixed Default Size function in some cases after previous fullscreen zooming.
+
+Configuration
+  * New user-definable key name CapsLock.
+  * New user-definable key name prefix ‘*’ to define for all modifiers.
+  * New user-definable modifier key assignments super and hyper.
+  * New prefixes U/Y (for super/hyper) for user-defined keys.
 
 ### 3.0.0 (28 March 2019) ###
 
