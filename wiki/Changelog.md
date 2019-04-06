@@ -15,6 +15,7 @@ Configuration
   * New user-definable key name prefix ‘*’ to define for all modifiers.
   * New user-definable modifier key assignments super and hyper.
   * New prefixes U/Y (for super/hyper) for user-defined keys.
+  * New option BellInterval to squash BEL sequences.
 
 ### 3.0.0 (28 March 2019) ###
 

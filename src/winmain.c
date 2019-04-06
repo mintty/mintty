@@ -1546,6 +1546,8 @@ flash_border()
 void
 win_bell(config * conf)
 {
+  do_update();
+
   static unsigned long last_bell = 0;
          unsigned long now = mtime();
 
