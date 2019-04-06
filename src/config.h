@@ -134,6 +134,7 @@ typedef struct {
   int bell_flash_style;
   bool bell_taskbar; // xterm: bellIsUrgent
   bool bell_popup;   // xterm: popOnBell
+  int bell_interval;
   wstring printer;
   bool confirm_exit;
   bool allow_set_selection;
