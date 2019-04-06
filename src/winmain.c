@@ -1550,7 +1550,7 @@ win_bell(config * conf)
          unsigned long now = mtime();
 
   if ( (conf->bell_sound || conf->bell_type) &&
-      ((unsigned long)conf->bell_interval <= now-last_bell) ) {
+      ((unsigned long)conf->bell_interval <= now - last_bell) ) {
     wchar * bell_name = (wchar *)conf->bell_file;
     bool free_bell_name = false;
     last_bell = now;
