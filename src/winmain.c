@@ -1546,9 +1546,14 @@ flash_border()
 void
 win_bell(config * conf)
 {
-  if (conf->bell_sound || conf->bell_type) {
+  static unsigned long last_bell = 0;
+         unsigned long now = mtime();
+
+  if ( (conf->bell_sound || conf->bell_type) &&
+      ((unsigned long)conf->bell_interval <= now - last_bell) ) {
     wchar * bell_name = (wchar *)conf->bell_file;
     bool free_bell_name = false;
+    last_bell = now;
     if (*bell_name) {
       if (wcschr(bell_name, L'/') || wcschr(bell_name, L'\\')) {
         if (bell_name[1] != ':') {

@@ -136,6 +136,7 @@ const config default_cfg = {
   .bell_flash_style = FLASH_FULL,
   .bell_taskbar = true, // xterm: bellIsUrgent
   .bell_popup = false,  // xterm: popOnBell
+  .bell_interval = 100,
   .printer = W(""),
   .confirm_exit = true,
   .allow_set_selection = false,
@@ -371,6 +372,7 @@ options[] = {
   {"BellFlashStyle", OPT_INT, offcfg(bell_flash_style)},
   {"BellTaskbar", OPT_BOOL, offcfg(bell_taskbar)},
   {"BellPopup", OPT_BOOL, offcfg(bell_popup)},
+  {"BellInterval", OPT_INT, offcfg(bell_interval)},
   {"Printer", OPT_WSTRING, offcfg(printer)},
   {"ConfirmExit", OPT_BOOL, offcfg(confirm_exit)},
   {"AllowSetSelection", OPT_BOOL, offcfg(allow_set_selection)},
