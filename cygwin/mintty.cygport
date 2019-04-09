@@ -42,7 +42,7 @@ src_install() {
   cd ${B}
   dobin bin/mintty.exe
   doman docs/mintty.1
-  dodoc COPYING LICENSE.Oxygen LICENSE.PuTTY
+  dodoc LICENSE*
   dodoc cygwin/README cygwin/setup.hint
   dobin tools/mintheme
 
