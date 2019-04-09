@@ -2146,7 +2146,7 @@ of character tags:
 (Corresponds to the xterm resource \fBdisallowedPasteControls\fP.)
 
 .TP
-\fBSpecial key remapping\fP
+\fBSpecial key remapping\fP [DEPRECATED, see \fBKeyFunctions\fP]
 These options can attach a specific string to some special keys.
 If the string is a number, a corresponding Escape sequence will be generated, 
 applying Shift/Ctrl/Alt modifiers, following the pattern of function keys.
@@ -2257,6 +2257,8 @@ Supported actions are described as follows:
 .br
 \(en \fB\`command\` (**)\fP: enters the output of the command
 .br
+\(en \fInumber (***)\fP: enters the escape sequence CSI\fInumber\fP[;\fImod\fP]~
+.br
 \(en \fBfullscreen (*)\fP: switches to fullscreen mode
 .br
 \(en \fBtoggle-fullscreen (*)\fP: toggles fullscreen mode
@@ -2354,6 +2356,9 @@ additional functionality is provided as for context menu user commands
 the PATH environment for the external command can be set up 
 with option \fBUserCommandsPath\fP.
 
+\fINote (***):\fP An unquoted \fInumber\fP causes mintty to form a 
+function key sequence, applying all modifiers.
+
 \fINote:\fP To just disable the built-in shortcut (and not override it 
 with a user-defined one), but further process the key as normal input, 
 leave the action empty, but include the colon.
@@ -2384,6 +2389,9 @@ in the latter case
 .br
 \(en \fBKeyFunctions=*CapsLock:super\fP assigns the Super modifier to 
 the CapsLock key
+.br
+\(en \fBKeyFunctions=*Menu:29\fP turns the Menu key into an F16 function key 
+(xterm default) and applies all modifiers to it
 
 .TP
 \fBUse system colours\fP (UseSystemColours=no)
