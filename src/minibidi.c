@@ -507,9 +507,11 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
   int i, j;
 
   uchar bidi_class_of(int i) {
+    ucschar c = line[i].wc;
+
 #ifdef try_to_handle_CJK_here
 #warning does not always work in RTL mode, now filtered before calling do_bidi
-    if (i && line[i].wc == UCSWIDE) {
+    if (i && c == UCSWIDE) {
       // try to fix double-width within right-to-left
       if (currentEmbedding & 1)
         i--;
@@ -520,9 +522,23 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
       // not displayed in RTL: U+FF1C (class default -> ON)
     }
 #endif
+
+#ifdef check_emoji
+    if (c == 0x200D
+     || (c >= 0x2600 && c < 0x2800)
+     || (c >= 0x1F300 && c < 0x20000)
+       )
+     return EN;
+#endif
+#ifdef check_emojilen
+    if (line[i].emojilen)
+      return EN;
+#endif
+
     if (explicitRTL)
       return R;
-    return bidi_class(line[i].wc);
+
+    return bidi_class(c);
   }
 
  /* Rule (P1)  NOT IMPLEMENTED
@@ -1276,6 +1292,16 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
   // (3)
   for (i = 0; i < count; i++) {
     tempType = bidi_class_of(i);
+#ifdef check_emojiseq
+    if (line[i].emojilen) {
+      // raise emoji sequence to LTR level, as a rough approximation of
+      // HL3. Emulate explicit directional formatting characters.
+      for (j = i; j < i + line[i].emojilen && j < count && line[j].emojilen; j++) {
+        levels[j] = leastGreaterEven(levels[i]);
+      }
+    }
+    else
+#endif
     if (tempType == WS) {
       j = i;
       while (j < count && (bidi_class_of(j) == WS || skip[j])) {

@@ -917,16 +917,19 @@ term_bidi_cache_store(int line,
   assert(ib == bidisize);
 }
 
+#define dont_debug_bidi
+
 #ifdef debug_bidi
-void trace_bidi(char * tag, bidi_char * wc)
+void trace_bidi(char * tag, bidi_char * wc, int ib)
 {
-  printf("%s", tag);
-  for (int i = 0; i < term.cols; i++)
-    if (wc[i].wc != ' ') printf(" %04X", wc[i].wc);
+  printf("%s[%d]", tag, ib);
+  for (int i = 0; i < ib; i++)
+    //if (wc[i].wc != ' ')
+      printf(" [2m%2d:[m%02X", wc[i].index, wc[i].wc);
   printf("\n");
 }
 #else
-#define trace_bidi(tag, wc)	
+#define trace_bidi(tag, wc, ib)	
 #endif
 
 wchar *
@@ -1121,6 +1124,9 @@ term_bidi_line(termline *line, int scr_y)
     //int wcsi = 0;
 
     ib = 0;
+#ifdef apply_HL3
+    uint emojirest = 0;
+#endif
     for (it = 0; it < term.cols; it++) {
       ucschar c = line->chars[it].chr;
       //wcs[wcsi++] = c;
@@ -1156,6 +1162,7 @@ term_bidi_line(termline *line, int scr_y)
             term.wcFrom[ib].origwc = term.wcFrom[ib].wc = bp->chr;
             term.wcFrom[ib].index = -1;
             term.wcFrom[ib].wide = false;
+            term.wcFrom[ib].emojilen = 0;
             ib++;
             //wcs[wcsi++] = bp->chr;
           }
@@ -1164,15 +1171,53 @@ term_bidi_line(termline *line, int scr_y)
 
       // collapse dummy wide second half placeholders
       if (c != UCSWIDE) {
+#ifdef apply_HL3
+        if (line->chars[it].attr.attr & TATTR_EMOJI) {
+          uint emojilen = line->chars[it].attr.attr & ATTR_FGMASK;
+          if (emojilen > 1) {
+            if (!emojirest) {
+              term.wcFromTo_size++;
+              term.wcFrom = renewn(term.wcFrom, term.wcFromTo_size);
+              term.wcTo = renewn(term.wcTo, term.wcFromTo_size);
+              term.wcFrom[ib].origwc = term.wcFrom[ib].wc = 0x202D; // LRO
+              term.wcFrom[ib].index = -1;
+              term.wcFrom[ib].wide = false;
+              ib++;
+            }
+            emojirest = emojilen;
+          }
+        }
+#endif
+
         term.wcFrom[ib].origwc = term.wcFrom[ib].wc = c;
         term.wcFrom[ib].index = it;
         term.wcFrom[ib].wide = false;
+        term.wcFrom[ib].emojilen = 
+          line->chars[it].attr.attr & TATTR_EMOJI
+          ? (line->chars[it].attr.attr & ATTR_FGMASK ?: 1)
+          : 0;
         ib++;
       }
       else if (ib) {
         // skip wide character virtual right half, flag it
         term.wcFrom[ib - 1].wide = true;
       }
+
+#ifdef apply_HL3
+#warning this does not work properly, may even crash
+      if (emojirest) {
+        emojirest--;
+        if (!emojirest) {
+          term.wcFromTo_size++;
+          term.wcFrom = renewn(term.wcFrom, term.wcFromTo_size);
+          term.wcTo = renewn(term.wcTo, term.wcFromTo_size);
+          term.wcFrom[ib].origwc = term.wcFrom[ib].wc = 0x202C; // PDF
+          term.wcFrom[ib].index = -1;
+          term.wcFrom[ib].wide = false;
+          ib++;
+        }
+      }
+#endif
 
       termchar * bp = &line->chars[it];
       // Unfold directional formatting characters which are handled 
@@ -1192,17 +1237,18 @@ term_bidi_line(termline *line, int scr_y)
           term.wcFrom[ib].origwc = term.wcFrom[ib].wc = bp->chr;
           term.wcFrom[ib].index = -1;
           term.wcFrom[ib].wide = false;
+          term.wcFrom[ib].emojilen = 0;
           ib++;
           //wcs[wcsi++] = bp->chr;
         }
       }
     }
 
-    trace_bidi("=", term.wcFrom);
+    trace_bidi("=", term.wcFrom, ib);
     int rtl = do_bidi(autodir, level, explicitRTL,
                       line->lattr & LATTR_BOXMIRROR,
                       term.wcFrom, ib);
-    trace_bidi(":", term.wcFrom);
+    trace_bidi(":", term.wcFrom, ib);
 
 #ifdef support_multiline_bidi
     if (autodir && rtl >= 0) {
@@ -1264,7 +1310,7 @@ term_bidi_line(termline *line, int scr_y)
 #endif
 
     do_shape(term.wcFrom, term.wcTo, ib);
-    trace_bidi("~", term.wcTo);
+    trace_bidi("~", term.wcTo, ib);
 
     if (term.ltemp_size < line->size) {
       term.ltemp_size = line->size;
@@ -1281,6 +1327,7 @@ term_bidi_line(termline *line, int scr_y)
         ib++;
 
       // copy character and combining reference from source as reordered
+      //printf("reorder %2d <- [%2d]%2d: %5X %d\n", it, ib, term.wcTo[ib].index, term.wcTo[ib].wc, term.wcTo[ib].wide);
       term.ltemp[it] = line->chars[term.wcTo[ib].index];
       if (term.ltemp[it].cc_next)
         term.ltemp[it].cc_next -= it - term.wcTo[ib].index;
