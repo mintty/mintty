@@ -485,6 +485,7 @@ struct term {
   int dcs_cmd;
 
   uchar *tabs;
+  bool newtab;
 
   enum {
     NORMAL, ESCAPE, CSI_ARGS,

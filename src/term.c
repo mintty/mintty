@@ -280,6 +280,7 @@ term_reset(bool full)
       term.tabs[i] = (i % 8 == 0);
   }
   if (full) {
+    term.newtab = 1;  // set default tabs on resize
     term.rvideo = 0;  // not reset by xterm
     term.bell_taskbar = cfg.bell_taskbar;  // not reset by xterm
     term.bell_popup = cfg.bell_popup;  // not reset by xterm
@@ -949,7 +950,7 @@ term_resize(int newrows, int newcols)
   // Reset tab stops
   term.tabs = renewn(term.tabs, newcols);
   for (int i = (term.cols > 0 ? term.cols : 0); i < newcols; i++)
-    term.tabs[i] = (i % 8 == 0);
+    term.tabs[i] = term.newtab && (i % 8 == 0);
 
   // Check that the cursor positions are still valid.
   assert(0 <= curs->y && curs->y < newrows);

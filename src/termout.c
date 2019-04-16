@@ -1699,6 +1699,7 @@ do_csi(uchar c)
       else if (arg0 == 3) {
         for (int i = 0; i < term.cols; i++)
           term.tabs[i] = false;
+        term.newtab = 0;  // don't set new default tabs on resize
       }
     when 'r': {      /* DECSTBM: set scroll margins */
       int top = arg0_def1 - 1;
