@@ -629,6 +629,11 @@ do_esc(uchar c)
       }
     when 'H':  /* HTS: set a tab */
       term.tabs[curs->x] = true;
+    when 'l':  /* HP Memory Lock */
+      if (curs->y < term.marg_bot)
+        term.marg_top = curs->y;
+    when 'm':  /* HP Memory Unlock */
+      term.marg_top = 0;
     when CPAIR('#', '8'):    /* DECALN: fills screen with Es :-) */
       for (int i = 0; i < term.rows; i++) {
         termline *line = term.lines[i];
@@ -1701,7 +1706,7 @@ do_csi(uchar c)
           term.tabs[i] = false;
         term.newtab = 0;  // don't set new default tabs on resize
       }
-    when 'r': {      /* DECSTBM: set scroll margins */
+    when 'r': {      /* DECSTBM: set scrolling region */
       int top = arg0_def1 - 1;
       int bot = (arg1 ? min(arg1, term.rows) : term.rows) - 1;
       if (bot > top) {

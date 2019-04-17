@@ -1,7 +1,8 @@
 Terminal features
   * Support ECMA-48 SPD control sequence, values 0 and 3 (RTL fun feature).
   * Fixed DECSET 80 (sixel scrolling mode) which was reverted.
-  * Make Clear All Tabs sequence (TBC 3) compatible with xterm.
+  * Clear All Tabs sequence (TBC 3) extends after resizing, compatible with xterm.
+  * HP Memory Lock/Unlock (xterm).
 
 Keyboard handling
   * Fixed encoding of Win key as Meta modifier.
