@@ -1,4 +1,5 @@
 Terminal features
+  * Blinking cursor mode (DECSET 12) overlays blinking cursor style (DECSCUSR) so that DECRST 12 does not spoil blinking style (#818, mintty/wsltty#133).
   * Support ECMA-48 SPD control sequence, values 0 and 3 (RTL fun feature).
   * Fixed DECSET 80 (sixel scrolling mode) which was reverted.
   * Clear All Tabs sequence (TBC 3) extends after resizing, compatible with xterm.

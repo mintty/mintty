@@ -1013,7 +1013,7 @@ set_modes(bool state)
           term.mouse_mode = state ? MM_X10 : 0;
           win_update_mouse();
         when 12: /* AT&T 610 blinking cursor */
-          term.cursor_blinks = state;
+          term.cursor_blinkmode = state;
           term.cursor_invalid = true;
           term_schedule_cblink();
         when 25: /* DECTCEM: enable/disable cursor */
@@ -1164,12 +1164,12 @@ set_modes(bool state)
           term.newline_mode = state;
 #ifdef support_Wyse_cursor_modes
         when 33: /* WYSTCURM: steady Wyse cursor */
-          term.cursor_blinks = !state;
+          term.cursor_blinkmode = !state;
           term.cursor_invalid = true;
           term_schedule_cblink();
         when 34: /* WYULCURM: Wyse underline cursor */
           term.cursor_type = state;
-          term.cursor_blinks = false;
+          term.cursor_blinkmode = false;
           term.cursor_invalid = true;
           term_schedule_cblink();
 #endif
@@ -1217,7 +1217,7 @@ get_mode(bool privatemode, int arg)
       when 9:  /* X10_MOUSE */
         return 2 - (term.mouse_mode == MM_X10);
       when 12: /* AT&T 610 blinking cursor */
-        return 2 - term.cursor_blinks;
+        return 2 - term.cursor_blinkmode;
       when 25: /* DECTCEM: enable/disable cursor */
         return 2 - term.cursor_on;
       when 30: /* Show/hide scrollbar */
@@ -1314,7 +1314,7 @@ get_mode(bool privatemode, int arg)
         return 2 - term.newline_mode;
 #ifdef support_Wyse_cursor_modes
       when 33: /* WYSTCURM: steady Wyse cursor */
-        return 2 - (!term.cursor_blinks);
+        return 2 - (!term.cursor_blinkmode);
       when 34: /* WYULCURM: Wyse underline cursor */
         if (term.cursor_type <= 1)
           return 2 - (term.cursor_type == 1);

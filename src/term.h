@@ -467,6 +467,7 @@ struct term {
                              // off(default): sixel scrolling moves cursor to left of graphics
   bool private_color_registers;
   int  cursor_type;
+  bool cursor_blinkmode;
   int  cursor_blinks;
   int  cursor_blink_interval;
   bool cursor_invalid;
@@ -594,7 +595,6 @@ extern void term_write(const char *, uint len);
 extern void term_flush(void);
 extern void term_set_focus(bool has_focus, bool may_report);
 extern int  term_cursor_type(void);
-extern bool term_cursor_blinks(void);
 extern void term_hide_cursor(void);
 
 extern void term_set_search(wchar * needle);

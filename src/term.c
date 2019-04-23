@@ -167,6 +167,28 @@ term_schedule_tblink2(void)
 /*
  * Likewise with cursor blinks.
  */
+int
+term_cursor_type(void)
+{
+  return term.cursor_type == -1 ? cfg.cursor_type : term.cursor_type;
+}
+
+static bool
+term_cursor_blinks(void)
+{
+  return term.cursor_blinkmode
+      || (term.cursor_blinks == -1 ? cfg.cursor_blinks : term.cursor_blinks);
+}
+
+void
+term_hide_cursor(void)
+{
+  if (term.cursor_on) {
+    term.cursor_on = false;
+    win_update(false);
+  }
+}
+
 static void
 cblink_cb(void)
 {
@@ -2605,23 +2627,3 @@ term_update_cs(void)
   );
 }
 
-int
-term_cursor_type(void)
-{
-  return term.cursor_type == -1 ? cfg.cursor_type : term.cursor_type;
-}
-
-bool
-term_cursor_blinks(void)
-{
-  return term.cursor_blinks == -1 ? cfg.cursor_blinks : term.cursor_blinks;
-}
-
-void
-term_hide_cursor(void)
-{
-  if (term.cursor_on) {
-    term.cursor_on = false;
-    win_update(false);
-  }
-}
