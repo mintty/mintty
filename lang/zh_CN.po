@@ -508,7 +508,7 @@ msgstr "以富文本复制(&R)"
 #. __ Options - Mouse:
 #: config.c:2940 config.c:2947 config.c:2980
 msgid "Copy as &HTML"
-msgstr "复制HTML"
+msgstr "以 HTML 复制"
 
 #. __ Options - Mouse:
 #: config.c:2992
@@ -975,27 +975,27 @@ msgstr "打开(&O)"
 #. __ Context menu:
 #: wininput.c:629
 msgid "Copy as text"
-msgstr "复制text"
+msgstr "以纯文本复制"
 
 #. __ Context menu:
 #: wininput.c:631
 msgid "Copy as RTF"
-msgstr "复制RTF"
+msgstr "以 RTF 复制"
 
 #. __ Context menu:
 #: wininput.c:633
 msgid "Copy as HTML text"
-msgstr "复制HTML text"
+msgstr "以 HTML 文本复制"
 
 #. __ Context menu:
 #: wininput.c:635
 msgid "Copy as HTML"
-msgstr "复制HTML"
+msgstr "以 HTML 复制"
 
 #. __ Context menu:
 #: wininput.c:637
 msgid "Copy as HTML full"
-msgstr "复制HTML全部"
+msgstr "以 HTML 全部复制"
 
 #. __ Context menu:
 #: wininput.c:644
