@@ -797,6 +797,12 @@ matchconf(char * conf, char * item)
 static void
 paste_hdrop(HDROP drop)
 {
+#if CYGWIN_VERSION_API_MINOR >= 222
+  // Update Cygwin locale to terminal locale.
+  cygwin_internal(CW_INT_SETLOCALE);
+#endif
+  uint n = DragQueryFileW(drop, -1, 0, 0);
+
   uint buf_len = 32, buf_pos = 0;
   char *buf = newn(char, buf_len);
   void buf_add(char c) {
@@ -805,13 +811,7 @@ paste_hdrop(HDROP drop)
     buf[buf_pos++] = c;
   }
 
-#if CYGWIN_VERSION_API_MINOR >= 222
-  // Update Cygwin locale to terminal locale.
-  cygwin_internal(CW_INT_SETLOCALE);
-#endif
-  uint n = DragQueryFileW(drop, -1, 0, 0);
   for (uint i = 0; i < n; i++) {
-
     uint wfn_len = DragQueryFileW(drop, i, 0, 0);
     wchar wfn[wfn_len + 1];
     DragQueryFileW(drop, i, wfn, wfn_len + 1);
@@ -999,12 +999,22 @@ win_paste(void)
     term.selected = false;
 
   HGLOBAL data;
-  if ((data = GetClipboardData(CF_HDROP)))
+  if ((data = GetClipboardData(CF_HDROP))) {
+    //printf("pasting CF_HDROP\n");
     paste_hdrop(data);
-  else if ((data = GetClipboardData(CF_UNICODETEXT)))
+  }
+  else if ((data = GetClipboardData(CF_UNICODETEXT))) {
+    //printf("pasting CF_UNICODETEXT\n");
+    //TODO:
+    //if (GetKeyState(VK_CONTROL) & 0x80)
+    //  apply path conversion..., factored out from the loop in paste_hdrop
     paste_unicode_text(data);
-  else if ((data = GetClipboardData(CF_TEXT)))
+  }
+  else if ((data = GetClipboardData(CF_TEXT))) {
+    //printf("pasting CF_TEXT\n");
     paste_text(data);
+  }
+
   CloseClipboard();
 }
 
