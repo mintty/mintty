@@ -2513,6 +2513,13 @@ select the order of these fields in the search bar; missing fields will
 be appended in a default order.
 
 .TP
+\fBScrollback search context\fP (SearchContext=0)
+This option will place the search result at the given distance from 
+the terminal top/bottom border when scrolling to the result location.
+If the value is negative, it will also keep the result at the (positive) 
+distance if the result is already visible.
+
+.TP
 \fBWrite if exited\fP (ExitWrite=no)
 Together with a hold option that keeps the terminal open after its child 
 process terminated, this option always writes an exit indication to the 

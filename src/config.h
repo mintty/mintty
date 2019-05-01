@@ -120,6 +120,7 @@ typedef struct {
   bool pgupdn_scroll;
   wstring lang;
   string search_bar;
+  int search_context;
   // Terminal
   string term;
   wstring answerback;

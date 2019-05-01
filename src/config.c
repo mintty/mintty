@@ -122,6 +122,7 @@ const config default_cfg = {
   .pgupdn_scroll = false,
   .lang = W(""),
   .search_bar = "",
+  .search_context = 0,
   // Terminal
   .term = "xterm",
   .answerback = W(""),
@@ -357,6 +358,7 @@ options[] = {
   {"PgUpDnScroll", OPT_BOOL, offcfg(pgupdn_scroll)},
   {"Language", OPT_WSTRING, offcfg(lang)},
   {"SearchBar", OPT_STRING, offcfg(search_bar)},
+  {"SearchContext", OPT_INT, offcfg(search_context)},
 
   // Terminal
   {"Term", OPT_STRING, offcfg(term)},

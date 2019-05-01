@@ -13,6 +13,7 @@ Keyboard handling
 Window handling
   * Revised/fixed fullscreen/font zooming behaviour and effect of ZoomFontWithWindow.
   * Fixed Default Size function in some cases after previous fullscreen zooming.
+  * Search (Alt+F3) can keep search context distance from top/bottom (#797).
 
 Configuration
   * New user-definable key name CapsLock.
@@ -21,6 +22,7 @@ Configuration
   * New prefixes U/Y (for super/hyper) for user-defined keys.
   * New user-definable numeric action, entering a function key sequence.
   * New option BellInterval to squash BEL sequences.
+  * New option SearchContext (#797).
 
 ### 3.0.0 (28 March 2019) ###
 
