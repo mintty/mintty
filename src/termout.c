@@ -1993,15 +1993,13 @@ do_dcs(void)
         return;
       }
 
-#ifdef fixsix
-      status = sixel_parser_finalize(st);
-#else
+#ifndef fixsix
       pixels = (unsigned char *)malloc(st->image.width * st->image.height * 4);
       if (!pixels)
         return;
-
-      status = sixel_parser_finalize(st, pixels);
 #endif
+
+      status = sixel_parser_finalize(st);
       if (status < 0) {
         sixel_parser_deinit(st);
         free(term.imgs.parser_state);
@@ -2082,12 +2080,16 @@ do_dcs(void)
                 img->left + img->width <= cur->left + cur->width &&
                 img->top + img->height <= cur->top + cur->height)
             {
-              for (y = 0; y < img->pixelheight; ++y)
+              // copy new img into old structure; resize memory first
+              cur->pixels = realloc(cur->pixels, img->width * img->height * sizeof(unsigned char));
+              // copy img data in stripes, for unknown reason
+              for (y = 0; y < img->pixelheight; ++y) {
                 memcpy(cur->pixels +
                          ((img->top - cur->top) * st->grid_height + y) * cur->pixelwidth * 4 +
                          (img->left - cur->left) * st->grid_width * 4,
                        img->pixels + y * img->pixelwidth * 4,
                        img->pixelwidth * 4);
+              }
               winimg_destroy(img);
               return;
             }
