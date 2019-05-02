@@ -263,6 +263,22 @@ caused by, or fixable by, mintty); it is a generic problem of cygwin/msys
 and occurs likewise in all other pty-based terminals (e.g. xterm).
 
 
+## Terminal type detection – check if running inside mintty ##
+
+Some applications, often text editors, want to know which terminal they 
+are running in, in order to make use of terminal-specific features that 
+are not indicated by the terminfo/termcap mechanism.
+
+The most reliable way to determine the terminal type is to use the 
+Secondary Device Attributes report queried from the terminal.
+The script `terminal` in the mintty [utils repository](https://github.com/mintty/utils) 
+provides an implementation.
+
+Using environment variables for this purpose is not reliable and therefore 
+not supported. See [issue #776](https://github.com/mintty/mintty/issues/776) 
+for a discussion.
+
+
 ## Terminal line settings ##
 
 Terminal line settings can be viewed or changed with the **[stty](http://www.opengroup.org/onlinepubs/9699919799/utilities/stty.html)** utility, which is installed as part of Cygwin’s core utilities package. Among other things, it can set the control characters used for generating signals or editing an input line.
@@ -388,7 +404,7 @@ Some applications may reset cursor style, especially cursor blinking,
 after terminating, caused by the 
 [terminfo database](http://invisible-island.net/ncurses/man/terminfo.5.html) 
 including the corresponding reset sequence in the “normal cursor” setting.
-This is avoided with mintty option `SuppressDEC=12`.
+This is avoided with mintty option `SuppressDEC=12`, not needed from mintty 3.0.1.
 
 ### Avoiding escape timeout issues in vim ###
 
