@@ -50,6 +50,8 @@ src_install() {
   doins lang/*.pot lang/*.po
   insinto /usr/share/mintty/themes
   doins themes/*
+  insinto /usr/share/mintty/sounds
+  doins sounds/*.wav sounds/*.WAV sounds/*.md
   insinto /usr/share/mintty/icon
   doins icon/wsl.ico
 
