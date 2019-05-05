@@ -2121,7 +2121,7 @@ do_dcs(void)
 
   when CPAIR('$', 'q'):
     switch (term.state) {
-    when DCS_ESCAPE:
+    when DCS_ESCAPE:       // DECRQSS
       if (!strcmp(s, "m")) { // SGR
         char buf[76], *p = buf;
         p += sprintf(p, "\eP1$r0");
@@ -2220,6 +2220,8 @@ do_dcs(void)
         child_printf("\eP1$r%ut\e\\", term.rows);
       } else if (!strcmp(s, "$|")) {  // DECSCPP (columns)
         child_printf("\eP1$r%u$|\e\\", term.cols);
+      } else if (!strcmp(s, "*|")) {  // DECSNLS (lines)
+        child_printf("\eP1$r%u*|\e\\", term.rows);
       } else {
         child_printf("\eP0$r%s\e\\", s);
       }
