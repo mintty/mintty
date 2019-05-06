@@ -404,7 +404,12 @@ adjust_font_weights(struct fontfam * ff)
     return;
   }
   if (!data.ansi_found && !data.cs_found) {
-    show_font_warning(ff, _("Font has limited support for character ranges"));
+    string l;
+    if (!strcmp(cfg.charset, "CP437") || ((l = getlocenvcat("LC_CTYPE")) && strstr(l, "CP437"))) {
+      // accept limited range
+    }
+    else
+      show_font_warning(ff, _("Font has limited support for character ranges"));
   }
 
   // find available widths closest to selected widths
