@@ -1515,6 +1515,10 @@ is output, so ligatures are also supported while being input.
 With LigaturesSupport=2, mintty also redisplays the previous cursor line 
 after the cursor is moved.
 
+This option is not capable of disabling ligatures, however, as they are 
+applied by Windows font handling. Setting \fIFontRender=textout\fP 
+disables Uniscribe, including ligatures support.
+
 .TP
 \fB\fP(ColSpacing=0)
 Additional column padding; ColSpacing=1 can avoid boldened glyphs being clipped.
