@@ -276,12 +276,14 @@ copy_rect(short y0, short x0, short y1, short x1, short y2, short x2)
     x1 = term.cols + x0 - x2 - 1;
   //printf("%d,%d..%d,%d -> %d,%d\n", y0, x0, y1, x1, y2, x2);
 
-  for (int y = y0; y <= y1; y++) {
+  bool down = y2 > y0;
+  bool left = x2 > x0;
+  for (int y = down ? y1 : y0; down ? y >= y0 : y <= y1; down ? y-- : y++) {
     termline * src = term.lines[y];
     termline * dst = term.lines[y + y2 - y0];
     term_check_boundary(x2, y + y2 - y0);
     term_check_boundary(x2 + x1 - x0 + 1, y + y2 - y0);
-    for (int x = x0; x <= x1; x++) {
+    for (int x = left ? x1 : x0; left ? x >= x0 : x <= x1; left ? x-- : x++) {
       copy_termchar(dst, x + x2 - x0, &src->chars[x]);
       //printf("copy %d:%d -> %d:%d\n", y, x, y + y2 - y0, x + x2 - x0);
       if ((x == x0 && src->chars[x].chr == UCSWIDE)
