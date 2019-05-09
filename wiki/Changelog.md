@@ -4,24 +4,29 @@ Terminal features
   * Fixed DECSET 80 (sixel scrolling mode) which was reverted.
   * Clear All Tabs sequence (TBC 3) extends after resizing, compatible with xterm.
   * HP Memory Lock/Unlock (xterm).
+  * Added DECSNLS to DECRQSS.
 
 Keyboard handling
   * Fixed encoding of Win key as Meta modifier.
   * Support optional Super and Hyper modifiers.
   * Lock keys do not change the state if they have user-defined assignments.
+  * User-definable additional function keys.
 
 Window handling
   * Revised/fixed fullscreen/font zooming behaviour and effect of ZoomFontWithWindow.
   * Fixed Default Size function in some cases after previous fullscreen zooming.
   * Search (Alt+F3) can keep search context distance from top/bottom (#797).
+  * Optional squashing of bell sound series (#865).
+  * No limited font warning if the selected locale is likewise limited (~#871).
 
 Configuration
+  * Mintty packages include a selection of bell sounds (#711).
   * New user-definable key name CapsLock.
   * New user-definable key name prefix ‘*’ to define for all modifiers.
   * New user-definable modifier key assignments super and hyper.
   * New prefixes U/Y (for super/hyper) for user-defined keys.
   * New user-definable numeric action, entering a function key sequence.
-  * New option BellInterval to squash BEL sequences.
+  * New option BellInterval to squash BEL sequences (#865).
   * New option SearchContext (#797).
 
 ### 3.0.0 (28 March 2019) ###

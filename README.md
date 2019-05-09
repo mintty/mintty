@@ -5,7 +5,8 @@ and [Msys2](https://github.com/msys2).
 ### Overview ###
 
 For an introduction, features overview, and screenshots, see the 
-[<img align=absmiddle src=icon/terminal.ico>Mintty homepage](http://mintty.github.io/).
+[<img align=absmiddle src=icon/terminal.ico>Mintty homepage](http://mintty.github.io/),
+with an opportunity to donate to appreciate mintty.
 
 For detailed hints and specific issues, see the [Wiki](https://github.com/mintty/mintty/wiki).
 
