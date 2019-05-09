@@ -1626,15 +1626,20 @@ pick_key_function(wstring key_commands, char * tag, int n, uint key, mod_keys mo
       else if ((*fct == '"' && fct[wcslen(fct) - 1] == '"') ||
           (*fct == '\'' && fct[wcslen(fct) - 1] == '\''))
       {
-        child_sendw(&fct[1], wcslen(fct) - 2);
-        ret = true;
+        int len = wcslen(fct) - 2;
+        if (len > 0) {
+          child_sendw(&fct[1], wcslen(fct) - 2);
+          ret = true;
+        }
       }
       else if (*fct == '`' && fct[wcslen(fct) - 1] == '`') {
         fct[wcslen(fct) - 1] = 0;
         char * cmd = cs__wcstombs(&fct[1]);
-        term_cmd(cmd);
+        if (*cmd) {
+          term_cmd(cmd);
+          ret = true;
+        }
         free(cmd);
-        ret = true;
       }
       else if (sscanf (paramp, "%u%c", & code, &(char){0}) == 1) {
         char buf[33];
