@@ -162,6 +162,139 @@ insert_char(int n)
   }
 }
 
+static bool
+illegal_rect_char(xchar chr)
+{
+  int width;
+#if HAS_LOCALES
+  if (cfg.charwidth)
+    width = xcwidth(chr);
+  else
+    width = wcwidth(chr);
+#else
+  width = xcwidth(chr);
+#endif
+  return width != 1;
+}
+
+static void
+fill_rect(xchar chr, cattr attr, bool sel, short y0, short x0, short y1, short x1)
+{
+  if (chr == UCSWIDE || illegal_rect_char(chr))
+    return;
+  wchar low = 0;
+  if (chr > 0xFFFF) {
+    low = low_surrogate(chr);
+    chr = high_surrogate(chr);
+  }
+
+  y0--; x0--; y1--; x1--;
+
+  if (term.curs.origin) {
+    y0 += term.marg_top;
+    x0 += term.marg_left;
+    y1 += term.marg_top;
+    x1 += term.marg_left;
+  }
+  if (y0 < 0)
+    y0 = 0;
+  if (x0 < 0)
+    x0 = 0;
+  if (y1 >= term.rows)
+    y1 = term.rows - 1;
+  if (x1 >= term.cols)
+    x1 = term.cols - 1;
+  //printf("%d,%d..%d,%d\n", y0, x0, y1, x1);
+
+  for (int y = y0; y <= y1; y++) {
+    termline * l = term.lines[y];
+    bool prevprot = true;  // not false!
+    for (int x = x0; x <= x1; x++) {
+      //printf("fill %d:%d\n", y, x);
+      bool prot = sel && l->chars[x].attr.attr & ATTR_PROTECTED;
+      if (prot != prevprot) {
+        // |P not here, no check
+        // |N check
+        // NP check only current position
+        // PN check
+        if (!prot) {  // includes the case x == x0
+          // clear previous half of wide char, even if protected
+          term_check_boundary(x0, y);
+        }
+        else if (l->chars[x].chr == UCSWIDE) {
+          // clear right half of wide char, even if protected;
+          // calling term_check_boundary would overwrite previous fill char
+          clear_cc(l, x);
+          l->chars[x].chr = ' ';
+        }
+      }
+      // clear wide char on right area border unless protected
+      if (!prot && x == x1)
+        term_check_boundary(x1 + 1, y);
+      prevprot = prot;
+
+      if (!sel || !prot) {
+        clear_cc(l, x);
+        l->chars[x].chr = chr;
+        l->chars[x].attr = attr;
+        if (low)
+          add_cc(l, x, low, attr);
+      }
+    }
+  }
+}
+
+static void
+copy_rect(short y0, short x0, short y1, short x1, short y2, short x2)
+{
+  y0--; x0--; y1--; x1--; y2--; x2--;
+
+  if (term.curs.origin) {
+    y0 += term.marg_top;
+    x0 += term.marg_left;
+    y1 += term.marg_top;
+    x1 += term.marg_left;
+    y2 += term.marg_top;
+    x2 += term.marg_left;
+  }
+  if (y0 < 0)
+    y0 = 0;
+  if (x0 < 0)
+    x0 = 0;
+  if (y1 >= term.rows)
+    y1 = term.rows - 1;
+  if (x1 >= term.cols)
+    x1 = term.cols - 1;
+
+  if (y2 < 0)
+    y2 = 0;
+  if (x2 < 0)
+    x2 = 0;
+  if (y2 + y1 - y0 >= term.rows)
+    y1 = term.rows + y0 - y2 - 1;
+  if (x2 + x1 - x0 >= term.cols)
+    x1 = term.cols + x0 - x2 - 1;
+  //printf("%d,%d..%d,%d -> %d,%d\n", y0, x0, y1, x1, y2, x2);
+
+  for (int y = y0; y <= y1; y++) {
+    termline * src = term.lines[y];
+    termline * dst = term.lines[y + y2 - y0];
+    term_check_boundary(x2, y + y2 - y0);
+    term_check_boundary(x2 + x1 - x0 + 1, y + y2 - y0);
+    for (int x = x0; x <= x1; x++) {
+      copy_termchar(dst, x + x2 - x0, &src->chars[x]);
+      //printf("copy %d:%d -> %d:%d\n", y, x, y + y2 - y0, x + x2 - x0);
+      if ((x == x0 && src->chars[x].chr == UCSWIDE)
+       || (x == x1 && illegal_rect_char(src->chars[x].chr))
+         )
+      {
+        clear_cc(dst, x);
+        dst->chars[x].chr = ' ';
+      }
+    }
+  }
+}
+
 static void
 write_bell(void)
 {
@@ -1924,6 +2057,19 @@ do_csi(uchar c)
           curs->bidimode &= ~LATTR_PRESRTL;
       else if (arg0 == 3)
           curs->bidimode |= LATTR_PRESRTL;
+    when CPAIR('$', 'v'):  /* DECCRA: VT420 Copy Rectangular Area */
+      copy_rect(arg0, arg1, term.csi_argv[2], term.csi_argv[3],
+                // skip term.csi_argv[4] (source page)
+                term.csi_argv[5], term.csi_argv[6]);
+    when CPAIR('$', 'x'):  /* DECFRA: VT420 Fill Rectangular Area */
+      fill_rect(arg0, curs->attr, false,
+                arg1, term.csi_argv[2], term.csi_argv[3], term.csi_argv[4]);
+    when CPAIR('$', 'z'):  /* DECERA: VT420 Erase Rectangular Area */
+      fill_rect(' ', term.erase_char.attr, false,
+                arg0, arg1, term.csi_argv[2], term.csi_argv[3]);
+    when CPAIR('$', '{'):  /* DECSERA: VT420 Selective Erase Rectangular Area */
+      fill_rect(' ', term.erase_char.attr, true,
+                arg0, arg1, term.csi_argv[2], term.csi_argv[3]);
   }
 }
 
