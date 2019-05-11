@@ -422,7 +422,10 @@ struct term {
   bool blink_is_real;     /* Actually blink blinking text */
   bool echoing;           /* Does terminal want local echo? */
   bool insert;            /* Insert mode */
-  int marg_top, marg_bot; /* scroll margins */
+  int marg_top, marg_bot; /* scrolling region margins */
+  int marg_left, marg_right; /* horizontal margins */
+  bool lrmargmode;           /* enable horizontal margins */
+  bool attr_rect;            /* rectangular attribute change extent */
   bool printing, only_printing;  /* Are we doing ANSI printing? */
   int  print_state;       /* state of print-end-sequence scan */
   char *printbuf;         /* buffered data for printer */
@@ -569,6 +572,8 @@ struct term {
 };
 
 extern struct term term;
+
+extern void scroll_rect(int topline, int botline, int lines);
 
 extern void term_resize(int, int);
 extern void term_scroll(int, int);

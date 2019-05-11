@@ -283,6 +283,9 @@ term_reset(bool full)
   term.insert = false;
   term.marg_top = 0;
   term.marg_bot = term.rows - 1;
+  term.marg_left = 0;
+  term.marg_right = term.cols - 1;
+  term.lrmargmode = false;
   term.app_cursor_keys = false;
 
   if (full) {
@@ -292,6 +295,7 @@ term_reset(bool full)
     term.app_wheel = false;
     term.app_control = 0;
     term.auto_repeat = cfg.auto_repeat;  // not supported by xterm
+    term.attr_rect = false;
   }
   term.modify_other_keys = 0;  // xterm resets this
 
@@ -854,6 +858,8 @@ term_resize(int newrows, int newcols)
 
   term.marg_top = 0;
   term.marg_bot = newrows - 1;
+  term.marg_left = 0;
+  term.marg_right = newcols - 1;
 
  /*
   * Resize the screen and scrollback. We only need to shift
@@ -1057,6 +1063,8 @@ term_check_boundary(int x, int y)
   if (x == term.cols)
     line->lattr &= ~LATTR_WRAPPED2;
   else if (line->chars[x].chr == UCSWIDE) {
+    if (x == term.marg_right + 1)
+      line->lattr &= ~LATTR_WRAPPED2;
     clear_cc(line, x - 1);
     clear_cc(line, x);
     line->chars[x - 1].chr = ' ';
