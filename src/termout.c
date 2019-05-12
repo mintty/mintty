@@ -374,7 +374,7 @@ scroll_rect(int topline, int botline, int lines)
   }
   y0++; y1++; y2++; e0++; e1++;
   int xl = term.marg_left + 1;
-  int xr = term.marg_right;
+  int xr = term.marg_right + 1;
   if (term.curs.origin) {
     xl = 1;
     xr = term.marg_right - term.marg_left + 1;
