@@ -185,6 +185,47 @@ illegal_rect_char(xchar chr)
 }
 
 static void
+attr_rect(cattrflags add, cattrflags sub, cattrflags xor, short y0, short x0, short y1, short x1)
+{
+  //printf("attr_rect %d,%d..%d,%d +%llX -%llX ^%llX\n", y0, x0, y1, x1, add, sub, xor);
+  y0--; x0--; y1--; x1--;
+
+  if (term.curs.origin) {
+    y0 += term.marg_top;
+    x0 += term.marg_left;
+    y1 += term.marg_top;
+    x1 += term.marg_left;
+  }
+  if (y0 < 0)
+    y0 = 0;
+  if (x0 < 0)
+    x0 = 0;
+  if (y1 >= term.rows)
+    y1 = term.rows - 1;
+  if (x1 >= term.cols)
+    x1 = term.cols - 1;
+  //printf("%d,%d..%d,%d\n", y0, x0, y1, x1);
+
+  for (int y = y0; y <= y1; y++) {
+    termline * l = term.lines[y];
+    int xl = x0;
+    int xr = x1;
+    if (!term.attr_rect) {
+      if (y != y0)
+        xl = term.marg_left;
+      if (y != y1)
+        xr = term.marg_right;
+    }
+    for (int x = xl; x <= xr; x++) {
+      //printf("attr %d:%d\n", y, x);
+      l->chars[x].attr.attr ^= xor;
+      l->chars[x].attr.attr &= ~sub;
+      l->chars[x].attr.attr |= add;
+    }
+  }
+}
+
+static void
 fill_rect(xchar chr, cattr attr, bool sel, short y0, short x0, short y1, short x1)
 {
   //printf("fill_rect %d,%d..%d,%d\n", y0, x0, y1, x1);
@@ -2152,6 +2193,37 @@ do_csi(uchar c)
     when CPAIR('$', '{'):  /* DECSERA: VT420 Selective Erase Rectangular Area */
       fill_rect(' ', term.erase_char.attr, true,
                 arg0, arg1, term.csi_argv[2], term.csi_argv[3]);
+    when CPAIR('*', 'x'):  /* DECSACE: VT420 Select Attribute Change Extent */
+      switch (arg0) {
+        when 2: term.attr_rect = true;
+        when 0 or 1: term.attr_rect = false;
+      }
+    when CPAIR('$', 'r')  /* DECCARA: VT420 Change Attributes in Area */
+      or CPAIR('$', 't'): {  /* DECRARA: VT420 Reverse Attributes in Area */
+      cattrflags a1 = 0, a2 = 0;
+      for (uint i = 4; i < term.csi_argc; i++)
+        switch (term.csi_argv[i]) {
+          when 0: a2 = ATTR_BOLD | ATTR_UNDER | ATTR_BLINK | ATTR_REVERSE;
+          when 1: a1 |= ATTR_BOLD;
+          when 4: a1 |= ATTR_UNDER;
+          when 5: a1 |= ATTR_BLINK;
+          when 7: a1 |= ATTR_REVERSE;
+          when 22: a2 |= ATTR_BOLD;
+          when 24: a2 |= ATTR_UNDER;
+          when 25: a2 |= ATTR_BLINK;
+          when 27: a2 |= ATTR_REVERSE;
+          //when 2: a1 |= ATTR_DIM;
+          //when 3: a1 |= ATTR_ITALIC;
+          //when 6: a1 |= ATTR_BLINK2;
+          //when 8: a1 |= ATTR_INVISIBLE;
+          //when 9: a1 |= ATTR_STRIKEOUT;
+        }
+      a1 &= ~a2;
+      if (c == 'r')
+        attr_rect(a1, a2, 0, arg0, arg1, term.csi_argv[2], term.csi_argv[3]);
+      else
+        attr_rect(0, 0, a1, arg0, arg1, term.csi_argv[2], term.csi_argv[3]);
+    }
   }
 }
 
