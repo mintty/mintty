@@ -415,6 +415,7 @@ struct term {
   bool rvideo;            /* global reverse video flag */
   bool cursor_on;         /* cursor enabled flag */
   bool deccolm_allowed;   /* DECCOLM sequence for 80/132 cols allowed? */
+  bool deccolm_noclear;   /* DECCOLM does not clear screen */
   bool reset_132;         /* Flag ESC c resets to 80 cols */
   bool cblinker;          /* When blinking is the cursor on ? */
   bool tblinker;          /* When the blinking text is on */

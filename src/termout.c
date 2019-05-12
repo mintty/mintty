@@ -1267,7 +1267,8 @@ set_modes(bool state)
             term.marg_left = 0;
             term.marg_right = term.cols - 1;
             move(0, 0, 0);
-            term_erase(false, false, true, true);
+            if (!term.deccolm_noclear)
+              term_erase(false, false, true, true);
           }
         when 5:  /* DECSCNM: reverse video */
           if (state != term.rvideo) {
@@ -1301,6 +1302,8 @@ set_modes(bool state)
           }
         when 40: /* Allow/disallow DECCOLM (xterm c132 resource) */
           term.deccolm_allowed = state;
+        when 95: /* VT510 DECNCSM: DECCOLM does not clear the screen */
+          term.deccolm_noclear = state;
         when 42: /* DECNRCM: national replacement character sets */
           term.curs.decnrc_enabled = state;
         when 67: /* DECBKM: backarrow key mode */

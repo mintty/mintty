@@ -296,6 +296,7 @@ term_reset(bool full)
     term.app_control = 0;
     term.auto_repeat = cfg.auto_repeat;  // not supported by xterm
     term.attr_rect = false;
+    term.deccolm_noclear = false;
   }
   term.modify_other_keys = 0;  // xterm resets this
 
