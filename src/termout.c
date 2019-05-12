@@ -388,6 +388,40 @@ scroll_rect(int topline, int botline, int lines)
   fill_rect(' ', term.curs.attr, false, e0, xl, e1, xr);
 }
 
+static void
+insdel_column(int col, bool del, int n)
+{
+  int x0, x1, x2, e0, e1;
+  if (del) {
+    x0 = col + n;
+    x1 = term.marg_right;
+    x2 = col;
+    e0 = term.marg_right - n + 1;
+    e1 = term.marg_right;
+  }
+  else {
+    x0 = col;
+    x1 = term.marg_right - n;
+    x2 = col + n;
+    e0 = col;
+    e1 = col + n - 1;
+  }
+  x0++; x1++; x2++; e0++; e1++;
+  int yt = term.marg_top + 1;
+  int yb = term.marg_bot + 1;
+  if (term.curs.origin) {
+    yt = 1;
+    yb = term.marg_bot - term.marg_top + 1;
+    x0 -= term.marg_left;
+    x1 -= term.marg_left;
+    x2 -= term.marg_left;
+    e0 -= term.marg_left;
+    e1 -= term.marg_left;
+  }
+  copy_rect(yt, x0, yb, x1, yt, x2);
+  fill_rect(' ', term.curs.attr, false, yt, e0, yb, e1);
+}
+
 
 static void
 write_bell(void)
@@ -910,6 +944,16 @@ do_esc(uchar c)
       term.curs.cset_single = curs->csets[2];
     when 'O':  /* SS3: Single Shift G3 character set */
       term.curs.cset_single = curs->csets[3];
+    when '6':  /* Back Index (DECBI), VT420 */
+      if (curs->x == term.marg_left)
+        insdel_column(term.marg_left, false, 1);
+      else
+        move(curs->x - 1, curs->y, 1);
+    when '9':  /* Forward Index (DECFI), VT420 */
+      if (curs->x == term.marg_right)
+        insdel_column(term.marg_left, true, 1);
+      else
+        move(curs->x + 1, curs->y, 1);
   }
 }
 
@@ -2224,6 +2268,12 @@ do_csi(uchar c)
       else
         attr_rect(0, 0, a1, arg0, arg1, term.csi_argv[2], term.csi_argv[3]);
     }
+    when CPAIR('\'', '}'):  /* DECIC: VT420 Insert Columns */
+      if (curs->x >= term.marg_left && curs->x <= term.marg_right)
+        insdel_column(curs->x, false, arg0_def1);
+    when CPAIR('\'', '~'):  /* DECDC: VT420 Delete Columns */
+      if (curs->x >= term.marg_left && curs->x <= term.marg_right)
+        insdel_column(curs->x, true, arg0_def1);
   }
 }
 

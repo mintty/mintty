@@ -2,6 +2,7 @@ Terminal features
   * VT420 rectangular area copy and fill: DECCRA, DECFRA, DECERA, DECSERA.
   * VT420 area attributes: DECSACE, DECCARA, DECRARA.
   * VT420 left and right margins: DECSLRM and private mode 69.
+  * VT420 horizontal scrolling: DECBI, DECFI, DECIC, DECDC.
   * Blinking cursor mode (DECSET 12) overlays blinking cursor style (DECSCUSR) so that DECRST 12 does not spoil blinking style (#818, mintty/wsltty#133).
   * Support ECMA-48 SPD control sequence, values 0 and 3 (RTL fun feature).
   * Fixed DECSET 80 (sixel scrolling mode) which was reverted.
