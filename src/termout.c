@@ -71,20 +71,27 @@ static void
 move(int x, int y, int marg_clip)
 {
   term_cursor *curs = &term.curs;
-  if (x < 0)
-    x = 0;
-  if (x >= term.cols)
-    x = term.cols - 1;
+
   if (marg_clip) {
     if ((curs->y >= term.marg_top || marg_clip == 2) && y < term.marg_top)
       y = term.marg_top;
     if ((curs->y <= term.marg_bot || marg_clip == 2) && y > term.marg_bot)
       y = term.marg_bot;
+    if ((curs->x >= term.marg_left || marg_clip == 2) && x < term.marg_left)
+      x = term.marg_left;
+    if ((curs->x <= term.marg_right || marg_clip == 2) && x > term.marg_right)
+      x = term.marg_right;
   }
+
+  if (x < 0)
+    x = 0;
+  if (x >= term.cols)
+    x = term.cols - 1;
   if (y < 0)
     y = 0;
   if (y >= term.rows)
     y = term.rows - 1;
+
   curs->x = x;
   curs->y = y;
   curs->wrapnext = false;
@@ -133,20 +140,20 @@ restore_cursor(void)
 static void
 insert_char(int n)
 {
-  int dir = (n < 0 ? -1 : +1);
+  bool del = n < 0;
   int m;
   term_cursor *curs = &term.curs;
   termline *line = term.lines[curs->y];
   int cols = min(line->cols, line->size);
+  cols = min(cols, term.marg_right + 1);
 
   n = (n < 0 ? -n : n);
   if (n > cols - curs->x)
     n = cols - curs->x;
   m = cols - curs->x - n;
   term_check_boundary(curs->x, curs->y);
-  if (dir < 0)
-    term_check_boundary(curs->x + n, curs->y);
-  if (dir < 0) {
+  term_check_boundary(curs->x + m, curs->y);
+  if (del) {
     for (int j = 0; j < m; j++)
       move_termchar(line, line->chars + curs->x + j,
                     line->chars + curs->x + j + n);
@@ -180,6 +187,7 @@ illegal_rect_char(xchar chr)
 static void
 fill_rect(xchar chr, cattr attr, bool sel, short y0, short x0, short y1, short x1)
 {
+  //printf("fill_rect %d,%d..%d,%d\n", y0, x0, y1, x1);
   if (chr == UCSWIDE || illegal_rect_char(chr))
     return;
   wchar low = 0;
@@ -247,6 +255,7 @@ fill_rect(xchar chr, cattr attr, bool sel, short y0, short x0, short y1, short x
 static void
 copy_rect(short y0, short x0, short y1, short x1, short y2, short x2)
 {
+  //printf("copy_rect %d,%d..%d,%d -> %d,%d\n", y0, x0, y1, x1, y2, x2);
   y0--; x0--; y1--; x1--; y2--; x2--;
 
   if (term.curs.origin) {
@@ -297,6 +306,48 @@ copy_rect(short y0, short x0, short y1, short x1, short y2, short x2)
   }
 }
 
+void
+scroll_rect(int topline, int botline, int lines)
+{
+  //printf("scroll_rect %d..%d %s%d\n", topline, botline, lines > 0 ? "+" : "", lines);
+  int y0, y1, y2, e0, e1;
+  if (lines < 0) {  // downwards
+//	scroll		copy		clear
+//	4	-2	4	6	4
+//	20		18		5
+    y0 = topline;
+    y1 = botline + lines;
+    y2 = topline - lines;
+    e0 = y0;
+    e1 = y0 - lines - 1;
+  }
+  else {
+//	scroll		copy		clear
+//	4	+2	6	4	19
+//	20		20		20
+    y0 = topline + lines;
+    y1 = botline;
+    y2 = topline;
+    e0 = y1 - lines + 1;
+    e1 = y1;
+  }
+  y0++; y1++; y2++; e0++; e1++;
+  int xl = term.marg_left + 1;
+  int xr = term.marg_right;
+  if (term.curs.origin) {
+    xl = 1;
+    xr = term.marg_right - term.marg_left + 1;
+    y0 -= term.marg_top;
+    y1 -= term.marg_top;
+    y2 -= term.marg_top;
+    e0 -= term.marg_top;
+    e1 -= term.marg_top;
+  }
+  copy_rect(y0, xl, y1, xr, y2, xl);
+  fill_rect(' ', term.curs.attr, false, e0, xl, e1, xr);
+}
+
+
 static void
 write_bell(void)
 {
@@ -309,12 +360,14 @@ static void
 write_backspace(void)
 {
   term_cursor *curs = &term.curs;
-  int term_top = curs->origin ? term.marg_top : 0;
+  int term_top = curs-> origin ? term.marg_top : 0;
   if (curs->x == 0 && (curs->y == term_top || !curs->autowrap
                        || (!cfg.old_wrapmodes && !curs->rev_wrap)))
     /* skip */;
-  else if (curs->x == 0 && curs->y > term_top)
-    curs->x = term.cols - 1, curs->y--;
+  else if (curs->x == term.marg_left && curs->y > term_top) {
+    curs->y--;
+    curs->x = term.marg_right;
+  }
   else if (curs->wrapnext) {
     curs->wrapnext = false;
     if (!curs->rev_wrap && !cfg.old_wrapmodes)
@@ -346,7 +399,7 @@ write_tab(void)
 static void
 write_return(void)
 {
-  term.curs.x = 0;
+  term.curs.x = term.marg_left;
   term.curs.wrapnext = false;
 }
 
@@ -462,7 +515,7 @@ write_char(wchar c, int width)
       term_do_scroll(term.marg_top, term.marg_bot, 1, true);
     else if (curs->y < term.rows - 1)
       curs->y++;
-    curs->x = 0;
+    curs->x = term.marg_left;
     curs->wrapnext = false;
     line = term.lines[curs->y];
     wrapparabidi(parabidi, line, curs->y);
@@ -492,7 +545,7 @@ write_char(wchar c, int width)
       */
       term_check_boundary(curs->x, curs->y);
       term_check_boundary(curs->x + width, curs->y);
-      if (curs->x == term.cols - 1) {
+      if (curs->x == term.marg_right || curs->x == term.cols - 1) {
         line->chars[curs->x] = term.erase_char;
         line->lattr |= LATTR_WRAPPED | LATTR_WRAPPED2;
         line->wrappos = curs->x;
@@ -501,7 +554,7 @@ write_char(wchar c, int width)
           term_do_scroll(term.marg_top, term.marg_bot, 1, true);
         else if (curs->y < term.rows - 1)
           curs->y++;
-        curs->x = 0;
+        curs->x = term.marg_left;
         line = term.lines[curs->y];
         wrapparabidi(parabidi, line, curs->y);
        /* Now we must term_check_boundary again, of course. */
@@ -552,7 +605,7 @@ write_char(wchar c, int width)
   }
 
   curs->x++;
-  if (curs->x == term.cols) {
+  if (curs->x == term.marg_right + 1 || curs->x == term.cols) {
     curs->x--;
     if (curs->autowrap || cfg.old_wrapmodes)
       curs->wrapnext = true;
@@ -1126,6 +1179,8 @@ set_modes(bool state)
             term.reset_132 = state;
             term.marg_top = 0;
             term.marg_bot = term.rows - 1;
+            term.marg_left = 0;
+            term.marg_right = term.cols - 1;
             move(0, 0, 0);
             term_erase(false, false, true, true);
           }
@@ -1165,6 +1220,12 @@ set_modes(bool state)
           term.curs.decnrc_enabled = state;
         when 67: /* DECBKM: backarrow key mode */
           term.backspace_sends_bs = state;
+        when 69: /* DECLRMM/VT420 DECVSSM: enable left/right margins DECSLRM */
+          term.lrmargmode = state;
+          if (!state) {
+            term.marg_left = 0;
+            term.marg_right = term.cols - 1;
+          }
         when 80: /* DECSDM: SIXEL display mode */
           term.sixel_display = !state;
         when 1000: /* VT200_MOUSE */
@@ -1363,6 +1424,8 @@ get_mode(bool privatemode, int arg)
         return 2 - term.curs.decnrc_enabled;
       when 67: /* DECBKM: backarrow key mode */
         return 2 - term.backspace_sends_bs;
+      when 69: /* DECLRMM: enable left and right margin mode DECSLRM */
+        return 2 - term.lrmargmode;
       when 80: /* DECSDM: SIXEL display mode */
         return 2 - !term.sixel_display;
       when 1000: /* VT200_MOUSE */
@@ -1691,13 +1754,15 @@ do_csi(uchar c)
     when 'F':        /* CPL: move up N lines and CR */
       move(0, curs->y - arg0_def1, 1);
     when 'G' or '`': /* CHA or HPA: set horizontal position */
-      move(arg0_def1 - 1, curs->y, 0);
+      move((curs->origin ? term.marg_left : 0) + arg0_def1 - 1,
+           curs->y, 
+           curs->origin ? 2 : 0);
     when 'd':        /* VPA: set vertical position */
       move(curs->x,
            (curs->origin ? term.marg_top : 0) + arg0_def1 - 1,
            curs->origin ? 2 : 0);
     when 'H' or 'f':  /* CUP or HVP: set horiz. and vert. positions at once */
-      move((arg1 ?: 1) - 1,
+      move((curs->origin ? term.marg_left : 0) + (arg1 ?: 1) - 1,
            (curs->origin ? term.marg_top : 0) + arg0_def1 - 1,
            curs->origin ? 2 : 0);
     when 'I':  /* CHT: move right N TABs */
@@ -1847,16 +1912,27 @@ do_csi(uchar c)
       if (bot > top) {
         term.marg_top = top;
         term.marg_bot = bot;
-        curs->x = 0;
+        curs->x = curs->origin ? term.marg_left : 0;
         curs->y = curs->origin ? term.marg_top : 0;
       }
     }
+    when 's':
+      if (term.lrmargmode) {  /* DECSLRM: set left and right margin */
+        int left = arg0_def1 - 1;
+        int right = (arg1 ? min(arg1, term.cols) : term.cols) - 1;
+        if (right > left) {
+          term.marg_left = left;
+          term.marg_right = right;
+          curs->x = curs->origin ? term.marg_left : 0;
+          curs->y = curs->origin ? term.marg_top : 0;
+        }
+      }
+      else           /* SCOSC: save cursor */
+        save_cursor();
+    when 'u':        /* SCORC: restore cursor */
+      restore_cursor();
     when 'm':        /* SGR: set graphics rendition */
       do_sgr();
-    when 's':        /* save cursor */
-      save_cursor();
-    when 'u':        /* restore cursor */
-      restore_cursor();
     when 't':        /* DECSLPP: set page size - ie window height */
      /*
       * VT340/VT420 sequence DECSLPP, for setting the height of the window.
@@ -1960,14 +2036,18 @@ do_csi(uchar c)
         when 1: term.curs.attr.attr |= ATTR_PROTECTED;
       }
     when 'n':        /* DSR: device status report */
-      if (arg0 == 6)
-        child_printf("\e[%d;%dR", curs->y + 1 - (curs->origin ? term.marg_top : 0), curs->x + 1);
+      if (arg0 == 6)  // CPR
+        child_printf("\e[%d;%dR",
+                     curs->y + 1 - (curs->origin ? term.marg_top : 0),
+                     curs->x + 1 - (curs->origin ? term.marg_left : 0));
       else if (arg0 == 5)
         child_write("\e[0n", 4);
     when CPAIR('?', 'n'):  /* DSR, DEC specific */
       switch (arg0) {
-        when 6:
-          child_printf("\e[?%d;%dR", curs->y + 1 - (curs->origin ? term.marg_top : 0), curs->x + 1);
+        when 6:  // DECXCPR
+          child_printf("\e[?%d;%dR",  // VT420: third parameter "page"...
+                       curs->y + 1 - (curs->origin ? term.marg_top : 0),
+                       curs->x + 1 - (curs->origin ? term.marg_left : 0));
         when 15:
           child_printf("\e[?%un", 11 - !!*cfg.printer);
         // DEC Locator
@@ -2352,14 +2432,14 @@ do_dcs(void)
         p += sprintf(p, "m\e\\");  // m for SGR, followed by ST
 
         child_write(buf, p - buf);
-      } else if (!strcmp(s, "r")) {  // DECSTBM (scroll margins)
+      } else if (!strcmp(s, "r")) {  // DECSTBM (scrolling region margins)
         child_printf("\eP1$r%u;%ur\e\\", term.marg_top + 1, term.marg_bot + 1);
+      } else if (!strcmp(s, "s")) {  // DECSLRM (left and right margins)
+        child_printf("\eP1$r%u;%us\e\\", term.marg_left + 1, term.marg_right + 1);
       } else if (!strcmp(s, "\"p")) {  // DECSCL (conformance level)
         child_printf("\eP1$r%u;%u\"p\e\\", 63, 1);  // report as VT300
       } else if (!strcmp(s, "\"q")) {  // DECSCA (protection attribute)
         child_printf("\eP1$r%u\"q\e\\", (attr.attr & ATTR_PROTECTED) != 0);
-      } else if (!strcmp(s, "s")) {  // DECSLRM (left and right margins)
-        child_printf("\eP1$r%u;%us\e\\", 1, term.cols);
       } else if (!strcmp(s, " q")) {  // DECSCUSR (cursor style)
         child_printf("\eP1$r%u q\e\\", 
                      (term.cursor_type >= 0 ? term.cursor_type * 2 : 0) + 1

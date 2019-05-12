@@ -1154,6 +1154,11 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
     win_update(true);
   }
 
+  if (term.lrmargmode) {
+    scroll_rect(topline, botline, lines);
+    return;
+  }
+
 #ifdef use_display_scrolling
   int scrolllines = lines;
 #endif
@@ -1307,7 +1312,7 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
   bool erasing_lines_from_top =
     start.y == 0 && start.x == 0 && end.x == 0 && !line_only && !selective;
 
-  if (erasing_lines_from_top) {
+  if (erasing_lines_from_top && !term.lrmargmode) {
    /* If it's a whole number of lines, starting at the top, and
     * we're fully erasing them, erase by scrolling and keep the
     * lines in the scrollback. */
