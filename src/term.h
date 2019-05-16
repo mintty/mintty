@@ -269,6 +269,7 @@ typedef enum {
   CSET_ASCII = 'B',   /* Normal ASCII charset */
   CSET_GBCHR = 'A',   /* UK variant */
   CSET_LINEDRW = '0', /* Line drawing charset */
+  CSET_VT52DRW = '2', /* VT52 "graphics" mode */
   CSET_TECH = '>',    /* DEC Technical */
   CSET_OEM = 'U',     /* OEM Codepage 437 */
   // definitions for DEC Supplemental support:
@@ -479,6 +480,8 @@ struct term {
 
   uchar esc_mod;  // Modifier character in escape sequences
 
+  uchar vt52_mode;
+
   uint csi_argc;
   uint csi_argv[32];
   uint csi_argv_defined[32];
@@ -503,7 +506,9 @@ struct term {
     DCS_INTERMEDIATE,
     DCS_PASSTHROUGH,
     DCS_IGNORE,
-    DCS_ESCAPE
+    DCS_ESCAPE,
+    VT52_Y, VT52_X,
+    VT52_FG, VT52_BG
   } state;
 
   // Mouse mode

@@ -742,22 +742,132 @@ do_ctrl(char c)
       write_linefeed();
       if (term.newline_mode)
         write_return();
-    when CTRL('E'): {  /* ENQ: terminal type query */
-      //child_write(cfg.answerback, strlen(cfg.answerback));
-      char * ab = cs__wcstombs(cfg.answerback);
-      child_write(ab, strlen(ab));
-      free(ab);
-    }
+    when CTRL('E'):   /* ENQ: terminal type query */
+      if (!term.vt52_mode) {
+        char * ab = cs__wcstombs(cfg.answerback);
+        child_write(ab, strlen(ab));
+        free(ab);
+      }
     when CTRL('N'):   /* LS1: Locking-shift one */
-      term.curs.gl = 1;
-      term_update_cs();
+      if (!term.vt52_mode) {
+        term.curs.gl = 1;
+        term_update_cs();
+      }
     when CTRL('O'):   /* LS0: Locking-shift zero */
-      term.curs.gl = 0;
-      term_update_cs();
+      if (!term.vt52_mode) {
+        term.curs.gl = 0;
+        term_update_cs();
+      }
     otherwise:
       return false;
   }
   return true;
+}
+
+static void
+do_vt52(uchar c)
+{
+  term_cursor *curs = &term.curs;
+  term.state = NORMAL;
+  term.curs.autowrap = false;
+  term.curs.rev_wrap = false;
+  term.esc_mod = 0;
+  switch (c) {
+    when '\e':
+      term.state = ESCAPE;
+    when '<':  /* Exit VT52 mode (Enter VT100 mode). */
+      term.vt52_mode = 0;
+    when '=':  /* Enter alternate keypad mode. */
+      term.app_keypad = true;
+    when '>':  /* Exit alternate keypad mode. */
+      term.app_keypad = false;
+    when 'A':  /* Cursor up. */
+      move(curs->x, curs->y - 1, 0);
+    when 'B':  /* Cursor down. */
+      move(curs->x, curs->y + 1, 0);
+    when 'C':  /* Cursor right. */
+      move(curs->x + 1, curs->y, 0);
+    when 'D':  /* Cursor left. */
+      move(curs->x - 1, curs->y, 0);
+    when 'F':  /* Enter graphics mode. */
+      term.vt52_mode = 2;
+    when 'G':  /* Exit graphics mode. */
+      term.vt52_mode = 1;
+    when 'H':  /* Move the cursor to the home position. */
+      move(0, 0, 0);
+    when 'I':  /* Reverse line feed. */
+      if (curs->y == term.marg_top)
+        term_do_scroll(term.marg_top, term.marg_bot, -1, true);
+      else if (curs->y > 0)
+        curs->y--;
+      curs->wrapnext = false;
+    when 'J':  /* Erase from the cursor to the end of the screen. */
+      term_erase(false, false, false, true);
+    when 'K':  /* Erase from the cursor to the end of the line. */
+      term_erase(false, true, false, true);
+    when 'Y':  /* Move the cursor to given row and column. */
+      term.state = VT52_Y;
+    when 'Z':  /* Identify. */
+      child_write("\e/Z", 3);
+    // Atari ST extensions
+    when 'E':  /* Clear screen */
+      move(0, 0, 0);
+      term_erase(false, false, false, true);
+    when 'b':  /* Foreground color */
+      term.state = VT52_FG;
+    when 'c':  /* Background color */
+      term.state = VT52_BG;
+    when 'd':  /* Clear to start of screen */
+      term_erase(false, false, true, false);
+    when 'e':  /* Enable cursor */
+      term.cursor_on = true;
+    when 'f':  /* Disable cursor */
+      term.cursor_on = false;
+    when 'j':  /* Save cursor */
+      save_cursor();
+    when 'k':  /* Restore cursor */
+      restore_cursor();
+    when 'l':  /* Clear line */
+      term_erase(false, true, true, true);
+      write_return();
+    when 'o':  /* Clear to start of line */
+      term_erase(false, true, true, false);
+    when 'p':  /* Reverse video */
+      term.curs.attr.attr |= ATTR_REVERSE;
+    when 'q':  /* Normal video */
+      term.curs.attr.attr &= ~ATTR_REVERSE;
+    when 'v':  /* Wrap on */
+      term.curs.autowrap = true;
+      term.curs.wrapnext = false;
+    when 'w':  /* Wrap off */
+      term.curs.autowrap = false;
+      term.curs.wrapnext = false;
+  }
+}
+
+static void
+do_vt52_move(void)
+{
+  term.state = NORMAL;
+  uchar y = term.cmd_buf[0];
+  uchar x = term.cmd_buf[1];
+  if (y < ' ' || x < ' ')
+    return;
+  move(x - ' ', y - ' ', 0);
+}
+
+static void
+do_vt52_colour(bool fg, uchar c)
+{
+  term.state = NORMAL;
+  if (fg) {
+    term.curs.attr.attr &= ~ATTR_FGMASK;
+    term.curs.attr.attr |= ((c & 0xF) + ANSI0) << ATTR_FGSHIFT;
+  }
+  else {
+    term.curs.attr.attr &= ~ATTR_BGMASK;
+    term.curs.attr.attr |= ((c & 0xF) + ANSI0) << ATTR_BGSHIFT;
+  }
 }
 
 // compatible state machine expansion for NCR and DECRQM
@@ -1256,7 +1366,8 @@ set_modes(bool state)
             term.curs.cset_single = CSET_ASCII;
             term_update_cs();
           }
-          // IGNORE VT52
+          else
+            term.vt52_mode = 1;
         when 3:  /* DECCOLM: 80/132 columns */
           if (term.deccolm_allowed) {
             term.selected = false;
@@ -2916,6 +3027,12 @@ term_do_write(const char *buf, uint len)
           c &= 0x7F;
           cset = term.curs.csets[term.curs.gr];
         }
+        if (term.vt52_mode) {
+          if (term.vt52_mode > 1)
+            cset = CSET_VT52DRW;
+          else
+            cset = CSET_ASCII;
+        }
 
         switch (cs_mb1towc(&wc, c)) {
           when 0: // NUL or low surrogate
@@ -3038,6 +3155,21 @@ term_do_write(const char *buf, uint len)
         }
 
         switch (cset) {
+          when CSET_VT52DRW:  // VT52 "graphics" mode
+            if (0x5E <= wc && wc <= 0x7E) {
+              uchar dispcode = 0;
+              if ('l' <= wc && wc <= 's') {
+                static uchar linedraw_code[8] = {
+                  0x10, 0x20, 0x20, 0x0A, 0x0A, 0x40, 0x40, 0x50
+                };
+                dispcode = linedraw_code[wc - 'l'];
+              }
+              else if ('c' <= wc && wc <= 'e') {
+                dispcode = 0xF7;
+              }
+              wc = W("^ ￿▮⅟³⁵⁷°±→…÷↓⎺⎺⎻⎻⎼⎼⎽⎽₀₁₂₃₄₅₆₇₈₉¶") [c - 0x5E];
+              term.curs.attr.attr |= ((cattrflags)dispcode) << ATTR_GRAPH_SHIFT;
+            }
           when CSET_LINEDRW:  // VT100 line drawing characters
             if (0x60 <= wc && wc <= 0x7E) {
               wchar dispwc = win_linedraw_char(wc - 0x60);
@@ -3184,8 +3316,25 @@ term_do_write(const char *buf, uint len)
         term.curs.attr.attr = asav;
       } // end term_write switch (term.state) when NORMAL
 
+      when VT52_Y:
+        term.cmd_len = 0;
+        term_push_cmd(c);
+        term.state = VT52_X;
+
+      when VT52_X:
+        term_push_cmd(c);
+        do_vt52_move();
+
+      when VT52_FG:
+        do_vt52_colour(true, c);
+
+      when VT52_BG:
+        do_vt52_colour(false, c);
+
       when ESCAPE or CMD_ESCAPE:
-        if (c < 0x20)
+        if (term.vt52_mode)
+          do_vt52(c);
+        else if (c < 0x20)
           do_ctrl(c);
         else if (c < 0x30) {
           //term.esc_mod = term.esc_mod ? 0xFF : c;

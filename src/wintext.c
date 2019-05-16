@@ -3066,6 +3066,8 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     else if (graph == 0xE0)  // square root base: rather draw (partially)
       for (int i = 0; i < len; i++)
         text[i] = 0x2502;
+    else if (graph == 0xF7)  // VT52 fraction numerator
+      yt -= line_width;
   }
 
  /* Finally, draw the text */
@@ -3201,6 +3203,12 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
           xl = xr;
           xr = xb;
         }
+      }
+      if (graph == 0xF7) {  // VT52 fraction numerator
+        yt = y + (cell_height - line_width) * 10 / 16;
+        yb = y + (cell_height - line_width) * 8 / 16;
+        xl = x + line_width - 1;
+        xr = xl + char_width - 1;
       }
       // adjustments with scaling pen:
       xl ++; xr ++;

@@ -8,6 +8,7 @@ Terminal features
   * Support ECMA-48 SPD control sequence, values 0 and 3 (RTL fun feature).
   * Fixed DECSET 80 (sixel scrolling mode) which was reverted.
   * Clear All Tabs sequence (TBC 3) extends after resizing, compatible with xterm.
+  * VT52 mode, thereby becoming fully VT100-compatible, with Atari ST extensions.
   * HP Memory Lock/Unlock (xterm).
   * Added DECSNLS to DECRQSS.
 

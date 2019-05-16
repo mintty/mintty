@@ -269,6 +269,7 @@ term_reset(bool full)
   }
 
   term.state = NORMAL;
+  term.vt52_mode = 0;
 
   // DECSTR attributes and cursor states to be reset
   term_cursor_reset(&term.curs);
