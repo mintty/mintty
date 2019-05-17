@@ -4,7 +4,7 @@ requires: cygwin
 ldesc: "Mintty is a terminal emulator for Cygwin.
 
 Terminal display features
-* Xterm-compatible terminal emulation, coverage of DEC VT300 series features.
+* Xterm-compatible terminal emulation, coverage of all DEC terminal series screen control features.
 * 256 colours and True-Colour support, optional CMYK colour specification.
 * Full Unicode and wide character support, comprehensive character encoding support.
 * Bidirectional rendering, flexible bidi controls.

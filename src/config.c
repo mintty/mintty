@@ -1915,15 +1915,34 @@ lang_handler(control *ctrl, int event)
 static void
 term_handler(control *ctrl, int event)
 {
+  bool terminfo_exists(char * ti) {
+    bool terminfo_exists_in(char * dir, char * sub, char * ti) {
+      char * terminfo = asform("%s%s/%x/%s", dir, sub ?: "", *ti, ti);
+      bool exists = !access(terminfo, R_OK);
+      free(terminfo);
+      return exists;
+    }
+    return terminfo_exists_in("/usr/share/terminfo", 0, ti)
+        || terminfo_exists_in(home, "/.terminfo", ti)
+         ;
+  }
   switch (event) {
     when EVENT_REFRESH:
       dlg_listbox_clear(ctrl);
       dlg_listbox_add(ctrl, "xterm");
       dlg_listbox_add(ctrl, "xterm-256color");
+      if (terminfo_exists("xterm-direct"))
+        dlg_listbox_add(ctrl, "xterm-direct");
       dlg_listbox_add(ctrl, "xterm-vt220");
       dlg_listbox_add(ctrl, "vt100");
       dlg_listbox_add(ctrl, "vt220");
       dlg_listbox_add(ctrl, "vt340");
+      dlg_listbox_add(ctrl, "vt420");
+      dlg_listbox_add(ctrl, "vt525");
+      if (terminfo_exists("mintty"))
+        dlg_listbox_add(ctrl, "mintty");
+      if (terminfo_exists("mintty-direct"))
+        dlg_listbox_add(ctrl, "mintty-direct");
       dlg_editbox_set(ctrl, new_cfg.term);
     when EVENT_VALCHANGE or EVENT_SELCHANGE:
       dlg_editbox_get(ctrl, &new_cfg.term);

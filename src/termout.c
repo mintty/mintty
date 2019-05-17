@@ -30,6 +30,8 @@
 static string primary_da1 = "\e[?1;2c";
 static string primary_da2 = "\e[?62;1;2;4;6;9;15;22;29c";
 static string primary_da3 = "\e[?63;1;2;4;6;9;15;22;29c";
+static string primary_da4 = "\e[?64;1;2;4;6;9;15;22;29c";
+static string primary_da5 = "\e[?65;1;2;4;6;9;15;22;29c";
 
 
 static bool
@@ -493,12 +495,16 @@ write_linefeed(void)
 static void
 write_primary_da(void)
 {
-  string primary_da = primary_da3;
+  string primary_da = primary_da4;
   char * vt = strstr(cfg.term, "vt");
   if (vt) {
     unsigned int ver;
     if (sscanf(vt + 2, "%u", &ver) == 1) {
-      if (ver >= 300)
+      if (ver >= 500)
+        primary_da = primary_da5;
+      else if (ver >= 400)
+        primary_da = primary_da4;
+      else if (ver >= 300)
         primary_da = primary_da3;
       else if (ver >= 200)
         primary_da = primary_da2;

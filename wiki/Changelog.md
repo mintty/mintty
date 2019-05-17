@@ -4,6 +4,7 @@ Terminal features
   * VT420 left and right margins: DECSLRM and private mode 69.
   * VT420 horizontal scrolling: DECBI, DECFI, DECIC, DECDC.
   * VT510 DECNCSM.
+  * Primary Device Attributes report VT420 by default; VT525 supported.
   * Blinking cursor mode (DECSET 12) overlays blinking cursor style (DECSCUSR) so that DECRST 12 does not spoil blinking style (#818, mintty/wsltty#133).
   * Support ECMA-48 SPD control sequence, values 0 and 3 (RTL fun feature).
   * Fixed DECSET 80 (sixel scrolling mode) which was reverted.
@@ -34,6 +35,7 @@ Configuration
   * New user-definable numeric action, entering a function key sequence.
   * New option BellInterval to squash BEL sequences (#865).
   * New option SearchContext (#797).
+  * Offer terminal types vt420, vt525; also xterm-direct, mintty, mintty-direct if installed (~#866, ~#867).
 
 ### 3.0.0 (28 March 2019) ###
 
