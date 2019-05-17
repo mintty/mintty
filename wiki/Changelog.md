@@ -12,6 +12,7 @@ Terminal features
   * VT52 mode, thereby becoming fully VT100-compatible, with Atari ST extensions.
   * HP Memory Lock/Unlock (xterm).
   * Added DECSNLS to DECRQSS.
+  * Fixed format of OSC 5;0;? response.
 
 Keyboard handling
   * Fixed encoding of Win key as Meta modifier.

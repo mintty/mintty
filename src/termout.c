@@ -2705,10 +2705,12 @@ static void
 do_colour_osc(bool has_index_arg, uint i, bool reset)
 {
   char *s = term.cmd_buf;
+  int index;
   if (has_index_arg) {
     int osc = i;
     int len = 0;
-    sscanf(s, "%u;%n", &i, &len);
+    sscanf(s, "%u;%n", &index, &len);
+    i = index;
     if ((reset ? len != 0 : len == 0) || i >= COLOUR_NUM)
       return;
     s += len;
@@ -2738,7 +2740,7 @@ do_colour_osc(bool has_index_arg, uint i, bool reset)
   else if (!strcmp(s, "?")) {
     child_printf("\e]%u;", term.cmd_num);
     if (has_index_arg)
-      child_printf("%u;", i);
+      child_printf("%u;", index);
     c = i < COLOUR_NUM ? colours[i] : 0;  // should not be affected by rvideo
     child_printf("rgb:%04x/%04x/%04x\e\\",
                  red(c) * 0x101, green(c) * 0x101, blue(c) * 0x101);
