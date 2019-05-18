@@ -1125,8 +1125,9 @@ do_update(void)
   update_skipped++;
   int output_speed = lines_scrolled / (term.rows ?: cfg.rows);
   lines_scrolled = 0;
-  if (update_skipped < cfg.display_speedup && cfg.display_speedup < 10
-      && output_speed > update_skipped
+  if ((update_skipped < cfg.display_speedup && cfg.display_speedup < 10
+       && output_speed > update_skipped
+      ) || win_is_iconic()
      )
   {
     win_set_timer(do_update, update_timer);

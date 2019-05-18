@@ -26,6 +26,7 @@ Window handling
   * Search (Alt+F3) can keep search context distance from top/bottom (#797).
   * Optional squashing of bell sound series (#865).
   * No limited font warning if the selected locale is likewise limited (~#871).
+  * Suppress output rendering while window is iconic (~#875).
 
 Configuration
   * Mintty packages include a selection of bell sounds (#711).
