@@ -2372,7 +2372,9 @@ win_key_down(WPARAM wp, LPARAM lp)
   }
 
   void cursor_key(char code, char symbol) {
-    if (!app_pad_key(symbol))
+    if (term.vt52_mode)
+      len = sprintf(buf, "\e%c", code);
+    else if (!app_pad_key(symbol))
       mods ? mod_csi(code) : term.app_cursor_keys ? ss3(code) : csi(code);
   }
 
@@ -2664,6 +2666,8 @@ static struct {
         send_syscommand((shift && !ctrl) ? IDM_FULLSCREEN_ZOOM : IDM_FULLSCREEN);
         return true;
       }
+      else if (extended && term.vt52_mode && term.app_keypad)
+        len = sprintf(buf, "\e?M");
       else if (extended && !numlock && term.app_keypad)
         //mod_ss3('M');
         app_pad_code('M' - '@');
@@ -2727,6 +2731,10 @@ static struct {
       if (!vk_special(cfg.key_scrlock))
         return false;
     when VK_F1 ... VK_F24:
+      if (key <= VK_F4 && term.vt52_mode) {
+        len = sprintf(buf, "\e%c", key - VK_F1 + 'P');
+        break;
+      }
       if (term.vt220_keys && ctrl && VK_F3 <= key && key <= VK_F10)
         key += 10, mods &= ~MDK_CTRL;
       if (key <= VK_F4)
@@ -2751,12 +2759,16 @@ static struct {
     when VK_RIGHT:  cursor_key('C', '6');
     when VK_CLEAR:  cursor_key('E', '5');
     when VK_MULTIPLY ... VK_DIVIDE:
-      if (key == VK_ADD && old_alt_state == ALT_ALONE)
+      if (term.vt52_mode && term.app_keypad)
+        len = sprintf(buf, "\e?%c", key - VK_MULTIPLY + 'j');
+      else if (key == VK_ADD && old_alt_state == ALT_ALONE)
         alt_state = ALT_HEX, alt_code = 0;
       else if (mods || (term.app_keypad && !numlock) || !layout())
         app_pad_code(key - VK_MULTIPLY + '*');
     when VK_NUMPAD0 ... VK_NUMPAD9:
-      if ((term.app_cursor_keys || !term.app_keypad) &&
+      if (term.vt52_mode && term.app_keypad)
+        len = sprintf(buf, "\e?%c", key - VK_NUMPAD0 + 'p');
+      else if ((term.app_cursor_keys || !term.app_keypad) &&
           alt_code_numpad_key(key - VK_NUMPAD0));
       else if (layout())
         ;
