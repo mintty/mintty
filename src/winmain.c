@@ -2476,15 +2476,12 @@ static struct {
       update_available_version(wp);
 
     when WM_VSCROLL:
+      //printf("WM_VSCROLL %d\n", LOWORD(wp));
       switch (LOWORD(wp)) {
-        when SB_BOTTOM:   term_scroll(-1, 0);
-        when SB_TOP:      term_scroll(+1, 0);
-        when SB_LINEDOWN: term_scroll(0, +1);
         when SB_LINEUP:   term_scroll(0, -1);
-        when SB_PAGEDOWN: term_scroll(0, +max(1, term.rows - 1));
+        when SB_LINEDOWN: term_scroll(0, +1);
         when SB_PAGEUP:   term_scroll(0, -max(1, term.rows - 1));
-        when SB_PRIOR:    term_scroll(SB_PRIOR, 0);
-        when SB_NEXT:     term_scroll(SB_NEXT, 0);
+        when SB_PAGEDOWN: term_scroll(0, +max(1, term.rows - 1));
         when SB_THUMBPOSITION or SB_THUMBTRACK: {
           SCROLLINFO info;
           info.cbSize = sizeof(SCROLLINFO);
@@ -2492,6 +2489,12 @@ static struct {
           GetScrollInfo(wnd, SB_VERT, &info);
           term_scroll(1, info.nTrackPos);
         }
+        when SB_TOP:      term_scroll(+1, 0);
+        when SB_BOTTOM:   term_scroll(-1, 0);
+        //when SB_ENDSCROLL: ;
+        // these two may be used by mintty keyboard shortcuts (not by Windows)
+        when SB_PRIOR:    term_scroll(SB_PRIOR, 0);
+        when SB_NEXT:     term_scroll(SB_NEXT, 0);
       }
 
     when WM_MOUSEMOVE: win_mouse_move(false, lp);
