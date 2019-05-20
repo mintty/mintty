@@ -2029,7 +2029,7 @@ do_csi(uchar c)
         set_modes(val & 1);
       }
     }
-    when CPAIR('#', '{'): { /* Push video attributes onto stack (XTPUSHSGR) */
+    when CPAIR('#', '{') or CPAIR('#', 'p'): { /* Push video attributes onto stack (XTPUSHSGR) */
       cattr ca = term.curs.attr;
       cattrflags caflagsmask = 0;
 
@@ -2069,7 +2069,7 @@ do_csi(uchar c)
       //printf("XTPUSHSGR &%llX %llX %06X %06X %06X\n", caflagsmask, ca.attr, ca.truefg, ca.truebg, ca.ulcolr);
       push_attrs(ca, caflagsmask);
     }
-    when CPAIR('#', '}'): { /* Pop video attributes from stack (XTPOPSGR) */
+    when CPAIR('#', '}') or CPAIR('#', 'q'): { /* Pop video attributes from stack (XTPOPSGR) */
       //printf("XTPOPSGR\n");
       // pop
       cattr ca;
