@@ -1527,7 +1527,7 @@ set_modes(bool state)
           term.report_font_changed = state;
         when 7783:       /* 'S': Shortcut override */
           term.shortcut_override = state;
-        when 7786:       /* 'V': Mousewheel reporting */
+        when 1007 or 7786:       /* 'V': Mousewheel reporting */
           term.wheel_reporting = state;
         when 7787:       /* 'W': Application mousewheel mode */
           term.app_wheel = state;

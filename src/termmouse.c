@@ -729,6 +729,9 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
           send_keys(up ? "\e[1;2a" : "\e[1;2b", 6, pages);
           send_keys(up ? "\eOa" : "\eOb", 3, lines);
         }
+        else if (term.vt52_mode) {
+          send_keys(up ? "\eA" : "\eB", 3, lines);
+        }
         else {
           send_keys(up ? "\e[5~" : "\e[6~", 4, pages);
           char code[3] =
