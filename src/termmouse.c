@@ -717,15 +717,15 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
           return;
         term_scroll(0, -lines);
       }
-      else if (term.wheel_reporting) {
-        if (strstr(cfg.suppress_wheel, "scrollapp"))
+      else if (term.wheel_reporting || term.wheel_reporting_xterm) {
+        if (strstr(cfg.suppress_wheel, "scrollapp") && !term.wheel_reporting_xterm)
           return;
         // Send scroll distance as CSI a/b events
         bool up = lines > 0;
         lines = abs(lines);
         int pages = lines / lines_per_page;
         lines -= pages * lines_per_page;
-        if (term.app_wheel) {
+        if (term.app_wheel && !term.wheel_reporting_xterm) {
           send_keys(up ? "\e[1;2a" : "\e[1;2b", 6, pages);
           send_keys(up ? "\eOa" : "\eOb", 3, lines);
         }

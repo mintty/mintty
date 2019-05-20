@@ -1527,7 +1527,9 @@ set_modes(bool state)
           term.report_font_changed = state;
         when 7783:       /* 'S': Shortcut override */
           term.shortcut_override = state;
-        when 1007 or 7786:       /* 'V': Mousewheel reporting */
+        when 1007:       /* Alternate Scroll Mode, xterm */
+          term.wheel_reporting_xterm = state;
+        when 7786:       /* 'V': Mousewheel reporting */
           term.wheel_reporting = state;
         when 7787:       /* 'W': Application mousewheel mode */
           term.app_wheel = state;
@@ -1691,6 +1693,8 @@ get_mode(bool privatemode, int arg)
         return 2 - term.report_font_changed;
       when 7783:       /* 'S': Shortcut override */
         return 2 - term.shortcut_override;
+      when 1007:       /* Alternate Scroll Mode, xterm */
+        return 2 - term.wheel_reporting_xterm;
       when 7786:       /* 'V': Mousewheel reporting */
         return 2 - term.wheel_reporting;
       when 7787:       /* 'W': Application mousewheel mode */

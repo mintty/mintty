@@ -7,7 +7,7 @@ Terminal features
   * Primary Device Attributes report VT420 by default; VT525 supported.
   * Blinking cursor mode (DECSET 12) overlays blinking cursor style (DECSCUSR) so that DECRST 12 does not spoil blinking style (#818, mintty/wsltty#133).
   * Support ECMA-48 SPD control sequence, values 0 and 3 (RTL fun feature).
-  * Support DECSET 1007 (mouse wheel reporting) (mintty alias 7786 deprecated).
+  * Support DECSET 1007 (mouse wheel reporting, xterm).
   * Fixed DECSET 80 (sixel scrolling mode) which was reverted.
   * Clear All Tabs sequence (TBC 3) extends after resizing, compatible with xterm.
   * VT52 mode, thereby becoming fully VT100-compatible, with Atari ST extensions.

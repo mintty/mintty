@@ -293,7 +293,6 @@ term_reset(bool full)
     term.deccolm_allowed = cfg.enable_deccolm_init;  // not reset by xterm
     term.vt220_keys = vt220(cfg.term);  // not reset by xterm
     term.app_keypad = false;  // xterm only with RIS
-    term.app_wheel = false;
     term.app_control = 0;
     term.auto_repeat = cfg.auto_repeat;  // not supported by xterm
     term.attr_rect = false;
@@ -323,7 +322,9 @@ term_reset(bool full)
     term.report_font_changed = 0;
     term.report_ambig_width = 0;
     term.shortcut_override = term.escape_sends_fs = term.app_escape_key = false;
+    term.wheel_reporting_xterm = false;
     term.wheel_reporting = true;
+    term.app_wheel = false;
     term.echoing = false;
     term.bracketed_paste = false;
     term.wide_indic = false;

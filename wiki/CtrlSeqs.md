@@ -144,8 +144,13 @@ Mousewheel reporting only happens on the alternate screen, whereas on the primar
 |:--------------|:--------------|
 | `^[[?1007l`   | disabled      |
 | `^[[?1007h`   | enabled       |
-| `^[[?7786l`   | disabled (deprecated) |
-| `^[[?7786h`   | enabled (deprecated)  |
+| `^[[?7786l`   | disabled      |
+| `^[[?7786h`   | enabled       |
+
+The xterm-style sequence mode (1007) is disabled by default but the mintty 
+feature (7786) is enabled by default. The mintty mode can be formatted 
+to private sequences (see below). To support these subtle differences, 
+both can be switched independently.
 
 By default, mousewheel events are reported as cursor key presses, which enables
 mousewheel scrolling in applications such as **[less](http://www.greenwoodsoftware.com/less)** without requiring any configuration. Alternatively, mousewheel reporting can be switched to _application mousewheel mode_, where the mousewheel sends its own separate keycodes that allow an application to treat the mousewheel differently from cursor keys:
