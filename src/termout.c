@@ -220,9 +220,17 @@ attr_rect(cattrflags add, cattrflags sub, cattrflags xor, short y0, short x0, sh
     }
     for (int x = xl; x <= xr; x++) {
       //printf("attr %d:%d\n", y, x);
-      l->chars[x].attr.attr ^= xor;
-      l->chars[x].attr.attr &= ~sub;
-      l->chars[x].attr.attr |= add;
+      cattrflags ca = l->chars[x].attr.attr;
+      ca ^= xor;
+      ca &= ~sub;
+      ca |= add;
+      if (ca != l->chars[x].attr.attr) {
+        if (x == xl)
+          term_check_boundary(x, y);
+        if (x == xr)
+          term_check_boundary(x + 1, y);
+      }
+      l->chars[x].attr.attr = ca;
     }
   }
 }
