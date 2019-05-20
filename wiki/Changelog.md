@@ -33,6 +33,7 @@ Configuration
   * New user-definable key name CapsLock.
   * New user-definable key name prefix ‘*’ to define for all modifiers.
   * New user-definable modifier key assignments super and hyper.
+  * New user-definable function paste-path (mintty/wsltty#161).
   * New prefixes U/Y (for super/hyper) for user-defined keys.
   * New user-definable numeric action, entering a function key sequence.
   * New option BellInterval to squash BEL sequences (#865).

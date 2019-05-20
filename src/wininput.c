@@ -1378,6 +1378,7 @@ static struct function_def cmd_defs[] = {
   {"copy-html-format", {IDM_COPY_HFMT}, mflags_copy},
   {"copy-html-full", {IDM_COPY_HTML}, mflags_copy},
   {"paste", {IDM_PASTE}, mflags_paste},
+  {"paste-path", {.fct = win_paste_path}, mflags_paste},
   {"copy-paste", {IDM_COPASTE}, mflags_copy},
   {"select-all", {IDM_SELALL}, 0},
   {"clear-scrollback", {IDM_CLRSCRLBCK}, 0},
