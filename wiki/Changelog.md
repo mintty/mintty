@@ -41,6 +41,7 @@ Configuration
   * New option BellInterval to squash BEL sequences (#865).
   * New option SearchContext (#797).
   * Offer terminal types vt420, vt525; also xterm-direct, mintty, mintty-direct if installed (~#866, ~#867).
+  * With --WSL, initialise title to WSL name rather than command line (~mintty/wsltty#167).
 
 ### 3.0.0 (28 March 2019) ###
 
