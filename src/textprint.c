@@ -8,7 +8,7 @@ static wstring printer = 0;
 static char * pf;
 static int pd;
 static const wchar BOM = 0xFEFF;
-static int np = 0;
+static uint np = 0;
 
 void
 printer_start_job(wstring printer_name)
