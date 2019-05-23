@@ -3002,6 +3002,18 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
       yt += cell_height * 1 / 8;
   }
 
+  int layer = 0;
+  colour fg0 = fg;
+  if (attr.attr & ATTR_SHADOW) {
+    layer = 1;
+    xt += line_width;
+    yt -= layer * line_width;
+    fg = ((fg & 0xFEFEFEFE) >> 1) + ((win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1);
+    SetTextColor(dc, fg);
+  }
+
+draw:
+
  /* Wavy underline */
   if (!ldisp2 && lattr != LATTR_TOP &&
       (attr.attr & UNDER_MASK) == ATTR_CURLYUND
@@ -3571,6 +3583,19 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   }
 
   _return:
+
+  if (layer) {
+    layer--;
+    if (!layer) {
+      xt -= line_width;
+      fg = fg0;
+      SetTextColor(dc, fg);
+    }
+    yt += line_width;
+    underlaid = true;
+    goto draw;
+  }
+
   if (coord_transformed)
     SetWorldTransform(dc, &old_xform);
 }
