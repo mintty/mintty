@@ -860,7 +860,8 @@ buf_path(wchar * wfn)
         else if (strncmp(p, "/cygdrive/", 10) == 0) {
           // convert /cygdrive/X/path referring to mounted drive
           p += 5;
-          strncpy(p, "/mnt", 4);
+          //strncpy(p, "/mnt", 4);
+          memcpy(p, "/mnt", 4);
         }
       }
       else {
@@ -910,7 +911,8 @@ buf_path(wchar * wfn)
           p = mp;
         else if (strncmp(p, "/cygdrive/", 10) == 0) {
           p += 5;
-          strncpy(p, "/mnt", 4);
+          //strncpy(p, "/mnt", 4);
+          memcpy(p, "/mnt", 4);
         }
       }
     }

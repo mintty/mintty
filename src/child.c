@@ -356,7 +356,9 @@ child_create(char *argv[], struct winsize *winp)
           dev += 3;
         else if (!strncmp(dev, "pts/", 4))
           dev += 4;
-        strncpy(ut.ut_id, dev, sizeof ut.ut_id);
+        //strncpy(ut.ut_id, dev, sizeof ut.ut_id);
+        for (uint i = 0; i < sizeof ut.ut_id && *dev; i++)
+          ut.ut_id[i] = *dev++;
 
         ut.ut_type = USER_PROCESS;
         ut.ut_pid = pid;
