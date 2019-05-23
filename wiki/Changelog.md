@@ -1,4 +1,8 @@
 Terminal features
+  * New character attributes overstrike and (as inspired by existing terminfo capabilities) shadow, subscript, superscript:
+    * SGR 8:7 overstrikes characters over preserved screen contents (28 clears).
+    * SGR 1:2 for shadowed display (22 clears).
+    * SGR 73 and SGR 74 for superscript and subscript display (75 clears).
   * VT420 rectangular area copy and fill: DECCRA, DECFRA, DECERA, DECSERA.
   * VT420 area attributes: DECSACE, DECCARA, DECRARA.
   * VT420 left and right margins: DECSLRM and private mode 69.

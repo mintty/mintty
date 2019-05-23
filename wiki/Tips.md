@@ -762,6 +762,7 @@ ISO/IEC 8613-6 sub-parameters are supported.
 |:-----------------------|:------------------|:------------------------------|
 | 1                      | 22                | bold                          |
 | 2                      | 22                | dim                           |
+| 1:2                    | 22                | shadowed                      |
 | 3                      | 23                | italic                        |
 | 4 _or_ 4:1             | 24 _or_ 4:0       | solid underline               |
 | 4:2 _or_ 21            | 24 _or_ 4:0       | double underline              |
@@ -772,6 +773,7 @@ ISO/IEC 8613-6 sub-parameters are supported.
 | 6                      | 25                | rapidly blinking              |
 | 7                      | 27                | inverse                       |
 | 8                      | 28                | invisible                     |
+| 8:7                    | 28                | overstrike                    |
 | 9                      | 29                | strikeout                     |
 | 11 (*)                 | 10                | alternative font 1 (*)        |
 | 12                     | 10                | alternative font 2            |
@@ -799,6 +801,8 @@ ISO/IEC 8613-6 sub-parameters are supported.
 | 58:2::R:G:B            | 59                | underline RGB colour          |
 | 58:3:F:C:M:Y           | 59                | underline CMY colour (*)      |
 | 58:4:F:C:M:Y:K         | 59                | underline CMYK colour (*)     |
+| 73                     | 75                | superscript (tentative)       |
+| 74                     | 75                | subscript   (tentative)       |
 | _any_                  | 0 _or empty_      |                               |
 
 Note: Alternative fonts are configured with options Font1 ... Font10.
@@ -822,6 +826,8 @@ CMY(K) colour values are scaled to a maximum of the given parameter F (=100%).
 Note: The emoji style attribute sets the display preference for a number 
 of characters that have emojis but would be displayed with text style 
 by default (e.g. decimal digits).
+
+Note: SGR codes for superscript and subscript display are subject to change.
 
 Note: Text attributes can be disabled with option SuppressSGR (see manual).
 

@@ -1123,6 +1123,12 @@ do_sgr(void)
         attr.attr |= prot;
       when 1: attr.attr |= ATTR_BOLD;
       when 2: attr.attr |= ATTR_DIM;
+      when 1 | SUB_PARS:
+        if (i + 1 < argc)
+          switch (term.csi_argv[i + 1]) {
+            when 2:
+              attr.attr |= ATTR_SHADOW;
+          }
       when 3: attr.attr |= ATTR_ITALIC;
       when 4:
         attr.attr &= ~UNDER_MASK;
@@ -1152,7 +1158,16 @@ do_sgr(void)
       when 6: attr.attr |= ATTR_BLINK2;
       when 7: attr.attr |= ATTR_REVERSE;
       when 8: attr.attr |= ATTR_INVISIBLE;
+      when 8 | SUB_PARS:
+        if (i + 1 < argc)
+          switch (term.csi_argv[i + 1]) {
+            when 7:
+              attr.attr |= ATTR_OVERSTRIKE;
+          }
       when 9: attr.attr |= ATTR_STRIKEOUT;
+      when 73: attr.attr |= ATTR_SUPERSCR;
+      when 74: attr.attr |= ATTR_SUBSCR;
+      when 75: attr.attr &= ~(ATTR_SUPERSCR | ATTR_SUBSCR);
       when 10 ... 11: {  // ... 12 disabled
         // mode 10 is the configured character set
         // mode 11 is the VGA character set (CP437 + control range graphics)
@@ -1178,7 +1193,7 @@ do_sgr(void)
       when 21:
         attr.attr &= ~UNDER_MASK;
         attr.attr |= ATTR_DOUBLYUND;
-      when 22: attr.attr &= ~(ATTR_BOLD | ATTR_DIM);
+      when 22: attr.attr &= ~(ATTR_BOLD | ATTR_DIM | ATTR_SHADOW);
       when 23:
         attr.attr &= ~ATTR_ITALIC;
         if (((attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT) + 10 == 20)
@@ -1186,7 +1201,7 @@ do_sgr(void)
       when 24: attr.attr &= ~UNDER_MASK;
       when 25: attr.attr &= ~(ATTR_BLINK | ATTR_BLINK2);
       when 27: attr.attr &= ~ATTR_REVERSE;
-      when 28: attr.attr &= ~ATTR_INVISIBLE;
+      when 28: attr.attr &= ~(ATTR_INVISIBLE | ATTR_OVERSTRIKE);
       when 29: attr.attr &= ~ATTR_STRIKEOUT;
       when 30 ... 37: /* foreground */
         attr.attr &= ~ATTR_FGMASK;
@@ -2035,19 +2050,21 @@ do_csi(uchar c)
 
       void set_push(int attr) {
         switch (attr) {
-          when 1: caflagsmask |= ATTR_BOLD;
+          when 1: caflagsmask |= ATTR_BOLD | ATTR_SHADOW;
           when 2: caflagsmask |= ATTR_DIM;
           when 3: caflagsmask |= ATTR_ITALIC;
           when 4 or 21: caflagsmask |= UNDER_MASK;
           when 5 or 6: caflagsmask |= ATTR_BLINK | ATTR_BLINK2;
           when 7: caflagsmask |= ATTR_REVERSE;
-          when 8: caflagsmask |= ATTR_INVISIBLE;
+          when 8: caflagsmask |= ATTR_INVISIBLE | ATTR_OVERSTRIKE;
           when 9: caflagsmask |= ATTR_STRIKEOUT;
           when 20: caflagsmask |= FONTFAM_MASK;
           when 53: caflagsmask |= ATTR_OVERL;
           when 58: caflagsmask |= ATTR_ULCOLOUR;
           when 10: caflagsmask |= ATTR_FGMASK;
           when 11: caflagsmask |= ATTR_BGMASK;
+          when 73: caflagsmask |= ATTR_SUPERSCR;
+          when 74: caflagsmask |= ATTR_SUBSCR;
         }
       }
 
@@ -2605,13 +2622,15 @@ do_dcs(void)
     switch (term.state) {
     when DCS_ESCAPE:       // DECRQSS
       if (!strcmp(s, "m")) { // SGR
-        char buf[76], *p = buf;
+        char buf[90], *p = buf;
         p += sprintf(p, "\eP1$r0");
 
         if (attr.attr & ATTR_BOLD)
           p += sprintf(p, ";1");
         if (attr.attr & ATTR_DIM)
           p += sprintf(p, ";2");
+        if (attr.attr & ATTR_SHADOW)
+          p += sprintf(p, ";1:2");
         if (attr.attr & ATTR_ITALIC)
           p += sprintf(p, ";3");
 
@@ -2633,6 +2652,8 @@ do_dcs(void)
           p += sprintf(p, ";7");
         if (attr.attr & ATTR_INVISIBLE)
           p += sprintf(p, ";8");
+        if (attr.attr & ATTR_OVERSTRIKE)
+          p += sprintf(p, ";8:7");
         if (attr.attr & ATTR_STRIKEOUT)
           p += sprintf(p, ";9");
         if ((attr.attr & UNDER_MASK) == ATTR_DOUBLYUND)
@@ -2641,6 +2662,10 @@ do_dcs(void)
           p += sprintf(p, ";51;52");
         if (attr.attr & ATTR_OVERL)
           p += sprintf(p, ";53");
+        if (attr.attr & ATTR_SUPERSCR)
+          p += sprintf(p, ";73");
+        if (attr.attr & ATTR_SUBSCR)
+          p += sprintf(p, ";74");
 
         if (term.curs.oem_acs)
           p += sprintf(p, ";%u", 10 + term.curs.oem_acs);
