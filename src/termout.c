@@ -610,6 +610,12 @@ write_char(wchar c, int width)
     wrapparabidi(parabidi, line, curs->y);
   }
 
+  bool overstrike = false;
+  if (curs->attr.attr & ATTR_OVERSTRIKE) {
+    width = 0;
+    overstrike = true;
+  }
+
   if (term.insert && width > 0)
     insert_char(width);
 
@@ -665,6 +671,9 @@ write_char(wchar c, int width)
        /* If we're in wrapnext state, the character
         * to combine with is _here_, not to our left. */
         int x = curs->x - !curs->wrapnext;
+       /* Same if we overstrike an actually not combining character. */
+        if (overstrike)
+          x = curs->x;
        /*
         * If the previous character is UCSWIDE, back up another one.
         */
@@ -688,7 +697,10 @@ write_char(wchar c, int width)
         // particularly to include initial bidi directional markers
         add_cc(line, -1, c, curs->attr);
       }
-      return;
+      if (!overstrike)
+        return;
+      // otherwise width 0 was faked for this switch, 
+      // and we still need to advance the cursor below
     otherwise:  // Anything else. Probably shouldn't get here.
       return;
   }
