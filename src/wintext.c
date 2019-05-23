@@ -25,8 +25,9 @@ enum {
   FONT_STRIKEOUT = 0x08,
   FONT_HIGH      = 0x10,
   FONT_ZOOMFULL  = 0x20,
-  FONT_WIDE      = 0x40,
-  FONT_NARROW    = 0x80,
+  FONT_ZOOMSMALL = 0x40,
+  FONT_WIDE      = 0x80,
+  FONT_NARROW    = 0x100,
   FONT_MAXNO     = FONT_WIDE + FONT_NARROW
 };
 
@@ -1330,6 +1331,10 @@ another_font(struct fontfam * ff, int fontno)
   if (fontno & FONT_ZOOMFULL) {
     y = cell_height * (1 + !!(fontno & FONT_HIGH));
     x = cell_width * (1 + !!(fontno & FONT_WIDE));
+  }
+  if (fontno & FONT_ZOOMSMALL) {
+    y = y * 12 / 20;
+    x = x * 12 / 20;
   }
 
 #ifdef debug_create_font
@@ -2695,6 +2700,8 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     nfont |= FONT_STRIKEOUT;
   if (attr.attr & TATTR_ZOOMFULL)
     nfont |= FONT_ZOOMFULL;
+  if (attr.attr & (ATTR_SUBSCR | ATTR_SUPERSCR))
+    nfont |= FONT_ZOOMSMALL;
   another_font(ff, nfont);
 
   bool force_manual_underline = false;
@@ -2985,6 +2992,14 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     SetTextColor(dc, fg);
 
     underlaid = true;
+  }
+
+  if (attr.attr & (ATTR_SUBSCR | ATTR_SUPERSCR)) {
+    xt += cell_width * 3 / 10;
+    if (attr.attr & ATTR_SUBSCR)
+      yt += cell_height * 3 / 8;
+    else
+      yt += cell_height * 1 / 8;
   }
 
  /* Wavy underline */
