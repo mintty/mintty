@@ -129,6 +129,8 @@ wchar
 win_linedraw_char(int i)
 {
   int findex = (term.curs.attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+  if (findex > 10)
+    findex = 0;
   struct fontfam * ff = &fontfamilies[findex];
   return ff->win_linedraw_chars[i];
 }
@@ -2538,8 +2540,41 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
 {
   //if (kb_trace) {printf("[%ld] <win_text\n", mtime()); kb_trace = 0;}
 
-  int graph = (attr.attr >> ATTR_GRAPH_SHIFT) & 0xFF;
+  int graph = (attr.attr & GRAPH_MASK) >> ATTR_GRAPH_SHIFT;
+  bool graph_vt52 = false;
   int findex = (attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+  // in order to save attributes bits, special graphic handling is encoded 
+  // in a compact form, combined with unused values of the font number;
+  // here we do some decoding and also recoding back to the previous format, 
+  // in order to avoid micro-refactoring in the code below, 
+  // where graphic encoding is interpreted bitwise in some cases;
+  // the font ranges used are:
+  //  <none> (graph part only): special for DEC Technical, VT52 fraction
+  //  11     VT100 Line Drawing, bit-wise encoded segments
+  //  12     VT100 scanlines 1...5
+  //  13     VT52 scanlines 1...8
+  //  14     Unicode Block Elements, part 1
+  //  15     Unicode Block Elements, part 2
+  if (findex > 10) {
+    if (findex == 12) // VT100 scanlines
+      graph <<= 4;
+    else if (findex == 13) { // VT52 scanlines
+      graph <<= 4;
+      graph_vt52 = true;
+    }
+    else if (findex >= 14)
+      graph |= 0x80 | ((findex & 1) << 4);
+
+    findex = 0;
+  }
+  else if (graph) {
+    if (graph == 0xF)
+      graph = 0xF7;
+    else if (graph == 0xE)
+      graph = 0xE0;
+    else
+      graph |= 0xE0;
+  }
   struct fontfam * ff = &fontfamilies[findex];
 
   trace_line("win_text:");
@@ -2748,6 +2783,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   }
 
   if (graph && graph < 0xE0) {
+    // clear codes for Block Elements, VT100 Line Drawing and "scanlines"
     for (int i = 0; i < len; i++)
       text[i] = ' ';
   }
@@ -3056,7 +3092,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   }
 
  /* DEC Tech adjustments */
-  if (graph >= 0xE0) {  // DEC Technical rendering to be fixed
+  if (graph >= 0xE0) {  // adjust rendering of DEC Technical and VT52 fraction
     if ((graph & ~1) == 0xE8)  // left square bracket corners
       xt += line_width + 1;
     else if ((graph & ~1) == 0xEA)  // right square bracket corners
@@ -3165,7 +3201,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
 #define DRAW_DOWN  0x4
 #endif
 
-  if (graph >= 0xE0) {  // DEC Technical characters to be fixed
+  if (graph >= 0xE0) {  // fix DEC Technical characters, draw VT52 fraction
     if (graph & 0x08) {
       // square bracket corners already repositioned above
     }
@@ -3256,7 +3292,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
       DeleteObject(oldpen);
     }
   }
-  else if (graph >= 0x80) {  // Unicode Block Elements
+  else if (graph >= 0x80 && !graph_vt52) {  // Unicode Block Elements
     // Block Elements (U+2580-U+259F)
     // ▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟
     int char_height = cell_height;
@@ -3392,9 +3428,10 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
       xi += char_width;
     }
   }
-  else if (graph >> 4) {  // VT100 horizontal lines ⎺⎻(─)⎼⎽
+  else if (graph >> 4) {  // VT100/VT52 horizontal "scanlines"
+    int parts = graph_vt52 ? 8 : 5;
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
-    int yoff = (cell_height - line_width) * (graph >> 4) / 5;
+    int yoff = (cell_height - line_width) * (graph >> 4) / parts;
     if (lattr >= LATTR_TOP)
       yoff *= 2;
     if (lattr == LATTR_BOT)
@@ -3531,6 +3568,8 @@ void
 win_check_glyphs(wchar *wcs, uint num)
 {
   int findex = (term.curs.attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+  if (findex > 10)
+    findex = 0;
   struct fontfam * ff = &fontfamilies[findex];
 
   bool bold = (ff->bold_mode == BOLD_FONT) && (term.curs.attr.attr & ATTR_BOLD);
@@ -3576,6 +3615,8 @@ int
 win_char_width(xchar c)
 {
   int findex = (term.curs.attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+  if (findex > 10)
+    findex = 0;
   struct fontfam * ff = &fontfamilies[findex];
 
 #define measure_width

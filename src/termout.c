@@ -3178,17 +3178,21 @@ term_do_write(const char *buf, uint len)
           when CSET_VT52DRW:  // VT52 "graphics" mode
             if (0x5E <= wc && wc <= 0x7E) {
               uchar dispcode = 0;
+              uchar gcode = 0;
               if ('l' <= wc && wc <= 's') {
-                static uchar linedraw_code[8] = {
-                  0x10, 0x20, 0x20, 0x0A, 0x0A, 0x40, 0x40, 0x50
-                };
-                dispcode = linedraw_code[wc - 'l'];
+                dispcode = wc - 'l' + 1;
+                gcode = 13;
               }
               else if ('c' <= wc && wc <= 'e') {
-                dispcode = 0xF7;
+                dispcode = 0xF;
               }
               wc = W("^ ￿▮⅟³⁵⁷°±→…÷↓⎺⎺⎻⎻⎼⎼⎽⎽₀₁₂₃₄₅₆₇₈₉¶") [c - 0x5E];
               term.curs.attr.attr |= ((cattrflags)dispcode) << ATTR_GRAPH_SHIFT;
+              if (gcode) {
+                // extend graph encoding with unused font number
+                term.curs.attr.attr &= ~FONTFAM_MASK;
+                term.curs.attr.attr |= (cattrflags)gcode << ATTR_FONTFAM_SHIFT;
+              }
             }
           when CSET_LINEDRW:  // VT100 line drawing characters
             if (0x60 <= wc && wc <= 0x7E) {
@@ -3210,7 +3214,17 @@ term_do_write(const char *buf, uint len)
                   0, 0, 0, 0, 0, 0
                 };
                 uchar dispcode = linedraw_code[wc - 0x60];
-                term.curs.attr.attr |= ((cattrflags)dispcode) << ATTR_GRAPH_SHIFT;
+                if (dispcode) {
+                  uchar gcode = 11;
+                  if (dispcode >> 4) {
+                    dispcode >>= 4;
+                    gcode++;
+                  }
+                  term.curs.attr.attr |= ((cattrflags)dispcode) << ATTR_GRAPH_SHIFT;
+                  // extend graph encoding with unused font numbers
+                  term.curs.attr.attr &= ~FONTFAM_MASK;
+                  term.curs.attr.attr |= (cattrflags)gcode << ATTR_FONTFAM_SHIFT;
+                }
               }
 #endif
               wc = dispwc;
@@ -3223,12 +3237,12 @@ term_do_write(const char *buf, uint len)
                    [c - ' ' - 1];
               if (c <= 0x37) {
                 static uchar techdraw_code[23] = {
-                  0xE0,                    // square root base
+                  0xE,                          // square root base
                   0, 0, 0, 0, 0,
-                  0xE8, 0xE9, 0xEA, 0xEB,  // square bracket corners
-                  0, 0, 0, 0,              // curly bracket hooks
-                  0, 0,                    // curly bracket middle pieces
-                  0xE1, 0xE2, 0, 0, 0xE5, 0xE6, 0xE7  // sum segments
+                  0x8, 0x9, 0xA, 0xB,           // square bracket corners
+                  0, 0, 0, 0,                   // curly bracket hooks
+                  0, 0,                         // curly bracket middle pieces
+                  0x1, 0x2, 0, 0, 0x5, 0x6, 0x7 // sum segments
                 };
                 uchar dispcode = techdraw_code[c - 0x21];
                 term.curs.attr.attr |= ((cattrflags)dispcode) << ATTR_GRAPH_SHIFT;
@@ -3329,7 +3343,11 @@ term_do_write(const char *buf, uint len)
         if (wc >= 0x2580 && wc <= 0x259F) {
           // Block Elements (U+2580-U+259F)
           // ▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟
-          term.curs.attr.attr |= ((cattrflags)(wc & 0xFF)) << ATTR_GRAPH_SHIFT;
+          term.curs.attr.attr |= ((cattrflags)(wc & 0xF)) << ATTR_GRAPH_SHIFT;
+          uchar gcode = 14 + ((wc >> 4) & 1);
+          // extend graph encoding with unused font numbers
+          term.curs.attr.attr &= ~FONTFAM_MASK;
+          term.curs.attr.attr |= (cattrflags)gcode << ATTR_FONTFAM_SHIFT;
         }
 
         write_char(wc, width);

@@ -735,6 +735,8 @@ term_create_html(FILE * hf, int level)
           hprintf(hf, " ul");
       }
       int findex = (ca->attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+      if (findex > 10)
+        findex = 0;
       if (findex) {
         if (enhtml) {
           if (*cfg.fontfams[findex].name || findex == 10) {
