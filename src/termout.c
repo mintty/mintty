@@ -2090,7 +2090,7 @@ do_csi(uchar c)
         }
       if ((ca.attr & caflagsmask & ATTR_FGMASK) != TRUE_COLOUR)
         ca.truefg = 0;
-      if ((ca.attr & caflagsmask & ATTR_BGMASK) != TRUE_COLOUR)
+      if ((ca.attr & caflagsmask & ATTR_BGMASK) != TRUE_COLOUR << ATTR_BGSHIFT)
         ca.truebg = 0;
       if (!(caflagsmask & ATTR_ULCOLOUR))
         ca.ulcolr = (colour)-1;
@@ -2110,7 +2110,7 @@ do_csi(uchar c)
                               | (ca.attr & caflagsmask);
         if ((ca.attr & caflagsmask & ATTR_FGMASK) == TRUE_COLOUR)
           term.curs.attr.truefg = ca.truefg;
-        if ((ca.attr & caflagsmask & ATTR_BGMASK) == TRUE_COLOUR)
+        if ((ca.attr & caflagsmask & ATTR_BGMASK) == TRUE_COLOUR << ATTR_BGSHIFT)
           term.curs.attr.truebg = ca.truebg;
         if (caflagsmask & ATTR_ULCOLOUR)
           term.curs.attr.ulcolr = ca.ulcolr;
