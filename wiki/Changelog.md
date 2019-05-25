@@ -18,6 +18,7 @@ Terminal features
   * VT52 mode, thereby becoming fully VT100-compatible, with Atari ST extensions.
   * HP Memory Lock/Unlock (xterm).
   * Added DECSNLS to DECRQSS.
+  * Fixed VT and FF in LNM mode.
   * Fixed format of OSC 5;0;? response.
 
 Keyboard handling

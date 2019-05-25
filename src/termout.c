@@ -760,8 +760,12 @@ do_ctrl(char c)
       write_tab();
     when '\v':   /* VT: Line tabulation */
       write_linefeed();
+      if (term.newline_mode)
+        write_return();
     when '\f':   /* FF: Form feed */
       write_linefeed();
+      if (term.newline_mode)
+        write_return();
     when '\r':   /* CR: Carriage return */
       write_return();
     when '\n':   /* LF: Line feed */
