@@ -376,7 +376,7 @@ switchable bidi behaviour per line and partially per paragraph (i.e. within
 an auto-wrapped line), as listed in 
 \fIhttps://github.com/mintty/mintty/wiki/CtrlSeqs#bidirectional-rendering\fP.
 They follow the current status of the bidi mode model of the 
-«BiDi in Terminal Emulators» recommendation 
+\fBBiDi in Terminal Emulators\fP recommendation 
 (\fIhttps://terminal-wg.pages.freedesktop.org/bidi/\fP).
 
 .SS Menus
@@ -2892,17 +2892,20 @@ like a number of other terminal emulators, it reuses the xterm entry.
 .SS Screen control features, DEC and xterm compatibility
 
 Mintty is compatible with xterm screen control.
-It support DEC terminal screen features up to the VT500 series, 
+It supports DEC terminal screen features up to the VT500 series 
+except DECRLM (right-to-left cursor motion), 
 also supporting VT52 mode, thus being fully VT100-compatible.
 It also includes most other xterm-specific control sequences and modes.
 
 In addition, mintty supports a maximum of ANSI and ECMA-48 character attribute controls 
-(including RGB and CMYK true-colour support, italic, 
-underline styles and colours, overline, strikeout, rapid blinking, 
-alternative fonts). Mintty provides Sixel graphics support, Emoji support, 
-and Bidi reordering according to the Unicode Bidi Algorithm UBA, amended 
-with flexible bidi controls according to the draft bidi mode model of the 
-«BiDi in Terminal Emulators» recommendation 
+(including RGB and CMYK true-colour support, italic, overline, 
+strikeout, rapid blinking, alternative fonts) and additional 
+rendering attributes (underline styles and colours, superscript and subscript, 
+shadowed and overstrike).
+Mintty provides Sixel graphics support, Emoji support, and 
+Bidi reordering according to the Unicode Bidi Algorithm UBA, amended 
+with flexible bidi controls according to the draft bidi mode model of 
+the \fBBiDi in Terminal Emulators\fP recommendation 
 (\fIhttps://terminal-wg.pages.freedesktop.org/bidi/\fP).
 
 Mintty is not as configurable as xterm; it offers essential configuration 
