@@ -472,19 +472,21 @@ win_copy_as(const wchar *data, cattr *cattrs, int len, char what)
       MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS,
                           (char[]){i}, 1, unitab + i, 1);
 
-    char * rtffontname = newn(char, wcslen(cfg.font.name) * 9 + 1);
+    wstring cfgfont = *cfg.copy_as_rtf_font ? cfg.copy_as_rtf_font : cfg.font.name;
+    int cfgsize = cfg.copy_as_rtf_font_size ? cfg.copy_as_rtf_font_size : cfg.font.size;
+    char * rtffontname = newn(char, wcslen(cfgfont) * 9 + 1);
     char * rtffnpoi = rtffontname;
-    for (uint i = 0; i < wcslen(cfg.font.name); i++)
-      if (!(cfg.font.name[i] & 0xFF80) && !strchr("\\;{}", cfg.font.name[i]))
-        *rtffnpoi++ = cfg.font.name[i];
+    for (uint i = 0; i < wcslen(cfgfont); i++)
+      if (!(cfgfont[i] & 0xFF80) && !strchr("\\;{}", cfgfont[i]))
+        *rtffnpoi++ = cfgfont[i];
       else
-        rtffnpoi += sprintf(rtffnpoi, "\\u%d '", cfg.font.name[i]);
+        rtffnpoi += sprintf(rtffnpoi, "\\u%d '", cfgfont[i]);
     *rtffnpoi = '\0';
     rtfsize = 100 + strlen(rtffontname);
     rtf = newn(char, rtfsize);
     rtflen = sprintf(rtf,
       "{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0\\fmodern %s;}}\\f0\\fs%d",
-      rtffontname, cfg.font.size * 2);
+      rtffontname, cfgsize * 2);
     free(rtffontname);
 
    /*
