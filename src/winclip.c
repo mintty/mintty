@@ -712,7 +712,8 @@ win_copy_as(const wchar *data, cattr *cattrs, int len, char what)
     // determine HTML format level requested
     int level = 0;
     if (cfg.copy_as_html && !what)
-      level = cfg.copy_as_rtf ? 2 : 3;
+      //level = cfg.copy_as_rtf ? 2 : 3;
+      level = cfg.copy_as_html;
     else if (what == 'h')
       level = 1;
     else if (what == 'f')
