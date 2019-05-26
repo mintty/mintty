@@ -38,6 +38,7 @@ Window handling
 Clipboard handling
   * Trim trailing spaces for HTML and HTML text copies (#878).
   * Select HTML detail level by setting of "Copy as HTML" alone (#878).
+  * Specify "fixed pitch" for RTF format (~#878).
 
 Configuration
   * Mintty packages include a selection of bell sounds (#711).

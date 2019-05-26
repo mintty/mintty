@@ -483,7 +483,7 @@ win_copy_as(const wchar *data, cattr *cattrs, int len, char what)
     rtfsize = 100 + strlen(rtffontname);
     rtf = newn(char, rtfsize);
     rtflen = sprintf(rtf,
-      "{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0\\fmodern %s;}}\\f0\\fs%d",
+      "{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0\\fmodern\\fprq1 %s;}}\\f0\\fs%d",
       rtffontname, cfg.font.size * 2);
     free(rtffontname);
 
