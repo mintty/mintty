@@ -35,6 +35,9 @@ Window handling
   * No limited font warning if the selected locale is likewise limited (~#871).
   * Suppress output rendering while window is iconic (~#875).
 
+Clipboard handling
+  * Trim trailing spaces for HTML and HTML text copies (#878).
+
 Configuration
   * Mintty packages include a selection of bell sounds (#711).
   * New user-definable key name CapsLock.
