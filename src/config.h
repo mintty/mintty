@@ -104,7 +104,7 @@ typedef struct {
   bool copy_as_rtf;
   char copy_as_html;
   wstring copy_as_rtf_font;
-  char copy_as_rtf_font_size;
+  int copy_as_rtf_font_size;
   bool clicks_place_cursor;
   char middle_click_action;
   char right_click_action;
