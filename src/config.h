@@ -102,7 +102,7 @@ typedef struct {
   // Mouse
   bool copy_on_select;
   bool copy_as_rtf;
-  char copy_as_html;
+  int copy_as_html;
   wstring copy_as_rtf_font;
   int copy_as_rtf_font_size;
   bool clicks_place_cursor;

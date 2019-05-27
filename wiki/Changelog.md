@@ -35,12 +35,18 @@ Window handling
   * No limited font warning if the selected locale is likewise limited (~#871).
   * Suppress output rendering while window is iconic (~#875).
 
+Clipboard handling
+  * Trim trailing spaces for HTML and HTML text copies (#878).
+  * Select HTML detail level by setting of "Copy as HTML" alone (#878).
+  * Specify "fixed pitch" for RTF format (~#878).
+
 Configuration
   * Mintty packages include a selection of bell sounds (#711).
   * New user-definable key name CapsLock.
   * New user-definable key name prefix ‘*’ to define for all modifiers.
   * New user-definable modifier key assignments super and hyper.
   * New user-definable function paste-path (mintty/wsltty#161).
+  * New user-definable control char syntax (#873).
   * New prefixes U/Y (for super/hyper) for user-defined keys.
   * New user-definable numeric action, entering a function key sequence.
   * New option BellInterval to squash BEL sequences (#865).

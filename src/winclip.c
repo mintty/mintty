@@ -485,7 +485,7 @@ win_copy_as(const wchar *data, cattr *cattrs, int len, char what)
     rtfsize = 100 + strlen(rtffontname);
     rtf = newn(char, rtfsize);
     rtflen = sprintf(rtf,
-      "{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0\\fmodern %s;}}\\f0\\fs%d",
+      "{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0\\fmodern\\fprq1 %s;}}\\f0\\fs%d",
       rtffontname, cfgsize * 2);
     free(rtffontname);
 
@@ -714,7 +714,8 @@ win_copy_as(const wchar *data, cattr *cattrs, int len, char what)
     // determine HTML format level requested
     int level = 0;
     if (cfg.copy_as_html && !what)
-      level = cfg.copy_as_rtf ? 2 : 3;
+      //level = cfg.copy_as_rtf ? 2 : 3;
+      level = cfg.copy_as_html;
     else if (what == 'h')
       level = 1;
     else if (what == 'f')

@@ -1633,6 +1633,24 @@ pick_key_function(wstring key_commands, char * tag, int n, uint key, mod_keys mo
           ret = true;
         }
       }
+      else if (*fct == '^' && wcslen(fct) == 2) {
+        char cc[2];
+        cc[1] = ' ';
+        if (fct[1] == '?')
+          cc[1] = '\177';
+        else if (fct[1] == ' ' || (fct[1] >= '@' && fct[1] <= '_')) {
+          cc[1] = fct[1] & 0x1F;
+        }
+        if (cc[1] != ' ') {
+          if (mods & MDK_ALT) {
+            cc[0] = '\e';
+            child_send(cc, 2);
+          }
+          else
+            child_send(&cc[1], 1);
+          ret = true;
+        }
+      }
       else if (*fct == '`' && fct[wcslen(fct) - 1] == '`') {
         fct[wcslen(fct) - 1] = 0;
         char * cmd = cs__wcstombs(&fct[1]);

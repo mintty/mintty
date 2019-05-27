@@ -2271,15 +2271,17 @@ in order to prevent that input of Ctrl+_ would be inhibited.
 
 Supported actions are described as follows:
 .br
-\(en \fB"string"\fP or \fB\(aqstring\(aq\fP: enters the literal string
+\(en \fB"\fP\fIstring\fP\fB"\fP or \fB\(aq\fP\fIstring\fP\fB\(aq\fP: enters the literal string
 .br
-\(en \fB\`command\` (**)\fP: enters the output of the command
+\(en \fB^\fP\fIchar\fP: enters a control char ('@'...'_' or '?' for DEL)
 .br
-\(en \fInumber (***)\fP: enters the escape sequence CSI\fInumber\fP[;\fImod\fP]~
+\(en \fB\`\fP\fIcommand\fP\fB\`\fP (**): enters the output of the command
 .br
-\(en \fBfullscreen (*)\fP: switches to fullscreen mode
+\(en \fInumber\fP (***): enters the escape sequence CSI\fInumber\fP[;\fImod\fP]~
 .br
-\(en \fBtoggle-fullscreen (*)\fP: toggles fullscreen mode
+\(en \fBfullscreen\fP (*): switches to fullscreen mode
+.br
+\(en \fBtoggle-fullscreen\fP (*): toggles fullscreen mode
 .br
 \(en \fBwin-max\fP: resizes to window size
 .br
@@ -2297,13 +2299,13 @@ Supported actions are described as follows:
 .br
 \(en \fBoptions\fP: opens the Options dialog
 .br
-\(en \fBmenu-text (*)\fP: opens the context menu at the cursor position
+\(en \fBmenu-text\fP (*): opens the context menu at the cursor position
 .br
-\(en \fBmenu-pointer (*)\fP: opens the context menu at the mouse position
+\(en \fBmenu-pointer\fP (*): opens the context menu at the mouse position
 .br
 \(en \fBsearch\fP: opens the search bar
 .br
-\(en \fBdefault-size (*)\fP: switches to default terminal size
+\(en \fBdefault-size\fP (*): switches to default terminal size
 .br
 \(en \fBscrollbar-outer\fP: toggles the scrollbar (xterm compatible)
 .br
@@ -2355,7 +2357,7 @@ Supported actions are described as follows:
 .br
 \(en \fBtoggle-char-info\fP: toggles character info display
 .br
-\(en \fBexport-html (*)\fP: exports the screen as an HTML file
+\(en \fBexport-html\fP (*): exports the screen as an HTML file
 .br
 \(en \fBprint-screen\fP: print screen contents
 .br
