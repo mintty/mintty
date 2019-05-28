@@ -1,3 +1,6 @@
+Window handling
+  * Reenable left scrollbar.
+
 ### 3.0.1 (28 May 2019) ###
 
 Highlights

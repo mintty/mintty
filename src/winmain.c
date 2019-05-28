@@ -1906,7 +1906,7 @@ void
 win_update_scrollbar(bool inner)
 {
   // enforce outer scrollbar if switched on
-  int scrollbar = term.show_scrollbar ? (cfg.scrollbar || !inner) : 0;
+  int scrollbar = term.show_scrollbar ? (cfg.scrollbar ?: !inner) : 0;
   // keep config consistent with enforced scrollbar
   if (scrollbar && !cfg.scrollbar)
     cfg.scrollbar = 1;
