@@ -1,5 +1,5 @@
-<!-- Creator     : groff version 1.22.3 -->
-<!-- CreationDate: Wed Mar 27 19:27:33 2019 -->
+<!-- Creator     : groff version 1.22.4 -->
+<!-- CreationDate: Tue May 28 07:17:46 2019 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -606,8 +606,7 @@ line and partially per paragraph (i.e. within an
 auto-wrapped line), as listed in
 <i>https://github.com/mintty/mintty/wiki/CtrlSeqs#bidirectional-rendering</i>.
 They follow the current status of the bidi mode model of the
-&Acirc;&laquo;BiDi in Terminal Emulators&Acirc;&raquo;
-recommendation
+<b>BiDi in Terminal Emulators</b> recommendation
 (<i>https://terminal-wg.pages.freedesktop.org/bidi/</i>).</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Menus</b>
@@ -761,10 +760,11 @@ resize</b> <br>
 The usual windows function to drag on the window border
 resizes the terminal. <i><br>
 Shift-coupled font-with-window zooming:</i> If Shift is also
-held while resizing, the font will be scaled along with the
-resizing, unless disabled with ZoomFontWithWindow=false
-(which would help to avoid interference with certain shifted
-hotkeys configured to resize the window). <br>
+held while resizing, but Control is not held, the font will
+be scaled along with the resizing, unless disabled with
+ZoomFontWithWindow=false (which would help to avoid
+interference with certain shifted hotkeys configured to
+resize the window). <br>
 Note that due to the different height/width factors, coupled
 font zooming is not a precise operation.</p>
 
@@ -1783,6 +1783,12 @@ applications that support it, e.g. word processors.</p>
 Copy as rich text is also available as an explicit item in
 the extended context menu.</p>
 
+<p style="margin-left:22%; margin-top: 1em">The font used
+in RTF may be changed by the settings <b>CopyAsRTFFont</b>
+and <b>CopyAsRTFFontHeight</b>, to accommodate the case that
+the configured mintty font is not available when reading the
+contents (e.g. after sending it by mail).</p>
+
 <p style="margin-left:11%;"><b>Copy as HTML</b>
 (CopyAsHTML=0)</p>
 
@@ -1922,6 +1928,12 @@ character is output, so ligatures are also supported while
 being input. With LigaturesSupport=2, mintty also redisplays
 the previous cursor line after the cursor is moved.</p>
 
+<p style="margin-left:22%; margin-top: 1em">This option is
+not capable of disabling ligatures, however, as they are
+applied by Windows font handling. Setting
+<i>FontRender=textout</i> disables Uniscribe, including
+ligatures support.</p>
+
 <p style="margin-left:11%;">(ColSpacing=0)</p>
 
 <p style="margin-left:22%;">Additional column padding;
@@ -2017,11 +2029,17 @@ Terminal type</b> (Term=xterm)</p>
 determines the setting of the TERM environment variable at
 mintty startup. Choices available from the dropdown list are
 <b>xterm</b>, <b>xterm-256color</b>, <b>xterm-vt220</b>,
-<b>vt100</b>, <b>vt220</b>, <b>vt340</b>. The option
-<b>vt340</b> facilitates a terminal ID indication
-corresponding to the Sixel graphics feature (but there is no
-mutual dependence between this setting and that
-feature).</p>
+<b>vt100</b>, <b>vt220</b>, <b>vt340</b>, <b>vt420</b>,
+<b>vt525</b>, <b>xterm-direct</b>, <b>mintty</b>,
+<b>mintty-direct</b>.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The last three
+options are only offered if the respective terminfo entries
+are installed in the system. The *<b>-direct</b> entries
+provide terminfo capabilities to set true-colour (24 bit
+colour) attributes. Note, however, that this only affects
+usage of the <i>terminfo</i> API to drive the terminal; the
+respective control sequences are always available.</p>
 
 <p style="margin-left:22%; margin-top: 1em">If the setting
 contains &quot;vt220&quot; or higher, xterm VT220-style
@@ -2032,13 +2050,22 @@ DECSET 1061 control sequence.)</p>
 <p style="margin-left:22%; margin-top: 1em">Apart from
 that, this setting has no effect on mintty&rsquo;s terminal
 emulation, i.e. all the features are always available.
-However, the TERM setting does tell applications what
-features they can use.</p>
+However, the TERM setting may be used by applications to
+choose what features they can use, alternatively to the
+preferrable device attributes queries (see
+<i>https://github.com/mintty/mintty/wiki/Tips</i> for
+hints).</p>
 
 <p style="margin-left:22%; margin-top: 1em">The
 <b>xterm-256color</b> setting enables 256-color mode in some
 applications, but may not be recognised at all by others,
 which is why plain <b>xterm</b> is the default.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The
+<b>vt340</b> setting facilitates a terminal ID indication
+corresponding to the Sixel graphics feature. However,
+particularly the <i>gnuplot</i> tool uses a dedicated
+variable (<b>GNUTERM</b>) to trigger its usage.</p>
 
 <p style="margin-left:22%; margin-top: 1em">(Corresponds
 roughly to the combined xterm resources
@@ -2152,11 +2179,10 @@ active. (Corresponds to the xterm resource
 <b>bellIsUrgent</b>, switchable by an escape sequence.) <br>
 &ndash; <b>Popup on bell</b> (BellPopup=no): Popup mintty to
 desktop foreground. (Corresponds to the xterm resource
-<b>popOnBell</b>, switchable by an escape sequence.)</p>
-
-<p style="margin-left:22%;">&ndash; <b>Minimum delay
-between bells</b> (BellInterval=100): Multiple bells 
-within this many milliseconds will sound as one.</p>
+<b>popOnBell</b>, switchable by an escape sequence.) <br>
+&ndash; <b>Minimum delay between bells</b>
+(BellInterval=100): Multiple bells within this many
+milliseconds will sound as one.</p>
 
 <p style="margin-left:22%; margin-top: 1em">A simple
 <b>frequency beep</b> can be configured in the configuration
@@ -2660,8 +2686,8 @@ comma-separated list of character tags: <br>
 (Corresponds to the xterm resource
 <b>disallowedPasteControls</b>.)</p>
 
-<p style="margin-left:11%;"><b>Special key
-remapping</b></p>
+<p style="margin-left:11%;"><b>Special key remapping</b>
+[DEPRECATED, see <b>KeyFunctions</b>]</p>
 
 <p style="margin-left:22%;">These options can attach a
 specific string to some special keys. If the string is a
@@ -2679,7 +2705,8 @@ assigned the traditional terminal line Break function. <br>
 &ndash; <b>Key_Break</b>=^\ <i>(Ctrl+\)</i> <br>
 &ndash; <b>Key_Menu</b>= <br>
 &ndash; <b>Key_ScrollLock</b>= <br>
-&ndash; <b>Key_PrintScreen</b>=</p>
+&ndash; <b>Key_PrintScreen</b>= <i>(key press event
+typically not sent)</i></p>
 
 <p style="margin-left:22%; margin-top: 1em">Examples: <br>
 Key_Menu=29 would make the Menu key send the same escape
@@ -2709,18 +2736,23 @@ optional whitespace indentation. <br>
 <p style="margin-left:22%; margin-top: 1em">Supported keys
 are described as follows: <br>
 &ndash; function keys F1...F24 <br>
-&ndash; modified function keys, preceded with a combination
-of C, A, S, W, in this order, indicating Ctrl, Alt, Shift,
-Win as combined with the function key, attached with a
-&quot;+&quot; separator, e.g. <b>CS+F9</b> <br>
+&ndash; modified function keys or special keys (see below),
+preceded with a combination of C, A, S, W, U, Y, in this
+order, indicating Ctrl, Alt, Shift, Win, Super, Hyper as
+combined with the key, attached with a &quot;+&quot;
+separator, e.g. <b>CS+F9</b>; or a prefix &quot;*&quot; that
+applies the definition for all modified variations of the
+key, e.g. <b>*Menu</b> <br>
 &ndash; special keys (some of which do not occur on typical
-keyboards) and keypad keys; Space, Enter, Esc and Tab are
-only considered with at least one modifier <br>
+keyboards) and keypad keys, as well as modified special and
+keypad keys; Space, Enter, Esc and Tab are only considered
+with at least one modifier <br>
 Esc, Tab <br>
 Enter, KP_Enter <br>
 Space, Back <br>
 Pause, Break <br>
-ScrollLock, PrintScreen, NumLock <br>
+ScrollLock, NumLock, CapsLock <br>
+(PrintScreen) <br>
 LWin, RWin <br>
 Menu <br>
 Insert, KP_Insert <br>
@@ -2733,7 +2765,7 @@ Left, KP_Left <br>
 Right, KP_Right <br>
 Up, KP_Up <br>
 Down, KP_Down <br>
-KP_Begin (the middle &quot;5&quot; key) <br>
+KP_Begin <i>(the middle &quot;5&quot; key)</i> <br>
 KP_Divide, KP_Multiply, KP_Subtract, KP_Add <br>
 Select, Print, Exec, Help, Sleep, Attn <br>
 CrSel, ExSel, ErEof <br>
@@ -2767,13 +2799,19 @@ of Ctrl+_ would be inhibited.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Supported
 actions are described as follows: <br>
-&ndash; <b>&quot;string&quot;</b> or <b>'string'</b>: enters
-the literal string <br>
-&ndash; <b>`command` (**)</b>: enters the output of the
-command <br>
-&ndash; <b>fullscreen (*)</b>: switches to fullscreen mode
+&ndash; <b>&quot;</b><i>string</i><b>&quot;</b> or
+<b>'</b><i>string</i><b>'</b>: enters the literal string
 <br>
-&ndash; <b>toggle-fullscreen (*)</b>: toggles fullscreen
+&ndash; <b>^</b><i>char</i>: enters a control char
+(&rsquo;@&rsquo;...&rsquo;_&rsquo; or &rsquo;?&rsquo; for
+DEL) <br>
+&ndash; <b>`</b><i>command</i><b>`</b> (**): enters the
+output of the command <br>
+&ndash; <i>number</i> (***): enters the escape sequence
+CSI<i>number</i>[;<i>mod</i>]~ <br>
+&ndash; <b>fullscreen</b> (*): switches to fullscreen mode
+<br>
+&ndash; <b>toggle-fullscreen</b> (*): toggles fullscreen
 mode <br>
 &ndash; <b>win-max</b>: resizes to window size <br>
 &ndash; <b>win-restore</b>: resizes to normal size <br>
@@ -2785,12 +2823,12 @@ size <br>
 is released <br>
 &ndash; <b>new-window</b>: opens a new terminal window <br>
 &ndash; <b>options</b>: opens the Options dialog <br>
-&ndash; <b>menu-text (*)</b>: opens the context menu at the
+&ndash; <b>menu-text</b> (*): opens the context menu at the
 cursor position <br>
-&ndash; <b>menu-pointer (*)</b>: opens the context menu at
+&ndash; <b>menu-pointer</b> (*): opens the context menu at
 the mouse position <br>
 &ndash; <b>search</b>: opens the search bar <br>
-&ndash; <b>default-size (*)</b>: switches to default
+&ndash; <b>default-size</b> (*): switches to default
 terminal size <br>
 &ndash; <b>scrollbar-outer</b>: toggles the scrollbar (xterm
 compatible) <br>
@@ -2811,6 +2849,8 @@ background) <br>
 &ndash; <b>copy-html-full</b>: copies HTML (close to screen
 layout) <br>
 &ndash; <b>paste</b>: pastes from the clipboard <br>
+&ndash; <b>paste-path</b>: pastes and tries to convert path
+syntax <br>
 &ndash; <b>copy-paste</b>: copies and pastes <br>
 &ndash; <b>select-all</b>: selects all text including
 scrollback <br>
@@ -2833,12 +2873,15 @@ filename <br>
 &ndash; <b>toggle-logging</b>: toggles logfile logging <br>
 &ndash; <b>toggle-char-info</b>: toggles character info
 display <br>
-&ndash; <b>export-html (*)</b>: exports the screen as an
+&ndash; <b>export-html</b> (*): exports the screen as an
 HTML file <br>
 &ndash; <b>print-screen</b>: print screen contents <br>
 &ndash; <b>toggle-bidi</b>: toggles (global) bidi disabling
 <br>
-&ndash; <b>void</b>: do nothing</p>
+&ndash; <b>void</b>: do nothing <br>
+&ndash; <b>super</b>: use this key as Super modifier key
+<br>
+&ndash; <b>hyper</b>: use this key as Hyper modifier key</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note
 (*):</i> The exact behaviour of some actions depends on the
@@ -2851,6 +2894,10 @@ user commands (option <b>UserCommands</b>): environment
 variables and PATH substitution; the PATH environment for
 the external command can be set up with option
 <b>UserCommandsPath</b>.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note
+(***):</i> An unquoted <i>number</i> causes mintty to form a
+function key sequence, applying all modifiers.</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i> To
 just disable the built-in shortcut (and not override it with
@@ -2865,6 +2912,10 @@ either, use the &quot;<b>void</b>&quot; dummy action.</p>
 invalid action (like &quot;foo&quot;) will make mintty beep
 on the key.</p>
 
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i> If
+an assignment to any of the Lock keys is defined, mintty
+will compensate for its implicit state change effect.</p>
+
 <p style="margin-left:22%; margin-top: 1em">Examples: <br>
 &ndash; <b>KeyFunctions=d:`echo -n
 `date``;A+F4:;CA+F12:break;-:&quot;minus&quot;</b> will
@@ -2878,7 +2929,13 @@ with setting <b>-o CtrlExchangeShift=true</b> will assign
 copy/paste to ^C and ^V for Windows addicts <br>
 &ndash; <b>KeyFunctions=A+Enter:void;A+KP_Enter:</b> will
 disable zooming on Alt+Enter and also disable it on
-Alt+keypad-Enter but enter ESC Return in the latter case</p>
+Alt+keypad-Enter but enter ESC Return in the latter case
+<br>
+&ndash; <b>KeyFunctions=*CapsLock:super</b> assigns the
+Super modifier to the CapsLock key <br>
+&ndash; <b>KeyFunctions=*Menu:29</b> turns the Menu key into
+an F16 function key (xterm default) and applies all
+modifiers to it</p>
 
 <p style="margin-left:11%;"><b>Use system colours</b>
 (UseSystemColours=no)</p>
@@ -3004,6 +3061,15 @@ button), &lt;/&gt; (previous/next buttons), s (search
 string) to select the order of these fields in the search
 bar; missing fields will be appended in a default order.</p>
 
+<p style="margin-left:11%;"><b>Scrollback search
+context</b> (SearchContext=0)</p>
+
+<p style="margin-left:22%;">This option will place the
+search result at the given distance from the terminal
+top/bottom border when scrolling to the result location. If
+the value is negative, it will also keep the result at the
+(positive) distance if the result is already visible.</p>
+
 <p style="margin-left:11%;"><b>Write if exited</b>
 (ExitWrite=no)</p>
 
@@ -3051,8 +3117,7 @@ implicit font zooming</b> (ZoomFontWithWindow=yes)</p>
 <p style="margin-left:22%;">If this option is set to false,
 implicit font zooming coupled with window zooming by the
 Shift key is disabled, except for the keyboard zoom
-functions Shift+Alt+Enter/F11 and the Shift+menu
-function.</p>
+functions Shift+Alt+Enter and the Shift+menu function.</p>
 
 <p style="margin-left:11%;"><b>Handling of DPI changes</b>
 (HandleDPI=2)</p>
@@ -3460,22 +3525,39 @@ wrapper.</p>
 <p style="margin-left:11%; margin-top: 1em"><b>Termcap/terminfo</b>
 <br>
 Mintty does not have its own <i>termcap</i> or
-<i>terminfo</i> entries; instead, it simply pretends to be
-an xterm.</p>
+<i>terminfo</i> entries; like a number of other terminal
+emulators, it reuses the xterm entry.</p>
 
-<p style="margin-left:11%; margin-top: 1em"><b>Missing
-xterm features</b> <br>
-Mintty is nowhere near as configurable as xterm. Of
-xterm&rsquo;s keyboard modes, only the default PC-style and
-VT220-style are available. 8-bit control characters are not
-supported. There is no Tektronix 4014 emulation. Mouse
-highlighting mode is not implemented.</p>
+<p style="margin-left:11%; margin-top: 1em"><b>Screen
+control features, DEC and xterm compatibility</b> <br>
+Mintty is compatible with xterm screen control. It supports
+DEC terminal screen features up to the VT500 series except
+DECRLM (right-to-left cursor motion), also supporting VT52
+mode, thus being fully VT100-compatible. It also includes
+most other xterm-specific control sequences and modes.</p>
 
-<p style="margin-left:11%; margin-top: 1em">The majority of
-xterm&rsquo;s many control sequences is implemented, up to
-the VT300 series level; VT400 rectangular area operations
-are not implemented. Significant omissions should be
-reported to the issue tracker.</p>
+<p style="margin-left:11%; margin-top: 1em">In addition,
+mintty supports a maximum of ANSI and ECMA-48 character
+attribute controls (including RGB and CMYK true-colour
+support, italic, overline, strikeout, rapid blinking,
+alternative fonts) and additional rendering attributes
+(underline styles and colours, superscript and subscript,
+shadowed and overstrike). Mintty provides Sixel graphics
+support, Emoji support, and Bidi reordering according to the
+Unicode Bidi Algorithm UBA, amended with flexible bidi
+controls according to the draft bidi mode model of the
+<b>BiDi in Terminal Emulators</b> recommendation
+(<i>https://terminal-wg.pages.freedesktop.org/bidi/</i>).</p>
+
+<p style="margin-left:11%; margin-top: 1em">Mintty is not
+as configurable as xterm; it offers essential configuration
+features, many of which are &quot;hidden settings&quot;,
+i.e. they do not appear in the interactive
+&quot;Options&quot; configuration dialog. Of xterm&rsquo;s
+keyboard modes, only the default PC-style and VT220-style
+are available. 8-bit control characters are not supported.
+There is no Tektronix 4014 emulation. Mouse highlighting
+mode is not implemented.</p>
 
 <h2>SEE ALSO
 <a name="SEE ALSO"></a>
@@ -3492,7 +3574,7 @@ page <i>https://github.com/mintty/mintty/wiki</i>.</p>
 
 
 <p style="margin-left:11%; margin-top: 1em">Copyright (C)
-2013 Andy Koppe (C) 2018 Thomas Wolff</p>
+2013 Andy Koppe (C) 2019 Thomas Wolff</p>
 
 <p style="margin-left:11%; margin-top: 1em">Mintty is
 released under the terms of the the <i>GNU General Public
