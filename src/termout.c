@@ -1097,6 +1097,8 @@ do_esc(uchar c)
       term.curs.attr = CATTR_DEFAULT;
       term.marg_top = 0;
       term.marg_bot = term.rows - 1;
+      term.marg_left = 0;
+      term.marg_right = term.cols - 1;
       move(0, 0, 0);
       for (int i = 0; i < term.rows; i++) {
         termline *line = term.lines[i];
