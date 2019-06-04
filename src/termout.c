@@ -497,11 +497,10 @@ static void
 write_backspace(void)
 {
   term_cursor *curs = &term.curs;
-  int term_top = curs-> origin ? term.marg_top : 0;
-  if (curs->x == 0 && (curs->y == term_top || !curs->autowrap
+  if (curs->x == 0 && (curs->y == term.marg_top || !curs->autowrap
                        || (!cfg.old_wrapmodes && !curs->rev_wrap)))
     /* skip */;
-  else if (curs->x == term.marg_left && curs->y > term_top) {
+  else if (curs->x == term.marg_left && curs->y > term.marg_top) {
     curs->y--;
     curs->x = term.marg_right;
   }
@@ -510,7 +509,7 @@ write_backspace(void)
     if (!curs->rev_wrap && !cfg.old_wrapmodes)
       curs->x--;
   }
-  else if (curs->x > 0)
+  else if (curs->x > 0 && curs->x != term.marg_left)
     curs->x--;
 }
 
