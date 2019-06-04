@@ -1092,6 +1092,12 @@ do_esc(uchar c)
     when 'm':  /* HP Memory Unlock */
       term.marg_top = 0;
     when CPAIR('#', '8'):    /* DECALN: fills screen with Es :-) */
+      term.curs.origin = false;
+      term.curs.wrapnext = false;
+      term.curs.attr = CATTR_DEFAULT;
+      term.marg_top = 0;
+      term.marg_bot = term.rows - 1;
+      move(0, 0, 0);
       for (int i = 0; i < term.rows; i++) {
         termline *line = term.lines[i];
         for (int j = 0; j < term.cols; j++) {
