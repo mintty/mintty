@@ -432,6 +432,58 @@ insdel_column(int col, bool del, int n)
   fill_rect(' ', term.curs.attr, false, yt, e0, yb, e1);
 }
 
+static uint
+sum_rect(short y0, short x0, short y1, short x1)
+{
+  //printf("sum_rect %d,%d..%d,%d\n", y0, x0, y1, x1);
+
+  y0--; x0--; y1--; x1--;
+
+  if (term.curs.origin) {
+    y0 += term.marg_top;
+    x0 += term.marg_left;
+    y1 += term.marg_top;
+    x1 += term.marg_left;
+  }
+  if (y0 < 0)
+    y0 = 0;
+  if (x0 < 0)
+    x0 = 0;
+  if (y1 >= term.rows)
+    y1 = term.rows - 1;
+  if (x1 >= term.cols)
+    x1 = term.cols - 1;
+  //printf("%d,%d..%d,%d\n", y0, x0, y1, x1);
+
+  uint sum = 0;
+  for (int y = y0; y <= y1; y++) {
+    termline * line = term.lines[y];
+    for (int x = x0; x <= x1; x++) {
+      //printf("add %d:%d\n", y, x);
+      if (line->chars[x].chr == UCSWIDE) {
+      }
+      else {
+        sum += line->chars[x].chr;  // xterm default would mask & 0xFF
+        cattrflags attr = line->chars[x].attr.attr;
+        if (attr & ATTR_UNDER)
+          sum += 0x10;
+        else if (attr & ATTR_REVERSE)
+          sum += 0x20;
+        else if (attr & ATTR_BLINK)
+          sum += 0x40;
+        else if (attr & ATTR_BOLD)
+          sum += 0x80;
+        int xc = x;
+        while (line->chars[xc].cc_next) {
+          xc += line->chars[xc].cc_next;
+          sum += line->chars[xc].chr & 0xFF;
+        }
+      }
+    }
+  }
+  return sum;
+}
+
 
 static void
 write_bell(void)
@@ -2433,6 +2485,10 @@ do_csi(uchar c)
       else
         attr_rect(0, 0, a1, arg0, arg1, term.csi_argv[2], term.csi_argv[3]);
     }
+    when CPAIR('*', 'y'): { /* DECRQCRA: VT420 Request Rectangular Checksum */
+      uint s = sum_rect(term.csi_argv[2], term.csi_argv[3], term.csi_argv[4], term.csi_argv[5]);
+      child_printf("\eP%u!~%04X\e\\", arg0, -s & 0xFFFF);
+    }
     when CPAIR('\'', '}'):  /* DECIC: VT420 Insert Columns */
       if (curs->x >= term.marg_left && curs->x <= term.marg_right)
         insdel_column(curs->x, false, arg0_def1);
@@ -2732,7 +2788,7 @@ do_dcs(void)
       } else if (!strcmp(s, "s")) {  // DECSLRM (left and right margins)
         child_printf("\eP1$r%u;%us\e\\", term.marg_left + 1, term.marg_right + 1);
       } else if (!strcmp(s, "\"p")) {  // DECSCL (conformance level)
-        child_printf("\eP1$r%u;%u\"p\e\\", 63, 1);  // report as VT300
+        child_printf("\eP1$r%u;%u\"p\e\\", 65, 1);  // report as VT500 S7C1T
       } else if (!strcmp(s, "\"q")) {  // DECSCA (protection attribute)
         child_printf("\eP1$r%u\"q\e\\", (attr.attr & ATTR_PROTECTED) != 0);
       } else if (!strcmp(s, " q")) {  // DECSCUSR (cursor style)
