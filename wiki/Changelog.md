@@ -1,6 +1,7 @@
 Terminal features
   * Report DECRQSS DECSCL conformance level as VT500 (7-bit controls).
   * Rectangular checksum DECRQCRA.
+  * Fixed BS "border" case.
 
 Window handling
   * Reenable left scrollbar.

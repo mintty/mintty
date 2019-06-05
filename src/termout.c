@@ -510,7 +510,7 @@ write_backspace(void)
     if (!curs->rev_wrap && !cfg.old_wrapmodes)
       curs->x--;
   }
-  else
+  else if (curs->x > 0)
     curs->x--;
 }
 
