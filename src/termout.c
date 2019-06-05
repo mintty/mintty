@@ -643,6 +643,8 @@ write_char(wchar c, int width)
     clear_cc(line, curs->x);
     line->chars[curs->x].chr = c;
     line->chars[curs->x].attr = curs->attr;
+    if (term.lrmargmode)
+      line->lattr &= ~LATTR_MODE;
     if (!(line->lattr & LATTR_WRAPCONTD))
       line->lattr = (line->lattr & ~LATTR_BIDIMASK) | curs->bidimode;
     //TODO: if changed, propagate mode onto paragraph
