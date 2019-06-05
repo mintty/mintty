@@ -3,6 +3,7 @@ Terminal features
   * Rectangular checksum DECRQCRA.
   * Fixed BS and CR "border" cases.
   * Fixed left/right margin mode to inhibit double width lines.
+  * Fixed TAB to stop at right margin.
 
 Window handling
   * Reenable left scrollbar.

@@ -518,9 +518,11 @@ write_tab(void)
 {
   term_cursor *curs = &term.curs;
 
-  do
+  do {
+    if (curs->x == term.marg_right)
+      break;
     curs->x++;
-  while (curs->x < term.cols - 1 && !term.tabs[curs->x]);
+  } while (curs->x < term.cols - 1 && !term.tabs[curs->x]);
 
   if ((term.lines[curs->y]->lattr & LATTR_MODE) != LATTR_NORM) {
     if (curs->x >= term.cols / 2)
