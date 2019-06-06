@@ -370,6 +370,8 @@ term_reset(bool full)
         term_do_scroll(0, term.rows - 1, 1, true);
       }
     }
+    term.curs.x = 0;
+    term.curs.y = 0;
   }
 
   term.in_vbell = false;
