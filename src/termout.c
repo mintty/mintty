@@ -142,6 +142,9 @@ restore_cursor(void)
 static void
 insert_char(int n)
 {
+  if (term.curs.x < term.marg_left || term.curs.x > term.marg_right)
+    return;
+
   bool del = n < 0;
   int m;
   term_cursor *curs = &term.curs;

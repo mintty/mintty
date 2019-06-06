@@ -2,8 +2,11 @@ Terminal features
   * Report DECRQSS DECSCL conformance level as VT500 (7-bit controls).
   * Rectangular checksum DECRQCRA.
   * Fixed BS and CR "border" cases.
+  * Fixed DCH/ICH/IRM outside left/right margins.
+
   * Fixed left/right margin mode to inhibit double width lines.
   * Fixed TAB to stop at right margin.
+
   * Application scrollbar (experimental).
 
 Window handling
