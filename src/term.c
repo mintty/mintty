@@ -288,6 +288,7 @@ term_reset(bool full)
   term.marg_right = term.cols - 1;
   term.lrmargmode = false;
   term.app_cursor_keys = false;
+  term.app_scrollbar = false;
 
   if (full) {
     term.deccolm_allowed = cfg.enable_deccolm_init;  // not reset by xterm

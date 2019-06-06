@@ -4,7 +4,7 @@
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "termpriv.h"
-#include "winpriv.h"  // win_get_font, win_change_font, win_led
+#include "winpriv.h"  // win_get_font, win_change_font, win_led, win_set_scrollview
 
 #include "win.h"
 #include "appinfo.h"
@@ -2509,6 +2509,8 @@ do_csi(uchar c)
     when CPAIR('\'', '~'):  /* DECDC: VT420 Delete Columns */
       if (curs->x >= term.marg_left && curs->x <= term.marg_right)
         insdel_column(curs->x, true, arg0_def1);
+    when CPAIR('#', 't'):  /* application scrollbar */
+      win_set_scrollview(arg0, arg1);
   }
 }
 

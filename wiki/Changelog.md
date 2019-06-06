@@ -4,9 +4,11 @@ Terminal features
   * Fixed BS and CR "border" cases.
   * Fixed left/right margin mode to inhibit double width lines.
   * Fixed TAB to stop at right margin.
+  * Application scrollbar (experimental).
 
 Window handling
   * Reenable left scrollbar.
+  * Application scrollbar (experimental).
 
 ### 3.0.1 (28 May 2019) ###
 

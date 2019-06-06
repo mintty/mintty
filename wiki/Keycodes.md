@@ -212,6 +212,19 @@ F1 through F4 send numpad-style keycodes, because they emulate the four [PF keys
 The numbers in the keycodes really are that irregular. Only twelve function keys are usually available on a PC keyboard, but in VT220 keyboard mode, the Ctrl modifier adds 10 to the function key number, so that for example Ctrl+F3 sends the F13 keycode.
 
 
+## Application scrollbar events ##
+
+In application scrollbar mode, the following keys or sequences are generated:
+
+| **Event**   | **key/sequence** | note |
+|:----------|:----------|:----------------|
+| **Scroll Up/Down** | Up/Down | modifiers applied |
+| **Page Up/Down**   | PgUp/PgDn | modifiers applied |
+| **Scroll Here**    | `^[[`_pos_`#d`  | _pos_ between 1 and virtual size |
+| **Top**            | `^[[0#d`        |                                  |
+| **Bottom**         | `^[[`_size_`#d` | configured virtual _size_        |
+
+
 ## Mousewheel ##
 
 In xterm [mouse tracking](http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#Mouse%20Tracking) modes, the mousewheel is treated is a pair of mouse buttons. However, the mousewheel can also be used for scrolling in applications such as **[less](http://www.greenwoodsoftware.com/less)** that do not support xterm mouse reporting but that do use the alternate screen. Under those circumstances, mousewheel events are encoded as cursor up/down and page up/down keys. See the sections on the [cursor keys](Keycodes#cursor-keys) and [editing keys](Keycodes#editing-keys) for details.

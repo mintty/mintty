@@ -1153,7 +1153,7 @@ do_update(void)
   ReleaseDC(wnd, dc);
 
   // Update scrollbar
-  if (cfg.scrollbar && term.show_scrollbar) {
+  if (cfg.scrollbar && term.show_scrollbar && !term.app_scrollbar) {
     int lines = sblines();
     SCROLLINFO si = {
       .cbSize = sizeof si,

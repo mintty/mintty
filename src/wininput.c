@@ -1973,7 +1973,8 @@ win_key_down(WPARAM wp, LPARAM lp)
         win_bell(&cfg);
     }
     //if (scroll) {
-    //  SendMessage(wnd, WM_VSCROLL, scroll, 0);
+    //  if (!term.app_scrollbar)
+    //    SendMessage(wnd, WM_VSCROLL, scroll, 0);
     //  sel_adjust = true;
     //}
     if (sel_adjust) {
@@ -2228,7 +2229,8 @@ win_key_down(WPARAM wp, LPARAM lp)
             return true;
           otherwise: goto not_scroll;
         }
-        SendMessage(wnd, WM_VSCROLL, scroll, 0);
+        if (!term.app_scrollbar) // prevent recursion
+          SendMessage(wnd, WM_VSCROLL, scroll, 0);
         return true;
         not_scroll:;
       }

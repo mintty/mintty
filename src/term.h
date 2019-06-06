@@ -466,6 +466,7 @@ struct term {
   bool report_ambig_width;
   bool bracketed_paste;
   bool show_scrollbar;
+  bool app_scrollbar;
   bool wide_indic;
   bool wide_extra;
   bool disable_bidi;

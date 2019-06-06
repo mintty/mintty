@@ -573,6 +573,39 @@ win_sys_style(bool focus)
 
 
 /*
+   Application scrollbar.
+ */
+static int scroll_len = 0;
+
+void
+win_set_scrollview(int pos, int len)
+{
+  bool prev = term.app_scrollbar;
+  term.app_scrollbar = pos;
+  if (pos) {
+    if (len)
+      scroll_len = len;
+    else
+      len = scroll_len;
+    SetScrollInfo(
+      wnd, SB_VERT,
+      &(SCROLLINFO){
+        .cbSize = sizeof(SCROLLINFO),
+        .fMask = SIF_ALL | SIF_DISABLENOSCROLL,
+        .nMin = 1,
+        .nMax = len,
+        .nPage = term.rows,
+        .nPos = pos,
+      },
+      true  // redraw
+    );
+  }
+  if (term.app_scrollbar != prev)
+    win_update_scrollbar(false);
+}
+
+
+/*
    Window title functions.
  */
 
@@ -1910,6 +1943,9 @@ win_update_scrollbar(bool inner)
   // keep config consistent with enforced scrollbar
   if (scrollbar && !cfg.scrollbar)
     cfg.scrollbar = 1;
+  if (term.app_scrollbar && !scrollbar) {
+    scrollbar = cfg.scrollbar ?: 1;
+  }
 
   LONG style = GetWindowLong(wnd, GWL_STYLE);
   SetWindowLong(wnd, GWL_STYLE,
@@ -2477,29 +2513,49 @@ static struct {
 
     when WM_VSCROLL:
       //printf("WM_VSCROLL %d\n", LOWORD(wp));
-      switch (LOWORD(wp)) {
-        when SB_LINEUP:   term_scroll(0, -1);
-        when SB_LINEDOWN: term_scroll(0, +1);
-        when SB_PAGEUP:   term_scroll(0, -max(1, term.rows - 1));
-        when SB_PAGEDOWN: term_scroll(0, +max(1, term.rows - 1));
-        when SB_THUMBPOSITION or SB_THUMBTRACK: {
-          SCROLLINFO info;
-          info.cbSize = sizeof(SCROLLINFO);
-          info.fMask = SIF_TRACKPOS;
-          GetScrollInfo(wnd, SB_VERT, &info);
-          term_scroll(1, info.nTrackPos);
+      if (!term.app_scrollbar)
+        switch (LOWORD(wp)) {
+          when SB_LINEUP:   term_scroll(0, -1);
+          when SB_LINEDOWN: term_scroll(0, +1);
+          when SB_PAGEUP:   term_scroll(0, -max(1, term.rows - 1));
+          when SB_PAGEDOWN: term_scroll(0, +max(1, term.rows - 1));
+          when SB_THUMBPOSITION or SB_THUMBTRACK: {
+            SCROLLINFO info;
+            info.cbSize = sizeof(SCROLLINFO);
+            info.fMask = SIF_TRACKPOS;
+            GetScrollInfo(wnd, SB_VERT, &info);
+            term_scroll(1, info.nTrackPos);
+          }
+          when SB_TOP:      term_scroll(+1, 0);
+          when SB_BOTTOM:   term_scroll(-1, 0);
+          //when SB_ENDSCROLL: ;
+          // these two may be used by mintty keyboard shortcuts (not by Windows)
+          when SB_PRIOR:    term_scroll(SB_PRIOR, 0);
+          when SB_NEXT:     term_scroll(SB_NEXT, 0);
         }
-        when SB_TOP:      term_scroll(+1, 0);
-        when SB_BOTTOM:   term_scroll(-1, 0);
-        //when SB_ENDSCROLL: ;
-        // these two may be used by mintty keyboard shortcuts (not by Windows)
-        when SB_PRIOR:    term_scroll(SB_PRIOR, 0);
-        when SB_NEXT:     term_scroll(SB_NEXT, 0);
-      }
+      else
+        switch (LOWORD(wp)) {
+          when SB_LINEUP:   win_key_down(VK_UP, 1);
+          when SB_LINEDOWN: win_key_down(VK_DOWN, 1);
+          when SB_PAGEUP:   win_key_down(VK_PRIOR, 1);
+          when SB_PAGEDOWN: win_key_down(VK_NEXT, 1);
+          when SB_THUMBPOSITION or SB_THUMBTRACK: {
+            SCROLLINFO info;
+            info.cbSize = sizeof(SCROLLINFO);
+            info.fMask = SIF_TRACKPOS;
+            GetScrollInfo(wnd, SB_VERT, &info);
+            child_printf("\e[%u#d", info.nTrackPos);
+          }
+          when SB_TOP:      child_printf("\e[0#d");
+          when SB_BOTTOM:   child_printf("\e[%u#d", scroll_len);
+        }
+
+    when WM_MOUSEWHEEL:
+      // check whether in client area (terminal pane) or over scrollbar...
+      win_mouse_wheel(wp, lp);
 
     when WM_MOUSEMOVE: win_mouse_move(false, lp);
     when WM_NCMOUSEMOVE: win_mouse_move(true, lp);
-    when WM_MOUSEWHEEL: win_mouse_wheel(wp, lp);
     when WM_LBUTTONDOWN: win_mouse_click(MBT_LEFT, lp);
     when WM_RBUTTONDOWN: win_mouse_click(MBT_RIGHT, lp);
     when WM_MBUTTONDOWN: win_mouse_click(MBT_MIDDLE, lp);
