@@ -379,18 +379,19 @@ enum {
 
 typedef struct {
   short x, y;
+  bool wrapnext;
   cattr attr;
   bool origin;
-  bool autowrap;  // switchable (xterm Wraparound Mode (DECAWM Auto Wrap))
-  bool wrapnext;
-  bool rev_wrap;  // switchable (xterm Reverse-wraparound Mode)
-  ushort bidimode;
   short gl, gr;
   term_cset csets[4];
   term_cset cset_single;
   uchar oem_acs;
   bool utf;
-  bool decnrc_enabled;    /* DECNRCM sequence to enable NRC? */
+  ushort bidimode;
+  // these should not be affected by cursor restore (DEC, xterm):
+  bool decnrc_enabled;  /* DECNRCM: enable NRC */
+  bool autowrap;        /* DECAWM: Autowrap mode */
+  bool rev_wrap;        /* xterm: Reverse wraparound mode */
 } term_cursor;
 
 struct term {
