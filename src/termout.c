@@ -125,6 +125,18 @@ restore_cursor(void)
   if (curs->y >= term.rows)
     curs->y = term.rows - 1;
 
+ /* In origin mode, make sure the cursor position is within margins */
+  if (curs->origin) {
+    if (curs->x < term.marg_left)
+      curs->x = term.marg_left;
+    else if (curs->x > term.marg_right)
+      curs->x = term.marg_right;
+    if (curs->y < term.marg_top)
+      curs->y = term.marg_top;
+    else if (curs->y > term.marg_bot)
+      curs->y = term.marg_bot;
+  }
+
  /*
   * wrapnext might reset to False 
   * if the x position is no longer at the rightmost edge.
