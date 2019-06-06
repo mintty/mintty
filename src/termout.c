@@ -141,7 +141,7 @@ restore_cursor(void)
   * wrapnext might reset to False 
   * if the x position is no longer at the rightmost edge.
   */
-  if (curs->wrapnext && curs->x < term.cols - 1)
+  if (curs->wrapnext && curs->x < term.cols - 1 && curs->x != term.marg_right)
     curs->wrapnext = false;
 
   term_update_cs();
