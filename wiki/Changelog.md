@@ -8,6 +8,7 @@ Terminal features
   * Fixed TAB to stop at right margin.
   * Ensure restored cursor to be within margins in origin mode.
   * Fixed DECDC beyond terminal width.
+  * Fixed DECSED 3 not to clear current position; guard CSI [?] n J/K.
   * Full reset (RIS) moves cursor home.
 
   * Application scrollbar (experimental).

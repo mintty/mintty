@@ -2101,22 +2101,23 @@ do_csi(uchar c)
     when 'I':  /* CHT: move right N TABs */
       for (int i = 0; i < arg0_def1; i++)
         write_tab();
-    when 'J' or CPAIR('?', 'J'): { /* ED/DECSED: (selective) erase in display */
-      if (arg0 == 3 && !term.esc_mod) { /* Erase Saved Lines (xterm) */
+    when 'J' or CPAIR('?', 'J'):  /* ED/DECSED: (selective) erase in display */
+      if (arg0 == 3) { /* Erase Saved Lines (xterm) */
+        // don't care if (term.esc_mod) // ignore selective
         term_clear_scrollback();
         term.disptop = 0;
       }
-      else {
+      else if (arg0 <= 2) {
         bool above = arg0 == 1 || arg0 == 2;
         bool below = arg0 == 0 || arg0 == 2;
         term_erase(term.esc_mod, false, above, below);
       }
-    }
-    when 'K' or CPAIR('?', 'K'): { /* EL/DECSEL: (selective) erase in line */
-      bool right = arg0 == 0 || arg0 == 2;
-      bool left  = arg0 == 1 || arg0 == 2;
-      term_erase(term.esc_mod, true, left, right);
-    }
+    when 'K' or CPAIR('?', 'K'):  /* EL/DECSEL: (selective) erase in line */
+      if (arg0 <= 2) {
+        bool right = arg0 == 0 || arg0 == 2;
+        bool left  = arg0 == 1 || arg0 == 2;
+        term_erase(term.esc_mod, true, left, right);
+      }
     when 'L':        /* IL: insert lines */
       if (curs->y >= term.marg_top && curs->y <= term.marg_bot)
         term_do_scroll(curs->y, term.marg_bot, -arg0_def1, false);
