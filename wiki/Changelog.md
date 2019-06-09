@@ -9,6 +9,7 @@ Terminal features
   * Ensure restored cursor to be within margins in origin mode.
   * Fixed DECDC beyond terminal width.
   * Fixed DECSED 3 not to clear current position; guard CSI [?] n J/K.
+  * Proper default values for rectangular operations.
   * Full reset (RIS) moves cursor home.
 
   * Application scrollbar (experimental).

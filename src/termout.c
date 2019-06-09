@@ -2475,19 +2475,27 @@ do_csi(uchar c)
           curs->bidimode &= ~LATTR_PRESRTL;
       else if (arg0 == 3)
           curs->bidimode |= LATTR_PRESRTL;
+#define urows (uint) term.rows
+#define ucols (uint) term.cols
     when CPAIR('$', 'v'):  /* DECCRA: VT420 Copy Rectangular Area */
-      copy_rect(arg0, arg1, term.csi_argv[2], term.csi_argv[3],
+      copy_rect(arg0_def1, arg1 ?: 1, 
+                term.csi_argv[2] ?: urows, term.csi_argv[3] ?: ucols,
                 // skip term.csi_argv[4] (source page)
-                term.csi_argv[5], term.csi_argv[6]);
+                term.csi_argv[5] ?: urows, term.csi_argv[6] ?: ucols
+                // skip term.csi_argv[7] (destination page)
+                );
     when CPAIR('$', 'x'):  /* DECFRA: VT420 Fill Rectangular Area */
-      fill_rect(arg0, curs->attr, false,
-                arg1, term.csi_argv[2], term.csi_argv[3], term.csi_argv[4]);
+      fill_rect(arg0 ?: ' ', curs->attr, false,
+                arg1 ?: 1, term.csi_argv[2] ?: 1,
+                term.csi_argv[3] ?: urows, term.csi_argv[4] ?: ucols);
     when CPAIR('$', 'z'):  /* DECERA: VT420 Erase Rectangular Area */
       fill_rect(' ', term.erase_char.attr, false,
-                arg0, arg1, term.csi_argv[2], term.csi_argv[3]);
+                arg0_def1, arg1 ?: 1,
+                term.csi_argv[2] ?: urows, term.csi_argv[3] ?: ucols);
     when CPAIR('$', '{'):  /* DECSERA: VT420 Selective Erase Rectangular Area */
       fill_rect(' ', term.erase_char.attr, true,
-                arg0, arg1, term.csi_argv[2], term.csi_argv[3]);
+                arg0_def1, arg1 ?: 1,
+                term.csi_argv[2] ?: urows, term.csi_argv[3] ?: ucols);
     when CPAIR('*', 'x'):  /* DECSACE: VT420 Select Attribute Change Extent */
       switch (arg0) {
         when 2: term.attr_rect = true;
@@ -2515,12 +2523,15 @@ do_csi(uchar c)
         }
       a1 &= ~a2;
       if (c == 'r')
-        attr_rect(a1, a2, 0, arg0, arg1, term.csi_argv[2], term.csi_argv[3]);
+        attr_rect(a1, a2, 0, arg0_def1, arg1 ?: 1,
+                  term.csi_argv[2] ?: urows, term.csi_argv[3] ?: ucols);
       else
-        attr_rect(0, 0, a1, arg0, arg1, term.csi_argv[2], term.csi_argv[3]);
+        attr_rect(0, 0, a1, arg0_def1, arg1 ?: 1,
+                  term.csi_argv[2] ?: urows, term.csi_argv[3] ?: ucols);
     }
     when CPAIR('*', 'y'): { /* DECRQCRA: VT420 Request Rectangular Checksum */
-      uint s = sum_rect(term.csi_argv[2], term.csi_argv[3], term.csi_argv[4], term.csi_argv[5]);
+      uint s = sum_rect(term.csi_argv[2] ?: 1, term.csi_argv[3] ?: 1,
+                        term.csi_argv[4] ?: urows, term.csi_argv[5] ?: ucols);
       child_printf("\eP%u!~%04X\e\\", arg0, -s & 0xFFFF);
     }
     when CPAIR('\'', '}'):  /* DECIC: VT420 Insert Columns */
