@@ -7,6 +7,7 @@ Terminal features
   * Fixed left/right margin mode to inhibit double width lines.
   * Fixed TAB to stop at right margin.
   * Ensure restored cursor to be within margins in origin mode.
+  * Fixed DECDC beyond terminal width.
   * Full reset (RIS) moves cursor home.
 
   * Application scrollbar (experimental).
