@@ -286,11 +286,11 @@ term_reset(bool full)
   term.marg_bot = term.rows - 1;
   term.marg_left = 0;
   term.marg_right = term.cols - 1;
-  term.lrmargmode = false;
   term.app_cursor_keys = false;
   term.app_scrollbar = false;
 
   if (full) {
+    term.lrmargmode = false;
     term.deccolm_allowed = cfg.enable_deccolm_init;  // not reset by xterm
     term.vt220_keys = vt220(cfg.term);  // not reset by xterm
     term.app_keypad = false;  // xterm only with RIS

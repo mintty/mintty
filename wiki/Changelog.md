@@ -11,6 +11,7 @@ Terminal features
   * Fixed DECSED 3 not to clear current position; guard CSI [?] n J/K.
   * Proper default values for rectangular operations.
   * Full reset (RIS) moves cursor home.
+  * Soft reset (DECSTR) does not disable left/right margin mode.
 
   * Application scrollbar (experimental).
 
