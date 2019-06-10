@@ -429,6 +429,8 @@ insdel_column(int col, bool del, int n)
     }
   }
   else {
+    if (col + n > term.marg_right + 1)
+      n = term.marg_right + 1 - col;
     x0 = col;
     x1 = term.marg_right - n;
     x2 = col + n;

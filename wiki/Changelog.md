@@ -7,7 +7,7 @@ Terminal features
   * Fixed left/right margin mode to inhibit double width lines.
   * Fixed TAB to stop at right margin.
   * Ensure restored cursor to be within margins in origin mode.
-  * Fixed DECDC beyond terminal width.
+  * Fixed DECDC and DECIC beyond right margin.
   * Fixed DECSED 3 not to clear current position; guard CSI [?] n J/K.
   * Proper default values for rectangular operations.
   * Full reset (RIS) moves cursor home.
