@@ -2081,7 +2081,14 @@ do_csi(uchar c)
     when 'C':        /* CUF: Cursor right */
       move(curs->x + arg0_def1, curs->y, 1);
     when 'D':        /* CUB: move left N cols */
-      move(curs->x - arg0_def1, curs->y, 1);
+      if (arg0_def1 > curs->x) {
+        arg0_def1 -= curs->x + 1;
+        move(0, curs->y, 1);
+        write_backspace();
+        move(curs->x - arg0_def1, curs->y, 1);
+      }
+      else
+        move(curs->x - arg0_def1, curs->y, 1);
     when 'E':        /* CNL: move down N lines and CR */
       move(0, curs->y + arg0_def1, 1);
     when 'F':        /* CPL: move up N lines and CR */

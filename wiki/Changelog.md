@@ -12,6 +12,7 @@ Terminal features
   * Proper default values for rectangular operations.
   * Full reset (RIS) moves cursor home.
   * Soft reset (DECSTR) does not disable left/right margin mode.
+  * Cursor backward (CUB) applies reverse-wraparound.
 
   * Application scrollbar (experimental).
 
