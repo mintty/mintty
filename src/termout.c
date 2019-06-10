@@ -423,8 +423,8 @@ insdel_column(int col, bool del, int n)
     x2 = col;
     e0 = term.marg_right - n + 1;
     e1 = term.marg_right;
-    if (x0 > term.cols) {
-      x0 = term.cols;
+    if (x0 > term.marg_right) {
+      x0 = term.marg_right;
       e0 = col;
     }
   }
