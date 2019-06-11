@@ -381,6 +381,8 @@ scroll_rect(int topline, int botline, int lines)
 //	scroll		copy		clear
 //	4	-2	4	6	4
 //	20		18		5
+    if (topline - lines > term.marg_bot + 1)
+      lines = topline - term.marg_bot - 1;
     y0 = topline;
     y1 = botline + lines;
     y2 = topline - lines;
@@ -391,6 +393,8 @@ scroll_rect(int topline, int botline, int lines)
 //	scroll		copy		clear
 //	4	+2	6	4	19
 //	20		20		20
+    if (topline + lines > term.marg_bot + 1)
+      lines = term.marg_bot + 1 - topline;
     y0 = topline + lines;
     y1 = botline;
     y2 = topline;
@@ -401,6 +405,7 @@ scroll_rect(int topline, int botline, int lines)
   int xl = term.marg_left + 1;
   int xr = term.marg_right + 1;
   if (term.curs.origin) {
+    // compensate for the originmode applied in the functions called below
     xl = 1;
     xr = term.marg_right - term.marg_left + 1;
     y0 -= term.marg_top;
@@ -416,6 +421,7 @@ scroll_rect(int topline, int botline, int lines)
 static void
 insdel_column(int col, bool del, int n)
 {
+  //printf("insdel_column @%d %d marg %d..%d\n", col, n, term.marg_left, term.marg_right);
   int x0, x1, x2, e0, e1;
   if (del) {
     x0 = col + n;
@@ -441,6 +447,7 @@ insdel_column(int col, bool del, int n)
   int yt = term.marg_top + 1;
   int yb = term.marg_bot + 1;
   if (term.curs.origin) {
+    // compensate for the originmode applied in the functions called below
     yt = 1;
     yb = term.marg_bot - term.marg_top + 1;
     x0 -= term.marg_left;
