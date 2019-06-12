@@ -576,6 +576,9 @@ static void
 write_linefeed(void)
 {
   term_cursor *curs = &term.curs;
+  if (curs->x < term.marg_left || curs->x > term.marg_right)
+    return;
+
   clear_wrapcontd(term.lines[curs->y], curs->y);
   if (curs->y == term.marg_bot)
     term_do_scroll(term.marg_top, term.marg_bot, 1, true);
@@ -1099,8 +1102,10 @@ do_esc(uchar c)
     when 'D':  /* IND: exactly equivalent to LF */
       write_linefeed();
     when 'E':  /* NEL: exactly equivalent to CR-LF */
-      write_return();
-      write_linefeed();
+      if (curs->x >= term.marg_left && curs->x <= term.marg_right) {
+        write_return();
+        write_linefeed();
+      }
     when 'M':  /* RI: reverse index - backwards LF */
       if (curs->y == term.marg_top)
         term_do_scroll(term.marg_top, term.marg_bot, -1, true);
