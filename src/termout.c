@@ -2135,10 +2135,14 @@ do_csi(uchar c)
         term_erase(term.esc_mod, true, left, right);
       }
     when 'L':        /* IL: insert lines */
-      if (curs->y >= term.marg_top && curs->y <= term.marg_bot)
+      if (curs->y >= term.marg_top && curs->y <= term.marg_bot
+       && curs->x >= term.marg_left && curs->x <= term.marg_right
+         )
         term_do_scroll(curs->y, term.marg_bot, -arg0_def1, false);
     when 'M':        /* DL: delete lines */
-      if (curs->y >= term.marg_top && curs->y <= term.marg_bot)
+      if (curs->y >= term.marg_top && curs->y <= term.marg_bot
+       && curs->x >= term.marg_left && curs->x <= term.marg_right
+         )
         term_do_scroll(curs->y, term.marg_bot, arg0_def1, true);
     when '@':        /* ICH: insert chars */
       insert_char(arg0_def1);
@@ -2551,10 +2555,14 @@ do_csi(uchar c)
       child_printf("\eP%u!~%04X\e\\", arg0, -s & 0xFFFF);
     }
     when CPAIR('\'', '}'):  /* DECIC: VT420 Insert Columns */
-      if (curs->x >= term.marg_left && curs->x <= term.marg_right)
+      if (curs->x >= term.marg_left && curs->x <= term.marg_right
+       && curs->y >= term.marg_top && curs->y <= term.marg_bot
+         )
         insdel_column(curs->x, false, arg0_def1);
     when CPAIR('\'', '~'):  /* DECDC: VT420 Delete Columns */
-      if (curs->x >= term.marg_left && curs->x <= term.marg_right)
+      if (curs->x >= term.marg_left && curs->x <= term.marg_right
+       && curs->y >= term.marg_top && curs->y <= term.marg_bot
+         )
         insdel_column(curs->x, true, arg0_def1);
     when CPAIR('#', 't'):  /* application scrollbar */
       win_set_scrollview(arg0, arg1);
