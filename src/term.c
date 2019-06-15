@@ -2027,7 +2027,8 @@ term_paint(void)
           tattr.attr != (dispchars[j].attr.attr & ~(ATTR_NARROW | DATTR_MASK))
               )
       {
-        if ((tattr.attr & ATTR_WIDE) == 0 && win_char_width(tchar) == 2
+        if ((tattr.attr & ATTR_WIDE) == 0
+            && win_char_width(tchar, tattr.attr) == 2
             // do not tamper with graphics
             && !line->lattr
             // and restrict narrowing to ambiguous width chars
@@ -2043,7 +2044,8 @@ term_paint(void)
                  // for double-width characters 
                  // (if double-width by font substitution)
                  && cs_ambig_wide && !font_ambig_wide
-                 && win_char_width(tchar) == 1 // && !widerange(tchar)
+                 && win_char_width(tchar, tattr.attr) == 1
+                    //? && !widerange(tchar)
                  // and reassure to apply this only to ambiguous width chars
                  && ambigwide(tchar)
                 ) {
@@ -2056,7 +2058,7 @@ term_paint(void)
 #define dont_debug_width_scaling
 #ifdef debug_width_scaling
       if (tattr.attr & (ATTR_EXPAND | ATTR_NARROW | ATTR_WIDE))
-        printf("%04X w %d enw %02X\n", tchar, win_char_width(tchar), (uint)(((tattr.attr & (ATTR_EXPAND | ATTR_NARROW | ATTR_WIDE)) >> 24)));
+        printf("%04X w %d enw %02X\n", tchar, win_char_width(tchar, tattr.attr), (uint)(((tattr.attr & (ATTR_EXPAND | ATTR_NARROW | ATTR_WIDE)) >> 24)));
 #endif
 
      /* FULL-TERMCHAR */

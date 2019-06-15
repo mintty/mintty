@@ -17,6 +17,9 @@ Terminal features
 
   * Application scrollbar (experimental).
 
+Font rendering
+  * Check functions (width, glyph) consult proper attributes and font.
+
 Window handling
   * Reenable left scrollbar.
   * Application scrollbar (experimental).

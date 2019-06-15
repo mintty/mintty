@@ -243,6 +243,8 @@ get_font_quality(void)
 
 #define dont_debug_fonts 1
 
+#define dont_debug_win_char_width
+
 #if defined(debug_fonts) && debug_fonts > 0
 #define trace_font(params)	printf params
 #else
@@ -585,9 +587,9 @@ win_init_fontfamily(HDC dc, int findex)
       line_char_width  >= latin_char_width * 1.5;
 
 #ifdef debug_win_char_width
-  int w_latin = win_char_width(0x0041);
-  int w_greek = win_char_width(0x03B1);
-  int w_lines = win_char_width(0x2500);
+  int w_latin = win_char_width(0x0041, 0);
+  int w_greek = win_char_width(0x03B1, 0);
+  int w_lines = win_char_width(0x2500, 0);
   printf("%04X %5.2f %d\n", 0x0041, latin_char_width, w_latin);
   printf("%04X %5.2f %d\n", 0x03B1, greek_char_width, w_greek);
   printf("%04X %5.2f %d\n", 0x2500, line_char_width, w_lines);
@@ -2115,7 +2117,7 @@ _trace_line(char * tag, cattr attr, ushort lattr, wchar * text, int len)
 #endif
 
 static wchar
-combsubst(wchar comb)
+combsubst(wchar comb, cattrflags attr)
 {
   static const struct {
     wchar comb;
@@ -2168,7 +2170,7 @@ combsubst(wchar comb)
         return comb;
 
       wchar chk = comb;
-      win_check_glyphs(&chk, 1);
+      win_check_glyphs(&chk, 1, attr);
       if (chk)
         return lookup[k].subst;
       else
@@ -2778,7 +2780,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   if (combining) {
    /* Substitute combining characters by overprinting lookalike glyphs */
     for (int i = 0; i < len; i++)
-      text[i] = combsubst(text[i]);
+      text[i] = combsubst(text[i], attr.attr);
    /* Determine characters that should be combined by Windows */
     if (len == 2) {
       if (text[0] == 'i' && (text[1] == 0x030F || text[1] == 0x0311))
@@ -3601,22 +3603,40 @@ draw:
 }
 
 
+static HFONT
+font4(struct fontfam * ff, cattrflags attr)
+{
+  bool bold = (ff->bold_mode == BOLD_FONT) && (attr & ATTR_BOLD);
+  bool italic = attr & ATTR_ITALIC;
+  int font4index = (bold ? FONT_BOLD : 0) | (italic ? FONT_ITALIC : 0);
+  HFONT f = ff->fonts[font4index];
+  if (!f && italic) {
+    if (!ff->fonts[FONT_BOLD]) {
+      font4index &= ~FONT_BOLD;
+      f = ff->fonts[font4index];
+    }
+    if (!f) {
+      another_font(ff, font4index);
+      f = ff->fonts[font4index];
+    }
+  }
+  if (!f)
+    f = ff->fonts[FONT_NORMAL];
+  return f;
+}
+
 /* Check availability of characters in the current font.
  * Zeroes each of the characters in the input array that isn't available.
  */
 void
-win_check_glyphs(wchar *wcs, uint num)
+win_check_glyphs(wchar *wcs, uint num, cattrflags attr)
 {
-  int findex = (term.curs.attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+  int findex = (attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
   if (findex > 10)
     findex = 0;
   struct fontfam * ff = &fontfamilies[findex];
 
-  bool bold = (ff->bold_mode == BOLD_FONT) && (term.curs.attr.attr & ATTR_BOLD);
-  bool italic = term.curs.attr.attr & ATTR_ITALIC;
-  HFONT f = ff->fonts[(bold ? FONT_BOLD : FONT_NORMAL) | italic ? FONT_ITALIC : 0];
-  if (!f)  // may not have been initialized
-    f = ff->fonts[FONT_NORMAL];
+  HFONT f = font4(ff, attr);
 
   HDC dc = GetDC(wnd);
   SelectObject(dc, f);
@@ -3629,15 +3649,13 @@ win_check_glyphs(wchar *wcs, uint num)
   ReleaseDC(wnd, dc);
 }
 
-#define dont_debug_win_char_width
-
 #ifdef debug_win_char_width
 int
-win_char_width(xchar c)
+win_char_width(xchar c, cattrflags attr)
 {
 #define win_char_width xwin_char_width
-int win_char_width(xchar);
-  int w = win_char_width(c);
+int win_char_width(xchar, cattrflags);
+  int w = win_char_width(c, attr);
   if (c >= 0x80)
     printf("win_char_width(%04X) -> %d\n", c, w);
   return w;
@@ -3652,9 +3670,9 @@ int win_char_width(xchar);
    * also whether to expand a normal width character if expected wide
  */
 int
-win_char_width(xchar c)
+win_char_width(xchar c, cattrflags attr)
 {
-  int findex = (term.curs.attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+  int findex = (attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
   if (findex > 10)
     findex = 0;
   struct fontfam * ff = &fontfamilies[findex];
@@ -3678,14 +3696,7 @@ win_char_width(xchar c)
   if (c >= ' ' && c <= '~')  // don't width-check ASCII
     return 1;
 
-  bool bold = (ff->bold_mode == BOLD_FONT) && (term.curs.attr.attr & ATTR_BOLD);
-  bool italic = term.curs.attr.attr & ATTR_ITALIC;
-  int font4index = (bold ? FONT_BOLD : FONT_NORMAL) | italic ? FONT_ITALIC : 0;
-  HFONT f = ff->fonts[font4index];
-  if (!f) {  // may not have been initialized
-    f = ff->fonts[FONT_NORMAL];
-    font4index = FONT_NORMAL;
-  }
+  HFONT f = font4(ff, attr);
 
   HDC dc = GetDC(wnd);
 #ifdef debug_win_char_width
@@ -3694,7 +3705,7 @@ win_char_width(xchar c)
   SelectObject(dc, f);
 #ifdef debug_win_char_width
   if (c == 0x2001)
-    win_char_width(0x5555);
+    win_char_width(0x5555, attr);
   if (!ok0)
     printf("width %04X failed (dc %p)\n", c, dc);
   else if (c > '~' || c == 'A') {
@@ -3822,6 +3833,11 @@ win_char_width(xchar c)
   {
     // look up c in charpropcache
     struct charpropcache * cpfound = 0;
+
+    bool bold = (ff->bold_mode == BOLD_FONT) && (attr & ATTR_BOLD);
+    bool italic = attr & ATTR_ITALIC;
+    int font4index = (bold ? FONT_BOLD : 0) | (italic ? FONT_ITALIC : 0);
+
     for (uint i = 0; i < ff->cpcachelen[font4index]; i++)
       if (ff->cpcache[font4index][i].ch == c) {
         if (ff->cpcache[font4index][i].width) {
@@ -3871,13 +3887,21 @@ win_char_width(xchar c)
  * Returns 0 if unsuccessful.
  */
 wchar
-win_combine_chars(wchar c, wchar cc)
+win_combine_chars(wchar c, wchar cc, cattrflags attr)
 {
   wchar cs[2];
   int len = FoldStringW(MAP_PRECOMPOSED, (wchar[]){c, cc}, 2, cs, 2);
   if (len == 1) {  // check whether the combined glyph exists
+    int findex = (attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+    if (findex > 10)
+      findex = 0;
+    struct fontfam * ff = &fontfamilies[findex];
+
+    HFONT f = font4(ff, attr);
+
     ushort glyph;
     HDC dc = GetDC(wnd);
+    SelectObject(dc, f);
     GetGlyphIndicesW(dc, cs, 1, &glyph, true);
     ReleaseDC(wnd, dc);
 #ifdef debug_win_combine

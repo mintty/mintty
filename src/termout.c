@@ -773,7 +773,7 @@ write_char(wchar c, int width)
        /* Try to precompose with the cell's base codepoint */
         wchar pc;
         if (termattrs_equal_fg(&line->chars[x].attr, &curs->attr))
-          pc = win_combine_chars(line->chars[x].chr, c);
+          pc = win_combine_chars(line->chars[x].chr, c, curs->attr.attr);
         else
           pc = 0;
         if (pc)
@@ -808,7 +808,7 @@ write_error(void)
   // Write one of REPLACEMENT CHARACTER or, if that does not exist,
   // MEDIUM SHADE which looks appropriately erroneous.
   wchar errch = 0xFFFD;
-  win_check_glyphs(&errch, 1);
+  win_check_glyphs(&errch, 1, term.curs.attr.attr);
   if (!errch)
     errch = 0x2592;
   write_char(errch, 1);
@@ -3086,7 +3086,7 @@ do_cmd(void)
           return;
         wcs[n++] = strtoul(s, &s, 10);
       }
-      win_check_glyphs(wcs, n);
+      win_check_glyphs(wcs, n, term.curs.attr.attr);
       s = term.cmd_buf;
       for (size_t i = 0; i < n; i++) {
         *s++ = ';';
@@ -3308,7 +3308,7 @@ term_do_write(const char *buf, uint len)
           width = 2;
         else if (term.wide_extra && wc >= 0x2000 && extrawide(wc)) {
           width = 2;
-          if (win_char_width(wc) < 2)
+          if (win_char_width(wc, term.curs.attr.attr) < 2)
             term.curs.attr.attr |= ATTR_EXPAND;
         }
         else
@@ -3330,9 +3330,9 @@ term_do_write(const char *buf, uint len)
         if (width == 2
             // && wcschr(W("〈〉《》「」『』【】〒〓〔〕〖〗〘〙〚〛"), wc)
             && wc >= 0x3008 && wc <= 0x301B && (wc | 1) != 0x3013
-            && win_char_width(wc) < 2
+            && win_char_width(wc, term.curs.attr.attr) < 2
             // ensure symmetric handling of matching brackets
-            && win_char_width(wc ^ 1) < 2)
+            && win_char_width(wc ^ 1, term.curs.attr.attr) < 2)
         {
           term.curs.attr.attr |= ATTR_EXPAND;
         }
