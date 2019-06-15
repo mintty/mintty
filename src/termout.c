@@ -676,8 +676,11 @@ write_char(wchar c, int width)
     clear_cc(line, curs->x);
     line->chars[curs->x].chr = c;
     line->chars[curs->x].attr = curs->attr;
+#ifdef insufficient_approach
+#warning this does not help when scrolling via rectangular copy
     if (term.lrmargmode)
       line->lattr &= ~LATTR_MODE;
+#endif
     if (!(line->lattr & LATTR_WRAPCONTD))
       line->lattr = (line->lattr & ~LATTR_BIDIMASK) | curs->bidimode;
     //TODO: if changed, propagate mode onto paragraph
