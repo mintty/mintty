@@ -1147,17 +1147,23 @@ do_esc(uchar c)
       }
       term.disptop = 0;
     when CPAIR('#', '3'):  /* DECDHL: 2*height, top */
-      term.lines[curs->y]->lattr &= LATTR_BIDIMASK;
-      term.lines[curs->y]->lattr |= LATTR_TOP;
+      if (!term.lrmargmode) {
+        term.lines[curs->y]->lattr &= LATTR_BIDIMASK;
+        term.lines[curs->y]->lattr |= LATTR_TOP;
+      }
     when CPAIR('#', '4'):  /* DECDHL: 2*height, bottom */
-      term.lines[curs->y]->lattr &= LATTR_BIDIMASK;
-      term.lines[curs->y]->lattr |= LATTR_BOT;
+      if (!term.lrmargmode) {
+        term.lines[curs->y]->lattr &= LATTR_BIDIMASK;
+        term.lines[curs->y]->lattr |= LATTR_BOT;
+      }
     when CPAIR('#', '5'):  /* DECSWL: normal */
       term.lines[curs->y]->lattr &= LATTR_BIDIMASK;
       term.lines[curs->y]->lattr |= LATTR_NORM;
     when CPAIR('#', '6'):  /* DECDWL: 2*width */
-      term.lines[curs->y]->lattr &= LATTR_BIDIMASK;
-      term.lines[curs->y]->lattr |= LATTR_WIDE;
+      if (!term.lrmargmode) {
+        term.lines[curs->y]->lattr &= LATTR_BIDIMASK;
+        term.lines[curs->y]->lattr |= LATTR_WIDE;
+      }
     when CPAIR('%', '8') or CPAIR('%', 'G'):
       curs->utf = true;
       term_update_cs();
@@ -1565,7 +1571,13 @@ set_modes(bool state)
           term.backspace_sends_bs = state;
         when 69: /* DECLRMM/VT420 DECVSSM: enable left/right margins DECSLRM */
           term.lrmargmode = state;
-          if (!state) {
+          if (state) {
+            for (int i = 0; i < term.rows; i++) {
+              termline *line = term.lines[i];
+              line->lattr = LATTR_NORM;
+            }
+          }
+          else {
             term.marg_left = 0;
             term.marg_right = term.cols - 1;
           }
