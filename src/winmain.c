@@ -1652,7 +1652,7 @@ win_bell(config * conf)
 
   if (cfg.bell_flash_style & FLASH_FRAME)
     flash_border();
-  if (term.bell_taskbar && !term.has_focus)
+  if (term.bell_taskbar && (!term.has_focus || win_is_iconic()))
     flash_taskbar(true);
   if (term.bell_popup)
     win_set_zorder(true);

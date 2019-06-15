@@ -20,6 +20,7 @@ Terminal features
 Window handling
   * Reenable left scrollbar.
   * Application scrollbar (experimental).
+  * Always flash taskbar on bell if iconic, if configured (#887, #607).
 
 ### 3.0.1 (28 May 2019) ###
 
