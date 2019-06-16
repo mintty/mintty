@@ -202,6 +202,7 @@ typedef struct {
   bool bold_as_special;
   int selection_show_size;
   bool hover_title;
+  int baud;
   // Legacy
   bool use_system_colours;
   bool old_bold;

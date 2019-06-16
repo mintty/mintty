@@ -221,7 +221,8 @@ const config default_cfg = {
     [BOLD_CYAN_I]    = RGB(0x40, 0xFF, 0xFF),
     [BOLD_WHITE_I]   = RGB(0xFF, 0xFF, 0xFF)
   },
-  .sixel_clip_char = W(" ")
+  .sixel_clip_char = W(" "),
+  .baud = 0
 };
 
 config cfg, new_cfg, file_cfg;
@@ -447,6 +448,7 @@ options[] = {
   {"BoldAsRainbowSparkles", OPT_BOOL, offcfg(bold_as_special)},
   {"SelectionShowSize", OPT_INT, offcfg(selection_show_size)},
   {"HoverTitle", OPT_BOOL, offcfg(hover_title)},
+  {"Baud", OPT_INT, offcfg(baud)},
 
   // ANSI colours
   {"Black", OPT_COLOUR, offcfg(ansi_colours[BLACK_I])},

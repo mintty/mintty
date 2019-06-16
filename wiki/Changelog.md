@@ -26,6 +26,9 @@ Window handling
   * Application scrollbar (experimental).
   * Always flash taskbar on bell if iconic, if configured (#887, #607).
 
+Configuration
+  * Option Baud to simulate serial connection speed for a legacy feeling.
+
 ### 3.0.1 (28 May 2019) ###
 
 Highlights

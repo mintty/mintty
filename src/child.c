@@ -474,6 +474,46 @@ child_proc(void)
         // this avoids most partial updates, results in less flickering/tearing.
         static char buf[4096];
         uint len = 0;
+#if CYGWIN_VERSION_API_MINOR >= 74
+        if (cfg.baud > 0) {
+          uint cps = cfg.baud / 10; // 1 start bit, 8 data bits, 1 stop bit
+          uint nspc = 2000000000 / cps;
+
+          static ulong prevtime = 0;
+          static ulong exceeded = 0;
+          static ulong granularity = 0;
+          struct timespec tim;
+          if (!granularity) {
+            clock_getres(CLOCK_MONOTONIC, &tim); // cygwin granularity: 539ns
+            granularity = tim.tv_nsec;
+          }
+          clock_gettime(CLOCK_MONOTONIC, &tim);
+          ulong now = tim.tv_sec * (long)1000000000 + tim.tv_nsec;
+          //printf("baud %d ns/char %d prev %ld now %ld delta\n", cfg.baud, nspc, prevtime, now);
+          if (now < prevtime + nspc) {
+            ulong delay = prevtime ? prevtime + nspc - now : 0;
+            if (delay < exceeded)
+              exceeded -= delay;
+            else {
+              tim.tv_sec = delay / 1000000000;
+              tim.tv_nsec = delay % 1000000000;
+              clock_nanosleep(CLOCK_MONOTONIC, 0, &tim, 0);
+              clock_gettime(CLOCK_MONOTONIC, &tim);
+              ulong then = tim.tv_sec * (long)1000000000 + tim.tv_nsec;
+              //printf("nsleep %ld -> %ld\n", delay, then - now);
+              if (then - now > delay)
+                exceeded = then - now - delay;
+              now = then;
+            }
+          }
+          prevtime = now;
+
+          int ret = read(pty_fd, buf, 1);
+          if (ret > 0)
+            len = ret;
+        }
+        else
+#endif
         do {
           //if (kb_trace) printf("[%lu] <read\n", mtime());
 
@@ -483,6 +523,7 @@ child_proc(void)
           else
             break;
         } while (len < sizeof buf);
+
         if (len > 0) {
           term_write(buf, len);
           // accelerate keyboard echo if (unechoed) keyboard input is pending
