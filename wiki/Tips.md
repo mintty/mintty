@@ -879,10 +879,6 @@ Emoji data can be found at the following sources:
   * Use the [extraction script `getemojis`](getemojis) to extract emoji data (call it without parameters for instructions)
   * Deploy the desired subdirectories (e.g. `apple`)
   * Includes apple, emojione, facebook, google, twitter, samsung, windows emojis (and some limited low-resolution sets that we shall ignore)
-* [Emoji data and images](https://github.com/iamcal/emoji-data)
-  * “Clone or download” the repository or download a release archive
-  * Deploy subdirectories `img-*` as appropriate (e.g. img-apple-64 as `apple`)
-  * Includes apple, emojione-2D, facebook, facebook messenger (discontinued), google, twitter emojis
 
 To “Clone” with limited download volume, use the command `git clone --depth 1`.
 To download only the desired subdirectory from `github.com`, use `subversion`, 
