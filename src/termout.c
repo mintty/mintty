@@ -525,8 +525,8 @@ static void
 write_backspace(void)
 {
   term_cursor *curs = &term.curs;
-  if (curs->x == 0 && (curs->y == term.marg_top || !curs->autowrap
-                       || (!cfg.old_wrapmodes && !curs->rev_wrap)))
+  if (curs->x == 0 && (curs->y == term.marg_top || !term.autowrap
+                       || (!cfg.old_wrapmodes && !term.rev_wrap)))
     /* skip */;
   else if (curs->x == term.marg_left && curs->y > term.marg_top) {
     curs->y--;
@@ -534,7 +534,7 @@ write_backspace(void)
   }
   else if (curs->wrapnext) {
     curs->wrapnext = false;
-    if (!curs->rev_wrap && !cfg.old_wrapmodes)
+    if (!term.rev_wrap && !cfg.old_wrapmodes)
       curs->x--;
   }
   else if (curs->x > 0 && curs->x != term.marg_left)
@@ -688,7 +688,7 @@ write_char(wchar c, int width)
       term_invalidate(0, curs->y, curs->x, curs->y);
   }
 
-  if (curs->wrapnext && curs->autowrap && width > 0) {
+  if (curs->wrapnext && term.autowrap && width > 0) {
     line->lattr |= LATTR_WRAPPED;
     line->wrappos = curs->x;
     ushort parabidi = getparabidi(line);
@@ -800,7 +800,7 @@ write_char(wchar c, int width)
   curs->x++;
   if (curs->x == term.marg_right + 1 || curs->x == term.cols) {
     curs->x--;
-    if (curs->autowrap || cfg.old_wrapmodes)
+    if (term.autowrap || cfg.old_wrapmodes)
       curs->wrapnext = true;
   }
 }
@@ -891,8 +891,8 @@ do_vt52(uchar c)
 {
   term_cursor *curs = &term.curs;
   term.state = NORMAL;
-  term.curs.autowrap = false;
-  term.curs.rev_wrap = false;
+  term.autowrap = false;
+  term.rev_wrap = false;
   term.esc_mod = 0;
   switch (c) {
     when '\e':
@@ -959,10 +959,10 @@ do_vt52(uchar c)
     when 'q':  /* Normal video */
       term.curs.attr.attr &= ~ATTR_REVERSE;
     when 'v':  /* Wrap on */
-      term.curs.autowrap = true;
+      term.autowrap = true;
       term.curs.wrapnext = false;
     when 'w':  /* Wrap off */
-      term.curs.autowrap = false;
+      term.autowrap = false;
       term.curs.wrapnext = false;
   }
 }
@@ -1072,7 +1072,7 @@ do_esc(uchar c)
     for (uint i = 0; i < lengthof(csdesignations); i++)
       if (csdesignations[i].design == nrc_code
           && (csdesignations[i].cstype & csmask)
-          && (csdesignations[i].free || term.curs.decnrc_enabled)
+          && (csdesignations[i].free || term.decnrc_enabled)
          )
       {
         curs->csets[gi] = csdesignations[i].cs;
@@ -1542,10 +1542,10 @@ set_modes(bool state)
         when 6:  /* DECOM: DEC origin mode */
           term.curs.origin = state;
         when 7:  /* DECAWM: auto wrap */
-          term.curs.autowrap = state;
+          term.autowrap = state;
           term.curs.wrapnext = false;
         when 45:  /* xterm: reverse (auto) wraparound */
-          term.curs.rev_wrap = state;
+          term.rev_wrap = state;
           term.curs.wrapnext = false;
         when 8:  /* DECARM: auto key repeat */
           term.auto_repeat = state;
@@ -1569,7 +1569,7 @@ set_modes(bool state)
         when 95: /* VT510 DECNCSM: DECCOLM does not clear the screen */
           term.deccolm_noclear = state;
         when 42: /* DECNRCM: national replacement character sets */
-          term.curs.decnrc_enabled = state;
+          term.decnrc_enabled = state;
         when 67: /* DECBKM: backarrow key mode */
           term.backspace_sends_bs = state;
         when 69: /* DECLRMM/VT420 DECVSSM: enable left/right margins DECSLRM */
@@ -1764,9 +1764,9 @@ get_mode(bool privatemode, int arg)
       when 6:  /* DECOM: DEC origin mode */
         return 2 - term.curs.origin;
       when 7:  /* DECAWM: auto wrap */
-        return 2 - term.curs.autowrap;
+        return 2 - term.autowrap;
       when 45:  /* xterm: reverse (auto) wraparound */
-        return 2 - term.curs.rev_wrap;
+        return 2 - term.rev_wrap;
       when 8:  /* DECARM: auto key repeat */
         return 2 - term.auto_repeat;
         //return 3; // ignored
@@ -1781,7 +1781,7 @@ get_mode(bool privatemode, int arg)
       when 40: /* Allow/disallow DECCOLM (xterm c132 resource) */
         return 2 - term.deccolm_allowed;
       when 42: /* DECNRCM: national replacement character sets */
-        return 2 - term.curs.decnrc_enabled;
+        return 2 - term.decnrc_enabled;
       when 67: /* DECBKM: backarrow key mode */
         return 2 - term.backspace_sends_bs;
       when 69: /* DECLRMM: enable left and right margin mode DECSLRM */
@@ -3222,7 +3222,7 @@ term_do_write(const char *buf, uint len)
           cset = term.curs.cset_single;
           term.curs.cset_single = CSET_ASCII;
         }
-        else if (term.curs.decnrc_enabled
+        else if (term.decnrc_enabled
          && term.curs.gr && term.curs.csets[term.curs.gr] != CSET_ASCII
          && !term.curs.oem_acs && !term.curs.utf
          && c >= 0x80 && c < 0xFF) {

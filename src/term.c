@@ -251,10 +251,7 @@ term_cursor_reset(term_cursor *curs)
   for (uint i = 0; i < lengthof(curs->csets); i++)
     curs->csets[i] = CSET_ASCII;
   curs->cset_single = CSET_ASCII;
-  curs->decnrc_enabled = false;
 
-  curs->autowrap = true;
-  curs->rev_wrap = cfg.old_wrapmodes;
   curs->bidimode = 0;
 
   curs->origin = false;
@@ -277,6 +274,10 @@ term_reset(bool full)
   term_cursor_reset(&term.saved_cursors[1]);
   term_update_cs();
   term.erase_char = basic_erase_char;
+  // these used to be in term_cursor, thus affected by cursor restore
+  term.decnrc_enabled = false;
+  term.autowrap = true;
+  term.rev_wrap = cfg.old_wrapmodes;
 
   // DECSTR states to be reset (in addition to cursor states)
   // https://www.vt100.net/docs/vt220-rm/table4-10.html

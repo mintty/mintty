@@ -388,13 +388,14 @@ typedef struct {
   uchar oem_acs;
   bool utf;
   ushort bidimode;
-  // these should not be affected by cursor restore (DEC, xterm):
-  bool decnrc_enabled;  /* DECNRCM: enable NRC */
-  bool autowrap;        /* DECAWM: Autowrap mode */
-  bool rev_wrap;        /* xterm: Reverse wraparound mode */
 } term_cursor;
 
 struct term {
+  // these used to be in term_cursor, thus affected by cursor restore
+  bool decnrc_enabled;  /* DECNRCM: enable NRC */
+  bool autowrap;        /* DECAWM: Autowrap mode */
+  bool rev_wrap;        /* xterm: Reverse wraparound mode */
+
   bool on_alt_screen;     /* On alternate screen? */
   bool show_other_screen;
 

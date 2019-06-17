@@ -5,6 +5,7 @@ Terminal features
   * Fixed DCH/ICH/IRM outside left/right margins.
   * Inhibiting double width/height lines in left/right margin mode.
 
+  * Auto-wrap modes are no more affected by cursor save/restore.
   * Fixed left/right margin mode to inhibit double width lines.
   * Fixed TAB to stop at right margin.
   * Ensure restored cursor to be within margins in origin mode.
