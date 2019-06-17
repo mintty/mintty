@@ -1541,6 +1541,10 @@ set_modes(bool state)
           }
         when 6:  /* DECOM: DEC origin mode */
           term.curs.origin = state;
+          if (state)
+            move(term.marg_left, term.marg_top, 0);
+          else
+            move(0, 0, 0);
         when 7:  /* DECAWM: auto wrap */
           term.autowrap = state;
           term.curs.wrapnext = false;

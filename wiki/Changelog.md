@@ -9,6 +9,7 @@ Terminal features
   * Fixed left/right margin mode to inhibit double width lines.
   * Fixed TAB to stop at right margin.
   * Ensure restored cursor to be within margins in origin mode.
+  * Set/Reset origin mode moves cursor home.
   * Confining DL, IL, DECDC, DECIC within margins.
   * Confining LF, IND, VT, NEL, FF within margins.
   * Fixed DECSED 3 not to clear current position; guard CSI [?] n J/K.
