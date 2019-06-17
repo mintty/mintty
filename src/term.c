@@ -2029,11 +2029,8 @@ term_paint(void)
       {
         if ((tattr.attr & ATTR_WIDE) == 0
             && win_char_width(tchar, tattr.attr) == 2
-            // do not tamper with graphics
-            && !line->lattr
-            // and restrict narrowing to ambiguous width chars
-            //&& ambigwide(tchar)
-            // but then they will be clipped...
+            // && !(line->lattr & LATTR_MODE) ? "do not tamper with graphics"
+            // && ambigwide(tchar) ? but then they will be clipped...
            ) {
           tattr.attr |= ATTR_NARROW;
         }
