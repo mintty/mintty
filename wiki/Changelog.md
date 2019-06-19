@@ -22,6 +22,7 @@ Terminal features
 
 Font rendering
   * Check functions (width, glyph) consult proper attributes and font.
+  * Tweaked check for automatic narrowing to fit in cell width.
 
 Window handling
   * Reenable left scrollbar.

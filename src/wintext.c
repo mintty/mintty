@@ -3717,8 +3717,9 @@ win_char_width(xchar c, cattrflags attr)
     BOOL ok3 = GetCharABCWidthsW(dc, c, c, &abc);  // only on TrueType
     ABCFLOAT abcf; memset(&abcf, 0, sizeof abcf);
     BOOL ok4 = GetCharABCWidthsFloatW(dc, c, c, &abcf);
-    printf("w %04X [cell %d] - 32 %d %d - flt %d %.3f - abc %d %d %d %d - abc flt %d %4.1f %4.1f %4.1f\n", 
-           c, cell_width, ok1, cw, ok2, cwf, 
+    printf("w %04X [cell %d] - 32 %d %d - flt %d %.3f - abc %d %d %d %d - abcflt %d %4.1f %4.1f %4.1f\n", 
+           c, cell_width, 
+           ok1, cw, ok2, cwf, 
            ok3, abc.abcA, abc.abcB, abc.abcC, 
            ok4, abcf.abcfA, abcf.abcfB, abcf.abcfC);
   }
@@ -3802,32 +3803,24 @@ win_char_width(xchar c, cattrflags attr)
   }
 
   if ((c >= 0x3000 && c <= 0x303F)
-     || (ambigwide(c) &&
-#ifdef check_ambig_non_letters
-#warning instead we now check all non-letters with some exclusions
-      (c == 0x20AC  // €
-      || (c >= 0x2100 && c <= 0x23FF)   // Letterlike, Number Forms, Arrows, Math Operators, Misc Technical
-      || (c >= 0x2460 && c <= 0x24FF)   // Enclosed Alphanumerics
-      || (c >= 0x25A0 && c <= 0x25FF)   // Geometric Shapes
-      || (c >= 0x2600 && c <= 0x27BF)   // Miscellaneous Symbols, Dingbats
-      || (c >= 0x2B00 && c <= 0x2BFF)   // Miscellaneous Symbols and Arrows
-      || (c >= 0x1F100 && c <= 0x1F1FF) // Enclosed Alphanumeric Supplement
-      )
-#else
-      // check all non-letters
-      (bidi_class(c) != L               // indicates not a letter
-      || (c >= 0x249C && c <= 0x24E9)   // parenthesized/circled letters
-      || (c >= 0x3248 && c <= 0x324F)   // Enclosed CJK Letters and Months
-      || (c >= 0x1F110 && c <= 0x1F12A) // Enclosed Alphanumeric Supplement
-      )
-      &&
-      // with some exceptions
-      !(  (c >= 0x2500 && c <= 0x2588)  // Box Drawing, Block Elements
-       || (c >= 0x2592 && c <= 0x2594)  // Block Elements
-       || (c >= 0x2160 && c <= 0x2179)  // Roman Numerals
-       //|| wcschr (W("‐‑‘’‚‛“”„‟‹›"), c) // #712 workaround; now caching
-       )
+   || (c >= 0x2460 && c <= 0x24FF)   // Enclosed Alphanumerics
+   || (c >= 0x2600 && c <= 0x27BF)   // Miscellaneous Symbols, Dingbats
+   //|| (c >= 0x249C && c <= 0x24E9)   // parenthesized/circled letters
+   || (c >= 0x3248 && c <= 0x324F)   // Enclosed CJK Letters and Months
+   || (c >= 0x1F100 && c <= 0x1F1FF) // Enclosed Alphanumeric Supplement
+#ifdef check_more_mostly_covered_below
+   || (c >= 0x2100 && c <= 0x23FF)   // Letterlike, Number Forms, Arrows, Math Operators, Misc Technical
+   || (c >= 0x25A0 && c <= 0x25FF)   // Geometric Shapes
+   || (c >= 0x2B00 && c <= 0x2BFF)   // Miscellaneous Symbols and Arrows
 #endif
+   || (// check all non-letters with some exceptions
+       bidi_class(c) != L               // indicates not a letter
+      &&
+       !(  (c >= 0x2500 && c <= 0x2588)  // Box Drawing, Block Elements
+        || (c >= 0x2592 && c <= 0x2594)  // Block Elements
+        || (c >= 0x2160 && c <= 0x2179)  // Roman Numerals
+        //|| wcschr (W("‐‑‘’‚‛“”„‟‹›"), c) // #712 workaround; now caching
+        )
       )
      )
   {
