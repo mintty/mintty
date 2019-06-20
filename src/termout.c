@@ -2075,6 +2075,7 @@ do_csi(uchar c)
   if (arg1 < 0)
     arg1 = 0;
   int arg0_def1 = arg0 ?: 1;  // first arg with default 1
+  static int ime_status = 0;
 
   // DECRQM quirk
   if (term.esc_mod == 0xFF && esc_mod0 == '?' && esc_mod1 == '$' && c == 'p')
@@ -2590,6 +2591,15 @@ do_csi(uchar c)
         insdel_column(curs->x, true, arg0_def1);
     when CPAIR('#', 't'):  /* application scrollbar */
       win_set_scrollview(arg0, arg1);
+    // IME control
+    when CPAIR('<', 'r'):
+      ImmSetOpenStatus(imc, ime_status);
+      win_set_ime_open(ime_status);
+    when CPAIR('<', 's'):
+      ime_status = ImmGetOpenStatus(imc);
+    when CPAIR('<', 't'):
+      ImmSetOpenStatus(imc, arg0);
+      win_set_ime_open(arg0);
   }
 }
 
