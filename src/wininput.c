@@ -2868,6 +2868,21 @@ static struct {
   return true;
 }
 
+void
+win_csi_seq(char * pre, char * suf)
+{
+  mod_keys mods = get_mods();
+  inline bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
+  bool super = super_key && is_key_down(super_key);
+  bool hyper = hyper_key && is_key_down(hyper_key);
+  mods |= super * MDK_SUPER | hyper * MDK_HYPER;
+
+  if (mods)
+    child_printf("\e[%s;%u%s", pre, mods + 1, suf);
+  else
+    child_printf("\e[%s%s", pre, suf);
+}
+
 bool
 win_key_up(WPARAM wp, LPARAM lp)
 {

@@ -215,14 +215,18 @@ The numbers in the keycodes really are that irregular. Only twelve function keys
 ## Application scrollbar events ##
 
 In application scrollbar mode, the following keys or sequences are generated:
+The relative scrollbar reports can have a second parameter which encodes 
+the modifiers like for other function keys.
 
-| **Event**   | **key/sequence** | note |
-|:----------|:----------|:----------------|
-| **Scroll Up/Down** | Up/Down | modifiers applied |
-| **Page Up/Down**   | PgUp/PgDn | modifiers applied |
-| **Scroll Here**    | `^[[`_pos_`#d`  | _pos_ between 1 and virtual size |
-| **Top**            | `^[[0#d`        |                                  |
-| **Bottom**         | `^[[`_size_`#d` | configured virtual _size_        |
+| **Event**       | **sequence**    | note                             |
+|:----------------|:----------------|:---------------------------------|
+| **Page Up**     | `^[[5#e`        |                                  |
+| **Page Down**   | `^[[6#e`        |                                  |
+| **Scroll Up**   | `^[[65#e`       |                                  |
+| **Scroll Down** | `^[[66#e`       |                                  |
+| **Scroll Here** | `^[[`_pos_`#d`  | _pos_ between 1 and virtual size |
+| **Top**         | `^[[0#d`        |                                  |
+| **Bottom**      | `^[[`_size_`#d` | configured virtual _size_        |
 
 
 ## Mousewheel ##

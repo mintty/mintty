@@ -157,21 +157,24 @@ position, and receive scrollbar events as control sequences.
 This mode is up to future revision. It is currently enabled or disabled 
 implicitly, there is no explicit mode setting sequence.
 
-The application scrollbar indicates a scrollbar view within an assumed span 
-of a virtual document (as maintained by the application). The height of the 
-view always corresponds to the actual terminal size (rows). 
-Control sequences can set up the total virtual document size (in assumed lines) 
-as well as the view position (from 1 to total size).
+The application scrollbar indicates a scrollbar view ("scroll offset") 
+within an assumed span of a virtual document ("document height", as 
+maintained by the application). The height of the view ("viewport height") 
+defaults to the actual terminal size (rows); its difference to the 
+terminal size is kept when resizing the terminal. Control sequences 
+can set up the current view position ("scroll offset" from 1 to total size) 
+as well as the total virtual document size ("document height" in assumed lines) 
+and optionally the "viewport height".
 
-| **sequence**            | **scrollbar**                                |
-|:------------------------|:---------------------------------------------|
-| `^[[`_pos_`;`_size_`#t` | set scrollbar view position and virtual size |
-| `^[[`_pos_`#t`          | set scrollbar view position                  |
-| `^[[0#t`                | disable application scrollbar                |
+| **sequence**                      | **scrollbar**                                        |
+|:----------------------------------|:-----------------------------------------------------|
+| `^[[`_pos_`;`_size_`;`_height`#t` | set scrollbar view position, virtual size and height |
+| `^[[`_pos_`;`_size_`#t`           | set scrollbar view position and virtual size         |
+| `^[[`_pos_`#t`                    | set scrollbar view position                          |
+| `^[[0#t`                          | disable application scrollbar                        |
 
-Relative scrollbar movement is reported by normal cursor keys (up/down/page),
-absolute positioning is reported with special sequences;
-for details see 
+Relative scrollbar movement and absolute positioning are reported with 
+special sequences; for details see 
 [Keycodes – Application scrollbar events](https://github.com/mintty/mintty/wiki/Keycodes#application-scrollbar-events).
 
 

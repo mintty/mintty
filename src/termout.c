@@ -2589,7 +2589,7 @@ do_csi(uchar c)
          )
         insdel_column(curs->x, true, arg0_def1);
     when CPAIR('#', 't'):  /* application scrollbar */
-      win_set_scrollview(arg0, arg1);
+      win_set_scrollview(arg0, arg1, term.csi_argc > 2 ? (int)term.csi_argv[2] : -1);
     when CPAIR('<', 't'):  /* TTIMEST: change IME state (Tera Term) */
       win_set_ime(arg0);
     when CPAIR('<', 's'):  /* TTIMESV: save IME state (Tera Term) */

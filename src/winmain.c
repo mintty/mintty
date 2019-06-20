@@ -576,9 +576,10 @@ win_sys_style(bool focus)
    Application scrollbar.
  */
 static int scroll_len = 0;
+static int scroll_dif = 0;
 
 void
-win_set_scrollview(int pos, int len)
+win_set_scrollview(int pos, int len, int height)
 {
   bool prev = term.app_scrollbar;
   term.app_scrollbar = pos;
@@ -587,6 +588,10 @@ win_set_scrollview(int pos, int len)
       scroll_len = len;
     else
       len = scroll_len;
+    if (height >= 0)
+      scroll_dif = term.rows - height;
+    else if (!prev)
+      scroll_dif = 0;
     SetScrollInfo(
       wnd, SB_VERT,
       &(SCROLLINFO){
@@ -594,7 +599,7 @@ win_set_scrollview(int pos, int len)
         .fMask = SIF_ALL | SIF_DISABLENOSCROLL,
         .nMin = 1,
         .nMax = len,
-        .nPage = term.rows,
+        .nPage = term.rows - scroll_dif,
         .nPos = pos,
       },
       true  // redraw
@@ -2535,10 +2540,22 @@ static struct {
         }
       else
         switch (LOWORD(wp)) {
-          when SB_LINEUP:   win_key_down(VK_UP, 1);
-          when SB_LINEDOWN: win_key_down(VK_DOWN, 1);
-          when SB_PAGEUP:   win_key_down(VK_PRIOR, 1);
-          when SB_PAGEDOWN: win_key_down(VK_NEXT, 1);
+          when SB_LINEUP:
+            //win_key_down(VK_UP, 1);
+            win_csi_seq("65", "#e");
+          when SB_LINEDOWN:
+            //win_key_down(VK_DOWN, 1);
+            win_csi_seq("66", "#e");
+          when SB_PAGEUP:
+            //win_key_down(VK_PRIOR, 1);
+            win_csi_seq("5", "#e");
+          when SB_PAGEDOWN:
+            //win_key_down(VK_NEXT, 1);
+            win_csi_seq("6", "#e");
+          when SB_TOP:
+            child_printf("\e[0#d");
+          when SB_BOTTOM:
+            child_printf("\e[%u#d", scroll_len);
           when SB_THUMBPOSITION or SB_THUMBTRACK: {
             SCROLLINFO info;
             info.cbSize = sizeof(SCROLLINFO);
@@ -2546,8 +2563,6 @@ static struct {
             GetScrollInfo(wnd, SB_VERT, &info);
             child_printf("\e[%u#d", info.nTrackPos);
           }
-          when SB_TOP:      child_printf("\e[0#d");
-          when SB_BOTTOM:   child_printf("\e[%u#d", scroll_len);
         }
 
     when WM_MOUSEWHEEL:

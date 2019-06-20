@@ -61,7 +61,7 @@ extern void win_change_font(uint findex, wstring fn);
 extern void win_font_cs_reconfig(bool font_changed);
 
 extern void win_update_scrollbar(bool inner);
-extern void win_set_scrollview(int pos, int len);
+extern void win_set_scrollview(int pos, int len, int height);
 
 extern void win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size);
 extern void scale_to_image_ratio(void);
@@ -91,6 +91,7 @@ extern void win_mouse_move(bool nc, LPARAM);
 extern void win_key_reset(void);
 extern bool win_key_down(WPARAM, LPARAM);
 extern bool win_key_up(WPARAM, LPARAM);
+extern void win_csi_seq(char * pre, char * suf);
 
 extern void win_led(int led, bool set);
 
