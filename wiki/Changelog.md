@@ -19,6 +19,7 @@ Terminal features
   * Cursor backward (CUB) applies reverse-wraparound.
 
   * Application scrollbar (experimental).
+  * Control sequence to switch IME status (#888, Tera Term).
 
 Font rendering
   * Check functions (width, glyph) consult proper attributes and font.

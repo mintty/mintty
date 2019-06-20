@@ -67,6 +67,18 @@ The respective setting is cleared with a corresponding sequence ending with `l`.
 | `^[[?77031h`  | Ctrl+_    | `^[[95;5u`   |
 
 
+## Input method ##
+
+Mintty allows to set, save or restore the IME status explicitly, to support 
+applications like text editors to adapt it to the current input target.
+
+| **sequence**  | **IME status**                            |
+|:--------------|:------------------------------------------|
+| `^[[<`_on_`t` | Open (1) or Close (0, default) IME status |
+| `^[[<s`       | Save (push) IME status                    |
+| `^[[<r`       | Restore (pop) IME status                  |
+
+
 ## Shortcut override mode ##
 
 When shortcut override mode is on, all shortcut key combinations are sent to the application instead of triggering window commands.

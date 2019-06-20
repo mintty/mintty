@@ -3026,6 +3026,19 @@ hook_windows(int id, HOOKPROC hookproc, bool global)
 
 #endif
 
+bool
+win_get_ime(void)
+{
+  return ImmGetOpenStatus(imc);
+}
+
+void
+win_set_ime(bool open)
+{
+  ImmSetOpenStatus(imc, open);
+  win_set_ime_open(open);
+}
+
 
 void
 report_pos(void)

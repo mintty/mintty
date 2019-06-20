@@ -106,6 +106,8 @@ extern void win_switch(bool back, bool alternate);
 extern int search_monitors(int * minx, int * miny, HMONITOR lookup_mon, int get_primary, MONITORINFO *mip);
 
 extern void win_set_ime_open(bool);
+extern void win_set_ime(bool open);
+extern bool win_get_ime(void);
 
 extern void show_message(char * msg, UINT type);
 extern void show_info(char * msg);
