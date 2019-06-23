@@ -583,6 +583,10 @@ win_set_scrollview(int pos, int len, int height)
 {
   bool prev = term.app_scrollbar;
   term.app_scrollbar = pos;
+
+  if (term.app_scrollbar != prev)
+    win_update_scrollbar(false);
+
   if (pos) {
     if (len)
       scroll_len = len;
@@ -605,8 +609,6 @@ win_set_scrollview(int pos, int len, int height)
       true  // redraw
     );
   }
-  if (term.app_scrollbar != prev)
-    win_update_scrollbar(false);
 }
 
 
@@ -1949,6 +1951,7 @@ win_update_scrollbar(bool inner)
   if (scrollbar && !cfg.scrollbar)
     cfg.scrollbar = 1;
   if (term.app_scrollbar && !scrollbar) {
+    //printf("enforce application scrollbar %d->%d->%d\n", scrollbar, cfg.scrollbar, cfg.scrollbar ?: 1);
     scrollbar = cfg.scrollbar ?: 1;
   }
 
