@@ -320,6 +320,51 @@ show_font_warning(struct fontfam * ff, char * msg)
 #define TCI_SRCLOCALE 0x1000
 #endif
 
+#ifdef check_font_ranges
+#warning this does not tell us whether a glyph is shown
+
+static GLYPHSET *
+win_font_ranges(HDC dc, struct fontfam * ff, int fontno)
+{
+  if (!ff->fonts[fontno] || fontno >= FONT_BOLDITAL)
+    return 0;
+  SelectObject(dc, ff->fonts[fontno]);
+  int ursize = GetFontUnicodeRanges(dc, 0);
+  GLYPHSET * gs = malloc(ursize);
+  gs->cbThis = ursize;
+  gs->flAccel = 0;
+  if (GetFontUnicodeRanges(dc, gs)) {
+#ifdef debug_font_ranges
+    printf("%d %ls\n", fontno, ff->name);
+    for (uint i = 0; i < gs->cRanges; i++) {
+      printf("%04X: %d\n", gs->ranges[i].wcLow, gs->ranges[i].cGlyphs);
+    }
+#endif
+  }
+  return gs;
+}
+
+static bool
+glyph_in(WCHAR c, GLYPHSET * gs)
+{
+  int min = 0;
+  int max = gs->cRanges - 1;
+  int mid;
+  while (max >= min) {
+    mid = (min + max) / 2;
+    if (c < gs->ranges[mid].wcLow) {
+      max = mid - 1;
+    } else if (c < gs->ranges[mid].wcLow + gs->ranges[mid].cGlyphs) {
+      return true;
+    } else {
+      min = mid + 1;
+    }
+  }
+  return false;
+}
+
+#endif
+
 static UINT
 get_default_charset(void)
 {
@@ -3642,10 +3687,24 @@ win_check_glyphs(wchar *wcs, uint num, cattrflags attr)
   SelectObject(dc, f);
   ushort glyphs[num];
   GetGlyphIndicesW(dc, wcs, num, glyphs, true);
-  for (size_t i = 0; i < num; i++) {
+  for (uint i = 0; i < num; i++) {
     if (glyphs[i] == 0xFFFF || glyphs[i] == 0x1F)
       wcs[i] = 0;
   }
+
+#ifdef check_font_ranges
+#warning this does not tell us whether a glyph is shown
+  bool bold = (ff->bold_mode == BOLD_FONT) && (attr & ATTR_BOLD);
+  bool italic = attr & ATTR_ITALIC;
+  int font4index = (bold ? FONT_BOLD : 0) | (italic ? FONT_ITALIC : 0);
+  GLYPHSET * gs = win_font_ranges(dc, ff, font4index);
+  if (gs)
+    for (uint i = 0; i < num; i++) {
+      if (!glyph_in(wcs[i], gs))
+        wcs[i] = 0;
+    }
+#endif
+
   ReleaseDC(wnd, dc);
 }
 
