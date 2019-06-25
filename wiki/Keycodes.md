@@ -222,8 +222,8 @@ the modifiers like for other function keys.
 |:----------------|:----------------|:---------------------------------|
 | **Page Up**     | `^[[5#e`        |                                  |
 | **Page Down**   | `^[[6#e`        |                                  |
-| **Scroll Up**   | `^[[65#e`       |                                  |
-| **Scroll Down** | `^[[66#e`       |                                  |
+| **Scroll Up**   | `^[[65#e`       | also mouse wheel on scrollbar    |
+| **Scroll Down** | `^[[66#e`       | also mouse wheel on scrollbar    |
 | **Scroll Here** | `^[[`_pos_`#d`  | _pos_ between 1 and virtual size |
 | **Top**         | `^[[0#d`        |                                  |
 | **Bottom**      | `^[[`_size_`#d` | configured virtual _size_        |

@@ -31,6 +31,7 @@ char * mintty_debug;
 
 #include <mmsystem.h>  // PlaySound for MSys
 #include <shellapi.h>
+#include <windowsx.h>  // GET_X_LPARAM, GET_Y_LPARAM
 
 #ifdef __CYGWIN__
 #include <sys/cygwin.h>  // cygwin_internal
@@ -1284,20 +1285,37 @@ win_get_scrpos(int *xp, int *yp, bool with_borders)
   }
 }
 
+static int
+win_has_scrollbar(void)
+{
+  LONG style = GetWindowLong(wnd, GWL_STYLE);
+  if (style & WS_VSCROLL) {
+    LONG exstyle = GetWindowLong(wnd, GWL_EXSTYLE);
+    if (exstyle & WS_EX_LEFTSCROLLBAR)
+      return -1;
+    else
+      return 1;
+  }
+  else
+    return 0;
+}
+
 void
 win_get_pixels(int *height_p, int *width_p, bool with_borders)
 {
   RECT r;
   GetWindowRect(wnd, &r);
+  //printf("win_get_pixels: width %d win_has_scrollbar %d\n", r.right - r.left, win_has_scrollbar());
   if (with_borders) {
     *height_p = r.bottom - r.top;
-    *width_p = r.right - r.left
-             + (cfg.scrollbar ? GetSystemMetrics(SM_CXVSCROLL) : 0);
+    *width_p = r.right - r.left;
   }
   else {
     int sy = win_search_visible() ? SEARCHBAR_HEIGHT : 0;
     *height_p = r.bottom - r.top - extra_height - 2 * PADDING - sy;
-    *width_p = r.right - r.left - extra_width - 2 * PADDING;
+    *width_p = r.right - r.left - extra_width - 2 * PADDING
+             //- (cfg.scrollbar ? GetSystemMetrics(SM_CXVSCROLL) : 0);
+             - (win_has_scrollbar() ? GetSystemMetrics(SM_CXVSCROLL) : 0);
   }
 }
 
@@ -1739,7 +1757,7 @@ win_adjust_borders(int t_width, int t_height)
   printf("win_adjust_borders w/h %d %d\n", width, height);
 #endif
 
-  if (cfg.scrollbar)
+  if (term.app_scrollbar || cfg.scrollbar)
     width += GetSystemMetrics(SM_CXVSCROLL);
 
   extra_width = width - (cr.right - cr.left);
@@ -2568,9 +2586,38 @@ static struct {
           }
         }
 
-    when WM_MOUSEWHEEL:
+    when WM_MOUSEWHEEL: {
       // check whether in client area (terminal pane) or over scrollbar...
-      win_mouse_wheel(wp, lp);
+      POINT wpos = {.x = GET_X_LPARAM(lp), .y = GET_Y_LPARAM(lp)};
+      ScreenToClient(wnd, &wpos);
+      int height, width;
+      win_get_pixels(&height, &width, false);
+      height += 2 * PADDING;
+      width += 2 * PADDING;
+      int delta = GET_WHEEL_DELTA_WPARAM(wp);  // positive means up
+      //printf("%d %d %d %d %d\n", wpos.y, wpos.x, height, width, delta);
+      if (wpos.y >= 0 && wpos.y < height) {
+        if (wpos.x >= 0 && wpos.x < width)
+          win_mouse_wheel(wp, lp);
+        else {
+          int hsb = win_has_scrollbar();
+          if (hsb && term.app_scrollbar) {
+            int wsb = GetSystemMetrics(SM_CXVSCROLL);
+            if ((hsb > 0 && wpos.x >= width && wpos.x < width + wsb)
+             || (hsb < 0 && wpos.x < 0 && wpos.x >= - wsb)
+               )
+            {
+              if (delta > 0) // mouse wheel up
+                //win_key_down(VK_UP, 1);
+                win_csi_seq("65", "#e");
+              else // mouse wheel down
+                //win_key_down(VK_DOWN, 1);
+                win_csi_seq("66", "#e");
+            }
+          }
+        }
+      }
+    }
 
     when WM_MOUSEMOVE: win_mouse_move(false, lp);
     when WM_NCMOUSEMOVE: win_mouse_move(true, lp);

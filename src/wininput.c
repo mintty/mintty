@@ -9,7 +9,7 @@
 #include "child.h"
 
 #include <math.h>
-#include <windowsx.h>
+#include <windowsx.h>  // GET_X_LPARAM, GET_Y_LPARAM
 #include <winnls.h>
 #include <termios.h>
 
