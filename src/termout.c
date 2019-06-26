@@ -707,6 +707,7 @@ write_char(wchar c, int width)
   if (curs->attr.attr & ATTR_OVERSTRIKE) {
     width = 0;
     overstrike = true;
+    curs->wrapnext = false;
   }
 
   if (term.insert && width > 0)
@@ -760,7 +761,7 @@ write_char(wchar c, int width)
 #ifdef debug_surrogates
       printf("write_char %04X %2d %08llX\n", c, width, curs->attr.attr);
 #endif
-      if (curs->x > 0) {
+      if (curs->x > 0 || overstrike) {
        /* If we're in wrapnext state, the character
         * to combine with is _here_, not to our left. */
         int x = curs->x - !curs->wrapnext;
