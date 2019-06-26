@@ -1789,7 +1789,12 @@ emoji_show(int x, int y, struct emoji e, int elen, cattr eattr, ushort lattr)
 void
 _win_text(int line, int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl, bool clearpad, uchar phase)
 {
-  printf("[%d] %d:%d(%d) %04X,%04X %08llX\n", line, ty, tx, len, *text, text[1], attr.attr);
+  if (*text != ' ') {
+    printf("[%d] %d:%d(len %d) attr %08llX", line, ty, tx, len, attr.attr);
+    for (int i = 0; i < len && i < 8; i++)
+      printf(" %04X", text[i]);
+    printf("\n");
+  }
   win_text(tx, ty, text, len, attr, textattr, lattr, has_rtl, clearpad, phase);
 }
 
