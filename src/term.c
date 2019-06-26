@@ -1782,6 +1782,21 @@ emoji_show(int x, int y, struct emoji e, int elen, cattr eattr, ushort lattr)
     win_emoji_show(x, y, efn, elen, lattr);
 }
 
+#define dont_debug_win_text_invocation
+
+#ifdef debug_win_text_invocation
+
+void
+_win_text(int line, int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl, bool clearpad, uchar phase)
+{
+  printf("[%d] %d:%d(%d) %04X,%04X %08llX\n", line, ty, tx, len, *text, text[1], attr.attr);
+  win_text(tx, ty, text, len, attr, textattr, lattr, has_rtl, clearpad, phase);
+}
+
+#define win_text(tx, ty, text, len, attr, textattr, lattr, has_rtl, clearpad, phase) _win_text(__LINE__, tx, ty, text, len, attr, textattr, lattr, has_rtl, clearpad, phase)
+
+#endif
+
 void
 term_paint(void)
 {
