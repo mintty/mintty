@@ -1980,6 +1980,10 @@ likely based on a more up-to-date Unicode version.
 with ambiguous-width characters assumed to be wide.
 (Corresponds to the xterm resource \fBcjkWidth\fP.)
 
+\fINote:\fP If this option selects using built-in width properties, 
+the response to the Secondary Device Attributes request will report 
+the built-in Unicode version as its third parameter.
+
 \fIWarning:\fP With this option, actual width properties as rendered 
 on the screen and width assumptions of the \fBwcwidth\fP function will be 
 inconsistent for the impacted characters, which may confuse 

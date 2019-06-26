@@ -1,4 +1,5 @@
 Terminal features
+  * Secondary Device Attributes report Unicode version with option Charwidth.
   * Report DECRQSS DECSCL conformance level as VT500 (7-bit controls).
   * Rectangular checksum DECRQCRA.
   * Fixed BS and CR "border" cases.

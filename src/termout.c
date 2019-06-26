@@ -14,6 +14,7 @@
 #include "sixel.h"
 #include "winimg.h"
 #include "base64.h"
+#include "unicodever.t"
 
 #include <termios.h>
 
@@ -2107,8 +2108,12 @@ do_csi(uchar c)
       if (!arg0)
         write_primary_da();
     when CPAIR('>', 'c'):     /* Secondary DA: report device version */
-      if (!arg0)
-        child_printf("\e[>77;%u;0c", DECIMAL_VERSION);
+      if (!arg0) {
+        if (cfg.charwidth)
+          child_printf("\e[>77;%u;%uc", DECIMAL_VERSION, UNICODE_VERSION);
+        else
+          child_printf("\e[>77;%u;0c", DECIMAL_VERSION);
+      }
     when 'a':        /* HPR: move right N cols */
       move(curs->x + arg0_def1, curs->y, 1);
     when 'C':        /* CUF: Cursor right */

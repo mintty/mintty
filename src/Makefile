@@ -243,11 +243,17 @@ full-emoji-list.html:
 
 univer = `sed -e '/^\# Blocks-/ s,[^0-9]*\([0-9]*\)\.\([0-9]\)\.[0-9][^0-9]*,\1.\2,' -e t -e d Blocks.txt`
 
-univer:	Blocks.txt
-	echo $(univer)
-
 emoji-%.txt:	Blocks.txt
 	$(WGET) http://www.unicode.org/Public/emoji/$(univer)/$@
+
+unicodever = `sed -e '/^\# Blocks-/ s,[^0-9]*\([0-9]*\)\.\([0-9]\)\.\([0-9]\)[^0-9]*,\1\2\3,' -e t -e d Blocks.txt`
+
+unicodever.t:
+	echo "#define UNICODE_VERSION $(unicodever)" > unicodever.t
+
+univer:	Blocks.txt
+	echo $(univer)
+	echo $(unicodever)
 
 %.txt:
 	$(WGET) http://www.unicode.org/Public/UNIDATA/$@
