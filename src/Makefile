@@ -185,10 +185,10 @@ rgb.t:	# /usr/share/X11/rgb.txt # X11 color names, from package 'rgb'
 	sed -e 's,	, ,g' -e 's/ *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([^ ].*[^ ]\) */	{\1, \2, \3, "\4"},/' /usr/share/X11/rgb.txt > rgb.t
 
 combdata=combining.t combdouble.t combined.t
-unidata=$(combdata) ambiguous.t casefold.t bidiclasses.t mirroring.t brackets.t canonical.t wide.t
+unidata=$(combdata) ambiguous.t casefold.t bidiclasses.t mirroring.t brackets.t canonical.t wide.t unicodever.t
 emojidata=emojibase.t emojiseqs.t
 
-unicodedata=UnicodeData.txt EastAsianWidth.txt Blocks.txt CaseFolding.txt BidiMirroring.txt BidiBrackets.txt BidiCharacterTest.txt BidiTest.txt
+unicodedata=UnicodeData.txt EastAsianWidth.txt Blocks.txt CaseFolding.txt BidiMirroring.txt BidiBrackets.txt BidiCharacterTest.txt BidiTest.txt NameAliases.txt
 unicodeemoji=emoji-data.txt emoji-sequences.txt emoji-variation-sequences.txt emoji-zwj-sequences.txt
 
 clean-unicode:
@@ -242,17 +242,19 @@ full-emoji-list.html:
 	$(WGET) http://www.unicode.org/emoji/charts/$@
 
 univer = `sed -e '/^\# Blocks-/ s,[^0-9]*\([0-9]*\)\.\([0-9]\)\.[0-9][^0-9]*,\1.\2,' -e t -e d Blocks.txt`
+unibasever = `sed -e '/^\# Blocks-/ s,[^0-9]*\([0-9]*\)\..*,\1.0,' -e t -e d Blocks.txt`
 
 emoji-%.txt:	Blocks.txt
-	$(WGET) http://www.unicode.org/Public/emoji/$(univer)/$@
+	$(WGET) http://www.unicode.org/Public/emoji/$(unibasever)/$@
 
 unicodever = `sed -e '/^\# Blocks-/ s,[^0-9]*\([0-9]*\)\.\([0-9]\)\.\([0-9]\)[^0-9]*,\1\2\3,' -e t -e d Blocks.txt`
 
-unicodever.t:
+unicodever.t:	# Blocks.txt
 	echo "#define UNICODE_VERSION $(unicodever)" > unicodever.t
 
 univer:	Blocks.txt
 	echo $(univer)
+	echo $(unibasever)
 	echo $(unicodever)
 
 %.txt:
