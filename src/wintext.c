@@ -3049,17 +3049,30 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
       yt += cell_height * 1 / 8;
   }
 
+ /* Shadow */
   int layer = 0;
   colour fg0 = fg;
+  colour ul0 = ul;
   if (attr.attr & ATTR_SHADOW) {
     layer = 1;
     xt += line_width;
     yt -= layer * line_width;
+    x += line_width;
+    y -= layer * line_width;
     fg = ((fg & 0xFEFEFEFE) >> 1) + ((win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1);
+    ul = ((ul & 0xFEFEFEFE) >> 1) + ((win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1);
     SetTextColor(dc, fg);
   }
 
-draw:
+draw:;
+#ifdef debug_draw
+  if (*text != ' ')
+    printf("draw @%d:%d %d:%d %d:%d\n", ty, tx, yt, xt, y, x);
+#endif
+  int yt0 = yt;
+  int xt0 = xt;
+  int y0 = y;
+  int x0 = x;
 
  /* Wavy underline */
   if (!ldisp2 && lattr != LATTR_TOP &&
@@ -3128,14 +3141,15 @@ draw:
                    : PS_SOLID;
     HPEN oldpen = SelectObject(dc, CreatePen(penstyle, 0, ul));
     int gapfrom = 0, gapdone = 0;
+    int _line_width = line_width;
     if ((attr.attr & UNDER_MASK) == ATTR_DOUBLYUND) {
       if (line_width < 3)
-        line_width = 3;
-      int gap = line_width / 3;
-      gapfrom = (line_width - gap) / 2;
-      gapdone = line_width - gapfrom;
+        _line_width = 3;
+      int gap = _line_width / 3;
+      gapfrom = (_line_width - gap) / 2;
+      gapdone = _line_width - gapfrom;
     }
-    for (int l = 0; l < line_width; l++) {
+    for (int l = 0; l < _line_width; l++) {
       if (l >= gapdone || l < gapfrom) {
         MoveToEx(dc, x, y + uloff - l, null);
         LineTo(dc, x + ulen * char_width, y + uloff - l);
@@ -3237,6 +3251,8 @@ draw:
         if (!termattrs_equal_fg(&textattr[i], &textattr[i - 1])) {
           // determine colour to be used for combining characters
           colour fg = apply_attr_colour(textattr[i], ACM_SIMPLE).truefg;
+          if (layer)
+            fg = ((fg & 0xFEFEFEFE) >> 1) + ((win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1);
           SetTextColor(dc, fg);
         }
         ulen = char1ulen(&text[i]);
@@ -3276,23 +3292,24 @@ draw:
 #endif
 
   if (graph >= 0xE0) {  // fix DEC Technical characters, draw VT52 fraction
-    if (graph & 0x08) {
+    if ((graph & 0x0C) == 0x08) {
       // square bracket corners already repositioned above
     }
-    else {  // Sum segments to be (partially) drawn, square root base
+    else {  // Sum segments to be (partially) drawn, 
+            // square root base, pointing triangles, VT52 fraction numerator
       int sum_width = line_width;
       int y0 = (lattr == LATTR_BOT) ? y - cell_height : y;
       int yoff = (cell_height - line_width) * 3 / 5;
       if (lattr >= LATTR_TOP)
         yoff *= 2;
       int xoff = (char_width - line_width) / 2;
-      // 0x80 square root base
+      // 0xE0 square root base
       // sum segments:
-      // 0x81 upper left: add diagonal to bottom
-      // 0x82 lower left: add diagonal to top
-      // 0x85 upper right: add hook down
-      // 0x86 lower right: add hook up
-      // 0x87 middle right angle
+      // 0xE1 upper left: add diagonal to bottom
+      // 0xE2 lower left: add diagonal to top
+      // 0xE5 upper right: add hook down
+      // 0xE6 lower right: add hook up
+      // 0xE7 middle right angle
       int yt, yb;
       int ycellb = y0 + (lattr >= LATTR_TOP ? 2 : 1) * cell_height;
       if (graph & 1) {  // upper segment: downwards
@@ -3331,6 +3348,19 @@ draw:
         yt -= 1;
         yb -= 1;
       }
+      // pointing triangles:
+      if ((graph & ~1) == 0xEC) {
+        xl = x + line_width;
+        xr = x + char_width - 2 * line_width - 1;
+        x0 = x + (char_width - line_width) / 2;
+        yt = y + cell_height - 2 * line_width - 1;
+        yb = y + line_width;
+        if (graph & 1) {
+          yt ^= yb;
+          yb ^= yt;
+          yt ^= yb;
+        }
+      }
       // special adjustments:
       if (graph == 0xE0) {  // square root base
         xl --;
@@ -3352,6 +3382,12 @@ draw:
             MoveToEx(dc, x0 + l, y0, null);
             LineTo(dc, xl + l, yt);
             LineTo(dc, x0 + l, yb);
+          }
+          else if ((graph & ~1) == 0xEC) {  // pointing triangles
+            MoveToEx(dc, xl + l, yt, null);
+            LineTo(dc, xr + l, yt);
+            LineTo(dc, x0 + l, yb);
+            LineTo(dc, xl + l, yt);
           }
           else {
             MoveToEx(dc, xl + l, yt, null);
@@ -3386,7 +3422,10 @@ draw:
       uint r = (red(fg) * mix + red(bg) * (8 - mix)) / 8;
       uint g = (green(fg) * mix + green(bg) * (8 - mix)) / 8;
       uint b = (blue(fg) * mix + blue(bg) * (8 - mix)) / 8;
-      return RGB(r, g, b);
+      colour res = RGB(r, g, b);
+      if (layer)
+        res = ((res & 0xFEFEFEFE) >> 1) + ((win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1);
+      return res;
     }
     void linedraw(char l, char t, char r, char b, colour c)
     {
@@ -3580,10 +3619,13 @@ draw:
 
   show_curchar_info('w');
   if (has_cursor) {
+    colour _cc = cursor_colour;
+    if (layer)
+      _cc = ((_cc & 0xFEFEFEFE) >> 1) + ((win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1);
 #if defined(debug_cursor) && debug_cursor > 1
     printf("painting cursor_type '%c' cursor_on %d\n", "?b_l"[term_cursor_type()+1], term.cursor_on);
 #endif
-    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, cursor_colour));
+    HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, _cc));
     switch (term_cursor_type()) {
       when CUR_BLOCK:
         if (attr.attr & TATTR_PASCURS) {
@@ -3596,35 +3638,37 @@ draw:
         SystemParametersInfo(SPI_GETCARETWIDTH, 0, &caret_width, 0);
         if (caret_width > char_width)
           caret_width = char_width;
+        int xx = x;
         if (attr.attr & TATTR_RIGHTCURS)
-          x += char_width - caret_width;
+          xx += char_width - caret_width;
         if (attr.attr & TATTR_ACTCURS) {
-          HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(cursor_colour));
-          Rectangle(dc, x, y, x + caret_width, y + cell_height);
+          HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(_cc));
+          Rectangle(dc, xx, y, xx + caret_width, y + cell_height);
           DeleteObject(SelectObject(dc, oldbrush));
         }
         else if (attr.attr & TATTR_PASCURS) {
           for (int dy = 0; dy < cell_height; dy += 2)
             Polyline(
-              dc, (POINT[]){{x, y + dy}, {x + caret_width, y + dy}}, 2);
+              dc, (POINT[]){{xx, y + dy}, {xx + caret_width, y + dy}}, 2);
         }
       }
-      when CUR_UNDERSCORE:
-        y = yt + min(ff->descent, cell_height - 2);
-        y += ff->row_spacing * 3 / 8;
+      when CUR_UNDERSCORE: {
+        int yy = yt + min(ff->descent, cell_height - 2);
+        yy += ff->row_spacing * 3 / 8;
         if (lattr >= LATTR_TOP) {
-          y += ff->row_spacing / 2;
+          yy += ff->row_spacing / 2;
           if (lattr == LATTR_BOT)
-            y += cell_height;
+            yy += cell_height;
         }
         if (attr.attr & TATTR_ACTCURS)
-          Rectangle(dc, x, y, x + char_width, y + 2);
+          Rectangle(dc, x, yy, x + char_width, yy + 2);
         else if (attr.attr & TATTR_PASCURS) {
           for (int dx = 0; dx < char_width; dx += 2) {
-            SetPixel(dc, x + dx, y, cursor_colour);
-            SetPixel(dc, x + dx, y + 1, cursor_colour);
+            SetPixel(dc, x + dx, yy, _cc);
+            SetPixel(dc, x + dx, yy + 1, _cc);
           }
         }
+      }
     }
     DeleteObject(SelectObject(dc, oldpen));
   }
@@ -3633,12 +3677,19 @@ draw:
 
   if (layer) {
     layer--;
+    yt = yt0;
+    xt = xt0;
+    y = y0;
+    x = x0;
     if (!layer) {
       xt -= line_width;
+      x -= line_width;
       fg = fg0;
+      ul = ul0;
       SetTextColor(dc, fg);
     }
     yt += line_width;
+    y += line_width;
     underlaid = true;
     goto draw;
   }
