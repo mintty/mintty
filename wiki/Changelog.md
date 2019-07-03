@@ -1,4 +1,5 @@
 Terminal features
+  * ECMA-48 SL/SR shift columns left/right (xterm).
   * Fixed overstrike in leftmost column.
   * Secondary Device Attributes report Unicode version with option Charwidth.
   * Report DECRQSS DECSCL conformance level as VT500 (7-bit controls).

@@ -2594,6 +2594,16 @@ do_csi(uchar c)
        && curs->y >= term.marg_top && curs->y <= term.marg_bot
          )
         insdel_column(curs->x, true, arg0_def1);
+    when CPAIR(' ', 'A'):     /* SR: ECMA-48 shift columns right */
+      if (curs->x >= term.marg_left && curs->x <= term.marg_right
+       && curs->y >= term.marg_top && curs->y <= term.marg_bot
+         )
+        insdel_column(term.marg_left, false, arg0_def1);
+    when CPAIR(' ', '@'):     /* SR: ECMA-48 shift columns left */
+      if (curs->x >= term.marg_left && curs->x <= term.marg_right
+       && curs->y >= term.marg_top && curs->y <= term.marg_bot
+         )
+        insdel_column(term.marg_left, true, arg0_def1);
     when CPAIR('#', 't'):  /* application scrollbar */
       win_set_scrollview(arg0, arg1, term.csi_argc > 2 ? (int)term.csi_argv[2] : -1);
     when CPAIR('<', 't'):  /* TTIMEST: change IME state (Tera Term) */
