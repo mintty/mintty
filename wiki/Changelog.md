@@ -32,6 +32,9 @@ Window handling
   * Application scrollbar (experimental).
   * Always flash taskbar on bell if iconic, if configured (#887, #607).
 
+Other
+  * Reduced global HTML formatting on Copy as HTML text (#889).
+
 Configuration
   * Option Baud to simulate serial connection speed for a legacy feeling.
 

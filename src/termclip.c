@@ -499,9 +499,10 @@ term_create_html(FILE * hf, int level)
     "  <link rel='stylesheet' type='text/css' href='mintty.css'/>\n"
     //"  <script type='text/javascript' language='JavaScript' src='emoji.js'></script>\n"
     "  <style type='text/css'>\n"
-    "  body, pre { margin: 0; padding: 0; }\n"
-    "  pre { font-family: inherit; }\n"
+    "  pre { font-family: inherit; margin: 0; padding: 0; }\n"
     );
+  if (level >= 3)
+    hprintf(hf, "  body { margin: 0; padding: 0; }\n");
   hprintf(hf, "  span {\n");
   if (level >= 2) {
     // font needed in <span> for some tools (e.g. Powerpoint)
