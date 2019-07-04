@@ -7,6 +7,7 @@ Terminal features
   * Fixed BS and CR "border" cases.
   * Fixed DCH/ICH/IRM outside left/right margins.
   * Inhibiting double width/height lines in left/right margin mode.
+  * Primary DA indicate Horizontal Scrolling and Rectangular Editing.
 
   * Auto-wrap modes are no more affected by cursor save/restore.
   * Fixed left/right margin mode to inhibit double width lines.

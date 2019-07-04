@@ -31,8 +31,21 @@
 static string primary_da1 = "\e[?1;2c";
 static string primary_da2 = "\e[?62;1;2;4;6;9;15;22;29c";
 static string primary_da3 = "\e[?63;1;2;4;6;9;15;22;29c";
-static string primary_da4 = "\e[?64;1;2;4;6;9;15;22;29c";
-static string primary_da5 = "\e[?65;1;2;4;6;9;15;22;29c";
+static string primary_da4 = "\e[?64;1;2;4;6;9;15;21;22;28;29c";
+static string primary_da5 = "\e[?65;1;2;4;6;9;15;21;22;28;29c";
+/* Registered Extensions to the Character Cell Display Service Class
+	1	132 Column Display
+	2	Printer Port
+	3	ReGIS Display
+	4	Sixels Display
+	6	Selectively Erasable Characters
+	9	National Replacement Character Sets
+	15	Technical Character Set
+	21	Horizontal Scrolling
+	22	Color Text
+	28	Rectangular Editing
+	29	Text Locator
+*/
 
 
 static bool
