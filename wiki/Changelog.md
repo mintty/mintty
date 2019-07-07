@@ -26,6 +26,7 @@ Terminal features
   * Control sequence to switch IME status (#888, Tera Term).
 
 Font rendering
+  * Reenabled DPI scaling in Windows 7 (#890).
   * Check functions (width, glyph) consult proper attributes and font.
   * Tweaked check for automatic narrowing to fit in cell width.
   * Fixed shadow attribute artefacts.
