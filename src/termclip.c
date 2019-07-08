@@ -499,11 +499,11 @@ term_create_html(FILE * hf, int level)
     "  <link rel='stylesheet' type='text/css' href='mintty.css'/>\n"
     //"  <script type='text/javascript' language='JavaScript' src='emoji.js'></script>\n"
     "  <style type='text/css'>\n"
-    "  pre { font-family: inherit; margin: 0; padding: 0; }\n"
+    "  #vt100 pre { font-family: inherit; margin: 0; padding: 0; }\n"
     );
   if (level >= 3)
-    hprintf(hf, "  body { margin: 0; padding: 0; }\n");
-  hprintf(hf, "  span {\n");
+    hprintf(hf, "  body.mintty { margin: 0; padding: 0; }\n");
+  hprintf(hf, "  #vt100 span {\n");
   if (level >= 2) {
     // font needed in <span> for some tools (e.g. Powerpoint)
     hprintf(hf,
@@ -632,7 +632,7 @@ term_create_html(FILE * hf, int level)
   hprintf(hf, "  }\n");
   hprintf(hf, "  </script>\n");
   hprintf(hf, "</head>\n\n");
-  hprintf(hf, "<body onload='setup();'>\n");
+  hprintf(hf, "<body class=mintty onload='setup();'>\n");
   //hprintf(hf, "  <table border=0 cellpadding=0 cellspacing=0><tr><td>\n");
   hprintf(hf, "  <div class=background id='vt100'>\n");
   hprintf(hf, "   <pre>");
