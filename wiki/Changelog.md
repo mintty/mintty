@@ -10,6 +10,7 @@ Terminal features
   * Primary DA indicate Horizontal Scrolling and Rectangular Editing.
 
   * Auto-wrap modes are no more affected by cursor save/restore.
+  * NRC enabled mode is no more affected by cursor save/restore.
   * Fixed left/right margin mode to inhibit double width lines.
   * Fixed TAB to stop at right margin.
   * Ensure restored cursor to be within margins in origin mode.
