@@ -2282,12 +2282,18 @@ do_csi(uchar c)
       if (curs->y >= term.marg_top && curs->y <= term.marg_bot
        && curs->x >= term.marg_left && curs->x <= term.marg_right
          )
+      {
         term_do_scroll(curs->y, term.marg_bot, -arg0_def1, false);
+        curs->x = term.marg_left;
+      }
     when 'M':        /* DL: delete lines */
       if (curs->y >= term.marg_top && curs->y <= term.marg_bot
        && curs->x >= term.marg_left && curs->x <= term.marg_right
          )
+      {
         term_do_scroll(curs->y, term.marg_bot, arg0_def1, true);
+        curs->x = term.marg_left;
+      }
     when '@':        /* ICH: insert chars */
       insert_char(arg0_def1);
     when 'P':        /* DCH: delete chars */

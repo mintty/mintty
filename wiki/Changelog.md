@@ -6,6 +6,7 @@ Terminal features
   * Rectangular checksum DECRQCRA.
   * Fixed BS and CR "border" cases.
   * Fixed DCH/ICH/IRM outside left/right margins.
+  * Fixed DL/IL to move cursor to left margin.
   * Inhibiting double width/height lines in left/right margin mode.
   * Primary DA indicate Horizontal Scrolling and Rectangular Editing.
 
