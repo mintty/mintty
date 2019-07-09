@@ -7,6 +7,7 @@ Terminal features
   * Fixed BS and CR "border" cases.
   * Fixed DCH/ICH/IRM outside left/right margins.
   * Fixed DL/IL to move cursor to left margin.
+  * Reverse wrap from home position moves to lower right margin (xterm).
   * Inhibiting double width/height lines in left/right margin mode.
   * Primary DA indicate Horizontal Scrolling and Rectangular Editing.
 
