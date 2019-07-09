@@ -414,7 +414,7 @@ enum_fonts_adjust_font_weights(const LOGFONTW * lfp, const TEXTMETRICW * tmp, DW
 }
 
 static void
-adjust_font_weights(struct fontfam * ff)
+adjust_font_weights(struct fontfam * ff, int findex)
 {
   LOGFONTW lf;
   wcscpy(lf.lfFaceName, W(""));
@@ -457,6 +457,9 @@ adjust_font_weights(struct fontfam * ff)
     string l;
     if (!strcmp(cfg.charset, "CP437") || ((l = getlocenvcat("LC_CTYPE")) && strstr(l, "CP437"))) {
       // accept limited range
+    }
+    else if (findex) {
+      // don't report for alternative / secondary fonts
     }
     else
       show_font_warning(ff, _("Font has limited support for character ranges"));
@@ -541,7 +544,7 @@ win_init_fontfamily(HDC dc, int findex)
     ff->fw_bold = min(ff->fw_norm + 300, 1000);
     // adjust selected font weights to available font weights
     trace_font(("-> Weight %d/%d\n", ff->fw_norm, ff->fw_bold));
-    adjust_font_weights(ff);
+    adjust_font_weights(ff, findex);
     trace_font(("->     -> %d/%d\n", ff->fw_norm, ff->fw_bold));
   }
   else if (ff->isbold) {
