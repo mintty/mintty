@@ -65,6 +65,7 @@ typedef struct {
   // Text
   font_spec font;
   font_spec fontfams[11];
+  wstring font_choice;
   wstring font_sample;
   bool show_hidden_fonts;
   char font_smoothing;

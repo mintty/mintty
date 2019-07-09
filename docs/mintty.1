@@ -918,8 +918,10 @@ the system ANSI encoding.
 (This does not apply to the same configuration settings when given on the 
 command-line.)
 .br
-Unicode-enabled settings: BellFile, ThemeFile, Background, Title, ExitTitle, Icon, Log, 
-Language, Font, Font1..., FontSample, Printer, Answerback, SixelClipChars, 
+Unicode-enabled settings: BellFile, ThemeFile, Background, 
+Title, ExitTitle, Icon, Log, 
+Language, Font, Font1..., FontSample, FontChoice, 
+Printer, Answerback, SixelClipChars, 
 Class, AppID, AppName, AppLaunchCmd, 
 DropCommands, UserCommands, SessionCommands, TaskCommands, 
 KeyFunctions, SysMenuFunctions, CtxMenuFunctions, UserCommandsPath.
@@ -1052,7 +1054,7 @@ convenient testing how the selected font looks. Its function is the same
 as the \fBApply\fP button of the options dialog.
 
 Further settings can be given in the config file:
-.br
+
 \(en \fBFont boldness\fP (FontWeight=400): This is an implicit value after 
 selecting a font in the font selection menu, or can be specified in the 
 config file or on the command line for font selection. Typical weights 
@@ -1062,26 +1064,52 @@ or FontIsBold=yes) but if a font family has a different scheme or more than
 If a font family has no bold weight but boldness was requested, mintty 
 does not adhere to this scheme but enforces bold font selection; however, 
 in this case the bold attribute may not be effective.
-.br
+
 \(en \fBAlternative fonts\fP (Font1= ... Font10= , Font1Weight= ... Font10Weight=):
 With these settings, up to 10 alternative fonts (and optionally weights) 
 can be configured which would then be selectable via ECMA-48 SGR character attributes 
 (see Tips wiki page \fIhttps://github.com/mintty/mintty/wiki/Tips#text-attributes-and-rendering\fP).
+.br
+They can also be used as secondary fonts with option \fBFontChoice\fP.
+.br
 \fINote:\fP Font10 has a special preference property; if it is not configured, 
 mintty will try to activate it anyway, looking for an installed 
 Fraktur or Blackletter font (ECMA-48 "Gothic").
+.br
 \fINote:\fP The control sequence for alternative font 1 overrides the identical 
 control sequence to select the VGA character set, which would thus be disabled. 
 Configuring alternative font 1 is therefore discouraged.
+
+\(en \fBChoice of script-specific secondary fonts\fP (FontChoice=):
+With this setting, alternative fonts can be specified as secondary font 
+for specific scripts.
+The value is a series of semicolon-separated, colon-combined 
+pairs of script name and alternative font number.
+Script names are as specified in the Unicode file Scripts.txt, listed 
+in \fIhttps://en.wikipedia.org/wiki/Script_(Unicode)\fP column "Alias".
+(The definition list can be split over multiple lines if a separator is 
+followed by a backslash, newline, and optional whitespace indentation.)
 .br
+Example:
+.br
+  \fBFontChoice=Hebrew:6;Arabic:7;Han:8;Hangul:9\fP
+.br
+  \fBFont6=David\fP
+.br
+  \fBFont7=Simplified Arabic Fixed\fP
+.br
+  \fBFont8=FangSong\fP
+.br
+  \fBFont9=MingLiU\fP
+
 \(en \fBFont sample text\fP (FontSample=):
 This setting overrides the text for the "Sample" box in the Font chooser dialog.
-.br
+
 \(en \fBShow "hidden" fonts\fP (ShowHiddenFonts=no):
 This hidden setting enables display of monospace fonts in the font selection 
 menu even if they are marked to Hide in the Windows Font settings (from the 
 Control Panel \(em Fonts folder).
-.br
+
 \(en \fBConfigure font chooser\fP (FontMenu=-1):
 This hidden setting selects and tunes the font chooser dialog element.
 Value 1 selects the Windows system font chooser unmodified;

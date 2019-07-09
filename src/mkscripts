@@ -1,0 +1,81 @@
+#! /bin/sh -f
+
+skipcheck=true
+
+if $skipcheck || make Scripts.txt >&2
+then	true
+else	echo Could not acquire Unicode data file Scripts.txt >&2
+	exit 1
+fi
+
+CC=${CC-cc}
+
+(
+cat <</eoc
+#include <string.h>
+#include <stdio.h>
+
+long range_low;
+long range_high = -2;
+char * range_name = "";
+char * range_category = "";
+
+void
+flush ()
+{
+	if (range_high >= 0) {
+		printf ("	{0x%04lX, 0x%04lX, 0, \"%s\"},\n", range_low, range_high, range_name);
+	}
+}
+
+void
+range (low, high, name, category)
+	long low;
+	long high;
+	char * name;
+	char * category;
+{
+	if (strcmp (name, "Common") == 0) {
+		// ignore
+	} else if (strcmp (name, range_name) == 0) {
+		range_high = high;
+	} else {
+		flush ();
+		range_low = low;
+		range_high = high;
+		range_name = name;
+		range_category = category;
+	}
+}
+
+int
+main () {
+/eoc
+
+
+# transform
+#00F8..01BA    ; LATIN # L& [195] LATIN SMALL LETTER O WITH STROKE..LATIN SMALL LETTER EZH WITH TAIL
+#01BB          ; LATIN # Lo       LATIN LETTER TWO WITH STROKE
+
+LC_ALL=C egrep '^[^#]' Scripts.txt |
+sed	-e '/^#/ d' \
+	-e 's/^\([0-9A-F][0-9A-F]*\)\.\.\([0-9A-F][0-9A-F]*\) *; *\([^ ]*\) *# *\([^ ]*\).*/\1	{0x\1, 0x\2, "\3", "\4"},/' \
+	-e 's/^\([0-9A-F][0-9A-F]*\) *; *\([^ ]*\) *# *\([^ ]*\).*/\1	{0x\1, 0x\1, "\2", "\3"},/' \
+	-e 's,^\(....\)	,00\1	,' \
+	-e 's,^\(.....\)	,0\1	,' \
+| sort | sed -e 's,^.*	,	,' -e 's,_, ,g' |
+sed -e "s/{/range (/" -e "s/},/);/"
+
+
+cat <</eoc
+	flush ();
+	return 0;
+}
+/eoc
+) > mkscripts.c
+
+if $CC -o mkscripts.exe mkscripts.c
+then	./mkscripts.exe > scripts.t
+	rm -f mkscripts.c mkscripts.exe
+else	exit 1
+fi

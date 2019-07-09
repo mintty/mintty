@@ -820,6 +820,113 @@ write_char(wchar c, int width)
   }
 }
 
+static struct {
+  ucschar first, last;
+  uchar font;
+  char * scriptname;
+} scriptfonts[] = {
+#include "scripts.t"
+};
+static bool scriptfonts_init = false;
+
+static void
+mapfont(char * script, uchar f)
+{
+  for (uint i = 0; i < lengthof(scriptfonts); i++)
+    if (0 == strcmp(scriptfonts[i].scriptname, script))
+      scriptfonts[i].font = f;
+}
+
+static char *
+cfg_apply(char * conf, char * item)
+{
+  char * cmdp = conf;
+  char sepch = ';';
+  if ((uchar)*cmdp <= (uchar)' ')
+    sepch = *cmdp++;
+
+  char * paramp;
+  while ((paramp = strchr(cmdp, ':'))) {
+    *paramp = '\0';
+    paramp++;
+    char * sepp = strchr(paramp, sepch);
+    if (sepp)
+      *sepp = '\0';
+
+    if (!item || !strcmp(cmdp, item)) {
+      mapfont(cmdp, atoi(paramp));
+    }
+
+    if (sepp) {
+      cmdp = sepp + 1;
+      // check for multi-line separation
+      if (*cmdp == '\\' && cmdp[1] == '\n') {
+        cmdp += 2;
+        while (isspace(*cmdp))
+          cmdp++;
+      }
+    }
+    else
+      break;
+  }
+  return 0;
+}
+
+static void
+init_scriptfonts(void)
+{
+  if (*cfg.font_choice) {
+    char * cfg_scriptfonts = cs__wcstombs(cfg.font_choice);
+    cfg_apply(cfg_scriptfonts, 0);
+    free(cfg_scriptfonts);
+  }
+  scriptfonts_init = true;
+}
+
+static uchar
+scriptfont(ucschar ch)
+{
+  if (!*cfg.font_choice)
+    return 0;
+  if (!scriptfonts_init)
+    init_scriptfonts();
+
+  int i, j, k;
+
+  i = -1;
+  j = lengthof(scriptfonts);
+
+  while (j - i > 1) {
+    k = (i + j) / 2;
+    if (ch < scriptfonts[k].first)
+      j = k;
+    else if (ch > scriptfonts[k].last)
+      i = k;
+    else
+      return scriptfonts[k].font;
+  }
+  return 0;
+}
+
+static void
+write_ucschar(wchar hwc, wchar wc, int width)
+{
+  cattrflags attr = term.curs.attr.attr;
+  ucschar c = hwc ? combine_surrogates(hwc, wc) : wc;
+  uchar cf = scriptfont(c);
+  if (cf && cf <= 10 && !(attr & FONTFAM_MASK))
+    term.curs.attr.attr = attr | ((cattrflags)cf << ATTR_FONTFAM_SHIFT);
+
+  if (hwc) {
+    write_char(hwc, width);
+    write_char(wc, -1);  // -1 indicates low surrogate
+  }
+  else
+    write_char(wc, width);
+
+  term.curs.attr.attr = attr;
+}
+
 static void
 write_error(void)
 {
@@ -2102,14 +2209,8 @@ do_csi(uchar c)
       cattr cur_attr = term.curs.attr;
       term.curs.attr = last_attr;
       wchar h = last_high, c = last_char;
-      for (int i = 0; i < arg0_def1; i++) {
-        if (h) {  // non-BMP
-          write_char(h, last_width);
-          write_char(c, -1);
-        }
-        else
-          write_char(c, last_width);
-      }
+      for (int i = 0; i < arg0_def1; i++)
+        write_ucschar(h, c, last_width);
       term.curs.attr = cur_attr;
     }
     when 'A':        /* CUU: move up N lines */
@@ -3316,8 +3417,7 @@ term_do_write(const char *buf, uint len)
 #else
             int width = xcwidth(combine_surrogates(hwc, wc));
 #endif
-            write_char(hwc, width);
-            write_char(wc, -1);  // -1 indicates low surrogate
+            write_ucschar(hwc, wc, width);
           }
           else
             write_error();
@@ -3329,7 +3429,7 @@ term_do_write(const char *buf, uint len)
 
         // ASCII shortcut for some speedup (~5%), earliest applied here
         if (wc >= ' ' && wc <= 0x7E && cset == CSET_ASCII) {
-          write_char(wc, 1);
+          write_ucschar(0, wc, 1);
           continue;
         }
 
@@ -3583,7 +3683,7 @@ term_do_write(const char *buf, uint len)
           term.curs.attr.attr |= (cattrflags)gcode << ATTR_FONTFAM_SHIFT;
         }
 
-        write_char(wc, width);
+        write_ucschar(0, wc, width);
         term.curs.attr.attr = asav;
       } // end term_write switch (term.state) when NORMAL
 

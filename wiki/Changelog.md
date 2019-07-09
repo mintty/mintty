@@ -27,6 +27,7 @@ Terminal features
   * Control sequence to switch IME status (#888, Tera Term).
 
 Font rendering
+  * Script-specific secondary font choice (#580, #821, #883).
   * Reenabled DPI scaling in Windows 7 (#890).
   * Check functions (width, glyph) consult proper attributes and font.
   * Tweaked check for automatic narrowing to fit in cell width.
@@ -43,6 +44,7 @@ Other
 
 Configuration
   * Option Baud to simulate serial connection speed for a legacy feeling.
+  * Option FontChoice for script-specific secondary fonts (#580, #821, #883).
 
 ### 3.0.1 (28 May 2019) ###
 
