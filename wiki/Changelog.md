@@ -36,6 +36,10 @@ Font rendering
   * Fixed shadow attribute artefacts.
   * Fixed DEC Tech up/down arrows by manual drawing.
 
+Sixel graphics
+  * Tweaked sixel handling to avoid crash condition.
+  * Reintroduced fixed Sixel colour registers handling (#593).
+
 Window handling
   * Reenable left scrollbar.
   * Application scrollbar (experimental).

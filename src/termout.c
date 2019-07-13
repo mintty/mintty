@@ -2751,7 +2751,6 @@ do_dcs(void)
   char *s = term.cmd_buf;
   unsigned char *pixels;
   int i;
-  imglist *cur, *img;
   colour bg, fg;
   cattr attr = term.curs.attr;
   int status = (-1);
@@ -2763,30 +2762,16 @@ do_dcs(void)
 
   switch (term.dcs_cmd) {
   when 'q':
-
     st = (sixel_state_t *)term.imgs.parser_state;
-
-// Revert https://github.com/mintty/mintty/commit/fe48cdc
-// "fixed SIXEL colour registers handling"
-// which led to Sixel display silently failing 
-// or even stalling mintty window (#740)
-#define fixsix
-
-#ifndef fixsix
-#warning Sixel display bug #740 reenabled
-#endif
 
     switch (term.state) {
     when DCS_PASSTHROUGH:
       if (!st)
         return;
-#ifdef fixsix
-      if (!st->image.data)
-        return;
-#endif
       status = sixel_parser_parse(st, (unsigned char *)s, term.cmd_len);
       if (status < 0) {
         sixel_parser_deinit(st);
+        //printf("free state 1 %p\n", term.imgs.parser_state);
         free(term.imgs.parser_state);
         term.imgs.parser_state = NULL;
         term.state = DCS_IGNORE;
@@ -2796,38 +2781,31 @@ do_dcs(void)
     when DCS_ESCAPE:
       if (!st)
         return;
-#ifdef fixsix
-      if (!st->image.data)
-        return;
-#endif
       status = sixel_parser_parse(st, (unsigned char *)s, term.cmd_len);
       if (status < 0) {
         sixel_parser_deinit(st);
+        //printf("free state 2 %p\n", term.imgs.parser_state);
         free(term.imgs.parser_state);
         term.imgs.parser_state = NULL;
         return;
       }
 
-#ifndef fixsix
-      pixels = (unsigned char *)malloc(st->image.width * st->image.height * 4);
+      int size_pixels = st->image.width * st->image.height * 4;
+      pixels = (unsigned char *)malloc(size_pixels);
+      //printf("alloc pixels 1 w %d h %d (%d) -> %p\n", st->image.width, st->image.height, size_pixels, pixels);
       if (!pixels)
         return;
-#endif
 
-      status = sixel_parser_finalize(st);
+      status = sixel_parser_finalize(st, pixels);
+      sixel_parser_deinit(st);
       if (status < 0) {
-        sixel_parser_deinit(st);
+        //printf("free state 3 %p\n", term.imgs.parser_state);
         free(term.imgs.parser_state);
+        //printf("free pixels\n");
+        free(pixels);
         term.imgs.parser_state = NULL;
         return;
       }
-
-#ifdef fixsix
-      pixels = (unsigned char *)st->image.data;
-      st->image.data = NULL;
-#else
-      sixel_parser_deinit(st);
-#endif
 
       left = term.curs.x;
       top = term.virtuallines + (term.sixel_display ? 0: term.curs.y);
@@ -2836,8 +2814,10 @@ do_dcs(void)
       pixelwidth = st->image.width;
       pixelheight = st->image.height;
 
+      imglist * img;
       if (!winimg_new(&img, pixels, left, top, width, height, pixelwidth, pixelheight) != 0) {
         sixel_parser_deinit(st);
+        //printf("free state 4 %p\n", term.imgs.parser_state);
         free(term.imgs.parser_state);
         term.imgs.parser_state = NULL;
         return;
@@ -2879,10 +2859,12 @@ do_dcs(void)
       if (term.imgs.first == NULL) {
         term.imgs.first = term.imgs.last = img;
       } else {
-        for (cur = term.imgs.first; cur; cur = cur->next) {
+        // try some optimization: replace existing images if overwritten
+        for (imglist * cur = term.imgs.first; cur; cur = cur->next) {
           if (cur->pixelwidth == cur->width * st->grid_width &&
               cur->pixelheight == cur->height * st->grid_height)
           {
+            // if same size, replace
             if (img->top == cur->top && img->left == cur->left &&
                 img->width == cur->width &&
                 img->height == cur->height)
@@ -2891,12 +2873,14 @@ do_dcs(void)
               winimg_destroy(img);
               return;
             }
+            // if new image within area of previous image, ...
+#ifdef handle_overlay_images
+#warning this creates some crash conditions...
             if (img->top >= cur->top && img->left >= cur->left &&
                 img->left + img->width <= cur->left + cur->width &&
                 img->top + img->height <= cur->top + cur->height)
             {
-              // copy new img into old structure; resize memory first
-              cur->pixels = realloc(cur->pixels, img->width * img->height * sizeof(unsigned char));
+              // inject new img into old structure;
               // copy img data in stripes, for unknown reason
               for (y = 0; y < img->pixelheight; ++y) {
                 memcpy(cur->pixels +
@@ -2908,8 +2892,10 @@ do_dcs(void)
               winimg_destroy(img);
               return;
             }
+#endif
           }
         }
+        // append image to list
         term.imgs.last->next = img;
         term.imgs.last = img;
       }
@@ -2920,16 +2906,10 @@ do_dcs(void)
       bg = win_get_colour(BG_COLOUR_I);
       if (!st) {
         st = term.imgs.parser_state = calloc(1, sizeof(sixel_state_t));
+        //printf("alloc state %d -> %p\n", (int)sizeof(sixel_state_t), st);
         sixel_parser_set_default_color(st);
       }
-#ifdef fixsix
-      status = sixel_parser_init(st,
-                                 (fg & 0xff) << 16 | (fg & 0xff00) | (fg & 0xff0000) >> 16,
-                                 (bg & 0xff) << 16 | (bg & 0xff00) | (bg & 0xff0000) >> 16,
-                                 term.private_color_registers);
-#else
       status = sixel_parser_init(st, fg, bg, term.private_color_registers);
-#endif
       if (status < 0)
         return;
     }

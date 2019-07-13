@@ -31,6 +31,7 @@ tempfile_new(void)
     return NULL;
 
   tempfile = malloc(sizeof(tempfile_t));
+  //printf("tempfile alloc %d -> %p\n", (int)sizeof(tempfile_t), tempfile);
   if (!tempfile)
     return NULL;
 
@@ -48,6 +49,7 @@ tempfile_destroy(tempfile_t *tempfile)
   if (tempfile == tempfile_current)
     tempfile_current = NULL;
   fclose(tempfile->fp);
+  //printf("free tempfile %p\n", tempfile);
   free(tempfile);
   tempfile_num--;
 }
@@ -141,6 +143,7 @@ strage_create(void)
     return NULL;
 
   strage = malloc(sizeof(temp_strage_t));
+  //printf("strage alloc %d -> %p\n", (int)sizeof(temp_strage_t), strage);
   if (!strage)
     return NULL;
 
@@ -154,6 +157,7 @@ static void
 strage_destroy(temp_strage_t *strage)
 {
   tempfile_deref(strage->tempfile);
+  //printf("free strage %p\n", strage);
   free(strage);
 }
 
@@ -177,6 +181,7 @@ winimg_new(imglist **ppimg, unsigned char *pixels,
   imglist *img;
 
   img = (imglist *)malloc(sizeof(imglist));
+  //printf("winimg alloc %d -> %p\n", (int)sizeof(imglist), img);
   if (!img)
     return false;
 
@@ -219,11 +224,13 @@ winimg_lazyinit(imglist *img)
   bmpinfo.bmiHeader.biPlanes = 1;
   bmpinfo.bmiHeader.biBitCount = 32;
   bmpinfo.bmiHeader.biCompression = BI_RGB;
+  bmpinfo.bmiHeader.biSizeImage = 0;
   img->hdc = CreateCompatibleDC(dc);
   img->hbmp = CreateDIBSection(dc, &bmpinfo, DIB_RGB_COLORS, (void*)&pixels, NULL, 0);
-  SelectObject(img->hdc, img->hbmp);
+  /*HGDIOBJ res =*/ SelectObject(img->hdc, img->hbmp);
   if (img->pixels) {
     CopyMemory(pixels, img->pixels, size);
+    //printf("winimg_lazyinit free pixels %p\n", img->pixels); fflush(stdout);
     free(img->pixels);
   } else {
     // resume from hibernation
@@ -273,10 +280,12 @@ winimg_destroy(imglist *img)
     DeleteDC(img->hdc);
     DeleteObject(img->hbmp);
   } else if (img->pixels) {
+    //printf("winimg_destroy free pixels %p\n", img->pixels);
     free(img->pixels);
   } else {
     strage_destroy(img->strage);
   }
+  //printf("winimg_destroy free img %p\n", img);
   free(img);
 }
 
@@ -287,6 +296,7 @@ winimgs_clear(void)
 
   // clear parser state
   sixel_parser_deinit(term.imgs.parser_state);
+  //printf("winimgs_clear free state %p\n", term.imgs.parser_state);
   free(term.imgs.parser_state);
   term.imgs.parser_state = NULL;
 
