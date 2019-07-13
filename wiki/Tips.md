@@ -675,6 +675,23 @@ default preference; mintty will try to find a Fraktur or Blackletter font
 for it on your system.
 <img align=top src=https://github.com/mintty/mintty/wiki/mintty-alternative-fonts.png>
 
+### Secondary fonts ###
+
+Mintty can select alternative fonts for specific Unicode script ranges.
+With this feature, you can e.g. use a different font for CJK characters.
+
+Script names are as specified in the Unicode file Scripts.txt, listed in 
+[wiki: Unicode scripts](https://en.wikipedia.org/wiki/Script_(Unicode)) column "Alias".
+
+Configuration example:
+```
+FontChoice=Hebrew:6;Arabic:7;Han:8;Hangul:9
+Font6=David
+Font7=Simplified Arabic Fixed
+Font8=FangSong
+Font9=MingLiU
+```
+
 
 ## Character width ##
 
