@@ -112,7 +112,7 @@ static int wsl_fstab_len = 0;
 static char *
 skip(char * s)
 {
-  while (isspace(*s))
+  while (iswspace(*s))
     s++;
   return s;
 }
@@ -163,12 +163,12 @@ wslmntmapped(void)
         char * p1 = skip(linebuf);
         if (*p1 != '#') {
           char * x = p1;
-          while (!isspace(*x))
+          while (!iswspace(*x))
             x++;
           *x++ = 0;
           char * p2 = skip(x);
           x = p2;
-          while (!isspace(*x))
+          while (!iswspace(*x))
             x++;
           *x = 0;
           if (x-- > p2 && *x == '/')
@@ -787,7 +787,7 @@ matchconf(char * conf, char * item)
       // check for multi-line separation
       if (*cmdp == '\\' && cmdp[1] == '\n') {
         cmdp += 2;
-        while (isspace(*cmdp))
+        while (iswspace(*cmdp))
           cmdp++;
       }
     }

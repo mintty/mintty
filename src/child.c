@@ -890,7 +890,7 @@ user_command(wstring commands, int n)
         // check for multi-line separation
         if (*cmdp == '\\' && cmdp[1] == '\n') {
           cmdp += 2;
-          while (isspace(*cmdp))
+          while (iswspace(*cmdp))
             cmdp++;
         }
       }
@@ -1227,7 +1227,7 @@ child_launch(int n, int argc, char * argv[], int moni)
         // check for multi-line separation
         if (*cmdp == '\\' && cmdp[1] == '\n') {
           cmdp += 2;
-          while (isspace(*cmdp))
+          while (iswspace(*cmdp))
             cmdp++;
         }
       }

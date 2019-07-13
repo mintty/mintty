@@ -163,7 +163,7 @@ append_commands(HMENU menu, wstring commands, UINT_PTR idm_cmd, bool add_icons, 
     // check for multi-line separation
     if (*cmdp == '\\' && cmdp[1] == '\n') {
       cmdp += 2;
-      while (isspace(*cmdp))
+      while (iswspace(*cmdp))
         cmdp++;
     }
   }
@@ -586,7 +586,7 @@ win_update_menus(bool callback)
       // check for multi-line separation
       if (*cmdp == '\\' && cmdp[1] == '\n') {
         cmdp += 2;
-        while (isspace(*cmdp))
+        while (iswspace(*cmdp))
           cmdp++;
       }
     }
@@ -1700,7 +1700,7 @@ pick_key_function(wstring key_commands, char * tag, int n, uint key, mod_keys mo
       // check for multi-line separation
       if (*cmdp == '\\' && cmdp[1] == '\n') {
         cmdp += 2;
-        while (isspace(*cmdp))
+        while (iswspace(*cmdp))
           cmdp++;
       }
     }

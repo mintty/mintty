@@ -1372,9 +1372,11 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
 
 struct emoji_base {
   void * res;  // filename (char*/wchar*) or cached image
-  uint tags: 11;
-  xchar ch: 21;
-} __attribute__((packed));
+  struct {
+    uint tags: 11;
+    xchar ch: 21;
+  } __attribute__((packed));
+};
 
 struct emoji_base emoji_bases[] = {
 #include "emojibase.t"

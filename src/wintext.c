@@ -1648,7 +1648,7 @@ load_background_image_brush(HDC dc, wstring fn)
       static wchar * prevbg = 0;
       bool isnewbg = !prevbg || wcscmp(cfg.background, prevbg);
       printf("isnewbg %d <%ls> <%ls>\n", isnewbg, cfg.background, prevbg);
-      if (ratio && isnewbg && abs(bw * h - bh * w) > 5) {
+      if (ratio && isnewbg && abs((int)bw * h - (int)bh * w) > 5) {
         if (prevbg)
           free(prevbg);
         prevbg = wcsdup(cfg.background);
@@ -2106,7 +2106,7 @@ scale_to_image_ratio()
   printf("  cur w %d h %d img bw %d bh %d\n", (int)w, (int)h, bw, bh);
 #endif
 
-  if (abs(bw * h - bh * w) < w + h)
+  if (abs((int)bw * h - (int)bh * w) < w + h)
     return;
 
   w = max(w, ini_width);

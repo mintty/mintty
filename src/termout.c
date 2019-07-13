@@ -869,7 +869,7 @@ cfg_apply(char * conf, char * item)
       // check for multi-line separation
       if (*cmdp == '\\' && cmdp[1] == '\n') {
         cmdp += 2;
-        while (isspace(*cmdp))
+        while (iswspace(*cmdp))
           cmdp++;
       }
     }

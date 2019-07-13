@@ -33,7 +33,7 @@ join="join -a 1 -a 2"
 
 echo joining emojis >&2
 $join <( $join <( $join <( $join .emoji_base .emoji_text) .emoji_emoj) .emoji_pres) .emoji_pict |
-sed -e "s/ / | EM_/g" -e "s/\([^ ]*\)\(.*\)/  {0, 0\2, 0x\1},/"
+sed -e "s/ / | EM_/g" -e "s/\([^ ]*\)\(.*\)/  {0, {0\2, 0x\1}},/"
 
 ;;
 
