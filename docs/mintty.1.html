@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Tue May 28 07:17:46 2019 -->
+<!-- CreationDate: Sat Jul 13 11:07:46 2019 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -1218,9 +1218,9 @@ the system ANSI encoding. (This does not apply to the same
 configuration settings when given on the command-line.) <br>
 Unicode-enabled settings: BellFile, ThemeFile, Background,
 Title, ExitTitle, Icon, Log, Language, Font, Font1...,
-FontSample, Printer, Answerback, SixelClipChars, Class,
-AppID, AppName, AppLaunchCmd, DropCommands, UserCommands,
-SessionCommands, TaskCommands, KeyFunctions,
+FontSample, FontChoice, Printer, Answerback, SixelClipChars,
+Class, AppID, AppName, AppLaunchCmd, DropCommands,
+UserCommands, SessionCommands, TaskCommands, KeyFunctions,
 SysMenuFunctions, CtxMenuFunctions, UserCommandsPath.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Be careful when
@@ -1371,50 +1371,79 @@ function is the same as the <b>Apply</b> button of the
 options dialog.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Further
-settings can be given in the config file: <br>
-&ndash; <b>Font boldness</b> (FontWeight=400): This is an
-implicit value after selecting a font in the font selection
-menu, or can be specified in the config file or on the
-command line for font selection. Typical weights are
-<b>Normal</b>/<b>Regular</b> (FontWeight=400) and
-<b>Bold</b> (FontWeight=700 or FontIsBold=yes) but if a font
-family has a different scheme or more than 2 font weights,
-the weight value can be used for more specific selection. If
-a font family has no bold weight but boldness was requested,
-mintty does not adhere to this scheme but enforces bold font
-selection; however, in this case the bold attribute may not
-be effective. <br>
-&ndash; <b>Alternative fonts</b> (Font1= ... Font10= ,
-Font1Weight= ... Font10Weight=): With these settings, up to
-10 alternative fonts (and optionally weights) can be
-configured which would then be selectable via ECMA-48 SGR
-character attributes (see Tips wiki page
+settings can be given in the config file:</p>
+
+<p style="margin-left:22%; margin-top: 1em">&ndash; <b>Font
+boldness</b> (FontWeight=400): This is an implicit value
+after selecting a font in the font selection menu, or can be
+specified in the config file or on the command line for font
+selection. Typical weights are <b>Normal</b>/<b>Regular</b>
+(FontWeight=400) and <b>Bold</b> (FontWeight=700 or
+FontIsBold=yes) but if a font family has a different scheme
+or more than 2 font weights, the weight value can be used
+for more specific selection. If a font family has no bold
+weight but boldness was requested, mintty does not adhere to
+this scheme but enforces bold font selection; however, in
+this case the bold attribute may not be effective.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&ndash;
+<b>Alternative fonts</b> (Font1= ... Font10= , Font1Weight=
+... Font10Weight=): With these settings, up to 10
+alternative fonts (and optionally weights) can be configured
+which would then be selectable via ECMA-48 SGR character
+attributes (see Tips wiki page
 <i>https://github.com/mintty/mintty/wiki/Tips#text-attributes-and-rendering</i>).
-<i>Note:</i> Font10 has a special preference property; if it
-is not configured, mintty will try to activate it anyway,
+<br>
+They can also be used as secondary fonts with option
+<b>FontChoice</b>. <i><br>
+Note:</i> Font10 has a special preference property; if it is
+not configured, mintty will try to activate it anyway,
 looking for an installed Fraktur or Blackletter font
-(ECMA-48 &quot;Gothic&quot;). <i>Note:</i> The control
-sequence for alternative font 1 overrides the identical
-control sequence to select the VGA character set, which
-would thus be disabled. Configuring alternative font 1 is
-therefore discouraged. <br>
-&ndash; <b>Font sample text</b> (FontSample=): This setting
-overrides the text for the &quot;Sample&quot; box in the
-Font chooser dialog. <br>
-&ndash; <b>Show &quot;hidden&quot; fonts</b>
-(ShowHiddenFonts=no): This hidden setting enables display of
-monospace fonts in the font selection menu even if they are
-marked to Hide in the Windows Font settings (from the
-Control Panel &mdash; Fonts folder). <br>
-&ndash; <b>Configure font chooser</b> (FontMenu=-1): This
-hidden setting selects and tunes the font chooser dialog
-element. Value 1 selects the Windows system font chooser
-unmodified; value 2 enables font chooser localization,
-adding value 4 (to 6 or 14) enables horizontal item scaling
-(making space for localized labels), adding value 8 (to 10
-or 14) enables item and size adjustments, value -1 enables
-all tuning; value 0 selects a built-in inline font
-chooser.</p>
+(ECMA-48 &quot;Gothic&quot;). <i><br>
+Note:</i> The control sequence for alternative font 1
+overrides the identical control sequence to select the VGA
+character set, which would thus be disabled. Configuring
+alternative font 1 is therefore discouraged.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&ndash;
+<b>Choice of script-specific secondary fonts</b>
+(FontChoice=): With this setting, alternative fonts can be
+specified as secondary font for specific scripts. The value
+is a series of semicolon-separated, colon-combined pairs of
+script name and alternative font number. Script names are as
+specified in the Unicode file Scripts.txt, listed in
+<i>https://en.wikipedia.org/wiki/Script_(Unicode)</i> column
+&quot;Alias&quot;. (The definition list can be split over
+multiple lines if a separator is followed by a backslash,
+newline, and optional whitespace indentation.) <br>
+Example: <b><br>
+FontChoice=Hebrew:6;Arabic:7;Han:8;Hangul:9 <br>
+Font6=David <br>
+Font7=Simplified Arabic Fixed <br>
+Font8=FangSong <br>
+Font9=MingLiU</b></p>
+
+<p style="margin-left:22%; margin-top: 1em">&ndash; <b>Font
+sample text</b> (FontSample=): This setting overrides the
+text for the &quot;Sample&quot; box in the Font chooser
+dialog.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&ndash; <b>Show
+&quot;hidden&quot; fonts</b> (ShowHiddenFonts=no): This
+hidden setting enables display of monospace fonts in the
+font selection menu even if they are marked to Hide in the
+Windows Font settings (from the Control Panel &mdash; Fonts
+folder).</p>
+
+<p style="margin-left:22%; margin-top: 1em">&ndash;
+<b>Configure font chooser</b> (FontMenu=-1): This hidden
+setting selects and tunes the font chooser dialog element.
+Value 1 selects the Windows system font chooser unmodified;
+value 2 enables font chooser localization, adding value 4
+(to 6 or 14) enables horizontal item scaling (making space
+for localized labels), adding value 8 (to 10 or 14) enables
+item and size adjustments, value -1 enables all tuning;
+value 0 selects a built-in inline font chooser.</p>
 
 <p style="margin-left:11%;"><b>Text lines</b>
 (UnderlineManual=false)</p>
@@ -2406,6 +2435,14 @@ intervals (of 16ms each) in order to save output that is
 visually scrolled off right away, so effectively increasing
 output speed. The maximum value is 9.</p>
 
+<p style="margin-left:11%;"><b>Decelerate display speed to
+virtual serial transmission rate</b> (Baud=0)</p>
+
+<p style="margin-left:22%;">This setting can demonstrate a
+legacy feeling of a serial terminal connection. Typical baud
+rates (as supported by DEC VT420) were 300, 600, 1200, 2400,
+4800, 9600, 19200, 38400, 56700, 76800, 115200.</p>
+
 <p style="margin-left:11%;"><b>Clear selection highlighting
 on input</b> (ClearSelectionOnInput=true)</p>
 
@@ -2464,6 +2501,12 @@ the xterm resource <b>mkWidth</b>.) <br>
 &ndash; <b>ambig-wide</b> Use built-in width properties,
 with ambiguous-width characters assumed to be wide.
 (Corresponds to the xterm resource <b>cjkWidth</b>.)</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i> If
+this option selects using built-in width properties, the
+response to the Secondary Device Attributes request will
+report the built-in Unicode version as its third
+parameter.</p>
 
 
 <p style="margin-left:22%; margin-top: 1em"><i>Warning:</i>
