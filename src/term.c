@@ -250,6 +250,7 @@ term_cursor_reset(term_cursor *curs)
   curs->utf = false;
   for (uint i = 0; i < lengthof(curs->csets); i++)
     curs->csets[i] = CSET_ASCII;
+  curs->decsupp = CSET_DECSPGR;
   curs->cset_single = CSET_ASCII;
 
   curs->bidimode = 0;

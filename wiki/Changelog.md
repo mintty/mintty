@@ -1,3 +1,6 @@
+Terminal features
+  * DECAUPSS to assign user-preferred supplemental sets to DECSUPP.
+
 ### 3.0.2 (13 July 2019) ###
 
 Terminal features

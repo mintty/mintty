@@ -1121,6 +1121,64 @@ do_vt52_colour(bool fg, uchar c)
   }
 }
 
+static term_cset
+lookup_cset(ushort nrc_code, uchar csmask, bool enabled)
+{
+  static struct {
+    ushort design;
+    uchar cstype;  // 1: 94-character set, 2: 96-character set, 3: both
+    bool free;     // does not need NRC enabling
+    uchar cs;
+  } csdesignations[] = {
+    {'B', 1, 1, CSET_ASCII},	// ASCII
+    {'A', 3, 1, CSET_GBCHR},	// UK Latin-1
+    {'0', 1, 1, CSET_LINEDRW},	// DEC Special Line Drawing
+    {'>', 1, 1, CSET_TECH},		// DEC Technical
+    {'U', 1, 1, CSET_OEM},		// OEM Codepage 437
+    {'<', 1, 1, CSET_DECSUPP},	// DEC Supplementary (VT200)
+    {CPAIR('%', '5'), 1, 1, CSET_DECSPGR},	// DEC Supplementary Graphics (VT300)
+    // definitions for NRC support:
+    {'4', 1, 0, CSET_NL},	// Dutch
+    {'C', 1, 0, CSET_FI},	// Finnish
+    {'5', 1, 0, CSET_FI},	// Finnish
+    {'R', 1, 0, CSET_FR},	// French
+    {'f', 1, 0, CSET_FR},	// French
+    {'Q', 1, 0, CSET_CA},	// French Canadian (VT200, VT300)
+    {'9', 1, 0, CSET_CA},	// French Canadian (VT200, VT300)
+    {'K', 1, 0, CSET_DE},	// German
+    {'Y', 1, 0, CSET_IT},	// Italian
+    {'`', 1, 0, CSET_NO},	// Norwegian/Danish
+    {'E', 1, 0, CSET_NO},	// Norwegian/Danish
+    {'6', 1, 0, CSET_NO},	// Norwegian/Danish
+    {CPAIR('%', '6'), 1, 0, CSET_PT},	// Portuguese (VT300)
+    {'Z', 1, 0, CSET_ES},	// Spanish
+    {'H', 1, 0, CSET_SE},	// Swedish
+    {'7', 1, 0, CSET_SE},	// Swedish
+    {'=', 1, 0, CSET_CH},	// Swiss
+    // 96-character sets (xterm 336)
+    {'L', 2, 1, CSET_ISO_Latin_Cyrillic},
+    {'F', 2, 1, CSET_ISO_Greek_Supp},
+    {'H', 2, 1, CSET_ISO_Hebrew},
+    {'M', 2, 1, CSET_ISO_Latin_5},
+    {CPAIR('"', '?'), 1, 1, CSET_DEC_Greek_Supp},
+    {CPAIR('"', '4'), 1, 1, CSET_DEC_Hebrew_Supp},
+    {CPAIR('%', '0'), 1, 1, CSET_DEC_Turkish_Supp},
+    {CPAIR('&', '4'), 1, 0, CSET_NRCS_Cyrillic},
+    {CPAIR('"', '>'), 1, 0, CSET_NRCS_Greek},
+    {CPAIR('%', '='), 1, 0, CSET_NRCS_Hebrew},
+    {CPAIR('%', '2'), 1, 0, CSET_NRCS_Turkish},
+  };
+  for (uint i = 0; i < lengthof(csdesignations); i++)
+    if (csdesignations[i].design == nrc_code
+        && (csdesignations[i].cstype & csmask)
+        && (csdesignations[i].free || enabled)
+       )
+    {
+      return csdesignations[i].cs;
+    }
+  return 0;
+}
+
 // compatible state machine expansion for NCR and DECRQM
 static uchar esc_mod0 = 0;
 static uchar esc_mod1 = 0;
@@ -1153,61 +1211,13 @@ do_esc(uchar c)
     check_designa("-./", 2);  // 96-character set designation?
   }
   if (csmask) {
-    static struct {
-      ushort design;
-      uchar cstype;  // 1: 94-character set, 2: 96-character set, 3: both
-      bool free;     // does not need NRC enabling
-      uchar cs;
-    } csdesignations[] = {
-      {'B', 1, 1, CSET_ASCII},	// ASCII
-      {'A', 3, 1, CSET_GBCHR},	// UK Latin-1
-      {'0', 1, 1, CSET_LINEDRW},	// DEC Special Line Drawing
-      {'>', 1, 1, CSET_TECH},		// DEC Technical
-      {'U', 1, 1, CSET_OEM},		// OEM Codepage 437
-      {'<', 1, 1, CSET_DECSUPP},	// DEC Supplementary (VT200)
-      {CPAIR('%', '5'), 1, 1, CSET_DECSPGR},	// DEC Supplementary Graphics (VT300)
-      // definitions for NRC support:
-      {'4', 1, 0, CSET_NL},	// Dutch
-      {'C', 1, 0, CSET_FI},	// Finnish
-      {'5', 1, 0, CSET_FI},	// Finnish
-      {'R', 1, 0, CSET_FR},	// French
-      {'f', 1, 0, CSET_FR},	// French
-      {'Q', 1, 0, CSET_CA},	// French Canadian (VT200, VT300)
-      {'9', 1, 0, CSET_CA},	// French Canadian (VT200, VT300)
-      {'K', 1, 0, CSET_DE},	// German
-      {'Y', 1, 0, CSET_IT},	// Italian
-      {'`', 1, 0, CSET_NO},	// Norwegian/Danish
-      {'E', 1, 0, CSET_NO},	// Norwegian/Danish
-      {'6', 1, 0, CSET_NO},	// Norwegian/Danish
-      {CPAIR('%', '6'), 1, 0, CSET_PT},	// Portuguese (VT300)
-      {'Z', 1, 0, CSET_ES},	// Spanish
-      {'H', 1, 0, CSET_SE},	// Swedish
-      {'7', 1, 0, CSET_SE},	// Swedish
-      {'=', 1, 0, CSET_CH},	// Swiss
-      // 96-character sets (xterm 336)
-      {'L', 2, 1, CSET_ISO_Latin_Cyrillic},
-      {'F', 2, 1, CSET_ISO_Greek_Supp},
-      {'H', 2, 1, CSET_ISO_Hebrew},
-      {'M', 2, 1, CSET_ISO_Latin_5},
-      {CPAIR('"', '?'), 1, 1, CSET_DEC_Greek_Supp},
-      {CPAIR('"', '4'), 1, 1, CSET_DEC_Hebrew_Supp},
-      {CPAIR('%', '0'), 1, 1, CSET_DEC_Turkish_Supp},
-      {CPAIR('&', '4'), 1, 0, CSET_NRCS_Cyrillic},
-      {CPAIR('"', '>'), 1, 0, CSET_NRCS_Greek},
-      {CPAIR('%', '='), 1, 0, CSET_NRCS_Hebrew},
-      {CPAIR('%', '2'), 1, 0, CSET_NRCS_Turkish},
-    };
     ushort nrc_code = CPAIR(esc_mod1, c);
-    for (uint i = 0; i < lengthof(csdesignations); i++)
-      if (csdesignations[i].design == nrc_code
-          && (csdesignations[i].cstype & csmask)
-          && (csdesignations[i].free || term.decnrc_enabled)
-         )
-      {
-        curs->csets[gi] = csdesignations[i].cs;
-        term_update_cs();
-        return;
-      }
+    term_cset cs = lookup_cset(nrc_code, csmask, term.decnrc_enabled);
+    if (cs) {
+      curs->csets[gi] = cs;
+      term_update_cs();
+      return;
+    }
   }
 
   switch (CPAIR(term.esc_mod, c)) {
@@ -2745,26 +2755,38 @@ do_csi(uchar c)
 static void
 do_dcs(void)
 {
-  // DECRQSS (Request Status String) and DECSIXEL are implemented.
+  // Implemented:
+  // DECRQSS (Request Status String)
+  // DECAUPSS (Assign User-Preferred Supplemental Set)
+  // DECSIXEL
   // No DECUDK (User-Defined Keys) or xterm termcap/terminfo data.
 
   char *s = term.cmd_buf;
-  unsigned char *pixels;
-  int i;
-  colour bg, fg;
-  cattr attr = term.curs.attr;
-  int status = (-1);
-  int x, y;
-  int x0, y0;
-  int attr0;
-  int left, top, width, height, pixelwidth, pixelheight;
-  sixel_state_t *st = 0;
+  if (!term.cmd_len)
+    *s = 0;
 
   switch (term.dcs_cmd) {
-  when 'q':
-    st = (sixel_state_t *)term.imgs.parser_state;
 
-    switch (term.state) {
+  when CPAIR('!', 'u'):  // DECAUPSS
+    if (term.state == DCS_ESCAPE) {
+      ushort nrc_code = 0;
+      if (term.cmd_len == 1)
+        nrc_code = *s;
+      else if (term.cmd_len == 2)
+        nrc_code = CPAIR(s[0], s[1]);
+      term_cset cs = lookup_cset(nrc_code, 7, false);
+      if (cs) {
+        term.curs.decsupp = cs;
+        term_update_cs();
+        return;
+      }
+    }
+
+  when 'q': {
+   sixel_state_t * st = (sixel_state_t *)term.imgs.parser_state;
+   int status = -1;
+
+   switch (term.state) {
     when DCS_PASSTHROUGH:
       if (!st)
         return;
@@ -2791,7 +2813,7 @@ do_dcs(void)
       }
 
       int size_pixels = st->image.width * st->image.height * 4;
-      pixels = (unsigned char *)malloc(size_pixels);
+      unsigned char * pixels = (unsigned char *)malloc(size_pixels);
       //printf("alloc pixels 1 w %d h %d (%d) -> %p\n", st->image.width, st->image.height, size_pixels, pixels);
       if (!pixels)
         return;
@@ -2807,12 +2829,12 @@ do_dcs(void)
         return;
       }
 
-      left = term.curs.x;
-      top = term.virtuallines + (term.sixel_display ? 0: term.curs.y);
-      width = st->image.width / st->grid_width;
-      height = st->image.height / st->grid_height;
-      pixelwidth = st->image.width;
-      pixelheight = st->image.height;
+      short left = term.curs.x;
+      short top = term.virtuallines + (term.sixel_display ? 0: term.curs.y);
+      int width = st->image.width / st->grid_width;
+      int height = st->image.height / st->grid_height;
+      int pixelwidth = st->image.width;
+      int pixelheight = st->image.height;
 
       imglist * img;
       if (!winimg_new(&img, pixels, left, top, width, height, pixelwidth, pixelheight) != 0) {
@@ -2823,25 +2845,25 @@ do_dcs(void)
         return;
       }
 
-      x0 = term.curs.x;
-      attr0 = term.curs.attr.attr;
+      short x0 = term.curs.x;
+      cattrflags attr0 = term.curs.attr.attr;
 
       // fill with space characters
       if (term.sixel_display) {  // sixel display mode
-        y0 = term.curs.y;
+        short y0 = term.curs.y;
         term.curs.y = 0;
-        for (y = 0; y < img->height && y < term.rows; ++y) {
+        for (int y = 0; y < img->height && y < term.rows; ++y) {
           term.curs.y = y;
           term.curs.x = 0;
-          for (x = x0; x < x0 + img->width && x < term.cols; ++x)
+          for (int x = x0; x < x0 + img->width && x < term.cols; ++x)
             write_char(SIXELCH, 1);
         }
         term.curs.y = y0;
         term.curs.x = x0;
       } else {  // sixel scrolling mode
-        for (i = 0; i < img->height; ++i) {
+        for (int i = 0; i < img->height; ++i) {
           term.curs.x = x0;
-          for (x = x0; x < x0 + img->width && x < term.cols; ++x)
+          for (int x = x0; x < x0 + img->width && x < term.cols; ++x)
             write_char(SIXELCH, 1);
           if (i == img->height - 1) {  // in the last line
             if (!term.sixel_scrolls_right) {
@@ -2900,10 +2922,10 @@ do_dcs(void)
         term.imgs.last = img;
       }
 
-    otherwise:
+    otherwise: {
       /* parser status initialization */
-      fg = win_get_colour(FG_COLOUR_I);
-      bg = win_get_colour(BG_COLOUR_I);
+      colour fg = win_get_colour(FG_COLOUR_I);
+      colour bg = win_get_colour(BG_COLOUR_I);
       if (!st) {
         st = term.imgs.parser_state = calloc(1, sizeof(sixel_state_t));
         //printf("alloc state %d -> %p\n", (int)sizeof(sixel_state_t), st);
@@ -2913,10 +2935,13 @@ do_dcs(void)
       if (status < 0)
         return;
     }
+   }
+  }
 
   when CPAIR('$', 'q'):
     switch (term.state) {
-    when DCS_ESCAPE:       // DECRQSS
+    when DCS_ESCAPE: {     // DECRQSS
+      cattr attr = term.curs.attr;
       if (!strcmp(s, "m")) { // SGR
         char buf[90], *p = buf;
         p += sprintf(p, "\eP1$r0");
@@ -3028,9 +3053,11 @@ do_dcs(void)
       } else {
         child_printf("\eP0$r%s\e\\", s);
       }
+    }
     otherwise:
       return;
     }
+
   }
 }
 
@@ -3368,7 +3395,10 @@ term_do_write(const char *buf, uint len)
           c &= 0x7F;
           cset = term.curs.csets[term.curs.gr];
         }
-        if (term.vt52_mode) {
+
+        if (cset == CSET_DECSUPP)
+          cset = term.curs.decsupp;
+        else if (term.vt52_mode) {
           if (term.vt52_mode > 1)
             cset = CSET_VT52DRW;
           else

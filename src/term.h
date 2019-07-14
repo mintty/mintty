@@ -384,6 +384,7 @@ typedef struct {
   bool origin;
   short gl, gr;
   term_cset csets[4];
+  term_cset decsupp;
   term_cset cset_single;
   uchar oem_acs;
   bool utf;
