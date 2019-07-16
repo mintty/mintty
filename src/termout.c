@@ -3396,14 +3396,14 @@ term_do_write(const char *buf, uint len)
           cset = term.curs.csets[term.curs.gr];
         }
 
-        if (cset == CSET_DECSUPP)
-          cset = term.curs.decsupp;
-        else if (term.vt52_mode) {
+        if (term.vt52_mode) {
           if (term.vt52_mode > 1)
             cset = CSET_VT52DRW;
           else
             cset = CSET_ASCII;
         }
+        else if (cset == CSET_DECSUPP)
+          cset = term.curs.decsupp;
 
         switch (cs_mb1towc(&wc, c)) {
           when 0: // NUL or low surrogate
