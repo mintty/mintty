@@ -1,5 +1,6 @@
 Terminal features
   * DECAUPSS to assign user-preferred supplemental sets to DECSUPP.
+  * Ignore SOS string (ESC X ...), in addition to PM and APC (xterm).
 
 ### 3.0.2 (13 July 2019) ###
 

@@ -1231,7 +1231,7 @@ do_esc(uchar c)
       term.state = OSC_START;
     when 'P':  /* DCS: device control string */
       term.state = DCS_START;
-    when '^' or '_': /* PM: privacy message, APC: application program command */
+    when '^' or '_' or 'X': /* PM, APC, SOS strings to be ignored */
       term.state = IGNORE_STRING;
     when '7':  /* DECSC: save cursor */
       save_cursor();
