@@ -262,6 +262,11 @@ issue, because it is not a mintty issue (or well, an issue maybe, but not
 caused by, or fixable by, mintty); it is a generic problem of cygwin/msys 
 and occurs likewise in all other pty-based terminals (e.g. xterm).
 
+### Signal processing with alien programs ###
+
+The same workaround handles interrupt signals, particularly Control+C, 
+which does not otherwise function as expected with non-cygwin programs.
+
 
 ## Terminal type detection – check if running inside mintty ##
 
