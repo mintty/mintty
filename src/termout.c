@@ -2165,7 +2165,7 @@ do_winop(void)
         win_maximise(-2);
       else if (arg1 == 1 || arg1 == 0)
         win_maximise(arg1 ? 2 : 0);
-    when 11: child_write(win_is_iconic() ? "\e[1t" : "\e[2t", 4);
+    when 11: child_write(win_is_iconic() ? "\e[2t" : "\e[1t", 4);
     when 13: {
       int x, y;
       win_get_scrpos(&x, &y, arg1 == 2);
