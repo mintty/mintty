@@ -1779,7 +1779,7 @@ emoji_show(int x, int y, struct emoji e, int elen, cattr eattr, ushort lattr)
     efn = emoji_bases[e.idx].res;
   }
 #ifdef debug_emojis
-  printf("emoji_show <%ls>\n", efn);
+  printf("emoji_show @%d:%d..%d seq %d idx %d <%ls>\n", y, x, elen, e.seq, e.idx, efn);
 #endif
   if (efn && *efn)
     win_emoji_show(x, y, efn, elen, lattr);
@@ -2055,7 +2055,12 @@ term_paint(void)
             && win_char_width(tchar, tattr.attr) == 2
             // && !(line->lattr & LATTR_MODE) ? "do not tamper with graphics"
             // && ambigwide(tchar) ? but then they will be clipped...
-           ) {
+           )
+        {
+          //printf("[%d:%d] narrow? %04X..%04X\n", i, j, tchar, chars[j + 1].chr);
+#ifdef failed_attempt_to_tame_narrowing
+          if (j + 1 < term.cols && chars[j + 1].chr != ' ')
+#endif
           tattr.attr |= ATTR_NARROW;
         }
         else if (tattr.attr & ATTR_WIDE
@@ -2069,12 +2074,14 @@ term_paint(void)
                     //? && !widerange(tchar)
                  // and reassure to apply this only to ambiguous width chars
                  && ambigwide(tchar)
-                ) {
+                )
+        {
           tattr.attr |= ATTR_EXPAND;
         }
       }
-      else if (dispchars[j].attr.attr & ATTR_NARROW)
+      else if (dispchars[j].attr.attr & ATTR_NARROW) {
         tattr.attr |= ATTR_NARROW;
+      }
 
 #define dont_debug_width_scaling
 #ifdef debug_width_scaling

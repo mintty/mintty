@@ -3,6 +3,9 @@ Terminal features
   * Ignore SOS string (ESC X ...), in addition to PM and APC (xterm).
   * Fixed iconified window report which was reverted (#893).
 
+Font rendering
+  * Reimplement auto-narrowing (too wide glyphs) by coordinate scaling (#892).
+
 Window handling
   * Flexible configuration of scroll modifiers (~#894).
 

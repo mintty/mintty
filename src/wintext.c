@@ -27,7 +27,8 @@ enum {
   FONT_ZOOMFULL  = 0x20,
   FONT_ZOOMSMALL = 0x40,
   FONT_WIDE      = 0x80,
-  FONT_NARROW    = 0x100,
+  //FONT_NARROW    = 0x100,
+  FONT_NARROW    = 0,	// disabled narrowing via font
   FONT_MAXNO     = FONT_WIDE + FONT_NARROW
 };
 
@@ -2991,7 +2992,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
       underlaid = true;
   }
 
- /* Coordinate transformation */
+ /* Coordinate transformation per line */
   int coord_transformed = 0;
   XFORM old_xform;
   if (lpresrtl) {
@@ -3175,6 +3176,8 @@ draw:;
     DeleteObject(oldpen);
   }
 
+  int dxs_[len];
+
  /* Background for overhang overlay */
   if (ldisp1) {
     if (!underlaid)
@@ -3196,6 +3199,32 @@ draw:;
         text[i] = 0x2502;
     else if (graph == 0xF7)  // VT52 fraction numerator
       yt -= line_width;
+  }
+
+ /* Coordinate transformation per character */
+  int coord_transformed2 = 0;
+  XFORM old_xform2;
+  RECT box_, box2_;
+  if (attr.attr & ATTR_NARROW) {
+    coord_transformed2 = SetGraphicsMode(dc, GM_ADVANCED);
+    if (coord_transformed2 && GetWorldTransform(dc, &old_xform2)) {
+      clear_run();
+
+      float scale = 0.5;
+      int dscale = 1.0 / scale;
+      XFORM xform = (XFORM){scale, 0.0, 0.0, 1.0, xt * (1.0 - scale), 0.0};
+      coord_transformed2 = ModifyWorldTransform(dc, &xform, MWT_LEFTMULTIPLY);
+      if (coord_transformed2) {
+        for (int i = 0; i < len; i++)
+          dxs_[i] = dxs[i];
+        box_ = box;
+        box2_ = box2;
+        for (int i = 0; i < len; i++)
+          dxs[i] *= dscale;
+        box.right *= dscale;
+        box2.right *= dscale;
+      }
+    }
   }
 
  /* Finally, draw the text */
@@ -3270,6 +3299,15 @@ draw:;
       }
     }
   text_out_end();
+
+  if (coord_transformed2) {
+    SetWorldTransform(dc, &old_xform2);
+    // restore these in case we're in a shadow loop
+    for (int i = 0; i < len; i++)
+      dxs[i] = dxs_[i];
+    box = box_;
+    box2 = box2_;
+  }
 
  /* Manual drawing of certain graphics */
   // line_width already set above for DEC Tech adjustments
