@@ -520,6 +520,24 @@ staticddlbig(ctrlpos * cp, char *stext, int sid, int lid)
 }
 
 /*
+ * A static, text/label only.
+ */
+static void
+staticlabel(ctrlpos * cp, char *stext, int sid)
+{
+  RECT r;
+
+  if (stext) {
+    r.left = GAPBETWEEN;
+    r.top = cp->ypos;
+    r.right = cp->width;
+    r.bottom = STATICHEIGHT;
+    doctl(null, cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, stext, sid);
+    cp->ypos += STATICHEIGHT + GAPBETWEEN;
+  }
+}
+
+/*
  * A list box with a static labelling it.
  */
 static void
@@ -806,6 +824,9 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
                              ctrl->listbox.ncols - 1, (LPARAM) tabarray);
         }
       }
+      when CTRL_LABEL:
+        num_ids = 1;
+        staticlabel(&pos, ctrl->label, base_id);
       when CTRL_FONTSELECT: {
         num_ids = 3;
         //__ Options - Text: font chooser activation button

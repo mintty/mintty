@@ -315,6 +315,14 @@ ctrl_pushbutton(controlset *s, char *label,
 }
 
 control *
+ctrl_label(controlset *s, char *label)
+{
+  control *c = ctrl_new(s, CTRL_LABEL, 0, 0);
+  c->label = label ? strdup(label) : null;
+  return c;
+}
+
+control *
 ctrl_fontsel(controlset *s, char *label,
              handler_fn handler, void *context)
 {

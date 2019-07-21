@@ -3,6 +3,9 @@ Terminal features
   * Ignore SOS string (ESC X ...), in addition to PM and APC (xterm).
   * Fixed iconified window report which was reverted (#893).
 
+Window handling
+  * Flexible configuration of scroll modifiers (~#894).
+
 ### 3.0.2 (13 July 2019) ###
 
 Terminal features

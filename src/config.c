@@ -522,6 +522,8 @@ static opt_val
     {"alt", MDK_ALT},
     {"ctrl", MDK_CTRL},
     {"win", MDK_WIN},
+    {"super", MDK_SUPER},
+    {"hyper", MDK_HYPER},
     {0, 0}
   },
   [OPT_TRANS] = (opt_val[]) {
@@ -2655,6 +2657,20 @@ font_handler(control *ctrl, int event)
   }
 }
 
+static void
+modifier_handler(control *ctrl, int event)
+{
+  char *cp = ctrl->context;
+  int col = ctrl->column;
+  char mask = 1 << col;
+  //printf("mod %02X ev %d col %d <%s>\n", *cp, event, col, ctrl->label);
+  if (event == EVENT_REFRESH)
+    dlg_checkbox_set(ctrl, *cp & mask);
+  else if (event == EVENT_VALCHANGE)
+    *cp = (*cp & ~mask) | (dlg_checkbox_get(ctrl) << col);
+  //printf(" -> %02X\n", *cp);
+}
+
 
 void
 setup_config_box(controlbox * b)
@@ -3128,6 +3144,7 @@ setup_config_box(controlbox * b)
     _("&Right"), 1,
     null
   );
+#ifdef scroll_mod_buttons
   ctrl_radiobuttons(
     //__ Options - Window:
     s, _("Modifier for scrolling"), 5,
@@ -3144,6 +3161,37 @@ setup_config_box(controlbox * b)
     _("&Off"), 0,
     null
   );
+#else
+  ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
+  ctrl_label(
+    //__ Options - Window:
+    s, _("Modifier for scrolling"));
+  ctrl_columns(s, 6, 20, 16, 16, 16, 16, 16);
+  ctrl_checkbox(
+    //__ Options - Window:
+    s, _("&Shift"), modifier_handler, &new_cfg.scroll_mod
+  )->column = 0;
+  ctrl_checkbox(
+    //__ Options - Window:
+    s, _("&Alt"), modifier_handler, &new_cfg.scroll_mod
+  )->column = 1;
+  ctrl_checkbox(
+    //__ Options - Window:
+    s, _("&Ctrl"), modifier_handler, &new_cfg.scroll_mod
+  )->column = 2;
+  ctrl_checkbox(
+    //__ Options - Window:
+    s, _("&Win"), modifier_handler, &new_cfg.scroll_mod
+  )->column = 3;
+  ctrl_checkbox(
+    //__ Options - Window:
+    s, _("&Sup"), modifier_handler, &new_cfg.scroll_mod
+  )->column = 4;
+  ctrl_checkbox(
+    //__ Options - Window:
+    s, _("&Hyp"), modifier_handler, &new_cfg.scroll_mod
+  )->column = 5;
+#endif
   ctrl_checkbox(
     //__ Options - Window:
     s, _("&PgUp and PgDn scroll without modifier"),
