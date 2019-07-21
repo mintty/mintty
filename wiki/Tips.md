@@ -776,9 +776,10 @@ to adjust line spacing.
 
 ## Text attributes and rendering ##
 
-Mintty supports a maximum of usual and unusual text attributes.
-For underline styles and colour values, colon-separated 
-ISO/IEC 8613-6 sub-parameters are supported.
+Mintty supports a maximum of usual and unusual text attributes, 
+settable with “Select Graphic Rendition” (SGR) escape sequences.
+For underline styles and some other values, colon-separated 
+ECMA-48 sub-parameters are supported.
 
 | **start `^[[...m`**    | **end `^[[...m`** | **attribute**                 |
 |:-----------------------|:------------------|:------------------------------|
@@ -833,7 +834,9 @@ to the respectively selected font attribute.
 
 Note: The control sequence for alternative font 1 overrides the identical 
 control sequence to select the VGA character set. Configuring alternative 
-font 1 is therefore discouraged.
+font 1 is therefore discouraged. Note, on the other hand, that the 
+VGA character set control sequence SGR 11 (effective if Font1 is not configured) 
+is _not_ reset with SGR 0 but only with SGR 10.
 
 Note: The control sequences for Fraktur (“Gothic”) font are described 
 in ECMA-48, see also [wiki:ANSI code](https://en.wikipedia.org/wiki/ANSI_escape_code).
