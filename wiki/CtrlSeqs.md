@@ -166,12 +166,12 @@ can set up the current view position ("scroll offset" from 1 to total size)
 as well as the total virtual document size ("document height" in assumed lines) 
 and optionally the "viewport height".
 
-| **sequence**                      | **scrollbar**                                        |
-|:----------------------------------|:-----------------------------------------------------|
-| `^[[`_pos_`;`_size_`;`_height`#t` | set scrollbar view position, virtual size and height |
-| `^[[`_pos_`;`_size_`#t`           | set scrollbar view position and virtual size         |
-| `^[[`_pos_`#t`                    | set scrollbar view position                          |
-| `^[[0#t`                          | disable application scrollbar                        |
+| **sequence**                       | **scrollbar**                                        |
+|:-----------------------------------|:-----------------------------------------------------|
+| `^[[`_pos_`;`_size_`;`_height_`#t` | set scrollbar view position, virtual size and height |
+| `^[[`_pos_`;`_size_`#t`            | set scrollbar view position and virtual size         |
+| `^[[`_pos_`#t`                     | set scrollbar view position                          |
+| `^[[0#t`                           | disable application scrollbar                        |
 
 Relative scrollbar movement and absolute positioning are reported with 
 special sequences; for details see 

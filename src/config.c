@@ -3085,6 +3085,8 @@ setup_config_box(controlbox * b)
     _("&Application"), true,
     null
   );
+#define appl_override_buttons
+#ifdef appl_override_buttons
   ctrl_radiobuttons(
     //__ Options - Mouse:
     s, _("Modifier for overriding default"), 5,
@@ -3101,6 +3103,38 @@ setup_config_box(controlbox * b)
     _("&Off"), 0,
     null
   );
+#else
+#warning needs some coding
+  ctrl_label(
+    //__ Options - Mouse:
+    s, _("Modifier for overriding default"));
+  ctrl_columns(s, 6, 20, 16, 16, 16, 16, 16);
+  ctrl_checkbox(
+    //__ Options - Mouse:
+    s, _("&Shift"), modifier_handler, &new_cfg.click_target_mod
+  )->column = 0;
+  ctrl_checkbox(
+    //__ Options - Mouse:
+    s, _("&Alt"), modifier_handler, &new_cfg.click_target_mod
+  )->column = 1;
+  ctrl_checkbox(
+    //__ Options - Mouse:
+    s, _("&Ctrl"), modifier_handler, &new_cfg.click_target_mod
+  )->column = 2;
+  ctrl_checkbox(
+    //__ Options - Mouse:
+    s, _("&Win"), modifier_handler, &new_cfg.click_target_mod
+  )->column = 3;
+  ctrl_checkbox(
+    //__ Options - Mouse:
+    s, _("&Sup"), modifier_handler, &new_cfg.click_target_mod
+  )->column = 4;
+  ctrl_checkbox(
+    //__ Options - Mouse:
+    s, _("&Hyp"), modifier_handler, &new_cfg.click_target_mod
+  )->column = 5;
+  ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
+#endif
 
  /*
   * The Window panel.
