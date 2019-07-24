@@ -319,7 +319,7 @@ $(pdf): ../docs/$(NAME).1
 html := ../docs/$(NAME).1.html
 html: $(html)
 $(html): ../docs/$(NAME).1
-	groff -t -man -Thtml $< > $@
+	sed -f html.sed $< | groff -t -man -mwww -Thtml > $@
 
 clean:
 	#rm -rf *.d *.o $(NAME)*
