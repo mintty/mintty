@@ -3068,7 +3068,45 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     SetTextColor(dc, fg);
   }
 
+  int bloom = 0;
+  XFORM old_xform_bloom;
+  int coord_transformed_bloom = 0;
+  if (cfg.bloom) {
+    bloom = 2;
+    fg = ((fg & 0xFEFEFEFE) >> 1) + ((win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1);
+    SetTextColor(dc, fg);
+  }
+
 draw:;
+  if (bloom) {
+    if (bloom > 1)
+      fg = ((fg & 0xFEFEFEFE) >> 1) + ((win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1);
+    else {
+      colour fg2 = (fg & 0xFEFEFEFE) >> 1;
+      colour bg2 = (win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1;
+      colour fg4 = (fg & 0xFCFCFCFC) >> 2;
+      colour bg4 = (win_get_colour(BG_COLOUR_I) & 0xFCFCFCFC) >> 2;
+      fg = fg2 + fg4 + bg2 + bg4;
+    }
+    SetTextColor(dc, fg);
+
+    coord_transformed_bloom = SetGraphicsMode(dc, GM_ADVANCED);
+    if (coord_transformed_bloom && GetWorldTransform(dc, &old_xform_bloom)) {
+      clear_run();
+
+      float scale = 1.0 + (float)bloom / 7.0;
+      /*
+        xt' = xt + cell_width / 2
+        x' - xt' = sc * (x - xt')
+        x' = xt' + sc * x - sc * xt'
+        x' = sc * x + (1 - sc) * xt'
+      */
+      XFORM xform = (XFORM){scale, 0.0, 0.0, scale, 
+                    ((float)xt + (float)cell_width / 2) * (1.0 - scale), 
+                    ((float)yt + (float)cell_height / 2) * (1.0 - scale)};
+      coord_transformed_bloom = ModifyWorldTransform(dc, &xform, MWT_LEFTMULTIPLY);
+    }
+  }
 #ifdef debug_draw
   if (*text != ' ')
     printf("draw @%d:%d %d:%d %d:%d\n", ty, tx, yt, xt, y, x);
@@ -3249,8 +3287,8 @@ draw:;
 
   if (combining || combining_double)
     *dxs = char_width;  // convince Windows to apply font underlining
-  text_out_start(dc, text, len, dxs);
 
+  text_out_start(dc, text, len, dxs);
   for (int xoff = 0; xoff < xwidth; xoff++)
     if (combining || combining_double) {
       // Workaround for mangled display of combining characters;
@@ -3715,6 +3753,14 @@ draw:;
   }
 
   _return:
+
+  if (bloom && coord_transformed_bloom) {
+    bloom--;
+    SetWorldTransform(dc, &old_xform_bloom);
+    fg = fg0;
+    SetTextColor(dc, fg);
+    goto draw;
+  }
 
   if (layer) {
     layer--;

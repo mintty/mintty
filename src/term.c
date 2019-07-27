@@ -2455,7 +2455,7 @@ term_paint(void)
       }
       bc = tbc;
 
-      if (break_run) {
+      if (break_run || cfg.bloom) {
         if ((dirty_run && textlen) || overlaying)
           out_text(start, i, text, textlen, attr, textattr, line->lattr, has_rtl);
         start = j;

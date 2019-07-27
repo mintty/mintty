@@ -5,9 +5,13 @@ Terminal features
 
 Font rendering
   * Reimplement auto-narrowing (too wide glyphs) by coordinate scaling (#892).
+  * Bloom effect around characters of old CRT terminals, rough simulation.
 
 Window handling
   * Flexible configuration of scroll modifiers (~#894).
+
+Configuration
+  * Option Bloom.
 
 ### 3.0.2 (13 July 2019) ###
 

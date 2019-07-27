@@ -223,7 +223,8 @@ const config default_cfg = {
     [BOLD_WHITE_I]   = RGB(0xFF, 0xFF, 0xFF)
   },
   .sixel_clip_char = W(" "),
-  .baud = 0
+  .baud = 0,
+  .bloom = 0
 };
 
 config cfg, new_cfg, file_cfg;
@@ -451,6 +452,7 @@ options[] = {
   {"SelectionShowSize", OPT_INT, offcfg(selection_show_size)},
   {"HoverTitle", OPT_BOOL, offcfg(hover_title)},
   {"Baud", OPT_INT, offcfg(baud)},
+  {"Bloom", OPT_INT, offcfg(bloom)},
 
   // ANSI colours
   {"Black", OPT_COLOUR, offcfg(ansi_colours[BLACK_I])},

@@ -204,6 +204,7 @@ typedef struct {
   int selection_show_size;
   bool hover_title;
   int baud;
+  int bloom;
   // Legacy
   bool use_system_colours;
   bool old_bold;
