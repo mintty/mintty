@@ -546,6 +546,7 @@ It can be accessed using the scrollbar, the mouse wheel, or the keyboard.
 Hold the \fBShift\fP key while pressing the \fBUp\fP and \fBDown\fP arrow keys
 to scroll line-by-line or the \fBPageUp\fP and \fBPageDown\fP keys to scroll
 page-by-page.
+With option \fBKeyFunctions\fP, user-defined keys can be used for scrolling.
 
 .SS Searching in the text and scrollback buffer
 
@@ -2415,6 +2416,22 @@ Supported actions are described as follows:
 \(en \fBsuper\fP: use this key as Super modifier key
 .br
 \(en \fBhyper\fP: use this key as Hyper modifier key
+.br
+\(en \fBscroll_top\fP: scroll scrollback view to beginning
+.br
+\(en \fBscroll_end\fP: scroll scrollback view to end
+.br
+\(en \fBscroll_pgup\fP: scroll scrollback view one page up
+.br
+\(en \fBscroll_pgdn\fP: scroll scrollback view one page down
+.br
+\(en \fBscroll_lnup\fP: scroll scrollback view one line up
+.br
+\(en \fBscroll_lndn\fP: scroll scrollback view one line down
+.br
+\(en \fBscroll_prev\fP: scroll scrollback view to previous marker
+.br
+\(en \fBscroll_next\fP: scroll scrollback view to next marker
 
 \fINote (*):\fP The exact behaviour of some actions depends on the 
 state of the Shift key.
@@ -2461,6 +2478,9 @@ the CapsLock key
 .br
 \(en \fBKeyFunctions=*Menu:29\fP turns the Menu key into an F16 function key 
 (xterm default) and applies all modifiers to it
+.br
+\(en \fBKeyFunctions=S+KP_Prior:scroll_pgup;C+KP_Prior:scroll_pgup;C+KP_Next:scroll_pgdn;S+KP_Next:scroll_pgdn\fP 
+enables scrollback scrolling with either of Shift or Control modifiers
 
 .TP
 \fBUse system colours\fP (UseSystemColours=no)

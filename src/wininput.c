@@ -1194,6 +1194,23 @@ toggle_bidi()
   term.disable_bidi = !term.disable_bidi;
 }
 
+static void scroll_HOME()
+  { SendMessage(wnd, WM_VSCROLL, SB_TOP, 0); }
+static void scroll_END()
+  { SendMessage(wnd, WM_VSCROLL, SB_BOTTOM, 0); }
+static void scroll_PRIOR()
+  { SendMessage(wnd, WM_VSCROLL, SB_PAGEUP, 0); }
+static void scroll_NEXT()
+  { SendMessage(wnd, WM_VSCROLL, SB_PAGEDOWN, 0); }
+static void scroll_UP()
+  { SendMessage(wnd, WM_VSCROLL, SB_LINEUP, 0); }
+static void scroll_DOWN()
+  { SendMessage(wnd, WM_VSCROLL, SB_LINEDOWN, 0); }
+static void scroll_LEFT()
+  { SendMessage(wnd, WM_VSCROLL, SB_PRIOR, 0); }
+static void scroll_RIGHT()
+  { SendMessage(wnd, WM_VSCROLL, SB_NEXT, 0); }
+
 static void
 nop()
 {
@@ -1398,6 +1415,15 @@ static struct function_def cmd_defs[] = {
 
   {"super", {.fct_key = super_down}, 0},
   {"hyper", {.fct_key = hyper_down}, 0},
+
+  {"scroll_top", {.fct = scroll_HOME}, 0},
+  {"scroll_end", {.fct = scroll_END}, 0},
+  {"scroll_pgup", {.fct = scroll_PRIOR}, 0},
+  {"scroll_pgdn", {.fct = scroll_NEXT}, 0},
+  {"scroll_lnup", {.fct = scroll_UP}, 0},
+  {"scroll_lndn", {.fct = scroll_DOWN}, 0},
+  {"scroll_prev", {.fct = scroll_LEFT}, 0},
+  {"scroll_next", {.fct = scroll_RIGHT}, 0},
 
   {"void", {.fct = nop}, 0}
 };

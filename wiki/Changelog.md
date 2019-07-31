@@ -9,9 +9,11 @@ Font rendering
 
 Window handling
   * Flexible configuration of scroll modifiers (~#894).
+  * User-definable functions for scrollback scrolling (~#894).
 
 Configuration
   * Option Bloom.
+  * Option KeyFunctions can assign scrollback scrolling keys (~#894).
 
 ### 3.0.2 (13 July 2019) ###
 
