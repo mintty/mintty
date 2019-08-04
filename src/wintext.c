@@ -3079,7 +3079,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
 
 draw:;
   if (bloom) {
-    if (bloom > 1)
+    if (bloom > 1 || bloom >= 1)
       fg = ((fg & 0xFEFEFEFE) >> 1) + ((win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1);
     else {
       colour fg2 = (fg & 0xFEFEFEFE) >> 1;
@@ -3089,6 +3089,7 @@ draw:;
       fg = fg2 + fg4 + bg2 + bg4;
     }
     SetTextColor(dc, fg);
+    SelectObject(dc, ff->fonts[nfont | FONT_BOLD]);
 
     coord_transformed_bloom = SetGraphicsMode(dc, GM_ADVANCED);
     if (coord_transformed_bloom && GetWorldTransform(dc, &old_xform_bloom)) {
@@ -3759,6 +3760,8 @@ draw:;
     SetWorldTransform(dc, &old_xform_bloom);
     fg = fg0;
     SetTextColor(dc, fg);
+    if (!bloom)
+      SelectObject(dc, ff->fonts[nfont]);
     goto draw;
   }
 
