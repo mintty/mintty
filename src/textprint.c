@@ -2,6 +2,7 @@
 #include "charset.h"
 #include "winpriv.h"  // win_prefix_title, win_unprefix_title
 #include <fcntl.h>
+#include <pwd.h>
 
 
 static wstring printer = 0;
@@ -9,6 +10,7 @@ static char * pf;
 static int pd;
 static const wchar BOM = 0xFEFF;
 static uint np = 0;
+static struct passwd * pw;
 
 void
 printer_start_job(wstring printer_name)
@@ -18,8 +20,13 @@ printer_start_job(wstring printer_name)
   char * user = getenv("USER");
   if (!user)
     user = getenv("USERNAME");
-  if (!user)
-    user = "";
+  if (!user) {
+    pw = getpwuid(getuid());
+    if (pw)
+      user = pw->pw_name;
+    else
+      user = "";
+  }
 
   char pid[11];
   sprintf(pid, "%d", getpid());
@@ -92,13 +99,13 @@ printer_finish_job(void)
 
     // retrieve current value of `chcp`
     // which is not necessarily the same as GetOEMCP() !
-    FILE * chcpcom = popen("chcp.com | sed -e 's,.*:,,' -e 's, ,,'", "r");
+    FILE * chcpcom = popen("$SYSTEMROOT/System32/chcp.com | /bin/sed -e 's,.*:,,' -e 's, ,,'", "r");
     char line[99];
     fgets(line, sizeof line, chcpcom);
     pclose(chcpcom);
     int chcp = atoi(line);
 
-    char * cmdformat = "@chcp 65001 > nul:\r\n@start /min notepad /w /pt \"%s\" \"%s\"\r\n@chcp %d > nul:";
+    char * cmdformat = "@%%SYSTEMROOT%%\\System32\\chcp 65001 > nul:\r\n@start /min %%SYSTEMROOT%%\\notepad /w /pt \"%s\" \"%s\"\r\n@%%SYSTEMROOT%%\\System32\\chcp %d > nul:";
     char cmd[strlen(cmdformat) - 6 + strlen(wf) + strlen(pn) + 22 + 1];
     sprintf(cmd, cmdformat, wf, pn, chcp);
 
