@@ -12,7 +12,8 @@ Window handling
   * User-definable functions for scrollback scrolling (~#894).
 
 Other
-  * Drop PATH dependency of printer feature (#897).
+  * Dropped PATH dependency of printer feature (#897).
+  * Dropped float: left from copied HTML style (#900).
 
 Configuration
   * Option Bloom.

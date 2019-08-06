@@ -580,9 +580,14 @@ term_create_html(FILE * hf, int level)
             red(fg_colour), green(fg_colour), blue(fg_colour));
   }
 
+#ifdef float_left
   // float needed here to avoid placement left of previous text (Thunderbird)
-  hprintf(hf, "    float: left;\n");
+  // this cannot be reproduced anymore; dropped (#900)
+  if (level >= 3) {
+    hprintf(hf, "    float: left;\n");
+#endif
   hprintf(hf, "  }\n");
+
   // add xterm-compatible style classes for some text attributes
   hprintf(hf, "  .bd { font-weight: bold }\n");
   hprintf(hf, "  .it { font-style: italic }\n");
