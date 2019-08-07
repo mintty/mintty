@@ -2169,7 +2169,7 @@ do_winop(void)
     when 13: {
       int x, y;
       win_get_scrpos(&x, &y, arg1 == 2);
-      child_printf("\e[3;%d;%dt", x, y);
+      child_printf("\e[3;%u;%ut", (ushort)x, (ushort)y);
     }
     when 14: {
       int height, width;

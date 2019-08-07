@@ -2,6 +2,7 @@ Terminal features
   * DECAUPSS to assign user-preferred supplemental sets to DECSUPP.
   * Ignore SOS string (ESC X ...), in addition to PM and APC (xterm).
   * Fixed iconified window report which was reverted (#893).
+  * Prevent negative CSI 13 t response parameters (#899).
 
 Font rendering
   * Reimplement auto-narrowing (too wide glyphs) by coordinate scaling (#892).
