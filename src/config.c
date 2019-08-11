@@ -904,12 +904,14 @@ init_config_dirs(void)
     sprintf(appdata, "%s/mintty", getenv("APPDATA"));
     config_dirs[++last_config_dir] = appdata;
   }
-  char * xdgconf = newn(char, strlen(home) + 16);
-  sprintf(xdgconf, "%s/.config/mintty", home);
-  config_dirs[++last_config_dir] = xdgconf;
-  char * homeconf = newn(char, strlen(home) + 9);
-  sprintf(homeconf, "%s/.mintty", home);
-  config_dirs[++last_config_dir] = homeconf;
+  if (!support_wsl) {
+    char * xdgconf = newn(char, strlen(home) + 16);
+    sprintf(xdgconf, "%s/.config/mintty", home);
+    config_dirs[++last_config_dir] = xdgconf;
+    char * homeconf = newn(char, strlen(home) + 9);
+    sprintf(homeconf, "%s/.mintty", home);
+    config_dirs[++last_config_dir] = homeconf;
+  }
   if (config_dir) {
     config_dirs[++last_config_dir] = config_dir;
   }
