@@ -1,34 +1,101 @@
 #! /bin/sh
 
 case "$1" in
-*.*)	fullemojis="$1"; shift;;
-"")	echo "Usage: `basename $0` .../full-emoji-list.html [emoji style]..." >&2
+-sh)	postproc=cat
+	shift;;
+*)	postproc=sh;;
+esac
+
+emojisurl0=http://www.unicode.org/emoji/charts/full-emoji-list.html
+emojisurl1=http://www.unicode.org/emoji/charts/full-emoji-modifiers.html
+
+case "$1" in
+*.html)	emojis1=`dirname "$1"`/full-emoji-modifiers.html
+	if [ -r "$1" -a -r "$emojis1" ]
+	then	emojis0="$1"
+	else	echo Not readable: "$1" "$emojis1" >&2
+		exit
+	fi
+	shift;;
+-d)	if curl -RO -z `basename $emojisurl0` $emojisurl0 && curl -RO -z `basename $emojisurl1` $emojisurl1
+	then	emojis0=full-emoji-list.html
+		emojis1=full-emoji-modifiers.html
+	else	echo Download failed >&2
+		exit
+	fi
+	shift;;
+"")	echo "Usage: `basename $0` [-d | .../full-emoji-list.html] [emoji style]..." >&2
 	echo >&2
 	echo "This script extracts emojis graphics (.png format) from a downloaded copy of" >&2
-	echo "	http://www.unicode.org/emoji/charts/full-emoji-list.html" >&2
+	echo "	$emojisurl0" >&2
+	echo "	$emojisurl1" >&2
 	echo "for the selected emoji style sets, or (if none selected) all of them:" >&2
-	echo "	apple google twitter emojione facebook samsung windows" >&2
+	echo "	apple google facebook windows twitter emojione samsung" >&2
 	echo "and always extracts common emoji graphics." >&2
 	echo >&2
 	echo "Warning: with all styles selected, this may take a few hours on Cygwin." >&2
 	exit;;
-*)	echo missing file name of full emoji list >&2; exit;;
+*)	echo Missing file name of full emoji list >&2; exit;;
 esac
+
+echo -n "Using " >&2
+cat "$emojis0" | sed -e "s,<title>\(.*\)</title>,\1," -e t -e d >&2
+
+#cat "$emojis0" |
+#sed -e "/^<\/tr/ q" -e "s/.*<th.*#col-vendor.>\([^.<]*\).*/\1/" -e t -e d |
+#pr -t -n | sed -e "s,^,vendor ," -e 7q
+# 11.0:
+#	vendor     1    Appl
+#	vendor     2    Goog
+#	vendor     3    Twtr
+#	vendor     4    One
+#	vendor     5    FB
+#	vendor     6    Sams
+#	vendor     7    Wind
+# 12.0:
+#	vendor     1    Appl
+#	vendor     2    Goog
+#	vendor     3    FB
+#	vendor     4    Wind
+#	vendor     5    Twtr
+#	vendor     6    Joy
+#	vendor     7    Sams
+
+seli=0
+for vendor in `cat "$emojis0" |
+  sed -e "/^<\/tr/ q" -e "s/.*<th.*#col-vendor.>\([^.<]*\).*/\1/" -e t -e d |
+  sed -e 7q`
+do	seli=`expr $seli + 1`
+	case "$vendor" in
+	Appl)	apple=$seli;;
+	Goog)	google=$seli;;
+	FB)	facebook=$seli;;
+	Wind)	windows=$seli;;
+	Twtr)	twitter=$seli;;
+	One|Joy) emojione=$seli;;
+	Sams)	samsung=$seli;;
+	esac
+done
 
 sel=
 while	case "$1" in
-	apple)	sel="1$sel";;
-	google)	sel="2$sel";;
-	twitter)	sel="3$sel";;
-	emojione)	sel="4$sel";;
-	facebook)	sel="5$sel";;
-	samsung)	sel="6$sel";;
-	windows)	sel="7$sel";;
+	apple)		seli="$apple";;
+	google)		seli="$google";;
+	facebook)	seli="$facebook";;
+	windows)	seli="$windows";;
+	twitter)	seli="$twitter";;
+	joy|emojione)	seli="$emojione";;
+	samsung)	seli="$samsung";;
 	"")	false;;
 	*)	echo emoji set "$1" not known; exit;;
 	esac
-do	shift
+do	sel="$sel$seli"
+	mkdir -p $seli
+	[ -e "$1" ] || ln -s "$seli" "$1"
+	shift
 done
+mkdir -p 0
+[ -e common ] || ln -s 0 common
 
 sel=0${sel:-1234567}
 export sel
@@ -38,11 +105,11 @@ echo "Warning: this may take a few hours on Cygwin" >&2
 LC_ALL=C
 export LC_ALL
 
-total=`grep -e "name='\([^']*\)'.*U+" "$fullemojis" | wc -l`
+total=`grep -e "name='\([^']*\)'.*U+" "$emojis0" "$emojis1" | wc -l`
 export total
 
 (
-echo "Extracting $total emojis from $fullemojis" >&2
+echo "Extracting $total emojis " >&2
 
 cat <<\/EOS
 n=0
@@ -76,23 +143,23 @@ imgskip () {
 
 /EOS
 
-mkdirlink () {
-  case $sel in
-  *$1*)	mkdir -p $1
-  	[ -e "$2" ] || ln -s "$1" "$2"
-  	;;
-  esac
-}
-mkdirlink 1 apple
-mkdirlink 2 google
-mkdirlink 3 twitter
-mkdirlink 4 emojione
-mkdirlink 5 facebook
-mkdirlink 6 samsung
-mkdirlink 7 windows
-mkdirlink 0 common
+#mkdirlink () {
+#  case $sel in
+#  *$1*)	mkdir -p $1
+#  	[ -e "$2" ] || ln -s "$1" "$2"
+#  	;;
+#  esac
+#}
+#mkdirlink 1 apple
+#mkdirlink 2 google
+#mkdirlink 3 facebook
+#mkdirlink 4 windows
+#mkdirlink 5 twitter
+#mkdirlink 6 emojione
+#mkdirlink 7 samsung
+#mkdirlink 0 common
 
-cat "$fullemojis" |
+cat "$emojis0" "$emojis1" |
 sed -e "s/^.*name='\([^']*\)'.*U+.*/name \1/" -e "t name" \
     -e "s/.*—.*/imgskip/" -e t \
     -e "s@^.*….*src='data:image/png;base64,\([^']*\)'.*@img0 \1@" -e t \
@@ -100,4 +167,4 @@ sed -e "s/^.*name='\([^']*\)'.*U+.*/name \1/" -e "t name" \
     -e d \
     -e ": name" \
     -e "s,_,-,g"
-) | sh
+) | $postproc
