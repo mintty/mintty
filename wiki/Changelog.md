@@ -19,6 +19,7 @@ Other
 Configuration
   * Option Bloom.
   * Option KeyFunctions can assign scrollback scrolling keys (~#894).
+  * Options dialog supports setting Emojis and EmojiPlacement.
 
 ### 3.0.2 (13 July 2019) ###
 

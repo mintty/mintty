@@ -1714,7 +1714,7 @@ about_handler(control *unused(ctrl), int event)
 
 
 static void
-add_file_resources(control *ctrl, wstring pattern)
+add_file_resources(control *ctrl, wstring pattern, bool dirs)
 {
   wstring suf = wcsrchr(pattern, L'.');
   int sufl = suf ? wcslen(suf) : 0;
@@ -1735,10 +1735,11 @@ add_file_resources(control *ctrl, wstring pattern)
     free(rcpat);
     if (ok) {
       while (ok) {
-        if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-          // skip
+        if (dirs && (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+          if (ffd.cFileName[0] != '.' && 0 != wcscmp(ffd.cFileName, W("common")))
+            dlg_listbox_add_w(ctrl, ffd.cFileName);
         }
-        else {
+        else if (!dirs) {
           //LARGE_INTEGER filesize = {.LowPart = ffd.nFileSizeLow, .HighPart = ffd.nFileSizeHigh};
           //long s = filesize.QuadPart;
 
@@ -1899,7 +1900,7 @@ lang_handler(control *ctrl, int event)
       dlg_listbox_add_w(ctrl, WINLOC);
       dlg_listbox_add_w(ctrl, LOCENV);
       dlg_listbox_add_w(ctrl, LOCALE);
-      add_file_resources(ctrl, W("lang/*.po"));
+      add_file_resources(ctrl, W("lang/*.po"), false);
       if (wcscmp(new_cfg.lang, W("")) == 0)
         dlg_editbox_set_w(ctrl, NONE);
       else if (wcscmp(new_cfg.lang, W("@")) == 0)
@@ -2028,7 +2029,7 @@ bellfile_handler(control *ctrl, int event)
   if (event == EVENT_REFRESH) {
     dlg_listbox_clear(ctrl);
     dlg_listbox_add_w(ctrl, NONE);
-    add_file_resources(ctrl, W("sounds/*.wav"));
+    add_file_resources(ctrl, W("sounds/*.wav"), false);
     // strip std dir prefix...
     dlg_editbox_set_w(ctrl, *bell_file ? bell_file : NONE);
   }
@@ -2164,7 +2165,7 @@ theme_handler(control *ctrl, int event)
   if (event == EVENT_REFRESH) {
     dlg_listbox_clear(ctrl);
     dlg_listbox_add_w(ctrl, NONE);
-    add_file_resources(ctrl, W("themes/*"));
+    add_file_resources(ctrl, W("themes/*"), false);
 #ifdef attempt_to_keep_scheme_hidden
     if (*new_cfg.colour_scheme)
       // don't do this, rather keep previously entered name to store scheme
@@ -2675,6 +2676,71 @@ modifier_handler(control *ctrl, int event)
   //printf(" -> %02X\n", *cp);
 }
 
+static void
+emojis_handler(control *ctrl, int event)
+{
+  //__ emojis style
+  const string NONE = _("◇ None ◇");  // ♢◇
+  string emojis = NONE;
+  for (opt_val * o = opt_vals[OPT_EMOJIS]; o->name; o++) {
+    if (new_cfg.emojis == o->val) {
+      emojis = o->name;
+      break;
+    }
+  }
+
+  if (event == EVENT_REFRESH) {
+    dlg_listbox_clear(ctrl);
+    dlg_listbox_add(ctrl, NONE);
+    add_file_resources(ctrl, W("emojis/*"), true);
+    // strip std dir prefix...
+    dlg_editbox_set(ctrl, *emojis ? emojis : NONE);
+  }
+  else if (event == EVENT_VALCHANGE || event == EVENT_SELCHANGE) {
+    if (dlg_listbox_getcur(ctrl) == 0)
+      new_cfg.emojis = 0;
+    else {
+      new_cfg.emojis = 0;
+      dlg_editbox_get(ctrl, &emojis);
+      for (opt_val * o = opt_vals[OPT_EMOJIS]; o->name; o++) {
+        if (!strcasecmp(emojis, o->name)) {
+          new_cfg.emojis = o->val;
+          break;
+        }
+      }
+    }
+  }
+}
+
+static void
+opt_handler(control *ctrl, int event, char * popt, opt_val * ovals)
+{
+  switch (event) {
+    when EVENT_REFRESH:
+      dlg_listbox_clear(ctrl);
+      while (ovals->name) {
+        dlg_listbox_add(ctrl, ovals->name);
+        if (*popt == ovals->val)
+          dlg_editbox_set(ctrl, ovals->name);
+        ovals++;
+      }
+    when EVENT_VALCHANGE or EVENT_SELCHANGE: {
+      int i = 0;
+      while (ovals->name) {
+        if (dlg_listbox_getcur(ctrl) == i++)
+          *popt = ovals->val;
+        ovals++;
+      }
+    }
+  }
+}
+
+static void
+emoji_placement_handler(control *ctrl, int event)
+{
+  opt_handler(ctrl, event, &new_cfg.emoji_placement, opt_vals[OPT_EMOJI_PLACEMENT]);
+}
+
 
 void
 setup_config_box(controlbox * b)
@@ -2816,7 +2882,7 @@ setup_config_box(controlbox * b)
   if (cfg.fontmenu == 0) {  // use built-in inline font menu
     ctrl_columns(s, 2, 70, 30);
     (font_list = ctrl_listbox(
-      s, null, 5, 100, font_handler, 0
+      s, null, 4, 100, font_handler, 0
     ))->column = 0;
     (font_weights = ctrl_listbox(
       //__ Options - Text:
@@ -2829,6 +2895,19 @@ setup_config_box(controlbox * b)
     )->column = 1;
     (font_sample = ctrl_pushbutton(s, null, apply_handler, 0
     ))->column = 0;
+
+    s = ctrl_new_set(b, _("Text"), null, 
+                     //__ Options - Text:
+                     _("Emojis"));
+    ctrl_columns(s, 2, 50, 50);
+    ctrl_combobox(
+      //__ Options - Text:
+      s, _("Style"), 100, emojis_handler, 0
+    )->column = 0;
+    ctrl_combobox(
+      //__ Options - Text:
+      s, _("Placement"), 100, emoji_placement_handler, 0
+    )->column = 1;
 
     s = ctrl_new_set(b, _("Text"), null, null);
     ctrl_columns(s, 2, 50, 50);
@@ -2847,6 +2926,16 @@ setup_config_box(controlbox * b)
     ctrl_fontsel(
       s, null, dlg_stdfontsel_handler, &new_cfg.font
     );
+
+    s = ctrl_new_set(b, _("Text"), null, _("Emojis"));
+    ctrl_columns(s, 2, 50, 50);
+    ctrl_combobox(
+      s, _("Style"), 100, emojis_handler, 0
+    )->column = 0;
+    ctrl_combobox(
+      //__ Options - Text:
+      s, _("Placement"), 100, emoji_placement_handler, 0
+    )->column = 1;
 
     s = ctrl_new_set(b, _("Text"), null, null);
     ctrl_columns(s, 2, 50, 50);
