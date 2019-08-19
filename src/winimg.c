@@ -400,6 +400,7 @@ winimg_paint(void)
       img = img->next;
     }
   }
+
   ReleaseDC(wnd, dc);
 }
 
@@ -519,8 +520,10 @@ win_emoji_show(int x, int y, wchar * efn, int elen, ushort lattr)
     }
   }
 
+  HDC dc = GetDC(wnd);
   GpGraphics * gr;
-  s = GdipCreateFromHDC(GetDC(wnd), &gr);
+  s = GdipCreateFromHDC(dc, &gr);
+
   gpcheck("hdc", s);
   s = GdipDrawImageRectI(gr, img, col, row, w, h);
   gpcheck("draw", s);
@@ -531,6 +534,9 @@ win_emoji_show(int x, int y, wchar * efn, int elen, ushort lattr)
   gpcheck("delete gr", s);
   s = GdipDisposeImage(img);
   gpcheck("dispose img", s);
+
+  ReleaseDC(wnd, dc);
+
   if (fs) {
     // Release stream resources, close file.
     fs->lpVtbl->Release(fs);
