@@ -23,14 +23,11 @@ static size_t const TEMPFILE_MAX_NUM = 16;
 static tempfile_t *
 tempfile_new(void)
 {
-  tempfile_t *tempfile;
-  FILE *fp;
-
-  fp = tmpfile();
+  FILE *fp = tmpfile();
   if (!fp)
     return NULL;
 
-  tempfile = malloc(sizeof(tempfile_t));
+  tempfile_t *tempfile = malloc(sizeof(tempfile_t));
   //printf("tempfile alloc %d -> %p\n", (int)sizeof(tempfile_t), tempfile);
   if (!tempfile)
     return NULL;
@@ -70,9 +67,8 @@ tempfile_deref(tempfile_t *tempfile)
 static size_t
 tempfile_size(tempfile_t *tempfile)
 {
-  fpos_t fsize = 0;
-
   fseek(tempfile->fp, 0L, SEEK_END);
+  fpos_t fsize = 0;
   fgetpos(tempfile->fp, &fsize);
 
   return (size_t)fsize;
@@ -81,15 +77,13 @@ tempfile_size(tempfile_t *tempfile)
 static tempfile_t *
 tempfile_get(void)
 {
-  size_t size;
-
   if (!tempfile_current) {
     tempfile_current = tempfile_new();
     return tempfile_current;
   }
 
   /* get file size */
-  size = tempfile_size(tempfile_current);
+  size_t size = tempfile_size(tempfile_current);
 
   /* if the file size reaches TEMPFILE_MAX_SIZE, return new temporary file */
   if (size > TEMPFILE_MAX_SIZE) {
@@ -106,10 +100,8 @@ tempfile_get(void)
 static bool
 tempfile_write(tempfile_t *tempfile, unsigned char *p, size_t pos, size_t size)
 {
-  size_t nbytes;
-
   fseek((FILE *)tempfile->fp, pos, SEEK_SET);
-  nbytes = fwrite(p, 1, size, tempfile->fp);
+  size_t nbytes = fwrite(p, 1, size, tempfile->fp);
   if (nbytes != size)
     return false;
 
@@ -119,11 +111,9 @@ tempfile_write(tempfile_t *tempfile, unsigned char *p, size_t pos, size_t size)
 static bool
 tempfile_read(tempfile_t *tempfile, unsigned char *p, size_t pos, size_t size)
 {
-  size_t nbytes;
-
   fflush((FILE *)tempfile->fp);
   fseek((FILE *)tempfile->fp, pos, SEEK_SET);
-  nbytes = fread(p, 1, size, (FILE *)tempfile->fp);
+  size_t nbytes = fread(p, 1, size, (FILE *)tempfile->fp);
   if (nbytes != size)
     return false;
 
@@ -135,14 +125,11 @@ tempfile_read(tempfile_t *tempfile, unsigned char *p, size_t pos, size_t size)
 static temp_strage_t *
 strage_create(void)
 {
-  temp_strage_t *strage;
-  tempfile_t *tempfile;
-
-  tempfile = tempfile_get();
+  tempfile_t *tempfile = tempfile_get();
   if (!tempfile)
     return NULL;
 
-  strage = malloc(sizeof(temp_strage_t));
+  temp_strage_t *strage = malloc(sizeof(temp_strage_t));
   //printf("strage alloc %d -> %p\n", (int)sizeof(temp_strage_t), strage);
   if (!strage)
     return NULL;
@@ -178,9 +165,7 @@ winimg_new(imglist **ppimg, unsigned char *pixels,
            int left, int top, int width, int height,
            int pixelwidth, int pixelheight)
 {
-  imglist *img;
-
-  img = (imglist *)malloc(sizeof(imglist));
+  imglist *img = (imglist *)malloc(sizeof(imglist));
   //printf("winimg alloc %d -> %p\n", (int)sizeof(imglist), img);
   if (!img)
     return false;
@@ -206,38 +191,42 @@ winimg_new(imglist **ppimg, unsigned char *pixels,
 void
 winimg_lazyinit(imglist *img)
 {
-  BITMAPINFO bmpinfo;
-  unsigned char *pixels;
-  HDC dc;
-  size_t size;
-
   if (img->hdc)
     return;
 
-  size = img->pixelwidth * img->pixelheight * 4;
+  HDC dc = GetDC(wnd);
+  if (!dc)
+    return;
 
-  dc = GetDC(wnd);
-
-  bmpinfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-  bmpinfo.bmiHeader.biWidth = img->pixelwidth;
-  bmpinfo.bmiHeader.biHeight = - img->pixelheight;
-  bmpinfo.bmiHeader.biPlanes = 1;
-  bmpinfo.bmiHeader.biBitCount = 32;
-  bmpinfo.bmiHeader.biCompression = BI_RGB;
-  bmpinfo.bmiHeader.biSizeImage = 0;
   img->hdc = CreateCompatibleDC(dc);
-  img->hbmp = CreateDIBSection(dc, &bmpinfo, DIB_RGB_COLORS, (void*)&pixels, NULL, 0);
-  /*HGDIOBJ res =*/ SelectObject(img->hdc, img->hbmp);
-  if (img->pixels) {
-    CopyMemory(pixels, img->pixels, size);
-    //printf("winimg_lazyinit free pixels %p\n", img->pixels); fflush(stdout);
-    free(img->pixels);
-  } else {
-    // resume from hibernation
-    assert(img->strage);
-    strage_read(img->strage, pixels, size);
+  if (img->hdc) {
+    BITMAPINFO bmpinfo;
+    unsigned char *pixels;
+
+    bmpinfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmpinfo.bmiHeader.biWidth = img->pixelwidth;
+    bmpinfo.bmiHeader.biHeight = - img->pixelheight;
+    bmpinfo.bmiHeader.biPlanes = 1;
+    bmpinfo.bmiHeader.biBitCount = 32;
+    bmpinfo.bmiHeader.biCompression = BI_RGB;
+    bmpinfo.bmiHeader.biSizeImage = 0;
+    img->hbmp = CreateDIBSection(dc, &bmpinfo, DIB_RGB_COLORS, (void*)&pixels, NULL, 0);
+    if (img->hbmp) {
+      /*HGDIOBJ res =*/
+      SelectObject(img->hdc, img->hbmp);
+      size_t size = img->pixelwidth * img->pixelheight * 4;
+      if (img->pixels) {
+        CopyMemory(pixels, img->pixels, size);
+        //printf("winimg_lazyinit free pixels %p\n", img->pixels); fflush(stdout);
+        free(img->pixels);
+      } else {
+        // resume from hibernation
+        assert(img->strage);
+        strage_read(img->strage, pixels, size);
+      }
+      img->pixels = pixels;
+    }
   }
-  img->pixels = pixels;
 
   ReleaseDC(wnd, dc);
 }
@@ -246,15 +235,12 @@ winimg_lazyinit(imglist *img)
 static void
 winimg_hibernate(imglist *img)
 {
-  size_t size;
-  temp_strage_t *strage;
-
-  size = img->pixelwidth * img->pixelheight * 4;
+  size_t size = img->pixelwidth * img->pixelheight * 4;
 
   if (!img->hdc)
     return;
 
-  strage = strage_create();
+  temp_strage_t *strage = strage_create();
   if (!strage)
     return;
 
@@ -292,13 +278,13 @@ winimg_destroy(imglist *img)
 void
 winimgs_clear(void)
 {
-  imglist *img, *prev;
-
   // clear parser state
   sixel_parser_deinit(term.imgs.parser_state);
   //printf("winimgs_clear free state %p\n", term.imgs.parser_state);
   free(term.imgs.parser_state);
   term.imgs.parser_state = NULL;
+
+  imglist *img, *prev;
 
   // clear images in current screen
   for (img = term.imgs.first; img; ) {
@@ -325,12 +311,6 @@ winimg_paint(void)
 {
   imglist *img;
   imglist *prev = NULL;
-  int left, top;
-  int x, y;
-  termchar *dchar;
-  bool update_flag;
-  HDC dc;
-  RECT rc;
 
   /* free disk space if number of tempfile exceeds TEMPFILE_MAX_NUM */
   while (tempfile_num > TEMPFILE_MAX_NUM && term.imgs.first) {
@@ -339,8 +319,9 @@ winimg_paint(void)
     winimg_destroy(img);
   }
 
-  dc = GetDC(wnd);
+  HDC dc = GetDC(wnd);
 
+  RECT rc;
   GetClientRect(wnd, &rc);
   IntersectClipRect(dc, rc.left + PADDING, rc.top + PADDING,
                     rc.left + PADDING + term.cols * cell_width,
@@ -359,21 +340,21 @@ winimg_paint(void)
       winimg_destroy(prev);
     } else {
       // if the image is scrolled out, serialize it into a temp file.
-      left = img->left;
-      top = img->top - term.virtuallines - term.disptop;
+      int left = img->left;
+      int top = img->top - term.virtuallines - term.disptop;
       if (top + img->height < 0 || top > term.rows) {
         winimg_hibernate(img);
       } else {
         // create DC handle if it is not initialized, or resume from hibernate
         winimg_lazyinit(img);
-        for (y = max(0, top); y < min(top + img->height, term.rows); ++y) {
+        for (int y = max(0, top); y < min(top + img->height, term.rows); ++y) {
           int wide_factor = (term.displines[y]->lattr & LATTR_MODE) == LATTR_NORM ? 1: 2;
-          for (x = left; x < min(left + img->width, term.cols); ++x) {
-            dchar = &term.displines[y]->chars[x];
+          for (int x = left; x < min(left + img->width, term.cols); ++x) {
+            termchar *dchar = &term.displines[y]->chars[x];
 
             // if sixel image is overwirtten by characters,
             // exclude the area from the clipping rect.
-            update_flag = false;
+            bool update_flag = false;
             if (dchar->chr != SIXELCH)
               update_flag = true;
             if (dchar->attr.attr & (TATTR_RESULT | TATTR_CURRESULT | TATTR_MARKED | TATTR_CURMARKED))
