@@ -11,6 +11,6 @@ extern void winimg_lazyinit(imglist *img);
 extern void winimg_paint(void);
 extern void winimgs_clear(void);
 
-extern void win_emoji_show(int x, int y, wchar * efn, int elen, ushort lattr);
+extern void win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int elen, ushort lattr);
 
 #endif

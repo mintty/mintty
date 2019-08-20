@@ -429,8 +429,12 @@ gpcheck(char * tag, GpStatus s)
 #define gpcheck(tag, s)	(void)s
 #endif
 
+#include <fcntl.h>
+#include "charset.h"  // path_win_w_to_posix
+static IStream * (WINAPI * pSHCreateMemStream)(void *, UINT) = 0;
+
 void
-win_emoji_show(int x, int y, wchar * efn, int elen, ushort lattr)
+win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int elen, ushort lattr)
 {
   GpStatus s;
 
@@ -439,13 +443,42 @@ win_emoji_show(int x, int y, wchar * efn, int elen, ushort lattr)
   if (!gis) {
     s = GdiplusStartup(&gis, &gi, NULL);
     gpcheck("startup", s);
+
+    HMODULE shc = GetModuleHandleA("shlwapi");
+    pSHCreateMemStream = (void *)GetProcAddress(shc, "SHCreateMemStream");
   }
 
   bool use_stream = true;
   IStream * fs = 0;
-  if (use_stream) {
+  if (*bufpoi && pSHCreateMemStream) {  // use cached image data
+    fs = pSHCreateMemStream(*bufpoi, *buflen);
+    s = fs ? Ok : NotImplemented;
+  }
+  else if (use_stream) {
     s = GdipCreateStreamOnFile(efn, 0 /* FileMode.Open */, &fs);
     gpcheck("stream", s);
+    if (s && pSHCreateMemStream) {
+      char * fn = path_win_w_to_posix(efn);
+      int f = open(fn, O_BINARY | O_RDONLY);
+      free(fn);
+      if (f) {
+        struct stat stat;
+        if (0 == fstat(f, &stat)) {
+          char * img = newn(char, stat.st_size);
+          int len;
+          char * p = img;
+          while ((len = read(f, p, stat.st_size - (p - img))) > 0) {
+            p += len;
+          }
+          *bufpoi = img;
+          *buflen = p - img;
+          fs = pSHCreateMemStream(img, p - img);
+          if (fs)
+            s = Ok;
+        }
+        close(f);
+      }
+    }
   }
   else
     s = NotImplemented;
@@ -526,7 +559,8 @@ win_emoji_show(int x, int y, wchar * efn, int elen, ushort lattr)
 
 #else
 
-void win_emoji_show(int x, int y, wchar * efn, int elen, ushort lattr)
+void
+win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int elen, ushort lattr)
 {
   (void)x; (void)y; (void)efn; (void)elen; (void)lattr;
 }

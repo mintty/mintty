@@ -1372,7 +1372,9 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
 #define EM_base 16
 
 struct emoji_base {
-  void * res;  // filename (char*/wchar*) or cached image
+  wchar * res;  // image filename
+  void * buf;  // cached image
+  int buflen;  // cached image
   struct {
     uint tags: 11;
     xchar ch: 21;
@@ -1426,7 +1428,9 @@ emoji_tags(int i)
 #endif
 
 struct emoji_seq {
-  void * res;   // filename (char*/wchar*) or cached image
+  wchar * res;  // image filename
+  void * buf;   // cached image
+  int buflen;   // cached image
   echar chs[8]; // code points
   char * name;  // short name in emoji-sequences.txt, emoji-zwj-sequences.txt
 };
@@ -1772,17 +1776,23 @@ emoji_show(int x, int y, struct emoji e, int elen, cattr eattr, ushort lattr)
 {
   (void)eattr;
   wchar * efn;
+  void * * bufpoi;
+  int * buflen;
   if (e.seq) {
     efn = emoji_seqs[e.idx].res;
+    bufpoi = &emoji_seqs[e.idx].buf;
+    buflen = &emoji_seqs[e.idx].buflen;
   }
   else {
     efn = emoji_bases[e.idx].res;
+    bufpoi = &emoji_bases[e.idx].buf;
+    buflen = &emoji_bases[e.idx].buflen;
   }
 #ifdef debug_emojis
   printf("emoji_show @%d:%d..%d seq %d idx %d <%ls>\n", y, x, elen, e.seq, e.idx, efn);
 #endif
   if (efn && *efn)
-    win_emoji_show(x, y, efn, elen, lattr);
+    win_emoji_show(x, y, efn, bufpoi, buflen, elen, lattr);
 }
 
 #define dont_debug_win_text_invocation
