@@ -1372,7 +1372,7 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
 #define EM_base 16
 
 struct emoji_base {
-  wchar * res;  // image filename
+  wchar * efn;  // image filename
   void * buf;  // cached image
   int buflen;  // cached image
   struct {
@@ -1428,7 +1428,7 @@ emoji_tags(int i)
 #endif
 
 struct emoji_seq {
-  wchar * res;  // image filename
+  wchar * efn;  // image filename
   void * buf;   // cached image
   int buflen;   // cached image
   echar chs[8]; // code points
@@ -1447,6 +1447,33 @@ struct emoji {
 } __attribute__((packed));
 
 #define dont_debug_emojis 1
+
+void
+clear_emoji_data()
+{
+  for (uint i = 0; i < lengthof(emoji_bases); i++) {
+    if (emoji_bases[i].efn) {
+      free(emoji_bases[i].efn);
+      emoji_bases[i].efn = 0;
+    }
+    if (emoji_bases[i].buf) {
+      free(emoji_bases[i].buf);
+      emoji_bases[i].buf = 0;
+      emoji_bases[i].buflen = 0;
+    }
+  }
+  for (uint i = 0; i < lengthof(emoji_seqs); i++) {
+    if (emoji_seqs[i].efn) {
+      free(emoji_seqs[i].efn);
+      emoji_seqs[i].efn = 0;
+    }
+    if (emoji_seqs[i].buf) {
+      free(emoji_seqs[i].buf);
+      emoji_seqs[i].buf = 0;
+      emoji_seqs[i].buflen = 0;
+    }
+  }
+}
 
 /*
    Get emoji sequence "short name".
@@ -1482,10 +1509,10 @@ check_emoji(struct emoji e)
 {
   wchar * * efnpoi;
   if (e.seq) {
-    efnpoi = (wchar * *)&emoji_seqs[e.idx].res;
+    efnpoi = (wchar * *)&emoji_seqs[e.idx].efn;
   }
   else {
-    efnpoi = (wchar * *)&emoji_bases[e.idx].res;
+    efnpoi = (wchar * *)&emoji_bases[e.idx].efn;
   }
   if (*efnpoi) { // emoji resource was checked before
     return **efnpoi;  // ... successfully?
@@ -1572,7 +1599,7 @@ fallback:;
       goto fallback;
     }
 
-    * efnpoi = W("");  // indicate "checked but not found"
+    * efnpoi = wcsdup(W(""));  // indicate "checked but not found"
     return false;
   }
 }
@@ -1779,12 +1806,12 @@ emoji_show(int x, int y, struct emoji e, int elen, cattr eattr, ushort lattr)
   void * * bufpoi;
   int * buflen;
   if (e.seq) {
-    efn = emoji_seqs[e.idx].res;
+    efn = emoji_seqs[e.idx].efn;
     bufpoi = &emoji_seqs[e.idx].buf;
     buflen = &emoji_seqs[e.idx].buflen;
   }
   else {
-    efn = emoji_bases[e.idx].res;
+    efn = emoji_bases[e.idx].efn;
     bufpoi = &emoji_bases[e.idx].buf;
     buflen = &emoji_bases[e.idx].buflen;
   }

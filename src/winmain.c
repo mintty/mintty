@@ -2048,6 +2048,8 @@ win_reconfig(void)
     new_cfg.bold_as_colour != cfg.bold_as_colour ||
     new_cfg.font_smoothing != cfg.font_smoothing;
 
+  bool emojistyle_changed = new_cfg.emojis != cfg.emojis;
+
   if (new_cfg.fg_colour != cfg.fg_colour)
     win_set_colour(FG_COLOUR_I, new_cfg.fg_colour);
 
@@ -2059,6 +2061,11 @@ win_reconfig(void)
 
   /* Copy the new config and refresh everything */
   copy_config("win_reconfig", &cfg, &new_cfg);
+
+  if (emojistyle_changed) {
+    clear_emoji_data();
+    win_invalidate_all(false);
+  }
 
   font_cs_reconfig(font_changed);
 }
@@ -4440,7 +4447,7 @@ main(int argc, char *argv[])
       char buf[1024];
       int len;
       bool res = true;
-      while ((len = read(t, buf, sizeof buf)) >= 0)
+      while ((len = read(t, buf, sizeof buf)) > 0)
         if (write(t, buf, len) < 0) {
           res = false;
           break;

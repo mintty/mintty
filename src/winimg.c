@@ -562,7 +562,9 @@ win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int ele
 void
 win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int elen, ushort lattr)
 {
-  (void)x; (void)y; (void)efn; (void)elen; (void)lattr;
+  (void)x; (void)y;
+  (void)efn; (void)bufpoi; (void)buflen;
+  (void)elen; (void)lattr;
 }
 
 #endif

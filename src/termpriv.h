@@ -41,6 +41,7 @@ term_selecting(void)
 
 extern void term_update_cs(void);
 
+extern void clear_emoji_data(void);
 extern char * get_emoji_description(termchar *);
 
 extern int termchars_equal(termchar * a, termchar * b);
