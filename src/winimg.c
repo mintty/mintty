@@ -20,6 +20,11 @@ static size_t tempfile_num = 0;
 static size_t const TEMPFILE_MAX_SIZE = 1024 * 1024 * 16;  /* 16MB */
 static size_t const TEMPFILE_MAX_NUM = 16;
 
+// protection limit against exhaustion of resources (Windows handles)
+// if we'd create ~10000 "CompatibleDCs", handle handling will fail...
+static int cdc = 999;
+
+
 static tempfile_t *
 tempfile_new(void)
 {
@@ -198,6 +203,10 @@ winimg_lazyinit(imglist *img)
   if (!dc)
     return;
 
+  if (!cdc)
+    return;
+  cdc--;
+
   img->hdc = CreateCompatibleDC(dc);
   if (img->hdc) {
     BITMAPINFO bmpinfo;
@@ -250,6 +259,7 @@ winimg_hibernate(imglist *img)
   }
 
   // delete allocated DIB section.
+  cdc++;
   DeleteDC(img->hdc);
   DeleteObject(img->hbmp);
   img->pixels = NULL;
@@ -263,6 +273,7 @@ void
 winimg_destroy(imglist *img)
 {
   if (img->hdc) {
+    cdc++;
     DeleteDC(img->hdc);
     DeleteObject(img->hbmp);
   } else if (img->pixels) {
