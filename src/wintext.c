@@ -4148,7 +4148,7 @@ win_set_colour(colour_i i, colour c)
       cc(i, cfg.bg_colour);
     else if (i == CURSOR_COLOUR_I) {
       cc(i, cfg.cursor_colour);
-      cc(IME_CURSOR_COLOUR_I, cfg.cursor_colour);
+      cc(IME_CURSOR_COLOUR_I, cfg.ime_cursor_colour);
     }
     else if (i == SEL_COLOUR_I)
       cc(i, cfg.sel_bg_colour);
@@ -4192,7 +4192,28 @@ win_set_colour(colour_i i, colour c)
         // Set the colour of text under the cursor to whichever of foreground
         // and background colour is further away from the cursor colour.
         colour fg = colours[FG_COLOUR_I], bg = colours[BG_COLOUR_I];
-        cc(CURSOR_TEXT_COLOUR_I, colour_dist(c, fg) > colour_dist(c, bg) ? fg : bg);
+        colour _cc = colour_dist(c, fg) > colour_dist(c, bg) ? fg : bg;
+        cc(CURSOR_TEXT_COLOUR_I, _cc);
+        if (cfg.ime_cursor_colour != DEFAULT_COLOUR) {
+          // effective IME cursor colour : configured IME cursor colour
+          // = effective cursor colour : configured cursor colour
+          // resp.
+          // effective IME cursor colour : effective cursor colour
+          // = configured IME cursor colour : configured cursor colour
+          uint r = (uint)red(_cc) * (uint)red(cfg.ime_cursor_colour);
+          if (red(cfg.cursor_colour))
+            r /= red(cfg.cursor_colour);
+          r = max(r, 255);
+          uint g = (uint)green(_cc) * (uint)green(cfg.ime_cursor_colour);
+          if (green(cfg.cursor_colour))
+            g /= green(cfg.cursor_colour);
+          g = max(r, 255);
+          uint b = (uint)blue(_cc) * (uint)blue(cfg.ime_cursor_colour);
+          if (blue(cfg.cursor_colour))
+            b /= blue(cfg.cursor_colour);
+          b = max(r, 255);
+          c = RGB(r, g, b);
+        }
         cc(IME_CURSOR_COLOUR_I, c);
       }
       otherwise:
