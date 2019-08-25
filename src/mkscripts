@@ -1,12 +1,23 @@
 #! /bin/sh -f
 
-skipcheck=true
+skipcheck=false
 
 if $skipcheck || make Scripts.txt >&2
 then	true
 else	echo Could not acquire Unicode data file Scripts.txt >&2
 	exit 1
 fi
+if $skipcheck || make Blocks.txt >&2
+then	true
+else	echo Could not acquire Unicode data file Blocks.txt >&2
+	exit 1
+fi
+
+getranges () {
+	egrep '^[^#]' Scripts.txt
+	egrep "(Arrows|Mathematical Operators|Technical|Enclosed Alphanumerics|Pictographs|Control Pictures|Optical|Box Drawing|Miscellaneous.*Symbols|Block Elements|Geometric Shapes|Dingbats|Tiles|Cards|Emoticons|Transport|Alchemical|Chess)" Blocks.txt |
+	sed -e "s,;.*, ; PictoSymbols,"
+}
 
 CC=${CC-cc}
 
@@ -18,7 +29,6 @@ cat <</eoc
 long range_low;
 long range_high = -2;
 char * range_name = "";
-char * range_category = "";
 
 void
 flush ()
@@ -29,11 +39,10 @@ flush ()
 }
 
 void
-range (low, high, name, category)
+range (low, high, name)
 	long low;
 	long high;
 	char * name;
-	char * category;
 {
 	if (strcmp (name, "Common") == 0) {
 		// ignore
@@ -44,7 +53,6 @@ range (low, high, name, category)
 		range_low = low;
 		range_high = high;
 		range_name = name;
-		range_category = category;
 	}
 }
 
@@ -54,13 +62,13 @@ main () {
 
 
 # transform
-#00F8..01BA    ; LATIN # L& [195] LATIN SMALL LETTER O WITH STROKE..LATIN SMALL LETTER EZH WITH TAIL
-#01BB          ; LATIN # Lo       LATIN LETTER TWO WITH STROKE
+#00F8..01BA    ; Latin # L& [195] LATIN SMALL LETTER O WITH STROKE..LATIN SMALL LETTER EZH WITH TAIL
+#01BB          ; Latin # Lo       LATIN LETTER TWO WITH STROKE
 
-LC_ALL=C egrep '^[^#]' Scripts.txt |
+LC_ALL=C getranges |
 sed	-e '/^#/ d' \
-	-e 's/^\([0-9A-F][0-9A-F]*\)\.\.\([0-9A-F][0-9A-F]*\) *; *\([^ ]*\) *# *\([^ ]*\).*/\1	{0x\1, 0x\2, "\3", "\4"},/' \
-	-e 's/^\([0-9A-F][0-9A-F]*\) *; *\([^ ]*\) *# *\([^ ]*\).*/\1	{0x\1, 0x\1, "\2", "\3"},/' \
+	-e 's/^\([0-9A-F][0-9A-F]*\)\.\.\([0-9A-F][0-9A-F]*\) *; *\([^ #]*\).*/\1	{0x\1, 0x\2, "\3"},/' \
+	-e 's/^\([0-9A-F][0-9A-F]*\) *; *\([^ #]*\).*/\1	{0x\1, 0x\1, "\2"},/' \
 	-e 's,^\(....\)	,00\1	,' \
 	-e 's,^\(.....\)	,0\1	,' \
 | sort | sed -e 's,^.*	,	,' -e 's,_, ,g' |
@@ -72,10 +80,10 @@ cat <</eoc
 	return 0;
 }
 /eoc
-) > mkscripts.c
+) > mkscripts.tc
 
-if $CC -o mkscripts.exe mkscripts.c
+if $CC -o mkscripts.exe -x c mkscripts.tc
 then	./mkscripts.exe > scripts.t
-	rm -f mkscripts.c mkscripts.exe
+	rm -f mkscripts.tc mkscripts.exe
 else	exit 1
 fi

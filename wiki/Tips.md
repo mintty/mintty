@@ -697,6 +697,15 @@ Font8=FangSong
 Font9=MingLiU
 ```
 
+A special name is `PictoSymbols` to assign an alternative font to 
+ranges of pictographic symbols, including arrows, mathematical and technical 
+symbols, shapes, dingbats, emoticons etc.
+Configuration example:
+```
+FontChoice=PictoSymbols:2
+Font2=DejaVu Sans Mono
+```
+
 
 ## Character width ##
 

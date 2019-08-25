@@ -1090,6 +1090,12 @@ Script names are as specified in the Unicode file Scripts.txt, listed
 in \fIhttps://en.wikipedia.org/wiki/Script_(Unicode)\fP column "Alias".
 (The definition list can be split over multiple lines if a separator is 
 followed by a backslash, newline, and optional whitespace indentation.)
+A special name is \fBPictoSymbols\fP to assign an alternative font to 
+ranges of pictographic symbols from Unicode blocks matching 
+Arrows, Mathematical Operators, Technical, Enclosed Alphanumerics, 
+Pictographs, Control Pictures, Optical, Box Drawing, Miscellaneous.*Symbols, 
+Block Elements, Geometric Shapes, Dingbats, Tiles, Cards, Emoticons, 
+Transport, Alchemical, Chess.
 .br
 Example:
 .br
@@ -1102,6 +1108,10 @@ Example:
   \fBFont8=FangSong\fP
 .br
   \fBFont9=MingLiU\fP
+.br
+  \fBFontChoice=PictoSymbols:2\fP
+.br
+  \fBFont2=DejaVu Sans Mono\fP
 
 \(en \fBFont sample text\fP (FontSample=):
 This hidden setting overrides the text for the "Sample" box in the Font chooser dialog.
@@ -1380,7 +1390,7 @@ allowed to detect a Ctrl+Menu sequence as AltGr.
 \fBOld method of AltGr detection\fP (OldAltGrDetection=no)
 Setting this hidden option would disable a workaround for an 
 incompatibility in the Windows on-screen keyboard, 
-just in case is has any side effects.
+just in case it has any side effects.
 
 .TP
 \fBSupport injection of external hotkeys\fP (SupportExternalHotkeys=2)
