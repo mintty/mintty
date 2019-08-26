@@ -938,7 +938,7 @@ win_zoom_font(int zoom, bool sync_size_with_font)
 
 static HDC dc;
 static enum { UPDATE_IDLE, UPDATE_BLOCKED, UPDATE_PENDING } update_state;
-static bool ime_open;
+static bool ime_open = false;
 
 static int update_skipped = 0;
 int lines_scrolled = 0;
@@ -4146,8 +4146,10 @@ win_set_colour(colour_i i, colour c)
       cc(i, cfg.fg_colour);
     else if (i == BG_COLOUR_I)
       cc(i, cfg.bg_colour);
-    else if (i == CURSOR_COLOUR_I)
+    else if (i == CURSOR_COLOUR_I) {
       cc(i, cfg.cursor_colour);
+      cc(IME_CURSOR_COLOUR_I, cfg.cursor_colour);
+    }
     else if (i == SEL_COLOUR_I)
       cc(i, cfg.sel_bg_colour);
     else if (i == SEL_TEXT_COLOUR_I)
