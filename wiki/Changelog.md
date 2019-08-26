@@ -1,11 +1,14 @@
 Terminal features
+  * Mouse buttons 4 and 5 send the same escape sequences as xterm.
   * DECAUPSS to assign user-preferred supplemental sets to DECSUPP.
   * Ignore SOS string (ESC X ...), in addition to PM and APC (xterm).
   * Fixed iconified window report which was reverted (#893).
   * Prevent negative CSI 13 t response parameters (#899).
+  * Fixed interaction of OSC 12/112 "Set/Reset cursor colour" with IME (#903).
 
 Font rendering
   * Reimplement auto-narrowing (too wide glyphs) by coordinate scaling (#892).
+  * Support alternative font choice for symbols and pictographs (#892).
   * Bloom effect around characters of old CRT terminals, rough simulation.
 
 Window handling
@@ -13,13 +16,19 @@ Window handling
   * User-definable functions for scrollback scrolling (~#894).
 
 Other
+  * Cache emoji image data (speedup emoji display).
   * Dropped PATH dependency of printer feature (#897).
   * Dropped float: left from copied HTML style (#900).
+  * Fixed Windows handle resource leak when displaying many emojis (mintty/wsltty#185).
+  * Fixed potential crash on sixel display after resource leak.
+  * Preventing Windows handle resource exhaustion when displaying many sixel images.
 
 Configuration
   * Option Bloom.
   * Option KeyFunctions can assign scrollback scrolling keys (~#894).
   * Options dialog supports setting Emojis and EmojiPlacement.
+  * Options dialog: additional "Selection" panel with additional settings.
+  * Option OldOptions to customize changed areas in Options dialog.
 
 ### 3.0.2 (13 July 2019) ###
 
