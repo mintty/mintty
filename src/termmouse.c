@@ -299,13 +299,22 @@ send_mouse_event(mouse_action a, mouse_button b, mod_keys mods, pos p)
 
   uint x = p.x + 1, y = p.y + 1;
 
-  switch (b) {
-    when MBT_4:
-      b = MBT_LEFT; mods |= MDK_ALT;
-    when MBT_5:
-      b = MBT_RIGHT; mods |= MDK_ALT;
-    otherwise:;
-  }
+  if (cfg.old_xbuttons)
+    switch (b) {
+      when MBT_4:
+        b = MBT_LEFT; mods |= MDK_ALT;
+      when MBT_5:
+        b = MBT_RIGHT; mods |= MDK_ALT;
+      otherwise:;
+    }
+  else
+    switch (b) {
+      when MBT_4:
+        b = 129;
+      when MBT_5:
+        b = 130;
+      otherwise:;
+    }
 
   uint code = b ? b - 1 : 0x3;
 

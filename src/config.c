@@ -225,6 +225,7 @@ const config default_cfg = {
   .sixel_clip_char = W(" "),
   .baud = 0,
   .bloom = 0,
+  .old_xbuttons = false,
   .old_options = ""
 };
 
@@ -454,6 +455,7 @@ options[] = {
   {"HoverTitle", OPT_BOOL, offcfg(hover_title)},
   {"Baud", OPT_INT, offcfg(baud)},
   {"Bloom", OPT_INT, offcfg(bloom)},
+  {"OldXButtons", OPT_BOOL, offcfg(old_xbuttons)},
   {"OldOptions", OPT_STRING, offcfg(old_options)},
 
   // ANSI colours
