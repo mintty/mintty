@@ -166,7 +166,7 @@ mtime(void)
 
 
 #ifdef debug_resize
-#define SetWindowPos(wnd, after, x, y, cx, cy, flags)	{printf("SWP[%s] %ld %ld\n", __FUNCTION__, (long int)cx, (long int)cy); Set##WindowPos(wnd, after, x, y, cx, cy, flags);}
+#define SetWindowPos(wnd, after, x, y, cx, cy, flags)	printf("SWP[%s] %ld %ld\n", __FUNCTION__, (long int)cx, (long int)cy), Set##WindowPos(wnd, after, x, y, cx, cy, flags)
 static void
 trace_winsize(char * tag)
 {
@@ -1303,19 +1303,25 @@ win_has_scrollbar(void)
 void
 win_get_pixels(int *height_p, int *width_p, bool with_borders)
 {
+  trace_winsize("win_get_pixels");
   RECT r;
-  GetWindowRect(wnd, &r);
   //printf("win_get_pixels: width %d win_has_scrollbar %d\n", r.right - r.left, win_has_scrollbar());
   if (with_borders) {
+    GetWindowRect(wnd, &r);
     *height_p = r.bottom - r.top;
     *width_p = r.right - r.left;
   }
   else {
+    GetClientRect(wnd, &r);
     int sy = win_search_visible() ? SEARCHBAR_HEIGHT : 0;
-    *height_p = r.bottom - r.top - extra_height - 2 * PADDING - sy;
-    *width_p = r.right - r.left - extra_width - 2 * PADDING
-             //- (cfg.scrollbar ? GetSystemMetrics(SM_CXVSCROLL) : 0);
-             - (win_has_scrollbar() ? GetSystemMetrics(SM_CXVSCROLL) : 0);
+    *height_p = r.bottom - r.top - 2 * PADDING - sy
+              //- extra_height
+              ;
+    *width_p = r.right - r.left - 2 * PADDING
+             //- extra_width
+             //- (cfg.scrollbar ? GetSystemMetrics(SM_CXVSCROLL) : 0)
+             //- (win_has_scrollbar() ? GetSystemMetrics(SM_CXVSCROLL) : 0)
+             ;
   }
 }
 

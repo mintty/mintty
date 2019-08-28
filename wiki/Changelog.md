@@ -5,6 +5,7 @@ Terminal features
   * Fixed iconified window report which was reverted (#893).
   * Prevent negative CSI 13 t response parameters (#899).
   * Fixed interaction of OSC 12/112 "Set/Reset cursor colour" with IME (#903).
+  * Fixed text area size reported in response to CSI 14 t (#899).
 
 Font rendering
   * Reimplement auto-narrowing (too wide glyphs) by coordinate scaling (#892).
