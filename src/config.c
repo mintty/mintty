@@ -3268,7 +3268,7 @@ setup_config_box(controlbox * b)
       s, _("Copy as &rich text"),
       dlg_stdcheckbox_handler, &new_cfg.copy_as_rtf
     )->column = 0;
-  #ifndef copy_as_html_single_line
+#ifndef copy_as_html_single_line
     ctrl_radiobuttons(
       //__ Options - Selection:
       s, _("Copy as &HTML"), 2,
@@ -3294,6 +3294,7 @@ setup_config_box(controlbox * b)
     );
 #endif
 
+    ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
     ctrl_columns(s, 2, 50, 50);
     ctrl_checkbox(
       //__ Options - Selection:
