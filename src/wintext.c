@@ -15,6 +15,8 @@
 
 #define dont_debug_bold 1
 
+#define dont_narrow_via_font
+
 enum {
   FONT_NORMAL    = 0x00,
   FONT_BOLD      = 0x01,
@@ -27,9 +29,14 @@ enum {
   FONT_ZOOMFULL  = 0x20,
   FONT_ZOOMSMALL = 0x40,
   FONT_WIDE      = 0x80,
-  //FONT_NARROW    = 0x100,
-  FONT_NARROW    = 0,	// disabled narrowing via font
+#ifdef narrow_via_font
+#warning narrowing via font is deprecated
+  FONT_NARROW    = 0x100,
   FONT_MAXNO     = FONT_WIDE + FONT_NARROW
+#else
+  FONT_NARROW    = 0,	// disabled narrowing via font
+  FONT_MAXNO     = 2 * FONT_WIDE
+#endif
 };
 
 enum {LDRAW_CHAR_NUM = 31, LDRAW_CHAR_TRIES = 4};
