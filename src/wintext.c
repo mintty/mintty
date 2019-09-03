@@ -2745,7 +2745,11 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     nfont |= FONT_WIDE;
   }
   else if (attr.attr & ATTR_NARROW) {
-    wscale = 50;
+    wscale = cfg.char_narrowing;
+    if (wscale > 100)
+      wscale = 100;
+    if (wscale < 50)
+      wscale = 50;
     nfont |= FONT_NARROW;
   }
 

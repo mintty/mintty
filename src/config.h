@@ -171,6 +171,7 @@ typedef struct {
   int suspbuf_max;
   bool trim_selection;
   char charwidth;
+  int char_narrowing;
   char emojis;
   char emoji_placement;
   wstring app_id;

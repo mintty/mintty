@@ -10,6 +10,7 @@ Terminal features
 Font rendering
   * Reimplement auto-narrowing (too wide glyphs) by coordinate scaling (#892).
   * Support alternative font choice for symbols and pictographs (#892).
+  * Option to adjust automatic character narrowing (#892).
   * Bloom effect around characters of old CRT terminals, rough simulation.
 
 Window handling
@@ -27,6 +28,7 @@ Other
 Configuration
   * Option Bloom.
   * Option KeyFunctions can assign scrollback scrolling keys (~#894).
+  * Option CharNarrowing (#892).
   * Options dialog supports setting Emojis and EmojiPlacement.
   * Options dialog: additional "Selection" panel with additional settings.
   * Option OldOptions to customize changed areas in Options dialog.

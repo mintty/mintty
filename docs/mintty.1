@@ -2098,6 +2098,16 @@ inconsistent for the impacted characters, which may confuse
 screen applications (such as editors) that rely on \fBwcwidth\fP information.
 
 .TP
+\fBCharacter narrowing factor\fP (CharNarrowing=70)
+Depending on the font and font fallback (either by Windows means or 
+via option \fBFontChoice\fP), some glyphs may be too wide for the 
+character cell grid. Mintty applies automatic narrowing heuristics 
+to fit such glyphs into a character cell so they do not overlap 
+subsequent characters.
+With this setting, the horizontal scaling for narrowed characters can 
+be adjusted between 50% and 100%.
+
+.TP
 \fBBidirectional rendering\fP (Bidi=2)
 With this option, bidi rendering support can be disabled conditionally 
 or completely. Note that this can also be changed by an escape sequence.
