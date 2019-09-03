@@ -17,6 +17,8 @@ Font rendering
 Window handling
   * Flexible configuration of scroll modifiers (~#894).
   * User-definable functions for scrollback scrolling (~#894).
+  * Fixed sixel image list handling (#905).
+  * Optimized sixel image rendering if overlapped (#905).
 
 Other
   * Cache emoji image data (speedup emoji display).
