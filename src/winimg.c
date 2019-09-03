@@ -371,6 +371,7 @@ winimg_paint(void)
       } else {
         // create DC handle if it is not initialized, or resume from hibernate
         winimg_lazyinit(img);
+        bool keep_flag = false;
         for (int y = max(0, top); y < min(top + img->height, term.rows); ++y) {
           int wide_factor = (term.displines[y]->lattr & LATTR_MODE) == LATTR_NORM ? 1: 2;
           for (int x = left; x < min(left + img->width, term.cols); ++x) {
@@ -381,6 +382,8 @@ winimg_paint(void)
             bool clip_flag = false;
             if (dchar->chr != SIXELCH)
               clip_flag = true;
+            else if (dchar->attr.attr == (ulong)img)
+              keep_flag = true;
             if (dchar->attr.attr & (TATTR_RESULT | TATTR_CURRESULT | TATTR_MARKED | TATTR_CURMARKED))
               clip_flag = true;
             if (term.selected && !clip_flag) {
@@ -400,9 +403,17 @@ winimg_paint(void)
 #ifdef debug_sixel_list
         printf("display img\n");
 #endif
-        StretchBlt(dc, left * cell_width + PADDING, top * cell_height + PADDING,
-                   img->width * cell_width, img->height * cell_height, img->hdc,
-                   0, 0, img->pixelwidth, img->pixelheight, SRCCOPY);
+        if (keep_flag)
+          StretchBlt(dc, left * cell_width + PADDING, top * cell_height + PADDING,
+                     img->width * cell_width, img->height * cell_height, img->hdc,
+                     0, 0, img->pixelwidth, img->pixelheight, SRCCOPY);
+        else {
+          //destroy and remove
+#ifdef debug_sixel_list
+          printf("destroy overlapped\n");
+#endif
+          distrimg = img;
+        }
       }
     }
     if (distrimg) {

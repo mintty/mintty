@@ -2849,6 +2849,7 @@ do_dcs(void)
       cattrflags attr0 = term.curs.attr.attr;
 
       // fill with space characters
+      term.curs.attr.attr = (ulong)img;
       if (term.sixel_display) {  // sixel display mode
         short y0 = term.curs.y;
         term.curs.y = 0;
