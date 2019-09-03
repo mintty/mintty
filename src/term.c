@@ -2431,6 +2431,9 @@ term_paint(void)
                     || (tattr.truebg != attr.truebg)
                     || (tattr.ulcolr != attr.ulcolr);
 
+      if (tattr.attr & TATTR_EMOJI)
+        trace_run("emoji"), break_run = true;
+
       inline bool has_comb(termchar * tc)
       {
         if (!tc->cc_next)

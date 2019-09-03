@@ -1,4 +1,5 @@
 Terminal features
+  * Fixed display of subsequent identical emojis (since 3.0.1).
   * Mouse buttons 4 and 5 send the same escape sequences as xterm.
   * DECAUPSS to assign user-preferred supplemental sets to DECSUPP.
   * Ignore SOS string (ESC X ...), in addition to PM and APC (xterm).
