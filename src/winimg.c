@@ -205,6 +205,9 @@ winimg_lazyinit(imglist *img)
 
   if (!cdc)
     return;
+#ifdef debug_sixel_list
+  printf("creating device context, capacity %d->\n", cdc);
+#endif
   cdc--;
 
   img->hdc = CreateCompatibleDC(dc);
@@ -260,6 +263,9 @@ winimg_hibernate(imglist *img)
 
   // delete allocated DIB section.
   cdc++;
+#ifdef debug_sixel_list
+  printf("release dc, capacity ->%d\n", cdc);
+#endif
   DeleteDC(img->hdc);
   DeleteObject(img->hbmp);
   img->pixels = NULL;
@@ -274,6 +280,9 @@ winimg_destroy(imglist *img)
 {
   if (img->hdc) {
     cdc++;
+#ifdef debug_sixel_list
+  printf("release dc, capacity ->%d\n", cdc);
+#endif
     DeleteDC(img->hdc);
     DeleteObject(img->hbmp);
   } else if (img->pixels) {
@@ -282,7 +291,9 @@ winimg_destroy(imglist *img)
   } else {
     strage_destroy(img->strage);
   }
-  //printf("winimg_destroy free img %p\n", img);
+#ifdef debug_sixel_list
+  printf("winimg_destroy free img %p\n", img);
+#endif
   free(img);
 }
 
@@ -320,8 +331,7 @@ winimgs_clear(void)
 void
 winimg_paint(void)
 {
-  imglist *img;
-  imglist *prev = NULL;
+  imglist * img;
 
   /* free disk space if number of tempfile exceeds TEMPFILE_MAX_NUM */
   while (tempfile_num > TEMPFILE_MAX_NUM && term.imgs.first) {
@@ -337,18 +347,21 @@ winimg_paint(void)
   IntersectClipRect(dc, rc.left + PADDING, rc.top + PADDING,
                     rc.left + PADDING + term.cols * cell_width,
                     rc.top + PADDING + term.rows * cell_height);
+
+#ifdef debug_sixel_list
+  if (term.imgs.first)
+    printf("winimg_paint loop\n");
+#endif
+
+  imglist * prev = 0;
   for (img = term.imgs.first; img;) {
+    imglist * distrimg = 0;
     // if the image is out of scrollback, collect it
     if (img->top + img->height - term.virtuallines < - term.sblines) {
-      if (img == term.imgs.first)
-        term.imgs.first = img->next;
-      if (img == term.imgs.last)
-        term.imgs.last = prev;
-      if (prev)
-        prev->next = img->next;
-      prev = img;
-      img = img->next;
-      winimg_destroy(prev);
+#ifdef debug_sixel_list
+      printf("destroy scrolled out\n");
+#endif
+      distrimg = img;
     } else {
       // if the image is scrolled out, serialize it into a temp file.
       int left = img->left;
@@ -363,20 +376,20 @@ winimg_paint(void)
           for (int x = left; x < min(left + img->width, term.cols); ++x) {
             termchar *dchar = &term.displines[y]->chars[x];
 
-            // if sixel image is overwirtten by characters,
+            // if sixel image is overwritten by characters,
             // exclude the area from the clipping rect.
-            bool update_flag = false;
+            bool clip_flag = false;
             if (dchar->chr != SIXELCH)
-              update_flag = true;
+              clip_flag = true;
             if (dchar->attr.attr & (TATTR_RESULT | TATTR_CURRESULT | TATTR_MARKED | TATTR_CURMARKED))
-              update_flag = true;
-            if (term.selected && !update_flag) {
+              clip_flag = true;
+            if (term.selected && !clip_flag) {
               pos scrpos = {y + term.disptop, x, false};
-              update_flag = term.sel_rect
+              clip_flag = term.sel_rect
                   ? posPle(term.sel_start, scrpos) && posPlt(scrpos, term.sel_end)
                   : posle(term.sel_start, scrpos) && poslt(scrpos, term.sel_end);
             }
-            if (update_flag)
+            if (clip_flag)
               ExcludeClipRect(dc,
                               x * wide_factor * cell_width + PADDING,
                               y * cell_height + PADDING,
@@ -384,10 +397,26 @@ winimg_paint(void)
                               (y + 1) * cell_height + PADDING);
           }
         }
+#ifdef debug_sixel_list
+        printf("display img\n");
+#endif
         StretchBlt(dc, left * cell_width + PADDING, top * cell_height + PADDING,
                    img->width * cell_width, img->height * cell_height, img->hdc,
                    0, 0, img->pixelwidth, img->pixelheight, SRCCOPY);
       }
+    }
+    if (distrimg) {
+      if (img == term.imgs.first)
+        term.imgs.first = img->next;
+      if (prev)
+        prev->next = img->next;
+      if (img == term.imgs.last)
+        term.imgs.last = prev;
+
+      img = img->next;
+      winimg_destroy(distrimg);
+    }
+    else {
       prev = img;
       img = img->next;
     }

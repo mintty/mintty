@@ -2875,13 +2875,15 @@ do_dcs(void)
           }
         }
       }
-
       term.curs.attr.attr = attr0;
 
       if (term.imgs.first == NULL) {
         term.imgs.first = term.imgs.last = img;
       } else {
         // try some optimization: replace existing images if overwritten
+#ifdef debug_sixel_list
+        printf("do_dcs checking imglist\n");
+#endif
         for (imglist * cur = term.imgs.first; cur; cur = cur->next) {
           if (cur->pixelwidth == cur->width * st->grid_width &&
               cur->pixelheight == cur->height * st->grid_height)
@@ -2891,6 +2893,9 @@ do_dcs(void)
                 img->width == cur->width &&
                 img->height == cur->height)
             {
+#ifdef debug_sixel_list
+              printf("img replace\n");
+#endif
               memcpy(cur->pixels, img->pixels, img->pixelwidth * img->pixelheight * 4);
               winimg_destroy(img);
               return;
