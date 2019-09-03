@@ -251,8 +251,8 @@ makeliteral_attr(struct buf *b, termchar *c)
   */
   cattrflags attr = c->attr.attr & ~DATTR_MASK;
   int link = c->attr.link;
-  uint truefg = c->attr.truefg;
-  uint truebg = c->attr.truebg;
+  colour truefg = c->attr.truefg;
+  colour truebg = c->attr.truebg;
   colour ulcolr = c->attr.ulcolr;
 
   if (attr < 0x800000 && !truefg && !truebg

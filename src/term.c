@@ -1014,9 +1014,6 @@ term_resize(int newrows, int newcols)
 void
 term_switch_screen(bool to_alt, bool reset)
 {
-  imglist *first, *last;
-  long long int offset;
-
   if (to_alt == term.on_alt_screen)
     return;
 
@@ -1027,9 +1024,9 @@ term_switch_screen(bool to_alt, bool reset)
   term.other_lines = oldlines;
 
   /* swap image list */
-  first = term.imgs.first;
-  last = term.imgs.last;
-  offset = term.virtuallines;
+  imglist * first = term.imgs.first;
+  imglist * last = term.imgs.last;
+  long long int offset = term.virtuallines;
   term.imgs.first = term.imgs.altfirst;
   term.imgs.last = term.imgs.altlast;
   term.virtuallines = term.altvirtuallines;

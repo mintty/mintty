@@ -208,8 +208,8 @@ typedef unsigned long long cattrflags;
 typedef struct {
   cattrflags attr;
   int link;
-  uint truefg;
-  uint truebg;
+  colour truebg;
+  colour truefg;
   colour ulcolr;
 } cattr;
 
