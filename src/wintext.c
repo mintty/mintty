@@ -2601,6 +2601,11 @@ apply_attr_colour(cattr a, attr_colour_mode mode)
 void
 win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl, bool clearpad, uchar phase)
 {
+#ifdef debug_wscale
+  if (attr.attr & (ATTR_EXPAND | ATTR_NARROW | ATTR_WIDE))
+    for (int i = 0; i < len; i++)
+      printf("[%2d:%2d] %c%c%c%c %04X\n", ty, tx + i, attr.attr & ATTR_NARROW ? 'n' : ' ', attr.attr & ATTR_EXPAND ? 'x' : ' ', attr.attr & ATTR_WIDE ? 'w' : ' ', " WUL"[lattr & LATTR_MODE], text[i]);
+#endif
   //if (kb_trace) {printf("[%ld] <win_text\n", mtime()); kb_trace = 0;}
 
   int graph = (attr.attr & GRAPH_MASK) >> ATTR_GRAPH_SHIFT;
@@ -2732,11 +2737,17 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     otherwise:       nfont = FONT_WIDE + FONT_HIGH;
   }
 
-  if (attr.attr & ATTR_EXPAND)
+  int wscale = 100;
+
+  if (attr.attr & ATTR_EXPAND) {
+    if (nfont & FONT_WIDE)
+      wscale = 200;
     nfont |= FONT_WIDE;
-  else
-  if (attr.attr & ATTR_NARROW)
+  }
+  else if (attr.attr & ATTR_NARROW) {
+    wscale = 50;
     nfont |= FONT_NARROW;
+  }
 
   bool do_special_underlay = false;
   if (cfg.bold_as_special && (attr.attr & ATTR_BOLD)) {
@@ -3254,13 +3265,12 @@ draw:;
   int coord_transformed2 = 0;
   XFORM old_xform2;
   RECT box_, box2_;
-  if (attr.attr & ATTR_NARROW) {
+  if (wscale != 100) {
     coord_transformed2 = SetGraphicsMode(dc, GM_ADVANCED);
     if (coord_transformed2 && GetWorldTransform(dc, &old_xform2)) {
       clear_run();
 
-      float scale = 0.5;
-      int dscale = 1.0 / scale;
+      float scale = (float)wscale / 100.0;
       XFORM xform = (XFORM){scale, 0.0, 0.0, 1.0, xt * (1.0 - scale), 0.0};
       coord_transformed2 = ModifyWorldTransform(dc, &xform, MWT_LEFTMULTIPLY);
       if (coord_transformed2) {
@@ -3268,10 +3278,18 @@ draw:;
           dxs_[i] = dxs[i];
         box_ = box;
         box2_ = box2;
+        // compensate for the scaling
         for (int i = 0; i < len; i++)
-          dxs[i] *= dscale;
-        box.right *= dscale;
-        box2.right *= dscale;
+          dxs[i] /= scale;
+        if (wscale <= 100) {
+          box.right /= scale;
+          box2.right /= scale;
+        }
+        else { // evolutionary algorithm; don't ask why or how it works :/
+        // extend bounding box by the scaling
+          box.right *= scale;
+          box2.right *= scale;
+        }
       }
     }
   }
