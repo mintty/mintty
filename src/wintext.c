@@ -2769,8 +2769,11 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     // Don't force manual bold, it could be bad news.
     nfont &= ~(FONT_BOLD | FONT_UNDERLINE);
   }
+#ifdef narrow_via_font
   if ((nfont & (FONT_WIDE | FONT_NARROW)) == (FONT_WIDE | FONT_NARROW))
     nfont &= ~(FONT_WIDE | FONT_NARROW);
+#endif
+
   another_font(ff, nfont);
   if (!ff->fonts[nfont])
     nfont = FONT_NORMAL;
