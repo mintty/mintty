@@ -115,6 +115,7 @@ static bool prevent_pinning = false;
 bool support_wsl = false;
 wchar * wslname = 0;
 wstring wsl_basepath = W("");
+static uint wsl_ver = 0;
 static char * wsl_guid = 0;
 static bool wsl_launch = false;
 static bool start_home = false;
@@ -3370,7 +3371,7 @@ regclose(HKEY key)
 }
 
 static int
-getlxssinfo(bool list, wstring wslname,
+getlxssinfo(bool list, wstring wslname, uint * wsl_ver,
             char ** wsl_guid, wstring * wsl_rootfs, wstring * wsl_icon)
 {
   static wstring lxsskeyname = W("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Lxss");
@@ -3401,13 +3402,14 @@ getlxssinfo(bool list, wstring wslname,
       return 3;
 
     wchar * pn = getregstr(lxss, guid, W("PackageFamilyName"));
+    wchar * pfn = 0;
     if (pn) {  // look for installation directory and icon file
       rootfs = newn(wchar, wcslen(bp) + 8);
       wcscpy(rootfs, bp);
       wcscat(rootfs, W("\\rootfs"));
       HKEY appdata = regopen(HKEY_CURRENT_USER, W("Software\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppModel\\SystemAppData"));
       HKEY package = regopen(appdata, pn);
-      wchar * pfn = getregstr(package, W("Schemas"), W("PackageFullName"));
+      pfn = getregstr(package, W("Schemas"), W("PackageFullName"));
       regclose(package);
       regclose(appdata);
       // "%ProgramW6432%/WindowsApps/<PackageFullName>/images/icon.ico"
@@ -3425,12 +3427,16 @@ getlxssinfo(bool list, wstring wslname,
       icon = legacy_icon();
     }
     if (list) {
-      printf("WSL distribution name %ls\n", getregstr(lxss, guid, W("DistributionName")));
+      printf("WSL distribution name [7m%ls[m\n", getregstr(lxss, guid, W("DistributionName")));
       printf("-- guid %ls\n", guid);
+      printf("-- flag %u\n", getregval(lxss, guid, W("Flags")));
       printf("-- root %ls\n", rootfs);
       printf("-- pack %ls\n", pn);
+      if (pfn)
+        printf("-- full %ls\n", pfn);
       printf("-- icon %ls\n", icon);
     }
+    *wsl_ver = 1 + ((getregval(lxss, guid, W("Flags")) >> 3) & 1);
     *wsl_guid = cs__wcstoutf(guid);
     *wsl_rootfs = rootfs;
     *wsl_icon = icon;
@@ -3453,6 +3459,7 @@ getlxssinfo(bool list, wstring wslname,
         rootfs = renewn(rootfs, wcslen(rootfs) + 6);
         wcscat(rootfs, W("\\lxss"));
         *wsl_rootfs = rootfs;
+        *wsl_ver = 1;
         *wsl_guid = "";
         *wsl_icon = legacy_icon();
         err = 0;
@@ -3460,6 +3467,7 @@ getlxssinfo(bool list, wstring wslname,
       else
         err = 7;
 #else
+      *wsl_ver = 1;
       *wsl_guid = "";
       *wsl_rootfs = W("");  // activate legacy tricks in winclip.c
       *wsl_icon = legacy_icon();
@@ -3528,7 +3536,7 @@ select_WSL(char * wsl)
   wslname = cs__mbstowcs(wsl ?: "");
   wstring wsl_icon;
   // set --rootfs implicitly
-  int err = getlxssinfo(false, wslname, &wsl_guid, &wsl_basepath, &wsl_icon);
+  int err = getlxssinfo(false, wslname, &wsl_ver, &wsl_guid, &wsl_basepath, &wsl_icon);
   if (!err) {
     // set --title
     if (title_settable)
@@ -3582,7 +3590,7 @@ cmd_enum(wstring label, wstring cmd, wstring icon, int icon_index)
   jumplist_len++;
 }
 
-wstring 
+wstring
 wslicon(wchar * params)
 {
   wstring icon = 0;  // default: no icon
@@ -3608,9 +3616,10 @@ wslicon(wchar * params)
       wchar * wslname = newn(wchar, len + 1);
       wcsncpy(wslname, wsl, len);
       wslname[len] = 0;
+      uint ver;
       char * guid;
       wstring basepath;
-      int err = getlxssinfo(false, wslname, &guid, &basepath, &icon);
+      int err = getlxssinfo(false, wslname, &ver, &guid, &basepath, &icon);
       free(wslname);
       if (!err) {
         delete(basepath);
@@ -4199,7 +4208,7 @@ main(int argc, char *argv[])
 #if CYGWIN_VERSION_API_MINOR >= 74
           when 'W': {
             wstring wsl_icon;
-            getlxssinfo(true, 0, &wsl_guid, &wsl_basepath, &wsl_icon);
+            getlxssinfo(true, 0, &wsl_ver, &wsl_guid, &wsl_basepath, &wsl_icon);
             exit(0);
           }
 #endif
@@ -4401,11 +4410,19 @@ main(int argc, char *argv[])
   printf("per_monitor_dpi_aware %d\n", per_monitor_dpi_aware);
 #endif
 
+#define dont_debug_wsl
+#define wslbridge2
+
   // Work out what to execute.
   argv += optind;
   if (wsl_guid && wsl_launch) {
-#define dont_debug_wsl
+#ifdef wslbridge2
+    cmd = wsl_ver > 1 ? "/bin/hvpty" : "/bin/wslbridge2";
+    char * cmd0 = wsl_ver > 1 ? "-hvpty" : "-wslbridge2";
+#else
     cmd = "/bin/wslbridge";
+    char * cmd0 = "-wslbridge";
+#endif
     argc -= optind;
     bool login_dash = false;
     if (*argv && !strcmp(*argv, "-") && !argv[1]) {
@@ -4414,10 +4431,13 @@ main(int argc, char *argv[])
       //argc--;
       //argc++; // for "-l"
     }
+#ifdef wslbridge2
+    argc += start_home;
+#endif
     char ** new_argv = newn(char *, argc + 8 + start_home + (wsltty_appx ? 2 : 0));
     char ** pargv = new_argv;
     if (login_dash) {
-      *pargv++ = "-wslbridge";
+      *pargv++ = cmd0;
 #ifdef wslbridge_supports_l
 #warning redundant option wslbridge -l not needed
       *pargv++ = "-l";
@@ -4426,14 +4446,27 @@ main(int argc, char *argv[])
     else
       *pargv++ = cmd;
     if (*wsl_guid) {
+#ifdef wslbridge2
+      *pargv++ = "-d";
+      *pargv++ = cs__wcstombs(wslname);
+#else
       *pargv++ = "--distro-guid";
       *pargv++ = wsl_guid;
+#endif
     }
+#ifdef wslbridge_t
     *pargv++ = "-t";
+#endif
     *pargv++ = "-e";
     *pargv++ = "APPDATA";
-    if (start_home)
+    if (start_home) {
+#ifdef wslbridge2
+      *pargv++ = "--wsldir";
+      *pargv++ = "~";
+#else
       *pargv++ = "-C~";
+#endif
+    }
 
 #if CYGWIN_VERSION_API_MINOR >= 74
     // provide wslbridge-backend in a reachable place for invocation
@@ -4472,9 +4505,20 @@ main(int argc, char *argv[])
     }
 
     if (wsltty_appx && lappdata && *lappdata) {
+#ifdef wslbridge2
+      char * wslbridge_backend = asform(
+                                 wsl_ver > 1
+                                 ? "%s/hvpty-backend"
+                                 : "%s/wslbridge2-backend"
+                                 , lappdata);
+      char * bin_backend = wsl_ver > 1
+                           ? "/bin/hvpty-backend"
+                           : "/bin/wslbridge2-backend";
+      bool ok = copyfile(bin_backend, wslbridge_backend, true);
+#else
       char * wslbridge_backend = asform("%s/wslbridge-backend", lappdata);
-
       bool ok = copyfile("/bin/wslbridge-backend", wslbridge_backend, true);
+#endif
       (void)ok;
 
       *pargv++ = "--backend";

@@ -1670,6 +1670,37 @@ getregstr(HKEY key, wstring subkey, wstring attribute)
 #endif
 }
 
+uint
+getregval(HKEY key, wstring subkey, wstring attribute)
+{
+#if CYGWIN_VERSION_API_MINOR < 74
+  (void)key;
+  (void)subkey;
+  (void)attribute;
+  return 0;
+#else
+  // RegGetValueW is easier but not supported on Windows XP
+  HKEY sk = 0;
+  RegOpenKeyW(key, subkey, &sk);
+  if (!sk)
+    return 0;
+  DWORD type;
+  DWORD len;
+  int res = RegQueryValueExW(sk, attribute, 0, &type, 0, &len);
+  if (res)
+    return 0;
+  if (type == REG_DWORD) {
+    DWORD val;
+    len = sizeof(DWORD);
+    res = RegQueryValueExW(sk, attribute, 0, &type, (void *)&val, &len);
+    RegCloseKey(sk);
+    if (!res)
+      return (uint)val;
+  }
+  return 0;
+#endif
+}
+
 static wchar *
 muieventlabel(wchar * event)
 {

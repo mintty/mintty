@@ -229,5 +229,6 @@ extern void finish_config(void);
 extern void copy_config(char * tag, config * dst, const config * src);
 extern void apply_config(bool save);
 extern wchar * getregstr(HKEY key, wstring subkey, wstring attribute);
+extern uint getregval(HKEY key, wstring subkey, wstring attribute);
 
 #endif
