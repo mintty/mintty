@@ -37,6 +37,7 @@ extern char * fontpropinfo(void);
 extern bool title_settable;
 extern bool support_wsl;
 extern wstring wsl_basepath;
+extern bool report_child_pid;
 
 extern int ini_width, ini_height;
 extern bool win_is_fullscreen;

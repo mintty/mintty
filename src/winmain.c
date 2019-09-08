@@ -102,6 +102,7 @@ bool title_settable = true;
 static string border_style = 0;
 static string report_geom = 0;
 static bool report_moni = false;
+bool report_child_pid = false;
 static int monitor = 0;
 static bool center = false;
 static bool right = false;
@@ -3431,7 +3432,8 @@ getlxssinfo(bool list, wstring wslname, uint * wsl_ver,
       printf("-- guid %ls\n", guid);
       printf("-- flag %u\n", getregval(lxss, guid, W("Flags")));
       printf("-- root %ls\n", rootfs);
-      printf("-- pack %ls\n", pn);
+      if (pn)
+        printf("-- pack %ls\n", pn);
       if (pfn)
         printf("-- full %ls\n", pfn);
       printf("-- icon %ls\n", icon);
@@ -4212,6 +4214,10 @@ main(int argc, char *argv[])
             exit(0);
           }
 #endif
+          when 'p':
+            report_child_pid = true;
+          otherwise:
+            option_error(__("Unknown option '%s'"), optarg, 0);
         }
       when 'u': cfg.create_utmp = true;
       when '':
