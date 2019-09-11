@@ -1407,28 +1407,30 @@ win_update_glass(bool opaque)
   if (pSetWindowCompositionAttribute) {
     enum AccentState
     {
-        ACCENT_DISABLED = 0,
-        ACCENT_ENABLE_GRADIENT = 1,
-        ACCENT_ENABLE_TRANSPARENTGRADIENT = 2,
-        ACCENT_ENABLE_BLURBEHIND = 3,
-        ACCENT_INVALID_STATE = 4
+      ACCENT_DISABLED = 0,
+      ACCENT_ENABLE_GRADIENT = 1,
+      ACCENT_ENABLE_TRANSPARENTGRADIENT = 2,
+      ACCENT_ENABLE_BLURBEHIND = 3,
+      ACCENT_INVALID_STATE = 4
     };
     enum WindowCompositionAttribute
     {
-        WCA_ACCENT_POLICY = 19
+      WCA_ACCENT_POLICY = 19
     };
     struct ACCENTPOLICY
     {
-      enum AccentState nAccentState;
+      //enum AccentState nAccentState;
+      int nAccentState;
       int nFlags;
       int nColor;
       int nAnimationId;
     };
     struct WINCOMPATTRDATA
     {
-      enum WindowCompositionAttribute nAttribute;
+      //enum WindowCompositionAttribute attribute;
+      DWORD attribute;
       PVOID pData;
-      ULONG ulDataSize;
+      ULONG dataSize;
     };
     struct ACCENTPOLICY policy = {
       enabled ? ACCENT_ENABLE_BLURBEHIND : ACCENT_DISABLED,
@@ -3380,6 +3382,24 @@ getlxssinfo(bool list, wstring wslname, uint * wsl_ver,
   if (!lxss)
     return 1;
 
+#ifdef use_wsl_getdistconf
+  typedef enum
+  {
+    WSL_DISTRIBUTION_FLAGS_NONE,
+    WSL_DISTRIBUTION_FLAGS_ENABLE_INTEROP,
+    WSL_DISTRIBUTION_FLAGS_APPEND_NT_PATH,
+    WSL_DISTRIBUTION_FLAGS_ENABLE_DRIVE_MOUNTING,
+    //...
+  } WSL_DISTRIBUTION_FLAGS;
+  HRESULT (WINAPI * pWslGetDistributionConfiguration)
+           (PCWSTR name, ULONG *distVersion, ULONG *defaultUID,
+            WSL_DISTRIBUTION_FLAGS *,
+            PSTR **defaultEnvVars, ULONG *defaultEnvVarCount
+           ) =
+    // this works only in 64 bit mode
+    load_library_func("wslapi.dll", "WslGetDistributionConfiguration");
+#endif
+
   wchar * legacy_icon()
   {
     // "%LOCALAPPDATA%/lxss/bash.ico"
@@ -3427,8 +3447,24 @@ getlxssinfo(bool list, wstring wslname, uint * wsl_ver,
       rootfs = wcsdup(bp);
       icon = legacy_icon();
     }
+
+    wchar * name = getregstr(lxss, guid, W("DistributionName"));
+#ifdef use_wsl_getdistconf
+    // this has currently no benefit, and it does not work in 32-bit cygwin
+    if (pWslGetDistributionConfiguration) {
+      ULONG ver, uid, varc;
+      WSL_DISTRIBUTION_FLAGS flags;
+      PSTR * vars;
+      HRESULT res = pWslGetDistributionConfiguration(name, &ver, &uid, &flags, &vars, &varc);
+      for (uint i = 0; i < varc; i++)
+        CoTaskMemFree(vars[i]);
+      CoTaskMemFree(vars);
+      //printf("%d %ls %d uid %d %X\n", (int)res, name, (int)ver, (int)uid, (uint)flags);
+    }
+#endif
+
     if (list) {
-      printf("WSL distribution name [7m%ls[m\n", getregstr(lxss, guid, W("DistributionName")));
+      printf("WSL distribution name [7m%ls[m\n", name);
       printf("-- guid %ls\n", guid);
       printf("-- flag %u\n", getregval(lxss, guid, W("Flags")));
       printf("-- root %ls\n", rootfs);
@@ -3438,6 +3474,7 @@ getlxssinfo(bool list, wstring wslname, uint * wsl_ver,
         printf("-- full %ls\n", pfn);
       printf("-- icon %ls\n", icon);
     }
+
     *wsl_ver = 1 + ((getregval(lxss, guid, W("Flags")) >> 3) & 1);
     *wsl_guid = cs__wcstoutf(guid);
     *wsl_rootfs = rootfs;
