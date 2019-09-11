@@ -3385,10 +3385,7 @@ getlxssinfo(bool list, wstring wslname, uint * wsl_ver,
 #ifdef use_wsl_getdistconf
   typedef enum
   {
-    WSL_DISTRIBUTION_FLAGS_NONE,
-    WSL_DISTRIBUTION_FLAGS_ENABLE_INTEROP,
-    WSL_DISTRIBUTION_FLAGS_APPEND_NT_PATH,
-    WSL_DISTRIBUTION_FLAGS_ENABLE_DRIVE_MOUNTING,
+    WSL_DISTRIBUTION_FLAGS_NONE = 0,
     //...
   } WSL_DISTRIBUTION_FLAGS;
   HRESULT (WINAPI * pWslGetDistributionConfiguration)
@@ -3455,11 +3452,12 @@ getlxssinfo(bool list, wstring wslname, uint * wsl_ver,
       ULONG ver, uid, varc;
       WSL_DISTRIBUTION_FLAGS flags;
       PSTR * vars;
-      HRESULT res = pWslGetDistributionConfiguration(name, &ver, &uid, &flags, &vars, &varc);
-      for (uint i = 0; i < varc; i++)
-        CoTaskMemFree(vars[i]);
-      CoTaskMemFree(vars);
-      //printf("%d %ls %d uid %d %X\n", (int)res, name, (int)ver, (int)uid, (uint)flags);
+      if (S_OK == pWslGetDistributionConfiguration(name, &ver, &uid, &flags, &vars, &varc)) {
+        for (uint i = 0; i < varc; i++)
+          CoTaskMemFree(vars[i]);
+        CoTaskMemFree(vars);
+        //printf("%d %ls %d uid %d %X\n", (int)res, name, (int)ver, (int)uid, (uint)flags);
+      }
     }
 #endif
 
