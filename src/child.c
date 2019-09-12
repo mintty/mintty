@@ -330,8 +330,10 @@ child_create(char *argv[], struct winsize *winp)
     exit(mexit);
   }
   else { // Parent process.
-    if (report_child_pid)
+    if (report_child_pid) {
       printf("%d\n", pid);
+      fflush(stdout);
+    }
 
 #ifdef __midipix__
     // This corrupts CR in cygwin

@@ -103,6 +103,7 @@ static string border_style = 0;
 static string report_geom = 0;
 static bool report_moni = false;
 bool report_child_pid = false;
+static bool report_winpid = false;
 static int monitor = 0;
 static bool center = false;
 static bool right = false;
@@ -4251,6 +4252,8 @@ main(int argc, char *argv[])
 #endif
           when 'p':
             report_child_pid = true;
+          when 'P':
+            report_winpid = true;
           otherwise:
             option_error(__("Unknown option '%s'"), optarg, 0);
         }
@@ -5050,6 +5053,14 @@ main(int argc, char *argv[])
   // Install keyboard hook.
   hook_windows(WH_KEYBOARD_LL, hookprockbll, true);
 #endif
+
+  if (report_winpid) {
+    DWORD wpid = -1;
+    DWORD parent = GetWindowThreadProcessId(wnd, &wpid);
+    (void)parent;
+    printf("%d %d\n", getpid(), (int)wpid);
+    fflush(stdout);
+  }
 
   // Message loop.
   for (;;) {

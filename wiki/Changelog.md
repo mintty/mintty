@@ -35,6 +35,7 @@ Configuration
   * Options dialog supports setting Emojis and EmojiPlacement.
   * Options dialog: additional "Selection" panel with additional settings.
   * Option OldOptions to customize changed areas in Options dialog.
+  * Options -Rp and -RP to report process IDs (#909).
 
 ### 3.0.2 (13 July 2019) ###
 
