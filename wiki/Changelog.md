@@ -15,6 +15,7 @@ Font rendering
   * Bloom effect around characters of old CRT terminals, rough simulation.
 
 Window handling
+  * Right-click on title bar opens session switcher (Virtual Tabs, #699).
   * Flexible configuration of scroll modifiers (~#894).
   * User-definable functions for scrollback scrolling (~#894).
   * Fixed sixel image list handling (#905).

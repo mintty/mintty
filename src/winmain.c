@@ -2655,6 +2655,11 @@ static struct {
         when XBUTTON1: win_mouse_release(MBT_4, lp);
         when XBUTTON2: win_mouse_release(MBT_5, lp);
       }
+    when WM_NCRBUTTONDOWN:
+      if (wp == HTCAPTION) {
+        win_title_menu();
+        return 0;
+      }
 
     when WM_KEYDOWN or WM_SYSKEYDOWN:
       //printf("[%ld] WM_KEY %02X\n", mtime(), (int)wp);

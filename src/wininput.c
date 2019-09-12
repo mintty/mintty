@@ -15,6 +15,7 @@
 
 static HMENU ctxmenu = NULL;
 static HMENU sysmenu;
+static int sysmenulen;
 static uint super_key = 0;
 static uint hyper_key = 0;
 static uint newwin_key = 0;
@@ -596,6 +597,15 @@ win_update_menus(bool callback)
     check_commands(ctxmenu, cfg.ctx_user_commands, IDM_CTXMENUFUNCTION);
   if (*cfg.sys_user_commands)
     check_commands(sysmenu, cfg.sys_user_commands, IDM_SYSMENUFUNCTION);
+
+#ifdef vary_sysmenu
+  static bool switcher_in_sysmenu = false;
+  if (!switcher_in_sysmenu) {
+    add_switcher(sysmenu, true, false, true);
+    switcher_in_sysmenu = true;
+  }
+#endif
+  (void)sysmenulen;
 }
 
 static bool
@@ -704,6 +714,8 @@ win_init_menus(void)
   }
 
   InsertMenuW(sysmenu, SC_CLOSE, MF_SEPARATOR, 0, 0);
+
+  sysmenulen = GetMenuItemCount(sysmenu);
 }
 
 static void
@@ -794,6 +806,12 @@ void
 win_popup_menu(mod_keys mods)
 {
   open_popup_menu(false, null, mods);
+}
+
+void
+win_title_menu(void)
+{
+  open_popup_menu(false, "Ws", 0);
 }
 
 

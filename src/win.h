@@ -60,6 +60,7 @@ extern void win_get_scrpos(int *xp, int *yp, bool with_borders);
 extern void win_get_pixels(int *height_p, int *width_p, bool with_borders);
 extern void win_get_screen_chars(int *rows_p, int *cols_p);
 extern void win_popup_menu(mod_keys mods);
+extern void win_title_menu(void);
 
 extern void win_zoom_font(int, bool sync_size_with_font);
 extern void win_set_font_size(int, bool sync_size_with_font);
