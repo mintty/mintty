@@ -2674,7 +2674,7 @@ static struct {
         when XBUTTON2: win_mouse_release(MBT_5, lp);
       }
     when WM_NCRBUTTONDOWN:
-      if (wp == HTCAPTION) {
+      if (wp == HTCAPTION && (cfg.geom_sync > 0 || (GetKeyState(VK_CONTROL) & 0x80))) {
         win_title_menu();
         return 0;
       }
