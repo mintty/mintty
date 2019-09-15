@@ -2673,6 +2673,11 @@ static struct {
         when XBUTTON1: win_mouse_release(MBT_4, lp);
         when XBUTTON2: win_mouse_release(MBT_5, lp);
       }
+    when WM_NCLBUTTONDOWN:
+      if (wp == HTCAPTION && (GetKeyState(VK_CONTROL) & 0x80)) {
+        win_title_menu();
+        return 0;
+      }
     when WM_NCRBUTTONDOWN:
       if (wp == HTCAPTION && (cfg.geom_sync > 0 || (GetKeyState(VK_CONTROL) & 0x80))) {
         win_title_menu();

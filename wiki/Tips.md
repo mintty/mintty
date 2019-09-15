@@ -993,7 +993,7 @@ is likely to reset the working directory to the home directory.
 The Virtual Tabs feature provides a list of all running mintty sessions 
 as well as configurable launch parameters for new sessions.
 The session list is shown when right-clicking the title bar (if 
-virtual tabs mode is configured or with Ctrl).
+virtual tabs mode is configured or with Ctrl) or ctrl+left-clicking it.
 By default, the list is also shown in the extended context menu (Ctrl+right-click), 
 the mouse button 5 menu, and the menus opened with the Ctrl+Menu key 
 and the Ctrl+Shift+I shortcut (if enabled).
