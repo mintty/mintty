@@ -20,6 +20,7 @@ Window handling
   * User-definable functions for scrollback scrolling (~#894).
   * Fixed sixel image list handling (#905).
   * Optimized sixel image rendering if overlapped (#905).
+  * Dark colour theme support in scrollbar (mintty/wsltty#157).
 
 Other
   * Cache emoji image data (speedup emoji display).

@@ -4808,7 +4808,7 @@ main(int argc, char *argv[])
     pSystemParametersInfoA(SPI_GETHIGHCONTRAST, sizeof hc, &hc, 0);
 
     if (!(hc.dwFlags & HCF_HIGHCONTRASTON) && pShouldAppsUseDarkMode()) {
-      pSetWindowTheme(wnd, L"DarkMode_Explorer", NULL);
+      pSetWindowTheme(wnd, W("DarkMode_Explorer"), NULL);
       BOOL dark = 1;
 
 #ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
