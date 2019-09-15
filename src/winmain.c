@@ -186,7 +186,13 @@ trace_winsize(char * tag)
 static HRESULT (WINAPI * pDwmIsCompositionEnabled)(BOOL *) = 0;
 static HRESULT (WINAPI * pDwmExtendFrameIntoClientArea)(HWND, const MARGINS *) = 0;
 static HRESULT (WINAPI * pDwmEnableBlurBehindWindow)(HWND, void *) = 0;
+static HRESULT (WINAPI * pDwmSetWindowAttribute)(HWND, DWORD, LPCVOID, DWORD) = 0;
+
 static HRESULT (WINAPI * pSetWindowCompositionAttribute)(HWND, void *) = 0;
+static BOOL (WINAPI * pSystemParametersInfoA)(UINT, UINT, PVOID, UINT) = 0;
+
+static BOOLEAN (WINAPI * pShouldAppsUseDarkMode)(void) = 0; /* undocumented */
+static HRESULT (WINAPI * pSetWindowTheme)(HWND, const wchar_t *, const wchar_t *) = 0;
 
 // Helper for loading a system library. Using LoadLibrary() directly is insecure
 // because Windows might be searching the current working directory first.
@@ -209,6 +215,8 @@ load_dwm_funcs(void)
 {
   HMODULE dwm = load_sys_library("dwmapi.dll");
   HMODULE user32 = load_sys_library("user32.dll");
+  HMODULE uxtheme = load_sys_library("uxtheme.dll");
+
   if (dwm) {
     pDwmIsCompositionEnabled =
       (void *)GetProcAddress(dwm, "DwmIsCompositionEnabled");
@@ -216,10 +224,20 @@ load_dwm_funcs(void)
       (void *)GetProcAddress(dwm, "DwmExtendFrameIntoClientArea");
     pDwmEnableBlurBehindWindow =
       (void *)GetProcAddress(dwm, "DwmEnableBlurBehindWindow");
+    pDwmSetWindowAttribute = 
+      (void *)GetProcAddress(dwm, "DwmSetWindowAttribute");
   }
   if (user32) {
     pSetWindowCompositionAttribute =
       (void *)GetProcAddress(user32, "SetWindowCompositionAttribute");
+    pSystemParametersInfoA =
+      (void *)GetProcAddress(user32, "SystemParametersInfoA");
+  }
+  if (uxtheme) {
+    pShouldAppsUseDarkMode = 
+      (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(132)); /* ordinal */
+    pSetWindowTheme = 
+      (void *)GetProcAddress(uxtheme, "SetWindowTheme");
   }
 }
 
@@ -4782,6 +4800,26 @@ main(int argc, char *argv[])
                         x, y, width, height,
                         null, null, inst, null);
   trace_winsize("createwindow");
+
+  // Dark mode support
+  if (pShouldAppsUseDarkMode) {
+    HIGHCONTRAST hc = { 0 };
+    hc.cbSize = sizeof hc;
+    pSystemParametersInfoA(SPI_GETHIGHCONTRAST, sizeof hc, &hc, 0);
+
+    if (!(hc.dwFlags & HCF_HIGHCONTRASTON) && pShouldAppsUseDarkMode()) {
+      pSetWindowTheme(wnd, L"DarkMode_Explorer", NULL);
+      BOOL dark = 1;
+
+#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
+#define DWMWA_USE_IMMERSIVE_DARK_MODE 19
+#endif
+
+      pDwmSetWindowAttribute(wnd, DWMWA_USE_IMMERSIVE_DARK_MODE,
+                             &dark, sizeof dark);
+    }
+  }
+
   // Workaround for failing title parameter:
   if (pEnableNonClientDpiScaling)
     SetWindowTextW(wnd, wtitle);
