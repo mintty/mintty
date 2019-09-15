@@ -28,6 +28,7 @@ Other
   * Fixed Windows handle resource leak when displaying many emojis (mintty/wsltty#185).
   * Fixed potential crash on sixel display after resource leak.
   * Preventing Windows handle resource exhaustion when displaying many sixel images.
+  * Fixed potential crash when confirming exit (#907).
 
 Configuration
   * Option Bloom.

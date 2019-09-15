@@ -660,20 +660,22 @@ grandchild_process_list(void)
     int thispid = atoi(pn);
     if (thispid && thispid != pid) {
       char * ctty = procres(thispid, "ctty");
-      if (0 == strcmp(ctty, tty)) {
-        int ppid = procresi(thispid, "ppid");
-        int winpid = procresi(thispid, "winpid");
-        // not including the direct child (pid)
-        ttyprocs = renewn(ttyprocs, nttyprocs + 1);
-        ttyprocs[nttyprocs].pid = thispid;
-        ttyprocs[nttyprocs].ppid = ppid;
-        ttyprocs[nttyprocs].winpid = winpid;
-        char * cmd = procres(thispid, "cmdline");
-        ttyprocs[nttyprocs].cmdline = cmd;
+      if (ctty) {
+        if (0 == strcmp(ctty, tty)) {
+          int ppid = procresi(thispid, "ppid");
+          int winpid = procresi(thispid, "winpid");
+          // not including the direct child (pid)
+          ttyprocs = renewn(ttyprocs, nttyprocs + 1);
+          ttyprocs[nttyprocs].pid = thispid;
+          ttyprocs[nttyprocs].ppid = ppid;
+          ttyprocs[nttyprocs].winpid = winpid;
+          char * cmd = procres(thispid, "cmdline");
+          ttyprocs[nttyprocs].cmdline = cmd;
 
-        nttyprocs++;
+          nttyprocs++;
+        }
+        free(ctty);
       }
-      free(ctty);
     }
   }
   closedir(d);
