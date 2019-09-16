@@ -2829,6 +2829,7 @@ static struct {
 
     when WM_MOVING:
       trace_resize(("# WM_MOVING VK_SHIFT %02X\n", (uchar)GetKeyState(VK_SHIFT)));
+      win_destroy_tip();
       zoom_token = -4;
       moving = true;
 

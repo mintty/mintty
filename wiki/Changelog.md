@@ -21,6 +21,7 @@ Window handling
   * Fixed sixel image list handling (#905).
   * Optimized sixel image rendering if overlapped (#905).
   * Dark colour theme support in scrollbar (mintty/wsltty#157).
+  * Clear resizing popup after leaving fullscreen and moving (#913).
 
 Other
   * Cache emoji image data (speedup emoji display).
