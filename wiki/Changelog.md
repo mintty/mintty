@@ -1,4 +1,6 @@
 Terminal features
+  * Maintain scrollback buffer in left/right margin mode with default margins (#916).
+  * Do not put cleared lines into scrollback buffer.
   * Fixed display of subsequent identical emojis (since 3.0.1).
   * Mouse buttons 4 and 5 send the same escape sequences as xterm.
   * DECAUPSS to assign user-preferred supplemental sets to DECSUPP.
