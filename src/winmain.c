@@ -2366,6 +2366,7 @@ static struct {
 # endif
     printf("[%d]->%8p %04X %s (%04X %08X)\n", (int)time(0), wnd, message, wm_name, (unsigned)wp, (unsigned)lp);
 #endif
+
   switch (message) {
     when WM_NCCREATE:
       if (cfg.handle_dpichanged && pEnableNonClientDpiScaling) {
@@ -2567,6 +2568,12 @@ static struct {
           child_fork(main_argc, main_argv, moni);
         }
         when IDM_COPYTITLE: win_copy_title();
+        when IDM_KEY_DOWN_UP: {
+          bool on = lp & 0x10000;
+          int vk = lp & 0xFFFF;
+          //printf("IDM_KEY_DOWN_UP -> do_win_key_toggle %02X\n", vk);
+          do_win_key_toggle(vk, on);
+        }
       }
     }
 

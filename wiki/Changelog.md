@@ -3,6 +3,7 @@ Terminal features
   * Do not put cleared lines into scrollback buffer.
   * Fixed display of subsequent identical emojis (since 3.0.1).
   * Mouse buttons 4 and 5 send the same escape sequences as xterm.
+  * Disabled unreliable CSI DECLL to switch keyboard LEDs (#915).
   * DECAUPSS to assign user-preferred supplemental sets to DECSUPP.
   * Ignore SOS string (ESC X ...), in addition to PM and APC (xterm).
   * Fixed iconified window report which was reverted (#893).

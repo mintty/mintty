@@ -19,6 +19,7 @@
 #define posPlt(p1,p2) ((p1).y <= (p2).y && (p1).x < (p2).x)
 #define posPle(p1,p2) ((p1).y <= (p2).y && (p1).x <= (p2).x)
 
+
 extern void term_print_finish(void);
 
 extern void term_schedule_cblink(void);

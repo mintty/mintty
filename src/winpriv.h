@@ -92,6 +92,7 @@ extern void win_mouse_move(bool nc, LPARAM);
 extern void win_key_reset(void);
 extern bool win_key_down(WPARAM, LPARAM);
 extern bool win_key_up(WPARAM, LPARAM);
+extern void do_win_key_toggle(int vk, bool on);
 extern void win_csi_seq(char * pre, char * suf);
 
 extern void win_led(int led, bool set);
