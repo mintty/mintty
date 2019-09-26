@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Sat Jul 13 11:07:46 2019 -->
+<!-- CreationDate: Thu Sep 26 19:09:09 2019 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -361,6 +361,18 @@ on the system as determined by mintty, and exits.</p>
 &quot;W&quot;, mintty lists installed WSL distributions and
 properties, and exits.</p>
 
+<p style="margin-left:22%; margin-top: 1em">With value
+&quot;p&quot;, mintty reports the PID of the child process
+(e.g. the shell). With value &quot;P&quot;, mintty reports
+the cygwin PID and the Windows PID of the mintty process
+(i.e. running the terminal).</p>
+
+<p style="margin-left:11%;"><b>--trace</b>
+<i>OUTPUT</i></p>
+
+<p style="margin-left:22%;">This option redirects reporting
+(and debug) output to a file.</p>
+
 
 <p style="margin-left:11%;"><b>--store-taskbar-properties</b></p>
 
@@ -604,10 +616,11 @@ Bidi algorithm), mintty supports ECMA-48 bidi modes and
 private bidi modes to control switchable bidi behaviour per
 line and partially per paragraph (i.e. within an
 auto-wrapped line), as listed in
-<i>https://github.com/mintty/mintty/wiki/CtrlSeqs#bidirectional-rendering</i>.
-They follow the current status of the bidi mode model of the
-<b>BiDi in Terminal Emulators</b> recommendation
-(<i>https://terminal-wg.pages.freedesktop.org/bidi/</i>).</p>
+<i><a href="https://github.com/mintty/mintty/wiki/CtrlSeqs#bidirectional-rendering">https://github.com/mintty/mintty/wiki/CtrlSeqs#bidirectional-rendering</a></i>
+. They follow the current status of the bidi mode model of
+the <b>BiDi in Terminal Emulators</b> recommendation (
+<i><a href="https://terminal-wg.pages.freedesktop.org/bidi/">https://terminal-wg.pages.freedesktop.org/bidi/</a></i>
+).</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Menus</b>
 <br>
@@ -718,7 +731,8 @@ sequence (OSC 7).</p>
 <p style="margin-left:11%; margin-top: 1em">Mintty also
 supports the OSC 8 control to embed explicit hyperlinks
 (similar to links on web pages), see
-<i>https://github.com/mintty/mintty/wiki/CtrlSeqs#hyperlinks</i>.</p>
+<i><a href="https://github.com/mintty/mintty/wiki/CtrlSeqs#hyperlinks">https://github.com/mintty/mintty/wiki/CtrlSeqs#hyperlinks</a></i>
+.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><i>Note:</i>
 While application mouse modes are enabled (as used by many
@@ -810,7 +824,8 @@ the scrollbar, the mouse wheel, or the keyboard. Hold the
 <b>Shift</b> key while pressing the <b>Up</b> and
 <b>Down</b> arrow keys to scroll line-by-line or the
 <b>PageUp</b> and <b>PageDown</b> keys to scroll
-page-by-page.</p>
+page-by-page. With option <b>KeyFunctions</b>, user-defined
+keys can be used for scrolling.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Searching in
 the text and scrollback buffer</b> <br>
@@ -831,7 +846,7 @@ with scroll markers they navigate to the previous/next
 prompt, to provide a better orientation among the output of
 previously invoked commands. See the Control Sequences wiki
 page
-<i>https://github.com/mintty/mintty/wiki/CtrlSeqs#scroll-markers</i>
+<i><a href="https://github.com/mintty/mintty/wiki/CtrlSeqs#scroll-markers">https://github.com/mintty/mintty/wiki/CtrlSeqs#scroll-markers</a></i>
 for details.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Flip
@@ -858,15 +873,18 @@ are skipped unless both <b>Ctrl</b> keys are used.</p>
 Tabs</b> <br>
 The Virtual Tabs feature provides a list of all running
 mintty sessions (session switcher) as well as configurable
-launch parameters for new sessions (session launcher). By
-default, the list is shown in the extended context menu
-(Ctrl+right-click), the mouse button 5 menu, and the menus
-opened with the Ctrl+Menu key and the Ctrl+Shift+I shortcut
-(if enabled). (Menu contents for the various context menu
-invocations is configurable.) For configuration, see
-settings <b>SessionCommands</b>, <b>Menu*</b>, and
-<b>SessionGeomSync</b>. Distinct sets of sessions can be set
-up with the setting <b>-o Class=...</b>.</p>
+launch parameters for new sessions (session launcher). The
+session list is shown when right-clicking the title bar (if
+virtual tabs mode is configured or with Ctrl) or
+ctrl+left-clicking it. By default, the list is also shown in
+the extended context menu (Ctrl+right-click), the mouse
+button 5 menu, and the menus opened with the Ctrl+Menu key
+and the Ctrl+Shift+I shortcut (if enabled). (Menu contents
+for the various context menu invocations is configurable.)
+For configuration, see settings <b>SessionCommands</b>,
+<b>Menu*</b>, and <b>SessionGeomSync</b>. Distinct sets of
+sessions can be set up with the setting <b>-o
+Class=...</b>.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Closing a
 session</b> <br>
@@ -891,7 +909,8 @@ BRK can be ignored by configuration of the terminal device
 (pty) or can be ignored by an application by catching the
 SIGINT signal. For more forceful interruption of the
 terminal client application, see the Tips wiki page
-<i>https://github.com/mintty/mintty/wiki/Tips#terminating-the-foreground-program</i>.</p>
+<i><a href="https://github.com/mintty/mintty/wiki/Tips#terminating-the-foreground-program">https://github.com/mintty/mintty/wiki/Tips#terminating-the-foreground-program</a></i>
+.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Note that
 Ctrl+C is often configured to raise a SIGINT signal.
@@ -1108,6 +1127,11 @@ the benefit of this feature is the output of
 GNUTERM=sixel gnuplot -e &quot;splot [x=-3:3] [y=-3:3]
 sin(x) * cos(y)&quot;</p>
 
+<p style="margin-left:11%; margin-top: 1em"><i>Note:</i>
+The number of sixel images displayed on the screen is
+limited in order to prevent Windows handle resource
+exhaustion.</p>
+
 <p style="margin-left:11%; margin-top: 1em"><b>Emoji
 display support</b> <br>
 Mintty supports display of emojis as defined by Unicode
@@ -1115,7 +1139,7 @@ using emoji presentation, emoji style variation and emoji
 sequences. The option <b>Emojis</b> can choose among sets of
 emoji graphics if deployed in a mintty configuration
 directory. See the Tips wiki page
-<i>https://github.com/mintty/mintty/wiki/Tips#emojis</i>
+<i><a href="https://github.com/mintty/mintty/wiki/Tips#emojis">https://github.com/mintty/mintty/wiki/Tips#emojis</a></i>
 about deployment of emoji graphics for mintty.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>HTML Screen
@@ -1288,7 +1312,7 @@ a filename (like D:/.../solarized-light.minttyrc).</p>
 also be used as a drag-and-drop target for colour schemes
 downloaded from the Color Scheme Configurator, or for theme
 files from the web. See the Tips wiki page
-<i>https://github.com/mintty/mintty/wiki/Tips#using-colour-schemes-themes</i>
+<i><a href="https://github.com/mintty/mintty/wiki/Tips#using-colour-schemes-themes">https://github.com/mintty/mintty/wiki/Tips#using-colour-schemes-themes</a></i>
 about this mechanism.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Note: Mintty
@@ -1392,8 +1416,8 @@ this case the bold attribute may not be effective.</p>
 alternative fonts (and optionally weights) can be configured
 which would then be selectable via ECMA-48 SGR character
 attributes (see Tips wiki page
-<i>https://github.com/mintty/mintty/wiki/Tips#text-attributes-and-rendering</i>).
-<br>
+<i><a href="https://github.com/mintty/mintty/wiki/Tips#text-attributes-and-rendering">https://github.com/mintty/mintty/wiki/Tips#text-attributes-and-rendering</a></i>
+). <br>
 They can also be used as secondary fonts with option
 <b>FontChoice</b>. <i><br>
 Note:</i> Font10 has a special preference property; if it is
@@ -1412,20 +1436,29 @@ specified as secondary font for specific scripts. The value
 is a series of semicolon-separated, colon-combined pairs of
 script name and alternative font number. Script names are as
 specified in the Unicode file Scripts.txt, listed in
-<i>https://en.wikipedia.org/wiki/Script_(Unicode)</i> column
-&quot;Alias&quot;. (The definition list can be split over
-multiple lines if a separator is followed by a backslash,
-newline, and optional whitespace indentation.) <br>
+<i><a href="https://en.wikipedia.org/wiki/Script_(Unicode)">https://en.wikipedia.org/wiki/Script_(Unicode)</a></i>
+column &quot;Alias&quot;. (The definition list can be split
+over multiple lines if a separator is followed by a
+backslash, newline, and optional whitespace indentation.) A
+special name is <b>PictoSymbols</b> to assign an alternative
+font to ranges of pictographic symbols from Unicode blocks
+matching Arrows, Mathematical Operators, Technical, Enclosed
+Alphanumerics, Pictographs, Control Pictures, Optical, Box
+Drawing, Miscellaneous.*Symbols, Block Elements, Geometric
+Shapes, Dingbats, Tiles, Cards, Emoticons, Transport,
+Alchemical, Chess. <br>
 Example: <b><br>
 FontChoice=Hebrew:6;Arabic:7;Han:8;Hangul:9 <br>
 Font6=David <br>
 Font7=Simplified Arabic Fixed <br>
 Font8=FangSong <br>
-Font9=MingLiU</b></p>
+Font9=MingLiU <br>
+FontChoice=PictoSymbols:2 <br>
+Font2=DejaVu Sans Mono</b></p>
 
 <p style="margin-left:22%; margin-top: 1em">&ndash; <b>Font
-sample text</b> (FontSample=): This setting overrides the
-text for the &quot;Sample&quot; box in the Font chooser
+sample text</b> (FontSample=): This hidden setting overrides
+the text for the &quot;Sample&quot; box in the Font chooser
 dialog.</p>
 
 <p style="margin-left:22%; margin-top: 1em">&ndash; <b>Show
@@ -1448,13 +1481,61 @@ value 0 selects a built-in inline font chooser.</p>
 <p style="margin-left:11%;"><b>Text lines</b>
 (UnderlineManual=false)</p>
 
-<p style="margin-left:22%;">By setting this true, text
-attributes underline, doubly underline, strikeout and
-overline are enforced to be drawn manually. The default is
-to use Windows font variants for strikeout and for
-underline, unless mintty detects that the underlined font
-would not display properly. Note that font smoothing may be
-affected by Windows-generated underline modes.</p>
+<p style="margin-left:22%;">By enabling this hidden
+setting, text attributes underline, doubly underline,
+strikeout and overline are enforced to be drawn manually.
+The default is to use Windows font variants for strikeout
+and for underline, unless mintty detects that the underlined
+font would not display properly. Note that font smoothing
+may be affected by Windows-generated underline modes.</p>
+
+<p style="margin-left:11%;"><b>Emoji support</b>
+(Emojis=none)</p>
+
+<p style="margin-left:22%;">With this option, mintty emoji
+support is enabled and the emojis style is chosen. Mintty
+will match output for valid emoji sequences, presentation
+forms and emoji style selectors. (Note that up to cygwin
+2.10 it may be useful to set <b>Charwidth=unicode</b> in
+addition.)</p>
+
+<p style="margin-left:22%; margin-top: 1em">Supported
+styles are: <br>
+&ndash; <b>none</b> Emoji support disabled; symbols are
+taken from the font. <br>
+&ndash; <b>emojione</b> Use EmojiOne graphics. <br>
+&ndash; <b>noto</b> Use graphics from the Noto Emoji font.
+<br>
+&ndash; <b>apple</b> Use Apple emoji graphics. <br>
+&ndash; <b>google</b> Use Google emoji graphics. <br>
+&ndash; <b>twitter</b> Use Twitter emoji graphics. <br>
+&ndash; <b>facebook</b> Use Facebook emoji graphics. <br>
+&ndash; <b>samsung</b> Use Samsung emoji graphics. <br>
+&ndash; <b>windows</b> Use Windows emoji graphics.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note that all
+style options only work if the respective emoji graphics
+repository is deployed in a mintty resource directory,
+subdirectory <i>emojis</i>. See the Tips wiki page
+<i><a href="https://github.com/mintty/mintty/wiki/Tips#emojis">https://github.com/mintty/mintty/wiki/Tips#emojis</a></i>
+for details.</p>
+
+<p style="margin-left:11%;"><b>Emoji placement</b>
+(EmojiPlacement=stretch)</p>
+
+<p style="margin-left:22%;">Emojis are displayed in the
+rectangular character cell group determined by the cumulated
+width of the emoji sequence characters. The following
+options are provided to tune their display: <br>
+&ndash; <b>stretch</b> Emojis are scaled to fit in their
+display area. <br>
+&ndash; <b>align</b> Emojis are aligned in their display
+area. <br>
+&ndash; <b>middle</b> Emojis are centered in their display
+area. <br>
+&ndash; <b>full</b> Emojis are full-size with original
+aspect ratio; note that they may overlap into the next
+character(s).</p>
 
 <p style="margin-left:11%;"><b>Show bold as font</b>
 (BoldAsFont=no)</p>
@@ -1610,8 +1691,9 @@ the &quot;@cjknarrow&quot; locale modifier.</p>
 selected locale also determines the character width
 assumptions used for screen rendering. For exceptions, see
 the setting <b>Charwidth</b> and the control sequences for
-special wide character handling
-(<i>https://github.com/mintty/mintty/wiki/CtrlSeqs#wide-characters</i>).</p>
+special wide character handling (
+<i><a href="https://github.com/mintty/mintty/wiki/CtrlSeqs#wide-characters">https://github.com/mintty/mintty/wiki/CtrlSeqs#wide-characters</a></i>
+).</p>
 
 <p style="margin-left:11%;"><b>Character set</b>
 (Charset=)</p>
@@ -1633,10 +1715,10 @@ accordingly.</p>
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 The locale and character set can also be changed with an
 escape sequence, see the Control Sequences wiki page
-<i>https://github.com/mintty/mintty/wiki/CtrlSeqs#locale</i>.
-That setting takes precedence; changes from the Options menu
-will silently have no effect unless an escape sequence with
-empty locale is sent to the terminal to restore to
+<i><a href="https://github.com/mintty/mintty/wiki/CtrlSeqs#locale">https://github.com/mintty/mintty/wiki/CtrlSeqs#locale</a></i>
+. That setting takes precedence; changes from the Options
+menu will silently have no effect unless an escape sequence
+with empty locale is sent to the terminal to restore to
 &quot;default&quot;.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Keys</b>
@@ -1707,7 +1789,7 @@ detection</b> (OldAltGrDetection=no)</p>
 
 <p style="margin-left:22%;">Setting this hidden option
 would disable a workaround for an incompatibility in the
-Windows on-screen keyboard, just in case is has any side
+Windows on-screen keyboard, just in case it has any side
 effects.</p>
 
 <p style="margin-left:11%;"><b>Support injection of
@@ -2002,12 +2084,15 @@ be pressed together with the arrow-up/down, PgUp/PgDn,
 Home/End, or arrow-left/right keys to access the scrollback
 buffer. <br>
 The default is <b>Shift</b>. The <b>Off</b> setting disables
-scrolling with keyboard shortcuts. <br>
-&ndash; <b>Shift</b> <br>
-&ndash; <b>Ctrl</b> <br>
-&ndash; <b>Alt</b> <br>
-&ndash; <b>Win</b> <br>
-&ndash; <b>Off</b></p>
+scrolling with keyboard shortcuts. A combined numeric value
+selects the respective combination of modifier keys. <br>
+&ndash; <b>Shift</b> (1) <br>
+&ndash; <b>Alt</b> (2) <br>
+&ndash; <b>Ctrl</b> (4) <br>
+&ndash; <b>Win</b> (8) <br>
+&ndash; <b>Super</b> (16) <br>
+&ndash; <b>Hyper</b> (32) <br>
+&ndash; <b>Off</b> (0)</p>
 
 <p style="margin-left:11%;"><b>PgUp and PgDn scroll without
 modifier</b> (PgUpDnScroll=no)</p>
@@ -2039,7 +2124,7 @@ language/region code</p>
 
 <p style="margin-left:22%; margin-top: 1em">See the Tips
 wiki page
-<i>https://github.com/mintty/mintty/wiki/Tips#localization</i>
+<i><a href="https://github.com/mintty/mintty/wiki/Tips#localization">https://github.com/mintty/mintty/wiki/Tips#localization</a></i>
 about how to configure localization.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Note that
@@ -2082,8 +2167,8 @@ emulation, i.e. all the features are always available.
 However, the TERM setting may be used by applications to
 choose what features they can use, alternatively to the
 preferrable device attributes queries (see
-<i>https://github.com/mintty/mintty/wiki/Tips</i> for
-hints).</p>
+<i><a href="https://github.com/mintty/mintty/wiki/Tips">https://github.com/mintty/mintty/wiki/Tips</a></i>
+for hints).</p>
 
 <p style="margin-left:22%; margin-top: 1em">The
 <b>xterm-256color</b> setting enables 256-color mode in some
@@ -2262,10 +2347,10 @@ means &gt;= 24. <br>
 ... ST).</p>
 
 <p style="margin-left:22%; margin-top: 1em">See
-<i>https://github.com/mintty/mintty/wiki/Tips#text-attributes-and-rendering</i>
+<i><a href="https://github.com/mintty/mintty/wiki/Tips#text-attributes-and-rendering">https://github.com/mintty/mintty/wiki/Tips#text-attributes-and-rendering</a></i>
 for an overview of SGR attributes. <br>
 See
-<i>http://invisible-island.net/xterm/ctlseqs/ctlseqs.txt</i>
+<i><a href="http://invisible-island.net/xterm/ctlseqs/ctlseqs.txt">http://invisible-island.net/xterm/ctlseqs/ctlseqs.txt</a></i>
 for a full listing of escape control sequences. <br>
 For some of the option values, more specific configuration
 parameters exist: <br>
@@ -2427,7 +2512,18 @@ The following settings appear neither in the options dialog
 nor as command line options, which means they can only be
 set in config files or using the <b>--option</b> or
 <b>-o</b> command line option. <b><br>
-Accelerate display speed</b> (DisplaySpeedup=6)</p>
+Customize Options dialog</b> (OldOptions=)</p>
+
+<p style="margin-left:22%;">Listing comma-separated tags in
+this setting will disable extended or enhanced parts of the
+Options dialog. <br>
+&ndash; <b>emoji</b> Disable emoji style section in
+&quot;Text&quot; panel. <br>
+&ndash; <b>selection</b> Disable separate
+&quot;Selection&quot; panel.</p>
+
+<p style="margin-left:11%;"><b>Accelerate display speed</b>
+(DisplaySpeedup=6)</p>
 
 <p style="margin-left:22%;">If mintty processes high volume
 of output, it will skip up to the given number of refresh
@@ -2442,6 +2538,12 @@ virtual serial transmission rate</b> (Baud=0)</p>
 legacy feeling of a serial terminal connection. Typical baud
 rates (as supported by DEC VT420) were 300, 600, 1200, 2400,
 4800, 9600, 19200, 38400, 56700, 76800, 115200.</p>
+
+<p style="margin-left:11%;"><b>Bloom effect around
+characters</b> (Bloom=0)</p>
+
+<p style="margin-left:22%;">This setting enables a rough
+simulation of old CRT terminals&rsquo; bloom effect.</p>
 
 <p style="margin-left:11%;"><b>Clear selection highlighting
 on input</b> (ClearSelectionOnInput=true)</p>
@@ -2516,53 +2618,17 @@ will be inconsistent for the impacted characters, which may
 confuse screen applications (such as editors) that rely on
 <b>wcwidth</b> information.</p>
 
-<p style="margin-left:11%;"><b>Emoji support</b>
-(Emojis=none)</p>
+<p style="margin-left:11%;"><b>Character narrowing
+factor</b> (CharNarrowing=70)</p>
 
-<p style="margin-left:22%;">With this option, mintty emoji
-support is enabled and the emojis style is chosen. Mintty
-will match output for valid emoji sequences, presentation
-forms and emoji style selectors. (Note that up to cygwin
-2.10 it may be useful to set <b>Charwidth=unicode</b> in
-addition.)</p>
-
-<p style="margin-left:22%; margin-top: 1em">Supported
-styles are: <br>
-&ndash; <b>none</b> Emoji support disabled; symbols are
-taken from the font. <br>
-&ndash; <b>emojione</b> Use EmojiOne graphics. <br>
-&ndash; <b>noto</b> Use graphics from the Noto Emoji font.
-<br>
-&ndash; <b>apple</b> Use Apple emoji graphics. <br>
-&ndash; <b>google</b> Use Google emoji graphics. <br>
-&ndash; <b>twitter</b> Use Twitter emoji graphics. <br>
-&ndash; <b>facebook</b> Use Facebook emoji graphics. <br>
-&ndash; <b>samsung</b> Use Samsung emoji graphics. <br>
-&ndash; <b>windows</b> Use Windows emoji graphics.</p>
-
-<p style="margin-left:22%; margin-top: 1em">Note that all
-style options only work if the respective emoji graphics
-repository is deployed in a mintty resource directory,
-subdirectory <i>emojis</i>. See the Tips wiki page
-<i>https://github.com/mintty/mintty/wiki/Tips#emojis</i> for
-details.</p>
-
-<p style="margin-left:11%;"><b>Emoji placement</b>
-(EmojiPlacement=stretch)</p>
-
-<p style="margin-left:22%;">Emojis are displayed in the
-rectangular character cell group determined by the cumulated
-width of the emoji sequence characters. The following
-options are provided to tune their display: <br>
-&ndash; <b>stretch</b> Emojis are scaled to fit in their
-display area. <br>
-&ndash; <b>align</b> Emojis are aligned in their display
-area. <br>
-&ndash; <b>middle</b> Emojis are centered in their display
-area. <br>
-&ndash; <b>full</b> Emojis are full-size with original
-aspect ratio; note that they may overlap into the next
-character(s).</p>
+<p style="margin-left:22%;">Depending on the font and font
+fallback (either by Windows means or via option
+<b>FontChoice</b>), some glyphs may be too wide for the
+character cell grid. Mintty applies automatic narrowing
+heuristics to fit such glyphs into a character cell so they
+do not overlap subsequent characters. With this setting, the
+horizontal scaling for narrowed characters can be adjusted
+between 50% and 100%.</p>
 
 <p style="margin-left:11%;"><b>Bidirectional rendering</b>
 (Bidi=2)</p>
@@ -2636,9 +2702,10 @@ avoid AppID inconsistence and thus ungrouped taskbar icons,
 the shortcut&rsquo;s AppID should to be set to the same
 string as the mintty AppID, which can be done using the
 <b>winappid</b> utility available in the mintty utils
-repository <i>https://github.com/mintty/utils</i>. As noted
-above, since mintty 2.9.6, the mintty AppID does not need to
-be set anymore in this case.</p>
+repository
+<i><a href="https://github.com/mintty/utils">https://github.com/mintty/utils</a></i>
+. As noted above, since mintty 2.9.6, the mintty AppID does
+not need to be set anymore in this case.</p>
 
 <p style="margin-left:11%;"><b>Application Taskbar Shortcut
 Title</b> (AppName=)</p>
@@ -2924,7 +2991,24 @@ HTML file <br>
 &ndash; <b>void</b>: do nothing <br>
 &ndash; <b>super</b>: use this key as Super modifier key
 <br>
-&ndash; <b>hyper</b>: use this key as Hyper modifier key</p>
+&ndash; <b>hyper</b>: use this key as Hyper modifier key
+<br>
+&ndash; <b>scroll_top</b>: scroll scrollback view to
+beginning <br>
+&ndash; <b>scroll_end</b>: scroll scrollback view to end
+<br>
+&ndash; <b>scroll_pgup</b>: scroll scrollback view one page
+up <br>
+&ndash; <b>scroll_pgdn</b>: scroll scrollback view one page
+down <br>
+&ndash; <b>scroll_lnup</b>: scroll scrollback view one line
+up <br>
+&ndash; <b>scroll_lndn</b>: scroll scrollback view one line
+down <br>
+&ndash; <b>scroll_prev</b>: scroll scrollback view to
+previous marker <br>
+&ndash; <b>scroll_next</b>: scroll scrollback view to next
+marker</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note
 (*):</i> The exact behaviour of some actions depends on the
@@ -2978,7 +3062,11 @@ Alt+keypad-Enter but enter ESC Return in the latter case
 Super modifier to the CapsLock key <br>
 &ndash; <b>KeyFunctions=*Menu:29</b> turns the Menu key into
 an F16 function key (xterm default) and applies all
-modifiers to it</p>
+modifiers to it <br>
+&ndash;
+<b>KeyFunctions=S+KP_Prior:scroll_pgup;C+KP_Prior:scroll_pgup;C+KP_Next:scroll_pgdn;S+KP_Next:scroll_pgdn</b>
+enables scrollback scrolling with either of Shift or Control
+modifiers</p>
 
 <p style="margin-left:11%;"><b>Use system colours</b>
 (UseSystemColours=no)</p>
@@ -3041,7 +3129,7 @@ scheme file, this setting is not used anymore.</p>
 
 <p style="margin-left:22%; margin-top: 1em">See the Tips
 wiki page
-<i>https://github.com/mintty/mintty/wiki/Tips#using-colour-schemes-themes</i>
+<i><a href="https://github.com/mintty/mintty/wiki/Tips#using-colour-schemes-themes">https://github.com/mintty/mintty/wiki/Tips#using-colour-schemes-themes</a></i>
 about this mechanism.</p>
 
 <p style="margin-left:11%;"><b>Selection highlight
@@ -3285,7 +3373,8 @@ a key shortcut for menu item selection.</p>
 The previous command can be detected if prompt lines are
 marked with the escape sequence ^[[?7711h. See the Control
 Sequences wiki page
-<i>https://github.com/mintty/mintty/wiki/CtrlSeqs#scroll-markers</i>.</p>
+<i><a href="https://github.com/mintty/mintty/wiki/CtrlSeqs#scroll-markers">https://github.com/mintty/mintty/wiki/CtrlSeqs#scroll-markers</a></i>
+.</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 The PATH environment for the external command can be set up
@@ -3560,7 +3649,7 @@ functions will fail. Programs that access the console as a
 file should be fine though.</p>
 
 <p style="margin-left:11%; margin-top: 1em">See
-<i>https://github.com/mintty/mintty/wiki/Tips#inputoutput-interaction-with-alien-programs</i>
+<i><a href="https://github.com/mintty/mintty/wiki/Tips#inputoutput-interaction-with-alien-programs">https://github.com/mintty/mintty/wiki/Tips#inputoutput-interaction-with-alien-programs</a></i>
 for further hints, especially on the <i>winpty</i>
 wrapper.</p>
 
@@ -3589,8 +3678,9 @@ shadowed and overstrike). Mintty provides Sixel graphics
 support, Emoji support, and Bidi reordering according to the
 Unicode Bidi Algorithm UBA, amended with flexible bidi
 controls according to the draft bidi mode model of the
-<b>BiDi in Terminal Emulators</b> recommendation
-(<i>https://terminal-wg.pages.freedesktop.org/bidi/</i>).</p>
+<b>BiDi in Terminal Emulators</b> recommendation (
+<i><a href="https://terminal-wg.pages.freedesktop.org/bidi/">https://terminal-wg.pages.freedesktop.org/bidi/</a></i>
+).</p>
 
 <p style="margin-left:11%; margin-top: 1em">Mintty is not
 as configurable as xterm; it offers essential configuration
@@ -3609,7 +3699,9 @@ mode is not implemented.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Additional
 information can be found on the wiki on the mintty project
-page <i>https://github.com/mintty/mintty/wiki</i>.</p>
+page
+<i><a href="https://github.com/mintty/mintty/wiki">https://github.com/mintty/mintty/wiki</a></i>
+.</p>
 
 <h2>LICENSE
 <a name="LICENSE"></a>
@@ -3622,7 +3714,8 @@ page <i>https://github.com/mintty/mintty/wiki</i>.</p>
 <p style="margin-left:11%; margin-top: 1em">Mintty is
 released under the terms of the the <i>GNU General Public
 License</i> version 3. See
-<i>http://gnu.org/licenses/gpl</i> for the license text.</p>
+<i><a href="http://gnu.org/licenses/gpl">http://gnu.org/licenses/gpl</a></i>
+for the license text.</p>
 
 <p style="margin-left:11%; margin-top: 1em">There is NO
 WARRANTY, to the extent permitted by law.</p>
@@ -3634,12 +3727,13 @@ WARRANTY, to the extent permitted by law.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Please report
 bugs or suggest enhancements via the issue tracker at
-<i>https://github.com/mintty/mintty/issues</i>. Questions
-can be sent to the Cygwin mailing list at
+<i><a href="https://github.com/mintty/mintty/issues">https://github.com/mintty/mintty/issues</a></i>
+. Questions can be sent to the Cygwin mailing list at
 <i>cygwin@cygwin.com</i>, to the Mintty discussion issue
-<i>https://github.com/mintty/mintty/issues/500</i>, or to
-the Gitter chat (experimental)
-<i>https://gitter.im/mintty/mintty</i>.</p>
+<i><a href="https://github.com/mintty/mintty/issues/500">https://github.com/mintty/mintty/issues/500</a></i>
+, or to the Gitter chat (experimental)
+<i><a href="https://gitter.im/mintty/mintty">https://gitter.im/mintty/mintty</a></i>
+.</p>
 <hr>
 </body>
 </html>

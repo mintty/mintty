@@ -1,3 +1,5 @@
+### 3.0.3 (28 September 2019) ###
+
 Terminal features
   * Maintain scrollback buffer in left/right margin mode with default margins (#916).
   * Do not put cleared lines into scrollback buffer.
