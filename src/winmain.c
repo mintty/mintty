@@ -189,7 +189,7 @@ static HRESULT (WINAPI * pDwmEnableBlurBehindWindow)(HWND, void *) = 0;
 static HRESULT (WINAPI * pDwmSetWindowAttribute)(HWND, DWORD, LPCVOID, DWORD) = 0;
 
 static HRESULT (WINAPI * pSetWindowCompositionAttribute)(HWND, void *) = 0;
-static BOOL (WINAPI * pSystemParametersInfoA)(UINT, UINT, PVOID, UINT) = 0;
+static BOOL (WINAPI * pSystemParametersInfo)(UINT, UINT, PVOID, UINT) = 0;
 
 static BOOLEAN (WINAPI * pShouldAppsUseDarkMode)(void) = 0; /* undocumented */
 static HRESULT (WINAPI * pSetWindowTheme)(HWND, const wchar_t *, const wchar_t *) = 0;
@@ -230,8 +230,8 @@ load_dwm_funcs(void)
   if (user32) {
     pSetWindowCompositionAttribute =
       (void *)GetProcAddress(user32, "SetWindowCompositionAttribute");
-    pSystemParametersInfoA =
-      (void *)GetProcAddress(user32, "SystemParametersInfoA");
+    pSystemParametersInfo =
+      (void *)GetProcAddress(user32, "SystemParametersInfoW");
   }
   if (uxtheme) {
     pShouldAppsUseDarkMode = 
@@ -4816,9 +4816,10 @@ main(int argc, char *argv[])
 
   // Dark mode support
   if (pShouldAppsUseDarkMode) {
-    HIGHCONTRAST hc = { 0 };
+    HIGHCONTRASTW hc;
     hc.cbSize = sizeof hc;
-    pSystemParametersInfoA(SPI_GETHIGHCONTRAST, sizeof hc, &hc, 0);
+    pSystemParametersInfo(SPI_GETHIGHCONTRAST, sizeof hc, &hc, 0);
+    //printf("High Contrast scheme <%ls>\n", hc.lpszDefaultScheme);
 
     if (!(hc.dwFlags & HCF_HIGHCONTRASTON) && pShouldAppsUseDarkMode()) {
       pSetWindowTheme(wnd, W("DarkMode_Explorer"), NULL);
