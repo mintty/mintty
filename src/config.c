@@ -1778,7 +1778,9 @@ add_file_resources(control *ctrl, wstring pattern, bool dirs)
       while (ok) {
         if (dirs && (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
           if (ffd.cFileName[0] != '.' && !!wcscmp(ffd.cFileName, W("common")))
-            dlg_listbox_add_w(ctrl, ffd.cFileName);
+            // exclude the [0-7] links left over by the `getemojis` script
+            if (wcslen(ffd.cFileName) > 1)
+              dlg_listbox_add_w(ctrl, ffd.cFileName);
         }
         else if (!dirs) {
           //LARGE_INTEGER filesize = {.LowPart = ffd.nFileSizeLow, .HighPart = ffd.nFileSizeHigh};
