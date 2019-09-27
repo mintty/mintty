@@ -402,17 +402,17 @@ msgstr "文字セット(&C)"
 #. __ Options - Text:
 #: config.c:3007
 msgid "Emojis"
-msgstr ""
+msgstr "絵文字"
 
 #. __ Options - Text - Emojis:
 #: config.c:3011
 msgid "Style"
-msgstr ""
+msgstr "スタイル"
 
 #. __ Options - Text - Emojis:
 #: config.c:3015
 msgid "Placement"
-msgstr ""
+msgstr "配置"
 
 #. __ Options - Keys: treeview label
 #: config.c:3023 config.c:3043 config.c:3077
@@ -615,42 +615,42 @@ msgstr "Win(&W)"
 #. __ Options - Modifier - Super:
 #: config.c:3261 config.c:3447
 msgid "&Sup"
-msgstr ""
+msgstr "Sup(&S)"
 
 #. __ Options - Modifier - Hyper:
 #: config.c:3265 config.c:3451
 msgid "&Hyp"
-msgstr ""
+msgstr "Hyp(&H)"
 
 #. __ Options - Selection: treeview label
 #: config.c:3275 config.c:3288 config.c:3344
 msgid "Selection"
-msgstr ""
+msgstr "選択"
 
 #. __ Options - Selection: panel title
 #: config.c:3277
 msgid "Selection and clipboard"
-msgstr ""
+msgstr "選択とクリップボード"
 
 #. __ Options - Selection:
 #: config.c:3281
 msgid "Clear selection on input"
-msgstr ""
+msgstr "入力時に選択を解除する"
 
 #. __ Options - Selection: section title
 #: config.c:3290
 msgid "Clipboard"
-msgstr ""
+msgstr "クリップボード"
 
 #. __ Options - Selection:
 #: config.c:3334
 msgid "Trim space from selection"
-msgstr ""
+msgstr "選択から空白を取り除く"
 
 #. __ Options - Selection:
 #: config.c:3339
 msgid "Allow setting selection"
-msgstr ""
+msgstr "選択の設定を許可する"
 
 #. __ Options - Selection: section title
 #. __ Options - Window: treeview label
@@ -661,12 +661,12 @@ msgstr "ウィンドウ"
 #. __ Options - Selection:
 #: config.c:3351
 msgid "Show size while selecting (0..12)"
-msgstr ""
+msgstr "選択中にサイズを表示する (0..12)"
 
 #. __ Options - Selection:
 #: config.c:3358
 msgid "Suspend output while selecting"
-msgstr ""
+msgstr "選択中に一時停止する"
 
 #. __ Options - Window: panel title
 #: config.c:3370
