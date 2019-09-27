@@ -128,7 +128,7 @@ installed, mintty can be called from cygwin to run a WSL terminal session:
 * `mintty --WSL=Ubuntu`
 * `mintty --WSL` (for the Default distribution as set with `wslconfig /s`)
 
-Note, the `wslbridge` tool needs to be installed in `/bin` for this purpose 
+Note, the `wslbridge2` gateways need to be installed in `/bin` for this purpose 
 (see below for details).
 
 A WSL terminal session can be configured for the mintty session launcher 
@@ -146,11 +146,14 @@ using either the wsltty installer, a Chocolatey package, or a Windows Appx packa
 ### Manual setup of WSL terminal ###
 
 To help reproduce the installation manually, for users of cygwin or msys2:
-* From https://github.com/rprichard/wslbridge/releases, download the `wslbridge` archive corresponding to your system (cygwin/msys2 32/64 bit)
-* Install `wslbridge.exe` and `wslbridge-backend` into your cygwin or msys2 `/bin` directory
+* Download from the https://github.com/Biswa96/wslbridge2 repository
+* Build the wslbridge2 gateways with
+  * `make` for the frontends (e.g. from cygwin)
+  * `wsl make` or `wsl -d` _distro_ `make` for the backends, using a distro that has `make` and `g++` installed
+* From subdirectory `bin`, install the gateway tools `wslbridge2.exe`, `wslbridge2-backend`, `hvpty.exe`, `hvpty-backend` into your `/bin` directory
 * Make a desktop shortcut (Desktop right-click – New ▸ Shortcut) with
-  * Target: `X:\cygwin64\bin\mintty.exe --WSL=Linux_Distribution -`
-  * Icon location (Change Icon…) for Legacy “Ubuntu on Windows”: `%LOCALAPPDATA%\lxss\bash.ico`
+  * Target: `X:\cygwin64\bin\mintty.exe --WSL=`_distro_` -`, with the desired WSL distro (or empty for default)
+  * Icon location (Change Icon…) as appropriate; the wsltty installer will find the distro-specific icon
 
 Replace `X:\cygwin64` with your cygwin or msys2 root directory path 
 and `Linux_Distribution` with your preferred distribution. The suitable 
@@ -1131,8 +1134,8 @@ To bundle an application which is not natively compiled on cygwin with mintty,
 some way of bridging the terminal interworking incompatiblity problems 
 ([pty incompatibility problem](https://github.com/mintty/mintty/issues/56) and
 [character encoding incompatibility problem](https://github.com/mintty/mintty/issues/376))
-needs to be integrated. A generic solution is [winpty](https://github.com/rprichard/winpty)
-or its WSL-specific variant ʻwslbridge’.
+needs to be integrated. A generic solution is [winpty](https://github.com/rprichard/winpty).
+To run WSL, use ʻwslbridge2’ instead (see above).
 For software that is aware of Posix terminal conventions, it may be a feasible 
 solution if the software detects a terminal and its character encoding by 
 checking environment variable `TERM` and the locale variables and invokes 
