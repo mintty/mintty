@@ -66,22 +66,22 @@ msgstr "エラー: 子デーモンをforkできません"
 #. __ Options - Text - Emojis - Placement
 #: config.c:522
 msgid "stretch"
-msgstr ""
+msgstr "伸張"
 
 #. __ Options - Text - Emojis - Placement
 #: config.c:524
 msgid "align"
-msgstr ""
+msgstr "整列"
 
 #. __ Options - Text - Emojis - Placement
 #: config.c:526
 msgid "middle"
-msgstr ""
+msgstr "中央"
 
 #. __ Options - Text - Emojis - Placement
 #: config.c:528
 msgid "full"
-msgstr ""
+msgstr "全体"
 
 #. __ %s: unknown option name
 #: config.c:629
