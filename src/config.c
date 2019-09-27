@@ -518,10 +518,14 @@ static opt_val
     {0, 0}
   },
   [OPT_EMOJI_PLACEMENT] = (opt_val[]) {
-    {"stretch", EMPL_STRETCH},
-    {"align", EMPL_ALIGN},
-    {"middle", EMPL_MIDDLE},
-    {"full", EMPL_FULL},
+    //__ Options - Text - Emojis - Placement
+    {__("stretch"), EMPL_STRETCH},
+    //__ Options - Text - Emojis - Placement
+    {__("align"), EMPL_ALIGN},
+    //__ Options - Text - Emojis - Placement
+    {__("middle"), EMPL_MIDDLE},
+    //__ Options - Text - Emojis - Placement
+    {__("full"), EMPL_FULL},
     {0, 0}
   },
   [OPT_MOD] = (opt_val[]) {
@@ -2758,9 +2762,9 @@ opt_handler(control *ctrl, int event, char * popt, opt_val * ovals)
     when EVENT_REFRESH:
       dlg_listbox_clear(ctrl);
       while (ovals->name) {
-        dlg_listbox_add(ctrl, ovals->name);
+        dlg_listbox_add(ctrl, _(ovals->name));
         if (*popt == ovals->val)
-          dlg_editbox_set(ctrl, ovals->name);
+          dlg_editbox_set(ctrl, _(ovals->name));
         ovals++;
       }
     when EVENT_VALCHANGE or EVENT_SELCHANGE: {
