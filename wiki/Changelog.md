@@ -1,3 +1,6 @@
+Font rendering
+  * Exclude full-cell characters from auto-narrowing (#918).
+
 ### 3.0.3 (28 September 2019) ###
 
 Terminal features
