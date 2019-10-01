@@ -1,3 +1,6 @@
+Configuration
+  * Fix handling of --WSL default distribution.
+
 ### 3.0.4 (1 October 2019) ###
 
 Font rendering

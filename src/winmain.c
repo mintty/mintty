@@ -4527,8 +4527,10 @@ main(int argc, char *argv[])
       *pargv++ = cmd;
     if (*wsl_guid) {
 #ifdef wslbridge2
-      *pargv++ = "-d";
-      *pargv++ = cs__wcstombs(wslname);
+      if (*wslname) {
+        *pargv++ = "-d";
+        *pargv++ = cs__wcstombs(wslname);
+      }
 #else
       *pargv++ = "--distro-guid";
       *pargv++ = wsl_guid;
