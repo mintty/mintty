@@ -1,3 +1,5 @@
+### 3.0.4 (1 October 2019) ###
+
 Font rendering
   * Exclude full-cell characters from auto-narrowing (#918).
   * Fix adjustment of auto-narrowed characters (#918).
