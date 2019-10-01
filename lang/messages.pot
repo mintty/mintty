@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-10-01 15:54+0200\n"
+"POT-Creation-Date: 2019-10-02 00:45+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1209,7 +1209,7 @@ msgstr ""
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr ""
 
-#: winmain.c:4751
+#: winmain.c:4753
 msgid "Using default title due to invalid characters in program name"
 msgstr ""
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-10-01 15:53+0200\n"
+"POT-Creation-Date: 2019-10-02 00:43+0200\n"
 "PO-Revision-Date: 2019-01-29 16:00+0200\n"
 "Last-Translator: JSJ <jsj666@hotmail.com>\n"
 "Language-Team: JSJ\n"
@@ -1252,7 +1252,7 @@ msgstr "Error de sintaxis en arg. tamaño y posición '%s'"
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr "Mintty no se pudo liberar, inciando de todas formas"
 
-#: winmain.c:4751
+#: winmain.c:4753
 msgid "Using default title due to invalid characters in program name"
 msgstr ""
 "Usando título predeterminado porque hay caracteres extraños en el nombre del "

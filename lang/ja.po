@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-10-01 15:53+0200\n"
+"POT-Creation-Date: 2019-10-02 00:43+0200\n"
 "PO-Revision-Date: 2017-02-27 18:11+0900\n"
 "Last-Translator: Ken Takata <kentkt@csc.jp>\n"
 "Language-Team: \n"
@@ -1246,7 +1246,7 @@ msgstr "geometry引数に文法エラーがあります '%s'"
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr "minttyは呼び出し元からデタッチできません、とにかく起動します"
 
-#: winmain.c:4751
+#: winmain.c:4753
 msgid "Using default title due to invalid characters in program name"
 msgstr "プログラム名に不正な文字があるため既定のタイトルを使用します"
 

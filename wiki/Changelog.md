@@ -1,3 +1,5 @@
+### 3.0.5 (2 October 2019) ###
+
 Configuration
   * Fix handling of --WSL default distribution.
 
