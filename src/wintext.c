@@ -2744,6 +2744,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
       wscale = 200;
     nfont |= FONT_WIDE;
   }
+#ifndef narrow_via_font
   else if ((attr.attr & ATTR_NARROW) && !(attr.attr & TATTR_ZOOMFULL)) {
     wscale = cfg.char_narrowing;
     if (wscale > 100)
@@ -2752,6 +2753,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
       wscale = 50;
     nfont |= FONT_NARROW;
   }
+#endif
 
   bool do_special_underlay = false;
   if (cfg.bold_as_special && (attr.attr & ATTR_BOLD)) {
