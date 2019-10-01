@@ -2435,6 +2435,9 @@ term_paint(void)
                     || (tattr.truebg != attr.truebg)
                     || (tattr.ulcolr != attr.ulcolr);
 
+      if (tattr.attr & ATTR_NARROW)
+        trace_run("narrow"), break_run = true;
+
       if (tattr.attr & TATTR_EMOJI)
         trace_run("emoji"), break_run = true;
 

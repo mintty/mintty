@@ -1,5 +1,6 @@
 Font rendering
   * Exclude full-cell characters from auto-narrowing (#918).
+  * Fix adjustment of auto-narrowed characters (#918).
 
 Configuration
   * Emojis - Placement values translatable (#919).
