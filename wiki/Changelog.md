@@ -1,3 +1,7 @@
+Font rendering
+  * Changed default value CharNarrowing from 70 to 80 (#922).
+  * Excluding arrows, technical symbols, and other ranges from auto-narrowing (#922).
+
 ### 3.0.5 (2 October 2019) ###
 
 Configuration
