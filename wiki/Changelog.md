@@ -1,3 +1,6 @@
+Sixel display
+  * Fixed sixel display which was broken in 3.0.3.
+
 Font rendering
   * Changed default value CharNarrowing from 70 to 80 (#922).
   * Excluding arrows, technical symbols, and other ranges from auto-narrowing (#922).

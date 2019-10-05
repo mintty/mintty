@@ -2449,7 +2449,7 @@ term_paint(void)
                     || (tattr.truebg != attr.truebg)
                     || (tattr.ulcolr != attr.ulcolr);
 
-      if (tattr.attr & ATTR_NARROW)
+      if (tchar != SIXELCH && (tattr.attr & ATTR_NARROW))
         trace_run("narrow"), break_run = true;
 
       if (tattr.attr & TATTR_EMOJI)
