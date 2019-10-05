@@ -1229,6 +1229,15 @@ static void scroll_LEFT()
 static void scroll_RIGHT()
   { SendMessage(wnd, WM_VSCROLL, SB_NEXT, 0); }
 
+static void switch_NEXT()
+  { win_switch(false, true); }
+static void switch_PREV()
+  { win_switch(true, true); }
+static void switch_visible_NEXT()
+  { win_switch(false, false); }
+static void switch_visible_PREV()
+  { win_switch(true, false); }
+
 static void
 nop()
 {
@@ -1442,6 +1451,11 @@ static struct function_def cmd_defs[] = {
   {"scroll_lndn", {.fct = scroll_DOWN}, 0},
   {"scroll_prev", {.fct = scroll_LEFT}, 0},
   {"scroll_next", {.fct = scroll_RIGHT}, 0},
+
+  {"switch-prev", {.fct = switch_PREV}, 0},
+  {"switch-next", {.fct = switch_NEXT}, 0},
+  {"switch-visible-prev", {.fct = switch_visible_PREV}, 0},
+  {"switch-visible-next", {.fct = switch_visible_NEXT}, 0},
 
   {"void", {.fct = nop}, 0}
 };
