@@ -2,6 +2,12 @@ Font rendering
   * Changed default value CharNarrowing from 70 to 80 (#922).
   * Excluding arrows, technical symbols, and other ranges from auto-narrowing (#922).
 
+Virtual Tabs
+  * User-definable key bindings for quick tab switching (#923, #699).
+
+Configuration
+  * New user-definable functions switch[-visible]-(prev|next) (#923).
+
 ### 3.0.5 (2 October 2019) ###
 
 Configuration
