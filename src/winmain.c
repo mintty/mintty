@@ -4141,7 +4141,7 @@ main(int argc, char *argv[])
   }
 
   bool wdpresent = true;
-  if (invoked_from_shortcut) {
+  if (invoked_from_shortcut && sui.lpTitle) {
     shortcut = wcsdup(sui.lpTitle);
     setenv("MINTTY_SHORTCUT", path_win_w_to_posix(shortcut), true);
     wchar * icon = get_shortcut_icon_location(sui.lpTitle, &wdpresent);
@@ -4713,7 +4713,7 @@ main(int argc, char *argv[])
 
   // Expand AppID placeholders
   wchar * app_id = 0;
-  if (invoked_from_shortcut)
+  if (invoked_from_shortcut && sui.lpTitle)
     app_id = get_shortcut_appid(sui.lpTitle);
   if (!app_id)
     app_id = group_id(cfg.app_id);

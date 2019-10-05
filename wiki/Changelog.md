@@ -8,6 +8,9 @@ Font rendering
 Virtual Tabs
   * User-definable key bindings for quick tab switching (#923, #699).
 
+Other
+  * Safe handling of missing shortcut title/appid (#920).
+
 Configuration
   * New user-definable functions switch[-visible]-(prev|next) (#923).
 
