@@ -1,3 +1,5 @@
+### 3.0.6 (6 October 2019) ###
+
 Terminal features
   * Support for horizontal mouse scrolling (#925).
   * Fixed sixel display which was broken in 3.0.3.
