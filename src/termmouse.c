@@ -299,22 +299,24 @@ send_mouse_event(mouse_action a, mouse_button b, mod_keys mods, pos p)
 
   uint x = p.x + 1, y = p.y + 1;
 
-  if (cfg.old_xbuttons)
-    switch (b) {
-      when MBT_4:
-        b = MBT_LEFT; mods |= MDK_ALT;
-      when MBT_5:
-        b = MBT_RIGHT; mods |= MDK_ALT;
-      otherwise:;
-    }
-  else
-    switch (b) {
-      when MBT_4:
-        b = 129;
-      when MBT_5:
-        b = 130;
-      otherwise:;
-    }
+  if (a != MA_WHEEL) {
+    if (cfg.old_xbuttons)
+      switch (b) {
+        when MBT_4:
+          b = MBT_LEFT; mods |= MDK_ALT;
+        when MBT_5:
+          b = MBT_RIGHT; mods |= MDK_ALT;
+        otherwise:;
+      }
+    else
+      switch (b) {
+        when MBT_4:
+          b = 129;
+        when MBT_5:
+          b = 130;
+        otherwise:;
+      }
+  }
 
   uint code = b ? b - 1 : 0x3;
 
@@ -698,9 +700,11 @@ term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys mods,
       accu -= NOTCH_DELTA * notches;
       mouse_button b = (notches < 0) + 1;
       if (horizontal)
-        b = b ? 2 : 3;
+        b = 5 - b;
       notches = abs(notches);
-      do send_mouse_event(MA_WHEEL, b, mods, p); while (--notches);
+      do
+        send_mouse_event(MA_WHEEL, b, mods, p);
+      while (--notches);
     }
   }
 
