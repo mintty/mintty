@@ -1,4 +1,5 @@
-Sixel display
+Terminal features
+  * Support for horizontal mouse scrolling (#925).
   * Fixed sixel display which was broken in 3.0.3.
 
 Font rendering

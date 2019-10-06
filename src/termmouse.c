@@ -677,7 +677,7 @@ term_mouse_move(mod_keys mods, pos p)
 }
 
 void
-term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
+term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys mods, pos p)
 {
   if (term.hovering) {
     term.hovering = false;
@@ -686,7 +686,7 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
 
   enum { NOTCH_DELTA = 120 };
 
-  static int accu;
+  static int accu = 0;
   accu += delta;
 
   if (check_app_mouse(&mods)) {
@@ -697,9 +697,14 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
     if (notches) {
       accu -= NOTCH_DELTA * notches;
       mouse_button b = (notches < 0) + 1;
+      if (horizontal)
+        b = b ? 2 : 3;
       notches = abs(notches);
       do send_mouse_event(MA_WHEEL, b, mods, p); while (--notches);
     }
+  }
+
+  if (horizontal) {
   }
   else if ((mods & ~MDK_SHIFT) == MDK_CTRL) {
     if (strstr(cfg.suppress_wheel, "zoom"))

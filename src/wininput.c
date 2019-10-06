@@ -1038,18 +1038,14 @@ win_mouse_move(bool nc, LPARAM lp)
 }
 
 void
-win_mouse_wheel(WPARAM wp, LPARAM lp)
+win_mouse_wheel(POINT wpos, bool horizontal, int delta)
 {
-  // WM_MOUSEWHEEL reports screen coordinates rather than client coordinates
-  POINT wpos = {.x = GET_X_LPARAM(lp), .y = GET_Y_LPARAM(lp)};
-  ScreenToClient(wnd, &wpos);
   pos tpos = translate_pos(wpos.x, wpos.y);
 
-  int delta = GET_WHEEL_DELTA_WPARAM(wp);  // positive means up
   int lines_per_notch;
   SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &lines_per_notch, 0);
 
-  term_mouse_wheel(delta, lines_per_notch, get_mods(), tpos);
+  term_mouse_wheel(horizontal, delta, lines_per_notch, get_mods(), tpos);
 }
 
 void

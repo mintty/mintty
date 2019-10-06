@@ -2629,7 +2629,12 @@ static struct {
           }
         }
 
-    when WM_MOUSEWHEEL: {
+#ifndef WM_MOUSEHWHEEL
+#define WM_MOUSEHWHEEL 0x020E
+#endif
+
+    when WM_MOUSEWHEEL or WM_MOUSEHWHEEL: {
+      bool horizontal = message == WM_MOUSEHWHEEL;
       // check whether in client area (terminal pane) or over scrollbar...
       POINT wpos = {.x = GET_X_LPARAM(lp), .y = GET_Y_LPARAM(lp)};
       ScreenToClient(wnd, &wpos);
@@ -2637,12 +2642,12 @@ static struct {
       win_get_pixels(&height, &width, false);
       height += 2 * PADDING;
       width += 2 * PADDING;
-      int delta = GET_WHEEL_DELTA_WPARAM(wp);  // positive means up
+      int delta = GET_WHEEL_DELTA_WPARAM(wp);  // positive means up or right
       //printf("%d %d %d %d %d\n", wpos.y, wpos.x, height, width, delta);
       if (wpos.y >= 0 && wpos.y < height) {
         if (wpos.x >= 0 && wpos.x < width)
-          win_mouse_wheel(wp, lp);
-        else {
+          win_mouse_wheel(wpos, horizontal, delta);
+        else if (!horizontal) {
           int hsb = win_has_scrollbar();
           if (hsb && term.app_scrollbar) {
             int wsb = GetSystemMetrics(SM_CXVSCROLL);

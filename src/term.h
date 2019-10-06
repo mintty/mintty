@@ -598,7 +598,7 @@ extern void term_clear_scrollback(void);
 extern void term_mouse_click(mouse_button, mod_keys, pos, int count);
 extern void term_mouse_release(mouse_button, mod_keys, pos);
 extern void term_mouse_move(mod_keys, pos);
-extern void term_mouse_wheel(int delta, int lines_per_notch, mod_keys, pos);
+extern void term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys, pos);
 extern void term_select_all(void);
 extern void term_paint(void);
 extern void term_invalidate(int left, int top, int right, int bottom);
