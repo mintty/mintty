@@ -298,8 +298,10 @@ row_padding(int i, int e)
   }
 }
 
+static char * font_warnings = 0;
+
 static void
-show_font_warning(struct fontfam * ff, char * msg)
+font_warning(struct fontfam * ff, char * msg)
 {
   // suppress multiple font error messages
   if (ff->name_reported && wcscmp(ff->name_reported, ff->name) == 0) {
@@ -312,16 +314,26 @@ show_font_warning(struct fontfam * ff, char * msg)
   }
 
   char * fn = cs__wcstoutf(ff->name);
-  char * fullmsg;
-  int len = asprintf(&fullmsg, "%s:\n%s", msg, fn);
-  free(fn);
-  if (len > 0) {
-    show_message(fullmsg, MB_ICONWARNING);
-    free(fullmsg);
+  if (font_warnings) {
+    char * newfw = asform("%s\n%s:\n%s", font_warnings, msg, fn);
+    free(font_warnings);
+    font_warnings = newfw;
   }
   else
-    show_message(msg, MB_ICONWARNING);
+    font_warnings = asform("%s:\n%s", msg, fn);
+  free(fn);
 }
+
+static void
+show_font_warnings(void)
+{
+  if (font_warnings) {
+    show_message(font_warnings, MB_ICONWARNING);
+    free(font_warnings);
+    font_warnings = 0;
+  }
+}
+
 
 #ifndef TCI_SRCLOCALE
 //old MinGW
@@ -455,7 +467,7 @@ adjust_font_weights(struct fontfam * ff, int findex)
 
   // check if no font found
   if (!data.font_found) {
-    show_font_warning(ff, _("Font not found, using system substitute"));
+    font_warning(ff, _("Font not found, using system substitute"));
     ff->fw_norm = 400;
     ff->fw_bold = 700;
     trace_font(("//\n"));
@@ -470,7 +482,7 @@ adjust_font_weights(struct fontfam * ff, int findex)
       // don't report for alternative / secondary fonts
     }
     else
-      show_font_warning(ff, _("Font has limited support for character ranges"));
+      font_warning(ff, _("Font has limited support for character ranges"));
   }
 
   // find available widths closest to selected widths
@@ -575,7 +587,7 @@ win_init_fontfamily(HDC dc, int findex)
   GetTextMetrics(dc, &tm);
   if (!tm.tmHeight) {
     // corrupt font installation (e.g. deleted font file)
-    show_font_warning(ff, _("Font installation corrupt, using system substitute"));
+    font_warning(ff, _("Font installation corrupt, using system substitute"));
     wstrset(&ff->name, W(""));
     ff->fonts[FONT_NORMAL] = create_font(ff->name, ff->fw_norm, false);
     GetObject(ff->fonts[FONT_NORMAL], sizeof(LOGFONT), &logfont);
@@ -588,7 +600,7 @@ win_init_fontfamily(HDC dc, int findex)
 #ifdef check_charset_only_for_returned_font
   int default_charset = get_default_charset();
   if (tm.tmCharSet != default_charset && default_charset != DEFAULT_CHARSET) {
-    show_font_warning(ff, _("Font does not support system locale"));
+    font_warning(ff, _("Font does not support system locale"));
   }
 #endif
 
@@ -889,6 +901,8 @@ win_init_fonts(int size)
 
     win_init_fontfamily(dc, fi);
   }
+  if (initinit)
+    show_font_warnings();
   initinit = false;
 
   ReleaseDC(wnd, dc);
