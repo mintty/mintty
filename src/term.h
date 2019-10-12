@@ -207,10 +207,11 @@ typedef unsigned long long cattrflags;
 
 typedef struct {
   cattrflags attr;
-  int link;
   colour truebg;
   colour truefg;
   colour ulcolr;
+  int link;
+  int imgi;
 } cattr;
 
 extern const cattr CATTR_DEFAULT;
@@ -346,6 +347,7 @@ typedef struct {
 } temp_strage_t;
 
 typedef struct imglist {
+  int imgi;
   unsigned char *pixels;
   void *hdc;
   void *hbmp;

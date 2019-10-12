@@ -1,3 +1,7 @@
+Terminal features
+  * Fixed sixel image management (#929).
+
+Other
   * Collect font warnings into one popup message.
 
 ### 3.0.6 (6 October 2019) ###

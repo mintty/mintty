@@ -2845,17 +2845,17 @@ do_dcs(void)
         return;
       }
 
+      // fill image area with sixel placeholder characters
       short x0 = term.curs.x;
       cattrflags attr0 = term.curs.attr.attr;
-
-      // fill with space characters
-      term.curs.attr.attr = (ulong)img;
+      term.curs.attr.imgi = img->imgi;
       if (term.sixel_display) {  // sixel display mode
         short y0 = term.curs.y;
         term.curs.y = 0;
         for (int y = 0; y < img->height && y < term.rows; ++y) {
           term.curs.y = y;
           term.curs.x = 0;
+          //printf("SIXELCH @%d imgi %d\n", y, term.curs.attr.imgi);
           for (int x = x0; x < x0 + img->width && x < term.cols; ++x)
             write_char(SIXELCH, 1);
         }
@@ -2864,6 +2864,7 @@ do_dcs(void)
       } else {  // sixel scrolling mode
         for (int i = 0; i < img->height; ++i) {
           term.curs.x = x0;
+          //printf("SIXELCH @%d imgi %d\n", term.curs.y, term.curs.attr.imgi);
           for (int x = x0; x < x0 + img->width && x < term.cols; ++x)
             write_char(SIXELCH, 1);
           if (i == img->height - 1) {  // in the last line
@@ -2878,6 +2879,8 @@ do_dcs(void)
       }
       term.curs.attr.attr = attr0;
 
+      // add image to image list;
+      // replace previous for optimisation in some cases
       if (term.imgs.first == NULL) {
         term.imgs.first = term.imgs.last = img;
       } else {
@@ -2898,6 +2901,7 @@ do_dcs(void)
               printf("img replace\n");
 #endif
               memcpy(cur->pixels, img->pixels, img->pixelwidth * img->pixelheight * 4);
+              cur->imgi = img->imgi;
               winimg_destroy(img);
               return;
             }
@@ -2917,6 +2921,7 @@ do_dcs(void)
                        img->pixels + y * img->pixelwidth * 4,
                        img->pixelwidth * 4);
               }
+              cur->imgi = img->imgi;
               winimg_destroy(img);
               return;
             }

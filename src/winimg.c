@@ -175,6 +175,10 @@ winimg_new(imglist **ppimg, unsigned char *pixels,
   if (!img)
     return false;
 
+  static int _imgi = 0;
+  //printf("winimg_new %d @%d\n", _imgi, top);
+  img->imgi = _imgi++;
+
   img->pixels = pixels;
   img->hdc = NULL;
   img->hbmp = NULL;
@@ -355,13 +359,13 @@ winimg_paint(void)
 
   imglist * prev = 0;
   for (img = term.imgs.first; img;) {
-    imglist * distrimg = 0;
+    imglist * destrimg = 0;
     // if the image is out of scrollback, collect it
     if (img->top + img->height - term.virtuallines < - term.sblines) {
 #ifdef debug_sixel_list
       printf("destroy scrolled out\n");
 #endif
-      distrimg = img;
+      destrimg = img;
     } else {
       // if the image is scrolled out, serialize it into a temp file.
       int left = img->left;
@@ -372,17 +376,24 @@ winimg_paint(void)
         // create DC handle if it is not initialized, or resume from hibernate
         winimg_lazyinit(img);
         bool keep_flag = false;
+#ifdef debug_imgi
+        int _imgi = 0;
+#endif
         for (int y = max(0, top); y < min(top + img->height, term.rows); ++y) {
           int wide_factor = (term.displines[y]->lattr & LATTR_MODE) == LATTR_NORM ? 1: 2;
           for (int x = left; x < min(left + img->width, term.cols); ++x) {
             termchar *dchar = &term.displines[y]->chars[x];
+#ifdef debug_imgi
+          _imgi = dchar->attr.imgi;
+#endif
 
             // if sixel image is overwritten by characters,
             // exclude the area from the clipping rect.
             bool clip_flag = false;
             if (dchar->chr != SIXELCH)
               clip_flag = true;
-            else if (dchar->attr.attr == (ulong)img)
+            else if (img->imgi - dchar->attr.imgi >= 0)
+              // need to keep newer image, as sync may take a while
               keep_flag = true;
             if (dchar->attr.attr & (TATTR_RESULT | TATTR_CURRESULT | TATTR_MARKED | TATTR_CURMARKED))
               clip_flag = true;
@@ -403,6 +414,10 @@ winimg_paint(void)
 #ifdef debug_sixel_list
         printf("display img\n");
 #endif
+#ifdef debug_imgi
+        printf("img %p imgi %d attr.imgi %d keep %d\n", img, img->imgi, _imgi, keep_flag);
+#endif
+        // now either keep (and display) or delete the image data
         if (keep_flag)
           StretchBlt(dc, left * cell_width + PADDING, top * cell_height + PADDING,
                      img->width * cell_width, img->height * cell_height, img->hdc,
@@ -412,11 +427,12 @@ winimg_paint(void)
 #ifdef debug_sixel_list
           printf("destroy overlapped\n");
 #endif
-          distrimg = img;
+          destrimg = img;
         }
       }
     }
-    if (distrimg) {
+    // proceed to next image in list; destroy current if requested
+    if (destrimg) {
       if (img == term.imgs.first)
         term.imgs.first = img->next;
       if (prev)
@@ -425,7 +441,7 @@ winimg_paint(void)
         term.imgs.last = prev;
 
       img = img->next;
-      winimg_destroy(distrimg);
+      winimg_destroy(destrimg);
     }
     else {
       prev = img;
