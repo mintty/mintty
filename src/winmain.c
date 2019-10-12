@@ -1430,7 +1430,9 @@ win_update_glass(bool opaque)
       ACCENT_ENABLE_GRADIENT = 1,
       ACCENT_ENABLE_TRANSPARENTGRADIENT = 2,
       ACCENT_ENABLE_BLURBEHIND = 3,
-      ACCENT_INVALID_STATE = 4
+      ACCENT_ENABLE_ACRYLICBLURBEHIND = 4,
+      ACCENT_ENABLE_HOSTBACKDROP = 5,
+      ACCENT_INVALID_STATE = 6
     };
     enum WindowCompositionAttribute
     {
@@ -1463,6 +1465,7 @@ win_update_glass(bool opaque)
       sizeof(policy)
     };
 
+    //printf("SetWindowCompositionAttribute %d\n", policy.nAccentState);
     pSetWindowCompositionAttribute(wnd, &data);
   }
 }
