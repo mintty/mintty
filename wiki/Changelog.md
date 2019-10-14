@@ -1,6 +1,9 @@
 Terminal features
   * Fixed sixel image management (#929).
 
+Keyboard handling
+  * Fixed AltGr handling for AutoHotKey (#932).
+
 Other
   * Collect font warnings into one popup message.
 
