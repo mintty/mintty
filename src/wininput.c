@@ -2915,7 +2915,7 @@ static struct {
         app_pad_code(key - VK_OEM_PLUS + '+');
     when VK_PACKET:
       trace_alt("VK_PACKET alt %d lalt %d ralt %d altgr %d altgr0 %d\n", alt, lalt, ralt, altgr, altgr0);
-      if (altgr)
+      if (altgr0)
         alt = lalt;
       if (!layout())
         return false;
