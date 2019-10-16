@@ -1865,21 +1865,12 @@ win_key_down(WPARAM wp, LPARAM lp)
   bool ralt = is_key_down(VK_RMENU);
   bool alt = lalt | ralt;
   trace_alt("alt %d lalt %d ralt %d\n", alt, lalt, ralt);
-  bool external_hotkey = false;
-  // workaround moved down
-  if (0 && ralt && !scancode && cfg.external_hotkeys) {
-    // Support external hot key injection by overriding disabled Alt+Fn
-    // and fix buggy StrokeIt (#833).
-    trace_alt("ralt = false\n");
-    ralt = false;
-    if (cfg.external_hotkeys > 1)
-      external_hotkey = true;
-  }
   bool rctrl = is_key_down(VK_RCONTROL);
   bool ctrl = lctrl | rctrl;
   bool ctrl_lalt_altgr = cfg.ctrl_alt_is_altgr & ctrl & lalt & !ralt;
-  bool altgr = ralt | ctrl_lalt_altgr;
-  // workaround for StrokeIt
+  bool altgr0 = ralt | ctrl_lalt_altgr;
+
+  bool external_hotkey = false;
   if (ralt && !scancode && cfg.external_hotkeys) {
     // Support external hot key injection by overriding disabled Alt+Fn
     // and fix buggy StrokeIt (#833).
@@ -1888,6 +1879,8 @@ win_key_down(WPARAM wp, LPARAM lp)
     if (cfg.external_hotkeys > 1)
       external_hotkey = true;
   }
+
+  bool altgr = ralt | ctrl_lalt_altgr;
   bool win = (is_key_down(VK_LWIN) && key != VK_LWIN)
           || (is_key_down(VK_RWIN) && key != VK_RWIN);
   trace_alt("alt %d lalt %d ralt %d altgr %d\n", alt, lalt, ralt, altgr);
@@ -2921,7 +2914,7 @@ static struct {
       else if (VK_OEM_PLUS <= key && key <= VK_OEM_PERIOD)
         app_pad_code(key - VK_OEM_PLUS + '+');
     when VK_PACKET:
-      trace_alt("VK_PACKET\n");
+      trace_alt("VK_PACKET alt %d lalt %d ralt %d altgr %d altgr0 %d\n", alt, lalt, ralt, altgr, altgr0);
       if (altgr)
         alt = lalt;
       if (!layout())
