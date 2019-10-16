@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-10-06 16:24+0200\n"
-"PO-Revision-Date: 2018-11-12 19:40+0800\n"
+"POT-Creation-Date: 2019-10-06 16:26+0200\n"
+"PO-Revision-Date: 2019-10-16 12:32+0800\n"
 "Last-Translator: lcy0321 <u900011@gmail.com>\n"
 "Language-Team: \n"
 "Language: zh_TW\n"
@@ -66,22 +66,22 @@ msgstr "錯誤：無法建立子背景程序"
 #. __ Options - Text - Emojis - Placement
 #: config.c:522
 msgid "stretch"
-msgstr ""
+msgstr "延展"
 
 #. __ Options - Text - Emojis - Placement
 #: config.c:524
 msgid "align"
-msgstr ""
+msgstr "對齊"
 
 #. __ Options - Text - Emojis - Placement
 #: config.c:526
 msgid "middle"
-msgstr ""
+msgstr "置中"
 
 #. __ Options - Text - Emojis - Placement
 #: config.c:528
 msgid "full"
-msgstr ""
+msgstr "完整"
 
 #. __ %s: unknown option name
 #: config.c:629
@@ -422,17 +422,17 @@ msgstr "字元集(C)"
 #. __ Options - Text:
 #: config.c:3013
 msgid "Emojis"
-msgstr ""
+msgstr "表情符號"
 
 #. __ Options - Text - Emojis:
 #: config.c:3017
 msgid "Style"
-msgstr ""
+msgstr "風格"
 
 #. __ Options - Text - Emojis:
 #: config.c:3021
 msgid "Placement"
-msgstr ""
+msgstr "顯示方式"
 
 #. __ Options - Keys: treeview label
 #: config.c:3029 config.c:3049 config.c:3083
@@ -540,7 +540,7 @@ msgstr "滑鼠功能"
 #. __ Options - Selection:
 #: config.c:3112 config.c:3140 config.c:3151 config.c:3300
 msgid "Cop&y on select"
-msgstr "選擇時複製(&Y)"
+msgstr "選取時複製(&Y)"
 
 #. __ Options - Mouse:
 #. __ Options - Selection:
@@ -630,47 +630,47 @@ msgstr "覆蓋預設設定的修飾鍵"
 #. __ Options - Modifier - Win:
 #: config.c:3238 config.c:3263 config.c:3424 config.c:3449
 msgid "&Win"
-msgstr ""
+msgstr "&Win"
 
 #. __ Options - Modifier - Super:
 #: config.c:3267 config.c:3453
 msgid "&Sup"
-msgstr ""
+msgstr "&Sup"
 
 #. __ Options - Modifier - Hyper:
 #: config.c:3271 config.c:3457
 msgid "&Hyp"
-msgstr ""
+msgstr "&Hyp"
 
 #. __ Options - Selection: treeview label
 #: config.c:3281 config.c:3294 config.c:3350
 msgid "Selection"
-msgstr ""
+msgstr "選取"
 
 #. __ Options - Selection: panel title
 #: config.c:3283
 msgid "Selection and clipboard"
-msgstr ""
+msgstr "選取與剪貼簿"
 
 #. __ Options - Selection:
 #: config.c:3287
 msgid "Clear selection on input"
-msgstr ""
+msgstr "輸入時解除選取"
 
 #. __ Options - Selection: section title
 #: config.c:3296
 msgid "Clipboard"
-msgstr ""
+msgstr "剪貼簿"
 
 #. __ Options - Selection:
 #: config.c:3340
 msgid "Trim space from selection"
-msgstr ""
+msgstr "修剪選取範圍前後的空白"
 
 #. __ Options - Selection:
 #: config.c:3345
 msgid "Allow setting selection"
-msgstr ""
+msgstr "允許調整選取的設定值"
 
 #. __ Options - Selection: section title
 #. __ Options - Window: treeview label
@@ -681,12 +681,12 @@ msgstr "視窗"
 #. __ Options - Selection:
 #: config.c:3357
 msgid "Show size while selecting (0..12)"
-msgstr ""
+msgstr "選取時顯示長度"
 
 #. __ Options - Selection:
 #: config.c:3364
 msgid "Suspend output while selecting"
-msgstr ""
+msgstr "選取時暫停輸出"
 
 #. __ Options - Window: panel title
 #: config.c:3376
