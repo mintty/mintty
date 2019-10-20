@@ -4505,6 +4505,7 @@ main(int argc, char *argv[])
   argv += optind;
   if (wsl_guid && wsl_launch) {
 #ifdef wslbridge2
+    wsl_ver = 1; // quick fix; wslbridge2 branches itself
     cmd = wsl_ver > 1 ? "/bin/hvpty" : "/bin/wslbridge2";
     char * cmd0 = wsl_ver > 1 ? "-hvpty" : "-wslbridge2";
 #else

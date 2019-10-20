@@ -4,18 +4,26 @@
 Mintty supports a number of common places to look for and save its 
 configuration and resources.
 
-For its configuration file, it reads ```/etc/minttyrc```, ```$APPDATA/mintty/config```, 
-```~/.config/mintty/config```, ```~/.minttyrc```, in this order.
+For its configuration, it reads configuration files in this order:
+* `/etc/minttyrc`
+* `$APPDATA/mintty/config`
+* `~/.config/mintty/config`
+* `~/.minttyrc`
 
 For resource files to configure a colour scheme, 
-wave file for the bell character, or localization files, it looks for 
-subfolders ```themes```, ```sounds```, or ```lang```, respectively, 
-in one of the directories ```~/.mintty```, ```~/.config/mintty```, 
-```$APPDATA/mintty```, ```/usr/share/mintty```, whichever is found first.
+wave file for the bell character, localization files, emoji graphics,
+it looks for subfolders `themes`, `sounds`, `lang`, `emojis`, respectively, 
+in the directories
+* `~/.mintty`
+* `~/.config/mintty`
+* `$APPDATA/mintty`
+* `/usr/share/mintty`
 
 The ```~/.config/mintty``` folder is the XDG default base directory.
 The ```$APPDATA/mintty``` folder is especially useful to share common configuration 
 for various installations of mintty (e.g. Cygwin 32/64 Bit, MSYS, Git Bash, WSL).
+An additional directory for a configuration file and configuration resources 
+can be given with command-line parameter ```--configdir```.
 
 
 ## Using desktop shortcuts to start mintty ##
@@ -147,10 +155,11 @@ using either the wsltty installer, a Chocolatey package, or a Windows Appx packa
 
 To help reproduce the installation manually, for users of cygwin or msys2:
 * Download from the https://github.com/Biswa96/wslbridge2 repository
+* Install package dependencies `make`, `g++`, `linux-headers` in WSL
 * Build the wslbridge2 gateways with
-  * `make` for the frontends (e.g. from cygwin)
-  * `wsl make` or `wsl -d` _distro_ `make` for the backends, using a distro that has `make` and `g++` installed
-* From subdirectory `bin`, install the gateway tools `wslbridge2.exe`, `wslbridge2-backend`, `hvpty.exe`, `hvpty-backend` into your `/bin` directory
+  * `make RELEASE=1` for the frontends (e.g. from cygwin)
+  * `wsl make RELEASE=1` or `wsl -d` _distro_ `make RELEASE=1` for the backends
+* From subdirectory `bin`, install the gateway tools `wslbridge2.exe` and `wslbridge2-backend` into your `/bin` directory
 * Make a desktop shortcut (Desktop right-click – New ▸ Shortcut) with
   * Target: `X:\cygwin64\bin\mintty.exe --WSL=`_distro_` -`, with the desired WSL distro (or empty for default)
   * Icon location (Change Icon…) as appropriate; the wsltty installer will find the distro-specific icon
