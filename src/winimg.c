@@ -25,6 +25,69 @@ static size_t const TEMPFILE_MAX_NUM = 16;
 static int cdc = 999;
 
 
+#if CYGWIN_VERSION_API_MINOR >= 74
+
+// GDI+ handling
+static IStream * (WINAPI * pSHCreateMemStream)(void *, UINT) = 0;
+
+#include <w32api/gdiplus/gdiplus.h>
+#include <w32api/gdiplus/gdiplusflat.h>
+
+#define dont_debug_gdiplus
+
+#ifdef debug_gdiplus
+static void
+gpcheck(char * tag, GpStatus s)
+{
+  static char * gps[] = {
+    "Ok",
+    "GenericError",
+    "InvalidParameter",
+    "OutOfMemory",
+    "ObjectBusy",
+    "InsufficientBuffer",
+    "NotImplemented",
+    "Win32Error",
+    "WrongState",
+    "Aborted",
+    "FileNotFound",
+    "ValueOverflow",
+    "AccessDenied",
+    "UnknownImageFormat",
+    "FontFamilyNotFound",
+    "FontStyleNotFound",
+    "NotTrueTypeFont",
+    "UnsupportedGdiplusVersion",
+    "GdiplusNotInitialized",
+    "PropertyNotFound",
+    "PropertyNotSupported",
+    "ProfileNotFound",
+  };
+  if (s)
+    printf("[%s] %d %s\n", tag, s, s >= 0 && s < lengthof(gps) ? gps[s] : "?");
+}
+#else
+#define gpcheck(tag, s)	(void)s
+#endif
+
+static void
+gdiplus_init(void)
+{
+  GpStatus s;
+  static GdiplusStartupInput gi = (GdiplusStartupInput){1, NULL, FALSE, FALSE};
+  static ULONG_PTR gis = 0;
+  if (!gis) {
+    s = GdiplusStartup(&gis, &gi, NULL);
+    gpcheck("startup", s);
+
+    HMODULE shc = GetModuleHandleA("shlwapi");
+    pSHCreateMemStream = (void *)GetProcAddress(shc, "SHCreateMemStream");
+  }
+}
+
+#endif
+
+
 static tempfile_t *
 tempfile_new(void)
 {
@@ -419,8 +482,10 @@ winimg_paint(void)
 #endif
         // now either keep (and display) or delete the image data
         if (keep_flag)
-          StretchBlt(dc, left * cell_width + PADDING, top * cell_height + PADDING,
-                     img->width * cell_width, img->height * cell_height, img->hdc,
+          StretchBlt(dc,
+                     left * cell_width + PADDING, top * cell_height + PADDING,
+                     img->width * cell_width, img->height * cell_height,
+                     img->hdc,
                      0, 0, img->pixelwidth, img->pixelheight, SRCCOPY);
         else {
           //destroy and remove
@@ -455,65 +520,15 @@ winimg_paint(void)
 
 #if CYGWIN_VERSION_API_MINOR >= 74
 
-#include <w32api/wtypes.h>
-#include <w32api/gdiplus/gdiplus.h>
-#include <w32api/gdiplus/gdiplusflat.h>
-
-#define dont_debug_gdiplus
-
-#ifdef debug_gdiplus
-static void
-gpcheck(char * tag, GpStatus s)
-{
-  static char * gps[] = {
-    "Ok",
-    "GenericError",
-    "InvalidParameter",
-    "OutOfMemory",
-    "ObjectBusy",
-    "InsufficientBuffer",
-    "NotImplemented",
-    "Win32Error",
-    "WrongState",
-    "Aborted",
-    "FileNotFound",
-    "ValueOverflow",
-    "AccessDenied",
-    "UnknownImageFormat",
-    "FontFamilyNotFound",
-    "FontStyleNotFound",
-    "NotTrueTypeFont",
-    "UnsupportedGdiplusVersion",
-    "GdiplusNotInitialized",
-    "PropertyNotFound",
-    "PropertyNotSupported",
-    "ProfileNotFound",
-  };
-  if (s)
-    printf("[%s] %d %s\n", tag, s, s >= 0 && s < lengthof(gps) ? gps[s] : "?");
-}
-#else
-#define gpcheck(tag, s)	(void)s
-#endif
-
 #include <fcntl.h>
 #include "charset.h"  // path_win_w_to_posix
-static IStream * (WINAPI * pSHCreateMemStream)(void *, UINT) = 0;
 
 void
 win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int elen, ushort lattr)
 {
+  gdiplus_init();
+
   GpStatus s;
-
-  static GdiplusStartupInput gi = (GdiplusStartupInput){1, NULL, FALSE, FALSE};
-  static ULONG_PTR gis = 0;
-  if (!gis) {
-    s = GdiplusStartup(&gis, &gi, NULL);
-    gpcheck("startup", s);
-
-    HMODULE shc = GetModuleHandleA("shlwapi");
-    pSHCreateMemStream = (void *)GetProcAddress(shc, "SHCreateMemStream");
-  }
 
   bool use_stream = true;
   IStream * fs = 0;
@@ -604,8 +619,8 @@ win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int ele
   HDC dc = GetDC(wnd);
   GpGraphics * gr;
   s = GdipCreateFromHDC(dc, &gr);
-
   gpcheck("hdc", s);
+
   s = GdipDrawImageRectI(gr, img, col, row, w, h);
   gpcheck("draw", s);
   s = GdipFlush(gr, FlushIntentionFlush);
