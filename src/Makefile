@@ -346,7 +346,7 @@ SRCDEBUG+= -e "\((true|1) *\|"
 SRCDEBUG+= -e "& 0($|[^bx])"
 SRCDEBUG+= -e "^///"
 checksrc:
-	if egrep -a $(SRCDEBUG) *.[hc]; then false; fi
+	if egrep -an $(SRCDEBUG) *.[hc]; then false; fi
 
 #############################################################################
 # development and debug targets
