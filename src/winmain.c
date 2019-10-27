@@ -4504,15 +4504,17 @@ main(int argc, char *argv[])
   // Work out what to execute.
   argv += optind;
   if (wsl_guid && wsl_launch) {
+    argc -= optind;
 #ifdef wslbridge2
-    wsl_ver = 1; // quick fix; wslbridge2 branches itself
-    cmd = wsl_ver > 1 ? "/bin/hvpty" : "/bin/wslbridge2";
-    char * cmd0 = wsl_ver > 1 ? "-hvpty" : "-wslbridge2";
+# ifndef __x86_64__
+    argc += 2;  // -V 1/2
+# endif
+    cmd = "/bin/wslbridge2";
+    char * cmd0 = "-wslbridge2";
 #else
     cmd = "/bin/wslbridge";
     char * cmd0 = "-wslbridge";
 #endif
-    argc -= optind;
     bool login_dash = false;
     if (*argv && !strcmp(*argv, "-") && !argv[1]) {
       login_dash = true;
@@ -4523,6 +4525,7 @@ main(int argc, char *argv[])
 #ifdef wslbridge2
     argc += start_home;
 #endif
+
     char ** new_argv = newn(char *, argc + 8 + start_home + (wsltty_appx ? 2 : 0));
     char ** pargv = new_argv;
     if (login_dash) {
@@ -4534,6 +4537,15 @@ main(int argc, char *argv[])
     }
     else
       *pargv++ = cmd;
+#ifdef wslbridge2
+# ifndef __x86_64__
+    *pargv++ = "-V";
+    if (wsl_ver > 1)
+      *pargv++ = "2";
+    else
+      *pargv++ = "1";
+# endif
+#endif
     if (*wsl_guid) {
 #ifdef wslbridge2
       if (*wslname) {
@@ -4597,14 +4609,8 @@ main(int argc, char *argv[])
 
     if (wsltty_appx && lappdata && *lappdata) {
 #ifdef wslbridge2
-      char * wslbridge_backend = asform(
-                                 wsl_ver > 1
-                                 ? "%s/hvpty-backend"
-                                 : "%s/wslbridge2-backend"
-                                 , lappdata);
-      char * bin_backend = wsl_ver > 1
-                           ? "/bin/hvpty-backend"
-                           : "/bin/wslbridge2-backend";
+      char * wslbridge_backend = asform("%s/wslbridge2-backend", lappdata);
+      char * bin_backend = "/bin/wslbridge2-backend";
       bool ok = copyfile(bin_backend, wslbridge_backend, true);
 #else
       char * wslbridge_backend = asform("%s/wslbridge-backend", lappdata);
