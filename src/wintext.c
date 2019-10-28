@@ -7,7 +7,7 @@
 #include "winsearch.h"
 #include "charset.h"  // wcscpy, wcsncat, combiningdouble
 #include "config.h"
-#include "winimg.h"  // winimg_paint
+#include "winimg.h"  // winimgs_paint
 
 #include <winnls.h>
 #include <usp10.h>  // Uniscribe
@@ -1220,7 +1220,7 @@ do_update(void)
   term_update_search();
 
   term_paint();
-  winimg_paint();
+  winimgs_paint();
 
   ReleaseDC(wnd, dc);
 
@@ -4348,7 +4348,7 @@ win_paint(void)
   //if (kb_trace) printf("[%ld] win_paint state %d (idl/blk/pnd)\n", mtime(), update_state);
   if (update_state != UPDATE_PENDING) {
     term_paint();
-    winimg_paint();
+    winimgs_paint();
   }
 
   if (// do not just check whether a background was configured

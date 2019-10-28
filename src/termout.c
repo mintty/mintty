@@ -2880,7 +2880,8 @@ do_dcs(void)
       int pixelheight = st->image.height;
 
       imglist * img;
-      if (!winimg_new(&img, pixels, left, top, width, height, pixelwidth, pixelheight) != 0) {
+      if (!winimg_new(&img, 0, pixels, 0, left, top, width, height, pixelwidth, pixelheight, false)) {
+        free(pixels);
         sixel_parser_deinit(st);
         //printf("free state 4 %p\n", term.imgs.parser_state);
         free(term.imgs.parser_state);
@@ -3325,6 +3326,129 @@ do_cmd(void)
       }
       else
         term.curs.attr.link = -1;
+    }
+    when 1337: {  // iTerm2 image protocol
+                  // https://www.iterm2.com/documentation-images.html
+      char * payload = strchr(s, ':');
+      if (payload) {
+        *payload = 0;
+        payload++;
+      }
+
+      // verify protocol
+      if (0 == strncmp("File=", s, 5))
+        s += 5;
+      else
+        return;
+
+      char * name = 0;
+      int width = 0;
+      int height = 0;
+      int pixelwidth = 0;
+      int pixelheight = 0;
+      bool pAR = true;
+
+      // process parameters
+      while (s && *s) {
+        char * nxt = strchr(s, ';');
+        if (nxt) {
+          *nxt = 0;
+          nxt++;
+        }
+        char * sval = strchr(s, '=');
+        if (sval) {
+          *sval = 0;
+          sval++;
+        }
+        else
+          sval = "";
+        int val = atoi(sval);
+        char * suf = sval;
+        while (isdigit((uchar)*suf))
+          suf++;
+        bool pix = 0 == strcmp("px", suf);
+        bool per = 0 == strcmp("%", suf);
+        //printf("<%s>=<%s>%d<%s>\n", s, sval, val, suf);
+
+        if (0 == strcmp("name", s))
+          name = s;  // can serve as cache id
+        else if (0 == strcmp("width", s)) {
+          if (pix) {
+            pixelwidth = val;
+            width = (val - 1) / cell_width + 1;
+          }
+          else if (per) {
+            width = term.cols * val / 100;
+            pixelwidth = width * cell_width;
+          }
+          else {
+            width = val;
+            pixelwidth = val * cell_width;
+          }
+        }
+        else if (0 == strcmp("height", s)) {
+          if (pix) {
+            pixelheight = val;
+            height = (val - 1) / cell_height + 1;
+          }
+          else if (per) {
+            height = term.rows * val / 100;
+            pixelheight = height * cell_height;
+          }
+          else {
+            height = val;
+            pixelheight = val * cell_height;
+          }
+        }
+        else if (0 == strcmp("preserveAspectRatio", s)) {
+          pAR = val;
+        }
+
+        s = nxt;
+      }
+
+      if (payload) {
+#ifdef strip_newlines
+#warning not applicable as preprocessing OSC would not pass it here
+        char * from = strpbrk(payload, "\r\n");
+        if (from) {  // strip new lines
+          char * to = from;
+          while (*from) {
+            if (*from >= ' ')
+              *to++ = *from;
+            from++;
+          }
+          *to = 0;
+        }
+#endif
+        int len = strlen(payload);
+        int datalen = len - (len / 4);
+        void * data = malloc(datalen);
+        if (!data)
+          return;
+        datalen = base64_decode_clip(payload, len, data, datalen);
+        if (datalen > 0) {
+          // OK
+          imglist * img;
+          short left = term.curs.x;
+          short top = term.virtuallines + term.curs.y;
+          if (winimg_new(&img, name, data, datalen, left, top, width, height, pixelwidth, pixelheight, pAR)) {
+            fill_image_space(img);
+
+            if (term.imgs.first == NULL) {
+              term.imgs.first = term.imgs.last = img;
+            } else {
+              // append image to list
+              term.imgs.last->next = img;
+              term.imgs.last = img;
+            }
+          }
+          else
+            free(data);
+        }
+        else
+          free(data);
+      }
     }
   }
 }

@@ -263,6 +263,8 @@ extern int sblines(void);
 extern termline *fetch_line(int y);
 extern void release_line(termline *);
 
+
+/* Terminal state */
 typedef struct {
   int width;
   ushort lattr;
@@ -312,11 +314,13 @@ typedef struct {
   bool r;
 } pos;
 
+
 typedef enum {
   MBT_LEFT = 1, MBT_MIDDLE = 2, MBT_RIGHT = 3, MBT_4 = 4, MBT_5 = 5
 } mouse_button;
 
 
+/* Searching */
 typedef struct {
   int x;
   int y;
@@ -335,38 +339,42 @@ typedef struct {
 } termresults;
 
 
+/* Images */
 typedef struct {
-  void *fp;
+  void * fp;
   uint ref_counter;
   uint amount;
 } tempfile_t;
 
 typedef struct {
-  tempfile_t *tempfile;
+  tempfile_t * tempfile;
   size_t position;
 } temp_strage_t;
 
 typedef struct imglist {
   int imgi;
-  unsigned char *pixels;
-  void *hdc;
-  void *hbmp;
-  temp_strage_t *strage;
+  int cell_width, cell_height;
+  unsigned char * pixels;
+  void * hdc;
+  void * hbmp;
+  temp_strage_t * strage;
   int top;
   int left;
   int width;
   int height;
   int pixelwidth;
   int pixelheight;
-  struct imglist *next;
+  struct imglist * next;
+  char * id;
+  int len;
 } imglist;
 
 typedef struct {
-  void *parser_state;
-  imglist *first;
-  imglist *last;
-  imglist *altfirst;
-  imglist *altlast;
+  void * parser_state;
+  imglist * first;
+  imglist * last;
+  imglist * altfirst;
+  imglist * altlast;
 } termimgs;
 
 
