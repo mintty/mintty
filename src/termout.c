@@ -842,6 +842,16 @@ mapfont(char * script, uchar f)
   for (uint i = 0; i < lengthof(scriptfonts); i++)
     if (0 == strcmp(scriptfonts[i].scriptname, script))
       scriptfonts[i].font = f;
+  if (0 == strcmp(script, "CJK")) {
+    mapfont("Han", f);
+    mapfont("Hangul", f);
+    mapfont("Katakana", f);
+    mapfont("Hiragana", f);
+    mapfont("Bopomofo", f);
+    mapfont("Kanbun", f);
+    mapfont("Fullwidth", f);
+    mapfont("Halfwidth", f);
+  }
 }
 
 static char *

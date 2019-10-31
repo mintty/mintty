@@ -17,6 +17,23 @@ getranges () {
 	egrep '^[^#]' Scripts.txt
 	egrep "(Arrows|Mathematical Operators|Technical|Enclosed Alphanumerics|Pictographs|Control Pictures|Optical|Box Drawing|Miscellaneous.*Symbols|Block Elements|Geometric Shapes|Dingbats|Tiles|Cards|Emoticons|Transport|Alchemical|Chess)" Blocks.txt |
 	sed -e "s,;.*, ; PictoSymbols,"
+	cat <</eou
+3030..3037; CJK # CJK Symbols and Punctuation
+303C..303F; CJK # CJK Symbols and Punctuation
+3190..319F; Kanbun # Kanbun
+31C0..31EF; CJK # CJK Symbols and Punctuation
+327F..32CF; CJK # Enclosed CJK Letters and Months
+3358..33FF; CJK # CJK Compatibility
+FE30..FE4F; CJK # CJK Compatibility Forms
+FF01..FF20; Fullwidth Forms # Halfwidth and Fullwidth Forms
+FF5B..FF5E; Fullwidth Forms # Halfwidth and Fullwidth Forms
+FF5F..FF60; Fullwidth Forms # Halfwidth and Fullwidth Forms
+FF61..FF65; Halfwidth Forms # Halfwidth and Fullwidth Forms
+FF9E..FF9F; Katakana Symbols # Halfwidth and Fullwidth Forms
+FFE0..FFEE; Fullwidth Forms # Halfwidth and Fullwidth Forms
+16FE2..16FFF; CJK # Ideographic Symbols and Punctuation
+1F201..1F2FF; CJK # Enclosed Ideographic Supplement
+/eou
 }
 
 CC=${CC-cc}
