@@ -931,6 +931,10 @@ write_ucschar(wchar hwc, wchar wc, int width)
   cattrflags attr = term.curs.attr.attr;
   ucschar c = hwc ? combine_surrogates(hwc, wc) : wc;
   uchar cf = scriptfont(c);
+#ifdef debug_scriptfonts
+  if (c && cf)
+    printf("scriptfont %04X: %d\n", c, cf);
+#endif
   if (cf && cf <= 10 && !(attr & FONTFAM_MASK))
     term.curs.attr.attr = attr | ((cattrflags)cf << ATTR_FONTFAM_SHIFT);
 
