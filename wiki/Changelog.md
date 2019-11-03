@@ -1,5 +1,6 @@
 Terminal features
   * Fixed sixel image management (#929).
+  * Glyph checking (OSC 7771) considers FontChoice.
 
 Keyboard handling
   * Fixed AltGr handling for AutoHotKey (#932).

@@ -41,6 +41,7 @@ term_selecting(void)
 { return term.mouse_state < 0 && term.mouse_state >= MS_SEL_LINE; }
 
 extern void term_update_cs(void);
+extern uchar scriptfont(ucschar ch);
 
 extern void clear_emoji_data(void);
 extern char * get_emoji_description(termchar *);

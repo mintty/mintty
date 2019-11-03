@@ -3868,6 +3868,7 @@ win_check_glyphs(wchar *wcs, uint num, cattrflags attr)
   int findex = (attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
   if (findex > 10)
     findex = 0;
+
   struct fontfam * ff = &fontfamilies[findex];
 
   HFONT f = font4(ff, attr);
@@ -3876,6 +3877,22 @@ win_check_glyphs(wchar *wcs, uint num, cattrflags attr)
   SelectObject(dc, f);
   ushort glyphs[num];
   GetGlyphIndicesW(dc, wcs, num, glyphs, true);
+
+  // recheck for characters affected by FontChoice
+  for (uint i = 0; i < num; i++) {
+    uchar cf = scriptfont(wcs[i]);
+#ifdef debug_scriptfonts
+    if (wcs[i] && cf)
+      printf("scriptfont %04X: %d\n", wcs[i], cf);
+#endif
+    if (cf && cf <= 10) {
+      struct fontfam * ff = &fontfamilies[cf];
+      f = font4(ff, attr);
+      SelectObject(dc, f);
+      GetGlyphIndicesW(dc, &wcs[i], 1, &glyphs[i], true);
+    }
+  }
+
   for (uint i = 0; i < num; i++) {
     if (glyphs[i] == 0xFFFF || glyphs[i] == 0x1F)
       wcs[i] = 0;

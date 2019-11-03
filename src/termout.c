@@ -900,7 +900,7 @@ init_scriptfonts(void)
   scriptfonts_init = true;
 }
 
-static uchar
+uchar
 scriptfont(ucschar ch)
 {
   if (!*cfg.font_choice)
