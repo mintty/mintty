@@ -1322,11 +1322,14 @@ selected locale and character set.
 unrelated to the terminal character set (e.g. LC_MESSAGES) are cleared 
 to avoid confusion.
 
-\fINote:\fP If the locale option is set, mintty further checks whether 
+\fINote:\fP If the \fBLocale\fP option is set, mintty further checks whether 
 the locale is a "wide" locale (i.e. ambiguous-width characters are wide 
-in the locale) but the selected font is actually "ambiguous-narrow" 
-(i.e. ambiguous-width characters are narrow in the font) in which case it 
-appends the "@cjknarrow" locale modifier.
+in a CJK locale) but the selected font is actually "ambiguous-narrow" 
+(i.e. ambiguous-width characters are narrow in the font, as detected at 
+characters U+03B1 and U+2500) in which case it appends the 
+"@cjknarrow" locale modifier, in order to adapt the selected locale to 
+the chosen font.
+(This would be overridden by setting \fBCharwidth=ambig-wide\fP.)
 
 By default, the selected locale also determines the character width 
 assumptions used for screen rendering. For exceptions, see the 
