@@ -1,5 +1,6 @@
 Terminal features
   * Fixed sixel image management (#929).
+  * Fixed premature discarding of partially scrolled-out image.
   * Glyph checking (OSC 7771) considers FontChoice.
 
 Keyboard handling

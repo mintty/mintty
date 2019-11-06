@@ -590,7 +590,7 @@ winimgs_paint(void)
     // if the image is out of scrollback, collect it
     if (img->top + img->height - term.virtuallines < - term.sblines) {
 #ifdef debug_img_list
-      printf("paint: destroy v@%d\n", img->top);
+      printf("paint: destroy @%d h %d virt %lld sb %d\n", img->top, img->height, term.virtuallines, term.sblines);
 #endif
       destrimg = img;
     } else {
@@ -599,7 +599,8 @@ winimgs_paint(void)
       int top = img->top - term.virtuallines - term.disptop;
       if (top + img->height < 0 || top > term.rows) {
 #ifdef debug_img_list
-        printf("paint: hibernate img %p v@%d s@%d\n", img, img->top, top);
+        if (img->hdc)
+          printf("paint: hibernate img %p v@%d s@%d\n", img, img->top, top);
 #endif
         winimg_hibernate(img);
       } else {
@@ -611,7 +612,7 @@ winimgs_paint(void)
         // check all cells of image area;
         // overwritten cells are excluded from display,
         // if all cells are overwritten, flag for deletion
-        bool keep_flag = false;
+        bool disp_flag = false;
         for (int y = max(0, top); y < min(top + img->height, term.rows); ++y) {
           int wide_factor = (term.displines[y]->lattr & LATTR_MODE) == LATTR_NORM ? 1: 2;
           for (int x = left; x < min(left + img->width, term.cols); ++x) {
@@ -624,7 +625,7 @@ winimgs_paint(void)
               clip_flag = true;
             else if (img->imgi - dchar->attr.imgi >= 0)
               // need to keep newer image, as sync may take a while
-              keep_flag = true;
+              disp_flag = true;
             if (dchar->attr.attr & (TATTR_RESULT | TATTR_CURRESULT | TATTR_MARKED | TATTR_CURMARKED))
               clip_flag = true;
             if (term.selected && !clip_flag) {
@@ -642,7 +643,7 @@ winimgs_paint(void)
           }
         }
         // now either keep (and display) or delete the image data
-        if (keep_flag) {
+        if (disp_flag) {
 #ifdef debug_img_list
           printf("paint: display img\n");
 #endif
@@ -655,10 +656,14 @@ winimgs_paint(void)
                        img->hdc,
                        0, 0, img->pixelwidth, img->pixelheight, SRCCOPY);
         }
+        else if (top < 0 || top + img->height > term.rows) {
+          // we did not check the scrolled-out image part, 
+          // so keep the image for later display (when scrolled-in again)
+        }
         else {
           //destroy and remove
 #ifdef debug_img_list
-          printf("paint: destroy img\n");
+          printf("paint: destroy @%d h %d virt %lld sb %d\n", img->top, img->height, term.virtuallines, term.sblines);
 #endif
           destrimg = img;
         }
