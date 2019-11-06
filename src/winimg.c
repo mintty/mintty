@@ -511,11 +511,16 @@ draw_img(HDC dc, imglist * img)
       gpcheck("load stream", s);
     }
 
+    // cropping not yet supported
+    int crop_left = 0, crop_top = 0, crop_width = 0, crop_height = 0;
+
+    // position
     int left = img->left * cell_width;
     int top = (img->top - term.virtuallines - term.disptop) * cell_height;
     int width = img->pixelwidth;
     int height = img->pixelheight;
-    int crop_left = 0, crop_top = 0, crop_width = 0, crop_height = 0;
+    left += PADDING;
+    top += PADDING;
 
     int coord_transformed = 0;
     XFORM old_xform;
@@ -587,17 +592,18 @@ winimgs_paint(void)
   imglist * prev = 0;
   for (img = term.imgs.first; img;) {
     imglist * destrimg = 0;
-    // if the image is out of scrollback, collect it
+
     if (img->top + img->height - term.virtuallines < - term.sblines) {
+      // if the image is out of scrollback, collect it
 #ifdef debug_img_list
       printf("paint: destroy @%d h %d virt %lld sb %d\n", img->top, img->height, term.virtuallines, term.sblines);
 #endif
       destrimg = img;
     } else {
-      // if the image is scrolled out, serialize it into a temp file.
       int left = img->left;
       int top = img->top - term.virtuallines - term.disptop;
       if (top + img->height < 0 || top > term.rows) {
+        // if the image is scrolled out, serialize it into a temp file
 #ifdef debug_img_list
         if (img->hdc)
           printf("paint: hibernate img %p v@%d s@%d\n", img, img->top, top);
@@ -609,6 +615,7 @@ winimgs_paint(void)
 #endif
         // create DC handle if it is not initialized, or resume from hibernate
         winimg_lazyinit(img);
+
         // check all cells of image area;
         // overwritten cells are excluded from display,
         // if all cells are overwritten, flag for deletion
@@ -642,7 +649,19 @@ winimgs_paint(void)
                               (y + 1) * cell_height + PADDING);
           }
         }
-        // now either keep (and display) or delete the image data
+
+        // fill image area background (in case it's smaller or transparent)
+        int ytop = max(0, top) * cell_height + PADDING;
+        int ybot = min(top + img->height, term.rows) * cell_height + PADDING;
+        int xlft = left * cell_width + PADDING;
+        int xrgt = min(left + img->width, term.cols) * cell_width + PADDING;
+        colour bg = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
+        //bg = RGB(90, 150, 222);  // test background filling
+        HBRUSH br = CreateSolidBrush(bg);
+        FillRect(dc, &(RECT){xlft, ytop, xrgt, ybot}, br);
+        DeleteObject(br);
+
+        // now display, keep, or delete the image data
         if (disp_flag) {
 #ifdef debug_img_list
           printf("paint: display img\n");
@@ -669,6 +688,7 @@ winimgs_paint(void)
         }
       }
     }
+
     // proceed to next image in list; destroy current if requested
     if (destrimg) {
       if (img == term.imgs.first)
