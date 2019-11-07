@@ -2117,6 +2117,8 @@ term_paint(void)
             if (j + 1 < term.cols && chars[j + 1].chr != ' ')
 #endif
             tattr.attr |= ATTR_NARROW;
+            //if (ch != 0x25CC)
+            //printf("char %lc U+%04X narrow %d ambig %d\n", ch, ch, !!(tattr.attr & ATTR_NARROW), ambigwide(ch));
         }
         else if (tattr.attr & ATTR_WIDE
                  // guard character expanding properly to avoid 

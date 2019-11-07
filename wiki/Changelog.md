@@ -8,6 +8,7 @@ Keyboard handling
 
 Font rendering
   * Meta-script name "CJK" for FontChoice (#928).
+  * Adjusted default value CharNarrowing from 80 to 75 (#922).
 
 Other
   * Collect font warnings into one popup message.
