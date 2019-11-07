@@ -544,6 +544,24 @@ draw_img(HDC dc, imglist * img)
     if (coord_transformed)
       SetWorldTransform(dc, &old_xform);
 
+#ifdef fill_bg_gdiplus
+    // attempt to reduce flickering; replace FillRect below;
+    // does not work, still flickering;
+    // also, scaling and cropping is still buggy
+    GpSolidFill * br;
+    colour bg = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
+    bg = RGB(90, 150, 222);  // test background filling
+    s = GdipCreateSolidFill(0xFF000000 | red(bg) << 16 | green(bg) << 8 | blue(bg), &br);
+    gpcheck("brush create", s);
+    // this does not fill the canvas:
+    s = GdipFillRectangleI(gr, br, left, top, width, height);
+    // this is doubly scaled:
+    s = GdipFillRectangleI(gr, br, left, top, img->width * cell_width, img->height * cell_height);
+    gpcheck("brush fill", s);
+    s = GdipDeleteBrush(br);
+    gpcheck("brush delete", s);
+#endif
+
     if (crop_left || crop_top || crop_width || crop_height)
       s = GdipDrawImageRectRectI(gr, gimg,
                                  left, top, width, height,
@@ -651,6 +669,7 @@ winimgs_paint(void)
         }
 
         // fill image area background (in case it's smaller or transparent)
+#ifndef fill_bg_gdiplus
         int ytop = max(0, top) * cell_height + PADDING;
         int ybot = min(top + img->height, term.rows) * cell_height + PADDING;
         int xlft = left * cell_width + PADDING;
@@ -660,6 +679,7 @@ winimgs_paint(void)
         HBRUSH br = CreateSolidBrush(bg);
         FillRect(dc, &(RECT){xlft, ytop, xrgt, ybot}, br);
         DeleteObject(br);
+#endif
 
         // now display, keep, or delete the image data
         if (disp_flag) {
