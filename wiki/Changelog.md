@@ -6,6 +6,9 @@ Terminal features
 Keyboard handling
   * Fixed AltGr handling for AutoHotKey (#932).
 
+Font rendering
+  * Meta-script name "CJK" for FontChoice (#928).
+
 Other
   * Collect font warnings into one popup message.
 

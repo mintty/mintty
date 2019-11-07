@@ -700,16 +700,21 @@ With this feature, you can e.g. use a different font for CJK characters.
 Script names are as specified in the Unicode file Scripts.txt, listed in 
 [wiki: Unicode scripts](https://en.wikipedia.org/wiki/Script_(Unicode)) column "Alias".
 
+A special name is `CJK` which comprises Han, Hangul, Katakana, Hiragana, Bopomofo, Kanbun, 
+Halfwidth and Fullwidth Forms (except Latin). A later more specific entry 
+will override an earlier one (see CJK example below).
+
 Configuration example:
 ```
-FontChoice=Hebrew:6;Arabic:7;Han:8;Hangul:9
+FontChoice=Hebrew:6;Arabic:7;CJK:5;Han:8;Hangul:9
 Font6=David
 Font7=Simplified Arabic Fixed
+Font5=Malgun Gothic
 Font8=FangSong
 Font9=MingLiU
 ```
 
-A special name is `PictoSymbols` to assign an alternative font to 
+Another special name is `PictoSymbols` to assign an alternative font to 
 ranges of pictographic symbols, including arrows, mathematical and technical 
 symbols, shapes, dingbats, emoticons etc.
 Configuration example:

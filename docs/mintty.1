@@ -1107,6 +1107,7 @@ Script names are as specified in the Unicode file Scripts.txt, listed
 in \fIhttps://en.wikipedia.org/wiki/Script_(Unicode)\fP column "Alias".
 (The definition list can be split over multiple lines if a separator is 
 followed by a backslash, newline, and optional whitespace indentation.)
+.br
 A special name is \fBPictoSymbols\fP to assign an alternative font to 
 ranges of pictographic symbols from Unicode blocks matching 
 Arrows, Mathematical Operators, Technical, Enclosed Alphanumerics, 
@@ -1114,13 +1115,21 @@ Pictographs, Control Pictures, Optical, Box Drawing, Miscellaneous.*Symbols,
 Block Elements, Geometric Shapes, Dingbats, Tiles, Cards, Emoticons, 
 Transport, Alchemical, Chess.
 .br
+Another special name is \fBCJK\fP which comprises Han, Hangul, 
+Katakana, Hiragana, Bopomofo, Kanbun, 
+Halfwidth and Fullwidth Forms (except Latin). A later more specific entry 
+will override an earlier one (see CJK example below).
+
+.br
 Example:
 .br
-  \fBFontChoice=Hebrew:6;Arabic:7;Han:8;Hangul:9\fP
+  \fBFontChoice=Hebrew:6;Arabic:7;CJK:5;Han:8;Hangul:9\fP
 .br
   \fBFont6=David\fP
 .br
   \fBFont7=Simplified Arabic Fixed\fP
+.br
+  \fBFont5=Malgun Gothic\fP
 .br
   \fBFont8=FangSong\fP
 .br
