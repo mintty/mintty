@@ -851,6 +851,12 @@ GNUTERM=sixel gnuplot -e "splot [x=-3:3] [y=-3:3] sin(x) * cos(y)"
 \fINote:\fP The number of sixel images displayed on the screen is limited 
 in order to prevent Windows handle resource exhaustion.
 
+.TP
+\fBImage support\fP
+In addition to the legacy sixel feature, mintty supports graphic image display 
+(using iTerm2 controls). Image formats supported comprise
+PNG, JPEG, GIF, TIFF, BMP, Exif.
+
 .SS Emoji display support
 
 Mintty supports display of emojis as defined by Unicode using 
@@ -3044,7 +3050,7 @@ In addition, mintty supports a maximum of ANSI and ECMA-48 character attribute c
 strikeout, rapid blinking, alternative fonts) and additional 
 rendering attributes (underline styles and colours, superscript and subscript, 
 shadowed and overstrike).
-Mintty provides Sixel graphics support, Emoji support, and 
+Mintty provides Sixel graphics and other image support, Emoji support, and 
 Bidi reordering according to the Unicode Bidi Algorithm UBA, amended 
 with flexible bidi controls according to the draft bidi mode model of 
 the \fBBiDi in Terminal Emulators\fP recommendation 

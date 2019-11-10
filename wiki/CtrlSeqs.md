@@ -405,9 +405,37 @@ two features:
 | `^[[?7711l`   | mark secondary prompt line (upper lines) |
 
 
-## Sixel graphics end position ##
+## Image support ##
 
-After output of a sixel image in sixel scrolling mode, 
+In addition to the legacy sixel feature, mintty supports graphic image display 
+via iTerm2 controls:
+
+> `^[]1337;File=` _par_`=`_arg_ [ `;`_par_`=`_arg_ ]* `:`_image_ `^G`
+
+| **par**                  | **arg**           | **comment**        |
+|:-------------------------|:------------------|:-------------------|
+| **name=**                | base64-encoded ID | currently not used |
+| **width=**               | size (*)          | cell/pixel/percentage |
+| **height=**              | size (*)          | cell/pixel/percentage |
+| **preserveAspectRatio=** | 1 _or_ 0 | only used if **width** and **height** are given |
+| _image_                  |          | base64-encoded image data |
+
+The width or height size arguments use cell units by default. Optionally, 
+an appended "px" or "%" refers to the number of pixels or the percentage of 
+screen size at the time of image output.
+
+If both width and height are given, the preserveAspectRatio parameter can 
+select whether to fit the image in the denoted area or stretch it to fill it.
+If only one of width or height are given, the other dimension is scaled so 
+that the aspect ratio is preserved.
+If none of width or height are given, the image pixel size is used.
+
+Image formats supported comprise PNG, JPEG, GIF, TIFF, BMP, Exif.
+
+
+## Graphics end position ##
+
+After output of a sixel image in sixel scrolling mode, or other image, 
 the final cursor position can be next to the right bottom of the image, 
 below the left bottom of the image (default), or at the line beginning 
 below the image (like xterm). The mintty private sequence 7730 chooses 
@@ -429,8 +457,8 @@ can be used to control cursor shape and blinking.
 It takes an optional second parameter (proprietary extension) to set the 
 blinking interval in milliseconds.
 
-> `^[ [` _arg_ _SP_ `q`
-> `^[ [` _arg_ `;` _arg_ _SP_ `q`
+> `^[[` _arg_ _SP_ `q`
+> `^[[` _arg_ `;` _blink_ _SP_ `q`
 
 | **arg** | **shape**    | **blink** |
 |:--------|:-------------|:----------|

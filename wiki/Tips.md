@@ -1053,6 +1053,12 @@ gnuplot -e "splot [x=-3:3] [y=-3:3] sin(x) * cos(y)"
 Note that gnuplot uses black text on default background for captions 
 and coordinates so better not run it in a terminal with dark background.
 
+### Image support ###
+
+In addition to the legacy sixel feature, mintty supports graphic image display 
+(using iTerm2 controls). Image formats supported comprise
+PNG, JPEG, GIF, TIFF, BMP, Exif.
+
 
 ## Localization ##
 

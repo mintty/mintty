@@ -1,4 +1,5 @@
 Terminal features
+  * Graphic image output support (iTerm2).
   * Fixed sixel image management (#929).
   * Fixed premature discarding of partially scrolled-out image.
   * Glyph checking (OSC 7771) considers FontChoice.
