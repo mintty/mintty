@@ -288,8 +288,8 @@ are not indicated by the terminfo/termcap mechanism.
 
 The most reliable way to determine the terminal type is to use the 
 Secondary Device Attributes report queried from the terminal.
-The script `terminal` in the mintty [utils repository](https://github.com/mintty/utils) 
-provides an implementation.
+The script `terminal` in the mintty 
+[utils repository](https://github.com/mintty/utils) provides an implementation.
 
 Using environment variables for this purpose is not reliable and therefore 
 not supported. See [issue #776](https://github.com/mintty/mintty/issues/776) 
@@ -1039,12 +1039,13 @@ the left or right neighbour monitor: Win+Shift+cursor-left/right.
 
 ## Embedding graphics in terminal output ##
 
-The new support of the SIXEL feature facilitates a range of applications 
-that integrate graphic images in the terminal, animated graphics, and even 
-video and interactive gaming applications.
+Mintty supports both SIXEL graphics and image graphics output (see below).
 
-An example of the benefit of this feature is the output of `gnuplot` 
-with the command
+The Sixel feature facilitates a range of applications that integrate 
+graphic images in the terminal, animated graphics, and even video and 
+interactive gaming applications.
+
+An example is the output of `gnuplot` with the command
 ```
 export GNUTERM=sixel
 gnuplot -e "splot [x=-3:3] [y=-3:3] sin(x) * cos(y)"
@@ -1058,6 +1059,10 @@ and coordinates so better not run it in a terminal with dark background.
 In addition to the legacy sixel feature, mintty supports graphic image display 
 (using iTerm2 controls). Image formats supported comprise
 PNG, JPEG, GIF, TIFF, BMP, Exif.
+
+The script `showimg` in the 
+mintty [utils repository](https://github.com/mintty/utils) supports 
+interactive image display.
 
 
 ## Localization ##

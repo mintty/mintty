@@ -544,32 +544,40 @@ draw_img(HDC dc, imglist * img)
     if (coord_transformed)
       SetWorldTransform(dc, &old_xform);
 
+#define fill_bg_gdiplus
 #ifdef fill_bg_gdiplus
-    // attempt to reduce flickering; replace FillRect below;
-    // does not work, still flickering;
-    // also, scaling and cropping is still buggy
+    // fill image area background (in case it's smaller or transparent);
+    // background image brush should be used if configured
     GpSolidFill * br;
     colour bg = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
-    bg = RGB(90, 150, 222);  // test background filling
+    //bg = RGB(90, 150, 222);  // test background filling
     s = GdipCreateSolidFill(0xFF000000 | red(bg) << 16 | green(bg) << 8 | blue(bg), &br);
     gpcheck("brush create", s);
-    // this does not fill the canvas:
-    s = GdipFillRectangleI(gr, br, left, top, width, height);
-    // this is doubly scaled:
-    s = GdipFillRectangleI(gr, br, left, top, img->width * cell_width, img->height * cell_height);
+
+    int cwidth = img->width * img->cell_width;
+    int cheight = img->height * img->cell_height;
+    s = GdipFillRectangleI(gr, br, left + width, top, cwidth - width, height);
     gpcheck("brush fill", s);
+    s = GdipFillRectangleI(gr, br, left, top + height, cwidth, cheight - height);
+    gpcheck("brush fill", s);
+
     s = GdipDeleteBrush(br);
     gpcheck("brush delete", s);
 #endif
 
+    // can we fill transparent background with this mechanism somehow?
+    //GpImageAttributes * iattr;
+    //GdipCreateImageAttributes(&iattr);
     if (crop_left || crop_top || crop_width || crop_height)
       s = GdipDrawImageRectRectI(gr, gimg,
                                  left, top, width, height,
                                  crop_left, crop_top, crop_width, crop_height,
-                                 UnitPixel, 0, 0, 0);
+                                 UnitPixel, (GpImageAttributes *)0, 0, 0);
     else
       s = GdipDrawImageRectI(gr, gimg, left, top, width, height);
     gpcheck("draw", s);
+    //GdipDisposeImageAttributes(iattr);
+
     s = GdipFlush(gr, FlushIntentionFlush);
     gpcheck("flush", s);
 
@@ -668,8 +676,9 @@ winimgs_paint(void)
           }
         }
 
-        // fill image area background (in case it's smaller or transparent)
 #ifndef fill_bg_gdiplus
+        // fill image area background (in case it's smaller or transparent);
+        // background image brush should be used if configured
         int ytop = max(0, top) * cell_height + PADDING;
         int ybot = min(top + img->height, term.rows) * cell_height + PADDING;
         int xlft = left * cell_width + PADDING;
