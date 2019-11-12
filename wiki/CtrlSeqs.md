@@ -380,8 +380,10 @@ The _file-URL_ liberally follows a `file:` URL scheme; examples are
 The following _OSC_ ("operating system command") sequence can be used to 
 set a hyperlink attribute which is opened on Ctrl-click.
 
-| `^[]8;;`_URL_`^G` | underlay text with the hyperlink |
-| `^[]8;;^G` | clear hyperlink attribute (terminate hyperlink) |
+| **link control**         | **function**           |
+|:-------------------------|:------------------|
+| `^[]8;;`_URL_`^G`        | underlay text with the hyperlink |
+| `^[]8;;^G`               | clear hyperlink attribute (terminate hyperlink) |
 | `^[]8;id=`ID`;`_URL_`^G` | associate instances of hyperlink |
 
 A typical hyperlinked text would be written like
@@ -458,6 +460,7 @@ It takes an optional second parameter (proprietary extension) to set the
 blinking interval in milliseconds.
 
 > `^[[` _arg_ _SP_ `q`
+
 > `^[[` _arg_ `;` _blink_ _SP_ `q`
 
 | **arg** | **shape**    | **blink** |
