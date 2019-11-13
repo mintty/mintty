@@ -682,7 +682,7 @@ winimgs_paint(void)
         // fill image area background (in case it's smaller or transparent);
         // background image brush should be used if configured
         colour bg = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
-        bg = RGB(90, 150, 222);  // test background filling
+        //bg = RGB(90, 150, 222);  // test background filling
         HBRUSH br = CreateSolidBrush(bg);
 
         // determine area for padding
