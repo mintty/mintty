@@ -1227,6 +1227,13 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
     scroll_pos(&term.sel_start);
     scroll_pos(&term.sel_anchor);
     scroll_pos(&term.sel_end);
+
+    // Move graphics if within the scroll region
+    for (imglist * cur = term.imgs.first; cur; cur = cur->next) {
+      if (cur->top - term.virtuallines >= topline) {
+        cur->top += lines;
+      }
+    }
   }
   else {
     int seltop = topline;
