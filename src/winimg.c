@@ -544,21 +544,23 @@ draw_img(HDC dc, imglist * img)
     if (coord_transformed)
       SetWorldTransform(dc, &old_xform);
 
-#define fill_bg_gdiplus
 #ifdef fill_bg_gdiplus
     // fill image area background (in case it's smaller or transparent);
-    // background image brush should be used if configured
+    // background image brush should be used if configured;
+    // that'll be tricky since we've transformed coordinates here,
+    // so better do the padding before, in the GDI domain (FillRect below)
     GpSolidFill * br;
     colour bg = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
     //bg = RGB(90, 150, 222);  // test background filling
     s = GdipCreateSolidFill(0xFF000000 | red(bg) << 16 | green(bg) << 8 | blue(bg), &br);
     gpcheck("brush create", s);
 
-    int cwidth = img->width * img->cell_width;
-    int cheight = img->height * img->cell_height;
-    s = GdipFillRectangleI(gr, br, left + width, top, cwidth - width, height);
+    // determine area size for padding
+    int awidth = img->width * img->cell_width;
+    int aheight = img->height * img->cell_height;
+    s = GdipFillRectangleI(gr, br, left + width, top, awidth - width, height);
     gpcheck("brush fill", s);
-    s = GdipFillRectangleI(gr, br, left, top + height, cwidth, cheight - height);
+    s = GdipFillRectangleI(gr, br, left, top + height, awidth, aheight - height);
     gpcheck("brush fill", s);
 
     s = GdipDeleteBrush(br);
@@ -679,14 +681,21 @@ winimgs_paint(void)
 #ifndef fill_bg_gdiplus
         // fill image area background (in case it's smaller or transparent);
         // background image brush should be used if configured
+        colour bg = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
+        bg = RGB(90, 150, 222);  // test background filling
+        HBRUSH br = CreateSolidBrush(bg);
+
+        // determine area for padding
         int ytop = max(0, top) * cell_height + PADDING;
         int ybot = min(top + img->height, term.rows) * cell_height + PADDING;
         int xlft = left * cell_width + PADDING;
         int xrgt = min(left + img->width, term.cols) * cell_width + PADDING;
-        colour bg = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
-        //bg = RGB(90, 150, 222);  // test background filling
-        HBRUSH br = CreateSolidBrush(bg);
-        FillRect(dc, &(RECT){xlft, ytop, xrgt, ybot}, br);
+        // determine image size for padding
+        int iwidth = img->pixelwidth * cell_width / img->cell_width;
+        int iheight = img->pixelheight * cell_height / img->cell_height;
+        FillRect(dc, &(RECT){xlft + iwidth, ytop, xrgt, ytop + iheight}, br);
+        FillRect(dc, &(RECT){xlft, ytop + iheight, xrgt, ybot}, br);
+
         DeleteObject(br);
 #endif
 
