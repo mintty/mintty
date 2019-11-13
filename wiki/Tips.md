@@ -1039,7 +1039,7 @@ the left or right neighbour monitor: Win+Shift+cursor-left/right.
 
 ## Embedding graphics in terminal output ##
 
-Mintty supports both SIXEL graphics and image graphics output (see below).
+Mintty supports both Sixel graphics and image graphics output (see below).
 
 The Sixel feature facilitates a range of applications that integrate 
 graphic images in the terminal, animated graphics, and even video and 
@@ -1056,7 +1056,7 @@ and coordinates so better not run it in a terminal with dark background.
 
 ### Image support ###
 
-In addition to the legacy sixel feature, mintty supports graphic image display 
+In addition to the legacy Sixel feature, mintty supports graphic image display 
 (using iTerm2 controls). Image formats supported comprise
 PNG, JPEG, GIF, TIFF, BMP, Exif.
 

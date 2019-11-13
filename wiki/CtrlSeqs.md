@@ -409,7 +409,7 @@ two features:
 
 ## Image support ##
 
-In addition to the legacy sixel feature, mintty supports graphic image display 
+In addition to the legacy Sixel feature, mintty supports graphic image display 
 via iTerm2 controls:
 
 > `^[]1337;File=` _par_`=`_arg_ [ `;`_par_`=`_arg_ ]* `:`_image_ `^G`
@@ -437,7 +437,7 @@ Image formats supported comprise PNG, JPEG, GIF, TIFF, BMP, Exif.
 
 ## Graphics end position ##
 
-After output of a sixel image in sixel scrolling mode, or other image, 
+After output of a Sixel image in Sixel scrolling mode, or other image, 
 the final cursor position can be next to the right bottom of the image, 
 below the left bottom of the image (default), or at the line beginning 
 below the image (like xterm). The mintty private sequence 7730 chooses 

@@ -1,6 +1,6 @@
 Terminal features
   * Graphic image output support (iTerm2).
-  * Fixed sixel image management (#929).
+  * Fixed Sixel image management (#929).
   * Fixed premature discarding of partially scrolled-out image.
   * Glyph checking (OSC 7771) considers FontChoice.
 
@@ -18,7 +18,7 @@ Other
 
 Terminal features
   * Support for horizontal mouse scrolling (#925).
-  * Fixed sixel display which was broken in 3.0.3.
+  * Fixed Sixel display which was broken in 3.0.3.
 
 Font rendering
   * Changed default value CharNarrowing from 70 to 80 (#922).
@@ -72,8 +72,8 @@ Window handling
   * Virtual Tabs support on title bar (#699).
   * Flexible configuration of scroll modifiers (~#894).
   * User-definable functions for scrollback scrolling (~#894).
-  * Fixed sixel image list handling (#905).
-  * Optimized sixel image rendering if overlapped (#905).
+  * Fixed Sixel image list handling (#905).
+  * Optimized Sixel image rendering if overlapped (#905).
   * Dark colour theme support in scrollbar (mintty/wsltty#157).
   * Clear resizing popup after leaving fullscreen and moving (#913).
 
@@ -82,8 +82,8 @@ Other
   * Dropped PATH dependency of printer feature (#897).
   * Dropped float: left from copied HTML style (#900).
   * Fixed Windows handle resource leak when displaying many emojis (mintty/wsltty#185).
-  * Fixed potential crash on sixel display after resource leak.
-  * Preventing Windows handle resource exhaustion when displaying many sixel images.
+  * Fixed potential crash on Sixel display after resource leak.
+  * Preventing Windows handle resource exhaustion when displaying many Sixel images.
   * Fixed potential crash when confirming exit (#907).
 
 Configuration
@@ -136,7 +136,7 @@ Font rendering
   * Fixed DEC Tech up/down arrows by manual drawing.
 
 Sixel graphics
-  * Tweaked sixel handling to avoid crash condition.
+  * Tweaked Sixel handling to avoid crash condition.
   * Reintroduced fixed Sixel colour registers handling (#593).
 
 Window handling
@@ -177,7 +177,7 @@ Terminal features
   * Support ECMA-48 SPD control sequence, values 0 and 3 (RTL fun feature).
   * Support DECSET 1007 (mouse wheel reporting, xterm).
   * New CSI # p/q XTPUSHSGR and XTPOPSGR aliases (xterm 345).
-  * Fixed DECSET 80 (sixel scrolling mode) which was reverted.
+  * Fixed DECSET 80 (Sixel scrolling mode) which was reverted.
   * Clear All Tabs sequence (TBC 3) extends after resizing, compatible with xterm.
   * VT52 mode, thereby becoming fully VT100-compatible, with Atari ST extensions.
   * HP Memory Lock/Unlock (xterm).
