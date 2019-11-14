@@ -53,6 +53,7 @@ extern uint kb_trace;
 
 extern void win_update_now(void);
 
+extern bool fill_background(HDC dc, RECT * boxp);
 extern void win_flush_background(bool clearbg);
 extern void win_paint(void);
 

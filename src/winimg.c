@@ -693,8 +693,14 @@ winimgs_paint(void)
         // determine image size for padding
         int iwidth = img->pixelwidth * cell_width / img->cell_width;
         int iheight = img->pixelheight * cell_height / img->cell_height;
-        FillRect(dc, &(RECT){xlft + iwidth, ytop, xrgt, ytop + iheight}, br);
-        FillRect(dc, &(RECT){xlft, ytop + iheight, xrgt, ybot}, br);
+        if (*cfg.background) {
+          fill_background(dc, &(RECT){xlft + iwidth, ytop, xrgt, ybot - iheight});
+          fill_background(dc, &(RECT){xlft, ytop + iheight, xrgt, ybot});
+        }
+        else {
+          FillRect(dc, &(RECT){xlft + iwidth, ytop, xrgt, ytop + iheight}, br);
+          FillRect(dc, &(RECT){xlft, ytop + iheight, xrgt, ybot}, br);
+        }
 
         DeleteObject(br);
 #endif

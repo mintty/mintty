@@ -2082,7 +2082,7 @@ load_background_brush(HDC dc)
   free(bgfn);
 }
 
-static bool
+bool
 fill_background(HDC dc, RECT * boxp)
 {
   load_background_brush(dc);
