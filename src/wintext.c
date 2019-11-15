@@ -611,7 +611,9 @@ win_init_fontfamily(HDC dc, int findex)
   GetCharWidthFloatW(dc, 0x4E00, 0x4E00, &cjk_char_width);
 
   if (!findex) {
-    ff->row_spacing = row_padding(tm.tmInternalLeading, tm.tmExternalLeading);
+    int ilead = tm.tmInternalLeading - (dpi - 96) / 48;
+    ff->row_spacing = row_padding(ilead, tm.tmExternalLeading);
+    //printf("row_sp dpi %d (%ld %ld) %d + %d\n", dpi, tm.tmInternalLeading, tm.tmExternalLeading, ff->row_spacing, cfg.row_spacing);
     trace_font(("00 height %d avwidth %d asc %d dsc %d intlead %d extlead %d %ls\n", 
                (int)tm.tmHeight, (int)tm.tmAveCharWidth, (int)tm.tmAscent, (int)tm.tmDescent, 
                (int)tm.tmInternalLeading, (int)tm.tmExternalLeading, 
@@ -619,6 +621,7 @@ win_init_fontfamily(HDC dc, int findex)
     ff->row_spacing += cfg.row_spacing;
     if (ff->row_spacing < -tm.tmDescent)
       ff->row_spacing = -tm.tmDescent;
+    //printf("row_sp %d\n", ff->row_spacing);
     trace_font(("row spacing int %d ext %d -> %+d; add %+d -> %+d; desc %d -> %+d %ls\n", 
         (int)tm.tmInternalLeading, (int)tm.tmExternalLeading, row_padding(tm.tmInternalLeading, tm.tmExternalLeading),
         cfg.row_spacing, row_padding(tm.tmInternalLeading, tm.tmExternalLeading) + cfg.row_spacing,
