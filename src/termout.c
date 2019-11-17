@@ -969,8 +969,7 @@ contains(string s, int i)
       s++;
     int si = -1;
     int len;
-    sscanf(s, "%d%n", &si, &len);
-    if (len <= 0)
+    if (sscanf(s, "%d%n", &si, &len) <= 0)
       return false;
     s += len;
     if (si == i && (!*s || *s == ','))
