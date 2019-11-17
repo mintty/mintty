@@ -8,6 +8,7 @@ Keyboard handling
   * Fixed AltGr handling for AutoHotKey (#932).
 
 Font rendering
+  * Adjust row spacing ("Leading") for high DPI monitors (#777).
   * Meta-script name "CJK" for FontChoice (#928).
   * Adjusted default value CharNarrowing from 80 to 75 (#922).
 
