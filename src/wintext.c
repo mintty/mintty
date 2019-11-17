@@ -611,9 +611,10 @@ win_init_fontfamily(HDC dc, int findex)
   GetCharWidthFloatW(dc, 0x4E00, 0x4E00, &cjk_char_width);
 
   if (!findex) {
-    int ilead = tm.tmInternalLeading - (dpi - 96) / 72;
+    //?int ilead = tm.tmInternalLeading - (dpi - 96) / 48;
+    int ilead = tm.tmInternalLeading * 96 / dpi;
     ff->row_spacing = row_padding(ilead, tm.tmExternalLeading);
-    //printf("row_sp dpi %d (%ld %ld) %d + %d\n", dpi, tm.tmInternalLeading, tm.tmExternalLeading, ff->row_spacing, cfg.row_spacing);
+    //printf("row_sp dpi %d int %d -> ild %d (ext %d) -> pad %d + cfg %d\n", dpi, (int)tm.tmInternalLeading, ilead, (int)tm.tmExternalLeading, ff->row_spacing, cfg.row_spacing);
     trace_font(("00 height %d avwidth %d asc %d dsc %d intlead %d extlead %d %ls\n", 
                (int)tm.tmHeight, (int)tm.tmAveCharWidth, (int)tm.tmAscent, (int)tm.tmDescent, 
                (int)tm.tmInternalLeading, (int)tm.tmExternalLeading, 
