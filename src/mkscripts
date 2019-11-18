@@ -24,6 +24,7 @@ getranges () {
 31C0..31EF; CJK # CJK Symbols and Punctuation
 327F..32CF; CJK # Enclosed CJK Letters and Months
 3358..33FF; CJK # CJK Compatibility
+E000..F8FF; Private Use # Private Use Area
 FE30..FE4F; CJK # CJK Compatibility Forms
 FF01..FF20; Fullwidth Forms # Halfwidth and Fullwidth Forms
 FF5B..FF5E; Fullwidth Forms # Halfwidth and Fullwidth Forms
@@ -33,6 +34,8 @@ FF9E..FF9F; Katakana Symbols # Halfwidth and Fullwidth Forms
 FFE0..FFEE; Fullwidth Forms # Halfwidth and Fullwidth Forms
 16FE2..16FFF; CJK # Ideographic Symbols and Punctuation
 1F201..1F2FF; CJK # Enclosed Ideographic Supplement
+F0000..FFFFF; Private Use # Supplementary Private Use Area-A
+100000..10FFFF; Private Use # Supplementary Private Use Area-B
 /eou
 }
 

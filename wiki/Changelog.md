@@ -12,7 +12,7 @@ Window handling
 
 Font rendering
   * Adjust row spacing ("Leading") for high DPI monitors (#777).
-  * Meta-script name "CJK" for FontChoice (#928).
+  * Meta-script names "CJK" and "Private" for FontChoice (#928, #943, ~#754).
   * Adjusted default value CharNarrowing from 80 to 75 (#922).
 
 Other

@@ -723,6 +723,14 @@ FontChoice=PictoSymbols:2
 Font2=DejaVu Sans Mono
 ```
 
+Finally, special name `Private` covers the Private Use ranges, which are 
+often used for additional icon symbols (e.g. by "Nerd Fonts" or "Powerline" fonts).
+Configuration example:
+```
+FontChoice=Private:3
+Font3=MesloLGS NF
+```
+
 
 ## Character width ##
 
