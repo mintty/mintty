@@ -7,6 +7,9 @@ Terminal features
 Keyboard handling
   * Fixed AltGr handling for AutoHotKey (#932).
 
+Window handling
+  * Flush notification to handle auto-repeat click on scrollbar.
+
 Font rendering
   * Adjust row spacing ("Leading") for high DPI monitors (#777).
   * Meta-script name "CJK" for FontChoice (#928).

@@ -2605,7 +2605,7 @@ static struct {
           when SB_PRIOR:    term_scroll(SB_PRIOR, 0);
           when SB_NEXT:     term_scroll(SB_NEXT, 0);
         }
-      else
+      else {
         switch (LOWORD(wp)) {
           when SB_LINEUP:
             //win_key_down(VK_UP, 1);
@@ -2631,6 +2631,11 @@ static struct {
             child_printf("\e[%u#d", info.nTrackPos);
           }
         }
+        // flush notification to handle auto-repeat click on scrollbar,
+        // as messages are not dispatched to the application while 
+        // holding the mouse button on the scrollbar
+        child_proc();
+      }
 
 #ifndef WM_MOUSEHWHEEL
 #define WM_MOUSEHWHEEL 0x020E
