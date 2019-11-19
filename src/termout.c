@@ -2901,6 +2901,8 @@ do_dcs(void)
         term.imgs.parser_state = NULL;
         return;
       }
+      img->cwidth = st->max_x;
+      img->cheight = st->max_y;
 
       fill_image_space(img);
 

@@ -352,21 +352,34 @@ typedef struct {
 } temp_strage_t;
 
 typedef struct imglist {
-  int imgi;
-  int cell_width, cell_height;
-  unsigned char * pixels;
+  // linked list
+  struct imglist * next;
+  // image ref for multiple use (currently unused)
+  char * id;
+  // sixel: rendering data
   void * hdc;
   void * hbmp;
+  // sixel: disk cache
   temp_strage_t * strage;
-  int top;
-  int left;
-  int width;
-  int height;
-  int pixelwidth;
-  int pixelheight;
-  struct imglist * next;
-  char * id;
+
+  // image data
+  unsigned char * pixels;
+  // image: data size; sixel: 0
   int len;
+
+  // image ref for disposal management
+  int imgi;
+  // position within scrollback (top includes offset term.virtuallines)
+  int top, left;
+
+  // image area (cell units)
+  int width, height;
+  // sixel: image area size at time of output
+  // image: adjusted image size as requested, at time of output
+  int pixelwidth, pixelheight;
+  // image: terminal cell size at time of output
+  // sixel: actual graphic size, at time of output
+  int cwidth, cheight;
 } imglist;
 
 typedef struct {
