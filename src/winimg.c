@@ -680,55 +680,77 @@ winimgs_paint(void)
           }
         }
 
-#ifndef fill_bg_gdiplus
-        // fill image area background (in case it's smaller or transparent);
-        // background image brush should be used if configured
-        colour bg = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
-        //bg = RGB(90, 150, 222);  // test background filling
-        HBRUSH br = CreateSolidBrush(bg);
-
-        // determine image size for padding
-        int iwidth;
-        int iheight;
-        if (img->len) {
-          // image: actual picture size
-          iwidth = img->pixelwidth * cell_width / img->cwidth;
-          iheight = img->pixelheight * cell_height / img->cheight;
-        }
-        else {
-          // sixel: actual picture size
-          iwidth = img->cwidth * cell_width * img->width / img->pixelwidth;
-          iheight = img->cheight * cell_height * img->height / img->pixelheight;
-        }
+        // fill image area background (in case it's smaller or transparent)
         // calculate area for padding
         int ytop = max(0, top) * cell_height + PADDING;
-        int ibot = max(0, top * cell_height + iheight) + PADDING;
         int ybot = min(top + img->height, term.rows) * cell_height + PADDING;
         int xlft = left * cell_width + PADDING;
         int xrgt = min(left + img->width, term.cols) * cell_width + PADDING;
-        if (*cfg.background) {
-          fill_background(dc, &(RECT){xlft + iwidth, ytop, xrgt, ibot});
-          fill_background(dc, &(RECT){xlft, ibot, xrgt, ybot});
+        if (img->len) {
+          // better background handling implemented below; this version 
+          // would expose artefacts if a transparent image is scrolled
         }
         else {
-          FillRect(dc, &(RECT){xlft + iwidth, ytop, xrgt, ibot}, br);
-          FillRect(dc, &(RECT){xlft, ibot, xrgt, ybot}, br);
+          // determine image size for padding
+          int iwidth;
+          int iheight;
+          if (img->len) {
+            // image: actual picture size
+            iwidth = img->pixelwidth * cell_width / img->cwidth;
+            iheight = img->pixelheight * cell_height / img->cheight;
+          }
+          else {
+            // sixel: actual picture size
+            iwidth = img->cwidth * cell_width * img->width / img->pixelwidth;
+            iheight = img->cheight * cell_height * img->height / img->pixelheight;
+          }
+          int ibot = max(0, top * cell_height + iheight) + PADDING;
+          // fill either background image or colour
+          if (*cfg.background) {
+            fill_background(dc, &(RECT){xlft + iwidth, ytop, xrgt, ibot});
+            fill_background(dc, &(RECT){xlft, ibot, xrgt, ybot});
+          }
+          else {
+            colour bg = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
+            //bg = RGB(90, 150, 222);  // test background filling
+            HBRUSH br = CreateSolidBrush(bg);
+            FillRect(dc, &(RECT){xlft + iwidth, ytop, xrgt, ibot}, br);
+            FillRect(dc, &(RECT){xlft, ibot, xrgt, ybot}, br);
+            DeleteObject(br);
+          }
+          if (!img->len) {
+            // sixel needs this in addition
+            ExcludeClipRect(dc, xlft + iwidth, ytop, xrgt, ibot);
+            ExcludeClipRect(dc, xlft, ibot, xrgt, ybot);
+          }
         }
-        if (!img->len) {
-          ExcludeClipRect(dc, xlft + iwidth, ytop, xrgt, ibot);
-          ExcludeClipRect(dc, xlft, ibot, xrgt, ybot);
-        }
-
-        DeleteObject(br);
-#endif
 
         // now display, keep, or delete the image data
         if (disp_flag) {
 #ifdef debug_img_list
           printf("paint: display img\n");
 #endif
-          if (img->len)
-            draw_img(dc, img);
+          if (img->len) {
+            //draw_img(dc, img);
+            // underlay image with background;
+            // do it in a copy to avoid flickering
+            HDC hdc = CreateCompatibleDC(dc);
+            HBITMAP hbm = CreateCompatibleBitmap(dc, xrgt, ybot);
+            (void)SelectObject(hdc, hbm);
+            if (*cfg.background)
+              fill_background(hdc, &(RECT){0, 0, xrgt, ybot});
+            else {
+              colour bg = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
+              //bg = RGB(90, 150, 222);  // test background filling
+              HBRUSH br = CreateSolidBrush(bg);
+              FillRect(hdc, &(RECT){0, 0, xrgt, ybot}, br);
+            }
+            draw_img(hdc, img);
+            BitBlt(dc, xlft, ytop, xrgt - xlft, ybot - ytop,
+                       hdc, xlft, ytop, SRCCOPY);
+            DeleteObject(hbm);
+            DeleteDC(hdc);
+          }
           else
             StretchBlt(dc,
                        left * cell_width + PADDING, top * cell_height + PADDING,
