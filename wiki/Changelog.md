@@ -18,6 +18,9 @@ Font rendering
 Other
   * Collect font warnings into one popup message.
 
+Configuration
+  * Bold handling configuration makes "xterm" fallback explicit (#939, #936, #468).
+
 ### 3.0.6 (6 October 2019) ###
 
 Terminal features
