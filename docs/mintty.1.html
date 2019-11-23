@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Sun Oct  6 16:24:32 2019 -->
+<!-- CreationDate: Sat Nov 23 19:37:09 2019 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -834,7 +834,8 @@ open a search bar with an input field for a search string.
 Matches are highlighted in the scrollback buffer.
 <b>Enter</b>/<b>Shift+Enter</b> find the next/previous
 position of the match and scrolls the scrollback buffer
-accordingly. The appearance of the search bar and the
+accordingly. <b>Tab</b> focusses back into the terminal pane
+of the window. The appearance of the search bar and the
 matching highlight colours can be customized. <br>
 Matching is case-insensitive and ignores combining
 characters.</p>
@@ -1121,7 +1122,7 @@ user-defined input or invoke functions. See option
 
 <p style="margin-left:11%; margin-top: 1em"><b>Embedding
 graphics in terminal output</b> <br>
-The SIXEL graphics support feature facilitates a range of
+The Sixel graphics support feature facilitates a range of
 applications that integrate graphic images in the terminal,
 animated graphics, and even video and interactive gaming
 applications.</p>
@@ -1133,9 +1134,15 @@ GNUTERM=sixel gnuplot -e &quot;splot [x=-3:3] [y=-3:3]
 sin(x) * cos(y)&quot;</p>
 
 <p style="margin-left:11%; margin-top: 1em"><i>Note:</i>
-The number of sixel images displayed on the screen is
+The number of Sixel images displayed on the screen is
 limited in order to prevent Windows handle resource
-exhaustion.</p>
+exhaustion. <b><br>
+Image support</b></p>
+
+<p style="margin-left:22%;">In addition to the legacy Sixel
+feature, mintty supports graphic image display (using iTerm2
+controls). Image formats supported comprise PNG, JPEG, GIF,
+TIFF, BMP, Exif.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Emoji
 display support</b> <br>
@@ -1444,18 +1451,30 @@ specified in the Unicode file Scripts.txt, listed in
 <i><a href="https://en.wikipedia.org/wiki/Script_(Unicode)">https://en.wikipedia.org/wiki/Script_(Unicode)</a></i>
 column &quot;Alias&quot;. (The definition list can be split
 over multiple lines if a separator is followed by a
-backslash, newline, and optional whitespace indentation.) A
-special name is <b>PictoSymbols</b> to assign an alternative
-font to ranges of pictographic symbols from Unicode blocks
-matching Arrows, Mathematical Operators, Technical, Enclosed
-Alphanumerics, Pictographs, Control Pictures, Optical, Box
-Drawing, Miscellaneous.*Symbols, Block Elements, Geometric
-Shapes, Dingbats, Tiles, Cards, Emoticons, Transport,
-Alchemical, Chess. <br>
-Example: <b><br>
-FontChoice=Hebrew:6;Arabic:7;Han:8;Hangul:9 <br>
+backslash, newline, and optional whitespace indentation.)
+<br>
+A special name is <b>PictoSymbols</b> to assign an
+alternative font to ranges of pictographic symbols from
+Unicode blocks matching Arrows, Mathematical Operators,
+Technical, Enclosed Alphanumerics, Pictographs, Control
+Pictures, Optical, Box Drawing, Miscellaneous.*Symbols,
+Block Elements, Geometric Shapes, Dingbats, Tiles, Cards,
+Emoticons, Transport, Alchemical, Chess. <br>
+Another special name is <b>CJK</b> which comprises Han,
+Hangul, Katakana, Hiragana, Bopomofo, Kanbun, Halfwidth and
+Fullwidth Forms (except Latin). A later more specific entry
+will override an earlier one (see CJK example below). <br>
+Finally, special name <b>Private</b> covers the Private Use
+ranges, which are often used for additional icon symbols
+(e.g. by &quot;Nerd Fonts&quot; or &quot;Powerline&quot;
+fonts).</p>
+
+<p style="margin-left:22%; margin-top: 1em">Example:
+<b><br>
+FontChoice=Hebrew:6;Arabic:7;CJK:5;Han:8;Hangul:9 <br>
 Font6=David <br>
 Font7=Simplified Arabic Fixed <br>
+Font5=Malgun Gothic <br>
 Font8=FangSong <br>
 Font9=MingLiU <br>
 FontChoice=PictoSymbols:2 <br>
@@ -1580,6 +1599,14 @@ are true, both display methods are combined where
 applicable. If both are false, xterm default behaviour is
 applied. See <b>Bold Behaviour</b> for an overview.</p>
 
+<p style="margin-left:11%;"><b>Show bold like xterm
+default</b></p>
+
+<p style="margin-left:22%;">With this interactive option,
+you can choose xterm default boldening behaviour by
+switching both bold as font and colour off. It can be
+switched off by switching one of the other options on.</p>
+
 <p style="margin-left:11%;"><b>Bold substitution colour</b>
 (BoldColour=)</p>
 
@@ -1625,7 +1652,7 @@ by BoldAsFont and BoldAsColour independently, such that it
 is possible to choose only bold font, or only different
 colour, or both. <br>
 &ndash; Note that Default bold display can be overridden by
-the BoldColour mode.</p>
+a BoldColour setting.</p>
 
 <p style="margin-left:11%;"><b>Allow blinking</b>
 (AllowBlinking=no)</p>
@@ -1685,12 +1712,15 @@ variables unrelated to the terminal character set (e.g.
 LC_MESSAGES) are cleared to avoid confusion.</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i> If
-the locale option is set, mintty further checks whether the
-locale is a &quot;wide&quot; locale (i.e. ambiguous-width
-characters are wide in the locale) but the selected font is
-actually &quot;ambiguous-narrow&quot; (i.e. ambiguous-width
-characters are narrow in the font) in which case it appends
-the &quot;@cjknarrow&quot; locale modifier.</p>
+the <b>Locale</b> option is set, mintty further checks
+whether the locale is a &quot;wide&quot; locale (i.e.
+ambiguous-width characters are wide in a CJK locale) but the
+selected font is actually &quot;ambiguous-narrow&quot; (i.e.
+ambiguous-width characters are narrow in the font, as
+detected at characters U+03B1 and U+2500) in which case it
+appends the &quot;@cjknarrow&quot; locale modifier, in order
+to adapt the selected locale to the chosen font. (This would
+be overridden by setting <b>Charwidth=ambig-wide</b>.)</p>
 
 <p style="margin-left:22%; margin-top: 1em">By default, the
 selected locale also determines the character width
@@ -2522,6 +2552,8 @@ Customize Options dialog</b> (OldOptions=)</p>
 <p style="margin-left:22%;">Listing comma-separated tags in
 this setting will disable extended or enhanced parts of the
 Options dialog. <br>
+&ndash; <b>bold</b> Disable &quot;Show bold&quot; section
+with &quot;xterm&quot; pseudo option. <br>
 &ndash; <b>emoji</b> Disable emoji style section in
 &quot;Text&quot; panel. <br>
 &ndash; <b>selection</b> Disable separate
@@ -2624,7 +2656,7 @@ confuse screen applications (such as editors) that rely on
 <b>wcwidth</b> information.</p>
 
 <p style="margin-left:11%;"><b>Character narrowing
-factor</b> (CharNarrowing=70)</p>
+factor</b> (CharNarrowing=75)</p>
 
 <p style="margin-left:22%;">Depending on the font and font
 fallback (either by Windows means or via option
@@ -3687,11 +3719,12 @@ attribute controls (including RGB and CMYK true-colour
 support, italic, overline, strikeout, rapid blinking,
 alternative fonts) and additional rendering attributes
 (underline styles and colours, superscript and subscript,
-shadowed and overstrike). Mintty provides Sixel graphics
-support, Emoji support, and Bidi reordering according to the
-Unicode Bidi Algorithm UBA, amended with flexible bidi
-controls according to the draft bidi mode model of the
-<b>BiDi in Terminal Emulators</b> recommendation (
+shadowed and overstrike). Mintty provides Sixel graphics and
+other image support, Emoji support, and Bidi reordering
+according to the Unicode Bidi Algorithm UBA, amended with
+flexible bidi controls according to the draft bidi mode
+model of the <b>BiDi in Terminal Emulators</b>
+recommendation (
 <i><a href="https://terminal-wg.pages.freedesktop.org/bidi/">https://terminal-wg.pages.freedesktop.org/bidi/</a></i>
 ).</p>
 

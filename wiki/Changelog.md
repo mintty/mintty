@@ -1,3 +1,5 @@
+### 3.1.0 (23 November 2019) ###
+
 Terminal features
   * Graphic image output support (iTerm2).
   * Fixed Sixel image management (#929).
