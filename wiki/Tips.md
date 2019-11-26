@@ -930,7 +930,7 @@ Emoji data can be found at the following sources:
 * [EmojiOne](https://www.emojione.com/)
   * Free Download for your own use, PNG Files, download e.g. 128x128px zip
   * Deploy the preferred subdirectory (e.g. 128) as `emojione`
-* [Noto Emoji font](https://github.com/googlei18n/noto-emoji), subdirectory `png/128`
+* [Noto Emoji font](https://github.com/googlefonts/noto-emoji), subdirectory `png/128`
   * “Clone or download” the repository or download a release archive
   * Deploy subdirectory noto-emoji/png/128 as `noto`
 * [Unicode.org](http://www.unicode.org/emoji/charts/) Full Emoji List (~50MB)
@@ -942,7 +942,7 @@ Emoji data can be found at the following sources:
 To “Clone” with limited download volume, use the command `git clone --depth 1`.
 To download only the desired subdirectory from `github.com`, use `subversion`, 
 for example:
-  * `svn export https://github.com/googlei18n/noto-emoji/trunk/png/128 noto`
+  * `svn export https://github.com/googlefonts/noto-emoji/trunk/png/128 noto`
   * `svn export https://github.com/iamcal/emoji-data/trunk/img-apple-160 apple`
 
 “Deploy” above means move, link, copy or hard-link the respective subdirectory 

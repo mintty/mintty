@@ -6,11 +6,15 @@ ldesc: "Mintty is a terminal emulator for Cygwin.
 Terminal display features
 * Xterm-compatible terminal emulation, coverage of all DEC terminal series screen control features.
 * 256 colours and True-Colour support, optional CMYK colour specification.
-* Full Unicode and wide character support, comprehensive character encoding support.
+* Full Unicode support, comprehensive character encoding support and wide character handling.
 * Bidirectional rendering, flexible bidi controls.
 * Full character attributes support, including italic, underline styles and colours, overline, strikeout, rapid blinking.
+* Extended character attributes support: shadowed, subscript, superscript (terminfo) and overstrike.
 * Alternative fonts: simultaneous display of multiple fonts.
-* SIXEL graphics display and Emoji support.
+* Secondary fonts: script-specific alternative font usage.
+* Image display support.
+* Sixel graphics support.
+* Emoji support.
 
 Terminal input and interaction features
 * Character composition support includes dead keys, Compose key, Windows IME.
@@ -19,7 +23,7 @@ Terminal input and interaction features
 * Text selection with mouse or keyboard.
 * Easy copy & paste. Drag & drop of text, files and folders.
 * Ability to open files and URLs with Ctrl+click, explicit hyperlinks.
-* Fast rendering and scrolling.
+* Fast rendering and scrolling, fast keyboard feedback.
 * HTML export and clipboard format support.
 
 Window handling features and desktop integration

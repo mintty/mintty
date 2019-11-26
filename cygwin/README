@@ -11,7 +11,8 @@ Terminal display features
 * Extended character attributes support: shadowed, subscript, superscript (terminfo) and overstrike.
 * Alternative fonts: simultaneous display of multiple fonts.
 * Secondary fonts: script-specific alternative font usage.
-* SIXEL graphics display support.
+* Image display support.
+* Sixel graphics support.
 * Emoji support.
 
 Terminal input and interaction features
