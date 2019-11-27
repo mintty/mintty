@@ -2628,6 +2628,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
 
   int graph = (attr.attr & GRAPH_MASK) >> ATTR_GRAPH_SHIFT;
   bool graph_vt52 = false;
+  bool powerline = false;
   int findex = (attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
   // in order to save attributes bits, special graphic handling is encoded 
   // in a compact form, combined with unused values of the font number;
@@ -2644,6 +2645,10 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   if (findex > 10) {
     if (findex == 12) // VT100 scanlines
       graph <<= 4;
+    else if (findex == 13 && graph == 15) { // Private: geometric Powerline
+      graph = 0;
+      powerline = true;
+    }
     else if (findex == 13) { // VT52 scanlines
       graph <<= 4;
       graph_vt52 = true;
@@ -2885,10 +2890,19 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     }
   }
 
+  wchar * origtext = 0;
   if (graph && graph < 0xE0) {
     // clear codes for Block Elements, VT100 Line Drawing and "scanlines"
     for (int i = 0; i < len; i++)
       text[i] = ' ';
+  }
+  else if (powerline) {
+    origtext = newn(wchar, len);
+    // clear codes for Powerline geometric symbols
+    for (int i = 0; i < len; i++) {
+      origtext[i] = text[i];
+      text[i] = ' ';
+    }
   }
 
  /* Array with offsets between neighbouring characters */
@@ -3534,9 +3548,12 @@ draw:;
       DeleteObject(oldpen);
     }
   }
-  else if (graph >= 0x80 && !graph_vt52) {  // Unicode Block Elements
+  else if ((graph >= 0x80 && !graph_vt52) || powerline) {  // drawn graphics
     // Block Elements (U+2580-U+259F)
     // ▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟
+    // Private Use geometric Powerline symbols (U+E0B0-U+E0BF, not 5, 7)
+    // 
+    //      - -
     int char_height = cell_height;
     if (lattr >= LATTR_TOP)
       char_height *= 2;
@@ -3566,6 +3583,70 @@ draw:;
       MoveToEx(dc, xi + l, y0 + t, null);
       LineTo(dc, xi + r, y0 + b);
       DeleteObject(SelectObject(dc, oldpen));
+    }
+    void lines(char x1, char y1, char x2, char y2, char x3, char y3)
+    {
+      int _x1 = char_width * x1 / 8;
+      int _y1 = char_height * y1 / 8;
+      int _x2 = char_width * x2 / 8;
+      int _y2 = char_height * y2 / 8;
+      int _x3 = char_width * x3 / 8;
+      int _y3 = char_height * y3 / 8;
+      if (x2) {
+        _x1--; _x2--; _x3--;
+      }
+
+      int w = y3 >= 0 ? line_width : 0;
+      HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, w, fg));
+      MoveToEx(dc, xi + _x1, y0 + _y1, null);
+      LineTo(dc, xi + _x2, y0 + _y2);
+      if (y3 >= 0) {
+        MoveToEx(dc, xi + _x3, y0 + _y3 - 1, null);
+        LineTo(dc, xi + _x2, y0 + _y2 - 1);
+      }
+      DeleteObject(SelectObject(dc, oldpen));
+    }
+    void trio(char x1, char y1, char x2, char y2, char x3, char y3, bool chord)
+    {
+      int _x1 = char_width * x1 / 8;
+      int _y1 = char_height * y1 / 8;
+      int _x2 = char_width * x2 / 8;
+      int _y2 = char_height * y2 / 8;
+      int _x3 = char_width * x3 / 8;
+      int _y3 = char_height * y3 / 8;
+      if (x1) _x1--;
+      if (x2) _x2--;
+      if (x3) _x3--;
+      if (y2 == 8) _y2--;
+      _y3--;
+      if (chord && !x1) {
+        _x1++; _x2++; _x3++;
+      }
+
+      HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, fg));
+      HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(fg));
+      if (chord) {
+        if (x1)
+          Chord(dc, xi, y0 + _y1, xi + 2 * _x1, y0 + _y3,
+                    xi + _x1, y0 + _y1, xi + _x3, y0 + _y3);
+        else
+          Chord(dc, xi - _x2, y0 + _y1, xi + x2, y0 + _y3,
+                    xi + _x3, y0 + _y3, xi + _x1, y0 + _y1);
+      }
+      else
+        Polygon(dc, (POINT[]){{xi + _x1, y0 + _y1},
+                              {xi + _x2, y0 + _y2},
+                              {xi + _x3, y0 + _y3}}, 3);
+      DeleteObject(SelectObject(dc, oldbrush));
+      DeleteObject(SelectObject(dc, oldpen));
+    }
+    void triangle(char x1, char y1, char x2, char y2, char x3, char y3)
+    {
+      trio(x1, y1, x2, y2, x3, y3, false);
+    }
+    void trichord(char x1, char y1, char x2, char y2, char x3, char y3)
+    {
+      trio(x1, y1, x2, y2, x3, y3, true);
     }
     void rectdraw(char l, char t, char r, char b, char sol, colour c)
     {
@@ -3639,14 +3720,44 @@ draw:;
     }
 
     for (int i = 0; i < ulen; i++) {
-      switch (graph) {
+      if (powerline && origtext) switch (origtext[i]) {
+        when 0xE0B0:
+          triangle(0, 0, 8, 4, 0, 8);
+        when 0xE0B1:
+          lines(0, 0, 8, 4, 0, 8);
+        when 0xE0B2:
+          triangle(8, 0, 0, 4, 8, 8);
+        when 0xE0B3:
+          lines(8, 0, 0, 4, 8, 8);
+        when 0xE0B4:
+          trichord(0, 0, 8, 4, 0, 8);
+        when 0xE0B6:
+          trichord(8, 0, 0, 4, 8, 8);
+        when 0xE0B8:
+          triangle(0, 0, 0, 8, 8, 8);
+        when 0xE0B9:
+          lines(0, 0, 8, 8, -1, -1);
+        when 0xE0BA:
+          triangle(8, 0, 8, 8, 0, 8);
+        when 0xE0BB:
+          lines(8, 0, 0, 8, -1, -1);
+        when 0xE0BC:
+          triangle(0, 0, 8, 0, 0, 8);
+        when 0xE0BD:
+          lines(8, 0, 0, 8, -1, -1);
+        when 0xE0BE:
+          triangle(0, 0, 8, 0, 8, 8);
+        when 0xE0BF:
+          lines(0, 0, 8, 8, -1, -1);
+      } else switch (graph) {
+        // ▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟
         when 0x80: rect(0, 0, 8, 4); // UPPER HALF BLOCK
         when 0x81 ... 0x88: rect(0, 0x88 - graph, 8, 8); // LOWER EIGHTHS
         when 0x89 ... 0x8F: rect(0, 0, 0x90 - graph, 8); // LEFT EIGHTHS
         when 0x90: rect(4, 0, 8, 8); // RIGHT HALF BLOCK
-        when 0x91: rectsolcol(0, 0, 8, 8, 2);
-        when 0x92: rectsolcol(0, 0, 8, 8, 3);
-        when 0x93: rectsolcol(0, 0, 8, 8, 5);
+        when 0x91: rectsolcol(0, 0, 8, 8, 2); // ░ LIGHT SHADE
+        when 0x92: rectsolcol(0, 0, 8, 8, 3); // ▒ MEDIUM SHADE
+        when 0x93: rectsolcol(0, 0, 8, 8, 5); // ▓ DARK SHADE
         when 0x94: rect(0, 0, 8, 1); // UPPER ONE EIGHTH BLOCK
         when 0x95: rect(7, 0, 8, 8); // RIGHT ONE EIGHTH BLOCK
         when 0x96: rect(0, 4, 4, 8);
@@ -3748,6 +3859,9 @@ draw:;
     oldpen = SelectObject(dc, oldpen);
     DeleteObject(oldpen);
   }
+
+  if (origtext)
+    free(origtext);
 
   show_curchar_info('w');
   if (has_cursor) {

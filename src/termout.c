@@ -3866,6 +3866,16 @@ term_do_write(const char *buf, uint len)
           term.curs.attr.attr &= ~FONTFAM_MASK;
           term.curs.attr.attr |= (cattrflags)gcode << ATTR_FONTFAM_SHIFT;
         }
+#ifdef draw_powerline_geometric_symbols
+#warning graphical results of this approach are unpleasant; not enabled
+        else if (wc >= 0xE0B0 && wc <= 0xE0BF && wc != 0xE0B5 && wc != 0xE0B7) {
+          // draw geometric full-cell Powerline symbols,
+          // to avoid artefacts at their borders (#943)
+          term.curs.attr.attr &= ~FONTFAM_MASK;
+          term.curs.attr.attr |= (cattrflags)13 << ATTR_FONTFAM_SHIFT;
+          term.curs.attr.attr |= (cattrflags)15 << ATTR_GRAPH_SHIFT;
+        }
+#endif
 
         write_ucschar(0, wc, width);
         term.curs.attr.attr = asav;
