@@ -348,6 +348,7 @@ term_reset(bool full)
   term.sixel_scrolls_left = 0;
 
   term.cursor_type = -1;
+  term.cursor_size = 0;
   term.cursor_blinks = -1;
   term.cursor_blink_interval = 0;
   if (full) {

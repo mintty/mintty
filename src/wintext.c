@@ -3906,8 +3906,34 @@ draw:;
           if (lattr == LATTR_BOT)
             yy += cell_height;
         }
-        if (attr.attr & TATTR_ACTCURS)
-          Rectangle(dc, x, yy, x + char_width, yy + 2);
+        if (attr.attr & TATTR_ACTCURS) {
+	  /* cursor size CSI ? N c
+	     from linux console https://linuxgazette.net/137/anonymous.html
+		0   default
+		1   invisible
+		2   underscore
+		3   lower_third
+		4   lower_half
+		5   two_thirds
+		6   full block
+          */
+          int up = 0;
+          switch (term.cursor_size) {
+            when 1: up = -2;
+            when 2: up = line_width - 1;
+            when 3: up = cell_height / 3 - 1;
+            when 4: up = cell_height / 2;
+            when 5: up = cell_height * 2 / 3;
+            when 6: up = cell_height - 2;
+          }
+          if (up) {
+            HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(_cc));
+            Rectangle(dc, x, yy - up, x + char_width, yy + 2);
+            DeleteObject(SelectObject(dc, oldbrush));
+          }
+          else
+            Rectangle(dc, x, yy - up, x + char_width, yy + 2);
+        }
         else if (attr.attr & TATTR_PASCURS) {
           for (int dx = 0; dx < char_width; dx += 2) {
             SetPixel(dc, x + dx, yy, _cc);

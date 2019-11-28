@@ -2566,6 +2566,8 @@ do_csi(uchar c)
         term.cursor_blink_interval = arg1;
       term.cursor_invalid = true;
       term_schedule_cblink();
+    when CPAIR('?', 'c'):  /* Cursor size (Linux console) */
+      term.cursor_size = arg0;
     when CPAIR('"', 'q'):  /* DECSCA: select character protection attribute */
       switch (arg0) {
         when 0 or 2: term.curs.attr.attr &= ~ATTR_PROTECTED;

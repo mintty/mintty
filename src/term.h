@@ -505,6 +505,7 @@ struct term {
                              // off(default): sixel scrolling moves cursor to left of graphics
   bool private_color_registers;
   int  cursor_type;
+  int  cursor_size;
   bool cursor_blinkmode;
   int  cursor_blinks;
   int  cursor_blink_interval;

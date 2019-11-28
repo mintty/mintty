@@ -455,7 +455,7 @@ control sequence 8452.
 ## Cursor style ##
 
 The VT510 _[DECSCUSR](http://vt100.net/docs/vt510-rm/DECSCUSR)_ sequence 
-can be used to control cursor shape and blinking.
+can be used to control cursor type (shape) and blinking.
 It takes an optional second parameter (proprietary extension) to set the 
 blinking interval in milliseconds.
 
@@ -472,3 +472,20 @@ blinking interval in milliseconds.
 | **4**   | underscore   | no        |
 | **5**   | line         | yes       |
 | **6**   | line         | no        |
+
+Furthermore, the following Linux console sequence can be used to set the 
+size of the active underscore cursor.
+(Note that the second and third parameters from the Linux sequence are not 
+supported; cursor colour can be set with the OSC 12 sequence.)
+
+> `^[[?` _arg_ `c`
+
+| **arg** | **size**     |
+|:--------|:-------------|
+| **0**   | default      |
+| **1**   | invisible    |
+| **2**   | underscore   |
+| **3**   | lower_third  |
+| **4**   | lower_half   |
+| **5**   | two_thirds   |
+| **6**   | full block   |
