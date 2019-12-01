@@ -3286,7 +3286,8 @@ get_shortcut_icon_location(wchar * iconfile, bool * wdpresent)
       char * cop = var;
       wchar * v;
       for (v = &wil[1]; *v != '%'; v++) {
-        if (*v >= 'a' && *v <= 'z')
+        if (wil[2] == 'y' && *v >= 'a' && *v <= 'z')
+          // capitalize %SystemRoot%
           *cop = *v - 'a' + 'A';
         else
           *cop = *v;

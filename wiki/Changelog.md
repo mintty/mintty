@@ -1,6 +1,9 @@
 Terminal features
   * Linux console controls for underscore cursor size (mintty/wsltty#203).
 
+Other
+  * Fix access to shortcut icon with path prefix %ProgramW6432%.
+
 ### 3.1.0 (23 November 2019) ###
 
 Terminal features
