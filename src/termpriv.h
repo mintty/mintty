@@ -19,6 +19,7 @@
 #define posPlt(p1,p2) ((p1).y <= (p2).y && (p1).x < (p2).x)
 #define posPle(p1,p2) ((p1).y <= (p2).y && (p1).x <= (p2).x)
 
+
 extern void term_print_finish(void);
 
 extern void term_schedule_cblink(void);
@@ -30,29 +31,41 @@ extern void term_do_scroll(int topline, int botline, int lines, bool sb);
 extern void term_erase(bool selective, bool line_only, bool from_begin, bool to_end);
 extern int  term_last_nonempty_line(void);
 
+/* Bidi paragraph support */
+extern void clear_wrapcontd(termline * line, int y);
+extern ushort getparabidi(termline * line);
+extern wchar * wcsline(termline * line);  // for debug output
+
 static inline bool
 term_selecting(void)
 { return term.mouse_state < 0 && term.mouse_state >= MS_SEL_LINE; }
 
 extern void term_update_cs(void);
+extern uchar scriptfont(ucschar ch);
 
+extern void clear_emoji_data(void);
 extern char * get_emoji_description(termchar *);
 
-extern int termchars_equal(termchar *a, termchar *b);
-extern int termchars_equal_override(termchar *a, termchar *b, uint bchr, cattr battr);
+extern int termchars_equal(termchar * a, termchar * b);
+extern int termchars_equal_override(termchar * a, termchar * b, uint bchr, cattr battr);
 extern int termattrs_equal_fg(cattr * a, cattr * b);
 
-extern void copy_termchar(termline *destline, int x, termchar *src);
-extern void move_termchar(termline *line, termchar *dest, termchar *src);
+extern void copy_termchar(termline * destline, int x, termchar * src);
+extern void move_termchar(termline * line, termchar * dest, termchar * src);
 
 extern void add_cc(termline *, int col, wchar chr, cattr attr);
 extern void clear_cc(termline *, int col);
 
-extern uchar *compressline(termline *);
-extern termline *decompressline(uchar *, int *bytes_used);
+extern uchar * compressline(termline *);
+extern termline * decompressline(uchar *, int * bytes_used);
 
-extern termchar *term_bidi_line(termline *, int scr_y);
+extern termchar * term_bidi_line(termline *, int scr_y);
 
-extern void term_export_html(void);
+extern void term_export_html(bool do_open);
+extern char * term_get_html(int level);
+extern void print_screen(void);
+
+extern int putlink(char * link);
+extern char * geturl(int n);
 
 #endif

@@ -18,7 +18,8 @@
 # - DMALLOC: define to enable the dmalloc heap debugging library
 #
 # The values of DEBUG and DMALLOC variables do not matter, it's just about
-# whether they're defined, so e.g. 'make DEBUG=1' will trigger a debug build.
+# whether they're defined; a debug build can be built with
+#	make DEBUG=1
 
 #############################################################################
 NAME := mintty
@@ -89,7 +90,13 @@ rc_srcs := $(wildcard *.rc)
 objs := $(c_srcs:.c=.o) $(rc_srcs:.rc=.o)
 bins := $(patsubst %.o,$(BINDIR)/%.o,$(objs))
 
-CFLAGS := -std=gnu99 -include std.h -Wall -Wextra -Wundef -Werror
+ifneq ($(platform), msys)
+  # ensure avoidance of trampolines (a gcc mechanism to implement 
+  # some nested functions) as they cause some security software to choke
+  SECUR=-Wtrampolines
+endif
+# support cygwin debug package (use += to accept injected options)
+CFLAGS += -std=gnu99 -include std.h -Wall -Wextra -Wundef -Werror $(SECUR)
 
 ifeq ($(shell VER=`$(CC) -dumpversion`; expr $${VER%.*} '>=' 4.5), 1)
   CFLAGS += -mtune=atom
@@ -109,11 +116,14 @@ LDLIBS := -mwindows $(extralibs) -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -
 #override LDLIBS += -mwindows $(extralibs) -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -luuid
 
 ifdef DEBUG
+  CPPFLAGS += -Wno-trampolines
   CFLAGS += -g
 else
   CPPFLAGS += -DNDEBUG
   CFLAGS += -fomit-frame-pointer -O2
-  LDFLAGS += -s
+# support cygwin debug package:
+#  CFLAGS += -g # not needed; -ggdb and more injected by cygport
+#  do not LDFLAGS += -s
 endif
 
 ifdef DMALLOC
@@ -133,10 +143,10 @@ CCOPT=
 CCFLAGS:=$(CFLAGS) $(CCOPT)
 
 $(BINDIR)/term%.o: term%.c
-	$(CC) -c $(DEPOPT) $(CPPFLAGS) $(CCFLAGS) $< -o $(BINDIR)/term$*.o
+	$(CC) -c $(DEPOPT) $(CCFLAGS) $(CPPFLAGS) $< -o $(BINDIR)/term$*.o
 
 $(BINDIR)/%.o: %.c
-	$(CC) -c $(DEPOPT) $(CPPFLAGS) $(CCFLAGS) -fstack-check $< -o $(BINDIR)/$*.o
+	$(CC) -c $(DEPOPT) $(CCFLAGS) $(CPPFLAGS) -fstack-check $< -o $(BINDIR)/$*.o
 
 $(BINDIR)/%.o: %.rc %.h %.mft
 	$(RC) -c 65001 --preprocessor '$(CC) -E -xc -DRC_INVOKED $(DEPOPT) $(CPPFLAGS)' $< $(BINDIR)/$*.o
@@ -170,18 +180,24 @@ $(bin): $(bins)
 WGET=curl -R -O --connect-timeout 55
 WGET+=-z $@
 
-rgb.t:	# /usr/share/X11/rgb.txt # X11 color names
+rgb.t:	# /usr/share/X11/rgb.txt # X11 color names, from package 'rgb'
 #	255 250 250		snow
 #	->
 #		{255, 250, 250, "snow"},
 	sed -e 's,	, ,g' -e 's/ *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([^ ].*[^ ]\) */	{\1, \2, \3, "\4"},/' /usr/share/X11/rgb.txt > rgb.t
 
 combdata=combining.t combdouble.t combined.t
-unidata=$(combdata) ambiguous.t casefold.t bidiclasses.t wide.t
+unidata=$(combdata) ambiguous.t scripts.t casefold.t bidiclasses.t mirroring.t brackets.t canonical.t wide.t unicodever.t
 emojidata=emojibase.t emojiseqs.t
+
+unicodedata=UnicodeData.txt EastAsianWidth.txt Blocks.txt Scripts.txt CaseFolding.txt BidiMirroring.txt BidiBrackets.txt BidiCharacterTest.txt BidiTest.txt NameAliases.txt
+unicodeemoji=emoji-data.txt emoji-sequences.txt emoji-variation-sequences.txt emoji-zwj-sequences.txt
 
 clean-unicode:
 	rm -f $(unidata) $(emojidata)
+
+clean-unicode-data:	clean-unicode
+	rm -f $(unicodedata) $(unicodeemoji)
 
 combining.t:	# UnicodeData.txt Blocks.txt
 	uniset +cat=Me +cat=Mn +cat=Cf -00AD +1160-11FF +200B +D7B0-D7C6 +D7CB-D7FB c > combining.t
@@ -201,6 +217,9 @@ WIDTH-A:	# UnicodeData.txt Blocks.txt EastAsianWidth.txt
 wide.t:	# UnicodeData.txt Blocks.txt EastAsianWidth.txt
 	sh ./mkwide
 
+scripts.t:	# Scripts.txt
+	sh ./mkscripts
+
 casefold.t:	# CaseFolding.txt
 	sh ./mkcasefold > casefold.t
 
@@ -210,14 +229,38 @@ combined.t:	# UnicodeData.txt
 bidiclasses.t:	# UnicodeData.txt
 	sh ./mkbidiclasses > bidiclasses.t
 
+mirroring.t:	# BidiMirroring.txt
+	sh ./mkmirroring > mirroring.t
+
+brackets.t:	# BidiBrackets.txt
+	sh ./mkbrackets
+
+canonical.t:	# BidiBrackets.txt UnicodeData.txt
+	sh ./mkbrackets
+
+testbidi.exe:	testbidi.tc minibidi.c # BidiCharacterTest.txt BidiTest.txt
+	$(CC) -x c testbidi.tc -DTEST_BIDI --include std.h minibidi.c -o testbidi.exe
+
 unicode:	UnicodeData.txt Blocks.txt EastAsianWidth.txt
 
 full-emoji-list.html:
-	#$(WGET) http://www.unicode.org/emoji/charts-11.0/$@
 	$(WGET) http://www.unicode.org/emoji/charts/$@
 
-emoji-%.txt:
-	$(WGET) http://www.unicode.org/Public/emoji/11.0/$@
+univer = `sed -e '/^\# Blocks-/ s,[^0-9]*\([0-9]*\)\.\([0-9]\)\.[0-9][^0-9]*,\1.\2,' -e t -e d Blocks.txt`
+unibasever = `sed -e '/^\# Blocks-/ s,[^0-9]*\([0-9]*\)\..*,\1.0,' -e t -e d Blocks.txt`
+
+emoji-%.txt:	Blocks.txt
+	$(WGET) http://www.unicode.org/Public/emoji/$(unibasever)/$@
+
+unicodever = `sed -e '/^\# Blocks-/ s,[^0-9]*\([0-9]*\)\.\([0-9]\)\.\([0-9]\)[^0-9]*,\1\2\3,' -e t -e d Blocks.txt`
+
+unicodever.t:	# Blocks.txt
+	echo "#define UNICODE_VERSION $(unicodever)" > unicodever.t
+
+univer:	Blocks.txt
+	echo $(univer)
+	echo $(unibasever)
+	echo $(unicodever)
 
 %.txt:
 	$(WGET) http://www.unicode.org/Public/UNIDATA/$@
@@ -278,8 +321,7 @@ $(pdf): ../docs/$(NAME).1
 html := ../docs/$(NAME).1.html
 html: $(html)
 $(html): ../docs/$(NAME).1
-#	manserver ... $< > $@
-	groff -t -man -Thtml $< > $@
+	sed -f html.sed $< | groff -t -man -mwww -Thtml > $@
 
 clean:
 	#rm -rf *.d *.o $(NAME)*
@@ -304,7 +346,7 @@ SRCDEBUG+= -e "\((true|1) *\|"
 SRCDEBUG+= -e "& 0($|[^bx])"
 SRCDEBUG+= -e "^///"
 checksrc:
-	if egrep -a $(SRCDEBUG) *.[hc]; then false; fi
+	if egrep -an $(SRCDEBUG) *.[hc]; then false; fi
 
 #############################################################################
 # development and debug targets

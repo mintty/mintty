@@ -4,6 +4,7 @@ version=`echo VERSION | cpp -P --include src/appinfo.h`
 version=`eval echo $version`
 rel=${REL-0}
 pkg=mintty-$version-$rel
+dbg=mintty-debuginfo-$version-$rel
 
 ID_RSA=${ID_RSA-$HOME/.ssh/id_rsa}
 
@@ -13,6 +14,9 @@ echo Command: sftp -i $ID_RSA cygwin@cygwin.com
 if [ ! -f release/$pkg.hint ]
 then	cp cygwin/setup.hint release/$pkg.hint
 fi
+if [ ! -f release/$dbg.hint ]
+then	cp cygwin/mintty-debuginfo.hint release/$dbg.hint
+fi
 cd release
 touch '!ready'
 batch="-b -"
@@ -21,16 +25,20 @@ sftp $batch -i $ID_RSA cygwin@cygwin.com <</EOSFTP
 #mkdir x86/release/mintty
 put $pkg.i686/$pkg.tar.xz x86/release/mintty/
 put $pkg-src.tar.xz x86/release/mintty/
-#put setup.hint x86/release/mintty/
 put $pkg.hint x86/release/mintty/
+#mkdir x86/release/mintty/mintty-debuginfo
+put $pkg.i686/$dbg.tar.xz x86/release/mintty/mintty-debuginfo/
+put $dbg.hint x86/release/mintty/mintty-debuginfo/
 #put /dev/null x86/release/!ready
 put !ready x86/release/
 
 #mkdir x86_64/release/mintty
 put $pkg.x86_64/$pkg.tar.xz x86_64/release/mintty/
 put $pkg-src.tar.xz x86_64/release/mintty/
-#put setup.hint x86_64/release/mintty/
 put $pkg.hint x86_64/release/mintty/
+#mkdir x86_64/release/mintty/mintty-debuginfo
+put $pkg.x86_64/$dbg.tar.xz x86_64/release/mintty/mintty-debuginfo/
+put $dbg.hint x86_64/release/mintty/mintty-debuginfo/
 #put /dev/null x86_64/release/!ready
 put !ready x86_64/release/
 

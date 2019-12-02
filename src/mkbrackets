@@ -1,0 +1,19 @@
+#! /bin/sh
+
+brackets=BidiBrackets.txt
+unidata=UnicodeData.txt
+make $brackets >&2
+make $unidata >&2
+
+sed -e "s/^\([0-9A-F]*\); *\([0-9A-F]*\); *\([co]\).*/  {0x\1, 0x\2, BRACK\3},/" \
+    -e t -e d $brackets > brackets.t
+
+# generate table of canonical equivalents of brackets
+#208D;SUBSCRIPT LEFT PARENTHESIS;Ps;0;ON;<sub> 0028;...
+#	->
+#  {0x208D, 0x0028},
+sed -e "s/^\([0-9A-F][0-9A-F]*\).*/^\1;/" -e t -e d $brackets |
+grep -f - $unidata |
+sed -e "s,^\([0-9A-F][0-9A-F]*\);[^;]*;[^;]*;[^;]*;[^;]*;\([^;][^;]*\);.*,\1 \2," -e t -e d |
+sed -e "s,<.*> *,," -e "s/ /, 0x/" -e "s/^/  {0x/" -e "s/$/},/" > canonical.t
+

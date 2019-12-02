@@ -1,9 +1,10 @@
 // winclip.c (part of mintty)
-// Copyright 2008-12 Andy Koppe, 2017 Thomas Wolff
+// Copyright 2008-12 Andy Koppe, 2018 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "winpriv.h"
+#include "termpriv.h"  // term_get_html
 #include "charset.h"
 #include "child.h"
 #include "res.h"  // DIALOG_CLASS
@@ -48,7 +49,7 @@ shell_exec_thread(void *data)
   return 0;
 }
 
-static void
+void
 shell_exec(wstring wpath)
 // frees wpath
 {
@@ -111,7 +112,7 @@ static int wsl_fstab_len = 0;
 static char *
 skip(char * s)
 {
-  while (isspace(*s))
+  while (iswspace(*s))
     s++;
   return s;
 }
@@ -162,12 +163,12 @@ wslmntmapped(void)
         char * p1 = skip(linebuf);
         if (*p1 != '#') {
           char * x = p1;
-          while (!isspace(*x))
+          while (!iswspace(*x))
             x++;
           *x++ = 0;
           char * p2 = skip(x);
           x = p2;
-          while (!isspace(*x))
+          while (!iswspace(*x))
             x++;
           *x = 0;
           if (x-- > p2 && *x == '/')
@@ -302,7 +303,7 @@ dewsl(wchar * wpath)
 }
 
 void
-win_open(wstring wpath)
+win_open(wstring wpath, bool adjust_dir)
 // frees wpath
 {
   // unescape
@@ -355,7 +356,7 @@ win_open(wstring wpath)
 
       wpath = dewsl((wchar *)wpath);
     }
-    wstring conv_wpath = child_conv_path(wpath);
+    wstring conv_wpath = child_conv_path(wpath, adjust_dir);
 #ifdef debug_wsl
     printf("open <%ls> <%ls>\n", wpath, conv_wpath);
 #endif
@@ -418,6 +419,12 @@ apply_attr_colour_rtf(cattr ca, attr_colour_mode mode, int * pfgi, int * pbgi)
 void
 win_copy(const wchar *data, cattr *cattrs, int len)
 {
+  win_copy_as(data, cattrs, len, 0);
+}
+
+void
+win_copy_as(const wchar *data, cattr *cattrs, int len, char what)
+{
   HGLOBAL clipdata, clipdata2, clipdata3 = 0;
   int len2;
   void *lock, *lock2, *lock3;
@@ -442,7 +449,7 @@ win_copy(const wchar *data, cattr *cattrs, int len)
   memcpy(lock, data, len * sizeof(wchar));
   WideCharToMultiByte(CP_ACP, 0, data, len, lock2, len2, null, null);
 
-  if (cattrs && cfg.copy_as_rtf) {
+  if (cattrs && ((cfg.copy_as_rtf && !what) || what == 'r')) {
     wchar unitab[256];
     char *rtf = null;
     uchar *tdata = (uchar *) lock2;
@@ -465,19 +472,21 @@ win_copy(const wchar *data, cattr *cattrs, int len)
       MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS,
                           (char[]){i}, 1, unitab + i, 1);
 
-    char * rtffontname = newn(char, wcslen(cfg.font.name) * 9 + 1);
+    wstring cfgfont = *cfg.copy_as_rtf_font ? cfg.copy_as_rtf_font : cfg.font.name;
+    int cfgsize = cfg.copy_as_rtf_font_size ? cfg.copy_as_rtf_font_size : cfg.font.size;
+    char * rtffontname = newn(char, wcslen(cfgfont) * 9 + 1);
     char * rtffnpoi = rtffontname;
-    for (uint i = 0; i < wcslen(cfg.font.name); i++)
-      if (!(cfg.font.name[i] & 0xFF80) && !strchr("\\;{}", cfg.font.name[i]))
-        *rtffnpoi++ = cfg.font.name[i];
+    for (uint i = 0; i < wcslen(cfgfont); i++)
+      if (!(cfgfont[i] & 0xFF80) && !strchr("\\;{}", cfgfont[i]))
+        *rtffnpoi++ = cfgfont[i];
       else
-        rtffnpoi += sprintf(rtffnpoi, "\\u%d '", cfg.font.name[i]);
+        rtffnpoi += sprintf(rtffnpoi, "\\u%d '", cfgfont[i]);
     *rtffnpoi = '\0';
     rtfsize = 100 + strlen(rtffontname);
     rtf = newn(char, rtfsize);
     rtflen = sprintf(rtf,
-      "{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0\\fmodern %s;}}\\f0\\fs%d",
-      rtffontname, cfg.font.size * 2);
+      "{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0\\fmodern\\fprq1 %s;}}\\f0\\fs%d",
+      rtffontname, cfgsize * 2);
     free(rtffontname);
 
    /*
@@ -696,10 +705,56 @@ win_copy(const wchar *data, cattr *cattrs, int len)
   if (OpenClipboard(wnd)) {
     clipboard_token = true;
     EmptyClipboard();
+    // copy clipboard text formats
     SetClipboardData(CF_UNICODETEXT, clipdata);
     SetClipboardData(CF_TEXT, clipdata2);
+    // copy clipboard RTF format
     if (clipdata3)
       SetClipboardData(RegisterClipboardFormat(CF_RTF), clipdata3);
+    // determine HTML format level requested
+    int level = 0;
+    if (cfg.copy_as_html && !what)
+      //level = cfg.copy_as_rtf ? 2 : 3;
+      level = cfg.copy_as_html;
+    else if (what == 'h')
+      level = 1;
+    else if (what == 'f')
+      level = 2;
+    else if (what == 'H')
+      level = 3;
+    // copy clipboard HTML format
+    UINT CF_HTML = level ? RegisterClipboardFormatA("HTML Format") : 0;
+    if (CF_HTML) {
+      char * html = term_get_html(level);
+      char * htmlpre = "<html><!--StartFragment-->";
+      char * htmlpost = "<!--EndFragment--></html>";
+      int htmldescrlen = 92;
+      char * htmlcb = asform(
+             "Version:0.9\n"
+             "StartHTML:%08d\n"
+             "EndHTML:%08d\n"
+             "StartFragment:%08d\n"
+             "EndFragment:%08d\n"
+             "%s%s%s",
+             htmldescrlen,
+             htmldescrlen + strlen(htmlpre) + strlen(html) + strlen(htmlpost),
+             htmldescrlen + strlen(htmlpre),
+             htmldescrlen + strlen(htmlpre) + strlen(html),
+             htmlpre, html, htmlpost);
+      free(html);
+      int len = strlen(htmlcb);
+      //printf("clipboard HTML Format:\n%s\n", htmlcb);
+      HGLOBAL clipdatahtml = GlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE, len);
+      char * cliphtml = GlobalLock(clipdatahtml);
+      if (cliphtml) {
+        memcpy(cliphtml, htmlcb, len);
+        free(htmlcb);
+        GlobalUnlock(clipdatahtml);
+        SetClipboardData(CF_HTML, clipdatahtml);
+        GlobalFree(clipdatahtml);
+      }
+    }
+
     CloseClipboard();
   }
   else {
@@ -708,30 +763,61 @@ win_copy(const wchar *data, cattr *cattrs, int len)
   }
 }
 
-static void
-paste_hdrop(HDROP drop)
+static char *
+matchconf(char * conf, char * item)
 {
-  uint buf_len = 32, buf_pos = 0;
-  char *buf = newn(char, buf_len);
-  void buf_add(char c) {
-    if (buf_pos >= buf_len)
-      buf = renewn(buf, buf_len *= 2);
-    buf[buf_pos++] = c;
+  char * cmdp = conf;
+  char sepch = ';';
+  if ((uchar)*cmdp <= (uchar)' ')
+    sepch = *cmdp++;
+
+  char * paramp;
+  while ((paramp = strchr(cmdp, ':'))) {
+    *paramp = '\0';
+    paramp++;
+    char * sepp = strchr(paramp, sepch);
+    if (sepp)
+      *sepp = '\0';
+
+    if (!strcmp(cmdp, item))
+      return paramp;
+
+    if (sepp) {
+      cmdp = sepp + 1;
+      // check for multi-line separation
+      if (*cmdp == '\\' && cmdp[1] == '\n') {
+        cmdp += 2;
+        while (iswspace(*cmdp))
+          cmdp++;
+      }
+    }
+    else
+      break;
   }
+  return 0;
+}
 
-#if CYGWIN_VERSION_API_MINOR >= 222
-  // Update Cygwin locale to terminal locale.
-  cygwin_internal(CW_INT_SETLOCALE);
-#endif
-  uint n = DragQueryFileW(drop, -1, 0, 0);
-  for (uint i = 0; i < n; i++) {
+static uint buf_len, buf_pos;
+static char * buf;
 
-    uint wfn_len = DragQueryFileW(drop, i, 0, 0);
-    wchar wfn[wfn_len + 1];
-    DragQueryFileW(drop, i, wfn, wfn_len + 1);
-#ifdef debug_dragndrop
-    printf("dropped file <%ls>\n", wfn);
-#endif
+static void buf_init()
+{
+  buf_len = 32;
+  buf_pos = 0;
+  buf = newn(char, buf_len);
+}
+
+static void
+buf_add(char c)
+{
+  if (buf_pos >= buf_len)
+    buf = renewn(buf, buf_len *= 2);
+  buf[buf_pos++] = c;
+}
+
+static void
+buf_path(wchar * wfn)
+{
     char *fn = path_win_w_to_posix(wfn);
 
     bool has_tick = false, needs_quotes = false, needs_dollar = false;
@@ -777,7 +863,8 @@ paste_hdrop(HDROP drop)
         else if (strncmp(p, "/cygdrive/", 10) == 0) {
           // convert /cygdrive/X/path referring to mounted drive
           p += 5;
-          strncpy(p, "/mnt", 4);
+          //strncpy(p, "/mnt", 4);
+          memcpy(p, "/mnt", 4);
         }
       }
       else {
@@ -827,7 +914,8 @@ paste_hdrop(HDROP drop)
           p = mp;
         else if (strncmp(p, "/cygdrive/", 10) == 0) {
           p += 5;
-          strncpy(p, "/mnt", 4);
+          //strncpy(p, "/mnt", 4);
+          memcpy(p, "/mnt", 4);
         }
       }
     }
@@ -847,45 +935,39 @@ paste_hdrop(HDROP drop)
     }
     if (needs_quotes)
       buf_add('\'');
-    buf_add(' ');  // Filename separator
     free(fn);
+}
+
+static void
+paste_hdrop(HDROP drop)
+{
+#if CYGWIN_VERSION_API_MINOR >= 222
+  // Update Cygwin locale to terminal locale.
+  cygwin_internal(CW_INT_SETLOCALE);
+#endif
+  uint n = DragQueryFileW(drop, -1, 0, 0);
+
+  buf_init();
+  for (uint i = 0; i < n; i++) {
+    uint wfn_len = DragQueryFileW(drop, i, 0, 0);
+    wchar wfn[wfn_len + 1];
+    DragQueryFileW(drop, i, wfn, wfn_len + 1);
+#ifdef debug_dragndrop
+    printf("dropped file <%ls>\n", wfn);
+#endif
+    if (i)
+      buf_add(' ');  // Filename separator
+    buf_path(wfn);
   }
-  buf_pos--;  // Drop trailing space
 
   if (!support_wsl && *cfg.drop_commands) {
     // try to determine foreground program
     char * fg_prog = foreground_prog();
     if (fg_prog) {
       // match program base name
-      char * matchconf(char * conf, char * item, char sepch) {
-        if (*conf == sepch)
-          conf++;
-        char * m = strstr(conf, item);
-        if (m && (m == conf || *(m - 1) == sepch)) {
-          m += strlen(item);
-          if (*m == ':')
-            return m + 1;
-          else {
-            m = strchr(m, ':');
-            if (m)
-              return matchconf(m, item, sepch);
-            else
-              return null;
-          }
-        }
-        else
-          return null;
-      }
-
       char * drops = cs__wcstombs(cfg.drop_commands);
-      char sepch = ';';
-      if (((uchar)*drops) < (uchar)' ')
-        sepch = *drops;
-      char * paste = matchconf(drops, fg_prog, sepch);
+      char * paste = matchconf(drops, fg_prog);
       if (paste) {
-        char * sep = strchr(paste, sepch);
-        if (sep)
-          *sep = 0;
         buf[buf_pos] = 0;
         char * pastebuf = newn(char, strlen(paste) + strlen(buf) + 1);
         sprintf(pastebuf, paste, buf);
@@ -910,11 +992,27 @@ paste_hdrop(HDROP drop)
 }
 
 static void
+paste_path(HANDLE data)
+{
+  wchar *s = GlobalLock(data);
+  buf_init();
+  buf_path(s);
+  GlobalUnlock(data);
+
+  if (term.bracketed_paste)
+    child_write("\e[200~", 6);
+  child_send(buf, buf_pos);
+  free(buf);
+  if (term.bracketed_paste)
+    child_write("\e[201~", 6);
+}
+
+static void
 paste_unicode_text(HANDLE data)
 {
   wchar *s = GlobalLock(data);
   uint l = wcslen(s);
-  term_paste(s, l);
+  term_paste(s, l, (GetKeyState(VK_CONTROL) & 0x80) != 0);
   GlobalUnlock(data);
 }
 
@@ -926,25 +1024,54 @@ paste_text(HANDLE data)
   wchar s[l];
   MultiByteToWideChar(CP_ACP, 0, cs, -1, s, l);
   GlobalUnlock(data);
-  term_paste(s, l);
+  term_paste(s, l, (GetKeyState(VK_CONTROL) & 0x80) != 0);
+}
+
+static void
+do_win_paste(bool do_path)
+{
+  if (!OpenClipboard(null))
+    return;
+
+  if (cfg.input_clears_selection)
+    term.selected = false;
+
+  HGLOBAL data;
+  if ((data = GetClipboardData(CF_HDROP))) {
+    //printf("pasting CF_HDROP\n");
+    paste_hdrop(data);
+  }
+  else if ((data = GetClipboardData(CF_UNICODETEXT))) {
+    //printf("pasting CF_UNICODETEXT\n");
+    if (do_path)
+      paste_path(data);
+    else
+      paste_unicode_text(data);
+  }
+  else if ((data = GetClipboardData(CF_TEXT))) {
+    //printf("pasting CF_TEXT\n");
+    paste_text(data);
+  }
+
+  CloseClipboard();
 }
 
 void
 win_paste(void)
 {
-  if (!OpenClipboard(null))
-    return;
-  HGLOBAL data;
-  if (cfg.input_clears_selection)
-    term.selected = false;
-  if ((data = GetClipboardData(CF_HDROP)))
-    paste_hdrop(data);
-  else if ((data = GetClipboardData(CF_UNICODETEXT)))
-    paste_unicode_text(data);
-  else if ((data = GetClipboardData(CF_TEXT)))
-    paste_text(data);
-  CloseClipboard();
+  do_win_paste(false);
 }
+
+void
+win_paste_path(void)
+{
+  do_win_paste(true);
+}
+
+
+/*
+ *  Drag-and-drop
+ */
 
 static wchar *
 paste_dialog(HANDLE data, CLIPFORMAT cf)

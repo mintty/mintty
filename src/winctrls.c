@@ -520,6 +520,24 @@ staticddlbig(ctrlpos * cp, char *stext, int sid, int lid)
 }
 
 /*
+ * A static, text/label only.
+ */
+static void
+staticlabel(ctrlpos * cp, char *stext, int sid)
+{
+  RECT r;
+
+  if (stext) {
+    r.left = GAPBETWEEN;
+    r.top = cp->ypos;
+    r.right = cp->width;
+    r.bottom = STATICHEIGHT;
+    doctl(null, cp, r, "STATIC", WS_CHILD | WS_VISIBLE, 0, stext, sid);
+    cp->ypos += STATICHEIGHT + GAPBETWEEN;
+  }
+}
+
+/*
  * A list box with a static labelling it.
  */
 static void
@@ -806,6 +824,9 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
                              ctrl->listbox.ncols - 1, (LPARAM) tabarray);
         }
       }
+      when CTRL_LABEL:
+        num_ids = 1;
+        staticlabel(&pos, ctrl->label, base_id);
       when CTRL_FONTSELECT: {
         num_ids = 3;
         //__ Options - Text: font chooser activation button
@@ -1371,13 +1392,13 @@ fonthook(HWND hdlg, UINT msg, WPARAM wParam, LPARAM lParam)
 #  include "_wm.t"
   };
   char * wm_name = "WM_?";
-  if ((msg != WM_SETCURSOR && msg != WM_NCHITTEST && msg != WM_MOUSEFIRST
+  if ((msg != WM_SETCURSOR && msg != WM_NCHITTEST && msg != WM_MOUSEMOVE
        && msg != WM_ERASEBKGND && msg != WM_CTLCOLORDLG && msg != WM_PRINTCLIENT && msg != WM_CTLCOLORBTN
        && msg != WM_ENTERIDLE
        && (msg != WM_NOTIFY)
      )) {
     for (uint i = 0; i < lengthof(wm_names); i++)
-      if (msg == wm_names[i].wm_) {
+      if (msg == wm_names[i].wm_ && !strstr(wm_names[i].wm_name, "FIRST")) {
         wm_name = wm_names[i].wm_name;
         break;
       }

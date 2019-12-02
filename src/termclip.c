@@ -1,5 +1,5 @@
 // termclip.c (part of mintty)
-// Copyright 2008-10 Andy Koppe, 2017 Thomas Wolff
+// Copyright 2008-10 Andy Koppe, 2018 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -36,12 +36,12 @@ clip_addchar(clip_workbuf * b, wchar chr, cattr * ca)
   }
 
   b->text[b->len] = chr;
-  b->cattrs[b->len] = ca ? *ca : (cattr){0, 0, 0, 0};
+  b->cattrs[b->len] = ca ? *ca : CATTR_DEFAULT;
   b->len++;
 }
 
 // except OOM, guaranteed at least emtpy null terminated wstring and one cattr
-static clip_workbuf*
+static clip_workbuf *
 get_selection(pos start, pos end, bool rect, bool allinline)
 {
   int old_top_x = start.x;    /* needed for rect==1 */
@@ -51,6 +51,11 @@ get_selection(pos start, pos end, bool rect, bool allinline)
   while (poslt(start, end)) {
     bool nl = false;
     termline *line = fetch_line(start.y);
+
+    if (start.y == term.curs.y) {
+      line->chars[term.curs.x].attr.attr |= TATTR_ACTCURS;
+    }
+
     pos nlpos;
     wchar * sixel_clipp = (wchar *)cfg.sixel_clip_char;
 
@@ -73,15 +78,26 @@ get_selection(pos start, pos end, bool rect, bool allinline)
         nl = true;
     }
     else if (!(line->lattr & LATTR_WRAPPED)) {
+      //printf("pos %d\n", nlpos.x);
       while (nlpos.x && line->chars[nlpos.x - 1].chr == ' ' &&
+             (cfg.trim_selection ||
+              (line->chars[nlpos.x - 1].attr.attr & TATTR_CLEAR)) &&
              !line->chars[nlpos.x - 1].cc_next && poslt(start, nlpos))
         decpos(nlpos);
       if (poslt(nlpos, end))
         nl = true;
+      //printf("pos %d nl %d\n", nlpos.x, nl);
     }
-    else if (line->lattr & LATTR_WRAPPED2) {
-     /* Ignore the last char on the line in a WRAPPED2 line. */
-      decpos(nlpos);
+    else {
+     /* Strip added space in wrapped line after window resizing */
+      //printf("wr x %d w %d\n", nlpos.x, line->wrappos);
+      while (nlpos.x > line->wrappos + !(line->lattr & LATTR_WRAPPED2) &&
+             line->chars[nlpos.x - 1].chr == ' ' &&
+             (cfg.trim_selection ||
+              (line->chars[nlpos.x - 1].attr.attr & TATTR_CLEAR)) &&
+             !line->chars[nlpos.x - 1].cc_next && poslt(start, nlpos))
+        decpos(nlpos);
+      //printf("-> x %d w %d\n", nlpos.x, line->wrappos);
     }
 
    /*
@@ -143,14 +159,20 @@ get_selection(pos start, pos end, bool rect, bool allinline)
 }
 
 void
-term_copy(void)
+term_copy_as(char what)
 {
   if (!term.selected)
     return;
 
   clip_workbuf *buf = get_selection(term.sel_start, term.sel_end, term.sel_rect, false);
-  win_copy(buf->text, buf->cattrs, buf->len);
+  win_copy_as(buf->text, buf->cattrs, buf->len, what);
   destroy_clip_workbuf(buf);
+}
+
+void
+term_copy(void)
+{
+  term_copy_as(0);
 }
 
 void
@@ -165,13 +187,37 @@ term_open(void)
   while (iswspace(*p))
     p++;
   if (*p)
-    win_open(wcsdup(buf->text));  // win_open frees its argument
+    win_open(wcsdup(buf->text), true);  // win_open frees its argument
 
   destroy_clip_workbuf(buf);
 }
 
+static bool
+contains(string s, wchar c)
+{
+  string tag;
+  switch (c) {
+    when '\b': tag = "BS";
+    when '\t': tag = "HT";
+    when '\n': tag = "NL";
+    when '\r': tag = "CR";
+    when '\f': tag = "FF";
+    when '\e': tag = "ESC";
+    when '\177': tag = "DEL";
+    otherwise:
+      if (c < ' ')
+        tag = "C0";
+      else if (c >= 0x80 && c < 0xA0)
+        tag = "C1";
+      else
+        return false;
+  }
+  return strstr(s, tag);
+  // a bit simplistic, we should probably properly parse...
+}
+
 void
-term_paste(wchar *data, uint len)
+term_paste(wchar *data, uint len, bool all)
 {
   term_cancel_paste();
 
@@ -182,10 +228,15 @@ term_paste(wchar *data, uint len)
   // Unix-style \n line endings to \r, because that's what the Enter key sends.
   for (uint i = 0; i < len; i++) {
     wchar wc = data[i];
-    if (wc != '\n')
+    if (wc == '\n')
+      wc = '\r';
+    if (!all && *cfg.filter_paste && contains(cfg.filter_paste, wc))
+      wc = ' ';
+
+    if (data[i] != '\n')
       term.paste_buffer[term.paste_len++] = wc;
     else if (i == 0 || data[i - 1] != '\r')
-      term.paste_buffer[term.paste_len++] = '\r';
+      term.paste_buffer[term.paste_len++] = wc;
   }
 
   if (term.bracketed_paste)
@@ -208,10 +259,30 @@ void
 term_send_paste(void)
 {
   int i = term.paste_pos;
-  while (i < term.paste_len && term.paste_buffer[i++] != '\r');
+  /* We must not feed more than MAXPASTEMAX bytes into the pty in one chunk 
+     or it will block on the receiving side (write() does not return).
+   */
+#define MAXPASTEMAX 7819
+#define PASTEMAX 2222
+  while (i < term.paste_len && i - term.paste_pos < PASTEMAX
+         && term.paste_buffer[i++] != '\r'
+        )
+    ;
+  if (i < term.paste_len && is_high_surrogate(term.paste_buffer[i]))
+    i++;
+  //printf("term_send_paste pos %d @ %d (len %d)\n", term.paste_pos, i, term.paste_len);
   child_sendw(term.paste_buffer + term.paste_pos, i - term.paste_pos);
-  if (i < term.paste_len)
+  if (i < term.paste_len) {
     term.paste_pos = i;
+    // if only part of the paste buffer has been written to the child,
+    // the current strategy is to leave the rest pending for on-demand 
+    // invocation of term_send_paste from child_proc within the main loop,
+    // however, that causes partial loss of large paste contents;
+    // worse, without the PASTEMAX limitation, if long contents without 
+    // lineends is pasted, the terminal stalls (#810);
+    // attempts to replace the pending strategy with looping here (to 
+    // paste the whole contents) were not successful to solve the stalling
+  }
   else
     term_cancel_paste();
 }
@@ -311,7 +382,7 @@ term_get_text(bool all, bool screen, bool command)
 }
 
 void
-term_cmd(char * cmdpat)
+term_cmd(char * cmd)
 {
   // provide scrollback buffer
   wchar * wsel = term_get_text(true, false, false);
@@ -342,32 +413,25 @@ term_cmd(char * cmdpat)
   setenv("MINTTY_TITLE", ttl, true);
   free(ttl);
 
-#ifdef use_placeholders
-  sel = 0;
-  if (strstr(cmdpat, "%s") || strstr(cmdpat, "%1$s")) {
-    wchar * wsel = term_get_text(false, false, false);
-    sel = cs__wcstombs(wsel);
-    free(wsel);
+  char * path0 = 0;
+  char * path1 = 0;
+  if (*cfg.user_commands_path) {
+    path0 = getenv("PATH");
+    path1 = cs__wcstombs(cfg.user_commands_path);
+    char * ph = strstr(path1, "%s");
+    if (ph && !strchr(ph + 1, '%')) {
+      char * path2 = asform(path1, path0);
+      free(path1);
+      path1 = path2;
+    }
+    setenv("PATH", path1, true);
   }
-
-  int len = strlen(cmdpat) + (sel ? strlen(sel) : 0) + 1;
-  char * cmd = newn(char, len);
-  sprintf(cmd, cmdpat, sel ?: "");
-  if (sel)
-    free(sel);
-#else
-  char * cmd = cmdpat;
-#endif
-
   FILE * cmdf = popen(cmd, "r");
   unsetenv("MINTTY_TITLE");
   unsetenv("MINTTY_OUTPUT");
   unsetenv("MINTTY_SCREEN");
   unsetenv("MINTTY_SELECT");
   unsetenv("MINTTY_BUFFER");
-  unsetenv("MINTTY_CWD");
-  unsetenv("MINTTY_PID");
-  unsetenv("MINTTY_PROG");
   if (cmdf) {
     if (term.bracketed_paste)
       child_write("\e[200~", 6);
@@ -379,6 +443,10 @@ term_cmd(char * cmdpat)
     if (term.bracketed_paste)
       child_write("\e[201~", 6);
   }
+  if (path0)
+    setenv("PATH", path0, true);
+  if (path1)
+    free(path1);
 }
 
 #include <time.h>
@@ -386,8 +454,502 @@ term_cmd(char * cmdpat)
 #include <fcntl.h>
 #include "winpriv.h"  // PADDING
 
+static char *
+term_create_html(FILE * hf, int level)
+{
+  char * hbuf = hf ? 0 : strdup("");
+  void
+  hprintf(FILE * hf, const char * fmt, ...)
+  {
+    char * buf;
+    va_list va;
+    va_start(va, fmt);
+    int len = vasprintf(&buf, fmt, va);
+    va_end(va);
+    if (hf)
+      fprintf(hf, "%s", buf);
+    else {
+      hbuf = renewn(hbuf, strlen(hbuf) + len + 1);
+      strcat(hbuf, buf);
+    }
+    free(buf);
+  }
+
+  pos start = term.sel_start;
+  pos end = term.sel_end;
+  bool rect = term.sel_rect;
+  if (!term.selected) {
+    start = (pos){term.disptop, 0, false};
+    end = (pos){term.disptop + term.rows - 1, term.cols, false};
+    rect = false;
+  }
+
+  bool enhtml = true;  // compatibility enhanced HTML
+
+  char * font_name = cs__wcstoutf(cfg.font.name);
+  colour fg_colour = win_get_colour(FG_COLOUR_I);
+  colour bg_colour = win_get_colour(BG_COLOUR_I);
+  colour bold_colour = win_get_colour(BOLD_COLOUR_I);
+  hprintf(hf,
+    "<head>\n"
+    "  <meta name='generator' content='mintty'/>\n"
+    "  <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'/>\n"
+    "  <title>mintty screen dump</title>\n"
+    "  <link rel='stylesheet' type='text/css' href='xterm.css'/>\n"
+    "  <link rel='stylesheet' type='text/css' href='mintty.css'/>\n"
+    //"  <script type='text/javascript' language='JavaScript' src='emoji.js'></script>\n"
+    "  <style type='text/css'>\n"
+    "  #vt100 pre { font-family: inherit; margin: 0; padding: 0; }\n"
+    );
+  if (level >= 3)
+    hprintf(hf, "  body.mintty { margin: 0; padding: 0; }\n");
+  hprintf(hf, "  #vt100 span {\n");
+  if (level >= 2) {
+    // font needed in <span> for some tools (e.g. Powerpoint)
+    hprintf(hf,
+      "    font-family: '%s', 'Lucida Console ', 'Consolas', monospace;\n"
+                       // ? 'Lucida Sans Typewriter', 'Courier New', 'Courier'
+      , font_name);
+    if (cfg.underl_colour != (colour)-1)
+      hprintf(hf, "    text-decoration-color: #%02X%02X%02X;\n",
+              red(cfg.underl_colour), green(cfg.underl_colour), blue(cfg.underl_colour));
+  }
+  free(font_name);
+  hprintf(hf, "  }\n");
+
+  hprintf(hf,
+    "  #vt100 {\n"
+    "    border: 0px solid;\n"
+    "    padding: %dpx;\n"
+    , PADDING);
+  if (level >= 2) {
+    hprintf(hf,
+      "    line-height: %d%%;\n"
+      "    font-size: %dpt;\n"
+      , line_scale, font_size);
+  }
+
+  if (level >= 3) {
+    if (*cfg.background && !term.selected) {
+      wstring wbg = cfg.background;
+      bool tiled = *wbg == '*';
+      if (*wbg == '*' || *wbg == '_')
+        wbg++;
+      char * bg = cs__wcstoutf(wbg);
+      int alpha = -1;
+      char * salpha = strrchr(bg, ',');
+      if (salpha) {
+        *salpha = 0;
+        salpha++;
+        sscanf(salpha, "%u%c", &alpha, &(char){0});
+      }
+  
+      if (alpha >= 0) {
+        hprintf(hf, "  }\n");
+        hprintf(hf, "  #vt100 pre {\n");
+        hprintf(hf, "    background-color: rgba(%d, %d, %d, %.3f);\n",
+                red(bg_colour), green(bg_colour), blue(bg_colour),
+                (255.0 - alpha) / 255);
+        hprintf(hf, "  }\n");
+        hprintf(hf, "  .background {\n");
+      }
+  
+      hprintf(hf, "    background-image: url('%s');\n", bg);
+      if (!tiled) {
+        hprintf(hf, "    background-attachment: no-repeat;\n");
+        hprintf(hf, "    background-size: 100%% 100%%;\n");
+      }
+  
+      free(bg);
+  
+      if (alpha < 0) {
+        hprintf(hf, "  }\n");
+        hprintf(hf, "  #vt100 pre {\n");
+      }
+    }
+    else
+    {
+      hprintf(hf, "  }\n");
+      hprintf(hf, "  #vt100 pre {\n");
+      hprintf(hf, "    background-color: #%02X%02X%02X;\n",
+              red(bg_colour), green(bg_colour), blue(bg_colour));
+    }
+    // add style for <pre>
+    // default color needed here for some tools (e.g. Powerpoint)
+    hprintf(hf, "    color: #%02X%02X%02X;\n",
+            red(fg_colour), green(fg_colour), blue(fg_colour));
+  }
+
+#ifdef float_left
+  // float needed here to avoid placement left of previous text (Thunderbird)
+  // this cannot be reproduced anymore; dropped (#900)
+  if (level >= 3) {
+    hprintf(hf, "    float: left;\n");
+#endif
+  hprintf(hf, "  }\n");
+
+  // add xterm-compatible style classes for some text attributes
+  hprintf(hf, "  .bd { font-weight: bold }\n");
+  hprintf(hf, "  .it { font-style: italic }\n");
+  hprintf(hf, "  .ul { text-decoration-line: underline }\n");
+  hprintf(hf, "  .st { text-decoration-line: line-through }\n");
+  hprintf(hf, "  .lu { text-decoration-line: line-through underline }\n");
+  if (bold_colour != (colour)-1)
+    hprintf(hf, "  .bold-color { color: #%02X%02X%02X }\n",
+            red(bold_colour), green(bold_colour), blue(bold_colour));
+  for (int i = 0; i < 16; i++) {
+    colour ansii = win_get_colour(ANSI0 + i);
+    uchar r = red(ansii), g = green(ansii), b = blue(ansii);
+    hprintf(hf, "  .fg-color%d { color: #%02X%02X%02X }"
+                " .bg-color%d { background-color: #%02X%02X%02X }\n",
+                i, r, g, b, i, r, g, b);
+  }
+  colour cursor_colour = win_get_colour(CURSOR_COLOUR_I);
+  hprintf(hf, "  #cursor { background-color: #%02X%02X%02X }\n",
+          red(cursor_colour), green(cursor_colour), blue(cursor_colour));
+
+  if (level >= 2) {
+    for (int i = 1; i <= 10; i++)
+      if (*cfg.fontfams[i].name) {
+        char * fn = cs__wcstoutf(cfg.fontfams[i].name);
+        hprintf(hf, "  .font%d { font-family: '%s' }\n", i, fn);
+        free(fn);
+      }
+    if (!*cfg.fontfams[10].name)
+      hprintf(hf, "  .font10 { font-family: 'F25 Blackletter Typewriter' }\n");
+  }
+
+  hprintf(hf, "  </style>\n");
+  hprintf(hf, "  <script>\n");
+  hprintf(hf, "  var b1 = 500; var b2 = 300;\n");
+  hprintf(hf, "  function visib (tag, state, timeout) {\n");
+  hprintf(hf, "    var bl = document.getElementsByName(tag);\n");
+  hprintf(hf, "    var vv; if (state) vv = 'visible'; else vv = 'hidden';\n");
+  hprintf(hf, "    var i;\n");
+  hprintf(hf, "    for (i = 0; i < bl.length; i++) {\n");
+  hprintf(hf, "      bl[i].style.visibility = vv;\n");
+  hprintf(hf, "    }\n");
+  hprintf(hf, "    window.setTimeout ('visib (\"' + tag + '\", ' + !state + ', ' + timeout + ')', timeout);\n");
+  hprintf(hf, "  }\n");
+  hprintf(hf, "  function setup () {\n");
+  hprintf(hf, "    window.setTimeout ('visib (\"blink\", 0, b1)', b1);\n");
+  hprintf(hf, "    window.setTimeout ('visib (\"rapid\", 0, b2)', b2);\n");
+  hprintf(hf, "  }\n");
+  hprintf(hf, "  </script>\n");
+  hprintf(hf, "</head>\n\n");
+  hprintf(hf, "<body class=mintty onload='setup();'>\n");
+  //hprintf(hf, "  <table border=0 cellpadding=0 cellspacing=0><tr><td>\n");
+  hprintf(hf, "  <div class=background id='vt100'>\n");
+  hprintf(hf, "   <pre>");
+
+  clip_workbuf * buf = get_selection(start, end, rect, level >= 3);
+  int i0 = 0;
+  bool odd = true;
+  for (uint i = 0; i < buf->len; i++) {
+    if (!buf->text[i] || buf->text[i] == '\r' || buf->text[i] == '\n'
+        // buf->cattrs[i] ~!= buf->cattrs[i0] ?
+        // we need to check more than termattrs_equal_fg
+        // but less than termchars_equal_override
+# define IGNATTR (ATTR_WIDE | TATTR_COMBINING)
+        || (buf->cattrs[i].attr & ~IGNATTR) != (buf->cattrs[i0].attr & ~IGNATTR)
+        || buf->cattrs[i].truefg != buf->cattrs[i0].truefg
+        || buf->cattrs[i].truebg != buf->cattrs[i0].truebg
+        || buf->cattrs[i].ulcolr != buf->cattrs[i0].ulcolr
+       )
+    {
+      // flush chunk with equal attributes
+      hprintf(hf, "<span class='%s", odd ? "od" : "ev");
+
+      cattr * ca = &buf->cattrs[i0];
+      int fgi = (ca->attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
+      int bgi = (ca->attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
+      bool dim = ca->attr & ATTR_DIM;
+      bool rev = ca->attr & ATTR_REVERSE;
+
+      // colour setup preparations;
+      // we could perhaps reuse apply_attr_colour here, but again 
+      // the situation is specific: some terminal handling (manual bolding) 
+      // is not applicable in HTML export, and we do not want to simply 
+      // always retrieve a plain colour value because we want to specify 
+      // colour style or class only if the respective default is overridden
+      colour fg = fgi >= TRUE_COLOUR ? ca->truefg : win_get_colour(fgi);
+      colour bg = bgi >= TRUE_COLOUR ? ca->truebg : win_get_colour(bgi);
+      // separate ANSI values subject to BoldAsColour
+      int fga = fgi >= ANSI0 ? fgi & 0xFF : 999;
+      int bga = bgi >= ANSI0 ? bgi & 0xFF : 999;
+      if ((ca->attr & ATTR_BOLD) && fga < 8 && term.enable_bold_colour && !rev) {
+        if (bold_colour != (colour)-1)
+          fg = bold_colour;
+      }
+      if (dim) {
+        fg = ((fg & 0xFEFEFEFE) >> 1)
+             // dim against terminal bg (as in apply_attr_colour)
+             + ((win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1);
+      }
+      if (rev) {
+        fgi ^= bgi; fga ^= bga; fg ^= bg;
+        bgi ^= fgi; bga ^= fga; bg ^= fg;
+        fgi ^= bgi; fga ^= bga; fg ^= bg;
+      }
+      cattr ac = apply_attr_colour(*ca, ACM_TERM);
+      fg = ac.truefg;
+      bg = ac.truebg;
+
+      // add marker classes
+      if (ca->attr & ATTR_FRAMED)
+        hprintf(hf, " emoji");  // mark emoji style
+
+      // style adding function
+      bool with_style = false;
+      void add_style(char * s) {
+        if (!with_style) {
+          hprintf(hf, "' style='%s", s);
+          with_style = true;
+        }
+        else
+          hprintf(hf, " %s", s);
+      }
+      void add_color(char * pre, int col) {
+        colour ansii = win_get_colour(ANSI0 + col);
+        uchar r = red(ansii), g = green(ansii), b = blue(ansii);
+        add_style("");
+        hprintf(hf, "%scolor: #%02X%02X%02X;", pre, r, g, b);
+      }
+
+      // add style classes or resolved styles;
+      // explicit style= attributes instead of xterm-compatible classes
+      // are used for the sake of tools that do not take styles by class
+      // (Powerpoint; Word would take id= but not class=)
+      if (ca->attr & ATTR_BOLD) {
+        if (enhtml)
+          add_style("font-weight: bold;");
+        else
+          hprintf(hf, " bd");
+      }
+      if (ca->attr & ATTR_ITALIC) {
+        if (enhtml)
+          add_style("font-style: italic;");
+        else
+          hprintf(hf, " it");
+      }
+      if (!enhtml) {
+        if ((ca->attr & (ATTR_UNDER | ATTR_STRIKEOUT)) == (ATTR_UNDER | ATTR_STRIKEOUT))
+          hprintf(hf, " lu");
+        else if (ca->attr & ATTR_STRIKEOUT)
+          hprintf(hf, " st");
+        else if (ca->attr & UNDER_MASK)
+          hprintf(hf, " ul");
+      }
+      int findex = (ca->attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+      if (findex > 10)
+        findex = 0;
+      if (findex) {
+        if (enhtml) {
+          if (*cfg.fontfams[findex].name || findex == 10) {
+            add_style("font-family: ");
+            if (*cfg.fontfams[findex].name) {
+              char * fn = cs__wcstoutf(cfg.fontfams[findex].name);
+              hprintf(hf, "\"%s\";", fn);
+              free(fn);
+            }
+            else
+              hprintf(hf, "\"F25 Blackletter Typewriter\";");
+          }
+        }
+        else
+          hprintf(hf, " font%d", findex);
+      }
+
+      // catch and verify predefined colours and apply their colour classes
+      if (fgi == FG_COLOUR_I) {
+        if ((ca->attr & ATTR_BOLD) && term.enable_bold_colour) {
+          if (fg == bold_colour) {
+            if (enhtml) {
+              add_style("color: ");
+              hprintf(hf, "#%02X%02X%02X;",
+                      red(bold_colour), green(bold_colour), blue(bold_colour));
+            }
+            else
+              hprintf(hf, " bold-color");
+            fg = (colour)-1;
+          }
+        }
+        else if (fg == fg_colour)
+          fg = (colour)-1;
+      }
+      else if (fga < 8 && cfg.bold_as_colour && (ca->attr & ATTR_BOLD)
+               && fg == win_get_colour(ANSI0 + fga + 8)
+              )
+      {
+        if (enhtml)
+          add_color("", fga + 8);
+        else
+          hprintf(hf, " fg-color%d", fga + 8);
+        fg = (colour)-1;
+      }
+      else if (fga < 16 && fg == win_get_colour(ANSI0 + fga)) {
+        if (enhtml)
+          add_color("", fga);
+        else
+          hprintf(hf, " fg-color%d", fga);
+        fg = (colour)-1;
+      }
+      if (bgi == BG_COLOUR_I && bg == bg_colour)
+        bg = (colour)-1;
+      else if (bga < 16 && bg == win_get_colour(ANSI0 + bga)) {
+        if (enhtml)
+          add_color("background-", bga);
+        else
+          hprintf(hf, " bg-color%d", bga);
+        bg = (colour)-1;
+      }
+
+      // add individual styles
+
+      // add individual colours, or fix unmatched colours
+      if (fg != (colour)-1) {
+        uchar r = red(fg), g = green(fg), b = blue(fg);
+        add_style("");
+        hprintf(hf, "color: #%02X%02X%02X;", r, g, b);
+      }
+      if (bg != (colour)-1) {
+        uchar r = red(bg), g = green(bg), b = blue(bg);
+        add_style("");
+        hprintf(hf, "background-color: #%02X%02X%02X;", r, g, b);
+      }
+
+      if (enhtml && (ca->attr & (UNDER_MASK | ATTR_STRIKEOUT | ATTR_OVERL))) {
+        // add explicit style= lining attributes for the sake of tools 
+        // that do not take styles by class (Powerpoint)
+        add_style("text-decoration:");
+        if (ca->attr & UNDER_MASK)
+          hprintf(hf, " underline");
+        if (ca->attr & ATTR_STRIKEOUT)
+          hprintf(hf, " line-through");
+        if (ca->attr & ATTR_OVERL)
+          hprintf(hf, " overline");
+        hprintf(hf, ";");
+      }
+      else if (ca->attr & ATTR_OVERL) {
+        add_style("text-decoration-line: overline");
+        if (ca->attr & ATTR_STRIKEOUT)
+          hprintf(hf, " line-through");
+        if (ca->attr & ATTR_UNDER)
+          hprintf(hf, " underline");
+        hprintf(hf, ";");
+      }
+      if (ca->attr & ATTR_BROKENUND)
+        if (ca->attr & ATTR_DOUBLYUND)
+          add_style("text-decoration-style: dashed;");
+        else
+          add_style("text-decoration-style: dotted;");
+      else if ((ca->attr & UNDER_MASK) == ATTR_CURLYUND)
+        add_style("text-decoration-style: wavy;");
+      else if ((ca->attr & UNDER_MASK) == ATTR_DOUBLYUND)
+        add_style("text-decoration-style: double;");
+
+      colour ul = (ca->attr & ATTR_ULCOLOUR) ? ca->ulcolr : cfg.underl_colour;
+      if (ul != (colour)-1 && (ca->attr & (UNDER_MASK | ATTR_STRIKEOUT | ATTR_OVERL))) {
+        uchar r = red(ul), g = green(ul), b = blue(ul);
+        add_style("");
+        hprintf(hf, "text-decoration-color: #%02X%02X%02X;", r, g, b);
+      }
+
+      if (ca->attr & ATTR_INVISIBLE)
+        add_style("visibility: hidden;");
+      else {
+        // add JavaScript triggers
+        if (ca->attr & ATTR_BLINK2)
+          hprintf(hf, "' name='rapid");
+        else if (ca->attr & ATTR_BLINK)
+          hprintf(hf, "' name='blink");
+      }
+
+      // mark cursor position
+      if (ca->attr & (TATTR_ACTCURS | TATTR_PASCURS)) {
+        hprintf(hf, "' id='cursor");
+        fg = win_get_colour(CURSOR_TEXT_COLOUR_I);
+        // more precise cursor colour adjustments could be made...
+      }
+
+      // retrieve chunk of text from buffer
+      wchar save = buf->text[i];
+      buf->text[i] = 0;
+      char * s = cs__wcstoutf(&buf->text[i0]);
+      buf->text[i] = save;
+
+      // write chunk, apply HTML escapes
+      char * s1 = strpbrk(s, "<&");
+      if (s1) {
+        hprintf(hf, "'>");
+        char * s0 = s;
+        do {
+          if (*s0 == '<') {
+            hprintf(hf, "&lt;");
+            s0 ++;
+          }
+          else if (*s0 == '&') {
+            hprintf(hf, "&amp;");
+            s0 ++;
+          }
+          else {
+            char c = s1 ? *s1 : 0;
+            if (s1)
+              *s1 = 0;
+            hprintf(hf, "%s", s0);
+            if (s1) {
+              *s1 = c;
+              s0 = s1;
+            }
+            else
+              s0 += strlen(s0);
+          }
+          s1 = strpbrk(s0, "<&");
+        } while (*s0);
+        hprintf(hf, "</span>");
+      }
+      else
+        hprintf(hf, "'>%s</span>", s);
+      free(s);
+
+      // forward chunk pointer
+      i0 = i;
+    }
+
+    // forward newlines
+    if (buf->text[i] == '\r') {
+      i++;
+      i0 = i;
+    }
+    if (buf->text[i] == '\n') {
+      i++;
+      i0 = i;
+      if (enhtml)
+        // <br> needed for Powerpoint
+        hprintf(hf, "<br\n>");
+      else
+        hprintf(hf, "\n");
+      odd = !odd;
+    }
+  }
+  destroy_clip_workbuf(buf);
+
+  hprintf(hf, "</pre>\n");
+  hprintf(hf, "  </div>\n");
+  //hprintf(hf, "  </td></tr></table>\n");
+  hprintf(hf, "</body>\n");
+
+  return hbuf;
+}
+
+char *
+term_get_html(int level)
+{
+  return term_create_html(0, level);
+}
+
 void
-term_export_html(void)
+term_export_html(bool do_open)
 {
   struct timeval now;
   gettimeofday(& now, 0);
@@ -405,273 +967,35 @@ term_export_html(void)
     return;
   }
 
-  pos start = term.sel_start;
-  pos end = term.sel_end;
-  bool rect = term.sel_rect;
-  if (!term.selected) {
-    start = (pos){term.disptop, 0, false};
-    end = (pos){term.disptop + term.rows - 1, term.cols, false};
-    rect = false;
-  }
-
-  char * font_name = cs__wcstoutf(cfg.font.name);
-  colour fg_colour = win_get_colour(FG_COLOUR_I);
-  colour bg_colour = win_get_colour(BG_COLOUR_I);
-  fprintf(hf,
-    "<head>\n"
-    "  <meta name='generator' content='mintty'/>\n"
-    "  <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'/>\n"
-    "  <title>mintty screen dump</title>\n"
-    "  <link rel='stylesheet' type='text/css' href='xterm.css'/>\n"
-    "  <link rel='stylesheet' type='text/css' href='mintty.css'/>\n"
-    //"  <script type='text/javascript' language='JavaScript' src='emoji.js'></script>\n"
-    "  <style type='text/css'>\n"
-    "  body, pre { margin: 0; padding: 0; }\n"
-    "  pre { font-family: inherit; }\n"
-    );
-  if (cfg.underl_colour != (colour)-1)
-    fprintf(hf, "  span { text-decoration-color: #%02X%02X%02X; }\n",
-            red(cfg.underl_colour), green(cfg.underl_colour), blue(cfg.underl_colour));
-  fprintf(hf,
-    "  #vt100 {\n"
-    "    float: left;\n"
-    "    border: 0px solid;\n"
-    "    padding: %dpx;\n"
-    "    line-height: %d%%;\n"
-    "    font-size: %dpt;\n"
-    "    font-family: '%s', 'Lucida Console ', 'Consolas';\n"
-                            // ? 'Lucida Sans Typewriter', 'Courier New', 'Courier'
-    "    color: #%02X%02X%02X;\n",
-    PADDING, line_scale, font_size, font_name,
-    red(fg_colour), green(fg_colour), blue(fg_colour));
-  free(font_name);
-
-  if (*cfg.background && !term.selected) {
-    wstring wbg = cfg.background;
-    bool tiled = *wbg == '*';
-    if (*wbg == '*' || *wbg == '_')
-      wbg++;
-    char * bg = cs__wcstoutf(wbg);
-    int alpha = -1;
-    char * salpha = strrchr(bg, ',');
-    if (salpha) {
-      *salpha = 0;
-      salpha++;
-      sscanf(salpha, "%u%c", &alpha, &(char){0});
-    }
-
-    if (alpha >= 0) {
-      fprintf(hf, "    }\n");
-      fprintf(hf, "    #vt100 pre {\n");
-      fprintf(hf, "      background-color: rgba(%d, %d, %d, %.3f);\n",
-              red(bg_colour), green(bg_colour), blue(bg_colour),
-              (255.0 - alpha) / 255);
-      fprintf(hf, "    }\n");
-      fprintf(hf, "    td {\n");
-    }
-
-    fprintf(hf, "    background-image: url('%s');\n", bg);
-    if (!tiled) {
-      fprintf(hf, "    background-attachment: no-repeat;\n");
-      fprintf(hf, "    background-size: 100%% 100%%;\n");
-    }
-
-    free(bg);
-  }
-  else
-  {
-    fprintf(hf, "    background-color: #%02X%02X%02X;\n",
-            red(bg_colour), green(bg_colour), blue(bg_colour));
-  }
-  fprintf(hf, "    }\n");
-  fprintf(hf, "  .bd { font-weight: bold }\n");
-  fprintf(hf, "  .it { font-style: italic }\n");
-  fprintf(hf, "  .ul { text-decoration-line: underline }\n");
-  fprintf(hf, "  .st { text-decoration-line: line-through }\n");
-  fprintf(hf, "  .lu { text-decoration-line: line-through underline }\n");
-  for (int i = 0; i < 16; i++) {
-    colour ansii = win_get_colour(ANSI0 + i);
-    uchar r = red(ansii), g = green(ansii), b = blue(ansii);
-    fprintf(hf, "  .fg-color%d { color: #%02X%02X%02X }"
-                " .bg-color%d { background-color: #%02X%02X%02X }\n",
-                i, r, g, b, i, r, g, b);
-  }
-  for (int i = 1; i <= 10; i++)
-    if (*cfg.fontfams[i].name) {
-      char * fn = cs__wcstoutf(cfg.fontfams[i].name);
-      fprintf(hf, "  .font%d { font-family: '%s' }\n", i, fn);
-      free(fn);
-    }
-  if (!*cfg.fontfams[10].name)
-    fprintf(hf, "  .font10 { font-family: 'F25 Blackletter Typewriter' }\n");
-  fprintf(hf, "  </style>\n");
-  fprintf(hf, "  <script>\n");
-  fprintf(hf, "  var b1 = 500; var b2 = 300;\n");
-  fprintf(hf, "  function visib (tag, state, timeout) {\n");
-  fprintf(hf, "    var bl = document.getElementsByName(tag);\n");
-  fprintf(hf, "    var vv; if (state) vv = 'visible'; else vv = 'hidden';\n");
-  fprintf(hf, "    var i;\n");
-  fprintf(hf, "    for (i = 0; i < bl.length; i++) {\n");
-  fprintf(hf, "      bl[i].style.visibility = vv;\n");
-  fprintf(hf, "    }\n");
-  fprintf(hf, "    window.setTimeout ('visib (\"' + tag + '\", ' + !state + ', ' + timeout + ')', timeout);\n");
-  fprintf(hf, "  }\n");
-  fprintf(hf, "  function setup () {\n");
-  fprintf(hf, "    window.setTimeout ('visib (\"blink\", 0, b1)', b1);\n");
-  fprintf(hf, "    window.setTimeout ('visib (\"rapid\", 0, b2)', b2);\n");
-  fprintf(hf, "  }\n");
-  fprintf(hf, "  </script>\n");
-  fprintf(hf, "</head>\n\n");
-  fprintf(hf, "<body onload='setup();'>\n");
-  fprintf(hf, "  <table border=0 cellpadding=0 cellspacing=0><tr><td xbackground=>\n");
-  fprintf(hf, "  <div id='vt100'>\n");
-  fprintf(hf, "   <pre>");
-
-  clip_workbuf *buf = get_selection(start, end, rect, true);
-  int i0 = 0;
-  bool odd = true;
-  for (uint i = 0; i < buf->len; i++) {
-    if (!buf->text[i] || buf->text[i] == '\r' || buf->text[i] == '\n'
-        // buf->cattrs[i] ~!= buf->cattrs[i0] ?
-        // we need to check more than termattrs_equal_fg
-        // but less than termchars_equal_override
-# define IGNATTR (DATTR_MASK | ATTR_WIDE | TATTR_COMBINING)
-        || (buf->cattrs[i].attr & ~IGNATTR) != (buf->cattrs[i0].attr & ~IGNATTR)
-        || buf->cattrs[i].truefg != buf->cattrs[i0].truefg
-        || buf->cattrs[i].truebg != buf->cattrs[i0].truebg
-        || buf->cattrs[i].ulcolr != buf->cattrs[i0].ulcolr
-       )
-    {
-      // flush chunk with equal attributes
-      fprintf(hf, "<span class='%s", odd ? "od" : "ev");
-
-      // retrieve chunk
-      wchar save = buf->text[i];
-      buf->text[i] = 0;
-      char * s = cs__wcstoutf(&buf->text[i0]);
-      buf->text[i] = save;
-
-      cattr * ca = &buf->cattrs[i0];
-      int fgi = (ca->attr & ATTR_FGMASK) >> ATTR_FGSHIFT;
-      int bgi = (ca->attr & ATTR_BGMASK) >> ATTR_BGSHIFT;
-      bool dim = ca->attr & ATTR_DIM;
-      bool rev = ca->attr & ATTR_REVERSE;
-      colour fg = fgi >= TRUE_COLOUR ? ca->truefg : win_get_colour(fgi);
-      colour bg = bgi >= TRUE_COLOUR ? ca->truebg : win_get_colour(bgi);
-      if (dim)
-        fg = ((fg & 0xFEFEFEFE) >> 1)
-             + ((win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1);
-      if (rev) {
-        fgi ^= bgi; fg ^= bg;
-        bgi ^= fgi; bg ^= fg;
-        fgi ^= bgi; fg ^= bg;
-      }
-      // separate configurable ANSI values
-      int fga = fgi >= ANSI0 ? fgi & 0xFF : 999;
-      int bga = bgi >= ANSI0 ? bgi & 0xFF : 999;
-
-      // add classes
-      if (ca->attr & ATTR_BOLD)
-        fprintf(hf, " bd");
-      if (ca->attr & ATTR_ITALIC)
-        fprintf(hf, " it");
-      if ((ca->attr & (ATTR_UNDER | ATTR_STRIKEOUT)) == (ATTR_UNDER | ATTR_STRIKEOUT))
-        fprintf(hf, " lu");
-      else if (ca->attr & ATTR_STRIKEOUT)
-        fprintf(hf, " st");
-      else if (ca->attr & UNDER_MASK)
-        fprintf(hf, " ul");
-      int findex = (ca->attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
-      if (findex)
-        fprintf(hf, " font%d", findex);
-      if (ca->attr & ATTR_FRAMED)
-        fprintf(hf, " emoji");  // mark emoji style
-      if (fga < 16 && (!dim || rev))
-        fprintf(hf, " fg-color%d", fga);
-      if (bga < 16 && (!rev || !dim))
-        fprintf(hf, " bg-color%d", bga);
-
-      // add styles
-      bool with_style = false;
-      void add_style(char * s) {
-        if (!with_style) {
-          fprintf(hf, "' style='%s", s);
-          with_style = true;
-        }
-        else
-          fprintf(hf, " %s", s);
-      }
-      if ((fgi != FG_COLOUR_I && fga >= 16) || dim || (rev && fga >= 16)) {
-        uchar r = red(fg), g = green(fg), b = blue(fg);
-        add_style("");
-        fprintf(hf, "color: #%02X%02X%02X;", r, g, b);
-      }
-      if ((bgi != BG_COLOUR_I && bga >= 16) || (rev && (bga >= 16 || dim))) {
-        uchar r = red(bg), g = green(bg), b = blue(bg);
-        add_style("");
-        fprintf(hf, "background-color: #%02X%02X%02X;", r, g, b);
-      }
-
-      if (ca->attr & ATTR_OVERL) {
-        add_style("text-decoration-line: overline");
-        if (ca->attr & ATTR_STRIKEOUT)
-          fprintf(hf, " line-through");
-        if (ca->attr & ATTR_UNDER)
-          fprintf(hf, " underline");
-        fprintf(hf, ";");
-      }
-      if (ca->attr & ATTR_BROKENUND)
-        if (ca->attr & ATTR_DOUBLYUND)
-          add_style("text-decoration-style: dashed;");
-        else
-          add_style("text-decoration-style: dotted;");
-      else if ((ca->attr & UNDER_MASK) == ATTR_CURLYUND)
-        add_style("text-decoration-style: wavy;");
-      else if ((ca->attr & UNDER_MASK) == ATTR_DOUBLYUND)
-        add_style("text-decoration-style: double;");
-      if (ca->attr & ATTR_ULCOLOUR) {
-        uchar r = red(ca->ulcolr), g = green(ca->ulcolr), b = blue(ca->ulcolr);
-        add_style("");
-        fprintf(hf, "text-decoration-color: #%02X%02X%02X;", r, g, b);
-      }
-
-      if (ca->attr & ATTR_INVISIBLE)
-        add_style("visibility: hidden;");
-      else {
-        // add JavaScript triggers
-        if (ca->attr & ATTR_BLINK2)
-          fprintf(hf, "' name='rapid");
-        else if (ca->attr & ATTR_BLINK)
-          fprintf(hf, "' name='blink");
-      }
-
-      // write chunk
-      fprintf(hf, "'>%s</span>", s);
-      free(s);
-
-      // forward chunk pointer
-      i0 = i;
-    }
-
-    // forward newlines
-    if (buf->text[i] == '\r') {
-      i++;
-      i0 = i;
-    }
-    if (buf->text[i] == '\n') {
-      i++;
-      i0 = i;
-      fprintf(hf, "\n");
-      odd = !odd;
-    }
-  }
-  destroy_clip_workbuf(buf);
-
-  fprintf(hf, "</pre>\n");
-  fprintf(hf, "  </div>\n");
-  fprintf(hf, "  </td></tr></table>\n");
-  fprintf(hf, "</body>\n");
+  term_create_html(hf, 3);
 
   fclose(hf);  // implies close(hfd);
+
+  if (do_open) {
+    wchar * browse = cs__mbstowcs(htmlf);
+    win_open(browse, false);  // win_open frees its argument
+  }
+  free(htmlf);
+}
+
+#include "print.h"
+
+void
+print_screen(void)
+{
+  if (*cfg.printer == '*')
+    printer_start_job(printer_get_default());
+  else if (*cfg.printer)
+    printer_start_job(cfg.printer);
+  else
+    return;
+
+  pos start = (pos){term.disptop, 0, false};
+  pos end = (pos){term.disptop + term.rows - 1, term.cols, false};
+  bool rect = false;
+  clip_workbuf * buf = get_selection(start, end, rect, false);
+  printer_wwrite(buf->text, buf->len);
+  printer_finish_job();
+  destroy_clip_workbuf(buf);
 }
 

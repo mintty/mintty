@@ -10,6 +10,10 @@
 #include "charset.h"
 #include "child.h"
 #include "winsearch.h"
+#if CYGWIN_VERSION_API_MINOR >= 66
+#include <langinfo.h>
+#endif
+
 
 struct term term;
 
@@ -31,14 +35,80 @@ static bool markpos_valid = false;
 
 const cattr CATTR_DEFAULT =
             {.attr = ATTR_DEFAULT,
-             .truefg = 0, .truebg = 0, .ulcolr = (colour)-1};
+             .truefg = 0, .truebg = 0, .ulcolr = (colour)-1,
+             .link = -1
+            };
 
 termchar basic_erase_char =
    {.cc_next = 0, .chr = ' ',
             /* CATTR_DEFAULT */
-    .attr = {.attr = ATTR_DEFAULT,
-             .truefg = 0, .truebg = 0, .ulcolr = (colour)-1}
+    .attr = {.attr = ATTR_DEFAULT | TATTR_CLEAR,
+             .truefg = 0, .truebg = 0, .ulcolr = (colour)-1,
+             .link = -1
+            }
    };
+
+
+#define dont_debug_hyperlinks
+
+static char * * links = 0;
+static int nlinks = 0;
+static int linkid = 0;
+
+int
+putlink(char * link)
+{
+#if CYGWIN_VERSION_API_MINOR >= 66
+  bool utf8 = strcmp(nl_langinfo(CODESET), "UTF-8") == 0;
+#else
+  bool utf8 = strstr(cs_get_locale(), ".65001");
+#endif
+  if (!utf8) {
+    wchar * wlink = cs__mbstowcs(link);
+    link = cs__wcstoutf(wlink);
+    free(wlink);
+  }
+
+  if (*link != ';')
+    for (int i = 0; i < nlinks; i++)
+      if (0 == strcmp(link, links[i])) {
+        if (!utf8)
+          free(link);
+        return i;
+      }
+
+  char * link1;
+  if (*link == ';')
+    link1 = asform("=%d%s", ++linkid, link);
+  else
+    link1 = strdup(link);
+#ifdef debug_hyperlinks
+  printf("[%d] link <%s>\n", nlinks, link1);
+#endif
+  if (!utf8)
+    free(link);
+
+  nlinks++;
+  links = renewn(links, nlinks);
+  links[nlinks - 1] = link1;
+  return nlinks - 1;
+}
+
+char *
+geturl(int n)
+{
+  if (n >= 0 && n < nlinks) {
+    char * url = strchr(links[n], ';');
+    if (url) {
+      url++;
+#ifdef debug_hyperlinks
+      printf("[%d] url <%s> link <%s>\n", n, url, links[n]);
+#endif
+      return url;
+    }
+  }
+  return 0;
+}
 
 
 static bool
@@ -97,6 +167,28 @@ term_schedule_tblink2(void)
 /*
  * Likewise with cursor blinks.
  */
+int
+term_cursor_type(void)
+{
+  return term.cursor_type == -1 ? cfg.cursor_type : term.cursor_type;
+}
+
+static bool
+term_cursor_blinks(void)
+{
+  return term.cursor_blinkmode
+      || (term.cursor_blinks == -1 ? cfg.cursor_blinks : term.cursor_blinks);
+}
+
+void
+term_hide_cursor(void)
+{
+  if (term.cursor_on) {
+    term.cursor_on = false;
+    win_update(false);
+  }
+}
+
 static void
 cblink_cb(void)
 {
@@ -109,7 +201,7 @@ void
 term_schedule_cblink(void)
 {
   if (term_cursor_blinks() && term.has_focus)
-    win_set_timer(cblink_cb, cursor_blink_ticks());
+    win_set_timer(cblink_cb, term.cursor_blink_interval ?: cursor_blink_ticks());
   else
     term.cblinker = 1;  /* reset when not in use */
 }
@@ -158,11 +250,10 @@ term_cursor_reset(term_cursor *curs)
   curs->utf = false;
   for (uint i = 0; i < lengthof(curs->csets); i++)
     curs->csets[i] = CSET_ASCII;
+  curs->decsupp = CSET_DECSPGR;
   curs->cset_single = CSET_ASCII;
-  curs->decnrc_enabled = false;
 
-  curs->autowrap = true;
-  curs->rev_wrap = cfg.old_wrapmodes;
+  curs->bidimode = 0;
 
   curs->origin = false;
 }
@@ -176,6 +267,7 @@ term_reset(bool full)
   }
 
   term.state = NORMAL;
+  term.vt52_mode = 0;
 
   // DECSTR attributes and cursor states to be reset
   term_cursor_reset(&term.curs);
@@ -183,6 +275,10 @@ term_reset(bool full)
   term_cursor_reset(&term.saved_cursors[1]);
   term_update_cs();
   term.erase_char = basic_erase_char;
+  // these used to be in term_cursor, thus affected by cursor restore
+  term.decnrc_enabled = false;
+  term.autowrap = true;
+  term.rev_wrap = cfg.old_wrapmodes;
 
   // DECSTR states to be reset (in addition to cursor states)
   // https://www.vt100.net/docs/vt220-rm/table4-10.html
@@ -190,13 +286,20 @@ term_reset(bool full)
   term.insert = false;
   term.marg_top = 0;
   term.marg_bot = term.rows - 1;
+  term.marg_left = 0;
+  term.marg_right = term.cols - 1;
   term.app_cursor_keys = false;
+  term.app_scrollbar = false;
 
   if (full) {
+    term.lrmargmode = false;
+    term.deccolm_allowed = cfg.enable_deccolm_init;  // not reset by xterm
     term.vt220_keys = vt220(cfg.term);  // not reset by xterm
     term.app_keypad = false;  // xterm only with RIS
-    term.app_wheel = false;
     term.app_control = 0;
+    term.auto_repeat = cfg.auto_repeat;  // not supported by xterm
+    term.attr_rect = false;
+    term.deccolm_noclear = false;
   }
   term.modify_other_keys = 0;  // xterm resets this
 
@@ -207,6 +310,7 @@ term_reset(bool full)
       term.tabs[i] = (i % 8 == 0);
   }
   if (full) {
+    term.newtab = 1;  // set default tabs on resize
     term.rvideo = 0;  // not reset by xterm
     term.bell_taskbar = cfg.bell_taskbar;  // not reset by xterm
     term.bell_popup = cfg.bell_popup;  // not reset by xterm
@@ -221,10 +325,11 @@ term_reset(bool full)
     term.report_font_changed = 0;
     term.report_ambig_width = 0;
     term.shortcut_override = term.escape_sends_fs = term.app_escape_key = false;
+    term.wheel_reporting_xterm = false;
     term.wheel_reporting = true;
+    term.app_wheel = false;
     term.echoing = false;
     term.bracketed_paste = false;
-    term.show_scrollbar = true;  // enable_scrollbar not reset by xterm
     term.wide_indic = false;
     term.wide_extra = false;
     term.disable_bidi = false;
@@ -243,14 +348,18 @@ term_reset(bool full)
   term.sixel_scrolls_left = 0;
 
   term.cursor_type = -1;
+  term.cursor_size = 0;
   term.cursor_blinks = -1;
+  term.cursor_blink_interval = 0;
   if (full) {
     term.blink_is_real = cfg.allow_blinking;
+    term.hide_mouse = cfg.hide_mouse;
   }
 
   if (full) {
     term.selected = false;
     term.hovering = false;
+    term.hoverlink = -1;
     term.on_alt_screen = false;
     term_print_finish();
     if (term.lines) {
@@ -264,6 +373,8 @@ term_reset(bool full)
         term_do_scroll(0, term.rows - 1, 1, true);
       }
     }
+    term.curs.x = 0;
+    term.curs.y = 0;
   }
 
   term.in_vbell = false;
@@ -756,6 +867,8 @@ term_resize(int newrows, int newcols)
 
   term.marg_top = 0;
   term.marg_bot = newrows - 1;
+  term.marg_left = 0;
+  term.marg_right = newcols - 1;
 
  /*
   * Resize the screen and scrollback. We only need to shift
@@ -874,7 +987,7 @@ term_resize(int newrows, int newcols)
   // Reset tab stops
   term.tabs = renewn(term.tabs, newcols);
   for (int i = (term.cols > 0 ? term.cols : 0); i < newcols; i++)
-    term.tabs[i] = (i % 8 == 0);
+    term.tabs[i] = term.newtab && (i % 8 == 0);
 
   // Check that the cursor positions are still valid.
   assert(0 <= curs->y && curs->y < newrows);
@@ -902,9 +1015,6 @@ term_resize(int newrows, int newcols)
 void
 term_switch_screen(bool to_alt, bool reset)
 {
-  imglist *first, *last;
-  long long int offset;
-
   if (to_alt == term.on_alt_screen)
     return;
 
@@ -915,9 +1025,9 @@ term_switch_screen(bool to_alt, bool reset)
   term.other_lines = oldlines;
 
   /* swap image list */
-  first = term.imgs.first;
-  last = term.imgs.last;
-  offset = term.virtuallines;
+  imglist * first = term.imgs.first;
+  imglist * last = term.imgs.last;
+  long long int offset = term.virtuallines;
   term.imgs.first = term.imgs.altfirst;
   term.imgs.last = term.imgs.altlast;
   term.virtuallines = term.altvirtuallines;
@@ -959,6 +1069,8 @@ term_check_boundary(int x, int y)
   if (x == term.cols)
     line->lattr &= ~LATTR_WRAPPED2;
   else if (line->chars[x].chr == UCSWIDE) {
+    if (x == term.marg_right + 1)
+      line->lattr &= ~LATTR_WRAPPED2;
     clear_cc(line, x - 1);
     clear_cc(line, x);
     line->chars[x - 1].chr = ' ';
@@ -1048,6 +1160,11 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
     win_update(true);
   }
 
+  if (term.lrmargmode && (term.marg_left || term.marg_right != term.cols - 1)) {
+    scroll_rect(topline, botline, lines);
+    return;
+  }
+
 #ifdef use_display_scrolling
   int scrolllines = lines;
 #endif
@@ -1057,6 +1174,8 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
 
   bool down = lines < 0; // Scrolling downwards?
   lines = abs(lines);    // Number of lines to scroll by
+
+  lines_scrolled += lines;
 
   botline++; // One below the scroll region: easier to calculate with
 
@@ -1109,6 +1228,13 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
     scroll_pos(&term.sel_start);
     scroll_pos(&term.sel_anchor);
     scroll_pos(&term.sel_end);
+
+    // Move graphics if within the scroll region
+    for (imglist * cur = term.imgs.first; cur; cur = cur->next) {
+      if (cur->top - term.virtuallines >= topline) {
+        cur->top += lines;
+      }
+    }
   }
   else {
     int seltop = topline;
@@ -1149,6 +1275,15 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
 
 #define inclpos(p, size) ((p).x == size ? ((p).x = 0, (p).y++, 1) : ((p).x++, 0))
 
+void
+clear_wrapcontd(termline * line, int y)
+{
+  if (y < term.rows - 1 && (line->lattr & LATTR_WRAPPED)) {
+    line = term.lines[y + 1];
+    line->lattr &= ~(LATTR_WRAPCONTD | LATTR_AUTOSEL);
+  }
+}
+
 /*
  * Erase a large portion of the screen: the whole screen, or the
  * whole line, or parts thereof.
@@ -1186,11 +1321,16 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
   if (!from_begin || !to_end)
     term_check_boundary(curs->x, curs->y);
 
+#ifdef scrollback_erase_lines
+#warning this behaviour is not compatible with xterm
  /* Lines scrolled away shouldn't be brought back on if the terminal resizes. */
   bool erasing_lines_from_top =
     start.y == 0 && start.x == 0 && end.x == 0 && !line_only && !selective;
 
-  if (erasing_lines_from_top) {
+  if (erasing_lines_from_top && 
+      !(term.lrmargmode && (term.marg_left || term.marg_right != term.cols - 1))
+     )
+  {
    /* If it's a whole number of lines, starting at the top, and
     * we're fully erasing them, erase by scrolling and keep the
     * lines in the scrollback. */
@@ -1208,18 +1348,28 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
     if (!term.on_alt_screen)
       term.tempsblines = 0;
   }
-  else {
+  else
+#endif
+  {
     termline *line = term.lines[start.y];
     while (poslt(start, end)) {
       int cols = min(line->cols, line->size);
       if (start.x == cols) {
+        clear_wrapcontd(line, start.y);
         if (line_only)
           line->lattr &= ~(LATTR_WRAPPED | LATTR_WRAPPED2);
         else
-          line->lattr = LATTR_NORM;
+          line->lattr = LATTR_NORM | (line->lattr & LATTR_BIDIMASK);
       }
-      else if (!selective || !(line->chars[start.x].attr.attr & ATTR_PROTECTED))
+      else if (!selective ||
+               !(line->chars[start.x].attr.attr & ATTR_PROTECTED)
+              )
+      {
         line->chars[start.x] = term.erase_char;
+        line->chars[start.x].attr.attr |= TATTR_CLEAR;
+        if (!start.x)
+          clear_cc(line, -1);
+      }
       if (inclpos(start, cols) && start.y < term.rows)
         line = term.lines[start.y];
     }
@@ -1234,10 +1384,14 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
 #define EM_base 16
 
 struct emoji_base {
-  void * res;  // filename (char*/wchar*) or cached image
-  uint tags: 11;
-  xchar ch: 21;
-} __attribute__((packed));
+  wchar * efn;  // image filename
+  void * buf;  // cached image
+  int buflen;  // cached image
+  struct {
+    uint tags: 11;
+    xchar ch: 21;
+  } __attribute__((packed));
+};
 
 struct emoji_base emoji_bases[] = {
 #include "emojibase.t"
@@ -1286,7 +1440,9 @@ emoji_tags(int i)
 #endif
 
 struct emoji_seq {
-  void * res;   // filename (char*/wchar*) or cached image
+  wchar * efn;  // image filename
+  void * buf;   // cached image
+  int buflen;   // cached image
   echar chs[8]; // code points
   char * name;  // short name in emoji-sequences.txt, emoji-zwj-sequences.txt
 };
@@ -1303,6 +1459,33 @@ struct emoji {
 } __attribute__((packed));
 
 #define dont_debug_emojis 1
+
+void
+clear_emoji_data()
+{
+  for (uint i = 0; i < lengthof(emoji_bases); i++) {
+    if (emoji_bases[i].efn) {
+      free(emoji_bases[i].efn);
+      emoji_bases[i].efn = 0;
+    }
+    if (emoji_bases[i].buf) {
+      free(emoji_bases[i].buf);
+      emoji_bases[i].buf = 0;
+      emoji_bases[i].buflen = 0;
+    }
+  }
+  for (uint i = 0; i < lengthof(emoji_seqs); i++) {
+    if (emoji_seqs[i].efn) {
+      free(emoji_seqs[i].efn);
+      emoji_seqs[i].efn = 0;
+    }
+    if (emoji_seqs[i].buf) {
+      free(emoji_seqs[i].buf);
+      emoji_seqs[i].buf = 0;
+      emoji_seqs[i].buflen = 0;
+    }
+  }
+}
 
 /*
    Get emoji sequence "short name".
@@ -1338,10 +1521,10 @@ check_emoji(struct emoji e)
 {
   wchar * * efnpoi;
   if (e.seq) {
-    efnpoi = (wchar * *)&emoji_seqs[e.idx].res;
+    efnpoi = (wchar * *)&emoji_seqs[e.idx].efn;
   }
   else {
-    efnpoi = (wchar * *)&emoji_bases[e.idx].res;
+    efnpoi = (wchar * *)&emoji_bases[e.idx].efn;
   }
   if (*efnpoi) { // emoji resource was checked before
     return **efnpoi;  // ... successfully?
@@ -1428,7 +1611,7 @@ fallback:;
       goto fallback;
     }
 
-    * efnpoi = W("");  // indicate "checked but not found"
+    * efnpoi = wcsdup(W(""));  // indicate "checked but not found"
     return false;
   }
 }
@@ -1632,22 +1815,50 @@ emoji_show(int x, int y, struct emoji e, int elen, cattr eattr, ushort lattr)
 {
   (void)eattr;
   wchar * efn;
+  void * * bufpoi;
+  int * buflen;
   if (e.seq) {
-    efn = emoji_seqs[e.idx].res;
+    efn = emoji_seqs[e.idx].efn;
+    bufpoi = &emoji_seqs[e.idx].buf;
+    buflen = &emoji_seqs[e.idx].buflen;
   }
   else {
-    efn = emoji_bases[e.idx].res;
+    efn = emoji_bases[e.idx].efn;
+    bufpoi = &emoji_bases[e.idx].buf;
+    buflen = &emoji_bases[e.idx].buflen;
   }
 #ifdef debug_emojis
-  printf("emoji_show <%ls>\n", efn);
+  printf("emoji_show @%d:%d..%d seq %d idx %d <%ls>\n", y, x, elen, e.seq, e.idx, efn);
 #endif
   if (efn && *efn)
-    win_emoji_show(x, y, efn, elen, lattr);
+    win_emoji_show(x, y, efn, bufpoi, buflen, elen, lattr);
 }
+
+#define dont_debug_win_text_invocation
+
+#ifdef debug_win_text_invocation
+
+void
+_win_text(int line, int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl, bool clearpad, uchar phase)
+{
+  if (*text != ' ') {
+    printf("[%d] %d:%d(len %d) attr %08llX", line, ty, tx, len, attr.attr);
+    for (int i = 0; i < len && i < 8; i++)
+      printf(" %04X", text[i]);
+    printf("\n");
+  }
+  win_text(tx, ty, text, len, attr, textattr, lattr, has_rtl, clearpad, phase);
+}
+
+#define win_text(tx, ty, text, len, attr, textattr, lattr, has_rtl, clearpad, phase) _win_text(__LINE__, tx, ty, text, len, attr, textattr, lattr, has_rtl, clearpad, phase)
+
+#endif
 
 void
 term_paint(void)
 {
+  //if (kb_trace) printf("[%ld] term_paint\n", mtime());
+
 #ifdef use_display_scrolling
   if (dispscroll_lines) {
     disp_do_scroll(dispscroll_top, dispscroll_bot, dispscroll_lines);
@@ -1663,127 +1874,19 @@ term_paint(void)
   for (int i = 0; i < term.rows; i++) {
     pos scrpos;
     scrpos.y = i + term.disptop;
-
-   /* Do Arabic shaping and bidi. */
     termline *line = fetch_line(scrpos.y);
-    termchar *chars = term_bidi_line(line, i);
-    int *backward = chars ? term.post_bidi_cache[i].backward : 0;
-    int *forward = chars ? term.post_bidi_cache[i].forward : 0;
-    chars = chars ?: line->chars;
-
-    termline *displine = term.displines[i];
-    termchar *dispchars = displine->chars;
-    termchar newchars[term.cols];
-
-    // Prevent nested emoji sequence matching from matching partial subseqs
-    int emoji_col = 0;  // column from which to match for emoji sequences
 
    /*
-    * First loop: work along the line deciding what we want
-    * each character cell to look like.
+    * Pre-loop: identify emojis and emoji sequences.
     */
+    // Prevent nested emoji sequence matching from matching partial subseqs
+    int emoji_col = 0;  // column from which to match for emoji sequences
     for (int j = 0; j < term.cols; j++) {
-      termchar *d = chars + j;
-      scrpos.x = backward ? backward[j] : j;
-      wchar tchar = d->chr;
+      termchar *d = line->chars + j;
       cattr tattr = d->attr;
-
-     /* Many Windows fonts don't have the Unicode hyphen, but groff
-      * uses it for man pages, so display it as the ASCII version.
-      */
-      if (tchar == 0x2010)
-        tchar = '-';
 
       if (j < term.cols - 1 && d[1].chr == UCSWIDE)
         tattr.attr |= ATTR_WIDE;
-
-     /* Video reversing things */
-      bool selected =
-        term.selected &&
-        ( term.sel_rect
-          ? posPle(term.sel_start, scrpos) && posPlt(scrpos, term.sel_end)
-          : posle(term.sel_start, scrpos) && poslt(scrpos, term.sel_end)
-        );
-
-      if (selected) {
-        tattr.attr |= TATTR_SELECTED;
-
-        colour bg = win_get_colour(SEL_COLOUR_I);
-        if (bg != (colour)-1) {
-          tattr.truebg = bg;
-          tattr.attr = (tattr.attr & ~ATTR_BGMASK) | (TRUE_COLOUR << ATTR_BGSHIFT);
-
-          colour fg = win_get_colour(SEL_TEXT_COLOUR_I);
-          if (fg == (colour)-1)
-            fg = apply_attr_colour(tattr, ACM_SIMPLE).truefg;
-          static uint mindist = 22222;
-          bool too_close = colour_dist(fg, tattr.truebg) < mindist;
-          if (too_close)
-            fg = brighten(fg, tattr.truebg, false);
-          tattr.truefg = fg;
-          tattr.attr = (tattr.attr & ~ATTR_FGMASK) | (TRUE_COLOUR << ATTR_FGSHIFT);
-        }
-        else
-          tattr.attr ^= ATTR_REVERSE;
-      }
-
-      if (term.hovering &&
-          posle(term.hover_start, scrpos) && poslt(scrpos, term.hover_end)) {
-        tattr.attr &= ~UNDER_MASK;
-        tattr.attr |= ATTR_UNDER;
-        if (cfg.hover_colour != (colour)-1) {
-          tattr.attr |= ATTR_ULCOLOUR;
-          tattr.ulcolr = cfg.hover_colour;
-        }
-      }
-
-      bool flashchar = term.in_vbell &&
-                       ((cfg.bell_flash_style & FLASH_FULL)
-                        ||
-                        ((cfg.bell_flash_style & FLASH_BORDER)
-                         && (i == 0 || j == 0 ||
-                             i == term.rows - 1 || j == term.cols - 1
-                            )
-                        )
-                       );
-
-      if (flashchar) {
-        if (cfg.bell_flash_style & FLASH_REVERSE)
-          tattr.attr ^= ATTR_REVERSE;
-        else {
-          tattr.truebg = apply_attr_colour(tattr, ACM_VBELL_BG).truebg;
-          tattr.attr = (tattr.attr & ~ATTR_BGMASK) | (TRUE_COLOUR << ATTR_BGSHIFT);
-        }
-      }
-
-      int match = in_results(scrpos);
-      if (match > 0) {
-        tattr.attr |= TATTR_RESULT;
-        if (match > 1) {
-          tattr.attr |= TATTR_CURRESULT;
-        }
-      } else {
-        tattr.attr &= ~TATTR_RESULT;
-      }
-      if (markpos_valid && (displine->lattr & (LATTR_MARKED | LATTR_UNMARKED))) {
-        tattr.attr |= TATTR_MARKED;
-        if (scrpos.y == markpos)
-          tattr.attr |= TATTR_CURMARKED;
-      } else {
-        tattr.attr &= ~TATTR_MARKED;
-      }
-
-     /* 'Real' blinking ? */
-      if (term.blink_is_real && (tattr.attr & ATTR_BLINK)) {
-        if (term.has_focus && term.tblinker)
-          tchar = ' ';
-        tattr.attr &= ~ATTR_BLINK;
-      }
-      if (term.blink_is_real && (tattr.attr & ATTR_BLINK2)) {
-        if (term.has_focus && term.tblinker2)
-          tchar = ' ';
-        tattr.attr &= ~ATTR_BLINK2;
-      }
 
      /* Match emoji sequences
       * and replace by emoji indicators
@@ -1844,6 +1947,131 @@ term_paint(void)
         }
       }
 
+      d->attr = tattr;
+    }
+
+   /* Do Arabic shaping and bidi. */
+    termchar *chars = term_bidi_line(line, i);
+    int *backward = chars ? term.post_bidi_cache[i].backward : 0;
+    int *forward = chars ? term.post_bidi_cache[i].forward : 0;
+    chars = chars ?: line->chars;
+
+    termline *displine = term.displines[i];
+    termchar *dispchars = displine->chars;
+    termchar newchars[term.cols];
+
+   /*
+    * First loop: work along the line deciding what we want
+    * each character cell to look like.
+    */
+    for (int j = 0; j < term.cols; j++) {
+      termchar *d = chars + j;
+      scrpos.x = backward ? backward[j] : j;
+      wchar tchar = d->chr;
+      cattr tattr = d->attr;
+
+     /* Many Windows fonts don't have the Unicode hyphen, but groff
+      * uses it for man pages, so display it as the ASCII version.
+      */
+      if (tchar == 0x2010)
+        tchar = '-';
+
+      if (j < term.cols - 1 && d[1].chr == UCSWIDE)
+        tattr.attr |= ATTR_WIDE;
+
+     /* Video reversing things */
+      bool selected =
+        term.selected &&
+        ( term.sel_rect
+          ? posPle(term.sel_start, scrpos) && posPlt(scrpos, term.sel_end)
+          : posle(term.sel_start, scrpos) && poslt(scrpos, term.sel_end)
+        );
+
+      if (selected) {
+        tattr.attr |= TATTR_SELECTED;
+
+        colour bg = win_get_colour(SEL_COLOUR_I);
+        if (bg != (colour)-1) {
+          tattr.truebg = bg;
+          tattr.attr = (tattr.attr & ~ATTR_BGMASK) | (TRUE_COLOUR << ATTR_BGSHIFT);
+
+          colour fg = win_get_colour(SEL_TEXT_COLOUR_I);
+          if (fg == (colour)-1)
+            fg = apply_attr_colour(tattr, ACM_SIMPLE).truefg;
+          static uint mindist = 22222;
+          bool too_close = colour_dist(fg, tattr.truebg) < mindist;
+          if (too_close)
+            fg = brighten(fg, tattr.truebg, false);
+          tattr.truefg = fg;
+          tattr.attr = (tattr.attr & ~ATTR_FGMASK) | (TRUE_COLOUR << ATTR_FGSHIFT);
+        }
+        else
+          tattr.attr ^= ATTR_REVERSE;
+      }
+
+      if (term.hovering &&
+          (term.hoverlink >= 0
+           ? term.hoverlink == tattr.link
+           : posle(term.hover_start, scrpos) && poslt(scrpos, term.hover_end)
+          )
+         )
+      {
+        tattr.attr &= ~UNDER_MASK;
+        tattr.attr |= ATTR_UNDER;
+        if (cfg.hover_colour != (colour)-1) {
+          tattr.attr |= ATTR_ULCOLOUR;
+          tattr.ulcolr = cfg.hover_colour;
+        }
+      }
+
+      bool flashchar = term.in_vbell &&
+                       ((cfg.bell_flash_style & FLASH_FULL)
+                        ||
+                        ((cfg.bell_flash_style & FLASH_BORDER)
+                         && (i == 0 || j == 0 ||
+                             i == term.rows - 1 || j == term.cols - 1
+                            )
+                        )
+                       );
+
+      if (flashchar) {
+        if (cfg.bell_flash_style & FLASH_REVERSE)
+          tattr.attr ^= ATTR_REVERSE;
+        else {
+          tattr.truebg = apply_attr_colour(tattr, ACM_VBELL_BG).truebg;
+          tattr.attr = (tattr.attr & ~ATTR_BGMASK) | (TRUE_COLOUR << ATTR_BGSHIFT);
+        }
+      }
+
+      int match = in_results(scrpos);
+      if (match > 0) {
+        tattr.attr |= TATTR_RESULT;
+        if (match > 1) {
+          tattr.attr |= TATTR_CURRESULT;
+        }
+      } else {
+        tattr.attr &= ~TATTR_RESULT;
+      }
+      if (markpos_valid && (displine->lattr & (LATTR_MARKED | LATTR_UNMARKED))) {
+        tattr.attr |= TATTR_MARKED;
+        if (scrpos.y == markpos)
+          tattr.attr |= TATTR_CURMARKED;
+      } else {
+        tattr.attr &= ~TATTR_MARKED;
+      }
+
+     /* 'Real' blinking ? */
+      if (term.blink_is_real && (tattr.attr & ATTR_BLINK)) {
+        if (term.has_focus && term.tblinker)
+          tchar = ' ';
+        tattr.attr &= ~ATTR_BLINK;
+      }
+      if (term.blink_is_real && (tattr.attr & ATTR_BLINK2)) {
+        if (term.has_focus && term.tblinker2)
+          tchar = ' ';
+        tattr.attr &= ~ATTR_BLINK2;
+      }
+
      /* Mark box drawing, block and some other characters 
       * that should connect to their neighbour cells and thus 
       * be zoomed to the actual cell size including spacing (padding);
@@ -1872,14 +2100,33 @@ term_paint(void)
           tattr.attr != (dispchars[j].attr.attr & ~(ATTR_NARROW | DATTR_MASK))
               )
       {
-        if ((tattr.attr & ATTR_WIDE) == 0 && win_char_width(tchar) == 2
-            // do not tamper with graphics
-            && !line->lattr
-            // and restrict narrowing to ambiguous width chars
-            //&& ambigwide(tchar)
-            // but then they will be clipped...
-           ) {
-          tattr.attr |= ATTR_NARROW;
+        if ((tattr.attr & ATTR_WIDE) == 0
+            && win_char_width(tchar, tattr.attr) == 2
+            // && !(line->lattr & LATTR_MODE) ? "do not tamper with graphics"
+            // && ambigwide(tchar) ? but then they will be clipped...
+           )
+        {
+          //printf("[%d:%d] narrow? %04X..%04X\n", i, j, tchar, chars[j + 1].chr);
+          xchar ch = tchar;
+          if ((ch & 0xFC00) == 0xD800 && d->cc_next) {
+            termchar * cc = d + d->cc_next;
+            if ((cc->chr & 0xFC00) == 0xDC00) {
+              ch = ((xchar) (ch - 0xD7C0) << 10) | (cc->chr & 0x03FF);
+            }
+          }
+          if ((ch >= 0x2190 && ch <= 0x2BFF)
+           || (ch >= 0x1F000 && ch <= 0x1FAFF)
+             )
+          {
+            //tattr.attr |= ATTR_NARROW1; // ?
+          }
+          else
+#ifdef failed_attempt_to_tame_narrowing
+            if (j + 1 < term.cols && chars[j + 1].chr != ' ')
+#endif
+            tattr.attr |= ATTR_NARROW;
+            //if (ch != 0x25CC)
+            //printf("char %lc U+%04X narrow %d ambig %d\n", ch, ch, !!(tattr.attr & ATTR_NARROW), ambigwide(ch));
         }
         else if (tattr.attr & ATTR_WIDE
                  // guard character expanding properly to avoid 
@@ -1888,20 +2135,23 @@ term_paint(void)
                  // for double-width characters 
                  // (if double-width by font substitution)
                  && cs_ambig_wide && !font_ambig_wide
-                 && win_char_width(tchar) == 1 // && !widerange(tchar)
+                 && win_char_width(tchar, tattr.attr) == 1
+                    //? && !widerange(tchar)
                  // and reassure to apply this only to ambiguous width chars
                  && ambigwide(tchar)
-                ) {
+                )
+        {
           tattr.attr |= ATTR_EXPAND;
         }
       }
-      else if (dispchars[j].attr.attr & ATTR_NARROW)
+      else if (dispchars[j].attr.attr & ATTR_NARROW) {
         tattr.attr |= ATTR_NARROW;
+      }
 
 #define dont_debug_width_scaling
 #ifdef debug_width_scaling
       if (tattr.attr & (ATTR_EXPAND | ATTR_NARROW | ATTR_WIDE))
-        printf("%04X w %d enw %02X\n", tchar, win_char_width(tchar), (uint)(((tattr.attr & (ATTR_EXPAND | ATTR_NARROW | ATTR_WIDE)) >> 24)));
+        printf("%04X w %d enw %02X\n", tchar, win_char_width(tchar, tattr.attr), (uint)(((tattr.attr & (ATTR_EXPAND | ATTR_NARROW | ATTR_WIDE)) >> 24)));
 #endif
 
      /* FULL-TERMCHAR */
@@ -1999,12 +2249,38 @@ term_paint(void)
     }
     if (prevdirtyitalic) {
       // clear overhang into right padding border
-      win_text(term.cols, i, W(" "), 1, CATTR_DEFAULT, (cattr*)&CATTR_DEFAULT, line->lattr | LATTR_CLEARPAD, false);
+      win_text(term.cols, i, W(" "), 1, CATTR_DEFAULT, (cattr*)&CATTR_DEFAULT, line->lattr, false, true, 0);
     }
     if (firstdirtyitalic) {
       // clear overhang into left padding border
-      win_text(-1, i, W(" "), 1, CATTR_DEFAULT, (cattr*)&CATTR_DEFAULT, line->lattr | LATTR_CLEARPAD, false);
+      win_text(-1, i, W(" "), 1, CATTR_DEFAULT, (cattr*)&CATTR_DEFAULT, line->lattr, false, true, 0);
     }
+
+#define dont_debug_bidi_paragraphs
+#ifdef debug_bidi_paragraphs
+    static cattr CATTR_WRAPPED = {.truebg = RGB(255, 0, 0),
+                             .attr = ATTR_DEFFG | TRUE_COLOUR << ATTR_BGSHIFT,
+                             .truefg = 0, .ulcolr = (colour)-1, .link = -1};
+    static cattr CATTR_CONTD = {.truebg = RGB(0, 0, 255),
+                             .attr = ATTR_DEFFG | TRUE_COLOUR << ATTR_BGSHIFT,
+                             .truefg = 0, .ulcolr = (colour)-1, .link = -1};
+    static cattr CATTR_CONTWRAPD = {.truebg = RGB(255, 0, 255),
+                             .attr = ATTR_DEFFG | TRUE_COLOUR << ATTR_BGSHIFT,
+                             .truefg = 0, .ulcolr = (colour)-1, .link = -1};
+    wchar diag = ((line->lattr & 0x0F00) >> 8) + '0';
+    if (diag > '9')
+      diag += 'A' - '0' - 10;
+    if (line->lattr & (LATTR_WRAPPED | LATTR_WRAPCONTD)) {
+      if ((line->lattr & (LATTR_WRAPPED | LATTR_WRAPCONTD)) == (LATTR_WRAPPED | LATTR_WRAPCONTD))
+        win_text(-1, i, &diag, 1, CATTR_CONTWRAPD, (cattr*)&CATTR_CONTWRAPD, line->lattr, false, true, 0);
+      else if (line->lattr & LATTR_WRAPPED)
+        win_text(-1, i, &diag, 1, CATTR_WRAPPED, (cattr*)&CATTR_WRAPPED, line->lattr, false, true, 0);
+      else
+        win_text(-1, i, &diag, 1, CATTR_CONTD, (cattr*)&CATTR_CONTD, line->lattr, false, true, 0);
+    }
+    else if (displine->lattr & (LATTR_WRAPPED | LATTR_WRAPCONTD))
+      win_text(-1, i, W(" "), 1, CATTR_DEFAULT, (cattr*)&CATTR_DEFAULT, line->lattr, false, true, 0);
+#endif
 
    /*
     * Finally, loop once more and actually do the drawing.
@@ -2045,7 +2321,7 @@ term_paint(void)
     void flush_text()
     {
       if (ovl_len) {
-        win_text(ovl_x, ovl_y, ovl_text, ovl_len, ovl_attr, ovl_textattr, ovl_lattr | LATTR_DISP2, ovl_has_rtl);
+        win_text(ovl_x, ovl_y, ovl_text, ovl_len, ovl_attr, ovl_textattr, ovl_lattr, ovl_has_rtl, false, 2);
         ovl_len = 0;
       }
     }
@@ -2100,14 +2376,14 @@ term_paint(void)
               eattr.attr &= ~ATTR_REVERSE;
             }
 
-            win_text(x, y, esp, elen, eattr, textattr, lattr | LATTR_DISP1, has_rtl);
+            win_text(x, y, esp, elen, eattr, textattr, lattr, has_rtl, false, 1);
             flush_text();
           }
 #ifdef debug_emojis
           eattr.attr &= ~(ATTR_BGMASK | ATTR_FGMASK);
           eattr.attr |= 6 << ATTR_BGSHIFT | 4;
           esp[0] = '0' + elen;
-          win_text(x, y, esp, elen, eattr, textattr, lattr | LATTR_DISP2, has_rtl);
+          win_text(x, y, esp, elen, eattr, textattr, lattr, has_rtl, false, 2);
 #endif
           if (cfg.emoji_placement == EMPL_FULL && !overlaying)
             do_overlay = true;  // display in overlaying loop
@@ -2122,7 +2398,7 @@ term_paint(void)
           eattr.attr &= ~(ATTR_BGMASK | ATTR_FGMASK);
           eattr.attr |= 4 << ATTR_BGSHIFT | 6;
           esp[0] = '0';
-          win_text(x, y, esp, 1, eattr, textattr, lattr | LATTR_DISP2, has_rtl);
+          win_text(x, y, esp, 1, eattr, textattr, lattr, has_rtl, false, 2);
         }
 #endif
       }
@@ -2130,7 +2406,7 @@ term_paint(void)
         return;
       }
       else if (attr.attr & (ATTR_ITALIC | TATTR_COMBDOUBL)) {
-        win_text(x, y, text, len, attr, textattr, lattr | LATTR_DISP1, has_rtl);
+        win_text(x, y, text, len, attr, textattr, lattr, has_rtl, false, 1);
         flush_text();
         ovl_x = x;
         ovl_y = y;
@@ -2142,7 +2418,7 @@ term_paint(void)
         ovl_has_rtl = has_rtl;
       }
       else {
-        win_text(x, y, text, len, attr, textattr, lattr, has_rtl);
+        win_text(x, y, text, len, attr, textattr, lattr, has_rtl, false, 0);
         flush_text();
       }
     }
@@ -2182,6 +2458,12 @@ term_paint(void)
                     || (tattr.truefg != attr.truefg)
                     || (tattr.truebg != attr.truebg)
                     || (tattr.ulcolr != attr.ulcolr);
+
+      if (tchar != SIXELCH && (tattr.attr & ATTR_NARROW))
+        trace_run("narrow"), break_run = true;
+
+      if (tattr.attr & TATTR_EMOJI)
+        trace_run("emoji"), break_run = true;
 
       inline bool has_comb(termchar * tc)
       {
@@ -2244,7 +2526,7 @@ term_paint(void)
       }
       bc = tbc;
 
-      if (break_run) {
+      if (break_run || cfg.bloom) {
         if ((dirty_run && textlen) || overlaying)
           out_text(start, i, text, textlen, attr, textattr, line->lattr, has_rtl);
         start = j;
@@ -2411,7 +2693,9 @@ term_scroll(int rel, int where)
     int y = markpos;
     while ((rel == SB_PRIOR) ? y-- > sbtop : y++ < sbbot) {
       termline * line = fetch_line(y);
-      if (line->lattr & LATTR_MARKED) {
+      ushort lattr = line->lattr;
+      release_line(line);
+      if (lattr & LATTR_MARKED) {
         markpos = y;
         term.disptop = y;
         break;
@@ -2463,23 +2747,3 @@ term_update_cs(void)
   );
 }
 
-int
-term_cursor_type(void)
-{
-  return term.cursor_type == -1 ? cfg.cursor_type : term.cursor_type;
-}
-
-bool
-term_cursor_blinks(void)
-{
-  return term.cursor_blinks == -1 ? cfg.cursor_blinks : term.cursor_blinks;
-}
-
-void
-term_hide_cursor(void)
-{
-  if (term.cursor_on) {
-    term.cursor_on = false;
-    win_update(false);
-  }
-}

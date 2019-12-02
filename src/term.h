@@ -120,6 +120,11 @@ enum {
   ATTR_BROKENUND  = 0x0000000800000000u,
   ATTR_ULCOLOUR   = 0x0020000000000000u,
 
+  ATTR_SHADOW     = 0x0000100000000000u,
+  ATTR_OVERSTRIKE = 0x0000200000000000u,
+  ATTR_SUBSCR     = 0x0000400000000000u,
+  ATTR_SUPERSCR   = 0x0000800000000000u,
+
   ATTR_PROTECTED  = 0x20000000u,
   ATTR_WIDE       = 0x40000000u,
   ATTR_NARROW     = 0x80000000u,
@@ -128,7 +133,7 @@ enum {
 
   TATTR_EMOJI     = 0x1000000000000000u,
 
-  GRAPH_MASK      = 0x0000FF0000000000u,
+  GRAPH_MASK      = 0x00000F0000000000u,
   ATTR_GRAPH_SHIFT = 40,
 
   FONTFAM_MASK    = 0x000F000000000000u,
@@ -151,6 +156,7 @@ enum {
   TATTR_CURMARKED = 0x0800000000000000u, /* current scroll marker */
 
   TATTR_SELECTED  = 0x2000000000000000u, /* highlighted */
+  TATTR_CLEAR     = 0x4000000000000000u, /* erased / unwritten */
 
   DATTR_STARTRUN  = 0x8000000000000000u, /* start of redraw run */
   DATTR_MASK      = TATTR_RIGHTCURS | TATTR_PASCURS | TATTR_ACTCURS
@@ -158,7 +164,6 @@ enum {
   // unassigned bits:
   //                0x0040000000000000u
   //                0x0080000000000000u
-  //                0x4000000000000000u
 };
 
 /* Line attributes.
@@ -169,17 +174,27 @@ enum {
   LATTR_TOP       = 0x0002u, /* DEC double-height line (DECDHL), top half */
   LATTR_BOT       = 0x0003u, /* DEC double-height line (DECDHL), bottom half */
   LATTR_MODE      = 0x0003u, /* mask for double-width/height attributes */
-  LATTR_WRAPPED   = 0x0010u, /* this line wraps to next */
-  LATTR_WRAPPED2  = 0x0020u, /* with WRAPPED: CJK wide character
+  LATTR_WRAPPED   = 0x4000u, /* this line wraps to next */
+  LATTR_WRAPPED2  = 0x8000u, /* with WRAPPED: CJK wide character
                                   * wrapped to next line, so last
                                   * single-width cell is empty */
-  LATTR_CLEARPAD  = 0x0040u, /* flag to clear padding from overhang */
-  LATTR_MARKED    = 0x0100u, /* scroll marker */
-  LATTR_UNMARKED  = 0x0200u, /* secondary scroll marker */
-  LATTR_NOBIDI    = 0x4000u, /* disable bidi on this line */
-  // overlay line display (italic right-to-left overhang handling):
-  LATTR_DISP1     = 0x1000u,
-  LATTR_DISP2     = 0x2000u,
+  LATTR_MARKED    = 0x0004u, /* scroll marker */
+  LATTR_UNMARKED  = 0x0008u, /* secondary scroll marker */
+  // bidi control
+  LATTR_WRAPCONTD = 0x2000u, /* continued from wrapped line */
+  LATTR_BIDIMASK  = 0x1FC0u, /* all bidi attributes */
+  LATTR_NOBIDI    = 0x0040u, /* disable bidi on this line / in paragraph */
+  LATTR_BOXMIRROR = 0x0080u, /* bidi box graphics mirroring */
+  LATTR_BIDISEL   = 0x0100u, /* direction pre-selected */
+  LATTR_BIDIRTL   = 0x0200u, /* direction (preset or fallback or explicit) */
+  // temporary bidi flags
+  LATTR_AUTOSEL   = 0x0400u, /* autodetection accomplished */
+  LATTR_AUTORTL   = 0x0800u, /* direction after autodetection */
+  // presentational bidi flag
+  LATTR_PRESRTL   = 0x1000u,
+  // unassigned bits:
+  //                0x0010u
+  //                0x0020u
 };
 
 enum {
@@ -192,9 +207,11 @@ typedef unsigned long long cattrflags;
 
 typedef struct {
   cattrflags attr;
-  uint truefg;
-  uint truebg;
+  colour truebg;
+  colour truefg;
   colour ulcolr;
+  int link;
+  int imgi;
 } cattr;
 
 extern const cattr CATTR_DEFAULT;
@@ -226,6 +243,7 @@ typedef struct {
 
 typedef struct {
   ushort lattr;
+  ushort wrappos;
   ushort cols;    /* number of real columns on the line */
   ushort size;    /* number of allocated termchars
                      (cc-lists may make this > cols) */
@@ -245,8 +263,11 @@ extern int sblines(void);
 extern termline *fetch_line(int y);
 extern void release_line(termline *);
 
+
+/* Terminal state */
 typedef struct {
   int width;
+  ushort lattr;
   termchar *chars;
   int *forward, *backward;      /* the permutations of line positions */
 } bidi_cache_entry;
@@ -256,6 +277,7 @@ typedef enum {
   CSET_ASCII = 'B',   /* Normal ASCII charset */
   CSET_GBCHR = 'A',   /* UK variant */
   CSET_LINEDRW = '0', /* Line drawing charset */
+  CSET_VT52DRW = '2', /* VT52 "graphics" mode */
   CSET_TECH = '>',    /* DEC Technical */
   CSET_OEM = 'U',     /* OEM Codepage 437 */
   // definitions for DEC Supplemental support:
@@ -273,6 +295,18 @@ typedef enum {
   CSET_ES = 'Z', // Z           Spanish
   CSET_SE = '7', // H or 7      Swedish
   CSET_CH = '=', // =           Swiss
+  // 96-character sets (xterm 336)
+  CSET_ISO_Latin_Cyrillic	= 'L',
+  CSET_ISO_Greek_Supp		= 'F',
+  CSET_ISO_Hebrew		= 'H',
+  CSET_ISO_Latin_5		= 'M',
+  CSET_DEC_Greek_Supp		= '?' + 0x80,
+  CSET_DEC_Hebrew_Supp		= '4' + 0x80,
+  CSET_DEC_Turkish_Supp		= '0' + 0x80,
+  CSET_NRCS_Cyrillic		= '&' + 0x80,
+  CSET_NRCS_Greek		= '>' + 0x80,
+  CSET_NRCS_Hebrew		= '=' + 0x80,
+  CSET_NRCS_Turkish		= '2' + 0x80,
 } term_cset;
 
 typedef struct {
@@ -280,11 +314,13 @@ typedef struct {
   bool r;
 } pos;
 
+
 typedef enum {
   MBT_LEFT = 1, MBT_MIDDLE = 2, MBT_RIGHT = 3, MBT_4 = 4, MBT_5 = 5
 } mouse_button;
 
 
+/* Searching */
 typedef struct {
   int x;
   int y;
@@ -303,56 +339,87 @@ typedef struct {
 } termresults;
 
 
+/* Images */
 typedef struct {
-  void *fp;
+  void * fp;
   uint ref_counter;
   uint amount;
 } tempfile_t;
 
 typedef struct {
-  tempfile_t *tempfile;
+  tempfile_t * tempfile;
   size_t position;
 } temp_strage_t;
 
 typedef struct imglist {
-  unsigned char *pixels;
-  void *hdc;
-  void *hbmp;
-  temp_strage_t *strage;
-  int top;
-  int left;
-  int width;
-  int height;
-  int pixelwidth;
-  int pixelheight;
-  struct imglist *next;
+  // linked list
+  struct imglist * next;
+  // image ref for multiple use (currently unused)
+  char * id;
+  // sixel: rendering data
+  void * hdc;
+  void * hbmp;
+  // sixel: disk cache
+  temp_strage_t * strage;
+
+  // image data
+  unsigned char * pixels;
+  // image: data size; sixel: 0
+  int len;
+
+  // image ref for disposal management
+  int imgi;
+  // position within scrollback (top includes offset term.virtuallines)
+  int top, left;
+
+  // image area (cell units)
+  int width, height;
+  // sixel: image area size at time of output
+  // image: adjusted image size as requested, at time of output
+  int pixelwidth, pixelheight;
+  // image: terminal cell size at time of output
+  // sixel: actual graphic size, at time of output
+  int cwidth, cheight;
 } imglist;
 
 typedef struct {
-  void *parser_state;
-  imglist *first;
-  imglist *last;
-  imglist *altfirst;
-  imglist *altlast;
+  void * parser_state;
+  imglist * first;
+  imglist * last;
+  imglist * altfirst;
+  imglist * altlast;
 } termimgs;
 
 
+enum {
+  MODO_1 = 1,
+  MODO_2 = 2,
+  MODO_ESC = 0x10,  /* Report ESC as CSI u */
+  MODO_MOD = 0x20,  /* Report plain modifiers */
+  MODO_REL = 0x40,  /* Report release */
+  MODO_REP = 0x80,  /* Report repeat */
+};
+
 typedef struct {
   short x, y;
+  bool wrapnext;
   cattr attr;
   bool origin;
-  bool autowrap;  // switchable (xterm Wraparound Mode (DECAWM Auto Wrap))
-  bool wrapnext;
-  bool rev_wrap;  // switchable (xterm Reverse-wraparound Mode)
   short gl, gr;
   term_cset csets[4];
+  term_cset decsupp;
   term_cset cset_single;
   uchar oem_acs;
   bool utf;
-  bool decnrc_enabled;    /* DECNRCM sequence to enable NRC? */
+  ushort bidimode;
 } term_cursor;
 
 struct term {
+  // these used to be in term_cursor, thus affected by cursor restore
+  bool decnrc_enabled;  /* DECNRCM: enable NRC */
+  bool autowrap;        /* DECAWM: Autowrap mode */
+  bool rev_wrap;        /* xterm: Reverse wraparound mode */
+
   bool on_alt_screen;     /* On alternate screen? */
   bool show_other_screen;
 
@@ -374,12 +441,13 @@ struct term {
 
   termchar erase_char;
 
-  char *inbuf;            /* terminal input buffer */
-  uint inbuf_size, inbuf_pos;
+  char * suspbuf;         /* suspend output during selection buffer */
+  uint suspbuf_size, suspbuf_pos;
 
   bool rvideo;            /* global reverse video flag */
   bool cursor_on;         /* cursor enabled flag */
   bool deccolm_allowed;   /* DECCOLM sequence for 80/132 cols allowed? */
+  bool deccolm_noclear;   /* DECCOLM does not clear screen */
   bool reset_132;         /* Flag ESC c resets to 80 cols */
   bool cblinker;          /* When blinking is the cursor on ? */
   bool tblinker;          /* When the blinking text is on */
@@ -387,7 +455,10 @@ struct term {
   bool blink_is_real;     /* Actually blink blinking text */
   bool echoing;           /* Does terminal want local echo? */
   bool insert;            /* Insert mode */
-  int marg_top, marg_bot; /* scroll margins */
+  int marg_top, marg_bot; /* scrolling region margins */
+  int marg_left, marg_right; /* horizontal margins */
+  bool lrmargmode;           /* enable horizontal margins */
+  bool attr_rect;            /* rectangular attribute change extent */
   bool printing, only_printing;  /* Are we doing ANSI printing? */
   int  print_state;       /* state of print-end-sequence scan */
   char *printbuf;         /* buffered data for printer */
@@ -408,10 +479,12 @@ struct term {
   unsigned int app_control;
   bool app_cursor_keys;
   bool app_keypad;
-  bool app_wheel;
+  bool auto_repeat;
   bool bell_taskbar; // xterm: bellIsUrgent; switchable with CSI ? 1042 h/l
   bool bell_popup;   // xterm: popOnBell;    switchable with CSI ? 1043 h/l
-  bool wheel_reporting;
+  bool wheel_reporting_xterm; // xterm: alternateScroll
+  bool wheel_reporting;       // similar, but default true
+  bool app_wheel;             // format for wheel_reporting
   int  modify_other_keys;
   bool newline_mode;
   bool report_focus;
@@ -419,6 +492,7 @@ struct term {
   bool report_ambig_width;
   bool bracketed_paste;
   bool show_scrollbar;
+  bool app_scrollbar;
   bool wide_indic;
   bool wide_extra;
   bool disable_bidi;
@@ -431,10 +505,16 @@ struct term {
                              // off(default): sixel scrolling moves cursor to left of graphics
   bool private_color_registers;
   int  cursor_type;
+  int  cursor_size;
+  bool cursor_blinkmode;
   int  cursor_blinks;
+  int  cursor_blink_interval;
   bool cursor_invalid;
+  bool hide_mouse;
 
   uchar esc_mod;  // Modifier character in escape sequences
+
+  uchar vt52_mode;
 
   uint csi_argc;
   uint csi_argv[32];
@@ -447,6 +527,7 @@ struct term {
   int dcs_cmd;
 
   uchar *tabs;
+  bool newtab;
 
   enum {
     NORMAL, ESCAPE, CSI_ARGS,
@@ -459,7 +540,9 @@ struct term {
     DCS_INTERMEDIATE,
     DCS_PASSTHROUGH,
     DCS_IGNORE,
-    DCS_ESCAPE
+    DCS_ESCAPE,
+    VT52_Y, VT52_X,
+    VT52_FG, VT52_BG
   } state;
 
   // Mouse mode
@@ -496,6 +579,7 @@ struct term {
   bool selected, sel_rect;
   pos sel_start, sel_end, sel_anchor;
   bool hovering;
+  int hoverlink;
   pos hover_start, hover_end;
 
  /* Scroll steps during selection when cursor out of window. */
@@ -529,6 +613,8 @@ struct term {
 
 extern struct term term;
 
+extern void scroll_rect(int topline, int botline, int lines);
+
 extern void term_resize(int, int);
 extern void term_scroll(int, int);
 extern void term_reset(bool full);
@@ -536,13 +622,14 @@ extern void term_clear_scrollback(void);
 extern void term_mouse_click(mouse_button, mod_keys, pos, int count);
 extern void term_mouse_release(mouse_button, mod_keys, pos);
 extern void term_mouse_move(mod_keys, pos);
-extern void term_mouse_wheel(int delta, int lines_per_notch, mod_keys, pos);
+extern void term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys, pos);
 extern void term_select_all(void);
 extern void term_paint(void);
 extern void term_invalidate(int left, int top, int right, int bottom);
 extern void term_open(void);
 extern void term_copy(void);
-extern void term_paste(wchar *, uint len);
+extern void term_copy_as(char what);
+extern void term_paste(wchar *, uint len, bool all);
 extern void term_send_paste(void);
 extern void term_cancel_paste(void);
 extern void term_cmd(char * cmdpat);
@@ -553,7 +640,6 @@ extern void term_write(const char *, uint len);
 extern void term_flush(void);
 extern void term_set_focus(bool has_focus, bool may_report);
 extern int  term_cursor_type(void);
-extern bool term_cursor_blinks(void);
 extern void term_hide_cursor(void);
 
 extern void term_set_search(wchar * needle);

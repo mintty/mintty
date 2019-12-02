@@ -6,6 +6,7 @@
 #include "termpriv.h"
 #include "win.h"
 #include "child.h"
+#include "charset.h"  // cs__utftowcs
 
 /*
  * Fetch the character at a particular position in a line array.
@@ -148,7 +149,7 @@ sel_spread(void)
 }
 
 static bool
-hover_spread(void)
+hover_spread_empty(void)
 {
   term.hover_start = sel_spread_word(term.hover_start, false);
   term.hover_end = sel_spread_word(term.hover_end, true);
@@ -298,12 +299,23 @@ send_mouse_event(mouse_action a, mouse_button b, mod_keys mods, pos p)
 
   uint x = p.x + 1, y = p.y + 1;
 
-  switch (b) {
-    when MBT_4:
-      b = MBT_LEFT; mods |= MDK_ALT;
-    when MBT_5:
-      b = MBT_RIGHT; mods |= MDK_ALT;
-    otherwise:;
+  if (a != MA_WHEEL) {
+    if (cfg.old_xbuttons)
+      switch (b) {
+        when MBT_4:
+          b = MBT_LEFT; mods |= MDK_ALT;
+        when MBT_5:
+          b = MBT_RIGHT; mods |= MDK_ALT;
+        otherwise:;
+      }
+    else
+      switch (b) {
+        when MBT_4:
+          b = 129;
+        when MBT_5:
+          b = 130;
+        otherwise:;
+      }
   }
 
   uint code = b ? b - 1 : 0x3;
@@ -363,6 +375,14 @@ get_selpoint(const pos p)
 {
   pos sp = { .y = p.y + term.disptop, .x = p.x, .r = p.r };
   termline *line = fetch_line(sp.y);
+
+  // Adjust to presentational direction.
+  if (line->lattr & LATTR_PRESRTL) {
+    sp.x = term.cols - 1 - sp.x;
+    sp.r = !sp.r;
+  }
+
+  // Adjust to double-width line display.
   if ((line->lattr & LATTR_MODE) != LATTR_NORM)
     sp.x /= 2;
 
@@ -370,8 +390,12 @@ get_selpoint(const pos p)
   * Transform x through the bidi algorithm to find the _logical_
   * click point from the physical one.
   */
-  if (term_bidi_line(line, p.y) != null)
+  if (term_bidi_line(line, p.y) != null) {
+#ifdef debug_bidi_cache
+    printf("mouse @ log %d -> vis %d\n", sp.x, term.post_bidi_cache[p.y].backward[sp.x]);
+#endif
     sp.x = term.post_bidi_cache[p.y].backward[sp.x];
+  }
 
   // Back to previous cell if current one is second half of a wide char
   if (line->chars[sp.x].chr == UCSWIDE)
@@ -394,7 +418,7 @@ send_keys(char *code, uint len, uint count)
 }
 
 static bool
-is_app_mouse(mod_keys *mods_p)
+check_app_mouse(mod_keys *mods_p)
 {
   if (term.locator_1_enabled)
     return true;
@@ -413,7 +437,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     win_update(true);
   }
 
-  if (is_app_mouse(&mods)) {
+  if (check_app_mouse(&mods)) {
     if (term.mouse_mode == MM_X10)
       mods = 0;
     send_mouse_event(MA_CLICK, b, mods, box_pos(p));
@@ -459,7 +483,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     }
     else if (b == MBT_LEFT && mods == MDK_SHIFT && rca == RC_EXTEND)
       term.mouse_state = MS_PASTING;
-    else if (b == MBT_LEFT && mods == MDK_CTRL) {
+    else if (b == MBT_LEFT && (mods & ~cfg.click_target_mod) == MDK_CTRL) {
       if (count == cfg.opening_clicks) {
         // Open word under cursor
         p = get_selpoint(box_pos(p));
@@ -505,11 +529,19 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
   switch (state) {
     when MS_COPYING: term_copy();
     when MS_PASTING: win_paste();
-    when MS_OPENING:
-      term_open();
+    when MS_OPENING: {
+      termline *line = fetch_line(p.y);
+      int urli = line->chars[p.x].attr.link;
+      release_line(line);
+      char * url = geturl(urli);
+      if (url)
+        win_open(cs__utftowcs(url), true);  // win_open frees its argument
+      else
+        term_open();
       term.selected = false;
       term.hovering = false;
       win_update(true);
+    }
     when MS_SEL_CHAR or MS_SEL_WORD or MS_SEL_LINE: {
       // Finish selection.
       if (term.selected && cfg.copy_on_select)
@@ -572,7 +604,7 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
       last_dest = dest;
     }
     otherwise:
-      if (is_app_mouse(&mods)) {
+      if (check_app_mouse(&mods)) {
         if (term.mouse_mode >= MM_VT200)
           send_mouse_event(MA_RELEASE, b, mods, box_pos(p));
       }
@@ -609,6 +641,8 @@ term_mouse_move(mod_keys mods, pos p)
         bp = (pos){.y = p.y - 1, .x = term.cols - 1, .r = p.r};
     }
 
+    bool alt = mods & MDK_ALT;
+    term.sel_rect = alt;
     sel_drag(get_selpoint(bp));
 
     win_update(true);
@@ -627,11 +661,14 @@ term_mouse_move(mod_keys mods, pos p)
       send_mouse_event(MA_MOVE, 0, mods, bp);
   }
 
-  if (mods == MDK_CTRL) {
+  if (!check_app_mouse(&mods) && (mods & ~cfg.click_target_mod) == MDK_CTRL && term.has_focus) {
     p = get_selpoint(box_pos(p));
     term.hover_start = term.hover_end = p;
-    if (!hover_spread()) {
+    if (!hover_spread_empty()) {
       term.hovering = true;
+      termline *line = fetch_line(p.y);
+      term.hoverlink = line->chars[p.x].attr.link;
+      release_line(line);
       win_update(true);
     }
     else if (term.hovering) {
@@ -642,7 +679,7 @@ term_mouse_move(mod_keys mods, pos p)
 }
 
 void
-term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
+term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys mods, pos p)
 {
   if (term.hovering) {
     term.hovering = false;
@@ -651,20 +688,31 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
 
   enum { NOTCH_DELTA = 120 };
 
-  static int accu;
+  static int accu = 0;
   accu += delta;
 
-  if (is_app_mouse(&mods)) {
+  if (check_app_mouse(&mods)) {
+    if (strstr(cfg.suppress_wheel, "report"))
+      return;
     // Send as mouse events, with one event per notch.
     int notches = accu / NOTCH_DELTA;
     if (notches) {
       accu -= NOTCH_DELTA * notches;
       mouse_button b = (notches < 0) + 1;
+      if (horizontal)
+        b = 5 - b;
       notches = abs(notches);
-      do send_mouse_event(MA_WHEEL, b, mods, p); while (--notches);
+      do
+        send_mouse_event(MA_WHEEL, b, mods, p);
+      while (--notches);
     }
   }
+
+  if (horizontal) {
+  }
   else if ((mods & ~MDK_SHIFT) == MDK_CTRL) {
+    if (strstr(cfg.suppress_wheel, "zoom"))
+      return;
     if (cfg.zoom_mouse) {
       int zoom = accu / NOTCH_DELTA;
       if (zoom) {
@@ -682,17 +730,25 @@ term_mouse_wheel(int delta, int lines_per_notch, mod_keys mods, pos p)
     int lines = lines_per_notch * accu / NOTCH_DELTA;
     if (lines) {
       accu -= lines * NOTCH_DELTA / lines_per_notch;
-      if (!term.on_alt_screen || term.show_other_screen)
+      if (!term.on_alt_screen || term.show_other_screen) {
+        if (strstr(cfg.suppress_wheel, "scrollwin"))
+          return;
         term_scroll(0, -lines);
-      else if (term.wheel_reporting) {
+      }
+      else if (term.wheel_reporting || term.wheel_reporting_xterm) {
+        if (strstr(cfg.suppress_wheel, "scrollapp") && !term.wheel_reporting_xterm)
+          return;
         // Send scroll distance as CSI a/b events
         bool up = lines > 0;
         lines = abs(lines);
         int pages = lines / lines_per_page;
         lines -= pages * lines_per_page;
-        if (term.app_wheel) {
+        if (term.app_wheel && !term.wheel_reporting_xterm) {
           send_keys(up ? "\e[1;2a" : "\e[1;2b", 6, pages);
           send_keys(up ? "\eOa" : "\eOb", 3, lines);
+        }
+        else if (term.vt52_mode) {
+          send_keys(up ? "\eA" : "\eB", 2, lines);
         }
         else {
           send_keys(up ? "\e[5~" : "\e[6~", 4, pages);

@@ -11,6 +11,11 @@
 
 #define IDM_OPEN            0x0010
 #define IDM_COPY            0x0020
+#define IDM_COPY_TEXT       0x0120
+#define IDM_COPY_RTF        0x0220
+#define IDM_COPY_HTXT       0x0320
+#define IDM_COPY_HFMT       0x0420
+#define IDM_COPY_HTML       0x0520
 #define IDM_PASTE           0x0030
 #define IDM_UNUSED          0x0040
 #define IDM_COPASTE         0x0140
@@ -31,10 +36,14 @@
 #define IDM_SEARCH          0x00F0
 #define IDM_TOGLOG          0x01F0
 #define IDM_TOGCHARINFO     0x02F0
-#define IDM_HTML            0x0300
+#define IDM_TOGVT220KB      0x0300
+#define IDM_HTML            0x0310
+#define IDM_KEY_DOWN_UP     0x0330
 
 #define IDM_USERCOMMAND     0x1000
-#define IDM_SESSIONCOMMAND  0x5000
-#define IDM_GOTAB           0x9000
+#define IDM_SESSIONCOMMAND  0x4000
+#define IDM_SYSMENUFUNCTION 0x7000
+#define IDM_CTXMENUFUNCTION 0xA000
+#define IDM_GOTAB           0xD000
 
 #endif

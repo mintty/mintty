@@ -138,3 +138,6 @@ msgstr "Colors"
 msgid "Show &bold as colour"
 msgstr "Show &bold as color"
 
+msgid "as colour"
+msgstr "as color"
+

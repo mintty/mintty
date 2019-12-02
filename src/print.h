@@ -10,6 +10,7 @@ extern wstring printer_get_default(void);
 // printer output
 extern void printer_start_job(wstring printer_name);
 extern void printer_write(char *, uint len);
+extern void printer_wwrite(wchar *, uint len);
 extern void printer_finish_job(void);
 
 #endif

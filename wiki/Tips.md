@@ -4,18 +4,26 @@
 Mintty supports a number of common places to look for and save its 
 configuration and resources.
 
-For its configuration file, it reads ```/etc/minttyrc```, ```$APPDATA/mintty/config```, 
-```~/.config/mintty/config```, ```~/.minttyrc```, in this order.
+For its configuration, it reads configuration files in this order:
+* `/etc/minttyrc`
+* `$APPDATA/mintty/config`
+* `~/.config/mintty/config`
+* `~/.minttyrc`
 
 For resource files to configure a colour scheme, 
-wave file for the bell character, or localization files, it looks for 
-subfolders ```themes```, ```sounds```, or ```lang```, respectively, 
-in one of the directories ```~/.mintty```, ```~/.config/mintty```, 
-```$APPDATA/mintty```, ```/usr/share/mintty```, whichever is found first.
+wave file for the bell character, localization files, emoji graphics,
+it looks for subfolders `themes`, `sounds`, `lang`, `emojis`, respectively, 
+in the directories
+* `~/.mintty`
+* `~/.config/mintty`
+* `$APPDATA/mintty`
+* `/usr/share/mintty`
 
 The ```~/.config/mintty``` folder is the XDG default base directory.
 The ```$APPDATA/mintty``` folder is especially useful to share common configuration 
 for various installations of mintty (e.g. Cygwin 32/64 Bit, MSYS, Git Bash, WSL).
+An additional directory for a configuration file and configuration resources 
+can be given with command-line parameter ```--configdir```.
 
 
 ## Using desktop shortcuts to start mintty ##
@@ -42,16 +50,83 @@ instance would be focussed again with the associated hotkey. To have a
 new instance started with every usage of the hotkey, use the command-line 
 option ```-D``` for mintty in the shortcut target.
 
-_Note:_ About interaction problems of icon, shortcut, and the Windows taskbar:
-In a Windows desktop shortcut, to achieve consistent icon behaviour, 
-the same icon should be specified in the shortcut properties (Change Icon...) 
-and the mintty command line (Target:),
-or (beginning 2.2.3) no icon should be specified on the command line as 
-mintty will then take the icon from the invoking shortcut.
+### Taskbar icons ###
 
-_Note:_ It is suggested to _not_ use the option AppID in a Windows desktop 
-shortcut, or follow the advice about avoiding trouble with taskbar grouping 
-in the manual page.
+In a Windows desktop shortcut, (since mintty 2.2.3) it is suggested 
+to _not_ specify an icon in the command line, as mintty detects and uses 
+the icon from the invoking shortcut.
+If for any reason, an icon is to be specified, it should be the same 
+in the mintty command line (shortcut properties Target:) as in the 
+shortcut itself (Change Icon...).
+
+### Taskbar icon grouping ###
+
+Windows 7 and above use the application ID for grouping taskbar items.
+By default this setting is empty, in which case Windows groups taskbar
+items automatically based on their icon and command line.  This can be
+overridden by setting the AppID to a custom string, in which case windows
+with the same AppID are grouped together.
+
+The AppID supports placeholder parameters for a flexible grouping 
+configuration (see manual).
+The special value `AppID=@` causes mintty to derive an implicit AppID 
+from the WSL system name, in order to achieve WSL distribution-specific 
+taskbar grouping. This resolves taskbar grouping problems in some cases 
+(wsltty issue #96) but causes similar problems in other cases (issue #784).
+
+_Warning:_ Using this option in a Windows desktop shortcut may 
+cause trouble with taskbar grouping behaviour. If you need to do that, 
+the shortcut itself should also get attached with the same AppId.
+
+_Note:_ Since 2.9.6, if mintty is started via a Windows shortcut 
+which has its own AppID, it is reused for the new mintty window in order 
+to achieve proper taskbar icon grouping. This takes precedence over an 
+explicit setting of the AppID option.
+
+_Explanation:_ Note that Windows shortcut files have their own AppID.
+Hence, if an AppID is specified in the mintty settings, but not on a 
+taskbar-pinned shortcut for invoking mintty, clicking the pinned 
+shortcut will result in a separate taskbar item for the new mintty window, 
+rather than being grouped with the shortcut.
+
+_Hint:_ To avoid AppID inconsistence and thus ungrouped taskbar icons,
+the shortcut's AppID should to be set to the same string as the mintty AppID, 
+which can be done using the `winappid` utility available in 
+the mintty [utils repository](https://github.com/mintty/utils).
+As noted above, since mintty 2.9.6, the mintty AppID does not need to be set 
+anymore in this case.
+
+
+## Window session grouping ##
+
+For grouping of window icons in the taskbar, Windows uses the intricate 
+AppID concept as explained above. For grouping of desktop windows, as 
+used by the mintty session switcher or external window manipulation tools, 
+Windows uses the distinct but likewise intricate Class concept.
+Mintty provides flexible configuration to set up either of them, see manual.
+
+
+## Window icons ##
+
+The icons (taskbar icon and title bar icon) can be changed dynamically 
+with an OSC I escape sequence. Example:
+
+```
+echo -e "\e]I;`printenv 'ProgramFiles(x86)'`/Mozilla Firefox/firefox.exe,4\a"
+```
+
+
+## Start errors ##
+
+### Error: could not fork child process ###
+
+If you are frequently facing this problem, it is not really a mintty issue, 
+but it may reportedly help if you turn off the Windows ASLR feature 
+for cygwin-based programs; turn off Mandatory ASLR for mintty, 
+cygwin-console-helper, your shell and other programs as described in 
+[issue #493](https://github.com/mintty/mintty/issues/493#issuecomment-361281995)
+or using Powershell commands as described in
+[wsltty issue #6](https://github.com/mintty/wsltty/issues/6#issuecomment-419589599).
 
 
 ## Supporting Linux/Posix subsystems ##
@@ -61,13 +136,12 @@ installed, mintty can be called from cygwin to run a WSL terminal session:
 * `mintty --WSL=Ubuntu`
 * `mintty --WSL` (for the Default distribution as set with `wslconfig /s`)
 
-Note, the `wslbridge` tool needs to be installed in `/bin` for this purpose 
+Note, the `wslbridge2` gateways need to be installed in `/bin` for this purpose 
 (see below for details).
 
 A WSL terminal session can be configured for the mintty session launcher 
 in the config file, like:
 * `SessionCommands=Ubuntu:--WSL=Ubuntu`
-
 
 ### WSLtty, the standalone WSL mintty terminal ###
 
@@ -80,11 +154,15 @@ using either the wsltty installer, a Chocolatey package, or a Windows Appx packa
 ### Manual setup of WSL terminal ###
 
 To help reproduce the installation manually, for users of cygwin or msys2:
-* From https://github.com/rprichard/wslbridge/releases, download the `wslbridge` archive corresponding to your system (cygwin/msys2 32/64 bit)
-* Install `wslbridge.exe` and `wslbridge-backend` into your cygwin or msys2 `/bin` directory
+* Download from the https://github.com/Biswa96/wslbridge2 repository
+* Install package dependencies `make`, `g++`, `linux-headers` in WSL
+* Build the wslbridge2 gateways with
+  * `make RELEASE=1` for the frontends (e.g. from cygwin)
+  * `wsl make RELEASE=1` or `wsl -d` _distro_ `make RELEASE=1` for the backends
+* From subdirectory `bin`, install the gateway tools `wslbridge2.exe` and `wslbridge2-backend` into your `/bin` directory
 * Make a desktop shortcut (Desktop right-click – New ▸ Shortcut) with
-  * Target: `X:\cygwin64\bin\mintty.exe --WSL=Linux_Distribution -`
-  * Icon location (Change Icon…) for Legacy “Ubuntu on Windows”: `%LOCALAPPDATA%\lxss\bash.ico`
+  * Target: `X:\cygwin64\bin\mintty.exe --WSL=`_distro_` -`, with the desired WSL distro (or empty for default)
+  * Icon location (Change Icon…) as appropriate; the wsltty installer will find the distro-specific icon
 
 Replace `X:\cygwin64` with your cygwin or msys2 root directory path 
 and `Linux_Distribution` with your preferred distribution. The suitable 
@@ -196,6 +274,27 @@ issue, because it is not a mintty issue (or well, an issue maybe, but not
 caused by, or fixable by, mintty); it is a generic problem of cygwin/msys 
 and occurs likewise in all other pty-based terminals (e.g. xterm).
 
+### Signal processing with alien programs ###
+
+The same workaround handles interrupt signals, particularly Control+C, 
+which does not otherwise function as expected with non-cygwin programs.
+
+
+## Terminal type detection – check if running inside mintty ##
+
+Some applications, often text editors, want to know which terminal they 
+are running in, in order to make use of terminal-specific features that 
+are not indicated by the terminfo/termcap mechanism.
+
+The most reliable way to determine the terminal type is to use the 
+Secondary Device Attributes report queried from the terminal.
+The script `terminal` in the mintty 
+[utils repository](https://github.com/mintty/utils) provides an implementation.
+
+Using environment variables for this purpose is not reliable and therefore 
+not supported. See [issue #776](https://github.com/mintty/mintty/issues/776) 
+for a discussion.
+
 
 ## Terminal line settings ##
 
@@ -272,7 +371,7 @@ Finally, a couple of bindings for convenient searching of the command history. J
 ```
 
 
-## Keyboard not working as expected in certain applications (e.g. vim) ##
+## Unexpected behaviour with certain applications (e.g. vim) ##
 
 If for example the PgUp and PgDn keys do not work in your editor, the reason 
 may be that in the mintty Options, the Terminal Type was set to "vt100" 
@@ -301,6 +400,28 @@ let &t_SI.="\e[5 q"
 let &t_EI.="\e[1 q"
 let &t_te.="\e[0 q"
 ```
+
+### Enabling full mouse functionality in vim ###
+
+Before vim 8.1.0566, full mouse mode is not automatically enabled in mintty.
+Add this to _~/.vimrc_ for a workaround:
+
+```
+set mouse=a
+if has("mouse_sgr")
+    set ttymouse=sgr
+else
+    set ttymouse=xterm2
+end
+```
+
+### Blinking cursor reset ###
+
+Some applications may reset cursor style, especially cursor blinking, 
+after terminating, caused by the 
+[terminfo database](http://invisible-island.net/ncurses/man/terminfo.5.html) 
+including the corresponding reset sequence in the “normal cursor” setting.
+This is avoided with mintty option `SuppressDEC=12`, not needed from mintty 3.0.1.
 
 ### Avoiding escape timeout issues in vim ###
 
@@ -367,7 +488,7 @@ bind-key -n User1 previous-window
 ## Keyboard customization ##
 
 A number of options are available to customize the keyboard behaviour, 
-including user-defined function keys and Ctrl+Shift+key shortcuts.
+including user-defined function and keypad keys and Ctrl+Shift+key shortcuts.
 See the manual page for options and details.
 
 
@@ -390,7 +511,9 @@ For a separate compose key solution, the most seamless and stable
 **[WinCompose](https://github.com/SamHocevar/wincompose)**.
 
 
-## Changing colours ##
+## Appearance ##
+
+### Changing colours ###
 
 The default foreground, background and cursor colours can be changed in the options dialog, or by specifying the _ForegroundColour_, _BackgroundColour_ and _CursorColour_ settings in the configuration file or on the command line.
 
@@ -442,8 +565,7 @@ Different notations are accepted for colour specifications:
 * ```cmyk:C.C/M.M/Y.Y/K.K``` (float values between 0 and 1)
 * _color-name_ (using X11 color names, e.g. ```echo -ne '\e]10;bisque2\a'```)
 
-
-## Using colour schemes (“Themes”) ##
+### Using colour schemes (“Themes”) ###
 
 Colour schemes (that redefine ANSI colours and possibly foreground/background 
 colours) can be loaded with the option ```-C``` (capital C) or ```--loadconfig``` 
@@ -479,13 +601,44 @@ click the “Store” button to store the colour scheme.
 
 A number of colour schemes have been published for mintty, e.g.
 * https://github.com/oumu/mintty-color-schemes
-* https://github.com/PhilipDaniels/mintty/tree/master/themes
 * https://github.com/goreliu/wsl-terminal/tree/master/src/etc/themes
 
 Mintty also provides the command-line script ```mintheme``` which can 
 display the themes available in the mintty configuration directories or 
 activate one of them in the current mintty window.
 
+### Background image ###
+
+As an alternative to a background colour, mintty also supports graphic 
+background. This can be configured with the option `Background` or 
+set dynamically using special syntax of the colour background OSC sequence.
+The respective parameter addresses an image file, preceded by a mode 
+prefix and optionally followed by a transparancy value.
+Prefixes are:
+* `*` use image file as tiled background
+* `_` (optional with option Background) use image as picture background, scaled to window
+* `%` use image as picture background and scale window to its aspect ratio
+* `=` use desktop background (if tiled and unscaled), for a virtual floating window
+
+If the background filename is followed by a comma and a number between 1 and 254, 
+the background image will be dimmed towards the background colour;
+with a value of 255, the alpha transparency values of the image will be used.
+
+Examples:
+```
+Background=C:\cygwin\usr\share\backgrounds\tiles\rough_paper.png
+-o Background='C:\cygwin\usr\share\backgrounds\tiles\rough_paper.png'
+echo -ne '\e]11;*/usr/share/backgrounds/tiles/rough_paper.png\a'
+echo -ne '\e]11;_pontneuf.png,99\a'
+echo -ne '\e]11;=,99\a'
+```
+
+Note that relative pathnames depend on proper detection of the current directory 
+of the foreground process.
+Note that absolute pathnames within the cygwin file system are likely 
+not to work among different cygwin installations. 
+To configure a background in `$APPDATA/mintty/config` (or 
+`%APPDATA%/wsltty/config`), Windows pathname syntax should be used.
 
 ## Providing and selecting fonts ##
 
@@ -538,6 +691,45 @@ in the config file (see manual page), except for font 10 which has a
 default preference; mintty will try to find a Fraktur or Blackletter font 
 for it on your system.
 <img align=top src=https://github.com/mintty/mintty/wiki/mintty-alternative-fonts.png>
+
+### Secondary fonts ###
+
+Mintty can select alternative fonts for specific Unicode script ranges.
+With this feature, you can e.g. use a different font for CJK characters.
+
+Script names are as specified in the Unicode file Scripts.txt, listed in 
+[wiki: Unicode scripts](https://en.wikipedia.org/wiki/Script_(Unicode)) column "Alias".
+
+A special name is `CJK` which comprises Han, Hangul, Katakana, Hiragana, Bopomofo, Kanbun, 
+Halfwidth and Fullwidth Forms (except Latin). A later more specific entry 
+will override an earlier one (see CJK example below).
+
+Configuration example:
+```
+FontChoice=Hebrew:6;Arabic:7;CJK:5;Han:8;Hangul:9
+Font6=David
+Font7=Simplified Arabic Fixed
+Font5=Malgun Gothic
+Font8=FangSong
+Font9=MingLiU
+```
+
+Another special name is `PictoSymbols` to assign an alternative font to 
+ranges of pictographic symbols, including arrows, mathematical and technical 
+symbols, shapes, dingbats, emoticons etc.
+Configuration example:
+```
+FontChoice=PictoSymbols:2
+Font2=DejaVu Sans Mono
+```
+
+Finally, special name `Private` covers the Private Use ranges, which are 
+often used for additional icon symbols (e.g. by "Nerd Fonts" or "Powerline" fonts).
+Configuration example:
+```
+FontChoice=Private:3
+Font3=MesloLGS NF
+```
 
 
 ## Character width ##
@@ -618,17 +810,19 @@ to adjust line spacing.
 
 ## Text attributes and rendering ##
 
-Mintty supports a maximum of usual and unusual text attributes.
-For underline styles and colour values, colon-separated 
-ISO/IEC 8613-6 sub-parameters are supported.
+Mintty supports a maximum of usual and unusual text attributes, 
+settable with “Select Graphic Rendition” (SGR) escape sequences.
+For underline styles and some other values, colon-separated 
+ECMA-48 sub-parameters are supported.
 
 | **start `^[[...m`**    | **end `^[[...m`** | **attribute**                 |
 |:-----------------------|:------------------|:------------------------------|
 | 1                      | 22                | bold                          |
 | 2                      | 22                | dim                           |
+| 1:2                    | 22                | shadowed                      |
 | 3                      | 23                | italic                        |
 | 4 _or_ 4:1             | 24 _or_ 4:0       | solid underline               |
-| 4:2                    | 24 _or_ 4:0       | double underline              |
+| 4:2 _or_ 21            | 24 _or_ 4:0       | double underline              |
 | 4:3                    | 24 _or_ 4:0       | wavy underline                |
 | 4:4                    | 24 _or_ 4:0       | dotted underline              |
 | 4:5                    | 24 _or_ 4:0       | dashed underline              |
@@ -636,8 +830,9 @@ ISO/IEC 8613-6 sub-parameters are supported.
 | 6                      | 25                | rapidly blinking              |
 | 7                      | 27                | inverse                       |
 | 8                      | 28                | invisible                     |
+| 8:7                    | 28                | overstrike                    |
 | 9                      | 29                | strikeout                     |
-| 11                     | 10                | alternative font 1 (*)        |
+| 11 (*)                 | 10                | alternative font 1 (*)        |
 | 12                     | 10                | alternative font 2            |
 | ...                    | 10                | alternative fonts 3...8       |
 | 19                     | 10                | alternative font 9            |
@@ -663,16 +858,26 @@ ISO/IEC 8613-6 sub-parameters are supported.
 | 58:2::R:G:B            | 59                | underline RGB colour          |
 | 58:3:F:C:M:Y           | 59                | underline CMY colour (*)      |
 | 58:4:F:C:M:Y:K         | 59                | underline CMYK colour (*)     |
-| _any_                  | 0                 |                               |
+| 73                     | 75                | superscript (tentative)       |
+| 74                     | 75                | subscript   (tentative)       |
+| _any_                  | 0 _or empty_      |                               |
 
-Note: The control sequences for Fraktur (“Gothic”) font are described 
-in ECMA-48, see also [wiki:ANSI code](https://en.wikipedia.org/wiki/ANSI_escape_code).
-To use this feature, it is suggested to install `F25 Blackletter Typewriter`.
+Note: Alternative fonts are configured with options Font1 ... Font10.
+They can also be dynamically changed with OSC sequence 50 which refers 
+to the respectively selected font attribute.
 
 Note: The control sequence for alternative font 1 overrides the identical 
 control sequence to select the VGA character set. Configuring alternative 
-font 1 is therefore discouraged. See the mintty manual page about how 
-to configure alternative fonts.
+font 1 is therefore discouraged. Note, on the other hand, that the 
+VGA character set control sequence SGR 11 (effective if Font1 is not configured) 
+is _not_ reset with SGR 0 but only with SGR 10.
+
+Note: The control sequences for Fraktur (“Gothic”) font are described 
+in ECMA-48, see also [wiki:ANSI code](https://en.wikipedia.org/wiki/ANSI_escape_code).
+To use this feature, it is suggested to install `F25 Blackletter Typewriter`,
+e.g. from:
+* https://www.dafont.com/f25-blacklettertypewriter.font
+* https://fontmeme.com/fonts/f25-blackletter-typewriter-font/
 
 Note: RGB colour values are scaled to a maximum of 255 (=100%).
 CMY(K) colour values are scaled to a maximum of the given parameter F (=100%).
@@ -680,6 +885,10 @@ CMY(K) colour values are scaled to a maximum of the given parameter F (=100%).
 Note: The emoji style attribute sets the display preference for a number 
 of characters that have emojis but would be displayed with text style 
 by default (e.g. decimal digits).
+
+Note: SGR codes for superscript and subscript display are subject to change.
+
+Note: Text attributes can be disabled with option SuppressSGR (see manual).
 
 As a fancy add-on feature for text attributes, mintty supports distinct 
 colour attributes for combining characters, so a combined character 
@@ -694,6 +903,7 @@ background colours and inverse mode are ignored.
 
 Mintty supports display of emojis as defined by Unicode using 
 emoji presentation, emoji style variation and emoji sequences.
+(Note that the tty must be in a UTF-8 locale to support emoji codes.)
 
 The option `Emojis` can choose among sets of emoji graphics if 
 deployed in a mintty configuration directory.
@@ -708,7 +918,7 @@ Note that up to cygwin 2.10.0, it may be useful to set `Charwidth=unicode` in ad
 
 Emojis are displayed in the rectangular character cell group determined 
 by the cumulated width of the emoji sequence characters. The option 
-`EmojiPlacement` can adjust the location of emoji graphis within that area.
+`EmojiPlacement` can adjust the location of emoji graphics within that area.
 
 ### Installing emoji resources ###
 
@@ -720,23 +930,19 @@ Emoji data can be found at the following sources:
 * [EmojiOne](https://www.emojione.com/)
   * Free Download for your own use, PNG Files, download e.g. 128x128px zip
   * Deploy the preferred subdirectory (e.g. 128) as `emojione`
-* [Noto Emoji font](https://github.com/googlei18n/noto-emoji), subdirectory `png/128`
+* [Noto Emoji font](https://github.com/googlefonts/noto-emoji), subdirectory `png/128`
   * “Clone or download” the repository or download a release archive
   * Deploy subdirectory noto-emoji/png/128 as `noto`
-* [Unicode.org](http://www.unicode.org/emoji/charts-11.0/) Full Emoji List (~50MB)
-  * Download the [Full Emoji List](http://www.unicode.org/emoji/charts-11.0/full-emoji-list.html) (with all emoji data embedded)
+* [Unicode.org](http://www.unicode.org/emoji/charts/) Full Emoji List (~50MB)
+  * Download the [Full Emoji List](http://www.unicode.org/emoji/charts/full-emoji-list.html) (with all emoji data embedded)
   * Use the [extraction script `getemojis`](getemojis) to extract emoji data (call it without parameters for instructions)
   * Deploy the desired subdirectories (e.g. `apple`)
   * Includes apple, emojione, facebook, google, twitter, samsung, windows emojis (and some limited low-resolution sets that we shall ignore)
-* [Emoji data and images](https://github.com/iamcal/emoji-data)
-  * “Clone or download” the repository or download a release archive
-  * Deploy subdirectories `img-*` as appropriate (e.g. img-apple-64 as `apple`)
-  * Includes apple, emojione-2D, facebook, facebook messenger (discontinued), google, twitter emojis
 
 To “Clone” with limited download volume, use the command `git clone --depth 1`.
 To download only the desired subdirectory from `github.com`, use `subversion`, 
 for example:
-  * `svn export https://github.com/googlei18n/noto-emoji/trunk/png/128 noto`
+  * `svn export https://github.com/googlefonts/noto-emoji/trunk/png/128 noto`
   * `svn export https://github.com/iamcal/emoji-data/trunk/img-apple-160 apple`
 
 “Deploy” above means move, link, copy or hard-link the respective subdirectory 
@@ -811,13 +1017,17 @@ is likely to reset the working directory to the home directory.
 
 The Virtual Tabs feature provides a list of all running mintty sessions 
 as well as configurable launch parameters for new sessions.
-By default, the list is shown in the extended context menu (Ctrl+right-click), 
+The session list is shown when right-clicking the title bar (if 
+virtual tabs mode is configured or with Ctrl) or ctrl+left-clicking it.
+By default, the list is also shown in the extended context menu (Ctrl+right-click), 
 the mouse button 5 menu, and the menus opened with the Ctrl+Menu key 
 and the Ctrl+Shift+I shortcut (if enabled).
 (Menu contents for the various context menu invocations is configurable.)
 For configuration, see settings `SessionCommands`, `Menu*`, 
 and `SessionGeomSync`.
 Distinct sets of sessions can be set up with the setting `-o Class=...`.
+For flexible window grouping, this setting supports the same placeholders 
+as the `AppID` option.
 
 
 ## Multi-monitor support ##
@@ -837,12 +1047,13 @@ the left or right neighbour monitor: Win+Shift+cursor-left/right.
 
 ## Embedding graphics in terminal output ##
 
-The new support of the SIXEL feature facilitates a range of applications 
-that integrate graphic images in the terminal, animated graphics, and even 
-video and interactive gaming applications.
+Mintty supports both Sixel graphics and image graphics output (see below).
 
-An example of the benefit of this feature is the output of `gnuplot` 
-with the command
+The Sixel feature facilitates a range of applications that integrate 
+graphic images in the terminal, animated graphics, and even video and 
+interactive gaming applications.
+
+An example is the output of `gnuplot` with the command
 ```
 export GNUTERM=sixel
 gnuplot -e "splot [x=-3:3] [y=-3:3] sin(x) * cos(y)"
@@ -850,6 +1061,16 @@ gnuplot -e "splot [x=-3:3] [y=-3:3] sin(x) * cos(y)"
 
 Note that gnuplot uses black text on default background for captions 
 and coordinates so better not run it in a terminal with dark background.
+
+### Image support ###
+
+In addition to the legacy Sixel feature, mintty supports graphic image display 
+(using iTerm2 controls). Image formats supported comprise
+PNG, JPEG, GIF, TIFF, BMP, Exif.
+
+The script `showimg` in the 
+mintty [utils repository](https://github.com/mintty/utils) supports 
+interactive image display.
 
 
 ## Localization ##
@@ -913,9 +1134,11 @@ and the character information output simply overwrite each other.
 
 ## User-defined behaviour ##
 
-Mintty supports two extension features:
+Mintty supports a few extension features:
 * Application-specific drag-and-drop transformations (option `DropCommands`)
-* User-defined commands and filter functions (option `UserCommands`)
+* User-defined commands and filters for context menu (option `UserCommands`)
+* User-defined functions for key combinations (option `KeyFunctions`)
+* User-defined function entries for system menu (option `SysMenuFunctions`)
 
 See the manual page for details.
 
@@ -937,4 +1160,19 @@ To install mintty outside a cygwin environment, follow a few rules:
 * Compile mintty statically.
 * Install mintty.exe together with cygwin1.dll and cygwin-console-helper.exe.
 * Call the directory in which to install mintty and libraries ‘bin’.
+
+### Bundling mintty with dedicated software ###
+
+To bundle an application which is not natively compiled on cygwin with mintty,
+some way of bridging the terminal interworking incompatiblity problems 
+([pty incompatibility problem](https://github.com/mintty/mintty/issues/56) and
+[character encoding incompatibility problem](https://github.com/mintty/mintty/issues/376))
+needs to be integrated. A generic solution is [winpty](https://github.com/rprichard/winpty).
+To run WSL, use ʻwslbridge2’ instead (see above).
+For software that is aware of Posix terminal conventions, it may be a feasible 
+solution if the software detects a terminal and its character encoding by 
+checking environment variable `TERM` and the locale variables and invokes 
+`stty raw -echo` to enable direct character-based I/O and disable 
+non-compatible signal handling. For this purpose, stty and its library 
+dependencies need to be bundled with the installation as well.
 

@@ -5,7 +5,7 @@ case "$1" in
 "")	echo "Usage: `basename $0` .../full-emoji-list.html [emoji style]..." >&2
 	echo >&2
 	echo "This script extracts emojis graphics (.png format) from a downloaded copy of" >&2
-	echo "	http://www.unicode.org/emoji/charts-11.0/full-emoji-list.html" >&2
+	echo "	http://www.unicode.org/emoji/charts/full-emoji-list.html" >&2
 	echo "for the selected emoji style sets, or (if none selected) all of them:" >&2
 	echo "	apple google twitter emojione facebook samsung windows" >&2
 	echo "and always extracts common emoji graphics." >&2

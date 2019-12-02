@@ -67,19 +67,16 @@ The respective setting is cleared with a corresponding sequence ending with `l`.
 | `^[[?77031h`  | Ctrl+_    | `^[[95;5u`   |
 
 
-## Scrollbar hiding ##
+## Input method ##
 
-These sequences can be used to hide or show the scrollbar, whereby the window size remains the same but the number of character columns is changed to account for the width of the scrollbar. If the scrollbar is disabled in the options, it will always remain hidden.
+Mintty allows to set, save or restore the IME status explicitly, to support 
+applications like text editors to adapt it to the current input target.
 
-| **sequence**  | **scrollbar** |
-|:--------------|:--------------|
-| `^[[?7766l`   | hide          |
-| `^[[?7766h`   | show          |
-
-Note: Mintty also supports the xterm-compatible sequences to hide or show 
-the scrollbar, which handle the scrollbar as "outer" to the terminal, 
-adding to the window width but keeping the terminal width unchanged 
-(except in full-screen mode).
+| **sequence**  | **IME status**                            |
+|:--------------|:------------------------------------------|
+| `^[[<`_on_`t` | Open (1) or Close (0, default) IME status |
+| `^[[<s`       | Save (push) IME status                    |
+| `^[[<r`       | Restore (pop) IME status                  |
 
 
 ## Shortcut override mode ##
@@ -96,16 +93,89 @@ When shortcut override mode is on, all shortcut key combinations are sent to the
 
 Mintty supports bidi rendering by default. However, some applications 
 may prefer to control bidi appearance themselves. There is one option (Bidi) 
-and two control sequences to adjust the behaviour.
+and some control sequences to adjust the behaviour.
 
-| **option**  | **sequence**  | **bidi**     |
-|:------------|:--------------|:-------------|
-| `Bidi=0`    |               | disabled     |
-| `Bidi=1`    |               | disabled on alternate screen |
-|             | `^[[?77096h`  | disabled     |
-|             | `^[[?77096l`  | not disabled |
-|             | `^[[?7796h`   | disabled on current line |
-|             | `^[[?7796l`   | not disabled on current line |
+| **option**  | **bidi**     |
+|:------------|:-------------|
+| `Bidi=0`    | disabled     |
+| `Bidi=1`    | disabled on alternate screen |
+| `Bidi=2`    | (default) enabled |
+
+| **sequence**  | **bidi**     |
+|:--------------|:-------------|
+| `^[[?77096h`  | disabled     |
+| `^[[?77096l`  | enabled      |
+| `^[[?7796h`   | disabled on current line |
+| `^[[?7796l`   | not disabled on current line |
+| `^[[8h`       | BDSM (ECMA-48): implicit bidi mode (bidi-enabled lines) |
+| `^[[8l`       | BDSM (ECMA-48): explicit bidi mode (bidi-disabled lines) |
+| `^[[?2501h`   | enable bidi autodetection (default) |
+| `^[[?2501l`   | disable bidi autodetection |
+| `^[[1 k`      | SCP (ECMA-48): set lines to LTR paragraph embedding level |
+| `^[[2 k`      | SCP (ECMA-48): set lines to RTL paragraph embedding level |
+| `^[[0 k`      | SCP (ECMA-48): default direction handling: autodetection with LTR fallback |
+| `^[[?2500h`   | enable box mirroring (*) |
+| `^[[?2500l`   | disable box mirroring (*) |
+| `^[[0 S`      | SPD (ECMA-48): LTR presentation direction |
+| `^[[3 S`      | SPD (ECMA-48): RTL presentation direction |
+
+Note: ECMA-48 bidi modes and private bidi modes are experimental.
+They follow the current status of the bidi mode model of the 
+[«BiDi in Terminal Emulators» recommendation](https://terminal-wg.pages.freedesktop.org/bidi/).
+
+Note: Box mirroring means a number of graphic characters are added to the 
+set of bidi-mirrored characters as specified by Unicode.
+These are the unsymmetric characters from ranges Box Drawing (U+2500-U+257F) 
+and Block Elements (U+2580-U+259F). Others may be added in future versions.
+
+Note: SPD is a deprecated fun feature.
+
+
+## Scrollbar hiding ##
+
+These sequences can be used to hide or show the scrollbar, whereby the window size remains the same but the number of character columns is changed to account for the width of the scrollbar. If the scrollbar is disabled in the options, it will always remain hidden.
+
+| **sequence**  | **scrollbar** |
+|:--------------|:--------------|
+| `^[[?7766l`   | hide          |
+| `^[[?7766h`   | show          |
+
+Note: Mintty also supports the xterm-compatible sequences to hide or show 
+the scrollbar, which handle the scrollbar as "outer" to the terminal, 
+adding to the window width but keeping the terminal width unchanged 
+(except in full-screen mode).
+
+
+## Application scrollbar ##
+
+— EXPERIMENTAL —
+
+In application scrollbar mode, an application can make use of the window scrollbar;
+it can set up the scrollbar to reflect the application idea of a scroll 
+position, and receive scrollbar events as control sequences.
+
+This mode is up to future revision. It is currently enabled or disabled 
+implicitly, there is no explicit mode setting sequence.
+
+The application scrollbar indicates a scrollbar view ("scroll offset") 
+within an assumed span of a virtual document ("document height", as 
+maintained by the application). The height of the view ("viewport height") 
+defaults to the actual terminal size (rows); its difference to the 
+terminal size is kept when resizing the terminal. Control sequences 
+can set up the current view position ("scroll offset" from 1 to total size) 
+as well as the total virtual document size ("document height" in assumed lines) 
+and optionally the "viewport height".
+
+| **sequence**                       | **scrollbar**                                        |
+|:-----------------------------------|:-----------------------------------------------------|
+| `^[[`_pos_`;`_size_`;`_height_`#t` | set scrollbar view position, virtual size and height |
+| `^[[`_pos_`;`_size_`#t`            | set scrollbar view position and virtual size         |
+| `^[[`_pos_`#t`                     | set scrollbar view position                          |
+| `^[[0#t`                           | disable application scrollbar                        |
+
+Relative scrollbar movement and absolute positioning are reported with 
+special sequences; for details see 
+[Keycodes – Application scrollbar events](https://github.com/mintty/mintty/wiki/Keycodes#application-scrollbar-events).
 
 
 ## Mousewheel reporting ##
@@ -116,8 +186,15 @@ Mousewheel reporting only happens on the alternate screen, whereas on the primar
 
 | **sequence**  | **reporting** |
 |:--------------|:--------------|
+| `^[[?1007l`   | disabled      |
+| `^[[?1007h`   | enabled       |
 | `^[[?7786l`   | disabled      |
 | `^[[?7786h`   | enabled       |
+
+The xterm-style sequence mode (1007) is disabled by default but the mintty 
+feature (7786) is enabled by default. The mintty mode can be formatted 
+to private sequences (see below). To support these subtle differences, 
+both can be switched independently.
 
 By default, mousewheel events are reported as cursor key presses, which enables
 mousewheel scrolling in applications such as **[less](http://www.greenwoodsoftware.com/less)** without requiring any configuration. Alternatively, mousewheel reporting can be switched to _application mousewheel mode_, where the mousewheel sends its own separate keycodes that allow an application to treat the mousewheel differently from cursor keys:
@@ -258,12 +335,28 @@ Consistent changing could be achieved with a shell script like
 to be declared in your shell profile (e.g. `$HOME/.bashrc`).
 
 
-## Window title ##
+## Window title copy ##
 
 The following _OSC_ ("operating system command") sequence can be used to copy 
 the window title to the Windows clipboard (like menu function "Copy Title"):
 
 > `^[]7721;1^G`
+
+
+## Window title set ##
+
+The following _OSC_ ("operating system command") sequence can be used to 
+set the window title (alternatively to OSC 2):
+
+> `^[]l;1^G`
+
+
+## Window icon ##
+
+The following _OSC_ ("operating system command") sequence can be used to 
+set the window icon from the given file and optional icon index:
+
+> `^[]I;icon_file,index^G`
 
 
 ## Working directory ##
@@ -282,6 +375,27 @@ The _file-URL_ liberally follows a `file:` URL scheme; examples are
   * _(empty)_ to restore the default behaviour
 
 
+## Hyperlinks ##
+
+The following _OSC_ ("operating system command") sequence can be used to 
+set a hyperlink attribute which is opened on Ctrl-click.
+
+| **link control**         | **function**           |
+|:-------------------------|:------------------|
+| `^[]8;;`_URL_`^G`        | underlay text with the hyperlink |
+| `^[]8;;^G`               | clear hyperlink attribute (terminate hyperlink) |
+| `^[]8;id=`ID`;`_URL_`^G` | associate instances of hyperlink |
+
+A typical hyperlinked text would be written like
+> `^[]8;;`_URL_`^G`text`^[]8;;^G`
+
+Using the `id=` option, multiple parts of hyperlinked text can be 
+associated to a single hyperlink, so a partially visible or wrapped 
+hyperlinked text can be produced on the screen.
+See [Hyperlinks (a.k.a. HTML-like anchors) in terminal emulators](https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda#viewers-editors)
+for an example and a discussion.
+
+
 ## Scroll markers ##
 
 The following sequence can be used to mark prompt lines in support of 
@@ -293,9 +407,37 @@ two features:
 | `^[[?7711l`   | mark secondary prompt line (upper lines) |
 
 
-## Sixel graphics end position ##
+## Image support ##
 
-After output of a sixel image in sixel scrolling mode, 
+In addition to the legacy Sixel feature, mintty supports graphic image display 
+via iTerm2 controls:
+
+> `^[]1337;File=` _par_`=`_arg_ [ `;`_par_`=`_arg_ ]* `:`_image_ `^G`
+
+| **par**                  | **arg**           | **comment**        |
+|:-------------------------|:------------------|:-------------------|
+| **name=**                | base64-encoded ID | currently not used |
+| **width=**               | size (*)          | cell/pixel/percentage |
+| **height=**              | size (*)          | cell/pixel/percentage |
+| **preserveAspectRatio=** | 1 _or_ 0 | only used if **width** and **height** are given |
+| _image_                  |          | base64-encoded image data |
+
+The width or height size arguments use cell units by default. Optionally, 
+an appended "px" or "%" refers to the number of pixels or the percentage of 
+screen size at the time of image output.
+
+If both width and height are given, the preserveAspectRatio parameter can 
+select whether to fit the image in the denoted area or stretch it to fill it.
+If only one of width or height are given, the other dimension is scaled so 
+that the aspect ratio is preserved.
+If none of width or height are given, the image pixel size is used.
+
+Image formats supported comprise PNG, JPEG, GIF, TIFF, BMP, Exif.
+
+
+## Graphics end position ##
+
+After output of a Sixel image in Sixel scrolling mode, or other image, 
 the final cursor position can be next to the right bottom of the image, 
 below the left bottom of the image (default), or at the line beginning 
 below the image (like xterm). The mintty private sequence 7730 chooses 
@@ -312,9 +454,14 @@ control sequence 8452.
 
 ## Cursor style ##
 
-The VT510 _[DECSCUSR](http://vt100.net/docs/vt510-rm/DECSCUSR)_ sequence can be used to control cursor shape and blinking.
+The VT510 _[DECSCUSR](http://vt100.net/docs/vt510-rm/DECSCUSR)_ sequence 
+can be used to control cursor type (shape) and blinking.
+It takes an optional second parameter (proprietary extension) to set the 
+blinking interval in milliseconds.
 
-> `^[ [` _arg_ _SP_ `q`
+> `^[[` _arg_ _SP_ `q`
+
+> `^[[` _arg_ `;` _blink_ _SP_ `q`
 
 | **arg** | **shape**    | **blink** |
 |:--------|:-------------|:----------|
@@ -325,3 +472,20 @@ The VT510 _[DECSCUSR](http://vt100.net/docs/vt510-rm/DECSCUSR)_ sequence can be 
 | **4**   | underscore   | no        |
 | **5**   | line         | yes       |
 | **6**   | line         | no        |
+
+Furthermore, the following Linux console sequence can be used to set the 
+size of the active underscore cursor.
+(Note that the second and third parameters from the Linux sequence are not 
+supported; cursor colour can be set with the OSC 12 sequence.)
+
+> `^[[?` _arg_ `c`
+
+| **arg** | **size**     |
+|:--------|:-------------|
+| **0**   | default      |
+| **1**   | invisible    |
+| **2**   | underscore   |
+| **3**   | lower_third  |
+| **4**   | lower_half   |
+| **5**   | two_thirds   |
+| **6**   | full block   |

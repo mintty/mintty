@@ -1,0 +1,109 @@
+#! /bin/sh -f
+
+skipcheck=false
+
+if $skipcheck || make Scripts.txt >&2
+then	true
+else	echo Could not acquire Unicode data file Scripts.txt >&2
+	exit 1
+fi
+if $skipcheck || make Blocks.txt >&2
+then	true
+else	echo Could not acquire Unicode data file Blocks.txt >&2
+	exit 1
+fi
+
+getranges () {
+	egrep '^[^#]' Scripts.txt
+	egrep "(Arrows|Mathematical Operators|Technical|Enclosed Alphanumerics|Pictographs|Control Pictures|Optical|Box Drawing|Miscellaneous.*Symbols|Block Elements|Geometric Shapes|Dingbats|Tiles|Cards|Emoticons|Transport|Alchemical|Chess)" Blocks.txt |
+	sed -e "s,;.*, ; PictoSymbols,"
+	cat <</eou
+3030..3037; CJK # CJK Symbols and Punctuation
+303C..303F; CJK # CJK Symbols and Punctuation
+3190..319F; Kanbun # Kanbun
+31C0..31EF; CJK # CJK Symbols and Punctuation
+327F..32CF; CJK # Enclosed CJK Letters and Months
+3358..33FF; CJK # CJK Compatibility
+E000..F8FF; Private Use # Private Use Area
+FE30..FE4F; CJK # CJK Compatibility Forms
+FF01..FF20; Fullwidth Forms # Halfwidth and Fullwidth Forms
+FF5B..FF5E; Fullwidth Forms # Halfwidth and Fullwidth Forms
+FF5F..FF60; Fullwidth Forms # Halfwidth and Fullwidth Forms
+FF61..FF65; Halfwidth Forms # Halfwidth and Fullwidth Forms
+FF9E..FF9F; Katakana Symbols # Halfwidth and Fullwidth Forms
+FFE0..FFEE; Fullwidth Forms # Halfwidth and Fullwidth Forms
+16FE2..16FFF; CJK # Ideographic Symbols and Punctuation
+1F201..1F2FF; CJK # Enclosed Ideographic Supplement
+F0000..FFFFF; Private Use # Supplementary Private Use Area-A
+100000..10FFFF; Private Use # Supplementary Private Use Area-B
+/eou
+}
+
+CC=${CC-cc}
+
+(
+cat <</eoc
+#include <string.h>
+#include <stdio.h>
+
+long range_low;
+long range_high = -2;
+char * range_name = "";
+
+void
+flush ()
+{
+	if (range_high >= 0) {
+		printf ("	{0x%04lX, 0x%04lX, 0, \"%s\"},\n", range_low, range_high, range_name);
+	}
+}
+
+void
+range (low, high, name)
+	long low;
+	long high;
+	char * name;
+{
+	if (strcmp (name, "Common") == 0) {
+		// ignore
+	} else if (strcmp (name, range_name) == 0) {
+		range_high = high;
+	} else {
+		flush ();
+		range_low = low;
+		range_high = high;
+		range_name = name;
+	}
+}
+
+int
+main () {
+/eoc
+
+
+# transform
+#00F8..01BA    ; Latin # L& [195] LATIN SMALL LETTER O WITH STROKE..LATIN SMALL LETTER EZH WITH TAIL
+#01BB          ; Latin # Lo       LATIN LETTER TWO WITH STROKE
+
+LC_ALL=C getranges |
+sed	-e '/^#/ d' \
+	-e 's/^\([0-9A-F][0-9A-F]*\)\.\.\([0-9A-F][0-9A-F]*\) *; *\([^ #]*\).*/\1	{0x\1, 0x\2, "\3"},/' \
+	-e 's/^\([0-9A-F][0-9A-F]*\) *; *\([^ #]*\).*/\1	{0x\1, 0x\1, "\2"},/' \
+	-e 's,^\(....\)	,00\1	,' \
+	-e 's,^\(.....\)	,0\1	,' \
+| sort | sed -e 's,^.*	,	,' -e 's,_, ,g' |
+sed -e "s/{/range (/" -e "s/},/);/"
+
+
+cat <</eoc
+	flush ();
+	return 0;
+}
+/eoc
+) > mkscripts.tc
+
+if $CC -o mkscripts.exe -x c mkscripts.tc
+then	./mkscripts.exe > scripts.t
+	rm -f mkscripts.tc mkscripts.exe
+else	exit 1
+fi

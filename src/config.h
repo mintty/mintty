@@ -4,7 +4,8 @@
 
 // Enums for various options.
 
-typedef enum { MDK_SHIFT = 1, MDK_ALT = 2, MDK_CTRL = 4 } mod_keys;
+typedef enum { MDK_SHIFT = 1, MDK_ALT = 2, MDK_CTRL = 4, 
+               MDK_WIN = 8, MDK_SUPER = 16, MDK_HYPER = 32 } mod_keys;
 enum { HOLD_NEVER, HOLD_START, HOLD_ERROR, HOLD_ALWAYS };
 enum { CUR_BLOCK, CUR_UNDERSCORE, CUR_LINE };
 enum { FS_DEFAULT, FS_PARTIAL, FS_NONE, FS_FULL };
@@ -64,6 +65,7 @@ typedef struct {
   // Text
   font_spec font;
   font_spec fontfams[11];
+  wstring font_choice;
   wstring font_sample;
   bool show_hidden_fonts;
   char font_smoothing;
@@ -80,6 +82,8 @@ typedef struct {
   bool ctrl_alt_is_altgr;
   int ctrl_alt_delay_altgr;
   bool old_altgr_detection;
+  bool auto_repeat;
+  int external_hotkeys;
   bool clip_shortcuts;
   bool window_shortcuts;
   bool switch_shortcuts;
@@ -99,6 +103,9 @@ typedef struct {
   // Mouse
   bool copy_on_select;
   bool copy_as_rtf;
+  int copy_as_html;
+  wstring copy_as_rtf_font;
+  int copy_as_rtf_font_size;
   bool clicks_place_cursor;
   char middle_click_action;
   char right_click_action;
@@ -116,10 +123,12 @@ typedef struct {
   bool pgupdn_scroll;
   wstring lang;
   string search_bar;
+  int search_context;
   // Terminal
   string term;
   wstring answerback;
   bool old_wrapmodes;
+  bool enable_deccolm_init;
   bool bell_sound;
   int bell_type;
   wstring bell_file;
@@ -129,6 +138,7 @@ typedef struct {
   int bell_flash_style;
   bool bell_taskbar; // xterm: bellIsUrgent
   bool bell_popup;   // xterm: popOnBell
+  int bell_interval;
   wstring printer;
   bool confirm_exit;
   bool allow_set_selection;
@@ -149,8 +159,19 @@ typedef struct {
   // "Hidden"
   int bidi;
   bool disable_alternate_screen;
+  int display_speedup;
+  string suppress_sgr;
+  string suppress_dec;
+  string suppress_win;
+  string suppress_osc;
+  string suppress_nrc;
+  string suppress_wheel;
+  string filter_paste;
   bool input_clears_selection;
+  int suspbuf_max;
+  bool trim_selection;
   char charwidth;
+  int char_narrowing;
   char emojis;
   char emoji_placement;
   wstring app_id;
@@ -158,6 +179,9 @@ typedef struct {
   wstring app_launch_cmd;
   wstring drop_commands;
   wstring user_commands;
+  wstring ctx_user_commands;
+  wstring sys_user_commands;
+  wstring user_commands_path;
   wstring session_commands;
   wstring task_commands;
   string menu_mouse;
@@ -168,6 +192,7 @@ typedef struct {
   int geom_sync;
   int col_spacing, row_spacing;
   int padding;
+  int ligatures_support;
   int handle_dpichanged;
   int check_version_update;
   string word_chars;
@@ -178,6 +203,11 @@ typedef struct {
   bool short_long_opts;
   bool bold_as_special;
   int selection_show_size;
+  bool hover_title;
+  int baud;
+  int bloom;
+  string old_options;
+  bool old_xbuttons;
   // Legacy
   bool use_system_colours;
   bool old_bold;
@@ -199,5 +229,6 @@ extern void finish_config(void);
 extern void copy_config(char * tag, config * dst, const config * src);
 extern void apply_config(bool save);
 extern wchar * getregstr(HKEY key, wstring subkey, wstring attribute);
+extern uint getregval(HKEY key, wstring subkey, wstring attribute);
 
 #endif

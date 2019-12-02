@@ -50,13 +50,13 @@ ver:
 DIST := release
 TARUSER := --owner=root --group=root --owner=mintty --group=cygwin
 
-arch_files := Makefile COPYING LICENSE* INSTALL VERSION
+arch_files := Makefile LICENSE* INSTALL VERSION
 arch_files += src/Makefile src/*.c src/*.h src/*.rc src/*.mft
 arch_files += src/[!_]*.t src/mk*
-arch_files += tools/mintheme
+arch_files += tools/mintheme tools/getemojis
 arch_files += lang/*.pot lang/*.po
-arch_files += themes/*[!~]
-arch_files += cygwin/*.cygport cygwin/README* cygwin/setup.hint
+arch_files += themes/*[!~] sounds/*.wav sounds/*.WAV sounds/*.md
+arch_files += cygwin/*.cygport cygwin/README cygwin/setup.hint cygwin/mintty-debuginfo.hint
 arch_files += docs/*.1 docs/*.html icon/*
 arch_files += wiki/*
 #arch_files += scripts/*
@@ -67,7 +67,7 @@ docs/$(NAME).1.html: docs/$(NAME).1
 	cd src; $(MAKE) html
 	cp docs/$(NAME).1.html mintty.github.io/
 
-src := $(DIST)/$(name_ver)-src.tar.bz2
+src := $(DIST)/$(name_ver).tar.gz
 tar: $(generated) $(src)
 $(src): $(arch_files)
 	mkdir -p $(DIST)
@@ -76,10 +76,10 @@ $(src): $(arch_files)
 	#cp -ax --parents $^ $(name_ver)
 	cp -dl --parents $^ $(name_ver)
 	rm -f $@
-	tar cjf $@ --exclude="*~" $(TARUSER) $(name_ver)
+	tar czf $@ --exclude="*~" $(TARUSER) $(name_ver)
 	rm -rf $(name_ver)
 
-REL := 0
+REL := 1
 arch := $(shell uname -m)
 
 cygport := $(name_ver)-$(REL).cygport
@@ -97,14 +97,31 @@ binpkg:
 	cp cygwin/mintty.cygport $(DIST)/$(cygport)
 	cd $(DIST); cygport $(cygport) prep
 	cd $(DIST); cygport $(cygport) compile install
-	#cd $(DIST); cygport $(cygport) package
-	cd $(DIST)/$(name_ver)-$(REL).$(arch)/inst; tar cJf ../$(name_ver)-$(REL).tar.xz $(TARUSER) *
+	# cygport packages would reveal user information;
+	# with $$(TARUSER) in $${TAR_OPTIONS}, they are reduced to numeric, 
+	# but strangely still the local ids:
+	#cd $(DIST); TAR_OPTIONS="$(TARUSER)" cygport $(cygport) package
+	# this succeeds to record owner/group "0/0" in the archives:
+	#cd $(DIST); TAR_OPTIONS="--owner=0 --group=0" cygport $(cygport) package
+	# but we've already established the explicit archive build,
+	# which records owner/group "mintty/cygwin" in the archives:
+	# binary package:
+	cd $(DIST)/$(name_ver)-$(REL).$(arch)/inst; tar cJf ../$(name_ver)-$(REL).tar.xz $(TARUSER) usr/bin etc usr/share
+	# debug package:
+	cd $(DIST)/$(name_ver)-$(REL).$(arch)/inst; tar cJf ../$(NAME)-debuginfo-$(version)-$(REL).tar.xz $(TARUSER) usr/lib/debug usr/src/debug
 
 srcpkg: $(DIST)/$(name_ver)-$(REL)-src.tar.xz
 
-$(DIST)/$(name_ver)-$(REL)-src.tar.xz: $(DIST)/$(name_ver)-src.tar.bz2
+# deprecated:
+#$(DIST)/$(name_ver)-$(REL)-src.tar.xz: $(DIST)/$(name_ver)-src.tar.bz2
+#	cp cygwin/mintty.cygport $(DIST)/$(cygport)
+#	cd $(DIST); tar cJf $(name_ver)-$(REL)-src.tar.xz $(TARUSER) $(name_ver)-src.tar.bz2 $(name_ver)-$(REL).cygport
+
+# let's make the source package a .tar.gz (not -src.tar.bz2) to be 
+# consistent with github and support cygport magic package name handling:
+$(DIST)/$(name_ver)-$(REL)-src.tar.xz: $(DIST)/$(name_ver).tar.gz
 	cp cygwin/mintty.cygport $(DIST)/$(cygport)
-	cd $(DIST); tar cJf $(name_ver)-$(REL)-src.tar.xz $(TARUSER) $(name_ver)-src.tar.bz2 $(name_ver)-$(REL).cygport
+	cd $(DIST); tar cJf $(name_ver)-$(REL)-src.tar.xz $(TARUSER) $(name_ver).tar.gz $(name_ver)-$(REL).cygport
 
 upload:
 	REL=$(REL) cygwin/upload.sftp

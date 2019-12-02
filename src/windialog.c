@@ -417,13 +417,13 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 #  include "_wm.t"
   };
   char * wm_name = "WM_?";
-  if ((msg != WM_SETCURSOR && msg != WM_NCHITTEST && msg != WM_MOUSEFIRST
+  if ((msg != WM_SETCURSOR && msg != WM_NCHITTEST && msg != WM_MOUSEMOVE
        && msg != WM_ERASEBKGND && msg != WM_CTLCOLORDLG && msg != WM_PRINTCLIENT && msg != WM_CTLCOLORBTN
        && msg != WM_ENTERIDLE
        && (msg != WM_NOTIFY || (LOWORD(wParam) == IDCX_TREEVIEW && ((LPNMHDR) lParam)->code == TVN_SELCHANGED))
      )) {
     for (uint i = 0; i < lengthof(wm_names); i++)
-      if (msg == wm_names[i].wm_) {
+      if (msg == wm_names[i].wm_ && !strstr(wm_names[i].wm_name, "FIRST")) {
         wm_name = wm_names[i].wm_name;
         break;
       }
