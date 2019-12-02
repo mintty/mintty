@@ -84,6 +84,7 @@ bool win_is_fullscreen;
 static bool go_fullscr_on_max;
 static bool resizing;
 static bool moving = false;
+static bool wm_user = false;
 static bool disable_poschange = true;
 static int zoom_token = 0;  // for heuristic handling of Shift zoom (#467, #476)
 static bool default_size_token = false;
@@ -540,7 +541,7 @@ update_tab_titles()
       if (curr_wnd != wnd) {
         PostMessage(curr_wnd, WM_USER, 0, WIN_TITLE);
 #ifdef debug_tabbar
-        printf("notified %8p to update tabbar\n", curr_wnd);
+        printf("[%8p] notified %8p to update tabbar\n", wnd, curr_wnd);
 #endif
       }
     }
@@ -934,7 +935,7 @@ win_gotab(uint n)
       RECT r;
       GetWindowRect(wnd, &r);
 #ifdef debug_tabs
-      printf("switcher %d,%d %d,%d\n", (int)r.left, (int)r.top, (int)(r.right - r.left), (int)(r.bottom - r.top));
+      printf("[%8p] switcher %d,%d %d,%d\n", wnd, (int)r.left, (int)r.top, (int)(r.right - r.left), (int)(r.bottom - r.top));
 #endif
       PostMessage(tab, WM_USER,
                   MAKEWPARAM(r.right - r.left, r.bottom - r.top),
@@ -979,7 +980,7 @@ win_synctabs(int level)
           RECT r;
           GetWindowRect(wnd, &r);
 #ifdef debug_tabs
-          printf("sync all %d,%d %d,%d\n", (int)r.left, (int)r.top, (int)(r.right - r.left), (int)(r.bottom - r.top));
+          printf("[%8p] sync all %d,%d %d,%d\n", wnd, (int)r.left, (int)r.top, (int)(r.right - r.left), (int)(r.bottom - r.top));
 #endif
           PostMessage(curr_wnd, WM_USER,
                       MAKEWPARAM(r.right - r.left, r.bottom - r.top),
@@ -990,8 +991,16 @@ win_synctabs(int level)
     return true;
   }
 
+#ifdef debug_tabs
+  printf("[%8p] win_synctabs\n", wnd);
+#endif
+  if (wm_user)
+    return;
   if (cfg.geom_sync >= level)
     EnumWindows(wnd_enum_tabs, (LPARAM)level);
+#ifdef debug_tabs
+  printf("[%8p] win_synctabs end\n", wnd);
+#endif
 }
 
 
@@ -2435,6 +2444,10 @@ static struct {
 #endif
 
     when WM_USER:  // reposition and resize
+#ifdef debug_tabs
+      printf("[%8p] WM_USER %d,%d %d,%d\n", wnd, (INT16)LOWORD(lp), (INT16)HIWORD(lp), LOWORD(wp), HIWORD(wp));
+#endif
+      wm_user = true;
       if (!wp && lp == WIN_TOP) { // Ctrl+Alt or session switcher
         // these do not work:
         // BringWindowToTop(wnd);
@@ -2454,7 +2467,7 @@ static struct {
       }
       else if (cfg.geom_sync) {
 #ifdef debug_tabs
-        printf("switched %d,%d %d,%d\n", (INT16)LOWORD(lp), (INT16)HIWORD(lp), LOWORD(wp), HIWORD(wp));
+        printf("[%8p] switched %d,%d %d,%d\n", wnd, (INT16)LOWORD(lp), (INT16)HIWORD(lp), LOWORD(wp), HIWORD(wp));
 #endif
         if (!wp) {
           if (lp == WIN_MINIMIZE && cfg.geom_sync >= 3)
@@ -2473,6 +2486,10 @@ static struct {
                        SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
         }
       }
+#ifdef debug_tabs
+      printf("[%8p] WM_USER end\n", wnd);
+#endif
+      wm_user = false;
 
     when WM_COMMAND or WM_SYSCOMMAND: {
 # ifdef debug_messages
@@ -5037,7 +5054,7 @@ main(int argc, char *argv[])
     }
     if (cfg.geom_sync) {
 #ifdef debug_tabs
-      printf("launched %d,%d %d,%d\n", sx, sy, sdx, sdy);
+      printf("[%8p] launched %d,%d %d,%d\n", wnd, sx, sy, sdx, sdy);
 #endif
       if (si >= 2 && !sdx && !sdy) {
         win_maximise(2);

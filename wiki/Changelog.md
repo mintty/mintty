@@ -1,6 +1,9 @@
 Terminal features
   * Linux console controls for underscore cursor size (mintty/wsltty#203).
 
+Window handling
+  * Avoid resize flickering loop in Virtual Tabs mode.
+
 Other
   * Fix access to shortcut icon with path prefix %ProgramW6432%.
 
