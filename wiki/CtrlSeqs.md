@@ -414,17 +414,18 @@ via iTerm2 controls:
 
 > `^[]1337;File=` _par_`=`_arg_ [ `;`_par_`=`_arg_ ]* `:`_image_ `^G`
 
-| **par**                  | **arg**           | **comment**        |
-|:-------------------------|:------------------|:-------------------|
-| **name=**                | base64-encoded ID | currently not used |
-| **width=**               | size (*)          | cell/pixel/percentage |
-| **height=**              | size (*)          | cell/pixel/percentage |
-| **preserveAspectRatio=** | 1 _or_ 0 | only used if **width** and **height** are given |
-| _image_                  |          | base64-encoded image data |
+| **par**                  | **arg**            | **comment**               |
+|:-------------------------|:-------------------|:--------------------------|
+| **name=**                | base64-encoded ID  | currently not used        |
+| **width=**               | size (*)           | cell/pixel/percentage     |
+| **height=**              | size (*)           | cell/pixel/percentage     |
+| **preserveAspectRatio=** | 1 _(default) or_ 0 | only used if **width** and **height** are given |
+| _image_                  |                    | base64-encoded image data |
 
 The width or height size arguments use cell units by default. Optionally, 
 an appended "px" or "%" refers to the number of pixels or the percentage of 
-screen size at the time of image output.
+screen size at the time of image output. Image size persists when resizing 
+the terminal but scales when zooming the cell size.
 
 If both width and height are given, the preserveAspectRatio parameter can 
 select whether to fit the image in the denoted area or stretch it to fill it.
