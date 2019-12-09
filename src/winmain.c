@@ -195,6 +195,11 @@ static BOOL (WINAPI * pSystemParametersInfo)(UINT, UINT, PVOID, UINT) = 0;
 static BOOLEAN (WINAPI * pShouldAppsUseDarkMode)(void) = 0; /* undocumented */
 static HRESULT (WINAPI * pSetWindowTheme)(HWND, const wchar_t *, const wchar_t *) = 0;
 
+#define HTHEME HANDLE
+static COLORREF (WINAPI * pGetThemeSysColor)(HTHEME hth, int colid) = 0;
+static HTHEME (WINAPI * pOpenThemeData)(HWND, LPCWSTR pszClassList) = 0;
+static HRESULT (WINAPI * pCloseThemeData)(HTHEME) = 0;
+
 // Helper for loading a system library. Using LoadLibrary() directly is insecure
 // because Windows might be searching the current working directory first.
 static HMODULE
@@ -239,6 +244,13 @@ load_dwm_funcs(void)
       (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(132)); /* ordinal */
     pSetWindowTheme = 
       (void *)GetProcAddress(uxtheme, "SetWindowTheme");
+    pOpenThemeData =
+      (void *)GetProcAddress(uxtheme, "OpenThemeData");
+    pCloseThemeData =
+      (void *)GetProcAddress(uxtheme, "CloseThemeData");
+    if (pOpenThemeData && pCloseThemeData)
+      pGetThemeSysColor =
+        (void *)GetProcAddress(uxtheme, "GetThemeSysColor");
   }
 }
 
@@ -583,7 +595,7 @@ win_sys_style(bool focus)
   if (!save) {
     save = newn(COLORREF, lengthof(elements));
     for (uint i = 0; i < lengthof(elements); i++)
-      save[i] = GetSysColor(elements[i]);
+      save[i] = win_get_sys_colour(elements[i]);
   }
   if (focus)
     SetSysColors(lengthof(elements), elements, colours);
@@ -592,6 +604,22 @@ win_sys_style(bool focus)
 #else
 (void)focus;
 #endif
+}
+
+colour
+win_get_sys_colour(int colid)
+{
+  if (pGetThemeSysColor) {
+    HTHEME hth = pOpenThemeData(wnd, L"TAB;HEADER;WINDOW");
+    if (hth) {
+      colour col = pGetThemeSysColor(hth, colid);
+      //printf("colour id %d sys %06X theme %06X\n", colid, GetSysColor(colid), col);
+      pCloseThemeData(hth);
+      return col;
+    }
+  }
+
+  return GetSysColor(colid);
 }
 
 

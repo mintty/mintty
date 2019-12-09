@@ -96,8 +96,8 @@ win_show_tip(int x, int y, int cols, int rows)
     }
 
    /* Prepare other GDI objects and drawing info */
-    tip_bg = GetSysColor(COLOR_INFOBK);
-    tip_text = GetSysColor(COLOR_INFOTEXT);
+    tip_bg = win_get_sys_colour(COLOR_INFOBK);
+    tip_text = win_get_sys_colour(COLOR_INFOTEXT);
     memset(&nci, 0, sizeof(NONCLIENTMETRICS));
     nci.cbSize = sizeof(NONCLIENTMETRICS);
     SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS),

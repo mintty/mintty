@@ -42,7 +42,7 @@ extern void win_copy_text(const char *s);
 extern colour win_get_colour(colour_i);
 extern void win_set_colour(colour_i, colour);
 extern void win_reset_colours(void);
-extern colour win_get_sys_colour(bool fg);
+extern colour win_get_sys_colour(int colid);
 extern uint colour_dist(colour a, colour b);
 extern colour truecolour(cattr *, colour bg);
 

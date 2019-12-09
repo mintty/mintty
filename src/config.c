@@ -713,8 +713,8 @@ check_legacy_options(void (*remember_option)(char * tag, uint))
 {
   if (cfg.use_system_colours) {
     // Translate 'UseSystemColours' to colour settings.
-    cfg.fg_colour = cfg.cursor_colour = win_get_sys_colour(true);
-    cfg.bg_colour = win_get_sys_colour(false);
+    cfg.fg_colour = cfg.cursor_colour = win_get_sys_colour(COLOR_WINDOWTEXT);
+    cfg.bg_colour = win_get_sys_colour(COLOR_WINDOW);
     cfg.use_system_colours = false;
 
     // Make sure they're written to the config file.

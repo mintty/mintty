@@ -4443,12 +4443,6 @@ win_get_colour(colour_i i)
   return i < COLOUR_NUM ? colours[i] : 0;
 }
 
-colour
-win_get_sys_colour(bool fg)
-{
-  return GetSysColor(fg ? COLOR_WINDOWTEXT : COLOR_WINDOW);
-}
-
 void
 win_reset_colours(void)
 {

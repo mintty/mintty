@@ -99,7 +99,7 @@ icon_bitmap(HICON hIcon)
     return NULL;
 
   // Fill the background of the compatible DC with the given colour
-  SetBkColor(dst_hdc, GetSysColor(COLOR_MENU));
+  SetBkColor(dst_hdc, win_get_sys_colour(COLOR_MENU));
   ExtTextOut(dst_hdc, 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
 
   // Draw the icon into the compatible DC
