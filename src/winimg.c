@@ -241,7 +241,8 @@ winimg_len(imglist *img)
 bool
 winimg_new(imglist **ppimg, char * id, unsigned char * pixels, uint len,
            int left, int top, int width, int height,
-           int pixelwidth, int pixelheight, bool preserveAR)
+           int pixelwidth, int pixelheight, bool preserveAR,
+           int crop_x, int crop_y, int crop_width, int crop_height)
 {
   imglist *img = (imglist *)malloc(sizeof(imglist));
   //printf("winimg alloc %d -> %p\n", (int)sizeof(imglist), img);
@@ -303,6 +304,38 @@ winimg_new(imglist **ppimg, char * id, unsigned char * pixels, uint len,
 
       if (s != Ok)
         return false;
+
+      // cropping pre-adjustment
+      if (crop_width > 0)
+        pw = crop_width;
+      else if (crop_width < 0) {
+        crop_width = - crop_width;
+        pw -= crop_width;
+      }
+      if (crop_height > 0)
+        ph = crop_height;
+      else if (crop_height < 0) {
+        crop_height = - crop_height;
+        ph -= crop_height;
+      }
+      if (crop_x)
+        pw -= crop_x;
+      if (crop_y)
+        ph -= crop_y;
+      if (crop_x || crop_y || crop_width || crop_height) {
+        if (!crop_width)
+          crop_width = pw - crop_x;
+        if (!crop_height)
+          crop_height = ph - crop_y;
+      }
+
+      if (pw <= 0 || ph <= 0)
+        return false;
+
+      img->crop_x = crop_x;
+      img->crop_y = crop_y;
+      img->crop_width = crop_width;
+      img->crop_height = crop_height;
 
       /*
 	case	given			effective
@@ -511,9 +544,6 @@ draw_img(HDC dc, imglist * img)
       gpcheck("load stream", s);
     }
 
-    // cropping not yet supported
-    int crop_left = 0, crop_top = 0, crop_width = 0, crop_height = 0;
-
     // position
     int left = img->left * cell_width;
     int top = (img->top - term.virtuallines - term.disptop) * cell_height;
@@ -567,14 +597,17 @@ draw_img(HDC dc, imglist * img)
     gpcheck("brush delete", s);
 #endif
 
-    // can we fill transparent background with this mechanism somehow?
-    //GpImageAttributes * iattr;
+    GpImageAttributes * iattr = 0;
     //GdipCreateImageAttributes(&iattr);
-    if (crop_left || crop_top || crop_width || crop_height)
+#ifdef debug_cropping
+    printf("draw %3d %3d %3d %3d crop %3d %3d %3d %3d\n", left, top, width, height, img->crop_x, img->crop_y, img->crop_width, img->crop_height);
+#endif
+    if (img->crop_x || img->crop_y || img->crop_width || img->crop_height)
       s = GdipDrawImageRectRectI(gr, gimg,
                                  left, top, width, height,
-                                 crop_left, crop_top, crop_width, crop_height,
-                                 UnitPixel, (GpImageAttributes *)0, 0, 0);
+                                 img->crop_x, img->crop_y,
+                                 img->crop_width, img->crop_height,
+                                 UnitPixel, iattr, 0, 0);
     else
       s = GdipDrawImageRectI(gr, gimg, left, top, width, height);
     gpcheck("draw", s);

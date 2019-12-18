@@ -380,6 +380,8 @@ typedef struct imglist {
   // image: terminal cell size at time of output
   // sixel: actual graphic size, at time of output
   int cwidth, cheight;
+  // image: cropping
+  int crop_x, crop_y, crop_width, crop_height;
 } imglist;
 
 typedef struct {

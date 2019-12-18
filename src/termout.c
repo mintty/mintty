@@ -2895,7 +2895,7 @@ do_dcs(void)
       int pixelheight = st->image.height;
 
       imglist * img;
-      if (!winimg_new(&img, 0, pixels, 0, left, top, width, height, pixelwidth, pixelheight, false)) {
+      if (!winimg_new(&img, 0, pixels, 0, left, top, width, height, pixelwidth, pixelheight, false, 0, 0, 0, 0)) {
         free(pixels);
         sixel_parser_deinit(st);
         //printf("free state 4 %p\n", term.imgs.parser_state);
@@ -3364,6 +3364,10 @@ do_cmd(void)
       int pixelwidth = 0;
       int pixelheight = 0;
       bool pAR = true;
+      int crop_x = 0;
+      int crop_y = 0;
+      int crop_width = 0;
+      int crop_height = 0;
 
       // process parameters
       while (s && *s) {
@@ -3420,6 +3424,36 @@ do_cmd(void)
         else if (0 == strcmp("preserveAspectRatio", s)) {
           pAR = val;
         }
+        else if (0 == strcmp("cropX", s) || 0 == strcmp("cropLeft", s)) {
+          if (pix) {
+            crop_x = val;
+          }
+        }
+        else if (0 == strcmp("cropY", s) || 0 == strcmp("cropTop", s)) {
+          if (pix) {
+            crop_y = val;
+          }
+        }
+        else if (0 == strcmp("cropWidth", s)) {
+          if (pix) {
+            crop_width = val;
+          }
+        }
+        else if (0 == strcmp("cropHeight", s)) {
+          if (pix) {
+            crop_height = val;
+          }
+        }
+        else if (0 == strcmp("cropRight", s)) {
+          if (pix) {
+            crop_width = - val;
+          }
+        }
+        else if (0 == strcmp("cropBottom", s)) {
+          if (pix) {
+            crop_height = - val;
+          }
+        }
 
         s = nxt;
       }
@@ -3449,7 +3483,7 @@ do_cmd(void)
           imglist * img;
           short left = term.curs.x;
           short top = term.virtuallines + term.curs.y;
-          if (winimg_new(&img, name, data, datalen, left, top, width, height, pixelwidth, pixelheight, pAR)) {
+          if (winimg_new(&img, name, data, datalen, left, top, width, height, pixelwidth, pixelheight, pAR, crop_x, crop_y, crop_width, crop_height)) {
             fill_image_space(img);
 
             if (term.imgs.first == NULL) {
