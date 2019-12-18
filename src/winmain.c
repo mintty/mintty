@@ -610,7 +610,7 @@ colour
 win_get_sys_colour(int colid)
 {
   if (pGetThemeSysColor) {
-    HTHEME hth = pOpenThemeData(wnd, L"TAB;HEADER;WINDOW");
+    HTHEME hth = pOpenThemeData(wnd, W("TAB;HEADER;WINDOW"));
     if (hth) {
       colour col = pGetThemeSysColor(hth, colid);
       //printf("colour id %d sys %06X theme %06X\n", colid, GetSysColor(colid), col);
