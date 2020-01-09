@@ -4,6 +4,9 @@ Terminal features
 Window handling
   * Avoid resize flickering loop in Virtual Tabs mode.
 
+Font rendering
+  * Fix adjusted row spacing ("Leading") for negative font leading (#948, #946).
+
 Other
   * Fix access to shortcut icon with path prefix %ProgramW6432%.
 

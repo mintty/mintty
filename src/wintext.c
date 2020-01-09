@@ -612,7 +612,8 @@ win_init_fontfamily(HDC dc, int findex)
 
   if (!findex) {
     //?int ilead = tm.tmInternalLeading - (dpi - 96) / 48;
-    int ilead = tm.tmInternalLeading * 96 / dpi;
+    int idpi = dpi;  // avoid coercion of tm.tmInternalLeading to unsigned
+    int ilead = tm.tmInternalLeading * 96 / idpi;
     ff->row_spacing = row_padding(ilead, tm.tmExternalLeading);
     //printf("row_sp dpi %d int %d -> ild %d (ext %d) -> pad %d + cfg %d\n", dpi, (int)tm.tmInternalLeading, ilead, (int)tm.tmExternalLeading, ff->row_spacing, cfg.row_spacing);
     trace_font(("00 height %d avwidth %d asc %d dsc %d intlead %d extlead %d %ls\n", 
