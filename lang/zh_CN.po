@@ -44,7 +44,7 @@ msgstr "错误：无法创建子进程"
 
 #: child.c:242
 msgid "DLL rebasing may be required; see 'rebaseall / rebase --help'"
-msgstr "可能需要 DLL 地址重定位，运行该命令查看 'rebaseall / rebase --help'"
+msgstr "可能需要 DLL 地址重定位，运行此命令查看帮助 'rebaseall / rebase --help'"
 
 #. __ %1$s: client command (e.g. shell) to be run; %2$s: error message
 #: child.c:320
@@ -68,22 +68,22 @@ msgstr "错误：无法创建子进程"
 #. __ Options - Text - Emojis - Placement
 #: config.c:522
 msgid "stretch"
-msgstr ""
+msgstr "拉伸"
 
 #. __ Options - Text - Emojis - Placement
 #: config.c:524
 msgid "align"
-msgstr ""
+msgstr "适应"
 
 #. __ Options - Text - Emojis - Placement
 #: config.c:526
 msgid "middle"
-msgstr ""
+msgstr "居中"
 
 #. __ Options - Text - Emojis - Placement
 #: config.c:528
 msgid "full"
-msgstr ""
+msgstr "填充"
 
 #. __ %s: unknown option name
 #: config.c:629
@@ -106,7 +106,7 @@ msgstr "忽略 '%s' 无效值，属于该选项 '%s'"
 #. __ %s: option name
 #: config.c:848
 msgid "Ignoring option '%s' with missing value"
-msgstr "忽略 '%s' 选项因为缺失值"
+msgstr "忽略 '%s' 选项，因为缺少值"
 
 #. __ %1$s: config file name, %2$s: error message
 #: config.c:1471
@@ -114,7 +114,7 @@ msgid ""
 "Could not save options to '%s':\n"
 "%s."
 msgstr ""
-"不能将选项保存到 '%s'：\n"
+"无法将选项保存到 '%s'：\n"
 "%s。"
 
 #: config.c:1824
@@ -187,7 +187,7 @@ msgstr "已下载 / 给我起名！"
 
 #: config.c:2292
 msgid "Could not load web theme"
-msgstr "不能加载网络主题"
+msgstr "无法加载网络主题"
 
 #: config.c:2341
 msgid "Cannot write theme file"
@@ -375,27 +375,27 @@ msgstr "大小(&S)"
 #. __ Options - Text:
 #: config.c:3001 config.c:3059
 msgid "Sho&w bold as font"
-msgstr "显示粗字体字形(&W)"
+msgstr "显示粗体字形(&W)"
 
 #. __ Options - Text:
 #: config.c:3006 config.c:3064
 msgid "Show &bold as colour"
-msgstr "显示粗字体颜色(&B)"
+msgstr "显示粗体颜色(&B)"
 
 #. __ Options - Text:
 #: config.c:3013 config.c:3091
 msgid "Show bold"
-msgstr "显示粗字"
+msgstr "显示粗体的"
 
 #. __ Options - Text:
 #: config.c:3017 config.c:3095
 msgid "as font"
-msgstr "体字形"
+msgstr "字形"
 
 #. __ Options - Text:
 #: config.c:3022 config.c:3100
 msgid "as colour"
-msgstr "体颜色"
+msgstr "颜色"
 
 #. __ Options - Text:
 #: config.c:3027 config.c:3105
@@ -449,17 +449,17 @@ msgstr "字符集(&C)"
 #. __ Options - Text:
 #: config.c:3128 config.c:3134
 msgid "Emojis"
-msgstr ""
+msgstr "Emoji"
 
 #. __ Options - Text - Emojis:
 #: config.c:3138
 msgid "Style"
-msgstr ""
+msgstr "风格"
 
 #. __ Options - Text - Emojis:
 #: config.c:3143
 msgid "Placement"
-msgstr ""
+msgstr "位置"
 
 #. __ Options - Keys: treeview label
 #: config.c:3151 config.c:3171 config.c:3205
@@ -509,7 +509,7 @@ msgstr "切换窗口(&S) (Ctrl+[Shift+]Tab)"
 #. __ Options - Keys:
 #: config.c:3191
 msgid "&Zoom (Ctrl+plus/minus/zero)"
-msgstr "缩放(&Z) (Ctrl+ +/-/0)"
+msgstr "缩放(&Z) (Ctrl + +/-/0)"
 
 #. __ Options - Keys:
 #: config.c:3196
@@ -533,7 +533,7 @@ msgstr "组合按键"
 #. __ Options - Modifier - Shift:
 #: config.c:3212 config.c:3354 config.c:3373 config.c:3540 config.c:3559
 msgid "&Shift"
-msgstr "&Shift"
+msgstr ""
 
 #. __ Options - Keys:
 #. __ Options - Mouse:
@@ -542,7 +542,7 @@ msgstr "&Shift"
 #. __ Options - Modifier - Control:
 #: config.c:3214 config.c:3356 config.c:3381 config.c:3542 config.c:3567
 msgid "&Ctrl"
-msgstr "&Ctrl"
+msgstr ""
 
 #. __ Options - Keys:
 #. __ Options - Mouse:
@@ -551,7 +551,7 @@ msgstr "&Ctrl"
 #. __ Options - Modifier - Alt:
 #: config.c:3216 config.c:3358 config.c:3377 config.c:3544 config.c:3563
 msgid "&Alt"
-msgstr "&Alt"
+msgstr ""
 
 #. __ Options - Mouse: treeview label
 #: config.c:3226 config.c:3302 config.c:3334
@@ -567,7 +567,7 @@ msgstr "鼠标功能"
 #. __ Options - Selection:
 #: config.c:3234 config.c:3262 config.c:3273 config.c:3422
 msgid "Cop&y on select"
-msgstr "选择时复制(&Y)"
+msgstr "选中后立即复制(&Y)"
 
 #. __ Options - Mouse:
 #. __ Options - Selection:
@@ -584,7 +584,7 @@ msgstr "以 HTML 复制"
 #. __ Options - Mouse:
 #: config.c:3298
 msgid "Clic&ks place command line cursor"
-msgstr "用鼠标点击来定位光标(&K)"
+msgstr "使用鼠标点击来定位光标(&K)"
 
 #. __ Options - Mouse: section title
 #: config.c:3304
@@ -594,7 +594,7 @@ msgstr "单击动作"
 #. __ Options - Mouse:
 #: config.c:3307
 msgid "Right mouse button"
-msgstr "鼠标右键按钮"
+msgstr "鼠标右键"
 
 #. __ Options - Mouse:
 #: config.c:3310 config.c:3324
@@ -672,48 +672,48 @@ msgstr ""
 #. __ Options - Selection: treeview label
 #: config.c:3403 config.c:3416 config.c:3472
 msgid "Selection"
-msgstr ""
+msgstr "选中"
 
 #. __ Options - Selection: panel title
 #: config.c:3405
 msgid "Selection and clipboard"
-msgstr ""
+msgstr "选中字符和剪切板功能"
 
 #. __ Options - Selection:
 #: config.c:3409
 msgid "Clear selection on input"
-msgstr ""
+msgstr "输入后取消选中"
 
 #. __ Options - Selection: section title
 #: config.c:3418
 msgid "Clipboard"
-msgstr ""
+msgstr "剪切板"
 
 #. __ Options - Selection:
 #: config.c:3462
 msgid "Trim space from selection"
-msgstr ""
+msgstr "移除不必要的空格"
 
 #. __ Options - Selection:
 #: config.c:3467
 msgid "Allow setting selection"
-msgstr ""
+msgstr "允许选中设置"
 
 #. __ Options - Selection: section title
 #. __ Options - Window: treeview label
 #: config.c:3474 config.c:3496 config.c:3515 config.c:3588
 msgid "Window"
-msgstr "窗口"
+msgstr "提示"
 
 #. __ Options - Selection:
 #: config.c:3479
 msgid "Show size while selecting (0..12)"
-msgstr ""
+msgstr "选择时显示尺寸 (0..12)"
 
 #. __ Options - Selection:
 #: config.c:3486
 msgid "Suspend output while selecting"
-msgstr ""
+msgstr "选择时暂停屏幕输出"
 
 #. __ Options - Window: panel title
 #: config.c:3498
@@ -957,7 +957,7 @@ msgstr "可用"
 #. __ Options: dialog width scale factor (80...200)
 #: windialog.c:676
 msgid "100"
-msgstr "100"
+msgstr ""
 
 #: windialog.c:811 windialog.c:836
 msgid "Error"
@@ -966,24 +966,24 @@ msgstr "错误"
 #. __ Context menu, session switcher ("virtual tabs") menu label
 #: wininput.c:277
 msgid "Session switcher"
-msgstr "会话切换器"
+msgstr "切换会话"
 
 #. __ Context menu, session launcher ("virtual tabs") menu label
 #: wininput.c:296
 msgid "Session launcher"
-msgstr "会话启动器"
+msgstr "启动会话"
 
 #: wininput.c:405 wininput.c:411
 msgid "Ctrl+"
-msgstr "Ctrl+"
+msgstr ""
 
 #: wininput.c:406 wininput.c:412
 msgid "Alt+"
-msgstr "Alt+"
+msgstr ""
 
 #: wininput.c:407 wininput.c:413
 msgid "Shift+"
-msgstr "Shift+"
+msgstr ""
 
 #. __ System menu:
 #: wininput.c:438
@@ -1149,15 +1149,15 @@ msgstr "用户命令"
 
 #: winmain.c:2182
 msgid "Processes are running in session:"
-msgstr "在当前会话运行的进程："
+msgstr "在当前会话中还运行着进程："
 
 #: winmain.c:2183
 msgid "Close anyway?"
-msgstr "一定要关闭？"
+msgstr "确认关闭？"
 
 #: winmain.c:2301
 msgid "Try '--help' for more information"
-msgstr "使用 --help 参数运行查看更多信息"
+msgstr "使用 --help 参数运行来了解如何使用"
 
 #: winmain.c:2309
 msgid "Could not load icon"
@@ -1236,15 +1236,15 @@ msgstr "找不到 '%s' WSL 发行版"
 
 #: winmain.c:4231
 msgid "Duplicate option '%s'"
-msgstr "重复选项 '%s'"
+msgstr "重复的选项 '%s'"
 
 #: winmain.c:4239 winmain.c:4307
 msgid "Unknown option '%s'"
-msgstr "未知选项 '%s'"
+msgstr "未知的选项 %s"
 
 #: winmain.c:4241
 msgid "Option '%s' requires an argument"
-msgstr "' %s' 选项需要一个参数"
+msgstr "选项 %s 需要一个参数"
 
 #: winmain.c:4268
 msgid "Syntax error in position argument '%s'"
@@ -1260,26 +1260,26 @@ msgstr "geometry 选项的参数 '%s' 有语法错误"
 
 #: winmain.c:4491
 msgid "Mintty could not detach from caller, starting anyway"
-msgstr "Mintty 不能从调用者分离，但还是启动"
+msgstr "Mintty 不能从调用者分离，但继续启动"
 
 #: winmain.c:4773
 msgid "Using default title due to invalid characters in program name"
-msgstr "使用默认标题栏文字，因为程序名中有无效字符"
+msgstr "使用默认的标题栏文字，因为程序名中有无效字符"
 
 #. __ label of search bar close button; not actually "localization"
 #: winsearch.c:260
 msgid "X"
-msgstr "X"
+msgstr ""
 
 #. __ label of search bar prev button; not actually "localization"
 #: winsearch.c:264
 msgid "◀"
-msgstr "◀"
+msgstr ""
 
 #. __ label of search bar next button; not actually "localization"
 #: winsearch.c:268
 msgid "▶"
-msgstr "▶"
+msgstr ""
 
 #. __ Options - Text: font properties information: "Leading": total line padding (see option RowSpacing), Bold/Underline modes (font or manual, see options BoldAsFont/UnderlineManual/UnderlineColour)
 #: wintext.c:152
@@ -1314,7 +1314,7 @@ msgstr "字体不支持系统语言环境"
 
 #: appinfo.h:61
 msgid "There is no warranty, to the extent permitted by law."
-msgstr "在法律许可范围内，不负担保责任。"
+msgstr "在法律许可的情况下特此明示，本软件不提供任何担保。"
 
 #. __ %s: WEBSITE (URL)
 #: appinfo.h:66
@@ -1324,6 +1324,6 @@ msgid ""
 "%s.\n"
 "See also the Wiki there for further hints, thanks and credits."
 msgstr ""
-"可在 mintty 的项目主页的 Issues 反馈问题或者功能改进，地址：\n"
-"%s\n"
-"可参阅 Wiki 页面中的更多帮助、感谢和许可等信息。"
+"在 mintty 项目主页的 Issues 版块反馈问题或者提交功能改进\n"
+"地址：%s\n"
+"Wiki 页面中有更多帮助、鸣谢和许可等信息。"
