@@ -3,6 +3,7 @@ Terminal features
 
 Window handling
   * Avoid resize flickering loop in Virtual Tabs mode.
+  * Don't keep selection size info popup on top when defocussed (#956).
 
 Font rendering
   * Fix adjusted row spacing ("Leading") for negative font leading (#948, #946).

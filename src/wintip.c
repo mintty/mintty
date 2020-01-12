@@ -104,7 +104,7 @@ win_show_tip(int x, int y, int cols, int rows)
                          &nci, 0);
     tip_font = CreateFontIndirect(&nci.lfStatusFont);
     tip_wnd =
-      CreateWindowExA(WS_EX_TOOLWINDOW | WS_EX_TOPMOST,
+      CreateWindowExA(WS_EX_TOOLWINDOW,  // don't include WS_EX_TOPMOST
                       MAKEINTRESOURCEA(tip_class), null, WS_POPUP, x, y, 1, 1,
                       null, null, inst, null);
     ShowWindow(tip_wnd, SW_SHOWNOACTIVATE);
