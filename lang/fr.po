@@ -1,15 +1,14 @@
-# French translations for mintty package
 # Traductions françaises du paquet mintty.
 # Copyright (C) 2017 THE mintty'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the mintty package.
-# Eric lassauge <lassauge@gmail.com>, 2017.
+# Eric lassauge <lassauge@gmail.com>, 2017-2020.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-11-23 19:33+0100\n"
-"PO-Revision-Date: 2017-02-07 13:23+0000\n"
+"PO-Revision-Date: 2020-01-13 10:49+0100\n"
 "Last-Translator: Eric Lassauge <lassauge@gmail.com>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "Language: fr\n"
@@ -17,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 1.8.11\n"
+"X-Generator: Poedit 2.0.9\n"
 
 #: charset.c:231 charset.c:242 winmain.c:4081 winmain.c:4193 winmain.c:4200
 msgid "(Default)"
@@ -37,27 +36,27 @@ msgstr "Aucun terminal disponible"
 
 #: child.c:167
 msgid "Error: Could not open log file"
-msgstr "Erreur : impossible d’ouvrir le fichier de trace"
+msgstr "Erreur : impossible d’ouvrir le fichier de trace"
 
 #: child.c:240
 msgid "Error: Could not fork child process"
-msgstr "Erreur : impossible de créer un process fils"
+msgstr "Erreur : impossible de créer un process fils"
 
 #: child.c:242
 msgid "DLL rebasing may be required; see 'rebaseall / rebase --help'"
 msgstr ""
-"Il peut être nécessaire de rebaser les DLL, voir « rebaseall / rebase --"
-"help »"
+"Il peut être nécessaire de rebaser les DLL, voir « rebaseall / rebase --help "
+"»"
 
 #. __ %1$s: client command (e.g. shell) to be run; %2$s: error message
 #: child.c:320
 msgid "Failed to run '%s': %s"
-msgstr "Impossible de lancer « %s » : %s"
+msgstr "Impossible de lancer « %s » : %s"
 
 #. __ %1$s: client command (e.g. shell) terminated, %2$i: exit code
 #: child.c:444
 msgid "%s: Exit %i"
-msgstr "%s : sortie %i"
+msgstr "%s : sortie %i"
 
 #. __ default inline notification if ExitWrite=yes
 #: child.c:451
@@ -66,50 +65,50 @@ msgstr "TERMINÉ"
 
 #: child.c:1046
 msgid "Error: Could not fork child daemon"
-msgstr "Erreur : impossible de créer un process démon fils"
+msgstr "Erreur : impossible de créer un process démon fils"
 
 #. __ Options - Text - Emojis - Placement
 #: config.c:522
 msgid "stretch"
-msgstr ""
+msgstr "étendre"
 
 #. __ Options - Text - Emojis - Placement
 #: config.c:524
 msgid "align"
-msgstr ""
+msgstr "aligner"
 
 #. __ Options - Text - Emojis - Placement
 #: config.c:526
 msgid "middle"
-msgstr ""
+msgstr "milieu"
 
 #. __ Options - Text - Emojis - Placement
 #: config.c:528
 msgid "full"
-msgstr ""
+msgstr "complet"
 
 #. __ %s: unknown option name
 #: config.c:629
 msgid "Ignoring unknown option '%s'"
-msgstr "Option inconnue « %s » ignorée"
+msgstr "Option inconnue « %s » ignorée"
 
 #: config.c:674 config.c:703
 msgid "Internal error: too many options"
-msgstr "Erreur interne : trop d’options"
+msgstr "Erreur interne : trop d’options"
 
 #: config.c:690
 msgid "Internal error: too many options/comments"
-msgstr "Erreur interne : trop d’options/commentaires"
+msgstr "Erreur interne : trop d’options/commentaires"
 
 #. __ %2$s: option name, %1$s: invalid value
 #: config.c:836
 msgid "Ignoring invalid value '%s' for option '%s'"
-msgstr "Value inconnue ignorée « %s » pour l’option inconnue « %s »"
+msgstr "Value inconnue ignorée « %s » pour l’option « %s »"
 
 #. __ %s: option name
 #: config.c:848
 msgid "Ignoring option '%s' with missing value"
-msgstr "Option « %s » avec des valeurs manquantes ignorée"
+msgstr "Option « %s » avec des valeurs manquantes ignorée"
 
 #. __ %1$s: config file name, %2$s: error message
 #: config.c:1471
@@ -117,7 +116,7 @@ msgid ""
 "Could not save options to '%s':\n"
 "%s."
 msgstr ""
-"Impossible d’enregistrer les options dans « %s » :\n"
+"Impossible d’enregistrer les options dans « %s » :\n"
 "%s."
 
 #: config.c:1824
@@ -131,7 +130,7 @@ msgstr "◆ Imprimante par défaut ◆"
 #. __ UI language
 #: config.c:1935
 msgid "– None –"
-msgstr "◇ Aucun ◇"
+msgstr "– Aucun –"
 
 #: config.c:1936
 msgid "@ Windows language @"
@@ -139,11 +138,11 @@ msgstr "@ Langue système @"
 
 #: config.c:1937
 msgid "* Locale environm. *"
-msgstr "◆ Locale environ. ◆"
+msgstr "* Locale environ. *"
 
 #: config.c:1938
 msgid "= cfg. Text Locale ="
-msgstr "◆ Langue caractères ◆"
+msgstr "= Langue caractères ="
 
 #: config.c:2020
 msgid "simple beep"
@@ -186,7 +185,7 @@ msgstr "◇ Aucun ◇"
 #. __ indicator of unsaved downloaded colour scheme
 #: config.c:2203
 msgid "downloaded / give me a name!"
-msgstr "téléchargé / donnez-moi un nom !"
+msgstr "téléchargé / donnez-moi un nom !"
 
 #: config.c:2292
 msgid "Could not load web theme"
@@ -368,12 +367,12 @@ msgstr "Police de caractères"
 #. __ Font chooser:
 #: config.c:2984 winctrls.c:1174
 msgid "Font st&yle:"
-msgstr "&Style de police :"
+msgstr "&Style de police :"
 
 #. __ Font chooser:
 #: config.c:2989 winctrls.c:1176
 msgid "&Size:"
-msgstr "&Taille :"
+msgstr "&Taille :"
 
 #. __ Options - Text:
 #: config.c:3001 config.c:3059
@@ -452,7 +451,7 @@ msgstr "&Jeu de caractères"
 #. __ Options - Text:
 #: config.c:3128 config.c:3134
 msgid "Emojis"
-msgstr ""
+msgstr "Émoticône"
 
 #. __ Options - Text - Emojis:
 #: config.c:3138
@@ -680,27 +679,27 @@ msgstr "Sélection"
 #. __ Options - Selection: panel title
 #: config.c:3405
 msgid "Selection and clipboard"
-msgstr "Sélection et clipboard"
+msgstr "Sélection et presse-papier"
 
 #. __ Options - Selection:
 #: config.c:3409
 msgid "Clear selection on input"
-msgstr ""
+msgstr "Effacer la sélection sur saisie"
 
 #. __ Options - Selection: section title
 #: config.c:3418
 msgid "Clipboard"
-msgstr ""
+msgstr "Presse-papier"
 
 #. __ Options - Selection:
 #: config.c:3462
 msgid "Trim space from selection"
-msgstr ""
+msgstr "Enlever les espaces de la sélection"
 
 #. __ Options - Selection:
 #: config.c:3467
 msgid "Allow setting selection"
-msgstr ""
+msgstr "Activer la sélection"
 
 #. __ Options - Selection: section title
 #. __ Options - Window: treeview label
@@ -711,12 +710,12 @@ msgstr "Fenêtre"
 #. __ Options - Selection:
 #: config.c:3479
 msgid "Show size while selecting (0..12)"
-msgstr ""
+msgstr "Montrer la taille pendant la sélection (0..12)"
 
 #. __ Options - Selection:
 #: config.c:3486
 msgid "Suspend output while selecting"
-msgstr ""
+msgstr "Suspendre l'affichage pendant la sélection"
 
 #. __ Options - Window: panel title
 #: config.c:3498
@@ -860,7 +859,7 @@ msgstr "&Appliquer"
 #. __ Font chooser:
 #: winctrls.c:1172
 msgid "&Font:"
-msgstr "&Police :"
+msgstr "&Police :"
 
 #. __ Font chooser:
 #: winctrls.c:1178
@@ -875,7 +874,7 @@ msgstr "AàBbCçÉéYz"
 #. __ Font chooser: this field is only shown with FontMenu=1
 #: winctrls.c:1199
 msgid "Sc&ript:"
-msgstr "Sc&ript :"
+msgstr "Sc&ript :"
 
 #. __ Font chooser: this field is only shown with FontMenu=1
 #: winctrls.c:1201
@@ -890,12 +889,12 @@ msgstr "Couleur"
 #. __ Colour chooser:
 #: winctrls.c:1219 winctrls.c:1231
 msgid "B&asic colours:"
-msgstr "Couleurs de b&ase :"
+msgstr "Couleurs de b&ase :"
 
 #. __ Colour chooser:
 #: winctrls.c:1238
 msgid "&Custom colours:"
-msgstr "Couleurs &personnalisées :"
+msgstr "Couleurs &personnalisées :"
 
 #. __ Colour chooser:
 #: winctrls.c:1245
@@ -915,32 +914,32 @@ msgstr "|&Unie"
 #. __ Colour chooser:
 #: winctrls.c:1252
 msgid "&Hue:"
-msgstr "&Teinte :"
+msgstr "&Teinte :"
 
 #. __ Colour chooser:
 #: winctrls.c:1255
 msgid "&Sat:"
-msgstr "&Satur. :"
+msgstr "&Satur. :"
 
 #. __ Colour chooser:
 #: winctrls.c:1257
 msgid "&Lum:"
-msgstr "&Lum. :"
+msgstr "&Lum. :"
 
 #. __ Colour chooser:
 #: winctrls.c:1259
 msgid "&Red:"
-msgstr "&Rouge :"
+msgstr "&Rouge :"
 
 #. __ Colour chooser:
 #: winctrls.c:1261
 msgid "&Green:"
-msgstr "&Vert :"
+msgstr "&Vert :"
 
 #. __ Colour chooser:
 #: winctrls.c:1263
 msgid "&Blue:"
-msgstr "&Bleu :"
+msgstr "&Bleu :"
 
 #. __ Colour chooser:
 #: winctrls.c:1266
@@ -1113,7 +1112,7 @@ msgstr "Copier en RTF"
 #. __ Context menu:
 #: wininput.c:646
 msgid "Copy as HTML text"
-msgstr "Copier en HTML text"
+msgstr "Copier en texte HTML"
 
 #. __ Context menu:
 #: wininput.c:648
@@ -1153,15 +1152,15 @@ msgstr "Commandes utilisateur"
 # msgstr "Arrêter le défilement"
 #: winmain.c:2182
 msgid "Processes are running in session:"
-msgstr "Processus en cours dans la session :"
+msgstr "Processus en cours dans la session :"
 
 #: winmain.c:2183
 msgid "Close anyway?"
-msgstr "Forcer la fermeture ?"
+msgstr "Forcer la fermeture ?"
 
 #: winmain.c:2301
 msgid "Try '--help' for more information"
-msgstr "Essayez « --help » pour plus d’information"
+msgstr "Essayez « --help » pour plus d’information"
 
 #: winmain.c:2309
 msgid "Could not load icon"
@@ -1169,7 +1168,7 @@ msgstr "Impossible de charger l’icône"
 
 #: winmain.c:3921
 msgid "Usage:"
-msgstr "Utilisation :"
+msgstr "Utilisation :"
 
 #: winmain.c:3922
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
@@ -1213,7 +1212,7 @@ msgstr ""
 "Si un tiret est donné comme nom de programme, alors invoque le shell comme "
 "shell de login.\n"
 "\n"
-"Options :\n"
+"Options :\n"
 "  -c, --config FICHIER  Charge le fichier de configuration spécifié (cf. -C "
 "ou -o FichierTheme)\n"
 "  -e, --exec ...        Traite le reste des arguments comme la commande à "
@@ -1228,7 +1227,7 @@ msgstr ""
 "caractères (également COLSxLIGNES)\n"
 "  -s, --size maxwidth|maxheight  Configure la taille max de la fenêtre aux "
 "dimensions spécifiées\n"
-"  -t, --title TITRE     Configure le titre de la fenêtre (par défault : nom "
+"  -t, --title TITRE     Configure le titre de la fenêtre (par défault : nom "
 "de la commande invoquée) (cf. -T)\n"
 "  -w, --window normal|min|max|full|hide  Configure l’état initial de la "
 "fenêtre\n"
@@ -1253,31 +1252,31 @@ msgstr ""
 
 #: winmain.c:4081 winmain.c:4193 winmain.c:4200
 msgid "WSL distribution '%s' not found"
-msgstr "Distribution WSL « %s » non trouvée"
+msgstr "Distribution WSL « %s » non trouvée"
 
 #: winmain.c:4231
 msgid "Duplicate option '%s'"
-msgstr "Option « %s » en double"
+msgstr "Option « %s » en double"
 
 #: winmain.c:4239 winmain.c:4307
 msgid "Unknown option '%s'"
-msgstr "Option inconnue « %s »"
+msgstr "Option inconnue « %s »"
 
 #: winmain.c:4241
 msgid "Option '%s' requires an argument"
-msgstr "L’option « %s » requiert un argument"
+msgstr "L’option « %s » requiert un argument"
 
 #: winmain.c:4268
 msgid "Syntax error in position argument '%s'"
-msgstr "Erreur de syntaxe pour l’argument de position « %s »"
+msgstr "Erreur de syntaxe pour l’argument de position « %s »"
 
 #: winmain.c:4279
 msgid "Syntax error in size argument '%s'"
-msgstr "Erreur de syntaxe pour l’argument de taille « %s »"
+msgstr "Erreur de syntaxe pour l’argument de taille « %s »"
 
 #: winmain.c:4416
 msgid "Syntax error in geometry argument '%s'"
-msgstr "Erreur de syntaxe pour l’argument de taille et position « %s »"
+msgstr "Erreur de syntaxe pour l’argument de taille et position « %s »"
 
 #: winmain.c:4491
 msgid "Mintty could not detach from caller, starting anyway"
@@ -1307,7 +1306,7 @@ msgstr "▶"
 #. __ Options - Text: font properties information: "Leading": total line padding (see option RowSpacing), Bold/Underline modes (font or manual, see options BoldAsFont/UnderlineManual/UnderlineColour)
 #: wintext.c:152
 msgid "Leading: %d, Bold: %s, Underline: %s"
-msgstr "Interlignage : %d, Gras : %s, Souligné : %s"
+msgstr "Interlignage : %d, Gras : %s, Souligné : %s"
 
 #. __ Options - Text: font properties: value taken from font
 #: wintext.c:154
@@ -1347,8 +1346,8 @@ msgid ""
 "%s.\n"
 "See also the Wiki there for further hints, thanks and credits."
 msgstr ""
-"Traductions © 2017 Éric Lassauge\n"
+"Traductions © 2020 Éric Lassauge\n"
 "Reportez les bugs ou les demandes d’amélioration via le gestionnaire de "
 "problèmes de la page du projet mintty\n"
-"à l’adresse « %s ».\n"
+"à l’adresse « %s ».\n"
 "Voir également le wiki pour d’autres astuces, remerciements et crédits."
