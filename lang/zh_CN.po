@@ -697,7 +697,7 @@ msgstr "移除不必要的空格"
 #. __ Options - Selection:
 #: config.c:3467
 msgid "Allow setting selection"
-msgstr "允许选中设置"
+msgstr "允许使用 OSC 52 转义字符设置剪切板内容"
 
 #. __ Options - Selection: section title
 #. __ Options - Window: treeview label
@@ -708,7 +708,7 @@ msgstr "提示"
 #. __ Options - Selection:
 #: config.c:3479
 msgid "Show size while selecting (0..12)"
-msgstr "选择时显示尺寸 (0..12)"
+msgstr "选择时显示尺寸 (0:关闭/1-12:方位)"
 
 #. __ Options - Selection:
 #: config.c:3486
@@ -1236,7 +1236,7 @@ msgstr "找不到 '%s' WSL 发行版"
 
 #: winmain.c:4231
 msgid "Duplicate option '%s'"
-msgstr "重复的选项 '%s'"
+msgstr "重复的选项 %s"
 
 #: winmain.c:4239 winmain.c:4307
 msgid "Unknown option '%s'"
