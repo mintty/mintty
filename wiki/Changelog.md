@@ -7,6 +7,7 @@ Window handling
 
 Font rendering
   * Fix adjusted row spacing ("Leading") for negative font leading (#948, #946).
+  * Search bar button symbols configurable (#955).
 
 Other
   * Fix access to shortcut icon with path prefix %ProgramW6432%.

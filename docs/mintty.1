@@ -945,7 +945,7 @@ command-line.)
 Unicode-enabled settings: BellFile, ThemeFile, Background, 
 Title, ExitTitle, Icon, Log, 
 Language, Font, Font1..., FontSample, FontChoice, 
-Printer, Answerback, SixelClipChars, 
+SearchBar, Printer, Answerback, SixelClipChars, 
 Class, AppID, AppName, AppLaunchCmd, 
 DropCommands, UserCommands, SessionCommands, TaskCommands, 
 KeyFunctions, SysMenuFunctions, CtxMenuFunctions, UserCommandsPath.
@@ -2686,6 +2686,12 @@ This string option can customize the order of items in the search bar.
 Use x (close button), </> (previous/next buttons), s (search string) to 
 select the order of these fields in the search bar; missing fields will 
 be appended in a default order.
+Also button symbols in the range U+25B2 ... U+25C5 can be used, as well as 
+some other arrow and pointing index symbols and wide angle brackets, which 
+when pointing up or left define the previous button symbol and its position, 
+or when pointing down or right define the next button symbol and its position.
+Also button symbols U+2717 or U+2718 can be used to define the 
+close button and its position.
 
 .TP
 \fBScrollback search context\fP (SearchContext=0)

@@ -124,7 +124,7 @@ const config default_cfg = {
   .scroll_mod = MDK_SHIFT,
   .pgupdn_scroll = false,
   .lang = W(""),
-  .search_bar = "",
+  .search_bar = W(""),
   .search_context = 0,
   // Terminal
   .term = "xterm",
@@ -368,7 +368,7 @@ options[] = {
   {"ScrollMod", OPT_MOD, offcfg(scroll_mod)},
   {"PgUpDnScroll", OPT_BOOL, offcfg(pgupdn_scroll)},
   {"Language", OPT_WSTRING, offcfg(lang)},
-  {"SearchBar", OPT_STRING, offcfg(search_bar)},
+  {"SearchBar", OPT_WSTRING, offcfg(search_bar)},
   {"SearchContext", OPT_INT, offcfg(search_context)},
 
   // Terminal

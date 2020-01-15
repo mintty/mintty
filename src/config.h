@@ -122,7 +122,7 @@ typedef struct {
   char scroll_mod;
   bool pgupdn_scroll;
   wstring lang;
-  string search_bar;
+  wstring search_bar;
   int search_context;
   // Terminal
   string term;
