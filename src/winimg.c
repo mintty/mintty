@@ -373,6 +373,7 @@ winimg_new(imglist **ppimg, char * id, unsigned char * pixels, uint len,
     }
 #else
     (void)preserveAR;
+    (void)crop_x, (void)crop_y, (void)crop_width, (void)crop_height;
 #endif
   }
   else
