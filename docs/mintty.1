@@ -2757,9 +2757,13 @@ Double-width characters should not be used here.
 
 .TP
 \fBDrag-and-drop application-targetted commands\fP (DropCommands=)
-With this setting, a set of string patterns can be configured for 
-paste insertion, in dependence of the program running in the terminal 
-foreground. The value is a series of semicolon-separated, colon-combined 
+With this setting, a set of string patterns can be configured for paste insertion, 
+in dependence of the program running in the terminal foreground. 
+
+\fINote:\fP Detection of terminal foreground processes works only locally; 
+this features does not work with WSL or after remote login.
+
+The value is a series of semicolon-separated, colon-combined 
 pairs of program name and drop pattern; the pattern is pasted with the 
 actual clipboard contents replaced for a "%s".
 If a semicolon shall be embedded into any of the drop patterns, 
@@ -2767,8 +2771,6 @@ a non-whitespace control character (i.e. none of \fB^I^J^K^L^M\fP) can be
 specified as an alternative separator by starting the whole setting with it.
 The definition list can be split over multiple lines if a separator is 
 followed by a backslash, newline, and optional whitespace indentation.
-
-\fINote:\fP This is an experimental feature, with an experimental configuration format.
 
 \fINote:\fP This feature potentially makes mintty vulnerable against command injection.
 Be careful what commands you configure! For shell commands, it is 
@@ -2926,8 +2928,6 @@ followed by a backslash, newline, and optional whitespace indentation.
 added to the localization file of the selected UI localization language 
 (in subdirectory \fIlang\fP of a mintty resource directory).
 
-\fINote:\fP This is an experimental feature, with an experimental configuration format.
-
 Examples:
 .br
 \(en \fBSessionCommands=big:-w max;Ubuntu:--WSL=Ubuntu;mybox:ssh mybox\fP
@@ -2970,8 +2970,6 @@ added to the localization file of the selected UI localization language
 determine a suitable WSL distribution icon for the jump list, or use the 
 WSLtty default icon from the mintty resource subdirectory \fIicon\fP, 
 or from the WSLtty package if installed.
-
-\fINote:\fP This is an experimental feature, with an experimental configuration format.
 
 Examples:
 .br
@@ -3095,5 +3093,5 @@ There is NO WARRANTY, to the extent permitted by law.
 Please report bugs or suggest enhancements via the issue tracker at
 \fIhttps://github.com/mintty/mintty/issues\fP.
 Questions can be sent to the Cygwin mailing list at \fIcygwin@cygwin.com\fP, 
-to the Mintty discussion issue \fIhttps://github.com/mintty/mintty/issues/500\fP, 
+to the Mintty chat issue \fIhttps://github.com/mintty/mintty/issues/777\fP, 
 or to the Gitter chat (experimental) \fIhttps://gitter.im/mintty/mintty\fP.

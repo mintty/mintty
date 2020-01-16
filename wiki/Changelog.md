@@ -12,6 +12,7 @@ Font rendering
 Other
   * Fix access to shortcut icon with path prefix %ProgramW6432%.
   * Fix clipboard memory handling (#950).
+  * Note that DropCommands does not work with WSL or remotely (#947).
 
 ### 3.1.0 (23 November 2019) ###
 
