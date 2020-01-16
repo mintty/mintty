@@ -259,20 +259,19 @@ mintty /bin/env DISPLAY=:0 /bin/ssh -X server
 
 When interacting with programs that use a native Windows API for 
 command-line user interaction (“console mode”), a number of undesirable 
-effects are observed; this is the 
+effects used to be observed; this is the 
 [pty incompatibility problem](https://github.com/mintty/mintty/issues/56) 
 and the 
 [character encoding incompatibility problem](https://github.com/mintty/mintty/issues/376).
-This basically affects all programs not compiled in a cygwin or msys 
-environment (and note that MinGW is not msys in this context).
+This would basically affect all programs not compiled in a cygwin or msys 
+environment (and note that MinGW is not msys in this context), and would 
+occur in all pty-based terminals (like xterm, rxvt etc).
 
-As a workaround, you can use [winpty](https://github.com/rprichard/winpty) 
-as a wrapper to invoke the Windows program.
+Cygwin 3.1.0 compensates for this issue via the ConPTY API of Windows 10.
 
-_Note:_ There is no point in reporting this for the 15th time as a mintty 
-issue, because it is not a mintty issue (or well, an issue maybe, but not 
-caused by, or fixable by, mintty); it is a generic problem of cygwin/msys 
-and occurs likewise in all other pty-based terminals (e.g. xterm).
+As a workaround on older versions of Cygwin or Windows, you can use 
+[winpty](https://github.com/rprichard/winpty) as a wrapper to invoke 
+the Windows program.
 
 ### Signal processing with alien programs ###
 
