@@ -808,10 +808,16 @@ win_popup_menu(mod_keys mods)
   open_popup_menu(false, null, mods);
 }
 
-void
-win_title_menu(void)
+bool
+win_title_menu(bool leftbut)
 {
-  open_popup_menu(false, "Ws", 0);
+  string title_menu = leftbut ? cfg.menu_title_ctrl_l : cfg.menu_title_ctrl_r;
+  if (*title_menu) {
+    open_popup_menu(false, title_menu, 0);
+    return true;
+  }
+  else
+    return false;
 }
 
 

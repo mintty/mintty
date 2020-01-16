@@ -2565,7 +2565,8 @@ the CapsLock key
 \(en \fBKeyFunctions=*Menu:29\fP turns the Menu key into an F16 function key 
 (xterm default) and applies all modifiers to it
 .br
-\(en \fBKeyFunctions=S+KP_Prior:scroll_pgup;C+KP_Prior:scroll_pgup;C+KP_Next:scroll_pgdn;S+KP_Next:scroll_pgdn\fP 
+\(en \fBKeyFunctions=S+KP_Prior:scroll_pgup;C+KP_Prior:scroll_pgup;\\
+	C+KP_Next:scroll_pgdn;S+KP_Next:scroll_pgdn\fP 
 enables scrollback scrolling with either of Shift or Control modifiers
 
 .TP
@@ -2992,6 +2993,10 @@ These settings allow to customize the context menu as opened in various ways.
 \(en \fBMenu key\fP (MenuMenu=bs); the Menu key (unless redefined)
 .br
 \(en \fBCtrl+Menu key\fP (MenuCtrlMenu=e|ls); the Ctrl+Menu-key
+.br
+\(en \fBCtrl+Mouse title\fP (MenuTitleCtrlRight=Ws); Ctrl+right on title
+.br
+\(en \fBCtrl+left-Mouse title\fP (MenuTitleCtrlLeft=Ws); Ctrl+left title
 
 Menu contents can be configured by a sequence of characters with the following meaning:
 .br
@@ -3014,6 +3019,9 @@ Menu contents can be configured by a sequence of characters with the following m
 \(en \fBP\fP: the menu is opened at the mouse pointer position
 .br
 \(en \fBW\fP: show window icon for uniconized windows in session switcher
+
+\fINote:\fP With empty values for \fBMenuTitleCtrlLeft\fP/\fBRight\fP 
+the default session launcher for Ctrl+left/right-click on title bar can be disabled.
 
 .TP
 \fBSession geometry synchronization / Virtual tabs\fP (SessionGeomSync=0)

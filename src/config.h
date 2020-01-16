@@ -189,6 +189,8 @@ typedef struct {
   string menu_altmouse;
   string menu_menu;
   string menu_ctrlmenu;
+  string menu_title_ctrl_l;
+  string menu_title_ctrl_r;
   int geom_sync;
   int col_spacing, row_spacing;
   int padding;

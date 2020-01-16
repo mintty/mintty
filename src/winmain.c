@@ -2740,13 +2740,13 @@ static struct {
       }
     when WM_NCLBUTTONDOWN:
       if (wp == HTCAPTION && (GetKeyState(VK_CONTROL) & 0x80)) {
-        win_title_menu();
-        return 0;
+        if (win_title_menu(true))
+          return 0;
       }
     when WM_NCRBUTTONDOWN:
       if (wp == HTCAPTION && (cfg.geom_sync > 0 || (GetKeyState(VK_CONTROL) & 0x80))) {
-        win_title_menu();
-        return 0;
+        if (win_title_menu(false))
+          return 0;
       }
 
     when WM_KEYDOWN or WM_SYSKEYDOWN:

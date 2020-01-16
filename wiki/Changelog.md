@@ -4,10 +4,14 @@ Terminal features
 Window handling
   * Avoid resize flickering loop in Virtual Tabs mode.
   * Don't keep selection size info popup on top when defocussed (#956).
+  * Ctrl+mouse on title bar can be configured or disabled (#953).
 
 Font rendering
   * Fix adjusted row spacing ("Leading") for negative font leading (#948, #946).
   * Search bar button symbols configurable (#955).
+
+Configuration
+  * New options MenuTitleCtrlLeft, MenuTitleCtrlRight (#953).
 
 Other
   * Fix access to shortcut icon with path prefix %ProgramW6432%.
