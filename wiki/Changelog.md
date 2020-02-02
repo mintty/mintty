@@ -12,6 +12,7 @@ Font rendering
 
 Configuration
   * New options MenuTitleCtrlLeft, MenuTitleCtrlRight (#953).
+  * Option SearchBar can configure button symbols (#955).
 
 Other
   * Fix access to shortcut icon with path prefix %ProgramW6432%.
