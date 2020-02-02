@@ -89,6 +89,7 @@ extern char * path_posix_to_win_a(const char * p);
 #if defined(__midipix__) || defined(debug_wcs)
 //__midipix__
 #define wcslen _wcslen
+#define wcsnlen _wcsnlen
 #define wcscmp _wcscmp
 //CYGWIN_VERSION_API_MINOR < 74
 #define wcschr _wcschr
@@ -112,6 +113,7 @@ extern int wcscmp(const wchar * s1, const wchar * s2);
 
 #define wcscpy(tgt, src) memcpy(tgt, src, (wcslen(src) + 1) * sizeof(wchar))
 #define wcscat(tgt, src) wcscpy(&tgt[wcslen(tgt)], src)
+extern unsigned int wcsnlen(const wchar * s, unsigned int max);
 extern wchar * wcschr(const wchar * s, wchar c);
 extern wchar * wcsrchr(const wchar * s, wchar c);
 extern int wcsncmp(const wchar * s1, const wchar * s2, int len);

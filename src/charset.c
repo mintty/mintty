@@ -660,7 +660,7 @@ cs_btowc_glyph(char c)
 unsigned int
 wcslen(const wchar * s)
 {
-  int len = 0;
+  unsigned int len = 0;
   while (s && *s++)
     len++;
   return len;
@@ -683,6 +683,15 @@ wcscmp(const wchar * s1, const wchar * s2)
 
 #if CYGWIN_VERSION_API_MINOR < 74 || defined(__midipix__) || defined(debug_wcs)
 // needed for MinGW MSYS
+
+unsigned int
+wcsnlen(const wchar * s, unsigned int max)
+{
+  unsigned int len = 0;
+  while (len < max && s && *s++)
+    len++;
+  return len;
+}
 
 wchar *
 wcschr(const wchar * s, wchar c)
