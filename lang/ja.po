@@ -393,7 +393,7 @@ msgstr "フォントを使用"
 #. __ Options - Text:
 #: config.c:3022 config.c:3100
 msgid "as colour"
-msgstr "をカラー表示"
+msgstr "カラー表示"
 
 #. __ Options - Text:
 #: config.c:3027 config.c:3105
