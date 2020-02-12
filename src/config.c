@@ -509,6 +509,8 @@ static opt_val
     {"locale", 0},
     {"unicode", 1},
     {"ambig-wide", 2},
+    {"single", 10},
+    {"single-unicode", 11},
     {0, 0}
   },
   [OPT_EMOJIS] = (opt_val[]) {

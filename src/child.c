@@ -696,7 +696,7 @@ grandchild_process_list(void)
           procw[i] = 0x2007;  // FIGURE SPACE
     int wid = min(wcslen(procw), 40);
     for (int i = 13; i < wid; i++)
-      if ((cfg.charwidth ? xcwidth(procw[i]) : wcwidth(procw[i])) == 2)
+      if (((cfg.charwidth % 10) ? xcwidth(procw[i]) : wcwidth(procw[i])) == 2)
         wid--;
     procw[wid] = 0;
 

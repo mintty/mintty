@@ -336,7 +336,7 @@ update_locale(void)
   if (valid_default_locale) {
     default_codepage = cs_codepage(nl_langinfo(CODESET));
     default_locale = strdup(set_locale);
-    cs_ambig_wide = wcwidth(0x3B1) == 2;
+    cs_ambig_wide = cfg.charwidth < 10 && wcwidth(0x3B1) == 2;
   }
   else {
 #endif
@@ -388,7 +388,13 @@ cs_reconfig(void)
 #if HAS_LOCALES
     if (setlocale(LC_CTYPE, config_locale) &&
         !support_wsl) {  // set locale anyway, but do not modify for WSL
-      if (cfg.charwidth < 2 && wcwidth(0x3B1) == 2 && !font_ambig_wide) {
+      if (cfg.charwidth >= 10) {
+        // Attach "@cjksingle" to locale if enforcing single-width mode
+        string l = config_locale;
+        config_locale = asform("%s@cjksingle", l);
+        delete(l);
+      }
+      else if (cfg.charwidth < 2 && wcwidth(0x3B1) == 2 && !font_ambig_wide) {
         // Attach "@cjknarrow" to locale if running in ambiguous-narrow mode
         // with an ambig-wide locale setting
         string l = config_locale;

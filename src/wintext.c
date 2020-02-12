@@ -28,10 +28,11 @@ enum {
   FONT_HIGH      = 0x10,
   FONT_ZOOMFULL  = 0x20,
   FONT_ZOOMSMALL = 0x40,
-  FONT_WIDE      = 0x80,
+  FONT_ZOOMDOWN  = 0x80,
+  FONT_WIDE      = 0x100,
 #ifdef narrow_via_font
 #warning narrowing via font is deprecated
-  FONT_NARROW    = 0x100,
+  FONT_NARROW    = 0x200,
   FONT_MAXNO     = FONT_WIDE + FONT_NARROW
 #else
   FONT_NARROW    = 0,	// disabled narrowing via font
@@ -1412,6 +1413,10 @@ another_font(struct fontfam * ff, int fontno)
   if (fontno & FONT_ZOOMSMALL) {
     y = y * 12 / 20;
     x = x * 12 / 20;
+  }
+  if (fontno & FONT_ZOOMDOWN) {
+    y = y / 2;
+    x = x / 2;
   }
 
 #ifdef debug_create_font
@@ -2801,6 +2806,8 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     nfont |= FONT_ZOOMFULL;
   if (attr.attr & (ATTR_SUBSCR | ATTR_SUPERSCR))
     nfont |= FONT_ZOOMSMALL;
+  if (attr.attr & TATTR_SINGLE)
+    nfont |= FONT_ZOOMDOWN;
   another_font(ff, nfont);
 
   bool force_manual_underline = false;
@@ -3112,6 +3119,8 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     else
       yt += cell_height * 1 / 8;
   }
+  if (attr.attr & TATTR_SINGLE)
+    yt += cell_height / 4;
 
  /* Shadow */
   int layer = 0;

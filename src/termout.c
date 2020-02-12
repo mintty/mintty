@@ -205,7 +205,7 @@ illegal_rect_char(xchar chr)
 {
   int width;
 #if HAS_LOCALES
-  if (cfg.charwidth)
+  if (cfg.charwidth % 10)
     width = xcwidth(chr);
   else
     width = wcwidth(chr);
@@ -733,11 +733,19 @@ write_char(wchar c, int width)
   if (term.insert && width > 0)
     insert_char(width);
 
+  bool single_width = false;
+  if (cfg.charwidth >= 10 && width > 1) {
+    single_width = true;
+    width = 1;
+  }
+
   switch (width) {
     when 1:  // Normal character.
       term_check_boundary(curs->x, curs->y);
       term_check_boundary(curs->x + 1, curs->y);
       put_char(c);
+      if (single_width)
+        line->chars[curs->x].attr.attr |= TATTR_SINGLE;
     when 2 or 3:  // Double-width char (Triple-width was an experimental option).
      /*
       * If we're about to display a double-width character 
@@ -2254,7 +2262,7 @@ do_csi(uchar c)
         write_primary_da();
     when CPAIR('>', 'c'):     /* Secondary DA: report device version */
       if (!arg0) {
-        if (cfg.charwidth)
+        if (cfg.charwidth % 10)
           child_printf("\e[>77;%u;%uc", DECIMAL_VERSION, UNICODE_VERSION);
         else
           child_printf("\e[>77;%u;0c", DECIMAL_VERSION);
@@ -3628,7 +3636,8 @@ term_do_write(const char *buf, uint len)
         if (is_low_surrogate(wc)) {
           if (hwc) {
 #if HAS_LOCALES
-            int width = cfg.charwidth ? xcwidth(combine_surrogates(hwc, wc)) :
+            int width = (cfg.charwidth % 10)
+                        ? xcwidth(combine_surrogates(hwc, wc)) :
 # ifdef __midipix__
                         wcwidth(combine_surrogates(hwc, wc));
 # else
@@ -3687,7 +3696,7 @@ term_do_write(const char *buf, uint len)
         }
         else
 #if HAS_LOCALES
-          if (cfg.charwidth)
+          if (cfg.charwidth % 10)
             width = xcwidth(wc);
           else
             width = wcwidth(wc);
