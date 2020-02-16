@@ -174,10 +174,21 @@ xcwidth(xchar c)
 }
 
 bool
-ambigwide(xchar c)
+is_wide(xchar c)
 {
-  return bisearch(c, ambiguous, lengthof(ambiguous))
-     && !bisearch(c, wide, lengthof(wide));
+  return bisearch(c, wide, lengthof(wide));
+}
+
+bool
+is_ambig(xchar c)
+{
+  return bisearch(c, ambiguous, lengthof(ambiguous));
+}
+
+bool
+is_ambigwide(xchar c)
+{
+  return is_ambig(c) && !is_wide(c);
 }
 
 static const interval indic[] = {

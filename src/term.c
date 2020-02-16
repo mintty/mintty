@@ -2103,7 +2103,7 @@ term_paint(void)
         if ((tattr.attr & ATTR_WIDE) == 0
             && win_char_width(tchar, tattr.attr) == 2
             // && !(line->lattr & LATTR_MODE) ? "do not tamper with graphics"
-            // && ambigwide(tchar) ? but then they will be clipped...
+            // && is_ambigwide(tchar) ? but then they will be clipped...
            )
         {
           //printf("[%d:%d] narrow? %04X..%04X\n", i, j, tchar, chars[j + 1].chr);
@@ -2126,7 +2126,7 @@ term_paint(void)
 #endif
             tattr.attr |= ATTR_NARROW;
             //if (ch != 0x25CC)
-            //printf("char %lc U+%04X narrow %d ambig %d\n", ch, ch, !!(tattr.attr & ATTR_NARROW), ambigwide(ch));
+            //printf("char %lc U+%04X narrow %d ambig %d\n", ch, ch, !!(tattr.attr & ATTR_NARROW), is_ambigwide(ch));
         }
         else if (tattr.attr & ATTR_WIDE
                  // guard character expanding properly to avoid 
@@ -2138,7 +2138,7 @@ term_paint(void)
                  && win_char_width(tchar, tattr.attr) == 1
                     //? && !widerange(tchar)
                  // and reassure to apply this only to ambiguous width chars
-                 && ambigwide(tchar)
+                 && is_ambigwide(tchar)
                 )
         {
           tattr.attr |= ATTR_EXPAND;

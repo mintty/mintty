@@ -2136,12 +2136,20 @@ with ambiguous-width characters assumed to be wide.
 \(en \fBsingle-unicode\fP Enforce single-width (no double width rendering), 
 with built-in width properties to determine combining characters.
 
+\fINote:\fP With setting \fBambig-wide\fP, if the effective locale does not define 
+ambiguous-width characters wide already, mintty appends the "@cjkwide" 
+locale modifier, in order to adapt the selected locale to the width preference.
+
+\fINote:\fP With settings \fBsingle\fP or \fBsingle-unicode\fP, 
+mintty appends the "@cjksingle" locale modifier, 
+in order to adapt the selected locale to the width preference.
+
 \fINote:\fP If this option selects using built-in width properties, 
 the response to the Secondary Device Attributes request will report 
 the built-in Unicode version as its third parameter.
 
 \fIWarning:\fP With this option, actual width properties as rendered 
-on the screen and width assumptions of the \fBwcwidth\fP function will be 
+on the screen and width assumptions of the \fBwcwidth\fP function may be 
 inconsistent for the impacted characters, which may confuse 
 screen applications (such as editors) that rely on \fBwcwidth\fP information.
 

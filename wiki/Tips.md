@@ -769,7 +769,15 @@ If it is not desired to set a specific base locale in order to enable
 ambiguous-wide mode, option `Charwidth=ambig-wide` can be used.
 It implies `Charwidth=unicode` behaviour, with the same caveats as above.
 Mintty indicates this mode by appending the `@cjkwide` modifier to the 
-`LC_CTYPE` locale variable (not yet supported by cygwin).
+`LC_CTYPE` locale variable.
+
+Single-width CJK character rendering can be enforced, with proper glyph 
+scaling, with settings `Charwidth=single` or `Charwidth=single-unicode`, 
+following a 
+[proposal](https://gitlab.freedesktop.org/terminal-wg/specifications/issues/9#note_406682) 
+in the Terminals Working Group Specifications.
+Mintty indicates this mode by appending the `@cjksingle` modifier to the 
+`LC_CTYPE` locale variable.
 
 ### Selective double character width ###
 

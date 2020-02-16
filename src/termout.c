@@ -734,9 +734,14 @@ write_char(wchar c, int width)
     insert_char(width);
 
   bool single_width = false;
-  if (cfg.charwidth >= 10 && width > 1) {
-    single_width = true;
-    width = 1;
+  if (cfg.charwidth >= 10 || cs_single_forced) {
+    if (width > 1) {
+      single_width = true;
+      width = 1;
+    }
+    else if (is_wide(c) || (font_ambig_wide && is_ambig(c))) {
+      single_width = true;
+    }
   }
 
   switch (width) {

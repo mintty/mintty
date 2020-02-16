@@ -68,12 +68,15 @@ extern bool cs_ambig_wide;
 #else
 #define cs_ambig_wide font_ambig_wide
 #endif
+extern bool cs_single_forced;
 extern int xcwidth(xchar c);
 
 extern bool indicwide(xchar c);
 extern bool extrawide(xchar c);
 extern bool combiningdouble(xchar c);
-extern bool ambigwide(xchar c);
+extern bool is_wide(xchar c);
+extern bool is_ambig(xchar c);
+extern bool is_ambigwide(xchar c);
 
 
 // path conversions
