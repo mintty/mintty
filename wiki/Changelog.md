@@ -11,6 +11,7 @@ Font rendering
   * Search bar button symbols configurable (#955).
   * Support optional enforced single-width character rendering (#964).
   * Support enabling of additional ligatures such as arrows (#601).
+  * Not widening ambiguous-width Geometric Shapes, to avoid unsymmetric pairs.
 
 Configuration
   * New options MenuTitleCtrlLeft, MenuTitleCtrlRight (#953).

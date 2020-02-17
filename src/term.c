@@ -2136,9 +2136,12 @@ term_paint(void)
                  // (if double-width by font substitution)
                  && cs_ambig_wide && !font_ambig_wide
                  && win_char_width(tchar, tattr.attr) == 1
-                    //? && !widerange(tchar)
+                    //? && !is_wide(tchar)
                  // and reassure to apply this only to ambiguous width chars
                  && is_ambigwide(tchar)
+                 // do not widen Geometric Shapes
+                 // (Geometric Shapes Extended are not ambiguous)
+                 && !(0x25A0 <= tchar && tchar <= 0x25FF)
                 )
         {
           tattr.attr |= ATTR_EXPAND;
