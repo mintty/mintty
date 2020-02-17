@@ -1642,13 +1642,28 @@ The RowSpacing value is added to that.
 (Corresponds roughly to the xterm resource \fBscaleHeight\fP.)
 
 .TP
-\fBLigatures support\fP (LigaturesSupport=0)
+\fBInteractive Ligatures support\fP (LigaturesSupport=0)
 By default, ligatures, as supported by the selected font, are rendered 
 if they are output to the terminal in one chunk. When this option is 
 set =1, mintty redisplays the left part of the line whenever a character 
 is output, so ligatures are also supported while being input.
 With LigaturesSupport=2, mintty also redisplays the previous cursor line 
 after the cursor is moved.
+
+This option is not capable of disabling ligatures, however, as they are 
+applied by Windows font handling. Setting \fIFontRender=textout\fP 
+disables Uniscribe, including ligatures support.
+
+.TP
+\fBLigatures supported\fP (Ligatures=1)
+This setting can affect the set of ligatures applied, as supported by the 
+selected font.
+When this option is set =1, the default set of ligatures is applied.
+With a value greater than 1, additional ligatures are enabled, e.g. 
+turning "<-", "->", "<--", "-->" into arrows, and "<=", ">=" into 
+less/greater or equal symbols. Note the ambiguity of ligature transformation 
+as e.g. "<=" could as well be meant to be an arrow. There is currently 
+no mechanism to affect ligature transformation in more detail.
 
 This option is not capable of disabling ligatures, however, as they are 
 applied by Windows font handling. Setting \fIFontRender=textout\fP 

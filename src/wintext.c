@@ -2292,12 +2292,18 @@ text_out_start(HDC hdc, LPCWSTR psz, int cch, int *dxs)
   if (!use_uniscribe)
     return;
 
+#if CYGWIN_VERSION_API_MINOR >= 74
+  static SCRIPT_CONTROL sctrl_lig = (SCRIPT_CONTROL){.fMergeNeutralItems = 1};
+#else
+  SCRIPT_CONTROL sctrl_lig = (SCRIPT_CONTROL){.fReserved = 1};
+#endif
   HRESULT hr = ScriptStringAnalyse(hdc, psz, cch, 0, -1, 
     // could | SSA_FIT and use `width` (from win_text) instead of MAXLONG
     // to justify to monospace cell widths;
     // SSA_LINK is needed for Hangul and default-size CJK
     SSA_GLYPHS | SSA_FALLBACK | SSA_LINK, MAXLONG, 
-    NULL, NULL, dxs, NULL, NULL, &ssa);
+    cfg.ligatures > 1 ? &sctrl_lig : 0, 
+    NULL, dxs, NULL, NULL, &ssa);
   if (!SUCCEEDED(hr) && hr != USP_E_SCRIPT_NOT_IN_FONT)
     use_uniscribe = false;
 }

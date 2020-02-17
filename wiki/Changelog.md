@@ -10,11 +10,13 @@ Font rendering
   * Fix adjusted row spacing ("Leading") for negative font leading (#948, #946).
   * Search bar button symbols configurable (#955).
   * Support optional enforced single-width character rendering (#964).
+  * Support enabling of additional ligatures such as arrows (#601).
 
 Configuration
   * New options MenuTitleCtrlLeft, MenuTitleCtrlRight (#953).
   * Option SearchBar can configure button symbols (#955).
   * New option values Charwidth=single / Charwidth=single-unicode (#964).
+  * New option Ligatures (#601).
 
 Other
   * Fix access to shortcut icon with path prefix %ProgramW6432%.
