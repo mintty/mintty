@@ -266,7 +266,7 @@ options AppName and AppLaunchCmd.
 Prevent pinning of the mintty window to the Windows taskbar.
 
 .TP
-\fB--wsl\fP
+\fB--wsl\fP (preferred option: \fB--WSL\fP, see below)
 Adjust to WSL (the Windows Subsystem for Linux, or Bash/Ubuntu on Windows):
 .br
 \(en When dragging a Windows file or folder into mintty, it will be pasted 
@@ -285,7 +285,7 @@ namespace and converted before opening in Windows.
 .TP
 \fB--WSL\fP \fIWSL DISTRIBUTION NAME\fP
 Run a WSL session, setting other parameters as appropriate and involving 
-one of the \fIwslbridge2\fP gateways implicitly 
+the \fIwslbridge2\fP gateway implicitly 
 (which should be installed in /bin for this purpose).
 If the distribution name is empty, the default WSL installation is run; 
 otherwise, it refers to the installed WSL packages as listed by the 
@@ -295,8 +295,12 @@ and \fB--icon=\fP... if a respective icon file exists for the distribution.
 
 .TP
 \fB--WSLmode\fP \fIWSL DISTRIBUTION NAME\fP
-Setup a WSL session like \fB--WSL\fP but do not actually launch wsl 
-which must be achieved with explicit setup of a suitable gateway.
+Setup a WSL session for the given distribution (like \fB--WSL\fP) but 
+do not actually launch WSL which must be achieved with explicit 
+invocation of a suitable gateway.
+The preferred option is \fB--WSL\fP which invokes \fI/bin/wslbridge2\fP 
+in login mode and with proper arguments as determined from the selected 
+WSL distribution.
 
 .TP
 \fB--rootfs\fP \fIROOTFOLDER\fP
