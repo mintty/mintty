@@ -2135,7 +2135,12 @@ term_paint(void)
                  // for double-width characters 
                  // (if double-width by font substitution)
                  && cs_ambig_wide
-                 //&& !font_ambig_wide // wide MS Mincho has narrow æ, œ, ...
+                 // the following restriction would be good for
+                 // MS PGothic (but bad non-CJK range anyway)
+                 // but bad for
+                 // MS Mincho: wide Greek/Cyrillic but narrow æ, œ, ...
+                 // SimSun, NSimSun, Yu Gothic
+                 //&& !font_ambig_wide
                  && win_char_width(tchar, tattr.attr) == 1
                  // and reassure to apply this only to ambiguous width chars
                  && is_ambigwide(tchar) // is_ambig(tchar) && !is_wide(tchar)
