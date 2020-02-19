@@ -2134,11 +2134,11 @@ term_paint(void)
                  // considering that Windows may report width 1 
                  // for double-width characters 
                  // (if double-width by font substitution)
-                 && cs_ambig_wide && !font_ambig_wide
+                 && cs_ambig_wide
+                 //&& !font_ambig_wide // wide MS Mincho has narrow æ, œ, ...
                  && win_char_width(tchar, tattr.attr) == 1
-                    //? && !is_wide(tchar)
                  // and reassure to apply this only to ambiguous width chars
-                 && is_ambigwide(tchar)
+                 && is_ambigwide(tchar) // is_ambig(tchar) && !is_wide(tchar)
                  // do not widen Geometric Shapes
                  // (Geometric Shapes Extended are not ambiguous)
                  && !(0x25A0 <= tchar && tchar <= 0x25FF)
