@@ -12,6 +12,7 @@ Font rendering
   * Support optional enforced single-width character rendering (#964).
   * Support enabling of additional ligatures such as arrows (#601).
   * Not widening ambiguous-width Geometric Shapes, to avoid unsymmetric pairs.
+  * Proper auto-widening (æ, œ, ...) in partially ambiguous-wide fonts (MS Mincho).
 
 Configuration
   * New options MenuTitleCtrlLeft, MenuTitleCtrlRight (#953).
