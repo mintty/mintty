@@ -7,7 +7,7 @@
 
 #include "config.h"
 #include "child.h"    // child_update_charset
-#include "winpriv.h"  // support_wsl
+#include "winpriv.h"  // support_wsl, font_ambig_wide
 
 #if HAS_LOCALES
 #include <locale.h>
@@ -414,7 +414,9 @@ cs_reconfig(void)
       }
       else if (cfg.charwidth < 2 && wcwidth(0x3B1) == 2 && !font_ambig_wide) {
         // Attach "@cjknarrow" to locale if running in ambiguous-narrow mode
-        // with an ambig-wide locale setting
+        // with an ambig-wide locale setting.
+        // ISSUE: instead of font_ambig_wide, probably cs_ambig_wide 
+        // should be checked, which is however only set afer update_locale()!
         string l = config_locale;
         config_locale = asform("%s@cjknarrow", l);
         delete(l);

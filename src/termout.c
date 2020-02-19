@@ -739,7 +739,7 @@ write_char(wchar c, int width)
       single_width = true;
       width = 1;
     }
-    else if (is_wide(c) || (font_ambig_wide && is_ambig(c))) {
+    else if (is_wide(c) || (cs_ambig_wide && is_ambig(c))) {
       single_width = true;
     }
   }

@@ -61,8 +61,6 @@ extern string charset_menu[];
 
 extern int cs_cur_max;
 
-extern bool font_ambig_wide;
-
 #if HAS_LOCALES
 extern bool cs_ambig_wide;
 #else

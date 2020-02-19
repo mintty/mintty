@@ -27,6 +27,7 @@ extern LOGFONT lfont;
 
 extern int font_size;  // logical font size, as configured (< 0: pixel size)
 extern int cell_width, cell_height;  // includes spacing
+extern bool font_ambig_wide;
 extern int line_scale;
 extern int PADDING;
 extern bool show_charinfo;
