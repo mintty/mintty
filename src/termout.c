@@ -952,6 +952,13 @@ write_ucschar(wchar hwc, wchar wc, int width)
     term.curs.attr.attr = attr | ((cattrflags)cf << ATTR_FONTFAM_SHIFT);
 
   if (hwc) {
+    if (width == 1
+        && (cfg.charwidth == 10 || cs_single_forced)
+        && (is_wide(c) || (cs_ambig_wide && is_ambig(c)))
+       )
+    { // ensure indication of cjksingle width handling to trigger down-zooming
+      width = 2;
+    }
     write_char(hwc, width);
     write_char(wc, -1);  // -1 indicates low surrogate
   }
