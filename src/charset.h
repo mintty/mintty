@@ -61,11 +61,7 @@ extern string charset_menu[];
 
 extern int cs_cur_max;
 
-#if HAS_LOCALES
 extern bool cs_ambig_wide;
-#else
-#define cs_ambig_wide font_ambig_wide
-#endif
 extern bool cs_single_forced;
 extern int xcwidth(xchar c);
 

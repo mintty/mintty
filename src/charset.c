@@ -29,8 +29,8 @@ static string config_locale;   // Locale configured in the options.
 static string env_locale;      // Locale determined by the environment.
 #if HAS_LOCALES
 static bool valid_default_locale, use_locale;
-bool cs_ambig_wide;
 #endif
+bool cs_ambig_wide;
 bool cs_single_forced = false;
 
 static uint codepage, default_codepage;
@@ -377,6 +377,8 @@ update_locale(void)
     }
     cs_ambig_wide = true;
   }
+#else
+  cs_ambig_wide = font_ambig_wide;
 #endif
 
   update_mode();
