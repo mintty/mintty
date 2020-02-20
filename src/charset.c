@@ -378,7 +378,7 @@ update_locale(void)
     cs_ambig_wide = true;
   }
 #else
-  cs_ambig_wide = font_ambig_wide;
+  cs_ambig_wide = cfg.charwidth == 2 || font_ambig_wide;
 #endif
 
   update_mode();
