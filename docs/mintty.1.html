@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Sat Nov 23 19:37:09 2019 -->
+<!-- CreationDate: Fri Feb 21 18:44:12 2020 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -385,25 +385,13 @@ AppLaunchCmd.</p>
 <p style="margin-left:22%;">Prevent pinning of the mintty
 window to the Windows taskbar.</p>
 
-<table width="100%" border="0" rules="none" frame="void"
-       cellspacing="0" cellpadding="0">
-<tr valign="top" align="left">
-<td width="11%"></td>
-<td width="7%">
+<p style="margin-left:11%;"><b>--wsl</b> (preferred option:
+<b>--WSL</b>, see below)</p>
 
-
-<p><b>--wsl</b></p></td>
-<td width="4%"></td>
-<td width="78%">
-
-
-<p>Adjust to WSL (the Windows Subsystem for Linux, or
-Bash/Ubuntu on Windows):</p></td></tr>
-</table>
-
-<p style="margin-left:22%;">&ndash; When dragging a Windows
-file or folder into mintty, it will be pasted using the
-Linux path name. <br>
+<p style="margin-left:22%;">Adjust to WSL (the Windows
+Subsystem for Linux, or Bash/Ubuntu on Windows): <br>
+&ndash; When dragging a Windows file or folder into mintty,
+it will be pasted using the Linux path name. <br>
 &ndash; When Ctrl+clicking a file name, it will be
 interpreted in the Linux namespace and converted before
 opening in Windows. <br>
@@ -418,8 +406,8 @@ process (for click-opening pathnames) cannot be detected.
 DISTRIBUTION NAME</i></p>
 
 <p style="margin-left:22%;">Run a WSL session, setting
-other parameters as appropriate and involving one of the
-<i>wslbridge2</i> gateways implicitly (which should be
+other parameters as appropriate and involving the
+<i>wslbridge2</i> gateway implicitly (which should be
 installed in /bin for this purpose). If the distribution
 name is empty, the default WSL installation is run;
 otherwise, it refers to the installed WSL packages as listed
@@ -431,9 +419,14 @@ distribution.</p>
 <p style="margin-left:11%;"><b>--WSLmode</b> <i>WSL
 DISTRIBUTION NAME</i></p>
 
-<p style="margin-left:22%;">Setup a WSL session like
-<b>--WSL</b> but do not actually launch wsl which must be
-achieved with explicit setup of a suitable gateway.</p>
+<p style="margin-left:22%;">Setup a WSL session for the
+given distribution (like <b>--WSL</b>) but do not actually
+launch WSL which must be achieved with explicit invocation
+of a suitable gateway. The preferred option is <b>--WSL</b>
+which invokes <i>/bin/wslbridge2</i> with proper arguments
+as determined from the selected WSL distribution, in login
+mode if requested and home directory preference if
+requested.</p>
 
 <p style="margin-left:11%;"><b>--rootfs</b>
 <i>ROOTFOLDER</i></p>
@@ -1254,10 +1247,11 @@ the system ANSI encoding. (This does not apply to the same
 configuration settings when given on the command-line.) <br>
 Unicode-enabled settings: BellFile, ThemeFile, Background,
 Title, ExitTitle, Icon, Log, Language, Font, Font1...,
-FontSample, FontChoice, Printer, Answerback, SixelClipChars,
-Class, AppID, AppName, AppLaunchCmd, DropCommands,
-UserCommands, SessionCommands, TaskCommands, KeyFunctions,
-SysMenuFunctions, CtxMenuFunctions, UserCommandsPath.</p>
+FontSample, FontChoice, SearchBar, Printer, Answerback,
+SixelClipChars, Class, AppID, AppName, AppLaunchCmd,
+DropCommands, UserCommands, SessionCommands, TaskCommands,
+KeyFunctions, SysMenuFunctions, CtxMenuFunctions,
+UserCommandsPath.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Be careful when
 running multiple instances of mintty. If options are saved
@@ -1684,6 +1678,38 @@ used for text display: <br>
 &ndash; <b>textout</b>: Use the Windows ExtTextOut API. <br>
 &ndash; <b>uniscribe</b>: Use the Windows Uniscribe API.</p>
 
+<p style="margin-left:11%;"><b>Ligatures support</b></p>
+
+<p style="margin-left:22%;">These options affect support
+for ligatures. They are not capable of disabling ligatures,
+however, as those are applied by Windows font handling.
+Setting <i>FontRender=textout</i> disables Uniscribe,
+including ligatures support.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&ndash;
+<b>Interactive Ligatures support</b> (LigaturesSupport=0):
+By default, ligatures, as supported by the selected font,
+are rendered if they are output to the terminal in one
+chunk. When this option is set =1, mintty redisplays the
+left part of the line whenever a character is output, so
+ligatures are also supported while being input. With
+LigaturesSupport=2, mintty also redisplays the previous
+cursor line after the cursor is moved.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&ndash;
+<b>Ligatures supported</b> (Ligatures=1): This setting can
+affect the set of ligatures applied, as supported by the
+selected font. When this option is set =1, the default set
+of ligatures is applied. With a value greater than 1,
+additional ligatures are enabled, e.g. turning
+&quot;&lt;-&quot;, &quot;-&gt;&quot;, &quot;&lt;--&quot;,
+&quot;--&gt;&quot; into arrows, and &quot;&lt;=&quot;,
+&quot;&gt;=&quot; into less/greater or equal symbols. Note
+the ambiguity of ligature transformation as e.g.
+&quot;&lt;=&quot; could as well be meant to be an arrow.
+There is currently no mechanism to affect ligature
+transformation in more detail.</p>
+
 <p style="margin-left:11%;"><b>Locale</b> (Locale=)</p>
 
 <p style="margin-left:22%;">The locale setting consists of
@@ -2051,7 +2077,8 @@ in character cells.</p>
 default width and height to the window&rsquo;s current
 size.</p>
 
-<p style="margin-left:11%;">(RowSpacing=0)</p>
+<p style="margin-left:11%;"><b>Vertical spacing
+adjustment</b> (RowSpacing=0)</p>
 
 <p style="margin-left:22%;">Additional row padding.</p>
 
@@ -2063,29 +2090,14 @@ is added to that. <br>
 (Corresponds roughly to the xterm resource
 <b>scaleHeight</b>.)</p>
 
-<p style="margin-left:11%;"><b>Ligatures support</b>
-(LigaturesSupport=0)</p>
-
-<p style="margin-left:22%;">By default, ligatures, as
-supported by the selected font, are rendered if they are
-output to the terminal in one chunk. When this option is set
-=1, mintty redisplays the left part of the line whenever a
-character is output, so ligatures are also supported while
-being input. With LigaturesSupport=2, mintty also redisplays
-the previous cursor line after the cursor is moved.</p>
-
-<p style="margin-left:22%; margin-top: 1em">This option is
-not capable of disabling ligatures, however, as they are
-applied by Windows font handling. Setting
-<i>FontRender=textout</i> disables Uniscribe, including
-ligatures support.</p>
-
-<p style="margin-left:11%;">(ColSpacing=0)</p>
+<p style="margin-left:11%;"><b>Horizontal spacing
+adjustment</b> (ColSpacing=0)</p>
 
 <p style="margin-left:22%;">Additional column padding;
 ColSpacing=1 can avoid boldened glyphs being clipped.</p>
 
-<p style="margin-left:11%;">(Padding=1)</p>
+<p style="margin-left:11%;"><b>Border
+spacing</b>(Padding=1)</p>
 
 <p style="margin-left:22%;">Window padding; margin between
 text and window border. The effective value is limited by
@@ -2639,7 +2651,23 @@ based on a more up-to-date Unicode version. (Corresponds to
 the xterm resource <b>mkWidth</b>.) <br>
 &ndash; <b>ambig-wide</b> Use built-in width properties,
 with ambiguous-width characters assumed to be wide.
-(Corresponds to the xterm resource <b>cjkWidth</b>.)</p>
+(Corresponds to the xterm resource <b>cjkWidth</b>.) <br>
+&ndash; <b>single</b> Enforce single-width (no double width
+rendering). <br>
+&ndash; <b>single-unicode</b> Enforce single-width (no
+double width rendering), with built-in width properties to
+determine combining characters.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+With setting <b>ambig-wide</b>, if the effective locale does
+not define ambiguous-width characters wide already, mintty
+appends the &quot;@cjkwide&quot; locale modifier, in order
+to adapt the selected locale to the width preference.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+With settings <b>single</b> or <b>single-unicode</b>, mintty
+appends the &quot;@cjksingle&quot; locale modifier, in order
+to adapt the selected locale to the width preference.</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i> If
 this option selects using built-in width properties, the
@@ -2651,7 +2679,7 @@ parameter.</p>
 <p style="margin-left:22%; margin-top: 1em"><i>Warning:</i>
 With this option, actual width properties as rendered on the
 screen and width assumptions of the <b>wcwidth</b> function
-will be inconsistent for the impacted characters, which may
+may be inconsistent for the impacted characters, which may
 confuse screen applications (such as editors) that rely on
 <b>wcwidth</b> information.</p>
 
@@ -3109,8 +3137,9 @@ Super modifier to the CapsLock key <br>
 an F16 function key (xterm default) and applies all
 modifiers to it <br>
 &ndash;
-<b>KeyFunctions=S+KP_Prior:scroll_pgup;C+KP_Prior:scroll_pgup;C+KP_Next:scroll_pgdn;S+KP_Next:scroll_pgdn</b>
-enables scrollback scrolling with either of Shift or Control
+<b>KeyFunctions=S+KP_Prior:scroll_pgup;C+KP_Prior:scroll_pgup;\
+C+KP_Next:scroll_pgdn;S+KP_Next:scroll_pgdn</b> enables
+scrollback scrolling with either of Shift or Control
 modifiers</p>
 
 <p style="margin-left:11%;"><b>Use system colours</b>
@@ -3235,7 +3264,14 @@ alpha transparency values of the image will be used.</p>
 customize the order of items in the search bar. Use x (close
 button), &lt;/&gt; (previous/next buttons), s (search
 string) to select the order of these fields in the search
-bar; missing fields will be appended in a default order.</p>
+bar; missing fields will be appended in a default order.
+Also button symbols in the range U+25B2 ... U+25C5 can be
+used, as well as some other arrow and pointing index symbols
+and wide angle brackets, which when pointing up or left
+define the previous button symbol and its position, or when
+pointing down or right define the next button symbol and its
+position. Also button symbols U+2717 or U+2718 can be used
+to define the close button and its position.</p>
 
 <p style="margin-left:11%;"><b>Scrollback search
 context</b> (SearchContext=0)</p>
@@ -3328,20 +3364,24 @@ application-targetted commands</b> (DropCommands=)</p>
 <p style="margin-left:22%;">With this setting, a set of
 string patterns can be configured for paste insertion, in
 dependence of the program running in the terminal
-foreground. The value is a series of semicolon-separated,
-colon-combined pairs of program name and drop pattern; the
-pattern is pasted with the actual clipboard contents
-replaced for a &quot;%s&quot;. If a semicolon shall be
-embedded into any of the drop patterns, a non-whitespace
-control character (i.e. none of <b>^I^J^K^L^M</b>) can be
-specified as an alternative separator by starting the whole
-setting with it. The definition list can be split over
-multiple lines if a separator is followed by a backslash,
-newline, and optional whitespace indentation.</p>
+foreground.</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
-This is an experimental feature, with an experimental
-configuration format.</p>
+Detection of terminal foreground processes works only
+locally; this features does not work with WSL or after
+remote login.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The value is a
+series of semicolon-separated, colon-combined pairs of
+program name and drop pattern; the pattern is pasted with
+the actual clipboard contents replaced for a &quot;%s&quot;.
+If a semicolon shall be embedded into any of the drop
+patterns, a non-whitespace control character (i.e. none of
+<b>^I^J^K^L^M</b>) can be specified as an alternative
+separator by starting the whole setting with it. The
+definition list can be split over multiple lines if a
+separator is followed by a backslash, newline, and optional
+whitespace indentation.</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 This feature potentially makes mintty vulnerable against
@@ -3549,10 +3589,6 @@ added to the localization file of the selected UI
 localization language (in subdirectory <i>lang</i> of a
 mintty resource directory).</p>
 
-<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
-This is an experimental feature, with an experimental
-configuration format.</p>
-
 <p style="margin-left:22%; margin-top: 1em">Examples: <br>
 &ndash; <b>SessionCommands=big:-w
 max;Ubuntu:--WSL=Ubuntu;mybox:ssh mybox</b> <br>
@@ -3609,10 +3645,6 @@ jump list, or use the WSLtty default icon from the mintty
 resource subdirectory <i>icon</i>, or from the WSLtty
 package if installed.</p>
 
-<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
-This is an experimental feature, with an experimental
-configuration format.</p>
-
 <p style="margin-left:22%; margin-top: 1em">Examples: <br>
 &ndash; <b>TaskCommands=big:-w
 max;Ubuntu:--WSL=Ubuntu;mybox:ssh mybox</b> <br>
@@ -3636,7 +3668,11 @@ button 5 menu <br>
 &ndash; <b>Menu key</b> (MenuMenu=bs); the Menu key (unless
 redefined) <br>
 &ndash; <b>Ctrl+Menu key</b> (MenuCtrlMenu=e|ls); the
-Ctrl+Menu-key</p>
+Ctrl+Menu-key <br>
+&ndash; <b>Ctrl+Mouse title</b> (MenuTitleCtrlRight=Ws);
+Ctrl+right on title <br>
+&ndash; <b>Ctrl+left-Mouse title</b> (MenuTitleCtrlLeft=Ws);
+Ctrl+left title</p>
 
 <p style="margin-left:22%; margin-top: 1em">Menu contents
 can be configured by a sequence of characters with the
@@ -3658,6 +3694,11 @@ position <br>
 position <br>
 &ndash; <b>W</b>: show window icon for uniconized windows in
 session switcher</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+With empty values for <b>MenuTitleCtrlLeft</b>/<b>Right</b>
+the default session launcher for Ctrl+left/right-click on
+title bar can be disabled.</p>
 
 <p style="margin-left:11%;"><b>Session geometry
 synchronization / Virtual tabs</b> (SessionGeomSync=0)</p>
@@ -3682,18 +3723,12 @@ separately</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Console
 issue</b> <br>
-Mintty is not a full replacement for Cygwin Console (i.e.
-cygwin running in a Windows console window). Like xterm and
-rxvt, mintty communicates with the child process through a
-pseudo terminal device, which Cygwin emulates using Windows
-pipes. This means that native Windows command line programs
-started in mintty see a pipe rather than a console device.
-As a consequence, such programs often disable interactive
-input. Also, direct calls to low-level Win32 console
-functions will fail. Programs that access the console as a
-file should be fine though.</p>
-
-<p style="margin-left:11%; margin-top: 1em">See
+Mintty, like xterm and rxvt and other terminals,
+communicates with the child process through a pseudo
+terminal device, which Cygwin emulates using Windows pipes,
+causing issues with native Windows command line programs.
+Cygwin 3.1.0 compensates for this issue via the ConPTY API
+of Windows 10. See
 <i><a href="https://github.com/mintty/mintty/wiki/Tips#inputoutput-interaction-with-alien-programs">https://github.com/mintty/mintty/wiki/Tips#inputoutput-interaction-with-alien-programs</a></i>
 for further hints, especially on the <i>winpty</i>
 wrapper.</p>
@@ -3775,8 +3810,8 @@ WARRANTY, to the extent permitted by law.</p>
 bugs or suggest enhancements via the issue tracker at
 <i><a href="https://github.com/mintty/mintty/issues">https://github.com/mintty/mintty/issues</a></i>
 . Questions can be sent to the Cygwin mailing list at
-<i>cygwin@cygwin.com</i>, to the Mintty discussion issue
-<i><a href="https://github.com/mintty/mintty/issues/500">https://github.com/mintty/mintty/issues/500</a></i>
+<i>cygwin@cygwin.com</i>, to the Mintty chat issue
+<i><a href="https://github.com/mintty/mintty/issues/777">https://github.com/mintty/mintty/issues/777</a></i>
 , or to the Gitter chat (experimental)
 <i><a href="https://gitter.im/mintty/mintty">https://gitter.im/mintty/mintty</a></i>
 .</p>

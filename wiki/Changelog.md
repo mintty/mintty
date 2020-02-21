@@ -1,3 +1,5 @@
+### 3.1.4 (21 February 2020) ###
+
 Terminal features
   * Linux console controls for underscore cursor size (mintty/wsltty#203).
 
@@ -8,17 +10,17 @@ Window handling
 
 Font rendering
   * Fix adjusted row spacing ("Leading") for negative font leading (#948, #946).
+  * Support enabling of additional ligatures such as arrows (#601).
   * Search bar button symbols configurable (#955).
   * Support optional enforced single-width character rendering (#964).
-  * Support enabling of additional ligatures such as arrows (#601).
   * Not widening ambiguous-width Geometric Shapes, to avoid unsymmetric pairs.
   * Proper auto-widening (æ, œ, ...) in partially ambiguous-wide fonts (MS Mincho).
 
 Configuration
+  * New option Ligatures (#601).
   * New options MenuTitleCtrlLeft, MenuTitleCtrlRight (#953).
   * Option SearchBar can configure button symbols (#955).
   * New option values Charwidth=single / Charwidth=single-unicode (#964).
-  * New option Ligatures (#601).
 
 Other
   * Fix access to shortcut icon with path prefix %ProgramW6432%.
