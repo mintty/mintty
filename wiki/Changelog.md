@@ -1,7 +1,6 @@
-### 3.1.4 (21 February 2020) ###
-
 Terminal features
   * Linux console controls for underscore cursor size (mintty/wsltty#203).
+  * Fixed sixel display failures at certain sizes (#967).
 
 Window handling
   * Avoid resize flickering loop in Virtual Tabs mode.

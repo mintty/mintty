@@ -2890,29 +2890,23 @@ do_dcs(void)
         return;
       }
 
-      int size_pixels = st->image.width * st->image.height * 4;
-      unsigned char * pixels = (unsigned char *)malloc(size_pixels);
-      //printf("alloc pixels 1 w %d h %d (%d) -> %p\n", st->image.width, st->image.height, size_pixels, pixels);
-      if (!pixels)
-        return;
-
-      status = sixel_parser_finalize(st, pixels);
+      unsigned char * pixels = sixel_parser_finalize(st);
+      //printf("sixel_parser_finalize %p\n", pixels);
       sixel_parser_deinit(st);
-      if (status < 0) {
+      if (!pixels) {
         //printf("free state 3 %p\n", term.imgs.parser_state);
         free(term.imgs.parser_state);
-        //printf("free pixels\n");
-        free(pixels);
         term.imgs.parser_state = NULL;
         return;
       }
 
       short left = term.curs.x;
       short top = term.virtuallines + (term.sixel_display ? 0: term.curs.y);
-      int width = st->image.width / st->grid_width;
-      int height = st->image.height / st->grid_height;
+      int width = (st->image.width -1 ) / st->grid_width + 1;
+      int height = (st->image.height -1 ) / st->grid_height + 1;
       int pixelwidth = st->image.width;
       int pixelheight = st->image.height;
+      //printf("w %d/%d %d h %d/%d %d\n", pixelwidth, st->grid_width, width, pixelheight, st->grid_height, height);
 
       imglist * img;
       if (!winimg_new(&img, 0, pixels, 0, left, top, width, height, pixelwidth, pixelheight, false, 0, 0, 0, 0)) {
