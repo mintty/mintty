@@ -704,7 +704,7 @@ msgstr "允许使用 OSC 52 转义字符设置剪切板内容"
 #. __ Options - Window: treeview label
 #: config.c:3484 config.c:3506 config.c:3525 config.c:3598
 msgid "Window"
-msgstr "提示"
+msgstr "窗口"
 
 #. __ Options - Selection:
 #: config.c:3489
