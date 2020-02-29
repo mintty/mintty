@@ -1061,12 +1061,25 @@ win_get_locator_info(int *x, int *y, int *buttons, bool by_pixels)
 
   if (GetCursorPos(&p)) {
     if (ScreenToClient(wnd, &p)) {
+      if (p.x < PADDING)
+        p.x = 0;
+      else
+        p.x -= PADDING;
+      if (p.x >= term.cols * cell_width)
+        p.x = term.cols * cell_width - 1;
+      if (p.y < PADDING)
+        p.y = 0;
+      else
+        p.y -= PADDING;
+      if (p.y >= term.rows * cell_height)
+        p.y = term.rows * cell_height - 1;
+
       if (by_pixels) {
-        *x = p.x - PADDING;
-        *y = p.y - PADDING;
+        *x = p.x;
+        *y = p.y;
       } else {
-        *x = floorf((p.x - PADDING) / (float)cell_width);
-        *y = floorf((p.y - PADDING) / (float)cell_height);
+        *x = floorf(p.x / (float)cell_width);
+        *y = floorf(p.y / (float)cell_height);
       }
     }
   }
