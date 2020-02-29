@@ -1,3 +1,6 @@
+Terminal features
+  * Limit coordinates of all mouse reports to text area (#972).
+
 ### 3.1.4 (25 February 2020) ###
 
 Terminal features

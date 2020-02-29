@@ -703,7 +703,7 @@ term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys mods,
         b = 5 - b;
       notches = abs(notches);
       do
-        send_mouse_event(MA_WHEEL, b, mods, p);
+        send_mouse_event(MA_WHEEL, b, mods, box_pos(p));
       while (--notches);
     }
   }
