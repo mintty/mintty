@@ -1,6 +1,9 @@
 Terminal features
   * Limit coordinates of all mouse reports to text area (#972).
 
+Keyboard handling
+  * Unmapped AltGr combinations: don't fallback to ESC prefixing (~#969).
+
 ### 3.1.4 (25 February 2020) ###
 
 Terminal features
