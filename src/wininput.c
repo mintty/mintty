@@ -1564,7 +1564,7 @@ vk_name(uint key)
 #ifdef debug_key
 #define trace_key(tag)	printf(" <-%s\n", tag)
 #else
-#define trace_key(tag)	
+#define trace_key(tag)	(void)0
 #endif
 
 #ifdef debug_alt
