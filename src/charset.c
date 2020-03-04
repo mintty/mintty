@@ -272,6 +272,20 @@ get_cp_info(void)
 }
 
 static void
+fallback_charset()
+{
+  if (0 == strcasecmp(cfg.charset, "GB18030"))
+#if HAS_LOCALES
+    if (!setlocale(LC_CTYPE, config_locale))
+#endif
+    {
+      delete(config_locale);
+      config_locale =
+        asform("%s.%s", cfg.locale, "GBK");
+    }
+}
+
+static void
 update_mode(void)
 {
   codepage =
@@ -293,6 +307,7 @@ update_mode(void)
               "C.UTF-8"
   );
   use_locale = use_default_locale || mode == CSM_UTF8;
+  //printf("mode %d valid_def %d use_loc %d\n", mode, valid_default_locale, use_locale);
   if (use_locale)
     cs_cur_max = MB_CUR_MAX;
   else
@@ -327,9 +342,11 @@ update_locale(void)
 
 #if HAS_LOCALES
   string set_locale = setlocale(LC_CTYPE, locale);
+  //printf("setlocale <%s> %p\n", locale, set_locale);
   if (!set_locale) {
     locale = asform("C.%s", charset);
     set_locale = setlocale(LC_CTYPE, locale);
+    //printf("setlocale <%s> %p\n", locale, set_locale);
     delete(locale);
   }
 
@@ -380,6 +397,9 @@ update_locale(void)
 #else
   cs_ambig_wide = cfg.charwidth == 2 || font_ambig_wide;
 #endif
+
+  // Map GB18030 -> GBK for child
+  fallback_charset();
 
   update_mode();
 }

@@ -976,7 +976,44 @@ previous/next prompt line if these are marked with scroll marker escape
 sequences, see the [[CtrlSeqs]] wiki page.
 
 
-## Passing arguments from an environment with different character set ##
+## Character encoding ##
+
+Character encoding (or character set) is normally determined via the 
+locale mechanism. To run mintty in a specific locale case-by-case, 
+you would set the LC_CTYPE locale category (using environment variables 
+LC_ALL, LC_CTYPE, LANG in this precedence) to configure both mintty and 
+its child process (shell) consistently, for example:
+
+```
+LC_CTYPE=zh_CN.gbk mintty &
+```
+
+However, as a legacy option, it is also possible to configure mintty with 
+distinct options `Locale` and `Charset`; note that despite the name, the 
+`Locale` parameter must *not* include an encoding suffix in this case.
+Take care to make sure that the child process has the same idea about the 
+character encoding as the terminal in this scenario.
+
+### GB18030 support ###
+
+Mintty has special support for the GB18030 character encoding which is not 
+supported by cygwin and therefore not available for interactive configuration 
+of the `Charset` setting in the Options dialog.
+Setting `Charset=GB18030` in a config file or on the command line invokes 
+this support (setting `Locale` too is necessary).
+Mintty will fallback to the GBK character encoding for the locale 
+setup of its child process in this case, to provide at least 
+consistence with a maximum subset of GB18030. GB18030 is fully 
+supported for terminal output/input. Example:
+
+```
+mintty -o Locale=zh_CN -o Charset=GB18030 &
+```
+
+If mintty is used as a WSL terminal, the WSL side can be configured to run 
+a GB18030 locale as well to achieve full GB18030 support.
+
+### Passing arguments from an environment with different character set ###
 
 To pass non-ASCII parameters to a command run from mintty using a specific 
 character encoding, proper conversion must be crafted.

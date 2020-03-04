@@ -1,6 +1,9 @@
 Terminal features
   * Limit coordinates of all mouse reports to text area (#972).
 
+Character encoding
+  * Enhanced and documented GB18030 support (mintty/wsltty#224).
+
 Keyboard handling
   * Unmapped AltGr combinations: don't fallback to ESC prefixing (~#969).
 
