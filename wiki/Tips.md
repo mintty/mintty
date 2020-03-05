@@ -1012,6 +1012,12 @@ mintty -o Locale=zh_CN -o Charset=GB18030 &
 
 If mintty is used as a WSL terminal, the WSL side can be configured to run 
 a GB18030 locale as well to achieve full GB18030 support.
+Give option `--WSL` first as it implies `Charset=UTF-8` which then needs to 
+be overridden:
+
+```
+mintty --WSL[=...] -o Locale=zh_CN -o Charset=GB18030
+```
 
 ### Passing arguments from an environment with different character set ###
 
