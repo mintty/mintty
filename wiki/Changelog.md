@@ -1,11 +1,15 @@
 Terminal features
   * Limit coordinates of all mouse reports to text area (#972).
+  * Support bell volume escape sequence DECSWBV (#974) with wave files.
 
 Character encoding
   * Enhanced and documented GB18030 support (mintty/wsltty#224).
 
 Keyboard handling
   * Unmapped AltGr combinations: don't fallback to ESC prefixing (~#969).
+
+Configuration
+  * Options BellFile2 ... BellFile7 (#974).
 
 ### 3.1.4 (25 February 2020) ###
 

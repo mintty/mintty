@@ -1853,6 +1853,11 @@ to a filename (like D:/.../soundfile.wav); this can be achieved also
 by drag-and-drop from a local file.
 This setting overrides the Bell system sound except No Beep.
 .br
+\(en \fBBell volume wave files\fP (BellFile2= ... BellFile7=): 
+Alternative wave files can be set in the config file for bell volumes 
+2 ... 7 as set by the escape sequence DECSWBV.
+The general BellFile setting corresponds to bell volume 8 (default).
+.br
 \(en \fBPlay\fP: The button plays the selected sound for testing.
 The sound is also played when it is changed.
 .br
@@ -1884,6 +1889,7 @@ switchable by an escape sequence.)
 switchable by an escape sequence.)
 .br
 \(en \fBMinimum delay between bells\fP (BellInterval=100): Multiple bells within this many milliseconds will sound as one.
+(Corresponds to the xterm resource \fBbellSuppressTime\fP.)
 .br
 
 A simple \fBfrequency beep\fP can be configured in the configuration file 

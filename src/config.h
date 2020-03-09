@@ -129,9 +129,8 @@ typedef struct {
   wstring answerback;
   bool old_wrapmodes;
   bool enable_deccolm_init;
-  bool bell_sound;
   int bell_type;
-  wstring bell_file;
+  wstring bell_file[7];
   int bell_freq;
   int bell_len;
   bool bell_flash;   // xterm: visualBell

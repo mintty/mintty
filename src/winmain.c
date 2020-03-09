@@ -1685,14 +1685,46 @@ win_bell(config * conf)
   do_update();
 
   static unsigned long last_bell = 0;
-         unsigned long now = mtime();
+  static int last_vol = 8;
+  unsigned long now = mtime();
 
-  if ( (conf->bell_sound || conf->bell_type) &&
-      ((unsigned long)conf->bell_interval <= now - last_bell) ) {
-    wchar * bell_name = (wchar *)conf->bell_file;
-    bool free_bell_name = false;
+  if (conf->bell_type &&
+      (now - last_bell >= (unsigned long)conf->bell_interval
+       || term.bell_vol != last_vol
+      )
+     )
+  {
     last_bell = now;
-    if (*bell_name) {
+    last_vol = term.bell_vol;
+
+    wchar * bell_name = 0;
+    void set_bells(char * belli)
+    {
+      while (*belli) {
+        int i = (*belli & 0x0F) - 2;
+        if (i >= 0 && i < (int)lengthof(conf->bell_file))
+          bell_name = (wchar *)conf->bell_file[i];
+        if (bell_name && *bell_name) {
+          return;
+        }
+        belli++;
+      }
+    }
+    switch (term.bell_vol) {
+      // no bell volume: 0 1
+      // low bell volume: 2 3 4
+      // high bell volume: 5 6 7 8
+      when 8: set_bells("8765432");
+      when 7: set_bells("7658432");
+      when 6: set_bells("6758432");
+      when 5: set_bells("5678432");
+      when 4: set_bells("4325678");
+      when 3: set_bells("3425678");
+      when 2: set_bells("2345678");
+    }
+
+    bool free_bell_name = false;
+    if (bell_name && *bell_name) {
       if (wcschr(bell_name, L'/') || wcschr(bell_name, L'\\')) {
         if (bell_name[1] != ':') {
           char * bf = path_win_w_to_posix(bell_name);
@@ -1726,6 +1758,9 @@ win_bell(config * conf)
 
     if (bell_name && *bell_name && PlaySoundW(bell_name, NULL, SND_ASYNC | SND_FILENAME)) {
       // played
+    }
+    else if (term.bell_vol <= 1) {
+      // muted
     }
     else if (conf->bell_freq)
       Beep(conf->bell_freq, conf->bell_len);

@@ -482,6 +482,7 @@ struct term {
   bool app_cursor_keys;
   bool app_keypad;
   bool auto_repeat;
+  int bell_vol;
   bool bell_taskbar; // xterm: bellIsUrgent; switchable with CSI ? 1042 h/l
   bool bell_popup;   // xterm: popOnBell;    switchable with CSI ? 1043 h/l
   bool wheel_reporting_xterm; // xterm: alternateScroll

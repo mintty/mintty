@@ -131,9 +131,8 @@ const config default_cfg = {
   .answerback = W(""),
   .old_wrapmodes = false,
   .enable_deccolm_init = false,
-  .bell_sound = true,
   .bell_type = 1,
-  .bell_file = W(""),
+  .bell_file = {W(""), W(""), W(""), W(""), W(""), W(""), W("")},
   .bell_freq = 0,
   .bell_len = 400,
   .bell_flash = false,  // xterm: visualBell
@@ -379,9 +378,14 @@ options[] = {
   {"Answerback", OPT_WSTRING, offcfg(answerback)},
   {"OldWrapModes", OPT_BOOL, offcfg(old_wrapmodes)},
   {"Enable132ColumnSwitching", OPT_BOOL, offcfg(enable_deccolm_init)},
-  {"BellSound", OPT_BOOL, offcfg(bell_sound)},
   {"BellType", OPT_INT, offcfg(bell_type)},
-  {"BellFile", OPT_WSTRING, offcfg(bell_file)},
+  {"BellFile", OPT_WSTRING, offcfg(bell_file[6])},
+  {"BellFile2", OPT_WSTRING, offcfg(bell_file[0])},
+  {"BellFile3", OPT_WSTRING, offcfg(bell_file[1])},
+  {"BellFile4", OPT_WSTRING, offcfg(bell_file[2])},
+  {"BellFile5", OPT_WSTRING, offcfg(bell_file[3])},
+  {"BellFile6", OPT_WSTRING, offcfg(bell_file[4])},
+  {"BellFile7", OPT_WSTRING, offcfg(bell_file[5])},
   {"BellFreq", OPT_INT, offcfg(bell_freq)},
   {"BellLen", OPT_INT, offcfg(bell_len)},
   {"BellFlash", OPT_BOOL, offcfg(bell_flash)},
@@ -2078,7 +2082,7 @@ bellfile_handler(control *ctrl, int event)
 {
   const wstring NONE = _W("◇ None (system sound) ◇");  // ♢◇
   const wstring CFG_NONE = W("");
-  wstring bell_file = new_cfg.bell_file;
+  wstring bell_file = new_cfg.bell_file[6];
   if (event == EVENT_REFRESH) {
     dlg_listbox_clear(ctrl);
     dlg_listbox_add_w(ctrl, NONE);
@@ -2093,12 +2097,12 @@ bellfile_handler(control *ctrl, int event)
       dlg_editbox_get_w(ctrl, &bell_file);
 
     // add std dir prefix?
-    new_cfg.bell_file = bell_file;
+    new_cfg.bell_file[6] = bell_file;
     win_bell(&new_cfg);
   }
   else if (event == EVENT_DROP) {
     dlg_editbox_set_w(ctrl, dragndrop);
-    wstrset(&new_cfg.bell_file, dragndrop);
+    wstrset(&new_cfg.bell_file[6], dragndrop);
     win_bell(&new_cfg);
   }
 }
@@ -3635,7 +3639,7 @@ setup_config_box(controlbox * b)
   ctrl_columns(s, 2, 100, 0);
   ctrl_combobox(
     //__ Options - Terminal: bell
-    s, _("&Wave"), 83, bellfile_handler, &new_cfg.bell_file
+    s, _("&Wave"), 83, bellfile_handler, &new_cfg.bell_file[6]
   )->column = 0;
   ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
   // balance column widths of the following 3 fields 
