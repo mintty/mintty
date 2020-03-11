@@ -812,6 +812,8 @@ message_box(HWND parwnd, char * text, char * caption, int type, wstring ok)
 
   oklabel = ok;
   oktype = type;
+  if (type != MB_OK)
+    type |= MB_SETFOREGROUND;
   hook_windows(set_labels);
   int ret;
   if (nonascii(text) || nonascii(caption)) {
@@ -837,6 +839,8 @@ message_box_w(HWND parwnd, wchar * wtext, wchar * wcaption, int type, wstring ok
 
   oklabel = ok;
   oktype = type;
+  if (type != MB_OK)
+    type |= MB_SETFOREGROUND;
   hook_windows(set_labels);
   int ret;
   ret = MessageBoxW(parwnd, wtext, wcaption, type);

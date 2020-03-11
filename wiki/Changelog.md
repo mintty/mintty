@@ -8,6 +8,9 @@ Character encoding
 Keyboard handling
   * Unmapped AltGr combinations: don't fallback to ESC prefixing (~#969).
 
+Other
+  * Warning and error popups are placed on top of desktop.
+
 Configuration
   * Options BellFile2 ... BellFile7 (#974).
 
