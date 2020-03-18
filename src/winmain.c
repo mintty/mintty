@@ -2794,12 +2794,14 @@ static struct {
         return 0;
 
     when WM_CHAR or WM_SYSCHAR:
+      provide_input(wp);
       child_sendw(&(wchar){wp}, 1);
       return 0;
 
     when WM_MENUCHAR:
       // this is sent after leaving the system menu with ESC 
       // and typing a key; insert the key and prevent the beep
+      provide_input(wp);
       child_sendw(&(wchar){wp}, 1);
       return MNC_CLOSE << 16;
 
@@ -2845,6 +2847,7 @@ static struct {
         if (len > 0) {
           char buf[len];
           ImmGetCompositionStringW(imc, GCS_RESULTSTR, buf, len);
+          provide_input(*(wchar *)buf);
           child_sendw((wchar *)buf, len / 2);
         }
         return 1;

@@ -1532,6 +1532,14 @@ win_key_reset(void)
   compose_clear();
 }
 
+// notify margin bell ring enabled
+void
+provide_input(wchar c1)
+{
+  if (term.margin_bell && c1 != '\e')
+    term.ring_enabled = true;
+}
+
 #define dont_debug_virtual_key_codes
 #define dont_debug_key
 #define dont_debug_alt
@@ -1709,6 +1717,7 @@ pick_key_function(wstring key_commands, char * tag, int n, uint key, mod_keys mo
       {
         int len = wcslen(fct) - 2;
         if (len > 0) {
+          provide_input(fct[1]);
           child_sendw(&fct[1], wcslen(fct) - 2);
           ret = true;
         }
@@ -1726,8 +1735,10 @@ pick_key_function(wstring key_commands, char * tag, int n, uint key, mod_keys mo
             cc[0] = '\e';
             child_send(cc, 2);
           }
-          else
+          else {
+            provide_input(cc[1]);
             child_send(&cc[1], 1);
+          }
           ret = true;
         }
       }
@@ -2951,6 +2962,7 @@ static struct {
 
   if (len) {
     //printf("[%ld] win_key_down %02X\n", mtime(), key); kb_trace = key;
+    provide_input(*buf);
     while (count--)
       child_send(buf, len);
     compose_clear();
@@ -3079,6 +3091,7 @@ win_key_up(WPARAM wp, LPARAM lp)
       do
         buf[--pos] = alt_code;
       while (alt_code >>= 8);
+      provide_input(buf[pos]);
       child_send(buf + pos, sizeof buf - pos);
       compose_clear();
     }
@@ -3087,11 +3100,13 @@ win_key_up(WPARAM wp, LPARAM lp)
       if (wc < 0x20)
         MultiByteToWideChar(CP_OEMCP, MB_USEGLYPHCHARS,
                             (char[]){wc}, 1, &wc, 1);
+      provide_input(wc);
       child_sendw(&wc, 1);
       compose_clear();
     }
     else {
       xchar xc = alt_code;
+      provide_input(' ');
       child_sendw((wchar[]){high_surrogate(xc), low_surrogate(xc)}, 2);
       compose_clear();
     }

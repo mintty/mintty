@@ -313,6 +313,9 @@ term_reset(bool full)
     term.newtab = 1;  // set default tabs on resize
     term.rvideo = 0;  // not reset by xterm
     term.bell_vol = 8;  // not reset by xterm
+    term.margin_bell_vol = 8;
+    term.margin_bell = false;  // not reset by xterm
+    term.ring_enabled = false;
     term.bell_taskbar = cfg.bell_taskbar;  // not reset by xterm
     term.bell_popup = cfg.bell_popup;  // not reset by xterm
     term.mouse_mode = MM_NONE;

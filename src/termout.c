@@ -694,6 +694,11 @@ write_char(wchar c, int width)
 
   void put_char(wchar c)
   {
+    if (term.ring_enabled && curs->x == term.marg_right + 1 - 8) {
+      win_bell(&cfg);
+      term.ring_enabled = false;
+    }
+
     clear_cc(line, curs->x);
     line->chars[curs->x].chr = c;
     line->chars[curs->x].attr = curs->attr;
@@ -1746,6 +1751,8 @@ set_modes(bool state)
           term.deccolm_noclear = state;
         when 42: /* DECNRCM: national replacement character sets */
           term.decnrc_enabled = state;
+        when 44: /* turn on margin bell (xterm) */
+          term.margin_bell = state;
         when 67: /* DECBKM: backarrow key mode */
           term.backspace_sends_bs = state;
         when 69: /* DECLRMM/VT420 DECVSSM: enable left/right margins DECSLRM */
@@ -1958,6 +1965,8 @@ get_mode(bool privatemode, int arg)
         return 2 - term.deccolm_allowed;
       when 42: /* DECNRCM: national replacement character sets */
         return 2 - term.decnrc_enabled;
+      when 44: /* margin bell (xterm) */
+        return 2 - term.margin_bell;
       when 67: /* DECBKM: backarrow key mode */
         return 2 - term.backspace_sends_bs;
       when 69: /* DECLRMM: enable left and right margin mode DECSLRM */
@@ -4216,6 +4225,9 @@ term_do_write(const char *buf, uint len)
         }
     }
   }
+
+  if (term.ring_enabled && term.curs.y != oldy)
+    term.ring_enabled = false;
 
   if (cfg.ligatures_support > 1) {
     // refresh ligature rendering in old cursor line
