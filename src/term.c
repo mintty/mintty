@@ -1370,7 +1370,6 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
               )
       {
         line->chars[start.x] = term.erase_char;
-        line->chars[start.x].attr.attr |= TATTR_CLEAR;
         if (!start.x)
           clear_cc(line, -1);
       }

@@ -132,6 +132,7 @@ restore_cursor(void)
   *curs = term.saved_cursors[term.on_alt_screen];
   term.erase_char.attr = curs->attr;
   term.erase_char.attr.attr &= (ATTR_FGMASK | ATTR_BGMASK);
+  term.erase_char.attr.attr |= TATTR_CLEAR;
 
  /* Make sure the window hasn't shrunk since the save */
   if (curs->x >= term.cols)
@@ -1669,6 +1670,7 @@ do_sgr(void)
   term.curs.attr = attr;
   term.erase_char.attr = attr;
   term.erase_char.attr.attr &= (ATTR_FGMASK | ATTR_BGMASK);
+  term.erase_char.attr.attr |= TATTR_CLEAR;
 }
 
 /*
