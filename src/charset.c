@@ -120,7 +120,7 @@ cs_descs[] = {
 string locale_menu[8];
 string charset_menu[lengthof(cs_descs) + 4];
 
-#define debug_locale
+#define dont_debug_locale
 #ifdef debug_locale
 #define trace_locale(tag, l)	printf("[%s] %s->%s\n", tag, l, setlocale(LC_CTYPE, 0))
 #else
@@ -302,8 +302,9 @@ fallback_charset()
       //setlocale(LC_CTYPE, config_locale); // apparently redundant
       //trace_locale("fallback", config_locale);
     }
-    else
+    else {
       trace_locale("fallback", config_locale);
+    }
   }
 }
 
