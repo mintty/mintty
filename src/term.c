@@ -258,6 +258,14 @@ term_cursor_reset(term_cursor *curs)
   curs->origin = false;
 }
 
+static void
+term_bell_reset(term_bell *bell)
+{
+  bell->vol = 8;  // not reset by xterm
+  bell->last_vol = bell->vol;
+  bell->last_bell = 0;
+}
+
 void
 term_reset(bool full)
 {
@@ -312,8 +320,8 @@ term_reset(bool full)
   if (full) {
     term.newtab = 1;  // set default tabs on resize
     term.rvideo = 0;  // not reset by xterm
-    term.bell_vol = 8;  // not reset by xterm
-    term.margin_bell_vol = 8;
+    term_bell_reset(&term.bell);
+    term_bell_reset(&term.marginbell);
     term.margin_bell = false;  // not reset by xterm
     term.ring_enabled = false;
     term.bell_taskbar = cfg.bell_taskbar;  // not reset by xterm
@@ -2441,6 +2449,7 @@ term_paint(void)
       termchar *d = chars + j;
       cattr tattr = newchars[j].attr;
       wchar tchar = newchars[j].chr;
+
       // Note: newchars[j].cc_next is always 0; use chars[]
       xchar xtchar = tchar;
 #ifdef proper_non_BMP_classification

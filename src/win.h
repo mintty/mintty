@@ -31,6 +31,7 @@ extern void win_capture_mouse(void);
 extern void win_get_locator_info(int *x, int *y, int *buttons, bool by_pixels);
 
 extern void win_bell(config *);
+extern void win_margin_bell(config *);
 
 extern void win_set_title(char *);
 extern void win_save_title(void);

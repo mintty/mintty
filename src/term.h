@@ -416,6 +416,12 @@ typedef struct {
   ushort bidimode;
 } term_cursor;
 
+typedef struct {
+  int vol;
+  int last_vol;
+  unsigned long last_bell;
+} term_bell;
+
 struct term {
   // these used to be in term_cursor, thus affected by cursor restore
   bool decnrc_enabled;  /* DECNRCM: enable NRC */
@@ -471,6 +477,8 @@ struct term {
   bool has_focus;
   bool focus_reported;
   bool in_vbell;
+
+  term_bell bell, marginbell;
   bool margin_bell;
   bool ring_enabled;
 
@@ -484,8 +492,6 @@ struct term {
   bool app_cursor_keys;
   bool app_keypad;
   bool auto_repeat;
-  int bell_vol;
-  int margin_bell_vol;
   bool bell_taskbar; // xterm: bellIsUrgent; switchable with CSI ? 1042 h/l
   bool bell_popup;   // xterm: popOnBell;    switchable with CSI ? 1043 h/l
   bool wheel_reporting_xterm; // xterm: alternateScroll

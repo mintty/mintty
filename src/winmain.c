@@ -1680,22 +1680,21 @@ flash_border()
  * Bell.
  */
 void
-win_bell(config * conf)
+do_win_bell(config * conf, bool margin_bell)
 {
   do_update();
 
-  static unsigned long last_bell = 0;
-  static int last_vol = 8;
+  term_bell * bellstate = margin_bell ? &term.marginbell : &term.bell;
   unsigned long now = mtime();
 
   if (conf->bell_type &&
-      (now - last_bell >= (unsigned long)conf->bell_interval
-       || term.bell_vol != last_vol
+      (now - bellstate->last_bell >= (unsigned long)conf->bell_interval
+       || bellstate->vol != bellstate->last_vol
       )
      )
   {
-    last_bell = now;
-    last_vol = term.bell_vol;
+    bellstate->last_bell = now;
+    bellstate->last_vol = bellstate->vol;
 
     wchar * bell_name = 0;
     void set_bells(char * belli)
@@ -1710,7 +1709,7 @@ win_bell(config * conf)
         belli++;
       }
     }
-    switch (term.bell_vol) {
+    switch (bellstate->vol) {
       // no bell volume: 0 1
       // low bell volume: 2 3 4
       // high bell volume: 5 6 7 8
@@ -1759,7 +1758,7 @@ win_bell(config * conf)
     if (bell_name && *bell_name && PlaySoundW(bell_name, NULL, SND_ASYNC | SND_FILENAME)) {
       // played
     }
-    else if (term.bell_vol <= 1) {
+    else if (bellstate->vol <= 1) {
       // muted
     }
     else if (conf->bell_freq)
@@ -1786,6 +1785,19 @@ win_bell(config * conf)
   if (term.bell_popup)
     win_set_zorder(true);
 }
+
+void
+win_bell(config * conf)
+{
+  do_win_bell(conf, false);
+}
+
+void
+win_margin_bell(config * conf)
+{
+  do_win_bell(conf, true);
+}
+
 
 void
 win_invalidate_all(bool clearbg)

@@ -696,7 +696,7 @@ write_char(wchar c, int width)
   void put_char(wchar c)
   {
     if (term.ring_enabled && curs->x == term.marg_right + 1 - 8) {
-      win_bell(&cfg);
+      win_margin_bell(&cfg);
       term.ring_enabled = false;
     }
 
@@ -2797,7 +2797,12 @@ do_csi(uchar c)
       win_set_ime(pop_mode(-1));
     when CPAIR(' ', 't'):     /* DECSWBV: VT520 warning bell volume */
       if (arg0 <= 8)
-        term.bell_vol = arg0;
+        term.bell.vol = arg0;
+    when CPAIR(' ', 'u'):     /* DECSMBV: VT520 margin bell volume */
+      if (!arg0)
+        term.marginbell.vol = 8;
+      else if (arg0 <= 8)
+        term.marginbell.vol = arg0;
   }
 }
 

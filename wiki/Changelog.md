@@ -2,6 +2,7 @@ Terminal features
   * Limit coordinates of all mouse reports to text area (#972).
   * Support bell volume escape sequence DECSWBV (#974) with wave files.
   * Support margin bell feature (#974), with DECSET 44 enabling sequence (xterm).
+  * Support margin bell volume escape sequence DECSMBV (#974) with wave files.
 
 Character encoding
   * Enhanced and documented GB18030 support (mintty/wsltty#224).
