@@ -1009,14 +1009,16 @@ supported for terminal output/input. Example:
 ```
 mintty -o Locale=zh_CN -o Charset=GB18030 &
 ```
+Add setting `-o Charwidth=ambig-wide` if desired.
 
 If mintty is used as a WSL terminal, the WSL side can be configured to run 
 a GB18030 locale as well to achieve full GB18030 support.
 Give option `--WSL` first as it implies `Charset=UTF-8` which then needs to 
-be overridden:
+be overridden; also add setting `Charwidth=ambig-wide` to run compatible 
+with WSL locales and not derive ambiguous character width from the font:
 
 ```
-mintty --WSL[=...] -o Locale=zh_CN -o Charset=GB18030
+mintty --WSL[=...] -o Locale=zh_CN -o Charset=GB18030 -o Charwidth=ambig-wide
 ```
 
 ### Passing arguments from an environment with different character set ###
