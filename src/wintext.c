@@ -2614,6 +2614,9 @@ apply_attr_colour(cattr a, attr_colour_mode mode)
 
   // ACM_TERM does also search and cursor colours. for now we don't handle those
 
+  if (a.attr & TATTR_CLEAR)
+    bg = brighten(bg, fg, false);
+
   a.truefg = fg;
   a.truebg = bg;
   a.attr |= TRUE_COLOUR << ATTR_FGSHIFT | TRUE_COLOUR << ATTR_BGSHIFT;

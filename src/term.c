@@ -2173,6 +2173,36 @@ term_paint(void)
         printf("%04X w %d enw %02X\n", tchar, win_char_width(tchar, tattr.attr), (uint)(((tattr.attr & (ATTR_EXPAND | ATTR_NARROW | ATTR_WIDE)) >> 24)));
 #endif
 
+     /* Visible space indication */
+      if (tchar == ' ') {
+        if (tattr.attr & TATTR_CLEAR) {
+          if (!(cfg.disp_clear & 8))
+            tattr.attr &= ~TATTR_CLEAR;
+          if (cfg.disp_clear & ~8) {
+            tchar = 0xB7; // ·0x00B7 ⋯0x22EF
+            if (cfg.disp_clear & 1)
+              tattr.attr |= ATTR_BOLD;
+            if (cfg.disp_clear & 2)
+              tattr.attr |= ATTR_DIM;
+            if ((cfg.disp_clear & 4) && cfg.underl_colour != (colour)-1) {
+              tattr.truefg = cfg.underl_colour;
+              tattr.attr |= TRUE_COLOUR << ATTR_FGSHIFT;
+            }
+          }
+        }
+        else if (cfg.disp_space) {
+          tchar = 0xB7; // ·0x00B7 ⋯0x22EF
+          if (cfg.disp_space & 1)
+            tattr.attr |= ATTR_BOLD;
+          if (cfg.disp_space & 2)
+            tattr.attr |= ATTR_DIM;
+          if ((cfg.disp_space & 4) && cfg.underl_colour != (colour)-1) {
+            tattr.truefg = cfg.underl_colour;
+            tattr.attr |= TRUE_COLOUR << ATTR_FGSHIFT;
+          }
+        }
+      }
+
      /* FULL-TERMCHAR */
       newchars[j].attr = tattr;
       newchars[j].chr = tchar;

@@ -3,6 +3,7 @@ Terminal features
   * Support bell volume escape sequence DECSWBV (#974) with wave files.
   * Support margin bell feature (#974), with DECSET 44 enabling sequence (xterm).
   * Support margin bell volume escape sequence DECSMBV (#974) with wave files.
+  * Support visible space indication.
 
 Character encoding
   * Enhanced and documented GB18030 support (mintty/wsltty#224).
@@ -18,6 +19,7 @@ Other
 
 Configuration
   * Options BellFile2 ... BellFile7 (#974).
+  * Options DispSpace and DispClear.
 
 ### 3.1.4 (25 February 2020) ###
 

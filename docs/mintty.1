@@ -1062,6 +1062,21 @@ control panel / Ease of Access Center, mouse panel or Optimize visual display.
 \fBCursor blink\fP (CursorBlinks=yes)
 If enabled, the cursor blinks at the rate set in the Keyboard control panel.
 
+.TP
+\fBVisible space indication\fP (DispSpace=0, DispClear=0)
+These settings enable visual indication of blank space. 
+Setting \fBDispSpace\fP affects explicitly written space, 
+setting \fBDispClear\fP affects unwritten/cleared character cells.
+The settings are bitmasks, adding the following values:
+.br
+\(en \fB1\fP indicate space by a bold dot
+.br
+\(en \fB2\fP indicate space by a dimmed dot
+.br
+\(en \fB4\fP indicate space by a dot in UnderlineColour if configured
+.br
+\(en \fB8\fP brighten background of clear space (DispClear only)
+
 .SS Text
 Settings controlling text display.
 
