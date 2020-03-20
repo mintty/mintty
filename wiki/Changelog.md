@@ -10,6 +10,9 @@ Character encoding
 Keyboard handling
   * Unmapped AltGr combinations: don't fallback to ESC prefixing (~#969).
 
+Window handling
+  * Drag-and-drop import of itermcolors schemes (mintty/wsltty#227).
+
 Other
   * Warning and error popups are placed on top of desktop.
 

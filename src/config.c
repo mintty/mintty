@@ -14,6 +14,7 @@
 #include "print.h"
 #include "charset.h"
 #include "win.h"
+#include <math.h>  // round()
 
 #include <windows.h>  // registry handling
 
@@ -2150,49 +2151,174 @@ download_scheme(char * url)
   if (!ok)
     return null;
   FILE * sf = fopen(sfn, "r");
+  //printf("URL <%s> file <%s> OK %d\n", url, sfn, !!sf);
   if (!sf)
     return null;
 #endif
 
   char * sch = null;
-  while (fgets(linebuf, sizeof(linebuf) - 1, sf)) {
-    char * eq = linebuf;
-    while ((eq = strchr(++eq, '='))) {
-      int dum;
-      if (sscanf(eq, "= %d , %d , %d", &dum, &dum, &dum) == 3) {
-        char *cp = eq;
-        while (strchr("=0123456789, ", *cp))
-          cp++;
-        *cp++ = ';';
-        *cp = '\0';
-        cp = eq;
-        if (cp != linebuf)
-          cp--;
-        while (strchr("BCFGMRWYacdeghiklnorstuwy ", *cp)) {
-          eq = cp;
-          if (cp == linebuf)
-            break;
-          else
-            cp--;
-        }
-        while (*eq == ' ')
-          eq++;
-        if (*eq != '=') {
-          // squeeze white space
-          char * src = eq;
-          char * dst = eq;
-          while (*src) {
-            if (*src != ' ' && *src != '\t')
-              *dst++ = *src;
-            src++;
+  char * urlsuf = strrchr(url, '.');
+  if (urlsuf && 0 == strcmp(urlsuf, ".itermcolors")) {
+    colour ansi_colours[16] = 
+      {(colour)-1, (colour)-1, (colour)-1, (colour)-1, 
+       (colour)-1, (colour)-1, (colour)-1, (colour)-1, 
+       (colour)-1, (colour)-1, (colour)-1, (colour)-1, 
+       (colour)-1, (colour)-1, (colour)-1, (colour)-1};
+    colour fg_colour = (colour)-1, bold_colour = (colour)-1, bg_colour = (colour)-1;
+    colour cursor_colour = (colour)-1, sel_fg_colour = (colour)-1, sel_bg_colour = (colour)-1;
+    colour underl_colour = (colour)-1, hover_colour = (colour)-1;
+    int level = 0;
+    colour * key = 0;
+    int component = -1;
+    while (fgets(linebuf, sizeof(linebuf) - 1, sf)) {
+      if (strstr(linebuf, "<dict>"))
+        level++;
+      else if (strstr(linebuf, "</dict>"))
+        level--;
+      else {
+        char * entity = strstr(linebuf, "<key>");
+        if (entity) {
+          entity += 5;
+          char * fini = strchr(entity, '<');
+          if (fini)
+            *fini = 0;
+          if (level == 2) {
+            if (0 == strcmp(entity, "Blue Component"))
+              component = 2;
+            else if (0 == strcmp(entity, "Green Component"))
+              component = 1;
+            else if (0 == strcmp(entity, "Red Component"))
+              component = 0;
+            else if (0 == strcmp(entity, "Alpha Component"))
+              ;
+            else if (0 == strcmp(entity, "Color Space"))
+              ;
+            else {
+              component = -1;
+            }
           }
-          *dst = '\0';
-
-          int len = sch ? strlen(sch) : 0;
-          sch = renewn(sch, len + strlen(eq) + 1);
-          strcpy(&sch[len], eq);
+          else if (level == 1) {
+            int coli;
+            if (0 == strcmp(entity, "Foreground Color"))
+              key = &fg_colour;
+            else if (0 == strcmp(entity, "Bold Color"))
+              key = &bold_colour;
+            else if (0 == strcmp(entity, "Background Color"))
+              key = &bg_colour;
+            else if (0 == strcmp(entity, "Cursor Color"))
+              key = &cursor_colour;
+            //else if (0 == strcmp(entity, "Cursor Text Color"))
+            else if (0 == strcmp(entity, "Selected Text Color"))
+              key = &sel_fg_colour;
+            else if (0 == strcmp(entity, "Selection Color"))
+              key = &sel_bg_colour;
+            else if (0 == strcmp(entity, "Underline Color"))
+              key = &underl_colour;
+            else if (0 == strcmp(entity, "Link Color"))
+              key = &hover_colour;  // ?
+            //else if (0 == strcmp(entity, "Cursor Guide Color"))
+            //else if (0 == strcmp(entity, "Tab Color"))
+            //else if (0 == strcmp(entity, "Badge Color"))
+            else if (sscanf(entity, "Ansi %d Color", &coli) == 1 && coli >= 0 && coli < 16) {
+              key = &ansi_colours[coli];
+            }
+            else
+              key = 0;
+          }
         }
-        break;
+        else if (level == 2 && key) {
+          entity = strstr(linebuf, "<real>");
+          double val;
+          if (entity && sscanf(entity, "<real>%lf<", &val) == 1 && val >= 0.0 && val <= 1.0) {
+            int ival = round(val * 255.0);
+            switch (component) {
+              when 0:  // red
+                *key = (*key & 0xFFFF00) | ival;
+              when 1:  // green
+                *key = (*key & 0xFF00FF) | ival << 8;
+              when 2:  // blue
+                *key = (*key & 0x00FFFF) | ival << 16;
+            }
+          }
+        }
+      }
+    }
+    // construct a ColourScheme string
+    void schapp(char * opt, colour c)
+    {
+      if (c != (colour)-1) {
+        char colval[strlen(opt) + 14];
+        sprintf(colval, "%s=%u,%u,%u;", opt, red(c), green(c), blue(c));
+        int len = sch ? strlen(sch) : 0;
+        sch = renewn(sch, len + strlen(colval) + 1);
+        strcpy(&sch[len], colval);
+      }
+    }
+    schapp("ForegroundColour", fg_colour);
+    schapp("BackgroundColour", bg_colour);
+    schapp("BoldColour", bold_colour);
+    schapp("CursorColour", cursor_colour);
+    schapp("UnderlineColour", underl_colour);
+    schapp("HoverColour", hover_colour);
+    schapp("HighlightBackgroundColour", sel_bg_colour);
+    schapp("HighlightForegroundColour", sel_fg_colour);
+    schapp("Black", ansi_colours[BLACK_I]);
+    schapp("Red", ansi_colours[RED_I]);
+    schapp("Green", ansi_colours[GREEN_I]);
+    schapp("Yellow", ansi_colours[YELLOW_I]);
+    schapp("Blue", ansi_colours[BLUE_I]);
+    schapp("Magenta", ansi_colours[MAGENTA_I]);
+    schapp("Cyan", ansi_colours[CYAN_I]);
+    schapp("White", ansi_colours[WHITE_I]);
+    schapp("BoldBlack", ansi_colours[BOLD_BLACK_I]);
+    schapp("BoldRed", ansi_colours[BOLD_RED_I]);
+    schapp("BoldGreen", ansi_colours[BOLD_GREEN_I]);
+    schapp("BoldYellow", ansi_colours[BOLD_YELLOW_I]);
+    schapp("BoldBlue", ansi_colours[BOLD_BLUE_I]);
+    schapp("BoldMagenta", ansi_colours[BOLD_MAGENTA_I]);
+    schapp("BoldCyan", ansi_colours[BOLD_CYAN_I]);
+    schapp("BoldWhite", ansi_colours[BOLD_WHITE_I]);
+  }
+  else {
+    while (fgets(linebuf, sizeof(linebuf) - 1, sf)) {
+      char * eq = linebuf;
+      while ((eq = strchr(++eq, '='))) {
+        int dum;
+        if (sscanf(eq, "= %d , %d , %d", &dum, &dum, &dum) == 3) {
+          char *cp = eq;
+          while (strchr("=0123456789, ", *cp))
+            cp++;
+          *cp++ = ';';
+          *cp = '\0';
+          cp = eq;
+          if (cp != linebuf)
+            cp--;
+          while (strchr("BCFGMRWYacdeghiklnorstuwy ", *cp)) {
+            eq = cp;
+            if (cp == linebuf)
+              break;
+            else
+              cp--;
+          }
+          while (*eq == ' ')
+            eq++;
+          if (*eq != '=') {
+            // squeeze white space
+            char * src = eq;
+            char * dst = eq;
+            while (*src) {
+              if (*src != ' ' && *src != '\t')
+                *dst++ = *src;
+              src++;
+            }
+            *dst = '\0';
+
+            int len = sch ? strlen(sch) : 0;
+            sch = renewn(sch, len + strlen(eq) + 1);
+            strcpy(&sch[len], eq);
+          }
+          break;
+        }
       }
     }
   }
@@ -2313,6 +2439,9 @@ theme_handler(control *ctrl, int event)
       enable_widget(store_button, false);
     }
   }
+  // apply changed theme immediately
+  if (strcmp(new_cfg.colour_scheme, cfg.colour_scheme) || wcscmp(new_cfg.theme_file, cfg.theme_file))
+    apply_config(false);
 }
 
 #define dont_debug_dragndrop

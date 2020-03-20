@@ -580,27 +580,32 @@ can be used in different ways:
 * Drag-and-drop a theme file from the Internet (may be embedded in HTML page)
 * Drag-and-drop a colour scheme directly from the Color Scheme Designer (see below)
 
-After drag-and-drop of a colour scheme, you may Apply it for testing;
+(Option 3) 
+A number of colour schemes have been published for mintty, also 
+mintty supports direct drag-and-drop import of itermcolors schemes.
+Look for the following repositories:
+* https://iterm2colorschemes.com/
+* https://github.com/oumu/mintty-color-schemes
+* https://github.com/goreliu/wsl-terminal/tree/master/src/etc/themes
+
+After drag-and-drop of a colour scheme, it is automatically applied 
+to the current terminal session for quick and easy testing;
 to keep the scheme in your popup selection, assign a name to it by typing it 
 into the Theme field, then click the “Store” button. After downloading a 
 theme file, the name will be filled with its basename as a suggestion.
 As long as a colour scheme is loaded but not yet stored, and a name is 
 available in the Theme field, the “Store” button will be enabled.
 
-There is an excellent colour scheme designer available:
+(Option 4) The 
 [4bit Terminal Color Scheme Designer](http://ciembor.github.io/4bit/#) 
-which lets you download a tuned colour scheme (top-right button “Get Scheme”).
+lets you download a tuned colour scheme (top-right button “Get Scheme”).
 Click on the button “Color Scheme Designer” below the Theme field 
 to open the designer page and start your design. You can either download 
 the scheme file (“Get Scheme” – “mintty”) or drag-and-drop the download link 
 directly to the mintty Options menu, to either the Theme field or the 
-Color Scheme Designer button. You can then click Apply to test the design 
-and if you like it, you can enter a theme name in the Theme field and then 
-click the “Store” button to store the colour scheme.
-
-A number of colour schemes have been published for mintty, e.g.
-* https://github.com/oumu/mintty-color-schemes
-* https://github.com/goreliu/wsl-terminal/tree/master/src/etc/themes
+Color Scheme Designer button. If you like the scheme, you can enter a 
+theme name in the Theme field and then click the “Store” button to 
+store the colour scheme.
 
 Mintty also provides the command-line script ```mintheme``` which can 
 display the themes available in the mintty configuration directories or 
