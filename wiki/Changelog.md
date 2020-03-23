@@ -19,7 +19,7 @@ Other
 
 Configuration
   * Options BellFile2 ... BellFile7 (#974).
-  * Options DispSpace and DispClear.
+  * Options DispSpace, DispTab, DispClear.
 
 ### 3.1.4 (25 February 2020) ###
 

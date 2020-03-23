@@ -2175,28 +2175,38 @@ term_paint(void)
 
      /* Visible space indication */
       if (tchar == ' ') {
+        int disp = 0;
         if (tattr.attr & TATTR_CLEAR) {
-          if (!(cfg.disp_clear & 8))
-            tattr.attr &= ~TATTR_CLEAR;
-          if (cfg.disp_clear & ~8) {
-            tchar = 0xB7; // ·0x00B7 ⋯0x22EF
-            if (cfg.disp_clear & 1)
-              tattr.attr |= ATTR_BOLD;
-            if (cfg.disp_clear & 2)
-              tattr.attr |= ATTR_DIM;
-            if ((cfg.disp_clear & 4) && cfg.underl_colour != (colour)-1) {
-              tattr.truefg = cfg.underl_colour;
-              tattr.attr |= TRUE_COLOUR << ATTR_FGSHIFT;
+          // TAB indication
+          if (cfg.disp_tab) {
+            static wchar tab[] = W("▹►"); // ▹▹► ▻▻► ▹▹▶ ▷▷▶ ››» ▸▸▶ ▹▹▷ ▹▹▸
+            if (tattr.attr & ATTR_BOLD) {
+              tchar = tab[1];
+              disp = cfg.disp_tab;
+            }
+            else if (tattr.attr & ATTR_DIM) {
+              tchar = tab[0];
+              disp = cfg.disp_tab;
             }
           }
+          tattr.attr &= ~(ATTR_BOLD | ATTR_DIM);
+
+          if (!(cfg.disp_clear & 8))
+            tattr.attr &= ~TATTR_CLEAR;
+          if (!disp)
+            disp = cfg.disp_clear & ~8;
         }
-        else if (cfg.disp_space) {
-          tchar = 0xB7; // ·0x00B7 ⋯0x22EF
-          if (cfg.disp_space & 1)
+        else
+          disp = cfg.disp_space;
+
+        if (disp) {
+          if (tchar == ' ')
+            tchar = 0xB7; // ·0x00B7 ⋯0x22EF
+          if (disp & 1)
             tattr.attr |= ATTR_BOLD;
-          if (cfg.disp_space & 2)
+          if (disp & 2)
             tattr.attr |= ATTR_DIM;
-          if ((cfg.disp_space & 4) && cfg.underl_colour != (colour)-1) {
+          if ((disp & 4) && cfg.underl_colour != (colour)-1) {
             tattr.truefg = cfg.underl_colour;
             tattr.attr |= TRUE_COLOUR << ATTR_FGSHIFT;
           }
