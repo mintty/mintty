@@ -520,9 +520,8 @@ child_proc(void)
         else
 #endif
         do {
-          //if (kb_trace) printf("[%lu] <read\n", mtime());
-
           int ret = read(pty_fd, buf + len, sizeof buf - len);
+          //if (kb_trace) printf("[%lu] read %d\n", mtime(), ret);
           if (ret > 0)
             len += ret;
           else
