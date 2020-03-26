@@ -30,7 +30,8 @@ download () {
 }
 
 case "$1" in
-"")	echo "Usage: `basename $0` [-d | DIR | .../full-emoji-list.html] [EMOJI_STYLE]..." >&2
+""|-h|--help)
+	echo "Usage: `basename $0` [-d | DIR | .../full-emoji-list.html] [EMOJI_STYLE]..." >&2
 	echo >&2
 	echo "This script extracts emojis graphics (.png format) from a downloaded copy of" >&2
 	echo "	$emojisurl0" >&2
@@ -52,7 +53,8 @@ case "$1" in
 	echo '  $APPDATA/mintty' >&2
 	echo '  /usr/share/mintty' >&2
 	exit;;
--d)	if download $emojisurl0 && download $emojisurl1
+-d|--download)
+	if download $emojisurl0 && download $emojisurl1
 	then	emojis0=full-emoji-list.html
 		emojis1=full-emoji-modifiers.html
 	else	echo Download failed >&2

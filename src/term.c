@@ -1553,19 +1553,28 @@ fallback:;
   char * fmt = "%04x";
   char * sep = "-";
   char * suf = ".png";
-  bool zwj = true;
-  bool sel = true;
+  bool zwj = true; // include 200D in filename
+  bool sel = true; // include FE0F in filename
   switch (style) {
+#ifdef unicode_cldr
+    when EMOJIS_CLDR:
+      pre = "/usr/share/unicode/cldr/emoji/emoji_";
+      sep = "_";
+      zwj = true;
+      sel = false;
+#endif
     when EMOJIS_NOTO:
       pre = "noto/emoji_u";
       sep = "_";
       zwj = true;
       sel = false;
-    when EMOJIS_ONE:
-      pre = "emojione/";
+    when EMOJIS_JOYPIXELS:
+      pre = "joypixels/";
       sep = "-";
       zwj = false;
       sel = false;
+    when EMOJIS_ONE:
+      pre = "emojione/";
     when EMOJIS_APPLE:
       pre = "apple/";
     when EMOJIS_GOOGLE:

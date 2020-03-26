@@ -870,8 +870,8 @@ ECMA-48 sub-parameters are supported.
 | 58:2::R:G:B            | 59                | underline RGB colour          |
 | 58:3:F:C:M:Y           | 59                | underline CMY colour (*)      |
 | 58:4:F:C:M:Y:K         | 59                | underline CMYK colour (*)     |
-| 73                     | 75                | superscript (tentative)       |
-| 74                     | 75                | subscript   (tentative)       |
+| 73                     | 75                | superscript                   |
+| 74                     | 75                | subscript                     |
 | _any_                  | 0 _or empty_      |                               |
 
 Note: Alternative fonts are configured with options Font1 ... Font10.
@@ -938,18 +938,21 @@ Mintty does not bundle actual emoji graphics with its package.
 You will have to download and deploy them yourself.
 
 Emoji data can be found at the following sources:
+* [Unicode.org](http://www.unicode.org/emoji/charts/) Full Emoji List (~50MB)
+  * Use the script [`getemojis`](getemojis) to download the web pages 
+  [Full Emoji List](http://www.unicode.org/emoji/charts/full-emoji-list.html) and 
+  [Full Emoji Modifier Sequences](http://www.unicode.org/emoji/charts/full-emoji-modifiers.html) 
+  (with all emoji data embedded)
+  and extract emoji data (call it without parameters for instructions)
+  * Deploy the desired subdirectories (e.g. `apple`) and subdirectory `common`
+  * Includes apple, emojione, facebook, google, twitter, samsung, windows emojis (and some limited low-resolution sets that we shall ignore)
 <img align=right src=https://github.com/mintty/mintty/wiki/mintty-emojis.png>
-* [EmojiOne](https://www.emojione.com/)
-  * Free Download for your own use, PNG Files, download e.g. 128x128px zip
-  * Deploy the preferred subdirectory (e.g. 128) as `emojione`
 * [Noto Emoji font](https://github.com/googlefonts/noto-emoji), subdirectory `png/128`
   * “Clone or download” the repository or download a release archive
   * Deploy subdirectory noto-emoji/png/128 as `noto`
-* [Unicode.org](http://www.unicode.org/emoji/charts/) Full Emoji List (~50MB)
-  * Download the [Full Emoji List](http://www.unicode.org/emoji/charts/full-emoji-list.html) (with all emoji data embedded)
-  * Use the [extraction script `getemojis`](getemojis) to extract emoji data (call it without parameters for instructions)
-  * Deploy the desired subdirectories (e.g. `apple`)
-  * Includes apple, emojione, facebook, google, twitter, samsung, windows emojis (and some limited low-resolution sets that we shall ignore)
+* [JoyPixels](https://www.joypixels.com/) (formerly EmojiOne)
+  * Download JoyPixels Free (or Premium)
+  * Deploy the preferred subdirectory (e.g. png/unicode/128) as `joypixels`
 
 To “Clone” with limited download volume, use the command `git clone --depth 1`.
 To download only the desired subdirectory from `github.com`, use `subversion`, 

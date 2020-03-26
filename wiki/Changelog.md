@@ -11,6 +11,10 @@ Character encoding
 Keyboard handling
   * Unmapped AltGr combinations: don't fallback to ESC prefixing (~#969).
 
+Unicode and Emoji data
+  * Unicode 13.0 update.
+  * Distinct support for EmojiOne (from unicode.org) and JoyPixels emojis.
+
 Window handling
   * Drag-and-drop import of itermcolors schemes (mintty/wsltty#227).
 

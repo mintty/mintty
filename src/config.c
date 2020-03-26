@@ -529,6 +529,7 @@ static opt_val
   [OPT_EMOJIS] = (opt_val[]) {
     {"none", EMOJIS_NONE},
     {"noto", EMOJIS_NOTO},
+    {"joypixels", EMOJIS_JOYPIXELS},
     {"emojione", EMOJIS_ONE},
     {"apple", EMOJIS_APPLE},
     {"google", EMOJIS_GOOGLE},
