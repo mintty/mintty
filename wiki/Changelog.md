@@ -24,6 +24,7 @@ Other
 Configuration
   * Options BellFile2 ... BellFile7 (#974).
   * Options DispSpace, DispTab, DispClear.
+  * Options Suppress* are now resilient against space (mintty/wsltty#235).
 
 ### 3.1.4 (25 February 2020) ###
 
