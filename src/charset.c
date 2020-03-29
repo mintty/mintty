@@ -302,9 +302,11 @@ fallback_charset()
       //setlocale(LC_CTYPE, config_locale); // apparently redundant
       //trace_locale("fallback", config_locale);
     }
+#if HAS_LOCALES
     else {
       trace_locale("fallback", config_locale);
     }
+#endif
   }
 }
 
