@@ -961,6 +961,7 @@ paste_hdrop(HDROP drop)
       buf_add(' ');  // Filename separator
     buf_path(wfn);
   }
+  buf[buf_pos] = 0;
 
   if (!support_wsl && *cfg.drop_commands) {
     // try to determine foreground program
@@ -970,12 +971,16 @@ paste_hdrop(HDROP drop)
       char * drops = cs__wcstombs(cfg.drop_commands);
       char * paste = matchconf(drops, fg_prog);
       if (paste) {
-        buf[buf_pos] = 0;
-        char * pastebuf = newn(char, strlen(paste) + strlen(buf) + 1);
-        sprintf(pastebuf, paste, buf);
-        child_send(pastebuf, strlen(pastebuf));
-        free(pastebuf);
-        free(drops);
+        char * format = strchr(paste, '%');
+        if (format && strchr("sw", *(++format)) && !strchr(format, '%')) {
+          char * pastebuf = newn(char, strlen(paste) + strlen(buf) + 1);
+          sprintf(pastebuf, paste, buf);
+          child_send(pastebuf, strlen(pastebuf));
+          free(pastebuf);
+        }
+        else
+          child_send(paste, strlen(paste));
+        free(drops);  // also frees paste which points into drops
         free(fg_prog);
         free(buf);
         return;
