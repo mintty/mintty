@@ -818,9 +818,11 @@ buf_add(char c)
 }
 
 static void
-buf_path(wchar * wfn)
+buf_path(wchar * wfn, bool convert)
 {
-    char *fn = path_win_w_to_posix(wfn);
+    char *fn = (convert || support_wsl)
+               ? path_win_w_to_posix(wfn)
+               : cs__wcstoutf(wfn);
 
     bool has_tick = false, needs_quotes = false, needs_dollar = false;
     for (char *p = fn; *p && !needs_dollar; p++) {
@@ -949,19 +951,21 @@ paste_hdrop(HDROP drop)
 #endif
   uint n = DragQueryFileW(drop, -1, 0, 0);
 
-  buf_init();
-  for (uint i = 0; i < n; i++) {
-    uint wfn_len = DragQueryFileW(drop, i, 0, 0);
-    wchar wfn[wfn_len + 1];
-    DragQueryFileW(drop, i, wfn, wfn_len + 1);
+  void bufpath(bool convert) {
+    buf_init();
+    for (uint i = 0; i < n; i++) {
+      uint wfn_len = DragQueryFileW(drop, i, 0, 0);
+      wchar wfn[wfn_len + 1];
+      DragQueryFileW(drop, i, wfn, wfn_len + 1);
 #ifdef debug_dragndrop
-    printf("dropped file <%ls>\n", wfn);
+      printf("dropped file <%ls>\n", wfn);
 #endif
-    if (i)
-      buf_add(' ');  // Filename separator
-    buf_path(wfn);
+      if (i)
+        buf_add(' ');  // Filename separator
+      buf_path(wfn, convert);
+    }
+    buf[buf_pos] = 0;
   }
-  buf[buf_pos] = 0;
 
   if (!support_wsl && *cfg.drop_commands) {
     // try to determine foreground program
@@ -973,6 +977,12 @@ paste_hdrop(HDROP drop)
       if (paste) {
         char * format = strchr(paste, '%');
         if (format && strchr("sw", *(++format)) && !strchr(format, '%')) {
+          if (*format == 's')
+            bufpath(true);
+          else {
+            *format = 's';
+            bufpath(false);
+          }
           char * pastebuf = newn(char, strlen(paste) + strlen(buf) + 1);
           sprintf(pastebuf, paste, buf);
           child_send(pastebuf, strlen(pastebuf));
@@ -990,6 +1000,8 @@ paste_hdrop(HDROP drop)
     }
   }
 
+  bufpath(true);
+
   if (term.bracketed_paste)
     child_write("\e[200~", 6);
   child_send(buf, buf_pos);
@@ -1003,7 +1015,7 @@ paste_path(HANDLE data)
 {
   wchar *s = GlobalLock(data);
   buf_init();
-  buf_path(s);
+  buf_path(s, true);
   GlobalUnlock(data);
 
   if (term.bracketed_paste)

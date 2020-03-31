@@ -16,6 +16,8 @@ Unicode and Emoji data
   * Distinct support for EmojiOne (from unicode.org) and JoyPixels emojis.
 
 Window handling
+  * DropCommands secured against multiple placeholders.
+  * DropCommands optionally pastes Windows format paths (#982).
   * Drag-and-drop import of itermcolors schemes (mintty/wsltty#227).
 
 Other
