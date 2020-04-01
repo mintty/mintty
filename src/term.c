@@ -2113,10 +2113,13 @@ term_paint(void)
       * Check the font we'll _probably_ be using to see if
       * the character is wide when we don't want it to be.
       */
+#ifdef ignore_private_use_for_auto_narrowing
       if (tchar >= 0xE000 && tchar < 0xF900) {
         // don't tamper with width of Private Use characters
       }
-      else if (tchar != dispchars[j].chr ||
+      else
+#endif
+      if (tchar != dispchars[j].chr ||
           tattr.attr != (dispchars[j].attr.attr & ~(ATTR_NARROW | DATTR_MASK))
               )
       {

@@ -851,6 +851,8 @@ write_char(wchar c, int width)
   }
 }
 
+#define dont_debug_scriptfonts
+
 static struct {
   ucschar first, last;
   uchar font;

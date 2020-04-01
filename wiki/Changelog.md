@@ -15,6 +15,9 @@ Unicode and Emoji data
   * Unicode 13.0 update.
   * Distinct support for EmojiOne (from unicode.org) and JoyPixels emojis.
 
+Font rendering
+  * Enable auto-narrowing for Private Use characters (#979, "Nerd Fonts").
+
 Window handling
   * DropCommands secured against multiple placeholders.
   * DropCommands optionally pastes Windows format paths (#982).

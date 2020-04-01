@@ -252,7 +252,7 @@ get_font_quality(void)
 
 #define dont_debug_fonts 1
 
-#define dont_debug_win_char_width
+#define dont_debug_win_char_width_init
 
 #if defined(debug_fonts) && debug_fonts > 0
 #define trace_font(params)	printf params
@@ -660,7 +660,7 @@ win_init_fontfamily(HDC dc, int findex)
       greek_char_width >= latin_char_width * 1.5 ||
       line_char_width  >= latin_char_width * 1.5;
 
-#ifdef debug_win_char_width
+#ifdef debug_win_char_width_init
   int w_latin = win_char_width(0x0041, 0);
   int w_greek = win_char_width(0x03B1, 0);
   int w_lines = win_char_width(0x2500, 0);
@@ -4077,6 +4077,8 @@ win_check_glyphs(wchar *wcs, uint num, cattrflags attr)
   ReleaseDC(wnd, dc);
 }
 
+#define dont_debug_win_char_width
+
 #ifdef debug_win_char_width
 int
 win_char_width(xchar c, cattrflags attr)
@@ -4085,7 +4087,7 @@ win_char_width(xchar c, cattrflags attr)
 int win_char_width(xchar, cattrflags);
   int w = win_char_width(c, attr);
   if (c >= 0x80)
-    printf("win_char_width(%04X) -> %d\n", c, w);
+    printf(" win_char_width(%04X) -> %d\n", c, w);
   return w;
 }
 #endif
@@ -4104,6 +4106,10 @@ win_char_width(xchar c, cattrflags attr)
   if (findex > 10)
     findex = 0;
   struct fontfam * ff = &fontfamilies[findex];
+#ifdef debug_win_char_width
+  if (c > 0xFF)
+    printf("win_char_width(%04X) font %d\n", c, findex);
+#endif
 
 #define measure_width
 
@@ -4135,7 +4141,7 @@ win_char_width(xchar c, cattrflags attr)
   if (c == 0x2001)
     win_char_width(0x5555, attr);
   if (!ok0)
-    printf("width %04X failed (dc %p)\n", c, dc);
+    printf(" wdth %04X failed (dc %p)\n", c, dc);
   else if (c > '~' || c == 'A') {
     int cw = 0;
     BOOL ok1 = GetCharWidth32W(dc, c, c, &cw);  // "not on TrueType"
@@ -4145,7 +4151,7 @@ win_char_width(xchar c, cattrflags attr)
     BOOL ok3 = GetCharABCWidthsW(dc, c, c, &abc);  // only on TrueType
     ABCFLOAT abcf; memset(&abcf, 0, sizeof abcf);
     BOOL ok4 = GetCharABCWidthsFloatW(dc, c, c, &abcf);
-    printf("w %04X [cell %d] - 32 %d %d - flt %d %.3f - abc %d %d %d %d - abcflt %d %4.1f %4.1f %4.1f\n", 
+    printf(" w %04X [cell %d] - 32 %d %d - flt %d %.3f - abc %d %d %d %d - abcflt %d %4.1f %4.1f %4.1f\n", 
            c, cell_width, 
            ok1, cw, ok2, cwf, 
            ok3, abc.abcA, abc.abcB, abc.abcC, 
@@ -4155,6 +4161,9 @@ win_char_width(xchar c, cattrflags attr)
 
   int ibuf = 0;
   bool ok = GetCharWidth32W(dc, c, c, &ibuf);
+#ifdef debug_win_char_width
+  printf(" getcharw %04X %dpx/cell %dpx\n", c, ibuf, cell_width);
+#endif
   if (!ok) {
     ReleaseDC(wnd, dc);
     return 0;
@@ -4166,10 +4175,10 @@ win_char_width(xchar c, cattrflags attr)
   ibuf /= cell_width;
   if (ibuf > 1) {
 #ifdef debug_win_char_width
-    printf("enquired %04X %dpx cell %dpx\n", c, ibuf, cell_width);
+    printf(" enquired %04X %dpx/cell %dpx\n", c, ibuf, cell_width);
 #endif
     ReleaseDC(wnd, dc);
-    //printf("win_char_width %04X -> %d\n", c, ibuf);
+    //printf(" win_char_width %04X -> %d\n", c, ibuf);
     return ibuf;
   }
 
@@ -4191,7 +4200,7 @@ win_char_width(xchar c, cattrflags attr)
     text_out_end();
 # ifdef debug_win_char_width
     for (int y = 0; y < cell_height; y++) {
-      printf("%2d|", y);
+      printf(" %2d|", y);
       for (int x = 0; x < cell_width * 2; x++) {
         COLORREF c = GetPixel(wid_dc, x, y);
         printf("%c", c != RGB(0, 0, 0) ? '*' : ' ');
@@ -4242,6 +4251,7 @@ win_char_width(xchar c, cattrflags attr)
    || (c >= 0x25A0 && c <= 0x25FF)   // Geometric Shapes
    || (c >= 0x2B00 && c <= 0x2BFF)   // Miscellaneous Symbols and Arrows
 #endif
+   || (c >= 0xE000 && c < 0xF900)    // Private Use Area
    || (// check all non-letters with some exceptions
        bidi_class(c) != L               // indicates not a letter
       &&
@@ -4278,7 +4288,7 @@ win_char_width(xchar c, cattrflags attr)
     ReleaseDC(wnd, dc);
 # ifdef debug_win_char_width
     if (c > '~' || c == 'A') {
-      printf("measured %04X %dpx cell %dpx width %d\n", c, mbuf, cell_width, width);
+      printf(" measured %04X %dpx cell %dpx width %d\n", c, mbuf, cell_width, width);
     }
 # endif
     // cache width
@@ -4295,13 +4305,13 @@ win_char_width(xchar c, cattrflags attr)
         ff->cpcachelen[font4index]++;
       }
     }
-    //printf("win_char_width %04X -> %d\n", c, width);
+    //printf(" win_char_width %04X -> %d\n", c, width);
     return width;
   }
 #endif
 
   ReleaseDC(wnd, dc);
-  //printf("win_char_width %04X -> %d\n", c, ibuf);
+  //printf(" win_char_width %04X -> %d\n", c, ibuf);
   return ibuf;
 }
 
