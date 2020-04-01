@@ -2164,7 +2164,7 @@ download_scheme(char * url)
 
   char * sch = null;
   char * urlsuf = strrchr(url, '.');
-  if (urlsuf && 0 == strcmp(urlsuf, ".itermcolors")) {
+  if (urlsuf && !strcmp(urlsuf, ".itermcolors")) {
     colour ansi_colours[16] = 
       {(colour)-1, (colour)-1, (colour)-1, (colour)-1, 
        (colour)-1, (colour)-1, (colour)-1, (colour)-1, 
