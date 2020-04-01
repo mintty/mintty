@@ -2820,7 +2820,9 @@ The value is a series of semicolon-separated, colon-combined
 pairs of program name and drop pattern. The pattern is pasted; a single 
 placeholder "%s" is replaced with the clipboard contents, 
 paths converted into cygwin format; a single placeholder "%w" is replaced 
-with the clipboard contents, paths left in Windows format.
+with the clipboard contents, paths left in Windows format. Using capital 
+placeholders "%S" or "%W" embeds the pasted paths into respective quotes 
+if needed.
 If a semicolon shall be embedded into any of the drop patterns, 
 a non-whitespace control character (i.e. none of \fB^I^J^K^L^M\fP) can be 
 specified as an alternative separator by starting the whole setting with it.
@@ -2839,7 +2841,7 @@ Examples:
 .br
 \(en \fBDropCommands=^_bash:cd \(aq%s\(aq;echo $PWD^M^_vim:^[:e %s^M^_\fP
 .br
-\(en \fBDropCommands=cmd:cd /D \(aq%w\(aq^M\fP
+\(en \fBDropCommands=cmd:cd /D %W^M\fP
 
 \fINote:\fP An "Enter" key has to be specified with the CR character code, 
 control characters need to be embedded verbatim 
