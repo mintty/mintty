@@ -2113,13 +2113,26 @@ term_paint(void)
       * Check the font we'll _probably_ be using to see if
       * the character is wide when we don't want it to be.
       */
+      if (tchar >= 0xE0B0 && tchar < 0xE0C0) {
+        // special handling for geometric "Powerline" symbols
+        if (cs_ambig_wide) {
+          if (tchar < 0xE0B8)
+            tattr.attr |= ATTR_EXPAND;
+        }
+        else {
+          if (tchar >= 0xE0B8) {
+            tattr.attr |= ATTR_NARROW;
+            // trigger char_narrowing to be tweaked to 50 in this case
+            tattr.attr |= TATTR_CLEAR;
+          }
+        }
+      }
 #ifdef ignore_private_use_for_auto_narrowing
-      if (tchar >= 0xE000 && tchar < 0xF900) {
+      else if (tchar >= 0xE000 && tchar < 0xF900) {
         // don't tamper with width of Private Use characters
       }
-      else
 #endif
-      if (tchar != dispchars[j].chr ||
+      else if (tchar != dispchars[j].chr ||
           tattr.attr != (dispchars[j].attr.attr & ~(ATTR_NARROW | DATTR_MASK))
               )
       {

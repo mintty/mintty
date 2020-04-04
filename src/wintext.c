@@ -2704,6 +2704,13 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   if (attr.attr & ATTR_WIDE)
     char_width *= 2;
 
+  bool wscale_narrow_50 = false;
+  if ((attr.attr & (ATTR_NARROW | TATTR_CLEAR)) == (ATTR_NARROW | TATTR_CLEAR)) {
+    // indicator for adjustment of auto-narrowing
+    attr.attr &= ~TATTR_CLEAR;
+    wscale_narrow_50 = true;
+  }
+
   bool default_bg = (attr.attr & ATTR_BGMASK) >> ATTR_BGSHIFT == BG_COLOUR_I;
   if (attr.attr & ATTR_REVERSE)
     default_bg = false;
@@ -2782,6 +2789,8 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
       wscale = 200;
     nfont |= FONT_WIDE;
   }
+  else if (wscale_narrow_50)
+    wscale = 50;
 #ifndef narrow_via_font
   else if ((attr.attr & ATTR_NARROW) && !(attr.attr & TATTR_ZOOMFULL)) {
     wscale = cfg.char_narrowing;
