@@ -10,6 +10,7 @@ Character encoding
 
 Keyboard handling
   * Unmapped AltGr combinations: don't fallback to ESC prefixing (~#969).
+  * Ignore Compose key if combined with Win key (#877).
 
 Unicode and Emoji data
   * Unicode 13.0 update.

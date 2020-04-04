@@ -2995,6 +2995,8 @@ win_csi_seq(char * pre, char * suf)
 bool
 win_key_up(WPARAM wp, LPARAM lp)
 {
+  inline bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
+
   uint key = wp;
 #ifdef debug_virtual_key_codes
   printf("  win_key_up %04X %s\n", key, vk_name(key));
@@ -3016,7 +3018,10 @@ win_key_up(WPARAM wp, LPARAM lp)
     return false;
 
   if (key == last_key) {
-    if (
+    if (is_key_down(VK_LWIN)){
+      // hotkey applications (e.g. Hot Keyboard) may send Win+Ctrl
+    }
+    else if (
         (cfg.compose_key == MDK_CTRL && key == VK_CONTROL) ||
         (cfg.compose_key == MDK_SHIFT && key == VK_SHIFT) ||
         (cfg.compose_key == MDK_ALT && key == VK_MENU)
@@ -3026,7 +3031,6 @@ win_key_up(WPARAM wp, LPARAM lp)
 
   if (newwin_pending) {
     if (key == newwin_key) {
-      inline bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }
       if (is_key_down(VK_SHIFT))
         newwin_shifted = true;
       if (newwin_shifted || win_is_fullscreen)
