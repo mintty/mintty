@@ -23,6 +23,7 @@ Window handling
   * DropCommands secured against multiple placeholders.
   * DropCommands optionally pastes Windows format paths (#982).
   * Drag-and-drop import of itermcolors schemes (mintty/wsltty#227).
+  * Workaround to interact with Hot Keyboard (#877, setting SupportExternalHotkeys=4).
 
 Other
   * Warning and error popups are placed on top of desktop.
@@ -31,6 +32,7 @@ Configuration
   * Options BellFile2 ... BellFile7 (#974).
   * Options DispSpace, DispTab, DispClear.
   * Options Suppress* are now resilient against space (mintty/wsltty#235).
+  * Option value SupportExternalHotkeys=4 (#877).
 
 ### 3.1.4 (25 February 2020) ###
 

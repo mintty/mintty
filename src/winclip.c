@@ -425,6 +425,7 @@ win_copy(const wchar *data, cattr *cattrs, int len)
 void
 win_copy_as(const wchar *data, cattr *cattrs, int len, char what)
 {
+  //printf("win_copy %d '%c'\n", len, what);
   HGLOBAL clipdata, clipdata2, clipdata3 = 0;
   int len2;
   void *lock, *lock2, *lock3;
@@ -702,6 +703,7 @@ win_copy_as(const wchar *data, cattr *cattrs, int len, char what)
   GlobalUnlock(clipdata);
   GlobalUnlock(clipdata2);
 
+  //printf("OpenClipboard win_copy\n");
   if (OpenClipboard(wnd)) {
     clipboard_token = true;
     EmptyClipboard();
@@ -1053,6 +1055,7 @@ paste_text(HANDLE data)
 static void
 do_win_paste(bool do_path)
 {
+  //printf("OpenClipboard win_paste\n");
   if (!OpenClipboard(null))
     return;
 

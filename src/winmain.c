@@ -5219,7 +5219,9 @@ main(int argc, char *argv[])
   HRESULT (WINAPI * pAddClipboardFormatListener)(HWND) =
     load_library_func("user32.dll", "AddClipboardFormatListener");
   if (pAddClipboardFormatListener) {
-    pAddClipboardFormatListener(wnd);
+    if (cfg.external_hotkeys < 4)
+      // send WM_CLIPBOARDUPDATE
+      pAddClipboardFormatListener(wnd);
   }
 
   win_synctabs(4);

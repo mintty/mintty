@@ -1487,7 +1487,9 @@ just in case it has any side effects.
 This setting supports external Alt+hotkey combinations, esp. Alt+F4 
 to close the window, independently of general Alt+Fn shortcuts support 
 (if option value is 2) and by fixing the buggy hotkey sequence sent 
-by StrokeIt.
+by StrokeIt. Setting 4 also disables the feature to clear the selection 
+when another application sets the clipboard; this is needed to workaround 
+weird behaviour of Hot Keyboard.
 
 .TP
 \fBCopy and Paste shortcuts\fP (ClipShortcuts=yes)
