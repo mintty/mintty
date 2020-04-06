@@ -1506,7 +1506,8 @@ typedef enum {
   COMP_PENDING = 1, COMP_ACTIVE = 2
 } comp_state_t;
 static comp_state_t comp_state = COMP_NONE;
-static uint last_key = 0;
+static uint last_key_down = 0;
+static uint last_key_up = 0;
 
 static struct {
   wchar kc[4];
@@ -1522,7 +1523,8 @@ compose_clear()
 {
   comp_state = COMP_CLEAR;
   compose_buflen = 0;
-  last_key = 0;
+  last_key_down = 0;
+  last_key_up = 0;
 }
 
 void
@@ -1812,7 +1814,8 @@ bool
 win_key_down(WPARAM wp, LPARAM lp)
 {
   uint key = wp;
-  last_key = key;
+  last_key_down = key;
+  last_key_up = 0;
 
   if (comp_state == COMP_ACTIVE)
     comp_state = COMP_PENDING;
@@ -1825,7 +1828,7 @@ win_key_down(WPARAM wp, LPARAM lp)
   uint count = LOWORD(lp);
 
 #ifdef debug_virtual_key_codes
-  printf("win_key_down %04X %s scan %d ext %d rpt %d/%d other %02X\n", key, vk_name(key), scancode, extended, repeat, count, HIWORD(lp) >> 8);
+  printf("win_key_down %02X %s scan %d ext %d rpt %d/%d other %02X\n", key, vk_name(key), scancode, extended, repeat, count, HIWORD(lp) >> 8);
 #endif
 
   if (repeat && !term.auto_repeat) {
@@ -2607,7 +2610,7 @@ static struct {
     wchar wc;
     int len = ToUnicode(key, scancode, kbd, &wc, 1, 0);
 #ifdef debug_key
-    printf("undead %04X scn %d -> %d %04X\n", key, scancode, len, wc);
+    printf("undead %02X scn %d -> %d %04X\n", key, scancode, len, wc);
 #endif
     if (len < 0) {
       // Ugly hack to clear dead key state, a la Michael Kaplan.
@@ -2999,7 +3002,7 @@ win_key_up(WPARAM wp, LPARAM lp)
 
   uint key = wp;
 #ifdef debug_virtual_key_codes
-  printf("  win_key_up %04X %s\n", key, vk_name(key));
+  printf("  win_key_up %02X %s\n", key, vk_name(key));
 #endif
 
   if (key == VK_CANCEL) {
@@ -3014,20 +3017,27 @@ win_key_up(WPARAM wp, LPARAM lp)
 
   uint scancode = HIWORD(lp) & (KF_EXTENDED | 0xFF);
   // avoid impact of fake keyboard events (nullifying implicit Lock states)
-  if (!scancode)
+  if (!scancode) {
+    last_key_up = key;
     return false;
+  }
 
-  if (key == last_key) {
-    if (is_key_down(VK_LWIN)){
-      // hotkey applications (e.g. Hot Keyboard) may send Win+Ctrl
-    }
-    else if (
+  if (key == last_key_down
+      // guard against cases of hotkey injection (#877)
+      && (!last_key_up || key == last_key_up)
+     )
+  {
+    if (
         (cfg.compose_key == MDK_CTRL && key == VK_CONTROL) ||
         (cfg.compose_key == MDK_SHIFT && key == VK_SHIFT) ||
         (cfg.compose_key == MDK_ALT && key == VK_MENU)
        )
       comp_state = COMP_ACTIVE;
   }
+  else
+    comp_state = COMP_NONE;
+
+  last_key_up = key;
 
   if (newwin_pending) {
     if (key == newwin_key) {
