@@ -454,6 +454,11 @@ timestamp. As a workaround, mintty can detect AltGr also from the
 two key codes arriving with some delay. Setting 
 `CtrlAltDelayAltGr=16` or `CtrlAltDelayAltGr=20` is suggested.
 
+### Handling the clipboard in Hot Keyboard ###
+
+Hot Keyboard needs configuration `CtrlAltIsAltGr=1` and `SupportExternalHotkeys=4` 
+as a workaround for buggy behaviour. Also `ClipShortcuts=true` (default) is advisable.
+
 
 ## Using Ctrl+Tab to switch window pane in terminal multiplexers ##
 
