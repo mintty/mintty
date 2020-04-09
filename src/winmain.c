@@ -193,6 +193,7 @@ static HRESULT (WINAPI * pSetWindowCompositionAttribute)(HWND, void *) = 0;
 static BOOL (WINAPI * pSystemParametersInfo)(UINT, UINT, PVOID, UINT) = 0;
 
 static BOOLEAN (WINAPI * pShouldAppsUseDarkMode)(void) = 0; /* undocumented */
+static BOOLEAN (WINAPI * pShouldSystUseDarkMode)(void) = 0; /* undocumented */
 static HRESULT (WINAPI * pSetWindowTheme)(HWND, const wchar_t *, const wchar_t *) = 0;
 
 #define HTHEME HANDLE
@@ -242,6 +243,8 @@ load_dwm_funcs(void)
   if (uxtheme) {
     pShouldAppsUseDarkMode = 
       (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(132)); /* ordinal */
+    pShouldSystUseDarkMode = 
+      (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(138)); /* ordinal */
     pSetWindowTheme = 
       (void *)GetProcAddress(uxtheme, "SetWindowTheme");
     pOpenThemeData =
@@ -4934,22 +4937,19 @@ main(int argc, char *argv[])
   trace_winsize("createwindow");
 
   // Dark mode support
-  if (pShouldAppsUseDarkMode) {
+  if (pShouldSystUseDarkMode) {
     HIGHCONTRASTW hc;
     hc.cbSize = sizeof hc;
     pSystemParametersInfo(SPI_GETHIGHCONTRAST, sizeof hc, &hc, 0);
     //printf("High Contrast scheme <%ls>\n", hc.lpszDefaultScheme);
 
-    if (!(hc.dwFlags & HCF_HIGHCONTRASTON) && pShouldAppsUseDarkMode()) {
+    if (!(hc.dwFlags & HCF_HIGHCONTRASTON) && pShouldSystUseDarkMode()) {
       pSetWindowTheme(wnd, W("DarkMode_Explorer"), NULL);
       BOOL dark = 1;
 
-#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
-#define DWMWA_USE_IMMERSIVE_DARK_MODE 19
-#endif
-
-      pDwmSetWindowAttribute(wnd, DWMWA_USE_IMMERSIVE_DARK_MODE,
-                             &dark, sizeof dark);
+      // set DWMWA_USE_IMMERSIVE_DARK_MODE
+      pDwmSetWindowAttribute(wnd, 20, &dark, sizeof dark);
+      pDwmSetWindowAttribute(wnd, 19, &dark, sizeof dark);
     }
   }
 

@@ -20,6 +20,7 @@ Font rendering
   * Enable auto-narrowing for Private Use characters (#979, "Nerd Fonts").
 
 Window handling
+  * Tweak title bar dark mode adaptation to undocumented Windows changes (#983, mintty/wsltty#157).
   * DropCommands secured against multiple placeholders.
   * DropCommands optionally pastes Windows format paths (#982).
   * Drag-and-drop import of itermcolors schemes (mintty/wsltty#227).
