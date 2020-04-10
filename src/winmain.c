@@ -232,12 +232,9 @@ load_sys_library(string name)
 static DWORD
 get_sys_build(void)
 {
-  if (pRtlGetNtVersionNumbers) {
-    DWORD build;
-    pRtlGetNtVersionNumbers(NULL, NULL, &build);
-    return build & ~0xF0000000;
-  }
-  return 1; /* a small build number */
+  DWORD build;
+  pRtlGetNtVersionNumbers(NULL, NULL, &build);
+  return build & ~0xF0000000;
 }
 
 static void
@@ -4997,6 +4994,8 @@ main(int argc, char *argv[])
       if (hr) { /* failed */
         pDwmSetWindowAttribute(wnd, 19, &dark, sizeof dark);
       }
+
+      pFlushMenuThemes();
     }
   }
 
