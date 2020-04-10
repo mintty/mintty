@@ -183,6 +183,7 @@ trace_winsize(char * tag)
 #define trace_winsize(tag)	
 #endif
 
+static void (WINAPI * pRtlGetNtVersionNumbers)(LPDWORD, LPDWORD, LPDWORD) = 0;
 
 static HRESULT (WINAPI * pDwmIsCompositionEnabled)(BOOL *) = 0;
 static HRESULT (WINAPI * pDwmExtendFrameIntoClientArea)(HWND, const MARGINS *) = 0;
@@ -192,7 +193,18 @@ static HRESULT (WINAPI * pDwmSetWindowAttribute)(HWND, DWORD, LPCVOID, DWORD) = 
 static HRESULT (WINAPI * pSetWindowCompositionAttribute)(HWND, void *) = 0;
 static BOOL (WINAPI * pSystemParametersInfo)(UINT, UINT, PVOID, UINT) = 0;
 
+typedef enum PREFERRED_APP_MODE
+{
+  PREFERRED_APP_MODE_DEFAULT,
+  PREFERRED_APP_MODE_ALLOW_DARK,
+  PREFERRED_APP_MODE_FORCE_DARK,
+  PREFERRED_APP_MODE_FORCE_LIGHT
+} PREFERRED_APP_MODE; /* undocumented */
+
 static BOOLEAN (WINAPI * pShouldAppsUseDarkMode)(void) = 0; /* undocumented */
+static BOOL (WINAPI * pAllowDarkModeForApp)(BOOL) = 0; /* undocumented */
+static PREFERRED_APP_MODE (WINAPI * pSetPreferredAppMode)(PREFERRED_APP_MODE) = 0; /* undocumented */
+static void (WINAPI * pFlushMenuThemes)(void) = 0; /* undocumented */
 static BOOLEAN (WINAPI * pShouldSystUseDarkMode)(void) = 0; /* undocumented */
 static HRESULT (WINAPI * pSetWindowTheme)(HWND, const wchar_t *, const wchar_t *) = 0;
 
@@ -217,13 +229,29 @@ load_sys_library(string name)
     return 0;
 }
 
+static DWORD
+get_sys_build(void)
+{
+  if (pRtlGetNtVersionNumbers) {
+    DWORD build;
+    pRtlGetNtVersionNumbers(NULL, NULL, &build);
+    return build & ~0xF0000000;
+  }
+  return 1; /* a small build number */
+}
+
 static void
 load_dwm_funcs(void)
 {
+  HMODULE ntdll = load_sys_library("ntdll.dll");
   HMODULE dwm = load_sys_library("dwmapi.dll");
   HMODULE user32 = load_sys_library("user32.dll");
   HMODULE uxtheme = load_sys_library("uxtheme.dll");
 
+  if (ntdll) {
+    pRtlGetNtVersionNumbers = 
+      (void *)GetProcAddress(ntdll, "RtlGetNtVersionNumbers");
+  }
   if (dwm) {
     pDwmIsCompositionEnabled =
       (void *)GetProcAddress(dwm, "DwmIsCompositionEnabled");
@@ -243,6 +271,15 @@ load_dwm_funcs(void)
   if (uxtheme) {
     pShouldAppsUseDarkMode = 
       (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(132)); /* ordinal */
+    if (get_sys_build() < 18362) { /* 1903 */
+      pAllowDarkModeForApp = 
+        (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(135)); /* ordinal */
+    } else {
+      pSetPreferredAppMode = 
+        (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(135)); /* ordinal */
+    }
+    pFlushMenuThemes = 
+      (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(136)); /* ordinal */
     pShouldSystUseDarkMode = 
       (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(138)); /* ordinal */
     pSetWindowTheme = 
@@ -4937,19 +4974,29 @@ main(int argc, char *argv[])
   trace_winsize("createwindow");
 
   // Dark mode support
-  if (pShouldSystUseDarkMode) {
+  if (pAllowDarkModeForApp || pSetPreferredAppMode) {
+    if (get_sys_build() < 18362) {
+      pAllowDarkModeForApp(1);
+    } else {
+      pSetPreferredAppMode(PREFERRED_APP_MODE_ALLOW_DARK);
+    }
+  }
+  if (pShouldSystUseDarkMode || pShouldAppsUseDarkMode) {
     HIGHCONTRASTW hc;
     hc.cbSize = sizeof hc;
     pSystemParametersInfo(SPI_GETHIGHCONTRAST, sizeof hc, &hc, 0);
     //printf("High Contrast scheme <%ls>\n", hc.lpszDefaultScheme);
 
-    if (!(hc.dwFlags & HCF_HIGHCONTRASTON) && pShouldSystUseDarkMode()) {
+    if (!(hc.dwFlags & HCF_HIGHCONTRASTON) &&
+      (pShouldSystUseDarkMode ? pShouldSystUseDarkMode() : pShouldAppsUseDarkMode())) {
       pSetWindowTheme(wnd, W("DarkMode_Explorer"), NULL);
       BOOL dark = 1;
 
       // set DWMWA_USE_IMMERSIVE_DARK_MODE
-      pDwmSetWindowAttribute(wnd, 20, &dark, sizeof dark);
-      pDwmSetWindowAttribute(wnd, 19, &dark, sizeof dark);
+      HRESULT hr = pDwmSetWindowAttribute(wnd, 20, &dark, sizeof dark);
+      if (hr) { /* failed */
+        pDwmSetWindowAttribute(wnd, 19, &dark, sizeof dark);
+      }
     }
   }
 
