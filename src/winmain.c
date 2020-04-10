@@ -183,6 +183,7 @@ trace_winsize(char * tag)
 #define trace_winsize(tag)	
 #endif
 
+
 static HRESULT (WINAPI * pDwmIsCompositionEnabled)(BOOL *) = 0;
 static HRESULT (WINAPI * pDwmExtendFrameIntoClientArea)(HWND, const MARGINS *) = 0;
 static HRESULT (WINAPI * pDwmEnableBlurBehindWindow)(HWND, void *) = 0;
@@ -192,7 +193,6 @@ static HRESULT (WINAPI * pSetWindowCompositionAttribute)(HWND, void *) = 0;
 static BOOL (WINAPI * pSystemParametersInfo)(UINT, UINT, PVOID, UINT) = 0;
 
 static BOOLEAN (WINAPI * pShouldAppsUseDarkMode)(void) = 0; /* undocumented */
-static BOOLEAN (WINAPI * pAllowDarkModeForApp)(BOOLEAN) = 0; /* undocumented */
 static DWORD (WINAPI * pSetPreferredAppMode)(DWORD) = 0; /* undocumented */
 static HRESULT (WINAPI * pSetWindowTheme)(HWND, const wchar_t *, const wchar_t *) = 0;
 
@@ -243,15 +243,12 @@ load_dwm_funcs(void)
   if (uxtheme) {
     pShouldAppsUseDarkMode = 
       (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(132)); /* ordinal */
-    if (HIWORD(GetVersion()) < 18362) { /* 1903 */
-      pAllowDarkModeForApp = 
-        (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(135)); /* ordinal */
-    } else {
-      pSetPreferredAppMode = 
-        (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(135)); /* ordinal */
-    }
+    pSetPreferredAppMode = 
+      (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(135)); /* ordinal */
+      // this would be AllowDarkModeForApp before Windows build 18362
     pSetWindowTheme = 
       (void *)GetProcAddress(uxtheme, "SetWindowTheme");
+
     pOpenThemeData =
       (void *)GetProcAddress(uxtheme, "OpenThemeData");
     pCloseThemeData =
@@ -4880,15 +4877,6 @@ main(int argc, char *argv[])
     }
   }
 
-  // Set app mode
-  if (pAllowDarkModeForApp || pSetPreferredAppMode) {
-    if (HIWORD(GetVersion()) < 18362) {
-      pAllowDarkModeForApp(1);
-    } else {
-      pSetPreferredAppMode(1); /* AllowDark */
-    }
-  }
-
   // The window class.
   class_atom = RegisterClassExW(&(WNDCLASSEXW){
     .cbSize = sizeof(WNDCLASSEXW),
@@ -4941,6 +4929,11 @@ main(int argc, char *argv[])
 #define printpos(tag, x, y, mon)
 #endif
 
+  // Dark mode support, prior to window creation
+  if (pSetPreferredAppMode) {
+    pSetPreferredAppMode(1); /* AllowDark */
+  }
+
   // Create initial window.
   term.show_scrollbar = cfg.scrollbar;  // hotfix #597
   wnd = CreateWindowExW(cfg.scrollbar < 0 ? WS_EX_LEFTSCROLLBAR : 0,
@@ -4962,7 +4955,8 @@ main(int argc, char *argv[])
       BOOL dark = 1;
 
       // set DWMWA_USE_IMMERSIVE_DARK_MODE
-      if (pDwmSetWindowAttribute(wnd, 20, &dark, sizeof dark)) {
+      if (S_OK != pDwmSetWindowAttribute(wnd, 20, &dark, sizeof dark)) {
+        // this would be the call before Windows build 18362
         pDwmSetWindowAttribute(wnd, 19, &dark, sizeof dark);
       }
     }
