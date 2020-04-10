@@ -202,7 +202,7 @@ typedef enum PREFERRED_APP_MODE /* undocumented, use capital letters to fit api 
 } PREFERRED_APP_MODE;
 
 static BOOLEAN (WINAPI * pShouldAppsUseDarkMode)(void) = 0; /* undocumented */
-static BOOL (WINAPI * pAllowDarkModeForApp)(BOOL) = 0; /* undocumented */
+static BOOLEAN (WINAPI * pAllowDarkModeForApp)(BOOLEAN) = 0; /* undocumented */
 static PREFERRED_APP_MODE (WINAPI * pSetPreferredAppMode)(PREFERRED_APP_MODE) = 0; /* undocumented */
 static void (WINAPI * pFlushMenuThemes)(void) = 0; /* undocumented */
 static HRESULT (WINAPI * pSetWindowTheme)(HWND, const wchar_t *, const wchar_t *) = 0;
