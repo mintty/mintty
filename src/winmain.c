@@ -193,18 +193,9 @@ static HRESULT (WINAPI * pDwmSetWindowAttribute)(HWND, DWORD, LPCVOID, DWORD) = 
 static HRESULT (WINAPI * pSetWindowCompositionAttribute)(HWND, void *) = 0;
 static BOOL (WINAPI * pSystemParametersInfo)(UINT, UINT, PVOID, UINT) = 0;
 
-typedef enum PREFERRED_APP_MODE /* undocumented, use capital letters to fit api style of winapi */
-{
-  PREFERRED_APP_MODE_DEFAULT,
-  PREFERRED_APP_MODE_ALLOW_DARK,
-  PREFERRED_APP_MODE_FORCE_DARK,
-  PREFERRED_APP_MODE_FORCE_LIGHT
-} PREFERRED_APP_MODE;
-
 static BOOLEAN (WINAPI * pShouldAppsUseDarkMode)(void) = 0; /* undocumented */
 static BOOLEAN (WINAPI * pAllowDarkModeForApp)(BOOLEAN) = 0; /* undocumented */
-static PREFERRED_APP_MODE (WINAPI * pSetPreferredAppMode)(PREFERRED_APP_MODE) = 0; /* undocumented */
-static void (WINAPI * pFlushMenuThemes)(void) = 0; /* undocumented */
+static DWORD (WINAPI * pSetPreferredAppMode)(DWORD) = 0; /* undocumented */
 static HRESULT (WINAPI * pSetWindowTheme)(HWND, const wchar_t *, const wchar_t *) = 0;
 
 #define HTHEME HANDLE
@@ -274,8 +265,6 @@ load_dwm_funcs(void)
       pSetPreferredAppMode = 
         (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(135)); /* ordinal */
     }
-    pFlushMenuThemes = 
-      (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(136)); /* ordinal */
     pSetWindowTheme = 
       (void *)GetProcAddress(uxtheme, "SetWindowTheme");
     pOpenThemeData =
@@ -4906,6 +4895,15 @@ main(int argc, char *argv[])
     }
   }
 
+  // Set app mode
+  if (pAllowDarkModeForApp || pSetPreferredAppMode) {
+    if (get_sys_build() < 18362) {
+      pAllowDarkModeForApp(1);
+    } else {
+      pSetPreferredAppMode(1); /* AllowDark */
+    }
+  }
+
   // The window class.
   class_atom = RegisterClassExW(&(WNDCLASSEXW){
     .cbSize = sizeof(WNDCLASSEXW),
@@ -4968,13 +4966,6 @@ main(int argc, char *argv[])
   trace_winsize("createwindow");
 
   // Dark mode support
-  if (pAllowDarkModeForApp || pSetPreferredAppMode) {
-    if (get_sys_build() < 18362) {
-      pAllowDarkModeForApp(1);
-    } else {
-      pSetPreferredAppMode(PREFERRED_APP_MODE_ALLOW_DARK);
-    }
-  }
   if (pShouldAppsUseDarkMode) {
     HIGHCONTRASTW hc;
     hc.cbSize = sizeof hc;
@@ -4986,12 +4977,9 @@ main(int argc, char *argv[])
       BOOL dark = 1;
 
       // set DWMWA_USE_IMMERSIVE_DARK_MODE
-      HRESULT hr = pDwmSetWindowAttribute(wnd, 20, &dark, sizeof dark);
-      if (hr) { /* failed */
+      if (pDwmSetWindowAttribute(wnd, 20, &dark, sizeof dark)) {
         pDwmSetWindowAttribute(wnd, 19, &dark, sizeof dark);
       }
-
-      pFlushMenuThemes();
     }
   }
 
