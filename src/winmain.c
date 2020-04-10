@@ -193,7 +193,7 @@ static HRESULT (WINAPI * pDwmSetWindowAttribute)(HWND, DWORD, LPCVOID, DWORD) = 
 static HRESULT (WINAPI * pSetWindowCompositionAttribute)(HWND, void *) = 0;
 static BOOL (WINAPI * pSystemParametersInfo)(UINT, UINT, PVOID, UINT) = 0;
 
-typedef enum PREFERRED_APP_MODE /* undocumented */
+typedef enum PREFERRED_APP_MODE /* undocumented, use capital letters to fit api style of winapi */
 {
   PREFERRED_APP_MODE_DEFAULT,
   PREFERRED_APP_MODE_ALLOW_DARK,
@@ -205,7 +205,6 @@ static BOOLEAN (WINAPI * pShouldAppsUseDarkMode)(void) = 0; /* undocumented */
 static BOOL (WINAPI * pAllowDarkModeForApp)(BOOL) = 0; /* undocumented */
 static PREFERRED_APP_MODE (WINAPI * pSetPreferredAppMode)(PREFERRED_APP_MODE) = 0; /* undocumented */
 static void (WINAPI * pFlushMenuThemes)(void) = 0; /* undocumented */
-static BOOLEAN (WINAPI * pShouldSystUseDarkMode)(void) = 0; /* undocumented */
 static HRESULT (WINAPI * pSetWindowTheme)(HWND, const wchar_t *, const wchar_t *) = 0;
 
 #define HTHEME HANDLE
@@ -277,8 +276,6 @@ load_dwm_funcs(void)
     }
     pFlushMenuThemes = 
       (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(136)); /* ordinal */
-    pShouldSystUseDarkMode = 
-      (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(138)); /* ordinal */
     pSetWindowTheme = 
       (void *)GetProcAddress(uxtheme, "SetWindowTheme");
     pOpenThemeData =
@@ -4978,14 +4975,13 @@ main(int argc, char *argv[])
       pSetPreferredAppMode(PREFERRED_APP_MODE_ALLOW_DARK);
     }
   }
-  if (pShouldSystUseDarkMode || pShouldAppsUseDarkMode) {
+  if (pShouldAppsUseDarkMode) {
     HIGHCONTRASTW hc;
     hc.cbSize = sizeof hc;
     pSystemParametersInfo(SPI_GETHIGHCONTRAST, sizeof hc, &hc, 0);
     //printf("High Contrast scheme <%ls>\n", hc.lpszDefaultScheme);
 
-    if (!(hc.dwFlags & HCF_HIGHCONTRASTON) &&
-      (pShouldSystUseDarkMode ? pShouldSystUseDarkMode() : pShouldAppsUseDarkMode())) {
+    if (!(hc.dwFlags & HCF_HIGHCONTRASTON) && pShouldAppsUseDarkMode()) {
       pSetWindowTheme(wnd, W("DarkMode_Explorer"), NULL);
       BOOL dark = 1;
 
