@@ -183,7 +183,7 @@ trace_winsize(char * tag)
 #define trace_winsize(tag)	
 #endif
 
-static void (WINAPI * pRtlGetNtVersionNumbers)(LPDWORD, LPDWORD, LPDWORD) = 0;
+static void (WINAPI * pRtlGetNtVersionNumbers)(LPDWORD, LPDWORD, LPDWORD) = 0; /* undocumented */
 
 static HRESULT (WINAPI * pDwmIsCompositionEnabled)(BOOL *) = 0;
 static HRESULT (WINAPI * pDwmExtendFrameIntoClientArea)(HWND, const MARGINS *) = 0;
@@ -193,13 +193,13 @@ static HRESULT (WINAPI * pDwmSetWindowAttribute)(HWND, DWORD, LPCVOID, DWORD) = 
 static HRESULT (WINAPI * pSetWindowCompositionAttribute)(HWND, void *) = 0;
 static BOOL (WINAPI * pSystemParametersInfo)(UINT, UINT, PVOID, UINT) = 0;
 
-typedef enum PREFERRED_APP_MODE
+typedef enum PREFERRED_APP_MODE /* undocumented */
 {
   PREFERRED_APP_MODE_DEFAULT,
   PREFERRED_APP_MODE_ALLOW_DARK,
   PREFERRED_APP_MODE_FORCE_DARK,
   PREFERRED_APP_MODE_FORCE_LIGHT
-} PREFERRED_APP_MODE; /* undocumented */
+} PREFERRED_APP_MODE;
 
 static BOOLEAN (WINAPI * pShouldAppsUseDarkMode)(void) = 0; /* undocumented */
 static BOOL (WINAPI * pAllowDarkModeForApp)(BOOL) = 0; /* undocumented */
