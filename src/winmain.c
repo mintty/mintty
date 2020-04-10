@@ -183,8 +183,6 @@ trace_winsize(char * tag)
 #define trace_winsize(tag)	
 #endif
 
-static void (WINAPI * pRtlGetNtVersionNumbers)(LPDWORD, LPDWORD, LPDWORD) = 0; /* undocumented */
-
 static HRESULT (WINAPI * pDwmIsCompositionEnabled)(BOOL *) = 0;
 static HRESULT (WINAPI * pDwmExtendFrameIntoClientArea)(HWND, const MARGINS *) = 0;
 static HRESULT (WINAPI * pDwmEnableBlurBehindWindow)(HWND, void *) = 0;
@@ -219,26 +217,13 @@ load_sys_library(string name)
     return 0;
 }
 
-static DWORD
-get_sys_build(void)
-{
-  DWORD build;
-  pRtlGetNtVersionNumbers(NULL, NULL, &build);
-  return build & ~0xF0000000;
-}
-
 static void
 load_dwm_funcs(void)
 {
-  HMODULE ntdll = load_sys_library("ntdll.dll");
   HMODULE dwm = load_sys_library("dwmapi.dll");
   HMODULE user32 = load_sys_library("user32.dll");
   HMODULE uxtheme = load_sys_library("uxtheme.dll");
 
-  if (ntdll) {
-    pRtlGetNtVersionNumbers = 
-      (void *)GetProcAddress(ntdll, "RtlGetNtVersionNumbers");
-  }
   if (dwm) {
     pDwmIsCompositionEnabled =
       (void *)GetProcAddress(dwm, "DwmIsCompositionEnabled");
@@ -258,7 +243,7 @@ load_dwm_funcs(void)
   if (uxtheme) {
     pShouldAppsUseDarkMode = 
       (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(132)); /* ordinal */
-    if (get_sys_build() < 18362) { /* 1903 */
+    if (HIWORD(GetVersion()) < 18362) { /* 1903 */
       pAllowDarkModeForApp = 
         (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(135)); /* ordinal */
     } else {
@@ -4897,7 +4882,7 @@ main(int argc, char *argv[])
 
   // Set app mode
   if (pAllowDarkModeForApp || pSetPreferredAppMode) {
-    if (get_sys_build() < 18362) {
+    if (HIWORD(GetVersion()) < 18362) {
       pAllowDarkModeForApp(1);
     } else {
       pSetPreferredAppMode(1); /* AllowDark */
