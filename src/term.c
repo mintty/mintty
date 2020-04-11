@@ -2115,6 +2115,7 @@ term_paint(void)
       */
       if (tchar >= 0xE0B0 && tchar < 0xE0C0) {
         // special handling for geometric "Powerline" symbols
+        tattr.attr |= TATTR_ZOOMFULL;
         if (cs_ambig_wide) {
           if (tchar < 0xE0B8)
             tattr.attr |= ATTR_EXPAND;

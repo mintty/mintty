@@ -18,6 +18,7 @@ Unicode and Emoji data
 
 Font rendering
   * Enable auto-narrowing for Private Use characters (#979, "Nerd Fonts").
+  * Adjust and zoom rendering for geometric Powerline symbols (#979).
 
 Window handling
   * Tweak title bar dark mode adaptation to undocumented Windows changes (#983, mintty/wsltty#157).
