@@ -314,11 +314,16 @@ win_toggle_search(bool show, bool focus)
                                      0, 0, 0, 0,
                                      search_wnd, NULL, inst, NULL);
 
-    win_dark_mode(search_wnd);
-    win_dark_mode(search_close_wnd);
+#ifdef darken_search_bar
+#ifdef darken_search_elements
     win_dark_mode(search_prev_wnd);
     win_dark_mode(search_next_wnd);
+    win_dark_mode(search_close_wnd);
+#endif
+    // these two do not darken anything
+    win_dark_mode(search_wnd);
     win_dark_mode(search_edit_wnd);
+#endif
 
     search_font = CreateFontW(sf_height, 0, 0, 0, FW_DONTCARE, false, false, false,
                              DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,

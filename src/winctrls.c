@@ -94,7 +94,10 @@ doctl(control * ctrl,
         CreateWindowExA(exstyle, class, text, wstyle, r.left, r.top, r.right,
                         r.bottom, cp->wnd, (HMENU)(INT_PTR)wid, inst, null);
     }
+#ifdef darken_dialog_elements
+    // apply dark mode to dialog buttons
     win_dark_mode(ctl);
+#endif
 #ifdef debug_widgets
     printf("%8p %s %d '%s'\n", ctl, class, exstyle, text);
 #endif
@@ -1231,7 +1234,8 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
       //__ Colour chooser:
       basic_colors = CreateWindowExW(4, W("Static"), lbl ?: _W("B&asic colours:"), 0x50020000, 6, 7, 210, 15, (HWND)wParam, 0, inst, 0);
                          //shortkey disambiguated from original "&Basic colors:"
-      win_dark_mode(basic_colors);
+      // this does not seem to apply dark mode to anything
+      //win_dark_mode(basic_colors);
       SendMessage(basic_colors, WM_SETFONT, fnt, MAKELPARAM(true, 0));
       if (lbl)
         free(lbl);
