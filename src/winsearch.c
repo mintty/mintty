@@ -314,6 +314,12 @@ win_toggle_search(bool show, bool focus)
                                      0, 0, 0, 0,
                                      search_wnd, NULL, inst, NULL);
 
+    win_dark_mode(search_wnd);
+    win_dark_mode(search_close_wnd);
+    win_dark_mode(search_prev_wnd);
+    win_dark_mode(search_next_wnd);
+    win_dark_mode(search_edit_wnd);
+
     search_font = CreateFontW(sf_height, 0, 0, 0, FW_DONTCARE, false, false, false,
                              DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                              DEFAULT_QUALITY, FIXED_PITCH | FF_DONTCARE,

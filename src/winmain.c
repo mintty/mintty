@@ -1512,6 +1512,28 @@ win_update_glass(bool opaque)
   }
 }
 
+void
+win_dark_mode(HWND w)
+{
+  if (pShouldAppsUseDarkMode) {
+    HIGHCONTRASTW hc;
+    hc.cbSize = sizeof hc;
+    pSystemParametersInfo(SPI_GETHIGHCONTRAST, sizeof hc, &hc, 0);
+    //printf("High Contrast scheme <%ls>\n", hc.lpszDefaultScheme);
+
+    if (!(hc.dwFlags & HCF_HIGHCONTRASTON) && pShouldAppsUseDarkMode()) {
+      pSetWindowTheme(w, W("DarkMode_Explorer"), NULL);
+
+      // set DWMWA_USE_IMMERSIVE_DARK_MODE; needed for titlebar
+      BOOL dark = 1;
+      if (S_OK != pDwmSetWindowAttribute(w, 20, &dark, sizeof dark)) {
+        // this would be the call before Windows build 18362
+        pDwmSetWindowAttribute(w, 19, &dark, sizeof dark);
+      }
+    }
+  }
+}
+
 /*
  * Go full-screen. This should only be called when we are already maximised.
  */
@@ -4944,23 +4966,7 @@ main(int argc, char *argv[])
   trace_winsize("createwindow");
 
   // Dark mode support
-  if (pShouldAppsUseDarkMode) {
-    HIGHCONTRASTW hc;
-    hc.cbSize = sizeof hc;
-    pSystemParametersInfo(SPI_GETHIGHCONTRAST, sizeof hc, &hc, 0);
-    //printf("High Contrast scheme <%ls>\n", hc.lpszDefaultScheme);
-
-    if (!(hc.dwFlags & HCF_HIGHCONTRASTON) && pShouldAppsUseDarkMode()) {
-      pSetWindowTheme(wnd, W("DarkMode_Explorer"), NULL);
-      BOOL dark = 1;
-
-      // set DWMWA_USE_IMMERSIVE_DARK_MODE
-      if (S_OK != pDwmSetWindowAttribute(wnd, 20, &dark, sizeof dark)) {
-        // this would be the call before Windows build 18362
-        pDwmSetWindowAttribute(wnd, 19, &dark, sizeof dark);
-      }
-    }
-  }
+  win_dark_mode(wnd);
 
   // Workaround for failing title parameter:
   if (pEnableNonClientDpiScaling)

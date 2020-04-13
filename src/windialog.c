@@ -471,6 +471,7 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
                        null);
       WPARAM font = SendMessage(wnd, WM_GETFONT, 0, 0);
       SendMessage(treeview, WM_SETFONT, font, MAKELPARAM(true, 0));
+      win_dark_mode(treeview);
       treeview_faff tvfaff;
       tvfaff.treeview = treeview;
       memset(tvfaff.lastat, 0, sizeof(tvfaff.lastat));
@@ -717,6 +718,7 @@ win_open_config(void)
   config_wnd = CreateDialog(inst, MAKEINTRESOURCE(IDD_MAINBOX),
                             wnd, config_dialog_proc);
   unhook_windows();
+  win_dark_mode(config_wnd);
   // At this point, we could actually calculate the size of the 
   // dialog box used for the Options menu; however, the resulting 
   // value(s) (here DIALOG_HEIGHT) is already needed before this point, 
