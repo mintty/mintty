@@ -142,6 +142,8 @@ edit_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
   return CallWindowProc(default_edit_proc, mesg.hwnd, mesg.message, mesg.wParam, mesg.lParam);
 }
 
+#define dont_darken_searchbar
+
 static LRESULT CALLBACK
 search_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -170,6 +172,21 @@ search_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
       if (wp) {
         update = true;
       }
+#ifdef darken_searchbar
+    when WM_CTLCOLOREDIT: {
+      bool support_dark_mode = true;
+      /// ... determine support_dark_mode as in win_dark_mode
+      if (support_dark_mode) {
+        HDC hdc = (HDC)wp;
+        colour fg = RGB(222, 22, 22); // test value
+        colour bg = RGB(22, 22, 22);  // test value
+        /// ... retrieve fg, bg from DarkMode_Explorer theme
+        SetTextColor(hdc, fg);
+        SetBkColor(hdc, bg);
+        return (INT_PTR)CreateSolidBrush(bg);
+      }
+    }
+#endif
   }
 
   if (update) {
@@ -314,15 +331,13 @@ win_toggle_search(bool show, bool focus)
                                      0, 0, 0, 0,
                                      search_wnd, NULL, inst, NULL);
 
-#ifdef darken_search_bar
-#ifdef darken_search_elements
+#ifdef darken_searchbar
     win_dark_mode(search_prev_wnd);
     win_dark_mode(search_next_wnd);
     win_dark_mode(search_close_wnd);
-#endif
     // these two do not darken anything
-    win_dark_mode(search_wnd);
-    win_dark_mode(search_edit_wnd);
+    //win_dark_mode(search_wnd);
+    //win_dark_mode(search_edit_wnd);
 #endif
 
     search_font = CreateFontW(sf_height, 0, 0, 0, FW_DONTCARE, false, false, false,

@@ -400,6 +400,30 @@ unhook_windows()
 
 #define dont_debug_messages
 
+#define dont_darken_dialog_elements
+
+#ifdef darken_dialog_elements
+static LRESULT CALLBACK
+tree_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, UINT_PTR uid, DWORD_PTR data)
+{
+  (void)uid; (void)data;
+  bool support_dark_mode = true;
+  /// ... determine support_dark_mode as in win_dark_mode
+  colour bg = RGB(22, 22, 22);
+  /// ... retrieve bg from DarkMode_Explorer theme
+  switch (msg) {
+    when WM_ERASEBKGND:      // handled via WM_CTLCOLORDLG above
+      if (support_dark_mode) {
+        HDC hdc = (HDC)wp;
+        RECT rc;
+        GetClientRect(wnd, &rc);
+        return FillRect(hdc, &rc, CreateSolidBrush(bg));
+      }
+  }
+  return DefSubclassProc(hwnd, msg, wp, lp);
+}
+#endif
+
 /*
  * This function is the configuration box.
  * (Being a dialog procedure, in general it returns 0 if the default
@@ -430,6 +454,15 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
     printf("[%d] dialog_proc %04X %s (%04X %08X)\n", (int)time(0), msg, wm_name, (unsigned)wParam, (unsigned)lParam);
   }
 #endif
+
+#ifdef darken_dialog_elements
+  bool support_dark_mode = true;
+  /// ... determine support_dark_mode as in win_dark_mode
+  colour fg = RGB(222, 22, 22); // test value
+  colour bg = RGB(22, 22, 22);  // test value
+  /// ... retrieve fg, bg from DarkMode_Explorer theme
+#endif
+
   switch (msg) {
     when WM_INITDIALOG: {
       ctrlbox = ctrl_new_box();
@@ -475,12 +508,13 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
       tvfaff.treeview = treeview;
       memset(tvfaff.lastat, 0, sizeof(tvfaff.lastat));
 
-
-     /*
-      * Apply dark mode to tree menu items (not background)
-      */
 #ifdef darken_dialog_elements
-      win_dark_mode(treeview);
+     /*
+      * Apply dark mode to tree menu background and active item
+      */
+      win_dark_mode(treeview); // active item
+      /// ... passive items?
+      SetWindowSubclass(treeview, tree_proc, 0, 0); // background
 #endif
 
      /*
@@ -539,6 +573,30 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
       }
     }
+
+#ifdef darken_dialog_elements
+    when WM_CTLCOLORDLG      // dialog background
+      or WM_CTLCOLORSTATIC   // labels
+      or WM_CTLCOLORBTN      // button borders; for buttons, see doctl
+      or WM_CTLCOLOREDIT     // popup items
+      or WM_CTLCOLORLISTBOX: // popup menu
+        if (support_dark_mode) {
+          HDC hdc = (HDC)wParam;
+          SetTextColor(hdc, fg);
+          SetBkColor(hdc, bg);
+          return (INT_PTR)CreateSolidBrush(bg);
+        }
+
+#ifdef draw_dialog_bg
+    when WM_ERASEBKGND:      // handled via WM_CTLCOLORDLG above
+      if (support_dark_mode) {
+        HDC hdc = (HDC)wParam;
+        RECT rc;
+        GetClientRect(wnd, &rc);
+        return FillRect(hdc, &rc, CreateSolidBrush(bg));
+      }
+#endif
+#endif
 
     when WM_CLOSE:
       DestroyWindow(wnd);
