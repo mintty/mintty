@@ -412,13 +412,18 @@ tree_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, UINT_PTR uid, DWORD_PTR dat
   colour bg = RGB(22, 22, 22);
   /// ... retrieve bg from DarkMode_Explorer theme
   switch (msg) {
-    when WM_ERASEBKGND:      // handled via WM_CTLCOLORDLG above
+    when WM_ERASEBKGND:      // darken treeview background
       if (support_dark_mode) {
         HDC hdc = (HDC)wp;
         RECT rc;
         GetClientRect(wnd, &rc);
-        return FillRect(hdc, &rc, CreateSolidBrush(bg));
+        HBRUSH br = CreateSolidBrush(bg);
+        int res = FillRect(hdc, &rc, br);
+        DeleteObject(br);
+        return res;
       }
+    //when 0x1100 or 0x110A or 0x110B or 0x110C or 0x112A or 0x112D or 0x113E or 0x2100:
+      // these also occur
   }
   return DefSubclassProc(hwnd, msg, wp, lp);
 }
@@ -580,12 +585,16 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
       or WM_CTLCOLORBTN      // button borders; for buttons, see doctl
       or WM_CTLCOLOREDIT     // popup items
       or WM_CTLCOLORLISTBOX: // popup menu
+      // or WM_CTLCOLORMSGBOX or WM_CTLCOLORSCROLLBAR ?
+        // setting fg fails for WM_CTLCOLORSTATIC
         if (support_dark_mode) {
           HDC hdc = (HDC)wParam;
           SetTextColor(hdc, fg);
           SetBkColor(hdc, bg);
           return (INT_PTR)CreateSolidBrush(bg);
         }
+    //when 0x0090 or 0x00F1 or 0x00F4 or 0x0143 or 0x014B:
+      // these also occur
 
 #ifdef draw_dialog_bg
     when WM_ERASEBKGND:      // handled via WM_CTLCOLORDLG above
@@ -593,7 +602,10 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
         HDC hdc = (HDC)wParam;
         RECT rc;
         GetClientRect(wnd, &rc);
-        return FillRect(hdc, &rc, CreateSolidBrush(bg));
+        HBRUSH br = CreateSolidBrush(bg);
+        int res = FillRect(hdc, &rc, br);
+        DeleteObject(br);
+        return res;
       }
 #endif
 #endif
