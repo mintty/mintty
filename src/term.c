@@ -2117,15 +2117,7 @@ term_paint(void)
         // special handling for geometric "Powerline" symbols
         tattr.attr |= TATTR_ZOOMFULL;
         if (cs_ambig_wide) {
-          if (tchar < 0xE0B8)
-            tattr.attr |= ATTR_EXPAND;
-        }
-        else {
-          if (tchar >= 0xE0B8) {
-            tattr.attr |= ATTR_NARROW;
-            // trigger char_narrowing to be tweaked to 50 in this case
-            tattr.attr |= TATTR_CLEAR;
-          }
+          tattr.attr |= ATTR_EXPAND;
         }
       }
 #ifdef ignore_private_use_for_auto_narrowing
