@@ -741,9 +741,6 @@ write_char(wchar c, int width)
     curs->wrapnext = false;
   }
 
-  if (term.insert && width > 0)
-    insert_char(width);
-
   bool single_width = false;
   if (cfg.charwidth >= 10 || cs_single_forced) {
     if (width > 1) {
@@ -754,6 +751,9 @@ write_char(wchar c, int width)
       single_width = true;
     }
   }
+
+  if (term.insert && width > 0)
+    insert_char(width);
 
   switch (width) {
     when 1:  // Normal character.
