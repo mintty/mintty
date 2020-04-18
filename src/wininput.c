@@ -1974,8 +1974,10 @@ win_key_down(WPARAM wp, LPARAM lp)
     transparency_pending = 2;
     switch (key) {
       when VK_HOME  : set_transparency(previous_transparency);
-      when VK_CLEAR : cfg.transparency = TR_GLASS;
-                      win_update_transparency(false);
+      when VK_CLEAR : if (win_is_glass_available()) {
+                        cfg.transparency = TR_GLASS;
+                        win_update_transparency(false);
+                      }
       when VK_DELETE: set_transparency(0);
       when VK_INSERT: set_transparency(127);
       when VK_END   : set_transparency(TR_HIGH);

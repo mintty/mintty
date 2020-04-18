@@ -1417,8 +1417,11 @@ bool
 win_is_glass_available(void)
 {
   BOOL result = false;
+#ifdef support_glass
+#warning #501: “Just give up on glass effects. Microsoft clearly have.”
   if (pDwmIsCompositionEnabled)
     pDwmIsCompositionEnabled(&result);
+#endif
   return result;
 }
 
