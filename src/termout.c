@@ -2297,6 +2297,9 @@ do_csi(uchar c)
         else
           child_printf("\e[>77;%u;0c", DECIMAL_VERSION);
       }
+    when CPAIR('>', 'q'):     /* Report terminal name and version */
+      if (!arg0)
+        child_printf("\eP>|%s %s\e\\", APPNAME, VERSION);
     when 'a':        /* HPR: move right N cols */
       move(curs->x + arg0_def1, curs->y, 1);
     when 'C':        /* CUF: Cursor right */

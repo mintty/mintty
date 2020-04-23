@@ -5,6 +5,7 @@ Terminal features
   * Support margin bell volume escape sequence DECSMBV (#974) with wave files.
   * Support visible space indication.
   * Fixed insert mode in single-width character mode (#964).
+  * New CSI > 0 q to report terminal name and version (#881).
 
 Character encoding
   * Enhanced and documented GB18030 support (mintty/wsltty#224).
