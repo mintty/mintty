@@ -21,6 +21,7 @@ Unicode and Emoji data
 Font rendering
   * Enable auto-narrowing for Private Use characters (#979, "Nerd Fonts").
   * Adjust and zoom rendering for geometric Powerline symbols (#979).
+  * Support emoji style OpenMoji (#985).
 
 Window handling
   * Tweak title bar dark mode adaptation to undocumented Windows changes (#983, mintty/wsltty#157).
@@ -39,6 +40,7 @@ Configuration
   * Options DispSpace, DispTab, DispClear.
   * Options Suppress* are now resilient against space (mintty/wsltty#235).
   * Option value SupportExternalHotkeys=4 (#877).
+  * Option value Emojis=openmoji (#985).
 
 ### 3.1.4 (25 February 2020) ###
 

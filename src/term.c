@@ -1589,6 +1589,9 @@ fallback:;
       pre = "windows/";
     when EMOJIS_NONE:
       pre = "common/";
+    when EMOJIS_OPENMOJI:
+      pre = "openmoji/";
+      fmt = "%04X";
     otherwise:
       return false;
   }

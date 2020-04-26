@@ -527,6 +527,7 @@ static opt_val
   },
   [OPT_EMOJIS] = (opt_val[]) {
     {"none", EMOJIS_NONE},
+    {"openmoji", EMOJIS_OPENMOJI},
     {"noto", EMOJIS_NOTO},
     {"joypixels", EMOJIS_JOYPIXELS},
     {"emojione", EMOJIS_ONE},
