@@ -453,68 +453,40 @@ term_reconfig(void)
     term.vt220_keys = vt220(new_cfg.term);
 }
 
-static bool
-in_result(pos abspos, result run)
-{
-  return
-    (abspos.x + abspos.y * term.cols >= run.x + run.y * term.cols) &&
-    (abspos.x + abspos.y * term.cols <  run.x + run.y * term.cols + run.len);
-}
-
-static bool
-in_results_recurse(pos abspos, int lo, int hi)
-{
-  if (hi - lo == 0) {
-    return false;
-  }
-  int mid = (lo + hi) / 2;
-  result run = term.results.results[mid];
-  if (run.x + run.y * term.cols > abspos.x + abspos.y * term.cols) {
-    return in_results_recurse(abspos, lo, mid);
-  } else if (run.x + run.y * term.cols + run.len <= abspos.x + abspos.y * term.cols) {
-    return in_results_recurse(abspos, mid + 1, hi);
-  }
-  return true;
-}
-
 static int
 in_results(pos scrpos)
 {
-  if (term.results.length == 0) {
+  if (term.results.xquery_length == 0) {
     return 0;
   }
+  int idx = scrpos.x + (scrpos.y + term.sblines) * term.cols;
+  if (!(term.results.range_begin <= idx && idx < term.results.range_end)) {
+    term_search_expand(idx);
+  }
 
-  pos abspos = {
-    .x = scrpos.x,
-    .y = scrpos.y + term.sblines
-  };
+  int b = 0;
+  int e = term.results.length;
+  while (b < e) {
+    int m = (b + e) / 2;
+    if (term.results.results[m].idx > idx) {
+      e = m;
+    } else {
+      b = m + 1;
+    }
+  }
 
-  int match = in_results_recurse(abspos, 0, term.results.length);
-  match += in_result(abspos, term.results.results[term.results.current]);
+  if (e <= 0) {
+    return 0;
+  }
+  result hit = term.results.results[e - 1];
+  if (idx >= hit.idx + hit.len) {
+    return 0;
+  }
+  int match = 1;
+  if (term.results.current.idx <= idx && idx < term.results.current.idx + term.results.current.len) {
+    match += 1;
+  }
   return match;
-}
-
-static void
-results_add(result abspos)
-{
-  assert(term.results.capacity > 0);
-  if (term.results.length == term.results.capacity) {
-    term.results.capacity *= 2;
-    term.results.results = renewn(term.results.results, term.results.capacity);
-  }
-
-  term.results.results[term.results.length] = abspos;
-  ++term.results.length;
-}
-
-static void
-results_partial_clear(int pos)
-{
-  int i = term.results.length;
-  while (i > 0 && term.results.results[i - 1].y >= pos) {
-    --i;
-  }
-  term.results.length = i;
 }
 
 void
@@ -543,131 +515,9 @@ term_set_search(wchar * needle)
   term.results.update_type = FULL_UPDATE;
 }
 
-static void
-circbuf_init(circbuf * cb, int sz)
-{
-  cb->capacity = sz;
-  cb->length = 0;
-  cb->start = 0;
-  cb->buf = newn(termline*, sz);
-}
-
-static void
-circbuf_destroy(circbuf * cb)
-{
-  cb->capacity = 0;
-  cb->length = 0;
-  cb->start = 0;
-
-  // Free any termlines we have left.
-  for (int i = 0; i < cb->capacity; ++i) {
-    if (cb->buf[i] == NULL)
-      continue;
-    release_line(cb->buf[i]);
-  }
-  free(cb->buf);
-  cb->buf = NULL;
-}
-
-static void
-circbuf_push(circbuf * cb, termline * tl)
-{
-  int pos = (cb->start + cb->length) % cb->capacity;
-
-  if (cb->length < cb->capacity) {
-    ++cb->length;
-  } else {
-    ++cb->start;
-    release_line(cb->buf[pos]);
-  }
-  cb->buf[pos] = tl;
-}
-
-static termline *
-circbuf_get(circbuf * cb, int i)
-{
-  assert(i < cb->length);
-  return cb->buf[(cb->start + i) % cb->capacity];
-}
-
-#ifdef dynamic_casefolding
-static struct {
-  uint code, fold;
-} * case_folding;
-static int case_foldn = 0;
-
-static void
-init_case_folding()
-{
-  static bool init = false;
-  if (init)
-    return;
-  init = true;
-
-  FILE * cf = fopen("/usr/share/unicode/ucd/CaseFolding.txt", "r");
-  if (cf) {
-    uint last = 0;
-    case_folding = newn(typeof(* case_folding), 1);
-    char buf[100];
-    while (fgets(buf, sizeof(buf), cf)) {
-      uint code, fold;
-      char status;
-      if (sscanf(buf, "%X; %c; %X;", &code, &status, &fold) == 3) {
-        //1E9B; C; 1E61; # LATIN SMALL LETTER LONG S WITH DOT ABOVE
-        //1E9E; F; 0073 0073; # LATIN CAPITAL LETTER SHARP S
-        //1E9E; S; 00DF; # LATIN CAPITAL LETTER SHARP S
-        //0130; T; 0069; # LATIN CAPITAL LETTER I WITH DOT ABOVE
-        if (status == 'C' || status == 'S' || (status == 'T' && code != last)) {
-          last = code;
-          case_folding = renewn(case_folding, case_foldn + 1);
-          case_folding[case_foldn].code = code;
-          case_folding[case_foldn].fold = fold;
-          case_foldn++;
-#ifdef debug_case_folding
-          printf("  {0x%04X, 0x%04X},\n", code, fold);
-#endif
-        }
-      }
-    }
-    fclose(cf);
-  }
-}
-#else
-static struct {
-  uint code, fold;
-} case_folding[] = {
-#include "casefold.t"
-};
-#define case_foldn lengthof(case_folding)
-#define init_case_folding()
-#endif
-
-static uint
-case_fold(uint ch)
-{
-  // binary search in table
-  int min = 0;
-  int max = case_foldn - 1;
-  int mid;
-  while (max >= min) {
-    mid = (min + max) / 2;
-    if (case_folding[mid].code < ch) {
-      min = mid + 1;
-    } else if (case_folding[mid].code > ch) {
-      max = mid - 1;
-    } else {
-      return case_folding[mid].fold;
-    }
-  }
-  return ch;
-}
-
 void
 term_update_search(void)
 {
-  init_case_folding();
-
-  int update_type = term.results.update_type;
   if (term.results.update_type == NO_UPDATE)
     return;
   term.results.update_type = NO_UPDATE;
@@ -677,98 +527,8 @@ term_update_search(void)
     return;
   }
 
-  circbuf cb;
-  // Allocate room for the circular buffer of termlines.
-  int lcurr = 0;
-  if (update_type == PARTIAL_UPDATE) {
-    // How much of the backscroll we need to update on a partial update?
-    // Do a ceil: (x + y - 1) / y
-    // On xquery_length - 1
-    int pstart = -((term.results.xquery_length + term.cols - 2) / term.cols) + term.sblines;
-    lcurr = lcurr > pstart ? lcurr:pstart;
-    results_partial_clear(lcurr);
-  } else {
-    term_clear_results();
-  }
-  int llen = term.results.xquery_length / term.cols + 1;
-  if (llen < 2)
-    llen = 2;
-
-  circbuf_init(&cb, llen);
-
-  // Fill in our starting set of termlines.
-  for (int i = lcurr; i < term.rows + term.sblines && cb.length < cb.capacity; ++i) {
-    circbuf_push(&cb, fetch_line(i - term.sblines));
-  }
-
-  int cpos = term.cols * lcurr;
-  /* the number of matched chars in the current run */
-  int npos = 0;
-  /* the number of matched cells in the current run (anpos >= npos) */
-  int anpos = 0;
-  int end = term.cols * (term.rows + term.sblines);
-
-  // Loop over every character and search for query.
-  while (cpos < end) {
-    // Determine the current position.
-    int x = (cpos % term.cols);
-    int y = (cpos / term.cols);
-
-    // If our current position isn't in the buffer, add it in.
-    if (y - lcurr >= llen) {
-      circbuf_push(&cb, fetch_line(lcurr + llen - term.sblines));
-      ++lcurr;
-    }
-    termline * lll = circbuf_get(&cb, y - lcurr);
-    termchar * chr = lll->chars + x;
-
-    if (npos == 0 && cpos + term.results.xquery_length >= end)
-      break;
-
-    xchar ch = chr->chr;
-    if ((ch & 0xFC00) == 0xD800 && chr->cc_next) {
-      termchar * cc = chr + chr->cc_next;
-      if ((cc->chr & 0xFC00) == 0xDC00) {
-        ch = ((xchar) (ch - 0xD7C0) << 10) | (cc->chr & 0x03FF);
-      }
-    }
-    xchar pat = term.results.xquery[npos];
-    bool match = case_fold(ch) == case_fold(pat);
-    if (!match) {
-      // Skip the second cell of any wide characters
-      if (ch == UCSWIDE) {
-        ++anpos;
-        ++cpos;
-        continue;
-      }
-      cpos -= npos - 1;
-      npos = 0;
-      anpos = 0;
-      continue;
-    }
-
-    ++anpos;
-    ++npos;
-
-    if (npos >= term.results.xquery_length) {
-      int start = cpos - anpos + 1;
-      result run = {
-        .x = start % term.cols,
-        .y = start / term.cols,
-        .len = anpos
-      };
-#ifdef debug_search
-      printf("%d, %d, %d\n", run.x, run.y, run.len);
-#endif
-      results_add(run);
-      npos = 0;
-      anpos = 0;
-    }
-
-    ++cpos;
-  }
-
-  circbuf_destroy(&cb);
+  term_clear_results();
+  // The actual search happens inside in_results().
 }
 
 void
@@ -778,18 +538,11 @@ term_schedule_search_update(void)
 }
 
 void
-term_schedule_search_partial_update(void)
-{
-  if (term.results.update_type == NO_UPDATE) {
-    term.results.update_type = PARTIAL_UPDATE;
-  }
-}
-
-void
 term_clear_results(void)
 {
   term.results.results = renewn(term.results.results, 16);
-  term.results.current = 0;
+  term.results.current = (result) {0, 0};
+  term.results.range_begin = term.results.range_end = 0;
   term.results.length = 0;
   term.results.capacity = 16;
 }

@@ -322,18 +322,26 @@ typedef enum {
 
 /* Searching */
 typedef struct {
-  int x;
-  int y;
+  // Index of a virtual array of scrollback + screen.
+  // y = idx / term.cols
+  // x = idx % term.rows
+  // y starts from the top most line (y = 0, the first line of scrollback or screen).
+  int idx;
+  // The length of a match, maybe larger than term.results.xquery_length because of UCSWIDE.
   int len;
 } result;
 
 typedef struct {
+  // The current active result, for prev/next button.
+  result current;
+  // An idx can be matched against term.results.results iff idx in [range_begin, range_end).
+  int range_begin, range_end;
   result * results;
   wchar * query;
   xchar * xquery;
   int xquery_length;
+  // The capacity and length of results.
   int capacity;
-  int current;
   int length;
   int update_type;
 } termresults;
@@ -660,5 +668,8 @@ extern void term_schedule_search_update(void);
 extern void term_update_search(void);
 extern void term_clear_results(void);
 extern void term_clear_search(void);
+extern void term_search_expand(int idx);
+extern result term_search_prev(void);
+extern result term_search_next(void);
 
 #endif
