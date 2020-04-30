@@ -332,10 +332,12 @@ term_search_next(void)
 
       // Search from the beginning.
       idx = 0;
-      // Clear results before the next expansion to avoid full search.
-      term_clear_results();
-      // term.results.current should be preserved.
-      term.results.current = current;
+      if (term.results.range_begin != 0) {
+        // Clear results before the next expansion to avoid full search.
+        term_clear_results();
+        // term.results.current should be preserved.
+        term.results.current = current;
+      }
     }
   }
 
@@ -384,10 +386,12 @@ term_search_prev(void)
 
       // Search from the end.
       idx = max_idx - 1;
-      // Clear results before the next expansion to avoid full search.
-      term_clear_results();
-      // term.results.current should be preserved.
-      term.results.current = current;
+      if (term.results.range_end != max_idx) {
+        // Clear results before the next expansion to avoid full search.
+        term_clear_results();
+        // term.results.current should be preserved.
+        term.results.current = current;
+      }
     }
   }
 
