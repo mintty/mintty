@@ -15,6 +15,7 @@
 # - TARGET: target triple for cross compiling
 #	values: i686-pc-cygwin, x86_64-pc-cygwin, i686-pc-msys, x86_64-pc-msys
 # - DEBUG: define to enable debug build
+# - DEBUG_OPT: define to enable debug build with optimization
 # - DMALLOC: define to enable the dmalloc heap debugging library
 #
 # The values of DEBUG and DMALLOC variables do not matter, it's just about
@@ -118,6 +119,8 @@ LDLIBS := -mwindows $(extralibs) -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -
 ifdef DEBUG
   CPPFLAGS += -Wno-trampolines
   CFLAGS += -g
+else ifdef DEBUG_OPT
+  CFLAGS += -fno-omit-frame-pointer -O2 -g
 else
   CPPFLAGS += -DNDEBUG
   CFLAGS += -fomit-frame-pointer -O2
