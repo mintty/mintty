@@ -31,6 +31,7 @@ Window handling
   * Drag-and-drop import of itermcolors schemes (mintty/wsltty#227).
   * Workaround to interact with Hot Keyboard (#877, setting SupportExternalHotkeys=4).
   * Disable deprecated glass mode from interactive options (#501, mintty/wsltty#241).
+  * Speedup of scrollback searching (#988, #986).
 
 Other
   * Warning and error popups are placed on top of desktop.
