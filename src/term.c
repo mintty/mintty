@@ -244,6 +244,7 @@ static void
 term_cursor_reset(term_cursor *curs)
 {
   curs->attr = CATTR_DEFAULT;
+  curs->width = 0;
   curs->gl = 0;
   curs->gr = 0;
   curs->oem_acs = 0;
@@ -2042,6 +2043,18 @@ _win_text(int line, int tx, int ty, wchar *text, int len, cattr attr, cattr *tex
 
 #endif
 
+#define dont_debug_line
+
+#ifdef debug_line
+void trace_line(char * tag, termchar * chars)
+{
+  if (chars[0].chr > 0x80)
+    printf("[%s] %04X %04X %04X %04X %04X %04X\n", tag, chars[0].chr, chars[1].chr, chars[2].chr, chars[3].chr, chars[4].chr, chars[5].chr);
+}
+#else
+#define trace_line(tag, chars)	
+#endif
+
 void
 term_paint(void)
 {
@@ -2063,6 +2076,8 @@ term_paint(void)
     pos scrpos;
     scrpos.y = i + term.disptop;
     termline *line = fetch_line(scrpos.y);
+
+    //trace_line("loop0", line->chars);
 
    /*
     * Pre-loop: identify emojis and emoji sequences.
@@ -2097,7 +2112,8 @@ term_paint(void)
           // check whether all emoji components have the same attributes
           bool equalattrs = true;
           for (int i = 1; i < e.len && equalattrs; i++) {
-# define IGNATTR (ATTR_WIDE | ATTR_FGMASK | TATTR_COMBINING)
+# define IGNWIDTH ATTR_EXPAND | ATTR_NARROW | TATTR_SINGLE | TATTR_CLEAR
+# define IGNATTR (ATTR_WIDE | ATTR_FGMASK | TATTR_COMBINING | IGNWIDTH)
             if ((d[i].attr.attr & ~IGNATTR) != (d->attr.attr & ~IGNATTR)
                || d[i].attr.truebg != d->attr.truebg
                )
@@ -2138,6 +2154,8 @@ term_paint(void)
       d->attr = tattr;
     }
 
+    //trace_line("loopb", line->chars);
+
    /* Do Arabic shaping and bidi. */
     termchar *chars = term_bidi_line(line, i);
     int *backward = chars ? term.post_bidi_cache[i].backward : 0;
@@ -2147,6 +2165,8 @@ term_paint(void)
     termline *displine = term.displines[i];
     termchar *dispchars = displine->chars;
     termchar newchars[term.cols];
+
+    //trace_line("loop1", chars);
 
    /*
     * First loop: work along the line deciding what we want
@@ -2431,6 +2451,9 @@ term_paint(void)
         dispchars[curs_x].attr.attr |= ATTR_INVALID;
     }
 
+    //trace_line("loopn", newchars);
+    //trace_line("loopd", dispchars);
+
    /*
     * Now loop over the line again, noting where things have changed.
     *
@@ -2624,7 +2647,8 @@ term_paint(void)
             win_text(x, y, esp, elen, eattr, textattr, lattr, has_rtl, false, 1);
             flush_text();
           }
-#ifdef debug_emojis
+#if defined(debug_emojis) && debug_emojis > 3
+          // add background to some emojis
           eattr.attr &= ~(ATTR_BGMASK | ATTR_FGMASK);
           eattr.attr |= 6 << ATTR_BGSHIFT | 4;
           esp[0] = '0' + elen;
@@ -2638,8 +2662,8 @@ term_paint(void)
             emoji_show(x, y, *ee, elen, eattr, lattr);
           }
         }
-#ifdef debug_emojis
-        else {
+#if defined(debug_emojis) && debug_emojis > 3
+        else { // mark some emojis
           eattr.attr &= ~(ATTR_BGMASK | ATTR_FGMASK);
           eattr.attr |= 4 << ATTR_BGSHIFT | 6;
           esp[0] = '0';
@@ -2667,6 +2691,8 @@ term_paint(void)
         flush_text();
       }
     }
+
+    //trace_line("loop3", newchars);
 
    /*
     * Third loop, for actual drawing.

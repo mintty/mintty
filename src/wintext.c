@@ -2706,7 +2706,8 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
 
   bool wscale_narrow_50 = false;
   if ((attr.attr & (ATTR_NARROW | TATTR_CLEAR)) == (ATTR_NARROW | TATTR_CLEAR)) {
-    // indicator for adjustment of auto-narrowing
+    // indicator for adjustment of auto-narrowing;
+    // geometric Powerline symbols, explicit single-width attribute narrowing
     attr.attr &= ~TATTR_CLEAR;
     wscale_narrow_50 = true;
   }

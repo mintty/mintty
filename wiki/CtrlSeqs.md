@@ -280,6 +280,23 @@ U+2910, U+296A..U+296D, U+2B33, U+2E0E..U+2E11, U+2E3A..U+2E3B;
 this list is subject to change in future versions.
 
 
+## Explicit character width ##
+
+Mintty provides explicit width override as a character attribute, 
+so an application can enforce single-width characters to be rendered wide 
+or double-width ("wide") characters to be rendered narrow.
+Experimentally, for this purpose the ECMA-48 escape sequences 
+"Presentation Expand Or Contract" (PEC) `CSI` _num_ `SP Z` are used, 
+with one extension:
+
+| **sequence** | **effect**                                    |
+|:-------------|:----------------------------------------------|
+| `^[[1 Z`     | expand: enforce double-cell display           |
+| `^[[2 Z`     | contract: enforce single-cell display         |
+| `^[[22 Z`    | zoom down to single-cell display (like setting `Charwidth=single`) |
+| `^[[2;2 Z`   | like `^[[22 Z`                                |
+
+
 ## Font size ##
 
 The following _OSC_ ("operating system command") sequences can be used to change and query font size:

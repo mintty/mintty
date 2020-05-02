@@ -742,6 +742,32 @@ write_char(wchar c, int width)
   }
 
   bool single_width = false;
+
+  // adjust to explicit width attribute; not for combinings and low surrogates
+  if (curs->width && width > 0) {
+    //if ((c & 0xFFF) == 0x153) printf("%llX %d\n", curs->attr.attr, width);
+    if (curs->width == 1) {
+      if (!(width < 2 || (cs_ambig_wide && is_ambig(c))))
+        curs->attr.attr |= TATTR_CLEAR | ATTR_NARROW;
+      width = 1;
+    }
+    else if (curs->width == 11) {
+      if (width > 1) {
+        if (!(cs_ambig_wide && is_ambig(c))) {
+          single_width = true;
+          curs->attr.attr |= TATTR_SINGLE;
+        }
+        width = 1;
+      }
+    }
+    else if (curs->width == 2) {
+      if (width < 2) {
+        curs->attr.attr |= ATTR_EXPAND;
+        width = 2;
+      }
+    }
+  }
+
   if (cfg.charwidth >= 10 || cs_single_forced) {
     if (width > 1) {
       single_width = true;
@@ -796,10 +822,6 @@ write_char(wchar c, int width)
       }
       put_char(c);
       curs->x++;
-#ifdef support_triple_width
-      if (width > 2)
-        curs->x += width - 2;
-#endif
       put_char(UCSWIDE);
     when 0 or -1:  // Combining character or Low surrogate.
 #ifdef debug_surrogates
@@ -2813,6 +2835,19 @@ do_csi(uchar c)
         term.marginbell.vol = 8;
       else if (arg0 <= 8)
         term.marginbell.vol = arg0;
+    when CPAIR(' ', 'Z'): /* PEC: ECMA-48 Presentation Expand Or Contract */
+      if (!arg0)
+        curs->width = 0;
+      else if (arg0 == 1)   // expanded
+        curs->width = 2;
+      else if (arg0 == 2) { // condensed
+        if (arg1 == 2)      // single-cell zoomed down
+          curs->width = 11;
+        else
+          curs->width = 1;
+      }
+      else if (arg0 == 22)  // single-cell zoomed down
+        curs->width = 11;
   }
 }
 

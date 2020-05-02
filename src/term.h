@@ -414,6 +414,7 @@ typedef struct {
   short x, y;
   bool wrapnext;
   cattr attr;
+  char width;  // handle explicit width attribute in termout.c
   bool origin;
   short gl, gr;
   term_cset csets[4];
