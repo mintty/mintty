@@ -205,6 +205,7 @@ enum {
 
 typedef unsigned long long cattrflags;
 
+// NOTE: cattr_eq() should be updated if new fields are added.
 typedef struct {
   cattrflags attr;
   colour truebg;

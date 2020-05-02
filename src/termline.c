@@ -49,6 +49,7 @@ struct buf {
   int len, size;
 };
 
+// Note: Inlining the add() function reduces the compression time by 30%.
 static void
 add(struct buf *b, uchar c)
 {
@@ -64,6 +65,34 @@ static int
 get(struct buf *b)
 {
   return b->data[b->len++];
+}
+
+/*
+ * Store the number, 7 bits at a time, least significant
+ * `digit' first, with the high bit set on all but the last.
+ */
+static void
+writevint(struct buf *b, int n)
+{
+  while (n >= 128) {
+    add(b, (uchar) ((n & 0x7F) | 0x80));
+    n >>= 7;
+  }
+  add(b, (uchar) (n));
+}
+
+static int
+readvint(struct buf *b)
+{
+  int val = 0;
+  int shift = 0;
+  int byte = 0;
+  do {
+    byte = get(b);
+    val |= (byte & 0x7F) << shift;
+    shift += 7;
+  } while (byte & 0x80);
+  return val;
 }
 
 /*
@@ -232,6 +261,34 @@ makeliteral_chr(struct buf *buf, termchar *c)
   add(buf, wc);
 }
 
+// Not using RLE here, because the only compressible thing is the white space.
+// The repetitive white space is encoded with 1 space followed by a counter.
+static void
+encode_chr(struct buf *b, termline *line)
+{
+  int space_cnt = 0;
+  //! Note: line->chars is based @ index -1
+  for (int i = -1; i < line->size; ++i) {
+    termchar *c = &line->chars[i];
+    if (c->chr == ' ') {
+      space_cnt++;
+      continue;
+    }
+
+    if (space_cnt > 0) {
+      add(b, ' ');
+      writevint(b, space_cnt);
+      space_cnt = 0;
+    }
+    makeliteral_chr(b, c);
+  }
+
+  if (space_cnt > 0) {
+    add(b, ' ');
+    writevint(b, space_cnt);
+  }
+}
+
 static void
 makeliteral_attr(struct buf *b, termchar *c)
 {
@@ -292,25 +349,64 @@ makeliteral_attr(struct buf *b, termchar *c)
   }
 }
 
-static void
-makeliteral_cc(struct buf *b, termchar *c)
+static bool
+cattr_eq(const cattr *a, const cattr *b)
 {
- /*
-  * For combining characters, I just encode a bunch of ordinary
-  * chars using makeliteral_chr, and terminate with a \0
-  * character (which I know won't come up as a combining char itself).
-  */
-  termchar z;
+  return a->attr == b->attr
+    && a->truebg == b->truebg
+    && a->truefg == b->truefg
+    && a->ulcolr == b->ulcolr
+    && a->link == b->link
+    && a->imgi == b->imgi;
+}
 
-  while (c->cc_next) {
-    c += c->cc_next;
-    assert(c->chr != 0);
-    makeliteral_chr(b, c);
-    makeliteral_attr(b, c);
+// Using RLE here, each cattr is followed by a counter.
+static void
+encode_attr(struct buf *b, termline *line)
+{
+  int head = -1;
+  int rle_cnt = 0;
+  //! Note: line->chars is based @ index -1
+  for (int i = -1; i < line->size; ++i) {
+    termchar *c = &line->chars[i];
+    if (cattr_eq(&c->attr, &line->chars[head].attr)) {
+      rle_cnt++;
+    } else {
+      makeliteral_attr(b, &line->chars[head]);
+      writevint(b, rle_cnt);
+      head = i;
+      rle_cnt = 1;
+    }
+  }
+  makeliteral_attr(b, &line->chars[head]);
+  writevint(b, rle_cnt);
+}
+
+// This is similar to encode_chr(), only repetitive zeros are compressed.
+static void
+encode_cc(struct buf *b, termline *line)
+{
+  uint16_t zero_cnt = 0;
+  //! Note: line->chars is based @ index -1
+  for (int i = -1; i < line->size; ++i) {
+    termchar *c = &line->chars[i];
+    if (c->cc_next == 0) {
+      zero_cnt++;
+      continue;
+    }
+
+    if (zero_cnt > 0) {
+      writevint(b, 0);
+      writevint(b, zero_cnt);
+      zero_cnt = 0;
+    }
+    writevint(b, c->cc_next);
   }
 
-  z.chr = 0;
-  makeliteral_chr(b, &z);
+  if (zero_cnt > 0) {
+    writevint(b, 0);
+    writevint(b, zero_cnt);
+  }
 }
 
 static void
@@ -329,6 +425,25 @@ readliteral_chr(struct buf *buf, termchar *c, termline *unused(line))
     else
       b = get(buf);
     c->chr = b << 8 | get(buf);
+  }
+}
+
+static void
+decode_chr(struct buf *b, termline *line)
+{
+  //! Note: line->chars is based @ index -1
+  for (int i = -1; i < line->size; ) {
+    termchar *c = &line->chars[i];
+    readliteral_chr(b, c, line);
+    if (c->chr == ' ') {
+      int space_cnt = readvint(b);
+      for (int j = 1; j < space_cnt; ++j) {
+        (c + j)->chr = ' ';
+      }
+      i += space_cnt;
+    } else {
+      i++;
+    }
   }
 }
 
@@ -386,215 +501,64 @@ readliteral_attr(struct buf *b, termchar *c, termline *unused(line))
 }
 
 static void
-readliteral_cc(struct buf *b, termchar *c, termline *line)
+decode_attr(struct buf *b, termline *line)
 {
-  termchar n;
-  int x = c - line->chars;
-
-  c->cc_next = 0;
-
-  while (1) {
-    readliteral_chr(b, &n, line);
-    if (!n.chr)
-      break;
-    readliteral_attr(b, &n, line);
-    add_cc(line, x, n.chr, n.attr);
+  //! Note: line->chars is based @ index -1
+  for (int i = -1; i < line->size; ) {
+    termchar *c = &line->chars[i];
+    readliteral_attr(b, c, line);
+    int rle_cnt = readvint(b);
+    i += rle_cnt;
+    for (int j = 1; j < rle_cnt; ++j) {
+      (c + j)->attr = c->attr;
+    }
   }
 }
 
 static void
-makerle(struct buf *b, termline *line,
-        void (*makeliteral) (struct buf *b, termchar *c))
+decode_cc(struct buf *b, termline *line)
 {
-  int hdrpos, hdrsize, prevlen, prevpos, thislen, thispos, prev2;
-
-  termchar *c = line->chars;
-  int n = line->cols;
-
   //! Note: line->chars is based @ index -1
-  c--;
-  n++;
-
-  hdrpos = b->len;
-  hdrsize = 0;
-  add(b, 0);
-  prevlen = prevpos = 0;
-  prev2 = false;
-
-  while (n-- > 0) {
-    thispos = b->len;
-    makeliteral(b, c++);
-    thislen = b->len - thispos;
-    if (thislen == prevlen &&
-        !memcmp(b->data + prevpos, b->data + thispos, thislen)) {
-     /*
-      * This literal precisely matches the previous one.
-      * Turn it into a run if it's worthwhile.
-      *
-      * With one-byte literals, it costs us two bytes to encode a run, 
-      * plus another byte to write the header to resume normal output; 
-      * so a three-element run is neutral, and anything beyond that 
-      * is unconditionally worthwhile. 
-      * With two-byte literals or more, even a 2-run is a win.
-      */
-      if (thislen > 1 || prev2) {
-        int runpos, runlen;
-
-       /*
-        * It's worth encoding a run. Start at prevpos,
-        * unless hdrsize == 0 in which case we can back up
-        * another one and start by overwriting hdrpos.
-        */
-
-        hdrsize--;      /* remove the literal at prevpos */
-        if (prev2) {
-          assert(hdrsize > 0);
-          hdrsize--;
-          prevpos -= prevlen;   /* and possibly another one */
-        }
-
-        if (hdrsize == 0) {
-          assert(prevpos == hdrpos + 1);
-          runpos = hdrpos;
-          b->len = prevpos + prevlen;
-        }
-        else {
-          memmove(b->data + prevpos + 1, b->data + prevpos, prevlen);
-          runpos = prevpos;
-          b->len = prevpos + prevlen + 1;
-         /*
-          * Terminate the previous run of ordinary literals.
-          */
-          assert(hdrsize >= 1 && hdrsize <= 128);
-          b->data[hdrpos] = hdrsize - 1;
-        }
-
-        runlen = prev2 ? 3 : 2;
-
-        while (n > 0 && runlen < 129) {
-          int tmppos, tmplen;
-          tmppos = b->len;
-          makeliteral(b, c);
-          tmplen = b->len - tmppos;
-          b->len = tmppos;
-          if (tmplen != thislen ||
-              memcmp(b->data + runpos + 1, b->data + tmppos, tmplen)) {
-            break;      /* run over */
-          }
-          n--, c++, runlen++;
-        }
-
-        assert(runlen >= 2 && runlen <= 129);
-        b->data[runpos] = runlen + 0x80 - 2;
-
-        hdrpos = b->len;
-        hdrsize = 0;
-        add(b, 0);
-       /* And ensure this run doesn't interfere with the next. */
-        prevlen = prevpos = 0;
-        prev2 = false;
-
-        continue;
+  for (int i = -1; i < line->size; ) {
+    termchar *c = &line->chars[i];
+    c->cc_next = readvint(b);
+    if (c->cc_next == 0) {
+      int zero_cnt = readvint(b);
+      for (int j = 1; j < zero_cnt; ++j) {
+        (c + j)->cc_next = 0;
       }
-      else {
-       /*
-        * Just flag that the previous two literals were identical,
-        * in case we find a third identical one we want to turn into a run.
-        */
-        prev2 = true;
-        prevlen = thislen;
-        prevpos = thispos;
-      }
+      i += zero_cnt;
+    } else {
+      i++;
     }
-    else {
-      prev2 = false;
-      prevlen = thislen;
-      prevpos = thispos;
-    }
-
-   /*
-    * This character isn't (yet) part of a run. Add it to hdrsize.
-    */
-    hdrsize++;
-    if (hdrsize == 128) {
-      b->data[hdrpos] = hdrsize - 1;
-      hdrpos = b->len;
-      hdrsize = 0;
-      add(b, 0);
-      prevlen = prevpos = 0;
-      prev2 = false;
-    }
-  }
-
- /* Clean up. */
-  if (hdrsize > 0) {
-    assert(hdrsize <= 128);
-    b->data[hdrpos] = hdrsize - 1;
-  }
-  else {
-    b->len = hdrpos;
   }
 }
-
 
 uchar *
 compressline(termline *line)
 {
   struct buf buffer = { null, 0, 0 }, *b = &buffer;
 
- /*
-  * First, store the column count, 7 bits at a time, least significant
-  * `digit' first, with the high bit set on all but the last.
-  */
-  {
-    int n = line->cols;
-    while (n >= 128) {
-      add(b, (uchar) ((n & 0x7F) | 0x80));
-      n >>= 7;
-    }
-    add(b, (uchar) (n));
-  }
-
- /*
-  * Next store the line attributes; same principle.
-  */
-  {
-    int n = line->lattr;
-    while (n >= 128) {
-      add(b, (uchar) ((n & 0x7F) | 0x80));
-      n >>= 7;
-    }
-    add(b, (uchar) (n));
-  }
+  // Store the column count, array size, cc_free and line attributes.
+  writevint(b, line->cols);
+  writevint(b, line->size);
+  writevint(b, line->cc_free);
+  writevint(b, line->lattr);
 
  /*
   * Store the wrap position if used.
   */
   if (line->lattr & LATTR_WRAPPED) {
-    int n = line->wrappos;
-    while (n >= 128) {
-      add(b, (uchar) ((n & 0x7F) | 0x80));
-      n >>= 7;
-    }
-    add(b, (uchar) (n));
+    writevint(b, line->wrappos);
   }
 
- /*
-  * Now we store a sequence of separate run-length encoded
-  * fragments, each containing exactly as many symbols as there
-  * are columns in the line.
-  *
-  * All of these have a common basic format:
-  *
-  *  - a byte 00-7F indicates that X+1 literals follow it
-  *  - a byte 80-FF indicates that a single literal follows it
-  *    and expects to be repeated (X-0x80)+2 times.
-  *
-  * The format of the `literals' varies between the fragments.
-  */
-  makerle(b, line, makeliteral_chr);
-  makerle(b, line, makeliteral_attr);
-  makerle(b, line, makeliteral_cc);
+  // FULL-TERMCHAR
+  // For each field in termchar, encode them separately.
+  // The whole line->chars array (from -1 to line->size) is encoded in each pass,
+  // no special handling is needed for the linked list inside line->chars.
+  encode_chr(b, line);
+  encode_attr(b, line);
+  encode_cc(b, line);
 
  /*
   * Trim the allocated memory so we don't waste any, and return.
@@ -605,46 +569,9 @@ compressline(termline *line)
   return renewn(b->data, b->len);
 }
 
-static void
-readrle(struct buf *b, termline *line,
-        void (*readliteral) (struct buf *b, termchar *c, termline *line))
-{
-  //! Note: line->chars is based @ index -1
-  int n = -1;
-
-  while (n < line->cols) {
-    int hdr = get(b);
-
-    if (hdr >= 0x80) {
-     /* A run. */
-
-      int pos = b->len, count = hdr + 2 - 0x80;
-      while (count--) {
-        assert(n < line->cols);
-        b->len = pos;
-        readliteral(b, line->chars + n, line);
-        n++;
-      }
-    }
-    else {
-     /* Just a sequence of consecutive literals. */
-
-      int count = hdr + 1;
-      while (count--) {
-        assert(n < line->cols);
-        readliteral(b, line->chars + n, line);
-        n++;
-      }
-    }
-  }
-
-  assert(n == line->cols);
-}
-
 termline *
 decompressline(uchar *data, int *bytes_used)
 {
-  int ncols, byte, shift;
   struct buf buffer, *b = &buffer;
   termline *line;
 
@@ -652,62 +579,38 @@ decompressline(uchar *data, int *bytes_used)
   b->len = 0;
 
  /*
-  * First read in the column count.
+  * First read in the column count and array size.
   */
-  ncols = shift = 0;
-  do {
-    byte = get(b);
-    ncols |= (byte & 0x7F) << shift;
-    shift += 7;
-  } while (byte & 0x80);
+  int ncols = readvint(b);
+  int size = readvint(b);
 
  /*
   * Now create the output termline.
   */
   line = new(termline);
-  newn_1(line->chars, termchar, ncols);
-  line->cols = line->size = ncols;
+  newn_1(line->chars, termchar, size);
+  line->cols = ncols;
+  line->size = size;
   line->temporary = true;
-  line->cc_free = 0;
-
- /*
-  * We must set all the cc pointers in line->chars to 0 right now, 
-  * so that cc diagnostics that verify the integrity of the whole line 
-  * will make sense while we're in the middle of building it up.
-  */
-  //! Note: line->chars is based @ index -1
-  for (int i = -1; i < line->cols; i++)
-    line->chars[i].cc_next = 0;
+  // read in the cc_free.
+  line->cc_free = (short) readvint(b);
 
  /*
   * Now read in the line attributes.
   */
-  line->lattr = shift = 0;
-  do {
-    byte = get(b);
-    line->lattr |= (byte & 0x7F) << shift;
-    shift += 7;
-  } while (byte & 0x80);
+  line->lattr = (ushort) readvint(b);
 
  /*
   * Read the wrap position if used.
   */
   if (line->lattr & LATTR_WRAPPED) {
-    ncols = shift = 0;
-    do {
-      byte = get(b);
-      ncols |= (byte & 0x7F) << shift;
-      shift += 7;
-    } while (byte & 0x80);
-    line->wrappos = ncols;
+    line->wrappos = (ushort) readvint(b);
   }
 
- /*
-  * Now we read in each of the RLE streams in turn.
-  */
-  readrle(b, line, readliteral_chr);
-  readrle(b, line, readliteral_attr);
-  readrle(b, line, readliteral_cc);
+  // FULL-TERMCHAR
+  decode_chr(b, line);
+  decode_attr(b, line);
+  decode_cc(b, line);
 
  /* Return the number of bytes read, for diagnostic purposes. */
   if (bytes_used)
