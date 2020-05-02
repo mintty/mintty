@@ -1117,13 +1117,11 @@ term_bidi_line(termline *line, int scr_y)
      )
     return null;
 
-  termchar *lchars;
-  int it, ib;
-
  /* Do Arabic shaping and bidi. */
 
-  if (!term_bidi_cache_hit(scr_y, line->chars, line->lattr, term.cols)) {
-
+  if (term_bidi_cache_hit(scr_y, line->chars, line->lattr, term.cols))
+    return term.post_bidi_cache[scr_y].chars;
+  else {
     if (term.wcFromTo_size < term.cols) {
       term.wcFromTo_size = term.cols;
       term.wcFrom = renewn(term.wcFrom, term.wcFromTo_size);
@@ -1134,11 +1132,11 @@ term_bidi_line(termline *line, int scr_y)
     //wchar wcs[2 * term.cols];  /// size handling to be tweaked
     //int wcsi = 0;
 
-    ib = 0;
+    int ib = 0;
 #ifdef apply_HL3
     uint emojirest = 0;
 #endif
-    for (it = 0; it < term.cols; it++) {
+    for (int it = 0; it < term.cols; it++) {
       ucschar c = line->chars[it].chr;
       //wcs[wcsi++] = c;
 
@@ -1333,7 +1331,7 @@ term_bidi_line(termline *line, int scr_y)
 
     // equip ltemp with reorder line->chars as determined in wcTo
     ib = 0;
-    for (it = 0; it < term.cols; it++) {
+    for (int it = 0; it < term.cols; it++) {
       while (term.wcTo[ib].index == -1)
         ib++;
 
@@ -1371,11 +1369,6 @@ term_bidi_line(termline *line, int scr_y)
     printf("\n");
 #endif
 
-    lchars = term.ltemp;
+    return term.ltemp;
   }
-  else {
-    lchars = term.post_bidi_cache[scr_y].chars;
-  }
-
-  return lchars;
 }
