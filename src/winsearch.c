@@ -26,12 +26,11 @@ int SEARCHBAR_HEIGHT = 26;
 static int
 current_delta(bool adjust)
 {
-  if (term.results.length == 0) {
+  if (term.results.current.len == 0) {
     return 0;
   }
 
-  result * res = term.results.results + term.results.current;
-  int y = res->y - term.sblines;
+  int y = term.results.current.idx / term.cols - term.sblines;
   int delta = 0;
   if (y < term.disptop) {
     delta = y - term.disptop;
@@ -62,15 +61,18 @@ current_delta(bool adjust)
 }
 
 static void
-scroll_to_result(void)
-{
-  if (term.results.length == 0) {
+scroll_to_result(result res) {
+  if (res.len == 0) {
     return;
   }
 
-  int delta = current_delta(true);
+  if (current_delta(false) == 0) {
+    // Update term.results.current iff the current result is in screen.
+    term.results.current = res;
+  }
 
   // Scroll if we must!
+  int delta = current_delta(true);
   if (delta != 0) {
     term_scroll(0, delta);
   }
@@ -79,23 +81,13 @@ scroll_to_result(void)
 static void
 next_result(void)
 {
-  if (term.results.length == 0) {
-    return;
-  }
-  if (current_delta(false) == 0)
-    term.results.current = (term.results.current + 1) % term.results.length;
-  scroll_to_result();
+  scroll_to_result(term_search_next());
 }
 
 static void
 prev_result(void)
 {
-  if (term.results.length == 0) {
-    return;
-  }
-  if (current_delta(false) == 0)
-    term.results.current = (term.results.current + term.results.length - 1) % term.results.length;
-  scroll_to_result();
+  scroll_to_result(term_search_prev());
 }
 
 static LRESULT CALLBACK
