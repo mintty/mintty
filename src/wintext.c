@@ -2635,9 +2635,9 @@ void
 win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl, bool clearpad, uchar phase)
 {
 #ifdef debug_wscale
-  if (attr.attr & (ATTR_EXPAND | ATTR_NARROW | ATTR_WIDE))
+  if (attr.attr & (TATTR_EXPAND | TATTR_NARROW | TATTR_WIDE))
     for (int i = 0; i < len; i++)
-      printf("[%2d:%2d] %c%c%c%c %04X\n", ty, tx + i, attr.attr & ATTR_NARROW ? 'n' : ' ', attr.attr & ATTR_EXPAND ? 'x' : ' ', attr.attr & ATTR_WIDE ? 'w' : ' ', " WUL"[lattr & LATTR_MODE], text[i]);
+      printf("[%2d:%2d] %c%c%c%c %04X\n", ty, tx + i, attr.attr & TATTR_NARROW ? 'n' : ' ', attr.attr & TATTR_EXPAND ? 'x' : ' ', attr.attr & TATTR_WIDE ? 'w' : ' ', " WUL"[lattr & LATTR_MODE], text[i]);
 #endif
   //if (kb_trace) {printf("[%ld] <win_text\n", mtime()); kb_trace = 0;}
 
@@ -2709,11 +2709,11 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   }
   else
 #endif
-  if (attr.attr & ATTR_WIDE)
+  if (attr.attr & TATTR_WIDE)
     char_width *= 2;
 
   bool wscale_narrow_50 = false;
-  if ((attr.attr & (ATTR_NARROW | TATTR_CLEAR)) == (ATTR_NARROW | TATTR_CLEAR)) {
+  if ((attr.attr & (TATTR_NARROW | TATTR_CLEAR)) == (TATTR_NARROW | TATTR_CLEAR)) {
     // indicator for adjustment of auto-narrowing;
     // geometric Powerline symbols, explicit single-width attribute narrowing
     attr.attr &= ~TATTR_CLEAR;
@@ -2793,7 +2793,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
 
   int wscale = 100;
 
-  if (attr.attr & ATTR_EXPAND) {
+  if (attr.attr & TATTR_EXPAND) {
     if (nfont & FONT_WIDE)
       wscale = 200;
     nfont |= FONT_WIDE;
@@ -2801,7 +2801,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   else if (wscale_narrow_50)
     wscale = 50;
 #ifndef narrow_via_font
-  else if ((attr.attr & ATTR_NARROW) && !(attr.attr & TATTR_ZOOMFULL)) {
+  else if ((attr.attr & TATTR_NARROW) && !(attr.attr & TATTR_ZOOMFULL)) {
     wscale = cfg.char_narrowing;
     if (wscale > 100)
       wscale = 100;

@@ -2097,7 +2097,7 @@ term_paint(void)
       cattr tattr = d->attr;
 
       if (j < term.cols - 1 && d[1].chr == UCSWIDE)
-        tattr.attr |= ATTR_WIDE;
+        tattr.attr |= TATTR_WIDE;
 
      /* Match emoji sequences
       * and replace by emoji indicators
@@ -2120,8 +2120,8 @@ term_paint(void)
           // check whether all emoji components have the same attributes
           bool equalattrs = true;
           for (int i = 1; i < e.len && equalattrs; i++) {
-# define IGNWIDTH ATTR_EXPAND | ATTR_NARROW | TATTR_SINGLE | TATTR_CLEAR
-# define IGNATTR (ATTR_WIDE | ATTR_FGMASK | TATTR_COMBINING | IGNWIDTH)
+# define IGNWIDTH TATTR_EXPAND | TATTR_NARROW | TATTR_SINGLE | TATTR_CLEAR
+# define IGNATTR (TATTR_WIDE | ATTR_FGMASK | TATTR_COMBINING | IGNWIDTH)
             if ((d[i].attr.attr & ~IGNATTR) != (d->attr.attr & ~IGNATTR)
                || d[i].attr.truebg != d->attr.truebg
                )
@@ -2193,7 +2193,7 @@ term_paint(void)
         tchar = '-';
 
       if (j < term.cols - 1 && d[1].chr == UCSWIDE)
-        tattr.attr |= ATTR_WIDE;
+        tattr.attr |= TATTR_WIDE;
 
      /* Video reversing things */
       bool selected =
@@ -2313,7 +2313,7 @@ term_paint(void)
         // special handling for geometric "Powerline" symbols
         tattr.attr |= TATTR_ZOOMFULL;
         if (cs_ambig_wide) {
-          tattr.attr |= ATTR_EXPAND;
+          tattr.attr |= TATTR_EXPAND;
         }
       }
 #ifdef ignore_private_use_for_auto_narrowing
@@ -2322,10 +2322,10 @@ term_paint(void)
       }
 #endif
       else if (tchar != dispchars[j].chr ||
-          tattr.attr != (dispchars[j].attr.attr & ~(ATTR_NARROW | DATTR_MASK))
+          tattr.attr != (dispchars[j].attr.attr & ~(TATTR_NARROW | DATTR_MASK))
               )
       {
-        if ((tattr.attr & ATTR_WIDE) == 0
+        if ((tattr.attr & TATTR_WIDE) == 0
             && win_char_width(tchar, tattr.attr) == 2
             // && !(line->lattr & LATTR_MODE) ? "do not tamper with graphics"
             // && is_ambigwide(tchar) ? but then they will be clipped...
@@ -2343,17 +2343,17 @@ term_paint(void)
            || (ch >= 0x1F000 && ch <= 0x1FAFF)
              )
           {
-            //tattr.attr |= ATTR_NARROW1; // ?
+            //tattr.attr |= TATTR_NARROW1; // ?
           }
           else
 #ifdef failed_attempt_to_tame_narrowing
             if (j + 1 < term.cols && chars[j + 1].chr != ' ')
 #endif
-            tattr.attr |= ATTR_NARROW;
+            tattr.attr |= TATTR_NARROW;
             //if (ch != 0x25CC)
-            //printf("char %lc U+%04X narrow %d ambig %d\n", ch, ch, !!(tattr.attr & ATTR_NARROW), is_ambigwide(ch));
+            //printf("char %lc U+%04X narrow %d ambig %d\n", ch, ch, !!(tattr.attr & TATTR_NARROW), is_ambigwide(ch));
         }
-        else if (tattr.attr & ATTR_WIDE
+        else if (tattr.attr & TATTR_WIDE
                  // guard character expanding properly to avoid 
                  // false hits as reported for CJK in #570,
                  // considering that Windows may report width 1 
@@ -2374,17 +2374,17 @@ term_paint(void)
                  && !(0x25A0 <= tchar && tchar <= 0x25FF)
                 )
         {
-          tattr.attr |= ATTR_EXPAND;
+          tattr.attr |= TATTR_EXPAND;
         }
       }
-      else if (dispchars[j].attr.attr & ATTR_NARROW) {
-        tattr.attr |= ATTR_NARROW;
+      else if (dispchars[j].attr.attr & TATTR_NARROW) {
+        tattr.attr |= TATTR_NARROW;
       }
 
 #define dont_debug_width_scaling
 #ifdef debug_width_scaling
-      if (tattr.attr & (ATTR_EXPAND | ATTR_NARROW | ATTR_WIDE))
-        printf("%04X w %d enw %02X\n", tchar, win_char_width(tchar, tattr.attr), (uint)(((tattr.attr & (ATTR_EXPAND | ATTR_NARROW | ATTR_WIDE)) >> 24)));
+      if (tattr.attr & (TATTR_EXPAND | TATTR_NARROW | TATTR_WIDE))
+        printf("%04X w %d enw %02X\n", tchar, win_char_width(tchar, tattr.attr), (uint)(((tattr.attr & (TATTR_EXPAND | TATTR_NARROW | TATTR_WIDE)) >> 24)));
 #endif
 
      /* Visible space indication */
@@ -2631,7 +2631,7 @@ term_paint(void)
       if (attr.attr & TATTR_EMOJI) {
         int elen = attr.attr & ATTR_FGMASK;
         cattr eattr = attr;
-        eattr.attr &= ~(ATTR_WIDE | TATTR_COMBINING);
+        eattr.attr &= ~(TATTR_WIDE | TATTR_COMBINING);
         wchar esp[] = W("        ");
         if (elen) {
           if (!overlaying) {
@@ -2734,7 +2734,7 @@ term_paint(void)
       }
 #endif
 
-      if ((dispchars[j].attr.attr ^ tattr.attr) & ATTR_WIDE)
+      if ((dispchars[j].attr.attr ^ tattr.attr) & TATTR_WIDE)
         dirty_line = true;
 
 #ifdef debug_run
@@ -2749,7 +2749,7 @@ term_paint(void)
                     || (tattr.truebg != attr.truebg)
                     || (tattr.ulcolr != attr.ulcolr);
 
-      if (tchar != SIXELCH && (tattr.attr & ATTR_NARROW))
+      if (tchar != SIXELCH && (tattr.attr & TATTR_NARROW))
         trace_run("narrow"), break_run = true;
 
       if (tattr.attr & TATTR_EMOJI)
@@ -2898,7 +2898,7 @@ term_paint(void)
       }
 
      /* If it's a wide char step along to the next one. */
-      if ((tattr.attr & ATTR_WIDE) && ++j < term.cols) {
+      if ((tattr.attr & TATTR_WIDE) && ++j < term.cols) {
         d++;
        /*
         * By construction above, the cursor should not

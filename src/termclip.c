@@ -650,7 +650,7 @@ term_create_html(FILE * hf, int level)
         // buf->cattrs[i] ~!= buf->cattrs[i0] ?
         // we need to check more than termattrs_equal_fg
         // but less than termchars_equal_override
-# define IGNATTR (ATTR_WIDE | TATTR_COMBINING)
+# define IGNATTR (TATTR_WIDE | TATTR_COMBINING)
         || (buf->cattrs[i].attr & ~IGNATTR) != (buf->cattrs[i0].attr & ~IGNATTR)
         || buf->cattrs[i].truefg != buf->cattrs[i0].truefg
         || buf->cattrs[i].truebg != buf->cattrs[i0].truebg

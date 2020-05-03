@@ -748,7 +748,7 @@ write_char(wchar c, int width)
     //if ((c & 0xFFF) == 0x153) printf("%llX %d\n", curs->attr.attr, width);
     if (curs->width == 1) {
       if (!(width < 2 || (cs_ambig_wide && is_ambig(c))))
-        curs->attr.attr |= TATTR_CLEAR | ATTR_NARROW;
+        curs->attr.attr |= TATTR_CLEAR | TATTR_NARROW;
       width = 1;
     }
     else if (curs->width == 11) {
@@ -762,14 +762,14 @@ write_char(wchar c, int width)
     }
     else if (curs->width == 2) {
       if (width < 2) {
-        curs->attr.attr |= ATTR_EXPAND;
+        curs->attr.attr |= TATTR_EXPAND;
         width = 2;
       }
     }
 #ifdef support_triple_width
     else if (curs->width == 3) {
       if (width < 2 || (cs_ambig_wide && is_ambig(c)))
-        curs->attr.attr |= ATTR_EXPAND;
+        curs->attr.attr |= TATTR_EXPAND;
 #define TATTR_TRIPLE 0x0080000000000000u
       curs->attr.attr |= TATTR_TRIPLE;
       width = 3;
@@ -3788,7 +3788,7 @@ term_do_write(const char *buf, uint len)
         else if (term.wide_extra && wc >= 0x2000 && extrawide(wc)) {
           width = 2;
           if (win_char_width(wc, term.curs.attr.attr) < 2)
-            term.curs.attr.attr |= ATTR_EXPAND;
+            term.curs.attr.attr |= TATTR_EXPAND;
         }
         else
 #if HAS_LOCALES
@@ -3818,7 +3818,7 @@ term_do_write(const char *buf, uint len)
             // ensure symmetric handling of matching brackets
             && win_char_width(wc ^ 1, term.curs.attr.attr) < 2)
         {
-          term.curs.attr.attr |= ATTR_EXPAND;
+          term.curs.attr.attr |= TATTR_EXPAND;
         }
 
         wchar NRC(wchar * map)
