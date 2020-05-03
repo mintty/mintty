@@ -2909,8 +2909,8 @@ term_paint(void)
           dirty_run = true;
         copy_termchar(displine, j, d);
 #ifdef support_triple_width
-        // do not handle triple-width here
-        //while (0 && dispchars[j].chr == UCSWIDE) {
+#warning do not handle triple-width here
+        //while (dispchars[j].chr == UCSWIDE) {
         //  j++;
         //  start++;
         //}
