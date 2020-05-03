@@ -584,6 +584,10 @@ static struct {
 static uint
 case_fold(uint ch)
 {
+  // speedup ASCII
+  if (ch >= 'A' && ch <= 'Z')
+    return ch + 'a' - 'A';
+
   // binary search in table
   int min = 0;
   int max = case_foldn - 1;
