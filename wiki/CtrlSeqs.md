@@ -291,6 +291,7 @@ with one extension:
 
 | **sequence** | **effect**                                    |
 |:-------------|:----------------------------------------------|
+| `^[[0 Z`     | default: normal single or double width        |
 | `^[[1 Z`     | expand: enforce double-cell display           |
 | `^[[2 Z`     | contract: enforce single-cell display         |
 | `^[[22 Z`    | zoom down to single-cell display (like setting `Charwidth=single`) |
