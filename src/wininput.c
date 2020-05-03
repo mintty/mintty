@@ -122,7 +122,7 @@ show_menu_info(HMENU menu)
   mi.cbSize = sizeof(MENUINFO);
   mi.fMask = MIM_STYLE | MIM_BACKGROUND;
   GetMenuInfo(menu, &mi);
-  printf("menuinfo style %04X brush %p\n", mi.dwStyle, mi.hbrBack);
+  printf("menuinfo style %04X brush %p\n", (uint)mi.dwStyle, mi.hbrBack);
 }
 
 static void
