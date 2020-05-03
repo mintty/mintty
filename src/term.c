@@ -2434,8 +2434,13 @@ term_paint(void)
       int curs_x = term.curs.x;
       if (forward)
         curs_x = forward[curs_x];
+#ifdef support_triple_width
+      while (curs_x > 0 && chars[curs_x].chr == UCSWIDE)
+        curs_x--;
+#else
       if (curs_x > 0 && chars[curs_x].chr == UCSWIDE)
         curs_x--;
+#endif
 
      /* Determine cursor cell attributes. */
       newchars[curs_x].attr.attr |=
@@ -2701,6 +2706,11 @@ term_paint(void)
       termchar *d = chars + j;
       cattr tattr = newchars[j].attr;
       wchar tchar = newchars[j].chr;
+#ifdef support_triple_width
+      if (tchar == UCSWIDE) {
+        continue;
+      }
+#endif
 
       // Note: newchars[j].cc_next is always 0; use chars[]
       xchar xtchar = tchar;
@@ -2890,6 +2900,13 @@ term_paint(void)
         if (!termchars_equal(&dispchars[j], d))
           dirty_run = true;
         copy_termchar(displine, j, d);
+#ifdef support_triple_width
+        // do not handle triple-width here
+        //while (0 && dispchars[j].chr == UCSWIDE) {
+        //  j++;
+        //  start++;
+        //}
+#endif
       }
     }
     if (dirty_run && textlen)

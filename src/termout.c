@@ -766,6 +766,15 @@ write_char(wchar c, int width)
         width = 2;
       }
     }
+#ifdef support_triple_width
+    else if (curs->width == 3) {
+      if (width < 2 || (cs_ambig_wide && is_ambig(c)))
+        curs->attr.attr |= ATTR_EXPAND;
+#define TATTR_TRIPLE 0x0080000000000000u
+      curs->attr.attr |= TATTR_TRIPLE;
+      width = 3;
+    }
+#endif
   }
 
   if (cfg.charwidth >= 10 || cs_single_forced) {
@@ -823,6 +832,14 @@ write_char(wchar c, int width)
       put_char(c);
       curs->x++;
       put_char(UCSWIDE);
+#ifdef support_triple_width
+      if (width > 2) {
+        for (int i = 2; i < width; i++) {
+          curs->x++;
+          put_char(UCSWIDE);
+        }
+      }
+#endif
     when 0 or -1:  // Combining character or Low surrogate.
 #ifdef debug_surrogates
       printf("write_char %04X %2d %08llX\n", c, width, curs->attr.attr);
@@ -2848,6 +2865,10 @@ do_csi(uchar c)
       }
       else if (arg0 == 22)  // single-cell zoomed down
         curs->width = 11;
+#ifdef support_triple_width
+      else if (arg0 == 3)   // triple-cell
+        curs->width = 3;
+#endif
   }
 }
 
@@ -3716,6 +3737,11 @@ term_do_write(const char *buf, uint len)
 #else
             int width = xcwidth(combine_surrogates(hwc, wc));
 #endif
+#ifdef support_triple_width
+            // do not handle triple-width here
+            //if (term.curs.width)
+            //  width = term.curs.width % 10;
+#endif
             write_ucschar(hwc, wc, width);
           }
           else
@@ -3770,6 +3796,11 @@ term_do_write(const char *buf, uint len)
             width = xcwidth(wc);
           else
             width = wcwidth(wc);
+#ifdef support_triple_width
+          // do not handle triple-width here
+          //if (term.curs.width)
+          //  width = term.curs.width % 10;
+#endif
 # ifdef hide_isolate_marks
           // force bidi isolate marks to be zero-width;
           // however, this is inconsistent with locale width

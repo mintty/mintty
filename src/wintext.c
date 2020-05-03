@@ -2701,6 +2701,14 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
   int x = tx * char_width + PADDING;
   int y = ty * cell_height + PADDING;
 
+#ifdef support_triple_width
+#define TATTR_TRIPLE 0x0080000000000000u
+  if ((attr.attr & TATTR_TRIPLE) == TATTR_TRIPLE) {
+    char_width *= 3;
+    attr.attr &= ~TATTR_TRIPLE;
+  }
+  else
+#endif
   if (attr.attr & ATTR_WIDE)
     char_width *= 2;
 

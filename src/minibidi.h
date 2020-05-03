@@ -6,7 +6,7 @@ typedef unsigned int ucschar;
 typedef struct {
   ucschar origwc, wc;
   short index;
-  bool wide;
+  uchar wide;  // width marker for term_bidi_line()
   uchar emojilen: 7;
 } bidi_char;
 
