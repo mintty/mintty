@@ -115,6 +115,16 @@ icon_bitmap(HICON hIcon)
 
 /* Menu handling */
 
+static inline void
+show_menu_info(HMENU menu)
+{
+  MENUINFO mi;
+  mi.cbSize = sizeof(MENUINFO);
+  mi.fMask = MIM_STYLE | MIM_BACKGROUND;
+  GetMenuInfo(menu, &mi);
+  printf("menuinfo style %04X brush %p\n", mi.dwStyle, mi.hbrBack);
+}
+
 static void
 append_commands(HMENU menu, wstring commands, UINT_PTR idm_cmd, bool add_icons, bool sysmenu)
 {
@@ -270,6 +280,7 @@ wnd_enum_tabs(HWND curr_wnd, LPARAM lParam)
 static void
 add_switcher(HMENU menu, bool vsep, bool hsep, bool use_win_icons)
 {
+  //printf("add_switcher vsep %d hsep %d\n", vsep, hsep);
   uint bar = vsep ? MF_MENUBARBREAK : 0;
   if (hsep)
     AppendMenuW(menu, MF_SEPARATOR, 0, 0);
@@ -288,6 +299,7 @@ add_switcher(HMENU menu, bool vsep, bool hsep, bool use_win_icons)
 static bool
 add_launcher(HMENU menu, bool vsep, bool hsep)
 {
+  //printf("add_launcher vsep %d hsep %d\n", vsep, hsep);
   if (*cfg.session_commands) {
     uint bar = vsep ? MF_MENUBARBREAK : 0;
     if (hsep)
@@ -611,6 +623,7 @@ win_update_menus(bool callback)
 static bool
 add_user_commands(HMENU menu, bool vsep, bool hsep, wstring title, wstring commands, UINT_PTR idm_cmd)
 {
+  //printf("add_user_commands vsep %d hsep %d\n", vsep, hsep);
   if (*commands) {
     uint bar = vsep ? MF_MENUBARBREAK : 0;
     if (hsep)
@@ -721,6 +734,7 @@ win_init_menus(void)
 static void
 open_popup_menu(bool use_text_cursor, string menucfg, mod_keys mods)
 {
+  //printf("open_popup_menu txtcur %d <%s> %X\n", use_text_cursor, menucfg, mods);
   /* Create a new context menu structure every time the menu is opened.
      This was a fruitless attempt to achieve its proper DPI scaling.
      It also supports opening different menus (Ctrl+ for extended menu).
@@ -730,6 +744,7 @@ open_popup_menu(bool use_text_cursor, string menucfg, mod_keys mods)
     DestroyMenu(ctxmenu);
 
   ctxmenu = CreatePopupMenu();
+  //show_menu_info(ctxmenu);
 
   if (!menucfg) {
     if (mods & MDK_ALT)
@@ -746,6 +761,8 @@ open_popup_menu(bool use_text_cursor, string menucfg, mod_keys mods)
   bool wicons = strchr(menucfg, 'W');
   while (*menucfg) {
     if (*menucfg == '|')
+      // Windows mangles the menu style if the flag MF_MENUBARBREAK is used 
+      // as triggered by vsep...
       vsep = true;
     else if (!strchr(menucfg + 1, *menucfg)) {
       // suppress duplicates except separators
@@ -787,6 +804,7 @@ open_popup_menu(bool use_text_cursor, string menucfg, mod_keys mods)
     menucfg++;
   }
   win_update_menus(false);  // dispensable; also called via WM_INITMENU
+  //show_menu_info(ctxmenu);
 
   POINT p;
   if (use_text_cursor) {
