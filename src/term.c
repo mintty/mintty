@@ -585,8 +585,12 @@ static uint
 case_fold(uint ch)
 {
   // speedup ASCII
-  if (ch >= 'A' && ch <= 'Z')
-    return ch + 'a' - 'A';
+  if (ch < 0x80) {
+    if (ch >= 'A' && ch <= 'Z')
+      return ch + 'a' - 'A';
+    else
+      return ch;
+  }
 
   // binary search in table
   int min = 0;
