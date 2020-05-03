@@ -851,7 +851,7 @@ static uint alt_code;
 static bool lctrl;  // Is left Ctrl pressed?
 static int lctrl_time;
 
-static mod_keys
+mod_keys
 get_mods(void)
 {
   inline bool is_key_down(uchar vk) { return GetKeyState(vk) & 0x80; }

@@ -91,6 +91,7 @@ extern void win_mouse_release(mouse_button, LPARAM);
 extern void win_mouse_wheel(POINT wpos, bool horizontal, int delta);
 extern void win_mouse_move(bool nc, LPARAM);
 
+extern mod_keys get_mods(void);
 extern void win_key_reset(void);
 extern void provide_input(wchar);
 extern bool win_key_down(WPARAM, LPARAM);
