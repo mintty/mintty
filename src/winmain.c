@@ -2451,6 +2451,18 @@ show_iconwarn(wchar * winmsg)
 #define dont_debug_only_sizepos_messages
 #define dont_debug_mouse_messages
 
+static bool
+in_client_area(HWND wnd, LPARAM lp)
+{
+  POINT wpos = {.x = GET_X_LPARAM(lp), .y = GET_Y_LPARAM(lp)};
+  ScreenToClient(wnd, &wpos);
+  int height, width;
+  win_get_pixels(&height, &width, false);
+  height += 2 * PADDING;
+  width += 2 * PADDING;
+  return wpos.y >= 0 && wpos.y < height && wpos.x >= 0 && wpos.x < width;
+}
+
 static LRESULT CALLBACK
 win_proc(HWND wnd, UINT message, WPARAM wp, LPARAM lp)
 {
@@ -2815,40 +2827,62 @@ static struct {
         when XBUTTON1: win_mouse_release(MBT_4, lp);
         when XBUTTON2: win_mouse_release(MBT_5, lp);
       }
-    when WM_NCLBUTTONDOWN: {
-      POINT wpos = {.x = GET_X_LPARAM(lp), .y = GET_Y_LPARAM(lp)};
-      ScreenToClient(wnd, &wpos);
-      int height, width;
-      win_get_pixels(&height, &width, false);
-      height += 2 * PADDING;
-      width += 2 * PADDING;
-      if (wpos.y >= 0 && wpos.y < height && wpos.x >= 0 && wpos.x < width)
+    when WM_NCLBUTTONDOWN:
+      if (in_client_area(wnd, lp)) {
         // clicked within "client area";
         // Windows sends the NC message nonetheless when Ctrl+Alt is held
         win_mouse_click(MBT_LEFT, lp);
+        return 0;
+      }
       else
       if (wp == HTCAPTION && get_mods() == MDK_CTRL) {
         if (win_title_menu(true))
           return 0;
       }
-    }
-    when WM_NCRBUTTONDOWN: {
-      POINT wpos = {.x = GET_X_LPARAM(lp), .y = GET_Y_LPARAM(lp)};
-      ScreenToClient(wnd, &wpos);
-      int height, width;
-      win_get_pixels(&height, &width, false);
-      height += 2 * PADDING;
-      width += 2 * PADDING;
-      if (wpos.y >= 0 && wpos.y < height && wpos.x >= 0 && wpos.x < width)
+    when WM_NCRBUTTONDOWN:
+      if (in_client_area(wnd, lp)) {
         // clicked within "client area";
         // Windows sends the NC message nonetheless when Ctrl+Alt is held
         win_mouse_click(MBT_RIGHT, lp);
+        return 0;
+      }
       else
       if (wp == HTCAPTION && (cfg.geom_sync > 0 || get_mods() == MDK_CTRL)) {
         if (win_title_menu(false))
           return 0;
       }
-    }
+    when WM_NCMBUTTONDOWN:
+      if (in_client_area(wnd, lp)) {
+        win_mouse_click(MBT_MIDDLE, lp);
+        return 0;
+      }
+    when WM_NCXBUTTONDOWN:
+      if (in_client_area(wnd, lp))
+        switch (HIWORD(wp)) {
+          when XBUTTON1: win_mouse_click(MBT_4, lp); return 0;
+          when XBUTTON2: win_mouse_click(MBT_5, lp); return 0;
+        }
+    when WM_NCLBUTTONUP:
+      if (in_client_area(wnd, lp)) {
+        win_mouse_release(MBT_LEFT, lp);
+        return 0;
+      }
+    when WM_NCRBUTTONUP:
+      if (in_client_area(wnd, lp)) {
+        win_mouse_release(MBT_RIGHT, lp);
+        return 0;
+      }
+    when WM_NCMBUTTONUP:
+      if (in_client_area(wnd, lp)) {
+        win_mouse_release(MBT_MIDDLE, lp);
+        return 0;
+      }
+    when WM_NCXBUTTONUP:
+      if (in_client_area(wnd, lp))
+        switch (HIWORD(wp)) {
+          when XBUTTON1: win_mouse_release(MBT_4, lp); return 0;
+          when XBUTTON2: win_mouse_release(MBT_5, lp); return 0;
+        }
 
     when WM_KEYDOWN or WM_SYSKEYDOWN:
       //printf("[%ld] WM_KEY %02X\n", mtime(), (int)wp);
