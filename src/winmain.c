@@ -2451,6 +2451,14 @@ show_iconwarn(wchar * winmsg)
 #define dont_debug_only_sizepos_messages
 #define dont_debug_mouse_messages
 
+static LPARAM
+screentoclient(HWND wnd, LPARAM lp)
+{
+  POINT wpos = {.x = GET_X_LPARAM(lp), .y = GET_Y_LPARAM(lp)};
+  ScreenToClient(wnd, &wpos);
+  return MAKELPARAM(wpos.x, wpos.y);
+}
+
 static bool
 in_client_area(HWND wnd, LPARAM lp)
 {
@@ -2810,7 +2818,7 @@ static struct {
     }
 
     when WM_MOUSEMOVE: win_mouse_move(false, lp);
-    when WM_NCMOUSEMOVE: win_mouse_move(true, lp);
+    when WM_NCMOUSEMOVE: win_mouse_move(true, screentoclient(wnd, lp));
     when WM_LBUTTONDOWN: win_mouse_click(MBT_LEFT, lp);
     when WM_RBUTTONDOWN: win_mouse_click(MBT_RIGHT, lp);
     when WM_MBUTTONDOWN: win_mouse_click(MBT_MIDDLE, lp);
@@ -2831,7 +2839,7 @@ static struct {
       if (in_client_area(wnd, lp)) {
         // clicked within "client area";
         // Windows sends the NC message nonetheless when Ctrl+Alt is held
-        win_mouse_click(MBT_LEFT, lp);
+        win_mouse_click(MBT_LEFT, screentoclient(wnd, lp));
         return 0;
       }
       else
@@ -2843,7 +2851,7 @@ static struct {
       if (in_client_area(wnd, lp)) {
         // clicked within "client area";
         // Windows sends the NC message nonetheless when Ctrl+Alt is held
-        win_mouse_click(MBT_RIGHT, lp);
+        win_mouse_click(MBT_RIGHT, screentoclient(wnd, lp));
         return 0;
       }
       else
@@ -2853,35 +2861,39 @@ static struct {
       }
     when WM_NCMBUTTONDOWN or WM_NCMBUTTONDBLCLK:
       if (in_client_area(wnd, lp)) {
-        win_mouse_click(MBT_MIDDLE, lp);
+        win_mouse_click(MBT_MIDDLE, screentoclient(wnd, lp));
         return 0;
       }
     when WM_NCXBUTTONDOWN or WM_NCXBUTTONDBLCLK:
       if (in_client_area(wnd, lp))
         switch (HIWORD(wp)) {
-          when XBUTTON1: win_mouse_click(MBT_4, lp); return 0;
-          when XBUTTON2: win_mouse_click(MBT_5, lp); return 0;
+          when XBUTTON1: win_mouse_click(MBT_4, screentoclient(wnd, lp));
+                         return 0;
+          when XBUTTON2: win_mouse_click(MBT_5, screentoclient(wnd, lp));
+                         return 0;
         }
     when WM_NCLBUTTONUP:
       if (in_client_area(wnd, lp)) {
-        win_mouse_release(MBT_LEFT, lp);
+        win_mouse_release(MBT_LEFT, screentoclient(wnd, lp));
         return 0;
       }
     when WM_NCRBUTTONUP:
       if (in_client_area(wnd, lp)) {
-        win_mouse_release(MBT_RIGHT, lp);
+        win_mouse_release(MBT_RIGHT, screentoclient(wnd, lp));
         return 0;
       }
     when WM_NCMBUTTONUP:
       if (in_client_area(wnd, lp)) {
-        win_mouse_release(MBT_MIDDLE, lp);
+        win_mouse_release(MBT_MIDDLE, screentoclient(wnd, lp));
         return 0;
       }
     when WM_NCXBUTTONUP:
       if (in_client_area(wnd, lp))
         switch (HIWORD(wp)) {
-          when XBUTTON1: win_mouse_release(MBT_4, lp); return 0;
-          when XBUTTON2: win_mouse_release(MBT_5, lp); return 0;
+          when XBUTTON1: win_mouse_release(MBT_4, screentoclient(wnd, lp));
+                         return 0;
+          when XBUTTON2: win_mouse_release(MBT_5, screentoclient(wnd, lp));
+                         return 0;
         }
 
     when WM_KEYDOWN or WM_SYSKEYDOWN:
