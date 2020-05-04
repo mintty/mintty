@@ -2827,7 +2827,7 @@ static struct {
         when XBUTTON1: win_mouse_release(MBT_4, lp);
         when XBUTTON2: win_mouse_release(MBT_5, lp);
       }
-    when WM_NCLBUTTONDOWN:
+    when WM_NCLBUTTONDOWN or WM_NCLBUTTONDBLCLK:
       if (in_client_area(wnd, lp)) {
         // clicked within "client area";
         // Windows sends the NC message nonetheless when Ctrl+Alt is held
@@ -2839,7 +2839,7 @@ static struct {
         if (win_title_menu(true))
           return 0;
       }
-    when WM_NCRBUTTONDOWN:
+    when WM_NCRBUTTONDOWN or WM_NCRBUTTONDBLCLK:
       if (in_client_area(wnd, lp)) {
         // clicked within "client area";
         // Windows sends the NC message nonetheless when Ctrl+Alt is held
@@ -2851,12 +2851,12 @@ static struct {
         if (win_title_menu(false))
           return 0;
       }
-    when WM_NCMBUTTONDOWN:
+    when WM_NCMBUTTONDOWN or WM_NCMBUTTONDBLCLK:
       if (in_client_area(wnd, lp)) {
         win_mouse_click(MBT_MIDDLE, lp);
         return 0;
       }
-    when WM_NCXBUTTONDOWN:
+    when WM_NCXBUTTONDOWN or WM_NCXBUTTONDBLCLK:
       if (in_client_area(wnd, lp))
         switch (HIWORD(wp)) {
           when XBUTTON1: win_mouse_click(MBT_4, lp); return 0;
