@@ -3110,8 +3110,11 @@ for further hints, especially on the \fIwinpty\fP wrapper.
 
 .SS Termcap/terminfo
 
-Mintty does not have its own \fItermcap\fP or \fIterminfo\fP entries;
-like a number of other terminal emulators, it reuses the xterm entry.
+Mintty has two \fItermcap\fP or \fIterminfo\fP entries, \fBmintty\fP and 
+\fBmintty-direct\fP (the latter reflecting true-colour capability).
+However, it sets the environment variable \fBTERM\fP to \fBxterm\fP 
+by default in order to provide maximal seamless compatibility also in case 
+of remote login.
 
 .SS Screen control features, DEC and xterm compatibility
 
