@@ -37,6 +37,7 @@ Window handling
 
 Other
   * Warning and error popups are placed on top of desktop.
+  * Environment variables TERM_PROGRAM[_VERSION] provide unreliable info about terminal application (#881).
 
 Configuration
   * Options BellFile2 ... BellFile7 (#974).
