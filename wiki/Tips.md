@@ -1177,6 +1177,9 @@ To add a new language, copy `messages.pot` to the desired `.po` file
 (including a region suffix if appropriate, like `fr_CH`) and add the 
 `msgstr` entries which are empty in the template. The tool `poedit` may 
 be used but remember to use UTF-8 encoding.
+Check the translations for strings that may be too long and get clipped 
+by a careful walkthrough of the Options dialog, opening all popups and 
+sub-dialogs (colours and font) and also checking `mintty -o FontMenu=0`.
 
 _Note:_ There is one special pseudo-string in the localization template which 
 facilitates scaling of the Options dialog width. It is labelled 
