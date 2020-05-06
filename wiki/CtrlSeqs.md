@@ -19,6 +19,16 @@ The full details of all supported control sequences are only available in the
 [source code](https://github.com/mintty/mintty/blob/master/src/termout.c).
 
 
+## Terminal identification ##
+
+These escape sequences cause mintty to report its identification.
+
+| **request** | **response**                      | **comment** |
+|:------------|:----------------------------------|:------------|
+| `^[[>0c`    | `^[[>77;`_version_`;`_unicode_`c` | secondary devices attributes (DEC); _version_ like 30105, _unicode_ version when using built-in data |
+| `^[[>0q`    | `^[P>|mintty `_version_`^[\`      | terminal identification query (xterm 354); _version_ like 3.1.5 |
+
+
 ## Escape keycode ##
 
 There are two settings controlling the keycode sent by the [Esc key](http://en.wikipedia.org/wiki/Esc_key).
@@ -281,6 +291,8 @@ this list is subject to change in future versions.
 
 
 ## Explicit character width ##
+
+— EXPERIMENTAL —
 
 Mintty provides explicit width override as a character attribute, 
 so an application can enforce single-width characters to be rendered wide 
