@@ -290,9 +290,12 @@ Secondary Device Attributes report queried from the terminal.
 The script `terminal` in the mintty 
 [utils repository](https://github.com/mintty/utils) provides an implementation.
 
-Using environment variables for this purpose is not reliable and therefore 
-not supported. See [issue #776](https://github.com/mintty/mintty/issues/776) 
-for a discussion.
+In addition, from mintty 3.1.5, an additional escape sequence causes mintty 
+to report its name and version; furthermore, although using 
+environment variables for this purpose is not reliable (see 
+[issue #776](https://github.com/mintty/mintty/issues/776) for a discussion), 
+mintty sets environment variables TERM_PROGRAM and TERM_PROGRAM_VERION 
+as various other terminals do.
 
 
 ## Terminal line settings ##
