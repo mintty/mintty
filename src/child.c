@@ -1143,6 +1143,14 @@ do_child_fork(int argc, char *argv[], int moni, bool launch)
     // propagate shortcut-inherited icon
     if (icon_is_from_shortcut)
       setenv("MINTTY_ICON", cs__wcstoutf(cfg.icon), true);
+    // provide environment to to maximize window
+    {
+      WINDOWPLACEMENT wndpl = {.length = sizeof wndpl};
+      (void) GetWindowPlacement(wnd, &wndpl);
+      if (wndpl.showCmd == SW_SHOWMAXIMIZED) {
+        setenvi("MINTTY_MAXIMIZE", 1);
+      }
+    }
 
     //setenv("MINTTY_CHILD", "1", true);
 

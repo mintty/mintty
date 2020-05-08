@@ -4599,6 +4599,11 @@ main(int argc, char *argv[])
     monitor = atoi(getenv("MINTTY_MONITOR"));
     unsetenv("MINTTY_MONITOR");
   }
+  bool maximize = false;
+  if (getenv("MINTTY_MAXIMIZE")) {
+    maximize = !!atoi(getenv("MINTTY_MAXIMIZE"));
+    unsetenv("MINTTY_MAXIMIZE");
+  }
 
   // if started from console, try to detach from caller's terminal (~daemonizing)
   // in order to not suppress signals
@@ -5216,7 +5221,7 @@ main(int argc, char *argv[])
   // Determine how to show the window.
   go_fullscr_on_max = (cfg.window == -1);
   default_size_token = true;  // prevent font zooming (#708)
-  int show_cmd = go_fullscr_on_max ? SW_SHOWMAXIMIZED : cfg.window;
+  int show_cmd = (go_fullscr_on_max || maximize) ? SW_SHOWMAXIMIZED : cfg.window;
   show_cmd = win_fix_taskbar_max(show_cmd);
 
   // Scale to background image aspect ratio if requested
