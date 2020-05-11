@@ -396,6 +396,7 @@ term_reset(bool full)
   term_schedule_tblink2();
   term_schedule_cblink();
   term_clear_scrollback();
+  term_schedule_search_update();
 
   win_reset_colours();
 }
