@@ -5,6 +5,8 @@ Terminal features
   * Support margin bell volume escape sequence DECSMBV (#974) with wave files.
   * Support visible space indication.
   * Fixed insert mode in single-width character mode (#964).
+  * DECFRA (fill rectangular area) works with wide and non-BMP characters.
+  * DECFRA works with NRCS and DEC Line Drawing characters (VT420).
   * New CSI > 0 q to report terminal name and version (#881).
   * New CSI 2/1 SP Z (ECMA-48 PEC) as character attribute to enforce single/double width (#615, #979, #938, #638, ~#88, ~#671).
   * Support Ctrl+Alt-mouse clicks (#987).
