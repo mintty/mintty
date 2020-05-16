@@ -307,6 +307,7 @@ term_reset(bool full)
     term.app_keypad = false;  // xterm only with RIS
     term.app_control = 0;
     term.auto_repeat = cfg.auto_repeat;  // not supported by xterm
+    term.repeat_rate = 30;
     term.attr_rect = false;
     term.deccolm_noclear = false;
   }

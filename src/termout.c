@@ -2933,6 +2933,9 @@ do_csi(uchar c)
       else if (arg0 == 3)   // triple-cell
         curs->width = 3;
 #endif
+    when CPAIR('-', 'p'): /* DECARR: VT520 Select Auto Repeat Rate */
+      if (arg0 <= 30)
+        term.repeat_rate = arg0;
   }
 }
 

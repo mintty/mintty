@@ -1849,14 +1849,20 @@ win_key_down(WPARAM wp, LPARAM lp)
   printf("win_key_down %02X %s scan %d ext %d rpt %d/%d other %02X\n", key, vk_name(key), scancode, extended, repeat, count, HIWORD(lp) >> 8);
 #endif
 
-  if (repeat && !term.auto_repeat) {
+static int last_key_time = 0;
+
+  if (repeat) {
 #ifdef auto_repeat_cursor_keys_option
     switch (key) {
       when VK_PRIOR ... VK_DOWN: do not return...;
     }
 #endif
-    return true;
+    if (!term.auto_repeat)
+      return true;
+    if (1000 / (GetMessageTime() - last_key_time) >= term.repeat_rate)
+      return true;
   }
+  last_key_time = GetMessageTime();
 
   if (key == VK_PROCESSKEY) {
     TranslateMessage(

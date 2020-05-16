@@ -99,6 +99,19 @@ When shortcut override mode is on, all shortcut key combinations are sent to the
 | `^[[?7783h`   | on           |
 
 
+## Keyboard auto repeat ##
+
+With the VT520 sequence DECARR the keyboard auto-repeat speed can be 
+limited to the given value in characters per second.
+Keyboard auto-repeat can also be disabled with DECSET 8 (DECARM).
+
+| **sequence**   | **comment**         |
+|:---------------|:--------------------|
+| `^[[`_cps_`-p` | max 30              |
+| `^[[?8l`       | disable auto-repeat |
+| `^[[?8h`       | enable auto-repeat  |
+
+
 ## Bidirectional rendering ##
 
 Mintty supports bidi rendering by default. However, some applications 
