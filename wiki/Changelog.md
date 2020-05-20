@@ -8,7 +8,7 @@ Terminal features
   * DECFRA (fill rectangular area) works with wide and non-BMP characters.
   * DECFRA works with NRCS and DEC Line Drawing characters (VT420).
   * New CSI > 0 q to report terminal name and version (#881).
-  * New CSI 2/1 SP Z (ECMA-48 PEC) as character attribute to enforce single/double width (#615, #979, #938, #638, ~#88, ~#671).
+  * New CSI 2/1 SP Z (ECMA-48 PEC) as character attribute to enforce single/double width (#615, #979, #973, #938, #638, ~#88, ~#671).
   * New CSI cps - p DECARR Select Auto Repeat Rate (VT520).
   * Support Ctrl+Alt-mouse clicks (#987).
 
