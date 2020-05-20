@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Fri Feb 21 18:44:12 2020 -->
+<!-- CreationDate: Wed May 20 17:25:31 2020 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -790,7 +790,7 @@ screen</b> <br>
 Full screen mode can be toggled using either the <b>Full
 Screen</b> command in the menu or either of the
 <b>Alt+Enter</b> and <b>Alt+F11</b> keyboard shortcuts, or
-the generic window title functions.</p>
+the generic functions of the window title bar.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Default
 size</b> <br>
@@ -959,7 +959,19 @@ shortcuts</b> <br>
 This section gives an overview of all the keyboard
 shortcuts. See also the final subsection on user-defined
 shortcuts. <b><br>
-Scrollback and Selection via keyboard</b></p>
+Alt modifier key</b></p>
+
+<p style="margin-left:22%;">Note that <b>Alt+</b> in this
+description refers to the left Alt key. For keyboards that
+have two Alt keys, the right Alt key is not generally
+supported as an Alt modifier. The reason is that it cannot
+be safely distinguished from the AltGr key of international
+keyboards which is used to generate specific additional
+characters in various keyboard layouts and can therefore not
+be used as a generic modifier.</p>
+
+<p style="margin-left:11%;"><b>Scrollback and Selection via
+keyboard</b></p>
 
 <p style="margin-left:22%;">&ndash; <b>Shift+Up</b>: Line
 up <br>
@@ -1100,8 +1112,7 @@ is held down, the navigation keys on the numeric keypad can
 be used for further fine-tuning: <br>
 Up/Dn to increase/decrease, PgUp/PgDn for steps, Del/Ins for
 no/max transparency, End for highest preconfigured
-transparency, Home for previous value, Clear (&quot;5&quot;)
-for glass. <br>
+transparency, Home for previous value. <br>
 If OpaqueWhenFocused is set, opaqueness is temporarily
 disabled to provide visible feedback for the changes.</p>
 
@@ -1379,6 +1390,23 @@ Optimize visual display.</p>
 
 <p style="margin-left:22%;">If enabled, the cursor blinks
 at the rate set in the Keyboard control panel.</p>
+
+<p style="margin-left:11%;"><b>Visible space indication</b>
+(DispSpace=0, DispClear=0, DispTab=0)</p>
+
+<p style="margin-left:22%;">These settings enable visual
+indication of blank space. Setting <b>DispSpace</b> affects
+explicitly written space, setting <b>DispClear</b> affects
+unwritten/cleared character cells, setting <b>DispTab</b>
+affects TAB positions over clear space. Suggested settings
+are 6 or 14. The settings are bitmasks, adding the following
+values: <br>
+&ndash; <b>1</b> bold indication of space <br>
+&ndash; <b>2</b> dimmed indication of space <br>
+&ndash; <b>4</b> indication of space in UnderlineColour if
+configured <br>
+&ndash; <b>8</b> brighten background of clear space
+(DispClear only)</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Text</b>
 <br>
@@ -1860,7 +1888,9 @@ external hotkeys</b> (SupportExternalHotkeys=2)</p>
 Alt+hotkey combinations, esp. Alt+F4 to close the window,
 independently of general Alt+Fn shortcuts support (if option
 value is 2) and by fixing the buggy hotkey sequence sent by
-StrokeIt.</p>
+StrokeIt. Setting 4 also disables the feature to clear the
+selection when another application sets the clipboard; this
+is needed to workaround weird behaviour of Hot Keyboard.</p>
 
 <p style="margin-left:11%;"><b>Copy and Paste shortcuts</b>
 (ClipShortcuts=yes)</p>
@@ -2311,6 +2341,11 @@ option can also be set to a filename (like
 D:/.../soundfile.wav); this can be achieved also by
 drag-and-drop from a local file. This setting overrides the
 Bell system sound except No Beep. <br>
+&ndash; <b>Bell volume wave files</b> (BellFile2= ...
+BellFile7=): Alternative wave files can be set in the config
+file for bell volumes 2 ... 7 as set by the escape sequence
+DECSWBV. The general BellFile setting corresponds to bell
+volume 8 (default). <br>
 &ndash; <b>Play</b>: The button plays the selected sound for
 testing. The sound is also played when it is changed. <br>
 &ndash; <b>Flash</b> (BellFlash=no): Briefly flash the
@@ -2343,7 +2378,8 @@ desktop foreground. (Corresponds to the xterm resource
 <b>popOnBell</b>, switchable by an escape sequence.) <br>
 &ndash; <b>Minimum delay between bells</b>
 (BellInterval=100): Multiple bells within this many
-milliseconds will sound as one.</p>
+milliseconds will sound as one. (Corresponds to the xterm
+resource <b>bellSuppressTime</b>.)</p>
 
 <p style="margin-left:22%; margin-top: 1em">A simple
 <b>frequency beep</b> can be configured in the configuration
@@ -3373,10 +3409,15 @@ remote login.</p>
 
 <p style="margin-left:22%; margin-top: 1em">The value is a
 series of semicolon-separated, colon-combined pairs of
-program name and drop pattern; the pattern is pasted with
-the actual clipboard contents replaced for a &quot;%s&quot;.
-If a semicolon shall be embedded into any of the drop
-patterns, a non-whitespace control character (i.e. none of
+program name and drop pattern. The pattern is pasted; a
+single placeholder &quot;%s&quot; is replaced with the
+clipboard contents, paths converted into cygwin format; a
+single placeholder &quot;%w&quot; is replaced with the
+clipboard contents, paths left in Windows format. Using
+capital placeholders &quot;%S&quot; or &quot;%W&quot; embeds
+the pasted paths into respective quotes if needed. If a
+semicolon shall be embedded into any of the drop patterns, a
+non-whitespace control character (i.e. none of
 <b>^I^J^K^L^M</b>) can be specified as an alternative
 separator by starting the whole setting with it. The
 definition list can be split over multiple lines if a
@@ -3396,7 +3437,8 @@ tricky filenames.</p>
 &ndash; <b>DropCommands=bash:cd
 '%s'^M;mined:^[fo^M%s^M;vim:^[:e %s^M</b> <br>
 &ndash; <b>DropCommands=^_bash:cd '%s';echo $PWD^M^_vim:^[:e
-%s^M^_</b></p>
+%s^M^_</b> <br>
+&ndash; <b>DropCommands=cmd:cd /D %W^M</b></p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i> An
 &quot;Enter&quot; key has to be specified with the CR
@@ -3736,9 +3778,12 @@ wrapper.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Termcap/terminfo</b>
 <br>
-Mintty does not have its own <i>termcap</i> or
-<i>terminfo</i> entries; like a number of other terminal
-emulators, it reuses the xterm entry.</p>
+Mintty has two <i>termcap</i> or <i>terminfo</i> entries,
+<b>mintty</b> and <b>mintty-direct</b> (the latter
+reflecting true-colour capability). However, it sets the
+environment variable <b>TERM</b> to <b>xterm</b> by default
+in order to provide maximal seamless compatibility also in
+case of remote login.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Screen
 control features, DEC and xterm compatibility</b> <br>

@@ -1,3 +1,5 @@
+### 3.1.5 (21 May 2020) ###
+
 Terminal features
   * Limit coordinates of all mouse reports to text area (#972).
   * Support bell volume escape sequence DECSWBV (#974) with wave files.
