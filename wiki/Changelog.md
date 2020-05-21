@@ -1,3 +1,6 @@
+Window handling
+  * Fixed resource leak when displaying images (#995).
+
 ### 3.1.5 (21 May 2020) ###
 
 Terminal features

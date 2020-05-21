@@ -778,6 +778,7 @@ winimgs_paint(void)
               //bg = RGB(90, 150, 222);  // test background filling
               HBRUSH br = CreateSolidBrush(bg);
               FillRect(hdc, &(RECT){0, 0, xrgt, ybot}, br);
+              DeleteObject(br);
             }
             draw_img(hdc, img);
             BitBlt(dc, xlft, ytop, xrgt - xlft, ybot - ytop,
