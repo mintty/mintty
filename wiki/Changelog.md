@@ -1,5 +1,8 @@
+### 3.1.6 (21 May 2020) ###
+
 Window handling
   * Fixed resource leak when displaying images (#995).
+  * Fixed crash condition on keyboard auto-repeat (#996).
 
 ### 3.1.5 (21 May 2020) ###
 

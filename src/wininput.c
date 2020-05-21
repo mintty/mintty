@@ -1851,6 +1851,7 @@ win_key_down(WPARAM wp, LPARAM lp)
 
 static int last_key_time = 0;
 
+  int message_time = GetMessageTime();
   if (repeat) {
 #ifdef auto_repeat_cursor_keys_option
     switch (key) {
@@ -1859,10 +1860,12 @@ static int last_key_time = 0;
 #endif
     if (!term.auto_repeat)
       return true;
-    if (1000 / (GetMessageTime() - last_key_time) >= term.repeat_rate)
+    if (message_time > last_key_time &&
+        (1000 / (message_time - last_key_time) >= term.repeat_rate)
+       )
       return true;
   }
-  last_key_time = GetMessageTime();
+  last_key_time = message_time;
 
   if (key == VK_PROCESSKEY) {
     TranslateMessage(
