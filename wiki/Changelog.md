@@ -1,3 +1,9 @@
+Terminal features
+  * New default CSI - p (DECARR 0) to disable keyboard repeat rate limitation.
+
+Keyboard handling
+  * Keyboard auto-repeat handling is now as usual (not affected) by default.
+
 ### 3.1.6 (21 May 2020) ###
 
 Window handling

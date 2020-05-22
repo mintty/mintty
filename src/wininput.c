@@ -1860,7 +1860,7 @@ static int last_key_time = 0;
 #endif
     if (!term.auto_repeat)
       return true;
-    if (message_time > last_key_time &&
+    if (term.repeat_rate && message_time > last_key_time &&
         (1000 / (message_time - last_key_time) >= term.repeat_rate)
        )
       return true;

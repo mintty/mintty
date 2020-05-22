@@ -103,11 +103,13 @@ When shortcut override mode is on, all shortcut key combinations are sent to the
 
 With the VT520 sequence DECARR the keyboard auto-repeat speed can be 
 limited to the given value in characters per second.
+Unlike original DECARR, a value of 0 disables repeat rate limitation.
 Keyboard auto-repeat can also be disabled with DECSET 8 (DECARM).
 
 | **sequence**   | **comment**         |
 |:---------------|:--------------------|
 | `^[[`_cps_`-p` | max 30              |
+| `^[[-p       ` | unlimited           |
 | `^[[?8l`       | disable auto-repeat |
 | `^[[?8h`       | enable auto-repeat  |
 
