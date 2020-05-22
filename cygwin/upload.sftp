@@ -12,7 +12,10 @@ echo Uploading $pkg
 echo Command: sftp -i $ID_RSA cygwin@cygwin.com
 
 if [ ! -f release/$pkg.hint ]
-then	cp cygwin/setup.hint release/$pkg.hint
+then	if [ -f cygwin/setup.hint.$version ]
+	then cp cygwin/setup.hint.$version release/$pkg.hint
+	else cp cygwin/setup.hint release/$pkg.hint
+	fi
 fi
 if [ ! -f release/$dbg.hint ]
 then	cp cygwin/mintty-debuginfo.hint release/$dbg.hint
