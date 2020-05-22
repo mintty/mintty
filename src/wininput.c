@@ -1849,9 +1849,9 @@ win_key_down(WPARAM wp, LPARAM lp)
   printf("win_key_down %02X %s scan %d ext %d rpt %d/%d other %02X\n", key, vk_name(key), scancode, extended, repeat, count, HIWORD(lp) >> 8);
 #endif
 
-static int last_key_time = 0;
+static LONG last_key_time = 0;
 
-  int message_time = GetMessageTime();
+  LONG message_time = GetMessageTime();
   if (repeat) {
 #ifdef auto_repeat_cursor_keys_option
     switch (key) {
@@ -1860,12 +1860,16 @@ static int last_key_time = 0;
 #endif
     if (!term.auto_repeat)
       return true;
-    if (term.repeat_rate && message_time > last_key_time &&
-        (1000 / (message_time - last_key_time) >= term.repeat_rate)
-       )
+    if (term.repeat_rate &&
+        message_time - last_key_time < 1000 / term.repeat_rate)
       return true;
   }
-  last_key_time = message_time;
+  if (repeat && term.repeat_rate &&
+      message_time - last_key_time < 2000 / term.repeat_rate)
+    /* Key repeat seems to be continued. */
+    last_key_time += 1000 / term.repeat_rate;
+  else
+    last_key_time = message_time;
 
   if (key == VK_PROCESSKEY) {
     TranslateMessage(

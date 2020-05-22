@@ -3,6 +3,7 @@ Terminal features
 
 Keyboard handling
   * Keyboard auto-repeat handling is now as usual (not affected) by default.
+  * Tweaked auto-repeat rate adjustment to better reflect selected values.
 
 ### 3.1.6 (21 May 2020) ###
 
