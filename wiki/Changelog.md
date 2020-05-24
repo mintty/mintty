@@ -4,6 +4,10 @@ Terminal features
 Keyboard handling
   * Keyboard auto-repeat handling is now as usual (not affected) by default.
   * Tweaked auto-repeat rate adjustment to better reflect selected values.
+  * Configurable key to activate keyboard selecting mode (#997, #84).
+
+Configuration
+  * New user-definable functions kb-select (#997, #84).
 
 ### 3.1.6 (21 May 2020) ###
 
