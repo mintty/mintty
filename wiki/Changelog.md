@@ -6,6 +6,9 @@ Keyboard handling
   * Tweaked auto-repeat rate adjustment to better reflect selected values.
   * Configurable key to activate keyboard selecting mode (#997, #84).
 
+Window handling
+  * Search results are cleared on reset (#998).
+
 Configuration
   * New user-definable function kb-select (#997, #84).
 
