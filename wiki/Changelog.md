@@ -7,7 +7,7 @@ Keyboard handling
   * Configurable key to activate keyboard selecting mode (#997, #84).
 
 Configuration
-  * New user-definable functions kb-select (#997, #84).
+  * New user-definable function kb-select (#997, #84).
 
 ### 3.1.6 (21 May 2020) ###
 
