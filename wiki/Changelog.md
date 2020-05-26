@@ -8,6 +8,7 @@ Keyboard handling
 
 Window handling
   * Search results are cleared on reset (#998).
+  * Constrain dark mode handling (#983) to Windows 10 (#1001).
 
 Configuration
   * New user-definable function kb-select (#997, #84).
