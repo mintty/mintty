@@ -242,8 +242,10 @@ load_dwm_funcs(void)
   }
   if (uxtheme) {
     DWORD win_version = GetVersion();
+    uint build = HIWORD(win_version);
     win_version = ((win_version & 0xff) << 8) | ((win_version >> 8) & 0xff);
-    if (win_version > 0x0601) {
+    //printf("Windows %d.%d Build %d\n", win_version >> 8, win_version & 0xFF, build);
+    if (win_version > 0x0601 && build >= 17763) { // minimum version 1809
       pShouldAppsUseDarkMode = 
         (void *)GetProcAddress(uxtheme, MAKEINTRESOURCEA(132)); /* ordinal */
       pSetPreferredAppMode = 
