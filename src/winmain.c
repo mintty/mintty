@@ -4689,9 +4689,9 @@ main(int argc, char *argv[])
     monitor = atoi(getenv("MINTTY_MONITOR"));
     unsetenv("MINTTY_MONITOR");
   }
-  bool maximize = false;
+  int run_max = 0;
   if (getenv("MINTTY_MAXIMIZE")) {
-    maximize = !!atoi(getenv("MINTTY_MAXIMIZE"));
+    run_max = atoi(getenv("MINTTY_MAXIMIZE"));
     unsetenv("MINTTY_MAXIMIZE");
   }
 
@@ -5311,8 +5311,9 @@ main(int argc, char *argv[])
   // Determine how to show the window.
   go_fullscr_on_max = (cfg.window == -1);
   default_size_token = true;  // prevent font zooming (#708)
-  int show_cmd = (go_fullscr_on_max || maximize) ? SW_SHOWMAXIMIZED : cfg.window;
+  int show_cmd = (go_fullscr_on_max || run_max) ? SW_SHOWMAXIMIZED : cfg.window;
   show_cmd = win_fix_taskbar_max(show_cmd);
+  // if (run_max == 2) win_maximise(2); // do that later to reduce flickering
 
   // Scale to background image aspect ratio if requested
   win_get_pixels(&ini_height, &ini_width, false);
@@ -5327,6 +5328,9 @@ main(int argc, char *argv[])
   // Finally show the window.
   ShowWindow(wnd, show_cmd);
   SetFocus(wnd);
+  // Cloning fullscreen window
+  if (run_max == 2)
+    win_maximise(2);
 
   // Set up clipboard notifications.
   HRESULT (WINAPI * pAddClipboardFormatListener)(HWND) =

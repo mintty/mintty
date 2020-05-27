@@ -1147,10 +1147,11 @@ do_child_fork(int argc, char *argv[], int moni, bool launch)
     // propagate shortcut-inherited icon
     if (icon_is_from_shortcut)
       setenv("MINTTY_ICON", cs__wcstoutf(cfg.icon), true);
-    // provide environment to to maximize window
-    if (IsZoomed(wnd)) {
+    // provide environment to maximise window
+    if (win_is_fullscreen)
+      setenvi("MINTTY_MAXIMIZE", 2);
+    else if (IsZoomed(wnd))
       setenvi("MINTTY_MAXIMIZE", 1);
-    }
 
     //setenv("MINTTY_CHILD", "1", true);
 

@@ -9,6 +9,7 @@ Keyboard handling
 Window handling
   * Search results are cleared on reset (#998).
   * Constrain dark mode handling (#983) to Windows 10 Version 1809 (#1001).
+  * Alt+F2 clones maximised and fullscreen window modes (#999, ~#633).
 
 Configuration
   * New user-definable function kb-select (#997, #84).
