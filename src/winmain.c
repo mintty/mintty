@@ -1466,10 +1466,27 @@ win_update_blur(bool opaque)
 static void
 win_update_glass(bool opaque)
 {
-  bool enabled =
-    cfg.transparency == TR_GLASS && !win_is_fullscreen &&
-    !(opaque && term.has_focus);
+  bool enabled;
 
+  enum WindowCompositionAttribute
+  {
+    WCA_ACCENT_POLICY = 19,
+    WCA_USEDARKMODECOLORS = 26
+  };
+  enum WindowCompositionAttribute accentType = WCA_ACCENT_POLICY;
+  if (cfg.transparency != TR_GLASS) {
+      static wstring personalizekeyname = W("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize");
+      uint useLight = getregval(HKEY_CURRENT_USER, personalizekeyname, W("AppsUseLightTheme"));
+      if (0 == useLight) {
+        enabled = true;
+        accentType = WCA_USEDARKMODECOLORS;
+      } else {
+        enabled = false;
+      }
+  } else {
+    enabled = cfg.transparency == TR_GLASS && !win_is_fullscreen && !(opaque && term.has_focus);
+  }
+  
   if (pDwmExtendFrameIntoClientArea) {
     pDwmExtendFrameIntoClientArea(wnd, &(MARGINS){enabled ? -1 : 0, 0, 0, 0});
   }
@@ -1484,10 +1501,6 @@ win_update_glass(bool opaque)
       ACCENT_ENABLE_ACRYLICBLURBEHIND = 4,
       ACCENT_ENABLE_HOSTBACKDROP = 5,
       ACCENT_INVALID_STATE = 6
-    };
-    enum WindowCompositionAttribute
-    {
-      WCA_ACCENT_POLICY = 19
     };
     struct ACCENTPOLICY
     {
@@ -1511,7 +1524,7 @@ win_update_glass(bool opaque)
       0
     };
     struct WINCOMPATTRDATA data = {
-      WCA_ACCENT_POLICY,
+      accentType,
       (PVOID)&policy,
       sizeof(policy)
     };
