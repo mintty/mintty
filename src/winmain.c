@@ -1466,7 +1466,7 @@ win_update_blur(bool opaque)
 static void
 win_update_glass(bool opaque)
 {
-  bool enabled;
+  bool compositionEnabled, extendFrameIntoClientArea;
 
   enum WindowCompositionAttribute
   {
@@ -1475,20 +1475,22 @@ win_update_glass(bool opaque)
   };
   enum WindowCompositionAttribute accentType = WCA_ACCENT_POLICY;
   if (cfg.transparency != TR_GLASS) {
-      static wstring personalizekeyname = W("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize");
-      uint useLight = getregval(HKEY_CURRENT_USER, personalizekeyname, W("AppsUseLightTheme"));
-      if (0 == useLight) {
-        enabled = true;
-        accentType = WCA_USEDARKMODECOLORS;
-      } else {
-        enabled = false;
-      }
+    static wstring personalizekeyname = W("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize");
+    uint useLight = getregval(HKEY_CURRENT_USER, personalizekeyname, W("AppsUseLightTheme"));
+    if (0 == useLight) {
+      compositionEnabled = true;
+      accentType = WCA_USEDARKMODECOLORS;
+    } else {
+      compositionEnabled = false;
+    }
+    extendFrameIntoClientArea = false;
   } else {
-    enabled = cfg.transparency == TR_GLASS && !win_is_fullscreen && !(opaque && term.has_focus);
+    compositionEnabled = cfg.transparency == TR_GLASS && !win_is_fullscreen && !(opaque && term.has_focus);
+	extendFrameIntoClientArea = true;
   }
   
   if (pDwmExtendFrameIntoClientArea) {
-    pDwmExtendFrameIntoClientArea(wnd, &(MARGINS){enabled ? -1 : 0, 0, 0, 0});
+    pDwmExtendFrameIntoClientArea(wnd, &(MARGINS){extendFrameIntoClientArea ? -1 : 0, 0, 0, 0});
   }
 
   if (pSetWindowCompositionAttribute) {
@@ -1518,7 +1520,7 @@ win_update_glass(bool opaque)
       ULONG dataSize;
     };
     struct ACCENTPOLICY policy = {
-      enabled ? ACCENT_ENABLE_BLURBEHIND : ACCENT_DISABLED,
+      compositionEnabled ? ACCENT_ENABLE_BLURBEHIND : ACCENT_DISABLED,
       0,
       0,
       0
