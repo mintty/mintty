@@ -1466,12 +1466,14 @@ win_update_blur(bool opaque)
 static void
 win_update_glass(bool opaque)
 {
-  bool enabled =
-    cfg.transparency == TR_GLASS && !win_is_fullscreen &&
-    !(opaque && term.has_focus);
+  bool glass = !(opaque && term.has_focus)
+               //&& !win_is_fullscreen
+               && cfg.transparency == TR_GLASS
+               //&& cfg.glass // decouple glass mode from transparency setting
+               ;
 
   if (pDwmExtendFrameIntoClientArea) {
-    pDwmExtendFrameIntoClientArea(wnd, &(MARGINS){enabled ? -1 : 0, 0, 0, 0});
+    pDwmExtendFrameIntoClientArea(wnd, &(MARGINS){glass ? -1 : 0, 0, 0, 0});
   }
 
   if (pSetWindowCompositionAttribute) {
@@ -1487,7 +1489,8 @@ win_update_glass(bool opaque)
     };
     enum WindowCompositionAttribute
     {
-      WCA_ACCENT_POLICY = 19
+      WCA_ACCENT_POLICY = 19,
+      WCA_USEDARKMODECOLORS = 26, // does not yield the desired effect (#1005)
     };
     struct ACCENTPOLICY
     {
@@ -1505,7 +1508,7 @@ win_update_glass(bool opaque)
       ULONG dataSize;
     };
     struct ACCENTPOLICY policy = {
-      enabled ? ACCENT_ENABLE_BLURBEHIND : ACCENT_DISABLED,
+      glass ? ACCENT_ENABLE_BLURBEHIND : ACCENT_DISABLED,
       0,
       0,
       0
