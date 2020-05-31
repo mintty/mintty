@@ -630,6 +630,10 @@ term_update_search(void)
 // return search results contained by [begin, end)
 static void
 do_search(int begin, int end) {
+  if (term.results.xquery_length == 0) {
+    return;
+  }
+
   init_case_folding();
 
   /* the position of current char */
