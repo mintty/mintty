@@ -2848,8 +2848,8 @@ static struct {
       if (in_client_area(wnd, lp)) {
         // clicked within "client area";
         // Windows sends the NC message nonetheless when Ctrl+Alt is held
-        win_mouse_click(MBT_LEFT, screentoclient(wnd, lp));
-        return 0;
+        if (win_mouse_click(MBT_LEFT, screentoclient(wnd, lp)))
+          return 0;
       }
       else
       if (wp == HTCAPTION && get_mods() == MDK_CTRL) {
@@ -2860,8 +2860,8 @@ static struct {
       if (in_client_area(wnd, lp)) {
         // clicked within "client area";
         // Windows sends the NC message nonetheless when Ctrl+Alt is held
-        win_mouse_click(MBT_RIGHT, screentoclient(wnd, lp));
-        return 0;
+        if (win_mouse_click(MBT_RIGHT, screentoclient(wnd, lp)))
+          return 0;
       }
       else
       if (wp == HTCAPTION && (cfg.geom_sync > 0 || get_mods() == MDK_CTRL)) {
@@ -2870,16 +2870,16 @@ static struct {
       }
     when WM_NCMBUTTONDOWN or WM_NCMBUTTONDBLCLK:
       if (in_client_area(wnd, lp)) {
-        win_mouse_click(MBT_MIDDLE, screentoclient(wnd, lp));
-        return 0;
+        if (win_mouse_click(MBT_MIDDLE, screentoclient(wnd, lp)))
+          return 0;
       }
     when WM_NCXBUTTONDOWN or WM_NCXBUTTONDBLCLK:
       if (in_client_area(wnd, lp))
         switch (HIWORD(wp)) {
-          when XBUTTON1: win_mouse_click(MBT_4, screentoclient(wnd, lp));
-                         return 0;
-          when XBUTTON2: win_mouse_click(MBT_5, screentoclient(wnd, lp));
-                         return 0;
+          when XBUTTON1: if (win_mouse_click(MBT_4, screentoclient(wnd, lp)))
+                           return 0;
+          when XBUTTON2: if (win_mouse_click(MBT_5, screentoclient(wnd, lp)))
+                           return 0;
         }
     when WM_NCLBUTTONUP:
       if (in_client_area(wnd, lp)) {

@@ -7,6 +7,7 @@ Keyboard handling
   * Configurable key to activate keyboard selecting mode (#997, #84).
 
 Window handling
+  * Ctrl+Alt+mouse-click restored to move the window (#1008).
   * Search results are cleared on reset (#998).
   * Constrain dark mode handling (#983) to Windows 10 Version 1809 (#1001).
   * Alt+F2 clones maximised and fullscreen window modes (#999, ~#633).

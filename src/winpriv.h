@@ -86,7 +86,7 @@ extern void win_update_menus(bool callback);
 extern void user_function(wstring commands, int n);
 
 extern void win_show_mouse(void);
-extern void win_mouse_click(mouse_button, LPARAM);
+extern bool win_mouse_click(mouse_button, LPARAM);
 extern void win_mouse_release(mouse_button, LPARAM);
 extern void win_mouse_wheel(POINT wpos, bool horizontal, int delta);
 extern void win_mouse_move(bool nc, LPARAM);

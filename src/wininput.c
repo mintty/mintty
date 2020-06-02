@@ -945,7 +945,7 @@ get_mouse_pos(LPARAM lp)
   return translate_pos(GET_X_LPARAM(lp), GET_Y_LPARAM(lp));
 }
 
-void
+bool
 win_mouse_click(mouse_button b, LPARAM lp)
 {
   mouse_state = true;
@@ -968,6 +968,8 @@ win_mouse_click(mouse_button b, LPARAM lp)
 
   SetFocus(wnd);  // in case focus was in search bar
 
+  bool res = false;
+
   if (click_focus && b == MBT_LEFT && count == 1
       && // not in application mouse mode
          !(term.mouse_mode && term.report_focus &&
@@ -979,13 +981,14 @@ win_mouse_click(mouse_button b, LPARAM lp)
     last_skipped = true;
     last_skipped_time = t;
     skip_release_token = b;
+    res = true;
   }
   else {
     if (last_skipped && dblclick) {
       // recognize double click also in application mouse modes
       term_mouse_click(b, mods, p, 1);
     }
-    term_mouse_click(b, mods, p, count);
+    res = term_mouse_click(b, mods, p, count);
     last_skipped = false;
   }
   last_pos = (pos){INT_MIN, INT_MIN, false};
@@ -1007,6 +1010,8 @@ win_mouse_click(mouse_button b, LPARAM lp)
       button_state |= 8;
     otherwise:;
   }
+
+  return res;
 }
 
 void

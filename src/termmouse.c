@@ -429,7 +429,7 @@ check_app_mouse(mod_keys *mods_p)
   return cfg.clicks_target_app ^ override;
 }
 
-void
+bool
 term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
 {
   if (term.hovering) {
@@ -437,6 +437,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     win_update(true);
   }
 
+  bool res = true;
   if (check_app_mouse(&mods)) {
     if (term.mouse_mode == MM_X10)
       mods = 0;
@@ -467,22 +468,30 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
       // trying to ignore WM_CAPTURECHANGED does not help
       if (!alt || fake_alt)
         win_popup_menu(mods);
+      else
+        res = false;
     }
     else if (b == MBT_MIDDLE && (mods & ~MDK_SHIFT) == MDK_CTRL) {
       if (cfg.zoom_mouse)
         win_zoom_font(0, mods & MDK_SHIFT);
+      else
+        res = false;
     }
     else if ((b == MBT_RIGHT && rca == RC_PASTE) ||
-             (b == MBT_MIDDLE && mca == MC_PASTE)) {
+             (b == MBT_MIDDLE && mca == MC_PASTE))
+    {
       if (!alt)
         term.mouse_state = shift_or_ctrl ? MS_COPYING : MS_PASTING;
+      else
+        res = false;
     }
     else if ((b == MBT_RIGHT && rca == RC_ENTER) ||
              (b == MBT_MIDDLE && mca == MC_ENTER)) {
       child_send("\r", 1);
     }
-    else if (b == MBT_LEFT && mods == MDK_SHIFT && rca == RC_EXTEND)
+    else if (b == MBT_LEFT && mods == MDK_SHIFT && rca == RC_EXTEND) {
       term.mouse_state = MS_PASTING;
+    }
     else if (b == MBT_LEFT && (mods & ~cfg.click_target_mod) == MDK_CTRL) {
       if (count == cfg.opening_clicks) {
         // Open word under cursor
@@ -494,10 +503,13 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
         sel_spread();
         win_update(true);
       }
+      else
+        res = false;
     }
     else if (b == MBT_MIDDLE && mca == MC_VOID) {
+      // res = true; // MC_VOID explicitly ignores the click
     }
-    else {
+    else if ((mods & (MDK_CTRL | MDK_ALT)) != (MDK_CTRL | MDK_ALT)) {
       // Only clicks for selecting and extending should get here.
       p = get_selpoint(box_pos(p));
       term.mouse_state = -count;
@@ -518,7 +530,12 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
       win_capture_mouse();
       win_update(true);
     }
+    else {
+      res = false;
+    }
   }
+
+  return res;
 }
 
 void
