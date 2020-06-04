@@ -16,6 +16,9 @@ Window handling
 Configuration
   * New user-definable function kb-select (#997, #84).
 
+Other
+  * Adding Windows build information to About info.
+
 ### 3.1.6 (21 May 2020) ###
 
 Window handling

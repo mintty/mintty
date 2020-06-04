@@ -949,9 +949,11 @@ win_show_about(void)
   char * abouttext = newn(char, strlen(aboutfmt) + strlen(WEBSITE));
   sprintf(abouttext, aboutfmt, WEBSITE);
 #else
+  DWORD win_version = GetVersion();
+  uint build = HIWORD(win_version);
   char * aboutfmt =
-    asform("%s\n%s\n%s\n%s\n\n%s", 
-           VERSION_TEXT, COPYRIGHT, LICENSE_TEXT, _(WARRANTY_TEXT), _(ABOUT_TEXT));
+    asform("%s [Windows %u]\n%s\n%s\n%s\n\n%s", 
+           VERSION_TEXT, build, COPYRIGHT, LICENSE_TEXT, _(WARRANTY_TEXT), _(ABOUT_TEXT));
   char * abouttext = asform(aboutfmt, WEBSITE);
 #endif
   free(aboutfmt);
