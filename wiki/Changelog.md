@@ -1,3 +1,5 @@
+### 3.1.7 (6 June 2020) ###
+
 Terminal features
   * New default CSI - p (DECARR 0) to disable keyboard repeat rate limitation.
 

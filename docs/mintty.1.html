@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Wed May 20 17:25:31 2020 -->
+<!-- CreationDate: Thu Jun  4 15:24:40 2020 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -1350,14 +1350,9 @@ the following choices: <br>
 &ndash; <b>Glass</b></p>
 
 <p style="margin-left:22%; margin-top: 1em">The
-<b>Glass</b> option is only available on Vista and above
-with desktop compositing enabled. To make this reasonably
-usable, the glass colour needs to be set to be as dark as
-possible in the Windows control panel: choose
-<i>Personalize</i> from the desktop context menu, click on
-<i>Window Color</i>, turn the colour intensity up to the
-maximum, show the colour mixer, and turn the brightness down
-to black.</p>
+<b>Glass</b> option is deprecated as it was only supported
+in Windows Vista and only if glass colour brightness was set
+black in the Windows control panel.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Numeric
 transparency values ranging from 4 to 254 can be specified
@@ -1817,7 +1812,8 @@ Auto-repeat keys</b> (AutoRepeat=on)</p>
 
 <p style="margin-left:22%;">When setting this off, keyboard
 auto-repeat is ignored. Auto-repeat can also be switched
-dynamically with DECSET 8.</p>
+dynamically with DECSET 8. Note that the repeat rate can be
+adjusted dynamically by an escape sequence.</p>
 
 <p style="margin-left:11%;"><b>Backarrow sends ^H</b>
 (BackspaceSendsBS=no)</p>
@@ -3094,6 +3090,7 @@ HTML file <br>
 <br>
 &ndash; <b>hyper</b>: use this key as Hyper modifier key
 <br>
+&ndash; <b>kb-select</b>: activate keyboard selection <br>
 &ndash; <b>scroll_top</b>: scroll scrollback view to
 beginning <br>
 &ndash; <b>scroll_end</b>: scroll scrollback view to end
@@ -3741,6 +3738,11 @@ session switcher</p>
 With empty values for <b>MenuTitleCtrlLeft</b>/<b>Right</b>
 the default session launcher for Ctrl+left/right-click on
 title bar can be disabled.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i> In
+multi-column layout (using a <b>|</b> vertical separator), a
+Windows bug causes fallback to a default theme, affecting
+colours and icons.</p>
 
 <p style="margin-left:11%;"><b>Session geometry
 synchronization / Virtual tabs</b> (SessionGeomSync=0)</p>

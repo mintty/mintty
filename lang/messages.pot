@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-05-21 19:34+0200\n"
+"POT-Creation-Date: 2020-06-04 15:26+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: charset.c:240 charset.c:251 winmain.c:4292 winmain.c:4404 winmain.c:4411
+#: charset.c:240 charset.c:251 winmain.c:4301 winmain.c:4413 winmain.c:4420
 msgid "(Default)"
 msgstr ""
 
@@ -961,215 +961,215 @@ msgid "Error"
 msgstr ""
 
 #. __ Context menu, session switcher ("virtual tabs") menu label
-#: wininput.c:288
+#: wininput.c:289
 msgid "Session switcher"
 msgstr ""
 
 #. __ Context menu, session launcher ("virtual tabs") menu label
-#: wininput.c:308
+#: wininput.c:309
 msgid "Session launcher"
 msgstr ""
 
-#: wininput.c:417 wininput.c:423
+#: wininput.c:418 wininput.c:424
 msgid "Ctrl+"
 msgstr ""
 
-#: wininput.c:418 wininput.c:424
+#: wininput.c:419 wininput.c:425
 msgid "Alt+"
 msgstr ""
 
-#: wininput.c:419 wininput.c:425
+#: wininput.c:420 wininput.c:426
 msgid "Shift+"
 msgstr ""
 
 #. __ System menu:
-#: wininput.c:450
+#: wininput.c:451
 msgid "&Restore"
 msgstr ""
 
 #. __ System menu:
-#: wininput.c:452
+#: wininput.c:453
 msgid "&Move"
 msgstr ""
 
 #. __ System menu:
-#: wininput.c:454
+#: wininput.c:455
 msgid "&Size"
 msgstr ""
 
 #. __ System menu:
-#: wininput.c:456
+#: wininput.c:457
 msgid "Mi&nimize"
 msgstr ""
 
 #. __ System menu:
-#: wininput.c:458
+#: wininput.c:459
 msgid "Ma&ximize"
 msgstr ""
 
 #. __ System menu:
-#: wininput.c:460
+#: wininput.c:461
 msgid "&Close"
 msgstr ""
 
 #. __ System menu:
-#: wininput.c:465
+#: wininput.c:466
 msgid "Ne&w"
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:472
+#: wininput.c:473
 msgid "&Copy"
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:489
+#: wininput.c:490
 msgid "&Paste "
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:494
+#: wininput.c:495
 msgid "Copy → Paste"
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:499
+#: wininput.c:500
 msgid "S&earch"
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:506
+#: wininput.c:507
 msgid "&Log to File"
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:512
+#: wininput.c:513
 msgid "Character &Info"
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:518
+#: wininput.c:519
 msgid "VT220 Keyboard"
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:523
+#: wininput.c:524
 msgid "&Reset"
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:531
+#: wininput.c:532
 msgid "&Default Size"
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:541
+#: wininput.c:542
 msgid "Scroll&bar"
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:547
+#: wininput.c:548
 msgid "&Full Screen"
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:553
+#: wininput.c:554
 msgid "Flip &Screen"
 msgstr ""
 
 #. __ System menu:
-#: wininput.c:563 wininput.c:723
+#: wininput.c:564 wininput.c:724
 msgid "Copy &Title"
 msgstr ""
 
 #. __ System menu:
 #. __ Context menu:
 #. __ System menu:
-#: wininput.c:565 wininput.c:707 wininput.c:725
+#: wininput.c:566 wininput.c:708 wininput.c:726
 msgid "&Options..."
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:650
+#: wininput.c:651
 msgid "Ope&n"
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:655
+#: wininput.c:656
 msgid "Copy as text"
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:657
+#: wininput.c:658
 msgid "Copy as RTF"
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:659
+#: wininput.c:660
 msgid "Copy as HTML text"
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:661
+#: wininput.c:662
 msgid "Copy as HTML"
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:663
+#: wininput.c:664
 msgid "Copy as HTML full"
 msgstr ""
 
 #. __ Context menu:
-#: wininput.c:670
+#: wininput.c:671
 msgid "Select &All"
 msgstr ""
 
 #. __ Context menu: write terminal window contents as HTML file
-#: wininput.c:675
+#: wininput.c:676
 msgid "HTML Screen Dump"
 msgstr ""
 
 #. __ Context menu: clear scrollback buffer (lines scrolled off the window)
-#: wininput.c:683
+#: wininput.c:684
 msgid "Clear Scrollback"
 msgstr ""
 
 #. __ Context menu: generate a TTY BRK condition (tty line interrupt)
-#: wininput.c:693
+#: wininput.c:694
 msgid "Send Break"
 msgstr ""
 
 #. __ Context menu, user commands
-#: wininput.c:790
+#: wininput.c:791
 msgid "User commands"
 msgstr ""
 
-#: winmain.c:2296
+#: winmain.c:2305
 msgid "Processes are running in session:"
 msgstr ""
 
-#: winmain.c:2297
+#: winmain.c:2306
 msgid "Close anyway?"
 msgstr ""
 
-#: winmain.c:2415
+#: winmain.c:2424
 msgid "Try '--help' for more information"
 msgstr ""
 
-#: winmain.c:2423
+#: winmain.c:2432
 msgid "Could not load icon"
 msgstr ""
 
-#: winmain.c:4132
+#: winmain.c:4141
 msgid "Usage:"
 msgstr ""
 
-#: winmain.c:4133
+#: winmain.c:4142
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr ""
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:4136
+#: winmain.c:4145
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -1202,39 +1202,39 @@ msgid ""
 "See manual page for further command line options and configuration.\n"
 msgstr ""
 
-#: winmain.c:4292 winmain.c:4404 winmain.c:4411
+#: winmain.c:4301 winmain.c:4413 winmain.c:4420
 msgid "WSL distribution '%s' not found"
 msgstr ""
 
-#: winmain.c:4442
+#: winmain.c:4451
 msgid "Duplicate option '%s'"
 msgstr ""
 
-#: winmain.c:4450 winmain.c:4518
+#: winmain.c:4459 winmain.c:4527
 msgid "Unknown option '%s'"
 msgstr ""
 
-#: winmain.c:4452
+#: winmain.c:4461
 msgid "Option '%s' requires an argument"
 msgstr ""
 
-#: winmain.c:4479
+#: winmain.c:4488
 msgid "Syntax error in position argument '%s'"
 msgstr ""
 
-#: winmain.c:4490
+#: winmain.c:4499
 msgid "Syntax error in size argument '%s'"
 msgstr ""
 
-#: winmain.c:4627
+#: winmain.c:4636
 msgid "Syntax error in geometry argument '%s'"
 msgstr ""
 
-#: winmain.c:4702
+#: winmain.c:4716
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr ""
 
-#: winmain.c:4984
+#: winmain.c:4998
 msgid "Using default title due to invalid characters in program name"
 msgstr ""
 

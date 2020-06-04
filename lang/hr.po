@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-05-20 17:25+0200\n"
+"POT-Creation-Date: 2020-06-04 15:24+0200\n"
 "PO-Revision-Date: 2020-05-07 13:12+0200\n"
 "Last-Translator: Milo Ivir <mail@milotype.de>\n"
 "Language-Team: \n"
@@ -20,7 +20,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
 
-#: charset.c:240 charset.c:251 winmain.c:4292 winmain.c:4404 winmain.c:4411
+#: charset.c:240 charset.c:251 winmain.c:4301 winmain.c:4413 winmain.c:4420
 msgid "(Default)"
 msgstr "(Standardno)"
 
@@ -967,215 +967,215 @@ msgid "Error"
 msgstr "Greška"
 
 #. __ Context menu, session switcher ("virtual tabs") menu label
-#: wininput.c:288
+#: wininput.c:289
 msgid "Session switcher"
 msgstr "Prekidač sesije"
 
 #. __ Context menu, session launcher ("virtual tabs") menu label
-#: wininput.c:308
+#: wininput.c:309
 msgid "Session launcher"
 msgstr "Pokretač sesije"
 
-#: wininput.c:417 wininput.c:423
+#: wininput.c:418 wininput.c:424
 msgid "Ctrl+"
 msgstr "Ctrl+"
 
-#: wininput.c:418 wininput.c:424
+#: wininput.c:419 wininput.c:425
 msgid "Alt+"
 msgstr "Alt+"
 
-#: wininput.c:419 wininput.c:425
+#: wininput.c:420 wininput.c:426
 msgid "Shift+"
 msgstr "Shift+"
 
 #. __ System menu:
-#: wininput.c:450
+#: wininput.c:451
 msgid "&Restore"
 msgstr "&Vrati izvorno stanje"
 
 #. __ System menu:
-#: wininput.c:452
+#: wininput.c:453
 msgid "&Move"
 msgstr "&Premjesti"
 
 #. __ System menu:
-#: wininput.c:454
+#: wininput.c:455
 msgid "&Size"
 msgstr "&Veličina"
 
 #. __ System menu:
-#: wininput.c:456
+#: wininput.c:457
 msgid "Mi&nimize"
 msgstr "Mi&nimiraj"
 
 #. __ System menu:
-#: wininput.c:458
+#: wininput.c:459
 msgid "Ma&ximize"
 msgstr "Ma&ksimiraj"
 
 #. __ System menu:
-#: wininput.c:460
+#: wininput.c:461
 msgid "&Close"
 msgstr "&Zatvori"
 
 #. __ System menu:
-#: wininput.c:465
+#: wininput.c:466
 msgid "Ne&w"
 msgstr "&Novi"
 
 #. __ Context menu:
-#: wininput.c:472
+#: wininput.c:473
 msgid "&Copy"
 msgstr "&Kopiraj"
 
 #. __ Context menu:
-#: wininput.c:489
+#: wininput.c:490
 msgid "&Paste "
 msgstr "&Umetni "
 
 #. __ Context menu:
-#: wininput.c:494
+#: wininput.c:495
 msgid "Copy → Paste"
 msgstr "Kopiraj → Umetni"
 
 #. __ Context menu:
-#: wininput.c:499
+#: wininput.c:500
 msgid "S&earch"
 msgstr "&Traži"
 
 #. __ Context menu:
-#: wininput.c:506
+#: wininput.c:507
 msgid "&Log to File"
 msgstr "Spremi log-zapise u datoteku"
 
 #. __ Context menu:
-#: wininput.c:512
+#: wininput.c:513
 msgid "Character &Info"
 msgstr "&Podaci znaka"
 
 #. __ Context menu:
-#: wininput.c:518
+#: wininput.c:519
 msgid "VT220 Keyboard"
 msgstr "Tipkovnica VT220"
 
 #. __ Context menu:
-#: wininput.c:523
+#: wininput.c:524
 msgid "&Reset"
 msgstr "&Vrati na izvorno"
 
 #. __ Context menu:
-#: wininput.c:531
+#: wininput.c:532
 msgid "&Default Size"
 msgstr "&Standardna veličina"
 
 #. __ Context menu:
-#: wininput.c:541
+#: wininput.c:542
 msgid "Scroll&bar"
 msgstr "Traka &klizača"
 
 #. __ Context menu:
-#: wininput.c:547
+#: wininput.c:548
 msgid "&Full Screen"
 msgstr "&Cjeloekranski prikaz"
 
 #. __ Context menu:
-#: wininput.c:553
+#: wininput.c:554
 msgid "Flip &Screen"
 msgstr "Preokreni &ekran"
 
 #. __ System menu:
-#: wininput.c:563 wininput.c:723
+#: wininput.c:564 wininput.c:724
 msgid "Copy &Title"
 msgstr "Kopiraj &naslov"
 
 #. __ System menu:
 #. __ Context menu:
 #. __ System menu:
-#: wininput.c:565 wininput.c:707 wininput.c:725
+#: wininput.c:566 wininput.c:708 wininput.c:726
 msgid "&Options..."
 msgstr "&Opcije …"
 
 #. __ Context menu:
-#: wininput.c:650
+#: wininput.c:651
 msgid "Ope&n"
 msgstr "O&tvori"
 
 #. __ Context menu:
-#: wininput.c:655
+#: wininput.c:656
 msgid "Copy as text"
 msgstr "Kopiraj kao tekst"
 
 #. __ Context menu:
-#: wininput.c:657
+#: wininput.c:658
 msgid "Copy as RTF"
 msgstr "Kopiraj kao RTF"
 
 #. __ Context menu:
-#: wininput.c:659
+#: wininput.c:660
 msgid "Copy as HTML text"
 msgstr "Kopiraj kao HTML tekst"
 
 #. __ Context menu:
-#: wininput.c:661
+#: wininput.c:662
 msgid "Copy as HTML"
 msgstr "Kopiraj kao HTML"
 
 #. __ Context menu:
-#: wininput.c:663
+#: wininput.c:664
 msgid "Copy as HTML full"
 msgstr "Kopiraj kao HTML kompletno"
 
 #. __ Context menu:
-#: wininput.c:670
+#: wininput.c:671
 msgid "Select &All"
 msgstr "Odaberi &sve"
 
 #. __ Context menu: write terminal window contents as HTML file
-#: wininput.c:675
+#: wininput.c:676
 msgid "HTML Screen Dump"
 msgstr "Spremi sadržaj u HTML"
 
 #. __ Context menu: clear scrollback buffer (lines scrolled off the window)
-#: wininput.c:683
+#: wininput.c:684
 msgid "Clear Scrollback"
 msgstr "Izbriši prijašnje retke"
 
 #. __ Context menu: generate a TTY BRK condition (tty line interrupt)
-#: wininput.c:693
+#: wininput.c:694
 msgid "Send Break"
 msgstr "Pošalji prekid retka"
 
 #. __ Context menu, user commands
-#: wininput.c:790
+#: wininput.c:791
 msgid "User commands"
 msgstr "Korisničke naredbe"
 
-#: winmain.c:2296
+#: winmain.c:2305
 msgid "Processes are running in session:"
 msgstr "U sesiji se izvode procesi:"
 
-#: winmain.c:2297
+#: winmain.c:2306
 msgid "Close anyway?"
 msgstr "Svejedno zatvoriti?"
 
-#: winmain.c:2415
+#: winmain.c:2424
 msgid "Try '--help' for more information"
 msgstr "Koristi „--help” za daljnje informacije"
 
-#: winmain.c:2423
+#: winmain.c:2432
 msgid "Could not load icon"
 msgstr "Nije bilo moguće učitati ikonu"
 
-#: winmain.c:4132
+#: winmain.c:4141
 msgid "Usage:"
 msgstr "Upotreba:"
 
-#: winmain.c:4133
+#: winmain.c:4142
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr "[OPCIJA]… [ PROGRAM [PARAMETAR]… | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:4136
+#: winmain.c:4145
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -1250,39 +1250,39 @@ msgstr ""
 "  -V, --verzija             Ispisuje podatke o verziji i izlazi\n"
 "Pogledaj priručnik za dodatne opcije u naredbenom retku i konfiguraciju.\n"
 
-#: winmain.c:4292 winmain.c:4404 winmain.c:4411
+#: winmain.c:4301 winmain.c:4413 winmain.c:4420
 msgid "WSL distribution '%s' not found"
 msgstr "WSL distribucija „%s” nije pronađena"
 
-#: winmain.c:4442
+#: winmain.c:4451
 msgid "Duplicate option '%s'"
 msgstr "Dupliciraj opciju „%s”"
 
-#: winmain.c:4450 winmain.c:4518
+#: winmain.c:4459 winmain.c:4527
 msgid "Unknown option '%s'"
 msgstr "Nepoznata opcija „%s”"
 
-#: winmain.c:4452
+#: winmain.c:4461
 msgid "Option '%s' requires an argument"
 msgstr "Opcija „%s” zahtijeva argument"
 
-#: winmain.c:4479
+#: winmain.c:4488
 msgid "Syntax error in position argument '%s'"
 msgstr "Greška u sintaksi za argument položaja „%s”"
 
-#: winmain.c:4490
+#: winmain.c:4499
 msgid "Syntax error in size argument '%s'"
 msgstr "Greška u sintaksi za argument veličine „%s”"
 
-#: winmain.c:4627
+#: winmain.c:4636
 msgid "Syntax error in geometry argument '%s'"
 msgstr "Greška u sintaksi za argument geometrije „%s”"
 
-#: winmain.c:4702
+#: winmain.c:4716
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr "Mintty se nije mogao odvojiti od pozivatelja, svejedno se pokreče"
 
-#: winmain.c:4984
+#: winmain.c:4998
 msgid "Using default title due to invalid characters in program name"
 msgstr ""
 "Koristi se standardni naslov, jer ime programa sadrži nevaljane znakove"
