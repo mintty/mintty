@@ -2,7 +2,7 @@ Terminal features
   * New default CSI - p (DECARR 0) to disable keyboard repeat rate limitation.
 
 Keyboard handling
-  * Keyboard auto-repeat handling is now as usual (not affected) by default.
+  * Keyboard auto-repeat handling is now as usual (not affected) by default (#1009).
   * Tweaked auto-repeat rate adjustment to better reflect selected values.
   * Configurable key to activate keyboard selecting mode (#997, #84).
 
