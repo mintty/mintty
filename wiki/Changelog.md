@@ -5,6 +5,7 @@ Keyboard handling
   * Keyboard auto-repeat handling is now as usual (not affected) by default (#1009).
   * Tweaked auto-repeat rate adjustment to better reflect selected values.
   * Configurable key to activate keyboard selecting mode (#997, #84).
+  * Restored right-Alt modifier (if not AltGr) (#1003, ~#969).
 
 Window handling
   * Ctrl+Alt+mouse-click restored to move the window (#1008).
