@@ -4202,10 +4202,12 @@ term_do_write(const char *buf, uint len)
           when ';':
             term.cmd_num = 0;
             term.state = CMD_STRING;
-          when '\a' or '\n' or '\r':
+          when '\a':
             term.state = NORMAL;
           when '\e':
             term.state = ESCAPE;
+          when '\n' or '\r':
+            term.state = IGNORE_STRING;
           otherwise:
             term.state = IGNORE_STRING;
         }
@@ -4224,7 +4226,7 @@ term_do_write(const char *buf, uint len)
           when '\e':
             term.state = CMD_ESCAPE;
           when '\n' or '\r':
-            term.state = NORMAL;
+            term.state = IGNORE_STRING;
           otherwise:
             term.state = IGNORE_STRING;
         }
@@ -4253,23 +4255,29 @@ term_do_write(const char *buf, uint len)
 
       when CMD_STRING:
         switch (c) {
-          when '\n' or '\r':
-            term.state = NORMAL;
           when '\a':
             do_cmd();
             term.state = NORMAL;
           when '\e':
             term.state = CMD_ESCAPE;
+          when '\n' or '\r':
+            // accept new lines in OSC strings
+            if (term.cmd_num != 1337)
+              term_push_cmd(c);
+            // else ignore new lines in base64-encoded images
           otherwise:
             term_push_cmd(c);
         }
 
       when IGNORE_STRING:
         switch (c) {
-          when '\n' or '\r' or '\a':
+          when '\a':
             term.state = NORMAL;
           when '\e':
             term.state = ESCAPE;
+          when '\n' or '\r':
+            // keep IGNORE_STRING
+            ;
         }
 
       when DCS_START:

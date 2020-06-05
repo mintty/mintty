@@ -1,3 +1,6 @@
+Terminal features
+  * Handle new lines within OSC strings, ignore for image data (#1010).
+
 ### 3.1.7 (6 June 2020) ###
 
 Terminal features
