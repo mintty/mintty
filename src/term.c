@@ -695,7 +695,7 @@ do_search(int begin, int end) {
         .idx = cpos - anpos + 1,
         .len = anpos
       };
-      assert(begin <= run.idx && (run.idx + run.len) < end);
+      assert(begin <= run.idx && (run.idx + run.len) <= end);
       // Append result
       results_add(run);
       npos = 0;
