@@ -4,6 +4,9 @@ Terminal features
 Window handling
   * Fixed crash with empty search pattern (#1011, ~#998).
 
+Configuration
+  * Changing default CheckVersionUpdate=0 to disable version checking by default.
+
 ### 3.1.7 (6 June 2020) ###
 
 Terminal features
