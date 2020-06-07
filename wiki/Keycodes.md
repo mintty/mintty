@@ -131,21 +131,21 @@ Super and Hyper modifiers can be configured with option _KeyFunctions_, e.g.:
 
 Number and symbol key combinations that are not handled either by the Windows keyboard layout or by the Ctrl key processing described above, are assigned the keycodes shown here.
 
-| **Key** | **modified**    | ** appl keypad modified** |
-|:--------|:----------------|:--------------------------|
-| **/**   | `^[[1;`_m_`o`   | `^[O`_m_`o`               |
-| **`*`** | `^[[1;`_m_`j`   | `^[O`_m_`j`               |
-| **-**   | `^[[1;`_m_`m`   | `^[O`_m_`m`               |
-| **+**   | `^[[1;`_m_`k`   | `^[O`_m_`k`               |
-| **Enter** |               | `^[O`_m_`M`               |
+| **Key** | **modified**    | **appl keypad modified**       |
+|:--------|:----------------|:-------------------------------|
+| **/**   | `^[[1;`_m_`o`   | `^[O`_m_`o`                    |
+| **`*`** | `^[[1;`_m_`j`   | `^[O`_m_`j`                    |
+| **-**   | `^[[1;`_m_`m`   | `^[O`_m_`m`                    |
+| **+**   | `^[[1;`_m_`k`   | `^[O`_m_`k`                    |
+| **Enter** |               | `^[O`_m_`M`                    |
 | **,**   | `^[[1;`_m_`l`   |
-|         |                 | ** VT220 appl keypad modified** |
-| **.**   | `^[[1;`_m_`n`   | `^[O`_m_`n`               |
-| **0**   | `^[[1;`_m_`p`   | `^[O`_m_`p`               |
-| **1**   | `^[[1;`_m_`q`   | `^[O`_m_`q`               |
+|         |                 | **VT220 appl keypad modified** |
+| **.**   | `^[[1;`_m_`n`   | `^[O`_m_`n`                    |
+| **0**   | `^[[1;`_m_`p`   | `^[O`_m_`p`                    |
+| **1**   | `^[[1;`_m_`q`   | `^[O`_m_`q`                    |
 | ...     |
-| **8**   | `^[[1;`_m_`x`   | `^[O`_m_`x`               |
-| **9**   | `^[[1;`_m_`y`   | `^[O`_m_`y`               |
+| **8**   | `^[[1;`_m_`x`   | `^[O`_m_`x`                    |
+| **9**   | `^[[1;`_m_`y`   | `^[O`_m_`y`                    |
 
 (These are VT220 application keypad codes with added modifier.)
 
