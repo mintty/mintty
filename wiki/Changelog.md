@@ -1,6 +1,9 @@
 Terminal features
   * Handle new lines within OSC strings, ignore for image data (#1010).
 
+Window handling
+  * Fixed crash with empty search pattern (#1011, ~#998).
+
 ### 3.1.7 (6 June 2020) ###
 
 Terminal features
