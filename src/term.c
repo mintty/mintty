@@ -630,6 +630,10 @@ term_update_search(void)
 // return search results contained by [begin, end)
 static void
 do_search(int begin, int end) {
+  if (term.results.xquery_length == 0) {
+    return;
+  }
+
   init_case_folding();
 
   /* the position of current char */
@@ -691,7 +695,7 @@ do_search(int begin, int end) {
         .idx = cpos - anpos + 1,
         .len = anpos
       };
-      assert(begin <= run.idx && (run.idx + run.len) < end);
+      assert(begin <= run.idx && (run.idx + run.len) <= end);
       // Append result
       results_add(run);
       npos = 0;
