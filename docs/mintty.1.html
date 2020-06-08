@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Thu Jun  4 15:24:40 2020 -->
+<!-- CreationDate: Mon Jun  8 15:39:58 2020 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -1837,9 +1837,9 @@ is enabled, <b>^?</b> (ASCII DEL) is sent instead. <br>
 (CtrlAltIsAltGr=no)</p>
 
 <p style="margin-left:22%;">The AltGr key on non-US Windows
-systems is a strange beast: pressing it is synonymous with
+systems is a strange beast: pressing it is similar to
 pressing the left Ctrl key and the right Alt key at the same
-time, and Windows programs usually treat any Ctrl+Alt
+time, and many Windows programs treat any Ctrl+Alt
 combination as AltGr.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Some programs,
@@ -1857,6 +1857,17 @@ ticking the checkbox here.</p>
 <p style="margin-left:22%; margin-top: 1em">The setting
 makes no difference for keys without AltGr key bindings
 (e.g. any key on the standard US layout).</p>
+
+<p style="margin-left:11%;"><b>AltGr is also Alt</b>
+(AltGrIsAlsoAlt=no)</p>
+
+<p style="margin-left:22%;">This setting enables fallback
+of the AltGr key to the function of the Alt modifier for
+those keys that do not have an AltGr mapping in the keyboard
+layout.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The setting
+makes no difference for keys with AltGr key bindings.</p>
 
 <p style="margin-left:11%;"><b>Allow delay for AltGr
 detection</b> (CtrlAltDelayAltGr=0)</p>
@@ -3376,12 +3387,12 @@ handling modes 1 or 2 (if supported, respectively), or set
 to 0/false to suppress DPI adjustments.</p>
 
 <p style="margin-left:11%;"><b>Check availability of mintty
-version update</b> (CheckVersionUpdate=900)</p>
+version update</b> (CheckVersionUpdate=0)</p>
 
-<p style="margin-left:22%;">If non-zero, mintty checks
-whether there is a version update available whenever the
-Options dialog is opened and this was not checked within the
-last given number of seconds.</p>
+<p style="margin-left:22%;">If non-zero (e.g. 900), mintty
+checks whether there is a version update available whenever
+the Options dialog is opened and this was not checked within
+the last given number of seconds.</p>
 
 <p style="margin-left:11%;"><b>Sixel image clipboard
 substitution</b> (SixelClipChars=<i>space</i>)</p>

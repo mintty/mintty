@@ -1,3 +1,5 @@
+### 3.1.8 (7 June 2020) ###
+
 Terminal features
   * Handle new lines within OSC strings, ignore for image data (#1010).
 
