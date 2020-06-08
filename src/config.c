@@ -84,6 +84,7 @@ const config default_cfg = {
   .backspace_sends_bs = CERASE == '\b',
   .delete_sends_del = false,
   .ctrl_alt_is_altgr = false,
+  .altgr_is_alt = false,
   .ctrl_alt_delay_altgr = 0,
   .old_altgr_detection = false,
   .auto_repeat = true,
@@ -329,6 +330,7 @@ options[] = {
   {"BackspaceSendsBS", OPT_BOOL, offcfg(backspace_sends_bs)},
   {"DeleteSendsDEL", OPT_BOOL, offcfg(delete_sends_del)},
   {"CtrlAltIsAltGr", OPT_BOOL, offcfg(ctrl_alt_is_altgr)},
+  {"AltGrIsAlsoAlt", OPT_BOOL, offcfg(altgr_is_alt)},
   {"CtrlAltDelayAltGr", OPT_INT, offcfg(ctrl_alt_delay_altgr)},
   {"OldAltGrDetection", OPT_BOOL, offcfg(old_altgr_detection)},
   {"AutoRepeat", OPT_BOOL, offcfg(auto_repeat)},
@@ -3316,6 +3318,11 @@ setup_config_box(controlbox * b)
     //__ Options - Keys:
     s, _("Ctrl+LeftAlt is Alt&Gr"),
     dlg_stdcheckbox_handler, &new_cfg.ctrl_alt_is_altgr
+  );
+  ctrl_checkbox(
+    //__ Options - Keys:
+    s, _("AltGr is also Alt"),
+    dlg_stdcheckbox_handler, &new_cfg.altgr_is_alt
   );
 
   s = ctrl_new_set(b, _("Keys"), null, 

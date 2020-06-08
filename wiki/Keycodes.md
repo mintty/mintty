@@ -49,7 +49,17 @@ See [section Modifier key encodings](Keycodes#modifier-key-encodings) below.
 
 ## AltGr ##
 
-The right Alt key, which is labelled [AltGr](http://en.wikipedia.org/wiki/AltGr_key) on most non-US keyboards, allows to type additional characters on many keyboard layouts. When the keyboard layout does not have a keycode for an AltGr combination, the AltGr key is treated as Alt instead. The _Ctrl+LeftAlt is AltGr_ setting allows combinations of either Ctrl key with the left Alt key to also be treated as AltGr.
+The right Alt key, which is labelled [AltGr](http://en.wikipedia.org/wiki/AltGr_key) on most non-US keyboards, 
+allows to type additional characters on many keyboard layouts. 
+When the keyboard layout does not have a keycode for an AltGr combination, 
+the AltGr key is treated as Alt instead.
+
+The `CtrlAltIsAltGr` setting (_Ctrl+LeftAlt is AltGr_ in the Options dialog) 
+allows combinations of either Ctrl key with the left Alt key to also be treated as AltGr.
+
+The `AltGrIsAlsoAlt` setting enables fallback of the AltGr key to the 
+function of the Alt modifier for those keys that do not have an AltGr 
+mapping in the keyboard layout.
 
 
 ## Ctrl ##
@@ -62,7 +72,7 @@ If Shift is held in addition to a control character combination, the correspondi
 
 The C1 control characters are shown as Unicode codepoints in the table below. How exactly C1 control characters are sent depends on the selected character encoding. In [ISO-8859](http://en.wikipedia.org/wiki/ISO/IEC_8859) encodings, they are encoded as single bytes, e.g. `\x81` for _U+0081_. With [UTF-8](http://en.wikipedia.org/wiki/UTF-8), they are encoded as two-byte sequences, which effectively means that the character code is prefixed with a `\xC2` byte, so for example _U+0081_ becomes `\xC2\x81`. C1 codepoints that are not supported by the selected character encoding are sent by prefixing the corresponding ASCII control character with an _ESC_ character, so _U+0081_ would be sent as `^[^A`.
 
-The Ctrl+Shift combinations are overridden by the CtrlShiftShortcuts setting (Ctrl+Shift+letter shortcuts in Options menu, Keys section).
+The Ctrl+Shift combinations are overridden by the `CtrlShiftShortcuts` setting (Ctrl+Shift+letter shortcuts in Options menu, Keys section).
 
 | **Char** | **Ctrl** | **Ctrl+Shift** |
 |:---------|:---------|:---------------|
@@ -123,7 +133,7 @@ add the numbers for each pressed modifier to 1:
 
 For example, Shift+Ctrl would be encoded as the number 6 (1 plus 1 for Shift plus 4 for Ctrl). Modifiers are not double-counted if, for example, both Shift keys are pressed. In the following sections, modifier codes are shown as _m_.
 
-Super and Hyper modifiers can be configured with option _KeyFunctions_, e.g.:
+Super and Hyper modifiers can be configured with option `KeyFunctions`, e.g.:
   * `KeyFunctions=*CapsLock:super`
 
 

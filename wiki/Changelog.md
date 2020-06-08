@@ -1,11 +1,15 @@
 Terminal features
   * Handle new lines within OSC strings, ignore for image data (#1010).
 
+Keyboard handling
+  * Optional legacy Alt modifier fallback for AltGr key.
+
 Window handling
   * Fixed crash with empty search pattern (#1011, ~#998).
 
 Configuration
   * Changing default CheckVersionUpdate=0 to disable version checking by default.
+  * Option AltGrIsAlsoAlt.
 
 ### 3.1.7 (6 June 2020) ###
 

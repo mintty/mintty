@@ -2748,7 +2748,7 @@ static struct {
       return true;
 
     // This prevents AltGr from behaving like Alt in modify_other_keys mode.
-    if (altgr0)
+    if (!cfg.altgr_is_alt && altgr0)
       return false;
 
     if (ralt) {
@@ -2997,7 +2997,7 @@ static struct {
       }
       else if (altgr_key())
         trace_key("altgr");
-      else if (altgr0 && !term.modify_other_keys)
+      else if (!cfg.altgr_is_alt && altgr0 && !term.modify_other_keys)
         // prevent AltGr from behaving like Alt
         trace_key("!altgr");
       else if (key != ' ' && alt_code_key(key - 'A' + 0xA))

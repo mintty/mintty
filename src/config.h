@@ -82,6 +82,7 @@ typedef struct {
   bool backspace_sends_bs;
   bool delete_sends_del;
   bool ctrl_alt_is_altgr;
+  bool altgr_is_alt;
   int ctrl_alt_delay_altgr;
   bool old_altgr_detection;
   bool auto_repeat;

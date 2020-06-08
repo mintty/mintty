@@ -1458,9 +1458,8 @@ If this option is enabled, \fB^?\fP (ASCII DEL) is sent instead.
 .TP
 \fBCtrl+LeftAlt is AltGr\fP (CtrlAltIsAltGr=no)
 The AltGr key on non-US Windows systems is a strange beast: pressing it is
-synonymous with pressing the left Ctrl key and the right Alt key at the
-same time, and Windows programs usually treat any Ctrl+Alt combination as
-AltGr.
+similar to pressing the left Ctrl key and the right Alt key at the
+same time, and many Windows programs treat any Ctrl+Alt combination as AltGr.
 
 Some programs, however, chief among them Microsoft's very own Office, do not
 treat Ctrl+LeftAlt as AltGr, so that Ctrl+LeftAlt combinations can be used in
@@ -1472,6 +1471,14 @@ The "standard" Windows behaviour can be restored by ticking the checkbox here.
 
 The setting makes no difference for keys without AltGr key bindings
 (e.g. any key on the standard US layout).
+
+.TP
+\fBAltGr is also Alt\fP (AltGrIsAlsoAlt=no)
+This setting enables fallback of the AltGr key to the function of the 
+Alt modifier for those keys that do not have an AltGr mapping in the 
+keyboard layout.
+
+The setting makes no difference for keys with AltGr key bindings.
 
 .TP
 \fBAllow delay for AltGr detection\fP (CtrlAltDelayAltGr=0)
