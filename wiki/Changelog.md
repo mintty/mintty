@@ -7,7 +7,7 @@ Keyboard handling
   * Optional legacy Alt modifier fallback for AltGr key.
 
 Window handling
-  * Fixed crash with empty search pattern (#1011, ~#998).
+  * Fixed crash with empty search pattern (#1011).
 
 Configuration
   * Changing default CheckVersionUpdate=0 to disable version checking by default.

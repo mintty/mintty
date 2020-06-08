@@ -491,7 +491,7 @@ msgstr "将 Ctrl+左Alt 设置为 Alt&Gr"
 #. __ Options - Keys:
 #: config.c:3324
 msgid "AltGr is also Alt"
-msgstr "将 AltGr 视为 Alt"
+msgstr "将 AltGr 也视为 Alt"
 
 #. __ Options - Keys: section title
 #: config.c:3330
