@@ -1,3 +1,6 @@
+Window handling
+  * For overlapping images, fixed background and clipping borders (~#1010).
+
 ### 3.1.8 (7 June 2020) ###
 
 Terminal features
