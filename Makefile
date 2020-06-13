@@ -83,12 +83,15 @@ REL := 1
 arch := $(shell uname -m)
 
 cygport := $(name_ver)-$(REL).cygport
-pkg: $(DIST) ver tar check _ srcpkg binpkg
+pkg: $(DIST) ver cop tar check _ srcpkg binpkg
 $(DIST):
 	mkdir $(DIST)
 
 check:
 	cd src; $(MAKE) check
+
+cop:
+	grep YEAR.*`date +%Y` src/appinfo.h
 
 _:
 	cd src; $(MAKE) _

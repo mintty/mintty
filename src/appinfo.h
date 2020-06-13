@@ -12,7 +12,7 @@
 // needed for res.rc
 #define APPDESC "Terminal"
 #define AUTHOR  "Andy Koppe / Thomas Wolff"
-#define YEAR    "2013/2019"
+#define YEAR    "2013/2020"
 
 
 #define CONCAT_(a,b) a##b
