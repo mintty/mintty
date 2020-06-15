@@ -2058,6 +2058,7 @@ _win_text(int line, int tx, int ty, wchar *text, int len, cattr attr, cattr *tex
 #endif
 
 #define dont_debug_line
+#define dont_debug_dirty 1
 
 #ifdef debug_line
 void trace_line(char * tag, termchar * chars)
@@ -2463,10 +2464,16 @@ term_paint(void)
         (term.curs.wrapnext ? TATTR_RIGHTCURS : 0);
 
       if (term.cursor_invalid)
+#ifdef debug_dirty
+        printf("INVALID c %d\n", curs_x),
+#endif
         dispchars[curs_x].attr.attr |= ATTR_INVALID;
 
       // try to fix #612 "cursor isn’t hidden right away"
       if (newchars[curs_x].attr.attr != dispchars[curs_x].attr.attr)
+#ifdef debug_dirty
+        printf("INVALID c %d\n", curs_x),
+#endif
         dispchars[curs_x].attr.attr |= ATTR_INVALID;
     }
 
@@ -2519,6 +2526,9 @@ term_paint(void)
       {
         int start = firstitalicstart >= 0 ? firstitalicstart : laststart;
         firstitalicstart = -1;
+#ifdef debug_dirty
+        printf("INVALID %d..%d\n", start, j - 1);
+#endif
         for (int k = start; k < j; k++)
           dispchars[k].attr.attr |= ATTR_INVALID;
         dirtyrect = true;
@@ -2532,6 +2542,9 @@ term_paint(void)
         firstdirtyitalic = prevdirtyitalic;
 
       if (dirtyrect)
+#ifdef debug_dirty
+        printf("INVALID %d\n", j),
+#endif
         dispchars[j].attr.attr |= ATTR_INVALID;
     }
     if (prevdirtyitalic) {
@@ -2588,6 +2601,9 @@ term_paint(void)
     uchar bc = 0;
     bool dirty_run = (line->lattr != displine->lattr);
     bool dirty_line = dirty_run;
+#if defined(debug_dirty) && debug_dirty > 1
+    printf("dirty ini %d:* lin %d run %d\n", i, dirty_line, dirty_run);
+#endif
     cattr attr = CATTR_DEFAULT;
     int start = 0;
 
@@ -2830,11 +2846,17 @@ term_paint(void)
         has_rtl = false;
         attr = tattr;
         dirty_run = dirty_line;
+#if defined(debug_dirty) && debug_dirty > 1
+        printf("dirty brk %d:%d lin %d run %d\n", i, j, dirty_line, dirty_run);
+#endif
       }
 
       bool do_copy =
         !termchars_equal_override(&dispchars[j], d, tchar, tattr);
       dirty_run |= do_copy;
+#if defined(debug_dirty) && debug_dirty > 1
+      printf("dirty cop %d:%d lin %d run %d\n", i, j, dirty_line, dirty_run);
+#endif
 
       if (tchar == SIXELCH) {
         // displaying region of a SIXEL image before actual graphics display;
@@ -2911,8 +2933,12 @@ term_paint(void)
         * be on the right-hand half of this character.
         * Ever.
         */
-        if (!termchars_equal(&dispchars[j], d))
+        if (!termchars_equal(&dispchars[j], d)) {
           dirty_run = true;
+#if defined(debug_dirty) && debug_dirty > 1
+          printf("dirty neq %d:%d lin %d run %d\n", i, j, dirty_line, dirty_run);
+#endif
+        }
         copy_termchar(displine, j, d);
 #ifdef support_triple_width
 #warning do not handle triple-width here
