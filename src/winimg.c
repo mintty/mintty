@@ -694,6 +694,9 @@ winimgs_paint(void)
         // overwritten cells are excluded from display,
         // if all cells are overwritten, flag for deletion
         bool disp_flag = false;
+        // disable display suppression and garbage collection of 
+        // overlayed images for now as it is buggy; further analysis pending
+        disp_flag = true;
         for (int y = max(0, top); y < min(top + img->height, term.rows); ++y) {
           int wide_factor =
             (term.displines[y]->lattr & LATTR_MODE) == LATTR_NORM ? 1 : 2;
