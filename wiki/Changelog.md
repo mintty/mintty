@@ -1,5 +1,6 @@
-Window handling
+Sixel and image display
   * For overlapping images, fixed background and clipping borders (~#1010).
+  * Avoid image flickering by revised image list rendering strategy (#1010).
 
 ### 3.1.8 (7 June 2020) ###
 

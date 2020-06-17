@@ -269,6 +269,7 @@ winimg_new(imglist **ppimg, char * id, unsigned char * pixels, uint len,
   img->pixelwidth = pixelwidth;
   img->pixelheight = pixelheight;
   img->next = NULL;
+  img->prev = NULL;
   img->strage = NULL;
 
   img->len = len;
@@ -643,6 +644,7 @@ winimgs_paint(void)
   while (tempfile_num > TEMPFILE_MAX_NUM && term.imgs.first) {
     img = term.imgs.first;
     term.imgs.first = term.imgs.first->next;
+    term.imgs.first->prev = NULL;
     winimg_destroy(img);
   }
 
@@ -657,8 +659,12 @@ winimgs_paint(void)
                     rc.top + PADDING + term.rows * cell_height);
 #endif
 
-  imglist * prev = 0;
-  for (img = term.imgs.first; img;) {
+  bool backward_img_traversal = true;
+  img = backward_img_traversal ? term.imgs.last : term.imgs.first;
+  imglist * next;
+  for (; img; img = next) {
+    next = backward_img_traversal ? img->prev : img->next;
+
     imglist * destrimg = 0;
 
     if (img->top + img->height - term.virtuallines < - term.sblines) {
@@ -702,7 +708,7 @@ winimgs_paint(void)
             else if (img->imgi - dchar->attr.imgi >= 0) {
               // need to keep newer image, as sync may take a while
 #ifdef debug_img_disp
-            printf("paint: dirty (%d) %d:%d %d >= %d\n", disp_flag, y, x, img->imgi, dchar->attr.imgi);
+              printf("paint: dirty (%d) %d:%d %d >= %d\n", disp_flag, y, x, img->imgi, dchar->attr.imgi);
 #endif
               disp_flag = true;
             }
@@ -798,6 +804,7 @@ winimgs_paint(void)
                        hdc, xlft, ytop, SRCCOPY);
             DeleteObject(hbm);
             DeleteDC(hdc);
+            ExcludeClipRect(dc, xlft, ytop, xrgt, ybot);
           }
           else {
             StretchBlt(dc,
@@ -805,10 +812,17 @@ winimgs_paint(void)
                        img->width * cell_width, img->height * cell_height,
                        img->hdc,
                        0, 0, img->pixelwidth, img->pixelheight, SRCCOPY);
+            ExcludeClipRect(dc,
+                       left * cell_width + PADDING, top * cell_height + PADDING,
+                       left * cell_width + PADDING + img->width * cell_width,
+                       top * cell_height + PADDING + img->height * cell_height
+                       );
           }
-          // restore clipping region
-          ReleaseDC(wnd, dc);
-          dc = GetDC(wnd);
+          if (!backward_img_traversal) {
+            // restore clipping region
+            ReleaseDC(wnd, dc);
+            dc = GetDC(wnd);
+          }
         }
         else if (top < 0 || top + img->height > term.rows) {
           // we did not check the scrolled-out image part, 
@@ -826,19 +840,16 @@ winimgs_paint(void)
 
     // proceed to next image in list; destroy current if requested
     if (destrimg) {
-      if (img == term.imgs.first)
+      if (img->next)
+        img->next->prev = img->prev;
+      else
+        term.imgs.last = img->prev;
+      if (img->prev)
+        img->prev->next = img->next;
+      else
         term.imgs.first = img->next;
-      if (prev)
-        prev->next = img->next;
-      if (img == term.imgs.last)
-        term.imgs.last = prev;
 
-      img = img->next;
       winimg_destroy(destrimg);
-    }
-    else {
-      prev = img;
-      img = img->next;
     }
   }
 

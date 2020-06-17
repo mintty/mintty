@@ -2948,6 +2948,9 @@ fill_image_space(imglist * img)
   cattrflags attr0 = term.curs.attr.attr;
   // refer SIXELCH cells to image for display/discard management
   term.curs.attr.imgi = img->imgi;
+#ifdef debug_img_disp
+  printf("fill %d:%d %d\n", term.curs.y, term.curs.x, img->imgi);
+#endif
 
   short x0 = term.curs.x;
   if (term.sixel_display) {  // sixel display mode
@@ -3083,6 +3086,13 @@ do_dcs(void)
 #ifdef debug_sixel_list
         printf("do_dcs checking imglist\n");
 #endif
+#ifdef replace_images
+#warning do not replace images in the list anymore
+        // with new flicker-reduce strategy of rendering overlapped images,
+        // new images should always be added to the end of the queue;
+        // completely overlayed images should be collected for removal 
+        // during the rendering loop (winimgs_paint),
+        // or latest when they are scrolled out of the scrollback buffer
         for (imglist * cur = term.imgs.first; cur; cur = cur->next) {
           if (cur->pixelwidth == cur->width * st->grid_width &&
               cur->pixelheight == cur->height * st->grid_height)
@@ -3123,7 +3133,9 @@ do_dcs(void)
 #endif
           }
         }
+#endif
         // append image to list
+        img->prev = term.imgs.last;
         term.imgs.last->next = img;
         term.imgs.last = img;
       }
@@ -3656,6 +3668,7 @@ do_cmd(void)
               term.imgs.first = term.imgs.last = img;
             } else {
               // append image to list
+              img->prev = term.imgs.last;
               term.imgs.last->next = img;
               term.imgs.last = img;
             }

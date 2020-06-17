@@ -362,6 +362,7 @@ typedef struct {
 typedef struct imglist {
   // linked list
   struct imglist * next;
+  struct imglist * prev;
   // image ref for multiple use (currently unused)
   char * id;
   // sixel: rendering data
