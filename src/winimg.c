@@ -651,14 +651,12 @@ winimgs_paint(void)
 
   HDC dc = GetDC(wnd);
 
-#ifdef pre_clip
-  // this does not appear to be necessary
+  // clip off padding area, avoiding image artefacts when scrolling
   RECT rc;
   GetClientRect(wnd, &rc);
   IntersectClipRect(dc, rc.left + PADDING, rc.top + PADDING,
                     rc.left + PADDING + term.cols * cell_width,
                     rc.top + PADDING + term.rows * cell_height);
-#endif
 
   // prepare detection of overwritten images for garbage collection
   bool drawn[term.rows * term.cols];
