@@ -232,6 +232,7 @@ strage_read(temp_strage_t *strage, unsigned char *p, size_t size)
 
 #define dont_debug_img_list
 #define dont_debug_img_disp
+#define dont_debug_img_over
 
 static uint
 winimg_len(imglist *img)
@@ -246,11 +247,11 @@ winimg_new(imglist **ppimg, char * id, unsigned char * pixels, uint len,
            int crop_x, int crop_y, int crop_width, int crop_height)
 {
   imglist *img = (imglist *)malloc(sizeof(imglist));
-  //printf("winimg alloc %d -> %p\n", (int)sizeof(imglist), img);
+  //printf("winimg alloc %d -> [%d]\n", (int)sizeof(imglist), img->imgi);
   if (!img)
     return false;
 #ifdef debug_img_list
-  printf("winimg_new %p->%p l %d t %d w %d h %d\n", img, pixels, left, top, width, height);
+  printf("winimg_new [%d]->%p l %d t %d w %d h %d\n", img->imgi, pixels, left, top, width, height);
 #endif
 
   static int _imgi = 0;
@@ -430,14 +431,14 @@ winimg_lazyinit(imglist *img)
       uint size = winimg_len(img);
       if (img->pixels) {
         CopyMemory(pixels, img->pixels, size);
-        //printf("winimg_lazyinit free pixels %p->%p\n", img, img->pixels);
+        //printf("winimg_lazyinit free pixels [%d]->%p\n", img->imgi, img->pixels);
         free(img->pixels);
       } else {
         // resume from hibernation
         assert(img->strage);
         strage_read(img->strage, pixels, size);
       }
-      //printf("winimg_lazyinit img->pixels = pixels %p->%p\n", img, pixels);
+      //printf("winimg_lazyinit img->pixels = pixels [%d]->%p\n", img->imgi, pixels);
       img->pixels = pixels;
     }
   }
@@ -457,7 +458,7 @@ winimg_hibernate(imglist *img)
     return;
 
   temp_strage_t *strage = strage_create();
-  //printf("winimg_hibernate %p->%p to %p\n", img, img->pixels, strage);
+  //printf("winimg_hibernate [%d]->%p to %p\n", img->imgi, img->pixels, strage);
   if (!strage)
     return;
 
@@ -659,9 +660,17 @@ winimgs_paint(void)
                     rc.top + PADDING + term.rows * cell_height);
 #endif
 
+  // prepare detection of overwritten images for garbage collection
+  bool drawn[term.rows * term.cols];
+  memset(drawn, 0, sizeof drawn);
+
+  // tame the flickering by backward traversal together with global clipping
   bool backward_img_traversal = true;
   img = backward_img_traversal ? term.imgs.last : term.imgs.first;
   imglist * next;
+#ifdef debug_img_over
+  printf("--------------- imglist loop\n");
+#endif
   for (; img; img = next) {
     next = backward_img_traversal ? img->prev : img->next;
 
@@ -669,10 +678,13 @@ winimgs_paint(void)
 
     if (img->top + img->height - term.virtuallines < - term.sblines) {
       // if the image is out of scrollback, collect it
+      destrimg = img;
 #ifdef debug_img_list
       printf("paint: destroy @%d h %d virt %lld sb %d\n", img->top, img->height, term.virtuallines, term.sblines);
 #endif
-      destrimg = img;
+#ifdef debug_img_over
+      printf("@%d:%d destroy out [%d]\n", img->top - term.virtuallines - term.disptop, img->left, img->imgi);
+#endif
     } else {
       int left = img->left;
       int top = img->top - term.virtuallines - term.disptop;
@@ -680,12 +692,15 @@ winimgs_paint(void)
         // if the image is scrolled out, serialize it into a temp file
 #ifdef debug_img_list
         if (img->hdc)
-          printf("paint: hibernate img %p v@%d s@%d\n", img, img->top, top);
+          printf("paint: hibernate img [%d] v@%d s@%d\n", img->imgi, img->top, top);
 #endif
         winimg_hibernate(img);
+#ifdef debug_img_over
+        printf("@%d:%d hiber [%d]\n", top, left, img->imgi);
+#endif
       } else {
 #ifdef debug_img_list
-        printf("paint: check img %p v@%d s@%d\n", img, img->top, top);
+        printf("paint: check img [%d] v@%d s@%d\n", img->imgi, img->top, top);
 #endif
         // create img DC handle if not initialized, or resume from hibernate
         winimg_lazyinit(img);
@@ -694,9 +709,6 @@ winimgs_paint(void)
         // overwritten cells are excluded from display,
         // if all cells are overwritten, flag for deletion
         bool disp_flag = false;
-        // disable display suppression and garbage collection of 
-        // overlayed images for now as it is buggy; further analysis pending
-        disp_flag = true;
         for (int y = max(0, top); y < min(top + img->height, term.rows); ++y) {
           int wide_factor =
             (term.displines[y]->lattr & LATTR_MODE) == LATTR_NORM ? 1 : 2;
@@ -706,14 +718,16 @@ winimgs_paint(void)
             // if sixel image is overwritten by characters,
             // exclude the area from the clipping rect.
             bool clip_flag = false;
-            if (dchar->chr != SIXELCH)
+            if (dchar->chr != SIXELCH) {
               clip_flag = true;
-            else if (img->imgi - dchar->attr.imgi >= 0) {
-              // need to keep newer image, as sync may take a while
+              drawn[y * term.cols + x] = true;
+            }
+            else if (!drawn[y * term.cols + x]) {
+              disp_flag = true;
+              drawn[y * term.cols + x] = true;
 #ifdef debug_img_disp
               printf("paint: dirty (%d) %d:%d %d >= %d\n", disp_flag, y, x, img->imgi, dchar->attr.imgi);
 #endif
-              disp_flag = true;
             }
             // if cell is overlaid by selection or cursor, exclude
             if (dchar->attr.attr & (TATTR_RESULT | TATTR_CURRESULT | TATTR_MARKED | TATTR_CURMARKED))
@@ -732,6 +746,9 @@ winimgs_paint(void)
                               (y + 1) * cell_height + PADDING);
           }
         }
+#ifdef debug_img_over
+        printf("@%d:%d disp [%sm%d[m [%d]\n", top, left, disp_flag ? "" : "41", disp_flag, img->imgi);
+#endif
 
         // fill image area background (in case it's smaller or transparent)
         // calculate area for padding
@@ -833,10 +850,13 @@ winimgs_paint(void)
         }
         else {
           //destroy and remove
+          destrimg = img;
 #ifdef debug_img_list
           printf("paint: destroy @%d h %d virt %lld sb %d\n", img->top, img->height, term.virtuallines, term.sblines);
 #endif
-          destrimg = img;
+#ifdef debug_img_over
+          printf("@%d:%d destroy over [%d]\n", top, left, img->imgi);
+#endif
         }
       }
     }
