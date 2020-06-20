@@ -1,3 +1,5 @@
+### 3.2.0 (20 June 2020) ###
+
 Sixel and image display
   * For overlapping images, fixed background and clipping borders (~#1010).
   * Avoid image flickering by revised image list rendering strategy (#1010).
