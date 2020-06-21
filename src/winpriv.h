@@ -30,6 +30,7 @@ extern int cell_width, cell_height;  // includes spacing
 extern bool font_ambig_wide;
 extern int line_scale;
 extern int PADDING;
+extern int OFFSET;
 extern bool show_charinfo;
 extern void toggle_charinfo(void);
 extern void toggle_vt220(void);

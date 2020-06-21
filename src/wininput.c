@@ -918,7 +918,7 @@ translate_pos(int x, int y)
 {
   return (pos){
     .x = floorf((x - PADDING) / (float)cell_width),
-    .y = floorf((y - PADDING) / (float)cell_height),
+    .y = floorf((y - PADDING - OFFSET) / (float)cell_height),
     .r = (cfg.elastic_mouse && !term.mouse_mode)
          ? (x - PADDING) % cell_width > cell_width / 2
          : 0
@@ -1091,10 +1091,10 @@ win_get_locator_info(int *x, int *y, int *buttons, bool by_pixels)
         p.x -= PADDING;
       if (p.x >= term.cols * cell_width)
         p.x = term.cols * cell_width - 1;
-      if (p.y < PADDING)
+      if (p.y < OFFSET + PADDING)
         p.y = 0;
       else
-        p.y -= PADDING;
+        p.y -= OFFSET + PADDING;
       if (p.y >= term.rows * cell_height)
         p.y = term.rows * cell_height - 1;
 
