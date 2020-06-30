@@ -724,8 +724,7 @@ term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys mods,
       while (--notches);
     }
   }
-
-  if (horizontal) {
+  else if (horizontal) {
   }
   else if ((mods & ~MDK_SHIFT) == MDK_CTRL) {
     if (strstr(cfg.suppress_wheel, "zoom"))
@@ -745,6 +744,7 @@ term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys mods,
     if (lines_per_notch == -1 || mods & MDK_SHIFT)
       lines_per_notch = lines_per_page;
     int lines = lines_per_notch * accu / NOTCH_DELTA;
+    //printf("mouse lines %d per notch %d accu %d\n", lines, lines_per_notch, accu);
     if (lines) {
       accu -= lines * NOTCH_DELTA / lines_per_notch;
       if (!term.on_alt_screen || term.show_other_screen) {

@@ -1,9 +1,12 @@
+Mouse handling
+  * Avoid double interpretation of wheel events, also fixing speed issues (mintty/wsltty#238).
+
 ### 3.2.0 (20 June 2020) ###
 
 Sixel and image display
   * For overlapping images, fixed background and clipping borders (~#1010).
   * Avoid image flickering by revised image list rendering strategy (#1010).
-  * New strategy to detect and collect overlayed images (~#1010).
+  * New strategy to detect and collect overlaid images (~#1010).
 
 ### 3.1.8 (7 June 2020) ###
 
