@@ -2456,6 +2456,7 @@ show_iconwarn(wchar * winmsg)
  */
 
 #define dont_debug_messages
+#define dont_debug_only_input_messages
 #define dont_debug_only_focus_messages
 #define dont_debug_only_sizepos_messages
 #define dont_debug_mouse_messages
@@ -2505,12 +2506,14 @@ static struct {
      )
 # ifdef debug_only_sizepos_messages
     if (strstr(wm_name, "POSCH") || strstr(wm_name, "SIZ"))
-# else
+# endif
 # ifdef debug_only_focus_messages
     if (strstr(wm_name, "ACTIVATE") || strstr(wm_name, "FOCUS"))
 # endif
+# ifdef debug_only_input_messages
+    if (strstr(wm_name, "MOUSE") || strstr(wm_name, "BUTTON") || strstr(wm_name, "CURSOR") || strstr(wm_name, "KEY"))
 # endif
-    printf("[%d]->%8p %04X %s (%04X %08X)\n", (int)time(0), wnd, message, wm_name, (unsigned)wp, (unsigned)lp);
+    printf("[%d]->%8p %04X %s (%08X %08X)\n", (int)time(0), wnd, message, wm_name, (unsigned)wp, (unsigned)lp);
 #endif
 
   switch (message) {
@@ -3818,6 +3821,7 @@ getlxssinfo(bool list, wstring wslname, uint * wsl_ver,
   }
 }
 
+#ifdef not_used
 bool
 wexists(wstring fn)
 {
@@ -3827,6 +3831,7 @@ wexists(wstring fn)
   FindClose(hFind);
   return ok;
 }
+#endif
 
 bool
 waccess(wstring fn, int amode)
