@@ -252,7 +252,8 @@ tek_address(char * code)
 #endif
   tek_buf = renewn(tek_buf, tek_buf_len + 1);
   tek_buf[tek_buf_len ++] = (struct tekchar) 
-    {.type = tek_mode, .y = tek_y, .x = tek_x, .intensity = intensity};
+    {.type = tek_mode, .y = tek_y, .x = tek_x,
+     .style = style, .intensity = intensity};
 }
 
 /*	DEAIHJBF
@@ -502,11 +503,15 @@ tek_paint(void)
   */
   short scale_mode = -1;
 
+  // retrieve terminal pixel size (without padding)
+  int height, width;
+  win_get_pixels(&height, &width, false);
+
   HDC dc = GetDC(wnd);
   HDC hdc = CreateCompatibleDC(dc);
   HBITMAP hbm = scale_mode == 1
                 ? CreateCompatibleBitmap(dc, 4096, 4096)
-                : CreateCompatibleBitmap(dc, term.cols * cell_width, term.rows * cell_height);
+                : CreateCompatibleBitmap(dc, width, height);
   (void)SelectObject(hdc, hbm);
 
   // retrieve colour configuration
@@ -519,7 +524,6 @@ tek_paint(void)
   colour cc = win_get_colour(TEK_CURSOR_COLOUR_I);
   if (cc == (colour)-1)
     cc = win_get_colour(CURSOR_COLOUR_I);
-printf("%06X %06X\n", fg, bg);
 
   // adjust colours
   //cattr attr = term.curs.attr;
@@ -537,7 +541,6 @@ printf("%06X %06X\n", fg, bg);
   attr.attr |= ATTR_DIM;
   attr = apply_attr_colour(attr, ACM_SIMPLE);
   fg = attr.truefg;
-printf("%06X %06X %06X\n", glowfg, fg, bg);
 
   int pen_width = scale_mode == 1 ? 12 : 0;
 
@@ -545,20 +548,20 @@ printf("%06X %06X %06X\n", glowfg, fg, bg);
     if (scale_mode)
       return x;
     else
-      return x * term.cols * cell_width / 4096;
+      return x * width / 4096;
   }
   int ty(int y) {
     if (scale_mode)
       return 3120 - y;
     else
-      return (3120 - y) * term.rows * cell_height / 4096;
+      return (3120 - y) * height / 4096;
   }
 
   XFORM oldxf;
   if (scale_mode == -1 && SetGraphicsMode(hdc, GM_ADVANCED)) {
     GetWorldTransform(hdc, &oldxf);
-    XFORM xform = (XFORM){(float)term.cols * (float)cell_width / 4096.0, 0.0, 0.0, 
-                          (float)term.rows * (float)cell_height / 3120.0, 0.0, 0.0};
+    XFORM xform = (XFORM){(float)width / 4096.0, 0.0, 0.0, 
+                          (float)height / 3120.0, 0.0, 0.0};
     if (!ModifyWorldTransform(hdc, &xform, MWT_LEFTMULTIPLY))
       scale_mode = 0;
   }
@@ -626,13 +629,13 @@ printf("%06X %06X %06X\n", glowfg, fg, bg);
   if (scale_mode == 1)
     StretchBlt(dc,
                PADDING, OFFSET + PADDING,
-               term.cols * cell_width, term.rows * cell_height,
+               width, height,
                hdc,
                0, 0, 4096, 3120, SRCCOPY);
   else
     BitBlt(dc,
            PADDING, OFFSET + PADDING,
-           term.cols * cell_width, term.rows * cell_height,
+           width, height,
            hdc, 0, 0, SRCCOPY);
 
   DeleteObject(hbm);
