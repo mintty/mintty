@@ -61,8 +61,13 @@ typedef enum {
   // configured Bold colour
   BOLD_COLOUR_I = 281,
 
+  // Tektronix colours
+  TEK_FG_COLOUR_I      = 282,
+  TEK_BG_COLOUR_I      = 283,
+  TEK_CURSOR_COLOUR_I  = 284,
+
   // Number of colours
-  COLOUR_NUM = 282,
+  COLOUR_NUM = 285,
 
   // True Colour indicator
   // assert (TRUE_COLOUR % 4) == 0 so that checking x >= TRUE_COLOUR
@@ -565,7 +570,8 @@ struct term {
     DCS_IGNORE,
     DCS_ESCAPE,
     VT52_Y, VT52_X,
-    VT52_FG, VT52_BG
+    VT52_FG, VT52_BG,
+    TEK_ESCAPE, TEK_ADDRESS0, TEK_ADDRESS, TEK_INCREMENTAL
   } state;
 
   // Mouse mode

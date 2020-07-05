@@ -8,6 +8,7 @@
 #include "charset.h"  // wcscpy, wcsncat, combiningdouble
 #include "config.h"
 #include "winimg.h"  // winimgs_paint
+#include "tek.h"
 
 #include <winnls.h>
 #include <usp10.h>  // Uniscribe
@@ -1226,8 +1227,12 @@ do_update(void)
   win_paint_exclude_search(dc);
   term_update_search();
 
-  term_paint();
-  winimgs_paint();
+  if (tek_mode)
+    tek_paint();
+  else {
+    term_paint();
+    winimgs_paint();
+  }
 
   ReleaseDC(wnd, dc);
 
@@ -4553,8 +4558,12 @@ win_paint(void)
 
   //if (kb_trace) printf("[%ld] win_paint state %d (idl/blk/pnd)\n", mtime(), update_state);
   if (update_state != UPDATE_PENDING) {
-    term_paint();
-    winimgs_paint();
+    if (tek_mode)
+      tek_paint();
+    else {
+      term_paint();
+      winimgs_paint();
+    }
   }
 
   if (// do not just check whether a background was configured
