@@ -591,15 +591,24 @@ tek_paint(void)
       MoveToEx(hdc, tx(tc->x), ty(tc->y), null);
     else if (tc->type == TEKMODE_GRAPH) {
       HPEN pen;
+      HPEN create_pen(DWORD style)
+      {
+#ifdef use_extpen
+        LOGBRUSH brush = (LOGBRUSH){BS_HOLLOW, fg, 0};
+        return ExtCreatePen(PS_GEOMETRIC | style, pen_width, &brush, 0, 0);
+#else
+        return CreatePen(style, pen_width, fg);
+#endif
+      }
       switch (tc->style) {
         // 1 dotted
-        when 1: pen = CreatePen(PS_DOT, pen_width, fg);
+        when 1: pen = create_pen(PS_DOT);
         // 2 dot-dashed
-        when 2: pen = CreatePen(PS_DASHDOT, pen_width, fg);
+        when 2: pen = create_pen(PS_DASHDOT);
         // 3 short dashed
-        when 3: pen = CreatePen(PS_DASHDOTDOT, pen_width, fg);
+        when 3: pen = create_pen(PS_DASHDOTDOT);
         // 4 long dashed
-        when 4: pen = CreatePen(PS_DASH, pen_width, fg);
+        when 4: pen = create_pen(PS_DASH);
         // 0 solid
         otherwise: pen = CreatePen(PS_SOLID, pen_width, fg);
       }
