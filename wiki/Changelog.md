@@ -1,6 +1,9 @@
 Mouse handling
   * Avoid double interpretation of wheel events, also fixing speed issues (mintty/wsltty#238).
 
+Configuration
+  * Support resource configuration directories via links (#1016).
+
 ### 3.2.0 (20 June 2020) ###
 
 Sixel and image display

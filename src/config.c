@@ -1781,34 +1781,35 @@ about_handler(control *unused(ctrl), int event)
 
 
 static void
-add_file_resources(control *ctrl, wstring pattern, bool dirs)
+add_file_resources(control *ctrl, wstring pattern, bool list_dirs)
 {
-  wstring suf = wcsrchr(pattern, L'.');
-  int sufl = suf ? wcslen(suf) : 0;
-
   init_config_dirs();
-  WIN32_FIND_DATAW ffd;
-  HANDLE hFind = NULL;
-  int ok = false;
+
   for (int i = last_config_dir; i >= 0; i--) {
+#ifdef use_findfile
+    wstring suf = wcsrchr(pattern, L'.');
+    int sufl = suf ? wcslen(suf) : 0;
+
     wchar * rcpat = path_posix_to_win_w(config_dirs[i]);
     int len = wcslen(rcpat);
     rcpat = renewn(rcpat, len + wcslen(pattern) + 2);
     rcpat[len++] = L'/';
     wcscpy(&rcpat[len], pattern);
+    //printf("<%s> -> <%ls>\n", config_dirs[i], rcpat);
 
-    hFind = FindFirstFileW(rcpat, &ffd);
-    ok = hFind != INVALID_HANDLE_VALUE;
+    WIN32_FIND_DATAW ffd;
+    HANDLE hFind = FindFirstFileW(rcpat, &ffd);
+    int ok = hFind != INVALID_HANDLE_VALUE;
     free(rcpat);
     if (ok) {
       while (ok) {
-        if (dirs && (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+        if (list_dirs && (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
           if (ffd.cFileName[0] != '.' && !!wcscmp(ffd.cFileName, W("common")))
             // exclude the [0-7] links left over by the `getemojis` script
             if (wcslen(ffd.cFileName) > 1)
               dlg_listbox_add_w(ctrl, ffd.cFileName);
         }
-        else if (!dirs) {
+        else if (!list_dirs) {
           //LARGE_INTEGER filesize = {.LowPart = ffd.nFileSizeLow, .HighPart = ffd.nFileSizeHigh};
           //long s = filesize.QuadPart;
 
@@ -1829,6 +1830,45 @@ add_file_resources(control *ctrl, wstring pattern, bool dirs)
       // empty valid dir
       //break;
     }
+#else
+#include <dirent.h>
+    char * pat = cs__wcstombs(pattern);
+    char * patsuf = strrchr(pat, '.');
+    char * patbase = strrchr(pat, '/');
+    if (patbase)
+      *patbase = 0;
+    char * rcpat = asform("%s/%s", config_dirs[i], pat);
+    //printf("<%s> -> <%s>\n", config_dirs[i], rcpat);
+
+    DIR * dir = opendir(rcpat);
+    free(rcpat);
+    if (dir) {
+      struct dirent * direntry;
+      while ((direntry = readdir (dir)) != 0) {
+        if (patsuf && !strstr(direntry->d_name, patsuf))
+          continue;
+
+        if (list_dirs && direntry->d_type == DT_DIR) {
+          if (direntry->d_name[0] != '.' && !!strcmp(direntry->d_name, "common"))
+            // exclude the [0-7] links left over by the `getemojis` script
+            if (strlen(direntry->d_name) > 1)
+              dlg_listbox_add(ctrl, direntry->d_name);
+        }
+        else if (!list_dirs) {
+          // strip suffix
+          int len = strlen(direntry->d_name);
+          if (direntry->d_name[0] != '.' && direntry->d_name[len - 1] != '~') {
+            char * dotsuf = strrchr(direntry->d_name, '.');
+            if (dotsuf)
+              *dotsuf = 0;
+            dlg_listbox_add(ctrl, direntry->d_name);
+          }
+        }
+      }
+      closedir(dir);
+    }
+    free(pat);
+#endif
   }
 }
 
