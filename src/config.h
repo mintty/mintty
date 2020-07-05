@@ -51,6 +51,7 @@ typedef struct {
 typedef struct {
   // Looks
   colour fg_colour, bold_colour, bg_colour, cursor_colour;
+  colour tek_fg_colour, tek_bg_colour, tek_cursor_colour;
   colour underl_colour, hover_colour;
   int disp_space, disp_clear, disp_tab;
   bool underl_manual;
@@ -78,6 +79,7 @@ typedef struct {
   string locale;
   string charset;
   int fontmenu;
+  wstring tek_font;
   // Keys
   bool backspace_sends_bs;
   bool delete_sends_del;

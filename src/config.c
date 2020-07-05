@@ -38,6 +38,9 @@ const config default_cfg = {
   .bold_colour = (colour)-1,
   .bg_colour = 0x000000,
   .cursor_colour = 0xBFBFBF,
+  .tek_fg_colour = (colour)-1,
+  .tek_bg_colour = (colour)-1,
+  .tek_cursor_colour = (colour)-1,
   .underl_colour = (colour)-1,
   .disp_space = 0,
   .disp_clear = 0,
@@ -80,6 +83,7 @@ const config default_cfg = {
   .locale = "",
   .charset = "",
   .fontmenu = -1,
+  .tek_font = W(""),
   // Keys
   .backspace_sends_bs = CERASE == '\b',
   .delete_sends_del = false,
@@ -266,6 +270,9 @@ options[] = {
   // Looks
   {"BoldColour", OPT_COLOUR, offcfg(bold_colour)},
   {"CursorColour", OPT_COLOUR, offcfg(cursor_colour)},
+  {"TekForegroundColour", OPT_COLOUR, offcfg(tek_fg_colour)},
+  {"TekBackgroundColour", OPT_COLOUR, offcfg(tek_bg_colour)},
+  {"TekCursorColour", OPT_COLOUR, offcfg(tek_cursor_colour)},
   {"UnderlineColour", OPT_COLOUR, offcfg(underl_colour)},
   {"DispSpace", OPT_INT, offcfg(disp_space)},
   {"DispClear", OPT_INT, offcfg(disp_clear)},
@@ -326,6 +333,7 @@ options[] = {
   {"Font9Weight", OPT_INT, offcfg(fontfams[9].weight)},
   {"Font10", OPT_WSTRING, offcfg(fontfams[10].name)},
   {"Font10Weight", OPT_INT, offcfg(fontfams[10].weight)},
+  {"TekFont", OPT_WSTRING, offcfg(tek_font)},
 
   // Keys
   {"BackspaceSendsBS", OPT_BOOL, offcfg(backspace_sends_bs)},

@@ -358,12 +358,14 @@ init_font(short f)
 {
   if (tekfonts[f].f)
     DeleteObject(tekfonts[f].f);
+
+  wstring fn = *cfg.tek_font ? cfg.tek_font : cfg.font.name;
   tekfonts[f].f = CreateFontW(
                   - tekfonts[f].hei, - tekfonts[f].wid, 
                   0, 0, FW_NORMAL, 0, 0, 0,
                   DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                   get_font_quality(), FIXED_PITCH | FF_DONTCARE,
-                  cfg.font.name);
+                  fn);
 }
 
 static void
@@ -507,18 +509,35 @@ tek_paint(void)
                 : CreateCompatibleBitmap(dc, term.cols * cell_width, term.rows * cell_height);
   (void)SelectObject(hdc, hbm);
 
-  cattr attr = apply_attr_colour(term.curs.attr, ACM_SIMPLE);
+  // retrieve colour configuration
+  fg = win_get_colour(TEK_FG_COLOUR_I);
+  if (fg == (colour)-1)
+    fg = win_get_colour(FG_COLOUR_I);
+  colour bg = win_get_colour(TEK_BG_COLOUR_I);
+  if (bg == (colour)-1)
+    bg = win_get_colour(BG_COLOUR_I);
+  colour cc = win_get_colour(TEK_CURSOR_COLOUR_I);
+  if (cc == (colour)-1)
+    cc = win_get_colour(CURSOR_COLOUR_I);
+printf("%06X %06X\n", fg, bg);
+
+  // adjust colours
+  //cattr attr = term.curs.attr;
+  cattr attr =
+      {.attr = (TRUE_COLOUR << ATTR_FGSHIFT) | (TRUE_COLOUR << ATTR_BGSHIFT),
+             .truefg = fg, .truebg = bg, .ulcolr = (colour)-1,
+             .link = -1
+            };
+  //attr = apply_attr_colour(attr, ACM_SIMPLE);
+  // use full colour for glow or bold (defocused)
   colour glowfg = attr.truefg;
-///  colour bg = attr.truebg;
+  (void) glowfg;
+  bg = attr.truebg;
+  // derived dimmed default colour
   attr.attr |= ATTR_DIM;
   attr = apply_attr_colour(attr, ACM_SIMPLE);
   fg = attr.truefg;
-  (void)glowfg;
-#ifdef colour_stuff
-  colour fg = win_get_colour(TEK_FG_COLOUR_I);
-  colour bg = win_get_colour(TEK_BG_COLOUR_I);
-  win_get_colour(TEK_CURSOR_COLOUR_I);
-#endif
+printf("%06X %06X %06X\n", glowfg, fg, bg);
 
   int pen_width = scale_mode == 1 ? 12 : 0;
 
@@ -592,9 +611,13 @@ tek_paint(void)
       SetPixel(hdc, tx(tc->x), ty(tc->y), fg);
   }
   // cursor █▒▓
-  if (lastfont < 4)
+  if (lastfont < 4) {
+    if (cc != fg)
+      flush_text(hdc);
+    fg = cc;
     write_text(hdc, (struct tekchar)
                     {.type = 0, .c = 0x2588, .w = 1, .font = lastfont});
+  }
   flush_text(hdc);
 
   if (scale_mode == -1)
