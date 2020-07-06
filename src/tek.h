@@ -23,7 +23,7 @@ extern void tek_copy(void);
 extern void tek_clear(void);
 
 extern void tek_beam(bool defocused, bool write_through, char vector_style);
-extern void tek_intensity(int);
+extern void tek_intensity(bool defocused, int intensity);
 
 extern void tek_address(char *);
 extern void tek_pen(bool on);

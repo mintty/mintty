@@ -5,6 +5,7 @@ bool tek_bypass = false;
 static uchar intensity = 0x7D; // for point modes
 static uchar style = 0;        // for vector modes
 static uchar font = 0;
+static bool beam_defocused = false;
 static bool plotpen = false;
 static bool apl_mode = false;
 
@@ -31,6 +32,7 @@ static short margin = 0;
 struct tekchar {
   char type;
   uchar recent;
+  bool defocused;
 #if CYGWIN_VERSION_API_MINOR >= 74
   union {
     struct {
@@ -102,6 +104,7 @@ tek_write(wchar c, int width)
   tek_buf = renewn(tek_buf, tek_buf_len + 1);
   tek_buf[tek_buf_len ++] = (struct tekchar)
                             {.type = 0, .recent = beam_glow,
+                             .defocused = beam_defocused,
                              .c = c, .w = width, .font = font};
   if (width > 0) {
     tek_x += width * tekfonts[font].wid;
@@ -131,8 +134,8 @@ tek_copy(void)
 void
 tek_beam(bool defocused, bool write_through, char vector_style)
 {
-///
-(void)defocused; (void)write_through;
+  (void)write_through;
+  beam_defocused = defocused;
   if (vector_style > 4)
     style = 0;
   else
@@ -140,8 +143,9 @@ tek_beam(bool defocused, bool write_through, char vector_style)
 }
 
 void
-tek_intensity(int i)
+tek_intensity(bool defocused, int i)
 {
+  beam_defocused = defocused;
   intensity = i;
 }
 
@@ -257,6 +261,7 @@ tek_address(char * code)
   tek_buf = renewn(tek_buf, tek_buf_len + 1);
   tek_buf[tek_buf_len ++] = (struct tekchar) 
     {.type = tek_mode, .recent = beam_glow,
+     .defocused = beam_defocused,
      .y = tek_y, .x = tek_x,
      .style = style, .intensity = intensity};
 }
@@ -283,12 +288,14 @@ tek_step(char c)
     tek_buf = renewn(tek_buf, tek_buf_len + 1);
     tek_buf[tek_buf_len ++] = (struct tekchar) 
       {.type = TEKMODE_POINT_PLOT, .recent = beam_glow,
+       .defocused = beam_defocused,
        .y = tek_y, .x = tek_x, .intensity = intensity};
   }
   else {
     tek_buf = renewn(tek_buf, tek_buf_len + 1);
     tek_buf[tek_buf_len ++] = (struct tekchar) 
       {.type = TEKMODE_GRAPH0, .recent = beam_glow,
+       .defocused = beam_defocused,
        .y = tek_y, .x = tek_x, .intensity = 0};
   }
 }
@@ -545,8 +552,6 @@ tek_paint(void)
   cc = ((cc & 0xFEFEFEFE) >> 1) + ((cc & 0xFCFCFCFC) >> 2)
                                 + ((bg & 0xFCFCFCFC) >> 2);
 
-  int pen_width = scale_mode == 1 ? 12 : 0;
-
   int tx(int x) {
     if (scale_mode)
       return x;
@@ -584,8 +589,18 @@ tek_paint(void)
       fg = glowfg;
       tc->recent --;
     }
-    else {
+    else
       fg = fg0;
+
+    int pen_width = scale_mode == 1 ? width / 204 + height / 156 : 0;
+
+    // defocused mode
+    if (tc->defocused) {
+      // simulate defocused by brighter display
+      //fg = glowfg;
+      // or by wider pen
+      pen_width = width / 204 + height / 156;
+      // or by shaded pen; not implemented
     }
 
     if (tc->type) {
@@ -622,7 +637,11 @@ tek_paint(void)
         // 4 long dashed
         when 4: pen = create_pen(PS_DASH);
         // 0 solid
-        otherwise: pen = CreatePen(PS_SOLID, pen_width, fg);
+        otherwise:
+          if (pen_width)
+            pen = create_pen(PS_SOLID);
+          else
+            pen = CreatePen(PS_SOLID, pen_width, fg);
       }
       HPEN oldpen = SelectObject(hdc, pen);
       SetBkMode(hdc, TRANSPARENT);  // stabilize broken vector styles

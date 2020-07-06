@@ -4264,7 +4264,7 @@ term_do_write(const char *buf, uint len)
         else if (tek_mode == TEKMODE_SPECIAL_PLOT && term.state == TEK_ADDRESS0) {
           term.state = TEK_ADDRESS;
           term.cmd_len = 0;
-          tek_intensity(c);
+          tek_intensity(c & 0x40, c & 0x37);
         }
         else if (!(c & 0x60) || term.cmd_len > 5) {
           term.cmd_len = 0;
