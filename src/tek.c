@@ -11,6 +11,8 @@ static bool apl_mode = false;
 static short tek_y, tek_x;
 static uchar lastfont = 0;
 
+static int beam_glow = 0;
+
 static wchar * APL = W(" ¨)<≤=>]∨∧≠÷,+./0123456789([;×:\\¯⍺⊥∩⌊∊_∇∆⍳∘'⎕∣⊤○⋆?⍴⌈∼↓∪ω⊃↑⊂←⊢→≥-⋄ABCDEFGHIJKLMNOPQRSTUVWXYZ{⊣}$ ");
 
 struct tekfont {
@@ -28,6 +30,7 @@ static short margin = 0;
 
 struct tekchar {
   char type;
+  uchar recent;
 #if CYGWIN_VERSION_API_MINOR >= 74
   union {
     struct {
@@ -98,7 +101,8 @@ tek_write(wchar c, int width)
 
   tek_buf = renewn(tek_buf, tek_buf_len + 1);
   tek_buf[tek_buf_len ++] = (struct tekchar)
-                            {.type = 0, .c = c, .w = width, .font = font};
+                            {.type = 0, .recent = beam_glow,
+                             .c = c, .w = width, .font = font};
   if (width > 0) {
     tek_x += width * tekfonts[font].wid;
   }
@@ -252,7 +256,8 @@ tek_address(char * code)
 #endif
   tek_buf = renewn(tek_buf, tek_buf_len + 1);
   tek_buf[tek_buf_len ++] = (struct tekchar) 
-    {.type = tek_mode, .y = tek_y, .x = tek_x,
+    {.type = tek_mode, .recent = beam_glow,
+     .y = tek_y, .x = tek_x,
      .style = style, .intensity = intensity};
 }
 
@@ -277,12 +282,14 @@ tek_step(char c)
   if (plotpen) {
     tek_buf = renewn(tek_buf, tek_buf_len + 1);
     tek_buf[tek_buf_len ++] = (struct tekchar) 
-      {.type = TEKMODE_POINT_PLOT, .y = tek_y, .x = tek_x, .intensity = intensity};
+      {.type = TEKMODE_POINT_PLOT, .recent = beam_glow,
+       .y = tek_y, .x = tek_x, .intensity = intensity};
   }
   else {
     tek_buf = renewn(tek_buf, tek_buf_len + 1);
     tek_buf[tek_buf_len ++] = (struct tekchar) 
-      {.type = TEKMODE_GRAPH0, .y = tek_y, .x = tek_x, .intensity = 0};
+      {.type = TEKMODE_GRAPH0, .recent = beam_glow,
+       .y = tek_y, .x = tek_x, .intensity = 0};
   }
 }
 
@@ -477,7 +484,7 @@ write_text (HDC dc, struct tekchar tc)
 }
 
 void
-tek_init(void)
+tek_init(int glow)
 {
   init_font(0);
   init_font(1);
@@ -487,6 +494,7 @@ tek_init(void)
   static bool init = false;
   if (!init) {
     tek_reset();
+    beam_glow = glow;
     init = true;
   }
 }
@@ -515,32 +523,27 @@ tek_paint(void)
   (void)SelectObject(hdc, hbm);
 
   // retrieve colour configuration
-  fg = win_get_colour(TEK_FG_COLOUR_I);
-  if (fg == (colour)-1)
-    fg = win_get_colour(FG_COLOUR_I);
+  colour fg0 = win_get_colour(TEK_FG_COLOUR_I);
+  if (fg0 == (colour)-1)
+    fg0 = win_get_colour(FG_COLOUR_I);
   colour bg = win_get_colour(TEK_BG_COLOUR_I);
   if (bg == (colour)-1)
     bg = win_get_colour(BG_COLOUR_I);
   colour cc = win_get_colour(TEK_CURSOR_COLOUR_I);
   if (cc == (colour)-1)
     cc = win_get_colour(CURSOR_COLOUR_I);
+  // optionally use current text colour?
+  //cattr attr = apply_attr_colour(term.curs.attr, ACM_SIMPLE); .truefg/bg
 
   // adjust colours
-  //cattr attr = term.curs.attr;
-  cattr attr =
-      {.attr = (TRUE_COLOUR << ATTR_FGSHIFT) | (TRUE_COLOUR << ATTR_BGSHIFT),
-             .truefg = fg, .truebg = bg, .ulcolr = (colour)-1,
-             .link = -1
-            };
-  //attr = apply_attr_colour(attr, ACM_SIMPLE);
   // use full colour for glow or bold (defocused)
-  colour glowfg = attr.truefg;
-  (void) glowfg;
-  bg = attr.truebg;
+  colour glowfg = fg0;
   // derived dimmed default colour
-  attr.attr |= ATTR_DIM;
-  attr = apply_attr_colour(attr, ACM_SIMPLE);
-  fg = attr.truefg;
+  fg0 = ((fg0 & 0xFEFEFEFE) >> 1) + ((fg0 & 0xFCFCFCFC) >> 2)
+                                  + ((bg & 0xFCFCFCFC) >> 2);
+  // also dim cursor colour
+  cc = ((cc & 0xFEFEFEFE) >> 1) + ((cc & 0xFCFCFCFC) >> 2)
+                                + ((bg & 0xFCFCFCFC) >> 2);
 
   int pen_width = scale_mode == 1 ? 12 : 0;
 
@@ -575,6 +578,15 @@ tek_paint(void)
   lastfont = 4;
   for (int i = 0; i < tek_buf_len; i++) {
     struct tekchar * tc = &tek_buf[i];
+
+    // beam glow effect (bright drawing spot)
+    if (tc->recent) {
+      fg = glowfg;
+      tc->recent --;
+    }
+    else {
+      fg = fg0;
+    }
 
     if (tc->type) {
       flush_text(hdc);
@@ -613,6 +625,7 @@ tek_paint(void)
         otherwise: pen = CreatePen(PS_SOLID, pen_width, fg);
       }
       HPEN oldpen = SelectObject(hdc, pen);
+      SetBkMode(hdc, TRANSPARENT);  // stabilize broken vector styles
       LineTo(hdc, tx(tc->x), ty(tc->y));
       oldpen = SelectObject(hdc, oldpen);
       DeleteObject(oldpen);
@@ -622,13 +635,13 @@ tek_paint(void)
     else if (tc->type == TEKMODE_POINT_PLOT)
       SetPixel(hdc, tx(tc->x), ty(tc->y), fg);
   }
-  // cursor █▒▓
+  // cursor ▐ or fill rectangle; ❚ spiddly; █▒▓ do not work unclipped
   if (lastfont < 4) {
     if (cc != fg)
       flush_text(hdc);
     fg = cc;
     write_text(hdc, (struct tekchar)
-                    {.type = 0, .c = 0x2588, .w = 1, .font = lastfont});
+                    {.type = 0, .c = 0x2590, .w = 1, .font = lastfont});
   }
   flush_text(hdc);
 

@@ -1982,7 +1982,7 @@ set_modes(bool state)
         when 38: /* DECTEK: Enter Tektronix Mode (VT240, VT330) */
           if (state) {
             tek_mode = TEKMODE_ALPHA;
-            tek_init();
+            tek_init(cfg.tek_glow);
           }
         when 40: /* Allow/disallow DECCOLM (xterm c132 resource) */
           term.deccolm_allowed = state;

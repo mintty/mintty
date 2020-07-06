@@ -52,6 +52,7 @@ typedef struct {
   // Looks
   colour fg_colour, bold_colour, bg_colour, cursor_colour;
   colour tek_fg_colour, tek_bg_colour, tek_cursor_colour;
+  int tek_glow;
   colour underl_colour, hover_colour;
   int disp_space, disp_clear, disp_tab;
   bool underl_manual;
