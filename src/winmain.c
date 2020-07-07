@@ -21,6 +21,7 @@ char * mintty_debug;
 #include "appinfo.h"
 #include "child.h"
 #include "charset.h"
+#include "tek.h"
 
 #include <locale.h>
 #include <getopt.h>
@@ -2675,6 +2676,11 @@ static struct {
         when IDM_PASTE: win_paste();
         when IDM_SELALL: term_select_all(); win_update(false);
         when IDM_RESET: winimgs_clear(); term_reset(true); win_update(false);
+          if (tek_mode)
+            tek_reset();
+        when IDM_PAGE:
+          if (tek_mode)
+            tek_page();
         when IDM_DEFSIZE:
           default_size_token = true;
           default_size();

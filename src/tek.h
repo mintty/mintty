@@ -11,6 +11,7 @@ enum tekmode {
 extern enum tekmode tek_mode;
 extern bool tek_bypass;
 
+extern void tek_page(void);
 extern void tek_reset(void);
 extern void tek_init(int glow);
 

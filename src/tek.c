@@ -5,6 +5,7 @@ bool tek_bypass = false;
 static uchar intensity = 0x7F; // for point modes
 static uchar style = 0;        // for vector modes
 static uchar font = 0;
+static short margin = 0;
 static bool beam_defocused = false;
 static bool plotpen = false;
 static bool apl_mode = false;
@@ -26,8 +27,6 @@ struct tekfont {
   {0, 58, 121, 52, 33},
   {0, 64, 133, 48, 30}
 };
-
-static short margin = 0;
 
 struct tekchar {
   char type;
@@ -75,13 +74,37 @@ tek_clear(void)
   tek_home();
 }
 
+/* PAGE
+   Erases the display, resets to Alpha Mode and home position;
+   resets to Margin 1 and cancels Bypass condition.
+*/
+void
+tek_page(void)
+{
+  tek_clear();
+  tek_mode = TEKMODE_ALPHA;
+  margin = 0;
+  tek_bypass = false;
+}
+
+/* RESET (xterm)
+   Unlike the similarly-named Tektronix “RESET” button, this
+   does everything that PAGE does as well as resetting the
+   line-type and font-size to their default values.
+*/
 void
 tek_reset(void)
 {
-  intensity = 0x7D;
+  // line type
   style = 0;
+  beam_defocused = false;
+  // font
   font = 0;
-  tek_clear();
+  apl_mode = false;
+  // clear etc
+  tek_page();
+  // let's also do this
+  intensity = 0x7F;
 }
 
 void

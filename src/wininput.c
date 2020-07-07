@@ -7,6 +7,7 @@
 
 #include "charset.h"
 #include "child.h"
+#include "tek.h"
 
 #include <math.h>
 #include <windowsx.h>  // GET_X_LPARAM, GET_Y_LPARAM
@@ -525,6 +526,10 @@ win_update_menus(bool callback)
     alt_fn ? W("Alt+F8") : ct_sh ? W("Ctrl+Shift+R") : null
   );
 
+  modify_menu(ctxmenu, IDM_PAGE, 0, W("PAGE"),
+    null
+  );
+
   uint defsize_enabled =
     IsZoomed(wnd) || term.cols != cfg.cols || term.rows != cfg.rows
     ? MF_ENABLED : MF_GRAYED;
@@ -679,6 +684,8 @@ win_init_ctxmenu(bool extended_menu, bool with_user_commands)
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_TOGVT220KB, 0);
   }
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_RESET, 0);
+  if (tek_mode)
+    AppendMenuW(ctxmenu, MF_ENABLED, IDM_PAGE, 0);
   if (extended_menu) {
     //__ Context menu: clear scrollback buffer (lines scrolled off the window)
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_CLRSCRLBCK, _W("Clear Scrollback"));
@@ -1491,6 +1498,7 @@ static struct function_def cmd_defs[] = {
   {"copy-title", {IDM_COPYTITLE}, 0},
   {"lock-title", {.fct = lock_title}, mflags_lock_title},
   {"reset", {IDM_RESET}, 0},
+  {"page", {IDM_PAGE}, 0},
   {"break", {IDM_BREAK}, 0},
   {"flipscreen", {IDM_FLIPSCREEN}, mflags_flipscreen},
   {"open", {IDM_OPEN}, mflags_open},
