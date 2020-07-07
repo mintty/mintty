@@ -2,7 +2,7 @@
 
 enum tekmode tek_mode = TEKMODE_OFF;
 bool tek_bypass = false;
-static uchar intensity = 0x7D; // for point modes
+static uchar intensity = 0x7F; // for point modes
 static uchar style = 0;        // for vector modes
 static uchar font = 0;
 static bool beam_defocused = false;
@@ -323,7 +323,7 @@ static bool ptd = false;
       printf("move %4d %4d\n", tc->y, tc->x);
     else if (tc->type == TEKMODE_GRAPH)
       printf("line %4d %4d\n", tc->y, tc->x);
-    else if (tc->type == TEKMODE_POINT_PLOT)
+    else if (tc->type == TEKMODE_POINT_PLOT || tc->type == TEKMODE_SPECIAL_PLOT)
       printf("plot %4d %4d\n", tc->y, tc->x);
     else
       printf("text %04X:%d\n", tc->c, tc->w);
@@ -581,6 +581,7 @@ tek_paint(void)
   out_y = 3120 - tekfonts[font].hei;
   margin = 0;
   lastfont = 4;
+  //printf("tek_paint %d %p\n", tek_buf_len, tek_buf);
   for (int i = 0; i < tek_buf_len; i++) {
     struct tekchar * tc = &tek_buf[i];
 
@@ -651,8 +652,29 @@ tek_paint(void)
       // add final point
       SetPixel(hdc, tx(tc->x), ty(tc->y), fg);
     }
-    else if (tc->type == TEKMODE_POINT_PLOT)
-      SetPixel(hdc, tx(tc->x), ty(tc->y), fg);
+    else if (tc->type == TEKMODE_POINT_PLOT || tc->type == TEKMODE_SPECIAL_PLOT) {
+      if (tc->intensity == 0x7F)
+        SetPixel(hdc, tx(tc->x), ty(tc->y), fg);
+      else {
+        static short intensify[64] =
+          { 0,  1,  1,  1,   1,  1,  1,  2,    2,  2,  2,  2,   3,  3,  3,  3,
+            4,  4,  4,  5,   5,  5,  6,  6,    7,  8,  9, 10,  11, 12, 12, 13,
+           14, 16, 17, 19,  20, 22, 23, 25,   28, 31, 34, 38,  41, 44, 47, 50,
+           56, 62, 69, 75,  81, 88, 94, 100,  56, 63, 69, 75,  81, 88, 96, 100
+          };
+        int r = red(fg);
+        int g = green(fg);
+        int b = blue(fg);
+        int _r = red(bg);
+        int _g = green(bg);
+        int _b = blue(bg);
+        r = (r - _r) * intensify[tc->intensity & 0x3F] / 100 + _r;
+        g = (g - _g) * intensify[tc->intensity & 0x3F] / 100 + _g;
+        b = (b - _b) * intensify[tc->intensity & 0x3F] / 100 + _b;
+        colour fgpix = RGB(r, g, b);
+        SetPixel(hdc, tx(tc->x), ty(tc->y), fgpix);
+      }
+    }
   }
   // cursor ▐ or fill rectangle; ❚ spiddly; █▒▓ do not work unclipped
   if (lastfont < 4) {
