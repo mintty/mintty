@@ -652,6 +652,7 @@ not to work among different cygwin installations.
 To configure a background in `$APPDATA/mintty/config` (or 
 `%APPDATA%/wsltty/config`), Windows pathname syntax should be used.
 
+
 ## Providing and selecting fonts ##
 
 To provide additional fonts for use with mintty, monospace fonts can be 
@@ -1142,6 +1143,20 @@ PNG, JPEG, GIF, TIFF, BMP, Exif.
 The script `showimg` in the 
 mintty [utils repository](https://github.com/mintty/utils) supports 
 interactive image display.
+
+
+## Tektronix 4014 vector graphics ##
+
+Mintty can emulate the Tektronix 4014 vector graphics terminal. 
+It switches to Tek emulation on the xterm sequence DECSET 38 (`\e[?38h`). 
+It is suggested to adjust the window size to the Tektronix 4010 resolution and aspect ratio before:
+* `echo -en "\e[4;$780;$1024t"`
+
+The script `tek` in the mintty 
+[utils repository](https://github.com/mintty/utils) supports switching 
+to Tek mode and optionally output of Tek or plot files.
+It also sets the environment variables **TERM** and **GNUTERM** properly.
+When leaving the sub-shell, it restores DEC/ANSI terminal mode.
 
 
 ## Localization ##

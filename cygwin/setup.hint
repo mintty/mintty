@@ -16,6 +16,7 @@ Terminal display features
 * Image display support.
 * Sixel graphics support.
 * Emoji support.
+* Tektronix 4014 vector graphics emulation.
 
 Terminal input and interaction features
 * Character composition support includes dead keys, Compose key, Windows IME.

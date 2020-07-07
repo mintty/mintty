@@ -869,6 +869,13 @@ In addition to the legacy Sixel feature, mintty supports graphic image display
 (using iTerm2 controls). Image formats supported comprise
 PNG, JPEG, GIF, TIFF, BMP, Exif.
 
+.SS Vector graphics terminal emulation
+
+Mintty supports Tektronix 4014 mode. It switches to Tek emulation on the 
+xterm sequence DECSET 38 (`\e[?38h`). It is suggested to adjust the window 
+size to the Tektronix 4010 resolution and aspect ratio before 
+(`echo -en "\e[4;$780;$1024t"`).
+
 .SS Emoji display support
 
 Mintty supports display of emojis as defined by Unicode using 
@@ -3147,18 +3154,20 @@ In addition, mintty supports a maximum of ANSI and ECMA-48 character attribute c
 strikeout, rapid blinking, alternative fonts) and additional 
 rendering attributes (underline styles and colours, superscript and subscript, 
 shadowed and overstrike).
-Mintty provides Sixel graphics and other image support, Emoji support, and 
-Bidi reordering according to the Unicode Bidi Algorithm UBA, amended 
-with flexible bidi controls according to the draft bidi mode model of 
-the \fBBiDi in Terminal Emulators\fP recommendation 
+Mintty provides Sixel graphics, image support according to the iTerm2 
+protocol (including png, jpeg, gif output), Emoji support, and Bidi 
+reordering according to the Unicode Bidi Algorithm UBA, amended with 
+flexible bidi controls according to the draft bidi mode model of the 
+\fBBiDi in Terminal Emulators\fP recommendation 
 (\fIhttps://terminal-wg.pages.freedesktop.org/bidi/\fP).
+
+Mintty also provides emulation of the Tektronix 4014 vector graphics terminal.
 
 Mintty is not as configurable as xterm; it offers essential configuration 
 features, many of which are "hidden settings", i.e. they do not appear in 
 the interactive "Options" configuration dialog.
 Of xterm's keyboard modes, only the default PC-style and VT220-style are available.
 8-bit control characters are not supported.
-There is no Tektronix 4014 emulation.
 Mouse highlighting mode is not implemented.
 
 .SH SEE ALSO

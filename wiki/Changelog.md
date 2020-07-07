@@ -1,3 +1,6 @@
+Vector graphics
+  * Tektronix 4014 terminal vector graphics terminal emulation (#896).
+
 Mouse handling
   * Avoid double interpretation of wheel events, also fixing speed issues (mintty/wsltty#238).
 
