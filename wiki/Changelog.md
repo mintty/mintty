@@ -1,8 +1,9 @@
 Vector graphics
   * Tektronix 4014 terminal vector graphics terminal emulation (#896).
 
-Mouse handling
-  * Avoid double interpretation of wheel events, also fixing speed issues (mintty/wsltty#238).
+Window handling
+  * Prevent mouse wheel double interpretation, also fixing speed issues (mintty/wsltty#238).
+  * Handle proper link attributes when screen is scrolled (#1021).
 
 Configuration
   * Support resource configuration directories via links (#1016).

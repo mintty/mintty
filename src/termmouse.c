@@ -547,7 +547,7 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
     when MS_COPYING: term_copy();
     when MS_PASTING: win_paste();
     when MS_OPENING: {
-      termline *line = fetch_line(p.y);
+      termline *line = fetch_line(p.y + term.disptop);
       int urli = line->chars[p.x].attr.link;
       release_line(line);
       char * url = geturl(urli);
