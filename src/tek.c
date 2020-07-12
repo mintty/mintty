@@ -55,6 +55,31 @@ struct tekchar {
 };
 static struct tekchar * tek_buf = 0;
 static int tek_buf_len = 0;
+static int tek_buf_size = 0;
+
+static void
+tek_buf_append(struct tekchar * tc)
+{
+  if (tek_buf_len == tek_buf_size) {
+    int new_size = tek_buf_size + 1000;
+    struct tekchar * new_buf = renewn(tek_buf, new_size);
+    if (!new_buf)
+      return;
+    tek_buf = new_buf;
+    tek_buf_size = new_size;
+  }
+  tek_buf[tek_buf_len ++] = * tc;
+}
+
+static void
+tek_buf_clear(void)
+{
+  if (tek_buf)
+    free(tek_buf);
+  tek_buf = 0;
+  tek_buf_len = 0;
+  tek_buf_size = 0;
+}
 
 
 static void
@@ -68,10 +93,7 @@ tek_home(void)
 void
 tek_clear(void)
 {
-  if (tek_buf)
-    free(tek_buf);
-  tek_buf = 0;
-  tek_buf_len = 0;
+  tek_buf_clear();
   tek_home();
 }
 
@@ -125,11 +147,10 @@ tek_write(wchar c, int width)
     width = 1;
   }
 
-  tek_buf = renewn(tek_buf, tek_buf_len + 1);
-  tek_buf[tek_buf_len ++] = (struct tekchar)
-                            {.type = 0, .recent = beam_glow,
-                             .defocused = beam_defocused,
-                             .c = c, .w = width, .font = font};
+  tek_buf_append(&(struct tekchar)
+                  {.type = 0, .recent = beam_glow,
+                   .defocused = beam_defocused,
+                   .c = c, .w = width, .font = font});
   if (width > 0) {
     tek_x += width * tekfonts[font].wid;
   }
@@ -282,12 +303,11 @@ tek_address(char * code)
 #ifdef debug_graph
   printf(" -> (%d) -> %d:%d\n", tek_mode, tek_y, tek_x);
 #endif
-  tek_buf = renewn(tek_buf, tek_buf_len + 1);
-  tek_buf[tek_buf_len ++] = (struct tekchar) 
-    {.type = tek_mode, .recent = beam_glow,
-     .defocused = beam_defocused,
-     .y = tek_y, .x = tek_x,
-     .style = style, .intensity = intensity};
+  tek_buf_append(&(struct tekchar)
+                  {.type = tek_mode, .recent = beam_glow,
+                   .defocused = beam_defocused,
+                   .y = tek_y, .x = tek_x,
+                   .style = style, .intensity = intensity});
 }
 
 /*	DEAIHJBF
@@ -309,18 +329,16 @@ tek_step(char c)
     tek_x += 1;
 
   if (plotpen) {
-    tek_buf = renewn(tek_buf, tek_buf_len + 1);
-    tek_buf[tek_buf_len ++] = (struct tekchar) 
-      {.type = TEKMODE_POINT_PLOT, .recent = beam_glow,
-       .defocused = beam_defocused,
-       .y = tek_y, .x = tek_x, .intensity = intensity};
+    tek_buf_append(&(struct tekchar)
+                    {.type = TEKMODE_POINT_PLOT, .recent = beam_glow,
+                     .defocused = beam_defocused,
+                     .y = tek_y, .x = tek_x, .intensity = intensity});
   }
   else {
-    tek_buf = renewn(tek_buf, tek_buf_len + 1);
-    tek_buf[tek_buf_len ++] = (struct tekchar) 
-      {.type = TEKMODE_GRAPH0, .recent = beam_glow,
-       .defocused = beam_defocused,
-       .y = tek_y, .x = tek_x, .intensity = 0};
+    tek_buf_append(&(struct tekchar)
+                    {.type = TEKMODE_GRAPH0, .recent = beam_glow,
+                     .defocused = beam_defocused,
+                     .y = tek_y, .x = tek_x, .intensity = 0});
   }
 }
 
@@ -476,12 +494,12 @@ out_up(void)
 }
 
 static void
-out_char(HDC dc, struct tekchar tc)
+out_char(HDC dc, struct tekchar * tc)
 {
-  if (tc.c < ' ') {
+  if (tc->c < ' ') {
     out_flush(dc);
-    short pw = tekfonts[tc.font].wid;
-    switch(tc.c) {
+    short pw = tekfonts[tc->font].wid;
+    switch(tc->c) {
       when '\b':  /* BS: left */
         out_x -= pw;
         if (out_x < margin) {
@@ -503,17 +521,17 @@ out_char(HDC dc, struct tekchar tc)
     }
   }
   else {
-    if (tc.w != lastwidth || !tc.w) {
+    if (tc->w != lastwidth || !tc->w) {
       out_flush(dc);
     }
-    lastwidth = tc.w;
+    lastwidth = tc->w;
 
     if (!txt) {
       txt_y = out_y;
       txt_x = out_x;
     }
 
-    short pw = tc.w * tekfonts[tc.font].wid;
+    short pw = tc->w * tekfonts[tc->font].wid;
     out_x += pw;
     if (out_x + pw > 4096) {
       out_flush(dc);
@@ -522,11 +540,11 @@ out_char(HDC dc, struct tekchar tc)
     }
 
     txt = renewn(txt, (txt ? wcslen(txt) : 0) + 2);
-    txt[txt_len ++] = tc.c;
+    txt[txt_len ++] = tc->c;
     txt[txt_len] = 0;
     txt_wid += pw;
   }
-  lastfont = tc.font;
+  lastfont = tc->font;
 }
 
 void
@@ -678,7 +696,7 @@ tek_paint(void)
     else {
       if (tc->font != lastfont)
         out_flush(hdc);
-      out_char(hdc, tek_buf[i]);
+      out_char(hdc, &tek_buf[i]);
     }
 
     if (tc->type == TEKMODE_GRAPH0)
@@ -747,7 +765,7 @@ tek_paint(void)
     if (cc != fg)
       out_flush(hdc);
     fg = cc;
-    out_char(hdc, (struct tekchar)
+    out_char(hdc, &(struct tekchar)
                    {.type = 0, .c = 0x2590, .w = 1, .font = lastfont});
   }
   out_flush(hdc);
