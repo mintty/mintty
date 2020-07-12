@@ -423,7 +423,7 @@ static int txt_len = 0;
 static int txt_wid = 0;
 
 static void
-flush_text(HDC dc)
+out_flush(HDC dc)
 {
   if (txt) {
     static short offset = 0; // 16? but then the bottom will get clipped
@@ -436,13 +436,13 @@ flush_text(HDC dc)
 }
 
 static void
-write_cr(void)
+out_cr(void)
 {
   out_x = margin;
 }
 
 static void
-write_lf(void)
+out_lf(void)
 {
   short ph = tekfonts[lastfont & 3].hei;
   out_y -= ph;
@@ -454,7 +454,7 @@ write_lf(void)
 }
 
 static void
-write_up(void)
+out_up(void)
 {
   short ph = tekfonts[lastfont & 3].hei;
   out_y += ph;
@@ -466,43 +466,43 @@ write_up(void)
 }
 
 static void
-write_text (HDC dc, struct tekchar tc)
+out_char(HDC dc, struct tekchar tc)
 {
   if (!txt) {
     txt_y = out_y;
     txt_x = out_x;
   }
   if (tc.c < ' ') {
-    flush_text(dc);
+    out_flush(dc);
     short pw = tekfonts[tc.font].wid;
     switch(tc.c) {
       when '\b':  /* BS: left */
         out_x -= pw;
         if (out_x < margin) {
-          write_up();
+          out_up();
           out_x = 4096 - pw;
         }
       when '\t':  /* HT: right */
         out_x += pw;
         if (out_x + pw > 4096) {
-          write_cr();
-          write_lf();
+          out_cr();
+          out_lf();
         }
       when '\v':  /* VT: up */
-        write_up();
+        out_up();
       when '\n':  /* LF: down */
-        write_lf();
+        out_lf();
       when '\r':  /* CR: carriage return */
-        write_cr();
+        out_cr();
     }
   }
   else {
     short pw = tc.w * tekfonts[tc.font].wid;
     out_x += pw;
     if (out_x + pw > 4096) {
-      flush_text(dc);
-      write_cr();
-      write_lf();
+      out_flush(dc);
+      out_cr();
+      out_lf();
     }
 
     txt = renewn(txt, (txt ? wcslen(txt) : 0) + 2);
@@ -655,14 +655,14 @@ tek_paint(void)
     }
 
     if (tc->type) {
-      flush_text(hdc);
+      out_flush(hdc);
       out_x = tc->x;
       out_y = tc->y;
     }
     else {
       if (tc->font != lastfont)
-        flush_text(hdc);
-      write_text(hdc, tek_buf[i]);
+        out_flush(hdc);
+      out_char(hdc, tek_buf[i]);
     }
 
     if (tc->type == TEKMODE_GRAPH0)
@@ -729,12 +729,12 @@ tek_paint(void)
   // cursor ▐ or fill rectangle; ❚ spiddly; █▒▓ do not work unclipped
   if (lastfont < 4) {
     if (cc != fg)
-      flush_text(hdc);
+      out_flush(hdc);
     fg = cc;
-    write_text(hdc, (struct tekchar)
-                    {.type = 0, .c = 0x2590, .w = 1, .font = lastfont});
+    out_char(hdc, (struct tekchar)
+                   {.type = 0, .c = 0x2590, .w = 1, .font = lastfont});
   }
-  flush_text(hdc);
+  out_flush(hdc);
 
   if (scale_mode == -1)
     SetWorldTransform(hdc, &oldxf);
