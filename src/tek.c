@@ -575,6 +575,14 @@ tek_paint(void)
   cc = ((cc & 0xFEFEFEFE) >> 1) + ((cc & 0xFCFCFCFC) >> 2)
                                 + ((bg & 0xFCFCFCFC) >> 2);
 
+  // fill background
+  HBRUSH bgbr = CreateSolidBrush(bg);
+  if (scale_mode == 1)
+    FillRect(hdc, &(RECT){0, 0, 4096, 4096}, bgbr);
+  else
+    FillRect(hdc, &(RECT){0, 0, width, height}, bgbr);
+  DeleteObject(bgbr);
+
   int tx(int x) {
     if (scale_mode)
       return x;
