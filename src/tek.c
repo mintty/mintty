@@ -12,6 +12,7 @@ static bool apl_mode = false;
 
 static short tek_y, tek_x;
 static uchar lastfont = 0;
+static int lastwidth = -1;
 
 static int beam_glow = 0;
 
@@ -413,7 +414,11 @@ out_text(HDC dc, short x, short y, wchar * s, uchar f)
   SetBkMode(dc, TRANSPARENT);
   SetTextColor(dc, fg);
 
-  ExtTextOutW(dc, x, y, 0, 0, s, wcslen(s), 0);
+  int len = wcslen(s);
+  int dxs[len];
+  for (int i = 0; i < len; i++)
+    dxs[i] = tekfonts[f].wid * lastwidth;
+  ExtTextOutW(dc, x, y, 0, 0, s, len, dxs);
 }
 
 static short txt_y, txt_x;
@@ -426,8 +431,13 @@ static void
 out_flush(HDC dc)
 {
   if (txt) {
-    static short offset = 0; // 16? but then the bottom will get clipped
-    out_text(dc, txt_x, 3120 - txt_y - tekfonts[font].hei + offset, txt, lastfont & 3);
+    if (!lastwidth) {
+      // fix position of combining character
+      short pw = tekfonts[lastfont].wid;
+      txt_x -= pw;
+    }
+    //printf("%d <%ls> [%d]\n", txt_len, txt, lastwidth);
+    out_text(dc, txt_x, 3120 - txt_y - tekfonts[font].hei, txt, lastfont & 3);
     free(txt);
     txt = 0;
     txt_len = 0;
@@ -468,10 +478,6 @@ out_up(void)
 static void
 out_char(HDC dc, struct tekchar tc)
 {
-  if (!txt) {
-    txt_y = out_y;
-    txt_x = out_x;
-  }
   if (tc.c < ' ') {
     out_flush(dc);
     short pw = tekfonts[tc.font].wid;
@@ -497,6 +503,16 @@ out_char(HDC dc, struct tekchar tc)
     }
   }
   else {
+    if (tc.w != lastwidth || !tc.w) {
+      out_flush(dc);
+    }
+    lastwidth = tc.w;
+
+    if (!txt) {
+      txt_y = out_y;
+      txt_x = out_x;
+    }
+
     short pw = tc.w * tekfonts[tc.font].wid;
     out_x += pw;
     if (out_x + pw > 4096) {
