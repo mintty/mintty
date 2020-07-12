@@ -541,17 +541,6 @@ tek_paint(void)
   */
   short scale_mode = -1;
 
-  // retrieve terminal pixel size (without padding)
-  int height, width;
-  win_get_pixels(&height, &width, false);
-
-  HDC dc = GetDC(wnd);
-  HDC hdc = CreateCompatibleDC(dc);
-  HBITMAP hbm = scale_mode == 1
-                ? CreateCompatibleBitmap(dc, 4096, 4096)
-                : CreateCompatibleBitmap(dc, width, height);
-  (void)SelectObject(hdc, hbm);
-
   // retrieve colour configuration
   colour fg0 = win_get_colour(TEK_FG_COLOUR_I);
   if (fg0 == (colour)-1)
@@ -574,6 +563,36 @@ tek_paint(void)
   // also dim cursor colour
   cc = ((cc & 0xFEFEFEFE) >> 1) + ((cc & 0xFCFCFCFC) >> 2)
                                 + ((bg & 0xFCFCFCFC) >> 2);
+
+  // retrieve terminal pixel size (without padding)
+  int height, width;
+  win_get_pixels(&height, &width, false);
+
+  // align to aspect ratio
+  int pad_l = 0, pad_t = 0;
+  int pad_r = 0, pad_b = 0;
+  if (width > height * 4096 / 3120) {
+    // width factor > height factor; reduce width
+    int w = height * 4096 / 3120;
+    pad_l = (width - w) / 2;
+    pad_r = width - w - pad_l;
+    width = w;
+  }
+  else if (height > width * 3120 / 4096) {
+    // height factor > width factor; reduce height
+    int h = width * 3120 / 4096;
+    pad_t = (height - h) / 2;
+    pad_b = height - h - pad_t;
+    height = h;
+  }
+  (void)pad_r; (void)pad_b;  // could be used to clear outer pane
+
+  HDC dc = GetDC(wnd);
+  HDC hdc = CreateCompatibleDC(dc);
+  HBITMAP hbm = scale_mode == 1
+                ? CreateCompatibleBitmap(dc, 4096, 4096)
+                : CreateCompatibleBitmap(dc, width, height);
+  (void)SelectObject(hdc, hbm);
 
   // fill background
   HBRUSH bgbr = CreateSolidBrush(bg);
@@ -722,13 +741,13 @@ tek_paint(void)
 
   if (scale_mode == 1)
     StretchBlt(dc,
-               PADDING, OFFSET + PADDING,
+               PADDING + pad_l, OFFSET + PADDING + pad_t,
                width, height,
                hdc,
                0, 0, 4096, 3120, SRCCOPY);
   else
     BitBlt(dc,
-           PADDING, OFFSET + PADDING,
+           PADDING + pad_l, OFFSET + PADDING + pad_t,
            width, height,
            hdc, 0, 0, SRCCOPY);
 
