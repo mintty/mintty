@@ -18,6 +18,8 @@ static int lastwidth = -1;
 static int beam_glow = 1;
 static int thru_glow = 5;
 
+static bool flash = false;
+
 static wchar * APL = W(" ¨)<≤=>]∨∧≠÷,+./0123456789([;×:\\¯⍺⊥∩⌊∊_∇∆⍳∘'⎕∣⊤○⋆?⍴⌈∼↓∪ω⊃↑⊂←⊢→≥-⋄ABCDEFGHIJKLMNOPQRSTUVWXYZ{⊣}$ ");
 
 struct tekfont {
@@ -99,6 +101,10 @@ void
 tek_clear(void)
 {
   tek_buf_clear();
+  flash = true;
+  tek_paint();
+  flash = false;
+  usleep(30000);
   tek_home();
 }
 
@@ -640,6 +646,8 @@ tek_paint(void)
   (void)SelectObject(hdc, hbm);
 
   // fill background
+  if (flash)
+    bg = fg0;
   HBRUSH bgbr = CreateSolidBrush(bg);
   if (scale_mode == 1)
     FillRect(hdc, &(RECT){0, 0, 4096, 4096}, bgbr);
