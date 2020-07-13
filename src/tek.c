@@ -49,8 +49,10 @@ struct tekchar {
 #else
   wchar c;
   short w;
+  uchar font;
   short y, x;
   short intensity;
+  uchar style;
 #endif
 };
 static struct tekchar * tek_buf = 0;
@@ -566,6 +568,7 @@ tek_init(int glow)
 void
 tek_paint(void)
 {
+  //unsigned long now = mtime();
   trace_tek();
 
   /* scale mode, how to map Tek coordinates to window coordinates
@@ -788,4 +791,5 @@ tek_paint(void)
   DeleteObject(hbm);
   DeleteDC(hdc);
   ReleaseDC(wnd, dc);
+  //printf("tek_painted %ld\n", mtime() - now);
 }

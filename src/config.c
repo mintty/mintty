@@ -1790,6 +1790,10 @@ about_handler(control *unused(ctrl), int event)
 }
 
 
+#if CYGWIN_VERSION_API_MINOR < 74
+#define use_findfile
+#endif
+
 static void
 add_file_resources(control *ctrl, wstring pattern, bool list_dirs)
 {
