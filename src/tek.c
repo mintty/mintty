@@ -12,6 +12,7 @@ static bool plotpen = false;
 static bool apl_mode = false;
 
 static short tek_y, tek_x;
+static short gin_y, gin_x;
 static uchar lastfont = 0;
 static int lastwidth = -1;
 
@@ -106,6 +107,14 @@ tek_clear(void)
   flash = false;
   usleep(30000);
   tek_home();
+}
+
+void
+tek_gin(void)
+{
+  //gin_y = tek_y;
+  //gin_x = tek_x;
+  tek_move_by(0, 0);
 }
 
 /* PAGE
@@ -392,7 +401,63 @@ static bool ptd = false;
 }
 
 
+static void
+fix_gin()
+{
+  if (gin_y < 0)
+    gin_y = 0;
+  if (gin_y > 3119)
+    gin_y = 3119;
+  if (gin_x < 0)
+    gin_x = 0;
+  if (gin_x > 4095)
+    gin_x = 4095;
+}
+
+void
+tek_move_by(int dy, int dx)
+{
+  //printf("tek_move_by %d:%d\n", dy, dx);
+  if (dy || dx) {
+    gin_y += dy;
+    gin_x += dx;
+    fix_gin();
+  }
+  else {
+    gin_y = 1560;
+    gin_x = 2048;
+  }
+}
+
+#include <windows.h>
+#include "winpriv.h"
 #include "child.h"
+
+void
+tek_move_to(int y, int x)
+{
+  //printf("tek_move_to %d:%d\n", y, x);
+  int height, width;
+  win_get_pixels(&height, &width, false);
+
+  int pad_l = 0, pad_t = 0;
+  if (width > height * 4096 / 3120) {
+    // width factor > height factor; reduce width
+    int w = height * 4096 / 3120;
+    pad_l = (width - w) / 2;
+    width = w;
+  }
+  else if (height > width * 3120 / 4096) {
+    // height factor > width factor; reduce height
+    int h = width * 3120 / 4096;
+    pad_t = (height - h) / 2;
+    height = h;
+  }
+
+  gin_y = 3119 - (y - pad_t) * 3120 / height;
+  gin_x = (x - pad_l) * 4096 / width;
+  fix_gin();
+}
 
 void
 tek_send_address(void)
@@ -400,6 +465,7 @@ tek_send_address(void)
   child_printf("%c%c%c%c",
                0x20 | (tek_y >> 7), 0x60 | ((tek_y >> 2) & 0x1F),
                0x20 | (tek_x >> 7), 0x40 | ((tek_x >> 2) & 0x1F));
+  tek_mode = TEKMODE_ALPHA;
 }
 
 void
@@ -408,9 +474,6 @@ tek_enq(void)
   child_write("4", 1);
   tek_send_address();
 }
-
-#include <windows.h>
-#include "winpriv.h"
 
 colour fg;
 
@@ -663,9 +726,9 @@ tek_paint(void)
   }
   int ty(int y) {
     if (scale_mode)
-      return 3120 - y;
+      return 3119 - y;
     else
-      return (3120 - y) * height / 4096;
+      return (3119 - y) * height / 4096;
   }
 
   XFORM oldxf;
@@ -684,6 +747,7 @@ tek_paint(void)
   out_y = 3120 - tekfonts[font].hei;
   margin = 0;
   lastfont = 4;
+  int pen_width = scale_mode == 1 ? width / 204 + height / 156 : 0;
   //printf("tek_paint %d %p\n", tek_buf_len, tek_buf);
   for (int i = 0; i < tek_buf_len; i++) {
     struct tekchar * tc = &tek_buf[i];
@@ -718,8 +782,6 @@ tek_paint(void)
     }
     else
       fg = fg0;
-
-    int pen_width = scale_mode == 1 ? width / 204 + height / 156 : 0;
 
     // defocused mode
     if (tc->defocused) {
@@ -802,6 +864,7 @@ tek_paint(void)
       }
     }
   }
+
   // cursor ▐ or fill rectangle; ❚ spiddly; █▒▓ do not work unclipped
   if (lastfont < 4) {
     if (cc != fg)
@@ -811,6 +874,23 @@ tek_paint(void)
                    {.type = 0, .c = 0x2590, .w = 1, .font = lastfont});
   }
   out_flush(hdc);
+
+  // GIN mode
+  if (tek_mode == TEKMODE_GIN) {
+    fg = ((fg0 & 0xFEFEFEFE) >> 1) + ((bg & 0xFEFEFEFE) >> 1);
+    HPEN pen = CreatePen(PS_SOLID, pen_width, fg);
+    HPEN oldpen = SelectObject(hdc, pen);
+    SetBkMode(hdc, TRANSPARENT);  // stabilize broken vector styles
+
+    //printf("GIN %d:%d\n", gin_y, gin_x);
+    MoveToEx(hdc, tx(0), ty(gin_y), null);
+    LineTo(hdc, tx(4096), ty(gin_y));
+    MoveToEx(hdc, tx(gin_x), ty(0), null);
+    LineTo(hdc, tx(gin_x), ty(3120));
+
+    oldpen = SelectObject(hdc, oldpen);
+    DeleteObject(oldpen);
+  }
 
   if (scale_mode == -1)
     SetWorldTransform(hdc, &oldxf);

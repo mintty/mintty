@@ -1162,6 +1162,7 @@ tek_esc(char c)
       tek_bypass = true;
     when CTRL('Z'):   /* SUB: Gin mode */
       tek_mode = TEKMODE_GIN;
+      tek_gin();
       term.state = NORMAL;
       tek_bypass = true;
     when 0x1C:   /* FS: Special Plot mode */

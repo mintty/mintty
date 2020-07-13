@@ -14,14 +14,18 @@ extern bool tek_bypass;
 extern void tek_page(void);
 extern void tek_reset(void);
 extern void tek_init(int glow);
+extern void tek_gin(void);
 
 extern void tek_font(short f);
 extern void tek_write(wchar c, int width);
-extern void tek_send_address(void);
 extern void tek_enq(void);
 extern void tek_alt(bool);
 extern void tek_copy(void);
 extern void tek_clear(void);
+
+extern void tek_move_to(int y, int x);
+extern void tek_move_by(int dy, int dx);
+extern void tek_send_address(void);
 
 extern void tek_beam(bool defocused, bool write_through, char vector_style);
 extern void tek_intensity(bool defocused, int intensity);

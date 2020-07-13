@@ -1049,6 +1049,13 @@ win_mouse_release(mouse_button b, LPARAM lp)
 void
 win_mouse_move(bool nc, LPARAM lp)
 {
+  if (tek_mode == TEKMODE_GIN) {
+    int y = GET_Y_LPARAM(lp) - PADDING - OFFSET;
+    int x = GET_X_LPARAM(lp) - PADDING;
+    tek_move_to(y, x);
+    return;
+  }
+
   if (lp == last_lp)
     return;
 
@@ -2190,6 +2197,23 @@ static LONG last_key_time = 0;
       term.selected = false;
     return true;
   }
+  if (tek_mode == TEKMODE_GIN) {
+    int step = (mods & MDK_SHIFT) ? 40 : (mods & MDK_CTRL) ? 1 : 4;
+    switch (key) {
+      when VK_HOME : tek_move_by(step, -step);
+      when VK_UP   : tek_move_by(step, 0);
+      when VK_PRIOR: tek_move_by(step, step);
+      when VK_LEFT : tek_move_by(0, -step);
+      when VK_CLEAR: tek_move_by(0, 0);
+      when VK_RIGHT: tek_move_by(0, step);
+      when VK_END  : tek_move_by(-step, -step);
+      when VK_DOWN : tek_move_by(-step, 0);
+      when VK_NEXT : tek_move_by(-step, step);
+      otherwise: step = 0;
+    }
+    if (step)
+      return true;
+  }
 
   bool allow_shortcut = true;
 
@@ -3067,6 +3091,8 @@ static struct {
     // we cannot win_update_now here; need to wait for the echo (child_proc)
     kb_input = true;
     //printf("[%ld] win_key sent %02X\n", mtime(), key); kb_trace = key;
+    if (tek_mode == TEKMODE_GIN)
+      tek_send_address();
   }
   else if (comp_state == COMP_PENDING)
     comp_state = COMP_ACTIVE;

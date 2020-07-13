@@ -7,6 +7,7 @@
 #include "win.h"
 #include "child.h"
 #include "charset.h"  // cs__utftowcs
+#include "tek.h"
 
 /*
  * Fetch the character at a particular position in a line array.
@@ -438,7 +439,21 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
   }
 
   bool res = true;
-  if (check_app_mouse(&mods)) {
+  if (tek_mode == TEKMODE_GIN) {
+    char c = '`';
+    switch (b) {
+      when MBT_LEFT: c = 'l';
+      when MBT_MIDDLE: c = 'm';
+      when MBT_RIGHT: c = 'r';
+      when MBT_4: c = 'p';
+      when MBT_5: c = 'q';
+    }
+    if (mods & MDK_SHIFT)
+      c ^= ' ';
+    child_send(&c, 1);
+    tek_send_address();
+  }
+  else if (check_app_mouse(&mods)) {
     if (term.mouse_mode == MM_X10)
       mods = 0;
     send_mouse_event(MA_CLICK, b, mods, box_pos(p));
@@ -708,7 +723,14 @@ term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys mods,
   static int accu = 0;
   accu += delta;
 
-  if (check_app_mouse(&mods)) {
+  if (tek_mode == TEKMODE_GIN) {
+    int step = (mods & MDK_SHIFT) ? 40 : (mods & MDK_CTRL) ? 1 : 4;
+    if (horizontal ^ (mods & MDK_CTRL))
+      tek_move_by(0, step * delta / NOTCH_DELTA);
+    else
+      tek_move_by(step * delta / NOTCH_DELTA, 0);
+  }
+  else if (check_app_mouse(&mods)) {
     if (strstr(cfg.suppress_wheel, "report"))
       return;
     // Send as mouse events, with one event per notch.
