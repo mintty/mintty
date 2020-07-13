@@ -7,6 +7,7 @@ static uchar style = 0;        // for vector modes
 static uchar font = 0;
 static short margin = 0;
 static bool beam_defocused = false;
+static bool beam_writethru = false;
 static bool plotpen = false;
 static bool apl_mode = false;
 
@@ -14,7 +15,8 @@ static short tek_y, tek_x;
 static uchar lastfont = 0;
 static int lastwidth = -1;
 
-static int beam_glow = 0;
+static int beam_glow = 1;
+static int thru_glow = 5;
 
 static wchar * APL = W(" ¨)<≤=>]∨∧≠÷,+./0123456789([;×:\\¯⍺⊥∩⌊∊_∇∆⍳∘'⎕∣⊤○⋆?⍴⌈∼↓∪ω⊃↑⊂←⊢→≥-⋄ABCDEFGHIJKLMNOPQRSTUVWXYZ{⊣}$ ");
 
@@ -33,6 +35,7 @@ struct tekchar {
   char type;
   uchar recent;
   bool defocused;
+  bool writethru;
 #if CYGWIN_VERSION_API_MINOR >= 74
   union {
     struct {
@@ -123,6 +126,7 @@ tek_reset(void)
   // line type
   style = 0;
   beam_defocused = false;
+  beam_writethru = false;
   // font
   font = 0;
   apl_mode = false;
@@ -150,8 +154,9 @@ tek_write(wchar c, int width)
   }
 
   tek_buf_append(&(struct tekchar)
-                  {.type = 0, .recent = beam_glow,
-                   .defocused = beam_defocused,
+                  {.type = 0,
+                   .recent = beam_writethru ? thru_glow : beam_glow,
+                   .defocused = beam_defocused, .writethru = beam_writethru,
                    .c = c, .w = width, .font = font});
   if (width > 0) {
     tek_x += width * tekfonts[font].wid;
@@ -181,8 +186,8 @@ tek_copy(void)
 void
 tek_beam(bool defocused, bool write_through, char vector_style)
 {
-  (void)write_through;
   beam_defocused = defocused;
+  beam_writethru = write_through;
   if (vector_style > 4)
     style = 0;
   else
@@ -306,8 +311,9 @@ tek_address(char * code)
   printf(" -> (%d) -> %d:%d\n", tek_mode, tek_y, tek_x);
 #endif
   tek_buf_append(&(struct tekchar)
-                  {.type = tek_mode, .recent = beam_glow,
-                   .defocused = beam_defocused,
+                  {.type = tek_mode,
+                   .recent = beam_writethru ? thru_glow : beam_glow,
+                   .defocused = beam_defocused, .writethru = beam_writethru,
                    .y = tek_y, .x = tek_x,
                    .style = style, .intensity = intensity});
 }
@@ -332,14 +338,16 @@ tek_step(char c)
 
   if (plotpen) {
     tek_buf_append(&(struct tekchar)
-                    {.type = TEKMODE_POINT_PLOT, .recent = beam_glow,
-                     .defocused = beam_defocused,
+                    {.type = TEKMODE_POINT_PLOT,
+                     .recent = beam_writethru ? thru_glow : beam_glow,
+                     .defocused = beam_defocused, .writethru = beam_writethru,
                      .y = tek_y, .x = tek_x, .intensity = intensity});
   }
   else {
     tek_buf_append(&(struct tekchar)
-                    {.type = TEKMODE_GRAPH0, .recent = beam_glow,
-                     .defocused = beam_defocused,
+                    {.type = TEKMODE_GRAPH0,
+                     .recent = beam_writethru ? thru_glow : beam_glow,
+                     .defocused = beam_defocused, .writethru = beam_writethru,
                      .y = tek_y, .x = tek_x, .intensity = 0});
   }
 }
@@ -672,8 +680,31 @@ tek_paint(void)
   for (int i = 0; i < tek_buf_len; i++) {
     struct tekchar * tc = &tek_buf[i];
 
-    // beam glow effect (bright drawing spot)
-    if (tc->recent) {
+    // write-thru mode and beam glow effect (bright drawing spot)
+    if (tc->writethru) {
+      fg = fg0;
+      if (tc->recent) {
+        // simulate Write-Thru by distinct colour?
+        //fg = RGB(200, 100, 0);
+        // fade out?
+        if (tc->recent <= (thru_glow + 1) / 2)
+          fg = ((fg0 & 0xFEFEFEFE) >> 1) + ((bg & 0xFEFEFEFE) >> 1);
+
+        tc->recent--;
+      }
+      else {
+        // simulate faded Write-Thru by distinct colour?
+        //fg = RGB(200, 100, 0);
+        fg = cfg.tek_write_thru_colour;
+        if (fg == (colour)-1) {
+          fg = ((fg0 & 0xFEFEFEFE) >> 1) + ((bg & 0xFEFEFEFE) >> 1);
+          fg = RGB(green(fg), blue(fg), red(fg));
+        }
+        // fade away?
+        //fg = bg;
+      }
+    }
+    else if (tc->recent) {
       fg = glowfg;
       tc->recent --;
     }
