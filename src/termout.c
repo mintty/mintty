@@ -3983,8 +3983,11 @@ term_do_write(const char *buf, uint len)
             wc = cs_btowc_glyph(c);
             if (wc != c)
               write_char(wc, 1);
+            else if (cfg.printable_controls > 1)
+              goto goon;
           }
           continue;
+          goon:;
         }
 
         // Non-characters
@@ -4004,7 +4007,7 @@ term_do_write(const char *buf, uint len)
           if (win_char_width(wc, term.curs.attr.attr) < 2)
             term.curs.attr.attr |= TATTR_EXPAND;
         }
-        else
+        else {
 #if HAS_LOCALES
           if (cfg.charwidth % 10)
             width = xcwidth(wc);
@@ -4024,6 +4027,13 @@ term_do_write(const char *buf, uint len)
 #else
           width = xcwidth(wc);
 #endif
+        }
+        if (width < 0 && cfg.printable_controls) {
+          if (wc >= 0x80 && wc < 0xA0)
+            width = 1;
+          else if (wc < ' ' && cfg.printable_controls > 1)
+            width = 1;
+        }
 
         if (width == 2
             // && wcschr(W("〈〉《》「」『』【】〒〓〔〕〖〗〘〙〚〛"), wc)

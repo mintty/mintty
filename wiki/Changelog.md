@@ -7,6 +7,7 @@ Window handling
 
 Configuration
   * Support resource configuration directories via links (#1016).
+  * New option PrintableControls to make controls visible (#1019).
 
 ### 3.2.0 (20 June 2020) ###
 

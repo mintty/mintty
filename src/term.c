@@ -2199,6 +2199,22 @@ term_paint(void)
       if (tchar == 0x2010)
         tchar = '-';
 
+      if (cfg.printable_controls) {
+        if (tchar >= 0x80 && tchar < 0xA0)
+          tchar = 0x2592;  // ⌷⎕░▒▓
+        else if (tchar < ' ' && cfg.printable_controls > 1)
+          tchar = 0x2591;  // ⌷⎕░▒▓
+        if (tchar >= 0x2580 && tchar <= 0x259F) {
+          // Block Elements (U+2580-U+259F)
+          // ▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟
+          tattr.attr |= ((cattrflags)(tchar & 0xF)) << ATTR_GRAPH_SHIFT;
+          uchar gcode = 14 + ((tchar >> 4) & 1);
+          // extend graph encoding with unused font numbers
+          tattr.attr &= ~FONTFAM_MASK;
+          tattr.attr |= (cattrflags)gcode << ATTR_FONTFAM_SHIFT;
+        }
+      }
+
       if (j < term.cols - 1 && d[1].chr == UCSWIDE)
         tattr.attr |= TATTR_WIDE;
 
