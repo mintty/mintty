@@ -865,13 +865,14 @@ tek_paint(void)
     }
   }
 
-  // cursor ▐ or fill rectangle; ❚ spiddly; █▒▓ do not work unclipped
-  if (lastfont < 4) {
+  // text cursor
+  if (lastfont < 4 && term.cblinker) {
     if (cc != fg)
       out_flush(hdc);
     fg = cc;
     out_char(hdc, &(struct tekchar)
-                   {.type = 0, .c = 0x2590, .w = 1, .font = lastfont});
+                   {.type = 0, .c = 0x2588,  // ▐ half ❚ spiddly █▒▓
+                    .w = 1, .font = lastfont});
   }
   out_flush(hdc);
 
