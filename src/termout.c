@@ -1188,6 +1188,8 @@ tek_esc(char c)
     when CTRL('C'):
       tek_mode = TEKMODE_OFF;
       win_invalidate_all(false);
+    when ']':  /* OSC: operating system command */
+      term.state = OSC_START;
   }
 }
 
@@ -3633,20 +3635,25 @@ do_cmd(void)
         term.wide_extra = true;
     }
     when 52: do_clipboard();
-    when 50: {
-      uint ff = (term.curs.attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
-      if (!strcmp(s, "?")) {
-        char * fn = cs__wcstombs(win_get_font(ff) ?: W(""));
-        child_printf("\e]50;%s\e\\", fn);
-        free(fn);
+    when 50:
+      if (tek_mode) {
+        tek_set_font(cs__mbstowcs(s));
+        tek_init(cfg.tek_glow);
       }
       else {
-        if (ff < lengthof(cfg.fontfams) - 1) {
-          wstring wfont = cs__mbstowcs(s);  // let this leak...
-          win_change_font(ff, wfont);
+        uint ff = (term.curs.attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+        if (!strcmp(s, "?")) {
+          char * fn = cs__wcstombs(win_get_font(ff) ?: W(""));
+          child_printf("\e]50;%s\e\\", fn);
+          free(fn);
+        }
+        else {
+          if (ff < lengthof(cfg.fontfams) - 1) {
+            wstring wfont = cs__mbstowcs(s);  // let this leak...
+            win_change_font(ff, wfont);
+          }
         }
       }
-    }
     when 8: {  // hyperlink attribute
       char * link = s;
       char * url = strchr(s, ';');

@@ -22,6 +22,7 @@ extern void tek_enq(void);
 extern void tek_alt(bool);
 extern void tek_copy(void);
 extern void tek_clear(void);
+extern void tek_set_font(wchar * fn);
 
 extern void tek_move_to(int y, int x);
 extern void tek_move_by(int dy, int dx);

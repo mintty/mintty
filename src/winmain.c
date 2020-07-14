@@ -2178,6 +2178,8 @@ font_cs_reconfig(bool font_changed)
 {
   if (font_changed) {
     win_init_fonts(cfg.font.size);
+    if (tek_mode)
+      tek_init(cfg.tek_glow);
     trace_resize((" (font_cs_reconfig -> win_adapt_term_size)\n"));
     win_adapt_term_size(true, false);
   }
