@@ -758,15 +758,22 @@ tek_paint(void)
   else
     scale_mode = 0;
 
+  int pen_width0 = scale_mode == 1
+                   ? width / 204 + height / 156
+                   : (width + height) / 1600;
+  // in scale_modes 0 or -1, for full width (3120×4096) pen_width should be 4
+  //printf("pen width %d\n", pen_width0);
+
   txt = 0;
   out_x = 0;
   out_y = 3120 - tekfonts[font].hei;
   margin = 0;
   lastfont = 4;
-  int pen_width = scale_mode == 1 ? width / 204 + height / 156 : 0;
   //printf("tek_paint %d %p\n", tek_buf_len, tek_buf);
   for (int i = 0; i < tek_buf_len; i++) {
     struct tekchar * tc = &tek_buf[i];
+
+    int pen_width = pen_width0;
 
     // write-thru mode and beam glow effect (bright drawing spot)
     if (tc->writethru) {
@@ -804,7 +811,7 @@ tek_paint(void)
       // simulate defocused by brighter display
       //fg = glowfg;
       // or by wider pen
-      pen_width = width / 204 + height / 156;
+      pen_width = (pen_width ?: 1) * 8;
       // or by shaded pen; not implemented
     }
 
@@ -895,7 +902,7 @@ tek_paint(void)
   // GIN mode
   if (tek_mode == TEKMODE_GIN) {
     fg = ((fg0 & 0xFEFEFEFE) >> 1) + ((bg & 0xFEFEFEFE) >> 1);
-    HPEN pen = CreatePen(PS_SOLID, pen_width, fg);
+    HPEN pen = CreatePen(PS_SOLID, pen_width0, fg);
     HPEN oldpen = SelectObject(hdc, pen);
     SetBkMode(hdc, TRANSPARENT);  // stabilize broken vector styles
 
