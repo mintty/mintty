@@ -28,11 +28,11 @@ struct tekfont {
   void * f;
   short rows, cols;
   short hei, wid;
-} tekfonts[] = {
-  {0, 35, 74, 87, 55},
-  {0, 38, 81, 80, 50},
-  {0, 58, 121, 52, 33},
-  {0, 64, 133, 48, 30}
+} tekfonts[] = {        // Tek		VT240		mintty
+  {0, 35, 74, 89, 55},  // 35 × 74	35 × 74		35 × 74
+  {0, 38, 81, 82, 50},  // 38 × 81	38 × 81		38 × 81
+  {0, 58, 121, 53, 32}, // 58 × 121	58 × 128	58 × 128
+  {0, 64, 133, 48, 30}  // 64 × 133	64 × 133	64 × 136 (see out_lf)
 };
 
 struct tekchar {
@@ -318,7 +318,7 @@ tek_address(char * code)
   }
   else {  // error
 #ifdef debug_graph
-  printf(" -> err\n");
+    printf(" -> err\n");
 #endif
     return;
   }
@@ -562,7 +562,9 @@ out_lf(void)
 {
   short ph = tekfonts[lastfont & 3].hei;
   out_y -= ph;
-  if (out_y < 0) {
+  // "<=" rather than "<" to skip last pixel line,
+  // to adjust smallest character size mode to original 64 lines
+  if (out_y <= 0) {
     out_y = 3120 - ph;
     margin = 2048 - margin;
     out_x = (out_x + 2048) % 4096;
@@ -596,7 +598,7 @@ out_char(HDC dc, struct tekchar * tc)
         }
       when '\t':  /* HT: right */
         out_x += pw;
-        if (out_x + pw > 4096) {
+        if (out_x + pw >= 4096) {
           out_cr();
           out_lf();
         }
@@ -613,24 +615,29 @@ out_char(HDC dc, struct tekchar * tc)
       out_flush(dc);
     }
     lastwidth = tc->w;
-
-    if (!txt) {
-      txt_y = out_y;
-      txt_x = out_x;
-    }
-
     short pw = tc->w * tekfonts[tc->font].wid;
-    out_x += pw;
+    //printf("out %02X @%d:%d\n", tc->c, out_y, out_x);
+
+    // line wrap-around
     if (out_x + pw > 4096) {
       out_flush(dc);
       out_cr();
       out_lf();
+      //printf("wrapped -> @%d:%d\n", out_y, out_x);
+    }
+
+    if (!txt) {
+      txt_y = out_y;
+      txt_x = out_x;
+      //printf("txt %02X @%d:%d\n", tc->c, out_y, out_x);
     }
 
     txt = renewn(txt, (txt ? wcslen(txt) : 0) + 2);
     txt[txt_len ++] = tc->c;
     txt[txt_len] = 0;
     txt_wid += pw;
+
+    out_x += pw;
   }
   lastfont = tc->font;
 }
