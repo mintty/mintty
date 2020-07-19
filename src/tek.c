@@ -721,7 +721,7 @@ tek_paint(void)
   HDC dc = GetDC(wnd);
   HDC hdc = CreateCompatibleDC(dc);
   HBITMAP hbm = scale_mode == 1
-                ? CreateCompatibleBitmap(dc, 4096, 4096)
+                ? CreateCompatibleBitmap(dc, 4096, 3120)
                 : CreateCompatibleBitmap(dc, width, height);
   (void)SelectObject(hdc, hbm);
 
@@ -730,7 +730,7 @@ tek_paint(void)
     bg = fg0;
   HBRUSH bgbr = CreateSolidBrush(bg);
   if (scale_mode == 1)
-    FillRect(hdc, &(RECT){0, 0, 4096, 4096}, bgbr);
+    FillRect(hdc, &(RECT){0, 0, 4096, 3120}, bgbr);
   else
     FillRect(hdc, &(RECT){0, 0, width, height}, bgbr);
   DeleteObject(bgbr);
