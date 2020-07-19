@@ -597,11 +597,12 @@ out_char(HDC dc, struct tekchar * tc)
           out_x = 4096 - pw;
         }
       when '\t':  /* HT: right */
-        out_x += pw;
-        if (out_x + pw >= 4096) {
+        out_flush(dc);
+        if (out_x + pw > 4096) {
           out_cr();
           out_lf();
         }
+        out_x += pw;
       when '\v':  /* VT: up */
         out_up();
       when '\n':  /* LF: down */
