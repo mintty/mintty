@@ -1396,6 +1396,17 @@ win_get_pixels(int *height_p, int *width_p, bool with_borders)
 }
 
 void
+term_save_img(wstring fn)
+{
+  HDC dc = GetDC(wnd);
+  int height, width;
+  win_get_pixels(&height, &width, false);
+  save_img(dc, PADDING, OFFSET + PADDING, 
+               width + 2 * PADDING, height + 2 * PADDING, fn);
+  ReleaseDC(wnd, dc);
+}
+
+void
 win_get_screen_chars(int *rows_p, int *cols_p)
 {
   MONITORINFO mi;

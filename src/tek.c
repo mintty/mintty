@@ -22,6 +22,8 @@ static int thru_glow = 5;
 
 static bool flash = false;
 
+static wchar * copyfn = 0;
+
 static wchar * APL = W(" ¨)<≤=>]∨∧≠÷,+./0123456789([;×:\\¯⍺⊥∩⌊∊_∇∆⍳∘'⎕∣⊤○⋆?⍴⌈∼↓∪ω⊃↑⊂←⊢→≥-⋄ABCDEFGHIJKLMNOPQRSTUVWXYZ{⊣}$ ");
 
 struct tekfont {
@@ -187,8 +189,10 @@ tek_alt(bool alt_chars)
 
 
 void
-tek_copy(void)
+tek_copy(wchar * fn)
 {
+  if (!copyfn)
+    copyfn = fn;
 }
 
 
@@ -698,6 +702,20 @@ tek_paint(void)
   // retrieve terminal pixel size (without padding)
   int height, width;
   win_get_pixels(&height, &width, false);
+  if (copyfn) {
+    height = 780;
+    width = 1024;
+    // check if any 12-bit graphics addressing is used
+    for (int i = 0; i < tek_buf_len; i++) {
+      struct tekchar * tc = &tek_buf[i];
+      if (tc->type && ((tc->x & 3) || (tc->y & 3))) {
+        // select high resolution to reflect 12 bit addressing
+        height = 3120;
+        width = 4096;
+        break;
+      }
+    }
+  }
 
   // align to aspect ratio
   int pad_l = 0, pad_t = 0;
@@ -813,6 +831,7 @@ tek_paint(void)
       //fg = glowfg;
       // or by wider pen
       pen_width = (pen_width ?: 1) * 8;
+      //printf("defocused pen width %d\n", pen_width);
       // or by shaded pen; not implemented
     }
 
@@ -890,7 +909,7 @@ tek_paint(void)
   }
 
   // text cursor
-  if (lastfont < 4 && term.cblinker) {
+  if (!copyfn && lastfont < 4 && term.cblinker) {
     if (cc != fg)
       out_flush(hdc);
     fg = cc;
@@ -920,17 +939,24 @@ tek_paint(void)
   if (scale_mode == -1)
     SetWorldTransform(hdc, &oldxf);
 
-  if (scale_mode == 1)
-    StretchBlt(dc,
-               PADDING + pad_l, OFFSET + PADDING + pad_t,
-               width, height,
-               hdc,
-               0, 0, 4096, 3120, SRCCOPY);
-  else
-    BitBlt(dc,
-           PADDING + pad_l, OFFSET + PADDING + pad_t,
-           width, height,
-           hdc, 0, 0, SRCCOPY);
+  if (copyfn) {
+    save_img(hdc, 0, 0, width, height, copyfn);
+    free(copyfn);
+    copyfn = 0;
+  }
+  else {
+    if (scale_mode == 1)
+      StretchBlt(dc,
+                 PADDING + pad_l, OFFSET + PADDING + pad_t,
+                 width, height,
+                 hdc,
+                 0, 0, 4096, 3120, SRCCOPY);
+    else
+      BitBlt(dc,
+             PADDING + pad_l, OFFSET + PADDING + pad_t,
+             width, height,
+             hdc, 0, 0, SRCCOPY);
+  }
 
   DeleteObject(hbm);
   DeleteDC(hdc);

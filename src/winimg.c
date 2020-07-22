@@ -999,6 +999,47 @@ win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int ele
   }
 }
 
+void
+save_img(HDC dc, int x, int y, int w, int h, wstring fn)
+{
+  gdiplus_init();
+  GpStatus s;
+
+  if (!w || !h) {
+    // determine size
+    BITMAP bitmap;
+    HGDIOBJ hbitmap = GetCurrentObject(dc, OBJ_BITMAP);
+    GetObject(hbitmap, sizeof(BITMAP), &bitmap);
+    //printf("%d %d\n", bitmap.bmHeight, bitmap.bmWidth);
+    if (!w)
+      w = bitmap.bmWidth - x;
+    if (!h)
+      h = bitmap.bmHeight - y;
+  }
+
+  // provide paintable bitmap of matching size
+  HBITMAP copbm = CreateCompatibleBitmap(dc, w, h);
+  HDC copdc = CreateCompatibleDC(dc);
+
+  // copy contents into GDI+ bitmap
+  (void)SelectObject(copdc, copbm);
+  BitBlt(copdc, 0, 0, w, h, dc, x, y, SRCCOPY);
+  GpImage* gimg;
+  s = GdipCreateBitmapFromHBITMAP(copbm, 0, &gimg);
+  gpcheck("create", s);
+  DeleteDC(copdc);
+  DeleteObject(copbm);
+
+  // save as png
+  CLSID png;
+  CLSIDFromString(W("{557CF406-1A04-11D3-9A73-0000F81EF32E}"), &png);
+  s = GdipSaveImageToFile(gimg, fn, &png, 0);
+  gpcheck("save", s);
+
+  s = GdipDisposeImage(gimg);
+  gpcheck("dispose image", s);
+}
+
 #else
 
 void
@@ -1007,6 +1048,12 @@ win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int ele
   (void)x; (void)y;
   (void)efn; (void)bufpoi; (void)buflen;
   (void)elen; (void)lattr;
+}
+
+void
+save_img(HDC dc, int x, int y, int w, int h, wstring fn)
+{
+  (void)dc;
 }
 
 #endif

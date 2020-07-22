@@ -18,6 +18,7 @@
 #include "unicodever.t"
 
 #include <termios.h>
+#include <sys/time.h>
 
 #define TERM_CMD_BUF_INC_STEP 128
 #define TERM_CMD_BUF_MAX_SIZE (1024 * 1024)
@@ -1156,7 +1157,15 @@ tek_esc(char c)
     when CTRL('O'):   /* LS0: Locking-shift zero */
       tek_alt(false);
     when CTRL('W'):   /* ETB: Make Copy */
-      tek_copy();
+      {
+        struct timeval now;
+        gettimeofday(& now, 0);
+        char * copf = newn(char, MAX_PATH + 1);
+        strftime(copf, MAX_PATH, "mintty.%F_%T.png", localtime (& now.tv_sec));
+        wchar * copyfn = path_posix_to_win_w(copf);
+        free(copf);
+        tek_copy(copyfn);  // stored; free'd later
+      }
       tek_bypass = false;
     when CTRL('X'):   /* CAN: Set Bypass */
       tek_bypass = true;

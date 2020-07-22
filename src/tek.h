@@ -20,7 +20,7 @@ extern void tek_font(short f);
 extern void tek_write(wchar c, int width);
 extern void tek_enq(void);
 extern void tek_alt(bool);
-extern void tek_copy(void);
+extern void tek_copy(wchar * fn);
 extern void tek_clear(void);
 extern void tek_set_font(wchar * fn);
 
@@ -36,3 +36,7 @@ extern void tek_pen(bool on);
 extern void tek_step(char c);
 
 extern void tek_paint(void);
+
+// avoid #include "winimg.h"
+extern void save_img(HDC, int x, int y, int w, int h, wstring fn);
+
