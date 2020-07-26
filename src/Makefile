@@ -360,6 +360,7 @@ SRCDEBUG+= -e "& 0($|[^bx])"
 SRCDEBUG+= -e "^///"
 checksrc:
 	if egrep -an $(SRCDEBUG) *.[hc]; then false; fi
+	if sed -e "s,.*IDM_.*0x\([0-9A-F]*\) *,\1," -e t -e d winids.h | sort | uniq -d | grep .; then false; fi
 
 #############################################################################
 # development and debug targets
