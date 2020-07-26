@@ -1054,6 +1054,8 @@ void
 save_img(HDC dc, int x, int y, int w, int h, wstring fn)
 {
   (void)dc;
+  (void)x; (void)y; (void)w; (void)h;
+  (void)fn;
 }
 
 #endif
