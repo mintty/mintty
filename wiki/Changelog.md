@@ -4,10 +4,13 @@ Vector graphics
 Window handling
   * Prevent mouse wheel double interpretation, also fixing speed issues (mintty/wsltty#238).
   * Handle proper link attributes when screen is scrolled (#1021).
+  * Image saving feature for terminal contents (png format), DEC and Tek.
 
 Configuration
   * Support resource configuration directories via links (#1016).
   * New option PrintableControls to make controls visible (#1019).
+  * New options Tek*.
+  * New user-definable functions save-image, tek-copy, tek-page, tek-reset.
 
 ### 3.2.0 (20 June 2020) ###
 

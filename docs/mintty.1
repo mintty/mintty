@@ -874,7 +874,12 @@ PNG, JPEG, GIF, TIFF, BMP, Exif.
 Mintty supports Tektronix 4014 mode. It switches to Tek emulation on the 
 xterm sequence DECSET 38 (`\e[?38h`). It is suggested to adjust the window 
 size to the Tektronix 4010 resolution and aspect ratio before 
-(`echo -en "\e[4;$780;$1024t"`).
+(`echo -en "\e[4;$780;$1024t"`). The \fBtek\fP utility available in 
+the mintty utils repository \fIhttps://github.com/mintty/utils\fP helps to 
+enter Tek mode and set up some environment information properly.
+
+While in Tek mode, the context menu provides the Tektronix mode functions 
+RESET (like xterm), PAGE (minor reset), and COPY ("hard" copy to image file).
 
 .SS Emoji display support
 
@@ -898,6 +903,14 @@ also a background image or pattern is reproduced, if its filename was
 configured as a relative path name using POSIX syntax (forward slashes).
 
 If Shift is held, the function also opens the HTML page.
+
+.SS Image dump of terminal contents
+
+Mintty can save the visual contents of the terminal screen in an image file 
+\fBmintty.date_time.png\fP. This is supported from the context menu or via 
+user-definable key functions. The current terminal dimensions are used for 
+the image size except in Tek mode, where one of the original Tek sizes is 
+used (depending on whether 12-bit pixel addresses are in effect).
 
 .SS Diagnostic support
 
