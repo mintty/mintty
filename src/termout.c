@@ -3931,7 +3931,8 @@ term_do_write(const char *buf, uint len)
             if (wc)
               pos--;
           when -1: // Encoding error
-            write_error();
+            if (!tek_mode)
+              write_error();
             if (term.in_mb_char || term.high_surrogate)
               pos--;
             term.high_surrogate = 0;

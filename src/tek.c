@@ -259,7 +259,7 @@ tek_address(char * code)
   short tag = 0;
   char * tc = code;
   while (* tc) {
-    tag = (tag << 2) | (* tc >> 5);
+    tag = (tag << 2) | ((* tc >> 5) & 3);
 #ifdef debug_graph
     printf(" %d%d", *tc >> 6, (*tc >> 5) & 1);
 #endif
