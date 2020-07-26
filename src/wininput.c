@@ -671,7 +671,7 @@ win_init_ctxmenu(bool extended_menu, bool with_user_commands)
   //__ Context menu:
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_SELALL, _W("Select &All"));
   //__ Context menu:
-  AppendMenuW(ctxmenu, MF_ENABLED, IDM_SAVEIMG, _W("Save &Image"));
+  AppendMenuW(ctxmenu, MF_ENABLED, IDM_SAVEIMG, _W("Save as &Image"));
   if (tek_mode) {
     AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_TEKRESET, W("Tektronix RESET"));
