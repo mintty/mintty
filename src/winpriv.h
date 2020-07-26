@@ -126,6 +126,6 @@ extern void win_close(void);
 
 extern unsigned long mtime(void);
 
-extern void term_save_img(wstring fn);
+extern void term_save_image(void);
 
 #endif

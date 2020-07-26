@@ -196,6 +196,8 @@ tek_copy(wchar * fn)
 }
 
 
+#define dont_debug_graph
+
 /* vector_style
    0 solid
    1 dotted
@@ -206,6 +208,9 @@ tek_copy(wchar * fn)
 void
 tek_beam(bool defocused, bool write_through, char vector_style)
 {
+#ifdef debug_graph
+  printf("!tek_beam %d defocused %d write-thru %d\n", vector_style, defocused, write_through);
+#endif
   beam_defocused = defocused;
   beam_writethru = write_through;
   if (vector_style > 4)
@@ -221,13 +226,11 @@ tek_intensity(bool defocused, int i)
   intensity = i;
 }
 
-#define dont_debug_graph
-
 void
 tek_address(char * code)
 {
 #ifdef debug_graph
-  printf("tek_address %d <%s>", tek_mode, code);
+  printf("!tek_address %d <%s>", tek_mode, code);
 #endif
   /* https://vt100.net/docs/vt3xx-gp/chapter13.html#S13.14.3
 	tag bits
@@ -648,12 +651,15 @@ out_char(HDC dc, struct tekchar * tc)
 }
 
 void
-tek_init(int glow)
+tek_init(bool reset, int glow)
 {
   init_font(0);
   init_font(1);
   init_font(2);
   init_font(3);
+
+  if (reset)
+    tek_reset();
 
   static bool init = false;
   if (!init) {
@@ -793,25 +799,39 @@ tek_paint(void)
     struct tekchar * tc = &tek_buf[i];
 
     int pen_width = pen_width0;
+    fg = fg0;
+
+    // defocused mode
+    if (tc->defocused) {
+      // simulate defocused by brighter display
+      //fg = glowfg;
+      if (cfg.tek_defocused_colour != (colour)-1)
+        fg = cfg.tek_defocused_colour;
+
+      // display defocused by wider pen
+      pen_width = (pen_width ?: 1) * 12;
+      //printf("defocused pen width %d\n", pen_width);
+      // or by shaded pen; not implemented
+    }
 
     // write-thru mode and beam glow effect (bright drawing spot)
     if (tc->writethru) {
-      fg = fg0;
       if (tc->recent) {
         // simulate Write-Thru by distinct colour?
         //fg = RGB(200, 100, 0);
         // fade out?
         if (tc->recent <= (thru_glow + 1) / 2)
-          fg = ((fg0 & 0xFEFEFEFE) >> 1) + ((bg & 0xFEFEFEFE) >> 1);
+          fg = ((fg & 0xFEFEFEFE) >> 1) + ((bg & 0xFEFEFEFE) >> 1);
 
         tc->recent--;
       }
       else {
         // simulate faded Write-Thru by distinct colour?
         //fg = RGB(200, 100, 0);
-        fg = cfg.tek_write_thru_colour;
-        if (fg == (colour)-1) {
-          fg = ((fg0 & 0xFEFEFEFE) >> 1) + ((bg & 0xFEFEFEFE) >> 1);
+        if (cfg.tek_write_thru_colour != (colour)-1)
+          fg = cfg.tek_write_thru_colour;
+        else {
+          fg = ((fg & 0xFEFEFEFE) >> 1) + ((bg & 0xFEFEFEFE) >> 1);
           fg = RGB(green(fg), blue(fg), red(fg));
         }
         // fade away?
@@ -821,18 +841,6 @@ tek_paint(void)
     else if (tc->recent) {
       fg = glowfg;
       tc->recent --;
-    }
-    else
-      fg = fg0;
-
-    // defocused mode
-    if (tc->defocused) {
-      // simulate defocused by brighter display
-      //fg = glowfg;
-      // or by wider pen
-      pen_width = (pen_width ?: 1) * 8;
-      //printf("defocused pen width %d\n", pen_width);
-      // or by shaded pen; not implemented
     }
 
     if (tc->type) {
@@ -859,6 +867,7 @@ tek_paint(void)
         return CreatePen(style, pen_width, fg);
 #endif
       }
+      //printf("style %d defoc %d pw %d\n", tc->style, tc->defocused, pen_width);
       switch (tc->style) {
         // 1 dotted
         when 1: pen = create_pen(PS_DOT);

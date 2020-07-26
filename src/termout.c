@@ -1157,15 +1157,7 @@ tek_esc(char c)
     when CTRL('O'):   /* LS0: Locking-shift zero */
       tek_alt(false);
     when CTRL('W'):   /* ETB: Make Copy */
-      {
-        struct timeval now;
-        gettimeofday(& now, 0);
-        char * copf = newn(char, MAX_PATH + 1);
-        strftime(copf, MAX_PATH, "mintty.%F_%T.png", localtime (& now.tv_sec));
-        wchar * copyfn = path_posix_to_win_w(copf);
-        free(copf);
-        tek_copy(copyfn);  // stored; free'd later
-      }
+      term_save_image();
       tek_bypass = false;
     when CTRL('X'):   /* CAN: Set Bypass */
       tek_bypass = true;
@@ -1997,7 +1989,7 @@ set_modes(bool state)
         when 38: /* DECTEK: Enter Tektronix Mode (VT240, VT330) */
           if (state) {
             tek_mode = TEKMODE_ALPHA;
-            tek_init(cfg.tek_glow);
+            tek_init(true, cfg.tek_glow);
           }
         when 40: /* Allow/disallow DECCOLM (xterm c132 resource) */
           term.deccolm_allowed = state;
@@ -3650,7 +3642,7 @@ do_cmd(void)
     when 50:
       if (tek_mode) {
         tek_set_font(cs__mbstowcs(s));
-        tek_init(cfg.tek_glow);
+        tek_init(false, cfg.tek_glow);
       }
       else {
         uint ff = (term.curs.attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;

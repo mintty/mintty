@@ -1396,14 +1396,26 @@ win_get_pixels(int *height_p, int *width_p, bool with_borders)
 }
 
 void
-term_save_img(wstring fn)
+term_save_image(void)
 {
-  HDC dc = GetDC(wnd);
-  int height, width;
-  win_get_pixels(&height, &width, false);
-  save_img(dc, PADDING, OFFSET + PADDING, 
-               width + 2 * PADDING, height + 2 * PADDING, fn);
-  ReleaseDC(wnd, dc);
+  struct timeval now;
+  gettimeofday(& now, 0);
+  char * copf = newn(char, MAX_PATH + 1);
+  strftime(copf, MAX_PATH, "mintty.%F_%T.png", localtime (& now.tv_sec));
+  wchar * copyfn = path_posix_to_win_w(copf);
+  free(copf);
+
+  if (tek_mode)
+    tek_copy(copyfn);  // stored; free'd later
+  else {
+    HDC dc = GetDC(wnd);
+    int height, width;
+    win_get_pixels(&height, &width, false);
+    save_img(dc, PADDING, OFFSET + PADDING, 
+                 width + 2 * PADDING, height + 2 * PADDING, copyfn);
+    free(copyfn);
+    ReleaseDC(wnd, dc);
+  }
 }
 
 void
@@ -2190,7 +2202,7 @@ font_cs_reconfig(bool font_changed)
   if (font_changed) {
     win_init_fonts(cfg.font.size);
     if (tek_mode)
-      tek_init(cfg.tek_glow);
+      tek_init(false, cfg.tek_glow);
     trace_resize((" (font_cs_reconfig -> win_adapt_term_size)\n"));
     win_adapt_term_size(true, false);
   }
@@ -2691,9 +2703,17 @@ static struct {
         when IDM_RESET: winimgs_clear(); term_reset(true); win_update(false);
           if (tek_mode)
             tek_reset();
-        when IDM_PAGE:
+        when IDM_TEKRESET:
+          if (tek_mode)
+            tek_reset();
+        when IDM_TEKPAGE:
           if (tek_mode)
             tek_page();
+        when IDM_TEKCOPY:
+          if (tek_mode)
+            term_save_image();
+        when IDM_SAVEIMG:
+          term_save_image();
         when IDM_DEFSIZE:
           default_size_token = true;
           default_size();

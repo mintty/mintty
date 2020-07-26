@@ -2556,7 +2556,13 @@ Supported actions are described as follows:
 .br
 \(en \fBreset\fP: resets the terminal
 .br
-\(en \fBpage\fP: Tek mode PAGE key (~soft reset)
+\(en \fBtek-reset\fP: Tek mode RESET
+.br
+\(en \fBtek-page\fP: Tek mode PAGE key (~soft reset)
+.br
+\(en \fBtek-copy\fP: Tek mode COPY key (image "hard" copy to file)
+.br
+\(en \fBsave-image\fP: Save terminal image to file
 .br
 \(en \fBbreak\fP: sends a break condition to the application
 .br
@@ -2719,7 +2725,8 @@ Also X11 color names are supported.
 .TP
 \fBTektronix mode colours\fP
 For Tektronix 4014 emulation, colours can be overridden;
-\fBTekWriteThruColour\fP is used to visualize Write-Thru mode.
+\fBTekWriteThruColour\fP and \fBTekDefocusedColour\fP can be used 
+to visualize Write-Thru and Defocused modes.
 .br
 \(en \fBTekForegroundColour\fP=\fI\fP
 .br
@@ -2728,6 +2735,8 @@ For Tektronix 4014 emulation, colours can be overridden;
 \(en \fBTekCursorColour\fP=\fI\fP
 .br
 \(en \fBTekWriteThruColour\fP=\fI\fP
+.br
+\(en \fBTekDefocusedColour\fP=\fI\fP
 
 .TP
 \fBTektronix mode font\fP (TekFont=)

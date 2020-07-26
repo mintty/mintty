@@ -13,7 +13,7 @@ extern bool tek_bypass;
 
 extern void tek_page(void);
 extern void tek_reset(void);
-extern void tek_init(int glow);
+extern void tek_init(bool reset, int glow);
 extern void tek_gin(void);
 
 extern void tek_font(short f);

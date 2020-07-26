@@ -526,10 +526,6 @@ win_update_menus(bool callback)
     alt_fn ? W("Alt+F8") : ct_sh ? W("Ctrl+Shift+R") : null
   );
 
-  modify_menu(ctxmenu, IDM_PAGE, 0, W("PAGE"),
-    null
-  );
-
   uint defsize_enabled =
     IsZoomed(wnd) || term.cols != cfg.cols || term.rows != cfg.rows
     ? MF_ENABLED : MF_GRAYED;
@@ -674,6 +670,15 @@ win_init_ctxmenu(bool extended_menu, bool with_user_commands)
   }
   //__ Context menu:
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_SELALL, _W("Select &All"));
+  //__ Context menu:
+  AppendMenuW(ctxmenu, MF_ENABLED, IDM_SAVEIMG, _W("Save &Image"));
+  if (tek_mode) {
+    AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
+    AppendMenuW(ctxmenu, MF_ENABLED, IDM_TEKRESET, W("Tektronix RESET"));
+    AppendMenuW(ctxmenu, MF_ENABLED, IDM_TEKPAGE, W("Tektronix PAGE"));
+    AppendMenuW(ctxmenu, MF_ENABLED, IDM_TEKCOPY, W("Tektronix COPY"));
+
+  }
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_SEARCH, 0);
   if (extended_menu) {
@@ -684,8 +689,6 @@ win_init_ctxmenu(bool extended_menu, bool with_user_commands)
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_TOGVT220KB, 0);
   }
   AppendMenuW(ctxmenu, MF_ENABLED, IDM_RESET, 0);
-  if (tek_mode)
-    AppendMenuW(ctxmenu, MF_ENABLED, IDM_PAGE, 0);
   if (extended_menu) {
     //__ Context menu: clear scrollback buffer (lines scrolled off the window)
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_CLRSCRLBCK, _W("Clear Scrollback"));
@@ -1453,6 +1456,12 @@ mflags_options()
   return config_wnd ? MF_GRAYED : MF_ENABLED;
 }
 
+static uint
+mflags_tek_mode()
+{
+  return tek_mode ? MF_ENABLED : MF_GRAYED;
+}
+
 // user-definable functions
 static struct function_def cmd_defs[] = {
 #ifdef support_sc_defs
@@ -1505,7 +1514,10 @@ static struct function_def cmd_defs[] = {
   {"copy-title", {IDM_COPYTITLE}, 0},
   {"lock-title", {.fct = lock_title}, mflags_lock_title},
   {"reset", {IDM_RESET}, 0},
-  {"page", {IDM_PAGE}, 0},
+  {"tek-reset", {IDM_TEKRESET}, mflags_tek_mode},
+  {"tek-page", {IDM_TEKPAGE}, mflags_tek_mode},
+  {"tek-copy", {IDM_TEKCOPY}, mflags_tek_mode},
+  {"save-image", {IDM_SAVEIMG}, 0},
   {"break", {IDM_BREAK}, 0},
   {"flipscreen", {IDM_FLIPSCREEN}, mflags_flipscreen},
   {"open", {IDM_OPEN}, mflags_open},

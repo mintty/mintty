@@ -22,7 +22,10 @@
 #define IDM_SELALL          0x0050
 #define IDM_CLRSCRLBCK      0x0150
 #define IDM_RESET           0x0060
-#define IDM_PAGE            0x0160
+#define IDM_TEKRESET        0x0160
+#define IDM_TEKPAGE         0x0260
+#define IDM_TEKCOPY         0x0360
+#define IDM_SAVEIMG         0x0460
 #define IDM_DEFSIZE         0x0070
 #define IDM_DEFSIZE_ZOOM    0x0170
 #define IDM_SCROLLBAR       0x0280
