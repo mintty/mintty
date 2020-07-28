@@ -953,8 +953,7 @@ term_export_html(bool do_open)
 {
   struct timeval now;
   gettimeofday(& now, 0);
-  char * htmlf = newn(char, MAX_PATH + 1);
-  strftime(htmlf, MAX_PATH, "mintty.%F_%T.html", localtime (& now.tv_sec));
+  char * htmlf = save_filename(".html");
 
   int hfd = open(htmlf, O_WRONLY | O_CREAT | O_EXCL, 0600);
   if (hfd < 0) {

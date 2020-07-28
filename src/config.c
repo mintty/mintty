@@ -185,6 +185,7 @@ const config default_cfg = {
   .char_narrowing = 75,
   .emojis = 0,
   .emoji_placement = 0,
+  .save_filename = W("mintty.%Y-%m-%d_%H-%M-%S"),
   .app_id = W(""),
   .app_name = W(""),
   .app_launch_cmd = W(""),
@@ -456,6 +457,7 @@ options[] = {
   {"CharNarrowing", OPT_INT, offcfg(char_narrowing)},
   {"Emojis", OPT_EMOJIS, offcfg(emojis)},
   {"EmojiPlacement", OPT_EMOJI_PLACEMENT, offcfg(emoji_placement)},
+  {"SaveFilename", OPT_WSTRING, offcfg(save_filename)},
   {"AppID", OPT_WSTRING, offcfg(app_id)},
   {"AppName", OPT_WSTRING, offcfg(app_name)},
   {"AppLaunchCmd", OPT_WSTRING, offcfg(app_launch_cmd)},
@@ -649,6 +651,22 @@ static opt_val
 #else
 #define trace_theme(params)
 #endif
+
+
+char *
+save_filename(char * suf)
+{
+  char * pat = path_win_w_to_posix(cfg.save_filename);
+  // e.g. "mintty.%Y-%m-%d_%H-%M-%S"
+
+  struct timeval now;
+  gettimeofday(& now, 0);
+  char * fn = newn(char, MAX_PATH + 1 + strlen(suf));
+  strftime(fn, MAX_PATH, pat, localtime(& now.tv_sec));
+  free(pat);
+  strcat(fn, suf);
+  return fn;
+}
 
 
 #define dont_debug_opterror

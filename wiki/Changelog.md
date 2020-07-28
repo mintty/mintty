@@ -11,6 +11,7 @@ Configuration
   * New option PrintableControls to make controls visible (#1019).
   * New options Tek*.
   * New user-definable functions save-image, tek-copy, tek-page, tek-reset.
+  * New option SaveFilename.
 
 ### 3.2.0 (20 June 2020) ###
 

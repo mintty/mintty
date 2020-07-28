@@ -1400,8 +1400,7 @@ term_save_image(void)
 {
   struct timeval now;
   gettimeofday(& now, 0);
-  char * copf = newn(char, MAX_PATH + 1);
-  strftime(copf, MAX_PATH, "mintty.%F_%T.png", localtime (& now.tv_sec));
+  char * copf = save_filename(".png");
   wchar * copyfn = path_posix_to_win_w(copf);
   free(copf);
 

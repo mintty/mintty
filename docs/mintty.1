@@ -2085,6 +2085,11 @@ If a log file name is specified with \fBLog=...\fP and \fBLogging=no\fP,
 logging can be enabled (and toggled) from the extended context menu.
 
 .TP
+\fBFilename pattern for screen saving\fP (SaveFilename=mintty.%Y-%m-%d_%H-%M-%S)
+This setting selects the location and filename pattern (which is expanded 
+with the strftime(3) function) for .html and .png screen dumps.
+
+.TP
 \fBWindow title\fP (Title=)
 The \fBTitle\fP setting can be used to determine the initial window title.
 If it is empty, as it is by default, the title is set to the command being run.
