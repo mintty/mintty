@@ -1,6 +1,9 @@
 Vector graphics
   * Tektronix 4014 terminal vector graphics terminal emulation (#896).
 
+Keyboard handling
+  * Cancel compose key on mouse actions, to prevent surprising character composition.
+
 Window handling
   * Prevent mouse wheel double interpretation, also fixing speed issues (mintty/wsltty#238).
   * Handle proper link attributes when screen is scrolled (#1021).

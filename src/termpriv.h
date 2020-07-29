@@ -68,4 +68,6 @@ extern void print_screen(void);
 extern int putlink(char * link);
 extern char * geturl(int n);
 
+extern void compose_clear(void);
+
 #endif

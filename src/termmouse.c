@@ -433,6 +433,8 @@ check_app_mouse(mod_keys *mods_p)
 bool
 term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
 {
+  compose_clear();
+
   if (term.hovering) {
     term.hovering = false;
     win_update(true);
@@ -556,6 +558,8 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
 void
 term_mouse_release(mouse_button b, mod_keys mods, pos p)
 {
+  compose_clear();
+
   int state = term.mouse_state;
   term.mouse_state = 0;
   switch (state) {
@@ -657,6 +661,8 @@ sel_scroll_cb(void)
 void
 term_mouse_move(mod_keys mods, pos p)
 {
+  compose_clear();
+
   //printf("mouse_move %d+%d/2\n", p.x, p.r);
   pos bp = box_pos(p);
 
@@ -713,6 +719,8 @@ term_mouse_move(mod_keys mods, pos p)
 void
 term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys mods, pos p)
 {
+  compose_clear();
+
   if (term.hovering) {
     term.hovering = false;
     win_update(true);
