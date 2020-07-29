@@ -1137,7 +1137,7 @@ msgstr "全选(&A)"
 #. __ Context menu:
 #: wininput.c:674
 msgid "Save as &Image"
-msgstr "保存截图"
+msgstr "保存截图(&I)"
 
 #. __ Context menu: write terminal window contents as HTML file
 #: wininput.c:686
