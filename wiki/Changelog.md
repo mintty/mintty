@@ -8,6 +8,7 @@ Window handling
   * Prevent mouse wheel double interpretation, also fixing speed issues (mintty/wsltty#238).
   * Handle proper link attributes when screen is scrolled (#1021).
   * Image saving feature for terminal contents (png format), DEC and Tek.
+  * Tweak click-opening WSL files (mintty/wsltty#115).
 
 Configuration
   * Support resource configuration directories via links (#1016).
