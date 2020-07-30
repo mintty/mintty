@@ -4,6 +4,7 @@ Vector graphics
 Keyboard handling
   * Cancel compose key on mouse actions, to prevent surprising character composition.
   * Fixed special key assignment (Ctrl+Shift+^) spoiled by KeyFunctions (since 2.9.1).
+  * Fixed key modifier matching for KeyFunctions in some cases of Super/Hyper.
 
 Window handling
   * Prevent mouse wheel double interpretation, also fixing speed issues (mintty/wsltty#238).

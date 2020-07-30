@@ -2326,7 +2326,7 @@ static LONG last_key_time = 0;
                          win ? "W" : "",
                          super ? "U" : "",
                          hyper ? "Y" : "",
-                         (alt | win) ? "+" : "",
+                         (alt | win | super | hyper) ? "+" : "",
                          keytag);
             free(keytag);
           }
