@@ -2334,6 +2334,14 @@ static LONG last_key_time = 0;
 #ifdef debug_def_keys
         printf("key %04X <%s>\n", *wbuf, tag);
 #endif
+
+        if (wlen < 0) {
+          // Ugly hack to clear dead key state, a la Michael Kaplan.
+          memset(kbd0, 0, sizeof kbd0);
+          uint scancode = MapVirtualKey(VK_DECIMAL, 0);
+          wchar dummy;
+          while (ToUnicode(VK_DECIMAL, scancode, kbd0, &dummy, 1, 0) < 0);
+        }
       }
       if (tag) {
         int ret = pick_key_function(cfg.key_commands, tag, 0, key, mods, scancode);
