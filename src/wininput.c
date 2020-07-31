@@ -2936,11 +2936,13 @@ static struct {
         app_pad_code('M' - '@');
       else if (!extended && term.modify_other_keys && (shift || ctrl))
         other_code('\r');
-      else if (!ctrl)
+#ifdef support_special_key_Enter
+      else if (ctrl)
+        ctrl_ch(CTRL('^'));
+#endif
+      else
         esc_if(alt),
         term.newline_mode ? ch('\r'), ch('\n') : ch(shift ? '\n' : '\r');
-      else
-        ctrl_ch(CTRL('^'));
     when VK_BACK:
       if (!ctrl)
         esc_if(alt), ch(term.backspace_sends_bs ? '\b' : CDEL);
@@ -2976,6 +2978,7 @@ static struct {
       : ctrl_ch(term.escape_sends_fs ? CTRL('\\') : CTRL('['));
     when VK_PAUSE:
       if (!vk_special(ctrl & !extended ? cfg.key_break : cfg.key_pause))
+        // default cfg.key_pause is CTRL(']')
         return false;
     when VK_CANCEL:
       if (!strcmp(cfg.key_break, "_BRK_")) {
@@ -2983,6 +2986,7 @@ static struct {
         return false;
       }
       if (!vk_special(cfg.key_break))
+        // default cfg.key_break is CTRL('\\')
         return false;
     when VK_SNAPSHOT:
       if (!vk_special(cfg.key_prtscreen))

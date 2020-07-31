@@ -7,6 +7,8 @@ Keyboard handling
   * Fixed special key assignment (Ctrl+Shift+@ with AltGr) spoiled by AltGrIsAlsoAlt prevention (since 3.1.5).
   * Fixed Ctrl+AltGr+letter combinations.
   * Fixed key modifier matching for KeyFunctions in some cases of Super/Hyper.
+  * Dropped Ctrl+Enter special key assignments.
+  * Deprecated Shift+Escape/Break/Pause.
 
 Window handling
   * Prevent mouse wheel double interpretation, also fixing speed issues (mintty/wsltty#238).
