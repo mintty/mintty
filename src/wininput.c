@@ -1647,7 +1647,7 @@ vk_name(uint key)
 #endif
 
 #ifdef debug_key
-#define trace_key(tag)	printf(" <-%s\n", tag)
+#define trace_key(tag)	printf(" key(%s)\n", tag)
 #else
 #define trace_key(tag)	(void)0
 #endif
@@ -2761,7 +2761,7 @@ static struct {
     wchar wc = undead_keycode();
     if (!wc) {
 #ifdef debug_key
-      printf("modf !wc mods %d shft %d\n", mods, mods & MDK_SHIFT);
+      printf("modf !wc mods %X shft %d\n", mods, mods & MDK_SHIFT);
 #endif
       if (mods & MDK_SHIFT) {
         kbd[VK_SHIFT] = 0;
@@ -3040,8 +3040,10 @@ static struct {
     when 'A' ... 'Z' or ' ': {
       bool check_menu = key == VK_SPACE && !term.shortcut_override
                         && cfg.window_shortcuts && alt && !altgr && !ctrl;
+      // support Ctrl+Shift+AltGr combinations (esp. Ctrl+Shift+@)
+      bool ctsh = (mods & ~MDK_ALT) == (cfg.ctrl_exchange_shift ? MDK_CTRL : (MDK_CTRL | MDK_SHIFT));
 #ifdef debug_key
-      printf("-- mods %d alt %d altgr %d/%d ctrl %d lctrl %d/%d (modf %d comp %d)\n", mods, alt, altgr, altgr0, ctrl, lctrl, lctrl0, term.modify_other_keys, comp_state);
+      printf("-- mods %X alt %d altgr %d/%d ctrl %d lctrl %d/%d (modf %d comp %d)\n", mods, alt, altgr, altgr0, ctrl, lctrl, lctrl0, term.modify_other_keys, comp_state);
 #endif
       if (allow_shortcut && check_menu) {
         send_syscommand(SC_KEYMENU);
@@ -3049,7 +3051,7 @@ static struct {
       }
       else if (altgr_key())
         trace_key("altgr");
-      else if (!cfg.altgr_is_alt && altgr0 && !term.modify_other_keys)
+      else if (!ctsh && !cfg.altgr_is_alt && altgr0 && !term.modify_other_keys)
         // prevent AltGr from behaving like Alt
         trace_key("!altgr");
       else if (key != ' ' && alt_code_key(key - 'A' + 0xA))
