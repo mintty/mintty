@@ -1999,7 +1999,6 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
   }
   int term_width = client_width - 2 * PADDING;
   int term_height = client_height - 2 * PADDING - OFFSET;
-
   if (!sync_size_with_font && win_search_visible()) {
     term_height -= SEARCHBAR_HEIGHT;
   }
@@ -2756,11 +2755,11 @@ static struct {
           HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
           int x, y;
           int moni = search_monitors(&x, &y, mon, true, 0);
-          child_fork(main_argc, main_argv, moni);
+          child_fork(main_argc, main_argv, moni, get_mods() & MDK_SHIFT);
         }
         when IDM_NEW_MONI: {
           int moni = lp;
-          child_fork(main_argc, main_argv, moni);
+          child_fork(main_argc, main_argv, moni, get_mods() & MDK_SHIFT);
         }
         when IDM_COPYTITLE: win_copy_title();
         when IDM_KEY_DOWN_UP: {

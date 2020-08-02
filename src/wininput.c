@@ -3194,8 +3194,10 @@ win_key_up(WPARAM wp, LPARAM lp)
     if (key == newwin_key) {
       if (is_key_down(VK_SHIFT))
         newwin_shifted = true;
-      if (newwin_shifted || win_is_fullscreen)
+#ifdef control_AltF2_size_via_token
+      if (newwin_shifted /*|| win_is_fullscreen*/)
         clone_size_token = false;
+#endif
 
       newwin_pending = false;
 
