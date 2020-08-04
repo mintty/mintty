@@ -5270,7 +5270,8 @@ main(int argc, char *argv[])
           }
         }
         else {
-          win_set_chars(cfg.rows, cfg.cols);
+          // consider preset size (term_)
+          win_set_chars(term_rows ?: cfg.rows, term_cols ?: cfg.cols);
           trace_winsize("dpi > win_set_chars");
         }
       }

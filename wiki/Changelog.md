@@ -15,6 +15,7 @@ Window handling
   * Handle proper link attributes when screen is scrolled (#1021).
   * Image saving feature for terminal contents (png format), DEC and Tek.
   * Fixed Shift+Alt+F2 size control on maximised/fullscreen windows (#633).
+  * Fixed Alt+F2 on normal window to clone current size (broken since 2.4.3).
   * Tweak click-opening WSL files (mintty/wsltty#115).
 
 Configuration
