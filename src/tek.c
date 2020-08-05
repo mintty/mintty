@@ -152,6 +152,12 @@ tek_reset(void)
   tek_page();
   // let's also do this
   intensity = 0x7F;
+  // let's better reset everything
+  plotpen = false;
+  lastfont = 0;
+  lastwidth = -1;
+  beam_glow = 1;
+  thru_glow = 5;
 }
 
 void
