@@ -1191,6 +1191,7 @@ tek_esc(char c)
         term_do_write("", 1);
     when CTRL('C'):
       tek_mode = TEKMODE_OFF;
+      term.state = NORMAL;
       win_invalidate_all(false);
     when ']':  /* OSC: operating system command */
       term.state = OSC_START;
@@ -4289,10 +4290,13 @@ term_do_write(const char *buf, uint len)
           term.cmd_len = 0;
           tek_intensity(c & 0x40, c & 0x37);
         }
-        else if (!(c & 0x60) || term.cmd_len > 5) {
-          term.cmd_len = 0;
-          term.state = NORMAL;  // error
-        }
+        //else if (term.cmd_len > 5) {
+        // no length checking here, interferes with previous OSC!
+        // let term_push_cmd do it
+        //}
+        //else if (!(c & 0x60)) {
+        // no error checking here, let tek_address catch it
+        //}
         else {
           if (term.state == TEK_ADDRESS0) {
             term.state = TEK_ADDRESS;
