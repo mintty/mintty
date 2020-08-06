@@ -1,3 +1,5 @@
+### 3.3.0 (6 August 2020) ###
+
 Vector graphics
   * Tektronix 4014 terminal vector graphics terminal emulation (#896).
 

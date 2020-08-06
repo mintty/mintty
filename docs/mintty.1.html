@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Mon Jun  8 15:39:58 2020 -->
+<!-- CreationDate: Thu Aug  6 15:34:31 2020 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -1148,6 +1148,24 @@ feature, mintty supports graphic image display (using iTerm2
 controls). Image formats supported comprise PNG, JPEG, GIF,
 TIFF, BMP, Exif.</p>
 
+<p style="margin-left:11%; margin-top: 1em"><b>Vector
+graphics terminal emulation</b> <br>
+Mintty supports Tektronix 4014 mode. It switches to Tek
+emulation on the xterm sequence DECSET 38
+(&lsquo;\[?38h&lsquo;). It is suggested to adjust the window
+size to the Tektronix 4010 resolution and aspect ratio
+before (&lsquo;echo -en &quot;\[4;$780;$1024t&quot;&lsquo;).
+The <b>tek</b> utility available in the mintty utils
+repository
+<i><a href="https://github.com/mintty/utils">https://github.com/mintty/utils</a></i>
+helps to enter Tek mode and set up some environment
+information properly.</p>
+
+<p style="margin-left:11%; margin-top: 1em">While in Tek
+mode, the context menu provides the Tektronix mode functions
+RESET (like xterm), PAGE (minor reset), and COPY
+(&quot;hard&quot; copy to image file).</p>
+
 <p style="margin-left:11%; margin-top: 1em"><b>Emoji
 display support</b> <br>
 Mintty supports display of emojis as defined by Unicode
@@ -1174,6 +1192,16 @@ path name using POSIX syntax (forward slashes).</p>
 
 <p style="margin-left:11%; margin-top: 1em">If Shift is
 held, the function also opens the HTML page.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Image dump
+of terminal contents</b> <br>
+Mintty can save the visual contents of the terminal screen
+in an image file <b>mintty.date_time.png</b>. This is
+supported from the context menu or via user-definable key
+functions. The current terminal dimensions are used for the
+image size except in Tek mode, where one of the original Tek
+sizes is used (depending on whether 12-bit pixel addresses
+are in effect).</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Diagnostic
 support <br>
@@ -2547,6 +2575,14 @@ logging initially. If a log file name is specified with
 <b>Log=...</b> and <b>Logging=no</b>, logging can be enabled
 (and toggled) from the extended context menu.</p>
 
+<p style="margin-left:11%;"><b>Filename pattern for screen
+saving</b> <br>
+(SaveFilename=mintty.%Y-%m-%d_%H-%M-%S)</p>
+
+<p style="margin-left:22%;">This setting selects the
+location and filename pattern (which is expanded with the
+strftime(3) function) for .html and .png screen dumps.</p>
+
 <p style="margin-left:11%;"><b>Window title</b>
 (Title=)</p>
 
@@ -2725,6 +2761,24 @@ screen and width assumptions of the <b>wcwidth</b> function
 may be inconsistent for the impacted characters, which may
 confuse screen applications (such as editors) that rely on
 <b>wcwidth</b> information.</p>
+
+<p style="margin-left:11%;"><b>Display control
+characters</b> (PrintableControls=0)</p>
+
+<p style="margin-left:22%;">Controls characters are
+non-printing by default and as specified by the locale
+width. Setting PrintableControls=1 enables visual indication
+of &quot;C1&quot; control characters (range U+80...U+9F);
+PrintableControls=2 would also make &quot;C0&quot; (normal)
+control characters visible. (Value 1 corresponds to the
+xterm resource <b>allowC1Printable</b>.)</p>
+
+
+<p style="margin-left:22%; margin-top: 1em"><i>Warning:</i>
+With this option, control character display is inconsistent
+with width assumptions of the <b>wcwidth</b> function, which
+may confuse screen applications (such as editors) that rely
+on <b>wcwidth</b> information.</p>
 
 <p style="margin-left:11%;"><b>Character narrowing
 factor</b> (CharNarrowing=75)</p>
@@ -3082,6 +3136,12 @@ clipboard <br>
 &ndash; <b>lock-title</b>: locks the window title from being
 changed <br>
 &ndash; <b>reset</b>: resets the terminal <br>
+&ndash; <b>tek-reset</b>: Tek mode RESET <br>
+&ndash; <b>tek-page</b>: Tek mode PAGE key (~soft reset)
+<br>
+&ndash; <b>tek-copy</b>: Tek mode COPY key (image
+&quot;hard&quot; copy to file) <br>
+&ndash; <b>save-image</b>: Save terminal image to file <br>
 &ndash; <b>break</b>: sends a break condition to the
 application <br>
 &ndash; <b>flipscreen</b>: switches the alternate screen
@@ -3179,12 +3239,30 @@ Alt+keypad-Enter but enter ESC Return in the latter case
 Super modifier to the CapsLock key <br>
 &ndash; <b>KeyFunctions=*Menu:29</b> turns the Menu key into
 an F16 function key (xterm default) and applies all
-modifiers to it <br>
-&ndash;
-<b>KeyFunctions=S+KP_Prior:scroll_pgup;C+KP_Prior:scroll_pgup;\
-C+KP_Next:scroll_pgdn;S+KP_Next:scroll_pgdn</b> enables
-scrollback scrolling with either of Shift or Control
-modifiers</p>
+modifiers to it</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="22%"></td>
+<td width="-14%"></td>
+<td width="7%"></td>
+<td width="85%">
+
+
+<p>&ndash;
+<b>KeyFunctions=S+KP_Prior:scroll_pgup;C+KP_Prior:scroll_pgup;\</b></p> </td></tr>
+<tr valign="top" align="left">
+<td width="22%"></td>
+<td width="-14%"></td>
+<td width="7%"></td>
+<td width="85%">
+
+
+<p><b>C+KP_Next:scroll_pgdn;S+KP_Next:scroll_pgdn</b>
+enables scrollback scrolling with either of Shift or Control
+modifiers</p> </td></tr>
+</table>
 
 <p style="margin-left:11%;"><b>Use system colours</b>
 (UseSystemColours=no)</p>
@@ -3234,6 +3312,32 @@ can be used as well. Also X11 color names are supported.
 &ndash; <b>BoldMagenta</b>=255,64,255 <br>
 &ndash; <b>BoldCyan</b>=64,255,255 <br>
 &ndash; <b>BoldWhite</b>=255,255,255</p>
+
+<p style="margin-left:11%;"><b>Tektronix mode
+colours</b></p>
+
+<p style="margin-left:22%;">For Tektronix 4014 emulation,
+colours can be overridden; <b>TekWriteThruColour</b> and
+<b>TekDefocusedColour</b> can be used to visualize
+Write-Thru and Defocused modes. <br>
+&ndash; <b>TekForegroundColour</b>= <br>
+&ndash; <b>TekBackgroundColour</b>= <br>
+&ndash; <b>TekCursorColour</b>= <br>
+&ndash; <b>TekWriteThruColour</b>= <br>
+&ndash; <b>TekDefocusedColour</b>=</p>
+
+<p style="margin-left:11%;"><b>Tektronix mode font</b>
+(TekFont=)</p>
+
+<p style="margin-left:22%;">For Tektronix 4014 emulation, a
+dedicated font can be selected. The terminal default font is
+used otherwise.</p>
+
+<p style="margin-left:11%;"><b>Tektronix mode effect</b>
+(TekGlow=1)</p>
+
+<p style="margin-left:22%;">The Tektronix drawing beam glow
+can be switched with this setting.</p>
 
 <p style="margin-left:11%;"><b>Downloaded colour scheme</b>
 (ColourScheme=)</p>
@@ -3812,14 +3916,19 @@ attribute controls (including RGB and CMYK true-colour
 support, italic, overline, strikeout, rapid blinking,
 alternative fonts) and additional rendering attributes
 (underline styles and colours, superscript and subscript,
-shadowed and overstrike). Mintty provides Sixel graphics and
-other image support, Emoji support, and Bidi reordering
+shadowed and overstrike). Mintty provides Sixel graphics,
+image support according to the iTerm2 protocol (including
+png, jpeg, gif output), Emoji support, and Bidi reordering
 according to the Unicode Bidi Algorithm UBA, amended with
 flexible bidi controls according to the draft bidi mode
 model of the <b>BiDi in Terminal Emulators</b>
 recommendation (
 <i><a href="https://terminal-wg.pages.freedesktop.org/bidi/">https://terminal-wg.pages.freedesktop.org/bidi/</a></i>
 ).</p>
+
+<p style="margin-left:11%; margin-top: 1em">Mintty also
+provides emulation of the Tektronix 4014 vector graphics
+terminal.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Mintty is not
 as configurable as xterm; it offers essential configuration
@@ -3828,8 +3937,7 @@ i.e. they do not appear in the interactive
 &quot;Options&quot; configuration dialog. Of xterm&rsquo;s
 keyboard modes, only the default PC-style and VT220-style
 are available. 8-bit control characters are not supported.
-There is no Tektronix 4014 emulation. Mouse highlighting
-mode is not implemented.</p>
+Mouse highlighting mode is not implemented.</p>
 
 <h2>SEE ALSO
 <a name="SEE ALSO"></a>
