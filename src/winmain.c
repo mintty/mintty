@@ -1410,7 +1410,7 @@ term_save_image(void)
     HDC dc = GetDC(wnd);
     int height, width;
     win_get_pixels(&height, &width, false);
-    save_img(dc, PADDING, OFFSET + PADDING, 
+    save_img(dc, 0, OFFSET, 
                  width + 2 * PADDING, height + 2 * PADDING, copyfn);
     free(copyfn);
     ReleaseDC(wnd, dc);

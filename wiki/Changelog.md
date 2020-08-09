@@ -1,3 +1,6 @@
+Window handling
+  * Fixed offset of saved image.
+
 ### 3.3.0 (6 August 2020) ###
 
 Vector graphics
