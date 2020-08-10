@@ -871,6 +871,9 @@ set_option(string name, string val_str, bool from_file)
       }
     }
     when OPT_COLOUR:
+#ifdef debug_theme
+      printf("set_option <%s> <%s>\n", name, val_str);
+#endif
       if (parse_colour(val_str, val_p))
         return i;
     otherwise: {
@@ -1436,10 +1439,10 @@ void
 copy_config(char * tag, config * dst_p, const config * src_p)
 {
 #ifdef debug_theme
-  char * cfg(config * p) {
-    return p == new_cfg ? "new" : p == file_cfg ? "file" : p == cfg ? "cfg" : "?";
+  char * _cfg(const config * p) {
+    return p == &new_cfg ? "new" : p == &file_cfg ? "file" : p == &cfg ? "cfg" : "?";
   }
-  printf("[%s] copy_config %s <- %s\n", tag, cfg(dst_p), cfg(src_p));
+  printf("[%s] copy_config %s <- %s\n", tag, _cfg(dst_p), _cfg(src_p));
 #else
   (void)tag;
 #endif
@@ -2530,7 +2533,12 @@ theme_handler(control *ctrl, int event)
   }
   // apply changed theme immediately
   if (strcmp(new_cfg.colour_scheme, cfg.colour_scheme) || wcscmp(new_cfg.theme_file, cfg.theme_file))
+  {
+#ifdef debug_theme
+    printf("theme_handler: apply\n");
+#endif
     apply_config(false);
+  }
 }
 
 #define dont_debug_dragndrop
