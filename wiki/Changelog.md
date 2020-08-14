@@ -1,6 +1,9 @@
 Window handling
   * Fixed offset of saved image.
 
+Terminal features
+  * Fixed invalid IME cursor colour after OSC 112 "Reset cursor colour" (#942).
+
 ### 3.3.0 (6 August 2020) ###
 
 Vector graphics
