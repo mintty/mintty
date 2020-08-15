@@ -2,6 +2,7 @@ Window handling
   * Fixed offset of saved image.
 
 Terminal features
+  * XTPUSHSGR foreground/background changed to 30/31 (xterm 357).
   * Fixed invalid IME cursor colour after OSC 112 "Reset cursor colour" (#942).
 
 ### 3.3.0 (6 August 2020) ###

@@ -2642,8 +2642,8 @@ do_csi(uchar c)
           when 20: caflagsmask |= FONTFAM_MASK;
           when 53: caflagsmask |= ATTR_OVERL;
           when 58: caflagsmask |= ATTR_ULCOLOUR;
-          when 10: caflagsmask |= ATTR_FGMASK;
-          when 11: caflagsmask |= ATTR_BGMASK;
+          when 30 or 10: caflagsmask |= ATTR_FGMASK;
+          when 31 or 11: caflagsmask |= ATTR_BGMASK;
           when 73: caflagsmask |= ATTR_SUPERSCR;
           when 74: caflagsmask |= ATTR_SUBSCR;
         }
