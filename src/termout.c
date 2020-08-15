@@ -3455,8 +3455,9 @@ do_colour_osc(bool has_index_arg, uint i, bool reset)
     if (has_index_arg)
       child_printf("%u;", index);
     c = i < COLOUR_NUM ? colours[i] : 0;  // should not be affected by rvideo
-    child_printf("rgb:%04x/%04x/%04x\e\\",
-                 red(c) * 0x101, green(c) * 0x101, blue(c) * 0x101);
+    char * osc_fini = term.state == CMD_ESCAPE ? "\e\\" : "\a";
+    child_printf("rgb:%04x/%04x/%04x%s",
+                 red(c) * 0x101, green(c) * 0x101, blue(c) * 0x101, osc_fini);
   }
   else if (parse_colour(s, &c))
     win_set_colour(i, c);
@@ -3511,7 +3512,8 @@ do_cmd(void)
 {
   char *s = term.cmd_buf;
   s[term.cmd_len] = 0;
-  //printf("OSC %d <%s>\n", term.cmd_num, s);
+  //printf("OSC %d <%s> %s\n", term.cmd_num, s, term.state == CMD_ESCAPE ? "ST" : "BEL");
+  char * osc_fini = term.state == CMD_ESCAPE ? "\e\\" : "\a";
 
   if (*cfg.suppress_osc && contains(cfg.suppress_osc, term.cmd_num))
     // skip suppressed OSC command
@@ -3566,7 +3568,7 @@ do_cmd(void)
         child_set_fork_dir(s);
     when 701:  // Set/get locale (from urxvt).
       if (!strcmp(s, "?"))
-        child_printf("\e]701;%s\e\\", cs_get_locale());
+        child_printf("\e]701;%s%s", cs_get_locale(), osc_fini);
       else
         cs_set_locale(s);
     when 7721:  // Copy window title to clipboard.
@@ -3586,7 +3588,7 @@ do_cmd(void)
     }
     when 7770:  // Change font size.
       if (!strcmp(s, "?"))
-        child_printf("\e]7770;%u\e\\", win_get_font_size());
+        child_printf("\e]7770;%u%s", win_get_font_size(), osc_fini);
       else {
         char *end;
         int i = strtol(s, &end, 10);
@@ -3599,7 +3601,7 @@ do_cmd(void)
       }
     when 7777:  // Change font and window size.
       if (!strcmp(s, "?"))
-        child_printf("\e]7777;%u\e\\", win_get_font_size());
+        child_printf("\e]7777;%u%s", win_get_font_size(), osc_fini);
       else {
         char *end;
         int i = strtol(s, &end, 10);
@@ -3628,7 +3630,7 @@ do_cmd(void)
           s += sprintf(s, "%u", wcs[i]);
       }
       *s = 0;
-      child_printf("\e]7771;!%s\e\\", term.cmd_buf);
+      child_printf("\e]7771;!%s%s", term.cmd_buf, osc_fini);
     }
     when 77119: {  // Indic and Extra characters wide handling
       int what = atoi(s);
@@ -3649,7 +3651,7 @@ do_cmd(void)
         uint ff = (term.curs.attr.attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
         if (!strcmp(s, "?")) {
           char * fn = cs__wcstombs(win_get_font(ff) ?: W(""));
-          child_printf("\e]50;%s\e\\", fn);
+          child_printf("\e]50;%s%s", fn, osc_fini);
           free(fn);
         }
         else {
