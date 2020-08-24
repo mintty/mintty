@@ -731,7 +731,7 @@ winimgs_paint(void)
             if (dchar->attr.attr & (TATTR_RESULT | TATTR_CURRESULT | TATTR_MARKED | TATTR_CURMARKED))
               clip_flag = true;
             if (term.selected && !clip_flag) {
-              pos scrpos = {y + term.disptop, x, false};
+              pos scrpos = {y + term.disptop, x, 0, 0, false};
               clip_flag = term.sel_rect
                   ? posPle(term.sel_start, scrpos) && posPlt(scrpos, term.sel_end)
                   : posle(term.sel_start, scrpos) && poslt(scrpos, term.sel_end);

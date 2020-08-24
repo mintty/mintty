@@ -323,13 +323,15 @@ send_mouse_event(mouse_action a, mouse_button b, mod_keys mods, pos p)
 
   if (a != MA_RELEASE)
     code |= a * 0x20;
-  else if (term.mouse_enc != ME_XTERM_CSI)
+  else if (term.mouse_enc != ME_XTERM_CSI && term.mouse_enc != ME_PIXEL_CSI)
     code = 0x3;
 
   code |= (mods & ~cfg.click_target_mod) * 0x4;
 
   if (term.mouse_enc == ME_XTERM_CSI)
     child_printf("\e[<%u;%u;%u%c", code, x, y, (a == MA_RELEASE ? 'm' : 'M'));
+  else if (term.mouse_enc == ME_PIXEL_CSI)
+    child_printf("\e[<%u;%u;%u%c", code, p.pix + 1, p.piy + 1, (a == MA_RELEASE ? 'm' : 'M'));
   else if (term.mouse_enc == ME_URXVT_CSI)
     child_printf("\e[%u;%u;%uM", code + 0x20, x, y);
   else {
@@ -368,6 +370,7 @@ box_pos(pos p)
 {
   p.y = min(max(0, p.y), term.rows - 1);
   p.x = min(max(0, p.x), term.cols - 1);
+  // p.piy and p.pix already clipped in translate_pos()
   return p;
 }
 

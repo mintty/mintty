@@ -315,7 +315,8 @@ typedef enum {
 } term_cset;
 
 typedef struct {
-  int y, x;
+  int y, x;      // cell coordinates of mouse event
+  int piy, pix;  // pixel coordinates of mouse event
   bool r;
 } pos;
 
@@ -589,7 +590,8 @@ struct term {
     ME_X10,        // CSI M followed by one byte each for event, X and Y
     ME_UTF8,       // Same as X10, but with UTF-8 encoded X and Y (ugly!)
     ME_URXVT_CSI,  // CSI event ; x ; y M
-    ME_XTERM_CSI   // CSI > event ; x ; y M/m
+    ME_XTERM_CSI,  // CSI > event ; x ; y M/m
+    ME_PIXEL_CSI   // CSI > event ; pix ; piy M/m
   } mouse_enc;
 
   enum {
