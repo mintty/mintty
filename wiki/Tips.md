@@ -749,12 +749,26 @@ Font3=MesloLGS NF
 
 By default, mintty adjusts character width to the width assumption of the 
 locale mechanism (function `wcwidth`).
-If it is desired to use more up-to-date Unicode width properties, this can 
-be chosen with option `Charwidth=unicode`. Note that actual width 
-properties as rendered on the screen and width assumptions of the 
-`wcwidth` function will be inconsistent then for the impacted characters, 
-which may confuse screen applications (such as editors) that rely on 
-`wcwidth` information.
+Character width can be modified by a number of configuration or dynamic settings:
+* `Locale`: change locale, stays consistent with system locales
+* `Charwidth=unicode`: use built-in rather than system-provided Unicode data
+* `Charwidth`: further options to handle double-width characters
+* `Charset`: may affect CJK ambiguous-width handling if used with `Locale`
+* `Font`: may affect CJK ambiguous-width handling if used with `Locale`
+* `PrintableControls`: makes C1 or C0 control characters visible (width 1)
+* OSC 701: changes locale/charset, may affect ambiguous width handling
+* OSC 50: changes font, may affect ambiguous width handling (with `Locale`)
+* OSC 77119: turns some character ranges to wide characters
+* PEC: explicit character width attribute
+
+See the [mintty manual](http://mintty.github.io/mintty.1.html) and
+[Control Sequences](https://github.com/mintty/mintty/wiki/CtrlSeqs)
+for more details.
+
+Note that with any of these settings, actual width properties as 
+rendered on the screen and width assumptions of the `wcwidth` function 
+will be inconsistent then for the impacted characters, which may confuse 
+screen applications (such as editors) that rely on `wcwidth` information.
 
 ### Ambiguous width setting ###
 
