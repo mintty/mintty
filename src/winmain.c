@@ -3380,6 +3380,32 @@ hookprockbll(int nCode, WPARAM wParam, LPARAM lParam)
          nCode, (long)wParam, 
          key, (uint)kbdll->scanCode, (uint)kbdll->flags, (ulong)kbdll->dwExtraInfo);
 #endif
+
+  mod_keys mods = get_mods();
+  bool is_hooked_hotkey(WPARAM wParam, uint key)
+  {
+    return wParam == WM_KEYDOWN &&
+      // proof of concept; key/modifiers would need to be configurable
+      (key == VK_F9 && mods == MDK_ALT);
+  }
+  if (is_hooked_hotkey(wParam, key)) {
+    if (GetFocus() == wnd && IsWindowVisible(wnd)) {
+      ShowWindow(wnd, SW_SHOW);  // in case it was started with -w hide
+      ShowWindow(wnd, SW_HIDE);
+    }
+    else {
+      // These do not work:
+      //win_to_top(wnd);
+      //win_set_zorder(true);
+      // Need to minimize first:
+      ShowWindow(wnd, SW_MINIMIZE);
+      ShowWindow(wnd, SW_RESTORE);
+    }
+    // Return to prevent multiple mintty windows from flickering
+    // Return 1 to swallow hotkey
+    return 1;
+  }
+
   bool hook = false;
 #ifdef check_swallow
   // this should be factored out to wininput.c, if ever to be used
@@ -3406,13 +3432,16 @@ hookprockbll(int nCode, WPARAM wParam, LPARAM lParam)
       return 1;
     }
   }
+
   return CallNextHookEx(0, nCode, wParam, lParam);
 }
 
 void
 hook_windows(int id, HOOKPROC hookproc, bool global)
 {
-  SetWindowsHookExW(id, hookproc, 0, global ? 0 : GetCurrentThreadId());
+  bool hotkey_configured() {return false;}
+  if (hotkey_configured())
+    SetWindowsHookExW(id, hookproc, 0, global ? 0 : GetCurrentThreadId());
 }
 
 #endif
