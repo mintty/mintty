@@ -462,7 +462,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     if (term.mouse_mode == MM_X10)
       mods = 0;
     send_mouse_event(MA_CLICK, b, mods, box_pos(p));
-    term.mouse_state = b;
+    term.mouse_state = (int)b;
   }
   else {
     // generic transformation M4/M5 -> Alt+left/right;
@@ -695,7 +695,7 @@ term_mouse_move(mod_keys mods, pos p)
   }
   else if (term.mouse_state > 0) {
     if (term.mouse_mode >= MM_BTN_EVENT)
-      send_mouse_event(MA_MOVE, term.mouse_state, mods, bp);
+      send_mouse_event(MA_MOVE, (mouse_button)term.mouse_state, mods, bp);
   }
   else {
     if (term.mouse_mode == MM_ANY_EVENT)
