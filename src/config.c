@@ -1,5 +1,5 @@
 // config.c (part of mintty)
-// Copyright 2008-13 Andy Koppe, 2015-2017 Thomas Wolff
+// Copyright 2008-13 Andy Koppe, 2015-2020 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -45,6 +45,8 @@ const config default_cfg = {
   .tek_defocused_colour = (colour)-1,
   .tek_glow = 1,
   .underl_colour = (colour)-1,
+  .tab_fg_colour = (colour)-1,
+  .tab_bg_colour = (colour)-1,
   .disp_space = 0,
   .disp_clear = 0,
   .disp_tab = 0,
@@ -282,6 +284,8 @@ options[] = {
   {"TekDefocusedColour", OPT_COLOUR, offcfg(tek_defocused_colour)},
   {"TekGlow", OPT_INT, offcfg(tek_glow)},
   {"UnderlineColour", OPT_COLOUR, offcfg(underl_colour)},
+  {"TabForegroundColour", OPT_COLOUR, offcfg(tab_fg_colour)},
+  {"TabBackgroundColour", OPT_COLOUR, offcfg(tab_bg_colour)},
   {"DispSpace", OPT_INT, offcfg(disp_space)},
   {"DispClear", OPT_INT, offcfg(disp_clear)},
   {"DispTab", OPT_INT, offcfg(disp_tab)},
