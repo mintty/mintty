@@ -1,11 +1,15 @@
 Window handling
   * Fixed offset of saved image.
+  * Optional tabbar for interactive virtual tabs session switching (#944).
 
 Terminal features
   * Mouse mode 1016 with pixel coordinates (xterm 360).
   * XTPUSHSGR foreground/background changed to 30/31 (xterm 357).
   * Align OSC response terminator (ST or BEL) with request terminator (#1028, xterm).
   * Fixed invalid IME cursor colour after OSC 112 "Reset cursor colour" (#942).
+
+Configuration
+  * New option ShowTabBar (#944).
 
 ### 3.3.0 (6 August 2020) ###
 

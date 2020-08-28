@@ -19,6 +19,24 @@ extern ATOM class_atom;
 
 extern void clear_tabs(void);
 extern void add_tab(uint tabi, HWND wndi);
+// Inter-window actions
+enum {
+  WIN_MINIMIZE = 0,
+  WIN_MAXIMIZE = -1,
+  WIN_TOP = 1,
+  WIN_TITLE = 4,
+  WIN_INIT_POS = 5
+};
+// support tabbar
+extern void win_to_top(HWND top_wnd);
+extern void win_post_sync_msg(HWND target, int level);
+struct tabinfo {
+  unsigned long tag;
+  HWND wnd;
+  wchar * title;
+};
+extern struct tabinfo * tabinfo;
+extern int ntabinfo;
 
 extern COLORREF colours[COLOUR_NUM];
 extern colour brighten(colour c, colour against, bool monotone);

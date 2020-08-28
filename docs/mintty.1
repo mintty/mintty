@@ -611,6 +611,15 @@ Distinct sets of sessions can be set up with the setting \fB-o Class=...\fP.
 Virtual Tabs can be switched quickly with user-defined key assignments, 
 using user-definable functions switch-[visible-](prev|next).
 
+.TP
+\fBTabbar\fP
+.br
+With setting \fBShowTabBar=1\fP, an interactive tabbar complements the 
+virtual tabs mechanism. (It works like the session switcher available 
+via extended context menu or title bar menu.)
+It is recommended to also set \fBSessionGeomSync=2\fP or higher to 
+achieve a tabbed window behaviour.
+
 .SS Closing a session
 
 Clicking the window's close button, pressing \fBAlt+F4\fP, or choosing
@@ -3186,6 +3195,21 @@ operation within the Virtual Tabs feature:
 \(en \fB3\fP: sync. also when window is minimized
 .br
 \(en \fB4\fP: sync. also when window is started separately
+
+.TP
+\fBTabbar\fP (ShowTabBar=0)
+Setting \fBShowTabBar=1\fP enables an interactive tabbar as an alternative 
+session switcher.
+It is recommended to set \fBSessionGeomSync=2\fP or higher with this option.
+
+.TP
+\fBTabbar highlighting\fP
+With these settings, colour highlighting of the active tab in the tabbar 
+can be configured.
+.br
+\(en \fBTabForegroundColour\fP=\fI\fP
+.br
+\(en \fBTabBackgroundColour\fP=\fI\fP
 
 .SH SCOPE AND LIMITATIONS
 

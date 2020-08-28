@@ -1,5 +1,5 @@
 // winmain.c (part of mintty)
-// Copyright 2008-13 Andy Koppe, 2015-2018 Thomas Wolff
+// Copyright 2008-13 Andy Koppe, 2015-2020 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -16,6 +16,7 @@ char * mintty_debug;
 #include "winsearch.h"
 #include "winimg.h"
 #include "jumplist.h"
+#include "wintab.h"
 
 #include "term.h"
 #include "appinfo.h"
@@ -90,14 +91,6 @@ static bool disable_poschange = true;
 static int zoom_token = 0;  // for heuristic handling of Shift zoom (#467, #476)
 static bool default_size_token = false;
 bool clipboard_token = false;
-
-// Inter-window actions
-enum {
-  WIN_MINIMIZE = 0,
-  WIN_MAXIMIZE = -1,
-  WIN_TOP = 1,
-  WIN_TITLE = 4,
-};
 
 // Options
 bool title_settable = true;
@@ -399,11 +392,7 @@ win_set_timer(void (*cb)(void), uint ticks)
 
 #define dont_debug_tabbar
 
-static struct tabinfo {
-  unsigned long tag;
-  HWND wnd;
-  wchar * title;
-} * tabinfo = 0;
+struct tabinfo * tabinfo = 0;
 int ntabinfo = 0;
 
 static HWND
@@ -571,9 +560,11 @@ update_tab_titles()
     }
     return true;
   }
-  if (cfg.geom_sync) {
+  if (cfg.geom_sync || win_tabbar_visible()) {
     // update my own list
     refresh_tab_titles(true);
+    // support tabbar
+    win_update_tabbar();
     // tell the others to update their's
     EnumWindows(wnd_enum_tabs, 0);
   }
@@ -614,7 +605,7 @@ win_sys_style(bool focus)
   else
     SetSysColors(lengthof(elements), elements, save);
 #else
-(void)focus;
+  (void)focus;
 #endif
 }
 
@@ -810,7 +801,29 @@ win_restore_title(void)
  *  Switch to next or previous application window in z-order
  */
 
-static void
+// support tabbar
+void
+win_post_sync_msg(HWND target, int level)
+{
+  if (cfg.geom_sync) {
+    if (win_is_fullscreen)
+      PostMessage(target, WM_USER, 0, WIN_MAXIMIZE);
+    else if (level >= 3 && IsIconic(wnd))
+      PostMessage(target, WM_USER, 0, WIN_MINIMIZE);
+    else {
+      RECT r;
+      GetWindowRect(wnd, &r);
+#ifdef debug_tabs
+      printf("switcher %d,%d %d,%d\n", (int)r.left, (int)r.top, (int)(r.right - r.left), (int)(r.bottom - r.top));
+#endif
+      PostMessage(target, WM_USER,
+                  MAKEWPARAM(r.right - r.left, r.bottom - r.top),
+                  MAKELPARAM(r.left, r.top));
+    }
+  }
+}
+
+void
 win_to_top(HWND top_wnd)
 {
   // this would block if target window is blocked:
@@ -916,6 +929,10 @@ win_switch(bool back, bool alternate)
 #else
   refresh_tab_titles(false);
   win_to_top(back ? get_prev_tab(alternate) : get_next_tab(alternate));
+  // support tabbar
+  if (cfg.geom_sync)
+    win_post_sync_msg(back ? get_prev_tab(alternate) : get_next_tab(alternate), cfg.geom_sync);
+  win_update_tabbar();
 #endif
 }
 
@@ -969,6 +986,9 @@ win_gotab(uint n)
 
   // reposition / resize
   if (cfg.geom_sync) {
+#ifdef use_common_sync
+    win_post_sync_msg(tab, cfg.geom_sync);
+#else
     if (win_is_fullscreen)
       PostMessage(tab, WM_USER, 0, WIN_MAXIMIZE);
     else {
@@ -981,6 +1001,7 @@ win_gotab(uint n)
                   MAKEWPARAM(r.right - r.left, r.bottom - r.top),
                   MAKELPARAM(r.left, r.top));
     }
+#endif
   }
 
   if (tab == wnd)
@@ -1012,6 +1033,9 @@ win_synctabs(int level)
     GetWindowInfo(curr_wnd, &curr_wnd_info);
     if (class_atom == curr_wnd_info.atomWindowType) {
       if (curr_wnd != wnd) {
+#ifdef use_common_sync
+        win_post_sync_msg(curr_wnd, level);
+#else
         if (win_is_fullscreen)
           PostMessage(curr_wnd, WM_USER, 0, WIN_MAXIMIZE);
         else if (level == 3) // minimize
@@ -1026,6 +1050,7 @@ win_synctabs(int level)
                       MAKEWPARAM(r.right - r.left, r.bottom - r.top),
                       MAKELPARAM(r.left, r.top));
         }
+#endif
       }
     }
     return true;
@@ -1998,7 +2023,11 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
     norm_extra_height = extra_height;
   }
   int term_width = client_width - 2 * PADDING;
-  int term_height = client_height - 2 * PADDING - OFFSET;
+  int term_height = client_height - 2 * PADDING;
+  if (!sync_size_with_font /*&& win_tabbar_visible()*/) {
+    // untested: what if sync_size_with_font == true ?
+    term_height -= OFFSET;
+  }
   if (!sync_size_with_font && win_search_visible()) {
     term_height -= SEARCHBAR_HEIGHT;
   }
@@ -2048,6 +2077,9 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
   win_invalidate_all(false);
 
   win_update_search();
+  // support tabbar
+  win_update_tabbar();
+
   term_schedule_search_update();
   win_schedule_update();
 }
@@ -2623,12 +2655,25 @@ static struct {
         ShowWindow(wnd, SW_RESTORE);
       }
       else if (!wp && lp == WIN_TITLE) {
-        if (cfg.geom_sync)
+        if (cfg.geom_sync || win_tabbar_visible()) {
           refresh_tab_titles(false);
+          // support tabbar
+          win_update_tabbar();
+        }
       }
       else if (cfg.geom_sync) {
 #ifdef debug_tabs
         printf("[%8p] switched %d,%d %d,%d\n", wnd, (INT16)LOWORD(lp), (INT16)HIWORD(lp), LOWORD(wp), HIWORD(wp));
+#endif
+#ifdef use_init_position
+        if (win_tabbar_visible()) {
+          // support tabbar; however, the purpose of this handling is unclear
+          if (!wp && lp == WIN_INIT_POS)
+            win_synctabs(4);
+          else
+            win_handle_sync_msg(wp, lp);
+        }
+        else
 #endif
         if (!wp) {
           if (lp == WIN_MINIMIZE && cfg.geom_sync >= 3)
@@ -2744,6 +2789,8 @@ static struct {
 
           term_schedule_search_update();
           win_update_search();
+          // support tabbar
+          win_update_tabbar();
         }
         when IDM_SCROLLBAR:
           term.show_scrollbar = !term.show_scrollbar;
@@ -3041,6 +3088,8 @@ static struct {
                    RDW_FRAME | RDW_INVALIDATE |
                    RDW_UPDATENOW | RDW_ALLCHILDREN);
       win_update_search();
+      // support tabbar
+      win_update_tabbar();
 
     when WM_FONTCHANGE:
       font_cs_reconfig(true);
@@ -3079,6 +3128,12 @@ static struct {
       }
       win_update_transparency(cfg.opaque_when_focused);
       win_key_reset();
+#ifdef adapt_term_size_on_activate
+      // support tabbar?
+      // this was included in the original patch but its purpose is unclear
+      // and it causes some flickering
+      win_adapt_term_size(false, false);
+#endif
 
     when WM_SETFOCUS:
       trace_resize(("# WM_SETFOCUS VK_SHIFT %02X\n", (uchar)GetKeyState(VK_SHIFT)));
@@ -5443,8 +5498,22 @@ main(int argc, char *argv[])
       pAddClipboardFormatListener(wnd);
   }
 
+#ifdef use_init_position
+  if (cfg.show_tabbar)
+    // support tabbar; however, the purpose of this handling is unclear
+    win_init_position();
+  else
+    win_synctabs(4);
+#else
   win_synctabs(4);
+#endif
+
   update_tab_titles();
+
+  // support tabbar
+  if (cfg.show_tabbar) {
+    win_open_tabbar();
+  }
 
 #ifdef hook_keyboard
   // Install keyboard hook.
