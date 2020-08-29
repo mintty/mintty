@@ -105,6 +105,7 @@ tab_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, UINT_PTR uid, DWORD_PTR data
     DeleteDC(bufdc);
     EndPaint(hwnd, &pnts);
     return true;  // || uid || data ?
+    (void)uid, (void)data;
   } else if (msg == WM_ERASEBKGND) {
     if (!lp)
       return true;

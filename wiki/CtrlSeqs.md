@@ -425,11 +425,11 @@ The _file-URL_ liberally follows a `file:` URL scheme; examples are
 The following _OSC_ ("operating system command") sequence can be used to 
 set a hyperlink attribute which is opened on Ctrl-click.
 
-| **link control**         | **function**           |
-|:-------------------------|:------------------|
-| `^[]8;;`_URL_`^G`        | underlay text with the hyperlink |
+| **link control**         | **function**                                    |
+|:-------------------------|:------------------------------------------------|
+| `^[]8;;`_URL_`^G`        | underlay text with the hyperlink                |
 | `^[]8;;^G`               | clear hyperlink attribute (terminate hyperlink) |
-| `^[]8;id=`ID`;`_URL_`^G` | associate instances of hyperlink |
+| `^[]8;id=`ID`;`_URL_`^G` | associate instances of hyperlink                |
 
 A typical hyperlinked text would be written like
 > `^[]8;;`_URL_`^G`text`^[]8;;^G`
@@ -448,8 +448,10 @@ two features:
   * Shift+cursor-left/right navigates to the previous/next prompt line and scrolls in the scrollback buffer accordingly
   * user-defined commands can refer to environment variable MINED_OUTPUT which contains terminal output as limited by previous marker
 
+| **marker**    | **function**                                              |
+|:--------------|:----------------------------------------------------------|
 | `^[[?7711h`   | mark prompt line (last line in case of multi-line prompt) |
-| `^[[?7711l`   | mark secondary prompt line (upper lines) |
+| `^[[?7711l`   | mark secondary prompt line (upper lines)                  |
 
 
 ## Image support ##

@@ -2025,7 +2025,7 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
   int term_width = client_width - 2 * PADDING;
   int term_height = client_height - 2 * PADDING;
   if (!sync_size_with_font /*&& win_tabbar_visible()*/) {
-    // untested: what if sync_size_with_font == true ?
+    // apparently insignificant if sync_size_with_font && win_is_fullscreen
     term_height -= OFFSET;
   }
   if (!sync_size_with_font && win_search_visible()) {
@@ -2229,6 +2229,7 @@ win_font_cs_reconfig(bool font_changed)
 static void
 font_cs_reconfig(bool font_changed)
 {
+  //printf("font_cs_reconfig font_changed %d\n", font_changed);
   if (font_changed) {
     win_init_fonts(cfg.font.size);
     if (tek_mode)
@@ -3251,6 +3252,7 @@ static struct {
       trace_resize(("# WM_EXITSIZEMOVE (resizing %d) VK_SHIFT %02X\n", resizing, (uchar)GetKeyState(VK_SHIFT)));
       bool shift = GetKeyState(VK_SHIFT) & 0x80;
 
+      //printf("WM_EXITSIZEMOVE resizing %d shift %d\n", resizing, shift);
       if (resizing) {
         resizing = false;
         win_destroy_tip();
