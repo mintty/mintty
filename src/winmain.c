@@ -986,22 +986,7 @@ win_gotab(uint n)
 
   // reposition / resize
   if (cfg.geom_sync) {
-#ifdef use_common_sync
-    win_post_sync_msg(tab, cfg.geom_sync);
-#else
-    if (win_is_fullscreen)
-      PostMessage(tab, WM_USER, 0, WIN_MAXIMIZE);
-    else {
-      RECT r;
-      GetWindowRect(wnd, &r);
-#ifdef debug_tabs
-      printf("[%8p] switcher %d,%d %d,%d\n", wnd, (int)r.left, (int)r.top, (int)(r.right - r.left), (int)(r.bottom - r.top));
-#endif
-      PostMessage(tab, WM_USER,
-                  MAKEWPARAM(r.right - r.left, r.bottom - r.top),
-                  MAKELPARAM(r.left, r.top));
-    }
-#endif
+    win_post_sync_msg(tab, 0);  // 0: don't minimize
   }
 
   if (tab == wnd)
@@ -1033,24 +1018,7 @@ win_synctabs(int level)
     GetWindowInfo(curr_wnd, &curr_wnd_info);
     if (class_atom == curr_wnd_info.atomWindowType) {
       if (curr_wnd != wnd) {
-#ifdef use_common_sync
         win_post_sync_msg(curr_wnd, level);
-#else
-        if (win_is_fullscreen)
-          PostMessage(curr_wnd, WM_USER, 0, WIN_MAXIMIZE);
-        else if (level == 3) // minimize
-          PostMessage(curr_wnd, WM_USER, 0, WIN_MINIMIZE);
-        else {
-          RECT r;
-          GetWindowRect(wnd, &r);
-#ifdef debug_tabs
-          printf("[%8p] sync all %d,%d %d,%d\n", wnd, (int)r.left, (int)r.top, (int)(r.right - r.left), (int)(r.bottom - r.top));
-#endif
-          PostMessage(curr_wnd, WM_USER,
-                      MAKEWPARAM(r.right - r.left, r.bottom - r.top),
-                      MAKELPARAM(r.left, r.top));
-        }
-#endif
       }
     }
     return true;
