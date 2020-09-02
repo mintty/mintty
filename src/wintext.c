@@ -4557,12 +4557,15 @@ win_reset_colours(void)
 }
 
 
+#define dont_debug_padding_background
+
 void
 win_paint(void)
 {
   PAINTSTRUCT p;
   dc = BeginPaint(wnd, &p);
 
+  // better invalidate more than less; limited to text area in term_invalidate
   term_invalidate(
     (p.rcPaint.left - PADDING) / cell_width,
     (p.rcPaint.top - PADDING - OFFSET) / cell_height,
@@ -4580,13 +4583,12 @@ win_paint(void)
     }
   }
 
-  if (// do not just check whether a background was configured
-      //!*cfg.background &&
-      // check whether a configured background was successfully loaded
+  if (// check whether no background was configured and successfully loaded
       !bgbrush_bmp &&
 #if CYGWIN_VERSION_API_MINOR >= 74
       !bgbrush_img &&
 #endif
+      // check whether we need to refresh padding background
       (p.fErase
        || p.rcPaint.left < PADDING
        || p.rcPaint.top < OFFSET + PADDING
@@ -4606,21 +4608,34 @@ win_paint(void)
          but not modify the established behaviour if there is no background.
      */
     colour bg_colour = colours[term.rvideo ? FG_COLOUR_I : BG_COLOUR_I];
+#ifdef debug_padding_background
+    // visualize background for testing
+    bg_colour = RGB(222, 0, 0);
+#endif
     HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(bg_colour));
     HPEN oldpen = SelectObject(dc, CreatePen(PS_SOLID, 0, bg_colour));
 
-    IntersectClipRect(dc, p.rcPaint.left, p.rcPaint.top, p.rcPaint.right,
-                      p.rcPaint.bottom);
+    // unclear purpose
+    IntersectClipRect(dc, p.rcPaint.left, p.rcPaint.top,
+                          p.rcPaint.right, p.rcPaint.bottom);
 
-    ExcludeClipRect(dc, PADDING, OFFSET + PADDING,
-                    PADDING + cell_width * term.cols,
-                    OFFSET + PADDING + cell_height * term.rows);
+    // mask inner area not to pad with background
+    ExcludeClipRect(dc, PADDING,
+                        OFFSET + PADDING,
+                        PADDING + cell_width * term.cols,
+                        OFFSET + PADDING + cell_height * term.rows);
 
-    Rectangle(dc, p.rcPaint.left, p.rcPaint.top,
-                  p.rcPaint.right, p.rcPaint.bottom);
+    // fill outer padding area with background
+    int sy = win_search_visible() ? SEARCHBAR_HEIGHT : 0;
+    Rectangle(dc, p.rcPaint.left, max(p.rcPaint.top, OFFSET),
+                  p.rcPaint.right, p.rcPaint.bottom - sy);
 
     DeleteObject(SelectObject(dc, oldbrush));
     DeleteObject(SelectObject(dc, oldpen));
+#ifdef debug_padding_background
+    // show visualized background for testing
+    usleep(900000);
+#endif
   }
 
   EndPaint(wnd, &p);
