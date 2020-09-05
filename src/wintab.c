@@ -89,7 +89,7 @@ tabbar_update()
 static LRESULT CALLBACK
 tab_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, UINT_PTR uid, DWORD_PTR data)
 {
-  //printf("tab_proc %d\n", msg);
+  //printf("tab_proc %03X\n", msg);
   if (msg == WM_PAINT) {
     RECT rect;
     GetClientRect(hwnd, &rect);
@@ -119,8 +119,7 @@ tab_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, UINT_PTR uid, DWORD_PTR data
 static LRESULT CALLBACK
 container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
-  //printf("tabbar container_proc %04X\n", msg);
-
+  //printf("tabbar container_proc %03X\n", msg);
   if (msg == WM_NOTIFY) {
     LPNMHDR lpnmhdr = (LPNMHDR)lp;
     //printf("notify %lld %d %d\n", lpnmhdr->idFrom, lpnmhdr->code, TCN_SELCHANGE);
@@ -154,7 +153,7 @@ container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     }
   }
   else if (msg == WM_CREATE) {
-    tab_wnd = CreateWindowExA(0, WC_TABCONTROL, "", WS_CHILD|TCS_FIXEDWIDTH|TCS_OWNERDRAWFIXED, 0, 0, 0, 0, hwnd, 0, inst, NULL);
+    tab_wnd = CreateWindowExA(0, WC_TABCONTROL, "", WS_CHILD | TCS_FIXEDWIDTH | TCS_OWNERDRAWFIXED, 0, 0, 0, 0, hwnd, 0, inst, NULL);
 #if CYGWIN_VERSION_API_MINOR >= 74
     SetWindowSubclass(tab_wnd, tab_proc, 0, 0);
 #endif
@@ -192,7 +191,7 @@ container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     int hcenter = (dis->rcItem.left + dis->rcItem.right) / 2;
     int vcenter = (dis->rcItem.top + dis->rcItem.bottom) / 2;
 
-    SetTextAlign(hdc, TA_CENTER|TA_TOP);
+    SetTextAlign(hdc, TA_CENTER | TA_TOP);
     TCITEMW tie;
     wchar_t buf[256];
     tie.mask = TCIF_TEXT;
@@ -206,20 +205,28 @@ container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
       //tabbr = GetSysColorBrush(COLOR_ACTIVECAPTION);
       //SetTextColor(hdc, GetSysColor(COLOR_CAPTIONTEXT));
       tabbr = GetSysColorBrush(COLOR_HIGHLIGHT);
+      //printf("TAB bg %06X\n", GetSysColor(COLOR_HIGHLIGHT));
       SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
+      //printf("TAB fg %06X\n", GetSysColor(COLOR_HIGHLIGHTTEXT));
 
       // override active tab colours if configured
       tabbg = cfg.tab_bg_colour;
-      if (tabbg != (colour)-1)
+      if (tabbg != (colour)-1) {
+        //printf("TAB bg %06X\n", tabbg);
         tabbr = CreateSolidBrush(tabbg);
+      }
       colour tabfg = cfg.tab_fg_colour;
-      if (tabfg != (colour)-1)
+      if (tabfg != (colour)-1) {
+        //printf("TAB fg %06X\n", tabfg);
         SetTextColor(hdc, tabfg);
+      }
     }
     else {
       tabbr = GetSysColorBrush(COLOR_3DFACE);
+      //printf("tab bg %06X\n", GetSysColor(COLOR_3DFACE));
       //tabbr = GetSysColorBrush(COLOR_INACTIVECAPTION);
       SetTextColor(hdc, GetSysColor(COLOR_CAPTIONTEXT));
+      //printf("tab fg %06X\n", GetSysColor(COLOR_CAPTIONTEXT));
     }
     FillRect(hdc, &dis->rcItem, tabbr);
     if (tabbg != (colour)-1)
@@ -247,7 +254,9 @@ tabbar_init()
                               .lpszMenuName = NULL,
                               .lpszClassName = TABBARCLASS
                              });
-  bar_wnd = CreateWindowExA(WS_EX_STATICEDGE, TABBARCLASS, "", WS_CHILD | WS_BORDER, 0, 0, 0, 0, wnd, 0, inst, NULL);
+  bar_wnd = CreateWindowExA(WS_EX_STATICEDGE, TABBARCLASS, "",
+                            WS_CHILD | WS_BORDER,
+                            0, 0, 0, 0, wnd, 0, inst, NULL);
 
   initialized = true;
 }
