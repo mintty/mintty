@@ -625,7 +625,7 @@ As an alternative to a background colour, mintty also supports graphic
 background. This can be configured with the option `Background` or 
 set dynamically using special syntax of the colour background OSC sequence.
 The respective parameter addresses an image file, preceded by a mode 
-prefix and optionally followed by a transparancy value.
+prefix and optionally followed by a transparency value.
 Prefixes are:
 * `*` use image file as tiled background
 * `_` (optional with option Background) use image as picture background, scaled to window
