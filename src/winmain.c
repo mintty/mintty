@@ -71,6 +71,8 @@ static int main_argc;
 static bool invoked_from_shortcut = false;
 wstring shortcut = 0;
 static bool invoked_with_appid = false;
+uint hotkey = 0;
+mod_keys hotkey_mods = 0;
 
 
 //filled by win_adjust_borders:
@@ -3384,6 +3386,14 @@ static struct {
       else
         return result;
     }
+
+    when WM_SETHOTKEY: {
+      hotkey = wp & 0xFF;
+      ushort mods = wp >> 8;
+      hotkey_mods = !!(mods & HOTKEYF_SHIFT) * MDK_SHIFT
+                  | !!(mods & HOTKEYF_ALT) * MDK_ALT
+                  | !!(mods & HOTKEYF_CONTROL) * MDK_CTRL;
+    }
   }
 
  /*
@@ -3393,7 +3403,11 @@ static struct {
   return DefWindowProcW(wnd, message, wp, lp);
 }
 
+#define dont_hook_keyboard
+
 #ifdef hook_keyboard
+
+#define debug_hook
 
 static LRESULT CALLBACK
 hookprockbll(int nCode, WPARAM wParam, LPARAM lParam)
@@ -3406,14 +3420,18 @@ hookprockbll(int nCode, WPARAM wParam, LPARAM lParam)
          key, (uint)kbdll->scanCode, (uint)kbdll->flags, (ulong)kbdll->dwExtraInfo);
 #endif
 
-  mod_keys mods = get_mods();
-  bool is_hooked_hotkey(WPARAM wParam, uint key)
+  bool is_hooked_hotkey(WPARAM wParam, uint key, mod_keys mods)
   {
+#ifdef debug_hook
+    show_info(asform("key %02X mods %02X hooked %02X mods %02X", key, mods, hotkey, hotkey_mods));
+#endif
     return wParam == WM_KEYDOWN &&
-      // proof of concept; key/modifiers would need to be configurable
-      (key == VK_F9 && mods == MDK_ALT);
+      // hotkey/modifiers could be
+      // * derived from invocation shortcut (implemented)
+      // * configurable explicitly (not implemented)
+      (key == hotkey && mods == hotkey_mods);
   }
-  if (is_hooked_hotkey(wParam, key)) {
+  if (is_hooked_hotkey(wParam, key, get_mods())) {
     if (GetFocus() == wnd && IsWindowVisible(wnd)) {
       ShowWindow(wnd, SW_SHOW);  // in case it was started with -w hide
       ShowWindow(wnd, SW_HIDE);
