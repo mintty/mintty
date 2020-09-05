@@ -795,7 +795,7 @@ win_init_fontfamily(HDC dc, int findex)
       printf("bold_mode %d font_size %d size %d bold %d diff %d %s %ls\n",
              ff->bold_mode, font_size,
              fontsize[FONT_NORMAL], fontsize[FONT_BOLD], diffsize,
-             fontsize[FONT_BOLD] != fontsize[FONT_NORMAL] ? "///" : "===",
+             fontsize[FONT_BOLD] != fontsize[FONT_NORMAL] ? "=/=" : "===",
              ff->name);
 #endif
     if (diffsize * 16 > fontsize[FONT_NORMAL]) {
@@ -1734,7 +1734,7 @@ load_background_image_brush(HDC dc, wstring fn)
         // set half-tone stretch-blit mode for scaling quality
         SetStretchBltMode(dc1, HALFTONE);
         // draw the bitmap scaled into the destination memory DC
-        StretchBlt(dc1, 0, 0, w, h, dc0, 0, 0, bw, bh, SRCCOPY);
+        StretchBlt(dc1, 0, OFFSET, w, h - OFFSET, dc0, 0, 0, bw, bh, SRCCOPY);
 
         DeleteObject(hbm);
         hbm = hbm1;
@@ -1753,7 +1753,7 @@ load_background_image_brush(HDC dc, wstring fn)
 
         BYTE alphafmt = alpha == 255 ? AC_SRC_ALPHA : 0;
         BLENDFUNCTION bf = (BLENDFUNCTION) {AC_SRC_OVER, 0, alpha, alphafmt};
-        if (pAlphaBlend(dc1, 0, 0, w, h, dc0, 0, 0, bw, bh, bf)) {
+        if (pAlphaBlend(dc1, 0, OFFSET, w, h - OFFSET, dc0, 0, 0, bw, bh, bf)) {
           DeleteObject(hbm);
           hbm = hbm1;
         }
@@ -1787,6 +1787,8 @@ load_background_image_brush(HDC dc, wstring fn)
       if (bgbrush_bmp) {
         RECT cr;
         GetClientRect(wnd, &cr);
+        // support tabbar
+        cr.top += OFFSET;
 
         /* By applying this tweak here and (!) in fill_background below,
            we can apply an offset to the origin of a wallpaper background, 
@@ -1955,7 +1957,7 @@ get_bg_filename(void)
       }
       else {
         // need to scale wallpaper later, when loading;
-        /// not implemented, invalidate
+        // not implemented, invalidate
         *wallpfn = 0;
         // possibly, according to docs, but apparently ignored, 
         // also determine origin according to
@@ -2038,6 +2040,9 @@ load_background_brush(HDC dc)
   if (win_search_visible())
     cr.bottom -= SEARCHBAR_HEIGHT;
 
+  // support tabbar (minor need here)
+  cr.top += OFFSET;
+
   wchar * bgfn = get_bg_filename();  // also set tiled and alpha
 
   HBITMAP
@@ -2105,6 +2110,10 @@ fill_background(HDC dc, RECT * boxp)
   if (wallp) {
     offset_bg(dc);
   }
+
+  // support tabbar
+  if (boxp->top < OFFSET)
+    boxp->top = OFFSET;
 
   return
     (bgbrush_bmp && FillRect(dc, boxp, bgbrush_bmp))
@@ -3075,6 +3084,8 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
  /* Graphic background: picture or texture */
   if (*cfg.background && default_bg) {
     RECT bgbox = box0;
+
+    // extend into padding area
     if (!tx)
       bgbox.left = 0;
     if (bgbox.right >= PADDING + cell_width * term.cols)
@@ -3091,6 +3102,10 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
 
     if (fill_background(dc, &bgbox))
       underlaid = true;
+#ifdef debug_text_background
+    if (*text != 'x')
+      underlaid = false;
+#endif
   }
 
  /* Coordinate transformation per line */
