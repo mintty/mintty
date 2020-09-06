@@ -89,8 +89,9 @@ tabbar_update()
 static LRESULT CALLBACK
 tab_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, UINT_PTR uid, DWORD_PTR data)
 {
-  //printf("tab_proc %03X\n", msg);
+  //printf("tabbar tab_proc %03X\n", msg);
   if (msg == WM_PAINT) {
+    //printf("tabbar tab_proc WM_PAINT\n");
     RECT rect;
     GetClientRect(hwnd, &rect);
     PAINTSTRUCT pnts;
@@ -107,9 +108,11 @@ tab_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, UINT_PTR uid, DWORD_PTR data
     return true;  // || uid || data ?
     (void)uid, (void)data;
   } else if (msg == WM_ERASEBKGND) {
+    //printf("tabbar tab_proc WM_ERASEBKGND\n");
     if (!lp)
       return true;
   } else if (msg == WM_DRAWITEM) {
+    //printf("tabbar tab_proc WM_DRAWITEM\n");
   }
   return DefSubclassProc(hwnd, msg, wp, lp);
 }
@@ -119,8 +122,9 @@ tab_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, UINT_PTR uid, DWORD_PTR data
 static LRESULT CALLBACK
 container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
-  //printf("tabbar container_proc %03X\n", msg);
+  //printf("tabbar con_proc %03X\n", msg);
   if (msg == WM_NOTIFY) {
+    //printf("tabbar con_proc WM_NOTIFY\n");
     LPNMHDR lpnmhdr = (LPNMHDR)lp;
     //printf("notify %lld %d %d\n", lpnmhdr->idFrom, lpnmhdr->code, TCN_SELCHANGE);
     if (lpnmhdr->code == TCN_SELCHANGE) {
@@ -153,6 +157,7 @@ container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     }
   }
   else if (msg == WM_CREATE) {
+    //printf("tabbar con_proc WM_CREATE\n");
     tab_wnd = CreateWindowExA(0, WC_TABCONTROL, "", WS_CHILD | TCS_FIXEDWIDTH | TCS_OWNERDRAWFIXED, 0, 0, 0, 0, hwnd, 0, inst, NULL);
 #if CYGWIN_VERSION_API_MINOR >= 74
     SetWindowSubclass(tab_wnd, tab_proc, 0, 0);
@@ -164,6 +169,7 @@ container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     SendMessage(tab_wnd, WM_SETFONT, (WPARAM)tabbar_font, 1);
   }
   else if (msg == WM_SHOWWINDOW) {
+    //printf("tabbar con_proc WM_SHOWWINDOW\n");
     if (wp) {
       //printf("show %p\n", bar_wnd);
       ShowWindow(tab_wnd, SW_SHOW);
@@ -172,6 +178,7 @@ container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     //return true;  // skip callback chain?
   }
   else if (msg == WM_SIZE) {
+    //printf("tabbar con_proc WM_SIZE\n");
     tabbar_font = CreateFontW(cell_height * TABFONTSCALE, cell_width * TABFONTSCALE, 0, 0, FW_DONTCARE, false, false, false,
                               DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                               DEFAULT_QUALITY, FIXED_PITCH | FF_DONTCARE,
@@ -185,6 +192,7 @@ container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     tabbar_update();
   }
   else if (msg == WM_DRAWITEM) {
+    //printf("tabbar con_proc WM_DRAWITEM\n");
     LPDRAWITEMSTRUCT dis = (LPDRAWITEMSTRUCT)lp;
     HDC hdc = dis->hDC;
     //printf("container received drawitem %llx %p\n", wp, dis);

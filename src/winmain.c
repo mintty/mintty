@@ -689,6 +689,7 @@ win_set_icon(char * s, int icon_index)
 void
 win_set_title(char *title)
 {
+  //printf("win_set_title settable %d <%s>\n", title_settable, title);
   if (title_settable) {
     wchar wtitle[strlen(title) + 1];
     if (cs_mbstowcs(wtitle, title, lengthof(wtitle)) >= 0) {
@@ -824,6 +825,32 @@ win_post_sync_msg(HWND target, int level)
     }
   }
 }
+
+#ifdef use_init_position
+static void
+win_init_position()
+{
+  BOOL CALLBACK wnd_call_sync(HWND curr_wnd, LPARAM lp)
+  {
+    (void)lp;
+    WINDOWINFO curr_wnd_info;
+    curr_wnd_info.cbSize = sizeof(WINDOWINFO);
+    GetWindowInfo(curr_wnd, &curr_wnd_info);
+    if (class_atom == curr_wnd_info.atomWindowType) {
+      if (curr_wnd != wnd && !IsIconic(curr_wnd)) {
+        PostMessage(curr_wnd, WM_USER, 0, WIN_INIT_POS);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  if (EnumWindows(wnd_call_sync, (LPARAM)4)) {
+    // all callbacks succeeded
+    win_synctabs(4);
+  }
+}
+#endif
 
 void
 win_to_top(HWND top_wnd)
@@ -5486,6 +5513,11 @@ main(int argc, char *argv[])
       pAddClipboardFormatListener(wnd);
   }
 
+  // Set up tabbar
+  if (cfg.show_tabbar) {
+    win_open_tabbar();
+  }
+
 #ifdef use_init_position
   if (cfg.show_tabbar)
     // support tabbar; however, the purpose of this handling is unclear
@@ -5497,11 +5529,6 @@ main(int argc, char *argv[])
 #endif
 
   update_tab_titles();
-
-  // support tabbar
-  if (cfg.show_tabbar) {
-    win_open_tabbar();
-  }
 
 #ifdef hook_keyboard
   // Install keyboard hook.
