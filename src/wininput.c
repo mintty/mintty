@@ -1324,6 +1324,12 @@ lock_title()
 }
 
 static void
+clear_title()
+{
+  win_set_title("");
+}
+
+static void
 super_down(uint key, mod_keys mods)
 {
   super_key = key;
@@ -1515,6 +1521,7 @@ static struct function_def cmd_defs[] = {
   {"clear-scrollback", {IDM_CLRSCRLBCK}, 0},
   {"copy-title", {IDM_COPYTITLE}, 0},
   {"lock-title", {.fct = lock_title}, mflags_lock_title},
+  {"clear-title", {.fct = clear_title}, 0},
   {"reset", {IDM_RESET}, 0},
   {"tek-reset", {IDM_TEKRESET}, mflags_tek_mode},
   {"tek-page", {IDM_TEKPAGE}, mflags_tek_mode},
