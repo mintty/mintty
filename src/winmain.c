@@ -4370,6 +4370,7 @@ opts[] = {
   {"size",       required_argument, 0, 's'},
   {"title",      required_argument, 0, 't'},
   {"Title",      required_argument, 0, 'T'},
+  {"tabbar",     optional_argument, 0, ''},
   {"Border",     required_argument, 0, 'B'},
   {"Report",     required_argument, 0, 'R'},
   {"Reportpos",  required_argument, 0, 'R'},  // compatibility variant
@@ -4669,6 +4670,9 @@ main(int argc, char *argv[])
       when 'T':
         set_arg_option("Title", optarg);
         title_settable = false;
+      when '':
+        set_arg_option("ShowTabBar", strdup("1"));
+        set_arg_option("SessionGeomSync", optarg ?: strdup("2"));
       when 'B':
         border_style = strdup(optarg);
       when 'R':
