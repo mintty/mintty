@@ -11,7 +11,7 @@ Terminal features
 Configuration
   * New option ShowTabBar (#944).
   * New command-line option --tabbar (#944).
-  * New user-definable function clear-title.
+  * New user-definable functions clear-title, refresh.
 
 ### 3.3.0 (6 August 2020) ###
 

@@ -1330,6 +1330,12 @@ clear_title()
 }
 
 static void
+refresh()
+{
+  win_invalidate_all(false);
+}
+
+static void
 super_down(uint key, mod_keys mods)
 {
   super_key = key;
@@ -1537,6 +1543,7 @@ static struct function_def cmd_defs[] = {
   {"toggle-vt220", {.fct = toggle_vt220}, mflags_vt220},
   {"toggle-auto-repeat", {.fct = toggle_auto_repeat}, mflags_auto_repeat},
   {"toggle-bidi", {.fct = toggle_bidi}, mflags_bidi},
+  {"refresh", {.fct = refresh}, 0},
 
   {"super", {.fct_key = super_down}, 0},
   {"hyper", {.fct_key = hyper_down}, 0},
