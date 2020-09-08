@@ -1746,7 +1746,7 @@ win_key_nullify(uchar vk)
 #define dont_debug_def_keys 1
 
 static int
-pick_key_function(wstring key_commands, char * tag, int n, uint key, mod_keys mods, uint scancode)
+pick_key_function(wstring key_commands, char * tag, int n, uint key, mod_keys mods, mod_keys mod0, uint scancode)
 {
   char * ukey_commands = cs__wcstoutf(key_commands);
   char * cmdp = ukey_commands;
@@ -1757,11 +1757,40 @@ pick_key_function(wstring key_commands, char * tag, int n, uint key, mod_keys mo
   printf("pick_key_function (%s) <%s> %d\n", ukey_commands, tag, n);
 #endif
 
+  // derive modifiers from specification prefix, module their order;
+  // in order to abstract from the order and support flexible configuration,
+  // the modifiers could have been collected separately already instead of 
+  // prefixing them to the tag (before calling pick_key_function) but 
+  // that would have been more substantial redesign; or the prefix could 
+  // be normalized here by sorting; better solution: collect info here
+  mod_keys tagmods(char * k)
+  {
+    mod_keys m = mod0;
+    char * sep = strrchr(k, '+');
+    if (sep)
+      for (; *k && k < sep; k++)
+        switch (*k) {
+          when 'S': m |= MDK_SHIFT;
+          when 'A': m |= MDK_ALT;
+          when 'C': m |= MDK_CTRL;
+          when 'W': m |= MDK_WIN;
+          when 'U': m |= MDK_SUPER;
+          when 'Y': m |= MDK_HYPER;
+        }
+    return m;
+  }
+
+  mod_keys mod_tag = tagmods(tag);
   char * tag0 = tag ? strchr(tag, '+') : 0;
   if (tag0)
     tag0++;
   else
     tag0 = tag;
+
+#if defined(debug_def_keys) && debug_def_keys > 0
+  printf("key_fun tag <%s> tag0 <%s> mod %X\n", tag ?: "(null)", tag0 ?: "(null)", mod_tag);
+#endif
+
   char * paramp;
   while ((tag || n >= 0) && (paramp = strchr(cmdp, ':'))) {
     *paramp = '\0';
@@ -1770,16 +1799,26 @@ pick_key_function(wstring key_commands, char * tag, int n, uint key, mod_keys mo
     if (sepp)
       *sepp = '\0';
 
+    mod_keys mod_cmd = tagmods(cmdp);
+    char * cmd0 = strrchr(cmdp, '+');
+    if (cmd0)
+      cmd0++;
+    else
+      cmd0 = cmdp;
+
+    if (*cmdp == '*') {
+      mod_cmd = mod_tag;
+      cmd0 = cmdp;
+      cmd0++;
+      if (*cmd0 == '+')
+        cmd0++;
+    }
+
 #if defined(debug_def_keys) && debug_def_keys > 1
-    printf("tag <%s>: cmd <%s> fct <%s>\n", tag, cmdp, paramp);
+    printf("tag <%s>: cmd <%s> cmd0 <%s> mod %X fct <%s>\n", tag, cmdp, cmd0, mod_cmd, paramp);
 #endif
 
-    if (tag ? (*cmdp == '*' ? !strcmp(&cmdp[1], tag0)
-                            : !strcmp(cmdp, tag)
-              )
-            : n == 0
-       )
-    {
+    if (tag ? (mod_cmd == mod_tag && !strcmp(cmd0, tag0)) : n == 0) {
 #if defined(debug_def_keys) && debug_def_keys == 1
       printf("tag <%s>: cmd <%s> fct <%s>\n", tag, cmdp, paramp);
 #endif
@@ -1901,7 +1940,7 @@ pick_key_function(wstring key_commands, char * tag, int n, uint key, mod_keys mo
 void
 user_function(wstring commands, int n)
 {
-  pick_key_function(commands, 0, n, 0, 0, 0);
+  pick_key_function(commands, 0, n, 0, 0, 0, 0);
 }
 
 bool
@@ -2259,6 +2298,7 @@ static LONG last_key_time = 0;
          priority over modifyOtherKeys mode.
        */
       char * tag = 0;
+      mod_keys mod0 = 0;
       int vki = -1;
       for (uint i = 0; i < lengthof(vktab); i++)
         if (key == vktab[i].vkey) {
@@ -2344,6 +2384,7 @@ static LONG last_key_time = 0;
                          hyper ? "Y" : "",
                          (alt | win | super | hyper) ? "+" : "",
                          keytag);
+            mod0 |= MDK_CTRL | MDK_SHIFT;
             free(keytag);
           }
         }
@@ -2360,7 +2401,7 @@ static LONG last_key_time = 0;
         }
       }
       if (tag) {
-        int ret = pick_key_function(cfg.key_commands, tag, 0, key, mods, scancode);
+        int ret = pick_key_function(cfg.key_commands, tag, 0, key, mods, mod0, scancode);
         free(tag);
         if (ret == true)
           return true;

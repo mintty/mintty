@@ -2461,7 +2461,7 @@ Supported keys are described as follows:
 \(en function keys F1...F24
 .br
 \(en modified function keys or special keys (see below), preceded with a 
-combination of C, A, S, W, U, Y, in this order, 
+combination of C, A, S, W, U, Y, 
 indicating Ctrl, Alt, Shift, Win, Super, Hyper as combined with the key, 
 attached with a "+" separator, e.g. \fBCS+F9\fP;
 or a prefix "*" that applies the definition for all modified variations 
@@ -2700,6 +2700,11 @@ the CapsLock key
 .br
 \(en \fBKeyFunctions=*Menu:29\fP turns the Menu key into an F16 function key 
 (xterm default) and applies all modifiers to it
+.br
+\(en \fBKeyFunctions=A+Left:switch-prev;A+Right:switch-next;\\
+	A+C+Left:switch-visible-prev;A+C+Right:switch-visible-next\fP
+enables window switching with [Ctrl+]Alt+Left/Right keys on the 
+"editing keypad" (prefix KP_ for the numeric keypad)
 .br
 \(en \fBKeyFunctions=S+KP_Prior:scroll_pgup;C+KP_Prior:scroll_pgup;\\
 	C+KP_Next:scroll_pgdn;S+KP_Next:scroll_pgdn\fP 
