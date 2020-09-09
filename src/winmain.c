@@ -810,6 +810,8 @@ win_post_sync_msg(HWND target, int level)
 {
   if (cfg.geom_sync) {
     if (win_is_fullscreen)
+      PostMessage(target, WM_USER, 0, WIN_FULLSCREEN);
+    else if (IsZoomed(wnd))
       PostMessage(target, WM_USER, 0, WIN_MAXIMIZE);
     else if (level >= 3 && IsIconic(wnd))
       PostMessage(target, WM_USER, 0, WIN_MINIMIZE);
@@ -2676,12 +2678,16 @@ static struct {
         if (!wp) {
           if (lp == WIN_MINIMIZE && cfg.geom_sync >= 3)
             ShowWindow(wnd, SW_MINIMIZE);
-          else if (lp == WIN_MAXIMIZE && cfg.geom_sync)
+          else if (lp == WIN_FULLSCREEN && cfg.geom_sync)
             win_maximise(2);
+          else if (lp == WIN_MAXIMIZE && cfg.geom_sync)
+            win_maximise(1);
         }
         else if (cfg.geom_sync) {
           if (win_is_fullscreen)
             clear_fullscreen();
+          if (IsZoomed(wnd))
+            win_maximise(0);
           // (INT16) to handle multi-monitor negative coordinates properly
           SetWindowPos(wnd, null,
                        //GET_X_LPARAM(lp), GET_Y_LPARAM(lp),

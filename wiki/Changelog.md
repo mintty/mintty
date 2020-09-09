@@ -1,6 +1,7 @@
 Window handling
   * Fixed offset of saved image.
   * Optional tabbar for interactive virtual tabs session switching (#944).
+  * Fixed maximised/fullscreen synchronisation among sessions/tabs.
   * Fixed themes list and interactive theme switching feedback (mintty/wsltty#251).
 
 Terminal features

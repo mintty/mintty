@@ -23,6 +23,7 @@ extern void add_tab(uint tabi, HWND wndi);
 enum {
   WIN_MINIMIZE = 0,
   WIN_MAXIMIZE = -1,
+  WIN_FULLSCREEN = -2,
   WIN_TOP = 1,
   WIN_TITLE = 4,
   WIN_INIT_POS = 5
