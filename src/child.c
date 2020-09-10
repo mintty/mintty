@@ -1010,7 +1010,7 @@ setenvi(char * env, int val)
 static void
 setup_sync()
 {
-  if (cfg.geom_sync) {
+  if (sync_level()) {
     if (win_is_fullscreen) {
       setenvi("MINTTY_DX", 0);
       setenvi("MINTTY_DY", 0);

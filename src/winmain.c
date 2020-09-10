@@ -562,7 +562,7 @@ update_tab_titles()
     }
     return true;
   }
-  if (cfg.geom_sync || win_tabbar_visible()) {
+  if (sync_level() || win_tabbar_visible()) {
     // update my own list
     refresh_tab_titles(true);
     // support tabbar
@@ -805,10 +805,16 @@ win_restore_title(void)
  */
 
 // support tabbar
+int
+sync_level(void)
+{
+  return max(cfg.geom_sync, cfg.tabbar);
+}
+
 void
 win_post_sync_msg(HWND target, int level)
 {
-  if (cfg.geom_sync) {
+  if (sync_level()) {
     if (win_is_fullscreen)
       PostMessage(target, WM_USER, 0, WIN_FULLSCREEN);
     else if (IsZoomed(wnd))
@@ -961,8 +967,8 @@ win_switch(bool back, bool alternate)
   refresh_tab_titles(false);
   win_to_top(back ? get_prev_tab(alternate) : get_next_tab(alternate));
   // support tabbar
-  if (cfg.geom_sync)
-    win_post_sync_msg(back ? get_prev_tab(alternate) : get_next_tab(alternate), cfg.geom_sync);
+  if (sync_level())
+    win_post_sync_msg(back ? get_prev_tab(alternate) : get_next_tab(alternate), sync_level());
   win_update_tabbar();
 #endif
 }
@@ -1016,7 +1022,7 @@ win_gotab(uint n)
   win_to_top(tab);
 
   // reposition / resize
-  if (cfg.geom_sync) {
+  if (sync_level()) {
     win_post_sync_msg(tab, 0);  // 0: don't minimize
   }
 
@@ -1060,7 +1066,7 @@ win_synctabs(int level)
 #endif
   if (wm_user)
     return;
-  if (cfg.geom_sync >= level)
+  if (sync_level() >= level)
     EnumWindows(wnd_enum_tabs, (LPARAM)level);
 #ifdef debug_tabs
   printf("[%8p] win_synctabs end\n", wnd);
@@ -2655,13 +2661,13 @@ static struct {
         ShowWindow(wnd, SW_RESTORE);
       }
       else if (!wp && lp == WIN_TITLE) {
-        if (cfg.geom_sync || win_tabbar_visible()) {
+        if (sync_level() || win_tabbar_visible()) {
           refresh_tab_titles(false);
           // support tabbar
           win_update_tabbar();
         }
       }
-      else if (cfg.geom_sync) {
+      else if (sync_level()) {
 #ifdef debug_tabs
         printf("[%8p] switched %d,%d %d,%d\n", wnd, (INT16)LOWORD(lp), (INT16)HIWORD(lp), LOWORD(wp), HIWORD(wp));
 #endif
@@ -2676,14 +2682,14 @@ static struct {
         else
 #endif
         if (!wp) {
-          if (lp == WIN_MINIMIZE && cfg.geom_sync >= 3)
+          if (lp == WIN_MINIMIZE && sync_level() >= 3)
             ShowWindow(wnd, SW_MINIMIZE);
-          else if (lp == WIN_FULLSCREEN && cfg.geom_sync)
+          else if (lp == WIN_FULLSCREEN && sync_level())
             win_maximise(2);
-          else if (lp == WIN_MAXIMIZE && cfg.geom_sync)
+          else if (lp == WIN_MAXIMIZE && sync_level())
             win_maximise(1);
         }
-        else if (cfg.geom_sync) {
+        else if (sync_level()) {
           if (win_is_fullscreen)
             clear_fullscreen();
           if (IsZoomed(wnd))
@@ -2955,7 +2961,7 @@ static struct {
           return 0;
       }
       else
-      if (wp == HTCAPTION && (cfg.geom_sync > 0 || get_mods() == MDK_CTRL)) {
+      if (wp == HTCAPTION && (sync_level() > 0 || get_mods() == MDK_CTRL)) {
         if (win_title_menu(false))
           return 0;
       }
@@ -4677,7 +4683,7 @@ main(int argc, char *argv[])
         set_arg_option("Title", optarg);
         title_settable = false;
       when '':
-        set_arg_option("ShowTabBar", strdup("1"));
+        set_arg_option("TabBar", strdup("1"));
         set_arg_option("SessionGeomSync", optarg ?: strdup("2"));
       when 'B':
         border_style = strdup(optarg);
@@ -5426,7 +5432,7 @@ main(int argc, char *argv[])
       unsetenv("MINTTY_DY");
       si++;
     }
-    if (cfg.geom_sync) {
+    if (sync_level()) {
 #ifdef debug_tabs
       printf("[%8p] launched %d,%d %d,%d\n", wnd, sx, sy, sdx, sdy);
 #endif
@@ -5524,12 +5530,12 @@ main(int argc, char *argv[])
   }
 
   // Set up tabbar
-  if (cfg.show_tabbar) {
+  if (cfg.tabbar) {
     win_open_tabbar();
   }
 
 #ifdef use_init_position
-  if (cfg.show_tabbar)
+  if (cfg.tabbar)
     // support tabbar; however, the purpose of this handling is unclear
     win_init_position();
   else

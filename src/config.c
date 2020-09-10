@@ -206,7 +206,7 @@ const config default_cfg = {
   .menu_title_ctrl_l = "Ws",
   .menu_title_ctrl_r = "Ws",
   .geom_sync = 0,
-  .show_tabbar = false,
+  .tabbar = 0,
   .col_spacing = 0,
   .row_spacing = 0,
   .padding = 1,
@@ -482,7 +482,7 @@ options[] = {
   {"MenuTitleCtrlRight", OPT_STRING, offcfg(menu_title_ctrl_r)},
 
   {"SessionGeomSync", OPT_INT, offcfg(geom_sync)},
-  {"ShowTabBar", OPT_BOOL, offcfg(show_tabbar)},
+  {"TabBar", OPT_BOOL, offcfg(tabbar)},
   {"ColSpacing", OPT_INT, offcfg(col_spacing)},
   {"RowSpacing", OPT_INT, offcfg(row_spacing)},
   {"Padding", OPT_INT, offcfg(padding)},

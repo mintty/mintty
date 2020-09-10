@@ -198,7 +198,7 @@ However, a window move can also be done with Ctrl+Alt+click-drag.
 .TP
 \fB--tabbar\fP[\fB=\fP\fIlevel\fP]
 Activate tabbar for tab-based session switching among virtual tabs.
-This sets \fBShowTabBar=1\fP and \fBSessionGeomSync=\fP\fIlevel\fP.
+This sets \fBTabBar=1\fP and \fBSessionGeomSync=\fP\fIlevel\fP.
 Without given value the default window synchronization level is 2.
 
 .TP
@@ -620,7 +620,7 @@ using user-definable functions switch-[visible-](prev|next).
 .TP
 \fBTabbar\fP
 .br
-With setting \fBShowTabBar=1\fP, an interactive tabbar complements the 
+With setting \fBTabBar\fP, an interactive tabbar complements the 
 virtual tabs mechanism. (It works like the session switcher available 
 via extended context menu or title bar menu.)
 It is recommended to also set \fBSessionGeomSync=2\fP or higher to 
@@ -3212,10 +3212,11 @@ operation within the Virtual Tabs feature:
 \(en \fB4\fP: sync. also when window is started separately
 
 .TP
-\fBTabbar\fP (ShowTabBar=0)
-Setting \fBShowTabBar=1\fP enables an interactive tabbar as an alternative 
-session switcher.
-It is recommended to set \fBSessionGeomSync=2\fP or higher with this option.
+\fBTabbar and tab synchronization\fP (TabBar=0)
+Setting \fBTabBar=\fP\fIlevel\fP enables an interactive tabbar as 
+an alternative session switcher. It raises the effective window position 
+synchronization to the given level as if also setting 
+\fBSessionGeomSync=\fP\fIlevel\fP. It is recommended to use level 2 or higher.
 
 .TP
 \fBTabbar highlighting\fP
