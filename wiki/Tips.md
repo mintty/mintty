@@ -38,17 +38,28 @@ For example, shortcuts for access to remote machines can be created by
 invoking **[ssh](http://www.openssh.com)**. The command simply needs 
 to be appended to the target field of the shortcut’s properties:
 
-> Target: `C:\Cygwin\bin\mintty.exe /bin/ssh server`
+> Target: `C:\Cygwin64\bin\mintty.exe /bin/ssh server`
 
 The **[cygutils](http://www.cygwin.com/cygwin-ug-net/using-effectively.html#using-cygutils)** package 
 provides the **mkshortcut** utility for creating shortcuts from the command line. 
 See its manual page for details.
 
-A Windows shortcut can be associated with a **Shortcut key** so an instance 
-of mintty can be started using a hotkey. By default, an already running 
-instance would be focussed again with the associated hotkey. To have a 
-new instance started with every usage of the hotkey, use the command-line 
-option ```-D``` for mintty in the shortcut target.
+### Hotkey / Windows Shortcut key ###
+
+In a Windows shortcut (desktop or Start menu), a "Shortcut key" with 
+modifiers can be defined as a system hotkey to start an application or 
+bring it to the front.
+
+To have a new instance started with every usage of the hotkey, use the 
+command-line option ```-D``` for mintty in the shortcut target.
+
+### Hotkey / "quake mode" ###
+
+Mintty detects if activated via hotkey and will use the same hotkey to 
+minimize itself in turn. The preferred appearance of the hotkey-activated 
+terminal window can further be customized with options in the shortcut, e.g.
+
+> `C:\Cygwin64\bin\mintty.exe --pos top --size maxwidth -`
 
 ### Taskbar icons ###
 
@@ -134,7 +145,7 @@ or using Powershell commands as described in
 If you have any Linux distribution for the Windows Subsystem for Linux (WSL) 
 installed, mintty can be called from cygwin to run a WSL terminal session:
 * `mintty --WSL=Ubuntu`
-* `mintty --WSL` (for the Default distribution as set with `wslconfig /s`)
+* `mintty --WSL` (for the Default distribution as set with `wslconfig /s` or `wsl -s`)
 
 Note, the `wslbridge2` gateways need to be installed in `/bin` for this purpose 
 (see below for details).
@@ -638,8 +649,8 @@ with a value of 255, the alpha transparency values of the image will be used.
 
 Examples:
 ```
-Background=C:\cygwin\usr\share\backgrounds\tiles\rough_paper.png
--o Background='C:\cygwin\usr\share\backgrounds\tiles\rough_paper.png'
+Background=C:\cygwin64\usr\share\backgrounds\tiles\rough_paper.png
+-o Background='C:\cygwin64\usr\share\backgrounds\tiles\rough_paper.png'
 echo -ne '\e]11;*/usr/share/backgrounds/tiles/rough_paper.png\a'
 echo -ne '\e]11;_pontneuf.png,99\a'
 echo -ne '\e]11;=,99\a'
@@ -1066,7 +1077,7 @@ starting in a specific directory with a non-ASCII name,
 use this command line as a shortcut target:
 
 ```
-C:\cygwin\bin\mintty.exe -o Locale=C -o Charset=GBK /bin/bash -l -c "cd `echo D:/桌面 | iconv -f UTF-8`; exec bash"
+C:\cygwin64\bin\mintty.exe -o Locale=C -o Charset=GBK /bin/bash -l -c "cd `echo D:/桌面 | iconv -f UTF-8`; exec bash"
 ```
 
 So the initial shell, interpreting its ```cd``` parameters already in GBK 

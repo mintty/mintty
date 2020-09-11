@@ -165,7 +165,7 @@ see the description of Alt+F2.
 .TP
 \fB-s\fP, \fB--size\fP \fICOLS\fB,\fIROWS\fP
 Set the default size of the window in character columns and rows.
-(The xterm-like syntax \fICOLS\fBx\fIROWS\fP is accepted too.)
+(The xterm-like syntax \fICOLS\fP\fBx\fP\fIROWS\fP is accepted too.)
 Instead of coordinates, "maxwidth" or "maxheight" can be specified;
 this can be combined with another parameter \fB-s\fP for the other dimension.
 The dimension for which "max" is applied is ignored in further \fB-s\fP or 
@@ -295,7 +295,7 @@ the \fIwslbridge2\fP gateway implicitly
 (which should be installed in /bin for this purpose).
 If the distribution name is empty, the default WSL installation is run; 
 otherwise, it refers to the installed WSL packages as listed by the 
-Windows tool \fBwslconfig /l\fP.
+Windows tool \fBwslconfig /l\fP or \fBwsl -l\fP.
 Implies \fB--wsl -o Locale=C -o Charset=UTF-8\fP, \fB--rootfs=\fP..., 
 and \fB--icon=\fP... if a respective icon file exists for the distribution.
 
@@ -863,6 +863,13 @@ provide visible feedback for the changes.
 Function keys, special keys, and Ctrl+Shift+key combinations 
 can be redefined to generate user-defined input or invoke functions.
 See option \fBKeyFunctions\fP for details.
+
+.TP
+\fBStartup hotkey ("quake mode")\fP
+In a Windows shortcut (desktop or Start menu), a "Shortcut key" with 
+modifiers can be defined as a system hotkey to start an application or 
+bring it to the front. Mintty detects if activated via hotkey and will 
+use the same hotkey to minimize itself in turn.
 
 .SS Embedding graphics in terminal output
 

@@ -71,8 +71,9 @@ static int main_argc;
 static bool invoked_from_shortcut = false;
 wstring shortcut = 0;
 static bool invoked_with_appid = false;
-uint hotkey = 0;
-mod_keys hotkey_mods = 0;
+static uint hotkey = 0;
+static mod_keys hotkey_mods = 0;
+static HHOOK kb_hook = 0;
 
 
 //filled by win_adjust_borders:
@@ -2522,6 +2523,9 @@ show_iconwarn(wchar * winmsg)
 #define dont_debug_only_focus_messages
 #define dont_debug_only_sizepos_messages
 #define dont_debug_mouse_messages
+#define dont_debug_hook
+
+static void win_global_keyboard_hook(bool on);
 
 static LPARAM
 screentoclient(HWND wnd, LPARAM lp)
@@ -3426,13 +3430,24 @@ static struct {
         return result;
     }
 
-    when WM_SETHOTKEY: {
-      hotkey = wp & 0xFF;
-      ushort mods = wp >> 8;
-      hotkey_mods = !!(mods & HOTKEYF_SHIFT) * MDK_SHIFT
-                  | !!(mods & HOTKEYF_ALT) * MDK_ALT
-                  | !!(mods & HOTKEYF_CONTROL) * MDK_CTRL;
-    }
+    when WM_SETHOTKEY:
+#ifdef debug_hook
+      show_info(asform("WM_SETHOTKEY %X %02X", wp >> 8, wp & 0xFF));
+#endif
+      if (wp & 0xFF) {
+        // Set up implicit startup hotkey as defined via Windows shortcut
+        if (!hotkey)
+          win_global_keyboard_hook(true);
+        hotkey = wp & 0xFF;
+        ushort mods = wp >> 8;
+        hotkey_mods = !!(mods & HOTKEYF_SHIFT) * MDK_SHIFT
+                    | !!(mods & HOTKEYF_ALT) * MDK_ALT
+                    | !!(mods & HOTKEYF_CONTROL) * MDK_CTRL;
+      }
+      else {
+        hotkey = 0;
+        win_global_keyboard_hook(false);
+      }
   }
 
  /*
@@ -3441,12 +3456,6 @@ static struct {
   */
   return DefWindowProcW(wnd, message, wp, lp);
 }
-
-#define dont_hook_keyboard
-
-#ifdef hook_keyboard
-
-#define debug_hook
 
 static LRESULT CALLBACK
 hookprockbll(int nCode, WPARAM wParam, LPARAM lParam)
@@ -3518,15 +3527,20 @@ hookprockbll(int nCode, WPARAM wParam, LPARAM lParam)
   return CallNextHookEx(0, nCode, wParam, lParam);
 }
 
-void
+static void
 hook_windows(int id, HOOKPROC hookproc, bool global)
 {
-  bool hotkey_configured() {return false;}
-  if (hotkey_configured())
-    SetWindowsHookExW(id, hookproc, 0, global ? 0 : GetCurrentThreadId());
+  kb_hook = SetWindowsHookExW(id, hookproc, 0, global ? 0 : GetCurrentThreadId());
 }
 
-#endif
+static void
+win_global_keyboard_hook(bool on)
+{
+  if (on)
+    hook_windows(WH_KEYBOARD_LL, hookprockbll, true);
+  else if (kb_hook)
+    UnhookWindowsHookEx(kb_hook);
+}
 
 bool
 win_get_ime(void)
@@ -5546,9 +5560,11 @@ main(int argc, char *argv[])
 
   update_tab_titles();
 
-#ifdef hook_keyboard
-  // Install keyboard hook.
-  hook_windows(WH_KEYBOARD_LL, hookprockbll, true);
+#ifdef always_hook_keyboard
+  // Install keyboard hook if we configure an explicit startup hotkey...
+  // not implemented
+  if (hotkey_configured ...)
+    win_global_keyboard_hook(true);
 #endif
 
   if (report_winpid) {
