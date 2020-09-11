@@ -56,8 +56,9 @@ command-line option ```-D``` for mintty in the shortcut target.
 ### Hotkey / "quake mode" ###
 
 Mintty detects if activated via hotkey and will use the same hotkey to 
-minimize itself in turn. The preferred appearance of the hotkey-activated 
-terminal window can further be customized with options in the shortcut, e.g.
+minimize itself in turn, unless inhibited by shortcut override mode. 
+The preferred appearance of the hotkey-activated terminal window can 
+further be customized with options in the shortcut, e.g.
 
 > `C:\Cygwin64\bin\mintty.exe --pos top --size maxwidth -`
 

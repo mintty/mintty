@@ -3460,6 +3460,9 @@ static struct {
 static LRESULT CALLBACK
 hookprockbll(int nCode, WPARAM wParam, LPARAM lParam)
 {
+  if (term.shortcut_override)
+    return CallNextHookEx(0, nCode, wParam, lParam);
+
   LPKBDLLHOOKSTRUCT kbdll = (LPKBDLLHOOKSTRUCT)lParam;
   uint key = kbdll->vkCode;
 #ifdef debug_hook
