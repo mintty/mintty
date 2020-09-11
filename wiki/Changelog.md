@@ -3,6 +3,7 @@ Window handling
   * Optional tabbar for interactive virtual tabs session switching (#944).
   * Fixed maximised/fullscreen synchronisation among sessions/tabs.
   * Fixed themes list and interactive theme switching feedback (mintty/wsltty#251).
+  * Support system hotkey for activation in "Quake mode" (#1029).
 
 Terminal features
   * Mouse mode 1016 with pixel coordinates (xterm 360).
