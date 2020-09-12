@@ -5449,6 +5449,9 @@ main(int argc, char *argv[])
       unsetenv("MINTTY_DY");
       si++;
     }
+    if (getenv("MINTTY_TABBAR")) {
+      cfg.tabbar = max(cfg.tabbar, atoi(getenv("MINTTY_TABBAR")));
+    }
     if (sync_level()) {
 #ifdef debug_tabs
       printf("[%8p] launched %d,%d %d,%d\n", wnd, sx, sy, sdx, sdy);

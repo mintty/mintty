@@ -1023,6 +1023,8 @@ setup_sync()
       setenvi("MINTTY_DX", r.right - r.left);
       setenvi("MINTTY_DY", r.bottom - r.top);
     }
+    if (cfg.tabbar)
+      setenvi("MINTTY_TABBAR", cfg.tabbar);
   }
 }
 
