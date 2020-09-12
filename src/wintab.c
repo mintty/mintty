@@ -33,7 +33,7 @@ fit_title(HDC dc, int tab_width, wchar_t *title_in, wchar_t *title_out, int olen
     wcsncpy(title_out, title_in, olen);
     return title_len;
   }
-  wcsncpy(title_out, L"\u2026\u2026", olen);
+  wcsncpy(title_out, W("\u2026\u2026"), olen);
   title_out[0] = title_in[0];
   GetTextExtentPoint32W(dc, title_out, 2, &text_size);
   text_width = text_size.cx;
@@ -158,7 +158,7 @@ container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
   }
   else if (msg == WM_CREATE) {
     //printf("tabbar con_proc WM_CREATE\n");
-    tab_wnd = CreateWindowExA(0, WC_TABCONTROL, "", WS_CHILD | TCS_FIXEDWIDTH | TCS_OWNERDRAWFIXED, 0, 0, 0, 0, hwnd, 0, inst, NULL);
+    tab_wnd = CreateWindowExA(0, WC_TABCONTROLA, "", WS_CHILD | TCS_FIXEDWIDTH | TCS_OWNERDRAWFIXED, 0, 0, 0, 0, hwnd, 0, inst, NULL);
 #if CYGWIN_VERSION_API_MINOR >= 74
     SetWindowSubclass(tab_wnd, tab_proc, 0, 0);
 #endif
