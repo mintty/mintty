@@ -4,6 +4,7 @@ Window handling
   * Fixed maximised/fullscreen synchronisation among sessions/tabs.
   * Fixed themes list and interactive theme switching feedback (mintty/wsltty#251).
   * Support system hotkey for activation in "Quake mode" (#1029).
+  * Fixed state inconsistencies after minimizing synchronized windows (#699, ~#944).
 
 Terminal features
   * Mouse mode 1016 with pixel coordinates (xterm 360).

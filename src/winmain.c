@@ -3279,18 +3279,30 @@ static struct {
     when WM_MOVE:
       // enable coupled moving of window tabs on Win+Shift moving;
       // (#600#issuecomment-366643426, if SessionGeomSync ≥ 2);
-      // avoid mutual repositioning (endless flickering)
-      if (!moving)
+      // avoid mutual repositioning (endless flickering);
+      // as an additional condition, position synchronization shall 
+      // only be done if the window has the focus; otherwise this 
+      // has bad impact when a window is (tried to be) restored 
+      // after the window set was minimized; the taskbar icons 
+      // would inconsistently be disabled except one, and after closing 
+      // windows, remaining ones would not be restored at all anymore, 
+      // also the window title sometimes appeared mysteriously corrupted
+      //printf("WM_MOVE moving %d focus %d\n", moving, GetFocus() == wnd);
+      if (!moving && GetFocus() == wnd)
         win_synctabs(2);
       moving = false;
+
+#define WP ((WINDOWPOS *) lp)
+
+    when WM_WINDOWPOSCHANGING:
+      trace_resize(("# WM_WINDOWPOSCHANGING %3X (resizing %d) %d %d @ %d %d\n", WP->flags, resizing, WP->cy, WP->cx, WP->y, WP->x));
 
     when WM_WINDOWPOSCHANGED: {
       if (disable_poschange)
         // avoid premature Window size adaptation (#649?)
         break;
 
-#     define WP ((WINDOWPOS *) lp)
-      trace_resize(("# WM_WINDOWPOSCHANGED (resizing %d) %d %d @ %d %d\n", resizing, WP->cy, WP->cx, WP->y, WP->x));
+      trace_resize(("# WM_WINDOWPOSCHANGED %3X (resizing %d) %d %d @ %d %d\n", WP->flags, resizing, WP->cy, WP->cx, WP->y, WP->x));
       if (per_monitor_dpi_aware == DPI_AWAREV1) {
         // not necessary for DPI handling V2
         bool dpi_changed = true;
