@@ -566,6 +566,19 @@ to scroll line-by-line or the \fBPageUp\fP and \fBPageDown\fP keys to scroll
 page-by-page.
 With option \fBKeyFunctions\fP, user-defined keys can be used for scrolling.
 
+If the alternate screen is active, instead of scrolling in the scrollback 
+buffer, the mouse wheel sends virtual cursor key escape sequences 
+("mousewheel reporting", roughly corresponds to xterm alternateScroll mode). 
+This causes many applications, including less or bash, to scroll in an 
+application-specific way (e.g. in the shell history).
+In both cases (scrollback and application scrolling), the number of lines 
+per mouse notch is taken from Windows system settings, typically 3.
+With setting \fBZoomMouse=false\fP, holding the \fBControl\fP key while 
+moving the mouse wheel scrolls by 1 line.
+
+Note that all modes of mouse operation are overridden by 
+various "mouse tracking" modes enabled by escape sequences.
+
 .SS Searching in the text and scrollback buffer
 
 The \fBSearch\fP menu command and \fBAlt+F3\fP shorcut open a search bar 

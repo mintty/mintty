@@ -6,6 +6,9 @@ Window handling
   * Support system hotkey for activation in "Quake mode" (#1029).
   * Fixed state inconsistencies after minimizing synchronized windows (#699, ~#944).
 
+Mouse handling
+  * If ZoomMouse=false, Ctrl+mouse-wheel scrolls by 1 line per notch (#1032).
+
 Terminal features
   * Mouse mode 1016 with pixel coordinates (xterm 360).
   * XTPUSHSGR foreground/background changed to 30/31 (xterm 357).
