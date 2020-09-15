@@ -2698,6 +2698,15 @@ static struct {
             clear_fullscreen();
           if (IsZoomed(wnd))
             win_maximise(0);
+#ifdef attempt_to_restore_tabset_consistently
+          // if a set of synchronized windows (tab set) is minimized, 
+          // one window restored and closed, the others remain minimized;
+          // this is a failed attempt to fix that inconsistency
+          //printf("WM_USER sync iconic %d\n", IsIconic(wnd));
+          if (IsIconic(wnd))
+            ShowWindow(wnd, SW_RESTORE);
+#endif
+
           // (INT16) to handle multi-monitor negative coordinates properly
           SetWindowPos(wnd, null,
                        //GET_X_LPARAM(lp), GET_Y_LPARAM(lp),
