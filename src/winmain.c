@@ -2885,7 +2885,10 @@ static struct {
         }
         // flush notification to handle auto-repeat click on scrollbar,
         // as messages are not dispatched to the application while 
-        // holding the mouse button on the scrollbar
+        // holding the mouse button on the scrollbar;
+        // wait a moment first: try to flush the pipe to 
+        // avoid incomplete delivery (#1033); 1ms is not sufficient
+        usleep(5555);
         child_proc();
       }
 
