@@ -572,7 +572,8 @@ buffer, the mouse wheel sends virtual cursor key escape sequences
 This causes many applications, for example \fIless\fP, to scroll in an 
 application-specific way (e.g. in the shell history).
 In both cases (scrollback and application scrolling), the number of lines 
-per mouse notch is taken from Windows system settings, typically 3.
+per mouse notch is taken from Windows system settings, typically 3; 
+this can be overriden by setting \fBLinesPerMouseWheelNotch\fP.
 With setting \fBZoomMouse=false\fP, holding the \fBControl\fP key while 
 moving the mouse wheel scrolls by 1 line.
 
@@ -2917,6 +2918,14 @@ Ctrl+Shift+V will enter a Control+V character.
 .TP
 \fBMouse zooming\fP (ZoomMouse=yes)
 Enabling font zooming with \fBCtrl+mouse-wheel/middle-mouse-click\fP.
+
+.TP
+\fBScroll lines per mouse wheel notch\fP (LinesPerMouseWheelNotch=0)
+With this setting, the number of lines counted per notch of the mouse wheel 
+can be set to a maximum of the terminal height - 1. This applies to 
+scrollback scrolling as well as to mousewheel reporting but not to 
+mouse tracking reports.
+The default is to take the value from a system setting, typically 3.
 
 .TP
 \fBDisable Shift-coupled implicit font zooming\fP (ZoomFontWithWindow=yes)

@@ -8,6 +8,7 @@ Window handling
 
 Mouse handling
   * If ZoomMouse=false, Ctrl+mouse-wheel scrolls by 1 line per notch (#1032).
+  * Configurable number of scroll lines per mouse wheel notch (#1032).
 
 Terminal features
   * Mouse mode 1016 with pixel coordinates (xterm 360).
@@ -18,6 +19,7 @@ Terminal features
 Configuration
   * New option TabBar and command-line option --tabbar (#944).
   * New user-definable functions clear-title, refresh.
+  * New option LinesPerMouseWheelNotch (#1032).
   * Option KeyFunctions: flexible specification of modifiers (in any order).
 
 ### 3.3.0 (6 August 2020) ###

@@ -129,6 +129,7 @@ const config default_cfg = {
   .click_target_mod = MDK_SHIFT,
   .hide_mouse = true,
   .elastic_mouse = false,
+  .lines_per_notch = 0,
   // Window
   .cols = 80,
   .rows = 24,
@@ -390,6 +391,7 @@ options[] = {
   {"ClickTargetMod", OPT_MOD, offcfg(click_target_mod)},
   {"HideMouse", OPT_BOOL, offcfg(hide_mouse)},
   {"ElasticMouse", OPT_BOOL, offcfg(elastic_mouse)},
+  {"LinesPerMouseWheelNotch", OPT_INT, offcfg(lines_per_notch)},
 
   // Window
   {"Columns", OPT_INT, offcfg(cols)},

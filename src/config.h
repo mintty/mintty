@@ -123,6 +123,7 @@ typedef struct {
   char click_target_mod;
   bool hide_mouse;
   bool elastic_mouse;
+  int lines_per_notch;
   // Window
   int cols, rows;
   int scrollback_lines;

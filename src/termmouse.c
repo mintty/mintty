@@ -773,9 +773,12 @@ term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys mods,
   else if (!(mods & ~(MDK_SHIFT | MDK_CTRL))) {
     if (mods & MDK_CTRL)
       lines_per_notch = 1;
+    else if (cfg.lines_per_notch > 0)
+      lines_per_notch = min(cfg.lines_per_notch, term.rows - 1);
+
     // Scroll, taking the lines_per_notch setting into account.
     // Scroll by a page per notch if setting is -1 or Shift is pressed.
-    int lines_per_page = max(1, term.rows - 1);
+    int lines_per_page = max(1, term.rows);
     if (lines_per_notch == -1 || mods & MDK_SHIFT)
       lines_per_notch = lines_per_page;
     int lines = lines_per_notch * accu / NOTCH_DELTA;
