@@ -770,7 +770,7 @@ term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys mods,
       }
     }
   }
-  else if (!(mods & ~(MDK_SHIFT | MDK_CTRL))) {
+  else if (!(mods & ~(MDK_SHIFT | MDK_CTRL | MDK_ALT))) {
     if (mods & MDK_CTRL)
       lines_per_notch = 1;
     else if (cfg.lines_per_notch > 0)
@@ -785,7 +785,7 @@ term_mouse_wheel(bool horizontal, int delta, int lines_per_notch, mod_keys mods,
     //printf("mouse lines %d per notch %d accu %d\n", lines, lines_per_notch, accu);
     if (lines) {
       accu -= lines * NOTCH_DELTA / lines_per_notch;
-      if (!term.on_alt_screen || term.show_other_screen) {
+      if ((!term.on_alt_screen || term.show_other_screen) && !(mods & MDK_ALT)) {
         if (strstr(cfg.suppress_wheel, "scrollwin"))
           return;
         term_scroll(0, -lines);

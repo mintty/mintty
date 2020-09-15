@@ -9,6 +9,7 @@ Window handling
 Mouse handling
   * If ZoomMouse=false, Ctrl+mouse-wheel scrolls by 1 line per notch (#1032).
   * Configurable number of scroll lines per mouse wheel notch (#1032).
+  * Support mousewheel reporting (e.g. for shell history scrolling) in normal screen mode (~#1032).
 
 Terminal features
   * Mouse mode 1016 with pixel coordinates (xterm 360).
