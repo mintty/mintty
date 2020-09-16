@@ -182,14 +182,16 @@ position, and receive scrollbar events as control sequences.
 This mode is up to future revision. It is currently enabled or disabled 
 implicitly, there is no explicit mode setting sequence.
 
-The application scrollbar indicates a scrollbar view ("scroll offset") 
-within an assumed span of a virtual document ("document height", as 
-maintained by the application). The height of the view ("viewport height") 
+The application scrollbar indicates a scrollbar view (scroll offset _position_) 
+within an assumed span of a virtual document (document _size_, as 
+maintained by the application). The height of the view (viewport _height_) 
 defaults to the actual terminal size (rows); its difference to the 
-terminal size is kept when resizing the terminal. Control sequences 
-can set up the current view position ("scroll offset" from 1 to total size) 
-as well as the total virtual document size ("document height" in assumed lines) 
-and optionally the "viewport height".
+terminal size is kept when resizing the terminal.
+
+Control sequences can set the current view position (scroll offset _position_ 
+of the top end of the marked area in the scrollbar, 
+from 1 to _size_ − _height_ + 1) as well as the total virtual document _size_ 
+(in assumed lines) and optionally the viewport _height_.
 
 | **sequence**                       | **scrollbar**                                        |
 |:-----------------------------------|:-----------------------------------------------------|
@@ -201,6 +203,7 @@ and optionally the "viewport height".
 Relative scrollbar movement and absolute positioning are reported with 
 special sequences; for details see 
 [Keycodes – Application scrollbar events](https://github.com/mintty/mintty/wiki/Keycodes#application-scrollbar-events).
+See there also for an illustrated explanation of the meaning of _pos_ vs _size_ values.
 
 
 ## Mousewheel reporting ##

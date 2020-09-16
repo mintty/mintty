@@ -248,6 +248,32 @@ the modifiers like for other function keys.
 | **Top**         | `^[[0#d`        |                                  |
 | **Bottom**      | `^[[`_size_`#d` | configured virtual _size_        |
 
+See the screenshots for an illustration of the meaning of _pos_ vs _size_ values.
+
+<img align=left src=https://github.com/mintty/mintty/wiki/application-scrollbar-middle.png>
+The position of the _viewport_ (the marked area of the scrollbar) is 
+measured at its top. So when setting up position 50 in size 100 (`^[[50;100;20#t`),
+the viewport is not centered but begins in the middle of the scrollbar.
+<br clear=all>
+
+<img align=left src=https://github.com/mintty/mintty/wiki/application-scrollbar-bottom.png>
+Also, when the viewport is dragged to the bottom, it ends at the total size 
+but the reported position is its beginning (81 in the example, mouse button 
+still held). So the maximum position reported after pulling or dragging the 
+viewport is _size_ − _height_ + 1, but the position reported when placing it 
+directly to the bottom (from the scrollbar menu) will yet be full _size_.
+(Likewise the minimum position reported when dragging is 1 but the position 
+reported for placing to the top is 0.)
+<br clear=all>
+
+Note also that after dragging and releasing the mouse button, the viewport 
+position flips back to its previous place until the application interprets 
+the report and sets the position. (This is to prevent looping interference 
+with updated positions triggering additional system events.)
+
+For the sequences to set up application scrollbar mode and change its parameters see 
+[Control Sequences – Application scrollbar](https://github.com/mintty/mintty/wiki/CtrlSeqs#application-scrollbar).
+
 
 ## Mousewheel ##
 
