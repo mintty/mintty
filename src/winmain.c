@@ -2892,11 +2892,12 @@ static struct {
             child_printf("\e[%u#d", info.nTrackPos);
           }
         }
-        // flush notification to handle auto-repeat click on scrollbar,
-        // as messages are not dispatched to the application while 
-        // holding the mouse button on the scrollbar;
-        // wait a moment first: try to flush the pipe to 
-        // avoid incomplete delivery (#1033); 1ms is not sufficient
+        // while holding the mouse button on the scrollbar (e.g. dragging), 
+        // messages are not dispatched to the application;
+        // so in order to make any response effective on the screen, 
+        // we need to call the child_proc function here;
+        // additional delay avoids incomplete delivery of such echo (#1033),
+        // 1ms is not sufficient
         usleep(5555);
         child_proc();
       }
