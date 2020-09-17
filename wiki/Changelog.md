@@ -1,10 +1,14 @@
-Window handling
-  * Fixed offset of saved image.
+### 3.4.0 (19 September 2020) ###
+
+Window handling / Tabs
   * Optional tabbar for interactive virtual tabs session switching (#944).
   * Fixed maximised/fullscreen synchronisation among sessions/tabs.
+  * Fixed state inconsistencies after minimizing synchronized windows (#699, ~#944).
+
+Window handling
+  * Fixed offset of saved image.
   * Fixed themes list and interactive theme switching feedback (mintty/wsltty#251).
   * Support system hotkey for activation in "Quake mode" (#1029).
-  * Fixed state inconsistencies after minimizing synchronized windows (#699, ~#944).
 
 Mouse handling
   * If ZoomMouse=false, Ctrl+mouse-wheel scrolls by 1 line per notch (#1032).

@@ -251,12 +251,14 @@ the modifiers like for other function keys.
 See the screenshots for an illustration of the meaning of _pos_ vs _size_ values.
 
 <img align=left src=https://github.com/mintty/mintty/wiki/application-scrollbar-middle.png>
+
 The position of the _viewport_ (the marked area of the scrollbar) is 
 measured at its top. So when setting up position 50 in size 100 (`^[[50;100;20#t`),
 the viewport is not centered but begins in the middle of the scrollbar.
 <br clear=all>
 
 <img align=left src=https://github.com/mintty/mintty/wiki/application-scrollbar-bottom.png>
+
 Also, when the viewport is dragged to the bottom, it ends at the total size 
 but the reported position is its beginning (81 in the example, mouse button 
 still held). So the maximum position reported after pulling or dragging the 

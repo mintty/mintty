@@ -1111,7 +1111,7 @@ a login shell), Alt+F2 starts again a login terminal, whose login shell
 is likely to reset the working directory to the home directory.
 
 
-## Virtual Tabs ##
+## Virtual Tabs and Tabbar ##
 
 The Virtual Tabs feature provides a list of all running mintty sessions 
 as well as configurable launch parameters for new sessions.
@@ -1126,6 +1126,11 @@ and `SessionGeomSync`.
 Distinct sets of sessions can be set up with the setting `-o Class=...`.
 For flexible window grouping, this setting supports the same placeholders 
 as the `AppID` option.
+
+### Tabbar ###
+
+Tabs can also be switched from a tabbar, activated with setting `Tabbar` to 
+a recommended value of 2 or more (use 4 or 9 for maximal tab synchronization).
 
 
 ## Multi-monitor support ##

@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Thu Aug  6 15:34:31 2020 -->
+<!-- CreationDate: Thu Sep 17 18:56:57 2020 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -27,7 +27,7 @@
 <a href="#OPTIONS">OPTIONS</a><br>
 <a href="#USAGE">USAGE</a><br>
 <a href="#CONFIGURATION">CONFIGURATION</a><br>
-<a href="#LIMITATIONS">LIMITATIONS</a><br>
+<a href="#SCOPE AND LIMITATIONS">SCOPE AND LIMITATIONS</a><br>
 <a href="#SEE ALSO">SEE ALSO</a><br>
 <a href="#LICENSE">LICENSE</a><br>
 <a href="#CONTACT">CONTACT</a><br>
@@ -255,16 +255,18 @@ window, see the description of Alt+F2.</p>
 
 <p style="margin-left:22%;">Set the default size of the
 window in character columns and rows. (The xterm-like syntax
-<i>COLS</i><b>x</b><i>ROWS</i> <b>is accepted too.) Instead
-of coordinates, &quot;maxwidth&quot; or
-&quot;maxheight&quot; can be specified; this can be combined
-with another parameter -s for the other dimension. The
-dimension for which &quot;max&quot; is applied is ignored in
-further -s or -p parameters. For example, mintty -s maxwidth
--p 0,0 -s 0,10 will start a window at full screen width,
-positioned at the top of the screen, with 10 lines.</b></p>
+<i>COLS</i><b>x</b><i>ROWS</i> is accepted too.) Instead of
+coordinates, &quot;maxwidth&quot; or &quot;maxheight&quot;
+can be specified; this can be combined with another
+parameter <b>-s</b> for the other dimension. The dimension
+for which &quot;max&quot; is applied is ignored in further
+<b>-s</b> or <b>-p</b> parameters. For example, <b>mintty -s
+maxwidth -p 0,0 -s 0,10</b> will start a window at full
+screen width, positioned at the top of the screen, with 10
+lines.</p>
 
-<p style="margin-left:11%;"><b>--nobidi, --nortl</b></p>
+<p style="margin-left:11%;"><b>--nobidi</b>,
+<b>--nortl</b></p>
 
 <p style="margin-left:22%;">Disable bidi display
 (right-to-left support). Same as <b>-o Bidi=0</b>.</p>
@@ -292,6 +294,15 @@ only a frame or no border. This feature is only available on
 the command line. Note that frame border operations are also
 disabled. However, a window move can also be done with
 Ctrl+Alt+click-drag.</p>
+
+
+<p style="margin-left:11%;"><b>--tabbar</b>[<b>=</b><i>level</i>]</p>
+
+<p style="margin-left:22%;">Activate tabbar for tab-based
+session switching among virtual tabs. This sets
+<b>TabBar=1</b> and <b>SessionGeomSync=</b><i>level</i>.
+Without given value the default window synchronization level
+is 2.</p>
 
 <p style="margin-left:11%;"><b>-u</b>, <b>--utmp</b></p>
 
@@ -411,10 +422,10 @@ other parameters as appropriate and involving the
 installed in /bin for this purpose). If the distribution
 name is empty, the default WSL installation is run;
 otherwise, it refers to the installed WSL packages as listed
-by the Windows tool <b>wslconfig /l</b>. Implies <b>--wsl -o
-Locale=C -o Charset=UTF-8</b>, <b>--rootfs=</b>..., and
-<b>--icon=</b>... if a respective icon file exists for the
-distribution.</p>
+by the Windows tool <b>wslconfig /l</b> or <b>wsl -l</b>.
+Implies <b>--wsl -o Locale=C -o Charset=UTF-8</b>,
+<b>--rootfs=</b>..., and <b>--icon=</b>... if a respective
+icon file exists for the distribution.</p>
 
 <p style="margin-left:11%;"><b>--WSLmode</b> <i>WSL
 DISTRIBUTION NAME</i></p>
@@ -820,6 +831,32 @@ the scrollbar, the mouse wheel, or the keyboard. Hold the
 page-by-page. With option <b>KeyFunctions</b>, user-defined
 keys can be used for scrolling.</p>
 
+<p style="margin-left:11%; margin-top: 1em">If the
+alternate screen is active, instead of scrolling in the
+scrollback buffer, the mouse wheel sends virtual cursor key
+escape sequences (&quot;mousewheel reporting&quot;, roughly
+corresponds to xterm alternateScroll mode). This causes many
+applications, for example <i>less</i>, to scroll in an
+application-specific way (e.g. in the shell history). In
+both cases (scrollback and application scrolling), the
+number of lines per mouse notch is taken from Windows system
+settings, typically 3; this can be overriden by setting
+<b>LinesPerMouseWheelNotch</b>. With setting
+<b>ZoomMouse=false</b>, holding the <b>Control</b> key while
+moving the mouse wheel scrolls by 1 line.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Scrollback
+scrolling can be overridden dynamically to enforce
+mousewheel reporting in normal screen mode (i.e. not
+alternate screen) by holding the <b>Alt</b> key
+additionally. So for example shell history can be scrolled
+with Control+Alt+mouse-wheel.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Note that all
+modes of mouse operation are overridden by various
+&quot;mouse tracking&quot; modes enabled by escape
+sequences.</p>
+
 <p style="margin-left:11%; margin-top: 1em"><b>Searching in
 the text and scrollback buffer</b> <br>
 The <b>Search</b> menu command and <b>Alt+F3</b> shorcut
@@ -884,6 +921,26 @@ Class=...</b>.</p>
 can be switched quickly with user-defined key assignments,
 using user-definable functions
 switch-[visible-](prev|next).</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="11%"></td>
+<td width="9%">
+
+
+<p><b>Tabbar</b></p></td>
+<td width="2%"></td>
+<td width="78%">
+
+
+<p>With setting <b>TabBar</b>, an interactive tabbar
+complements the virtual tabs mechanism. (It works like the
+session switcher available via extended context menu or
+title bar menu.) It is recommended to also set
+<b>SessionGeomSync=2</b> or higher to achieve a tabbed
+window behaviour.</p></td></tr>
+</table>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Closing a
 session</b> <br>
@@ -1124,6 +1181,16 @@ and Ctrl+Shift+key combinations can be redefined to generate
 user-defined input or invoke functions. See option
 <b>KeyFunctions</b> for details.</p>
 
+<p style="margin-left:11%;"><b>Startup hotkey (&quot;quake
+mode&quot;)</b></p>
+
+<p style="margin-left:22%;">In a Windows shortcut (desktop
+or Start menu), a &quot;Shortcut key&quot; with modifiers
+can be defined as a system hotkey to start an application or
+bring it to the front. Mintty detects if activated via
+hotkey and will use the same hotkey to minimize itself in
+turn, unless inhibited by shortcut override mode.</p>
+
 <p style="margin-left:11%; margin-top: 1em"><b>Embedding
 graphics in terminal output</b> <br>
 The Sixel graphics support feature facilitates a range of
@@ -1152,11 +1219,11 @@ TIFF, BMP, Exif.</p>
 graphics terminal emulation</b> <br>
 Mintty supports Tektronix 4014 mode. It switches to Tek
 emulation on the xterm sequence DECSET 38
-(&lsquo;\[?38h&lsquo;). It is suggested to adjust the window
-size to the Tektronix 4010 resolution and aspect ratio
-before (&lsquo;echo -en &quot;\[4;$780;$1024t&quot;&lsquo;).
-The <b>tek</b> utility available in the mintty utils
-repository
+(&lsquo;\e[?38h&lsquo;). It is suggested to adjust the
+window size to the Tektronix 4010 resolution and aspect
+ratio before (&lsquo;echo -en
+&quot;\e[4;780;1024t&quot;&lsquo;). The <b>tek</b> utility
+available in the mintty utils repository
 <i><a href="https://github.com/mintty/utils">https://github.com/mintty/utils</a></i>
 helps to enter Tek mode and set up some environment
 information properly.</p>
@@ -1193,6 +1260,10 @@ path name using POSIX syntax (forward slashes).</p>
 <p style="margin-left:11%; margin-top: 1em">If Shift is
 held, the function also opens the HTML page.</p>
 
+<p style="margin-left:11%; margin-top: 1em">Filename
+pattern and location are configurable (setting
+<b>SaveFilename</b>).</p>
+
 <p style="margin-left:11%; margin-top: 1em"><b>Image dump
 of terminal contents</b> <br>
 Mintty can save the visual contents of the terminal screen
@@ -1202,6 +1273,10 @@ functions. The current terminal dimensions are used for the
 image size except in Tek mode, where one of the original Tek
 sizes is used (depending on whether 12-bit pixel addresses
 are in effect).</p>
+
+<p style="margin-left:11%; margin-top: 1em">Filename
+pattern and location are configurable (setting
+<b>SaveFilename</b>).</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Diagnostic
 support <br>
@@ -3009,12 +3084,12 @@ optional whitespace indentation. <br>
 are described as follows: <br>
 &ndash; function keys F1...F24 <br>
 &ndash; modified function keys or special keys (see below),
-preceded with a combination of C, A, S, W, U, Y, in this
-order, indicating Ctrl, Alt, Shift, Win, Super, Hyper as
-combined with the key, attached with a &quot;+&quot;
-separator, e.g. <b>CS+F9</b>; or a prefix &quot;*&quot; that
-applies the definition for all modified variations of the
-key, e.g. <b>*Menu</b> <br>
+preceded with a combination of C, A, S, W, U, Y, indicating
+Ctrl, Alt, Shift, Win, Super, Hyper as combined with the
+key, attached with a &quot;+&quot; separator, e.g.
+<b>CS+F9</b>; or a prefix &quot;*&quot; that applies the
+definition for all modified variations of the key, e.g.
+<b>*Menu</b> <br>
 &ndash; special keys (some of which do not occur on typical
 keyboards) and keypad keys, as well as modified special and
 keypad keys; Space, Enter, Esc and Tab are only considered
@@ -3133,6 +3208,7 @@ scrollback <br>
 mode <br>
 &ndash; <b>copy-title</b>: copies the window title to the
 clipboard <br>
+&ndash; <b>clear-title</b>: clears the window title <br>
 &ndash; <b>lock-title</b>: locks the window title from being
 changed <br>
 &ndash; <b>reset</b>: resets the terminal <br>
@@ -3156,6 +3232,7 @@ HTML file <br>
 &ndash; <b>print-screen</b>: print screen contents <br>
 &ndash; <b>toggle-bidi</b>: toggles (global) bidi disabling
 <br>
+&ndash; <b>refresh</b>: refresh terminal display <br>
 &ndash; <b>void</b>: do nothing <br>
 &ndash; <b>super</b>: use this key as Super modifier key
 <br>
@@ -3231,6 +3308,10 @@ has a Ctrl+_ assignment already <br>
 &ndash; <b>KeyFunctions=c:copy;v:paste</b> in combination
 with setting <b>-o CtrlExchangeShift=true</b> will assign
 copy/paste to ^C and ^V for Windows addicts <br>
+&ndash;
+<b>KeyFunctions=AS+Insert:paste-path;AS+KP_Insert:paste-path</b>
+will always try to convert pasted paths to POSIX syntax on
+Alt+Shift+Insert <br>
 &ndash; <b>KeyFunctions=A+Enter:void;A+KP_Enter:</b> will
 disable zooming on Alt+Enter and also disable it on
 Alt+keypad-Enter but enter ESC Return in the latter case
@@ -3243,6 +3324,27 @@ modifiers to it</p>
 
 <table width="100%" border="0" rules="none" frame="void"
        cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="22%"></td>
+<td width="-14%"></td>
+<td width="7%"></td>
+<td width="85%">
+
+
+<p>&ndash;
+<b>KeyFunctions=A+Left:switch-prev;A+Right:switch-next;\</b></p> </td></tr>
+<tr valign="top" align="left">
+<td width="22%"></td>
+<td width="-14%"></td>
+<td width="7%"></td>
+<td width="85%">
+
+
+
+<p><b>A+C+Left:switch-visible-prev;A+C+Right:switch-visible-next</b>
+enables window switching with [Ctrl+]Alt+Left/Right keys on
+the &quot;editing keypad&quot; (prefix KP_ for the numeric
+keypad)</p> </td></tr>
 <tr valign="top" align="left">
 <td width="22%"></td>
 <td width="-14%"></td>
@@ -3283,8 +3385,7 @@ red.</p>
 
 <p style="margin-left:22%; margin-top: 1em">By default,
 this is unset, which means that the cursor colour does not
-change. The colour can also be changed using xterm&rsquo;s
-OSC 4 control sequence with colour number 262.</p>
+change.</p>
 
 <p style="margin-left:11%;"><b>ANSI colours</b></p>
 
@@ -3470,6 +3571,16 @@ Control+V character.</p>
 
 <p style="margin-left:22%;">Enabling font zooming with
 <b>Ctrl+mouse-wheel/middle-mouse-click</b>.</p>
+
+<p style="margin-left:11%;"><b>Scroll lines per mouse wheel
+notch</b> (LinesPerMouseWheelNotch=0)</p>
+
+<p style="margin-left:22%;">With this setting, the number
+of lines counted per notch of the mouse wheel can be set to
+a maximum of the terminal height - 1. This applies to
+scrollback scrolling as well as to mousewheel reporting but
+not to mouse tracking reports. The default is to take the
+value from a system setting, typically 3.</p>
 
 <p style="margin-left:11%;"><b>Disable Shift-coupled
 implicit font zooming</b> (ZoomFontWithWindow=yes)</p>
@@ -3875,8 +3986,26 @@ switching/launching a session <br>
 &ndash; <b>4</b>: sync. also when window is started
 separately</p>
 
-<h2>LIMITATIONS
-<a name="LIMITATIONS"></a>
+<p style="margin-left:11%;"><b>Tabbar and tab
+synchronization</b> (TabBar=0)</p>
+
+<p style="margin-left:22%;">Setting
+<b>TabBar=</b><i>level</i> enables an interactive tabbar as
+an alternative session switcher. It raises the effective
+window position synchronization to the given level as if
+also setting <b>SessionGeomSync=</b><i>level</i>. It is
+recommended to use level 2 or higher.</p>
+
+<p style="margin-left:11%;"><b>Tabbar highlighting</b></p>
+
+<p style="margin-left:22%;">With these settings, colour
+highlighting of the active tab in the tabbar can be
+configured. <br>
+&ndash; <b>TabForegroundColour</b>= <br>
+&ndash; <b>TabBackgroundColour</b>=</p>
+
+<h2>SCOPE AND LIMITATIONS
+<a name="SCOPE AND LIMITATIONS"></a>
 </h2>
 
 

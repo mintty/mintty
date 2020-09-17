@@ -30,6 +30,7 @@ Terminal input and interaction features
 Window handling features and desktop integration
 * Colour schemes / Theme file support. Background texture and image support.
 * Virtual Tabs / session switcher and launcher.
+* Tabbar to switch virtual tabs for a tabbed window experience.
 * Taskbar tasks (“jump list”) configuration. Task grouping configuration.
 * Flexible fullscreen, fullsize and border options.
 * Screen and scrollback buffer search.
