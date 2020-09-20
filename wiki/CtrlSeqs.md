@@ -341,7 +341,7 @@ The following _OSC_ ("operating system command") sequences can be used to change
 | `^[]7770;^G`           | default             |
 
 As usual, OSC sequences can also be terminated with `^[\` (_ST_, the string terminator) instead of `^G`.
-When the font size is queried, a sequence that would restore the current size is sent, terminated with _ST_: `^[]7770;`_num_`^[\`.
+When the font size is queried, a sequence that would restore the current font size is sent.
 
 
 ## Font and window size ##
@@ -358,7 +358,7 @@ The following _OSC_ ("operating system command") sequences can be used to change
 
 The window size is adapted to zoom with the font size, so the terminal character geometry is kept if possible.
 As usual, OSC sequences can also be terminated with `^[\` (_ST_, the string terminator) instead of `^G`.
-When the font size is queried, a sequence that would restore the current size is sent, terminated with _ST_: `^[]7777;`_num_`^[\`.
+When the font size is queried, a sequence that would restore the current font and window size is sent.
 
 
 ## Locale ##
