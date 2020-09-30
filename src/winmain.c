@@ -3513,7 +3513,10 @@ hookprockbll(int nCode, WPARAM wParam, LPARAM lParam)
   if (is_hooked_hotkey(wParam, key, get_mods())) {
     if (GetFocus() == wnd && IsWindowVisible(wnd)) {
       ShowWindow(wnd, SW_SHOW);  // in case it was started with -w hide
-      ShowWindow(wnd, SW_HIDE);
+      // put the window away
+      //ShowWindow(wnd, SW_HIDE);
+      // rather minimize and keep icon in taskbar (#1035)
+      ShowWindow(wnd, SW_MINIMIZE);
     }
     else {
       // These do not work:

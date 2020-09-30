@@ -1,6 +1,9 @@
 Terminal features
   * Fixed injected false visual tab indication (#1036).
 
+Window handling
+  * Keep hotkey-started window in taskbar (#1035).
+
 ### 3.4.0 (19 September 2020) ###
 
 Window handling / Tabs
