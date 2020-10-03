@@ -3264,9 +3264,14 @@ static struct {
           if (zoom_token < 1)  // accept overriding zoom_token 4
             zoom_token = 1;
 #endif
+        bool ctrl = GetKeyState(VK_CONTROL) & 0x80;
         bool scale_font = (cfg.zoom_font_with_window || zoom_token > 2)
                        && (zoom_token > 0) && (GetKeyState(VK_SHIFT) & 0x80)
-                       && !default_size_token;
+                       && !default_size_token
+                       // override font zooming to support FancyZones
+                       // (#487, microsoft/PowerToys#1050)
+                       && !ctrl
+                       ;
         //printf("WM_SIZE scale_font %d zoom_token %d\n", scale_font, zoom_token);
         win_adapt_term_size(false, scale_font);
         if (zoom_token > 0)

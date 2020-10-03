@@ -4,6 +4,7 @@ Terminal features
 
 Window handling
   * Keep hotkey-started window in taskbar (#1035).
+  * Override font zooming also with Ctrl, to support FancyZones (#487).
 
 ### 3.4.0 (19 September 2020) ###
 
