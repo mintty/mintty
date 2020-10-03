@@ -1,5 +1,6 @@
 Terminal features
   * Fixed injected false visual tab indication (#1036).
+  * Escape sequences for stack of colours (XTPUSH/POP/REPORTCOLORS, xterm 357).
 
 Window handling
   * Keep hotkey-started window in taskbar (#1035).
