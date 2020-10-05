@@ -4992,6 +4992,7 @@ main(int argc, char *argv[])
 #ifdef wslbridge2
     argc += start_home;
 #endif
+    argc += 6;  // LANG, LC_CTYPE, LC_ALL
 
     char ** new_argv = newn(char *, argc + 8 + start_home + (wsltty_appx ? 2 : 0));
     char ** pargv = new_argv;
@@ -5029,6 +5030,12 @@ main(int argc, char *argv[])
 #endif
     *pargv++ = "-e";
     *pargv++ = "APPDATA";
+    *pargv++ = "-e";
+    *pargv++ = "LANG";
+    *pargv++ = "-e";
+    *pargv++ = "LC_CTYPE";
+    *pargv++ = "-e";
+    *pargv++ = "LC_ALL";
     if (start_home) {
 #ifdef wslbridge2
       *pargv++ = "--wsldir";

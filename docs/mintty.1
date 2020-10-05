@@ -298,6 +298,8 @@ otherwise, it refers to the installed WSL packages as listed by the
 Windows tool \fBwslconfig /l\fP or \fBwsl -l\fP.
 Implies \fB--wsl -o Locale=C -o Charset=UTF-8\fP, \fB--rootfs=\fP..., 
 and \fB--icon=\fP... if a respective icon file exists for the distribution.
+Also sets up the gateway to propagate locale settings LANG, LC_CTYPE, LC_ALL 
+and environment variable APPDATA to the WSL session.
 
 .TP
 \fB--WSLmode\fP \fIWSL DISTRIBUTION NAME\fP
