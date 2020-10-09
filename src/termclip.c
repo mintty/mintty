@@ -35,6 +35,19 @@ clip_addchar(clip_workbuf * b, wchar chr, cattr * ca)
     b->cattrs = renewn(b->cattrs, b->capacity);
   }
 
+  if (chr == ' ' && ca && ca->attr & TATTR_CLEAR && ca->attr & ATTR_BOLD) {
+    // collapse TAB
+    int l0 = b->len;
+    while (l0) {
+      l0--;
+      if (b->text[l0] == ' ' && b->cattrs[l0].attr & TATTR_CLEAR && b->cattrs[l0].attr & ATTR_DIM)
+        b->len--;
+      else
+        break;
+    }
+    chr = '\t';
+  }
+
   b->text[b->len] = chr;
   b->cattrs[b->len] = ca ? *ca : CATTR_DEFAULT;
   b->len++;
