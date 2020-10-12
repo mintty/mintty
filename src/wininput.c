@@ -1780,7 +1780,7 @@ pick_key_function(wstring key_commands, char * tag, int n, uint key, mod_keys mo
     return m;
   }
 
-  mod_keys mod_tag = tagmods(tag);
+  mod_keys mod_tag = tagmods(tag ?: "");
   char * tag0 = tag ? strchr(tag, '+') : 0;
   if (tag0)
     tag0++;
