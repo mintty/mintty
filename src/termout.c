@@ -1,5 +1,5 @@
 // termout.c (part of mintty)
-// Copyright 2008-12 Andy Koppe, 2017-19 Thomas Wolff
+// Copyright 2008-12 Andy Koppe, 2017-20 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -3494,10 +3494,10 @@ do_colour_osc(bool has_index_arg, uint i, bool reset)
 {
   int osc_num = term.cmd_num;  // 4, 5, 10..19, 104, 105, 110..119
   char *s = term.cmd_buf;
+  int index;
 
 do_osc_control:
   //printf("OSC %d <%s>\n", osc_num, s);
-  int index;
   if (has_index_arg) {  // OSC 4, 5, 104, 105
     int osc = i;  // 4, 5
     int len = 0;
