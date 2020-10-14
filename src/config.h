@@ -111,7 +111,7 @@ typedef struct {
   // Mouse
   bool copy_on_select;
   bool copy_as_rtf;
-  int copy_as_html;
+  char copy_as_html;
   wstring copy_as_rtf_font;
   int copy_as_rtf_font_size;
   bool clicks_place_cursor;
@@ -119,7 +119,7 @@ typedef struct {
   char right_click_action;
   int opening_clicks;
   bool zoom_mouse;
-  bool clicks_target_app;
+  char clicks_target_app;
   char click_target_mod;
   bool hide_mouse;
   bool elastic_mouse;

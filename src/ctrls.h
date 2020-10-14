@@ -306,7 +306,7 @@ extern control * ctrl_listbox(controlset *, char * label, int lines, int percent
  * until a null in place of a title string is seen.
  */
 extern control * ctrl_radiobuttons(controlset *, char * label, int ncolumns,
-                                   handler_fn handler, void * context, ...);
+                                   handler_fn handler, char * context, ...);
 
 extern control * ctrl_pushbutton(controlset *, char * label,
                                  handler_fn handler, void * context);

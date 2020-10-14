@@ -7,6 +7,7 @@ Window handling
   * Click-open link still after moving the mouse over the link area (#1039).
   * Keep hotkey-started window in taskbar (#1035).
   * Override font zooming also with Ctrl, to support FancyZones (#487).
+  * Fixed CopyAsHTML config glitch (#1042).
 
 Character encoding
   * Propagate locale settings with option --WSL (mintty/wsltty#259).

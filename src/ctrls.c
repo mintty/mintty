@@ -270,7 +270,7 @@ ctrl_listbox(controlset *s, char *label, int lines, int percentage,
  */
 control *
 ctrl_radiobuttons(controlset *s, char *label, int ncolumns,
-                  handler_fn handler, void *context, ...)
+                  handler_fn handler, char *context, ...)
 {
   va_list ap;
   int i;
