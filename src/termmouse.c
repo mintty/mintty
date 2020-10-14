@@ -691,7 +691,7 @@ term_mouse_move(mod_keys mods, pos p)
   else if (term.mouse_state == MS_OPENING) {
     // let's not clear link opening state when just moving the mouse (#1039)
     // but only after hovering out of the link area (below)
-#if link_opening_only_if_unmoved
+#ifdef link_opening_only_if_unmoved
     term.mouse_state = 0;
     term.selected = false;
     win_update(true);
