@@ -1,5 +1,5 @@
 // termmouse.c (part of mintty)
-// Copyright 2008-12 Andy Koppe, 2017 Thomas Wolff
+// Copyright 2008-12 Andy Koppe, 2017-20 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -689,9 +689,13 @@ term_mouse_move(mod_keys mods, pos p)
     win_update(true);
   }
   else if (term.mouse_state == MS_OPENING) {
+    // let's not clear link opening state when just moving the mouse (#1039)
+    // but only after hovering out of the link area (below)
+#if link_opening_only_if_unmoved
     term.mouse_state = 0;
     term.selected = false;
     win_update(true);
+#endif
   }
   else if (term.mouse_state > 0) {
     if (term.mouse_mode >= MM_BTN_EVENT)
@@ -716,6 +720,10 @@ term_mouse_move(mod_keys mods, pos p)
       term.hovering = false;
       win_update(true);
     }
+    //printf("->hovering %d (opening %d)\n", term.hovering, term.mouse_state == MS_OPENING);
+    // clear link opening state after hovering out of link area
+    if (!term.hovering && term.mouse_state == MS_OPENING)
+      term.mouse_state = 0;
   }
 }
 
