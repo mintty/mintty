@@ -26,6 +26,7 @@ extern void user_command(wstring commands, int n);
 extern wstring child_conv_path(wstring, bool adjust_dir);
 extern void child_fork(int argc, char * argv[], int moni, bool config_size);
 extern void child_set_fork_dir(char *);
+extern void setenvi(char * env, int val);
 extern void child_launch(int n, int argc, char * argv[], int moni);
 
 #endif

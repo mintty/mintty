@@ -5468,6 +5468,24 @@ main(int argc, char *argv[])
     trace_winsize("border_style");
   }
 
+  if (cfg.tabbar && !getenv("MINTTY_DX") && !getenv("MINTTY_DY")) {
+    HWND wnd_other = FindWindowEx(NULL, wnd,
+        (LPCTSTR)(uintptr_t)class_atom, NULL);
+    if (wnd_other) {
+      if (IsZoomed(wnd_other)) {
+        setenvi("MINTTY_DX", 0);
+        setenvi("MINTTY_DY", 0);
+      } else {
+        RECT r;
+        GetWindowRect(wnd_other, &r);
+        setenvi("MINTTY_X", r.left);
+        setenvi("MINTTY_Y", r.top);
+        setenvi("MINTTY_DX", r.right - r.left);
+        setenvi("MINTTY_DY", r.bottom - r.top);
+      }
+    }
+  }
+
   {
     // INT16 to handle multi-monitor negative coordinates properly
     INT16 sx = 0, sy = 0, sdx = 1, sdy = 1;
