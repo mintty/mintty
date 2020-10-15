@@ -5,6 +5,7 @@ Terminal features
 
 Window handling
   * Align position of new tabbar-enabled window with previous one (#1044, thanks to K. Takata).
+  * Tweaked tabbar handling for speed-up of title changes (#1043, thanks to K. Takata).
   * Click-open link still after moving the mouse over the link area (#1039).
   * Keep hotkey-started window in taskbar (#1035).
   * Override font zooming also with Ctrl, to support FancyZones (#487).
