@@ -10,7 +10,6 @@
 #include <string.h>
 
 int TABBAR_HEIGHT = 0;
-static int prev_height = 0;
 static HWND tab_wnd, bar_wnd;
 
 static HFONT tabbar_font;
@@ -286,22 +285,21 @@ win_toggle_tabbar(bool show)
 
   int margin = cell_width / 6 + 1;
   int padding = margin * 2;
-  int height = cell_height  + margin * 2;
+  int height = cell_height + margin * 2 + padding * 2;
   if (height != TABBAR_HEIGHT && initialized) {
     tabbar_destroy();
   }
   if (!initialized) {
     tabbar_init();
   }
-  prev_height = height;
   tabbar_update();
   if (show) {
     show = show;
-    TABBAR_HEIGHT = height + padding * 2;
+    TABBAR_HEIGHT = height;
     //printf("nweheight");
     SetWindowPos(bar_wnd, 0,
                  cr.left, 0,
-                 width, height + padding * 2,
+                 width, height,
                  SWP_NOZORDER);
     ShowWindow(bar_wnd, SW_SHOW);
   } else {
