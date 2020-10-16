@@ -764,6 +764,9 @@ Place font files into the subdirectory `fonts` of the mintty configuration
 directory. All will be made available for mintty usage, there is currently 
 no mechanism to configure dynamic fonts explicitly. The number of font files 
 should be limited to avoid significant startup delay.
+To avoid having to set up an explicit `--configdir` invocation parameter, 
+fonts can be placed in the /usr/share/mintty/fonts folder of the portable 
+installation.
 
 
 ## Character width ##
