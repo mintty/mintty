@@ -5261,6 +5261,19 @@ main(int argc, char *argv[])
   });
 
 
+  // Provide temporary fonts
+static int dynfonts = 0;
+  void add_font(wchar * fn)
+  {
+    int n = AddFontResourceExW(fn, FR_PRIVATE, 0);
+    if (n)
+      dynfonts += n;
+    else
+      printf("Failed to add font %ls\n", fn);
+  }
+  handle_file_resources(W("fonts/*"), add_font);
+  //printf("Added %d fonts\n", dynfonts);
+
   // Initialise the fonts, thus also determining their width and height.
   win_init_fonts(cfg.font.size);
 

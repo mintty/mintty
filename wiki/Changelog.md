@@ -9,6 +9,9 @@ Window handling / Tabbar
   * Fixed startup position of maximised window (#1045).
   * Fixed Alt+Shift+F2 behaviour on a maximised window (#1045).
 
+Font installation / Portable application
+  * Support dynamic installation of temporary fonts (#901, #1004).
+
 Window handling
   * Click-open link still after moving the mouse over the link area (#1039).
   * Keep hotkey-started window in taskbar (#1035).

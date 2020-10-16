@@ -69,7 +69,7 @@ colour schemes. However, \fB-o ThemeFile=\fIFILENAME\fP may be preferable.
 .TP
 \fB--configdir\fP \fIDIRNAME\fP
 Use the given directory to check for resource subdirectories 
-(\fIthemes\fP, \fIsounds\fP, \fIlang\fP, \fIemojis\fP, \fIicon\fP);
+(\fIthemes\fP, \fIsounds\fP, \fIlang\fP, \fIemojis\fP, \fIicon\fP, \fIfonts\fP);
 also read settings from the configuration file \fIDIRNAME\fP/\fBconfig\fP, 
 in addition to the default config files, and save configuration changes here.
 
@@ -386,6 +386,12 @@ see the \fBCONFIGURATION\fP section on how it can be customised.
 
 Mintty uses Windows Uniscribe font rendering to display a wider range 
 of characters; the TextOut API is automatically used instead if suitable.
+
+.TP
+\fBFont integration\fP
+Fonts in the resource subdirectory \fIfonts\fP of the config directory 
+are installed dynamically and can be used for configured or interactively 
+changed font selection. This is especially useful for a portable installation.
 
 .SS Bidirectional rendering
 
@@ -1517,7 +1523,7 @@ This also changes the \fBCtrl+Backspace\fP code from \fB^_\fP to \fB^?\fP.
 (Corresponds to the xterm resource \fBbackarrowKey\fP.)
 
 .TP
-\fBDelete sends DEL\fP(DeleteSendsDEL=no)
+\fBDelete sends DEL\fP (DeleteSendsDEL=no)
 By default, mintty sends VT100 Remove as the keycode for the keypad Del key.
 If this option is enabled, \fB^?\fP (ASCII DEL) is sent instead.
 .br
@@ -1689,7 +1695,7 @@ with \fBShift\fP pressed pastes the clipboard instead of extending the
 selection.
 
 .TP
-\fBMiddle mouse button\fP(MiddleClickAction=paste)
+\fBMiddle mouse button\fP (MiddleClickAction=paste)
 Action to take when the middle mouse button is pressed.
 .br
 \(en \fBPaste\fP: Paste the clipboard contents.
@@ -1731,14 +1737,14 @@ The \fBOff\fP setting disables overriding.
 \(en \fBOff\fP
 
 .TP
-\fBMouse auto-hiding\fP(HideMouse=on)
+\fBMouse auto-hiding\fP (HideMouse=on)
 By default, mintty automatically hides the cross-hair mouse cursor when 
 keyboard input is being entered. Setting this option =false keeps the cursor.
 .br
 (Corresponds to the xterm resource value \fBpointerMode:2\fP.)
 
 .TP
-\fBElastic text selection\fP(ElasticMouse=off)
+\fBElastic text selection\fP (ElasticMouse=off)
 With this option set, text selection with mouse dragging only includes 
 first and last characters if they are spanned at least halfway, so just 
 slightly touching a character leaves it out.
@@ -1774,7 +1780,7 @@ The RowSpacing value is added to that.
 Additional column padding; ColSpacing=1 can avoid boldened glyphs being clipped.
 
 .TP
-\fBBorder spacing\fP(Padding=1)
+\fBBorder spacing\fP (Padding=1)
 Window padding; margin between text and window border. The effective value 
 is limited by the character cell width (scaling with font zooming).
 .br

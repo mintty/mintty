@@ -756,6 +756,15 @@ FontChoice=Private:3
 Font3=MesloLGS NF
 ```
 
+### Dynamic fonts ###
+
+Mintty supports on-the-fly temporary font installation, especially for use 
+in a portable terminal application.
+Place font files into the subdirectory `fonts` of the mintty configuration 
+directory. All will be made available for mintty usage, there is currently 
+no mechanism to configure dynamic fonts explicitly. The number of font files 
+should be limited to avoid significant startup delay.
+
 
 ## Character width ##
 

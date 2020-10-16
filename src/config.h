@@ -227,6 +227,9 @@ typedef struct {
   bool old_bold;
 } config;
 
+
+typedef void (* str_fn)(wchar *);
+
 extern string config_dir;
 extern config cfg, new_cfg, file_cfg;
 
@@ -235,6 +238,7 @@ extern void list_fonts(bool report);
 extern void load_config(string filename, int to_save);
 extern void load_theme(wstring theme);
 extern char * get_resource_file(wstring sub, wstring res, bool towrite);
+extern void handle_file_resources(wstring pattern, str_fn fnh);
 extern void load_scheme(string colour_scheme);
 extern void set_arg_option(string name, string val);
 extern void parse_arg_option(string);
