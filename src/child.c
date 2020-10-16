@@ -1015,7 +1015,7 @@ setup_sync()
       setenvi("MINTTY_DX", 0);
       setenvi("MINTTY_DY", 0);
     }
-    else {
+    else if (!IsZoomed(wnd)) {
       RECT r;
       GetWindowRect(wnd, &r);
       setenvi("MINTTY_X", r.left);

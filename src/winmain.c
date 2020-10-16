@@ -5473,9 +5473,15 @@ main(int argc, char *argv[])
         (LPCTSTR)(uintptr_t)class_atom, NULL);
     if (wnd_other) {
       if (IsZoomed(wnd_other)) {
-        setenvi("MINTTY_DX", 0);
-        setenvi("MINTTY_DY", 0);
-      } else {
+        if ((GetWindowLong(wnd_other, GWL_STYLE) & WS_THICKFRAME) == 0) {
+          setenvi("MINTTY_DX", 0);
+          setenvi("MINTTY_DY", 0);
+        }
+        else {
+          run_max = 1;
+        }
+      }
+      else {
         RECT r;
         GetWindowRect(wnd_other, &r);
         setenvi("MINTTY_X", r.left);
