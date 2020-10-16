@@ -3,9 +3,13 @@ Terminal features
   * Escape sequences for stack of colours (XTPUSH/POP/REPORTCOLORS, xterm 357).
   * Support multiple controls in OSC 4, 5, 10..19, 104, 105 (#1038, xterm).
 
-Window handling
+Window handling / Tabbar
   * Align position of new tabbar-enabled window with previous one (#1044, thanks to K. Takata).
   * Tweaked tabbar handling for speed-up of title changes (#1043, thanks to K. Takata).
+  * Fixed startup position of maximised window (#1045).
+  * Fixed Alt+Shift+F2 behaviour on a maximised window (#1045).
+
+Window handling
   * Click-open link still after moving the mouse over the link area (#1039).
   * Keep hotkey-started window in taskbar (#1035).
   * Override font zooming also with Ctrl, to support FancyZones (#487).
