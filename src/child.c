@@ -1140,8 +1140,8 @@ do_child_fork(int argc, char *argv[], int moni, bool launch, bool config_size)
 
     // provide environment to clone size
     if (!config_size) {
-      setenvi("MINTTY_ROWS", term.rows);
-      setenvi("MINTTY_COLS", term.cols);
+      setenvi("MINTTY_ROWS", term.rows0);
+      setenvi("MINTTY_COLS", term.cols0);
       // provide environment to maximise window
       if (win_is_fullscreen)
         setenvi("MINTTY_MAXIMIZE", 2);

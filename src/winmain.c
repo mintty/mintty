@@ -3273,7 +3273,12 @@ static struct {
                        && !ctrl
                        ;
         //printf("WM_SIZE scale_font %d zoom_token %d\n", scale_font, zoom_token);
+        int rows0 = term.rows0, cols0 = term.cols0;
         win_adapt_term_size(false, scale_font);
+        if (wp == SIZE_MAXIMIZED) {
+          term.rows0 = rows0;
+          term.cols0 = cols0;
+        }
         if (zoom_token > 0)
           zoom_token = zoom_token >> 1;
         default_size_token = false;
@@ -5606,6 +5611,10 @@ main(int argc, char *argv[])
   // Cloning fullscreen window
   if (run_max == 2)
     win_maximise(2);
+
+  // Save the non-maximised window size
+  term.rows0 = term_rows;
+  term.cols0 = term_cols;
 
   // Set up clipboard notifications.
   HRESULT (WINAPI * pAddClipboardFormatListener)(HWND) =
