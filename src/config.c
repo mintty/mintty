@@ -1872,6 +1872,8 @@ do_file_resources(control *ctrl, wstring pattern, bool list_dirs, str_fn fnh)
             ffd.cFileName[len - sufl] = 0;
             if (ctrl)
               dlg_listbox_add_w(ctrl, ffd.cFileName);
+            else
+              (void)fnh;  // CYGWIN_VERSION_API_MINOR < 74
           }
         }
         ok = FindNextFileW(hFind, &ffd);

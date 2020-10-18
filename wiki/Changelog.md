@@ -3,11 +3,11 @@ Terminal features
   * Escape sequences for stack of colours (XTPUSH/POP/REPORTCOLORS, xterm 357).
   * Support multiple controls in OSC 4, 5, 10..19, 104, 105 (#1038, xterm).
 
-Window handling / Tabbar
-  * Align position of new tabbar-enabled window with previous one (#1044, thanks to K. Takata).
-  * Tweaked tabbar handling for speed-up of title changes (#1043, thanks to K. Takata).
+Window handling / Tabbar (thanks to K. Takata)
+  * Align position of new tabbar-enabled window with previous one (#1044).
+  * Tweaked tabbar handling for speed-up of title changes (#1043).
   * Fixed startup position of maximised window (#1045).
-  * Fixed Alt+Shift+F2 behaviour on a maximised window (#1045).
+  * Fixed Alt+Shift+F2 and Alt+F2 behaviour on a maximised window (#1045).
 
 Font installation / Portable application
   * Support dynamic installation of temporary fonts (#901, #1004).

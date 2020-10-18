@@ -5492,6 +5492,9 @@ static int dynfonts = 0;
   }
 
   if (cfg.tabbar && !getenv("MINTTY_DX") && !getenv("MINTTY_DY")) {
+#if CYGWIN_VERSION_API_MINOR < 74
+typedef UINT_PTR uintptr_t;
+#endif
     HWND wnd_other = FindWindowExW(NULL, wnd,
         (LPCWSTR)(uintptr_t)class_atom, NULL);
     if (wnd_other && FindWindowExA(wnd_other, NULL, TABBARCLASS, NULL)) {
