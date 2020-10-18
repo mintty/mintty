@@ -18,7 +18,6 @@ static const int max_tab_width = 300;
 static const int min_tab_width = 20;
 static int prev_tab_width = 0;
 
-#define TABBARCLASS "Tabbar"
 #define TABFONTSCALE 9/10
 
 static int
