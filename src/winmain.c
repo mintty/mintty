@@ -5479,8 +5479,8 @@ main(int argc, char *argv[])
   }
 
   if (cfg.tabbar && !getenv("MINTTY_DX") && !getenv("MINTTY_DY")) {
-    HWND wnd_other = FindWindowEx(NULL, wnd,
-        (LPCTSTR)(uintptr_t)class_atom, NULL);
+    HWND wnd_other = FindWindowExW(NULL, wnd,
+        (LPCWSTR)(uintptr_t)class_atom, NULL);
     if (wnd_other && FindWindowExA(wnd_other, NULL, TABBARCLASS, NULL)) {
       if (IsZoomed(wnd_other)) {
         if ((GetWindowLong(wnd_other, GWL_STYLE) & WS_THICKFRAME) == 0) {
