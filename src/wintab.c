@@ -18,7 +18,6 @@ static const int max_tab_width = 300;
 static const int min_tab_width = 20;
 static int prev_tab_width = 0;
 
-#define TABBARCLASS "Tabbar"
 #define TABFONTSCALE 9/10
 
 static int
@@ -276,6 +275,14 @@ tabbar_destroy()
   initialized = false;
 }
 
+static int
+win_get_tabbar_height()
+{
+  int margin = cell_width / 6 + 1;
+  int padding = margin * 2;
+  return cell_height + margin * 2 + padding * 2;
+}
+
 static void
 win_toggle_tabbar(bool show)
 {
@@ -283,9 +290,7 @@ win_toggle_tabbar(bool show)
   GetClientRect(wnd, &cr);
   int width = cr.right - cr.left;
 
-  int margin = cell_width / 6 + 1;
-  int padding = margin * 2;
-  int height = cell_height + margin * 2 + padding * 2;
+  int height = win_get_tabbar_height();
   if (height != TABBAR_HEIGHT && initialized) {
     tabbar_destroy();
   }
@@ -294,7 +299,6 @@ win_toggle_tabbar(bool show)
   }
   tabbar_update();
   if (show) {
-    show = show;
     TABBAR_HEIGHT = height;
     //printf("nweheight");
     SetWindowPos(bar_wnd, 0,
@@ -325,6 +329,13 @@ win_update_tabbar()
   if (win_tabbar_visible()) {
     win_toggle_tabbar(true);
   }
+}
+
+void
+win_prepare_tabbar()
+{
+  if (cfg.tabbar)
+    OFFSET = win_get_tabbar_height();
 }
 
 void

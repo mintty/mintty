@@ -3273,7 +3273,12 @@ static struct {
                        && !ctrl
                        ;
         //printf("WM_SIZE scale_font %d zoom_token %d\n", scale_font, zoom_token);
+        int rows0 = term.rows0, cols0 = term.cols0;
         win_adapt_term_size(false, scale_font);
+        if (wp == SIZE_MAXIMIZED) {
+          term.rows0 = rows0;
+          term.cols0 = cols0;
+        }
         if (zoom_token > 0)
           zoom_token = zoom_token >> 1;
         default_size_token = false;
@@ -4934,6 +4939,9 @@ main(int argc, char *argv[])
     run_max = atoi(getenv("MINTTY_MAXIMIZE"));
     unsetenv("MINTTY_MAXIMIZE");
   }
+  if (getenv("MINTTY_TABBAR")) {
+    cfg.tabbar = max(cfg.tabbar, atoi(getenv("MINTTY_TABBAR")));
+  }
 
   // if started from console, try to detach from caller's terminal (~daemonizing)
   // in order to not suppress signals
@@ -5290,6 +5298,7 @@ static int dynfonts = 0;
     pGetDpiForMonitor(mon, 0, &x, &dpi);  // MDT_EFFECTIVE_DPI
   }
 #endif
+  win_prepare_tabbar();
   win_adjust_borders(cell_width * term_cols, cell_height * term_rows);
 
   // Having x == CW_USEDEFAULT but not y still triggers default positioning,
@@ -5436,6 +5445,7 @@ static int dynfonts = 0;
       */
       if (dpi != 96) {
         font_cs_reconfig(true);
+        win_prepare_tabbar();
         trace_winsize("dpi > font_cs_reconfig");
         if (maxwidth || maxheight) {
           // changed terminal size not yet recorded, 
@@ -5482,9 +5492,9 @@ static int dynfonts = 0;
   }
 
   if (cfg.tabbar && !getenv("MINTTY_DX") && !getenv("MINTTY_DY")) {
-    HWND wnd_other = FindWindowEx(NULL, wnd,
-        (LPCTSTR)(uintptr_t)class_atom, NULL);
-    if (wnd_other) {
+    HWND wnd_other = FindWindowExW(NULL, wnd,
+        (LPCWSTR)(uintptr_t)class_atom, NULL);
+    if (wnd_other && FindWindowExA(wnd_other, NULL, TABBARCLASS, NULL)) {
       if (IsZoomed(wnd_other)) {
         if ((GetWindowLong(wnd_other, GWL_STYLE) & WS_THICKFRAME) == 0) {
           setenvi("MINTTY_DX", 0);
@@ -5528,9 +5538,6 @@ static int dynfonts = 0;
       sdy = atoi(getenv("MINTTY_DY"));
       unsetenv("MINTTY_DY");
       si++;
-    }
-    if (getenv("MINTTY_TABBAR")) {
-      cfg.tabbar = max(cfg.tabbar, atoi(getenv("MINTTY_TABBAR")));
     }
     if (sync_level()) {
 #ifdef debug_tabs
@@ -5613,13 +5620,6 @@ static int dynfonts = 0;
     argv, &(struct winsize){term_rows, term_cols, term_width, term_height}
   );
 
-  // Finally show the window.
-  ShowWindow(wnd, show_cmd);
-  SetFocus(wnd);
-  // Cloning fullscreen window
-  if (run_max == 2)
-    win_maximise(2);
-
   // Set up clipboard notifications.
   HRESULT (WINAPI * pAddClipboardFormatListener)(HWND) =
     load_library_func("user32.dll", "AddClipboardFormatListener");
@@ -5633,6 +5633,17 @@ static int dynfonts = 0;
   if (cfg.tabbar) {
     win_open_tabbar();
   }
+
+  // Finally show the window.
+  ShowWindow(wnd, show_cmd);
+  SetFocus(wnd);
+  // Cloning fullscreen window
+  if (run_max == 2)
+    win_maximise(2);
+
+  // Save the non-maximised window size
+  term.rows0 = term_rows;
+  term.cols0 = term_cols;
 
 #ifdef use_init_position
   if (cfg.tabbar)
