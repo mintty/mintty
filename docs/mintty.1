@@ -213,7 +213,8 @@ or hidden.
 .TP
 \fB--class\fP \fICLASS\fP
 Use \fICLASS\fP as the window class name of the main window.
-This allows scripting tools to distinguish different mintty instances.
+This allows window grouping or setup of different tab sets, 
+and it allows scripting tools to distinguish different mintty instances.
 The default is "mintty".
 
 .TP
@@ -2218,7 +2219,7 @@ window manager is used.
 .TP
 \fBWindow class name\fP (Class=mintty)
 The \fBClass\fP setting determines the name of the window class of the terminal window.
-It can be used to distinguish or group different mintty windows, e.g. for 
+It can be used to distinguish or group different mintty windows, or tab sets, e.g. for 
 the mintty session switcher, or for Windows scripting tools such as AutoHotKey.
 
 For a flexible grouping configuration, the Class option supports the 
