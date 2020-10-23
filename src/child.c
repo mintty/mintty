@@ -219,7 +219,6 @@ void
 child_create(char *argv[], struct winsize *winp)
 {
   trace_dir(asform("child_create: %s", getcwd(malloc(MAX_PATH), MAX_PATH)));
-  string lang = cs_lang();
 
   // xterm and urxvt ignore SIGHUP, so let's do the same.
   signal(SIGHUP, SIG_IGN);
@@ -286,15 +285,24 @@ child_create(char *argv[], struct winsize *winp)
     setenv("TERM_PROGRAM", APPNAME, true);
     setenv("TERM_PROGRAM_VERSION", VERSION, true);
 
-    if (lang) {
-      unsetenv("LC_ALL");
-      unsetenv("LC_COLLATE");
-      unsetenv("LC_CTYPE");
-      unsetenv("LC_MONETARY");
-      unsetenv("LC_NUMERIC");
-      unsetenv("LC_TIME");
-      unsetenv("LC_MESSAGES");
-      setenv("LANG", lang, true);
+    // If option Locale is used, set locale variables?
+    // https://github.com/mintty/mintty/issues/116#issuecomment-108888265
+    // Variables are now set in update_locale() which sets one of 
+    // LC_ALL or LC_CTYPE depending on previous setting of 
+    // LC_ALL or LC_CTYPE or LANG, stripping @cjk modifiers for WSL.
+    if (cfg.old_locale) {
+      //string lang = cs_lang();
+      string lang = cs_lang() ? cs_get_locale() : 0;
+      if (lang) {
+        unsetenv("LC_ALL");
+        unsetenv("LC_COLLATE");
+        unsetenv("LC_CTYPE");
+        unsetenv("LC_MONETARY");
+        unsetenv("LC_NUMERIC");
+        unsetenv("LC_TIME");
+        unsetenv("LC_MESSAGES");
+        setenv("LANG", lang, true);
+      }
     }
 
     // Terminal line settings

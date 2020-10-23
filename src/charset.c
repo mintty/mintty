@@ -22,18 +22,20 @@
 
 static cs_mode mode = CSM_DEFAULT;
 
-static string default_locale;  // Used unless UTF-8 or ACP mode is on.
+static string default_locale = 0;  // Used unless UTF-8 or ACP mode is on.
 
 static string term_locale;     // Locale set via terminal control sequences.
 static string config_locale;   // Locale configured in the options.
 static string env_locale;      // Locale determined by the environment.
 #if HAS_LOCALES
-static bool valid_default_locale, use_locale;
+static bool valid_default_locale = false;
+static bool use_locale = false;
 #endif
-bool cs_ambig_wide;
+bool cs_ambig_wide = false;
 bool cs_single_forced = false;
 
-static uint codepage, default_codepage;
+static uint codepage = 0;
+static int default_codepage;
 
 static wchar cp_default_wchar;
 static char cp_default_char[4];
@@ -121,7 +123,7 @@ string locale_menu[8];
 string charset_menu[lengthof(cs_descs) + 4];
 
 #define dont_debug_locale
-#ifdef debug_locale
+#if defined(debug_locale) && HAS_LOCALES
 #define trace_locale(tag, l)	printf("[%s] %s->%s\n", tag, l, setlocale(LC_CTYPE, 0))
 #else
 #define trace_locale(tag, l)	
@@ -358,7 +360,7 @@ cs_set_mode(cs_mode new_mode)
 }
 
 static void
-update_locale(void)
+old_update_locale(void)
 {
   delete(default_locale);
 
@@ -432,6 +434,156 @@ update_locale(void)
   update_mode();
 }
 
+static void
+set_locale_env(string loc)
+{
+  char * cut = 0;
+  if (support_wsl && strstr(loc, "@cjk")) {
+    // strip unsupported modifier for WSL
+    loc = strdup(loc);
+    cut = strstr(loc, "@cjk");
+    *cut = 0;
+  }
+
+  char * lc = getenv("LC_ALL");
+  if (lc && *lc)                  // if LC_ALL is set
+    setenv("LC_ALL", loc, true);  // update LC_ALL
+  else {
+    lc = getenv("LC_CTYPE");
+    if (lc && *lc)                    // if LC_CTYPE is set
+      setenv("LC_CTYPE", loc, true);  // update LC_CTYPE
+    else {
+      lc = getenv("LANG");
+      if (lc && strcmp(lc, loc) == 0)   // if LANG is not set properly
+        setenv("LC_CTYPE", loc, true);  // set LC_CTYPE
+    }
+  }
+
+  if (cut)
+    free((char *)loc);
+}
+
+static void
+update_locale(void)
+{
+  if (cfg.old_locale) {
+    old_update_locale();
+    return;
+  }
+
+  if (default_locale) {
+    delete(default_locale);
+    default_locale = 0;
+  }
+
+  string locale = term_locale ?: config_locale ?: env_locale;
+  string dot = strchr(locale, '.');
+  string charset = dot ? dot + 1 : locale;
+
+  char charwidth = cfg.charwidth;
+
+#if HAS_LOCALES
+  string set_locale = setlocale(LC_CTYPE, locale);
+  trace_locale("update_locale", locale);
+
+  bool gb18030 = false;
+  if (!set_locale && strcasecmp(charset, "GB18030") == 0) {
+    charset = "GBK";
+    char * locgbk = strdup(locale);
+    char * dot = strchr(locgbk, '.');
+    if (dot)
+      *dot = 0;
+    locgbk = asform("%s.GBK", locgbk);
+    set_locale = setlocale(LC_CTYPE, locgbk);
+    trace_locale("update_locale", locgbk);
+    delete(locgbk);
+    if (set_locale) {
+      gb18030 = true;
+      codepage = 54936;
+      use_locale = false;
+    }
+  }
+
+  if (!set_locale) {
+    locale = asform("C.%s", charset);
+    set_locale = setlocale(LC_CTYPE, locale);
+    trace_locale("update_locale", locale);
+    delete(locale);
+  }
+
+  valid_default_locale = set_locale;
+  if (valid_default_locale) {
+    default_codepage = cs_codepage(nl_langinfo(CODESET));
+    default_locale = strdup(set_locale);
+    // preliminary ambiguous width
+    cs_ambig_wide = charwidth < 10 && wcwidth(0x3B1) == 2;
+    if (charwidth <= 1 && wcwidth(0x4E00) == 1) {
+      //charwidth += 10;  // better flag explicitly:
+      cs_single_forced = true;
+    }
+  }
+  else {
+    cs_ambig_wide = font_ambig_wide;
+  }
+
+  if (charwidth >= 10 && wcwidth(0x4E00) == 2) {
+    // Attach "@cjksingle" to locale if enforcing single-width mode
+    string l = default_locale;
+    default_locale = asform("%s@cjksingle", l);
+    delete(l);
+    // indicate @cjksingle to locale lib
+    setlocale(LC_CTYPE, default_locale);
+    trace_locale("cjksingle", default_locale);
+  }
+  else if (charwidth == 2 && !cs_ambig_wide) {
+    // Attach "@cjkwide" to locale if running in ambiguous-wide mode
+    // with an ambig-narrow locale setting
+    string l = default_locale;
+    default_locale = asform("%s@cjkwide", l);
+    delete(l);
+    // indicate @cjkwide to locale lib
+    setlocale(LC_CTYPE, default_locale);
+    trace_locale("ambigwide", default_locale);
+    cs_ambig_wide = true;
+  }
+  else if ((charwidth == 3 && cs_ambig_wide)
+           || (support_wsl && charwidth < 2 && cs_ambig_wide
+               && strncasecmp(charset, "utf", 3) == 0
+              )
+          )
+  {
+    // Attach "@cjknarrow" to locale if running in ambiguous-narrow mode
+    // with an ambig-wide locale setting
+    string l = default_locale;
+    default_locale = asform("%s@cjknarrow", l);
+    delete(l);
+    // indicate @cjknarrow to locale lib
+    setlocale(LC_CTYPE, default_locale);
+    trace_locale("ambignarrow", default_locale);
+    cs_ambig_wide = false;
+  }
+#else  // HAS_LOCALES
+  default_codepage = cs_codepage(charset);
+  default_locale = asform("C.%u", default_codepage);
+  cs_ambig_wide = charwidth == 2 || font_ambig_wide;
+  bool gb18030 = 0 == strcasecmp(cfg.charset, "GB18030");
+#endif
+
+  update_mode();
+
+  // Map GB18030 -> GBK for child
+  if (gb18030) {
+#if HAS_LOCALES
+    use_locale = false;
+#endif
+    codepage = 54936;
+    set_locale_env(locale);
+    get_cp_info();
+  }
+  else if (default_locale)  // avoid passing undefined value
+    set_locale_env(default_locale);
+}
+
 string
 cs_get_locale(void)
 {
@@ -443,18 +595,21 @@ cs_set_locale(string locale)
 {
   delete(term_locale);
   term_locale = *locale ? strdup(locale) : 0;
+  trace_locale("cs_set_locale", term_locale);
   update_locale();
 }
 
 void
 cs_reconfig(void)
 {
+  trace_locale("cs_reconfig", "");
   delete(config_locale);
   if (*cfg.locale) {
     config_locale =
       asform("%s%s%s", cfg.locale, *cfg.charset ? "." : "", cfg.charset);
+    trace_locale("cs_reconfig", config_locale);
 #if HAS_LOCALES
-    if (setlocale(LC_CTYPE, config_locale) &&
+    if (cfg.old_locale && setlocale(LC_CTYPE, config_locale) &&
         !support_wsl) {  // set locale anyway, but do not modify for WSL
       if (cfg.charwidth >= 10) {
         // Attach "@cjksingle" to locale if enforcing single-width mode
@@ -466,7 +621,7 @@ cs_reconfig(void)
         // Attach "@cjknarrow" to locale if running in ambiguous-narrow mode
         // with an ambig-wide locale setting.
         // ISSUE: instead of font_ambig_wide, probably cs_ambig_wide 
-        // should be checked, which is however only set afer update_locale()!
+        // should be checked, which is however only set after update_locale()!
         string l = config_locale;
         config_locale = asform("%s@cjknarrow", l);
         delete(l);

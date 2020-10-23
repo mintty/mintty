@@ -81,6 +81,8 @@ typedef struct {
   bool allow_blinking;
   string locale;
   string charset;
+  char charwidth;
+  bool old_locale;
   int fontmenu;
   wstring tek_font;
   // Keys
@@ -178,7 +180,6 @@ typedef struct {
   bool input_clears_selection;
   int suspbuf_max;
   bool trim_selection;
-  char charwidth;
   int printable_controls;
   int char_narrowing;
   char emojis;

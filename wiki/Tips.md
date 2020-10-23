@@ -778,7 +778,7 @@ Character width can be modified by a number of configuration or dynamic settings
 * `Charwidth=unicode`: use built-in rather than system-provided Unicode data
 * `Charwidth`: further options to handle double-width characters
 * `Charset`: may affect CJK ambiguous-width handling if used with `Locale`
-* `Font`: may affect CJK ambiguous-width handling if used with `Locale`
+* `Font`: may affect CJK ambiguous-width handling if locale support fails
 * `PrintableControls`: makes C1 or C0 control characters visible (width 1)
 * OSC 701: changes locale/charset, may affect ambiguous width handling
 * OSC 50: changes font, may affect ambiguous width handling (with `Locale`)
@@ -1071,12 +1071,9 @@ Add setting `-o Charwidth=ambig-wide` if desired.
 
 If mintty is used as a WSL terminal, the WSL side can be configured to run 
 a GB18030 locale as well to achieve full GB18030 support.
-Give option `--WSL` first as it implies `Charset=UTF-8` which then needs to 
-be overridden; also add setting `Charwidth=ambig-wide` to run compatible 
-with WSL locales and not derive ambiguous character width from the font:
 
 ```
-mintty --WSL[=...] -o Locale=zh_CN -o Charset=GB18030 -o Charwidth=ambig-wide
+mintty --WSL[=...] -o Locale=zh_CN -o Charset=GB18030
 ```
 
 ### Passing arguments from an environment with different character set ###

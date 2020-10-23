@@ -855,6 +855,13 @@ write_char(wchar c, int width)
 #endif
   }
 
+#ifdef enforce_ambiguous_narrow_here
+  // enforce ambiguous-narrow as configured or for WSL;
+  // this could be done here but is now sufficiently achieved in charset.c
+  if (cs_ambig_narrow && width > 1 && is_ambig(c))
+    width = 1;
+#endif
+
   if (cfg.charwidth >= 10 || cs_single_forced) {
     if (width > 1) {
       single_width = true;

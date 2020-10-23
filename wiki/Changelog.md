@@ -19,7 +19,18 @@ Window handling
   * Fixed CopyAsHTML config glitch (#1042).
 
 Character encoding
+  * Revised locale handling and setting, especially with option Locale.
+  * Revised character width determination and setting, especially with option Locale.
+  * Revised setup of GB18030 encoding support.
+  * New option to enforce narrow ambiguous-width.
+  * Do not clear/overwrite all locale categories anymore by option Locale.
+  * Do not enforce UTF-8 encoding with WSL anymore.
   * Propagate locale settings with option --WSL (mintty/wsltty#259).
+  * Do not enforce UTF-8 for WSL anymore.
+
+Configuration
+  * New option value Charwidth=ambig-narrow.
+  * New option OldLocale.
 
 ### 3.4.0 (19 September 2020) ###
 
@@ -49,7 +60,7 @@ Configuration
   * New option TabBar and command-line option --tabbar (#944).
   * New user-definable functions clear-title, refresh.
   * New option LinesPerMouseWheelNotch (#1032).
-  * Option KeyFunctions: flexible specification of modifiers (in any order).
+  * Option KeyFunctions: flexible specification of modifiers (in any order) (#851).
 
 ### 3.3.0 (6 August 2020) ###
 

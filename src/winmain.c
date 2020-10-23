@@ -4093,10 +4093,14 @@ select_WSL(char * wsl)
       else
         delete(wsl_icon);
     }
-    // set implicit options --wsl -o Locale=C -o Charset=UTF-8
+    // set implicit option --wsl
     support_wsl = true;
-    set_arg_option("Locale", strdup("C"));
-    set_arg_option("Charset", strdup("UTF-8"));
+    if (cfg.old_locale) {
+      // enforce UTF-8 for WSL:
+      // also set implicit options -o Locale=C -o Charset=UTF-8
+      set_arg_option("Locale", strdup("C"));
+      set_arg_option("Charset", strdup("UTF-8"));
+    }
     if (0 == wcscmp(cfg.app_id, W("@")))
       // setting an implicit AppID fixes mintty/wsltty#96 but causes #784
       // so an explicit config value derives AppID from wsl distro name
@@ -5038,12 +5042,14 @@ main(int argc, char *argv[])
 #endif
     *pargv++ = "-e";
     *pargv++ = "APPDATA";
-    *pargv++ = "-e";
-    *pargv++ = "LANG";
-    *pargv++ = "-e";
-    *pargv++ = "LC_CTYPE";
-    *pargv++ = "-e";
-    *pargv++ = "LC_ALL";
+    if (!cfg.old_locale) {
+      *pargv++ = "-e";
+      *pargv++ = "LANG";
+      *pargv++ = "-e";
+      *pargv++ = "LC_CTYPE";
+      *pargv++ = "-e";
+      *pargv++ = "LC_ALL";
+    }
     if (start_home) {
 #ifdef wslbridge2
       *pargv++ = "--wsldir";
