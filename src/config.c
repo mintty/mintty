@@ -117,11 +117,6 @@ const config default_cfg = {
   .key_scrlock = "",	// VK_SCROLL
   .key_commands = W(""),
   // Mouse
-  .copy_on_select = true,
-  .copy_as_rtf = true,
-  .copy_as_html = 0,
-  .copy_as_rtf_font = W(""),
-  .copy_as_rtf_font_size = 0,
   .clicks_place_cursor = false,
   .middle_click_action = MC_PASTE,
   .right_click_action = RC_MENU,
@@ -132,6 +127,16 @@ const config default_cfg = {
   .hide_mouse = true,
   .elastic_mouse = false,
   .lines_per_notch = 0,
+  // Selection
+  .input_clears_selection = true,
+  .copy_on_select = true,
+  .copy_as_rtf = true,
+  .copy_as_html = 0,
+  .copy_as_rtf_font = W(""),
+  .copy_as_rtf_font_size = 0,
+  .trim_selection = true,
+  .allow_set_selection = false,
+  .selection_show_size = false,
   // Window
   .cols = 80,
   .rows = 24,
@@ -158,7 +163,6 @@ const config default_cfg = {
   .bell_interval = 100,
   .printer = W(""),
   .confirm_exit = true,
-  .allow_set_selection = false,
   // Command line
   .class = W(""),
   .hold = HOLD_START,
@@ -182,9 +186,7 @@ const config default_cfg = {
   .suppress_nrc = "",  // unused
   .suppress_wheel = "",
   .filter_paste = "",
-  .input_clears_selection = true,
   .suspbuf_max = 8080,
-  .trim_selection = true,
   .printable_controls = 0,
   .char_narrowing = 75,
   .emojis = 0,
@@ -221,7 +223,6 @@ const config default_cfg = {
   .use_system_colours = false,
   .short_long_opts = false,
   .bold_as_special = false,
-  .selection_show_size = false,
   .hover_title = true,
   .old_bold = false,
   .ime_cursor_colour = DEFAULT_COLOUR,
@@ -380,11 +381,6 @@ options[] = {
   {"KeyFunctions", OPT_WSTRING | OPT_KEEPCR, offcfg(key_commands)},
 
   // Mouse
-  {"CopyOnSelect", OPT_BOOL, offcfg(copy_on_select)},
-  {"CopyAsRTF", OPT_BOOL, offcfg(copy_as_rtf)},
-  {"CopyAsHTML", OPT_BOOL, offcfg(copy_as_html)},
-  {"CopyAsRTFFont", OPT_WSTRING, offcfg(copy_as_rtf_font)},
-  {"CopyAsRTFFontHeight", OPT_INT, offcfg(copy_as_rtf_font_size)},
   {"ClicksPlaceCursor", OPT_BOOL, offcfg(clicks_place_cursor)},
   {"MiddleClickAction", OPT_MIDDLECLICK, offcfg(middle_click_action)},
   {"RightClickAction", OPT_RIGHTCLICK, offcfg(right_click_action)},
@@ -395,6 +391,17 @@ options[] = {
   {"HideMouse", OPT_BOOL, offcfg(hide_mouse)},
   {"ElasticMouse", OPT_BOOL, offcfg(elastic_mouse)},
   {"LinesPerMouseWheelNotch", OPT_INT, offcfg(lines_per_notch)},
+
+  // Selection
+  {"ClearSelectionOnInput", OPT_BOOL, offcfg(input_clears_selection)},
+  {"CopyOnSelect", OPT_BOOL, offcfg(copy_on_select)},
+  {"CopyAsRTF", OPT_BOOL, offcfg(copy_as_rtf)},
+  {"CopyAsHTML", OPT_BOOL, offcfg(copy_as_html)},
+  {"CopyAsRTFFont", OPT_WSTRING, offcfg(copy_as_rtf_font)},
+  {"CopyAsRTFFontHeight", OPT_INT, offcfg(copy_as_rtf_font_size)},
+  {"TrimSelection", OPT_BOOL, offcfg(trim_selection)},
+  {"AllowSetSelection", OPT_BOOL, offcfg(allow_set_selection)},
+  {"SelectionShowSize", OPT_INT, offcfg(selection_show_size)},
 
   // Window
   {"Columns", OPT_INT, offcfg(cols)},
@@ -429,7 +436,6 @@ options[] = {
   {"BellInterval", OPT_INT, offcfg(bell_interval)},
   {"Printer", OPT_WSTRING, offcfg(printer)},
   {"ConfirmExit", OPT_BOOL, offcfg(confirm_exit)},
-  {"AllowSetSelection", OPT_BOOL, offcfg(allow_set_selection)},
 
   // Command line
   {"Class", OPT_WSTRING, offcfg(class)},
@@ -458,9 +464,7 @@ options[] = {
   {"SuppressNRC", OPT_STRING, offcfg(suppress_nrc)},  // unused
   {"SuppressMouseWheel", OPT_STRING, offcfg(suppress_wheel)},
   {"FilterPasteControls", OPT_STRING, offcfg(filter_paste)},
-  {"ClearSelectionOnInput", OPT_BOOL, offcfg(input_clears_selection)},
   {"SuspendWhileSelecting", OPT_INT, offcfg(suspbuf_max)},
-  {"TrimSelection", OPT_BOOL, offcfg(trim_selection)},
   {"PrintableControls", OPT_INT, offcfg(printable_controls)},
   {"CharNarrowing", OPT_INT, offcfg(char_narrowing)},
   {"Emojis", OPT_EMOJIS, offcfg(emojis)},
@@ -501,7 +505,6 @@ options[] = {
   {"OldBold", OPT_BOOL, offcfg(old_bold)},
   {"ShortLongOpts", OPT_BOOL, offcfg(short_long_opts)},
   {"BoldAsRainbowSparkles", OPT_BOOL, offcfg(bold_as_special)},
-  {"SelectionShowSize", OPT_INT, offcfg(selection_show_size)},
   {"HoverTitle", OPT_BOOL, offcfg(hover_title)},
   {"Baud", OPT_INT, offcfg(baud)},
   {"Bloom", OPT_INT, offcfg(bloom)},
@@ -3512,6 +3515,8 @@ setup_config_box(controlbox * b)
                       _("Mouse functions"), null);
   ctrl_columns(s, 2, 50, 50);
   if (strstr(cfg.old_options, "sel")) {
+//#define copy_as_html_checkbox
+//#define copy_as_html_right
 #ifdef copy_as_html_checkbox
     ctrl_checkbox(
       //__ Options - Mouse:

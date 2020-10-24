@@ -111,11 +111,6 @@ typedef struct {
   string key_scrlock;	// VK_SCROLL
   wstring key_commands;
   // Mouse
-  bool copy_on_select;
-  bool copy_as_rtf;
-  char copy_as_html;
-  wstring copy_as_rtf_font;
-  int copy_as_rtf_font_size;
   bool clicks_place_cursor;
   char middle_click_action;
   char right_click_action;
@@ -126,6 +121,16 @@ typedef struct {
   bool hide_mouse;
   bool elastic_mouse;
   int lines_per_notch;
+  // Selection
+  bool input_clears_selection;
+  bool copy_on_select;
+  bool copy_as_rtf;
+  char copy_as_html;
+  wstring copy_as_rtf_font;
+  int copy_as_rtf_font_size;
+  bool trim_selection;
+  bool allow_set_selection;
+  int selection_show_size;
   // Window
   int cols, rows;
   int scrollback_lines;
@@ -151,7 +156,6 @@ typedef struct {
   int bell_interval;
   wstring printer;
   bool confirm_exit;
-  bool allow_set_selection;
   // Command line
   wstring class;
   char hold;
@@ -177,9 +181,7 @@ typedef struct {
   string suppress_nrc;
   string suppress_wheel;
   string filter_paste;
-  bool input_clears_selection;
   int suspbuf_max;
-  bool trim_selection;
   int printable_controls;
   int char_narrowing;
   char emojis;
@@ -217,7 +219,6 @@ typedef struct {
   wstring sixel_clip_char;
   bool short_long_opts;
   bool bold_as_special;
-  int selection_show_size;
   bool hover_title;
   int baud;
   int bloom;
