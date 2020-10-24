@@ -382,7 +382,7 @@ options[] = {
   // Mouse
   {"CopyOnSelect", OPT_BOOL, offcfg(copy_on_select)},
   {"CopyAsRTF", OPT_BOOL, offcfg(copy_as_rtf)},
-  {"CopyAsHTML", OPT_INT, offcfg(copy_as_html)},
+  {"CopyAsHTML", OPT_BOOL, offcfg(copy_as_html)},
   {"CopyAsRTFFont", OPT_WSTRING, offcfg(copy_as_rtf_font)},
   {"CopyAsRTFFontHeight", OPT_INT, offcfg(copy_as_rtf_font_size)},
   {"ClicksPlaceCursor", OPT_BOOL, offcfg(clicks_place_cursor)},

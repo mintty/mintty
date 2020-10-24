@@ -116,7 +116,7 @@ LDLIBS := -mwindows $(extralibs) -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -
 #override LDLIBS += -mwindows $(extralibs) -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -luuid
 
 ifdef DEBUG
-  CPPFLAGS += -Wno-trampolines
+#  CPPFLAGS += -Wno-trampolines
   CFLAGS += -g
 else
   CPPFLAGS += -DNDEBUG
