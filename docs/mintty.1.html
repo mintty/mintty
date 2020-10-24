@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Thu Sep 17 18:56:57 2020 -->
+<!-- CreationDate: Sat Oct 24 13:15:32 2020 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -124,10 +124,11 @@ preferable.</b></p>
 
 <p style="margin-left:22%;">Use the given directory to
 check for resource subdirectories (<i>themes</i>,
-<i>sounds</i>, <i>lang</i>, <i>emojis</i>, <i>icon</i>);
-also read settings from the configuration file
-<i>DIRNAME</i>/<b>config</b>, in addition to the default
-config files, and save configuration changes here.</p>
+<i>sounds</i>, <i>lang</i>, <i>emojis</i>, <i>icon</i>,
+<i>fonts</i>); also read settings from the configuration
+file <i>DIRNAME</i>/<b>config</b>, in addition to the
+default config files, and save configuration changes
+here.</p>
 
 <p style="margin-left:11%;"><b>--dir</b>
 <i>directory</i></p>
@@ -317,9 +318,10 @@ normal, minimized, maximized, full screen, or hidden.</p>
 <p style="margin-left:11%;"><b>--class</b> <i>CLASS</i></p>
 
 <p style="margin-left:22%;">Use <i>CLASS</i> as the window
-class name of the main window. This allows scripting tools
-to distinguish different mintty instances. The default is
-&quot;mintty&quot;.</p>
+class name of the main window. This allows window grouping
+or setup of different tab sets, and it allows scripting
+tools to distinguish different mintty instances. The default
+is &quot;mintty&quot;.</p>
 
 <p style="margin-left:11%;"><b>-d</b>,
 <b>--nodaemon</b></p>
@@ -411,7 +413,8 @@ UserCommands are disabled. <br>
 &ndash; The working directory of the current foreground
 process (for click-opening pathnames) cannot be detected.
 <br>
-&ndash; Locale modification (@cjk...) is disabled.</p>
+&ndash; Locale modification (@cjk...) is not set to the
+environment variables.</p>
 
 <p style="margin-left:11%;"><b>--WSL</b> <i>WSL
 DISTRIBUTION NAME</i></p>
@@ -423,9 +426,11 @@ installed in /bin for this purpose). If the distribution
 name is empty, the default WSL installation is run;
 otherwise, it refers to the installed WSL packages as listed
 by the Windows tool <b>wslconfig /l</b> or <b>wsl -l</b>.
-Implies <b>--wsl -o Locale=C -o Charset=UTF-8</b>,
-<b>--rootfs=</b>..., and <b>--icon=</b>... if a respective
-icon file exists for the distribution.</p>
+Implies <b>--wsl</b>, <b>--rootfs=</b>..., and
+<b>--icon=</b>... if a respective icon file exists for the
+distribution. Also sets up the gateway to propagate locale
+settings LANG, LC_CTYPE, LC_ALL and environment variable
+APPDATA to the WSL session.</p>
 
 <p style="margin-left:11%;"><b>--WSLmode</b> <i>WSL
 DISTRIBUTION NAME</i></p>
@@ -609,7 +614,14 @@ customised.</p>
 rendering</b> <br>
 Mintty uses Windows Uniscribe font rendering to display a
 wider range of characters; the TextOut API is automatically
-used instead if suitable.</p>
+used instead if suitable. <b><br>
+Font integration</b></p>
+
+<p style="margin-left:22%;">Fonts in the resource
+subdirectory <i>fonts</i> of the config directory are
+installed dynamically and can be used for configured or
+interactively changed font selection. This is especially
+useful for a portable installation.</p>
 
 
 <p style="margin-left:11%; margin-top: 1em"><b>Bidirectional
@@ -938,7 +950,7 @@ switch-[visible-](prev|next).</p>
 complements the virtual tabs mechanism. (It works like the
 session switcher available via extended context menu or
 title bar menu.) It is recommended to also set
-<b>SessionGeomSync=2</b> or higher to achieve a tabbed
+<b>SessionGeomSync=3</b> or higher to achieve a tabbed
 window behaviour.</p></td></tr>
 </table>
 
@@ -1863,17 +1875,6 @@ This means, while not strictly necessary, that also locale
 variables unrelated to the terminal character set (e.g.
 LC_MESSAGES) are cleared to avoid confusion.</p>
 
-<p style="margin-left:22%; margin-top: 1em"><i>Note:</i> If
-the <b>Locale</b> option is set, mintty further checks
-whether the locale is a &quot;wide&quot; locale (i.e.
-ambiguous-width characters are wide in a CJK locale) but the
-selected font is actually &quot;ambiguous-narrow&quot; (i.e.
-ambiguous-width characters are narrow in the font, as
-detected at characters U+03B1 and U+2500) in which case it
-appends the &quot;@cjknarrow&quot; locale modifier, in order
-to adapt the selected locale to the chosen font. (This would
-be overridden by setting <b>Charwidth=ambig-wide</b>.)</p>
-
 <p style="margin-left:22%; margin-top: 1em">By default, the
 selected locale also determines the character width
 assumptions used for screen rendering. For exceptions, see
@@ -1908,6 +1909,67 @@ menu will silently have no effect unless an escape sequence
 with empty locale is sent to the terminal to restore to
 &quot;default&quot;.</p>
 
+<p style="margin-left:11%;"><b>Character width handling</b>
+(Charwidth=locale)</p>
+
+<p style="margin-left:22%;">With this hidden setting,
+locale-determined character width properties can be
+overridden: <br>
+&ndash; <b>locale</b> Use locale width properties. <br>
+&ndash; <b>unicode</b> Use built-in width properties, likely
+based on a more up-to-date Unicode version. (Corresponds to
+the xterm resource <b>mkWidth</b>.) <br>
+&ndash; <b>ambig-wide</b> Use built-in width properties,
+with ambiguous-width characters assumed to be wide.
+(Corresponds to the xterm resource <b>cjkWidth:true</b>.)
+<br>
+&ndash; <b>ambig-narrow</b> Use built-in width properties,
+with ambiguous-width characters assumed to be narrow.
+(Corresponds to the xterm resource <b>cjkWidth:false</b>.)
+<br>
+&ndash; <b>single</b> Enforce single-width (no double width
+rendering). <br>
+&ndash; <b>single-unicode</b> Enforce single-width (no
+double width rendering), with built-in width properties to
+determine combining characters.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+With setting <b>ambig-wide</b>, if the effective locale does
+not define ambiguous-width characters wide already, mintty
+appends the &quot;@cjkwide&quot; locale modifier, in order
+to adapt the selected locale to the width preference. With
+setting <b>ambig-narrow</b>, if the effective locale does
+not define ambiguous-width characters narrow already, mintty
+appends the &quot;@cjknarrow&quot; locale modifier, in order
+to adapt the selected locale to the width preference.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+With settings <b>single</b> or <b>single-unicode</b>, mintty
+appends the &quot;@cjksingle&quot; locale modifier, in order
+to adapt the selected locale to the width preference.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i> If
+this option selects using built-in width properties, the
+response to the Secondary Device Attributes request will
+report the built-in Unicode version as its third
+parameter.</p>
+
+
+<p style="margin-left:22%; margin-top: 1em"><i>Warning:</i>
+With this option, actual width properties as rendered on the
+screen and width assumptions of the <b>wcwidth</b> function
+may be inconsistent for the impacted characters, which may
+confuse screen applications (such as editors) that rely on
+<b>wcwidth</b> information.</p>
+
+<p style="margin-left:11%;"><b>Old character locale
+handling</b> (OldLocale=false)</p>
+
+<p style="margin-left:22%;">This setting reverts
+determination and handling of character encoding and
+character width from locale and options mostly to mintty up
+to 3.4.0.</p>
+
 <p style="margin-left:11%; margin-top: 1em"><b>Keys</b>
 <br>
 Settings controlling keyboard behaviour. <b><br>
@@ -1928,8 +1990,8 @@ also changes the <b>Ctrl+Backspace</b> code from <b>^_</b>
 to <b>^?</b>. <br>
 (Corresponds to the xterm resource <b>backarrowKey</b>.)</p>
 
-<p style="margin-left:11%;"><b>Delete sends
-DEL</b>(DeleteSendsDEL=no)</p>
+<p style="margin-left:11%;"><b>Delete sends DEL</b>
+(DeleteSendsDEL=no)</p>
 
 <p style="margin-left:22%;">By default, mintty sends VT100
 Remove as the keycode for the keypad Del key. If this option
@@ -2082,6 +2144,15 @@ with the mouse is copied to the clipboard as soon as the
 mouse button is released, thus emulating X Window
 behaviour.</p>
 
+<p style="margin-left:11%;"><b>Copy with TABs</b>
+(CopyTab=no)</p>
+
+<p style="margin-left:22%;">With this setting, when copying
+text, TAB characters will be preserved rather than expanded
+to spaces. Note that user-definable functions are available
+to invoke copying explicitly with or without TABs via
+keyboard shortcut or menu item.</p>
+
 <p style="margin-left:11%;"><b>Copy as rich text</b>
 (CopyAsRTF=yes)</p>
 
@@ -2142,8 +2213,8 @@ region instead of pasting the clipboard. If it is set to
 <b>Extend</b>, a left click with <b>Shift</b> pressed pastes
 the clipboard instead of extending the selection.</p>
 
-<p style="margin-left:11%;"><b>Middle mouse
-button</b>(MiddleClickAction=paste)</p>
+<p style="margin-left:11%;"><b>Middle mouse button</b>
+(MiddleClickAction=paste)</p>
 
 <p style="margin-left:22%;">Action to take when the middle
 mouse button is pressed. <br>
@@ -2180,8 +2251,8 @@ The <b>Off</b> setting disables overriding. <br>
 &ndash; <b>Win</b> <br>
 &ndash; <b>Off</b></p>
 
-<p style="margin-left:11%;"><b>Mouse
-auto-hiding</b>(HideMouse=on)</p>
+<p style="margin-left:11%;"><b>Mouse auto-hiding</b>
+(HideMouse=on)</p>
 
 <p style="margin-left:22%;">By default, mintty
 automatically hides the cross-hair mouse cursor when
@@ -2190,8 +2261,8 @@ keeps the cursor. <br>
 (Corresponds to the xterm resource value
 <b>pointerMode:2</b>.)</p>
 
-<p style="margin-left:11%;"><b>Elastic text
-selection</b>(ElasticMouse=off)</p>
+<p style="margin-left:11%;"><b>Elastic text selection</b>
+(ElasticMouse=off)</p>
 
 <p style="margin-left:22%;">With this option set, text
 selection with mouse dragging only includes first and last
@@ -2236,8 +2307,8 @@ adjustment</b> (ColSpacing=0)</p>
 <p style="margin-left:22%;">Additional column padding;
 ColSpacing=1 can avoid boldened glyphs being clipped.</p>
 
-<p style="margin-left:11%;"><b>Border
-spacing</b>(Padding=1)</p>
+<p style="margin-left:11%;"><b>Border spacing</b>
+(Padding=1)</p>
 
 <p style="margin-left:22%;">Window padding; margin between
 text and window border. The effective value is limited by
@@ -2700,8 +2771,9 @@ suggested by the window manager is used.</p>
 <p style="margin-left:22%;">The <b>Class</b> setting
 determines the name of the window class of the terminal
 window. It can be used to distinguish or group different
-mintty windows, e.g. for the mintty session switcher, or for
-Windows scripting tools such as AutoHotKey.</p>
+mintty windows, or tab sets, e.g. for the mintty session
+switcher, or for Windows scripting tools such as
+AutoHotKey.</p>
 
 <p style="margin-left:22%; margin-top: 1em">For a flexible
 grouping configuration, the Class option supports the same
@@ -2792,50 +2864,6 @@ when hovering can be disabled.</p>
 <p style="margin-left:22%;">This settings enables names
 options (&quot;long options&quot;) on the command line to be
 given with only one dash rather than a double dash.</p>
-
-<p style="margin-left:11%;"><b>Character width handling</b>
-(Charwidth=locale)</p>
-
-<p style="margin-left:22%;">With this option,
-locale-determined character width properties can be
-overridden: <br>
-&ndash; <b>locale</b> Use locale width properties. <br>
-&ndash; <b>unicode</b> Use built-in width properties, likely
-based on a more up-to-date Unicode version. (Corresponds to
-the xterm resource <b>mkWidth</b>.) <br>
-&ndash; <b>ambig-wide</b> Use built-in width properties,
-with ambiguous-width characters assumed to be wide.
-(Corresponds to the xterm resource <b>cjkWidth</b>.) <br>
-&ndash; <b>single</b> Enforce single-width (no double width
-rendering). <br>
-&ndash; <b>single-unicode</b> Enforce single-width (no
-double width rendering), with built-in width properties to
-determine combining characters.</p>
-
-<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
-With setting <b>ambig-wide</b>, if the effective locale does
-not define ambiguous-width characters wide already, mintty
-appends the &quot;@cjkwide&quot; locale modifier, in order
-to adapt the selected locale to the width preference.</p>
-
-<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
-With settings <b>single</b> or <b>single-unicode</b>, mintty
-appends the &quot;@cjksingle&quot; locale modifier, in order
-to adapt the selected locale to the width preference.</p>
-
-<p style="margin-left:22%; margin-top: 1em"><i>Note:</i> If
-this option selects using built-in width properties, the
-response to the Secondary Device Attributes request will
-report the built-in Unicode version as its third
-parameter.</p>
-
-
-<p style="margin-left:22%; margin-top: 1em"><i>Warning:</i>
-With this option, actual width properties as rendered on the
-screen and width assumptions of the <b>wcwidth</b> function
-may be inconsistent for the impacted characters, which may
-confuse screen applications (such as editors) that rely on
-<b>wcwidth</b> information.</p>
 
 <p style="margin-left:11%;"><b>Display control
 characters</b> (PrintableControls=0)</p>
@@ -3188,6 +3216,10 @@ transparency level <br>
 &ndash; <b>copy</b>: copies the selection to the clipboard
 <br>
 &ndash; <b>copy-text</b>: copies text only <br>
+&ndash; <b>copy-tabs</b>: copies text only, including TAB
+characters <br>
+&ndash; <b>copy-plain</b>: copies text only, TAB characters
+expanded as on screen <br>
 &ndash; <b>copy-rtf</b>: copies rich text format <br>
 &ndash; <b>copy-html-text</b>: copies HTML text only (no
 font information) <br>
@@ -3994,7 +4026,7 @@ synchronization</b> (TabBar=0)</p>
 an alternative session switcher. It raises the effective
 window position synchronization to the given level as if
 also setting <b>SessionGeomSync=</b><i>level</i>. It is
-recommended to use level 2 or higher.</p>
+recommended to use level 3 or higher.</p>
 
 <p style="margin-left:11%;"><b>Tabbar highlighting</b></p>
 
@@ -4085,7 +4117,7 @@ page
 
 
 <p style="margin-left:11%; margin-top: 1em">Copyright (C)
-2013 Andy Koppe (C) 2019 Thomas Wolff</p>
+2013 Andy Koppe (C) 2020 Thomas Wolff</p>
 
 <p style="margin-left:11%; margin-top: 1em">Mintty is
 released under the terms of the the <i>GNU General Public

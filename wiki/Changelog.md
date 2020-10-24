@@ -1,3 +1,5 @@
+### 3.4.1 (24 October 2020) ###
+
 Terminal features
   * Fixed injected false visual tab indication (#1036).
   * Escape sequences for stack of colours (XTPUSH/POP/REPORTCOLORS, xterm 357).
