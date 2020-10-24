@@ -1682,6 +1682,13 @@ If enabled, the region selected with the mouse is copied to the clipboard as
 soon as the mouse button is released, thus emulating X Window behaviour.
 
 .TP
+\fBCopy with TABs\fP (CopyTab=no)
+With this setting, when copying text, TAB characters will be preserved 
+rather than expanded to spaces.
+Note that user-definable functions are available to invoke copying 
+explicitly with or without TABs via keyboard shortcut or menu item.
+
+.TP
 \fBCopy as rich text\fP (CopyAsRTF=yes)
 If this option is enabled, which it is by default, text is copied to the
 clipboard in rich text format (RTF) in addition to plain text format.
@@ -2604,6 +2611,10 @@ Supported actions are described as follows:
 \(en \fBcopy\fP: copies the selection to the clipboard
 .br
 \(en \fBcopy-text\fP: copies text only
+.br
+\(en \fBcopy-tabs\fP: copies text only, including TAB characters
+.br
+\(en \fBcopy-plain\fP: copies text only, TAB characters expanded as on screen
 .br
 \(en \fBcopy-rtf\fP: copies rich text format
 .br

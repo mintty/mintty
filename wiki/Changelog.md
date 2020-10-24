@@ -13,6 +13,7 @@ Font installation / Portable application
   * Support dynamic installation of temporary fonts (#901, #1004).
 
 Window handling
+  * Clipboard selection can optionally contain TAB characters (#1037).
   * Click-open link still after moving the mouse over the link area (#1039).
   * Keep hotkey-started window in taskbar (#1035).
   * Override font zooming also with Ctrl, to support FancyZones (#487).
@@ -29,6 +30,7 @@ Character encoding
   * Do not enforce UTF-8 for WSL anymore.
 
 Configuration
+  * New option CopyTab (#1037).
   * New option value Charwidth=ambig-narrow.
   * New option OldLocale.
 

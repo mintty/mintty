@@ -130,6 +130,7 @@ const config default_cfg = {
   // Selection
   .input_clears_selection = true,
   .copy_on_select = true,
+  .copy_tabs = false,
   .copy_as_rtf = true,
   .copy_as_html = 0,
   .copy_as_rtf_font = W(""),
@@ -395,6 +396,7 @@ options[] = {
   // Selection
   {"ClearSelectionOnInput", OPT_BOOL, offcfg(input_clears_selection)},
   {"CopyOnSelect", OPT_BOOL, offcfg(copy_on_select)},
+  {"CopyTab", OPT_BOOL, offcfg(copy_tabs)},
   {"CopyAsRTF", OPT_BOOL, offcfg(copy_as_rtf)},
   {"CopyAsHTML", OPT_BOOL, offcfg(copy_as_html)},
   {"CopyAsRTFFont", OPT_WSTRING, offcfg(copy_as_rtf_font)},
@@ -3525,6 +3527,11 @@ setup_config_box(controlbox * b)
     )->column = 0;
     ctrl_checkbox(
       //__ Options - Mouse:
+      s, _("Copy with TABs"),
+      dlg_stdcheckbox_handler, &new_cfg.copy_tabs
+    )->column = 0;
+    ctrl_checkbox(
+      //__ Options - Mouse:
       s, _("Copy as &rich text"),
       dlg_stdcheckbox_handler, &new_cfg.copy_as_rtf
     )->column = 1;
@@ -3553,6 +3560,11 @@ setup_config_box(controlbox * b)
     )->column = 0;
     ctrl_checkbox(
       //__ Options - Mouse:
+      s, _("Copy with TABs"),
+      dlg_stdcheckbox_handler, &new_cfg.copy_tabs
+    )->column = 0;
+    ctrl_checkbox(
+      //__ Options - Mouse:
       s, _("Copy as &rich text"),
       dlg_stdcheckbox_handler, &new_cfg.copy_as_rtf
     )->column = 0;
@@ -3562,6 +3574,7 @@ setup_config_box(controlbox * b)
       s, _("Cop&y on select"),
       dlg_stdcheckbox_handler, &new_cfg.copy_on_select
     )->column = 0;
+    // no space for "Copy with TABs"
     ctrl_checkbox(
       //__ Options - Mouse:
       s, _("Copy as &rich text"),
@@ -3710,6 +3723,11 @@ setup_config_box(controlbox * b)
       //__ Options - Selection:
       s, _("Cop&y on select"),
       dlg_stdcheckbox_handler, &new_cfg.copy_on_select
+    )->column = 0;
+    ctrl_checkbox(
+      //__ Options - Selection:
+      s, _("Copy with TABs"),
+      dlg_stdcheckbox_handler, &new_cfg.copy_tabs
     )->column = 0;
     ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
     ctrl_columns(s, 2, 50, 50);

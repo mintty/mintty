@@ -477,6 +477,8 @@ win_update_menus(bool callback)
   // enable/disable predefined extended context menu entries
   // (user-definable ones are handled via fct_status())
   EnableMenuItem(ctxmenu, IDM_COPY_TEXT, sel_enabled);
+  EnableMenuItem(ctxmenu, IDM_COPY_TABS, sel_enabled);
+  EnableMenuItem(ctxmenu, IDM_COPY_TXT, sel_enabled);
   EnableMenuItem(ctxmenu, IDM_COPY_RTF, sel_enabled);
   EnableMenuItem(ctxmenu, IDM_COPY_HTXT, sel_enabled);
   EnableMenuItem(ctxmenu, IDM_COPY_HFMT, sel_enabled);
@@ -655,6 +657,8 @@ win_init_ctxmenu(bool extended_menu, bool with_user_commands)
   if (extended_menu) {
     //__ Context menu:
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_COPY_TEXT, _W("Copy as text"));
+    //__ Context menu:
+    AppendMenuW(ctxmenu, MF_ENABLED, IDM_COPY_TABS, _W("Copy with TABs"));
     //__ Context menu:
     AppendMenuW(ctxmenu, MF_ENABLED, IDM_COPY_RTF, _W("Copy as RTF"));
     //__ Context menu:
@@ -1516,6 +1520,8 @@ static struct function_def cmd_defs[] = {
 
   {"copy", {IDM_COPY}, mflags_copy},
   {"copy-text", {IDM_COPY_TEXT}, mflags_copy},
+  {"copy-tabs", {IDM_COPY_TABS}, mflags_copy},
+  {"copy-plain", {IDM_COPY_TXT}, mflags_copy},
   {"copy-rtf", {IDM_COPY_RTF}, mflags_copy},
   {"copy-html-text", {IDM_COPY_HTXT}, mflags_copy},
   {"copy-html-format", {IDM_COPY_HFMT}, mflags_copy},

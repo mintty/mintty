@@ -27,15 +27,9 @@ destroy_clip_workbuf(clip_workbuf * b)
 
 // All b members must be 0 initially, ca may be null if the caller doesn't care
 static void
-clip_addchar(clip_workbuf * b, wchar chr, cattr * ca)
+clip_addchar(clip_workbuf * b, wchar chr, cattr * ca, bool tabs)
 {
-  if (b->len >= b->capacity) {
-    b->capacity = b->len ? b->len * 2 : 1024;  // x2 strategy, 1K chars initially
-    b->text = renewn(b->text, b->capacity);
-    b->cattrs = renewn(b->cattrs, b->capacity);
-  }
-
-  if (chr == ' ' && ca && ca->attr & TATTR_CLEAR && ca->attr & ATTR_BOLD) {
+  if (tabs && chr == ' ' && ca && ca->attr & TATTR_CLEAR && ca->attr & ATTR_BOLD) {
     // collapse TAB
     int l0 = b->len;
     while (l0) {
@@ -48,6 +42,12 @@ clip_addchar(clip_workbuf * b, wchar chr, cattr * ca)
     chr = '\t';
   }
 
+  if (b->len >= b->capacity) {
+    b->capacity = b->len ? b->len * 2 : 1024;  // x2 strategy, 1K chars initially
+    b->text = renewn(b->text, b->capacity);
+    b->cattrs = renewn(b->cattrs, b->capacity);
+  }
+
   b->text[b->len] = chr;
   b->cattrs[b->len] = ca ? *ca : CATTR_DEFAULT;
   b->len++;
@@ -55,7 +55,7 @@ clip_addchar(clip_workbuf * b, wchar chr, cattr * ca)
 
 // except OOM, guaranteed at least emtpy null terminated wstring and one cattr
 static clip_workbuf *
-get_selection(pos start, pos end, bool rect, bool allinline)
+get_selection(pos start, pos end, bool rect, bool allinline, bool with_tabs)
 {
   int old_top_x = start.x;    /* needed for rect==1 */
   clip_workbuf *buf = newn(clip_workbuf, 1);
@@ -149,7 +149,7 @@ get_selection(pos start, pos end, bool rect, bool allinline)
         cbuf[1] = 0;
 
         for (p = cbuf; *p; p++)
-          clip_addchar(buf, *p, pca);
+          clip_addchar(buf, *p, pca, with_tabs);
 
         if (line->chars[x].cc_next)
           x += line->chars[x].cc_next;
@@ -159,15 +159,15 @@ get_selection(pos start, pos end, bool rect, bool allinline)
       start.x++;
     }
     if (nl) {
-      clip_addchar(buf, '\r', 0);
-      clip_addchar(buf, '\n', 0);
+      clip_addchar(buf, '\r', 0, false);
+      clip_addchar(buf, '\n', 0, false);
     }
     start.y++;
     start.x = rect ? old_top_x : 0;
 
     release_line(line);
   }
-  clip_addchar(buf, 0, 0);
+  clip_addchar(buf, 0, 0, false);
   return buf;
 }
 
@@ -177,7 +177,11 @@ term_copy_as(char what)
   if (!term.selected)
     return;
 
-  clip_workbuf *buf = get_selection(term.sel_start, term.sel_end, term.sel_rect, false);
+  bool with_tabs = what == 'T' || ((!what || what == 't') && cfg.copy_tabs);
+  if (what == 'T' || what == 'p') // map "text with TABs" and "plain" to text
+    what = 't';
+  clip_workbuf *buf = get_selection(term.sel_start, term.sel_end, term.sel_rect,
+                                    false, with_tabs);
   win_copy_as(buf->text, buf->cattrs, buf->len, what);
   destroy_clip_workbuf(buf);
 }
@@ -193,7 +197,7 @@ term_open(void)
 {
   if (!term.selected)
     return;
-  clip_workbuf *buf = get_selection(term.sel_start, term.sel_end, term.sel_rect, false);
+  clip_workbuf *buf = get_selection(term.sel_start, term.sel_end, term.sel_rect, false, false);
 
   // Don't bother opening if it's all whitespace.
   wchar *p = buf->text;
@@ -388,7 +392,7 @@ term_get_text(bool all, bool screen, bool command)
     rect = term.sel_rect;
   }
 
-  clip_workbuf *buf = get_selection(start, end, rect, false);
+  clip_workbuf *buf = get_selection(start, end, rect, false, cfg.copy_tabs);
   wchar * tbuf = wcsdup(buf->text);
   destroy_clip_workbuf(buf);
   return tbuf;
@@ -655,7 +659,7 @@ term_create_html(FILE * hf, int level)
   hprintf(hf, "  <div class=background id='vt100'>\n");
   hprintf(hf, "   <pre>");
 
-  clip_workbuf * buf = get_selection(start, end, rect, level >= 3);
+  clip_workbuf * buf = get_selection(start, end, rect, level >= 3, false);
   int i0 = 0;
   bool odd = true;
   for (uint i = 0; i < buf->len; i++) {
@@ -1005,7 +1009,7 @@ print_screen(void)
   pos start = (pos){term.disptop, 0, 0, 0, false};
   pos end = (pos){term.disptop + term.rows - 1, term.cols, 0, 0, false};
   bool rect = false;
-  clip_workbuf * buf = get_selection(start, end, rect, false);
+  clip_workbuf * buf = get_selection(start, end, rect, false, false);
   printer_wwrite(buf->text, buf->len);
   printer_finish_job();
   destroy_clip_workbuf(buf);

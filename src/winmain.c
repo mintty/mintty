@@ -2757,6 +2757,8 @@ static struct {
         when IDM_OPEN: term_open();
         when IDM_COPY: term_copy();
         when IDM_COPY_TEXT: term_copy_as('t');
+        when IDM_COPY_TABS: term_copy_as('T');
+        when IDM_COPY_TXT: term_copy_as('p');
         when IDM_COPY_RTF: term_copy_as('r');
         when IDM_COPY_HTXT: term_copy_as('h');
         when IDM_COPY_HFMT: term_copy_as('f');

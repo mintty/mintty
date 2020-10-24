@@ -124,6 +124,7 @@ typedef struct {
   // Selection
   bool input_clears_selection;
   bool copy_on_select;
+  bool copy_tabs;
   bool copy_as_rtf;
   char copy_as_html;
   wstring copy_as_rtf_font;
