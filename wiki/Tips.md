@@ -1190,7 +1190,7 @@ interactive image display.
 Mintty can emulate the Tektronix 4014 vector graphics terminal. 
 It switches to Tek emulation on the xterm sequence DECSET 38 (`\e[?38h`). 
 It is suggested to adjust the window size to the Tektronix 4010 resolution and aspect ratio before:
-* `echo -en "\e[4;$780;$1024t"`
+* `echo -en "\e[4;780;1024t"`
 
 The script `tek` in the mintty 
 [utils repository](https://github.com/mintty/utils) supports switching 
