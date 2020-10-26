@@ -560,3 +560,19 @@ supported; cursor colour can be set with the OSC 12 sequence.)
 | **4**   | lower_half   |
 | **5**   | two_thirds   |
 | **6**   | full block   |
+
+
+## Printing and screen dump ##
+
+Mintty supports the following DEC, xterm and mintty Media Copy sequences:
+
+| **sequence** | **effect**                      |
+|:-------------|:--------------------------------|
+| `^[[0i`      | print screen to default printer |
+| `^[[5i`      | redirect output to printer      |
+| `^[[4i`      | end output to printer           |
+| `^[[?5i`     | copy output to printer          |
+| `^[[?4i`     | end output to printer           |
+| `^[[10i`     | save screen as HTML             |
+| `^[[12i`     | save screen as PNG image        |
+
