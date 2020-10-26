@@ -1029,9 +1029,10 @@ the system ANSI encoding.
 (This does not apply to the same configuration settings when given on the 
 command-line.)
 .br
-Unicode-enabled settings: BellFile, ThemeFile, Background, 
-Title, ExitTitle, Icon, Log, 
-Language, Font, Font1..., FontSample, FontChoice, 
+Unicode-enabled settings: BellFile, BellFile2..7, ThemeFile, Background, 
+Title, ExitTitle, Icon, Log, SaveFilename, 
+Language, Font, Font1..10, FontSample, FontChoice, 
+TekFont, CopyAsRTFFont, 
 SearchBar, Printer, Answerback, SixelClipChars, 
 Class, AppID, AppName, AppLaunchCmd, 
 DropCommands, UserCommands, SessionCommands, TaskCommands, 
@@ -2291,6 +2292,15 @@ with a value between 1 and 12, setting the popup position by clock hour.
 \fBShow hyperlink in window title when hovering\fP (HoverTitle=true)
 With this setting, display of an explicit hyperlink (OSC 8 attribute) 
 in the window title when hovering can be disabled.
+
+.TP
+\fBShow automatic progress bar\fP (ProgressBar=0)
+This setting initially enables a progress indication on the taskbar icon, 
+based on automatic progress detection: if the current cursor line ends 
+with a percent indication (x%) it will be notified via progress bar in 
+one of three levels 1 (green), 2 (yellow), 3 (red).
+Note that the progress bar can also be switched or even controlled by an 
+escape sequence.
 
 .TP
 \fBSingle-dash long options\fP (ShortLongOpts=false)

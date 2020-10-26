@@ -3153,6 +3153,14 @@ do_csi(uchar c)
     when CPAIR('-', 'p'): /* DECARR: VT520 Select Auto Repeat Rate */
       if (arg0 <= 30)
         term.repeat_rate = arg0;
+    when CPAIR('%', 'q'):  /* setup progress indicator on taskbar icon */
+      if (arg0 <= 3) {
+        taskbar_progress(- arg0);
+        if (term.csi_argc > 1)
+          taskbar_progress(arg1);
+        else
+          term.detect_progress = arg0;
+      }
   }
 }
 

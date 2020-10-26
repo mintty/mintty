@@ -221,6 +221,7 @@ typedef struct {
   bool short_long_opts;
   bool bold_as_special;
   bool hover_title;
+  char progress_bar;
   int baud;
   int bloom;
   string old_options;

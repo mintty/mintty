@@ -206,6 +206,26 @@ special sequences; for details see
 See there also for an illustrated explanation of the meaning of _pos_ vs _size_ values.
 
 
+## Progress bar ##
+
+— EXPERIMENTAL —
+
+A progress indication on the taskbar icon can be switched or controlled with 
+this escape sequence.
+With a second parameter, the progress value can be controlled explicitly.
+With only one parameter, automatic progress detection is enabled, 
+scanning the current cursor line for a final percentage indication.
+Note that automatic progress bar can also be configured.
+
+| **sequence**                 | **comment**                                 |
+|:-----------------------------|:--------------------------------------------|
+| `^[[0%q`                     | disable progress indication                 |
+| `^[[1%q`                     | enable progress indication level 1 (green)  |
+| `^[[2%q`                     | enable progress indication level 2 (yellow) |
+| `^[[3%q`                     | enable progress indication level 3 (red)    |
+| `^[[`_level_`;`_percent_`%q` | set progress level and value                |
+
+
 ## Mousewheel reporting ##
 
 Mintty includes support for sending mousewheel events to an application without having to enable full [xterm mouse tracking](http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#Mouse%20Tracking), which takes over all mouse events and isn't supported by every application.

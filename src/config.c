@@ -225,6 +225,7 @@ const config default_cfg = {
   .short_long_opts = false,
   .bold_as_special = false,
   .hover_title = true,
+  .progress_bar = 0,
   .old_bold = false,
   .ime_cursor_colour = DEFAULT_COLOUR,
   .ansi_colours = {
@@ -508,6 +509,7 @@ options[] = {
   {"ShortLongOpts", OPT_BOOL, offcfg(short_long_opts)},
   {"BoldAsRainbowSparkles", OPT_BOOL, offcfg(bold_as_special)},
   {"HoverTitle", OPT_BOOL, offcfg(hover_title)},
+  {"ProgressBar", OPT_BOOL, offcfg(progress_bar)},
   {"Baud", OPT_INT, offcfg(baud)},
   {"Bloom", OPT_INT, offcfg(bloom)},
   {"OldXButtons", OPT_BOOL, offcfg(old_xbuttons)},

@@ -1,3 +1,10 @@
+Terminal features
+  * Progress bar control sequence CSI %q.
+  * Optional automatic progress detection (mintty/wsltty#202).
+
+Configuration
+  * New option ProgressBar (mintty/wsltty#202).
+
 ### 3.4.1 (24 October 2020) ###
 
 Terminal features

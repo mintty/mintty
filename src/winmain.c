@@ -143,6 +143,8 @@ typedef struct {
 
 #endif
 
+#include <shlobj.h>
+
 
 unsigned long
 mtime(void)
@@ -1736,6 +1738,42 @@ win_set_chars(int rows, int cols)
     win_fix_position();
   }
   trace_winsize("win_set_chars > win_fix_position");
+}
+
+
+void
+taskbar_progress(int i)
+{
+#if CYGWIN_VERSION_API_MINOR >= 74
+static int last_i = 0;
+  if (i == last_i)
+    return;
+  //printf("taskbar_progress %d\n", i);
+
+  ITaskbarList4 * tbl;
+  HRESULT hres = CoCreateInstance(&CLSID_TaskbarList, NULL,
+                                  CLSCTX_INPROC_SERVER,
+                                  &IID_ITaskbarList, (void **) &tbl);
+  if (!SUCCEEDED(hres))
+    return;
+
+  if (i > 0)
+    hres = tbl->lpVtbl->SetProgressValue(tbl, wnd, i, 100);
+  else if (i == 0)
+    hres = tbl->lpVtbl->SetProgressState(tbl, wnd, TBPF_NOPROGRESS);
+  else if (i == -1)
+    hres = tbl->lpVtbl->SetProgressState(tbl, wnd, TBPF_NORMAL);
+  else if (i == -2)
+    hres = tbl->lpVtbl->SetProgressState(tbl, wnd, TBPF_PAUSED);
+  else if (i == -3)
+    hres = tbl->lpVtbl->SetProgressState(tbl, wnd, TBPF_ERROR);
+
+  last_i = i;
+
+  tbl->lpVtbl->Release(tbl);
+#else
+  (void)i;
+#endif
 }
 
 
@@ -3661,8 +3699,6 @@ typedef void * voidrefref;
 #define STARTF_TITLEISLINKNAME 0x00000800
 #define STARTF_TITLEISAPPID 0x00001000
 #endif
-
-#include <shlobj.h>
 
 static wchar *
 get_shortcut_icon_location(wchar * iconfile, bool * wdpresent)

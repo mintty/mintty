@@ -558,6 +558,8 @@ struct term {
   uchar *tabs;
   bool newtab;
 
+  int detect_progress;
+
   enum {
     NORMAL, ESCAPE, CSI_ARGS,
     IGNORE_STRING, CMD_STRING, CMD_ESCAPE,
