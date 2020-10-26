@@ -2830,14 +2830,14 @@ do_csi(uchar c)
       restore_cursor();
     when 'm':        /* SGR: set graphics rendition */
       do_sgr();
-    when 't':        /* DECSLPP: set page size - ie window height */
+    when 't':
      /*
       * VT340/VT420 sequence DECSLPP, for setting the height of the window.
       * DEC only allowed values 24/25/36/48/72/144, so dtterm and xterm
       * claimed values below 24 for various window operations, 
       * and also allowed any number of rows from 24 and above to be set.
       */
-      if (arg0 >= 24) {
+      if (arg0 >= 24) {  /* DECSLPP: set page size - ie window height */
         if (*cfg.suppress_win && contains(cfg.suppress_win, 24))
           ; // skip suppressed window operation
         else {
