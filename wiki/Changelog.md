@@ -3,6 +3,9 @@ Terminal features
   * Optional automatic progress detection (mintty/wsltty#202).
   * Media Copy sequence CSI 12 i to dump screen as image (#1051).
 
+Window handling / Tabbar (thanks to K. Takata)
+  * Bring other tab to top when closing (#1054).
+
 Configuration
   * New option ProgressBar (mintty/wsltty#202).
 
