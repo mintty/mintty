@@ -3677,6 +3677,14 @@ exit_mintty(void)
 {
   report_pos();
 
+  // bring next window to top
+  if (sync_level()) {
+    HWND wnd_other = FindWindowExW(NULL, wnd,
+        (LPCWSTR)(uintptr_t)class_atom, NULL);
+    if (wnd_other)
+      win_to_top(wnd_other);
+  }
+
   // could there be a lag until the window is actually destroyed?
   // so we'd have to add a safeguard here...
   SetWindowTextA(wnd, "");
