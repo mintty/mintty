@@ -48,8 +48,13 @@ clip_addchar(clip_workbuf * b, wchar chr, cattr * ca, bool tabs)
     b->cattrs = renewn(b->cattrs, b->capacity);
   }
 
+  cattr copattr = ca ? *ca : CATTR_DEFAULT;
+  if (copattr.attr & TATTR_CLEAR) {
+    copattr.attr &= ~(ATTR_BOLD | ATTR_DIM | TATTR_CLEAR);
+  }
+
   b->text[b->len] = chr;
-  b->cattrs[b->len] = ca ? *ca : CATTR_DEFAULT;
+  b->cattrs[b->len] = copattr;
   b->len++;
 }
 
