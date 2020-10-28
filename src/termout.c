@@ -2569,6 +2569,28 @@ do_winop(void)
 }
 
 static void
+set_taskbar_progress(int state, int percent)
+{
+  if (state == 0) {  // disable progress indication
+    taskbar_progress(-9);
+    term.detect_progress = 0;
+  }
+  else if (state == 8) {  // "busy"
+    taskbar_progress(-8);
+    term.detect_progress = 0;
+  }
+  else if (state <= 3) {
+    taskbar_progress(- state);
+    if (percent >= 0) {
+      taskbar_progress(percent);
+      term.detect_progress = 0;
+    }
+    else  // enable automatic progress detection
+      term.detect_progress = state;
+  }
+}
+
+static void
 do_csi(uchar c)
 {
   term_cursor *curs = &term.curs;
@@ -3162,13 +3184,7 @@ do_csi(uchar c)
       if (arg0 <= 30)
         term.repeat_rate = arg0;
     when CPAIR('%', 'q'):  /* setup progress indicator on taskbar icon */
-      if (arg0 <= 3) {
-        taskbar_progress(- arg0);
-        if (term.csi_argc > 1)
-          taskbar_progress(arg1);
-        else
-          term.detect_progress = arg0;
-      }
+      set_taskbar_progress(arg0, term.csi_argc > 1 ? arg1 : -1);
   }
 }
 

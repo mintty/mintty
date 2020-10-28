@@ -223,7 +223,8 @@ Note that automatic progress bar can also be configured.
 | `^[[1%q`                     | enable progress indication level 1 (green)  |
 | `^[[2%q`                     | enable progress indication level 2 (yellow) |
 | `^[[3%q`                     | enable progress indication level 3 (red)    |
-| `^[[`_level_`;`_percent_`%q` | set progress level and value                |
+| `^[[`_level_`;`_percent_`%q` | set progress level (1..3) and value         |
+| `^[[8%q`                     | enable continuous "busy" indication         |
 
 
 ## Mousewheel reporting ##
