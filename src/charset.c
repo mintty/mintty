@@ -454,7 +454,7 @@ set_locale_env(string loc)
       setenv("LC_CTYPE", loc, true);  // update LC_CTYPE
     else {
       lc = getenv("LANG");
-      if (lc && strcmp(lc, loc) == 0)   // if LANG is not set properly
+      if (!lc || strcmp(lc, loc) != 0)  // if LANG is not set properly
         setenv("LC_CTYPE", loc, true);  // set LC_CTYPE
     }
   }
