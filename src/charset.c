@@ -514,6 +514,7 @@ update_locale(void)
   valid_default_locale = set_locale;
   if (valid_default_locale) {
     default_codepage = cs_codepage(nl_langinfo(CODESET));
+    //printf("codepage %d <%s>\n", default_codepage, nl_langinfo(CODESET));
     default_locale = strdup(set_locale);
     // preliminary ambiguous width
     cs_ambig_wide = charwidth < 10 && wcwidth(0x3B1) == 2;
