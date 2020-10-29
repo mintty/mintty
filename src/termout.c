@@ -3989,6 +3989,69 @@ do_cmd(void)
           free(data);
       }
     }
+    when 9: {
+typedef struct {
+  char * p;
+  int v;
+} paramap;
+      int scanenum(char * s, int * _i, paramap * p, bool donum) {
+        char * sep = strchr(s, ';');
+        int len = sep ? (uint)(sep - s) : strlen(s);
+        while (p->p) {
+          if (0 == strncasecmp(s, p->p, len)) {
+            *_i = p->v;
+            return len;
+          }
+          p++;
+        }
+        if (donum) {
+          // fallback scan for number
+          int numlen = sscanf(s, "%d", _i);
+          if (numlen && numlen == len)
+            return numlen;
+        }
+        // not found
+        return 0;
+      }
+
+      int cmd;
+      int len = scanenum(s, &cmd,
+                         (paramap[]){{"4", 4}, {"progress", 4}, {0, 0}},
+                         false);
+      if (!len || cmd != 4)
+        return;
+      s += len;
+
+      if (!*s)
+        return;
+      s++;
+      int state;
+      len = scanenum(s, &state,
+                     (paramap[]){
+                                 {"off", 0},
+                                 {"green", 1},
+                                 {"yellow", 2},
+                                 {"red", 3},
+                                 {"busy", 8},
+                                 {"0", 0},
+                                 {"1", 1},
+                                 {"4", 2},
+                                 {"2", 3},
+                                 {"3", 8},
+                                 {0, 0}},
+                     false);
+      if (!len)
+        return;
+      s += len;
+
+      int percent = -1;
+      if (*s) {
+        s++;
+        sscanf(s, "%d", &percent);
+      }
+
+      set_taskbar_progress(state, percent);
+    }
   }
 }
 

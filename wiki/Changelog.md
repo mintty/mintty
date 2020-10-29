@@ -1,5 +1,5 @@
 Terminal features
-  * Progress bar control sequence CSI %q.
+  * Progress bar control sequences CSI %q or OSC 9;4.
   * Optional automatic progress detection (mintty/wsltty#202).
   * Media Copy sequence CSI 12 i to dump screen as image (#1051).
   * HTML screen dumps do not visualize Space and TAB.
