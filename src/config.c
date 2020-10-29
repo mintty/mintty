@@ -609,6 +609,7 @@ static opt_val
   [OPT_CURSOR] = (opt_val[]) {
     {"line", CUR_LINE},
     {"block", CUR_BLOCK},
+    {"box", CUR_BOX},
     {"underscore", CUR_UNDERSCORE},
     {0, 0}
   },
@@ -3236,12 +3237,16 @@ setup_config_box(controlbox * b)
   //__ Options - Looks: section title
                       _("Cursor"));
   ctrl_radiobuttons(
-    s, null, 4 + with_glass,
+    s, null, 4,
     dlg_stdradiobutton_handler, &new_cfg.cursor_type,
     //__ Options - Looks: cursor type
     _("Li&ne"), CUR_LINE,
     //__ Options - Looks: cursor type
     _("Bloc&k"), CUR_BLOCK,
+#ifdef cursor_type_box
+    //__ Options - Looks: cursor type
+    _("Bo&x"), CUR_BOX,
+#endif
     //__ Options - Looks: cursor type
     _("&Underscore"), CUR_UNDERSCORE,
     null

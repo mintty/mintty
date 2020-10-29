@@ -1,8 +1,9 @@
 Terminal features
-  * Progress bar control sequences CSI %q or OSC 9;4.
+  * Progress bar control sequences CSI %q or OSC 9;4 (experimental).
   * Optional automatic progress detection (mintty/wsltty#202).
   * Media Copy sequence CSI 12 i to dump screen as image (#1051).
   * HTML screen dumps do not visualize Space and TAB.
+  * New DECSCUSR (CSI SP q) values 7, 8 to set cursor style box (mintty/wsltty#204).
 
 Window handling / Tabbar (thanks to K. Takata)
   * Bring other tab to top when closing (#1054).
@@ -12,6 +13,7 @@ Character encoding
 
 Configuration
   * New option ProgressBar (mintty/wsltty#202).
+  * New option value CursorType=box (config file/command line only, mintty/wsltty#204).
 
 ### 3.4.1 (24 October 2020) ###
 

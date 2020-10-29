@@ -3938,6 +3938,11 @@ draw:;
           Rectangle(dc, x, y, x + char_width, y + cell_height);
           SelectObject(dc, oldbrush);
         }
+      when CUR_BOX: {
+        HBRUSH oldbrush = SelectObject(dc, GetStockObject(NULL_BRUSH));
+        Rectangle(dc, x, y, x + char_width, y + cell_height);
+        SelectObject(dc, oldbrush);
+      }
       when CUR_LINE: {
         int caret_width = 1;
         SystemParametersInfo(SPI_GETCARETWIDTH, 0, &caret_width, 0);

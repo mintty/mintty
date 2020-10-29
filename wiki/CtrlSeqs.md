@@ -556,6 +556,8 @@ blinking interval in milliseconds.
 | **4**   | underscore   | no        |
 | **5**   | line         | yes       |
 | **6**   | line         | no        |
+| **7**   | box          | yes       |
+| **8**   | box          | no        |
 
 Furthermore, the following Linux console sequence can be used to set the 
 size of the active underscore cursor.
