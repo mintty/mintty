@@ -456,6 +456,15 @@ set_locale_env(string loc)
       lc = getenv("LANG");
       if (!lc || strcmp(lc, loc) != 0)  // if LANG is not set properly
         setenv("LC_CTYPE", loc, true);  // set LC_CTYPE
+      // alternative approaches:
+      // - fix LANG only if it was set before and leave all unset otherwise;
+      //   this triggers bad behaviour in shell startup scripts; see
+      //   https://github.com/mintty/mintty/issues/1050#issuecomment-719635747
+      //   resulting in locale setting inconsistent with requested Locale
+      // - set LANG unconditionally; this would however impose locale 
+      //   setting on other (i.e. non-LC_CTYPE) locale categories, which 
+      //   is not the concern of a terminal; see
+      //   https://github.com/mintty/mintty/issues/1050#issuecomment-719365620
     }
   }
 
