@@ -1466,28 +1466,41 @@ If no locale is set here, which is the default, mintty uses the locale and
 character set specified via the environment variables \fILC_ALL\fP,
 \fILC_CTYPE\fP or \fILANG\fP.
 
-If the locale option is set, however, it will override any environment
-variable setting: \fILC_ALL\fP and the \fILC_*\fP variables for specific
-locale categories are cleared, while \fILANG\fP is set according to the
-selected locale and character set.
+The major purpose of setting \fBLocale\fP, as far as the terminal is 
+concerned, is to enable setting \fBCharset\fP. Therefore, after revision 
+of locale handling in mintty 3.4.1, mintty restrains itself to setting 
+the LC_CTYPE category of the locale mechanism if possible and not 
+overwrite other categories if they are set in the environment.
 
-\fINote:\fP This means, while not strictly necessary, that also locale variables 
+Until mintty 3.4.0 or with option OldLocale set, if the locale option 
+is set, however, it would override any environment variable setting:
+\fILC_ALL\fP and the \fILC_*\fP variables for specific locale categories 
+are cleared, while \fILANG\fP is set according to the selected locale 
+and character set.
+This meant, while not strictly necessary, that also locale variables 
 unrelated to the terminal character set (e.g. LC_MESSAGES) are cleared 
 to avoid confusion.
-
-By default, the selected locale also determines the character width 
-assumptions used for screen rendering. For exceptions, see the 
-setting \fBCharwidth\fP and the control sequences for special wide character handling 
-(\fIhttps://github.com/mintty/mintty/wiki/CtrlSeqs#wide-characters\fP).
+If you prefer basic locale setup for all categories to be affected by 
+the LC_CTYPE locale, it is suggested to add the following to the 
+shell startup scripts:
+.br
+	LANG="${LC_ALL:-${LC_CTYPE:-$LANG}}"
 
 .TP
 \fBCharacter set\fP (Charset=)
 The character set to be used for encoding input and decoding output.
 If no locale is set, this setting is ignored.
 
+By default, the locale selected by options \fBLocale\fP and \fBCharset\fP 
+also determines the character width assumptions used for screen rendering. 
+Exceptions are enabled by some settings, particularly \fBCharwidth\fP,
+and some control sequences; for an overview see
+(\fIhttps://github.com/mintty/mintty/wiki/Tips#character-width\fP).
+
 \fINote:\fP
-While changing the character set takes effect immediately for text input and
-ouput, it does not affect the processes already running in mintty.
+When changing the character set interactively in the Options dialog, 
+it takes effect immediately for text input and ouput, but it does not 
+affect the processes already running in mintty.
 This is because the environment variables of a running process cannot be
 changed from outside that process.
 Therefore mintty should be restarted for a character set change to take full
