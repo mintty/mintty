@@ -468,6 +468,11 @@ set_locale_env(string loc)
     }
   }
 
+  // if parameter Locale is used, always set LANG additionally;
+  // see https://github.com/mintty/mintty/issues/1050#issuecomment-719931484
+  if (*cfg.locale)
+    setenv("LANG", loc, true);
+
   if (cut)
     free((char *)loc);
 }

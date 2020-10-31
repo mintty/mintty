@@ -10,6 +10,7 @@ Window handling / Tabbar (thanks to K. Takata)
 
 Character encoding
   * Fixed locale setup in case of empty locale (#1050, thanks to K. Takata).
+  * Always set LANG if option Locale is used (#1050).
 
 Configuration
   * New option ProgressBar (mintty/wsltty#202).
