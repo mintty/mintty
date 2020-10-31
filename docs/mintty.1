@@ -1471,6 +1471,7 @@ concerned, is to enable setting \fBCharset\fP. Therefore, after revision
 of locale handling in mintty 3.4.1, mintty restrains itself to setting 
 the LC_CTYPE category of the locale mechanism if possible and not 
 overwrite other categories if they are set in the environment.
+In addition, however, if Locale is set, mintty also sets the LANG variable.
 
 Until mintty 3.4.0 or with option OldLocale set, if the locale option 
 is set, however, it would override any environment variable setting:
