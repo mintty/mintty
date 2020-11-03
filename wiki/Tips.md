@@ -11,8 +11,9 @@ For its configuration, it reads configuration files in this order:
 * `~/.minttyrc`
 
 For resource files to configure a colour scheme, 
-wave file for the bell character, localization files, emoji graphics,
-it looks for subfolders `themes`, `sounds`, `lang`, `emojis`, respectively, 
+wave file for the bell character, localization files, emoji graphics, 
+dynamic fonts, it looks for subfolders 
+`themes`, `sounds`, `lang`, `emojis`, `fonts`, respectively, 
 in the directories
 * `~/.mintty`
 * `~/.config/mintty`
@@ -978,6 +979,7 @@ Note that up to cygwin 2.10.0, it may be useful to set `Charwidth=unicode` in ad
 Emojis are displayed in the rectangular character cell group determined 
 by the cumulated width of the emoji sequence characters. The option 
 `EmojiPlacement` can adjust the location of emoji graphics within that area.
+You can use the escape sequence PEC to tune emoji width.
 
 ### Installing emoji resources ###
 
