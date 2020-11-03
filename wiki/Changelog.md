@@ -1,3 +1,5 @@
+### 3.4.2 (4 November 2020) ###
+
 Terminal features
   * Progress bar control sequences CSI %q or OSC 9;4 (experimental).
   * Optional automatic progress detection (mintty/wsltty#202).
