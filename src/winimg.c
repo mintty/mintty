@@ -748,6 +748,17 @@ winimgs_paint(void)
         printf("@%d:%d disp [%sm%d[m [%d]\n", top, left, disp_flag ? "" : "41", disp_flag, img->imgi);
 #endif
 
+#ifdef scale_graphics_in_double_width_lines
+#warning no working implementation yet; not done in xterm either
+        termline * line = fetch_line(top);
+        ushort lattr = line->lattr;
+        release_line(line);
+        if ((lattr & LATTR_MODE) != LATTR_NORM) {
+          // fix position in double-width line:
+          // adjust below: left, xlft, ...width, xrgt, iwidth, iheight
+        }
+#endif
+
         // fill image area background (in case it's smaller or transparent)
         // calculate area for padding
         int ytop = max(0, top) * cell_height + OFFSET + PADDING;
@@ -941,11 +952,15 @@ win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int ele
   if ((lattr & LATTR_MODE) >= LATTR_BOT)
     row -= cell_height;
   int w = elen * cell_width;
-  if ((lattr & LATTR_MODE) != LATTR_NORM)
+  if ((lattr & LATTR_MODE) != LATTR_NORM) {
     w *= 2;
+    // fix position in double-width line
+    col += x * cell_width;
+  }
   int h = cell_height;
   if ((lattr & LATTR_MODE) >= LATTR_TOP)
     h *= 2;
+  // glitch: missing clipping for inconsistent double-height lines
 
   if (cfg.emoji_placement) {
     uint iw, ih;

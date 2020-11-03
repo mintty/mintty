@@ -4,6 +4,7 @@ Terminal features
   * Media Copy sequence CSI 12 i to dump screen as image (#1051).
   * HTML screen dumps do not visualize Space and TAB.
   * New DECSCUSR (CSI SP q) values 7, 8 to set cursor style box (mintty/wsltty#204).
+  * Fixed horizontal position of emojis in double-width lines.
 
 Window handling / Tabbar (thanks to K. Takata)
   * Bring other tab to top when closing (#1054).
