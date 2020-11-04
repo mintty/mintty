@@ -64,7 +64,7 @@ Read settings from the specified configuration file, in addition to
 the default config files.
 The file is not taken into account for saving configuration changes.
 This is useful to mix-in partial configuration variants, particularly 
-colour schemes. However, \fB-o ThemeFile=\fIFILENAME\fP may be preferable.
+colour schemes. However, \fB-o ThemeFile=\fP\fIFILENAME\fP may be preferable.
 
 .TP
 \fB--configdir\fP \fIDIRNAME\fP
@@ -103,7 +103,7 @@ or to stay open only if the child process terminates with an error, i.e. with
 a non-zero exit status or due to a signal indicating a runtime error.
 
 .TP
-\fB-i\fP, \fB--icon\fP \fIFILE\fP[\fB,\fIINDEX\fP]
+\fB-i\fP, \fB--icon\fP \fIFILE\fP[\fB,\fP\fIINDEX\fP]
 Load the window icon from an executable, DLL, or icon file.  The optional
 comma-separated index can be used to select a particular icon in a file with
 multiple icons.
@@ -136,10 +136,10 @@ the extended context menu.
 .TP
 \fB-o\fP, \fB--option\fP \fINAME\fP=\fIVALUE\fP
 Override the named config file option with the given value, e.g.
-\fC-o ScrollbackLines=1000\fP.
+\fB-o ScrollbackLines=1000\fP.
 
 .TP
-\fB-p\fP, \fB--position\fP \fIX\fB,\fIY\fP
+\fB-p\fP, \fB--position\fP \fIX\fP\fB,\fP\fIY\fP
 Open the window with its top left corner at the specified coordinates.
 Instead of coordinates, "centre" or "center" can be specified to place 
 the window in the screen centre, and "right" or "bottom" can be specified 
@@ -163,7 +163,7 @@ address space as provided by Windows.
 see the description of Alt+F2.
 
 .TP
-\fB-s\fP, \fB--size\fP \fICOLS\fB,\fIROWS\fP
+\fB-s\fP, \fB--size\fP \fICOLS\fP\fB,\fP\fIROWS\fP
 Set the default size of the window in character columns and rows.
 (The xterm-like syntax \fICOLS\fP\fBx\fP\fIROWS\fP is accepted too.)
 Instead of coordinates, "maxwidth" or "maxheight" can be specified;
@@ -360,7 +360,7 @@ Sets Font.
 Sets FontSize.
 
 .TP
-\fB--geometry\fP \fICOLS\fBx\fIROWS\fP[[-+]\fIX\fB[-+]\fIY\fB][\fI@\fBMONITOR]
+\fB--geometry\fP \fICOLS\fP\fBx\fP\fIROWS\fP[[-+]\fIX\fP\fB[-+]\fP\fIY\fP][\fB@\fP\fIMONITOR\fP]
 Sets size and position, extending xterm syntax by an optional monitor number.
 
 .TP
@@ -2160,7 +2160,7 @@ status or it was terminated by a signal indicating a runtime error.
 
 .TP
 \fBWindow icon\fP (Icon=)
-The \fBIcon\fP setting with format \fIFILE\fP[\fB,\fIINDEX\fP] allows to load
+The \fBIcon\fP setting with format \fIFILE\fP[\fB,\fP\fIINDEX\fP] allows to load
 the window icon from an executable, DLL, or icon file.
 The optional comma-separated index can be used to select a particular icon in
 a file with multiple icons.
