@@ -1,3 +1,6 @@
+Character encoding
+  * Fixed locale setup interworking with bash startup profile (~#1050).
+
 ### 3.4.2 (4 November 2020) ###
 
 Terminal features

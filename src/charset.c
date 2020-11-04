@@ -454,17 +454,24 @@ set_locale_env(string loc)
       setenv("LC_CTYPE", loc, true);  // update LC_CTYPE
     else {
       lc = getenv("LANG");
-      if (!lc || strcmp(lc, loc) != 0)  // if LANG is not set properly
-        setenv("LC_CTYPE", loc, true);  // set LC_CTYPE
+      if (lc && *lc)                      // if LANG is set
+        if (strcmp(lc, loc) != 0)         // but LANG is not set properly
+          setenv("LC_CTYPE", loc, true);  // set LC_CTYPE to override
+
       // alternative approaches:
       // - fix LANG only if it was set before and leave all unset otherwise;
       //   this triggers bad behaviour in shell startup scripts; see
       //   https://github.com/mintty/mintty/issues/1050#issuecomment-719635747
       //   resulting in locale setting inconsistent with requested Locale
+      // - if LANG is null or not set properly, fix it with LC_CTYPE (3.4.2);
+      //   this prevents setting from system locale in bash profile
+      // + if LANG is set but not properly, fix it with LC_CTYPE;
+      //   also set LANG unconditionally if option Locale is used (see below)
       // - set LANG unconditionally; this would however impose locale 
       //   setting on other (i.e. non-LC_CTYPE) locale categories, which 
       //   is not the concern of a terminal; see
       //   https://github.com/mintty/mintty/issues/1050#issuecomment-719365620
+      // - set LANG unconditionally and clear the others (until 3.4.0)
     }
   }
 
