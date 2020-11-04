@@ -1473,6 +1473,12 @@ the LC_CTYPE category of the locale mechanism if possible and not
 overwrite other categories if they are set in the environment.
 In addition, however, if Locale is set, mintty also sets the LANG variable.
 
+If you prefer basic locale setup for all categories to be affected by 
+the LC_CTYPE locale, whether setting Locale is used or not, it is 
+suggested to add the following to the shell startup scripts:
+.br
+	export LANG="${LC_ALL:-${LC_CTYPE:-$LANG}}"
+
 Until mintty 3.4.0 or with option OldLocale set, if the locale option 
 is set, however, it would override any environment variable setting:
 \fILC_ALL\fP and the \fILC_*\fP variables for specific locale categories 
@@ -1481,11 +1487,6 @@ and character set.
 This meant, while not strictly necessary, that also locale variables 
 unrelated to the terminal character set (e.g. LC_MESSAGES) are cleared 
 to avoid confusion.
-If you prefer basic locale setup for all categories to be affected by 
-the LC_CTYPE locale, it is suggested to add the following to the 
-shell startup scripts:
-.br
-	LANG="${LC_ALL:-${LC_CTYPE:-$LANG}}"
 
 .TP
 \fBCharacter set\fP (Charset=)
