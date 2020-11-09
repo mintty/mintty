@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 trace () {
 #	echo $* >&2
@@ -106,19 +106,21 @@ cat "$emojis0" | sed -e "s,<title>\(.*\)</title>,\1," -e t -e d >&2
 #	vendor     7    Sams
 
 seli=0
+styles=(common)
 for vendor in `cat "$emojis0" |
   sed -e "/^<\/tr/ q" -e "s/.*<th.*#col-vendor.>\([^.<]*\).*/\1/" -e t -e d |
   sed -e 7q`
 do	seli=`expr $seli + 1`
 	case "$vendor" in
-	Appl)	apple=$seli;;
-	Goog)	google=$seli;;
-	FB)	facebook=$seli;;
-	Wind)	windows=$seli;;
-	Twtr)	twitter=$seli;;
-	One|Joy) emojione=$seli;;
-	Sams)	samsung=$seli;;
+	Appl)	st=apple; apple=$seli;;
+	Goog)	st=google; google=$seli;;
+	FB)	st=facebook; facebook=$seli;;
+	Wind)	st=windows; windows=$seli;;
+	Twtr)	st=twitter; twitter=$seli;;
+	One|Joy) st=emojione; emojione=$seli;;
+	Sams)	st=samsung; samsung=$seli;;
 	esac
+	styles[$seli]=$st
 done
 
 case "$1" in
@@ -138,15 +140,13 @@ while	case "$1" in
 	esac
 do	sel="$sel$seli"
 	mkdir -p "$1"
-	[ -e "$seli" ] || ln -s "$1" "$seli"
 	shift
 done
 mkdir -p common
-[ -e 0 ] || ln -s common 0
 
 export sel
 
-echo "Warning: this may take a few hours on Cygwin" >&2
+echo "Warning: this may take a while on Cygwin" >&2
 
 LC_ALL=C
 export LC_ALL
@@ -161,6 +161,7 @@ echo LC_ALL=C
 echo export LC_ALL
 echo total=$total
 echo sel=$sel
+echo "styles=(${styles[*]})"
 
 cat <<\/EOS
 n=0
@@ -174,21 +175,21 @@ name () {
 }
 
 img0 () {
-  echo " common 0/$ename.png" >&2
-  echo "$1" | base64 -d > 0/$ename.png
+  echo " common $ename.png" >&2
+  echo "$1" | base64 -d > common/$ename.png
 }
 
 img () {
   style=$(( $style + 1 ))
   case $sel in
-  *$style*)	echo "$1" | base64 -d > $style/$ename.png;;
+  *$style*)	echo "$1" | base64 -d > ${styles[$style]}/$ename.png;;
   esac
 }
 
 imgskip () {
   style=$(( $style + 1 ))
   case $sel in
-  *$style*)	echo " skip $style/$ename.png" >&2;;
+  *$style*)	echo " skip ${styles[$style]}/$ename.png" >&2;;
   esac
 }
 
