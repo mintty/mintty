@@ -24,9 +24,9 @@ static cs_mode mode = CSM_DEFAULT;
 
 static string default_locale = 0;  // Used unless UTF-8 or ACP mode is on.
 
-static string term_locale;     // Locale set via terminal control sequences.
-static string config_locale;   // Locale configured in the options.
-static string env_locale;      // Locale determined by the environment.
+static string term_locale = 0;    // Locale set via terminal control sequence.
+static string config_locale = 0;  // Locale configured in the options.
+static string env_locale = 0;     // Locale determined by the environment.
 #if HAS_LOCALES
 static bool valid_default_locale = false;
 static bool use_locale = false;
@@ -435,6 +435,15 @@ old_update_locale(void)
 }
 
 static void
+setlocenv(string cat, string loc)
+{
+  setenv(cat, loc, true);
+#ifdef debug_locale
+  printf("setenv %s=%s\n", cat, loc);
+#endif
+}
+
+static void
 set_locale_env(string loc)
 {
   char * cut = 0;
@@ -447,16 +456,16 @@ set_locale_env(string loc)
 
   char * lc = getenv("LC_ALL");
   if (lc && *lc)                  // if LC_ALL is set
-    setenv("LC_ALL", loc, true);  // update LC_ALL
+    setlocenv("LC_ALL", loc);     // update LC_ALL
   else {
     lc = getenv("LC_CTYPE");
     if (lc && *lc)                    // if LC_CTYPE is set
-      setenv("LC_CTYPE", loc, true);  // update LC_CTYPE
+      setlocenv("LC_CTYPE", loc);     // update LC_CTYPE
     else {
       lc = getenv("LANG");
       if (lc && *lc)                      // if LANG is set
         if (strcmp(lc, loc) != 0)         // but LANG is not set properly
-          setenv("LC_CTYPE", loc, true);  // set LC_CTYPE to override
+          setlocenv("LC_CTYPE", loc);     // set LC_CTYPE to override
 
       // alternative approaches:
       // - fix LANG only if it was set before and leave all unset otherwise;
@@ -478,7 +487,7 @@ set_locale_env(string loc)
   // if parameter Locale is used, always set LANG additionally;
   // see https://github.com/mintty/mintty/issues/1050#issuecomment-719931484
   if (*cfg.locale)
-    setenv("LANG", loc, true);
+    setlocenv("LANG", loc);
 
   if (cut)
     free((char *)loc);
@@ -677,12 +686,46 @@ cs_init(void)
   init_locale_menu();
   init_charset_menu();
 
+  if (!cfg.old_locale && !getlocenvcat("LC_CTYPE")) {
+    // anticipate system-derived locale setting to be done in 
+    // /etc/profile.d/lang.* 
+    // in order to make mintty and shell locales consistent
+    LCID lcid = GetUserDefaultUILanguage ();
+    char iso639[10];
+    if (GetLocaleInfo (lcid, LOCALE_SISO639LANGNAME, iso639, 10)) {
+      char iso3166[10];
+      iso3166[0] = '\0';
+      GetLocaleInfo (lcid, LOCALE_SISO3166CTRYNAME, iso3166, 10);
+      env_locale = asform("%s%s%s.UTF-8",
+                          iso639,
+                          lcid > 0x3FF ? "_" : "",
+                          lcid > 0x3FF ? iso3166 : "");
+#if HAS_LOCALES
+      setlocale(LC_CTYPE, env_locale);
+#endif
+      setlocenv("LC_CTYPE", env_locale);
+      trace_locale("cs_init win env", env_locale);
+
+      // ensure reliable single-width of system-derived UTF-8 locales
+      if (cfg.charwidth < 10 && wcwidth(0x3B1) == 2) {
+        string el = asform("%s@cjknarrow", env_locale);
+        delete(env_locale);
+        env_locale = el;
+#if HAS_LOCALES
+        setlocale(LC_CTYPE, env_locale);
+#endif
+        setlocenv("LC_CTYPE", env_locale);
+        trace_locale("cs_init win env", env_locale);
+      }
+    }
+  }
+
   env_locale =
 #if HAS_LOCALES
     setlocale(LC_CTYPE, "") ?:
 #endif
     getlocenvcat("LC_CTYPE");
-  trace_locale("cs_init", "");
+  trace_locale("cs_init env", env_locale);
 
   env_locale = env_locale ? strdup(env_locale) : "C";
 

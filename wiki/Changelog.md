@@ -1,5 +1,6 @@
 Character encoding
   * Fixed locale setup interworking with bash startup profile (~#1050).
+  * Handling empty startup locale to be consistent with system-derived shell locale (~#1050).
 
 ### 3.4.2 (4 November 2020) ###
 
