@@ -706,17 +706,17 @@ cs_init(void)
       setlocenv("LC_CTYPE", env_locale);
       trace_locale("cs_init win env", env_locale);
 
+#if HAS_LOCALES
       // ensure reliable single-width of system-derived UTF-8 locales
       if (cfg.charwidth < 10 && wcwidth(0x3B1) == 2) {
         string el = asform("%s@cjknarrow", env_locale);
         delete(env_locale);
         env_locale = el;
-#if HAS_LOCALES
         setlocale(LC_CTYPE, env_locale);
-#endif
         setlocenv("LC_CTYPE", env_locale);
         trace_locale("cs_init win env", env_locale);
       }
+#endif
     }
   }
 
