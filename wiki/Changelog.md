@@ -1,3 +1,6 @@
+Terminal features
+  * Terminal reset clears progress bar (mintty/wsltty#202).
+
 ### 3.4.3 (11 November 2020) ###
 
 Character encoding

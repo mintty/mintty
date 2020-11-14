@@ -398,6 +398,7 @@ term_reset(bool full)
   term_clear_scrollback();
 
   term.detect_progress = cfg.progress_bar;
+  taskbar_progress(-9);
 
   term_schedule_search_update();
 
