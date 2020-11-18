@@ -1,5 +1,6 @@
 Terminal features
   * Terminal reset clears progress bar (mintty/wsltty#202).
+  * DECTST colour fillings (CSI 4;10..13 y, VT240).
 
 ### 3.4.3 (11 November 2020) ###
 

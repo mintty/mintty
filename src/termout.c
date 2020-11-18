@@ -3185,6 +3185,30 @@ do_csi(uchar c)
         term.repeat_rate = arg0;
     when CPAIR('%', 'q'):  /* setup progress indicator on taskbar icon */
       set_taskbar_progress(arg0, term.csi_argc > 1 ? arg1 : -1);
+    when 'y':  /* DECTST */
+      if (arg0 == 4) {
+        cattr attr = (cattr)
+                     {.attr = ATTR_DEFFG | (TRUE_COLOUR << ATTR_BGSHIFT),
+                      .truefg = 0, .truebg = 0, .ulcolr = (colour)-1,
+                      .link = -1
+                     };
+        switch (arg1) {
+          when 10: attr.truebg = RGB(0, 0, 255);
+          when 11: attr.truebg = RGB(255, 0, 0);
+          when 12: attr.truebg = RGB(0, 255, 0);
+          when 13: attr.truebg = RGB(255, 255, 255);
+          otherwise: return;
+        }
+        for (int i = 0; i < term.rows; i++) {
+          termline *line = term.lines[i];
+          for (int j = 0; j < term.cols; j++) {
+            line->chars[j] =
+              (termchar) {.cc_next = 0, .chr = ' ', attr};
+          }
+          line->lattr = LATTR_NORM;
+        }
+        term.disptop = 0;
+      }
   }
 }
 
