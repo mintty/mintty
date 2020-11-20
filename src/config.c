@@ -197,6 +197,7 @@ const config default_cfg = {
   .app_name = W(""),
   .app_launch_cmd = W(""),
   .drop_commands = W(""),
+  .exit_commands = W(""),
   .user_commands = W(""),
   .ctx_user_commands = W(""),
   .sys_user_commands = W(""),
@@ -478,6 +479,7 @@ options[] = {
   {"AppLaunchCmd", OPT_WSTRING, offcfg(app_launch_cmd)},
 
   {"DropCommands", OPT_WSTRING | OPT_KEEPCR, offcfg(drop_commands)},
+  {"ExitCommands", OPT_WSTRING | OPT_KEEPCR, offcfg(exit_commands)},
   {"UserCommands", OPT_WSTRING | OPT_KEEPCR, offcfg(user_commands)},
   {"CtxMenuFunctions", OPT_WSTRING | OPT_KEEPCR, offcfg(ctx_user_commands)},
   {"SysMenuFunctions", OPT_WSTRING | OPT_KEEPCR, offcfg(sys_user_commands)},
@@ -965,6 +967,44 @@ void
 parse_arg_option(string option)
 {
   check_arg_option(parse_option(option, false));
+}
+
+
+/*
+   In a configuration parameter list, map tag to value.
+ */
+char *
+matchconf(char * conf, char * item)
+{
+  char * cmdp = conf;
+  char sepch = ';';
+  if ((uchar)*cmdp <= (uchar)' ')
+    sepch = *cmdp++;
+
+  char * paramp;
+  while ((paramp = strchr(cmdp, ':'))) {
+    *paramp = '\0';
+    paramp++;
+    char * sepp = strchr(paramp, sepch);
+    if (sepp)
+      *sepp = '\0';
+
+    if (!strcmp(cmdp, item))
+      return paramp;
+
+    if (sepp) {
+      cmdp = sepp + 1;
+      // check for multi-line separation
+      if (*cmdp == '\\' && cmdp[1] == '\n') {
+        cmdp += 2;
+        while (iswspace(*cmdp))
+          cmdp++;
+      }
+    }
+    else
+      break;
+  }
+  return 0;
 }
 
 

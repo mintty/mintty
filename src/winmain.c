@@ -2433,6 +2433,24 @@ confirm_exit(void)
 void
 win_close(void)
 {
+  if (!support_wsl && *cfg.exit_commands) {
+    // try to determine foreground program
+    char * fg_prog = foreground_prog();
+    if (fg_prog) {
+      // match program base name
+      char * exits = cs__wcstombs(cfg.exit_commands);
+      char * paste = matchconf(exits, fg_prog);
+      if (paste) {
+        child_send(paste, strlen(paste));
+        free(exits);  // also frees paste which points into exits
+        free(fg_prog);
+        return;  // don't close terminal
+      }
+      free(exits);
+      free(fg_prog);
+    }
+  }
+
   if (!cfg.confirm_exit || confirm_exit())
     child_kill((GetKeyState(VK_SHIFT) & 0x80) != 0);
 }

@@ -192,6 +192,7 @@ typedef struct {
   wstring app_name;
   wstring app_launch_cmd;
   wstring drop_commands;
+  wstring exit_commands;
   wstring user_commands;
   wstring ctx_user_commands;
   wstring sys_user_commands;
@@ -253,5 +254,7 @@ extern void apply_config(bool save);
 extern wchar * getregstr(HKEY key, wstring subkey, wstring attribute);
 extern uint getregval(HKEY key, wstring subkey, wstring attribute);
 extern char * save_filename(char * suf);
+// In a configuration parameter list, map tag to value
+extern char * matchconf(char * conf, char * item);
 
 #endif

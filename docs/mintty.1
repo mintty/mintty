@@ -282,7 +282,7 @@ using the Linux path name.
 \(en When Ctrl+clicking a file name, it will be interpreted in the Linux 
 namespace and converted before opening in Windows.
 .br
-\(en Options DropCommands and setting MINTTY_PROG for UserCommands are disabled.
+\(en Options DropCommands, ExitCommands, and setting MINTTY_PROG for UserCommands are disabled.
 .br
 \(en The working directory of the current foreground process 
 (for click-opening pathnames) cannot be detected.
@@ -1035,7 +1035,7 @@ Language, Font, Font1..10, FontSample, FontChoice,
 TekFont, CopyAsRTFFont, 
 SearchBar, Printer, Answerback, SixelClipChars, 
 Class, AppID, AppName, AppLaunchCmd, 
-DropCommands, UserCommands, SessionCommands, TaskCommands, 
+DropCommands, ExitCommands, UserCommands, SessionCommands, TaskCommands, 
 KeyFunctions, SysMenuFunctions, CtxMenuFunctions, UserCommandsPath.
 
 Be careful when running multiple instances of mintty. If options are saved 
@@ -3051,6 +3051,35 @@ control characters need to be embedded verbatim
 \fINote:\fP If different actions for directories/folders or even different 
 command invocations depending on file name pattern are desired, this should 
 be handled by a suitable cooperating shell function.
+
+.TP
+\fBExit application-targetted commands\fP (ExitCommands=)
+With this setting, a set of strings can be configured to be sent to 
+respective applicaionts,
+in dependence of the program running in the terminal foreground. 
+
+\fINote:\fP Detection of terminal foreground processes works only locally; 
+this features does not work with WSL or after remote login.
+
+The value is a series of semicolon-separated, colon-combined 
+pairs of program name and (control) string. The string is sent to the 
+client application.
+If a semicolon shall be embedded into any of the drop patterns, 
+a non-whitespace control character (i.e. none of \fB^I^J^K^L^M\fP) can be 
+specified as an alternative separator by starting the whole setting with it.
+The definition list can be split over multiple lines if a separator is 
+followed by a backslash, newline, and optional whitespace indentation.
+
+\fINote:\fP This feature potentially makes mintty vulnerable against command injection.
+Be careful what strings you configure!
+
+Examples:
+.br
+\(en \fBExitCommands=bash:exit^M;mined:^[q;emacs:^X^C\fP
+
+\fINote:\fP An "Enter" key has to be specified with the CR character code, 
+control characters need to be embedded verbatim 
+(indicated above as "^M", "^[", "^X", "^C"); there is no escape notation.
 
 .TP
 \fBUser commands\fP (UserCommands=) [DEPRECATED, see \fBCtxMenuFunctions\fP]
