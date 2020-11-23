@@ -2313,9 +2313,10 @@ in the window title when hovering can be disabled.
 .TP
 \fBShow automatic progress bar\fP (ProgressBar=0)
 This setting initially enables a progress indication on the taskbar icon, 
-based on automatic progress detection: if the current cursor line ends 
-with a percent indication (x%) it will be notified via progress bar in 
-one of three levels 1 (green), 2 (yellow), 3 (red).
+based on automatic progress detection: if the current cursor line contains 
+a percent indication (x%) and a subsequent relative positioning (e.g. a CR 
+return character) like in text progress indications, it will be notified 
+via progress bar in one of three levels 1 (green), 2 (yellow), 3 (red).
 Note that the progress bar can also be switched or even controlled by an 
 escape sequence.
 
@@ -3055,7 +3056,7 @@ be handled by a suitable cooperating shell function.
 .TP
 \fBExit application-targetted commands\fP (ExitCommands=)
 With this setting, a set of strings can be configured to be sent to 
-respective applicaionts,
+respective applications,
 in dependence of the program running in the terminal foreground. 
 
 \fINote:\fP Detection of terminal foreground processes works only locally; 
@@ -3073,7 +3074,7 @@ followed by a backslash, newline, and optional whitespace indentation.
 \fINote:\fP This feature potentially makes mintty vulnerable against command injection.
 Be careful what strings you configure!
 
-Examples:
+Example:
 .br
 \(en \fBExitCommands=bash:exit^M;mined:^[q;emacs:^X^C\fP
 

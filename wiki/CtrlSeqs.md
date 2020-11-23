@@ -214,8 +214,10 @@ A progress indication on the taskbar icon can be switched or controlled with
 this escape sequence.
 With a second parameter, the progress value can be controlled explicitly.
 With only one parameter, automatic progress detection is enabled, 
-scanning the current cursor line for a final percentage indication.
-Note that automatic progress bar can also be configured.
+scanning the current cursor line for a percentage indication (x%) and 
+enabled by a subsequent relative positioning (e.g. a CR return 
+character) like in text progress indications.
+Note that automatic progress bar can also be configured (option ProgressBar).
 
 | **sequence**                 | **comment**                                 |
 |:-----------------------------|:--------------------------------------------|

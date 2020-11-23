@@ -78,6 +78,12 @@ term_push_cmd(char c)
   return true;
 }
 
+static void
+enable_progress(void)
+{
+  term.lines[term.curs.y]->lattr |= LATTR_PROGRESS;
+}
+
 /*
  * Move the cursor to a given position, clipping at boundaries.
  * We may or may not want to clip at the scroll margin: marg_clip is
@@ -669,6 +675,7 @@ write_return(void)
     term.curs.x = 0;
   else
     term.curs.x = term.marg_left;
+  enable_progress();
 }
 
 static void
@@ -2648,14 +2655,17 @@ do_csi(uchar c)
       }
       else
         move(curs->x - arg0_def1, curs->y, 1);
+      enable_progress();
     when 'E':        /* CNL: move down N lines and CR */
       move(0, curs->y + arg0_def1, 1);
     when 'F':        /* CPL: move up N lines and CR */
       move(0, curs->y - arg0_def1, 1);
-    when 'G' or '`': /* CHA or HPA: set horizontal position */
-      move((curs->origin ? term.marg_left : 0) + arg0_def1 - 1,
-           curs->y, 
-           curs->origin ? 2 : 0);
+    when 'G' or '`': { /* CHA or HPA: set horizontal position */
+      short x = (curs->origin ? term.marg_left : 0) + arg0_def1 - 1;
+      if (x < curs->x)
+        enable_progress();
+      move(x, curs->y, curs->origin ? 2 : 0);
+    }
     when 'd':        /* VPA: set vertical position */
       move(curs->x,
            (curs->origin ? term.marg_top : 0) + arg0_def1 - 1,
@@ -2923,6 +2933,7 @@ do_csi(uchar c)
           curs->x--;
         while (curs->x > 0 && !term.tabs[curs->x]);
       }
+      enable_progress();
     }
     when CPAIR('$', 'w'):     /* DECTABSR: tab stop report */
       if (arg0 == 2) {
@@ -4095,6 +4106,9 @@ term_print_finish(void)
 static void
 term_do_write(const char *buf, uint len)
 {
+  //check e.g. if progress indication is following by CR
+  //printf("[%ld] write %02X...%02X\n", mtime(), *buf, buf[len - 1]);
+
   // Reset cursor blinking.
   term.cblinker = 1;
   term_schedule_cblink();

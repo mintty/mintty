@@ -2502,16 +2502,23 @@ term_paint(void)
       if (term.detect_progress) {
         int j = term.cols;
         while (--j > 0) {
-          if (chars[j].chr == '%' ||
+          if (chars[j].chr == '%'
+#ifdef detect_percentage_only_at_line_end
+              ||
+              // check empty space indication in chars;
+              // note: TATTR_CLEAR is already cleared in newchars
               (!(chars[j].attr.attr & TATTR_CLEAR)
-               // note: TATTR_CLEAR is already cleared in newchars
-               && !wcschr(W(")"), chars[j].chr)
+               // accept anything after %
+               && 0
+               // accept termination chars after percentage indication
+               && !wcschr(W(")]."), chars[j].chr)
               )
+#endif
              )
             break;
         }
         int p = 0;
-        if (chars[j].chr == '%') {
+        if (chars[j].chr == '%' && (displine->lattr & LATTR_PROGRESS)) {
           int f = 1;
           while (--j >= 0) {
             if (chars[j].chr >= '0' && chars[j].chr <= '9') {

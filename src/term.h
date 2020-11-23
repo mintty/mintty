@@ -197,8 +197,9 @@ enum {
   LATTR_AUTORTL   = 0x0800u, /* direction after autodetection */
   // presentational bidi flag
   LATTR_PRESRTL   = 0x1000u,
+  // enable automatic progress detection
+  LATTR_PROGRESS  = 0x0010u,
   // unassigned bits:
-  //                0x0010u
   //                0x0020u
 };
 
