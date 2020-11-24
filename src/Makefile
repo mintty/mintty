@@ -252,14 +252,18 @@ unicode:	UnicodeData.txt Blocks.txt EastAsianWidth.txt
 univer = `sed -e '/^\# Blocks-/ s,[^0-9]*\([0-9]*\)\.\([0-9]\)\.\([0-9]\)[^0-9]*,\1.\2.\3,' -e t -e d Blocks.txt`
 unibasever = `sed -e '/^\# Blocks-/ s,[^0-9]*\([0-9]*\)\..*,\1.0,' -e t -e d Blocks.txt`
 
+# Emoji version may advance Unicode version
+emojiver = $(unibasever)
+emojiver = 13.1
+
 # until 12.0:
 #emoji-%.txt:	Blocks.txt
 #	$(WGET) http://www.unicode.org/Public/emoji/$(unibasever)/$@
 # from 13.0:
 emoji-sequences.txt:	Blocks.txt
-	$(WGET) http://www.unicode.org/Public/emoji/$(unibasever)/$@
+	$(WGET) http://www.unicode.org/Public/emoji/$(emojiver)/$@
 emoji-zwj-sequences.txt:	Blocks.txt
-	$(WGET) http://www.unicode.org/Public/emoji/$(unibasever)/$@
+	$(WGET) http://www.unicode.org/Public/emoji/$(emojiver)/$@
 emoji-data.txt:	Blocks.txt
 	$(WGET) http://www.unicode.org/Public/$(univer)/ucd/emoji/$@
 emoji-variation-sequences.txt:	Blocks.txt

@@ -1638,11 +1638,11 @@ emoji_tags(int i)
 #endif
 
 struct emoji_seq {
-  wchar * efn;  // image filename
-  void * buf;   // cached image
-  int buflen;   // cached image
-  echar chs[8]; // code points
-  char * name;  // short name in emoji-sequences.txt, emoji-zwj-sequences.txt
+  wchar * efn;   // image filename
+  void * buf;    // cached image
+  int buflen;    // cached image
+  echar chs[10]; // code points
+  char * name;   // short name in emoji-sequences.txt, emoji-zwj-sequences.txt
 };
 
 struct emoji_seq emoji_seqs[] = {

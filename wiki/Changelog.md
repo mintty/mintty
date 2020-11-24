@@ -1,3 +1,6 @@
+Unicode and Emoji data
+  * Update to Emoji data version 13.1.
+
 Terminal features
   * Terminal reset clears progress bar (mintty/wsltty#202).
   * DECTST colour fillings (CSI 4;10..13 y, VT240).
