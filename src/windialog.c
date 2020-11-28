@@ -507,7 +507,7 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
                        | TVS_SHOWSELALWAYS, r.left, r.top, r.right - r.left,
                        r.bottom - r.top, wnd, (HMENU) IDCX_TREEVIEW, inst,
                        null);
-      WPARAM font = SendMessage(wnd, WM_GETFONT, 0, 0);
+      WPARAM font = diafont() ?: (WPARAM)SendMessage(wnd, WM_GETFONT, 0, 0);
       SendMessage(treeview, WM_SETFONT, font, MAKELPARAM(true, 0));
       treeview_faff tvfaff;
       tvfaff.treeview = treeview;

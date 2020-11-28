@@ -251,6 +251,8 @@ const config default_cfg = {
   .baud = 0,
   .bloom = 0,
   .old_xbuttons = false,
+  .options_font = W(""),
+  .options_fontsize = 13,
   .old_options = ""
 };
 
@@ -515,6 +517,8 @@ options[] = {
   {"Baud", OPT_INT, offcfg(baud)},
   {"Bloom", OPT_INT, offcfg(bloom)},
   {"OldXButtons", OPT_BOOL, offcfg(old_xbuttons)},
+  {"OptionsFont", OPT_WSTRING, offcfg(options_font)},
+  {"OptionsFontHeight", OPT_INT, offcfg(options_fontsize)},
   {"OldOptions", OPT_STRING, offcfg(old_options)},
 
   // ANSI colours

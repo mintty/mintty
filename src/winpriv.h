@@ -141,6 +141,7 @@ extern void win_set_ime(bool open);
 extern bool win_get_ime(void);
 
 extern void win_dark_mode(HWND w);
+extern WPARAM diafont(void);
 
 extern void show_message(char * msg, UINT type);
 extern void show_info(char * msg);

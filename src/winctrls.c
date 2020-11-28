@@ -38,13 +38,31 @@
 #define PUSHBTNHEIGHT 14
 #define PROGBARHEIGHT 14
 
+
+WPARAM
+diafont(void)
+{
+  return 0;  // Options scaling not fully implemented, disabling for now
+
+static WPARAM diafont = 0;
+  if (!diafont && *cfg.options_font)
+    diafont = (WPARAM)CreateFontW(
+                        -cfg.options_fontsize, 0, 0, 0,
+                        400, false, false, false,
+                        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+                        CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, 0,
+                        cfg.options_font
+                      );
+  return diafont;
+}
+
 void
 ctrlposinit(ctrlpos * cp, HWND wnd, int leftborder, int rightborder,
             int topborder)
 {
   RECT r, r2;
   cp->wnd = wnd;
-  cp->font = SendMessage(wnd, WM_GETFONT, 0, 0);
+  cp->font = diafont() ?: (WPARAM)SendMessage(wnd, WM_GETFONT, 0, 0);
   cp->ypos = topborder;
   GetClientRect(wnd, &r);
   r2.left = r2.top = 0;
@@ -1017,9 +1035,17 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
     bool from_mouse = ((CBTACTIVATESTRUCT *)lParam)->fMouse;
     trace_hook(" mou %d\n", from_mouse);
   }
-  else
+  else {
     trace_hook("\n");
+  }
 #endif
+
+  void setfont(int id)
+  {
+    HWND button = GetDlgItem((HWND)wParam, id);
+    if (diafont())
+      SendMessage(button, WM_SETFONT, diafont(), MAKELPARAM(true, 0));
+  }
 
   void setlabel(int id, wstring label)
   {
@@ -1030,6 +1056,9 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
 #endif
       SetWindowTextW(button, label);
     }
+
+    // adjust custom font
+    setfont(id);
   }
 
   static int adjust_sample = 0;  /* pre-adjust (here) vs post-adjust (below)
@@ -1249,7 +1278,7 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
         GetWindowTextW(basic_colors, lbl, size);
       }
 
-      LRESULT fnt = SendMessage(basic_colors, WM_GETFONT, 0, 0);
+      WPARAM fnt = diafont() ?: (WPARAM)SendMessage(basic_colors, WM_GETFONT, 0, 0);
       DestroyWindow(basic_colors);
       //__ Colour chooser:
       basic_colors = CreateWindowExW(4, W("Static"), lbl ?: _W("B&asic colours:"), 0x50020000, 6, 7, 210, 15, (HWND)wParam, 0, inst, 0);
@@ -1361,6 +1390,25 @@ set_labels(bool font_chooser, int nCode, WPARAM wParam, LPARAM lParam)
 
     hooked_window_activated = true;
   }
+
+#ifdef debug_dlgitems
+    char * s = getenv("s");
+    int n;
+    while (s && (n = strtol(s, &s, 0))) {
+      printf("?%d\n", n);
+      setfont(n);
+    }
+#endif
+    // adjust custom font for anonymous system menu fields
+    setfont(703);  // Hue
+    setfont(704);  // Sat
+    setfont(705);  // Lum
+    setfont(706);  // Red
+    setfont(707);  // Green
+    setfont(708);  // Blue
+    setfont(1136);  // Font
+    setfont(1137);  // Font style
+    setfont(1138);  // Size
 
   if (do_next_hook) {
     trace_hook(" -> NextHook\n");
@@ -1610,6 +1658,7 @@ dlg_text_paint(control *ctrl)
     SendMessage(wnd, WM_SETFONT, (WPARAM)fnt, MAKELPARAM(false, 0));
     SetWindowTextW(wnd, *new_cfg.font_sample ? new_cfg.font_sample : _W("Ferqœm’4€"));
   }
+  DeleteObject(fnt);
 }
 
 /*
