@@ -4281,6 +4281,8 @@ term_do_write(const char *buf, uint len)
           width = 2;
         else if (term.wide_extra && wc >= 0x2000 && extrawide(wc)) {
           width = 2;
+          // Note: this check is currently not implemented for
+          // non-BMP characters (see case if is_low_surrogate(wc) above)
           if (win_char_width(wc, term.curs.attr.attr) < 2)
             term.curs.attr.attr |= TATTR_EXPAND;
         }

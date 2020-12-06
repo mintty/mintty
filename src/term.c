@@ -2355,22 +2355,25 @@ term_paint(void)
           tattr.attr != (dispchars[j].attr.attr & ~(TATTR_NARROW | DATTR_MASK))
               )
       {
+        xchar xch = tchar;
+        if ((xch & 0xFC00) == 0xD800 && d->cc_next) {
+          termchar * cc = d + d->cc_next;
+          if ((cc->chr & 0xFC00) == 0xDC00) {
+            xch = ((xchar) (xch - 0xD7C0) << 10) | (cc->chr & 0x03FF);
+          }
+        }
+
         if ((tattr.attr & TATTR_WIDE) == 0
-            && win_char_width(tchar, tattr.attr) == 2
+            && win_char_width(xch, tattr.attr) == 2
             // && !(line->lattr & LATTR_MODE) ? "do not tamper with graphics"
             // && is_ambigwide(tchar) ? but then they will be clipped...
            )
         {
           //printf("[%d:%d] narrow? %04X..%04X\n", i, j, tchar, chars[j + 1].chr);
-          xchar ch = tchar;
-          if ((ch & 0xFC00) == 0xD800 && d->cc_next) {
-            termchar * cc = d + d->cc_next;
-            if ((cc->chr & 0xFC00) == 0xDC00) {
-              ch = ((xchar) (ch - 0xD7C0) << 10) | (cc->chr & 0x03FF);
-            }
-          }
-          if ((ch >= 0x2190 && ch <= 0x2BFF)
-           || (ch >= 0x1F000 && ch <= 0x1FAFF)
+          if (
+              // do not narrow various symbol ranges
+                 (xch >= 0x2190 && xch <= 0x25FF)
+              || (xch >= 0x27C0 && xch <= 0x2BFF)
              )
           {
             //tattr.attr |= TATTR_NARROW1; // ?
@@ -2381,7 +2384,7 @@ term_paint(void)
 #endif
             tattr.attr |= TATTR_NARROW;
             //if (ch != 0x25CC)
-            //printf("char %lc U+%04X narrow %d ambig %d\n", ch, ch, !!(tattr.attr & TATTR_NARROW), is_ambigwide(ch));
+            //printf("char %lc U+%04X narrow %d ambig %d\n", xch, xch, !!(tattr.attr & TATTR_NARROW), is_ambigwide(xch));
         }
         else if (tattr.attr & TATTR_WIDE
                  // guard character expanding properly to avoid 
@@ -2396,7 +2399,7 @@ term_paint(void)
                  // MS Mincho: wide Greek/Cyrillic but narrow æ, œ, ...
                  // SimSun, NSimSun, Yu Gothic
                  //&& !font_ambig_wide
-                 && win_char_width(tchar, tattr.attr) == 1
+                 && win_char_width(xch, tattr.attr) == 1
                  // and reassure to apply this only to ambiguous width chars
                  && is_ambigwide(tchar) // is_ambig(tchar) && !is_wide(tchar)
                  // do not widen Geometric Shapes

@@ -4131,7 +4131,7 @@ win_check_glyphs(wchar *wcs, uint num, cattrflags attr)
   ReleaseDC(wnd, dc);
 }
 
-#define dont_debug_win_char_width
+#define dont_debug_win_char_width 2
 
 #ifdef debug_win_char_width
 int
@@ -4214,30 +4214,36 @@ win_char_width(xchar c, cattrflags attr)
 #endif
 
   int ibuf = 0;
-  bool ok = GetCharWidth32W(dc, c, c, &ibuf);
-#ifdef debug_win_char_width
-  printf(" getcharw %04X %dpx/cell %dpx\n", c, ibuf, cell_width);
-#endif
-  if (!ok) {
-    ReleaseDC(wnd, dc);
-    return 0;
-  }
 
-  // report char as wide if its width is more than 1½ cells;
-  // this is unreliable if font fallback is involved (#615)
-  ibuf += cell_width / 2 - 1;
-  ibuf /= cell_width;
-  if (ibuf > 1) {
+#ifdef use_getcharwidth
+#warning avoid buggy GetCharWidth*
+  if (c < 0x10000) {
+    bool ok = GetCharWidth32W(dc, c, c, &ibuf);
 #ifdef debug_win_char_width
-    printf(" enquired %04X %dpx/cell %dpx\n", c, ibuf, cell_width);
+    printf(" getcharwidth32 %04X %dpx(/cell %dpx)\n", c, ibuf, cell_width);
 #endif
-    ReleaseDC(wnd, dc);
-    //printf(" win_char_width %04X -> %d\n", c, ibuf);
-    return ibuf;
+    if (!ok) {
+      ReleaseDC(wnd, dc);
+      return 0;
+    }
+
+    // report char as wide if its width is more than 1½ cells;
+    // this is unreliable if font fallback is involved (#615)
+    ibuf += cell_width / 2 - 1;
+    ibuf /= cell_width;
+    if (ibuf > 1) {
+#ifdef debug_win_char_width
+      printf(" enquired %04X %dpx/cell %dpx\n", c, ibuf, cell_width);
+#endif
+      ReleaseDC(wnd, dc);
+      //printf(" win_char_width %04X -> %d\n", c, ibuf);
+      return ibuf;
+    }
   }
+#endif
 
 #ifdef measure_width
-  int act_char_width(wchar wc)
+  int act_char_width(xchar wc)
   {
     HDC wid_dc = CreateCompatibleDC(dc);
     HBITMAP wid_bm = CreateCompatibleBitmap(dc, cell_width * 2, cell_height);
@@ -4249,10 +4255,20 @@ win_char_width(xchar c, cattrflags attr)
     SetBkMode(wid_dc, OPAQUE);
     int dx = 0;
     use_uniscribe = cfg.font_render == FR_UNISCRIBE;
-    text_out_start(wid_dc, &wc, 1, &dx);
-    text_out(wid_dc, 0, 0, ETO_OPAQUE, null, &wc, 1, &dx);
+    wchar wc2[2];
+    if (wc < 0x10000) {
+      *wc2 = wc;
+      text_out_start(wid_dc, wc2, 1, &dx);
+      text_out(wid_dc, 0, 0, ETO_OPAQUE, null, wc2, 1, &dx);
+    }
+    else {
+      wc2[0] = high_surrogate(wc);
+      wc2[1] = low_surrogate(wc);
+      text_out_start(wid_dc, wc2, 2, &dx);
+      text_out(wid_dc, 0, 0, ETO_OPAQUE, null, wc2, 2, &dx);
+    }
     text_out_end();
-# ifdef debug_win_char_width
+# if defined(debug_win_char_width) && debug_win_char_width > 1
     for (int y = 0; y < cell_height; y++) {
       printf(" %2d|", y);
       for (int x = 0; x < cell_width * 2; x++) {
@@ -4294,23 +4310,28 @@ win_char_width(xchar c, cattrflags attr)
                // although FONT_WIDE is actually activated
   }
 
-  if ((c >= 0x3000 && c <= 0x303F)
-   || (c >= 0x2460 && c <= 0x24FF)   // Enclosed Alphanumerics
-   || (c >= 0x2600 && c <= 0x27BF)   // Miscellaneous Symbols, Dingbats
+  if ((c >= 0x3000 && c <= 0x303F)   // CJK Symbols and Punctuation
+
+   || (c >= 0x2460 && c <= 0x24FF)   // Enclosed Alphanumerics, to cover:
    //|| (c >= 0x249C && c <= 0x24E9)   // parenthesized/circled letters
-   || (c >= 0x3248 && c <= 0x324F)   // Enclosed CJK Letters and Months
+
+   //|| (c >= 0x2600 && c <= 0x27BF)   // Miscellaneous Symbols, Dingbats
+   || c == 0x26AC
+
+   || (c >= 0x3248 && c <= 0x324F)   // circled CJK Numbers
    || (c >= 0x1F100 && c <= 0x1F1FF) // Enclosed Alphanumeric Supplement
-#ifdef check_more_mostly_covered_below
-   || (c >= 0x2100 && c <= 0x23FF)   // Letterlike, Number Forms, Arrows, Math Operators, Misc Technical
-   || (c >= 0x25A0 && c <= 0x25FF)   // Geometric Shapes
-   || (c >= 0x2B00 && c <= 0x2BFF)   // Miscellaneous Symbols and Arrows
-#endif
+
+   || c == 0x2139                    // Letterlike: Information Source
+   || (c >= 0x2180 && c <= 0x2182)   // Number Forms: combined Roman Numerals
+   || (c >= 0x2187 && c <= 0x2188)   // Number Forms: combined Roman Numerals
+
    || (c >= 0xE000 && c < 0xF900)    // Private Use Area
+
    || (// check all non-letters with some exceptions
        bidi_class(c) != L               // indicates not a letter
-      &&
+      &&  // do not check these non-letters:
        !(  (c >= 0x2500 && c <= 0x2588)  // Box Drawing, Block Elements
-        || (c >= 0x2592 && c <= 0x2594)  // Block Elements
+        || (c >= 0x2591 && c <= 0x2594)  // Block Elements
         || (c >= 0x2160 && c <= 0x2179)  // Roman Numerals
         //|| wcschr (W("‐‑‘’‚‛“”„‟‹›"), c) // #712 workaround; now caching
         )

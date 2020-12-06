@@ -6,6 +6,10 @@ Terminal features
   * DECTST colour fillings (CSI 4;10..13 y, VT240).
   * Smart detection of progress indication also inmidst line (mintty/wsltty#202).
 
+Font rendering
+  * Enabled width detection for auto-narrowing non-BMP characters (#1065).
+  * Tweaked character ranges to consider for auto-narrowing (#1065).
+
 Window handling
   * Optionally transform Exit to characters, to exit on application-level (#1063).
 
