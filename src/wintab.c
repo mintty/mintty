@@ -12,7 +12,7 @@
 int TABBAR_HEIGHT = 0;
 static HWND tab_wnd, bar_wnd;
 
-static HFONT tabbar_font;
+static HFONT tabbar_font = 0;
 static bool initialized = false;
 static const int max_tab_width = 300;
 static const int min_tab_width = 20;
@@ -160,6 +160,8 @@ container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 #if CYGWIN_VERSION_API_MINOR >= 74
     SetWindowSubclass(tab_wnd, tab_proc, 0, 0);
 #endif
+    if (tabbar_font)
+      DeleteObject(tabbar_font);
     tabbar_font = CreateFontW(cell_height * TABFONTSCALE, cell_width * TABFONTSCALE, 0, 0, FW_DONTCARE, false, false, false,
                               DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                               DEFAULT_QUALITY, FIXED_PITCH | FF_DONTCARE,
@@ -177,6 +179,8 @@ container_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
   }
   else if (msg == WM_SIZE) {
     //printf("tabbar con_proc WM_SIZE\n");
+    if (tabbar_font)
+      DeleteObject(tabbar_font);
     tabbar_font = CreateFontW(cell_height * TABFONTSCALE, cell_width * TABFONTSCALE, 0, 0, FW_DONTCARE, false, false, false,
                               DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                               DEFAULT_QUALITY, FIXED_PITCH | FF_DONTCARE,

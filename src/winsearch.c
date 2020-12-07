@@ -14,7 +14,7 @@ static HWND search_prev_wnd;
 static HWND search_next_wnd;
 static HWND search_edit_wnd;
 static WNDPROC default_edit_proc;
-static HFONT search_font;
+static HFONT search_font = 0;
 
 static void win_hide_search(void);
 
@@ -332,6 +332,8 @@ win_toggle_search(bool show, bool focus)
     //win_dark_mode(search_edit_wnd);
 #endif
 
+    if (search_font)
+      DeleteObject(search_font);
     search_font = CreateFontW(sf_height, 0, 0, 0, FW_DONTCARE, false, false, false,
                              DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                              DEFAULT_QUALITY, FIXED_PITCH | FF_DONTCARE,
