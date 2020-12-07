@@ -9,6 +9,8 @@
 #include "winpriv.h"
 #include "charset.h"  // wcscpy
 
+#include "res.h"  // DIALOG_FONT, DIALOG_FONTSIZE
+
 #define _RPCNDR_H
 #define _WTYPES_H
 #define _OLE2_H
@@ -39,21 +41,45 @@
 #define PROGBARHEIGHT 14
 
 
+static HFONT _diafont = 0;
+static int diafontsize = 0;
+
+static void
+calc_diafontsize(void)
+{
+  cfg.options_fontsize = cfg.options_fontsize ?: DIALOG_FONTSIZE;
+
+  int fontsize = - MulDiv(cfg.options_fontsize, dpi, 72);
+  if (fontsize != diafontsize && _diafont) {
+    DeleteObject(_diafont);
+    _diafont = 0;
+  }
+  diafontsize = fontsize;
+}
+
+int
+scale_dialog(int x)
+{
+  calc_diafontsize();
+
+  return MulDiv(x, cfg.options_fontsize, DIALOG_FONTSIZE);
+  // scale by another * 1.2 for Comic Sans MS ...?
+}
+
 WPARAM
 diafont(void)
 {
-  return 0;  // Options scaling not fully implemented, disabling for now
+  calc_diafontsize();
 
-static WPARAM diafont = 0;
-  if (!diafont && *cfg.options_font)
-    diafont = (WPARAM)CreateFontW(
-                        -cfg.options_fontsize, 0, 0, 0,
-                        400, false, false, false,
-                        DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
-                        CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, 0,
-                        cfg.options_font
-                      );
-  return diafont;
+  if (!_diafont && (*cfg.options_font || cfg.options_fontsize != DIALOG_FONTSIZE))
+    _diafont = CreateFontW(
+                 diafontsize, 0, 0, 0,
+                 400, false, false, false,
+                 DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+                 CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, 0,
+                 *cfg.options_font ? cfg.options_font : W(DIALOG_FONT)
+               );
+  return (WPARAM)_diafont;
 }
 
 void
@@ -63,7 +89,7 @@ ctrlposinit(ctrlpos * cp, HWND wnd, int leftborder, int rightborder,
   RECT r, r2;
   cp->wnd = wnd;
   cp->font = diafont() ?: (WPARAM)SendMessage(wnd, WM_GETFONT, 0, 0);
-  cp->ypos = topborder;
+  cp->ypos = topborder;  // don't scale_dialog this; would move OK buttons out
   GetClientRect(wnd, &r);
   r2.left = r2.top = 0;
   r2.right = 4;
@@ -71,8 +97,9 @@ ctrlposinit(ctrlpos * cp, HWND wnd, int leftborder, int rightborder,
   MapDialogRect(wnd, &r2);
   cp->dlu4inpix = r2.right;
   cp->width = (r.right * 4) / (r2.right) - 2 * GAPBETWEEN;
-  cp->xoff = leftborder;
-  cp->width -= leftborder + rightborder;
+  // scale Options dialog items horizontally with custom font
+  cp->xoff = scale_dialog(leftborder);
+  cp->width -= cp->xoff + scale_dialog(rightborder);
 }
 
 #ifdef darken_dialog_elements
@@ -97,14 +124,23 @@ doctl(control * ctrl,
       string text, int wid)
 {
   HWND ctl;
+
  /*
   * Note nonstandard use of RECT. This is deliberate: by
   * transforming the width and height directly we arrange to
   * have all supposedly same-sized controls really same-sized.
   */
-
   r.left += cp->xoff;
   MapDialogRect(cp->wnd, &r);
+
+  // scale Options dialog items vertical position and size with custom font
+  r.top = scale_dialog(r.top);
+  r.bottom = scale_dialog(r.bottom);
+#if 0
+  // don't scale Options dialog items horizontally, done elsewhere
+  r.left = scale_dialog(cp->xoff) + scale_dialog(r.left - scale_dialog(cp->xoff));
+  r.right = scale_dialog(r.right);
+#endif
 
  /*
   * We can pass in cp->wnd == null, to indicate a dry run
@@ -118,8 +154,9 @@ doctl(control * ctrl,
       wchar * wtext = text ? cs__utftowcs(text) : 0;
       wchar * wclass = class ? cs__utftowcs(class) : 0;
       ctl =
-        CreateWindowExW(exstyle, wclass, wtext, wstyle, r.left, r.top, r.right,
-                        r.bottom, cp->wnd, (HMENU)(INT_PTR)wid, inst, null);
+        CreateWindowExW(exstyle, wclass, wtext, wstyle,
+                        r.left, r.top, r.right, r.bottom,
+                        cp->wnd, (HMENU)(INT_PTR)wid, inst, null);
       if (wtext)
         free(wtext);
       if (wclass)
@@ -127,8 +164,9 @@ doctl(control * ctrl,
     }
     else {
       ctl =
-        CreateWindowExA(exstyle, class, text, wstyle, r.left, r.top, r.right,
-                        r.bottom, cp->wnd, (HMENU)(INT_PTR)wid, inst, null);
+        CreateWindowExA(exstyle, class, text, wstyle,
+                        r.left, r.top, r.right, r.bottom,
+                        cp->wnd, (HMENU)(INT_PTR)wid, inst, null);
     }
 #ifdef darken_dialog_elements
     // apply dark mode to dialog buttons
@@ -712,10 +750,9 @@ winctrl_layout(winctrls *wc, ctrlpos *cp, controlset *s, int *id)
     * `ctrl' (a pointer to the control we have to create, or
     * think about creating, in this iteration of the loop),
     * `pos' (a suitable ctrlpos with which to position it), and
-    * `c' (a winctrl structure to receive details of the
-    * dialog IDs). Or we'll have done a `continue', if it was
-    * CTRL_COLUMNS and doesn't require any control creation at
-    * all.
+    * `c' (a winctrl structure to receive details of the dialog IDs).
+    * Or we'll have done a `continue', if it was CTRL_COLUMNS 
+    * and doesn't require any control creation at all.
     */
     if (ctrl->type == CTRL_COLUMNS) {
       assert((ctrl->columns.ncols == 1) ^ (ncols == 1));

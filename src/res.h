@@ -22,6 +22,7 @@
 #define DIALOG_CLASS "ConfigBox"
 
 #define DIALOG_FONT "MS Shell Dlg"
+#define DIALOG_FONTSIZE 8
 //#define DIALOG_FONT "Tahoma"
 
 //#define DIALOG_FONT "Calibri"

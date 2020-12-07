@@ -11,6 +11,13 @@
 #define SB_PRIOR 100
 #define SB_NEXT 101
 
+#ifndef WM_DPICHANGED
+#define WM_DPICHANGED 0x02E0
+#endif
+#ifndef WM_GETDPISCALEDSIZE
+#define WM_GETDPISCALEDSIZE 0x02E4
+#endif
+
 extern HINSTANCE inst;  // The all-important instance handle
 extern HWND wnd;        // the main terminal window
 extern HIMC imc;        // the input method context
@@ -141,7 +148,6 @@ extern void win_set_ime(bool open);
 extern bool win_get_ime(void);
 
 extern void win_dark_mode(HWND w);
-extern WPARAM diafont(void);
 
 extern void show_message(char * msg, UINT type);
 extern void show_info(char * msg);

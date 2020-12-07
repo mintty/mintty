@@ -252,7 +252,7 @@ const config default_cfg = {
   .bloom = 0,
   .old_xbuttons = false,
   .options_font = W(""),
-  .options_fontsize = 13,
+  .options_fontsize = 0,
   .old_options = ""
 };
 
@@ -404,6 +404,7 @@ options[] = {
   {"CopyAsRTF", OPT_BOOL, offcfg(copy_as_rtf)},
   {"CopyAsHTML", OPT_BOOL, offcfg(copy_as_html)},
   {"CopyAsRTFFont", OPT_WSTRING, offcfg(copy_as_rtf_font)},
+  {"CopyAsRTFFontSize", OPT_INT | OPT_LEGACY, offcfg(copy_as_rtf_font_size)},
   {"CopyAsRTFFontHeight", OPT_INT, offcfg(copy_as_rtf_font_size)},
   {"TrimSelection", OPT_BOOL, offcfg(trim_selection)},
   {"AllowSetSelection", OPT_BOOL, offcfg(allow_set_selection)},
@@ -518,6 +519,7 @@ options[] = {
   {"Bloom", OPT_INT, offcfg(bloom)},
   {"OldXButtons", OPT_BOOL, offcfg(old_xbuttons)},
   {"OptionsFont", OPT_WSTRING, offcfg(options_font)},
+  {"OptionsFontSize", OPT_INT | OPT_LEGACY, offcfg(options_fontsize)},
   {"OptionsFontHeight", OPT_INT, offcfg(options_fontsize)},
   {"OldOptions", OPT_STRING, offcfg(old_options)},
 

@@ -398,8 +398,6 @@ unhook_windows()
 }
 
 
-#define dont_debug_messages
-
 #define dont_darken_dialog_elements
 
 #ifdef darken_dialog_elements
@@ -428,6 +426,8 @@ tree_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, UINT_PTR uid, DWORD_PTR dat
   return DefSubclassProc(hwnd, msg, wp, lp);
 }
 #endif
+
+#define dont_debug_messages
 
 /*
  * This function is the configuration box.
@@ -500,13 +500,14 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
       r.top = 3;
       r.bottom = r.top + DIALOG_HEIGHT - 26;
       MapDialogRect(wnd, &r);
+      int treewidth = scale_dialog(r.right - r.left);
       HWND treeview =
         CreateWindowExA(WS_EX_CLIENTEDGE, WC_TREEVIEWA, "",
-                       WS_CHILD | WS_VISIBLE | WS_TABSTOP | TVS_HASLINES |
-                       TVS_DISABLEDRAGDROP | TVS_HASBUTTONS | TVS_LINESATROOT
-                       | TVS_SHOWSELALWAYS, r.left, r.top, r.right - r.left,
-                       r.bottom - r.top, wnd, (HMENU) IDCX_TREEVIEW, inst,
-                       null);
+                       WS_CHILD | WS_VISIBLE | WS_TABSTOP | TVS_HASLINES
+                       | TVS_DISABLEDRAGDROP | TVS_HASBUTTONS
+                       | TVS_LINESATROOT | TVS_SHOWSELALWAYS,
+                       r.left, r.top, treewidth, r.bottom - r.top,
+                       wnd, (HMENU) IDCX_TREEVIEW, inst, null);
       WPARAM font = diafont() ?: (WPARAM)SendMessage(wnd, WM_GETFONT, 0, 0);
       SendMessage(treeview, WM_SETFONT, font, MAKELPARAM(true, 0));
       treeview_faff tvfaff;
@@ -609,6 +610,11 @@ config_dialog_proc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
       }
 #endif
 #endif
+
+    when WM_DPICHANGED:
+      if (*cfg.options_font || cfg.options_fontsize != DIALOG_FONTSIZE)
+        // rescaling does not work, so better drop the Options dialog
+        DestroyWindow(wnd);
 
     when WM_CLOSE:
       DestroyWindow(wnd);
@@ -754,6 +760,9 @@ scale_options(int nCode, WPARAM wParam, LPARAM lParam)
       int scale_options_width = atoi(_("100"));
       if (scale_options_width >= 80 && scale_options_width <= 200)
         cs->cx = cs->cx * scale_options_width / 100;
+      // scale Options dialog with custom font
+      cs->cx = scale_dialog(cs->cx);
+      cs->cy = scale_dialog(cs->cy);
     }
   }
 
