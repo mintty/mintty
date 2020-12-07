@@ -1273,7 +1273,7 @@ Mintty supports a few extension features:
 
 See the manual page for details.
 
-### Terminating the foreground program ###
+### Terminating the foreground program, the hard way ###
 
 As an example for a user-defined command, that is not used for filtering 
 text in this case, assume the user wants a menu option to terminate the 
@@ -1282,6 +1282,23 @@ including a user command:
 
 ```
 UserCommands=Kill foreground process:kill -9 $MINTTY_PID
+```
+
+### Terminating the foreground program, the smart way ###
+
+With option `ExitCommands`, a set of strings (likely control strings) 
+can be defined to be sent to the respective foreground application 
+if the window is instructed to "Close" from its menu or close button.
+
+_Note:_ Detection of terminal foreground processes works only locally; 
+this features does not work with WSL or after remote login.
+
+_Note:_ This feature potentially makes mintty vulnerable against command injection.
+Be careful what strings you configure!
+
+Example:
+```
+ExitCommands=bash:exit^M;mined:^[q;emacs:^X^C
 ```
 
 
