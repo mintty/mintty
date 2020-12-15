@@ -828,7 +828,34 @@ wcscasestr(wstring in, wstring find)
   return 0;
 }
 
-static void
+static int CALLBACK
+enum_fonts(const LOGFONTW * lfp, const TEXTMETRICW * tmp, DWORD fontType, LPARAM lParam)
+{
+  (void)tmp;
+  (void)fontType;
+  wstring * fnp = (wstring *)lParam;
+
+#if defined(debug_fonts) && debug_fonts > 1
+  trace_font(("%ls %dx%d %d it %d cs %d %s\n", lfp->lfFaceName, (int)lfp->lfWidth, (int)lfp->lfHeight, (int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
+#endif
+  if ((lfp->lfPitchAndFamily & 3) == FIXED_PITCH
+   && !lfp->lfCharSet
+   && lfp->lfFaceName[0] != '@'
+     )
+  {
+    if (wcscasestr(lfp->lfFaceName, W("Fraktur"))) {
+      *fnp = wcsdup(lfp->lfFaceName);
+      return 0;  // done
+    }
+    else if (wcscasestr(lfp->lfFaceName, W("Blackletter"))) {
+      *fnp = wcsdup(lfp->lfFaceName);
+      // continue to look for "Fraktur"
+    }
+  }
+  return 1;  // continue
+}
+
+void
 findFraktur(wstring * fnp)
 {
   LOGFONTW lf;
@@ -836,36 +863,11 @@ findFraktur(wstring * fnp)
   lf.lfPitchAndFamily = 0;
   lf.lfCharSet = ANSI_CHARSET;   // report only ANSI character range
 
-  int CALLBACK enum_fonts(const LOGFONTW * lfp, const TEXTMETRICW * tmp, DWORD fontType, LPARAM lParam)
-  {
-    (void)tmp;
-    (void)fontType;
-    wstring * fnp = (wstring *)lParam;
-
-#if defined(debug_fonts) && debug_fonts > 1
-    trace_font(("%ls %dx%d %d it %d cs %d %s\n", lfp->lfFaceName, (int)lfp->lfWidth, (int)lfp->lfHeight, (int)lfp->lfWeight, lfp->lfItalic, lfp->lfCharSet, (lfp->lfPitchAndFamily & 3) == FIXED_PITCH ? "fixed" : ""));
-#endif
-    if ((lfp->lfPitchAndFamily & 3) == FIXED_PITCH
-     && !lfp->lfCharSet
-     && lfp->lfFaceName[0] != '@'
-       )
-    {
-      if (wcscasestr(lfp->lfFaceName, W("Fraktur"))) {
-        *fnp = wcsdup(lfp->lfFaceName);
-        return 0;  // done
-      }
-      else if (wcscasestr(lfp->lfFaceName, W("Blackletter"))) {
-        *fnp = wcsdup(lfp->lfFaceName);
-        // continue to look for "Fraktur"
-      }
-    }
-    return 1;  // continue
-  }
-
   HDC dc = GetDC(0);
   EnumFontFamiliesExW(dc, 0, enum_fonts, (LPARAM)fnp, 0);
   ReleaseDC(0, dc);
 }
+
 
 /*
  * Initialize fonts for all configured font families.
@@ -4139,9 +4141,10 @@ win_char_width(xchar c, cattrflags attr)
 {
 #define win_char_width xwin_char_width
 int win_char_width(xchar, cattrflags);
+  ulong t = mtime();
   int w = win_char_width(c, attr);
   if (c >= 0x80)
-    printf(" win_char_width(%04X) -> %d\n", c, w);
+    printf(" [%ld:%ld] win_char_width(%04X) -> %d\n", t, mtime() - t, c, w);
   return w;
 }
 #endif
@@ -4156,6 +4159,12 @@ int win_char_width(xchar, cattrflags);
 int
 win_char_width(xchar c, cattrflags attr)
 {
+  // NOTE: if wintext.c is compiled with optimization (-O1 or higher), 
+  // and win_char_width is called for a non-BMP character (>= 0x10000), 
+  // (unless inhibited by calls to GetCharABCWidths* below)
+  // a mysterious delay occurs, if tracing with timestamps apparently 
+  // *before* invocation of win_char_width (unless printf gets delayed...)
+
   int findex = (attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
   if (findex > 10)
     findex = 0;
@@ -4202,6 +4211,9 @@ win_char_width(xchar c, cattrflags attr)
     float cwf = 0.0;
     BOOL ok2 = GetCharWidthFloatW(dc, c, c, &cwf);
     ABC abc; memset(&abc, 0, sizeof abc);
+    // NOTE: with these 2 calls of GetCharABCWidths*, 
+    // the mysterious delay for non-BMP characters does not occur, 
+    // again mysteriously
     BOOL ok3 = GetCharABCWidthsW(dc, c, c, &abc);  // only on TrueType
     ABCFLOAT abcf; memset(&abcf, 0, sizeof abcf);
     BOOL ok4 = GetCharABCWidthsFloatW(dc, c, c, &abcf);

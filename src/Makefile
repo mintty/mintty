@@ -148,6 +148,11 @@ $(BINDIR)/term%.o: term%.c
 $(BINDIR)/term.o: term.c emojibase.t emojiseqs.t
 	$(CC) -c $(DEPOPT) $(CCFLAGS) $(CPPFLAGS) -fstack-check $< -o $(BINDIR)/term.o
 
+# do not optimize wintext.c; this causes a mysterious delay if 
+# win_char_width is called with a non-BMP character
+$(BINDIR)/wintext.o: wintext.c
+	$(CC) -c $(DEPOPT) $(CCFLAGS) -O0 $(CPPFLAGS) -fstack-check $< -o $(BINDIR)/wintext.o
+
 $(BINDIR)/%.o: %.c
 	$(CC) -c $(DEPOPT) $(CCFLAGS) $(CPPFLAGS) -fstack-check $< -o $(BINDIR)/$*.o
 
@@ -190,7 +195,7 @@ rgb.t:	# /usr/share/X11/rgb.txt # X11 color names, from package 'rgb'
 	sed -e 's,	, ,g' -e 's/ *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([^ ].*[^ ]\) */	{\1, \2, \3, "\4"},/' /usr/share/X11/rgb.txt > rgb.t
 
 combdata=combining.t combdouble.t combined.t
-unidata=$(combdata) ambiguous.t scripts.t casefold.t bidiclasses.t mirroring.t brackets.t canonical.t wide.t unicodever.t
+unidata=$(combdata) ambiguous.t scripts.t blocks.t casefold.t bidiclasses.t mirroring.t brackets.t canonical.t wide.t unicodever.t
 emojidata=emojibase.t emojiseqs.t
 
 unicodedata=UnicodeData.txt EastAsianWidth.txt Blocks.txt Scripts.txt CaseFolding.txt BidiMirroring.txt BidiBrackets.txt BidiCharacterTest.txt BidiTest.txt NameAliases.txt
@@ -222,6 +227,9 @@ wide.t:	# UnicodeData.txt Blocks.txt EastAsianWidth.txt
 
 scripts.t:	# Scripts.txt
 	sh ./mkscripts
+
+blocks.t:	# Blocks.txt
+	sh ./mkblocks
 
 casefold.t:	# CaseFolding.txt
 	sh ./mkcasefold > casefold.t
