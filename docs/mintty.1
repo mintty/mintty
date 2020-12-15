@@ -1231,6 +1231,10 @@ will override an earlier one (see CJK example below).
 .br
 Finally, special name \fBPrivate\fP covers the Private Use ranges, which are 
 often used for additional icon symbols (e.g. by "Nerd Fonts" or "Powerline" fonts).
+.br
+In addition to Unicode scripts, also Unicode blocks can be used 
+to specify a secondary font, by a "|" prefix to the block name, with block 
+specifications preceding over the more general script specifications.
 
 .br
 Example:
@@ -1250,6 +1254,8 @@ Example:
   \fBFontChoice=PictoSymbols:2\fP
 .br
   \fBFont2=DejaVu Sans Mono\fP
+.br
+  \fBFontChoice=Greek:3;|Greek Extended:4\fP
 
 \(en \fBFont sample text\fP (FontSample=):
 This hidden setting overrides the text for the "Sample" box in the Font chooser dialog.

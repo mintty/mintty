@@ -9,6 +9,7 @@ Terminal features
 Font rendering
   * Enabled width detection for auto-narrowing non-BMP characters (#1065).
   * Tweaked character ranges to consider for auto-narrowing (#1065).
+  * Enabled secondary font specification for Unicode blocks (#777).
 
 Window handling
   * Optionally transform Exit to characters, to exit on application-level (#1063).
@@ -17,6 +18,7 @@ Window handling
 Configuration
   * New option ExitCommands (#1063).
   * New options OptionsFont and OptionsFontHeight (~#1059).
+  * Extended syntax for option FontChoice (#777).
 
 ### 3.4.3 (11 November 2020) ###
 

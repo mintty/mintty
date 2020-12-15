@@ -983,30 +983,36 @@ write_char(wchar c, int width)
 
 #define dont_debug_scriptfonts
 
-static struct {
+struct rangefont {
   ucschar first, last;
   uchar font;
   char * scriptname;
-} scriptfonts[] = {
+};
+static struct rangefont scriptfonts[] = {
 #include "scripts.t"
 };
+static struct rangefont blockfonts[] = {
+#include "blocks.t"
+};
 static bool scriptfonts_init = false;
+static bool use_blockfonts = false;
 
 static void
-mapfont(char * script, uchar f)
+mapfont(struct rangefont * ranges, uint len, char * script, uchar f)
 {
-  for (uint i = 0; i < lengthof(scriptfonts); i++)
-    if (0 == strcmp(scriptfonts[i].scriptname, script))
-      scriptfonts[i].font = f;
+  for (uint i = 0; i < len; i++) {
+    if (0 == strcmp(ranges[i].scriptname, script))
+      ranges[i].font = f;
+  }
   if (0 == strcmp(script, "CJK")) {
-    mapfont("Han", f);
-    mapfont("Hangul", f);
-    mapfont("Katakana", f);
-    mapfont("Hiragana", f);
-    mapfont("Bopomofo", f);
-    mapfont("Kanbun", f);
-    mapfont("Fullwidth", f);
-    mapfont("Halfwidth", f);
+    mapfont(ranges, len, "Han", f);
+    mapfont(ranges, len, "Hangul", f);
+    mapfont(ranges, len, "Katakana", f);
+    mapfont(ranges, len, "Hiragana", f);
+    mapfont(ranges, len, "Bopomofo", f);
+    mapfont(ranges, len, "Kanbun", f);
+    mapfont(ranges, len, "Fullwidth", f);
+    mapfont(ranges, len, "Halfwidth", f);
   }
 }
 
@@ -1027,7 +1033,10 @@ cfg_apply(char * conf, char * item)
       *sepp = '\0';
 
     if (!item || !strcmp(cmdp, item)) {
-      mapfont(cmdp, atoi(paramp));
+      if (*cmdp == '|')
+        mapfont(blockfonts, lengthof(blockfonts), cmdp + 1, atoi(paramp));
+      else
+        mapfont(scriptfonts, lengthof(scriptfonts), cmdp, atoi(paramp));
     }
 
     if (sepp) {
@@ -1052,6 +1061,7 @@ init_scriptfonts(void)
     char * cfg_scriptfonts = cs__wcstombs(cfg.font_choice);
     cfg_apply(cfg_scriptfonts, 0);
     free(cfg_scriptfonts);
+    use_blockfonts = wcschr(cfg.font_choice, '|');
   }
   scriptfonts_init = true;
 }
@@ -1066,9 +1076,26 @@ scriptfont(ucschar ch)
 
   int i, j, k;
 
+  if (use_blockfonts) {
+    i = -1;
+    j = lengthof(blockfonts);
+    while (j - i > 1) {
+      k = (i + j) / 2;
+      if (ch < blockfonts[k].first)
+        j = k;
+      else if (ch > blockfonts[k].last)
+        i = k;
+      else {
+        uchar f = blockfonts[k].font;
+        if (f)
+          return f;
+        break;
+      }
+    }
+  }
+
   i = -1;
   j = lengthof(scriptfonts);
-
   while (j - i > 1) {
     k = (i + j) / 2;
     if (ch < scriptfonts[k].first)
@@ -1088,8 +1115,8 @@ write_ucschar(wchar hwc, wchar wc, int width)
   ucschar c = hwc ? combine_surrogates(hwc, wc) : wc;
   uchar cf = scriptfont(c);
 #ifdef debug_scriptfonts
-  if (c && cf)
-    printf("scriptfont %04X: %d\n", c, cf);
+  if (c && (cf || c > 0xFF))
+    printf("write_ucschar %04X scriptfont %d\n", c, cf);
 #endif
   if (cf && cf <= 10 && !(attr & FONTFAM_MASK))
     term.curs.attr.attr = attr | ((cattrflags)cf << ATTR_FONTFAM_SHIFT);
@@ -4157,7 +4184,7 @@ term_do_write(const char *buf, uint len)
         if (term.curs.oem_acs && !memchr("\e\n\r\b", c, 4)) {
           if (term.curs.oem_acs == 2)
             c |= 0x80;
-          write_char(cs_btowc_glyph(c), 1);
+          write_ucschar(0, cs_btowc_glyph(c), 1);
           continue;
         }
 
@@ -4259,7 +4286,7 @@ term_do_write(const char *buf, uint len)
           if (!do_ctrl(wc) && c == wc) {
             wc = cs_btowc_glyph(c);
             if (wc != c)
-              write_char(wc, 1);
+              write_ucschar(0, wc, 1);
             else if (cfg.printable_controls > 1)
               goto goon;
           }

@@ -757,6 +757,13 @@ FontChoice=Private:3
 Font3=MesloLGS NF
 ```
 
+Note that in addition to Unicode scripts, also Unicode blocks can be used 
+to specify a secondary font, by a "|" prefix to the block name, with block 
+specifications preceding over the more general script specifications.
+```
+FontChoice=Greek:3;|Greek Extended:4
+```
+
 ### Dynamic fonts ###
 
 Mintty supports on-the-fly temporary font installation, especially for use 
