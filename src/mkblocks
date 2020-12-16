@@ -1,0 +1,16 @@
+#! /bin/sh -f
+
+skipcheck=false
+
+if $skipcheck || make Blocks.txt >&2
+then	true
+else	echo Could not acquire Unicode data file Blocks.txt >&2
+	exit 1
+fi
+
+# transform
+#0000..007F; Basic Latin
+
+sed	-e 's/^\([0-9A-F][0-9A-F]*\)\.\.\([0-9A-F][0-9A-F]*\) *; *\(.*\)/	{0x\1, 0x\2, 0, "\3"},/' \
+	-e t -e d Blocks.txt > blocks.t
+
