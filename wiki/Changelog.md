@@ -5,6 +5,7 @@ Terminal features
   * Terminal reset clears progress bar (mintty/wsltty#202).
   * DECTST colour fillings (CSI 4;10..13 y, VT240).
   * Smart detection of progress indication also inmidst line (mintty/wsltty#202).
+  * Fixed rendering of 0x7F (DEL code) in some 96-characters NRCS modes.
 
 Font rendering
   * Enabled width detection for auto-narrowing non-BMP characters (#1065).

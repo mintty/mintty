@@ -4202,8 +4202,6 @@ term_do_write(const char *buf, uint len)
           // tune C1 behaviour to mimic xterm
           if (c < 0xA0)
             continue;
-          // TODO: if we'd ever support 96 character sets (other than 'A')
-          // 0xFF should be handled specifically
 
           c &= 0x7F;
           cset = term.curs.csets[term.curs.gr];
@@ -4281,76 +4279,13 @@ term_do_write(const char *buf, uint len)
           continue;
         }
 
-        // Control characters
-        if (wc < 0x20 || wc == 0x7F) {
-          if (!do_ctrl(wc) && c == wc) {
-            wc = cs_btowc_glyph(c);
-            if (wc != c)
-              write_ucschar(0, wc, 1);
-            else if (cfg.printable_controls > 1)
-              goto goon;
-          }
-          continue;
-          goon:;
-        }
-
         // Non-characters
         if (wc == 0xFFFE || wc == 0xFFFF) {
           write_error();
           continue;
         }
 
-        cattrflags asav = term.curs.attr.attr;
-
         // Everything else
-        int width;
-        if (term.wide_indic && wc >= 0x0900 && indicwide(wc))
-          width = 2;
-        else if (term.wide_extra && wc >= 0x2000 && extrawide(wc)) {
-          width = 2;
-          // Note: this check is currently not implemented for
-          // non-BMP characters (see case if is_low_surrogate(wc) above)
-          if (win_char_width(wc, term.curs.attr.attr) < 2)
-            term.curs.attr.attr |= TATTR_EXPAND;
-        }
-        else {
-#if HAS_LOCALES
-          if (cfg.charwidth % 10)
-            width = xcwidth(wc);
-          else
-            width = wcwidth(wc);
-#ifdef support_triple_width
-          // do not handle triple-width here
-          //if (term.curs.width)
-          //  width = term.curs.width % 10;
-#endif
-# ifdef hide_isolate_marks
-          // force bidi isolate marks to be zero-width;
-          // however, this is inconsistent with locale width
-          if (wc >= 0x2066 && wc <= 0x2069)
-            width = 0;  // bidi isolate marks
-# endif
-#else
-          width = xcwidth(wc);
-#endif
-        }
-        if (width < 0 && cfg.printable_controls) {
-          if (wc >= 0x80 && wc < 0xA0)
-            width = 1;
-          else if (wc < ' ' && cfg.printable_controls > 1)
-            width = 1;
-        }
-
-        if (width == 2
-            // && wcschr(W("〈〉《》「」『』【】〒〓〔〕〖〗〘〙〚〛"), wc)
-            && wc >= 0x3008 && wc <= 0x301B && (wc | 1) != 0x3013
-            && win_char_width(wc, term.curs.attr.attr) < 2
-            // ensure symmetric handling of matching brackets
-            && win_char_width(wc ^ 1, term.curs.attr.attr) < 2)
-        {
-          term.curs.attr.attr |= TATTR_EXPAND;
-        }
-
         wchar NRC(wchar * map)
         {
           static char * rpl = "#@[\\]^_`{|}~";
@@ -4360,6 +4295,8 @@ term_do_write(const char *buf, uint len)
           else
             return wc;
         }
+
+        cattrflags asav = term.curs.attr.attr;
 
         switch (cset) {
           when CSET_VT52DRW:  // VT52 "graphics" mode
@@ -4533,6 +4470,7 @@ term_do_write(const char *buf, uint len)
           otherwise: ;
         }
 
+        // Some more special graphic renderings
         if (wc >= 0x2580 && wc <= 0x259F) {
           // Block Elements (U+2580-U+259F)
           // ▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟
@@ -4553,6 +4491,72 @@ term_do_write(const char *buf, uint len)
         }
 #endif
 
+        // Determine width of character to be rendered
+        int width;
+        if (term.wide_indic && wc >= 0x0900 && indicwide(wc))
+          width = 2;
+        else if (term.wide_extra && wc >= 0x2000 && extrawide(wc)) {
+          width = 2;
+          // Note: this check is currently not implemented for
+          // non-BMP characters (see case if is_low_surrogate(wc) above)
+          if (win_char_width(wc, term.curs.attr.attr) < 2)
+            term.curs.attr.attr |= TATTR_EXPAND;
+        }
+        else {
+#if HAS_LOCALES
+          if (cfg.charwidth % 10)
+            width = xcwidth(wc);
+          else
+            width = wcwidth(wc);
+#ifdef support_triple_width
+          // do not handle triple-width here
+          //if (term.curs.width)
+          //  width = term.curs.width % 10;
+#endif
+# ifdef hide_isolate_marks
+          // force bidi isolate marks to be zero-width;
+          // however, this is inconsistent with locale width
+          if (wc >= 0x2066 && wc <= 0x2069)
+            width = 0;  // bidi isolate marks
+# endif
+#else
+          width = xcwidth(wc);
+#endif
+        }
+        if (width < 0 && cfg.printable_controls) {
+          if (wc >= 0x80 && wc < 0xA0)
+            width = 1;
+          else if (wc < ' ' && cfg.printable_controls > 1)
+            width = 1;
+        }
+
+        // Auto-expanded glyphs
+        if (width == 2
+            // && wcschr(W("〈〉《》「」『』【】〒〓〔〕〖〗〘〙〚〛"), wc)
+            && wc >= 0x3008 && wc <= 0x301B && (wc | 1) != 0x3013
+            && win_char_width(wc, term.curs.attr.attr) < 2
+            // ensure symmetric handling of matching brackets
+            && win_char_width(wc ^ 1, term.curs.attr.attr) < 2)
+        {
+          term.curs.attr.attr |= TATTR_EXPAND;
+        }
+
+        // Control characters
+        if (wc < 0x20 || wc == 0x7F) {
+          if (!do_ctrl(wc) && c == wc) {
+            wc = cs_btowc_glyph(c);
+            if (wc != c)
+              write_ucschar(0, wc, 1);
+            else if (cfg.printable_controls > 1)
+              goto goon;
+          }
+          term.curs.attr.attr = asav;
+          continue;
+
+          goon:;
+        }
+
+        // Finally, write it and restore cursor attribute
         write_ucschar(0, wc, width);
         term.curs.attr.attr = asav;
       } // end term_write switch (term.state) when NORMAL
