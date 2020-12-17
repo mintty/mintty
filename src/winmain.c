@@ -5684,7 +5684,8 @@ static int dynfonts = 0;
 
   // Create child process.
   child_create(
-    argv, &(struct winsize){term_rows, term_cols, term_width, term_height}
+    argv,
+    &(struct winsize){term_rows, term_cols, term_cols * cell_width, term_rows * cell_height}
   );
 
   // Set up clipboard notifications.

@@ -16,6 +16,7 @@ Font rendering
 Window handling
   * Optionally transform Exit to characters, to exit on application-level (#1063).
   * Options dialog: configurable font and size (~#1059).
+  * Tweak initial setup of terminal pixel size (#1071).
 
 Configuration
   * New option ExitCommands (#1063).
