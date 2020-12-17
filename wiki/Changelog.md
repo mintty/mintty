@@ -6,6 +6,7 @@ Terminal features
   * DECTST colour fillings (CSI 4;10..13 y, VT240).
   * Smart detection of progress indication also inmidst line (mintty/wsltty#202).
   * Fixed rendering of 0x7F (DEL code) in some 96-characters NRCS modes.
+  * Support for 48-bit hex colour specs (#1072).
 
 Font rendering
   * Enabled width detection for auto-narrowing non-BMP characters (#1065).

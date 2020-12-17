@@ -824,6 +824,11 @@ parse_colour(string s, colour *cp)
   float c, m, y, k = 0;
   if (sscanf(s, "%u,%u,%u", &r, &g, &b) == 3)
     ;
+  else if (sscanf(s, "#%4x%4x%4x", &r, &g, &b) == 3) {
+    r >>= 8;
+    g >>= 8;
+    b >>= 8;
+  }
   else if (sscanf(s, "#%2x%2x%2x", &r, &g, &b) == 3)
     ;
   else if (sscanf(s, "rgb:%2x/%2x/%2x", &r, &g, &b) == 3)
