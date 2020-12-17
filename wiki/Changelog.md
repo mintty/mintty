@@ -13,6 +13,9 @@ Font rendering
   * Tweaked character ranges to consider for auto-narrowing (#1065).
   * Enabled secondary font specification for Unicode blocks (#777).
 
+Keyboard handling
+  * Compose key may also be user-defined super or hyper (#777).
+
 Window handling
   * Optionally transform Exit to characters, to exit on application-level (#1063).
   * Options dialog: configurable font and size (~#1059).
@@ -22,6 +25,7 @@ Configuration
   * New option ExitCommands (#1063).
   * New options OptionsFont and OptionsFontHeight (~#1059).
   * Extended syntax for option FontChoice (#777).
+  * New ComposeKey values super, hyper (#777).
 
 ### 3.4.3 (11 November 2020) ###
 
