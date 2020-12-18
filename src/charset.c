@@ -692,10 +692,10 @@ cs_init(void)
     // in order to make mintty and shell locales consistent
     LCID lcid = GetUserDefaultUILanguage ();
     char iso639[10];
-    if (GetLocaleInfo (lcid, LOCALE_SISO639LANGNAME, iso639, 10)) {
+    if (GetLocaleInfoA(lcid, LOCALE_SISO639LANGNAME, iso639, 10)) {
       char iso3166[10];
       iso3166[0] = '\0';
-      GetLocaleInfo (lcid, LOCALE_SISO3166CTRYNAME, iso3166, 10);
+      GetLocaleInfoA(lcid, LOCALE_SISO3166CTRYNAME, iso3166, 10);
       env_locale = asform("%s%s%s.UTF-8",
                           iso639,
                           lcid > 0x3FF ? "_" : "",
