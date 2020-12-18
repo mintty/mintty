@@ -1120,6 +1120,9 @@ Numeric transparency values ranging from 4 to 254 can be specified in config
 files or on the command line.  (Values below 4 are multiplied by 16, for
 backward compatibility reasons.)
 
+Note that opaqueness (non-transparency) cumulates in SessionGeomSync modes 
+like with tabbar.
+
 .TP
 \fBOpaque when focused\fP (OpaqueWhenFocused=no)
 Enable to make the window opaque when it is active (to avoid background
