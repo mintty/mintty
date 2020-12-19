@@ -1,3 +1,5 @@
+### 3.4.4 (19 December 2020) ###
+
 Unicode and Emoji data
   * Update to Emoji data version 13.1.
 

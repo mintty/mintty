@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Wed Nov 11 10:41:01 2020 -->
+<!-- CreationDate: Sun Dec 20 22:57:44 2020 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -408,8 +408,8 @@ it will be pasted using the Linux path name. <br>
 &ndash; When Ctrl+clicking a file name, it will be
 interpreted in the Linux namespace and converted before
 opening in Windows. <br>
-&ndash; Options DropCommands and setting MINTTY_PROG for
-UserCommands are disabled. <br>
+&ndash; Options DropCommands, ExitCommands, and setting
+MINTTY_PROG for UserCommands are disabled. <br>
 &ndash; The working directory of the current foreground
 process (for click-opening pathnames) cannot be detected.
 <br>
@@ -1376,9 +1376,9 @@ Background, Title, ExitTitle, Icon, Log, SaveFilename,
 Language, Font, Font1..10, FontSample, FontChoice, TekFont,
 CopyAsRTFFont, SearchBar, Printer, Answerback,
 SixelClipChars, Class, AppID, AppName, AppLaunchCmd,
-DropCommands, UserCommands, SessionCommands, TaskCommands,
-KeyFunctions, SysMenuFunctions, CtxMenuFunctions,
-UserCommandsPath.</p>
+DropCommands, ExitCommands, UserCommands, SessionCommands,
+TaskCommands, KeyFunctions, SysMenuFunctions,
+CtxMenuFunctions, UserCommandsPath.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Be careful when
 running multiple instances of mintty. If options are saved
@@ -1474,6 +1474,10 @@ black in the Windows control panel.</p>
 transparency values ranging from 4 to 254 can be specified
 in config files or on the command line. (Values below 4 are
 multiplied by 16, for backward compatibility reasons.)</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note that
+opaqueness (non-transparency) cumulates in SessionGeomSync
+modes like with tabbar.</p>
 
 <p style="margin-left:11%;"><b>Opaque when focused</b>
 (OpaqueWhenFocused=no)</p>
@@ -1601,7 +1605,11 @@ will override an earlier one (see CJK example below). <br>
 Finally, special name <b>Private</b> covers the Private Use
 ranges, which are often used for additional icon symbols
 (e.g. by &quot;Nerd Fonts&quot; or &quot;Powerline&quot;
-fonts).</p>
+fonts). <br>
+In addition to Unicode scripts, also Unicode blocks can be
+used to specify a secondary font, by a &quot;|&quot; prefix
+to the block name, with block specifications preceding over
+the more general script specifications.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Example:
 <b><br>
@@ -1612,7 +1620,8 @@ Font5=Malgun Gothic <br>
 Font8=FangSong <br>
 Font9=MingLiU <br>
 FontChoice=PictoSymbols:2 <br>
-Font2=DejaVu Sans Mono</b></p>
+Font2=DejaVu Sans Mono <br>
+FontChoice=Greek:3;|Greek Extended:4</b></p>
 
 <p style="margin-left:22%; margin-top: 1em">&ndash; <b>Font
 sample text</b> (FontSample=): This hidden setting overrides
@@ -2802,7 +2811,17 @@ The following settings appear neither in the options dialog
 nor as command line options, which means they can only be
 set in config files or using the <b>--option</b> or
 <b>-o</b> command line option. <b><br>
-Customize Options dialog</b> (OldOptions=)</p>
+Options dialog custom font and size</b> (OptionsFont=,
+OptionsFontHeight=0)</p>
+
+<p style="margin-left:22%;">These settings change the font
+and fontsize in the Options dialog. (Note that scaling a
+custom font in the Options dialog when changing the screen
+resolution does not work, so Options is closed in this
+case.)</p>
+
+<p style="margin-left:11%;"><b>Customize Options dialog</b>
+(OldOptions=)</p>
 
 <p style="margin-left:22%;">Listing comma-separated tags in
 this setting will disable extended or enhanced parts of the
@@ -2881,10 +2900,12 @@ bar</b> (ProgressBar=0)</p>
 <p style="margin-left:22%;">This setting initially enables
 a progress indication on the taskbar icon, based on
 automatic progress detection: if the current cursor line
-ends with a percent indication (x%) it will be notified via
-progress bar in one of three levels 1 (green), 2 (yellow), 3
-(red). Note that the progress bar can also be switched or
-even controlled by an escape sequence.</p>
+contains a percent indication (x%) and a subsequent relative
+positioning (e.g. a CR return character) like in text
+progress indications, it will be notified via progress bar
+in one of three levels 1 (green), 2 (yellow), 3 (red). Note
+that the progress bar can also be switched or even
+controlled by an escape sequence.</p>
 
 <p style="margin-left:11%;"><b>Single-dash long options</b>
 (ShortLongOpts=false)</p>
@@ -3734,6 +3755,47 @@ different actions for directories/folders or even different
 command invocations depending on file name pattern are
 desired, this should be handled by a suitable cooperating
 shell function.</p>
+
+<p style="margin-left:11%;"><b>Exit application-targetted
+commands</b> (ExitCommands=)</p>
+
+<p style="margin-left:22%;">With this setting, a set of
+strings can be configured to be sent to respective
+applications, in dependence of the program running in the
+terminal foreground, if the window is instructed to
+&quot;Close&quot; from its menu or close button.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+Detection of terminal foreground processes works only
+locally; this features does not work with WSL or after
+remote login.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The value is a
+series of semicolon-separated, colon-combined pairs of
+program name and (control) string. The string is sent to the
+client application. If a semicolon shall be embedded into
+any of the drop patterns, a non-whitespace control character
+(i.e. none of <b>^I^J^K^L^M</b>) can be specified as an
+alternative separator by starting the whole setting with it.
+The definition list can be split over multiple lines if a
+separator is followed by a backslash, newline, and optional
+whitespace indentation.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+This feature potentially makes mintty vulnerable against
+command injection. Be careful what strings you
+configure!</p>
+
+<p style="margin-left:22%; margin-top: 1em">Example: <br>
+&ndash;
+<b>ExitCommands=bash:exit^M;mined:^[q;emacs:^X^C</b></p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i> An
+&quot;Enter&quot; key has to be specified with the CR
+character code, control characters need to be embedded
+verbatim (indicated above as &quot;^M&quot;, &quot;^[&quot;,
+&quot;^X&quot;, &quot;^C&quot;); there is no escape
+notation.</p>
 
 <p style="margin-left:11%;"><b>User commands</b>
 (UserCommands=) [DEPRECATED, see
