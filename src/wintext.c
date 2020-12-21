@@ -4312,7 +4312,11 @@ win_char_width(xchar c, cattrflags attr)
     return wid;
   }
 
-  if (c >= 0x2160 && c <= 0x2179) {  // Roman Numerals
+  if ((c >= 0x2160 && c <= 0x2179)   // Roman Numerals
+   || (c >= 0x01C4 && c <= 0x01CC)   // double letters
+   || (c >= 0x01F1 && c <= 0x01F3)   // double letters
+     )
+  {
     ReleaseDC(wnd, dc);
     return 2;
   }
