@@ -613,6 +613,12 @@ win_init_fontfamily(HDC dc, int findex)
   GetCharWidthFloatW(dc, 0x2500, 0x2500, &line_char_width);
   GetCharWidthFloatW(dc, 0x4E00, 0x4E00, &cjk_char_width);
 
+  // avoid trouble with non-text font (#777, Noto Sans Symbols2)
+  if (!latin_char_width) {
+    //GetCharWidthFloatW(dc, 0x0020, 0x0020, &latin_char_width);
+    latin_char_width = (float)font_size / 16;
+  }
+
   if (!findex) {
     //?int ilead = tm.tmInternalLeading - (dpi - 96) / 48;
     int idpi = dpi;  // avoid coercion of tm.tmInternalLeading to unsigned
