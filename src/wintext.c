@@ -4313,8 +4313,6 @@ win_char_width(xchar c, cattrflags attr)
   }
 
   if ((c >= 0x2160 && c <= 0x2179)   // Roman Numerals
-   || (c >= 0x01C4 && c <= 0x01CC)   // double letters
-   || (c >= 0x01F1 && c <= 0x01F3)   // double letters
      )
   {
     ReleaseDC(wnd, dc);
@@ -4333,6 +4331,9 @@ win_char_width(xchar c, cattrflags attr)
   }
 
   if ((c >= 0x3000 && c <= 0x303F)   // CJK Symbols and Punctuation
+
+   || (c >= 0x01C4 && c <= 0x01CC)   // double letters
+   || (c >= 0x01F1 && c <= 0x01F3)   // double letters
 
    || (c >= 0x2460 && c <= 0x24FF)   // Enclosed Alphanumerics, to cover:
    //|| (c >= 0x249C && c <= 0x24E9)   // parenthesized/circled letters
