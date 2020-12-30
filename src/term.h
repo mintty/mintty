@@ -309,7 +309,7 @@ typedef enum {
   CSET_DEC_Greek_Supp		= '?' + 0x80,
   CSET_DEC_Hebrew_Supp		= '4' + 0x80,
   CSET_DEC_Turkish_Supp		= '0' + 0x80,
-  CSET_NRCS_Cyrillic		= '&' + 0x80,
+  CSET_DEC_Cyrillic		= '&' + 0x80,
   CSET_NRCS_Greek		= '>' + 0x80,
   CSET_NRCS_Hebrew		= '=' + 0x80,
   CSET_NRCS_Turkish		= '2' + 0x80,

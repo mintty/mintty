@@ -2,6 +2,7 @@ Terminal features
   * Fixed width handling when selecting a non-text font (~#777).
   * Auto-narrowing: glyph double-width detection for double-letter characters (like Dz, #777).
   * Support fractional percentage for progress detection (#1074).
+  * Tweaked availability of DEC Cyrillic character set (VT520, xterm 363).
 
 ### 3.4.4 (19 December 2020) ###
 
