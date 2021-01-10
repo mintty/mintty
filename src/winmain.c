@@ -4587,6 +4587,14 @@ main(int argc, char *argv[])
 # ifdef debuglog
   fprintf(mtlog, "shortcut %d %ls\n", invoked_from_shortcut, sui.lpTitle);
 # endif
+  // conclude whether started via Win+R (may be considered to set login mode)
+  //invoked_from_win_r = !invoked_from_shortcut & (sui.dwFlags & STARTF_USESHOWWINDOW);
+# ifdef debug_startupinfo
+  char * sinfo = asform("STARTUPINFO <%s> <%s> %08X %d\n",
+        cs__wcstombs(sui.lpDesktop ?: u""), cs__wcstombs(sui.lpTitle ?: u""),
+        sui.dwFlags, sui.wShowWindow);
+  show_info(sinfo);
+# endif
 
   // Options triggered via wsl*.exe
 #if CYGWIN_VERSION_API_MINOR >= 74
