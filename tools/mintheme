@@ -249,7 +249,12 @@ query() {
 }
 
 conftheme() {
-	themefile=`cygpath -wa "$1"`
+	if [ `uname` = "Linux" ] && [ -n "$APPDATA" ]
+	then
+		themefile=`wslpath -ma "$1"`
+	else
+		themefile=`cygpath -wa "$1"`
+	fi
 	for conffile in ~/.minttyrc ~/.config/mintty/config "$APPDATA/mintty/config" /etc/minttyrc
 	do	if [ -w "$conffile" ]
 		then
