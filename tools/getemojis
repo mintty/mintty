@@ -8,7 +8,7 @@ trace () {
 case "$1" in
 -sh)	postproc=cat
 	shift;;
-*)	postproc=sh;;
+*)	postproc=bash;;
 esac
 
 case `basename "$PWD"` in
