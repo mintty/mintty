@@ -700,6 +700,7 @@ win_set_title(char *title)
       GetWindowTextW(wnd, oldtitle, len + 1);
       if (0 != wcscmp(wtitle, oldtitle)) {
         SetWindowTextW(wnd, wtitle);
+        usleep(1000);
         update_tab_titles();
       }
     }
