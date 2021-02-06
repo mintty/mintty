@@ -4,6 +4,11 @@ Terminal features
   * Support fractional percentage for progress detection (#1074).
   * Tweaked availability of DEC Cyrillic character set (VT520, xterm 363).
 
+Configuration
+  * Support for theme file conversion on filename drag-and-drop (#1079).
+  * Support for theme file conversion on "file:" URL drag-and-drop (~#1079).
+  * Support for ".json" theme file conversion (~~#1079).
+
 ### 3.4.4 (19 December 2020) ###
 
 Unicode and Emoji data

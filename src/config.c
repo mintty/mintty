@@ -2321,7 +2321,7 @@ enable_widget(control * ctrl, bool enable)
   EnableWindow(wid, enable);
 }
 
-#define dont_debug_scheme 1
+#define dont_debug_scheme 2
 
 /*
    Load scheme from URL or file, convert .itermcolors and .json formats
@@ -2378,7 +2378,7 @@ download_scheme(char * url)
 
   // colour scheme string
   char * sch = null;
-  // colour modifications, common for .itermcolors and .json
+  // colour modifications, common for .itermcolors and .json (unused there)
   colour ansi_colours[16] = 
     {(colour)-1, (colour)-1, (colour)-1, (colour)-1, 
      (colour)-1, (colour)-1, (colour)-1, (colour)-1, 
@@ -2516,6 +2516,75 @@ download_scheme(char * url)
     }
     // collect modified colours into colour scheme string
     schappall();
+  }
+  else if (urlsuf && !strcmp(urlsuf, ".json")) {
+    // support .json theme files in either vscode or Windows terminal format
+    while (fgets(linebuf, sizeof(linebuf) - 1, sf)) {
+      char * scan = strchr(linebuf, '"');
+      char * key;
+      char * val;
+      if (scan) {
+        scan++;
+        // strip vscode prefixes
+        if (strncmp(scan, "terminal.", 9) == 0) {
+          scan += 9;
+          if (strncmp(scan, "ansi", 4) == 0)
+            scan += 4;
+        }
+        key = scan;
+        scan = strchr(scan, '"');
+      }
+      if (scan) {
+        *scan = 0;
+        scan++;
+        scan = strchr(scan, '"');
+        if (scan) {
+          scan++;
+          val = scan;
+          scan = strchr(scan, '"');
+          if (scan) {
+            *scan = 0;
+          }
+        }
+      }
+      if (scan) {
+#if defined(debug_scheme) && debug_scheme > 1
+        printf("<%s> <%s> (%s)\n", key, val, linebuf);
+#endif
+        // transform .json colour names
+        void schapp(char * jname, char * name)
+        {
+          if (strcasecmp(key, jname) == 0) {
+#if defined(debug_scheme) && debug_scheme > 1
+            printf("%s=%s\n", name, val);
+#endif
+            int len = sch ? strlen(sch) : 0;
+            sch = renewn(sch, len + strlen(name) + strlen(val) + 3);
+            sprintf(&sch[len], "%s=%s;", name, val);
+          }
+        }
+        schapp("black", "Black");
+        schapp("red", "Red");
+        schapp("green", "Green");
+        schapp("yellow", "Yellow");
+        schapp("blue", "Blue");
+        schapp("magenta", "Magenta");
+        schapp("purple", "Magenta");
+        schapp("cyan", "Cyan");
+        schapp("white", "White");
+        schapp("brightblack", "BoldBlack");
+        schapp("brightred", "BoldRed");
+        schapp("brightgreen", "BoldGreen");
+        schapp("brightyellow", "BoldYellow");
+        schapp("brightblue", "BoldBlue");
+        schapp("brightmagenta", "BoldMagenta");
+        schapp("brightpurple", "BoldMagenta");
+        schapp("brightcyan", "BoldCyan");
+        schapp("brightwhite", "BoldWhite");
+        schapp("foreground", "ForegroundColour");
+        schapp("background", "BackgroundColour");
+      }
+    }
   }
   else {
     while (fgets(linebuf, sizeof(linebuf) - 1, sf)) {
