@@ -4,6 +4,10 @@ Terminal features
   * Support fractional percentage for progress detection (#1074).
   * Tweaked availability of DEC Cyrillic character set (VT520, xterm 363).
 
+Keyboard handling
+  * Changed Ctrl+Backarrow to send Backspace (#1082, #449, xterm).
+  * Applying modifyOtherKeys mode 2 more consistently to special keys (~~#1082).
+
 Configuration
   * Support for theme file conversion on filename drag-and-drop (#1079).
   * Support for theme file conversion on "file:" URL drag-and-drop (~#1079).
