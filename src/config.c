@@ -2644,6 +2644,7 @@ theme_handler(control *ctrl, int event)
           || wcsncmp(W("https:"), dragndrop, 6) == 0
           || wcsncmp(W("ftp:"), dragndrop, 4) == 0
           || wcsncmp(W("ftps:"), dragndrop, 5) == 0
+          || wcsncmp(W("file:"), dragndrop, 5) == 0
 #if CYGWIN_VERSION_API_MINOR >= 74
           || (dragndrop[1] == ':' &&
               (wcsstr(dragndrop, W(".itermcolors")) ||
