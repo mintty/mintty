@@ -2321,39 +2321,59 @@ enable_widget(control * ctrl, bool enable)
   EnableWindow(wid, enable);
 }
 
+#define dont_debug_scheme 1
+
+/*
+   Load scheme from URL or file, convert .itermcolors and .json formats
+ */
 static char *
 download_scheme(char * url)
 {
+#ifdef debug_scheme
+  printf("download_scheme <%s>\n", url);
+#endif
   if (strchr(url, '\''))
     return null;  // Insecure link
 
-#ifdef use_curl
-  static string cmdpat = "curl '%s' -o - 2> /dev/null";
-  char * cmd = newn(char, strlen(cmdpat) -1 + strlen(url));
-  sprintf(cmd, cmdpat, url);
-  FILE * sf = popen(cmd, "r");
-  if (!sf)
-    return null;
-#else
-  HRESULT (WINAPI * pURLDownloadToFile)(void *, LPCSTR, LPCSTR, DWORD, void *) = 0;
-  pURLDownloadToFile = load_library_func("urlmon.dll", "URLDownloadToFileA");
-  bool ok = false;
-  char * sfn = asform("%s/.mintty-scheme.%d", tmpdir(), getpid());
-  if (pURLDownloadToFile) {
-#ifdef __CYGWIN__
-    /* Need to sync the Windows environment */
-    cygwin_internal(CW_SYNC_WINENV);
-#endif
-    char * wfn = path_posix_to_win_a(sfn);
-    ok = S_OK == pURLDownloadToFile(NULL, url, wfn, 0, NULL);
-    free(wfn);
+  FILE * sf = 0;
+  char * sfn = 0;
+  if (url[1] == ':') {
+    sf = fopen(url, "r");
   }
-  if (!ok)
-    return null;
-  FILE * sf = fopen(sfn, "r");
-  //printf("URL <%s> file <%s> OK %d\n", url, sfn, !!sf);
+  else {
+#ifdef use_curl
+    static string cmdpat = "curl '%s' -o - 2> /dev/null";
+    char * cmd = newn(char, strlen(cmdpat) -1 + strlen(url));
+    sprintf(cmd, cmdpat, url);
+    sf = popen(cmd, "r");
+#else
+    HRESULT (WINAPI * pURLDownloadToFile)(void *, LPCSTR, LPCSTR, DWORD, void *) = 0;
+    pURLDownloadToFile = load_library_func("urlmon.dll", "URLDownloadToFileA");
+    bool ok = false;
+    sfn = asform("%s/.mintty-scheme.%d", tmpdir(), getpid());
+    if (pURLDownloadToFile) {
+# ifdef __CYGWIN__
+      /* Need to sync the Windows environment */
+      cygwin_internal(CW_SYNC_WINENV);
+# endif
+      char * wfn = path_posix_to_win_a(sfn);
+      ok = S_OK == pURLDownloadToFile(NULL, url, wfn, 0, NULL);
+      free(wfn);
+    }
+    if (!ok)
+      free(sfn);
+    sf = fopen(sfn, "r");
+    //printf("URL <%s> file <%s> OK %d\n", url, sfn, !!sf);
+    if (!sf) {
+      remove(sfn);
+      free(sfn);
+    }
+#endif
+  }
   if (!sf)
     return null;
+#ifdef debug_scheme
+  printf("URL <%s> OK %d\n", url, !!sf);
 #endif
 
   char * sch = null;
@@ -2398,6 +2418,9 @@ download_scheme(char * url)
             }
           }
           else if (level == 1) {
+#if defined(debug_scheme) && debug_scheme > 1
+            printf("iterm entity <%s>\n", entity);
+#endif
             int coli;
             if (0 == strcmp(entity, "Foreground Color"))
               key = &fg_colour;
@@ -2427,6 +2450,9 @@ download_scheme(char * url)
           }
         }
         else if (level == 2 && key) {
+#if defined(debug_scheme) && debug_scheme > 1
+          printf("iterm value <%s>\n", linebuf);
+#endif
           entity = strstr(linebuf, "<real>");
           double val;
           if (entity && sscanf(entity, "<real>%lf<", &val) == 1 && val >= 0.0 && val <= 1.0) {
@@ -2446,6 +2472,9 @@ download_scheme(char * url)
     // construct a ColourScheme string
     void schapp(char * opt, colour c)
     {
+#if defined(debug_scheme) && debug_scheme > 1
+      printf("schapp %s %06X\n", opt, c);
+#endif
       if (c != (colour)-1) {
         char colval[strlen(opt) + 14];
         sprintf(colval, "%s=%u,%u,%u;", opt, red(c), green(c), blue(c));
@@ -2526,10 +2555,15 @@ download_scheme(char * url)
   pclose(sf);
 #else
   fclose(sf);
-  remove(sfn);
-  free(sfn);
+  if (sfn) {
+    remove(sfn);
+    free(sfn);
+  }
 #endif
 
+#if defined(debug_scheme) && debug_scheme > 1
+  printf("download_scheme -> <%s>\n", sch);
+#endif
   return sch;
 }
 
@@ -2578,6 +2612,9 @@ theme_handler(control *ctrl, int event)
                  );
   }
   else if (event == EVENT_DROP) {
+#ifdef debug_scheme
+    printf("EVENT_DROP <%ls>\n", dragndrop);
+#endif
     if (wcsncmp(W("data:text/plain,"), dragndrop, 16) == 0) {
       // indicate availability of downloaded scheme to be stored
       dlg_editbox_set_w(ctrl, DOWNLOADED);
@@ -2607,14 +2644,26 @@ theme_handler(control *ctrl, int event)
           || wcsncmp(W("https:"), dragndrop, 6) == 0
           || wcsncmp(W("ftp:"), dragndrop, 4) == 0
           || wcsncmp(W("ftps:"), dragndrop, 5) == 0
-            ) {
+#if CYGWIN_VERSION_API_MINOR >= 74
+          || (dragndrop[1] == ':' &&
+              (wcsstr(dragndrop, W(".itermcolors")) ||
+               wcsstr(dragndrop, W(".json"))
+              )
+             )
+#endif
+            )
+    {
       char * url = cs__wcstoutf(dragndrop);
       char * sch = download_scheme(url);
       if (sch) {
         wchar * urlpoi = wcschr(dragndrop, '?');
         if (urlpoi)
           *urlpoi = 0;
+        // find URL basename
         urlpoi = wcsrchr(dragndrop, '/');
+        // or file basename
+        if (!urlpoi)
+          urlpoi = wcsrchr(dragndrop, '\\');
         if (urlpoi) {
           // set theme name proposal to url base name
           urlpoi++;
