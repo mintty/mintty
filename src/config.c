@@ -2376,17 +2376,62 @@ download_scheme(char * url)
   printf("URL <%s> OK %d\n", url, !!sf);
 #endif
 
+  // colour scheme string
   char * sch = null;
+  // colour modifications, common for .itermcolors and .json
+  colour ansi_colours[16] = 
+    {(colour)-1, (colour)-1, (colour)-1, (colour)-1, 
+     (colour)-1, (colour)-1, (colour)-1, (colour)-1, 
+     (colour)-1, (colour)-1, (colour)-1, (colour)-1, 
+     (colour)-1, (colour)-1, (colour)-1, (colour)-1};
+  colour fg_colour = (colour)-1, bold_colour = (colour)-1, bg_colour = (colour)-1;
+  colour cursor_colour = (colour)-1, sel_fg_colour = (colour)-1, sel_bg_colour = (colour)-1;
+  colour underl_colour = (colour)-1, hover_colour = (colour)-1;
+  // construct a ColourScheme string
+  void schapp(char * opt, colour c)
+  {
+#if defined(debug_scheme) && debug_scheme > 1
+    printf("schapp %s %06X\n", opt, c);
+#endif
+    if (c != (colour)-1) {
+      char colval[strlen(opt) + 14];
+      sprintf(colval, "%s=%u,%u,%u;", opt, red(c), green(c), blue(c));
+      int len = sch ? strlen(sch) : 0;
+      sch = renewn(sch, len + strlen(colval) + 1);
+      strcpy(&sch[len], colval);
+    }
+  }
+  // collect all modified colours in a colour scheme string
+  void schappall()
+  {
+    schapp("ForegroundColour", fg_colour);
+    schapp("BackgroundColour", bg_colour);
+    schapp("BoldColour", bold_colour);
+    schapp("CursorColour", cursor_colour);
+    schapp("UnderlineColour", underl_colour);
+    schapp("HoverColour", hover_colour);
+    schapp("HighlightBackgroundColour", sel_bg_colour);
+    schapp("HighlightForegroundColour", sel_fg_colour);
+    schapp("Black", ansi_colours[BLACK_I]);
+    schapp("Red", ansi_colours[RED_I]);
+    schapp("Green", ansi_colours[GREEN_I]);
+    schapp("Yellow", ansi_colours[YELLOW_I]);
+    schapp("Blue", ansi_colours[BLUE_I]);
+    schapp("Magenta", ansi_colours[MAGENTA_I]);
+    schapp("Cyan", ansi_colours[CYAN_I]);
+    schapp("White", ansi_colours[WHITE_I]);
+    schapp("BoldBlack", ansi_colours[BOLD_BLACK_I]);
+    schapp("BoldRed", ansi_colours[BOLD_RED_I]);
+    schapp("BoldGreen", ansi_colours[BOLD_GREEN_I]);
+    schapp("BoldYellow", ansi_colours[BOLD_YELLOW_I]);
+    schapp("BoldBlue", ansi_colours[BOLD_BLUE_I]);
+    schapp("BoldMagenta", ansi_colours[BOLD_MAGENTA_I]);
+    schapp("BoldCyan", ansi_colours[BOLD_CYAN_I]);
+    schapp("BoldWhite", ansi_colours[BOLD_WHITE_I]);
+  }
+
   char * urlsuf = strrchr(url, '.');
   if (urlsuf && !strcmp(urlsuf, ".itermcolors")) {
-    colour ansi_colours[16] = 
-      {(colour)-1, (colour)-1, (colour)-1, (colour)-1, 
-       (colour)-1, (colour)-1, (colour)-1, (colour)-1, 
-       (colour)-1, (colour)-1, (colour)-1, (colour)-1, 
-       (colour)-1, (colour)-1, (colour)-1, (colour)-1};
-    colour fg_colour = (colour)-1, bold_colour = (colour)-1, bg_colour = (colour)-1;
-    colour cursor_colour = (colour)-1, sel_fg_colour = (colour)-1, sel_bg_colour = (colour)-1;
-    colour underl_colour = (colour)-1, hover_colour = (colour)-1;
     int level = 0;
     colour * key = 0;
     int component = -1;
@@ -2469,44 +2514,8 @@ download_scheme(char * url)
         }
       }
     }
-    // construct a ColourScheme string
-    void schapp(char * opt, colour c)
-    {
-#if defined(debug_scheme) && debug_scheme > 1
-      printf("schapp %s %06X\n", opt, c);
-#endif
-      if (c != (colour)-1) {
-        char colval[strlen(opt) + 14];
-        sprintf(colval, "%s=%u,%u,%u;", opt, red(c), green(c), blue(c));
-        int len = sch ? strlen(sch) : 0;
-        sch = renewn(sch, len + strlen(colval) + 1);
-        strcpy(&sch[len], colval);
-      }
-    }
-    schapp("ForegroundColour", fg_colour);
-    schapp("BackgroundColour", bg_colour);
-    schapp("BoldColour", bold_colour);
-    schapp("CursorColour", cursor_colour);
-    schapp("UnderlineColour", underl_colour);
-    schapp("HoverColour", hover_colour);
-    schapp("HighlightBackgroundColour", sel_bg_colour);
-    schapp("HighlightForegroundColour", sel_fg_colour);
-    schapp("Black", ansi_colours[BLACK_I]);
-    schapp("Red", ansi_colours[RED_I]);
-    schapp("Green", ansi_colours[GREEN_I]);
-    schapp("Yellow", ansi_colours[YELLOW_I]);
-    schapp("Blue", ansi_colours[BLUE_I]);
-    schapp("Magenta", ansi_colours[MAGENTA_I]);
-    schapp("Cyan", ansi_colours[CYAN_I]);
-    schapp("White", ansi_colours[WHITE_I]);
-    schapp("BoldBlack", ansi_colours[BOLD_BLACK_I]);
-    schapp("BoldRed", ansi_colours[BOLD_RED_I]);
-    schapp("BoldGreen", ansi_colours[BOLD_GREEN_I]);
-    schapp("BoldYellow", ansi_colours[BOLD_YELLOW_I]);
-    schapp("BoldBlue", ansi_colours[BOLD_BLUE_I]);
-    schapp("BoldMagenta", ansi_colours[BOLD_MAGENTA_I]);
-    schapp("BoldCyan", ansi_colours[BOLD_CYAN_I]);
-    schapp("BoldWhite", ansi_colours[BOLD_WHITE_I]);
+    // collect modified colours into colour scheme string
+    schappall();
   }
   else {
     while (fgets(linebuf, sizeof(linebuf) - 1, sf)) {
