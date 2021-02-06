@@ -603,7 +603,8 @@ can be used in different ways:
 
 (Option 3) 
 A number of colour schemes have been published for mintty, also 
-mintty supports direct drag-and-drop import of itermcolors schemes.
+mintty supports direct drag-and-drop import of theme files in 
+iTerm2 or Windows terminal formats.
 Look for the following repositories:
 * https://iterm2colorschemes.com/
 * https://github.com/oumu/mintty-color-schemes
