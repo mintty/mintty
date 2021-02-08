@@ -184,6 +184,12 @@ standalone package would set that up for you in the shortcuts. For other
 invocation (cygwin or Windows command line), mintty finds the suitable 
 WSL icon itself.
 
+Note that older wslbridge2 backends used not to be interoperable among 
+systems with different libraries (glibc vs musl).
+The _distro_ `Alpine` had been checked out to build a backend that works 
+with all Linux distributions; builds of later wslbridge2 are reported 
+to be interoperable though.
+
 At the end of the `mintty --WSL` invocation line, you may add an explicit 
 WSL shell invocation like `/bin/bash -l` to select your favourite shell or 
 ask for a login shell (`-l`), or set a start directory (`-C`, before any 
