@@ -273,6 +273,10 @@ options AppName and AppLaunchCmd.
 Prevent pinning of the mintty window to the Windows taskbar.
 
 .TP
+\fB-P\fP, \fB--pcon\fP [\fBon\fP|\fBoff\fP]
+Enforce enabling or disabling of ConPTY support.
+
+.TP
 \fB--wsl\fP (preferred option: \fB--WSL\fP, see below)
 Adjust to WSL (the Windows Subsystem for Linux, or Bash/Ubuntu on Windows):
 .br
@@ -2458,6 +2462,12 @@ mintty -o AppID=Mintty.PinTest.1 -o AppName=Mintty.PinTest -o AppLaunchCmd="C:\\
 a specific AppID cannot be removed or even modified again with normal means.
 For this reason, it is advisable to use temporary AppIDs for testing 
 (like MyMintty.1).
+
+.TP
+\fBControl ConPTY support\fP (ConPTY=)
+Setting this on or off enforces enabled or disabled support of pseudo console 
+for native Windows programs. The default is to leave it up to the default 
+of the system environment (cygwin or MSYS2).
 
 .TP
 \fBWord selection characters\fP (WordChars=)

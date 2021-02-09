@@ -201,6 +201,7 @@ typedef struct {
   wstring user_commands_path;
   wstring session_commands;
   wstring task_commands;
+  int conpty_support;
   string menu_mouse;
   string menu_ctrlmouse;
   string menu_altmouse;
