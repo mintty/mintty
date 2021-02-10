@@ -249,8 +249,24 @@ query() {
 }
 
 conftheme() {
-	themefile=`cygpath -wa "$1"`
-	for conffile in ~/.minttyrc ~/.config/mintty/config "$APPDATA/mintty/config" /etc/minttyrc
+	if [ `uname` = "Linux" ] && type wslpath 2> /dev/null 1>&2
+	then
+		themefile=`wslpath -ma "$1"`
+	elif type cygpath 2> /dev/null 1>&2
+	then
+		themefile=`cygpath -wa "$1"`
+	else
+		echo "cannot save to config file in this system environment"
+		exit
+	fi
+	if [ `uname` = "Linux" ] && type wslpath 1>&2
+	then
+		ls "$APPDATA/mintty/config"
+	elif type cygpath 1>&2
+	then
+		ls ~/.minttyrc ~/.config/mintty/config "$APPDATA/mintty/config" /etc/minttyrc
+	fi 2> /dev/null |
+	while read conffile
 	do	if [ -w "$conffile" ]
 		then
 			newconf=/tmp/minttyrc.$$
