@@ -1,5 +1,5 @@
 // config.c (part of mintty)
-// Copyright 2008-13 Andy Koppe, 2015-2020 Thomas Wolff
+// Copyright 2008-13 Andy Koppe, 2015-2021 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -14,8 +14,10 @@
 #include "print.h"
 #include "charset.h"
 #include "win.h"
+#include <fcntl.h>  // open+flags, mkdir
 
 #include <windows.h>  // registry handling
+#include "winpriv.h"  // support_wsl, load_library_func
 
 #include <termios.h>
 #ifdef __CYGWIN__
@@ -697,15 +699,47 @@ static opt_val
 char *
 save_filename(char * suf)
 {
-  char * pat = path_win_w_to_posix(cfg.save_filename);
-  // e.g. "mintty.%Y-%m-%d_%H-%M-%S"
+  char * pat = cs__wcstombs(cfg.save_filename);
+
+  // expand initial ~ or $variable
+  char * sep;
+  if (*pat == '~' && pat[1] == '/') {
+    char * pat1 = asform("%s%s", home, pat + 1);
+    free(pat);
+    pat = pat1;
+  }
+  else if (*pat == '$' && (sep = strchr(pat, '/'))) {
+    *sep = 0;
+    if (getenv(pat + 1)) {
+      char * pat1 = asform("%s/%s", getenv(pat + 1), sep + 1);
+      free(pat);
+      pat = pat1;
+    }
+  }
+  wchar * wpat = cs__mbstowcs(pat);
+  free(pat);
+  pat = path_win_w_to_posix(wpat);
+  free(wpat);
+  //printf("save_filename pat %ls -> %s\n", cfg.save_filename, pat);
 
   struct timeval now;
   gettimeofday(& now, 0);
   char * fn = newn(char, MAX_PATH + 1 + strlen(suf));
   strftime(fn, MAX_PATH, pat, localtime(& now.tv_sec));
+  //printf("save_filename [%s] (%s) -> %s%s\n", pat, suf, fn, suf);
   free(pat);
   strcat(fn, suf);
+
+  // make sure directory exists
+  char * basesep = strrchr(fn, '/');
+  if (basesep) {
+    *basesep = 0;
+    if (access(fn, X_OK | W_OK) != 0) {
+      mkdir(fn, 0755);
+    }
+    *basesep = '/';
+  }
+
   return fn;
 }
 
@@ -1035,8 +1069,6 @@ matchconf(char * conf, char * item)
 }
 
 
-#include "winpriv.h"  // home
-
 static string * config_dirs = 0;
 static int last_config_dir = -1;
 
@@ -1073,8 +1105,6 @@ init_config_dirs(void)
     config_dirs[++last_config_dir] = config_dir;
   }
 }
-
-#include <fcntl.h>
 
 char *
 get_resource_file(wstring sub, wstring res, bool towrite)

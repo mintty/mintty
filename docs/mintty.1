@@ -2220,9 +2220,15 @@ If a log file name is specified with \fBLog=...\fP and \fBLogging=no\fP,
 logging can be enabled (and toggled) from the extended context menu.
 
 .TP
-\fBFilename pattern for screen saving\fP (SaveFilename=mintty.%Y-%m-%d_%H-%M-%S)
+\fBFilenames for screen saving\fP (SaveFilename=mintty.%Y-%m-%d_%H-%M-%S)
 This setting selects the location and filename pattern (which is expanded 
 with the strftime(3) function) for .html and .png screen dumps.
+An initial home prefix or environment variable prefix is expanded (POSIX 
+path and variable syntax needs to be used in this case). Examples:
+.br
+\(en \fBSaveFilename=~/mintty.%Y-%m-%d_%H-%M-%S\fP
+.br
+\(en \fBSaveFilename=$USERPROFILE/Pictures/mintty/%Y-%m-%d_%H-%M-%S\fP
 
 .TP
 \fBWindow title\fP (Title=)

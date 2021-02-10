@@ -9,6 +9,7 @@ Keyboard handling
   * Applying modifyOtherKeys mode 2 more consistently to special keys (~~#1082).
 
 Configuration
+  * Support home or environment variable prefix for setting SaveFilename (~#1086).
   * New settings -P/--pcon/ConPTY to enable/disable ConPTY support (mintty/wsltty#271).
   * Support for theme file conversion on filename drag-and-drop (#1079).
   * Support for theme file conversion on "file:" URL drag-and-drop (~#1079).
