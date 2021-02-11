@@ -2230,6 +2230,10 @@ path and variable syntax needs to be used in this case). Examples:
 .br
 \(en \fBSaveFilename=$USERPROFILE/Pictures/mintty/%Y-%m-%d_%H-%M-%S\fP
 
+Note that if the filename pattern is a relative pathname (as is the default),
+it will be taken as relative to the working directory mintty was started in,
+with some tweaks as described above for the Log file.
+
 .TP
 \fBWindow title\fP (Title=)
 The \fBTitle\fP setting can be used to determine the initial window title.
