@@ -2552,6 +2552,7 @@ do_winop(void)
         win_maximise(0);
         win_set_chars(rows0, cols0);
       }
+      usleep(1000);
     }
     when 10:
       if (term.csi_argc != 2)
@@ -2563,6 +2564,7 @@ do_winop(void)
         win_maximise(-2);
       else if (arg1 == 1 || arg1 == 0)
         win_maximise(arg1 ? 2 : 0);
+      usleep(1000);
     when 11: child_write(win_is_iconic() ? "\e[2t" : "\e[1t", 4);
     when 13: {
       int x, y;
