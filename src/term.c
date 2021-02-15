@@ -509,33 +509,8 @@ results_add(result abspos)
   ++term.results.length;
 }
 
-void
-term_set_search(wchar * needle)
-{
-  free(term.results.query);
-  term.results.query = needle;
-
-  // transform UTF-16 to UCS for matching
-  int wlen = wcslen(needle);
-  xchar * xquery = malloc(sizeof(xchar) * (wlen + 1));
-  wchar prev = 0;
-  int xlen = -1;
-  for (int i = 0; i < wlen; i++) {
-    if ((prev & 0xFC00) == 0xD800 && (needle[i] & 0xFC00) == 0xDC00)
-      xquery[xlen] = ((xchar) (prev - 0xD7C0) << 10) | (needle[i] & 0x03FF);
-    else
-      xquery[++xlen] = needle[i];
-    prev = needle[i];
-  }
-  xquery[++xlen] = 0;
-
-  free(term.results.xquery);
-  term.results.xquery = xquery;
-  term.results.xquery_length = xlen;
-  term.results.update_type = FULL_UPDATE;
-}
-
 #ifdef dynamic_casefolding
+
 static struct {
   uint code, fold;
 } * case_folding;
@@ -577,7 +552,9 @@ init_case_folding()
     fclose(cf);
   }
 }
+
 #else
+
 static struct {
   uint code, fold;
 } case_folding[] = {
@@ -585,6 +562,7 @@ static struct {
 };
 #define case_foldn lengthof(case_folding)
 #define init_case_folding()
+
 #endif
 
 static uint
@@ -616,6 +594,36 @@ case_fold(uint ch)
 }
 
 void
+term_set_search(wchar * needle)
+{
+  free(term.results.query);
+  term.results.query = needle;
+
+  // transform UTF-16 to UCS for matching
+  int wlen = wcslen(needle);
+  xchar * xquery = malloc(sizeof(xchar) * (wlen + 1));
+  wchar prev = 0;
+  int xlen = -1;
+  for (int i = 0; i < wlen; i++) {
+    xchar xqueri;
+    if ((prev & 0xFC00) == 0xD800 && (needle[i] & 0xFC00) == 0xDC00)
+      xqueri = ((xchar) (prev - 0xD7C0) << 10) | (needle[i] & 0x03FF);
+    else {
+      ++xlen;
+      xqueri = needle[i];
+    }
+    xquery[xlen] = case_fold(xqueri);
+    prev = needle[i];
+  }
+  xquery[++xlen] = 0;
+
+  free(term.results.xquery);
+  term.results.xquery = xquery;
+  term.results.xquery_length = xlen;
+  term.results.update_type = FULL_UPDATE;
+}
+
+void
 term_update_search(void)
 {
   if (term.results.update_type == NO_UPDATE)
@@ -635,6 +643,7 @@ term_update_search(void)
 static void
 do_search(int begin, int end)
 {
+printf("do_search %d %d\n", begin, end);
   if (term.results.xquery_length == 0) {
     return;
   }
@@ -678,7 +687,7 @@ do_search(int begin, int end)
       }
     }
     xchar pat = term.results.xquery[npos];
-    bool match = case_fold(ch) == case_fold(pat);
+    bool match = case_fold(ch) == pat;
     if (!match) {
       // Skip the second cell of any wide characters
       if (ch == UCSWIDE) {
