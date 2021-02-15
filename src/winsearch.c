@@ -61,7 +61,8 @@ current_delta(bool adjust)
 }
 
 static void
-scroll_to_result(result res) {
+scroll_to_result(result res)
+{
   if (res.len == 0) {
     return;
   }

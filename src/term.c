@@ -633,7 +633,8 @@ term_update_search(void)
 
 // return search results contained by [begin, end)
 static void
-do_search(int begin, int end) {
+do_search(int begin, int end)
+{
   if (term.results.xquery_length == 0) {
     return;
   }
@@ -655,12 +656,12 @@ do_search(int begin, int end) {
     int x = (cpos % term.cols);
     int y = (cpos / term.cols);
     if (line_y != y) {
-        // If our current position isn't in the termline, add it in.
-        if (line) {
-            release_line(line);
-        }
-        line = fetch_line(y - term.sblines);
-        line_y = y;
+      // If our current position isn't in the termline, add it in.
+      if (line) {
+        release_line(line);
+      }
+      line = fetch_line(y - term.sblines);
+      line_y = y;
     }
 
     if (npos == 0 && cpos + term.results.xquery_length >= end) {
