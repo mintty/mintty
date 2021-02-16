@@ -1,3 +1,5 @@
+### 3.4.5 (17 February 2021) ###
+
 Terminal features
   * Fixed width handling when selecting a non-text font (~#777).
   * Auto-narrowing: glyph double-width detection for double-letter characters (like Dz, #777).
@@ -9,6 +11,7 @@ Keyboard handling
   * Applying modifyOtherKeys mode 2 more consistently to special keys (~~#1082).
 
 Configuration
+  * Tool `mintheme` works from WSL and in `screen` (mintty/wsltty#268).
   * Support home or environment variable prefix for setting SaveFilename (~#1086).
   * New settings -P/--pcon/ConPTY to enable/disable ConPTY support (mintty/wsltty#271).
   * Support for theme file conversion on filename drag-and-drop (#1079).

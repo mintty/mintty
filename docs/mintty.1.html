@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Sun Dec 20 22:57:44 2020 -->
+<!-- CreationDate: Wed Feb 17 13:43:14 2021 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -398,6 +398,12 @@ AppLaunchCmd.</p>
 <p style="margin-left:22%;">Prevent pinning of the mintty
 window to the Windows taskbar.</p>
 
+<p style="margin-left:11%;"><b>-P</b>, <b>--pcon</b>
+[<b>on</b>|<b>off</b>]</p>
+
+<p style="margin-left:22%;">Enforce enabling or disabling
+of ConPTY support.</p>
+
 <p style="margin-left:11%;"><b>--wsl</b> (preferred option:
 <b>--WSL</b>, see below)</p>
 
@@ -673,9 +679,10 @@ selected text is automatically copied to the clipboard. This
 can be disabled on the <b>Mouse</b> page of the options
 dialog. Selected text can also be copied manually using
 either the <b>Copy</b> menu command, the <b>Ctrl+Ins</b> or
-<b>Ctrl+Shift+C</b> keyboard shortcuts (<b>Ctrl+C</b> with
-option <b>CtrlExchangeShift=yes</b>), or the middle mouse
-button combined with <b>Shift</b>.</p>
+<b>Ctrl+Shift+C</b> keyboard shortcuts (the latter if
+enabled by setting <b>CtrlShiftShortcuts=yes</b>;
+<b>Ctrl+C</b> with option <b>CtrlExchangeShift=yes</b>), or
+the middle mouse button combined with <b>Shift</b>.</p>
 
 <p style="margin-left:11%; margin-top: 1em">The selected
 region is copied as &quot;rich text&quot; as well as normal
@@ -691,7 +698,8 @@ the window menu.</p>
 <p style="margin-left:11%; margin-top: 1em">The clipboard
 contents can be pasted using either the <b>Paste</b> menu
 command, the <b>Shift+Ins</b> or <b>Ctrl+Shift+V</b>
-keyboard shortcuts (<b>Ctrl+V</b> with option
+keyboard shortcuts (the latter if enabled by setting
+<b>CtrlShiftShortcuts=yes</b>; <b>Ctrl+V</b> with option
 <b>CtrlExchangeShift=yes</b>), or the middle mouse button.
 Not only text but also files and directories can be pasted,
 whereby the latter are inserted as Cygwin file names. Shell
@@ -2747,13 +2755,24 @@ logging initially. If a log file name is specified with
 <b>Log=...</b> and <b>Logging=no</b>, logging can be enabled
 (and toggled) from the extended context menu.</p>
 
-<p style="margin-left:11%;"><b>Filename pattern for screen
-saving</b> <br>
-(SaveFilename=mintty.%Y-%m-%d_%H-%M-%S)</p>
+<p style="margin-left:11%;"><b>Filenames for screen
+saving</b> (SaveFilename=mintty.%Y-%m-%d_%H-%M-%S)</p>
 
 <p style="margin-left:22%;">This setting selects the
 location and filename pattern (which is expanded with the
-strftime(3) function) for .html and .png screen dumps.</p>
+strftime(3) function) for .html and .png screen dumps. An
+initial home prefix or environment variable prefix is
+expanded (POSIX path and variable syntax needs to be used in
+this case). Examples: <br>
+&ndash; <b>SaveFilename=~/mintty.%Y-%m-%d_%H-%M-%S</b> <br>
+&ndash;
+<b>SaveFilename=$USERPROFILE/Pictures/mintty/%Y-%m-%d_%H-%M-%S</b></p>
+
+<p style="margin-left:22%; margin-top: 1em">Note that if
+the filename pattern is a relative pathname (as is the
+default), it will be taken as relative to the working
+directory mintty was started in, with some tweaks as
+described above for the Log file.</p>
 
 <p style="margin-left:11%;"><b>Window title</b>
 (Title=)</p>
@@ -3068,6 +3087,14 @@ Once made persistent, the stored properties associated with
 a specific AppID cannot be removed or even modified again
 with normal means. For this reason, it is advisable to use
 temporary AppIDs for testing (like MyMintty.1).</p>
+
+<p style="margin-left:11%;"><b>Control ConPTY support</b>
+(ConPTY=)</p>
+
+<p style="margin-left:22%;">Setting this on or off enforces
+enabled or disabled support of pseudo console for native
+Windows programs. The default is to leave it up to the
+default of the system environment (cygwin or MSYS2).</p>
 
 <p style="margin-left:11%;"><b>Word selection
 characters</b> (WordChars=)</p>
@@ -3401,51 +3428,18 @@ Alt+keypad-Enter but enter ESC Return in the latter case
 Super modifier to the CapsLock key <br>
 &ndash; <b>KeyFunctions=*Menu:29</b> turns the Menu key into
 an F16 function key (xterm default) and applies all
-modifiers to it</p>
-
-<table width="100%" border="0" rules="none" frame="void"
-       cellspacing="0" cellpadding="0">
-<tr valign="top" align="left">
-<td width="22%"></td>
-<td width="-14%"></td>
-<td width="7%"></td>
-<td width="85%">
-
-
-<p>&ndash;
-<b>KeyFunctions=A+Left:switch-prev;A+Right:switch-next;\</b></p> </td></tr>
-<tr valign="top" align="left">
-<td width="22%"></td>
-<td width="-14%"></td>
-<td width="7%"></td>
-<td width="85%">
-
-
-
-<p><b>A+C+Left:switch-visible-prev;A+C+Right:switch-visible-next</b>
+modifiers to it <br>
+&ndash;
+<b>KeyFunctions=A+Left:switch-prev;A+Right:switch-next;\
+A+C+Left:switch-visible-prev;A+C+Right:switch-visible-next</b>
 enables window switching with [Ctrl+]Alt+Left/Right keys on
 the &quot;editing keypad&quot; (prefix KP_ for the numeric
-keypad)</p> </td></tr>
-<tr valign="top" align="left">
-<td width="22%"></td>
-<td width="-14%"></td>
-<td width="7%"></td>
-<td width="85%">
-
-
-<p>&ndash;
-<b>KeyFunctions=S+KP_Prior:scroll_pgup;C+KP_Prior:scroll_pgup;\</b></p> </td></tr>
-<tr valign="top" align="left">
-<td width="22%"></td>
-<td width="-14%"></td>
-<td width="7%"></td>
-<td width="85%">
-
-
-<p><b>C+KP_Next:scroll_pgdn;S+KP_Next:scroll_pgdn</b>
-enables scrollback scrolling with either of Shift or Control
-modifiers</p> </td></tr>
-</table>
+keypad) <br>
+&ndash;
+<b>KeyFunctions=S+KP_Prior:scroll_pgup;C+KP_Prior:scroll_pgup;\
+C+KP_Next:scroll_pgdn;S+KP_Next:scroll_pgdn</b> enables
+scrollback scrolling with either of Shift or Control
+modifiers</p>
 
 <p style="margin-left:11%;"><b>Use system colours</b>
 (UseSystemColours=no)</p>
