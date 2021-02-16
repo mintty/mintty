@@ -643,7 +643,7 @@ term_update_search(void)
 static void
 do_search(int begin, int end)
 {
-printf("do_search %d %d\n", begin, end);
+  //printf("do_search %d %d\n", begin, end);
   if (term.results.xquery_length == 0) {
     return;
   }
