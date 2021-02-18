@@ -3886,6 +3886,10 @@ do_cmd(void)
           }
         }
       }
+    when 7750:
+      set_arg_option("Emojis", strdup(s));
+      clear_emoji_data();
+      win_invalidate_all(false);
     when 8: {  // hyperlink attribute
       char * link = s;
       char * url = strchr(s, ';');

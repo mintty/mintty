@@ -1,3 +1,7 @@
+Configuration
+  * Support style Emojis=zoom.
+  * OSC 7750 for dynamic change of emojis style.
+
 ### 3.4.5 (17 February 2021) ###
 
 Terminal features

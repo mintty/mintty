@@ -1770,6 +1770,11 @@ fallback:;
       sep = "-";
       zwj = false;
       sel = false;
+    when EMOJIS_ZOOM:
+      pre = "zoom/";
+      sep = "-";
+      zwj = false;
+      sel = false;
     when EMOJIS_ONE:
       pre = "emojione/";
     when EMOJIS_APPLE:

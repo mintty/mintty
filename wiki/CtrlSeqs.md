@@ -396,6 +396,14 @@ As usual, OSC sequences can also be terminated with `^[\` (_ST_, the string term
 When the font size is queried, a sequence that would restore the current font and window size is sent.
 
 
+## Emojis style ##
+
+Like OSC 50 for font style, this sequence can change the emojis style.
+For values, see setting `Emojis` in the manual.
+
+> `^[]7750;_emojis-style_`^G`
+
+
 ## Locale ##
 
 The locale and charset used by the terminal can be queried or changed using

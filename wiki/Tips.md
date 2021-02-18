@@ -1018,6 +1018,8 @@ Emoji data can be found at the following sources:
 * [JoyPixels](https://www.joypixels.com/) (formerly EmojiOne)
   * Download JoyPixels Free (or Premium)
   * Deploy the preferred subdirectory (e.g. png/unicode/128) as `joypixels`
+* Zoom (with an installed Zoom meeting client)
+  * Deploy $APPDATA/Zoom/data/Emojis/*.png into `zoom`
 <img align=right src=https://github.com/mintty/mintty/wiki/mintty-emojis.png>
 
 To “Clone” with limited download volume, use the command `git clone --depth 1`.

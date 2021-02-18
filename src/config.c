@@ -592,6 +592,7 @@ static opt_val
     {"facebook", EMOJIS_FB},
     {"samsung", EMOJIS_SAMSUNG},
     {"windows", EMOJIS_WINDOWS},
+    {"zoom", EMOJIS_ZOOM},
     {0, 0}
   },
   [OPT_EMOJI_PLACEMENT] = (opt_val[]) {
@@ -976,8 +977,9 @@ set_option(string name, string val_str, bool from_file)
     }
   }
   //__ %2$s: option name, %1$s: invalid value
-  opterror(_("Ignoring invalid value '%s' for option '%s'"), 
-           from_file, val_str, name);
+  if (!wnd)  // report errors only during initialisation
+    opterror(_("Ignoring invalid value '%s' for option '%s'"), 
+             from_file, val_str, name);
   return -1;
 }
 
