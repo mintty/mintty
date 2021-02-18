@@ -1,3 +1,5 @@
+### 3.4.6 (20 February 2021) ###
+
 Configuration
   * Support style Emojis=zoom.
   * OSC 7750 for dynamic change of emojis style.
