@@ -1,3 +1,6 @@
+Terminal features
+  * Fixed blinking for drawn/overstrike characters, (under)lining and emojis.
+
 ### 3.4.6 (20 February 2021) ###
 
 Configuration

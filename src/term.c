@@ -2322,15 +2322,24 @@ term_paint(void)
       }
 
      /* 'Real' blinking ? */
-      if (term.blink_is_real && (tattr.attr & ATTR_BLINK)) {
-        if (term.has_focus && term.tblinker)
-          tchar = ' ';
-        tattr.attr &= ~ATTR_BLINK;
-      }
-      if (term.blink_is_real && (tattr.attr & ATTR_BLINK2)) {
-        if (term.has_focus && term.tblinker2)
-          tchar = ' ';
-        tattr.attr &= ~ATTR_BLINK2;
+#define UNLINED (UNDER_MASK | ATTR_STRIKEOUT | ATTR_OVERL | ATTR_OVERSTRIKE)
+#define UNBLINK (FONTFAM_MASK | GRAPH_MASK | UNLINED | TATTR_EMOJI)
+      if (term.blink_is_real) {
+        if (tattr.attr & ATTR_BLINK2) {
+          if (term.has_focus && term.tblinker2) {
+            tchar = ' ';
+            tattr.attr &= ~(UNBLINK | ATTR_BLINK2);
+            tattr.attr |= ATTR_BLINK;  // trigger combined unblinking below
+          }
+        }
+        // ATTR_BLINK2 should override ATTR_BLINK to avoid chaotic dual blink
+        else if (tattr.attr & ATTR_BLINK) {
+          if (term.has_focus && term.tblinker) {
+            tchar = ' ';
+            tattr.attr &= ~UNBLINK;
+            //tattr.attr |= ATTR_BLINK;  // trigger combined unblinking below
+          }
+        }
       }
 
      /* Mark box drawing, block and some other characters 
@@ -2962,7 +2971,8 @@ term_paint(void)
 
 #define dont_debug_surrogates
 
-      if (d->cc_next) {
+     /* Append combining and overstrike characters, combine surrogates */
+      if (d->cc_next && !(tattr.attr & ATTR_BLINK)) {
         termchar *dd = d;
         while (dd->cc_next && textlen < maxtextlen) {
 #ifdef debug_surrogates

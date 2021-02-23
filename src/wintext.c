@@ -2418,7 +2418,9 @@ old_apply_attr_colour(cattr a, attr_colour_mode mode)
   // indexed modifications
   bool do_reverse_i = mode & (ACM_RTF_PALETTE | ACM_RTF_GEN);
   bool do_bold_i = mode & (ACM_TERM | ACM_RTF_PALETTE | ACM_RTF_GEN | ACM_SIMPLE | ACM_VBELL_BG);
+#ifdef handle_blinking_here
   bool do_blink_i = mode & (ACM_TERM | ACM_RTF_PALETTE | ACM_RTF_GEN);
+#endif
   bool do_finalize_rtf_i = mode & (ACM_RTF_PALETTE | ACM_RTF_GEN);
   bool do_rtf_bold_decolour_i = mode & (ACM_RTF_GEN);
 
@@ -2435,12 +2437,15 @@ old_apply_attr_colour(cattr a, attr_colour_mode mode)
   if (do_bold_i && (a.attr & ATTR_BOLD))    // rtf_bold_decolour uses ATTR_BOLD
     reset_bold = !old_apply_bold_colour(&fgi);  // we'll reset afterwards if needed
 
+#ifdef handle_blinking_here
+  // this is handled in term_paint
   if (do_blink_i && (a.attr & ATTR_BLINK)) {
     if (CCL_ANSI8(bgi))
       bgi |= 8;
     else if (CCL_DEFAULT(bgi))
       bgi |= 1;
   }
+#endif
 
   if (do_finalize_rtf_i) {
     if (do_rtf_bold_decolour_i) {  // uses ATTR_BOLD, ATTR_REVERSE
@@ -2567,7 +2572,9 @@ apply_attr_colour(cattr a, attr_colour_mode mode)
   // indexed modifications
   bool do_reverse_i = mode & (ACM_RTF_PALETTE | ACM_RTF_GEN);
   bool do_bold_i = mode & (ACM_TERM | ACM_RTF_PALETTE | ACM_RTF_GEN | ACM_SIMPLE | ACM_VBELL_BG);
+#ifdef handle_blinking_here
   bool do_blink_i = mode & (ACM_TERM | ACM_RTF_PALETTE | ACM_RTF_GEN);
+#endif
   bool do_finalize_rtf_i = mode & (ACM_RTF_PALETTE | ACM_RTF_GEN);
   bool do_rtf_bold_decolour_i = mode & (ACM_RTF_GEN);
 
@@ -2584,12 +2591,15 @@ apply_attr_colour(cattr a, attr_colour_mode mode)
   if (do_bold_i && (a.attr & ATTR_BOLD))    // rtf_bold_decolour uses ATTR_BOLD
     reset_bold = !apply_bold_colour(&fgi);  // we'll reset afterwards if needed
 
+#ifdef handle_blinking_here
+  // this is handled in term_paint
   if (do_blink_i && (a.attr & ATTR_BLINK)) {
     if (CCL_ANSI8(bgi))
       bgi |= 8;
     else if (CCL_DEFAULT(bgi))
       bgi |= 1;
   }
+#endif
 
   if (do_finalize_rtf_i) {
     if (do_rtf_bold_decolour_i) {  // uses ATTR_BOLD, ATTR_REVERSE
