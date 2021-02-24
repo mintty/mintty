@@ -846,6 +846,24 @@ in the Terminals Working Group Specifications.
 Mintty indicates this mode by appending the `@cjksingle` modifier to the 
 `LC_CTYPE` locale variable.
 
+### Remote locale width mismatch ###
+
+After remote login, locale definitions of remote and local systems may differ, 
+mostly about existing locales and ambiguous width properties.
+This is particularly the case if
+* the cygwin locale includes a @cjk... modifier which is not supported on other systems
+* the cygwin locale is a CJK locale with UTF-8 encoding in cygwin before 3.2.0 (which makes ambiguous width narrow for all UTF-8 locales to be consistent with other systems)
+
+The script `localejoin` in the 
+mintty [utils repository](https://github.com/mintty/utils) adjusts these 
+mismatches by switching the terminal locale temporarily and thus joining 
+its width properties with those of typical remote systems.
+Direct invocation of the script just runs a shell with a locale setting.
+To use it for direct remote invocation, install it under the name 
+containing any of the remote login programs (rsh, rlogin, rexec, telnet, ssh).
+Example (with `localejoin` renamed/linked/copied as `minssh`):
+* `minssh` _myLinuxhost_
+
 ### Selective double character width ###
 
 While mintty fully supports double-width characters (esp. CJK) as well 
