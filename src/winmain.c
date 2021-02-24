@@ -5211,9 +5211,9 @@ main(int argc, char *argv[])
     // if called from WSL (mintty/wsltty#76)
     unsetenv("HOME");
   }
-  else if (*argv && (argv[1] || strcmp(*argv, "-")))
+  else if (*argv && (argv[1] || strcmp(*argv, "-")))  // argv is a command
     cmd = *argv;
-  else {  // argv is only "-"
+  else {  // argv is empty or only "-"
     // Look up the user's shell.
     cmd = getenv("SHELL");
     cmd = cmd ? strdup(cmd) :
@@ -5227,7 +5227,7 @@ main(int argc, char *argv[])
     char *arg0 = slash ? slash + 1 : cmd;
 
     // Prepend '-' if a login shell was requested.
-    if (*argv)
+    if (*argv || (invoked_from_shortcut && cfg.login_from_shortcut))
       arg0 = asform("-%s", arg0);
 
     // Create new argument array.

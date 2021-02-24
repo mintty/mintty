@@ -36,6 +36,8 @@ As a last resort, it falls back to \fI/bin/sh\fP.
 
 If a single dash is specified instead of a program name, the shell is invoked
 as a login shell.
+If mintty is started from a Windows shortcut (desktop or start menu), by 
+default the shell is also invoked as a login shell unless disabled by an option.
 
 Invocation by a name of \fBwsl*\fP\fI[-distro]\fP 
 implies a \fB--WSL\fP\fI[=distro]\fP parameter.
@@ -2474,6 +2476,12 @@ mintty -o AppID=Mintty.PinTest.1 -o AppName=Mintty.PinTest -o AppLaunchCmd="C:\\
 a specific AppID cannot be removed or even modified again with normal means.
 For this reason, it is advisable to use temporary AppIDs for testing 
 (like MyMintty.1).
+
+.TP
+\fBStart shell in login mode if run from shortcut\fP (LoginFromShortcut=yes)
+By default, mintty since version 347 will start its shell in login mode 
+if invoked via a Windows desktop or start menu shortcut unless this setting 
+is disabled.
 
 .TP
 \fBControl ConPTY support\fP (ConPTY=)

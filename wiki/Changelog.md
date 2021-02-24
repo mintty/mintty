@@ -1,6 +1,10 @@
 Terminal features
   * Fixed blinking for drawn/overstrike characters, (under)lining and emojis.
 
+Configuration
+  * Run shell in login mode if terminal started from Windows shortcut.
+  * New option LoginFromShortcut.
+
 ### 3.4.6 (20 February 2021) ###
 
 Configuration

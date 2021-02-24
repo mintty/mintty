@@ -45,6 +45,12 @@ The **[cygutils](http://www.cygwin.com/cygwin-ug-net/using-effectively.html#usin
 provides the **mkshortcut** utility for creating shortcuts from the command line. 
 See its manual page for details.
 
+### Smart login mode ###
+
+If invoked from a Windows shortcut (desktop or start menu), mintty starts 
+the shell in login mode implicitly (since mintty 3.4.7) unless disabled 
+with option `LoginFromShortcut`.
+
 ### Hotkey / Windows Shortcut key ###
 
 In a Windows shortcut (desktop or Start menu), a "Shortcut key" with 
