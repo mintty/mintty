@@ -1,5 +1,6 @@
 Terminal features
   * Fixed blinking for drawn/overstrike characters, (under)lining and emojis.
+  * Restore attributes after DECALN test pattern (vttest 11.6.4/5).
 
 Configuration
   * Run shell in login mode if terminal started from Windows shortcut.

@@ -1596,15 +1596,16 @@ do_esc(uchar c)
         term.marg_top = curs->y;
     when 'm':  /* HP Memory Unlock */
       term.marg_top = 0;
-    when CPAIR('#', '8'):    /* DECALN: fills screen with Es :-) */
+    when CPAIR('#', '8'): {  /* DECALN: fills screen with Es :-) */
       term.curs.origin = false;
       term.curs.wrapnext = false;
-      term.curs.attr = CATTR_DEFAULT;
       term.marg_top = 0;
       term.marg_bot = term.rows - 1;
       term.marg_left = 0;
       term.marg_right = term.cols - 1;
       move(0, 0, 0);
+      cattr savattr = term.curs.attr;
+      term.curs.attr = CATTR_DEFAULT;
       for (int i = 0; i < term.rows; i++) {
         termline *line = term.lines[i];
         for (int j = 0; j < term.cols; j++) {
@@ -1613,7 +1614,9 @@ do_esc(uchar c)
         }
         line->lattr = LATTR_NORM;
       }
+      term.curs.attr = savattr;
       term.disptop = 0;
+    }
     when CPAIR('#', '3'):  /* DECDHL: 2*height, top */
       if (!term.lrmargmode) {
         term.lines[curs->y]->lattr &= LATTR_BIDIMASK;
