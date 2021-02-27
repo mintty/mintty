@@ -1670,6 +1670,12 @@ do_esc(uchar c)
         insdel_column(term.marg_left, true, 1);
       else
         move(curs->x + 1, curs->y, 1);
+    when 'V':  /* Start of Guarded Area (SPA) */
+      term.curs.attr.attr |= ATTR_PROTECTED;
+      term.iso_guarded_area = true;
+    when 'W':  /* End of Guarded Area (EPA) */
+      term.curs.attr.attr &= ~ATTR_PROTECTED;
+      term.iso_guarded_area = true;
   }
 }
 
@@ -2718,14 +2724,31 @@ do_csi(uchar c)
       else if (arg0 <= 2) {
         bool above = arg0 == 1 || arg0 == 2;
         bool below = arg0 == 0 || arg0 == 2;
-        term_erase(term.esc_mod, false, above, below);
+        term_erase(term.esc_mod | term.iso_guarded_area, false, above, below);
       }
     when 'K' or CPAIR('?', 'K'):  /* EL/DECSEL: (selective) erase in line */
       if (arg0 <= 2) {
         bool right = arg0 == 0 || arg0 == 2;
         bool left  = arg0 == 1 || arg0 == 2;
-        term_erase(term.esc_mod, true, left, right);
+        term_erase(term.esc_mod | term.iso_guarded_area, true, left, right);
       }
+    when 'X': {      /* ECH: write N spaces w/o moving cursor */
+      termline *line = term.lines[curs->y];
+      int cols = min(line->cols, line->size);
+      int n = min(arg0_def1, cols - curs->x);
+      if (n > 0) {
+        int p = curs->x;
+        term_check_boundary(curs->x, curs->y);
+        term_check_boundary(curs->x + n, curs->y);
+        while (n--) {
+          if (!term.iso_guarded_area ||
+              !(line->chars[p].attr.attr & ATTR_PROTECTED)
+             )
+            line->chars[p] = term.erase_char;
+          p++;
+        }
+      }
+    }
     when 'L':        /* IL: insert lines */
       if (curs->y >= term.marg_top && curs->y <= term.marg_bot
        && curs->x >= term.marg_left && curs->x <= term.marg_right
@@ -2943,18 +2966,6 @@ do_csi(uchar c)
       */
       win_set_chars(term.rows, arg0 ?: cfg.cols);
       term.selected = false;
-    when 'X': {      /* ECH: write N spaces w/o moving cursor */
-      termline *line = term.lines[curs->y];
-      int cols = min(line->cols, line->size);
-      int n = min(arg0_def1, cols - curs->x);
-      if (n > 0) {
-        int p = curs->x;
-        term_check_boundary(curs->x, curs->y);
-        term_check_boundary(curs->x + n, curs->y);
-        while (n--)
-          line->chars[p++] = term.erase_char;
-      }
-    }
     when 'x':        /* DECREQTPARM: report terminal characteristics */
       if (arg0 <= 1)
         child_printf("\e[%u;1;1;120;120;1;0x", arg0 + 2);
@@ -3004,8 +3015,12 @@ do_csi(uchar c)
       term.cursor_size = arg0;
     when CPAIR('"', 'q'):  /* DECSCA: select character protection attribute */
       switch (arg0) {
-        when 0 or 2: term.curs.attr.attr &= ~ATTR_PROTECTED;
-        when 1: term.curs.attr.attr |= ATTR_PROTECTED;
+        when 0 or 2:
+          term.curs.attr.attr &= ~ATTR_PROTECTED;
+          term.iso_guarded_area = false;
+        when 1:
+          term.curs.attr.attr |= ATTR_PROTECTED;
+          term.iso_guarded_area = false;
       }
     when 'n':        /* DSR: device status report */
       if (arg0 == 6)  // CPR

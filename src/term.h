@@ -559,6 +559,9 @@ struct term {
   uchar *tabs;
   bool newtab;
 
+  bool iso_guarded_area;  // global distinction of ISO Guarded Area
+                          // as protected (xterm-like simplification)
+
   int detect_progress;
 
   enum {

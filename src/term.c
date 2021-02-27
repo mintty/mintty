@@ -397,6 +397,8 @@ term_reset(bool full)
   term_schedule_cblink();
   term_clear_scrollback();
 
+  term.iso_guarded_area = false;
+
   term.detect_progress = cfg.progress_bar;
   taskbar_progress(-9);
 
