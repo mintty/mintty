@@ -2,6 +2,7 @@ Terminal features
   * Fixed blinking for drawn/overstrike characters, (under)lining and emojis.
   * Restore attributes after DECALN test pattern (vttest 11.6.4/5).
   * Simplified support of ISO Guarded Area as protected (xterm-like global distinction).
+  * Fixed validity for REP repeat preceding graphic char (vttest 11[.6].7.2).
 
 Configuration
   * Run shell in login mode if terminal started from Windows shortcut.

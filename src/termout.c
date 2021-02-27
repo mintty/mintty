@@ -1299,6 +1299,7 @@ do_ctrl(char c)
     when '\e':   /* ESC: Escape */
       term.state = ESCAPE;
       term.esc_mod = 0;
+      return true;  // keep preceding char for REP
     when '\a':   /* BEL: Bell */
       write_bell();
     when '\b':     /* BS: Back space */
@@ -1338,6 +1339,7 @@ do_ctrl(char c)
     otherwise:
       return false;
   }
+  last_char = 0;  // cancel preceding char for REP
   return true;
 }
 
@@ -1542,6 +1544,7 @@ do_esc(uchar c)
     if (cs) {
       curs->csets[gi] = cs;
       term_update_cs();
+      last_char = 0;  // cancel preceding char for REP
       return;
     }
   }
@@ -1553,6 +1556,7 @@ do_esc(uchar c)
       memset(term.csi_argv, 0, sizeof(term.csi_argv));
       memset(term.csi_argv_defined, 0, sizeof(term.csi_argv_defined));
       term.esc_mod = 0;
+      return;  // keep preceding char for REP
     when ']':  /* OSC: operating system command */
       term.state = OSC_START;
     when 'P':  /* DCS: device control string */
@@ -1677,6 +1681,7 @@ do_esc(uchar c)
       term.curs.attr.attr &= ~ATTR_PROTECTED;
       term.iso_guarded_area = true;
   }
+  last_char = 0;  // cancel preceding char for REP
 }
 
 static void
@@ -2657,8 +2662,9 @@ do_csi(uchar c)
       cattr cur_attr = term.curs.attr;
       term.curs.attr = last_attr;
       wchar h = last_high, c = last_char;
-      for (int i = 0; i < arg0_def1; i++)
-        write_ucschar(h, c, last_width);
+      if (last_char)
+        for (int i = 0; i < arg0_def1; i++)
+          write_ucschar(h, c, last_width);
       term.curs.attr = cur_attr;
     }
     when 'A':        /* CUU: move up N lines */
@@ -3268,6 +3274,7 @@ do_csi(uchar c)
         term.disptop = 0;
       }
   }
+  last_char = 0;  // cancel preceding char for REP
 }
 
 /*
