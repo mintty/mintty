@@ -4,6 +4,9 @@ Terminal features
   * Simplified support of ISO Guarded Area as protected (xterm-like global distinction).
   * Fixed validity for REP repeat preceding graphic char (vttest 11[.6].7.2).
 
+Vector graphics (Tektronix 4014 mode)
+  * Support "written first vector", triggered by GS-BEL (vttest 11.8.6.5, ~#896).
+
 Configuration
   * Run shell in login mode if terminal started from Windows shortcut.
   * New option LoginFromShortcut.

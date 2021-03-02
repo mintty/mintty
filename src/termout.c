@@ -4611,7 +4611,10 @@ term_do_write(const char *buf, uint len)
         tek_esc(c);
 
       when TEK_ADDRESS0 or TEK_ADDRESS:
-        if (c < ' ')
+        if (c == '\a' && tek_mode == TEKMODE_GRAPH0 && term.state == TEK_ADDRESS0) {
+          tek_mode= TEKMODE_GRAPH;
+        }
+        else if (c < ' ')
           tek_ctrl(c);
         else if (tek_mode == TEKMODE_SPECIAL_PLOT && term.state == TEK_ADDRESS0) {
           term.state = TEK_ADDRESS;
