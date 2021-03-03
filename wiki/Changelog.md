@@ -3,6 +3,7 @@ Terminal features
   * Restore attributes after DECALN test pattern (vttest 11.6.4/5).
   * Simplified support of ISO Guarded Area as protected (xterm-like global distinction).
   * Fixed validity for REP repeat preceding graphic char (vttest 11[.6].7.2).
+  * Keyboard status report (DEC DSR 26), reporting window focus (vttest 11.1.1.1.1).
 
 Vector graphics (Tektronix 4014 mode)
   * Support "written first vector", triggered by GS-BEL (vttest 11.8.6.5, ~#896).

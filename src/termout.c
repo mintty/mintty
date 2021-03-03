@@ -3034,7 +3034,7 @@ do_csi(uchar c)
                      curs->y + 1 - (curs->origin ? term.marg_top : 0),
                      curs->x + 1 - (curs->origin ? term.marg_left : 0));
       else if (arg0 == 5)
-        child_write("\e[0n", 4);
+        child_write("\e[0n", 4);  // "in good operating condition"
     when CPAIR('?', 'n'):  /* DSR, DEC specific */
       switch (arg0) {
         when 6:  // DECXCPR
@@ -3043,6 +3043,8 @@ do_csi(uchar c)
                        curs->x + 1 - (curs->origin ? term.marg_left : 0));
         when 15:
           child_printf("\e[?%un", 11 - !!*cfg.printer);
+        when 26:  // Keyboard Report
+          child_printf("\e[?27;0;%cn", term.has_focus ? '0' : '8');
         // DEC Locator
         when 53 or 55:
           child_printf("\e[?53n");
