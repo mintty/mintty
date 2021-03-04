@@ -260,6 +260,16 @@ tek_address(char * code)
 	01 11 11 10	High Y	Extra	Low Y	Low X
 	more unseen
 	01 01 10	High Y	High X	Low X
+
+	10 Bits border coordinates
+	0100000	1100000	0100000	1000000	y 0 x 0
+	0x20	0x60	0x20	0x40	" ` @"
+	0100000	1100000	0111111	1011111	y 0 x 1023 (0 3FF)
+	0x20	0x60	0x3F	0x5F	" `?_"
+	0111000	1101011	0100000	1000000	y 779 x 0 (30B 0)
+	0x38	0x6B	0x20	0x40	"8k @"
+	0111000	1101011	0111111	1011111	y 779 x 1023 (30B 3FF)
+	0x38	0x6B	0x3F	0x5F	"8k?_"
   */
   // accumulate tags for switching; clear tags from input
   short tag = 0;
@@ -766,12 +776,14 @@ tek_paint(void)
   DeleteObject(bgbr);
 
   int tx(int x) {
+    x -= 1;  // heuristic adjustment to compensate for coordinate rounding
     if (scale_mode)
       return x;
     else
       return x * width / 4096;
   }
   int ty(int y) {
+    y += 2;  // heuristic adjustment to compensate for coordinate rounding
     if (scale_mode)
       return 3119 - y;
     else
@@ -860,8 +872,10 @@ tek_paint(void)
       out_char(hdc, &tek_buf[i]);
     }
 
-    if (tc->type == TEKMODE_GRAPH0)
+    if (tc->type == TEKMODE_GRAPH0) {
+      //printf("MoveTo (%d:%d) %d:%d\n", tc->y, tc->x, ty(tc->y), tx(tc->x));
       MoveToEx(hdc, tx(tc->x), ty(tc->y), null);
+    }
     else if (tc->type == TEKMODE_GRAPH) {
       HPEN pen;
       HPEN create_pen(DWORD style)
@@ -892,6 +906,7 @@ tek_paint(void)
       }
       HPEN oldpen = SelectObject(hdc, pen);
       SetBkMode(hdc, TRANSPARENT);  // stabilize broken vector styles
+      //printf("LineTo (%d:%d) %d:%d\n", tc->y, tc->x, ty(tc->y), tx(tc->x));
       LineTo(hdc, tx(tc->x), ty(tc->y));
       oldpen = SelectObject(hdc, oldpen);
       DeleteObject(oldpen);

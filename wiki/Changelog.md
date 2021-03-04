@@ -7,6 +7,7 @@ Terminal features
 
 Vector graphics (Tektronix 4014 mode)
   * Support "written first vector", triggered by GS-BEL (vttest 11.8.6.5, ~#896).
+  * Adjustment of border coordinates to compensate for coordinate rounding.
 
 Configuration
   * Run shell in login mode if terminal started from Windows shortcut.
