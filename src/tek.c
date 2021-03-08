@@ -483,24 +483,6 @@ tek_move_to(int y, int x)
   fix_gin();
 }
 
-void
-tek_send_address(void)
-{
-  child_printf("%c%c%c%c",
-               0x20 | (tek_y >> 7), 0x60 | ((tek_y >> 2) & 0x1F),
-               0x20 | (tek_x >> 7), 0x40 | ((tek_x >> 2) & 0x1F));
-  tek_mode = TEKMODE_ALPHA;
-}
-
-void
-tek_enq(void)
-{
-  child_write("4", 1);
-  tek_send_address();
-}
-
-colour fg;
-
 static uint
 get_font_quality(void)
 {
@@ -536,6 +518,29 @@ init_font(short f)
                   fn);
 }
 
+static colour fg;
+static short txt_y, txt_x;
+static short out_y, out_x;
+static wchar * txt = 0;
+static int txt_len = 0;
+static int txt_wid = 0;
+
+void
+tek_send_address(void)
+{
+  child_printf("%c%c%c%c",
+               0x20 | (tek_y >> 7), 0x60 | ((tek_y >> 2) & 0x1F),
+               0x20 | (tek_x >> 7), 0x40 | ((tek_x >> 2) & 0x1F));
+  tek_mode = TEKMODE_ALPHA;
+}
+
+void
+tek_enq(void)
+{
+  child_write("4", 1);
+  tek_send_address();
+}
+
 static void
 out_text(HDC dc, short x, short y, wchar * s, uchar f)
 {
@@ -549,12 +554,6 @@ out_text(HDC dc, short x, short y, wchar * s, uchar f)
     dxs[i] = tekfonts[f].wid * lastwidth;
   ExtTextOutW(dc, x, y, 0, 0, s, len, dxs);
 }
-
-static short txt_y, txt_x;
-static short out_y, out_x;
-static wchar * txt = 0;
-static int txt_len = 0;
-static int txt_wid = 0;
 
 static void
 out_flush(HDC dc)
