@@ -451,6 +451,7 @@ tek_move_by(int dy, int dx)
     gin_y = 1560;
     gin_x = 2048;
   }
+  tek_paint();  // Smooth GIN mode crosshair cursor movement.
 }
 
 #include <windows.h>
@@ -481,6 +482,7 @@ tek_move_to(int y, int x)
   gin_y = 3119 - (y - pad_t) * 3120 / height;
   gin_x = (x - pad_l) * 4096 / width;
   fix_gin();
+  tek_paint();  // Smooth GIN mode crosshair cursor movement.
 }
 
 static uint
