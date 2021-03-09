@@ -1171,6 +1171,13 @@ contains(string s, int i)
 
 static short prev_state = 0;
 
+static void
+tek_gin_fin(void)
+{
+  if (tek_mode == TEKMODE_GIN)
+    tek_mode = TEKMODE_ALPHA;
+}
+
 /* Process Tek mode ESC control */
 static void
 tek_esc(char c)
@@ -1206,11 +1213,12 @@ tek_esc(char c)
     when CTRL('W'):   /* ETB: Make Copy */
       term_save_image();
       tek_bypass = false;
+      tek_gin_fin();
     when CTRL('X'):   /* CAN: Set Bypass */
       tek_bypass = true;
     when CTRL('Z'):   /* SUB: Gin mode */
-      tek_mode = TEKMODE_GIN;
       tek_gin();
+      tek_mode = TEKMODE_GIN;
       term.state = NORMAL;
       tek_bypass = true;
     when 0x1C:   /* FS: Special Plot mode */
@@ -1259,17 +1267,21 @@ tek_ctrl(char c)
     when '\a':   /* BEL: Bell */
       write_bell();
       tek_bypass = false;
+      tek_gin_fin();
     when '\b' or '\t' or '\v':     /* BS or HT or VT */
       if (tek_mode == TEKMODE_ALPHA)
         tek_write(c, -2);
     when '\n':   /* LF: Line feed */
       tek_bypass = false;
       tek_write(c, -2);
+      tek_gin_fin();
     when '\r':   /* CR: Carriage return */
       tek_mode = TEKMODE_ALPHA;
       term.state = NORMAL;
       tek_bypass = false;
       tek_write(c, -2);
+    when CTRL('O'):   /* SI */
+      tek_gin_fin();
     when 0x1C:   /* FS: Point Plot mode */
       tek_mode = TEKMODE_POINT_PLOT;
       term.state = TEK_ADDRESS0;

@@ -55,6 +55,7 @@ typedef struct {
   colour tek_write_thru_colour, tek_defocused_colour;
   colour tab_fg_colour, tab_bg_colour;
   int tek_glow;
+  int tek_strap;
   colour underl_colour, hover_colour;
   int disp_space, disp_clear, disp_tab;
   bool underl_manual;

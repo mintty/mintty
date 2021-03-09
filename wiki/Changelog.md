@@ -7,7 +7,14 @@ Terminal features
 
 Vector graphics (Tektronix 4014 mode)
   * Support "written first vector", triggered by GS-BEL (vttest 11.8.6.5, ~#896).
+  * Initial written vector joins previous text output (xterm).
   * Adjustment of border coordinates to compensate for coordinate rounding.
+  * Fixed GIN mode and ENQ coordinates.
+  * Tweaked ENQ status byte.
+  * Distinct GIN mode mouse input (xterm).
+  * Smooth GIN mode crosshair cursor movement.
+  * Various mode handling fixes after GIN mode.
+  * GIN mode terminator strap options (Tek, xterm), option TekStrap.
 
 Configuration
   * Run shell in login mode if terminal started from Windows shortcut.

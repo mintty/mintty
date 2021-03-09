@@ -1,6 +1,7 @@
 #include "tek.h"
 
 enum tekmode tek_mode = TEKMODE_OFF;
+static enum tekmode tek_mode_pre_gin;
 bool tek_bypass = false;
 static uchar intensity = 0x7F; // for point modes
 static uchar style = 0;        // for vector modes
@@ -12,7 +13,7 @@ static bool plotpen = false;
 static bool apl_mode = false;
 
 static short tek_y, tek_x;
-static short gin_y, gin_x;
+static short gin_y, gin_x = -1;
 static uchar lastfont = 0;
 static int lastwidth = -1;
 static wchar * tek_dyn_font = 0;
@@ -115,6 +116,8 @@ tek_clear(void)
 void
 tek_gin(void)
 {
+  tek_mode_pre_gin = tek_mode;
+  tek_mode = TEKMODE_GIN;
   //gin_y = tek_y;
   //gin_x = tek_x;
   tek_move_by(0, 0);
@@ -355,6 +358,8 @@ tek_address(char * code)
                    .defocused = beam_defocused, .writethru = beam_writethru,
                    .y = tek_y, .x = tek_x,
                    .style = style, .intensity = intensity});
+  // 3-10, ALPHA MODE 22.
+  margin = 0;
 }
 
 /*	DEAIHJBF
@@ -447,7 +452,7 @@ tek_move_by(int dy, int dx)
     gin_x += dx;
     fix_gin();
   }
-  else {
+  else if (gin_x < 0) {
     gin_y = 1560;
     gin_x = 2048;
   }
@@ -527,20 +532,63 @@ static wchar * txt = 0;
 static int txt_len = 0;
 static int txt_wid = 0;
 
+static void
+tek_send_address_0(int strap)
+{
+  short y, x;
+  if (tek_mode == TEKMODE_GIN) {
+    y = gin_y;
+    x = gin_x;
+  }
+  else {
+    y = out_y;
+    x = out_x;
+  }
+
+  child_printf("%c%c%c%c",
+               0x20 | (x >> 7), 0x60 | ((x >> 2) & 0x1F),
+               0x20 | (y >> 7), 0x40 | ((y >> 2) & 0x1F));
+  if (strap) {
+    if (strap > 1)
+      child_write("\r\003", 2);
+    else
+      child_write("\r", 1);
+  }
+}
+
 void
 tek_send_address(void)
 {
-  child_printf("%c%c%c%c",
-               0x20 | (tek_y >> 7), 0x60 | ((tek_y >> 2) & 0x1F),
-               0x20 | (tek_x >> 7), 0x40 | ((tek_x >> 2) & 0x1F));
+  tek_send_address_0(cfg.tek_strap);
+  // 3-18, GIN MODE 45.: return to Alpha mode
   tek_mode = TEKMODE_ALPHA;
+  // or rather restore previous mode for smooth interactive drawing?
+  tek_mode = tek_mode_pre_gin;
+  // 3-10, ALPHA MODE 22.
+  margin = 0;
 }
 
 void
 tek_enq(void)
 {
-  child_write("4", 1);
-  tek_send_address();
+  if (tek_mode == TEKMODE_GIN) {
+    // 3-17, GIN MODE 44.: ENQ while in GIN mode
+    tek_send_address_0(false);
+    return;
+  }
+
+  char status = 0x30;
+  if (cfg.tek_strap)
+    status |= 0x80;
+  if (tek_mode == TEKMODE_ALPHA)
+    status |= 0x04;
+  else
+    status |= 0x08;
+  if (margin)
+    status |= 0x02;
+  child_write(&status, 1);
+  tek_send_address_0(cfg.tek_strap);
+  // 3-17, GIN MODE 41., 42.: stay in current mode
 }
 
 static void
@@ -871,6 +919,8 @@ tek_paint(void)
       if (tc->font != lastfont)
         out_flush(hdc);
       out_char(hdc, &tek_buf[i]);
+      // update graphic cursor in case of subsequent written first vector
+      MoveToEx(hdc, tx(out_x), ty(out_y), null);
     }
 
     if (tc->type == TEKMODE_GRAPH0) {
@@ -940,7 +990,11 @@ tek_paint(void)
   }
 
   // text cursor
-  if (!copyfn && lastfont < 4 && term.cblinker) {
+  if ((tek_mode == TEKMODE_ALPHA ||
+       (tek_mode == TEKMODE_GIN && tek_mode_pre_gin == TEKMODE_ALPHA)
+      ) && !copyfn && lastfont < 4 && term.cblinker
+     )
+  {
     if (cc != fg)
       out_flush(hdc);
     fg = cc;
@@ -950,7 +1004,7 @@ tek_paint(void)
   }
   out_flush(hdc);
 
-  // GIN mode
+  // GIN mode crosshair cursor
   if (tek_mode == TEKMODE_GIN) {
     fg = ((fg0 & 0xFEFEFEFE) >> 1) + ((bg & 0xFEFEFEFE) >> 1);
     HPEN pen = CreatePen(PS_SOLID, pen_width0, fg);
