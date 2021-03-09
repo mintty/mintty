@@ -69,6 +69,7 @@ extern bool report_child_pid;
 
 extern int ini_width, ini_height;
 extern bool win_is_fullscreen;
+extern bool win_is_always_on_top;
 extern bool clipboard_token;
 extern uint dpi;
 extern int per_monitor_dpi_aware;
@@ -153,6 +154,7 @@ extern void show_message(char * msg, UINT type);
 extern void show_info(char * msg);
 
 extern void win_close(void);
+extern void win_toggle_on_top(void);
 
 extern unsigned long mtime(void);
 

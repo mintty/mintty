@@ -1403,6 +1403,12 @@ mflags_zoomed()
 }
 
 static uint
+mflags_always_top()
+{
+  return win_is_always_on_top ? MF_CHECKED: MF_UNCHECKED;
+}
+
+static uint
 mflags_flipscreen()
 {
   return term.show_other_screen ? MF_CHECKED : MF_UNCHECKED;
@@ -1505,6 +1511,7 @@ static struct function_def cmd_defs[] = {
   {"win-restore", {.fct = window_restore}, 0},
   {"win-icon", {.fct = window_min}, 0},
   {"close", {.fct = win_close}, 0},
+  {"win-toggle-always-on-top", {.fct = win_toggle_on_top}, mflags_always_top},
 
   {"new", {.fct_key = newwin_begin}, 0},  // deprecated
   {"new-key", {.fct_key = newwin_begin}, 0},

@@ -87,6 +87,7 @@ int ini_width, ini_height;
 
 // State
 bool win_is_fullscreen;
+bool win_is_always_on_top = false;
 static bool go_fullscr_on_max;
 static bool resizing;
 static bool moving = false;
@@ -1351,6 +1352,14 @@ win_set_zorder(bool top)
   // but do not stick it to the top:
   SetWindowPos(wnd, top ? HWND_NOTOPMOST : HWND_BOTTOM, 0, 0, 0, 0,
                SWP_NOMOVE | SWP_NOSIZE);
+}
+
+void
+win_toggle_on_top(void)
+{
+  win_is_always_on_top = !win_is_always_on_top;
+  SetWindowPos(wnd, win_is_always_on_top ? HWND_TOPMOST : HWND_NOTOPMOST,
+               0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 }
 
 bool
