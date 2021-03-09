@@ -1,5 +1,6 @@
 Terminal features
   * Fixed blinking for drawn/overstrike characters, (under)lining and emojis.
+  * Fixed character set GR mappings to be unguarded by NRCS (vttest 3.10).
   * Restore attributes after DECALN test pattern (vttest 11.6.4/5).
   * Simplified support of ISO Guarded Area as protected (xterm-like global distinction).
   * Fixed validity for REP repeat preceding graphic char (vttest 11[.6].7.2).

@@ -4240,10 +4240,13 @@ term_do_write(const char *buf, uint len)
           cset = term.curs.cset_single;
           term.curs.cset_single = CSET_ASCII;
         }
-        else if (term.decnrc_enabled
-         && term.curs.gr && term.curs.csets[term.curs.gr] != CSET_ASCII
-         && !term.curs.oem_acs && !term.curs.utf
-         && c >= 0x80 && c < 0xFF) {
+        else if (term.curs.gr
+              //&& (term.decnrc_enabled || !term.decnrc_enabled)
+              && term.curs.csets[term.curs.gr] != CSET_ASCII
+              && !term.curs.oem_acs && !term.curs.utf
+              && c >= 0x80 && c < 0xFF
+                )
+        {
           // tune C1 behaviour to mimic xterm
           if (c < 0xA0)
             continue;
