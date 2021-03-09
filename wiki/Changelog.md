@@ -14,14 +14,15 @@ Vector graphics (Tektronix 4014 mode)
   * Distinct GIN mode mouse input (xterm).
   * Smooth GIN mode crosshair cursor movement.
   * Various mode handling fixes after GIN mode.
-  * GIN mode terminator strap options (Tek, xterm), option TekStrap.
+  * GIN mode terminator strap options (Tek, xterm).
 
 Window handling
-  * New user-definable function win-toggle-always-on-top.
+  * New user-definable function win-toggle-always-on-top (#1095).
 
 Configuration
   * Run shell in login mode if terminal started from Windows shortcut.
   * New option LoginFromShortcut.
+  * New option TekStrap.
 
 ### 3.4.6 (20 February 2021) ###
 
