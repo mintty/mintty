@@ -862,6 +862,7 @@ tek_paint(void)
   margin = 0;
   lastfont = 4;
   //printf("tek_paint %d %p\n", tek_buf_len, tek_buf);
+  //static int trc = -1;
   for (int i = 0; i < tek_buf_len; i++) {
     struct tekchar * tc = &tek_buf[i];
 
@@ -874,6 +875,21 @@ tek_paint(void)
       //fg = glowfg;
       if (cfg.tek_defocused_colour != (colour)-1)
         fg = cfg.tek_defocused_colour;
+      else {  // bolden colour
+        int r = red(fg);
+        int g = green(fg);
+        int b = blue(fg);
+        int _r = red(bg);
+        int _g = green(bg);
+        int _b = blue(bg);
+        r = (r - _r) * 150 / 100 + _r;
+        g = (g - _g) * 150 / 100 + _g;
+        b = (b - _b) * 150 / 100 + _b;
+        r = min(255, max(0, r));
+        g = min(255, max(0, g));
+        b = min(255, max(0, b));
+        fg = RGB(r, g, b);
+      }
 
       // display defocused by wider pen
       pen_width = (pen_width ?: 1) * 12;
@@ -887,8 +903,11 @@ tek_paint(void)
         // simulate Write-Thru by distinct colour?
         //fg = RGB(200, 100, 0);
         // fade out?
-        if (tc->recent <= (thru_glow + 1) / 2)
+        if (tc->recent <= (thru_glow + 1) / 2) {
+          //printf("fade %06X", fg);
           fg = ((fg & 0xFEFEFEFE) >> 1) + ((bg & 0xFEFEFEFE) >> 1);
+          //printf(" -> %06X\n", fg);
+        }
 
         tc->recent--;
       }
@@ -898,8 +917,11 @@ tek_paint(void)
         if (cfg.tek_write_thru_colour != (colour)-1)
           fg = cfg.tek_write_thru_colour;
         else {
+          //printf("fade %06X", fg);
           fg = ((fg & 0xFEFEFEFE) >> 1) + ((bg & 0xFEFEFEFE) >> 1);
+          //printf(" -> %06X", fg);
           fg = RGB(green(fg), blue(fg), red(fg));
+          //printf(" -> %06X\n", fg);
         }
         // fade away?
         //fg = bg;
@@ -962,10 +984,16 @@ tek_paint(void)
       oldpen = SelectObject(hdc, oldpen);
       DeleteObject(oldpen);
       // add final point
-      SetPixel(hdc, tx(tc->x), ty(tc->y), fg);
+      //SetPixel(hdc, tx(tc->x), ty(tc->y), fg);
+      pen = CreatePen(PS_SOLID, pen_width / 4, fg);
+      oldpen = SelectObject(hdc, pen);
+      int delta = pen_width / 4;
+      Ellipse(hdc, tx(tc->x - delta), ty(tc->y - delta), tx(tc->x + delta), ty(tc->y + delta));
+      oldpen = SelectObject(hdc, oldpen);
+      DeleteObject(oldpen);
     }
     else if (tc->type == TEKMODE_POINT_PLOT || tc->type == TEKMODE_SPECIAL_PLOT) {
-      if (tc->intensity == 0x7F)
+      if (tc->intensity == 0x7F && !tc->defocused)
         SetPixel(hdc, tx(tc->x), ty(tc->y), fg);
       else {
         static short intensify[64] =
@@ -980,14 +1008,35 @@ tek_paint(void)
         int _r = red(bg);
         int _g = green(bg);
         int _b = blue(bg);
+#ifdef linear_intensify
+        short i = tc->intensity & 0x3F;
+        if (i > 55)
+          i -= 8;
+        r = (r - _r) * i / 55 + _r;
+        g = (g - _g) * i / 55 + _g;
+        b = (b - _b) * i / 55 + _b;
+#else
         r = (r - _r) * intensify[tc->intensity & 0x3F] / 100 + _r;
         g = (g - _g) * intensify[tc->intensity & 0x3F] / 100 + _g;
         b = (b - _b) * intensify[tc->intensity & 0x3F] / 100 + _b;
+#endif
         colour fgpix = RGB(r, g, b);
-        SetPixel(hdc, tx(tc->x), ty(tc->y), fgpix);
+        //trc *= trc;
+        //if (trc) printf("fg %06X bg %06X (wt %d df %d) int [%2d]*%3d -> %06X (w %d)\n", fg, bg, tc->writethru, tc->defocused, tc->intensity, intensify[tc->intensity & 0x3F], fgpix, pen_width);
+        if (tc->defocused) {
+          HPEN pen = CreatePen(PS_SOLID, pen_width, fgpix);
+          HPEN oldpen = SelectObject(hdc, pen);
+          int delta = 4;
+          Ellipse(hdc, tx(tc->x - delta), ty(tc->y - delta), tx(tc->x + delta), ty(tc->y + delta));
+          oldpen = SelectObject(hdc, oldpen);
+          DeleteObject(oldpen);
+        }
+        else
+          SetPixel(hdc, tx(tc->x), ty(tc->y), fgpix);
       }
     }
   }
+  //if (trc == 1) trc = false;
 
   // text cursor
   if ((tek_mode == TEKMODE_ALPHA ||

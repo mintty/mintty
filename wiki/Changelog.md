@@ -16,6 +16,8 @@ Vector graphics (Tektronix 4014 mode)
   * Smooth GIN mode crosshair cursor movement.
   * Various mode handling fixes after GIN mode.
   * GIN mode terminator strap options (Tek, xterm).
+  * Enhanced "defocused" indication by boldened colour.
+  * Enhanced "defocused" point plot indication by boldened point size.
 
 Window handling
   * Lines cleared from top of screen are scrolled into scrollback buffer (mintty/wsltty#272).
