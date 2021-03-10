@@ -1532,19 +1532,17 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
   if (!from_begin || !to_end)
     term_check_boundary(curs->x, curs->y);
 
-#ifdef scrollback_erase_lines
-#warning this behaviour is not compatible with xterm
  /* Lines scrolled away shouldn't be brought back on if the terminal resizes. */
   bool erasing_lines_from_top =
     start.y == 0 && start.x == 0 && end.x == 0 && !line_only && !selective;
 
-  if (erasing_lines_from_top && 
+  if (cfg.erase_to_scrollback && erasing_lines_from_top && 
       !(term.lrmargmode && (term.marg_left || term.marg_right != term.cols - 1))
      )
   {
    /* If it's a whole number of lines, starting at the top, and
     * we're fully erasing them, erase by scrolling and keep the
-    * lines in the scrollback. */
+    * lines in the scrollback. This behaviour is not compatible with xterm. */
     int scrolllines = end.y;
     if (end.y == term.rows) {
      /* Shrink until we find a non-empty row. */
@@ -1559,9 +1557,7 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
     if (!term.on_alt_screen)
       term.tempsblines = 0;
   }
-  else
-#endif
-  {
+  else {
     termline *line = term.lines[start.y];
     while (poslt(start, end)) {
       int cols = min(line->cols, line->size);

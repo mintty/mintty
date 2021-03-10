@@ -18,11 +18,13 @@ Vector graphics (Tektronix 4014 mode)
   * GIN mode terminator strap options (Tek, xterm).
 
 Window handling
+  * Lines cleared from top of screen are scrolled into scrollback buffer (mintty/wsltty#272).
   * New user-definable function win-toggle-always-on-top (#1095).
 
 Configuration
   * Run shell in login mode if terminal started from Windows shortcut.
   * New option LoginFromShortcut.
+  * New option EraseToScrollback.
   * New option TekStrap.
 
 ### 3.4.6 (20 February 2021) ###

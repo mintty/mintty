@@ -184,6 +184,7 @@ const config default_cfg = {
   // "Hidden"
   .bidi = 2,
   .disable_alternate_screen = false,
+  .erase_to_scrollback = true,
   .display_speedup = 6,
   .suppress_sgr = "",
   .suppress_dec = "",
@@ -474,6 +475,7 @@ options[] = {
   // "Hidden"
   {"Bidi", OPT_INT, offcfg(bidi)},
   {"NoAltScreen", OPT_BOOL, offcfg(disable_alternate_screen)},
+  {"EraseToScrollback", OPT_BOOL, offcfg(erase_to_scrollback)},
   {"DisplaySpeedup", OPT_INT, offcfg(display_speedup)},
   {"SuppressSGR", OPT_STRING, offcfg(suppress_sgr)},
   {"SuppressDEC", OPT_STRING, offcfg(suppress_dec)},

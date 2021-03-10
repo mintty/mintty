@@ -2323,6 +2323,11 @@ This setting enables a rough simulation of old CRT terminals' bloom effect.
 When this is disabled, keyboard input or pasting does not clear selection highlighting.
 
 .TP
+\fBErase top lines into scrollback buffer\fP (EraseToScrollback=true)
+With this setting, lines cleared in the top part of the screen are scrolled 
+into the scrollback buffer, so they can be restored.
+
+.TP
 \fBSuspend output while selecting\fP (SuspendWhileSelecting=8080)
 During drag-selects, the user may want the screen to hold still 
 to be selected from. Mintty can suspend processing of terminal output 
