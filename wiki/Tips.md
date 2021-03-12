@@ -898,6 +898,7 @@ interfere with mintty’s own bidi transformation.
 The actual window size is influenced by several parameters:
 * Font size / character height is the main parameter to determine the row height.
 * Row height is additionally affected by the “leading” information from the font.
+* Automatic row height adjustment method can be selected by setting `AutoLeading`.
 * Row height and column width can furthermore be tuned with setting `RowSpacing` and `ColSpacing`.
 * A gap between text and window border can be specified with setting `Padding` (default 1).
 

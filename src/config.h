@@ -215,6 +215,7 @@ typedef struct {
   int geom_sync;
   int tabbar;
   int col_spacing, row_spacing;
+  int auto_leading;
   int padding;
   int ligatures;
   int ligatures_support;

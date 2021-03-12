@@ -23,10 +23,12 @@ Vector graphics (Tektronix 4014 mode)
 Window handling
   * Lines cleared from top of screen are scrolled into scrollback buffer (mintty/wsltty#272).
   * New user-definable function win-toggle-always-on-top (#1095).
+  * New heuristics to adjust row spacing to font metrics (mintty/wslttyw#257).
 
 Configuration
   * Run shell in login mode if terminal started from Windows shortcut.
   * New option LoginFromShortcut.
+  * New option AutoLeading (mintty/wslttyw#257).
   * New option EraseToScrollback.
   * New option TekStrap.
 

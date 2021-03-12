@@ -1851,6 +1851,15 @@ Pressing this button sets the default width and height to the window's
 current size.
 
 .TP
+\fBVertical spacing automatic adjustment strategy\fP (AutoLeading=2)
+Vertical spacing / row height is determined from font parameters.
+Mintty can apply some heuristic automatic adjustment to catch weird 
+font spacing values. Setting 0 disables this feature, setting 1 uses 
+the algorithm in effect until mintty 3.4.6, setting 2 uses a tweaked 
+algorithm that avoids clipped descenders in some fonts.
+The manual tuning setting \fBRowSpacing\fP is applied after auto-leading.
+
+.TP
 \fBVertical spacing adjustment\fP (RowSpacing=0)
 Additional row padding.
 
