@@ -243,12 +243,20 @@ term_paste(wchar *data, uint len, bool all)
 {
   term_cancel_paste();
 
+  uint size = len;
   term.paste_buffer = newn(wchar, len);
   term.paste_len = term.paste_pos = 0;
 
   // Copy data to the paste buffer, converting both Windows-style \r\n and
   // Unix-style \n line endings to \r, because that's what the Enter key sends.
   for (uint i = 0; i < len; i++) {
+    if (term.bracketed_paste) {
+      if (i + 6 <= len && wcsncmp(W("\e[201~"), &data[i], 6) == 0) {
+        i += 6 - 1;
+        continue;
+      }
+    }
+
     wchar wc = data[i];
     if (wc == '\n')
       wc = '\r';
@@ -259,6 +267,18 @@ term_paste(wchar *data, uint len, bool all)
       term.paste_buffer[term.paste_len++] = wc;
     else if (i == 0 || data[i - 1] != '\r')
       term.paste_buffer[term.paste_len++] = wc;
+    else
+      continue;
+
+    if (term.bracketed_paste && wc == '\r' && i + 1 < len
+     && (i + 2 != len || 0 != wcsncmp(&data[i], W("\r\n"), 2))
+       )
+    {
+      size += 12;
+      term.paste_buffer = renewn(term.paste_buffer, size);
+      wcsncpy(&term.paste_buffer[term.paste_len], W("\e[201~\e[200~"), 12);
+      term.paste_len += 12;
+    }
   }
 
   if (term.bracketed_paste)
