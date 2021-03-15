@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Fri Feb 19 11:47:02 2021 -->
+<!-- CreationDate: Tue Mar 16 10:49:12 2021 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -78,7 +78,10 @@ back to <i>/bin/sh</i>.</p>
 
 <p style="margin-left:11%; margin-top: 1em">If a single
 dash is specified instead of a program name, the shell is
-invoked as a login shell.</p>
+invoked as a login shell. If mintty is started from a
+Windows shortcut (desktop or start menu), by default the
+shell is also invoked as a login shell unless disabled by an
+option.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Invocation by a
 name of <b>wsl*</b><i>[-distro]</i> implies a
@@ -2324,6 +2327,18 @@ in character cells.</p>
 default width and height to the window&rsquo;s current
 size.</p>
 
+<p style="margin-left:11%;"><b>Vertical spacing automatic
+adjustment strategy</b> (AutoLeading=2)</p>
+
+<p style="margin-left:22%;">Vertical spacing / row height
+is determined from font parameters. Mintty can apply some
+heuristic automatic adjustment to catch weird font spacing
+values. Setting 0 disables this feature, setting 1 uses the
+algorithm in effect until mintty 3.4.6, setting 2 uses a
+tweaked algorithm that avoids clipped descenders in some
+fonts. The manual tuning setting <b>RowSpacing</b> is
+applied after auto-leading.</p>
+
 <p style="margin-left:11%;"><b>Vertical spacing
 adjustment</b> (RowSpacing=0)</p>
 
@@ -2882,6 +2897,13 @@ on input</b> (ClearSelectionOnInput=true)</p>
 <p style="margin-left:22%;">When this is disabled, keyboard
 input or pasting does not clear selection highlighting.</p>
 
+<p style="margin-left:11%;"><b>Erase top lines into
+scrollback buffer</b> (EraseToScrollback=true)</p>
+
+<p style="margin-left:22%;">With this setting, lines
+cleared in the top part of the screen are scrolled into the
+scrollback buffer, so they can be restored.</p>
+
 <p style="margin-left:11%;"><b>Suspend output while
 selecting</b> (SuspendWhileSelecting=8080)</p>
 
@@ -3089,6 +3111,14 @@ a specific AppID cannot be removed or even modified again
 with normal means. For this reason, it is advisable to use
 temporary AppIDs for testing (like MyMintty.1).</p>
 
+<p style="margin-left:11%;"><b>Start shell in login mode if
+run from shortcut</b> (LoginFromShortcut=yes)</p>
+
+<p style="margin-left:22%;">By default, mintty since
+version 347 will start its shell in login mode if invoked
+via a Windows desktop or start menu shortcut unless this
+setting is disabled.</p>
+
 <p style="margin-left:11%;"><b>Control ConPTY support</b>
 (ConPTY=)</p>
 
@@ -3269,6 +3299,8 @@ mode <br>
 &ndash; <b>win-restore</b>: resizes to normal size <br>
 &ndash; <b>win-toggle-max</b>: toggles maximized / normal
 size <br>
+&ndash; <b>win-toggle-always-on-top</b>: toggles window
+always-on-top <br>
 &ndash; <b>win-icon</b>: turns window into icon <br>
 &ndash; <b>close</b>: closes terminal window <br>
 &ndash; <b>new-key</b>: opens a new terminal window when key
@@ -3515,6 +3547,15 @@ used otherwise.</p>
 
 <p style="margin-left:22%;">The Tektronix drawing beam glow
 can be switched with this setting.</p>
+
+<p style="margin-left:11%;"><b>Tektronix &quot;strap
+option&quot;</b> (TekStrap=0)</p>
+
+<p style="margin-left:22%;">Number of characters appended
+after GIN mode address reports; valid values are 0, 1 (CR)
+and 2 (CR ^C). <br>
+(Corresponds to the xterm resource
+<b>ginTerminator</b>.)</p>
 
 <p style="margin-left:11%;"><b>Downloaded colour scheme</b>
 (ColourScheme=)</p>

@@ -1,3 +1,5 @@
+### 3.4.7 (16 March 2021) ###
+
 Terminal features
   * Fixed blinking for drawn/overstrike characters, (under)lining and emojis.
   * Bracketed Paste Mode: ensure embedding of each line.
