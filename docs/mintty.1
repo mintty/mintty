@@ -940,6 +940,9 @@ enter Tek mode and set up some environment information properly.
 While in Tek mode, the context menu provides the Tektronix mode functions 
 RESET (like xterm), PAGE (minor reset), and COPY ("hard" copy to image file).
 
+While in Tek mode, the OSC 50 control sequence changes the Tek font.
+Tek mode text output supports Unicode.
+
 .SS Emoji display support
 
 Mintty supports display of emojis as defined by Unicode using 
@@ -3456,7 +3459,9 @@ flexible bidi controls according to the draft bidi mode model of the
 \fBBiDi in Terminal Emulators\fP recommendation 
 (\fIhttps://terminal-wg.pages.freedesktop.org/bidi/\fP).
 
-Mintty also provides emulation of the Tektronix 4014 vector graphics terminal.
+Mintty also provides emulation of the Tektronix 4014 vector graphics terminal,
+including "writethru" and "defocused" beam modes (for which colour indication 
+can be configured), write beam glow and GIN mode.
 
 Mintty is not as configurable as xterm; it offers essential configuration 
 features, many of which are "hidden settings", i.e. they do not appear in 
