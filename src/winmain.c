@@ -4059,7 +4059,7 @@ getlxssinfo(bool list, wstring wslname, uint * wsl_ver,
     if (stat (rootdir, & fstat_buf) == 0 && S_ISDIR (fstat_buf.st_mode)) {
       *wsl_rootfs = rootfs;
     }
-    else {
+    else if (wslname) {
       free(rootfs);
       rootfs = newn(wchar, wcslen(wslname) + 8);
       wcscpy(rootfs, W("\\\\wsl$\\"));
