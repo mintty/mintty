@@ -1,3 +1,6 @@
+Terminal features
+  * Implicit (detected) progress bar uses configured colour.
+
 ### 3.4.7 (16 March 2021) ###
 
 Terminal features

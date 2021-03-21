@@ -2560,8 +2560,10 @@ term_paint(void)
             }
           }
         }
-        if (p <= 100)
+        if (p <= 100) {
+          taskbar_progress(- term.detect_progress);
           taskbar_progress(p);
+        }
       }
     }
 
