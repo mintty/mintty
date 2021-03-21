@@ -1,4 +1,5 @@
 Terminal features
+  * Support progress detection (for implicit progress bar) also if iconized.
   * Implicit (detected) progress bar uses configured colour.
 
 ### 3.4.7 (16 March 2021) ###
