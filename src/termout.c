@@ -2641,6 +2641,10 @@ set_taskbar_progress(int state, int percent)
     taskbar_progress(-8);
     term.detect_progress = 0;
   }
+  else if (state == 10) {  // reset to default
+    term.detect_progress = cfg.progress_bar;
+    taskbar_progress(-9);
+  }
   else if (state <= 3) {
     taskbar_progress(- state);
     if (percent >= 0) {
@@ -4136,6 +4140,8 @@ typedef struct {
       len = scanenum(s, &state,
                      (paramap[]){
                                  {"off", 0},
+                                 {"default", 10},
+                                 {"", 10},
                                  {"green", 1},
                                  {"yellow", 2},
                                  {"red", 3},

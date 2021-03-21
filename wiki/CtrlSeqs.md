@@ -225,6 +225,7 @@ Note that automatic progress bar can also be configured (option ProgressBar).
 | `^[[1%q`                     | enable progress indication level 1 (green)  |
 | `^[[2%q`                     | enable progress indication level 2 (yellow) |
 | `^[[3%q`                     | enable progress indication level 3 (red)    |
+| `^[[10%q`                    | reset progress indication as configured     |
 | `^[[`_level_`;`_percent_`%q` | set progress level (1..3) and value         |
 | `^[[8%q`                     | enable continuous "busy" indication         |
 
@@ -237,6 +238,7 @@ is available too, alternatively supporting mnemonic parameters:
 | `^[]9;progress;green^G`                 | enable green progress indication  |
 | `^[]9;progress;yellow^G`                | enable yellow progress indication |
 | `^[]9;progress;red^G`                   | enable red progress indication    |
+| `^[]9;progress;default^G` _or empty_    | reset progress indication         |
 | `^[]9;progress;`_level_`;`_percent_`^G` | set progress level and value      |
 | `^[]9;progress;busy^G`                  | enable busy indication            |
 
