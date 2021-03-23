@@ -2,6 +2,7 @@ Terminal features
   * Support progress detection (for implicit progress bar) also if iconized.
   * Implicit (detected) progress bar uses configured colour.
   * Escape sequences to reset progress bar colour mode to configured value.
+  * Escape sequence to change progress value only.
 
 ### 3.4.7 (16 March 2021) ###
 

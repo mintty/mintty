@@ -2633,7 +2633,9 @@ do_winop(void)
 static void
 set_taskbar_progress(int state, int percent)
 {
-  if (state == 0) {  // disable progress indication
+  //printf("set_taskbar_progress (%d) %d %d%%\n", term.detect_progress, state, percent);
+  if (state == 0 && percent < 0) {  // disable progress indication
+    // skipping this if percent < 0 to allow percent-only setting with state 0
     taskbar_progress(-9);
     term.detect_progress = 0;
   }
@@ -2646,8 +2648,13 @@ set_taskbar_progress(int state, int percent)
     taskbar_progress(-9);
   }
   else if (state <= 3) {
-    taskbar_progress(- state);
+    if (state > 0)
+      taskbar_progress(- state);
     if (percent >= 0) {
+      // if we disable (above), then request percentage only (here), 
+      // colour will be 1/green regardless of previous/configured setting;
+      // to improve this, we'd have to introduce another variable,
+      // term.previous_progress
       taskbar_progress(percent);
       term.detect_progress = 0;
     }

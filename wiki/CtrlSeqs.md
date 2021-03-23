@@ -227,6 +227,7 @@ Note that automatic progress bar can also be configured (option ProgressBar).
 | `^[[3%q`                     | enable progress indication level 3 (red)    |
 | `^[[10%q`                    | reset progress indication as configured     |
 | `^[[`_level_`;`_percent_`%q` | set progress level (1..3) and value         |
+| `^[[;`_percent_`%q`          | change progress value only                  |
 | `^[[8%q`                     | enable continuous "busy" indication         |
 
 An _OSC 9;4_ sequence (compatible with ConEmu or Windows Terminal) 
