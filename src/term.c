@@ -402,6 +402,8 @@ term_reset(bool full)
   term.detect_progress = cfg.progress_bar;
   taskbar_progress(-9);
 
+  term.suspend_update = 0;
+
   term_schedule_search_update();
 
   win_reset_colours();

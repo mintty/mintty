@@ -2055,6 +2055,12 @@ set_modes(bool state)
         when 25: /* DECTCEM: enable/disable cursor */
           term.cursor_on = state;
           // Should we set term.cursor_invalid or call term_invalidate ?
+#ifdef end_suspend_output_by_enabling_cursor
+          if (state) {
+            term.suspend_update = false;
+            do_update();
+          }
+#endif
         when 30: /* Show/hide scrollbar */
           if (state != term.show_scrollbar) {
             term.show_scrollbar = state;
@@ -3298,6 +3304,17 @@ do_csi(uchar c)
         }
         term.disptop = 0;
       }
+#ifdef suspend_display_update_via_CSI
+    when CPAIR('&', 'q'):  /* suspend display update (ms) */
+      term.suspend_update = min(arg0, term.rows * term.cols / 8);
+      //printf("susp = %d\n", term.suspend_update);
+      if (term.suspend_update == 0) {
+        do_update();
+        // mysteriously, a delay here makes the output flush 
+        // more likely to happen, yet not reliably...
+        usleep(1000);
+      }
+#endif
   }
   last_char = 0;  // cancel preceding char for REP
 }
@@ -3360,6 +3377,7 @@ do_dcs(void)
   char *s = term.cmd_buf;
   if (!term.cmd_len)
     *s = 0;
+  //printf("DCS %04X state %d <%s>\n", term.dcs_cmd, term.state, s);
 
   switch (term.dcs_cmd) {
 
@@ -3520,7 +3538,7 @@ do_dcs(void)
   }
 
   when CPAIR('$', 'q'):
-    switch (term.state) {
+   switch (term.state) {
     when DCS_ESCAPE: {     // DECRQSS
       cattr attr = term.curs.attr;
       if (!strcmp(s, "m")) { // SGR
@@ -3637,7 +3655,35 @@ do_dcs(void)
     }
     otherwise:
       return;
+   }
+
+  // https://gitlab.com/gnachman/iterm2/-/wikis/synchronized-updates-spec
+  // Begin synchronized update (BSU): ESC P = 1 s Parameters ST
+  // End synchronized update (ESU): ESC P = 2 s Parameters ST
+  when CPAIR('=', 's'): {
+    //printf("DCS =[%u]%u;%us term.state %d <%s>\n", term.csi_argc, term.csi_argv[0], term.csi_argv[1], term.state, s);
+    int susp = -1;
+    if (term.csi_argv[0] == 1) {
+      // calculate default and max timeout
+      //susp = term.rows * term.cols / (10 + cfg.display_speedup);
+      susp = 420;  // limit of user-requested delay
+      // limit timeout if requested
+      if (term.csi_argc > 1 && term.csi_argv[1])
+        susp = min(term.csi_argv[1], susp);
+      else
+        susp = 150;  // constant default
     }
+    else if (term.csi_argv[0] == 2)
+      susp = 0;
+    if (susp < 0)
+      return;
+
+    term.suspend_update = susp;
+    if (susp == 0) {
+      do_update();
+      //usleep(1000);  // flush update not needed here...
+    }
+  }
 
   }
 }
@@ -4856,6 +4902,11 @@ term_do_write(const char *buf, uint len)
         term.cmd_num = -1;
         term.cmd_len = 0;
         term.dcs_cmd = 0;
+        // use csi_arg vars also for DCS parameters
+        term.csi_argc = 0;
+        memset(term.csi_argv, 0, sizeof(term.csi_argv));
+        memset(term.csi_argv_defined, 0, sizeof(term.csi_argv_defined));
+
         switch (c) {
           when '@' ... '~':  /* DCS cmd final byte */
             term.dcs_cmd = c;
@@ -4864,13 +4915,17 @@ term_do_write(const char *buf, uint len)
           when '\e':
             term.state = DCS_ESCAPE;
           when '0' ... '9':  /* DCS parameter */
+            //printf("DCS start %c\n", c);
             term.state = DCS_PARAM;
           when ';':          /* DCS separator */
+            //printf("DCS sep %c\n", c);
             term.state = DCS_PARAM;
           when ':':
+            //printf("DCS sep %c\n", c);
             term.state = DCS_IGNORE;
           when '<' ... '?':
             term.dcs_cmd = c;
+            //printf("DCS sep %c\n", c);
             term.state = DCS_PARAM;
           when ' ' ... '/':  /* DCS intermediate byte */
             term.dcs_cmd = c;
@@ -4883,17 +4938,29 @@ term_do_write(const char *buf, uint len)
         switch (c) {
           when '@' ... '~':  /* DCS cmd final byte */
             term.dcs_cmd = term.dcs_cmd << 8 | c;
+            if (term.csi_argv[term.csi_argc])
+              term.csi_argc ++;
             do_dcs();
             term.state = DCS_PASSTHROUGH;
           when '\e':
             term.state = DCS_ESCAPE;
             term.esc_mod = 0;
-          when '0' ... '9' or ';' or ':':  /* DCS parameter */
-            term.state = DCS_PARAM;
+          when '0' ... '9':  /* DCS parameter */
+            //printf("DCS param %c\n", c);
+            if (term.csi_argc < 2) {
+              uint i = term.csi_argc;
+              term.csi_argv[i] = 10 * term.csi_argv[i] + c - '0';
+            }
+          when ';' or ':':  /* DCS parameter separator */
+            //printf("DCS param sep %c\n", c);
+            if (term.csi_argc + 1 < lengthof(term.csi_argv))
+              term.csi_argc ++;
           when '<' ... '?':
             term.dcs_cmd = term.dcs_cmd << 8 | c;
+            //printf("DCS param %c\n", c);
             term.state = DCS_PARAM;
           when ' ' ... '/':  /* DCS intermediate byte */
+            //printf("DCS param->inter %c\n", c);
             term.dcs_cmd = term.dcs_cmd << 8 | c;
             term.state = DCS_INTERMEDIATE;
           otherwise:
@@ -4910,6 +4977,7 @@ term_do_write(const char *buf, uint len)
             term.state = DCS_ESCAPE;
             term.esc_mod = 0;
           when '0' ... '?':  /* DCS parameter byte */
+            //printf("DCS inter->ignore %c\n", c);
             term.state = DCS_IGNORE;
           when ' ' ... '/':  /* DCS intermediate byte */
             term.dcs_cmd = term.dcs_cmd << 8 | c;

@@ -503,6 +503,19 @@ two features:
 | `^[[?7711l`   | mark secondary prompt line (upper lines)                  |
 
 
+## Synchronous update ##
+
+A pair of Begin/End Synchronous Update DCS sequences suspends the output 
+between them in order to be updated to the screen synchronously.
+The purpose is that applications can control atomic screen update, 
+in order to avoid screen flickering in certain situations of display update.
+
+| **sequence**      | **function**                                        |
+|:------------------|:----------------------------------------------------|
+| `^[P=1s^[\`       | suspend screen update for 150 ms                    |
+| `^[P=1;`_N_`s^[\` | suspend screen update for _N_ ms, max 420 ms        |
+| `^[P=2s^[\`       | update screen (flush output), end update suspending |
+
 ## Image support ##
 
 In addition to the legacy Sixel feature, mintty supports graphic image display 

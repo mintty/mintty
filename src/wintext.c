@@ -1230,6 +1230,7 @@ do_update(void)
 #if defined(debug_cursor) && debug_cursor > 1
   printf("do_update cursor_on %d @%d,%d\n", term.cursor_on, term.curs.y, term.curs.x);
 #endif
+  //printf("do_update state %d susp %d\n", update_state, term.suspend_update);
   if (update_state == UPDATE_BLOCKED) {
     update_state = UPDATE_IDLE;
     return;
@@ -1240,13 +1241,20 @@ do_update(void)
   lines_scrolled = 0;
   if ((update_skipped < cfg.display_speedup && cfg.display_speedup < 10
        && output_speed > update_skipped
+       //&& !term.smooth_scroll ?
       ) || (!term.detect_progress && win_is_iconic())
+        //|| win_is_hidden() ?
+        // suspend display update:
+        //|| (update_skipped < term.suspend_update * cfg.display_speedup)
+        || (update_skipped * update_timer < term.suspend_update)
      )
   {
+    //printf("skip %d susp %d\n", update_skipped, term.suspend_update);
     win_set_timer(do_update, update_timer);
     return;
   }
   update_skipped = 0;
+  term.suspend_update = 0;
 
   update_state = UPDATE_BLOCKED;
 

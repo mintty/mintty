@@ -1,4 +1,5 @@
 Terminal features
+  * Escape sequences DCS=1/2s for atomic/synchronous screen update (~#1098).
   * Support progress detection (for implicit progress bar) also if iconized.
   * Implicit (detected) progress bar uses configured colour.
   * Escape sequences to reset progress bar colour mode to configured value.

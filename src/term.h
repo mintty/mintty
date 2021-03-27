@@ -469,6 +469,8 @@ struct term {
   char * suspbuf;         /* suspend output during selection buffer */
   uint suspbuf_size, suspbuf_pos;
 
+  int suspend_update;
+
   bool rvideo;            /* global reverse video flag */
   bool cursor_on;         /* cursor enabled flag */
   bool deccolm_allowed;   /* DECCOLM sequence for 80/132 cols allowed? */
