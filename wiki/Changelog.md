@@ -9,6 +9,7 @@ Terminal features
 Configuration
   * New options MousePointer, AppMousePointer.
   * WSL-specific detection of Term info availabilities (mintty/wsltty#278).
+  * Export TERM to WSL (mintty/wsltty#278).
 
 ### 3.4.7 (16 March 2021) ###
 

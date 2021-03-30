@@ -5176,7 +5176,7 @@ main(int argc, char *argv[])
 #ifdef wslbridge2
     argc += start_home;
 #endif
-    argc += 6;  // LANG, LC_CTYPE, LC_ALL
+    argc += 10;  // -e parameters
 
     char ** new_argv = newn(char *, argc + 8 + start_home + (wsltty_appx ? 2 : 0));
     char ** pargv = new_argv;
@@ -5212,6 +5212,8 @@ main(int argc, char *argv[])
 #ifdef wslbridge_t
     *pargv++ = "-t";
 #endif
+    *pargv++ = "-e";
+    *pargv++ = "TERM";
     *pargv++ = "-e";
     *pargv++ = "APPDATA";
     if (!cfg.old_locale) {
