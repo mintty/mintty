@@ -3669,7 +3669,7 @@ do_dcs(void)
       susp = 420;  // limit of user-requested delay
       // limit timeout if requested
       if (term.csi_argc > 1 && term.csi_argv[1])
-        susp = min(term.csi_argv[1], susp);
+        susp = min((int)term.csi_argv[1], susp);
       else
         susp = 150;  // constant default
     }

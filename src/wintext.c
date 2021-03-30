@@ -1034,7 +1034,11 @@ init_charnametable()
   }
 
   char * cnfn = get_resource_file(W("info"), W("charnames.txt"), false);
-  FILE * cnf = fopen(cnfn, "r");
+  FILE * cnf = 0;
+  if (cnfn) {
+    cnf = fopen(cnfn, "r");
+    free(cnfn);
+  }
   if (cnf) {
     uint cc;
     char cn[100];
