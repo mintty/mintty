@@ -71,7 +71,7 @@ colour schemes. However, \fB-o ThemeFile=\fP\fIFILENAME\fP may be preferable.
 .TP
 \fB--configdir\fP \fIDIRNAME\fP
 Use the given directory to check for resource subdirectories 
-(\fIthemes\fP, \fIsounds\fP, \fIlang\fP, \fIemojis\fP, \fIicon\fP, \fIfonts\fP);
+(\fIthemes\fP, \fIsounds\fP, \fIlang\fP, \fIemojis\fP, \fIicon\fP, \fIfonts\fP, \fIpointers\fP);
 also read settings from the configuration file \fIDIRNAME\fP/\fBconfig\fP, 
 in addition to the default config files, and save configuration changes here.
 
@@ -880,7 +880,7 @@ Keys pane of the options dialog.
 .br
 \(en \fBCtrl+Shift+O\fP: Toggle scrollbar
 .br
-\(en \fBCtrl+Shift+P\fP: Cycle pointer styles
+\(en \fBCtrl+Shift+P\fP: Cycle text pointer (cursor) styles
 .br
 \(en \fBCtrl+Shift+T\fP: Cycle or tune transparency levels
 
@@ -3033,6 +3033,17 @@ screen. By default, only an error exit code is displayed.
 Together with a hold option that keeps the terminal open after its child 
 process terminated, this option prefixes the window title with its string, 
 for example -o ExitTitle="TERMINATED: ".
+
+.TP
+\fBMouse pointer styles\fP (MousePointer=ibeam, AppMousePointer=arrow)
+This setting defines the mouse position indicator (i.e. not the text cursor) 
+from the given resource. Note that mintty maintains two different mouse 
+pointer shapes, to distinguish application mouse reporting modes.
+Valid values are Windows predefined cursor names 
+(appstarting, arrow, cross, hand, help, ibeam, icon, no, size, sizeall, sizenesw, sizens, sizenwse, sizewe, uparrow, wait).
+or cursor file names which are looked up in subdirectory \fIpointers\fP of 
+a mintty resource directory; supported file types are .cur, .ico, .ani.
+(Corresponds to the xterm resource \fBpointerShape\fP.)
 
 .TP
 \fBConfigure document opening by mouse click\fP (OpeningClicks=1)

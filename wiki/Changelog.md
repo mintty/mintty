@@ -1,4 +1,5 @@
 Terminal features
+  * Escape sequence OSC 22 to set mouse pointer shape (xterm 367).
   * Escape sequences DCS=1/2s for atomic/synchronous screen update (~#1098).
   * Support progress detection (for implicit progress bar) also if iconized.
   * Implicit (detected) progress bar uses configured colour.
@@ -6,6 +7,7 @@ Terminal features
   * Escape sequence to change progress value only.
 
 Configuration
+  * New options MousePointer, AppMousePointer.
   * WSL-specific detection of Term info availabilities (mintty/wsltty#278).
 
 ### 3.4.7 (16 March 2021) ###

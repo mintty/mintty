@@ -12,8 +12,8 @@ For its configuration, it reads configuration files in this order:
 
 For resource files to configure a colour scheme, 
 wave file for the bell character, localization files, emoji graphics, 
-dynamic fonts, it looks for subfolders 
-`themes`, `sounds`, `lang`, `emojis`, `fonts`, respectively, 
+dynamic fonts, pointer shapes, it looks for subfolders 
+`themes`, `sounds`, `lang`, `emojis`, `fonts`, `pointers`, respectively, 
 in the directories
 * `~/.mintty`
 * `~/.config/mintty`

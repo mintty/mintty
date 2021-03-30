@@ -603,6 +603,22 @@ supported; cursor colour can be set with the OSC 12 sequence.)
 | **6**   | full block   |
 
 
+## Mouse pointer style ##
+
+The following _OSC_ ("operating system command") sequence (xterm 367) 
+can be used to set the mouse pointer shape of the current mouse mode 
+(mintty maintains two different mouse pointer shapes, to distinguish 
+application mouse reporting modes).
+Valid values are Windows predefined cursor names 
+(appstarting, arrow, cross, hand, help, ibeam, icon, no, size, sizeall, sizenesw, sizens, sizenwse, sizewe, uparrow, wait).
+or cursor file names which are looked up in subdirectory `pointers` of 
+a mintty resource directory; supported file types are .cur, .ico, .ani.
+
+| **sequence**          |
+|:----------------------|
+| `^[]22;`_pointer_`^G` |
+
+
 ## Printing and screen dump ##
 
 Mintty supports the following DEC, xterm and mintty Media Copy sequences:

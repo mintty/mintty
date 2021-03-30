@@ -124,6 +124,8 @@ typedef struct {
   bool hide_mouse;
   bool elastic_mouse;
   int lines_per_notch;
+  wstring mouse_pointer;
+  wstring appmouse_pointer;
   // Selection
   bool input_clears_selection;
   bool copy_on_select;

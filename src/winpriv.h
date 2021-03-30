@@ -111,6 +111,8 @@ extern void win_show_tip(int x, int y, int cols, int rows);
 extern void win_destroy_tip(void);
 
 extern void taskbar_progress(int percent);
+extern HCURSOR win_get_cursor(bool appmouse);
+extern void set_cursor_style(bool appmouse, wchar * style);
 
 extern void win_init_menus(void);
 extern void win_update_menus(bool callback);

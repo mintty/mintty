@@ -2467,6 +2467,83 @@ win_close(void)
 
 
 /*
+   Mouse pointer style.
+ */
+
+static struct {
+  void * tag;
+  wchar * name;
+} cursorstyles[] = {
+  {IDC_APPSTARTING, W("appstarting")},
+  {IDC_ARROW, W("arrow")},
+  {IDC_CROSS, W("cross")},
+  {IDC_HAND, W("hand")},
+  {IDC_HELP, W("help")},
+  {IDC_IBEAM, W("ibeam")},
+  {IDC_ICON, W("icon")},
+  {IDC_NO, W("no")},
+  {IDC_SIZE, W("size")},
+  {IDC_SIZEALL, W("sizeall")},
+  {IDC_SIZENESW, W("sizenesw")},
+  {IDC_SIZENS, W("sizens")},
+  {IDC_SIZENWSE, W("sizenwse")},
+  {IDC_SIZEWE, W("sizewe")},
+  {IDC_UPARROW, W("uparrow")},
+  {IDC_WAIT, W("wait")},
+};
+
+static HCURSOR cursors[2] = {0, 0};
+
+HCURSOR
+win_get_cursor(bool appmouse)
+{
+  return cursors[appmouse];
+}
+
+void
+set_cursor_style(bool appmouse, wchar * style)
+{
+  HCURSOR c = 0;
+  if (wcschr(style, '.')) {
+    char * pf = get_resource_file(W("pointers"), style, false);
+    wchar * wpf = 0;
+    if (pf) {
+      wpf = path_posix_to_win_w(pf);
+      free(pf);
+    }
+    if (wpf) {
+      c = LoadImageW(null, wpf, IMAGE_CURSOR, 
+                           0, 0,
+                           LR_DEFAULTSIZE |
+                           LR_LOADFROMFILE | LR_LOADTRANSPARENT);
+      free(wpf);
+    }
+  }
+  if (!c)
+    for (uint i = 0; i < lengthof(cursorstyles); i++)
+      if (0 == wcscmp(style, cursorstyles[i].name)) {
+        c = LoadCursor(null, cursorstyles[i].tag);
+        break;
+      }
+  if (!c)
+    c = LoadCursor(null, appmouse ? IDC_ARROW : IDC_IBEAM);
+
+  if (!IS_INTRESOURCE(cursors[appmouse]))
+    DestroyCursor(cursors[appmouse]);
+  cursors[appmouse] = c;
+  SetClassLongPtr(wnd, GCLP_HCURSOR, (LONG_PTR)c);
+  SetCursor(c);
+}
+
+static void
+win_init_cursors()
+{
+  set_cursor_style(true, W("arrow"));
+  set_cursor_style(false, W("ibeam"));
+}
+
+
+/*
    Diagnostic functions.
  */
 
@@ -5688,6 +5765,7 @@ static int dynfonts = 0;
   CreateCaret(wnd, caretbm, 0, 0);
 
   // Initialise various other stuff.
+  win_init_cursors();
   win_init_drop_target();
   win_init_menus();
   win_update_transparency(cfg.opaque_when_focused);

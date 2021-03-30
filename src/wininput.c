@@ -886,15 +886,21 @@ get_mods(void)
 static void
 update_mouse(mod_keys mods)
 {
-  static bool app_mouse;
+static bool last_app_mouse = false;
+
   bool new_app_mouse =
-    term.mouse_mode && !term.show_other_screen &&
-    cfg.clicks_target_app ^ ((mods & cfg.click_target_mod) != 0);
-  if (new_app_mouse != app_mouse) {
-    HCURSOR cursor = LoadCursor(null, new_app_mouse ? IDC_ARROW : IDC_IBEAM);
+    (term.mouse_mode || term.locator_1_enabled)
+    // disable app mouse pointer while showing "other" screen (flipped)
+    && !term.show_other_screen
+    // disable app mouse pointer while not targetting app
+    && (cfg.clicks_target_app ^ ((mods & cfg.click_target_mod) != 0));
+
+  if (new_app_mouse != last_app_mouse) {
+    //HCURSOR cursor = LoadCursor(null, new_app_mouse ? IDC_ARROW : IDC_IBEAM);
+    HCURSOR cursor = win_get_cursor(new_app_mouse);
     SetClassLongPtr(wnd, GCLP_HCURSOR, (LONG_PTR)cursor);
     SetCursor(cursor);
-    app_mouse = new_app_mouse;
+    last_app_mouse = new_app_mouse;
   }
 }
 
