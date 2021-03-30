@@ -1968,10 +1968,12 @@ Choices available from the dropdown list are \fBxterm\fP, \fBxterm-256color\fP,
 \fBxterm-direct\fP, \fBmintty\fP, \fBmintty-direct\fP.
 
 The last three options are only offered if the respective terminfo entries 
-are installed in the system. The *\fB-direct\fP entries provide 
-terminfo capabilities to set true-colour (24 bit colour) attributes.
+are installed in the system (WSL distribution with options --wsl/--WSL).
+The *\fB-direct\fP entries provide terminfo capabilities to set 
+true-colour (24 bit colour) attributes.
 Note, however, that this only affects usage of the \fIterminfo\fP API 
-to drive the terminal; the respective control sequences are always available.
+to drive the terminal; the respective control sequences are always available 
+and applications are free to use them directly.
 
 If the setting contains "vt220" or higher, xterm VT220-style function 
 key mode is enabled instead of the default PC-style function key mode.

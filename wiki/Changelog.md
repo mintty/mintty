@@ -5,6 +5,9 @@ Terminal features
   * Escape sequences to reset progress bar colour mode to configured value.
   * Escape sequence to change progress value only.
 
+Configuration
+  * WSL-specific detection of Term info availabilities (mintty/wsltty#278).
+
 ### 3.4.7 (16 March 2021) ###
 
 Terminal features

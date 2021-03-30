@@ -2238,12 +2238,35 @@ term_handler(control *ctrl, int event)
     bool terminfo_exists_in(char * dir, char * sub, char * ti) {
       char * terminfo = asform("%s%s/%x/%s", dir, sub ?: "", *ti, ti);
       bool exists = !access(terminfo, R_OK);
+      //printf("exists %d <%s>\n", exists, terminfo);
       free(terminfo);
+      if (support_wsl && !exists) {
+        terminfo = asform("%s%s/%c/%s", dir, sub ?: "", *ti, ti);
+        exists = !access(terminfo, R_OK);
+        //printf("exists %d <%s>\n", exists, terminfo);
+        free(terminfo);
+      }
       return exists;
     }
-    return terminfo_exists_in("/usr/share/terminfo", 0, ti)
-        || terminfo_exists_in(home, "/.terminfo", ti)
-         ;
+    if (support_wsl) {
+      char * wslroot;
+      if (wslname) {
+        char * wslnamec = cs__wcstombs(wslname);
+        wslroot = asform("//wsl$/%s", wslnamec);
+        free(wslnamec);
+      }
+      else if (*wsl_basepath)
+        wslroot = path_win_w_to_posix(wsl_basepath);
+      else
+        wslroot = strdup("");
+      bool ex = terminfo_exists_in(wslroot, "/usr/share/terminfo", ti);
+      free(wslroot);
+      return ex;
+    }
+    else
+      return terminfo_exists_in("/usr/share/terminfo", 0, ti)
+          || terminfo_exists_in(home, "/.terminfo", ti)
+           ;
   }
   switch (event) {
     when EVENT_REFRESH:
