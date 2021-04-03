@@ -8,6 +8,7 @@ Terminal features
 
 Configuration
   * New options MousePointer, AppMousePointer.
+  * Restored "Allow blinking" in Options dialog (#1097).
   * WSL-specific detection of Term info availabilities (mintty/wsltty#278).
   * Export TERM to WSL (mintty/wsltty#278).
 

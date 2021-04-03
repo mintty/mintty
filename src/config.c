@@ -572,8 +572,7 @@ typedef const struct {
   char val;
 } opt_val;
 
-static opt_val
-*const opt_vals[] = {
+static opt_val * const opt_vals[] = {
   [OPT_BOOL] = (opt_val[]) {
     {"no", false},
     {"yes", true},
@@ -3341,6 +3340,34 @@ compose_key_handler(control *ctrl, int event)
   opt_handler(ctrl, event, &new_cfg.compose_key, opt_vals[OPT_COMPOSE_KEY]);
 }
 
+static void
+smoothing_handler(control *ctrl, int event)
+{
+  opt_handler(ctrl, event, &new_cfg.font_smoothing, opt_vals[OPT_FONTSMOOTH]);
+}
+
+static opt_val * const showbold_vals =
+(opt_val[]) {
+    {__("as font"), 1},
+    {__("as colour"), 2},
+    {__("as font & as colour"), 3},
+    {__("xterm"), 0},
+    {0, 0}
+};
+
+static char showbold;
+
+static void
+showbold_handler(control *ctrl, int event)
+{
+  showbold = new_cfg.bold_as_font | ((char)new_cfg.bold_as_colour) << 1;
+  //printf("bold as font %d as colour %d event %d\n", new_cfg.bold_as_font, new_cfg.bold_as_colour, event);
+  opt_handler(ctrl, event, &showbold, showbold_vals);
+  new_cfg.bold_as_font = showbold & 1;
+  new_cfg.bold_as_colour = showbold & 2;
+  //printf("bold as font %d as colour %d\n", new_cfg.bold_as_font, new_cfg.bold_as_colour);
+}
+
 static bool bold_like_xterm;
 
 static void
@@ -3567,6 +3594,7 @@ setup_config_box(controlbox * b)
       )->column = 1;
     }
     else {
+     if (0 != strstr(cfg.old_options, "blinking")) {
       s = ctrl_new_set(b, _("Text"), null, 
                        //__ Options - Text:
                        _("Show bold"));
@@ -3586,6 +3614,17 @@ setup_config_box(controlbox * b)
         s, _("xterm"),
         bold_handler, &bold_like_xterm
       )->column = 2;
+     }
+     else {
+      ctrl_combobox(
+        //__ Options - Text:
+        s, _("Show bold"),
+        50, showbold_handler, 0);
+      ctrl_checkbox(
+        //__ Options - Text:
+        s, _("&Allow blinking"),
+        dlg_stdcheckbox_handler, &new_cfg.allow_blinking);
+     }
     }
   }
   else {
@@ -3630,6 +3669,7 @@ setup_config_box(controlbox * b)
       )->column = 0;
     }
     else {
+     if (0 != strstr(cfg.old_options, "blinking")) {
       ctrl_radiobuttons(
         //__ Options - Text:
         s, _("Font smoothing"), 4,
@@ -3664,6 +3704,21 @@ setup_config_box(controlbox * b)
         s, _("xterm"),
         bold_handler, &bold_like_xterm
       )->column = 2;
+     }
+     else {
+      ctrl_combobox(
+        s, _("Font smoothing"), 50, smoothing_handler, 0);
+
+      s = ctrl_new_set(b, _("Text"), null, null);
+      ctrl_combobox(
+        //__ Options - Text:
+        s, _("Show bold"),
+        50, showbold_handler, 0);
+      ctrl_checkbox(
+        //__ Options - Text:
+        s, _("&Allow blinking"),
+        dlg_stdcheckbox_handler, &new_cfg.allow_blinking);
+     }
     }
   }
 
