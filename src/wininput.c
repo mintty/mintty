@@ -1251,6 +1251,12 @@ window_toggle_max()
 }
 
 static void
+win_toggle_screen_on()
+{
+  win_keep_screen_on(!keep_screen_on);
+}
+
+static void
 window_restore()
 {
   win_maximise(0);
@@ -1415,6 +1421,12 @@ mflags_always_top()
 }
 
 static uint
+mflags_screen_on()
+{
+  return keep_screen_on ? MF_CHECKED: MF_UNCHECKED;
+}
+
+static uint
 mflags_flipscreen()
 {
   return term.show_other_screen ? MF_CHECKED : MF_UNCHECKED;
@@ -1518,6 +1530,7 @@ static struct function_def cmd_defs[] = {
   {"win-icon", {.fct = window_min}, 0},
   {"close", {.fct = win_close}, 0},
   {"win-toggle-always-on-top", {.fct = win_toggle_on_top}, mflags_always_top},
+  {"win-toggle-keep-screen-on", {.fct = win_toggle_screen_on}, mflags_screen_on},
 
   {"new", {.fct_key = newwin_begin}, 0},  // deprecated
   {"new-key", {.fct_key = newwin_begin}, 0},

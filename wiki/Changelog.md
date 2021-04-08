@@ -6,6 +6,9 @@ Terminal features
   * Escape sequences to reset progress bar colour mode to configured value.
   * Escape sequence to change progress value only.
 
+Desktop integration
+  * New user-definable function win-toggle-keep-screen-on to disable screen saver.
+
 Configuration
   * New options MousePointer, AppMousePointer.
   * Restored "Allow blinking" in Options dialog (#1097).

@@ -74,6 +74,7 @@ extern bool win_is_always_on_top;
 extern bool clipboard_token;
 extern uint dpi;
 extern int per_monitor_dpi_aware;
+extern bool keep_screen_on;
 
 extern bool click_focus_token;
 extern pos last_pos;
@@ -91,6 +92,8 @@ extern void win_init_fonts(int size);
 extern wstring win_get_font(uint findex);
 extern void win_change_font(uint findex, wstring fn);
 extern void win_font_cs_reconfig(bool font_changed);
+
+extern void win_keep_screen_on(bool);
 
 extern void win_update_scrollbar(bool inner);
 extern void win_set_scrollview(int pos, int len, int height);

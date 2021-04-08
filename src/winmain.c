@@ -96,6 +96,7 @@ static bool disable_poschange = true;
 static int zoom_token = 0;  // for heuristic handling of Shift zoom (#467, #476)
 static bool default_size_token = false;
 bool clipboard_token = false;
+bool keep_screen_on = false;
 
 // Options
 bool title_settable = true;
@@ -388,6 +389,16 @@ set_per_monitor_dpi_aware(void)
 void
 win_set_timer(void (*cb)(void), uint ticks)
 { SetTimer(wnd, (UINT_PTR)cb, ticks, null); }
+
+void
+win_keep_screen_on(bool on)
+{
+  keep_screen_on = on;
+  if (on)
+    SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED /*| ES_AWAYMODE_REQUIRED*/);
+  else
+    SetThreadExecutionState(ES_CONTINUOUS);
+}
 
 
 /*
