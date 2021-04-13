@@ -58,16 +58,17 @@ typedef enum {
   SEL_COLOUR_I         = 279,
   SEL_TEXT_COLOUR_I    = 280,
 
-  // configured Bold colour
+  // configured attribute substitution colours
   BOLD_COLOUR_I = 281,
+  BLINK_COLOUR_I = 282,
 
   // Tektronix colours
-  TEK_FG_COLOUR_I      = 282,
-  TEK_BG_COLOUR_I      = 283,
-  TEK_CURSOR_COLOUR_I  = 284,
+  TEK_FG_COLOUR_I      = 283,
+  TEK_BG_COLOUR_I      = 284,
+  TEK_CURSOR_COLOUR_I  = 285,
 
   // Number of colours
-  COLOUR_NUM = 285,
+  COLOUR_NUM = 286,
 
   // True Colour indicator
   // assert (TRUE_COLOUR % 4) == 0 so that checking x >= TRUE_COLOUR
@@ -112,13 +113,13 @@ enum {
   ATTR_INVALID    = 0x0003FFFFu,
   ATTR_BOLD       = 0x00040000u,
   ATTR_DIM        = 0x00080000u,
-  ATTR_REVERSE    = 0x00100000u,
-  ATTR_UNDER      = 0x00200000u,
-  ATTR_BLINK      = 0x00400000u,
+  ATTR_REVERSE    = 0x00400000u,
+  ATTR_UNDER      = 0x02000000u,
+  ATTR_BLINK      = 0x00100000u,
 
   ATTR_ITALIC     = 0x00800000u,
   ATTR_INVISIBLE  = 0x01000000u,
-  ATTR_BLINK2     = 0x02000000u,
+  ATTR_BLINK2     = 0x00200000u,
   ATTR_STRIKEOUT  = 0x04000000u,
   ATTR_DOUBLYUND  = 0x08000000u,
   ATTR_OVERL      = 0x10000000u,
@@ -529,6 +530,7 @@ struct term {
   bool wide_extra;
   bool disable_bidi;
   bool enable_bold_colour;
+  bool enable_blink_colour;
 
   bool sixel_display;        // true if sixel scrolling mode is off
   bool sixel_scrolls_right;  // on: sixel scrolling leaves cursor to right of graphic

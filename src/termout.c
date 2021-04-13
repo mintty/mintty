@@ -3708,11 +3708,11 @@ do_osc_control:
     if (osc % 100 == 5) {
       if (i == 0)
         i = BOLD_COLOUR_I;
+      else if (i == 2)
+        i = BLINK_COLOUR_I;
 #ifdef other_color_substitutes
       else if (i == 1)
         i = UNDERLINE_COLOUR_I;
-      else if (i == 2)
-        i = BLINK_COLOUR_I;
       else if (i == 3)
         i = REVERSE_COLOUR_I;
       else if (i == 4)
@@ -3846,9 +3846,12 @@ do_cmd(void)
     when 5:   do_colour_osc(true, 5, false);
     when 6 or 106: {
       int col, on;
-      if (sscanf(term.cmd_buf, "%u;%u", &col, &on) == 2)
+      if (sscanf(term.cmd_buf, "%u;%u", &col, &on) == 2) {
         if (col == 0)
           term.enable_bold_colour = on;
+        else if (col == 2)
+          term.enable_blink_colour = on;
+      }
     }
     when 104: do_colour_osc(true, 4, true);
     when 105: do_colour_osc(true, 5, true);

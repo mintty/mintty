@@ -2553,11 +2553,15 @@ apply_bold_colour(colour_i *pfgi)
       *pfgi |= 8;  // (BLACK|...|WHITE)_I -> BOLD_(BLACK|...|WHITE)_I
     return true;  // both thickened
   }
-  // switchable bold_colour
+  // switchable attribute colours
   if (term.enable_bold_colour && CCL_DEFAULT(*pfgi)
       && colours[BOLD_COLOUR_I] != (colour)-1
      )
     *pfgi = BOLD_COLOUR_I;
+  else if (term.enable_blink_colour && CCL_DEFAULT(*pfgi)
+      && colours[BLINK_COLOUR_I] != (colour)-1
+     )
+    *pfgi = BLINK_COLOUR_I;
   else
   // normal independent as_font/as_colour controls
   if (cfg.bold_as_colour) {
@@ -4517,6 +4521,9 @@ win_set_colour(colour_i i, colour c)
     if (i == BOLD_COLOUR_I) {
       cc(BOLD_COLOUR_I, cfg.bold_colour);
     }
+    else if (i == BLINK_COLOUR_I) {
+      cc(BLINK_COLOUR_I, cfg.blink_colour);
+    }
     else if (i == BOLD_FG_COLOUR_I) {
       bold_colour_selected = false;
       if (cfg.bold_colour != (colour)-1)
@@ -4658,8 +4665,9 @@ win_reset_colours(void)
   }
   win_set_colour(SEL_COLOUR_I, cfg.sel_bg_colour);
   win_set_colour(SEL_TEXT_COLOUR_I, cfg.sel_fg_colour);
-  // Bold colour
+  // attribute colours
   win_set_colour(BOLD_COLOUR_I, (colour)-1);
+  win_set_colour(BLINK_COLOUR_I, (colour)-1);
 #if defined(debug_bold) || defined(debug_brighten)
   string ci[] = {"FG_COLOUR_I", "BOLD_FG_COLOUR_I", "BG_COLOUR_I", "BOLD_BG_COLOUR_I", "CURSOR_TEXT_COLOUR_I", "CURSOR_COLOUR_I", "IME_CURSOR_COLOUR_I", "SEL_COLOUR_I", "SEL_TEXT_COLOUR_I", "BOLD_COLOUR_I"};
   for (int i = FG_COLOUR_I; i < COLOUR_NUM; i++)

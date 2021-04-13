@@ -50,7 +50,7 @@ typedef struct {
 
 typedef struct {
   // Looks
-  colour fg_colour, bold_colour, bg_colour, cursor_colour;
+  colour fg_colour, bold_colour, blink_colour, bg_colour, cursor_colour;
   colour tek_fg_colour, tek_bg_colour, tek_cursor_colour;
   colour tek_write_thru_colour, tek_defocused_colour;
   colour tab_fg_colour, tab_bg_colour;

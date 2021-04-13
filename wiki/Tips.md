@@ -990,11 +990,11 @@ Note: SGR codes for superscript and subscript display are subject to change.
 Note: Text attributes can be disabled with option SuppressSGR (see manual).
 
 As a fancy add-on feature for text attributes, mintty supports distinct 
-colour attributes for combining characters, so a combined character 
+(colour) attributes for combining characters, so a combined character 
 can be displayed in multiple colours. Attributes considered for this 
 purpose are default and ANSI foreground colours, palette and true-colour 
-foreground colours, dim mode and manual bold mode (BoldAsFont=false); 
-background colours and inverse mode are ignored.
+foreground colours, dim mode and manual bold mode (BoldAsFont=false), 
+and blinking; background colours and inverse mode are ignored.
 <img align=top src=https://github.com/mintty/mintty/wiki/mintty-coloured-combinings.png>
 
 

@@ -348,6 +348,7 @@ term_reset(bool full)
     term.wide_extra = false;
     term.disable_bidi = false;
     term.enable_bold_colour = cfg.bold_as_colour;
+    term.enable_blink_colour = true;
   }
 
   term.virtuallines = 0;
@@ -2092,6 +2093,9 @@ void trace_line(char * tag, termchar * chars)
 #define trace_line(tag, chars)	
 #endif
 
+#define UNLINED (UNDER_MASK | ATTR_STRIKEOUT | ATTR_OVERL | ATTR_OVERSTRIKE)
+#define UNBLINK (FONTFAM_MASK | GRAPH_MASK | UNLINED | TATTR_EMOJI)
+
 void
 term_paint(void)
 {
@@ -2321,23 +2325,30 @@ term_paint(void)
         tattr.attr &= ~TATTR_MARKED;
       }
 
-     /* 'Real' blinking ? */
-#define UNLINED (UNDER_MASK | ATTR_STRIKEOUT | ATTR_OVERL | ATTR_OVERSTRIKE)
-#define UNBLINK (FONTFAM_MASK | GRAPH_MASK | UNLINED | TATTR_EMOJI)
-      if (term.blink_is_real) {
+     /* Colour indication for blinking ? */
+      if ((tattr.attr & (ATTR_BLINK | ATTR_BLINK2))
+       && term.enable_blink_colour && colours[BLINK_COLOUR_I] != (colour)-1
+       //&& !(tattr.attr & TATTR_EMOJI)
+         )
+      {
+        if (!(tattr.attr & TATTR_EMOJI)) {
+          tattr.truefg = colours[BLINK_COLOUR_I];
+          tattr.attr = (tattr.attr & ~ATTR_FGMASK) | (TRUE_COLOUR << ATTR_FGSHIFT);
+        }
+      }
+     /* Real blinking ? */
+      else if (term.blink_is_real) {
         if (tattr.attr & ATTR_BLINK2) {
           if (term.has_focus && term.tblinker2) {
-            tchar = ' ';
-            tattr.attr &= ~(UNBLINK | ATTR_BLINK2);
-            tattr.attr |= ATTR_BLINK;  // trigger combined unblinking below
+            tattr.attr |= ATTR_INVISIBLE;
+            tattr.attr &= ~UNBLINK;
           }
         }
         // ATTR_BLINK2 should override ATTR_BLINK to avoid chaotic dual blink
         else if (tattr.attr & ATTR_BLINK) {
           if (term.has_focus && term.tblinker) {
-            tchar = ' ';
+            tattr.attr |= ATTR_INVISIBLE;
             tattr.attr &= ~UNBLINK;
-            //tattr.attr |= ATTR_BLINK;  // trigger combined unblinking below
           }
         }
       }
@@ -2974,37 +2985,66 @@ term_paint(void)
 #define dont_debug_surrogates
 
      /* Append combining and overstrike characters, combine surrogates */
-      if (d->cc_next && !(tattr.attr & ATTR_BLINK)) {
+      if (d->cc_next) {
         termchar *dd = d;
         while (dd->cc_next && textlen < maxtextlen) {
 #ifdef debug_surrogates
           wchar prev = dd->chr;
 #endif
           dd += dd->cc_next;
+          wchar tchar = dd->chr;
 
           // mark combining unless pseudo-combining surrogates
-          if (!is_low_surrogate(dd->chr)) {
+          if (!is_low_surrogate(tchar)) {
             if (tattr.attr & TATTR_EMOJI)
               break;
             attr.attr |= TATTR_COMBINING;
           }
-          if (combiningdouble(dd->chr))
+          if (combiningdouble(tchar))
             attr.attr |= TATTR_COMBDOUBL;
 
-          textattr[textlen] = dd->attr;
-          if (cfg.emojis && dd->chr == 0xFE0E)
+          // copy attribute, handle blinking
+          cattr tattr = dd->attr;
+          if ((tattr.attr & (ATTR_BLINK | ATTR_BLINK2))
+           && term.enable_blink_colour && colours[BLINK_COLOUR_I] != (colour)-1
+           && !(tattr.attr & TATTR_EMOJI)
+             )
+          {  // colour indication for blinking
+            tattr.truefg = colours[BLINK_COLOUR_I];
+            tattr.attr = (tattr.attr & ~ATTR_FGMASK) | (TRUE_COLOUR << ATTR_FGSHIFT);
+          }
+          else if (term.blink_is_real) {
+            if (tattr.attr & ATTR_BLINK2) {
+              if (term.has_focus && term.tblinker2) {
+                tattr.attr |= ATTR_INVISIBLE;
+                tattr.attr &= ~UNBLINK;
+              }
+              dirty_run = true;  // attempt to optimise this failed
+            }
+            // ATTR_BLINK2 should override ATTR_BLINK to avoid chaotic dual blink
+            else if (tattr.attr & ATTR_BLINK) {
+              if (term.has_focus && term.tblinker) {
+                tattr.attr |= ATTR_INVISIBLE;
+                tattr.attr &= ~UNBLINK;
+              }
+              dirty_run = true;  // attempt to optimise this failed
+            }
+          }
+          textattr[textlen] = tattr;
+
+          if (cfg.emojis && tchar == 0xFE0E)
             ; // skip text style variation selector
-          else if (dd->chr >= 0x2066 && dd->chr <= 0x2069)
+          else if (tchar >= 0x2066 && tchar <= 0x2069)
             // hide bidi isolate mark glyphs (if handled zero-width)
             text[textlen++] = 0x200B;  // zero width space
           else
-            text[textlen++] = dd->chr;
+            text[textlen++] = tchar;
 #ifdef debug_surrogates
           ucschar comb = 0xFFFFF;
-          if ((prev & 0xFC00) == 0xD800 && (dd->chr & 0xFC00) == 0xDC00)
-            comb = ((ucschar) (prev - 0xD7C0) << 10) | (dd->chr & 0x03FF);
+          if ((prev & 0xFC00) == 0xD800 && (tchar & 0xFC00) == 0xDC00)
+            comb = ((ucschar) (prev - 0xD7C0) << 10) | (tchar & 0x03FF);
           printf("comb (%04X) %04X %04X (%05X) %11llX\n", 
-                 d->chr, prev, dd->chr, comb, attr.attr);
+                 d->chr, prev, tchar, comb, attr.attr);
 #endif
         }
       }

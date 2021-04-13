@@ -38,6 +38,7 @@ const config default_cfg = {
   // Looks
   .fg_colour = 0xBFBFBF,
   .bold_colour = (colour)-1,
+  .blink_colour = (colour)-1,
   .bg_colour = 0x000000,
   .cursor_colour = 0xBFBFBF,
   .tek_fg_colour = (colour)-1,
@@ -296,6 +297,7 @@ options[] = {
 
   // Looks
   {"BoldColour", OPT_COLOUR, offcfg(bold_colour)},
+  {"BlinkColour", OPT_COLOUR, offcfg(blink_colour)},
   {"CursorColour", OPT_COLOUR, offcfg(cursor_colour)},
   {"TekForegroundColour", OPT_COLOUR, offcfg(tek_fg_colour)},
   {"TekBackgroundColour", OPT_COLOUR, offcfg(tek_bg_colour)},
@@ -2456,7 +2458,8 @@ download_scheme(char * url)
      (colour)-1, (colour)-1, (colour)-1, (colour)-1, 
      (colour)-1, (colour)-1, (colour)-1, (colour)-1, 
      (colour)-1, (colour)-1, (colour)-1, (colour)-1};
-  colour fg_colour = (colour)-1, bold_colour = (colour)-1, bg_colour = (colour)-1;
+  colour fg_colour = (colour)-1, bg_colour = (colour)-1;
+  colour bold_colour = (colour)-1, blink_colour = (colour)-1;
   colour cursor_colour = (colour)-1, sel_fg_colour = (colour)-1, sel_bg_colour = (colour)-1;
   colour underl_colour = (colour)-1, hover_colour = (colour)-1;
   // construct a ColourScheme string
@@ -2479,6 +2482,7 @@ download_scheme(char * url)
     schapp("ForegroundColour", fg_colour);
     schapp("BackgroundColour", bg_colour);
     schapp("BoldColour", bold_colour);
+    schapp("BlinkColour", blink_colour);
     schapp("CursorColour", cursor_colour);
     schapp("UnderlineColour", underl_colour);
     schapp("HoverColour", hover_colour);
