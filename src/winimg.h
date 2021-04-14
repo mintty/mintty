@@ -7,7 +7,8 @@ extern bool winimg_new(imglist * * ppimg, char * id,
                        unsigned char * pixels, uint len,
                        int top, int left, int width, int height,
                        int pixelwidth, int pixelheight, bool preserveAR,
-                       int crop_x, int crop_y, int crop_w, int crop_h);
+                       int crop_x, int crop_y, int crop_w, int crop_h,
+                       int attr);
 extern void winimg_destroy(imglist * img);
 extern void winimg_lazyinit(imglist * img);
 extern void winimgs_paint(void);

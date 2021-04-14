@@ -399,6 +399,9 @@ typedef struct imglist {
   int cwidth, cheight;
   // image: cropping
   int crop_x, crop_y, crop_width, crop_height;
+
+  // text attributes to be considered (blinking)
+  int attr;
 } imglist;
 
 typedef struct {

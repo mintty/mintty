@@ -244,7 +244,8 @@ bool
 winimg_new(imglist **ppimg, char * id, unsigned char * pixels, uint len,
            int left, int top, int width, int height,
            int pixelwidth, int pixelheight, bool preserveAR,
-           int crop_x, int crop_y, int crop_width, int crop_height)
+           int crop_x, int crop_y, int crop_width, int crop_height,
+           int attr)
 {
   imglist *img = (imglist *)malloc(sizeof(imglist));
   //printf("winimg alloc %d -> [%d]\n", (int)sizeof(imglist), img->imgi);
@@ -272,6 +273,7 @@ winimg_new(imglist **ppimg, char * id, unsigned char * pixels, uint len,
   img->next = NULL;
   img->prev = NULL;
   img->strage = NULL;
+  img->attr = attr;
 
   img->len = len;
   if (len) {  // image format, not sixel
@@ -671,6 +673,18 @@ winimgs_paint(void)
 #endif
   for (; img; img = next) {
     next = backward_img_traversal ? img->prev : img->next;
+
+    // blink attribute
+    if (term.blink_is_real && term.has_focus) {
+      if (img->attr & ATTR_BLINK2) {
+        if (term.tblinker2)
+          continue;
+      }
+      else if (img->attr & ATTR_BLINK) {
+        if (term.tblinker)
+          continue;
+      }
+    }
 
     imglist * destrimg = 0;
 

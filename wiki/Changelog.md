@@ -2,6 +2,7 @@ Terminal features
   * Revised and fixed handling of blink attribute (~#1097).
   * Coloured blink substitution display (xterm), escape sequences OSC 5/6;2.
   * Support distinct blink attribute for base and combining characters.
+  * Apply blink attribute to graphics.
   * Escape sequence OSC 22 to set mouse pointer shape (xterm 367).
   * Escape sequences DCS=1/2s for atomic/synchronous screen update (~#1098).
   * Support progress detection (for implicit progress bar) also if iconized.
