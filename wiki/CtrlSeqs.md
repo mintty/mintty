@@ -516,6 +516,7 @@ in order to avoid screen flickering in certain situations of display update.
 | `^[P=1;`_N_`s^[\` | suspend screen update for _N_ ms, max 420 ms        |
 | `^[P=2s^[\`       | update screen (flush output), end update suspending |
 
+
 ## Image support ##
 
 In addition to the legacy Sixel feature, mintty supports graphic image display 
