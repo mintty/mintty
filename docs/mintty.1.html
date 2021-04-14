@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Tue Mar 16 10:49:12 2021 -->
+<!-- CreationDate: Thu Apr 15 14:41:28 2021 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -128,9 +128,9 @@ preferable.</p>
 <p style="margin-left:22%;">Use the given directory to
 check for resource subdirectories (<i>themes</i>,
 <i>sounds</i>, <i>lang</i>, <i>emojis</i>, <i>icon</i>,
-<i>fonts</i>); also read settings from the configuration
-file <i>DIRNAME</i>/<b>config</b>, in addition to the
-default config files, and save configuration changes
+<i>fonts</i>, <i>pointers</i>); also read settings from the
+configuration file <i>DIRNAME</i>/<b>config</b>, in addition
+to the default config files, and save configuration changes
 here.</p>
 
 <p style="margin-left:11%;"><b>--dir</b>
@@ -1181,7 +1181,8 @@ can be enabled on the Keys pane of the options dialog. <br>
 despite Shift) <br>
 &ndash; <b>Ctrl+Shift+S</b>: Flip screen <br>
 &ndash; <b>Ctrl+Shift+O</b>: Toggle scrollbar <br>
-&ndash; <b>Ctrl+Shift+P</b>: Cycle pointer styles <br>
+&ndash; <b>Ctrl+Shift+P</b>: Cycle text pointer (cursor)
+styles <br>
 &ndash; <b>Ctrl+Shift+T</b>: Cycle or tune transparency
 levels</p>
 
@@ -1255,6 +1256,10 @@ information properly.</p>
 mode, the context menu provides the Tektronix mode functions
 RESET (like xterm), PAGE (minor reset), and COPY
 (&quot;hard&quot; copy to image file).</p>
+
+<p style="margin-left:11%; margin-top: 1em">While in Tek
+mode, the OSC 50 control sequence changes the Tek font. Tek
+mode text output supports Unicode.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Emoji
 display support</b> <br>
@@ -1774,6 +1779,17 @@ colour can also be set, modified, enabled or disabled with
 the respective xterm OSC control sequences. <br>
 (Corresponds to the xterm resources <b>colorBD</b> and
 <b>colorBDMode</b>.)</p>
+
+<p style="margin-left:11%;"><b>Blink substitution
+colour</b> (BlinkColour=)</p>
+
+<p style="margin-left:22%;">This hidden option sets a
+colour to be used to render the blink attribute of text,
+overriding real blinking. The blink substitution colour can
+also be set, modified, enabled or disabled with the
+respective xterm OSC control sequences. <br>
+(Corresponds to the xterm resources <b>colorBL</b> and
+<b>colorBLMode</b>.)</p>
 
 <p style="margin-left:11%;"><b>Bold as special
 background</b> (BoldAsRainbowSparkles=false)</p>
@@ -2458,11 +2474,13 @@ mintty startup. Choices available from the dropdown list are
 
 <p style="margin-left:22%; margin-top: 1em">The last three
 options are only offered if the respective terminfo entries
-are installed in the system. The *<b>-direct</b> entries
-provide terminfo capabilities to set true-colour (24 bit
-colour) attributes. Note, however, that this only affects
-usage of the <i>terminfo</i> API to drive the terminal; the
-respective control sequences are always available.</p>
+are installed in the system (WSL distribution with options
+--wsl/--WSL). The *<b>-direct</b> entries provide terminfo
+capabilities to set true-colour (24 bit colour) attributes.
+Note, however, that this only affects usage of the
+<i>terminfo</i> API to drive the terminal; the respective
+control sequences are always available and applications are
+free to use them directly.</p>
 
 <p style="margin-left:22%; margin-top: 1em">If the setting
 contains &quot;vt220&quot; or higher, xterm VT220-style
@@ -2863,6 +2881,8 @@ this setting will disable extended or enhanced parts of the
 Options dialog. <br>
 &ndash; <b>bold</b> Disable &quot;Show bold&quot; section
 with &quot;xterm&quot; pseudo option. <br>
+&ndash; <b>blinking</b> Disable &quot;Allow blinking&quot;.
+<br>
 &ndash; <b>emoji</b> Disable emoji style section in
 &quot;Text&quot; panel. <br>
 &ndash; <b>selection</b> Disable separate
@@ -3299,6 +3319,8 @@ mode <br>
 &ndash; <b>win-restore</b>: resizes to normal size <br>
 &ndash; <b>win-toggle-max</b>: toggles maximized / normal
 size <br>
+&ndash; <b>win-toggle-keep-screen-on</b>: toggles disabling
+of screen saver (use with care) <br>
 &ndash; <b>win-toggle-always-on-top</b>: toggles window
 always-on-top <br>
 &ndash; <b>win-icon</b>: turns window into icon <br>
@@ -3665,6 +3687,21 @@ that keeps the terminal open after its child process
 terminated, this option prefixes the window title with its
 string, for example -o ExitTitle=&quot;TERMINATED:
 &quot;.</p>
+
+<p style="margin-left:11%;"><b>Mouse pointer styles</b>
+(MousePointer=ibeam, AppMousePointer=arrow)</p>
+
+<p style="margin-left:22%;">This setting defines the mouse
+position indicator (i.e. not the text cursor) from the given
+resource. Note that mintty maintains two different mouse
+pointer shapes, to distinguish application mouse reporting
+modes. Valid values are Windows predefined cursor names
+(appstarting, arrow, cross, hand, help, ibeam, icon, no,
+size, sizeall, sizenesw, sizens, sizenwse, sizewe, uparrow,
+wait). or cursor file names which are looked up in
+subdirectory <i>pointers</i> of a mintty resource directory;
+supported file types are .cur, .ico, .ani. (Corresponds to
+the xterm resource <b>pointerShape</b>.)</p>
 
 <p style="margin-left:11%;"><b>Configure document opening
 by mouse click</b> (OpeningClicks=1)</p>
@@ -4215,7 +4252,10 @@ recommendation (
 
 <p style="margin-left:11%; margin-top: 1em">Mintty also
 provides emulation of the Tektronix 4014 vector graphics
-terminal.</p>
+terminal, including &quot;writethru&quot; and
+&quot;defocused&quot; beam modes (for which colour
+indication can be configured), write beam glow and GIN mode,
+and APL character mode.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Mintty is not
 as configurable as xterm; it offers essential configuration

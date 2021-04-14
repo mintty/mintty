@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-16 10:50+0100\n"
+"POT-Creation-Date: 2021-04-15 13:48+0200\n"
 "PO-Revision-Date: 2020-05-07 13:12+0200\n"
 "Last-Translator: Milo Ivir <mail@milotype.de>\n"
 "Language-Team: \n"
@@ -20,7 +20,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
 
-#: charset.c:242 charset.c:253 winmain.c:4637 winmain.c:4749 winmain.c:4756
+#: charset.c:242 charset.c:253 winmain.c:4725 winmain.c:4837 winmain.c:4844
 msgid "(Default)"
 msgstr "(Standardno)"
 
@@ -69,51 +69,51 @@ msgid "Error: Could not fork child daemon"
 msgstr "Greška: Nije bilo moguće napraviti kopiju podređenog demona"
 
 #. __ Options - Text - Emojis - Placement
-#: config.c:608
+#: config.c:613
 msgid "stretch"
 msgstr "rastegni"
 
 #. __ Options - Text - Emojis - Placement
-#: config.c:610
+#: config.c:615
 msgid "align"
 msgstr "poravnaj"
 
 #. __ Options - Text - Emojis - Placement
-#: config.c:612
+#: config.c:617
 msgid "middle"
 msgstr "sredina"
 
 #. __ Options - Text - Emojis - Placement
-#: config.c:614
+#: config.c:619
 msgid "full"
 msgstr "potpuno"
 
 #. __ %s: unknown option name
-#: config.c:773
+#: config.c:778
 msgid "Ignoring unknown option '%s'"
 msgstr "Zanemaruje se nepoznata opcija „%s”"
 
-#: config.c:818 config.c:847
+#: config.c:823 config.c:852
 msgid "Internal error: too many options"
 msgstr "Interna greška: previše opcija"
 
-#: config.c:834
+#: config.c:839
 msgid "Internal error: too many options/comments"
 msgstr "Interna greška: previše opcija/komentara"
 
 #. __ %2$s: option name, %1$s: invalid value
 #. report errors only during initialisation
-#: config.c:989
+#: config.c:994
 msgid "Ignoring invalid value '%s' for option '%s'"
 msgstr "Zanemaruje se nevaljana vrijednost „%s” za opciju „%s”"
 
 #. __ %s: option name
-#: config.c:1001
+#: config.c:1006
 msgid "Ignoring option '%s' with missing value"
 msgstr "Zanemaruje se opcija „%s” s nedostajućom vrijednosti"
 
 #. __ %1$s: config file name, %2$s: error message
-#: config.c:1658
+#: config.c:1663
 msgid ""
 "Could not save options to '%s':\n"
 "%s."
@@ -121,163 +121,182 @@ msgstr ""
 "Nije bilo moguće spremiti opcije u „%s”:\n"
 "%s."
 
-#: config.c:2085
+#: config.c:2090
 msgid "◇ None (printing disabled) ◇"
 msgstr "◇ Bez (ispisivanje deaktivirano) ◇"
 
-#: config.c:2087
+#: config.c:2092
 msgid "◆ Default printer ◆"
 msgstr "◆ Standardni pisač ◆"
 
 #. __ UI language
-#: config.c:2196
+#: config.c:2201
 msgid "– None –"
 msgstr "– Neodređeno –"
 
-#: config.c:2197
+#: config.c:2202
 msgid "@ Windows language @"
 msgstr "@ Jezik Windowsa @"
 
-#: config.c:2198
+#: config.c:2203
 msgid "* Locale environm. *"
 msgstr "* Jezik okruženja *"
 
-#: config.c:2199
+#: config.c:2204
 msgid "= cfg. Text Locale ="
 msgstr "= postavi jezik teksta ="
 
-#: config.c:2281
+#: config.c:2309
 msgid "simple beep"
 msgstr "jednostavni zvučni signal"
 
-#: config.c:2282
+#: config.c:2310
 msgid "no beep"
 msgstr "bez zvučnog signala"
 
-#: config.c:2283
+#: config.c:2311
 msgid "Default Beep"
 msgstr "Standardni zvučni signal"
 
-#: config.c:2284
+#: config.c:2312
 msgid "Critical Stop"
 msgstr "Kritično zaustavljanje"
 
-#: config.c:2285
+#: config.c:2313
 msgid "Question"
 msgstr "Pitanje"
 
-#: config.c:2286
+#: config.c:2314
 msgid "Exclamation"
 msgstr "Upozorenje"
 
-#: config.c:2287
+#: config.c:2315
 msgid "Asterisk"
 msgstr "Važno"
 
-#: config.c:2330
+#: config.c:2358
 msgid "◇ None (system sound) ◇"
 msgstr "◇ Bez (zvuk sustava) ◇"
 
 #. __ terminal theme / colour scheme
 #. __ emojis style
-#: config.c:2698 config.c:3248
+#: config.c:2728 config.c:3278
 msgid "◇ None ◇"
 msgstr "◇ Bez ◇"
 
 #. __ indicator of unsaved downloaded colour scheme
-#: config.c:2701
+#: config.c:2731
 msgid "downloaded / give me a name!"
 msgstr "preuzeto / zadaj ime!"
 
-#: config.c:2806
+#: config.c:2836
 msgid "Could not load web theme"
 msgstr "Nije bilo moguće učitati temu"
 
-#: config.c:2863
+#: config.c:2893
 msgid "Cannot write theme file"
 msgstr "Nije moguće zapisati datoteku teme"
 
-#: config.c:2868
+#: config.c:2898
 msgid "Cannot store theme file"
 msgstr "Nije moguće spremiti datoteku teme"
 
+#. __ Options - Text:
+#: config.c:3355 config.c:3608 config.c:3698
+msgid "as font"
+msgstr "kao font"
+
+#. __ Options - Text:
+#: config.c:3356 config.c:3613 config.c:3703
+msgid "as colour"
+msgstr "kao boja"
+
+#: config.c:3357
+msgid "as font & as colour"
+msgstr "kao font & boju"
+
+#. __ Options - Text:
+#: config.c:3358 config.c:3618 config.c:3708
+msgid "xterm"
+msgstr "xterm"
+
 #. __ Dialog button - show About text
-#: config.c:3381
+#: config.c:3439
 msgid "About..."
 msgstr "Informacije …"
 
 #. __ Dialog button - save changes
-#: config.c:3384
+#: config.c:3442
 msgid "Save"
 msgstr "Spremi"
 
 #. __ Dialog button - cancel
-#: config.c:3388 winctrls.c:1254 windialog.c:872
+#: config.c:3446 winctrls.c:1254 windialog.c:872
 msgid "Cancel"
 msgstr "Odustani"
 
 #. __ Dialog button - apply changes
-#: config.c:3392
+#: config.c:3450
 msgid "Apply"
 msgstr "Primijeni"
 
 #. __ Dialog button - take notice
-#: config.c:3396 windialog.c:869
+#: config.c:3454 windialog.c:869
 msgid "I see"
 msgstr "Vidim"
 
 #. __ Dialog button - confirm action
-#: config.c:3398 winctrls.c:1253 windialog.c:871
+#: config.c:3456 winctrls.c:1253 windialog.c:871
 msgid "OK"
 msgstr "U redu"
 
 #. __ Options - Looks: treeview label
-#: config.c:3405 config.c:3436 config.c:3477
+#: config.c:3463 config.c:3494 config.c:3535
 msgid "Looks"
 msgstr "Izgled"
 
 #. __ Options - Looks: panel title
-#: config.c:3407
+#: config.c:3465
 msgid "Looks in Terminal"
 msgstr "Izgled u terminalu"
 
 #. __ Options - Looks: section title
-#: config.c:3409
+#: config.c:3467
 msgid "Colours"
 msgstr "Boje"
 
 #. __ Options - Looks:
-#: config.c:3413
+#: config.c:3471
 msgid "&Foreground..."
 msgstr "&Prednja …"
 
 #. __ Options - Looks:
-#: config.c:3417
+#: config.c:3475
 msgid "&Background..."
 msgstr "&Stražnja …"
 
 #. __ Options - Looks:
-#: config.c:3421
+#: config.c:3479
 msgid "&Cursor..."
 msgstr "Po&kazivač …"
 
 #. __ Options - Looks:
-#: config.c:3425
+#: config.c:3483
 msgid "&Theme"
 msgstr "&Tema"
 
 #. __ Options - Looks: name of web service
-#: config.c:3430
+#: config.c:3488
 msgid "Color Scheme Designer"
 msgstr "Color Scheme Designer"
 
 #. __ Options - Looks: store colour scheme
-#: config.c:3433 winctrls.c:461
+#: config.c:3491 winctrls.c:461
 msgid "Store"
 msgstr "Spremi"
 
 #. __ Options - Looks: section title
-#: config.c:3438
+#: config.c:3496
 msgid "Transparency"
 msgstr "Prozirnost"
 
@@ -285,258 +304,243 @@ msgstr "Prozirnost"
 #. __ Options - Keys:
 #. __ Options - Mouse:
 #. __ Options - Window:
-#: config.c:3444 config.c:3756 config.c:3919 config.c:4110
+#: config.c:3502 config.c:3842 config.c:4005 config.c:4196
 msgid "&Off"
 msgstr "&Isklj."
 
 #. __ Options - Looks: transparency
-#: config.c:3446
+#: config.c:3504
 msgid "&Low"
 msgstr "&Niska"
 
 #. __ Options - Looks: transparency, short form of radio button label "Medium"
-#: config.c:3448
+#: config.c:3506
 msgid "&Med."
 msgstr "&Srednja"
 
 #. __ Options - Looks: transparency
-#: config.c:3450
+#: config.c:3508
 msgid "&Medium"
 msgstr "&Srednja"
 
 #. __ Options - Looks: transparency
-#: config.c:3452
+#: config.c:3510
 msgid "&High"
 msgstr "&Visoka"
 
 #. __ Options - Looks: transparency
-#: config.c:3454
+#: config.c:3512
 msgid "Gla&ss"
 msgstr "Sta&klo"
 
 #. __ Options - Looks: transparency
-#: config.c:3461 config.c:3472
+#: config.c:3519 config.c:3530
 msgid "Opa&que when focused"
 msgstr "&Neprozirno pri fokusu"
 
 #. __ Options - Looks: transparency
-#: config.c:3466
+#: config.c:3524
 msgid "Blu&r"
 msgstr "&Zamuti"
 
 #. __ Options - Looks: section title
-#: config.c:3479
+#: config.c:3537
 msgid "Cursor"
 msgstr "Pokazivač"
 
 #. __ Options - Looks: cursor type
-#: config.c:3484
+#: config.c:3542
 msgid "Li&ne"
 msgstr "&Crta"
 
 #. __ Options - Looks: cursor type
-#: config.c:3486
+#: config.c:3544
 msgid "Bloc&k"
 msgstr "Pravo&kutnik"
 
 #. __ Options - Looks: cursor type
-#: config.c:3489
+#: config.c:3547
 msgid "Bo&x"
 msgstr ""
 
 #. __ Options - Looks: cursor type
-#: config.c:3492
+#: config.c:3550
 msgid "&Underscore"
 msgstr "&Podvlaka"
 
 #. __ Options - Looks: cursor feature
-#: config.c:3497
+#: config.c:3555
 msgid "Blinkin&g"
 msgstr "&Treperenje"
 
 #. __ Options - Text: treeview label
-#: config.c:3504 config.c:3529 config.c:3543 config.c:3572 config.c:3621
-#: config.c:3643 config.c:3656 config.c:3664
+#: config.c:3562 config.c:3587 config.c:3602 config.c:3642 config.c:3692
+#: config.c:3716 config.c:3729 config.c:3742 config.c:3750
 msgid "Text"
 msgstr "Tekst"
 
 #. __ Options - Text: panel title
-#: config.c:3506
+#: config.c:3564
 msgid "Text and Font properties"
 msgstr "Svojstva teksta i fonta"
 
 #. __ Options - Text: section title
-#: config.c:3508
+#: config.c:3566
 msgid "Font"
 msgstr "Font"
 
 #. __ Options - Text:
 #. __ Font chooser:
-#: config.c:3516 winctrls.c:1264
+#: config.c:3574 winctrls.c:1264
 msgid "Font st&yle:"
 msgstr "St&il fonta:"
 
 #. __ Font chooser:
-#: config.c:3521 winctrls.c:1266
+#: config.c:3579 winctrls.c:1266
 msgid "&Size:"
 msgstr "&Veličina:"
 
 #. __ Options - Text:
-#: config.c:3533 config.c:3591
+#: config.c:3591 config.c:3661
 msgid "Sho&w bold as font"
 msgstr "Pri&kaži podebljano kao font"
 
 #. __ Options - Text:
-#: config.c:3538 config.c:3596
+#: config.c:3596 config.c:3666
 msgid "Show &bold as colour"
 msgstr "Prikaži pode&bljano kao boju"
 
 #. __ Options - Text:
-#: config.c:3545 config.c:3623
+#: config.c:3604 config.c:3625 config.c:3694 config.c:3719
 msgid "Show bold"
 msgstr "Prikaži podebljano"
 
 #. __ Options - Text:
-#: config.c:3549 config.c:3627
-msgid "as font"
-msgstr "kao font"
+#: config.c:3629 config.c:3671 config.c:3723
+msgid "&Allow blinking"
+msgstr "Dozvoli &treperenje"
 
 #. __ Options - Text:
-#: config.c:3554 config.c:3632
-msgid "as colour"
-msgstr "kao boja"
-
-#. __ Options - Text:
-#: config.c:3559 config.c:3637
-msgid "xterm"
-msgstr "xterm"
-
-#. __ Options - Text:
-#: config.c:3576 config.c:3608
+#: config.c:3646 config.c:3679 config.c:3714
 msgid "Font smoothing"
 msgstr "Zaglađivanje fonta"
 
 #. __ Options - Text:
-#: config.c:3579 config.c:3611 config.c:3807 config.c:3846 config.c:4001
-#: config.c:4014
+#: config.c:3649 config.c:3682 config.c:3893 config.c:3932 config.c:4087
+#: config.c:4100
 msgid "&Default"
 msgstr "&Standardno"
 
 #. __ Options - Text:
 #. __ Options - Window: scrollbar
-#: config.c:3581 config.c:3613 config.c:3805 config.c:3844 config.c:3999
-#: config.c:4012 config.c:4091
+#: config.c:3651 config.c:3684 config.c:3891 config.c:3930 config.c:4085
+#: config.c:4098 config.c:4177
 msgid "&None"
 msgstr "&Bez"
 
 #. __ Options - Text:
-#: config.c:3583 config.c:3615 config.c:3806 config.c:3845 config.c:4000
-#: config.c:4013
+#: config.c:3653 config.c:3686 config.c:3892 config.c:3931 config.c:4086
+#: config.c:4099
 msgid "&Partial"
 msgstr "&Djelomično"
 
 #. __ Options - Text:
-#: config.c:3585 config.c:3617 config.c:3808 config.c:3847 config.c:4002
-#: config.c:4015
+#: config.c:3655 config.c:3688 config.c:3894 config.c:3933 config.c:4088
+#: config.c:4101
 msgid "&Full"
 msgstr "&Potpuno"
 
-#. __ Options - Text:
-#: config.c:3601
-msgid "&Allow blinking"
-msgstr "Dozvoli &treperenje"
-
-#: config.c:3646
+#: config.c:3732
 msgid "&Locale"
 msgstr "&Jezik"
 
-#: config.c:3649
+#: config.c:3735
 msgid "&Character set"
 msgstr "&Skup znakova"
 
 #. __ Options - Text - Emojis:
 #. __ Options - Text:
-#: config.c:3660 config.c:3666
+#: config.c:3746 config.c:3752
 msgid "Emojis"
 msgstr "Emoji znakovi"
 
 #. __ Options - Text - Emojis:
-#: config.c:3670
+#: config.c:3756
 msgid "Style"
 msgstr "Stil"
 
 #. __ Options - Text - Emojis:
-#: config.c:3675
+#: config.c:3761
 msgid "Placement"
 msgstr "Smještaj"
 
 #. __ Options - Keys: treeview label
-#: config.c:3683 config.c:3708 config.c:3743 config.c:3761
+#: config.c:3769 config.c:3794 config.c:3829 config.c:3847
 msgid "Keys"
 msgstr "Tipke"
 
 #. __ Options - Keys: panel title
-#: config.c:3685
+#: config.c:3771
 msgid "Keyboard features"
 msgstr "Funkcije tipki"
 
 #. __ Options - Keys:
-#: config.c:3689
+#: config.c:3775
 msgid "&Backarrow sends ^H"
 msgstr "&Pozadine šalje ^H"
 
 #. __ Options - Keys:
-#: config.c:3694
+#: config.c:3780
 msgid "&Delete sends DEL"
 msgstr "&Brisanje šalje DEL"
 
 #. __ Options - Keys:
-#: config.c:3699
+#: config.c:3785
 msgid "Ctrl+LeftAlt is Alt&Gr"
 msgstr "Ctrl+LijeviAlt je Alt&Gr"
 
 #. __ Options - Keys:
-#: config.c:3704
+#: config.c:3790
 msgid "AltGr is also Alt"
 msgstr "AltGr je također Alt"
 
 #. __ Options - Keys: section title
-#: config.c:3710
+#: config.c:3796
 msgid "Shortcuts"
 msgstr "Prečaci"
 
 #. __ Options - Keys:
-#: config.c:3713
+#: config.c:3799
 msgid "Cop&y and Paste (Ctrl/Shift+Ins)"
 msgstr "&Kopiraj i umetni (Ctrl/Shift+umetni)"
 
 #. __ Options - Keys:
-#: config.c:3718
+#: config.c:3804
 msgid "&Menu and Full Screen (Alt+Space/Enter)"
 msgstr "&Izbornik i cjeloekranski prikaz (Alt+razmaknica/Enter)"
 
 #. __ Options - Keys:
-#: config.c:3723
+#: config.c:3809
 msgid "&Switch window (Ctrl+[Shift+]Tab)"
 msgstr "&Mijenjanje prozora (Ctrl+[Shift+]Tab)"
 
 #. __ Options - Keys:
-#: config.c:3728
+#: config.c:3814
 msgid "&Zoom (Ctrl+plus/minus/zero)"
 msgstr "&Zumiranje (Ctrl+plus/minus/nula)"
 
 #. __ Options - Keys:
-#: config.c:3733
+#: config.c:3819
 msgid "&Alt+Fn shortcuts"
 msgstr "&Alt+Fn prečaci"
 
 #. __ Options - Keys:
-#: config.c:3738
+#: config.c:3824
 msgid "&Ctrl+Shift+letter shortcuts"
 msgstr "&Ctrl+Shift+slovo prečaci"
 
 #. __ Options - Keys: section title
-#: config.c:3745 config.c:3763
+#: config.c:3831 config.c:3849
 msgid "Compose key"
 msgstr "Modifikator"
 
@@ -545,7 +549,7 @@ msgstr "Modifikator"
 #. __ Options - Modifier - Shift:
 #. __ Options - Window:
 #. __ Options - Modifier - Shift:
-#: config.c:3750 config.c:3911 config.c:3930 config.c:4102 config.c:4121
+#: config.c:3836 config.c:3997 config.c:4016 config.c:4188 config.c:4207
 msgid "&Shift"
 msgstr "&Shift"
 
@@ -554,7 +558,7 @@ msgstr "&Shift"
 #. __ Options - Modifier - Control:
 #. __ Options - Window:
 #. __ Options - Modifier - Control:
-#: config.c:3752 config.c:3913 config.c:3938 config.c:4104 config.c:4129
+#: config.c:3838 config.c:3999 config.c:4024 config.c:4190 config.c:4215
 msgid "&Ctrl"
 msgstr "&Ctrl"
 
@@ -563,112 +567,112 @@ msgstr "&Ctrl"
 #. __ Options - Modifier - Alt:
 #. __ Options - Window:
 #. __ Options - Modifier - Alt:
-#: config.c:3754 config.c:3915 config.c:3934 config.c:4106 config.c:4125
+#: config.c:3840 config.c:4001 config.c:4020 config.c:4192 config.c:4211
 msgid "&Alt"
 msgstr "&Alt"
 
 #. __ Options - Mouse: treeview label
-#: config.c:3770 config.c:3859 config.c:3891
+#: config.c:3856 config.c:3945 config.c:3977
 msgid "Mouse"
 msgstr "Miš"
 
 #. __ Options - Mouse: panel title
-#: config.c:3772
+#: config.c:3858
 msgid "Mouse functions"
 msgstr "Funkcije miša"
 
 #. __ Options - Mouse:
 #. __ Options - Selection:
-#: config.c:3780 config.c:3813 config.c:3829 config.c:3979
+#: config.c:3866 config.c:3899 config.c:3915 config.c:4065
 msgid "Cop&y on select"
 msgstr "&Kopiraj pri odabiru"
 
 #. __ Options - Mouse:
 #. __ Options - Selection:
 #. __ Context menu:
-#: config.c:3785 config.c:3818 config.c:3984 wininput.c:661
+#: config.c:3871 config.c:3904 config.c:4070 wininput.c:661
 msgid "Copy with TABs"
 msgstr "Kopiraj &TABs"
 
 #. __ Options - Mouse:
 #. __ Options - Selection:
-#: config.c:3790 config.c:3823 config.c:3835 config.c:3991
+#: config.c:3876 config.c:3909 config.c:3921 config.c:4077
 msgid "Copy as &rich text"
 msgstr "Kopi&raj kao formatirani tekst"
 
 #. __ Options - Mouse:
 #. __ Options - Selection:
-#: config.c:3796 config.c:3803 config.c:3842 config.c:3997 config.c:4010
+#: config.c:3882 config.c:3889 config.c:3928 config.c:4083 config.c:4096
 msgid "Copy as &HTML"
 msgstr "Kopiraj kao &HTML"
 
 #. __ Options - Mouse:
-#: config.c:3855
+#: config.c:3941
 msgid "Clic&ks place command line cursor"
 msgstr "&Pritiskanje miša postavlja kursor u naredbenom retku"
 
 #. __ Options - Mouse: section title
-#: config.c:3861
+#: config.c:3947
 msgid "Click actions"
 msgstr "Radnje pritiskom miša"
 
 #. __ Options - Mouse:
-#: config.c:3864
+#: config.c:3950
 msgid "Right mouse button"
 msgstr "Desna tipka miša"
 
 #. __ Options - Mouse:
-#: config.c:3867 config.c:3881
+#: config.c:3953 config.c:3967
 msgid "&Paste"
 msgstr "&Umetni"
 
 #. __ Options - Mouse:
-#: config.c:3869 config.c:3883
+#: config.c:3955 config.c:3969
 msgid "E&xtend"
 msgstr "&Proširi"
 
 #. __ Options - Mouse:
-#: config.c:3871
+#: config.c:3957
 msgid "&Menu"
 msgstr "&Izbornik"
 
 #. __ Options - Mouse:
-#: config.c:3873 config.c:3887
+#: config.c:3959 config.c:3973
 msgid "Ente&r"
 msgstr "Ente&r"
 
 #. __ Options - Mouse:
-#: config.c:3878
+#: config.c:3964
 msgid "Middle mouse button"
 msgstr "Srednja tipka miša"
 
 #. __ Options - Mouse:
-#: config.c:3885
+#: config.c:3971
 msgid "&Nothing"
 msgstr "&Ništa"
 
 #. __ Options - Mouse: section title
-#: config.c:3893
+#: config.c:3979
 msgid "Application mouse mode"
 msgstr "Modus miša u programu"
 
 #. __ Options - Mouse:
-#: config.c:3896
+#: config.c:3982
 msgid "Default click target"
 msgstr "Standardni cilj pritiskanja miša"
 
 #. __ Options - Mouse: application mouse mode click target
-#: config.c:3899
+#: config.c:3985
 msgid "&Window"
 msgstr "Pro&zor"
 
 #. __ Options - Mouse: application mouse mode click target
-#: config.c:3901
+#: config.c:3987
 msgid "&Application"
 msgstr "&Program"
 
 #. __ Options - Mouse:
-#: config.c:3908 config.c:3926
+#: config.c:3994 config.c:4012
 msgid "Modifier for overriding default"
 msgstr "Modifikator za zaobilaženje standarda"
 
@@ -676,183 +680,183 @@ msgstr "Modifikator za zaobilaženje standarda"
 #. __ Options - Modifier - Win:
 #. __ Options - Window:
 #. __ Options - Modifier - Win:
-#: config.c:3917 config.c:3942 config.c:4108 config.c:4133
+#: config.c:4003 config.c:4028 config.c:4194 config.c:4219
 msgid "&Win"
 msgstr "&Win"
 
 #. __ Options - Modifier - Super:
-#: config.c:3946 config.c:4137
+#: config.c:4032 config.c:4223
 msgid "&Sup"
 msgstr "&Sup"
 
 #. __ Options - Modifier - Hyper:
-#: config.c:3950 config.c:4141
+#: config.c:4036 config.c:4227
 msgid "&Hyp"
 msgstr "&Hyp"
 
 #. __ Options - Selection: treeview label
-#: config.c:3960 config.c:3973 config.c:4034
+#: config.c:4046 config.c:4059 config.c:4120
 msgid "Selection"
 msgstr "Odabir"
 
 #. __ Options - Selection: panel title
-#: config.c:3962
+#: config.c:4048
 msgid "Selection and clipboard"
 msgstr "Odabir i međuspremnik"
 
 #. __ Options - Selection:
-#: config.c:3966
+#: config.c:4052
 msgid "Clear selection on input"
 msgstr "Ukloni odabir pri unosu"
 
 #. __ Options - Selection: section title
-#: config.c:3975
+#: config.c:4061
 msgid "Clipboard"
 msgstr "Međuspremnik"
 
 #. __ Options - Selection:
-#: config.c:4024
+#: config.c:4110
 msgid "Trim space from selection"
 msgstr "Ukloni razmak iz odabira"
 
 #. __ Options - Selection:
-#: config.c:4029
+#: config.c:4115
 msgid "Allow setting selection"
 msgstr "Dozvoli postavljanje odabira"
 
 #. __ Options - Selection: section title
 #. __ Options - Window: treeview label
-#: config.c:4036 config.c:4058 config.c:4077 config.c:4150
+#: config.c:4122 config.c:4144 config.c:4163 config.c:4236
 msgid "Window"
 msgstr "Prozor"
 
 #. __ Options - Selection:
-#: config.c:4041
+#: config.c:4127
 msgid "Show size while selecting (0..12)"
 msgstr "Prikaži veličinu tijekom označavanja (0 … 12)"
 
 #. __ Options - Selection:
-#: config.c:4048
+#: config.c:4134
 msgid "Suspend output while selecting"
 msgstr "Odgodi rezultat tijekom označavanja"
 
 #. __ Options - Window: panel title
-#: config.c:4060
+#: config.c:4146
 msgid "Window properties"
 msgstr "Svojstva prozora"
 
 #. __ Options - Window: section title
-#: config.c:4062
+#: config.c:4148
 msgid "Default size"
 msgstr "Standardna veličina"
 
 #. __ Options - Window:
-#: config.c:4066
+#: config.c:4152
 msgid "Colu&mns"
 msgstr "&Stupaca"
 
 #. __ Options - Window:
-#: config.c:4070
+#: config.c:4156
 msgid "Ro&ws"
 msgstr "&Redaka"
 
 #. __ Options - Window:
-#: config.c:4074
+#: config.c:4160
 msgid "C&urrent size"
 msgstr "Trenutačna veličina"
 
 #. __ Options - Window:
-#: config.c:4081
+#: config.c:4167
 msgid "Scroll&back lines"
 msgstr "Redaka za klizanje unatrag"
 
 #. __ Options - Window:
-#: config.c:4086
+#: config.c:4172
 msgid "Scrollbar"
 msgstr "Traka klizača"
 
 #. __ Options - Window: scrollbar
-#: config.c:4089
+#: config.c:4175
 msgid "&Left"
 msgstr "&Lijevo"
 
 #. __ Options - Window: scrollbar
-#: config.c:4093
+#: config.c:4179
 msgid "&Right"
 msgstr "&Desno"
 
 #. __ Options - Window:
-#: config.c:4099 config.c:4117
+#: config.c:4185 config.c:4203
 msgid "Modifier for scrolling"
 msgstr "Modifikator za klizanje"
 
 #. __ Options - Window:
-#: config.c:4146
+#: config.c:4232
 msgid "&PgUp and PgDn scroll without modifier"
 msgstr "&PgUp↑ i PgDn↓ pomicanje bez modifikatora"
 
 #. __ Options - Window: section title
-#: config.c:4152
+#: config.c:4238
 msgid "UI language"
 msgstr "Jezik sučelja"
 
 #. __ Options - Terminal: treeview label
-#: config.c:4162 config.c:4175 config.c:4236 config.c:4250
+#: config.c:4248 config.c:4261 config.c:4322 config.c:4336
 msgid "Terminal"
 msgstr "Terminal"
 
 #. __ Options - Terminal: panel title
-#: config.c:4164
+#: config.c:4250
 msgid "Terminal features"
 msgstr "Funkcije terminala"
 
 #. __ Options - Terminal:
-#: config.c:4168
+#: config.c:4254
 msgid "&Type"
 msgstr "&Vrsta"
 
 #. __ Options - Terminal:
-#: config.c:4172
+#: config.c:4258
 msgid "&Answerback"
 msgstr "&Odgovor"
 
 #. __ Options - Terminal: section title
-#: config.c:4177
+#: config.c:4263
 msgid "Bell"
 msgstr "Zvono"
 
 #. __ Options - Terminal: bell
-#: config.c:4184
+#: config.c:4270
 msgid "► &Play"
 msgstr "► &Sviraj"
 
 #. __ Options - Terminal: bell
-#: config.c:4190
+#: config.c:4276
 msgid "&Wave"
 msgstr "&Zvuk"
 
 #. __ Options - Terminal: bell
-#: config.c:4212 config.c:4225
+#: config.c:4298 config.c:4311
 msgid "&Flash"
 msgstr "&Zabljesni"
 
 #. __ Options - Terminal: bell
-#: config.c:4214 config.c:4229
+#: config.c:4300 config.c:4315
 msgid "&Highlight in taskbar"
 msgstr "&Istakni u programskoj traci"
 
 #. __ Options - Terminal: bell
-#: config.c:4216 config.c:4233
+#: config.c:4302 config.c:4319
 msgid "&Popup"
 msgstr "&Skočni prozor"
 
 #. __ Options - Terminal: section title
-#: config.c:4238
+#: config.c:4324
 msgid "Printer"
 msgstr "Pisač"
 
 #. __ Options - Terminal:
-#: config.c:4253
+#: config.c:4339
 msgid "Prompt about running processes on &close"
 msgstr "Upozori o aktivnim procesima pri &zatvaranju"
 
@@ -1173,32 +1177,32 @@ msgstr "Pošalji prekid retka"
 msgid "User commands"
 msgstr "Korisničke naredbe"
 
-#: winmain.c:2422
+#: winmain.c:2433
 msgid "Processes are running in session:"
 msgstr "U sesiji se izvode procesi:"
 
-#: winmain.c:2423
+#: winmain.c:2434
 msgid "Close anyway?"
 msgstr "Svejedno zatvoriti?"
 
-#: winmain.c:2559
+#: winmain.c:2647
 msgid "Try '--help' for more information"
 msgstr "Koristi „--help” za daljnje informacije"
 
-#: winmain.c:2567
+#: winmain.c:2655
 msgid "Could not load icon"
 msgstr "Nije bilo moguće učitati ikonu"
 
-#: winmain.c:4467
+#: winmain.c:4555
 msgid "Usage:"
 msgstr "Upotreba:"
 
-#: winmain.c:4468
+#: winmain.c:4556
 msgid "[OPTION]... [ PROGRAM [ARG]... | - ]"
 msgstr "[OPCIJA]… [ PROGRAM [PARAMETAR]… | - ]"
 
 #. __ help text (output of -H / --help), after initial line ("synopsis")
-#: winmain.c:4471
+#: winmain.c:4559
 msgid ""
 "Start a new terminal session running the specified program or the user's "
 "shell.\n"
@@ -1273,39 +1277,39 @@ msgstr ""
 "  -V, --verzija             Ispisuje podatke o verziji i izlazi\n"
 "Pogledaj priručnik za dodatne opcije u naredbenom retku i konfiguraciju.\n"
 
-#: winmain.c:4637 winmain.c:4749 winmain.c:4756
+#: winmain.c:4725 winmain.c:4837 winmain.c:4844
 msgid "WSL distribution '%s' not found"
 msgstr "WSL distribucija „%s” nije pronađena"
 
-#: winmain.c:4787
+#: winmain.c:4875
 msgid "Duplicate option '%s'"
 msgstr "Dupliciraj opciju „%s”"
 
-#: winmain.c:4795 winmain.c:4866
+#: winmain.c:4883 winmain.c:4954
 msgid "Unknown option '%s'"
 msgstr "Nepoznata opcija „%s”"
 
-#: winmain.c:4797
+#: winmain.c:4885
 msgid "Option '%s' requires an argument"
 msgstr "Opcija „%s” zahtijeva argument"
 
-#: winmain.c:4824
+#: winmain.c:4912
 msgid "Syntax error in position argument '%s'"
 msgstr "Greška u sintaksi za argument položaja „%s”"
 
-#: winmain.c:4835
+#: winmain.c:4923
 msgid "Syntax error in size argument '%s'"
 msgstr "Greška u sintaksi za argument veličine „%s”"
 
-#: winmain.c:4975
+#: winmain.c:5063
 msgid "Syntax error in geometry argument '%s'"
 msgstr "Greška u sintaksi za argument geometrije „%s”"
 
-#: winmain.c:5060
+#: winmain.c:5148
 msgid "Mintty could not detach from caller, starting anyway"
 msgstr "Mintty se nije mogao odvojiti od pozivatelja, svejedno se pokreče"
 
-#: winmain.c:5351
+#: winmain.c:5441
 msgid "Using default title due to invalid characters in program name"
 msgstr ""
 "Koristi se standardni naslov, jer ime programa sadrži nevaljane znakove"

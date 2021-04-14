@@ -1,3 +1,5 @@
+### 3.5.0 (16 April 2021) ###
+
 Terminal features
   * Revised and fixed handling of blink attribute (~#1097).
   * Coloured blink substitution display (xterm), escape sequences OSC 5/6;2.
