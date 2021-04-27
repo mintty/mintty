@@ -4002,8 +4002,9 @@ draw:;
       when CUR_LINE: {
         int caret_width = 1;
         SystemParametersInfo(SPI_GETCARETWIDTH, 0, &caret_width, 0);
-        if (caret_width > char_width)
-          caret_width = char_width;
+        // limit line cursor width by char_width? rather by line_width (#1101)
+        if (caret_width > line_width)
+          caret_width = line_width;
         int xx = x;
         if (attr.attr & TATTR_RIGHTCURS)
           xx += char_width - caret_width;

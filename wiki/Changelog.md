@@ -1,3 +1,6 @@
+Terminal features
+  * Limit line cursor width by width of lines (underline etc) (#1101).
+
 ### 3.5.0 (16 April 2021) ###
 
 Terminal features
