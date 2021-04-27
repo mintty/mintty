@@ -2214,6 +2214,8 @@ set_modes(bool state)
             term.curs.bidimode &= ~LATTR_BIDISEL;
           else
             term.curs.bidimode |= LATTR_BIDISEL;
+        when 2026:
+          term.suspend_update = state ? 150 : 0;
       }
     }
     else { /* SM/RM: set/reset mode */

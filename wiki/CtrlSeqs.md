@@ -505,15 +505,17 @@ two features:
 
 ## Synchronous update ##
 
-A pair of Begin/End Synchronous Update DCS sequences suspends the output 
-between them in order to be updated to the screen synchronously.
+A pair of Begin/End Synchronous Update DECSET or DCS sequences suspends 
+the output between them in order to be updated to the screen synchronously.
 The purpose is that applications can control atomic screen update, 
 in order to avoid screen flickering in certain situations of display update.
 
 | **sequence**      | **function**                                        |
 |:------------------|:----------------------------------------------------|
+| `^[[?2026h`       | suspend screen update for 150 ms                    |
 | `^[P=1s^[\`       | suspend screen update for 150 ms                    |
 | `^[P=1;`_N_`s^[\` | suspend screen update for _N_ ms, max 420 ms        |
+| `^[[?2026l`       | update screen (flush output), end update suspending |
 | `^[P=2s^[\`       | update screen (flush output), end update suspending |
 
 
