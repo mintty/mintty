@@ -117,7 +117,7 @@ LDLIBS := -mwindows $(extralibs) -lcomctl32 -limm32 -lwinmm -lwinspool -lole32 -
 
 ifdef DEBUG
 #  CPPFLAGS += -Wno-trampolines
-  CFLAGS += -g
+  CFLAGS += -g -Wno-error
 else
   CPPFLAGS += -DNDEBUG
   CFLAGS += -fomit-frame-pointer -O2
