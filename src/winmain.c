@@ -1837,11 +1837,9 @@ flash_border()
 /*
  * Bell.
  */
-void
+static void
 do_win_bell(config * conf, bool margin_bell)
 {
-  do_update();
-
   term_bell * bellstate = margin_bell ? &term.marginbell : &term.bell;
   unsigned long now = mtime();
 
@@ -1851,6 +1849,8 @@ do_win_bell(config * conf, bool margin_bell)
       )
      )
   {
+    do_update();
+
     bellstate->last_bell = now;
     bellstate->last_vol = bellstate->vol;
 
