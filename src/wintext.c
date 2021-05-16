@@ -4310,8 +4310,17 @@ win_char_width(xchar c, cattrflags attr)
 #endif
 
 #ifdef measure_width
+
+#define dont_debug_rendering
+
   int act_char_width(xchar wc)
   {
+# ifdef debug_rendering
+# include <time.h>
+    struct timespec tim;
+    clock_gettime(CLOCK_MONOTONIC, &tim);
+    ulong now = tim.tv_sec * (long)1000000000 + tim.tv_nsec;
+# endif
     HDC wid_dc = CreateCompatibleDC(dc);
     HBITMAP wid_bm = CreateCompatibleBitmap(dc, cell_width * 2, cell_height);
     HBITMAP wid_oldbm = SelectObject(wid_dc, wid_bm);
@@ -4335,6 +4344,13 @@ win_char_width(xchar c, cattrflags attr)
       text_out(wid_dc, 0, 0, ETO_OPAQUE, null, wc2, 2, &dx);
     }
     text_out_end();
+
+    int wid = 0;
+
+//#define debug_win_char_width 2
+
+#ifdef use_GetPixel
+
 # if defined(debug_win_char_width) && debug_win_char_width > 1
     for (int y = 0; y < cell_height; y++) {
       printf(" %2d|", y);
@@ -4345,8 +4361,21 @@ win_char_width(xchar c, cattrflags attr)
       printf("|\n");
     }
 # endif
-
-    int wid = 0;
+# ifdef heuristic_sparse_width_checking
+    for (int x = cell_width * 2 - 1; !wid && x >= cell_width; x -= 2)
+      for (int y = 0; y < cell_height / 2; y++) {
+        COLORREF c = GetPixel(wid_dc, x, cell_height / 2 + y);
+        if (c != RGB(0, 0, 0)) {
+          wid = x + 1;
+          break;
+        }
+        c = GetPixel(wid_dc, x, cell_height / 2 - y);
+        if (c != RGB(0, 0, 0)) {
+          wid = x + 1;
+          break;
+        }
+      }
+# else
     for (int x = cell_width * 2 - 1; !wid && x >= 0; x--)
       for (int y = 0; y < cell_height; y++) {
         COLORREF c = GetPixel(wid_dc, x, y);
@@ -4355,9 +4384,74 @@ win_char_width(xchar c, cattrflags attr)
           break;
         }
       }
+# endif
     SelectObject(wid_dc, wid_oldbm);
+
+#else // use_GetPixel
+
+    SelectObject(wid_dc, wid_oldbm);
+
+# ifdef test_preload_bitmap_info
+    BITMAP bm0;
+    GetObject(wid_bm, sizeof(BITMAP), &bm0);
+    //assuming:
+    //bm0.bmWidthBytes == bm0.bmWidth * 4 == cell_width * 8
+    //bm0.bmBitsPixel == 32
+# endif
+    BITMAPINFO bmi;
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+# ifdef test_precheck_bitmap
+    int ok = GetDIBits(wid_dc, wid_bm, 0, cell_height, 0, &bmi, DIB_RGB_COLORS);
+    printf("DI %d %d pl %d bt/px %d comp %d size %d\n",
+           bmi.bmiHeader.biWidth, bmi.bmiHeader.biHeight,
+           bmi.bmiHeader.biPlanes, bmi.bmiHeader.biBitCount,
+           bmi.bmiHeader.biCompression, bmi.bmiHeader.biSizeImage);
+    //assuming:
+    //bmi.bmiHeader.biBitCount == 32
+    //bmi.bmiHeader.biSizeImage == biWidth * biHeight * 4
+# endif
+    bmi.bmiHeader.biWidth = cell_width * 2;
+    bmi.bmiHeader.biHeight = -cell_height;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+
+    DWORD * pixels = newn(DWORD, cell_width * 2 * cell_height);
+    //int scanlines =
+    GetDIBits(wid_dc, wid_bm, 0, cell_height, pixels, &bmi, DIB_RGB_COLORS);
+
+# if defined(debug_win_char_width) && debug_win_char_width > 1
+    for (int y = 0; y < cell_height; y++) {
+      printf(" %2d|", y);
+      for (int x = 0; x < cell_width * 2; x++) {
+        COLORREF c = pixels[y * cell_width * 2 + x];
+        printf("%c", c != RGB(0, 0, 0) ? '*' : ' ');
+      }
+      printf("|\n");
+    }
+# endif
+    for (int x = cell_width * 2 - 1; !wid && x >= 0; x--)
+      for (int y = 0; y < cell_height; y++) {
+        COLORREF c = pixels[y * cell_width * 2 + x];
+        if (c != RGB(0, 0, 0)) {
+          wid = x + 1;
+          break;
+        }
+      }
+
+    free(pixels);
+
+#endif // use_GetPixel
+
     DeleteObject(wid_bm);
     DeleteDC(wid_dc);
+
+# ifdef debug_rendering
+    clock_gettime(CLOCK_MONOTONIC, &tim);
+    ulong then = tim.tv_sec * (long)1000000000 + tim.tv_nsec;
+    printf("rendered %05X %s (t %ld) width %d -> %d\n", wc, attr & TATTR_WIDE ? "wide" : "narr", then - now, wid, wid > cell_width ? 2 : 1);
+# endif
+
     return wid;
   }
 
@@ -4455,7 +4549,8 @@ win_char_width(xchar c, cattrflags attr)
     //printf(" win_char_width %04X -> %d\n", c, width);
     return width;
   }
-#endif
+
+#endif // measure_width
 
   ReleaseDC(wnd, dc);
   //printf(" win_char_width %04X -> %d\n", c, ibuf);
