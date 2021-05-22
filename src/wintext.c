@@ -2374,7 +2374,7 @@ text_out(HDC hdc, int x, int y, UINT fuOptions, RECT *prc, LPCWSTR psz, int cch,
   if (*psz >= 0x80) {
     printf("@%3d (%3d):", x, y);
     for (int i = 0; i < cch; i++)
-      printf(" %04X", psz[i]);
+      printf(" %04X<%d>", psz[i], dxs[i]);
     printf("\n");
   }
 #endif
@@ -4057,8 +4057,9 @@ draw:;
             when 6: up = cell_height - 2;
           }
           if (up) {
+            int yct = max(yy - up, yt);
             HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(_cc));
-            Rectangle(dc, x, yy - up, x + char_width, yy + 2);
+            Rectangle(dc, x, yct, x + char_width, yy + 2);
             DeleteObject(SelectObject(dc, oldbrush));
           }
           else

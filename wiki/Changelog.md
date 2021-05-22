@@ -3,8 +3,9 @@ Terminal features
   * Alternative escape sequence DECSET 2026 for synchronous screen update (#1098).
   * Optimise screen display speed on bell sound series (#1102, ~#865).
 
-Font rendering
+Rendering
   * Speedup of width detection for auto-narrowing for certain characters (#1065, #979, #892).
+  * Prevent artefacts of large-size underscore cursor (CSI 4 SP q CSI ? 6 c).
 
 ### 3.5.0 (16 April 2021) ###
 
