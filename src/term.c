@@ -2054,10 +2054,10 @@ emoji_show(int x, int y, struct emoji e, int elen, cattr eattr, ushort lattr)
     buflen = &emoji_bases[e.idx].buflen;
   }
 #ifdef debug_emojis
-  printf("emoji_show @%d:%d..%d seq %d idx %d <%ls>\n", y, x, elen, e.seq, e.idx, efn);
+  printf("emoji_show @%d:%d..%d it %d seq %d idx %d <%ls>\n", y, x, elen, !!(eattr.attr & ATTR_ITALIC), e.seq, e.idx, efn);
 #endif
   if (efn && *efn)
-    win_emoji_show(x, y, efn, bufpoi, buflen, elen, lattr);
+    win_emoji_show(x, y, efn, bufpoi, buflen, elen, lattr, eattr.attr & ATTR_ITALIC);
 }
 
 #define dont_debug_win_text_invocation

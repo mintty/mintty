@@ -2,6 +2,7 @@ Terminal features
   * Limit line cursor width by width of lines (underline etc) (#1101).
   * Alternative escape sequence DECSET 2026 for synchronous screen update (#1098).
   * Optimise screen display speed on bell sound series (#1102, ~#865).
+  * Italic emojis.
 
 Rendering
   * Speedup of width detection for auto-narrowing for certain characters (#1065, #979, #892).
