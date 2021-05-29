@@ -1015,11 +1015,14 @@ win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int ele
     /* {eM11, eM12, eM21, eM22, eDx, eDy}
        y' = x * eM12 + y * eM22 + eDy
        x' = x * eM11 + y * eM21 + eDx
-       x' = x + ( (r+h-1-y) / h) * w/4
+       x' = x + ( (r+h-1-y) / h) * w/4 - bottom-line_x-undent(w/8)
      */
     XFORM xform = (XFORM){1.0, 0.0, 0.0, 1.0, 0.0, 0.0};
     xform.eM21 = ((float)cell_width) * -0.25 / ((float)cell_height);
-    xform.eDx = ((float)cell_width) * 0.25 * ((float)(row - 1) / ((float)cell_height) + 1.0);
+    //xform.eDx = ((float)cell_width) * 0.25 * ((float)(row - 1) / ((float)cell_height) + 1.0)
+    //          - ((float)cell_width) * 0.125;
+    xform.eDx = ((float)cell_width) * 
+             (0.25 * ((float)(row - 1) / ((float)cell_height) + 1.0) - 0.125);
     coord_transformed = SetWorldTransform(dc, &xform);
   }
 
