@@ -1,4 +1,5 @@
 Terminal features
+  * Visual double-width of symbols and emojis with subsequent space (#1104, #892, #1065, #979).
   * Limit line cursor width by width of lines (underline etc) (#1101).
   * Alternative escape sequence DECSET 2026 for synchronous screen update (#1098).
   * Optimise screen display speed on bell sound series (#1102, ~#865).

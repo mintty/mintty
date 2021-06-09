@@ -884,6 +884,12 @@ but not all such characters are handled, and there is no perfect solution
 that would also comply with the locale mechanism unless the terminal would 
 support proportional fonts.
 
+### Wide symbol overhang ###
+
+For symbol characters and emojis that are single-width by definition 
+(e.g. locale) but visually double-width, double-width display is supported 
+if the character is following by an adjacent single-width space character.
+
 
 ## Font rendering and geometry ##
 
