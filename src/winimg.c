@@ -1099,7 +1099,7 @@ win_emoji_show(int x, int y, wchar * efn, void * * bufpoi, int * buflen, int ele
 {
   (void)x; (void)y;
   (void)efn; (void)bufpoi; (void)buflen;
-  (void)elen; (void)lattr;
+  (void)elen; (void)lattr; (void)italic;
 }
 
 void
