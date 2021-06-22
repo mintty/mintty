@@ -47,6 +47,7 @@ static bool killed;
 static int win_fd;
 static int pty_fd = -1;
 static int log_fd = -1;
+static struct winsize prev_winsize = (struct winsize){0, 0, 0, 0};
 bool logging = false;
 
 #if CYGWIN_VERSION_API_MINOR >= 66
@@ -219,6 +220,8 @@ void
 child_create(char *argv[], struct winsize *winp)
 {
   trace_dir(asform("child_create: %s", getcwd(malloc(MAX_PATH), MAX_PATH)));
+
+  prev_winsize = *winp;
 
   // xterm and urxvt ignore SIGHUP, so let's do the same.
   signal(SIGHUP, SIG_IGN);
@@ -793,8 +796,10 @@ child_sendw(const wchar *ws, uint wlen)
 void
 child_resize(struct winsize *winp)
 {
-  if (pty_fd >= 0)
+  if (pty_fd >= 0 && 0 != memcmp(&prev_winsize, winp, sizeof(struct winsize))) {
+    prev_winsize = *winp;
     ioctl(pty_fd, TIOCSWINSZ, winp);
+  }
 }
 
 static int

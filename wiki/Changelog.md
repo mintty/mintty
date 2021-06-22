@@ -4,6 +4,7 @@ Terminal features
   * Alternative escape sequence DECSET 2026 for synchronous screen update (#1098).
   * Optimise screen display speed on bell sound series (#1102, ~#865).
   * Italic emojis.
+  * Notify child process via iotcl also when scaling window with font size (xterm 368).
 
 Rendering
   * Speedup of width detection for auto-narrowing for certain characters (#1065, #979, #892).

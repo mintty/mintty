@@ -1488,6 +1488,7 @@ win_set_pixels(int height, int width)
     return;
 
   int sy = win_search_visible() ? SEARCHBAR_HEIGHT : 0;
+  // set window size
   SetWindowPos(wnd, null, 0, 0,
                width + extra_width + 2 * PADDING,
                height + extra_height + OFFSET + 2 * PADDING + sy,
@@ -1641,6 +1642,7 @@ make_fullscreen(void)
   MONITORINFO mi;
   get_my_monitor_info(&mi);
   RECT fr = mi.rcMonitor;
+  // set window size
   SetWindowPos(wnd, HWND_TOP, fr.left, fr.top,
                fr.right - fr.left, fr.bottom - fr.top, SWP_FRAMECHANGED);
 }
@@ -1702,6 +1704,7 @@ win_set_geom(int y, int x, int height, int width)
   else if (height > 0)
     term_height = height;
 
+  // set window size
   SetWindowPos(wnd, null, term_x, term_y,
                term_width, term_height,
                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOZORDER);
@@ -2145,6 +2148,10 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
     struct winsize ws = {rows, cols, cols * cell_width, rows * cell_height};
     child_resize(&ws);
   }
+  else {  // also notify font size changes; filter identical updates later
+    struct winsize ws = {rows, cols, cols * cell_width, rows * cell_height};
+    child_resize(&ws);
+  }
   win_invalidate_all(false);
 
   win_update_search();
@@ -2168,6 +2175,7 @@ win_fix_taskbar_max(int show_cmd)
     RECT mr = mi.rcMonitor;
     if (mr.top != ar.top || mr.bottom != ar.bottom || mr.left != ar.left || mr.right != ar.right) {
       show_cmd = SW_RESTORE;
+      // set window size
       SetWindowPos(wnd, null, 
                    ar.left, ar.top, ar.right - ar.left, ar.bottom - ar.top, 
                    SWP_NOZORDER);
@@ -2275,6 +2283,7 @@ win_update_scrollbar(bool inner)
       wr.right += GetSystemMetrics(SM_CXVSCROLL);
     else if (!scrollbar && (style & WS_VSCROLL))
       wr.right -= GetSystemMetrics(SM_CXVSCROLL);
+    // set window size
     SetWindowPos(wnd, null, 0, 0, wr.right - wr.left, wr.bottom - wr.top,
                  SWP_NOACTIVATE | SWP_NOMOVE |
                  SWP_NOZORDER | SWP_FRAMECHANGED);
@@ -2868,6 +2877,7 @@ static struct {
 #endif
 
           // (INT16) to handle multi-monitor negative coordinates properly
+          // set window size
           SetWindowPos(wnd, null,
                        //GET_X_LPARAM(lp), GET_Y_LPARAM(lp),
                        (INT16)LOWORD(lp), (INT16)HIWORD(lp),
@@ -3554,6 +3564,7 @@ static struct {
         dpi = new_dpi;
 
         int y = term.rows, x = term.cols;
+        // set window size
         SetWindowPos(wnd, 0, r->left, r->top, r->right - r->left, r->bottom - r->top,
                      SWP_NOZORDER | SWP_NOACTIVATE);
 
@@ -3601,6 +3612,7 @@ static struct {
           // decrease the window size if moving between monitors repeatedly
           long width = (r->right - r->left) * 20 / 19;
           long height = (r->bottom - r->top) * 20 / 19;
+          // set window size
           SetWindowPos(wnd, 0, r->left, r->top, width, height,
                        SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
           int y = term.rows, x = term.cols;
@@ -5600,6 +5612,7 @@ static int dynfonts = 0;
 #endif
     printpos("fin", x, y, ar);
 
+    // set window size
     SetWindowPos(wnd, NULL, x, y, width, height,
       SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
     trace_winsize("-p");
@@ -5608,6 +5621,7 @@ static int dynfonts = 0;
   if (per_monitor_dpi_aware) {
     if (cfg.x != (int)CW_USEDEFAULT) {
       // The first SetWindowPos actually set x and y
+      // set window size
       SetWindowPos(wnd, NULL, x, y, width, height,
         SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
       // Then, we are placed the windows on the correct monitor and we can
@@ -5738,6 +5752,7 @@ static int dynfonts = 0;
         win_maximise(2);
       }
       else if (si == 4) {
+        // set window size
         SetWindowPos(wnd, null, sx, sy, sdx, sdy, SWP_NOZORDER);
       }
       trace_winsize("launch");
