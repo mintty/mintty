@@ -2100,6 +2100,16 @@ void trace_line(char * tag, termchar * chars)
 #define UNLINED (UNDER_MASK | ATTR_STRIKEOUT | ATTR_OVERL | ATTR_OVERSTRIKE)
 #define UNBLINK (FONTFAM_MASK | GRAPH_MASK | UNLINED | TATTR_EMOJI)
 
+// Attributes to be ignored when checking whether to apply overhang:
+// we cannot support overhang over double-width space (TATTR_WIDE),
+// that would produce artefacts in the scrollback;
+// need to ignore:
+//	FONTFAM_MASK implementing option FontChoice
+//	TATTR_NARROW which may have been set before this check
+//	ATTR_BOLD | ATTR_DIM | TATTR_CLEAR which are used for clear space
+#define IGNOVRHANG (FONTFAM_MASK | TATTR_NARROW | ATTR_BOLD | ATTR_DIM | TATTR_CLEAR)
+#define at_cursor_pos(i, j)	((i == term.curs.y) && !((term.curs.x - j) >> 1))
+
 void
 term_paint(void)
 {
@@ -2180,9 +2190,15 @@ term_paint(void)
           if (ok && equalattrs) {
             // Emoji overhang
             if (e.len == 1 && j + 1 < term.cols
-             && iswspace(d[1].chr) && !d[1].cc_next
-             && d[1].chr != 0x1680 && d[1].chr != 0x3000
-             && d->attr.attr == d[1].attr.attr)
+             // only if followed by space
+             //&& iswspace(d[1].chr) && !d[1].cc_next
+             //&& d[1].chr != 0x1680 && d[1].chr != 0x3000
+             && d[1].chr == ' ' && !d[1].cc_next
+             // not at cursor position? does not work for emojis
+             //&& !at_cursor_pos(i, j)
+             // and significant attributes are equal
+             && !((d->attr.attr ^ d[1].attr.attr) & ~IGNOVRHANG)
+               )
             {
               d->attr.attr |= TATTR_OVERHANG;
               // also mark adjacent space to suppress its display
@@ -2489,14 +2505,21 @@ term_paint(void)
       }
 
      /* Symbol overhang */
-//#define IGNOVRHANG (FONTFAM_MASK | TATTR_WIDE)
-// we cannot support overhang over double-width space (TATTR_WIDE);
-// that would produce artefacts in the scrollback;
-#define IGNOVRHANG (FONTFAM_MASK)
+      /* Note: to consider Visible space indication for overhang
+         (not to be applied then), there are two options:
+         - move this into the second loop below (first attempt failed)
+         - cancel overhang when adjusting next position with indication
+      */
+      //if (tchar >= 0x0900) printf("@%d %08llX %08llX\n", j, tattr.attr, chars[j + 1].attr.attr);
       if (tchar >= 0x0900 && j + 1 < term.cols
-       && iswspace(chars[j + 1].chr) && !chars[j + 1].cc_next
-       && chars[j + 1].chr != 0x1680
-       && (chars[j].attr.attr & ~IGNOVRHANG) == (chars[j + 1].attr.attr & ~IGNOVRHANG)
+       // only if followed by space
+       //&& iswspace(chars[j + 1].chr) && !chars[j + 1].cc_next
+       //&& chars[j + 1].chr != 0x1680
+       && chars[j + 1].chr == ' ' && !chars[j + 1].cc_next
+       // not at cursor position? does not seem proper
+       //&& !at_cursor_pos(i, j)
+       // and significant attributes are equal
+       && !((tattr.attr ^ chars[j + 1].attr.attr) & ~IGNOVRHANG)
          )
       {
         //printf("symb @%d:%d overhang %d attr %08llX attr1 %08llX\n", i, j, !!(chars[j].attr.attr & TATTR_OVERHANG), chars[j].attr.attr, chars[j + 1].attr.attr);
@@ -2512,7 +2535,10 @@ term_paint(void)
            )
         {
           tattr.attr |= TATTR_OVERHANG;
-          tattr.attr &= ~TATTR_NARROW;
+          // clear narrowing; this is rather done in the second loop below;
+          // as we still need this information in case the overhang flag 
+          // is reset when handling the subsequent position
+          //tattr.attr &= ~TATTR_NARROW;
         }
       }
 
@@ -2559,6 +2585,11 @@ term_paint(void)
             tattr.truefg = cfg.underl_colour;
             tattr.attr |= TRUE_COLOUR << ATTR_FGSHIFT;
           }
+
+          // Symbol overhang: cancel overhang of previous character
+          // (reason to keep TATTR_NARROW in this loop)
+          if (j)
+            newchars[j - 1].attr.attr &= ~TATTR_OVERHANG;
         }
       }
 
@@ -2567,7 +2598,7 @@ term_paint(void)
       newchars[j].chr = tchar;
      /* Combining characters are still read from chars */
       newchars[j].cc_next = 0;
-    }
+    }  // end first loop
 
     if (i == curs_y) {
      /* Determine the column the cursor is on, taking bidi into account and
@@ -2604,6 +2635,7 @@ term_paint(void)
 #endif
         dispchars[curs_x].attr.attr |= ATTR_INVALID;
 
+     /* Progress indication */
       if (term.detect_progress) {
         int j = term.cols;
         while (--j > 0) {
@@ -2684,6 +2716,10 @@ term_paint(void)
         if (firstitalicstart < 0 && newchars[j].attr.attr & (ATTR_ITALIC | TATTR_OVERHANG))
           firstitalicstart = j;
       }
+
+     /* Symbol overhang: clear narrowing */
+      if (newchars[j].attr.attr & TATTR_OVERHANG)
+        newchars[j].attr.attr &= ~TATTR_NARROW;
 
       if (!dirtyrect  // test this first for potential speed-up
           && (dispchars[j].chr != newchars[j].chr
@@ -2880,7 +2916,7 @@ term_paint(void)
         }
 #endif
       }
-      else if ((attr.attr & TATTR_OVERHANG) && iswspace(*text)
+      else if ((attr.attr & TATTR_OVERHANG) && *text == ' ' //iswspace(*text)
              // skip the skipping if overhanging char was meanwhile changed
              && start && (newchars[start - 1].attr.attr & TATTR_OVERHANG)
               )
