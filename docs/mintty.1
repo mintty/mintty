@@ -2564,6 +2564,20 @@ of character tags:
 (Corresponds to the xterm resource \fBdisallowedPasteControls\fP.)
 
 .TP
+\fBLine splitting in bracketed paste mode\fP (BracketedPasteByLine=1)
+In bracketed paste mode (which embeds pasted contents in bracketing 
+escape sequences), it can be considered a security issue for the command line 
+if bracket embedding is applied only for the whole paste buffer. Therefore 
+mintty provides a configurable feature to embed each new line in 
+bracket sequences individually, controlled by this setting.
+.br
+\(en \fB0\fP never split paste contents by lines
+.br
+\(en \fB1\fP only split when not in alternate screen mode
+.br
+\(en \fB2\fP always split paste contents by lines
+
+.TP
 \fBSpecial key remapping\fP [DEPRECATED, see \fBKeyFunctions\fP]
 These options can attach a specific string to some special keys.
 If the string is a number, a corresponding Escape sequence will be generated, 

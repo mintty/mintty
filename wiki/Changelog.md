@@ -5,10 +5,14 @@ Terminal features
   * Optimise screen display speed on bell sound series (#1102, ~#865).
   * Italic emojis.
   * Notify child process via iotcl also when scaling window with font size (xterm 368).
+  * Bracketed paste mode: configurable splitting by line.
 
 Rendering
   * Speedup of width detection for auto-narrowing for certain characters (#1065, #979, #892).
   * Prevent artefacts of large-size underscore cursor (CSI 4 SP q CSI ? 6 c).
+
+Configuration
+  * New option BracketedPasteByLine.
 
 ### 3.5.0 (16 April 2021) ###
 

@@ -196,6 +196,7 @@ const config default_cfg = {
   .suppress_nrc = "",  // unused
   .suppress_wheel = "",
   .filter_paste = "",
+  .bracketed_paste_split = 1,
   .suspbuf_max = 8080,
   .printable_controls = 0,
   .char_narrowing = 75,
@@ -491,6 +492,7 @@ options[] = {
   {"SuppressNRC", OPT_STRING, offcfg(suppress_nrc)},  // unused
   {"SuppressMouseWheel", OPT_STRING, offcfg(suppress_wheel)},
   {"FilterPasteControls", OPT_STRING, offcfg(filter_paste)},
+  {"BracketedPasteByLine", OPT_INT, offcfg(bracketed_paste_split)},
   {"SuspendWhileSelecting", OPT_INT, offcfg(suspbuf_max)},
   {"PrintableControls", OPT_INT, offcfg(printable_controls)},
   {"CharNarrowing", OPT_INT, offcfg(char_narrowing)},
