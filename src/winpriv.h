@@ -136,6 +136,8 @@ extern void do_win_key_toggle(int vk, bool on);
 extern void win_csi_seq(char * pre, char * suf);
 
 extern void win_led(int led, bool set);
+extern bool get_scroll_lock(void);
+extern void sync_scroll_lock(bool locked);
 
 extern wchar * dewsl(wchar * wpath);
 extern void shell_exec(wstring wpath);

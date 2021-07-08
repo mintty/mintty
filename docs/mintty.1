@@ -581,6 +581,7 @@ It can be accessed using the scrollbar, the mouse wheel, or the keyboard.
 Hold the \fBShift\fP key while pressing the \fBUp\fP and \fBDown\fP arrow keys
 to scroll line-by-line or the \fBPageUp\fP and \fBPageDown\fP keys to scroll
 page-by-page.
+In \fIscroll mode\fP, the same keys without \fBShift\fP do the same.
 With option \fBKeyFunctions\fP, user-defined keys can be used for scrolling.
 
 If the alternate screen is active, instead of scrolling in the scrollback 
@@ -601,6 +602,24 @@ can be scrolled with Control+Alt+mouse-wheel.
 
 Note that all modes of mouse operation are overridden by 
 various "mouse tracking" modes enabled by escape sequences.
+
+.SS Scroll Lock handling
+
+The ScrollLock key is one of the most useless keys on typical PC keyboards 
+as it is mostly ignored by software nowadays, and yet has its own LED.
+However, there are two historic features that could be associated with 
+"ScrollLock". One is the VT100 NoScroll key which would hold output 
+via the terminal, the other is a Windows function to switch cursor keys 
+to screen scrolling as still used by the Excel program.
+Mintty provides both features as user-definable functions, in two variants each. 
+Functions are no-scroll and scroll-mode (referring to those two features) 
+which would be reset by any key input, and toggle-no-scroll and 
+toggle-scroll-mode which would switch the respective feature on or off.
+These functions can be attached to any user-assignable function key or 
+special key, including the ScrollLock key.
+Mintty manages the ScrollLock keyboard light to reflect either of these 
+functions activated, trying to decouple the light indication from the 
+ScrollLock key while in a mintty window.
 
 .SS Searching in the text and scrollback buffer
 
@@ -757,6 +776,8 @@ and can therefore not be used as a generic modifier.
 \(en \fBShift+middle-keypad-key\fP: Enter keyboard selecting mode
 
 Note: The modifier can be configured with setting \fBScrollMod\fP.
+
+Note: In \fIscroll mode\fP, up/down/top/bottom scrolling works without \fBShift\fP.
 
 Keyboard selecting mode: \fBAlt\fP sets rectangular selection.
 Once keyboard selecting mode is entered, the following keys are applied:
@@ -2783,6 +2804,14 @@ Supported actions are described as follows:
 .br
 \(en \fBflipscreen\fP: switches the alternate screen
 .br
+\(en \fBno-scroll\fP: locks output until input key is pressed
+.br
+\(en \fBtoggle-no-scroll\fP: toggles locked output
+.br
+\(en \fBscroll-mode\fP: enables unmodified cursor scrolling until input
+.br
+\(en \fBtoggle-scroll-mode\fP: toggles unmodified cursor key scrolling
+.br
 \(en \fBopen\fP: opens the selection, e.g. a URL or filename
 .br
 \(en \fBtoggle-logging\fP: toggles logfile logging
@@ -2888,6 +2917,21 @@ enables window switching with [Ctrl+]Alt+Left/Right keys on the
 \(en \fBKeyFunctions=S+KP_Prior:scroll_pgup;C+KP_Prior:scroll_pgup;\\
 	C+KP_Next:scroll_pgdn;S+KP_Next:scroll_pgdn\fP 
 enables scrollback scrolling with either of Shift or Control modifiers
+.br
+\(en \fBKeyFunctions=ScrollLock:toggle-no-scroll\fP enables NoScroll key
+
+.TP
+\fBManage keyboard LEDs\fP (ManageLEDs=7)
+Mintty manages the keyboard indicator lights (LEDs) for the CapsLock, Numlock, 
+and ScrollLock state in order to achieve consistent indication.
+If any of these keys have a user-defined function attached, there usage 
+shall not affect the visual keyboard modifier indication. Also, if a 
+scroll feature is activated (no-scroll or scroll-mode), the ScrollLock 
+indication shall indicate the current state of the terminal window. The 
+ScrollLock light is restored to its previous state if the terminal window 
+gets out of focus or terminates.
+This setting can disable LED management for ScrollLock (ManageLEDs=3) or 
+for all modifiers (ManageLEDs=0).
 
 .TP
 \fBUse system colours\fP (UseSystemColours=no)

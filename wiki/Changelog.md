@@ -6,6 +6,8 @@ Terminal features
   * Italic emojis.
   * Notify child process via iotcl also when scaling window with font size (xterm 368).
   * Bracketed paste mode: configurable splitting by line.
+  * New user-definable functions no-scroll, toggle-no-scroll, scroll-mode, toggle-scroll-mode.
+  * Management of the ScrollLock LED for consistence with actual status of special scroll features.
 
 Rendering
   * Speedup of width detection for auto-narrowing for certain characters (#1065, #979, #892).

@@ -3823,6 +3823,9 @@ exit_mintty(void)
       win_to_top(wnd_other);
   }
 
+  // restore ScrollLock LED
+  term_set_focus(false, false);
+
   // could there be a lag until the window is actually destroyed?
   // so we'd have to add a safeguard here...
   SetWindowTextA(wnd, "");

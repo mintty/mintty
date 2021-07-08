@@ -5083,6 +5083,8 @@ term_write(const char *buf, uint len)
     can grow up to a configurable size.
   */
   if (term_selecting() && cfg.suspbuf_max > 0) {
+    // || term.no_scroll ? -> more reliably handled in child_proc
+
     // if buffer size would be exceeded, flush; prevent uint overflow
     if (len > cfg.suspbuf_max - term.suspbuf_pos)
       term_flush();

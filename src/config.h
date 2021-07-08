@@ -113,6 +113,7 @@ typedef struct {
   string key_menu;	// VK_APPS
   string key_scrlock;	// VK_SCROLL
   wstring key_commands;
+  int manage_leds;
   // Mouse
   bool clicks_place_cursor;
   char middle_click_action;

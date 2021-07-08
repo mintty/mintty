@@ -404,6 +404,8 @@ term_reset(bool full)
   taskbar_progress(-9);
 
   term.suspend_update = 0;
+  term.no_scroll = 0;
+  term.scroll_mode = 0;
 
   term_schedule_search_update();
 
@@ -3307,9 +3309,18 @@ term_set_focus(bool has_focus, bool may_report)
     term_schedule_cblink();
   }
 
-  if (has_focus != term.focus_reported && may_report) {
+  if (has_focus != term.focus_reported) {
     term.focus_reported = has_focus;
-    if (term.report_focus)
+
+static bool sys_scroll_lock;
+    if (has_focus) {
+      sys_scroll_lock = get_scroll_lock();
+      sync_scroll_lock(term.no_scroll || term.scroll_mode);
+    }
+    else
+      sync_scroll_lock(sys_scroll_lock);
+
+    if (term.report_focus && may_report)
       child_write(has_focus ? "\e[I" : "\e[O", 3);
   }
 }

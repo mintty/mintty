@@ -407,6 +407,9 @@ child_tty(void)
 void
 child_proc(void)
 {
+  if (term.no_scroll)
+    return;
+
   for (;;) {
     if (term.paste_buffer)
       term_send_paste();
@@ -796,7 +799,7 @@ child_sendw(const wchar *ws, uint wlen)
 void
 child_resize(struct winsize *winp)
 {
-  if (pty_fd >= 0 && 0 != memcmp(&prev_winsize, winp, sizeof(struct winsize))) {
+  if (pty_fd >= 0 && memcmp(&prev_winsize, winp, sizeof(struct winsize)) != 0) {
     prev_winsize = *winp;
     ioctl(pty_fd, TIOCSWINSZ, winp);
   }
