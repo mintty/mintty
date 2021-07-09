@@ -15,6 +15,7 @@ Rendering
 
 Configuration
   * New option BracketedPasteByLine.
+  * New user-definable function new-window-cwd to clone window in current directory.
 
 ### 3.5.0 (16 April 2021) ###
 

@@ -1618,6 +1618,7 @@ static struct function_def cmd_defs[] = {
 #endif
 
   {"new-window", {IDM_NEW}, 0},
+  {"new-window-cwd", {IDM_NEW_CWD}, 0},
   //{"new-monitor", {IDM_NEW_MONI}, 0},
 
   //{"default-size", {IDM_DEFSIZE}, 0},
