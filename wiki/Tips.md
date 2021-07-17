@@ -329,16 +329,14 @@ Terminal line settings can be viewed or changed with the **[stty](http://www.ope
 
 See the stty manual for all the details, but here are a few examples. The commands can be included in shell startup files to make them permanent.
 
-To change the key for deleting a whole word from _Ctrl+W_ to _Ctrl+Backspace_:
-
+To change the key for deleting a whole word from _Ctrl+W_ to _Ctrl+Backspace_,
+you could assign the `^_` control character to the _Ctrl+Backarrow_ key:
+```
+KeyFunctions=C+Back:"^_"
+```
+and apply the following terminal line setting:
 ```
 stty werase '^_'
-```
-
-To use _Ctrl+Enter_ instead of _Ctrl+D_ for end of file:
-
-```
-stty eof '^^'
 ```
 
 To use _Pause_ and _Break_ instead of _Ctrl+Z_ and _Ctrl+C_ for suspending or interrupting a process:
@@ -355,7 +353,9 @@ echo -ne '\e[?7728h'
 
 (The standard escape character `^[` cannot be used for that purpose because it appears as the first character in many keycodes.)
 
-Unix terminal line drivers have a flow control feature that allow terminal output to be stopped with _Ctrl+S_ and restarted with _Ctrl+Q_. However, due to the scrollback feature in modern terminal emulators, there is little need for this. Hence, to make those key combinations available for other uses, disable flow control with this command:
+Unix terminal line drivers have a flow control feature that allow terminal output to be stopped with _Ctrl+S_ and restarted with _Ctrl+Q_. However, due to the scrollback feature in modern terminal emulators, there is little need for this. Hence, to make those key combinations available for other uses, disable flow control with this command
+(note that screen-oriented programs like text editors will typically 
+manage this setting themselves):
 
 ```
 stty -ixon
@@ -369,30 +369,28 @@ Keyboard input for the **[bash](http://www.gnu.org/software/bash)** shell and ot
 Anyone used to Windows key combinations for editing text might find the following bindings useful:
 
 ```
-# Ctrl+Left/Right to move by whole words
+# Ctrl+Right / Ctrl+Left to move by whole words
 "\e[1;5C": forward-word
 "\e[1;5D": backward-word
 
-# Ctrl+Backspace/Delete to delete whole words
+# Ctrl+Delete / Ctrl+Backarrow to delete whole words
 "\e[3;5~": kill-word
-"\C-_": backward-kill-word
+"\C-_": backward-kill-word      # with mintty setting KeyFunctions=C+Back:"^_"
 
-# Ctrl+Shift+Backspace/Delete to delete to start/end of the line
+# Ctrl+Shift+Delete to delete to end of the line
 "\e[3;6~": kill-line
-"\xC2\x9F": backward-kill-line  # for UTF-8
-#"\x9F": backward-kill-line     # for ISO-8859-x
-#"\e\C-_": backward-kill-line   # for any other charset
 
-# Alt-Backspace for undo
-"\e\d": undo
+# Ctrl+Shift+Backarrow to delete to start of the line
+"\e[72;6~": backward-kill-line  # with mintty setting KeyFunctions=CS+Back:72
+
+# Alt-Backarrow for undo
+"\e\d": undo                    # would be disabled by DECSET 67 sequence
 ```
-
-(The Ctrl+Shift+Backspace keycode depends on the selected character set, so the appropriate binding needs to be chosen.)
 
 Finally, a couple of bindings for convenient searching of the command history. Just enter the first few characters of a previous command and press _Ctrl+Up_ to look it up.
 
 ```
-# Ctrl+Up/Down for searching command history
+# Ctrl+Up / Ctrl+Down for searching command history
 "\e[1;5A": history-search-backward
 "\e[1;5B": history-search-forward
 ```
