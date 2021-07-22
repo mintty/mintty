@@ -1161,7 +1161,7 @@ static void
 cycle_transparency(void)
 {
   cfg.transparency = ((cfg.transparency + 16) / 16 * 16) % 128;
-  win_update_transparency(false);
+  win_update_transparency(cfg.transparency, false);
 }
 
 static void
@@ -1172,7 +1172,7 @@ set_transparency(int t)
   else if (t < 0)
     t = 0;
   cfg.transparency = t;
-  win_update_transparency(false);
+  win_update_transparency(t, false);
 }
 
 static void
@@ -1211,7 +1211,7 @@ transparency_level()
     transparency_tuned = false;
   }
   if (cfg.opaque_when_focused)
-    win_update_transparency(false);
+    win_update_transparency(cfg.transparency, false);
 }
 
 static void
@@ -2327,7 +2327,7 @@ static LONG last_key_time = 0;
       when VK_HOME  : set_transparency(previous_transparency);
       when VK_CLEAR : if (win_is_glass_available()) {
                         cfg.transparency = TR_GLASS;
-                        win_update_transparency(false);
+                        win_update_transparency(TR_GLASS, false);
                       }
       when VK_DELETE: set_transparency(0);
       when VK_INSERT: set_transparency(127);
@@ -2672,7 +2672,7 @@ static LONG last_key_time = 0;
                     transparency_tuned = false;
                   }
                   if (cfg.opaque_when_focused)
-                    win_update_transparency(false);
+                    win_update_transparency(cfg.transparency, false);
 #ifdef debug_transparency
                   printf("++%d\n", transparency_pending);
 #endif
@@ -3535,7 +3535,7 @@ win_key_up(WPARAM wp, LPARAM lp)
     if (!transparency_tuned)
       cycle_transparency();
     if (!transparency_pending && cfg.opaque_when_focused)
-      win_update_transparency(true);
+      win_update_transparency(cfg.transparency, true);
   }
 
   if (key == VK_CONTROL && term.hovering) {

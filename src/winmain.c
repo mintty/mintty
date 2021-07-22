@@ -87,6 +87,7 @@ int ini_width, ini_height;
 
 // State
 bool win_is_fullscreen;
+static bool is_init = false;
 bool win_is_always_on_top = false;
 static bool go_fullscr_on_max;
 static bool resizing;
@@ -480,6 +481,75 @@ sort_tabinfo()
   qsort(tabinfo, ntabinfo, sizeof(struct tabinfo), comp_tabinfo);
 }
 
+static void
+win_hide_other_tabs(HWND to_top)
+{
+  BOOL CALLBACK wnd_hide_tab(HWND curr_wnd, LPARAM lp)
+  {
+    HWND to_top = (HWND)lp;
+    WINDOWINFO curr_wnd_info;
+    curr_wnd_info.cbSize = sizeof(WINDOWINFO);
+    GetWindowInfo(curr_wnd, &curr_wnd_info);
+    if (class_atom == curr_wnd_info.atomWindowType) {
+      //printf("[%p] hiding %p (unless top %p)\n", wnd, curr_wnd, to_top);
+      if (curr_wnd != to_top && !IsIconic(curr_wnd)) {
+        // do not use either of 
+        // ShowWindow(SW_HIDE) or SetWindowPos(SWP_HIDEWINDOW);
+        // it is hard to restore from those states and window handling 
+        // interferes with them in a number of unpleasant ways;
+        // esp. killing such a tab window will leave the others invisible
+
+        // we could PostMessage(curr_wnd, WM_USER, 0, WIN_HIDE)
+        // and handle that; currently synchronous handling seems sufficient
+
+        // pseudo-hide background tabs by max transparency
+        LONG style = GetWindowLong(curr_wnd, GWL_EXSTYLE);
+        style |= WS_EX_LAYERED;
+        SetWindowLong(curr_wnd, GWL_EXSTYLE, style);
+        SetLayeredWindowAttributes(curr_wnd, 0, 0, LWA_ALPHA);
+      }
+    }
+    return true;
+  }
+
+  EnumWindows(wnd_hide_tab, (LPARAM)to_top);
+}
+
+// support tabbar
+int
+sync_level(void)
+{
+  if (!cfg.window)
+    return 0;  // avoid trouble if hidden
+  return max(cfg.geom_sync, cfg.tabbar);
+}
+
+static bool
+manage_tab_hiding(void)
+{
+  return sync_level() > 1;
+}
+
+/*
+  Notify tab focus. Manage hidden tab status.
+ */
+static void
+win_set_tab_focus(void)
+{
+  // guard by is_init to avoid hiding background tabs by early WM_ACTIVATE
+  if (is_init && manage_tab_hiding()) {
+    // don't need to unhide as we don't hide above
+    //ShowWindow(wnd, SW_SHOW);  // in case it was a hidden tab
+
+    // restore by clearing pseudo-hidden state
+    win_update_transparency(cfg.transparency, cfg.opaque_when_focused);
+
+    // hide background tabs
+    if (cfg.window)  // not hidden explicitly
+      win_hide_other_tabs(wnd);
+  }
+}
+
 /*
   Enumerate all windows of the mintty class.
   ///TODO: Maintain a local list of them.
@@ -818,13 +888,6 @@ win_restore_title(void)
  *  Switch to next or previous application window in z-order
  */
 
-// support tabbar
-int
-sync_level(void)
-{
-  return max(cfg.geom_sync, cfg.tabbar);
-}
-
 void
 win_post_sync_msg(HWND target, int level)
 {
@@ -884,11 +947,18 @@ win_to_top(HWND top_wnd)
   // PostMessage(top_wnd, WM_USER, 0, WIN_TOP);
 
   // one of these works:
-  SetForegroundWindow(top_wnd);
+  int fgok = SetForegroundWindow(top_wnd);
   // SetActiveWindow(top_wnd);
 
   if (IsIconic(top_wnd))
     ShowWindow(top_wnd, SW_RESTORE);
+
+  //printf("[%p] win_to_top %p ok %d\n", wnd, top_wnd, fgok);
+  if (!fgok && cfg.tabbar) {
+    // clicked on non-existent tab: clear vanished tab from tabbar
+    win_bell(&cfg);
+    update_tab_titles();
+  }
 }
 
 #define dont_debug_sessions 1
@@ -941,6 +1011,8 @@ wnd_enum_proc(HWND curr_wnd, LPARAM unused(lp))
 void
 win_switch(bool back, bool alternate)
 {
+  //printf("[%p] win_switch %d %d\n", wnd, back, alternate);
+
   // avoid being pushed behind other windows (#652)
   // but do it below, not here (wsltty#47)
   //SetWindowPos(wnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
@@ -1030,6 +1102,7 @@ static void
 win_gotab(uint n)
 {
   HWND tab = get_tab(n);
+  //printf("[%p] win_gotab %d %p\n", wnd, n, tab);
 
   // apparently, we don't have to fiddle with SetWindowPos as in win_switch
 
@@ -1040,20 +1113,11 @@ win_gotab(uint n)
     win_post_sync_msg(tab, 0);  // 0: don't minimize
   }
 
+#ifdef hide_myself
+#warning hiding and unhiding tabs is implemented elsewhere
   if (tab == wnd)
     // avoid hiding when switching to myself
     return;
-
-#ifdef hide_myself
-#warning needs to implement: unhide other when closing
-  // hide myself
-# ifdef short_hide
-  ShowWindow(wnd, SW_HIDE);
-# else
-  SetWindowPos(wnd, null, 0, 0, 0, 0,
-               SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER |
-               SWP_HIDEWINDOW | SWP_NOACTIVATE | SWP_NOCOPYBITS);
-# endif
 #endif
 }
 
@@ -2230,9 +2294,8 @@ default_size(void)
 }
 
 void
-win_update_transparency(bool opaque)
+win_update_transparency(int trans, bool opaque)
 {
-  int trans = cfg.transparency;
   if (trans == TR_GLASS)
     trans = 0;
   LONG style = GetWindowLong(wnd, GWL_EXSTYLE);
@@ -2318,7 +2381,7 @@ font_cs_reconfig(bool font_changed)
     win_adapt_term_size(true, false);
   }
   win_update_scrollbar(true); // assume "inner", shouldn't change anyway
-  win_update_transparency(cfg.opaque_when_focused);
+  win_update_transparency(cfg.transparency, cfg.opaque_when_focused);
   win_update_mouse();
 
   win_font_cs_reconfig(font_changed);
@@ -3335,10 +3398,11 @@ static struct {
       if ((wp & 0xF) != WA_INACTIVE) {
         flash_taskbar(false);  /* stop */
         term_set_focus(true, true);
+        win_set_tab_focus();  // unhide this tab and hide others
       } else {
         term_set_focus(false, true);
       }
-      win_update_transparency(cfg.opaque_when_focused);
+      win_update_transparency(cfg.transparency, cfg.opaque_when_focused);
       win_key_reset();
 #ifdef adapt_term_size_on_activate
       // support tabbar?
@@ -3350,6 +3414,7 @@ static struct {
     when WM_SETFOCUS:
       trace_resize(("# WM_SETFOCUS VK_SHIFT %02X\n", (uchar)GetKeyState(VK_SHIFT)));
       term_set_focus(true, false);
+      win_set_tab_focus();  // unhide this tab and hide others
       win_sys_style(true);
       CreateCaret(wnd, caretbm, 0, 0);
       //flash_taskbar(false);  /* stop; not needed when leaving search bar */
@@ -3706,6 +3771,7 @@ hookprockbll(int nCode, WPARAM wParam, LPARAM lParam)
   }
   if (is_hooked_hotkey(wParam, key, get_mods())) {
     if (GetFocus() == wnd && IsWindowVisible(wnd)) {
+      // this probably makes no sense after IsWindowVisible(wnd):
       ShowWindow(wnd, SW_SHOW);  // in case it was started with -w hide
       // put the window away
       //ShowWindow(wnd, SW_HIDE);
@@ -3842,6 +3908,11 @@ exit_mintty(void)
                SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER
                | SWP_NOREPOSITION | SWP_NOACTIVATE | SWP_NOCOPYBITS);
   update_tab_titles();
+
+#ifdef activate_other_tab_at_exit
+  if (sync_level())
+    win_switch(true, false);  // not needed
+#endif
 
   exit(0);
 }
@@ -5443,6 +5514,10 @@ main(int argc, char *argv[])
   wstring wclass = W(APPNAME);
   if (*cfg.class)
     wclass = group_id(cfg.class);
+#ifdef prevent_grouping_hidden_tabs
+  if (!cfg.window)
+    wclass = cs__utftowcs(asform("%d", getpid()));
+#endif
 
   // Put child command line into window title if we haven't got one already.
   wstring wtitle = cfg.title;
@@ -5623,7 +5698,7 @@ static int dynfonts = 0;
 
     // set window size
     SetWindowPos(wnd, NULL, x, y, width, height,
-      SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
+                 SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
     trace_winsize("-p");
   }
 
@@ -5632,11 +5707,11 @@ static int dynfonts = 0;
       // The first SetWindowPos actually set x and y
       // set window size
       SetWindowPos(wnd, NULL, x, y, width, height,
-        SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
+                   SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
       // Then, we are placed the windows on the correct monitor and we can
       // now interpret width/height in correct DPI.
       SetWindowPos(wnd, NULL, x, y, width, height,
-        SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
+                   SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
     }
     // retrieve initial monitor DPI
     if (pGetDpiForMonitor) {
@@ -5678,7 +5753,8 @@ static int dynfonts = 0;
             if (maxheight && ar.bottom - ar.top < h)
               h = ar.bottom - ar.top;
             SetWindowPos(wnd, null, 0, 0, w, h,
-                         SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
+                         SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER
+                         | SWP_NOACTIVATE);
           }
         }
         else {
@@ -5701,7 +5777,8 @@ static int dynfonts = 0;
     }
     SetWindowLong(wnd, GWL_STYLE, style);
     SetWindowPos(wnd, null, 0, 0, 0, 0,
-                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED
+                 | SWP_NOACTIVATE);
     trace_winsize("border_style");
   }
 
@@ -5762,7 +5839,8 @@ static int dynfonts = 0;
       }
       else if (si == 4) {
         // set window size
-        SetWindowPos(wnd, null, sx, sy, sdx, sdy, SWP_NOZORDER);
+        SetWindowPos(wnd, null, sx, sy, sdx, sdy,
+                     SWP_NOZORDER | SWP_NOACTIVATE);
       }
       trace_winsize("launch");
     }
@@ -5805,7 +5883,7 @@ static int dynfonts = 0;
   win_init_cursors();
   win_init_drop_target();
   win_init_menus();
-  win_update_transparency(cfg.opaque_when_focused);
+  win_update_transparency(cfg.transparency, cfg.opaque_when_focused);
 
 #ifdef debug_display_monitors_mockup
 #define report_moni true
@@ -5907,10 +5985,119 @@ static int dynfonts = 0;
     fflush(stdout);
   }
 
+#ifdef do_check_unhide_tab_via_enumwindows
+  void check_unhide_tab(void)
+  {
+    bool all_hidden = true;
+
+    BOOL CALLBACK
+    wnd_enum_proc(HWND curr_wnd, LPARAM unused(lp))
+    {
+      WINDOWINFO curr_wnd_info;
+      curr_wnd_info.cbSize = sizeof(WINDOWINFO);
+      GetWindowInfo(curr_wnd, &curr_wnd_info);
+      if (class_atom == curr_wnd_info.atomWindowType) {
+        bool layered = GetWindowLong(curr_wnd, GWL_EXSTYLE) & WS_EX_LAYERED;
+        BYTE b;
+        GetLayeredWindowAttributes(curr_wnd, 0, &b, 0);
+        bool hidden = layered && !b;
+        if (!hidden) {
+          all_hidden = false;
+          return false;
+        }
+      }
+      return true;
+    }
+
+    if (GetFocus() != wnd && manage_tab_hiding()) {
+      EnumWindows(wnd_enum_proc, 0);
+      if (all_hidden) {
+        //printf("[%p] win_update_transparency %d %d\n", wnd, cfg.transparency, cfg.opaque_when_focused);
+        win_update_transparency(cfg.transparency, cfg.opaque_when_focused);
+      }
+    }
+  }
+#else
+  void check_unhide_or_clear_tab(void)
+  {
+    if (GetFocus() == wnd || !manage_tab_hiding())
+      return;
+
+    bool all_hidden = true;
+    bool vanished = false;
+
+    for (int w = 0; w < ntabinfo; w++) {
+      HWND curr_wnd = tabinfo[w].wnd;
+
+      WINDOWINFO curr_wnd_info;
+      curr_wnd_info.cbSize = sizeof(WINDOWINFO);
+      if (!GetWindowInfo(curr_wnd, &curr_wnd_info)) {
+        vanished = true;
+      }
+      if (class_atom == curr_wnd_info.atomWindowType) {
+        bool layered = GetWindowLong(curr_wnd, GWL_EXSTYLE) & WS_EX_LAYERED;
+        BYTE b;
+        GetLayeredWindowAttributes(curr_wnd, 0, &b, 0);
+        bool hidden = layered && !b;
+        if (!hidden) {
+          all_hidden = false;
+          // don't break; continue to check for vanished
+        }
+      }
+    }
+
+    if (all_hidden)
+      win_update_transparency(cfg.transparency, cfg.opaque_when_focused);
+    if (vanished)
+      update_tab_titles();
+  }
+#endif
+
+#ifdef debug_hidden_tabs
+  void check_hidden_tabs(void)
+  {
+    BOOL CALLBACK
+    wnd_enum_proc(HWND curr_wnd, LPARAM unused(lp))
+    {
+        WINDOWINFO curr_wnd_info;
+        curr_wnd_info.cbSize = sizeof(WINDOWINFO);
+        GetWindowInfo(curr_wnd, &curr_wnd_info);
+        if (class_atom == curr_wnd_info.atomWindowType) {
+          bool vis1 = GetWindowLong(curr_wnd, GWL_STYLE) & WS_VISIBLE;
+          bool vis2 = curr_wnd_info.dwStyle & WS_VISIBLE;
+          bool layered = GetWindowLong(curr_wnd, GWL_EXSTYLE) & WS_EX_LAYERED;
+          BYTE b;
+          GetLayeredWindowAttributes(curr_wnd, 0, &b, 0);
+          bool hidden = layered && !b;
+          printf("[%p] enum %p focus %d icon %d vis %d/%d/%d lay %d α %d hidden %d\n", wnd, curr_wnd, 
+                 GetFocus() == curr_wnd, IsIconic(curr_wnd), 
+                 IsWindowVisible(curr_wnd), vis1, vis2, layered, b, hidden);
+        }
+      return true;
+    }
+    EnumWindows(wnd_enum_proc, 0);
+
+    win_set_timer(check_hidden_tabs, 999);
+  }
+  if (manage_tab_hiding())
+    win_set_timer(check_hidden_tabs, 999);
+#endif
+
+  is_init = true;
+  win_set_tab_focus();  // hide other tabs
+
   // Message loop.
   for (;;) {
     MSG msg;
     while (PeekMessage(&msg, null, 0, 0, PM_REMOVE)) {
+      // stale tab management; does this have performance impact?
+      // should we do it only every n-the time, or timer-driven?
+#ifdef do_check_unhide_tab_via_enumwindows
+      check_unhide_tab();
+#else
+      check_unhide_or_clear_tab();
+#endif
+
       if (msg.message == WM_QUIT)
         return msg.wParam;
       if (!IsDialogMessage(config_wnd, &msg))

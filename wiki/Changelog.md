@@ -1,3 +1,4 @@
+
 Terminal features
   * Visual double-width of symbols and emojis with subsequent space (#1104, #892, #1065, #979).
   * Limit line cursor width by width of lines (underline etc) (#1101).
@@ -12,6 +13,11 @@ Terminal features
 Rendering
   * Speedup of width detection for auto-narrowing for certain characters (#1065, #979, #892).
   * Prevent artefacts of large-size underscore cursor (CSI 4 SP q CSI ? 6 c).
+
+Tab management
+  * Hide background tabs (~#1069, ~#944, ~#699).
+  * Support transparency in tabbed window (#1069, ~#699).
+  * Keep tabbar consistent (~#944, #699).
 
 Configuration
   * New option BracketedPasteByLine.

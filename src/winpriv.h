@@ -33,7 +33,8 @@ enum {
   WIN_FULLSCREEN = -2,
   WIN_TOP = 1,
   WIN_TITLE = 4,
-  WIN_INIT_POS = 5
+  WIN_INIT_POS = 5,
+  WIN_HIDE = 8,
 };
 // support tabbar
 extern void win_to_top(HWND top_wnd);
@@ -105,7 +106,7 @@ extern void win_open_config(void);
 extern void * load_library_func(string lib, string func);
 extern void update_available_version(bool ok);
 extern void set_dpi_auto_scaling(bool on);
-extern void win_update_transparency(bool opaque);
+extern void win_update_transparency(int transparency, bool opaque);
 extern void win_prefix_title(const wstring);
 extern void win_unprefix_title(const wstring);
 extern void win_set_icon(char * s, int icon_index);
