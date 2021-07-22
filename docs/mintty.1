@@ -1559,6 +1559,12 @@ and some control sequences; for an overview see
 (\fIhttps://github.com/mintty/mintty/wiki/Tips#character-width\fP).
 
 \fINote:\fP
+Setting \fBLocale\fP and combining this with an empty or (Default) 
+\fBCharset\fP setting results in an implicit character encoding 
+as defined by the respective locale without suffix, 
+which is not UTF-8 in most cases and may lead to unexpected behaviour.
+
+\fINote:\fP
 When changing the character set interactively in the Options dialog, 
 it takes effect immediately for text input and ouput, but it does not 
 affect the processes already running in mintty.

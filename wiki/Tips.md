@@ -1096,6 +1096,9 @@ LC_CTYPE=zh_CN.gbk mintty &
 However, as a legacy option, it is also possible to configure mintty with 
 distinct options `Locale` and `Charset`; note that despite the name, the 
 `Locale` parameter must *not* include an encoding suffix in this case.
+Note that combining `Locale` with an empty `Charset` setting results in 
+the implicit character encoding as defined by the respective locale 
+without suffix, which is not UTF-8 in most cases and may be unexpected.
 Take care to make sure that the child process has the same idea about the 
 character encoding as the terminal in this scenario.
 
