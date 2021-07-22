@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Thu Apr 15 14:41:28 2021 -->
+<!-- CreationDate: Fri Jul 23 20:26:28 2021 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -851,8 +851,9 @@ the scrollbar, the mouse wheel, or the keyboard. Hold the
 <b>Shift</b> key while pressing the <b>Up</b> and
 <b>Down</b> arrow keys to scroll line-by-line or the
 <b>PageUp</b> and <b>PageDown</b> keys to scroll
-page-by-page. With option <b>KeyFunctions</b>, user-defined
-keys can be used for scrolling.</p>
+page-by-page. In <i>scroll mode</i>, the same keys without
+<b>Shift</b> do the same. With option <b>KeyFunctions</b>,
+user-defined keys can be used for scrolling.</p>
 
 <p style="margin-left:11%; margin-top: 1em">If the
 alternate screen is active, instead of scrolling in the
@@ -879,6 +880,27 @@ with Control+Alt+mouse-wheel.</p>
 modes of mouse operation are overridden by various
 &quot;mouse tracking&quot; modes enabled by escape
 sequences.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Scroll Lock
+handling</b> <br>
+The ScrollLock key is one of the most useless keys on
+typical PC keyboards as it is mostly ignored by software
+nowadays, and yet has its own LED. However, there are two
+historic features that could be associated with
+&quot;ScrollLock&quot;. One is the VT100 NoScroll key which
+would hold output via the terminal, the other is a Windows
+function to switch cursor keys to screen scrolling as still
+used by the Excel program. Mintty provides both features as
+user-definable functions, in two variants each. Functions
+are no-scroll and scroll-mode (referring to those two
+features) which would be reset by any key input, and
+toggle-no-scroll and toggle-scroll-mode which would switch
+the respective feature on or off. These functions can be
+attached to any user-assignable function key or special key,
+including the ScrollLock key. Mintty manages the ScrollLock
+keyboard light to reflect either of these functions
+activated, trying to decouple the light indication from the
+ScrollLock key while in a mintty window.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Searching in
 the text and scrollback buffer</b> <br>
@@ -944,6 +966,12 @@ Class=...</b>.</p>
 can be switched quickly with user-defined key assignments,
 using user-definable functions
 switch-[visible-](prev|next).</p>
+
+<p style="margin-left:11%; margin-top: 1em">Since 3.5.1,
+mintty manages tabs in order to support transparency
+(avoiding cumulation of opaqueness), hide background tabs
+from appearing while moving the window, and keep the tabbar
+consistent in case a tab gets terminated irregularly.</p>
 
 <table width="100%" border="0" rules="none" frame="void"
        cellspacing="0" cellpadding="0">
@@ -1071,6 +1099,10 @@ selecting mode</p>
 <p style="margin-left:22%; margin-top: 1em">Note: The
 modifier can be configured with setting
 <b>ScrollMod</b>.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note: In
+<i>scroll mode</i>, up/down/top/bottom scrolling works
+without <b>Shift</b>.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Keyboard
 selecting mode: <b>Alt</b> sets rectangular selection. Once
@@ -1491,9 +1523,10 @@ transparency values ranging from 4 to 254 can be specified
 in config files or on the command line. (Values below 4 are
 multiplied by 16, for backward compatibility reasons.)</p>
 
-<p style="margin-left:22%; margin-top: 1em">Note that
-opaqueness (non-transparency) cumulates in SessionGeomSync
-modes like with tabbar.</p>
+<p style="margin-left:22%; margin-top: 1em">Since 3.5.1,
+when overlaying multiple tabs (SessionGeomSync modes),
+mintty manages tab window transparency to avoid cumulation
+of opaqueness.</p>
 
 <p style="margin-left:11%;"><b>Opaque when focused</b>
 (OpaqueWhenFocused=no)</p>
@@ -1627,7 +1660,7 @@ used to specify a secondary font, by a &quot;|&quot; prefix
 to the block name, with block specifications preceding over
 the more general script specifications.</p>
 
-<p style="margin-left:22%; margin-top: 1em">Example:
+<p style="margin-left:22%; margin-top: 1em">Examples:
 <b><br>
 FontChoice=Hebrew:6;Arabic:7;CJK:5;Han:8;Hangul:9 <br>
 Font6=David <br>
@@ -1635,8 +1668,9 @@ Font7=Simplified Arabic Fixed <br>
 Font5=Malgun Gothic <br>
 Font8=FangSong <br>
 Font9=MingLiU <br>
-FontChoice=PictoSymbols:2 <br>
+FontChoice=PictoSymbols:2;Private:3 <br>
 Font2=DejaVu Sans Mono <br>
+Font3=MesloLGS NF <br>
 FontChoice=Greek:3;|Greek Extended:4</b></p>
 
 <p style="margin-left:22%; margin-top: 1em">&ndash; <b>Font
@@ -1944,6 +1978,13 @@ particularly <b>Charwidth</b>, and some control sequences;
 for an overview see (
 <i><a href="https://github.com/mintty/mintty/wiki/Tips#character-width">https://github.com/mintty/mintty/wiki/Tips#character-width</a></i>
 ).</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+Setting <b>Locale</b> and combining this with an empty or
+(Default) <b>Charset</b> setting results in an implicit
+character encoding as defined by the respective locale
+without suffix, which is not UTF-8 in most cases and may
+lead to unexpected behaviour.</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 When changing the character set interactively in the Options
@@ -3086,16 +3127,16 @@ not need to be set anymore in this case.</p>
 <p style="margin-left:11%;"><b>Application Taskbar Shortcut
 Title</b> (AppName=)</p>
 
-<p style="margin-left:22%;">The title of the Windows 7
-taskbar shortcut. If the shortcut is pinned, the title is
-kept only if it was made persistent as described for
-AppLaunchCmd.</p>
+<p style="margin-left:22%;">The title of the taskbar
+shortcut (since Windows 7). If the shortcut is pinned, the
+title is kept only if it was made persistent as described
+for AppLaunchCmd.</p>
 
 <p style="margin-left:11%;"><b>Application Taskbar Shortcut
 Launch Command</b> (AppLaunchCmd=)</p>
 
 <p style="margin-left:22%;">The command to use if a
-shortcut pinned to the Windows 7 taskbar is invoked. This is
+shortcut pinned to the Windows taskbar is invoked. This is
 only effective if combined with an AppName option and the
 command-line option --store-taskbar-properties to make it
 persistent. It should also be combined with an explicit and
@@ -3187,6 +3228,21 @@ comma-separated list of character tags: <br>
 &ndash; <b>C1</b> control characters 0x80...0x9F <br>
 (Corresponds to the xterm resource
 <b>disallowedPasteControls</b>.)</p>
+
+<p style="margin-left:11%;"><b>Line splitting in bracketed
+paste mode</b> (BracketedPasteByLine=1)</p>
+
+<p style="margin-left:22%;">In bracketed paste mode (which
+embeds pasted contents in bracketing escape sequences), it
+can be considered a security issue for the command line if
+bracket embedding is applied only for the whole paste
+buffer. Therefore mintty provides a configurable feature to
+embed each new line in bracket sequences individually,
+controlled by this setting. <br>
+&ndash; <b>0</b> never split paste contents by lines <br>
+&ndash; <b>1</b> only split when not in alternate screen
+mode <br>
+&ndash; <b>2</b> always split paste contents by lines</p>
 
 <p style="margin-left:11%;"><b>Special key remapping</b>
 [DEPRECATED, see <b>KeyFunctions</b>]</p>
@@ -3328,6 +3384,8 @@ always-on-top <br>
 &ndash; <b>new-key</b>: opens a new terminal window when key
 is released <br>
 &ndash; <b>new-window</b>: opens a new terminal window <br>
+&ndash; <b>new-window-cwd</b>: opens a new terminal window
+in working directory of current foreground process <br>
 &ndash; <b>options</b>: opens the Options dialog <br>
 &ndash; <b>menu-text</b> (*): opens the context menu at the
 cursor position <br>
@@ -3385,6 +3443,13 @@ changed <br>
 application <br>
 &ndash; <b>flipscreen</b>: switches the alternate screen
 <br>
+&ndash; <b>no-scroll</b>: locks output until input key is
+pressed <br>
+&ndash; <b>toggle-no-scroll</b>: toggles locked output <br>
+&ndash; <b>scroll-mode</b>: enables unmodified cursor
+scrolling until input <br>
+&ndash; <b>toggle-scroll-mode</b>: toggles unmodified cursor
+key scrolling <br>
 &ndash; <b>open</b>: opens the selection, e.g. a URL or
 filename <br>
 &ndash; <b>toggle-logging</b>: toggles logfile logging <br>
@@ -3494,7 +3559,25 @@ keypad) <br>
 <b>KeyFunctions=S+KP_Prior:scroll_pgup;C+KP_Prior:scroll_pgup;\
 C+KP_Next:scroll_pgdn;S+KP_Next:scroll_pgdn</b> enables
 scrollback scrolling with either of Shift or Control
-modifiers</p>
+modifiers <br>
+&ndash; <b>KeyFunctions=ScrollLock:toggle-no-scroll</b>
+enables NoScroll key</p>
+
+<p style="margin-left:11%;"><b>Manage keyboard LEDs</b>
+(ManageLEDs=7)</p>
+
+<p style="margin-left:22%;">Mintty manages the keyboard
+indicator lights (LEDs) for the CapsLock, Numlock, and
+ScrollLock state in order to achieve consistent indication.
+If any of these keys have a user-defined function attached,
+there usage shall not affect the visual keyboard modifier
+indication. Also, if a scroll feature is activated
+(no-scroll or scroll-mode), the ScrollLock indication shall
+indicate the current state of the terminal window. The
+ScrollLock light is restored to its previous state if the
+terminal window gets out of focus or terminates. This
+setting can disable LED management for ScrollLock
+(ManageLEDs=3) or for all modifiers (ManageLEDs=0).</p>
 
 <p style="margin-left:11%;"><b>Use system colours</b>
 (UseSystemColours=no)</p>

@@ -26,7 +26,7 @@ SRC_URI="https://github.com/${NAME}/${NAME}/archive/${VERSION}/${NAME}-${VERSION
 #GIT_URI="https://github.com/mintty/mintty.git"
 #GIT_TAG=${VERSION}
 
-DEPEND="gcc-core make"
+BUILD_REQUIRES="gcc-core make"
 
 RESTRICT=postinst_doc
 

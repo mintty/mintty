@@ -1,3 +1,4 @@
+### 3.5.1 (24 July 2021) ###
 
 Terminal features
   * Visual double-width of symbols and emojis with subsequent space (#1104, #892, #1065, #979).
