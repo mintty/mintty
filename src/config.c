@@ -1723,6 +1723,7 @@ save_config(void)
 
 
 static control *cols_box, *rows_box, *locale_box, *charset_box;
+static control *transparency_valbox, *transparency_selbox;
 static control *font_sample, *font_list, *font_weights;
 
 void
@@ -3426,6 +3427,73 @@ bold_handler(control *ctrl, int event)
   }
 }
 
+void
+transparency_valhandler(control *ctrl, int event)
+{
+  if (event == EVENT_VALCHANGE) {
+    string val = 0;
+    dlg_editbox_get(ctrl, &val);
+    new_cfg.transparency = atoi(val);
+    delete(val);
+  }
+  else if (event == EVENT_UNFOCUS) {
+    string val = 0;
+    dlg_editbox_get(ctrl, &val);
+    int transp = atoi(val);
+    delete(val);
+    // adjust value if out of range
+    if (transp < 4)
+      transp = 0;
+    else if (transp > 254)
+      transp = 254;
+    new_cfg.transparency = transp;
+    // refresh box in case we changed it
+    char buf[16];
+    sprintf(buf, "%i", transp);
+    dlg_editbox_set(ctrl, buf);
+    // update radio buttons
+    dlg_stdradiobutton_handler(transparency_selbox, EVENT_REFRESH);
+  }
+  else if (event == EVENT_REFRESH) {
+    char buf[16];
+    sprintf(buf, "%i", (uchar)new_cfg.transparency);
+    dlg_editbox_set(ctrl, buf);
+  }
+}
+
+void
+transparency_selhandler(control *ctrl, int event)
+{
+  dlg_stdradiobutton_handler(ctrl, event);
+  if (event == EVENT_VALCHANGE) {
+    transparency_valhandler(transparency_valbox, EVENT_REFRESH);
+  }
+}
+
+static void
+transparency_slider(control *ctrl, int event)
+{
+  string dir = ctrl->context;
+  mod_keys mods = get_mods();
+  if (event == EVENT_ACTION) {
+    int step = *dir == '-' ? -4 : 4;
+    if (mods & MDK_SHIFT)
+      step *= 4;
+    else if (mods & MDK_CTRL)
+      step /= 4;
+    int transp = (uchar)new_cfg.transparency;
+    transp += step;
+    if (transp < 4)
+      transp = step > 0 ? 4 : 0;
+    else if (transp > 254)
+      transp = 254;
+    new_cfg.transparency = transp;
+    transparency_valhandler(transparency_valbox, EVENT_REFRESH);
+    // call the lower-level function for update, to avoid recursion
+    dlg_stdradiobutton_handler(transparency_selbox, EVENT_REFRESH);
+  }
+}
+
 
 void
 setup_config_box(controlbox * b)
@@ -3499,9 +3567,9 @@ setup_config_box(controlbox * b)
   //__ Options - Looks: section title
                       _("Transparency"));
   bool with_glass = win_is_glass_available();
-  ctrl_radiobuttons(
+  transparency_selbox = ctrl_radiobuttons(
     s, null, 4 + with_glass,
-    dlg_stdradiobutton_handler, &new_cfg.transparency,
+    transparency_selhandler, &new_cfg.transparency,
     //__ Options - Looks: transparency
     _("&Off"), TR_OFF,
     //__ Options - Looks: transparency
@@ -3529,11 +3597,29 @@ setup_config_box(controlbox * b)
     dlg_stdcheckbox_handler, &new_cfg.blurred
   )->column = 1;
 #else
+#ifdef no_transparency_pseudo_slider
   ctrl_checkbox(
     //__ Options - Looks: transparency
     s, _("Opa&que when focused"),
     dlg_stdcheckbox_handler, &new_cfg.opaque_when_focused
   );
+#else
+  ctrl_columns(s, 4, 64, 10, 16, 10);
+  ctrl_checkbox(
+    //__ Options - Looks: transparency
+    s, _("Opa&que when focused"),
+    dlg_stdcheckbox_handler, &new_cfg.opaque_when_focused
+  )->column = 0;
+  (transparency_valbox = ctrl_editbox(
+    s, 0, 100, transparency_valhandler, 0 //&new_cfg.transparency
+  ))->column = 2;
+  ctrl_pushbutton(
+    s, _("◄"), transparency_slider, "-"
+  )->column = 1;
+  ctrl_pushbutton(
+    s, _("►"), transparency_slider, "+"
+  )->column = 3;
+#endif
 #endif
 
   s = ctrl_new_set(b, _("Looks"), null, 

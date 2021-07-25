@@ -22,6 +22,7 @@ Tab management
 
 Configuration
   * New option BracketedPasteByLine.
+  * Transparency button slider (#728, #140).
   * New user-definable function new-window-cwd to clone window in current directory (~#1106).
 
 ### 3.5.0 (16 April 2021) ###

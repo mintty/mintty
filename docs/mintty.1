@@ -423,7 +423,7 @@ be opened, with some additional entries.
 Mintty also adds a couple of items to the window menu, which can be accessed 
 by clicking on the program icon or pressing \fBAlt+Space\fP.
 
-Both menus have an entry that leads to the options dialog for changing mintty's
+Both menus have an entry that leads to the Options dialog for changing mintty's
 configuration.
 
 .SS Text selection, copy & paste
@@ -437,7 +437,7 @@ selection includes special characters that commonly appear in file names and
 URLs.
 
 By default, selected text is automatically copied to the clipboard.
-This can be disabled on the \fBMouse\fP page of the options dialog.
+This can be disabled on the \fBMouse\fP page of the Options dialog.
 Selected text can also be copied manually using either the \fBCopy\fP menu
 command, the \fBCtrl+Ins\fP or \fBCtrl+Shift+C\fP keyboard shortcuts 
 (the latter if enabled by setting \fBCtrlShiftShortcuts=yes\fP; 
@@ -882,7 +882,7 @@ Note also that this feature is overridden by option \fBSessionGeomSync\fP.
 
 An alternative set of shortcuts for clipboard and window commands using
 \fBCtrl+Shift+letter\fP combinations is available.  These can be enabled on the
-Keys pane of the options dialog.
+Keys pane of the Options dialog.
 .br
 \(en \fBCtrl+Shift+A\fP: Select all
 .br
@@ -1030,7 +1030,7 @@ and the character information output simply overwrite each other.
 
 .SH CONFIGURATION
 
-Mintty has a graphical options dialog that can be reached via the context menu
+Mintty has a graphical Options dialog that can be reached via the context menu
 or the window menu.  It has the following action buttons:
 .br
 \(en \fBCancel\fP: discards changes.
@@ -1156,6 +1156,7 @@ and only if glass colour brightness was set black in the Windows control panel.
 Numeric transparency values ranging from 4 to 254 can be specified in config
 files or on the command line.  (Values below 4 are multiplied by 16, for
 backward compatibility reasons.)
+The Options dialog also offers a numeric input option with slider buttons.
 
 Since 3.5.1, when overlaying multiple tabs (SessionGeomSync modes), 
 mintty manages tab window transparency to avoid cumulation of opaqueness.
@@ -1218,7 +1219,7 @@ In the config file, this corresponds to the following entries:
 .br
 The font selection dialog also offers an \fBApply\fP button for 
 convenient testing how the selected font looks. Its function is the same 
-as the \fBApply\fP button of the options dialog.
+as the \fBApply\fP button of the Options dialog.
 
 Further settings can be given in the config file:
 
@@ -1978,7 +1979,7 @@ This option does not affect the arrow keys or Home/End keys.
 .TP
 \fBUI localization language\fP (Language=)
 This selects the language or language/region code to use for 
-localization of the mintty user interface, the options dialog, 
+localization of the mintty user interface, the Options dialog, 
 menus, message boxes, and terminal in-line error messages.
 .br
 \(en \fI(empty)\fP an empty entry disables localization
@@ -2215,7 +2216,7 @@ The option is a list of action tags:
 
 .SS Command line
 The settings here are config file versions of command line options
-described in the OPTIONS section.  They do not appear in the options dialog.
+described in the OPTIONS section.  They do not appear in the Options dialog.
 
 .TP
 \fBHolding the window open\fP (Hold=start)
@@ -2337,7 +2338,7 @@ For a flexible grouping configuration, the Class option supports the
 same \fB%s\fP placeholder parameters as the AppID option.
 
 .SS "Hidden" settings
-The following settings appear neither in the options dialog nor as command line
+The following settings appear neither in the Options dialog nor as command line
 options, which means they can only be set in config files or using the
 \fB--option\fP or \fB-o\fP command line option.
 
@@ -2949,7 +2950,7 @@ for all modifiers (ManageLEDs=0).
 \fBUse system colours\fP (UseSystemColours=no)
 If this is set, the Windows-wide colour settings are used
 instead of the foreground, background, and cursor colours chosen on the Looks
-page of the options dialog.
+page of the Options dialog.
 
 .TP
 \fBIME cursor colour\fP (IMECursorColour=)

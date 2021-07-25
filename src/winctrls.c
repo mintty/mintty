@@ -1896,10 +1896,12 @@ void
 dlg_radiobutton_set(control *ctrl, int whichbutton)
 {
   winctrl *c = ctrl->plat_ctrl;
-  assert(c && c->ctrl->type == CTRL_RADIO);
-  CheckRadioButton(dlg.wnd, c->base_id + 1,
-                   c->base_id + c->ctrl->radio.nbuttons,
-                   c->base_id + 1 + whichbutton);
+  if (c) {  // can be null (leaving the dialog with ESC from another control)
+    assert(c && c->ctrl->type == CTRL_RADIO);
+    CheckRadioButton(dlg.wnd, c->base_id + 1,
+                     c->base_id + c->ctrl->radio.nbuttons,
+                     c->base_id + 1 + whichbutton);
+  }
 }
 
 int
