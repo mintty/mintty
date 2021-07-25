@@ -395,6 +395,17 @@ Finally, a couple of bindings for convenient searching of the command history. J
 "\e[1;5B": history-search-forward
 ```
 
+To add interactive protection from injected commands, the readline feature 
+`enable-bracketed-paste` makes use of bracketed-paste mode to present 
+multi-line commands for confirmation before running them.
+It should _not_ be combined with `skip-csi-sequence` however which is 
+buggy as of bash 4.4.12 / readline 7.0.3.
+
+```
+set enable-bracketed-paste on
+# do not map "\e[": skip-csi-sequence
+```
+
 
 ## Unexpected behaviour with certain applications (e.g. vim) ##
 
