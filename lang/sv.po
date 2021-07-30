@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-07-23 20:26+0200\n"
-"PO-Revision-Date: 2020-03-14 13:53+0100\n"
+"PO-Revision-Date: 2021-07-30 19:51+0200\n"
 "Last-Translator: A Regnander <anton_r_3 at hotmail dot com>\n"
 "Language-Team: \n"
 "Language: sv\n"
@@ -358,7 +358,7 @@ msgstr "Blo&ck"
 #. __ Options - Looks: cursor type
 #: config.c:3551
 msgid "Bo&x"
-msgstr ""
+msgstr "R&uta"
 
 #. __ Options - Looks: cursor type
 #: config.c:3554
@@ -1020,7 +1020,7 @@ msgstr "&Flytta"
 #. __ System menu:
 #: wininput.c:456
 msgid "&Size"
-msgstr "&Storlek"
+msgstr "&Ändra storlek"
 
 #. __ System menu:
 #: wininput.c:458
@@ -1080,7 +1080,7 @@ msgstr "VT220-tangentbord"
 #. __ Context menu:
 #: wininput.c:527
 msgid "&Reset"
-msgstr "&Nollställ"
+msgstr "&Rensa"
 
 #. __ Context menu:
 #: wininput.c:535
