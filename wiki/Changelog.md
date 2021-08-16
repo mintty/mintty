@@ -200,7 +200,6 @@ Character encoding
   * Do not clear/overwrite all locale categories anymore by option Locale.
   * Do not enforce UTF-8 encoding with WSL anymore.
   * Propagate locale settings with option --WSL (mintty/wsltty#259).
-  * Do not enforce UTF-8 for WSL anymore.
 
 Configuration
   * New option CopyTab (#1037).
