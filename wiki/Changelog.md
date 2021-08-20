@@ -1,4 +1,3 @@
-### 3.5.1 (August 2021) ###
 
 Terminal features
   * Visual double-width of symbols and emojis with subsequent space (#1104, #892, #1065, #979).
@@ -16,8 +15,6 @@ Rendering
   * Prevent artefacts of large-size underscore cursor (CSI 4 SP q CSI ? 6 c).
 
 Tab management
-  * Hide background tabs (~#1069, ~#944, ~#699).
-  * Support transparency in tabbed window (#1069, ~#699).
   * Keep tabbar consistent (~#944, #699).
 
 Configuration

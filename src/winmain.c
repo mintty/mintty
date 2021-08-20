@@ -94,6 +94,7 @@ static bool resizing;
 static bool moving = false;
 static bool wm_user = false;
 static bool disable_poschange = true;
+static bool poschanging = false;
 static int zoom_token = 0;  // for heuristic handling of Shift zoom (#467, #476)
 static bool default_size_token = false;
 bool clipboard_token = false;
@@ -527,17 +528,27 @@ sync_level(void)
 static bool
 manage_tab_hiding(void)
 {
-  return sync_level() > 1;
+  /* The mechanism of hiding non-foreground tabs in order to support 
+     transparency for tabbed windows is disabled because it does not 
+     work properly and causes inconsistent and buggy behaviour in various 
+     window management situations, e.g. switching the tab on maximising 
+     or even looping tab switching when restoring from fullscreen.
+   */
+  return false;
+  //return sync_level() > 1;
 }
 
 /*
   Notify tab focus. Manage hidden tab status.
  */
 static void
-win_set_tab_focus(void)
+win_set_tab_focus(char tag)
 {
+  (void)tag;
+
   // guard by is_init to avoid hiding background tabs by early WM_ACTIVATE
   if (is_init && manage_tab_hiding()) {
+    //printf("[%p] set_tab_focus %c focus %d\n", wnd, tag, GetFocus() == wnd);
     // don't need to unhide as we don't hide above
     //ShowWindow(wnd, SW_SHOW);  // in case it was a hidden tab
 
@@ -2296,6 +2307,7 @@ default_size(void)
 void
 win_update_transparency(int trans, bool opaque)
 {
+  //printf("win_update_transparency %d opaque %d\n", trans, opaque);
   if (trans == TR_GLASS)
     trans = 0;
   LONG style = GetWindowLong(wnd, GWL_EXSTYLE);
@@ -3395,10 +3407,14 @@ static struct {
 #endif
 
     when WM_ACTIVATE:
+      //printf("[%p] WM_ACTIVATE act %d focus %d posch %d\n", wnd, (wp & 0xF) != WA_INACTIVE, GetFocus() == wnd, poschanging);
       if ((wp & 0xF) != WA_INACTIVE) {
         flash_taskbar(false);  /* stop */
         term_set_focus(true, true);
-        win_set_tab_focus();  // unhide this tab and hide others
+
+        // tab management: unhide this tab and hide others
+        if (!poschanging)  // skip while moving; may cause tab switching
+          win_set_tab_focus('A');
       } else {
         term_set_focus(false, true);
       }
@@ -3414,7 +3430,10 @@ static struct {
     when WM_SETFOCUS:
       trace_resize(("# WM_SETFOCUS VK_SHIFT %02X\n", (uchar)GetKeyState(VK_SHIFT)));
       term_set_focus(true, false);
-      win_set_tab_focus();  // unhide this tab and hide others
+
+      // tab management: do not repeat here; may cause tab switching
+      //win_set_tab_focus('F');  // unhide this tab and hide others
+
       win_sys_style(true);
       CreateCaret(wnd, caretbm, 0, 0);
       //flash_taskbar(false);  /* stop; not needed when leaving search bar */
@@ -3568,9 +3587,11 @@ static struct {
 #define WP ((WINDOWPOS *) lp)
 
     when WM_WINDOWPOSCHANGING:
+      poschanging = true;
       trace_resize(("# WM_WINDOWPOSCHANGING %3X (resizing %d) %d %d @ %d %d\n", WP->flags, resizing, WP->cy, WP->cx, WP->y, WP->x));
 
     when WM_WINDOWPOSCHANGED: {
+      poschanging = false;
       if (disable_poschange)
         // avoid premature Window size adaptation (#649?)
         break;
@@ -3704,6 +3725,15 @@ static struct {
       }
       break;
     }
+
+#ifdef debug_stylestuff
+    when WM_STYLECHANGING: {
+      printf("STYLE %08X -> %08X\n", ((STYLESTRUCT *)lp)->styleOld, ((STYLESTRUCT *)lp)->styleNew);
+      //return 0;
+    }
+
+    when WM_ERASEBKGND:
+#endif
 
     when WM_NCHITTEST: {
       LRESULT result = DefWindowProcW(wnd, message, wp, lp);
@@ -3910,8 +3940,9 @@ exit_mintty(void)
   update_tab_titles();
 
 #ifdef activate_other_tab_at_exit
+  // tab management: ensure other tab gets on top when exiting; not needed
   if (sync_level())
-    win_switch(true, false);  // not needed
+    win_switch(true, false);
 #endif
 
   exit(0);
@@ -5515,6 +5546,7 @@ main(int argc, char *argv[])
   if (*cfg.class)
     wclass = group_id(cfg.class);
 #ifdef prevent_grouping_hidden_tabs
+  // should an explicitly hidden window not be grouped with a "class" of tabs?
   if (!cfg.window)
     wclass = cs__utftowcs(asform("%d", getpid()));
 #endif
@@ -6020,9 +6052,6 @@ static int dynfonts = 0;
 #else
   void check_unhide_or_clear_tab(void)
   {
-    if (GetFocus() == wnd || !manage_tab_hiding())
-      return;
-
     bool all_hidden = true;
     bool vanished = false;
 
@@ -6033,12 +6062,15 @@ static int dynfonts = 0;
       curr_wnd_info.cbSize = sizeof(WINDOWINFO);
       if (!GetWindowInfo(curr_wnd, &curr_wnd_info)) {
         vanished = true;
+        if (!manage_tab_hiding())
+          break;
       }
-      if (class_atom == curr_wnd_info.atomWindowType) {
+      else if (manage_tab_hiding() && class_atom == curr_wnd_info.atomWindowType) {
         bool layered = GetWindowLong(curr_wnd, GWL_EXSTYLE) & WS_EX_LAYERED;
         BYTE b;
         GetLayeredWindowAttributes(curr_wnd, 0, &b, 0);
         bool hidden = layered && !b;
+        //printf("[%p] layered %d attr %d hidden %d\n", wnd, layered, b, hidden);
         if (!hidden) {
           all_hidden = false;
           // don't break; continue to check for vanished
@@ -6046,7 +6078,16 @@ static int dynfonts = 0;
       }
     }
 
-    if (all_hidden)
+#ifdef monitor_focussed_tab_on_top
+    // tab management: ensure focussed tab on top
+    if (manage_tab_hiding() && term.has_focus && !poschanging) {
+      win_set_tab_focus('G');
+      return;
+    }
+#endif
+
+    //printf("check all_hidden %d vanished %d\n", all_hidden, vanished);
+    if (manage_tab_hiding() && all_hidden)
       win_update_transparency(cfg.transparency, cfg.opaque_when_focused);
     if (vanished)
       update_tab_titles();
@@ -6084,7 +6125,8 @@ static int dynfonts = 0;
 #endif
 
   is_init = true;
-  win_set_tab_focus();  // hide other tabs
+  // tab management: secure transparency appearance by hiding other tabs
+  win_set_tab_focus('I');  // hide other tabs
 
   // Message loop.
   for (;;) {
