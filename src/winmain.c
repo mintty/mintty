@@ -5602,7 +5602,13 @@ static int dynfonts = 0;
   //printf("Added %d fonts\n", dynfonts);
 
   // Initialise the fonts, thus also determining their width and height.
-  win_init_fonts(cfg.font.size);
+  if (per_monitor_dpi_aware && pGetDpiForMonitor) {
+    // avoid double win_init_fonts
+  }
+  else {
+    // win_init_fonts here as before
+    win_init_fonts(cfg.font.size);
+  }
 
   // Reconfigure the charset module now that arguments have been converted,
   // the locale/charset settings have been loaded, and the font width has
@@ -5610,13 +5616,6 @@ static int dynfonts = 0;
   cs_reconfig();
 
   // Determine window sizes.
-#if 0
-  if (per_monitor_dpi_aware && pGetDpiForMonitor) {
-    HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
-    uint x;
-    pGetDpiForMonitor(mon, 0, &x, &dpi);  // MDT_EFFECTIVE_DPI
-  }
-#endif
   win_prepare_tabbar();
   win_adjust_borders(cell_width * term_cols, cell_height * term_rows);
 
@@ -5764,8 +5763,15 @@ static int dynfonts = 0;
          monitor selection and the respective DPI to be considered,
          so we have to adjust here.
       */
-      if (dpi != 96) {
-        font_cs_reconfig(true);
+      /* Note: this used to be guarded by
+         //if (dpi != 96)
+         until 3.5.0
+         but the previous initial call to win_init_fonts above 
+         is now skipped (if per_monitor_dpi_aware...) to avoid its 
+         double invocation, so we need to initialise fonts here always.
+      */
+      {
+        font_cs_reconfig(true);  // calls win_init_fonts(cfg.font.size);
         win_prepare_tabbar();
         trace_winsize("dpi > font_cs_reconfig");
         if (maxwidth || maxheight) {
