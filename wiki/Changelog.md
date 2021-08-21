@@ -17,6 +17,9 @@ Rendering
 Tab management
   * Keep tabbar consistent (~#944, #699).
 
+Initialisation
+  * Font initialisation speedup (~#1113).
+
 Configuration
   * New option BracketedPasteByLine.
   * Transparency button slider (#728, #140).

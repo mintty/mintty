@@ -463,6 +463,14 @@ adjust_font_weights(struct fontfam * ff, int findex)
     .cs_found = default_charset == DEFAULT_CHARSET
   };
 
+  // do not enumerate all fonts for unspecified alternative font
+  if (ff->name[0] == 0) {
+    ff->fw_norm = 400;
+    ff->fw_bold = 700;
+    trace_font(("--\n"));
+    return;
+  }
+
   HDC dc = GetDC(0);
   EnumFontFamiliesExW(dc, &lf, enum_fonts_adjust_font_weights, (LPARAM)&data, 0);
   trace_font(("font width (%d)%d(%d)/(%d)%d(%d)", data.fw_norm_0, ff->fw_norm, data.fw_norm_1, data.fw_bold_0, ff->fw_bold, data.fw_bold_1));
