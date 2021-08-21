@@ -3038,6 +3038,12 @@ term_paint(void)
         trace_run("bmp"), break_run = true;
 #endif
 
+     /*
+      * Break some special ranges to avoid erratic narrow spacing.
+      */
+      if (j > 0 && (d[-1].chr | 1) == 0xFD3F)
+        trace_run("spec"), break_run = true;
+
       if (!dirty_line) {
         if (dispchars[j].chr == tchar &&
             (dispchars[j].attr.attr & ~DATTR_STARTRUN) == tattr.attr)

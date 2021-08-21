@@ -13,6 +13,7 @@ Terminal features
 Rendering
   * Speedup of width detection for auto-narrowing for certain characters (#1065, #979, #892).
   * Prevent artefacts of large-size underscore cursor (CSI 4 SP q CSI ? 6 c).
+  * Prevent spacing anomaly after U+FD3E and U+FD3F.
 
 Tab management
   * Keep tabbar consistent (~#944, #699).
