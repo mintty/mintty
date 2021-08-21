@@ -532,6 +532,12 @@ A number of options are available to customize the keyboard behaviour,
 including user-defined function and keypad keys and Ctrl+Shift+key shortcuts.
 See the manual page for options and details.
 
+### Windows-style copy/paste key assignments ###
+
+If both settings `CtrlShiftShortcuts` and `CtrlExchangeShift` are enabled, 
+copy & paste functions are assigned to plain (unshifted) _Ctrl+C_ 
+and _Ctrl+V_ for those who prefer them to be handled like in Windows.
+
 
 ## Compose key ##
 
