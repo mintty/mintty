@@ -24,6 +24,7 @@ Initialisation
   * Font initialisation speedup (~#1113).
   * Avoid duplicate font initialisation (~#1113).
   * Earlier window display by later setup of drag-and-drop and tabbar (~#1113).
+  * Grab focus before showing the window, reducing focus delay (#1113).
 
 Configuration
   * New option BracketedPasteByLine.

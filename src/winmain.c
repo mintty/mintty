@@ -5978,6 +5978,13 @@ static int dynfonts = 0;
       pAddClipboardFormatListener(wnd);
   }
 
+  // Grab the focus into the window.
+  /* Do this before even showing the window in order to evade the 
+     focus delay enforced by child_create() (#1113).
+     (This makes the comment below obsolete but let's keep it just in case.)
+  */
+  SetFocus(wnd);
+
   // Create child process.
   /* We could move this below SetFocus() or win_init_drop_target() 
      in order to further reduce the delay until window display (#1113) 
@@ -5993,7 +6000,6 @@ static int dynfonts = 0;
 
   // Finally show the window.
   ShowWindow(wnd, show_cmd);
-  SetFocus(wnd);
   // Cloning fullscreen window
   if (run_max == 2)
     win_maximise(2);
