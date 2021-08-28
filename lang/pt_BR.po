@@ -69,22 +69,22 @@ msgstr "Erro: Não foi possível bifurcar o daemon filho"
 #. __ Options - Text - Emojis - Placement
 #: config.c:617
 msgid "stretch"
-msgstr ""
+msgstr "esticar"
 
 #. __ Options - Text - Emojis - Placement
 #: config.c:619
 msgid "align"
-msgstr ""
+msgstr "alinhar"
 
 #. __ Options - Text - Emojis - Placement
 #: config.c:621
 msgid "middle"
-msgstr ""
+msgstr "meio"
 
 #. __ Options - Text - Emojis - Placement
 #: config.c:623
 msgid "full"
-msgstr ""
+msgstr "completa"
 
 #. __ %s: unknown option name
 #: config.c:782
@@ -465,12 +465,12 @@ msgstr ""
 #. __ Options - Text - Emojis:
 #: config.c:3760
 msgid "Style"
-msgstr ""
+msgstr "Estilo"
 
 #. __ Options - Text - Emojis:
 #: config.c:3765
 msgid "Placement"
-msgstr ""
+msgstr "Localização"
 
 #. __ Options - Keys: treeview label
 #: config.c:3773 config.c:3798 config.c:3833 config.c:3851
@@ -695,32 +695,32 @@ msgstr ""
 #. __ Options - Selection: treeview label
 #: config.c:4050 config.c:4063 config.c:4124
 msgid "Selection"
-msgstr ""
+msgstr "Seleção"
 
 #. __ Options - Selection: panel title
 #: config.c:4052
 msgid "Selection and clipboard"
-msgstr ""
+msgstr "Seleção e área de transferência"
 
 #. __ Options - Selection:
 #: config.c:4056
 msgid "Clear selection on input"
-msgstr ""
+msgstr "Limpar a seleção na entrada"
 
 #. __ Options - Selection: section title
 #: config.c:4065
 msgid "Clipboard"
-msgstr ""
+msgstr "Área de transferência"
 
 #. __ Options - Selection:
 #: config.c:4114
 msgid "Trim space from selection"
-msgstr ""
+msgstr "Aparar espaço da seleção"
 
 #. __ Options - Selection:
 #: config.c:4119
 msgid "Allow setting selection"
-msgstr ""
+msgstr "Permitir seleção de configuração"
 
 #. __ Options - Selection: section title
 #. __ Options - Window: treeview label
@@ -731,12 +731,12 @@ msgstr "Janela"
 #. __ Options - Selection:
 #: config.c:4131
 msgid "Show size while selecting (0..12)"
-msgstr ""
+msgstr "Mostrar tamanho ao selecionar (0..12)"
 
 #. __ Options - Selection:
 #: config.c:4138
 msgid "Suspend output while selecting"
-msgstr ""
+msgstr "Suspender saída durante a seleção"
 
 #. __ Options - Window: panel title
 #: config.c:4150
