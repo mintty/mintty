@@ -23,6 +23,7 @@ Tab management
 Initialisation
   * Font initialisation speedup (~#1113).
   * Avoid duplicate font initialisation (~#1113).
+  * Slightly earlier window display by later drag-and-drop setup (~#1113).
 
 Configuration
   * New option BracketedPasteByLine.

@@ -5919,7 +5919,6 @@ static int dynfonts = 0;
 
   // Initialise various other stuff.
   win_init_cursors();
-  win_init_drop_target();
   win_init_menus();
   win_update_transparency(cfg.transparency, cfg.opaque_when_focused);
 
@@ -5996,6 +5995,9 @@ static int dynfonts = 0;
   // Cloning fullscreen window
   if (run_max == 2)
     win_maximise(2);
+
+  // Initialise drag-and-drop into window.
+  win_init_drop_target();
 
   // Save the non-maximised window size
   term.rows0 = term_rows;
