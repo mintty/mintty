@@ -2200,6 +2200,10 @@ term_paint(void)
              //&& !at_cursor_pos(i, j)
              // and significant attributes are equal
              && !((d->attr.attr ^ d[1].attr.attr) & ~IGNOVRHANG)
+             // do not overhang numbers, flag letters etc
+             && d->chr >= 0x80 // exclude #️*️0️..9️
+             //&& !(ch >= 0x1F1E6 || ch <= 0x1F1FF) // exclude 🇦..🇿
+             && !(!e.seq && emoji_bases[e.idx].ch >= 0x1F1E6 && emoji_bases[e.idx].ch <= 0x1F1FF)
                )
             {
               d->attr.attr |= TATTR_OVERHANG;
