@@ -15,6 +15,8 @@ Rendering
   * Prevent artefacts of large-size underscore cursor (CSI 4 SP q CSI ? 6 c).
   * Prevent spacing anomaly after U+FD3E and U+FD3F.
 
+Window handling
+  * Ensure -w full to cover taskbar also with -B void (~#1114).
 Tab management
   * Keep tabbar consistent (~#944, #699).
 

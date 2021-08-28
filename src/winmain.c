@@ -5942,6 +5942,11 @@ static int dynfonts = 0;
   show_cmd = win_fix_taskbar_max(show_cmd);
   // if (run_max == 2) win_maximise(2); // do that later to reduce flickering
 
+  // Ensure -w full to cover taskbar also with -B void (~#1114)
+  //printf("win %d go_full %d run %d show %d\n", cfg.window, go_fullscr_on_max, run_max, show_cmd);
+  if (go_fullscr_on_max)
+    run_max = 2; // ensure fullscreen is full screen
+
   // Scale to background image aspect ratio if requested
   win_get_pixels(&ini_height, &ini_width, false);
   if (*cfg.background == '%')
