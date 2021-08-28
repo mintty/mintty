@@ -5969,12 +5969,6 @@ static int dynfonts = 0;
     }
   }
 
-  // Create child process.
-  child_create(
-    argv,
-    &(struct winsize){term_rows, term_cols, term_cols * cell_width, term_rows * cell_height}
-  );
-
   // Set up clipboard notifications.
   HRESULT (WINAPI * pAddClipboardFormatListener)(HWND) =
     load_library_func("user32.dll", "AddClipboardFormatListener");
@@ -5983,6 +5977,19 @@ static int dynfonts = 0;
       // send WM_CLIPBOARDUPDATE
       pAddClipboardFormatListener(wnd);
   }
+
+  // Create child process.
+  /* We could move this below SetFocus() or win_init_drop_target() 
+     in order to further reduce the delay until window display (#1113) 
+     but at a cost:
+     - the window flickers white before displaying its background if this 
+       is moved below ShowWindow()
+     - child terminal size would get wrong with -w max or -w full
+  */
+  child_create(
+    argv,
+    &(struct winsize){term_rows, term_cols, term_cols * cell_width, term_rows * cell_height}
+  );
 
   // Finally show the window.
   ShowWindow(wnd, show_cmd);
