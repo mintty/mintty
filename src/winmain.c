@@ -5984,17 +5984,17 @@ static int dynfonts = 0;
       pAddClipboardFormatListener(wnd);
   }
 
-  // Set up tabbar
-  if (cfg.tabbar) {
-    win_open_tabbar();
-  }
-
   // Finally show the window.
   ShowWindow(wnd, show_cmd);
   SetFocus(wnd);
   // Cloning fullscreen window
   if (run_max == 2)
     win_maximise(2);
+
+  // Set up tabbar
+  if (cfg.tabbar) {
+    win_open_tabbar();
+  }
 
   // Initialise drag-and-drop into window.
   win_init_drop_target();
