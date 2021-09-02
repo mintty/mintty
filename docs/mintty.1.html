@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Fri Jul 23 20:26:28 2021 -->
+<!-- CreationDate: Fri Sep  3 20:49:10 2021 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -663,7 +663,7 @@ accessed by clicking on the program icon or pressing
 <b>Alt+Space</b>.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Both menus have
-an entry that leads to the options dialog for changing
+an entry that leads to the Options dialog for changing
 mintty&rsquo;s configuration.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Text
@@ -679,7 +679,7 @@ that commonly appear in file names and URLs.</p>
 
 <p style="margin-left:11%; margin-top: 1em">By default,
 selected text is automatically copied to the clipboard. This
-can be disabled on the <b>Mouse</b> page of the options
+can be disabled on the <b>Mouse</b> page of the Options
 dialog. Selected text can also be copied manually using
 either the <b>Copy</b> menu command, the <b>Ctrl+Ins</b> or
 <b>Ctrl+Shift+C</b> keyboard shortcuts (the latter if
@@ -720,7 +720,14 @@ enabled with option <b>SelectionShowSize</b>.</p>
 <p style="margin-left:11%; margin-top: 1em">Selection can
 also be managed using the keyboard. Shift+middle-keypad-key
 (Shift+&quot;5&quot;) enters keyboard selecting mode
-(modifier configurable). <b><br>
+(modifier configurable).</p>
+
+<p style="margin-left:11%; margin-top: 1em">Note: If both
+settings <b>CtrlShiftShortcuts</b> and
+<b>CtrlExchangeShift</b> are enabled, copy &amp; paste
+functions are assigned to plain (unshifted) <b>Ctrl+C</b>
+and <b>Ctrl+V</b> for those who prefer them to be handled
+like in Windows. <b><br>
 Elastic text selection</b></p>
 
 <p style="margin-left:22%;">The traditional selection
@@ -1199,7 +1206,7 @@ shortcuts</b></p>
 <p style="margin-left:22%; margin-top: 1em">An alternative
 set of shortcuts for clipboard and window commands using
 <b>Ctrl+Shift+letter</b> combinations is available. These
-can be enabled on the Keys pane of the options dialog. <br>
+can be enabled on the Keys pane of the Options dialog. <br>
 &ndash; <b>Ctrl+Shift+A</b>: Select all <br>
 &ndash; <b>Ctrl+Shift+C</b>: Copy <br>
 &ndash; <b>Ctrl+Shift+V</b>: Paste <br>
@@ -1378,7 +1385,7 @@ overwrite each other.</p>
 
 
 <p style="margin-left:11%; margin-top: 1em">Mintty has a
-graphical options dialog that can be reached via the context
+graphical Options dialog that can be reached via the context
 menu or the window menu. It has the following action
 buttons: <br>
 &ndash; <b>Cancel</b>: discards changes. <br>
@@ -1521,7 +1528,10 @@ black in the Windows control panel.</p>
 <p style="margin-left:22%; margin-top: 1em">Numeric
 transparency values ranging from 4 to 254 can be specified
 in config files or on the command line. (Values below 4 are
-multiplied by 16, for backward compatibility reasons.)</p>
+multiplied by 16, for backward compatibility reasons.) The
+Options dialog also offers a numeric input option with
+slider buttons. Use Shift or Control to adjust their step
+width.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Since 3.5.1,
 when overlaying multiple tabs (SessionGeomSync modes),
@@ -1591,7 +1601,7 @@ fonts are listed <br>
 The font selection dialog also offers an <b>Apply</b> button
 for convenient testing how the selected font looks. Its
 function is the same as the <b>Apply</b> button of the
-options dialog.</p>
+Options dialog.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Further
 settings can be given in the config file:</p>
@@ -2475,7 +2485,7 @@ does not affect the arrow keys or Home/End keys.</p>
 
 <p style="margin-left:22%;">This selects the language or
 language/region code to use for localization of the mintty
-user interface, the options dialog, menus, message boxes,
+user interface, the Options dialog, menus, message boxes,
 and terminal in-line error messages. <br>
 &ndash; <i>(empty)</i> an empty entry disables localization
 <br>
@@ -2754,7 +2764,7 @@ application mouse modes</p>
 line</b> <br>
 The settings here are config file versions of command line
 options described in the OPTIONS section. They do not appear
-in the options dialog. <b><br>
+in the Options dialog. <b><br>
 Holding the window open</b> (Hold=start)</p>
 
 <p style="margin-left:22%;">The <b>Hold</b> setting
@@ -2901,7 +2911,7 @@ grouping configuration, the Class option supports the same
 
 <p style="margin-left:11%; margin-top: 1em"><b>Hidden
 settings</b> <br>
-The following settings appear neither in the options dialog
+The following settings appear neither in the Options dialog
 nor as command line options, which means they can only be
 set in config files or using the <b>--option</b> or
 <b>-o</b> command line option. <b><br>
@@ -3585,7 +3595,7 @@ setting can disable LED management for ScrollLock
 <p style="margin-left:22%;">If this is set, the
 Windows-wide colour settings are used instead of the
 foreground, background, and cursor colours chosen on the
-Looks page of the options dialog.</p>
+Looks page of the Options dialog.</p>
 
 <p style="margin-left:11%;"><b>IME cursor colour</b>
 (IMECursorColour=)</p>
@@ -4331,7 +4341,8 @@ flexible bidi controls according to the draft bidi mode
 model of the <b>BiDi in Terminal Emulators</b>
 recommendation (
 <i><a href="https://terminal-wg.pages.freedesktop.org/bidi/">https://terminal-wg.pages.freedesktop.org/bidi/</a></i>
-).</p>
+). However, emoji rendering does not work properly within
+right-to-left text.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Mintty also
 provides emulation of the Tektronix 4014 vector graphics
