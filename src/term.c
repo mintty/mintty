@@ -2112,6 +2112,9 @@ void trace_line(char * tag, termchar * chars)
 #define IGNOVRHANG (FONTFAM_MASK | TATTR_NARROW | ATTR_BOLD | ATTR_DIM | TATTR_CLEAR)
 #define at_cursor_pos(i, j)	((i == term.curs.y) && !((term.curs.x - j) >> 1))
 
+#define IGNWIDTH TATTR_EXPAND | TATTR_NARROW | TATTR_SINGLE | TATTR_CLEAR
+#define IGNEMOJATTR (TATTR_WIDE | ATTR_FGMASK | TATTR_COMBINING | IGNWIDTH)
+
 void
 term_paint(void)
 {
@@ -2133,10 +2136,20 @@ term_paint(void)
     pos scrpos;
     scrpos.y = i + term.disptop;
     termline *line = fetch_line(scrpos.y);
+    // Prevent nested emoji sequence matching from matching partial subseqs
+    int emoji_col = 0;  // column from which to match for emoji sequences
 
     //trace_line("loop0", line->chars);
 
+#if false
    /*
+    * This was an attempt to support emojis within right-to-left text 
+      introduced in 3.0.1 and removed for 3.5.1 because it spoiled 
+      emoji selection highlighting (#1116), caused some flickering, 
+      and did not even support right-to-left properly anyway.
+      Bidi handling could be tweaked so that this approach would be applied 
+      only in bidi lines, not fixing the other issues however.
+      Previous comment:
     * Pre-loop: identify emojis and emoji sequences.
       This is a hacky approach to handling emoji sequences; problems:
       - temporary attributes are written back into original char matrix 
@@ -2144,14 +2157,17 @@ term_paint(void)
       - if the emoji sequences gets broken later by partial overwriting,
         rendering will become inconsistent
       - rendering of emojis within bidi lines is only partially correct
+      - selection highlighting does not work
+      - rendering is applied repeatedly, resulting in some flickering
       Moving emoji sequences handling into the first loop below, on the 
       other hand, would break it even more in bidi lines.
     */
-    // Prevent nested emoji sequence matching from matching partial subseqs
-    int emoji_col = 0;  // column from which to match for emoji sequences
     for (int j = 0; j < term.cols; j++) {
       termchar *d = line->chars + j;
       cattr tattr = d->attr;
+
+      // handle reverse attributes
+      //...
 
       if (j < term.cols - 1 && d[1].chr == UCSWIDE)
         tattr.attr |= TATTR_WIDE;
@@ -2177,9 +2193,7 @@ term_paint(void)
           // check whether all emoji components have the same attributes
           bool equalattrs = true;
           for (int i = 1; i < e.len && equalattrs; i++) {
-# define IGNWIDTH TATTR_EXPAND | TATTR_NARROW | TATTR_SINGLE | TATTR_CLEAR
-# define IGNATTR (TATTR_WIDE | ATTR_FGMASK | TATTR_COMBINING | IGNWIDTH)
-            if ((d[i].attr.attr & ~IGNATTR) != (d->attr.attr & ~IGNATTR)
+            if ((d[i].attr.attr & ~IGNEMOJATTR) != (d->attr.attr & ~IGNEMOJATTR)
                || d[i].attr.truebg != d->attr.truebg
                )
               equalattrs = false;
@@ -2210,6 +2224,7 @@ term_paint(void)
               // also mark adjacent space to suppress its display
               d[1].attr.attr |= TATTR_OVERHANG;
             }
+
             d->attr.attr &= ~ATTR_FGMASK;
             d->attr.attr |= TATTR_EMOJI | e.len;
 
@@ -2245,6 +2260,7 @@ term_paint(void)
     }
 
     //trace_line("loopb", line->chars);
+#endif
 
    /* Do Arabic shaping and bidi. */
     termchar *chars = term_bidi_line(line, i);
@@ -2400,6 +2416,92 @@ term_paint(void)
             tattr.attr &= ~UNBLINK;
           }
         }
+      }
+
+      if (j < term.cols - 1 && d[1].chr == UCSWIDE)
+        tattr.attr |= TATTR_WIDE;
+
+     /* Match emoji sequences
+      * and replace by emoji indicators
+      */
+      if (cfg.emojis && j >= emoji_col) {
+        struct emoji e;
+        if ((tattr.attr & TATTR_EMOJI) && !(tattr.attr & ATTR_FGMASK)) {
+          // previously marked subsequent emoji sequence component
+          e.len = 0;
+        }
+        else
+          e = match_emoji(d, term.cols - j);
+        if (e.len) {  // we have matched an emoji (sequence)
+          // avoid subsequent matching of a partial emoji subsequence
+          emoji_col = j + e.len;
+
+          // check whether emoji graphics exist for the emoji
+          bool ok = check_emoji(e);
+
+          // check whether all emoji components have the same attributes
+          bool equalattrs = true;
+          for (int i = 1; i < e.len && equalattrs; i++) {
+            if ((d[i].attr.attr & ~IGNEMOJATTR) != (d->attr.attr & ~IGNEMOJATTR)
+               || d[i].attr.truebg != d->attr.truebg
+               )
+              equalattrs = false;
+          }
+#ifdef debug_emojis
+          printf("matched len %d seq %d idx %d ok %d atr %d\n", e.len, e.seq, e.idx, ok, equalattrs);
+#endif
+
+          // modify character data to trigger later emoji display
+          if (ok && equalattrs) {
+            // Emoji overhang
+            if (e.len == 1 && j + 1 < term.cols
+             // only if followed by space
+             //&& iswspace(d[1].chr) && !d[1].cc_next
+             //&& d[1].chr != 0x1680 && d[1].chr != 0x3000
+             && d[1].chr == ' ' && !d[1].cc_next
+             // not at cursor position? does not work for emojis
+             //&& !at_cursor_pos(i, j)
+             // and significant attributes are equal
+             && !((d->attr.attr ^ d[1].attr.attr) & ~IGNOVRHANG)
+             // do not overhang numbers, flag letters etc
+             && d->chr >= 0x80 // exclude #️*️0️..9️
+             //&& !(ch >= 0x1F1E6 || ch <= 0x1F1FF) // exclude 🇦..🇿
+             && !(!e.seq && emoji_bases[e.idx].ch >= 0x1F1E6 && emoji_bases[e.idx].ch <= 0x1F1FF)
+               )
+            {
+              d->attr.attr |= TATTR_OVERHANG;
+              // also mark adjacent space to suppress its display
+              d[1].attr.attr |= TATTR_OVERHANG;
+            }
+
+            d->attr.attr &= ~ATTR_FGMASK;
+            d->attr.attr |= TATTR_EMOJI | e.len;
+
+            //d->attr.truefg = (uint)e;
+            struct emoji * ee = &e;
+            uint em = *(uint *)ee;
+            d->attr.truefg = em;
+
+            // refresh cached copy to avoid display delay
+            if (tattr.attr & TATTR_SELECTED) {
+              tattr = d->attr;
+              // need to propagate this to enable emoji highlighting
+              tattr.attr |= TATTR_SELECTED;
+            }
+            else
+              tattr = d->attr;
+            // inhibit rendering of subsequent emoji sequence components
+            for (int i = 1; i < e.len; i++) {
+              d[i].attr.attr &= ~ATTR_FGMASK;
+              d[i].attr.attr |= TATTR_EMOJI;
+              d[i].attr.truefg = em;
+            }
+          }
+        }
+#ifdef handle_symbol_overhang_here
+        else {  // not an emoji
+        }
+#endif
       }
 
      /* Mark box drawing, block and some other characters 
