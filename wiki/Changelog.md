@@ -19,8 +19,7 @@ Rendering
 
 Window handling
   * Ensure -w full to cover taskbar also with -B void (~#1114).
-Tab management
-  * Keep tabbar consistent (~#944, #699).
+  * Tab management: Keep tabbar consistent (~#944, #699).
 
 Initialisation
   * Font initialisation speedup (~#1113).
@@ -32,6 +31,7 @@ Configuration
   * New option BracketedPasteByLine.
   * Transparency button slider (#728, #140).
   * New user-definable function new-window-cwd to clone window in current directory (~#1106).
+  * New user-definable functions no-scroll, toggle-no-scroll, scroll-mode, toggle-scroll-mode.
 
 ### 3.5.0 (16 April 2021) ###
 
