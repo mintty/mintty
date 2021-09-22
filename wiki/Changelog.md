@@ -1,3 +1,6 @@
+Terminal features
+  * Fix (revert back) DECSDM (DECSET 80) Sixel Display mode (#1127, xterm 369).
+
 ### 3.5.1 (4 September 2021) ###
 
 Terminal features

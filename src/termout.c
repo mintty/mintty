@@ -2094,7 +2094,7 @@ set_modes(bool state)
             term.marg_right = term.cols - 1;
           }
         when 80: /* DECSDM: SIXEL display mode */
-          term.sixel_display = !state;
+          term.sixel_display = state;
         when 1000: /* VT200_MOUSE */
           term.mouse_mode = state ? MM_VT200 : 0;
           win_update_mouse();
@@ -2306,7 +2306,7 @@ get_mode(bool privatemode, int arg)
       when 69: /* DECLRMM: enable left and right margin mode DECSLRM */
         return 2 - term.lrmargmode;
       when 80: /* DECSDM: SIXEL display mode */
-        return 2 - !term.sixel_display;
+        return 2 - term.sixel_display;
       when 1000: /* VT200_MOUSE */
         return 2 - (term.mouse_mode == MM_VT200);
       when 1002: /* BTN_EVENT_MOUSE */
