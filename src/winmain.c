@@ -1829,7 +1829,8 @@ win_set_chars(int rows, int cols)
   // which would remove bottom padding and spoil some Windows magic (#629)
   if (rows != term.rows || cols != term.cols) {
     win_set_pixels(rows * cell_height, cols * cell_width);
-    win_fix_position();
+    if (is_init)  // don't spoil negative position (#1123)
+      win_fix_position();
   }
   trace_winsize("win_set_chars > win_fix_position");
 }
@@ -2152,7 +2153,8 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
   if (sync_size_with_font && !win_is_fullscreen) {
     // enforced win_set_chars(term.rows, term.cols):
     win_set_pixels(term.rows * cell_height, term.cols * cell_width);
-    win_fix_position();
+    if (is_init)  // don't spoil negative position (#1123)
+      win_fix_position();
     trace_winsize("win_adapt_term_size > win_fix_position");
 
     win_invalidate_all(false);
@@ -2227,6 +2229,7 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
     struct winsize ws = {rows, cols, cols * cell_width, rows * cell_height};
     child_resize(&ws);
   }
+
   win_invalidate_all(false);
 
   win_update_search();
@@ -2364,7 +2367,10 @@ win_update_scrollbar(bool inner)
                  SWP_NOZORDER | SWP_FRAMECHANGED);
   }
 
-  win_fix_position();
+  // confine to screen borders, except in full size (#1126)
+  if (!(win_is_fullscreen || IsZoomed(wnd)))
+    if (is_init)  // don't spoil negative position (#1123)
+      win_fix_position();
 }
 
 void
@@ -5604,6 +5610,7 @@ static int dynfonts = 0;
   // Initialise the fonts, thus also determining their width and height.
   if (per_monitor_dpi_aware && pGetDpiForMonitor) {
     // avoid double win_init_fonts
+    win_init_fonts(cfg.font.size);
   }
   else {
     // win_init_fonts here as before
