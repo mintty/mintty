@@ -909,7 +909,7 @@ findFraktur(wstring * fnp)
  * Initialize fonts for all configured font families.
  */
 void
-win_init_fonts(int size)
+win_init_fonts(int size, bool allfonts)
 {
   trace_resize(("--- init_fonts %d\n", size));
 
@@ -930,6 +930,10 @@ win_init_fonts(int size)
 
   static bool initinit = true;
   for (uint fi = 0; fi < lengthof(fontfamilies); fi++) {
+    // for pre-initialisation of font geometry, skip alternative fonts
+    if (!allfonts && fi)
+      break;
+
     if (!fi) {
       fontfamilies[fi].name = cfg.font.name;
       fontfamilies[fi].weight = cfg.font.weight;
@@ -989,7 +993,7 @@ win_set_font_size(int size, bool sync_size_with_font)
   trace_resize(("--- win_set_font_size %d %d×%d\n", size, term.rows, term.cols));
   size = size ? sgn(font_size) * min(size, 72) : cfg.font.size;
   if (size != font_size) {
-    win_init_fonts(size);
+    win_init_fonts(size, true);
     trace_resize((" (win_set_font_size -> win_adapt_term_size)\n"));
     win_adapt_term_size(sync_size_with_font, false);
   }

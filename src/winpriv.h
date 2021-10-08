@@ -89,7 +89,7 @@ extern bool fill_background(HDC dc, RECT * boxp);
 extern void win_flush_background(bool clearbg);
 extern void win_paint(void);
 
-extern void win_init_fonts(int size);
+extern void win_init_fonts(int size, bool allfonts);
 extern wstring win_get_font(uint findex);
 extern void win_change_font(uint findex, wstring fn);
 extern void win_font_cs_reconfig(bool font_changed);

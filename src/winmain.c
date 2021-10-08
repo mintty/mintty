@@ -2392,7 +2392,7 @@ font_cs_reconfig(bool font_changed)
 {
   //printf("font_cs_reconfig font_changed %d\n", font_changed);
   if (font_changed) {
-    win_init_fonts(cfg.font.size);
+    win_init_fonts(cfg.font.size, true);
     if (tek_mode)
       tek_init(false, cfg.tek_glow);
     trace_resize((" (font_cs_reconfig -> win_adapt_term_size)\n"));
@@ -3624,7 +3624,7 @@ static struct {
           // remaining glitch:
           // start mintty -p @1; move it to other monitor;
           // columns will be less
-          //win_init_fonts(cfg.font.size);
+          //win_init_fonts(cfg.font.size, true);
           font_cs_reconfig(true);
           win_adapt_term_size(true, false);
         }
@@ -3715,7 +3715,7 @@ static struct {
                        SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
           int y = term.rows, x = term.cols;
           win_adapt_term_size(false, true);
-          //?win_init_fonts(cfg.font.size);
+          //?win_init_fonts(cfg.font.size, true);
           // try to stabilize terminal size roundtrip
           if (term.rows != y || term.cols != x) {
             // win_fix_position also clips the window to desktop size
@@ -5609,12 +5609,24 @@ static int dynfonts = 0;
 
   // Initialise the fonts, thus also determining their width and height.
   if (per_monitor_dpi_aware && pGetDpiForMonitor) {
-    // avoid double win_init_fonts
-    win_init_fonts(cfg.font.size);
+    // we cannot avoid double win_init_fonts completely because of 
+    // circular dependencies of various window geometry calculations 
+    // with initial window creation (see comments below);
+    // initial setup esp. of cell_width, cell_height is needed 
+    // in order to prevent their uninitialised usage (#1124); we could also
+    // - set dummy values here, but which ones to ensure proper geometry?
+    // - guard against failing uninitialised cell_ values but that 
+    //   didn't turn out to yield the proper geometry
+    // - init fonts here only if height/size options are set
+    // - move handling of height/size options behind later win_init_fonts?
+    // and in order to further accelerate, we could
+    // - limit font initialisation to the primary font (2nd parameter)
+    // - limit font initialisation further (skip italic etc) for another ½ms
+    win_init_fonts(cfg.font.size, false);
   }
   else {
     // win_init_fonts here as before
-    win_init_fonts(cfg.font.size);
+    win_init_fonts(cfg.font.size, true);
   }
 
   // Reconfigure the charset module now that arguments have been converted,
@@ -5778,7 +5790,7 @@ static int dynfonts = 0;
          double invocation, so we need to initialise fonts here always.
       */
       {
-        font_cs_reconfig(true);  // calls win_init_fonts(cfg.font.size);
+        font_cs_reconfig(true);  // calls win_init_fonts(cfg.font.size, true);
         win_prepare_tabbar();
         trace_winsize("dpi > font_cs_reconfig");
         if (maxwidth || maxheight) {
