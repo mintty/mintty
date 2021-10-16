@@ -2,6 +2,8 @@ Terminal features
   * Fix (revert back) DECSDM (DECSET 80) Sixel Display mode (#1127, xterm 369).
 
 Window handling
+  * Fixed -s max... options (#1124).
+  * Tweaked handling of positioning and size options.
   * Always support negative position offset (#1123).
   * Avoid position gap after Options Apply (#1126).
 

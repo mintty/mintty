@@ -5676,11 +5676,16 @@ static int dynfonts = 0;
   if (pEnableNonClientDpiScaling)
     SetWindowTextW(wnd, wtitle);
 
-  // Adapt window position (and maybe size) to special parameters
-  // also select monitor if requested
-  if (center || right || bottom || left || top || maxwidth || maxheight
-      || monitor > 0
-     ) {
+
+  // Adapt window position and size to special parameters:
+  // select monitor if requested (before DPI adjustment!),
+  // adjust size to maxwidth/maxheight - these need to be evaluated twice,
+  // before and again after DPI adjustment, to avoid anomalies;
+  // some circular dependencies prevent a more straight-forward approach:
+  // 1. monitor selection
+  // 2. DPI adjustment
+  // 3. window size consideration for center/right/bottom placement
+  if (maxwidth || maxheight || monitor > 0) {
     MONITORINFO mi;
     get_my_monitor_info(&mi);
     RECT ar = mi.rcWork;
@@ -5707,6 +5712,127 @@ static int dynfonts = 0;
       ar = monar;
       printpos("mon", x, y, ar);
     }
+
+    if (cfg.x == (int)CW_USEDEFAULT) {
+      if (monitor == 0)
+        win_get_pos(&x, &y);
+      printpos("fix", x, y, ar);
+    }
+
+    if (maxwidth) {
+      x = ar.left;
+      width = ar.right - ar.left;
+    }
+    if (maxheight) {
+      y = ar.top;
+      height = ar.bottom - ar.top;
+    }
+#ifdef debug_resize
+    if (maxwidth || maxheight)
+      printf("max w/h %d %d\n", width, height);
+#endif
+    printpos("fin", x, y, ar);
+
+    // set window size
+    SetWindowPos(wnd, NULL, x, y, width, height,
+                 SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
+    trace_winsize("-p");
+  }
+
+  if (per_monitor_dpi_aware) {
+    if (cfg.x != (int)CW_USEDEFAULT) {
+      // The first SetWindowPos actually set x and y;
+      // set window size
+      SetWindowPos(wnd, NULL, x, y, width, height,
+                   SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
+      // Then, we have placed the window on the correct monitor
+      // and we can now interpret width/height in correct DPI.
+      SetWindowPos(wnd, NULL, x, y, width, height,
+                   SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
+    }
+    // retrieve initial monitor DPI
+    if (pGetDpiForMonitor) {
+      HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+      uint x;
+      pGetDpiForMonitor(mon, 0, &x, &dpi);  // MDT_EFFECTIVE_DPI
+#ifdef debug_dpi
+      uint ang, raw;
+      pGetDpiForMonitor(mon, 1, &x, &ang);  // MDT_ANGULAR_DPI
+      pGetDpiForMonitor(mon, 2, &x, &raw);  // MDT_RAW_DPI
+      printf("initial dpi eff %d ang %d raw %d\n", dpi, ang, raw);
+      print_system_metrics(dpi, "initial");
+#endif
+      // recalculate effective font size and adjust window
+      /* Note: it would avoid some problems to consider the DPI 
+         earlier and create the window at its proper size right away
+         but there are some cyclic dependencies among CreateWindow, 
+         monitor selection and the respective DPI to be considered,
+         so we have to adjust here.
+      */
+      /* Note: this used to be guarded by
+         //if (dpi != 96)
+         until 3.5.0
+         but the previous initial call to win_init_fonts above 
+         is now skipped (if per_monitor_dpi_aware...) to avoid its 
+         double invocation, so we need to initialise fonts here always.
+      */
+      {
+        font_cs_reconfig(true);  // calls win_init_fonts(cfg.font.size, true);
+        win_prepare_tabbar();
+        trace_winsize("dpi > font_cs_reconfig");
+        if (maxwidth || maxheight) {
+          // changed terminal size not yet recorded, 
+          // but window size hopefully adjusted already
+
+          /* Note: this used to be guarded by
+             //if (border_style)
+             but should be done always to avoid maxheight windows to 
+             be covered by the taskbar
+          */
+          {
+            // workaround for caption-less window exceeding borders (#733)
+            RECT wr;
+            GetWindowRect(wnd, &wr);
+            int w = wr.right - wr.left;
+            int h = wr.bottom - wr.top;
+            MONITORINFO mi;
+            get_my_monitor_info(&mi);
+            RECT ar = mi.rcWork;
+            if (maxwidth && ar.right - ar.left < w)
+              w = ar.right - ar.left;
+            if (maxheight && ar.bottom - ar.top < h)
+              h = ar.bottom - ar.top;
+
+            SetWindowPos(wnd, null, 0, 0, w, h,
+                         SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER
+                         | SWP_NOACTIVATE);
+          }
+        }
+        else {
+          // consider preset size (term_)
+          win_set_chars(term_rows ?: cfg.rows, term_cols ?: cfg.cols);
+          trace_winsize("dpi > win_set_chars");
+          //?win_set_pixels(term_rows * cell_height, term_cols * cell_width);
+        }
+      }
+    }
+  }
+  disable_poschange = false;
+
+  // Adapt window position (and maybe size) to special parameters,
+  // we need to reconsider maxwidth/maxheight here to accomodate 
+  // circular dependencies of 
+  // positioning, monitor selection, DPI adjustment and window size
+  if (center || right || bottom || left || top || maxwidth || maxheight) {
+    // adjust window size assumption to changed dpi
+    if (dpi != 96) {
+      win_get_pixels(&height, &width, true);
+    }
+
+    MONITORINFO mi;
+    get_my_monitor_info(&mi);
+    RECT ar = mi.rcWork;
+    printpos("cre", x, y, ar);
 
     if (cfg.x == (int)CW_USEDEFAULT) {
       if (monitor == 0)
@@ -5746,83 +5872,18 @@ static int dynfonts = 0;
 #endif
     printpos("fin", x, y, ar);
 
+    // heuristic adjustment, to prevent off-by-one width/height:
+    if (maxheight && !maxwidth)
+      width += cell_width * 3 / 4;
+    if (maxwidth && !maxheight)
+      height += cell_height * 3 / 4;
+
     // set window size
     SetWindowPos(wnd, NULL, x, y, width, height,
                  SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
     trace_winsize("-p");
   }
 
-  if (per_monitor_dpi_aware) {
-    if (cfg.x != (int)CW_USEDEFAULT) {
-      // The first SetWindowPos actually set x and y
-      // set window size
-      SetWindowPos(wnd, NULL, x, y, width, height,
-                   SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
-      // Then, we are placed the windows on the correct monitor and we can
-      // now interpret width/height in correct DPI.
-      SetWindowPos(wnd, NULL, x, y, width, height,
-                   SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
-    }
-    // retrieve initial monitor DPI
-    if (pGetDpiForMonitor) {
-      HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
-      uint x;
-      pGetDpiForMonitor(mon, 0, &x, &dpi);  // MDT_EFFECTIVE_DPI
-#ifdef debug_dpi
-      uint ang, raw;
-      pGetDpiForMonitor(mon, 1, &x, &ang);  // MDT_ANGULAR_DPI
-      pGetDpiForMonitor(mon, 2, &x, &raw);  // MDT_RAW_DPI
-      printf("initial dpi eff %d ang %d raw %d\n", dpi, ang, raw);
-      print_system_metrics(dpi, "initial");
-#endif
-      // recalculate effective font size and adjust window
-      /* Note: it would avoid some problems to consider the DPI 
-         earlier and create the window at its proper size right away
-         but there are some cyclic dependencies among CreateWindow, 
-         monitor selection and the respective DPI to be considered,
-         so we have to adjust here.
-      */
-      /* Note: this used to be guarded by
-         //if (dpi != 96)
-         until 3.5.0
-         but the previous initial call to win_init_fonts above 
-         is now skipped (if per_monitor_dpi_aware...) to avoid its 
-         double invocation, so we need to initialise fonts here always.
-      */
-      {
-        font_cs_reconfig(true);  // calls win_init_fonts(cfg.font.size, true);
-        win_prepare_tabbar();
-        trace_winsize("dpi > font_cs_reconfig");
-        if (maxwidth || maxheight) {
-          // changed terminal size not yet recorded, 
-          // but window size hopefully adjusted already
-          if (border_style) {
-            // workaround for caption-less window exceeding borders (#733)
-            RECT wr;
-            GetWindowRect(wnd, &wr);
-            int w = wr.right - wr.left;
-            int h = wr.bottom - wr.top;
-            MONITORINFO mi;
-            get_my_monitor_info(&mi);
-            RECT ar = mi.rcWork;
-            if (maxwidth && ar.right - ar.left < w)
-              w = ar.right - ar.left;
-            if (maxheight && ar.bottom - ar.top < h)
-              h = ar.bottom - ar.top;
-            SetWindowPos(wnd, null, 0, 0, w, h,
-                         SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER
-                         | SWP_NOACTIVATE);
-          }
-        }
-        else {
-          // consider preset size (term_)
-          win_set_chars(term_rows ?: cfg.rows, term_cols ?: cfg.cols);
-          trace_winsize("dpi > win_set_chars");
-        }
-      }
-    }
-  }
-  disable_poschange = false;
 
   if (border_style) {
     LONG style = GetWindowLong(wnd, GWL_STYLE);
