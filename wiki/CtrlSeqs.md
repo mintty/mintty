@@ -587,6 +587,28 @@ control sequence 8452.
 | `^[[?8452l`   | below image          |
 
 
+## Audio support ##
+
+— EXPERIMENTAL —
+
+Mintty supports audio sound output with this OSC sequence:
+
+> `^[]440;` _sound_ [ `:` _option_ ]* `^G`
+
+where _sound_ is the name of a sound file (.wav) in a mintty configuration 
+subdirectory _sounds_, or a path name of a .wav file.
+
+| **option** | **comment**                                              |
+|:-----------|:---------------------------------------------------------|
+| **async**  | sound playing is decoupled from control processing       |
+| **nostop** | sound is not played if an async sound is already playing |
+| **loop**   | sound is played in asynchronous endless loop             |
+
+An asynchronous sound can be stopped with an empty sound name:
+
+> `^[]440;^G`
+
+
 ## Cursor style ##
 
 The VT510 _[DECSCUSR](http://vt100.net/docs/vt510-rm/DECSCUSR)_ sequence 
