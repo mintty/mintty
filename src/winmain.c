@@ -1913,6 +1913,121 @@ flash_border()
   });
 }
 
+
+/*
+ * Play sound.
+ */
+void
+win_sound(char * sound_name, uint options)
+{
+  //printf("win_sound %ld<%s> %d\n", strlen(sound_name), sound_name, options);
+
+  options |= SND_NODEFAULT | SND_FILENAME;
+
+  if (!sound_name || !*sound_name) {
+    PlaySoundW(NULL, NULL, options);
+    return;
+  }
+
+  if (*sound_name == '_') {  // play a Windows system sound
+static struct {
+  UINT type; char * name;
+} ss[] = {
+  {0xFFFFFFFF, ""},
+  {MB_ICONASTERISK, "asterisk"},
+  {MB_ICONASTERISK, "*"},
+  {MB_ICONEXCLAMATION, "exclamation"},
+  {MB_ICONEXCLAMATION, "!"},
+  {MB_ICONERROR, "error"},
+  {MB_ICONHAND, "hand"},
+  {MB_ICONINFORMATION, "information"},
+  {MB_ICONQUESTION, "question"},
+  {MB_ICONQUESTION, "?"},
+  {MB_ICONSTOP, "stop"},
+  {MB_ICONWARNING, "warning"},
+  {MB_OK, "OK"}
+};
+
+    sound_name ++;
+    for (uint i = 0; i < lengthof(ss); i++)
+      if (0 == strcmp(sound_name, ss[i].name)) {
+        MessageBeep(ss[i].type);
+        break;
+      }
+    return;
+  }
+
+  wchar * sound_file = 0;
+  if (strchr(sound_name, '/') || strchr(sound_name, '\\')) {
+    sound_file = path_posix_to_win_w(sound_name);
+  }
+  else {
+    wchar * sound_name_w = cs__mbstowcs(sound_name);
+    if (!strchr(sound_name, '.')) {
+      int len = wcslen(sound_name_w);
+      sound_name_w = renewn(sound_name_w, len + 5);
+      wcscpy(&sound_name_w[len], W(".wav"));
+    }
+    char * sf = get_resource_file(W("sounds"), sound_name_w, false);
+    free(sound_name_w);
+    if (sf) {
+      sound_file = path_posix_to_win_w(sf);
+      free(sf);
+    }
+  }
+
+  if (sound_file && PlaySoundW(sound_file, NULL, options)) {
+    free(sound_file);
+  }
+}
+
+/*
+ * Beep for DECPS.
+ */
+void
+win_beep(uint freq, uint ms)
+{
+  uint params[2] = {freq, ms};
+
+static int beep_pid = -1;
+static int fd[2];
+  if (beep_pid <= 0) {
+    pipe(fd);
+    beep_pid = fork();
+    if (beep_pid == -1) {
+      // error
+      return;
+    }
+    else if (beep_pid > 0) { // parent
+      close(fd[0]);
+    }
+    else { // child
+      close(fd[1]);
+
+      while (read(fd[0], &params, sizeof(params)) > 0) {
+        Beep(params[0], params[1]);
+      }
+      exit(0);
+
+#ifdef external_beeper
+      // alternatively, remap the pipe to file descriptor 0
+      // and fork an external beeper; but it does not improve the jitter
+      close(0);
+      dup2(fd[0], 0);
+      close(fd[0]);
+      execl("minbeep", "minbeep", (char*)0);
+      // which does:
+      while (read(0, &params, sizeof(params)) > 0) {
+        Beep(params[0], params[1]);
+      }
+      exit(0);
+#endif
+    }
+  }
+
+  write(fd[1], &params, sizeof(params));
+}
+
 /*
  * Bell.
  */
