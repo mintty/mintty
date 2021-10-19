@@ -399,12 +399,34 @@ As usual, OSC sequences can also be terminated with `^[\` (_ST_, the string term
 When the font size is queried, a sequence that would restore the current font and window size is sent.
 
 
+## Font style ##
+
+OSC 50 semantics is extended to alternative fonts and the Tek mode font;
+it changes the font that is currently selected (and keeps that setting).
+
+
 ## Emojis style ##
 
 Like OSC 50 for font style, this sequence can change the emojis style.
 For values, see setting `Emojis` in the manual.
 
 > `^[]7750;_emojis-style_`^G`
+
+
+## Background image ##
+
+OSC 11 semantics is extended to set or change image background.
+
+| **sequence**         | **locale**                                       |
+|:---------------------|:-------------------------------------------------|
+| `^[]11;_`_image_`^G` | set terminal size background image               |
+| `^[]11;%`_image_`^G` | set image and scale terminal to its aspect ratio |
+| `^[]11;*`_image_`^G` | set tiled background                             |
+| `^[]11;=^G`          | set background to desktop image (if tiled)       |
+
+If the background filename is followed by a comma and a number between 1 and 254, 
+the background image will be dimmed towards the background colour;
+with a value of 255, the alpha transparency values of the image will be used.
 
 
 ## Locale ##
