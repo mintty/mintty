@@ -570,7 +570,13 @@ If none of width or height are given, the image pixel size is used.
 Image formats supported comprise PNG, JPEG, GIF, TIFF, BMP, Exif.
 
 
-## Graphics end position ##
+## Graphics position ##
+
+Sixel output is anchored at the current cursor position by default 
+(Sixel scrolling mode). DECSET 80 enables Sixel display mode instead, 
+so Sixel output would start at the top of screen. Note this setting 
+was reversed from mintty 3.0.1 to 3.5.1, following xterm interpretation 
+which has meanwhile also been fixed.
 
 After output of a Sixel image in Sixel scrolling mode, or other image, 
 the final cursor position can be next to the right bottom of the image, 
