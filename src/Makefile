@@ -370,7 +370,8 @@ SRCDEBUG:= -e "^(f*printf|\#define debug)" # \# make-escape to #
 SRCDEBUG+= -e "^(if|do|for|while) *[({]"
 SRCDEBUG+= -e "\((false|0) *&"
 SRCDEBUG+= -e "\((true|1) *\|"
-SRCDEBUG+= -e "& 0($|[^bx])"
+#SRCDEBUG+= -e "& 0($|[^bx])"
+SRCDEBUG+= -e "\(0 &"
 SRCDEBUG+= -e "^///"
 checksrc:
 	if egrep -an $(SRCDEBUG) *.[hc]; then false; fi
