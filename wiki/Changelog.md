@@ -3,6 +3,8 @@ Unicode and Emoji data
 
 Terminal features
   * Fix (revert back) DECSDM (DECSET 80) Sixel Display mode (#1127, xterm 369).
+  * Sound file playing OSC 440 (#1122).
+  * DECPS tone playing support (#1122).
 
 Window handling
   * Fixed -s max... options (#1124).
