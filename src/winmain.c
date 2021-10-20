@@ -4455,10 +4455,11 @@ getlxssinfo(bool list, wstring wslname, uint * wsl_ver,
       ret = RegEnumKeyW(lxss, i, subkey, keylen);
       if (ret == ERROR_SUCCESS) {
           wchar * dn = getregstr(lxss, subkey, W("DistributionName"));
+          //printf("list %d dn <%ls> wslname <%ls> lxss %p subkey <%ls>\n", list, dn, wslname, lxss, subkey);
           if (list) {
             getlxssdistinfo(true, lxss, subkey);
           }
-          else if (0 == wcscmp(dn, wslname)) {
+          else if (dn && 0 == wcscmp(dn, wslname)) {
             int err = getlxssdistinfo(false, lxss, subkey);
             regclose(lxss);
             return err;
