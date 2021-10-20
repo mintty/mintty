@@ -1,3 +1,6 @@
+Unicode and Emoji data
+  * Unicode 14.0 update.
+
 Terminal features
   * Fix (revert back) DECSDM (DECSET 80) Sixel Display mode (#1127, xterm 369).
 
