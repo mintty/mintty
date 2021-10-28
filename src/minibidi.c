@@ -601,12 +601,8 @@ do_bidi(bool autodir, int paragraphLevel, bool explicitRTL, bool box_mirror,
  /* Initialize types, levels */
   uchar types[count];
   uchar levels[count];
-#if __GNUC__ >= 11 && __INTPTR_WIDTH__ == 32
-  // workaround gcc 11 bug
-  for (i = 0; i < count; i++) {
-    types[i] = 0;
-  }
-#endif
+  // workaround for gcc 11 warning anomaly
+  types[0] = 0;
 
 #define dont_debug_bidi
 
