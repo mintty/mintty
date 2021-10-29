@@ -615,6 +615,29 @@ An asynchronous sound can be stopped with an empty sound name:
 
 > `^[]440;^G`
 
+Mintty also supports the DECPS Play Sound escape sequence with 
+tone style extension.
+
+| **sequence**                                       | **function**         |
+|:---------------------------------------------------|:---------------------|
+| `^[[`_vol_`;`_duration_`;`_note_[`;`_note_...]`,~` | play notes (16 supported) |
+| `^[[`_vol_`:`_tone_`;`_duration_`;`_note_[`;`_note_...]`,~` | set tone style and play |
+| `^[[0:`_tone_`,~` | change tone style only |
+
+The sequence plays the list of notes with the given volume (0...7) 
+and duration (0...255) in units of 1/32 of a second.
+Supported notes are 1 (C5) through 25 (C7).
+If the first parameter has a colon-separated sub-parameter appended, 
+it sets the current tone style (which will persist until changed again 
+or reset).
+Tones 1 to 5 are currently defined, 1 is a sine waveform.
+
+The initial tone style can be preselected by setting `PlayTone`; 
+if changed by a sequence, it will be restored by a terminal reset.
+Tone value 0 (also the fallback) resorts to the Windows Beep function.
+Other tones are only effective if the audio output library \fIlibao\fP 
+is installed.
+
 
 ## Cursor style ##
 

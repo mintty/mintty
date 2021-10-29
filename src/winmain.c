@@ -32,6 +32,9 @@ typedef UINT_PTR uintptr_t;
 #endif
 #include <pwd.h>
 
+#include <dlfcn.h>
+#include <math.h>
+
 #include <mmsystem.h>  // PlaySound for MSys
 #include <shellapi.h>
 #include <windowsx.h>  // GET_X_LPARAM, GET_Y_LPARAM
@@ -1982,12 +1985,141 @@ static struct {
 }
 
 /*
+ * Beep with audio output library libao, for DECPS.
+ */
+static void * libao = 0;
+
+typedef struct {
+  int  bits; /* bits per sample */
+  int  rate; /* samples per second (in a single channel) */
+  int  channels; /* number of audio channels */
+  int  byte_format; /* Byte ordering in sample, see constants below */
+  char *matrix; /* channel input matrix */
+} ao_sample_format;
+
+#define AO_FMT_LITTLE 1
+#define AO_FMT_BIG    2
+#define AO_FMT_NATIVE 4
+
+static void (* ao_initialize) (void);
+static void (* ao_shutdown) (void);
+static int (* ao_default_driver_id) (void);
+static int (* ao_driver_id) (char * name);
+static void * (* ao_open_live) (int driver_id, ao_sample_format * format, void * options);
+static int (* ao_play) (void * device, char * out, u_int32_t buf_size);
+static int (* ao_close) (void * device);
+
+static int ao_driver;
+static void * ao_device;
+static ao_sample_format ao_format;
+
+static bool
+aolib_start(void)
+{
+  if (libao)
+    return true;
+
+  // libao uses dlopen itself, so we have nested invocations of it;
+  // this would crash with default settings and default procedure -
+  // it's necessary to either add flag RTLD_NODELETE to dlopen 
+  // or defer dlcose after ao_initialize (Linux) or ao_shutdown (cygwin)
+  libao = dlopen ("cygao-4.dll", RTLD_LAZY | RTLD_GLOBAL);
+  if (!libao)
+    return false;
+
+  ao_initialize = dlsym(libao, "ao_initialize");
+  ao_shutdown = dlsym(libao, "ao_shutdown");
+  ao_default_driver_id = dlsym(libao, "ao_default_driver_id");
+  ao_driver_id = dlsym(libao, "ao_driver_id");
+  ao_open_live = dlsym(libao, "ao_open_live");
+  ao_play = dlsym(libao, "ao_play");
+  ao_close = dlsym(libao, "ao_close");
+
+  ao_initialize();
+  ao_driver = ao_driver_id("wmm");
+  memset(&ao_format, 0, sizeof(ao_format));
+  ao_format.bits = 16;
+  ao_format.channels = 2;
+  ao_format.rate = 44100;
+  ao_format.byte_format = AO_FMT_LITTLE;
+
+  ao_device = ao_open_live(ao_driver, &ao_format, 0);
+
+  return ao_device;
+}
+
+static void
+aolib_stop(void)
+{
+  if (libao) {
+    ao_close(ao_device);
+    ao_shutdown();
+    dlclose(libao);
+    libao = 0;
+  }
+}
+
+static void
+aolib_beep(uint tone, float vol, float freq, uint ms)
+{
+  int buf_len = ao_format.rate * ms / 1000;
+  int buf_size = ao_format.bits / 8 * ao_format.channels * buf_len;
+  char * buffer = calloc(buf_size, sizeof(char));
+
+  for (int i = 0; i < buf_len; i++) {
+    float sample;
+
+    switch (tone) {
+      when 1:  // sine
+        sample = sin(2 * M_PI * freq * ((float) i / ao_format.rate));
+      when 2: {
+        float s = sin(2 * M_PI * freq * ((float) i / ao_format.rate));
+        sample = 0.5 * (s + fabsf(s));
+      }
+      when 3:
+        sample = 
+            fabsf(sinf(2 * M_PI * freq * ((float) 0.5 * i / ao_format.rate)));
+      when 4:
+        sample = 
+             0.5 *
+             (sin(2 * M_PI * freq * ((float) i / ao_format.rate)) >= 0
+              ? 1 : -1
+             );
+      when 5:
+        sample = 
+             0.5 *
+             (sin(2 * M_PI * freq * ((float) i / ao_format.rate)) >= 0.4
+              ? 1 : -1
+             );
+      otherwise:
+        sample = 0;
+    }
+    // provide an audible stroke to separate the start of each note:
+    sample *= 1.0 - 0.15 * tanh((float)i / 1000.0);
+    // scale float sample to 16 bit int sample:
+    int isample = (int)(sample * vol * 32767.0);
+
+    // in contrast to buf_len calculation above, here the assumption is 
+    // fixed 16 bit samples, two channels
+    buffer[4 * i] = buffer[4 * i + 2] = isample & 0xFF;
+    buffer[4 * i + 1] = buffer[4 * i + 3] = (isample >> 8) & 0xFF;
+  }
+
+  ao_play(ao_device, buffer, buf_size);
+}
+
+/*
  * Beep for DECPS.
  */
 void
-win_beep(uint freq, uint ms)
+win_beep(uint tone, float vol, float freq, uint ms)
 {
-  uint params[2] = {freq, ms};
+  struct {
+    uint tone;
+    uint ms;
+    float vol;
+    float freq;
+  } params = {tone, ms, vol, freq};
 
 static int beep_pid = -1;
 static int fd[2];
@@ -2004,26 +2136,42 @@ static int fd[2];
     else { // child
       close(fd[1]);
 
-      while (read(fd[0], &params, sizeof(params)) > 0) {
-        Beep(params[0], params[1]);
-      }
-      exit(0);
-
 #ifdef external_beeper
-      // alternatively, remap the pipe to file descriptor 0
-      // and fork an external beeper; but it does not improve the jitter
+      // in case of external beep handling, remap the pipe 
+      // to file descriptor 0 and fork an external beep server; 
+      // but it does not improve the jitter when using Windows Beep
       close(0);
       dup2(fd[0], 0);
       close(fd[0]);
+      // invoke external beeper:
       execl("minbeep", "minbeep", (char*)0);
-      // which does:
-      while (read(0, &params, sizeof(params)) > 0) {
-        Beep(params[0], params[1]);
-      }
-      exit(0);
+      //handle invocation error...
+      // the external beeper runs:
+      //while (read(0, &params, sizeof(params)) > 0) {
+      //  Beep(params[0], params[1]);
+      //}
+      //exit(0);
 #endif
+
+      while (read(fd[0], &params, sizeof(params)) > 0) {
+        if (params.tone && aolib_start())
+          aolib_beep(params.tone, params.vol, params.freq, params.ms);
+        else
+          Beep((int)(params.freq + 0.5), params.ms);
+      }
+      aolib_stop();
+      exit(0);
     }
   }
+
+#ifdef ascii_beeper_pipe
+static FILE * bf = 0;
+  if (!bf)
+    bf = fdopen(fd[1], "w");
+  fprintf(bf, "%f %f %d %d\n", (float)params.ms / 1000.0, params.freq, params.vol, params.tone);
+  fflush(bf);
+  return;
+#endif
 
   write(fd[1], &params, sizeof(params));
 }

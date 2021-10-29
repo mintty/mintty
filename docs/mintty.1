@@ -999,6 +999,19 @@ If Shift is held, the function also opens the HTML page.
 
 Filename pattern and location are configurable (setting \fBSaveFilename\fP).
 
+.SS Audio support
+
+Mintty supports audio output for the warning bell (^G character), 
+margin bell, a private escape sequence for explicit output of a sound file, 
+and the DECPS tone playing escape sequence.
+A number of settings are available to configure the bell sound, also in 
+conjunction with the bell volume escape sequence (each volume can be 
+assigned a distinct sound file).
+Sound files for the bell sound and the audio sound output can be deployed 
+in a resource subdirectory \fIsounds\fP or addressed by pathname.
+Tone playing by DECPS is supported via the \fIlibao\fP audio output library 
+if installed. Setting \fBPlayTone\fP can preselect a tone style.
+
 .SS Image dump of terminal contents
 
 Mintty can save the visual contents of the terminal screen in an image file 
@@ -2153,6 +2166,14 @@ or on the command line:
 .br
 \(en\fB\fP (BellLen=400): Beep sound length (applies to frequency beep).
 .RE
+
+.TP
+\fBPlay Sound tone\fP (PlayTone=2)
+This setting preselects the sound tone used for the DECPS "Play Sound" 
+note playing escape sequence. Tones 1 to 5 are currently defined, 1 is a 
+sine waveform. These are only effective if the audio output library 
+\fIlibao\fP is installed.
+Value 0 (also the fallback) resorts to the Windows Beep function.
 
 .TP
 \fBPrinter\fP (Printer=)

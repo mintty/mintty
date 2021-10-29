@@ -324,6 +324,7 @@ term_reset(bool full)
     term.rvideo = 0;  // not reset by xterm
     term_bell_reset(&term.bell);
     term_bell_reset(&term.marginbell);
+    term.play_tone = cfg.play_tone;
     term.margin_bell = false;  // not reset by xterm
     term.ring_enabled = false;
     term.bell_taskbar = cfg.bell_taskbar;  // not reset by xterm

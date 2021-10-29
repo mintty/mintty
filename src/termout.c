@@ -3321,18 +3321,35 @@ do_csi(uchar c)
         usleep(1000);
       }
 #endif
-    when CPAIR(',', '~'):  /* DECPS: VT520 Play Sound */
-      // CSI vol;duration;note ,~
-      if (term.csi_argv[2] <= 25) {
-        static unsigned short freq_C5_C7[26] =
-               {0,
-                523, 554, 587, 622, 659, 698, 740, 784, 831, 880, 932, 988, 
-                1047, 1109, 1175, 1245, 1319, 1397, 
-                1480, 1568, 1661, 1760, 1865, 1976, 2093};
-        uint ms = term.csi_argv[1] * 1000 / 32;
-        for (uint i = 2; i < term.csi_argc; i++)
-          win_beep(freq_C5_C7[term.csi_argv[i]], ms);
+    when CPAIR(',', '~'): {  /* DECPS: VT520 Play Sound */
+      // CSI vol[:tone];duration[1/32s];note;... ,~
+      uint i = 0;
+      uint volarg = term.csi_argv[0];
+      if (volarg & SUB_PARS) {
+        volarg &= ~SUB_PARS;
+        ++i;
+        term.play_tone = term.csi_argv[1];
       }
+
+      uint ms = term.csi_argv[++i] * 1000 / 32;
+
+      float vol = 0.0;
+      if (volarg <= 7)
+        vol = (float)volarg / 7.0;
+      else if (volarg <= 100)
+        vol = (float)volarg / 100.0;
+
+static float freq_C5_C7[26] =
+          {0.0, 523.2511, 554.3653, 587.3295, 622.2540, 659.2551, 698.4565, 
+           739.9888, 783.9909, 830.6094, 880.0000, 932.3275, 987.7666, 
+           1046.502, 1108.731, 1174.659, 1244.508, 1318.510, 1396.913, 
+           1479.978, 1567.982, 1661.219, 1760.000, 1864.655, 1975.533, 
+           2093.005};
+
+      while (++i < term.csi_argc)
+        if (term.csi_argv[i] <= 25)
+          win_beep(term.play_tone, vol, freq_C5_C7[term.csi_argv[i]], ms);
+    }
   }
 
   last_char = 0;  // cancel preceding char for REP
