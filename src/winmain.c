@@ -3468,10 +3468,10 @@ static struct {
       if (lp & GCS_RESULTSTR) {
         LONG len = ImmGetCompositionStringW(imc, GCS_RESULTSTR, null, 0);
         if (len > 0) {
-          char buf[len];
+          wchar buf[(len + 1) / 2];
           ImmGetCompositionStringW(imc, GCS_RESULTSTR, buf, len);
-          provide_input(*(wchar *)buf);
-          child_sendw((wchar *)buf, len / 2);
+          provide_input(*buf);
+          child_sendw(buf, len / 2);
         }
         return 1;
       }
