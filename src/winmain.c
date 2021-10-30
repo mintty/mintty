@@ -2024,6 +2024,19 @@ aolib_start(void)
   // it's necessary to either add flag RTLD_NODELETE to dlopen 
   // or defer dlcose after ao_initialize (Linux) or ao_shutdown (cygwin)
   libao = dlopen ("cygao-4.dll", RTLD_LAZY | RTLD_GLOBAL);
+#ifdef fallback_to_mingw_libao
+  if (!libao) {
+    // try MingW version, with proper LD_LIBRARY_PATH contents
+    // (LD_LIBRARY_PATH=/usr/{x86_64,i686}-w64-mingw32/sys-root/mingw/bin)
+    libao = dlopen ("libao-4.dll", RTLD_LAZY | RTLD_GLOBAL);
+    if (!libao)  // try to load directly
+# ifdef __CYGWIN32__
+      libao = dlopen ("/usr/i686-w64-mingw32/sys-root/mingw/bin/libao-4.dll", RTLD_LAZY | RTLD_GLOBAL);
+# else
+      libao = dlopen ("/usr/x86_64-w64-mingw32/sys-root/mingw/bin/libao-4.dll", RTLD_LAZY | RTLD_GLOBAL);
+# endif
+  }
+#endif
   if (!libao)
     return false;
 
