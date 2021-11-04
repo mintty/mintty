@@ -4922,6 +4922,24 @@ DEFINE_PROPERTYKEY(PKEY_AppUserModel_StartPinOption, 0x9f4c2855,0x9f79,0x4B39,0x
 
 
 /*
+   Check minimum cygwin version.
+ */
+bool
+cygver_ge(uint v1, uint v2)
+{
+  static uint _v1 = 0, _v2 = 0;
+
+  if (!_v1) {
+    struct utsname name;
+    if (uname(&name) >= 0)
+      sscanf(name.release, "%d.%d.", &_v1, &_v2);
+  }
+
+  return _v1 > v1 || (_v1 == v1 && _v2 >= v2);
+}
+
+
+/*
    Expand window group id (AppID or Class) by placeholders.
  */
 static wchar *

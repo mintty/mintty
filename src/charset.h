@@ -35,6 +35,7 @@ extern void cs_reconfig(void);
 
 extern string cs_lang(void);
 
+extern int cs_get_codepage(void);
 extern string cs_get_locale(void);
 extern void cs_set_locale(string);
 

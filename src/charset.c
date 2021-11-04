@@ -7,7 +7,7 @@
 
 #include "config.h"
 #include "child.h"    // child_update_charset
-#include "winpriv.h"  // support_wsl, font_ambig_wide
+#include "winpriv.h"  // support_wsl, font_ambig_wide, cygver_ge
 
 #if HAS_LOCALES
 #include <locale.h>
@@ -129,22 +129,6 @@ string charset_menu[lengthof(cs_descs) + 4];
 #define trace_locale(tag, l)	
 #endif
 
-
-#if HAS_LOCALES
-static bool
-ge_release(uint v1, uint v2)
-{
-  static uint _v1 = 0, _v2 = 0;
-
-  if (!_v1) {
-    struct utsname name;
-    if (uname(&name) >= 0)
-      sscanf(name.release, "%d.%d.", &_v1, &_v2);
-  }
-
-  return _v1 > v1 || (_v1 == v1 && _v2 >= v2);
-}
-#endif
 
 static void
 strtoupper(char *dst, string src)
@@ -326,7 +310,7 @@ update_mode(void)
             : use_default_locale ?
               default_locale
             : cs_ambig_wide ?
-              (ge_release(2, 11)
+              (cygver_ge(2, 11)
                ? "C.UTF-8@cjkwide"
                : "ja_JP.UTF-8"
               )
@@ -619,6 +603,12 @@ string
 cs_get_locale(void)
 {
   return default_locale;
+}
+
+int
+cs_get_codepage(void)
+{
+  return default_codepage;
 }
 
 void

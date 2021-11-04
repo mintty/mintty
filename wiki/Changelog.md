@@ -12,6 +12,7 @@ Window handling
   * Tweaked handling of positioning and size options.
   * Always support negative position offset (#1123).
   * Avoid position gap after Options Apply (#1126).
+  * Copy text: set proper clipboard timestamp.
 
 ### 3.5.1 (4 September 2021) ###
 
