@@ -629,7 +629,7 @@ and duration (0...255) in units of 1/32 of a second.
 Supported note values are 1...25, indicating notes c’’ (C5) to c’’’’ (C7).
 
 The range of notes is mirrored to values 101...125 and extended to 41...137, 
-indicating notes C,, (C0) to c’’’’’ (C8). This extension is experimental 
+indicating notes ,,C (C0) to c’’’’’ (C8). This extension is experimental 
 and subject to withdrawal in later versions should other standard behaviour 
 be established in terminals.
 
