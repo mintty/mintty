@@ -5,6 +5,9 @@ trace () {
 	true
 }
 
+wgetfirst=false
+#wgetfirst=true
+
 case "$1" in
 -sh)	postproc=cat
 	shift;;
@@ -19,14 +22,29 @@ mintty)
 	exit;;
 esac
 
-emojisurl0=http://www.unicode.org/emoji/charts/full-emoji-list.html
-emojisurl1=http://www.unicode.org/emoji/charts/full-emoji-modifiers.html
+emojisurl0=https://www.unicode.org/emoji/charts/full-emoji-list.html
+emojisurl1=https://www.unicode.org/emoji/charts/full-emoji-modifiers.html
 
 download () {
-	if type curl
-	then	curl -RO -z `basename $1` $1
-	else	wget -N -t 1 $1
-	fi
+	if $wgetfirst
+	then	wget -N -t 1 "$1"
+	elif type curl
+	then	# prefer curl because it works better behind proxies
+		if [ -f `basename "$1"` ]
+		then	curl -RO -z `basename "$1"` "$1"
+		else	# avoid "Warning: Illegal date format for -z"
+			curl -RO "$1"
+		fi
+	else	wget -N -t 1 "$1"
+	fi ||
+	(echo "[41;30mFILE: $1[m" >&2
+	 echo "[41;30mERROR: download failed, file incomplete[m" >&2
+	 if [ -f `basename "$1"` ]
+	 then	# enforce fresh download next time
+		touch -d 1970-01-01 `basename "$1"`
+	 fi
+	 return 9
+	)
 }
 
 case "$1" in
