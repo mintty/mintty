@@ -3349,6 +3349,11 @@ static float freq_C5_C7[26] =
       while (++i < term.csi_argc)
         if (term.csi_argv[i] <= 25)
           win_beep(term.play_tone, vol, freq_C5_C7[term.csi_argv[i]], ms);
+        else if (term.csi_argv[i] >= 41 && term.csi_argv[i] <= 137) {
+          uint freqi = ((term.csi_argv[i] - 41) % 12 + 1);
+          float freq = freq_C5_C7[freqi] * (1 << (term.csi_argv[i] - 41) / 12) / 32;
+          win_beep(term.play_tone, vol, freq, ms);
+        }
     }
   }
 

@@ -626,7 +626,13 @@ tone style extension.
 
 The sequence plays the list of notes with the given volume (0...7) 
 and duration (0...255) in units of 1/32 of a second.
-Supported notes are 1 (C5) through 25 (C7).
+Supported note values are 1...25, indicating notes c’’ (C5) to c’’’’ (C7).
+
+The range of notes is mirrored to values 101...125 and extended to 41...137, 
+indicating notes C,, (C0) to c’’’’’ (C8). This extension is experimental 
+and subject to withdrawal in later versions should other standard behaviour 
+be established in terminals.
+
 If the first parameter has a colon-separated sub-parameter appended, 
 it sets the current tone style (which will persist until changed again 
 or reset).
