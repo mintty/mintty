@@ -6,6 +6,7 @@ Terminal features
   * Sound file playing OSC 440 (#1122).
   * DECPS tone playing support (#1122).
   * Fixed LED state glitch when ScrollLock is held in auto-repeat.
+  * Extended scope of area attributes change functions DECCARA and DECRARA.
 
 Window handling
   * Fixed -s max... options (#1124).

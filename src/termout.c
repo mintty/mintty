@@ -3197,27 +3197,124 @@ do_csi(uchar c)
       }
     when CPAIR('$', 'r')  /* DECCARA: VT420 Change Attributes in Area */
       or CPAIR('$', 't'): {  /* DECRARA: VT420 Reverse Attributes in Area */
-      cattrflags a1 = 0, a2 = 0;
-      for (uint i = 4; i < term.csi_argc; i++)
+      cattrflags a1 = 0, a2 = 0, ac = 0, af = 0;
+      for (uint i = 4; i < term.csi_argc; i++) {
+        int sub_pars = 0;
+        if (term.csi_argv[i] & SUB_PARS)
+          for (uint j = i + 1; j < term.csi_argc; j++) {
+            sub_pars++;
+            if (term.csi_argv[j] & SUB_PARS)
+              term.csi_argv[j] &= ~SUB_PARS;
+            else
+              break;
+          }
         switch (term.csi_argv[i]) {
-          when 0: a2 = ATTR_BOLD | ATTR_UNDER | ATTR_BLINK | ATTR_REVERSE;
+          when 0: a2 = ATTR_BOLD | ATTR_UNDER | ATTR_BLINK | ATTR_REVERSE
+                  | ATTR_DIM | ATTR_ITALIC | ATTR_BLINK2 | ATTR_STRIKEOUT
+                  ;
           when 1: a1 |= ATTR_BOLD;
           when 4: a1 |= ATTR_UNDER;
+                  a2 |= UNDER_MASK;
           when 5: a1 |= ATTR_BLINK;
           when 7: a1 |= ATTR_REVERSE;
-          when 22: a2 |= ATTR_BOLD;
-          when 24: a2 |= ATTR_UNDER;
-          when 25: a2 |= ATTR_BLINK;
+          when 22: a2 |= ATTR_BOLD | ATTR_DIM | ATTR_SHADOW;
+          when 24: a2 |= UNDER_MASK;
+          when 25: a2 |= ATTR_BLINK | ATTR_BLINK2;
           when 27: a2 |= ATTR_REVERSE;
-          //when 2: a1 |= ATTR_DIM;
-          //when 3: a1 |= ATTR_ITALIC;
-          //when 6: a1 |= ATTR_BLINK2;
-          //when 8: a1 |= ATTR_INVISIBLE;
-          //when 9: a1 |= ATTR_STRIKEOUT;
+          // extensions
+          when 1 | SUB_PARS:
+                  if (i + 1 < term.csi_argc && term.csi_argv[i + 1] == 1)
+                    a1 |= ATTR_SHADOW;
+          when 2: a1 |= ATTR_DIM;
+          when 3: a1 |= ATTR_ITALIC;
+          when 23: a2 |= ATTR_ITALIC;
+          when 4 | SUB_PARS:
+                  if (i + 1 < term.csi_argc) {
+                    a2 |= UNDER_MASK;
+                    switch (term.csi_argv[i + 1]) {
+                      when 0:
+                        ;
+                      when 1:
+                        a1 |= ATTR_UNDER;
+                      when 2:
+                        a1 |= ATTR_DOUBLYUND;
+                      when 3:
+                        a1 |= ATTR_CURLYUND;
+                      when 4:
+                        a1 |= ATTR_BROKENUND;
+                      when 5:
+                        a1 |= ATTR_BROKENUND | ATTR_DOUBLYUND;
+                    }
+                  }
+          when 6: a1 |= ATTR_BLINK2;
+          when 8: a1 |= ATTR_INVISIBLE;
+          when 28: a2 |= ATTR_INVISIBLE;
+          when 9: a1 |= ATTR_STRIKEOUT;
+          when 29: a2 |= ATTR_STRIKEOUT;
+          when 21: a1 |= ATTR_DOUBLYUND;
+                   a2 |= UNDER_MASK;
+          when 51 or 52: a1 |= ATTR_FRAMED;
+          when 54: a2 |= ATTR_FRAMED;
+          when 53: a1 |= ATTR_OVERL;
+          when 55: a2 |= ATTR_OVERL;
+          when 73: a1 |= ATTR_SUPERSCR;
+          when 74: a1 |= ATTR_SUBSCR;
+          when 75: a2 |= ATTR_SUPERSCR | ATTR_SUBSCR;
+          // colour
+          when 30 ... 37:
+                   a2 |= ATTR_FGMASK;
+                   ac = (term.csi_argv[i] - 30) << ATTR_FGSHIFT;
+          when 40 ... 47:
+                   a2 |= ATTR_BGMASK;
+                   ac = (term.csi_argv[i] - 40) << ATTR_BGSHIFT;
+          when 90 ... 97:
+                   a2 |= ATTR_FGMASK;
+                   ac = (term.csi_argv[i] - 90 + 8 + ANSI0) << ATTR_FGSHIFT;
+          when 100 ... 107:
+                   a2 |= ATTR_BGMASK;
+                   ac = (term.csi_argv[i] - 100 + 8 + ANSI0) << ATTR_BGSHIFT;
+          when 39: a2 |= ATTR_FGMASK;
+                   ac = ATTR_DEFFG;
+          when 49: a2 |= ATTR_BGMASK;
+                   ac = ATTR_DEFBG;
+          when 59: a2 |= ATTR_ULCOLOUR;
+          when 38 | SUB_PARS:
+            if (sub_pars == 2 && term.csi_argv[i + 1] == 5) {
+              a2 |= ATTR_FGMASK;
+              ac = ((term.csi_argv[i + 2] & 0xFF) << ATTR_FGSHIFT);
+            }
+            // true colour not implemented
+          when 48 | SUB_PARS:
+            if (sub_pars == 2 && term.csi_argv[i + 1] == 5) {
+              a2 |= ATTR_BGMASK;
+              ac = ((term.csi_argv[i + 2] & 0xFF) << ATTR_BGSHIFT);
+            }
+            // true colour not implemented
+          when 58 | SUB_PARS:
+            if (sub_pars == 2 && term.csi_argv[i + 1] == 5) {
+              // underline colour not implemented
+              //a1 |= ATTR_ULCOLOUR;
+              //ul = term.csi_argv[i + 2] & 0xFF;
+            }
+          // font
+          when 10 ... 20:
+            if (term.csi_argv[i] == 11 && !*cfg.fontfams[1].name)
+              continue;
+            a2 |= FONTFAM_MASK;
+            af = (cattrflags)(term.csi_argv[i] - 10) << ATTR_FONTFAM_SHIFT;
         }
+        i += sub_pars;
+      }
+      // withdraw cancelled changes
       a1 &= ~a2;
+#ifdef debug_deccara
       if (c == 'r')
-        attr_rect(a1, a2, 0, arg0_def1, arg1 ?: 1,
+        printf("-%16llX\n+%16llX\n", a1, a2);
+      else
+        printf("^%16llX\n", a1);
+#endif
+      if (c == 'r')
+        attr_rect(a1 | ac | af, a2, 0, arg0_def1, arg1 ?: 1,
                   term.csi_argv[2] ?: urows, term.csi_argv[3] ?: ucols);
       else
         attr_rect(0, 0, a1, arg0_def1, arg1 ?: 1,

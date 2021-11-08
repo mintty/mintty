@@ -114,6 +114,22 @@ Keyboard auto-repeat can also be disabled with DECSET 8 (DECARM).
 | `^[[?8h`       | enable auto-repeat  |
 
 
+## Area attributes change ##
+
+Mintty extends the scope of rectangular area attributes change functions 
+DECCARA and DECRARA to additional attributes as suitable.
+Colour and font changing functions are only supported with DECCARA.
+True colour and underline colour settings are not supported.
+Examples:
+
+| **sequence**             | **function**                                    |
+|:-------------------------|:------------------------------------------------|
+| `^[[2*x`                 | set rectangular area extent                     |
+| `^[[`_Pt_`;`_Pl_`;`_Pb_`;`_Pr_`;3;38:5:20$r` | set italic and palette colour 20 in area |
+| `^[[`_Pt_`;`_Pl_`;`_Pb_`;`_Pr_`;29$r` | clear strikeout in area |
+| `^[[`_Pt_`;`_Pl_`;`_Pb_`;`_Pr_`;9$t` | revert strikeout in area |
+
+
 ## Bidirectional rendering ##
 
 Mintty supports bidi rendering by default. However, some applications 
