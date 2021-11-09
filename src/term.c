@@ -1437,7 +1437,7 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
 
     // unscroll: Restore lines from scrollback
     if (sb && topline == 0 && !term.on_alt_screen && cfg.scrollback_lines) {
-      for (int i = topline + lines - 1; i >= topline; i--) {
+      for (int i = topline + lines - 1; i >= topline && term.sblines > 0; i--) {
         uchar *cline = scrollback_pop();
         termline *line = decompressline(cline, null);
         free(cline);
