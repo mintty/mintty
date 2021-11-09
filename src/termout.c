@@ -1388,7 +1388,7 @@ do_vt52(uchar c)
       move(0, 0, 0);
     when 'I':  /* Reverse line feed. */
       if (curs->y == term.marg_top)
-        term_do_scroll(term.marg_top, term.marg_bot, -1, true);
+        term_do_scroll(term.marg_top, term.marg_bot, -1, false);
       else if (curs->y > 0)
         curs->y--;
       curs->wrapnext = false;
@@ -1592,7 +1592,7 @@ do_esc(uchar c)
       }
     when 'M':  /* RI: reverse index - backwards LF */
       if (curs->y == term.marg_top)
-        term_do_scroll(term.marg_top, term.marg_bot, -1, true);
+        term_do_scroll(term.marg_top, term.marg_bot, -1, false);
       else if (curs->y > 0)
         curs->y--;
       curs->wrapnext = false;
@@ -2989,9 +2989,12 @@ do_csi(uchar c)
     when 'T':        /* SD: Scroll down */
       /* Avoid clash with unsupported hilight mouse tracking mode sequence */
       if (term.csi_argc <= 1) {
-        term_do_scroll(term.marg_top, term.marg_bot, -arg0_def1, true);
+        term_do_scroll(term.marg_top, term.marg_bot, -arg0_def1, false);
         curs->wrapnext = false;
       }
+    when CPAIR('+', 'T'):     /* unscroll (kitty) */
+      term_do_scroll(term.marg_top, term.marg_bot, -arg0_def1, true);
+      curs->wrapnext = false;
     when CPAIR('*', '|'):     /* DECSNLS */
      /*
       * Set number of lines on screen

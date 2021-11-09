@@ -130,6 +130,14 @@ Examples:
 | `^[[`_Pt_`;`_Pl_`;`_Pb_`;`_Pr_`;9$t` | revert strikeout in area |
 
 
+## Unscroll ##
+
+This sequence scrolls down screen lines like SD (CSI T) but fills the 
+empty lines from the end of the scrollback buffer.
+
+> `^[[`_N_`+T`
+
+
 ## Bidirectional rendering ##
 
 Mintty supports bidi rendering by default. However, some applications 

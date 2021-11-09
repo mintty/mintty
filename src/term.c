@@ -1435,6 +1435,18 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
     memmove(top + lines, top, moved_lines * sizeof(termline *));
     memcpy(top, recycled, sizeof recycled);
 
+    // unscroll: Restore lines from scrollback
+    if (sb && topline == 0 && !term.on_alt_screen && cfg.scrollback_lines) {
+      for (int i = topline + lines - 1; i >= topline; i--) {
+        uchar *cline = scrollback_pop();
+        termline *line = decompressline(cline, null);
+        free(cline);
+        line->temporary = false;  /* reconstituted line is now real */
+        free(term.lines[i]);
+        term.lines[i] = line;
+      }
+    }
+
     // Move selection markers if they're within the scroll region
     void scroll_pos(pos *p) {
       if (!term.show_other_screen && p->y >= topline && p->y < botline) {

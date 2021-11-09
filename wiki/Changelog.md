@@ -7,6 +7,7 @@ Terminal features
   * DECPS tone playing support (#1122).
   * Fixed LED state glitch when ScrollLock is held in auto-repeat.
   * Extended scope of area attributes change functions DECCARA and DECRARA.
+  * Unscroll sequence CSI +T, filling lines from scrollback buffer (kitty).
 
 Window handling
   * Fixed -s max... options (#1124).
