@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Fri Sep  3 20:49:10 2021 -->
+<!-- CreationDate: Wed Nov 10 19:00:24 2021 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -1330,6 +1330,21 @@ held, the function also opens the HTML page.</p>
 <p style="margin-left:11%; margin-top: 1em">Filename
 pattern and location are configurable (setting
 <b>SaveFilename</b>).</p>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Audio
+support</b> <br>
+Mintty supports audio output for the warning bell (^G
+character), margin bell, a private escape sequence for
+explicit output of a sound file, and the DECPS tone playing
+escape sequence. A number of settings are available to
+configure the bell sound, also in conjunction with the bell
+volume escape sequence (each volume can be assigned a
+distinct sound file). Sound files for the bell sound and the
+audio sound output can be deployed in a resource
+subdirectory <i>sounds</i> or addressed by pathname. Tone
+playing by DECPS is supported via the <i>libao</i> audio
+output library if installed. Setting <b>PlayTone</b> can
+preselect a tone style.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Image dump
 of terminal contents</b> <br>
@@ -2690,6 +2705,16 @@ sounds). <br>
 &ndash; (BellLen=400): Beep sound length (applies to
 frequency beep).</p>
 
+<p style="margin-left:11%;"><b>Play Sound tone</b>
+(PlayTone=2)</p>
+
+<p style="margin-left:22%;">This setting preselects the
+sound tone used for the DECPS &quot;Play Sound&quot; note
+playing escape sequence. Tones 1 to 5 are currently defined,
+1 is a sine waveform. These are only effective if the audio
+output library <i>libao</i> is installed. Value 0 (also the
+fallback) resorts to the Windows Beep function.</p>
+
 <p style="margin-left:11%;"><b>Printer</b> (Printer=)</p>
 
 <p style="margin-left:22%;">The ANSI standard defines
@@ -2893,7 +2918,8 @@ Y=)</p>
 integer settings that can be used to determine the initial
 coordinates of the top left corner of the terminal window.
 By default, these are unset, which means that the position
-suggested by the window manager is used.</p>
+suggested by the window manager is used. Setting only one of
+X, Y is not supported.</p>
 
 <p style="margin-left:11%;"><b>Window class name</b>
 (Class=mintty)</p>
@@ -2973,7 +2999,8 @@ scrollback buffer</b> (EraseToScrollback=true)</p>
 
 <p style="margin-left:22%;">With this setting, lines
 cleared in the top part of the screen are scrolled into the
-scrollback buffer, so they can be restored.</p>
+scrollback buffer, so they can be restored. (Corresponds
+roughly to the xterm resource <b>cdXtraScroll</b>.)</p>
 
 <p style="margin-left:11%;"><b>Suspend output while
 selecting</b> (SuspendWhileSelecting=8080)</p>
@@ -3240,7 +3267,7 @@ comma-separated list of character tags: <br>
 <b>disallowedPasteControls</b>.)</p>
 
 <p style="margin-left:11%;"><b>Line splitting in bracketed
-paste mode</b> (BracketedPasteByLine=1)</p>
+paste mode</b> (BracketedPasteByLine=0)</p>
 
 <p style="margin-left:22%;">In bracketed paste mode (which
 embeds pasted contents in bracketing escape sequences), it
@@ -3253,6 +3280,12 @@ controlled by this setting. <br>
 &ndash; <b>1</b> only split when not in alternate screen
 mode <br>
 &ndash; <b>2</b> always split paste contents by lines</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+This is meanwhile handled better by shell versions which
+highlight and hold back the pasted text until confirmed, so
+for consistent and uniform appearance, the default is 0 from
+mintty 3.5.2.</p>
 
 <p style="margin-left:11%;"><b>Special key remapping</b>
 [DEPRECATED, see <b>KeyFunctions</b>]</p>

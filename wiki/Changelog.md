@@ -1,3 +1,5 @@
+### 3.5.2 (13 November 2021) ###
+
 Unicode and Emoji data
   * Unicode 14.0 update.
 
