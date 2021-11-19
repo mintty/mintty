@@ -1,3 +1,6 @@
+Desktop integration
+  * WSL path conversion considers extended /etc/fstab entries (#1130).
+
 ### 3.5.2 (13 November 2021) ###
 
 Unicode and Emoji data
