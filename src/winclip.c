@@ -947,6 +947,9 @@ win_copy_as(const wchar *data, cattr *cattrs, int len, char what)
       char * textbuf = lockc;
       textbuf += 24;
       int buflen = WideCharToMultiByte(cs_get_codepage(), 0, data, len, textbuf, lenc, null, null);
+      // strip terminating NUL (#1132)
+      if (!textbuf[buflen - 1])
+        buflen--;
 
       struct {
         u_int64_t cb_sec;

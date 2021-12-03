@@ -1,6 +1,7 @@
 Desktop integration
   * WSL path conversion considers extended /etc/fstab entries (#1130).
   * WSL path conversion supports UNC paths (#1130).
+  * Clipboard: strip terminating NUL (#1132).
 
 ### 3.5.2 (13 November 2021) ###
 
