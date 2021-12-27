@@ -32,7 +32,7 @@ Terminal features
   * Alternative escape sequence DECSET 2026 for synchronous screen update (#1098).
   * Optimise screen display speed on bell sound series (#1102, ~#865).
   * Italic emojis.
-  * Notify child process via iotcl also when scaling window with font size (xterm 368).
+  * Notify child process via ioctl also when scaling window with font size (xterm 368).
   * Bracketed paste mode: configurable splitting by line.
   * New user-definable functions no-scroll, toggle-no-scroll, scroll-mode, toggle-scroll-mode.
   * Management of the ScrollLock LED for consistence with actual status of special scroll features.
