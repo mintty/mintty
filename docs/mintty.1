@@ -480,7 +480,7 @@ The traditional selection behaviour of cell-based terminals is that a
 character touched with the mouse is included in the selection.
 With option \fBElasticMouse\fP, text selection can be changed to include 
 the first and last characters only if they are spanned at least halfway 
-by the mouse dragging, like many GUI application do.
+by the mouse dragging, like many GUI applications do.
 
 .SS Drag & drop
 
@@ -2730,7 +2730,8 @@ Space, Enter, Esc and Tab are only considered with at least one modifier
 \(en any character reachable on the keyboard without Shift, considered if 
 pressed while Ctrl and Shift are also held; AltGr-generated characters 
 are supported; Alt and Win modifiers are supported, 
-e.g. \fBx\fP for Ctrl+Shift+x, \fBW+x\fP for Ctrl+Win+x, \fBAW+x\fP for Alt+Win+x
+e.g. \fBx\fP for Ctrl+Shift+x, \fBW+x\fP for Ctrl+Win+x, \fBAW+x\fP for Alt+Win+x; 
+note that capital letters do not work (as already combined with Shift).
 
 \fINote:\fP A key that needs a modifier already to be sent (e.g. Break 
 which is often Ctrl+Pause) also needs that modifier in the key definition 
