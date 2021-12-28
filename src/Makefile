@@ -305,7 +305,7 @@ composed.t:	# $(compose_list) $(keysymdefs)
 	sh ./mkcomposedt > composed.t
 
 XGETTEXT_OPTS=--package-name=mintty #--package-version=$(version)
-#XGETTEXT_OPTS+=--msgid-bugs-address=mintty@...
+XGETTEXT_OPTS+=--msgid-bugs-address=https://github.com/mintty/mintty/issues/700
 
 _:	localization checkloc
 localization:
