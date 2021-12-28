@@ -1033,7 +1033,7 @@ setenvi(char * env, int val)
 }
 
 static void
-setup_sync()
+setup_sync(bool in_tabs)
 {
   if (sync_level()) {
     if (win_is_fullscreen) {
@@ -1048,8 +1048,17 @@ setup_sync()
       setenvi("MINTTY_DX", r.right - r.left);
       setenvi("MINTTY_DY", r.bottom - r.top);
     }
-    if (cfg.tabbar)
+    if (cfg.tabbar) {
       setenvi("MINTTY_TABBAR", cfg.tabbar);
+      // enforce proper grouping, i.e. either new tab or window, as requested
+      if (in_tabs && *cfg.class) {
+        char * class = cs__wcstoutf(cfg.class);
+        setenv("MINTTY_CLASS", class, true);
+        free(class);
+      }
+      else if (!in_tabs)
+        setenv("MINTTY_CLASS", "+", true);
+    }
   }
 }
 
@@ -1060,7 +1069,6 @@ static void
 do_child_fork(int argc, char *argv[], int moni, bool launch, bool config_size, bool in_cwd)
 {
   trace_dir(asform("do_child_fork: %s", getcwd(malloc(MAX_PATH), MAX_PATH)));
-  setup_sync();
 
 #ifdef control_AltF2_size_via_token
   void reset_fork_mode()
@@ -1222,9 +1230,12 @@ do_child_fork(int argc, char *argv[], int moni, bool launch, bool config_size, b
   Called from Alt+F2.
  */
 void
-child_fork(int argc, char *argv[], int moni, bool config_size, bool in_cwd)
+child_fork(int argc, char *argv[], int moni, bool config_size, bool in_cwd, bool in_tabs)
 {
+  setup_sync(in_tabs);
   do_child_fork(argc, argv, moni, false, config_size, in_cwd);
+  // prevent wrong control of subsequent child_fork
+  unsetenv("MINTTY_CLASS");
 }
 
 /*
@@ -1248,7 +1259,7 @@ child_launch(int n, int argc, char * argv[], int moni)
         *sepp = '\0';
 
       if (n == 0) {
-        //setup_sync();
+        //setup_sync(false);
         argc = 1;
         char ** new_argv = newn(char *, argc + 1);
         new_argv[0] = argv[0];

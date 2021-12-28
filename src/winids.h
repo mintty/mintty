@@ -38,6 +38,8 @@
 #define IDM_OPTIONS         0x00B0
 #define IDM_NEW             0x00C0
 #define IDM_NEW_CWD         0x01C0
+#define IDM_TAB             0x02C0
+#define IDM_TAB_CWD         0x03C0
 #define IDM_NEW_MONI        0x00D0
 #define IDM_COPYTITLE       0x00E0
 #define IDM_SEARCH          0x00F0

@@ -204,6 +204,11 @@ This sets \fBTabBar=1\fP and \fBSessionGeomSync=\fP\fIlevel\fP.
 Without given value the default window synchronization level is 2.
 
 .TP
+\fB--newtabs\fP
+Create a new window even if virtual tabs are enabled, so running a new 
+tab group. Implies \fB--tabbar\fP (equivalent to \fB--tabbar -o NewTabs=2\fP).
+
+.TP
 \fB-u\fP, \fB--utmp\fP
 Create a utmp entry.
 
@@ -814,9 +819,11 @@ Once keyboard selecting mode is entered, the following keys are applied:
 .TP
 \fBWindow commands\fP
 .br
-\(en \fBAlt+F2\fP: New (clone window at current size); see notes below
+\(en \fBAlt+F2\fP: New (clone window/tab at current size); see notes below
 .br
-\(en \fBShift+Alt+F2\fP: New (clone window at configured size); see notes below
+\(en \fBShift+Alt+F2\fP: New (clone at configured size); see notes below
+.br
+\(en \fBShift+Shift+Alt+F2\fP: New window; see notes below
 .br
 \(en \fBAlt+F3\fP: Search (in scrollback buffer)
 .br
@@ -863,6 +870,9 @@ respective neighbour in the monitor grid;
 .br
 These navigation controls can be applied repeatedly to select a monitor further away.
 
+In virtual tabs mode (with tabbar), Alt+F2 spawns a new tab; with both 
+Shift keys held, it enforces a new tabbar group.
+
 Note that a heuristic algorithm is used, based on the size of the smallest 
 monitor attached to the system, so the target may not always be selected 
 as expected if multiple monitors of different size are available or 
@@ -895,7 +905,7 @@ Keys pane of the Options dialog.
 .br
 \(en \fBCtrl+Shift+V\fP: Paste
 .br
-\(en \fBCtrl+Shift+N\fP: New
+\(en \fBCtrl+Shift+N\fP: [DEPRECATED] New Window/Tab
 .br
 \(en \fBCtrl+Shift+H\fP: Search scrollback buffer
 .br
@@ -911,9 +921,9 @@ Keys pane of the Options dialog.
 .br
 \(en \fBCtrl+Shift+O\fP: Toggle scrollbar
 .br
-\(en \fBCtrl+Shift+P\fP: Cycle text pointer (cursor) styles
+\(en \fBCtrl+Shift+P\fP: [DEPRECATED] Cycle text pointer (cursor) styles
 .br
-\(en \fBCtrl+Shift+T\fP: Cycle or tune transparency levels
+\(en \fBCtrl+Shift+T\fP: [DEPRECATED] Cycle or tune transparency levels
 
 Ctrl+Shift+T cycles through transparency levels in steps, whenever 
 Ctrl+Shift+T is released. Alternatively, while Ctrl+Shift+T is held down, 
@@ -2777,11 +2787,15 @@ Supported actions are described as follows:
 .br
 \(en \fBclose\fP: closes terminal window
 .br
-\(en \fBnew-key\fP: opens a new terminal window when key is released
+\(en \fBnew-key\fP: opens a new terminal window when key is released; supports multi-monitor selection (see above)
 .br
 \(en \fBnew-window\fP: opens a new terminal window
 .br
 \(en \fBnew-window-cwd\fP: opens a new terminal window in working directory of current foreground process
+.br
+\(en \fBnew-tab\fP: opens a new terminal tab (if tabbar enabled)
+.br
+\(en \fBnew-tab-cwd\fP: opens a new terminal tab in working directory of current foreground process
 .br
 \(en \fBoptions\fP: opens the Options dialog
 .br
@@ -3543,6 +3557,17 @@ Setting \fBTabBar=\fP\fIlevel\fP enables an interactive tabbar as
 an alternative session switcher. It raises the effective window position 
 synchronization to the given level as if also setting 
 \fBSessionGeomSync=\fP\fIlevel\fP. It is recommended to use level 3 or higher.
+
+.TP
+\fBTabbar grouping\fP (NewTabs=0)
+Setting \fBNewTabs=1\fP is applicable to mintty if started from a 
+desktop shortcut.
+It will start a new window, i.e. a new tab group (if tabbar is enabled) 
+in this case. (Adding command-line option \fB--newtabs\fP in the 
+shortcut command line would achieve the same effect.)
+Setting \fBNewTabs=2\fP would enforce a new tab group and is 
+discouraged as a configuration setting; command-line option 
+\fB--newtabs\fP does the same per invocation.
 
 .TP
 \fBTabbar highlighting\fP

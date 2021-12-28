@@ -3354,17 +3354,29 @@ static struct {
           HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
           int x, y;
           int moni = search_monitors(&x, &y, mon, true, 0);
-          child_fork(main_argc, main_argv, moni, get_mods() & MDK_SHIFT, false);
+          child_fork(main_argc, main_argv, moni, get_mods() & MDK_SHIFT, false, false);
         }
         when IDM_NEW_CWD: {
           HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
           int x, y;
           int moni = search_monitors(&x, &y, mon, true, 0);
-          child_fork(main_argc, main_argv, moni, get_mods() & MDK_SHIFT, true);
+          child_fork(main_argc, main_argv, moni, get_mods() & MDK_SHIFT, true, false);
+        }
+        when IDM_TAB: {
+          HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+          int x, y;
+          int moni = search_monitors(&x, &y, mon, true, 0);
+          child_fork(main_argc, main_argv, moni, get_mods() & MDK_SHIFT, false, true);
+        }
+        when IDM_TAB_CWD: {
+          HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+          int x, y;
+          int moni = search_monitors(&x, &y, mon, true, 0);
+          child_fork(main_argc, main_argv, moni, get_mods() & MDK_SHIFT, true, true);
         }
         when IDM_NEW_MONI: {
           int moni = lp;
-          child_fork(main_argc, main_argv, moni, get_mods() & MDK_SHIFT, false);
+          child_fork(main_argc, main_argv, moni, get_mods() & MDK_SHIFT, false, false);
         }
         when IDM_COPYTITLE: win_copy_title();
         when IDM_KEY_DOWN_UP: {
@@ -5041,6 +5053,7 @@ opts[] = {
   {"title",      required_argument, 0, 't'},
   {"Title",      required_argument, 0, 'T'},
   {"tabbar",     optional_argument, 0, ''},
+  {"newtabs",    no_argument,       0, ''},
   {"Border",     required_argument, 0, 'B'},
   {"Report",     required_argument, 0, 'R'},
   {"Reportpos",  required_argument, 0, 'R'},  // compatibility variant
@@ -5350,6 +5363,11 @@ main(int argc, char *argv[])
         set_arg_option("Title", optarg);
         title_settable = false;
       when '':
+        set_arg_option("TabBar", strdup("1"));
+        set_arg_option("SessionGeomSync", optarg ?: strdup("2"));
+      when '':
+        cfg.new_tabs = 2;
+        // -newtabs implies -tabbar
         set_arg_option("TabBar", strdup("1"));
         set_arg_option("SessionGeomSync", optarg ?: strdup("2"));
       when 'B':
@@ -5851,6 +5869,23 @@ main(int argc, char *argv[])
   if (!cfg.window)
     wclass = cs__utftowcs(asform("%d", getpid()));
 #endif
+
+  char * tabclass = getenv("MINTTY_CLASS");
+  if (tabclass) {
+    unsetenv("MINTTY_CLASS");
+    if (0 == strcmp(tabclass, "+"))
+      cfg.new_tabs = 2;
+    else {
+      set_arg_option("Class", tabclass);
+      wclass = cs__utftowcs(tabclass);
+      cfg.new_tabs = 0;
+    }
+  }
+  if (cfg.new_tabs > 1 || (cfg.new_tabs && invoked_from_shortcut)) {
+    tabclass = asform(APPNAME "-%d", getpid());
+    set_arg_option("Class", tabclass);
+    wclass = cs__utftowcs(tabclass);
+  }
 
   // Put child command line into window title if we haven't got one already.
   wstring wtitle = cfg.title;

@@ -3,6 +3,18 @@ Desktop integration
   * WSL path conversion supports UNC paths (#1130).
   * Clipboard: strip terminating NUL (#1132).
 
+Window handling
+  * New key shortcut Shift+Shift+Alt+F2 (both Shift keys) to enforce new window outside tabbar.
+  * Distinct system menu items "New Window" and "New Tab" if tabbar enabled (mintty/wsltty#295).
+
+Hotkey functions and user-definable functions
+  * Deprecated default key assignments Control+Shift+N / +T / +P.
+  * New user-definable functions new-tab and new-tab-cwd.
+
+Configuration
+  * New option NewTabs (mintty/wsltty#295).
+  * New command-line option --newtabs.
+
 ### 3.5.2 (13 November 2021) ###
 
 Unicode and Emoji data

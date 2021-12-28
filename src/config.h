@@ -219,6 +219,7 @@ typedef struct {
   string menu_title_ctrl_r;
   int geom_sync;
   int tabbar;
+  int new_tabs;
   int col_spacing, row_spacing;
   int auto_leading;
   int padding;

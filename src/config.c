@@ -227,6 +227,7 @@ const config default_cfg = {
   .menu_title_ctrl_r = "Ws",
   .geom_sync = 0,
   .tabbar = 0,
+  .new_tabs = 0,
   .col_spacing = 0,
   .row_spacing = 0,
   .auto_leading = 2,
@@ -527,6 +528,7 @@ options[] = {
 
   {"SessionGeomSync", OPT_INT, offcfg(geom_sync)},
   {"TabBar", OPT_BOOL, offcfg(tabbar)},
+  {"NewTabs", OPT_INT, offcfg(new_tabs)},
   {"ColSpacing", OPT_INT, offcfg(col_spacing)},
   {"RowSpacing", OPT_INT, offcfg(row_spacing)},
   {"AutoLeading", OPT_INT, offcfg(auto_leading)},
