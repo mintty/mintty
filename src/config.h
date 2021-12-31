@@ -141,6 +141,7 @@ typedef struct {
   // Window
   int cols, rows;
   int scrollback_lines;
+  int max_scrollback_lines;
   char scrollbar;
   char scroll_mod;
   bool pgupdn_scroll;

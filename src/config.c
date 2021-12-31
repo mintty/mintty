@@ -152,6 +152,7 @@ const config default_cfg = {
   .rows = 24,
   .scrollbar = 1,
   .scrollback_lines = 10000,
+  .max_scrollback_lines = 250000,
   .scroll_mod = MDK_SHIFT,
   .pgupdn_scroll = false,
   .lang = W(""),
@@ -438,6 +439,7 @@ options[] = {
   {"Columns", OPT_INT, offcfg(cols)},
   {"Rows", OPT_INT, offcfg(rows)},
   {"ScrollbackLines", OPT_INT, offcfg(scrollback_lines)},
+  {"MaxScrollbackLines", OPT_INT, offcfg(max_scrollback_lines)},
   {"Scrollbar", OPT_SCROLLBAR, offcfg(scrollbar)},
   {"ScrollMod", OPT_MOD, offcfg(scroll_mod)},
   {"PgUpDnScroll", OPT_BOOL, offcfg(pgupdn_scroll)},
@@ -1609,6 +1611,18 @@ init_config(void)
   copy_config("init", &cfg, &default_cfg);
 }
 
+static void
+fix_config(void)
+{
+  // Avoid negative sizes.
+  cfg.rows = max(1, cfg.rows);
+  cfg.cols = max(1, cfg.cols);
+  cfg.scrollback_lines = max(0, cfg.scrollback_lines);
+
+  // Limit size of scrollback buffer.
+  cfg.scrollback_lines = min(cfg.scrollback_lines, cfg.max_scrollback_lines);
+}
+
 void
 finish_config(void)
 {
@@ -1623,10 +1637,7 @@ finish_config(void)
   opterror("Täst U %s %s", true, "böh", "büh€");
 #endif
 
-  // Avoid negative sizes.
-  cfg.rows = max(1, cfg.rows);
-  cfg.cols = max(1, cfg.cols);
-  cfg.scrollback_lines = max(0, cfg.scrollback_lines);
+  fix_config();
 
   // Ignore charset setting if we haven't got a locale.
   if (!*cfg.locale)
@@ -1763,6 +1774,7 @@ apply_config(bool save)
      )
     load_messages(&new_cfg);
   win_reconfig();  // copy_config(&cfg, &new_cfg);
+  fix_config();
   if (save)
     save_config();
   bool had_theme = !!*cfg.theme_file;

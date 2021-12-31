@@ -6,6 +6,7 @@ Desktop integration
 Window handling
   * New key shortcut Shift+Shift+Alt+F2 (both Shift keys) to enforce new window outside tabbar.
   * Distinct system menu items "New Window" and "New Tab" if tabbar enabled (mintty/wsltty#295).
+  * Limiting size of scrollback buffer to secure buffer and clipboard handling (#1134).
 
 Hotkey functions and user-definable functions
   * Deprecated default key assignments Control+Shift+N / +T / +P.
@@ -14,6 +15,7 @@ Hotkey functions and user-definable functions
 Configuration
   * New option NewTabs (mintty/wsltty#295).
   * New command-line option --newtabs.
+  * New option MaxScrollbackLines.
 
 ### 3.5.2 (13 November 2021) ###
 

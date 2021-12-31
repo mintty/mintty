@@ -385,7 +385,7 @@ Use \fB-l\fP to both set the log file name and enable logging.
 
 .TP
 \fB--sl\fP
-Sets ScrollbackLines.
+Sets ScrollbackLines; effectively limited by \fBMaxScrollbackLines\fP.
 
 .SH USAGE
 
@@ -1961,7 +1961,19 @@ without fixed limit.
 
 .TP
 \fBScrollback lines\fP (ScrollbackLines=10000)
-The maximum number of lines to keep in the scrollback buffer.
+The number of lines that can be kept in the scrollback buffer, 
+effectively limited by \fBMaxScrollbackLines\fP.
+.br
+(Corresponds to the xterm resource \fBsaveLines\fP.)
+
+.TP
+\fBScrollback lines limit\fP (MaxScrollbackLines=250000)
+This hidden setting limits the maximum number of lines to keep in the 
+scrollback buffer even if \fBScrollbackLines\fP is configured higher, 
+e.g. interactively. Note that increasing the scrollback buffer size to 
+a larger value may cause the menu function "Select all" to become 
+very slow and let mintty appear unresponsive for a while. Increasing to 
+a very large value may even cause mintty to crash; use at own risk.
 
 .TP
 \fBScrollbar\fP (Scrollbar=right)
