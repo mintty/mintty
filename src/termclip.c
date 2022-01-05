@@ -34,6 +34,9 @@ destroy_clip_workbuf(clip_workbuf * b)
 static void
 clip_addchar(clip_workbuf * b, wchar chr, cattr * ca, bool tabs, ulong sizehint)
 {
+  // ensure sizehint > 0
+  sizehint = max(sizehint, 8);
+
   if (tabs && chr == ' ' && ca && ca->attr & TATTR_CLEAR && ca->attr & ATTR_BOLD) {
     // collapse TAB
     int l0 = b->len;
