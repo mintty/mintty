@@ -648,14 +648,16 @@ win_init_fontfamily(HDC dc, int findex)
       	 g	tmDescent		|
       	–	tmExtLeading
       */
-      if (tm.tmInternalLeading < 2)
+      if (tm.tmInternalLeading < 0)
+        ff->row_spacing += 2 - tm.tmInternalLeading / 4;
+      else if (tm.tmInternalLeading < 2)
         ff->row_spacing += 2 - tm.tmInternalLeading;
       else if (tm.tmInternalLeading > 7)
         ff->row_spacing -= tm.tmExternalLeading;
-      trace_font(("vert geom: (int %d) asc %d + dsc %d -> hei %d, + ext %d; -> spc (%d) %d %ls\n", 
+      trace_font(("vert geom: (int %d) asc %d + dsc %d -> hei %d, + ext %d; -> spc %d %ls\n", 
                 (int)tm.tmInternalLeading, (int)tm.tmAscent, (int)tm.tmDescent,
                 (int)tm.tmHeight, (int)tm.tmExternalLeading, 
-                row_spacing_1, ff->row_spacing,
+                ff->row_spacing,
                 ff->name));
     }
 

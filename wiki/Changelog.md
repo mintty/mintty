@@ -11,6 +11,9 @@ Window handling
   * Distinct system menu items "New Window" and "New Tab" if tabbar enabled (mintty/wsltty#295).
   * Limiting size of scrollback buffer to secure buffer and clipboard handling (#1134).
 
+Font rendering
+  * Tweak again handling of negative font leading (#948, #946).
+
 Hotkey functions and user-definable functions
   * Deprecated default key assignments Control+Shift+N / +T / +P.
   * New user-definable functions new-tab and new-tab-cwd.
