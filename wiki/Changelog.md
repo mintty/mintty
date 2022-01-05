@@ -1,3 +1,6 @@
+Terminal features
+  * Fixed combining characters colour rendering (~#710).
+
 Desktop integration
   * WSL path conversion considers extended /etc/fstab entries (#1130).
   * WSL path conversion supports UNC paths (#1130).
