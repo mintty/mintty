@@ -10,6 +10,7 @@ Window handling
   * New key shortcut Shift+Shift+Alt+F2 (both Shift keys) to enforce new window outside tabbar.
   * Distinct system menu items "New Window" and "New Tab" if tabbar enabled (mintty/wsltty#295).
   * Limiting size of scrollback buffer to secure buffer and clipboard handling (#1134).
+  * Avoid position gap after Options Apply (~#1126) in more cases, especially scrollbar toggling.
 
 Font rendering
   * Tweak again handling of negative font leading (#948, #946).
