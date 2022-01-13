@@ -1557,6 +1557,45 @@ win_get_screen_chars(int *rows_p, int *cols_p)
   *cols_p = (fr.right - fr.left - 2 * PADDING) / cell_width;
 }
 
+static void
+win_fix_position(bool scrollbar)
+{
+  // DPI handling V2
+  if (is_in_dpi_change)
+    // window position needs no correction during DPI change, 
+    // avoid position flickering (#695)
+    return;
+
+  RECT wr;
+  GetWindowRect(wnd, &wr);
+  MONITORINFO mi;
+  get_my_monitor_info(&mi);
+  RECT ar = mi.rcWork;
+  //printf("win l/r %d..%d mon l/r %d %d\n", wr.left, wr.right, ar.left, ar.right);
+
+  // Correct edges. Top and left win if the window is too big.
+  if (!scrollbar) {  // skip vertical fixing if just adding scrollbar
+    wr.top -= max(0, wr.bottom - ar.bottom);
+    wr.top = max(wr.top, ar.top);
+  }
+  if (!scrollbar || wr.left > ar.left + GetSystemMetrics(SM_CXVSCROLL)) {
+    // skip fixing for scrollbar near left border of monitor
+    wr.left -= max(0, wr.right - ar.right);
+    wr.left = max(wr.left, ar.left);
+    // could further fine-tune if we're within scrollbar width from left edge..
+  }
+#ifdef workaround_629
+  // attempt to workaround left gap (#629); does not seem to work anymore
+  WINDOWINFO winfo;
+  winfo.cbSize = sizeof(WINDOWINFO);
+  GetWindowInfo(wnd, &winfo);
+  wr.left = max(wr.left, (int)(ar.left - winfo.cxWindowBorders));
+#endif
+
+  SetWindowPos(wnd, 0, wr.left, wr.top, 0, 0,
+               SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+}
+
 void
 win_set_pixels(int height, int width)
 {
@@ -1571,6 +1610,9 @@ win_set_pixels(int height, int width)
                width + extra_width + 2 * PADDING,
                height + extra_height + OFFSET + 2 * PADDING + sy,
                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER);
+
+  if (is_init)  // don't spoil negative position (#1123)
+    win_fix_position(false);
 }
 
 bool
@@ -1788,45 +1830,6 @@ win_set_geom(int y, int x, int height, int width)
                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOZORDER);
 }
 
-static void
-win_fix_position(bool scrollbar)
-{
-  // DPI handling V2
-  if (is_in_dpi_change)
-    // window position needs no correction during DPI change, 
-    // avoid position flickering (#695)
-    return;
-
-  RECT wr;
-  GetWindowRect(wnd, &wr);
-  MONITORINFO mi;
-  get_my_monitor_info(&mi);
-  RECT ar = mi.rcWork;
-  //printf("win l/r %d..%d mon l/r %d %d\n", wr.left, wr.right, ar.left, ar.right);
-
-  // Correct edges. Top and left win if the window is too big.
-  if (!scrollbar) {  // skip vertical fixing if just adding scrollbar
-    wr.top -= max(0, wr.bottom - ar.bottom);
-    wr.top = max(wr.top, ar.top);
-  }
-  if (!scrollbar || wr.left > ar.left + GetSystemMetrics(SM_CXVSCROLL)) {
-    // skip fixing for scrollbar near left border of monitor
-    wr.left -= max(0, wr.right - ar.right);
-    wr.left = max(wr.left, ar.left);
-    // could further fine-tune if we're within scrollbar width from left edge..
-  }
-#ifdef workaround_629
-  // attempt to workaround left gap (#629); does not seem to work anymore
-  WINDOWINFO winfo;
-  winfo.cbSize = sizeof(WINDOWINFO);
-  GetWindowInfo(wnd, &winfo);
-  wr.left = max(wr.left, (int)(ar.left - winfo.cxWindowBorders));
-#endif
-
-  SetWindowPos(wnd, 0, wr.left, wr.top, 0, 0,
-               SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-}
-
 void
 win_set_chars(int rows, int cols)
 {
@@ -1839,8 +1842,10 @@ win_set_chars(int rows, int cols)
   // which would remove bottom padding and spoil some Windows magic (#629)
   if (rows != term.rows || cols != term.cols) {
     win_set_pixels(rows * cell_height, cols * cell_width);
+#ifdef win_set_pixels_does_not_win_fix_position
     if (is_init)  // don't spoil negative position (#1123)
       win_fix_position(false);
+#endif
   }
   trace_winsize("win_set_chars > win_fix_position");
 }
@@ -2436,8 +2441,10 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
   if (sync_size_with_font && !win_is_fullscreen) {
     // enforced win_set_chars(term.rows, term.cols):
     win_set_pixels(term.rows * cell_height, term.cols * cell_width);
+#ifdef win_set_pixels_does_not_win_fix_position
     if (is_init)  // don't spoil negative position (#1123)
       win_fix_position(false);
+#endif
     trace_winsize("win_adapt_term_size > win_fix_position");
 
     win_invalidate_all(false);

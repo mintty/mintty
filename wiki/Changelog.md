@@ -215,6 +215,7 @@ Terminal features
 
 Window handling / Tabbar (thanks to K. Takata)
   * Bring other tab to top when closing (#1054).
+  * Always fix window position back to screen when widening beyond screen.
 
 Character encoding
   * Fixed locale setup in case of empty locale (#1050, thanks to K. Takata).
