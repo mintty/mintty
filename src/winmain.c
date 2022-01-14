@@ -1526,12 +1526,17 @@ win_get_pixels(int *height_p, int *width_p, bool with_borders)
 }
 
 void
-term_save_image(void)
+term_save_image(bool do_open)
 {
   struct timeval now;
   gettimeofday(& now, 0);
   char * copf = save_filename(".png");
   wchar * copyfn = path_posix_to_win_w(copf);
+
+  wchar * browse = 0;
+  if (do_open)
+    browse = cs__mbstowcs(copf);
+
   free(copf);
 
   if (tek_mode)
@@ -1545,6 +1550,9 @@ term_save_image(void)
     free(copyfn);
     ReleaseDC(wnd, dc);
   }
+
+  if (do_open)
+    win_open(browse, false);  // win_open frees its argument
 }
 
 void
@@ -3323,9 +3331,9 @@ static struct {
             tek_page();
         when IDM_TEKCOPY:
           if (tek_mode)
-            term_save_image();
+            term_save_image(GetKeyState(VK_SHIFT) & 0x80);
         when IDM_SAVEIMG:
-          term_save_image();
+          term_save_image(GetKeyState(VK_SHIFT) & 0x80);
         when IDM_DEFSIZE:
           default_size_token = true;
           default_size();

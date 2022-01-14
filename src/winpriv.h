@@ -167,6 +167,6 @@ extern void win_toggle_on_top(void);
 
 extern unsigned long mtime(void);
 
-extern void term_save_image(void);
+extern void term_save_image(bool do_open);
 
 #endif
