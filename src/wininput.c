@@ -1,5 +1,5 @@
 // wininput.c (part of mintty)
-// Copyright 2008-12 Andy Koppe, 2015-2018 Thomas Wolff
+// Copyright 2008-12 Andy Koppe, 2015-2022 Thomas Wolff
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "winpriv.h"
@@ -1612,6 +1612,19 @@ mflags_tek_mode()
   return tek_mode ? MF_ENABLED : MF_GRAYED;
 }
 
+static void hor_left_1() { horscroll(-1); }
+static void hor_right_1() { horscroll(1); }
+static void hor_out_1() { horsizing(1, false); }
+static void hor_in_1() { horsizing(-1, false); }
+static void hor_narrow_1() { horsizing(-1, true); }
+static void hor_wide_1() { horsizing(1, true); }
+static void hor_left_mult() { horscroll(-term.cols / 10); }
+static void hor_right_mult() { horscroll(term.cols / 10); }
+static void hor_out_mult() { horsizing(term.cols / 10, false); }
+static void hor_in_mult() { horsizing(-term.cols / 10, false); }
+static void hor_narrow_mult() { horsizing(-term.cols / 10, true); }
+static void hor_wide_mult() { horsizing(term.cols / 10, true); }
+
 // user-definable functions
 static struct function_def cmd_defs[] = {
 #ifdef support_sc_defs
@@ -1629,6 +1642,19 @@ static struct function_def cmd_defs[] = {
   {"new-window-cwd", {IDM_NEW_CWD}, 0},
   {"new-tab", {IDM_TAB}, 0},
   {"new-tab-cwd", {IDM_TAB_CWD}, 0},
+
+  {"hor-left-1", {.fct = hor_left_1}, 0},
+  {"hor-right-1", {.fct = hor_right_1}, 0},
+  {"hor-out-1", {.fct = hor_out_1}, 0},
+  {"hor-in-1", {.fct = hor_in_1}, 0},
+  {"hor-narrow-1", {.fct = hor_narrow_1}, 0},
+  {"hor-wide-1", {.fct = hor_wide_1}, 0},
+  {"hor-left-mult", {.fct = hor_left_mult}, 0},
+  {"hor-right-mult", {.fct = hor_right_mult}, 0},
+  {"hor-out-mult", {.fct = hor_out_mult}, 0},
+  {"hor-in-mult", {.fct = hor_in_mult}, 0},
+  {"hor-narrow-mult", {.fct = hor_narrow_mult}, 0},
+  {"hor-wide-mult", {.fct = hor_wide_mult}, 0},
 
   //{"default-size", {IDM_DEFSIZE}, 0},
   {"default-size", {IDM_DEFSIZE_ZOOM}, mflags_defsize},

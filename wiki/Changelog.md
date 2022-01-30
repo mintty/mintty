@@ -11,6 +11,7 @@ Window handling
   * Distinct system menu items "New Window" and "New Tab" if tabbar enabled (mintty/wsltty#295).
   * Limiting size of scrollback buffer to secure buffer and clipboard handling (#1134).
   * Avoid position gap after Options Apply (~#1126) in more cases, especially scrollbar toggling.
+  * Horizontal scrolling feature (#138).
 
 Font rendering
   * Tweak again handling of negative font leading (#948, #946).
@@ -23,6 +24,8 @@ Configuration
   * New option NewTabs (mintty/wsltty#295).
   * New command-line option --newtabs.
   * New option MaxScrollbackLines.
+  * New command-line option --horbar.
+  * New user-definable functions for horizontal scrolling.
 
 ### 3.5.2 (13 November 2021) ###
 

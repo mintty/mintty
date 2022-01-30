@@ -209,6 +209,12 @@ Create a new window even if virtual tabs are enabled, so running a new
 tab group. Implies \fB--tabbar\fP (equivalent to \fB--tabbar -o NewTabs=2\fP).
 
 .TP
+\fB--horbar\fP[\fB=\fP\fImode\fP]
+Support horizontal scrolling. Values are 3 to enable a permanent 
+horizontal scrollbar, or 2 to display a horizontal scrollbar only while 
+the horizontal terminal view is narrower than the actual terminal width.
+
+.TP
 \fB-u\fP, \fB--utmp\fP
 Create a utmp entry.
 
@@ -583,7 +589,7 @@ terminal in an unusable state. In that case, resetting the terminal's state
 via the \fBReset\fP command in the menu or the \fBAlt+F8\fP keyboard shortcut
 may help.
 
-.SS Scrolling
+.SS Scrolling and the scrollback buffer
 
 Mintty has a scrollback buffer that can hold up to 10000 lines in the default
 configuration.
@@ -613,6 +619,8 @@ can be scrolled with Control+Alt+mouse-wheel.
 Note that all modes of mouse operation are overridden by 
 various "mouse tracking" modes enabled by escape sequences.
 
+See section further below for horizontal scrolling.
+
 .SS Scroll Lock handling
 
 The ScrollLock key is one of the most useless keys on typical PC keyboards 
@@ -626,7 +634,7 @@ Functions are no-scroll and scroll-mode (referring to those two features)
 which would be reset by any key input, and toggle-no-scroll and 
 toggle-scroll-mode which would switch the respective feature on or off.
 These functions can be attached to any user-assignable function key or 
-special key, including the ScrollLock key.
+special key, including the ScrollLock key, with setting \fBKeyFunctions\fP.
 Mintty manages the ScrollLock keyboard light to reflect either of these 
 functions activated, trying to decouple the light indication from the 
 ScrollLock key while in a mintty window.
@@ -695,6 +703,28 @@ virtual tabs mechanism. (It works like the session switcher available
 via extended context menu or title bar menu.)
 It is recommended to also set \fBSessionGeomSync=3\fP or higher to 
 achieve a tabbed window behaviour.
+
+.SS Horizontal scrolling of terminal view and horizontal scrollbar
+
+Mintty provides an optional horizontal scrollbar, which can be enabled 
+by a \fB--horbar\fP command-line option.
+The window view can then be narrowed to be a partial view within 
+the actual terminal width, 
+and the view position can be changed by horizontal scrolling.
+There are two methods to perform view resizing and positioning: 
+
+The horizontal scrollbar can be used to shift the view, while clicking 
+it with either Ctrl held, or Shift or Alt held, can resize the view;
+Ctrl will narrow the view, Shift or Alt will widen it, each at the side 
+where the scrollbar is clicked; clicking the scrollbar end arrows resizes 
+by 1 column, clicking the empty scrollbar areas resizes by more columns.
+
+The other method of horizontal view control uses user-definable functions 
+which can be assigned to key combinations with option \fBKeyFunctions\fP.
+
+\fINote:\fP This is an experimental feature.
+
+\fINote:\fP Horizontal scrolling is not supported with virtual tabs mode.
 
 .SS Closing a session
 
@@ -2935,6 +2965,31 @@ Supported actions are described as follows:
 \(en \fBswitch-visible-next\fP: switch to next virtual tab which is not iconized
 .br
 
+\(en \fBhor-left-1\fP: horizontal scrolling left by 1 column
+.br
+\(en \fBhor-right-1\fP: horizontal scrolling right by 1 column
+.br
+\(en \fBhor-out-1\fP: horizontal view left wider by 1 column
+.br
+\(en \fBhor-in-1\fP: horizontal view left narrower by 1 column
+.br
+\(en \fBhor-narrow-1\fP: horizontal view right narrower by 1 column
+.br
+\(en \fBhor-wide-1\fP: horizontal view right wider by 1 column
+.br
+\(en \fBhor-left-mult\fP: horizontal scrolling left by some columns
+.br
+\(en \fBhor-right-mult\fP: horizontal scrolling right by some columns
+.br
+\(en \fBhor-out-mult\fP: horizontal view left wider by some columns
+.br
+\(en \fBhor-in-mult\fP: horizontal view left narrower by some columns
+.br
+\(en \fBhor-narrow-mult\fP: horizontal view right narrower by some columns
+.br
+\(en \fBhor-wide-mult\fP: horizontal view right wider by some columns
+.br
+
 \fINote (*):\fP The exact behaviour of some actions depends on the 
 state of the Shift key.
 
@@ -2998,6 +3053,12 @@ enables window switching with [Ctrl+]Alt+Left/Right keys on the
 enables scrollback scrolling with either of Shift or Control modifiers
 .br
 \(en \fBKeyFunctions=ScrollLock:toggle-no-scroll\fP enables NoScroll key
+.br
+\(en \fBKeyFunctions=C+Left:hor-left-1;C+Right:hor-right-1;\\
+	CS+Left:hor-out-1;CS+Right:hor-in-1;\\
+	S+Left:hor-narrow-1;S+Right:hor-wide-1\fP
+enables horizontal scrolling support via modified cursor keys on the 
+"editing keypad" (prefix KP_ for the numeric keypad)
 
 .TP
 \fBManage keyboard LEDs\fP (ManageLEDs=7)

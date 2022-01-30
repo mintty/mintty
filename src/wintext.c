@@ -1,5 +1,5 @@
 // wintext.c (part of mintty)
-// Copyright 2008-13 Andy Koppe, 2015-2018 Thomas Wolff
+// Copyright 2008-13 Andy Koppe, 2015-2022 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -1279,6 +1279,14 @@ do_update(void)
   show_curchar_info('u');
 
   dc = GetDC(wnd);
+
+  // horizontal scrolling of terminal view
+  int dx = - horclip();
+  if (dx) {
+    XFORM xform = (XFORM){1.0, 0.0, 0.0, 1.0, (float)dx, 0.0};
+    if (SetGraphicsMode(dc, GM_ADVANCED))
+      SetWorldTransform(dc, &xform);
+  }
 
   win_paint_exclude_search(dc);
   term_update_search();

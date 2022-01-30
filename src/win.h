@@ -53,6 +53,11 @@ extern colour truecolour(cattr *, colour bg);
 
 extern void win_invalidate_all(bool clearbg);
 
+extern int horclip(void);
+extern void horscroll(int cells);
+extern void horscrollto(int percent);
+extern void horsizing(int cells, bool from_right);
+
 extern void win_set_pos(int x, int y);
 extern void win_set_chars(int rows, int cols);
 extern void win_set_pixels(int height, int width);

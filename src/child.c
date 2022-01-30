@@ -1,5 +1,5 @@
 // child.c (part of mintty)
-// Copyright 2008-11 Andy Koppe, 2015-2017 Thomas Wolff
+// Copyright 2008-11 Andy Koppe, 2015-2022 Thomas Wolff
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "child.h"
@@ -1184,6 +1184,11 @@ do_child_fork(int argc, char *argv[], int moni, bool launch, bool config_size, b
     if (!config_size) {
       setenvi("MINTTY_ROWS", term.rows0);
       setenvi("MINTTY_COLS", term.cols0);
+#ifdef support_horizontal_scrollbar_with_tabbar
+      // this does not work, so horizontal scrollbar is disabled with tabbar
+extern int horsqueeze(void);  // should become horsqueeze_cols in win.h
+      setenvi("MINTTY_SQUEEZE", horsqueeze() / cell_width);
+#endif
       // provide environment to maximise window
       if (win_is_fullscreen)
         setenvi("MINTTY_MAXIMIZE", 2);
