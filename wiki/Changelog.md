@@ -24,6 +24,7 @@ Configuration
   * New option NewTabs (mintty/wsltty#295).
   * New command-line option --newtabs.
   * New option MaxScrollbackLines.
+  * Option OldModifyKeys to tune modified special keys.
   * New command-line option --horbar.
   * New user-definable functions for horizontal scrolling.
 

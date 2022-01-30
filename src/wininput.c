@@ -3229,10 +3229,8 @@ static struct {
         app_pad_code('M' - '@');
       else if (!extended && term.modify_other_keys && (shift || ctrl))
         other_code('\r');
-#ifdef support_special_key_Enter
-      else if (ctrl)
+      else if (ctrl && (cfg.old_modify_keys & 32))
         ctrl_ch(CTRL('^'));
-#endif
       else
         esc_if(alt),
         term.newline_mode ? ch('\r'), ch('\n') : ch(shift ? '\n' : '\r');

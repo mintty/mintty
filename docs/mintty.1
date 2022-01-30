@@ -1755,6 +1755,24 @@ incompatibility in the Windows on-screen keyboard,
 just in case it has any side effects.
 
 .TP
+\fBOld modified special keys\fP (OldModifyKeys=0)
+This setting can selectively restore behaviour of certain modified 
+special keys from older versions of mintty. The value may be -1 to 
+restore all former modified keys, or a logical sum of the following flags:
+.br
+\(en \fB1\fP Ctrl+Backarrow sends ^_, Ctrl+Shift+Backarrow sends U+9F
+.br
+\(en \fB2\fP Ctrl/Shift+Tab ignores modifyOtherKeys mode 2
+.br
+\(en \fB4\fP Ctrl/Shift+Tab ignores modifyOtherKeys mode 1
+.br
+\(en \fB8\fP Shift+Esc ignores modifyOtherKeys mode 2
+.br
+\(en \fB16\fP Alt+Shift+letter/space ignores modifyOtherKeys mode 2
+.br
+\(en \fB32\fP Ctrl+Enter sends ^^
+
+.TP
 \fBSupport injection of external hotkeys\fP (SupportExternalHotkeys=2)
 This setting supports external Alt+hotkey combinations, esp. Alt+F4 
 to close the window, independently of general Alt+Fn shortcuts support 
