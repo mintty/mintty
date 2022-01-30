@@ -1039,6 +1039,18 @@ If Shift is held, the function also opens the HTML page.
 
 Filename pattern and location are configurable (setting \fBSaveFilename\fP).
 
+.SS Image dump of terminal contents
+
+Mintty can save the visual contents of the terminal screen in an image file 
+\fBmintty.date_time.png\fP. This is supported from the context menu or via 
+user-definable key functions. The current terminal dimensions are used for 
+the image size except in Tek mode, where one of the original Tek sizes is 
+used (depending on whether 12-bit pixel addresses are in effect).
+
+If Shift is held, the function also opens the HTML page.
+
+Filename pattern and location are configurable (setting \fBSaveFilename\fP).
+
 .SS Audio support
 
 Mintty supports audio output for the warning bell (^G character), 
@@ -1051,18 +1063,7 @@ Sound files for the bell sound and the audio sound output can be deployed
 in a resource subdirectory \fIsounds\fP or addressed by pathname.
 Tone playing by DECPS is supported via the \fIlibao\fP audio output library 
 if installed. Setting \fBPlayTone\fP can preselect a tone style.
-
-.SS Image dump of terminal contents
-
-Mintty can save the visual contents of the terminal screen in an image file 
-\fBmintty.date_time.png\fP. This is supported from the context menu or via 
-user-definable key functions. The current terminal dimensions are used for 
-the image size except in Tek mode, where one of the original Tek sizes is 
-used (depending on whether 12-bit pixel addresses are in effect).
-
-If Shift is held, the function also opens the HTML page.
-
-Filename pattern and location are configurable (setting \fBSaveFilename\fP).
+See the Control Sequences wiki page \fIhttps://github.com/mintty/mintty/wiki/CtrlSeqs#audio-support\fP.
 
 .SS Diagnostic support
 
@@ -1749,10 +1750,10 @@ With this option, some delay in milliseconds (suggested 16 or 20) can be
 allowed to detect a Ctrl+Menu sequence as AltGr.
 
 .TP
-\fBOld method of AltGr detection\fP (OldAltGrDetection=no)
-Setting this hidden option would disable a workaround for an 
-incompatibility in the Windows on-screen keyboard, 
-just in case it has any side effects.
+\fBFormat of escape sequences for encoding modified keys\fP (FormatOtherKeys=1)
+This setting selects the escape sequence format for encoded modified 
+keys in modifyOtherKeys mode.
+(Corresponds to the xterm resource \fBformatOtherKeys\fP.)
 
 .TP
 \fBOld modified special keys\fP (OldModifyKeys=0)
@@ -1771,6 +1772,14 @@ restore all former modified keys, or a logical sum of the following flags:
 \(en \fB16\fP Alt+Shift+letter/space ignores modifyOtherKeys mode 2
 .br
 \(en \fB32\fP Ctrl+Enter sends ^^
+
+See also settings \fBAltGrIsAlsoAlt\fP and \fBCtrlAltIsAltGr\fP.
+
+.TP
+\fBOld method of AltGr detection\fP (OldAltGrDetection=no)
+Setting this hidden option would disable a workaround for an 
+incompatibility in the Windows on-screen keyboard, 
+just in case it has any side effects.
 
 .TP
 \fBSupport injection of external hotkeys\fP (SupportExternalHotkeys=2)
