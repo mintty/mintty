@@ -715,12 +715,15 @@ There are two methods to perform view resizing and positioning:
 
 The horizontal scrollbar can be used to shift the view, while clicking 
 it with either Ctrl held, or Shift or Alt held, can resize the view;
-Ctrl will narrow the view, Shift or Alt will widen it, each at the side 
-where the scrollbar is clicked; clicking the scrollbar end arrows resizes 
-by 1 column, clicking the empty scrollbar areas resizes by more columns.
+Ctrl will narrow the view, Shift or Alt will widen it, each at the 
+opposite side of where the scrollbar is clicked (in order to maintain 
+a stable clicking position while resizing by multiple clicks); 
+clicking the scrollbar end arrows resizes by 1 column, clicking the 
+empty scrollbar areas resizes by more columns.
 
 The other method of horizontal view control uses user-definable functions 
-which can be assigned to key combinations with option \fBKeyFunctions\fP.
+which can be assigned to key combinations with option \fBKeyFunctions\fP, 
+see there for an example.
 
 \fINote:\fP This is an experimental feature.
 

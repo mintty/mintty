@@ -3740,36 +3740,36 @@ static struct {
         when SB_LINELEFT:
 #ifdef resize_view_via_horizontal_scrollbar
           if (mods & (MDK_SHIFT | MDK_ALT))
-            horsizing(1, false);
+            horsizing(1, true);
           else if (mods & MDK_CTRL)
-            horsizing(-1, false);
+            horsizing(-1, true);
           else
 #endif
             horscroll(-1);
         when SB_LINERIGHT:
 #ifdef resize_view_via_horizontal_scrollbar
           if (mods & (MDK_SHIFT | MDK_ALT))
-            horsizing(1, true);
+            horsizing(1, false);
           else if (mods & MDK_CTRL)
-            horsizing(-1, true);
+            horsizing(-1, false);
           else
 #endif
             horscroll(1);
         when SB_PAGELEFT:
 #ifdef resize_view_via_horizontal_scrollbar
           if (mods & (MDK_SHIFT | MDK_ALT))
-            horsizing(term.cols / 10, false);
+            horsizing(term.cols / 10, true);
           else if (mods & MDK_CTRL)
-            horsizing(-term.cols / 10, false);
+            horsizing(-term.cols / 10, true);
           else
 #endif
             horscroll(-term.cols / 10);
         when SB_PAGERIGHT:
 #ifdef resize_view_via_horizontal_scrollbar
           if (mods & (MDK_SHIFT | MDK_ALT))
-            horsizing(term.cols / 10, true);
+            horsizing(term.cols / 10, false);
           else if (mods & MDK_CTRL)
-            horsizing(-term.cols / 10, true);
+            horsizing(-term.cols / 10, false);
           else
 #endif
             horscroll(term.cols / 10);
