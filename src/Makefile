@@ -308,9 +308,12 @@ XGETTEXT_OPTS=--package-name=mintty #--package-version=$(version)
 XGETTEXT_OPTS+=--msgid-bugs-address=https://github.com/mintty/mintty/issues/700
 
 _:	localization checkloc
-localization:
+localization:	pot po
+pot:
 	mkdir -p ../lang
-	xgettext --from-code=UTF-8 -k_ -k_W -k__ -c__ $(XGETTEXT_OPTS) *.c appinfo.h -o- | grep -v "^#, c-format" > ../lang/messages.pot
+	xgettext --from-code=UTF-8 -k_ -k_W -k__ -c__ $(XGETTEXT_OPTS) *.c appinfo.h -o- | grep -v "^#, c-format" > ../lang/messages.pott
+	cd ../lang; if diff -I POT-Creation-Date messages.pot messages.pott | grep . > /dev/null; then /bin/mv messages.pott messages.pot; else /bin/rm messages.pott; fi
+po:
 	cd ../lang; for po in *.po; do [ "$$po" = en.po ] || msgmerge -U "$$po" messages.pot; done
 checkloc:
 	cd ../lang; ! grep "^#, fuzzy" *.po
