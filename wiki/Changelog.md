@@ -1,3 +1,5 @@
+### 3.5.3 (3 February 2022) ###
+
 Terminal features
   * Fixed combining characters colour rendering (~#710).
 
@@ -11,6 +13,8 @@ Window handling
   * Distinct system menu items "New Window" and "New Tab" if tabbar enabled (mintty/wsltty#295).
   * Limiting size of scrollback buffer to secure buffer and clipboard handling (#1134).
   * Avoid position gap after Options Apply (~#1126) in more cases, especially scrollbar toggling.
+  * Always fix window position back to screen when widening beyond screen.
+  * Save as Image (from Ctrl+right-click) with Shift also opens the image (#1139).
   * Horizontal scrolling feature (#138).
 
 Font rendering
@@ -219,8 +223,6 @@ Terminal features
 
 Window handling / Tabbar (thanks to K. Takata)
   * Bring other tab to top when closing (#1054).
-  * Always fix window position back to screen when widening beyond screen.
-  * Save as Image (from Ctrl+right-click) with Shift also opens the image (#1139).
 
 Character encoding
   * Fixed locale setup in case of empty locale (#1050, thanks to K. Takata).

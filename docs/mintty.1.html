@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Wed Nov 10 19:00:24 2021 -->
+<!-- CreationDate: Thu Feb  3 06:10:24 2022 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -308,6 +308,22 @@ session switching among virtual tabs. This sets
 Without given value the default window synchronization level
 is 2.</p>
 
+<p style="margin-left:11%;"><b>--newtabs</b></p>
+
+<p style="margin-left:22%;">Create a new window even if
+virtual tabs are enabled, so running a new tab group.
+Implies <b>--tabbar</b> (equivalent to <b>--tabbar -o
+NewTabs=2</b>).</p>
+
+
+<p style="margin-left:11%;"><b>--horbar</b>[<b>=</b><i>mode</i>]</p>
+
+<p style="margin-left:22%;">Support horizontal scrolling.
+Values are 3 to enable a permanent horizontal scrollbar, or
+2 to display a horizontal scrollbar only while the
+horizontal terminal view is narrower than the actual
+terminal width.</p>
+
 <p style="margin-left:11%;"><b>-u</b>, <b>--utmp</b></p>
 
 <p style="margin-left:22%;">Create a utmp entry.</p>
@@ -604,7 +620,8 @@ the log file name and enable logging.</p></td></tr>
 <td width="78%">
 
 
-<p>Sets ScrollbackLines.</p></td></tr>
+<p>Sets ScrollbackLines; effectively limited by
+<b>MaxScrollbackLines</b>.</p> </td></tr>
 </table>
 
 <h2>USAGE
@@ -736,7 +753,7 @@ touched with the mouse is included in the selection. With
 option <b>ElasticMouse</b>, text selection can be changed to
 include the first and last characters only if they are
 spanned at least halfway by the mouse dragging, like many
-GUI application do.</p>
+GUI applications do.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Drag &amp;
 drop</b> <br>
@@ -849,9 +866,8 @@ resetting the terminal&rsquo;s state via the <b>Reset</b>
 command in the menu or the <b>Alt+F8</b> keyboard shortcut
 may help.</p>
 
-
-<p style="margin-left:11%; margin-top: 1em"><b>Scrolling</b>
-<br>
+<p style="margin-left:11%; margin-top: 1em"><b>Scrolling
+and the scrollback buffer</b> <br>
 Mintty has a scrollback buffer that can hold up to 10000
 lines in the default configuration. It can be accessed using
 the scrollbar, the mouse wheel, or the keyboard. Hold the
@@ -888,6 +904,9 @@ modes of mouse operation are overridden by various
 &quot;mouse tracking&quot; modes enabled by escape
 sequences.</p>
 
+<p style="margin-left:11%; margin-top: 1em">See section
+further below for horizontal scrolling.</p>
+
 <p style="margin-left:11%; margin-top: 1em"><b>Scroll Lock
 handling</b> <br>
 The ScrollLock key is one of the most useless keys on
@@ -904,10 +923,11 @@ features) which would be reset by any key input, and
 toggle-no-scroll and toggle-scroll-mode which would switch
 the respective feature on or off. These functions can be
 attached to any user-assignable function key or special key,
-including the ScrollLock key. Mintty manages the ScrollLock
-keyboard light to reflect either of these functions
-activated, trying to decouple the light indication from the
-ScrollLock key while in a mintty window.</p>
+including the ScrollLock key, with setting
+<b>KeyFunctions</b>. Mintty manages the ScrollLock keyboard
+light to reflect either of these functions activated, trying
+to decouple the light indication from the ScrollLock key
+while in a mintty window.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Searching in
 the text and scrollback buffer</b> <br>
@@ -999,6 +1019,37 @@ title bar menu.) It is recommended to also set
 <b>SessionGeomSync=3</b> or higher to achieve a tabbed
 window behaviour.</p></td></tr>
 </table>
+
+<p style="margin-left:11%; margin-top: 1em"><b>Horizontal
+scrolling of terminal view and horizontal scrollbar</b> <br>
+Mintty provides an optional horizontal scrollbar, which can
+be enabled by a <b>--horbar</b> command-line option. The
+window view can then be narrowed to be a partial view within
+the actual terminal width, and the view position can be
+changed by horizontal scrolling. There are two methods to
+perform view resizing and positioning:</p>
+
+<p style="margin-left:11%; margin-top: 1em">The horizontal
+scrollbar can be used to shift the view, while clicking it
+with either Ctrl held, or Shift or Alt held, can resize the
+view; Ctrl will narrow the view, Shift or Alt will widen it,
+each at the opposite side of where the scrollbar is clicked
+(in order to maintain a stable clicking position while
+resizing by multiple clicks); clicking the scrollbar end
+arrows resizes by 1 column, clicking the empty scrollbar
+areas resizes by more columns.</p>
+
+<p style="margin-left:11%; margin-top: 1em">The other
+method of horizontal view control uses user-definable
+functions which can be assigned to key combinations with
+option <b>KeyFunctions</b>, see there for an example.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><i>Note:</i>
+This is an experimental feature.</p>
+
+<p style="margin-left:11%; margin-top: 1em"><i>Note:</i>
+Horizontal scrolling is not supported with virtual tabs
+mode.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Closing a
 session</b> <br>
@@ -1135,9 +1186,11 @@ exit selection mode <br>
 <p style="margin-left:11%;"><b>Window commands</b></p>
 
 <p style="margin-left:22%;">&ndash; <b>Alt+F2</b>: New
-(clone window at current size); see notes below <br>
-&ndash; <b>Shift+Alt+F2</b>: New (clone window at configured
-size); see notes below <br>
+(clone window/tab at current size); see notes below <br>
+&ndash; <b>Shift+Alt+F2</b>: New (clone at configured size);
+see notes below <br>
+&ndash; <b>Shift+Shift+Alt+F2</b>: New window; see notes
+below <br>
 &ndash; <b>Alt+F3</b>: Search (in scrollback buffer) <br>
 &ndash; <b>Alt+F4</b>: Close <br>
 &ndash; <b>Alt+F8</b>: Reset <br>
@@ -1181,6 +1234,10 @@ current monitor. <br>
 These navigation controls can be applied repeatedly to
 select a monitor further away.</p>
 
+<p style="margin-left:22%; margin-top: 1em">In virtual tabs
+mode (with tabbar), Alt+F2 spawns a new tab; with both Shift
+keys held, it enforces a new tabbar group.</p>
+
 <p style="margin-left:22%; margin-top: 1em">Note that a
 heuristic algorithm is used, based on the size of the
 smallest monitor attached to the system, so the target may
@@ -1210,7 +1267,8 @@ can be enabled on the Keys pane of the Options dialog. <br>
 &ndash; <b>Ctrl+Shift+A</b>: Select all <br>
 &ndash; <b>Ctrl+Shift+C</b>: Copy <br>
 &ndash; <b>Ctrl+Shift+V</b>: Paste <br>
-&ndash; <b>Ctrl+Shift+N</b>: New <br>
+&ndash; <b>Ctrl+Shift+N</b>: [DEPRECATED] New Window/Tab
+<br>
 &ndash; <b>Ctrl+Shift+H</b>: Search scrollback buffer <br>
 &ndash; <b>Ctrl+Shift+W</b>: Close <br>
 &ndash; <b>Ctrl+Shift+R</b>: Reset <br>
@@ -1220,10 +1278,10 @@ can be enabled on the Keys pane of the Options dialog. <br>
 despite Shift) <br>
 &ndash; <b>Ctrl+Shift+S</b>: Flip screen <br>
 &ndash; <b>Ctrl+Shift+O</b>: Toggle scrollbar <br>
-&ndash; <b>Ctrl+Shift+P</b>: Cycle text pointer (cursor)
-styles <br>
-&ndash; <b>Ctrl+Shift+T</b>: Cycle or tune transparency
-levels</p>
+&ndash; <b>Ctrl+Shift+P</b>: [DEPRECATED] Cycle text pointer
+(cursor) styles <br>
+&ndash; <b>Ctrl+Shift+T</b>: [DEPRECATED] Cycle or tune
+transparency levels</p>
 
 <p style="margin-left:22%; margin-top: 1em">Ctrl+Shift+T
 cycles through transparency levels in steps, whenever
@@ -1331,6 +1389,23 @@ held, the function also opens the HTML page.</p>
 pattern and location are configurable (setting
 <b>SaveFilename</b>).</p>
 
+<p style="margin-left:11%; margin-top: 1em"><b>Image dump
+of terminal contents</b> <br>
+Mintty can save the visual contents of the terminal screen
+in an image file <b>mintty.date_time.png</b>. This is
+supported from the context menu or via user-definable key
+functions. The current terminal dimensions are used for the
+image size except in Tek mode, where one of the original Tek
+sizes is used (depending on whether 12-bit pixel addresses
+are in effect).</p>
+
+<p style="margin-left:11%; margin-top: 1em">If Shift is
+held, the function also opens the image.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Filename
+pattern and location are configurable (setting
+<b>SaveFilename</b>).</p>
+
 <p style="margin-left:11%; margin-top: 1em"><b>Audio
 support</b> <br>
 Mintty supports audio output for the warning bell (^G
@@ -1344,21 +1419,9 @@ audio sound output can be deployed in a resource
 subdirectory <i>sounds</i> or addressed by pathname. Tone
 playing by DECPS is supported via the <i>libao</i> audio
 output library if installed. Setting <b>PlayTone</b> can
-preselect a tone style.</p>
-
-<p style="margin-left:11%; margin-top: 1em"><b>Image dump
-of terminal contents</b> <br>
-Mintty can save the visual contents of the terminal screen
-in an image file <b>mintty.date_time.png</b>. This is
-supported from the context menu or via user-definable key
-functions. The current terminal dimensions are used for the
-image size except in Tek mode, where one of the original Tek
-sizes is used (depending on whether 12-bit pixel addresses
-are in effect).</p>
-
-<p style="margin-left:11%; margin-top: 1em">Filename
-pattern and location are configurable (setting
-<b>SaveFilename</b>).</p>
+preselect a tone style. See the Control Sequences wiki page
+<i><a href="https://github.com/mintty/mintty/wiki/CtrlSeqs#audio-support">https://github.com/mintty/mintty/wiki/CtrlSeqs#audio-support</a></i>
+.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b>Diagnostic
 support <br>
@@ -2166,6 +2229,39 @@ Windows does. With this option, some delay in milliseconds
 (suggested 16 or 20) can be allowed to detect a Ctrl+Menu
 sequence as AltGr.</p>
 
+<p style="margin-left:11%;"><b>Format of escape sequences
+for encoding modified keys</b> <br>
+(FormatOtherKeys=1)</p>
+
+<p style="margin-left:22%;">This setting selects the escape
+sequence format for encoded modified keys in modifyOtherKeys
+mode. (Corresponds to the xterm resource
+<b>formatOtherKeys</b>.)</p>
+
+<p style="margin-left:11%;"><b>Old modified special
+keys</b> (OldModifyKeys=0)</p>
+
+<p style="margin-left:22%;">This setting can selectively
+restore behaviour of certain modified special keys from
+older versions of mintty. The value may be -1 to restore all
+former modified keys, or a logical sum of the following
+flags: <br>
+&ndash; <b>1</b> Ctrl+Backarrow sends ^_,
+Ctrl+Shift+Backarrow sends U+9F <br>
+&ndash; <b>2</b> Ctrl/Shift+Tab ignores modifyOtherKeys mode
+2 <br>
+&ndash; <b>4</b> Ctrl/Shift+Tab ignores modifyOtherKeys mode
+1 <br>
+&ndash; <b>8</b> Shift+Esc ignores modifyOtherKeys mode 2
+<br>
+&ndash; <b>16</b> Alt+Shift+letter/space ignores
+modifyOtherKeys mode 2 <br>
+&ndash; <b>32</b> Ctrl+Enter sends ^^</p>
+
+<p style="margin-left:22%; margin-top: 1em">See also
+settings <b>AltGrIsAlsoAlt</b> and
+<b>CtrlAltIsAltGr</b>.</p>
+
 <p style="margin-left:11%;"><b>Old method of AltGr
 detection</b> (OldAltGrDetection=no)</p>
 
@@ -2454,8 +2550,22 @@ width shall be used, without fixed limit.</p>
 <p style="margin-left:11%;"><b>Scrollback lines</b>
 (ScrollbackLines=10000)</p>
 
-<p style="margin-left:22%;">The maximum number of lines to
-keep in the scrollback buffer.</p>
+<p style="margin-left:22%;">The number of lines that can be
+kept in the scrollback buffer, effectively limited by
+<b>MaxScrollbackLines</b>. <br>
+(Corresponds to the xterm resource <b>saveLines</b>.)</p>
+
+<p style="margin-left:11%;"><b>Scrollback lines limit</b>
+(MaxScrollbackLines=250000)</p>
+
+<p style="margin-left:22%;">This hidden setting limits the
+maximum number of lines to keep in the scrollback buffer
+even if <b>ScrollbackLines</b> is configured higher, e.g.
+interactively. Note that increasing the scrollback buffer
+size to a larger value may cause the menu function
+&quot;Select all&quot; to become very slow and let mintty
+appear unresponsive for a while. Increasing to a very large
+value may even cause mintty to crash; use at own risk.</p>
 
 <p style="margin-left:11%;"><b>Scrollbar</b>
 (Scrollbar=right)</p>
@@ -3375,7 +3485,9 @@ Play, Zoom <br>
 Shift, considered if pressed while Ctrl and Shift are also
 held; AltGr-generated characters are supported; Alt and Win
 modifiers are supported, e.g. <b>x</b> for Ctrl+Shift+x,
-<b>W+x</b> for Ctrl+Win+x, <b>AW+x</b> for Alt+Win+x</p>
+<b>W+x</b> for Ctrl+Win+x, <b>AW+x</b> for Alt+Win+x; note
+that capital letters do not work (as already combined with
+Shift).</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i> A
 key that needs a modifier already to be sent (e.g. Break
@@ -3425,10 +3537,15 @@ always-on-top <br>
 &ndash; <b>win-icon</b>: turns window into icon <br>
 &ndash; <b>close</b>: closes terminal window <br>
 &ndash; <b>new-key</b>: opens a new terminal window when key
-is released <br>
+is released; supports multi-monitor selection (see above)
+<br>
 &ndash; <b>new-window</b>: opens a new terminal window <br>
 &ndash; <b>new-window-cwd</b>: opens a new terminal window
 in working directory of current foreground process <br>
+&ndash; <b>new-tab</b>: opens a new terminal tab (if tabbar
+enabled) <br>
+&ndash; <b>new-tab-cwd</b>: opens a new terminal tab in
+working directory of current foreground process <br>
 &ndash; <b>options</b>: opens the Options dialog <br>
 &ndash; <b>menu-text</b> (*): opens the context menu at the
 cursor position <br>
@@ -3535,6 +3652,32 @@ virtual tab which is not iconized <br>
 &ndash; <b>switch-visible-next</b>: switch to next virtual
 tab which is not iconized</p>
 
+<p style="margin-left:22%; margin-top: 1em">&ndash;
+<b>hor-left-1</b>: horizontal scrolling left by 1 column
+<br>
+&ndash; <b>hor-right-1</b>: horizontal scrolling right by 1
+column <br>
+&ndash; <b>hor-out-1</b>: horizontal view left wider by 1
+column <br>
+&ndash; <b>hor-in-1</b>: horizontal view left narrower by 1
+column <br>
+&ndash; <b>hor-narrow-1</b>: horizontal view right narrower
+by 1 column <br>
+&ndash; <b>hor-wide-1</b>: horizontal view right wider by 1
+column <br>
+&ndash; <b>hor-left-mult</b>: horizontal scrolling left by
+some columns <br>
+&ndash; <b>hor-right-mult</b>: horizontal scrolling right by
+some columns <br>
+&ndash; <b>hor-out-mult</b>: horizontal view left wider by
+some columns <br>
+&ndash; <b>hor-in-mult</b>: horizontal view left narrower by
+some columns <br>
+&ndash; <b>hor-narrow-mult</b>: horizontal view right
+narrower by some columns <br>
+&ndash; <b>hor-wide-mult</b>: horizontal view right wider by
+some columns</p>
+
 <p style="margin-left:22%; margin-top: 1em"><i>Note
 (*):</i> The exact behaviour of some actions depends on the
 state of the Shift key.</p>
@@ -3576,6 +3719,10 @@ closing with Alt+F4, send a BRK on Ctrl+Alt+F12, but likely
 not input &quot;minus&quot; on Ctrl+Shift+minus because
 Shift+minus is an underline on many keyboard layouts which
 has a Ctrl+_ assignment already <br>
+&ndash;
+<b>KeyFunctions=C+F2:new-tab-cwd;AC+F2:new-window-cwd</b>
+will open a new tab in same directory as current process on
+Control+F2, or as a new window on Alt+Control+F2 <br>
 &ndash; <b>KeyFunctions=c:copy;v:paste</b> in combination
 with setting <b>-o CtrlExchangeShift=true</b> will assign
 copy/paste to ^C and ^V for Windows addicts <br>
@@ -3604,7 +3751,14 @@ C+KP_Next:scroll_pgdn;S+KP_Next:scroll_pgdn</b> enables
 scrollback scrolling with either of Shift or Control
 modifiers <br>
 &ndash; <b>KeyFunctions=ScrollLock:toggle-no-scroll</b>
-enables NoScroll key</p>
+enables NoScroll key <br>
+&ndash;
+<b>KeyFunctions=C+Left:hor-left-1;C+Right:hor-right-1;\
+CS+Left:hor-out-1;CS+Right:hor-in-1;\
+S+Left:hor-narrow-1;S+Right:hor-wide-1</b> enables
+horizontal scrolling support via modified cursor keys on the
+&quot;editing keypad&quot; (prefix KP_ for the numeric
+keypad)</p>
 
 <p style="margin-left:11%;"><b>Manage keyboard LEDs</b>
 (ManageLEDs=7)</p>
@@ -4316,6 +4470,19 @@ an alternative session switcher. It raises the effective
 window position synchronization to the given level as if
 also setting <b>SessionGeomSync=</b><i>level</i>. It is
 recommended to use level 3 or higher.</p>
+
+<p style="margin-left:11%;"><b>Tabbar grouping</b>
+(NewTabs=0)</p>
+
+<p style="margin-left:22%;">Setting <b>NewTabs=1</b> is
+applicable to mintty if started from a desktop shortcut. It
+will start a new window, i.e. a new tab group (if tabbar is
+enabled) in this case. (Adding command-line option
+<b>--newtabs</b> in the shortcut command line would achieve
+the same effect.) Setting <b>NewTabs=2</b> would enforce a
+new tab group and is discouraged as a configuration setting;
+command-line option <b>--newtabs</b> does the same per
+invocation.</p>
 
 <p style="margin-left:11%;"><b>Tabbar highlighting</b></p>
 
