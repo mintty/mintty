@@ -105,17 +105,23 @@ The special assignments for Escape, Break and Pause are deprecated.
 
 Note that key assignments can also be redefined with option `KeyFunctions`.
 
-| **Key**      | **plain** | **Shift** | **Ctrl** | **Ctrl+Shift** |
-|:-------------|:----------|:----------|:---------|:---------------|
-| **Tab**      | `^I`      | `^[[Z`    | `^[[1;5I`| `^[[1;6I`      |
-| **Space**    | _SP_      | _SP_      | `^@`     | _U+0080_       |
-| **Back** (*) | `^?`      | `^?`      | `^H`     | `^H`           |
-| **Enter**    | `^M`      | `^J`      |
-| **Escape**   | `^[`      | _U+009B_  |
-| **Break**    | `^\`      | _U+009C_  |
-| **Pause**    | `^]`      | _U+009D_  |
+| **Key**        | **plain** | **Shift** | **Ctrl** | **Ctrl+Shift** |
+|:---------------|:----------|:----------|:---------|:---------------|
+| **Tab**        | `^I`      | `^[[Z`    | `^[[1;5I`| `^[[1;6I`      |
+| **Space**      | _SP_      | _SP_      | `^@`     | _U+0080_       |
+| **Back** (*)   | `^?`      | `^?`      | `^H`     | `^H`           |
+| **Enter**      | `^M`      | `^J`      |
+| **Escape**     | `^[`      | _U+009B_  |
+| **Break**      | `^\`      | _U+009C_  |
+| **Pause**      | `^]`      | _U+009D_  |
+| **Back** (**)  |           |           | `^_`     |
+| **Enter** (**) |           |           | `^^`     |
 
 (*) Note: With setting BackspaceSendsBS=yes, `^?` and `^H` mappings are reversed.
+
+(**) Note: To restore special key assignments of previous mintty versions, use either of these settings:
+  * `OldModifyKeys=33`
+  * `KeyFunctions=C+Back:^_;C+Enter:^^`
 
 [Pause and Break](http://en.wikipedia.org/wiki/Pause_key) usually share a key, whereby Ctrl has to be pressed to get the Break function.
 

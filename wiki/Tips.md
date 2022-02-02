@@ -530,7 +530,14 @@ bind-key -n User1 previous-window
 
 A number of options are available to customize the keyboard behaviour, 
 including user-defined function and keypad keys and Ctrl+Shift+key shortcuts.
-See the manual page for options and details.
+See the manual page for options and details about
+* Backspace/DEL behaviour
+* AltGr and other modifiers
+* shortcut assignments
+* special key assignments
+* user-definable key functions
+
+See also the [[Keycodes]] wiki page.
 
 ### Windows-style copy/paste key assignments ###
 
