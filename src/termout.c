@@ -2039,10 +2039,11 @@ set_modes(bool state)
             move(0, 0, 0);
         when 7:  /* DECAWM: auto wrap */
           term.autowrap = state;
-          term.curs.wrapnext = false;
+          if (!state)
+            term.curs.wrapnext = false;
         when 45:  /* xterm: reverse (auto) wraparound */
           term.rev_wrap = state;
-          term.curs.wrapnext = false;
+          //term.curs.wrapnext = false;
         when 8:  /* DECARM: auto key repeat */
           term.auto_repeat = state;
         when 9:  /* X10_MOUSE */
