@@ -351,6 +351,10 @@ child_create(char *argv[], struct winsize *winp)
       printf("%d\n", pid);
       fflush(stdout);
     }
+    if (report_child_tty) {
+      printf("%s\n", ptsname(pty_fd));
+      fflush(stdout);
+    }
 
 #ifdef __midipix__
     // This corrupts CR in cygwin

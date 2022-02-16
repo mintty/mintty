@@ -1,6 +1,9 @@
 Terminal features
   * Tweak pending auto-wrap state affected when switching wrap modes.
 
+Configuration
+  * New option -Rt to report the tty name of the child process / shell.
+
 ### 3.5.3 (3 February 2022) ###
 
 Terminal features

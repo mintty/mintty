@@ -109,6 +109,7 @@ static string border_style = 0;
 static string report_geom = 0;
 static bool report_moni = false;
 bool report_child_pid = false;
+bool report_child_tty = false;
 static bool report_winpid = false;
 static int monitor = 0;
 static bool center = false;
@@ -5805,6 +5806,8 @@ main(int argc, char *argv[])
             report_child_pid = true;
           when 'P':
             report_winpid = true;
+          when 't':
+            report_child_tty = true;
           otherwise:
             option_error(__("Unknown option '%s'"), optarg, 0);
         }
