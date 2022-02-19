@@ -4306,9 +4306,10 @@ win_char_width(xchar c, cattrflags attr)
 
   int ibuf = 0;
 
-#ifdef use_getcharwidth
-#warning avoid buggy GetCharWidth*
   if (c < 0x10000) {
+    // use GetCharWidth* for BMP only;
+    // used to avoid GetCharWidth* at all from 3.4.4 to 3.5.3
+    // but we need it to support @cjkwide auto-widening
     bool ok = GetCharWidth32W(dc, c, c, &ibuf);
 #ifdef debug_win_char_width
     printf(" getcharwidth32 %04X %dpx(/cell %dpx)\n", c, ibuf, cell_width);
@@ -4331,7 +4332,6 @@ win_char_width(xchar c, cattrflags attr)
       return ibuf;
     }
   }
-#endif
 
 #ifdef measure_width
 

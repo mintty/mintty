@@ -2,6 +2,9 @@ Terminal features
   * Tweak pending auto-wrap state affected when switching wrap modes.
   * Fixed unscroll (CSI +T) in case width has changed meanwhile.
 
+Font rendering
+  * Fixed auto-widening of ambiguous-width letters (broken since 3.4.4).
+
 Configuration
   * New option -Rt to report the tty name of the child process / shell.
 
