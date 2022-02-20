@@ -209,7 +209,7 @@ of the shortcut may be set to `%USERPROFILE%`.
 On Windows 7, mintty may also be used as a terminal for the 
 Subsystem for UNIX-based applications (SUA), also known as Interix.
 For the mintty session launcher, this can be configured for the 
-available shells as follows (concatened with ‘;’ separator for multiple targets):
+available shells as follows (concatenated with ‘;’ separator for multiple targets):
 * `SessionCommands=Interix Korn Shell:/bin/winpty C:\Windows\posix.exe /u /c /bin/ksh -l`
 * `SessionCommands=Interix SVR-5 Korn Shell:/bin/winpty posix /u /p /svr-5/bin/ksh /c -ksh`
 * `SessionCommands=Interix C Shell:/bin/winpty posix /u /c /bin/csh -l`
@@ -293,6 +293,8 @@ environment (and note that MinGW is not msys in this context), and would
 occur in all pty-based terminals (like xterm, rxvt etc).
 
 Cygwin 3.1.0 compensates for this issue via the ConPTY API of Windows 10.
+On MSYS2, its usage can be enabled by setting MSYS=enable_pcon or 
+changing the default during installation.
 
 As a workaround on older versions of Cygwin or Windows, you can use 
 [winpty](https://github.com/rprichard/winpty) as a wrapper to invoke 
