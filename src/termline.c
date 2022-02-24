@@ -249,7 +249,7 @@ makeliteral_attr(struct buf *b, termchar *c)
   * ensures that attribute values remain 16-bit _unless_ the
   * user uses extended colour.
   */
-  cattrflags attr = c->attr.attr & ~DATTR_MASK;
+  cattrflags attr = c->attr.attr & ~DATTR_STARTRUN;  // keep cursor for reflow
   int link = c->attr.link;
   int imgi = c->attr.imgi;
   colour truefg = c->attr.truefg;
@@ -806,7 +806,7 @@ fetch_line(int y)
     assert(-y <= term.sblines);
     y += term.sbpos;
     if (y < 0)
-      y += term.sbsize; // Scrollback has wrapped round
+      y += term.sbsize; // scrollback buffer has wrapped round
     uchar *cline = term.scrollback[y];
     line = decompressline(cline, null);
     resizeline(line, term.cols);

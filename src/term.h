@@ -457,8 +457,8 @@ struct term {
   term_cursor curs, saved_cursors[2];
 
   uchar **scrollback;     /* lines scrolled off top of screen */
+  int sbsize;             /* buffer size of scrollback buffer */
   int disptop;            /* distance scrolled back (0 or -ve) */
-  int sbsize;              /* length of scrollback buffer */
   int sblines;            /* number of lines of scrollback */
   int sbpos;              /* index of next scrollback position to be filled */
   int tempsblines;        /* number of lines of .scrollback that

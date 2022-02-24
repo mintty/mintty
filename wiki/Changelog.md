@@ -1,3 +1,6 @@
+Window handling
+  * Reflow terminal lines when resizing terminal width (#82, #219, mintty/wsltty#154).
+
 Terminal features
   * Tweak pending auto-wrap state affected when switching wrap modes.
   * Fixed unscroll (CSI +T) in case width has changed meanwhile.
