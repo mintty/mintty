@@ -68,6 +68,7 @@ extern bool support_wsl;
 extern wchar * wslname;
 extern wstring wsl_basepath;
 extern bool report_child_pid;
+extern bool report_child_tty;
 
 extern int ini_width, ini_height;
 extern bool win_is_fullscreen;
