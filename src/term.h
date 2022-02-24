@@ -458,7 +458,7 @@ struct term {
 
   uchar **scrollback;     /* lines scrolled off top of screen */
   int disptop;            /* distance scrolled back (0 or -ve) */
-  int sblen;              /* length of scrollback buffer */
+  int sbsize;              /* length of scrollback buffer */
   int sblines;            /* number of lines of scrollback */
   int sbpos;              /* index of next scrollback position to be filled */
   int tempsblines;        /* number of lines of .scrollback that

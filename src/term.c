@@ -1011,15 +1011,15 @@ term_clear_search(void)
 static void
 scrollback_push(uchar *line)
 {
-  if (term.sblines == term.sblen) {
+  if (term.sblines == term.sbsize) {
     // Need to make space for the new line.
-    if (term.sblen < cfg.scrollback_lines) {
+    if (term.sbsize < cfg.scrollback_lines) {
       // Expand buffer
       assert(term.sbpos == 0);
-      int new_sblen = min(cfg.scrollback_lines, term.sblen * 3 + 1024);
-      term.scrollback = renewn(term.scrollback, new_sblen);
-      term.sbpos = term.sblen;
-      term.sblen = new_sblen;
+      int new_sbsize = min(cfg.scrollback_lines, term.sbsize * 3 + 1024);
+      term.scrollback = renewn(term.scrollback, new_sbsize);
+      term.sbpos = term.sbsize;
+      term.sbsize = new_sbsize;
     }
     else if (term.sblines) {
       // Throw away the oldest line
@@ -1029,10 +1029,10 @@ scrollback_push(uchar *line)
     else
       return;
   }
-  assert(term.sblines < term.sblen);
-  assert(term.sbpos < term.sblen);
+  assert(term.sblines < term.sbsize);
+  assert(term.sbpos < term.sbsize);
   term.scrollback[term.sbpos++] = line;
-  if (term.sbpos == term.sblen)
+  if (term.sbpos == term.sbsize)
     term.sbpos = 0;
   term.sblines++;
   if (term.tempsblines < term.sblines)
@@ -1043,12 +1043,12 @@ static uchar *
 scrollback_pop(void)
 {
   assert(term.sblines > 0);
-  assert(term.sbpos < term.sblen);
+  assert(term.sbpos < term.sbsize);
   term.sblines--;
   if (term.tempsblines)
     term.tempsblines--;
   if (term.sbpos == 0)
-    term.sbpos = term.sblen;
+    term.sbpos = term.sbsize;
   return term.scrollback[--term.sbpos];
 }
 
@@ -1062,7 +1062,7 @@ term_clear_scrollback(void)
     free(scrollback_pop());
   free(term.scrollback);
   term.scrollback = 0;
-  term.sblen = term.sblines = term.sbpos = 0;
+  term.sbsize = term.sblines = term.sbpos = 0;
   term.tempsblines = 0;
   term.disptop = 0;
 }

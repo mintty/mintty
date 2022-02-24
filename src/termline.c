@@ -806,7 +806,7 @@ fetch_line(int y)
     assert(-y <= term.sblines);
     y += term.sbpos;
     if (y < 0)
-      y += term.sblen; // Scrollback has wrapped round
+      y += term.sbsize; // Scrollback has wrapped round
     uchar *cline = term.scrollback[y];
     line = decompressline(cline, null);
     resizeline(line, term.cols);
