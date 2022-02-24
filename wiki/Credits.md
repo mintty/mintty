@@ -33,6 +33,7 @@ And, continuing from release 2.0.1, more thanks particularly to:
   * Hayaki Saito (saitoha.github.io), for the new Sixel graphics feature and his cooperation to improve and integrate it.
   * Avi Halachmi (:avih), for refactoring, tweaks and fixes around attribute handling, especially bold display.
   * Xiaohui Duan (:dxhisboy), for an interactive tabbar that extends the virtual tabs mechanism to a tabbed window experience.
+  * Brian Inglis, for monitoring the issue tracker and frequently helping sort out and debug issues.
 
 Cheers,<br>
 Thomas
