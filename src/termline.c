@@ -1048,6 +1048,8 @@ term_bidi_line(termline *line, int scr_y)
     ushort parabidi = (ushort)-1;
     bool brk = false;
     do {
+      if (term.disptop + y < -sblines())
+        break;  // skip attempt to look back beyond scrollback buffer
       termline *prevline = fetch_line(term.disptop + y);
       //printf("back @%d %04X %.22ls auto %d lvl %d\n", y, prevline->lattr, wcsline(prevline), autodir, level);
       if (prevline->lattr & LATTR_WRAPPED) {
