@@ -7,6 +7,7 @@ Terminal features
 
 Font rendering
   * Fixed auto-widening of ambiguous-width letters (broken since 3.4.4).
+  * Speedup rendering of replacement indication of invalid character codes (#1145).
 
 Configuration
   * New option -Rt to report the tty name of the child process / shell.

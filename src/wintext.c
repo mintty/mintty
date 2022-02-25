@@ -125,6 +125,7 @@ struct fontfam {
   bool font_dualwidth;
   struct charpropcache * cpcache[FONT_BOLDITAL + 1];
   uint cpcachelen[FONT_BOLDITAL + 1];
+  wchar errch;
   int fw_norm;
   int fw_bold;
   BOLD_MODE bold_mode;
@@ -562,6 +563,8 @@ win_init_fontfamily(HDC dc, int findex)
     }
     ff->fontflag[i] = false;
   }
+
+  ff->errch = 0;
 
   // if initialized as BOLD_SHADOW then real bold is never attempted
   ff->bold_mode = BOLD_FONT;
@@ -4210,6 +4213,29 @@ win_check_glyphs(wchar *wcs, uint num, cattrflags attr)
 #endif
 
   ReleaseDC(wnd, dc);
+}
+
+wchar
+get_errch(wchar *wcs, cattrflags attr)
+{
+  int findex = (attr & FONTFAM_MASK) >> ATTR_FONTFAM_SHIFT;
+  if (findex > 10)
+    findex = 0;
+
+  struct fontfam * ff = &fontfamilies[findex];
+  if (!ff->errch) {
+    static wchar * errchars = 0;
+    if (!errchars)
+      errchars = wcsdup(wcs);
+
+    win_check_glyphs(errchars, wcslen(wcs) - 1, term.curs.attr.attr);
+    for (uint i = 0; i < wcslen(wcs); i++)
+      if (errchars[i]) {
+        ff->errch = wcs[i];
+        break;
+      }
+  }
+  return ff->errch;
 }
 
 #define dont_debug_win_char_width 2

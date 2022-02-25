@@ -77,6 +77,7 @@ extern void win_set_font_size(int, bool sync_size_with_font);
 extern uint win_get_font_size(void);
 
 extern void win_check_glyphs(wchar *wcs, uint num, cattrflags attr);
+extern wchar get_errch(wchar *wcs, cattrflags attr);
 extern int win_char_width(xchar, cattrflags attr);
 extern wchar win_combine_chars(wchar bc, wchar cc, cattrflags attr);
 

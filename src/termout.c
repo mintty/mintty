@@ -1141,12 +1141,10 @@ write_ucschar(wchar hwc, wchar wc, int width)
 static void
 write_error(void)
 {
-  // Write one of REPLACEMENT CHARACTER or, if that does not exist,
-  // MEDIUM SHADE which looks appropriately erroneous.
-  wchar errch = 0xFFFD;
-  win_check_glyphs(&errch, 1, term.curs.attr.attr);
-  if (!errch)
-    errch = 0x2592;
+  // Write one of REPLACEMENT CHARACTER, MEDIUM SHADE, or other 
+  // replacement character as exists in the font and 
+  // which looks appropriately erroneous. Could be made configurable.
+  wchar errch = get_errch(W("�▒¤¿?"), term.curs.attr.attr);
   write_char(errch, 1);
 }
 
