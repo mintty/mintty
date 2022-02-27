@@ -547,6 +547,30 @@ If both settings `CtrlShiftShortcuts` and `CtrlExchangeShift` are enabled,
 copy & paste functions are assigned to plain (unshifted) _Ctrl+C_ 
 and _Ctrl+V_ for those who prefer them to be handled like in Windows.
 
+It’s also possible to assign user-defined functions to modified 
+character keys with setting `KeyFunctions`; however, redefining 
+control character assignment (e.g. Control+C) or Alt-modified characters 
+(prefixing them with ESC) is not supported by default. 
+This would disable basic terminal features and may result in users 
+„shooting themselves in the foot“; overriding this protection is 
+possible by setting `ShootFoot`.
+
+Finally, it’s also possible to define Control+V as a paste function 
+independently of the terminal; add the following to your .bashrc file:
+```
+paste () {
+  CLIP=$(cat /dev/clipboard)
+  COUNT=$(echo -n "$CLIP" | wc -c)
+  READLINE_LINE="${READLINE_LINE:0:$READLINE_POINT}${CLIP}${READLINE_LINE:$READLINE_POINT}"
+  READLINE_POINT=$(($READLINE_POINT + $COUNT))
+}
+bind -x '"\C-v": paste'
+```
+and the following to your .inputrc file:
+```
+set bind-tty-special-chars off
+```
+
 
 ## Compose key ##
 

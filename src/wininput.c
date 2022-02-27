@@ -2586,6 +2586,8 @@ static LONG last_key_time = 0;
                                      ? MDK_CTRL
                                      : (MDK_CTRL | MDK_SHIFT))
                || (mods & MDK_WIN)
+               || (mods & (MDK_SUPER | MDK_HYPER))
+               || ((mods & (MDK_CTRL | MDK_ALT)) && cfg.enable_remap_ctrls)
               )
       {
         uchar kbd0[256];

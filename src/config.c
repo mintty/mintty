@@ -123,6 +123,7 @@ const config default_cfg = {
   .key_scrlock = "",	// VK_SCROLL
   .key_commands = W(""),
   .manage_leds = 7,
+  .enable_remap_ctrls = false,
   // Mouse
   .clicks_place_cursor = false,
   .middle_click_action = MC_PASTE,
@@ -407,6 +408,7 @@ options[] = {
   {"Pause", OPT_STRING | OPT_LEGACY, offcfg(key_pause)},
   {"KeyFunctions", OPT_WSTRING | OPT_KEEPCR, offcfg(key_commands)},
   {"ManageLEDs", OPT_INT, offcfg(manage_leds)},
+  {"ShootFoot", OPT_BOOL, offcfg(enable_remap_ctrls)},
 
   // Mouse
   {"ClicksPlaceCursor", OPT_BOOL, offcfg(clicks_place_cursor)},

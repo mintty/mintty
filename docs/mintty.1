@@ -2765,8 +2765,8 @@ Key_Break=_BRK_ would assign the simulated terminal line Break function
 .TP
 \fBUser-defined shortcuts (KeyFunctions=)\fP
 With this setting, function keys, modified function keys, and 
-Ctrl+Shift+key combinations can be mapped to invoke specific functions 
-or generate user-defined input.
+Ctrl+Shift+key and other modified combinations of plain character keys 
+can be mapped to invoke specific functions or generate user-defined input.
 The value is a series of semicolon-separated, colon-combined 
 pairs of key and action descriptors
 (if a semicolon shall be embedded into any of the action descriptors, 
@@ -2776,6 +2776,14 @@ The definition list can be split over multiple lines if a separator is
 followed by a backslash, newline, and optional whitespace indentation.
 .br
 (Corresponds roughly to the xterm resource \fBtranslations\fP.)
+
+Note that Win+key combinations are often reserved by Windows.
+Note that Shift+char combinations of plain character keys can not be remapped 
+as they have a character assigned already within the basic keyboard layout.
+Likewise, Ctrl+char and Alt+char combinations have their traditional 
+terminal functions (sending control characters or ESC followed by the 
+character), so they are protected from accidental remapping by default; 
+remapping them to a key function needs an additional setting \fBShootFoot=yes\fP.
 
 Supported keys are described as follows:
 .br
@@ -3064,18 +3072,23 @@ new window on Alt+Control+F2
 \fB-o CtrlExchangeShift=true\fP will assign copy/paste to ^C and ^V 
 for Windows addicts
 .br
-\(en \fBKeyFunctions=AS+Insert:paste-path;AS+KP_Insert:paste-path\fP
-will always try to convert pasted paths to POSIX syntax on Alt+Shift+Insert
+\(en \fBKeyFunctions=C+v:paste\fP in combination with setting 
+\fB-o ShootFoot=true\fP will assign paste to ^V for Windows addicts
 .br
-\(en \fBKeyFunctions=A+Enter:void;A+KP_Enter:\fP will disable zooming 
-on Alt+Enter and also disable it on Alt+keypad-Enter but enter ESC Return 
-in the latter case
+\(en \fBKeyFunctions=U+s:"super"\fP will assign the text "super" to Super+s
 .br
 \(en \fBKeyFunctions=*CapsLock:super\fP assigns the Super modifier to 
 the CapsLock key
 .br
 \(en \fBKeyFunctions=*Menu:29\fP turns the Menu key into an F16 function key 
 (xterm default) and applies all modifiers to it
+.br
+\(en \fBKeyFunctions=AS+Insert:paste-path;AS+KP_Insert:paste-path\fP
+will always try to convert pasted paths to POSIX syntax on Alt+Shift+Insert
+.br
+\(en \fBKeyFunctions=A+Enter:void;A+KP_Enter:\fP will disable zooming 
+on Alt+Enter and also disable it on Alt+keypad-Enter but enter ESC Return 
+in the latter case
 .br
 \(en \fBKeyFunctions=A+Left:switch-prev;A+Right:switch-next;\\
 	A+C+Left:switch-visible-prev;A+C+Right:switch-visible-next\fP
@@ -3093,6 +3106,14 @@ enables scrollback scrolling with either of Shift or Control modifiers
 	S+Left:hor-narrow-1;S+Right:hor-wide-1\fP
 enables horizontal scrolling support via modified cursor keys on the 
 "editing keypad" (prefix KP_ for the numeric keypad)
+
+.TP
+\fBEnable overriding of basic key mappings\fP (ShootFoot=no)
+With this setting, basic characters of the keyboard layout as modified 
+with Control or Alt can be remapped to user-defined functions with option 
+\fBKeyFunctions\fP. The usage of this option is discouraged because 
+disabling basic control functions, like the interrupt character Control+C, 
+can be considered as shooting oneself in the foot.
 
 .TP
 \fBManage keyboard LEDs\fP (ManageLEDs=7)

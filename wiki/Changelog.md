@@ -5,12 +5,17 @@ Terminal features
   * Tweak pending auto-wrap state affected when switching wrap modes.
   * Fixed unscroll (CSI +T) in case width has changed meanwhile.
 
+Keyboard handling
+  * Support user-defined mappings for Super-/Hyper-modified character keys.
+  * Support optional user-defined mappings for Control-/Alt-modified character keys (#399, #252, #523, #602, #645, ~#524, ~#817, ~#451).
+
 Font rendering
   * Fixed auto-widening of ambiguous-width letters (broken since 3.4.4).
   * Speedup rendering of replacement indication of invalid character codes (#1145).
 
 Configuration
   * New option -Rt to report the tty name of the child process / shell.
+  * New option ShootFoot (#399, #252, #523, #602, #645, ~#524, ~#817, ~#451).
 
 ### 3.5.3 (3 February 2022) ###
 
