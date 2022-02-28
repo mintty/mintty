@@ -12,6 +12,7 @@ Keyboard handling
 Font rendering
   * Fixed auto-widening of ambiguous-width letters (broken since 3.4.4).
   * Speedup rendering of replacement indication of invalid character codes (#1145).
+  * Extend cell zoom to some Geometric Shapes U+25E2.., Dingbats U+1F67C.., and Symbols U+1FB00..U+1FBB3.
 
 Configuration
   * New option -Rt to report the tty name of the child process / shell.

@@ -2919,6 +2919,7 @@ term_paint(void)
       */
       if (tchar >= 0x2320 &&
           ((tchar >= 0x2500 && tchar <= 0x259F)
+           || (tchar >= 0x25E2 && tchar <= 0x25E5)
            || (tchar >= 0x239B && tchar <= 0x23B3)
            || (tchar >= 0x23B7 && tchar <= 0x23BD)
            || wcschr(W("〳〴〵⌠⌡⏐"), tchar)
@@ -2962,6 +2963,14 @@ term_paint(void)
           termchar * cc = d + d->cc_next;
           if ((cc->chr & 0xFC00) == 0xDC00) {
             xch = ((xchar) (xch - 0xD7C0) << 10) | (cc->chr & 0x03FF);
+          }
+
+          if ((xch >= 0x1F67C && xch <= 0x1F67F)
+              || (xch >= 0x1FB00 && xch <= 0x1FBB3)
+             )
+          {
+            tattr.attr |= TATTR_ZOOMFULL;
+            tattr.attr &= ~ATTR_ITALIC;
           }
         }
 
