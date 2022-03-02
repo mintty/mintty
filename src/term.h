@@ -201,8 +201,10 @@ enum {
   LATTR_PRESRTL   = 0x1000u,
   // enable automatic progress detection
   LATTR_PROGRESS  = 0x0010u,
+  // enable reflow / line rewrap on terminal resize
+  LATTR_REWRAP    = 0x0020u
   // unassigned bits:
-  //                0x0020u
+  // - none
 };
 
 enum {
@@ -436,6 +438,7 @@ typedef struct {
   uchar oem_acs;
   bool utf;
   ushort bidimode;
+  bool rewrap_on_resize;
 } term_cursor;
 
 typedef struct {

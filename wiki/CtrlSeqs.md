@@ -180,6 +180,18 @@ and Block Elements (U+2580-U+259F). Others may be added in future versions.
 Note: SPD is a deprecated fun feature.
 
 
+## Reflow / Rewrap / Line rebreaking on resize ##
+
+Mintty supports reflow of wrapped lines if the terminal is resized and its 
+width is changed. This feature, applicable with setting `RewrapOnResize`, 
+can be disabled per line, usable for example for prompt lines.
+
+| **sequence**  | **rewrap on resize** |
+|:--------------|:---------------------|
+| `^[[?2027l`   | disabled             |
+| `^[[?2027h`   | enabled (default)    |
+
+
 ## Scrollbar hiding ##
 
 These sequences can be used to hide or show the scrollbar, whereby the window size remains the same but the number of character columns is changed to account for the width of the scrollbar. If the scrollbar is disabled in the options, it will always remain hidden.

@@ -797,6 +797,10 @@ write_char(wchar c, int width)
     if (term.lrmargmode)
       line->lattr &= ~LATTR_MODE;
 #endif
+    if (term.curs.rewrap_on_resize)
+      line->lattr |= LATTR_REWRAP;
+    else
+      line->lattr &= ~LATTR_REWRAP;
     if (!(line->lattr & LATTR_WRAPCONTD))
       line->lattr = (line->lattr & ~LATTR_BIDIMASK) | curs->bidimode;
     //TODO: if changed, propagate mode onto paragraph
@@ -2219,6 +2223,8 @@ set_modes(bool state)
             do_update();
             usleep(1000);  // flush update
           }
+        when 2027:
+          term.curs.rewrap_on_resize = state;
       }
     }
     else { /* SM/RM: set/reset mode */
@@ -2378,6 +2384,8 @@ get_mode(bool privatemode, int arg)
         return 2 - !!(term.curs.bidimode & LATTR_BOXMIRROR);
       when 2501: /* bidi direction auto-detection */
         return 2 - !(term.curs.bidimode & LATTR_BIDISEL);
+      when 2027:
+        return 2 - term.curs.rewrap_on_resize;
       otherwise:
         return 0;
     }

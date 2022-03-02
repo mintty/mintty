@@ -141,6 +141,7 @@ typedef struct {
   int selection_show_size;
   // Window
   int cols, rows;
+  bool rewrap_on_resize;
   int scrollback_lines;
   int max_scrollback_lines;
   char scrollbar;

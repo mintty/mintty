@@ -564,6 +564,14 @@ certain shifted hotkeys configured to resize the window).
 Note that due to the different height/width factors, coupled font zooming 
 is not a precise operation.
 
+.SS Reflow / Line rebreaking after resize
+
+If the terminal is resized to a different width, mintty can 
+automatically rebreak and rewrap lines that had been auto-wrapped.
+This feature can be enabled by setting \fBRewrapOnResize\fP or in the 
+Options dialog.
+Note that rewrapping can also be disabled per line by an escape sequence.
+
 .SS DPI change
 
 When DPI setting changes (by reconfiguration of display properties 
@@ -1991,6 +1999,12 @@ Default height of the window, in character cells.
 \fBCurrent size\fP
 Pressing this button sets the default width and height to the window's
 current size.
+
+.TP
+\fBReflow / Line rewrap when terminal is resized\fP (RewrapOnResize=no)
+This setting enables mintty to automatically rebreak and rewrap 
+lines that had been auto-wrapped.
+Rewrapping can also be disabled per line by an escape sequence.
 
 .TP
 \fBVertical spacing automatic adjustment strategy\fP (AutoLeading=2)

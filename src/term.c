@@ -255,6 +255,7 @@ term_cursor_reset(term_cursor *curs)
   curs->cset_single = CSET_ASCII;
 
   curs->bidimode = 0;
+  curs->rewrap_on_resize = true;
 
   curs->origin = false;
 }
@@ -1239,7 +1240,10 @@ term_reflow(int newrows, int newcols)
     while (actcols && attr_clear(inbuf->chars[actcols - 1].attr.attr))
       actcols --;
 
-    if (!(inbuf->lattr & LATTR_WRAPPED) && actcols <= newcols) {
+    if ((!(inbuf->lattr & LATTR_WRAPPED) && actcols <= newcols)
+        || !(inbuf->lattr & LATTR_REWRAP)
+       )
+    {
       // shortcut: skip multiple lines handling
 
       if (newcols <= inbuf->cols)
@@ -1353,6 +1357,7 @@ term_reflow(int newrows, int newcols)
         // make a new outbuf line
         lout = 0;
         outbuf = newline(newcols, true);
+        outbuf->lattr = inbuf->lattr & ~(LATTR_WRAPPED | LATTR_WRAPPED2 | LATTR_WRAPCONTD);
         // position output column
         if (incol >= 0) {
           // subsequent lines
@@ -1564,7 +1569,7 @@ term_resize(int newrows, int newcols)
     resizeline(lines[i], newcols);
 
   // Reflow screen and scrollback buffer to new width
-  if (newcols != term.cols)
+  if (cfg.rewrap_on_resize && newcols != term.cols)
     term_reflow(newrows, newcols);
 
   // Make a new displayed text buffer.

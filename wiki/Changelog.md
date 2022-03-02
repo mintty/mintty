@@ -17,6 +17,7 @@ Font rendering
 Configuration
   * New option -Rt to report the tty name of the child process / shell.
   * New option ShootFoot (#399, #252, #523, #602, #645, ~#524, ~#817, ~#451).
+  * New option RewrapOnResize (#82), interactive (Options dialog).
 
 ### 3.5.3 (3 February 2022) ###
 

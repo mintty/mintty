@@ -151,6 +151,7 @@ const config default_cfg = {
   // Window
   .cols = 80,
   .rows = 24,
+  .rewrap_on_resize = false,
   .scrollbar = 1,
   .scrollback_lines = 10000,
   .max_scrollback_lines = 250000,
@@ -440,6 +441,7 @@ options[] = {
   // Window
   {"Columns", OPT_INT, offcfg(cols)},
   {"Rows", OPT_INT, offcfg(rows)},
+  {"RewrapOnResize", OPT_BOOL, offcfg(rewrap_on_resize)},
   {"ScrollbackLines", OPT_INT, offcfg(scrollback_lines)},
   {"MaxScrollbackLines", OPT_INT, offcfg(max_scrollback_lines)},
   {"Scrollbar", OPT_SCROLLBAR, offcfg(scrollbar)},
@@ -4267,6 +4269,12 @@ setup_config_box(controlbox * b)
     //__ Options - Window:
     s, _("C&urrent size"), current_size_handler, 0
   )->column = 4;
+  ctrl_columns(s, 1, 100);
+  ctrl_checkbox(
+    //__ Options - Window:
+    s, _("Re&wrap on resize"),
+    dlg_stdcheckbox_handler, &new_cfg.rewrap_on_resize
+  );
 
   s = ctrl_new_set(b, _("Window"), null, null);
   ctrl_columns(s, 2, 66, 34);
