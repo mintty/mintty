@@ -1126,8 +1126,12 @@ term_clear_scrollback(void)
 
 #define dont_debug_scrollback 1
 
-#define attr_clear(attr) ((attr & (TATTR_CLEAR | ATTR_BOLD | ATTR_DIM)) == TATTR_CLEAR)
+// mark cursor position in order not to lose it during reflow
 #define TATTR_MARKCURS (TATTR_ACTCURS | TATTR_PASCURS)
+// determine effective line length trimmed to printed characters;
+// need to include ATTR_BOLD | ATTR_DIM for proper TAB unwrapping
+// need to include TATTR_MARKCURS for proper detection of final cursor
+#define attr_clear(attr) ((attr & (TATTR_CLEAR | ATTR_BOLD | ATTR_DIM | TATTR_MARKCURS)) == TATTR_CLEAR)
 
 #ifdef debug_scrollback
 
@@ -1182,9 +1186,10 @@ static void
 term_reflow(int newrows, int newcols)
 {
   // First, mark the current cursor position;
-  // also clear old marks elsewhere
-  for (int i = newrows - 1; i >= 0; i--)
-    for (int j = newcols - 1; j >= 0; j--)
+  // also clear old marks elsewhere;
+  // use old size for scanning
+  for (int i = term.rows - 1; i >= 0; i--)
+    for (int j = term.cols - 1; j >= 0; j--)
       if (i == term.curs.y && j == term.curs.x)
         term.lines[i]->chars[j].attr.attr |= TATTR_MARKCURS;
       else
@@ -1436,16 +1441,19 @@ term_reflow(int newrows, int newcols)
 
   // Last, find the marked cursor position and target current cursor to it;
   // go backwards in case an old cursor mark, that had been scrolled out 
-  // and thus not cleared, was now scrolled in again.
+  // and thus not cleared, was now scrolled in again;
+  // use new size for scanning.
   // Fallback in case cursor was wrapped / scrolled out of screen:
   term.curs.y = 0;
   term.curs.x = 0;
   // search for cursor marker
   for (int i = newrows - 1; i >= 0; i--)
-    for (int j = newcols - 1; j >= 0; j--)
+    // need to search whole stored line, even if longer than screen width,
+    // in order to find zoomed-out cursor position
+    for (int j = term.lines[i]->cols - 1; j >= 0; j--)
       if (term.lines[i]->chars[j].attr.attr & TATTR_MARKCURS) {
         term.curs.y = i;
-        term.curs.x = j;
+        term.curs.x = min(j, newcols - 1);
         term.lines[i]->chars[j].attr.attr &= ~TATTR_MARKCURS;
         i = 0;
         break;
