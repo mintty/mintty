@@ -1509,7 +1509,6 @@ term_resize(int newrows, int newcols)
 
   termlines *lines = term.lines;
   term_cursor *curs = &term.curs;
-  term_cursor *saved_curs = &term.saved_cursors[term.on_alt_screen];
 
   // Shrink the screen if newrows < rows
   if (newrows < term.rows) {
@@ -1534,7 +1533,6 @@ term_resize(int newrows, int newcols)
 
     // Adjust cursor position
     curs->y = max(0, curs->y - store);
-    saved_curs->y = max(0, saved_curs->y - store);
 
     // Adjust image position
     term.virtuallines += min(0, store);
@@ -1566,7 +1564,6 @@ term_resize(int newrows, int newcols)
 
     // Adjust cursor position
     curs->y += restore;
-    saved_curs->y += restore;
 
     // Adjust image position
     term.virtuallines -= restore;
@@ -1612,7 +1609,6 @@ term_resize(int newrows, int newcols)
 
   // Check that the cursor positions are still valid.
   assert(0 <= curs->y && curs->y < newrows);
-  assert(0 <= saved_curs->y && saved_curs->y < newrows);
   curs->x = min(curs->x, newcols - 1);
 
   curs->wrapnext = false;
