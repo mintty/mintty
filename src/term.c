@@ -1187,9 +1187,12 @@ term_reflow(int newrows, int newcols)
 {
   // First, mark the current cursor position;
   // also clear old marks elsewhere;
-  // use old size for scanning
-  for (int i = term.rows - 1; i >= 0; i--)
-    for (int j = term.cols - 1; j >= 0; j--)
+  // to be sure to catch the cursor position, use the new height 
+  // (lines have already been rearranged) and respective widths of each line;
+  // in case of remaining problems, we couldl further move this marking 
+  // to the beginning of term_resize()
+  for (int i = newrows - 1; i >= 0; i--)
+    for (int j = term.lines[i]->cols - 1; j >= 0; j--)
       if (i == term.curs.y && j == term.curs.x)
         term.lines[i]->chars[j].attr.attr |= TATTR_MARKCURS;
       else
@@ -1608,7 +1611,11 @@ term_resize(int newrows, int newcols)
     term.tabs[i] = term.newtab && (i % 8 == 0);
 
   // Check that the cursor positions are still valid.
-  assert(0 <= curs->y && curs->y < newrows);
+  //assert(0 <= curs->y && curs->y < newrows);
+  // rather be on the safe side:
+
+  // Ensure valid cursor positions.
+  curs->y = min(curs->y, newrows - 1);
   curs->x = min(curs->x, newcols - 1);
 
   curs->wrapnext = false;
