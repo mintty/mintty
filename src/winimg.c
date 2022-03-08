@@ -242,7 +242,7 @@ winimg_len(imglist *img)
 
 bool
 winimg_new(imglist **ppimg, char * id, unsigned char * pixels, uint len,
-           int left, int top, int width, int height,
+           int left, int scrtop, int width, int height,
            int pixelwidth, int pixelheight, bool preserveAR,
            int crop_x, int crop_y, int crop_width, int crop_height,
            int attr)
@@ -259,13 +259,13 @@ winimg_new(imglist **ppimg, char * id, unsigned char * pixels, uint len,
 #ifdef debug_img_disp
   printf("winimg_new %d @%d:%d\n", _imgi, left, top);
 #endif
-  img->imgi = _imgi++;
+  img->imgi = ++_imgi;
 
   img->pixels = pixels;
   img->hdc = NULL;
   img->hbmp = NULL;
   img->left = left;
-  img->top = top;
+  img->top = term.virtuallines + scrtop;
   img->width = width;
   img->height = height;
   img->pixelwidth = pixelwidth;
@@ -741,7 +741,7 @@ winimgs_paint(void)
               printf("paint: dirty (%d) %d:%d %d >= %d\n", disp_flag, y, x, img->imgi, dchar->attr.imgi);
 #endif
             }
-            // if cell is overlaid by selection or cursor, exclude
+            // if cell is overlaid by selection or cursor, exclude it.
             if (dchar->attr.attr & (TATTR_RESULT | TATTR_CURRESULT | TATTR_MARKED | TATTR_CURMARKED))
               clip_flag = true;
             if (term.selected && !clip_flag) {

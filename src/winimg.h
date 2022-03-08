@@ -5,7 +5,7 @@
 
 extern bool winimg_new(imglist * * ppimg, char * id,
                        unsigned char * pixels, uint len,
-                       int top, int left, int width, int height,
+                       int left, int scrtop, int width, int height,
                        int pixelwidth, int pixelheight, bool preserveAR,
                        int crop_x, int crop_y, int crop_w, int crop_h,
                        int attr);

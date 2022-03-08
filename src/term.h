@@ -387,10 +387,11 @@ typedef struct imglist {
   // image: data size; sixel: 0
   int len;
 
-  // image ref for disposal management
+  // image ref for disposal management and for rebasing after reflow
   int imgi;
-  // position within scrollback (top includes offset term.virtuallines)
-  int top, left;
+  // position within scrollback
+  long long int top;  // includes offset term.virtuallines
+  int left;
 
   // image area (cell units)
   int width, height;
