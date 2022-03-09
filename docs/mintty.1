@@ -46,6 +46,10 @@ Mintty supports being started from a Windows desktop shortcut; it honours
 window and icon settings of the shortcut, aligns taskbar grouping with the 
 shortcut, disables daemonizing, and sets environment variable 
 MINTTY_SHORTCUT to its pathname.
+.br
+Before starting the child program, mintty trims the environment from other 
+variables set by launchers, other terminals, or shells, that might indicate 
+incorrect information and lead to confusing behaviour.
 
 .SH OPTIONS
 

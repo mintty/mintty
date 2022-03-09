@@ -5656,10 +5656,11 @@ main(int argc, char *argv[])
     }
   }
   else {
-    // We should check whether we've inherited a MINTTY_SHORTCUT setting
-    // from a previous invocation, and if so we should check whether the
-    // referred shortcut actually runs the same binary as we're running.
-    // If that's not the case, we should unset MINTTY_SHORTCUT here.
+    // In case we've inherited a MINTTY_SHORTCUT setting 
+    // from a previous invocation, unset it.
+    // We could check whether the referred shortcut actually runs the 
+    // same binary as we're running, and keep it in that case.
+    unsetenv("MINTTY_SHORTCUT");
   }
 
   for (;;) {

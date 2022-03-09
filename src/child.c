@@ -220,10 +220,61 @@ child_update_charset(void)
 #endif
 }
 
+/*
+   Trim environment from variables set by launchers, other terminals, 
+   or other shells, in order to avoid confusing behaviour or invalid 
+   information (e.g. LINES, COLUMNS).
+ */
+static void
+trim_environment(void)
+{
+  void trimenv(string e) {
+    if (e[strlen(e) - 1] == '_') {
+      for (int ei = 0; environ[ei]; ei++) {
+        if (strncmp(e, environ[ei], strlen(e)) == 0) {
+          char * ee = strchr(environ[ei], '=');
+          if (ee) {
+            char * ev = strndup(environ[ei], ee - environ[ei]);
+            //printf("%s @%d - unsetenv %s: %s\n", e, ei, ev, environ[ei]);
+            unsetenv(ev);
+            free(ev);
+            // recheck current position after deletion
+            --ei;
+          }
+        }
+      }
+    }
+    else
+      unsetenv(e);
+  }
+  trimenv("DEFAULT_COLORS");
+  trimenv("DESKTOP_STARTUP_ID");
+  trimenv("WCWIDTH_CJK_LEGACY");
+  trimenv("COLORFGBG");
+  trimenv("COLORTERM");
+  trimenv("ITERM2_");
+  trimenv("MC_");
+  trimenv("PUTTY");
+  trimenv("RXVT_");
+  trimenv("URXVT_");
+  trimenv("VTE_");
+  trimenv("LINES");
+  trimenv("COLUMNS");
+  trimenv("SHELL");
+  trimenv("TERMCAP");
+  trimenv("WINDOWID");
+  trimenv("LOGNAME");
+  trimenv("GIO_LAUNCHED_");
+  trimenv("XTERM_");
+  trimenv("TERM_");
+}
+
 void
 child_create(char *argv[], struct winsize *winp)
 {
   trace_dir(asform("child_create: %s", getcwd(malloc(MAX_PATH), MAX_PATH)));
+
+  trim_environment();
 
   prev_winsize = *winp;
 

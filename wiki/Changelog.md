@@ -14,6 +14,9 @@ Font rendering
   * Speedup rendering of replacement indication of invalid character codes (#1145).
   * Extend cell zoom to some Geometric Shapes U+25E2.., Dingbats U+1F67C.., and Symbols U+1FB00..U+1FBB3.
 
+Startup
+  * Trimming irrelevant and possibly confusing environment variables before child invocation (xterm).
+
 Configuration
   * New option -Rt to report the tty name of the child process / shell.
   * New option ShootFoot (#399, #252, #523, #602, #645, ~#524, ~#817, ~#451).
