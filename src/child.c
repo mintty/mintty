@@ -260,7 +260,6 @@ trim_environment(void)
   trimenv("VTE_");
   trimenv("LINES");
   trimenv("COLUMNS");
-  trimenv("SHELL");
   trimenv("TERMCAP");
   trimenv("WINDOWID");
   trimenv("LOGNAME");
