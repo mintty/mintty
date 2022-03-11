@@ -2791,10 +2791,11 @@ static LONG last_key_time = 0;
       send_syscommand(SC_KEYMENU);
     else {
       win_show_mouse();
-      open_popup_menu(false, 
+      open_popup_menu(true, 
                       mods & MDK_CTRL ? cfg.menu_ctrlmenu : cfg.menu_menu, 
                       mods);
     }
+    alt_state = ALT_NONE;
     return true;
   }
 

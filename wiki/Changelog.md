@@ -9,6 +9,7 @@ Keyboard handling
   * Support user-defined mappings for Super-/Hyper-modified character keys.
   * Support optional user-defined mappings for Control-/Alt-modified character keys (#399, #252, #523, #602, #645, ~#524, ~#817, ~#451).
   * Suspend shortcut handling during numeric character input.
+  * Menu key opens menu inside terminal, also stops numeric input.
 
 Font rendering
   * Fixed auto-widening of ambiguous-width letters (broken since 3.4.4).
