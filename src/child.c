@@ -247,22 +247,25 @@ trim_environment(void)
     else
       unsetenv(e);
   }
-  trimenv("DEFAULT_COLORS");
+  // clear startup information from desktop launchers
+  trimenv("WINDOWID");
+  trimenv("GIO_LAUNCHED_");
   trimenv("DESKTOP_STARTUP_ID");
-  trimenv("WCWIDTH_CJK_LEGACY");
+  // clear optional terminal configuration indications
+  trimenv("LINES");
+  trimenv("COLUMNS");
+  trimenv("TERMCAP");
   trimenv("COLORFGBG");
   trimenv("COLORTERM");
+  trimenv("DEFAULT_COLORS");
+  trimenv("WCWIDTH_CJK_LEGACY");
+  // clear identification from other terminals
   trimenv("ITERM2_");
   trimenv("MC_");
   trimenv("PUTTY");
   trimenv("RXVT_");
   trimenv("URXVT_");
   trimenv("VTE_");
-  trimenv("LINES");
-  trimenv("COLUMNS");
-  trimenv("TERMCAP");
-  trimenv("WINDOWID");
-  trimenv("GIO_LAUNCHED_");
   trimenv("XTERM_");
   trimenv("TERM_");
   // clear indications from terminal multiplexers
