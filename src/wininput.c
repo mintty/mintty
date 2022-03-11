@@ -2183,6 +2183,34 @@ user_function(wstring commands, int n)
   pick_key_function(commands, 0, n, 0, 0, 0, 0);
 }
 
+static void
+insert_alt_code(void)
+{
+  if (cs_cur_max < 4) {
+    char buf[4];
+    int pos = sizeof buf;
+    do
+      buf[--pos] = alt_code;
+    while (alt_code >>= 8);
+    provide_input(buf[pos]);
+    child_send(buf + pos, sizeof buf - pos);
+  }
+  else if (alt_code < 0x10000) {
+    wchar wc = alt_code;
+    if (wc < 0x20)
+      MultiByteToWideChar(CP_OEMCP, MB_USEGLYPHCHARS,
+                          (char[]){wc}, 1, &wc, 1);
+    provide_input(wc);
+    child_sendw(&wc, 1);
+  }
+  else {
+    xchar xc = alt_code;
+    provide_input(' ');
+    child_sendw((wchar[]){high_surrogate(xc), low_surrogate(xc)}, 2);
+  }
+  compose_clear();
+}
+
 bool
 win_key_down(WPARAM wp, LPARAM lp)
 {
@@ -3593,39 +3621,15 @@ win_key_up(WPARAM wp, LPARAM lp)
     win_update(false);
   }
 
-  if (key != VK_MENU)
-    return false;
-
-  if (alt_state > ALT_ALONE && alt_code) {
-    if (cs_cur_max < 4) {
-      char buf[4];
-      int pos = sizeof buf;
-      do
-        buf[--pos] = alt_code;
-      while (alt_code >>= 8);
-      provide_input(buf[pos]);
-      child_send(buf + pos, sizeof buf - pos);
-      compose_clear();
+  if (key == VK_MENU) {
+    if (alt_state > ALT_ALONE && alt_code) {
+      insert_alt_code();
     }
-    else if (alt_code < 0x10000) {
-      wchar wc = alt_code;
-      if (wc < 0x20)
-        MultiByteToWideChar(CP_OEMCP, MB_USEGLYPHCHARS,
-                            (char[]){wc}, 1, &wc, 1);
-      provide_input(wc);
-      child_sendw(&wc, 1);
-      compose_clear();
-    }
-    else {
-      xchar xc = alt_code;
-      provide_input(' ');
-      child_sendw((wchar[]){high_surrogate(xc), low_surrogate(xc)}, 2);
-      compose_clear();
-    }
+    alt_state = ALT_NONE;
+    return true;
   }
 
-  alt_state = ALT_NONE;
-  return true;
+  return false;
 }
 
 // simulate a key press/release sequence
