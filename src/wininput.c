@@ -2524,7 +2524,7 @@ static LONG last_key_time = 0;
 
   bool allow_shortcut = true;
 
-  if (!term.shortcut_override) {
+  if (!term.shortcut_override && old_alt_state <= ALT_ALONE) {
     // user-defined shortcuts
     //test: W("-:'foo';A+F3:;A+F5:flipscreen;A+F9:\"f9\";C+F10:\"f10\";p:paste;d:`date`;o:\"oo\";ö:\"öö\";€:\"euro\";~:'tilde';[:'[[';µ:'µµ'")
     if (*cfg.key_commands) {
