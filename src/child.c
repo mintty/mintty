@@ -262,10 +262,15 @@ trim_environment(void)
   trimenv("COLUMNS");
   trimenv("TERMCAP");
   trimenv("WINDOWID");
-  trimenv("LOGNAME");
   trimenv("GIO_LAUNCHED_");
   trimenv("XTERM_");
   trimenv("TERM_");
+  // clear indications from terminal multiplexers
+  trimenv("STY");
+  trimenv("WINDOW");
+  trimenv("TMUX");
+  trimenv("TMUX_PANE");
+  trimenv("BYOBU_");
 }
 
 void
