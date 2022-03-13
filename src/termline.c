@@ -115,14 +115,14 @@ add_cc(termline *line, int col, wchar chr, cattr attr)
 void
 clear_cc(termline *line, int col)
 {
-  int oldfree, origcol = col;
-
   assert(col >= -1 && col < line->cols);
 
   if (!line->chars[col].cc_next)
     return;     /* nothing needs doing */
 
-  oldfree = line->cc_free;
+  int oldfree = line->cc_free;
+  int origcol = col;
+
   line->cc_free = col + line->chars[col].cc_next;
   while (line->chars[col].cc_next)
     col += line->chars[col].cc_next;
@@ -540,6 +540,13 @@ makerle(struct buf *b, termline *line,
 uchar *
 compressline(termline *line)
 {
+#ifdef dont_compress_scrollback_buffer
+  uchar * cl = malloc(sizeof(termline) + (line->size + 1) * sizeof(termchar));
+  memcpy(cl, line, sizeof(termline));
+  memcpy(cl + sizeof(termline), &line->chars[-1], (line->size + 1) * sizeof(termchar));
+  return cl;
+#endif
+
   struct buf buffer = { null, 0, 0 }, *b = &buffer;
 
  /*
@@ -644,6 +651,15 @@ readrle(struct buf *b, termline *line,
 termline *
 decompressline(uchar *data, int *bytes_used)
 {
+#ifdef dont_compress_scrollback_buffer
+  termline * tl = malloc(sizeof(termline));
+  memcpy(tl, data, sizeof(termline));
+  termchar * tc = malloc((tl->size + 1) * sizeof(termchar));
+  memcpy(tc, data + sizeof(termline), (tl->size + 1) * sizeof(termchar));
+  tl->chars = &tc[1];
+  return tl;
+#endif
+
   int ncols, byte, shift;
   struct buf buffer, *b = &buffer;
   termline *line;
