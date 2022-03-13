@@ -230,6 +230,7 @@ trim_environment(void)
 {
   void trimenv(string e) {
     if (e[strlen(e) - 1] == '_') {
+#if CYGWIN_VERSION_API_MINOR >= 74
       for (int ei = 0; environ[ei]; ei++) {
         if (strncmp(e, environ[ei], strlen(e)) == 0) {
           char * ee = strchr(environ[ei], '=');
@@ -243,6 +244,7 @@ trim_environment(void)
           }
         }
       }
+#endif
     }
     else
       unsetenv(e);
