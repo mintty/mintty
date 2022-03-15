@@ -869,7 +869,8 @@ typedef enum {
   ALT_OCT = 8, ALT_DEC = 10, ALT_HEX = 16
 } alt_state_t;
 static alt_state_t alt_state;
-static uint alt_code;
+static int alt_code;
+static bool alt_uni;
 
 static bool lctrl;  // Is left Ctrl pressed?
 static int lctrl_time;
@@ -2186,7 +2187,7 @@ user_function(wstring commands, int n)
 static void
 insert_alt_code(void)
 {
-  if (cs_cur_max < 4) {
+  if (cs_cur_max < 4 && !alt_uni) {
     char buf[4];
     int pos = sizeof buf;
     do
@@ -2906,9 +2907,19 @@ static LONG last_key_time = 0;
   }
 
   bool alt_code_key(char digit) {
-    if (old_alt_state > ALT_ALONE && digit < old_alt_state) {
-      alt_state = old_alt_state;
-      alt_code = alt_code * alt_state + digit;
+    if (old_alt_state > ALT_ALONE) {
+      alt_state = old_alt_state;  // stay in alt_state, process key
+      if (digit >= 0 && digit < alt_state) {
+        alt_code = alt_code * alt_state + digit;
+        if (alt_code < 0 || alt_code > 0x10FFFF) {
+          win_bell(&cfg);
+          alt_state = ALT_NONE;
+        }
+        else
+          win_update(false);
+      }
+      else
+        win_bell(&cfg);
       return true;
     }
     return false;
@@ -2921,6 +2932,16 @@ static LONG last_key_time = 0;
       return true;
     }
     return alt_code_key(digit);
+  }
+
+  bool alt_code_ignore(void) {
+    if (old_alt_state > ALT_ALONE) {
+      alt_state = old_alt_state;  // keep alt_state, ignore key
+      win_bell(&cfg);
+      return true;
+    }
+    else
+      return false;
   }
 
   bool app_pad_key(char symbol) {
@@ -2937,7 +2958,10 @@ static LONG last_key_time = 0;
       app_pad_code(symbol);
       return true;
     }
-    return symbol != '.' && alt_code_numpad_key(symbol - '0');
+    if (symbol == '.')
+      return alt_code_ignore();
+    else
+      return alt_code_numpad_key(symbol - '0');
   }
 
   void edit_key(uchar code, char symbol) {
@@ -3245,6 +3269,11 @@ static struct {
 
   switch (key) {
     when VK_RETURN:
+      if (old_alt_state > ALT_ALONE) {
+        insert_alt_code();
+        alt_state = ALT_NONE;
+      }
+      else
       if (allow_shortcut && !term.shortcut_override && cfg.window_shortcuts
           && alt && !altgr
          )
@@ -3266,6 +3295,12 @@ static struct {
         esc_if(alt),
         term.newline_mode ? ch('\r'), ch('\n') : ch(shift ? '\n' : '\r');
     when VK_BACK:
+      if (old_alt_state > ALT_ALONE) {
+        alt_state = old_alt_state;  // keep alt_state, process key
+        alt_code = alt_code / alt_state;
+        win_update(false);
+      }
+      else
       if (cfg.old_modify_keys & 1) {
         if (!ctrl)
           esc_if(alt), ch(term.backspace_sends_bs ? '\b' : CDEL);
@@ -3285,6 +3320,9 @@ static struct {
         }
       }
     when VK_TAB:
+      if (alt_code_ignore()) {
+      }
+      else
       if (!(cfg.old_modify_keys & 2) && term.modify_other_keys > 1 && mods) {
         // perhaps also partially if:
         // term.modify_other_keys == 1 && (mods & ~(MDK_SHIFT | MDK_ALT)) ?
@@ -3319,6 +3357,10 @@ static struct {
         mod_csi('I');
       }
     when VK_ESCAPE:
+      if (old_alt_state > ALT_ALONE) {
+        alt_state = ALT_CANCELLED;
+      }
+      else
       if (!(cfg.old_modify_keys & 8) && term.modify_other_keys > 1 && mods)
         other_code('\033');
       else
@@ -3354,12 +3396,18 @@ static struct {
       if (!vk_special(cfg.key_scrlock))
         return false;
     when VK_F1 ... VK_F24:
+      if (alt_code_ignore()) {
+        return true;
+      }
+
       if (key <= VK_F4 && term.vt52_mode) {
         len = sprintf(buf, "\e%c", key - VK_F1 + 'P');
         break;
       }
+
       if (term.vt220_keys && ctrl && VK_F3 <= key && key <= VK_F10)
         key += 10, mods &= ~MDK_CTRL;
+
       if (key <= VK_F4)
         mod_ss3(key - VK_F1 + 'P');
       else {
@@ -3385,14 +3433,16 @@ static struct {
       if (term.vt52_mode && term.app_keypad)
         len = sprintf(buf, "\e?%c", key - VK_MULTIPLY + 'j');
       else if (key == VK_ADD && old_alt_state == ALT_ALONE)
-        alt_state = ALT_HEX, alt_code = 0;
+        alt_state = ALT_HEX, alt_code = 0, alt_uni = false;
+      else if (alt_code_ignore()) {
+      }
       else if (mods || (term.app_keypad && !numlock) || !layout())
         app_pad_code(key - VK_MULTIPLY + '*');
     when VK_NUMPAD0 ... VK_NUMPAD9:
       if (term.vt52_mode && term.app_keypad)
         len = sprintf(buf, "\e?%c", key - VK_NUMPAD0 + 'p');
       else if ((term.app_cursor_keys || !term.app_keypad) &&
-          alt_code_numpad_key(key - VK_NUMPAD0));
+        alt_code_numpad_key(key - VK_NUMPAD0));
       else if (layout())
         ;
       else
@@ -3407,6 +3457,14 @@ static struct {
 #ifdef debug_key
       printf("-- mods %X alt %d altgr %d/%d ctrl %d lctrl %d/%d (modf %d comp %d)\n", mods, alt, altgr, altgr0, ctrl, lctrl, lctrl0, term.modify_other_keys, comp_state);
 #endif
+      if (key == ' ' && old_alt_state > ALT_ALONE) {
+        insert_alt_code();
+        alt_state = ALT_NONE;
+      }
+      else
+      if (key > 'F' && alt_code_ignore()) {
+      }
+      else
       if (allow_shortcut && check_menu) {
         send_syscommand(SC_KEYMENU);
         return true;
@@ -3439,6 +3497,9 @@ static struct {
         ctrl_ch(CTRL(key));
     }
     when '0' ... '9' or VK_OEM_1 ... VK_OEM_102:
+      if (key > '9' && alt_code_ignore()) {
+      }
+      else
       if (key <= '9' && alt_code_key(key - '0'))
         ;
       else if (char_key())
