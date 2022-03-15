@@ -350,8 +350,8 @@ $(pdf): ../docs/$(NAME).1
 
 html := ../docs/$(NAME).1.html
 html: $(html)
-$(html): ../docs/$(NAME).1
-	sed -f html.sed $< | groff -t -man -mwww -Thtml > $@
+$(html): ../docs/$(NAME).1 htmlroff.sed htmlhtml.sed
+	sed -f htmlroff.sed $< | groff -t -man -mwww -Thtml | sed -f htmlhtml.sed > $@
 
 clean:
 	#rm -rf *.d *.o $(NAME)*

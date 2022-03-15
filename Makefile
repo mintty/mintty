@@ -63,7 +63,7 @@ arch_files += wiki/*
 
 generated := docs/$(NAME).1.html
 
-docs/$(NAME).1.html: docs/$(NAME).1
+docs/$(NAME).1.html: docs/$(NAME).1 src/htmlroff.sed src/htmlhtml.sed
 	cd src; $(MAKE) html
 	cp docs/$(NAME).1.html mintty.github.io/
 
