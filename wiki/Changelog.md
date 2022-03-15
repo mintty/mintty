@@ -10,6 +10,7 @@ Keyboard handling
   * Support optional user-defined mappings for Control-/Alt-modified character keys (#399, #252, #523, #602, #645, ~#524, ~#817, ~#451).
   * Suspend shortcut handling during numeric character input.
   * Revise and fix numeric character input.
+  * Distinct Unicode vs. hexadecimal numeric character input.
   * Menu key opens menu inside terminal, also stops numeric input.
 
 Font rendering
@@ -24,6 +25,7 @@ Configuration
   * New option -Rt to report the tty name of the child process / shell.
   * New option ShootFoot (#399, #252, #523, #602, #645, ~#524, ~#817, ~#451).
   * New option RewrapOnResize (#82), interactive (Options dialog).
+  * New user-definable function unicode-char.
 
 ### 3.5.3 (3 February 2022) ###
 

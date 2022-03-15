@@ -869,6 +869,7 @@ typedef enum {
   ALT_OCT = 8, ALT_DEC = 10, ALT_HEX = 16
 } alt_state_t;
 static alt_state_t alt_state;
+static alt_state_t old_alt_state;
 static int alt_code;
 static bool alt_uni;
 
@@ -1197,6 +1198,15 @@ cycle_pointer_style()
 /*
    Some auxiliary functions for user-defined key assignments.
  */
+
+static void
+unicode_char()
+{
+  alt_state = ALT_HEX;
+  old_alt_state = ALT_ALONE;
+  alt_code = 0;
+  alt_uni = true;
+}
 
 static void
 menu_text()
@@ -1668,6 +1678,8 @@ static struct function_def cmd_defs[] = {
   {"close", {.fct = win_close}, 0},
   {"win-toggle-always-on-top", {.fct = win_toggle_on_top}, mflags_always_top},
   {"win-toggle-keep-screen-on", {.fct = win_toggle_screen_on}, mflags_screen_on},
+
+  {"unicode-char", {.fct = unicode_char}, 0},
 
   {"new", {.fct_key = newwin_begin}, 0},  // deprecated
   {"new-key", {.fct_key = newwin_begin}, 0},
@@ -2370,7 +2382,7 @@ static LONG last_key_time = 0;
     return true;
   }
 
-  alt_state_t old_alt_state = alt_state;
+  old_alt_state = alt_state;
   if (alt_state > ALT_NONE)
     alt_state = ALT_CANCELLED;
 
@@ -2748,6 +2760,7 @@ static LONG last_key_time = 0;
         when 'T': transparency_level();  // deprecated default assignment
         when 'P': cycle_pointer_style(); // deprecated default assignment
         when 'O': toggle_scrollbar();
+        when 'U': unicode_char();
       }
       return true;
     }
