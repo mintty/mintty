@@ -1158,7 +1158,7 @@ printsb(char * tag)
     uchar *cline = term.scrollback[(i + term.sbpos) % term.sblines];
     termline *line = decompressline(cline, null);
     printline("=", line, -1);
-    free(line);
+    freeline(line);
   }
   printf("--------------------\n");
 }
@@ -1451,7 +1451,7 @@ term_reflow(int newrows, int newcols)
       }
     }
 #endif
-    free(line);
+    freeline(line);
   }
   term.virtuallines = term.sblines - newrows;
 
@@ -1897,7 +1897,7 @@ term_do_scroll(int topline, int botline, int lines, bool sb)
         resizeline(line, term.cols);  // ensure sufficient line length
         free(cline);
         line->temporary = false;  /* reconstituted line is now real */
-        free(term.lines[i]);
+        freeline(term.lines[i]);
         term.lines[i] = line;
       }
     }
