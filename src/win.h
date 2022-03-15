@@ -28,15 +28,19 @@ extern void do_update(void);
 
 extern void win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl, bool clearpad, uchar phase);
 
+/* input */
 extern void win_update_mouse(void);
 extern void win_capture_mouse(void);
 extern void win_get_locator_info(int *x, int *y, int *buttons, bool by_pixels);
+extern wchar * char_code_indication(uint * what);
 
+/* beep */
 extern void win_beep(uint tone, float vol, float freq, uint ms);
 extern void win_sound(char * sound_name, uint options);
 extern void win_bell(config *);
 extern void win_margin_bell(config *);
 
+/* title */
 extern void win_set_title(char *);
 extern void win_save_title(void);
 extern void win_restore_title(void);
@@ -44,6 +48,7 @@ extern void win_copy_title(void);
 extern char * win_get_title(void);
 extern void win_copy_text(const char *s);
 
+/* colour */
 extern colour win_get_colour(colour_i);
 extern void win_set_colour(colour_i, colour);
 extern void win_reset_colours(void);
@@ -97,8 +102,6 @@ extern int message_box(HWND parwnd, char * wtext, char * wcaption, int type, wst
 extern int message_box_w(HWND parwnd, wchar * wtext, wchar * wcaption, int type, wstring ok);
 
 extern bool win_is_glass_available(void);
-
-extern void win_clear_images(void);
 
 extern int get_tick_count(void);
 extern int cursor_blink_ticks(void);

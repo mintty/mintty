@@ -1810,6 +1810,44 @@ win_key_reset(void)
   compose_clear();
 }
 
+wchar *
+char_code_indication(uint * what)
+{
+static wchar cci_buf[13];
+
+  if (alt_state > ALT_ALONE) {
+    int ac = alt_code;
+    int i = lengthof(cci_buf);
+    cci_buf[--i] = 0;
+    do {
+      int digit = ac % alt_state;
+      cci_buf[--i] = digit > 9 ? digit - 10 + 'A' : digit + '0';
+      ac /= alt_state;
+    } while (ac && i);
+    if (alt_state == ALT_HEX && alt_uni && i > 1) {
+      cci_buf[--i] = '+';
+      cci_buf[--i] = 'U';
+    }
+    *what = alt_state;
+    return &cci_buf[i];
+  }
+  else if (alt_state == ALT_ALONE) {
+    *what = 4;
+    return W(" ");
+  }
+  else if (comp_state > COMP_NONE) {
+    int i;
+    for (i = 0; i < compose_buflen; i++)
+      cci_buf[i] = compose_buf[i];
+    cci_buf[i++] = ' ';
+    cci_buf[i] = 0;
+    *what = 2;
+    return cci_buf;
+  }
+  else
+    return 0;
+}
+
 // notify margin bell ring enabled
 void
 provide_input(wchar c1)
