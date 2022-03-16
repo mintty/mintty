@@ -3220,6 +3220,43 @@ term_paint(void)
 #endif
         dispchars[curs_x].attr.attr |= ATTR_INVALID;
 
+     /* Numeric input feedback */
+      uint what;
+      wchar * ifs = char_code_indication(&what);
+      if (ifs) {
+        curs_x = max(min(curs_x, (int)term.cols - (int)wcslen(ifs)), 0);
+        while (*ifs) {
+          newchars[curs_x].chr = *ifs++;
+          newchars[curs_x].attr.attr &= ~(TATTR_WIDE | TATTR_EXPAND);
+          newchars[curs_x].attr = CATTR_DEFAULT;
+          if (what >= 4) {
+            newchars[curs_x].attr.attr |= ATTR_ULCOLOUR;
+            newchars[curs_x].attr.ulcolr = RGB(255, 0, 0);
+          }
+          else {
+            newchars[curs_x].attr.attr |= ATTR_REVERSE | ATTR_DIM;
+            newchars[curs_x].attr.attr |= ATTR_ULCOLOUR;
+            newchars[curs_x].attr.ulcolr = RGB(255, 0, 0);
+          }
+          switch (what) {
+            when 16:
+              newchars[curs_x].attr.attr |= ATTR_DOUBLYUND;
+            when 10:
+              newchars[curs_x].attr.attr |= ATTR_CURLYUND;
+            when 8:
+              newchars[curs_x].attr.attr |= ATTR_BROKENUND;
+            when 4:  // ALT_ALONE
+              newchars[curs_x].attr.attr |= ATTR_BLINK2;
+            when 2:  // COMP_ACTIVE
+              newchars[curs_x].attr.attr |= ATTR_OVERL;
+            when 1:
+              newchars[curs_x].attr.attr |= ATTR_OVERL | ATTR_BLINK2;
+          }
+          dispchars[curs_x].attr.attr |= ATTR_INVALID;
+          curs_x++;
+        }
+      }
+
      /* Progress indication */
       if (term.detect_progress) {
         int j = term.cols;

@@ -775,7 +775,15 @@ context menu can be accessed.
 Mintty supports 5-button mice, handling mouse buttons 4 / 5 like 
 Alt+click-left / right in most mouse modes.
 
-.SS Alt codes
+.SS Character input
+
+Mintty supports input of characters that are not directly mapped in the 
+keyboard layout: Numeric input, Unicode input, and composed characters 
+entered after a configurable Compose key.
+Visual feedback displays numeric or composing input modes and their input.
+
+.TQ
+\fBAlt codes\fP
 
 The Windows Alt+Numpad method for entering character codes is supported,
 whereby the Alt key has to be held while entering the character code.
@@ -793,6 +801,19 @@ interpreted as a Unicode codepoint and encoded accordingly before it is sent.
 For other encodings, the entered code is sent as is. 
 If it doesn't fit into one byte, it is sent as multiple bytes, with 
 the most significant non-zero byte first.
+
+.TQ
+\fBUnicode input\fP
+With user-definable function \fBunicode-char\fP (Ctrl+Shift+U by default), 
+input of a hexadecimal Unicode character code is started.
+(In UTF-8 terminal mode, the result is the same as hexadecimal Alt code 
+input described above.)
+
+.TQ
+\fBCompose key\fP
+Mintty supports a Compose key like on some traditional keyboards, using 
+compose character sequences from X11.
+It can be assigned to a modifier key in the Options menu, section Keys.
 
 .SS Keyboard shortcuts
 
@@ -2910,6 +2931,8 @@ Supported actions are described as follows:
 \(en \fBcycle-pointer-style\fP: cycles the pointer style
 .br
 \(en \fBcycle-transparency-level\fP: cycles the transparency level
+.br
+\(en \fBunicode-char\fP: enter Unicode character by its hexadecimal code
 .br
 \(en \fBcopy\fP: copies the selection to the clipboard
 .br

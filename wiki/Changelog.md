@@ -4,6 +4,7 @@ Window handling
 Terminal features
   * Tweak pending auto-wrap state affected when switching wrap modes.
   * Fixed unscroll (CSI +T) in case width has changed meanwhile.
+  * Visual feedback of numeric or composed character input.
 
 Keyboard handling
   * Support user-defined mappings for Super-/Hyper-modified character keys.
