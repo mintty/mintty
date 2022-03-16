@@ -83,7 +83,7 @@ REL := 1
 arch := $(shell uname -m)
 
 cygport := $(name_ver)-$(REL).cygport
-pkg: $(DIST) ver cop tar check _ srcpkg binpkg
+pkg: $(DIST) ver check-x11 cop tar check _ srcpkg binpkg
 $(DIST):
 	mkdir $(DIST)
 
@@ -95,6 +95,18 @@ cop:
 
 _:
 	cd src; $(MAKE) _
+
+check-x11:	src/rgb.t src/composed.t
+
+src/rgb.t:	/usr/share/X11/rgb.txt # X11 color names, from package 'rgb'
+	rm -f src/rgb.t
+	cd src; $(MAKE) rgb.t
+
+compose_list=/usr/share/X11/locale/en_US.UTF-8/Compose
+keysymdefs=/usr/include/X11/keysymdef.h
+src/composed.t:	$(compose_list) $(keysymdefs)
+	rm -f src/composed.t
+	cd src; $(MAKE) composed.t
 
 binpkg:
 	cp cygwin/mintty.cygport $(DIST)/$(cygport)
