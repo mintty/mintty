@@ -13,6 +13,7 @@ Keyboard handling
   * Revise and fix numeric character input.
   * Distinct Unicode vs. hexadecimal numeric character input.
   * Menu key opens menu inside terminal, also stops numeric input.
+  * Fixed Compose sequences with more than 2 characters (broken since 3.1.5).
 
 Font rendering
   * Fixed auto-widening of ambiguous-width letters (broken since 3.4.4).

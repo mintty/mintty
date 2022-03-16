@@ -3414,7 +3414,7 @@ static struct {
         alt_state = ALT_CANCELLED;
       }
       else if (comp_state > COMP_NONE) {
-        comp_state = COMP_CLEAR;
+        compose_clear();
       }
       else
       if (!(cfg.old_modify_keys & 8) && term.modify_other_keys > 1 && mods)
@@ -3652,6 +3652,7 @@ win_key_up(WPARAM wp, LPARAM lp)
     return false;
   }
 
+  //printf("comp %d key %02X dn %02X up %02X\n", comp_state, key, last_key_down, last_key_up);
   if (key == last_key_down
       // guard against cases of hotkey injection (#877)
       && (!last_key_up || key == last_key_up)
@@ -3671,8 +3672,6 @@ win_key_up(WPARAM wp, LPARAM lp)
       }
     }
   }
-  else
-    comp_state = COMP_NONE;
 
   last_key_up = key;
 
