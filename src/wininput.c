@@ -3081,6 +3081,8 @@ static struct {
 #endif
       for (int i = 0; i < wlen; i++)
         compose_buf[compose_buflen++] = wbuf[i];
+      win_update(false);
+
       uint comp_len = min((uint)compose_buflen, lengthof(composed->kc));
       bool found = false;
       for (uint k = 0; k < lengthof(composed); k++)
@@ -3411,6 +3413,9 @@ static struct {
       if (old_alt_state > ALT_ALONE) {
         alt_state = ALT_CANCELLED;
       }
+      else if (comp_state > COMP_NONE) {
+        comp_state = COMP_CLEAR;
+      }
       else
       if (!(cfg.old_modify_keys & 8) && term.modify_other_keys > 1 && mods)
         other_code('\033');
@@ -3660,8 +3665,10 @@ win_key_up(WPARAM wp, LPARAM lp)
         || (cfg.compose_key == MDK_HYPER && key == hyper_key)
        )
     {
-      if (comp_state >= 0)
+      if (comp_state >= 0) {
         comp_state = COMP_ACTIVE;
+        win_update(false);
+      }
     }
   }
   else
