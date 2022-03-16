@@ -27,6 +27,7 @@ Configuration
   * New option ShootFoot (#399, #252, #523, #602, #645, ~#524, ~#817, ~#451).
   * New option RewrapOnResize (#82), interactive (Options dialog).
   * New user-definable function unicode-char.
+  * Updated X11-derived data: compose sequences and colour names.
 
 ### 3.5.3 (3 February 2022) ###
 
