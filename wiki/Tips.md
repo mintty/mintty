@@ -656,12 +656,18 @@ In the Options menu, section _Looks_, the _Theme_ popup offers theme files
 as stored in a resource directory for selection.
 This dialog field (or the “Color Scheme Designer” button for drag-and-drop) 
 can be used in different ways:
-* Popup the selection to choose a theme configured in your resource directory
+* (*) Popup the selection to choose a theme configured in your resource directory
 * Insert a file name (e.g. by pasting or drag-and-drop from Windows Explorer)
-* Drag-and-drop a theme file from the Internet (may be embedded in HTML page)
-* Drag-and-drop a colour scheme directly from the Color Scheme Designer (see below)
+* (*) Drag-and-drop a theme file from the Internet (may be embedded in HTML page)
+* (*) Drag-and-drop a colour scheme directly from the Color Scheme Designer (see below)
 
-(Option 3) 
+(* Option 1) 
+The default theme (since 3.5.4) is 
+[helmholtz](https://raw.githubusercontent.com/mintty/mintty/master/themes/helmholtz) 
+which provides a colour scheme of well-balanced appearance and luminance;
+see the comments in the theme file about its crafting principles.
+
+(* Option 3) 
 A number of colour schemes have been published for mintty, also 
 mintty supports direct drag-and-drop import of theme files in 
 iTerm2 or Windows terminal formats.
@@ -678,7 +684,7 @@ theme file, the name will be filled with its basename as a suggestion.
 As long as a colour scheme is loaded but not yet stored, and a name is 
 available in the Theme field, the “Store” button will be enabled.
 
-(Option 4) The 
+(* Option 4) The 
 [4bit Terminal Color Scheme Designer](http://ciembor.github.io/4bit/#) 
 lets you download a tuned colour scheme (top-right button “Get Scheme”).
 Click on the button “Color Scheme Designer” below the Theme field 

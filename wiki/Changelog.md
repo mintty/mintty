@@ -24,6 +24,8 @@ Startup
   * Trimming irrelevant and possibly confusing environment variables before child invocation (xterm).
 
 Configuration
+  * New themes helmholtz and luminous (contributed by Andy Koppe).
+  * Setting helmholtz theme as default colour scheme.
   * New option -Rt to report the tty name of the child process / shell.
   * New option ShootFoot (#399, #252, #523, #602, #645, ~#524, ~#817, ~#451).
   * New option RewrapOnResize (#82), interactive (Options dialog).
