@@ -1,0 +1,48 @@
+# "helmholtz" colour theme for mintty
+#
+# The aim of this theme is to provide vibrant colours where the normal and bold
+# levels each have approximately equal brightness. The exception is normal blue,
+# which is somewhat darker than the others as a compromise between readability
+# on a black background and suitability as a background colour. The normal and
+# bold variant of each colour have slightly different hues to help distinguish
+# them.
+#
+# To level the colours, their luminance was calculated as follows:
+# - Gamma-expand the sRGB components by dividing each by 255 and applying the
+#   sRGB transfer function (which approximately means applying exponent 2.2).
+# - Combine the components with formula Y = 0.2126 R + 0.7152 G + 0.0722 B.
+# - Gamma-compress with the reverse transfer function (approximately: apply
+#   exponent 1/2.2).
+#
+# https://en.wikipedia.org/wiki/SRGB
+#
+# The colours were then adjusted to achieve equal luminance. However, that did
+# not actually yield colours with equal apparent brightness. This is due to the
+# "Helmholtz-Kohlrausch effect", which means that some saturated colours appear
+# brighter than others to the human eye. The theme is named after that.
+#
+# https://en.wikipedia.org/wiki/Helmholtz-Kohlrausch_effect
+#
+# There doesn't appear to be a generally accepted model for compensating for
+# the effect, as it depends on observer, display device and surrounding
+# lighting. Hence, correction factors were determined experimentally, ranging
+# from 1.0 for yellow to 1.45 for red, and the colour components adjusted
+# accordingly. Of course, that is a highly subjective process ...
+
+Black=0,0,0
+Red=212,32,77
+Green=42,168,0
+Yellow=192,160,0
+Blue=0,72,216
+Magenta=172,64,208
+Cyan=0,180,165
+White=191,191,191
+
+BoldBlack=96,96,96
+BoldRed=255,96,96
+BoldGreen=0,244,0
+BoldYellow=239,239,0
+BoldBlue=85,170,255
+BoldMagenta=255,100,255
+BoldCyan=0,244,244
+BoldWhite=255,255,255
