@@ -26,7 +26,7 @@ extern void win_update(bool update_sel_tip);
 extern void win_schedule_update(void);
 extern void do_update(void);
 
-extern void win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl, bool clearpad, uchar phase);
+extern void win_text(int x, int y, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, char has_rtl, bool clearpad, uchar phase);
 
 /* input */
 extern void win_update_mouse(void);

@@ -4132,7 +4132,7 @@ do_cmd(void)
           free(fn);
         }
         else {
-          if (ff < lengthof(cfg.fontfams) - 1) {
+          if (ff <= 10) {  // also support changing alternative fonts 1..10
             wstring wfont = cs__mbstowcs(s);  // let this leak...
             win_change_font(ff, wfont);
           }

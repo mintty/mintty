@@ -1161,7 +1161,7 @@ command-line.)
 .br
 Unicode-enabled settings: BellFile, BellFile2..7, ThemeFile, Background, 
 Title, ExitTitle, Icon, Log, SaveFilename, 
-Language, Font, Font1..10, FontSample, FontChoice, 
+Language, Font, Font1..10, FontRTL, FontSample, FontChoice, 
 TekFont, CopyAsRTFFont, 
 SearchBar, Printer, Answerback, SixelClipChars, 
 Class, AppID, AppName, AppLaunchCmd, 
@@ -1341,6 +1341,12 @@ Fraktur or Blackletter font (ECMA-48 "Gothic").
 \fINote:\fP The control sequence for alternative font 1 overrides the identical 
 control sequence to select the VGA character set, which would thus be disabled. 
 Configuring alternative font 1 is therefore discouraged.
+
+\(en \fBRight-to-left fallback font\fP (FontRTL=Courier New, FontRTLWeight=400):
+Fallback font in case the selected font does not include right-to-left scripts, 
+as mintty does not make use of Windows font substitution in this case.
+For RTL scripts, this is superior to the FonChoice workaround, 
+as it works implicitly and provides real fallback behaviour.
 
 \(en \fBChoice of script-specific secondary fonts\fP (FontChoice=):
 With this setting, alternative fonts can be specified as secondary font 

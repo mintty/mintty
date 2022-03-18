@@ -81,6 +81,7 @@ const config default_cfg = {
   .fontfams[8] = {.name = W(""), .weight = 400, .isbold = false},
   .fontfams[9] = {.name = W(""), .weight = 400, .isbold = false},
   .fontfams[10] = {.name = W(""), .weight = 400, .isbold = false},
+  .fontfams[11] = {.name = W("Courier New"), .weight = 400, .isbold = false},
   .font_choice = W(""),
   .font_sample = W(""),
   .show_hidden_fonts = false,
@@ -377,6 +378,8 @@ options[] = {
   {"Font9Weight", OPT_INT, offcfg(fontfams[9].weight)},
   {"Font10", OPT_WSTRING, offcfg(fontfams[10].name)},
   {"Font10Weight", OPT_INT, offcfg(fontfams[10].weight)},
+  {"FontRTL", OPT_WSTRING, offcfg(fontfams[11].name)},
+  {"FontRTLWeight", OPT_INT, offcfg(fontfams[11].weight)},
   {"TekFont", OPT_WSTRING, offcfg(tek_font)},
 
   // Keys

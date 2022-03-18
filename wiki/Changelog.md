@@ -16,6 +16,7 @@ Keyboard handling
   * Fixed Compose sequences with more than 2 characters (broken since 3.1.5).
 
 Font rendering
+  * Right-to-left font fallback (#1148).
   * Fixed auto-widening of ambiguous-width letters (broken since 3.4.4).
   * Speedup rendering of replacement indication of invalid character codes (#1145).
   * Extend cell zoom to some Geometric Shapes U+25E2.., Dingbats U+1F67C.., and Symbols U+1FB00..U+1FBB3.

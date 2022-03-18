@@ -120,6 +120,7 @@ struct fontfam {
   wstring name_reported;
   int weight;
   bool isbold;
+  char no_rtl;  // 1: no R/Hebrew, 2: no AL/Arabic, 4: either
   HFONT fonts[FONT_MAXNO];
   bool fontflag[FONT_MAXNO];
   bool font_dualwidth;
@@ -134,7 +135,7 @@ struct fontfam {
   int descent;
   // VT100 linedraw character mappings for current font:
   wchar win_linedraw_chars[LDRAW_CHAR_NUM];
-} fontfamilies[11];
+} fontfamilies[12];  // lengthof(cfg.fontfams) if [11] set via fontfams
 
 int line_scale;
 
@@ -546,6 +547,7 @@ static void
 win_init_fontfamily(HDC dc, int findex)
 {
   struct fontfam * ff = &fontfamilies[findex];
+  //printf("fontfamily %d <%ls>\n", findex, ff->name);
 
   trace_resize(("--- init_fontfamily\n"));
   TEXTMETRIC tm;
@@ -719,6 +721,14 @@ win_init_fontfamily(HDC dc, int findex)
   ushort glyphs[LDRAW_CHAR_NUM][LDRAW_CHAR_TRIES];
   GetGlyphIndicesW(dc, *linedraw_chars, LDRAW_CHAR_NUM * LDRAW_CHAR_TRIES,
                    *glyphs, true);
+
+  // See what RTL glyphs are available.
+  ushort rtlglyphs[2];
+  GetGlyphIndicesW(dc, W("אا"), 2, rtlglyphs, true);
+  ff->no_rtl = (rtlglyphs[0] == 0xFFFF) | (rtlglyphs[1] == 0xFFFF) << 1;
+  if (ff->no_rtl)
+    ff->no_rtl |= 4;
+  //printf("RTL glyphs %04X %04X %d\n", rtlglyphs[0], rtlglyphs[1], ff->no_rtl);
 
   // For each character, try the list of possible mappings until either we
   // find one that has a glyph in the font or we hit the ASCII fallback.
@@ -944,6 +954,13 @@ win_init_fonts(int size, bool allfonts)
       fontfamilies[fi].weight = cfg.font.weight;
       fontfamilies[fi].isbold = cfg.font.isbold;
     }
+#ifdef set_RTL_fallback_font_hard_coded
+    else if (fi == 11) {
+      fontfamilies[fi].name = W("Courier New");
+      fontfamilies[fi].weight = 400;
+      fontfamilies[fi].isbold = false;
+    }
+#endif
     else {
       fontfamilies[fi].name = cfg.fontfams[fi].name;
       fontfamilies[fi].weight = cfg.fontfams[fi].weight;
@@ -2728,7 +2745,7 @@ apply_attr_colour(cattr a, attr_colour_mode mode)
    phase: overlay line display (italic right-to-left overhang handling)
  */
 void
-win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, bool has_rtl, bool clearpad, uchar phase)
+win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, ushort lattr, char has_rtl, bool clearpad, uchar phase)
 {
 #ifdef debug_wscale
   if (attr.attr & (TATTR_EXPAND | TATTR_NARROW | TATTR_WIDE))
@@ -2778,6 +2795,14 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
       graph |= 0xE0;
   }
   struct fontfam * ff = &fontfamilies[findex];
+  // check whether font lacks support of given RTL bidi class
+  // has_rtl:    1: R/Hebrew,    2: AL/Arabic,    4: other
+  // ff->no_rtl: 1: no R/Hebrew, 2: no AL/Arabic, 4: either
+  if (has_rtl & ff->no_rtl) {
+    //printf("%d<%ls> %X %X\n", findex, ff->name, has_rtl, ff->no_rtl);
+    findex = 11;
+    ff = &fontfamilies[findex];
+  }
 
   trace_line("win_text:");
 
