@@ -61,7 +61,7 @@ const config default_cfg = {
   .search_fg_colour = 0x000000,
   .search_bg_colour = 0x00DDDD,
   .search_current_colour = 0x0099DD,
-  .theme_file = W("helmholtz"),
+  .theme_file = W(""),
   .background = W(""),
   .colour_scheme = "",
   .transparency = 0,
@@ -250,6 +250,7 @@ const config default_cfg = {
   .old_bold = false,
   .ime_cursor_colour = DEFAULT_COLOUR,
   .ansi_colours = {
+#ifdef old_mintty_colour_scheme  // theme "mintty"
     [BLACK_I]        = RGB(0x00, 0x00, 0x00),
     [RED_I]          = RGB(0xBF, 0x00, 0x00),
     [GREEN_I]        = RGB(0x00, 0xBF, 0x00),
@@ -266,6 +267,24 @@ const config default_cfg = {
     [BOLD_MAGENTA_I] = RGB(0xFF, 0x40, 0xFF),
     [BOLD_CYAN_I]    = RGB(0x40, 0xFF, 0xFF),
     [BOLD_WHITE_I]   = RGB(0xFF, 0xFF, 0xFF)
+#else  // theme "helmholtz"
+    [BLACK_I]        = RGB(  0,   0,   0),
+    [RED_I]          = RGB(212,  20,  36),
+    [GREEN_I]        = RGB( 28, 168,   0),
+    [YELLOW_I]       = RGB(192, 160,   0),
+    [BLUE_I]         = RGB(  0,  72, 216),
+    [MAGENTA_I]      = RGB(176,  32, 224),
+    [CYAN_I]         = RGB(  0, 168, 154),
+    [WHITE_I]        = RGB(191, 191, 191),
+    [BOLD_BLACK_I]   = RGB( 96,  96,  96),
+    [BOLD_RED_I]     = RGB(255, 106, 106),
+    [BOLD_GREEN_I]   = RGB(  0, 244,   0),
+    [BOLD_YELLOW_I]  = RGB(240, 240,   0),
+    [BOLD_BLUE_I]    = RGB( 85, 170, 255),
+    [BOLD_MAGENTA_I] = RGB(255,  85, 255),
+    [BOLD_CYAN_I]    = RGB(  0, 240, 240),
+    [BOLD_WHITE_I]   = RGB(255, 255, 255)
+#endif
   },
   .sixel_clip_char = W(" "),
   .baud = 0,
