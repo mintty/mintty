@@ -23,26 +23,26 @@
 #
 # https://en.wikipedia.org/wiki/Helmholtz-Kohlrausch_effect
 #
-# There doesn't appear to be a generally accepted model for compensating for
-# the effect, as it depends on observer, display device and surrounding
-# lighting. Hence, correction factors were determined experimentally, ranging
-# from 1.0 for yellow to 1.45 for red, and the colour components adjusted
-# accordingly. Of course, that is a highly subjective process ...
+# There doesn't appear to be a generally valid model for compensating for the
+# effect, as it depends on observer, display device, and viewing environment.
+# Hence, correction factors were determined experimentally, ranging from 1.0
+# for yellow to 1.5 for red, and the colour components adjusted accordingly.
+# Of course, that is a highly subjective process ...
 
 Black=0,0,0
-Red=212,32,77
-Green=42,168,0
+Red=212,20,36
+Green=28,168,0
 Yellow=192,160,0
 Blue=0,72,216
-Magenta=172,64,208
-Cyan=0,180,165
+Magenta=176,32,224
+Cyan=0,168,154
 White=191,191,191
 
 BoldBlack=96,96,96
-BoldRed=255,96,96
+BoldRed=255,106,106
 BoldGreen=0,244,0
-BoldYellow=239,239,0
+BoldYellow=240,240,0
 BoldBlue=85,170,255
-BoldMagenta=255,100,255
-BoldCyan=0,244,244
+BoldMagenta=255,85,255
+BoldCyan=0,240,240
 BoldWhite=255,255,255

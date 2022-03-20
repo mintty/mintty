@@ -1,11 +1,39 @@
+# "luminous" colour theme for mintty
+#
+# The aim of this theme is to provide vibrant colours where the normal and bold
+# levels each have approximately equal luminance. The exception is normal blue,
+# which is somewhat darker than the others as a compromise between readability
+# on a black background and suitability as a background colour. The normal and
+# bold variant of each colour have slightly different hues to help distinguish
+# them.
+#
+# To level the colours, their luminance was calculated as follows:
+# - Gamma-expand the sRGB components by dividing each by 255 and applying the
+#   sRGB transfer function (which approximately means applying exponent 2.2).
+# - Combine the components with formula Y = 0.2126 R + 0.7152 G + 0.0722 B.
+# - Gamma-compress with the reverse transfer function (approximately: apply
+#   exponent 1/2.2).
+#
+# https://en.wikipedia.org/wiki/SRGB
+#
+# The colours were then adjusted to achieve equal luminance. However, that does
+# not actually yield colours with equal apparent brightness. This is due to the
+# "Helmholtz-Kohlrausch effect", which means that some saturated colours appear
+# brighter than others to the human eye:
+#
+# https://en.wikipedia.org/wiki/Helmholtz-Kohlrausch_effect
+#
+# See the "helmholtz" theme for an attempt to compensate for that.
+
 Black=0,0,0
-Red=208,0,52
-Green=30,120,0
-Yellow=123,102,0
-Blue=0,85,255
-Magenta=168,0,224
-Cyan=0,117,107
+Red=216,0,18
+Green=21,126,0
+Yellow=126,105,0
+Blue=0,72,216
+Magenta=174,0,232
+Cyan=0,120,110
 White=191,191,191
+
 BoldBlack=96,96,96
 BoldRed=255,127,127
 BoldGreen=0,192,0
