@@ -3230,12 +3230,12 @@ term_paint(void)
           newchars[curs_x].attr.attr &= ~(TATTR_WIDE | TATTR_EXPAND);
           newchars[curs_x].attr = CATTR_DEFAULT;
           if (what >= 4) {
-            newchars[curs_x].attr.attr |= ATTR_ULCOLOUR;
+            newchars[curs_x].attr.attr |= ATTR_ULCOLOUR | ATTR_BOLD;
             newchars[curs_x].attr.ulcolr = RGB(255, 0, 0);
           }
           else {
             newchars[curs_x].attr.attr |= ATTR_REVERSE | ATTR_DIM;
-            newchars[curs_x].attr.attr |= ATTR_ULCOLOUR;
+            newchars[curs_x].attr.attr |= ATTR_ULCOLOUR | ATTR_BOLD;
             newchars[curs_x].attr.ulcolr = RGB(255, 0, 0);
           }
           switch (what) {
