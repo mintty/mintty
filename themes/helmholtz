@@ -26,23 +26,23 @@
 # There doesn't appear to be a generally valid model for compensating for the
 # effect, as it depends on observer, display device, and viewing environment.
 # Hence, correction factors were determined experimentally, ranging from 1.0
-# for yellow to 1.5 for red, and the colour components adjusted accordingly.
+# for yellow to 1.45 for red, and the colour components adjusted accordingly.
 # Of course, that is a highly subjective process ...
 
 Black=0,0,0
-Red=212,20,36
+Red=216,36,51
 Green=28,168,0
 Yellow=192,160,0
 Blue=0,72,216
-Magenta=176,32,224
+Magenta=180,60,204
 Cyan=0,168,154
 White=191,191,191
 
 BoldBlack=96,96,96
-BoldRed=255,106,106
+BoldRed=255,102,102
 BoldGreen=0,244,0
 BoldYellow=240,240,0
 BoldBlue=85,170,255
-BoldMagenta=255,85,255
+BoldMagenta=255,102,255
 BoldCyan=0,240,240
 BoldWhite=255,255,255

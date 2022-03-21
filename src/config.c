@@ -269,19 +269,19 @@ const config default_cfg = {
     [BOLD_WHITE_I]   = RGB(0xFF, 0xFF, 0xFF)
 #else  // theme "helmholtz"
     [BLACK_I]        = RGB(  0,   0,   0),
-    [RED_I]          = RGB(212,  20,  36),
+    [RED_I]          = RGB(216,  36,  51),
     [GREEN_I]        = RGB( 28, 168,   0),
     [YELLOW_I]       = RGB(192, 160,   0),
     [BLUE_I]         = RGB(  0,  72, 216),
-    [MAGENTA_I]      = RGB(176,  32, 224),
+    [MAGENTA_I]      = RGB(180,  60, 204),
     [CYAN_I]         = RGB(  0, 168, 154),
     [WHITE_I]        = RGB(191, 191, 191),
     [BOLD_BLACK_I]   = RGB( 96,  96,  96),
-    [BOLD_RED_I]     = RGB(255, 106, 106),
+    [BOLD_RED_I]     = RGB(255, 102, 102),
     [BOLD_GREEN_I]   = RGB(  0, 244,   0),
     [BOLD_YELLOW_I]  = RGB(240, 240,   0),
     [BOLD_BLUE_I]    = RGB( 85, 170, 255),
-    [BOLD_MAGENTA_I] = RGB(255,  85, 255),
+    [BOLD_MAGENTA_I] = RGB(255, 102, 255),
     [BOLD_CYAN_I]    = RGB(  0, 240, 240),
     [BOLD_WHITE_I]   = RGB(255, 255, 255)
 #endif
