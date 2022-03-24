@@ -1,10 +1,12 @@
-# "helmholtz" colour theme for mintty
+# "kohlrausch" colour theme for mintty
 #
 # The aim of this theme is to provide vibrant colours where the normal and bold
-# levels each have approximately equal brightness. The exception is normal blue,
-# which is somewhat darker than the others as a compromise between readability
-# on a black background and suitability as a background colour. The variants of
-# each colour have slightly different hues to help distinguish them.
+# levels each have approximately equal brightness. The variants of each colour
+# have slightly different hues to help distinguish them.
+#
+# Unlike in the "helmholtz" scheme, the normal blue has a similar brightness to
+# the other normal colours, which helps its readability but makes it less
+# suitable as a background colour.
 #
 # To level the colours, their luminance was calculated as follows:
 # - Gamma-expand the sRGB components by dividing each by 255 and applying the
@@ -32,7 +34,7 @@ Black=0,0,0
 Red=216,36,51
 Green=28,168,0
 Yellow=192,160,0
-Blue=0,55,220
+Blue=0,102,255
 Magenta=177,72,198
 Cyan=0,168,154
 White=191,191,191
