@@ -1,3 +1,11 @@
+### 3.6.0 (20 March 2022) ###
+
+Highlights
+  * Optional feature: Reflow terminal lines when resizing terminal width.
+  * Visual feedback of numeric or composed character input.
+  * New themes helmholtz and luminous (contributed by Andy Koppe).
+  * Setting helmholtz theme as default colour scheme.
+
 Window handling
   * Reflow terminal lines when resizing terminal width (#82, #219, mintty/wsltty#154).
 

@@ -662,7 +662,7 @@ can be used in different ways:
 * (*) Drag-and-drop a colour scheme directly from the Color Scheme Designer (see below)
 
 (* Option 1) 
-The default theme (since 3.5.4) is 
+The default theme (since 3.6.0) is 
 [helmholtz](https://raw.githubusercontent.com/mintty/mintty/master/themes/helmholtz) 
 which provides a colour scheme of well-balanced appearance and luminance;
 see the comments in the theme file about its crafting principles.

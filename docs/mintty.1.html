@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Wed Mar 16 13:16:45 2022 -->
+<!-- CreationDate: Fri Mar 25 18:57:04 2022 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -1106,28 +1106,51 @@ selected and the context menu can be accessed.</p>
 5-button mice, handling mouse buttons 4 / 5 like
 Alt+click-left / right in most mouse modes.</p>
 
-<p style="margin-left:11%; margin-top: 1em"><b class=h3>Alt
-codes</b> <br>
-The Windows Alt+Numpad method for entering character codes
-is supported, whereby the Alt key has to be held while
-entering the character code. Only the first key has to be on
-the numpad; subsequent digits can be entered both on the
-numpad or the main part of the keyboard.</p>
+<p style="margin-left:11%; margin-top: 1em"><b class=h3>Character
+input</b> <br>
+Mintty supports input of characters that are not directly
+mapped in the keyboard layout: Numeric input, Unicode input,
+and composed characters entered after a configurable Compose
+key. Visual feedback displays numeric or composing input
+modes and their input. <br>
+<br><b class=h4>Alt codes</b></p>
 
-<p style="margin-left:11%; margin-top: 1em">If the first
+<p style="margin-left:22%; margin-top: 1em">The Windows
+Alt+Numpad method for entering character codes is supported,
+whereby the Alt key has to be held while entering the
+character code. Only the first key has to be on the numpad;
+subsequent digits can be entered both on the numpad or the
+main part of the keyboard.</p>
+
+<p style="margin-left:22%; margin-top: 1em">If the first
 key is the '<b>+</b>' on the numpad, the code is interpreted
 as hexadecimal, whereby digits A through F can be entered
 using the letter keys. If the first key is a zero, the code
 is interpreted as octal. If the first key is any other digit
 from 1 to 9, the code is interpreted as decimal.</p>
 
-<p style="margin-left:11%; margin-top: 1em">For UTF-8 and
+<p style="margin-left:22%; margin-top: 1em">For UTF-8 and
 other Unicode encodings such as GB18030, the entered code is
 interpreted as a Unicode codepoint and encoded accordingly
 before it is sent. For other encodings, the entered code is
 sent as is. If it doesn&rsquo;t fit into one byte, it is
 sent as multiple bytes, with the most significant non-zero
 byte first.</p>
+
+<p style="margin-left:11%;"><br><b class=h4>Unicode input</b></p>
+
+<p style="margin-left:22%;">With user-definable function
+<b>unicode-char</b> (Ctrl+Shift+U by default), input of a
+hexadecimal Unicode character code is started. (In UTF-8
+terminal mode, the result is the same as hexadecimal Alt
+code input described above.)</p>
+
+<p style="margin-left:11%;"><br><b class=h4>Compose key</b></p>
+
+<p style="margin-left:22%;">Mintty supports a Compose key
+like on some traditional keyboards, using compose character
+sequences from X11. It can be assigned to a modifier key in
+the Options menu, section Keys.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b class=h3>Keyboard
 shortcuts</b> <br>
@@ -1515,8 +1538,8 @@ the system ANSI encoding. (This does not apply to the same
 configuration settings when given on the command-line.) <br>
 Unicode-enabled settings: BellFile, BellFile2..7, ThemeFile,
 Background, Title, ExitTitle, Icon, Log, SaveFilename,
-Language, Font, Font1..10, FontSample, FontChoice, TekFont,
-CopyAsRTFFont, SearchBar, Printer, Answerback,
+Language, Font, Font1..10, FontRTL, FontSample, FontChoice,
+TekFont, CopyAsRTFFont, SearchBar, Printer, Answerback,
 SixelClipChars, Class, AppID, AppName, AppLaunchCmd,
 DropCommands, ExitCommands, UserCommands, SessionCommands,
 TaskCommands, KeyFunctions, SysMenuFunctions,
@@ -1724,6 +1747,15 @@ Note:</i> The control sequence for alternative font 1
 overrides the identical control sequence to select the VGA
 character set, which would thus be disabled. Configuring
 alternative font 1 is therefore discouraged.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&ndash;
+<b>Right-to-left fallback font</b> (FontRTL=Courier New,
+FontRTLWeight=400): Fallback font in case the selected font
+does not include right-to-left scripts, as mintty does not
+make use of Windows font substitution in this case. For RTL
+scripts, this is superior to a workaround using the
+FontChoice setting, as it works implicitly and provides real
+fallback behaviour.</p>
 
 <p style="margin-left:22%; margin-top: 1em">&ndash;
 <b>Choice of script-specific secondary fonts</b>
@@ -3595,6 +3627,8 @@ compatible) <br>
 <br>
 &ndash; <b>cycle-transparency-level</b>: cycles the
 transparency level <br>
+&ndash; <b>unicode-char</b>: enter Unicode character by its
+hexadecimal code <br>
 &ndash; <b>copy</b>: copies the selection to the clipboard
 <br>
 &ndash; <b>copy-text</b>: copies text only <br>
