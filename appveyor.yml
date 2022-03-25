@@ -1,6 +1,8 @@
 # This file is part of mintty project
 
-# Build image
+# Build image; of course mintty has nothing to do with Visual Studio -
+# this is just the name of Appveyor's build environment image
+# that also contains cygwin
 image: Visual Studio 2022
 
 # Version format
@@ -15,7 +17,7 @@ skip_tags: true
 
 build_script:
 - cmd: |
-    set PATH=C:\cygwin64;C:\cygwin64\bin;C:\cygwin64\usr\bin;%PATH%
+    set PATH=C:\cygwin64\bin;%PATH%
     make
 
 test_script:
