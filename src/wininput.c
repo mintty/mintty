@@ -1833,7 +1833,8 @@ static wchar cci_buf[13];
   }
   else if (alt_state == ALT_ALONE) {
     *what = 4;
-    return W(" ");
+    //return W(" ");
+    return 0;  // don't obscure text when just pressing Alt
   }
   else if (comp_state > COMP_NONE) {
     int i;

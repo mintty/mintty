@@ -1,3 +1,6 @@
+Terminal features
+  * Visual input feedback: don't obscure text when just pressing Alt.
+
 ### 3.6.0 (20 March 2022) ###
 
 Highlights
