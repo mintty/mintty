@@ -1,5 +1,10 @@
 Terminal features
   * Visual input feedback: don't obscure text when just pressing Alt.
+  * Separate foreground and background values for ANSI colours (#1151).
+  * OSC 7765 for setting ANSI colours distinct from palette colours (#1151).
+
+Configuration
+  * ANSI colour specification accepts foreground ; background values (#1151).
 
 ### 3.6.0 (20 March 2022) ###
 
