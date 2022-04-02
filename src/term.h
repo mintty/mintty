@@ -35,40 +35,45 @@ typedef enum {
   // on grounds of redundancy.
 
   // Colour numbers 256 through 271 are copies of ANSI colours 0 through 15
-  // supporting distinct handling of ANSI colours SGR 30..37/40../90../100.. 
-  // and palette colours SGR 38/48;5;0..15
+  // supporting distinct handling of ANSI colours SGR 30..37/40../90../100..
+  // and palette colours SGR 38/48;5;0..15.
   // For distinct bold handling alone, they could also be mapped to 0..15
-  // but duplicating them would also facilitate distinct colour values if desired
+  // but duplicating them could also facilitate distinct colour values if
+  // desired.
   ANSI0            = 256,
 
+  // Colour numbers 272 through 287 are the background variants of the ANSI
+  // colours.
+  BG_ANSI0         = 272,
+
   // Default foreground
-  FG_COLOUR_I      = 272,
-  BOLD_FG_COLOUR_I = 273,
+  FG_COLOUR_I      = 288,
+  BOLD_FG_COLOUR_I = 289,
 
   // Default background
-  BG_COLOUR_I      = 274,
-  BOLD_BG_COLOUR_I = 275,
+  BG_COLOUR_I      = 290,
+  BOLD_BG_COLOUR_I = 291,
 
   // Cursor colours
-  CURSOR_TEXT_COLOUR_I = 276,
-  CURSOR_COLOUR_I      = 277,
-  IME_CURSOR_COLOUR_I  = 278,
+  CURSOR_TEXT_COLOUR_I = 292,
+  CURSOR_COLOUR_I      = 293,
+  IME_CURSOR_COLOUR_I  = 294,
 
   // Selection highlight colours
-  SEL_COLOUR_I         = 279,
-  SEL_TEXT_COLOUR_I    = 280,
+  SEL_COLOUR_I         = 295,
+  SEL_TEXT_COLOUR_I    = 296,
 
   // configured attribute substitution colours
-  BOLD_COLOUR_I = 281,
-  BLINK_COLOUR_I = 282,
+  BOLD_COLOUR_I = 297,
+  BLINK_COLOUR_I = 298,
 
   // Tektronix colours
-  TEK_FG_COLOUR_I      = 283,
-  TEK_BG_COLOUR_I      = 284,
-  TEK_CURSOR_COLOUR_I  = 285,
+  TEK_FG_COLOUR_I      = 299,
+  TEK_BG_COLOUR_I      = 300,
+  TEK_CURSOR_COLOUR_I  = 301,
 
   // Number of colours
-  COLOUR_NUM = 286,
+  COLOUR_NUM = 302,
 
   // True Colour indicator
   // assert (TRUE_COLOUR % 4) == 0 so that checking x >= TRUE_COLOUR
@@ -78,6 +83,7 @@ typedef enum {
 
 // colour classes
 #define CCL_ANSI8(i) ((i) >= ANSI0 && (i) < ANSI0 + 8)
+#define CCL_BG_ANSI8(i) ((i) >= BG_ANSI0 && (i) < BG_ANSI0 + 8)
 #define CCL_DEFAULT(i) ((i) >= FG_COLOUR_I && (i) <= BOLD_BG_COLOUR_I)
 #define CCL_TRUEC(i) ((i) >= TRUE_COLOUR)
 

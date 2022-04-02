@@ -1,12 +1,12 @@
 // config.c (part of mintty)
-// Copyright 2008-13 Andy Koppe, 2015-2021 Thomas Wolff
+// Copyright 2008-22 Andy Koppe, 2015-2022 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 // Internationalization approach:
 // instead of refactoring a lot of framework functions (here, *ctrls.c)
 // to use Unicode strings, the API is simply redefined to use UTF-8;
-// non-ASCII strings are converted before being passed to the platform 
+// non-ASCII strings are converted before being passed to the platform
 // (using UTF-16 on Windows)
 
 #include "term.h"
@@ -268,22 +268,22 @@ const config default_cfg = {
     [BOLD_CYAN_I]    = RGB(0x40, 0xFF, 0xFF),
     [BOLD_WHITE_I]   = RGB(0xFF, 0xFF, 0xFF)
 #else  // theme "helmholtz"
-    [BLACK_I]        = RGB(  0,   0,   0),
-    [RED_I]          = RGB(216,  36,  51),
-    [GREEN_I]        = RGB( 28, 168,   0),
-    [YELLOW_I]       = RGB(192, 160,   0),
-    [BLUE_I]         = RGB(  0,  55, 220),
-    [MAGENTA_I]      = RGB(177,  72, 198),
-    [CYAN_I]         = RGB(  0, 168, 154),
-    [WHITE_I]        = RGB(191, 191, 191),
-    [BOLD_BLACK_I]   = RGB( 96,  96,  96),
-    [BOLD_RED_I]     = RGB(255, 102, 102),
-    [BOLD_GREEN_I]   = RGB(  0, 244,   0),
-    [BOLD_YELLOW_I]  = RGB(240, 240,   0),
-    [BOLD_BLUE_I]    = RGB( 85, 170, 255),
-    [BOLD_MAGENTA_I] = RGB(255, 114, 255),
-    [BOLD_CYAN_I]    = RGB(  0, 240, 240),
-    [BOLD_WHITE_I]   = RGB(255, 255, 255)
+    [BLACK_I]        = { RGB(  0,   0,   0), RGB(  0,   0,   0) },
+    [RED_I]          = { RGB(212,  44,  58), RGB(167,  35,  46) },
+    [GREEN_I]        = { RGB( 28, 168,   0), RGB( 22, 132,   0) },
+    [YELLOW_I]       = { RGB(192, 160,   0), RGB(192, 160,   0) },
+    [BLUE_I]         = { RGB( 30, 123, 216), RGB(  0,  45, 180) },
+    [MAGENTA_I]      = { RGB(177,  72, 198), RGB(138,  58, 154) },
+    [CYAN_I]         = { RGB(  0, 168, 154), RGB(  0, 132, 121) },
+    [WHITE_I]        = { RGB(191, 191, 191), RGB(191, 191, 191) },
+    [BOLD_BLACK_I]   = { RGB(127, 127, 127), RGB( 85,  85,  85) },
+    [BOLD_RED_I]     = { RGB(255, 118, 118), RGB(255, 118, 118) },
+    [BOLD_GREEN_I]   = { RGB(  0, 242,   0), RGB(  0, 242,   0) },
+    [BOLD_YELLOW_I]  = { RGB(242, 242,   0), RGB(242, 242,   0) },
+    [BOLD_BLUE_I]    = { RGB(125, 177, 255), RGB(125, 177, 255) },
+    [BOLD_MAGENTA_I] = { RGB(255, 112, 255), RGB(255, 112, 255) },
+    [BOLD_CYAN_I]    = { RGB(  0, 240, 240), RGB(  0, 240, 240) },
+    [BOLD_WHITE_I]   = { RGB(255, 255, 255), RGB(255, 255, 255) }
 #endif
   },
   .sixel_clip_char = W(" "),
@@ -300,7 +300,7 @@ config cfg, new_cfg, file_cfg;
 typedef enum {
   OPT_BOOL, OPT_MOD, OPT_TRANS, OPT_CURSOR, OPT_FONTSMOOTH, OPT_FONTRENDER,
   OPT_MIDDLECLICK, OPT_RIGHTCLICK, OPT_SCROLLBAR, OPT_WINDOW, OPT_HOLD,
-  OPT_INT, OPT_COLOUR, OPT_STRING, OPT_WSTRING,
+  OPT_INT, OPT_COLOUR, OPT_COLOUR_PAIR, OPT_STRING, OPT_WSTRING,
   OPT_CHARWIDTH, OPT_EMOJIS, OPT_EMOJI_PLACEMENT,
   OPT_COMPOSE_KEY,
   OPT_TYPE_MASK = 0x1F,
@@ -583,22 +583,22 @@ options[] = {
   {"OldOptions", OPT_STRING, offcfg(old_options)},
 
   // ANSI colours
-  {"Black", OPT_COLOUR, offcfg(ansi_colours[BLACK_I])},
-  {"Red", OPT_COLOUR, offcfg(ansi_colours[RED_I])},
-  {"Green", OPT_COLOUR, offcfg(ansi_colours[GREEN_I])},
-  {"Yellow", OPT_COLOUR, offcfg(ansi_colours[YELLOW_I])},
-  {"Blue", OPT_COLOUR, offcfg(ansi_colours[BLUE_I])},
-  {"Magenta", OPT_COLOUR, offcfg(ansi_colours[MAGENTA_I])},
-  {"Cyan", OPT_COLOUR, offcfg(ansi_colours[CYAN_I])},
-  {"White", OPT_COLOUR, offcfg(ansi_colours[WHITE_I])},
-  {"BoldBlack", OPT_COLOUR, offcfg(ansi_colours[BOLD_BLACK_I])},
-  {"BoldRed", OPT_COLOUR, offcfg(ansi_colours[BOLD_RED_I])},
-  {"BoldGreen", OPT_COLOUR, offcfg(ansi_colours[BOLD_GREEN_I])},
-  {"BoldYellow", OPT_COLOUR, offcfg(ansi_colours[BOLD_YELLOW_I])},
-  {"BoldBlue", OPT_COLOUR, offcfg(ansi_colours[BOLD_BLUE_I])},
-  {"BoldMagenta", OPT_COLOUR, offcfg(ansi_colours[BOLD_MAGENTA_I])},
-  {"BoldCyan", OPT_COLOUR, offcfg(ansi_colours[BOLD_CYAN_I])},
-  {"BoldWhite", OPT_COLOUR, offcfg(ansi_colours[BOLD_WHITE_I])},
+  {"Black", OPT_COLOUR_PAIR, offcfg(ansi_colours[BLACK_I])},
+  {"Red", OPT_COLOUR_PAIR, offcfg(ansi_colours[RED_I])},
+  {"Green", OPT_COLOUR_PAIR, offcfg(ansi_colours[GREEN_I])},
+  {"Yellow", OPT_COLOUR_PAIR, offcfg(ansi_colours[YELLOW_I])},
+  {"Blue", OPT_COLOUR_PAIR, offcfg(ansi_colours[BLUE_I])},
+  {"Magenta", OPT_COLOUR_PAIR, offcfg(ansi_colours[MAGENTA_I])},
+  {"Cyan", OPT_COLOUR_PAIR, offcfg(ansi_colours[CYAN_I])},
+  {"White", OPT_COLOUR_PAIR, offcfg(ansi_colours[WHITE_I])},
+  {"BoldBlack", OPT_COLOUR_PAIR, offcfg(ansi_colours[BOLD_BLACK_I])},
+  {"BoldRed", OPT_COLOUR_PAIR, offcfg(ansi_colours[BOLD_RED_I])},
+  {"BoldGreen", OPT_COLOUR_PAIR, offcfg(ansi_colours[BOLD_GREEN_I])},
+  {"BoldYellow", OPT_COLOUR_PAIR, offcfg(ansi_colours[BOLD_YELLOW_I])},
+  {"BoldBlue", OPT_COLOUR_PAIR, offcfg(ansi_colours[BOLD_BLUE_I])},
+  {"BoldMagenta", OPT_COLOUR_PAIR, offcfg(ansi_colours[BOLD_MAGENTA_I])},
+  {"BoldCyan", OPT_COLOUR_PAIR, offcfg(ansi_colours[BOLD_CYAN_I])},
+  {"BoldWhite", OPT_COLOUR_PAIR, offcfg(ansi_colours[BOLD_WHITE_I])},
 
   // Legacy
   {"BoldAsBright", OPT_BOOL | OPT_LEGACY, offcfg(bold_as_colour)},
@@ -1006,6 +1006,21 @@ set_option(string name, string val_str, bool from_file)
 #endif
       if (parse_colour(val_str, val_p))
         return i;
+    when OPT_COLOUR_PAIR: {
+#ifdef debug_theme
+      printf("set_option <%s> <%s>\n", name, val_str);
+#endif
+      colour_pair *pair = val_p;
+      if (parse_colour(val_str, &pair->fg)) {
+        const char *sep = strchr(val_str, ';');
+        if (!sep) {
+          pair->bg = pair->fg;
+          return i;
+        }
+        else if (parse_colour(sep + 1, &pair->bg))
+          return i;
+      }
+    }
     otherwise: {
       int len = strlen(val_str);
       if (!len)
@@ -1622,8 +1637,12 @@ copy_config(char * tag, config * dst_p, const config * src_p)
           strset(dst_val_p, *(string *)src_val_p);
         when OPT_WSTRING:
           wstrset(dst_val_p, *(wstring *)src_val_p);
-        when OPT_INT or OPT_COLOUR:
+        when OPT_INT:
           *(int *)dst_val_p = *(int *)src_val_p;
+        when OPT_COLOUR:
+          *(colour *)dst_val_p = *(colour *)src_val_p;
+        when OPT_COLOUR_PAIR:
+          *(colour_pair *)dst_val_p = *(colour_pair *)src_val_p;
         otherwise:
           *(char *)dst_val_p = *(char *)src_val_p;
       }
@@ -1659,7 +1678,7 @@ finish_config(void)
     (void)load_messages_lang("messages");
 #endif
 #ifdef debug_opterror
-  opterror("Täst L %s %s", false, "b�h", "b�h�");
+  opterror("Täst L %s %s", false, "b�h", "b�h�");
   opterror("Täst U %s %s", true, "böh", "büh€");
 #endif
 
@@ -1740,6 +1759,12 @@ save_config(void)
             colour c = *(colour *)val_p;
             fprintf(file, "%u,%u,%u", red(c), green(c), blue(c));
           }
+          when OPT_COLOUR_PAIR: {
+            colour_pair p = *(colour_pair *)val_p;
+            fprintf(file, "%u,%u,%u", red(p.fg), green(p.fg), blue(p.fg));
+            if (p.fg != p.bg)
+              fprintf(file, ";%u,%u,%u", red(p.bg), green(p.bg), blue(p.bg));
+          }
           otherwise: {
             int val = *(char *)val_p;
             opt_val *o = opt_vals[type];
@@ -1784,8 +1809,12 @@ apply_config(bool save)
           changed = strcmp(*(string *)val_p, *(string *)new_val_p);
         when OPT_WSTRING:
           changed = wcscmp(*(wstring *)val_p, *(wstring *)new_val_p);
-        when OPT_INT or OPT_COLOUR:
+        when OPT_INT:
           changed = (*(int *)val_p != *(int *)new_val_p);
+        when OPT_COLOUR:
+          changed = (*(colour *)val_p != *(colour *)new_val_p);
+        when OPT_COLOUR_PAIR:
+          changed = memcmp(val_p, new_val_p, sizeof(colour_pair));
         otherwise:
           changed = (*(char *)val_p != *(char *)new_val_p);
       }
