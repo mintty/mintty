@@ -23,6 +23,7 @@ enum { EMPL_STRETCH = 0, EMPL_ALIGN = 1, EMPL_MIDDLE = 2, EMPL_FULL = 3 };
 // Colour values.
 
 typedef uint colour;
+typedef struct { colour fg, bg; } colour_pair;
 
 enum { DEFAULT_COLOUR = UINT_MAX };
 
@@ -233,7 +234,7 @@ typedef struct {
   string word_chars;
   string word_chars_excl;
   colour ime_cursor_colour;
-  colour ansi_colours[16];
+  colour_pair ansi_colours[16];
   wstring sixel_clip_char;
   bool short_long_opts;
   bool bold_as_special;

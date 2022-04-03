@@ -1,5 +1,5 @@
 // wintext.c (part of mintty)
-// Copyright 2008-13 Andy Koppe, 2015-2022 Thomas Wolff
+// Copyright 2008-22 Andy Koppe, 2015-2022 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -2516,7 +2516,7 @@ old_apply_attr_colour(cattr a, attr_colour_mode mode)
 #ifdef handle_blinking_here
   // this is handled in term_paint
   if (do_blink_i && (a.attr & ATTR_BLINK)) {
-    if (CCL_ANSI8(bgi))
+    if (CCL_BG_ANSI8(bgi))
       bgi |= 8;
     else if (CCL_DEFAULT(bgi))
       bgi |= 1;
@@ -2674,7 +2674,7 @@ apply_attr_colour(cattr a, attr_colour_mode mode)
 #ifdef handle_blinking_here
   // this is handled in term_paint
   if (do_blink_i && (a.attr & ATTR_BLINK)) {
-    if (CCL_ANSI8(bgi))
+    if (CCL_BG_ANSI8(bgi))
       bgi |= 8;
     else if (CCL_DEFAULT(bgi))
       bgi |= 1;
@@ -4725,8 +4725,10 @@ win_set_colour(colour_i i, colour c)
   }
   else {
     cc(i, c);
-    if (i < 16)
+    if (i < 16) {
       cc(i + ANSI0, c);
+      cc(i + BG_ANSI0, c);
+    }
 #ifdef debug_brighten
     printf("colours[%d] = %06X\n", i, c);
 #endif
@@ -4806,10 +4808,12 @@ win_get_colour(colour_i i)
 void
 win_reset_colours(void)
 {
-  memcpy(colours, cfg.ansi_colours, sizeof cfg.ansi_colours);
-  // duplicate 16 ANSI colours to facilitate distinct handling (implemented)
-  // and also distinct colour values if desired
-  memcpy(&colours[ANSI0], cfg.ansi_colours, sizeof cfg.ansi_colours);
+  // ANSI foreground and background colour variants.
+  // The foreground variants are copied to the first 16 xterm256 slots.
+  for (uint i = 0; i < 16; i++) {
+    colours[ANSI0 + i] = colours[i] = cfg.ansi_colours[i].fg;
+    colours[BG_ANSI0 + i] = cfg.ansi_colours[i].bg;
+  }
 
   // Colour cube
   colour_i i = 16;

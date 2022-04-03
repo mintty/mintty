@@ -39,7 +39,7 @@ Mintty supports being started from a Windows desktop shortcut; it honours
 window and icon settings of the shortcut, aligns taskbar grouping with the 
 shortcut, disables daemonizing, and sets environment variable 
 MINTTY_SHORTCUT to its pathname.
-.br
+
 Before starting the child program, mintty trims the environment from other 
 variables set by launchers, other terminals, or shells, that might indicate 
 incorrect information and lead to confusing behaviour.
@@ -48,7 +48,7 @@ incorrect information and lead to confusing behaviour.
 
 The standard GNU option formats are accepted, with single dashes
 introducing short options and double dashes introducing long options.
-.br
+
 Note that setting \fBShortLongOpts\fP enables single-dash long options.
 
 .TQ
@@ -3183,45 +3183,52 @@ By default, this is unset, which means that the cursor colour does not change.
 
 .TQ
 \fBANSI colours\fP
-These are the 16 ANSI colour settings along with their default values.
-Colours are represented as comma-separated RGB triples with decimal 8-bit values
-ranging from 0 to 255. 
-X-style hexadecimal colour specifications such as #RRGGBB, 
-rgb:RR/GG/BB or rgb:RRRR/GGGG/BBBB, 
-cmy:C.C/M.M/Y.Y or cmyk:C.C/M.M/Y.Y/K.K can be used as well.
-Also X11 color names are supported.
+The sixteen ANSI colours can be chosen with the settings below. Colours are
+represented as comma-separated RGB triples with decimal 8-bit values ranging
+from 0 to 255.
+
+X11-style hexadecimal colour specifications such as #RRGGBB, rgb:RR/GG/BB, rgb:RRRR/GGGG/BBBB, cmy:C.C/M.M/Y.Y or cmyk:C.C/M.M/Y.Y/K.K, as well as X11
+colour names, can be used as well.
+
+The ANSI colours can have different values for foreground and background use.
+These need to be separated by a semicolon, for example 127,127,127;85,85,85
+for different shades of grey. If only one value is specified, it is used for
+both foreground and background.
+
+For the default values, please see the 'helmholtz' theme in directory
+/usr/share/mintty/themes.
+
+\(en \fBBlack\fP=
 .br
-\(en \fBBlack\fP=0,0,0
+\(en \fBRed\fP=
 .br
-\(en \fBRed\fP=191,0,0
+\(en \fBGreen\fP=
 .br
-\(en \fBGreen\fP=0,191,0
+\(en \fBYellow\fP=
 .br
-\(en \fBYellow\fP=191,191,0
+\(en \fBBlue\fP=
 .br
-\(en \fBBlue\fP=0,0,191
+\(en \fBMagenta\fP=
 .br
-\(en \fBMagenta\fP=191,0,191
+\(en \fBCyan\fP=
 .br
-\(en \fBCyan\fP=0,191,191
+\(en \fBWhite\fP=
 .br
-\(en \fBWhite\fP=191,191,191
+\(en \fBBoldBlack\fP=
 .br
-\(en \fBBoldBlack\fP=64,64,64
+\(en \fBBoldRed\fP=
 .br
-\(en \fBBoldRed\fP=255,64,64
+\(en \fBBoldGreen\fP=
 .br
-\(en \fBBoldGreen\fP=64,255,64
+\(en \fBBoldYellow\fP=
 .br
-\(en \fBBoldYellow\fP=255,255,64
+\(en \fBBoldBlue\fP=
 .br
-\(en \fBBoldBlue\fP=96,96,255
+\(en \fBBoldMagenta\fP=
 .br
-\(en \fBBoldMagenta\fP=255,64,255
+\(en \fBBoldCyan\fP=
 .br
-\(en \fBBoldCyan\fP=64,255,255
-.br
-\(en \fBBoldWhite\fP=255,255,255
+\(en \fBBoldWhite\fP=
 
 .TQ
 \fBTektronix mode colours\fP
@@ -3809,7 +3816,7 @@ Additional information can be found on the wiki on the mintty project page
 
 .SH LICENSE
 
-Copyright (C) 2013 Andy Koppe (C) 2022 Thomas Wolff
+Copyright (C) 2022 Thomas Wolff, Andy Koppe
 
 Mintty is released under the terms of the the \fIGNU General Public License\fP
 version 3.

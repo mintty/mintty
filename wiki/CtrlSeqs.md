@@ -737,6 +737,31 @@ a mintty resource directory; supported file types are .cur, .ico, .ani.
 |:----------------------|
 | `^[]22;`_pointer_`^G` |
 
+## ANSI colours ##
+
+The following _OSC_ sequences can be used to set or query the foreground and
+background variants of the ANSI colours.
+
+| **sequence**                        | ** effect **                         |
+|:------------------------------------|:-------------------------------------|
+| `^[]7765;`_index_`;`_colour_`^G`    | set fg and bg variants to same value |
+| `^[]7765;`_index_`;`_fg_`;`_bg_`^G` | set fg and bg to separate values     |
+| `^[]7765;`_index_`;?^G`             | query current values                 |
+
+The _index_ argument has to be in range 0 to 15.
+
+The colour values can be comma-separated decimal triples such as `255,85,0`,
+X11 colour names, or hexadecimal colour specifications such as `#`_RRGGBB_,
+`rgb:`_RR_`/`_GG_`/`_BB_, `rgb:`_RRRR_`/`_GGGG_`/`_BBBB_,
+`cmy:`_C_`.`_C_`/`_M_`.`_M_`/`_Y_`.`_Y_ or
+`cmyk:`_C_`.`_C_`/`_M_`.`_M_`/`_Y_`.`_Y_`/`_K_`.`_K_.
+
+If a colour value is left empty, it is reset to the value in the mintty
+configuration. Invalid values are ignored.
+
+The query sequence replies with the single-value sequence if the current values
+for the foreground and background variants are the same, and with the two-value
+sequence otherwise.
 
 ## Printing and screen dump ##
 
