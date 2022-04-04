@@ -935,30 +935,30 @@ parse_colour(string s, colour *cp)
     ;
   else if (sscanf(s, "rgb:%4x/%4x/%4x", &r, &g, &b) == 3)
     r >>= 8, g >>= 8, b >>= 8;
-  else if (sscanf(s, "cmy:%f/%f/%f", &c, &m, &y) == 3
-        || sscanf(s, "cmyk:%f/%f/%f/%f", &c, &m, &y, &k) == 4
-          )
-    if (c >= 0 && c <= 1 && m >= 0 && m <= 1 && y >= 0 && y <= 1 && k >= 0 && k <= 1) {
+  else if (sscanf(s, "cmy:%f/%f/%f", &c, &m, &y) == 3 ||
+           sscanf(s, "cmyk:%f/%f/%f/%f", &c, &m, &y, &k) == 4) {
+    if (c >= 0 && c <= 1 && m >= 0 && m <= 1 &&
+        y >= 0 && y <= 1 && k >= 0 && k <= 1) {
       r = (1 - c) * (1 - k) * 255;
       g = (1 - m) * (1 - k) * 255;
       b = (1 - y) * (1 - k) * 255;
     }
     else
       return false;
+  }
   else {
-    int coli = -1;
-    int len = strlen(s);
-    while (len && s[len - 1] == ' ')
-      len--;
-    for (uint i = 0; i < lengthof(xcolours); i++)
-      if (0 == strncasecmp(s, xcolours[i].name, len)) {
+    bool found = false;
+    for (uint i = 0; i < lengthof(xcolours); i++) {
+      string name = xcolours[i].name;
+      if (!strncasecmp(s, name, strlen(name))) {
         r = xcolours[i].r;
         g = xcolours[i].g;
         b = xcolours[i].b;
-        coli = i;
+        found = true;
         break;
       }
-    if (coli < 0)
+    }
+    if (!found)
       return false;
   }
 

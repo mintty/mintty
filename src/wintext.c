@@ -4670,6 +4670,9 @@ win_combine_chars(wchar c, wchar cc, cattrflags attr)
 
 // Colour settings
 
+// Xterm256 colour cube and greyscale
+static colour xterm_colours[240];
+
 void
 win_set_colour(colour_i i, colour c)
 {
@@ -4689,53 +4692,55 @@ win_set_colour(colour_i i, colour c)
 
   if (c == (colour)-1) {
     // ... reset to default ...
-    if (i == BOLD_COLOUR_I) {
-      cc(BOLD_COLOUR_I, cfg.bold_colour);
+    if (i < 16) {
+      colour_pair cp = cfg.ansi_colours[i];
+      cc(i, cp.fg);
+      cc(i + ANSI0, cp.fg);
+      cc(i + BG_ANSI0, cp.bg);
     }
-    else if (i == BLINK_COLOUR_I) {
-      cc(BLINK_COLOUR_I, cfg.blink_colour);
+    else if (i < 256)
+      cc(i, xterm_colours[i - 16]);
+    else if (i < ANSI0 + 16)
+      cc(i, cfg.ansi_colours[i - ANSI0].fg);
+    else if (i < BG_ANSI0 + 16)
+      cc(i, cfg.ansi_colours[i - BG_ANSI0].bg);
+    else switch (i) {
+      when BOLD_COLOUR_I: cc(BOLD_COLOUR_I, cfg.bold_colour);
+      when BLINK_COLOUR_I: cc(BLINK_COLOUR_I, cfg.blink_colour);
+      when BOLD_FG_COLOUR_I:
+        bold_colour_selected = false;
+        if (cfg.bold_colour != (colour)-1)
+          cc(BOLD_FG_COLOUR_I, cfg.bold_colour);
+        else
+          cc(BOLD_FG_COLOUR_I,
+             brighten(colours[FG_COLOUR_I], colours[BG_COLOUR_I], true));
+      when FG_COLOUR_I: cc(i, cfg.fg_colour);
+      when BG_COLOUR_I: cc(i, cfg.bg_colour);
+      when CURSOR_COLOUR_I:
+        cc(i, cfg.cursor_colour);
+        if (cfg.ime_cursor_colour != DEFAULT_COLOUR)
+          cc(IME_CURSOR_COLOUR_I, cfg.ime_cursor_colour);
+        //printf("ime_cc set -1 %06X\n", cfg.ime_cursor_colour);
+      when SEL_COLOUR_I: cc(i, cfg.sel_bg_colour);
+      when SEL_TEXT_COLOUR_I: cc(i, cfg.sel_fg_colour);
+      when TEK_FG_COLOUR_I: cc(i, cfg.tek_fg_colour);
+      when TEK_BG_COLOUR_I: cc(i, cfg.tek_bg_colour);
+      when TEK_CURSOR_COLOUR_I: cc(i, cfg.tek_cursor_colour);
+      otherwise: // do nothing
     }
-    else if (i == BOLD_FG_COLOUR_I) {
-      bold_colour_selected = false;
-      if (cfg.bold_colour != (colour)-1)
-        cc(BOLD_FG_COLOUR_I, cfg.bold_colour);
-      else
-        cc(BOLD_FG_COLOUR_I, brighten(colours[FG_COLOUR_I], colours[BG_COLOUR_I], true));
-    }
-    else if (i == FG_COLOUR_I)
-      cc(i, cfg.fg_colour);
-    else if (i == BG_COLOUR_I)
-      cc(i, cfg.bg_colour);
-    else if (i == CURSOR_COLOUR_I) {
-      cc(i, cfg.cursor_colour);
-      if (cfg.ime_cursor_colour != DEFAULT_COLOUR)
-        cc(IME_CURSOR_COLOUR_I, cfg.ime_cursor_colour);
-      //printf("ime_cc set -1 %06X\n", cfg.ime_cursor_colour);
-    }
-    else if (i == SEL_COLOUR_I)
-      cc(i, cfg.sel_bg_colour);
-    else if (i == SEL_TEXT_COLOUR_I)
-      cc(i, cfg.sel_fg_colour);
-    else if (i == TEK_FG_COLOUR_I)
-      cc(i, cfg.tek_fg_colour);
-    else if (i == TEK_BG_COLOUR_I)
-      cc(i, cfg.tek_bg_colour);
-    else if (i == TEK_CURSOR_COLOUR_I)
-      cc(i, cfg.tek_cursor_colour);
   }
   else {
+#ifdef debug_brighten
+    printf("colours[%d] = %06X\n", i, c);
+#endif
     cc(i, c);
     if (i < 16) {
       cc(i + ANSI0, c);
       cc(i + BG_ANSI0, c);
     }
-#ifdef debug_brighten
-    printf("colours[%d] = %06X\n", i, c);
-#endif
-
-    switch (i) {
+    else switch (i) {
       when FG_COLOUR_I:
-        // should we make this conditional, 
+        // should we make this conditional,
         // unless bold colour has been set explicitly?
         if (!bold_colour_selected) {
           if (cfg.bold_colour != (colour)-1)
@@ -4743,7 +4748,8 @@ win_set_colour(colour_i i, colour c)
           else {
             cc(BOLD_FG_COLOUR_I, brighten(c, colours[BG_COLOUR_I], true));
             // renew this too as brighten() may refer to contrast colour:
-            cc(BOLD_BG_COLOUR_I, brighten(colours[BG_COLOUR_I], colours[FG_COLOUR_I], true));
+            cc(BOLD_BG_COLOUR_I,
+               brighten(colours[BG_COLOUR_I], colours[FG_COLOUR_I], true));
           }
         }
       when BOLD_FG_COLOUR_I:
@@ -4755,7 +4761,8 @@ win_set_colour(colour_i i, colour c)
           else {
             cc(BOLD_BG_COLOUR_I, brighten(c, colours[FG_COLOUR_I], true));
             // renew this too as brighten() may refer to contrast colour:
-            cc(BOLD_FG_COLOUR_I, brighten(colours[FG_COLOUR_I], colours[BG_COLOUR_I], true));
+            cc(BOLD_FG_COLOUR_I,
+               brighten(colours[FG_COLOUR_I], colours[BG_COLOUR_I], true));
           }
         }
       when CURSOR_COLOUR_I: {
@@ -4787,8 +4794,7 @@ win_set_colour(colour_i i, colour c)
         cc(IME_CURSOR_COLOUR_I, c);
         //printf("ime_cc set c %06X\n", c);
       }
-      otherwise:
-        break;
+      otherwise: // do nothing
     }
   }
 
@@ -4815,20 +4821,24 @@ win_reset_colours(void)
     colours[BG_ANSI0 + i] = cfg.ansi_colours[i].bg;
   }
 
-  // Colour cube
-  colour_i i = 16;
-  for (uint r = 0; r < 6; r++)
-    for (uint g = 0; g < 6; g++)
-      for (uint b = 0; b < 6; b++)
-        colours[i++] = RGB(r ? r * 40 + 55 : 0,
-                           g ? g * 40 + 55 : 0,
-                           b ? b * 40 + 55 : 0);
-
-  // Grayscale
-  for (uint s = 0; s < 24; s++) {
-    uint c = s * 10 + 8;
-    colours[i++] = RGB(c, c, c);
+  // Initialize Xterm256 colour cube and greyscale
+  static bool xterm_colours_initialized = false;
+  if (!xterm_colours_initialized) {
+    xterm_colours_initialized = true;
+    uint i = 0;
+    for (uint r = 0; r < 6; r++)
+      for (uint g = 0; g < 6; g++)
+        for (uint b = 0; b < 6; b++)
+          xterm_colours[i++] = RGB(r ? r * 40 + 55 : 0,
+                                   g ? g * 40 + 55 : 0,
+                                   b ? b * 40 + 55 : 0);
+    for (uint s = 0; s < 24; s++) {
+      uint c = s * 10 + 8;
+      xterm_colours[i++] = RGB(c, c, c);
+    }
   }
+
+  memcpy(&colours[16], xterm_colours, sizeof xterm_colours);
 
   // Foreground, background, cursor
   win_set_colour(FG_COLOUR_I, cfg.fg_colour);
@@ -4844,7 +4854,13 @@ win_reset_colours(void)
   win_set_colour(BOLD_COLOUR_I, (colour)-1);
   win_set_colour(BLINK_COLOUR_I, (colour)-1);
 #if defined(debug_bold) || defined(debug_brighten)
-  string ci[] = {"FG_COLOUR_I", "BOLD_FG_COLOUR_I", "BG_COLOUR_I", "BOLD_BG_COLOUR_I", "CURSOR_TEXT_COLOUR_I", "CURSOR_COLOUR_I", "IME_CURSOR_COLOUR_I", "SEL_COLOUR_I", "SEL_TEXT_COLOUR_I", "BOLD_COLOUR_I"};
+  string ci[] = {
+    "FG_COLOUR_I", "BOLD_FG_COLOUR_I",
+    "BG_COLOUR_I", "BOLD_BG_COLOUR_I",
+    "CURSOR_TEXT_COLOUR_I", "CURSOR_COLOUR_I",
+    "IME_CURSOR_COLOUR_I", "SEL_COLOUR_I",
+    "SEL_TEXT_COLOUR_I", "BOLD_COLOUR_I"
+  };
   for (int i = FG_COLOUR_I; i < COLOUR_NUM; i++)
     if (colours[i] == (colour)-1)
       printf("colour %d ------ [%s]\n", i, ci[i - FG_COLOUR_I]);

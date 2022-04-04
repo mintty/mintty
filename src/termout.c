@@ -3964,16 +3964,8 @@ do_ansi_colour_osc(void)
     return;
 
   s += len;
-  char *sep = strchr(s, ';');
-  if (sep) {
-    // Two values: Set foreground and background separately.
-    colour c;
-    if (parse_colour(s, &c))
-      win_set_colour(ANSI0 + i, c);
-    if (parse_colour(sep + 1, &c))
-      win_set_colour(BG_ANSI0 + i, c);
-  }
-  else if (!strcmp(s, "?")) {
+
+  if (!strcmp(s, "?")) {
     // Just a question mark: Report colour.
     // Show background variant only if different.
     colour fg = colours[ANSI0 + i], bg = colours[BG_ANSI0 + i];
@@ -3984,16 +3976,27 @@ do_ansi_colour_osc(void)
     child_printf(osc_fini());
   }
   else {
-    // One value: Set foreground and background to the same.
-    // No value: Set both to configured default.
-    colour c = -1;
-    if (!*s || parse_colour(s, &c)) {
-      win_set_colour(ANSI0 + i, c);
-      win_set_colour(BG_ANSI0 + i, c);
+    char *sep = strchr(s, ';');
+    if (!sep) {
+      // One value: Set foreground and background to the same.
+      // Reset both when empty.
+      colour c = -1;
+      if (!*s || parse_colour(s, &c)) {
+        win_set_colour(ANSI0 + i, c);
+        win_set_colour(BG_ANSI0 + i, c);
+      }
+    }
+    else {
+      // Two values: Set foreground and background separately.
+      // Reset empty values.
+      colour fg = -1, bg = -1;
+      if (s == sep || parse_colour(s, &fg))
+        win_set_colour(ANSI0 + i, fg);
+      if (!sep[1] || parse_colour(&sep[1], &bg))
+        win_set_colour(BG_ANSI0 + i, bg);
     }
   }
 }
-
 
 /*
  * OSC 52: \e]52;[cp0-6];?|base64-string\07"
