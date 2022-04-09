@@ -737,6 +737,7 @@ a mintty resource directory; supported file types are .cur, .ico, .ani.
 |:----------------------|
 | `^[]22;`_pointer_`^G` |
 
+
 ## ANSI colours ##
 
 The following _OSC_ sequences can be used to set or query the foreground and
@@ -762,6 +763,12 @@ configuration. Invalid values are ignored.
 The query sequence replies with the single-value sequence if the current values
 for the foreground and background variants are the same, and with the two-value
 sequence otherwise.
+
+Note: Unlike the xterm-compatible sequence OSC 4, which sets palette colours 
+including ANSI colours, OSC 7765 can be used to change ANSI colours only, 
+leaving the associated palette colours 0..15 unchanged, so you could 
+select different colours with SGR 30..37 etc distinct from SGR 38:5 etc.
+
 
 ## Printing and screen dump ##
 
