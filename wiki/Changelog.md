@@ -1,3 +1,7 @@
+Window handling
+  * Terminal reflow (#82, #219): fixed crash condition on irregular reflow chunks.
+  * Terminal reflow (#82, #219): fixed memory leak.
+
 Terminal features
   * Visual input feedback: don't obscure text when just pressing Alt.
   * Separate foreground and background values for ANSI colours (#1151).
