@@ -4726,7 +4726,7 @@ win_set_colour(colour_i i, colour c)
       when TEK_FG_COLOUR_I: cc(i, cfg.tek_fg_colour);
       when TEK_BG_COLOUR_I: cc(i, cfg.tek_bg_colour);
       when TEK_CURSOR_COLOUR_I: cc(i, cfg.tek_cursor_colour);
-      otherwise: // do nothing
+      otherwise: ; // do nothing
     }
   }
   else {
@@ -4794,7 +4794,7 @@ win_set_colour(colour_i i, colour c)
         cc(IME_CURSOR_COLOUR_I, c);
         //printf("ime_cc set c %06X\n", c);
       }
-      otherwise: // do nothing
+      otherwise: ; // do nothing
     }
   }
 
