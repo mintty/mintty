@@ -7,6 +7,9 @@ Terminal features
   * Separate foreground and background values for ANSI colours (#1151).
   * OSC 7765 for setting ANSI colours distinct from palette colours (#1151).
 
+Keyboard handling
+  * Support longer multi-char keyboard input (a.k.a. "ligatures" in Windows) (#1155).
+
 Configuration
   * ANSI colour specification accepts foreground ; background values (#1151).
 
