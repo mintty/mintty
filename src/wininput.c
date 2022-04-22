@@ -1,5 +1,5 @@
 // wininput.c (part of mintty)
-// Copyright 2008-12 Andy Koppe, 2015-2022 Thomas Wolff
+// Copyright 2008-22 Andy Koppe, 2015-2022 Thomas Wolff
 // Licensed under the terms of the GNU General Public License v3 or later.
 
 #include "winpriv.h"
@@ -2263,6 +2263,26 @@ insert_alt_code(void)
   compose_clear();
 }
 
+// The ToUnicode function for converting keyboard states to characters may
+// return multiple wchars due to dead keys and ligatures defined in the
+// keyboard layout. The latter aren't limited to actual ligatures but can be any
+// sequence of wchars.
+//
+// Unfortunately MSDN doesn't define a maximum length.
+//
+// The semi-official limit is four:
+// http://www.siao2.com/2015/08/07/8770668856267196989.aspx
+//
+// However, KbdEdit supports up to nine:
+// http://www.kbdedit.com/manual/high_level_ligatures.html
+//
+// And in this ill-tempered thread on unicode.org, it was found that ligatures
+// can be up to sixteen wchars long:
+// https://www.unicode.org/mail-arch/unicode-ml/y2015-m08/0023.html
+//
+// So let's go with the biggest number.
+#define TO_UNICODE_MAX 16
+
 bool
 win_key_down(WPARAM wp, LPARAM lp)
 {
@@ -2672,7 +2692,7 @@ static LONG last_key_time = 0;
       {
         uchar kbd0[256];
         GetKeyboardState(kbd0);
-        wchar wbuf[4];
+        wchar wbuf[TO_UNICODE_MAX];
         int wlen = ToUnicode(key, scancode, kbd0, wbuf, lengthof(wbuf), 0);
         wchar w1 = wlen > 0 ? *wbuf : 0;
         kbd0[VK_SHIFT] = 0;
@@ -3042,10 +3062,7 @@ static struct {
 
   // Keyboard layout
   bool layout(void) {
-    // ToUnicode returns up to 4 wchars according to
-    // http://blogs.msdn.com/b/michkap/archive/2006/03/24/559169.aspx
-    // https://web.archive.org/web/20120103012712/http://blogs.msdn.com/b/michkap/archive/2006/03/24/559169.aspx
-    wchar wbuf[4];
+    wchar wbuf[TO_UNICODE_MAX];
     int wlen = ToUnicode(key, scancode, kbd, wbuf, lengthof(wbuf), 0);
     trace_alt("layout %d alt %d altgr %d\n", wlen, alt, altgr);
     if (!wlen)     // Unassigned.
