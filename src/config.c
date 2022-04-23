@@ -1,5 +1,5 @@
 // config.c (part of mintty)
-// Copyright 2008-22 Andy Koppe, 2015-2022 Thomas Wolff
+// Copyright 2008-2022 Andy Koppe, 2015-2022 Thomas Wolff
 // Based on code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -269,18 +269,18 @@ const config default_cfg = {
     [BOLD_WHITE_I]   = RGB(0xFF, 0xFF, 0xFF)
 #else  // theme "helmholtz"
     [BLACK_I]        = { RGB(  0,   0,   0), RGB(  0,   0,   0) },
-    [RED_I]          = { RGB(212,  44,  58), RGB(167,  35,  46) },
-    [GREEN_I]        = { RGB( 28, 168,   0), RGB( 22, 132,   0) },
+    [RED_I]          = { RGB(212,  44,  58), RGB(162,  30,  41) },
+    [GREEN_I]        = { RGB( 28, 168,   0), RGB( 28, 168,   0) },
     [YELLOW_I]       = { RGB(192, 160,   0), RGB(192, 160,   0) },
-    [BLUE_I]         = { RGB( 30, 123, 216), RGB(  0,  45, 180) },
-    [MAGENTA_I]      = { RGB(177,  72, 198), RGB(138,  58, 154) },
-    [CYAN_I]         = { RGB(  0, 168, 154), RGB(  0, 132, 121) },
+    [BLUE_I]         = { RGB(  0,  93, 255), RGB(  0,  32, 192) },
+    [MAGENTA_I]      = { RGB(177,  72, 198), RGB(134,  54, 150) },
+    [CYAN_I]         = { RGB(  0, 168, 154), RGB(  0, 168, 154) },
     [WHITE_I]        = { RGB(191, 191, 191), RGB(191, 191, 191) },
-    [BOLD_BLACK_I]   = { RGB(127, 127, 127), RGB( 85,  85,  85) },
+    [BOLD_BLACK_I]   = { RGB( 96,  96,  96), RGB( 72,  72,  72) },
     [BOLD_RED_I]     = { RGB(255, 118, 118), RGB(255, 118, 118) },
     [BOLD_GREEN_I]   = { RGB(  0, 242,   0), RGB(  0, 242,   0) },
     [BOLD_YELLOW_I]  = { RGB(242, 242,   0), RGB(242, 242,   0) },
-    [BOLD_BLUE_I]    = { RGB(125, 177, 255), RGB(125, 177, 255) },
+    [BOLD_BLUE_I]    = { RGB(125, 151, 255), RGB(125, 151, 255) },
     [BOLD_MAGENTA_I] = { RGB(255, 112, 255), RGB(255, 112, 255) },
     [BOLD_CYAN_I]    = { RGB(  0, 240, 240), RGB(  0, 240, 240) },
     [BOLD_WHITE_I]   = { RGB(255, 255, 255), RGB(255, 255, 255) }

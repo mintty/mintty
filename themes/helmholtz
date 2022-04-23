@@ -1,9 +1,13 @@
 # "helmholtz" colour theme for mintty
 #
+# Copyright (C) 2022 Andy Koppe.
+# Licensed under the terms of the MIT License.
+#
 # The aim of this theme is to provide vibrant colours where the normal and bold
-# levels each have approximately equal brightness. Additionally, the normal
-# colours apart from yellow have darker variants for use as background colours,
-# to help legibility of light text on them.
+# levels each have approximately equal brightness, with the exception of blue,
+# which is somewhat darker than the others to aid its legibility on light
+# backgrounds. Additionally, blue, red, magenta and grey have darker variants
+# for use as background colours to help legibility of light text on them.
 #
 # To level the colours, their luminance was calculated as follows:
 # - Gamma-expand the sRGB components by dividing each by 255 and applying the
@@ -28,19 +32,19 @@
 # Of course, that is a highly subjective process ...
 
 Black=0,0,0
-Red=212,44,58;167,35,46
-Green=28,168,0;22,132,0
+Red=212,44,58;162,30,41
+Green=28,168,0
 Yellow=192,160,0
-Blue=30,123,216;0,45,180
-Magenta=177,72,198;138,58,154
-Cyan=0,168,154;0,132,121
+Blue=0,93,255;0,32,192
+Magenta=177,72,198;134,54,150
+Cyan=0,168,154
 White=191,191,191
 
-BoldBlack=127,127,127;85,85,85
+BoldBlack=96,96,96;72,72,72
 BoldRed=255,118,118
 BoldGreen=0,242,0
 BoldYellow=242,242,0
-BoldBlue=125,177,255
+BoldBlue=125,151,255
 BoldMagenta=255,112,255
 BoldCyan=0,240,240
 BoldWhite=255,255,255
