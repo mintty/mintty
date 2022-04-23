@@ -7,7 +7,7 @@ Window handling
 Terminal features
   * Visual input feedback: don't obscure text when just pressing Alt.
   * Separate foreground and background values for ANSI colours (#1151).
-  * OSC 7765 for setting ANSI colours distinct from palette colours (#1151).
+  * OSC 7704 for setting ANSI colours distinct from palette colours (#1151).
 
 Keyboard handling
   * Support longer multi-char keyboard input (a.k.a. "ligatures" in Windows) (#1155).

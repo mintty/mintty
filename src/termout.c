@@ -3948,7 +3948,7 @@ do_osc_control:
 }
 
 /*
- * OSC 7765: Control foreground and background variants of the 16 ANSI colours
+ * OSC 7704: Control foreground and background variants of the 16 ANSI colours
  * independently of the first 16 slots in the xterm256 palette.
  */
 static void
@@ -4111,7 +4111,7 @@ do_cmd(void)
         cs_set_locale(s);
     when 7721:  // Copy window title to clipboard.
       win_copy_title();
-    when 7765:  // Change ANSI foreground/background colours.
+    when 7704:  // Change ANSI foreground/background colours.
       do_ansi_colour_osc();
     when 7773: {  // Change icon.
       uint icon_index = 0;

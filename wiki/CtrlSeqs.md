@@ -745,9 +745,9 @@ background variants of the ANSI colours.
 
 | **sequence**                        | ** effect **                         |
 |:------------------------------------|:-------------------------------------|
-| `^[]7765;`_index_`;`_colour_`^G`    | set fg and bg variants to same value |
-| `^[]7765;`_index_`;`_fg_`;`_bg_`^G` | set fg and bg to separate values     |
-| `^[]7765;`_index_`;?^G`             | query current values                 |
+| `^[]7704;`_index_`;`_colour_`^G`    | set fg and bg variants to same value |
+| `^[]7704;`_index_`;`_fg_`;`_bg_`^G` | set fg and bg to separate values     |
+| `^[]7704;`_index_`;?^G`             | query current values                 |
 
 The _index_ argument has to be in range 0 to 15.
 
@@ -765,7 +765,7 @@ for the foreground and background variants are the same, and with the two-value
 sequence otherwise.
 
 Note: Unlike the xterm-compatible sequence OSC 4, which sets palette colours 
-including ANSI colours, OSC 7765 can be used to change ANSI colours only, 
+including ANSI colours, OSC 7704 can be used to change ANSI colours only, 
 leaving the associated palette colours 0..15 unchanged, so you could 
 select different colours with SGR 30..37 etc distinct from SGR 38:5 etc.
 
