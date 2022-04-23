@@ -97,6 +97,8 @@ ifneq ($(platform), msys)
 endif
 # support cygwin debug package (use += to accept injected options)
 CFLAGS += -std=gnu99 -include std.h -Wall -Wextra -Wundef -Werror $(SECUR)
+# verify additional flags that are also injected into pkg build by cygport
+CFLAGS += -Wformat-security
 
 ifeq ($(shell VER=`$(CC) -dumpversion`; expr $${VER%.*} '>=' 4.5), 1)
   CFLAGS += -mtune=atom

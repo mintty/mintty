@@ -3910,7 +3910,7 @@ do_osc_control:
     if (has_index_arg)
       child_printf(";%u", index);
     print_osc_colour(colours[i]);
-    child_printf(osc_fini());
+    child_printf("%s", osc_fini());
   }
   else if (parse_colour(s, &c))
     win_set_colour(i, c);
@@ -3973,7 +3973,7 @@ do_ansi_colour_osc(void)
     print_osc_colour(fg);
     if (fg != bg)
       print_osc_colour(bg);
-    child_printf(osc_fini());
+    child_printf("%s", osc_fini());
   }
   else {
     char *sep = strchr(s, ';');
