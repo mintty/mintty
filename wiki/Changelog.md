@@ -1,3 +1,5 @@
+### 3.6.1 (24 April 2022) ###
+
 Window handling
   * Terminal reflow (#82, #219): fixed crash condition on irregular reflow chunks.
   * Terminal reflow (#82, #219): fixed memory leak.
@@ -10,8 +12,9 @@ Terminal features
 Keyboard handling
   * Support longer multi-char keyboard input (a.k.a. "ligatures" in Windows) (#1155).
 
-Configuration
+Configuration (contributed by Andy Koppe)
   * ANSI colour specification accepts foreground ; background values (#1151).
+  * Tuned themes helmholtz (default) and kohlrausch for legibility (#1156).
 
 ### 3.6.0 (20 March 2022) ###
 

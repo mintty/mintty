@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Fri Mar 25 18:57:04 2022 -->
+<!-- CreationDate: Sun Apr 24 05:12:34 2022 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -93,11 +93,13 @@ name of <b>wsl*</b><i>[-distro]</i> implies a
 being started from a Windows desktop shortcut; it honours
 window and icon settings of the shortcut, aligns taskbar
 grouping with the shortcut, disables daemonizing, and sets
-environment variable MINTTY_SHORTCUT to its pathname. <br>
-Before starting the child program, mintty trims the
-environment from other variables set by launchers, other
-terminals, or shells, that might indicate incorrect
-information and lead to confusing behaviour.</p>
+environment variable MINTTY_SHORTCUT to its pathname.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Before starting
+the child program, mintty trims the environment from other
+variables set by launchers, other terminals, or shells, that
+might indicate incorrect information and lead to confusing
+behaviour.</p>
 
 <h2>OPTIONS
 <a name="OPTIONS"></a>
@@ -107,9 +109,11 @@ information and lead to confusing behaviour.</p>
 <p style="margin-left:11%; margin-top: 1em">The standard
 GNU option formats are accepted, with single dashes
 introducing short options and double dashes introducing long
-options. <br>
-Note that setting <b>ShortLongOpts</b> enables single-dash
-long options. <b><br>
+options.</p>
+
+<p style="margin-left:11%; margin-top: 1em">Note that
+setting <b>ShortLongOpts</b> enables single-dash long
+options. <b><br>
 -c</b>, <b>--config</b> <i>FILENAME</i></p>
 
 <p style="margin-left:22%;">Read settings from the
@@ -1012,14 +1016,8 @@ Class=...</b>.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Virtual Tabs
 can be switched quickly with user-defined key assignments,
-using user-definable functions
-switch-[visible-](prev|next).</p>
-
-<p style="margin-left:11%; margin-top: 1em">Since 3.5.1,
-mintty manages tabs in order to support transparency
-(avoiding cumulation of opaqueness), hide background tabs
-from appearing while moving the window, and keep the tabbar
-consistent in case a tab gets terminated irregularly. <br>
+using user-definable functions switch-[visible-](prev|next).
+<br>
 <br><b class=h4>Tabbar</b></p>
 
 <p style="margin-left:22%;">With setting <b>TabBar</b>, an
@@ -1643,10 +1641,9 @@ Options dialog also offers a numeric input option with
 slider buttons. Use Shift or Control to adjust their step
 width.</p>
 
-<p style="margin-left:22%; margin-top: 1em">Since 3.5.1,
-when overlaying multiple tabs (SessionGeomSync modes),
-mintty manages tab window transparency to avoid cumulation
-of opaqueness.</p>
+<p style="margin-left:22%; margin-top: 1em">Note that
+opaqueness (non-transparency) cumulates in SessionGeomSync
+modes like with tabbar.</p>
 
 <p style="margin-left:11%;"><br><b class=h4>Opaque when focused</b>
 (OpaqueWhenFocused=no)</p>
@@ -3941,30 +3938,45 @@ change.</p>
 
 <p style="margin-left:11%;"><br><b class=h4>ANSI colours</b></p>
 
-<p style="margin-left:22%;">These are the 16 ANSI colour
-settings along with their default values. Colours are
-represented as comma-separated RGB triples with decimal
-8-bit values ranging from 0 to 255. X-style hexadecimal
-colour specifications such as #RRGGBB, rgb:RR/GG/BB or
-rgb:RRRR/GGGG/BBBB, cmy:C.C/M.M/Y.Y or cmyk:C.C/M.M/Y.Y/K.K
-can be used as well. Also X11 color names are supported.
-<br>
-&ndash; <b>Black</b>=0,0,0 <br>
-&ndash; <b>Red</b>=191,0,0 <br>
-&ndash; <b>Green</b>=0,191,0 <br>
-&ndash; <b>Yellow</b>=191,191,0 <br>
-&ndash; <b>Blue</b>=0,0,191 <br>
-&ndash; <b>Magenta</b>=191,0,191 <br>
-&ndash; <b>Cyan</b>=0,191,191 <br>
-&ndash; <b>White</b>=191,191,191 <br>
-&ndash; <b>BoldBlack</b>=64,64,64 <br>
-&ndash; <b>BoldRed</b>=255,64,64 <br>
-&ndash; <b>BoldGreen</b>=64,255,64 <br>
-&ndash; <b>BoldYellow</b>=255,255,64 <br>
-&ndash; <b>BoldBlue</b>=96,96,255 <br>
-&ndash; <b>BoldMagenta</b>=255,64,255 <br>
-&ndash; <b>BoldCyan</b>=64,255,255 <br>
-&ndash; <b>BoldWhite</b>=255,255,255</p>
+<p style="margin-left:22%;">The sixteen ANSI colours can be
+chosen with the settings below. Colours are represented as
+comma-separated RGB triples with decimal 8-bit values
+ranging from 0 to 255.</p>
+
+<p style="margin-left:22%; margin-top: 1em">X11-style
+hexadecimal colour specifications such as #RRGGBB,
+rgb:RR/GG/BB, rgb:RRRR/GGGG/BBBB, cmy:C.C/M.M/Y.Y or
+cmyk:C.C/M.M/Y.Y/K.K, as well as X11 colour names, can be
+used as well.</p>
+
+<p style="margin-left:22%; margin-top: 1em">The ANSI
+colours can have different values for foreground and
+background use. These need to be separated by a semicolon,
+for example 127,127,127;85,85,85 for different shades of
+grey. If only one value is specified, it is used for both
+foreground and background.</p>
+
+<p style="margin-left:22%; margin-top: 1em">For the default
+values, please see the &rsquo;helmholtz&rsquo; theme in
+directory /usr/share/mintty/themes.</p>
+
+<p style="margin-left:22%; margin-top: 1em">&ndash;
+<b>Black</b>= <br>
+&ndash; <b>Red</b>= <br>
+&ndash; <b>Green</b>= <br>
+&ndash; <b>Yellow</b>= <br>
+&ndash; <b>Blue</b>= <br>
+&ndash; <b>Magenta</b>= <br>
+&ndash; <b>Cyan</b>= <br>
+&ndash; <b>White</b>= <br>
+&ndash; <b>BoldBlack</b>= <br>
+&ndash; <b>BoldRed</b>= <br>
+&ndash; <b>BoldGreen</b>= <br>
+&ndash; <b>BoldYellow</b>= <br>
+&ndash; <b>BoldBlue</b>= <br>
+&ndash; <b>BoldMagenta</b>= <br>
+&ndash; <b>BoldCyan</b>= <br>
+&ndash; <b>BoldWhite</b>=</p>
 
 <p style="margin-left:11%;"><br><b class=h4>Tektronix mode
 colours</b></p>
@@ -4719,7 +4731,7 @@ page
 
 
 <p style="margin-left:11%; margin-top: 1em">Copyright (C)
-2013 Andy Koppe (C) 2022 Thomas Wolff</p>
+2022 Thomas Wolff, Andy Koppe</p>
 
 <p style="margin-left:11%; margin-top: 1em">Mintty is
 released under the terms of the the <i>GNU General Public
