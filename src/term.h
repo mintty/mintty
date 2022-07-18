@@ -463,8 +463,11 @@ struct term {
   bool on_alt_screen;     /* On alternate screen? */
   bool show_other_screen;
 
-  termlines *lines, *other_lines;
-  term_cursor curs, saved_cursors[2];
+  termlines *lines;        /* Line buffer */
+  termlines *other_lines;  /* switched with alternate screen */
+
+  term_cursor curs;              /* cursor */
+  term_cursor saved_cursors[2];  /* saved cursor of normal/alternate screen */
 
   uchar **scrollback;     /* lines scrolled off top of screen */
   int sbsize;             /* buffer size of scrollback buffer */
@@ -510,6 +513,14 @@ struct term {
 
   int  rows, cols;
   int  rows0, cols0;
+
+  int  st_rows;           /* status line(s) */
+#define term_allrows (term.rows + term.st_rows)
+  char st_type;           /* status line type (DECSSDT) */
+  bool st_active;         /* status line display active (DECSASD 1)*/
+  term_cursor st_other_curs;  /* switched with active status display */
+  term_cursor st_saved_curs;
+
   bool has_focus;
   bool focus_reported;
   bool in_vbell;

@@ -1,3 +1,7 @@
+Terminal features
+  * Status line area support (VT320, xterm 371), DECSSDT, DECSASD.
+  * Extended multi-line host-writable status area, DECSSDT 2 N.
+
 ### 3.6.1 (24 April 2022) ###
 
 Window handling

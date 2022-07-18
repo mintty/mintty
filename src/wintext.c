@@ -4909,7 +4909,7 @@ win_paint(void)
        || p.rcPaint.left < PADDING
        || p.rcPaint.top < OFFSET + PADDING
        || p.rcPaint.right >= PADDING + cell_width * term.cols
-       || p.rcPaint.bottom >= OFFSET + PADDING + cell_height * term.rows
+       || p.rcPaint.bottom >= OFFSET + PADDING + cell_height * term_allrows
       )
      )
   {
@@ -4939,7 +4939,7 @@ win_paint(void)
     ExcludeClipRect(dc, PADDING,
                         OFFSET + PADDING,
                         PADDING + cell_width * term.cols,
-                        OFFSET + PADDING + cell_height * term.rows);
+                        OFFSET + PADDING + cell_height * term_allrows);
 
     // fill outer padding area with background
     int sy = win_search_visible() ? SEARCHBAR_HEIGHT : 0;

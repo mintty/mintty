@@ -1766,7 +1766,7 @@ win_get_screen_chars(int *rows_p, int *cols_p)
   MONITORINFO mi;
   get_my_monitor_info(&mi);
   RECT fr = mi.rcMonitor;
-  *rows_p = (fr.bottom - fr.top - 2 * PADDING - OFFSET) / cell_height;
+  *rows_p = (fr.bottom - fr.top - 2 * PADDING - OFFSET) / cell_height - term.st_rows;
   *cols_p = (fr.right - fr.left - 2 * PADDING) / cell_width;
 }
 
@@ -2056,7 +2056,7 @@ win_set_chars(int rows, int cols)
   // prevent resizing to same logical size
   // which would remove bottom padding and spoil some Windows magic (#629)
   if (rows != term.rows || cols != term.cols) {
-    win_set_pixels(rows * cell_height, cols * cell_width);
+    win_set_pixels((rows + term.st_rows) * cell_height, cols * cell_width);
 #ifdef win_set_pixels_does_not_win_fix_position
     if (is_init)  // don't spoil negative position (#1123)
       win_fix_position(false);
@@ -2655,7 +2655,7 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
 
   if (sync_size_with_font && !win_is_fullscreen) {
     // enforced win_set_chars(term.rows, term.cols):
-    win_set_pixels(term.rows * cell_height, term.cols * cell_width);
+    win_set_pixels(term_allrows * cell_height, term.cols * cell_width);
 #ifdef win_set_pixels_does_not_win_fix_position
     if (is_init)  // don't spoil negative position (#1123)
       win_fix_position(false);
@@ -2693,7 +2693,7 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
     // should use term_height rather than rows; calc and store in term_resize
     // adjust by horsqueeze() but not by horex() here
     int cols0 = max(1, (term_width + horsqueeze()) / cell_width);
-    int rows0 = max(1, term_height / cell_height);
+    int rows0 = max(1, term_height / cell_height - term.st_rows);
 
     // rows0/term.rows gives a rough scaling factor for cell_height
     // cols0/term.cols gives a rough scaling factor for cell_width
@@ -2726,9 +2726,17 @@ win_adapt_term_size(bool sync_size_with_font, bool scale_font_with_size)
 
   // adjust by horsqueeze() but not by horex() here
   int cols = max(1, (term_width + horsqueeze()) / cell_width);
-  int rows = max(1, term_height / cell_height);
+  int rows = max(1, term_height / cell_height - term.st_rows);
+  int save_st_rows = term.st_rows;
   if (rows != term.rows || cols != term.cols) {
     term_resize(rows, cols);
+    if (save_st_rows) {
+      // handle potentially resized status area;
+      // better, rows would be calculated already considering 
+      // possible shrink of status area, to allow resizing smaller than it
+      rows = max(1, term_height / cell_height - term.st_rows);
+      //term.marg_bot is getting fixed in term_resize
+    }
     struct winsize ws = {rows, cols, cols * cell_width, rows * cell_height};
     child_resize(&ws);
   }
@@ -3997,7 +4005,7 @@ static struct {
       //     -> Windows sends WM_THEMECHANGED and WM_SYSCOLORCHANGE
       // and in both case a couple of WM_WININICHANGE
 
-      win_adjust_borders(cell_width * cfg.cols, cell_height * cfg.rows);
+      win_adjust_borders(cell_width * cfg.cols, cell_height * (cfg.rows + term.st_rows));
       RedrawWindow(wnd, null, null, 
                    RDW_FRAME | RDW_INVALIDATE |
                    RDW_UPDATENOW | RDW_ALLCHILDREN);
@@ -4118,10 +4126,10 @@ static int olddelta;
       int width = r->right - r->left - extra_width - 2 * PADDING;
       int height = r->bottom - r->top - extra_height - 2 * PADDING - OFFSET;
       int cols = max(1, (float)width / cell_width + 0.5);
-      int rows = max(1, (float)height / cell_height + 0.5);
+      int rows = max(1, (float)height / cell_height - term.st_rows + 0.5);
 
       int ew = width - cols * cell_width;
-      int eh = height - rows * cell_height;
+      int eh = height - (rows + term.st_rows) * cell_height;
 
       if (wp >= WMSZ_BOTTOM) {
         wp -= WMSZ_BOTTOM;
@@ -4595,7 +4603,7 @@ report_pos(void)
     int cols = term.cols;
     int rows = term.rows;
     cols = (placement.rcNormalPosition.right - placement.rcNormalPosition.left - norm_extra_width - 2 * PADDING) / cell_width;
-    rows = (placement.rcNormalPosition.bottom - placement.rcNormalPosition.top - norm_extra_height - 2 * PADDING - OFFSET) / cell_height;
+    rows = (placement.rcNormalPosition.bottom - placement.rcNormalPosition.top - norm_extra_height - 2 * PADDING - OFFSET) / cell_height - term.st_rows;
 
     printf("%s", main_argv[0]);
     printf(*report_geom == 'o' ? " -o Columns=%d -o Rows=%d" : " -s %d,%d", cols, rows);
@@ -6397,7 +6405,7 @@ static int dynfonts = 0;
 
   // Determine window sizes.
   win_prepare_tabbar();
-  win_adjust_borders(cell_width * term_cols, cell_height * term_rows);
+  win_adjust_borders(cell_width * term_cols, cell_height * (term_rows + term.st_rows));
 
   // Having x == CW_USEDEFAULT but not y still triggers default positioning,
   // whereas y == CW_USEDEFAULT but not x results in an invisible window,

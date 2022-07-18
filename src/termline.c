@@ -815,7 +815,7 @@ fetch_line(int y)
 
   termline *line;
   if (y >= 0) {
-    assert(y < term.rows);
+    assert(y < term_allrows);
     line = lines[y];
   }
   else {

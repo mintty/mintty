@@ -138,6 +138,23 @@ empty lines from the end of the scrollback buffer.
 > `^[[`_N_`+T`
 
 
+## Status line / area ##
+
+Mintty implements the DEC VT320 status line and extends the feature to 
+support a multi-line host-writable status area.
+It is configured with a proprietary second parameter to DECSSDT 2.
+Its height is limited to be smaller than half the screen height.
+
+| **sequence**          | **function**                              |
+|:----------------------|:------------------------------------------|
+| `^[[0$~` _or_ `^[[$~` | disable status line                       |
+| `^[[1$~`              | enable indicator status line              |
+| `^[[2$~`              | enable host-writable status line          |
+| `^[[2;`_N_`$~`        | enable host-writable status area, N lines |
+| `^[[0$}` _or_ `^[[$}` | select normal display (for writing)       |
+| `^[[1$}`              | select status display (for writing)       |
+
+
 ## Bidirectional rendering ##
 
 Mintty supports bidi rendering by default. However, some applications 
