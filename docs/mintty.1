@@ -2405,6 +2405,9 @@ If it contains \fB%\fP placeholders other than a single \fB%d\fP,
 the log file name will be constructed by calling strftime(3) on the 
 pattern; note that this is likely to fail if a placeholder expands with 
 "/" (%D).
+Example:
+.br
+\(en \fBLog=~/mintty.%Y-%m-%d_%H-%M-%S\fP.log
 
 If the log file name is a relative path name, it is relative from the 
 working directory mintty was started in. To avoid failure to create a 
