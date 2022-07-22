@@ -125,6 +125,7 @@ const config default_cfg = {
   .key_commands = W(""),
   .manage_leds = 7,
   .enable_remap_ctrls = false,
+  .old_keyfuncs_keypad = false,
   // Mouse
   .clicks_place_cursor = false,
   .middle_click_action = MC_PASTE,
@@ -432,6 +433,7 @@ options[] = {
   {"KeyFunctions", OPT_WSTRING | OPT_KEEPCR, offcfg(key_commands)},
   {"ManageLEDs", OPT_INT, offcfg(manage_leds)},
   {"ShootFoot", OPT_BOOL, offcfg(enable_remap_ctrls)},
+  {"OldKeyFunctionsKeypad", OPT_BOOL, offcfg(old_keyfuncs_keypad)},
 
   // Mouse
   {"ClicksPlaceCursor", OPT_BOOL, offcfg(clicks_place_cursor)},

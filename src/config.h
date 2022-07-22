@@ -116,6 +116,7 @@ typedef struct {
   wstring key_commands;
   int manage_leds;
   bool enable_remap_ctrls;
+  bool old_keyfuncs_keypad;
   // Mouse
   bool clicks_place_cursor;
   char middle_click_action;

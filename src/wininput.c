@@ -2651,10 +2651,11 @@ static LONG last_key_time = 0;
                       ? !extended
                       : vktab[vki].unmod == 3;
       bool editpad = !keypad && vktab[vki].unmod >= 2;
+      //printf("found %d ext %d kp %d ep %d\n", vki, extended, keypad, editpad);
       if (vki >= 0 && !altgr
           && (mods || vktab[vki].unmod || extended)
-          && (!editpad || !term.app_cursor_keys)
-          && (!keypad || !term.app_keypad)
+          && (!cfg.old_keyfuncs_keypad || !editpad || !term.app_cursor_keys)
+          && (!cfg.old_keyfuncs_keypad || !keypad || !term.app_keypad)
          )
       {
         tag = asform("%s%s%s%s%s%s%s%s%s",
