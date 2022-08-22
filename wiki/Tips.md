@@ -293,8 +293,9 @@ environment (and note that MinGW is not msys in this context), and would
 occur in all pty-based terminals (like xterm, rxvt etc).
 
 Cygwin 3.1.0 compensates for this issue via the ConPTY API of Windows 10.
-On MSYS2, its usage can be enabled by setting MSYS=enable_pcon or 
-changing the default during installation.
+On MSYS2, its usage can be enabled by setting the environment variable 
+MSYS=enable_pcon or changing the default during MSYS2 installation.
+You can also set mintty option ConPTY=true to override the MSYS2 default.
 
 As a workaround on older versions of Cygwin or Windows, you can use 
 [winpty](https://github.com/rprichard/winpty) as a wrapper to invoke 
