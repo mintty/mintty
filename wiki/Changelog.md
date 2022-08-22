@@ -4,6 +4,7 @@ Terminal features
 
 Keyboard handling
   * Not suppressing user-defined KeyFunctions for keypad keys in keypad modes (#1161).
+  * Alt+keypad-minus initiates decimal numeric input in case an Alt+numpad-digit key is assigned a user-defined function.
 
 Configuration
   * Option OldKeyFunctionsKeypad (~#1161, not listed in manual).

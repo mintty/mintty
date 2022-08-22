@@ -3507,8 +3507,12 @@ static struct {
     when VK_MULTIPLY ... VK_DIVIDE:
       if (term.vt52_mode && term.app_keypad)
         len = sprintf(buf, "\e?%c", key - VK_MULTIPLY + 'j');
+      // initiate hex numeric input
       else if (key == VK_ADD && old_alt_state == ALT_ALONE)
         alt_state = ALT_HEX, alt_code = 0, alt_uni = false;
+      // initiate decimal numeric input; override user-assigned functions
+      else if (key == VK_SUBTRACT && old_alt_state == ALT_ALONE)
+        alt_state = ALT_DEC, alt_code = 0, alt_uni = false;
       else if (alt_code_ignore()) {
       }
       else if (mods || (term.app_keypad && !numlock) || !layout())
