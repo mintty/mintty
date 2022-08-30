@@ -785,11 +785,17 @@ whereby the Alt key has to be held while entering the character code.
 Only the first key has to be on the numpad; subsequent digits can be entered
 both on the numpad or the main part of the keyboard.
 
-If the first key is the \(aq\fB+\fP\(aq on the numpad, the code is interpreted as
-hexadecimal, whereby digits A through F can be entered using the letter keys.
 If the first key is a zero, the code is interpreted as octal.
+.br
 If the first key is any other digit from 1 to 9, the code is interpreted as
 decimal.
+.br
+If the first key is the \(aq\fB+\fP\(aq on the numpad, the code is interpreted as
+hexadecimal, whereby digits A through F can be entered using the letter keys.
+.br
+If the first key is the \(aq\fB-\fP\(aq on the numpad, the code is interpreted as
+decimal; this is normally not needed but can be used to override a 
+user-defined function assignment to an Alt+numpad key.
 
 For UTF-8 and other Unicode encodings such as GB18030, the entered code is 
 interpreted as a Unicode codepoint and encoded accordingly before it is sent.
