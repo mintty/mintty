@@ -6872,6 +6872,9 @@ static int dynfonts = 0;
 
   // Finally show the window.
   ShowWindow(wnd, show_cmd);
+  // and grab focus again, just in case and for Windows 11
+  // (https://github.com/mintty/mintty/issues/1113#issuecomment-1210278957)
+  SetFocus(wnd);
   // Cloning fullscreen window
   if (run_max == 2)
     win_maximise(2);
