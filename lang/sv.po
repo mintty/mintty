@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: https://github.com/mintty/mintty/issues/700\n"
 "POT-Creation-Date: 2022-04-24 05:12+0200\n"
-"PO-Revision-Date: 2021-07-30 19:51+0200\n"
+"PO-Revision-Date: 2022-09-16 00:06+0200\n"
 "Last-Translator: A Regnander <anton_r_3 at hotmail dot com>\n"
 "Language-Team: \n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.1.1\n"
 
 #: charset.c:226 charset.c:237 winmain.c:5570 winmain.c:5683 winmain.c:5690
 msgid "(Default)"
@@ -295,7 +295,7 @@ msgstr "Lagra"
 #. __ Options - Looks: section title
 #: config.c:3639
 msgid "Transparency"
-msgstr "Genomskinlighet"
+msgstr "Transparens"
 
 #. __ Options - Looks: transparency
 #. __ Options - Keys:
@@ -333,7 +333,7 @@ msgstr "Gla&s"
 #. __ Options - Looks: transparency
 #: config.c:3662 config.c:3674 config.c:3681
 msgid "Opa&que when focused"
-msgstr "&Ingen genomskinlighet vid fokus"
+msgstr "&Ingen transparens vid fokus"
 
 #. __ Options - Looks: transparency
 #: config.c:3667
@@ -342,11 +342,11 @@ msgstr "S&uddighet"
 
 #: config.c:3688
 msgid "◄"
-msgstr ""
+msgstr "◄"
 
 #: config.c:3691
 msgid "►"
-msgstr ""
+msgstr "►"
 
 #. __ Options - Looks: section title
 #: config.c:3698
