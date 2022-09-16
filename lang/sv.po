@@ -342,11 +342,11 @@ msgstr "S&uddighet"
 
 #: config.c:3688
 msgid "◄"
-msgstr "◄"
+msgstr ""
 
 #: config.c:3691
 msgid "►"
-msgstr "►"
+msgstr ""
 
 #. __ Options - Looks: section title
 #: config.c:3698
