@@ -3270,10 +3270,14 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
 
   if (attr.attr & (ATTR_SUBSCR | ATTR_SUPERSCR)) {
     xt += cell_width * 3 / 10;
-    if (attr.attr & ATTR_SUBSCR)
-      yt += cell_height * 3 / 8;
-    else
-      yt += cell_height * 1 / 8;
+    switch (attr.attr & (ATTR_SUBSCR | ATTR_SUPERSCR)) {
+      when ATTR_SUBSCR | ATTR_SUPERSCR:
+        yt += cell_height * 10 / 32;  // 11 fits better but closer to subscr
+      when ATTR_SUBSCR:
+        yt += cell_height * 13 / 32;  // 14 looks better but at some clipping
+      when ATTR_SUPERSCR:
+        yt += cell_height * 1 / 8;
+    }
   }
   if (attr.attr & TATTR_SINGLE)
     yt += cell_height / 4;
