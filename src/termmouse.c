@@ -559,6 +559,22 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
   return res;
 }
 
+static void
+mouse_open(pos p)
+{
+  termline *line = fetch_line(p.y + term.disptop);
+  int urli = line->chars[p.x].attr.link;
+  release_line(line);
+  char * url = geturl(urli);
+  if (url)
+    win_open(cs__utftowcs(url), true);  // win_open frees its argument
+  else
+    term_open();
+  term.selected = false;
+  term.hovering = false;
+  win_update(true);
+}
+
 void
 term_mouse_release(mouse_button b, mod_keys mods, pos p)
 {
@@ -569,19 +585,7 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
   switch (state) {
     when MS_COPYING: term_copy();
     when MS_PASTING: win_paste();
-    when MS_OPENING: {
-      termline *line = fetch_line(p.y + term.disptop);
-      int urli = line->chars[p.x].attr.link;
-      release_line(line);
-      char * url = geturl(urli);
-      if (url)
-        win_open(cs__utftowcs(url), true);  // win_open frees its argument
-      else
-        term_open();
-      term.selected = false;
-      term.hovering = false;
-      win_update(true);
-    }
+    when MS_OPENING: mouse_open(p);
     when MS_SEL_CHAR or MS_SEL_WORD or MS_SEL_LINE: {
       // Finish selection.
       if (term.selected && cfg.copy_on_select)
