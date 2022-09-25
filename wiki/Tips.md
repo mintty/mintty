@@ -1018,8 +1018,8 @@ ECMA-48 sub-parameters are supported.
 | 58:2::R:G:B            | 59                | underline RGB colour          |
 | 58:3:F:C:M:Y           | 59                | underline CMY colour (*)      |
 | 58:4:F:C:M:Y:K         | 59                | underline CMYK colour (*)     |
-| 73                     | 75                | superscript                   |
-| 74                     | 75                | subscript                     |
+| 73 _or_ ?4             | 75 _or_ ?24       | superscript (*)               |
+| 74 _or_ ?5             | 75 _or_ ?24       | subscript (*)                 |
 | _any_                  | 0 _or empty_      |                               |
 
 Note: Alternative fonts are configured with options Font1 ... Font10.
@@ -1049,6 +1049,9 @@ by default (e.g. decimal digits).
 Note: SGR codes for superscript and subscript display are subject to change.
 
 Note: Text attributes can be disabled with option SuppressSGR (see manual).
+
+Note: Combined SGR 73;74 results in small characters at normal position.
+This does not apply to the alternative DEC private SGRs ?4 and ?5.
 
 As a fancy add-on feature for text attributes, mintty supports distinct 
 (colour) attributes for combining characters, so a combined character 

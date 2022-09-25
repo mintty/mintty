@@ -3031,6 +3031,14 @@ do_csi(uchar c)
       restore_cursor();
     when 'm':        /* SGR: set graphics rendition */
       do_sgr();
+    when CPAIR('?', 'm'):  /* DEC private SGR (EK-PPLV2-PM-B01) */
+      switch (arg0) {
+        when 4: term.curs.attr.attr &= ~ATTR_SUBSCR;
+                term.curs.attr.attr |= ATTR_SUPERSCR;
+        when 5: term.curs.attr.attr &= ~ATTR_SUPERSCR;
+                term.curs.attr.attr |= ATTR_SUBSCR;
+        when 24: term.curs.attr.attr &= ~(ATTR_SUPERSCR | ATTR_SUBSCR);
+      }
     when 't':
      /*
       * VT340/VT420 sequence DECSLPP, for setting the height of the window.

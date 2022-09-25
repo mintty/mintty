@@ -3,6 +3,7 @@ Terminal features
   * Extended multi-line host-writable status area, DECSSDT 2 N.
   * Combined sub/superscript attributes render small script (#1171).
   * Adjusted subscript position (~#1171).
+  * Alternative DEC private SGRs for sub/superscript (#1171).
 
 Keyboard handling
   * Not suppressing user-defined KeyFunctions for keypad keys in keypad modes (#1161).
