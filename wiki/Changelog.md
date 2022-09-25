@@ -8,11 +8,16 @@ Keyboard handling
   * Not suppressing user-defined KeyFunctions for keypad keys in keypad modes (#1161).
   * Alt+keypad-minus initiates decimal numeric input in case an Alt+numpad-digit key is assigned a user-defined function.
 
+Mouse handling
+  * Configurable modifiers for hovering and link opening (#1169).
+  * Support super and hyper modifiers with mouse functions.
+
 Initialisation
   * Grab focus again after showing the window, reducing focus delay for Windows 11 (#1113).
 
 Configuration
   * Option OldKeyFunctionsKeypad (~#1161, not listed in manual).
+  * Option LinkMod (#1169).
 
 ### 3.6.1 (24 April 2022) ###
 

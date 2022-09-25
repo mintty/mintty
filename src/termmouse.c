@@ -438,6 +438,12 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
 {
   compose_clear();
 
+  /* (#1169) was_hovering considers the case when hovering is not directly 
+     triggered via state MS_OPENING but rather overrides state MS_SEL_CHAR,
+     in order to supports its configuration to be applied without modifier
+  */
+  bool was_hovering = term.hovering;
+
   if (term.hovering) {
     term.hovering = false;
     win_update(true);
@@ -513,7 +519,10 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
     else if (b == MBT_LEFT && mods == MDK_SHIFT && rca == RC_EXTEND) {
       term.mouse_state = MS_PASTING;
     }
-    else if (b == MBT_LEFT && (mods & ~cfg.click_target_mod) == MDK_CTRL) {
+    else if (b == MBT_LEFT &&
+             ((char)(mods & ~cfg.click_target_mod) == cfg.link_mod || was_hovering)
+            )
+    {
       if (count == cfg.opening_clicks) {
         // Open word under cursor
         p = get_selpoint(box_pos(p));
@@ -581,12 +590,25 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
   compose_clear();
 
   int state = term.mouse_state;
+
   term.mouse_state = 0;
   switch (state) {
     when MS_COPYING: term_copy();
     when MS_PASTING: win_paste();
     when MS_OPENING: mouse_open(p);
     when MS_SEL_CHAR or MS_SEL_WORD or MS_SEL_LINE: {
+      // Open hovered link, accepting configurable modifiers
+      if (state == MS_SEL_CHAR && !term.selected
+          && ((char)(mods & ~cfg.click_target_mod) == cfg.link_mod)
+         )
+      {
+        // support the case of hovering and link opening without modifiers 
+        // if so configured (#1169)
+        mouse_open(p);
+        term.mouse_state = 0;
+        return;
+      }
+
       // Finish selection.
       if (term.selected && cfg.copy_on_select)
         term_copy();
@@ -711,7 +733,10 @@ term_mouse_move(mod_keys mods, pos p)
       send_mouse_event(MA_MOVE, 0, mods, bp);
   }
 
-  if (!check_app_mouse(&mods) && (mods & ~cfg.click_target_mod) == MDK_CTRL && term.has_focus) {
+  if (!check_app_mouse(&mods) && term.has_focus &&
+      ((char)(mods & ~cfg.click_target_mod) == cfg.link_mod)
+     )
+  {
     p = get_selpoint(box_pos(p));
     term.hover_start = term.hover_end = p;
     if (!hover_spread_empty()) {

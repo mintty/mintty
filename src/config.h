@@ -125,6 +125,7 @@ typedef struct {
   bool zoom_mouse;
   char clicks_target_app;
   char click_target_mod;
+  char link_mod;
   bool hide_mouse;
   bool elastic_mouse;
   int lines_per_notch;
