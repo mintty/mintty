@@ -4030,10 +4030,13 @@ draw:;
     DeleteObject(oldpen);
   }
 
+  _return:
+
   if (origtext)
     free(origtext);
 
   show_curchar_info('w');
+
   if (has_cursor) {
     colour _cc = cursor_colour;
     if (layer)
@@ -4130,8 +4133,6 @@ draw:;
     }
     DeleteObject(SelectObject(dc, oldpen));
   }
-
-  _return:
 
   if (bloom && coord_transformed_bloom) {
     bloom--;
