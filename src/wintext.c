@@ -2871,7 +2871,7 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     default_bg = false;
   }
 
-  if (has_cursor) {
+  if (has_cursor && phase < 2) {
     if (term_cursor_type() == CUR_BLOCK && (attr.attr & TATTR_ACTCURS))
       default_bg = false;
 
@@ -4037,7 +4037,20 @@ draw:;
 
   show_curchar_info('w');
 
-  if (has_cursor) {
+  if (has_cursor && phase < 2) {
+    int cursor_size(int cell_size)
+    {
+      switch (term.cursor_size) {
+        when 1: return -2;
+        when 2: return line_width - 1;
+        when 3: return cell_size / 3 - 1;
+        when 4: return cell_size / 2;
+        when 5: return cell_size * 2 / 3;
+        when 6: return cell_size - 2;
+        otherwise: return 0;
+      }
+    }
+
     colour _cc = cursor_colour;
     if (layer)
       _cc = ((_cc & 0xFEFEFEFE) >> 1) + ((win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1);
@@ -4058,11 +4071,15 @@ draw:;
         SelectObject(dc, oldbrush);
       }
       when CUR_LINE: {
-        int caret_width = 1;
-        SystemParametersInfo(SPI_GETCARETWIDTH, 0, &caret_width, 0);
-        // limit line cursor width by char_width? rather by line_width (#1101)
-        if (caret_width > line_width)
-          caret_width = line_width;
+        int caret_width = cursor_size(cell_width);
+        if (caret_width <= 0) {
+          caret_width = (3 + (lattr >= LATTR_WIDE ? 2 : 0)) * cell_width / 40;
+          SystemParametersInfo(SPI_GETCARETWIDTH, 0, &caret_width, 0);
+          caret_width *= cell_width / 8;
+          // limit cursor width (previously by line_width, #1101)
+          if (caret_width > cell_width)
+            caret_width = cell_width;
+        }
         int xx = x;
         if (attr.attr & TATTR_RIGHTCURS)
           xx += char_width - caret_width;
@@ -4076,7 +4093,12 @@ draw:;
           DeleteObject(SelectObject(dc, oldbrush));
 #else
           HBRUSH br = CreateSolidBrush(_cc);
+#ifdef simple_inverted_cursor_approach
+          // this does not give us sufficient colour control
+          InvertRect(dc, &(RECT){xx, y, xx + caret_width, y + cell_height});
+#else
           FillRect(dc, &(RECT){xx, y, xx + caret_width, y + cell_height}, br);
+#endif
           DeleteObject(br);
 #endif
         }
@@ -4105,15 +4127,7 @@ draw:;
 		5   two_thirds
 		6   full block
           */
-          int up = 0;
-          switch (term.cursor_size) {
-            when 1: up = -2;
-            when 2: up = line_width - 1;
-            when 3: up = cell_height / 3 - 1;
-            when 4: up = cell_height / 2;
-            when 5: up = cell_height * 2 / 3;
-            when 6: up = cell_height - 2;
-          }
+          int up = cursor_size(cell_height);
           if (up) {
             int yct = max(yy - up, yt);
             HBRUSH oldbrush = SelectObject(dc, CreateSolidBrush(_cc));

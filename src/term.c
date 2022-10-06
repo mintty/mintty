@@ -3690,7 +3690,16 @@ term_paint(void)
       else if (overlaying) {
         return;
       }
-      else if (attr.attr & (ATTR_ITALIC | TATTR_COMBDOUBL | TATTR_OVERHANG)) {
+      else if (attr.attr
+          & (ATTR_ITALIC | TATTR_COMBDOUBL | TATTR_OVERHANG | TATTR_MARKCURS)
+        )
+      {
+        /* Split output into 2 phases, for background and foreground, 
+           to support overlay display in some cases:
+           * italics and other potential overhang situations (emojis)
+           * combining doubles
+           * cursor position, to support underlay cursor painting
+         */
         win_text(x, y, text, len, attr, textattr, lattr, has_rtl, false, 1);
         flush_text();
         ovl_x = x;

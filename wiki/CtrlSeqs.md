@@ -725,6 +725,7 @@ Furthermore, the following Linux console sequence can be used to set the
 size of the active underscore cursor.
 (Note that the second and third parameters from the Linux sequence are not 
 supported; cursor colour can be set with the OSC 12 sequence.)
+The sequence also affects the vertical line cursor.
 
 > `^[[?` _arg_ `c`
 
