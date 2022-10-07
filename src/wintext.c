@@ -1143,10 +1143,45 @@ toggle_charinfo()
 }
 
 static void
+show_status_line()
+{
+  term_cursor curs = term.curs;
+  term.st_active = true;
+  cattr erase_attr = term.erase_char.attr;
+
+
+  termline * curline = term.displines[term.curs.y];
+  termchar * curchar = &curline->chars[term.curs.x];
+  term.curs.x = 0;
+  term.curs.y = term.rows;
+
+  term.curs.attr.attr &= ~(ATTR_FGMASK | ATTR_BGMASK);
+  term.curs.attr.attr |= (TRUE_COLOUR << ATTR_FGSHIFT) | (TRUE_COLOUR << ATTR_BGSHIFT);
+  term.curs.attr.truefg = win_get_colour(BG_COLOUR_I);
+  term.curs.attr.truebg = win_get_colour(FG_COLOUR_I);
+  term.erase_char.attr.attr &= ~(ATTR_FGMASK | ATTR_BGMASK);
+  term.erase_char.attr.attr |= (TRUE_COLOUR << ATTR_FGSHIFT) | (TRUE_COLOUR << ATTR_BGSHIFT);
+  term.erase_char.attr.truefg = win_get_colour(BG_COLOUR_I);
+  term.erase_char.attr.truebg = win_get_colour(FG_COLOUR_I);
+
+  char stbuf[99];
+  sprintf(stbuf, "[K@%d:%d U+%04X", curs.y, curs.x, curchar->chr);
+  term_write(stbuf, strlen(stbuf));
+
+  term.erase_char.attr = erase_attr;
+  term.st_active = false;
+  term.curs = curs;
+}
+
+static void
 show_curchar_info(char tag)
 {
+  if (term.st_type == 1)
+    show_status_line();
+
   if (!show_charinfo)
     return;
+
   init_charnametable();
   (void)tag;
   static termchar * pp = 0;
