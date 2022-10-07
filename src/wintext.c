@@ -2904,6 +2904,12 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
       printf("set cursor (colour %06X) @(row %d col %d) cursor_on %d\n", bg, (y - PADDING - OFFSET) / cell_height, (x - PADDING) / char_width, term.cursor_on);
 #endif
     }
+    else if (attr.attr & TATTR_ACTCURS) {
+      // enforce sufficient contrast (#1157) for all cursor styles
+      too_close = colour_dist(cursor_colour, fg) < mindist;
+      if (too_close)
+        cursor_colour = brighten(cursor_colour, fg, false);
+    }
   }
 
  /* Now that attributes are sorted out, select proper font */

@@ -5,6 +5,7 @@ Terminal features
   * Adjusted subscript position (~#1171).
   * Alternative DEC private SGRs for sub/superscript (#1171).
   * Revamp line cursor handling, size changeable by CSI ? N c (#1157).
+  * Ensure sufficient contrast for all cursor styles (#1157).
 
 Keyboard handling
   * Not suppressing user-defined KeyFunctions for keypad keys in keypad modes (#1161).
