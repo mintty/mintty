@@ -2906,10 +2906,17 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
     default_bg = false;
   }
 
-  if (has_cursor && phase < 2) {
+ /* Suppress graphic background at cursor position */
+  if (has_cursor)
     if (term_cursor_type() == CUR_BLOCK && (attr.attr & TATTR_ACTCURS))
       default_bg = false;
 
+ /* Cursor contrast adjustment for background or block cursor */
+  if (has_cursor && (phase < 2 || term_cursor_type() == CUR_BLOCK)) {
+    // To extend this heuristics to other cursor styles, 
+    // some tricky interworking needs to be sorted out (#1157);
+    // currently the assumption is that line cursors should be thin enough 
+    // to make this fix less important
     cursor_colour = colours[ime_open ? IME_CURSOR_COLOUR_I : CURSOR_COLOUR_I];
     //printf("cc (ime_open %d) %06X\n", ime_open, cursor_colour);
 
@@ -2938,12 +2945,6 @@ win_text(int tx, int ty, wchar *text, int len, cattr attr, cattr *textattr, usho
 #ifdef debug_cursor
       printf("set cursor (colour %06X) @(row %d col %d) cursor_on %d\n", bg, (y - PADDING - OFFSET) / cell_height, (x - PADDING) / char_width, term.cursor_on);
 #endif
-    }
-    else if (attr.attr & TATTR_ACTCURS) {
-      // enforce sufficient contrast (#1157) for all cursor styles
-      too_close = colour_dist(cursor_colour, fg) < mindist;
-      if (too_close)
-        cursor_colour = brighten(cursor_colour, fg, false);
     }
   }
 
