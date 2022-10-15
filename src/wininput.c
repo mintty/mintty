@@ -1720,6 +1720,7 @@ static struct function_def cmd_defs[] = {
   {"lock-title", {.fct = lock_title}, mflags_lock_title},
   {"clear-title", {.fct = clear_title}, 0},
   {"reset", {IDM_RESET}, 0},
+  {"reset-noask", {IDM_RESET_NOASK}, 0},
   {"tek-reset", {IDM_TEKRESET}, mflags_tek_mode},
   {"tek-page", {IDM_TEKPAGE}, mflags_tek_mode},
   {"tek-copy", {IDM_TEKCOPY}, mflags_tek_mode},
@@ -2822,7 +2823,7 @@ static LONG last_key_time = 0;
         when 'I': open_popup_menu(true, "ls", mods);
         when 'N': send_syscommand(IDM_TAB);  // deprecated default assignment
         when 'W': send_syscommand(SC_CLOSE);
-        when 'R': send_syscommand(IDM_RESET);
+        when 'R': send_syscommand(IDM_RESET_NOASK);
         when 'D': send_syscommand(IDM_DEFSIZE);
         when 'F': send_syscommand(cfg.zoom_font_with_window ? IDM_FULLSCREEN_ZOOM : IDM_FULLSCREEN);
         when 'S': send_syscommand(IDM_FLIPSCREEN);

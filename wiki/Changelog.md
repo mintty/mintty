@@ -20,9 +20,11 @@ Initialisation
 Configuration
   * Option OldKeyFunctionsKeypad (~#1161, not listed in manual).
   * Option LinkMod (#1169).
+  * New user-definable function reset-noask.
 
 Other
   * Fixed crash condition on user-defined commands (#1174).
+  * Add confirm dialog to Reset triggered by menu or Alt+F8 (#1173).
 
 ### 3.6.1 (24 April 2022) ###
 
