@@ -21,6 +21,9 @@ Configuration
   * Option OldKeyFunctionsKeypad (~#1161, not listed in manual).
   * Option LinkMod (#1169).
 
+Other
+  * Fixed crash condition on user-defined commands (#1174).
+
 ### 3.6.1 (24 April 2022) ###
 
 Window handling

@@ -50,16 +50,31 @@ clip_addchar(clip_workbuf * b, wchar chr, cattr * ca, bool tabs, ulong sizehint)
     chr = '\t';
   }
 
+  bool err = false;
+
   if (b->len >= b->capacity) {
     //b->capacity = b->len ? b->len * 2 : 1024;  // x2 strategy, 1K chars initially
     //b->capacity += sizehint;
     //b->capacity = b->capacity ? b->capacity * 3 / 2 : sizehint;
     b->capacity = b->capacity ? b->capacity * 5 / 4 : sizehint;
 
-    b->text = renewn(b->text, b->capacity);
-    if (b->with_attrs)
+    wchar * _text = renewn(b->text, b->capacity);
+    if (_text)
+      b->text = _text;
+    else
+      err = true;
+    if (b->with_attrs) {
       // the attributes part of the buffer is only filled as requested
-      b->cattrs = renewn(b->cattrs, b->capacity);
+      cattr * _cattrs = renewn(b->cattrs, b->capacity);
+      if (_cattrs)
+        b->cattrs = _cattrs;
+      else
+        err = true;
+    }
+  }
+  if (err) {
+    //printf("buf alloc err\n");
+    return;
   }
 
   cattr copattr = ca ? *ca : CATTR_DEFAULT;
@@ -79,15 +94,21 @@ clip_addchar(clip_workbuf * b, wchar chr, cattr * ca, bool tabs, ulong sizehint)
 static clip_workbuf *
 get_selection(bool attrs, pos start, pos end, bool rect, bool allinline, bool with_tabs)
 {
-  // estimate buffer size needed, to give memory allocation a hint
-  int lines = end.y - start.y;
-  long hint = (long)lines * term.cols / 8;
-  //printf("get_selection %d...%d (%d)\n", start.y, end.y, lines);
-
-  int old_top_x = start.x;    /* needed for rect==1 */
   clip_workbuf *buf = newn(clip_workbuf, 1);
   *buf = (clip_workbuf){.with_attrs = attrs,
                         .capacity = 0, .len = 0, .text = 0, .cattrs = 0};
+
+  // estimate buffer size needed, to give memory allocation increments a hint
+  int lines = end.y - start.y;
+  long hint = (long)lines * term.cols / 8;
+  //printf("get_selection %d...%d (%d)\n", start.y, end.y, lines);
+  // check overflow
+  if (lines < 0 || hint < 0) {
+    //printf("buf start > end %d\n", lines);
+    return buf;
+  }
+
+  int old_top_x = start.x;    /* needed for rect==1 */
 
   while (poslt(start, end)) {
     bool nl = false;
@@ -408,12 +429,17 @@ term_get_text(bool all, bool screen, bool command)
     else {
       termline * line = fetch_line(y);
       if (line->lattr & LATTR_MARKED) {
+        //printf("incr %d (sbtop %d/%d rows %d)\n", y, sbtop, term.sblines, term.rows);
         if (y > sbtop) {
           y--;
           end = (pos){y, term.cols, 0, 0, false};
-          termline * line = fetch_line(y);
-          if (line->lattr & LATTR_MARKED)
+          release_line(line);
+          line = fetch_line(y);
+          if (line->lattr & LATTR_MARKED) {
             y++;
+            release_line(line);
+            line = fetch_line(y);
+          }
         }
         else {
           end = (pos){y, 0, 0, 0, false};
@@ -424,8 +450,9 @@ term_get_text(bool all, bool screen, bool command)
         end = (pos){y, term.cols, 0, 0, false};
       }
 
-      if (fetch_line(y)->lattr & LATTR_UNMARKED)
+      if (line->lattr & LATTR_UNMARKED)
         end = (pos){y, 0, 0, 0, false};
+      release_line(line);
     }
 
     int yok = y;
@@ -439,8 +466,10 @@ term_get_text(bool all, bool screen, bool command)
       else
         skipprompt = false;
       if (line->lattr & LATTR_MARKED) {
+        release_line(line);
         break;
       }
+      release_line(line);
       yok = y;
     }
     start = (pos){yok, 0, 0, 0, false};
