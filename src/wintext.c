@@ -4118,6 +4118,7 @@ draw:;
           caret_width = (3 + (lattr >= LATTR_WIDE ? 2 : 0)) * cell_width / 40;
           SystemParametersInfo(SPI_GETCARETWIDTH, 0, &caret_width, 0);
           caret_width *= cell_width / 8;
+          caret_width = (caret_width == 0) ? 1 : caret_width;
           // limit cursor width (previously by line_width, #1101)
           if (caret_width > cell_width)
             caret_width = cell_width;
