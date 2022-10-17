@@ -4,7 +4,7 @@ Terminal features
   * Combined sub/superscript attributes render small script (#1171).
   * Adjusted subscript position (~#1171).
   * Alternative DEC private SGRs for sub/superscript (#1171).
-  * Revamp line cursor handling, size changeable by CSI ? N c (#1157).
+  * Revamp line cursor handling, size changeable by CSI ? N c (#1157, #1175).
 
 Keyboard handling
   * Not suppressing user-defined KeyFunctions for keypad keys in keypad modes (#1161).
