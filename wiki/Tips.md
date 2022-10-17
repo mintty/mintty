@@ -943,7 +943,7 @@ support proportional fonts.
 
 For symbol characters and emojis that are single-width by definition 
 (e.g. locale) but visually double-width, double-width display is supported 
-if the character is following by an adjacent single-width space character.
+if the character is followed by an adjacent single-width space character.
 
 
 ## Font rendering and geometry ##
@@ -1045,8 +1045,6 @@ CMY(K) colour values are scaled to a maximum of the given parameter F (=100%).
 Note: The emoji style attribute sets the display preference for a number 
 of characters that have emojis but would be displayed with text style 
 by default (e.g. decimal digits).
-
-Note: SGR codes for superscript and subscript display are subject to change.
 
 Note: Text attributes can be disabled with option SuppressSGR (see manual).
 
