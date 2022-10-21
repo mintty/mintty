@@ -697,6 +697,7 @@ term_mouse_move(mod_keys mods, pos p)
   pos bp = box_pos(p);
 
   if (term_selecting()) {
+    //printf("term_mouse_move selecting\n");
     if (p.y < 0 || p.y >= term.rows) {
       if (!term.sel_scroll)
         win_set_timer(sel_scroll_cb, 200);
@@ -715,7 +716,26 @@ term_mouse_move(mod_keys mods, pos p)
 
     win_update(true);
   }
+  else if (term.mouse_state == MS_OPENING && 0 == cfg.opening_mod) {
+    //printf("term_mouse_move opening mods %X\n", mods);
+    // assumption: don't need to check mouse button state in this workflow
+
+    // if hover links are configured to work without modifier, 
+    // still enable text selection even over a link, after the mouse 
+    // has moved from initial click;
+    // not this is in opposite to the next case, which deliberately 
+    // catches this case to NOT switch to selection, in order to 
+    // support hover action even after tiny mouse shaking (#1039)
+
+    term.mouse_state = MS_SEL_CHAR;
+    // here we could already establish selection mode properly, 
+    // as it is done above in term_mouse_click, case 
+    // "Only clicks for selecting and extending should get here." -
+    // we save that effort as it will be achieved anyway by the 
+    // next tiny movement...
+  }
   else if (term.mouse_state == MS_OPENING) {
+    //printf("term_mouse_move opening mods %X\n", mods);
     // let's not clear link opening state when just moving the mouse (#1039)
     // but only after hovering out of the link area (below)
 #ifdef link_opening_only_if_unmoved
@@ -725,10 +745,12 @@ term_mouse_move(mod_keys mods, pos p)
 #endif
   }
   else if (term.mouse_state > 0) {
+    //printf("term_mouse_move >0\n");
     if (term.mouse_mode >= MM_BTN_EVENT)
       send_mouse_event(MA_MOVE, (mouse_button)term.mouse_state, mods, bp);
   }
   else {
+    //printf("term_mouse_move any\n");
     if (term.mouse_mode == MM_ANY_EVENT)
       send_mouse_event(MA_MOVE, 0, mods, bp);
   }
@@ -738,6 +760,7 @@ term_mouse_move(mod_keys mods, pos p)
       ((char)(mods & ~cfg.click_target_mod) == cfg.opening_mod)
      )
   {
+    //printf("term_mouse_move link\n");
     p = get_selpoint(box_pos(p));
     term.hover_start = term.hover_end = p;
     if (!hover_spread_empty()) {
