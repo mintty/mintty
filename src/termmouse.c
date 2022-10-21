@@ -440,7 +440,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
 
   /* (#1169) was_hovering considers the case when hovering is not directly 
      triggered via state MS_OPENING but rather overrides state MS_SEL_CHAR,
-     in order to supports its configuration to be applied without modifier
+     in order to support its configuration to be applied without modifier
   */
   bool was_hovering = term.hovering;
 
@@ -520,7 +520,7 @@ term_mouse_click(mouse_button b, mod_keys mods, pos p, int count)
       term.mouse_state = MS_PASTING;
     }
     else if (b == MBT_LEFT &&
-             ((char)(mods & ~cfg.click_target_mod) == cfg.link_mod || was_hovering)
+             ((char)(mods & ~cfg.click_target_mod) == cfg.opening_mod || was_hovering)
             )
     {
       if (count == cfg.opening_clicks) {
@@ -599,7 +599,7 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
     when MS_SEL_CHAR or MS_SEL_WORD or MS_SEL_LINE: {
       // Open hovered link, accepting configurable modifiers
       if (state == MS_SEL_CHAR && !term.selected
-          && ((char)(mods & ~cfg.click_target_mod) == cfg.link_mod)
+          && ((char)(mods & ~cfg.click_target_mod) == cfg.opening_mod)
          )
       {
         // support the case of hovering and link opening without modifiers 
@@ -733,8 +733,9 @@ term_mouse_move(mod_keys mods, pos p)
       send_mouse_event(MA_MOVE, 0, mods, bp);
   }
 
+  // hover indication
   if (!check_app_mouse(&mods) && term.has_focus &&
-      ((char)(mods & ~cfg.click_target_mod) == cfg.link_mod)
+      ((char)(mods & ~cfg.click_target_mod) == cfg.opening_mod)
      )
   {
     p = get_selpoint(box_pos(p));

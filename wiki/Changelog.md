@@ -19,7 +19,7 @@ Initialisation
 
 Configuration
   * Option OldKeyFunctionsKeypad (~#1161, not listed in manual).
-  * Option LinkMod (#1169).
+  * Option OpeningMod (#1169).
   * New user-definable function reset-noask.
 
 Other

@@ -503,8 +503,9 @@ They are inserted in the same way as if they were pasted from the clipboard.
 
 Files, directories, URLs and web addresses beginning with "www." can be 
 opened either by holding \fBCtrl\fP while left-clicking on them (or 
-double-clicking, if and as enabled by option \fBOpeningClicks\fP), or by 
-selecting them and choosing the \fBOpen\fP command from the context menu.
+double-clicking, if and as enabled by option \fBOpeningClicks\fP, or 
+left-clicking with another modifier as configured by option \fBOpeningMod\fP), 
+or by selecting them and choosing the \fBOpen\fP command from the context menu.
 Embedded spaces are considered if escaped with a backslash; for 
 selected pathnames, also embedding quote marks are considered.
 
@@ -1996,7 +1997,7 @@ The \fBOff\fP setting disables overriding.
 \(en \fBOff\fP
 
 .TQ
-\fBModifier key for hovering and link opening\fP (LinkMod=ctrl)
+\fBModifier key for hovering and link opening\fP (OpeningMod=ctrl)
 This chooses the modifier key to enable mouse move hovering and 
 mouse click link opening.
 Accepted settings are ctrl, shift, alt, win, super, hyper, off.

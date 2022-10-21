@@ -122,10 +122,10 @@ typedef struct {
   char middle_click_action;
   char right_click_action;
   int opening_clicks;
+  char opening_mod;
   bool zoom_mouse;
   char clicks_target_app;
   char click_target_mod;
-  char link_mod;
   bool hide_mouse;
   bool elastic_mouse;
   int lines_per_notch;

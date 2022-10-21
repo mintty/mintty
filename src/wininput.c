@@ -903,7 +903,7 @@ update_mouse(mod_keys mods)
 static bool last_app_mouse = false;
 
   // unhover (end hovering) if hover modifiers are withdrawn
-  if (term.hovering && (char)(mods & ~cfg.click_target_mod) != cfg.link_mod) {
+  if (term.hovering && (char)(mods & ~cfg.click_target_mod) != cfg.opening_mod) {
     term.hovering = false;
     win_update(false);
   }
