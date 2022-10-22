@@ -1806,10 +1806,14 @@ term_clear_status(void)
   }
 
   // home status cursor position
-  if (term.st_active)
+  if (term.st_active) {
     term.curs.y = term.rows;
-  else
+    term.curs.x = 0;
+  }
+  else {
     term.st_other_curs.y = 0;  // saved status cursor is normalized to 0
+    term.st_other_curs.x = 0;
+  }
 }
 
 /*
