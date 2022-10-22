@@ -1775,6 +1775,14 @@ term_switch_screen(bool to_alt, bool reset)
   term.lines = term.other_lines;
   term.other_lines = oldlines;
 
+  // keep status area (xterm 373)
+  if (term.st_type == 2)
+    for (int i = term.rows; i < term_allrows; i++) {
+      freeline(term.lines[i]);
+      term.lines[i] = term.other_lines[i];
+      term.other_lines[i] = newline(term.cols, false);
+    }
+
   /* swap image list */
   imglist * first = term.imgs.first;
   imglist * last = term.imgs.last;
