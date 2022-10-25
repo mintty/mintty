@@ -510,6 +510,7 @@ struct term {
   int  print_state;       /* state of print-end-sequence scan */
   char *printbuf;         /* buffered data for printer */
   uint printbuf_size, printbuf_pos;
+  bool erase_to_screen;   /* DECECM: erase to default background */
 
   int  rows, cols;
   int  rows0, cols0;

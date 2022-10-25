@@ -5,6 +5,8 @@ Terminal features
   * Adjusted subscript position (~#1171).
   * Alternative DEC private SGRs for sub/superscript (#1171).
   * Revamp line cursor handling, size changeable by CSI ? N c (#1157, #1175).
+  * Support DECSET 117 (DECECM, VT520).
+  * Added DECARR to DECRQSS.
 
 Keyboard handling
   * Not suppressing user-defined KeyFunctions for keypad keys in keypad modes (#1161).

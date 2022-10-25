@@ -311,6 +311,7 @@ term_reset(bool full)
     term.repeat_rate = 0;
     term.attr_rect = false;
     term.deccolm_noclear = false;
+    term.erase_to_screen = false;
   }
   term.modify_other_keys = 0;  // xterm resets this
 
@@ -2196,7 +2197,8 @@ term_erase(bool selective, bool line_only, bool from_begin, bool to_end)
                !(line->chars[start.x].attr.attr & ATTR_PROTECTED)
               )
       {
-        line->chars[start.x] = term.erase_char;
+        line->chars[start.x] = 
+          term.erase_to_screen ? basic_erase_char : term.erase_char;
         if (!start.x)
           clear_cc(line, -1);
       }

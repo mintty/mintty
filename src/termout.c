@@ -2148,6 +2148,8 @@ set_modes(bool state)
           }
         when 80: /* DECSDM: SIXEL display mode */
           term.sixel_display = state;
+        when 117: /* DECECM: erase to default colour */
+          term.erase_to_screen = state;
         when 1000: /* VT200_MOUSE */
           term.mouse_mode = state ? MM_VT200 : 0;
           win_update_mouse();
@@ -2362,6 +2364,8 @@ get_mode(bool privatemode, int arg)
         return 2 - term.lrmargmode;
       when 80: /* DECSDM: SIXEL display mode */
         return 2 - term.sixel_display;
+      when 117: /* DECECM: erase to default colour */
+        return 2 - term.erase_to_screen;
       when 1000: /* VT200_MOUSE */
         return 2 - (term.mouse_mode == MM_VT200);
       when 1002: /* BTN_EVENT_MOUSE */
@@ -3945,6 +3949,8 @@ do_dcs(void)
         child_printf("\eP1$r%u$~\e\\", term.st_type);
       } else if (!strcmp(s, "$}")) {  // DECSASD (active status)
         child_printf("\eP1$r%u$}\e\\", term.st_active);
+      } else if (!strcmp(s, "-p")) {  // DECARR (auto repeat rate)
+        child_printf("\eP1$r%u-p\e\\", term.repeat_rate);
       } else {
         child_printf("\eP0$r%s\e\\", s);
       }
