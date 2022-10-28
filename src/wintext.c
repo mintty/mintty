@@ -1189,15 +1189,16 @@ show_curchar_info(char tag)
 
   void show_char_msg(char * cs) {
     static char * prev = null;
-    if (!prev || 0 != strcmp(cs, prev)) {
+    char * _cs = cs ?: "";
+    if (!prev || 0 != strcmp(_cs, prev)) {
       //printf("[%c]%s\n", tag, cs);
-      if (nonascii(cs)) {
-        wchar * wcs = cs__utftowcs(cs);
+      if (nonascii(_cs)) {
+        wchar * wcs = cs__utftowcs(_cs);
         SetWindowTextW(wnd, wcs);
         free(wcs);
       }
       else
-        SetWindowTextA(wnd, cs);
+        SetWindowTextA(wnd, _cs);
     }
     if (prev)
       free(prev);
@@ -1213,7 +1214,7 @@ show_curchar_info(char tag)
 
 #define dont_debug_emojis
 
-    if (cfg.emojis && (cpoi->attr.attr & TATTR_EMOJI)) {
+    if (cpoi && cfg.emojis && (cpoi->attr.attr & TATTR_EMOJI)) {
       if (cpoi == pp)
         return;
       cs = get_emoji_description(cpoi);
@@ -1276,6 +1277,9 @@ show_curchar_info(char tag)
       sprintf(&cs[strlen(cs)], "%s", cn);
       free(cn);
 #endif
+      int n = strlen(cs) - 1;
+      if (cs[n] == ' ')
+        cs[n] = 0;
     }
 
     show_char_msg(cs);  // does free(cs);
