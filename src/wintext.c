@@ -1255,13 +1255,34 @@ show_status_line()
   term.erase_char.attr.truebg = bg;
 
   bool status_bell = false;
+  if (term.bell.last_bell) {
+    // flash status line bell 6 times for 2s
+    // this first attempt flashes chaotically; we need a timer!
+    int deltabell = (mtime() - term.bell.last_bell) / (2000 / 11);
+    if (deltabell < 11 && !(deltabell & 1))
+      status_bell = true;
+  }
+
   if (status_bell) {
     term.curs.utf = true;
     term_update_cs();
   }
   wchar wstbuf[term.cols + 1];
-  swprintf(wstbuf, term.cols + 1, W("%s @%02d:%03d %ls %s"), 
-                 child_tty(), curs.y, curs.x, 
+  swprintf(wstbuf, term.cols + 1, W("%s%s%s%s %s%s@%02d:%03d%s%s%s%s%s %ls %s"), 
+                 term.vt220_keys ? "VT220" : "",
+                 term.app_cursor_keys ? "↕" : "",
+                 term.app_keypad ? "±" : "",
+                 child_tty(),
+                 term.printing ? "⎙" : "",
+                 term.bracketed_paste ? "⁅⁆" : "",
+                 curs.y, curs.x,
+                 term.on_alt_screen ? "🖵" : "",
+                 term.insert ? "⎀" : "",
+                 term.curs.wrapnext ? "↵" : "",
+                 term.marg_left || term.marg_right != term.cols - 1
+                 || term.marg_top || term.marg_bot != term.rows - 1
+                   ? "⬚" : "",
+                 term.curs.origin ? "⊡" : "",
                  status_bell ? W("🔔") : W(""),   // bell indicator 🔔 or 🛎️ 
                  get_char_info(dispchar, true) ?: ""
                  );
