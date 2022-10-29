@@ -72,4 +72,8 @@ extern char * geturl(int n);
 
 extern void compose_clear(void);
 
+/* Direct screen buffer output, for status line */
+extern void write_char(wchar wc, int width);
+extern void write_ucschar(wchar hwc, wchar wc, int width);
+
 #endif

@@ -776,7 +776,7 @@ static int last_width = 0;
 cattr last_attr = {.attr = ATTR_DEFAULT,
                    .truefg = 0, .truebg = 0, .ulcolr = (colour)-1};
 
-static void
+void
 write_char(wchar c, int width)
 {
   //if (kb_trace) printf("[%ld] write_char 'q'\n", mtime());
@@ -1160,7 +1160,7 @@ scriptfont(ucschar ch)
   return 0;
 }
 
-static void
+void
 write_ucschar(wchar hwc, wchar wc, int width)
 {
   cattrflags attr = term.curs.attr.attr;

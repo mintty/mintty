@@ -9,6 +9,7 @@
 #include "config.h"
 #include "winimg.h"  // winimgs_paint
 #include "tek.h"
+#include "child.h"   // child_tty
 
 #include <winnls.h>
 #include <usp10.h>  // Uniscribe
@@ -1143,7 +1144,7 @@ toggle_charinfo()
 }
 
 static char *
-get_char_info(termchar * cpoi)
+get_char_info(termchar * cpoi, bool doret)
 {
   init_charnametable();
 
@@ -1152,13 +1153,13 @@ get_char_info(termchar * cpoi)
   char * cs = 0;
 
   // return if base character same as previous and no combining chars
-  if (cpoi == pp && cpoi && cpoi->chr == prev.chr && !cpoi->cc_next)
+  if (!doret && cpoi == pp && cpoi && cpoi->chr == prev.chr && !cpoi->cc_next)
     return 0;
 
 #define dont_debug_emojis
 
   if (cpoi && cfg.emojis && (cpoi->attr.attr & TATTR_EMOJI)) {
-    if (cpoi == pp)
+    if (!doret && cpoi == pp)
       return 0;
     cs = get_emoji_description(cpoi);
 #ifdef debug_emojis
@@ -1235,28 +1236,52 @@ show_status_line()
   term.st_active = true;
   cattr erase_attr = term.erase_char.attr;
 
+  // get current character from normal screen cursor position
+  termline * displine = term.displines[term.curs.y];
+  termchar * dispchar = &displine->chars[term.curs.x];
 
-  termline * curline = term.displines[term.curs.y];
-  termchar * curchar = &curline->chars[term.curs.x];
   term.curs.x = 0;
   term.curs.y = term.rows;
 
+  colour bg = win_get_colour(FG_COLOUR_I);
+  bg = ((bg & 0xFEFEFEFE) >> 1) + ((win_get_colour(BG_COLOUR_I) & 0xFEFEFEFE) >> 1);
   term.curs.attr.attr &= ~(ATTR_FGMASK | ATTR_BGMASK);
   term.curs.attr.attr |= (TRUE_COLOUR << ATTR_FGSHIFT) | (TRUE_COLOUR << ATTR_BGSHIFT);
   term.curs.attr.truefg = win_get_colour(BG_COLOUR_I);
-  term.curs.attr.truebg = win_get_colour(FG_COLOUR_I);
+  term.curs.attr.truebg = bg;
   term.erase_char.attr.attr &= ~(ATTR_FGMASK | ATTR_BGMASK);
   term.erase_char.attr.attr |= (TRUE_COLOUR << ATTR_FGSHIFT) | (TRUE_COLOUR << ATTR_BGSHIFT);
   term.erase_char.attr.truefg = win_get_colour(BG_COLOUR_I);
-  term.erase_char.attr.truebg = win_get_colour(FG_COLOUR_I);
+  term.erase_char.attr.truebg = bg;
 
-  char stbuf[99];
-  sprintf(stbuf, "[K@%d:%d U+%04X", curs.y, curs.x, curchar->chr);
-  term_write(stbuf, strlen(stbuf));
+  bool status_bell = false;
+  if (status_bell) {
+    term.curs.utf = true;
+    term_update_cs();
+  }
+  wchar wstbuf[term.cols + 1];
+  swprintf(wstbuf, term.cols + 1, W("%s @%02d:%03d %ls %s"), 
+                 child_tty(), curs.y, curs.x, 
+                 status_bell ? W("🔔") : W(""),   // bell indicator 🔔 or 🛎️ 
+                 get_char_info(dispchar, true) ?: ""
+                 );
+  int n = 0;
+  for (wchar * cp = wstbuf; *cp; cp++)
+    if (is_high_surrogate(*cp) && is_low_surrogate(cp[1])) {
+      write_ucschar(*cp, cp[1], (n += 2, 2));  // simplified width assumptions
+      cp++;
+    }
+    else
+      write_char(*cp, (n++, 1));
+  for (; n < term.cols; n++)
+    write_char(W(' '), 1);
 
   term.erase_char.attr = erase_attr;
   term.st_active = false;
   term.curs = curs;
+  if (status_bell) {
+    term_update_cs();
+  }
 }
 
 static void
@@ -1295,7 +1320,7 @@ show_curchar_info(char tag)
   else {
     termline * displine = term.displines[line];
     termchar * dispchar = &displine->chars[term.curs.x];
-    char * cs = get_char_info(dispchar);
+    char * cs = get_char_info(dispchar, false);
     if (cs)
       show_char_msg(cs);  // does free(cs);
   }
