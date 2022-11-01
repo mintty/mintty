@@ -160,7 +160,7 @@ do	sel="$sel$seli"
 	mkdir -p "$1"
 	shift
 done
-mkdir -p common
+mkdir -p common google
 
 export sel
 
@@ -197,6 +197,11 @@ img0 () {
   echo "$1" | base64 -d > common/$ename.png
 }
 
+imgg () {
+  echo " google $ename.png" >&2
+  echo "$1" | base64 -d > google/$ename.png
+}
+
 img () {
   style=$(( $style + 1 ))
   case $sel in
@@ -216,6 +221,7 @@ imgskip () {
 cat "$emojis0" "$emojis1" |
 sed -e "s/^.*name='\([^']*\)'.*U+.*/name \1/" -e "t name" \
     -e "s/.*—.*/imgskip/" -e t \
+    -e "s@^.*….*src='data:image/png;base64,\([^']*\)'.*src='data:image/png;base64,\([^']*\)'.*@imgg \1\nimg0 \2@" -e t \
     -e "s@^.*….*src='data:image/png;base64,\([^']*\)'.*@img0 \1@" -e t \
     -e "s@^.*src='data:image/png;base64,\([^']*\)'.*@img \1@" -e t \
     -e d \
