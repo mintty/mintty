@@ -305,7 +305,7 @@ namespace and converted before opening in Windows.
 \(en Locale modification (@cjk...) is not set to the environment variables.
 
 .TQ
-\fB--WSL\fP \fIWSL DISTRIBUTION NAME\fP
+\fB--WSL\fP=\fIWSL DISTRIBUTION NAME\fP
 Run a WSL session, setting other parameters as appropriate and involving 
 the \fIwslbridge2\fP gateway implicitly 
 (which should be installed in /bin for this purpose).
@@ -318,7 +318,7 @@ Also sets up the gateway to propagate locale settings LANG, LC_CTYPE, LC_ALL
 and environment variable APPDATA to the WSL session.
 
 .TQ
-\fB--WSLmode\fP \fIWSL DISTRIBUTION NAME\fP
+\fB--WSLmode\fP=\fIWSL DISTRIBUTION NAME\fP
 Setup a WSL session for the given distribution (like \fB--WSL\fP) but 
 do not actually launch WSL which must be achieved with explicit 
 invocation of a suitable gateway.
