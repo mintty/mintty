@@ -1839,8 +1839,11 @@ term_switch_status(bool status_line)
   term_cursor oldcurs = term.curs;
   term.curs = term.st_other_curs;
   // saved status cursor line is normalized to 0, adjust
-  if (status_line)
+  if (status_line) {
     term.curs.y += term.rows;
+    if (term.curs.y >= term_allrows)
+      term.curs.y = term_allrows - 1;
+  }
   else
     oldcurs.y -= term.rows;
   term.st_other_curs = oldcurs;
