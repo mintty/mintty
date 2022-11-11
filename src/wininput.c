@@ -959,8 +959,8 @@ translate_pos(int x, int y)
   return (pos){
     .x = floorf((x - PADDING) / (float)cell_width),
     .y = floorf((y - PADDING - OFFSET) / (float)cell_height),
-    .pix = min(max(0, x - PADDING), term.rows * cell_height - 1),
-    .piy = min(max(0, y - PADDING - OFFSET), term.cols * cell_width - 1),
+    .pix = min(max(0, x - PADDING), term.cols * cell_width - 1),
+    .piy = min(max(0, y - PADDING - OFFSET), term.rows * cell_height - 1),
     .r = (cfg.elastic_mouse && !term.mouse_mode)
          ? (x - PADDING) % cell_width > cell_width / 2
          : 0

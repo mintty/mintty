@@ -16,6 +16,7 @@ Keyboard handling
 Mouse handling
   * Configurable modifiers for hovering and link opening (#1169).
   * Support super and hyper modifiers with mouse functions.
+  * Fixed mouse pixel coordinates limits (DECSET 1016).
 
 Initialisation
   * Grab focus again after showing the window, reducing focus delay for Windows 11 (#1113).
