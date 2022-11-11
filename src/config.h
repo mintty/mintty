@@ -247,6 +247,7 @@ typedef struct {
   wstring options_font;
   int options_fontsize;
   string old_options;
+  bool dim_margins;
   bool old_xbuttons;
   // Legacy
   bool use_system_colours;

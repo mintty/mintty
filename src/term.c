@@ -303,6 +303,7 @@ term_reset(bool full)
 
   if (full) {
     term.lrmargmode = false;
+    term.dim_margins = cfg.dim_margins;
     term.deccolm_allowed = cfg.enable_deccolm_init;  // not reset by xterm
     term.vt220_keys = vt220(cfg.term);  // not reset by xterm
     term.app_keypad = false;  // xterm only with RIS
@@ -3340,6 +3341,24 @@ term_paint(void)
       newchars[j].chr = tchar;
      /* Combining characters are still read from chars */
       newchars[j].cc_next = 0;
+
+     /* Margin indication */
+      if (term.dim_margins &&
+          (// in normal display:
+           i < term.marg_top || (i > term.marg_bot && i < term.rows)
+           // in status display:
+           || (i >= term.rows && i < term.marg_top + term.rows)
+           || (i > term.marg_bot + term.rows)
+           // outside left/right margins:
+           || j < term.marg_left || j > term.marg_right
+          )
+         )
+      {
+        cattr * ca = &newchars[j].attr;
+        ca->attr |= ATTR_DIM;
+        ca->attr ^= ATTR_REVERSE;
+      }
+
     }  // end first loop
 
     if (i == curs_y) {

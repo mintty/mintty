@@ -7,6 +7,7 @@ Terminal features
   * Revamp line cursor handling, size changeable by CSI ? N c (#1157, #1175).
   * Support DECSET 117 (DECECM, VT520).
   * Added DECARR to DECRQSS.
+  * Optionally visualize margins by dimming.
 
 Keyboard handling
   * Not suppressing user-defined KeyFunctions for keypad keys in keypad modes (#1161).
@@ -23,6 +24,7 @@ Configuration
   * Option OldKeyFunctionsKeypad (~#1161, not listed in manual).
   * Option OpeningMod (#1169).
   * New user-definable function reset-noask.
+  * Option DimMargins, user-definable function toggle-dim-margins.
 
 Other
   * Fixed crash condition on user-defined commands (#1174).

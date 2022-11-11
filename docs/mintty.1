@@ -2546,6 +2546,11 @@ Typical baud rates (as supported by DEC VT420) were
 This setting enables a rough simulation of old CRT terminals' bloom effect.
 
 .TQ
+\fBVisualize terminal margins\fP (DimMargins=false)
+This setting dims margin areas (mainly for testing); origin mode is not considered.
+A user-definable menu function can also toggle this feature.
+
+.TQ
 \fBClear selection highlighting on input\fP (ClearSelectionOnInput=true)
 When this is disabled, keyboard input or pasting does not clear selection highlighting.
 
@@ -3027,6 +3032,8 @@ Supported actions are described as follows:
 \(en \fBtoggle-bidi\fP: toggles (global) bidi disabling
 .br
 \(en \fBrefresh\fP: refresh terminal display
+.br
+\(en \fBtoggle-dim-margins\fP: toggles margin dimming
 .br
 \(en \fBvoid\fP: do nothing
 .br

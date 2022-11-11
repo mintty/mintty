@@ -505,6 +505,7 @@ struct term {
   int marg_top, marg_bot; /* scrolling region margins */
   int marg_left, marg_right; /* horizontal margins */
   bool lrmargmode;           /* enable horizontal margins */
+  bool dim_margins;
   bool attr_rect;            /* rectangular attribute change extent */
   bool printing, only_printing;  /* Are we doing ANSI printing? */
   int  print_state;       /* state of print-end-sequence scan */
