@@ -522,6 +522,7 @@ struct term {
   bool st_active;         /* status line display active (DECSASD 1)*/
   term_cursor st_other_curs;  /* switched with active status display */
   term_cursor st_saved_curs;
+  uint st_kb_flag;
 
   bool has_focus;
   bool focus_reported;

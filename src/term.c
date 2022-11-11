@@ -3431,7 +3431,10 @@ term_paint(void)
           dispchars[curs_x].attr.attr |= ATTR_INVALID;
           curs_x++;
         }
+        term.st_kb_flag = what;
       }
+      else
+        term.st_kb_flag = 0;
 
      /* Progress indication */
       if (term.detect_progress) {
