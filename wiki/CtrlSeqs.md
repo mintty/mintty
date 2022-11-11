@@ -470,12 +470,13 @@ For values, see setting `Emojis` in the manual.
 
 OSC 11 semantics is extended to set or change image background.
 
-| **sequence**         | **locale**                                       |
-|:---------------------|:-------------------------------------------------|
-| `^[]11;_`_image_`^G` | set terminal size background image               |
-| `^[]11;%`_image_`^G` | set image and scale terminal to its aspect ratio |
-| `^[]11;*`_image_`^G` | set tiled background                             |
-| `^[]11;=^G`          | set background to desktop image (if tiled)       |
+| **sequence**         | **locale**                                        |
+|:---------------------|:--------------------------------------------------|
+| `^[]11;_`_image_`^G` | set terminal size background image                |
+| `^[]11;%`_image_`^G` | set image and scale terminal to its aspect ratio  |
+| `^[]11;*`_image_`^G` | set tiled background                              |
+| `^[]11;+`_image_`^G` | set background scaled with aspect ratio and tiled |
+| `^[]11;=^G`          | set background to desktop image (if tiled)        |
 
 If the background filename is followed by a comma and a number between 1 and 254, 
 the background image will be dimmed towards the background colour;

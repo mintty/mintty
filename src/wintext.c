@@ -1644,6 +1644,7 @@ win_set_ime_open(bool open)
 static bool tiled = false;
 static bool ratio = false;
 static bool wallp = false;
+static bool multi = false;
 static int wallp_style;
 static int alpha = -1;
 static LONG w = 0, h = 0;
@@ -1903,6 +1904,21 @@ load_background_image_brush(HDC dc, wstring fn)
       // prepare source memory DC and select the source bitmap into it
       HDC dc0 = CreateCompatibleDC(dc);
       HBITMAP oldhbm0 = SelectObject(dc0, hbm);
+      // crop image for combined scaling and tiling (#1180)
+      if (multi) {
+        int imgw = w;
+        int imgh = h;
+        if (bw * h > w * bh) {
+          imgw = w;
+          imgh = bh * imgw / bw;
+        }
+        else if (bw * h < w * bh) {
+          imgh = h;
+          imgw = bw * imgh / bh;
+        }
+        w = imgw;
+        h = imgh;
+      }
 
       // prepare destination memory DC, 
       // create and select the destination bitmap into it
@@ -2095,6 +2111,7 @@ get_bg_filename(void)
   tiled = false;
   ratio = false;
   wallp = false;
+  multi = false;
   static wchar * wallpfn = 0;
 
   wchar * bgfn = (wchar *)cfg.background;
@@ -2104,6 +2121,10 @@ get_bg_filename(void)
   }
   else if (*bgfn == '%') {
     ratio = true;
+    bgfn++;
+  }
+  else if (*bgfn == '+') {
+    multi = true;
     bgfn++;
   }
   else if (*bgfn == '_') {
