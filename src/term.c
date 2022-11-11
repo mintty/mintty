@@ -1827,6 +1827,84 @@ term_clear_status(void)
 }
 
 /*
+ * Set status type.
+ */
+void
+term_set_status_type(int type, int lines)
+{
+  /*
+    Unlike xterm, we do not resize the window when changing 
+    status area size; this does not only avoid trouble in full-screen 
+    or maximized mode, it also complies with DEC (VT420 p. 221, VT520 p. 5-147):
+	Notes on DECSSDT
+	• If you select no status line (Ps = 0), the terminal uses the 
+	  line as an additional user window line to display data.
+    As an extension, mintty supports a multi-line status area, 
+    configured with a second parameter to DECSSDT 2.
+    The suggestion of such an option could be interpreted from VT520 p. 2-35:
+	[The number of data display lines visible, not counting any status lines.]
+    although that may just be referring to status lines of multiple sessions.
+  */
+  int old_st_rows = term.st_rows;
+  switch (type) {
+    when 0: 
+            term_clear_status();
+            term.st_rows = 0;
+    when 1: 
+            if (term.st_type == 2)
+              term_clear_status();
+            term.st_type = 1; term.st_rows = 1;
+    when 2: 
+            if (term.st_type != 2)
+              term_clear_status();
+            term.st_type = 2;
+            if (lines) {
+              if (lines >= term_allrows / 2)
+                term.st_rows = max(0, term_allrows / 2 - 1);
+              else
+                term.st_rows = lines;
+            }
+            else
+              term.st_rows = 1;
+    otherwise: return;
+  }
+  if (!term.st_rows) {
+    term.st_type = 0;
+    term_switch_status(false);
+  }
+  if (term.st_type != 2)
+    term_switch_status(false);
+  if (term.st_rows != old_st_rows) {
+    // don't need to win_adapt_term_size(false, false);
+    int newrows = term.rows + old_st_rows - term.st_rows;
+    // scroll cursor position out of status line area
+    int n = term.curs.y - newrows + 1;
+    if (n > 0) {
+      bool old_st_act = term.st_active;
+      term_switch_status(false);
+      term_do_scroll(term.marg_top, term.marg_bot, n, true);
+      // fix up
+      term.curs.y = max(0, term.curs.y - n);
+      term_switch_status(old_st_act);
+    }
+    // don't need to term_resize(newrows, -term.cols);
+    term.rows = newrows;
+    term.marg_top = 0;
+    term.marg_bot = newrows - 1;
+    term.marg_left = 0;
+    term.marg_right = term.cols - 1;
+    // clear status lines
+    for (int i = term.rows; i < term_allrows; i++) {
+      freeline(term.lines[i]);
+      term.lines[i] = newline(term.cols, false);
+    }
+    // notify child process
+    struct winsize ws = {newrows, term.cols, term.cols * cell_width, newrows * cell_height};
+    child_resize(&ws);
+  }
+}
+
+/*
  * Swap active status line / main display.
  */
 void

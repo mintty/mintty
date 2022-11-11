@@ -26,6 +26,7 @@ extern void term_schedule_cblink(void);
 extern void term_schedule_vbell(int already_started, int startpoint);
 
 extern void term_switch_screen(bool to_alt, bool reset);
+extern void term_set_status_type(int type, int lines);
 extern void term_switch_status(bool status_line);
 extern void term_clear_status(void);
 extern void term_check_boundary(int x, int y);
