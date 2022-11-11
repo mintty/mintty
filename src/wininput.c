@@ -956,11 +956,16 @@ hide_mouse(void)
 static pos
 translate_pos(int x, int y)
 {
+  int rows = term.rows;
+  if (term.st_active) {
+    rows = term.st_rows;
+    y = max(0, y - term.rows * cell_height);
+  }
   return (pos){
     .x = floorf((x - PADDING) / (float)cell_width),
     .y = floorf((y - PADDING - OFFSET) / (float)cell_height),
     .pix = min(max(0, x - PADDING), term.cols * cell_width - 1),
-    .piy = min(max(0, y - PADDING - OFFSET), term.rows * cell_height - 1),
+    .piy = min(max(0, y - PADDING - OFFSET), rows * cell_height - 1),
     .r = (cfg.elastic_mouse && !term.mouse_mode)
          ? (x - PADDING) % cell_width > cell_width / 2
          : 0
@@ -1144,7 +1149,12 @@ win_get_locator_info(int *x, int *y, int *buttons, bool by_pixels)
         p.y = 0;
       else
         p.y -= OFFSET + PADDING;
-      if (p.y >= term.rows * cell_height)
+      if (term.st_active) {
+        p.y = max(0, p.y - term.rows * cell_height);
+        if (p.y >= term.st_rows * cell_height)
+          p.y = term.st_rows * cell_height - 1;
+      }
+      else if (p.y >= term.rows * cell_height)
         p.y = term.rows * cell_height - 1;
 
       if (by_pixels) {
