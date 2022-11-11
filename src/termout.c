@@ -263,6 +263,10 @@ static void
 attr_rect(cattrflags add, cattrflags sub, cattrflags xor, short y0, short x0, short y1, short x1)
 {
   //printf("attr_rect %d,%d..%d,%d +%llX -%llX ^%llX\n", y0, x0, y1, x1, add, sub, xor);
+  if (term.st_active) {
+    y0 += term.rows;
+    y1 += term.rows;
+  }
   y0--; x0--; y1--; x1--;
 
   if (term.curs.origin) {
@@ -328,6 +332,10 @@ static void
 fill_rect(xchar chr, cattr attr, bool sel, short y0, short x0, short y1, short x1)
 {
   //printf("fill_rect %d,%d..%d,%d\n", y0, x0, y1, x1);
+  if (term.st_active) {
+    y0 += term.rows;
+    y1 += term.rows;
+  }
   int width = charwidth(chr);
   if (chr == UCSWIDE || width < 1)
     return;
@@ -456,6 +464,11 @@ static void
 copy_rect(short y0, short x0, short y1, short x1, short y2, short x2)
 {
   //printf("copy_rect %d,%d..%d,%d -> %d,%d\n", y0, x0, y1, x1, y2, x2);
+  if (term.st_active) {
+    y0 += term.rows;
+    y1 += term.rows;
+    y2 += term.rows;
+  }
   y0--; x0--; y1--; x1--; y2--; x2--;
 
   if (term.curs.origin) {
@@ -598,6 +611,10 @@ static uint
 sum_rect(short y0, short x0, short y1, short x1)
 {
   //printf("sum_rect %d,%d..%d,%d\n", y0, x0, y1, x1);
+  if (term.st_active) {
+    y0 += term.rows;
+    y1 += term.rows;
+  }
 
   y0--; x0--; y1--; x1--;
 
@@ -2808,11 +2825,11 @@ do_csi(uchar c)
     }
     when 'd':        /* VPA: set vertical position */
       move(curs->x,
-           (curs->origin ? term.marg_top : 0) + arg0_def1 - 1,
+           (curs->origin ? term.marg_top : 0) + arg0_def1 + top_y - 1,
            curs->origin ? 2 : 0);
     when 'H' or 'f':  /* CUP or HVP: set horiz. and vert. positions at once */
       move((curs->origin ? term.marg_left : 0) + (arg1 ?: 1) - 1,
-           (curs->origin ? term.marg_top : 0) + arg0_def1 - 1,
+           (curs->origin ? term.marg_top : 0) + arg0_def1 + top_y - 1,
            curs->origin ? 2 : 0);
     when 'I':  /* CHT: move right N TABs */
       for (int i = 0; i < arg0_def1; i++)
@@ -3146,7 +3163,7 @@ do_csi(uchar c)
     when 'n':        /* DSR: device status report */
       if (arg0 == 6)  // CPR
         child_printf("\e[%d;%dR",
-                     curs->y + 1 - (curs->origin ? term.marg_top : 0),
+                     curs->y + 1 - (curs->origin ? term.marg_top : 0) - top_y,
                      curs->x + 1 - (curs->origin ? term.marg_left : 0));
       else if (arg0 == 5)
         child_write("\e[0n", 4);  // "in good operating condition"
@@ -3154,7 +3171,7 @@ do_csi(uchar c)
       switch (arg0) {
         when 6:  // DECXCPR
           child_printf("\e[?%d;%dR",  // VT420: third parameter "page"...
-                       curs->y + 1 - (curs->origin ? term.marg_top : 0),
+                       curs->y + 1 - (curs->origin ? term.marg_top : 0) - top_y,
                        curs->x + 1 - (curs->origin ? term.marg_left : 0));
         when 15:
           child_printf("\e[?%un", 11 - !!*cfg.printer);
