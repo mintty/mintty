@@ -1,3 +1,6 @@
+Unicode and Emoji data
+  * Unicode 15.0 update.
+
 Terminal features
   * Status line area support (VT320, xterm 371), DECSSDT, DECSASD.
   * Extended multi-line host-writable status area, DECSSDT 2 N.
