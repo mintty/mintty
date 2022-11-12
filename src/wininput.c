@@ -1331,6 +1331,15 @@ toggle_dim_margins()
   term.dim_margins = !term.dim_margins;
 }
 
+void
+toggle_status_line()
+{
+  if (term.st_type == 1)
+    term_set_status_type(0, 0);
+  else
+    term_set_status_type(1, 0);
+}
+
 static void scroll_HOME()
   { SendMessage(wnd, WM_VSCROLL, SB_TOP, 0); }
 static void scroll_END()
@@ -1644,6 +1653,12 @@ mflags_dim_margins()
 }
 
 static uint
+mflags_status_line()
+{
+  return term.st_type == 1 ? MF_CHECKED : MF_UNCHECKED;
+}
+
+static uint
 mflags_options()
 {
   return config_wnd ? MF_GRAYED : MF_ENABLED;
@@ -1759,6 +1774,7 @@ static struct function_def cmd_defs[] = {
   {"toggle-bidi", {.fct = toggle_bidi}, mflags_bidi},
   {"refresh", {.fct = refresh}, 0},
   {"toggle-dim-margins", {.fct = toggle_dim_margins}, mflags_dim_margins},
+  {"toggle-status-line", {.fct = toggle_status_line}, mflags_status_line},
 
   {"super", {.fct_key = super_down}, 0},
   {"hyper", {.fct_key = hyper_down}, 0},

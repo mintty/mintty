@@ -378,6 +378,11 @@ term_reset(bool full)
   term_switch_status(false);
   if (full) {
     term_clear_status();
+    // restore initial status line unless type 2 selected
+    if (cfg.status_line && term.st_type == 0)
+      term_set_status_type(1, 0);
+    else if (!cfg.status_line && term.st_type == 1)
+      term_set_status_type(0, 0);
   }
 
   if (full) {

@@ -250,6 +250,7 @@ const config default_cfg = {
   .hover_title = true,
   .progress_bar = 0,
   .dim_margins = false,
+  .status_line = false,
   .old_bold = false,
   .ime_cursor_colour = DEFAULT_COLOUR,
   .ansi_colours = {
@@ -582,6 +583,7 @@ options[] = {
   {"Baud", OPT_INT, offcfg(baud)},
   {"Bloom", OPT_INT, offcfg(bloom)},
   {"DimMargins", OPT_BOOL, offcfg(dim_margins)},
+  {"StatusLine", OPT_BOOL, offcfg(status_line)},
   {"OldXButtons", OPT_BOOL, offcfg(old_xbuttons)},
   {"OptionsFont", OPT_WSTRING, offcfg(options_font)},
   {"OptionsFontSize", OPT_INT | OPT_LEGACY, offcfg(options_fontsize)},

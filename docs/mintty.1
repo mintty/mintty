@@ -2223,6 +2223,11 @@ mintty 2.7.5:
 .RE
 
 .TQ
+\fBEnable indicator status line\fP (StatusLine=false)
+This setting enables the DEC indicator status line initially.
+On terminal reset, this setting is restored unless host-writable status line is selected.
+
+.TQ
 \fBAllow control sequence to set selection\fP (AllowSetSelection=false)
 If enabled, the terminal control sequence OSC 52 is allowed to set the 
 clipboard selection for pasting (using base64-encoded contents, like xterm).
@@ -3022,6 +3027,8 @@ Supported actions are described as follows:
 \(en \fBopen\fP: opens the selection, e.g. a URL or filename
 .br
 \(en \fBtoggle-logging\fP: toggles logfile logging
+.br
+\(en \fBtoggle-status-line\fP: toggles indicator status line
 .br
 \(en \fBtoggle-char-info\fP: toggles character info display
 .br

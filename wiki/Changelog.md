@@ -26,6 +26,7 @@ Configuration
   * Option OpeningMod (#1169).
   * New user-definable function reset-noask.
   * Option DimMargins, user-definable function toggle-dim-margins.
+  * Option StatusLine, user-definable function toggle-status-line.
   * Background image mode '+' for combined scaling and tiling (#1180).
 
 Other
