@@ -31,6 +31,7 @@ Configuration
   * Option DimMargins, user-definable function toggle-dim-margins.
   * Option StatusLine, user-definable function toggle-status-line.
   * Background image mode '+' for combined scaling and tiling (#1180).
+  * New user-definable function transparency-opaque (#1168).
 
 Other
   * Fixed crash condition on user-defined commands (#1174).

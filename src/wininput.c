@@ -1254,6 +1254,12 @@ transparency_level()
 }
 
 static void
+transparency_opaque()
+{
+  win_update_transparency(cfg.transparency, true);
+}
+
+static void
 newwin_begin(uint key, mod_keys mods)
 {
   if (key) {
@@ -1739,6 +1745,7 @@ static struct function_def cmd_defs[] = {
   {"scrollbar-inner", {.fct = toggle_scrollbar}, mflags_scrollbar_inner},
   {"cycle-pointer-style", {.fct = cycle_pointer_style}, 0},
   {"cycle-transparency-level", {.fct = transparency_level}, 0},
+  {"transparency-opaque", {.fct = transparency_opaque}, 0},
 
   {"copy", {IDM_COPY}, mflags_copy},
   {"copy-text", {IDM_COPY_TEXT}, mflags_copy},
