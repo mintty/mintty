@@ -10,6 +10,7 @@ Terminal features
   * Revamp line cursor handling, size changeable by CSI ? N c (#1157, #1175).
   * Support DECSET 117 (DECECM, VT520).
   * Added DECARR to DECRQSS.
+  * Prevent font zooming for resizing controls like CSI 8.
   * Optionally visualize margins by dimming.
 
 Keyboard handling

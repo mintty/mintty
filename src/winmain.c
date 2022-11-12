@@ -1809,8 +1809,8 @@ win_fix_position(bool scrollbar)
                SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
-void
-win_set_pixels(int height, int width)
+static void
+win_set_pixels_zoom(int height, int width)
 {
   trace_resize(("--- win_set_pixels %d %d\n", height, width));
   // avoid resizing if no geometry yet available (#649?)
@@ -2045,8 +2045,8 @@ win_set_geom(int y, int x, int height, int width)
                SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOZORDER);
 }
 
-void
-win_set_chars(int rows, int cols)
+static void
+win_set_chars_zoom(int rows, int cols)
 {
   trace_resize(("--- win_set_chars %d×%d\n", rows, cols));
 
@@ -2064,6 +2064,26 @@ win_set_chars(int rows, int cols)
   }
   trace_winsize("win_set_chars > win_fix_position");
 }
+
+void
+win_set_pixels(int height, int width)
+{
+  // prevent font zooming if called from termout.c, for CSI 4
+  default_size_token = true;
+  win_set_pixels_zoom(height, width);
+}
+
+void
+win_set_chars(int rows, int cols)
+{
+  // prevent font zooming if called from termout.c, for CSI 8 etc
+  default_size_token = true;
+  win_set_chars_zoom(rows, cols);
+}
+
+// allow font zooming if called below
+#define win_set_pixels(height, width) win_set_pixels_zoom(height, width)
+#define win_set_chars(rows, cols) win_set_chars_zoom(rows, cols)
 
 
 void
