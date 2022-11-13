@@ -1232,6 +1232,7 @@ get_char_info(termchar * cpoi, bool doret)
 static void
 show_status_line()
 {
+#if CYGWIN_VERSION_API_MINOR >= 74
   term_cursor curs = term.curs;
   term.st_active = true;
   cattr erase_attr = term.erase_char.attr;
@@ -1313,6 +1314,7 @@ show_status_line()
   if (status_bell) {
     term_update_cs();
   }
+#endif
 }
 
 static void

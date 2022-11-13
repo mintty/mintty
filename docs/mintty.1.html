@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Sun Apr 24 05:12:34 2022 -->
+<!-- CreationDate: Sun Nov 13 12:45:02 2022 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -452,7 +452,7 @@ process (for click-opening pathnames) cannot be detected.
 &ndash; Locale modification (@cjk...) is not set to the
 environment variables.</p>
 
-<p style="margin-left:11%;"><b>--WSL</b> <i>WSL
+<p style="margin-left:11%;"><b>--WSL</b>=<i>WSL
 DISTRIBUTION NAME</i></p>
 
 <p style="margin-left:22%;">Run a WSL session, setting
@@ -468,7 +468,7 @@ distribution. Also sets up the gateway to propagate locale
 settings LANG, LC_CTYPE, LC_ALL and environment variable
 APPDATA to the WSL session.</p>
 
-<p style="margin-left:11%;"><b>--WSLmode</b> <i>WSL
+<p style="margin-left:11%;"><b>--WSLmode</b>=<i>WSL
 DISTRIBUTION NAME</i></p>
 
 <p style="margin-left:22%;">Setup a WSL session for the
@@ -782,11 +782,12 @@ files, directories and URLs</b> <br>
 Files, directories, URLs and web addresses beginning with
 &quot;www.&quot; can be opened either by holding <b>Ctrl</b>
 while left-clicking on them (or double-clicking, if and as
-enabled by option <b>OpeningClicks</b>), or by selecting
-them and choosing the <b>Open</b> command from the context
-menu. Embedded spaces are considered if escaped with a
-backslash; for selected pathnames, also embedding quote
-marks are considered.</p>
+enabled by option <b>OpeningClicks</b>, or left-clicking
+with another modifier as configured by option
+<b>OpeningMod</b>), or by selecting them and choosing the
+<b>Open</b> command from the context menu. Embedded spaces
+are considered if escaped with a backslash; for selected
+pathnames, also embedding quote marks are considered.</p>
 
 <p style="margin-left:11%; margin-top: 1em">A relative
 pathname is interpreted as relative to the current working
@@ -1121,11 +1122,16 @@ subsequent digits can be entered both on the numpad or the
 main part of the keyboard.</p>
 
 <p style="margin-left:22%; margin-top: 1em">If the first
-key is the '<b>+</b>' on the numpad, the code is interpreted
-as hexadecimal, whereby digits A through F can be entered
-using the letter keys. If the first key is a zero, the code
-is interpreted as octal. If the first key is any other digit
-from 1 to 9, the code is interpreted as decimal.</p>
+key is a zero, the code is interpreted as octal. <br>
+If the first key is any other digit from 1 to 9, the code is
+interpreted as decimal. <br>
+If the first key is the '<b>+</b>' on the numpad, the code
+is interpreted as hexadecimal, whereby digits A through F
+can be entered using the letter keys. <br>
+If the first key is the '<b>-</b>' on the numpad, the code
+is interpreted as decimal; this is normally not needed but
+can be used to override a user-defined function assignment
+to an Alt+numpad key.</p>
 
 <p style="margin-left:22%; margin-top: 1em">For UTF-8 and
 other Unicode encodings such as GB18030, the entered code is
@@ -1223,7 +1229,7 @@ see notes below <br>
 below <br>
 &ndash; <b>Alt+F3</b>: Search (in scrollback buffer) <br>
 &ndash; <b>Alt+F4</b>: Close <br>
-&ndash; <b>Alt+F8</b>: Reset <br>
+&ndash; <b>Alt+F8</b>: Reset (with confirm dialog) <br>
 &ndash; <b>Alt+F10</b>: Default terminal size (rows/columns)
 <br>
 &ndash; <b>Shift+Alt+F10</b>: Default terminal size
@@ -1301,7 +1307,8 @@ can be enabled on the Keys pane of the Options dialog. <br>
 <br>
 &ndash; <b>Ctrl+Shift+H</b>: Search scrollback buffer <br>
 &ndash; <b>Ctrl+Shift+W</b>: Close <br>
-&ndash; <b>Ctrl+Shift+R</b>: Reset <br>
+&ndash; <b>Ctrl+Shift+R</b>: Reset (without confirm dialog)
+<br>
 &ndash; <b>Ctrl+Shift+D</b>: Default terminal size
 (rows/columns) <br>
 &ndash; <b>Ctrl+Shift+F</b>: Full screen (not zooming font
@@ -2507,6 +2514,18 @@ The <b>Off</b> setting disables overriding. <br>
 &ndash; <b>Win</b> <br>
 &ndash; <b>Off</b></p>
 
+<p style="margin-left:11%;"><br><b class=h4>Modifier key for hovering
+and link opening</b> (OpeningMod=ctrl)</p>
+
+<p style="margin-left:22%;">This chooses the modifier key
+to enable mouse move hovering and mouse click link opening.
+Accepted settings are ctrl, shift, alt, win, super, hyper,
+off. Note that the setting may be overridden by
+ClickTargetMod if set to the same value. Note also that
+setting this to off (which enables hovering and link opening
+without modifier) overrides double and triple click
+functions.</p>
+
 <p style="margin-left:11%;"><br><b class=h4>Mouse auto-hiding</b>
 (HideMouse=on)</p>
 
@@ -2770,6 +2789,14 @@ column <br>
 &ndash; Reverse Wraparound mode initially disabled (but
 switchable), complying with xterm default and terminfo</p>
 
+<p style="margin-left:11%;"><br><b class=h4>Enable indicator status
+line</b> (StatusLine=false)</p>
+
+<p style="margin-left:22%;">This setting enables the DEC
+indicator status line initially. On terminal reset, this
+setting is restored unless host-writable status line is
+selected.</p>
+
 <p style="margin-left:11%;"><br><b class=h4>Allow control sequence to
 set selection</b> (AllowSetSelection=false)</p>
 
@@ -2989,8 +3016,9 @@ it contains <b>%d</b> it will be substituted with the
 process ID. If it contains <b>%</b> placeholders other than
 a single <b>%d</b>, the log file name will be constructed by
 calling strftime(3) on the pattern; note that this is likely
-to fail if a placeholder expands with &quot;/&quot;
-(%D).</p>
+to fail if a placeholder expands with &quot;/&quot; (%D).
+Example: <br>
+&ndash; <b>Log=~/mintty.%Y-%m-%d_%H-%M-%S</b>.log</p>
 
 <p style="margin-left:22%; margin-top: 1em">If the log file
 name is a relative path name, it is relative from the
@@ -3147,6 +3175,14 @@ characters</b> (Bloom=0)</p>
 
 <p style="margin-left:22%;">This setting enables a rough
 simulation of old CRT terminals&rsquo; bloom effect.</p>
+
+<p style="margin-left:11%;"><br><b class=h4>Visualize terminal
+margins</b> (DimMargins=false)</p>
+
+<p style="margin-left:22%;">This setting dims margin areas
+(mainly for testing); origin mode is not considered. A
+user-definable menu function can also toggle this
+feature.</p>
 
 <p style="margin-left:11%;"><br><b class=h4>Clear selection
 highlighting on input</b> (ClearSelectionOnInput=true)</p>
@@ -3624,6 +3660,8 @@ compatible) <br>
 <br>
 &ndash; <b>cycle-transparency-level</b>: cycles the
 transparency level <br>
+&ndash; <b>transparency-opaque</b>: temporarily overrides
+transparency <br>
 &ndash; <b>unicode-char</b>: enter Unicode character by its
 hexadecimal code <br>
 &ndash; <b>copy</b>: copies the selection to the clipboard
@@ -3656,7 +3694,10 @@ clipboard <br>
 &ndash; <b>clear-title</b>: clears the window title <br>
 &ndash; <b>lock-title</b>: locks the window title from being
 changed <br>
-&ndash; <b>reset</b>: resets the terminal <br>
+&ndash; <b>reset</b>: resets the terminal (with confirm
+dialog) <br>
+&ndash; <b>reset-noask</b>: resets the terminal (no confirm
+dialog) <br>
 &ndash; <b>tek-reset</b>: Tek mode RESET <br>
 &ndash; <b>tek-page</b>: Tek mode PAGE key (~soft reset)
 <br>
@@ -3677,6 +3718,8 @@ key scrolling <br>
 &ndash; <b>open</b>: opens the selection, e.g. a URL or
 filename <br>
 &ndash; <b>toggle-logging</b>: toggles logfile logging <br>
+&ndash; <b>toggle-status-line</b>: toggles indicator status
+line <br>
 &ndash; <b>toggle-char-info</b>: toggles character info
 display <br>
 &ndash; <b>export-html</b> (*): exports the screen as an
@@ -3685,6 +3728,8 @@ HTML file <br>
 &ndash; <b>toggle-bidi</b>: toggles (global) bidi disabling
 <br>
 &ndash; <b>refresh</b>: refresh terminal display <br>
+&ndash; <b>toggle-dim-margins</b>: toggles margin dimming
+<br>
 &ndash; <b>void</b>: do nothing <br>
 &ndash; <b>super</b>: use this key as Super modifier key
 <br>
@@ -4057,21 +4102,25 @@ texture</b> (Background=)</p>
 <p style="margin-left:22%;">With this option, an image can
 be chosen as background. With an image file name, absolute
 (with an optional <b>~</b> prefix) or relative to the
-current terminal foreground process, the option either uses
-the image as a background picture, scaled to the terminal
-size (optional prefix <b>_</b> to the filename), or
-initially scaling the terminal to the aspect ratio of the
-image (prefix <b>%</b> to the filename), or as a tiled
-background texture (prefix <b>*</b> to the filename), or it
-uses the current desktop background, achieving a virtual
-floating window effect (<b>=</b> without filename, currently
-only applicable if desktop wallpaper is set as being
-&quot;tiled&quot; and unscaled).</p>
+current terminal foreground process, the option uses the
+image as a background picture, with variations as indicated
+by a prefix character to the filename: <b><br>
+_</b> (optional prefix) scales the image to the terminal
+size <b><br>
+%</b> initially scales the terminal to the image&rsquo;s
+aspect ratio <b><br>
+*</b> uses the image as a tiled texture <b><br>
++</b> scales to terminal size, keeping aspect ratio, then
+tiles <b><br>
+=</b> (no filename) uses the current desktop background,
+achieving a virtual floating window effect (currently only
+applicable if desktop wallpaper is set as being
+&quot;tiled&quot; and unscaled)</p>
 
 <p style="margin-left:22%; margin-top: 1em">The background
 can be changed with an OSC 11 escape sequence, instead of a
 colour using a background specification prefixed with either
-of <b>_</b>, <b>%</b>, <b>*</b>, <b>=</b>.</p>
+of <b>_</b>, <b>%</b>, <b>*</b>, <b>+</b>, <b>=</b>.</p>
 
 <p style="margin-left:22%; margin-top: 1em">If the
 background filename is followed by a comma and a number
@@ -4658,10 +4707,11 @@ communicates with the child process through a pseudo
 terminal device, which Cygwin emulates using Windows pipes,
 causing issues with native Windows command line programs.
 Cygwin 3.1.0 compensates for this issue via the ConPTY API
-of Windows 10. See
+of Windows 10. MSYS2, however, does not enable this support
+by default. See
 <i><a href="https://github.com/mintty/mintty/wiki/Tips#inputoutput-interaction-with-alien-programs">https://github.com/mintty/mintty/wiki/Tips#inputoutput-interaction-with-alien-programs</a></i>
-for further hints, especially on the <i>winpty</i> wrapper
-for older systems.</p>
+for further hints, also on the <i>winpty</i> wrapper for
+older systems.</p>
 
 
 <p style="margin-left:11%; margin-top: 1em"><b class=h3>Termcap/terminfo</b>
@@ -4678,8 +4728,9 @@ control features, DEC and xterm compatibility</b> <br>
 Mintty is compatible with xterm screen control. It supports
 DEC terminal screen features up to the VT500 series except
 DECRLM (right-to-left cursor motion), also supporting VT52
-mode, thus being fully VT100-compatible. It also includes
-most other xterm-specific control sequences and modes.</p>
+mode, thus being fully VT100-compatible, and VT320 status
+lines. It also includes most other xterm-specific control
+sequences and modes.</p>
 
 <p style="margin-left:11%; margin-top: 1em">In addition,
 mintty supports a maximum of ANSI and ECMA-48 character
