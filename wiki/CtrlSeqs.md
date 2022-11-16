@@ -26,7 +26,7 @@ These escape sequences cause mintty to report its identification.
 | **request** | **response**                      | **comment** |
 |:------------|:----------------------------------|:------------|
 | `^[[>0c`    | `^[[>77;`_version_`;`_unicode_`c` | secondary devices attributes (DEC); _version_ like 30105, _unicode_ version when using built-in data |
-| `^[[>0q`    | `^[P>|mintty `_version_`^[\`      | terminal identification query (xterm 354); _version_ like 3.1.5 |
+| `^[[>0q`    | `^[P>\|mintty `_version_`^[\`     | terminal identification query (xterm 354); _version_ like 3.1.5 |
 
 
 ## Escape keycode ##
