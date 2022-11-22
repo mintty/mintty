@@ -59,7 +59,10 @@ else ifeq ($(TARGET), x86_64-pc-msys)
   platform := msys64
   zip_files := ../docs/readme-msys.html
 else
-  $(error Target '$(TARGET)' not supported)
+  # just warning to support cross-generation of data files
+warn=[30;48;5;11m
+norm=[m
+  $(warning $(warn) Target '$(TARGET)' not supported $(norm))
 endif
 
 CPPFLAGS := -DTARGET=$(TARGET)
@@ -206,7 +209,7 @@ unidata=$(combdata) ambiguous.t scripts.t blocks.t casefold.t bidiclasses.t mirr
 emojidata=emojibase.t emojiseqs.t
 
 unicodedata=UnicodeData.txt EastAsianWidth.txt Blocks.txt Scripts.txt CaseFolding.txt BidiMirroring.txt BidiBrackets.txt BidiCharacterTest.txt BidiTest.txt NameAliases.txt
-unicodeemoji=emoji-data.txt emoji-sequences.txt emoji-variation-sequences.txt emoji-zwj-sequences.txt
+unicodeemoji=emoji-data.txt emoji-sequences.txt emoji-variation-sequences.txt emoji-zwj-sequences.txt emoji-test.txt
 
 clean-unicode:
 	rm -f $(unidata) $(emojidata)
@@ -269,7 +272,8 @@ unibasever = `sed -e '/^\# Blocks-/ s,[^0-9]*\([0-9]*\)\..*,\1.0,' -e t -e d Blo
 
 # Emoji version may advance Unicode version
 emojiver = $(unibasever)
-emojiver = 13.1
+# override Emoji version if not in sync (or extract from emoji-data.txt)
+emojiver = 15.0
 
 # until 12.0:
 #emoji-%.txt:	Blocks.txt
@@ -278,6 +282,8 @@ emojiver = 13.1
 emoji-sequences.txt:	Blocks.txt
 	$(WGET) http://www.unicode.org/Public/emoji/$(emojiver)/$@
 emoji-zwj-sequences.txt:	Blocks.txt
+	$(WGET) http://www.unicode.org/Public/emoji/$(emojiver)/$@
+emoji-test.txt:	Blocks.txt
 	$(WGET) http://www.unicode.org/Public/emoji/$(emojiver)/$@
 emoji-data.txt:	Blocks.txt
 	$(WGET) http://www.unicode.org/Public/$(univer)/ucd/emoji/$@
@@ -300,7 +306,7 @@ univer:	Blocks.txt
 emojibase.t:	# emoji-data.txt emoji-variation-sequences.txt emoji-sequences.txt emoji-zwj-sequences.txt
 	bash ./mkemojis base > $@
 
-emojiseqs.t:	# emoji-sequences.txt emoji-zwj-sequences.txt
+emojiseqs.t:	# emoji-sequences.txt emoji-zwj-sequences.txt emoji-test.txt
 	bash ./mkemojis seqs > $@
 
 #compose_list=/usr/share/X11/locale/en_US.UTF-8/Compose

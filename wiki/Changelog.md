@@ -1,3 +1,6 @@
+Unicode and Emoji data
+  * Extend emoji information by considering Unicode file emoji-test.txt.
+
 ### 3.6.2 (13 Nov 2022) ###
 
 Unicode and Emoji data
