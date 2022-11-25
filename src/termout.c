@@ -989,14 +989,25 @@ write_char(wchar c, int width)
       term_check_boundary(curs->x + width, curs->y);
       if (curs->x == term.marg_right || curs->x == term.cols - 1) {
         line->chars[curs->x] = term.erase_char;
-        line = do_wrap(line, LATTR_WRAPPED | LATTR_WRAPPED2);
-       /* Now we must term_check_boundary again, of course. */
-        term_check_boundary(curs->x, curs->y);
-        term_check_boundary(curs->x + width, curs->y);
+        if (term.autowrap) {
+          line = do_wrap(line, LATTR_WRAPPED | LATTR_WRAPPED2);
+         /* Now we must term_check_boundary again, of course. */
+          term_check_boundary(curs->x, curs->y);
+          term_check_boundary(curs->x + width, curs->y);
+
+          put_char(c);
+          curs->x++;
+          put_char(UCSWIDE);
+        }
+        else {
+         /* drop character that does not fit into last column */
+        }
       }
-      put_char(c);
-      curs->x++;
-      put_char(UCSWIDE);
+      else {
+        put_char(c);
+        curs->x++;
+        put_char(UCSWIDE);
+      }
 #ifdef support_triple_width
       if (width > 2) {
         for (int i = 2; i < width; i++) {

@@ -1,3 +1,6 @@
+Terminal features
+  * Fixed double-width characters not to wrap if auto-wrap disabled.
+
 Unicode and Emoji data
   * Extend emoji information by considering Unicode file emoji-test.txt.
 
