@@ -762,6 +762,11 @@ write_tab(void)
 {
   term_cursor *curs = &term.curs;
 
+  if (cfg.wrap_tab && curs->wrapnext && term.autowrap) {
+    termline * line = term.lines[curs->y];
+    (void)do_wrap(line, LATTR_WRAPPED);
+  }
+
   int last = -1;
   do {
     if (curs->x == term.marg_right)

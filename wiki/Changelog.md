@@ -1,8 +1,12 @@
 Terminal features
   * Fixed double-width characters not to wrap if auto-wrap disabled.
+  * TAB may wrap to next line if enabled (~#1182).
 
 Unicode and Emoji data
   * Extend emoji information by considering Unicode file emoji-test.txt.
+
+Configuration
+  * Option WrapTab (~#1182).
 
 ### 3.6.2 (13 Nov 2022) ###
 

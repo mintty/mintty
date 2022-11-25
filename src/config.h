@@ -156,6 +156,7 @@ typedef struct {
   // Terminal
   string term;
   wstring answerback;
+  bool wrap_tab;
   bool old_wrapmodes;
   bool enable_deccolm_init;
   int bell_type;
