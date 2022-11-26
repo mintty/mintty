@@ -997,7 +997,10 @@ write_char(wchar c, int width)
       */
       term_check_boundary(curs->x, curs->y);
       term_check_boundary(curs->x + width, curs->y);
-      if (curs->x == term.marg_right || curs->x == term.cols - 1) {
+      if (curs->x == term.marg_right || curs->x == term.cols - 1
+       || ((line->lattr & LATTR_MODE) != LATTR_NORM && curs->x >= (term.cols - 1) / 2)
+         )
+      {
         line->chars[curs->x] = term.erase_char;
         if (term.autowrap) {
           line = do_wrap(line, LATTR_WRAPPED | LATTR_WRAPPED2);
@@ -1069,6 +1072,14 @@ write_char(wchar c, int width)
   }
 
   curs->x++;
+  if ((line->lattr & LATTR_MODE) != LATTR_NORM) {
+    if (curs->x >= term.cols / 2) {
+      curs->x --;
+      if (term.autowrap)
+        curs->wrapnext = true;
+    }
+  }
+  else
   if (curs->x == term.marg_right + 1 || curs->x == term.cols) {
     curs->x--;
     if (term.autowrap || cfg.old_wrapmodes)
