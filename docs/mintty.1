@@ -2223,10 +2223,12 @@ mintty 2.7.5:
 .RE
 
 .TQ
-\fBTAB character may wrap to next line\fP (WrapTab=no)
-With this setting, a TAB character after the last column in the line 
+\fBTAB character may wrap to next line\fP (WrapTab=0)
+Setting this to 1, a TAB character after the last column in the line 
 (i.e. in pending wrap state) will wrap to the next line and display there.
 (Corresponds to the xterm command-line option \fB-cu\fP.)
+Setting this to 2, a TAB character moving up to the line end will also 
+set the pending wrap condition, so that a subsequent character will wrap.
 
 .TQ
 \fBEnable indicator status line\fP (StatusLine=false)

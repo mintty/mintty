@@ -787,10 +787,15 @@ write_tab(void)
   if ((term.lines[curs->y]->lattr & LATTR_MODE) != LATTR_NORM) {
     if (curs->x >= term.cols / 2)
       curs->x = term.cols / 2 - 1;
+    if (cfg.wrap_tab > 1 && curs->x == term.cols / 2 - 1)
+      curs->wrapnext = true;
   }
   else {
     if (curs->x >= term.cols)
       curs->x = term.cols - 1;
+    if (cfg.wrap_tab > 1 && 
+        (curs->x == term.cols - 1 || curs->x == term.marg_right))
+      curs->wrapnext = true;
   }
 }
 
