@@ -2159,6 +2159,11 @@ set_modes(bool state)
           term.cursor_blinkmode = state;
           term.cursor_invalid = true;
           term_schedule_cblink();
+        when 20: /* DEC VK100 overstrike */
+          if (state)
+            term.curs.attr.attr |= ATTR_OVERSTRIKE;
+          else
+            term.curs.attr.attr &= ~ATTR_OVERSTRIKE;
         when 25: /* DECTCEM: enable/disable cursor */
           term.cursor_on = state;
           // Should we set term.cursor_invalid or call term_invalidate ?
@@ -2402,6 +2407,8 @@ get_mode(bool privatemode, int arg)
         return 2 - (term.mouse_mode == MM_X10);
       when 12: /* AT&T 610 blinking cursor */
         return 2 - term.cursor_blinkmode;
+      when 20: /* DEC VK100 overstrike */
+        return 2 - !!(term.curs.attr.attr & ATTR_OVERSTRIKE);
       when 25: /* DECTCEM: enable/disable cursor */
         return 2 - term.cursor_on;
       when 30: /* Show/hide scrollbar */

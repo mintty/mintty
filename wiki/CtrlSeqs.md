@@ -419,6 +419,19 @@ with one extension:
 | `^[[2;2 Z`   | like `^[[22 Z`                                |
 
 
+## Overstrike ##
+
+Mintty supports overstriking characters, with either an SGR attribute 
+or the VK100-compatible DECSET 20.
+
+| **sequence** | **effect**                                    |
+|:-------------|:----------------------------------------------|
+| `^[[8:7m`    | overstriking character writing mode           |
+| `^[[28m`     | overwriting character writing mode            |
+| `^[[?20h`    | overstriking character writing mode           |
+| `^[[?20l`    | overwriting character writing mode            |
+
+
 ## Font size ##
 
 The following _OSC_ ("operating system command") sequences can be used to change and query font size:
