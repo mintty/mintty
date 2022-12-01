@@ -294,9 +294,10 @@ occur in all pty-based terminals (like xterm, rxvt etc).
 
 Cygwin 3.1.0 compensates for this issue via the ConPTY API of Windows 10.
 On MSYS2, its usage can be enabled by setting the environment variable 
-MSYS=enable_pcon or changing the default during MSYS2 installation.
+MSYS=enable_pcon (or selecting this setting when installing an older version).
 You can also later set `MSYS=enable_pcon` in file `/etc/git-bash.config`.
-You can also set mintty option `ConPTY=true` to override the MSYS2 default.
+MSYS2 releases since 2022-10-28 enable ConPTY by default.
+You can also set mintty option `ConPTY=true` to override the MSYS2 setting.
 
 As a workaround on older versions of Cygwin or Windows, you can use 
 [winpty](https://github.com/rprichard/winpty) as a wrapper to invoke 
