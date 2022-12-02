@@ -10,6 +10,9 @@ Unicode and Emoji data
 Configuration
   * Option WrapTab (#1182).
 
+Other
+  * Fixed crash in Options dialog when Printer Service is stopped (#1185).
+
 ### 3.6.2 (13 Nov 2022) ###
 
 Unicode and Emoji data
