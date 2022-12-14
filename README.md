@@ -1,12 +1,14 @@
-Mintty is the [Cygwin](http://cygwin.com) Terminal emulator, 
-also available for [MSYS](http://mingw.org/wiki/MSYS) 
-and [Msys2](https://github.com/msys2).
+Mintty is the [Cygwin](http://cygwin.com) Terminal, 
+as well as the 
+[terminal emulator](http://en.wikipedia.org/wiki/Terminal_emulator) 
+for MSYS 
+([Msys2](https://github.com/msys2), 
+[old MSYS](https://web.archive.org/web/20201223203407/http://www.mingw.org/)).
 
 ### Overview ###
 
 For an introduction, features overview, and screenshots, see the 
-[<img align=absmiddle src=icon/terminal.ico>Mintty homepage](http://mintty.github.io/),
-with an opportunity to donate to appreciate mintty.
+[<img align=absmiddle src=icon/terminal.ico>Mintty homepage](http://mintty.github.io/).
 
 For detailed hints and specific issues, see the [Wiki](https://github.com/mintty/mintty/wiki).
 
