@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Sun Nov 13 12:45:02 2022 -->
+<!-- CreationDate: Sun Dec 18 01:37:28 2022 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -2789,6 +2789,17 @@ column <br>
 &ndash; Reverse Wraparound mode initially disabled (but
 switchable), complying with xterm default and terminfo</p>
 
+<p style="margin-left:11%;"><br><b class=h4>TAB character may wrap to
+next line</b> (WrapTab=0)</p>
+
+<p style="margin-left:22%;">Setting this to 1, a TAB
+character after the last column in the line (i.e. in pending
+wrap state) will wrap to the next line and display there.
+(Corresponds to the xterm command-line option <b>-cu</b>.)
+Setting this to 2, a TAB character moving up to the line end
+will also set the pending wrap condition, so that a
+subsequent character will wrap.</p>
+
 <p style="margin-left:11%;"><br><b class=h4>Enable indicator status
 line</b> (StatusLine=false)</p>
 
@@ -3660,8 +3671,8 @@ compatible) <br>
 <br>
 &ndash; <b>cycle-transparency-level</b>: cycles the
 transparency level <br>
-&ndash; <b>transparency-opaque</b>: temporarily overrides
-transparency <br>
+&ndash; <b>toggle-opaque</b>: toggles temporary transparency
+override <br>
 &ndash; <b>unicode-char</b>: enter Unicode character by its
 hexadecimal code <br>
 &ndash; <b>copy</b>: copies the selection to the clipboard

@@ -1,3 +1,5 @@
+### 3.6.3 (18 Dec 2022) ###
+
 Terminal features
   * Fixed double-width characters not to wrap if auto-wrap disabled.
   * TAB may wrap to next line, or cause subsequent wrap, if enabled (#1182).
