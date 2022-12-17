@@ -77,6 +77,7 @@ extern bool clipboard_token;
 extern uint dpi;
 extern int per_monitor_dpi_aware;
 extern bool keep_screen_on;
+extern bool force_opaque;
 
 extern bool click_focus_token;
 extern pos last_pos;

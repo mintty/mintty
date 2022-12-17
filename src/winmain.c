@@ -102,6 +102,7 @@ static int zoom_token = 0;  // for heuristic handling of Shift zoom (#467, #476)
 static bool default_size_token = false;
 bool clipboard_token = false;
 bool keep_screen_on = false;
+bool force_opaque = false;
 
 // Options
 bool title_settable = true;
@@ -2882,6 +2883,8 @@ win_update_transparency(int trans, bool opaque)
   SetWindowLong(wnd, GWL_EXSTYLE, style);
   if (trans) {
     if (opaque && term.has_focus)
+      trans = 0;
+    if (force_opaque)
       trans = 0;
     SetLayeredWindowAttributes(wnd, 0, 255 - (uchar)trans, LWA_ALPHA);
   }
