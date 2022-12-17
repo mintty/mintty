@@ -3,12 +3,17 @@ Terminal features
   * TAB may wrap to next line, or cause subsequent wrap, if enabled (#1182).
   * Fixed auto-wrap behaviour in double-width lines.
   * Overstriking character writing mode also switched with DECSET 20 (VK100, #1184).
+  * Fixed OSC 7 (set working directory) to handle ~ prefix.
+  * Added XTQMODKEYS state query (xterm 373).
+  * Withdrawn DEC private SGRs (/#1171, conflict with XTQMODKEYS).
+  * Added XTQALLOWED OSC 60 and OSC 61 (xterm 373).
 
 Unicode and Emoji data
   * Extend emoji information by considering Unicode file emoji-test.txt.
 
 Configuration
   * Option WrapTab (#1182).
+  * New user-definable function toggle-opaque (#1168), replaces transparency-opaque.
 
 Other
   * Fixed crash in Options dialog when Printer Service is stopped (#1185).

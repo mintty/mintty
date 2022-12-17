@@ -204,7 +204,7 @@ rgb.t:	# /usr/share/X11/rgb.txt # X11 color names, from package 'rgb'
 #		{255, 250, 250, "snow"},
 	sed -e 's,	, ,g' -e 's/ *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([0-9][0-9]*\) *\([^ ].*[^ ]\) */	{\1, \2, \3, "\4"},/' /usr/share/X11/rgb.txt > rgb.t
 
-combdata=combining.t combdouble.t combined.t
+combdata=combining.t combdouble.t combined.t formatting.t
 unidata=$(combdata) ambiguous.t scripts.t blocks.t casefold.t bidiclasses.t mirroring.t brackets.t canonical.t wide.t unicodever.t
 emojidata=emojibase.t emojiseqs.t
 
@@ -219,6 +219,12 @@ clean-unicode-data:	clean-unicode
 
 combining.t:	# UnicodeData.txt Blocks.txt
 	uniset +cat=Me +cat=Mn +cat=Cf -00AD +1160-11FF +200B +D7B0-D7C6 +D7CB-D7FB c > combining.t
+	# xterm 373:
+	#uniset +cat=Me +cat=Mn +0600-0605 +061C +06DD +070F +1160-11FF +D7B0-D7C6 +D7CB-D7FB c > combining.t
+
+formatting.t:	# UnicodeData.txt Blocks.txt
+	# xterm 373:
+	#uniset +cat=Cf -00AD -0600-0605 -061C -06DD -070F c > formatting.t
 
 ambiguous.t:	# WIDTH-A # UnicodeData.txt Blocks.txt
 	sh ./mkwidthA

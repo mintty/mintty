@@ -648,7 +648,7 @@ child_kill(bool point_blank)
 bool
 child_is_alive(void)
 {
-    return pid;
+  return pid;
 }
 
 bool
