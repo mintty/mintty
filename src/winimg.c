@@ -75,7 +75,7 @@ static void
 gdiplus_init(void)
 {
   GpStatus s;
-  static GdiplusStartupInput gi = (GdiplusStartupInput){1, NULL, FALSE, FALSE};
+  static GdiplusStartupInput gi = {1, NULL, FALSE, FALSE};
   static ULONG_PTR gis = 0;
   if (!gis) {
     s = GdiplusStartup(&gis, &gi, NULL);

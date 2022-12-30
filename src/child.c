@@ -49,7 +49,7 @@ static int win_fd;
 static int pty_fd = -1;
 static int log_fd = -1;
 #if CYGWIN_VERSION_API_MINOR >= 74
-static struct winsize prev_winsize = (struct winsize){0, 0, 0, 0};
+static struct winsize prev_winsize = {0, 0, 0, 0};
 #else
 static struct winsize prev_winsize;
 #endif

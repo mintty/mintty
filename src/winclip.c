@@ -310,7 +310,7 @@ unwslpath(wchar * wpath)
                          "/cygdrive"
 #endif
                          "/%c%s%s", 
-                         tolower(wsl_fstab[i].dev_fs[0]), 
+                         tolower((int)wsl_fstab[i].dev_fs[0]), 
                          &wsl_fstab[i].dev_fs[2], 
                          &wslpath[strlen(wsl_fstab[i].mount_point)]);
             break;
@@ -355,7 +355,7 @@ wslpath(char * path)
 #if defined(debug_wslpath) && debug_wslpath > 2
         printf("wslpath <%s> fstab <%s> <%s>\n", path, wsl_fstab[i].dev_fs, wsl_fstab[i].mount_point);
 #endif
-        if (tolower(*path) == tolower(wsl_fstab[i].dev_fs[0])
+        if (tolower((int)*path) == tolower((int)wsl_fstab[i].dev_fs[0])
          && wsl_fstab[i].dev_fs[1] == ':'
            )
         {

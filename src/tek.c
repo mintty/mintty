@@ -43,7 +43,7 @@ struct tekchar {
   uchar recent;
   bool defocused;
   bool writethru;
-#if CYGWIN_VERSION_API_MINOR >= 74
+#if __GNUC__ >= 5
   union {
     struct {
       wchar c;
