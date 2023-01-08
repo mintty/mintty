@@ -1,3 +1,6 @@
+Terminal features
+  * Tweak response code to XTQALLOWED OSC 60 and XTQDISALLOWED OSC 61 (xterm 378).
+
 ### 3.6.3 (18 Dec 2022) ###
 
 Terminal features
