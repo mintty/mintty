@@ -1,5 +1,6 @@
 Terminal features
   * Tweak response code to XTQALLOWED OSC 60 and XTQDISALLOWED OSC 61 (xterm 378).
+  * Hover and open URL: support parentheses (#1196).
 
 ### 3.6.3 (18 Dec 2022) ###
 
