@@ -2307,8 +2307,8 @@ struct emoji_base {
   void * buf;  // cached image
   int buflen;  // cached image
   struct {
-    uint tags: 11;
     xchar ch: 21;
+    uint tags: 11;
   } __attribute__((packed));
 };
 
