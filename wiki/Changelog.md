@@ -238,7 +238,7 @@ Configuration
   * New option BlinkColour.
   * New options MousePointer, AppMousePointer.
   * Restored "Allow blinking" in Options dialog (#1097).
-  * WSL-specific detection of Term info availabilities (mintty/wsltty#278).
+  * WSL-specific detection of available settings for Terminal Type (option Term) (mintty/wsltty#278).
   * Export TERM to WSL (mintty/wsltty#278).
 
 ### 3.4.7 (16 March 2021) ###
