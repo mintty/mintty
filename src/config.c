@@ -4454,7 +4454,7 @@ setup_config_box(controlbox * b)
   )->column = 0;
   ctrl_columns(s, 1, 100);  // reset column stuff so we can rearrange them
   // balance column widths of the following 3 fields 
-  // to accomodate different length of localized labels
+  // to accommodate different length of localized labels
   int strwidth(string s0) {
     int len = 0;
     unsigned char * sp = (unsigned char *)s0;

@@ -666,7 +666,7 @@ update_tab_titles()
     refresh_tab_titles(true);
     // support tabbar
     win_update_tabbar();
-    // tell the others to update their's
+    // tell the others to update theirs
     EnumWindows(wnd_enum_tabs, 0);
   }
 }
@@ -6653,7 +6653,7 @@ static int dynfonts = 0;
   disable_poschange = false;
 
   // Adapt window position (and maybe size) to special parameters,
-  // we need to reconsider maxwidth/maxheight here to accomodate 
+  // we need to reconsider maxwidth/maxheight here to accommodate 
   // circular dependencies of 
   // positioning, monitor selection, DPI adjustment and window size
   if (center || right || bottom || left || top || maxwidth || maxheight) {

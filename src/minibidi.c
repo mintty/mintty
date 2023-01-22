@@ -7,7 +7,7 @@
  * ------------
  * Description:
  * ------------
- * This is an implemention of Unicode's Bidirectional Algorithm
+ * This is an implementation of Unicode's Bidirectional Algorithm
  * (known as UAX #9).
  *
  *   http://www.unicode.org/reports/tr9/
