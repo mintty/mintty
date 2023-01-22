@@ -201,7 +201,7 @@ brighten(colour c, colour against, bool monotone)
   }
 
   colour bright;
-  uint thrsh = 22222;  // contrast threshhold;
+  uint thrsh = 22222;  // contrast threshold;
                        // if we're closer to either fg or bg,
                        // turn "brightening" into the other direction
 
