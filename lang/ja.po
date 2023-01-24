@@ -1209,7 +1209,7 @@ msgstr "構わず閉じますか？"
 
 #: winmain.c:3120
 msgid "Reset terminal?"
-msgstr "リセット 端末？"
+msgstr "端末をリセットしますか？"
 
 #: winmain.c:3322
 msgid "Try '--help' for more information"
