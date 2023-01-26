@@ -1,14 +1,14 @@
 # Traductions françaises du paquet mintty.
 # Copyright (C) 2017 THE mintty'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the mintty package.
-# Eric lassauge <lassauge@gmail.com>, 2017-2020.
+# Eric lassauge <lassauge@gmail.com>, 2017-2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: mintty\n"
 "Report-Msgid-Bugs-To: https://github.com/mintty/mintty/issues/700\n"
 "POT-Creation-Date: 2022-12-18 01:37+0100\n"
-"PO-Revision-Date: 2020-01-13 10:49+0100\n"
+"PO-Revision-Date: 2023-01-26 09:08+0100\n"
 "Last-Translator: Eric Lassauge <lassauge@gmail.com>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "Language: fr\n"
@@ -16,7 +16,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 2.0.9\n"
 
 #: charset.c:226 charset.c:237 winmain.c:5619 winmain.c:5732 winmain.c:5739
 msgid "(Default)"
@@ -147,11 +146,11 @@ msgstr "= Langue caractères ="
 
 #: config.c:2395
 msgid "simple beep"
-msgstr "Bip simple"
+msgstr "bip simple"
 
 #: config.c:2396
 msgid "no beep"
-msgstr "Pas de son"
+msgstr "pas de son"
 
 #: config.c:2397
 msgid "Default Beep"
@@ -217,7 +216,7 @@ msgstr "fonte & couleur"
 #. __ Options - Text:
 #: config.c:3444 config.c:3789 config.c:3879
 msgid "xterm"
-msgstr ""
+msgstr "xterm"
 
 #. __ Dialog button - show About text
 #: config.c:3592
@@ -344,11 +343,11 @@ msgstr "&Flou"
 
 #: config.c:3698
 msgid "◄"
-msgstr ""
+msgstr "◄"
 
 #: config.c:3701
 msgid "►"
-msgstr ""
+msgstr "►"
 
 #. __ Options - Looks: section title
 #: config.c:3708
@@ -368,7 +367,7 @@ msgstr "B&loc"
 #. __ Options - Looks: cursor type
 #: config.c:3718
 msgid "Bo&x"
-msgstr ""
+msgstr "Bloc"
 
 #. __ Options - Looks: cursor type
 #: config.c:3721
@@ -474,12 +473,12 @@ msgstr "Émoticône"
 #. __ Options - Text - Emojis:
 #: config.c:3927
 msgid "Style"
-msgstr ""
+msgstr "Style"
 
 #. __ Options - Text - Emojis:
 #: config.c:3932
 msgid "Placement"
-msgstr ""
+msgstr "Placement"
 
 #. __ Options - Keys: treeview label
 #: config.c:3940 config.c:3965 config.c:4000 config.c:4018
@@ -689,17 +688,17 @@ msgstr "Modifieur"
 #. __ Options - Modifier - Win:
 #: config.c:4174 config.c:4199 config.c:4371 config.c:4396
 msgid "&Win"
-msgstr ""
+msgstr "&Win"
 
 #. __ Options - Modifier - Super:
 #: config.c:4203 config.c:4400
 msgid "&Sup"
-msgstr ""
+msgstr "&Super"
 
 #. __ Options - Modifier - Hyper:
 #: config.c:4207 config.c:4404
 msgid "&Hyp"
-msgstr ""
+msgstr "&Hyper"
 
 #. __ Options - Selection: treeview label
 #: config.c:4217 config.c:4230 config.c:4291
@@ -860,7 +859,7 @@ msgstr "Flash &tâche"
 #. __ Options - Terminal: bell
 #: config.c:4479 config.c:4496
 msgid "&Popup"
-msgstr ""
+msgstr "&Popup"
 
 #. __ Options - Terminal: section title
 #: config.c:4501
@@ -874,7 +873,7 @@ msgstr "&Demander si process en cours à la fermeture"
 
 #: textprint.c:44 textprint.c:122
 msgid "[Printing...] "
-msgstr "[Impression…]"
+msgstr "[Impression…] "
 
 #. __ Options - Text: font chooser activation button
 #: winctrls.c:912
@@ -884,7 +883,7 @@ msgstr "&Sélect.…"
 #. __ Font chooser: title bar label
 #: winctrls.c:1258
 msgid "Font "
-msgstr "Police de caractères"
+msgstr "Police de caractères "
 
 #. __ Font chooser: button
 #: winctrls.c:1260
@@ -909,7 +908,7 @@ msgstr "AàBbCçÉéYz"
 #. __ Font chooser: this field is only shown with FontMenu=1
 #: winctrls.c:1289
 msgid "Sc&ript:"
-msgstr "Sc&ript :"
+msgstr "Sc&ript :"
 
 #. __ Font chooser: this field is only shown with FontMenu=1
 #: winctrls.c:1291
@@ -919,7 +918,7 @@ msgstr "<A>Autres polices</A>"
 #. __ Colour chooser: title bar label
 #: winctrls.c:1296
 msgid "Colour "
-msgstr "Couleur"
+msgstr "Couleur "
 
 #. __ Colour chooser:
 #: winctrls.c:1309 winctrls.c:1321
@@ -994,7 +993,7 @@ msgstr "disponible"
 #. __ Options: dialog width scale factor (80...200)
 #: windialog.c:760
 msgid "100"
-msgstr ""
+msgstr "100"
 
 #: windialog.c:901 windialog.c:928
 msgid "Error"
@@ -1012,11 +1011,11 @@ msgstr "Lanceur de session"
 
 #: wininput.c:419 wininput.c:425
 msgid "Ctrl+"
-msgstr ""
+msgstr "Ctrl+"
 
 #: wininput.c:420 wininput.c:426
 msgid "Alt+"
-msgstr ""
+msgstr "Alt+"
 
 #: wininput.c:421 wininput.c:427
 msgid "Shift+"
@@ -1070,7 +1069,7 @@ msgstr "&Copier"
 #. __ Context menu:
 #: wininput.c:499
 msgid "&Paste "
-msgstr "Co&ller"
+msgstr "Co&ller "
 
 #. __ Context menu:
 #: wininput.c:504
@@ -1214,7 +1213,7 @@ msgstr "Forcer la fermeture ?"
 
 #: winmain.c:3120
 msgid "Reset terminal?"
-msgstr ""
+msgstr "Réinitialiser le terminal ?"
 
 #: winmain.c:3322
 msgid "Try '--help' for more information"
@@ -1401,7 +1400,7 @@ msgid ""
 "%s.\n"
 "See also the Wiki there for further hints, thanks and credits."
 msgstr ""
-"Traductions © 2020 Éric Lassauge\n"
+"Traductions © 2023 Éric Lassauge\n"
 "Reportez les bugs ou les demandes d’amélioration via le gestionnaire de "
 "problèmes de la page du projet mintty\n"
 "à l’adresse « %s ».\n"
