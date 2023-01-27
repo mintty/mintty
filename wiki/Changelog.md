@@ -2,6 +2,9 @@ Terminal features
   * Tweak response code to XTQALLOWED OSC 60 and XTQDISALLOWED OSC 61 (xterm 378).
   * Hover and open URL: support parentheses (#1196).
 
+Windows integration
+  * Manage user-set HOME for calling Windows from WSL (mintty/wsltty#324, ~mintty/wsltty#76).
+
 ### 3.6.3 (18 Dec 2022) ###
 
 Terminal features
