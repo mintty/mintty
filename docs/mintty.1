@@ -1745,7 +1745,13 @@ Note that the repeat rate can be adjusted dynamically by an escape sequence.
 \fBBackarrow sends ^H\fP (BackspaceSendsBS=no)
 By default, mintty sends \fB^?\fP (ASCII DEL) as the keycode for the backspace key.
 If this option is enabled, \fB^H\fP is sent instead.
-This also changes the \fBCtrl+Backspace\fP code from \fB^_\fP to \fB^?\fP.
+This also changes the \fBCtrl+Backspace\fP code from \fB^H8\fP to \fB^?\fP.
+
+\fINote:\fP This setting also causes the tty setting \fBERASE character\fP 
+to be aligned accordingly (see \fIman termios\fP and command \fIstty erase\fP).
+Mind that this may affect certain applications, for example emacs which 
+cannot interpret the explicit Ctrl+h command anymore.
+
 .br
 (Corresponds to the xterm resource \fBbackarrowKey\fP.)
 

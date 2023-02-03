@@ -421,6 +421,13 @@ the application expects other key sequences than mintty sends.
 (While mintty could be changed to send VT100 application keypad codes in 
 that case, the current behaviour is compatible with xterm.)
 
+### Control+H in emacs ###
+
+If you configure the Backarrow key to send a Backspace character rather 
+than the Linux default DEL character (setting `BackspaceSendsBS=yes`), 
+emacs will not be able to recognize an explicit Ctrl+h command anymore.
+It is recommended to leave this setting at its default.
+
 ### Shift+up/down for text selection in emacs ###
 
 The escape sequences for Shift+up/down are mapped to scroll-backward/forward 
@@ -543,6 +550,18 @@ See the manual page for options and details about
 * user-definable key functions
 
 See also the [[Keycodes]] wiki page.
+
+### Backarrow key configuration ###
+
+By default, mintty sends `^?` (ASCII DEL) as the keycode for the Backarrow key.
+This is the Linux default (as opposed to sending `^H` which was the 
+default in many Unix environments).
+This can be changed with setting `BackspaceSendsBS=yes`.
+The tty setting `ERASE character` will be aligned accordingly 
+(see `man termios` and command `stty erase`).
+
+Mind that this may affect certain applications, for example emacs which 
+cannot interpret the explicit Control+h command anymore.
 
 ### Windows-style copy/paste key assignments ###
 
