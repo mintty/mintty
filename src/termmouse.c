@@ -29,9 +29,42 @@ sel_spread_word(pos p, bool forward)
 {
   pos ret_p = p;
   termline *line = fetch_line(p.y);
+static int level = 0;
+static char scheme = 0;
+  if (!forward) {
+    level = 0;
+    scheme = 0;
+  }
+  //printf("sel_ %d: forward %d level %d\n", p.x, forward, level);
 
   for (;;) {
     wchar c = get_char(line, p.x);
+
+    // scheme detection state machine
+    if (!forward) {
+      // http://abc.xy
+      //0ssss://
+      if (isalnum(c)) {
+        if (scheme == ':')
+          scheme = 's';
+        else if (scheme != 's')
+          scheme = 0;
+      }
+      else if (c == ':') {
+        if (scheme == '/')
+          scheme = ':';
+        else
+          scheme = 0;
+      }
+      else if (c == '/') {
+        scheme = '/';
+      }
+      else if (scheme)
+        break;
+      else
+        scheme = 0;
+    }
+
     if (term.mouse_state != MS_OPENING && *cfg.word_chars_excl)
       if (strchr(cfg.word_chars_excl, c))
         break;
@@ -48,16 +81,31 @@ sel_spread_word(pos p, bool forward)
       if (!forward)
         ret_p = p;
     }
-    else if (!term.mouse_state && strchr("()[]{}", c)) {
-      // support URLs with parentheses (#1196)
-      // should we also consider "'*<>^`| ?
+    // support URLs with parentheses (#1196)
+    // distinguish opening and closing parentheses to match proper nesting
+    else if (!term.mouse_state && strchr("([{", c)) {
+      level ++;
+      //printf("%d: %c forward %d level %d\n", p.x, c, forward, level);
       if (forward)
         ret_p = p;
     }
+    else if (!term.mouse_state && strchr(")]}", c)) {
+      level --;
+      //printf("%d: %c forward %d level %d\n", p.x, c, forward, level);
+      if (forward && level < 0)
+        break;
+      if (forward)
+        ret_p = p;
+    }
+    // should we also consider *^`| as part of a URL?
+    // should we strip ?!.,;: at the end?
+    // what about #$%&*\^`|~ at the end?
     else if (c == ' ' && p.x > 0 && get_char(line, p.x - 1) == '\\')
       ret_p = p;
-    else if (!(strchr("&,;?!", c) || c == (forward ? '=' : ':')))
+    else if (!(strchr("&,;?!:", c) || c == (forward ? '=' : ':'))) {
+      //printf("%d: %c forward %d level %d BREAK\n", p.x, c, forward, level);
       break;
+    }
 
     if (forward) {
       p.x++;
@@ -83,6 +131,7 @@ sel_spread_word(pos p, bool forward)
     }
   }
 
+  //printf("%d: return\n", ret_p.x);
   release_line(line);
   return ret_p;
 }
@@ -158,8 +207,10 @@ sel_spread(void)
 static bool
 hover_spread_empty(void)
 {
+  //printf("hover_spread_empty\n");
   term.hover_start = sel_spread_word(term.hover_start, false);
   term.hover_end = sel_spread_word(term.hover_end, true);
+  //printf("hover_spread_empty %d..%d\n", term.hover_start.x, term.hover_end.x);
   bool eq = term.hover_start.y == term.hover_end.y && term.hover_start.x == term.hover_end.x;
   incpos(term.hover_end);
   return eq;
