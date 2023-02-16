@@ -4,6 +4,7 @@
 
 #include "winpriv.h"
 #include "winsearch.h"
+#include "wintab.h"
 
 #include "charset.h"
 #include "child.h"
@@ -13,6 +14,7 @@
 #include <windowsx.h>  // GET_X_LPARAM, GET_Y_LPARAM
 #include <winnls.h>
 #include <termios.h>
+
 
 static HMENU ctxmenu = NULL;
 static HMENU sysmenu;
@@ -1683,6 +1685,22 @@ mflags_tek_mode()
   return tek_mode ? MF_ENABLED : MF_GRAYED;
 }
 
+static uint
+mflags_tabbar()
+{
+  return win_tabbar_visible() ? MF_CHECKED : MF_UNCHECKED;
+}
+
+static void
+toggle_tabbar()
+{
+  cfg.tabbar = !cfg.tabbar;
+  if (cfg.tabbar)
+    win_open_tabbar();
+  else
+    win_close_tabbar();
+}
+
 static void hor_left_1() { horscroll(-1); }
 static void hor_right_1() { horscroll(1); }
 static void hor_out_1() { horsizing(1, false); }
@@ -1713,6 +1731,7 @@ static struct function_def cmd_defs[] = {
   {"new-window-cwd", {IDM_NEW_CWD}, 0},
   {"new-tab", {IDM_TAB}, 0},
   {"new-tab-cwd", {IDM_TAB_CWD}, 0},
+  {"toggle-tabbar", {.fct = toggle_tabbar}, mflags_tabbar},
 
   {"hor-left-1", {.fct = hor_left_1}, 0},
   {"hor-right-1", {.fct = hor_right_1}, 0},

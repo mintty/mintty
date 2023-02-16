@@ -5,6 +5,9 @@ Terminal features
 Windows integration
   * Manage user-set HOME for calling Windows from WSL (mintty/wsltty#324, ~mintty/wsltty#76).
 
+Configuration
+  * New user-definable function toggle-tabbar (#1201).
+
 ### 3.6.3 (18 Dec 2022) ###
 
 Terminal features

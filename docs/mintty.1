@@ -2961,6 +2961,8 @@ Supported actions are described as follows:
 .br
 \(en \fBnew-tab-cwd\fP: opens a new terminal tab in working directory of current foreground process
 .br
+\(en \fBtoggle-tabbar\fP: toggles the tabbar
+.br
 \(en \fBoptions\fP: opens the Options dialog
 .br
 \(en \fBmenu-text\fP (*): opens the context menu at the cursor position
@@ -3792,6 +3794,10 @@ Setting \fBTabBar=\fP\fIlevel\fP enables an interactive tabbar as
 an alternative session switcher. It raises the effective window position 
 synchronization to the given level as if also setting 
 \fBSessionGeomSync=\fP\fIlevel\fP. It is recommended to use level 3 or higher.
+
+\fINote:\fP The tabbar can also be switched dynamically 
+with the user-definable function toggle-tabbar assigned to a hotkey or 
+configured into the context menu.
 
 .TQ
 \fBTabbar grouping\fP (NewTabs=0)
