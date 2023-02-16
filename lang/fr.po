@@ -830,7 +830,7 @@ msgstr "&Type"
 #. __ Options - Terminal:
 #: config.c:4435
 msgid "&Answerback"
-msgstr "&Retour"
+msgstr "&Réponse"
 
 #. __ Options - Terminal: section title
 #: config.c:4440

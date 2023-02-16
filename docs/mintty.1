@@ -136,6 +136,8 @@ the extended context menu.
 \fB-o\fP, \fB--option\fP \fINAME\fP=\fIVALUE\fP
 Override the named config file option with the given value, e.g.
 \fB-o ScrollbackLines=1000\fP.
+Note that for option settings that are localized in the Options menu, 
+the value in the config file or on the command line must be unlocalized.
 
 .TQ
 \fB-p\fP, \fB--position\fP \fIX\fP\fB,\fP\fIY\fP
@@ -2205,6 +2207,7 @@ tool uses a dedicated variable (\fBGNUTERM\fP) to trigger its usage.
 \fBAnswerback\fP (Answerback=)
 The answerback string is sent in response to the \fB^E\fP (ENQ) character.
 By default, this is empty.
+(Corresponds to the xterm resource \fBanswerbackString\fP.)
 
 .TQ
 \fBAlternate screen\fP (NoAltScreen=false)
@@ -2594,7 +2597,7 @@ in a line is included in the selection buffer.
 
 .TQ
 \fBSelection size indication\fP (SelectionShowSize=0)
-The current selection size can optionally been indicated with a popup, 
+The current text selection size can optionally be indicated with a popup, 
 with a value between 1 and 12, setting the popup position by clock hour.
 
 .TQ

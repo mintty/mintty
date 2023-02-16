@@ -1336,8 +1336,9 @@ The localization language can be selected with the option `Language`,
 see manual page for details.
 
 Example:
-`Language=*`, environment variables `LANGUAGE=de_CH:français:de:fr_FR` and 
-`LC_MESSAGES=en_GB.UTF-8`, `LC_ALL` not set:
+Assume setting `Language=*`, environment variables 
+`LANGUAGE=de_CH:français:de:fr_FR` and `LC_MESSAGES=en_GB.UTF-8`, 
+environment variable `LC_ALL` not set:
 mintty tries to find localization files (in this order) for 
 `de_CH`, `français`, `de`, `fr_FR`, `en_GB`, 
 then (as generic fallback) `fr` and `en`, 
@@ -1345,9 +1346,8 @@ each in all resource configuration folders (subfolder `lang`).
 
 Note that Windows may already have localized the default entries of the 
 system menu, which makes the system menu language inconsistent because 
-mintty adds a few items here. Choose `Language=en` to 
+mintty adds a few items here. Choose `Language=en` or `en_US` to 
 “reverse-localize” this, as well as the font and colour chooser dialogs.
-
 Choose `Language=en_US` to change `Colour` to `Color` in the menus.
 
 ### Adding translations to localization ###
@@ -1364,6 +1364,13 @@ be used but remember to use UTF-8 encoding.
 Check the translations for strings that may be too long and get clipped 
 by a careful walkthrough of the Options dialog, opening all popups and 
 sub-dialogs (colours and font) and also checking `mintty -o FontMenu=0`.
+
+_Note:_ For setting values in popup menus of some of the options 
+in the Options dialog, localization is also supported. Note however 
+that the corresponding values in the config file or on the command line 
+must not be localized, so apparent inconsistencies may arise.
+It is therefore suggested _not_ to localize these values 
+(marked “(localization optional)” in the localization template `messages.pot`).
 
 _Note:_ There is one special pseudo-string in the localization template which 
 facilitates scaling of the Options dialog width. It is labelled 

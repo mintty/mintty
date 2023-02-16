@@ -210,7 +210,7 @@ const config default_cfg = {
   .printable_controls = 0,
   .char_narrowing = 75,
   .emojis = 0,
-  .emoji_placement = 0,
+  .emoji_placement = EMPL_STRETCH,
   .save_filename = W("mintty.%Y-%m-%d_%H-%M-%S"),
   .app_id = W(""),
   .app_name = W(""),
@@ -622,12 +622,18 @@ typedef const struct {
 
 static opt_val * const opt_vals[] = {
   [OPT_BOOL] = (opt_val[]) {
-    {"no", false},
-    {"yes", true},
-    {"false", false},
-    {"true", true},
-    {"off", false},
-    {"on", true},
+    //__ Setting false for Boolean options (localization optional)
+    {__("no)", false},
+    //__ Setting true for Boolean options (localization optional)
+    {__("yes)", true},
+    //__ Setting false for Boolean options (localization optional)
+    {__("false"), false},
+    //__ Setting true for Boolean options (localization optional)
+    {__("true"), true},
+    //__ Setting false for Boolean options (localization optional)
+    {__("off"), false},
+    //__ Setting true for Boolean options (localization optional)
+    {__("on"), true},
     {0, 0}
   },
   [OPT_CHARWIDTH] = (opt_val[]) {
@@ -655,13 +661,13 @@ static opt_val * const opt_vals[] = {
     {0, 0}
   },
   [OPT_EMOJI_PLACEMENT] = (opt_val[]) {
-    //__ Options - Text - Emojis - Placement
+    //__ Options - Text - Emojis - Placement (localization optional)
     {__("stretch"), EMPL_STRETCH},
-    //__ Options - Text - Emojis - Placement
+    //__ Options - Text - Emojis - Placement (localization optional)
     {__("align"), EMPL_ALIGN},
-    //__ Options - Text - Emojis - Placement
+    //__ Options - Text - Emojis - Placement (localization optional)
     {__("middle"), EMPL_MIDDLE},
-    //__ Options - Text - Emojis - Placement
+    //__ Options - Text - Emojis - Placement (localization optional)
     {__("full"), EMPL_FULL},
     {0, 0}
   },
@@ -2283,10 +2289,13 @@ charset_handler(control *ctrl, int event)
 static void
 lang_handler(control *ctrl, int event)
 {
-  //__ UI language
+  //__ UI localization disabled
   const wstring NONE = _W("– None –");
+  //__ UI localization: use Windows desktop setting
   const wstring WINLOC = _W("@ Windows language @");
+  //__ UI localization: use environment variable setting (LANGUAGE, LC_*)
   const wstring LOCENV = _W("* Locale environm. *");
+  //__ UI localization: use mintty configuration setting (Text - Locale)
   const wstring LOCALE = _W("= cfg. Text Locale =");
   switch (event) {
     when EVENT_REFRESH:
@@ -4294,8 +4303,8 @@ setup_config_box(controlbox * b)
     ctrl_columns(s, 2, 100, 0);
     // window-related
     ctrl_editbox(
-      //__ Options - Selection:
-      s, _("Show size while selecting (0..12)"), 24,
+      //__ Options - Selection: clock position of info popup for text size
+      s, _("Show size while selecting (0..12)"), 15,
       dlg_stdintbox_handler, &new_cfg.selection_show_size
     );
 #define dont_config_suspbuf
@@ -4317,7 +4326,7 @@ setup_config_box(controlbox * b)
                       _("Window properties"), 
   //__ Options - Window: section title
                       _("Default size"));
-  ctrl_columns(s, 5, 35, 3, 28, 4, 30);
+  ctrl_columns(s, 5, 35, 4, 28, 3, 30);
   (cols_box = ctrl_editbox(
     //__ Options - Window:
     s, _("Colu&mns"), 44, dlg_stdintbox_handler, &new_cfg.cols
@@ -4431,7 +4440,7 @@ setup_config_box(controlbox * b)
     s, _("&Type"), 100, term_handler, 0
   )->column = 0;
   ctrl_editbox(
-    //__ Options - Terminal:
+    //__ Options - Terminal: answerback string for ^E request
     s, _("&Answerback"), 100, dlg_stdstringbox_handler, &new_cfg.answerback
   )->column = 1;
 
