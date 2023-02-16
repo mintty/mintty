@@ -623,9 +623,9 @@ typedef const struct {
 static opt_val * const opt_vals[] = {
   [OPT_BOOL] = (opt_val[]) {
     //__ Setting false for Boolean options (localization optional)
-    {__("no)", false},
+    {__("no"), false},
     //__ Setting true for Boolean options (localization optional)
-    {__("yes)", true},
+    {__("yes"), true},
     //__ Setting false for Boolean options (localization optional)
     {__("false"), false},
     //__ Setting true for Boolean options (localization optional)
