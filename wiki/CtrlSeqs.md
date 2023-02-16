@@ -387,7 +387,7 @@ source of information about which Indic characters should be considered wide;
 most screen applications will not cooperate with this feature as their 
 assumption of character widths is mostly based on the system locale 
 (with the notable exception of the Unicode editor MinEd which supports 
-Indic wide display in its forthcoming release).
+Indic wide display).
 
 Setting wide long Unicode characters mode, a number of Unicode characters 
 that are supposed to be "wide" or "long" will be displayed 
@@ -708,7 +708,7 @@ Tones 1 to 5 are currently defined, 1 is a sine waveform.
 The initial tone style can be preselected by setting `PlayTone`; 
 if changed by a sequence, it will be restored by a terminal reset.
 Tone value 0 (also the fallback) resorts to the Windows Beep function.
-Other tones are only effective if the audio output library \fIlibao\fP 
+Other tones are only effective if the audio output library `libao` 
 is installed.
 
 

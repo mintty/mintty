@@ -1361,7 +1361,11 @@ Script names are as specified in the Unicode file Scripts.txt, listed
 in \fIhttps://en.wikipedia.org/wiki/Script_(Unicode)\fP column "Alias".
 (The definition list can be split over multiple lines if a separator is 
 followed by a backslash, newline, and optional whitespace indentation.)
-.br
+
+Note that the setting string must not be terminated with a Windows lineend, 
+as its CR would be considered part of the last item; this can be prevented 
+with a final semicolon separator.
+
 A special name is \fBPictoSymbols\fP to assign an alternative font to 
 ranges of pictographic symbols from Unicode blocks matching 
 Arrows, Mathematical Operators, Technical, Enclosed Alphanumerics, 
@@ -1745,9 +1749,9 @@ Note that the repeat rate can be adjusted dynamically by an escape sequence.
 
 .TQ
 \fBBackarrow sends ^H\fP (BackspaceSendsBS=no)
-By default, mintty sends \fB^?\fP (ASCII DEL) as the keycode for the backspace key.
+By default, mintty sends \fB^?\fP (ASCII DEL) as the keycode for the \fBBackspace\fP key.
 If this option is enabled, \fB^H\fP is sent instead.
-This also changes the \fBCtrl+Backspace\fP code from \fB^H8\fP to \fB^?\fP.
+This also changes the \fBCtrl+Backspace\fP code from \fB^H\fP to \fB^?\fP.
 
 \fINote:\fP This setting also causes the tty setting \fBERASE character\fP 
 to be aligned accordingly (see \fIman termios\fP and command \fIstty erase\fP).
@@ -2856,12 +2860,17 @@ followed by a backslash, newline, and optional whitespace indentation.
 (Corresponds roughly to the xterm resource \fBtranslations\fP.)
 
 Note that Win+key combinations are often reserved by Windows.
+
 Note that Shift+char combinations of plain character keys can not be remapped 
 as they have a character assigned already within the basic keyboard layout.
 Likewise, Ctrl+char and Alt+char combinations have their traditional 
 terminal functions (sending control characters or ESC followed by the 
 character), so they are protected from accidental remapping by default; 
 remapping them to a key function needs additional setting \fBShootFoot=on\fP.
+
+Note that the setting string must not be terminated with a Windows lineend, 
+as its CR would be considered part of the last item; this can be prevented 
+with a final semicolon separator.
 
 Supported keys are described as follows:
 .br
@@ -3488,6 +3497,10 @@ specified as an alternative separator by starting the whole setting with it.
 The definition list can be split over multiple lines if a separator is 
 followed by a backslash, newline, and optional whitespace indentation.
 
+Note that the setting string must not be terminated with a Windows lineend, 
+as its CR would be considered part of the last item; this can be prevented 
+with a final semicolon separator.
+
 \fINote:\fP This feature potentially makes mintty vulnerable against command injection.
 Be careful what commands you configure! For shell commands, it is 
 advisable to embed the "%s" parameter placeholder in single quotation 
@@ -3529,6 +3542,10 @@ specified as an alternative separator by starting the whole setting with it.
 The definition list can be split over multiple lines if a separator is 
 followed by a backslash, newline, and optional whitespace indentation.
 
+Note that the setting string must not be terminated with a Windows lineend, 
+as its CR would be considered part of the last item; this can be prevented 
+with a final semicolon separator.
+
 \fINote:\fP This feature potentially makes mintty vulnerable against command injection.
 Be careful what strings you configure!
 
@@ -3552,6 +3569,10 @@ a non-whitespace control character (i.e. none of \fB^I^J^K^L^M\fP) can be
 specified as an alternative separator by starting the whole setting with it.
 The definition list can be split over multiple lines if a separator is 
 followed by a backslash, newline, and optional whitespace indentation.
+
+Note that the setting string must not be terminated with a Windows lineend, 
+as its CR would be considered part of the last item; this can be prevented 
+with a final semicolon separator.
 
 Mintty provides useful information in environment variables:
 .br
@@ -3632,6 +3653,10 @@ The configuration is similar to the \fBUserCommands\fP setting with respect
 to menu labels, and to \fBKeyFunctions\fP setting with respect to function 
 designations; respective notes and warnings apply.
 
+Note that the setting string must not be terminated with a Windows lineend, 
+as its CR would be considered part of the last item; this can be prevented 
+with a final semicolon separator.
+
 .TQ
 \fBSystem menu user commands\fP (SysMenuFunctions=)
 This setting lists user-defined functions or commands for the system menu 
@@ -3646,6 +3671,10 @@ a non-whitespace control character (i.e. none of \fB^I^J^K^L^M\fP) can be
 specified as an alternative separator by starting the whole setting with it).
 The definition list can be split over multiple lines if a separator is 
 followed by a backslash, newline, and optional whitespace indentation.
+
+Note that the setting string must not be terminated with a Windows lineend, 
+as its CR would be considered part of the last item; this can be prevented 
+with a final semicolon separator.
 
 The configuration is similar to the \fBUserCommands\fP setting with respect 
 to menu labels, and to \fBKeyFunctions\fP setting with respect to function 
@@ -3672,6 +3701,10 @@ specified as an alternative separator by starting the whole setting with it.)
 The definition list can be split over multiple lines if a separator is 
 followed by a backslash, newline, and optional whitespace indentation.
 
+Note that the setting string must not be terminated with a Windows lineend, 
+as its CR would be considered part of the last item; this can be prevented 
+with a final semicolon separator.
+
 \fINote:\fP Session launch names are subject to localization if they are 
 added to the localization file of the selected UI localization language 
 (in subdirectory \fIlang\fP of a mintty resource directory).
@@ -3697,6 +3730,10 @@ a non-whitespace control character (i.e. none of \fB^I^J^K^L^M\fP) can be
 specified as an alternative separator by starting the whole setting with it.)
 The definition list can be split over multiple lines if a separator is 
 followed by a backslash, newline, and optional whitespace indentation.
+
+Note that the setting string must not be terminated with a Windows lineend, 
+as its CR would be considered part of the last item; this can be prevented 
+with a final semicolon separator.
 
 \fINote:\fP This feature only works in combination with a parameter 
 \fB-o AppID=...\fP. If the taskbar icon is "pinned" to the taskbar, 
@@ -3861,6 +3898,9 @@ flexible bidi controls according to the draft bidi mode model of the
 \fBBiDi in Terminal Emulators\fP recommendation 
 (\fIhttps://terminal-wg.pages.freedesktop.org/bidi/\fP).
 However, emoji rendering does not work properly within right-to-left text.
+
+For mintty-specific private escape sequences and extensions, see 
+\fIhttps://github.com/mintty/mintty/wiki/CtrlSeqs\fP.
 
 Mintty also provides emulation of the Tektronix 4014 vector graphics terminal,
 including "writethru" and "defocused" beam modes (for which colour indication 
