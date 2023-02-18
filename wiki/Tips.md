@@ -1441,7 +1441,9 @@ ExitCommands=bash:exit^M;mined:^[q;emacs:^X^C
 To install mintty outside a cygwin environment, follow a few rules:
 * Compile mintty statically.
 * Install mintty.exe together with cygwin1.dll and cygwin-console-helper.exe.
-* Call the directory in which to install mintty and libraries ‘bin’.
+* Call the directory in which to install mintty and libraries `bin` (optional).
+* The parent directory of `bin` will be considered the mintty root directory.
+* Aside the `bin` directory (in the root directory), install folder tree `usr/share/mintty` with subdirectories for mintty resources, e.g. `lang/*.po`, `themes/*`, `sounds/*` etc.
 
 ### Bundling mintty with dedicated software ###
 
