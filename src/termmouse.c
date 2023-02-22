@@ -648,6 +648,59 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
 
   int state = term.mouse_state;
 
+  // "Clicks place cursor" implementation.
+  void place_cursor(void)
+  {
+    pos dest = term.selected ? term.sel_end : get_selpoint(box_pos(p));
+
+    static bool moved_previously = false;
+    static pos last_dest;
+
+    pos orig;
+    if (state == MS_SEL_CHAR)
+      orig = (pos){.y = term.curs.y, .x = term.curs.x};
+    else if (moved_previously)
+      orig = last_dest;
+    else
+      return;
+
+    bool forward = posle(orig, dest);
+    pos end = forward ? dest : orig;
+    p = forward ? orig : dest;
+
+    uint count = 0;
+    while (p.y != end.y) {
+      termline *line = fetch_line(p.y);
+      if (!(line->lattr & LATTR_WRAPPED)) {
+        release_line(line);
+        moved_previously = false;
+        return;
+      }
+      int cols = term.cols - ((line->lattr & LATTR_WRAPPED2) != 0);
+      for (int x = p.x; x < cols; x++) {
+        if (line->chars[x].chr != UCSWIDE)
+          count++;
+      }
+      p.y++;
+      p.x = 0;
+      release_line(line);
+    }
+    termline *line = fetch_line(p.y);
+    for (int x = p.x; x < end.x; x++) {
+      if (line->chars[x].chr != UCSWIDE)
+        count++;
+    }
+    release_line(line);
+
+    char code[3] =
+      {'\e', term.app_cursor_keys ? 'O' : '[', forward ? 'C' : 'D'};
+
+    send_keys(code, 3, count);
+
+    moved_previously = true;
+    last_dest = dest;
+  }
+
   term.mouse_state = 0;
   switch (state) {
     when MS_COPYING: term_copy();
@@ -683,58 +736,13 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
       // Flush any output held back during selection.
       term_flush();
 
-      // "Clicks place cursor" implementation.
-      if (!cfg.clicks_place_cursor || term.on_alt_screen || term.app_cursor_keys)
+      // Guard "Clicks place cursor" implementation.
+      if (term.on_alt_screen || term.app_cursor_keys)
         return;
 
-      pos dest = term.selected ? term.sel_end : get_selpoint(box_pos(p));
-
-      static bool moved_previously;
-      static pos last_dest;
-
-      pos orig;
-      if (state == MS_SEL_CHAR)
-        orig = (pos){.y = term.curs.y, .x = term.curs.x};
-      else if (moved_previously)
-        orig = last_dest;
-      else
-        return;
-
-      bool forward = posle(orig, dest);
-      pos end = forward ? dest : orig;
-      p = forward ? orig : dest;
-
-      uint count = 0;
-      while (p.y != end.y) {
-        termline *line = fetch_line(p.y);
-        if (!(line->lattr & LATTR_WRAPPED)) {
-          release_line(line);
-          moved_previously = false;
-          return;
-        }
-        int cols = term.cols - ((line->lattr & LATTR_WRAPPED2) != 0);
-        for (int x = p.x; x < cols; x++) {
-          if (line->chars[x].chr != UCSWIDE)
-            count++;
-        }
-        p.y++;
-        p.x = 0;
-        release_line(line);
-      }
-      termline *line = fetch_line(p.y);
-      for (int x = p.x; x < end.x; x++) {
-        if (line->chars[x].chr != UCSWIDE)
-          count++;
-      }
-      release_line(line);
-
-      char code[3] =
-        {'\e', term.app_cursor_keys ? 'O' : '[', forward ? 'C' : 'D'};
-
-      send_keys(code, 3, count);
-
-      moved_previously = true;
-      last_dest = dest;
+      // "Clicks place cursor": place cursor to mouse position
+      if (cfg.clicks_place_cursor)
+        place_cursor();
     }
     otherwise:
       if (check_app_mouse(&mods)) {
