@@ -651,8 +651,18 @@ term_mouse_release(mouse_button b, mod_keys mods, pos p)
   term.mouse_state = 0;
   switch (state) {
     when MS_COPYING: term_copy();
-    when MS_PASTING: win_paste();
     when MS_OPENING: mouse_open(p);
+    when MS_PASTING: {
+      // Finish selection.
+      if (term.selected && cfg.copy_on_select)
+        term_copy();
+
+      // Flush any output held back during selection.
+      term_flush();
+
+      // Now the pasting.
+      win_paste();
+    }
     when MS_SEL_CHAR or MS_SEL_WORD or MS_SEL_LINE: {
       // Open hovered link, accepting configurable modifiers
       if (state == MS_SEL_CHAR && !term.selected
