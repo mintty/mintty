@@ -94,6 +94,8 @@ clip_addchar(clip_workbuf * b, wchar chr, cattr * ca, bool tabs, ulong sizehint)
 static clip_workbuf *
 get_selection(bool attrs, pos start, pos end, bool rect, bool allinline, bool with_tabs)
 {
+  //printf("get_selection attrs %d all %d tabs %d\n", attrs, allinline, with_tabs);
+
   clip_workbuf *buf = newn(clip_workbuf, 1);
   *buf = (clip_workbuf){.with_attrs = attrs,
                         .capacity = 0, .len = 0, .text = 0, .cattrs = 0};
@@ -114,8 +116,13 @@ get_selection(bool attrs, pos start, pos end, bool rect, bool allinline, bool wi
     bool nl = false;
     termline *line = fetch_line(start.y);
 
-    if (start.y == term.curs.y) {
-      line->chars[term.curs.x].attr.attr |= TATTR_ACTCURS;
+    if (allinline) {
+      // this tweak (commit 975403 "export HTML: consider cursor", 2.9.1)
+      // causes cursor artefacts in connection with ClicksPlaceCursor=yes
+      // now guarded to cases of HTML copy/export
+      if (start.y == term.curs.y) {
+        line->chars[term.curs.x].attr.attr |= TATTR_ACTCURS;
+      }
     }
 
     pos nlpos;

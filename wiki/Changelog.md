@@ -1,6 +1,7 @@
 Terminal features
   * Tweak response code to XTQALLOWED OSC 60 and XTQDISALLOWED OSC 61 (xterm 378).
   * Hover and open URL: support parentheses (#1196).
+  * Fix cursor artefacts in connection with ClicksPlaceCursor=yes.
 
 Windows integration
   * Manage user-set HOME for calling Windows from WSL (mintty/wsltty#324, ~mintty/wsltty#76).
