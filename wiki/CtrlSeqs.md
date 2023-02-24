@@ -333,6 +333,25 @@ Application mousewheel mode is controlled by these sequences:
 | `^[[?7787h`   | application   |
 
 
+## Readline mouse modes ##
+
+These three mode settings, switched by DECSET/DECRST sequences (xterm 379) 
+enable mouse-controlled editing on the command line (as detected by the 
+cursor position) by sending virtual cursor or erase keystrokes.
+
+| **sequence**  | **mode**                                                  |
+|:--------------|:----------------------------------------------------------|
+| `^[[?2001h`   | left button places cursor on command line                 |
+| `^[[?2002h`   | middle button pastes at current mouse position            |
+| `^[[?2003h`   | double right-click deletes selection until mouse position |
+
+Note that middle and right button functions only apply if the middle button 
+is configured to Paste (default) and the right button is configured to 
+Extend the selection, respectively.
+The respective DECRST sequences (ending with `l`) disable the corresponding mode.
+These modes can be preset with option `ClicksPlaceCursor` initially and on hard reset.
+
+
 ## Ambiguous width reporting ##
 
 Applications can ask to be notified when the width of the so-called [ambiguous width](http://unicode.org/reports/tr11/#Ambiguous) character category changes due to the user changing font.

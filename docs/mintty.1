@@ -1945,9 +1945,13 @@ the extended context menu.
 .TQ
 \fBClicks place command line cursor\fP (ClicksPlaceCursor=no)
 If enabled, the command line cursor can be placed by pressing the left
-mouse button.
+mouse button. Also pasting in the command line positions the cursor first.
+Also double right-click (if right-click is configured to Extend selection) 
+deletes the selection up to the current mouse position.
 This works by sending the number of cursor keycodes needed to get to the
-destination.
+destination, and erase characters (of current tty setting) in the third case.
+The setting presets the readline mouse modes (DECSET 2001, 2002, 2003) 
+initially and on hard reset; they can also be switched by escape sequences.
 
 .TQ
 \fBRight mouse button\fP (RightClickAction=menu)

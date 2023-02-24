@@ -1,5 +1,6 @@
 Terminal features
   * Tweak response code to XTQALLOWED OSC 60 and XTQDISALLOWED OSC 61 (xterm 378).
+  * Readline mouse modes (DECSET 2001 / 2002 / 2003, xterm 379).
   * Hover and open URL: support parentheses (#1196).
   * Fix cursor artefacts in connection with ClicksPlaceCursor=yes.
   * Fix mouse-paste while still selecting.
@@ -9,6 +10,7 @@ Windows integration
 
 Configuration
   * New user-definable function toggle-tabbar (#1201).
+  * Setting ClicksPlaceCursor presets all readline mouse modes.
 
 ### 3.6.3 (18 Dec 2022) ###
 

@@ -2269,6 +2269,12 @@ set_modes(bool state)
           }
         when 1061:       /* VT220 keyboard emulation */
           term.vt220_keys = state;
+        when 2001:       /* Readline mouse button-1 */
+          term.readline_mouse_1 = state;
+        when 2002:       /* Readline mouse button-2 */
+          term.readline_mouse_2 = state;
+        when 2003:       /* Readline mouse button-3 */
+          term.readline_mouse_3 = state;
         when 2004:       /* xterm bracketed paste mode */
           term.bracketed_paste = state;
 

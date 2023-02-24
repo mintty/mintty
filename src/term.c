@@ -353,6 +353,9 @@ term_reset(bool full)
     term.disable_bidi = false;
     term.enable_bold_colour = cfg.bold_as_colour;
     term.enable_blink_colour = true;
+    term.readline_mouse_1 = cfg.clicks_place_cursor;
+    term.readline_mouse_2 = cfg.clicks_place_cursor;
+    term.readline_mouse_3 = cfg.clicks_place_cursor;
   }
 
   term.virtuallines = 0;

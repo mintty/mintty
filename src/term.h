@@ -562,6 +562,9 @@ struct term {
   bool disable_bidi;
   bool enable_bold_colour;
   bool enable_blink_colour;
+  bool readline_mouse_1;
+  bool readline_mouse_2;
+  bool readline_mouse_3;
 
   bool sixel_display;        // true if sixel scrolling mode is off
   bool sixel_scrolls_right;  // on: sixel scrolling leaves cursor to right of graphic
