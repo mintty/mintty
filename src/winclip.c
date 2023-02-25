@@ -19,6 +19,46 @@
 #include <sys/cygwin.h>  // cygwin_internal
 #endif
 
+
+#ifdef check_cygdrive
+// adapt /cygdrive prefix to actual configured one (like / or anything else);
+// this experimental approach is not enabled as it is 
+// only used for WSL and dynamic adaptation is hardly useful
+
+static char * _cygdrive = 0;
+static wchar * _wcygdrive = 0;
+
+static char *
+cygdrive(void)
+{
+  if (!_cygdrive) {
+    char target [99];
+    int ret = readlink ("/proc/cygdrive", target, sizeof (target) - 1);
+    if (ret >= 0) {
+      target [ret] = '\0';
+      _cygdrive = strdup(target);
+    }
+    else
+#if defined(__MSYS__) || defined(__MINGW32)
+      _cygdrive = "/";
+#else
+      _cygdrive = "/cygdrive";
+#endif
+    _wcygdrive = cs__mbstowcs(target);
+  }
+  return _cygdrive;
+}
+
+static wchar *
+wcygdrive(void)
+{
+  (void)cygdrive();
+  return _wcygdrive;
+}
+
+#endif
+
+
 static DWORD WINAPI
 shell_exec_thread(void *data)
 {
