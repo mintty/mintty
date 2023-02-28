@@ -324,7 +324,7 @@ In addition, from mintty 3.1.5, an additional escape sequence causes mintty
 to report its name and version; furthermore, although using 
 environment variables for this purpose is not reliable (see 
 [issue #776](https://github.com/mintty/mintty/issues/776) for a discussion), 
-mintty sets environment variables TERM_PROGRAM and TERM_PROGRAM_VERION 
+mintty sets environment variables TERM_PROGRAM and TERM_PROGRAM_VERSION 
 as various other terminals do.
 
 
