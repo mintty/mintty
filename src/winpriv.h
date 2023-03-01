@@ -67,6 +67,7 @@ extern bool title_settable;
 extern bool support_wsl;
 extern wchar * wslname;
 extern wstring wsl_basepath;
+extern bool report_config;
 extern bool report_child_pid;
 extern bool report_child_tty;
 

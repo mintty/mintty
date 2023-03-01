@@ -109,6 +109,7 @@ bool title_settable = true;
 static string border_style = 0;
 static string report_geom = 0;
 static bool report_moni = false;
+bool report_config = false;
 bool report_child_pid = false;
 bool report_child_tty = false;
 static bool report_winpid = false;
@@ -5557,6 +5558,8 @@ main(int argc, char *argv[])
   main_argv = argv;
   main_argc = argc;
   mintty_debug = getenv("MINTTY_DEBUG") ?: "";
+  if (strchr(mintty_debug, 'C'))
+    report_config = true;
 #ifdef debuglog
   mtlog = fopen("/tmp/mtlog", "a");
   {

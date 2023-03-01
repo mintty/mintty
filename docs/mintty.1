@@ -272,6 +272,11 @@ With value "p", mintty reports the PID of the child process (e.g. the shell).
 With value "P", mintty reports the cygwin PID and the Windows PID 
 of the mintty process (i.e. running the terminal).
 
+Note also the invocation \fIMINTTY_DEBUG=C mintty ...\fP; it will list 
+all config files loaded by mintty and whether they are also considered 
+for saving - the last one will be saved to. (This cannot be a \fB-R\fP 
+option as most config files are read before command line parameters are evaluated.)
+
 .TQ
 \fB--trace\fP \fIOUTPUT\fP
 This option redirects reporting (and debug) output to a file.
