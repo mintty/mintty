@@ -150,6 +150,8 @@ extern wstring wslicon(wchar * params);
 
 extern char * foreground_cwd(void);
 
+extern void toggle_status_line(void);
+
 extern void win_switch(bool back, bool alternate);
 extern int sync_level(void);
 

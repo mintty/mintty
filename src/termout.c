@@ -4269,7 +4269,8 @@ do_cmd(void)
       else
         cs_set_locale(s);
     when 7721:  // Copy window title to clipboard.
-      win_copy_title();
+      if (cfg.allow_set_selection)
+        win_copy_title();
     when 7704:  // Change ANSI foreground/background colours.
       do_ansi_colour_osc();
     when 7773: {  // Change icon.

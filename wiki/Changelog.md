@@ -9,6 +9,7 @@ Windows integration
   * Manage user-set HOME for calling Windows from WSL (mintty/wsltty#324, ~mintty/wsltty#76).
 
 Configuration
+  * Status line is configurable in Options menu, switchable from context menu.
   * New user-definable function toggle-tabbar (#1201).
   * Setting ClicksPlaceCursor presets all readline mouse modes.
 

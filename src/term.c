@@ -482,6 +482,10 @@ term_reconfig(void)
     term.bell_popup = new_cfg.bell_popup;
   if (strcmp(new_cfg.term, cfg.term))
     term.vt220_keys = vt220(new_cfg.term);
+  // status line
+  if (new_cfg.status_line != cfg.status_line
+      && new_cfg.status_line != term.st_type && term.st_type != 2)
+    toggle_status_line();
 }
 
 static int

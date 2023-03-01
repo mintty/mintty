@@ -541,8 +541,9 @@ to be declared in your shell profile (e.g. `$HOME/.bashrc`).
 
 The following _OSC_ ("operating system command") sequence can be used to copy 
 the window title to the Windows clipboard (like menu function "Copy Title"):
+This sequence is disabled by default setting `AllowSetSelection=no`.
 
-> `^[]7721;1^G`
+> `^[]7721^G`
 
 
 ## Window title set ##

@@ -4525,4 +4525,9 @@ setup_config_box(controlbox * b)
     s, _("Prompt about running processes on &close"),
     dlg_stdcheckbox_handler, &new_cfg.confirm_exit
   );
+  ctrl_checkbox(
+    //__ Options - Terminal:
+    s, _("Status Line"),
+    dlg_stdcheckbox_handler, &new_cfg.status_line
+  );
 }

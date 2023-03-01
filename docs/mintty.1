@@ -2249,8 +2249,10 @@ set the pending wrap condition, so that a subsequent character will wrap.
 
 .TQ
 \fBEnable indicator status line\fP (StatusLine=false)
-This setting enables the DEC indicator status line initially.
-On terminal reset, this setting is restored unless host-writable status line is selected.
+This setting enables the DEC indicator status line initially (or on hard terminal reset).
+The status line can also be toggled from the context menu.
+Note that an active host-writable status line overrides the setting 
+and disables the context menu function.
 
 .TQ
 \fBAllow control sequence to set selection\fP (AllowSetSelection=false)

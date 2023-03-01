@@ -32,6 +32,7 @@
 #define IDM_DEFSIZE         0x0070
 #define IDM_DEFSIZE_ZOOM    0x0170
 #define IDM_SCROLLBAR       0x0280
+#define IDM_STATUSLINE      0x0380
 #define IDM_FULLSCREEN      0x0080
 #define IDM_FULLSCREEN_ZOOM 0x0180
 #define IDM_BREAK           0x0090

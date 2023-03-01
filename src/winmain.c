@@ -3672,6 +3672,7 @@ static struct {
           win_update_scrollbar(false);
         when IDM_SEARCH: win_open_search();
         when IDM_FLIPSCREEN: term_flip_screen();
+        when IDM_STATUSLINE: toggle_status_line();
         when IDM_OPTIONS: win_open_config();
         when IDM_NEW: {
           HMONITOR mon = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);

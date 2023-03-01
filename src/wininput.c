@@ -566,6 +566,14 @@ win_update_menus(bool callback)
     alt_fn ? W("Alt+F12") : ct_sh ? W("Ctrl+Shift+S") : null
   );
 
+  uint status_line = term.st_type == 1 ? MF_CHECKED
+                   : term.st_type == 0 ? MF_UNCHECKED
+                   : MF_GRAYED;
+  //__ Context menu:
+  modify_menu(ctxmenu, IDM_STATUSLINE, status_line, _W("Status Line"),
+    null
+  );
+
   uint options_enabled = config_wnd ? MF_GRAYED : MF_ENABLED;
   EnableMenuItem(ctxmenu, IDM_OPTIONS, options_enabled);
   EnableMenuItem(sysmenu, IDM_OPTIONS, options_enabled);
@@ -710,6 +718,7 @@ win_init_ctxmenu(bool extended_menu, bool with_user_commands)
   AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_SCROLLBAR, 0);
   AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_FULLSCREEN_ZOOM, 0);
   AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_FLIPSCREEN, 0);
+  AppendMenuW(ctxmenu, MF_ENABLED | MF_UNCHECKED, IDM_STATUSLINE, 0);
   AppendMenuW(ctxmenu, MF_SEPARATOR, 0, 0);
   if (extended_menu) {
     //__ Context menu: generate a TTY BRK condition (tty line interrupt)
@@ -1345,7 +1354,7 @@ toggle_status_line()
 {
   if (term.st_type == 1)
     term_set_status_type(0, 0);
-  else
+  else if (term.st_type == 0)
     term_set_status_type(1, 0);
 }
 
@@ -1670,7 +1679,9 @@ mflags_dim_margins()
 static uint
 mflags_status_line()
 {
-  return term.st_type == 1 ? MF_CHECKED : MF_UNCHECKED;
+  return term.st_type == 1 ? MF_CHECKED
+       : term.st_type == 0 ? MF_UNCHECKED
+       : MF_GRAYED;
 }
 
 static uint
