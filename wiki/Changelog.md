@@ -7,6 +7,7 @@ Terminal features
 
 Windows integration
   * Manage user-set HOME for calling Windows from WSL (mintty/wsltty#324, ~mintty/wsltty#76).
+  * Support OSC 7 directory cloning if cloning WSL window while in rootfs.
 
 Configuration
   * Status line is configurable in Options menu, switchable from context menu.
