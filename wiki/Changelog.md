@@ -13,6 +13,7 @@ Configuration
   * Status line is configurable in Options menu, switchable from context menu.
   * New user-definable function toggle-tabbar (#1201).
   * Setting ClicksPlaceCursor presets all readline mouse modes.
+  * Dynamic support for flags emojis, deployment script (~mintty/wsltty#321).
   * `MINTTY_DEBUG=C mintty ...` will list loaded config files (#1181).
 
 ### 3.6.3 (18 Dec 2022) ###

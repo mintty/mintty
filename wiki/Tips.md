@@ -1086,6 +1086,9 @@ and blinking; background colours and inverse mode are ignored.
 Mintty supports display of emojis as defined by Unicode using 
 emoji presentation, emoji style variation and emoji sequences.
 (Note that the tty must be in a UTF-8 locale to support emoji codes.)
+Extended flag emojis (not listed by Unicode) are supported dynamically.
+
+<img align=right src=https://github.com/mintty/mintty/wiki/mintty-emojis.png>
 
 The option `Emojis` can choose among sets of emoji graphics if 
 deployed in a mintty configuration directory.
@@ -1107,6 +1110,8 @@ You can use the escape sequence PEC to tune emoji width.
 
 Mintty does not bundle actual emoji graphics with its package.
 You will have to download and deploy them yourself.
+Expert options are described here, see also the next section 
+for a Quick Guide to emoji installation.
 
 Emoji data can be found at the following sources:
 * [Unicode.org](http://www.unicode.org/emoji/charts/) Full Emoji List (~50MB)
@@ -1128,7 +1133,14 @@ Emoji data can be found at the following sources:
   * Deploy the preferred subdirectory (e.g. png/unicode/128) as `joypixels`
 * Zoom (with an installed Zoom meeting client)
   * Deploy $APPDATA/Zoom/data/Emojis/*.png into `zoom`
-<img align=right src=https://github.com/mintty/mintty/wiki/mintty-emojis.png>
+
+Emoji flags graphics (extending Unicode) can be found at the following sources:
+* [Google region flags](https://github.com/google/region-flags.git)
+* [Puellanivis’ emoji flags](https://github.com/puellanivis/emoji.git)
+
+  * Use the script [`getflags`](getflags) to download the repositories 
+  and extract emoji data (call it without parameters for instructions).
+  * Deploy common/*.png into `common`
 
 To “Clone” with limited download volume, use the command `git clone --depth 1`.
 To download only the desired subdirectory from `github.com`, use `subversion`, 
@@ -1145,6 +1157,27 @@ into mintty configuration resource subdirectory `emojis`, e.g.
 Use your preferred configuration directory, e.g.
 * `cp -rl noto-emoji/png/128 "$APPDATA"/mintty/emojis/noto`
 * `cp -rl noto-emoji/png/128 /usr/share/mintty/emojis/noto`
+
+### Quick Guide to emoji installation ###
+
+In the cygwin or MSYS2 mintty packages, the emoji download and deployment 
+scripts are installed in /usr/share/mintty/emojis, so do this for a common 
+all-users deployment of the emojis listed at Unicode.org and the flags emojis:
+* `cd /usr/share/mintty/emojis`
+* `./getemojis -d`
+* `./getflags -de`
+
+You may also use the scripts for deployment in your preferred config directory.
+
+To deploy in your personal local resource folder:
+* `mkdir -p ~/.config//mintty/emojis; cd ~/.config/mintty/emojis`
+* `/usr/share/mintty/emojis/getemojis -d`
+* `/usr/share/mintty/emojis/getflags -de`
+
+To deploy in your personal common resource folder (shared e.g. by cygwin/MSYS2):
+* `mkdir -p "$APPDATA"/mintty/emojis; cd "$APPDATA"/mintty/emojis`
+* `/usr/share/mintty/emojis/getemojis -d`
+* `/usr/share/mintty/emojis/getflags -de`
 
 
 ## Searching in the text and scrollback buffer ##

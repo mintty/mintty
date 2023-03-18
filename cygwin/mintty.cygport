@@ -55,7 +55,7 @@ src_install() {
   insinto /usr/share/mintty/icon
   doins icon/wsl.ico
   insinto /usr/share/mintty/emojis
-  doins tools/getemojis
+  doins tools/getemojis tools/getflags
 
   for i in 16 24 32 48 64 256
   do
