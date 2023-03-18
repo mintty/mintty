@@ -2356,8 +2356,10 @@ emoji_tags(int i)
 
 #ifdef echar16
 // emoji component encoding to wchar to save half the table size
+//	E0XXX	6XXX
+//	1FXXX	5XXX
 #define echar wchar
-#define ee(x) x >= 0xE0000 ? (wchar)((x & 0xFFF) + 0x6000): x >= 0x1F000 ? (wchar)((x & 0xFFF) + 0x5000) : x
+#define ee(x) x >= 0xE0000 ? (wchar)((x & 0xFFF) + 0x6000) : x >= 0x1F000 ? (wchar)((x & 0xFFF) + 0x5000) : x
 #define ed(x) ((x >> 12) == 6 ? (xchar)x + (0xE0000 - 0x6000) : (x >> 12) == 5 ? (xchar)x + (0x1F000 - 0x5000) : x)
 #else
 #define echar xchar
@@ -2381,7 +2383,7 @@ struct emoji_seq emoji_seqs[] = {
 struct emoji {
   int len: 7;   // emoji width in character cells (== # termchar positions)
   bool seq: 1;  // true: from emoji_seq, false: from emoji_base
-  int idx: 24;  // index in either emoji_seq or emoji_base
+  int idx: 24;  // index in either emoji_seqs or emoji_bases
 } __attribute__((packed));
 
 #define dont_debug_emojis 1
@@ -2536,8 +2538,8 @@ fallback:;
   wchar * wen = cs__utftowcs(en);
 
   char * ef = get_resource_file(W("emojis"), wen, false);
-#ifdef debug_emojis
-  printf("emoji <%s> file <%s>\n", en, ef);
+#if defined(debug_emojis) && debug_emojis > 1
+  printf("check_emoji seq %d idx %d (style %d) <%s> file <%s>\n", e.seq, e.idx, style, en, ef);
 #endif
   free(wen);
   free(en);
@@ -2550,7 +2552,7 @@ fallback:;
   else {
     // if no emoji graphics found, fallback to "common" emojis
     if (style) {
-      style = 0;
+      style = EMOJIS_NONE;
       goto fallback;
     }
 
@@ -2560,13 +2562,13 @@ fallback:;
 }
 
 static int
-match_emoji_seq(termchar * d, int maxlen, echar * chs)
+match_emoji_seq(termchar * d, int maxlen, echar * chs, uint len)
 {
   int l_text = 0; // number of matched text base character positions
   termchar * basechar = d;
   termchar * curchar = d;
 
-  for (uint i = 0; i < lengthof(emoji_seqs->chs) && ed(chs[i]); i++) {
+  for (uint i = 0; i < len && ed(chs[i]); i++) {
     if (!curchar)
       return 0;
     if (curchar == basechar)
@@ -2630,7 +2632,7 @@ match_emoji(termchar * d, int maxlen)
   uint tags = emoji_tags(tagi);
   if (tags) {
 #if defined(debug_emojis) && debug_emojis > 2
-    printf("%04X%s%s%s%s%s\n", ch,
+    printf("match base %04X%s%s%s%s%s\n", xchr(d),
            tags & EM_pres ? " pres" : "",
            tags & EM_pict ? " pict" : "",
            tags & EM_text ? " text" : "",
@@ -2659,10 +2661,10 @@ match_emoji(termchar * d, int maxlen)
     bool foundseq = false;
     if (tags & EM_base) {
       for (uint i = 0; i < lengthof(emoji_seqs); i++) {
-        int len = match_emoji_seq(d, maxlen, emoji_seqs[i].chs);
+        int len = match_emoji_seq(d, maxlen, emoji_seqs[i].chs, lengthof(emoji_seqs->chs));
         if (len) {
 #if defined(debug_emojis) && debug_emojis > 1
-          printf("match");
+          printf("match seqs");
           for (uint k = 0; k < lengthof(emoji_seqs->chs) && ed(emoji_seqs[i].chs[k]); k++)
             printf(" %04X", ed(emoji_seqs[i].chs[k]));
           printf("\n");
@@ -2690,6 +2692,7 @@ match_emoji(termchar * d, int maxlen)
         }
       }
     }
+
     if (!emoji.len) {
       wchar combchr = 0;
       if (comb) {
@@ -2742,12 +2745,21 @@ match_emoji(termchar * d, int maxlen)
       else
         emoji.len = 0;  // display text style
     }
+
     if (!emoji.len) {
       // not found another match; if we had a "longest match" before, 
       // but continued to search because it had no graphics, let's use it
       if (foundseq)
-        return longest;
+        emoji = longest;
     }
+
+#if defined(debug_emojis) && debug_emojis > 1
+    if (emoji.len) {
+      int i = emoji.idx;
+      struct emoji_base * ee = emoji.seq ? (struct emoji_base *)&emoji_seqs[i] : &emoji_bases[i];
+      printf("-> seq %d len %d idx %d <%ls> %d\n", emoji.seq, emoji.len, i, ee->efn, !!ee->buf);
+    }
+#endif
   }
 
   return emoji;
@@ -2769,7 +2781,7 @@ emoji_show(int x, int y, struct emoji e, int elen, cattr eattr, ushort lattr)
     bufpoi = &emoji_bases[e.idx].buf;
     buflen = &emoji_bases[e.idx].buflen;
   }
-#ifdef debug_emojis
+#if defined(debug_emojis) && debug_emojis > 1
   printf("emoji_show @%d:%d..%d it %d seq %d idx %d <%ls>\n", y, x, elen, !!(eattr.attr & ATTR_ITALIC), e.seq, e.idx, efn);
 #endif
 
@@ -2914,8 +2926,8 @@ term_paint(void)
                )
               equalattrs = false;
           }
-#ifdef debug_emojis
-          printf("matched len %d seq %d idx %d ok %d atr %d\n", e.len, e.seq, e.idx, ok, equalattrs);
+#if defined(debug_emojis) && debug_emojis > 3
+          printf("paint emoji: matched len %d seq %d idx %d ok %d atr %d\n", e.len, e.seq, e.idx, ok, equalattrs);
 #endif
 
           // modify character data to trigger later emoji display
@@ -3163,8 +3175,8 @@ term_paint(void)
                )
               equalattrs = false;
           }
-#ifdef debug_emojis
-          printf("matched len %d seq %d idx %d ok %d atr %d\n", e.len, e.seq, e.idx, ok, equalattrs);
+#if defined(debug_emojis) && debug_emojis > 3
+          printf("paint emoji: matched len %d seq %d idx %d ok %d atr %d\n", e.len, e.seq, e.idx, ok, equalattrs);
 #endif
 
           // modify character data to trigger later emoji display
@@ -3783,7 +3795,7 @@ term_paint(void)
             win_text(x, y, esp, elen, eattr, textattr, lattr, has_rtl, false, 1);
             flush_text();
           }
-#if defined(debug_emojis) && debug_emojis > 3
+#if defined(debug_emojis) && debug_emojis > 4
           // add background to some emojis
           eattr.attr &= ~(ATTR_BGMASK | ATTR_FGMASK);
           eattr.attr |= 6 << ATTR_BGSHIFT | 4;
@@ -3798,7 +3810,7 @@ term_paint(void)
             emoji_show(x, y, *ee, elen, eattr, lattr);
           }
         }
-#if defined(debug_emojis) && debug_emojis > 3
+#if defined(debug_emojis) && debug_emojis > 4
         else { // mark some emojis
           eattr.attr &= ~(ATTR_BGMASK | ATTR_FGMASK);
           eattr.attr |= 4 << ATTR_BGSHIFT | 6;
