@@ -601,6 +601,7 @@ struct term {
                           // as protected (xterm-like simplification)
 
   int detect_progress;
+  int progress_scan;
 
   enum {
     NORMAL, ESCAPE, CSI_ARGS,

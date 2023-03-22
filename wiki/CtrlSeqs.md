@@ -284,7 +284,9 @@ Note that automatic progress bar can also be configured (option ProgressBar).
 | `^[[8%q`                     | enable continuous "busy" indication         |
 
 An _OSC 9;4_ sequence (compatible with ConEmu or Windows Terminal) 
-is available too, alternatively supporting mnemonic parameters:
+is available too, alternatively supporting mnemonic parameters.
+It supports additional values to switch the progress scan mode 
+(option `ProgressScan`).
 
 | **sequence**                            | **comment**                       |
 |:----------------------------------------|:----------------------------------|
@@ -295,6 +297,8 @@ is available too, alternatively supporting mnemonic parameters:
 | `^[]9;progress;default^G` _or empty_    | reset progress indication         |
 | `^[]9;progress;`_level_`;`_percent_`^G` | set progress level and value      |
 | `^[]9;progress;busy^G`                  | enable busy indication            |
+| `^[]9;progress;single^G`                | single-line scan mode             |
+| `^[]9;progress;multiple^G`              | multi-line scan mode              |
 
 
 ## Mousewheel reporting ##

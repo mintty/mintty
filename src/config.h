@@ -243,6 +243,7 @@ typedef struct {
   bool bold_as_special;
   bool hover_title;
   char progress_bar;
+  int progress_scan;
   int baud;
   int bloom;
   wstring options_font;

@@ -27,7 +27,9 @@ An additional directory for a configuration file and configuration resources
 can be given with command-line parameter ```--configdir```.
 
 
-## Using desktop shortcuts to start mintty ##
+## Desktop integration ##
+
+### Using desktop shortcuts to start mintty ###
 
 The Cygwin [setup.exe](http://cygwin.com/setup.exe) package for mintty 
 installs a shortcut in the Windows start menu under _All Programs/Cygwin_.
@@ -114,6 +116,35 @@ which can be done using the `winappid` utility available in
 the mintty [utils repository](https://github.com/mintty/utils).
 As noted above, since mintty 2.9.6, the mintty AppID does not need to be set 
 anymore in this case.
+
+### Taskbar launch commands ###
+
+Launch commands from the taskbar icon and its menu can be configured 
+with settings `AppName`, `AppLaunchCmd` and `TaskCommands` ("jump list").
+This can be made persistent with command line setting `--store-taskbar-properties`.
+
+#### Tab sessions ####
+
+See also the section on [Virtual Tabs and Tabbar](#virtual-tabs-and-tabbar) 
+for configuration of session invocations from the context menu 
+with setting `SessionCommands`.
+
+### Taskbar pinning ###
+
+Taskbar pinning of a mintty window can be prevented with command line setting `--nopin`.
+
+### Taskbar bell indication ###
+
+Bell highlighting of the taskbar icon is enabled by default and can be 
+disabled with option `BellTaskbar`.
+
+### Taskbar progress indication ###
+
+Progress indication on the taskbar icon can be switched dynamically 
+or pre-configured with options `ProgressBar` and `ProgressScan`.
+To enable progress indication e.g. for the MSYS2 package manager pacman:
+* `ProgressBar=1`
+* `ProgressScan=2`
 
 
 ## Window session grouping ##

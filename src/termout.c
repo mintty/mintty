@@ -4683,8 +4683,15 @@ typedef struct {
                                  {"4", 2},
                                  {"2", 3},
                                  {"3", 8},
+                                 {"single", -1},
+                                 {"multiple", -2},
                                  {0, 0}},
                      false);
+      if (len < 0) {
+        term.progress_scan = - len;
+        return;
+      }
+
       if (!len)
         return;
       s += len;

@@ -2624,12 +2624,30 @@ in the window title when hovering can be disabled.
 .TQ
 \fBShow automatic progress bar\fP (ProgressBar=0)
 This setting initially enables a progress indication on the taskbar icon, 
-based on automatic progress detection: if the current cursor line contains 
-a percent indication (x%) and a subsequent relative positioning (e.g. a CR 
-return character) like in text progress indications, it will be notified 
+based on automatic progress detection (according to setting ProgressScan).
+The detected progress will be notified 
 via progress bar in one of three levels 1 (green), 2 (yellow), 3 (red).
 Note that the progress bar can also be switched or even controlled by an 
-escape sequence.
+escape sequence, see \fIhttps://github.com/mintty/mintty/wiki/CtrlSeqs#progress-bar\fP.
+
+.TQ
+\fBShow automatic progress bar\fP (ProgressScan=1)
+This setting selects the scan method to determine progress when 
+automatic progress detection is enabled:
+.br
+\(en \fB1\fP: single-line progress detection: if the current cursor 
+line contains a percent indication (x%) and a subsequent relative 
+positioning (e.g. a CR return character) like in text progress indications, 
+its percentage is taken as progress value
+.br
+\(en \fB2\fP: multi-line progress detection: all visible lines containing 
+a percent indication (x%) are accumulated to determine a progress value, 
+e.g. of \fIpacman\fP in MSYS2
+
+The detected progress will be notified via progress bar 
+according to option ProgressBar or its dynamic setting.
+Progress scan mode can also be switched by an escape sequence, 
+see \fIhttps://github.com/mintty/mintty/wiki/CtrlSeqs#progress-bar\fP.
 
 .TQ
 \fBSingle-dash long options\fP (ShortLongOpts=false)

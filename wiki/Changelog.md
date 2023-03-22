@@ -4,6 +4,7 @@ Terminal features
   * Hover and open URL: support parentheses (#1196).
   * Fix cursor artefacts in connection with ClicksPlaceCursor=yes.
   * Fix mouse-paste while still selecting.
+  * Support multi-line progress detection.
 
 Windows integration
   * Manage user-set HOME for calling Windows from WSL (mintty/wsltty#324, ~mintty/wsltty#76).
@@ -15,6 +16,7 @@ Configuration
   * Setting ClicksPlaceCursor presets all readline mouse modes.
   * Dynamic support for flags emojis, deployment script (~mintty/wsltty#321).
   * `MINTTY_DEBUG=C mintty ...` will list loaded config files (#1181).
+  * New option ProgressScan.
 
 ### 3.6.3 (18 Dec 2022) ###
 

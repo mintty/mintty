@@ -418,6 +418,7 @@ term_reset(bool full)
   term.iso_guarded_area = false;
 
   term.detect_progress = cfg.progress_bar;
+  term.progress_scan = cfg.progress_scan;
   taskbar_progress(-9);
 
   term.suspend_update = 0;
@@ -3044,6 +3045,9 @@ term_paint(void)
     term.cursor_on && !term.show_other_screen
     ? term.curs.y - term.disptop : -1;
 
+  int nlines_progress = 0;
+  int total_progress = 0;
+
   // Paint all lines, including status area
   for (int i = 0; i < term_allrows; i++) {
     pos scrpos;
@@ -3723,8 +3727,8 @@ term_paint(void)
       else
         term.st_kb_flag = 0;
 
-     /* Progress indication */
-      if (term.detect_progress) {
+     /* Progress indication on current cursor line (after back positioning) */
+      if (term.detect_progress && term.progress_scan == 1) {
         int j = term.cols;
         while (--j > 0) {
           if (chars[j].chr == '%'
@@ -3763,6 +3767,39 @@ term_paint(void)
         if (p <= 100) {
           taskbar_progress(- term.detect_progress);
           taskbar_progress(p);
+        }
+      }
+    }
+
+   /* Progress indication accumulated on all lines */
+    if (term.detect_progress && term.progress_scan == 2) {
+      int j = term.cols;
+      while (--j > 0) {
+        if (chars[j].chr == '%') {
+          int p = 0;
+          int f = 1;
+          bool pro = false;
+          while (--j >= 0) {
+            if (chars[j].chr >= '0' && chars[j].chr <= '9') {
+              p += f * (chars[j].chr - '0');
+              f *= 10;
+              pro = true;
+            }
+            else if (chars[j].chr == '.' || chars[j].chr == ',') {
+              p = 0;
+              f = 1;
+            }
+            else {
+              j++;
+              break;
+            }
+          }
+
+          if (pro && p <= 100) {
+            nlines_progress ++;
+            total_progress += p;
+          }
+          break;
         }
       }
     }
@@ -4328,6 +4365,10 @@ term_paint(void)
     * Release the line data fetched from the screen or scrollback buffer.
     */
     release_line(line);
+  }
+  if (term.detect_progress && term.progress_scan == 2) {
+    taskbar_progress(- term.detect_progress);
+    taskbar_progress(nlines_progress ? total_progress / nlines_progress : 0);
   }
 
   term.cursor_invalid = false;
