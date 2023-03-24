@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.22.4 -->
-<!-- CreationDate: Sun Dec 18 01:37:28 2022 -->
+<!-- CreationDate: Sat Mar 25 04:40:21 2023 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -229,7 +229,9 @@ context menu. (Equivalent to combining <b>--log</b> with
 
 <p style="margin-left:22%;">Override the named config file
 option with the given value, e.g. <b>-o
-ScrollbackLines=1000</b>.</p>
+ScrollbackLines=1000</b>. Note that for option settings that
+are localized in the Options menu, the value in the config
+file or on the command line must be unlocalized.</p>
 
 <p style="margin-left:11%;"><b>-p</b>, <b>--position</b>
 <i>X</i><b>,</b><i>Y</i></p>
@@ -409,6 +411,13 @@ process / shell. With value &quot;p&quot;, mintty reports
 the PID of the child process (e.g. the shell). With value
 &quot;P&quot;, mintty reports the cygwin PID and the Windows
 PID of the mintty process (i.e. running the terminal).</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note also the
+invocation <i>MINTTY_DEBUG=C mintty ...</i>; it will list
+all config files loaded by mintty and whether they are also
+considered for saving - the last one will be saved to. (This
+cannot be a <b>-R</b> option as most config files are read
+before command line parameters are evaluated.)</p>
 
 <p style="margin-left:11%;"><b>--trace</b>
 <i>OUTPUT</i></p>
@@ -1082,7 +1091,7 @@ BRK can be ignored by configuration of the terminal device
 (pty) or can be ignored by an application by catching the
 SIGINT signal. For more forceful interruption of the
 terminal client application, see the Tips wiki page
-<i><a href="https://github.com/mintty/mintty/wiki/Tips#terminating-the-foreground-program">https://github.com/mintty/mintty/wiki/Tips#terminating-the-foreground-program</a></i>
+<i><a href="https://github.com/mintty/mintty/wiki/Tips#terminating-the-foreground-program-the-hard-way">https://github.com/mintty/mintty/wiki/Tips#terminating-the-foreground-program-the-hard-way</a></i>
 .</p>
 
 <p style="margin-left:11%; margin-top: 1em">Note that
@@ -1403,7 +1412,9 @@ sequences. The option <b>Emojis</b> can choose among sets of
 emoji graphics if deployed in a mintty configuration
 directory. See the Tips wiki page
 <i><a href="https://github.com/mintty/mintty/wiki/Tips#emojis">https://github.com/mintty/mintty/wiki/Tips#emojis</a></i>
-about deployment of emoji graphics for mintty.</p>
+about deployment of emoji graphics for mintty. Extended flag
+emojis (not listed by Unicode) are supported
+dynamically.</p>
 
 <p style="margin-left:11%; margin-top: 1em"><b class=h3>HTML Screen
 dump</b> <br>
@@ -1771,15 +1782,23 @@ specified in the Unicode file Scripts.txt, listed in
 <i><a href="https://en.wikipedia.org/wiki/Script_(Unicode)">https://en.wikipedia.org/wiki/Script_(Unicode)</a></i>
 column &quot;Alias&quot;. (The definition list can be split
 over multiple lines if a separator is followed by a
-backslash, newline, and optional whitespace indentation.)
-<br>
-A special name is <b>PictoSymbols</b> to assign an
-alternative font to ranges of pictographic symbols from
-Unicode blocks matching Arrows, Mathematical Operators,
-Technical, Enclosed Alphanumerics, Pictographs, Control
-Pictures, Optical, Box Drawing, Miscellaneous.*Symbols,
-Block Elements, Geometric Shapes, Dingbats, Tiles, Cards,
-Emoticons, Transport, Alchemical, Chess. <br>
+backslash, newline, and optional whitespace
+indentation.)</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note that the
+setting string must not be terminated with a Windows
+lineend, as its CR would be considered part of the last
+item; this can be prevented with a final semicolon
+separator.</p>
+
+<p style="margin-left:22%; margin-top: 1em">A special name
+is <b>PictoSymbols</b> to assign an alternative font to
+ranges of pictographic symbols from Unicode blocks matching
+Arrows, Mathematical Operators, Technical, Enclosed
+Alphanumerics, Pictographs, Control Pictures, Optical, Box
+Drawing, Miscellaneous.*Symbols, Block Elements, Geometric
+Shapes, Dingbats, Tiles, Cards, Emoticons, Transport,
+Alchemical, Chess. <br>
 Another special name is <b>CJK</b> which comprises Han,
 Hangul, Katakana, Hiragana, Bopomofo, Kanbun, Halfwidth and
 Fullwidth Forms (except Latin). A later more specific entry
@@ -2214,11 +2233,20 @@ adjusted dynamically by an escape sequence.</p>
 (BackspaceSendsBS=no)</p>
 
 <p style="margin-left:22%;">By default, mintty sends
-<b>^?</b> (ASCII DEL) as the keycode for the backspace key.
-If this option is enabled, <b>^H</b> is sent instead. This
-also changes the <b>Ctrl+Backspace</b> code from <b>^_</b>
-to <b>^?</b>. <br>
-(Corresponds to the xterm resource <b>backarrowKey</b>.)</p>
+<b>^?</b> (ASCII DEL) as the keycode for the
+<b>Backspace</b> key. If this option is enabled, <b>^H</b>
+is sent instead. This also changes the <b>Ctrl+Backspace</b>
+code from <b>^H</b> to <b>^?</b>.</p>
+
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+This setting also causes the tty setting <b>ERASE
+character</b> to be aligned accordingly (see <i>man
+termios</i> and command <i>stty erase</i>). Mind that this
+may affect certain applications, for example emacs which
+cannot interpret the explicit Ctrl+h command anymore.</p>
+
+<p style="margin-left:22%; margin-top: 1em">(Corresponds to
+the xterm resource <b>backarrowKey</b>.)</p>
 
 <p style="margin-left:11%;"><br><b class=h4>Delete sends DEL</b>
 (DeleteSendsDEL=no)</p>
@@ -2455,9 +2483,16 @@ the extended context menu.</p>
 cursor</b> (ClicksPlaceCursor=no)</p>
 
 <p style="margin-left:22%;">If enabled, the command line
-cursor can be placed by pressing the left mouse button. This
-works by sending the number of cursor keycodes needed to get
-to the destination.</p>
+cursor can be placed by pressing the left mouse button. Also
+pasting in the command line positions the cursor first. Also
+double right-click (if right-click is configured to Extend
+selection) deletes the selection up to the current mouse
+position. This works by sending the number of cursor
+keycodes needed to get to the destination, and erase
+characters (of current tty setting) in the third case. The
+setting presets the readline mouse modes (DECSET 2001, 2002,
+2003) initially and on hard reset; they can also be switched
+by escape sequences.</p>
 
 <p style="margin-left:11%;"><br><b class=h4>Right mouse button</b>
 (RightClickAction=menu)</p>
@@ -2760,7 +2795,8 @@ roughly to the combined xterm resources
 
 <p style="margin-left:22%;">The answerback string is sent
 in response to the <b>^E</b> (ENQ) character. By default,
-this is empty.</p>
+this is empty. (Corresponds to the xterm resource
+<b>answerbackString</b>.)</p>
 
 <p style="margin-left:11%;"><br><b class=h4>Alternate screen</b>
 (NoAltScreen=false)</p>
@@ -2804,9 +2840,10 @@ subsequent character will wrap.</p>
 line</b> (StatusLine=false)</p>
 
 <p style="margin-left:22%;">This setting enables the DEC
-indicator status line initially. On terminal reset, this
-setting is restored unless host-writable status line is
-selected.</p>
+indicator status line initially (or on hard terminal reset).
+The status line can also be toggled from the context menu.
+Note that an active host-writable status line overrides the
+setting and disables the context menu function.</p>
 
 <p style="margin-left:11%;"><br><b class=h4>Allow control sequence to
 set selection</b> (AllowSetSelection=false)</p>
@@ -3230,9 +3267,10 @@ in the selection buffer. (Corresponds to the xterm resource
 <p style="margin-left:11%;"><br><b class=h4>Selection size
 indication</b> (SelectionShowSize=0)</p>
 
-<p style="margin-left:22%;">The current selection size can
-optionally been indicated with a popup, with a value between
-1 and 12, setting the popup position by clock hour.</p>
+<p style="margin-left:22%;">The current text selection size
+can optionally be indicated with a popup, with a value
+between 1 and 12, setting the popup position by clock
+hour.</p>
 
 <p style="margin-left:11%;"><br><b class=h4>Show hyperlink in window
 title when hovering</b> (HoverTitle=true)</p>
@@ -3246,13 +3284,36 @@ bar</b> (ProgressBar=0)</p>
 
 <p style="margin-left:22%;">This setting initially enables
 a progress indication on the taskbar icon, based on
-automatic progress detection: if the current cursor line
-contains a percent indication (x%) and a subsequent relative
-positioning (e.g. a CR return character) like in text
-progress indications, it will be notified via progress bar
-in one of three levels 1 (green), 2 (yellow), 3 (red). Note
-that the progress bar can also be switched or even
-controlled by an escape sequence.</p>
+automatic progress detection (according to setting
+ProgressScan). The detected progress will be notified via
+progress bar in one of three levels 1 (green), 2 (yellow), 3
+(red). Note that the progress bar can also be switched or
+even controlled by an escape sequence, see
+<i><a href="https://github.com/mintty/mintty/wiki/CtrlSeqs#progress-bar">https://github.com/mintty/mintty/wiki/CtrlSeqs#progress-bar</a></i>
+.</p>
+
+<p style="margin-left:11%;"><br><b class=h4>Show automatic progress
+bar</b> (ProgressScan=1)</p>
+
+<p style="margin-left:22%;">This setting selects the scan
+method to determine progress when automatic progress
+detection is enabled: <br>
+&ndash; <b>1</b>: single-line progress detection: if the
+current cursor line contains a percent indication (x%) and a
+subsequent relative positioning (e.g. a CR return character)
+like in text progress indications, its percentage is taken
+as progress value <br>
+&ndash; <b>2</b>: multi-line progress detection: all visible
+lines containing a percent indication (x%) are accumulated
+to determine a progress value, e.g. of <i>pacman</i> in
+MSYS2</p>
+
+<p style="margin-left:22%; margin-top: 1em">The detected
+progress will be notified via progress bar according to
+option ProgressBar or its dynamic setting. Progress scan
+mode can also be switched by an escape sequence, see
+<i><a href="https://github.com/mintty/mintty/wiki/CtrlSeqs#progress-bar">https://github.com/mintty/mintty/wiki/CtrlSeqs#progress-bar</a></i>
+.</p>
 
 <p style="margin-left:11%;"><br><b class=h4>Single-dash long
 options</b> (ShortLongOpts=false)</p>
@@ -3543,15 +3604,23 @@ whitespace indentation. <br>
 <b>translations</b>.)</p>
 
 <p style="margin-left:22%; margin-top: 1em">Note that
-Win+key combinations are often reserved by Windows. Note
-that Shift+char combinations of plain character keys can not
-be remapped as they have a character assigned already within
+Win+key combinations are often reserved by Windows.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note that
+Shift+char combinations of plain character keys can not be
+remapped as they have a character assigned already within
 the basic keyboard layout. Likewise, Ctrl+char and Alt+char
 combinations have their traditional terminal functions
 (sending control characters or ESC followed by the
 character), so they are protected from accidental remapping
 by default; remapping them to a key function needs
 additional setting <b>ShootFoot=on</b>.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note that the
+setting string must not be terminated with a Windows
+lineend, as its CR would be considered part of the last
+item; this can be prevented with a final semicolon
+separator.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Supported keys
 are described as follows: <br>
@@ -3655,6 +3724,7 @@ in working directory of current foreground process <br>
 enabled) <br>
 &ndash; <b>new-tab-cwd</b>: opens a new terminal tab in
 working directory of current foreground process <br>
+&ndash; <b>toggle-tabbar</b>: toggles the tabbar <br>
 &ndash; <b>options</b>: opens the Options dialog <br>
 &ndash; <b>menu-text</b> (*): opens the context menu at the
 cursor position <br>
@@ -4295,6 +4365,12 @@ definition list can be split over multiple lines if a
 separator is followed by a backslash, newline, and optional
 whitespace indentation.</p>
 
+<p style="margin-left:22%; margin-top: 1em">Note that the
+setting string must not be terminated with a Windows
+lineend, as its CR would be considered part of the last
+item; this can be prevented with a final semicolon
+separator.</p>
+
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 This feature potentially makes mintty vulnerable against
 command injection. Be careful what commands you configure!
@@ -4348,6 +4424,12 @@ The definition list can be split over multiple lines if a
 separator is followed by a backslash, newline, and optional
 whitespace indentation.</p>
 
+<p style="margin-left:22%; margin-top: 1em">Note that the
+setting string must not be terminated with a Windows
+lineend, as its CR would be considered part of the last
+item; this can be prevented with a final semicolon
+separator.</p>
+
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 This feature potentially makes mintty vulnerable against
 command injection. Be careful what strings you
@@ -4380,6 +4462,12 @@ specified as an alternative separator by starting the whole
 setting with it. The definition list can be split over
 multiple lines if a separator is followed by a backslash,
 newline, and optional whitespace indentation.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note that the
+setting string must not be terminated with a Windows
+lineend, as its CR would be considered part of the last
+item; this can be prevented with a final semicolon
+separator.</p>
 
 <p style="margin-left:22%; margin-top: 1em">Mintty provides
 useful information in environment variables: <br>
@@ -4485,6 +4573,12 @@ with respect to menu labels, and to <b>KeyFunctions</b>
 setting with respect to function designations; respective
 notes and warnings apply.</p>
 
+<p style="margin-left:22%; margin-top: 1em">Note that the
+setting string must not be terminated with a Windows
+lineend, as its CR would be considered part of the last
+item; this can be prevented with a final semicolon
+separator.</p>
+
 <p style="margin-left:11%;"><br><b class=h4>System menu user
 commands</b> (SysMenuFunctions=)</p>
 
@@ -4504,6 +4598,12 @@ as an alternative separator by starting the whole setting
 with it). The definition list can be split over multiple
 lines if a separator is followed by a backslash, newline,
 and optional whitespace indentation.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note that the
+setting string must not be terminated with a Windows
+lineend, as its CR would be considered part of the last
+item; this can be prevented with a final semicolon
+separator.</p>
 
 <p style="margin-left:22%; margin-top: 1em">The
 configuration is similar to the <b>UserCommands</b> setting
@@ -4537,6 +4637,12 @@ definition list can be split over multiple lines if a
 separator is followed by a backslash, newline, and optional
 whitespace indentation.</p>
 
+<p style="margin-left:22%; margin-top: 1em">Note that the
+setting string must not be terminated with a Windows
+lineend, as its CR would be considered part of the last
+item; this can be prevented with a final semicolon
+separator.</p>
+
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 Session launch names are subject to localization if they are
 added to the localization file of the selected UI
@@ -4569,6 +4675,12 @@ specified as an alternative separator by starting the whole
 setting with it.) The definition list can be split over
 multiple lines if a separator is followed by a backslash,
 newline, and optional whitespace indentation.</p>
+
+<p style="margin-left:22%; margin-top: 1em">Note that the
+setting string must not be terminated with a Windows
+lineend, as its CR would be considered part of the last
+item; this can be prevented with a final semicolon
+separator.</p>
 
 <p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
 This feature only works in combination with a parameter
@@ -4685,6 +4797,11 @@ window position synchronization to the given level as if
 also setting <b>SessionGeomSync=</b><i>level</i>. It is
 recommended to use level 3 or higher.</p>
 
+<p style="margin-left:22%; margin-top: 1em"><i>Note:</i>
+The tabbar can also be switched dynamically with the
+user-definable function toggle-tabbar assigned to a hotkey
+or configured into the context menu.</p>
+
 <p style="margin-left:11%;"><br><b class=h4>Tabbar grouping</b>
 (NewTabs=0)</p>
 
@@ -4718,8 +4835,8 @@ communicates with the child process through a pseudo
 terminal device, which Cygwin emulates using Windows pipes,
 causing issues with native Windows command line programs.
 Cygwin 3.1.0 compensates for this issue via the ConPTY API
-of Windows 10. MSYS2, however, does not enable this support
-by default. See
+of Windows 10. MSYS2, however, did not enable this support
+by default until end of 2022. See
 <i><a href="https://github.com/mintty/mintty/wiki/Tips#inputoutput-interaction-with-alien-programs">https://github.com/mintty/mintty/wiki/Tips#inputoutput-interaction-with-alien-programs</a></i>
 for further hints, also on the <i>winpty</i> wrapper for
 older systems.</p>
@@ -4741,7 +4858,9 @@ DEC terminal screen features up to the VT500 series except
 DECRLM (right-to-left cursor motion), also supporting VT52
 mode, thus being fully VT100-compatible, and VT320 status
 lines. It also includes most other xterm-specific control
-sequences and modes.</p>
+sequences and modes. See
+<i><a href="https://invisible-island.net/xterm/ctlseqs/ctlseqs.html">https://invisible-island.net/xterm/ctlseqs/ctlseqs.html</a></i>
+for a list.</p>
 
 <p style="margin-left:11%; margin-top: 1em">In addition,
 mintty supports a maximum of ANSI and ECMA-48 character
@@ -4759,6 +4878,11 @@ recommendation (
 <i><a href="https://terminal-wg.pages.freedesktop.org/bidi/">https://terminal-wg.pages.freedesktop.org/bidi/</a></i>
 ). However, emoji rendering does not work properly within
 right-to-left text.</p>
+
+<p style="margin-left:11%; margin-top: 1em">For
+mintty-specific private escape sequences and extensions, see
+<i><a href="https://github.com/mintty/mintty/wiki/CtrlSeqs">https://github.com/mintty/mintty/wiki/CtrlSeqs</a></i>
+.</p>
 
 <p style="margin-left:11%; margin-top: 1em">Mintty also
 provides emulation of the Tektronix 4014 vector graphics

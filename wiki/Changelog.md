@@ -1,3 +1,5 @@
+### 3.6.4 (25 Mar 2023) ###
+
 Terminal features
   * Tweak response code to XTQALLOWED OSC 60 and XTQDISALLOWED OSC 61 (xterm 378).
   * Readline mouse modes (DECSET 2001 / 2002 / 2003, xterm 379).
