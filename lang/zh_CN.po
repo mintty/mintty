@@ -909,7 +909,7 @@ msgstr "退出时提示还在运行的进程(&C)"
 #. __ Context menu:
 #: config.c:4537 wininput.c:573
 msgid "Status Line"
-msgstr ""
+msgstr "状态栏"
 
 #: textprint.c:44 textprint.c:122
 msgid "[Printing...] "
