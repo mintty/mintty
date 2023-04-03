@@ -31,7 +31,11 @@ tmpdir()
       tmpdir = asform("%s/Temp", tmpdir);
   }
   if (!tmpdir || access(tmpdir, W_OK) < 0)
+    tmpdir = "/var/tmp";
+  if (!tmpdir || access(tmpdir, W_OK) < 0)
     tmpdir = "/usr/tmp";
+  if (!tmpdir || access(tmpdir, W_OK) < 0)
+    tmpdir = "/tmp";
   return tmpdir;
 }
 
