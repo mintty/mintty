@@ -24,13 +24,65 @@ get_char(termline *line, int x)
   return c;
 }
 
+// https://en.wikipedia.org/wiki/Uniform_Resource_Identifier#Syntax
+// https://datatracker.ietf.org/doc/html/rfc3986#section-3.1
+enum SCHEME_STATE {
+  SCHEME_STATE_NONE,
+  SCHEME_STATE_SLASH_OPEN,
+  SCHEME_STATE_SLASH,
+  SCHEME_STATE_COLON,
+  SCHEME_STATE_SCHEME,
+  SCHEME_STATE_CLOSE,
+};
+
+// scheme detection state machine (generally parsed from right to left)
+int scheme_state_resolve(int state, char c)
+{
+  //  file:///some/path
+  // 544443221000010000
+  //  http://abc.xy
+  // 54444321000000
+  //  (http://www.site.com)
+  //  54444321000000000000
+  //  b/foo
+  //  01000
+  switch (state) {
+  case SCHEME_STATE_NONE:
+  case SCHEME_STATE_SLASH_OPEN:
+    if (c == '/') state++;
+    else state = SCHEME_STATE_NONE;
+    break;
+  case SCHEME_STATE_SLASH:
+    // allow >2 slash chars (e.g. file:///path)
+    if (c == ':') state++;
+    else if (c != '/') state = SCHEME_STATE_NONE;
+    break;
+  case SCHEME_STATE_COLON:
+  case SCHEME_STATE_SCHEME:
+    // technically RFC3986 specifies that the scheme portion
+    // must *start* with an alpha, however that's a bit
+    // difficult when parsing from right->left and would
+    // require backtracking in sel_spread_word
+    if (c == '+' || c == '-' || c == '.' || isalnum(c)) {
+      // preserve state only if SCHEME_STATE_SCHEME
+      if (state == SCHEME_STATE_COLON) state++;
+    } else {
+      // state machine done
+      state = SCHEME_STATE_CLOSE;
+    }
+    break;
+  }
+
+  return state;
+}
+
 static pos
 sel_spread_word(pos p, bool forward)
 {
   pos ret_p = p;
   termline *line = fetch_line(p.y);
 static int level = 0;
-static char scheme = 0;
+static int scheme = SCHEME_STATE_NONE;
   if (!forward) {
     level = 0;
     scheme = 0;
@@ -40,29 +92,10 @@ static char scheme = 0;
   for (;;) {
     wchar c = get_char(line, p.x);
 
-    // scheme detection state machine
     if (!forward) {
-      // http://abc.xy
-      //0ssss://
-      if (isalnum(c)) {
-        if (scheme == ':')
-          scheme = 's';
-        else if (scheme != 's')
-          scheme = 0;
-      }
-      else if (c == ':') {
-        if (scheme == '/')
-          scheme = ':';
-        else
-          scheme = 0;
-      }
-      else if (c == '/') {
-        scheme = '/';
-      }
-      else if (scheme)
+      scheme = scheme_state_resolve(scheme, c);
+      if (scheme == SCHEME_STATE_CLOSE)
         break;
-      else
-        scheme = 0;
     }
 
     if (term.mouse_state != MS_OPENING && *cfg.word_chars_excl)
