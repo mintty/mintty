@@ -1,3 +1,6 @@
+Terminal features
+  * Fix file link detection (#1208), tweak URL detection (#1209).
+
 ### 3.6.4 (25 Mar 2023) ###
 
 Terminal features

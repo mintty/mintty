@@ -59,7 +59,7 @@ static char scheme = 0;
       else if (c == '/') {
         scheme = '/';
       }
-      else if (scheme)
+      else if (scheme == 's')  // #1209 / #1208
         break;
       else
         scheme = 0;
