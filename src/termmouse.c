@@ -77,7 +77,7 @@ static char scheme = 0;
     }
     else if (strchr("_#%~+-", c))
       ret_p = p;
-    else if (strchr(".$@/\\", c)) {
+    else if (strchr(".~$@/\\", c)) {
       if (!forward)
         ret_p = p;
     }
