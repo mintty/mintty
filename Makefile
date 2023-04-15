@@ -9,6 +9,7 @@
 # - upload: Upload cygwin packages for publishing.
 # - ann: Create cygwin announcement mail.
 # - _: Create language translation template, update translation files.
+# - install: Install locally into $(DESTDIR)/
 
 # Variables intended for setting on the make command line.
 # - RELEASE: release number for packaging
@@ -155,4 +156,38 @@ announcement:
 	echo  >> $(announcement)
 	echo ------ >> $(announcement)
 	echo Thomas >> $(announcement)
+
+.PHONY: install # prevent file INSTALL to be taken as target install
+install:
+	mkdir -p $(DESTDIR)/
+	echo Installing into $(DESTDIR)/
+	# binaries
+	mkdir -p $(DESTDIR)/usr/bin
+	cp bin/mintty tools/mintheme $(DESTDIR)/usr/bin/
+	# manual
+	mkdir -p $(DESTDIR)/usr/share/man
+	gzip -c docs/mintty.1 > $(DESTDIR)/usr/share/man/mintty.1.gz
+	# resources
+	mkdir -p $(DESTDIR)/usr/share/mintty/{lang,themes,sounds,icon,emojis}
+	cp lang/*.pot lang/*.po $(DESTDIR)/usr/share/mintty/lang/
+	cp themes/* $(DESTDIR)/usr/share/mintty/themes/
+	cp sounds/*.wav sounds/*.WAV $(DESTDIR)/usr/share/mintty/sounds/
+	cp icon/wsl.ico $(DESTDIR)/usr/share/mintty/icon/
+	cp tools/getemojis tools/getflags $(DESTDIR)/usr/share/mintty/emojis/
+	# icons
+	for i in 16 24 32 48 64 256; do mkdir -p $(DESTDIR)/usr/share/icons/hicolor/$${i}x$${i}/apps; cp icon/hi$${i}-apps-mintty.png $(DESTDIR)/usr/share/icons/hicolor/$${i}x$${i}/apps/mintty.png; done
+	# enable new icon files
+	rm -f $(DESTDIR)/usr/share/icons/hicolor/icon-theme.cache
+	# make X11 desktop entry
+	# template: /usr/share/cygport/lib/src_install.cygpart
+	mkdir -p $(DESTDIR)/usr/share/applications
+	echo "[Desktop Entry]" > $(DESTDIR)/usr/share/applications/mintty.desktop
+	echo "Version=1.0" >> $(DESTDIR)/usr/share/applications/mintty.desktop
+	echo "Name=Mintty" >> $(DESTDIR)/usr/share/applications/mintty.desktop
+	echo "Exec=mintty" >> $(DESTDIR)/usr/share/applications/mintty.desktop
+	echo "TryExec=mintty" >> $(DESTDIR)/usr/share/applications/mintty.desktop
+	echo "Type=Application" >> $(DESTDIR)/usr/share/applications/mintty.desktop
+	echo "Icon=mintty" >> $(DESTDIR)/usr/share/applications/mintty.desktop
+	echo "Categories=System;TerminalEmulator;" >> $(DESTDIR)/usr/share/applications/mintty.desktop
+	echo "OnlyShowIn=X-Cygwin;" >> $(DESTDIR)/usr/share/applications/mintty.desktop
 
