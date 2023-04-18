@@ -631,13 +631,20 @@ Mintty uses the Windows keyboard layout system with its “dead key” mechanism
 for entering accented characters, enhanced by self-composed characters 
 for dead-key combinations that Windows does not support (e.g. ẃ).
 
-Mintty also provides a Compose key, configurable to Control, Shift or Alt,
-using X11 compose data. For example, if the compose key is configured 
-to be Control, pressing and release the Control key, followed by letters 
+Mintty also provides a Compose key, using X11 compose data.
+It is configurable to Control, Shift, Alt, Super or Hyper, or to any key 
+combination with user-definable function `compose` in setting `KeyFunctions`.
+For example, if the Compose key is configured to be Control, 
+pressing and releasing the Control key, followed by letters 
 `a` and `e`, will enter `æ`; Control-`-`-`,` will enter `¬`, 
 Control-`C`-`o` will enter `©`, Control-`<`-`<` will enter `«`, 
 Control-`c`-`,` will enter `ç`, Control-`s`-`s` will enter `ß`, 
 Control-`!`-`!` will enter `¡`, Control-`!`-`?` will enter `‽`, etc.
+
+The user-definable function `compose` can be used to assign the Compose 
+function to other keys, e.g.
+* `KeyFunctions=CapsLock:compose`
+* `KeyFunctions=NumLock:compose`
 
 For a separate compose key solution, the most seamless and stable 
 **Compose Key for Windows** is 
@@ -1387,7 +1394,7 @@ It is suggested to adjust the window size to the Tektronix 4010 resolution and a
 
 The script `tek` in the mintty 
 [utils repository](https://github.com/mintty/utils) supports switching 
-to Tek mode and optionally output of Tek or plot files.
+to Tek mode and optional output of Tek plot files.
 It also sets the environment variables **TERM** and **GNUTERM** properly.
 When leaving the sub-shell, it restores DEC/ANSI terminal mode.
 

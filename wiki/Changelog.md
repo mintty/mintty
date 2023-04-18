@@ -1,6 +1,9 @@
 Terminal features
   * Fix file link detection (#1208), tweak URL detection (#1209).
 
+Configuration
+  * New user-definable function compose (#1211).
+
 ### 3.6.4 (25 Mar 2023) ###
 
 Terminal features
