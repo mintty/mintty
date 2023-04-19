@@ -632,8 +632,9 @@ for entering accented characters, enhanced by self-composed characters
 for dead-key combinations that Windows does not support (e.g. ẃ).
 
 Mintty also provides a Compose key, using X11 compose data.
-It is configurable to Control, Shift, Alt, Super or Hyper, or to any key 
-combination with user-definable function `compose` in setting `KeyFunctions`.
+It is configurable to Control, Shift, Alt, Super or Hyper, or CapsLock, 
+or to any key combination with user-definable function `compose` in 
+setting `KeyFunctions`.
 For example, if the Compose key is configured to be Control, 
 pressing and releasing the Control key, followed by letters 
 `a` and `e`, will enter `æ`; Control-`-`-`,` will enter `¬`, 

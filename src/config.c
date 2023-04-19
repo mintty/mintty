@@ -690,6 +690,7 @@ static opt_val * const opt_vals[] = {
     {"ctrl", MDK_CTRL},
     {"super", MDK_SUPER},
     {"hyper", MDK_HYPER},
+    {"capslock", MDK_CAPSLOCK},
     {0, 0}
   },
   [OPT_TRANS] = (opt_val[]) {

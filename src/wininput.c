@@ -2292,14 +2292,16 @@ pick_key_function(wstring key_commands, char * tag, int n, uint key, mod_keys mo
 
       return ret;
     }
-#ifdef support_compose_by_capslock_via_config
-#warning this causes endless event looping, to be worked out if desired...
     else if (key == VK_CAPITAL && cfg.compose_key == MDK_CAPSLOCK) {
+      // support config ComposeKey=capslock:
       // nullify the keyboard state lock effect, see above,
-      // so we can/could support config ComposeKey=capslock
-      win_key_nullify(key);
+      // so we can support config ComposeKey=capslock;
+      // avoid the recursion with fake events that have scancode 0
+      if (scancode)
+        win_key_nullify(key);
+      else
+        return false;
     }
-#endif
 
     n--;
     if (sepp) {
@@ -3806,11 +3808,9 @@ win_key_up(WPARAM wp, LPARAM lp)
         || (cfg.compose_key == MDK_HYPER && key == hyper_key)
         // support KeyFunctions=CapsLock:compose (or other key)
         || key == compose_key
-#ifdef support_compose_by_capslock_via_config
-#warning needs support by nullifying capslock state (see above)
         // support config ComposeKey=capslock
+        // needs support by nullifying capslock state (see above)
         || (cfg.compose_key == MDK_CAPSLOCK && key == VK_CAPITAL)
-#endif
        )
     {
       if (comp_state >= 0) {

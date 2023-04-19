@@ -3,6 +3,7 @@ Terminal features
 
 Configuration
   * New user-definable function compose (#1211).
+  * New option setting ComposeKey=capslock (#1211).
 
 ### 3.6.4 (25 Mar 2023) ###
 
