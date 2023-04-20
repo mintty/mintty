@@ -173,6 +173,7 @@ typedef struct {
   int play_tone;
   wstring printer;
   bool confirm_exit;
+  bool confirm_reset;
   // Command line
   wstring class;
   char hold;

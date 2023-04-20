@@ -181,6 +181,7 @@ const config default_cfg = {
   .play_tone = 2,
   .printer = W(""),
   .confirm_exit = true,
+  .confirm_reset = false,
   // Command line
   .class = W(""),
   .hold = HOLD_START,
@@ -505,6 +506,7 @@ options[] = {
   {"PlayTone", OPT_INT, offcfg(play_tone)},
   {"Printer", OPT_WSTRING, offcfg(printer)},
   {"ConfirmExit", OPT_BOOL, offcfg(confirm_exit)},
+  {"ConfirmReset", OPT_BOOL, offcfg(confirm_reset)},
 
   // Command line
   {"Class", OPT_WSTRING, offcfg(class)},

@@ -2377,6 +2377,11 @@ If possible, mintty also displays a list of running child processes,
 using the procps command if installed, or the ps command.
 
 .TQ
+\fBPrompt to confirm interactive reset\fP (ConfirmReset=no)
+If enabled, ask for confirmation when a terminal reset is requested 
+interactively via \fIAlt+F8\fP or from the menu.
+
+.TQ
 \fBSuppress properties and features controlled by escape sequences\fP
 Using these options, the listed feature numbers are suppressed.
 Each option may contain a comma-separated list of respective numbers.
@@ -3067,7 +3072,7 @@ Supported actions are described as follows:
 .br
 \(en \fBlock-title\fP: locks the window title from being changed
 .br
-\(en \fBreset\fP: resets the terminal (with confirm dialog)
+\(en \fBreset\fP: resets the terminal (with confirm dialog if enabled)
 .br
 \(en \fBreset-noask\fP: resets the terminal (no confirm dialog)
 .br

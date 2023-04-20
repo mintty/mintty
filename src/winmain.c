@@ -3615,7 +3615,7 @@ static struct {
         when IDM_PASTE: win_paste();
         when IDM_SELALL: term_select_all(); win_update(false);
         when IDM_RESET or IDM_RESET_NOASK:
-          if ((wp & ~0xF) == IDM_RESET_NOASK || confirm_reset()) {
+          if ((wp & ~0xF) == IDM_RESET_NOASK || !cfg.confirm_reset || confirm_reset()) {
             winimgs_clear();
             term_reset(true);
             win_update(false);
