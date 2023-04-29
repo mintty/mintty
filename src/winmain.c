@@ -6829,9 +6829,17 @@ static int dynfonts = 0;
   }
 
   // Initialise the terminal.
-  term_reset(true);
+  // If term_reset tries to align the status line before 
+  // term.marg_bot is defined in term_resize 
+  // (as called from win_adapt_term_size after WM_SIZE), 
+  // mintty -o StatusLine=on will crash in call sequence
+  // term_reset - term_set_status_type - term_do_scroll - assert
+  // Happens with dpi == 96...
+  // So we'll have to call term_reset after term_resize:
+  //term_reset(true);
   term.show_scrollbar = !!cfg.scrollbar;
   term_resize(term_rows, term_cols);
+  term_reset(true);
 
   // Initialise the scroll bar.
   SetScrollInfo(

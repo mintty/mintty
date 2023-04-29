@@ -1,5 +1,6 @@
 Terminal features
   * Fix file link detection (#1208), tweak URL detection (#1209).
+  * Fix setup of initial status line if monitor DPI is not 96.
 
 Configuration
   * New user-definable function compose (#1211).
