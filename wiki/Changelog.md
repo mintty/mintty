@@ -1,5 +1,8 @@
-Terminal features
+Pathname handling
   * Fix file link detection (#1208), tweak URL detection (#1209).
+  * Restore opening of Windows path names (#1219; broken since 2.8.1).
+
+Terminal features
   * Fix setup of initial status line if monitor DPI is 96.
 
 Configuration
