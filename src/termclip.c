@@ -1,5 +1,5 @@
 // termclip.c (part of mintty)
-// Copyright 2008-10 Andy Koppe, 2018 Thomas Wolff
+// Copyright 2008-23 Andy Koppe, 2018 Thomas Wolff
 // Adapted from code from PuTTY-0.60 by Simon Tatham and team.
 // Licensed under the terms of the GNU General Public License v3 or later.
 
@@ -272,15 +272,11 @@ term_open(void)
   wchar * p = selstr;
   while (iswspace(*p))
     p++;
-  if (*p) {
-    wchar * url = p;
-    while (*p && !iswspace(*p))
-      p++;
-    *p = 0;
-    win_open(wcsdup(url), true);  // win_open frees its argument
-  }
 
-  free(selstr);
+  if (*p)
+    win_open(selstr, true);  // win_open frees its argument
+  else
+    free(selstr);
 }
 
 static bool
