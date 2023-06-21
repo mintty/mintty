@@ -5,6 +5,9 @@ Pathname handling
 Terminal features
   * Fix setup of initial status line if monitor DPI is 96.
 
+Window handling
+  * Revamp window operations, esp max/fullscreen, to not raise to foreground.
+
 Configuration
   * New user-definable function compose (#1211).
   * New option setting ComposeKey=capslock (#1211).

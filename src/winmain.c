@@ -1621,6 +1621,10 @@ win_set_iconic(bool iconic)
 {
   if (iconic ^ IsIconic(wnd))
     ShowWindow(wnd, iconic ? SW_MINIMIZE : SW_RESTORE);
+  /* possible enhancements:
+     - avoid force-to-top on restore - implementation attempt failed
+     - remember/preset maximize/fullscreen while minimize (xterm)
+   */
 }
 
 /*
@@ -1631,7 +1635,9 @@ win_set_pos(int x, int y)
 {
   trace_resize(("--- win_set_pos %d %d\n", x, y));
   if (!IsZoomed(wnd))
-    SetWindowPos(wnd, null, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+    SetWindowPos(wnd, null, x, y, 0, 0,
+                 SWP_NOACTIVATE |
+                 SWP_NOSIZE | SWP_NOZORDER);
 }
 
 /*
@@ -1980,7 +1986,8 @@ make_fullscreen(void)
   RECT fr = mi.rcMonitor;
   // set window size
   SetWindowPos(wnd, HWND_TOP, fr.left, fr.top,
-               fr.right - fr.left, fr.bottom - fr.top, SWP_FRAMECHANGED);
+               fr.right - fr.left, fr.bottom - fr.top,
+               SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
 /*
@@ -2004,6 +2011,7 @@ clear_fullscreen(void)
   }
   SetWindowLong(wnd, GWL_STYLE, style);
   SetWindowPos(wnd, null, 0, 0, 0, 0,
+               SWP_NOACTIVATE |
                SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 }
 
@@ -2829,6 +2837,33 @@ win_fix_taskbar_max(int show_cmd)
   return show_cmd;
 }
 
+#ifdef debug_win_status
+
+static void
+show_win_status(char * tag, HWND wnd)
+{
+  WINDOWPLACEMENT pl;
+  pl.length = sizeof(WINDOWPLACEMENT);
+  GetWindowPlacement(wnd, &pl);
+  RECT fr = pl.rcNormalPosition;
+  LONG style = GetWindowLong(wnd, GWL_STYLE);
+  printf("%s[%d:%p] show %d y %d..%d x %d..%d max %d zoom %d\n", 
+         tag, getpid(), wnd, 
+         pl.showCmd, 
+         fr.top, fr.bottom, fr.left, fr.right,
+         style & WS_MAXIMIZE,
+         IsZoomed(wnd)
+        );
+  bool layered = GetWindowLong(wnd, GWL_EXSTYLE) & WS_EX_LAYERED;
+  BYTE b;
+  GetLayeredWindowAttributes(wnd, 0, &b, 0);
+  bool hidden = layered && !b;
+  bool tooled = GetWindowLong(wnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW;
+  printf("%s[%d:%p] tooled %d layered %d attr %d hidden %d\n", tag, getpid(), wnd, tooled, layered, b, hidden);
+}
+
+#endif
+
 /*
  * Maximise or restore the window in response to a server-side request.
  * Argument value of 2 means go fullscreen.
@@ -2836,29 +2871,99 @@ win_fix_taskbar_max(int show_cmd)
 void
 win_maximise(int max)
 {
-//printf("win_max %d is_full %d IsZoomed %d\n", max, win_is_fullscreen, IsZoomed(wnd));
+  //printf("win_max %d is_full %d IsZoomed %d\n", max, win_is_fullscreen, IsZoomed(wnd));
+
   if (max == -2) // toggle full screen
     max = win_is_fullscreen ? 0 : 2;
+
+  /* avoid ShowWindow (or SetWindowPlacement) esp. with SW_MAXIMIZE
+     so we can prevent the window from also being activated
+   */
   if (IsZoomed(wnd)) {
-    if (!max)
-      ShowWindow(wnd, SW_RESTORE);
-    else if (max == 2 && !win_is_fullscreen)
+    if (!max) {  // restore max/fullscreen -> normal
+     /* Resize to normal position; order is important:
+        1. determine old "normal position" as it may get forgotton 
+           by subsequent operations (esp after removing WS_MAXIMIZE)
+        2. restore the window title, or the reference for the 
+           subsequent SetWindowPos resizing will be wrong 
+           (and even window size and terminal size inconsistent)
+        3. finally perform the actual resizing to "normal position"
+      */
+     /* Retrieve the previous unmaximised "normal" size */
+      WINDOWPLACEMENT pl;
+      pl.length = sizeof(WINDOWPLACEMENT);
+      GetWindowPlacement(wnd, &pl);
+      RECT fr = pl.rcNormalPosition;
+
+     /* Reinstate the window furniture. */
+      LONG style = GetWindowLong(wnd, GWL_STYLE);
+      if (border_style) {
+        if (strcmp(border_style, "void") != 0) {
+          style |= WS_THICKFRAME;
+        }
+      }
+      else {
+        style |= WS_CAPTION | WS_BORDER | WS_THICKFRAME;
+      }
+      style &= ~(WS_MINIMIZE | WS_MAXIMIZE);
+      SetWindowLong(wnd, GWL_STYLE, style);
+
+     /* Restore to normal size and position */
+      SetWindowPos(wnd, null, fr.left, fr.top,
+                   fr.right - fr.left, fr.bottom - fr.top,
+                   SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOZORDER);
+
+      win_is_fullscreen = false;
+    }
+    else if (max == 2 && !win_is_fullscreen)  // max -> fullscreen
       make_fullscreen();
+    else if (max == 1)  // fullscreen -> max
+      clear_fullscreen();
   }
-  else if (max) {
-    if (max == 2) {  // full screen
-      go_fullscr_on_max = true;
-      ShowWindow(wnd, SW_MAXIMIZE);
-    }
-    else if (max == 1) {  // maximize
-      // this would apply the workaround to consider the taskbar
-      // but it would make maximizing irreversible, so let's not do it here
-      //ShowWindow(wnd, win_fix_taskbar_max(SW_MAXIMIZE));
-      // rather let Windows maximize as it prefers, including the bug
-      ShowWindow(wnd, SW_MAXIMIZE);
-    }
-    else
-      ShowWindow(wnd, SW_MAXIMIZE);
+  else if (max == 2) {  // normal -> fullscreen
+#if 0
+    LONG style = GetWindowLong(wnd, GWL_STYLE);
+    style |= WS_MAXIMIZE;
+    style &= ~(WS_CAPTION | WS_BORDER | WS_THICKFRAME);
+    SetWindowLong(wnd, GWL_STYLE, style);
+
+    win_update_glass(cfg.opaque_when_focused);
+
+   /* Resize ourselves to exactly cover the nearest monitor. */
+    MONITORINFO mi;
+    get_my_monitor_info(&mi);
+    RECT fr = mi.rcMonitor;
+    // set window size
+    SetWindowPos(wnd, HWND_TOP, fr.left, fr.top,
+                 fr.right - fr.left, fr.bottom - fr.top,
+                 SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOZORDER);
+
+    win_is_fullscreen = true;
+#else
+    LONG style = GetWindowLong(wnd, GWL_STYLE);
+    style |= WS_MAXIMIZE;
+    SetWindowLong(wnd, GWL_STYLE, style);
+
+    SetWindowPos(wnd, null, 0, 0, 0, 0,
+               SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER
+               | SWP_FRAMECHANGED);
+
+    make_fullscreen();
+#endif
+  }
+  else if (max == 1) {  // normal -> max
+    LONG style = GetWindowLong(wnd, GWL_STYLE);
+    style |= WS_MAXIMIZE;
+    //style &= ~WS_MINIMIZE;  // ??
+    SetWindowLong(wnd, GWL_STYLE, style);
+   /* Resize ourselves to exactly cover the nearest monitor. */
+    MONITORINFO mi;
+    get_my_monitor_info(&mi);
+    RECT fr = mi.rcMonitor;
+    // set window size
+    SetWindowPos(wnd, HWND_TOP, fr.left, fr.top,
+                 fr.right - fr.left, fr.bottom - fr.top,
+                 SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOZORDER);
   }
 }
 
