@@ -512,6 +512,8 @@ win_hide_other_tabs(HWND to_top)
         // pseudo-hide background tabs by max transparency
         LONG style = GetWindowLong(curr_wnd, GWL_EXSTYLE);
         style |= WS_EX_LAYERED;
+        // improve hiding other tab, also hide it from taskbar:
+        style |= WS_EX_TOOLWINDOW;
         SetWindowLong(curr_wnd, GWL_EXSTYLE, style);
         SetLayeredWindowAttributes(curr_wnd, 0, 0, LWA_ALPHA);
       }
@@ -560,6 +562,11 @@ win_set_tab_focus(char tag)
 
     // restore by clearing pseudo-hidden state
     win_update_transparency(cfg.transparency, cfg.opaque_when_focused);
+
+    // unhide this tab from tool window mode, propagate it to taskbar
+    LONG style = GetWindowLong(wnd, GWL_EXSTYLE);
+    style &= ~WS_EX_TOOLWINDOW;
+    SetWindowLong(wnd, GWL_EXSTYLE, style);
 
     // hide background tabs
     if (cfg.window)  // not hidden explicitly

@@ -7,6 +7,7 @@ Terminal features
 
 Window handling
   * Revamp window operations, esp max/fullscreen, to not raise to foreground.
+  * Group taskbar icons by setting -o Class (#1207).
 
 Configuration
   * New user-definable function compose (#1211).
